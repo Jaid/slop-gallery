@@ -7,7 +7,6 @@ import {CuboidCollider, RigidBody, TrimeshCollider} from '@react-three/rapier'
 import {useEffect, useMemo, useRef} from 'react'
 import {EquirectangularReflectionMapping, Shape, SRGBColorSpace} from 'three/webgpu'
 
-import CanvasText from '#component/CanvasText'
 import {rooms, useGallery, walls} from '#src/lib/gallery.ts'
 import {architectureGeometry} from '#src/lib/gallery/architecture.ts'
 import {canvasTexture} from '#src/lib/texture.ts'
@@ -59,12 +58,6 @@ export default function Architecture() {
       {[-1.1, 1.1].map(x => <Box key={x} position={[x, 0.22, 0]} size={[0.14, 0.44, 0.8]} color="#514a3b" metalness={0.6}/>)}
     </group></RigidBody>
     {[[-6.6, 0, -6.5], [6.6, 0, -6.5], [-18.8, 0, 6.5], [18.8, 0, 6.5]].map((position, i) => <Plant key={i} position={position as [number, number, number]}/>)}
-    <CanvasText position={[0, 4.91, -7.76]} text="THE ART OF NOT MAKING SENSE" color="#5e624e" width={3.15} height={0.2} fontSize={0.45}/>
-    <group position={[-7.75, 4.3, 3]} rotation={[0, Math.PI / 2, 0]}><CanvasText text="02  /  CABINET OF CURIOSITIES" color="#52634b" width={2.8} height={0.22}/></group>
-    <group position={[7.75, 4.3, 3]} rotation={[0, -Math.PI / 2, 0]}><CanvasText text="03  /  THE AFTERHOURS SALON" color="#52634b" width={2.8} height={0.22}/></group>
-    <group position={[-14, 4.85, -7.74]}><CanvasText text="THE PAST WAS ALWAYS A LITTLE STRANGE" color="#eee8d4" width={4.8} height={0.22}/></group>
-    <group position={[14, 4.85, -7.74]}><CanvasText text="A DIFFERENT POINT OF VIEW" color="#f1ecdf" width={4} height={0.22}/></group>
-    <CanvasText position={[0, 4.1, 14.74]} rotation={[0, Math.PI, 0]} text="LESS, BUT SOMEHOW STILL TOO MUCH." color="#7d7155" width={3.5} height={0.22}/>
     <SecretDoor/>
   </>
 }
@@ -156,7 +149,5 @@ function SecretDoor() {
   return <RigidBody ref={body} type="kinematicPosition" colliders="cuboid" position={[open ? 3 : 0, 1.8, 8]}>
     <Box size={[2.6, 3.6, 0.28]} color="#b9baa5"/>
     {[-0.75, 0, 0.75].map(x => <Box key={x} position={[x, 0, -0.16]} size={[0.025, 3.3, 0.035]} color="#929b7c"/>)}
-    <CanvasText position={[0, 0.1, -0.16]} rotation={[0, Math.PI, 0]} text="NOTHING TO SEE HERE" color="#505e43" width={1.9} height={0.22}/>
-    <CanvasText position={[0, -0.25, -0.16]} rotation={[0, Math.PI, 0]} text="Consult the book to your left." color="#67715a" width={1.7} height={0.16}/>
   </RigidBody>
 }

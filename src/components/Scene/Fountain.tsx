@@ -5,7 +5,6 @@ import {CylinderCollider, RigidBody} from '@react-three/rapier'
 import {useEffect, useMemo, useRef} from 'react'
 import {Object3D, QuadraticBezierCurve3, RepeatWrapping, Vector3} from 'three/webgpu'
 
-import CanvasText from '#component/CanvasText'
 import {SoundEngine} from '#src/lib/audio/SoundEngine.ts'
 import {cameraPose, useGallery} from '#src/lib/gallery.ts'
 import {canvasTexture} from '#src/lib/texture.ts'
@@ -73,6 +72,5 @@ export default function Fountain() {
     </RigidBody>
     {jets.map((jet, i) => <mesh key={i}><tubeGeometry args={[jet, 32, 0.007, 5, false]}/><meshPhysicalMaterial color="#c7ece7" roughness={0.12} metalness={0.15} transparent opacity={0.42} depthWrite={false}/></mesh>)}
     <instancedMesh ref={particles} args={[undefined, undefined, 100]} frustumCulled={false}><sphereGeometry args={[1, 6, 6]}/><meshPhysicalMaterial color="#b4dfdc" roughness={0.1} metalness={0.2} transparent opacity={0.55} depthWrite={false}/></instancedMesh>
-    <CanvasText position={[0, 0.2, 1.455]} text="A SMALL STREAM OF CONSCIOUSNESS" width={1.3} height={0.11} color="#5a5848"/>
   </group>
 }

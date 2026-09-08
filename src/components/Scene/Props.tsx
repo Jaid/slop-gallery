@@ -2,7 +2,6 @@ import type {Vec3} from '#src/lib/gallery.ts'
 
 import {RigidBody} from '@react-three/rapier'
 
-import CanvasText from '#component/CanvasText'
 import {chime, notify, useGallery} from '#src/lib/gallery.ts'
 
 import GrabbableProp from './GrabbableProp.tsx'
@@ -30,7 +29,6 @@ export default function Props() {
     ] as const).map(prop => <group key={prop.id}>
       <RigidBody type="fixed" colliders="cuboid"><Box position={[prop.position[0], 0.65, prop.position[2]]} size={[1.1, 1.3, 1.1]} color="#d3c8b2"/><Box position={[prop.position[0], 1.32, prop.position[2]]} size={[1.16, 0.06, 1.16]} color="#e3d7bc"/></RigidBody>
       <Prop {...prop} position={[...prop.position]}/>
-      <CanvasText position={[prop.position[0], 1, prop.position[2] - 0.561]} rotation={[0, Math.PI, 0]} text={prop.kind === 'book' ? 'PLEASE DO NOT READ' : 'PLEASE TOUCH THE ART'} color="#6e654f" width={0.95} height={0.16}/>
     </group>)}
   </>
 }
@@ -56,7 +54,6 @@ function Prop({id, position, kind, title}: {id: string
       <Box size={[0.64, 0.095, 0.86]} color="#f1dfbd"/>
       <Box size={[0.69, 0.025, 0.91]} position={[0, 0.06, 0]} color="#59684e"/>
       <Box size={[0.69, 0.025, 0.91]} position={[0, -0.06, 0]} color="#59684e"/>
-      <CanvasText rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.074, 0]} text="GOOD TASTE" width={0.54} height={0.14} color="#dec897"/>
     </group>}
   </GrabbableProp>
 }
