@@ -35,7 +35,7 @@ export default function Collection() {
     <div className="collection-tools"><label className="search-field"><Icon name="search" size={17}/><input type="search" placeholder="Find a work or an artist…" aria-label="Search collection" value={query} onChange={event => setQuery(event.target.value)}/></label><select aria-label="Filter by room" value={room} onChange={event => setRoom(event.target.value)}><option value="all">All rooms</option>{rooms.map(room => <option key={room.id} value={room.id}>{room.title}</option>)}<option value="loose">Waiting to be hung</option></select></div>
     <div className="collection-grid">{filtered.map((p, i) => <article className="art-card" key={p.id}>
       <button className="art-image" onClick={() => setSelected(p.id)} aria-label={`Open ${p.title}`}><ArtworkThumb source={p.source} title={p.title}/><span>Look a little closer ↗</span></button>
-      <div className="art-card-meta"><small>{String(i + 1).padStart(2, '0')} / {p.merging ? 'ALCHEMY IN PROGRESS' : p.pending ? 'WORK IN PROGRESS' : !p.hung ? 'WAITING TO BE HUNG' : p.alternateSource ? 'A MATTER OF PERSPECTIVE' : 'COLLECTION'}</small><h3>{p.title}</h3><p>{p.creator}</p><button className="text-button" onClick={() => narrate(p.id)}><Icon name="sound" size={15}/> Hear the story</button></div>
+      <div className="art-card-meta"><small>{String(i + 1).padStart(2, '0')} / {p.merging ? 'ALCHEMY IN PROGRESS' : p.pending ? 'WORK IN PROGRESS' : !p.hung ? 'WAITING TO BE HUNG' : 'COLLECTION'}</small><h3>{p.title}</h3><p>{p.creator}</p><button className="text-button" onClick={() => narrate(p.id)}><Icon name="sound" size={15}/> Hear the story</button></div>
     </article>)}</div>
     {!filtered.length && <div className="empty-state"><h3>Nothing on this wall.</h3><p>Try another search. The good taste is still missing, too.</p><button className="text-button" onClick={() => {
       setQuery('')
@@ -47,7 +47,6 @@ export default function Collection() {
 function ArtworkDetail({portrait: p, back}: {back: () => void
   portrait: Portrait}) {
   const [editing, setEditing] = useState(false)
-  const [alternate, setAlternate] = useState(false)
   const [confirm, setConfirm] = useState(false)
   const [draft, setDraft] = useState({
     title: p.title,
@@ -75,8 +74,7 @@ function ArtworkDetail({portrait: p, back}: {back: () => void
   }
   return <div className="art-detail">
     <button className="text-button" onClick={back}>← Back to the collection</button>
-    <div className="detail-image"><ArtworkThumb source={alternate && p.alternateSource ? p.alternateSource : p.source} title={p.title}/></div>
-    {p.alternateSource && <button className="text-button" onClick={() => setAlternate(!alternate)}>◒ {alternate ? 'Return to the first impression' : 'See the other side of the story'}</button>}
+    <div className="detail-image"><ArtworkThumb source={p.source} title={p.title}/></div>
     <div className="eyebrow">{p.hung ? rooms.find(room => room.id === roomAt(p.position))?.title : 'WAITING TO BE HUNG'}{p.pending ? ' · THE CURATOR IS WRITING…' : ''}</div>
     {editing ? <form onSubmit={event => {
       event.preventDefault()

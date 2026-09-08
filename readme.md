@@ -4,7 +4,7 @@ Good taste. Questionable art.
 
 ![The Daydream Wing in Slop Gallery](docs/gallery.png)
 
-A local-first, first-person WebGPU museum: four rooms, fifteen absurd artworks and tactile sculptures. Built with React, React Three Fiber, Three.js TSL and Rapier.
+A local-first, first-person WebGPU museum: four rooms, sixteen absurd artworks and tactile sculptures. Built with React, React Three Fiber, Three.js TSL and Rapier.
 
 ## Run
 
@@ -38,7 +38,7 @@ Frames snap to valid wall surfaces, not arbitrary mesh hits. The preview include
 
 Add PNG, JPEG, WebP, AVIF or GIF files with the toolbar, drag and drop or clipboard paste. A drop on a suitable wall hangs the work there; otherwise it arrives as a loose frame. Images retain their aspect ratio and are normalized to WebP. Limits: twelve files per batch, 25 mb per image, 64 million decoded pixels and 120 works per collection. Animated inputs become still images.
 
-Collection provides search, room filters, complete stories, editable labels, image downloads and shortcuts to each work. The Duality of Doge rewards a sideways glance. The book on its pedestal can be picked up and thrown like the other sculptures.
+Collection provides search, room filters, complete stories, editable labels, image downloads and shortcuts to each work. The velvet and neon Doge portraits are separate works. The book on its pedestal can be picked up and thrown like the other sculptures.
 
 ## Optional AI
 

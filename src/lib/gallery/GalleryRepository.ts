@@ -7,8 +7,10 @@ import {createDocument, maximumPortraits, restoreDocument, useGallery} from './s
 import {wallCoordinates, wallPosition, walls} from './walls.ts'
 
 const imageTypes = new Set(['image/webp', 'image/png', 'image/jpeg', 'image/avif', 'image/gif'])
-const images = new Set(initialPortraits.flatMap(p => [p.source, p.alternateSource]).filter((p): p is string => typeof p === 'string'))
+const images = new Set(initialPortraits.map(p => p.source).filter((p): p is string => typeof p === 'string'))
 const narrations = new Set(initialPortraits.map(p => p.narration).filter((p): p is string => typeof p === 'string'))
+// Retired recordings remain valid in saved collections but no longer play.
+const retiredNarrations = new Set(['/audio/doge.opus'])
 const maxBytes = 150_000_000
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 const vector = (value: unknown, length: number) => Array.isArray(value) && value.length === length && value.every(v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) < 1000)
@@ -37,10 +39,7 @@ export function validateDocument(value: unknown): GalleryDocument {
     } else if (typeof p.source !== 'string' || !images.has(p.source)) {
       throw new Error('The collection references an unknown image.')
     }
-    if (p.alternateSource !== undefined && (typeof p.alternateSource !== 'string' || !images.has(p.alternateSource))) {
-      throw new Error('The alternate artwork is invalid.')
-    }
-    if (p.narration !== undefined && (typeof p.narration !== 'string' || !narrations.has(p.narration))) {
+    if (p.narration !== undefined && (typeof p.narration !== 'string' || (!narrations.has(p.narration) && !retiredNarrations.has(p.narration)))) {
       throw new Error('The narration asset is invalid.')
     }
     if (p.orientation !== undefined && (!vector(p.orientation, 4) || Math.abs(Math.hypot(...p.orientation as Array<number>) - 1) > 0.01)) {
@@ -74,8 +73,7 @@ export function validateDocument(value: unknown): GalleryDocument {
       hung: p.hung,
       wallId: typeof p.wallId === 'string' ? p.wallId : undefined,
       orientation: p.orientation as Portrait['orientation'],
-      alternateSource: p.alternateSource,
-      narration: p.narration,
+      narration: typeof p.narration === 'string' && narrations.has(p.narration) ? p.narration : undefined,
       imported: p.imported === true,
     }
   })

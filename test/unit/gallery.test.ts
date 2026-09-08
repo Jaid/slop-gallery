@@ -21,6 +21,19 @@ describe('wall geometry', () => {
       expect(wallCoordinates(wall, wallPosition(wall, 1.7, 2.5))).toBeCloseTo(1.7)
     })
   }
+  test('the two Doge images are independent, normally hung portraits', () => {
+    const velvet = initialPortraits.find(p => p.id === 'doge')!
+    const neon = initialPortraits.find(p => p.id === 'doge-neon')!
+    expect(velvet.source).toBe('/art/doge-velvet.webp')
+    expect(neon.source).toBe('/art/doge-neon.webp')
+    expect(velvet.hung).toBe(true)
+    expect(neon.hung).toBe(true)
+    expect(velvet.position).not.toEqual(neon.position)
+    expect(velvet.narration).toBeUndefined()
+    expect(neon.narration).toBeUndefined()
+    useGallery.getState().remove(velvet.id)
+    expect(useGallery.getState().portraits.some(p => p.id === neon.id)).toBe(true)
+  })
   test('the shipped exhibition leaves space for frames, plates and doors', () => {
     for (const p of initialPortraits) {
       const wall = walls.find(w => w.id === p.wallId)!
@@ -109,7 +122,7 @@ describe('image dimensions', () => {
     const job = importer.import([new File(['image'], 'pending.png', {type: 'image/png'})])
     restoreDocument(original)
     await job
-    expect(useGallery.getState().portraits).toHaveLength(15)
+    expect(useGallery.getState().portraits).toHaveLength(16)
     importer.dispose()
   })
   test('preserves landscape, portrait and square aspect ratios', () => {
@@ -188,7 +201,7 @@ describe('transactional history', () => {
 })
 describe('backup validation', () => {
   test('accepts the shipped collection', () => {
-    expect(validateDocument(original).portraits).toHaveLength(15)
+    expect(validateDocument(original).portraits).toHaveLength(16)
   })
   for (const secretOpen of [false, true]) {
     test(`ignores the retired puzzle state in existing collections (${secretOpen})`, () => {
@@ -199,9 +212,24 @@ describe('backup validation', () => {
       useGallery.getState().remove(original.portraits[0]!.id)
       expect(undo()).toBe(true)
       expect(createDocument()).not.toHaveProperty('secretOpen')
-      expect(useGallery.getState().portraits).toHaveLength(15)
+      expect(useGallery.getState().portraits).toHaveLength(16)
     })
   }
+  test('loads an existing Doge without retaining its retired recording or alternate image', () => {
+    const doge = initialPortraits.find(p => p.id === 'doge')!
+    const document = validateDocument({
+      ...original,
+      portraits: [{...doge, alternateSource: '/art/doge-neon.webp', narration: '/audio/doge.opus'}],
+    })
+    expect(document.portraits).toHaveLength(1)
+    expect(document.portraits[0]!.source).toBe(doge.source)
+    expect(document.portraits[0]!.narration).toBeUndefined()
+    expect(document.portraits[0]).not.toHaveProperty('alternateSource')
+    expect(() => validateDocument({
+      ...original,
+      portraits: [{...doge, narration: '/audio/unknown.opus'}],
+    })).toThrow()
+  })
   test('strips unknown settings instead of spreading them into the store', () => {
     expect(validateDocument({
       ...original,

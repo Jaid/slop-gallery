@@ -118,7 +118,6 @@ export class GalleryDirector {
       const result: Portrait = {
         ...a,
         source: merged,
-        alternateSource: undefined,
         narration: undefined,
         merging: false,
         pending: false,

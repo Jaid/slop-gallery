@@ -1,6 +1,6 @@
 import type {Portrait as PortraitData, Quat, Vec3} from '#src/lib/gallery.ts'
 import type {RapierRigidBody} from '@react-three/rapier'
-import type {Group, InstancedMesh, MeshBasicMaterial} from 'three/webgpu'
+import type {Group, InstancedMesh} from 'three/webgpu'
 
 import {useFrame} from '@react-three/fiber/webgpu'
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
@@ -13,15 +13,11 @@ import {chime, requestMerge, useGallery} from '#src/lib/gallery.ts'
 
 export const portraitObjects = new Map<string, {body: RapierRigidBody
   group: Group}>
-const normal = new Vector3
-const look = new Vector3
-const worldPosition = new Vector3
 
 export default function Portrait({portrait: p}: {portrait: PortraitData}) {
   const body = useRef<RapierRigidBody>(null)
   const group = useRef<Group>(null)
   const magic = useRef<InstancedMesh>(null)
-  const alternate = useRef<MeshBasicMaterial>(null)
   const held = useGallery(s => s.held === p.id)
   const frame = useGallery(s => s.frame)
   const dummy = useMemo(() => new Object3D, [])
@@ -70,7 +66,7 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
       }, true)
     }
   }, [p.hung, p.velocity])
-  useFrame(({camera}, dt) => {
+  useFrame((_, dt) => {
     if (useGallery.getState().motion) {
       clock.current += Math.min(dt, 0.06)
     }
@@ -85,14 +81,6 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
         magic.current.setMatrixAt(i, dummy.matrix)
       }
       magic.current.instanceMatrix.needsUpdate = true
-    }
-    if (alternate.current && group.current) {
-      group.current.getWorldPosition(worldPosition)
-      normal.set(0, 0, 1).applyQuaternion(group.current.getWorldQuaternion(new Quaternion))
-      look.copy(camera.position).sub(worldPosition).normalize()
-      const edge = Math.max(0, Math.min(1, (1 - normal.dot(look) - 0.045) / 0.24))
-      const opacity = edge * edge * (3 - 2 * edge)
-      alternate.current.opacity += (opacity - alternate.current.opacity) * (1 - Math.exp(-dt * 10))
     }
     if (body.current && !p.hung && body.current.translation().y < -4) {
       body.current.setTranslation({
@@ -140,7 +128,6 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
       <mesh castShadow receiveShadow><boxGeometry args={[w + 0.18, h + 0.18, 0.16]}/><meshStandardMaterial color={frameColor} roughness={0.32} metalness={frame === 'gold' ? 0.75 : 0.15} transparent opacity={held ? 0.3 : 1}/></mesh>
       <mesh position={[0, 0, 0.087]}><planeGeometry args={[w + 0.045, h + 0.045]}/><meshStandardMaterial color="#29261d"/></mesh>
       <mesh position={[0, 0, 0.096]}><planeGeometry args={[w, h]}/><DynamicImageMaterial source={p.source} toneMapped={false} transparent opacity={held ? 0.3 : 1}/></mesh>
-      {p.alternateSource && <mesh position={[0, 0, 0.099]}><planeGeometry args={[w, h]}/><DynamicImageMaterial ref={alternate} source={p.alternateSource} toneMapped={false} transparent opacity={0} depthWrite={false}/></mesh>}
       {[-1, 1].map(side => <group key={side}>
         <mesh position={[side * (w / 2 + 0.055), 0, 0.1]}><boxGeometry args={[0.022, h + 0.14, 0.026]}/><meshStandardMaterial color={frame === 'gold' ? '#ddbc7c' : frameColor} metalness={0.6} roughness={0.3}/></mesh>
         <mesh position={[0, side * (h / 2 + 0.055), 0.1]}><boxGeometry args={[w + 0.14, 0.022, 0.026]}/><meshStandardMaterial color={frame === 'gold' ? '#ddbc7c' : frameColor} metalness={0.6} roughness={0.3}/></mesh>

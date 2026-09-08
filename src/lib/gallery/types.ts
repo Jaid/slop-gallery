@@ -2,7 +2,6 @@ export type Vec3 = [number, number, number]
 export type Quat = [number, number, number, number]
 export type RoomId = 'afterhours' | 'cabinet' | 'daydream' | 'secret'
 export type Portrait = {
-  alternateSource?: string
   creator: string
   description: string
   height: number
