@@ -40,6 +40,8 @@ Add PNG, JPEG, WebP, AVIF or GIF files with the toolbar, drag and drop or clipbo
 
 Collection provides search, room filters, complete stories, editable labels, image downloads and shortcuts to each work. The velvet and neon Doge portraits are separate works. The book on its pedestal can be picked up and thrown like the other sculptures.
 
+The Serious Knot uses a polished gold material with procedural color and normal maps and a locally bundled [warehouse HDR reflection environment](public/environment/readme.md). Its reflections are material-local; the other sculptures and gallery lighting are unchanged.
+
 ## Optional AI
 
 Settings exposes OpenRouter connection and model preferences. The query parameters are `ai`, `text_model`, `text_model_effort`, `image_model`, `audio_model`, `narrator_voice`, `narrator_character`, `eager_audio` and `lite`. Defaults follow the supplied benchmark scaffold; provider availability and voice support can change.
