@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:Jaid/slop-gallery.git"
+    "url": "git+https://github.com/Jaid/slop-gallery.git"
   },
   "scripts": {
     "test": "bun test --max-concurrency 1"
