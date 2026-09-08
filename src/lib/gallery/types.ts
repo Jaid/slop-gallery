@@ -20,6 +20,7 @@ export type Portrait = {
   velocity?: Vec3
   wallId?: string
   width: number
+  year?: number
 }
 export type Placement = {
   inReach: boolean
@@ -29,6 +30,10 @@ export type Placement = {
   valid: boolean
   wallId: string
 }
+export type NarrationState = {id: string} & (
+  | {status: 'preparing'; source: null}
+  | {status: 'playing'; source: 'audio' | 'browser'}
+)
 export type GallerySettings = {
   frame: 'black' | 'gold' | 'oak'
   motion: boolean

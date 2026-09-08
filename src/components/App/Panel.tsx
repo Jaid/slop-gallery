@@ -10,6 +10,7 @@ export default function Panel({title, children}: {children: ReactNode
   title: string}) {
   const ref = useRef<HTMLDialogElement>(null)
   const panel = useGallery(s => s.panel)
+  const notice = useGallery(s => s.notice)
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null
     ref.current?.showModal()
@@ -28,6 +29,7 @@ export default function Panel({title, children}: {children: ReactNode
   }}>
     <section className={`panel ${panel === 'collection' ? 'collection-panel' : ''}`}>
       <div className="panel-heading"><div><div className="eyebrow">THE SLOP GALLERY</div><h2 id="panel-title">{title}</h2></div><button className="icon-button" aria-label="Close panel" onClick={() => openPanel(null)} autoFocus><Icon name="close"/></button></div>
+      {notice && <div className="toast" role="status">{notice}</div>}
       {children}
     </section>
   </dialog>

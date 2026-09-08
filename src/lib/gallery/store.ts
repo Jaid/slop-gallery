@@ -1,4 +1,4 @@
-import type {GalleryDocument, GallerySettings, GallerySnapshot, Placement, Portrait, RoomId, Vec3} from './types.ts'
+import type {GalleryDocument, GallerySettings, GallerySnapshot, NarrationState, Placement, Portrait, RoomId, Vec3} from './types.ts'
 
 import {create} from 'zustand'
 
@@ -8,19 +8,20 @@ export const maximumPortraits = 120
 export type Panel = 'collection' | 'help' | 'map' | 'settings' | null
 type State = GallerySettings & GallerySnapshot & {
   active: string | null
+  activeLabel: string | null
   add: (portrait: Portrait) => void
   ai: boolean
   apiKey: string
   commit: (portraits: Array<Portrait>) => void
   dragging: boolean
   future: Array<GallerySnapshot>
+  hasControlled: boolean
   held: string | null
   importFiles: ((files: Array<File>, target?: {direction: Vec3
     origin: Vec3}) => Promise<void>) | null
   inspecting: string | null
   locked: boolean
-  narration: {id: string
-    status: 'playing' | 'preparing'} | null
+  narration: NarrationState | null
   notice: string
   panel: Panel
   past: Array<GallerySnapshot>
@@ -28,6 +29,7 @@ type State = GallerySettings & GallerySnapshot & {
   ready: boolean
   remove: (id: string) => void
   importEpoch: number
+  resetEpoch: number
   revision: number
   room: RoomId
   saveStatus: 'error' | 'loading' | 'saved' | 'saving'
@@ -57,11 +59,34 @@ function readKey() {
   }
 }
 
+export function readControlled() {
+  try {
+    return localStorage.getItem('slop-gallery-controlled') === 'true'
+  } catch {
+    return false
+  }
+}
+
+// Entering the menu or acquiring pointer lock is not an in-game control.
+export function markControlled() {
+  const s = useGallery.getState()
+  if (s.hasControlled || !s.locked || s.panel) return
+  useGallery.setState({hasControlled: true})
+  try {
+    localStorage.setItem('slop-gallery-controlled', 'true')
+  } catch {
+    // Reset still becomes available for this visit when storage is blocked.
+  }
+}
+
 export const useGallery = create<State>((set, get) => ({
   portraits: initialPortraits.map(p => ({...p})),
   active: null,
+  activeLabel: null,
   held: null,
   locked: false,
+  hasControlled: readControlled(),
+  resetEpoch: 0,
   ready: false,
   dragging: false,
   inspecting: null,
@@ -113,6 +138,7 @@ export function undo() {
     future: [snapshot(s), ...s.future],
     held: null,
     active: null,
+    activeLabel: null,
     placement: null,
     revision: s.revision + 1,
     importEpoch: s.importEpoch + 1,
@@ -132,6 +158,7 @@ export function redo() {
     future: s.future.slice(1),
     held: null,
     active: null,
+    activeLabel: null,
     placement: null,
     revision: s.revision + 1,
     importEpoch: s.importEpoch + 1,
@@ -161,6 +188,7 @@ export function restoreDocument(document: GalleryDocument) {
     past: [],
     future: [],
     active: null,
+    activeLabel: null,
     held: null,
     placement: null,
     revision: useGallery.getState().revision + 1,

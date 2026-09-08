@@ -50,6 +50,9 @@ export class GalleryDirector {
         if (typeof partial.description === 'string' && partial.description.trim()) {
           patch.description = partial.description.slice(0, 5000)
         }
+        if (typeof partial.year === 'number' && Number.isSafeInteger(partial.year)) {
+          patch.year = partial.year
+        }
         useGallery.getState().update(portrait.id, patch)
       }
       update(await this.generateFlavor(await loadBlob(source), update, AbortSignal.any([this.controller.signal, AbortSignal.timeout(90_000)])))
@@ -124,6 +127,7 @@ export class GalleryDirector {
         imported: true,
         title: 'An unexpected collaboration',
         creator: 'You · accidental alchemist',
+        year: (new Date).getFullYear(),
         description: `“${a.title}” met “${b.title}”. Neither had planned to share a frame. ${this.settings.ai && this.key ? 'An AI-assisted collaboration.' : 'A locally made cut-paper collage, joined with a little gold.'}`.slice(0, 5000),
       }
       const state = useGallery.getState()

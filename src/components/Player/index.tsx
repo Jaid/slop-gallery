@@ -8,7 +8,7 @@ import {useEffect, useRef, useState} from 'react'
 import {Quaternion, Vector3} from 'three/webgpu'
 
 import {SoundEngine} from '#src/lib/audio/SoundEngine.ts'
-import {cameraPose, galleryEvents, useGallery} from '#src/lib/gallery.ts'
+import {cameraPose, galleryEvents, markControlled, useGallery} from '#src/lib/gallery.ts'
 
 import {getCapsuleHalfHeight, getJumpVelocity} from './util'
 
@@ -220,6 +220,7 @@ const RapierPlayer = ({acceleration = 18,
       }
     }
     const active = enabled && !cameraPose.focused && !useGallery.getState().panel && typeof document !== 'undefined' && document.pointerLockElement !== null
+    if (active && (keys.forward || keys.backward || keys.left || keys.right || keys.jump || keys.crouch || keys.sprint)) markControlled()
     const jumpHeld = active && keys.jump
     if (jumpHeld && !jumpHeldRef.current) {
       jumpBufferedUntilRef.current = now + Math.max(jumpBufferTime, 0)

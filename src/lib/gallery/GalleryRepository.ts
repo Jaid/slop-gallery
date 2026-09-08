@@ -32,6 +32,9 @@ export function validateDocument(value: unknown): GalleryDocument {
     if (!object(p) || !shortText(p.id, 100) || !p.id || ids.has(p.id) || !shortText(p.title, 300) || !shortText(p.creator, 200) || !shortText(p.description, 5000) || !vector(p.position, 3) || typeof p.rotation !== 'number' || !Number.isFinite(p.rotation) || typeof p.hung !== 'boolean' || typeof p.width !== 'number' || typeof p.height !== 'number' || !(p.width >= 0.15 && p.width <= 4 && p.height >= 0.15 && p.height <= 4)) {
       throw new Error('The collection contains an invalid artwork.')
     }
+    if (p.year !== undefined && !(typeof p.year === 'number' && Number.isSafeInteger(p.year))) {
+      throw new Error('The artwork year is invalid.')
+    }
     ids.add(p.id)
     if (p.source instanceof Blob) {
       bytes += p.source.size
@@ -66,6 +69,7 @@ export function validateDocument(value: unknown): GalleryDocument {
       id: p.id,
       title: p.title,
       creator: p.creator,
+      ...(typeof p.year === 'number' ? {year: p.year} : {}),
       description: p.description,
       source: p.source,
       position: p.position as Portrait['position'],

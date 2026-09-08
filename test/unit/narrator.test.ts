@@ -66,6 +66,7 @@ test('a pending label queues only the most recently requested story', async () =
   useGallery.getState().update('orange', {pending: true})
   await narrator.speak('goose')
   await narrator.speak('orange')
+  expect(useGallery.getState().narration).toMatchObject({status: 'preparing', source: null})
   useGallery.getState().update('goose', {pending: false})
   narrator.ready('goose')
   expect(spoken).toHaveLength(0)
@@ -79,6 +80,7 @@ test('a pending label queues only the most recently requested story', async () =
   expect(useGallery.getState().narration).toEqual({
     id: 'orange',
     status: 'playing',
+    source: 'browser',
   })
 })
 test('stop clears queued narration', async () => {
@@ -105,6 +107,8 @@ test('TTS keeps character steering out of the spoken transcript and caches audio
   expect(body.input).not.toContain(settings.narrator_character)
   expect(body.provider.options.google.instructions).toBe(settings.narrator_character)
   expect(body.response_format).toBe('mp3')
+  expect(useGallery.getState().narration).toMatchObject({status: 'playing', source: 'audio'})
+  expect(meterSpy).toHaveBeenCalledTimes(1)
   await narrator.speak('goose')
   expect(fetchSpy).toHaveBeenCalledTimes(1)
 })
@@ -114,7 +118,7 @@ test('provider failure falls back to readable browser narration', async () => {
   narrator = new Narrator(settings, 'test-key')
   await narrator.speak('goose')
   expect(spoken).toHaveLength(1)
-  expect(useGallery.getState().narration?.status).toBe('playing')
+  expect(useGallery.getState().narration).toMatchObject({status: 'playing', source: 'browser'})
 })
 
 test('bundled recordings play without a key or a speech provider request', async () => {
@@ -125,7 +129,7 @@ test('bundled recordings play without a key or a speech provider request', async
   expect(fetchSpy).toHaveBeenCalledTimes(1)
   expect(fetchSpy.mock.calls[0]![0]).toBe('/audio/goose.opus')
   expect(spoken).toHaveLength(0)
-  expect(useGallery.getState().narration).toEqual({id: 'goose', status: 'playing'})
+  expect(useGallery.getState().narration).toEqual({id: 'goose', status: 'playing', source: 'audio'})
   expect(meterSpy).toHaveBeenCalledTimes(1)
   narrator.stop()
   expect(disconnected).toBe(1)
@@ -162,5 +166,5 @@ test('playback failure disconnects the spectrum before browser speech takes over
   await narrator.speak('goose')
   expect(disconnected).toBe(1)
   expect(spoken).toHaveLength(1)
-  expect(useGallery.getState().narration?.status).toBe('playing')
+  expect(useGallery.getState().narration).toMatchObject({status: 'playing', source: 'browser'})
 })

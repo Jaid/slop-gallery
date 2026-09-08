@@ -105,3 +105,23 @@ test('streamed labels never overwrite a subsequent manual edit', async () => {
   expect(useGallery.getState().portraits[0]!.title).toBe('My label')
   director.dispose()
 })
+
+
+test('streamed artwork years are retained and invalid provider years are ignored', async () => {
+  const director = new TestDirector(defaults, 'test')
+  try {
+    const job = director.flavor(useGallery.getState().portraits[0]!)
+    await Promise.resolve()
+    director.partial?.({year: 1924})
+    expect(useGallery.getState().portraits[0]!.year).toBe(1924)
+    director.partial?.({year: 1924.5})
+    expect(useGallery.getState().portraits[0]!.year).toBe(1924)
+    director.partial?.({year: Infinity})
+    expect(useGallery.getState().portraits[0]!.year).toBe(1924)
+    director.flavorResult.resolve({year: 1925})
+    await job
+    expect(createDocument().portraits[0]!.year).toBe(1925)
+  } finally {
+    director.dispose()
+  }
+})

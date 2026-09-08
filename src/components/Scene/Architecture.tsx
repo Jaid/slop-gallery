@@ -19,6 +19,7 @@ import ReflectiveWoodFloor from './ReflectiveWoodFloor.tsx'
 
 export default function Architecture() {
   const theme = useGallery(s => s.theme)
+  const resetEpoch = useGallery(s => s.resetEpoch)
   const textures = useMemo(() => ({
     stone: surfaceTexture('stone'),
     plaster: surfaceTexture('plaster'),
@@ -65,7 +66,7 @@ export default function Architecture() {
       <BenchSeat position={[0, 0.52, 0]} size={[3.1, 0.24, 1.05]}/>
       {[-1.1, 1.1].map(x => <Box key={x} position={[x, 0.22, 0]} size={[0.14, 0.44, 0.8]} color="#514a3b" metalness={0.6}/>)}
     </group></RigidBody>
-    {[[-6.6, 0, -6.5], [6.6, 0, -6.5], [-18.8, 0, 6.5], [18.8, 0, 6.5]].map((position, i) => <Plant key={i} position={position as [number, number, number]}/>)}
+    {[[-6.6, 0, -6.5], [6.6, 0, -6.5], [-18.8, 0, 6.5], [18.8, 0, 6.5]].map((position, i) => <Plant key={resetEpoch + ':' + i} position={position as [number, number, number]}/>)}
   </>
 }
 

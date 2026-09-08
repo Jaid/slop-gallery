@@ -9,7 +9,9 @@ import {preview} from 'vite'
 
 type Snapshot = {
   active: string | null
+  activeLabel: string | null
   camera: Array<number>
+  hasControlled: boolean
   held: string | null
   locked: boolean
   placement: {reason: string
@@ -35,6 +37,11 @@ const enter = async (page: Page) => {
   await page.waitForSelector('#enter-gallery')
   await page.click('#enter-gallery')
   await page.waitForFunction(() => !!document.pointerLockElement)
+}
+const history = async (page: Page, redo = false) => {
+  await page.keyboard.down('Control')
+  await page.keyboard.press(redo ? 'y' : 'z')
+  await page.keyboard.up('Control')
 }
 const clickText = async (page: Page, text: string) => {
   const button = await page.waitForSelector(`xpath/.//button[starts-with(normalize-space(.), "${text}")]`)
@@ -77,7 +84,18 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     await page.waitForFunction(() => (globalThis.__gallery?.snapshot as (() => Snapshot) | undefined)?.().ready, {timeout: 60_000})
     await page.evaluate(() => document.fonts.ready)
     await mkdir('private/agent/reports', {recursive: true})
-    const screenshot = await page.screenshot({path: 'private/agent/reports/production-welcome.png'})
+    expect((await snapshot(page)).locked).toBe(false)
+    expect((await snapshot(page)).hasControlled).toBe(false)
+    expect(await page.$('.menu-overlay')).not.toBeNull()
+    expect(await page.$('.menu-reset')).toBeNull()
+    expect(await page.$('.connection[open]')).toBeNull()
+    await page.screenshot({path: 'private/agent/reports/production-welcome.png'})
+    await page.click('[aria-label="Mute audio"]')
+    await enter(page)
+    expect((await snapshot(page)).hasControlled).toBe(false)
+    expect(await page.$('.menu-overlay')).toBeNull()
+    expect(await page.$('header, footer, .artwork-overlay, .room-label')).toBeNull()
+    const screenshot = await page.screenshot({path: 'private/agent/reports/production-gallery.png'})
     // Test the composited browser screenshot, not just a nonblack GPU readback.
     const variance = await page.evaluate(async encoded => {
       const bitmap = await createImageBitmap(await (await fetch(`data:image/png;base64,${encoded}`)).blob())
@@ -93,20 +111,26 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     expect(variance).toBeGreaterThan(500)
     expect((await snapshot(page)).webGPU).toBe(true)
     expect((await snapshot(page)).portraits).toHaveLength(16)
-    await page.click('[aria-label="Toggle sound"]')
-    await enter(page)
-    await page.waitForFunction(() => !!document.pointerLockElement)
     const z = (await snapshot(page)).camera[2]!
     await page.keyboard.down('w')
     await Bun.sleep(350)
     await page.keyboard.up('w')
     expect((await snapshot(page)).camera[2]!).toBeLessThan(z - 0.3)
+    expect((await snapshot(page)).hasControlled).toBe(true)
     const rotation = (await snapshot(page)).rotation
     await page.mouse.move(820, 460)
     await page.waitForFunction(before => JSON.stringify((globalThis.__gallery!.snapshot as () => Snapshot)().rotation) !== JSON.stringify(before), {}, rotation)
+    const lookingAtPlate = Math.atan2(1.105 - 1.62, 3.28)
+    await teleport(page, [-3.6, 1.62, -4.5], [Math.sin(lookingAtPlate / 2), 0, 0, Math.cos(lookingAtPlate / 2)])
+    await page.waitForFunction(() => (globalThis.__gallery!.snapshot as () => Snapshot)().activeLabel === 'goose')
+    expect(await page.$eval('.artwork-overlay', element => element.textContent)).toContain('His Unbothered Majesty')
+    expect(await page.$eval('.artwork-overlay', element => element.textContent)).toContain('Cornelius van Honk')
+    expect(await page.$eval('.artwork-overlay', element => element.textContent)).toContain('Undated')
     const lookingUp = [Math.sin(0.13), 0, 0, Math.cos(0.13)]
     await teleport(page, [-3.6, 1.62, -4.5], lookingUp)
     await page.waitForFunction(() => (globalThis.__gallery!.snapshot as () => Snapshot)().active === 'goose')
+    expect((await snapshot(page)).activeLabel).toBeNull()
+    expect(await page.$('.artwork-overlay')).toBeNull()
     await page.keyboard.press('e')
     await page.waitForFunction(() => (globalThis.__gallery!.snapshot as () => Snapshot)().held === 'goose')
     await teleport(page, [-6.3, 1.62, -4.5], lookingUp)
@@ -177,9 +201,9 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     expect((await snapshot(page)).portraits).toHaveLength(16)
     await page.waitForFunction(() => (globalThis.__gallery!.snapshot as () => Snapshot)().portraits.find(p => p.id === 'orange')?.title === 'An unexpected collaboration')
     expect((await snapshot(page)).portraits).toHaveLength(16)
-    await page.click('[aria-label="Undo"]')
+    await history(page)
     expect((await snapshot(page)).portraits).toHaveLength(16)
-    await page.click('[aria-label="Redo"]')
+    await history(page, true)
     expect((await snapshot(page)).portraits).toHaveLength(16)
     await page.waitForFunction(() => (globalThis.__gallery!.snapshot as () => Snapshot)().saveStatus === 'saved')
     await Bun.sleep(700)
@@ -207,9 +231,11 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     expect(backup.portraits).toHaveLength(16)
     expect(backup.portraits.find((p: {id: string}) => p.id === 'orange').source.mime).toBe('image/webp')
     expect(backup).not.toHaveProperty('apiKey')
-    await clickText(page, 'Reset the collection')
-    await clickText(page, 'Confirm reset · restore the original collection')
+    await page.keyboard.press('Escape')
+    await clickText(page, 'Reset gallery')
+    await clickText(page, 'Confirm reset')
     expect((await snapshot(page)).portraits.find(p => p.id === 'orange')!.title).toBe('A Slightly Larger Tomorrow')
+    await page.click('[aria-label="Gallery settings"]')
     await (await page.$('input[aria-label="Restore gallery backup"]'))!.uploadFile(backupPath)
     await page.waitForSelector('.confirmation')
     await clickText(page, 'Restore collection')
@@ -234,7 +260,7 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     const dropped = (await snapshot(page)).portraits.find(p => p.title === 'dropped fixture')!
     expect(dropped.hung).toBe(true)
     expect(dropped.position[0]!).toBeLessThan(-6.32)
-    await page.click('[aria-label="Undo"]')
+    await history(page)
     await page.evaluate(encoded => {
       const clipboardData = new DataTransfer()
       clipboardData.items.add(new File([Uint8Array.fromBase64(encoded)], 'pasted fixture.png', {type: 'image/png'}))
@@ -242,7 +268,7 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     }, image)
     await page.waitForFunction(() => (globalThis.__gallery!.snapshot as () => Snapshot)().portraits.length === 16)
     expect((await snapshot(page)).portraits.some(p => p.title === 'pasted fixture')).toBe(true)
-    await page.click('[aria-label="Undo"]')
+    await history(page)
     for (const [x, room] of [[-14, 'cabinet'], [14, 'afterhours']] as const) {
       await teleport(page, [x, 1.62, 3])
       await page.waitForFunction(room => (globalThis.__gallery!.snapshot as () => Snapshot)().room === room, {}, room)
@@ -344,11 +370,8 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     const canceledBook = (await snapshot(page)).props.find(prop => prop.id === 'prop-book')!
     expect(canceledBook.bodyType).toBe(0)
     expect(canceledBook.collidersEnabled.every(Boolean)).toBe(true)
-    await page.click('[aria-label="Gallery settings"]')
-    const lite = await page.waitForSelector('xpath/.//label[contains(., "Lightweight rendering")]/input')
-    await lite!.click()
+    await page.click('[aria-label="Lightweight graphics"]')
     await page.waitForFunction(() => location.search.includes('lite=true'))
-    await page.keyboard.press('Escape')
     await page.screenshot({path: 'private/agent/reports/production-lite.png'})
     const captures = await page.evaluate(async () => {
       const [a, b] = await Promise.all([globalThis.__gallery!.captureFrame!(), globalThis.__gallery!.captureFrame!()])
@@ -358,19 +381,20 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     expect(captures[1]).toBe(1440)
     expect(captures[2]).toBeGreaterThan(0.9)
     await page.setViewport({width: 760, height: 900})
+    const muted = await page.$eval('[aria-label="Mute audio"]', button => button.getAttribute('aria-pressed'))
     await page.click('[aria-label="Open collection"]')
     await page.waitForSelector('dialog[open]')
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     await page.keyboard.press('Tab')
     expect(await page.evaluate(() => !!document.activeElement?.closest('dialog'))).toBe(true)
-    const muted = await page.$eval('[aria-label="Toggle sound"]', button => button.getAttribute('aria-pressed'))
     await page.keyboard.press('m')
-    expect(await page.$eval('[aria-label="Toggle sound"]', button => button.getAttribute('aria-pressed'))).toBe(muted)
     await page.screenshot({path: 'private/agent/reports/production-narrow.png'})
+    await page.keyboard.press('Escape')
+    expect(await page.$eval('[aria-label="Mute audio"]', button => button.getAttribute('aria-pressed'))).toBe(muted)
     const fallback = await browser.newPage()
     await fallback.evaluateOnNewDocument(() => Object.defineProperty(navigator, 'gpu', {value: undefined}))
     await fallback.goto(`${baseUrl}?ai=false`, {waitUntil: 'networkidle0'})
-    expect(await fallback.$eval('.render-error', element => element.textContent)).toContain('A little more GPU')
+    expect(await fallback.$eval('.render-error', element => element.textContent)).toContain('WebGPU is unavailable')
     await fallback.click('[aria-label="Open collection"]')
     expect(await fallback.$$eval('.art-card', cards => cards.length)).toBeGreaterThan(0)
     await fallback.close()

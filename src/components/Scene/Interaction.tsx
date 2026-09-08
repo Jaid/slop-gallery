@@ -9,7 +9,8 @@ import {Matrix4, PerspectiveCamera, Quaternion, Raycaster, Vector2, Vector3} fro
 import PlacementPreview from '#component/PlacementPreview'
 
 import {InspectionLook} from '#src/lib/camera/InspectionLook.ts'
-import {cameraPose, chime, dragPose, enterGallery, findPlacement, galleryEvents, isTextInput, narrate, notify, openPanel, redo, roomAt, undo, useGallery, wallDistance} from '#src/lib/gallery.ts'
+import {isPortraitLabelHit} from '#src/lib/gallery/portraitLabel.ts'
+import {cameraPose, chime, dragPose, enterGallery, findPlacement, galleryEvents, isTextInput, markControlled, narrate, notify, openPanel, redo, roomAt, undo, useGallery, wallDistance} from '#src/lib/gallery.ts'
 
 import {portraitObjects} from './Portrait.tsx'
 import {propObjects} from './GrabbableProp.tsx'
@@ -42,6 +43,9 @@ export default function Interaction() {
       return
     }
     const mousemove = (event: MouseEvent) => {
+      if (controls.isLocked && document.pointerLockElement === renderer.domElement && (event.movementX || event.movementY)) {
+        markControlled()
+      }
       const viewing = view.current
       if (!viewing || viewing.returning || !controls.isLocked || document.pointerLockElement !== renderer.domElement) {
         return
@@ -79,7 +83,7 @@ export default function Interaction() {
     }
     const lock = () => {
       const locked = document.pointerLockElement === renderer.domElement
-      useGallery.setState({locked})
+      useGallery.setState({locked, activeLabel: null})
       if (!locked) {
         cancel()
         cancelView()
@@ -163,6 +167,7 @@ export default function Interaction() {
         }
         return
       }
+      if (event.button === 0 || event.button === 2) markControlled()
       if (event.button === 0) {
         grab()
       }
@@ -236,6 +241,7 @@ export default function Interaction() {
       if (!s.locked || s.panel) {
         return
       }
+      if (['KeyE', 'KeyQ', 'KeyR', 'KeyV'].includes(event.code)) markControlled()
       if (event.code === 'KeyV' && s.active && portraitObjects.has(s.active)) {
         if (view.current) {
           cancelView()
@@ -344,8 +350,10 @@ export default function Interaction() {
       room: useGallery.getState().room,
       placement: placement.current,
       locked: useGallery.getState().locked,
+      hasControlled: useGallery.getState().hasControlled,
       held: useGallery.getState().held,
       active: useGallery.getState().active,
+      activeLabel: useGallery.getState().activeLabel,
       saveStatus: useGallery.getState().saveStatus,
       props: [...propObjects].map(([id, {body, group}]) => ({
         id,
@@ -434,6 +442,7 @@ export default function Interaction() {
     if (!dragPose.active) {
       let closest = wallDistance(cameraPose.position, cameraPose.direction)
       let active: string | null = null
+      let activeLabel: string | null = null
       for (const [id, object] of [...portraitObjects, ...propObjects]) {
         if (id === s.held || !object.group.visible) {
           continue
@@ -446,11 +455,14 @@ export default function Interaction() {
         if (hits[0] && hits[0].distance < closest) {
           closest = hits[0].distance
           active = id
+          activeLabel = s.locked && !s.panel && p?.hung && isPortraitLabelHit(hits[0].object, object.group) ? id : null
         }
       }
-      if (active !== s.active) {
-        useGallery.setState({active})
+      if (active !== s.active || activeLabel !== s.activeLabel) {
+        useGallery.setState({active, activeLabel})
       }
+    } else if (s.activeLabel) {
+      useGallery.setState({activeLabel: null})
     }
     if (!ghost.current) {
       return

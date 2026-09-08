@@ -14,7 +14,7 @@ type PortraitLabelProps = {
 export default function PortraitLabel({width, height, title, creator = '', pending, preview}: PortraitLabelProps) {
   const layout = portraitLabelLayout(width, height)
   const textMaterial = preview ? {color: preview.color, opacity: preview.opacity * 0.95, fog: false} : undefined
-  return <group position={[0, layout.y, preview ? 0.015 : 0]}>
+  return <group userData={{portraitLabel: !preview}} position={[0, layout.y, preview ? 0.015 : 0]}>
     <mesh castShadow={!preview}>
       <boxGeometry args={[layout.width, portraitLabel.height, portraitLabel.depth]}/>
       {preview

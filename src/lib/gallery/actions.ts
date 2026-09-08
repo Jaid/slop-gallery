@@ -28,6 +28,7 @@ export function openPanel(panel: Panel) {
   document.exitPointerLock?.()
   useGallery.setState({
     panel,
+    activeLabel: null,
     held: null,
     placement: null,
   })
@@ -79,7 +80,8 @@ export function importRejected() {
 
 export function resetGallery() {
   useGallery.getState().commit(initialPortraits.map(p => ({...p})))
-  useGallery.setState(s => ({active: null, importEpoch: s.importEpoch + 1}))
+  useGallery.setState(s => ({active: null, activeLabel: null, importEpoch: s.importEpoch + 1, resetEpoch: s.resetEpoch + 1}))
+  stopNarration()
   galleryEvents.dispatchEvent(new Event('home'))
   notify('Back to the beginning. Your previous collection is one Undo away.')
 }

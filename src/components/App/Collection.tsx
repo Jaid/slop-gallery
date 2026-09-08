@@ -51,6 +51,7 @@ function ArtworkDetail({portrait: p, back}: {back: () => void
   const [draft, setDraft] = useState({
     title: p.title,
     creator: p.creator,
+    year: p.year === undefined ? '' : String(p.year),
     description: p.description,
   })
   useEffect(() => {
@@ -58,17 +59,23 @@ function ArtworkDetail({portrait: p, back}: {back: () => void
       setDraft({
         title: p.title,
         creator: p.creator,
+        year: p.year === undefined ? '' : String(p.year),
         description: p.description,
       })
     }
-  }, [p.title, p.creator, p.description, editing])
+  }, [p.title, p.creator, p.year, p.description, editing])
   const save = () => {
     if (!draft.title.trim() || !draft.creator.trim()) {
       notify('Every masterpiece deserves a title and an artist.')
       return
     }
+    const year = draft.year.trim() ? Number(draft.year) : undefined
+    if (year !== undefined && !Number.isSafeInteger(year)) {
+      notify('Enter a whole-number year or leave it undated.')
+      return
+    }
     const s = useGallery.getState()
-    s.commit(s.portraits.map(work => work.id === p.id ? {...work, title: draft.title.trim(), creator: draft.creator.trim(), description: draft.description.trim(), pending: false, narration: undefined} : work))
+    s.commit(s.portraits.map(work => work.id === p.id ? {...work, title: draft.title.trim(), creator: draft.creator.trim(), year, description: draft.description.trim(), pending: false, narration: undefined} : work))
     setEditing(false)
     notify('The label is yours now.')
   }
@@ -88,12 +95,16 @@ function ArtworkDetail({portrait: p, back}: {back: () => void
         ...draft,
         creator: event.target.value,
       })} required/></label>
+      <label>Year<input type="number" step={1} value={draft.year} placeholder="Undated" onChange={event => setDraft({
+        ...draft,
+        year: event.target.value,
+      })}/></label>
       <label>The story<textarea value={draft.description} maxLength={5000} onChange={event => setDraft({
         ...draft,
         description: event.target.value,
       })} rows={5}/></label>
       <div className="detail-actions"><button className="primary-button" type="submit">Save label</button><button className="text-button" type="button" onClick={() => setEditing(false)}>Cancel</button></div>
-    </form> : <><h3>{p.title}</h3><p className="artist-byline">{p.creator}</p><p className="detail-story">{p.description}</p></>}
+    </form> : <><h3>{p.title}</h3><p className="artist-byline">{p.creator} · {p.year ?? 'Undated'}</p><p className="detail-story">{p.description}</p></>}
     <div className="detail-actions">
       <button className="primary-button" onClick={() => viewPortrait(p.id)} disabled={!p.hung || p.merging}>Visit this work <Icon name="arrow" size={17}/></button>
       <button className="text-button" onClick={() => narrate(p.id)}><Icon name="sound" size={16}/> Hear the story</button>

@@ -59,6 +59,7 @@ export class Narrator {
           narration: {
             id,
             status: 'preparing',
+            source: null,
           },
         })
         notify('The narrator is waiting for the ink to dry…')
@@ -72,6 +73,7 @@ export class Narrator {
         narration: {
           id,
           status: 'preparing',
+          source: null,
         },
       })
     }
@@ -124,7 +126,7 @@ export class Narrator {
         audio.onerror = () => {
           if (current()) {
             this.stop()
-            notify('Audio playback failed. The story is still available in the captions.')
+            notify('Audio playback failed. The story is still available in the collection.')
           }
         }
         await audio.play()
@@ -133,6 +135,7 @@ export class Narrator {
             narration: {
               id,
               status: 'playing',
+              source: 'audio',
             },
           })
         }
@@ -182,6 +185,7 @@ export class Narrator {
           narration: {
             id,
             status: 'playing',
+            source: 'browser',
           },
         })
       }
@@ -225,7 +229,7 @@ export class Narrator {
       }),
     })
     if (!response.ok) {
-      throw new Error(`Narration unavailable (${response.status}). Check the audio model in Settings.`)
+      throw new Error(`Narration unavailable (${response.status}). Check the audio model in the OpenRouter menu.`)
     }
     const type = response.headers.get('content-type') ?? ''
     if (!/audio\/(mp3|mpeg|ogg|wav)/.test(type)) {

@@ -12,9 +12,10 @@ import Props from './Props.tsx'
 
 export default function Scene() {
   const portraits = useGallery(s => s.portraits)
+  const resetEpoch = useGallery(s => s.resetEpoch)
   return <>
     <Architecture/>
-    <Props/>
+    <Props key={resetEpoch}/>
     {portraits.map(p => <Portrait key={p.id} portrait={p}/>)}
     <Player position={[0, 0.85, 5.8]} speed={3} yaw={0}/>
     <Interaction/>
