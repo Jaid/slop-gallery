@@ -61,7 +61,7 @@ describe('carried prop clearance', () => {
     expect(placement.hasRoom([0, 1.4, 0])).toBe(false)
     expect(placement.hasRoom([0, 1.4, 0], false)).toBe(true)
   })
-  test('does not treat a moving secret door like the player', () => {
+  test('does not treat an unrelated kinematic body like the player', () => {
     const placement = book()
     const door = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0, 1.8, 1.3))
     world.createCollider(RAPIER.ColliderDesc.cuboid(1.3, 1.8, 0.14), door)

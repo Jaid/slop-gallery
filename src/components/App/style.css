@@ -1226,7 +1226,6 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .search-field input { border: 0; background: transparent; outline: 0; padding: 12px 0; font: inherit; font-size: 12px; width: 100%; min-width: 0; color: var(--ink); }
 .search-field:focus-within { outline: 2px solid #74875a; outline-offset: 2px; }
 select { font: inherit; font-size: 11px; padding: 10px; color: var(--ink); background: #eeeee3; border: 1px solid #cdd3bd; border-radius: 4px; max-width: 200px; }
-.collection-footnote { border-top: 1px solid #d9ddce; padding-top: 22px; margin-top: 28px; font-size: 11px; color: #788468; line-height: 1.8; }
 .art-detail > .text-button { margin-bottom: 14px; }
 .detail-image { display: flex; align-items: center; justify-content: center; min-height: 230px; height: 40dvh; max-height: 440px; background: #e8e6da; padding: 22px; margin-bottom: 25px; border: 1px solid #d5d9c8; }
 .detail-image img { max-width: 100%; max-height: 100%; object-fit: contain; box-shadow: 0 5px 20px #27332120; }

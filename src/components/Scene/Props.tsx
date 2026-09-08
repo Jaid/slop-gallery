@@ -2,8 +2,6 @@ import type {Vec3} from '#src/lib/gallery.ts'
 
 import {RigidBody} from '@react-three/rapier'
 
-import {chime, notify, useGallery} from '#src/lib/gallery.ts'
-
 import GrabbableProp from './GrabbableProp.tsx'
 import {Box} from './primitives.tsx'
 
@@ -37,16 +35,7 @@ function Prop({id, position, kind, title}: {id: string
   kind: 'apple' | 'book' | 'knot'
   position: Vec3
   title: string}) {
-  const onGrab = () => {
-    const s = useGallery.getState()
-    if (kind === 'book' && !s.secretOpen) {
-      s.commit(s.portraits, true)
-      useGallery.setState({held: id})
-      chime(700)
-      notify('A plot twist. The Good Taste Department is now open behind you.')
-    }
-  }
-  return <GrabbableProp id={id} title={title} position={position} onGrab={onGrab}>
+  return <GrabbableProp id={id} title={title} position={position}>
     {kind === 'knot' ? <mesh castShadow><torusKnotGeometry args={[0.45, 0.13, 128, 20, 2, 3]}/><meshStandardMaterial color="#b38957" metalness={0.86} roughness={0.25}/></mesh> : kind === 'apple' ? <group>
       <mesh castShadow scale={[1, 0.93, 1]}><sphereGeometry args={[0.27, 32, 24]}/><meshStandardMaterial color="#bda063" metalness={0.85} roughness={0.24}/></mesh>
       <Box position={[0, 0.3, 0]} size={[0.035, 0.18, 0.04]} color="#645840"/>

@@ -4,7 +4,7 @@ Good taste. Questionable art.
 
 ![The Daydream Wing in Slop Gallery](docs/gallery.png)
 
-A local-first, first-person WebGPU museum: three distinct salons, twelve absurd artworks, a spatial fountain, tactile sculptures and one deliberately underwhelming secret. Built with React, React Three Fiber, Three.js TSL and Rapier.
+A local-first, first-person WebGPU museum: four rooms, twelve absurd artworks, a spatial fountain and tactile sculptures. Built with React, React Three Fiber, Three.js TSL and Rapier.
 
 ## Run
 
@@ -38,7 +38,7 @@ Frames snap to valid wall surfaces, not arbitrary mesh hits. The preview include
 
 Add PNG, JPEG, WebP, AVIF or GIF files with the toolbar, drag and drop or clipboard paste. A drop on a suitable wall hangs the work there; otherwise it arrives as a loose frame. Images retain their aspect ratio and are normalized to WebP. Limits: twelve files per batch, 25 mb per image, 64 million decoded pixels and 120 works per collection. Animated inputs become still images.
 
-Collection provides search, room filters, complete stories, editable labels, image downloads and shortcuts to each work. The Ambassador rewards a sideways glance. The book near the unmarked rear door rewards curiosity.
+Collection provides search, room filters, complete stories, editable labels, image downloads and shortcuts to each work. The Ambassador rewards a sideways glance. The book on its pedestal can be picked up and thrown like the other sculptures.
 
 ## Optional AI
 
@@ -54,7 +54,7 @@ The key lives in this tab’s `sessionStorage`, not the URL, IndexedDB or export
 
 ## Keeping your collection
 
-Artwork, labels, placements, room discovery and atmosphere preferences are automatically saved in this origin’s IndexedDB. Loose frames save their final pose when they settle. Camera position, sculpture positions, thrown pots and plucked leaves are session-only. Reloading replants the foliage. Undo history is limited to twenty collection changes and is not persisted.
+Artwork, labels, placements and atmosphere preferences are automatically saved in this origin’s IndexedDB. Loose frames save their final pose when they settle. Camera position, sculpture positions, thrown pots and plucked leaves are session-only. Reloading replants the foliage. Undo history is limited to twenty collection changes and is not persisted.
 
 Settings exports a compressed `.slop` backup containing embedded imported images. Restoring validates the document and decodes its images before asking to replace the current collection. Reset and restore are undoable collection operations. Atmosphere settings are independent of collection undo.
 
@@ -67,7 +67,7 @@ bun run check
 bun run test:live
 ```
 
-`check` runs strict TypeScript checks, unit tests and the production build. `test:live` builds again, starts an isolated preview and drives a fresh headless Chrome through real WebGPU rendering, pointer lock, movement, placement, throwing, collection editing, imports, collage fusion, history, persistence, backup restoration, room discovery and lightweight rendering. It also walks through the boolean-cut portals in both directions and exercises the non-WebGPU collection fallback. Geometry tests compare the arched openings against rendered mesh rays and Rapier collision rays on both faces. Override `CHROME_PATH` if Chrome is installed elsewhere.
+`check` runs strict TypeScript checks, unit tests and the production build. `test:live` builds again, starts an isolated preview and drives a fresh headless Chrome through real WebGPU rendering, pointer lock, movement, placement, throwing, collection editing, imports, collage fusion, history, persistence, backup restoration, room navigation and lightweight rendering. It also walks through the boolean-cut portals in both directions and exercises the non-WebGPU collection fallback. Geometry tests compare the arched openings against rendered mesh rays and Rapier collision rays on both faces. Override `CHROME_PATH` if Chrome is installed elsewhere.
 
 Browser screenshots and failure diagnostics are written under ignored `private/agent/reports`. The test verifies image-region variance in the actual browser screenshot; a merely nonblack GPU buffer is not considered proof that the gallery rendered correctly. `window.__gallery.snapshot()` and `captureFrame()` expose read-only diagnostics. Mutation helpers exist only with `?test=true`.
 

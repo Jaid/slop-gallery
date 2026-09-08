@@ -78,7 +78,7 @@ export function importRejected() {
 }
 
 export function resetGallery() {
-  useGallery.getState().commit(initialPortraits.map(p => ({...p})), false)
+  useGallery.getState().commit(initialPortraits.map(p => ({...p})))
   useGallery.setState(s => ({active: null, importEpoch: s.importEpoch + 1}))
   galleryEvents.dispatchEvent(new Event('home'))
   notify('Back to the beginning. Your previous collection is one Undo away.')

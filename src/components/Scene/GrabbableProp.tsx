@@ -26,16 +26,15 @@ type GrabbablePropProps = Omit<RigidBodyProps, 'children' | 'ref' | 'position'> 
   id: string
   title: string
   position: Vec3
-  onGrab?: () => void
   blockedMessage?: () => string
 }
 
-export default function GrabbableProp({id, title, children, onGrab, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, ...props}: GrabbablePropProps) {
+export default function GrabbableProp({id, title, children, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, ...props}: GrabbablePropProps) {
   const body = useRef<RapierRigidBody>(null)
   const group = useRef<Group>(null)
   const controller = useRef<GrabbableBody | null>(null)
-  const callbacks = useRef({onGrab, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic})
-  callbacks.current = {onGrab, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic}
+  const callbacks = useRef({canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic})
+  callbacks.current = {canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic}
   const {world} = useRapier()
   const held = useGallery(s => s.held === id)
   useEffect(() => {
@@ -56,7 +55,6 @@ export default function GrabbableProp({id, title, children, onGrab, canGrab, blo
           if (message) notify(message)
           return false
         }
-        callbacks.current.onGrab?.()
         return true
       },
       cancel: () => carried.cancel(),

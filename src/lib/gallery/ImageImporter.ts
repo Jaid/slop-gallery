@@ -137,7 +137,7 @@ export class ImageImporter {
           const title = file.name.replace(/\.[^.]+$/, '').replaceAll(/[-_]/g, ' ').trim().slice(0, 150) || 'An untitled arrival'
           const p = newPortrait(source, title, size.width, size.height, pose)
           const s = useGallery.getState()
-          const place = target && findPlacement(target.origin, target.direction, p.width, p.height, s.portraits, p.id, s.secretOpen)
+          const place = target && findPlacement(target.origin, target.direction, p.width, p.height, s.portraits, p.id)
           if (place?.valid) {
             Object.assign(p, {
               position: place.position,
@@ -146,7 +146,7 @@ export class ImageImporter {
               hung: true,
             })
           } else {
-            const distance = Math.min(1.6, Math.max(0.25, wallDistance(pose.position, pose.direction, s.secretOpen) - 0.35))
+            const distance = Math.min(1.6, Math.max(0.25, wallDistance(pose.position, pose.direction) - 0.35))
             p.position = [pose.position[0] + pose.direction[0] * distance, Math.max(0.8, pose.position[1] + pose.direction[1] * distance + count * 0.15), pose.position[2] + pose.direction[2] * distance]
           }
           s.add(p)

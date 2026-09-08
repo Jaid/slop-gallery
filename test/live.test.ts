@@ -28,7 +28,6 @@ type Snapshot = {
   room: string
   rotation: Array<number | string>
   saveStatus: string
-  secretOpen: boolean
 }
 const snapshot = (page: Page): Promise<Snapshot> => page.evaluate(() => (globalThis.__gallery!.snapshot as () => Snapshot)())
 const teleport = (page: Page, position: Array<number>, rotation = [0, 0, 0, 1]) => page.evaluate((position, rotation) => (globalThis.__gallery!.teleport as Function)(position, rotation), position, rotation)
@@ -141,7 +140,7 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     await page.evaluate(() => document.exitPointerLock())
     await page.click('[aria-label="Open collection"]')
     await page.waitForSelector('dialog[open]')
-    expect(await page.$$eval('.art-card', cards => cards.length)).toBe(11)
+    expect(await page.$$eval('.art-card', cards => cards.length)).toBe(12)
     await page.type('[aria-label="Search collection"]', 'Whiskers')
     expect(await page.$$eval('.art-card', cards => cards.length)).toBe(1)
     await page.click('.art-image')
@@ -307,14 +306,21 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     expect(thrown.collidersEnabled.every(Boolean)).toBe(true)
     expect(Math.hypot(thrown.position.x - beforeThrow.x, thrown.position.y - beforeThrow.y, thrown.position.z - beforeThrow.z)).toBeGreaterThan(0.2)
     await page.evaluate(() => document.exitPointerLock())
-    await teleport(page, [-3.2, 1.62, 5.2], [0, 1, 0, 0])
+    // The rear room is accessible without touching the book.
+    await teleport(page, [0, 1.62, 6], [0, 1, 0, 0])
+    await enter(page)
+    await page.keyboard.down('w')
+    await page.waitForFunction(() => (globalThis.__gallery!.snapshot as () => Snapshot)().room === 'secret')
+    await page.keyboard.up('w')
+    await page.evaluate(() => document.exitPointerLock())
+    await page.screenshot({path: 'private/agent/reports/production-good-taste.png'})
     await enter(page)
     // The book sits below eye level; look down toward the pedestal.
     await teleport(page, [-3.2, 1.62, 5.2], [0, Math.cos(0.07), Math.sin(0.07), 0])
     await page.waitForFunction(() => (globalThis.__gallery!.snapshot as () => Snapshot)().active === 'prop-book')
     await page.waitForFunction(() => (globalThis.__gallery!.snapshot as () => Snapshot)().props.find(prop => prop.id === 'prop-book')?.sleeping)
     await page.mouse.down({button: 'left'})
-    await page.waitForFunction(() => (globalThis.__gallery!.snapshot as () => Snapshot)().secretOpen)
+    await page.waitForFunction(() => (globalThis.__gallery!.snapshot as () => Snapshot)().held === 'prop-book')
     await teleport(page, [-3.2, 1.62, 4.2], [0, 1, 0, 0])
     await Bun.sleep(350)
     const heldBook = (await snapshot(page)).props.find(prop => prop.id === 'prop-book')!
@@ -338,13 +344,6 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     const canceledBook = (await snapshot(page)).props.find(prop => prop.id === 'prop-book')!
     expect(canceledBook.bodyType).toBe(0)
     expect(canceledBook.collidersEnabled.every(Boolean)).toBe(true)
-    await teleport(page, [0, 1.62, 6], [0, 1, 0, 0])
-    await enter(page)
-    await page.keyboard.down('w')
-    await page.waitForFunction(() => (globalThis.__gallery!.snapshot as () => Snapshot)().room === 'secret')
-    await page.keyboard.up('w')
-    await page.evaluate(() => document.exitPointerLock())
-    await page.screenshot({path: 'private/agent/reports/production-secret.png'})
     await page.click('[aria-label="Gallery settings"]')
     const lite = await page.waitForSelector('xpath/.//label[contains(., "Lightweight rendering")]/input')
     await lite!.click()

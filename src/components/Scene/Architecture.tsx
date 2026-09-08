@@ -1,10 +1,9 @@
 import type {Wall} from '#src/lib/gallery.ts'
-import type {RapierRigidBody} from '@react-three/rapier'
 import type {Texture} from 'three/webgpu'
 
-import {useFrame, useThree} from '@react-three/fiber/webgpu'
+import {useThree} from '@react-three/fiber/webgpu'
 import {CuboidCollider, RigidBody, TrimeshCollider} from '@react-three/rapier'
-import {useEffect, useMemo, useRef} from 'react'
+import {useEffect, useMemo} from 'react'
 import {EquirectangularReflectionMapping, Shape, SRGBColorSpace} from 'three/webgpu'
 
 import {rooms, useGallery, walls} from '#src/lib/gallery.ts'
@@ -58,7 +57,6 @@ export default function Architecture() {
       {[-1.1, 1.1].map(x => <Box key={x} position={[x, 0.22, 0]} size={[0.14, 0.44, 0.8]} color="#514a3b" metalness={0.6}/>)}
     </group></RigidBody>
     {[[-6.6, 0, -6.5], [6.6, 0, -6.5], [-18.8, 0, 6.5], [18.8, 0, 6.5]].map((position, i) => <Plant key={i} position={position as [number, number, number]}/>)}
-    <SecretDoor/>
   </>
 }
 
@@ -131,23 +129,4 @@ function ReflectionEnvironment() {
     }
   }, [scene])
   return null
-}
-function SecretDoor() {
-  const open = useGallery(s => s.secretOpen)
-  const body = useRef<RapierRigidBody>(null)
-  useFrame((_, dt) => {
-    if (!body.current) {
-      return
-    }
-    const x = body.current.translation().x
-    body.current.setNextKinematicTranslation({
-      x: x + ((open ? 3 : 0) - x) * (1 - Math.exp(-dt * 2.3)),
-      y: 1.8,
-      z: 8,
-    })
-  })
-  return <RigidBody ref={body} type="kinematicPosition" colliders="cuboid" position={[open ? 3 : 0, 1.8, 8]}>
-    <Box size={[2.6, 3.6, 0.28]} color="#b9baa5"/>
-    {[-0.75, 0, 0.75].map(x => <Box key={x} position={[x, 0, -0.16]} size={[0.025, 3.3, 0.035]} color="#929b7c"/>)}
-  </RigidBody>
 }

@@ -38,7 +38,6 @@ export type GallerySettings = {
 }
 export type GallerySnapshot = {
   portraits: Array<Portrait>
-  secretOpen: boolean
 }
 export type GalleryDocument = GallerySnapshot & {
   savedAt: string

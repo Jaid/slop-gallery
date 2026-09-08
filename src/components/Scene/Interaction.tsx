@@ -132,12 +132,12 @@ export default function Interaction() {
       if (throwing) {
         const d = camera.getWorldDirection(new Vector3)
         const origin = camera.position.toArray()
-        const distance = Math.min(1.45, Math.max(0.35, wallDistance(origin, d.toArray(), s.secretOpen) - 0.4))
+        const distance = Math.min(1.45, Math.max(0.35, wallDistance(origin, d.toArray()) - 0.4))
         const pos = camera.position.clone().addScaledVector(d, distance)
         s.commit(s.portraits.map(p => p.id === id ? {...p, hung: false, wallId: undefined, orientation: undefined, position: pos.toArray() as Vec3, rotation: Math.atan2(-d.x, -d.z), velocity: d.multiplyScalar(14).add(new Vector3(0, 1.5, 0)).toArray() as Vec3} : p))
         chime(130)
       } else {
-        const candidate = findPlacement(camera.position.toArray(), camera.getWorldDirection(new Vector3).toArray(), p.width, p.height, s.portraits, p.id, s.secretOpen)
+        const candidate = findPlacement(camera.position.toArray(), camera.getWorldDirection(new Vector3).toArray(), p.width, p.height, s.portraits, p.id)
         if (candidate?.valid) {
           s.commit(s.portraits.map(p => p.id === id ? {...p, position: candidate.position, rotation: candidate.rotation, wallId: candidate.wallId, hung: true, orientation: undefined, velocity: undefined} : p))
           chime(620)
@@ -342,7 +342,6 @@ export default function Interaction() {
       ready: useGallery.getState().ready,
       registered: portraitObjects.size,
       room: useGallery.getState().room,
-      secretOpen: useGallery.getState().secretOpen,
       placement: placement.current,
       locked: useGallery.getState().locked,
       held: useGallery.getState().held,
@@ -433,14 +432,14 @@ export default function Interaction() {
     ray.current.setFromCamera(cursor.current, camera)
     ray.current.far = 9
     if (!dragPose.active) {
-      let closest = wallDistance(cameraPose.position, cameraPose.direction, s.secretOpen)
+      let closest = wallDistance(cameraPose.position, cameraPose.direction)
       let active: string | null = null
       for (const [id, object] of [...portraitObjects, ...propObjects]) {
         if (id === s.held || !object.group.visible) {
           continue
         }
         const p = s.portraits.find(p => p.id === id)
-        if (p?.reserved || p && roomAt(p.position) === 'secret' && !s.secretOpen) {
+        if (p?.reserved) {
           continue
         }
         const hits = ray.current.intersectObject(object.group, true)
@@ -462,7 +461,7 @@ export default function Interaction() {
       placement.current = null
       return
     }
-    const candidate = findPlacement(ray.current.ray.origin.toArray(), ray.current.ray.direction.toArray(), p?.width ?? 2.4, p?.height ?? 2.4, s.portraits, p?.id, s.secretOpen)
+    const candidate = findPlacement(ray.current.ray.origin.toArray(), ray.current.ray.direction.toArray(), p?.width ?? 2.4, p?.height ?? 2.4, s.portraits, p?.id)
     placement.current = candidate
     if (candidate?.valid !== s.placement?.valid || candidate?.inReach !== s.placement?.inReach || candidate?.reason !== s.placement?.reason || candidate?.wallId !== s.placement?.wallId || !candidate && s.placement) {
       useGallery.setState({placement: candidate})

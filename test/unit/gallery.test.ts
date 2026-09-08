@@ -10,7 +10,6 @@ import {findPlacement, placementIssue, roomAt, wallCoordinates, wallPosition, wa
 const original = {
   ...createDocument(),
   portraits: initialPortraits.map(p => ({...p})),
-  secretOpen: false,
 }
 beforeEach(() => {
   restoreDocument(original)
@@ -72,8 +71,18 @@ describe('wall geometry', () => {
     expect(findPlacement([0, 2.5, 0], [0, 1, 0], 2, 2, [])).toBeNull()
     expect(findPlacement([0, 2.5, 0], [0, 0, 0], 2, 2, [])).toBeNull()
     expect(findPlacement([0, 2.5, 0], [-1, 0, 0], 2, 2, [])).toMatchObject({wallId: 'daydream-west', inReach: true})
-    expect(findPlacement([0, 2.5, 0], [0, 0, 1], 2, 2, [])).toBeNull()
-    expect(findPlacement([0, 2.5, 0], [0, 0, 1], 2, 2, [], '', true)).toMatchObject({wallId: 'secret-south', inReach: false})
+    expect(findPlacement([0, 2.5, 0], [0, 0, 1], 2, 2, [])).toMatchObject({wallId: 'secret-south', inReach: false})
+  })
+  test('the Good Taste Department is always available for hanging artwork', () => {
+    expect(findPlacement([0, 2.5, 10], [0, 0, 1], 2, 2, [])).toMatchObject({
+      wallId: 'secret-south',
+      inReach: true,
+      valid: true,
+    })
+    expect(findPlacement([0, 2.5, 10], [0, 0, -1], 2, 2, [])).toMatchObject({
+      wallId: 'daydream-north',
+      inReach: false,
+    })
   })
   test('label clearance follows the physical sign footprint', () => {
     const wall = walls[0]!
@@ -181,6 +190,18 @@ describe('backup validation', () => {
   test('accepts the shipped collection', () => {
     expect(validateDocument(original).portraits).toHaveLength(12)
   })
+  for (const secretOpen of [false, true]) {
+    test(`ignores the retired puzzle state in existing collections (${secretOpen})`, () => {
+      const document = validateDocument({...original, secretOpen})
+      expect(document).toEqual(validateDocument(original))
+      expect(document).not.toHaveProperty('secretOpen')
+      restoreDocument(document)
+      useGallery.getState().remove(original.portraits[0]!.id)
+      expect(undo()).toBe(true)
+      expect(createDocument()).not.toHaveProperty('secretOpen')
+      expect(useGallery.getState().portraits).toHaveLength(12)
+    })
+  }
   test('strips unknown settings instead of spreading them into the store', () => {
     expect(validateDocument({
       ...original,

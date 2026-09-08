@@ -9,7 +9,7 @@ import {Object3D, Quaternion, Vector3} from 'three/webgpu'
 
 import PortraitLabel from '#component/PortraitLabel'
 import DynamicImageMaterial from '#component/DynamicImageMaterial'
-import {chime, requestMerge, roomAt, useGallery} from '#src/lib/gallery.ts'
+import {chime, requestMerge, useGallery} from '#src/lib/gallery.ts'
 
 export const portraitObjects = new Map<string, {body: RapierRigidBody
   group: Group}>
@@ -24,14 +24,12 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
   const alternate = useRef<MeshBasicMaterial>(null)
   const held = useGallery(s => s.held === p.id)
   const frame = useGallery(s => s.frame)
-  const secretOpen = useGallery(s => s.secretOpen)
   const dummy = useMemo(() => new Object3D, [])
   const clock = useRef(0)
   const lastImpact = useRef(0)
   const w = p.width
   const h = p.height
   const frameColor = frame === 'gold' ? '#a5804b' : frame === 'oak' ? '#6a4630' : '#292c29'
-  const visible = roomAt(p.position) !== 'secret' || secretOpen
   useEffect(() => {
     if (body.current && group.current) {
       portraitObjects.set(p.id, {
@@ -138,7 +136,7 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
       }
     }}>
     <CuboidCollider args={[(w + 0.18) / 2, (h + 0.18) / 2, 0.085]} mass={2}/>
-    <group ref={group} userData={{portraitId: p.id}} visible={visible && !p.reserved}>
+    <group ref={group} userData={{portraitId: p.id}} visible={!p.reserved}>
       <mesh castShadow receiveShadow><boxGeometry args={[w + 0.18, h + 0.18, 0.16]}/><meshStandardMaterial color={frameColor} roughness={0.32} metalness={frame === 'gold' ? 0.75 : 0.15} transparent opacity={held ? 0.3 : 1}/></mesh>
       <mesh position={[0, 0, 0.087]}><planeGeometry args={[w + 0.045, h + 0.045]}/><meshStandardMaterial color="#29261d"/></mesh>
       <mesh position={[0, 0, 0.096]}><planeGeometry args={[w, h]}/><DynamicImageMaterial source={p.source} toneMapped={false} transparent opacity={held ? 0.3 : 1}/></mesh>

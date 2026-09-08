@@ -12,7 +12,6 @@ const defaults = Object.fromEntries(Object.entries(parameterParsers).map(([key, 
 const original = {
   ...createDocument(),
   portraits: initialPortraits.map(p => ({...p})),
-  secretOpen: false,
 }
 const a = new Blob(['hanging'], {type: 'image/webp'})
 const b = new Blob(['thrown'], {type: 'image/webp'})

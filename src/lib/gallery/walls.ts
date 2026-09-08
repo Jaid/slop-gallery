@@ -180,13 +180,10 @@ export function placementIssue(wall: Wall, position: Vec3, width: number, height
   return ''
 }
 
-export function findPlacement(origin: Vec3, direction: Vec3, width: number, height: number, portraits: ReadonlyArray<Portrait>, ignoreId = '', secretOpen = false): Placement | null {
+export function findPlacement(origin: Vec3, direction: Vec3, width: number, height: number, portraits: ReadonlyArray<Portrait>, ignoreId = ''): Placement | null {
   let nearest = Infinity
   let result: Placement | null = null
   for (const wall of walls) {
-    if (wall.room === 'secret' && !secretOpen) {
-      continue
-    }
     const nx = Math.sin(wall.rotation)
     const nz = Math.cos(wall.rotation)
     const facing = direction[0] * nx + direction[2] * nz
@@ -221,7 +218,7 @@ export function findPlacement(origin: Vec3, direction: Vec3, width: number, heig
   return result
 }
 
-export function wallDistance(origin: Vec3, direction: Vec3, secretOpen: boolean) {
-  const hit = findPlacement(origin, direction, 0, 0, [], '', secretOpen)
+export function wallDistance(origin: Vec3, direction: Vec3) {
+  const hit = findPlacement(origin, direction, 0, 0, [])
   return hit ? Math.hypot(...hit.position.map((v, i) => v - origin[i]!) as Vec3) + 0.3 : Infinity
 }

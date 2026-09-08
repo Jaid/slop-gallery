@@ -11,7 +11,7 @@ type State = GallerySettings & GallerySnapshot & {
   add: (portrait: Portrait) => void
   ai: boolean
   apiKey: string
-  commit: (portraits: Array<Portrait>, secretOpen?: boolean) => void
+  commit: (portraits: Array<Portrait>) => void
   dragging: boolean
   future: Array<GallerySnapshot>
   held: string | null
@@ -47,7 +47,6 @@ export function cleanPortrait(p: Portrait): Portrait {
 function snapshot(state: GallerySnapshot): GallerySnapshot {
   return {
     portraits: state.portraits.map(cleanPortrait),
-    secretOpen: state.secretOpen,
   }
 }
 function readKey() {
@@ -60,7 +59,6 @@ function readKey() {
 
 export const useGallery = create<State>((set, get) => ({
   portraits: initialPortraits.map(p => ({...p})),
-  secretOpen: false,
   active: null,
   held: null,
   locked: false,
@@ -85,9 +83,8 @@ export const useGallery = create<State>((set, get) => ({
   revision: 0,
   importFiles: null,
   update: (id, patch) => set(s => ({portraits: s.portraits.map(p => p.id === id ? {...p, ...patch} : p)})),
-  commit: (portraits, secretOpen = get().secretOpen) => set(s => ({
+  commit: portraits => set(s => ({
     portraits,
-    secretOpen,
     past: [...s.past.slice(-19), snapshot(s)],
     future: [],
     revision: s.revision + 1,

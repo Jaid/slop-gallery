@@ -69,14 +69,14 @@ export default function Settings({params, setParams}: ReturnType<typeof useGalle
         void repository.import(file).then(setIncoming).catch(error => notify(error instanceof Error ? error.message : 'That backup could not be read.')).finally(() => setBusy(false))
       }}/>
       {incoming && <div className="confirmation"><p>Restore this collection of {incoming.portraits.length} works? Your current collection will be replaced. You can undo this.</p><button className="primary-button" onClick={() => {
-        s.commit(incoming.portraits, incoming.secretOpen)
+        s.commit(incoming.portraits)
         useGallery.setState(current => ({...incoming.settings, importEpoch: current.importEpoch + 1}))
         setIncoming(null)
         galleryEvents.dispatchEvent(new Event('home'))
         notify('Your collection has arrived safely.')
       }}>Restore collection</button><button className="text-button" onClick={() => setIncoming(null)}>Keep this collection</button></div>}
     </section>
-    <section className="settings-section"><div className="section-label">04 / A FRESH START</div><p className="muted">Restore the original art and close the secret room. This is undoable. Your atmosphere preferences stay as they are.</p><button className="reset-button" onClick={() => {
+    <section className="settings-section"><div className="section-label">04 / A FRESH START</div><p className="muted">Restore the original art. This is undoable. Your atmosphere preferences stay as they are.</p><button className="reset-button" onClick={() => {
       if (confirmReset) {
         resetGallery()
         setConfirmReset(false)

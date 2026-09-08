@@ -22,19 +22,17 @@ export function download(blob: Blob, name: string) {
 
 export default function Collection() {
   const portraits = useGallery(s => s.portraits)
-  const secretOpen = useGallery(s => s.secretOpen)
   const [query, setQuery] = useState('')
   const [room, setRoom] = useState('all')
   const [selected, setSelected] = useState<string | null>(null)
   const detail = portraits.find(p => p.id === selected)
-  const available = portraits.filter(p => secretOpen || roomAt(p.position) !== 'secret')
-  const filtered = available.filter(p => (room === 'all' || room === 'loose' ? room !== 'loose' || !p.hung : roomAt(p.position) === room) && `${p.title} ${p.creator} ${p.description}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()))
+  const filtered = portraits.filter(p => (room === 'all' || room === 'loose' ? room !== 'loose' || !p.hung : roomAt(p.position) === room) && `${p.title} ${p.creator} ${p.description}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()))
   if (detail) {
     return <ArtworkDetail key={detail.id} portrait={detail} back={() => setSelected(null)}/>
   }
   return <>
-    <p className="panel-intro">{available.length} works. Not a single sensible explanation.</p>
-    <div className="collection-tools"><label className="search-field"><Icon name="search" size={17}/><input type="search" placeholder="Find a work or an artist…" aria-label="Search collection" value={query} onChange={event => setQuery(event.target.value)}/></label><select aria-label="Filter by room" value={room} onChange={event => setRoom(event.target.value)}><option value="all">All rooms</option>{rooms.filter(room => secretOpen || room.id !== 'secret').map(room => <option key={room.id} value={room.id}>{room.title}</option>)}<option value="loose">Waiting to be hung</option></select></div>
+    <p className="panel-intro">{portraits.length} works. Not a single sensible explanation.</p>
+    <div className="collection-tools"><label className="search-field"><Icon name="search" size={17}/><input type="search" placeholder="Find a work or an artist…" aria-label="Search collection" value={query} onChange={event => setQuery(event.target.value)}/></label><select aria-label="Filter by room" value={room} onChange={event => setRoom(event.target.value)}><option value="all">All rooms</option>{rooms.map(room => <option key={room.id} value={room.id}>{room.title}</option>)}<option value="loose">Waiting to be hung</option></select></div>
     <div className="collection-grid">{filtered.map((p, i) => <article className="art-card" key={p.id}>
       <button className="art-image" onClick={() => setSelected(p.id)} aria-label={`Open ${p.title}`}><ArtworkThumb source={p.source} title={p.title}/><span>Look a little closer ↗</span></button>
       <div className="art-card-meta"><small>{String(i + 1).padStart(2, '0')} / {p.merging ? 'ALCHEMY IN PROGRESS' : p.pending ? 'WORK IN PROGRESS' : !p.hung ? 'WAITING TO BE HUNG' : p.alternateSource ? 'A MATTER OF PERSPECTIVE' : 'COLLECTION'}</small><h3>{p.title}</h3><p>{p.creator}</p><button className="text-button" onClick={() => narrate(p.id)}><Icon name="sound" size={15}/> Hear the story</button></div>
@@ -43,7 +41,6 @@ export default function Collection() {
       setQuery('')
       setRoom('all')
     }}>Clear filters</button></div>}
-    {!secretOpen && <p className="collection-footnote">There is one more work. Some doors prefer a good book to a key.</p>}
   </>
 }
 

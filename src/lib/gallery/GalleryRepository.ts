@@ -15,7 +15,7 @@ const vector = (value: unknown, length: number) => Array.isArray(value) && value
 const shortText = (value: unknown, max: number): value is string => typeof value === 'string' && value.length <= max
 
 export function validateDocument(value: unknown): GalleryDocument {
-  if (!object(value) || value.version !== 1 || !Array.isArray(value.portraits) || value.portraits.length > maximumPortraits || typeof value.secretOpen !== 'boolean' || !object(value.settings)) {
+  if (!object(value) || value.version !== 1 || !Array.isArray(value.portraits) || value.portraits.length > maximumPortraits || !object(value.settings)) {
     throw new Error('This is not a supported Slop Gallery collection.')
   }
   const settings = value.settings
@@ -82,7 +82,6 @@ export function validateDocument(value: unknown): GalleryDocument {
   return {
     version: 1,
     portraits,
-    secretOpen: value.secretOpen,
     savedAt: typeof value.savedAt === 'string' ? value.savedAt : '',
     settings: {
       theme: settings.theme as GalleryDocument['settings']['theme'],
@@ -235,7 +234,7 @@ export async function initializePersistence() {
     })
   }
   const unsubscribe = useGallery.subscribe((s, previous) => {
-    if (s.portraits === previous.portraits && s.secretOpen === previous.secretOpen && s.theme === previous.theme && s.frame === previous.frame && s.sound === previous.sound && s.motion === previous.motion) {
+    if (s.portraits === previous.portraits && s.theme === previous.theme && s.frame === previous.frame && s.sound === previous.sound && s.motion === previous.motion) {
       return
     }
     clearTimeout(timer)
