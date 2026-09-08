@@ -11,6 +11,7 @@ import Collection from './Collection.tsx'
 import Help from './Help.tsx'
 import Icon from './Icon.tsx'
 import Map from './Map.tsx'
+import NarrationBars from './NarrationBars.tsx'
 import Panel from './Panel.tsx'
 import RenderBoundary from './RenderBoundary.tsx'
 import Settings from './Settings.tsx'
@@ -95,7 +96,7 @@ export default function App() {
       {s.inspecting && <div className="inspect-hint">A little closer. <kbd>Release V</kbd> to return</div>}
       {s.held && <div className={`grab-instruction ${s.placement?.valid ? 'valid' : ''}`}><span className="status-dot"/>{s.held.startsWith('prop-leaf-') ? 'A small act of botanical rebellion.' : s.held.startsWith('prop-') ? 'Culture, in the palm of your hand.' : s.placement?.valid ? 'A rather good spot.' : s.placement?.reason || 'Find a little wall space.'}<small>{s.held.startsWith('prop-') ? 'Release to set down' : 'Release to hang'} · Right-click / Q to throw · Esc to cancel</small></div>}
     </>}
-    {s.narration && speaking && <div className="now-playing" role="status"><span className={`audio-bars ${s.narration.status}`}><i/><i/><i/><i/></span><div><small>{s.narration.status === 'preparing' ? 'PREPARING YOUR STORY' : 'THE AUDIO GUIDE'}</small><span>{speaking.title}</span></div><button aria-label="Stop narration" className="icon-button" onClick={stopNarration}><Icon name="close" size={16}/></button></div>}
+    {s.narration && speaking && <div className="now-playing" role="status"><NarrationBars status={s.narration.status}/><div><small>{s.narration.status === 'preparing' ? 'PREPARING YOUR STORY' : 'THE AUDIO GUIDE'}</small><span>{speaking.title}</span></div><button aria-label="Stop narration" className="icon-button" onClick={stopNarration}><Icon name="close" size={16}/></button></div>}
     <footer className="footer"><div className="controls-guide"><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Walk</span><i/><span><span className="mouse-glyph"/>Look around</span><i/><span><kbd>LMB</kbd> Hold & move art</span><i/><span><kbd>RMB</kbd> Narrate / throw</span></div>
       <div className="footer-right"><div className="history-controls"><button aria-label="Undo" title="Undo (Ctrl+Z)" disabled={!s.past.length} onClick={() => {
         if (undo()) {

@@ -3,6 +3,7 @@ import type {AiSettings} from '../ai/settings.ts'
 import {notify} from '../gallery/actions.ts'
 import {useGallery} from '../gallery/store.ts'
 import {SoundEngine} from './SoundEngine.ts'
+import {narrationMeter} from './NarrationMeter.ts'
 
 export const intro = {
   id: '__intro',
@@ -12,6 +13,7 @@ export const intro = {
 
 export class Narrator {
   private audio: HTMLAudioElement | undefined
+  private disconnectAudio: (() => void) | undefined
   private cache = new Map<string, Blob>
   private controller = new AbortController
   private jobs = new Map<string, Promise<Blob>>
@@ -107,9 +109,13 @@ export class Narrator {
         return
       }
       if (blob) {
+        const sound = SoundEngine.get()
+        await sound.resume()
+        if (!current()) return
         this.url = URL.createObjectURL(blob)
         const audio = this.audio = new Audio(this.url)
         audio.volume = 0.85
+        this.disconnectAudio = narrationMeter.connect(audio, sound.context)
         audio.addEventListener('ended', () => {
           if (current()) {
             this.stop()
@@ -135,6 +141,7 @@ export class Narrator {
       }
     } catch (error) {
       if (play && current()) {
+        this.clearAudio()
         notify(error instanceof Error ? `${error.message} Using the browser voice instead.` : 'Using the browser voice instead.')
         this.browserSpeech(id, transcript, current)
       }
@@ -144,14 +151,20 @@ export class Narrator {
   stop() {
     this.version++
     this.waiting = undefined
+    this.clearAudio()
+    globalThis.speechSynthesis?.cancel()
+    useGallery.setState({narration: null})
+  }
+
+  private clearAudio() {
     this.audio?.pause()
+    this.disconnectAudio?.()
+    this.disconnectAudio = undefined
     this.audio = undefined
     if (this.url) {
       URL.revokeObjectURL(this.url)
     }
     this.url = undefined
-    globalThis.speechSynthesis?.cancel()
-    useGallery.setState({narration: null})
   }
 
   private browserSpeech(id: string, text: string, current: () => boolean) {

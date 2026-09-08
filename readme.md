@@ -56,7 +56,7 @@ Settings exposes OpenRouter connection and model preferences. The query paramete
 - Without AI, fusion is explicitly a local cut-paper collage – not a simulated model response.
 - Changing AI settings cancels outstanding work. Late responses cannot overwrite a manual label edit, undo, reset or a removed source image.
 
-The key lives in this tab’s `sessionStorage`, not the URL, IndexedDB or exports. Connected provider requests may incur charges and transmit images or story text to OpenRouter and its selected provider. Browser voices depend on the operating system and may need their own network access; recorded stories work without a speech service. Captions remain available when audio fails.
+The key lives in this tab’s `sessionStorage`, not the URL, IndexedDB or exports. Connected provider requests may incur charges and transmit images or story text to OpenRouter and its selected provider. Browser voices depend on the operating system and may need their own network access; recorded stories work without a speech service. Captions remain available when audio fails. The audio guide’s five gradient bars react to the actual narration spectrum, not a looping animation or gallery sound effects. Recorded and provider-generated audio are analyzed; browser speech uses a static indicator because its audio cannot be sampled. The meter remains live when decorative motion is disabled; reduced motion removes smoothing rather than hiding the audio measurements.
 
 ## Keeping your collection
 

@@ -4,6 +4,7 @@ import {afterEach, beforeEach, expect, spyOn, test} from 'bun:test'
 
 import {parameterParsers} from '../../src/lib/ai/settings.ts'
 import {Narrator} from '../../src/lib/audio/Narrator.ts'
+import {narrationMeter} from '../../src/lib/audio/NarrationMeter.ts'
 import {SoundEngine} from '../../src/lib/audio/SoundEngine.ts'
 import {initialPortraits} from '../../src/lib/gallery/collection.ts'
 import {useGallery} from '../../src/lib/gallery/store.ts'
@@ -15,11 +16,16 @@ const previous = {
   speechSynthesis: globalThis.speechSynthesis,
   SpeechSynthesisUtterance: globalThis.SpeechSynthesisUtterance,
 }
+let disconnected = 0
+let meterSpy: ReturnType<typeof spyOn<typeof narrationMeter, 'connect'>> | undefined
 let narrator: Narrator
 let fetchSpy: ReturnType<typeof spyOn<typeof globalThis, 'fetch'>> | undefined
 let soundSpy: ReturnType<typeof spyOn<typeof SoundEngine, 'get'>> | undefined
 beforeEach(() => {
   spoken.length = 0
+  disconnected = 0
+  soundSpy = spyOn(SoundEngine, 'get').mockReturnValue({resume: async () => {}, context: {}} as SoundEngine)
+  meterSpy = spyOn(narrationMeter, 'connect').mockImplementation(() => () => {disconnected++})
   useGallery.setState({
     sound: true,
     narration: null,
@@ -47,6 +53,7 @@ afterEach(() => {
   narrator?.dispose()
   fetchSpy?.mockRestore()
   soundSpy?.mockRestore()
+  meterSpy?.mockRestore()
   Object.assign(globalThis, previous)
   useGallery.setState({sound: false})
 })
@@ -88,7 +95,6 @@ test('stop clears queued narration', async () => {
   expect(useGallery.getState().narration).toBeNull()
 })
 test('TTS keeps character steering out of the spoken transcript and caches audio', async () => {
-  soundSpy = spyOn(SoundEngine, 'get').mockReturnValue({resume: async () => {}} as SoundEngine)
   fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(new Response(new Blob(['audio'], {type: 'audio/mpeg'})))
   narrator = new Narrator(settings, 'test-key')
   await narrator.speak('goose')
@@ -120,4 +126,41 @@ test('bundled recordings play without a key or a speech provider request', async
   expect(fetchSpy.mock.calls[0]![0]).toBe('/audio/goose.opus')
   expect(spoken).toHaveLength(0)
   expect(useGallery.getState().narration).toEqual({id: 'goose', status: 'playing'})
+  expect(meterSpy).toHaveBeenCalledTimes(1)
+  narrator.stop()
+  expect(disconnected).toBe(1)
+  expect(useGallery.getState().narration).toBeNull()
+})
+
+test('stopping while the audio context resumes cannot start stale playback or metering', async () => {
+  let resume!: () => void
+  const resumed = new Promise<void>(resolve => {resume = resolve})
+  let started!: () => void
+  const resuming = new Promise<void>(resolve => {started = resolve})
+  soundSpy!.mockReturnValue({resume: () => {started(); return resumed}, context: {}} as SoundEngine)
+  useGallery.setState({portraits: initialPortraits.map(p => ({...p}))})
+  fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(new Response(new Blob(['audio'], {type: 'audio/ogg'})))
+  narrator = new Narrator({...settings, ai: false}, '')
+  const job = narrator.speak('goose')
+  await resuming
+  narrator.stop()
+  resume()
+  await job
+  expect(meterSpy).not.toHaveBeenCalled()
+  expect(useGallery.getState().narration).toBeNull()
+})
+
+test('playback failure disconnects the spectrum before browser speech takes over', async () => {
+  Object.assign(globalThis, {Audio: class extends EventTarget {
+    volume = 1
+    pause() {}
+    async play() {throw new Error('Playback rejected')}
+  }})
+  useGallery.setState({portraits: initialPortraits.map(p => ({...p}))})
+  fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(new Response(new Blob(['audio'], {type: 'audio/ogg'})))
+  narrator = new Narrator({...settings, ai: false}, '')
+  await narrator.speak('goose')
+  expect(disconnected).toBe(1)
+  expect(spoken).toHaveLength(1)
+  expect(useGallery.getState().narration?.status).toBe('playing')
 })

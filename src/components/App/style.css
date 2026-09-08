@@ -1251,12 +1251,9 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px
 .now-playing > div { min-width: 0; }
 .now-playing small { font-size: 7px; letter-spacing: 1.3px; display: block; margin-bottom: 4px; color: #7d886a; }
 .now-playing div span { font-size: 11px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.audio-bars { display: flex; align-items: center; gap: 2px; height: 22px; width: 18px; flex: none; }
-.audio-bars i { width: 2px; height: 6px; background: #8d9d73; }
-.audio-bars.playing i { animation: audio-bar 0.9s ease-in-out infinite alternate; }
-.audio-bars i:nth-child(2) { animation-delay: -0.45s; height: 15px; }
-.audio-bars i:nth-child(3) { animation-delay: -0.2s; height: 11px; }
-.audio-bars i:nth-child(4) { animation-delay: -0.65s; }
+.audio-bars { display: flex; align-items: flex-end; gap: 3px; height: 34px; width: 37px; flex: none; }
+.audio-bars i { width: 5px; height: 100%; border-radius: 2px; background: linear-gradient(to top, #d44e8c, #e9c68f); transform: scaleY(0.15); transform-origin: bottom; transition: transform 90ms ease; }
+.audio-bars.preparing { opacity: 0.5; }
 .prop-hint { position: absolute; bottom: calc(var(--footer-height) + 40px); left: 50%; transform: translateX(-50%); background: #f6f4e9ed; padding: 20px 28px; border: 1px solid #dae1ca; border-radius: 4px; font-family: 'Instrument Serif', Georgia, serif; font-size: 25px; }
 .prop-hint .eyebrow { margin-bottom: 8px; font-family: 'DM Sans', sans-serif; }
 .prop-hint small { display: block; margin-top: 10px; font: 10px 'DM Sans', sans-serif; color: #768463; }
@@ -1288,7 +1285,6 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px
 .render-error { position: absolute; inset: 0; z-index: 3; background: #edeadd; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; }
 .render-error h2 { font: 42px 'Instrument Serif', Georgia, serif; margin: 16px 0; }
 .render-error p { max-width: 400px; font-size: 14px; line-height: 1.8; color: #738164; margin-bottom: 22px; }
-@keyframes audio-bar { to { height: 20px; } }
 @keyframes panel-enter { from { translate: 24px 0; opacity: 0.7; } to { translate: 0 0; opacity: 1; } }
 @media (min-width: 1700px) {
   :root { --header-height: 100px; --footer-height: 70px; }
