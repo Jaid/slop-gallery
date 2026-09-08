@@ -1,18 +1,19 @@
 import type {Vec3} from '#src/lib/gallery.ts'
 
-import {RigidBody} from '@react-three/rapier'
-
 import GoldMaterial from '#component/GoldMaterial'
 
 import GrabbableProp from './GrabbableProp.tsx'
+import Pedestal, {usePedestal} from './Pedestal.tsx'
 import {Box} from './primitives.tsx'
 
 export default function Props() {
+  const pedestal = usePedestal()
   return <>
     {([
       {
         id: 'prop-book',
-        position: [-3.2, 1.4, 6.8],
+        // Clear the 1.35 m cap with the bottom cover, 0.0725 m below the center.
+        position: [-3.2, 1.43, 6.8],
         kind: 'book',
         title: 'A suspiciously well-read book',
       }, {
@@ -27,7 +28,7 @@ export default function Props() {
         title: 'The original forbidden download',
       },
     ] as const).map(prop => <group key={prop.id}>
-      <RigidBody type="fixed" colliders="cuboid"><Box position={[prop.position[0], 0.65, prop.position[2]]} size={[1.1, 1.3, 1.1]} color="#d3c8b2"/><Box position={[prop.position[0], 1.32, prop.position[2]]} size={[1.16, 0.06, 1.16]} color="#e3d7bc"/></RigidBody>
+      <Pedestal {...pedestal} position={[prop.position[0], 0, prop.position[2]]}/>
       <Prop {...prop} position={[...prop.position]}/>
     </group>)}
   </>
