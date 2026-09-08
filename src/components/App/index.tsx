@@ -87,7 +87,7 @@ export default function App() {
       <div className="welcome-actions"><button className="primary-button" id="enter-gallery" disabled={!s.ready} onClick={enterGallery}>{!s.ready ? 'Hanging the exhibition…' : started ? 'Back to the gallery' : 'Step inside'}<Icon name="arrow"/></button><button className="text-button" onClick={() => openPanel('help')}>A quick introduction <span>↗</span></button></div>
       <div className="local-note"><span className="status-dot"/>No tickets. No rules. Please touch the art.</div>
     </section>}
-    {!s.locked && !s.panel && !s.dragging && !prompt && <div className="exhibit-caption"><span>ON VIEW</span><strong>The art of not making sense.</strong><p>Four rooms. Not a single sensible explanation.</p><button onClick={() => openPanel('collection')}>Meet the collection <span>↗</span></button></div>}
+    {!s.locked && !s.panel && !s.dragging && !prompt && <div className="exhibit-caption"><span>ON VIEW</span><strong>The art of not making sense.</strong><p>Five rooms. Not a single sensible explanation.</p><button onClick={() => openPanel('collection')}>Meet the collection <span>↗</span></button></div>}
     {s.locked && <>
       <div className={`crosshair ${s.active ? 'targeted' : ''}`}/>
       {shown && !s.inspecting && <div className="art-subtitle"><div className="eyebrow">{'pending' in shown && Boolean(shown.pending) ? 'THE CURATOR IS WRITING…' : 'creator' in shown ? String(shown.creator) : 'YOUR GALLERY GUIDE'}</div><h2>{shown.title}</h2><p>{shown.description}</p>{active && <small><b>HOLD LMB / E</b> Move <span>·</span><b>RMB / R</b> Listen <span>·</span><b>HOLD V</b> Look closer</small>}</div>}

@@ -6,10 +6,12 @@ import {useMemo} from 'react'
 
 import {plantLeaves} from '#src/lib/physics/leaves.ts'
 import {PlantAttachment} from '#src/lib/physics/PlantAttachment.ts'
-import {potGeometry, potPhysics, potVertices} from '#src/lib/physics/pots.ts'
+import {potGeometry, potPhysics, potVertices, soilSurface} from '#src/lib/physics/pots.ts'
 
 import GrabbableProp from './GrabbableProp.tsx'
 import Leaf from './Leaf.tsx'
+import SoilMaterial from './SoilMaterial.tsx'
+import TerracottaMaterial from './TerracottaMaterial.tsx'
 
 // Attached stems remain decorative. Once the pot is released they collide with it.
 const attachStemCollider = (collider: RapierCollider | null) => {collider?.setEnabled(false)}
@@ -31,10 +33,11 @@ export default function Plant({position}: {position: Vec3}) {
     >
       <group position={[0, -0.36, 0]}>
         <ConvexHullCollider args={[potVertices]} mass={3.8}/>
-        <CylinderCollider args={[0.015, 0.33]} position={[0, 0.72, 0]} mass={0.8}/>
-        <mesh castShadow receiveShadow><primitive attach="geometry" object={potGeometry}/><meshStandardMaterial color="#aa7256" roughness={0.85}/></mesh>
-        <mesh position={[0, 0.72, 0]}><cylinderGeometry args={[0.33, 0.33, 0.03, 24]}/><meshStandardMaterial color="#30291f"/></mesh>
+        <CylinderCollider args={[soilSurface.halfHeight, soilSurface.radius]} position={[0, soilSurface.center, 0]} mass={0.8}/>
+        <mesh castShadow receiveShadow><primitive attach="geometry" object={potGeometry}/><TerracottaMaterial/></mesh>
+        <mesh position={[0, soilSurface.center, 0]} receiveShadow><cylinderGeometry args={[soilSurface.radius, soilSurface.radius, soilSurface.halfHeight * 2, 64]}/><SoilMaterial/></mesh>
         {leaves.map(leaf => <group key={leaf.id} rotation={[0, leaf.angle, 0]}>
+          <mesh castShadow><primitive attach="geometry" object={leaf.stem.rootGeometry}/><meshStandardMaterial color="#4d603d"/></mesh>
           <ConvexHullCollider ref={attachStemCollider} args={[leaf.stem.remainingVertices]} mass={0.003}/>
           <mesh castShadow><primitive attach="geometry" object={leaf.stem.remainingGeometry}/><meshStandardMaterial color="#4d603d"/></mesh>
         </group>)}

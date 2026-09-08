@@ -5,7 +5,7 @@ import {initialPortraits} from '../../src/lib/gallery/collection.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import {containedRect, ImageImporter, imageSize} from '../../src/lib/gallery/ImageImporter.ts'
 import {createDocument, maximumPortraits, redo, restoreDocument, undo, useGallery} from '../../src/lib/gallery/store.ts'
-import {findPlacement, placementIssue, roomAt, wallCoordinates, wallPosition, walls} from '../../src/lib/gallery/walls.ts'
+import {findPlacement, galleryBounds, insideGallery, placementIssue, roomAt, rooms, roomVisit, wallCoordinates, wallPosition, walls} from '../../src/lib/gallery/walls.ts'
 
 const original = {
   ...createDocument(),
@@ -96,6 +96,44 @@ describe('wall geometry', () => {
       wallId: 'daydream-north',
       inReach: false,
     })
+  })
+  test('the Amber Room connects through matching Cabinet arches in both directions', () => {
+    const cabinet = walls.find(wall => wall.id === 'cabinet-south')!
+    const amber = walls.find(wall => wall.id === 'amber-north')!
+    const entrance = wallPosition(cabinet, cabinet.holes![0]!.u, 2, 0)
+    const exit = wallPosition(amber, amber.holes![0]!.u, 2, 0)
+    entrance.forEach((value, i) => expect(value).toBeCloseTo(exit[i]!))
+    expect(findPlacement([-10.2, 2.5, 6], [0, 0, 1], 2, 2, [])).toMatchObject({wallId: 'amber-south', inReach: false})
+    expect(findPlacement([-10.2, 2.5, 10], [0, 0, -1], 2, 2, [])).toMatchObject({wallId: 'cabinet-north', inReach: false})
+    expect(findPlacement([-14, 2.5, 6], [0, 0, 1], 2, 2, [])).toMatchObject({wallId: 'cabinet-south', inReach: true})
+    expect(findPlacement([-14, 2.5, 10], [0, 0, -1], 2, 2, [])).toMatchObject({wallId: 'amber-north', inReach: true})
+  })
+  test('the Amber Room has usable hanging walls', () => {
+    expect(findPlacement([-14, 2.5, 14], [0, 0, 1], 2, 2, [])).toMatchObject({
+      wallId: 'amber-south',
+      position: [-14, 2.5, 19.78],
+      inReach: true,
+      valid: true,
+    })
+  })
+  test('gallery bounds include the new room but not the empty space beside it', () => {
+    expect(galleryBounds).toEqual({minX: -20, maxX: 20, minZ: -8, maxZ: 20})
+    for (const position of [[-14, 2, 14], [-14, 2, 19.8], [0, 2, 14], [-20, 0, 20]] as const) {
+      expect(insideGallery([...position])).toBe(true)
+    }
+    for (const position of [[-6, 2, 18], [14, 2, 14], [-14, 2, 20.01], [-20.01, 2, 14], [-14, -1.01, 14], [-14, 6.01, 14], [NaN, 2, 14]] as const) {
+      expect(insideGallery([...position])).toBe(false)
+    }
+  })
+  test('every floor-plan destination lands inside its own room', () => {
+    for (const room of rooms) {
+      const visit = roomVisit(room)
+      expect(insideGallery(visit.position)).toBe(true)
+      expect(roomAt(visit.position)).toBe(room.id)
+      expect(Math.hypot(...visit.rotation)).toBeCloseTo(1)
+    }
+    expect(roomAt([-10.2, 2, 7.99])).toBe('cabinet')
+    expect(roomAt([-10.2, 2, 8.01])).toBe('amber')
   })
   test('label clearance follows the physical sign footprint', () => {
     const wall = walls[0]!
@@ -259,6 +297,16 @@ describe('backup validation', () => {
     const result = validateDocument({...original, portraits: [custom]}).portraits[0]!
     expect(result.id).toBe(custom.id)
     expect(result.source).toBe(source)
+  })
+  test('round-trips artwork hung in the Amber Room', () => {
+    const wall = walls.find(wall => wall.id === 'amber-south')!
+    const portrait = {...initialPortraits[0]!, wallId: wall.id, rotation: wall.rotation, position: wallPosition(wall, 0, 2.5)}
+    const saved = validateDocument({...original, portraits: [portrait]})
+    expect(saved.portraits[0]).toMatchObject(portrait)
+    expect(validateDocument(saved)).toEqual(saved)
+  })
+  test('rejects loose artwork outside the actual room footprint', () => {
+    expect(() => validateDocument({...original, portraits: [{...initialPortraits[0]!, hung: false, position: [-6, 2, 18]}]})).toThrow('outside the gallery')
   })
   test('accepts the shipped collection', () => {
     expect(validateDocument(original).portraits).toHaveLength(16)

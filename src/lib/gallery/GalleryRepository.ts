@@ -5,7 +5,7 @@ import {initialPortraits} from './collection.ts'
 import {imageSize} from './ImageImporter.ts'
 import {migratePortrait} from './migratePortrait.ts'
 import {createDocument, maximumPortraits, restoreDocument, useGallery} from './store.ts'
-import {wallCoordinates, wallPosition, walls} from './walls.ts'
+import {insideGallery, wallCoordinates, wallPosition, walls} from './walls.ts'
 
 const imageTypes = new Set(['image/webp', 'image/png', 'image/jpeg', 'image/avif', 'image/gif'])
 const images = new Set(initialPortraits.map(p => p.source).filter((p): p is string => typeof p === 'string'))
@@ -58,8 +58,7 @@ export function validateDocument(value: unknown): GalleryDocument {
         throw new Error('A hanging artwork is detached from its wall.')
       }
     }
-    const [x, y, z] = p.position as Array<number>
-    if (Math.abs(x!) > 20 || z! < -8 || z! > 15 || y! < -1 || y! > 6 || z! > 8 && Math.abs(x!) > 4) {
+    if (!insideGallery(p.position as Portrait['position'])) {
       throw new Error('An artwork is outside the gallery.')
     }
     const bundled = initialPortraits.find(defaultPortrait => defaultPortrait.id === p.id && defaultPortrait.source === p.source && defaultPortrait.title === p.title && defaultPortrait.description === p.description)

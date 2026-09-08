@@ -1,11 +1,11 @@
 import {afterEach, beforeEach, describe, expect, test} from 'bun:test'
 import RAPIER from '@dimforge/rapier3d-compat'
-import {Euler, Quaternion, Vector3} from 'three/webgpu'
+import {Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {GrabbableBody} from '../../src/lib/physics/GrabbableBody.ts'
 import {leafPhysics, leafRotation, leafVertices, plantLeaves} from '../../src/lib/physics/leaves.ts'
 import {PlantAttachment} from '../../src/lib/physics/PlantAttachment.ts'
-import {potGeometry, potPhysics, potVertices} from '../../src/lib/physics/pots.ts'
+import {potGeometry, potPhysics, potVertices, soilSurface} from '../../src/lib/physics/pots.ts'
 
 await RAPIER.init()
 let world: RAPIER.World
@@ -19,7 +19,7 @@ function plant() {
   const attachments = new PlantAttachment(definitions.map(leaf => leaf.id))
   const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, 0.36, 0).setCcdEnabled(true))
   world.createCollider(RAPIER.ColliderDesc.convexHull(potVertices)!.setTranslation(0, -0.36, 0).setMass(3.8).setRestitution(potPhysics.restitution).setFriction(potPhysics.friction), body)
-  world.createCollider(RAPIER.ColliderDesc.cylinder(0.015, 0.33).setTranslation(0, 0.36, 0).setMass(0.8), body)
+  world.createCollider(RAPIER.ColliderDesc.cylinder(soilSurface.halfHeight, soilSurface.radius).setTranslation(0, soilSurface.center - 0.36, 0).setMass(0.8), body)
   for (const definition of definitions) {
     const rotation = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), definition.angle)
     world.createCollider(RAPIER.ColliderDesc.convexHull(definition.stem.remainingVertices)!.setTranslation(0, -0.36, 0).setRotation(rotation).setMass(0.003).setEnabled(false), body)
@@ -55,6 +55,26 @@ function pluckAll(leaves: GrabbableBody[]) {
 }
 
 describe('throwable plant pots', () => {
+  test('the rim is open above recessed soil, with visible inner walls', () => {
+    const material = new MeshBasicMaterial
+    const mesh = new Mesh(potGeometry, material)
+    mesh.updateMatrixWorld(true)
+    try {
+      const down = new Raycaster(new Vector3(0.15, 1, 0), new Vector3(0, -1, 0))
+      expect(down.intersectObject(mesh)[0]!.point.y).toBeCloseTo(0.055)
+      const rim = new Raycaster(new Vector3(0.36, 1, 0), new Vector3(0, -1, 0))
+      expect(rim.intersectObject(mesh)[0]!.point.y).toBeCloseTo(0.72)
+      const inside = new Raycaster(new Vector3(0, 0.68, 0), new Vector3(1, 0, 0))
+      expect(inside.intersectObject(mesh)[0]!.distance).toBeGreaterThan(soilSurface.radius)
+      expect(0.72 - soilSurface.center - soilSurface.halfHeight).toBeCloseTo(0.09)
+      for (const leaf of plantLeaves([0, 0, 0])) {
+        leaf.stem.rootGeometry.computeBoundingBox()
+        expect(leaf.stem.rootGeometry.boundingBox!.min.y).toBeLessThan(soilSurface.center + soilSurface.halfHeight)
+      }
+    } finally {
+      material.dispose()
+    }
+  })
   test('rendered pot and collider share the same tapered geometry', () => {
     expect(potVertices).toEqual(Float32Array.from(potGeometry.getAttribute('position').array))
     potGeometry.computeBoundingBox()

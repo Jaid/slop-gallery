@@ -4,7 +4,7 @@ Good taste. Questionable art.
 
 ![The Daydream Wing in Slop Gallery](docs/gallery.png)
 
-A local-first, first-person WebGPU museum: four rooms, sixteen absurd artworks and tactile sculptures. Built with React, React Three Fiber, Three.js TSL and Rapier.
+A local-first, first-person WebGPU museum: five rooms, sixteen absurd artworks and tactile sculptures. Built with React, React Three Fiber, Three.js TSL and Rapier.
 
 ## Run
 
@@ -41,6 +41,10 @@ Add PNG, JPEG, WebP, AVIF or GIF files with the toolbar, drag and drop or clipbo
 Collection provides search, room filters, complete stories, editable labels, image downloads and shortcuts to each work. The velvet and neon Doge portraits are separate works. The book on its pedestal can be picked up and thrown like the other sculptures.
 
 The Serious Knot uses a polished gold material with procedural color and normal maps and a locally bundled [warehouse HDR reflection environment](public/environment/readme.md). Its reflections are material-local; the other sculptures and gallery lighting are unchanged.
+
+The Amber Room is through the rear arch in the Cabinet of Curiosities, or directly accessible from the floor plan. Dark damask wallpaper, walnut-colored paneling, a burgundy rug and an eight-arm brass chandelier give it a warmer, dimmer atmosphere. Its walls are left empty for your collection. The floor and rug adapt the procedural materials from the `ox_smart-gallery-webgpu` reference run: staggered wood joints and wavy grain tile every 2.4 m, while fine red carpet fibers tile every 1.8 m. Color and bump maps share the same physical scale, with mipmaps and anisotropic filtering for shallow viewing angles.
+
+The Afterhours Salon, home of the Serious Knot, has cream-and-charcoal checkerboard marble adapted from the reference run’s vestibule floor. Each roughly 69 cm tile has fine veins and narrow grout, with a glossy finish and live planar reflections that strengthen at grazing angles while keeping the grout matte. A mip-filtered, 75%-resolution reflection pass captures the actual room without recursive reflections. The Knot’s gold material and reflection environment are unchanged. The Cabinet of Curiosities, home of Mona Ribbit, uses a much subtler, softly blurred reflection over its existing wood floor for a satin-varnish effect.
 
 ## Optional AI
 

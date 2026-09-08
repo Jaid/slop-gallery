@@ -324,7 +324,7 @@ const RapierPlayer = ({acceleration = 18,
     }
     const bob = useGallery.getState().motion ? Math.sin(bobPhaseRef.current) * Math.max(headBob, 0) * movementAmount : 0
     if (movementAmount > 0.1 && Math.sin(bobPhaseRef.current) < -0.9 && useGallery.getState().sound) {
-      SoundEngine.existing()?.step(useGallery.getState().room === 'cabinet')
+      SoundEngine.existing()?.step(['cabinet', 'amber'].includes(useGallery.getState().room))
     }
     if (!cameraPose.focused) {
       camera.position.set(translation.x, translation.y + cameraHeightRef.current + bob, translation.z)

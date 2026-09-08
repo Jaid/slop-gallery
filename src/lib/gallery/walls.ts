@@ -58,7 +58,38 @@ export const rooms = [
     size: [8, 7],
     color: '#d4be90',
   },
+  {
+    id: 'amber',
+    number: '05',
+    title: 'The Amber Room',
+    subtitle: 'Low light. Rich textures. Questionable company.',
+    center: [-14, 14],
+    size: [12, 12],
+    color: '#674b37',
+  },
 ] as const
+
+export const galleryBounds = {
+  minX: Math.min(...rooms.map(room => room.center[0] - room.size[0] / 2)),
+  maxX: Math.max(...rooms.map(room => room.center[0] + room.size[0] / 2)),
+  minZ: Math.min(...rooms.map(room => room.center[1] - room.size[1] / 2)),
+  maxZ: Math.max(...rooms.map(room => room.center[1] + room.size[1] / 2)),
+}
+
+function contains(room: (typeof rooms)[number], [x, , z]: Vec3) {
+  return Math.abs(x - room.center[0]) <= room.size[0] / 2 && Math.abs(z - room.center[1]) <= room.size[1] / 2
+}
+
+export function insideGallery(position: Vec3) {
+  return position.every(Number.isFinite) && position[1] >= -1 && position[1] <= 6 && rooms.some(room => contains(room, position))
+}
+
+export function roomVisit(room: (typeof rooms)[number]): {position: Vec3, rotation: [number, number, number, number]} {
+  return {
+    position: [room.center[0], 1.7, room.center[1] + (room.id === 'secret' ? -1.1 : room.size[1] / 2 - 2.4)],
+    rotation: room.id === 'secret' ? [0, 1, 0, 0] : [0, 0, 0, 1],
+  }
+}
 
 const wall = (id: string, room: RoomId, x: number, z: number, rotation: number, width: number, holes?: Wall['holes']): Wall => ({
   id,
@@ -98,7 +129,9 @@ export const walls: Array<Wall> = [
   ]),
   wall('cabinet-north', 'cabinet', -14, -8, 0, 12),
   wall('cabinet-west', 'cabinet', -20, 0, Math.PI / 2, 16),
-  wall('cabinet-south', 'cabinet', -14, 8, Math.PI, 12),
+  wall('cabinet-south', 'cabinet', -14, 8, Math.PI, 12, [
+    {u: -3.8, width: 2.8, height: 3.8, profile: 'arch'},
+  ]),
   wall('cabinet-east', 'cabinet', -8, 0, -Math.PI / 2, 16, [
     {
       u: 3,
@@ -122,6 +155,12 @@ export const walls: Array<Wall> = [
   wall('secret-west', 'secret', -4, 11.5, Math.PI / 2, 7),
   wall('secret-east', 'secret', 4, 11.5, -Math.PI / 2, 7),
   wall('secret-south', 'secret', 0, 15, Math.PI, 8),
+  wall('amber-north', 'amber', -14, 8, 0, 12, [
+    {u: 3.8, width: 2.8, height: 3.8, profile: 'arch'},
+  ]),
+  wall('amber-west', 'amber', -20, 14, Math.PI / 2, 12),
+  wall('amber-east', 'amber', -8, 14, -Math.PI / 2, 12),
+  wall('amber-south', 'amber', -14, 20, Math.PI, 12),
 ]
 
 // This profile is shared by CSG cutters, portal trim and interaction ray tests.
@@ -138,17 +177,8 @@ export function insideOpening(hole: WallOpening, u: number, y: number) {
   return y >= 0 && y < openingTop(hole, u)
 }
 
-export function roomAt([x, , z]: Vec3): RoomId {
-  if (z > 8 && Math.abs(x) <= 4) {
-    return 'secret'
-  }
-  if (x < -8) {
-    return 'cabinet'
-  }
-  if (x > 8) {
-    return 'afterhours'
-  }
-  return 'daydream'
+export function roomAt(position: Vec3): RoomId {
+  return rooms.find(room => contains(room, position))?.id ?? 'daydream'
 }
 
 export function wallPosition(wall: Wall, u: number, y: number, offset = 0.22): Vec3 {

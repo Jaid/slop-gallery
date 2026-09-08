@@ -7,11 +7,15 @@ import {useEffect, useMemo} from 'react'
 import {EquirectangularReflectionMapping, Shape, SRGBColorSpace} from 'three/webgpu'
 
 import {rooms, useGallery, walls} from '#src/lib/gallery.ts'
-import {architectureGeometry} from '#src/lib/gallery/architecture.ts'
+import {architectureGeometry, wallTop} from '#src/lib/gallery/architecture.ts'
 import {canvasTexture} from '#src/lib/texture.ts'
 
-import {surfaceTexture} from './materials.ts'
+import AmberRoom from './AmberRoom.tsx'
+import BenchSeat from './BenchSeat.tsx'
+import CheckerMarbleFloor from './CheckerMarbleFloor.tsx'
+import {damaskTexture, surfaceTexture} from './materials.ts'
 import {Box, Plant} from './primitives.tsx'
+import ReflectiveWoodFloor from './ReflectiveWoodFloor.tsx'
 
 export default function Architecture() {
   const theme = useGallery(s => s.theme)
@@ -19,6 +23,7 @@ export default function Architecture() {
     stone: surfaceTexture('stone'),
     plaster: surfaceTexture('plaster'),
     wood: surfaceTexture('wood'),
+    damask: damaskTexture(rooms.find(room => room.id === 'amber')!.size[0], wallTop),
   }), [])
   useEffect(() => () => {
     for (const t of Object.values(textures)) {
@@ -30,13 +35,15 @@ export default function Architecture() {
     <color attach="background" args={['#ded8ca']}/><fog attach="fog" args={['#d9d4c7', 35, 70]}/>
     <ambientLight intensity={0.65}/><hemisphereLight args={['#ecf3ff', '#a29270', 1.15]}/>
     <directionalLight position={[-3, 9, 4]} intensity={2.3} color="#fff0d7" castShadow shadow-mapSize={[4096, 4096]} shadow-camera-left={-24} shadow-camera-right={24} shadow-camera-top={20} shadow-camera-bottom={-20} shadow-normalBias={0.035}/>
-    {walls.map(wall => <WallSurface key={wall.id} wall={wall} theme={theme} plaster={textures.plaster}/>)}
-    {rooms.map(room => <group key={room.id} position={[room.center[0], 0, room.center[1]]}>
+    {walls.map(wall => <WallSurface key={wall.id} wall={wall} theme={theme} plaster={wall.room === 'amber' ? textures.damask : textures.plaster}/>)}
+    {rooms.filter(room => room.id !== 'amber').map(room => <group key={room.id} position={[room.center[0], 0, room.center[1]]}>
       <RigidBody type="fixed" colliders={false}>
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, -0.15, 0]}/>
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]}/>
-        <Box position={[0, -0.12, 0]} size={[room.size[0], 0.24, room.size[1]]} map={room.id === 'cabinet' ? textures.wood : textures.stone} color={room.id === 'cabinet' ? '#c5a585' : (room.id === 'afterhours' ? '#dedce4' : '#f3eddf')} roughness={0.36}/>
+        <Box position={[0, -0.12, 0]} size={[room.size[0], 0.24, room.size[1]]} map={room.id === 'afterhours' ? undefined : room.id === 'cabinet' ? textures.wood : textures.stone} color={room.id === 'cabinet' ? '#c5a585' : (room.id === 'afterhours' ? '#23201d' : '#f3eddf')} roughness={0.36}/>
       </RigidBody>
+      {room.id === 'cabinet' && <ReflectiveWoodFloor width={room.size[0]} depth={room.size[1]} texture={textures.wood}/>}
+      {room.id === 'afterhours' && <CheckerMarbleFloor width={room.size[0]} depth={room.size[1]}/>}
       <Box position={[0, 5.78, 0]} size={[room.size[0], 0.18, room.size[1]]} color={room.id === 'cabinet' ? '#7c9586' : '#e1dccc'}/>
       {(room.id === 'secret' ? [0] : [-4, 0, 4]).map(z => <group key={z}>
         <Box position={[0, 5.6, z]} size={[room.size[0] * 0.48, 0.1, 2.6]} color="#a29982"/>
@@ -44,16 +51,18 @@ export default function Architecture() {
         {[-1, 0, 1].map(x => <Box key={x} position={[x * room.size[0] * 0.12, 5.5, z]} size={[0.045, 0.12, 2.5]} color="#c0b7a1"/>)}
       </group>)}
       {(room.id === 'secret' ? [0] : [-3.5, 3.5]).map(z => <pointLight key={z} position={[0, 4.9, z]} intensity={room.id === 'cabinet' ? 40 : 32} distance={14} decay={2} color={room.id === 'afterhours' ? '#eee3ff' : '#fff1d8'}/>)}
-      {Array.from({length: room.size[0] / 2 + 1}, (_, i) => i * 2 - room.size[0] / 2).map(x => <Box key={x} position={[x, 0.007, 0]} size={[0.012, 0.008, room.size[1]]} color="#a8a18f"/>)}
-      {Array.from({length: Math.floor(room.size[1] / 2) + 1}, (_, i) => i * 2 - room.size[1] / 2).map(z => <Box key={z} position={[0, 0.008, z]} size={[room.size[0], 0.008, 0.012]} color="#a8a18f"/>)}
-      {[-1, 1].map(side => <group key={side}>
-        <Box position={[side * (room.size[0] / 2 - 1.25), 0.015, 0]} size={[0.026, 0.012, room.size[1] - 2.5]} color="#9d8354" metalness={0.45}/>
-        <Box position={[0, 0.015, side * (room.size[1] / 2 - 1.25)]} size={[room.size[0] - 2.5, 0.012, 0.026]} color="#9d8354" metalness={0.45}/>
-      </group>)}
+      {room.id !== 'afterhours' && <>
+        {Array.from({length: room.size[0] / 2 + 1}, (_, i) => i * 2 - room.size[0] / 2).map(x => <Box key={x} position={[x, 0.007, 0]} size={[0.012, 0.008, room.size[1]]} color="#a8a18f"/>)}
+        {Array.from({length: Math.floor(room.size[1] / 2) + 1}, (_, i) => i * 2 - room.size[1] / 2).map(z => <Box key={z} position={[0, 0.008, z]} size={[room.size[0], 0.008, 0.012]} color="#a8a18f"/>)}
+        {[-1, 1].map(side => <group key={side}>
+          <Box position={[side * (room.size[0] / 2 - 1.25), 0.015, 0]} size={[0.026, 0.012, room.size[1] - 2.5]} color="#9d8354" metalness={0.45}/>
+          <Box position={[0, 0.015, side * (room.size[1] / 2 - 1.25)]} size={[room.size[0] - 2.5, 0.012, 0.026]} color="#9d8354" metalness={0.45}/>
+        </group>)}
+      </>}
     </group>)}
+    <AmberRoom wood={textures.wood}/>
     <RigidBody type="fixed" colliders="cuboid"><group position={[1.6, 0, 1.6]}>
-      <Box position={[0, 0.52, 0]} size={[3.1, 0.24, 1.05]} map={textures.wood} color="#b89068" roughness={0.5}/>
-      <Box position={[0, 0.68, 0]} size={[2.98, 0.12, 0.96]} color="#8a785b" roughness={0.95}/>
+      <BenchSeat position={[0, 0.52, 0]} size={[3.1, 0.24, 1.05]}/>
       {[-1.1, 1.1].map(x => <Box key={x} position={[x, 0.22, 0]} size={[0.14, 0.44, 0.8]} color="#514a3b" metalness={0.6}/>)}
     </group></RigidBody>
     {[[-6.6, 0, -6.5], [6.6, 0, -6.5], [-18.8, 0, 6.5], [18.8, 0, 6.5]].map((position, i) => <Plant key={i} position={position as [number, number, number]}/>)}
@@ -80,13 +89,13 @@ function Alcove({width = 3.1, color = '#c8c8b6'}: {color?: string
 function WallSurface({wall, plaster, theme}: {plaster: Texture
   theme: string
   wall: Wall}) {
-  const color = wall.room === 'cabinet' ? '#658578' : wall.room === 'afterhours' ? '#9295a2' : wall.room === 'secret' ? '#ded4b8' : theme === 'sage' ? '#bac9b9' : theme === 'nocturne' ? '#7d91a0' : '#eee7d7'
-  const trim = wall.room === 'cabinet' ? '#44655a' : (wall.room === 'afterhours' ? '#71778b' : '#ded5c1')
+  const color = wall.room === 'amber' ? '#ffffff' : wall.room === 'cabinet' ? '#658578' : wall.room === 'afterhours' ? '#9295a2' : wall.room === 'secret' ? '#ded4b8' : theme === 'sage' ? '#bac9b9' : theme === 'nocturne' ? '#7d91a0' : '#eee7d7'
+  const trim = wall.room === 'amber' ? '#35251f' : wall.room === 'cabinet' ? '#44655a' : (wall.room === 'afterhours' ? '#71778b' : '#ded5c1')
   const geometry = architectureGeometry(wall)
   return <group position={wall.center} rotation={[0, wall.rotation, 0]}>
     <RigidBody type="fixed" colliders={false}>
       {geometry.collision.map((args, i) => <TrimeshCollider key={i} args={args}/>)}
-      <mesh name={`wall-${wall.id}`} receiveShadow castShadow><primitive object={geometry.surface} attach="geometry"/><meshStandardMaterial color={color} map={plaster} roughness={0.9}/></mesh>
+      <mesh name={`wall-${wall.id}`} receiveShadow castShadow><primitive object={geometry.surface} attach="geometry"/><meshStandardMaterial color={color} map={plaster} roughness={wall.room === 'amber' ? 0.86 : 0.9}/></mesh>
       {geometry.trim.map((part, i) => <mesh key={i} receiveShadow castShadow><primitive object={part} attach="geometry"/><meshStandardMaterial color={trim} roughness={0.6}/></mesh>)}
     </RigidBody>
     <Box position={[0, 5.08, 0.16]} size={[wall.width, 0.1, 0.22]} color={trim}/>

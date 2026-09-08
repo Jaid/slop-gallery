@@ -28,6 +28,11 @@ const foliage = stemLengths.map((carriedLength, i) => {
   const stemHeight = 1.13 + i % 4 * 0.13
   const position: Vec3 = [0.3 + i % 3 * 0.08, 1.5 + i % 4 * 0.13, 0]
   const base = new Vector3(0.15, stemHeight, 0).addScaledVector(stemAxis, -0.55)
+  // Extend the planted end into the lowered soil without changing pluck lengths or cut positions.
+  const rootLength = (base.y - 0.60) / stemAxis.y
+  const rootCenter = base.clone().addScaledVector(stemAxis, -rootLength / 2)
+  const rootGeometry = new CylinderGeometry(0.018, 0.021, rootLength, 5)
+    .rotateZ(stemTilt).translate(...rootCenter.toArray())
   // Stop at the leaf's middle plane, not beyond its thin back surface.
   // Keep the existing roots and stem direction; the whole tip cap fits inside the blade.
   const stemLength = new Vector3(...position).sub(base).dot(leafNormal) / stemAxis.dot(leafNormal)
@@ -52,6 +57,7 @@ const foliage = stemLengths.map((carriedLength, i) => {
     position,
     color: i % 2 ? '#637a4a' : '#3d5e42',
     stem: {
+      rootGeometry,
       carriedLength,
       remainingGeometry,
       remainingVertices: Float32Array.from(remainingGeometry.getAttribute('position').array),
@@ -74,6 +80,7 @@ export type LeafStem = (typeof foliage)[number]['stem']
 if (import.meta.hot) import.meta.hot.dispose(() => {
   leafGeometry.dispose()
   for (const {stem} of foliage) {
+    stem.rootGeometry.dispose()
     stem.remainingGeometry.dispose()
     stem.carriedGeometry?.dispose()
   }
