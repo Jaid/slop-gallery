@@ -1,0 +1,40 @@
+{
+  "name": "webgpu-capture-bridge",
+  "version": "0.1.0",
+  "type": "module",
+  "funding": "https://github.com/sponsors/Jaid",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jaid/slop-gallery.git"
+  },
+  "license": "MIT",
+  "main": "src/main.ts",
+  "scripts": {
+    "test": "bun test --max-concurrency 1 ./test"
+  },
+  "description": "Reusable WebGPU frame capture for Three.js with optional React Three Fiber bindings",
+  "exports": {
+    ".": "./src/main.ts",
+    "./react": "./src/react/main.ts"
+  },
+  "types": "./src/main.ts",
+  "files": [
+    "src",
+    "readme.md",
+    "license.txt"
+  ],
+  "sideEffects": false,
+  "peerDependencies": {
+    "three": "^0.185.1",
+    "react": "^19.2.8",
+    "@react-three/fiber": "^10.0.0-alpha.4"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "@react-three/fiber": {
+      "optional": true
+    }
+  }
+}

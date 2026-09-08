@@ -1,0 +1,109 @@
+import {describe, expect, test} from 'bun:test'
+import {DataTexture, Vector3} from 'three/webgpu'
+
+import {portraitLabel, portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
+import {previewBorderGeometry, previewOpacity, PreviewVisual} from '../../src/components/PlacementPreview/PreviewVisual.ts'
+
+describe('placement preview', () => {
+  for (const [width, height] of [[2.62, 2.62], [4.22, 1.22], [0.52, 3.22]] as const) {
+    test(`the ${width} × ${height} border is closed, hollow and front-facing`, () => {
+      const geometry = previewBorderGeometry(width, height)
+      try {
+        const positions = geometry.getAttribute('position')
+        const uvs = geometry.getAttribute('uv')
+        const indices = geometry.index!
+        expect(positions.count).toBe(10)
+        expect(indices.count).toBe(24)
+        for (const offset of [0, 1]) {
+          expect(new Vector3().fromBufferAttribute(positions, offset)).toEqual(new Vector3().fromBufferAttribute(positions, 8 + offset))
+          expect(uvs.getX(8 + offset)).toBeCloseTo(2 * (width + height))
+        }
+        let area = 0
+        for (let i = 0; i < indices.count; i += 3) {
+          const a = new Vector3().fromBufferAttribute(positions, indices.getX(i))
+          const b = new Vector3().fromBufferAttribute(positions, indices.getX(i + 1))
+          const c = new Vector3().fromBufferAttribute(positions, indices.getX(i + 2))
+          const normal = b.sub(a).cross(c.sub(a))
+          expect(normal.z).toBeGreaterThan(0)
+          area += normal.z / 2
+        }
+        expect(area).toBeCloseTo(width * height - (width - 0.056) * (height - 0.056), 5)
+      } finally {
+        geometry.dispose()
+      }
+    })
+  }
+
+  test('validity changes the shared tint and reduced motion freezes the ants', () => {
+    const visual = new PreviewVisual(2.4, 1.8, null)
+    try {
+      expect(visual.tint.value.getHexString()).toBe('ff3b45')
+      visual.update(true, true, 1 / 60)
+      expect(visual.tint.value.getHexString()).toBe('36ff72')
+      const time = visual.time.value
+      visual.update(false, false, 5)
+      expect(visual.time.value).toBe(time)
+      expect(visual.tint.value.getHexString()).toBe('ff3b45')
+      visual.update(true, true, 5)
+      expect(visual.time.value - time).toBeCloseTo(0.06)
+      visual.update(true, true, -1)
+      expect(visual.time.value - time).toBeCloseTo(0.06)
+      expect(visual.borderMaterial.depthWrite).toBe(false)
+      expect(visual.imageMaterial.depthWrite).toBe(false)
+      expect(visual.imageMaterial.colorNode).not.toBeNull()
+    } finally {
+      visual.dispose()
+    }
+  })
+
+
+  test('distant previews fade every shader layer without disappearing', () => {
+    const visual = new PreviewVisual(2, 2, null)
+    try {
+      visual.update(false, true, 1 / 60, false)
+      expect(visual.opacity.value).toBe(0.18)
+      expect(previewOpacity(false)).toBe(visual.opacity.value)
+      expect(visual.borderMaterial.opacityNode).not.toBeNull()
+      expect(visual.labelBorderMaterial.opacityNode).not.toBeNull()
+      expect(visual.imageMaterial.opacityNode).not.toBeNull()
+      visual.update(false, false, 0, true)
+      expect(visual.opacity.value).toBe(1)
+      expect(visual.tint.value.getHexString()).toBe('ff3b45')
+    } finally {
+      visual.dispose()
+    }
+  })
+
+  test('the preview sign outline matches the hung label dimensions and bottom', () => {
+    for (const width of [0.3, 1.2, 2.4, 4]) {
+      const visual = new PreviewVisual(width, 2.4, null)
+      try {
+        const label = portraitLabelLayout(width, 2.4)
+        visual.labelBorder.computeBoundingBox()
+        const bounds = visual.labelBorder.boundingBox!
+        expect(bounds.max.x - bounds.min.x).toBeCloseTo(label.width)
+        expect(bounds.max.y - bounds.min.y).toBeCloseTo(portraitLabel.height)
+        expect(bounds.min.y + label.y).toBeCloseTo(label.bottom)
+        expect(label.titleWidth).toBeLessThanOrEqual(label.width)
+        expect(label.creatorWidth).toBeLessThanOrEqual(label.width)
+      } finally {
+        visual.dispose()
+      }
+    }
+  })
+
+  test('disposes its own resources without disposing the shared artwork texture', () => {
+    const texture = new DataTexture(new Uint8Array(16), 2, 2)
+    const visual = new PreviewVisual(1, 2, texture)
+    const disposed: string[] = []
+    visual.border.addEventListener('dispose', () => disposed.push('border'))
+    visual.labelBorder.addEventListener('dispose', () => disposed.push('label border'))
+    visual.labelBorderMaterial.addEventListener('dispose', () => disposed.push('label border material'))
+    visual.borderMaterial.addEventListener('dispose', () => disposed.push('border material'))
+    visual.imageMaterial.addEventListener('dispose', () => disposed.push('image material'))
+    texture.addEventListener('dispose', () => disposed.push('texture'))
+    visual.dispose()
+    expect(disposed).toEqual(['border', 'label border', 'border material', 'label border material', 'image material'])
+    texture.dispose()
+  })
+})

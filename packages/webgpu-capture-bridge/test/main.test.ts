@@ -1,0 +1,288 @@
+import {describe, expect, test} from 'bun:test'
+
+import {RGBAFormat, UnsignedByteType} from 'three/webgpu'
+
+import {WebgpuCapture} from '../src/main.ts'
+import {encode, TestRenderer} from './helpers.ts'
+
+describe('WebgpuCapture', () => {
+  test('renders to an RGBA8 output target and restores renderer state before readback settles', async () => {
+    const renderer = new TestRenderer
+    const previous = {
+      target: renderer.target,
+      outputTarget: renderer.outputTarget,
+    }
+    const readback = Promise.withResolvers<Uint8Array<ArrayBuffer>>()
+    renderer.readback = () => readback.promise
+    const capture = new WebgpuCapture({
+      renderer,
+      encode,
+      render: () => {
+        expect(renderer.target).toBeNull()
+        expect(renderer.outputTarget).not.toBe(previous.outputTarget)
+        expect(renderer.outputTarget?.texture.format).toBe(RGBAFormat)
+        expect(renderer.outputTarget?.texture.type).toBe(UnsignedByteType)
+        expect(renderer.outputTarget?.samples).toBe(renderer.samples)
+        expect(renderer.outputTarget?.depthBuffer).toBe(true)
+        expect(renderer.outputTarget?.stencilBuffer).toBe(false)
+        expect(renderer.autoClear).toBe(true)
+      },
+    })
+    const pending = capture.captureFrame()
+    await Promise.resolve()
+    expect(renderer.target).toBe(previous.target)
+    expect(renderer.outputTarget).toBe(previous.outputTarget)
+    expect(renderer.cubeFace).toBe(3)
+    expect(renderer.mipmapLevel).toBe(2)
+    expect(renderer.autoClear).toBe(false)
+    readback.resolve(new Uint8Array(16).fill(255))
+    const result = await pending
+    expect(result.meanLuminance).toBeCloseTo(255)
+    expect(result).toEqual({
+      width: 2,
+      height: 2,
+      centerPixel: [255, 255, 255, 255],
+      dataUrl: 'data:image/png;test,2x2',
+      meanLuminance: result.meanLuminance,
+      nonBlackFraction: 1,
+    })
+    capture.dispose()
+  })
+  test('coalesces concurrent callers until encoding completes and starts a fresh capture afterward', async () => {
+    const renderer = new TestRenderer
+    const encoding = Promise.withResolvers<string>()
+    const started = Promise.withResolvers<void>()
+    let renderCount = 0
+    const capture = new WebgpuCapture({
+      renderer,
+      render: () => {
+        renderCount += 1
+      },
+      encode: () => {
+        started.resolve()
+        return encoding.promise
+      },
+    })
+    const first = capture.captureFrame()
+    expect(capture.captureFrame()).toBe(first)
+    await started.promise
+    expect(capture.captureFrame()).toBe(first)
+    expect(renderCount).toBe(1)
+    expect(renderer.readCount).toBe(1)
+    encoding.resolve('data:image/png;test,encoded')
+    const result = await first
+    expect(result.dataUrl).toBe('data:image/png;test,encoded')
+    const next = capture.captureFrame()
+    expect(next).not.toBe(first)
+    await next
+    expect(renderCount).toBe(2)
+    capture.dispose()
+  })
+  test('reuses the target and reads the current physical drawing-buffer size for every capture', async () => {
+    const renderer = new TestRenderer
+    const capture = new WebgpuCapture({
+      renderer,
+      render() {},
+      encode,
+    })
+    await capture.captureFrame()
+    const target = renderer.capturedTarget!
+    renderer.size.set(65, 3)
+    const result = await capture.captureFrame()
+    expect(renderer.capturedTarget).toBe(target)
+    expect([target.width, target.height]).toEqual([65, 3])
+    expect([result.width, result.height]).toEqual([65, 3])
+    capture.dispose()
+  })
+  for (const failure of ['render', 'readback-sync', 'readback-async', 'encode'] as const) {
+    test(`restores state and allows retry after a ${failure} failure`, async () => {
+      const renderer = new TestRenderer
+      const previousTarget = renderer.target
+      const previousOutput = renderer.outputTarget
+      const error = new Error(failure)
+      let fail = true
+      const originalReadback = renderer.readback
+      renderer.readback = () => {
+        if (fail && failure === 'readback-sync') {
+          throw error
+        }
+        if (fail && failure === 'readback-async') {
+          return Promise.reject(error)
+        }
+        return originalReadback()
+      }
+      const capture = new WebgpuCapture({
+        renderer,
+        render: () => {
+          if (fail && failure === 'render') {
+            throw error
+          }
+        },
+        encode: frame => {
+          if (fail && failure === 'encode') {
+            throw error
+          }
+          return encode(frame)
+        },
+      })
+      await expect(capture.captureFrame()).rejects.toBe(error)
+      expect(renderer.target).toBe(previousTarget)
+      expect(renderer.outputTarget).toBe(previousOutput)
+      expect(renderer.cubeFace).toBe(3)
+      expect(renderer.mipmapLevel).toBe(2)
+      expect(renderer.autoClear).toBe(false)
+      fail = false
+      await expect(capture.captureFrame()).resolves.toHaveProperty('width', 2)
+      capture.dispose()
+    })
+  }
+  for (const reject of [false, true]) {
+    test(`defers disposal until a pending readback ${reject ? 'rejects' : 'resolves'}`, async () => {
+      const renderer = new TestRenderer
+      const readback = Promise.withResolvers<Uint8Array<ArrayBuffer>>()
+      renderer.readback = () => readback.promise
+      const capture = new WebgpuCapture({
+        renderer,
+        render() {},
+        encode,
+      })
+      const pending = capture.captureFrame()
+      await Promise.resolve()
+      let disposed = 0
+      renderer.capturedTarget!.addEventListener('dispose', () => {
+        disposed += 1
+      })
+      capture.dispose()
+      capture.dispose()
+      expect(disposed).toBe(0)
+      await expect(capture.captureFrame()).rejects.toThrow('disposed')
+      if (reject) {
+        readback.reject(new Error('Device lost.'))
+        await expect(pending).rejects.toThrow('Device lost.')
+      } else {
+        readback.resolve(new Uint8Array(16))
+        await expect(pending).resolves.toHaveProperty('width', 2)
+      }
+      expect(disposed).toBe(1)
+      capture[Symbol.dispose]()
+      expect(disposed).toBe(1)
+    })
+  }
+  test('allows an accepted capture to finish when disposed before it starts', async () => {
+    const renderer = new TestRenderer
+    const capture = new WebgpuCapture({
+      renderer,
+      render() {},
+      encode,
+    })
+    const pending = capture.captureFrame()
+    capture.dispose()
+    await expect(pending).resolves.toHaveProperty('width', 2)
+    await expect(capture.captureFrame()).rejects.toThrow('disposed')
+  })
+  test('disposes idle targets exactly once without disposing the renderer’s targets', async () => {
+    const renderer = new TestRenderer
+    let externalDisposals = 0
+    renderer.target!.addEventListener('dispose', () => {
+      externalDisposals += 1
+    })
+    renderer.outputTarget!.addEventListener('dispose', () => {
+      externalDisposals += 1
+    })
+    const capture = new WebgpuCapture({
+      renderer,
+      render() {},
+      encode,
+    })
+    await capture.captureFrame()
+    let disposals = 0
+    renderer.capturedTarget!.addEventListener('dispose', () => {
+      disposals += 1
+    })
+    capture.dispose()
+    capture[Symbol.dispose]()
+    expect(disposals).toBe(1)
+    expect(externalDisposals).toBe(0)
+  })
+  test('does not allocate or render when disposed without being used', async () => {
+    const renderer = new TestRenderer
+    const capture = new WebgpuCapture({
+      renderer,
+      render() {
+        throw new Error('Unexpected render.')
+      },
+      encode,
+    })
+    capture.dispose()
+    await expect(capture.captureFrame()).rejects.toThrow('disposed')
+    expect(renderer.readCount).toBe(0)
+    expect(renderer.capturedTarget).toBeNull()
+  })
+  test('rejects empty drawing buffers and recovers after a resize', async () => {
+    const renderer = new TestRenderer
+    renderer.size.set(0, 0)
+    const capture = new WebgpuCapture({
+      renderer,
+      render() {},
+      encode,
+    })
+    await expect(capture.captureFrame()).rejects.toThrow('Invalid capture size')
+    expect(renderer.readCount).toBe(0)
+    renderer.size.set(1, 1)
+    await expect(capture.captureFrame()).resolves.toHaveProperty('width', 1)
+    capture.dispose()
+  })
+  test('respects byte offsets and excludes padding from image statistics and encoder input', async () => {
+    const renderer = new TestRenderer
+    renderer.size.set(1, 2)
+    const bytes = new Uint8Array(280).fill(255)
+    bytes.set([0, 0, 0, 255], 8)
+    bytes.set([255, 0, 0, 128], 264)
+    renderer.readback = () => Promise.resolve(bytes.subarray(8, 268))
+    const capture = new WebgpuCapture({
+      renderer,
+      render() {},
+      encode: frame => {
+        expect([...frame.pixels]).toEqual([0, 0, 0, 255, 255, 0, 0, 128])
+        return encode(frame)
+      },
+    })
+    const result = await capture.captureFrame()
+    expect(result.centerPixel).toEqual([255, 0, 0, 128])
+    expect(result.nonBlackFraction).toBe(0.5)
+    expect(result.meanLuminance).toBeCloseTo(255 * 0.2126 / 2)
+    capture.dispose()
+  })
+  test('rejects malformed buffers before encoding and permits a later valid capture', async () => {
+    const renderer = new TestRenderer
+    renderer.readback = () => Promise.resolve(new Uint8Array(15))
+    const capture = new WebgpuCapture({
+      renderer,
+      render() {},
+      encode,
+    })
+    await expect(capture.captureFrame()).rejects.toThrow('Unexpected WebGPU readback size')
+    renderer.readback = () => Promise.resolve(new Uint8Array(16))
+    await expect(capture.captureFrame()).resolves.toHaveProperty('width', 2)
+    capture.dispose()
+  })
+  test('supports independent capture instances without sharing state', async () => {
+    const first = new WebgpuCapture({
+      renderer: new TestRenderer,
+      render() {},
+      encode,
+    })
+    const second = new WebgpuCapture({
+      renderer: new TestRenderer,
+      render() {},
+      encode,
+    })
+    const a = first.captureFrame()
+    const b = second.captureFrame()
+    expect(a).not.toBe(b)
+    first.dispose()
+    await Promise.all([a, b])
+    await expect(second.captureFrame()).resolves.toHaveProperty('width', 2)
+    second.dispose()
+  })
+})

@@ -2,29 +2,59 @@
   "name": "slop-gallery",
   "version": "0.1.0",
   "type": "module",
-  "exports": {
-    ".": {
-      "default": "./src/main.ts"
-    }
-  },
   "imports": {
     "#src/*": "./src/*",
-    "#root/*": "./*"
+    "#root/*": "./*",
+    "#component/*": "./src/components/*/index.tsx"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Jaid/slop-gallery.git"
   },
   "scripts": {
-    "test": "bun test --max-concurrency 1 ./test"
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "lint": "tsc --noEmit --noUnusedLocals --noUnusedParameters --pretty false",
+    "test": "bun test ./test/unit ./packages/webgpu-capture-bridge/test",
+    "test:live": "bun run build && bun test ./test/live.test.ts",
+    "check": "bun run lint && bun run test && bun run build"
   },
   "devDependencies": {
+    "@dimforge/rapier3d-compat": "0.19.2",
     "@types/bun": "1.4.1",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "@types/three": "0.185.4",
+    "@vitejs/plugin-react": "6.1.1",
     "eslint": "10.10.0",
     "eslint-config-jaid": "26.0.0",
+    "puppeteer-core": "25.10.0",
+    "sass-embedded": "1.104.0",
     "tsconfig-jaid-bun": "16.0.0",
-    "typescript": "npm:typescript-classic@6.0.4"
+    "typescript": "npm:typescript-classic",
+    "vite": "8.2.2"
   },
   "funding": "https://github.com/sponsors/Jaid",
-  "license": "MIT"
+  "license": "MIT",
+  "description": "A living museum of happy accidents. A local-first WebGPU art gallery.",
+  "dependencies": {
+    "@openrouter/ai-sdk-provider": "3.0.0",
+    "@react-three/drei": "11.0.0-alpha.7",
+    "@react-three/fiber": "10.0.0-alpha.4",
+    "@react-three/rapier": "2.2.0",
+    "ai": "7.0.93",
+    "mount-root": "0.5.0",
+    "nuqs": "2.10.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-dropzone": "20.1.1",
+    "three": "0.185.1",
+    "three-bvh-csg": "0.0.18",
+    "zustand": "5.0.15",
+    "webgpu-capture-bridge": "workspace:*"
+  },
+  "workspaces": [
+    "packages/*"
+  ]
 }
