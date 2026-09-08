@@ -23,10 +23,10 @@ beforeEach(() => {
   useGallery.setState({
     sound: true,
     narration: null,
-    portraits: initialPortraits.map(p => ({...p})),
+    portraits: initialPortraits.map(p => ({...p, narration: undefined})),
   })
   Object.assign(globalThis, {
-    Audio: class {
+    Audio: class extends EventTarget {
       volume = 1; pause() {} async play() {}
     },
     SpeechSynthesisUtterance: class {
@@ -109,4 +109,15 @@ test('provider failure falls back to readable browser narration', async () => {
   await narrator.speak('goose')
   expect(spoken).toHaveLength(1)
   expect(useGallery.getState().narration?.status).toBe('playing')
+})
+
+test('bundled recordings play without a key or a speech provider request', async () => {
+  useGallery.setState({portraits: initialPortraits.map(p => ({...p}))})
+  fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(new Response(new Blob(['audio'], {type: 'audio/ogg'})))
+  narrator = new Narrator({...settings, ai: false}, '')
+  await narrator.speak('goose')
+  expect(fetchSpy).toHaveBeenCalledTimes(1)
+  expect(fetchSpy.mock.calls[0]![0]).toBe('/audio/goose.opus')
+  expect(spoken).toHaveLength(0)
+  expect(useGallery.getState().narration).toEqual({id: 'goose', status: 'playing'})
 })

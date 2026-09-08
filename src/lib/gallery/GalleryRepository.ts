@@ -62,6 +62,7 @@ export function validateDocument(value: unknown): GalleryDocument {
     if (Math.abs(x!) > 20 || z! < -8 || z! > 15 || y! < -1 || y! > 6 || z! > 8 && Math.abs(x!) > 4) {
       throw new Error('An artwork is outside the gallery.')
     }
+    const bundled = initialPortraits.find(defaultPortrait => defaultPortrait.id === p.id && defaultPortrait.source === p.source && defaultPortrait.title === p.title && defaultPortrait.description === p.description)
     return {
       id: p.id,
       title: p.title,
@@ -75,7 +76,7 @@ export function validateDocument(value: unknown): GalleryDocument {
       hung: p.hung,
       wallId: typeof p.wallId === 'string' ? p.wallId : undefined,
       orientation: p.orientation as Portrait['orientation'],
-      narration: typeof p.narration === 'string' && narrations.has(p.narration) ? p.narration : undefined,
+      narration: p.narration === undefined ? bundled?.narration : typeof p.narration === 'string' && narrations.has(p.narration) ? p.narration : undefined,
       imported: p.imported === true,
     }
   })

@@ -7,6 +7,7 @@ export const initialPortraits: Array<Portrait> = [
     creator: 'Cornelius van Honk',
     description: 'A ruler of impeccable breeding and absolutely no qualifications. His foreign policy consists primarily of hissing.',
     source: '/art/goose.webp',
+    narration: '/audio/goose.opus',
     position: [
       -3.6,
       2.5,
@@ -24,6 +25,7 @@ export const initialPortraits: Array<Portrait> = [
     creator: 'The Department of Daydreams',
     description: 'The village had asked for a little more sunshine. The universe, as usual, misunderstood the brief.',
     source: '/art/orange.webp',
+    narration: '/audio/orange.opus',
     position: [
       0,
       2.65,
@@ -41,6 +43,7 @@ export const initialPortraits: Array<Portrait> = [
     creator: 'The Department of Good Dogs',
     description: 'A peaceful velvet pup with no appointments, no responsibilities and a deeply held belief that the entire sofa belongs to him.',
     source: '/art/dog.webp',
+    narration: '/audio/dog.opus',
     position: [
       3.6,
       2.5,
@@ -58,6 +61,7 @@ export const initialPortraits: Array<Portrait> = [
     creator: 'The Department of Good Dogs',
     description: 'A galactic predator of pure neon fury. His cosmic authority is absolute, provided nobody mentions the vacuum cleaner.',
     source: '/art/wolf.webp',
+    narration: '/audio/wolf.opus',
     position: [
       -4.5,
       2.5,
@@ -75,6 +79,7 @@ export const initialPortraits: Array<Portrait> = [
     creator: 'Sylvia Nimbus',
     description: 'A tree with excellent aspirations and a rather relaxed relationship with the ground. The gardener has requested a ladder.',
     source: '/art/tree.webp',
+    narration: '/audio/tree.opus',
     position: [
       -7.78,
       2.5,
@@ -92,6 +97,7 @@ export const initialPortraits: Array<Portrait> = [
     creator: 'Leonardo da Birb',
     description: 'Her enigmatic smile hides the fact she just stole your sandwich. A masterpiece of urban elegance and mild menace.',
     source: '/art/pigeon.png',
+    narration: '/audio/pigeon.opus',
     position: [
       7.78,
       2.6,
@@ -145,6 +151,7 @@ export const initialPortraits: Array<Portrait> = [
     creator: 'Generative Orchard No. 6',
     description: 'Synthetic produce contemplates whether humans can distinguish hunger from engagement. The banana has already accepted cookies.',
     source: '/art/fruit.webp',
+    narration: '/audio/fruit.opus',
     position: [
       -12.5,
       2.65,
@@ -162,6 +169,7 @@ export const initialPortraits: Array<Portrait> = [
     creator: 'Ectoplasmic Catering Collective',
     description: 'Dinner ran long. By approximately four centuries. No guest will admit who ordered the bottomless spectral linguine.',
     source: '/art/ghosts.avif',
+    narration: '/audio/ghosts.opus',
     position: [
       -19.78,
       2.6,
@@ -269,6 +277,7 @@ export const initialPortraits: Array<Portrait> = [
     creator: 'Salvador Deli',
     description: 'The tea is cold. The guest is shellfish. Nobody is having the afternoon they had imagined.',
     source: '/art/lobster.webp',
+    narration: '/audio/lobster.opus',
     position: [
       4.5,
       2.5,

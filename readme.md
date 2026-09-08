@@ -46,7 +46,7 @@ Settings exposes OpenRouter connection and model preferences. The query paramete
 
 - Imports send a reduced image to the text model for streamed titles and stories.
 - Fusion sends the hanging image first and the thrown image second to the image model.
-- Narration uses bundled recordings where available, then optional provider speech or the browser voice. Character instructions are separate from the spoken transcript.
+- All sixteen default artworks have bundled Opus narration. Custom stories use optional provider speech or the browser voice. Character instructions are separate from the spoken transcript.
 - Without AI, fusion is explicitly a local cut-paper collage – not a simulated model response.
 - Changing AI settings cancels outstanding work. Late responses cannot overwrite a manual label edit, undo, reset or a removed source image.
 

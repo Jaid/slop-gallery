@@ -29,8 +29,8 @@ describe('wall geometry', () => {
     expect(velvet.hung).toBe(true)
     expect(neon.hung).toBe(true)
     expect(velvet.position).not.toEqual(neon.position)
-    expect(velvet.narration).toBeUndefined()
-    expect(neon.narration).toBeUndefined()
+    expect(velvet.narration).toBe('/audio/dog.opus')
+    expect(neon.narration).toBe('/audio/wolf.opus')
     useGallery.getState().remove(velvet.id)
     expect(useGallery.getState().portraits.some(p => p.id === neon.id)).toBe(true)
   })
@@ -206,6 +206,7 @@ describe('backup validation', () => {
       expect(p.id).toMatch(/^[a-z]+(?:-[a-z]+)*$/)
       expect(p.source).toMatch(new RegExp('^/art/' + p.id + '\\.(webp|png|avif)$'))
       expect(await Bun.file(new URL('../../public' + p.source, import.meta.url)).exists()).toBe(true)
+      expect(p.narration).toBe('/audio/' + p.id + '.opus')
       if (p.narration) {
         expect(p.narration).toBe('/audio/' + p.id + '.opus')
         expect(await Bun.file(new URL('../../public' + p.narration, import.meta.url)).exists()).toBe(true)
@@ -242,6 +243,16 @@ describe('backup validation', () => {
       expect(result).toMatchObject(wolf)
     })
   }
+  test('existing unedited defaults gain recordings without replacing edited stories', () => {
+    const goose = initialPortraits.find(p => p.id === 'goose')!
+    const saved = {...goose, narration: undefined}
+    const load = (patch = {}) => validateDocument({...original, portraits: [{...saved, ...patch}]}).portraits[0]!
+    expect(load().narration).toBe('/audio/goose.opus')
+    expect(load({title: 'My title'}).narration).toBeUndefined()
+    expect(load({description: 'My story.'}).narration).toBeUndefined()
+    expect(load({source: new Blob(['pixels'], {type: 'image/webp'})}).narration).toBeUndefined()
+    expect(saved.narration).toBeUndefined()
+  })
   test('renaming defaults does not replace imported images', () => {
     const source = new Blob(['pixels'], {type: 'image/webp'})
     const custom = {...initialPortraits[0]!, id: 'my-artwork', source, imported: true}
