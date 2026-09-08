@@ -53,6 +53,31 @@ describe('boolean architecture', () => {
       }
     })
   }
+  for (const wall of walls.filter(wall => wall.holes?.length)) {
+    test(`${wall.id}: doorway reveals have exactly one visible face through the plaster, baseboard and plinth`, () => {
+      const geometry = createArchitectureGeometry(wall)
+      const material = new MeshBasicMaterial
+      try {
+        const meshes = [geometry.surface, ...geometry.trim].map(geometry => new Mesh(geometry, material))
+        for (const hole of wall.holes!) {
+          for (const side of [-1, 1]) {
+            for (const y of [0.173, 0.393, 0.417, 0.613, 1.731]) {
+              for (const z of [0.051, 0.092, 0.121, 0.183, 0.231, 0.259, 0.301]) {
+                const depth = y < 0.4 ? 0.325 : 0.27
+                const ray = new Raycaster(new Vector3(hole.u, y, z), new Vector3(side, 0, 0), 0, hole.width / 2 + 0.4)
+                const hits = ray.intersectObjects(meshes)
+                expect(hits.length).toBe(z < depth ? 1 : 0)
+                if (hits.length) expect(hits[0]!.distance).toBeCloseTo(hole.width / 2, 5)
+              }
+            }
+          }
+        }
+      } finally {
+        material.dispose()
+        geometry.dispose()
+      }
+    })
+  }
   test('placement rays hit the solid arch shoulders, not the opening beneath them', () => {
     const wall = walls.find(wall => wall.id === 'daydream-east')!
     const hole = wall.holes![0]!

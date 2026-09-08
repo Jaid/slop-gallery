@@ -1,7 +1,7 @@
 import type {Wall, WallOpening} from './walls.ts'
 
 import {BoxGeometry, BufferGeometry, ExtrudeGeometry, MeshBasicMaterial, Shape} from 'three/webgpu'
-import {Brush, Evaluator, SUBTRACTION} from 'three-bvh-csg'
+import {ADDITION, Brush, Evaluator, SUBTRACTION} from 'three-bvh-csg'
 
 export const wallTop = 5.8
 export const wallFace = 0.105
@@ -55,8 +55,8 @@ export function createArchitectureGeometry(wall: Wall) {
     return result
   }
   const cutters = (wall.holes ?? []).map(hole => brush(extrude(openingShape(hole), 2, -0.5)))
-  const cut = (geometry: BufferGeometry) => {
-    let result = brush(geometry)
+  const cut = (geometry: BufferGeometry | Brush) => {
+    let result = geometry instanceof Brush ? geometry : brush(geometry)
     for (const cutter of cutters) {
       const target = brush(new BufferGeometry)
       result = evaluator.evaluate(result, cutter, SUBTRACTION, target)
@@ -69,17 +69,22 @@ export function createArchitectureGeometry(wall: Wall) {
   try {
     // Paired room faces meet at z = 0 instead of occupying overlapping solids.
     const surface = cut(box(wall.width, wallTop, wallFace, 0, wallTop / 2, wallFace / 2))
-    const trim = [
-      cut(box(wall.width, 0.38, 0.12, 0, 0.19, 0.14)),
-      cut(box(wall.width, 0.06, 0.16, 0, 0.41, 0.17)),
-    ]
+    // Trim starts at the plaster face so their exposed doorway reveals never overlap.
+    const trimBox = (width: number, height: number, front: number, x: number, y: number) => brush(box(width, height, front - wallFace, x, y, (front + wallFace) / 2))
+    let molding = trimBox(wall.width, 0.38, 0.2, 0, 0.19)
+    const join = (part: Brush) => {
+      molding = evaluator.evaluate(molding, part, ADDITION, brush(new BufferGeometry))
+    }
+    join(trimBox(wall.width, 0.06, 0.25, 0, 0.41))
     for (const hole of wall.holes ?? []) {
-      // One continuous arch and both jambs, with the exact same opening as the wall.
-      trim.push(cut(extrude(openingShape(hole, 0.17, 0), 0.165, wallFace)))
+      join(brush(extrude(openingShape(hole, 0.17, 0), 0.165, wallFace)))
       for (const side of [-1, 1]) {
-        trim.push(cut(box(0.3, 0.4, 0.29, hole.u + side * (hole.width / 2 + 0.085), 0.2, 0.18)))
+        join(trimBox(0.3, 0.4, 0.325, hole.u + side * (hole.width / 2 + 0.085), 0.2))
       }
     }
+    // Cut the assembled solid once, leaving a single reveal instead of coplanar faces
+    // from the baseboard, arch and plinth. Rendering and collision share this geometry.
+    const trim = [cut(molding)]
     const collision = [surface, ...trim].map(colliderGeometry)
     return {
       surface,
