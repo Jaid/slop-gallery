@@ -109,7 +109,7 @@ describe('image dimensions', () => {
     const job = importer.import([new File(['image'], 'pending.png', {type: 'image/png'})])
     restoreDocument(original)
     await job
-    expect(useGallery.getState().portraits).toHaveLength(12)
+    expect(useGallery.getState().portraits).toHaveLength(15)
     importer.dispose()
   })
   test('preserves landscape, portrait and square aspect ratios', () => {
@@ -188,7 +188,7 @@ describe('transactional history', () => {
 })
 describe('backup validation', () => {
   test('accepts the shipped collection', () => {
-    expect(validateDocument(original).portraits).toHaveLength(12)
+    expect(validateDocument(original).portraits).toHaveLength(15)
   })
   for (const secretOpen of [false, true]) {
     test(`ignores the retired puzzle state in existing collections (${secretOpen})`, () => {
@@ -199,7 +199,7 @@ describe('backup validation', () => {
       useGallery.getState().remove(original.portraits[0]!.id)
       expect(undo()).toBe(true)
       expect(createDocument()).not.toHaveProperty('secretOpen')
-      expect(useGallery.getState().portraits).toHaveLength(12)
+      expect(useGallery.getState().portraits).toHaveLength(15)
     })
   }
   test('strips unknown settings instead of spreading them into the store', () => {
@@ -212,7 +212,7 @@ describe('backup validation', () => {
       },
     }).settings).toEqual(original.settings)
   })
-  for (const patch of [{source: 'https://example.com/tracker'}, {source: '/audio/beige.opus'}, {position: [Number.NaN, 2, 0]}, {width: 0}, {wallId: 'missing'}, {rotation: Math.PI}, {position: [0, 2, 0]}, {orientation: [0, 0, 0, 0]}]) {
+  for (const patch of [{source: 'https://example.com/tracker'}, {source: '/audio/doge.opus'}, {position: [Number.NaN, 2, 0]}, {width: 0}, {wallId: 'missing'}, {rotation: Math.PI}, {position: [0, 2, 0]}, {orientation: [0, 0, 0, 0]}]) {
     test(`rejects malformed artwork ${JSON.stringify(patch)}`, () => {
       expect(() => validateDocument({
         ...original,

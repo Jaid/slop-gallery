@@ -11,44 +11,9 @@ export class SoundEngine {
 
   private lastStep = 0
 
-  private water: {gain: GainNode
-    pan: StereoPannerNode
-    source: AudioBufferSourceNode} | undefined
-
   private constructor() {
     this.master.gain.value = 0.6
     this.master.connect(this.context.destination)
-  }
-
-  fountain(distance: number, pan: number) {
-    if (!this.water) {
-      const buffer = this.context.createBuffer(1, this.context.sampleRate * 4, this.context.sampleRate)
-      const data = buffer.getChannelData(0)
-      let brown = 0
-      for (let i = 0; i < data.length; i++) {
-        brown = (brown + (Math.random() * 2 - 1) * 0.04) / 1.04
-        data[i] = brown * 3
-      }
-      const source = this.context.createBufferSource()
-      const filter = this.context.createBiquadFilter()
-      const gain = this.context.createGain()
-      const pan = this.context.createStereoPanner()
-      source.buffer = buffer
-      source.loop = true
-      filter.type = 'bandpass'
-      filter.frequency.value = 800
-      filter.Q.value = 0.3
-      source.connect(filter).connect(gain).connect(pan).connect(this.master)
-      gain.gain.value = 0
-      source.start()
-      this.water = {
-        source,
-        gain,
-        pan,
-      }
-    }
-    this.water.gain.gain.setTargetAtTime(Math.min(0.13, 0.25 / (1 + distance * distance * 0.12)), this.context.currentTime, 0.15)
-    this.water.pan.pan.setTargetAtTime(Math.max(-1, Math.min(1, pan)), this.context.currentTime, 0.15)
   }
 
   mute(muted: boolean) {
