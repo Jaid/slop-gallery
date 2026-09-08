@@ -2,8 +2,8 @@ import type {AiSettings} from '../ai/settings.ts'
 
 import {notify} from '../gallery/actions.ts'
 import {useGallery} from '../gallery/store.ts'
-import {SoundEngine} from './SoundEngine.ts'
 import {narrationMeter} from './NarrationMeter.ts'
+import {SoundEngine} from './SoundEngine.ts'
 
 export const intro = {
   id: '__intro',
@@ -13,17 +13,41 @@ export const intro = {
 
 export class Narrator {
   private audio: HTMLAudioElement | undefined
-  private disconnectAudio: (() => void) | undefined
   private cache = new Map<string, Blob>
   private controller = new AbortController
+  private disconnectAudio: (() => void) | undefined
   private jobs = new Map<string, Promise<Blob>>
+  private unsubscribe: () => void
   private url: string | undefined
   private version = 0
+
   private waiting: string | undefined
 
-  constructor(private settings: AiSettings, private key: string) {}
+  constructor(private settings: AiSettings, private key: string) {
+    this.unsubscribe = useGallery.subscribe((s, before) => {
+      const id = s.narration?.id
+      if (!id) {
+        return
+      }
+      const p = s.portraits.find(p => p.id === id)
+      const previous = before.portraits.find(p => p.id === id)
+      if (!s.sound || id !== intro.id && !p) {
+        this.stop()
+      } else if (this.waiting === id) {
+        // Both generated completion and a manual label edit release queued narration.
+        if (p && !p.pending && !p.merging) {
+          this.ready(id)
+        }
+      } else if (p?.pending || p?.merging) {
+        void this.speak(id).catch(() => notify('The story could not be played.'))
+      } else if (p && previous && (p.title !== previous.title || p.description !== previous.description || p.source !== previous.source || p.narration !== previous.narration)) {
+        this.stop()
+      }
+    })
+  }
 
   dispose() {
+    this.unsubscribe()
     this.stop()
     this.controller.abort()
     this.cache.clear()
@@ -31,9 +55,9 @@ export class Narrator {
 
   ready(id: string) {
     if (this.waiting === id) {
-      void this.speak(id)
+      void this.speak(id).catch(() => notify('The story could not be played.'))
     } else if (this.settings.eager_audio) {
-      void this.speak(id, false)
+      void this.speak(id, false).catch(() => notify('The story could not be prepared.'))
     }
   }
 
@@ -45,7 +69,7 @@ export class Narrator {
       merging: false,
       narration: undefined,
     } : s.portraits.find(p => p.id === id)
-    if (!p || !s.sound) {
+    if (!p || !s.sound || this.controller.signal.aborted) {
       return
     }
     if (play) {
@@ -76,6 +100,16 @@ export class Narrator {
           source: null,
         },
       })
+    }
+    let failed = false
+    const fallback = (error: unknown) => {
+      if (!play || !current() || failed) {
+        return
+      }
+      failed = true
+      this.clearAudio()
+      notify(error instanceof Error ? `${error.message} Using the browser voice instead.` : 'Using the browser voice instead.')
+      this.browserSpeech(id, transcript, current)
     }
     try {
       let blob: Blob | undefined
@@ -113,24 +147,21 @@ export class Narrator {
       if (blob) {
         const sound = SoundEngine.get()
         await sound.resume()
-        if (!current()) return
+        if (!current()) {
+          return
+        }
         this.url = URL.createObjectURL(blob)
         const audio = this.audio = new Audio(this.url)
         audio.volume = 0.85
         this.disconnectAudio = narrationMeter.connect(audio, sound.context)
         audio.addEventListener('ended', () => {
-          if (current()) {
+          if (current() && !failed) {
             this.stop()
           }
         })
-        audio.onerror = () => {
-          if (current()) {
-            this.stop()
-            notify('Audio playback failed. The story is still available in the collection.')
-          }
-        }
+        audio.onerror = () => fallback(new Error('Audio playback failed.'))
         await audio.play()
-        if (current()) {
+        if (current() && !failed) {
           useGallery.setState({
             narration: {
               id,
@@ -143,11 +174,7 @@ export class Narrator {
         this.browserSpeech(id, transcript, current)
       }
     } catch (error) {
-      if (play && current()) {
-        this.clearAudio()
-        notify(error instanceof Error ? `${error.message} Using the browser voice instead.` : 'Using the browser voice instead.')
-        this.browserSpeech(id, transcript, current)
-      }
+      fallback(error)
     }
   }
 
@@ -157,17 +184,6 @@ export class Narrator {
     this.clearAudio()
     globalThis.speechSynthesis?.cancel()
     useGallery.setState({narration: null})
-  }
-
-  private clearAudio() {
-    this.audio?.pause()
-    this.disconnectAudio?.()
-    this.disconnectAudio = undefined
-    this.audio = undefined
-    if (this.url) {
-      URL.revokeObjectURL(this.url)
-    }
-    this.url = undefined
   }
 
   private browserSpeech(id: string, text: string, current: () => boolean) {
@@ -204,6 +220,20 @@ export class Narrator {
       }
     }
     speechSynthesis.speak(utterance)
+  }
+
+  private clearAudio() {
+    if (this.audio) {
+      this.audio.onerror = null
+    }
+    this.audio?.pause()
+    this.disconnectAudio?.()
+    this.disconnectAudio = undefined
+    this.audio = undefined
+    if (this.url) {
+      URL.revokeObjectURL(this.url)
+    }
+    this.url = undefined
   }
 
   private async generate(input: string) {

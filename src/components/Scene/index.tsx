@@ -1,5 +1,5 @@
 import {useFrame, useThree} from '@react-three/fiber/webgpu'
-import {useRef} from 'react'
+import {useEffect, useRef} from 'react'
 
 import Player from '#component/Player'
 import {useGallery} from '#src/lib/gallery.ts'
@@ -25,7 +25,10 @@ export default function Scene() {
 function Ready() {
   const backend = useThree(s => s.renderer.backend)
   const frames = useRef(0)
-  if (!('isWebGPUBackend' in backend) || backend.isWebGPUBackend !== true) throw new Error('A WebGPU adapter is required for the gallery.')
+  useEffect(() => () => useGallery.setState({ready: false}), [])
+  if (!('isWebGPUBackend' in backend) || backend.isWebGPUBackend !== true) {
+    throw new Error('A WebGPU adapter is required for the gallery.')
+  }
   useFrame(() => {
     if (useGallery.getState().ready) {
       return

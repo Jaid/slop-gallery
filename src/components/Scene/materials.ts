@@ -7,7 +7,7 @@ export function surfaceTexture(kind: 'plaster' | 'stone' | 'wood') {
   const c = document.createElement('canvas')
   c.width = c.height = 512
   const ctx = c.getContext('2d')!
-  ctx.fillStyle = kind === 'wood' ? '#735139' : kind === 'stone' ? '#c9c3b1' : '#e5e0d2'
+  ctx.fillStyle = kind === 'wood' ? '#735139' : (kind === 'stone' ? '#c9c3b1' : '#e5e0d2')
   ctx.fillRect(0, 0, 512, 512)
   let seed = 91
   const rand = () => {
@@ -33,18 +33,6 @@ export function surfaceTexture(kind: 'plaster' | 'stone' | 'wood') {
   t.repeat.set(kind === 'stone' ? 8 : 3, kind === 'stone' ? 8 : 3)
   t.anisotropy = 8
   return t
-}
-export function radialTexture() {
-  const c = document.createElement('canvas')
-  c.width = c.height = 128
-  const x = c.getContext('2d')!
-  const g = x.createRadialGradient(64, 64, 0, 64, 64, 64)
-  g.addColorStop(0, 'rgba(255,233,181,.8)')
-  g.addColorStop(0.3, 'rgba(255,225,169,.25)')
-  g.addColorStop(1, 'rgba(255,230,180,0)')
-  x.fillStyle = g
-  x.fillRect(0, 0, 128, 128)
-  return canvasTexture(c)
 }
 
 /** Burgundy silk and small stamped rosettes, adapted from the ox_smart-gallery-webgpu reference. */
@@ -114,7 +102,7 @@ export function checkerMarbleTexture(width: number, depth: number) {
   const context = canvas.getContext('2d')!
   let seed = 61
   const random = () => {
-    seed = seed + 0x6D2B79F5 | 0
+    seed = seed + 0x6D_2B_79_F5 | 0
     let value = Math.imul(seed ^ seed >>> 15, 1 | seed)
     value = value + Math.imul(value ^ value >>> 7, 61 | value) ^ value
     return ((value ^ value >>> 14) >>> 0) / 4_294_967_296

@@ -7,13 +7,12 @@ import {PointerLockControls} from 'three/addons/controls/PointerLockControls.js'
 import {Matrix4, PerspectiveCamera, Quaternion, Raycaster, Vector2, Vector3} from 'three/webgpu'
 
 import PlacementPreview from '#component/PlacementPreview'
-
 import {InspectionLook} from '#src/lib/camera/InspectionLook.ts'
+import {cameraPose, chime, dragPose, enterGallery, findPlacement, galleryEvents, isTextInput, markControlled, narrate, notify, openPanel, roomAt, useGallery, wallDistance} from '#src/lib/gallery.ts'
 import {isPortraitLabelHit} from '#src/lib/gallery/portraitLabel.ts'
-import {cameraPose, chime, dragPose, enterGallery, findPlacement, galleryEvents, isTextInput, markControlled, narrate, notify, openPanel, redo, roomAt, undo, useGallery, wallDistance} from '#src/lib/gallery.ts'
 
-import {portraitObjects} from './Portrait.tsx'
 import {propObjects} from './GrabbableProp.tsx'
+import {portraitObjects} from './Portrait.tsx'
 
 const up = new Vector3(0, 1, 0)
 
@@ -29,8 +28,8 @@ export default function Interaction() {
   const dragging = useGallery(s => s.dragging)
   const view = useRef<{id: string
     look: InspectionLook
-    restoreControls: () => void
     position: Vector3
+    restoreControls: () => void
     returning: boolean
     rotation: Quaternion} | null>(null)
   const previousHeld = useRef<string | null>(null)
@@ -83,7 +82,10 @@ export default function Interaction() {
     }
     const lock = () => {
       const locked = document.pointerLockElement === renderer.domElement
-      useGallery.setState({locked, activeLabel: null})
+      useGallery.setState({
+        locked,
+        activeLabel: null,
+      })
       if (!locked) {
         cancel()
         cancelView()
@@ -147,7 +149,7 @@ export default function Interaction() {
           chime(620)
           notify('Perfectly placed. Probably.')
         } else {
-          notify(candidate?.reason ? 'No move made. ' + candidate.reason : 'No move made. Find an empty patch of wall.')
+          notify(candidate?.reason ? `No move made. ${candidate.reason}` : 'No move made. Find an empty patch of wall.')
         }
       }
       useGallery.setState({
@@ -167,7 +169,9 @@ export default function Interaction() {
         }
         return
       }
-      if (event.button === 0 || event.button === 2) markControlled()
+      if (event.button === 0 || event.button === 2) {
+        markControlled()
+      }
       if (event.button === 0) {
         grab()
       }
@@ -195,7 +199,9 @@ export default function Interaction() {
       view.current = {
         id,
         look: new InspectionLook(camera.quaternion),
-        restoreControls: () => {controls.enabled = wasEnabled},
+        restoreControls: () => {
+          controls.enabled = wasEnabled
+        },
         returning: false,
         position: camera.position.clone(),
         rotation: camera.quaternion.clone(),
@@ -207,16 +213,6 @@ export default function Interaction() {
       if (isTextInput(event.target)) {
         return
       }
-      if ((event.ctrlKey || event.metaKey) && (event.code === 'KeyZ' || event.code === 'KeyY')) {
-        event.preventDefault()
-        cancel()
-        cancelView()
-        const redone = event.code === 'KeyY' || event.shiftKey
-        if (redone ? redo() : undo()) {
-          notify(redone ? 'Redone. A second thought about your second thought.' : 'Undone. Even happy accidents are reversible.')
-        }
-        return
-      }
       if (event.repeat) {
         return
       }
@@ -225,15 +221,6 @@ export default function Interaction() {
         cancel()
         cancelView()
       }
-      if (event.code === 'KeyM') {
-        useGallery.setState({sound: !s.sound})
-      }
-      if (event.code === 'KeyG') {
-        openPanel(s.panel === 'collection' ? null : 'collection')
-      }
-      if (event.code === 'KeyH') {
-        openPanel(s.panel === 'help' ? null : 'help')
-      }
       if (event.code === 'Tab' && !s.panel && s.locked) {
         event.preventDefault()
         openPanel('map')
@@ -241,7 +228,9 @@ export default function Interaction() {
       if (!s.locked || s.panel) {
         return
       }
-      if (['KeyE', 'KeyQ', 'KeyR', 'KeyV'].includes(event.code)) markControlled()
+      if (['KeyE', 'KeyQ', 'KeyR', 'KeyV'].includes(event.code)) {
+        markControlled()
+      }
       if (event.code === 'KeyV' && s.active && portraitObjects.has(s.active)) {
         if (view.current) {
           cancelView()
@@ -297,13 +286,15 @@ export default function Interaction() {
         },
       }))
     }
-    const drop = (event: Event) => {
-      const {files, x, y} = (event as CustomEvent<{files: File[]; x: number; y: number}>).detail
+    const importTarget = (x: number, y: number) => {
       const bounds = renderer.domElement.getBoundingClientRect()
       const cursor = new Vector2((x - bounds.left) / bounds.width * 2 - 1, -((y - bounds.top) / bounds.height) * 2 + 1)
-      const dropRay = new Raycaster()
+      const dropRay = new Raycaster
       dropRay.setFromCamera(cursor, camera)
-      void useGallery.getState().importFiles?.(files, {origin: dropRay.ray.origin.toArray() as Vec3, direction: dropRay.ray.direction.toArray() as Vec3})
+      return {
+        origin: dropRay.ray.origin.toArray(),
+        direction: dropRay.ray.direction.toArray(),
+      }
     }
     const context = (event: Event) => event.preventDefault()
     const blur = () => {
@@ -321,7 +312,8 @@ export default function Interaction() {
     galleryEvents.addEventListener('view', onView)
     galleryEvents.addEventListener('home', home)
     galleryEvents.addEventListener('cancel-view', cancelView)
-    galleryEvents.addEventListener('drop-files', drop)
+    useGallery.setState({importTarget})
+    galleryEvents.addEventListener('cancel-interaction', cancel)
     return () => {
       cancel()
       stopView()
@@ -336,7 +328,10 @@ export default function Interaction() {
       galleryEvents.removeEventListener('view', onView)
       galleryEvents.removeEventListener('home', home)
       galleryEvents.removeEventListener('cancel-view', cancelView)
-      galleryEvents.removeEventListener('drop-files', drop)
+      if (useGallery.getState().importTarget === importTarget) {
+        useGallery.setState({importTarget: null})
+      }
+      galleryEvents.removeEventListener('cancel-interaction', cancel)
     }
   }, [camera, controls, renderer])
   useEffect(() => {
@@ -360,7 +355,7 @@ export default function Interaction() {
         position: body.translation(),
         bodyType: body.bodyType(),
         sleeping: body.isSleeping(),
-        visualPosition: group.getWorldPosition(new Vector3()).toArray(),
+        visualPosition: group.getWorldPosition(new Vector3).toArray(),
         collidersEnabled: Array.from({length: body.numColliders()}, (_, index) => body.collider(index).isEnabled()),
       })),
       portraits: useGallery.getState().portraits.map(p => ({
@@ -459,7 +454,10 @@ export default function Interaction() {
         }
       }
       if (active !== s.active || activeLabel !== s.activeLabel) {
-        useGallery.setState({active, activeLabel})
+        useGallery.setState({
+          active,
+          activeLabel,
+        })
       }
     } else if (s.activeLabel) {
       useGallery.setState({activeLabel: null})

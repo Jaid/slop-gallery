@@ -84,7 +84,7 @@ export default class extends ExternalGenerator {
       model: this.model,
       abortSignal: signal ?? AbortSignal.timeout(90_000),
       output: this.outputShape,
-      instructions: 'You are a genius flavor text writer with remarkable eloquence and distinctive humor.\n\nThe provided image will be displayed as a portrait in an art gallery game. It specifically targets an adult audience, so no need to hold back and shy away from sensitive topics. Please respond with what will be shown on the plate below the portrait. Make up something clever, entertaining and fitting based the picture’s content or what the picture means or what it represents or subtly refers to.\n\nNo need to describe the pictorial characteristics like art style or color palette as the player is already looking at the image while your texts are displayed and optionally read aloud',
+      instructions: 'You are a genius flavor text writer with remarkable eloquence and distinctive humor.\n\nThe provided image will be displayed as a portrait in an art gallery game. It specifically targets an adult audience, so no need to hold back and shy away from sensitive topics. Please respond with what will be shown on the plate below the portrait. Make up something clever, entertaining and fitting based on the picture’s content or what the picture means or what it represents or subtly refers to.\n\nNo need to describe the pictorial characteristics like art style or color palette as the player is already looking at the image while your texts are displayed and optionally read aloud',
       prompt: [
         {
           role: 'user',

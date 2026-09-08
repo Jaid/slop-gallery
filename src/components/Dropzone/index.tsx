@@ -4,7 +4,8 @@ import type {DropEvent} from 'react-dropzone'
 import {useEffect} from 'react'
 import {useDropzone} from 'react-dropzone'
 
-import {dragPose, galleryEvents, importRejected, useGallery} from '#src/lib/gallery.ts'
+import {dragPose, galleryEvents, importRejected, notify, useGallery} from '#src/lib/gallery.ts'
+import {imageExtensions, maximumImageBytes} from '#src/lib/gallery/imagePolicy.ts'
 
 import css from './style.module.sass'
 
@@ -13,9 +14,18 @@ export default function Dropzone({children}: PropsWithChildren) {
   const handleDrop = (files: Array<File>, event: DropEvent) => {
     if (event.type === 'drop') {
       const {clientX: x, clientY: y} = event as DragEvent
-      galleryEvents.dispatchEvent(new CustomEvent('drop-files', {detail: {files, x, y}}))
+      galleryEvents.dispatchEvent(new CustomEvent('drop-files', {
+        detail: {
+          files,
+          x,
+          y,
+        },
+      }))
     } else {
-      void useGallery.getState().importFiles?.(files)
+      const importFiles = useGallery.getState().importFiles
+      if (importFiles) {
+        void importFiles(files).catch(() => notify('The images could not be imported.'))
+      }
     }
   }
   const {getRootProps, getInputProps, isDragActive, isDragReject} = useDropzone({
@@ -23,14 +33,8 @@ export default function Dropzone({children}: PropsWithChildren) {
     noKeyboard: true,
     onDropAccepted: handleDrop,
     onDropRejected: importRejected,
-    accept: {
-      'image/png': ['.png'],
-      'image/jpeg': ['.jpg', '.jpeg'],
-      'image/webp': ['.webp'],
-      'image/avif': ['.avif'],
-      'image/gif': ['.gif'],
-    },
-    maxSize: 25e6,
+    accept: imageExtensions,
+    maxSize: maximumImageBytes,
     onDragOver: event => {
       dragPose.x = event.clientX
       dragPose.y = event.clientY

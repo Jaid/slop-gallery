@@ -1,17 +1,19 @@
-name: test
+name: check
 on:
   push:
     branches: [main]
   pull_request:
 jobs:
-  test:
+  check:
     runs-on: ubuntu-latest
     steps:
     - name: checkout
-      uses: actions/checkout@v6.0.2
+      uses: actions/checkout@v7.0.1
     - name: setupBun
       uses: oven-sh/setup-bun@v2.2.0
+      with:
+        bun-version: 1.4.2
     - name: install
       run: bun install --frozen-lockfile
-    - name: test
-      run: bun run test
+    - name: check
+      run: bun run check

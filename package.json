@@ -2,48 +2,37 @@
   "name": "slop-gallery",
   "version": "0.1.0",
   "type": "module",
+  "private": true,
+  "description": "A living museum of happy accidents. A local-first WebGPU art gallery.",
+  "funding": "https://github.com/sponsors/Jaid",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jaid/slop-gallery.git"
+  },
   "imports": {
     "#src/*": "./src/*",
     "#root/*": "./*",
     "#component/*": "./src/components/*/index.tsx"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Jaid/slop-gallery.git"
-  },
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
     "build": "vite build",
+    "check": "bun run typecheck && bun run lint && bun run test && bun run build && bun run check:package",
+    "check:package": "bun scripts/checkPackage.ts",
+    "dev": "vite --host 127.0.0.1",
+    "lint": "bun scripts/lint.ts",
     "preview": "vite preview --host 127.0.0.1",
-    "lint": "tsc --noEmit --noUnusedLocals --noUnusedParameters --pretty false",
     "test": "bun test ./test/unit ./packages/webgpu-capture-bridge/test",
     "test:live": "bun run build && bun test ./test/live.test.ts",
-    "check": "bun run lint && bun run test && bun run build"
+    "typecheck": "tsc --noEmit --noUnusedLocals --noUnusedParameters --pretty false"
   },
-  "devDependencies": {
-    "@dimforge/rapier3d-compat": "0.19.2",
-    "@types/bun": "1.4.1",
-    "@types/react": "19.2.18",
-    "@types/react-dom": "19.2.7",
-    "@types/three": "0.185.4",
-    "@vitejs/plugin-react": "6.1.1",
-    "eslint": "10.10.0",
-    "eslint-config-jaid": "26.0.0",
-    "puppeteer-core": "25.10.0",
-    "sass-embedded": "1.104.0",
-    "tsconfig-jaid-bun": "16.0.0",
-    "typescript": "npm:typescript-classic",
-    "vite": "8.2.2"
-  },
-  "funding": "https://github.com/sponsors/Jaid",
-  "license": "MIT",
-  "description": "A living museum of happy accidents. A local-first WebGPU art gallery.",
   "dependencies": {
     "@openrouter/ai-sdk-provider": "3.0.0",
     "@react-three/drei": "11.0.0-alpha.7",
-    "@react-three/fiber": "10.0.0-alpha.4",
+    "@react-three/fiber": "10.0.0-alpha.5",
     "@react-three/rapier": "2.2.0",
     "ai": "7.0.93",
+    "es-toolkit": "1.52.0",
     "mount-root": "0.5.0",
     "nuqs": "2.10.1",
     "react": "19.2.8",
@@ -51,8 +40,29 @@
     "react-dropzone": "20.1.1",
     "three": "0.185.1",
     "three-bvh-csg": "0.0.18",
-    "zustand": "5.0.15",
-    "webgpu-capture-bridge": "workspace:*"
+    "three-mesh-bvh": "0.9.14",
+    "webgpu-capture-bridge": "workspace:*",
+    "zustand": "5.0.15"
+  },
+  "devDependencies": {
+    "@dimforge/rapier3d-compat": "0.19.2",
+    "@types/bun": "1.4.2",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "@types/three": "0.185.4",
+    "@vitejs/plugin-react": "6.1.1",
+    "eslint": "10.10.0",
+    "eslint-config-jaid": "26.0.0",
+    "fake-indexeddb": "6.2.5",
+    "puppeteer-core": "25.10.0",
+    "sass-embedded": "1.104.0",
+    "tsconfig-jaid-bun": "16.0.0",
+    "type-fest": "5.9.0",
+    "typescript": "npm:typescript-classic@6.0.4",
+    "vite": "8.2.2"
+  },
+  "patchedDependencies": {
+    "three-bvh-csg@0.0.18": "patches/three-bvh-csg@0.0.18.patch"
   },
   "workspaces": [
     "packages/*"

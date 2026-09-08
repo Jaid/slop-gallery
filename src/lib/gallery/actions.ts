@@ -3,7 +3,7 @@ import type {Portrait, Vec3} from './types.ts'
 
 import {SoundEngine} from '../audio/SoundEngine.ts'
 import {initialPortraits} from './collection.ts'
-import {useGallery} from './store.ts'
+import {redo, undo, useGallery} from './store.ts'
 
 export const cameraPose = {
   focused: false,
@@ -41,8 +41,11 @@ export function enterGallery() {
   }
   useGallery.setState({panel: null})
   galleryEvents.dispatchEvent(new Event('cancel-view'))
-  void SoundEngine.get().resume()
-  void document.querySelector('canvas')?.requestPointerLock()?.catch(() => notify('Click the gallery to begin exploring.'))
+  void SoundEngine.get().resume().catch(() => notify('Audio could not be enabled.'))
+  const lock = document.querySelector('canvas')?.requestPointerLock()
+  if (lock) {
+    void lock.catch(() => notify('Click the gallery to begin exploring.'))
+  }
 }
 
 export function chime(frequency = 320) {
@@ -52,7 +55,7 @@ export function chime(frequency = 320) {
 }
 
 export function narrate(id: string) {
-  void SoundEngine.get().resume()
+  void SoundEngine.get().resume().catch(() => notify('Audio could not be enabled.'))
   galleryEvents.dispatchEvent(new CustomEvent('narrate', {detail: id}))
 }
 
@@ -65,6 +68,9 @@ export function requestMerge(first: string, second: string) {
 }
 
 export function viewPortrait(id: string) {
+  if (!useGallery.getState().ready) {
+    return
+  }
   useGallery.setState({panel: null})
   galleryEvents.dispatchEvent(new CustomEvent('view', {detail: id}))
 }
@@ -80,7 +86,12 @@ export function importRejected() {
 
 export function resetGallery() {
   useGallery.getState().commit(initialPortraits.map(p => ({...p})))
-  useGallery.setState(s => ({active: null, activeLabel: null, importEpoch: s.importEpoch + 1, resetEpoch: s.resetEpoch + 1}))
+  useGallery.setState(s => ({
+    active: null,
+    activeLabel: null,
+    importEpoch: s.importEpoch + 1,
+    resetEpoch: s.resetEpoch + 1,
+  }))
   stopNarration()
   galleryEvents.dispatchEvent(new Event('home'))
   notify('Back to the beginning. Your previous collection is one Undo away.')
@@ -117,7 +128,7 @@ export function newPortrait(source: Blob, title: string, width: number, height: 
 }
 
 export function isTextInput(target: EventTarget | null) {
-  return target instanceof HTMLElement && (target.isContentEditable || !!target.closest('input, textarea, select, dialog, [role="dialog"]'))
+  return target instanceof HTMLElement && (target.isContentEditable || !!target.closest('input, textarea, select'))
 }
 
 export function setApiKey(key: string) {
@@ -131,4 +142,41 @@ export function setApiKey(key: string) {
     notify('Tab storage is unavailable. The key will only stay in memory.')
   }
   useGallery.setState({apiKey: key})
+}
+
+export function changeHistory(redone = false) {
+  galleryEvents.dispatchEvent(new Event('cancel-interaction'))
+  galleryEvents.dispatchEvent(new Event('cancel-view'))
+  if (redone ? redo() : undo()) {
+    notify(redone ? 'Redone. A second thought about your second thought.' : 'Undone. Even happy accidents are reversible.')
+  }
+}
+
+export function handleGalleryKey(event: KeyboardEvent) {
+  if (isTextInput(event.target) || event.defaultPrevented) {
+    return
+  }
+  if ((event.ctrlKey || event.metaKey) && (event.code === 'KeyZ' || event.code === 'KeyY')) {
+    event.preventDefault()
+    changeHistory(event.code === 'KeyY' || event.shiftKey)
+    return
+  }
+  const s = useGallery.getState()
+  if (event.repeat || event.ctrlKey || event.metaKey || event.altKey || s.panel) {
+    return
+  }
+  if (event.code === 'KeyM') {
+    useGallery.setState({sound: !s.sound})
+  }
+  if (event.code === 'KeyG') {
+    openPanel('collection')
+  }
+  if (event.code === 'KeyH') {
+    openPanel('help')
+  }
+}
+
+export async function importDroppedFiles(files: Array<File>, x: number, y: number) {
+  const s = useGallery.getState()
+  return s.importFiles?.(files, s.panel ? undefined : s.importTarget?.(x, y))
 }

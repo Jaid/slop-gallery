@@ -3,16 +3,15 @@ import type {GalleryDocument, Portrait} from './types.ts'
 import {notify} from './actions.ts'
 import {initialPortraits} from './collection.ts'
 import {imageSize} from './ImageImporter.ts'
+import {imageExtensions, maximumBackupBytes, validateCollectionImages, validateImage} from './imagePolicy.ts'
 import {migratePortrait} from './migratePortrait.ts'
 import {createDocument, maximumPortraits, restoreDocument, useGallery} from './store.ts'
 import {insideGallery, wallCoordinates, wallPosition, walls} from './walls.ts'
 
-const imageTypes = new Set(['image/webp', 'image/png', 'image/jpeg', 'image/avif', 'image/gif'])
 const images = new Set(initialPortraits.map(p => p.source).filter((p): p is string => typeof p === 'string'))
 const narrations = new Set(initialPortraits.map(p => p.narration).filter((p): p is string => typeof p === 'string'))
 // Retired recordings remain valid in saved collections but no longer play.
 const retiredNarrations = new Set(['/audio/doge.opus'])
-const maxBytes = 150_000_000
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 const vector = (value: unknown, length: number) => Array.isArray(value) && value.length === length && value.every(v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) < 1000)
 const shortText = (value: unknown, max: number): value is string => typeof value === 'string' && value.length <= max
@@ -21,13 +20,15 @@ export function validateDocument(value: unknown): GalleryDocument {
   if (!object(value) || value.version !== 1 || !Array.isArray(value.portraits) || value.portraits.length > maximumPortraits || !object(value.settings)) {
     throw new Error('This is not a supported Slop Gallery collection.')
   }
+  if (typeof value.savedAt === 'string' && !shortText(value.savedAt, 100)) {
+    throw new Error('The collection timestamp is too long.')
+  }
   const settings = value.settings
   if (!['ivory', 'sage', 'nocturne'].includes(String(settings.theme)) || !['gold', 'oak', 'black'].includes(String(settings.frame)) || typeof settings.sound !== 'boolean' || typeof settings.motion !== 'boolean') {
     throw new Error('The collection has invalid settings.')
   }
   const ids = new Set<string>
-  let bytes = 0
-  const portraits: Array<Portrait> = value.portraits.map(value => {
+  const portraits: Array<Portrait> = value.portraits.map((value: unknown) => {
     const p = object(value) ? migratePortrait(value) : value
     if (!object(p) || !shortText(p.id, 100) || !p.id || ids.has(p.id) || !shortText(p.title, 300) || !shortText(p.creator, 200) || !shortText(p.description, 5000) || !vector(p.position, 3) || typeof p.rotation !== 'number' || !Number.isFinite(p.rotation) || typeof p.hung !== 'boolean' || typeof p.width !== 'number' || typeof p.height !== 'number' || !(p.width >= 0.15 && p.width <= 4 && p.height >= 0.15 && p.height <= 4)) {
       throw new Error('The collection contains an invalid artwork.')
@@ -35,16 +36,16 @@ export function validateDocument(value: unknown): GalleryDocument {
     if (p.year !== undefined && !(typeof p.year === 'number' && Number.isSafeInteger(p.year))) {
       throw new Error('The artwork year is invalid.')
     }
+    if (typeof p.wallId === 'string' && !shortText(p.wallId, 100)) {
+      throw new Error('The artwork wall identifier is too long.')
+    }
     ids.add(p.id)
     if (p.source instanceof Blob) {
-      bytes += p.source.size
-      if (!imageTypes.has(p.source.type) || p.source.size > 25_000_000 || bytes > maxBytes) {
-        throw new Error('The collection contains an unsupported or oversized image.')
-      }
+      validateImage(p.source)
     } else if (typeof p.source !== 'string' || !images.has(p.source)) {
       throw new Error('The collection references an unknown image.')
     }
-    if (p.narration !== undefined && (typeof p.narration !== 'string' || (!narrations.has(p.narration) && !retiredNarrations.has(p.narration)))) {
+    if (p.narration !== undefined && (typeof p.narration !== 'string' || !narrations.has(p.narration) && !retiredNarrations.has(p.narration))) {
       throw new Error('The narration asset is invalid.')
     }
     if (p.orientation !== undefined && (!vector(p.orientation, 4) || Math.abs(Math.hypot(...p.orientation as Array<number>) - 1) > 0.01)) {
@@ -69,7 +70,7 @@ export function validateDocument(value: unknown): GalleryDocument {
       id: p.id,
       title: p.title,
       creator: p.creator,
-      ...(typeof p.year === 'number' ? {year: p.year} : {}),
+      ...typeof p.year === 'number' ? {year: p.year} : {},
       description: p.description,
       source: p.source,
       position: p.position as Portrait['position'],
@@ -83,6 +84,7 @@ export function validateDocument(value: unknown): GalleryDocument {
       imported: p.imported === true,
     }
   })
+  validateCollectionImages(portraits)
   return {
     version: 1,
     portraits,
@@ -101,6 +103,7 @@ export class GalleryRepository {
   private writes = Promise.resolve()
 
   async export(document = createDocument()) {
+    document = validateDocument(document)
     const portraits = await Promise.all(document.portraits.map(async p => ({
       ...p,
       source: p.source instanceof Blob ? {
@@ -108,18 +111,26 @@ export class GalleryRepository {
         data: new Uint8Array(await p.source.arrayBuffer()).toBase64(),
       } : p.source,
     })))
-    const stream = new Blob([
+    const serialized = new Blob([
       JSON.stringify({
         ...document,
         portraits,
       }),
-    ]).stream().pipeThrough(new CompressionStream('gzip'))
-    return new Response(stream).blob()
+    ])
+    if (serialized.size > maximumBackupBytes) {
+      throw new Error('The collection backup is too large.')
+    }
+    const stream = serialized.stream().pipeThrough(new CompressionStream('gzip'))
+    const backup = await new Response(stream).blob()
+    if (backup.size > maximumBackupBytes) {
+      throw new Error('The compressed collection backup is too large.')
+    }
+    return backup
   }
 
   async import(file: Blob) {
-    if (file.size > maxBytes) {
-      throw new Error('Choose a collection smaller than 150 mb.')
+    if (file.size > maximumBackupBytes) {
+      throw new Error('Choose a collection no larger than 210 mb.')
     }
     const reader = file.stream().pipeThrough(new DecompressionStream('gzip')).getReader()
     const chunks: Array<Uint8Array<ArrayBuffer>> = []
@@ -131,7 +142,7 @@ export class GalleryRepository {
           break
         }
         total += value.byteLength
-        if (total > maxBytes * 1.4) {
+        if (total > maximumBackupBytes) {
           throw new Error('The unpacked collection is too large.')
         }
         chunks.push(new Uint8Array(value))
@@ -149,7 +160,7 @@ export class GalleryRepository {
         continue
       }
       const {data, mime} = p.source
-      if (typeof data !== 'string' || typeof mime !== 'string' || !imageTypes.has(mime)) {
+      if (typeof data !== 'string' || typeof mime !== 'string' || !Object.hasOwn(imageExtensions, mime)) {
         throw new Error('Invalid image data in collection.')
       }
       p.source = new Blob([Uint8Array.fromBase64(data)], {type: mime})
@@ -180,7 +191,8 @@ export class GalleryRepository {
     return value === undefined ? null : validateDocument(value)
   }
 
-  save(document: GalleryDocument) {
+  async save(document: GalleryDocument) {
+    document = validateDocument(document)
     const next = this.writes.catch(() => {}).then(async () => {
       const db = await this.open()
       await new Promise<void>((resolve, reject) => {
@@ -195,16 +207,40 @@ export class GalleryRepository {
   }
 
   private open() {
-    return this.database ??= new Promise((resolve, reject) => {
+    if (this.database) {
+      return this.database
+    }
+    let blocked = false
+    const pending = new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open('slop-gallery', 1)
       request.onupgradeneeded = () => request.result.createObjectStore('collections')
       request.onsuccess = () => {
-        request.result.onversionchange = () => request.result.close()
+        // A previously blocked request can succeed after its caller has already failed.
+        if (blocked) {
+          request.result.close()
+          return
+        }
+        request.result.onversionchange = () => {
+          request.result.close()
+          if (this.database === pending) {
+            this.database = undefined
+          }
+        }
         resolve(request.result)
       }
       request.onerror = () => reject(request.error)
-      request.onblocked = () => reject(new Error('Close the other gallery tabs to unlock storage.'))
+      request.onblocked = () => {
+        blocked = true
+        reject(new Error('Close the other gallery tabs to unlock storage.'))
+      }
     })
+    this.database = pending
+    void pending.catch(() => {
+      if (this.database === pending) {
+        this.database = undefined
+      }
+    })
+    return pending
   }
 }
 
@@ -216,16 +252,25 @@ export async function initializePersistence() {
     if (saved) {
       restoreDocument(saved)
     }
-    useGallery.setState({saveStatus: 'saved'})
+    useGallery.setState({
+      saveStatus: 'saved',
+      storageRecoveryRequired: false,
+    })
   } catch {
-    useGallery.setState({saveStatus: 'error'})
-    notify('Local storage could not be read. You can still explore and export your collection.')
+    useGallery.setState({
+      saveStatus: 'error',
+      storageRecoveryRequired: true,
+    })
+    notify('Local storage could not be read. The stored record is protected. Export your current collection or choose recovery in Settings.')
   }
   let timer: ReturnType<typeof setTimeout> | undefined
   let generation = 0
   const flush = () => {
     clearTimeout(timer)
     timer = undefined
+    if (useGallery.getState().storageRecoveryRequired) {
+      return
+    }
     const id = ++generation
     useGallery.setState({saveStatus: 'saving'})
     void repository.save(createDocument()).then(() => {
@@ -233,12 +278,18 @@ export async function initializePersistence() {
         useGallery.setState({saveStatus: 'saved'})
       }
     }).catch(() => {
+      if (id !== generation || timer) {
+        return
+      }
       useGallery.setState({saveStatus: 'error'})
       notify('Local save failed. Export your collection from Settings to keep a backup.')
     })
   }
   const unsubscribe = useGallery.subscribe((s, previous) => {
-    if (s.portraits === previous.portraits && s.theme === previous.theme && s.frame === previous.frame && s.sound === previous.sound && s.motion === previous.motion) {
+    if (s.storageRecoveryRequired) {
+      return
+    }
+    if (s.storageRecoveryRequired === previous.storageRecoveryRequired && s.portraits === previous.portraits && s.theme === previous.theme && s.frame === previous.frame && s.sound === previous.sound && s.motion === previous.motion) {
       return
     }
     clearTimeout(timer)
@@ -252,6 +303,7 @@ export async function initializePersistence() {
   }
   document.addEventListener('visibilitychange', hidden)
   return () => {
+    generation++
     unsubscribe()
     clearTimeout(timer)
     document.removeEventListener('visibilitychange', hidden)

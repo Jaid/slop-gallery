@@ -63,7 +63,7 @@ const CanvasText = ({color = '#ffffff',
       texture.image.data = new Uint8Array(context.getImageData(0, 0, canvas.width, canvas.height).data.buffer)
       texture.needsUpdate = true
     }
-    void render()
+    void render().catch(error => console.error('Canvas text rendering failed.', error))
     return () => {
       cancelled = true
     }

@@ -4,10 +4,12 @@ export type RoomId = 'afterhours' | 'amber' | 'cabinet' | 'daydream' | 'secret'
 export type Portrait = {
   creator: string
   description: string
+  flavorJob?: symbol
   height: number
   hung: boolean
   id: string
   imported?: boolean
+  mergeJob?: symbol
   merging?: boolean
   narration?: string
   orientation?: Quat
@@ -31,8 +33,10 @@ export type Placement = {
   wallId: string
 }
 export type NarrationState = {id: string} & (
-  | {status: 'preparing'; source: null}
-  | {status: 'playing'; source: 'audio' | 'browser'}
+  | {source: 'audio' | 'browser'
+    status: 'playing'}
+  | {source: null
+    status: 'preparing'}
 )
 export type GallerySettings = {
   frame: 'black' | 'gold' | 'oak'

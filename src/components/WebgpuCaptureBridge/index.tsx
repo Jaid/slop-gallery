@@ -1,16 +1,8 @@
-import type {CaptureFrameApi} from 'webgpu-capture-bridge'
+import '#src/lib/diagnostics.ts'
 
 import {useEffect} from 'react'
 import {useCaptureFrame} from 'webgpu-capture-bridge/react'
 
-type GalleryDebugApi = Partial<CaptureFrameApi> & Record<string, unknown>
-
-declare global {
-  var __gallery: GalleryDebugApi | undefined
-  interface Window {
-    __gallery?: GalleryDebugApi
-  }
-}
 // Only the gallery adapter knows about the app’s global diagnostics API.
 const WebgpuCaptureBridge = () => {
   const captureFrame = useCaptureFrame()

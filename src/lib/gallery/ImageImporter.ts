@@ -1,6 +1,7 @@
 import type {Portrait, Vec3} from './types.ts'
 
 import {cameraPose, chime, loadBlob, newPortrait, notify} from './actions.ts'
+import {validateImage} from './imagePolicy.ts'
 import {maximumPortraits, useGallery} from './store.ts'
 import {findPlacement, wallDistance} from './walls.ts'
 
@@ -84,11 +85,13 @@ export async function compositeImages(first: Blob | string, second: Blob | strin
 }
 
 export class ImageImporter {
-  private queue = Promise.resolve()
   private disposed = false
+  private queue = Promise.resolve()
 
-  dispose() { this.disposed = true }
   constructor(private readonly onImport: (portrait: Portrait) => void) {}
+  dispose() {
+    this.disposed = true
+  }
 
   import(files: Array<File>, target?: {direction: Vec3
     origin: Vec3}) {
@@ -99,13 +102,13 @@ export class ImageImporter {
       direction: [...cameraPose.direction] as Vec3,
     }
     this.queue = this.queue.catch(() => {}).then(async () => {
-      if (this.disposed || useGallery.getState().importEpoch !== epoch) return
+      if (this.disposed || useGallery.getState().importEpoch !== epoch) {
+        return
+      }
       let count = 0
       for (const file of files.slice(0, 12)) {
         try {
-          if (!['image/png', 'image/jpeg', 'image/webp', 'image/avif', 'image/gif'].includes(file.type) || file.size > 25_000_000) {
-            throw new Error('Choose PNG, JPEG, WebP, AVIF or GIF under 25 mb.')
-          }
+          validateImage(file)
           if (useGallery.getState().portraits.length >= maximumPortraits) {
             throw new Error('The collection is full. Remove a work to make room.')
           }

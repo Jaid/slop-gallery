@@ -1,0 +1,580 @@
+{
+  "packages/webgpu-capture-bridge/package.json": {
+    "json/sort-keys": 9
+  },
+  "scripts/checkPackage.ts": {
+    "typescript/no-restricted-imports": 1
+  },
+  "src/components/App/ArtworkThumb.tsx": {
+    "typescript/no-shadow": 1
+  },
+  "src/components/App/Collection.tsx": {
+    "typescript/no-use-before-define": 1,
+    "typescript/no-shadow": 1,
+    "no-nested-ternary": 2,
+    "unicorn/no-nested-ternary": 1,
+    "stylistic/no-extra-parens": 1,
+    "stylistic/object-curly-newline": 2,
+    "stylistic/object-property-newline": 6,
+    "promise/prefer-await-to-then": 2
+  },
+  "src/components/App/Hud.tsx": {
+    "curly": 1,
+    "stylistic/nonblock-statement-body-position": 1
+  },
+  "src/components/App/index.tsx": {
+    "typescript/no-unnecessary-condition": 1,
+    "no-nested-ternary": 2,
+    "unicorn/no-nested-ternary": 1
+  },
+  "src/components/App/Map.tsx": {
+    "no-nested-ternary": 1,
+    "unicorn/no-nested-ternary": 1
+  },
+  "src/components/App/Menu.tsx": {
+    "no-nested-ternary": 1,
+    "unicorn/no-nested-ternary": 1
+  },
+  "src/components/App/NarrationActivity.tsx": {
+    "perfectionist/sort-union-types": 1,
+    "curly": 1,
+    "stylistic/nonblock-statement-body-position": 1
+  },
+  "src/components/App/NarrationBars.tsx": {
+    "perfectionist/sort-union-types": 1,
+    "unicorn/prefer-spread": 1,
+    "typescript/array-type": 1,
+    "unicorn/no-array-for-each": 2,
+    "stylistic/block-spacing": 4,
+    "stylistic/brace-style": 4,
+    "stylistic/max-statements-per-line": 2,
+    "curly": 1,
+    "stylistic/nonblock-statement-body-position": 1
+  },
+  "src/components/App/NarrationIndicator.tsx": {
+    "perfectionist/sort-union-types": 1,
+    "no-nested-ternary": 1,
+    "unicorn/no-nested-ternary": 1
+  },
+  "src/components/App/OpenRouterConnection.tsx": {
+    "no-nested-ternary": 1,
+    "unicorn/no-nested-ternary": 1,
+    "promise/prefer-await-to-then": 5
+  },
+  "src/components/App/ResetGallery.tsx": {
+    "curly": 1,
+    "stylistic/nonblock-statement-body-position": 1
+  },
+  "src/components/App/Settings.tsx": {
+    "no-nested-ternary": 3,
+    "stylistic/no-extra-parens": 1,
+    "unicorn/no-nested-ternary": 1,
+    "promise/prefer-await-to-then": 3,
+    "promise/prefer-await-to-callbacks": 1
+  },
+  "src/components/CanvasText/index.tsx": {
+    "typescript/no-unnecessary-condition": 1,
+    "promise/prefer-await-to-then": 1,
+    "promise/prefer-await-to-callbacks": 1
+  },
+  "src/components/Dropzone/index.tsx": {
+    "promise/prefer-await-to-then": 1,
+    "no-nested-ternary": 2,
+    "unicorn/no-nested-ternary": 2
+  },
+  "src/components/DynamicImageMaterial/index.tsx": {
+    "no-nested-ternary": 1,
+    "stylistic/no-extra-parens": 1
+  },
+  "src/components/DynamicImageMaterial/useArtworkTexture.ts": {
+    "typescript/no-use-before-define": 1,
+    "promise/prefer-await-to-then": 7
+  },
+  "src/components/PlacementPreview/index.tsx": {
+    "perfectionist/sort-object-types": 2,
+    "stylistic/object-curly-newline": 2,
+    "stylistic/object-property-newline": 1
+  },
+  "src/components/PlacementPreview/PreviewVisual.ts": {
+    "stylistic/no-confusing-arrow": 1,
+    "new-cap": 1
+  },
+  "src/components/Player/index.tsx": {
+    "typescript/no-shadow": 1,
+    "no-underscore-dangle": 2,
+    "curly": 1,
+    "stylistic/nonblock-statement-body-position": 1,
+    "no-nested-ternary": 1,
+    "stylistic/multiline-ternary": 1,
+    "unicorn/no-nested-ternary": 2
+  },
+  "src/components/PortraitLabel/index.tsx": {
+    "perfectionist/sort-object-types": 2,
+    "stylistic/object-curly-newline": 2,
+    "stylistic/object-property-newline": 2,
+    "stylistic/multiline-ternary": 2
+  },
+  "src/components/Postprocessing/index.tsx": {
+    "stylistic/no-confusing-arrow": 1
+  },
+  "src/components/Scene/AmberRoom.tsx": {
+    "typescript/no-shadow": 1
+  },
+  "src/components/Scene/Architecture.tsx": {
+    "typescript/no-use-before-define": 2,
+    "no-nested-ternary": 9,
+    "unicorn/no-nested-ternary": 3,
+    "stylistic/no-extra-parens": 2,
+    "prefer-template": 1,
+    "typescript/no-shadow": 1
+  },
+  "src/components/Scene/BenchSeat.tsx": {
+    "perfectionist/sort-imports": 1,
+    "stylistic/object-property-newline": 1
+  },
+  "src/components/Scene/Chandelier.tsx": {
+    "stylistic/object-curly-newline": 2,
+    "stylistic/object-property-newline": 2
+  },
+  "src/components/Scene/CheckerMarbleFloor.tsx": {
+    "stylistic/object-property-newline": 1,
+    "perfectionist/sort-object-types": 1
+  },
+  "src/components/Scene/GrabbableProp.tsx": {
+    "perfectionist/sort-imports": 2,
+    "import/consistent-type-specifier-style": 1,
+    "perfectionist/sort-union-types": 1,
+    "perfectionist/sort-object-types": 2,
+    "stylistic/object-curly-newline": 4,
+    "stylistic/object-property-newline": 6,
+    "curly": 8,
+    "stylistic/nonblock-statement-body-position": 8
+  },
+  "src/components/Scene/index.tsx": {
+    "typescript/no-use-before-define": 1
+  },
+  "src/components/Scene/Interaction.tsx": {
+    "typescript/no-shadow": 9,
+    "stylistic/no-confusing-arrow": 2,
+    "stylistic/object-curly-newline": 4,
+    "stylistic/object-property-newline": 12,
+    "typescript/no-unnecessary-type-assertion": 2,
+    "no-multi-assign": 1,
+    "no-underscore-dangle": 1
+  },
+  "src/components/Scene/Leaf.tsx": {
+    "perfectionist/sort-imports": 1,
+    "stylistic/block-spacing": 2,
+    "stylistic/brace-style": 2,
+    "stylistic/max-statements-per-line": 1,
+    "stylistic/member-delimiter-style": 3,
+    "stylistic/object-property-newline": 3,
+    "perfectionist/sort-object-types": 1
+  },
+  "src/components/Scene/materials.ts": {
+    "no-multi-assign": 6,
+    "no-nested-ternary": 1,
+    "stylistic/no-extra-parens": 1,
+    "unicorn/prefer-math-trunc": 1,
+    "operator-assignment": 1
+  },
+  "src/components/Scene/Pedestal.tsx": {
+    "stylistic/object-curly-newline": 2,
+    "stylistic/object-property-newline": 1
+  },
+  "src/components/Scene/Plant.tsx": {
+    "perfectionist/sort-imports": 1,
+    "stylistic/block-spacing": 2,
+    "stylistic/brace-style": 2,
+    "stylistic/max-statements-per-line": 1,
+    "prefer-template": 2
+  },
+  "src/components/Scene/Portrait.tsx": {
+    "perfectionist/sort-imports": 1,
+    "no-nested-ternary": 1,
+    "unicorn/no-nested-ternary": 1
+  },
+  "src/components/Scene/Props.tsx": {
+    "typescript/no-use-before-define": 1,
+    "no-nested-ternary": 1,
+    "unicorn/no-nested-ternary": 1
+  },
+  "src/components/Scene/ReflectiveWoodFloor.tsx": {
+    "perfectionist/sort-imports": 1,
+    "stylistic/object-property-newline": 2,
+    "perfectionist/sort-object-types": 1
+  },
+  "src/components/WebgpuCaptureBridge/index.tsx": {
+    "no-underscore-dangle": 2
+  },
+  "src/lib/ai/ExternalGenerator.ts": {
+    "typescript/no-unnecessary-condition": 2
+  },
+  "src/lib/ai/GalleryDirector.ts": {
+    "stylistic/no-confusing-arrow": 1,
+    "promise/prefer-await-to-then": 1,
+    "typescript/no-unnecessary-condition": 1
+  },
+  "src/lib/audio/NarrationMeter.ts": {
+    "unicorn/no-array-for-each": 1,
+    "curly": 2,
+    "stylistic/nonblock-statement-body-position": 2
+  },
+  "src/lib/audio/Narrator.ts": {
+    "typescript/no-shadow": 3,
+    "promise/prefer-await-to-then": 2,
+    "no-multi-assign": 1,
+    "unicorn/prefer-add-event-listener": 3,
+    "typescript/no-unnecessary-condition": 3
+  },
+  "src/lib/camera/InspectionLook.ts": {
+    "typescript/consistent-type-imports": 1,
+    "stylistic/padding-line-between-statements": 1,
+    "perfectionist/sort-classes": 2
+  },
+  "src/lib/diagnostics.ts": {
+    "no-underscore-dangle": 1
+  },
+  "src/lib/gallery/actions.ts": {
+    "typescript/no-unnecessary-condition": 2,
+    "promise/prefer-await-to-then": 3
+  },
+  "src/lib/gallery/architecture.ts": {
+    "perfectionist/sort-imports": 1,
+    "stylistic/padding-line-between-statements": 3,
+    "stylistic/object-curly-newline": 2,
+    "stylistic/object-property-newline": 3,
+    "perfectionist/sort-modules": 2,
+    "perfectionist/sort-union-types": 1,
+    "typescript/no-shadow": 1,
+    "typescript/no-unnecessary-condition": 1
+  },
+  "src/lib/gallery/collection.ts": {
+    "stylistic/linebreak-style": 3
+  },
+  "src/lib/gallery/GalleryRepository.ts": {
+    "typescript/no-shadow": 1,
+    "no-nested-ternary": 1,
+    "unicorn/no-nested-ternary": 1,
+    "unicorn/prefer-add-event-listener": 4,
+    "promise/prefer-await-to-then": 5,
+    "no-multi-assign": 1
+  },
+  "src/lib/gallery/ImageImporter.ts": {
+    "typescript/return-await": 1,
+    "promise/prefer-await-to-then": 2,
+    "typescript/no-unnecessary-condition": 1
+  },
+  "src/lib/gallery/migratePortrait.ts": {
+    "stylistic/comma-spacing": 41,
+    "stylistic/padding-line-between-statements": 1,
+    "prefer-template": 4,
+    "curly": 1,
+    "stylistic/nonblock-statement-body-position": 1
+  },
+  "src/lib/gallery/PedestalGeometry.ts": {
+    "typescript/consistent-type-imports": 1,
+    "stylistic/no-confusing-arrow": 1,
+    "unicorn/consistent-function-scoping": 1,
+    "no-nested-ternary": 2,
+    "unicorn/no-nested-ternary": 1,
+    "stylistic/padding-line-between-statements": 2,
+    "typescript/no-unnecessary-type-assertion": 1,
+    "curly": 1,
+    "stylistic/nonblock-statement-body-position": 1,
+    "perfectionist/sort-classes": 1
+  },
+  "src/lib/gallery/portraitLabel.ts": {
+    "stylistic/no-multiple-empty-lines": 1,
+    "curly": 1,
+    "stylistic/nonblock-statement-body-position": 1
+  },
+  "src/lib/gallery/store.ts": {
+    "typescript/no-use-before-define": 2,
+    "stylistic/no-extra-parens": 1,
+    "stylistic/object-curly-newline": 2,
+    "stylistic/object-property-newline": 1
+  },
+  "src/lib/gallery/walls.ts": {
+    "perfectionist/sort-modules": 1,
+    "stylistic/object-property-newline": 7,
+    "stylistic/indent": 2,
+    "stylistic/array-bracket-newline": 4,
+    "stylistic/object-curly-newline": 4,
+    "typescript/no-shadow": 4
+  },
+  "src/lib/materials/GoldTextures.ts": {
+    "stylistic/padding-line-between-statements": 3,
+    "typescript/no-shadow": 2,
+    "curly": 1,
+    "stylistic/nonblock-statement-body-position": 1,
+    "no-multi-assign": 1
+  },
+  "src/lib/materials/MarbleFloorMaterial.ts": {
+    "perfectionist/sort-imports": 1,
+    "stylistic/object-curly-newline": 2,
+    "stylistic/object-property-newline": 5
+  },
+  "src/lib/materials/ReflectiveFloorMaterial.ts": {
+    "perfectionist/sort-imports": 3,
+    "stylistic/object-curly-newline": 4,
+    "stylistic/object-property-newline": 4,
+    "perfectionist/sort-object-types": 2
+  },
+  "src/lib/materials/RoomFloorTextures.ts": {
+    "unicorn/prefer-math-trunc": 4,
+    "unicorn/numeric-separators-style": 2,
+    "operator-assignment": 1,
+    "stylistic/padding-line-between-statements": 4,
+    "no-multi-assign": 7,
+    "curly": 6,
+    "stylistic/nonblock-statement-body-position": 6,
+    "stylistic/object-curly-newline": 4,
+    "stylistic/object-property-newline": 3,
+    "perfectionist/sort-classes": 2,
+    "perfectionist/sort-object-types": 1
+  },
+  "src/lib/materials/SoilTextures.ts": {
+    "stylistic/padding-line-between-statements": 1,
+    "curly": 1,
+    "stylistic/nonblock-statement-body-position": 1,
+    "perfectionist/sort-classes": 1,
+    "no-multi-assign": 3
+  },
+  "src/lib/materials/TerracottaTextures.ts": {
+    "stylistic/padding-line-between-statements": 1,
+    "curly": 1,
+    "stylistic/nonblock-statement-body-position": 1,
+    "perfectionist/sort-classes": 1,
+    "no-multi-assign": 2
+  },
+  "src/lib/materials/WoodFloorMaterial.ts": {
+    "stylistic/object-curly-newline": 2,
+    "stylistic/object-property-newline": 4
+  },
+  "src/lib/physics/leaves.ts": {
+    "stylistic/new-parens": 2,
+    "stylistic/padding-line-between-statements": 3,
+    "unicorn/no-zero-fractions": 1,
+    "unicorn/no-useless-iterator-to-array": 3,
+    "prefer-template": 1,
+    "perfectionist/sort-modules": 1,
+    "typescript/no-unnecessary-condition": 1,
+    "curly": 1,
+    "stylistic/nonblock-statement-body-position": 1
+  },
+  "src/lib/physics/PlantAttachment.ts": {
+    "perfectionist/sort-classes": 5,
+    "stylistic/block-spacing": 4,
+    "stylistic/brace-style": 4,
+    "curly": 3,
+    "stylistic/nonblock-statement-body-position": 3
+  },
+  "src/lib/physics/pots.ts": {
+    "stylistic/object-curly-newline": 4,
+    "stylistic/object-property-newline": 4,
+    "curly": 2,
+    "stylistic/nonblock-statement-body-position": 2,
+    "typescript/no-unnecessary-condition": 1
+  },
+  "src/lib/physics/PropPlacement.ts": {
+    "perfectionist/sort-imports": 1,
+    "perfectionist/sort-classes": 4,
+    "typescript/no-shadow": 1,
+    "perfectionist/sort-object-types": 1,
+    "stylistic/object-curly-newline": 2,
+    "stylistic/object-property-newline": 2,
+    "curly": 4,
+    "stylistic/nonblock-statement-body-position": 4,
+    "typescript/no-unnecessary-type-assertion": 2
+  },
+  "src/lib/useGalleryAI.ts": {
+    "promise/prefer-await-to-then": 3
+  },
+  "src/lib/useGalleryCommands.ts": {
+    "promise/prefer-await-to-then": 2
+  },
+  "src/main.tsx": {
+    "typescript/no-unnecessary-condition": 1
+  },
+  "test/live.test.ts": {
+    "typescript/no-restricted-imports": 1,
+    "no-underscore-dangle": 38,
+    "typescript/no-shadow": 13,
+    "unicorn/no-await-expression-member": 37,
+    "stylistic/max-statements-per-line": 1,
+    "stylistic/no-extra-parens": 1
+  },
+  "test/unit/architecture.test.ts": {
+    "perfectionist/sort-imports": 2,
+    "stylistic/padding-line-between-statements": 1,
+    "typescript/no-shadow": 6,
+    "stylistic/object-curly-newline": 10,
+    "stylistic/object-property-newline": 11,
+    "unicorn/prefer-spread": 1,
+    "curly": 1,
+    "stylistic/nonblock-statement-body-position": 1
+  },
+  "test/unit/gallery.test.ts": {
+    "perfectionist/sort-imports": 1,
+    "stylistic/object-curly-newline": 58,
+    "stylistic/object-property-newline": 40,
+    "stylistic/padding-line-between-statements": 2,
+    "unicorn/no-array-for-each": 1,
+    "unicorn/prefer-number-properties": 1,
+    "stylistic/brace-style": 2,
+    "stylistic/max-statements-per-line": 1,
+    "typescript/restrict-template-expressions": 1,
+    "prefer-template": 6,
+    "unicorn/prefer-string-raw": 1,
+    "typescript/no-base-to-string": 1,
+    "typescript/no-shadow": 1
+  },
+  "test/unit/gold-material.test.ts": {
+    "perfectionist/sort-imports": 2,
+    "curly": 6,
+    "stylistic/nonblock-statement-body-position": 6,
+    "stylistic/padding-line-between-statements": 2,
+    "stylistic/new-parens": 1
+  },
+  "test/unit/hud.test.ts": {
+    "perfectionist/sort-imports": 1,
+    "curly": 2,
+    "stylistic/nonblock-statement-body-position": 2,
+    "stylistic/padding-line-between-statements": 2,
+    "stylistic/object-curly-newline": 16,
+    "stylistic/object-property-newline": 11
+  },
+  "test/unit/inspection-look.test.ts": {
+    "perfectionist/sort-imports": 1,
+    "stylistic/new-parens": 4,
+    "stylistic/padding-line-between-statements": 12,
+    "unicorn/numeric-separators-style": 11,
+    "curly": 7,
+    "stylistic/nonblock-statement-body-position": 7,
+    "prefer-const": 1,
+    "unicorn/prefer-number-properties": 2
+  },
+  "test/unit/leaves.test.ts": {
+    "perfectionist/sort-imports": 3,
+    "stylistic/block-spacing": 6,
+    "stylistic/brace-style": 6,
+    "stylistic/max-statements-per-line": 3,
+    "stylistic/object-curly-newline": 8,
+    "stylistic/object-property-newline": 8,
+    "stylistic/padding-line-between-statements": 3,
+    "stylistic/new-parens": 13,
+    "curly": 13,
+    "stylistic/nonblock-statement-body-position": 13,
+    "typescript/no-shadow": 2,
+    "one-var": 5,
+    "unicorn/no-for-loop": 1,
+    "unicorn/consistent-function-scoping": 1,
+    "unicorn/numeric-separators-style": 6,
+    "typescript/array-type": 1,
+    "stylistic/function-paren-newline": 2,
+    "stylistic/function-call-argument-newline": 2,
+    "unicorn/no-useless-iterator-to-array": 1
+  },
+  "test/unit/marble-material.test.ts": {
+    "perfectionist/sort-imports": 1,
+    "stylistic/padding-line-between-statements": 2
+  },
+  "test/unit/menu.test.ts": {
+    "perfectionist/sort-imports": 2,
+    "stylistic/object-curly-newline": 8,
+    "stylistic/object-property-newline": 4,
+    "curly": 2,
+    "stylistic/nonblock-statement-body-position": 2,
+    "stylistic/padding-line-between-statements": 1,
+    "stylistic/block-spacing": 6,
+    "stylistic/brace-style": 6,
+    "stylistic/max-statements-per-line": 3
+  },
+  "test/unit/narration-meter.test.ts": {
+    "curly": 1,
+    "stylistic/nonblock-statement-body-position": 1,
+    "stylistic/padding-line-between-statements": 1,
+    "stylistic/object-curly-newline": 6,
+    "stylistic/object-property-newline": 7,
+    "stylistic/block-spacing": 4,
+    "stylistic/brace-style": 4
+  },
+  "test/unit/narrator.test.ts": {
+    "unicorn/consistent-function-scoping": 1,
+    "typescript/no-unnecessary-condition": 1,
+    "stylistic/max-statements-per-line": 3,
+    "stylistic/no-extra-parens": 1,
+    "stylistic/object-curly-newline": 2,
+    "stylistic/object-property-newline": 3
+  },
+  "test/unit/pedestal.test.ts": {
+    "perfectionist/sort-imports": 1,
+    "stylistic/object-curly-newline": 4,
+    "stylistic/object-property-newline": 4,
+    "stylistic/padding-line-between-statements": 6,
+    "unicorn/prefer-spread": 1,
+    "curly": 6,
+    "stylistic/nonblock-statement-body-position": 6,
+    "unicorn/numeric-separators-style": 1
+  },
+  "test/unit/persistence.test.ts": {
+    "unicorn/no-await-expression-member": 1
+  },
+  "test/unit/placement-preview.test.ts": {
+    "perfectionist/sort-imports": 2,
+    "stylistic/new-parens": 5,
+    "stylistic/padding-line-between-statements": 4,
+    "stylistic/no-multiple-empty-lines": 1,
+    "typescript/array-type": 1
+  },
+  "test/unit/pots.test.ts": {
+    "perfectionist/sort-imports": 1,
+    "stylistic/block-spacing": 6,
+    "stylistic/brace-style": 6,
+    "stylistic/max-statements-per-line": 3,
+    "stylistic/object-curly-newline": 20,
+    "stylistic/object-property-newline": 20,
+    "curly": 5,
+    "stylistic/nonblock-statement-body-position": 5,
+    "stylistic/padding-line-between-statements": 3,
+    "stylistic/new-parens": 3,
+    "typescript/no-shadow": 1,
+    "unicorn/no-useless-iterator-to-array": 2,
+    "typescript/array-type": 1,
+    "unicorn/no-array-for-each": 3,
+    "one-var": 1,
+    "sort-vars": 1
+  },
+  "test/unit/props.test.ts": {
+    "perfectionist/sort-imports": 1,
+    "stylistic/block-spacing": 2,
+    "stylistic/brace-style": 2,
+    "stylistic/max-statements-per-line": 1,
+    "stylistic/object-curly-newline": 8,
+    "stylistic/object-property-newline": 10,
+    "stylistic/padding-line-between-statements": 4,
+    "unicorn/numeric-separators-style": 1,
+    "unicorn/prefer-number-properties": 1,
+    "typescript/no-shadow": 1,
+    "curly": 1,
+    "stylistic/nonblock-statement-body-position": 1
+  },
+  "test/unit/soil.test.ts": {
+    "perfectionist/sort-imports": 1,
+    "curly": 1,
+    "stylistic/nonblock-statement-body-position": 1
+  },
+  "test/unit/terracotta.test.ts": {
+    "perfectionist/sort-imports": 1,
+    "curly": 4,
+    "stylistic/nonblock-statement-body-position": 4,
+    "stylistic/padding-line-between-statements": 2
+  },
+  "vite.config.ts": {
+    "perfectionist/sort-imports": 1,
+    "stylistic/object-curly-newline": 2,
+    "stylistic/object-property-newline": 3,
+    "stylistic/comma-dangle": 1
+  }
+}

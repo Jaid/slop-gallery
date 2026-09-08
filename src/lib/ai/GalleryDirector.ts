@@ -10,7 +10,7 @@ export class GalleryDirector {
   readonly narrator: Narrator
   private controller = new AbortController
   private flavors = new Map<string, symbol>
-  private merges = new Set<string>
+  private merges = new Map<string, symbol>
 
   constructor(private settings: AiSettings, private key: string) {
     this.narrator = new Narrator(settings, key)
@@ -19,7 +19,18 @@ export class GalleryDirector {
   dispose() {
     this.controller.abort()
     this.narrator.dispose()
-    useGallery.setState(s => ({portraits: s.portraits.map(p => (p.pending || p.merging || p.reserved ? {...p, pending: false, merging: false, reserved: false} : p))}))
+    for (const [id, token] of this.merges) {
+      this.releaseMerge(id, token)
+    }
+    for (const [id, token] of this.flavors) {
+      if (useGallery.getState().portraits.some(p => p.id === id && p.flavorJob === token)) {
+        useGallery.getState().update(id, {
+          pending: false,
+          flavorJob: undefined,
+        })
+      }
+    }
+    this.flavors.clear()
   }
 
   async flavor(portrait: Portrait) {
@@ -33,8 +44,11 @@ export class GalleryDirector {
     const token = Symbol(portrait.id)
     this.flavors.set(portrait.id, token)
     const source = portrait.source
-    const current = () => !this.controller.signal.aborted && this.flavors.get(portrait.id) === token && useGallery.getState().portraits.some(p => p.id === portrait.id && p.source === source && p.pending)
-    useGallery.getState().update(portrait.id, {pending: true})
+    const current = () => !this.controller.signal.aborted && this.flavors.get(portrait.id) === token && useGallery.getState().portraits.some(p => p.id === portrait.id && p.source === source && p.pending && p.flavorJob === token)
+    useGallery.getState().update(portrait.id, {
+      pending: true,
+      flavorJob: token,
+    })
     try {
       const update = (partial: Partial<Portrait>) => {
         if (!current()) {
@@ -62,11 +76,17 @@ export class GalleryDirector {
       }
     } finally {
       if (current()) {
-        useGallery.getState().update(portrait.id, {pending: false})
+        useGallery.getState().update(portrait.id, {
+          pending: false,
+          flavorJob: undefined,
+        })
         this.narrator.ready(portrait.id)
       }
       if (this.flavors.get(portrait.id) === token) {
         this.flavors.delete(portrait.id)
+        if (useGallery.getState().portraits.some(p => p.id === portrait.id && p.flavorJob === token)) {
+          useGallery.getState().update(portrait.id, {flavorJob: undefined})
+        }
       }
     }
   }
@@ -78,9 +98,7 @@ export class GalleryDirector {
   }
   protected async generateMerge(first: Portrait['source'], second: Portrait['source'], signal: AbortSignal, aspect: number) {
     if (!this.settings.ai || !this.key) {
-      const result = await compositeImages(first, second)
-      await new Promise(resolve => setTimeout(resolve, 1400))
-      return result
+      return compositeImages(first, second)
     }
     const {default: MergeGenerator} = await import('./MergeGenerator.ts')
     const [hanging, thrown] = await Promise.all([loadBlob(first), loadBlob(second)])
@@ -98,19 +116,22 @@ export class GalleryDirector {
     if (!a?.hung || !b || b.hung || first === second || a.merging || b.reserved || this.merges.has(first) || this.merges.has(second)) {
       return
     }
-    this.merges.add(first)
-    this.merges.add(second)
+    const token = Symbol('merge')
+    this.merges.set(first, token)
+    this.merges.set(second, token)
     s.update(first, {
       merging: true,
+      mergeJob: token,
       pending: false,
     })
     s.update(second, {
       reserved: true,
+      mergeJob: token,
       pending: false,
     })
     const current = () => {
       const portraits = useGallery.getState().portraits
-      return !this.controller.signal.aborted && portraits.some(p => p.id === first && p.source === a.source && p.merging) && portraits.some(p => p.id === second && p.source === b.source && p.reserved)
+      return !this.controller.signal.aborted && portraits.some(p => p.id === first && p.source === a.source && p.merging && p.mergeJob === token) && portraits.some(p => p.id === second && p.source === b.source && p.reserved && p.mergeJob === token)
     }
     notify(this.settings.ai && this.key ? 'The alchemy is underway. Both originals stay safe until it succeeds.' : 'A local collage is taking shape. No AI and no upload.')
     try {
@@ -123,6 +144,8 @@ export class GalleryDirector {
         source: merged,
         narration: undefined,
         merging: false,
+        mergeJob: undefined,
+        flavorJob: undefined,
         pending: false,
         imported: true,
         title: 'An unexpected collaboration',
@@ -134,23 +157,32 @@ export class GalleryDirector {
       state.commit(state.portraits.filter(p => p.id !== second).map(p => p.id === first ? result : p))
       chime(900)
       notify('Something wonderfully unexpected. Undo will bring both originals back.')
-      void this.flavor(result)
+      void this.flavor(result).catch(() => notify('The label could not be prepared.'))
     } catch {
       if (current()) {
         notify('The fusion did not finish. Both originals are still here. Check the image model or try again.')
       }
     } finally {
       // One original may have been removed mid-request. Release the survivor as well.
-      const state = useGallery.getState()
-      if (state.portraits.some(p => p.id === first && p.source === a.source && p.merging)) {
-        state.update(first, {merging: false})
+      this.releaseMerge(first, token)
+      this.releaseMerge(second, token)
+      if (!this.controller.signal.aborted) {
+        this.narrator.ready(first)
       }
-      if (state.portraits.some(p => p.id === second && p.source === b.source && p.reserved)) {
-        state.update(second, {reserved: false})
-      }
-      this.narrator.ready(first)
-      this.merges.delete(first)
-      this.merges.delete(second)
+    }
+  }
+
+  private releaseMerge(id: string, token: symbol) {
+    if (this.merges.get(id) !== token) {
+      return
+    }
+    this.merges.delete(id)
+    if (useGallery.getState().portraits.some(p => p.id === id && p.mergeJob === token)) {
+      useGallery.getState().update(id, {
+        merging: false,
+        reserved: false,
+        mergeJob: undefined,
+      })
     }
   }
 }

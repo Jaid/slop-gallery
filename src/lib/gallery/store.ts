@@ -3,8 +3,9 @@ import type {GalleryDocument, GallerySettings, GallerySnapshot, NarrationState, 
 import {create} from 'zustand'
 
 import {initialPortraits} from './collection.ts'
+import {validateCollectionImages} from './imagePolicy.ts'
 
-export const maximumPortraits = 120
+export {maximumPortraits} from './imagePolicy.ts'
 export type Panel = 'collection' | 'help' | 'map' | 'settings' | null
 type State = GallerySettings & GallerySnapshot & {
   active: string | null
@@ -17,8 +18,11 @@ type State = GallerySettings & GallerySnapshot & {
   future: Array<GallerySnapshot>
   hasControlled: boolean
   held: string | null
+  importEpoch: number
   importFiles: ((files: Array<File>, target?: {direction: Vec3
     origin: Vec3}) => Promise<void>) | null
+  importTarget: ((x: number, y: number) => {direction: Vec3
+    origin: Vec3}) | null
   inspecting: string | null
   locked: boolean
   narration: NarrationState | null
@@ -28,11 +32,11 @@ type State = GallerySettings & GallerySnapshot & {
   placement: Placement | null
   ready: boolean
   remove: (id: string) => void
-  importEpoch: number
   resetEpoch: number
   revision: number
   room: RoomId
   saveStatus: 'error' | 'loading' | 'saved' | 'saving'
+  storageRecoveryRequired: boolean
   update: (id: string, patch: Partial<Portrait>) => void
 }
 
@@ -43,6 +47,29 @@ export function cleanPortrait(p: Portrait): Portrait {
     merging: false,
     reserved: false,
     velocity: undefined,
+    mergeJob: undefined,
+    flavorJob: undefined,
+  }
+}
+
+export function readControlled() {
+  try {
+    return localStorage.getItem('slop-gallery-controlled') === 'true'
+  } catch {
+    return false
+  }
+}
+// Entering the menu or acquiring pointer lock is not an in-game control.
+export function markControlled() {
+  const s = useGallery.getState()
+  if (s.hasControlled || !s.locked || s.panel) {
+    return
+  }
+  useGallery.setState({hasControlled: true})
+  try {
+    localStorage.setItem('slop-gallery-controlled', 'true')
+  } catch {
+    // Reset still becomes available for this visit when storage is blocked.
   }
 }
 
@@ -56,26 +83,6 @@ function readKey() {
     return sessionStorage.getItem('slop-gallery-key') ?? ''
   } catch {
     return ''
-  }
-}
-
-export function readControlled() {
-  try {
-    return localStorage.getItem('slop-gallery-controlled') === 'true'
-  } catch {
-    return false
-  }
-}
-
-// Entering the menu or acquiring pointer lock is not an in-game control.
-export function markControlled() {
-  const s = useGallery.getState()
-  if (s.hasControlled || !s.locked || s.panel) return
-  useGallery.setState({hasControlled: true})
-  try {
-    localStorage.setItem('slop-gallery-controlled', 'true')
-  } catch {
-    // Reset still becomes available for this visit when storage is blocked.
   }
 }
 
@@ -101,26 +108,34 @@ export const useGallery = create<State>((set, get) => ({
   theme: 'ivory',
   frame: 'gold',
   narration: null,
+  storageRecoveryRequired: false,
   saveStatus: 'loading',
   past: [],
   future: [],
   importEpoch: 0,
   revision: 0,
   importFiles: null,
-  update: (id, patch) => set(s => ({portraits: s.portraits.map(p => p.id === id ? {...p, ...patch} : p)})),
-  commit: portraits => set(s => ({
-    portraits,
-    past: [...s.past.slice(-19), snapshot(s)],
-    future: [],
-    revision: s.revision + 1,
-    held: null,
-    placement: null,
-  })),
+  importTarget: null,
+  update: (id, patch) => set(s => {
+    const portraits = s.portraits.map(p => (p.id === id ? {...p, ...patch} : p))
+    if (patch.source !== undefined) {
+      validateCollectionImages(portraits)
+    }
+    return {portraits}
+  }),
+  commit: portraits => {
+    validateCollectionImages(portraits)
+    set(s => ({
+      portraits,
+      past: [...s.past.slice(-19), snapshot(s)],
+      future: [],
+      revision: s.revision + 1,
+      held: null,
+      placement: null,
+    }))
+  },
   add: portrait => {
     const s = get()
-    if (s.portraits.length >= maximumPortraits) {
-      throw new Error(`The gallery holds ${maximumPortraits} works. Remove a work before adding another.`)
-    }
     s.commit([...s.portraits, portrait])
   },
   remove: id => get().commit(get().portraits.filter(p => p.id !== id)),
@@ -182,6 +197,7 @@ export function createDocument(): GalleryDocument {
 }
 
 export function restoreDocument(document: GalleryDocument) {
+  validateCollectionImages(document.portraits)
   useGallery.setState({
     ...snapshot(document),
     ...document.settings,

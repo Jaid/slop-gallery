@@ -4,6 +4,7 @@ import {useEffect, useRef} from 'react'
 
 import {openPanel, useGallery} from '#src/lib/gallery.ts'
 
+import History from './History.tsx'
 import Icon from './Icon.tsx'
 
 export default function Panel({title, children}: {children: ReactNode
@@ -30,6 +31,7 @@ export default function Panel({title, children}: {children: ReactNode
     <section className={`panel ${panel === 'collection' ? 'collection-panel' : ''}`}>
       <div className="panel-heading"><div><div className="eyebrow">THE SLOP GALLERY</div><h2 id="panel-title">{title}</h2></div><button className="icon-button" aria-label="Close panel" onClick={() => openPanel(null)} autoFocus><Icon name="close"/></button></div>
       {notice && <div className="toast" role="status">{notice}</div>}
+      <History/>
       {children}
     </section>
   </dialog>

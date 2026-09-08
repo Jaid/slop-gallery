@@ -2,7 +2,7 @@ import type {PropsWithChildren} from 'react'
 
 import {Component} from 'react'
 
-import {openPanel} from '#src/lib/gallery.ts'
+import {openPanel, useGallery} from '#src/lib/gallery.ts'
 
 export default class RenderBoundary extends Component<PropsWithChildren<{onFailure?: () => void}>, {failed: boolean}> {
   static getDerivedStateFromError() {
@@ -10,6 +10,12 @@ export default class RenderBoundary extends Component<PropsWithChildren<{onFailu
   }
   state = {failed: false}
   componentDidCatch() {
+    useGallery.setState({
+      ready: false,
+      locked: false,
+      active: null,
+      activeLabel: null,
+    })
     this.props.onFailure?.()
   }
   render() {
