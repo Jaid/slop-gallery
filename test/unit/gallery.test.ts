@@ -22,10 +22,10 @@ describe('wall geometry', () => {
     })
   }
   test('the two Doge images are independent, normally hung portraits', () => {
-    const velvet = initialPortraits.find(p => p.id === 'doge')!
-    const neon = initialPortraits.find(p => p.id === 'doge-neon')!
-    expect(velvet.source).toBe('/art/doge-velvet.webp')
-    expect(neon.source).toBe('/art/doge-neon.webp')
+    const velvet = initialPortraits.find(p => p.id === 'dog')!
+    const neon = initialPortraits.find(p => p.id === 'wolf')!
+    expect(velvet.source).toBe('/art/dog.webp')
+    expect(neon.source).toBe('/art/wolf.webp')
     expect(velvet.hung).toBe(true)
     expect(neon.hung).toBe(true)
     expect(velvet.position).not.toEqual(neon.position)
@@ -200,6 +200,55 @@ describe('transactional history', () => {
   })
 })
 describe('backup validation', () => {
+  test('default IDs match unique, existing artwork and narration filenames', async () => {
+    expect(new Set(initialPortraits.map(p => p.id)).size).toBe(initialPortraits.length)
+    for (const p of initialPortraits) {
+      expect(p.id).toMatch(/^[a-z]+(?:-[a-z]+)*$/)
+      expect(p.source).toMatch(new RegExp('^/art/' + p.id + '\\.(webp|png|avif)$'))
+      expect(await Bun.file(new URL('../../public' + p.source, import.meta.url)).exists()).toBe(true)
+      if (p.narration) {
+        expect(p.narration).toBe('/audio/' + p.id + '.opus')
+        expect(await Bun.file(new URL('../../public' + p.narration, import.meta.url)).exists()).toBe(true)
+      }
+    }
+  })
+  test('renamed defaults in saved collections preserve edits and migrate asset paths', () => {
+    const shrimp = initialPortraits.find(p => p.id === 'shrimp')!
+    const old = {
+      ...shrimp,
+      id: 'shrimpman',
+      source: '/art/shrimpman.webp',
+      narration: '/audio/shrimpman.opus',
+      title: 'My custom title',
+      description: 'My custom story.',
+    }
+    const result = validateDocument({...original, portraits: [old]}).portraits[0]!
+    expect(result).toMatchObject({
+      ...shrimp,
+      title: old.title,
+      description: old.description,
+    })
+    expect(old.id).toBe('shrimpman')
+    expect(validateDocument({...original, portraits: [result]}).portraits[0]).toEqual(result)
+    expect(() => validateDocument({...original, portraits: [old, shrimp]})).toThrow()
+  })
+  for (const id of ['doge-neon', 'dog-neon']) {
+    test(`migrates ${id} to wolf`, () => {
+      const wolf = initialPortraits.find(p => p.id === 'wolf')!
+      const result = validateDocument({
+        ...original,
+        portraits: [{...wolf, id, source: '/art/' + id + '.webp'}],
+      }).portraits[0]!
+      expect(result).toMatchObject(wolf)
+    })
+  }
+  test('renaming defaults does not replace imported images', () => {
+    const source = new Blob(['pixels'], {type: 'image/webp'})
+    const custom = {...initialPortraits[0]!, id: 'my-artwork', source, imported: true}
+    const result = validateDocument({...original, portraits: [custom]}).portraits[0]!
+    expect(result.id).toBe(custom.id)
+    expect(result.source).toBe(source)
+  })
   test('accepts the shipped collection', () => {
     expect(validateDocument(original).portraits).toHaveLength(16)
   })
@@ -216,10 +265,10 @@ describe('backup validation', () => {
     })
   }
   test('loads an existing Doge without retaining its retired recording or alternate image', () => {
-    const doge = initialPortraits.find(p => p.id === 'doge')!
+    const doge = initialPortraits.find(p => p.id === 'dog')!
     const document = validateDocument({
       ...original,
-      portraits: [{...doge, alternateSource: '/art/doge-neon.webp', narration: '/audio/doge.opus'}],
+      portraits: [{...doge, alternateSource: '/art/wolf.webp', narration: '/audio/doge.opus'}],
     })
     expect(document.portraits).toHaveLength(1)
     expect(document.portraits[0]!.source).toBe(doge.source)

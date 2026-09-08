@@ -45,13 +45,13 @@ test('the real text adapter consumes streamed structured output', async () => {
   expect(request.messages.at(-1).content[0].image_url.url).toStartWith('data:image/webp;base64,')
 })
 test('the real image adapter keeps hanging/thrown attachment order', async () => {
-  const data = new Uint8Array(await Bun.file('public/art/work-0.webp').arrayBuffer())
+  const data = new Uint8Array(await Bun.file('public/art/goose.webp').arrayBuffer())
   fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({
     created: 1,
     data: [{b64_json: data.toBase64()}],
   }))
-  const first = Bun.file('public/art/work-0.webp')
-  const second = Bun.file('public/art/work-1.webp')
+  const first = Bun.file('public/art/goose.webp')
+  const second = Bun.file('public/art/orange.webp')
   const result = await new MergeGenerator('test-key', 'test-image-model').generate(first, second)
   expect(result.size).toBe(data.byteLength)
   expect(fetchSpy.mock.calls[0]![0]).toBe('https://openrouter.ai/api/v1/images')

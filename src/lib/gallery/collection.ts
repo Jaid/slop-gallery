@@ -6,7 +6,7 @@ export const initialPortraits: Array<Portrait> = [
     title: 'His Unbothered Majesty',
     creator: 'Cornelius van Honk',
     description: 'A ruler of impeccable breeding and absolutely no qualifications. His foreign policy consists primarily of hissing.',
-    source: '/art/work-0.webp',
+    source: '/art/goose.webp',
     position: [
       -3.6,
       2.5,
@@ -23,7 +23,7 @@ export const initialPortraits: Array<Portrait> = [
     title: 'A Slightly Larger Tomorrow',
     creator: 'The Department of Daydreams',
     description: 'The village had asked for a little more sunshine. The universe, as usual, misunderstood the brief.',
-    source: '/art/work-1.webp',
+    source: '/art/orange.webp',
     position: [
       0,
       2.65,
@@ -36,11 +36,11 @@ export const initialPortraits: Array<Portrait> = [
     wallId: 'daydream-north',
   },
   {
-    id: 'doge',
+    id: 'dog',
     title: 'The Velvet Doge',
     creator: 'The Department of Good Dogs',
     description: 'A peaceful velvet pup with no appointments, no responsibilities and a deeply held belief that the entire sofa belongs to him.',
-    source: '/art/doge-velvet.webp',
+    source: '/art/dog.webp',
     position: [
       3.6,
       2.5,
@@ -53,11 +53,11 @@ export const initialPortraits: Array<Portrait> = [
     wallId: 'daydream-north',
   },
   {
-    id: 'doge-neon',
+    id: 'wolf',
     title: 'Much Neon. Very Cosmic.',
     creator: 'The Department of Good Dogs',
     description: 'A galactic predator of pure neon fury. His cosmic authority is absolute, provided nobody mentions the vacuum cleaner.',
-    source: '/art/doge-neon.webp',
+    source: '/art/wolf.webp',
     position: [
       -4.5,
       2.5,
@@ -70,11 +70,11 @@ export const initialPortraits: Array<Portrait> = [
     wallId: 'daydream-south',
   },
   {
-    id: 'cloud',
+    id: 'tree',
     title: 'Rooted in Absolutely Nothing',
     creator: 'Sylvia Nimbus',
     description: 'A tree with excellent aspirations and a rather relaxed relationship with the ground. The gardener has requested a ladder.',
-    source: '/art/work-3.webp',
+    source: '/art/tree.webp',
     position: [
       -7.78,
       2.5,
@@ -91,7 +91,7 @@ export const initialPortraits: Array<Portrait> = [
     title: 'Mona Coo Lisa',
     creator: 'Leonardo da Birb',
     description: 'Her enigmatic smile hides the fact she just stole your sandwich. A masterpiece of urban elegance and mild menace.',
-    source: '/art/pigeon-mona.png',
+    source: '/art/pigeon.png',
     position: [
       7.78,
       2.6,
@@ -104,12 +104,12 @@ export const initialPortraits: Array<Portrait> = [
     wallId: 'daydream-east',
   },
   {
-    id: 'golden',
+    id: 'toast',
     title: 'His Golden Crispness',
     creator: 'Imperial Court of Toast',
     description: 'The sovereign ruler of breakfast, anointed in salted butter and reigning over four slots of unyielding thermal perfection.',
-    source: '/art/golden-crispness.webp',
-    narration: '/audio/golden-crispness.opus',
+    source: '/art/toast.webp',
+    narration: '/audio/toast.opus',
     position: [
       19.78,
       2.6,
@@ -122,12 +122,12 @@ export const initialPortraits: Array<Portrait> = [
     wallId: 'afterhours-east',
   },
   {
-    id: 'catgalaxy',
+    id: 'cat',
     title: 'Cosmic Inconvenience',
     creator: 'Meow-ghelangelo',
     description: 'Proof that given infinite cosmic authority, a feline will still push entire clusters of stars off the counter simply to see them explode into supernovas.',
-    source: '/art/cat-galaxy.webp',
-    narration: '/audio/cat-galaxy.opus',
+    source: '/art/cat.webp',
+    narration: '/audio/cat.opus',
     position: [
       -17,
       2.65,
@@ -144,7 +144,7 @@ export const initialPortraits: Array<Portrait> = [
     title: 'The Algorithm Dreams of Fruit',
     creator: 'Generative Orchard No. 6',
     description: 'Synthetic produce contemplates whether humans can distinguish hunger from engagement. The banana has already accepted cookies.',
-    source: '/art/algorithm-fruit.webp',
+    source: '/art/fruit.webp',
     position: [
       -12.5,
       2.65,
@@ -161,7 +161,7 @@ export const initialPortraits: Array<Portrait> = [
     title: 'The Last Course Refuses to End',
     creator: 'Ectoplasmic Catering Collective',
     description: 'Dinner ran long. By approximately four centuries. No guest will admit who ordered the bottomless spectral linguine.',
-    source: '/art/ghost-banquet.avif',
+    source: '/art/ghosts.avif',
     position: [
       -19.78,
       2.6,
@@ -174,12 +174,12 @@ export const initialPortraits: Array<Portrait> = [
     wallId: 'cabinet-west',
   },
   {
-    id: 'shrimpman',
+    id: 'shrimp',
     title: 'Portrait of a Gentleman as Appetizer',
     creator: 'Rembrandt van Rijn-ish',
     description: 'He was a man of substance, of brine, and of cocktail sauce. History remembers only the sauce.',
-    source: '/art/shrimpman.webp',
-    narration: '/audio/shrimpman.opus',
+    source: '/art/shrimp.webp',
+    narration: '/audio/shrimp.opus',
     position: [
       11,
       2.6,
@@ -192,12 +192,12 @@ export const initialPortraits: Array<Portrait> = [
     wallId: 'afterhours-north',
   },
   {
-    id: 'rubberduck',
+    id: 'duck',
     title: 'Apotheosis of the Rubber Duck',
     creator: 'Michelangelo di Slop',
     description: 'The sacred bath toy ascends to the celestial heavens, forever untethered from bathtubs, soapsuds, and mortality.',
-    source: '/art/rubber-duck-ascension.webp',
-    narration: '/audio/rubber-duck-ascension.opus',
+    source: '/art/duck.webp',
+    narration: '/audio/duck.opus',
     position: [
       0,
       2.4,
@@ -210,12 +210,12 @@ export const initialPortraits: Array<Portrait> = [
     wallId: 'secret-south',
   },
   {
-    id: 'sourdough',
+    id: 'bread',
     title: 'The Sourdough Soliloquy',
     creator: 'Jan van der Crumb',
     description: 'Born of wild yeast and existential dread, this loaf contemplated the fleeting cruelty of butter before meeting the serrated knife.',
-    source: '/art/sourdough-soliloquy.webp',
-    narration: '/audio/sourdough-soliloquy.opus',
+    source: '/art/bread.webp',
+    narration: '/audio/bread.opus',
     position: [
       16,
       2.6,
@@ -228,12 +228,12 @@ export const initialPortraits: Array<Portrait> = [
     wallId: 'afterhours-north',
   },
   {
-    id: 'frogmona',
+    id: 'frog',
     title: 'Mona Ribbit',
     creator: 'Leonardo da Pond',
     description: 'She smiles because she knows something you don’t – mostly where the flies are and why your pond is inferior.',
-    source: '/art/frog-mona.webp',
-    narration: '/audio/frog-mona.opus',
+    source: '/art/frog.webp',
+    narration: '/audio/frog.opus',
     position: [
       -14,
       2.5,
@@ -246,12 +246,12 @@ export const initialPortraits: Array<Portrait> = [
     wallId: 'cabinet-south',
   },
   {
-    id: 'petalroom',
+    id: 'flower',
     title: 'Board and Lodging',
     creator: 'C. Nightbloom',
     description: 'The moths pay rent in dust. The furniture is pollen. Reservations are seasonal and spiritually non-refundable.',
-    source: '/art/petal-room.webp',
-    narration: '/audio/petal-room.opus',
+    source: '/art/flower.webp',
+    narration: '/audio/flower.opus',
     position: [
       14,
       2.6,
@@ -268,7 +268,7 @@ export const initialPortraits: Array<Portrait> = [
     title: 'An Uninvited Tea Guest',
     creator: 'Salvador Deli',
     description: 'The tea is cold. The guest is shellfish. Nobody is having the afternoon they had imagined.',
-    source: '/art/work-2.webp',
+    source: '/art/lobster.webp',
     position: [
       4.5,
       2.5,
