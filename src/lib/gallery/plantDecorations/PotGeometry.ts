@@ -13,6 +13,12 @@ const profiles: Record<PotKind, Profile> = {
   celadon: [[0, 0], [0.24, 0], [0.26, 0.03], [0.31, 0.07], [0.365, 0.15], [0.393, 0.24], [0.4, 0.31], [0.387, 0.39], [0.357, 0.47], [0.337, 0.5], [0.32, 0.51], [0.306, 0.5], [0.3, 0.477], [0.324, 0.43], [0.353, 0.34], [0.355, 0.25], [0.32, 0.14], [0.24, 0.065], [0, 0.065]],
   noir: [[0, 0.13], [0.22, 0.13], [0.24, 0.155], [0.252, 0.21], [0.325, 0.75], [0.335, 0.78], [0.326, 0.8], [0.303, 0.8], [0.294, 0.78], [0.215, 0.2], [0, 0.2]],
 }
+const radialSegments: Record<PotKind, number> = {
+  atelier: 96,
+  ivory: 200, // Five segments per flute keep all 40 ridges evenly sampled.
+  celadon: 96,
+  noir: 80,
+}
 
 /** Hollow ceramic shells with finished rims; the recessed substrate belongs to the pot. */
 export class PotGeometry {
@@ -23,7 +29,7 @@ export class PotGeometry {
 
   constructor(kind: PotKind) {
     const definition = potDefinition(kind)
-    this.shell = new LatheGeometry(profiles[kind].map(point => new Vector2(...point)), kind === 'ivory' ? 320 : 128)
+    this.shell = new LatheGeometry(profiles[kind].map(point => new Vector2(...point)), radialSegments[kind])
     const positions = this.shell.getAttribute('position')
     const uv = this.shell.getAttribute('uv')
     for (let i = 0; i < positions.count; i++) {
@@ -45,8 +51,8 @@ export class PotGeometry {
     this.vertices = Float32Array.from(positions.array)
     this.soil = new CylinderGeometry(definition.soilRadius, definition.soilRadius, 0.03, 64).translate(0, definition.soilHeight - 0.015, 0)
     this.trim = kind === 'noir' ? mergeParts([
-      new CylinderGeometry(0.22, 0.24, 0.13, 96).translate(0, 0.065, 0),
-      new TorusGeometry(0.325, 0.006, 8, 96).rotateX(Math.PI / 2).translate(0, 0.772, 0),
+      new CylinderGeometry(0.22, 0.24, 0.13, 64).translate(0, 0.065, 0),
+      new TorusGeometry(0.325, 0.006, 6, 64).rotateX(Math.PI / 2).translate(0, 0.772, 0),
     ]) : null
   }
 

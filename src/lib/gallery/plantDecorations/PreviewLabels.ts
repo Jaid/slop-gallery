@@ -49,7 +49,7 @@ export class PreviewLabels {
       context.fillRect(x + 178, y + 130, width - 202, 1)
       context.fillStyle = '#294238'
       context.font = 'bold 21px sans-serif'
-      context.fillText(complexityLabel(this.complexities[i]!.triangles), x + 178, y + 164, width - 200)
+      context.fillText(complexityLabel(this.complexities[i]!), x + 178, y + 164, width - 200)
     }
     this.texture = canvasTexture(canvas)
     this.texture.anisotropy = 16

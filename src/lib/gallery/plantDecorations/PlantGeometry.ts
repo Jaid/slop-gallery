@@ -2,7 +2,7 @@ import type {PlantKind} from './catalog.ts'
 
 import {BufferGeometry, CatmullRomCurve3, Color, Float32BufferAttribute, Matrix4, Quaternion, SphereGeometry, TubeGeometry, Vector3} from 'three/webgpu'
 
-import {mergeParts} from './geometry.ts'
+import {mergeParts, sampleGrid} from './geometry.ts'
 
 type Point = [number, number, number]
 type BladeStyle = 'fiddle' | 'gold' | 'lance' | 'oval' | 'silver' | 'split' | 'succulent'
@@ -62,7 +62,7 @@ export class PlantGeometry {
     }
     const transform = (new Matrix4).compose(new Vector3(...at), (new Quaternion).setFromUnitVectors(up, new Vector3(...direction).normalize()).multiply((new Quaternion).setFromAxisAngle(up, roll)), new Vector3(1, 1, 1))
     if (style === 'succulent') {
-      const geometry = new SphereGeometry(1, 16, 12).scale(width / 2, length / 2, width * 0.22).translate(0, length / 2, 0)
+      const geometry = new SphereGeometry(1, 12, 8).scale(width / 2, length / 2, width * 0.22).translate(0, length / 2, 0)
       const fleshyPositions = geometry.getAttribute('position')
       const fleshyColors: Array<number> = []
       for (let i = 0; i < fleshyPositions.count; i++) {
@@ -116,13 +116,34 @@ export class PlantGeometry {
     geometry.setAttribute('color', new Float32BufferAttribute(colors, 3))
     geometry.setAttribute('uv', new Float32BufferAttribute(uvs, 2))
     geometry.setIndex(indices)
+    // Sample the dense grid’s normals too, so fewer faces do not flatten the original shading.
     geometry.computeVertexNormals()
-    this.blades.push(geometry)
+    // Keep the full outline and the narrow midrib; flat areas need far fewer columns.
+    let sampledColumns = [0, 5, 6, 7, 12]
+    if (style === 'silver') {
+      sampledColumns = [0, 2, 4, 5, 6, 7, 8, 10, 12]
+    }
+    if (style === 'gold') {
+      sampledColumns = [0, 1, 2, 6, 10, 11, 12]
+    }
+    if (style === 'lance') {
+      sampledColumns = [0, 2, 4]
+    }
+    const sampledRows = style === 'lance' ? [0, 1, 2, 4, 6, 8, 10, 11, 12] : Array.from({length: rows + 1}, (_, row) => row)
+    this.blades.push(sampleGrid(geometry, columns, sampledRows, sampledColumns))
+    geometry.dispose()
   }
 
   private branch(points: Array<Point>, radius = 0.009) {
     const curve = new CatmullRomCurve3(points.map(point => new Vector3(...point)))
-    const geometry = new TubeGeometry(curve, Math.max(5, points.length * 5), radius, 6, false)
+    // Straight stalks only need their two end rings; retain trunks and arching frond spines.
+    let tubularSegments = points.length * 3
+    if (points.length === 2) {
+      tubularSegments = 1
+    } else if (radius >= 0.02 || points.length >= 4) {
+      tubularSegments = points.length * 5
+    }
+    const geometry = new TubeGeometry(curve, tubularSegments, radius, 6, false)
     // Taper gently toward the growing tip instead of using uniform wire-like tubes.
     const positions = geometry.getAttribute('position')
     const segments = geometry.parameters.tubularSegments

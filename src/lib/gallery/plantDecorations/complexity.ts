@@ -24,6 +24,8 @@ export function decorationComplexity(pot: PotGeometry, plant: PlantGeometry) {
 }
 
 const countFormat = new Intl.NumberFormat('en-US', {useGrouping: 'min2'})
-export function complexityLabel(triangles: number) {
-  return `Complexity: ${countFormat.format(triangles).replaceAll(',', ' ')} triangles`
+export function complexityLabel({potTriangles, plantTriangles}: ReturnType<typeof decorationComplexity>) {
+  const pot = countFormat.format(potTriangles).replaceAll(',', ' ')
+  const plant = countFormat.format(plantTriangles).replaceAll(',', ' ')
+  return `Complexity: ${pot} + ${plant} triangles`
 }

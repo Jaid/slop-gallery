@@ -59,6 +59,66 @@ describe('modular botanical catalog', () => {
       material.dispose()
     }
   })
+  test('pot 01 stays within its triangle budget, including soil', () => {
+    const geometry = new PotGeometry(plantCombinations[0]!.pot)
+    try {
+      const triangles = triangleCount(geometry.shell) + triangleCount(geometry.soil) + triangleCount(geometry.trim)
+      expect(triangles).toBeGreaterThanOrEqual(2500)
+      expect(triangles).toBeLessThanOrEqual(3000)
+    } finally {
+      geometry.dispose()
+    }
+  })
+  test('pot 09 stays within its triangle budget and retains all 40 evenly spaced flutes', () => {
+    const geometry = new PotGeometry(plantCombinations[8]!.pot)
+    try {
+      const triangles = triangleCount(geometry.shell) + triangleCount(geometry.soil) + triangleCount(geometry.trim)
+      expect(triangles).toBeGreaterThanOrEqual(4000)
+      expect(triangles).toBeLessThanOrEqual(6000)
+      const {points, segments} = geometry.shell.parameters
+      const ring = points.findIndex(point => point.y === 0.45)
+      expect(ring).toBeGreaterThanOrEqual(0)
+      expect(segments % 40).toBe(0)
+      const positions = geometry.shell.getAttribute('position')
+      const radiusAt = (segment: number) => {
+        const vertex = segment * points.length + ring
+        return Math.hypot(positions.getX(vertex), positions.getZ(vertex))
+      }
+      const amplitude = 0.012 * Math.sin(Math.PI * 0.45 / 0.76)
+      const samplesPerFlute = segments / 40
+      for (let flute = 0; flute < 40; flute++) {
+        const peak = radiusAt(flute * samplesPerFlute)
+        const trough = radiusAt(flute * samplesPerFlute + Math.floor(samplesPerFlute / 2))
+        expect(peak).toBeCloseTo(0.319 + amplitude, 6)
+        // Preserve at least 90% of the original crest-to-trough relief.
+        expect(peak - trough).toBeGreaterThanOrEqual(amplitude * 0.9)
+      }
+      expect(radiusAt(segments)).toBeCloseTo(radiusAt(0), 6)
+    } finally {
+      geometry.dispose()
+    }
+  })
+  test('pot 17 stays within its triangle budget, including soil', () => {
+    const geometry = new PotGeometry(plantCombinations[16]!.pot)
+    try {
+      const triangles = triangleCount(geometry.shell) + triangleCount(geometry.soil) + triangleCount(geometry.trim)
+      expect(triangles).toBeGreaterThanOrEqual(3000)
+      expect(triangles).toBeLessThanOrEqual(4000)
+    } finally {
+      geometry.dispose()
+    }
+  })
+  test('pot 25 stays within its triangle budget, including soil and brass hardware', () => {
+    const geometry = new PotGeometry(plantCombinations[24]!.pot)
+    try {
+      expect(geometry.trim).not.toBeNull()
+      const triangles = triangleCount(geometry.shell) + triangleCount(geometry.soil) + triangleCount(geometry.trim)
+      expect(triangles).toBeGreaterThanOrEqual(2500)
+      expect(triangles).toBeLessThanOrEqual(3000)
+    } finally {
+      geometry.dispose()
+    }
+  })
   test('all eight plants are deterministic, rooted, finite and individually modeled', () => {
     const hashes = new Set<bigint | number>
     for (const plant of plants) {
@@ -73,7 +133,9 @@ describe('modular botanical catalog', () => {
           for (const name of ['position', 'normal', 'uv']) {
             expect([...part.getAttribute(name).array].every(Number.isFinite)).toBe(true)
           }
-          expect(part.getAttribute('position').count % 3).toBe(0)
+          expect(part.index).not.toBeNull()
+          expect(part.index!.count % 3).toBe(0)
+          expect([...part.index!.array].every(index => index < part.getAttribute('position').count)).toBe(true)
           expect(part.getAttribute('position').count).toBeGreaterThan(0)
         }
         expect(geometry.foliage.getAttribute('color').count).toBe(geometry.foliage.getAttribute('position').count)
@@ -147,7 +209,7 @@ describe('plant sign complexity', () => {
         const pot = potGeometry.get(combination.pot)!
         const plant = plantGeometry.get(combination.plant)!
         const counts = decorationComplexity(pot, plant)
-        expect(counts.plantTriangles).toBe((plant.foliage.getAttribute('position').count + plant.stems.getAttribute('position').count) / 3)
+        expect(counts.plantTriangles).toBe((plant.foliage.index!.count + plant.stems.index!.count) / 3)
         expect(counts.potTriangles).toBe((pot.shell.index!.count + pot.soil.index!.count) / 3 + triangleCount(pot.trim))
         expect(counts.triangles).toBe(counts.potTriangles + counts.plantTriangles)
         expect(Number.isSafeInteger(counts.triangles)).toBe(true)
@@ -162,9 +224,21 @@ describe('plant sign complexity', () => {
       }
     }
   })
-  test('sign text names the actual triangle unit and groups large counts with narrow spaces', () => {
-    expect(complexityLabel(9999)).toBe('Complexity: 9999 triangles')
-    expect(complexityLabel(10_000)).toBe('Complexity: 10 000 triangles')
-    expect(complexityLabel(123_456)).toBe('Complexity: 123 456 triangles')
+  test('sign text splits pot and plant triangles in that order and groups each count independently', () => {
+    expect(complexityLabel({
+      potTriangles: 9999,
+      plantTriangles: 10_000,
+      triangles: 19_999,
+    })).toBe('Complexity: 9999 + 10 000 triangles')
+    expect(complexityLabel({
+      potTriangles: 123_456,
+      plantTriangles: 9999,
+      triangles: 133_455,
+    })).toBe('Complexity: 123 456 + 9999 triangles')
+    expect(complexityLabel({
+      potTriangles: 0,
+      plantTriangles: 0,
+      triangles: 0,
+    })).toBe('Complexity: 0 + 0 triangles')
   })
 })
