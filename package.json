@@ -48,7 +48,7 @@
     "zustand": "5.0.15"
   },
   "devDependencies": {
-    "@dimforge/rapier3d-compat": "0.19.2",
+    "@dimforge/rapier3d": "0.19.2",
     "@types/bun": "1.4.2",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.7",
