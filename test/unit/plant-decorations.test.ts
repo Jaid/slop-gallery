@@ -1,8 +1,8 @@
 import {describe, expect, test} from 'bun:test'
 
-import {Box3, BoxGeometry, BufferGeometry, Mesh, MeshBasicNodeMaterial, Raycaster, Vector3} from 'three/webgpu'
+import {BoxGeometry, BufferGeometry, Mesh, MeshBasicNodeMaterial, Raycaster, Vector3} from 'three/webgpu'
 
-import {plantCombinations, plants, pots, showPlantPreview} from '../../src/lib/gallery/plantDecorations/catalog.ts'
+import {plantCombinations, plants, pots} from '../../src/lib/gallery/plantDecorations/catalog.ts'
 import {complexityLabel, decorationComplexity} from '../../src/lib/gallery/plantDecorations/complexity.ts'
 import {PlantGeometry} from '../../src/lib/gallery/plantDecorations/PlantGeometry.ts'
 import {PotGeometry} from '../../src/lib/gallery/plantDecorations/PotGeometry.ts'
@@ -20,12 +20,6 @@ describe('modular botanical catalog', () => {
       expect(plantCombinations.slice(row * 8, row * 8 + 8).map(combination => combination.plant)).toEqual(plants.map(plant => plant.id))
       expect(plantCombinations.filter(combination => combination.pot === pot.id)).toHaveLength(8)
     }
-  })
-  test('the installation is temporary and explicitly removable without changing the catalog', () => {
-    expect(showPlantPreview('')).toBe(true)
-    expect(showPlantPreview('?plantPreview=true')).toBe(true)
-    expect(showPlantPreview('?ai=false&plantPreview=false')).toBe(false)
-    expect(plantCombinations).toHaveLength(32)
   })
   test('every pot is hollow above its fitted, recessed soil and has a distinct silhouette', () => {
     const material = new MeshBasicNodeMaterial
@@ -153,37 +147,6 @@ describe('modular botanical catalog', () => {
       }
     }
     expect(hashes.size).toBe(8)
-  })
-  test('all combinations fit inside the room, clear each other and preserve walking lanes', () => {
-    const geometries = new Map(plants.map(plant => [plant.id, new PlantGeometry(plant.id)]))
-    try {
-      const bounds = plantCombinations.map(combination => {
-        const plant = geometries.get(combination.plant)!
-        const pot = pots.find(candidate => candidate.id === combination.pot)!
-        const box = (new Box3).union(plant.foliage.boundingBox!).union(plant.stems.boundingBox!)
-        box.translate(new Vector3(0, pot.soilHeight + 0.036, 0))
-        box.expandByPoint(new Vector3(-pot.radius, 0, -pot.radius))
-        box.expandByPoint(new Vector3(pot.radius, pot.height, pot.radius))
-        box.translate(new Vector3(...combination.position))
-        expect(box.min.x).toBeGreaterThan(-7)
-        expect(box.max.x).toBeLessThan(7)
-        expect(box.min.z).toBeGreaterThan(-6.5)
-        expect(box.max.z).toBeLessThan(4.1)
-        expect(box.max.y).toBeLessThan(2.7)
-        return box
-      })
-      for (let a = 0; a < bounds.length; a++) {
-        for (let b = a + 1; b < bounds.length; b++) {
-          expect(bounds[a]!.intersectsBox(bounds[b]!)).toBe(false)
-        }
-      }
-      // At least 85 cm between solid pots, before the nonsolid leaf canopies.
-      expect(1.65 - Math.max(...pots.map(pot => pot.radius)) * 2).toBeGreaterThanOrEqual(0.84)
-    } finally {
-      for (const geometry of geometries.values()) {
-        geometry.dispose()
-      }
-    }
   })
 })
 describe('plant sign complexity', () => {

@@ -56,9 +56,9 @@ The Afterhours Salon, home of the Serious Knot, has cream-and-charcoal checkerbo
 
 The Cabinet of Curiosities has seven open botanical reliefs, just above the baseboards near its corners, instead of repeated lower-wall panels: carved sage leaves and floral rosettes with golden scrollwork and metallic details using the Serious Knot’s polished gold material, procedural grain and local HDR reflections. The shallow ornaments stay behind hung frames and shift inward where a doorway blocks a corner, keeping them clear of the doorway trim. The east-wall ornaments symmetrically flank the doorway, matching the corner ornaments’ clearance from the outside of its frame. The south wall beside the Amber Room doorway is left undecorated. All seven share a center height of 94 cm. Shared, instanced geometry draws the entire room’s ornamentation in two calls.
 
-## Botanical selection display
+## Botanical assets
 
-The Daydream Wing temporarily displays 32 numbered combinations of four pots and eight plants. Walk through the rows and choose your favorite numbers. Each modular `PlantDecoration` contains a `Pot` (including soil) and a `Plant`. The legacy plants and pots have been removed; interactive specimens use the modular meshes. Append `plantPreview=false` to restore the central bench and open floor. See the [numbered catalog and component guide](docs/plant-decorations.md).
+The temporary plant preview, its numbered signs and all plant placements have been removed. The central bench and open floor are restored. The reusable pot and plant catalogs, modular `PlantDecoration` components and interactive `DestructiblePlant` models remain available. Future pots will contain randomly selected plants; no pots or plants are placed until their locations are chosen.
 
 ## Optional AI
 
@@ -74,7 +74,7 @@ The key lives in this tab’s `sessionStorage`, not the URL, IndexedDB or export
 
 ## Keeping your collection
 
-Artwork, labels, placements and atmosphere preferences are automatically saved in this origin’s IndexedDB. If loading fails, the stored record is protected and autosave stays paused until you explicitly confirm its replacement in Preferences & backups. Loose frames save their final pose when they settle. Camera position, sculpture positions, thrown pots and plucked leaves are session-only. Reloading replants the foliage. Undo history is limited to twenty collection changes and is not persisted.
+Artwork, labels, placements and atmosphere preferences are automatically saved in this origin’s IndexedDB. If loading fails, the stored record is protected and autosave stays paused until you explicitly confirm its replacement in Preferences & backups. Loose frames save their final pose when they settle. Camera and sculpture positions are session-only. Undo history is limited to twenty collection changes and is not persisted.
 
 Preferences & backups exports a compressed `.slop` backup containing embedded imported images. Restoring validates the document and decodes its images before asking to replace the current collection. Reset restores the original artwork, replants foliage, resets sculptures and returns to the entrance. Reset and restore are undoable collection operations; resetting session-only physics positions is not undoable. Atmosphere settings are independent of collection undo.
 

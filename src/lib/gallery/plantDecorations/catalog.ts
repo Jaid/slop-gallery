@@ -1,5 +1,3 @@
-import type {Vec3} from '../types.ts'
-
 export const pots = [
   {
     id: 'atelier',
@@ -84,19 +82,13 @@ export const plants = [
 ] as const
 export type PlantKind = (typeof plants)[number]['id']
 
-// Pot-major ordering stays stable when the temporary display is removed.
+// Preserve the preview’s catalog numbers for referencing pot/plant pairs.
 export const plantCombinations = pots.flatMap((pot, row) => plants.map((plant, column) => ({
   number: row * plants.length + column + 1,
   pot: pot.id,
   plant: plant.id,
-  position: [(column - 3.5) * 1.65, 0, 3.1 - row * 2.7] as Vec3,
 })))
 
 export function potDefinition(kind: PotKind) {
   return pots.find(pot => pot.id === kind)!
-}
-
-// Temporary review installation. Disable to restore the original bench and open floor.
-export function showPlantPreview(search: string) {
-  return new URLSearchParams(search).get('plantPreview') !== 'false'
 }

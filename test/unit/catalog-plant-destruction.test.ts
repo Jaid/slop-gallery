@@ -7,7 +7,6 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import {Vector3} from 'three/webgpu'
 
 import {CatalogPlantGeometry} from '../../src/lib/gallery/destructiblePlants/CatalogPlantGeometry.ts'
-import {destructiblePreviewKind, destructionHint} from '../../src/lib/gallery/destructiblePlants/preview.ts'
 import {potDefinition} from '../../src/lib/gallery/plantDecorations/catalog.ts'
 import {PlantGeometry} from '../../src/lib/gallery/plantDecorations/PlantGeometry.ts'
 import {PotGeometry} from '../../src/lib/gallery/plantDecorations/PotGeometry.ts'
@@ -92,14 +91,6 @@ function values(geometry: BufferGeometry, name: string) {
   return [...geometry.getAttribute(name).array]
 }
 describe('existing specimen geometry', () => {
-  test('only 04 and 06 gain interaction; the bonsai stays decorative', () => {
-    expect(Array.from({length: 32}, (_, i) => i + 1).filter(number => destructiblePreviewKind(number))).toEqual([4, 6])
-    expect(destructiblePreviewKind(4)).toBe('snake')
-    expect(destructiblePreviewKind(6)).toBe('calathea')
-    expect(destructiblePreviewKind(8)).toBeUndefined()
-    expect(destructionHint(6)).toBe('Leaves → root → pot')
-    expect(destructionHint(1)).toBeUndefined()
-  })
   test.each([['snake', 15], ['calathea', 13]] as const)('%s retains every visible triangle, attribute and leaf', (kind, count) => {
     const source = new PlantGeometry(kind)
     const model = new CatalogPlantGeometry(kind)

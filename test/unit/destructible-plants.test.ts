@@ -3,12 +3,11 @@ import type {DestructiblePlantKind} from '../../src/lib/gallery/destructiblePlan
 import {afterEach, beforeEach, describe, expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
-import {Box3, Euler, Matrix4, Quaternion, Vector3} from 'three/webgpu'
+import {Euler, Matrix4, Quaternion, Vector3} from 'three/webgpu'
 
 import {destructiblePlants} from '../../src/lib/gallery/destructiblePlants/catalog.ts'
 import {DestructiblePlantGeometry} from '../../src/lib/gallery/destructiblePlants/DestructiblePlantGeometry.ts'
 import {plantCombinations, potDefinition} from '../../src/lib/gallery/plantDecorations/catalog.ts'
-import {PlantGeometry} from '../../src/lib/gallery/plantDecorations/PlantGeometry.ts'
 import {PotGeometry} from '../../src/lib/gallery/plantDecorations/PotGeometry.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 import {GrabbableBody} from '../../src/lib/physics/GrabbableBody.ts'
@@ -128,7 +127,7 @@ describe('new destructible botanical models', () => {
     }
     expect(geometry.leaves.filter(leaf => leaf.title.includes('flower'))).toHaveLength(kind === 'peaceLily' ? 3 : 0)
   })
-  test('new signs preserve numbers 01–32 and both canopies clear the existing display', () => {
+  test('interactive models preserve catalog numbers and fit below gallery ceilings', () => {
     expect(plantCombinations).toHaveLength(32)
     expect(destructiblePlants.map(specimen => specimen.number)).toEqual([33, 34])
     for (const specimen of destructiblePlants) {
@@ -142,21 +141,11 @@ describe('new destructible botanical models', () => {
           bounds.union(leaf.stem.boundingBox!.clone().applyMatrix4(transform))
         }
       }
-      bounds.translate(new Vector3(...specimen.position).add(new Vector3(0, potDefinition(specimen.pot).soilHeight, 0)))
+      bounds.translate(new Vector3(0, potDefinition(specimen.pot).soilHeight, 0))
       expect(bounds.min.x).toBeGreaterThan(-7)
       expect(bounds.max.x).toBeLessThan(7)
       expect(bounds.max.y).toBeLessThan(2.7)
       expect(bounds.max.z).toBeLessThan(6.2)
-      for (const combination of plantCombinations) {
-        const other = new PlantGeometry(combination.plant)
-        try {
-          const otherBounds = (new Box3).union(other.foliage.boundingBox!).union(other.stems.boundingBox!)
-          otherBounds.translate(new Vector3(...combination.position).add(new Vector3(0, potDefinition(combination.pot).soilHeight + 0.036, 0)))
-          expect(bounds.intersectsBox(otherBounds)).toBe(false)
-        } finally {
-          other.dispose()
-        }
-      }
     }
   })
   test.each(['birdOfParadise', 'peaceLily'] as const)('%s releases every owned buffer', kind => {

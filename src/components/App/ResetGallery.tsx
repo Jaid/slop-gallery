@@ -8,7 +8,7 @@ export default function ResetGallery() {
   if (!available) return null
   return <div className="menu-reset">
     {confirming ? <div className="reset-confirmation">
-      <p>Restore the original art, sculptures and plants and return to the entrance? Collection changes can be undone; physics positions cannot.</p>
+      <p>Restore the original art and sculptures and return to the entrance? Collection changes can be undone; physics positions cannot.</p>
       <button className="reset-button" onClick={() => {
         resetGallery()
         setConfirming(false)

@@ -62,7 +62,7 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
       }
     })
     // Wait for scene readiness below; network-idle navigation is not a rendering signal.
-    await page.goto(`${baseUrl}?ai=false&test=true&plantPreview=false`, {waitUntil: 'domcontentloaded'})
+    await page.goto(`${baseUrl}?ai=false&test=true`, {waitUntil: 'domcontentloaded'})
     await page.waitForFunction(() => globalThis.__gallery?.snapshot?.().ready, {timeout: 60_000})
     await page.evaluate(() => document.fonts.ready)
     await mkdir('private/agent/reports', {recursive: true})
