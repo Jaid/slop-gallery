@@ -21,7 +21,7 @@ async function run(cwd: string, args: Array<string>) {
 }
 try {
   await run(join(root, 'packages/webgpu-capture-bridge'), ['pm', 'pack', '--filename', archive, '--ignore-scripts'])
-  const workspacePackages = ['telemethree', 'telemethree-ego', 'use-graphics-quality', 'three-fiber-game']
+  const workspacePackages = ['telemethree', 'telemethree-ego', 'use-graphics-quality', 'three-fiber-game', 'ego-player']
   for (const name of workspacePackages) {
     await run(join(root, 'packages', name), ['pm', 'pack', '--filename', join(fixture, `${name}.tgz`), '--ignore-scripts'])
   }
@@ -36,6 +36,8 @@ try {
   for (const name of ['@types/three', '@types/react', '@types/react-dom', '@types/bun', 'typescript']) {
     dependencies[name] = manifest.devDependencies[name]!
   }
+  const playerManifest = await Bun.file(join(root, 'packages/ego-player/package.json')).json() as {devDependencies: Record<string, string>}
+  dependencies['@dimforge/rapier3d-compat'] = playerManifest.devDependencies['@dimforge/rapier3d-compat']!
   await Bun.write(join(consumer, 'package.json'), JSON.stringify({
     name: 'capture-consumer',
     private: true,
@@ -60,6 +62,33 @@ try {
   await Bun.write(join(consumer, 'game-preload.ts'), await Bun.file(join(root, 'packages/three-fiber-game/test/preload.ts')).text())
   await Bun.write(join(consumer, 'game.test.tsx'), gameTests.replaceAll('../src/main.ts', 'three-fiber-game'))
   await run(consumer, ['test', '--preload', './game-preload.ts', './game.test.tsx'])
+  for (const [source, target] of [['main.test.ts', 'player.test.ts'], ['react.test.tsx', 'player-react.test.tsx']] as const) {
+    const playerTests = await Bun.file(join(root, 'packages/ego-player/test', source)).text()
+    await Bun.write(join(consumer, target), playerTests.replaceAll('../src/main.ts', 'ego-player'))
+    await run(consumer, ['test', '--preload', './game-preload.ts', `./${target}`])
+  }
+  await Bun.write(join(consumer, 'motor-consumer.ts'), [
+    "import {EgoMotor, defaultEgoOptions} from 'ego-player/motor'",
+    "if (typeof EgoMotor !== 'function' || defaultEgoOptions.speed !== 3) throw new Error('Motor exports are missing.')",
+  ].join('\n'))
+  // This entry must load in Bun without the React/WebGPU resolution preload.
+  await run(consumer, ['./motor-consumer.ts'])
+  await Bun.write(join(consumer, 'player-consumer.tsx'), [
+    "import type {EgoAction, EgoInput, EgoPlayerHandle, EgoPlayerProps} from 'ego-player'",
+    "import EgoPlayer, {egoControls} from 'ego-player'",
+    "import Game from 'three-fiber-game'",
+    "import {useKeyboardControls} from '@react-three/drei/webgpu'",
+    "import {useRef} from 'react'",
+    'function Player() {',
+    '  const player = useRef<EgoPlayerHandle>(null)',
+    '  const input = useKeyboardControls<EgoAction>()[1]',
+    '  const props = {input, ref: player, onUpdate: state => state.velocity.x} satisfies EgoPlayerProps',
+    '  return <EgoPlayer {...props}/>',
+    '}',
+    'export const keyboardPlayer = <Game controls={egoControls} physics><Player/></Game>',
+    'const input: EgoInput = {forward: true}',
+    'export const customPlayer = <EgoPlayer input={() => input} pointerLock={false} requirePointerLock={false}/>',
+  ].join('\n'))
   await Bun.write(join(consumer, 'game-consumer.tsx'), [
     "import Game, {WebgpuRenderer} from 'three-fiber-game'",
     "import type {Controls, GameProps, GameWrapperProps, GameWrappers} from 'three-fiber-game'",
@@ -87,16 +116,17 @@ try {
     "export {GraphicsQualityProvider, useGraphicsQuality, useGraphicsQualityValue, useSetGraphicsQuality} from 'use-graphics-quality'",
     "export {EgoTelemetry} from 'telemethree-ego'",
     "export {useEgoTelemetry} from 'telemethree-ego/react'",
+    "export {keyboardPlayer, customPlayer} from './player-consumer.tsx'",
     "export {example, customized} from './game-consumer.tsx'",
   ].join('\n'))
-  await run(consumer, ['node_modules/typescript/bin/tsc', '--noEmit', '--strict', '--skipLibCheck', '--module', 'preserve', '--moduleResolution', 'bundler', '--target', 'esnext', '--lib', 'esnext,dom,dom.iterable', '--types', 'bun', '--jsx', 'react-jsx', '--allowImportingTsExtensions', 'consumer.ts', 'game.test.tsx'])
+  await run(consumer, ['node_modules/typescript/bin/tsc', '--noEmit', '--strict', '--skipLibCheck', '--module', 'preserve', '--moduleResolution', 'bundler', '--target', 'esnext', '--lib', 'esnext,dom,dom.iterable', '--types', 'bun', '--jsx', 'react-jsx', '--allowImportingTsExtensions', 'consumer.ts', 'game.test.tsx', 'player.test.ts', 'player-react.test.tsx', 'motor-consumer.ts'])
   await Bun.write(join(consumer, 'build.ts'), [
     "import {webgpuResolution} from './game-preload.ts'",
     "const result = await Bun.build({entrypoints: ['./consumer.ts'], target: 'browser', outdir: '.', plugins: [webgpuResolution]})",
     "if (!result.success) throw new AggregateError(result.logs, 'Consumer browser build failed.')",
   ].join('\n'))
   await run(consumer, ['./build.ts'])
-  console.log('Packed capture/ego/graphics/game tests, all package consumer types and React browser bundles passed.')
+  console.log('Packed capture/ego/graphics/game/player tests, all package consumer types and React browser bundles passed.')
 } finally {
   await rm(fixture, {
     recursive: true,

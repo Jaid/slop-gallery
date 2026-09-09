@@ -1,0 +1,39 @@
+{
+  "name": "ego-player",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Composable first-person Rapier movement and camera controls for WebGPU React Three Fiber games",
+  "funding": "https://github.com/sponsors/Jaid",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jaid/slop-gallery.git",
+    "directory": "packages/ego-player"
+  },
+  "main": "src/main.ts",
+  "exports": {
+    ".": "./src/main.ts",
+    "./motor": "./src/motor.ts"
+  },
+  "scripts": {
+    "test": "bun test ./test"
+  },
+  "peerDependencies": {
+    "@react-three/drei": "^11.0.0-alpha.7",
+    "@react-three/fiber": "^10.0.0-alpha.5",
+    "@react-three/rapier": "^2.2.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "three": "^0.186.0"
+  },
+  "devDependencies": {
+    "@dimforge/rapier3d-compat": "0.19.2"
+  },
+  "files": [
+    "src",
+    "readme.md",
+    "license.txt"
+  ],
+  "sideEffects": false,
+  "types": "./src/main.ts"
+}

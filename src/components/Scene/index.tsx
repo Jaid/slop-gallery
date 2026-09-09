@@ -18,7 +18,7 @@ export default function Scene() {
     <Architecture/>
     <Props key={resetEpoch}/>
     {portraits.map(p => <Portrait key={p.id} portrait={p}/>)}
-    <Player position={[0, 0.85, 5.8]} speed={3} yaw={0}/>
+    <Player/>
     <Interaction/>
     <DevelopmentBridge/>
     <Ready/>

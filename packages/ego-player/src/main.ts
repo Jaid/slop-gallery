@@ -1,0 +1,7 @@
+export {egoControls} from './controls.ts'
+export {EgoMotor} from './EgoMotor.ts'
+export {EgoPlayer as default, EgoPlayer} from './EgoPlayer.tsx'
+export type {EgoPlayerProps, EgoPointerLockOptions} from './EgoPlayer.tsx'
+export {defaultEgoOptions} from './options.ts'
+export type {EgoOptions} from './options.ts'
+export type * from './types.ts'

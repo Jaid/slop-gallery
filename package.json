@@ -22,7 +22,7 @@
     "dev": "vite --host 127.0.0.1",
     "lint": "bun scripts/lint.ts",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "bun test ./test/unit ./packages/webgpu-capture-bridge/test ./packages/telemethree/test ./packages/telemethree-ego/test ./packages/use-graphics-quality/test ./packages/three-fiber-game/test",
+    "test": "bun test ./test/unit ./packages/webgpu-capture-bridge/test ./packages/telemethree/test ./packages/telemethree-ego/test ./packages/use-graphics-quality/test ./packages/three-fiber-game/test ./packages/ego-player/test",
     "test:live": "bun run build && bun test ./test/live.test.ts",
     "typecheck": "tsc --noEmit --noUnusedLocals --noUnusedParameters --pretty false"
   },
@@ -32,6 +32,7 @@
     "@react-three/fiber": "10.0.0-alpha.5",
     "@react-three/rapier": "2.2.0",
     "ai": "7.0.94",
+    "ego-player": "workspace:*",
     "es-toolkit": "1.52.0",
     "mount-root": "0.5.0",
     "nuqs": "2.10.1",

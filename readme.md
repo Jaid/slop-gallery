@@ -113,6 +113,10 @@ Provider lifecycle and narration requests are tested with controlled responses. 
 
 The [three-fiber-game workspace package](packages/three-fiber-game/readme.md) provides the native WebGPU Canvas, typed keyboard controls and optional Rapier physics. Its `wrapper` and `sceneWrapper` props accept one component or a readonly list, with the first wrapper outermost. Gallery-specific graphics budgets stay in `App/World`; capture, telemetry and postprocessing are injected by the stable `App/GameScene` wrapper. Package tests and the isolated packed-consumer check run as part of `bun run check`.
 
+## First-person player
+
+The [ego-player workspace package](packages/ego-player/readme.md) owns reusable Rapier movement, crouch clearance, jumping and the first-person camera. It accepts an explicit input reader, exposes a feet-based teleport/snapshot ref and includes a React-independent motor entry. The gallery’s Player component only connects inspection, navigation, footsteps and telemetry. Package tests exercise real physics and headless React lifecycles; the packed-consumer check verifies both public entries outside the workspace.
+
 ## Reusable capture library
 
 The [webgpu-capture-bridge workspace package](packages/webgpu-capture-bridge/readme.md) contains the React-independent capture service and optional React Three Fiber bindings. The gallery component only connects its capture function to `window.__gallery`. Library unit tests run as part of `bun run check`.

@@ -1,0 +1,507 @@
+import type {EgoInput, EgoOptions, EgoPosition} from '../src/main.ts'
+
+import {afterEach, beforeEach, expect, test} from 'bun:test'
+
+import RAPIER from '@dimforge/rapier3d-compat'
+import {Quaternion, Vector3} from 'three/webgpu'
+
+import DefaultPlayer, {defaultEgoOptions, egoControls, EgoMotor, EgoPlayer} from '../src/main.ts'
+
+await RAPIER.init()
+let world: RAPIER.World
+let motors: Array<EgoMotor>
+const rotation = new Quaternion
+beforeEach(() => {
+  world = new RAPIER.World({
+    x: 0,
+    y: -9.81,
+    z: 0,
+  })
+  motors = []
+})
+afterEach(() => {
+  for (const motor of motors) {
+    motor.dispose()
+  }
+  world.free()
+})
+function player(options: EgoOptions = {}, position: EgoPosition = [0, 0.04, 0]) {
+  const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(...position))
+  const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
+  const motor = new EgoMotor(RAPIER, world, body, collider, options)
+  motors.push(motor)
+  return motor
+}
+function floor() {
+  return world.createCollider(RAPIER.ColliderDesc.cuboid(20, 0.1, 20).setTranslation(0, -0.1, 0))
+}
+function tick(motor: EgoMotor, input: EgoInput = {}, count = 1, active = true) {
+  for (let i = 0; i < count; i++) {
+    motor.step(world.timestep, input, rotation, active)
+    world.step()
+  }
+}
+function grounded(options: EgoOptions = {}) {
+  floor()
+  const motor = player(options)
+  tick(motor, {}, 30)
+  expect(motor.grounded).toBe(true)
+  return motor
+}
+test('exports are coherent, default bindings and options are immutable', () => {
+  expect(DefaultPlayer).toBe(EgoPlayer)
+  expect(defaultEgoOptions.eyeHeight).toBe(1.6)
+  expect(defaultEgoOptions.speed).toBe(3)
+  expect(egoControls.forward).toEqual(['KeyW', 'ArrowUp'])
+  expect(Object.isFrozen(defaultEgoOptions)).toBe(true)
+  expect(Object.isFrozen(egoControls.forward)).toBe(true)
+})
+test('settles at feet-relative capsule clearance and reports physical state', () => {
+  const motor = grounded()
+  expect(motor.body.translation().y).toBeCloseTo(0.02, 2)
+  expect(motor.getState()).toMatchObject({
+    grounded: true,
+    crouching: false,
+    active: true,
+  })
+  tick(motor, {forward: true}, 60)
+  expect(motor.getState().velocity.z).toBeCloseTo(-defaultEgoOptions.speed, 2)
+  expect(motor.body.translation().z).toBeLessThan(-2)
+  const snapshot = motor.getState()
+  tick(motor, {right: true}, 60)
+  expect(snapshot.position.x).toBeCloseTo(0)
+  expect(snapshot.velocity.z).toBeCloseTo(-defaultEgoOptions.speed, 2)
+})
+test('partial input is neutral and diagonal input is normalized', () => {
+  const motor = grounded()
+  tick(motor, {
+    forward: true,
+    right: true,
+  }, 60)
+  expect(Math.hypot(motor.getState().velocity.x, motor.getState().velocity.z)).toBeCloseTo(defaultEgoOptions.speed, 2)
+  tick(motor, {}, 60)
+  expect(motor.horizontalSpeed).toBeLessThan(0.001)
+  expect(Number.isFinite(motor.body.translation().z)).toBe(true)
+})
+test('sprint and crouch speeds preserve feet and resize the collider synchronously', () => {
+  const motor = grounded()
+  tick(motor, {
+    forward: true,
+    sprint: true,
+  }, 90)
+  expect(motor.horizontalSpeed).toBeCloseTo(defaultEgoOptions.speed * defaultEgoOptions.sprintFactor, 2)
+  tick(motor, {
+    forward: true,
+    crouch: true,
+    sprint: true,
+  }, 90)
+  expect(motor.crouching).toBe(true)
+  expect(motor.horizontalSpeed).toBeCloseTo(defaultEgoOptions.speed * defaultEgoOptions.crouchFactor, 2)
+  expect(motor.body.collider(0).halfHeight()).toBeCloseTo(0.2)
+  expect(motor.body.collider(0).translation().y - motor.body.translation().y).toBeCloseTo(0.5)
+  expect(motor.body.translation().y).toBeCloseTo(0.02, 2)
+  tick(motor)
+  expect(motor.crouching).toBe(false)
+  expect(motor.body.collider(0).halfHeight()).toBeCloseTo(0.5)
+})
+test('cannot stand under a ceiling but stands after clearance is restored', () => {
+  const motor = grounded()
+  tick(motor, {crouch: true})
+  const ceiling = world.createCollider(RAPIER.ColliderDesc.cuboid(2, 0.1, 2).setTranslation(0, 1.3, 0))
+  world.step()
+  tick(motor, {}, 10)
+  expect(motor.crouching).toBe(true)
+  world.removeCollider(ceiling, false)
+  world.step()
+  tick(motor)
+  expect(motor.crouching).toBe(false)
+})
+test('sensors and disabled ceilings do not block standing', () => {
+  const motor = grounded()
+  tick(motor, {crouch: true})
+  world.createCollider(RAPIER.ColliderDesc.cuboid(2, 0.1, 2).setTranslation(0, 1.3, 0).setSensor(true))
+  world.createCollider(RAPIER.ColliderDesc.cuboid(2, 0.1, 2).setTranslation(0, 1.4, 0).setEnabled(false))
+  world.step()
+  tick(motor)
+  expect(motor.crouching).toBe(false)
+})
+test('walls stop motion and collision-resolved velocity excludes attempted motion', () => {
+  const motor = grounded()
+  world.createCollider(RAPIER.ColliderDesc.cuboid(5, 2, 0.1).setTranslation(0, 1, -1))
+  world.step()
+  tick(motor, {forward: true}, 120)
+  expect(motor.body.translation().z).toBeGreaterThan(-0.61)
+  expect(motor.body.translation().z).toBeLessThan(-0.55)
+  // Allow Rapier’s small contact corrections while rejecting attempted walking velocity.
+  expect(Math.abs(motor.getState().velocity.z)).toBeLessThan(0.01)
+})
+test('collision groups apply to movement and standing queries', () => {
+  const motor = grounded({collisionGroups: 0x00_01_00_01})
+  world.createCollider(RAPIER.ColliderDesc.cuboid(5, 2, 0.1).setTranslation(0, 1, -1).setCollisionGroups(0x00_02_00_02))
+  world.step()
+  tick(motor, {forward: true}, 90)
+  expect(motor.body.translation().z).toBeLessThan(-2)
+  motor.teleport([0, 0.04, 0])
+  tick(motor, {crouch: true}, 30)
+  world.createCollider(RAPIER.ColliderDesc.cuboid(2, 0.1, 2).setTranslation(0, 1.3, 0).setCollisionGroups(0x00_02_00_02))
+  world.step()
+  tick(motor)
+  expect(motor.crouching).toBe(false)
+})
+test('jump reaches its configured height and holding does not auto-jump on landing', () => {
+  const motor = grounded()
+  const start = motor.body.translation().y
+  let peak = start
+  for (let i = 0; i < 150; i++) {
+    tick(motor, {jump: true})
+    peak = Math.max(peak, motor.body.translation().y)
+  }
+  expect(peak - start).toBeGreaterThan(1.45)
+  expect(peak - start).toBeLessThan(1.6)
+  expect(motor.grounded).toBe(true)
+})
+test('release shortens jumps and a repress during coyote time does not double-jump', () => {
+  const motor = grounded()
+  tick(motor, {jump: true})
+  const launched = motor.getState().velocity.y
+  tick(motor)
+  const released = motor.getState().velocity.y
+  expect(released).toBeLessThan(launched * 0.6)
+  tick(motor, {jump: true})
+  expect(motor.getState().velocity.y).toBeLessThan(released)
+})
+test('coyote time allows a jump after walking off a ledge', () => {
+  const ground = floor()
+  const motor = player()
+  tick(motor, {}, 30)
+  world.removeCollider(ground, false)
+  world.step()
+  tick(motor, {}, 3)
+  expect(motor.grounded).toBe(false)
+  tick(motor, {jump: true})
+  expect(motor.getState().velocity.y).toBeGreaterThan(5)
+})
+test('buffered jump fires on landing but disabling input clears the buffer', () => {
+  const motor = grounded()
+  motor.teleport([0, 0.06, 0])
+  tick(motor, {jump: true})
+  let launched = false
+  for (let i = 0; i < 20; i++) {
+    tick(motor, {jump: true})
+    launched ||= motor.getState().velocity.y > 4
+  }
+  expect(launched).toBe(true)
+  tick(motor)
+  motor.teleport([0, 0.06, 0])
+  tick(motor, {jump: true})
+  tick(motor, {jump: true}, 30, false)
+  expect(motor.grounded).toBe(true)
+  expect(motor.getState().active).toBe(false)
+})
+test('teleport resets momentum, grounded history, pending translation and jump buffer', () => {
+  const motor = grounded()
+  tick(motor, {forward: true}, 30)
+  tick(motor, {jump: true})
+  motor.teleport([8, 3, 7])
+  expect(motor.getState()).toMatchObject({
+    grounded: false,
+    position: {
+      x: 8,
+      y: 3,
+      z: 7,
+    },
+    velocity: {
+      x: 0,
+      y: 0,
+      z: 0,
+    },
+  })
+  world.step()
+  expect(motor.body.translation()).toEqual({
+    x: 8,
+    y: 3,
+    z: 7,
+  })
+  tick(motor, {jump: true})
+  expect(motor.getState().velocity.y).toBeLessThan(0)
+  expect(motor.body.translation().x).toBe(8)
+  expect(motor.body.translation().z).toBe(7)
+  tick(motor)
+  tick(motor, {jump: true})
+  expect(motor.getState().velocity.y).toBeLessThan(0)
+})
+test('disabled input decelerates without freezing gravity or allowing a jump', () => {
+  const motor = grounded()
+  tick(motor, {forward: true}, 30)
+  tick(motor, {
+    forward: true,
+    jump: true,
+  }, 60, false)
+  expect(motor.horizontalSpeed).toBeLessThan(0.001)
+  expect(motor.grounded).toBe(true)
+  motor.teleport([0, 4, 0])
+  tick(motor, {jump: true}, 30, false)
+  expect(motor.body.translation().y).toBeLessThan(3)
+})
+test('separate motors do not share velocity or jump state', () => {
+  const first = player({gravity: 0}, [-2, 0.04, 0])
+  const second = player({gravity: 0}, [2, 0.04, 0])
+  for (let i = 0; i < 90; i++) {
+    first.step(world.timestep, {forward: true}, rotation)
+    second.step(world.timestep, {}, rotation)
+    world.step()
+  }
+  expect(first.horizontalSpeed).toBeCloseTo(defaultEgoOptions.speed, 2)
+  expect(second.horizontalSpeed).toBeLessThan(0.001)
+  expect(second.body.translation().z).toBe(0)
+})
+test('movement follows yaw even when the camera looks straight up', () => {
+  const motor = grounded()
+  const yaw = (new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), Math.PI / 2)
+  const pitch = (new Quaternion).setFromAxisAngle(new Vector3(1, 0, 0), Math.PI / 2)
+  const look = yaw.multiply(pitch)
+  for (let i = 0; i < 90; i++) {
+    motor.step(world.timestep, {forward: true}, look)
+    world.step()
+  }
+  expect(motor.getState().velocity.x).toBeCloseTo(-defaultEgoOptions.speed, 2)
+  expect(motor.getState().velocity.z).toBeCloseTo(0, 2)
+})
+test('options update without losing momentum and undefined restores defaults', () => {
+  const motor = grounded()
+  tick(motor, {forward: true}, 60)
+  motor.configure({
+    speed: 4,
+    radius: 0.4,
+    height: 2,
+  })
+  expect(motor.horizontalSpeed).toBeCloseTo(defaultEgoOptions.speed, 2)
+  expect(motor.body.collider(0).radius()).toBeCloseTo(0.4)
+  tick(motor, {forward: true}, 60)
+  expect(motor.horizontalSpeed).toBeCloseTo(4, 2)
+  motor.configure({speed: undefined})
+  tick(motor, {forward: true}, 60)
+  expect(motor.horizontalSpeed).toBeCloseTo(defaultEgoOptions.speed, 2)
+})
+test('invalid deltas are inert and short timesteps are not artificially enlarged', () => {
+  const motor = player({
+    gravity: 0,
+    airAcceleration: 1000,
+    speed: 1000,
+  })
+  for (const dt of [0, -1, Infinity, Number.NaN]) {
+    motor.step(dt, {forward: true}, rotation)
+    expect(motor.getState().velocity).toEqual({
+      x: 0,
+      y: 0,
+      z: 0,
+    })
+  }
+  motor.step(1 / 1000, {forward: true}, rotation)
+  expect(motor.horizontalSpeed).toBeCloseTo(1)
+  motor.step(100, {forward: true}, rotation)
+  expect(motor.body.nextTranslation().z).toBeCloseTo(-2.55)
+  expect(motor.horizontalSpeed).toBeCloseTo(2.55 / 100, 5)
+})
+test('nonfinite options and teleports fail before poisoning physics', () => {
+  const motor = player()
+  expect(() => motor.configure({speed: Number.NaN})).toThrow(RangeError)
+  expect(() => motor.teleport([Infinity, 0, 0])).toThrow(RangeError)
+  expect(motor.getState().position.x).toBe(0)
+  expect(motor.getState().position.y).toBeCloseTo(0.04)
+  expect(motor.getState().position.z).toBe(0)
+})
+test('disposing twice is safe and stops scheduling movement', () => {
+  const motor = grounded()
+  motor.dispose()
+  motor.dispose()
+  const position = motor.body.translation()
+  tick(motor, {forward: true}, 30)
+  expect(motor.body.translation()).toEqual(position)
+})
+test('teleport updates collider pose before the next controller query', () => {
+  const motor = grounded()
+  motor.teleport([8, 3, 7])
+  expect(motor.body.collider(0).translation().x).toBe(8)
+  expect(motor.body.collider(0).translation().y).toBeCloseTo(3.8)
+  expect(motor.body.collider(0).translation().z).toBe(7)
+})
+test('autostep climbs a low ledge and can be disabled', () => {
+  const motor = grounded()
+  world.createCollider(RAPIER.ColliderDesc.cuboid(2, 0.075, 2), world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, 0.075, -3)))
+  world.step()
+  tick(motor, {forward: true}, 80)
+  expect(motor.body.translation().z).toBeLessThan(-2)
+  expect(motor.body.translation().y).toBeGreaterThan(0.15)
+  motor.configure({stepHeight: 0})
+  motor.teleport([0, 0.04, 0])
+  tick(motor, {forward: true}, 80)
+  expect(motor.body.translation().z).toBeGreaterThan(-1)
+})
+test('upward collision stops a jump at the ceiling', () => {
+  const motor = grounded()
+  world.createCollider(RAPIER.ColliderDesc.cuboid(3, 0.1, 3).setTranslation(0, 2.2, 0))
+  world.step()
+  let peak = 0
+  for (let i = 0; i < 90; i++) {
+    tick(motor, {jump: true})
+    peak = Math.max(peak, motor.body.translation().y)
+  }
+  expect(peak).toBeGreaterThan(0.3)
+  expect(peak).toBeLessThan(0.51)
+  expect(motor.grounded).toBe(true)
+})
+const boostedDirections: Array<[string, EgoInput, 'dodge' | 'sprint']> = [
+  ['forward', {forward: true}, 'sprint'],
+  [
+    'forward-left', {
+      forward: true,
+      left: true,
+    }, 'sprint',
+  ],
+  [
+    'forward-right', {
+      forward: true,
+      right: true,
+    }, 'sprint',
+  ],
+  ['left', {left: true}, 'dodge'],
+  ['right', {right: true}, 'dodge'],
+  ['backward', {backward: true}, 'dodge'],
+  [
+    'backward-left', {
+      backward: true,
+      left: true,
+    }, 'dodge',
+  ],
+  [
+    'backward-right', {
+      backward: true,
+      right: true,
+    }, 'dodge',
+  ],
+  [
+    'canceled forward plus left', {
+      forward: true,
+      backward: true,
+      left: true,
+    }, 'dodge',
+  ],
+  [
+    'canceled sideways plus forward', {
+      forward: true,
+      left: true,
+      right: true,
+    }, 'sprint',
+  ],
+]
+test.each(boostedDirections)('%s uses its directional boost speed', (_name, input, mode) => {
+  const motor = player({gravity: 0})
+  tick(motor, {
+    ...input,
+    sprint: true,
+  }, 120)
+  const factor = mode === 'dodge' ? defaultEgoOptions.dodgeFactor : defaultEgoOptions.sprintFactor
+  expect(motor.horizontalSpeed).toBeCloseTo(defaultEgoOptions.speed * factor, 4)
+})
+test.each(boostedDirections)('%s uses its directional jump-height boost', (_name, input, mode) => {
+  const motor = grounded()
+  tick(motor, {
+    ...input,
+    sprint: true,
+    jump: true,
+  })
+  const factor = mode === 'dodge' ? defaultEgoOptions.dodgeJumpFactor : defaultEgoOptions.sprintJumpFactor
+  expect(motor.getState().velocity.y).toBeCloseTo(Math.sqrt(2 * defaultEgoOptions.gravity * defaultEgoOptions.jumpHeight * factor), 4)
+})
+test('dodge defaults are weaker than sprint defaults', () => {
+  expect(defaultEgoOptions.dodgeFactor).toBe(1.5)
+  expect(defaultEgoOptions.dodgeJumpFactor).toBe(1.1)
+  expect(defaultEgoOptions.dodgeFactor).toBeLessThan(defaultEgoOptions.sprintFactor)
+  expect(defaultEgoOptions.dodgeJumpFactor).toBeLessThan(defaultEgoOptions.sprintJumpFactor)
+})
+test('dodge requires the boost action and crouching overrides it', () => {
+  const motor = player({gravity: 0})
+  tick(motor, {left: true}, 120)
+  expect(motor.horizontalSpeed).toBeCloseTo(defaultEgoOptions.speed, 4)
+  tick(motor, {
+    left: true,
+    sprint: true,
+    crouch: true,
+  }, 120)
+  expect(motor.horizontalSpeed).toBeCloseTo(defaultEgoOptions.speed * defaultEgoOptions.crouchFactor, 4)
+  tick(motor, {
+    left: true,
+    sprint: true,
+  }, 120, false)
+  expect(motor.horizontalSpeed).toBeCloseTo(0, 4)
+})
+test('crouch jumps do not stack with dodge bonuses', () => {
+  const motor = grounded()
+  tick(motor, {
+    left: true,
+    sprint: true,
+    crouch: true,
+    jump: true,
+  })
+  expect(motor.getState().velocity.y).toBeCloseTo(Math.sqrt(2 * defaultEgoOptions.gravity * defaultEgoOptions.jumpHeight * defaultEgoOptions.crouchJumpFactor), 4)
+})
+test('stationary and fully canceled input preserve the existing boosted standing jump', () => {
+  const motor = grounded()
+  tick(motor, {
+    forward: true,
+    backward: true,
+    left: true,
+    right: true,
+    sprint: true,
+    jump: true,
+  })
+  expect(motor.horizontalSpeed).toBeCloseTo(0, 4)
+  expect(motor.getState().velocity.y).toBeCloseTo(Math.sqrt(2 * defaultEgoOptions.gravity * defaultEgoOptions.jumpHeight * defaultEgoOptions.sprintJumpFactor), 4)
+})
+test('dodge factors update independently and omitted values restore defaults', () => {
+  const motor = grounded({
+    dodgeFactor: 1.2,
+    dodgeJumpFactor: 0.8,
+  })
+  tick(motor, {
+    backward: true,
+    sprint: true,
+  }, 60)
+  expect(motor.horizontalSpeed).toBeCloseTo(defaultEgoOptions.speed * 1.2, 2)
+  tick(motor, {
+    backward: true,
+    sprint: true,
+    jump: true,
+  })
+  expect(motor.getState().velocity.y).toBeCloseTo(Math.sqrt(2 * defaultEgoOptions.gravity * defaultEgoOptions.jumpHeight * 0.8), 4)
+  motor.configure({
+    gravity: 0,
+    dodgeFactor: undefined,
+    dodgeJumpFactor: undefined,
+  })
+  tick(motor, {
+    right: true,
+    sprint: true,
+  }, 120)
+  expect(motor.horizontalSpeed).toBeCloseTo(defaultEgoOptions.speed * defaultEgoOptions.dodgeFactor, 4)
+})
+test('switching between sprint and dodge retains smooth acceleration', () => {
+  const motor = player({gravity: 0})
+  tick(motor, {
+    forward: true,
+    sprint: true,
+  }, 120)
+  const before = motor.getState().velocity
+  tick(motor, {
+    right: true,
+    sprint: true,
+  })
+  const after = motor.getState().velocity
+  expect(Math.hypot(after.x - before.x, after.z - before.z)).toBeCloseTo(defaultEgoOptions.airAcceleration * world.timestep, 4)
+  tick(motor, {
+    right: true,
+    sprint: true,
+  }, 120)
+  expect(motor.horizontalSpeed).toBeCloseTo(defaultEgoOptions.speed * defaultEgoOptions.dodgeFactor, 4)
+})
