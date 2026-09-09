@@ -8,6 +8,7 @@ import {EquirectangularReflectionMapping, Shape, SRGBColorSpace} from 'three/web
 
 import {rooms, useGallery, walls} from '#src/lib/gallery.ts'
 import {architectureGeometry, wallTop} from '#src/lib/gallery/architecture.ts'
+import {showPlantPreview} from '#src/lib/gallery/plantDecorations/catalog.ts'
 import {plantPositions} from '#src/lib/gallery/plants.ts'
 import {canvasTexture} from '#src/lib/texture.ts'
 
@@ -16,10 +17,12 @@ import BenchSeat from './BenchSeat.tsx'
 import CabinetOrnaments from './CabinetOrnaments.tsx'
 import CheckerMarbleFloor from './CheckerMarbleFloor.tsx'
 import {damaskTexture, surfaceTexture} from './materials.ts'
+import PlantPreview from './PlantPreview.tsx'
 import {Box, Plant} from './primitives.tsx'
 import ReflectiveWoodFloor from './ReflectiveWoodFloor.tsx'
 
 export default function Architecture() {
+  const plantPreview = showPlantPreview(globalThis.location.search)
   const theme = useGallery(s => s.theme)
   const resetEpoch = useGallery(s => s.resetEpoch)
   const textures = useMemo(() => ({
@@ -65,10 +68,10 @@ export default function Architecture() {
     </group>)}
     <CabinetOrnaments/>
     <AmberRoom wood={textures.wood}/>
-    <RigidBody type="fixed" colliders="cuboid"><group position={[1.6, 0, 1.6]}>
+    {plantPreview ? <PlantPreview/> : <RigidBody type="fixed" colliders="cuboid"><group position={[1.6, 0, 1.6]}>
       <BenchSeat position={[0, 0.52, 0]} size={[3.1, 0.24, 1.05]}/>
       {[-1.1, 1.1].map(x => <Box key={x} position={[x, 0.22, 0]} size={[0.14, 0.44, 0.8]} color="#514a3b" metalness={0.6}/>)}
-    </group></RigidBody>
+    </group></RigidBody>}
     {plantPositions.map(position => <Plant key={resetEpoch + ':' + position.join(':')} position={position}/>)}
   </>
 }

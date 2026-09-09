@@ -61,7 +61,8 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
         external.push(request.url())
       }
     })
-    await page.goto(`${baseUrl}?ai=false&test=true`, {waitUntil: 'networkidle0'})
+    // Wait for scene readiness below; network-idle navigation is not a rendering signal.
+    await page.goto(`${baseUrl}?ai=false&test=true&plantPreview=false`, {waitUntil: 'domcontentloaded'})
     await page.waitForFunction(() => globalThis.__gallery?.snapshot?.().ready, {timeout: 60_000})
     await page.evaluate(() => document.fonts.ready)
     await mkdir('private/agent/reports', {recursive: true})
@@ -201,7 +202,7 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     expect((await snapshot(page)).portraits).toHaveLength(baseline)
     await page.waitForFunction(() => globalThis.__gallery!.snapshot!().saveStatus === 'saved')
     await Bun.sleep(700)
-    await page.reload({waitUntil: 'networkidle0'})
+    await page.reload({waitUntil: 'domcontentloaded'})
     await page.waitForFunction(() => globalThis.__gallery?.snapshot?.().ready)
     expect((await snapshot(page)).portraits.find(p => p.id === 'cat')!.title).toBe('A tested masterpiece')
     expect((await snapshot(page)).portraits.find(p => p.id === 'orange')!.title).toBe('An unexpected collaboration')
@@ -411,7 +412,8 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     expect(await page.$eval('[aria-label="Mute audio"]', button => button.getAttribute('aria-pressed'))).toBe(muted)
     const fallback = await browser.newPage()
     await fallback.evaluateOnNewDocument(() => Object.defineProperty(navigator, 'gpu', {value: undefined}))
-    await fallback.goto(`${baseUrl}?ai=false`, {waitUntil: 'networkidle0'})
+    await fallback.goto(`${baseUrl}?ai=false`, {waitUntil: 'domcontentloaded'})
+    await fallback.waitForSelector('.render-error')
     expect(await fallback.$eval('.render-error', element => element.textContent)).toContain('WebGPU is unavailable')
     expect(await fallback.$$eval('canvas, .art-card, [aria-label="Open collection"]', elements => elements.length)).toBe(0)
     await fallback.close()
@@ -419,6 +421,7 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     expect(errors).toEqual([])
   } catch (error) {
     await page.screenshot({path: 'private/agent/reports/live-failure.png'})
+    console.log('Browser errors:', errors)
     console.log(await snapshot(page), await page.$eval('body', b => b.innerText))
     throw error
   } finally {

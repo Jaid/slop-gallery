@@ -2,6 +2,7 @@ import {useThree} from '@react-three/fiber/webgpu'
 import {useEffect} from 'react'
 import {bloom} from 'three/addons/tsl/display/BloomNode.js'
 import {ao} from 'three/addons/tsl/display/GTAONode.js'
+import {smaa} from 'three/addons/tsl/display/SMAANode.js'
 import {float, length, mrt, normalView, output, pass, screenUV, smoothstep, vec3, vec4} from 'three/tsl'
 import {RenderPipeline} from 'three/webgpu'
 
@@ -12,7 +13,8 @@ const Postprocessing = () => {
   const set = useThree(state => state.set)
   useEffect(() => {
     const pipeline = new RenderPipeline(renderer)
-    const scenePass = pass(scene, camera)
+    // GTAO gathers depth texels; r186 cannot gather a multisampled depth texture.
+    const scenePass = pass(scene, camera, {samples: 0})
     scenePass.setMRT(mrt({
       output,
       normal: normalView,
@@ -29,10 +31,12 @@ const Postprocessing = () => {
     const bloomPass = bloom(occluded, 0.18, 0.25, 1)
     const edge = smoothstep(float(0.26), float(0.78), length(screenUV.sub(0.5)))
     const vignette = float(1).sub(edge.mul(0.2))
-    pipeline.outputNode = occluded.add(bloomPass).mul(vec4(vec3(vignette), 1))
+    const antialias = smaa(occluded.add(bloomPass).mul(vec4(vec3(vignette), 1)))
+    pipeline.outputNode = antialias
     set({renderPipeline: pipeline})
     return () => {
       set(state => state.renderPipeline === pipeline ? {renderPipeline: null} : {})
+      antialias.dispose()
       ambientOcclusion.dispose()
       bloomPass.dispose()
       scenePass.dispose()

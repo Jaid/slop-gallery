@@ -54,6 +54,10 @@ The Afterhours Salon, home of the Serious Knot, has cream-and-charcoal checkerbo
 
 The Cabinet of Curiosities has seven open botanical reliefs, just above the baseboards near its corners, instead of repeated lower-wall panels: carved sage leaves and floral rosettes with golden scrollwork and metallic details using the Serious Knot’s polished gold material, procedural grain and local HDR reflections. The shallow ornaments stay behind hung frames and shift inward where a doorway blocks a corner, keeping them clear of the doorway trim. The east-wall ornaments symmetrically flank the doorway, matching the corner ornaments’ clearance from the outside of its frame. The south wall beside the Amber Room doorway is left undecorated. All seven share a center height of 94 cm. Shared, instanced geometry draws the entire room’s ornamentation in two calls.
 
+## Botanical selection display
+
+The Daydream Wing temporarily displays 32 numbered combinations of four pots and eight plants. Walk through the rows and choose your favorite numbers. Each modular `PlantDecoration` contains a `Pot` (including soil) and a `Plant`. The original pluckable plants are preserved. Append `plantPreview=false` to restore the central bench and open floor. See the [numbered catalog and component guide](docs/plant-decorations.md).
+
 ## Optional AI
 
 The menu’s OpenRouter manager exposes connection and model preferences. The query parameters are `ai`, `text_model`, `text_model_effort`, `image_model`, `audio_model`, `narrator_voice`, `narrator_character`, `eager_audio` and `lite`. Defaults follow the supplied benchmark scaffold; provider availability and voice support can change.
