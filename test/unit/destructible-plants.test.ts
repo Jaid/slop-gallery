@@ -13,8 +13,8 @@ import {PotGeometry} from '../../src/lib/gallery/plantDecorations/PotGeometry.ts
 import {triangleCount} from '../../src/lib/geometry.ts'
 import {GrabbableBody} from '../../src/lib/physics/GrabbableBody.ts'
 import {initializeFoliageCollider} from '../../src/lib/physics/initializeFoliageCollider.ts'
-import {leafPhysics} from '../../src/lib/physics/leaves.ts'
 import {PlantAttachment} from '../../src/lib/physics/PlantAttachment.ts'
+import {leafPhysics} from '../../src/lib/physics/plantPhysics.ts'
 
 await RAPIER.init()
 let world: RAPIER.World
@@ -190,7 +190,7 @@ for (const kind of ['birdOfParadise', 'peaceLily'] as const) {
         }
       }
     })
-    test('plucking, canceling and re-grabbing use the legacy attachment rules', () => {
+    test('plucking, canceling and re-grabbing preserve attachment rules', () => {
       const {attachments, leaves, pot} = plant(kind)
       expect(pot.grab()).toBe(false)
       const leaf = leaves[1]!
@@ -273,6 +273,88 @@ for (const kind of ['birdOfParadise', 'peaceLily'] as const) {
       for (let i = 0; i < pot.body.numColliders(); i++) {
         expect(pot.body.collider(i).isEnabled()).toBe(true)
       }
+    })
+    test('carried stalks participate in held clearance, not just their leaf heads', () => {
+      const {geometry, leaves} = plant(kind)
+      const leaf = leaves[1]!
+      const definition = geometry.leaves[1]!
+      const position = leaf.body.translation()
+      const rotation = leaf.body.rotation()
+      const head = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(position.x, position.y, position.z).setRotation(rotation))
+      world.createCollider(RAPIER.ColliderDesc.convexHull(definition.vertices)!.setEnabled(false), head)
+      const headOnly = new GrabbableBody(head, world)
+      const point = definition.stem!.boundingBox!.getCenter(new Vector3).applyQuaternion(new Quaternion(rotation.x, rotation.y, rotation.z, rotation.w)).add(new Vector3(position.x, position.y, position.z))
+      world.createCollider(RAPIER.ColliderDesc.ball(0.003).setTranslation(point.x, point.y, point.z))
+      world.step()
+      expect(headOnly.placement.hasRoom([position.x, position.y, position.z])).toBe(true)
+      expect(leaf.placement.hasRoom([position.x, position.y, position.z])).toBe(false)
+    })
+    test('remaining stems participate in pot clearance while their colliders are disabled', () => {
+      const {geometry, leaves, pot} = plant(kind)
+      pluckAll(leaves)
+      const collider = pot.body.collider(2)
+      const vertices = geometry.stemColliders[0]!.vertices
+      let top = 0
+      for (let i = 3; i < vertices.length; i += 3) {
+        if (vertices[i + 1]! > vertices[top + 1]!) {
+          top = i
+        }
+      }
+      const rotation = pot.body.rotation()
+      const translation = pot.body.translation()
+      const offset = collider.translationWrtParent()!
+      const point = (new Vector3).fromArray(vertices, top).add(new Vector3(offset.x, offset.y, offset.z)).applyQuaternion(new Quaternion(rotation.x, rotation.y, rotation.z, rotation.w)).add(new Vector3(translation.x, translation.y, translation.z))
+      const obstacle = world.createCollider(RAPIER.ColliderDesc.ball(0.015).setTranslation(point.x, point.y, point.z))
+      world.step()
+      const position = pot.body.translation()
+      expect(collider.isEnabled()).toBe(false)
+      expect(pot.placement.hasRoom([position.x, position.y, position.z])).toBe(false)
+      obstacle.setEnabled(false)
+      expect(pot.placement.hasRoom([position.x, position.y, position.z])).toBe(true)
+    })
+    test('canceling a pot pickup restores its pose and collider flags without moving loose leaves', () => {
+      const {attachments, leaves, pot} = plant(kind)
+      pluckAll(leaves)
+      const original = pot.body.translation()
+      const loose = leaves.map(leaf => leaf.body.translation())
+      const enabled = Array.from({length: pot.body.numColliders()}, (_, i) => pot.body.collider(i).isEnabled())
+      pot.grab()
+      pot.move([0, 2, 3], [0, 2, 4], 1 / 60, false)
+      expect(pot.body.translation()).not.toEqual(original)
+      pot.cancel()
+      expect(pot.body.translation()).toEqual(original)
+      expect(pot.body.isFixed()).toBe(true)
+      expect(attachments.potAttached).toBe(true)
+      expect(leaves.map(leaf => leaf.body.translation())).toEqual(loose)
+      expect(Array.from({length: pot.body.numColliders()}, (_, i) => pot.body.collider(i).isEnabled())).toEqual(enabled)
+    })
+    test('released pots land on the floor and lost pots recover empty without replanting leaves', () => {
+      const {attachments, leaves, pot} = plant(kind)
+      pluckAll(leaves)
+      const original = pot.body.translation()
+      const handle = pot.body.handle
+      world.createCollider(RAPIER.ColliderDesc.cuboid(40, 0.1, 40).setTranslation(0, -0.1, 0))
+      pot.grab()
+      pot.move([0, 2, 3], [0, 2, 4], 1 / 60, false)
+      pot.release(false, [0, 0, 1])
+      for (let i = 0; i < 360; i++) {
+        world.step()
+      }
+      expect(pot.body.translation().y).toBeGreaterThan(0)
+      expect(pot.body.translation().y).toBeLessThan(0.6)
+      const loose = leaves.map(leaf => leaf.body.translation())
+      pot.body.setTranslation({
+        x: 0,
+        y: -5,
+        z: 5,
+      }, true)
+      pot.recover()
+      expect(pot.body.translation()).toEqual(original)
+      expect(pot.body.handle).toBe(handle)
+      expect(attachments.potAttached).toBe(true)
+      expect(attachments.remaining).toBe(0)
+      expect(leaves.map(leaf => leaf.body.translation())).toEqual(loose)
+      expect(pot.grab()).toBe(true)
     })
     test('lost leaves reattach only while their pot remains anchored', () => {
       const {attachments, leaves, pot} = plant(kind)

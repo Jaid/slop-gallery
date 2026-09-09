@@ -162,15 +162,6 @@
     "no-multi-assign": 1,
     "no-underscore-dangle": 1
   },
-  "src/components/Scene/Leaf.tsx": {
-    "perfectionist/sort-imports": 1,
-    "stylistic/block-spacing": 2,
-    "stylistic/brace-style": 2,
-    "stylistic/max-statements-per-line": 1,
-    "stylistic/member-delimiter-style": 3,
-    "stylistic/object-property-newline": 3,
-    "perfectionist/sort-object-types": 1
-  },
   "src/components/Scene/materials.ts": {
     "no-multi-assign": 6,
     "no-nested-ternary": 1,
@@ -181,13 +172,6 @@
   "src/components/Scene/Pedestal.tsx": {
     "stylistic/object-curly-newline": 2,
     "stylistic/object-property-newline": 1
-  },
-  "src/components/Scene/Plant.tsx": {
-    "perfectionist/sort-imports": 1,
-    "stylistic/block-spacing": 2,
-    "stylistic/brace-style": 2,
-    "stylistic/max-statements-per-line": 1,
-    "prefer-template": 2
   },
   "src/components/Scene/Portrait.tsx": {
     "perfectionist/sort-imports": 1,
@@ -352,30 +336,12 @@
     "stylistic/object-curly-newline": 2,
     "stylistic/object-property-newline": 4
   },
-  "src/lib/physics/leaves.ts": {
-    "stylistic/new-parens": 2,
-    "stylistic/padding-line-between-statements": 3,
-    "unicorn/no-zero-fractions": 1,
-    "unicorn/no-useless-iterator-to-array": 3,
-    "prefer-template": 1,
-    "perfectionist/sort-modules": 1,
-    "typescript/no-unnecessary-condition": 1,
-    "curly": 1,
-    "stylistic/nonblock-statement-body-position": 1
-  },
   "src/lib/physics/PlantAttachment.ts": {
     "perfectionist/sort-classes": 5,
     "stylistic/block-spacing": 4,
     "stylistic/brace-style": 4,
     "curly": 3,
     "stylistic/nonblock-statement-body-position": 3
-  },
-  "src/lib/physics/pots.ts": {
-    "stylistic/object-curly-newline": 4,
-    "stylistic/object-property-newline": 4,
-    "curly": 2,
-    "stylistic/nonblock-statement-body-position": 2,
-    "typescript/no-unnecessary-condition": 1
   },
   "src/lib/physics/PropPlacement.ts": {
     "perfectionist/sort-imports": 1,
@@ -455,27 +421,6 @@
     "prefer-const": 1,
     "unicorn/prefer-number-properties": 2
   },
-  "test/unit/leaves.test.ts": {
-    "perfectionist/sort-imports": 3,
-    "stylistic/block-spacing": 6,
-    "stylistic/brace-style": 6,
-    "stylistic/max-statements-per-line": 3,
-    "stylistic/object-curly-newline": 8,
-    "stylistic/object-property-newline": 8,
-    "stylistic/padding-line-between-statements": 3,
-    "stylistic/new-parens": 13,
-    "curly": 13,
-    "stylistic/nonblock-statement-body-position": 13,
-    "typescript/no-shadow": 2,
-    "one-var": 5,
-    "unicorn/no-for-loop": 1,
-    "unicorn/consistent-function-scoping": 1,
-    "unicorn/numeric-separators-style": 6,
-    "typescript/array-type": 1,
-    "stylistic/function-paren-newline": 2,
-    "stylistic/function-call-argument-newline": 2,
-    "unicorn/no-useless-iterator-to-array": 1
-  },
   "test/unit/marble-material.test.ts": {
     "perfectionist/sort-imports": 1,
     "stylistic/padding-line-between-statements": 2
@@ -527,24 +472,6 @@
     "stylistic/padding-line-between-statements": 4,
     "stylistic/no-multiple-empty-lines": 1,
     "typescript/array-type": 1
-  },
-  "test/unit/pots.test.ts": {
-    "perfectionist/sort-imports": 1,
-    "stylistic/block-spacing": 6,
-    "stylistic/brace-style": 6,
-    "stylistic/max-statements-per-line": 3,
-    "stylistic/object-curly-newline": 20,
-    "stylistic/object-property-newline": 20,
-    "curly": 5,
-    "stylistic/nonblock-statement-body-position": 5,
-    "stylistic/padding-line-between-statements": 3,
-    "stylistic/new-parens": 3,
-    "typescript/no-shadow": 1,
-    "unicorn/no-useless-iterator-to-array": 2,
-    "typescript/array-type": 1,
-    "unicorn/no-array-for-each": 3,
-    "one-var": 1,
-    "sort-vars": 1
   },
   "test/unit/props.test.ts": {
     "perfectionist/sort-imports": 1,

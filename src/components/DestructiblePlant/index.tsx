@@ -12,7 +12,7 @@ import {potDefinition} from '#src/lib/gallery/plantDecorations/catalog.ts'
 import {decorationResources} from '#src/lib/gallery/plantDecorations/DecorationResources.ts'
 import {initializeFoliageCollider} from '#src/lib/physics/initializeFoliageCollider.ts'
 import {PlantAttachment} from '#src/lib/physics/PlantAttachment.ts'
-import {potPhysics} from '#src/lib/physics/pots.ts'
+import {potPhysics} from '#src/lib/physics/plantPhysics.ts'
 import {RootedPlantAttachment} from '#src/lib/physics/RootedPlantAttachment.ts'
 
 import Leaf from './Leaf.tsx'

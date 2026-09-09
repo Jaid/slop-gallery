@@ -9,7 +9,6 @@ import {EquirectangularReflectionMapping, Shape, SRGBColorSpace} from 'three/web
 import {rooms, useGallery, walls} from '#src/lib/gallery.ts'
 import {architectureGeometry, wallTop} from '#src/lib/gallery/architecture.ts'
 import {showPlantPreview} from '#src/lib/gallery/plantDecorations/catalog.ts'
-import {plantPositions} from '#src/lib/gallery/plants.ts'
 import {canvasTexture} from '#src/lib/texture.ts'
 
 import AmberRoom from './AmberRoom.tsx'
@@ -19,7 +18,7 @@ import CheckerMarbleFloor from './CheckerMarbleFloor.tsx'
 import DestructiblePlants from './DestructiblePlants.tsx'
 import {damaskTexture, surfaceTexture} from './materials.ts'
 import PlantPreview from './PlantPreview.tsx'
-import {Box, Plant} from './primitives.tsx'
+import {Box} from './primitives.tsx'
 import ReflectiveWoodFloor from './ReflectiveWoodFloor.tsx'
 
 export default function Architecture() {
@@ -74,7 +73,6 @@ export default function Architecture() {
       {[-1.1, 1.1].map(x => <Box key={x} position={[x, 0.22, 0]} size={[0.14, 0.44, 0.8]} color="#514a3b" metalness={0.6}/>)}
     </group></RigidBody>}
     <DestructiblePlants key={resetEpoch}/>
-    {plantPositions.map(position => <Plant key={resetEpoch + ':' + position.join(':')} position={position}/>)}
   </>
 }
 
