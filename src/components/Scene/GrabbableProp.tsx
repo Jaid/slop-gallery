@@ -83,6 +83,9 @@ export default function GrabbableProp({id, title, children, canGrab, blockedMess
     carried.move(origin, [origin[0] + d[0] * 1.45, origin[1] + d[1] * 1.45, origin[2] + d[2] * 1.45], delta, useGallery.getState().motion)
   })
   return <RigidBody ref={body} colliders="cuboid" ccd restitution={0.32} friction={0.8} mass={1.8} {...props}>
-    <group ref={group}>{children}</group>
+    <group ref={group} name={id} userData={{
+      propId: id,
+      title,
+    }}>{children}</group>
   </RigidBody>
 }

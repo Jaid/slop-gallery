@@ -95,7 +95,10 @@ function WallSurface({wall, plaster, theme}: {plaster: Texture
   const color = wall.room === 'amber' ? '#ffffff' : wall.room === 'cabinet' ? '#658578' : wall.room === 'afterhours' ? '#9295a2' : wall.room === 'secret' ? '#ded4b8' : theme === 'sage' ? '#bac9b9' : theme === 'nocturne' ? '#7d91a0' : '#eee7d7'
   const trim = wall.room === 'amber' ? '#35251f' : wall.room === 'cabinet' ? '#44655a' : (wall.room === 'afterhours' ? '#71778b' : '#ded5c1')
   const geometry = architectureGeometry(wall)
-  return <group position={wall.center} rotation={[0, wall.rotation, 0]}>
+  return <group name={wall.id} userData={{
+    wallId: wall.id,
+    room: wall.room,
+  }} position={wall.center} rotation={[0, wall.rotation, 0]}>
     <RigidBody type="fixed" colliders={false}>
       {geometry.collision.map((args, i) => <TrimeshCollider key={i} args={args}/>)}
       <mesh name={`wall-${wall.id}`} receiveShadow castShadow><primitive object={geometry.surface} attach="geometry"/><meshStandardMaterial color={color} map={plaster} roughness={wall.room === 'amber' ? 0.86 : 0.9}/></mesh>

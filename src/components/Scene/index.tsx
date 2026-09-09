@@ -1,6 +1,7 @@
 import {useFrame, useThree} from '@react-three/fiber/webgpu'
 import {useEffect, useRef} from 'react'
 
+import DevelopmentBridge from '#component/DevelopmentBridge'
 import Player from '#component/Player'
 import {useGallery} from '#src/lib/gallery.ts'
 
@@ -19,6 +20,7 @@ export default function Scene() {
     {portraits.map(p => <Portrait key={p.id} portrait={p}/>)}
     <Player position={[0, 0.85, 5.8]} speed={3} yaw={0}/>
     <Interaction/>
+    <DevelopmentBridge/>
     <Ready/>
   </>
 }

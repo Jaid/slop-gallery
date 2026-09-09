@@ -74,6 +74,22 @@ Preferences & backups exports a compressed `.slop` backup containing embedded im
 
 Browser storage is not a permanent backup. Export before clearing site data, switching browser profiles or changing the hosting origin. Use one editing tab at a time; there is no collaborative multi-tab merge protocol.
 
+## Development mode
+
+Load the gallery with `?development=true` (or append `&development=true` to existing query parameters) to expose `window['slop.gallery']` once the 3D scene mounts. This is an explicit runtime opt-in, including in production builds; changing the flag requires a reload. It does not enable the separate `?test=true` mutation helpers.
+
+```js
+const aim = window['slop.gallery'].getAim()
+aim.hit?.point // Exact world-space {x, y, z} of the nearest mesh hit, in meters.
+aim.hit?.mesh // Mesh name, UUID, numeric id, type, geometry type and scalar metadata.
+aim.hit?.ancestors // Parent-to-root identities and metadata, including wall or artwork ids.
+aim.hits // All intersected meshes/instances, ordered nearest first.
+```
+
+The ray follows the center of the camera view, not the desktop cursor. It works while the menu is open or pointer lock is released, so you can aim, open the console and inspect without moving the camera. Each call computes a fresh, JSON-serializable snapshot; no per-frame picking work is added. `hit` is `null` and `hits` is empty when nothing is intersected. Coordinates retain the raycaster’s floating-point precision without rounding.
+
+Hits include distance, world-space point and surface normal, geometry-local point, UV, triangle index, instance id and material identity. For instanced geometry, the local point and normal account for the individual instance transform. Each mesh/instance appears once at its nearest surface; subsequent hits can be behind the first object and do not imply visibility through it. Hidden subtrees, camera layers, invisible materials, fully transparent materials and camera clipping distances are respected. This is geometric raycasting, not pixel picking: texture alpha, shader displacement, normal maps and postprocessing do not change the reported intersection. Metadata copies only scalar `userData` values, never live Three.js objects or nested application state.
+
 ## Checks
 
 ```sh
