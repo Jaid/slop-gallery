@@ -15,6 +15,7 @@ import BenchSeat from './BenchSeat.tsx'
 import CabinetOrnaments from './CabinetOrnaments.tsx'
 import CheckerMarbleFloor from './CheckerMarbleFloor.tsx'
 import {damaskTexture, surfaceTexture} from './materials.ts'
+import PottedPlants from './PottedPlants.tsx'
 import {Box} from './primitives.tsx'
 import ReflectiveWoodFloor from './ReflectiveWoodFloor.tsx'
 
@@ -61,6 +62,7 @@ export default function Architecture() {
         </group>)}
       </>}
     </group>)}
+    <PottedPlants/>
     <CabinetOrnaments/>
     <AmberRoom wood={textures.wood}/>
     <RigidBody type="fixed" colliders="cuboid"><group position={[1.6, 0, 1.6]}>

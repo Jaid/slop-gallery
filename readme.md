@@ -58,7 +58,7 @@ The Cabinet of Curiosities has seven open botanical reliefs, just above the base
 
 ## Botanical assets
 
-The temporary plant preview, its numbered signs and all plant placements have been removed. The central bench and open floor are restored. The reusable pot and plant catalogs, modular `PlantDecoration` components and interactive `DestructiblePlant` models remain available. Future pots will contain randomly selected plants; no pots or plants are placed until their locations are chosen.
+The temporary plant preview, its numbered signs and all plant placements have been removed. The central bench and open floor are restored. The reusable pot and plant catalogs, modular `PlantDecoration` components and interactive `DestructiblePlant` models remain available. Pots are added only at chosen locations: Ivory flute pots stand in the southwest and northeast corners of the Afterhours Salon, and matching blue-green Celadon pots stand in the northwest and northeast corners of the Daydream Wing. The Amber Room has no pots or plants. Each pot randomly selects from all ten plant varieties once per mount; ordinary rerenders and gallery resets preserve its selection. Interactive varieties retain their plucking and pot-pickup behavior.
 
 ## Optional AI
 
