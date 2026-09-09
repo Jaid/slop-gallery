@@ -40,7 +40,6 @@ export type NarrationState = {id: string} & (
 )
 export type GallerySettings = {
   frame: 'black' | 'gold' | 'oak'
-  motion: boolean
   sound: boolean
   theme: 'ivory' | 'nocturne' | 'sage'
 }

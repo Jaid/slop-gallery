@@ -71,7 +71,7 @@ export default function GrabbableProp({id, title, children, canGrab, blockedMess
         return true
       },
       cancel: () => carried.cancel(),
-      move: (origin, target, delta) => carried.move(origin, target, delta, useGallery.getState().motion),
+      move: (origin, target, delta) => carried.move(origin, target, delta),
       release: throwing => {
         if (carried.release(throwing, cameraPose.direction)) notify('Not enough room here. Returned the object.')
       },
@@ -93,7 +93,7 @@ export default function GrabbableProp({id, title, children, canGrab, blockedMess
     const p = cameraPose.position
     const d = cameraPose.direction
     const origin: Vec3 = [p[0], p[1] - 0.22, p[2]]
-    carried.move(origin, [origin[0] + d[0] * 1.45, origin[1] + d[1] * 1.45, origin[2] + d[2] * 1.45], delta, useGallery.getState().motion)
+    carried.move(origin, [origin[0] + d[0] * 1.45, origin[1] + d[1] * 1.45, origin[2] + d[2] * 1.45], delta)
   })
   return <RigidBody ref={body} colliders="cuboid" ccd restitution={0.32} friction={0.8} mass={1.8} {...props}>
     <group ref={group} name={id} userData={{

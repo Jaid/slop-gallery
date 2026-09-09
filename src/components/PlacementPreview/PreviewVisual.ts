@@ -82,7 +82,7 @@ export class PreviewVisual {
     }
     this.imageMaterial.colorNode = this.tint.mul(edges.mul(1.15).add(0.025)).mul(scan)
     this.imageMaterial.opacityNode = edges.mul(0.3).add(0.65).mul(this.opacity)
-    this.update(false, false, 0)
+    this.update(false, 0)
   }
 
   dispose() {
@@ -93,12 +93,10 @@ export class PreviewVisual {
     this.imageMaterial.dispose()
   }
 
-  update(valid: boolean, motion: boolean, delta: number, inReach = true) {
+  update(valid: boolean, delta: number, inReach = true) {
     this.tint.value.set(valid ? previewColors.valid : previewColors.invalid)
     this.opacity.value = previewOpacity(inReach)
-    if (motion) {
-      this.time.value = (this.time.value + Math.min(Math.max(delta, 0), 0.06)) % 1024
-    }
+    this.time.value = (this.time.value + Math.min(Math.max(delta, 0), 0.06)) % 1024
   }
 
   private createBorderMaterial(width: number, height: number) {

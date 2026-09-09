@@ -65,7 +65,7 @@ export class PropPlacement {
     return this.hasRoom(position, false) ? position : null
   }
 
-  follow(target: Vec3, delta: number, animate = true): Vec3 | null {
+  follow(target: Vec3, delta: number): Vec3 | null {
     const current = this.body.translation()
     const position = new Vector3(current.x, current.y, current.z)
     if (!Number.isFinite(delta) || delta <= 0) return position.toArray()
@@ -73,7 +73,7 @@ export class PropPlacement {
     const movement = new Vector3(...target).sub(position)
     // About 95% settled in 125 ms, independent of refresh rate. Limit both
     // long-distance pickups and resumed frames so neither produces a one-frame jump.
-    let budget = animate ? Math.min(movement.length() * -Math.expm1(-24 * dt), 20 * dt) : movement.length()
+    let budget = Math.min(movement.length() * -Math.expm1(-24 * dt), 20 * dt)
     movement.clampLength(0, budget)
     for (let i = 0; i < 3 && movement.lengthSq() > 1e-12; i++) {
       const direction = movement.clone().normalize()

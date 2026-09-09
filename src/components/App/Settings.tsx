@@ -28,7 +28,6 @@ export default function Settings() {
       <span className="field-label">Daydream wall palette</span><div className="swatches">{(['ivory', 'sage', 'nocturne'] as const).map(theme => <button aria-pressed={s.theme === theme} className={s.theme === theme ? 'chosen' : ''} onClick={() => useGallery.setState({theme})} key={theme}><i style={{background: theme === 'ivory' ? '#e7dfcc' : (theme === 'sage' ? '#a4b7a6' : '#536571')}}/>{theme}</button>)}</div>
       <span className="field-label">Frame finish</span><div className="segmented">{(['gold', 'oak', 'black'] as const).map(frame => <button key={frame} aria-pressed={s.frame === frame} className={s.frame === frame ? 'chosen' : ''} onClick={() => useGallery.setState({frame})}>{frame}</button>)}</div>
       <label className="toggle-row">Sound<input type="checkbox" checked={s.sound} onChange={event => useGallery.setState({sound: event.target.checked})}/></label>
-      <label className="toggle-row">Camera motion & animated details<input type="checkbox" checked={s.motion} onChange={event => useGallery.setState({motion: event.target.checked})}/></label>
     </section>
     <section className="settings-section"><div className="section-label">Collection backup</div>
       {s.storageRecoveryRequired && <div className="confirmation"><p>The saved collection could not be read. Automatic saving is paused so the original record stays untouched. Export the current session or restore a backup before deciding to replace it.</p><button className="text-button danger" onClick={() => {

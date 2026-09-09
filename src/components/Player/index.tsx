@@ -342,7 +342,7 @@ const RapierPlayer = ({acceleration = 18,
     if (movementAmount > 0.03) {
       bobPhaseRef.current += delta * Math.max(headBobFrequency, 0) * Math.PI * 2 * clamp(movementAmount, 0.6, 1.5)
     }
-    const bob = useGallery.getState().motion ? Math.sin(bobPhaseRef.current) * Math.max(headBob, 0) * movementAmount : 0
+    const bob = Math.sin(bobPhaseRef.current) * Math.max(headBob, 0) * movementAmount
     if (movementAmount > 0.1 && Math.sin(bobPhaseRef.current) < -0.9 && useGallery.getState().sound) {
       SoundEngine.existing()?.step(['cabinet', 'amber'].includes(useGallery.getState().room))
     }

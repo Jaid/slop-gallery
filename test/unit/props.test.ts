@@ -192,13 +192,15 @@ describe('carried prop flight', () => {
     }
     expect(Math.abs(placement.body.translation().x)).toBeGreaterThan(0.3)
   })
-  test('honors reduced motion without disabling collision checks', () => {
+  test('smooths movement without disabling collision checks', () => {
     const placement = book()
     setPosition(placement, [0, 1.4, 0])
-    expect(placement.follow([0, 1.4, 1.6], 1 / 60, false)![2]).toBe(1.6)
+    const next = placement.follow([0, 1.4, 1.6], 1 / 60)!
+    expect(next[2]).toBeGreaterThan(0)
+    expect(next[2]).toBeLessThan(1.6)
     world.createCollider(RAPIER.ColliderDesc.cuboid(2, 2, 0.02).setTranslation(0, 1, 0.9))
     world.step()
-    const blocked = placement.follow([0, 1.4, 1.6], 1 / 60, false)!
+    const blocked = placement.follow([0, 1.4, 1.6], 0.05)!
     expect(blocked[2]).toBeLessThan(0.43)
     expect(placement.hasRoom(blocked, false)).toBe(true)
   })

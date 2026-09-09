@@ -67,7 +67,7 @@ export class GrabbableBody {
     return true
   }
 
-  move(origin: Vec3, target: Vec3, delta: number, animate = true) {
+  move(origin: Vec3, target: Vec3, delta: number) {
     if (!this.active) {
       return
     }
@@ -75,7 +75,7 @@ export class GrabbableBody {
     if (!destination) {
       return
     }
-    const position = this.placement.follow(destination, delta, animate)
+    const position = this.placement.follow(destination, delta)
     if (!position) {
       return
     }

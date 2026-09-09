@@ -104,7 +104,6 @@ export const useGallery = create<State>((set, get) => ({
   ai: false,
   apiKey: readKey(),
   sound: true,
-  motion: typeof matchMedia === 'function' ? !matchMedia('(prefers-reduced-motion: reduce)').matches : true,
   theme: 'ivory',
   frame: 'gold',
   narration: null,
@@ -191,7 +190,6 @@ export function createDocument(): GalleryDocument {
       theme: s.theme,
       frame: s.frame,
       sound: s.sound,
-      motion: s.motion,
     },
   }
 }

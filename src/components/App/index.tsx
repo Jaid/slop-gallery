@@ -1,6 +1,6 @@
 import './style.css'
 
-import {lazy, Suspense, useEffect, useState} from 'react'
+import {lazy, Suspense, useState} from 'react'
 import {useSlopGalleryTelemetry} from 'slop-gallery-telemethree/react'
 
 import Dropzone from '#component/Dropzone'
@@ -32,9 +32,6 @@ export default function App() {
   const s = useGallery()
   const [renderFailed, setRenderFailed] = useState(false)
   const gpu = navigator.gpu !== undefined && globalThis.isSecureContext
-  useEffect(() => {
-    document.documentElement.dataset.motion = s.motion ? 'on' : 'off'
-  }, [s.motion])
   if (!gpu) {
     return <main className="render-error"><h2>WebGPU is unavailable.</h2><p>Slop Gallery requires native WebGPU. Open it in current Chrome or Edge with hardware acceleration enabled, using HTTPS or localhost.</p></main>
   }

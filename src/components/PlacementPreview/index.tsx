@@ -21,8 +21,8 @@ export default function PlacementPreview({width, height, source, title, creator,
   const visual = useMemo(() => new PreviewVisual(width, height, texture), [width, height, texture])
   useEffect(() => () => visual.dispose(), [visual])
   useFrame((_, delta) => {
-    const {placement, motion} = useGallery.getState()
-    visual.update(placement?.valid === true, motion, delta, placement?.inReach === true)
+    const {placement} = useGallery.getState()
+    visual.update(placement?.valid === true, delta, placement?.inReach === true)
   })
   return <>
     <mesh position={[0, 0, 0.115]}>

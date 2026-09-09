@@ -24,7 +24,7 @@ export function validateDocument(value: unknown): GalleryDocument {
     throw new Error('The collection timestamp is too long.')
   }
   const settings = value.settings
-  if (!['ivory', 'sage', 'nocturne'].includes(String(settings.theme)) || !['gold', 'oak', 'black'].includes(String(settings.frame)) || typeof settings.sound !== 'boolean' || typeof settings.motion !== 'boolean') {
+  if (!['ivory', 'sage', 'nocturne'].includes(String(settings.theme)) || !['gold', 'oak', 'black'].includes(String(settings.frame)) || typeof settings.sound !== 'boolean') {
     throw new Error('The collection has invalid settings.')
   }
   const ids = new Set<string>
@@ -93,7 +93,6 @@ export function validateDocument(value: unknown): GalleryDocument {
       theme: settings.theme as GalleryDocument['settings']['theme'],
       frame: settings.frame as GalleryDocument['settings']['frame'],
       sound: settings.sound,
-      motion: settings.motion,
     },
   }
 }
@@ -289,7 +288,7 @@ export async function initializePersistence() {
     if (s.storageRecoveryRequired) {
       return
     }
-    if (s.storageRecoveryRequired === previous.storageRecoveryRequired && s.portraits === previous.portraits && s.theme === previous.theme && s.frame === previous.frame && s.sound === previous.sound && s.motion === previous.motion) {
+    if (s.storageRecoveryRequired === previous.storageRecoveryRequired && s.portraits === previous.portraits && s.theme === previous.theme && s.frame === previous.frame && s.sound === previous.sound) {
       return
     }
     clearTimeout(timer)

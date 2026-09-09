@@ -34,20 +34,20 @@ describe('placement preview', () => {
     })
   }
 
-  test('validity changes the shared tint and reduced motion freezes the ants', () => {
+  test('validity changes the shared tint while the ants keep animating', () => {
     const visual = new PreviewVisual(2.4, 1.8, null)
     try {
       expect(visual.tint.value.getHexString()).toBe('ff3b45')
-      visual.update(true, true, 1 / 60)
+      visual.update(true, 1 / 60)
       expect(visual.tint.value.getHexString()).toBe('36ff72')
       const time = visual.time.value
-      visual.update(false, false, 5)
-      expect(visual.time.value).toBe(time)
+      visual.update(false, 5)
+      expect(visual.time.value - time).toBeCloseTo(0.06)
       expect(visual.tint.value.getHexString()).toBe('ff3b45')
-      visual.update(true, true, 5)
-      expect(visual.time.value - time).toBeCloseTo(0.06)
-      visual.update(true, true, -1)
-      expect(visual.time.value - time).toBeCloseTo(0.06)
+      visual.update(true, 5)
+      expect(visual.time.value - time).toBeCloseTo(0.12)
+      visual.update(true, -1)
+      expect(visual.time.value - time).toBeCloseTo(0.12)
       expect(visual.borderMaterial.depthWrite).toBe(false)
       expect(visual.imageMaterial.depthWrite).toBe(false)
       expect(visual.imageMaterial.colorNode).not.toBeNull()
@@ -60,13 +60,13 @@ describe('placement preview', () => {
   test('distant previews fade every shader layer without disappearing', () => {
     const visual = new PreviewVisual(2, 2, null)
     try {
-      visual.update(false, true, 1 / 60, false)
+      visual.update(false, 1 / 60, false)
       expect(visual.opacity.value).toBe(0.18)
       expect(previewOpacity(false)).toBe(visual.opacity.value)
       expect(visual.borderMaterial.opacityNode).not.toBeNull()
       expect(visual.labelBorderMaterial.opacityNode).not.toBeNull()
       expect(visual.imageMaterial.opacityNode).not.toBeNull()
-      visual.update(false, false, 0, true)
+      visual.update(false, 0, true)
       expect(visual.opacity.value).toBe(1)
       expect(visual.tint.value.getHexString()).toBe('ff3b45')
     } finally {

@@ -153,7 +153,7 @@ describe('inspection look', () => {
     }
   })
 
-  test('supports return targets, reduced motion and invalid frame durations', () => {
+  test('supports return targets and invalid frame durations', () => {
     const look = new InspectionLook(rotation())
     for (const delta of [0, -1, NaN, Infinity]) {
       expect(look.update(rotation(1), delta).angleTo(rotation())).toBeLessThan(0.000001)
@@ -161,7 +161,10 @@ describe('inspection look', () => {
     const bounded = new InspectionLook(rotation()).update(rotation(1), 0.06)
     expect(look.update(rotation(1), 5).angleTo(bounded)).toBeLessThan(0.000001)
     look.addInput(-1, 0)
-    expect(look.update(rotation(0.4), 1 / 60, false).angleTo(rotation(0.4))).toBeLessThan(0.000001)
+    expect(look.update(rotation(0.4), 1 / 60).angleTo(rotation(0.4))).toBeGreaterThan(0.000001)
+    for (let i = 0; i < 240; i++) {
+      look.update(rotation(0.4), 1 / 60)
+    }
     expect(look.update(rotation(0.4), 1 / 60).angleTo(rotation(0.4))).toBeLessThan(0.000001)
   })
 })

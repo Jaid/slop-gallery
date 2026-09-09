@@ -54,14 +54,7 @@ export class InspectionLook {
     }
   }
 
-  update(target: Quaternion, delta: number, motion = true) {
-    if (!motion) {
-      this.pending.set(0, 0)
-      this.pitch.velocity = 0
-      this.yaw.velocity = 0
-      this.angles.setFromQuaternion(target)
-      return this.rotation.copy(target)
-    }
+  update(target: Quaternion, delta: number) {
     if (!Number.isFinite(delta) || delta <= 0) {
       return this.rotation
     }

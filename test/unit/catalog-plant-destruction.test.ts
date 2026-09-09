@@ -82,7 +82,9 @@ function fixture(kind: DestructibleCatalogKind) {
 function clearLeaves(leaves: Array<GrabbableBody>) {
   for (const [i, leaf] of leaves.entries()) {
     expect(leaf.grab()).toBe(true)
-    leaf.move([3 + i * 0.5, 2, 3], [3 + i * 0.5, 2, 4], 1 / 60, false)
+    for (let frame = 0; frame < 20; frame++) {
+      leaf.move([3 + i * 0.5, 2, 3], [3 + i * 0.5, 2, 4], 0.05)
+    }
     leaf.release(false, [0, 0, 1])
     expect(leaf.body.isDynamic()).toBe(true)
   }
@@ -146,7 +148,9 @@ describe('catalog plant destruction', () => {
     expect(state.rootAttached).toBe(true)
     expect(pot.grab()).toBe(false)
     expect(root.grab()).toBe(true)
-    root.move([0, 2, 3], [0, 2, 4], 1 / 60, false)
+    for (let frame = 0; frame < 20; frame++) {
+      root.move([0, 2, 3], [0, 2, 4], 0.05)
+    }
     root.release(true, [0, 0, 1])
     expect(root.body.isDynamic()).toBe(true)
     root.grab()
@@ -161,11 +165,15 @@ describe('catalog plant destruction', () => {
     const {model, leaves, root, pot} = fixture(kind)
     clearLeaves(leaves)
     root.grab()
-    root.move([0, 2, 3], [0, 2, 4], 1 / 60, false)
+    for (let frame = 0; frame < 20; frame++) {
+      root.move([0, 2, 3], [0, 2, 4], 0.05)
+    }
     root.release(true, [0, 0, 1])
     const positions = [root, ...leaves].map(piece => piece.body.translation())
     pot.grab()
-    pot.move([-3, 2, 3], [-3, 2, 4], 1 / 60, false)
+    for (let frame = 0; frame < 20; frame++) {
+      pot.move([-3, 2, 3], [-3, 2, 4], 0.05)
+    }
     pot.release(true, [0, 0, 1])
     expect([root, ...leaves].map(piece => piece.body.translation())).toEqual(positions)
     expect(pot.body.numColliders()).toBe(2)
@@ -183,7 +191,9 @@ describe('catalog plant destruction', () => {
     const state = attachments
     clearLeaves(leaves)
     root.grab()
-    root.move([0, 2, 3], [0, 2, 4], 1 / 60, false)
+    for (let frame = 0; frame < 20; frame++) {
+      root.move([0, 2, 3], [0, 2, 4], 0.05)
+    }
     root.release(false, [0, 0, 1])
     leaves[0]!.body.setTranslation({
       x: 0,
@@ -202,10 +212,14 @@ describe('catalog plant destruction', () => {
     expect(state.rootAttached).toBe(true)
     expect(pot.grab()).toBe(false)
     root.grab()
-    root.move([0, 2, 3], [0, 2, 4], 1 / 60, false)
+    for (let frame = 0; frame < 20; frame++) {
+      root.move([0, 2, 3], [0, 2, 4], 0.05)
+    }
     root.release(false, [0, 0, 1])
     pot.grab()
-    pot.move([-3, 2, 3], [-3, 2, 4], 1 / 60, false)
+    for (let frame = 0; frame < 20; frame++) {
+      pot.move([-3, 2, 3], [-3, 2, 4], 0.05)
+    }
     pot.release(false, [0, 0, 1])
     root.body.setTranslation({
       x: 0,
@@ -231,7 +245,9 @@ describe('catalog plant destruction', () => {
     expect(pot.grab()).toBe(false)
     piece.grab()
     for (let i = 0; i < 30; i++) {
-      piece.move([0, 2, 2], [0, 2, 3], 1 / 60)
+      for (let frame = 0; frame < 20; frame++) {
+        piece.move([0, 2, 2], [0, 2, 3], 0.05)
+      }
     }
     expect(piece.body.translation().z).toBeGreaterThan(2.5)
     expect(piece.release(false, [0, 0, 1])).toBe(false)
@@ -241,7 +257,9 @@ describe('catalog plant destruction', () => {
     world.createCollider(RAPIER.ColliderDesc.cuboid(0.5, 2, 0.1).setTranslation(0, 2, 2.5))
     world.step()
     piece.grab()
-    piece.move([0, 2, 2], [0, 2, 4], 1 / 60, false)
+    for (let frame = 0; frame < 20; frame++) {
+      piece.move([0, 2, 2], [0, 2, 4], 0.05)
+    }
     expect(piece.body.translation().z).toBeGreaterThan(2.6)
     // A re-grab of loose geometry must not ignore its former pot.
     expect(piece.placement.hasRoom([home.x, home.y, home.z], false)).toBe(false)

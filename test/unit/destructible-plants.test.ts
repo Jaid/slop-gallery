@@ -186,7 +186,9 @@ for (const kind of ['birdOfParadise', 'peaceLily'] as const) {
       const original = leaf.body.translation()
       const rotation = leaf.body.rotation()
       expect(leaf.grab()).toBe(true)
-      leaf.move([0, 1.5, 3], [0, 1.5, 2], 1 / 60, false)
+      for (let frame = 0; frame < 20; frame++) {
+        leaf.move([0, 1.5, 3], [0, 1.5, 2], 0.05)
+      }
       expect(leaf.body.translation()).not.toEqual(original)
       expect(attachments.remaining).toBe(leaves.length - 1)
       leaf.cancel()
@@ -308,7 +310,9 @@ for (const kind of ['birdOfParadise', 'peaceLily'] as const) {
       const loose = leaves.map(leaf => leaf.body.translation())
       const enabled = Array.from({length: pot.body.numColliders()}, (_, i) => pot.body.collider(i).isEnabled())
       pot.grab()
-      pot.move([0, 2, 3], [0, 2, 4], 1 / 60, false)
+      for (let frame = 0; frame < 20; frame++) {
+        pot.move([0, 2, 3], [0, 2, 4], 0.05)
+      }
       expect(pot.body.translation()).not.toEqual(original)
       pot.cancel()
       expect(pot.body.translation()).toEqual(original)
@@ -324,7 +328,9 @@ for (const kind of ['birdOfParadise', 'peaceLily'] as const) {
       const handle = pot.body.handle
       world.createCollider(RAPIER.ColliderDesc.cuboid(40, 0.1, 40).setTranslation(0, -0.1, 0))
       pot.grab()
-      pot.move([0, 2, 3], [0, 2, 4], 1 / 60, false)
+      for (let frame = 0; frame < 20; frame++) {
+        pot.move([0, 2, 3], [0, 2, 4], 0.05)
+      }
       pot.release(false, [0, 0, 1])
       for (let i = 0; i < 360; i++) {
         world.step()

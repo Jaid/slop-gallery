@@ -585,10 +585,6 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px
   .drop-card { padding: 20px; }
   .drop-card h2 { font-size: 28px; }
 }
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; }
-}
-html[data-motion='off'] *, html[data-motion='off'] *::before, html[data-motion='off'] *::after { animation: none !important; transition: none !important; }
 
 /* Full-screen gallery and its quiet, translucent menu. */
 .viewport {

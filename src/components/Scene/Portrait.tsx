@@ -67,9 +67,7 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
     }
   }, [p.hung, p.velocity])
   useFrame((_, dt) => {
-    if (useGallery.getState().motion) {
-      clock.current += Math.min(dt, 0.06)
-    }
+    clock.current += Math.min(dt, 0.06)
     if (p.merging && magic.current) {
       for (let i = 0; i < 64; i++) {
         const a = i * Math.PI / 32 + clock.current * 1.9

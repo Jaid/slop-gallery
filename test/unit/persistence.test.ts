@@ -178,3 +178,20 @@ test('metadata limits leave room for image encoding in every exported collection
     ],
   })).toThrow('wall identifier')
 })
+test('retired motion settings are ignored in saved collections', () => {
+  const document = createDocument()
+  expect(document.settings).not.toHaveProperty('motion')
+  for (const motion of [true, false]) {
+    const loaded = validateDocument({
+      ...document,
+      settings: {
+        ...document.settings,
+        motion,
+      },
+    })
+    expect(loaded.settings).toEqual(document.settings)
+    restoreDocument(loaded)
+    expect(useGallery.getState()).not.toHaveProperty('motion')
+    expect(createDocument().settings).toEqual(document.settings)
+  }
+})

@@ -412,8 +412,8 @@ export default function Interaction() {
         target = new Vector3(...p.position).addScaledVector(normal, distance)
         rotation = (new Quaternion).setFromRotationMatrix((new Matrix4).lookAt(target, new Vector3(...p.position), up))
       }
-      camera.position.lerp(target, s.motion ? 1 - Math.exp(-dt * 8) : 1)
-      camera.quaternion.copy(viewing.look.update(rotation, dt, s.motion))
+      camera.position.lerp(target, 1 - Math.exp(-dt * 8))
+      camera.quaternion.copy(viewing.look.update(rotation, dt))
       if (viewing.returning && camera.position.distanceTo(target) < 0.01 && camera.quaternion.angleTo(rotation) < 0.005) {
         viewing.restoreControls()
         view.current = null
