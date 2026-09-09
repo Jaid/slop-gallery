@@ -118,11 +118,11 @@ The app is private. Capture-library releases use tags matching its own version: 
 
 See [quality-report decisions](docs/quality-report-decisions.md) for accepted repairs, deliberate deferrals and the Fiber/Rapier compatibility exception.
 
-## Telemetry packages
+## Telemetry
 
-`telemethree` provides reusable metrics, logs, traces and Three frame/scene statistics. `telemethree-ego` adds player position, velocity and aim. `slop-gallery-telemethree` adds gallery state/events and pushes all three signals to Victoria through a same-origin development relay. The existing NAS configuration is unchanged.
+`telemethree` provides reusable metrics, logs, traces and Three frame/scene statistics. `telemethree-ego` adds player position, velocity and aim. The app’s `src/lib/telemetry` integration adds gallery state/events and pushes all three signals to Victoria through a same-origin development relay. The existing NAS configuration is unchanged.
 
-Telemetry is enabled in Vite development, disabled by `?telemetry=false` or `?test=true` and opt-in for production via `VITE_TELEMETRY_ENDPOINT`. With `?development=true`, `window['slop.gallery'].getTelemetry()` reports delivery status. See the [core API](packages/telemethree/readme.md), [player layer](packages/telemethree-ego/readme.md) and [gallery integration, endpoint configuration and queries](packages/slop-gallery-telemethree/readme.md).
+Telemetry is enabled in Vite development, disabled by `?telemetry=false` or `?test=true` and opt-in for production via `VITE_TELEMETRY_ENDPOINT`. With `?development=true`, `window['slop.gallery'].getTelemetry()` reports delivery status. See the [core API](packages/telemethree/readme.md), [player layer](packages/telemethree-ego/readme.md) and [gallery integration, endpoint configuration and queries](src/lib/telemetry/readme.md).
 
 ## WebGPU-exclusive rendering
 

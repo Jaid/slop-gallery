@@ -1,4 +1,4 @@
-import type {GalleryState} from '../src/main.ts'
+import type {GalleryState} from '../../src/lib/telemetry/types.ts'
 import type {ExportBatch, Metric} from 'telemethree'
 
 import {expect, test} from 'bun:test'
@@ -6,8 +6,9 @@ import {createServer} from 'node:http'
 
 import {createStore} from 'zustand/vanilla'
 
-import {SlopGalleryTelemetry, VictoriaExporter} from '../src/main.ts'
-import {createVictoriaRelay} from '../src/vite.ts'
+import {SlopGalleryTelemetry} from '../../src/lib/telemetry/SlopGalleryTelemetry.ts'
+import {VictoriaExporter} from '../../src/lib/telemetry/VictoriaExporter.ts'
+import {createVictoriaRelay} from '../../src/lib/telemetry/vite.ts'
 
 async function status(url: string, init?: RequestInit) {
   const response = await fetch(url, init)

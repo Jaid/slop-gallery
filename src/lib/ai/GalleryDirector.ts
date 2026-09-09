@@ -5,7 +5,7 @@ import {Narrator} from '../audio/Narrator.ts'
 import {chime, loadBlob, notify} from '../gallery/actions.ts'
 import {compositeImages, fitGeneratedImage} from '../gallery/ImageImporter.ts'
 import {useGallery} from '../gallery/store.ts'
-import {telemetry} from '../telemetry.ts'
+import {telemetry} from '../telemetry/index.ts'
 
 export class GalleryDirector {
   readonly narrator: Narrator

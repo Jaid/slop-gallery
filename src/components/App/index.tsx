@@ -1,11 +1,11 @@
 import './style.css'
 
 import {lazy, Suspense, useState} from 'react'
-import {useSlopGalleryTelemetry} from 'slop-gallery-telemethree/react'
 
 import Dropzone from '#component/Dropzone'
 import {galleryEvents, openPanel, useGallery} from '#src/lib/gallery.ts'
-import {telemetry} from '#src/lib/telemetry.ts'
+import {telemetry} from '#src/lib/telemetry/index.ts'
+import {useSlopGalleryTelemetry} from '#src/lib/telemetry/useSlopGalleryTelemetry.ts'
 import useGalleryAI from '#src/lib/useGalleryAI.ts'
 import useGalleryCommands from '#src/lib/useGalleryCommands.ts'
 

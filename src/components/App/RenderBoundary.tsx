@@ -3,7 +3,7 @@ import type {PropsWithChildren} from 'react'
 import {Component} from 'react'
 
 import {openPanel, useGallery} from '#src/lib/gallery.ts'
-import {telemetry} from '#src/lib/telemetry.ts'
+import {telemetry} from '#src/lib/telemetry/index.ts'
 
 export default class RenderBoundary extends Component<PropsWithChildren<{onFailure?: () => void}>, {failed: boolean}> {
   static getDerivedStateFromError() {

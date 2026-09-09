@@ -1,9 +1,11 @@
-# slop-gallery-telemethree
+# Gallery telemetry
 
-Slop Gallery instrumentation layered on `telemethree` and `telemethree-ego`, with Victoria delivery. It uses structural gallery-state/event contracts, never imports application source and can be consumed as a packed package.
+Slop Gallery instrumentation layered on `telemethree` and `telemethree-ego`, with Victoria delivery. This application-specific implementation lives in `src/lib/telemetry`; only the reusable Three and player telemetry layers are workspace packages.
+
+The browser-only `index.ts` owns the configured `telemetry` singleton and the controller’s `playerTelemetry` source. Import the classes directly when constructing an isolated client, such as in unit tests.
 
 ```ts
-import {SlopGalleryTelemetry} from 'slop-gallery-telemethree'
+import {SlopGalleryTelemetry} from '#src/lib/telemetry/SlopGalleryTelemetry.ts'
 
 const telemetry = new SlopGalleryTelemetry({endpoint: '/api/telemetry'})
 const disconnect = telemetry.connect(galleryStore, galleryEvents)
@@ -11,7 +13,7 @@ const ego = telemetry.createEgo({read: readPlayerAndAim})
 // Call ego.update() after controller/camera updates, then disconnect on unmount.
 ```
 
-`useSlopGalleryTelemetry(telemetry, store, events)` from `/react` pairs subscriptions with cleanup and attempts a flush on pagehide/visibility loss. A null client disables the hook. Use the reusable Three and ego hooks inside Canvas with this same client.
+`useSlopGalleryTelemetry(telemetry, store, events)` from `useSlopGalleryTelemetry.ts` pairs subscriptions with cleanup and attempts a flush on pagehide/visibility loss. A null client disables the hook. Use the reusable Three and ego hooks inside Canvas with this same client.
 
 ## Gallery signals
 
@@ -26,7 +28,7 @@ Only counts, flags, state names and numeric player/aim measurements are selected
 
 The checked configuration on 2026-09-09 has an OTLP collector for logs/traces only. Its metrics pipeline is not enabled. `VictoriaExporter` therefore uses native [VictoriaMetrics JSON import](https://docs.victoriametrics.com/victoriametrics/url-examples/#apiv1import) for metrics and OTLP/HTTP JSON for logs/traces. Metrics retain dotted names; resource/measurement attributes become labels. Duplicate series samples within the same millisecond in one batch keep their latest value.
 
-The `/vite` entry exports `victoriaTelemetry()` and `createVictoriaRelay()`:
+The server-only `vite.ts` module exports `victoriaTelemetry()` and `createVictoriaRelay()`:
 
 | Same-origin POST route | Fixed upstream destination |
 | --- | --- |

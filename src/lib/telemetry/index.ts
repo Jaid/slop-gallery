@@ -1,6 +1,6 @@
 import type {Point3} from 'telemethree-ego'
 
-import {SlopGalleryTelemetry} from 'slop-gallery-telemethree'
+import {SlopGalleryTelemetry} from './SlopGalleryTelemetry.ts'
 
 const params = new URLSearchParams(typeof location === 'undefined' ? '' : location.search)
 const endpoint: string | undefined = import.meta.env.VITE_TELEMETRY_ENDPOINT

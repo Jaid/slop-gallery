@@ -9,7 +9,7 @@ import {Quaternion, Vector3} from 'three/webgpu'
 
 import {SoundEngine} from '#src/lib/audio/SoundEngine.ts'
 import {cameraPose, galleryEvents, markControlled, useGallery} from '#src/lib/gallery.ts'
-import {playerTelemetry} from '#src/lib/telemetry.ts'
+import {playerTelemetry} from '#src/lib/telemetry/index.ts'
 
 import {getCapsuleHalfHeight, getJumpVelocity} from './util'
 

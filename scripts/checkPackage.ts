@@ -21,7 +21,7 @@ async function run(cwd: string, args: Array<string>) {
 }
 try {
   await run(join(root, 'packages/webgpu-capture-bridge'), ['pm', 'pack', '--filename', archive, '--ignore-scripts'])
-  const workspacePackages = ['telemethree', 'telemethree-ego', 'slop-gallery-telemethree', 'use-graphics-quality']
+  const workspacePackages = ['telemethree', 'telemethree-ego', 'use-graphics-quality']
   for (const name of workspacePackages) {
     await run(join(root, 'packages', name), ['pm', 'pack', '--filename', join(fixture, `${name}.tgz`), '--ignore-scripts'])
   }
@@ -33,7 +33,7 @@ try {
   for (const name of ['three', 'react', 'react-dom', '@react-three/fiber']) {
     dependencies[name] = manifest.dependencies[name]!
   }
-  for (const name of ['@types/three', '@types/react', '@types/react-dom', '@types/bun', 'typescript', 'vite']) {
+  for (const name of ['@types/three', '@types/react', '@types/react-dom', '@types/bun', 'typescript']) {
     dependencies[name] = manifest.devDependencies[name]!
   }
   await Bun.write(join(consumer, 'package.json'), JSON.stringify({
@@ -67,14 +67,9 @@ try {
     "export {GraphicsQualityProvider, useGraphicsQuality, useGraphicsQualityValue, useSetGraphicsQuality} from 'use-graphics-quality'",
     "export {EgoTelemetry} from 'telemethree-ego'",
     "export {useEgoTelemetry} from 'telemethree-ego/react'",
-    "export {SlopGalleryTelemetry, VictoriaExporter} from 'slop-gallery-telemethree'",
-    "export {useSlopGalleryTelemetry} from 'slop-gallery-telemethree/react'",
   ].join('\n'))
   await run(consumer, ['node_modules/typescript/bin/tsc', '--noEmit', '--strict', '--skipLibCheck', '--module', 'preserve', '--moduleResolution', 'bundler', '--target', 'esnext', '--lib', 'esnext,dom,dom.iterable', '--jsx', 'react-jsx', '--allowImportingTsExtensions', 'consumer.ts'])
   await run(consumer, ['build', './consumer.ts', '--target', 'browser', '--outfile', 'consumer.js'])
-  await Bun.write(join(consumer, 'server.ts'), "export {victoriaTelemetry, createVictoriaRelay} from 'slop-gallery-telemethree/vite'\n")
-  await run(consumer, ['node_modules/typescript/bin/tsc', '--noEmit', '--strict', '--skipLibCheck', '--module', 'preserve', '--moduleResolution', 'bundler', '--target', 'esnext', '--allowImportingTsExtensions', 'server.ts'])
-  await run(consumer, ['build', './server.ts', '--target', 'bun', '--outfile', 'server.js'])
   console.log('Packed capture/ego/graphics tests, all package consumer types and optional React browser bundles passed.')
 } finally {
   await rm(fixture, {

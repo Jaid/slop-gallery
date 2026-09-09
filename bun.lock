@@ -16,7 +16,6 @@
         "react": "19.2.8",
         "react-dom": "19.2.8",
         "react-dropzone": "20.1.1",
-        "slop-gallery-telemethree": "workspace:*",
         "telemethree": "workspace:*",
         "telemethree-ego": "workspace:*",
         "three": "0.186.0",
@@ -43,22 +42,6 @@
         "typescript": "npm:typescript-classic@6.0.4",
         "vite": "8.2.2",
       },
-    },
-    "packages/slop-gallery-telemethree": {
-      "name": "slop-gallery-telemethree",
-      "version": "0.1.0",
-      "dependencies": {
-        "telemethree": "workspace:*",
-        "telemethree-ego": "workspace:*",
-      },
-      "peerDependencies": {
-        "react": "^19.2.8",
-        "vite": "^8.2.2",
-      },
-      "optionalPeers": [
-        "react",
-        "vite",
-      ],
     },
     "packages/telemethree": {
       "name": "telemethree",
@@ -749,8 +732,6 @@
     "shebang-command": ["shebang-command@2.0.0", "", { "dependencies": { "shebang-regex": "^3.0.0" } }, "sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA=="],
 
     "shebang-regex": ["shebang-regex@3.0.0", "", {}, "sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A=="],
-
-    "slop-gallery-telemethree": ["slop-gallery-telemethree@workspace:packages/slop-gallery-telemethree"],
 
     "source-map-js": ["source-map-js@1.2.1", "", {}, "sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA=="],
 

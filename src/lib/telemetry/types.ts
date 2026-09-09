@@ -1,6 +1,6 @@
 import type {TelemetryOptions} from 'telemethree'
 
-/** Structural adapter: no imports from the app and no artwork, keys or prompts in the contract. */
+/** Telemetry only needs selected gallery state, without artwork, keys or prompts. */
 export type GalleryState = {
   ai: boolean
   held: string | null

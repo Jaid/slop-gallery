@@ -3,7 +3,7 @@ import {useEffect} from 'react'
 
 import {AimInspector} from '#src/lib/development/AimInspector.ts'
 import {installDevelopmentApi} from '#src/lib/development/api.ts'
-import {telemetry} from '#src/lib/telemetry.ts'
+import {telemetry} from '#src/lib/telemetry/index.ts'
 
 export default function DevelopmentBridge() {
   const scene = useThree(s => s.scene)

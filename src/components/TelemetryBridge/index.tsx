@@ -4,7 +4,7 @@ import {useEgoTelemetry} from 'telemethree-ego/react'
 import {useThreeTelemetry} from 'telemethree/react'
 
 import {AimInspector} from '#src/lib/development/AimInspector.ts'
-import {playerTelemetry, telemetry} from '#src/lib/telemetry.ts'
+import {playerTelemetry, telemetry} from '#src/lib/telemetry/index.ts'
 
 function Collectors() {
   const scene = useThree(state => state.scene)
