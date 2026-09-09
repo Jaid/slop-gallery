@@ -15,6 +15,30 @@ beforeEach(() => {
 })
 afterEach(() => world.free())
 describe('shared grabbing regressions', () => {
+  test('lower-gallery props only recover after falling below the lower floor', () => {
+    const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 2, 3))
+    world.createCollider(RAPIER.ColliderDesc.cuboid(0.2, 0.2, 0.2), body)
+    const carried = new GrabbableBody(body, world)
+    carried.rememberHome()
+    body.setTranslation({
+      x: 18,
+      y: -4.1,
+      z: 15,
+    }, true)
+    carried.recover()
+    expect(body.translation().y).toBeCloseTo(-4.1)
+    body.setTranslation({
+      x: 18,
+      y: -8,
+      z: 15,
+    }, true)
+    carried.recover()
+    expect(body.translation()).toEqual({
+      x: 0,
+      y: 2,
+      z: 3,
+    })
+  })
   test('sleeping sculptures wake and cancel restores their dynamic compound colliders', () => {
     const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(1, 2, 3))
     world.createCollider(RAPIER.ColliderDesc.cuboid(0.3, 0.05, 0.4), body)

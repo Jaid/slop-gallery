@@ -6,7 +6,7 @@ import {imageSize} from './ImageImporter.ts'
 import {imageExtensions, maximumBackupBytes, validateCollectionImages, validateImage} from './imagePolicy.ts'
 import {migratePortrait} from './migratePortrait.ts'
 import {createDocument, maximumPortraits, restoreDocument, useGallery} from './store.ts'
-import {insideGallery, wallCoordinates, wallPosition, walls} from './walls.ts'
+import {insideGallery, placementIssue, wallCoordinates, wallPosition, walls} from './walls.ts'
 
 const images = new Set(initialPortraits.map(p => p.source).filter((p): p is string => typeof p === 'string'))
 const narrations = new Set(initialPortraits.map(p => p.narration).filter((p): p is string => typeof p === 'string'))
@@ -54,6 +54,7 @@ export function validateDocument(value: unknown): GalleryDocument {
     if (p.hung && (!walls.some(wall => wall.id === p.wallId) || p.orientation)) {
       throw new Error('A hanging artwork has an invalid wall.')
     }
+    let displaced = false
     if (p.hung) {
       const wall = walls.find(w => w.id === p.wallId)!
       const pos = p.position as Portrait['position']
@@ -61,6 +62,7 @@ export function validateDocument(value: unknown): GalleryDocument {
       if (Math.hypot(...expected.map((n, i) => n - pos[i]!)) > 0.025 || Math.abs(Math.sin((p.rotation - wall.rotation) / 2)) > 0.001) {
         throw new Error('A hanging artwork is detached from its wall.')
       }
+      displaced = object(value) && value.wallId === 'secret-east' && placementIssue(wall, pos, p.width, p.height, []) === 'Let’s keep the doorway clear.'
     }
     if (!insideGallery(p.position as Portrait['position'])) {
       throw new Error('An artwork is outside the gallery.')
@@ -73,13 +75,14 @@ export function validateDocument(value: unknown): GalleryDocument {
       ...typeof p.year === 'number' ? {year: p.year} : {},
       description: p.description,
       source: p.source,
-      position: p.position as Portrait['position'],
+      // Lay legacy frames that covered the new doorway safely inside the Antechamber.
+      position: displaced ? [0, 0.2, 11.5] : p.position as Portrait['position'],
       rotation: p.rotation,
       width: p.width,
       height: p.height,
-      hung: p.hung,
+      hung: p.hung && !displaced,
       wallId: typeof p.wallId === 'string' ? p.wallId : undefined,
-      orientation: p.orientation as Portrait['orientation'],
+      orientation: displaced ? [Math.SQRT1_2, 0, 0, Math.SQRT1_2] : p.orientation as Portrait['orientation'],
       narration: p.narration === undefined ? bundled?.narration : typeof p.narration === 'string' && narrations.has(p.narration) ? p.narration : undefined,
       imported: p.imported === true,
     }

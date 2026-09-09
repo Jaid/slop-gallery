@@ -107,13 +107,13 @@ describe('wall geometry', () => {
       inReach: true,
     })
     expect(findPlacement([0, 2.5, 0], [0, 0, 1], 2, 2, [])).toMatchObject({
-      wallId: 'secret-south',
+      wallId: 'antechamber-south',
       inReach: false,
     })
   })
-  test('the Good Taste Department is always available for hanging artwork', () => {
+  test('the Antechamber is always available for hanging artwork', () => {
     expect(findPlacement([0, 2.5, 10], [0, 0, 1], 2, 2, [])).toMatchObject({
-      wallId: 'secret-south',
+      wallId: 'antechamber-south',
       inReach: true,
       valid: true,
     })
@@ -158,14 +158,14 @@ describe('wall geometry', () => {
   test('gallery bounds include the new room but not the empty space beside it', () => {
     expect(galleryBounds).toEqual({
       minX: -20,
-      maxX: 20,
+      maxX: 24,
       minZ: -8,
-      maxZ: 20,
+      maxZ: 22,
     })
     for (const position of [[-14, 2, 14], [-14, 2, 19.8], [0, 2, 14], [-20, 0, 20]] as const) {
       expect(insideGallery([...position])).toBe(true)
     }
-    for (const position of [[-6, 2, 18], [14, 2, 14], [-14, 2, 20.01], [-20.01, 2, 14], [-14, -1.01, 14], [-14, 6.01, 14], [Number.NaN, 2, 14]] as const) {
+    for (const position of [[-6, 2, 18], [14, 3, 14], [-14, 2, 20.01], [-20.01, 2, 14], [-14, -1.01, 14], [-14, 6.01, 14], [Number.NaN, 2, 14]] as const) {
       expect(insideGallery([...position])).toBe(false)
     }
   })
@@ -189,7 +189,7 @@ describe('wall geometry', () => {
   test('room boundaries are shared by UI and interaction', () => {
     expect(roomAt([-14, 2, 0])).toBe('cabinet')
     expect(roomAt([14, 2, 0])).toBe('afterhours')
-    expect(roomAt([0, 2, 11])).toBe('secret')
+    expect(roomAt([0, 2, 11])).toBe('antechamber')
     expect(roomAt([0, 2, 3])).toBe('daydream')
   })
 })
@@ -223,7 +223,7 @@ describe('image dimensions', () => {
     })
   })
   for (const dimensions of [[0, 100], [-1, 100], [Number.NaN, 100], [Infinity, 100], [9000, 9000], [1300, 100], [100, 1300]]) {
-    test(`rejects ${dimensions}`, () => {
+    test(`rejects ${dimensions.join('×')}`, () => {
       expect(() => imageSize(dimensions[0]!, dimensions[1]!)).toThrow()
     })
   }
@@ -286,6 +286,9 @@ describe('backup validation', () => {
   test('default IDs match unique, existing artwork and narration filenames', async () => {
     expect(new Set(initialPortraits.map(p => p.id)).size).toBe(initialPortraits.length)
     for (const p of initialPortraits) {
+      if (typeof p.source !== 'string') {
+        throw new TypeError('Default artworks must reference bundled images.')
+      }
       expect(p.id).toMatch(/^[a-z]+(?:-[a-z]+)*$/)
       expect(p.source).toMatch(new RegExp(String.raw`^/art/${p.id}\.(webp|png|avif)$`))
       expect(await Bun.file(new URL(`../../public${p.source}`, import.meta.url)).exists()).toBe(true)

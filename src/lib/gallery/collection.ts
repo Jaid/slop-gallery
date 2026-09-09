@@ -215,7 +215,7 @@ export const initialPortraits: Array<Portrait> = [
     width: 1.6,
     height: 1.6,
     hung: true,
-    wallId: 'secret-south',
+    wallId: 'antechamber-south',
   },
   {
     id: 'bread',

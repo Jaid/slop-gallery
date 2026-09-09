@@ -2,7 +2,7 @@
 
 Good taste. Questionable art.
 
-A local-first, first-person WebGPU museum: five rooms, sixteen absurd artworks and tactile sculptures. Built with React, React Three Fiber, Three.js TSL and Rapier.
+A local-first, first-person WebGPU museum: six rooms across two levels, sixteen absurd artworks and tactile sculptures. Built with React, React Three Fiber, Three.js TSL and Rapier.
 
 Uses Three r186. See the [migration and Mage fixture impact report](docs/three-r186.md) for rendering changes, new capabilities, the temporary r185 type declarations and the manual visual-review checklist.
 
@@ -49,6 +49,8 @@ Collection provides search, room filters, complete stories, editable labels and 
 The Serious Knot uses a polished gold material with procedural color and normal maps and a locally bundled [warehouse HDR reflection environment](public/environment/readme.md). Its reflections are material-local; the other sculptures and gallery lighting are unchanged.
 
 The three sculpture pedestals use carved limestone with fluted faces, chamfered corners, stepped bases and crowns and narrow aged-brass collars set into dark reveals. Subtle procedural mineral bedding and grain run continuously across the stone. Their geometry and stone material are shared, and fixed collision meshes follow the carved surfaces while preserving the original footprint and display height.
+
+The former secret room is now **The Antechamber**. Its east doorway leads down twenty illuminated stone steps to **The Undertone**, 3.6 m below the main gallery. Dark slate, blue-green light, brass handrails and a slowly rotating orbital light sculpture give the lower chamber its own atmosphere. The perimeter walls remain available for your collection. The floor plan includes both levels and the stairs; navigation, imports, wall placement and saved collections use the lower floor’s elevation. Existing secret-room wall placements migrate to the Antechamber without changing artwork or labels; frames that covered the new doorway arrive loose on the Antechamber floor.
 
 The Amber Room is through the rear arch in the Cabinet of Curiosities, or directly accessible from the floor plan. Dark damask wallpaper, walnut-colored paneling, a burgundy rug and an eight-arm brass chandelier give it a warmer, dimmer atmosphere. Its walls are left empty for your collection. The floor and rug adapt the procedural materials from the `ox_smart-gallery-webgpu` reference run: staggered wood joints and wavy grain tile every 2.4 m, while fine red carpet fibers tile every 1.8 m. Color and bump maps share the same physical scale, with mipmaps and anisotropic filtering for shallow viewing angles.
 

@@ -48,7 +48,7 @@ test('collection and preferences expose Add artwork, backups and visible history
   expect(history).toContain('Undo')
   expect(history).toContain('Redo')
   const map = renderToStaticMarkup(createElement(Map))
-  expect(map.match(/disabled=""/g)).toHaveLength(5)
+  expect(map.match(/disabled=""/g)).toHaveLength(6)
 })
 test('renderer-free drops decode, commit and support undo/redo inside Collection', async () => {
   Object.assign(globalThis, {

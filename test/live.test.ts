@@ -352,7 +352,7 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     await teleport(page, [0, 1.62, 6], [0, 1, 0, 0])
     await enter(page)
     await page.keyboard.down('w')
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().room === 'secret')
+    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().room === 'antechamber')
     await page.keyboard.up('w')
     await page.evaluate(() => document.exitPointerLock())
     await page.screenshot({path: 'private/agent/reports/production-good-taste.png'})

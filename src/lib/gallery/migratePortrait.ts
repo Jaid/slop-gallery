@@ -32,6 +32,7 @@ for (const [oldId, id, image, narration] of aliases) {
 export function migratePortrait(portrait: Record<string, unknown>) {
   return {
     ...portrait,
+    wallId: typeof portrait.wallId === 'string' ? portrait.wallId.replace(/^secret-(east|north|south|west)$/u, 'antechamber-$1') : portrait.wallId,
     id: typeof portrait.id === 'string' ? ids.get(portrait.id) ?? portrait.id : portrait.id,
     source: typeof portrait.source === 'string' ? images.get(portrait.source) ?? portrait.source : portrait.source,
     narration: typeof portrait.narration === 'string' ? narrations.get(portrait.narration) ?? portrait.narration : portrait.narration,

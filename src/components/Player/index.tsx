@@ -5,7 +5,7 @@ import EgoPlayer from 'ego-player'
 import {useEffect, useRef} from 'react'
 
 import {SoundEngine} from '#src/lib/audio/SoundEngine.ts'
-import {cameraPose, galleryEvents, markControlled, useGallery} from '#src/lib/gallery.ts'
+import {cameraPose, floorHeight, galleryEvents, markControlled, useGallery} from '#src/lib/gallery.ts'
 import {playerTelemetry} from '#src/lib/telemetry/index.ts'
 
 const enabled = () => !cameraPose.focused && !useGallery.getState().panel
@@ -30,7 +30,7 @@ export default function Player() {
         rotation: [number, number, number, number]}>).detail
       cameraPose.focused = false
       // Gallery navigation describes camera poses; ego-player consistently uses feet.
-      player.current?.teleport([position[0], Math.max(0.04, position[1] - 1.6), position[2]], rotation)
+      player.current?.teleport([position[0], Math.max(floorHeight(position) + 0.04, position[1] - 1.6), position[2]], rotation)
     }
     galleryEvents.addEventListener('teleport', teleport)
     return () => {

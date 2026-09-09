@@ -3,10 +3,38 @@ import type {Wall, WallOpening} from './walls.ts'
 import {ADDITION, Brush, Evaluator, SUBTRACTION} from 'three-bvh-csg'
 import {BoxGeometry, BufferGeometry, ExtrudeGeometry, MeshBasicNodeMaterial, Shape} from 'three/webgpu'
 
+const curveSegments = 64
+const openingShape = (hole: WallOpening, padding = 0, bottom = -0.5) => {
+  const shape = new Shape
+  const radius = hole.width / 2 + padding
+  shape.moveTo(hole.u - radius, bottom)
+  shape.lineTo(hole.u + radius, bottom)
+  if (hole.profile === 'arch') {
+    const spring = hole.height - hole.width / 2
+    shape.lineTo(hole.u + radius, spring)
+    shape.absarc(hole.u, spring, radius, 0, Math.PI, false)
+  } else {
+    shape.lineTo(hole.u + radius, hole.height + padding)
+    shape.lineTo(hole.u - radius, hole.height + padding)
+  }
+  shape.closePath()
+  return shape
+}
+const extrude = (shape: Shape, depth: number, z: number) => {
+  return new ExtrudeGeometry(shape, {
+    depth,
+    bevelEnabled: false,
+    steps: 1,
+    curveSegments,
+  }).translate(0, 0, z)
+}
+const box = (width: number, height: number, depth: number, x: number, y: number, z: number) => {
+  return new BoxGeometry(width, height, depth).translate(x, y, z)
+}
+
 export const wallTop = 5.8
 export const wallFace = 0.105
 export const wallOpeningTrim = 0.17
-const curveSegments = 64
 export type ArchitectureGeometry = ReturnType<typeof createArchitectureGeometry>
 export function colliderGeometry(geometry: BufferGeometry): [Float32Array, Uint32Array] {
   const positions = geometry.getAttribute('position')
@@ -16,6 +44,7 @@ export function colliderGeometry(geometry: BufferGeometry): [Float32Array, Uint3
 }
 // CSG runs once per wall layout, never in the animation loop or on theme changes.
 export function createArchitectureGeometry(wall: Wall) {
+  const top = wall.height + 0.3
   const evaluator = new Evaluator
   evaluator.useGroups = false
   const material = new MeshBasicNodeMaterial
@@ -41,7 +70,7 @@ export function createArchitectureGeometry(wall: Wall) {
   }
   try {
     // Paired room faces meet at z = 0 instead of occupying overlapping solids.
-    const surface = cut(box(wall.width, wallTop, wallFace, 0, wallTop / 2, wallFace / 2))
+    const surface = cut(box(wall.width, top, wallFace, 0, top / 2, wallFace / 2))
     // Trim starts at the plaster face so their exposed doorway reveals never overlap.
     const trimBox = (width: number, height: number, front: number, x: number, y: number) => brush(box(width, height, front - wallFace, x, y, (front + wallFace) / 2))
     let molding = trimBox(wall.width, 0.38, 0.2, 0, 0.19)
@@ -85,36 +114,9 @@ export function createArchitectureGeometry(wall: Wall) {
   }
 }
 
-function openingShape(hole: WallOpening, padding = 0, bottom = -0.5) {
-  const shape = new Shape
-  const radius = hole.width / 2 + padding
-  shape.moveTo(hole.u - radius, bottom)
-  shape.lineTo(hole.u + radius, bottom)
-  if (hole.profile === 'arch') {
-    const spring = hole.height - hole.width / 2
-    shape.lineTo(hole.u + radius, spring)
-    shape.absarc(hole.u, spring, radius, 0, Math.PI, false)
-  } else {
-    shape.lineTo(hole.u + radius, hole.height + padding)
-    shape.lineTo(hole.u - radius, hole.height + padding)
-  }
-  shape.closePath()
-  return shape
-}
-function extrude(shape: Shape, depth: number, z: number) {
-  return new ExtrudeGeometry(shape, {
-    depth,
-    bevelEnabled: false,
-    steps: 1,
-    curveSegments,
-  }).translate(0, 0, z)
-}
-function box(width: number, height: number, depth: number, x: number, y: number, z: number) {
-  return new BoxGeometry(width, height, depth).translate(x, y, z)
-}
 const cache = new Map<string, ArchitectureGeometry>
 export function architectureGeometry(wall: Wall) {
-  const key = JSON.stringify([wall.width, wall.holes ?? []])
+  const key = JSON.stringify([wall.width, wall.height, wall.holes ?? []])
   let geometry = cache.get(key)
   if (!geometry) {
     geometry = createArchitectureGeometry(wall)

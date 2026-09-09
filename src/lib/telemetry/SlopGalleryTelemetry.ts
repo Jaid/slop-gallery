@@ -5,6 +5,7 @@ import type {EgoTelemetryOptions} from 'telemethree-ego'
 import {Telemetry} from 'telemethree'
 import {EgoTelemetry} from 'telemethree-ego'
 
+import {rooms} from '../gallery/walls.ts'
 import {VictoriaExporter} from './VictoriaExporter.ts'
 
 export class SlopGalleryTelemetry extends Telemetry {
@@ -139,7 +140,7 @@ export class SlopGalleryTelemetry extends Telemetry {
     this.metric('gallery.narration.active', Number(state.narration !== null))
     this.metric('gallery.save.error', Number(state.saveStatus === 'error'))
     // Emit every bounded room state, so the previous room does not remain at 1.
-    for (const room of ['daydream', 'afterhours', 'cabinet', 'amber', 'secret']) {
+    for (const {id: room} of rooms) {
       this.metric('gallery.room.active', Number(room === state.room), {attributes: {room}})
     }
   }

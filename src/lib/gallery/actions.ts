@@ -4,6 +4,7 @@ import type {Portrait, Vec3} from './types.ts'
 import {SoundEngine} from '../audio/SoundEngine.ts'
 import {initialPortraits} from './collection.ts'
 import {redo, undo, useGallery} from './store.ts'
+import {floorHeight} from './walls.ts'
 
 export const cameraPose = {
   focused: false,
@@ -118,7 +119,7 @@ export function newPortrait(source: Blob, title: string, width: number, height: 
     creator: 'You · guest artist',
     description: 'A new arrival. Every collection starts with a little curiosity.',
     source,
-    position: [p[0] + d[0] * 1.6, Math.max(0.8, p[1] + d[1] * 1.6), p[2] + d[2] * 1.6],
+    position: [p[0] + d[0] * 1.6, Math.max(floorHeight([p[0] + d[0] * 1.6, p[1], p[2] + d[2] * 1.6]) + 0.8, p[1] + d[1] * 1.6), p[2] + d[2] * 1.6],
     rotation: Math.atan2(-d[0], -d[2]),
     width,
     height,

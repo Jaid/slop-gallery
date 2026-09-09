@@ -9,7 +9,7 @@ import {Object3D, Quaternion, Vector3} from 'three/webgpu'
 
 import DynamicImageMaterial from '#component/DynamicImageMaterial'
 import PortraitLabel from '#component/PortraitLabel'
-import {chime, requestMerge, useGallery} from '#src/lib/gallery.ts'
+import {chime, floorHeight, requestMerge, useGallery} from '#src/lib/gallery.ts'
 
 export const portraitObjects = new Map<string, {body: RapierRigidBody
   group: Group}>
@@ -25,7 +25,12 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
   const lastImpact = useRef(0)
   const w = p.width
   const h = p.height
-  const frameColor = frame === 'gold' ? '#a5804b' : (frame === 'oak' ? '#6a4630' : '#292c29')
+  const frameColors = {
+    gold: '#a5804b',
+    oak: '#6a4630',
+    black: '#292c29',
+  }
+  const frameColor = frameColors[frame]
   useEffect(() => {
     if (body.current && group.current) {
       portraitObjects.set(p.id, {
@@ -80,7 +85,8 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
       }
       magic.current.instanceMatrix.needsUpdate = true
     }
-    if (body.current && !p.hung && body.current.translation().y < -4) {
+    const position = body.current?.translation()
+    if (body.current && position && !p.hung && position.y < floorHeight([position.x, position.y, position.z]) - 4) {
       body.current.setTranslation({
         x: 0,
         y: 1,
