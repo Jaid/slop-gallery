@@ -21,6 +21,8 @@ export type EgoOptions = {
   eyeHeight?: number
   fallGravityFactor?: number
   gravity?: number
+  /** Requested downward speed while grounded, in world units per second. Nonpositive values disable the bias. */
+  groundStickSpeed?: number
   height?: number
   jumpBufferTime?: number
   jumpHeight?: number
@@ -31,6 +33,7 @@ export type EgoOptions = {
   pushDynamicBodies?: boolean
   radius?: number
   slideAngle?: number
+  /** Maximum Rapier ground-snapping distance in world units. Nonpositive values disable snapping. */
   snapToGround?: number
   speed?: number
   sprintFactor?: number
@@ -57,6 +60,7 @@ export const defaultEgoOptions = Object.freeze({
   eyeHeight: 1.6,
   fallGravityFactor: 2,
   gravity: 9.81,
+  groundStickSpeed: 0.18,
   bobStrength: 0.018,
   bobFrequency: 1.8,
   height: 1.6,

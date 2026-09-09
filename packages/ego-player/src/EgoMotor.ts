@@ -195,7 +195,7 @@ export class EgoMotor {
       this.lastGroundedAt = Number.NEGATIVE_INFINITY
       this.isGrounded = false
     } else if (grounded) {
-      this.verticalVelocity = -Math.max(o.snapToGround, 0.05)
+      this.verticalVelocity = -Math.max(o.groundStickSpeed, 0)
     } else {
       const gravityFactor = this.verticalVelocity < 0 ? Math.max(o.fallGravityFactor, 0) : 1
       this.verticalVelocity = Math.max(this.verticalVelocity - Math.max(o.gravity, 0) * gravityFactor * dt, -Math.max(o.maxSpeedDown, 0))

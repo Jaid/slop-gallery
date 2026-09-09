@@ -123,6 +123,7 @@ Distances use world units, speeds use world units per second, acceleration/gravi
 | `jumpReleaseFactor`, `jumpBufferTime`, `coyoteTime` | 0.55, 0.14, 0.12 |
 | `gravity`, `fallGravityFactor`, `maxSpeedDown` | 9.81, 1.35, 30 |
 | `contactOffset`, `snapToGround` | 0.02, 0.18 |
+| `groundStickSpeed` | 0.18 |
 | `stepHeight`, `stepMinWidth` | 0.3, 0.2 |
 | `maxSlopeAngle`, `slideAngle` | 50, 55 |
 | `pushDynamicBodies`, `characterMass` | true, 80 |
@@ -135,6 +136,8 @@ Crouching resizes the capsule synchronously before movement; standing is blocked
 Holding the `sprint` action while moving forward (including forward diagonals) uses `sprintFactor` and `sprintJumpFactor`. Holding it while moving sideways or backward is a **dodge** and uses `dodgeFactor` and `dodgeJumpFactor` instead. Direction is camera-relative and opposing keys cancel before classification: W + S + A dodges left, while W + A sprints diagonally. Both modes retain the normal acceleration and air-control behavior; dodge is a sustained directional boost, not a timed dash or invulnerability action.
 
 Crouching suppresses both boosts. Without directional input, Shift + jump retains the existing `sprintJumpFactor` bonus. Factors are evaluated when a buffered jump launches, not when it was queued. Jump factors multiply jump **height**, not velocity. Releasing jump multiplies positive vertical velocity by `jumpReleaseFactor`. Grounded and airborne acceleration/deceleration are independent. Gravity is integrated by the motor, not inherited from the Physics world’s gravity.
+
+`snapToGround` only controls Rapier’s maximum snap **distance** in world units. `groundStickSpeed` independently controls the requested downward **speed** while grounded, in world units per second. Its default 0.18 preserves the previous default bias: at 60 physics steps per second, it requests 0.003 world units downward per step before collision resolution. Changing the snap distance no longer changes this bias. A nonpositive `groundStickSpeed` disables the bias without changing the configured snap distance; there is no hidden minimum speed. Removing the bias can affect ground detection and snapping. Jump launches and airborne gravity remain independent.
 
 A nonpositive `stepHeight` or `stepMinWidth` disables autostep; nonpositive `snapToGround` disables snapping. Autostep does not climb dynamic bodies. Actual traversability also depends on capsule shape, contact offset, approach and slope settings; the step-height setting is not a guarantee that every ledge below it is traversable. `characterMass={null}` lets Rapier derive character mass from the body. Collision groups filter both movement and stand-up clearance; sensors and disabled colliders are ignored.
 
