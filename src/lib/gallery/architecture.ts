@@ -1,10 +1,14 @@
 import type {Wall, WallOpening} from './walls.ts'
 
 import {ADDITION, Brush, Evaluator, SUBTRACTION} from 'three-bvh-csg'
-import {BoxGeometry, BufferGeometry, ExtrudeGeometry, MeshBasicNodeMaterial, Shape} from 'three/webgpu'
+import {BoxGeometry, BufferGeometry, ExtrudeGeometry, Matrix4, MeshBasicNodeMaterial, Shape} from 'three/webgpu'
+
+import {wallFace, wallOpeningTrim} from './architectureDimensions.ts'
+
+export {wallFace, wallOpeningTrim, wallTop} from './architectureDimensions.ts'
 
 const curveSegments = 64
-const openingShape = (hole: WallOpening, padding = 0, bottom = -0.5) => {
+const openingShape = (hole: WallOpening, padding = 0, bottom = hole.bottom ?? -0.5) => {
   const shape = new Shape
   const radius = hole.width / 2 + padding
   shape.moveTo(hole.u - radius, bottom)
@@ -32,9 +36,6 @@ const box = (width: number, height: number, depth: number, x: number, y: number,
   return new BoxGeometry(width, height, depth).translate(x, y, z)
 }
 
-export const wallTop = 5.8
-export const wallFace = 0.105
-export const wallOpeningTrim = 0.17
 export type ArchitectureGeometry = ReturnType<typeof createArchitectureGeometry>
 export function colliderGeometry(geometry: BufferGeometry): [Float32Array, Uint32Array] {
   const positions = geometry.getAttribute('position')
@@ -73,24 +74,64 @@ export function createArchitectureGeometry(wall: Wall) {
     const surface = cut(box(wall.width, top, wallFace, 0, top / 2, wallFace / 2))
     // Trim starts at the plaster face so their exposed doorway reveals never overlap.
     const trimBox = (width: number, height: number, front: number, x: number, y: number) => brush(box(width, height, front - wallFace, x, y, (front + wallFace) / 2))
-    let molding = trimBox(wall.width, 0.38, 0.2, 0, 0.19)
+    const baseboardBand = (bottom: number, height: number, front: number) => {
+      if (!wall.baseboardProfile) {
+        return trimBox(wall.width, height, front, 0, bottom + height / 2)
+      }
+      // Sweep each band along the actual floor contact instead of burying a
+      // horizontal molding in the ramp and exposing a tapering triangular stub.
+      const shape = new Shape
+      for (const [i, [u, y]] of wall.baseboardProfile.entries()) {
+        if (i === 0) {
+          shape.moveTo(u, y + bottom)
+        } else {
+          shape.lineTo(u, y + bottom)
+        }
+      }
+      for (const [u, y] of wall.baseboardProfile.toReversed()) {
+        shape.lineTo(u, y + bottom + height)
+      }
+      shape.closePath()
+      return brush(extrude(shape, front - wallFace, wallFace))
+    }
+    let molding = baseboardBand(0, 0.38, 0.2)
     const join = (part: Brush) => {
       molding = evaluator.evaluate(molding, part, ADDITION, brush(new BufferGeometry))
     }
-    join(trimBox(wall.width, 0.06, 0.25, 0, 0.41))
+    join(baseboardBand(0.38, 0.06, 0.25))
     for (const hole of wall.holes ?? []) {
-      join(brush(extrude(openingShape(hole, wallOpeningTrim, 0), 0.165, wallFace)))
-      for (const side of [-1, 1]) {
-        join(trimBox(0.3, 0.4, 0.325, hole.u + side * (hole.width / 2 + wallOpeningTrim / 2), 0.2))
+      const front = wall.trimStyle === 'plain' ? 0.25 : 0.27
+      join(brush(extrude(openingShape(hole, wallOpeningTrim, hole.bottom ? hole.bottom - wallOpeningTrim : 0), front - wallFace, wallFace)))
+      if (wall.trimStyle !== 'plain' && !hole.bottom) {
+        for (const side of [-1, 1]) {
+          join(trimBox(0.3, 0.4, 0.325, hole.u + side * (hole.width / 2 + wallOpeningTrim / 2), 0.2))
+        }
       }
     }
     // Cut the assembled solid once, leaving a single reveal instead of coplanar faces
     // from the baseboard, arch and plinth. Rendering and collision share this geometry.
     const trim = [cut(molding)]
-    const collision = [surface, ...trim].map(colliderGeometry)
+    const glazing = (wall.holes ?? []).filter(hole => hole.glassThickness).map(hole => {
+      const bottom = hole.bottom ?? 0
+      const geometry = extrude(openingShape(hole, 0, bottom), hole.glassThickness!, (wallFace - hole.glassThickness!) / 2)
+      geometry.computeBoundingBox()
+      geometry.computeBoundingSphere()
+      retained.add(geometry)
+      return geometry
+    })
+    if (wall.slope) {
+      const shear = (new Matrix4).set(1, 0, 0, 0, wall.slope, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
+      for (const geometry of [surface, ...trim, ...glazing]) {
+        geometry.applyMatrix4(shear)
+        geometry.computeBoundingBox()
+        geometry.computeBoundingSphere()
+      }
+    }
+    const collision = [surface, ...trim, ...glazing].map(colliderGeometry)
     return {
       surface,
       trim,
+      glazing,
       collision,
       dispose() {
         for (const geometry of retained) {
@@ -116,7 +157,7 @@ export function createArchitectureGeometry(wall: Wall) {
 
 const cache = new Map<string, ArchitectureGeometry>
 export function architectureGeometry(wall: Wall) {
-  const key = JSON.stringify([wall.width, wall.height, wall.holes ?? []])
+  const key = JSON.stringify([wall.width, wall.height, wall.holes ?? [], wall.slope ?? 0, wall.baseboardProfile ?? null, wall.trimStyle ?? 'classic'])
   let geometry = cache.get(key)
   if (!geometry) {
     geometry = createArchitectureGeometry(wall)

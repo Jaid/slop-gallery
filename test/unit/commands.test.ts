@@ -11,6 +11,7 @@ import {galleryEvents, handleGalleryKey, importDroppedFiles, isTextInput, viewPo
 import {ImageImporter} from '../../src/lib/gallery/ImageImporter.ts'
 import {imageFilename} from '../../src/lib/gallery/imagePolicy.ts'
 import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
+import {rooms} from '../../src/lib/gallery/walls.ts'
 
 const original = createDocument()
 const previous = {
@@ -48,7 +49,7 @@ test('collection and preferences expose Add artwork, backups and visible history
   expect(history).toContain('Undo')
   expect(history).toContain('Redo')
   const map = renderToStaticMarkup(createElement(Map))
-  expect(map.match(/disabled=""/g)).toHaveLength(6)
+  expect(map.match(/disabled=""/g)).toHaveLength(rooms.length)
 })
 test('renderer-free drops decode, commit and support undo/redo inside Collection', async () => {
   Object.assign(globalThis, {

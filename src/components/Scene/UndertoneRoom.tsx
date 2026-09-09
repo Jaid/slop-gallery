@@ -28,7 +28,7 @@ export default function UndertoneRoom({stone}: {stone: Texture}) {
         <mesh position={[-side * 0.085, 2.2, 0]}><boxGeometry args={[0.025, 2.45, 0.065]}/><meshBasicNodeMaterial color="#83c5bd" toneMapped={false}/></mesh>
       </group>)}
       <RigidBody type="fixed" colliders="cuboid">
-        <group position={[side * 4.1, 0, 2.6]} rotation={[0, Math.PI / 2, 0]}>
+        <group position={[side * 4.1, 0, -1.8]} rotation={[0, Math.PI / 2, 0]}>
           <BenchSeat position={[0, 0.48, 0]} size={[2.6, 0.2, 0.8]}/>
           {[-1, 1].map(x => <Box key={x} position={[x, 0.19, 0]} size={[0.14, 0.38, 0.65]} color="#34494b" metalness={0.5}/>)}
         </group>

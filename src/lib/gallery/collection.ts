@@ -1,5 +1,7 @@
 import type {Portrait} from './types.ts'
 
+import {daydream} from './daydream.ts'
+
 export const initialPortraits: Array<Portrait> = [
   {
     id: 'goose',
@@ -11,7 +13,7 @@ export const initialPortraits: Array<Portrait> = [
     position: [
       -3.6,
       2.5,
-      -7.78,
+      daydream.northZ + 0.22,
     ],
     rotation: 0,
     width: 2.05,
@@ -29,7 +31,7 @@ export const initialPortraits: Array<Portrait> = [
     position: [
       0,
       2.65,
-      -7.78,
+      daydream.northZ + 0.22,
     ],
     rotation: 0,
     width: 2.7,
@@ -47,7 +49,7 @@ export const initialPortraits: Array<Portrait> = [
     position: [
       3.6,
       2.5,
-      -7.78,
+      daydream.northZ + 0.22,
     ],
     rotation: 0,
     width: 2.05,

@@ -41,9 +41,9 @@ describe('wall geometry', () => {
     }
   })
   test('hits the facing wall and preserves the frame offset', () => {
-    expect(findPlacement([0, 2.5, 0], [0, 0, -1], 2, 2, [])).toMatchObject({
+    expect(findPlacement([0, 2.5, -24], [0, 0, -1], 2, 2, [])).toMatchObject({
       wallId: 'daydream-north',
-      position: [0, 2.5, -7.78],
+      position: [0, 2.5, -31.78],
       valid: true,
     })
     expect(findPlacement([0, 2.5, 5], [0, 0, -1], 2, 2, [])).toMatchObject({
@@ -71,20 +71,20 @@ describe('wall geometry', () => {
     expect(placementIssue(wall, p.position, p.width, p.height, initialPortraits, p.id)).toBe('')
   })
   test('keeps distant wall previews but never accepts them as placements', () => {
-    for (const z of [2.001, 5, 7.5]) {
+    for (const z of [-21.999, 5, 7.5]) {
       expect(findPlacement([0, 2.5, z], [0, 0, -1], 2, 2, [])).toMatchObject({
         wallId: 'daydream-north',
-        position: [0, 2.5, -7.78],
+        position: [0, 2.5, -31.78],
         inReach: false,
         valid: false,
         reason: 'Move closer to hang this artwork.',
       })
     }
-    expect(findPlacement([0, 2.5, 2], [0, 0, -1], 2, 2, [])).toMatchObject({
+    expect(findPlacement([0, 2.5, -22], [0, 0, -1], 2, 2, [])).toMatchObject({
       inReach: true,
       valid: true,
     })
-    expect(findPlacement([0, 2.5, 1.999], [0, 0, -1], 2, 2, [])).toMatchObject({
+    expect(findPlacement([0, 2.5, -22.001], [0, 0, -1], 2, 2, [])).toMatchObject({
       inReach: true,
       valid: true,
     })
@@ -94,7 +94,7 @@ describe('wall geometry', () => {
       inReach: false,
       valid: false,
     })
-    expect(findPlacement([0, 2.5, 0], [0, 0, -0.5], 2, 2, [])).toMatchObject({
+    expect(findPlacement([0, 2.5, -24], [0, 0, -0.5], 2, 2, [])).toMatchObject({
       inReach: true,
       valid: true,
     })
@@ -158,9 +158,9 @@ describe('wall geometry', () => {
   test('gallery bounds include the new room but not the empty space beside it', () => {
     expect(galleryBounds).toEqual({
       minX: -20,
-      maxX: 24,
-      minZ: -8,
-      maxZ: 22,
+      maxX: 20,
+      minZ: -32,
+      maxZ: 20,
     })
     for (const position of [[-14, 2, 14], [-14, 2, 19.8], [0, 2, 14], [-20, 0, 20]] as const) {
       expect(insideGallery([...position])).toBe(true)

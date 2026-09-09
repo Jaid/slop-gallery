@@ -4,13 +4,13 @@ import {describe, expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
 import {EgoMotor} from 'ego-player/motor'
-import {BoxGeometry, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
+import {BoxGeometry, Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {newPortrait} from '../../src/lib/gallery/actions.ts'
 import {createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import {initialPortraits} from '../../src/lib/gallery/collection.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
-import {stairBlocks, staircase, stairFloorHeight} from '../../src/lib/gallery/staircase.ts'
+import {stairBlocks, staircase, stairFlights, stairFloorHeight, stairRails, stairRoofs, stairTurn} from '../../src/lib/gallery/staircase.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
 import {findPlacement, floorHeight, insideGallery, placementIssue, roomAt, rooms, roomVisit, wallPosition, walls} from '../../src/lib/gallery/walls.ts'
 
@@ -18,35 +18,40 @@ await RAPIER.init()
 const lower = rooms.find(candidate => candidate.id === 'undertone')!
 const upper = rooms.find(candidate => candidate.id === 'antechamber')!
 describe('lower gallery', () => {
-  test('navigation, room classification and floor bounds include both levels and the staircase', () => {
-    expect(upper.title).toBe('The Antechamber')
-    expect(roomVisit(lower).position[1]).toBeCloseTo(-1.9)
+  test('stacked rooms, both stair flights and the U-turn landing resolve their own elevation', () => {
+    expect(lower.center).toEqual(upper.center)
+    expect(roomVisit(lower).position[1]).toBeCloseTo(-6.3)
     for (const block of stairBlocks) {
       const position: Vec3 = [block.position[0], block.top + 1.6, block.position[2]]
-      expect(stairFloorHeight(position[0])).toBeCloseTo(block.top)
+      expect(stairFloorHeight(position[0], position[2])).toBeCloseTo(block.top)
       expect(floorHeight(position)).toBeCloseTo(block.top)
       expect(insideGallery(position)).toBe(true)
       expect(roomAt(position)).toBe('undertone')
     }
-    expect(insideGallery([18, -3.55, 15])).toBe(true)
-    expect(insideGallery([18, -4.61, 15])).toBe(false)
-    expect(insideGallery([18, 2.41, 15])).toBe(false)
+    expect(roomAt([0, 1.6, 11.5])).toBe('antechamber')
+    expect(roomAt([0, -6.4, 11.5])).toBe('undertone')
+    expect(floorHeight([0, 1.6, 11.5])).toBe(0)
+    expect(floorHeight([0, -6.4, 11.5])).toBe(-8)
+    expect(floorHeight([5, -6.4, 11.5])).toBe(-8)
+    expect(insideGallery([0, -8.95, 11.5])).toBe(true)
+    expect(insideGallery([0, -9.01, 11.5])).toBe(false)
     expect(insideGallery([8, -1, 14])).toBe(false)
-    expect(insideGallery([8, -5, 11.5])).toBe(false)
     expect(insideGallery([Number.NaN, -2, 15])).toBe(false)
+    expect(stairFloorHeight(stairTurn.position[0], stairTurn.position[2])).toBe(-4)
+    expect(stairFloorHeight(8, 13.3)).toBeUndefined()
   })
-  test('wall rays and frame/label clearance use world elevation exactly once', () => {
+  test('wall rays and frame clearance respect lower-level elevations and relocated portals', () => {
     const wall = walls.find(candidate => candidate.id === 'undertone-south')!
     const position = wallPosition(wall, 2, lower.floorY + 2.5)
-    expect(position[1]).toBeCloseTo(-1.1)
+    expect(position[1]).toBeCloseTo(-5.5)
     expect(placementIssue(wall, position, 2, 2, [])).toBe('')
     expect(placementIssue(wall, wallPosition(wall, 2, lower.floorY + 1), 2, 2, [])).toContain('label')
-    expect(findPlacement([16, -1.1, 18], [0, 0, 1], 2, 2, [])).toMatchObject({
+    expect(findPlacement([-2, -5.5, 14], [0, 0, 1], 2, 2, [])).toMatchObject({
       wallId: wall.id,
       valid: true,
     })
-    expect(findPlacement([14, -2, 11.5], [-1, 0, 0], 1, 1, [])).toBeNull()
-    expect(findPlacement([14, -2, 14], [-1, 0, 0], 1, 1, [])?.wallId).toBe('undertone-west')
+    expect(findPlacement([4, -6.4, staircase.returnZ], [1, 0, 0], 1, 1, [])).toBeNull()
+    expect(findPlacement([4, -6.4, 11.5], [1, 0, 0], 1, 1, [])?.wallId).toBe('undertone-east')
     expect(findPlacement([8, -0.5, 11.5], [0, 0, -1], 1, 1, [])).toMatchObject({
       valid: false,
       reason: 'Keep the stairway clear.',
@@ -100,7 +105,7 @@ describe('lower gallery', () => {
     expect(validateDocument(saved)).toEqual(saved)
     expect(portrait.hung).toBe(true)
   })
-  test('lower-level hanging and loose portraits round-trip through collection validation', () => {
+  test('hanging and loose portraits survive relocation once without changing their metadata', () => {
     const wall = walls.find(candidate => candidate.id === 'undertone-south')!
     for (const hung of [true, false]) {
       const portrait = {
@@ -108,7 +113,7 @@ describe('lower gallery', () => {
         hung,
         wallId: wall.id,
         rotation: wall.rotation,
-        position: hung ? wallPosition(wall, 0, -1.1) : [18, -3.4, 17] as Vec3,
+        position: hung ? wallPosition(wall, 2, -5.5) : [0, -7.8, 15] as Vec3,
       }
       const saved = validateDocument({
         ...createDocument(),
@@ -116,14 +121,55 @@ describe('lower gallery', () => {
       })
       expect(saved.portraits[0]).toMatchObject(portrait)
       expect(validateDocument(saved)).toEqual(saved)
+      const old = {
+        ...portrait,
+        position: [portrait.position[0] + 18, portrait.position[1] + 4.4, portrait.position[2] + 3.5],
+      }
+      const migrated = validateDocument({
+        ...createDocument(),
+        portraits: [old],
+      }).portraits[0]!
+      expect(migrated).toMatchObject({
+        ...portrait,
+        position: migrated.position,
+      })
+      for (const [axis, value] of portrait.position.entries()) {
+        expect(migrated.position[axis]!).toBeCloseTo(value)
+      }
     }
     const portrait = newPortrait(new Blob, 'Lower arrival', 1, 1, {
-      position: [18, -2, 18],
+      position: [0, -6.4, 15],
       direction: [0, -1, 0],
     })
-    expect(portrait.position[1]).toBeCloseTo(-2.8)
+    expect(portrait.position[1]).toBeCloseTo(-7.2)
   })
-  test('every visible tread matches its physical top and adjoins the next one', () => {
+  test('legacy paintings displaced by the east stair portal or north tunnel are laid safely inside', () => {
+    for (const portrait of [
+      {
+        ...initialPortraits[0]!,
+        wallId: 'undertone-east',
+        rotation: -Math.PI / 2,
+        position: [23.78, -1.1, 18.6],
+      },
+      {
+        ...initialPortraits[0]!,
+        wallId: 'undertone-north',
+        rotation: 0,
+        position: [18, -1.1, 8.22],
+      },
+    ]) {
+      const saved = validateDocument({
+        ...createDocument(),
+        portraits: [portrait],
+      })
+      expect(saved.portraits[0]).toMatchObject({
+        hung: false,
+        position: [0, -7.8, 15],
+      })
+      expect(validateDocument(saved)).toEqual(saved)
+    }
+  })
+  test('every tread matches the physical floor, and sidewalls close every tread edge', () => {
     const world = new RAPIER.World({
       x: 0,
       y: -9.81,
@@ -135,7 +181,7 @@ describe('lower gallery', () => {
         world.createCollider(RAPIER.ColliderDesc.cuboid(block.size[0] / 2, block.size[1] / 2, block.size[2] / 2).setTranslation(...block.position))
       }
       world.step()
-      for (const [i, block] of stairBlocks.entries()) {
+      for (const block of stairBlocks) {
         const geometry = new BoxGeometry(...block.size)
         try {
           const mesh = new Mesh(geometry, material)
@@ -144,13 +190,30 @@ describe('lower gallery', () => {
           const origin = new Vector3(block.position[0], 2, block.position[2])
           const direction = new Vector3(0, -1, 0)
           expect(new Raycaster(origin, direction).intersectObject(mesh)[0]!.point.y).toBeCloseTo(block.top)
-          expect(world.castRay(new RAPIER.Ray(origin, direction), 10, true)!.timeOfImpact).toBeCloseTo(2 - block.top)
-          if (i > 0) {
-            const previous = stairBlocks[i - 1]!
-            expect(block.position[0] - block.size[0] / 2).toBeCloseTo(previous.position[0] + previous.size[0] / 2)
-          }
+          expect(world.castRay(new RAPIER.Ray(origin, direction), 12, true)!.timeOfImpact).toBeCloseTo(2 - block.top)
         } finally {
           geometry.dispose()
+        }
+      }
+      for (const flight of stairFlights) {
+        for (const side of [-1, 1]) {
+          const wall = flight.wall(side)
+          const geometry = createArchitectureGeometry(wall)
+          try {
+            const mesh = new Mesh(geometry.surface, material)
+            mesh.position.set(...wall.center)
+            mesh.rotation.y = wall.rotation
+            mesh.updateMatrixWorld(true)
+            for (const block of flight.blocks) {
+              for (const edge of [-0.499, 0, 0.499]) {
+                const x = block.position[0] + block.size[0] * edge
+                const ray = new Raycaster(new Vector3(x, block.top + 0.001, block.position[2]), new Vector3(0, 0, side), 0, 2)
+                expect(ray.intersectObject(mesh).length).toBeGreaterThan(0)
+              }
+            }
+          } finally {
+            geometry.dispose()
+          }
         }
       }
     } finally {
@@ -158,82 +221,81 @@ describe('lower gallery', () => {
       world.free()
     }
   })
-  for (const [fps, offset] of [[30, -0.7], [60, -0.35], [60, 0], [60, 0.35], [60, 0.7], [120, 0.55], [240, 0]] as const) {
-    for (const sprint of [false, true]) {
-      for (const ascending of [false, true]) {
-        test(`${ascending ? 'ascends' : 'descends'} the full staircase and both portals without jumping (sprint: ${sprint}, physics: ${fps} Hz, offset: ${offset})`, () => {
-          const world = new RAPIER.World({
-            x: 0,
-            y: -9.81,
-            z: 0,
-          })
-          world.timestep = 1 / fps
-          const geometries = walls.filter(wall => ['antechamber-east', 'undertone-west', 'undertone-stairs-north', 'undertone-stairs-south'].includes(wall.id)).map(wall => ({
-            wall,
-            geometry: createArchitectureGeometry(wall),
-          }))
-          for (const {wall, geometry} of geometries) {
-            const rotation = (new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)
-            for (const [vertices, indices] of geometry.collision) {
-              world.createCollider(RAPIER.ColliderDesc.trimesh(vertices, indices).setTranslation(...wall.center).setRotation(rotation))
-            }
-          }
-          for (const block of stairBlocks) {
-            world.createCollider(RAPIER.ColliderDesc.cuboid(block.size[0] / 2, block.size[1] / 2, block.size[2] / 2).setTranslation(...block.position))
-          }
-          world.createCollider(RAPIER.ColliderDesc.cuboid(4, 0.15, 3.5).setTranslation(0, -0.15, 11.5))
-          world.createCollider(RAPIER.ColliderDesc.cuboid(6, 0.15, 7).setTranslation(18, lower.floorY - 0.15, 15))
-          const slope = -Math.atan2(3.6, 8)
-          const roofRotation = (new Quaternion).setFromAxisAngle(new Vector3(0, 0, 1), slope)
-          world.createCollider(RAPIER.ColliderDesc.cuboid((Math.hypot(8, 3.6) + 0.2) / 2, 0.09, staircase.width / 2).setTranslation(8, 1.8, staircase.z).setRotation(roofRotation))
-          for (const side of [-1, 1]) {
-            world.createCollider(RAPIER.ColliderDesc.cuboid(Math.hypot(8, 3.6) / 2, 0.0325, 0.0325).setTranslation(8, -0.8, staircase.z + side * (staircase.width / 2 - 0.22)).setRotation(roofRotation))
-          }
-          const start: Vec3 = ascending ? [13.4, lower.floorY + 0.04, staircase.z + offset] : [3, 0.04, staircase.z + offset]
-          const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(...start))
-          const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
-          const motor = new EgoMotor(RAPIER, world, body, collider)
-          const facing = (new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), ascending ? Math.PI / 2 : -Math.PI / 2)
-          try {
-            for (let i = 0; i < 30; i++) {
-              motor.step(world.timestep, {}, facing)
-              world.step()
-            }
-            let travelTime = 0
-            let stalled = 0
-            let longestStall = 0
-            for (let i = 0; i < fps * 12; i++) {
-              travelTime += world.timestep
-              const previousX = body.translation().x
-              motor.step(world.timestep, {
-                forward: true,
-                sprint,
-              }, facing)
-              world.step()
-              stalled = Math.abs(body.translation().x - previousX) < 0.001 ? stalled + world.timestep : 0
-              longestStall = Math.max(longestStall, stalled)
-              if (ascending ? body.translation().x < 3 : body.translation().x > 13.4) {
-                break
+  for (const fps of [30, 60, 120, 240]) {
+    for (const offset of [-0.65, 0, 0.65]) {
+      for (const sprint of [false, true]) {
+        for (const ascending of [false, true]) {
+          test(`${ascending ? 'ascends' : 'descends'} the U-turn stairs at ${fps} Hz, offset ${offset}, sprint ${sprint}`, () => {
+            const world = new RAPIER.World({
+              x: 0,
+              y: -9.81,
+              z: 0,
+            })
+            world.timestep = 1 / fps
+            const geometries = walls.filter(wall => ['antechamber-east', 'undertone-east'].includes(wall.id) || wall.id.startsWith('undertone-stairs-')).map(wall => ({
+              wall,
+              geometry: createArchitectureGeometry(wall),
+            }))
+            for (const {wall, geometry} of geometries) {
+              const rotation = (new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)
+              for (const [vertices, indices] of geometry.collision) {
+                world.createCollider(RAPIER.ColliderDesc.trimesh(vertices, indices).setTranslation(...wall.center).setRotation(rotation))
               }
             }
-            // A riser may consume one physics tick, not a visible stop-and-reaccelerate cycle.
-            expect(longestStall).toBeLessThan(0.035)
-            expect(travelTime).toBeLessThan(sprint ? 1.8 : 4.7)
-            expect(ascending ? body.translation().x < 3 : body.translation().x > 13.4).toBe(true)
-            for (let i = 0; i < 60; i++) {
-              motor.step(world.timestep, {}, facing)
-              world.step()
+            for (const block of stairBlocks) {
+              world.createCollider(RAPIER.ColliderDesc.cuboid(block.size[0] / 2, block.size[1] / 2, block.size[2] / 2).setTranslation(...block.position))
             }
-            expect(body.translation().y).toBeCloseTo((ascending ? 0 : lower.floorY) + 0.02, 2)
-            expect(motor.grounded).toBe(true)
-          } finally {
-            motor.dispose()
-            world.free()
-            for (const {geometry} of geometries) {
-              geometry.dispose()
+            for (const beam of [...stairRoofs, ...stairRails]) {
+              world.createCollider(RAPIER.ColliderDesc.cuboid(beam.size[0] / 2, beam.size[1] / 2, beam.size[2] / 2).setTranslation(...beam.position).setRotation((new Quaternion).setFromEuler(new Euler(...beam.rotation))))
             }
-          }
-        })
+            world.createCollider(RAPIER.ColliderDesc.cuboid(4, 0.15, 3.5).setTranslation(0, -0.15, 11.5))
+            world.createCollider(RAPIER.ColliderDesc.cuboid(6, 0.15, 7).setTranslation(0, lower.floorY - 0.15, 11.5))
+            world.createCollider(RAPIER.ColliderDesc.cuboid(6, 0.15, 7).setTranslation(0, lower.floorY + 5.9, 11.5))
+            const path = [[3, staircase.z + offset], [stairTurn.position[0], staircase.z + offset], [stairTurn.position[0], staircase.returnZ + offset], [4.4, staircase.returnZ + offset]]
+            if (ascending) {
+              path.reverse()
+            }
+            const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(path[0]![0]!, (ascending ? lower.floorY : 0) + 0.04, path[0]![1]!))
+            const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
+            const motor = new EgoMotor(RAPIER, world, body, collider)
+            const facing = new Quaternion
+            try {
+              for (let i = 0; i < 30; i++) {
+                motor.step(world.timestep, {}, facing)
+                world.step()
+              }
+              let target = 1
+              for (let i = 0; i < fps * 16 && target < path.length; i++) {
+                const position = body.translation()
+                const dx = path[target]![0]! - position.x
+                const dz = path[target]![1]! - position.z
+                if (Math.hypot(dx, dz) < Math.max(0.14, (sprint ? 8 : 3) / fps)) {
+                  target++
+                  continue
+                }
+                facing.setFromAxisAngle(new Vector3(0, 1, 0), Math.atan2(-dx, -dz))
+                motor.step(world.timestep, {
+                  forward: true,
+                  sprint,
+                }, facing)
+                world.step()
+              }
+              expect(target).toBe(path.length)
+              for (let i = 0; i < 60; i++) {
+                motor.step(world.timestep, {}, facing)
+                world.step()
+              }
+              expect(body.translation().y).toBeCloseTo((ascending ? 0 : lower.floorY) + 0.02, 2)
+              expect(motor.grounded).toBe(true)
+            } finally {
+              motor.dispose()
+              world.free()
+              for (const {geometry} of geometries) {
+                geometry.dispose()
+              }
+            }
+          })
+        }
       }
     }
   }

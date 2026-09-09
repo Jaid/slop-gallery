@@ -340,7 +340,7 @@ for (const kind of ['birdOfParadise', 'peaceLily'] as const) {
       const loose = leaves.map(leaf => leaf.body.translation())
       pot.body.setTranslation({
         x: 0,
-        y: -5,
+        y: -13,
         z: 5,
       }, true)
       pot.recover()
@@ -358,7 +358,7 @@ for (const kind of ['birdOfParadise', 'peaceLily'] as const) {
       const handle = leaf.body.handle
       leaf.body.setTranslation({
         x: 0,
-        y: -5,
+        y: -13,
         z: 0,
       }, true)
       leaf.recover()
@@ -381,7 +381,7 @@ for (const kind of ['birdOfParadise', 'peaceLily'] as const) {
       pot.release(false, [0, 0, 1])
       leaf.body.setTranslation({
         x: 0,
-        y: -5,
+        y: -13,
         z: 0,
       }, true)
       leaf.recover()

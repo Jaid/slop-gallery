@@ -4,6 +4,7 @@ import {notify} from './actions.ts'
 import {initialPortraits} from './collection.ts'
 import {imageSize} from './ImageImporter.ts'
 import {imageExtensions, maximumBackupBytes, validateCollectionImages, validateImage} from './imagePolicy.ts'
+import {lowerGallery} from './lowerGallery.ts'
 import {migratePortrait} from './migratePortrait.ts'
 import {createDocument, maximumPortraits, restoreDocument, useGallery} from './store.ts'
 import {insideGallery, placementIssue, wallCoordinates, wallPosition, walls} from './walls.ts'
@@ -54,7 +55,7 @@ export function validateDocument(value: unknown): GalleryDocument {
     if (p.hung && (!walls.some(wall => wall.id === p.wallId) || p.orientation)) {
       throw new Error('A hanging artwork has an invalid wall.')
     }
-    let displaced = false
+    let displaced: Portrait['position'] | undefined
     if (p.hung) {
       const wall = walls.find(w => w.id === p.wallId)!
       const pos = p.position as Portrait['position']
@@ -62,7 +63,13 @@ export function validateDocument(value: unknown): GalleryDocument {
       if (Math.hypot(...expected.map((n, i) => n - pos[i]!)) > 0.025 || Math.abs(Math.sin((p.rotation - wall.rotation) / 2)) > 0.001) {
         throw new Error('A hanging artwork is detached from its wall.')
       }
-      displaced = object(value) && value.wallId === 'secret-east' && placementIssue(wall, pos, p.width, p.height, []) === 'Let’s keep the doorway clear.'
+      if (object(value) && placementIssue(wall, pos, p.width, p.height, []) === 'Let’s keep the doorway clear.') {
+        if (value.wallId === 'secret-east') {
+          displaced = [0, 0.2, 11.5]
+        } else if (wall.room === 'undertone' && Array.isArray(value.position) && value.position[0] >= 12) {
+          displaced = [0, lowerGallery.floorY + 0.2, lowerGallery.undertone.center[1] + 3.5]
+        }
+      }
     }
     if (!insideGallery(p.position as Portrait['position'])) {
       throw new Error('An artwork is outside the gallery.')
@@ -75,8 +82,8 @@ export function validateDocument(value: unknown): GalleryDocument {
       ...typeof p.year === 'number' ? {year: p.year} : {},
       description: p.description,
       source: p.source,
-      // Lay legacy frames that covered the new doorway safely inside the Antechamber.
-      position: displaced ? [0, 0.2, 11.5] : p.position as Portrait['position'],
+      // Lay legacy frames displaced by a new portal safely inside their room.
+      position: displaced ?? p.position as Portrait['position'],
       rotation: p.rotation,
       width: p.width,
       height: p.height,

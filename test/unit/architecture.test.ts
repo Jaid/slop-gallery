@@ -4,7 +4,7 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import {computeMeshVolume} from 'three-bvh-csg'
 import {DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
-import {createArchitectureGeometry, wallFace, wallTop} from '../../src/lib/gallery/architecture.ts'
+import {createArchitectureGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
 import {findPlacement, insideOpening, openingTop, walls} from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
@@ -28,7 +28,7 @@ describe('boolean architecture', () => {
           // Sample the jambs, the formerly rectangular upper corners and the crown.
           for (const offset of [-1.45, -1.2, -0.6, 0, 0.6, 1.2, 1.45]) {
             const u = hole.u + offset
-            for (const y of [0.2, 1.62, 2.5, 3.2, 3.55, 3.75, 3.9, 4.1]) {
+            for (const y of [0.2, 1.62, 2.5, 3.2, 3.55, 3.75, 3.9, 4.1].filter(value => value < wall.height + 0.3 - 0.001)) {
               const solid = !insideOpening(hole, u, y)
               for (const side of [-1, 1]) {
                 const origin = new Vector3(u, y, side)
@@ -36,13 +36,13 @@ describe('boolean architecture', () => {
                 const ray = new Raycaster(origin, direction, 0, 2)
                 expect(ray.intersectObject(meshes[0]!).length > 0).toBe(solid)
                 expect(ray.intersectObjects(meshes).length > 0).toBe(solid)
-                expect(!!world.castRay(new RAPIER.Ray(origin, direction), 2, true)).toBe(solid)
+                expect(!!world.castRay(new RAPIER.Ray(origin, direction), 2, true)).toBe(solid || !!hole.glassThickness)
               }
             }
           }
         }
-        const openingArea = wall.holes!.reduce((sum, hole) => sum + (hole.profile === 'arch' ? hole.width * (hole.height - hole.width / 2) + Math.PI * (hole.width / 2) ** 2 / 2 : hole.width * hole.height), 0)
-        expect(Number(computeMeshVolume(geometry.surface))).toBeCloseTo((wall.width * wallTop - openingArea) * wallFace, 3)
+        const openingArea = wall.holes!.reduce((sum, hole) => sum + (hole.profile === 'arch' ? hole.width * (hole.height - hole.width / 2) + Math.PI * (hole.width / 2) ** 2 / 2 : hole.width * (hole.height - (hole.bottom ?? 0))), 0)
+        expect(Number(computeMeshVolume(geometry.surface))).toBeCloseTo((wall.width * (wall.height + 0.3) - openingArea) * wallFace, 3)
         expect(geometry.surface.boundingBox!.min.z).toBeCloseTo(0)
         expect(geometry.surface.boundingBox!.max.z).toBeCloseTo(wallFace)
         for (const mesh of meshes) {
@@ -65,9 +65,11 @@ describe('boolean architecture', () => {
         const meshes = [geometry.surface, ...geometry.trim].map(geometry => new Mesh(geometry, material))
         for (const hole of wall.holes!) {
           for (const side of [-1, 1]) {
-            for (const y of [0.173, 0.393, 0.417, 0.613, 1.731]) {
+            for (const offsetY of [0.173, 0.393, 0.417, 0.613, 1.731]) {
+              const y = (hole.bottom ?? 0) + offsetY
               for (const z of [0.051, 0.092, 0.121, 0.183, 0.231, 0.259, 0.301]) {
-                const depth = y < 0.4 ? 0.325 : 0.27
+                const classicDepth = y < 0.4 ? 0.325 : 0.27
+                const depth = wall.trimStyle === 'plain' ? 0.25 : classicDepth
                 const ray = new Raycaster(new Vector3(hole.u, y, z), new Vector3(side, 0, 0), 0, hole.width / 2 + 0.4)
                 const hits = ray.intersectObjects(meshes)
                 expect(hits.length).toBe(z < depth ? 1 : 0)

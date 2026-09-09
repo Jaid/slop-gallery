@@ -1,0 +1,117 @@
+import {describe, expect, test} from 'bun:test'
+
+import RAPIER from '@dimforge/rapier3d-compat'
+import {EgoMotor} from 'ego-player/motor'
+import {computeMeshVolume} from 'three-bvh-csg'
+import {Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
+
+import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
+import {glasswellPlatform, glasswellRamps, lowerGallery, rampFloorHeight} from '../../src/lib/gallery/lowerGallery.ts'
+import {RampGeometry} from '../../src/lib/gallery/RampGeometry.ts'
+import {floorHeight, walls} from '../../src/lib/gallery/walls.ts'
+import {addGlasswellRailings} from './helpers/glasswellRailings.ts'
+
+await RAPIER.init()
+test('matching access ramps flank the room with a clear central floor', () => {
+  expect(glasswellRamps).toHaveLength(2)
+  const [west, east] = glasswellRamps
+  expect(west!.x).toBe(-7.9)
+  expect(east!.x).toBe(7.9)
+  expect(west!.x - west!.width / 2).toBe(-lowerGallery.glasswell.size[0] / 2)
+  expect(east!.x + east!.width / 2).toBe(lowerGallery.glasswell.size[0] / 2)
+  expect({
+    ...west,
+    side: east!.side,
+    x: east!.x,
+  }).toEqual(east!)
+  expect(rampFloorHeight(0, -20)).toBeUndefined()
+})
+for (const ramp of glasswellRamps) {
+  describe(`${ramp.side}-wall access ramp`, () => {
+    test('a closed cuboid-sided wedge meets the ground and raised platform exactly', () => {
+      const geometry = new RampGeometry(ramp.width, ramp.rise, ramp.run)
+      const material = new MeshBasicMaterial
+      try {
+        expect(Number(computeMeshVolume(geometry))).toBeCloseTo(ramp.width * ramp.rise * ramp.run / 2, 4)
+        expect(geometry.getAttribute('position').count).toBe(24)
+        expect([...geometry.getAttribute('normal').array].every(Number.isFinite)).toBe(true)
+        const mesh = new Mesh(geometry, material)
+        mesh.position.set(ramp.x, ramp.floorY, ramp.startZ)
+        mesh.updateMatrixWorld(true)
+        expect(ramp.startZ - ramp.run).toBe(glasswellPlatform.position[2] + glasswellPlatform.size[2] / 2)
+        expect(ramp.floorY + ramp.rise).toBe(glasswellPlatform.position[1] + glasswellPlatform.size[1] / 2)
+        for (const distance of [0.01, 1, 4.5, 8, 8.99]) {
+          const z = ramp.startZ - distance
+          const top = ramp.floorY + distance / ramp.run * ramp.rise
+          expect(rampFloorHeight(ramp.x, z)).toBeCloseTo(top)
+          expect(floorHeight([ramp.x, top + 1.6, z])).toBeCloseTo(top)
+          const ray = new Raycaster(new Vector3(ramp.x, 0, z), new Vector3(0, -1, 0))
+          expect(ray.intersectObject(mesh)[0]!.point.y).toBeCloseTo(top)
+        }
+        expect(rampFloorHeight(ramp.x + ramp.width, ramp.startZ)).toBeUndefined()
+        expect(rampFloorHeight(ramp.x, ramp.startZ + 0.01)).toBeUndefined()
+        expect(rampFloorHeight(ramp.x, ramp.startZ - ramp.run - 0.01)).toBeUndefined()
+      } finally {
+        geometry.dispose()
+        material.dispose()
+      }
+    })
+    for (const fps of [30, 60, 120, 240]) {
+      for (const offset of [-0.4, 0, 0.4]) {
+        for (const sprint of [false, true]) {
+          for (const ascending of [false, true]) {
+            test(`${ascending ? 'ascends' : 'descends'} with handrails at ${fps} Hz, offset ${offset}, sprint ${sprint}`, () => {
+              const geometry = new RampGeometry(ramp.width, ramp.rise, ramp.run)
+              const wall = walls.find(value => value.id === `glasswell-${ramp.side}`)!
+              const wallGeometry = createArchitectureGeometry(wall)
+              const world = new RAPIER.World({
+                x: 0,
+                y: -9.81,
+                z: 0,
+              })
+              world.timestep = 1 / fps
+              const [vertices, indices] = colliderGeometry(geometry)
+              world.createCollider(RAPIER.ColliderDesc.trimesh(vertices, indices).setTranslation(ramp.x, ramp.floorY, ramp.startZ))
+              for (const [wallVertices, wallIndices] of wallGeometry.collision) {
+                world.createCollider(RAPIER.ColliderDesc.trimesh(wallVertices, wallIndices).setTranslation(...wall.center).setRotation((new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)))
+              }
+              world.createCollider(RAPIER.ColliderDesc.cuboid(glasswellPlatform.size[0] / 2, glasswellPlatform.size[1] / 2, glasswellPlatform.size[2] / 2).setTranslation(...glasswellPlatform.position))
+              world.createCollider(RAPIER.ColliderDesc.cuboid(lowerGallery.glasswell.size[0] / 2, 0.12, lowerGallery.glasswell.size[1] / 2).setTranslation(0, ramp.floorY - 0.12, lowerGallery.glasswell.center[1]))
+              addGlasswellRailings(world)
+              const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(ramp.x + offset, ramp.floorY + (ascending ? 0 : ramp.rise) + 0.04, ascending ? ramp.startZ + 0.8 : ramp.startZ - ramp.run - 1))
+              const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
+              const motor = new EgoMotor(RAPIER, world, body, collider)
+              const facing = (new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), ascending ? 0 : Math.PI)
+              try {
+                let reached = false
+                for (let i = 0; i < fps * 8; i++) {
+                  motor.step(world.timestep, {
+                    forward: true,
+                    sprint,
+                  }, facing)
+                  world.step()
+                  reached = ascending ? body.translation().z < ramp.startZ - ramp.run - 0.8 : body.translation().z > ramp.startZ + 0.8
+                  if (reached) {
+                    break
+                  }
+                }
+                expect(reached).toBe(true)
+                for (let i = 0; i < 60; i++) {
+                  motor.step(world.timestep, {}, facing)
+                  world.step()
+                }
+                expect(body.translation().y).toBeCloseTo(ramp.floorY + (ascending ? ramp.rise : 0) + 0.02, 2)
+                expect(motor.grounded).toBe(true)
+              } finally {
+                motor.dispose()
+                world.free()
+                geometry.dispose()
+                wallGeometry.dispose()
+              }
+            })
+          }
+        }
+      }
+    }
+  })
+}

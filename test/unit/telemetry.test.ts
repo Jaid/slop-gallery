@@ -6,6 +6,7 @@ import {createServer} from 'node:http'
 
 import {createStore} from 'zustand/vanilla'
 
+import {rooms} from '../../src/lib/gallery/walls.ts'
 import {SlopGalleryTelemetry} from '../../src/lib/telemetry/SlopGalleryTelemetry.ts'
 import {VictoriaExporter} from '../../src/lib/telemetry/VictoriaExporter.ts'
 import {createVictoriaRelay} from '../../src/lib/telemetry/vite.ts'
@@ -81,7 +82,7 @@ test('gallery adapters record bounded state, lifecycle events and save spans, th
   await telemetry.flush()
   expect(batches).toHaveLength(count)
   const metrics = batches.filter(batch => batch.signal === 'metrics').flatMap(batch => batch.records) as Array<Metric>
-  expect(metrics.filter(metric => metric.name === 'gallery.room.active').slice(-5).map(metric => metric.value)).toEqual([0, 0, 0, 1, 0])
+  expect(metrics.filter(metric => metric.name === 'gallery.room.active').slice(-rooms.length).map(metric => metric.value)).toEqual(rooms.map(room => Number(room.id === 'amber')))
   await telemetry.dispose()
 })
 test('Victoria uses native JSON metrics and the existing OTLP logs/traces endpoints', async () => {

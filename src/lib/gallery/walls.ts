@@ -1,11 +1,18 @@
 import type {Placement, Portrait, RoomId, Vec3} from './types.ts'
 
+import {daydream} from './daydream.ts'
+import {balconyFloorHeight} from './glasswellBalcony.ts'
+import {towerFloorHeight} from './glasswellTower.ts'
+import {glasswellPlatform, glasswellRamps, lowerGallery, rampFloorHeight} from './lowerGallery.ts'
 import {portraitLabel, portraitLabelLayout} from './portraitLabel.ts'
-import {staircase, stairFloorHeight} from './staircase.ts'
+import {insideStairway, staircase, stairFlights, stairFloorHeight, stairTurn} from './staircase.ts'
+import {tunnelDisplayWindow} from './tunnelDisplays.ts'
 
 export const placementReach = 10
 
 export type WallOpening = {
+  bottom?: number
+  glassThickness?: number
   height: number
   profile: 'arch' | 'rectangle'
   u: number
@@ -13,6 +20,7 @@ export type WallOpening = {
 }
 
 export type Wall = {
+  baseboardProfile?: Array<readonly [number, number]>
   center: Vec3
   hangable?: boolean
   height: number
@@ -20,6 +28,8 @@ export type Wall = {
   id: string
   room: RoomId
   rotation: number
+  slope?: number
+  trimStyle?: 'classic' | 'plain'
   width: number
 }
 
@@ -27,16 +37,18 @@ export const rooms = [
   {
     id: 'daydream',
     floorY: 0,
+    height: 5.8,
     number: '01',
     title: 'The Daydream Wing',
     subtitle: 'Nothing here is quite as it seems.',
-    center: [0, 0],
-    size: [16, 16],
+    center: [0, (daydream.northZ + daydream.southZ) / 2],
+    size: [daydream.width, daydream.southZ - daydream.northZ],
     color: '#c6c7ae',
   },
   {
     id: 'cabinet',
     floorY: 0,
+    height: 5.8,
     number: '02',
     title: 'Cabinet of Curiosities',
     subtitle: 'Old masters. New misunderstandings.',
@@ -47,6 +59,7 @@ export const rooms = [
   {
     id: 'afterhours',
     floorY: 0,
+    height: 5.8,
     number: '03',
     title: 'The Afterhours Salon',
     subtitle: 'A change of perspective is encouraged.',
@@ -57,6 +70,7 @@ export const rooms = [
   {
     id: 'antechamber',
     floorY: 0,
+    height: 5.8,
     number: '04',
     title: 'The Antechamber',
     subtitle: 'A pause between the peculiar and the profound.',
@@ -67,6 +81,7 @@ export const rooms = [
   {
     id: 'amber',
     floorY: 0,
+    height: 5.8,
     number: '05',
     title: 'The Amber Room',
     subtitle: 'Low light. Rich textures. Questionable company.',
@@ -76,21 +91,32 @@ export const rooms = [
   },
   {
     id: 'undertone',
-    floorY: staircase.bottomY,
+    floorY: lowerGallery.floorY,
+    height: 5.8,
     number: '06',
     title: 'The Undertone',
     subtitle: 'Down the stairs. Out of the ordinary.',
-    center: [18, 15],
-    size: [12, 14],
+    center: lowerGallery.undertone.center,
+    size: lowerGallery.undertone.size,
     color: '#264c54',
+  },
+  {
+    id: 'glasswell',
+    floorY: lowerGallery.floorY,
+    // Stop at the ceiling underside, not the upper room’s walkable surface.
+    height: lowerGallery.glasswell.ceiling.topY - lowerGallery.glasswell.ceiling.thickness - lowerGallery.floorY,
+    number: '07',
+    title: 'The Glasswell',
+    subtitle: 'Borrowed light from the gallery above.',
+    center: lowerGallery.glasswell.center,
+    size: lowerGallery.glasswell.size,
+    color: '#7e9298',
   },
 ] as const
 
-const stairContains = ([x, , z]: Vec3) => {
-  return x >= staircase.startX && x <= staircase.endX && Math.abs(z - staircase.z) <= staircase.width / 2
-}
+const tunnelContains = ([x, y, z]: Vec3) => Math.abs(x - lowerGallery.tunnel.x) <= lowerGallery.tunnel.width / 2 && z >= lowerGallery.tunnel.northZ && z <= lowerGallery.tunnel.southZ && y >= lowerGallery.floorY - 1 && y <= lowerGallery.floorY + lowerGallery.tunnel.height
 const contains = (room: (typeof rooms)[number], [x, y, z]: Vec3) => {
-  return y >= room.floorY - 1 && y <= room.floorY + 6 && Math.abs(x - room.center[0]) <= room.size[0] / 2 && Math.abs(z - room.center[1]) <= room.size[1] / 2
+  return y >= room.floorY - 1 && y <= room.floorY + room.height + 0.2 && Math.abs(x - room.center[0]) <= room.size[0] / 2 && Math.abs(z - room.center[1]) <= room.size[1] / 2
 }
 
 export const galleryBounds = {
@@ -101,7 +127,7 @@ export const galleryBounds = {
 }
 
 export function insideGallery(position: Vec3) {
-  return position.every(Number.isFinite) && (rooms.some(room => contains(room, position)) || stairContains(position) && position[1] >= stairFloorHeight(position[0]) - 1 && position[1] <= staircase.topY + 3.8)
+  return position.every(Number.isFinite) && (rooms.some(room => contains(room, position)) || insideStairway(position) || tunnelContains(position))
 }
 
 export function roomVisit(room: (typeof rooms)[number]): {position: Vec3
@@ -118,9 +144,40 @@ const wall = (id: string, room: RoomId, x: number, z: number, rotation: number, 
   center: [x, rooms.find(value => value.id === room)!.floorY, z],
   rotation,
   width,
-  height: 5.5,
+  height: rooms.find(value => value.id === room)!.height - 0.3,
   holes,
 })
+const roomWall = (roomId: RoomId, side: 'east' | 'north' | 'south' | 'west', holes?: Wall['holes']) => {
+  const room = rooms.find(value => value.id === roomId)!
+  const [x, z] = room.center
+  const [width, depth] = room.size
+  const sides = {
+    north: [x, z - depth / 2, 0, width],
+    east: [x + width / 2, z, -Math.PI / 2, depth],
+    south: [x, z + depth / 2, Math.PI, width],
+    west: [x - width / 2, z, Math.PI / 2, depth],
+  } as const
+  const [wallX, wallZ, rotation, length] = sides[side]
+  const result = wall(`${roomId}-${side}`, roomId, wallX, wallZ, rotation, length, holes)
+  if (roomId === 'glasswell') {
+    result.trimStyle = 'plain'
+    if (side === 'north') {
+      const height = glasswellPlatform.position[1] + glasswellPlatform.size[1] / 2 - room.floorY
+      result.baseboardProfile = [[-length / 2, height], [length / 2, height]]
+    } else {
+      const ramp = glasswellRamps.find(value => value.side === side)
+      if (ramp) {
+        result.baseboardProfile = [
+          [room.center[1] - depth / 2, ramp.rise],
+          [ramp.startZ - ramp.run, ramp.rise],
+          [ramp.startZ, 0],
+          [room.center[1] + depth / 2, 0],
+        ].map(([worldZ, y]): [number, number] => [(worldZ! - room.center[1]) * (side === 'east' ? 1 : -1), y!]).toSorted((a, b) => a[0] - b[0])
+      }
+    }
+  }
+  return result
+}
 const doorway: Array<WallOpening> = [
   {
     u: -3,
@@ -130,7 +187,10 @@ const doorway: Array<WallOpening> = [
   },
 ]
 export const walls: Array<Wall> = [
-  wall('daydream-north', 'daydream', 0, -8, 0, 16),
+  wall('daydream-north', 'daydream', 0, daydream.northZ, 0, daydream.width),
+  // Keep the original side walls and doorways fixed; extend only their north ends.
+  wall('daydream-extension-west', 'daydream', -daydream.width / 2, (daydream.northZ + daydream.previousNorthZ) / 2, Math.PI / 2, daydream.previousNorthZ - daydream.northZ),
+  wall('daydream-extension-east', 'daydream', daydream.width / 2, (daydream.northZ + daydream.previousNorthZ) / 2, -Math.PI / 2, daydream.previousNorthZ - daydream.northZ),
   wall('daydream-west', 'daydream', -8, 0, Math.PI / 2, 16, doorway),
   wall('daydream-east', 'daydream', 8, 0, -Math.PI / 2, 16, [
     {
@@ -199,21 +259,85 @@ export const walls: Array<Wall> = [
   wall('amber-west', 'amber', -20, 14, Math.PI / 2, 12),
   wall('amber-east', 'amber', -8, 14, -Math.PI / 2, 12),
   wall('amber-south', 'amber', -14, 20, Math.PI, 12),
-  wall('undertone-north', 'undertone', 18, 8, 0, 12),
-  wall('undertone-east', 'undertone', 24, 15, -Math.PI / 2, 14),
-  wall('undertone-south', 'undertone', 18, 22, Math.PI, 12),
-  wall('undertone-west', 'undertone', 12, 15, Math.PI / 2, 14, [
+  roomWall('undertone', 'north', [
     {
-      u: 3.5,
+      u: 0,
+      width: lowerGallery.tunnel.width,
+      height: 3.6,
+      profile: 'rectangle',
+    },
+  ]),
+  roomWall('undertone', 'east', [
+    {
+      u: staircase.returnZ - lowerGallery.undertone.center[1],
       width: staircase.width,
       height: 3.6,
       profile: 'rectangle',
     },
   ]),
-  ...[-1, 1].map(side => ({
-    ...wall(`undertone-stairs-${side < 0 ? 'north' : 'south'}`, 'undertone', 8, staircase.z + side * staircase.width / 2, side < 0 ? 0 : Math.PI, 8),
-    height: 7.1,
+  roomWall('undertone', 'south'),
+  roomWall('undertone', 'west'),
+  ...stairFlights.flatMap(flight => [-1, 1].map(side => flight.wall(side))),
+  ...[
+    {
+      id: 'east',
+      x: staircase.turnX + staircase.width,
+      z: stairTurn.position[2],
+      rotation: -Math.PI / 2,
+      width: stairTurn.size[2],
+    },
+    {
+      id: 'north',
+      x: stairTurn.position[0],
+      z: staircase.z - staircase.width / 2,
+      rotation: 0,
+      width: staircase.width,
+    },
+    {
+      id: 'south',
+      x: stairTurn.position[0],
+      z: staircase.returnZ + staircase.width / 2,
+      rotation: Math.PI,
+      width: staircase.width,
+    },
+    {
+      id: 'divider',
+      x: staircase.turnX,
+      z: stairTurn.position[2],
+      rotation: Math.PI / 2,
+      width: staircase.returnZ - staircase.z - staircase.width,
+    },
+  ].map(part => ({
+    ...wall(`undertone-stairs-turn-${part.id}`, 'undertone', part.x, part.z, part.rotation, part.width),
+    center: [part.x, stairTurn.top - 0.3, part.z] as Vec3,
+    height: 3.6,
     hangable: false,
+  })),
+  roomWall('glasswell', 'north'),
+  roomWall('glasswell', 'east'),
+  roomWall('glasswell', 'west'),
+  roomWall('glasswell', 'south', [
+    {
+      u: 0,
+      width: lowerGallery.tunnel.width,
+      height: 3.6,
+      profile: 'rectangle',
+    },
+  ]),
+  ...[-1, 1].map(side => ({
+    ...wall(`glasswell-tunnel-${side < 0 ? 'west' : 'east'}`, 'glasswell', lowerGallery.tunnel.x + side * lowerGallery.tunnel.width / 2, (lowerGallery.tunnel.northZ + lowerGallery.tunnel.southZ) / 2, side < 0 ? Math.PI / 2 : -Math.PI / 2, lowerGallery.tunnel.southZ - lowerGallery.tunnel.northZ, [
+      {
+        u: 0,
+        bottom: tunnelDisplayWindow.bottom,
+        height: tunnelDisplayWindow.top,
+        width: tunnelDisplayWindow.width,
+        glassThickness: tunnelDisplayWindow.glassThickness,
+        profile: 'rectangle',
+      },
+    ]),
+    height: lowerGallery.tunnel.height,
+    hangable: false,
+    trimStyle: 'plain' as const,
   })),
 ]
 
@@ -228,11 +352,18 @@ export function openingTop(hole: WallOpening, u: number, padding = 0) {
 }
 
 export function insideOpening(hole: WallOpening, u: number, y: number) {
-  return y >= 0 && y < openingTop(hole, u)
+  return y >= (hole.bottom ?? 0) && y < openingTop(hole, u)
 }
 
 export function roomAt(position: Vec3): RoomId {
-  return rooms.find(room => contains(room, position))?.id ?? (stairContains(position) ? 'undertone' : 'daydream')
+  const room = rooms.find(value => contains(value, position))
+  if (room) {
+    return room.id
+  }
+  if (insideStairway(position)) {
+    return 'undertone'
+  }
+  return tunnelContains(position) ? 'glasswell' : 'daydream'
 }
 
 export function wallPosition(wall: Wall, u: number, y: number, offset = 0.22): Vec3 {
@@ -283,10 +414,10 @@ export function findPlacement(origin: Vec3, direction: Vec3, width: number, heig
     }
     const point: Vec3 = [origin[0] + direction[0] * distance, origin[1] + direction[1] * distance, origin[2] + direction[2] * distance]
     const u = wallCoordinates(wall, point)
-    if (Math.abs(u) > wall.width / 2 || point[1] < wall.center[1] || point[1] > wall.center[1] + wall.height) {
+    if (Math.abs(u) > wall.width / 2 || point[1] < wall.center[1] + u * (wall.slope ?? 0) || point[1] > wall.center[1] + u * (wall.slope ?? 0) + wall.height) {
       continue
     }
-    if (wall.holes?.some(hole => insideOpening(hole, u, point[1] - wall.center[1]))) {
+    if (wall.holes?.some(hole => !hole.glassThickness && insideOpening(hole, u, point[1] - wall.center[1]))) {
       continue
     }
     nearest = distance
@@ -310,10 +441,32 @@ export function wallDistance(origin: Vec3, direction: Vec3) {
   return hit ? Math.hypot(...hit.position.map((v, i) => v - origin[i]!) as Vec3) + 0.3 : Infinity
 }
 
-// Floor lookup is horizontal: callers also use it to recover objects below the floor.
-export function floorHeight([x, , z]: Vec3) {
-  if (stairContains([x, 0, z])) {
-    return stairFloorHeight(x)
+// Prefer the highest nearby floor below the caller, not the first horizontal match.
+// This also recovers loose objects slightly below a slab in stacked rooms.
+export function floorHeight([x, y, z]: Vec3) {
+  const heights = rooms.filter(room => Math.abs(x - room.center[0]) <= room.size[0] / 2 && Math.abs(z - room.center[1]) <= room.size[1] / 2).map(room => room.floorY as number)
+  if (Math.abs(x - glasswellPlatform.position[0]) <= glasswellPlatform.size[0] / 2 && Math.abs(z - glasswellPlatform.position[2]) <= glasswellPlatform.size[2] / 2) {
+    heights.push(glasswellPlatform.position[1] + glasswellPlatform.size[1] / 2)
   }
-  return rooms.find(room => Math.abs(x - room.center[0]) <= room.size[0] / 2 && Math.abs(z - room.center[1]) <= room.size[1] / 2)?.floorY ?? 0
+  const balcony = balconyFloorHeight(x, z)
+  if (balcony !== undefined) {
+    heights.push(balcony)
+  }
+  const tower = towerFloorHeight(x, z)
+  if (tower !== undefined) {
+    heights.push(tower)
+  }
+  const stair = stairFloorHeight(x, z)
+  if (stair !== undefined) {
+    heights.push(stair)
+  }
+  const ramp = rampFloorHeight(x, z)
+  if (ramp !== undefined) {
+    heights.push(ramp)
+  }
+  if (tunnelContains([x, lowerGallery.floorY, z])) {
+    heights.push(lowerGallery.floorY)
+  }
+  heights.sort((a, b) => b - a)
+  return heights.find(height => y >= height - 1) ?? heights.at(-1) ?? 0
 }

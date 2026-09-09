@@ -21,15 +21,15 @@ describe('shared grabbing regressions', () => {
     const carried = new GrabbableBody(body, world)
     carried.rememberHome()
     body.setTranslation({
-      x: 18,
-      y: -4.1,
+      x: 0,
+      y: -8.5,
       z: 15,
     }, true)
     carried.recover()
-    expect(body.translation().y).toBeCloseTo(-4.1)
+    expect(body.translation().y).toBeCloseTo(-8.5)
     body.setTranslation({
-      x: 18,
-      y: -8,
+      x: 0,
+      y: -13,
       z: 15,
     }, true)
     carried.recover()

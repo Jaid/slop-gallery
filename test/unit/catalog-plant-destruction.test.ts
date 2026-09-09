@@ -197,14 +197,14 @@ describe('catalog plant destruction', () => {
     root.release(false, [0, 0, 1])
     leaves[0]!.body.setTranslation({
       x: 0,
-      y: -5,
+      y: -13,
       z: 0,
     }, true)
     leaves[0]!.recover()
     expect(leaves[0]!.body.isDynamic()).toBe(true)
     root.body.setTranslation({
       x: 0,
-      y: -5,
+      y: -13,
       z: 0,
     }, true)
     root.recover()
@@ -223,7 +223,7 @@ describe('catalog plant destruction', () => {
     pot.release(false, [0, 0, 1])
     root.body.setTranslation({
       x: 0,
-      y: -5,
+      y: -13,
       z: 0,
     }, true)
     root.recover()

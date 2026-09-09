@@ -16,6 +16,43 @@ const previous = {
   document: globalThis.document,
   createImageBitmap: globalThis.createImageBitmap,
 }
+test('old north-wall collections follow the extension once, including custom hanging positions', () => {
+  const north = initialPortraits.filter(portrait => portrait.wallId === 'daydream-north')
+  const custom = {
+    ...north[0]!,
+    id: 'custom',
+    position: [-5, 2.8, -7.78],
+  }
+  const legacy = {
+    ...original,
+    portraits: [
+      ...north.map(portrait => ({
+        ...portrait,
+        position: [portrait.position[0], portrait.position[1], -7.78],
+      })),
+      custom,
+      {
+        ...custom,
+        id: 'loose',
+        hung: false,
+      },
+    ],
+  }
+  const migrated = validateDocument(legacy)
+  expect(migrated.portraits.slice(0, 3)).toMatchObject(north)
+  expect(migrated.portraits[3]!.position).toEqual([-5, 2.8, -31.78])
+  expect(migrated.portraits[4]!.position).toEqual([-5, 2.8, -7.78])
+  expect(validateDocument(migrated)).toEqual(migrated)
+  expect(() => validateDocument({
+    ...legacy,
+    portraits: [
+      {
+        ...custom,
+        position: [-5, 2.8, -7],
+      },
+    ],
+  })).toThrow('detached')
+})
 let cleanup: (() => void) | undefined
 let loadSpy: ReturnType<typeof spyOn<typeof repository, 'load'>> | undefined
 let saveSpy: ReturnType<typeof spyOn<typeof repository, 'save'>> | undefined
