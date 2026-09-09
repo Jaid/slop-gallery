@@ -52,6 +52,8 @@ The Amber Room is through the rear arch in the Cabinet of Curiosities, or direct
 
 The Afterhours Salon, home of the Serious Knot, has cream-and-charcoal checkerboard marble adapted from the reference run’s vestibule floor. Each roughly 69 cm tile has fine veins and narrow grout, with a glossy finish and live planar reflections that strengthen at grazing angles while keeping the grout matte. A mip-filtered, 75%-resolution reflection pass captures the actual room without recursive reflections. The Knot’s gold material and reflection environment are unchanged. The Cabinet of Curiosities, home of Mona Ribbit, uses a much subtler, softly blurred reflection over its existing wood floor for a satin-varnish effect.
 
+The Cabinet of Curiosities has eight open botanical reliefs just above the baseboards near its corners, two per wall, instead of repeated lower-wall panels: carved sage leaves and floral rosettes with golden scrollwork and metallic details using the Serious Knot’s polished gold material, procedural grain and local HDR reflections. The shallow ornaments stay behind hung frames and shift inward where a doorway blocks a corner, keeping all eight low and clear of the doorway trim. Shared, instanced geometry draws the entire room’s ornamentation in two calls.
+
 ## Optional AI
 
 The menu’s OpenRouter manager exposes connection and model preferences. The query parameters are `ai`, `text_model`, `text_model_effort`, `image_model`, `audio_model`, `narrator_voice`, `narrator_character`, `eager_audio` and `lite`. Defaults follow the supplied benchmark scaffold; provider availability and voice support can change.

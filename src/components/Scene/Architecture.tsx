@@ -12,6 +12,7 @@ import {canvasTexture} from '#src/lib/texture.ts'
 
 import AmberRoom from './AmberRoom.tsx'
 import BenchSeat from './BenchSeat.tsx'
+import CabinetOrnaments from './CabinetOrnaments.tsx'
 import CheckerMarbleFloor from './CheckerMarbleFloor.tsx'
 import {damaskTexture, surfaceTexture} from './materials.ts'
 import {Box, Plant} from './primitives.tsx'
@@ -61,6 +62,7 @@ export default function Architecture() {
         </group>)}
       </>}
     </group>)}
+    <CabinetOrnaments/>
     <AmberRoom wood={textures.wood}/>
     <RigidBody type="fixed" colliders="cuboid"><group position={[1.6, 0, 1.6]}>
       <BenchSeat position={[0, 0.52, 0]} size={[3.1, 0.24, 1.05]}/>
@@ -106,7 +108,6 @@ function WallSurface({wall, plaster, theme}: {plaster: Texture
       {[-5.5, -1.8, 1.8, 5.5].map(x => <group key={x}><Box position={[x, 2.7, 0.16]} size={[0.18, 4.9, 0.2]} color={trim}/><Box position={[x, 4.94, 0.24]} size={[0.34, 0.15, 0.28]} color={trim}/></group>)}
     </>}
     {(wall.id === 'daydream-east' || wall.id === 'daydream-west') && <group position={[wall.id === 'daydream-east' ? -2.8 : 2.8, 0, 0]}><Alcove width={3.5}/></group>}
-    {wall.room === 'cabinet' && Array.from({length: Math.floor(wall.width / 2)}, (_, i) => -wall.width / 2 + 1 + i * 2).filter(x => !wall.holes?.some(hole => Math.abs(x - hole.u) < hole.width / 2 + 0.9)).map(x => <Box key={x} position={[x, 0.96, 0.125]} size={[1.72, 0.92, 0.025]} color="#587466" roughness={0.9}/>)}
   </group>
 }
 function ReflectionEnvironment() {
