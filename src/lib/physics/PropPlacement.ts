@@ -6,14 +6,15 @@ import {Quaternion, Vector3} from 'three/webgpu'
 const skin = 0.025
 
 export class PropPlacement {
-  constructor(readonly world: World, readonly body: RigidBody) {}
+  constructor(readonly world: World, readonly body: RigidBody, private readonly extractionAnchor?: () => RigidBody | undefined) {}
 
   private obstacle = (collider: Collider) => collider.isEnabled() && !collider.isSensor()
 
   private carryObstacle = (collider: Collider) => {
     const data = collider.parent()?.userData
     const player = data && typeof data === 'object' && 'kind' in data && data.kind === 'player'
-    return this.obstacle(collider) && !player
+    const anchor = this.extractionAnchor?.()
+    return this.obstacle(collider) && !player && (!anchor || collider.parent()?.handle !== anchor.handle)
   }
 
   private shapes(position: Vec3) {

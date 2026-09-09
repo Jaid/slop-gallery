@@ -1,7 +1,7 @@
-import type {ReactNode} from 'react'
-import type {RapierRigidBody, RigidBodyProps} from '@react-three/rapier'
-import type {Group} from 'three/webgpu'
 import type {Vec3} from '#src/lib/gallery.ts'
+import type {RapierRigidBody, RigidBodyProps} from '@react-three/rapier'
+import type {ReactNode} from 'react'
+import type {Group} from 'three/webgpu'
 
 import {useFrame} from '@react-three/fiber/webgpu'
 import {RigidBody, useRapier} from '@react-three/rapier'
@@ -21,7 +21,7 @@ export type PropHandle = {
 }
 export const propObjects = new Map<string, PropHandle>
 
-type GrabbablePropProps = Omit<RigidBodyProps, 'children' | 'ref' | 'position'> & GrabbableBodyOptions & {
+type GrabbablePropProps = Omit<RigidBodyProps, 'children' | 'position' | 'ref'> & GrabbableBodyOptions & {
   children: ReactNode
   id: string
   title: string
@@ -29,17 +29,30 @@ type GrabbablePropProps = Omit<RigidBodyProps, 'children' | 'ref' | 'position'> 
   blockedMessage?: () => string
 }
 
-export default function GrabbableProp({id, title, children, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, ...props}: GrabbablePropProps) {
+export default function GrabbableProp({id, title, children, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, attachmentBody, ...props}: GrabbablePropProps) {
   const body = useRef<RapierRigidBody>(null)
   const group = useRef<Group>(null)
   const controller = useRef<GrabbableBody | null>(null)
-  const callbacks = useRef({canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic})
-  callbacks.current = {canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic}
+  const callbacks = useRef({
+    canGrab,
+    blockedMessage,
+    onAttachmentChange,
+    recoverAsDynamic,
+    attachmentBody,
+  })
+  callbacks.current = {
+    canGrab,
+    blockedMessage,
+    onAttachmentChange,
+    recoverAsDynamic,
+    attachmentBody,
+  }
   const {world} = useRapier()
   const held = useGallery(s => s.held === id)
   useEffect(() => {
     if (!body.current || !group.current) return
     const carried = new GrabbableBody(body.current, world, {
+      attachmentBody: () => callbacks.current.attachmentBody?.(),
       canGrab: () => callbacks.current.canGrab?.() ?? true,
       onAttachmentChange: attached => callbacks.current.onAttachmentChange?.(attached),
       recoverAsDynamic: () => callbacks.current.recoverAsDynamic?.() ?? false,
@@ -60,7 +73,7 @@ export default function GrabbableProp({id, title, children, canGrab, blockedMess
       cancel: () => carried.cancel(),
       move: (origin, target, delta) => carried.move(origin, target, delta, useGallery.getState().motion),
       release: throwing => {
-        if (carried.release(throwing, cameraPose.direction)) notify('Not enough room here. Returned the object to its last clear spot.')
+        if (carried.release(throwing, cameraPose.direction)) notify('Not enough room here. Returned the object.')
       },
     }
     propObjects.set(id, handle)

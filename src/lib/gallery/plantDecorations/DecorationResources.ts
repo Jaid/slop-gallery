@@ -1,3 +1,6 @@
+import type {DestructibleGeometry} from '../destructiblePlants/base/DestructibleGeometry.ts'
+import type {DestructiblePlantKind} from '../destructiblePlants/catalog.ts'
+import type {DestructibleCatalogKind} from '../destructiblePlants/CatalogPlantGeometry.ts'
 import type {PlantKind, PotKind} from './catalog.ts'
 
 import {DoubleSide, MeshStandardNodeMaterial} from 'three/webgpu'
@@ -5,6 +8,8 @@ import {DoubleSide, MeshStandardNodeMaterial} from 'three/webgpu'
 import {SoilTextures} from '#src/lib/materials/SoilTextures.ts'
 import {TerracottaTextures} from '#src/lib/materials/TerracottaTextures.ts'
 
+import {CatalogPlantGeometry} from '../destructiblePlants/CatalogPlantGeometry.ts'
+import {DestructiblePlantGeometry} from '../destructiblePlants/DestructiblePlantGeometry.ts'
 import {PlantGeometry} from './PlantGeometry.ts'
 import {PotGeometry} from './PotGeometry.ts'
 
@@ -64,11 +69,21 @@ class DecorationResources {
     color: '#78614a',
     roughness: 0.92,
   })
+  private readonly destructibleCache = new Map<DestructibleCatalogKind | DestructiblePlantKind, DestructibleGeometry>
   private readonly plantCache = new Map<PlantKind, PlantGeometry>
   private readonly potCache = new Map<PotKind, PotGeometry>
 
+  destructiblePlant(kind: DestructibleCatalogKind | DestructiblePlantKind) {
+    let geometry = this.destructibleCache.get(kind)
+    if (!geometry) {
+      geometry = kind === 'snake' || kind === 'calathea' ? new CatalogPlantGeometry(kind) : new DestructiblePlantGeometry(kind)
+      this.destructibleCache.set(kind, geometry)
+    }
+    return geometry
+  }
+
   dispose() {
-    for (const geometry of [...this.potCache.values(), ...this.plantCache.values()]) {
+    for (const geometry of [...this.potCache.values(), ...this.plantCache.values(), ...this.destructibleCache.values()]) {
       geometry.dispose()
     }
     for (const material of [...Object.values(this.shells), this.soil, this.brass, this.foliage, this.waxyFoliage, this.stems, this.wood]) {

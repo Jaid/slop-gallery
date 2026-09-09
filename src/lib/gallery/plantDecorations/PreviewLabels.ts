@@ -2,6 +2,7 @@ import {MeshBasicNodeMaterial, PlaneGeometry} from 'three/webgpu'
 
 import {canvasTexture} from '#src/lib/texture.ts'
 
+import {destructionHint} from '../destructiblePlants/preview.ts'
 import {plantCombinations, plants, potDefinition} from './catalog.ts'
 import {complexityLabel, decorationComplexity} from './complexity.ts'
 import {decorationResources} from './DecorationResources.ts'
@@ -44,7 +45,7 @@ export class PreviewLabels {
       context.fillText(pot.title, x + 178, y + 85)
       context.fillStyle = '#777963'
       context.font = '18px sans-serif'
-      context.fillText(pot.subtitle, x + 178, y + 113)
+      context.fillText(destructionHint(combination.number) ?? pot.subtitle, x + 178, y + 113, width - 200)
       context.fillStyle = '#c7c5b2'
       context.fillRect(x + 178, y + 130, width - 202, 1)
       context.fillStyle = '#294238'

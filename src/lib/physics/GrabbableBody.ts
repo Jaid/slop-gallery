@@ -6,6 +6,7 @@ import {RigidBodyType} from '@dimforge/rapier3d-compat'
 import {PropPlacement} from './PropPlacement.ts'
 
 export type GrabbableBodyOptions = {
+  attachmentBody?: () => RigidBody | undefined
   canGrab?: () => boolean
   onAttachmentChange?: (attached: boolean) => void
   recoverAsDynamic?: () => boolean
@@ -30,7 +31,9 @@ export class GrabbableBody {
   private saved: BodyPose | null = null
 
   constructor(readonly body: RigidBody, world: World, private readonly options: GrabbableBodyOptions = {}) {
-    this.placement = new PropPlacement(world, body)
+    this.placement = new PropPlacement(world, body, () => {
+      return this.saved?.type === RigidBodyType.Fixed ? this.options.attachmentBody?.() : undefined
+    })
   }
 
   get active() {
@@ -103,6 +106,12 @@ export class GrabbableBody {
     let returned = false
     if (!this.placement.hasRoom([current.x, current.y, current.z])) {
       const fallback = this.lastClear && this.placement.hasRoom(this.lastClear) ? this.lastClear : this.saved.position
+      // An embedded root may not have cleared its pot yet. Restore the attachment
+      // instead of enabling an overlapping dynamic body inside the solid pot hull.
+      if (!this.placement.hasRoom(fallback)) {
+        this.cancel()
+        return true
+      }
       this.translate(fallback)
       returned = true
     }
