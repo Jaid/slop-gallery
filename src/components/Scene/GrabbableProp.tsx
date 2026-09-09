@@ -1,4 +1,5 @@
 import type {Vec3} from '#src/lib/gallery.ts'
+import type {GrabbableBodyOptions} from '#src/lib/physics/GrabbableBody.ts'
 import type {RapierRigidBody, RigidBodyProps} from '@react-three/rapier'
 import type {ReactNode} from 'react'
 import type {Group} from 'three/webgpu'
@@ -8,7 +9,7 @@ import {RigidBody, useRapier} from '@react-three/rapier'
 import {useEffect, useRef} from 'react'
 
 import {cameraPose, notify, useGallery} from '#src/lib/gallery.ts'
-import {GrabbableBody, type GrabbableBodyOptions} from '#src/lib/physics/GrabbableBody.ts'
+import {GrabbableBody} from '#src/lib/physics/GrabbableBody.ts'
 
 export type PropHandle = {
   body: RapierRigidBody
@@ -22,11 +23,11 @@ export type PropHandle = {
 export const propObjects = new Map<string, PropHandle>
 
 type GrabbablePropProps = Omit<RigidBodyProps, 'children' | 'position' | 'ref'> & GrabbableBodyOptions & {
+  blockedMessage?: () => string
   children: ReactNode
   id: string
-  title: string
   position: Vec3
-  blockedMessage?: () => string
+  title: string
 }
 
 export default function GrabbableProp({id, title, children, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, attachmentBody, ...props}: GrabbablePropProps) {
@@ -50,7 +51,9 @@ export default function GrabbableProp({id, title, children, canGrab, blockedMess
   const {world} = useRapier()
   const held = useGallery(s => s.held === id)
   useEffect(() => {
-    if (!body.current || !group.current) return
+    if (!body.current || !group.current) {
+      return
+    }
     const carried = new GrabbableBody(body.current, world, {
       attachmentBody: () => callbacks.current.attachmentBody?.(),
       canGrab: () => callbacks.current.canGrab?.() ?? true,
@@ -65,7 +68,9 @@ export default function GrabbableProp({id, title, children, canGrab, blockedMess
       grab: () => {
         if (!carried.grab()) {
           const message = callbacks.current.blockedMessage?.()
-          if (message) notify(message)
+          if (message) {
+            notify(message)
+          }
           return false
         }
         return true
@@ -73,23 +78,35 @@ export default function GrabbableProp({id, title, children, canGrab, blockedMess
       cancel: () => carried.cancel(),
       move: (origin, target, delta) => carried.move(origin, target, delta),
       release: throwing => {
-        if (carried.release(throwing, cameraPose.direction)) notify('Not enough room here. Returned the object.')
+        if (carried.release(throwing, cameraPose.direction)) {
+          notify('Not enough room here. Returned the object.')
+        }
       },
     }
     propObjects.set(id, handle)
     return () => {
-      if (propObjects.get(id) === handle) propObjects.delete(id)
-      if (controller.current === carried) controller.current = null
+      if (propObjects.get(id) === handle) {
+        propObjects.delete(id)
+      }
+      if (controller.current === carried) {
+        controller.current = null
+      }
     }
   }, [id, title, world])
   useEffect(() => {
-    if (!held) controller.current?.cancel()
+    if (!held) {
+      controller.current?.cancel()
+    }
   }, [held])
   useFrame((_, delta) => {
     const carried = controller.current
-    if (!carried) return
+    if (!carried) {
+      return
+    }
     carried.recover()
-    if (!held) return
+    if (!held) {
+      return
+    }
     const p = cameraPose.position
     const d = cameraPose.direction
     const origin: Vec3 = [p[0], p[1] - 0.22, p[2]]

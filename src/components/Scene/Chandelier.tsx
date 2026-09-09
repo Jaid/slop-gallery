@@ -4,7 +4,11 @@ import {MeshStandardNodeMaterial} from 'three/webgpu'
 import {ChandelierGeometry} from '#src/lib/gallery/ChandelierGeometry.ts'
 
 export default function Chandelier() {
-  const brass = useMemo(() => new MeshStandardNodeMaterial({color: '#bd924c', metalness: 0.88, roughness: 0.2}), [])
+  const brass = useMemo(() => new MeshStandardNodeMaterial({
+    color: '#bd924c',
+    metalness: 0.88,
+    roughness: 0.2,
+  }), [])
   const geometry = useMemo(() => new ChandelierGeometry, [])
   useEffect(() => () => {
     brass.dispose()

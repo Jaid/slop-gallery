@@ -9,7 +9,7 @@ function footprint(width: number, fluted = false) {
   const half = width / 2
   const corner = 0.025
   // Exact quarter-turns keep collinear cap vertices collinear during triangulation.
-  const point = (x: number, y: number, side: number) => side === 0 ? new Vector2(x, y) : side === 1 ? new Vector2(-y, x) : side === 2 ? new Vector2(-x, -y) : new Vector2(y, -x)
+  const point = (x: number, y: number, side: number) => (side === 0 ? new Vector2(x, y) : side === 1 ? new Vector2(-y, x) : side === 2 ? new Vector2(-x, -y) : new Vector2(y, -x))
   shape.moveTo(-half + corner, -half)
   for (let side = 0; side < 4; side++) {
     if (fluted) {
@@ -33,7 +33,6 @@ function footprint(width: number, fluted = false) {
   shape.closePath()
   return shape
 }
-
 function block(width: number, bottom: number, top: number, bevel: number, fluted = false) {
   // Negative bevel offset keeps the finished silhouette inside the requested width.
   const geometry = new ExtrudeGeometry(footprint(width, fluted), {
@@ -52,6 +51,14 @@ function block(width: number, bottom: number, top: number, bevel: number, fluted
 
 /** A fluted stone plinth with a stepped foot, recessed collars and a beveled cap. */
 export class PedestalGeometry {
+  readonly bronze = mergeParts([
+    block(0.974, 0.232, 0.242, 0.002),
+    block(0.974, 1.128, 1.138, 0.002),
+  ])
+  readonly reveals = mergeParts([
+    block(0.94, 0.23, 0.25, 0.002),
+    block(0.94, 1.12, 1.14, 0.002),
+  ])
   // Preserve the original 1.16 m footprint and 1.35 m sculpture support height.
   readonly stone = mergeParts([
     block(1.16, 0, 0.105, 0.012),
@@ -61,14 +68,6 @@ export class PedestalGeometry {
     block(1.01, 1.14, 1.19, 0.007),
     block(1.085, 1.19, 1.255, 0.014),
     block(1.16, 1.255, 1.35, 0.012),
-  ])
-  readonly bronze = mergeParts([
-    block(0.974, 0.232, 0.242, 0.002),
-    block(0.974, 1.128, 1.138, 0.002),
-  ])
-  readonly reveals = mergeParts([
-    block(0.94, 0.23, 0.25, 0.002),
-    block(0.94, 1.12, 1.14, 0.002),
   ])
   // Fixed concave colliders follow the actual flutes, ledges and beveled edges.
   readonly collision = [this.stone, this.bronze, this.reveals].map(colliderGeometry)

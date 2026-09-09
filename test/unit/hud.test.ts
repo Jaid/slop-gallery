@@ -1,4 +1,5 @@
 import {afterAll, describe, expect, test} from 'bun:test'
+
 import {createElement} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
 import {BoxGeometry, Group, Mesh, MeshBasicMaterial, PlaneGeometry, Raycaster, Vector3} from 'three/webgpu'
@@ -25,7 +26,9 @@ describe('title plate targeting', () => {
   portrait.add(frame, label)
   portrait.updateMatrixWorld(true)
   afterAll(() => {
-    for (const mesh of [frame, backing, text]) mesh.geometry.dispose()
+    for (const mesh of [frame, backing, text]) {
+      mesh.geometry.dispose()
+    }
     material.dispose()
   })
   const target = (x: number, y: number) => {
@@ -53,16 +56,25 @@ describe('title plate targeting', () => {
     expect(isPortraitLabelHit(previewText, portrait)).toBe(false)
   })
 })
-
 describe('contextual HUD', () => {
   test('the artwork overlay includes title, description, creator and year', () => {
-    const p = {...initialPortraits[0]!, year: 1924}
+    const p = {
+      ...initialPortraits[0]!,
+      year: 1924,
+    }
     const html = renderToStaticMarkup(createElement(ArtworkOverlay, {portrait: p}))
-    for (const value of [p.title, p.description, p.creator, p.year]) expect(html).toContain(String(value))
+    for (const value of [p.title, p.description, p.creator, p.year]) {
+      expect(html).toContain(String(value))
+    }
     expect(html).not.toContain('Undated')
   })
   test('year zero is not mistaken for a missing year', () => {
-    const html = renderToStaticMarkup(createElement(ArtworkOverlay, {portrait: {...initialPortraits[0]!, year: 0}}))
+    const html = renderToStaticMarkup(createElement(ArtworkOverlay, {
+      portrait: {
+        ...initialPortraits[0]!,
+        year: 0,
+      },
+    }))
     expect(html).toContain('<span>0</span>')
     expect(html).not.toContain('Undated')
   })
@@ -70,14 +82,22 @@ describe('contextual HUD', () => {
     expect(renderToStaticMarkup(createElement(ArtworkOverlay, {portrait: initialPortraits[0]!}))).toContain('Undated')
   })
   test('recorded and provider audio show the real five-band visualization', () => {
-    const html = renderToStaticMarkup(createElement(NarrationIndicator, {title: 'A story', status: 'playing', source: 'audio'}))
+    const html = renderToStaticMarkup(createElement(NarrationIndicator, {
+      title: 'A story',
+      status: 'playing',
+      source: 'audio',
+    }))
     expect(html).toContain('A story')
     expect(html).toContain('Narrator playing')
     expect(html).toContain('audio-bars playing')
     expect(html.match(/<i>/g)).toHaveLength(5)
   })
   test('browser speech shows a static speaking icon, not a spectrum', () => {
-    const html = renderToStaticMarkup(createElement(NarrationIndicator, {title: 'A browser story', status: 'playing', source: 'browser'}))
+    const html = renderToStaticMarkup(createElement(NarrationIndicator, {
+      title: 'A browser story',
+      status: 'playing',
+      source: 'browser',
+    }))
     expect(html).toContain('A browser story')
     expect(html).toContain('Browser voice playing')
     expect(html).toContain('narration-static')
@@ -85,19 +105,25 @@ describe('contextual HUD', () => {
     expect(html).not.toContain('<i>')
   })
   test('preparing narration does not pretend to have audio measurements', () => {
-    const html = renderToStaticMarkup(createElement(NarrationIndicator, {title: 'A story', status: 'preparing', source: null}))
+    const html = renderToStaticMarkup(createElement(NarrationIndicator, {
+      title: 'A story',
+      status: 'preparing',
+      source: null,
+    }))
     expect(html).toContain('Preparing narration…')
     expect(html).not.toContain('audio-bars')
   })
 })
-
 describe('artwork year metadata', () => {
   test('existing collections remain valid without years', () => {
     expect(validateDocument(createDocument()).portraits[0]!.year).toBeUndefined()
   })
   test('years survive validation and compressed backup round-trips', async () => {
     const document = createDocument()
-    document.portraits[0] = {...document.portraits[0]!, year: 1924}
+    document.portraits[0] = {
+      ...document.portraits[0]!,
+      year: 1924,
+    }
     const repository = new GalleryRepository
     const result = await repository.import(await repository.export(document))
     expect(result.portraits[0]!.year).toBe(1924)
@@ -105,7 +131,15 @@ describe('artwork year metadata', () => {
   for (const year of [1924.5, '', '2026', Number.NaN, Infinity, Number.MAX_SAFE_INTEGER + 1, {value: 2026}]) {
     test(`invalid year metadata is rejected: ${JSON.stringify(year)}`, () => {
       const document = createDocument()
-      expect(() => validateDocument({...document, portraits: [{...document.portraits[0], year}]})).toThrow('year')
+      expect(() => validateDocument({
+        ...document,
+        portraits: [
+          {
+            ...document.portraits[0],
+            year,
+          },
+        ],
+      })).toThrow('year')
     })
   }
 })

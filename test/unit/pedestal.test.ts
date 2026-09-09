@@ -15,7 +15,11 @@ let world: RAPIER.World
 const material = new MeshBasicMaterial
 beforeEach(() => {
   geometry = new PedestalGeometry
-  world = new RAPIER.World({x: 0, y: -9.81, z: 0})
+  world = new RAPIER.World({
+    x: 0,
+    y: -9.81,
+    z: 0,
+  })
   for (const [vertices, indices] of geometry.collision) {
     world.createCollider(RAPIER.ColliderDesc.trimesh(vertices, indices))
   }
@@ -25,7 +29,6 @@ afterEach(() => {
   geometry.dispose()
   world.free()
 })
-
 describe('sculpture pedestals', () => {
   test('preserves the support height and footprint with finite, bounded geometry', () => {
     const bounds = geometry.stone.boundingBox!
@@ -37,17 +40,19 @@ describe('sculpture pedestals', () => {
     let bytes = 0
     for (const part of [geometry.stone, geometry.bronze, geometry.reveals]) {
       for (const attribute of ['position', 'normal', 'uv']) {
-        expect(Array.from(part.getAttribute(attribute).array).every(Number.isFinite)).toBe(true)
+        expect([...part.getAttribute(attribute).array].every(Number.isFinite)).toBe(true)
       }
       const normals = part.getAttribute('normal')
       const normal = new Vector3
       let unitNormals = true
       for (let i = 0; i < normals.count; i++) {
-        if (Math.abs(normal.fromBufferAttribute(normals, i).length() - 1) > 1e-5) unitNormals = false
+        if (Math.abs(normal.fromBufferAttribute(normals, i).length() - 1) > 1e-5) {
+          unitNormals = false
+        }
       }
       expect(unitNormals).toBe(true)
       expect(part.boundingBox!.min.y).toBeGreaterThanOrEqual(-1e-6)
-      expect(part.boundingBox!.max.y).toBeLessThanOrEqual(1.350001)
+      expect(part.boundingBox!.max.y).toBeLessThanOrEqual(1.350_001)
       triangles += triangleCount(part)
       expect(part.index).not.toBeNull()
       bytes += part.index!.array.byteLength + Object.values(part.attributes).reduce((sum, attribute) => sum + attribute.array.byteLength, 0)
@@ -55,7 +60,6 @@ describe('sculpture pedestals', () => {
     expect(triangles).toBeLessThan(4600)
     expect(bytes).toBeLessThan(250_000)
   })
-
   test('matches visible flutes, collars, ledges and chamfers with physical collision on all four faces', () => {
     const meshes = [geometry.stone, geometry.bronze, geometry.reveals].map(part => new Mesh(part, material))
     for (let side = 0; side < 4; side++) {
@@ -66,7 +70,9 @@ describe('sculpture pedestals', () => {
           const visible = new Raycaster(origin, direction, 0, 4).intersectObjects(meshes)[0]
           const collision = world.castRay(new RAPIER.Ray(origin, direction), 4, true)
           expect(!!visible).toBe(!!collision)
-          if (visible) expect(collision!.timeOfImpact).toBeCloseTo(visible.distance, 5)
+          if (visible) {
+            expect(collision!.timeOfImpact).toBeCloseTo(visible.distance, 5)
+          }
         }
       }
     }
@@ -74,15 +80,15 @@ describe('sculpture pedestals', () => {
     const depth = (x: number) => new Raycaster(new Vector3(x, 0.7, 2), new Vector3(0, 0, -1)).intersectObject(stone)[0]!.distance
     expect(depth(0.047) - depth(0)).toBeCloseTo(0.022, 5)
   })
-
   test('keeps a dropped sculpture resting on the cap', () => {
     const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 1.8, 0))
     world.createCollider(RAPIER.ColliderDesc.cuboid(0.345, 0.0725, 0.455), body)
-    for (let i = 0; i < 240; i++) world.step()
+    for (let i = 0; i < 240; i++) {
+      world.step()
+    }
     expect(body.translation().y).toBeCloseTo(1.4225, 2)
     expect(Math.abs(body.linvel().y)).toBeLessThan(0.01)
   })
-
   test('lets a carried book clear the new cap without flying through it', () => {
     const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, 1.43, 0))
     world.createCollider(RAPIER.ColliderDesc.cuboid(0.345, 0.0725, 0.455).setEnabled(false), body)
@@ -94,12 +100,15 @@ describe('sculpture pedestals', () => {
       const next = placement.follow(destination, 1 / 60)!
       expect(next).not.toBeNull()
       expect(placement.hasRoom(next, false)).toBe(true)
-      body.setTranslation({x: next[0], y: next[1], z: next[2]}, false)
+      body.setTranslation({
+        x: next[0],
+        y: next[1],
+        z: next[2],
+      }, false)
       world.step()
     }
     expect(body.translation().z).toBeGreaterThan(1)
   })
-
   for (const [x, z] of [[0, 1], [0, -1], [1, 0], [-1, 0], [-0.96, 0.28]] as const) {
     test(`picks up the settled three-part book from direction ${x}, ${z}, including after canceling`, () => {
       // Match the live spawn and separate pages/covers, not a single bounding box:
@@ -111,7 +120,9 @@ describe('sculpture pedestals', () => {
       const controller = new GrabbableBody(body, world)
       world.step()
       expect(controller.placement.hasRoom([body.translation().x, body.translation().y, body.translation().z])).toBe(true)
-      for (let i = 0; i < 300; i++) world.step()
+      for (let i = 0; i < 300; i++) {
+        world.step()
+      }
       expect(body.isSleeping()).toBe(true)
       expect(body.translation().y).toBeCloseTo(1.4225, 2)
       const resting = body.translation()
@@ -131,15 +142,18 @@ describe('sculpture pedestals', () => {
           expect(controller.release(true, [x, 0, z])).toBe(false)
           expect(body.isDynamic()).toBe(true)
           expect(body.linvel().y).toBe(2)
-          for (let i = 0; i < body.numColliders(); i++) expect(body.collider(i).isEnabled()).toBe(true)
+          for (let i = 0; i < body.numColliders(); i++) {
+            expect(body.collider(i).isEnabled()).toBe(true)
+          }
         }
       }
     })
   }
-
   test('owns and releases its geometry and uses a matte procedural stone material', () => {
     let disposed = 0
-    for (const part of [geometry.stone, geometry.bronze, geometry.reveals]) part.addEventListener('dispose', () => disposed++)
+    for (const part of [geometry.stone, geometry.bronze, geometry.reveals]) {
+      part.addEventListener('dispose', () => disposed++)
+    }
     geometry.dispose()
     expect(disposed).toBe(3)
     const limestone = new LimestoneMaterial

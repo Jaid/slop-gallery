@@ -1,47 +1,19 @@
 import type {Wall, WallOpening} from './walls.ts'
 
-import {BoxGeometry, BufferGeometry, ExtrudeGeometry, MeshBasicNodeMaterial, Shape} from 'three/webgpu'
 import {ADDITION, Brush, Evaluator, SUBTRACTION} from 'three-bvh-csg'
+import {BoxGeometry, BufferGeometry, ExtrudeGeometry, MeshBasicNodeMaterial, Shape} from 'three/webgpu'
 
 export const wallTop = 5.8
 export const wallFace = 0.105
 export const wallOpeningTrim = 0.17
 const curveSegments = 64
-
-function openingShape(hole: WallOpening, padding = 0, bottom = -0.5) {
-  const shape = new Shape
-  const radius = hole.width / 2 + padding
-  shape.moveTo(hole.u - radius, bottom)
-  shape.lineTo(hole.u + radius, bottom)
-  if (hole.profile === 'arch') {
-    const spring = hole.height - hole.width / 2
-    shape.lineTo(hole.u + radius, spring)
-    shape.absarc(hole.u, spring, radius, 0, Math.PI, false)
-  } else {
-    shape.lineTo(hole.u + radius, hole.height + padding)
-    shape.lineTo(hole.u - radius, hole.height + padding)
-  }
-  shape.closePath()
-  return shape
-}
-
-function extrude(shape: Shape, depth: number, z: number) {
-  return new ExtrudeGeometry(shape, {depth, bevelEnabled: false, steps: 1, curveSegments}).translate(0, 0, z)
-}
-
-function box(width: number, height: number, depth: number, x: number, y: number, z: number) {
-  return new BoxGeometry(width, height, depth).translate(x, y, z)
-}
-
+export type ArchitectureGeometry = ReturnType<typeof createArchitectureGeometry>
 export function colliderGeometry(geometry: BufferGeometry): [Float32Array, Uint32Array] {
   const positions = geometry.getAttribute('position')
   const vertices = Float32Array.from(positions.array)
   const indices = geometry.index ? Uint32Array.from(geometry.index.array) : Uint32Array.from({length: positions.count}, (_, i) => i)
   return [vertices, indices]
 }
-
-export type ArchitectureGeometry = ReturnType<typeof createArchitectureGeometry>
-
 // CSG runs once per wall layout, never in the animation loop or on theme changes.
 export function createArchitectureGeometry(wall: Wall) {
   const evaluator = new Evaluator
@@ -56,7 +28,7 @@ export function createArchitectureGeometry(wall: Wall) {
     return result
   }
   const cutters = (wall.holes ?? []).map(hole => brush(extrude(openingShape(hole), 2, -0.5)))
-  const cut = (geometry: BufferGeometry | Brush) => {
+  const cut = (geometry: Brush | BufferGeometry) => {
     let result = geometry instanceof Brush ? geometry : brush(geometry)
     for (const cutter of cutters) {
       const target = brush(new BufferGeometry)
@@ -113,6 +85,33 @@ export function createArchitectureGeometry(wall: Wall) {
   }
 }
 
+function openingShape(hole: WallOpening, padding = 0, bottom = -0.5) {
+  const shape = new Shape
+  const radius = hole.width / 2 + padding
+  shape.moveTo(hole.u - radius, bottom)
+  shape.lineTo(hole.u + radius, bottom)
+  if (hole.profile === 'arch') {
+    const spring = hole.height - hole.width / 2
+    shape.lineTo(hole.u + radius, spring)
+    shape.absarc(hole.u, spring, radius, 0, Math.PI, false)
+  } else {
+    shape.lineTo(hole.u + radius, hole.height + padding)
+    shape.lineTo(hole.u - radius, hole.height + padding)
+  }
+  shape.closePath()
+  return shape
+}
+function extrude(shape: Shape, depth: number, z: number) {
+  return new ExtrudeGeometry(shape, {
+    depth,
+    bevelEnabled: false,
+    steps: 1,
+    curveSegments,
+  }).translate(0, 0, z)
+}
+function box(width: number, height: number, depth: number, x: number, y: number, z: number) {
+  return new BoxGeometry(width, height, depth).translate(x, y, z)
+}
 const cache = new Map<string, ArchitectureGeometry>
 export function architectureGeometry(wall: Wall) {
   const key = JSON.stringify([wall.width, wall.holes ?? []])

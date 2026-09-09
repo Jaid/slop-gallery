@@ -7,8 +7,8 @@ import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import {useEffect, useMemo, useRef} from 'react'
 import {Object3D, Quaternion, Vector3} from 'three/webgpu'
 
-import PortraitLabel from '#component/PortraitLabel'
 import DynamicImageMaterial from '#component/DynamicImageMaterial'
+import PortraitLabel from '#component/PortraitLabel'
 import {chime, requestMerge, useGallery} from '#src/lib/gallery.ts'
 
 export const portraitObjects = new Map<string, {body: RapierRigidBody
@@ -25,7 +25,7 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
   const lastImpact = useRef(0)
   const w = p.width
   const h = p.height
-  const frameColor = frame === 'gold' ? '#a5804b' : frame === 'oak' ? '#6a4630' : '#292c29'
+  const frameColor = frame === 'gold' ? '#a5804b' : (frame === 'oak' ? '#6a4630' : '#292c29')
   useEffect(() => {
     if (body.current && group.current) {
       portraitObjects.set(p.id, {

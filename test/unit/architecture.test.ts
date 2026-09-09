@@ -1,20 +1,24 @@
 import {describe, expect, test} from 'bun:test'
+
 import RAPIER from '@dimforge/rapier3d-compat'
-import {DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 import {computeMeshVolume} from 'three-bvh-csg'
+import {DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {createArchitectureGeometry, wallFace, wallTop} from '../../src/lib/gallery/architecture.ts'
 import {findPlacement, insideOpening, openingTop, walls} from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
-
 describe('boolean architecture', () => {
   for (const wall of walls.filter(wall => wall.holes?.length)) {
     test(`${wall.id}: curved openings match the visible solid and physical collision on both faces`, () => {
       const geometry = createArchitectureGeometry(wall)
       const material = new MeshBasicMaterial({side: DoubleSide})
       const meshes = [geometry.surface, ...geometry.trim].map(geometry => new Mesh(geometry, material))
-      const world = new RAPIER.World({x: 0, y: 0, z: 0})
+      const world = new RAPIER.World({
+        x: 0,
+        y: 0,
+        z: 0,
+      })
       try {
         for (const [vertices, indices] of geometry.collision) {
           world.createCollider(RAPIER.ColliderDesc.trimesh(vertices, indices))
@@ -43,7 +47,7 @@ describe('boolean architecture', () => {
         expect(geometry.surface.boundingBox!.max.z).toBeCloseTo(wallFace)
         for (const mesh of meshes) {
           for (const name of ['position', 'normal', 'uv']) {
-            expect(Array.from(mesh.geometry.getAttribute(name).array).every(Number.isFinite)).toBe(true)
+            expect([...mesh.geometry.getAttribute(name).array].every(Number.isFinite)).toBe(true)
           }
         }
       } finally {
@@ -67,7 +71,9 @@ describe('boolean architecture', () => {
                 const ray = new Raycaster(new Vector3(hole.u, y, z), new Vector3(side, 0, 0), 0, hole.width / 2 + 0.4)
                 const hits = ray.intersectObjects(meshes)
                 expect(hits.length).toBe(z < depth ? 1 : 0)
-                if (hits.length) expect(hits[0]!.distance).toBeCloseTo(hole.width / 2, 5)
+                if (hits.length) {
+                  expect(hits[0]!.distance).toBeCloseTo(hole.width / 2, 5)
+                }
               }
             }
           }
@@ -84,10 +90,29 @@ describe('boolean architecture', () => {
     expect(openingTop(hole, hole.u)).toBeCloseTo(3.8)
     expect(openingTop(hole, hole.u + 1.2)).toBeLessThan(3.2)
     expect(findPlacement([5, 3.5, 4.2], [1, 0, 0], 0, 0, [])?.wallId).toBe(wall.id)
-    expect(findPlacement([5, 3.5, 3], [1, 0, 0], 0, 0, [])).toMatchObject({wallId: 'afterhours-east', inReach: false, valid: false})
+    expect(findPlacement([5, 3.5, 3], [1, 0, 0], 0, 0, [])).toMatchObject({
+      wallId: 'afterhours-east',
+      inReach: false,
+      valid: false,
+    })
   })
   test('supports multiple independent openings without leaving a bottom sill', () => {
-    const wall = {...walls[0]!, holes: [{u: -3, width: 2, height: 3.5, profile: 'arch' as const}, {u: 3, width: 2.5, height: 3.6, profile: 'rectangle' as const}]}
+    const wall = {
+      ...walls[0]!,
+      holes: [
+        {
+          u: -3,
+          width: 2,
+          height: 3.5,
+          profile: 'arch' as const,
+        }, {
+          u: 3,
+          width: 2.5,
+          height: 3.6,
+          profile: 'rectangle' as const,
+        },
+      ],
+    }
     const geometry = createArchitectureGeometry(wall)
     const material = new MeshBasicMaterial({side: DoubleSide})
     try {

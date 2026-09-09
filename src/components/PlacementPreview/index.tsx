@@ -8,12 +8,12 @@ import {portraitLabel, portraitLabelLayout} from '#src/lib/gallery/portraitLabel
 
 import {previewColors, previewOpacity, PreviewVisual} from './PreviewVisual.ts'
 
-export default function PlacementPreview({width, height, source, title, creator, pending}: {width: number
+export default function PlacementPreview({width, height, source, title, creator, pending}: {creator?: string
   height: number
+  pending?: boolean
   source?: Blob | string
   title?: string
-  creator?: string
-  pending?: boolean}) {
+  width: number;}) {
   const {texture} = useArtworkTexture(source)
   const valid = useGallery(s => s.placement?.valid === true)
   const inReach = useGallery(s => s.placement?.inReach === true)
@@ -33,7 +33,10 @@ export default function PlacementPreview({width, height, source, title, creator,
       <primitive object={visual.border} attach="geometry"/>
       <primitive object={visual.borderMaterial} attach="material"/>
     </mesh>
-    <PortraitLabel width={width} height={height} title={title} creator={creator} pending={pending} preview={{color: valid ? previewColors.valid : previewColors.invalid, opacity: previewOpacity(inReach)}}/>
+    <PortraitLabel width={width} height={height} title={title} creator={creator} pending={pending} preview={{
+      color: valid ? previewColors.valid : previewColors.invalid,
+      opacity: previewOpacity(inReach),
+    }}/>
     <mesh position={[0, label.y, portraitLabel.depth / 2 + 0.018]}>
       <primitive object={visual.labelBorder} attach="geometry"/>
       <primitive object={visual.labelBorderMaterial} attach="material"/>

@@ -1,15 +1,11 @@
-import type {Collider, RigidBody, World} from '@dimforge/rapier3d-compat'
 import type {Vec3} from '../gallery/types.ts'
+import type {Collider, RigidBody, World} from '@dimforge/rapier3d-compat'
 
 import {Quaternion, Vector3} from 'three/webgpu'
 
 const skin = 0.025
 
 export class PropPlacement {
-  constructor(readonly world: World, readonly body: RigidBody, private readonly extractionAnchor?: () => RigidBody | undefined) {}
-
-  private obstacle = (collider: Collider) => collider.isEnabled() && !collider.isSensor()
-
   private carryObstacle = (collider: Collider) => {
     const data = collider.parent()?.userData
     const player = data && typeof data === 'object' && 'kind' in data && data.kind === 'player'
@@ -17,39 +13,9 @@ export class PropPlacement {
     return this.obstacle(collider) && !player && (!anchor || collider.parent()?.handle !== anchor.handle)
   }
 
-  private shapes(position: Vec3) {
-    const rotation = this.body.rotation()
-    const parentRotation = new Quaternion(rotation.x, rotation.y, rotation.z, rotation.w)
-    return Array.from({length: this.body.numColliders()}, (_, i) => {
-      const collider = this.body.collider(i)
-      const offset = collider.translationWrtParent()!
-      const rotation = collider.rotationWrtParent()!
-      return {
-        shape: collider.shape,
-        center: new Vector3(offset.x, offset.y, offset.z).applyQuaternion(parentRotation).add(new Vector3(...position)),
-        orientation: parentRotation.clone().multiply(new Quaternion(rotation.x, rotation.y, rotation.z, rotation.w)),
-      }
-    })
-  }
+  private obstacle = (collider: Collider) => collider.isEnabled() && !collider.isSensor()
 
-  hasRoom(position: Vec3, includePlayer = true) {
-    const predicate = includePlayer ? this.obstacle : this.carryObstacle
-    return this.shapes(position).every(({center, orientation, shape}) => !this.world.intersectionWithShape(center, orientation, shape, undefined, undefined, undefined, this.body, predicate))
-  }
-
-  private sweep(origin: Vec3, direction: Vector3, distance: number, clearance = skin) {
-    let nearest: {hit: NonNullable<ReturnType<World['castShape']>>
-      center: Vector3
-      orientation: Quaternion} | null = null
-    for (const {center, orientation, shape} of this.shapes(origin)) {
-      const hit = this.world.castShape(center, orientation, direction, shape, clearance, distance, false, undefined, undefined, undefined, this.body, this.carryObstacle)
-      if (hit) {
-        distance = Math.max(0, hit.time_of_impact)
-        nearest = {hit, center, orientation}
-      }
-    }
-    return nearest
-  }
+  constructor(readonly world: World, readonly body: RigidBody, private readonly extractionAnchor?: () => RigidBody | undefined) {}
 
   constrain(origin: Vec3, target: Vec3): Vec3 | null {
     const direction = new Vector3(...target).sub(new Vector3(...origin))
@@ -58,8 +24,10 @@ export class PropPlacement {
     // Sweep every part of the object, including offset covers and labels. A center ray
     // misses pedestals below the sightline and lets the book’s edges enter the stone.
     const collision = this.sweep(origin, direction, distance)
-    if (collision) distance = Math.max(0, collision.hit.time_of_impact)
-    const position = new Vector3(...origin).addScaledVector(direction, distance).toArray() as Vec3
+    if (collision) {
+      distance = Math.max(0, collision.hit.time_of_impact)
+    }
+    const position = new Vector3(...origin).addScaledVector(direction, distance).toArray()
     // In a space narrower than the prop, keep its previous pose rather than pushing
     // geometry through an obstacle. Release still checks the player as well.
     return this.hasRoom(position, false) ? position : null
@@ -68,7 +36,9 @@ export class PropPlacement {
   follow(target: Vec3, delta: number): Vec3 | null {
     const current = this.body.translation()
     const position = new Vector3(current.x, current.y, current.z)
-    if (!Number.isFinite(delta) || delta <= 0) return position.toArray()
+    if (!Number.isFinite(delta) || delta <= 0) {
+      return position.toArray()
+    }
     const dt = Math.min(delta, 0.05)
     const movement = new Vector3(...target).sub(position)
     // About 95% settled in 125 ms, independent of refresh rate. Limit both
@@ -93,15 +63,57 @@ export class PropPlacement {
       const separation = witness.sub(new Vector3(hit.witness1.x, hit.witness1.y, hit.witness1.z)).dot(normal)
       let lift = Math.min(budget, Math.max(0, skin - separation) + 0.0001)
       const obstruction = this.sweep(position.toArray(), normal, lift, 0)
-      if (obstruction) lift = Math.min(lift, Math.max(0, obstruction.hit.time_of_impact))
+      if (obstruction) {
+        lift = Math.min(lift, Math.max(0, obstruction.hit.time_of_impact))
+      }
       position.addScaledVector(normal, lift)
       budget = Math.max(0, budget - lift)
       movement.addScaledVector(direction, -travel)
       const intoSurface = movement.dot(normal)
-      if (intoSurface < 0) movement.addScaledVector(normal, -intoSurface)
+      if (intoSurface < 0) {
+        movement.addScaledVector(normal, -intoSurface)
+      }
       movement.clampLength(0, budget)
     }
-    const result = position.toArray() as Vec3
+    const result = position.toArray()
     return this.hasRoom(result, false) ? result : null
+  }
+
+  hasRoom(position: Vec3, includePlayer = true) {
+    const predicate = includePlayer ? this.obstacle : this.carryObstacle
+    return this.shapes(position).every(({center, orientation, shape}) => !this.world.intersectionWithShape(center, orientation, shape, undefined, undefined, undefined, this.body, predicate))
+  }
+
+  private shapes(position: Vec3) {
+    const rotation = this.body.rotation()
+    const parentRotation = new Quaternion(rotation.x, rotation.y, rotation.z, rotation.w)
+    return Array.from({length: this.body.numColliders()}, (_, i) => {
+      const collider = this.body.collider(i)
+      const offset = collider.translationWrtParent()!
+      const rotation = collider.rotationWrtParent()!
+      return {
+        shape: collider.shape,
+        center: new Vector3(offset.x, offset.y, offset.z).applyQuaternion(parentRotation).add(new Vector3(...position)),
+        orientation: parentRotation.clone().multiply(new Quaternion(rotation.x, rotation.y, rotation.z, rotation.w)),
+      }
+    })
+  }
+
+  private sweep(origin: Vec3, direction: Vector3, distance: number, clearance = skin) {
+    let nearest: {center: Vector3
+      hit: NonNullable<ReturnType<World['castShape']>>
+      orientation: Quaternion} | null = null
+    for (const {center, orientation, shape} of this.shapes(origin)) {
+      const hit = this.world.castShape(center, orientation, direction, shape, clearance, distance, false, undefined, undefined, undefined, this.body, this.carryObstacle)
+      if (hit) {
+        distance = Math.max(0, hit.time_of_impact)
+        nearest = {
+          hit,
+          center,
+          orientation,
+        }
+      }
+    }
+    return nearest
   }
 }

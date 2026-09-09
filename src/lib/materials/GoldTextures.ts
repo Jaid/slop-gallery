@@ -4,7 +4,6 @@ const size = 512
 const wrap = (value: number, period: number) => (value % period + period) % period
 const fade = (value: number) => value * value * value * (value * (value * 6 - 15) + 10)
 const mix = (a: number, b: number, weight: number) => a + (b - a) * weight
-
 function noise(u: number, v: number, frequency: number) {
   const x = u * frequency
   const y = v * frequency
@@ -17,7 +16,6 @@ function noise(u: number, v: number, frequency: number) {
   }
   return mix(mix(hash(ix, iy), hash(ix + 1, iy), fade(x - ix)), mix(hash(ix, iy + 1), hash(ix + 1, iy + 1), fade(x - ix)), fade(y - iy))
 }
-
 function grain(u: number, v: number, frequency: number) {
   let value = 0
   let amplitude = 0.5
@@ -28,10 +26,11 @@ function grain(u: number, v: number, frequency: number) {
   }
   return value / 0.9375
 }
-
 function texture(pixels: Uint8Array, color = false) {
   const map = new DataTexture(pixels, size, size)
-  if (color) map.colorSpace = SRGBColorSpace
+  if (color) {
+    map.colorSpace = SRGBColorSpace
+  }
   map.wrapS = map.wrapT = RepeatWrapping
   map.repeat.set(3, 1)
   map.generateMipmaps = true

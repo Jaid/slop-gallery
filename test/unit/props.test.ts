@@ -1,13 +1,19 @@
 import {afterEach, beforeEach, describe, expect, test} from 'bun:test'
+
 import RAPIER from '@dimforge/rapier3d-compat'
 
 import {PropPlacement} from '../../src/lib/physics/PropPlacement.ts'
 
 await RAPIER.init()
 let world: RAPIER.World
-beforeEach(() => {world = new RAPIER.World({x: 0, y: 0, z: 0})})
+beforeEach(() => {
+  world = new RAPIER.World({
+    x: 0,
+    y: 0,
+    z: 0,
+  })
+})
 afterEach(() => world.free())
-
 function book() {
   const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, 1.42, 1.6))
   for (const [width, height, depth, y] of [[0.64, 0.095, 0.86, 0], [0.69, 0.025, 0.91, -0.06], [0.69, 0.025, 0.91, 0.06]]) {
@@ -18,7 +24,6 @@ function book() {
 function pedestal() {
   return world.createCollider(RAPIER.ColliderDesc.cuboid(0.58, 0.675, 0.58).setTranslation(0, 0.675, 1.6))
 }
-
 describe('carried prop clearance', () => {
   test('pulls the whole book toward the hand instead of through its pedestal', () => {
     const placement = book()
@@ -34,7 +39,12 @@ describe('carried prop clearance', () => {
   })
   test('uses rotated compound geometry, not a hardcoded bounding radius', () => {
     const placement = book()
-    placement.body.setRotation({x: 0, y: Math.SQRT1_2, z: 0, w: Math.SQRT1_2}, false)
+    placement.body.setRotation({
+      x: 0,
+      y: Math.SQRT1_2,
+      z: 0,
+      w: Math.SQRT1_2,
+    }, false)
     pedestal()
     world.step()
     const position = placement.constrain([0, 1.4, 0], [0, 1.2, 1.45])!
@@ -101,11 +111,13 @@ describe('carried prop clearance', () => {
     expect(placement.constrain([0, 1.4, 0], [0, 1.4, 0])).toEqual([0, 1.4, 0])
   })
 })
-
 function setPosition(placement: PropPlacement, position: [number, number, number]) {
-  placement.body.setTranslation({x: position[0], y: position[1], z: position[2]}, false)
+  placement.body.setTranslation({
+    x: position[0],
+    y: position[1],
+    z: position[2],
+  }, false)
 }
-
 describe('carried prop flight', () => {
   test('eases toward a newly unblocked hand without overshooting or snapping', () => {
     const placement = book()
@@ -120,7 +132,7 @@ describe('carried prop flight', () => {
       setPosition(placement, next)
       previous = next[2]
     }
-    expect(previous).toBeGreaterThan(0.49999)
+    expect(previous).toBeGreaterThan(0.499_99)
   })
   test('settles at the same rate at 30, 60, 144 and 240 fps', () => {
     const placement = book()
@@ -137,7 +149,7 @@ describe('carried prop flight', () => {
     setPosition(placement, [0, 1.4, 0])
     expect(placement.follow([0, 1.4, 9], 1 / 60)![2]).toBeCloseTo(20 / 60)
     expect(placement.follow([0, 1.4, 9], 5)![2]).toBeCloseTo(1)
-    for (const delta of [0, -1, NaN, Infinity]) {
+    for (const delta of [0, -1, Number.NaN, Infinity]) {
       expect(placement.follow([0, 1.4, 9], delta)![2]).toBe(0)
     }
   })
@@ -158,7 +170,9 @@ describe('carried prop flight', () => {
         expect(next[1]).toBeGreaterThan(1.42)
         expect(next[2]).toBeGreaterThan(1.6 - 20 / 60)
       }
-      if (i === 30) expect(next[2]).toBeGreaterThan(destination[2])
+      if (i === 30) {
+        expect(next[2]).toBeGreaterThan(destination[2])
+      }
       setPosition(placement, next)
       previous = next
       world.step()
@@ -182,7 +196,12 @@ describe('carried prop flight', () => {
   test('slides along a rotated obstacle without penetrating it', () => {
     const placement = book()
     setPosition(placement, [0, 1.4, 0])
-    world.createCollider(RAPIER.ColliderDesc.cuboid(3, 2, 0.02).setTranslation(0, 1, 1.2).setRotation({x: 0, y: Math.sin(Math.PI / 8), z: 0, w: Math.cos(Math.PI / 8)}))
+    world.createCollider(RAPIER.ColliderDesc.cuboid(3, 2, 0.02).setTranslation(0, 1, 1.2).setRotation({
+      x: 0,
+      y: Math.sin(Math.PI / 8),
+      z: 0,
+      w: Math.cos(Math.PI / 8),
+    }))
     world.step()
     for (let i = 0; i < 90; i++) {
       const next = placement.follow([0, 1.4, 2], 1 / 60)!

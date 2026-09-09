@@ -1,8 +1,9 @@
 import {describe, expect, test} from 'bun:test'
+
 import {DataTexture, Vector3} from 'three/webgpu'
 
-import {portraitLabel, portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
 import {previewBorderGeometry, previewOpacity, PreviewVisual} from '../../src/components/PlacementPreview/PreviewVisual.ts'
+import {portraitLabel, portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
 
 describe('placement preview', () => {
   for (const [width, height] of [[2.62, 2.62], [4.22, 1.22], [0.52, 3.22]] as const) {
@@ -15,14 +16,14 @@ describe('placement preview', () => {
         expect(positions.count).toBe(10)
         expect(indices.count).toBe(24)
         for (const offset of [0, 1]) {
-          expect(new Vector3().fromBufferAttribute(positions, offset)).toEqual(new Vector3().fromBufferAttribute(positions, 8 + offset))
+          expect((new Vector3).fromBufferAttribute(positions, offset)).toEqual((new Vector3).fromBufferAttribute(positions, 8 + offset))
           expect(uvs.getX(8 + offset)).toBeCloseTo(2 * (width + height))
         }
         let area = 0
         for (let i = 0; i < indices.count; i += 3) {
-          const a = new Vector3().fromBufferAttribute(positions, indices.getX(i))
-          const b = new Vector3().fromBufferAttribute(positions, indices.getX(i + 1))
-          const c = new Vector3().fromBufferAttribute(positions, indices.getX(i + 2))
+          const a = (new Vector3).fromBufferAttribute(positions, indices.getX(i))
+          const b = (new Vector3).fromBufferAttribute(positions, indices.getX(i + 1))
+          const c = (new Vector3).fromBufferAttribute(positions, indices.getX(i + 2))
           const normal = b.sub(a).cross(c.sub(a))
           expect(normal.z).toBeGreaterThan(0)
           area += normal.z / 2
@@ -33,7 +34,6 @@ describe('placement preview', () => {
       }
     })
   }
-
   test('validity changes the shared tint while the ants keep animating', () => {
     const visual = new PreviewVisual(2.4, 1.8, null)
     try {
@@ -55,8 +55,6 @@ describe('placement preview', () => {
       visual.dispose()
     }
   })
-
-
   test('distant previews fade every shader layer without disappearing', () => {
     const visual = new PreviewVisual(2, 2, null)
     try {
@@ -73,7 +71,6 @@ describe('placement preview', () => {
       visual.dispose()
     }
   })
-
   test('the preview sign outline matches the hung label dimensions and bottom', () => {
     for (const width of [0.3, 1.2, 2.4, 4]) {
       const visual = new PreviewVisual(width, 2.4, null)
@@ -91,11 +88,10 @@ describe('placement preview', () => {
       }
     }
   })
-
   test('disposes its own resources without disposing the shared artwork texture', () => {
     const texture = new DataTexture(new Uint8Array(16), 2, 2)
     const visual = new PreviewVisual(1, 2, texture)
-    const disposed: string[] = []
+    const disposed: Array<string> = []
     visual.border.addEventListener('dispose', () => disposed.push('border'))
     visual.labelBorder.addEventListener('dispose', () => disposed.push('label border'))
     visual.labelBorderMaterial.addEventListener('dispose', () => disposed.push('label border material'))

@@ -238,7 +238,9 @@ const RapierPlayer = ({acceleration = 18,
       }
     }
     const active = enabled && !cameraPose.focused && !useGallery.getState().panel && typeof document !== 'undefined' && document.pointerLockElement !== null
-    if (active && (keys.forward || keys.backward || keys.left || keys.right || keys.jump || keys.crouch || keys.sprint)) markControlled()
+    if (active && (keys.forward || keys.backward || keys.left || keys.right || keys.jump || keys.crouch || keys.sprint)) {
+      markControlled()
+    }
     const jumpHeld = active && keys.jump
     if (jumpHeld && !jumpHeldRef.current) {
       jumpBufferedUntilRef.current = now + Math.max(jumpBufferTime, 0)

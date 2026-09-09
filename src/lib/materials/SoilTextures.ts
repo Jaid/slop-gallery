@@ -2,10 +2,11 @@ import {SimplexNoise} from 'three/addons/math/SimplexNoise.js'
 import {DataTexture, LinearFilter, LinearMipmapLinearFilter, SRGBColorSpace} from 'three/webgpu'
 
 const size = 512
-
 function texture(pixels: Uint8Array, color = false) {
   const map = new DataTexture(pixels, size, size)
-  if (color) map.colorSpace = SRGBColorSpace
+  if (color) {
+    map.colorSpace = SRGBColorSpace
+  }
   map.generateMipmaps = true
   map.minFilter = LinearMipmapLinearFilter
   map.magFilter = LinearFilter
@@ -16,8 +17,8 @@ function texture(pixels: Uint8Array, color = false) {
 
 /** Small soil crumbs, grit and mineral flecks over a dark, matte substrate. */
 export class SoilTextures {
-  readonly map: DataTexture
   readonly bumpMap: DataTexture
+  readonly map: DataTexture
 
   constructor() {
     let seed = 541

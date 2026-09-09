@@ -2,10 +2,11 @@ import {DataTexture, LinearFilter, LinearMipmapLinearFilter, RepeatWrapping, SRG
 
 const width = 1024
 const height = 512
-
 function texture(pixels: Uint8Array, color = false) {
   const map = new DataTexture(pixels, width, height)
-  if (color) map.colorSpace = SRGBColorSpace
+  if (color) {
+    map.colorSpace = SRGBColorSpace
+  }
   map.wrapS = RepeatWrapping
   map.generateMipmaps = true
   map.minFilter = LinearMipmapLinearFilter
@@ -17,8 +18,8 @@ function texture(pixels: Uint8Array, color = false) {
 
 /** Unglazed clay: fine surface grain, tiny pores and occasional pale mineral grains. */
 export class TerracottaTextures {
-  readonly map: DataTexture
   readonly bumpMap: DataTexture
+  readonly map: DataTexture
   readonly roughnessMap: DataTexture
 
   constructor() {

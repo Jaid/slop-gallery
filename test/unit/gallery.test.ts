@@ -1,9 +1,9 @@
 import {beforeEach, describe, expect, test} from 'bun:test'
 
-import {portraitLabel, portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
 import {initialPortraits} from '../../src/lib/gallery/collection.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import {containedRect, ImageImporter, imageSize} from '../../src/lib/gallery/ImageImporter.ts'
+import {portraitLabel, portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
 import {createDocument, maximumPortraits, redo, restoreDocument, undo, useGallery} from '../../src/lib/gallery/store.ts'
 import {findPlacement, galleryBounds, insideGallery, placementIssue, roomAt, rooms, roomVisit, wallCoordinates, wallPosition, walls} from '../../src/lib/gallery/walls.ts'
 
@@ -46,10 +46,18 @@ describe('wall geometry', () => {
       position: [0, 2.5, -7.78],
       valid: true,
     })
-    expect(findPlacement([0, 2.5, 5], [0, 0, -1], 2, 2, [])).toMatchObject({wallId: 'daydream-north', inReach: false, valid: false})
+    expect(findPlacement([0, 2.5, 5], [0, 0, -1], 2, 2, [])).toMatchObject({
+      wallId: 'daydream-north',
+      inReach: false,
+      valid: false,
+    })
   })
   test('doorways are not hanging surfaces', () => {
-    expect(findPlacement([0, 2, 3], [-1, 0, 0], 2, 2, [])).toMatchObject({wallId: 'cabinet-west', inReach: false, valid: false})
+    expect(findPlacement([0, 2, 3], [-1, 0, 0], 2, 2, [])).toMatchObject({
+      wallId: 'cabinet-west',
+      inReach: false,
+      valid: false,
+    })
     const wall = walls.find(w => w.id === 'daydream-west')!
     expect(placementIssue(wall, wallPosition(wall, -4.6, 2.5), 2, 2, [])).toContain('doorway')
   })
@@ -62,7 +70,6 @@ describe('wall geometry', () => {
     expect(placementIssue(wall, p.position, p.width, p.height, initialPortraits)).toContain('close')
     expect(placementIssue(wall, p.position, p.width, p.height, initialPortraits, p.id)).toBe('')
   })
-
   test('keeps distant wall previews but never accepts them as placements', () => {
     for (const z of [2.001, 5, 7.5]) {
       expect(findPlacement([0, 2.5, z], [0, 0, -1], 2, 2, [])).toMatchObject({
@@ -73,18 +80,36 @@ describe('wall geometry', () => {
         reason: 'Move closer to hang this artwork.',
       })
     }
-    expect(findPlacement([0, 2.5, 2], [0, 0, -1], 2, 2, [])).toMatchObject({inReach: true, valid: true})
-    expect(findPlacement([0, 2.5, 1.999], [0, 0, -1], 2, 2, [])).toMatchObject({inReach: true, valid: true})
+    expect(findPlacement([0, 2.5, 2], [0, 0, -1], 2, 2, [])).toMatchObject({
+      inReach: true,
+      valid: true,
+    })
+    expect(findPlacement([0, 2.5, 1.999], [0, 0, -1], 2, 2, [])).toMatchObject({
+      inReach: true,
+      valid: true,
+    })
   })
   test('reach is measured in world units, not ray parameter units', () => {
-    expect(findPlacement([0, 2.5, 5], [0, 0, -2], 2, 2, [])).toMatchObject({inReach: false, valid: false})
-    expect(findPlacement([0, 2.5, 0], [0, 0, -0.5], 2, 2, [])).toMatchObject({inReach: true, valid: true})
+    expect(findPlacement([0, 2.5, 5], [0, 0, -2], 2, 2, [])).toMatchObject({
+      inReach: false,
+      valid: false,
+    })
+    expect(findPlacement([0, 2.5, 0], [0, 0, -0.5], 2, 2, [])).toMatchObject({
+      inReach: true,
+      valid: true,
+    })
   })
   test('only wall hits produce previews and closer walls still occlude farther walls', () => {
     expect(findPlacement([0, 2.5, 0], [0, 1, 0], 2, 2, [])).toBeNull()
     expect(findPlacement([0, 2.5, 0], [0, 0, 0], 2, 2, [])).toBeNull()
-    expect(findPlacement([0, 2.5, 0], [-1, 0, 0], 2, 2, [])).toMatchObject({wallId: 'daydream-west', inReach: true})
-    expect(findPlacement([0, 2.5, 0], [0, 0, 1], 2, 2, [])).toMatchObject({wallId: 'secret-south', inReach: false})
+    expect(findPlacement([0, 2.5, 0], [-1, 0, 0], 2, 2, [])).toMatchObject({
+      wallId: 'daydream-west',
+      inReach: true,
+    })
+    expect(findPlacement([0, 2.5, 0], [0, 0, 1], 2, 2, [])).toMatchObject({
+      wallId: 'secret-south',
+      inReach: false,
+    })
   })
   test('the Good Taste Department is always available for hanging artwork', () => {
     expect(findPlacement([0, 2.5, 10], [0, 0, 1], 2, 2, [])).toMatchObject({
@@ -102,11 +127,25 @@ describe('wall geometry', () => {
     const amber = walls.find(wall => wall.id === 'amber-north')!
     const entrance = wallPosition(cabinet, cabinet.holes![0]!.u, 2, 0)
     const exit = wallPosition(amber, amber.holes![0]!.u, 2, 0)
-    entrance.forEach((value, i) => expect(value).toBeCloseTo(exit[i]!))
-    expect(findPlacement([-10.2, 2.5, 6], [0, 0, 1], 2, 2, [])).toMatchObject({wallId: 'amber-south', inReach: false})
-    expect(findPlacement([-10.2, 2.5, 10], [0, 0, -1], 2, 2, [])).toMatchObject({wallId: 'cabinet-north', inReach: false})
-    expect(findPlacement([-14, 2.5, 6], [0, 0, 1], 2, 2, [])).toMatchObject({wallId: 'cabinet-south', inReach: true})
-    expect(findPlacement([-14, 2.5, 10], [0, 0, -1], 2, 2, [])).toMatchObject({wallId: 'amber-north', inReach: true})
+    for (const [i, value] of entrance.entries()) {
+      expect(value).toBeCloseTo(exit[i]!)
+    }
+    expect(findPlacement([-10.2, 2.5, 6], [0, 0, 1], 2, 2, [])).toMatchObject({
+      wallId: 'amber-south',
+      inReach: false,
+    })
+    expect(findPlacement([-10.2, 2.5, 10], [0, 0, -1], 2, 2, [])).toMatchObject({
+      wallId: 'cabinet-north',
+      inReach: false,
+    })
+    expect(findPlacement([-14, 2.5, 6], [0, 0, 1], 2, 2, [])).toMatchObject({
+      wallId: 'cabinet-south',
+      inReach: true,
+    })
+    expect(findPlacement([-14, 2.5, 10], [0, 0, -1], 2, 2, [])).toMatchObject({
+      wallId: 'amber-north',
+      inReach: true,
+    })
   })
   test('the Amber Room has usable hanging walls', () => {
     expect(findPlacement([-14, 2.5, 14], [0, 0, 1], 2, 2, [])).toMatchObject({
@@ -117,11 +156,16 @@ describe('wall geometry', () => {
     })
   })
   test('gallery bounds include the new room but not the empty space beside it', () => {
-    expect(galleryBounds).toEqual({minX: -20, maxX: 20, minZ: -8, maxZ: 20})
+    expect(galleryBounds).toEqual({
+      minX: -20,
+      maxX: 20,
+      minZ: -8,
+      maxZ: 20,
+    })
     for (const position of [[-14, 2, 14], [-14, 2, 19.8], [0, 2, 14], [-20, 0, 20]] as const) {
       expect(insideGallery([...position])).toBe(true)
     }
-    for (const position of [[-6, 2, 18], [14, 2, 14], [-14, 2, 20.01], [-20.01, 2, 14], [-14, -1.01, 14], [-14, 6.01, 14], [NaN, 2, 14]] as const) {
+    for (const position of [[-6, 2, 18], [14, 2, 14], [-14, 2, 20.01], [-20.01, 2, 14], [-14, -1.01, 14], [-14, 6.01, 14], [Number.NaN, 2, 14]] as const) {
       expect(insideGallery([...position])).toBe(false)
     }
   })
@@ -142,7 +186,6 @@ describe('wall geometry', () => {
     expect(placementIssue(wall, wallPosition(wall, 0, lowestCenter - 0.001), 2, 2, [])).toContain('label')
     expect(placementIssue(wall, wallPosition(wall, 0, lowestCenter + 0.001), 2, 2, [])).toBe('')
   })
-
   test('room boundaries are shared by UI and interaction', () => {
     expect(roomAt([-14, 2, 0])).toBe('cabinet')
     expect(roomAt([14, 2, 0])).toBe('afterhours')
@@ -156,7 +199,9 @@ describe('image dimensions', () => {
     expect(containedRect(100, 400, 600, 300)).toEqual([262.5, 0, 75, 300])
   })
   test('a queued import cannot survive a collection replacement', async () => {
-    const importer = new ImageImporter(() => { throw new Error('An abandoned import was committed.') })
+    const importer = new ImageImporter(() => {
+      throw new Error('An abandoned import was committed.')
+    })
     const job = importer.import([new File(['image'], 'pending.png', {type: 'image/png'})])
     restoreDocument(original)
     await job
@@ -242,12 +287,12 @@ describe('backup validation', () => {
     expect(new Set(initialPortraits.map(p => p.id)).size).toBe(initialPortraits.length)
     for (const p of initialPortraits) {
       expect(p.id).toMatch(/^[a-z]+(?:-[a-z]+)*$/)
-      expect(p.source).toMatch(new RegExp('^/art/' + p.id + '\\.(webp|png|avif)$'))
-      expect(await Bun.file(new URL('../../public' + p.source, import.meta.url)).exists()).toBe(true)
-      expect(p.narration).toBe('/audio/' + p.id + '.opus')
+      expect(p.source).toMatch(new RegExp(String.raw`^/art/${p.id}\.(webp|png|avif)$`))
+      expect(await Bun.file(new URL(`../../public${p.source}`, import.meta.url)).exists()).toBe(true)
+      expect(p.narration).toBe(`/audio/${p.id}.opus`)
       if (p.narration) {
-        expect(p.narration).toBe('/audio/' + p.id + '.opus')
-        expect(await Bun.file(new URL('../../public' + p.narration, import.meta.url)).exists()).toBe(true)
+        expect(p.narration).toBe(`/audio/${p.id}.opus`)
+        expect(await Bun.file(new URL(`../../public${p.narration}`, import.meta.url)).exists()).toBe(true)
       }
     }
   })
@@ -261,30 +306,56 @@ describe('backup validation', () => {
       title: 'My custom title',
       description: 'My custom story.',
     }
-    const result = validateDocument({...original, portraits: [old]}).portraits[0]!
+    const result = validateDocument({
+      ...original,
+      portraits: [old],
+    }).portraits[0]!
     expect(result).toMatchObject({
       ...shrimp,
       title: old.title,
       description: old.description,
     })
     expect(old.id).toBe('shrimpman')
-    expect(validateDocument({...original, portraits: [result]}).portraits[0]).toEqual(result)
-    expect(() => validateDocument({...original, portraits: [old, shrimp]})).toThrow()
+    expect(validateDocument({
+      ...original,
+      portraits: [result],
+    }).portraits[0]).toEqual(result)
+    expect(() => validateDocument({
+      ...original,
+      portraits: [old, shrimp],
+    })).toThrow()
   })
   for (const id of ['doge-neon', 'dog-neon']) {
     test(`migrates ${id} to wolf`, () => {
       const wolf = initialPortraits.find(p => p.id === 'wolf')!
       const result = validateDocument({
         ...original,
-        portraits: [{...wolf, id, source: '/art/' + id + '.webp'}],
+        portraits: [
+          {
+            ...wolf,
+            id,
+            source: `/art/${id}.webp`,
+          },
+        ],
       }).portraits[0]!
       expect(result).toMatchObject(wolf)
     })
   }
   test('existing unedited defaults gain recordings without replacing edited stories', () => {
     const goose = initialPortraits.find(p => p.id === 'goose')!
-    const saved = {...goose, narration: undefined}
-    const load = (patch = {}) => validateDocument({...original, portraits: [{...saved, ...patch}]}).portraits[0]!
+    const saved = {
+      ...goose,
+      narration: undefined,
+    }
+    const load = (patch = {}) => validateDocument({
+      ...original,
+      portraits: [
+        {
+          ...saved,
+          ...patch,
+        },
+      ],
+    }).portraits[0]!
     expect(load().narration).toBe('/audio/goose.opus')
     expect(load({title: 'My title'}).narration).toBeUndefined()
     expect(load({description: 'My story.'}).narration).toBeUndefined()
@@ -293,27 +364,55 @@ describe('backup validation', () => {
   })
   test('renaming defaults does not replace imported images', () => {
     const source = new Blob(['pixels'], {type: 'image/webp'})
-    const custom = {...initialPortraits[0]!, id: 'my-artwork', source, imported: true}
-    const result = validateDocument({...original, portraits: [custom]}).portraits[0]!
+    const custom = {
+      ...initialPortraits[0]!,
+      id: 'my-artwork',
+      source,
+      imported: true,
+    }
+    const result = validateDocument({
+      ...original,
+      portraits: [custom],
+    }).portraits[0]!
     expect(result.id).toBe(custom.id)
     expect(result.source).toBe(source)
   })
   test('round-trips artwork hung in the Amber Room', () => {
     const wall = walls.find(wall => wall.id === 'amber-south')!
-    const portrait = {...initialPortraits[0]!, wallId: wall.id, rotation: wall.rotation, position: wallPosition(wall, 0, 2.5)}
-    const saved = validateDocument({...original, portraits: [portrait]})
+    const portrait = {
+      ...initialPortraits[0]!,
+      wallId: wall.id,
+      rotation: wall.rotation,
+      position: wallPosition(wall, 0, 2.5),
+    }
+    const saved = validateDocument({
+      ...original,
+      portraits: [portrait],
+    })
     expect(saved.portraits[0]).toMatchObject(portrait)
     expect(validateDocument(saved)).toEqual(saved)
   })
   test('rejects loose artwork outside the actual room footprint', () => {
-    expect(() => validateDocument({...original, portraits: [{...initialPortraits[0]!, hung: false, position: [-6, 2, 18]}]})).toThrow('outside the gallery')
+    expect(() => validateDocument({
+      ...original,
+      portraits: [
+        {
+          ...initialPortraits[0]!,
+          hung: false,
+          position: [-6, 2, 18],
+        },
+      ],
+    })).toThrow('outside the gallery')
   })
   test('accepts the shipped collection', () => {
     expect(validateDocument(original).portraits).toHaveLength(16)
   })
   for (const secretOpen of [false, true]) {
     test(`ignores the retired puzzle state in existing collections (${secretOpen})`, () => {
-      const document = validateDocument({...original, secretOpen})
+      const document = validateDocument({
+        ...original,
+        secretOpen,
+      })
       expect(document).toEqual(validateDocument(original))
       expect(document).not.toHaveProperty('secretOpen')
       restoreDocument(document)
@@ -327,7 +426,13 @@ describe('backup validation', () => {
     const doge = initialPortraits.find(p => p.id === 'dog')!
     const document = validateDocument({
       ...original,
-      portraits: [{...doge, alternateSource: '/art/wolf.webp', narration: '/audio/doge.opus'}],
+      portraits: [
+        {
+          ...doge,
+          alternateSource: '/art/wolf.webp',
+          narration: '/audio/doge.opus',
+        },
+      ],
     })
     expect(document.portraits).toHaveLength(1)
     expect(document.portraits[0]!.source).toBe(doge.source)
@@ -335,7 +440,12 @@ describe('backup validation', () => {
     expect(document.portraits[0]).not.toHaveProperty('alternateSource')
     expect(() => validateDocument({
       ...original,
-      portraits: [{...doge, narration: '/audio/unknown.opus'}],
+      portraits: [
+        {
+          ...doge,
+          narration: '/audio/unknown.opus',
+        },
+      ],
     })).toThrow()
   })
   test('strips unknown settings instead of spreading them into the store', () => {

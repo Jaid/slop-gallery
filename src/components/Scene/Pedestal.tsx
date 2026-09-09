@@ -7,7 +7,10 @@ import {PedestalGeometry} from '#src/lib/gallery/PedestalGeometry.ts'
 import {LimestoneMaterial} from '#src/lib/materials/LimestoneMaterial.ts'
 
 export function usePedestal() {
-  const resources = useMemo(() => ({geometry: new PedestalGeometry, material: new LimestoneMaterial}), [])
+  const resources = useMemo(() => ({
+    geometry: new PedestalGeometry,
+    material: new LimestoneMaterial,
+  }), [])
   useEffect(() => () => {
     resources.geometry.dispose()
     resources.material.dispose()

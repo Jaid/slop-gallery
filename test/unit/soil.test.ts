@@ -1,4 +1,5 @@
 import {expect, test} from 'bun:test'
+
 import {NoColorSpace, SRGBColorSpace} from 'three/webgpu'
 
 import {SoilTextures} from '../../src/lib/materials/SoilTextures.ts'
@@ -24,7 +25,9 @@ test('soil has deterministic brown grains and matching relief with owned resourc
     for (let i = 0; i < color.length; i += 4) {
       shades.add(color[i]!)
       relief.add(bump[i]!)
-      if (!(color[i]! > color[i + 1]! && color[i + 1]! > color[i + 2]! && color[i + 3] === 255 && bump[i + 3] === 255)) throw new Error('Expected opaque brown soil.')
+      if (!(color[i]! > color[i + 1]! && color[i + 1]! > color[i + 2]! && color[i + 3] === 255 && bump[i + 3] === 255)) {
+        throw new Error('Expected opaque brown soil.')
+      }
     }
     expect(shades.size).toBeGreaterThan(50)
     expect(relief.size).toBeGreaterThan(60)

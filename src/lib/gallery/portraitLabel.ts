@@ -20,11 +20,12 @@ export function portraitLabelLayout(width: number, height: number) {
   }
 }
 
-
 // Text and backing meshes share the label marker; the frame itself does not.
 export function isPortraitLabelHit(object: Object3D, portrait: Object3D) {
   for (let current: Object3D | null = object; current && current !== portrait; current = current.parent) {
-    if (current.userData.portraitLabel === true) return true
+    if (current.userData.portraitLabel === true) {
+      return true
+    }
   }
   return false
 }

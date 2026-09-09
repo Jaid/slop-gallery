@@ -1,7 +1,8 @@
-import {Euler, Quaternion, Vector2} from 'three/webgpu'
+import type {Quaternion} from 'three/webgpu'
+
+import {Euler, Vector2} from 'three/webgpu'
 
 const wrapAngle = (angle: number) => Math.atan2(Math.sin(angle), Math.cos(angle))
-
 class InspectionSpring {
   value = 0
   velocity = 0
@@ -37,10 +38,10 @@ class InspectionSpring {
 export class InspectionLook {
   readonly rotation: Quaternion
   private readonly angles = new Euler(0, 0, 0, 'YXZ')
-  private readonly targetAngles = new Euler(0, 0, 0, 'YXZ')
-  private readonly pitch = new InspectionSpring
-  private readonly yaw = new InspectionSpring
   private readonly pending = new Vector2
+  private readonly pitch = new InspectionSpring
+  private readonly targetAngles = new Euler(0, 0, 0, 'YXZ')
+  private readonly yaw = new InspectionSpring
 
   constructor(rotation: Quaternion) {
     this.rotation = rotation.clone()

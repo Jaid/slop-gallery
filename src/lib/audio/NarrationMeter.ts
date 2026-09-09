@@ -3,13 +3,15 @@ export const narrationBands = [[20, 120], [120, 500], [500, 2000], [2000, 6000],
 /** RMS of the analyser’s normalized frequency magnitudes, grouped like the reference visualizer. */
 export function frequencyLevels(frequencies: Uint8Array, sampleRate: number, fftSize: number, output = new Float32Array(narrationBands.length)) {
   const binHz = sampleRate / fftSize
-  narrationBands.forEach(([minimum, maximum], band) => {
+  for (const [band, [minimum, maximum]] of narrationBands.entries()) {
     const first = Math.max(0, Math.ceil(minimum / binHz))
     const last = Math.min(frequencies.length, Math.ceil(maximum / binHz))
     let squares = 0
-    for (let i = first; i < last; i++) squares += (frequencies[i]! / 255) ** 2
+    for (let i = first; i < last; i++) {
+      squares += (frequencies[i]! / 255) ** 2
+    }
     output[band] = last > first ? Math.sqrt(squares / (last - first)) : 0
-  })
+  }
   return output
 }
 
@@ -47,7 +49,9 @@ export class NarrationMeter {
 
   read() {
     const {analyser, audio} = this
-    if (!analyser || !audio || audio.paused || audio.ended || audio.muted || audio.volume === 0 || analyser.context.state !== 'running') return this.levels.fill(0)
+    if (!analyser || !audio || audio.paused || audio.ended || audio.muted || audio.volume === 0 || analyser.context.state !== 'running') {
+      return this.levels.fill(0)
+    }
     analyser.getByteFrequencyData(this.frequencies)
     return frequencyLevels(this.frequencies, analyser.context.sampleRate, analyser.fftSize, this.levels)
   }
