@@ -5,6 +5,7 @@ import {ADDITION, Brush, Evaluator, SUBTRACTION} from 'three-bvh-csg'
 
 export const wallTop = 5.8
 export const wallFace = 0.105
+export const wallOpeningTrim = 0.17
 const curveSegments = 64
 
 function openingShape(hole: WallOpening, padding = 0, bottom = -0.5) {
@@ -77,9 +78,9 @@ export function createArchitectureGeometry(wall: Wall) {
     }
     join(trimBox(wall.width, 0.06, 0.25, 0, 0.41))
     for (const hole of wall.holes ?? []) {
-      join(brush(extrude(openingShape(hole, 0.17, 0), 0.165, wallFace)))
+      join(brush(extrude(openingShape(hole, wallOpeningTrim, 0), 0.165, wallFace)))
       for (const side of [-1, 1]) {
-        join(trimBox(0.3, 0.4, 0.325, hole.u + side * (hole.width / 2 + 0.085), 0.2))
+        join(trimBox(0.3, 0.4, 0.325, hole.u + side * (hole.width / 2 + wallOpeningTrim / 2), 0.2))
       }
     }
     // Cut the assembled solid once, leaving a single reveal instead of coplanar faces

@@ -2,6 +2,7 @@ import {afterEach, beforeEach, describe, expect, test} from 'bun:test'
 import RAPIER from '@dimforge/rapier3d-compat'
 import {Euler, Plane, Quaternion, Vector3} from 'three/webgpu'
 
+import {plantPositions} from '../../src/lib/gallery/plants.ts'
 import {GrabbableBody} from '../../src/lib/physics/GrabbableBody.ts'
 import type {LeafStem} from '../../src/lib/physics/leaves.ts'
 import {leafGeometry, leafPhysics, leafRotation, leafVertices, plantLeaves} from '../../src/lib/physics/leaves.ts'
@@ -24,11 +25,10 @@ const position = (carried: GrabbableBody) => {const p = carried.body.translation
 
 describe('pluckable foliage', () => {
   test('all 44 leaves have distinct, stable identities and the original appearance', () => {
-    const plants: Array<[number, number, number]> = [[-6.6, 0, -6.5], [6.6, 0, -6.5], [-18.8, 0, 6.5], [18.8, 0, 6.5]]
-    const leaves = plants.flatMap(plantLeaves)
+    const leaves = plantPositions.flatMap(plantLeaves)
     expect(leaves).toHaveLength(44)
     expect(new Set(leaves.map(leaf => leaf.id)).size).toBe(44)
-    expect(plants.flatMap(plantLeaves)).toEqual(leaves)
+    expect(plantPositions.flatMap(plantLeaves)).toEqual(leaves)
     leafGeometry.computeBoundingBox()
     expect(leafGeometry.boundingBox!.max.y).toBeCloseTo(0.48)
     expect(leafGeometry.boundingBox!.max.z).toBeCloseTo(0.045)

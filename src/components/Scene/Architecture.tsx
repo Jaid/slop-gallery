@@ -8,6 +8,7 @@ import {EquirectangularReflectionMapping, Shape, SRGBColorSpace} from 'three/web
 
 import {rooms, useGallery, walls} from '#src/lib/gallery.ts'
 import {architectureGeometry, wallTop} from '#src/lib/gallery/architecture.ts'
+import {plantPositions} from '#src/lib/gallery/plants.ts'
 import {canvasTexture} from '#src/lib/texture.ts'
 
 import AmberRoom from './AmberRoom.tsx'
@@ -68,7 +69,7 @@ export default function Architecture() {
       <BenchSeat position={[0, 0.52, 0]} size={[3.1, 0.24, 1.05]}/>
       {[-1.1, 1.1].map(x => <Box key={x} position={[x, 0.22, 0]} size={[0.14, 0.44, 0.8]} color="#514a3b" metalness={0.6}/>)}
     </group></RigidBody>
-    {[[-6.6, 0, -6.5], [6.6, 0, -6.5], [-18.8, 0, 6.5], [18.8, 0, 6.5]].map((position, i) => <Plant key={resetEpoch + ':' + i} position={position as [number, number, number]}/>)}
+    {plantPositions.map(position => <Plant key={resetEpoch + ':' + position.join(':')} position={position}/>)}
   </>
 }
 
