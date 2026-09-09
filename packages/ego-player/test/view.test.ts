@@ -20,7 +20,7 @@ test('stride callbacks are frame-rate independent and do not require visible bob
     for (let i = 0; i < fps * 10; i++) {
       const result = view.update(1 / fps, defaultEgoOptions.speed, true, false, {
         ...defaultEgoOptions,
-        headBob: 0,
+        bobStrength: 0,
       })
       steps += Number(result.stepped)
       expect(result.offset).toBe(1.6)

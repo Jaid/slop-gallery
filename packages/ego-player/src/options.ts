@@ -2,7 +2,9 @@ export type EgoOptions = {
   acceleration?: number
   airAcceleration?: number
   airDeceleration?: number
-  cameraSharpness?: number
+  bobFrequency?: number
+  bobStrength?: number
+  cameraSpeed?: number
   characterMass?: number | null
   collisionGroups?: number
   contactOffset?: number
@@ -19,8 +21,6 @@ export type EgoOptions = {
   eyeHeight?: number
   fallGravityFactor?: number
   gravity?: number
-  headBob?: number
-  headBobFrequency?: number
   height?: number
   jumpBufferTime?: number
   jumpHeight?: number
@@ -43,7 +43,7 @@ export const defaultEgoOptions = Object.freeze({
   acceleration: 18,
   airAcceleration: 6,
   airDeceleration: 1.5,
-  cameraSharpness: 18,
+  cameraSpeed: 10,
   characterMass: 80,
   contactOffset: 0.02,
   coyoteTime: 0.12,
@@ -55,10 +55,10 @@ export const defaultEgoOptions = Object.freeze({
   dodgeFactor: 1.5,
   dodgeJumpFactor: 1.1,
   eyeHeight: 1.6,
-  fallGravityFactor: 1.35,
+  fallGravityFactor: 2,
   gravity: 9.81,
-  headBob: 0.018,
-  headBobFrequency: 1.8,
+  bobStrength: 0.018,
+  bobFrequency: 1.8,
   height: 1.6,
   jumpBufferTime: 0.14,
   jumpHeight: 1.5,

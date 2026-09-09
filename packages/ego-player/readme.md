@@ -101,7 +101,7 @@ Supply finite positions and finite, nonzero quaternions. Use `userData` to tag t
 
 - `onInput(input)`: before movement when input is active and at least one player action is pressed.
 - `onUpdate(state)`: after each physics step with a detached snapshot. Reading the ref on demand avoids these per-step allocations.
-- `onStep(state)`: at a grounded stride’s downward bob trough, at most once per rendered frame. It works with `headBob={0}` and does not repeat across frames surrounding one trough.
+- `onStep(state)`: at a grounded stride’s downward bob trough, at most once per rendered frame. It works with `bobStrength={0}` and does not repeat across frames surrounding one trough.
 
 Callbacks receive current props without remounting the player. The package never plays sounds or chooses a surface material.
 
@@ -126,7 +126,7 @@ Distances use world units, speeds use world units per second, acceleration/gravi
 | `stepHeight`, `stepMinWidth` | 0.3, 0.2 |
 | `maxSlopeAngle`, `slideAngle` | 50, 55 |
 | `pushDynamicBodies`, `characterMass` | true, 80 |
-| `cameraSharpness`, `headBob`, `headBobFrequency` | 18, 0.018, 1.8 |
+| `cameraSpeed`, `bobStrength`, `bobFrequency` | 18, 0.018, 1.8 |
 | `maxDelta` | 0.05 |
 | `collisionGroups` | all groups |
 
@@ -138,7 +138,7 @@ Crouching suppresses both boosts. Without directional input, Shift + jump retain
 
 A nonpositive `stepHeight` or `stepMinWidth` disables autostep; nonpositive `snapToGround` disables snapping. Autostep does not climb dynamic bodies. Actual traversability also depends on capsule shape, contact offset, approach and slope settings; the step-height setting is not a guarantee that every ledge below it is traversable. `characterMass={null}` lets Rapier derive character mass from the body. Collision groups filter both movement and stand-up clearance; sensors and disabled colliders are ignored.
 
-`maxDelta` caps simulation catch-up per physics step, with a minimum cap of 1/240. It never enlarges an actual smaller timestep. Reported physical velocity still uses the actual physics interval. Render smoothing independently caps catch-up at 0.1 seconds. `headBobFrequency` is the base stride frequency; speed adjusts it. Zero head bob removes visual bobbing without muting stride callbacks.
+`maxDelta` caps simulation catch-up per physics step, with a minimum cap of 1/240. It never enlarges an actual smaller timestep. Reported physical velocity still uses the actual physics interval. Render smoothing independently caps catch-up at 0.1 seconds. `bobFrequency` is the base stride frequency; speed adjusts it. Zero head bob removes visual bobbing without muting stride callbacks.
 
 ## Lower-level motor
 
