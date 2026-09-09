@@ -1,4 +1,4 @@
-import type {Controls} from '../Game/normalizeControls'
+import type {Controls} from 'three-fiber-game'
 
 export type Actions = 'backward' | 'crouch' | 'forward' | 'jump' | 'left' | 'right' | 'sprint'
 const controls: Controls<Actions> = {

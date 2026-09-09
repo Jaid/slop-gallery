@@ -20,6 +20,7 @@
         "telemethree-ego": "workspace:*",
         "three": "0.186.0",
         "three-bvh-csg": "0.0.18",
+        "three-fiber-game": "workspace:*",
         "three-mesh-bvh": "0.9.14",
         "use-graphics-quality": "workspace:*",
         "webgpu-capture-bridge": "workspace:*",
@@ -71,6 +72,18 @@
         "@react-three/fiber",
         "react",
       ],
+    },
+    "packages/three-fiber-game": {
+      "name": "three-fiber-game",
+      "version": "0.1.0",
+      "peerDependencies": {
+        "@react-three/drei": "^11.0.0-alpha.7",
+        "@react-three/fiber": "^10.0.0-alpha.5",
+        "@react-three/rapier": "^2.2.0",
+        "react": "^19.2.8",
+        "react-dom": "^19.2.8",
+        "three": "^0.186.0",
+      },
     },
     "packages/use-graphics-quality": {
       "name": "use-graphics-quality",
@@ -770,6 +783,8 @@
     "three": ["three@0.186.0", "", {}, "sha512-cr/fIM2ddMSVbYVgkfD4jLJv7Fh/8ZTjvo+7gQeSVGUZHxpx9FDwoL5iC7hUz/LiRA8wMbqfnb90xKfm1/HHkQ=="],
 
     "three-bvh-csg": ["three-bvh-csg@0.0.18", "", { "peerDependencies": { "three": ">=0.179.0", "three-mesh-bvh": ">=0.9.7" } }, "sha512-M3GCZMmGFgASGuDf+YMamM83nVlD/vdwzVHcYbFxgW+g1S7/nKPiuY00YVHOMbjmJPh8mLevGZL65ItHUuGt2w=="],
+
+    "three-fiber-game": ["three-fiber-game@workspace:packages/three-fiber-game"],
 
     "three-mesh-bvh": ["three-mesh-bvh@0.9.14", "", { "peerDependencies": { "three": ">= 0.159.0" } }, "sha512-xJzfUXnLYjgw5tRKGxjfJW3Pcx0IbwNskvpdwRryhK07SYrKrYB4W8zAaPxu784gK7G4lCBgG+vfG3YeYn95kg=="],
 

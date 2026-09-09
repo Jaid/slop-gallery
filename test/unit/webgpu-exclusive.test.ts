@@ -1,46 +1,6 @@
-import type {WebgpuRendererOptions} from '#src/lib/rendering/WebgpuRenderer.ts'
-
 import {expect, test} from 'bun:test'
 
-import {WebgpuRenderer} from '#src/lib/rendering/WebgpuRenderer.ts'
-
-test('native renderer propagates adapter failure without trying a fallback context', async () => {
-  let fallbackCalls = 0
-  let contextCalls = 0
-  const canvas = {
-    width: 1,
-    height: 1,
-    getContext: () => {
-      contextCalls++
-      throw new Error('Unexpected context request.')
-    },
-  } as unknown as HTMLCanvasElement
-  // Exercise runtime behavior even when an untyped caller supplies excluded options.
-  const options = {
-    canvas,
-    forceWebGL: true,
-    getFallback: () => {
-      fallbackCalls++
-      throw new Error('Unexpected fallback.')
-    },
-  }
-  const renderer = new WebgpuRenderer(options)
-  const failure = new Error('WebGPU adapter unavailable.')
-  renderer.backend.init = () => {
-    throw failure
-  }
-  expect(renderer.backend.isWebGPUBackend).toBe(true)
-  expect(renderer.isWebGPURenderer).toBe(true)
-  await expect(renderer.init()).rejects.toBe(failure)
-  expect(fallbackCalls).toBe(0)
-  expect(contextCalls).toBe(0)
-})
-test('public renderer options and package exports do not expose compatibility switches', async () => {
-  const nativeOptions: WebgpuRendererOptions = {antialias: true}
-  expect(nativeOptions.antialias).toBe(true)
-  // @ts-expect-error TS2353 WebGL switching is not part of the native renderer API.
-  const unsupported: WebgpuRendererOptions = {forceWebGL: true}
-  expect(unsupported).toBeDefined()
+test('telemetry package exports have one React entry', async () => {
   for (const name of ['telemethree', 'telemethree-ego']) {
     const manifest = await Bun.file(`packages/${name}/package.json`).json() as {exports: Record<string, string>}
     expect(Object.keys(manifest.exports)).toEqual(['.', './react'])

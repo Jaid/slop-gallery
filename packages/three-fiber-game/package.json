@@ -1,0 +1,35 @@
+{
+  "name": "three-fiber-game",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Composable WebGPU games with React Three Fiber, keyboard controls and optional physics",
+  "funding": "https://github.com/sponsors/Jaid",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jaid/slop-gallery.git",
+    "directory": "packages/three-fiber-game"
+  },
+  "main": "src/main.ts",
+  "exports": {
+    ".": "./src/main.ts"
+  },
+  "scripts": {
+    "test": "bun test ./test"
+  },
+  "peerDependencies": {
+    "@react-three/drei": "^11.0.0-alpha.7",
+    "@react-three/fiber": "^10.0.0-alpha.5",
+    "@react-three/rapier": "^2.2.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "three": "^0.186.0"
+  },
+  "files": [
+    "src",
+    "readme.md",
+    "license.txt"
+  ],
+  "sideEffects": false,
+  "types": "./src/main.ts"
+}

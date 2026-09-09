@@ -109,6 +109,10 @@ Browser screenshots and failure diagnostics are written under ignored `private/a
 
 Provider lifecycle and narration requests are tested with controlled responses. These checks do not certify paid model availability or live provider output quality.
 
+## Reusable game root
+
+The [three-fiber-game workspace package](packages/three-fiber-game/readme.md) provides the native WebGPU Canvas, typed keyboard controls and optional Rapier physics. Its `wrapper` and `sceneWrapper` props accept one component or a readonly list, with the first wrapper outermost. Gallery-specific graphics budgets stay in `App/World`; capture, telemetry and postprocessing are injected by the stable `App/GameScene` wrapper. Package tests and the isolated packed-consumer check run as part of `bun run check`.
+
 ## Reusable capture library
 
 The [webgpu-capture-bridge workspace package](packages/webgpu-capture-bridge/readme.md) contains the React-independent capture service and optional React Three Fiber bindings. The gallery component only connects its capture function to `window.__gallery`. Library unit tests run as part of `bun run check`.

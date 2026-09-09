@@ -22,7 +22,7 @@
     "dev": "vite --host 127.0.0.1",
     "lint": "bun scripts/lint.ts",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "bun test ./test/unit ./packages/webgpu-capture-bridge/test ./packages/telemethree/test ./packages/telemethree-ego/test ./packages/use-graphics-quality/test",
+    "test": "bun test ./test/unit ./packages/webgpu-capture-bridge/test ./packages/telemethree/test ./packages/telemethree-ego/test ./packages/use-graphics-quality/test ./packages/three-fiber-game/test",
     "test:live": "bun run build && bun test ./test/live.test.ts",
     "typecheck": "tsc --noEmit --noUnusedLocals --noUnusedParameters --pretty false"
   },
@@ -42,6 +42,7 @@
     "telemethree-ego": "workspace:*",
     "three": "0.186.0",
     "three-bvh-csg": "0.0.18",
+    "three-fiber-game": "workspace:*",
     "three-mesh-bvh": "0.9.14",
     "use-graphics-quality": "workspace:*",
     "webgpu-capture-bridge": "workspace:*",
