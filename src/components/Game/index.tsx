@@ -7,6 +7,7 @@ import {Canvas} from '@react-three/fiber/webgpu'
 import {Physics} from '@react-three/rapier'
 
 import Postprocessing from '#component/Postprocessing'
+import TelemetryBridge from '#component/TelemetryBridge'
 import WebgpuCaptureBridge from '#component/WebgpuCaptureBridge'
 
 import normalizeControls from './normalizeControls'
@@ -38,6 +39,7 @@ function Game<Actions extends string = string>({postprocessing = <Postprocessing
     antialias: !lite,
   }}>
     <WebgpuCaptureBridge/>
+    <TelemetryBridge/>
     {world}
     {!lite && postprocessing}
   </Canvas>

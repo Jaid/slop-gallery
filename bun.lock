@@ -16,6 +16,9 @@
         "react": "19.2.8",
         "react-dom": "19.2.8",
         "react-dropzone": "20.1.1",
+        "slop-gallery-telemethree": "workspace:*",
+        "telemethree": "workspace:*",
+        "telemethree-ego": "workspace:*",
         "three": "0.186.0",
         "three-bvh-csg": "0.0.18",
         "three-mesh-bvh": "0.9.14",
@@ -39,6 +42,51 @@
         "typescript": "npm:typescript-classic@6.0.4",
         "vite": "8.2.2",
       },
+    },
+    "packages/slop-gallery-telemethree": {
+      "name": "slop-gallery-telemethree",
+      "version": "0.1.0",
+      "dependencies": {
+        "telemethree": "workspace:*",
+        "telemethree-ego": "workspace:*",
+      },
+      "peerDependencies": {
+        "react": "^19.2.8",
+        "vite": "^8.2.2",
+      },
+      "optionalPeers": [
+        "react",
+        "vite",
+      ],
+    },
+    "packages/telemethree": {
+      "name": "telemethree",
+      "version": "0.1.0",
+      "peerDependencies": {
+        "@react-three/fiber": "^10.0.0-alpha.5",
+        "react": "^19.2.8",
+        "three": "^0.186.0",
+      },
+      "optionalPeers": [
+        "@react-three/fiber",
+        "react",
+      ],
+    },
+    "packages/telemethree-ego": {
+      "name": "telemethree-ego",
+      "version": "0.1.0",
+      "dependencies": {
+        "telemethree": "workspace:*",
+      },
+      "peerDependencies": {
+        "@react-three/fiber": "^10.0.0-alpha.5",
+        "react": "^19.2.8",
+        "three": "^0.186.0",
+      },
+      "optionalPeers": [
+        "@react-three/fiber",
+        "react",
+      ],
     },
     "packages/webgpu-capture-bridge": {
       "name": "webgpu-capture-bridge",
@@ -694,6 +742,8 @@
 
     "shebang-regex": ["shebang-regex@3.0.0", "", {}, "sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A=="],
 
+    "slop-gallery-telemethree": ["slop-gallery-telemethree@workspace:packages/slop-gallery-telemethree"],
+
     "source-map-js": ["source-map-js@1.2.1", "", {}, "sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA=="],
 
     "stable-hash-x": ["stable-hash-x@0.2.0", "", {}, "sha512-o3yWv49B/o4QZk5ZcsALc6t0+eCelPc44zZsLtCQnZPDwFpDYSWcDnrv2TtMmMbQ7uKo3J0HTURCqckw23czNQ=="],
@@ -721,6 +771,10 @@
     "tagged-tag": ["tagged-tag@1.0.0", "", {}, "sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng=="],
 
     "tapable": ["tapable@2.3.3", "", {}, "sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A=="],
+
+    "telemethree": ["telemethree@workspace:packages/telemethree"],
+
+    "telemethree-ego": ["telemethree-ego@workspace:packages/telemethree-ego"],
 
     "three": ["three@0.186.0", "", {}, "sha512-cr/fIM2ddMSVbYVgkfD4jLJv7Fh/8ZTjvo+7gQeSVGUZHxpx9FDwoL5iC7hUz/LiRA8wMbqfnb90xKfm1/HHkQ=="],
 

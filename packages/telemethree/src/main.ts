@@ -1,1 +1,8 @@
-export default {}
+export {ExportError} from './ExportError.ts'
+export {OtlpHttpExporter} from './OtlpHttpExporter.ts'
+export type {HttpExporterOptions, HttpRequest} from './OtlpHttpExporter.ts'
+export {Span} from './Span.ts'
+export {Telemetry} from './Telemetry.ts'
+export {ThreeStatistics} from './ThreeStatistics.ts'
+export type {RendererInfo, ThreeStatisticsOptions} from './ThreeStatistics.ts'
+export type {Attributes, ExportBatch, ExportResult, Log, Metric, MetricOptions, Records, Signal, TelemetryExporter, TelemetryOptions, Trace, TraceContext} from './types.ts'

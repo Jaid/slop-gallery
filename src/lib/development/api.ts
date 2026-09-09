@@ -1,7 +1,10 @@
 import type {AimSnapshot} from './AimInspector.ts'
+import type {Telemetry} from 'telemethree'
 
 export type DevelopmentApi = {
   getAim: () => AimSnapshot
+  getTelemetry?: () => {sessionId: string
+    signals: ReturnType<Telemetry['status']>} | null
 }
 
 type DevelopmentHost = {'slop.gallery'?: DevelopmentApi}

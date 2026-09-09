@@ -15,7 +15,7 @@ bun run dev
 
 Open the printed localhost URL in current Chrome or Edge with hardware acceleration enabled. Production hosting requires HTTPS. This is a keyboard-and-mouse experience; the collection browser also works without WebGPU.
 
-Use `?ai=false` for a completely local gallery session. The OpenRouter manager in the menu is optional – no provider requests happen without a key. All exhibition artwork, fonts, recordings and environment textures are bundled or generated locally.
+Use `?ai=false&telemetry=false` for a completely local gallery session. The OpenRouter manager in the menu is optional – no provider requests happen without a key. All exhibition artwork, fonts, recordings and environment textures are bundled or generated locally.
 
 The gallery starts in a minimal menu over a dimmed, blurred view. Enter to explore; Esc returns to the menu. The HUD keeps the aiming dot, a contextual artwork overlay when you look at a title plate and a compact narrator indicator with live audio visualization while a story is playing. Audio mute, full/lightweight graphics and the expandable OpenRouter manager live in the menu. Collection, controls and preferences/backups remain available through secondary links. Reset appears only after the first in-game movement, look or action; this is remembered on the device. Opening the menu or clicking Enter alone does not reveal it.
 
@@ -111,3 +111,9 @@ The [webgpu-capture-bridge workspace package](packages/webgpu-capture-bridge/rea
 The app is private. Capture-library releases use tags matching its own version: webgpu-capture-bridge-v<version>. Stable versions publish to the latest npm tag; prereleases publish to next. The release workflow checks the tag/version match and runs the same full check before publishing only that workspace.
 
 See [quality-report decisions](docs/quality-report-decisions.md) for accepted repairs, deliberate deferrals and the Fiber/Rapier compatibility exception.
+
+## Telemetry packages
+
+`telemethree` provides reusable metrics, logs, traces and Three frame/scene statistics. `telemethree-ego` adds player position, velocity and aim. `slop-gallery-telemethree` adds gallery state/events and pushes all three signals to Victoria through a same-origin development relay. The existing NAS configuration is unchanged.
+
+Telemetry is enabled in Vite development, disabled by `?telemetry=false` or `?test=true` and opt-in for production via `VITE_TELEMETRY_ENDPOINT`. With `?development=true`, `window['slop.gallery'].getTelemetry()` reports delivery status. See the [core API](packages/telemethree/readme.md), [player layer](packages/telemethree-ego/readme.md) and [gallery integration, endpoint configuration and queries](packages/slop-gallery-telemethree/readme.md).

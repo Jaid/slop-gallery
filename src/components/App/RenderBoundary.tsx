@@ -3,13 +3,15 @@ import type {PropsWithChildren} from 'react'
 import {Component} from 'react'
 
 import {openPanel, useGallery} from '#src/lib/gallery.ts'
+import {telemetry} from '#src/lib/telemetry.ts'
 
 export default class RenderBoundary extends Component<PropsWithChildren<{onFailure?: () => void}>, {failed: boolean}> {
   static getDerivedStateFromError() {
     return {failed: true}
   }
   state = {failed: false}
-  componentDidCatch() {
+  componentDidCatch(error: Error) {
+    telemetry?.log('Gallery rendering failed.', 'error', {'error.type': error.name})
     useGallery.setState({
       ready: false,
       locked: false,

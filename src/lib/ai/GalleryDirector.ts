@@ -5,6 +5,7 @@ import {Narrator} from '../audio/Narrator.ts'
 import {chime, loadBlob, notify} from '../gallery/actions.ts'
 import {compositeImages, fitGeneratedImage} from '../gallery/ImageImporter.ts'
 import {useGallery} from '../gallery/store.ts'
+import {telemetry} from '../telemetry.ts'
 
 export class GalleryDirector {
   readonly narrator: Narrator
@@ -69,7 +70,8 @@ export class GalleryDirector {
         }
         useGallery.getState().update(portrait.id, patch)
       }
-      update(await this.generateFlavor(await loadBlob(source), update, AbortSignal.any([this.controller.signal, AbortSignal.timeout(90_000)])))
+      const generate = async () => this.generateFlavor(await loadBlob(source), update, AbortSignal.any([this.controller.signal, AbortSignal.timeout(90_000)]))
+      update(await (telemetry ? telemetry.trace('gallery.ai.flavor', generate, {model: this.settings.text_model}) : generate()))
     } catch {
       if (current()) {
         notify('The curator is unavailable. Your artwork is safe; you can edit its label in Collection.')
@@ -135,7 +137,8 @@ export class GalleryDirector {
     }
     notify(this.settings.ai && this.key ? 'The alchemy is underway. Both originals stay safe until it succeeds.' : 'A local collage is taking shape. No AI and no upload.')
     try {
-      const merged = await this.generateMerge(a.source, b.source, AbortSignal.any([this.controller.signal, AbortSignal.timeout(120_000)]), a.width / a.height)
+      const generate = () => this.generateMerge(a.source, b.source, AbortSignal.any([this.controller.signal, AbortSignal.timeout(120_000)]), a.width / a.height)
+      const merged = await (telemetry ? telemetry.trace('gallery.merge', generate, {mode: this.settings.ai && this.key ? 'ai' : 'local'}) : generate())
       if (!current()) {
         return
       }

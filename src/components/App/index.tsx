@@ -1,9 +1,11 @@
 import './style.css'
 
 import {lazy, Suspense, useEffect, useState} from 'react'
+import {useSlopGalleryTelemetry} from 'slop-gallery-telemethree/react'
 
 import Dropzone from '#component/Dropzone'
-import {openPanel, useGallery} from '#src/lib/gallery.ts'
+import {galleryEvents, openPanel, useGallery} from '#src/lib/gallery.ts'
+import {telemetry} from '#src/lib/telemetry.ts'
 import useGalleryAI from '#src/lib/useGalleryAI.ts'
 import useGalleryCommands from '#src/lib/useGalleryCommands.ts'
 
@@ -24,6 +26,7 @@ const panelTitles = {
   map: 'Floor plan',
 }
 export default function App() {
+  useSlopGalleryTelemetry(telemetry, useGallery, galleryEvents)
   const settings = useGalleryAI()
   useGalleryCommands()
   const s = useGallery()

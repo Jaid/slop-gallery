@@ -9,6 +9,7 @@ import {Quaternion, Vector3} from 'three/webgpu'
 
 import {SoundEngine} from '#src/lib/audio/SoundEngine.ts'
 import {cameraPose, galleryEvents, markControlled, useGallery} from '#src/lib/gallery.ts'
+import {playerTelemetry} from '#src/lib/telemetry.ts'
 
 import {getCapsuleHalfHeight, getJumpVelocity} from './util'
 
@@ -134,6 +135,7 @@ const RapierPlayer = ({acceleration = 18,
   const clockRef = useRef(0)
   const verticalVelocityRef = useRef(0)
   const velocityRef = useRef(new Vector3)
+  const physicalVelocity = useRef(new Vector3)
   const cameraHeightRef = useRef(standingHeight / 2 + eyeHeight)
   const bobPhaseRef = useRef(0)
   const getKeys = useKeyboardControls<Actions>()[1]
@@ -143,6 +145,21 @@ const RapierPlayer = ({acceleration = 18,
   const currentHeight = crouching ? crouchingHeight : standingHeight
   const capsuleHalfHeight = getCapsuleHalfHeight(currentHeight, safeRadius)
   const initialFeetPosition: [number, number, number] = [position[0], position[1] - standingHeight / 2, position[2]]
+  useEffect(() => {
+    const read = () => {
+      const body = bodyRef.current
+      return body ? {
+        position: body.translation(),
+        velocity: physicalVelocity.current,
+      } : null
+    }
+    playerTelemetry.read = read
+    return () => {
+      if (playerTelemetry.read === read) {
+        playerTelemetry.read = null
+      }
+    }
+  }, [])
   useEffect(() => {
     camera.rotation.set(0, yaw, 0, 'YXZ')
   }, [camera, yaw])
@@ -161,6 +178,7 @@ const RapierPlayer = ({acceleration = 18,
         z: position[2],
       })
       velocityRef.current.set(0, 0, 0)
+      physicalVelocity.current.set(0, 0, 0)
       verticalVelocityRef.current = 0
       cameraPose.focused = false
       camera.position.set(...position)
@@ -290,6 +308,7 @@ const RapierPlayer = ({acceleration = 18,
     desiredMovement.z = horizontalVelocity.z * dt
     controller.computeColliderMovement(collider, desiredMovement, undefined, collisionGroups, isCharacterObstacle)
     const movement = controller.computedMovement()
+    physicalVelocity.current.set(movement.x / dt, movement.y / dt, movement.z / dt)
     const translation = body.translation()
     body.setNextKinematicTranslation({
       x: translation.x + movement.x,

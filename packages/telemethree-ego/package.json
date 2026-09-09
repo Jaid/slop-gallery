@@ -1,8 +1,8 @@
 {
-  "name": "telemethree",
+  "name": "telemethree-ego",
   "version": "0.1.0",
   "type": "module",
-  "description": "Composable metrics, logs, traces and frame statistics for React Three Fiber",
+  "description": "Player position, velocity and aim telemetry for Three Fiber",
   "funding": "https://github.com/sponsors/Jaid",
   "license": "MIT",
   "repository": {
@@ -17,6 +17,9 @@
   },
   "scripts": {
     "test": "bun test --max-concurrency 1 ./test"
+  },
+  "dependencies": {
+    "telemethree": "workspace:*"
   },
   "peerDependencies": {
     "@react-three/fiber": "^10.0.0-alpha.5",
