@@ -16,7 +16,9 @@ const identityRotation = {
   w: 1,
 }
 
-/** Owns one Rapier character controller, not the supplied world, body or collider. */
+/**
+  * Owns one Rapier character controller, not the supplied world, body or collider.
+  */
 export class EgoMotor {
   private active = false
   private clock = 0
@@ -211,7 +213,7 @@ export class EgoMotor {
       y: translation.y + movement.y,
       z: translation.z + movement.z,
     })
-    this.velocity.set(movement.x / dt, 0, movement.z / dt)
+    // Keep requested horizontal momentum separate from collision-resolved velocity. Autostep can spend a tick lifting the capsule; feeding that short horizontal displacement back into acceleration makes every riser behave like a wall. Physical velocity above still reports only the movement that actually happened.
     this.isGrounded = this.controller.computedGrounded()
     if (this.isGrounded) {
       this.lastGroundedAt = now

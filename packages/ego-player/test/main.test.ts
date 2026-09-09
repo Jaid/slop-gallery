@@ -554,3 +554,36 @@ test.each([Infinity, Number.NaN])('nonfinite ground stick speed %s is rejected',
   const motor = player()
   expect(() => motor.configure({groundStickSpeed})).toThrow(RangeError)
 })
+for (const fps of [30, 60, 120, 240]) {
+  for (const sprint of [false, true]) {
+    test(`a flight of stairs preserves horizontal momentum (${fps} Hz, sprint: ${sprint})`, () => {
+      world.timestep = 1 / fps
+      const motor = grounded()
+      for (let i = 0; i < 20; i++) {
+        const height = (i + 1) * 0.18
+        world.createCollider(RAPIER.ColliderDesc.cuboid(2, height / 2, 0.18).setTranslation(0, height / 2, -1 - (i + 0.5) * 0.36))
+      }
+      world.createCollider(RAPIER.ColliderDesc.cuboid(2, 1.8, 2).setTranslation(0, 1.8, -10.2))
+      world.step()
+      let elapsed = 0
+      let stalled = 0
+      let longestStall = 0
+      while (motor.body.translation().z > -8.8 && elapsed < 6) {
+        const previousZ = motor.body.translation().z
+        tick(motor, {
+          forward: true,
+          sprint,
+        })
+        elapsed += world.timestep
+        if (elapsed > 0.2) {
+          stalled = Math.abs(motor.body.translation().z - previousZ) < 0.001 ? stalled + world.timestep : 0
+          longestStall = Math.max(longestStall, stalled)
+        }
+      }
+      expect(elapsed).toBeLessThan(sprint ? 1.7 : 4.2)
+      expect(longestStall).toBeLessThan(0.035)
+      expect(motor.body.translation().y).toBeCloseTo(3.62, 2)
+      expect(motor.grounded).toBe(true)
+    })
+  }
+}
