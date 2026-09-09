@@ -4,9 +4,9 @@ import {describe, expect, test} from 'bun:test'
 
 import {BoxGeometry, Float32BufferAttribute, PlaneGeometry} from 'three/webgpu'
 
-import {triangleCount} from '../../src/lib/gallery/plantDecorations/complexity.ts'
-import {mergeParts, sampleGrid} from '../../src/lib/gallery/plantDecorations/geometry.ts'
+import {sampleGrid} from '../../src/lib/gallery/plantDecorations/geometry.ts'
 import {PlantGeometry} from '../../src/lib/gallery/plantDecorations/PlantGeometry.ts'
+import {mergeParts, triangleCount} from '../../src/lib/geometry.ts'
 
 function connectedParts(geometry: BufferGeometry) {
   const parents = Array.from({length: geometry.getAttribute('position').count}, (_, i) => i)
@@ -71,7 +71,7 @@ describe('botanical geometry assembly', () => {
     const rendered = merged.index ? merged.toNonIndexed() : merged
     try {
       expect(disposed).toBe(2)
-      expect(Boolean(merged.index)).toBe(!mixed)
+      expect(merged.index).not.toBeNull()
       expect(triangleCount(merged)).toBe(24)
       if (!mixed) {
         expect(merged.getAttribute('position').count).toBe(48)

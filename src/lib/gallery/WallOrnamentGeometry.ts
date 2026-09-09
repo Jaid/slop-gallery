@@ -1,8 +1,9 @@
 import type {Wall} from './walls.ts'
 import type {BufferGeometry} from 'three/webgpu'
 
-import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js'
-import {CatmullRomCurve3, ExtrudeGeometry, Path, Shape, SphereGeometry, TorusGeometry, TubeGeometry, Vector3} from 'three/webgpu'
+import {CatmullRomCurve3, ExtrudeGeometry, Line3, Path, Shape, SphereGeometry, TorusGeometry, TubeGeometry, Vector3} from 'three/webgpu'
+
+import {mergeParts} from '../geometry.ts'
 
 export const wallOrnament = {
   halfWidth: 0.8,
@@ -33,24 +34,15 @@ export function wallOrnamentPositions(wall: Wall) {
   return [left, right]
 }
 
-function merge(parts: Array<BufferGeometry>) {
-  const flat = parts.map(part => {
-    return part.index ? part.toNonIndexed() : part
-  })
-  try {
-    const geometry = mergeGeometries(flat)
-    geometry.computeBoundingBox()
-    geometry.computeBoundingSphere()
-    return geometry
-  } finally {
-    for (const part of new Set([...parts, ...flat])) {
-      part.dispose()
-    }
-  }
-}
 function stem(path: Path, radius: number, z: number) {
-  const curve = new CatmullRomCurve3(path.getPoints(16).map(point => new Vector3(point.x, point.y, z)))
-  return new TubeGeometry(curve, Math.max(4, Math.ceil(path.getLength() * 64)), radius, 6, false).scale(1, 1, 0.65)
+  const points = path.getPoints(16).map(point => new Vector3(point.x, point.y, z))
+  const curve = new CatmullRomCurve3(points)
+  const line = new Line3(points[0], points.at(-1))
+  const closest = new Vector3
+  // Most leaf veins are straight despite being authored as quadratic paths.
+  const straight = points.every(point => line.closestPointToPoint(point, true, closest).distanceToSquared(point) < 1e-12)
+  const segments = straight ? 1 : Math.max(4, Math.ceil(path.getLength() * 48))
+  return new TubeGeometry(curve, segments, radius, 6, false).scale(1, 1, 0.65)
 }
 function leaf(length: number, width: number) {
   const shape = new Shape
@@ -63,7 +55,7 @@ function leaf(length: number, width: number) {
   return new ExtrudeGeometry(shape, {
     depth: 0.006,
     steps: 1,
-    curveSegments: 6,
+    curveSegments: 4,
     bevelEnabled: true,
     bevelThickness: 0.003,
     bevelSize: 0.003,
@@ -117,14 +109,14 @@ export class WallOrnamentGeometry {
       vein.lineTo(0, 0.12)
       brass.push(stem(vein, 0.003, 0.03).rotateZ(angle))
     }
-    brass.push(new TorusGeometry(0.034, 0.005, 6, 32).translate(0, 0, 0.018))
-    brass.push(new SphereGeometry(0.025, 20, 12).scale(1, 1, 0.4).translate(0, 0, 0.02))
+    brass.push(new TorusGeometry(0.034, 0.005, 6, 24).translate(0, 0, 0.018))
+    brass.push(new SphereGeometry(0.025, 12, 8).scale(1, 1, 0.4).translate(0, 0, 0.02))
     // Small pearl finials finish the central flower without a rectangular backing.
     for (const y of [-0.2, 0.2]) {
-      brass.push(new SphereGeometry(0.013, 12, 8).scale(1, 1.4, 0.5).translate(0, y, 0.012))
+      brass.push(new SphereGeometry(0.013, 10, 8).scale(1, 1.4, 0.5).translate(0, y, 0.012))
     }
-    this.foliage = merge(foliage)
-    this.brass = merge(brass)
+    this.foliage = mergeParts(foliage)
+    this.brass = mergeParts(brass)
   }
 
   dispose() {

@@ -1,6 +1,7 @@
-import {mergeGeometries, toCreasedNormals} from 'three/addons/utils/BufferGeometryUtils.js'
-import {BufferGeometry, ExtrudeGeometry, Shape, Vector2} from 'three/webgpu'
+import {toCreasedNormals} from 'three/addons/utils/BufferGeometryUtils.js'
+import {ExtrudeGeometry, Shape, Vector2} from 'three/webgpu'
 
+import {mergeParts} from '../geometry.ts'
 import {colliderGeometry} from './architecture.ts'
 
 function footprint(width: number, fluted = false) {
@@ -17,8 +18,8 @@ function footprint(width: number, fluted = false) {
         const center = (flute - 3.5) * 0.094
         const start = point(center - 0.032, -half, side)
         shape.lineTo(start.x, start.y)
-        for (let step = 1; step <= 16; step++) {
-          const angle = step / 16 * Math.PI
+        for (let step = 1; step <= 8; step++) {
+          const angle = step / 8 * Math.PI
           const p = point(center - Math.cos(angle) * 0.032, -half + Math.sin(angle) * 0.022, side)
           shape.lineTo(p.x, p.y)
         }
@@ -49,21 +50,10 @@ function block(width: number, bottom: number, top: number, bevel: number, fluted
   return fluted ? toCreasedNormals(geometry.scale(100, 100, 100), Math.PI / 6).scale(0.01, 0.01, 0.01) : geometry
 }
 
-function merge(parts: Array<BufferGeometry>) {
-  try {
-    const geometry = mergeGeometries(parts)!
-    geometry.computeBoundingBox()
-    geometry.computeBoundingSphere()
-    return geometry
-  } finally {
-    for (const part of parts) part.dispose()
-  }
-}
-
 /** A fluted stone plinth with a stepped foot, recessed collars and a beveled cap. */
 export class PedestalGeometry {
   // Preserve the original 1.16 m footprint and 1.35 m sculpture support height.
-  readonly stone = merge([
+  readonly stone = mergeParts([
     block(1.16, 0, 0.105, 0.012),
     block(1.09, 0.105, 0.185, 0.018),
     block(1.01, 0.185, 0.23, 0.007),
@@ -72,11 +62,11 @@ export class PedestalGeometry {
     block(1.085, 1.19, 1.255, 0.014),
     block(1.16, 1.255, 1.35, 0.012),
   ])
-  readonly bronze = merge([
+  readonly bronze = mergeParts([
     block(0.974, 0.232, 0.242, 0.002),
     block(0.974, 1.128, 1.138, 0.002),
   ])
-  readonly reveals = merge([
+  readonly reveals = mergeParts([
     block(0.94, 0.23, 0.25, 0.002),
     block(0.94, 1.12, 1.14, 0.002),
   ])

@@ -1,23 +1,4 @@
-import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js'
 import {BufferGeometry, Float32BufferAttribute} from 'three/webgpu'
-
-export function mergeParts(parts: Array<BufferGeometry>) {
-  // Preserve shared vertices whenever the parts agree on indexed topology.
-  const indexed = parts.every(part => part.index !== null)
-  const compatible = indexed ? parts : parts.map(part => {
-    return part.index ? part.toNonIndexed() : part
-  })
-  try {
-    const result = mergeGeometries(compatible)
-    result.computeBoundingBox()
-    result.computeBoundingSphere()
-    return result
-  } finally {
-    for (const part of new Set([...parts, ...compatible])) {
-      part.dispose()
-    }
-  }
-}
 
 /** Decimate a row-major blade grid while retaining the sampled normals, colors and UVs. */
 export function sampleGrid(source: BufferGeometry, sourceColumns: number, rows: ReadonlyArray<number>, columns: ReadonlyArray<number>) {

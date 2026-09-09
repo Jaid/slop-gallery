@@ -1,8 +1,10 @@
 import {afterEach, beforeEach, describe, expect, test} from 'bun:test'
+
 import RAPIER from '@dimforge/rapier3d-compat'
 import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {PedestalGeometry} from '../../src/lib/gallery/PedestalGeometry.ts'
+import {triangleCount} from '../../src/lib/geometry.ts'
 import {LimestoneMaterial} from '../../src/lib/materials/LimestoneMaterial.ts'
 import {GrabbableBody} from '../../src/lib/physics/GrabbableBody.ts'
 import {PropPlacement} from '../../src/lib/physics/PropPlacement.ts'
@@ -32,6 +34,7 @@ describe('sculpture pedestals', () => {
     expect(bounds.getSize(new Vector3).x).toBeCloseTo(1.16, 6)
     expect(bounds.getSize(new Vector3).z).toBeCloseTo(1.16, 6)
     let triangles = 0
+    let bytes = 0
     for (const part of [geometry.stone, geometry.bronze, geometry.reveals]) {
       for (const attribute of ['position', 'normal', 'uv']) {
         expect(Array.from(part.getAttribute(attribute).array).every(Number.isFinite)).toBe(true)
@@ -45,9 +48,12 @@ describe('sculpture pedestals', () => {
       expect(unitNormals).toBe(true)
       expect(part.boundingBox!.min.y).toBeGreaterThanOrEqual(-1e-6)
       expect(part.boundingBox!.max.y).toBeLessThanOrEqual(1.350001)
-      triangles += part.getAttribute('position').count / 3
+      triangles += triangleCount(part)
+      expect(part.index).not.toBeNull()
+      bytes += part.index!.array.byteLength + Object.values(part.attributes).reduce((sum, attribute) => sum + attribute.array.byteLength, 0)
     }
-    expect(triangles).toBeLessThan(8000)
+    expect(triangles).toBeLessThan(4600)
+    expect(bytes).toBeLessThan(250_000)
   })
 
   test('matches visible flutes, collars, ledges and chamfers with physical collision on all four faces', () => {

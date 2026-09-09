@@ -2,7 +2,8 @@ import type {PlantKind} from './catalog.ts'
 
 import {BufferGeometry, CatmullRomCurve3, Color, Float32BufferAttribute, Matrix4, Quaternion, SphereGeometry, TubeGeometry, Vector3} from 'three/webgpu'
 
-import {mergeParts, sampleGrid} from './geometry.ts'
+import {mergeParts} from '../../geometry.ts'
+import {sampleGrid} from './geometry.ts'
 
 type Point = [number, number, number]
 type BladeStyle = 'fiddle' | 'gold' | 'lance' | 'oval' | 'silver' | 'split' | 'succulent'

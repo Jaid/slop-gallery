@@ -3,9 +3,10 @@ import {describe, expect, test} from 'bun:test'
 import {Box3, BoxGeometry, BufferGeometry, Mesh, MeshBasicNodeMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {plantCombinations, plants, pots, showPlantPreview} from '../../src/lib/gallery/plantDecorations/catalog.ts'
-import {complexityLabel, decorationComplexity, triangleCount} from '../../src/lib/gallery/plantDecorations/complexity.ts'
+import {complexityLabel, decorationComplexity} from '../../src/lib/gallery/plantDecorations/complexity.ts'
 import {PlantGeometry} from '../../src/lib/gallery/plantDecorations/PlantGeometry.ts'
 import {PotGeometry} from '../../src/lib/gallery/plantDecorations/PotGeometry.ts'
+import {triangleCount} from '../../src/lib/geometry.ts'
 
 describe('modular botanical catalog', () => {
   test('four vessels × eight botanicals produce every pair exactly once, numbered 01–32', () => {

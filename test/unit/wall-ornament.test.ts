@@ -6,12 +6,14 @@ import {wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
 import {cabinetOrnaments} from '../../src/lib/gallery/cabinetOrnaments.ts'
 import {wallOrnament, WallOrnamentGeometry, wallOrnamentPositions} from '../../src/lib/gallery/WallOrnamentGeometry.ts'
 import {wallCoordinates, wallPosition, walls} from '../../src/lib/gallery/walls.ts'
+import {triangleCount} from '../../src/lib/geometry.ts'
 
 describe('cabinet wall ornaments', () => {
   test('keeps the relief just above the baseboard and behind hung artwork', () => {
     const geometry = new WallOrnamentGeometry
     try {
       let triangles = 0
+      let bytes = 0
       for (const part of [geometry.foliage, geometry.brass]) {
         const bounds = part.boundingBox!
         expect(bounds.min.x).toBeCloseTo(-bounds.max.x, 5)
@@ -31,9 +33,12 @@ describe('cabinet wall ornaments', () => {
         for (let i = 0; i < normals.count; i++) {
           expect(normal.fromBufferAttribute(normals, i).length()).toBeCloseTo(1, 5)
         }
-        triangles += part.getAttribute('position').count / 3
+        triangles += triangleCount(part)
+        expect(part.index).not.toBeNull()
+        bytes += part.index!.array.byteLength + Object.values(part.attributes).reduce((sum, attribute) => sum + attribute.array.byteLength, 0)
       }
-      expect(triangles).toBeLessThan(25_000)
+      expect(triangles).toBeLessThan(10_000)
+      expect(bytes).toBeLessThan(700_000)
     } finally {
       geometry.dispose()
     }

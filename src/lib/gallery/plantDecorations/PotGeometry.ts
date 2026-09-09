@@ -3,8 +3,8 @@ import type {BufferGeometry} from 'three/webgpu'
 
 import {CylinderGeometry, LatheGeometry, TorusGeometry, Vector2} from 'three/webgpu'
 
+import {mergeParts} from '../../geometry.ts'
 import {potDefinition} from './catalog.ts'
-import {mergeParts} from './geometry.ts'
 
 type Profile = Array<[number, number]>
 const profiles: Record<PotKind, Profile> = {
