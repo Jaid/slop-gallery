@@ -8,6 +8,22 @@ import {tunnelDisplays} from '#src/lib/gallery/tunnelDisplays.ts'
 
 import {Box} from './primitives.tsx'
 
+export default function TunnelDisplays({material}: {material: Material}) {
+  return <group name="sealed-tunnel-displays">
+    {tunnelDisplays.map(display => <group key={display.side} name={`tunnel-display-${display.side}`}>
+      <RigidBody type="fixed" colliders={false}>
+        {display.shell.map(({position, size}, i) => <group key={i}>
+          <CuboidCollider position={position} args={[size[0] / 2, size[1] / 2, size[2] / 2]}/>
+          <Box position={position} size={size} material={material}/>
+        </group>)}
+      </RigidBody>
+      {display.exhibits.map(exhibit => <group key={exhibit.id} name={exhibit.id} position={exhibit.position}>
+        <DisplayExhibit kind={exhibit.kind} material={material}/>
+      </group>)}
+    </group>)}
+  </group>
+}
+
 function DisplayExhibit({kind, material}: {kind: number
   material: Material}) {
   const target = useMemo(() => {
@@ -37,21 +53,5 @@ function DisplayExhibit({kind, material}: {kind: number
     </mesh>
     <spotLight position={[0, 3.35, 0.25]} target={target} intensity={32} color="#eee4cf" distance={4.5} angle={0.65} penumbra={0.7} decay={2} castShadow shadow-mapSize={[512, 512]} shadow-normalBias={0.015}/>
   </>
-}
-
-export default function TunnelDisplays({material}: {material: Material}) {
-  return <group name="sealed-tunnel-displays">
-    {tunnelDisplays.map(display => <group key={display.side} name={`tunnel-display-${display.side}`}>
-      <RigidBody type="fixed" colliders={false}>
-        {display.shell.map(({position, size}, i) => <group key={i}>
-          <CuboidCollider position={position} args={[size[0] / 2, size[1] / 2, size[2] / 2]}/>
-          <Box position={position} size={size} material={material}/>
-        </group>)}
-      </RigidBody>
-      {display.exhibits.map(exhibit => <group key={exhibit.id} name={exhibit.id} position={exhibit.position}>
-        <DisplayExhibit kind={exhibit.kind} material={material}/>
-      </group>)}
-    </group>)}
-  </group>
 }
 
