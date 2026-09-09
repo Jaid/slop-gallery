@@ -16,10 +16,10 @@ export default function Leaf({id, position, color, stem, onAttachmentChange, rec
   return <GrabbableProp id={id} title="A leaf with somewhere else to be" position={position} rotation={leafRotation} type="fixed" colliders={false} {...leafPhysics} onAttachmentChange={onAttachmentChange} recoverAsDynamic={recoverAsDynamic}>
     {/* Attached foliage is decorative; only a plucked leaf becomes a solid dynamic prop. */}
     <ConvexHullCollider ref={attachLeafCollider} args={[leafVertices]} mass={leafPhysics.mass}/>
-    <mesh castShadow receiveShadow><primitive attach="geometry" object={leafGeometry}/><meshStandardMaterial color={color} roughness={0.64}/></mesh>
+    <mesh castShadow receiveShadow><primitive attach="geometry" object={leafGeometry}/><meshStandardNodeMaterial color={color} roughness={0.64}/></mesh>
     {stem.carriedGeometry && stem.vertices && <>
       <ConvexHullCollider ref={attachLeafCollider} args={[stem.vertices]} mass={stem.mass}/>
-      <mesh castShadow receiveShadow><primitive attach="geometry" object={stem.carriedGeometry}/><meshStandardMaterial color="#4d603d"/></mesh>
+      <mesh castShadow receiveShadow><primitive attach="geometry" object={stem.carriedGeometry}/><meshStandardNodeMaterial color="#4d603d"/></mesh>
     </>}
   </GrabbableProp>
 }

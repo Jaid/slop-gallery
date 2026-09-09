@@ -10,6 +10,6 @@ export default function BenchSeat({position, size}: {position: Vec3, size: Vec3}
   useEffect(() => () => geometry.dispose(), [geometry])
   return <mesh name="bench-seat" position={position} castShadow receiveShadow>
     <primitive object={geometry} attach="geometry"/>
-    <meshStandardMaterial color="#6e4f30" roughness={0.5}/>
+    <meshStandardNodeMaterial color="#6e4f30" roughness={0.5}/>
   </mesh>
 }

@@ -13,7 +13,7 @@ bun install
 bun run dev
 ```
 
-Open the printed localhost URL in current Chrome or Edge with hardware acceleration enabled. Production hosting requires HTTPS. This is a keyboard-and-mouse experience; the collection browser also works without WebGPU.
+Open the printed localhost URL in current Chrome or Edge with hardware acceleration enabled. Production hosting requires HTTPS. This is a keyboard-and-mouse experience; native WebGPU is required; there is no WebGL or collection-only compatibility mode.
 
 Use `?ai=false&telemetry=false` for a completely local gallery session. The OpenRouter manager in the menu is optional – no provider requests happen without a key. All exhibition artwork, fonts, recordings and environment textures are bundled or generated locally.
 
@@ -40,7 +40,7 @@ Frames snap to valid wall surfaces, not arbitrary mesh hits. The preview include
 
 Add PNG, JPEG, WebP, AVIF or GIF files with Add artwork in Collection, drag and drop or clipboard paste. A drop on a suitable wall hangs the work there; otherwise it arrives as a loose frame. Images retain their aspect ratio and are normalized to WebP. Limits: twelve files per batch, 25 mb per image, 64 million decoded pixels 150 mb of embedded images and 120 works per collection. Animated inputs become still images.
 
-Collection and preferences expose Undo/Redo buttons, and keyboard history remains available inside panels except when an editable field has focus. Without WebGPU, imports, label edits, downloads and backups remain available; navigation into the world is disabled.
+Collection and preferences expose Undo/Redo buttons, and keyboard history remains available inside panels except when an editable field has focus. Without native WebGPU, the app displays its requirements instead of starting an alternate gallery mode.
 
 Collection provides search, room filters, complete stories, editable labels and years, image downloads and shortcuts to each work. The velvet and neon Doge portraits are separate works. The book on its pedestal can be picked up and thrown like the other sculptures.
 
@@ -97,7 +97,7 @@ bun run check
 bun run test:live
 ```
 
-`check` runs strict TypeScript checks, ESLint with a per-file/rule warning regression gate, unit tests, the production build and an isolated packed-library consumer check. Floating/misused promises and unsafe TypeScript operations are errors. The remaining style backlog is recorded in eslint-baseline.json; run bun run lint --tighten after cleanup to reduce its allowances. `test:live` builds again, starts an isolated preview and drives a fresh headless Chrome through real WebGPU rendering, pointer lock, movement, placement, throwing, collection editing, imports, collage fusion, history, persistence, backup restoration, room navigation and lightweight rendering. It also walks through the boolean-cut portals in both directions and exercises the non-WebGPU collection fallback. Geometry tests compare the arched openings against rendered mesh rays and Rapier collision rays on both faces. Override `CHROME_PATH` if Chrome is installed elsewhere.
+`check` runs strict TypeScript checks, ESLint with a per-file/rule warning regression gate, unit tests, the production build and an isolated packed-library consumer check. Floating/misused promises and unsafe TypeScript operations are errors. The remaining style backlog is recorded in eslint-baseline.json; run bun run lint --tighten after cleanup to reduce its allowances. `test:live` builds again, starts an isolated preview and drives a fresh headless Chrome through real WebGPU rendering, pointer lock, movement, placement, throwing, collection editing, imports, collage fusion, history, persistence, backup restoration, room navigation and lightweight rendering. It also walks through the boolean-cut portals in both directions and verifies that a non-WebGPU browser cannot start the gallery. Geometry tests compare the arched openings against rendered mesh rays and Rapier collision rays on both faces. Override `CHROME_PATH` if Chrome is installed elsewhere.
 
 Browser screenshots and failure diagnostics are written under ignored `private/agent/reports`. The test verifies image-region variance in the actual browser screenshot; a merely nonblack GPU buffer is not considered proof that the gallery rendered correctly. `window.__gallery.snapshot()` and `captureFrame()` expose read-only diagnostics. Mutation helpers exist only with `?test=true`.
 
@@ -117,3 +117,9 @@ See [quality-report decisions](docs/quality-report-decisions.md) for accepted re
 `telemethree` provides reusable metrics, logs, traces and Three frame/scene statistics. `telemethree-ego` adds player position, velocity and aim. `slop-gallery-telemethree` adds gallery state/events and pushes all three signals to Victoria through a same-origin development relay. The existing NAS configuration is unchanged.
 
 Telemetry is enabled in Vite development, disabled by `?telemetry=false` or `?test=true` and opt-in for production via `VITE_TELEMETRY_ENDPOINT`. With `?development=true`, `window['slop.gallery'].getTelemetry()` reports delivery status. See the [core API](packages/telemethree/readme.md), [player layer](packages/telemethree-ego/readme.md) and [gallery integration, endpoint configuration and queries](packages/slop-gallery-telemethree/readme.md).
+
+## WebGPU-exclusive rendering
+
+All app materials use node materials. The renderer constructs `WebGPUBackend` directly with no fallback, so failed adapter/device initialization never creates a WebGL context. Vite redirects transitive bare Fiber imports (including Rapier) to `@react-three/fiber/webgpu` so dependencies share the same WebGPU Canvas context. Telemetry packages expose one `/react` entry, not backend-specific variants. Capture and statistics accept concrete Three WebGPU objects rather than cross-engine renderer adapters.
+
+This removes owned compatibility paths; upstream Three/Drei dependencies can still contain unused WebGL-related code. The project does not patch third-party engine internals to pretend that those upstream APIs no longer exist.

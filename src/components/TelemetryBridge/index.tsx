@@ -1,7 +1,7 @@
 import {useThree} from '@react-three/fiber/webgpu'
 import {useMemo} from 'react'
-import {useEgoTelemetry} from 'telemethree-ego/react/webgpu'
-import {useThreeTelemetry} from 'telemethree/react/webgpu'
+import {useEgoTelemetry} from 'telemethree-ego/react'
+import {useThreeTelemetry} from 'telemethree/react'
 
 import {AimInspector} from '#src/lib/development/AimInspector.ts'
 import {playerTelemetry, telemetry} from '#src/lib/telemetry.ts'

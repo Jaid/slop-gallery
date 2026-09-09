@@ -4,7 +4,7 @@ Composable metrics, logs, explicit traces and Three statistics. The core has no 
 
 ```tsx
 import {Telemetry, OtlpHttpExporter} from 'telemethree'
-import {TelemetryProvider, useTelemetry, useThreeTelemetry} from 'telemethree/react/webgpu'
+import {TelemetryProvider, useTelemetry, useThreeTelemetry} from 'telemethree/react'
 
 const telemetry = new Telemetry({
   resource: {'service.name': 'my-game'},
@@ -25,7 +25,7 @@ function Action() {
 // <TelemetryProvider telemetry={telemetry}><Canvas><Statistics/></Canvas><Action/></TelemetryProvider>
 ```
 
-Use `/react` with Canvas from `@react-three/fiber`, or `/react/webgpu` with Canvas from `@react-three/fiber/webgpu`. Do not mix Fiber entry points. `useTelemetry` works outside Canvas too. Alternatively, `useThreeTelemetry({telemetry})` accepts an explicit instance. Providers and collection hooks acquire reference-counted delivery timers and clean up on unmount, including StrictMode. Keep the client and optional attribute objects stable across renders.
+The single `/react` entry uses Canvas from `@react-three/fiber/webgpu` exclusively. The former default-Fiber implementation and `/react/webgpu` alias have been removed. `useTelemetry` works outside Canvas too. Alternatively, `useThreeTelemetry({telemetry})` accepts an explicit instance. Providers and collection hooks acquire reference-counted delivery timers and clean up on unmount, including StrictMode. Keep the client and optional attribute objects stable across renders.
 
 ## Core API
 
@@ -73,11 +73,13 @@ Implement `TelemetryExporter.export(batch)` to consume any signal or use `OtlpHt
 | `three.frame.duration.mean`, `.p95`, `.p99`, `.max` | Wall-clock frame intervals in milliseconds, not GPU execution time |
 | `three.frame.samples` | Number of intervals retained in the sample window |
 | `three.render.draw_calls`, `.triangles`, `.points`, `.lines` | Last completed frame, summed across render passes |
-| `three.memory.geometries`, `.textures`, `.programs`, `.bytes` | Renderer-reported resources; programs/bytes emitted only when available |
+| `three.memory.geometries`, `.textures`, `.programs`, `.bytes` | Renderer-reported resources; native WebGPU program counts and memory estimates |
 | `three.scene.objects`, `.meshes`, `.visible_meshes`, `.instances` | Scene inventory, traversed once per reporting interval |
 
 Percentiles use nearest rank. At most the most recent 16 384 intervals are retained per reporting window. Hidden-page intervals and the first frame after resumption are excluded. Wall-clock timing bypasses Fiber’s clamped simulation delta, preserving real stalls. Demand rendering measures intervals between callbacks; idle scenes produce no samples. Visible meshes means visible ancestry, not frustum/occlusion/material-tested draw counts. Instances count scene instance slots. Memory bytes are Three’s estimate, not driver-wide VRAM usage.
 
-Outside React, use `ThreeStatistics(telemetry, renderer.info, scene, options)`, acquire `connect()`, call `beginFrame()` before all passes and `endFrame(actualDeltaSeconds)` afterward, then release the returned cleanup. Call `reset()` across suspension/discontinuities.
+Outside React, use `ThreeStatistics(telemetry, renderer, scene, options)`, acquire `connect()`, call `beginFrame()` before all passes and `endFrame(actualDeltaSeconds)` afterward, then release the returned cleanup. Call `reset()` across suspension/discontinuities.
 
 Protocol reference: [OTLP specification](https://opentelemetry.io/docs/specs/otlp/).
+
+`ThreeStatistics` accepts a concrete Three WebGPU renderer and scene, not a generic renderer-info adapter. It rejects non-native backends, reads `info.render.drawCalls` directly and exports `three.render.passes` and `three.compute.calls` from the WebGPU frame counters. There is no WebGL counter normalization or optional WebGL program-array path.

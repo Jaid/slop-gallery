@@ -12,8 +12,7 @@
   "main": "src/main.ts",
   "exports": {
     ".": "./src/main.ts",
-    "./react": "./src/react/main.ts",
-    "./react/webgpu": "./src/react/webgpu.ts"
+    "./react": "./src/react/main.ts"
   },
   "scripts": {
     "test": "bun test --max-concurrency 1 ./test"

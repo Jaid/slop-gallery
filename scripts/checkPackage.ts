@@ -61,10 +61,8 @@ try {
     'export {WebgpuCaptureBridge, useCaptureFrame}',
     "export {Telemetry, OtlpHttpExporter, ThreeStatistics} from 'telemethree'",
     "export {TelemetryProvider, useTelemetry, useThreeTelemetry} from 'telemethree/react'",
-    "export {useThreeTelemetry as useWebgpuTelemetry} from 'telemethree/react/webgpu'",
     "export {EgoTelemetry} from 'telemethree-ego'",
     "export {useEgoTelemetry} from 'telemethree-ego/react'",
-    "export {useEgoTelemetry as useWebgpuEgoTelemetry} from 'telemethree-ego/react/webgpu'",
     "export {SlopGalleryTelemetry, VictoriaExporter} from 'slop-gallery-telemethree'",
     "export {useSlopGalleryTelemetry} from 'slop-gallery-telemethree/react'",
   ].join('\n'))

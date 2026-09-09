@@ -8,5 +8,5 @@ export default function GoldMaterial() {
   const environment = useEnvironment({files: '/environment/warehouse.hdr'})
   const textures = useMemo(() => new GoldTextures, [])
   useEffect(() => () => textures.dispose(), [textures])
-  return <meshStandardMaterial map={textures.map} normalMap={textures.normal} normalScale={[0.5, 0.5]} metalness={0.9} roughness={0.12} envMap={environment} envMapIntensity={0.35}/>
+  return <meshStandardNodeMaterial map={textures.map} normalMap={textures.normal} normalScale={[0.5, 0.5]} metalness={0.9} roughness={0.12} envMap={environment} envMapIntensity={0.35}/>
 }

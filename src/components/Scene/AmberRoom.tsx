@@ -26,13 +26,13 @@ export default function AmberRoom({wood}: {wood: Texture}) {
       </RigidBody>
       <mesh name="amber-wood-floor" receiveShadow position={[0, 0.001, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[...room.size]}/>
-        <meshStandardMaterial {...floor.wood} bumpScale={0.035} roughness={0.55}/>
+        <meshStandardNodeMaterial {...floor.wood} bumpScale={0.035} roughness={0.55}/>
       </mesh>
       {[-4, 0, 4].map(x => <Box key={x} position={[x, 5.56, 0]} size={[0.18, 0.3, room.size[1]]} map={wood} color="#493226"/>)}
       <Box position={[0, 0.007, 0]} size={[rug[0], 0.012, rug[1]]} color="#3b1010" roughness={1}/>
       <mesh name="amber-carpet" receiveShadow position={[0, 0.014, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[...rug]}/>
-        <meshStandardMaterial {...floor.carpet} bumpScale={0.008} roughness={1}/>
+        <meshStandardNodeMaterial {...floor.carpet} bumpScale={0.008} roughness={1}/>
       </mesh>
       <RigidBody type="fixed" colliders="cuboid">
         <group position={[-4.1, 0, 1.8]} rotation={[0, Math.PI / 2, 0]}>

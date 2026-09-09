@@ -1,20 +1,4 @@
-import type {WebGPURenderer} from 'three/webgpu'
-
-/** The renderer surface used by the capture service. */
-export type CaptureRenderer = Pick<WebGPURenderer,
-  | 'autoClear'
-  | 'depth'
-  | 'getActiveCubeFace'
-  | 'getActiveMipmapLevel'
-  | 'getDrawingBufferSize'
-  | 'getOutputRenderTarget'
-  | 'getRenderTarget'
-  | 'readRenderTargetPixelsAsync'
-  | 'samples'
-  | 'setOutputRenderTarget'
-  | 'setRenderTarget'
-  | 'stencil'
->
+import type {Camera, RenderPipeline, Scene, WebGPURenderer} from 'three/webgpu'
 
 export type RgbaFrame = {
   height: number
@@ -43,9 +27,10 @@ export type CaptureFrameApi = {
 export type FrameEncoder = (frame: RgbaFrame) => Promise<string> | string
 
 export type WebgpuCaptureOptions = {
+  camera: Camera
   /** Defaults to PNG encoding with a detached HTML canvas. */
   encode?: FrameEncoder
-  /** Synchronously render the scene or pipeline to the currently selected output target. */
-  render: () => void
-  renderer: CaptureRenderer
+  pipeline?: RenderPipeline | null
+  renderer: WebGPURenderer
+  scene: Scene
 }

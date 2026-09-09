@@ -24,11 +24,11 @@ export default function Pedestal({position, geometry, material}: ReturnType<type
     </mesh>
     <mesh name="pedestal-bronze" castShadow receiveShadow>
       <primitive object={geometry.bronze} attach="geometry"/>
-      <meshStandardMaterial color="#8c7044" metalness={0.78} roughness={0.38}/>
+      <meshStandardNodeMaterial color="#8c7044" metalness={0.78} roughness={0.38}/>
     </mesh>
     <mesh name="pedestal-reveals" castShadow receiveShadow>
       <primitive object={geometry.reveals} attach="geometry"/>
-      <meshStandardMaterial color="#514a3d" roughness={0.85}/>
+      <meshStandardNodeMaterial color="#514a3d" roughness={0.85}/>
     </mesh>
   </RigidBody>
 }

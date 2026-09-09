@@ -9,7 +9,7 @@ type CanvasTextProps = Omit<ThreeElements['mesh'], 'children'> & {
   fontSize?: number
   fontWeight?: number | string
   height: number
-  materialProps?: Omit<ThreeElements['meshBasicMaterial'], 'map'>
+  materialProps?: Omit<ThreeElements['meshBasicNodeMaterial'], 'map'>
   maxWidth?: number
   text: string
   width: number
@@ -71,7 +71,7 @@ const CanvasText = ({color = '#ffffff',
   useEffect(() => () => texture.dispose(), [texture])
   return <mesh {...meshProps}>
     <planeGeometry args={[width, height]}/>
-    <meshBasicMaterial {...materialProps} map={texture} transparent depthWrite={false} toneMapped={false}/>
+    <meshBasicNodeMaterial {...materialProps} map={texture} transparent depthWrite={false} toneMapped={false}/>
   </mesh>
 }
 export default CanvasText

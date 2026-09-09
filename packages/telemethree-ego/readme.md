@@ -3,7 +3,7 @@
 The player layer between `telemethree` and application-specific instrumentation. No Rapier, input, game-store or development-API dependency.
 
 ```tsx
-import {useEgoTelemetry} from 'telemethree-ego/react/webgpu'
+import {useEgoTelemetry} from 'telemethree-ego/react'
 
 function PlayerMetrics({telemetry, controller, aim}) {
   useEgoTelemetry({
@@ -19,7 +19,7 @@ function PlayerMetrics({telemetry, controller, aim}) {
 }
 ```
 
-Use `/react` for the default Fiber Canvas or `/react/webgpu` for the WebGPU entry. The hook samples in the finish phase, acquires a delivery timer and releases it on unmount. It skips hidden pages and clears differentiation history on visibility changes. Source functions may change without restarting collection; keep optional attribute objects stable.
+The single `/react` entry requires `@react-three/fiber/webgpu`. The default-Fiber implementation, injected frame-hook factory and `/react/webgpu` alias have been removed. The hook samples in the finish phase, acquires a delivery timer and releases it on unmount. It skips hidden pages and clears differentiation history on visibility changes. Source functions may change without restarting collection; keep optional attribute objects stable.
 
 The framework-independent `EgoTelemetry` accepts the same options. Call `update()` each frame; its cheap cadence gate calls the source only when due, including any expensive raycast. `record(sample, monotonicTimeMs?)` bypasses the gate for externally scheduled sampling. Use `telemetry.start()` separately outside React. Return `null` when no player exists. `SlopGalleryTelemetry.createEgo(options)` supplies the shared client automatically.
 

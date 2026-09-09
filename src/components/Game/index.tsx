@@ -1,3 +1,4 @@
+import type {WebgpuRendererOptions} from '#src/lib/rendering/WebgpuRenderer.ts'
 import type {Controls} from './normalizeControls'
 import type {PhysicsProps} from '@react-three/rapier'
 import type {ComponentProps, ReactNode} from 'react'
@@ -9,6 +10,7 @@ import {Physics} from '@react-three/rapier'
 import Postprocessing from '#component/Postprocessing'
 import TelemetryBridge from '#component/TelemetryBridge'
 import WebgpuCaptureBridge from '#component/WebgpuCaptureBridge'
+import {WebgpuRenderer} from '#src/lib/rendering/WebgpuRenderer.ts'
 
 import normalizeControls from './normalizeControls'
 
@@ -34,10 +36,11 @@ function Game<Actions extends string = string>({postprocessing = <Postprocessing
     const physicsProps: Omit<PhysicsProps, 'children'> = physics === true ? defaultPhysics : physics
     world = <Physics {...physicsProps}>{world}</Physics>
   }
-  const canvas = <Canvas {...canvasProps} renderer={{
+  const canvas = <Canvas {...canvasProps} renderer={(options: WebgpuRendererOptions) => new WebgpuRenderer({
+    ...options,
     alpha: false,
     antialias: !lite,
-  }}>
+  })}>
     <WebgpuCaptureBridge/>
     <TelemetryBridge/>
     {world}

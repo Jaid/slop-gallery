@@ -1,11 +1,61 @@
 import {describe, expect, test} from 'bun:test'
 
-import {RGBAFormat, UnsignedByteType} from 'three/webgpu'
+import {PerspectiveCamera, RenderPipeline, RGBAFormat, Scene, UnsignedByteType} from 'three/webgpu'
 
 import {WebgpuCapture} from '../src/main.ts'
-import {encode, TestRenderer} from './helpers.ts'
+import {encode, TestCapture, TestRenderer} from './helpers.ts'
 
 describe('WebgpuCapture', () => {
+  test('rejects non-native renderers and pipelines owned by a different renderer', () => {
+    const renderer = new TestRenderer
+    renderer.backend.isWebGPUBackend = false
+    expect(() => new WebgpuCapture({
+      renderer: renderer.asRenderer(),
+      scene: new Scene,
+      camera: new PerspectiveCamera,
+    })).toThrow('native WebGPU')
+    renderer.backend.isWebGPUBackend = true
+    const pipeline = new RenderPipeline((new TestRenderer).asRenderer())
+    expect(() => new WebgpuCapture({
+      renderer: renderer.asRenderer(),
+      scene: new Scene,
+      camera: new PerspectiveCamera,
+      pipeline,
+    })).toThrow('must belong')
+  })
+  test('captures the concrete scene/camera or the active WebGPU pipeline', async () => {
+    const renderer = new TestRenderer
+    const scene = new Scene
+    const camera = new PerspectiveCamera
+    let rendered = 0
+    let postprocessed = 0
+    renderer.onRender = () => {
+      rendered++
+    }
+    const direct = new WebgpuCapture({
+      renderer: renderer.asRenderer(),
+      scene,
+      camera,
+      encode,
+    })
+    await direct.captureFrame()
+    const pipeline = new RenderPipeline(renderer.asRenderer())
+    pipeline.render = () => {
+      postprocessed++
+    }
+    const capture = new WebgpuCapture({
+      renderer: renderer.asRenderer(),
+      scene,
+      camera,
+      pipeline,
+      encode,
+    })
+    await capture.captureFrame()
+    expect(rendered).toBe(1)
+    expect(postprocessed).toBe(1)
+    direct.dispose()
+    capture.dispose()
+  })
   test('renders to an RGBA8 output target and restores renderer state before readback settles', async () => {
     const renderer = new TestRenderer
     const previous = {
@@ -14,7 +64,7 @@ describe('WebgpuCapture', () => {
     }
     const readback = Promise.withResolvers<Uint8Array<ArrayBuffer>>()
     renderer.readback = () => readback.promise
-    const capture = new WebgpuCapture({
+    const capture = new TestCapture({
       renderer,
       encode,
       render: () => {
@@ -53,7 +103,7 @@ describe('WebgpuCapture', () => {
     const encoding = Promise.withResolvers<string>()
     const started = Promise.withResolvers<void>()
     let renderCount = 0
-    const capture = new WebgpuCapture({
+    const capture = new TestCapture({
       renderer,
       render: () => {
         renderCount += 1
@@ -80,7 +130,7 @@ describe('WebgpuCapture', () => {
   })
   test('reuses the target and reads the current physical drawing-buffer size for every capture', async () => {
     const renderer = new TestRenderer
-    const capture = new WebgpuCapture({
+    const capture = new TestCapture({
       renderer,
       render() {},
       encode,
@@ -111,7 +161,7 @@ describe('WebgpuCapture', () => {
         }
         return originalReadback()
       }
-      const capture = new WebgpuCapture({
+      const capture = new TestCapture({
         renderer,
         render: () => {
           if (fail && failure === 'render') {
@@ -141,7 +191,7 @@ describe('WebgpuCapture', () => {
       const renderer = new TestRenderer
       const readback = Promise.withResolvers<Uint8Array<ArrayBuffer>>()
       renderer.readback = () => readback.promise
-      const capture = new WebgpuCapture({
+      const capture = new TestCapture({
         renderer,
         render() {},
         encode,
@@ -170,7 +220,7 @@ describe('WebgpuCapture', () => {
   }
   test('allows an accepted capture to finish when disposed before it starts', async () => {
     const renderer = new TestRenderer
-    const capture = new WebgpuCapture({
+    const capture = new TestCapture({
       renderer,
       render() {},
       encode,
@@ -189,7 +239,7 @@ describe('WebgpuCapture', () => {
     renderer.outputTarget!.addEventListener('dispose', () => {
       externalDisposals += 1
     })
-    const capture = new WebgpuCapture({
+    const capture = new TestCapture({
       renderer,
       render() {},
       encode,
@@ -206,7 +256,7 @@ describe('WebgpuCapture', () => {
   })
   test('does not allocate or render when disposed without being used', async () => {
     const renderer = new TestRenderer
-    const capture = new WebgpuCapture({
+    const capture = new TestCapture({
       renderer,
       render() {
         throw new Error('Unexpected render.')
@@ -221,7 +271,7 @@ describe('WebgpuCapture', () => {
   test('rejects empty drawing buffers and recovers after a resize', async () => {
     const renderer = new TestRenderer
     renderer.size.set(0, 0)
-    const capture = new WebgpuCapture({
+    const capture = new TestCapture({
       renderer,
       render() {},
       encode,
@@ -239,7 +289,7 @@ describe('WebgpuCapture', () => {
     bytes.set([0, 0, 0, 255], 8)
     bytes.set([255, 0, 0, 128], 264)
     renderer.readback = () => Promise.resolve(bytes.subarray(8, 268))
-    const capture = new WebgpuCapture({
+    const capture = new TestCapture({
       renderer,
       render() {},
       encode: frame => {
@@ -256,7 +306,7 @@ describe('WebgpuCapture', () => {
   test('rejects malformed buffers before encoding and permits a later valid capture', async () => {
     const renderer = new TestRenderer
     renderer.readback = () => Promise.resolve(new Uint8Array(15))
-    const capture = new WebgpuCapture({
+    const capture = new TestCapture({
       renderer,
       render() {},
       encode,
@@ -267,12 +317,12 @@ describe('WebgpuCapture', () => {
     capture.dispose()
   })
   test('supports independent capture instances without sharing state', async () => {
-    const first = new WebgpuCapture({
+    const first = new TestCapture({
       renderer: new TestRenderer,
       render() {},
       encode,
     })
-    const second = new WebgpuCapture({
+    const second = new TestCapture({
       renderer: new TestRenderer,
       render() {},
       encode,

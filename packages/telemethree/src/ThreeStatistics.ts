@@ -1,25 +1,14 @@
 import type {Telemetry} from './Telemetry.ts'
 import type {Attributes} from './types.ts'
-import type {Object3D} from 'three'
+import type {Scene, WebGPURenderer} from 'three/webgpu'
 
-export type RendererInfo = {
-  autoReset: boolean
-  memory: {geometries: number
-    textures: number
-    total?: number}
-  programs?: Array<unknown> | null
-  render: {calls: number
-    drawCalls?: number
-    lines: number
-    points: number
-    triangles: number}
-  reset: () => void
-}
+import {InstancedMesh, Mesh} from 'three/webgpu'
+
 export type ThreeStatisticsOptions = {attributes?: Attributes
   intervalMs?: number
   maxSamples?: number}
 
-const owners = new WeakSet<RendererInfo>
+const owners = new WeakSet<WebGPURenderer>
 
 /** Owns per-frame renderer statistics while connected, including all reflection/postprocessing passes. */
 export class ThreeStatistics {
@@ -32,7 +21,7 @@ export class ThreeStatistics {
   private readonly samples: Float64Array
   private skipFrame = true
 
-  constructor(private readonly telemetry: Telemetry, private readonly info: RendererInfo, private readonly scene: Object3D, private readonly options: ThreeStatisticsOptions = {}) {
+  constructor(private readonly telemetry: Telemetry, private readonly renderer: WebGPURenderer, private readonly scene: Scene, private readonly options: ThreeStatisticsOptions = {}) {
     const size = options.maxSamples ?? 16_384
     this.intervalMs = options.intervalMs ?? 5000
     if (!Number.isSafeInteger(size) || size < 1 || !Number.isFinite(this.intervalMs) || this.intervalMs <= 0) {
@@ -43,25 +32,29 @@ export class ThreeStatistics {
 
   beginFrame() {
     if (this.connected) {
-      this.info.reset()
+      this.renderer.info.reset()
     }
   }
 
   connect() {
-    if (this.connected || owners.has(this.info)) {
+    const {backend, info} = this.renderer
+    if (!('isWebGPUBackend' in backend) || backend.isWebGPUBackend !== true) {
+      throw new Error('ThreeStatistics requires a native WebGPU renderer.')
+    }
+    if (this.connected || owners.has(this.renderer)) {
       throw new Error('Mount only one ThreeStatistics collector per renderer.')
     }
-    owners.add(this.info)
+    owners.add(this.renderer)
     this.connected = true
-    this.autoReset = this.info.autoReset
-    this.info.autoReset = false
+    this.autoReset = info.autoReset
+    info.autoReset = false
     return () => {
       if (!this.connected) {
         return
       }
       this.connected = false
-      owners.delete(this.info)
-      this.info.autoReset = this.autoReset
+      owners.delete(this.renderer)
+      info.autoReset = this.autoReset
       this.reset()
     }
   }
@@ -98,34 +91,32 @@ export class ThreeStatistics {
     metric('frame.duration.p99', sorted[Math.ceil(sorted.length * 0.99) - 1]!, 'ms')
     metric('frame.duration.max', sorted.at(-1)!, 'ms')
     metric('frame.samples', sorted.length, '{frame}')
-    const {render, memory} = this.info
-    metric('render.draw_calls', render.drawCalls ?? render.calls)
+    const {render, compute, memory} = this.renderer.info
+    metric('render.draw_calls', render.drawCalls)
+    metric('render.passes', render.frameCalls)
+    metric('compute.calls', compute.frameCalls)
     metric('render.triangles', render.triangles)
     metric('render.points', render.points)
     metric('render.lines', render.lines)
     metric('memory.geometries', memory.geometries)
     metric('memory.textures', memory.textures)
-    if (memory.total !== undefined) {
-      metric('memory.bytes', memory.total, 'By')
-    }
-    if (this.info.programs) {
-      metric('memory.programs', this.info.programs.length)
-    }
+    metric('memory.bytes', memory.total, 'By')
+    metric('memory.programs', memory.programs)
     let objects = 0
     let meshes = 0
     let instances = 0
     let visibleMeshes = 0
     this.scene.traverse(object => {
       objects++
-      if ('isMesh' in object && object.isMesh) {
+      if (object instanceof Mesh) {
         meshes++
       }
-      if ('isInstancedMesh' in object && object.isInstancedMesh && 'count' in object && typeof object.count === 'number') {
+      if (object instanceof InstancedMesh) {
         instances += object.count
       }
     })
     this.scene.traverseVisible(object => {
-      if ('isMesh' in object && object.isMesh) {
+      if (object instanceof Mesh) {
         visibleMeshes++
       }
     })

@@ -1,4 +1,4 @@
-import {useFrame, useThree} from '@react-three/fiber/webgpu'
+import {useFrame} from '@react-three/fiber/webgpu'
 import {useEffect, useRef} from 'react'
 
 import DevelopmentBridge from '#component/DevelopmentBridge'
@@ -25,12 +25,8 @@ export default function Scene() {
   </>
 }
 function Ready() {
-  const backend = useThree(s => s.renderer.backend)
   const frames = useRef(0)
   useEffect(() => () => useGallery.setState({ready: false}), [])
-  if (!('isWebGPUBackend' in backend) || backend.isWebGPUBackend !== true) {
-    throw new Error('A WebGPU adapter is required for the gallery.')
-  }
   useFrame(() => {
     if (useGallery.getState().ready) {
       return

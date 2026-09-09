@@ -9,6 +9,6 @@ export function Box({size, color = '#dad2bf', map, metalness = 0, roughness = 0.
   metalness?: number
   roughness?: number
   size: Vec3}) {
-  return <mesh castShadow receiveShadow {...props}><boxGeometry args={size}/><meshStandardMaterial color={color} map={map} roughness={roughness} metalness={metalness}/></mesh>
+  return <mesh castShadow receiveShadow {...props}><boxGeometry args={size}/><meshStandardNodeMaterial color={color} map={map} roughness={roughness} metalness={metalness}/></mesh>
 }
 

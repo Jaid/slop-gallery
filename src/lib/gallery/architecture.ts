@@ -1,6 +1,6 @@
 import type {Wall, WallOpening} from './walls.ts'
 
-import {BoxGeometry, BufferGeometry, ExtrudeGeometry, MeshBasicMaterial, Shape} from 'three/webgpu'
+import {BoxGeometry, BufferGeometry, ExtrudeGeometry, MeshBasicNodeMaterial, Shape} from 'three/webgpu'
 import {ADDITION, Brush, Evaluator, SUBTRACTION} from 'three-bvh-csg'
 
 export const wallTop = 5.8
@@ -46,7 +46,7 @@ export type ArchitectureGeometry = ReturnType<typeof createArchitectureGeometry>
 export function createArchitectureGeometry(wall: Wall) {
   const evaluator = new Evaluator
   evaluator.useGroups = false
-  const material = new MeshBasicMaterial
+  const material = new MeshBasicNodeMaterial
   const brushes: Array<Brush> = []
   const retained = new Set<BufferGeometry>
   const brush = (geometry: BufferGeometry) => {

@@ -35,12 +35,15 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.motion = s.motion ? 'on' : 'off'
   }, [s.motion])
+  if (!gpu) {
+    return <main className="render-error"><h2>WebGPU is unavailable.</h2><p>Slop Gallery requires native WebGPU. Open it in current Chrome or Edge with hardware acceleration enabled, using HTTPS or localhost.</p></main>
+  }
   return <Dropzone>
     <main className="viewport" aria-label="Interactive 3D gallery">
-      {gpu ? <RenderBoundary onFailure={() => setRenderFailed(true)}><Suspense fallback={null}><World lite={settings.params.lite}/></Suspense></RenderBoundary> : <div className="render-error"><h2>WebGPU is unavailable.</h2><p>Open the gallery in current Chrome or Edge with hardware acceleration enabled, using HTTPS or localhost.</p><button className="primary-button" aria-label="Open collection" onClick={() => openPanel('collection')}>Browse the collection</button></div>}
+      <RenderBoundary onFailure={() => setRenderFailed(true)}><Suspense fallback={null}><World lite={settings.params.lite}/></Suspense></RenderBoundary>
     </main>
-    {!s.locked && !s.panel && !s.dragging && gpu && !renderFailed && <Menu {...settings}/>}
-    {(!gpu || renderFailed) && <nav className="fallback-tools" aria-label="Gallery commands"><button className="text-button" onClick={() => openPanel('collection')}>Collection</button><button className="text-button" onClick={() => openPanel('settings')}>Preferences & backups</button><button className="text-button" onClick={() => openPanel('help')}>Controls</button></nav>}
+    {!s.locked && !s.panel && !s.dragging && !renderFailed && <Menu {...settings}/>}
+    {renderFailed && <nav className="fallback-tools" aria-label="Gallery recovery"><button className="text-button" onClick={() => openPanel('collection')}>Collection</button><button className="text-button" onClick={() => openPanel('settings')}>Preferences & backups</button><button className="text-button" onClick={() => openPanel('help')}>Controls</button></nav>}
     <Hud/>
     {s.notice && !s.panel && <div className="toast" role="status">{s.notice}</div>}
     {s.panel && <Panel key={s.panel} title={panelTitles[s.panel]}>{s.panel === 'collection' ? <Collection/> : s.panel === 'settings' ? <Settings/> : s.panel === 'map' ? <Map/> : <Help/>}</Panel>}

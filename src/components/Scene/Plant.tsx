@@ -37,9 +37,9 @@ export default function Plant({position}: {position: Vec3}) {
         <mesh castShadow receiveShadow><primitive attach="geometry" object={potGeometry}/><TerracottaMaterial/></mesh>
         <mesh position={[0, soilSurface.center, 0]} receiveShadow><cylinderGeometry args={[soilSurface.radius, soilSurface.radius, soilSurface.halfHeight * 2, 64]}/><SoilMaterial/></mesh>
         {leaves.map(leaf => <group key={leaf.id} rotation={[0, leaf.angle, 0]}>
-          <mesh castShadow><primitive attach="geometry" object={leaf.stem.rootGeometry}/><meshStandardMaterial color="#4d603d"/></mesh>
+          <mesh castShadow><primitive attach="geometry" object={leaf.stem.rootGeometry}/><meshStandardNodeMaterial color="#4d603d"/></mesh>
           <ConvexHullCollider ref={attachStemCollider} args={[leaf.stem.remainingVertices]} mass={0.003}/>
-          <mesh castShadow><primitive attach="geometry" object={leaf.stem.remainingGeometry}/><meshStandardMaterial color="#4d603d"/></mesh>
+          <mesh castShadow><primitive attach="geometry" object={leaf.stem.remainingGeometry}/><meshStandardNodeMaterial color="#4d603d"/></mesh>
         </group>)}
       </group>
     </GrabbableProp>

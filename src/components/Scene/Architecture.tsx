@@ -50,7 +50,7 @@ export default function Architecture() {
       <Box position={[0, 5.78, 0]} size={[room.size[0], 0.18, room.size[1]]} color={room.id === 'cabinet' ? '#7c9586' : '#e1dccc'}/>
       {(room.id === 'secret' ? [0] : [-4, 0, 4]).map(z => <group key={z}>
         <Box position={[0, 5.6, z]} size={[room.size[0] * 0.48, 0.1, 2.6]} color="#a29982"/>
-        <mesh position={[0, 5.54, z]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[room.size[0] * 0.48 - 0.1, 2.45]}/><meshBasicMaterial color={room.id === 'afterhours' ? '#efe6ff' : '#fff3d8'}/></mesh>
+        <mesh position={[0, 5.54, z]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[room.size[0] * 0.48 - 0.1, 2.45]}/><meshBasicNodeMaterial color={room.id === 'afterhours' ? '#efe6ff' : '#fff3d8'}/></mesh>
         {[-1, 0, 1].map(x => <Box key={x} position={[x * room.size[0] * 0.12, 5.5, z]} size={[0.045, 0.12, 2.5]} color="#c0b7a1"/>)}
       </group>)}
       {(room.id === 'secret' ? [0] : [-3.5, 3.5]).map(z => <pointLight key={z} position={[0, 4.9, z]} intensity={room.id === 'cabinet' ? 40 : 32} distance={14} decay={2} color={room.id === 'afterhours' ? '#eee3ff' : '#fff1d8'}/>)}
@@ -86,8 +86,8 @@ function Alcove({width = 3.1, color = '#c8c8b6'}: {color?: string
     return shape
   }, [width])
   return <group position={[0, 0.42, 0.112]}>
-    <mesh><shapeGeometry args={[shape, 48]}/><meshStandardMaterial color="#a6a68e" roughness={0.95}/></mesh>
-    <mesh position={[0, 0.028, 0.004]} scale={[0.976, 0.987, 1]}><shapeGeometry args={[shape, 48]}/><meshStandardMaterial color={color} roughness={0.95}/></mesh>
+    <mesh><shapeGeometry args={[shape, 48]}/><meshStandardNodeMaterial color="#a6a68e" roughness={0.95}/></mesh>
+    <mesh position={[0, 0.028, 0.004]} scale={[0.976, 0.987, 1]}><shapeGeometry args={[shape, 48]}/><meshStandardNodeMaterial color={color} roughness={0.95}/></mesh>
   </group>
 }
 function WallSurface({wall, plaster, theme}: {plaster: Texture
@@ -102,13 +102,13 @@ function WallSurface({wall, plaster, theme}: {plaster: Texture
   }} position={wall.center} rotation={[0, wall.rotation, 0]}>
     <RigidBody type="fixed" colliders={false}>
       {geometry.collision.map((args, i) => <TrimeshCollider key={i} args={args}/>)}
-      <mesh name={`wall-${wall.id}`} receiveShadow castShadow><primitive object={geometry.surface} attach="geometry"/><meshStandardMaterial color={color} map={plaster} roughness={wall.room === 'amber' ? 0.86 : 0.9}/></mesh>
-      {geometry.trim.map((part, i) => <mesh key={i} receiveShadow castShadow><primitive object={part} attach="geometry"/><meshStandardMaterial color={trim} roughness={0.6}/></mesh>)}
+      <mesh name={`wall-${wall.id}`} receiveShadow castShadow><primitive object={geometry.surface} attach="geometry"/><meshStandardNodeMaterial color={color} map={plaster} roughness={wall.room === 'amber' ? 0.86 : 0.9}/></mesh>
+      {geometry.trim.map((part, i) => <mesh key={i} receiveShadow castShadow><primitive object={part} attach="geometry"/><meshStandardNodeMaterial color={trim} roughness={0.6}/></mesh>)}
     </RigidBody>
     <Box position={[0, 5.08, 0.16]} size={[wall.width, 0.1, 0.22]} color={trim}/>
     <Box position={[0, 5.28, 0.18]} size={[wall.width, 0.23, 0.32]} color={trim}/>
     {wall.id === 'daydream-north' && <>
-      {[-3.6, 0, 3.6].map(x => <group position={[x, 0, 0]} key={x}><Alcove width={3.25}/><Box position={[0, 4.67, 0.55]} size={[0.76, 0.06, 0.16]} color="#ab8850" metalness={0.7}/><mesh position={[0, 4.637, 0.55]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[0.62, 0.12]}/><meshBasicMaterial color="#fff0cf"/></mesh></group>)}
+      {[-3.6, 0, 3.6].map(x => <group position={[x, 0, 0]} key={x}><Alcove width={3.25}/><Box position={[0, 4.67, 0.55]} size={[0.76, 0.06, 0.16]} color="#ab8850" metalness={0.7}/><mesh position={[0, 4.637, 0.55]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[0.62, 0.12]}/><meshBasicNodeMaterial color="#fff0cf"/></mesh></group>)}
       {[-5.5, -1.8, 1.8, 5.5].map(x => <group key={x}><Box position={[x, 2.7, 0.16]} size={[0.18, 4.9, 0.2]} color={trim}/><Box position={[x, 4.94, 0.24]} size={[0.34, 0.15, 0.28]} color={trim}/></group>)}
     </>}
     {(wall.id === 'daydream-east' || wall.id === 'daydream-west') && <group position={[wall.id === 'daydream-east' ? -2.8 : 2.8, 0, 0]}><Alcove width={3.5}/></group>}

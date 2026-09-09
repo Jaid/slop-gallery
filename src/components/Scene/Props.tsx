@@ -40,7 +40,7 @@ function Prop({id, position, kind, title}: {id: string
   title: string}) {
   return <GrabbableProp id={id} title={title} position={position}>
     {kind === 'knot' ? <mesh castShadow receiveShadow><torusKnotGeometry args={[0.45, 0.13, 256, 48, 2, 3]}/><GoldMaterial/></mesh> : kind === 'apple' ? <group>
-      <mesh castShadow scale={[1, 0.93, 1]}><sphereGeometry args={[0.27, 32, 24]}/><meshStandardMaterial color="#bda063" metalness={0.85} roughness={0.24}/></mesh>
+      <mesh castShadow scale={[1, 0.93, 1]}><sphereGeometry args={[0.27, 32, 24]}/><meshStandardNodeMaterial color="#bda063" metalness={0.85} roughness={0.24}/></mesh>
       <Box position={[0, 0.3, 0]} size={[0.035, 0.18, 0.04]} color="#645840"/>
     </group> : <group>
       <Box size={[0.64, 0.095, 0.86]} color="#f1dfbd"/>

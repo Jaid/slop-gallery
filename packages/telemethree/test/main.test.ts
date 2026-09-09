@@ -1,12 +1,20 @@
-import type {ExportBatch, Metric, RendererInfo, Trace} from '../src/main.ts'
+import type {ExportBatch, Metric, Trace} from '../src/main.ts'
+import type {WebGPURenderer} from 'three/webgpu'
 
 import {expect, test} from 'bun:test'
 
-import {Group, InstancedMesh, Mesh, Scene} from 'three'
+import Info from 'three/src/renderers/common/Info.js'
+import {Group, InstancedMesh, Mesh, Scene} from 'three/webgpu'
 
 import {ExportError, OtlpHttpExporter, Telemetry, ThreeStatistics} from '../src/main.ts'
 import {encodeOtlp, unixNano} from '../src/otlp.ts'
 
+function testRenderer() {
+  return {
+    info: new Info,
+    backend: {isWebGPUBackend: true},
+  } as unknown as WebGPURenderer
+}
 function fixture(options: Partial<ConstructorParameters<typeof Telemetry>[0]> = {}) {
   const batches: Array<ExportBatch> = []
   let now = 1000
@@ -245,40 +253,28 @@ test('HTTP exporter recognizes partial success, permanent errors and Retry-After
 })
 test('Three statistics include all passes and distinguish draw calls from cumulative render calls', async () => {
   const {telemetry, batches} = fixture()
-  const info: RendererInfo = {
-    autoReset: true,
-    reset: () => {
-      info.render.drawCalls = 0
-      info.render.triangles = 0
-    },
-    render: {
-      calls: 9999,
-      drawCalls: 0,
-      triangles: 0,
-      points: 0,
-      lines: 0,
-    },
-    memory: {
-      geometries: 3,
-      textures: 4,
-      total: 1200,
-    },
-  }
+  const renderer = testRenderer()
+  const {info} = renderer
+  info.render.calls = 9999
+  info.memory.geometries = 3
+  info.memory.textures = 4
+  info.memory.total = 1200
+  info.memory.programs = 6
   const scene = new Scene
   const hidden = new Group
   hidden.visible = false
   hidden.add(new Mesh)
   scene.add(new Mesh, hidden, new InstancedMesh(undefined, undefined, 8))
-  const stats = new ThreeStatistics(telemetry, info, scene, {intervalMs: 1000})
+  const stats = new ThreeStatistics(telemetry, renderer, scene, {intervalMs: 1000})
   const stop = stats.connect()
   expect(info.autoReset).toBe(false)
-  expect(() => new ThreeStatistics(telemetry, info, scene).connect()).toThrow()
+  expect(() => new ThreeStatistics(telemetry, renderer, scene).connect()).toThrow()
   stats.endFrame(0.1)
   for (let frame = 1; frame <= 100; frame++) {
     stats.beginFrame()
-    info.render.drawCalls! += 3
+    info.render.drawCalls += 3
     info.render.triangles += 20
-    info.render.drawCalls! += 5
+    info.render.drawCalls += 5
     info.render.triangles += 30
     stats.endFrame(0.01)
   }
@@ -301,23 +297,13 @@ test('Three statistics include all passes and distinguish draw calls from cumula
   stop()
   expect(info.autoReset).toBe(true)
 })
-test('p95/p99 use nearest-rank frame durations and support WebGL counters', async () => {
+test('p95/p99 use nearest-rank WebGPU frame durations', async () => {
   const {telemetry, batches} = fixture()
-  const info = {
-    autoReset: false,
-    reset: () => {},
-    render: {
-      calls: 7,
-      triangles: 1,
-      points: 0,
-      lines: 0,
-    },
-    memory: {
-      geometries: 0,
-      textures: 0,
-    },
-  }
-  const stats = new ThreeStatistics(telemetry, info, new Scene, {
+  const renderer = testRenderer()
+  const {info} = renderer
+  info.autoReset = false
+  info.render.drawCalls = 7
+  const stats = new ThreeStatistics(telemetry, renderer, new Scene, {
     intervalMs: 5050,
     maxSamples: 100,
   })
@@ -337,21 +323,8 @@ test('p95/p99 use nearest-rank frame durations and support WebGL counters', asyn
 })
 test('statistics ring retains only the newest bounded sample set', async () => {
   const {telemetry, batches} = fixture()
-  const info = {
-    autoReset: true,
-    reset: () => {},
-    render: {
-      calls: 0,
-      triangles: 0,
-      points: 0,
-      lines: 0,
-    },
-    memory: {
-      geometries: 0,
-      textures: 0,
-    },
-  }
-  const statistics = new ThreeStatistics(telemetry, info, new Scene, {
+  const renderer = testRenderer()
+  const statistics = new ThreeStatistics(telemetry, renderer, new Scene, {
     intervalMs: 15,
     maxSamples: 3,
   })
@@ -368,6 +341,16 @@ test('statistics ring retains only the newest bounded sample set', async () => {
     'three.frame.duration.p99': 5,
   })
   stop()
+})
+test('Three statistics reject a renderer running the WebGL fallback backend', () => {
+  const {telemetry} = fixture()
+  const renderer = {
+    info: new Info,
+    backend: {isWebGLBackend: true},
+  } as unknown as WebGPURenderer
+  const statistics = new ThreeStatistics(telemetry, renderer, new Scene)
+  expect(() => statistics.connect()).toThrow('native WebGPU')
+  expect(renderer.info.autoReset).toBe(true)
 })
 test('delivery timer leases survive duplicate cleanup and stop after the final owner', async () => {
   const {telemetry, batches} = fixture({flushIntervalMs: 5})

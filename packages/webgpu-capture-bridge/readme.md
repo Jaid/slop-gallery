@@ -13,7 +13,8 @@ await renderer.init()
 
 const capture = new WebgpuCapture({
   renderer,
-  render: () => renderer.render(scene, camera),
+  scene,
+  camera,
 })
 
 try {
@@ -24,7 +25,7 @@ try {
 }
 ```
 
-For postprocessing, use `render: () => pipeline.render()`. The callback must be synchronous and render to the selected output target. Initialize the renderer before capturing. The service does not own or dispose your renderer, scene or pipeline.
+For postprocessing, pass `pipeline`, a Three `RenderPipeline` owned by the same renderer. Arbitrary render callbacks and the former structural `CaptureRenderer` API have been removed. Native WebGPU is required; renderers using Three’s WebGL fallback are rejected. Initialize the renderer before capturing. The service does not own or dispose your renderer, scene or pipeline.
 
 `captureFrame` is bound to its instance and can be passed directly as a callback. Each instance lazily allocates one RGBA8 render target and resizes it to the renderer’s current physical drawing-buffer dimensions, including pixel ratio. Empty or invalid dimensions reject instead of producing a misleading image.
 
@@ -32,7 +33,7 @@ Captures use an output render target, preserving Three.js screen tone mapping an
 
 ## React Three Fiber
 
-Use the WebGPU `Canvas` from Fiber 10. The hook returns a stable capture function and reads the current scene, camera and render pipeline at capture time.
+Use the WebGPU `Canvas` from Fiber 10. The hook returns a stable capture function and reconnects its capture service when the scene, camera, renderer or render pipeline changes.
 
 ```tsx
 import {useEffect} from 'react'
@@ -102,7 +103,7 @@ This is a fresh render of the scene or pipeline, not a browser screenshot: DOM o
 
 ## Development
 
-The package ships modern ESM TypeScript source for Bun and TypeScript-aware bundlers. It targets Three.js 0.185, React 19 and the WebGPU API in Fiber 10. TypeScript consumers need the matching Three.js type definitions.
+The package ships modern ESM TypeScript source for Bun and TypeScript-aware bundlers. It targets Three.js 0.186, React 19 and the WebGPU API in Fiber 10. TypeScript consumers need the matching Three.js type definitions.
 
 ```sh
 bun run --cwd packages/webgpu-capture-bridge test

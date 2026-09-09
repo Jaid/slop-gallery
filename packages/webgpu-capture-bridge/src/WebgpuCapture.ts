@@ -22,6 +22,13 @@ export class WebgpuCapture implements CaptureFrameApi, Disposable {
   private target: RenderTarget | null = null
 
   constructor(options: WebgpuCaptureOptions) {
+    const backend = options.renderer.backend
+    if (!('isWebGPUBackend' in backend) || backend.isWebGPUBackend !== true) {
+      throw new Error('WebgpuCapture requires a native WebGPU renderer.')
+    }
+    if (options.pipeline && options.pipeline.renderer !== options.renderer) {
+      throw new Error('The capture pipeline must belong to the capture renderer.')
+    }
     this.options = {...options}
   }
 
@@ -51,7 +58,7 @@ export class WebgpuCapture implements CaptureFrameApi, Disposable {
   }
 
   private async readFrame(): Promise<CaptureFrameResult> {
-    const {renderer, render, encode = encodePng} = this.options
+    const {renderer, scene, camera, pipeline, encode = encodePng} = this.options
     const {width, height} = renderer.getDrawingBufferSize(this.size)
     validateSize(width, height)
     this.target ??= new RenderTarget(width, height, {
@@ -74,7 +81,11 @@ export class WebgpuCapture implements CaptureFrameApi, Disposable {
       renderer.setOutputRenderTarget(target)
       renderer.setRenderTarget(null)
       renderer.autoClear = true
-      render()
+      if (pipeline) {
+        pipeline.render()
+      } else {
+        renderer.render(scene, camera)
+      }
       pendingReadback = renderer.readRenderTargetPixelsAsync(target, 0, 0, width, height)
     } finally {
       // Restore synchronously: the ordinary render loop must not draw into our target while mapping.

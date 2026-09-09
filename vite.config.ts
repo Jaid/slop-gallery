@@ -18,6 +18,15 @@ export default defineConfig(({mode}) => {
       sourcemap: true,
       chunkSizeWarningLimit: 6000,
     },
+    resolve: {
+      // Rapier and other dependencies must use the same WebGPU-only Fiber implementation as the app.
+      alias: [
+        {
+          find: /^@react-three\/fiber$/u,
+          replacement: '@react-three/fiber/webgpu',
+        },
+      ],
+    },
     server: {host: '127.0.0.1'},
   }
 })
