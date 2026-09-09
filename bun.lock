@@ -16,7 +16,7 @@
         "react": "19.2.8",
         "react-dom": "19.2.8",
         "react-dropzone": "20.1.1",
-        "three": "0.185.1",
+        "three": "0.186.0",
         "three-bvh-csg": "0.0.18",
         "three-mesh-bvh": "0.9.14",
         "webgpu-capture-bridge": "workspace:*",
@@ -46,7 +46,7 @@
       "peerDependencies": {
         "@react-three/fiber": "^10.0.0-alpha.4",
         "react": "^19.2.8",
-        "three": "^0.185.1",
+        "three": "^0.186.0",
       },
       "optionalPeers": [
         "@react-three/fiber",
@@ -722,7 +722,7 @@
 
     "tapable": ["tapable@2.3.3", "", {}, "sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A=="],
 
-    "three": ["three@0.185.1", "", {}, "sha512-5aojFCXKwnjBRZvUnt3WFfEcvUJgkN5LlijRFN95hMy8WVkG4I0QNcJE+OuWvuJ0bOdStrbfXn0pkd6/QyiAlg=="],
+    "three": ["three@0.186.0", "", {}, "sha512-cr/fIM2ddMSVbYVgkfD4jLJv7Fh/8ZTjvo+7gQeSVGUZHxpx9FDwoL5iC7hUz/LiRA8wMbqfnb90xKfm1/HHkQ=="],
 
     "three-bvh-csg": ["three-bvh-csg@0.0.18", "", { "peerDependencies": { "three": ">=0.179.0", "three-mesh-bvh": ">=0.9.7" } }, "sha512-M3GCZMmGFgASGuDf+YMamM83nVlD/vdwzVHcYbFxgW+g1S7/nKPiuY00YVHOMbjmJPh8mLevGZL65ItHUuGt2w=="],
 

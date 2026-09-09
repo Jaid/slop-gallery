@@ -4,6 +4,8 @@ Good taste. Questionable art.
 
 A local-first, first-person WebGPU museum: five rooms, sixteen absurd artworks and tactile sculptures. Built with React, React Three Fiber, Three.js TSL and Rapier.
 
+Uses Three r186. See the [migration and Mage fixture impact report](docs/three-r186.md) for rendering changes, new capabilities, the temporary r185 type declarations and the manual visual-review checklist.
+
 ## Run
 
 ```sh

@@ -2,6 +2,8 @@
 
 On-demand frame capture for Three.js WebGPU renderers, with optional React Three Fiber bindings. No gallery globals, app imports, animation loop or browser work on import.
 
+Targets Three r186 (`three@^0.186.0`). The renderer belongs to the caller; wait for pending captures before awaiting `renderer.dispose()` during application teardown.
+
 ## Three.js
 
 ```typescript
