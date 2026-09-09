@@ -5,9 +5,11 @@ import {useThree} from '@react-three/fiber/webgpu'
 import {CuboidCollider, RigidBody, TrimeshCollider} from '@react-three/rapier'
 import {useEffect, useMemo} from 'react'
 import {EquirectangularReflectionMapping, Shape, SRGBColorSpace} from 'three/webgpu'
+import {useGraphicsQualityValue} from 'use-graphics-quality'
 
 import {rooms, useGallery, walls} from '#src/lib/gallery.ts'
 import {architectureGeometry, wallTop} from '#src/lib/gallery/architecture.ts'
+import {getGraphicsProfile} from '#src/lib/rendering/graphicsQuality.ts'
 import {canvasTexture} from '#src/lib/texture.ts'
 
 import AmberRoom from './AmberRoom.tsx'
@@ -17,9 +19,10 @@ import CheckerMarbleFloor from './CheckerMarbleFloor.tsx'
 import {damaskTexture, surfaceTexture} from './materials.ts'
 import PottedPlants from './PottedPlants.tsx'
 import {Box} from './primitives.tsx'
-import ReflectiveWoodFloor from './ReflectiveWoodFloor.tsx'
+import WoodFloor from './WoodFloor.tsx'
 
 export default function Architecture() {
+  const {floorReflections} = useGraphicsQualityValue(getGraphicsProfile)
   const theme = useGallery(s => s.theme)
   const textures = useMemo(() => ({
     stone: surfaceTexture('stone'),
@@ -42,9 +45,9 @@ export default function Architecture() {
       <RigidBody type="fixed" colliders={false}>
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, -0.15, 0]}/>
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]}/>
-        <Box position={[0, -0.12, 0]} size={[room.size[0], 0.24, room.size[1]]} map={room.id === 'afterhours' ? undefined : room.id === 'cabinet' ? textures.wood : textures.stone} color={room.id === 'cabinet' ? '#c5a585' : (room.id === 'afterhours' ? '#23201d' : '#f3eddf')} roughness={0.36}/>
+        <Box position={[0, -0.12, 0]} size={[room.size[0], 0.24, room.size[1]]} map={room.id === 'afterhours' ? undefined : (room.id === 'cabinet' ? textures.wood : textures.stone)} color={room.id === 'cabinet' ? '#c5a585' : room.id === 'afterhours' ? '#23201d' : '#f3eddf'} roughness={floorReflections ? 0.36 : 0.8} envMapIntensity={floorReflections ? 1 : 0}/>
       </RigidBody>
-      {room.id === 'cabinet' && <ReflectiveWoodFloor width={room.size[0]} depth={room.size[1]} texture={textures.wood}/>}
+      {room.id === 'cabinet' && <WoodFloor width={room.size[0]} depth={room.size[1]} texture={textures.wood}/>}
       {room.id === 'afterhours' && <CheckerMarbleFloor width={room.size[0]} depth={room.size[1]}/>}
       <Box position={[0, 5.78, 0]} size={[room.size[0], 0.18, room.size[1]]} color={room.id === 'cabinet' ? '#7c9586' : '#e1dccc'}/>
       {(room.id === 'secret' ? [0] : [-4, 0, 4]).map(z => <group key={z}>
@@ -54,11 +57,11 @@ export default function Architecture() {
       </group>)}
       {(room.id === 'secret' ? [0] : [-3.5, 3.5]).map(z => <pointLight key={z} position={[0, 4.9, z]} intensity={room.id === 'cabinet' ? 40 : 32} distance={14} decay={2} color={room.id === 'afterhours' ? '#eee3ff' : '#fff1d8'}/>)}
       {room.id !== 'afterhours' && <>
-        {Array.from({length: room.size[0] / 2 + 1}, (_, i) => i * 2 - room.size[0] / 2).map(x => <Box key={x} position={[x, 0.007, 0]} size={[0.012, 0.008, room.size[1]]} color="#a8a18f"/>)}
-        {Array.from({length: Math.floor(room.size[1] / 2) + 1}, (_, i) => i * 2 - room.size[1] / 2).map(z => <Box key={z} position={[0, 0.008, z]} size={[room.size[0], 0.008, 0.012]} color="#a8a18f"/>)}
+        {Array.from({length: room.size[0] / 2 + 1}, (_, i) => i * 2 - room.size[0] / 2).map(x => <Box key={x} position={[x, 0.007, 0]} size={[0.012, 0.008, room.size[1]]} color="#a8a18f" envMapIntensity={floorReflections ? 1 : 0}/>)}
+        {Array.from({length: Math.floor(room.size[1] / 2) + 1}, (_, i) => i * 2 - room.size[1] / 2).map(z => <Box key={z} position={[0, 0.008, z]} size={[room.size[0], 0.008, 0.012]} color="#a8a18f" envMapIntensity={floorReflections ? 1 : 0}/>)}
         {[-1, 1].map(side => <group key={side}>
-          <Box position={[side * (room.size[0] / 2 - 1.25), 0.015, 0]} size={[0.026, 0.012, room.size[1] - 2.5]} color="#9d8354" metalness={0.45}/>
-          <Box position={[0, 0.015, side * (room.size[1] / 2 - 1.25)]} size={[room.size[0] - 2.5, 0.012, 0.026]} color="#9d8354" metalness={0.45}/>
+          <Box position={[side * (room.size[0] / 2 - 1.25), 0.015, 0]} size={[0.026, 0.012, room.size[1] - 2.5]} color="#9d8354" metalness={0.45} envMapIntensity={floorReflections ? 1 : 0}/>
+          <Box position={[0, 0.015, side * (room.size[1] / 2 - 1.25)]} size={[room.size[0] - 2.5, 0.012, 0.026]} color="#9d8354" metalness={0.45} envMapIntensity={floorReflections ? 1 : 0}/>
         </group>)}
       </>}
     </group>)}
@@ -93,7 +96,7 @@ function WallSurface({wall, plaster, theme}: {plaster: Texture
   theme: string
   wall: Wall}) {
   const color = wall.room === 'amber' ? '#ffffff' : wall.room === 'cabinet' ? '#658578' : wall.room === 'afterhours' ? '#9295a2' : wall.room === 'secret' ? '#ded4b8' : theme === 'sage' ? '#bac9b9' : theme === 'nocturne' ? '#7d91a0' : '#eee7d7'
-  const trim = wall.room === 'amber' ? '#35251f' : wall.room === 'cabinet' ? '#44655a' : (wall.room === 'afterhours' ? '#71778b' : '#ded5c1')
+  const trim = wall.room === 'amber' ? '#35251f' : wall.room === 'cabinet' ? '#44655a' : wall.room === 'afterhours' ? '#71778b' : '#ded5c1'
   const geometry = architectureGeometry(wall)
   return <group name={wall.id} userData={{
     wallId: wall.id,

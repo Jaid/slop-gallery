@@ -10,6 +10,7 @@ import useGalleryAI from '#src/lib/useGalleryAI.ts'
 import useGalleryCommands from '#src/lib/useGalleryCommands.ts'
 
 import Collection from './Collection.tsx'
+import GraphicsQuality from './GraphicsQuality.tsx'
 import Help from './Help.tsx'
 import Hud from './Hud.tsx'
 import Map from './Map.tsx'
@@ -35,14 +36,14 @@ export default function App() {
   if (!gpu) {
     return <main className="render-error"><h2>WebGPU is unavailable.</h2><p>Slop Gallery requires native WebGPU. Open it in current Chrome or Edge with hardware acceleration enabled, using HTTPS or localhost.</p></main>
   }
-  return <Dropzone>
+  return <GraphicsQuality><Dropzone>
     <main className="viewport" aria-label="Interactive 3D gallery">
-      <RenderBoundary onFailure={() => setRenderFailed(true)}><Suspense fallback={null}><World lite={settings.params.lite}/></Suspense></RenderBoundary>
+      <RenderBoundary onFailure={() => setRenderFailed(true)}><Suspense fallback={null}><World/></Suspense></RenderBoundary>
     </main>
     {!s.locked && !s.panel && !s.dragging && !renderFailed && <Menu {...settings}/>}
     {renderFailed && <nav className="fallback-tools" aria-label="Gallery recovery"><button className="text-button" onClick={() => openPanel('collection')}>Collection</button><button className="text-button" onClick={() => openPanel('settings')}>Preferences & backups</button><button className="text-button" onClick={() => openPanel('help')}>Controls</button></nav>}
     <Hud/>
     {s.notice && !s.panel && <div className="toast" role="status">{s.notice}</div>}
     {s.panel && <Panel key={s.panel} title={panelTitles[s.panel]}>{s.panel === 'collection' ? <Collection/> : s.panel === 'settings' ? <Settings/> : s.panel === 'map' ? <Map/> : <Help/>}</Panel>}
-  </Dropzone>
+  </Dropzone></GraphicsQuality>
 }

@@ -9,6 +9,5 @@ export const parameterParsers = {
   narrator_voice: parseAsString.withDefault('Algenib'),
   narrator_character: parseAsString.withDefault('art gallery narrator – witty, wise, sarcastic, calm'),
   eager_audio: parseAsBoolean.withDefault(false),
-  lite: parseAsBoolean.withDefault(false),
 }
 export type AiSettings = {[Key in keyof typeof parameterParsers]: (typeof parameterParsers)[Key]['defaultValue']}

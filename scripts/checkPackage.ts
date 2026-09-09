@@ -21,13 +21,13 @@ async function run(cwd: string, args: Array<string>) {
 }
 try {
   await run(join(root, 'packages/webgpu-capture-bridge'), ['pm', 'pack', '--filename', archive, '--ignore-scripts'])
-  const telemetryPackages = ['telemethree', 'telemethree-ego', 'slop-gallery-telemethree']
-  for (const name of telemetryPackages) {
+  const workspacePackages = ['telemethree', 'telemethree-ego', 'slop-gallery-telemethree', 'use-graphics-quality']
+  for (const name of workspacePackages) {
     await run(join(root, 'packages', name), ['pm', 'pack', '--filename', join(fixture, `${name}.tgz`), '--ignore-scripts'])
   }
   await mkdir(consumer)
   const dependencies: Record<string, string> = {'webgpu-capture-bridge': 'file:../capture.tgz'}
-  for (const name of telemetryPackages) {
+  for (const name of workspacePackages) {
     dependencies[name] = `file:../${name}.tgz`
   }
   for (const name of ['three', 'react', 'react-dom', '@react-three/fiber']) {
@@ -42,7 +42,7 @@ try {
     type: 'module',
     dependencies,
     // These packages are not published yet; resolve their versioned transitive edges to the archives too.
-    overrides: Object.fromEntries(telemetryPackages.map(name => [name, `file:../${name}.tgz`])),
+    overrides: Object.fromEntries(workspacePackages.map(name => [name, `file:../${name}.tgz`])),
   }))
   await run(consumer, ['install', '--ignore-scripts'])
   const helpers = await Bun.file(join(root, 'packages/webgpu-capture-bridge/test/helpers.ts')).text()
@@ -53,6 +53,9 @@ try {
   const egoTests = await Bun.file(join(root, 'packages/telemethree-ego/test/main.test.ts')).text()
   await Bun.write(join(consumer, 'ego.test.ts'), egoTests.replaceAll('../src/main.ts', 'telemethree-ego'))
   await run(consumer, ['test', './ego.test.ts'])
+  const graphicsTests = await Bun.file(join(root, 'packages/use-graphics-quality/test/main.test.tsx')).text()
+  await Bun.write(join(consumer, 'graphics.test.tsx'), graphicsTests.replaceAll('../src/main.ts', 'use-graphics-quality'))
+  await run(consumer, ['test', './graphics.test.tsx'])
   await Bun.write(join(consumer, 'consumer.ts'), [
     "import {WebgpuCapture} from 'webgpu-capture-bridge'",
     "import type {WebgpuCaptureOptions} from 'webgpu-capture-bridge'",
@@ -61,6 +64,7 @@ try {
     'export {WebgpuCaptureBridge, useCaptureFrame}',
     "export {Telemetry, OtlpHttpExporter, ThreeStatistics} from 'telemethree'",
     "export {TelemetryProvider, useTelemetry, useThreeTelemetry} from 'telemethree/react'",
+    "export {GraphicsQualityProvider, useGraphicsQuality, useGraphicsQualityValue, useSetGraphicsQuality} from 'use-graphics-quality'",
     "export {EgoTelemetry} from 'telemethree-ego'",
     "export {useEgoTelemetry} from 'telemethree-ego/react'",
     "export {SlopGalleryTelemetry, VictoriaExporter} from 'slop-gallery-telemethree'",
@@ -71,7 +75,7 @@ try {
   await Bun.write(join(consumer, 'server.ts'), "export {victoriaTelemetry, createVictoriaRelay} from 'slop-gallery-telemethree/vite'\n")
   await run(consumer, ['node_modules/typescript/bin/tsc', '--noEmit', '--strict', '--skipLibCheck', '--module', 'preserve', '--moduleResolution', 'bundler', '--target', 'esnext', '--allowImportingTsExtensions', 'server.ts'])
   await run(consumer, ['build', './server.ts', '--target', 'bun', '--outfile', 'server.js'])
-  console.log('Packed capture/ego tests, all package consumer types and optional React browser bundles passed.')
+  console.log('Packed capture/ego/graphics tests, all package consumer types and optional React browser bundles passed.')
 } finally {
   await rm(fixture, {
     recursive: true,

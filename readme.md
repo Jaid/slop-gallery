@@ -52,7 +52,7 @@ The three sculpture pedestals use carved limestone with fluted faces, chamfered 
 
 The Amber Room is through the rear arch in the Cabinet of Curiosities, or directly accessible from the floor plan. Dark damask wallpaper, walnut-colored paneling, a burgundy rug and an eight-arm brass chandelier give it a warmer, dimmer atmosphere. Its walls are left empty for your collection. The floor and rug adapt the procedural materials from the `ox_smart-gallery-webgpu` reference run: staggered wood joints and wavy grain tile every 2.4 m, while fine red carpet fibers tile every 1.8 m. Color and bump maps share the same physical scale, with mipmaps and anisotropic filtering for shallow viewing angles.
 
-The Afterhours Salon, home of the Serious Knot, has cream-and-charcoal checkerboard marble adapted from the reference run’s vestibule floor. Each roughly 69 cm tile has fine veins and narrow grout, with a glossy finish and live planar reflections that strengthen at grazing angles while keeping the grout matte. A mip-filtered, 75%-resolution reflection pass captures the actual room without recursive reflections. The Knot’s gold material and reflection environment are unchanged. The Cabinet of Curiosities, home of Mona Ribbit, uses a much subtler, softly blurred reflection over its existing wood floor for a satin-varnish effect.
+The Afterhours Salon, home of the Serious Knot, has cream-and-charcoal checkerboard marble adapted from the reference run’s vestibule floor. Quality mode uses polished marble with filtered, nonrecursive planar reflections and a subtler satin-varnish reflection on the Cabinet of Curiosities’ wood floor. Performance keeps the veins, grout and wood grain but uses matte finishes without allocating planar reflection targets. All grounds, including the Amber Room’s wood and carpet, opt out of environment reflections in performance mode. The Knot’s gold material and reflection environment are unchanged.
 
 The Cabinet of Curiosities has seven open botanical reliefs, just above the baseboards near its corners, instead of repeated lower-wall panels: carved sage leaves and floral rosettes with golden scrollwork and metallic details using the Serious Knot’s polished gold material, procedural grain and local HDR reflections. The shallow ornaments stay behind hung frames and shift inward where a doorway blocks a corner, keeping them clear of the doorway trim. The east-wall ornaments symmetrically flank the doorway, matching the corner ornaments’ clearance from the outside of its frame. The south wall beside the Amber Room doorway is left undecorated. All seven share a center height of 94 cm. Shared, instanced geometry draws the entire room’s ornamentation in two calls.
 
@@ -62,7 +62,7 @@ The temporary plant preview, its numbered signs and all plant placements have be
 
 ## Optional AI
 
-The menu’s OpenRouter manager exposes connection and model preferences. The query parameters are `ai`, `text_model`, `text_model_effort`, `image_model`, `audio_model`, `narrator_voice`, `narrator_character`, `eager_audio` and `lite`. Defaults follow the supplied benchmark scaffold; provider availability and voice support can change.
+The menu’s OpenRouter manager exposes connection and model preferences. The query parameters are `ai`, `text_model`, `text_model_effort`, `image_model`, `audio_model`, `narrator_voice`, `narrator_character` and `eager_audio`. Defaults follow the supplied benchmark scaffold; provider availability and voice support can change.
 
 - Imports send a reduced image to the text model for streamed titles and stories.
 - Fusion sends the hanging image first and the thrown image second to the image model.
@@ -129,3 +129,11 @@ Telemetry is enabled in Vite development, disabled by `?telemetry=false` or `?te
 All app materials use node materials. The renderer constructs `WebGPUBackend` directly with no fallback, so failed adapter/device initialization never creates a WebGL context. Vite redirects transitive bare Fiber imports (including Rapier) to `@react-three/fiber/webgpu` so dependencies share the same WebGPU Canvas context. Telemetry packages expose one `/react` entry, not backend-specific variants. Capture and statistics accept concrete Three WebGPU objects rather than cross-engine renderer adapters.
 
 This removes owned compatibility paths; upstream Three/Drei dependencies can still contain unused WebGL-related code. The project does not patch third-party engine internals to pretend that those upstream APIs no longer exist.
+
+## Graphics quality
+
+The menu switches between **Quality** (default) and **Performance**. The separate URL parameter is `graphics=quality` or `graphics=performance`; missing or invalid values select quality. The old `lite` flag is no longer used.
+
+Quality uses a device pixel ratio capped at 2, shadows and the GTAO/bloom/vignette/SMAA pipeline. Performance renders directly at device pixel ratio 1, without shadows or postprocessing. Quality retains procedural dirt and clay textures and floor reflections. Performance uses clean, matte dirt and pot finishes and disables both environment and planar reflections on grounds. Finish variants are allocated lazily and shared without replacing plant or pot geometry. Switching modes does not remount the scene, reset the player or rebuild the physics world.
+
+The renderer-independent [use-graphics-quality](packages/use-graphics-quality/readme.md) package provides controlled boolean React state through `isQuality`, typed value selectors and `useGraphicsQuality.getName(isQuality)` for lowercase names. URL state and gallery-specific rendering budgets stay in the application, separate from AI settings.

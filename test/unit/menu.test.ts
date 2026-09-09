@@ -1,8 +1,10 @@
+import type {AiSettings} from '../../src/lib/ai/settings.ts'
+
 import {afterEach, beforeEach, describe, expect, test} from 'bun:test'
+
 import {createElement} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
-
-import type {AiSettings} from '../../src/lib/ai/settings.ts'
+import {GraphicsQualityProvider} from 'use-graphics-quality'
 
 import Menu from '../../src/components/App/Menu.tsx'
 import ResetGallery from '../../src/components/App/ResetGallery.tsx'
@@ -17,31 +19,47 @@ let writes: number
 beforeEach(() => {
   values = new Map
   writes = 0
-  Object.defineProperty(globalThis, 'localStorage', {configurable: true, value: {
-    getItem: (key: string) => values.get(key) ?? null,
-    setItem: (key: string, value: string) => {
-      writes++
-      values.set(key, value)
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    value: {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        writes++
+        values.set(key, value)
+      },
     },
-  }})
-  useGallery.setState({...useGallery.getInitialState(), hasControlled: false}, true)
+  })
+  useGallery.setState({
+    ...useGallery.getInitialState(),
+    hasControlled: false,
+  }, true)
 })
 afterEach(() => {
   useGallery.setState(state, true)
-  if (storageDescriptor) Object.defineProperty(globalThis, 'localStorage', storageDescriptor)
-  else Reflect.deleteProperty(globalThis, 'localStorage')
+  if (storageDescriptor) {
+    Object.defineProperty(globalThis, 'localStorage', storageDescriptor)
+  } else {
+    Reflect.deleteProperty(globalThis, 'localStorage')
+  }
 })
-
 describe('minimal menu', () => {
   test('starts unlocked, with no reset or automatic OpenRouter prompt', () => {
     expect(useGallery.getState().locked).toBe(false)
     expect(useGallery.getState().hasControlled).toBe(false)
     expect(renderToStaticMarkup(createElement(ResetGallery))).toBe('')
     const params = Object.fromEntries(Object.entries(parameterParsers).map(([key, parser]) => [key, parser.defaultValue])) as AiSettings
-    const html = renderToStaticMarkup(createElement(Menu, {params, setParams: async () => new URLSearchParams}))
+    const html = renderToStaticMarkup(createElement(GraphicsQualityProvider, {
+      isQuality: true,
+      onChange: () => {},
+      children: createElement(Menu, {
+        params,
+        setParams: async () => new URLSearchParams,
+      }),
+    }))
     expect(html).toContain('aria-labelledby="menu-title"')
     expect(html).toContain('Mute audio')
-    expect(html).toContain('Lightweight graphics')
+    expect(html).toContain('Performance graphics')
+    expect(html).toContain('<small>Quality</small>')
     expect(html).toContain('OpenRouter')
     expect(html).not.toContain('<details open')
     expect(html).not.toContain('Reset gallery')
@@ -68,7 +86,12 @@ describe('minimal menu', () => {
     expect(createDocument()).not.toHaveProperty('hasControlled')
   })
   test('blocked storage does not prevent reset becoming available', () => {
-    Object.defineProperty(globalThis, 'localStorage', {configurable: true, get() {throw new Error('Storage blocked')}})
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      get() {
+        throw new Error('Storage blocked')
+      },
+    })
     expect(readControlled()).toBe(false)
     useGallery.setState({locked: true})
     expect(() => markControlled()).not.toThrow()
@@ -80,8 +103,12 @@ describe('minimal menu', () => {
     const before = useGallery.getState()
     let homes = 0
     let stops = 0
-    const home = () => {homes++}
-    const stop = () => {stops++}
+    const home = () => {
+      homes++
+    }
+    const stop = () => {
+      stops++
+    }
     galleryEvents.addEventListener('home', home)
     galleryEvents.addEventListener('stop-narration', stop)
     try {

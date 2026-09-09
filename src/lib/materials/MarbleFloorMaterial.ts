@@ -1,12 +1,22 @@
 import type {Texture} from 'three/webgpu'
+
 import {texture} from 'three/tsl'
 
-import {ReflectiveFloorMaterial} from './ReflectiveFloorMaterial.ts'
+import {FloorMaterial} from './FloorMaterial.ts'
 
-/** Polished stone with a live planar reflection, stronger at grazing angles. */
-export class MarbleFloorMaterial extends ReflectiveFloorMaterial {
-  constructor(map: Texture) {
-    // Keep grout matte; even the dark marble is lighter than the grout in linear color.
-    super(map, {color: '#e8dfd0', roughness: 0.12, strength: 0.12, grazingStrength: 0.65, blur: 1, mask: texture(map).r.smoothstep(0.008, 0.014)})
+/** Polished, reflective marble in quality; honed stone in performance. */
+export class MarbleFloorMaterial extends FloorMaterial {
+  constructor(map: Texture, reflections = true) {
+    super(map, {
+      color: '#e8dfd0',
+      roughness: reflections ? 0.12 : 0.8,
+      // Keep grout matte; even dark marble is lighter than grout in linear color.
+      reflection: reflections ? {
+        strength: 0.12,
+        grazingStrength: 0.65,
+        blur: 1,
+        mask: texture(map).r.smoothstep(0.008, 0.014),
+      } : undefined,
+    })
   }
 }
