@@ -13,6 +13,10 @@ bun install
 bun run dev
 ```
 
+Vite runs through Bun with the runner config loader and listens on all interfaces; `vite.tower.lan` is allowed for the local HTTPS proxy. `bun run build:dev` writes to `out/build/development`; `bun run build` writes the production bundle to `dist`; `bun run preview` serves that production build on loopback. Other nonproduction modes write to `out/build/<mode>`.
+
+The shared Vite config enables React Compiler, package-derived page titles, media mixins, PostCSS normalization and Autoprefixer for Chrome 152+. Production adds Terser, advanced CSS optimization and flat named React/vendor/main chunks. Source maps remain enabled. Property reads retain their side effects, and CSS optimization preserves fonts, animation identifiers and stacking levels referenced by application code. The WebGPU Fiber alias and mode-specific Victoria telemetry environment settings apply to both modes. Production filenames are stable, so deployment must revalidate JavaScript and CSS rather than cache them as immutable.
+
 Open the printed localhost URL in current Chrome or Edge with hardware acceleration enabled. Production hosting requires HTTPS. This is a keyboard-and-mouse experience; native WebGPU is required; there is no WebGL or collection-only compatibility mode.
 
 Use `?ai=false&telemetry=false` for a completely local gallery session. The OpenRouter manager in the menu is optional – no provider requests happen without a key. All exhibition artwork, fonts, recordings and environment textures are bundled or generated locally.

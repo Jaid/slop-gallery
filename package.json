@@ -1,5 +1,6 @@
 {
   "name": "slop-gallery",
+  "displayName": "Slop Gallery",
   "version": "0.1.0",
   "type": "module",
   "private": true,
@@ -16,15 +17,17 @@
     "#component/*": "./src/components/*/index.tsx"
   },
   "scripts": {
-    "build": "vite build",
+    "build": "bun run vite build",
+    "build:dev": "bun run vite build --mode development",
     "check": "bun run typecheck && bun run lint && bun run test && bun run build && bun run check:package",
     "check:package": "bun scripts/checkPackage.ts",
-    "dev": "vite --host 127.0.0.1",
+    "dev": "bun run vite --mode development",
     "lint": "bun scripts/lint.ts",
-    "preview": "vite preview --host 127.0.0.1",
+    "preview": "bun run vite preview --host 127.0.0.1",
     "test": "bun test --max-concurrency 1 ./test",
     "test:live": "bun run build && bun test ./test/live.test.ts",
-    "typecheck": "tsc --noEmit --noUnusedLocals --noUnusedParameters --pretty false"
+    "typecheck": "tsc --noEmit --noUnusedLocals --noUnusedParameters --pretty false",
+    "vite": "bun node_modules/vite/dist/node/cli.js --configLoader runner"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.19.2",
@@ -52,22 +55,35 @@
     "zustand": "5.0.15"
   },
   "devDependencies": {
+    "@babel/core": "8.0.1",
+    "@rolldown/plugin-babel": "0.2.3",
     "@types/bun": "1.4.2",
+    "@types/postcss-normalize": "9.0.4",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.7",
     "@types/three": "0.185.4",
     "@vitejs/plugin-react": "6.1.1",
+    "autoprefixer": "10.5.4",
+    "babel-plugin-react-compiler": "1.0.0",
+    "browserslist": "4.28.8",
+    "caniuse-lite": "1.0.30001810",
+    "cssnano-preset-advanced": "9.0.2",
     "eslint": "10.10.0",
     "eslint-config-jaid": "26.0.0",
     "fake-indexeddb": "6.2.5",
     "forward-slash-path": "0.3.0",
     "fs-extra": "11.4.0",
+    "postcss": "8.5.28",
+    "postcss-normalize": "13.0.1",
     "puppeteer-core": "25.10.0",
     "sass-embedded": "1.104.0",
+    "terser": "5.51.2",
     "tsconfig-jaid-react": "16.0.0",
     "type-fest": "5.9.0",
     "typescript": "npm:typescript-classic@6.0.4",
-    "vite": "8.2.2"
+    "vite": "8.2.2",
+    "vite-plugin-media-mixins": "0.10.0",
+    "vite-plugin-title": "0.6.0"
   },
   "patchedDependencies": {
     "three-bvh-csg@0.0.18": "patches/three-bvh-csg@0.0.18.patch"
