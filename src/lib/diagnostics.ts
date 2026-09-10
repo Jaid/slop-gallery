@@ -1,6 +1,6 @@
-import type {MenuStage} from './gallery/MenuSession.ts'
 import type {Placement, Portrait, RoomId, Vec3} from './gallery/types.ts'
 import type {EulerTuple} from 'three/webgpu'
+import type {PauseMenuStage} from 'use-pause-menu/core'
 import type {CaptureFrameApi} from 'webgpu-capture-bridge'
 
 export type GalleryDiagnostics = {
@@ -10,7 +10,7 @@ export type GalleryDiagnostics = {
   hasControlled: boolean
   held: string | null
   locked: boolean
-  menuStage: MenuStage
+  menuStage: PauseMenuStage
   placement: Placement | null
   portraits: Array<Pick<Portrait, 'height' | 'hung' | 'id' | 'merging' | 'pending' | 'position' | 'reserved' | 'title' | 'wallId' | 'width'> & {physical?: {x: number
     y: number

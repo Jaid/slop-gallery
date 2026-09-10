@@ -1,5 +1,5 @@
 import type {AiSettings} from '../../src/lib/ai/settings.ts'
-import type {MenuStage} from '../../src/lib/gallery/MenuSession.ts'
+import type {PauseMenuStage as MenuStage} from 'use-pause-menu/core'
 
 import {afterEach, beforeEach, describe, expect, spyOn, test} from 'bun:test'
 
@@ -14,6 +14,7 @@ import {SoundEngine} from '../../src/lib/audio/SoundEngine.ts'
 import {galleryEvents, resetGallery, startNewGame} from '../../src/lib/gallery/actions.ts'
 import {playerSession, playerSpawn} from '../../src/lib/gallery/PlayerSession.ts'
 import {createDocument, markControlled, readControlled, undo, useGallery} from '../../src/lib/gallery/store.ts'
+import {pauseMenu} from '../../src/lib/pauseMenu.ts'
 
 const state = useGallery.getState()
 const storageDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')
@@ -139,10 +140,13 @@ describe('minimal menu', () => {
 })
 test.each(['first', 'return', 'pause', 'unfocus'] as const)('renders the %s menu stage', (stage: MenuStage) => {
   const initial = {...useGallery.getInitialState()}
+  const snapshot = spyOn(pauseMenu, 'getServerSnapshot').mockReturnValue({
+    stage,
+    locked: false,
+  })
   Object.assign(useGallery.getInitialState(), {
     ready: true,
     hasControlled: true,
-    menuStage: stage,
   })
   try {
     const params = Object.fromEntries(Object.entries(parameterParsers).map(([key, parser]) => [key, parser.defaultValue])) as AiSettings
@@ -155,7 +159,7 @@ test.each(['first', 'return', 'pause', 'unfocus'] as const)('renders the %s menu
       }),
     }))
     expect(html).toContain(`data-stage="${stage}"`)
-    expect(html).toContain(stage === 'first' ? 'Enter gallery' : stage === 'return' ? 'Continue' : 'Resume')
+    expect(html).toContain(stage === 'first' ? 'Enter gallery' : (stage === 'return' ? 'Continue' : 'Resume'))
     expect(html.includes('data-testid="minimap"')).toBe(stage === 'pause')
     expect(html.includes('New game')).toBe(stage === 'return')
     expect(html.includes('Your position')).toBe(stage === 'pause')
@@ -175,26 +179,19 @@ test.each(['first', 'return', 'pause', 'unfocus'] as const)('renders the %s menu
       expect(html).not.toContain('Reset gallery')
     }
   } finally {
+    snapshot.mockRestore()
     Object.assign(useGallery.getInitialState(), initial)
   }
 })
 test('New game resets and enters directly; it does nothing before the scene is ready', () => {
-  const documentDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'document')
   const engine: SoundEngine = Object.create(SoundEngine.prototype)
   const getSound = spyOn(SoundEngine, 'get').mockReturnValue(engine)
   const resume = spyOn(engine, 'resume').mockResolvedValue()
   let entered = 0
-  Object.defineProperty(globalThis, 'document', {
-    configurable: true,
-    value: {
-      querySelector: () => ({
-        requestPointerLock: () => {
-          entered++
-          expect(useGallery.getState().portraits.some(p => p.id === 'goose')).toBe(true)
-          expect(playerSession.snapshot().position).toEqual(playerSpawn.position)
-        },
-      }),
-    },
+  const enter = spyOn(pauseMenu, 'enter').mockImplementation(async () => {
+    entered++
+    expect(useGallery.getState().portraits.some(p => p.id === 'goose')).toBe(true)
+    expect(playerSession.snapshot().position).toEqual(playerSpawn.position)
   })
   try {
     useGallery.getState().remove('goose')
@@ -203,7 +200,6 @@ test('New game resets and enters directly; it does nothing before the scene is r
     expect(useGallery.getState().portraits.some(p => p.id === 'goose')).toBe(false)
     useGallery.setState({
       ready: true,
-      menuStage: 'return',
     })
     startNewGame()
     expect(entered).toBe(1)
@@ -212,29 +208,32 @@ test('New game resets and enters directly; it does nothing before the scene is r
   } finally {
     resume.mockRestore()
     getSound.mockRestore()
-    if (documentDescriptor) {
-      Object.defineProperty(globalThis, 'document', documentDescriptor)
-    } else {
-      Reflect.deleteProperty(globalThis, 'document')
-    }
+    enter.mockRestore()
   }
 })
-
 test.each(['lobby', 'oculus'] as const)('pause heading identifies the %s room and floor', room => {
   const initial = {...useGallery.getInitialState()}
-  Object.assign(useGallery.getInitialState(), {menuStage: 'pause', room})
+  const snapshot = spyOn(pauseMenu, 'getServerSnapshot').mockReturnValue({
+    stage: 'pause',
+    locked: false,
+  })
+  Object.assign(useGallery.getInitialState(), {room})
   try {
     const params = Object.fromEntries(Object.entries(parameterParsers).map(([key, parser]) => [key, parser.defaultValue])) as AiSettings
     const html = renderToStaticMarkup(createElement(GraphicsQualityProvider, {
       isQuality: true,
       onChange: () => {},
-      children: createElement(Menu, {params, setParams: async () => new URLSearchParams}),
+      children: createElement(Menu, {
+        params,
+        setParams: async () => new URLSearchParams,
+      }),
     }))
     expect(html).toContain(room === 'lobby' ? '>Lobby</h1>' : '>Oculus</h1>')
     expect(html).toContain(room === 'lobby' ? '>upper floor room</p>' : '>lower floor room</p>')
     expect(html).not.toContain('>Slop Gallery</h1>')
     expect(html).not.toContain('Good taste.')
   } finally {
+    snapshot.mockRestore()
     Object.assign(useGallery.getInitialState(), initial)
   }
 })

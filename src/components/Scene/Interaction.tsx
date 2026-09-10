@@ -9,10 +9,10 @@ import {Euler, Matrix4, PerspectiveCamera, Quaternion, Raycaster, Vector2, Vecto
 import PlacementPreview from '#component/PlacementPreview'
 import {InspectionLook} from '#src/lib/camera/InspectionLook.ts'
 import {cameraPose, chime, dragPose, enterGallery, findPlacement, galleryEvents, isTextInput, markControlled, narrate, notify, openPanel, roomAt, useGallery, wallDistance} from '#src/lib/gallery.ts'
-import {MenuSession} from '#src/lib/gallery/MenuSession.ts'
 import {playerSpawn} from '#src/lib/gallery/PlayerSession.ts'
 import {isPortraitLabelHit} from '#src/lib/gallery/portraitLabel.ts'
 import {portraitObjects} from '#src/lib/gallery/portraitObjects.ts'
+import {pauseMenu} from '#src/lib/pauseMenu.ts'
 
 import {propObjects} from './GrabbableProp.tsx'
 
@@ -39,6 +39,7 @@ export default function Interaction() {
     rotation: Quaternion} | null>(null)
   const introduced = useRef(false)
   const keyboardGrab = useRef(false)
+  useEffect(() => pauseMenu.attach(renderer.domElement), [renderer])
   useEffect(() => {
     if (!(controls instanceof PointerLockControls)) {
       return
@@ -58,9 +59,6 @@ export default function Interaction() {
     return () => document.removeEventListener('mousemove', mousemove)
   }, [controls, renderer])
   useEffect(() => {
-    const menuSession = new MenuSession(useGallery.getState().menuStage)
-    menuSession.locked = document.pointerLockElement === renderer.domElement
-    const releasePointer = () => menuSession.release('unfocus')
     const cancel = () => {
       const s = useGallery.getState()
       if (s.held) {
@@ -86,13 +84,12 @@ export default function Interaction() {
       useGallery.setState({inspecting: null})
     }
     const lock = () => {
-      const locked = document.pointerLockElement === renderer.domElement
-      if (document.pointerLockElement && !locked) {
-        menuSession.release('unfocus')
+      const {locked} = pauseMenu.getSnapshot()
+      if (locked === useGallery.getState().locked) {
+        return
       }
       useGallery.setState({
         locked,
-        menuStage: menuSession.change(locked, document.hasFocus() && !document.hidden, renderer.domElement.isConnected),
         activeLabel: null,
       })
       if (!locked) {
@@ -247,7 +244,6 @@ export default function Interaction() {
       }
       const s = useGallery.getState()
       if (event.code === 'Escape') {
-        menuSession.release('pause')
         cancel()
         cancelView()
       }
@@ -329,18 +325,11 @@ export default function Interaction() {
     }
     const context = (event: Event) => event.preventDefault()
     const blur = () => {
-      menuSession.release('unfocus')
       cancel()
       cancelView()
     }
-    const visibility = () => {
-      if (document.hidden) {
-        blur()
-      }
-    }
-    document.addEventListener('visibilitychange', visibility)
-    galleryEvents.addEventListener('release-pointer', releasePointer)
-    document.addEventListener('pointerlockchange', lock)
+    const unsubscribeMenu = pauseMenu.subscribe(lock)
+    lock()
     globalThis.addEventListener('mousedown', down)
     globalThis.addEventListener('mouseup', mouseup)
     globalThis.addEventListener('keydown', keydown)
@@ -356,9 +345,7 @@ export default function Interaction() {
     return () => {
       cancel()
       stopView()
-      document.removeEventListener('visibilitychange', visibility)
-      galleryEvents.removeEventListener('release-pointer', releasePointer)
-      document.removeEventListener('pointerlockchange', lock)
+      unsubscribeMenu()
       globalThis.removeEventListener('mousedown', down)
       globalThis.removeEventListener('mouseup', mouseup)
       globalThis.removeEventListener('keydown', keydown)
@@ -386,7 +373,7 @@ export default function Interaction() {
       room: useGallery.getState().room,
       placement: placement.current,
       locked: useGallery.getState().locked,
-      menuStage: useGallery.getState().menuStage,
+      menuStage: pauseMenu.getSnapshot().stage,
       hasControlled: useGallery.getState().hasControlled,
       held: useGallery.getState().held,
       active: useGallery.getState().active,

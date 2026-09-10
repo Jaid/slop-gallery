@@ -177,3 +177,7 @@ The menu switches between **Quality** (default) and **Performance**. The separat
 Quality uses a device pixel ratio capped at 2, shadows and the GTAO/bloom/vignette/SMAA pipeline. Performance renders directly at device pixel ratio 1, without shadows or postprocessing. Quality retains procedural dirt and clay textures and floor reflections. Performance uses clean, matte dirt and pot finishes and disables both environment and planar reflections on grounds. Finish variants are allocated lazily and shared without replacing plant or pot geometry. Switching modes does not remount the scene, reset the player or rebuild the physics world.
 
 The renderer-independent [use-graphics-quality](packages/use-graphics-quality/readme.md) package provides controlled boolean React state through `isQuality`, typed value selectors and `useGraphicsQuality.getName(isQuality)` for lowercase names. URL state and gallery-specific rendering budgets stay in the application, separate from AI settings.
+
+## Reusable pause menus
+
+The `use-pause-menu` workspace package owns visit tracking, pointer-lock attachment and stage inference. Its framework-free `PauseMenu` controller exposes immutable snapshots and a `usePauseMenu` React subscription. Slop Gallery keeps its legacy visit-marker migration, menu rendering, game reset and movement cleanup locally. See [the package documentation](packages/use-pause-menu/readme.md) for the standalone and Fiber APIs.

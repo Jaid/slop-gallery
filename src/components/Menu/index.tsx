@@ -1,6 +1,7 @@
 import type useGalleryAI from '#src/lib/useGalleryAI.ts'
 
 import {useEffect, useRef} from 'react'
+import usePauseMenu from 'use-pause-menu'
 
 import Icon from '#component/Icon'
 import MenuNarration from '#component/MenuNarration'
@@ -8,14 +9,15 @@ import MenuOptions from '#component/MenuOptions'
 import Minimap from '#component/Minimap'
 import OpenRouterConnection from '#component/OpenRouterConnection'
 import {enterGallery, rooms, startNewGame, useGallery} from '#src/lib/gallery.ts'
+import {pauseMenu} from '#src/lib/pauseMenu.ts'
 
 import css from './style.module.sass'
 
 export default function Menu(settings: ReturnType<typeof useGalleryAI>) {
   const s = useGallery()
-  const stage = s.menuStage
+  const {stage} = usePauseMenu(pauseMenu)
   const room = rooms.find(room => room.id === s.room)!
-  const tagline = stage === 'pause' ? (room.floorY < 0 ? 'lower floor room' : 'upper floor room') : 'Good taste. Questionable art.'
+  const tagline = stage === 'pause' ? room.floorY < 0 ? 'lower floor room' : 'upper floor room' : 'Good taste. Questionable art.'
   const heading = useRef<HTMLHeadingElement>(null)
   useEffect(() => {
     heading.current?.focus({preventScroll: true})

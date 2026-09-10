@@ -27,6 +27,7 @@
         "three-fiber-game": "workspace:*",
         "three-mesh-bvh": "0.9.15",
         "use-graphics-quality": "workspace:*",
+        "use-pause-menu": "workspace:*",
         "webgpu-capture-bridge": "workspace:*",
         "zustand": "5.0.15",
       },
@@ -124,6 +125,16 @@
       "peerDependencies": {
         "react": "^19.2.8",
       },
+    },
+    "packages/use-pause-menu": {
+      "name": "use-pause-menu",
+      "version": "0.1.0",
+      "peerDependencies": {
+        "react": "^19.2.8",
+      },
+      "optionalPeers": [
+        "react",
+      ],
     },
     "packages/webgpu-capture-bridge": {
       "name": "webgpu-capture-bridge",
@@ -1068,6 +1079,8 @@
     "uri-js": ["uri-js@4.4.1", "", { "dependencies": { "punycode": "^2.1.0" } }, "sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg=="],
 
     "use-graphics-quality": ["use-graphics-quality@workspace:packages/use-graphics-quality"],
+
+    "use-pause-menu": ["use-pause-menu@workspace:packages/use-pause-menu"],
 
     "use-sync-external-store": ["use-sync-external-store@1.7.0", "", { "peerDependencies": { "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-6L+EeigHMQhdaIPNIFUKwfWJSwWFQ8gJbJ2DLOs5sDIegTwR9fRxvnM3uciHKjIZhFz+KAv2emhWMRvDmMcY8A=="],
 

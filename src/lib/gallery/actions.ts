@@ -2,6 +2,7 @@ import type {Panel} from './store.ts'
 import type {Portrait, Vec3} from './types.ts'
 
 import {SoundEngine} from '../audio/SoundEngine.ts'
+import {pauseMenu} from '../pauseMenu.ts'
 import {initialPortraits} from './collection.ts'
 import {playerSession, playerSpawn} from './PlayerSession.ts'
 import {redo, undo, useGallery} from './store.ts'
@@ -27,8 +28,7 @@ export function notify(notice: string) {
 }
 
 export function openPanel(panel: Panel) {
-  galleryEvents.dispatchEvent(new Event('release-pointer'))
-  document.exitPointerLock?.()
+  pauseMenu.release()
   useGallery.setState({
     panel,
     activeLabel: null,
@@ -45,10 +45,7 @@ export function enterGallery() {
   useGallery.setState({panel: null})
   galleryEvents.dispatchEvent(new Event('cancel-view'))
   void SoundEngine.get().resume().catch(() => notify('Audio could not be enabled.'))
-  const lock = document.querySelector('canvas')?.requestPointerLock()
-  if (lock) {
-    void lock.catch(() => notify('Click the gallery to begin exploring.'))
-  }
+  void pauseMenu.enter().catch(() => notify('Click the gallery to begin exploring.'))
 }
 
 export function chime(frequency = 320) {

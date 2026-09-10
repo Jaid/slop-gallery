@@ -1,12 +1,13 @@
-import type {MenuStage} from './MenuSession.ts'
 import type {GalleryDocument, GallerySettings, GallerySnapshot, NarrationState, Placement, Portrait, RoomId, Vec3} from './types.ts'
 
 import {create} from 'zustand'
 
+import {readControlled} from '../pauseMenu.ts'
 import {initialPortraits} from './collection.ts'
 import {validateCollectionImages} from './imagePolicy.ts'
-import {startMenuVisit} from './MenuSession.ts'
 import {playerSession} from './PlayerSession.ts'
+
+export {readControlled} from '../pauseMenu.ts'
 
 export {maximumPortraits} from './imagePolicy.ts'
 export type Panel = 'map' | null
@@ -28,7 +29,6 @@ type State = GallerySettings & GallerySnapshot & {
     origin: Vec3}) | null
   inspecting: string | null
   locked: boolean
-  menuStage: MenuStage
   narration: NarrationState | null
   notice: string
   panel: Panel
@@ -57,13 +57,6 @@ export function cleanPortrait(p: Portrait): Portrait {
   }
 }
 
-export function readControlled() {
-  try {
-    return localStorage.getItem('slop-gallery-controlled') === 'true'
-  } catch {
-    return false
-  }
-}
 // Entering the menu or acquiring pointer lock is not an in-game control.
 export function markControlled() {
   const s = useGallery.getState()
@@ -74,7 +67,7 @@ export function markControlled() {
   try {
     localStorage.setItem('slop-gallery-controlled', 'true')
   } catch {
-    // Reset still becomes available for this visit when storage is blocked.
+    // Control history still remains available for this visit when storage is blocked.
   }
 }
 
@@ -97,7 +90,6 @@ export const useGallery = create<State>((set, get) => ({
   activeLabel: null,
   held: null,
   locked: false,
-  menuStage: startMenuVisit(),
   hasControlled: readControlled(),
   resetEpoch: 0,
   ready: false,
