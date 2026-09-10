@@ -3,7 +3,7 @@ import type {Vec3} from '../src/lib/gallery/types.ts'
 import type {Page} from 'puppeteer-core'
 
 import {expect, test} from 'bun:test'
-import {mkdir} from 'node:fs/promises'
+import fs from 'fs-extra'
 import * as path from 'forward-slash-path'
 
 import puppeteer from 'puppeteer-core'

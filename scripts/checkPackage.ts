@@ -1,4 +1,4 @@
-import {mkdir, mkdtemp, rm} from 'node:fs/promises'
+import fs from 'fs-extra'
 import {tmpdir} from 'node:os'
 import * as path from 'forward-slash-path'
 
