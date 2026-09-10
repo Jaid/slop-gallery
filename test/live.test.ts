@@ -65,7 +65,7 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     await page.goto(`${baseUrl}?ai=false&test=true`, {waitUntil: 'domcontentloaded'})
     await page.waitForFunction(() => globalThis.__gallery?.snapshot?.().ready, {timeout: 60_000})
     await page.evaluate(() => document.fonts.ready)
-    await mkdir('private/agent/reports', {recursive: true})
+    await fs.ensureDir('private/agent/reports')
     expect((await snapshot(page)).locked).toBe(false)
     expect((await snapshot(page)).hasControlled).toBe(false)
     expect(await page.$('.menu-overlay')).not.toBeNull()
@@ -206,8 +206,8 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     await page.waitForFunction(() => globalThis.__gallery?.snapshot?.().ready)
     expect((await snapshot(page)).portraits.find(p => p.id === 'cat')!.title).toBe('A tested masterpiece')
     expect((await snapshot(page)).portraits.find(p => p.id === 'orange')!.title).toBe('An unexpected collaboration')
-    const downloadPath = resolve(`private/agent/reports/downloads-${Date.now()}`)
-    await mkdir(downloadPath, {recursive: true})
+    const downloadPath = path.resolve(`private/agent/reports/downloads-${Date.now()}`)
+    await fs.ensureDir(downloadPath)
     const client = await browser.target().createCDPSession()
     await client.send('Browser.setDownloadBehavior', {
       behavior: 'allow',

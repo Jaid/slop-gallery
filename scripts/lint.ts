@@ -1,14 +1,14 @@
 import type {ESLint as ESLintTypes} from 'eslint'
-import * as path from 'forward-slash-path'
 
 import {ESLint} from 'eslint'
+import * as path from 'forward-slash-path'
 
 export type WarningCounts = Record<string, Record<string, number>>
 
 export function countWarnings(results: Array<ESLintTypes.LintResult>, cwd: string): WarningCounts {
   const counts: WarningCounts = {}
   for (const result of results) {
-    const file = relative(cwd, result.filePath).replaceAll('\\', '/')
+    const file = path.relative(cwd, result.filePath).replaceAll('\\', '/')
     for (const message of result.messages) {
       if (message.severity !== 1) {
         continue
