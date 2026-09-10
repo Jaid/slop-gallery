@@ -1,6 +1,5 @@
 import type {ESLint as ESLintTypes} from 'eslint'
-
-import {relative} from 'node:path'
+import * as path from 'forward-slash-path'
 
 import {ESLint} from 'eslint'
 

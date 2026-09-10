@@ -1,6 +1,6 @@
 import {mkdir, mkdtemp, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
-import {join, resolve} from 'node:path'
+import * as path from 'forward-slash-path'
 
 const root = resolve(import.meta.dir, '..')
 const fixture = await mkdtemp(join(tmpdir(), 'slop-capture-consumer-'))

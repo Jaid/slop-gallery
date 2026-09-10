@@ -4,7 +4,7 @@ import type {Page} from 'puppeteer-core'
 
 import {expect, test} from 'bun:test'
 import {mkdir} from 'node:fs/promises'
-import {resolve} from 'node:path'
+import * as path from 'forward-slash-path'
 
 import puppeteer from 'puppeteer-core'
 import {preview} from 'vite'
