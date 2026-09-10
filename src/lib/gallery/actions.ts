@@ -3,12 +3,13 @@ import type {Portrait, Vec3} from './types.ts'
 
 import {SoundEngine} from '../audio/SoundEngine.ts'
 import {initialPortraits} from './collection.ts'
+import {playerSession, playerSpawn} from './PlayerSession.ts'
 import {redo, undo, useGallery} from './store.ts'
 import {floorHeight} from './walls.ts'
 
 export const cameraPose = {
   focused: false,
-  position: [0, 1.7, 5.8] as Vec3,
+  position: [playerSpawn.position[0], playerSpawn.position[1] + 1.6, playerSpawn.position[2]] as Vec3,
   direction: [0, 0, -1] as Vec3,
 }
 export const dragPose = {
@@ -86,6 +87,7 @@ export function importRejected() {
 }
 
 export function resetGallery() {
+  playerSession.restore(playerSpawn)
   useGallery.getState().commit(initialPortraits.map(p => ({...p})))
   useGallery.setState(s => ({
     active: null,

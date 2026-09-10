@@ -8,13 +8,20 @@ import {EquirectangularReflectionMapping, MeshStandardNodeMaterial, Shape, SRGBC
 
 import {rooms, useGallery, walls} from '#src/lib/gallery.ts'
 import {architectureGeometry, wallTop} from '#src/lib/gallery/architecture.ts'
+import {CabinWoodMaterial} from '#src/lib/materials/CabinWoodMaterial.ts'
+import {CastleStoneMaterial} from '#src/lib/materials/CastleStoneMaterial.ts'
 import {canvasTexture} from '#src/lib/texture.ts'
 
 import AmberRoom from './AmberRoom.tsx'
-import BenchSeat from './BenchSeat.tsx'
 import CabinetOrnaments from './CabinetOrnaments.tsx'
+import CabinPassages from './CabinPassages.tsx'
+import CabinRoom from './CabinRoom.tsx'
+import CabinWindow from './CabinWindow.tsx'
+import Fountain from './Fountain.tsx'
+import FountainBenches from './FountainBenches.tsx'
 import GalleryStairs from './GalleryStairs.tsx'
 import GlasswellRoom from './GlasswellRoom.tsx'
+import MainEntrance from './MainEntrance.tsx'
 import {damaskTexture, surfaceTexture} from './materials.ts'
 import PottedPlants from './PottedPlants.tsx'
 import {Box} from './primitives.tsx'
@@ -28,6 +35,12 @@ const pointLightPositions: Partial<Record<Wall['room'], Array<number>>> = {
 
 export default function Architecture() {
   const theme = useGallery(s => s.theme)
+  const castleStone = useMemo(() => new CastleStoneMaterial, [])
+  const cabinWood = useMemo(() => new CabinWoodMaterial, [])
+  useEffect(() => () => {
+    castleStone.dispose()
+    cabinWood.dispose()
+  }, [castleStone, cabinWood])
   const textures = useMemo(() => ({
     stone: surfaceTexture('stone'),
     plaster: surfaceTexture('plaster'),
@@ -46,12 +59,20 @@ export default function Architecture() {
       t.dispose()
     }
   }, [textures])
+  const wallMaterial = (wall: Wall) => {
+    if (wall.room === 'glasswell') {
+      return glasswellMaterial
+    }
+    if (wall.room === 'cabin') {
+      return wall.id.startsWith('cabin-tunnel-') ? castleStone : cabinWood
+    }
+  }
   return <>
     <ReflectionEnvironment/>
     <color attach="background" args={['#ded8ca']}/><fog attach="fog" args={['#d9d4c7', 35, 70]}/>
     <ambientLight intensity={0.65}/><hemisphereLight args={['#ecf3ff', '#a29270', 1.15]}/>
     <directionalLight position={[-3, 9, 4]} intensity={2.3} color="#fff0d7" castShadow shadow-mapSize={[4096, 4096]} shadow-camera-left={-24} shadow-camera-right={24} shadow-camera-top={20} shadow-camera-bottom={-20} shadow-normalBias={0.035}/>
-    {walls.map(wall => <WallSurface key={wall.id} material={wall.room === 'glasswell' ? glasswellMaterial : undefined} wall={wall} theme={theme} plaster={wall.room === 'amber' ? textures.damask : textures.plaster}/>)}
+    {walls.map(wall => <WallSurface key={wall.id} material={wallMaterial(wall)} wall={wall} theme={theme} plaster={wall.room === 'amber' ? textures.damask : textures.plaster}/>)}
     {rooms.filter(room => room.floorY === 0 && room.id !== 'amber').map(room => <group key={room.id} position={[room.center[0], 0, room.center[1]]}>
       <RigidBody type="fixed" colliders={false}>
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]}/>
@@ -66,15 +87,17 @@ export default function Architecture() {
       {(pointLightPositions[room.id] ?? [-3.5, 3.5]).map(z => <pointLight key={z} position={[0, 4.9, z]} intensity={room.id === 'cabinet' ? 40 : 32} distance={room.id === 'daydream' && z === -8 ? 22 : 14} decay={2} castShadow={room.id === 'daydream' && z === -8} shadow-mapSize={[1024, 1024]} shadow-normalBias={0.03} color={room.id === 'afterhours' ? '#eee3ff' : '#fff1d8'}/>)}
     </group>)}
     <PottedPlants/>
+    <Fountain/>
+    <FountainBenches wood={textures.wood}/>
+    <CabinRoom wood={textures.wood} stone={castleStone}/>
+    <CabinWindow material={cabinWood}/>
+    <CabinPassages material={castleStone}/>
     <CabinetOrnaments/>
     <AmberRoom wood={textures.wood}/>
     <GalleryStairs/>
     <UndertoneRoom stone={textures.stone}/>
     <GlasswellRoom material={glasswellMaterial}/>
-    <RigidBody type="fixed" colliders="cuboid"><group position={[1.6, 0, 1.6]}>
-      <BenchSeat position={[0, 0.52, 0]} size={[3.1, 0.24, 1.05]}/>
-      {[-1.1, 1.1].map(x => <Box key={x} position={[x, 0.22, 0]} size={[0.14, 0.44, 0.8]} color="#514a3b" metalness={0.6}/>)}
-    </group></RigidBody>
+
   </>
 }
 
@@ -133,11 +156,11 @@ function WallSurface({wall, plaster, theme, material}: {material?: Material
         <meshStandardNodeMaterial color="#b7d8d9" transparent opacity={0.16} roughness={0.16} metalness={0.1} depthWrite={false}/>
       </mesh>)}
     </RigidBody>
-    <Box position={[0, wall.height - 0.42, 0.16]} rotation={[0, 0, Math.atan(wall.slope ?? 0)]} size={[wall.width * Math.hypot(1, wall.slope ?? 0), 0.1, 0.22]} color={trim} material={material}/>
-    <Box position={[0, wall.height - 0.22, 0.18]} rotation={[0, 0, Math.atan(wall.slope ?? 0)]} size={[wall.width * Math.hypot(1, wall.slope ?? 0), 0.23, 0.32]} color={trim} material={material}/>
+    {geometry.cornice.map((part, i) => <mesh key={i} geometry={part} material={material} receiveShadow castShadow>{!material && <meshStandardNodeMaterial color={trim} roughness={0.6}/>}</mesh>)}
     {wall.id === 'daydream-north' && <>
-      {[-3.6, 0, 3.6].map(x => <group position={[x, 0, 0]} key={x}><Alcove width={3.25}/><Box position={[0, 4.67, 0.55]} size={[0.76, 0.06, 0.16]} color="#ab8850" metalness={0.7}/><mesh position={[0, 4.637, 0.55]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[0.62, 0.12]}/><meshBasicNodeMaterial color="#fff0cf"/></mesh></group>)}
-      {[-5.5, -1.8, 1.8, 5.5].map(x => <group key={x}><Box position={[x, 2.7, 0.16]} size={[0.18, 4.9, 0.2]} color={trim} material={material}/><Box position={[x, 4.94, 0.24]} size={[0.34, 0.15, 0.28]} color={trim} material={material}/></group>)}
+      <MainEntrance/>
+      {[-3.6, 3.6].map(x => <group position={[x, 0, 0]} key={x}><Alcove width={2.6}/><Box position={[0, 4.67, 0.55]} size={[0.76, 0.06, 0.16]} color="#ab8850" metalness={0.7}/><mesh position={[0, 4.637, 0.55]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[0.62, 0.12]}/><meshBasicNodeMaterial color="#fff0cf"/></mesh></group>)}
+      {[-5.3, -2.2, 2.2, 5.3].map(x => <group key={x}><Box position={[x, 2.7, 0.16]} size={[0.18, 4.9, 0.2]} color={trim} material={material}/><Box position={[x, 4.94, 0.24]} size={[0.34, 0.15, 0.28]} color={trim} material={material}/></group>)}
     </>}
     {(wall.id === 'daydream-east' || wall.id === 'daydream-west') && <group position={[wall.id === 'daydream-east' ? -2.8 : 2.8, 0, 0]}><Alcove width={3.5}/></group>}
   </group>

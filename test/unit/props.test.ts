@@ -64,7 +64,7 @@ describe('carried prop clearance', () => {
   test('ignores the player while holding but checks them before release', () => {
     const placement = book()
     const player = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased())
-    player.userData = {kind: 'player'}
+    player.userData = {isPlayer: true}
     world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), player)
     world.step()
     expect(placement.constrain([0, 1.4, 0], [0, 1.4, 1.45])).toEqual([0, 1.4, 1.45])

@@ -1,6 +1,6 @@
 export type Vec3 = [number, number, number]
 export type Quat = [number, number, number, number]
-export type RoomId = 'afterhours' | 'amber' | 'antechamber' | 'cabinet' | 'daydream' | 'glasswell' | 'undertone'
+export type RoomId = 'afterhours' | 'amber' | 'antechamber' | 'cabin' | 'cabinet' | 'daydream' | 'glasswell' | 'undertone'
 export type Portrait = {
   creator: string
   description: string
@@ -47,7 +47,14 @@ export type GallerySnapshot = {
   portraits: Array<Portrait>
 }
 export type GalleryDocument = GallerySnapshot & {
+  player?: PlayerPose
   savedAt: string
   settings: GallerySettings
   version: 1
+}
+
+export type PlayerPose = {
+  /** World-space feet position, independent of head bob and inspection cameras. */
+  position: Vec3
+  yaw: number
 }

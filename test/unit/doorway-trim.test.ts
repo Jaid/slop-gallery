@@ -66,6 +66,6 @@ describe('plain doorway trim', () => {
       trimStyle: undefined,
     })).toBe(classic)
     expect(classic.trim[0]!.boundingBox!.max.z).toBeCloseTo(0.325, 6)
-    expect(walls.filter(value => value.trimStyle === 'plain').every(value => value.room === 'glasswell')).toBe(true)
+    expect(walls.filter(value => value.trimStyle === 'plain').every(value => ['glasswell', 'cabin'].includes(value.room))).toBe(true)
   })
 })

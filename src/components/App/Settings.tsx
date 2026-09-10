@@ -5,6 +5,7 @@ import {useRef, useState} from 'react'
 import {download} from '#src/lib/download.ts'
 import {galleryEvents, notify, useGallery} from '#src/lib/gallery.ts'
 import {repository} from '#src/lib/gallery/GalleryRepository.ts'
+import {playerSession} from '#src/lib/gallery/PlayerSession.ts'
 
 export default function Settings() {
   const s = useGallery()
@@ -39,7 +40,7 @@ export default function Settings() {
         }
       }}>{recovering ? 'Confirm replacement of unreadable saved collection' : 'Replace unreadable saved collection with this session'}</button>{recovering && <button className="text-button" onClick={() => setRecovering(false)}>Keep the stored record</button>}</div>}
       <div className="storage-status"><span className="status-dot"/>{s.saveStatus === 'loading' ? 'Reading this device’s collection…' : s.saveStatus === 'error' ? 'Local save unavailable – export a backup.' : s.saveStatus === 'saving' ? 'Saving on this device…' : 'Automatically saved on this device.'}</div>
-      <p className="muted">Images, labels, artwork placements and preferences stay in this browser’s IndexedDB. No account or cloud storage. Loose frames are saved when they settle. Export a .slop backup before clearing browser data or moving to another device. Keys are never included.</p>
+      <p className="muted">Images, labels, artwork placements, preferences and your player pose stay in this browser. The collection uses IndexedDB; a small local checkpoint preserves your latest position and facing when you refresh. No account or cloud storage. Loose frames are saved when they settle. Export a .slop backup before clearing browser data or moving to another device. Keys are never included.</p>
       <div className="detail-actions"><button className="primary-button" disabled={busy} onClick={() => void backup()}>{busy ? 'Working…' : 'Export collection'} <span>↗</span></button><button className="text-button" disabled={busy} onClick={() => input.current?.click()}>Restore a backup</button></div>
       <input ref={input} hidden type="file" accept=".slop" aria-label="Restore gallery backup" onChange={event => {
         const file = event.target.files?.[0]
@@ -52,12 +53,14 @@ export default function Settings() {
       }}/>
       {incoming && <div className="confirmation"><p>Restore this collection of {incoming.portraits.length} works? Your current collection will be replaced. You can undo this.</p><button className="primary-button" onClick={() => {
         s.commit(incoming.portraits)
+        playerSession.restore(incoming.player)
         useGallery.setState(current => ({
           ...incoming.settings,
           importEpoch: current.importEpoch + 1,
+          playerEpoch: current.playerEpoch + 1,
         }))
         setIncoming(null)
-        galleryEvents.dispatchEvent(new Event('home'))
+        galleryEvents.dispatchEvent(new Event('cancel-interaction'))
         notify('Your collection has arrived safely.')
       }}>Restore collection</button><button className="text-button" onClick={() => setIncoming(null)}>Keep this collection</button></div>}
     </section>

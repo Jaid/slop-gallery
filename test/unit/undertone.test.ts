@@ -7,11 +7,12 @@ import {EgoMotor} from 'ego-player/motor'
 import {BoxGeometry, Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {newPortrait} from '../../src/lib/gallery/actions.ts'
-import {createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
+import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import {initialPortraits} from '../../src/lib/gallery/collection.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
-import {stairBlocks, staircase, stairFlights, stairFloorHeight, stairRails, stairRoofs, stairTurn} from '../../src/lib/gallery/staircase.ts'
+import {stairBlocks, staircase, stairFlights, stairFloorHeight, stairRailGeometry, stairRoofs, stairTurn} from '../../src/lib/gallery/staircase.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
+import {undertoneRecovery} from '../../src/lib/gallery/undertone/config.ts'
 import {findPlacement, floorHeight, insideGallery, placementIssue, roomAt, rooms, roomVisit, wallPosition, walls} from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
@@ -19,7 +20,9 @@ const lower = rooms.find(candidate => candidate.id === 'undertone')!
 const upper = rooms.find(candidate => candidate.id === 'antechamber')!
 describe('lower gallery', () => {
   test('stacked rooms, both stair flights and the U-turn landing resolve their own elevation', () => {
-    expect(lower.center).toEqual(upper.center)
+    expect(lower.size).toEqual([28, 28])
+    expect(lower.center).toEqual([-8, 18.5])
+    expect(upper.center).toEqual([0, 11.5])
     expect(roomVisit(lower).position[1]).toBeCloseTo(-6.3)
     for (const block of stairBlocks) {
       const position: Vec3 = [block.position[0], block.top + 1.6, block.position[2]]
@@ -46,7 +49,7 @@ describe('lower gallery', () => {
     expect(position[1]).toBeCloseTo(-5.5)
     expect(placementIssue(wall, position, 2, 2, [])).toBe('')
     expect(placementIssue(wall, wallPosition(wall, 2, lower.floorY + 1), 2, 2, [])).toContain('label')
-    expect(findPlacement([-2, -5.5, 14], [0, 0, 1], 2, 2, [])).toMatchObject({
+    expect(findPlacement([-2, -5.5, 27], [0, 0, 1], 2, 2, [])).toMatchObject({
       wallId: wall.id,
       valid: true,
     })
@@ -105,43 +108,67 @@ describe('lower gallery', () => {
     expect(validateDocument(saved)).toEqual(saved)
     expect(portrait.hung).toBe(true)
   })
-  test('hanging and loose portraits survive relocation once without changing their metadata', () => {
-    const wall = walls.find(candidate => candidate.id === 'undertone-south')!
-    for (const hung of [true, false]) {
-      const portrait = {
-        ...initialPortraits[0]!,
-        hung,
-        wallId: wall.id,
-        rotation: wall.rotation,
-        position: hung ? wallPosition(wall, 2, -5.5) : [0, -7.8, 15] as Vec3,
-      }
-      const saved = validateDocument({
-        ...createDocument(),
-        portraits: [portrait],
-      })
-      expect(saved.portraits[0]).toMatchObject(portrait)
-      expect(validateDocument(saved)).toEqual(saved)
-      const old = {
-        ...portrait,
-        position: [portrait.position[0] + 18, portrait.position[1] + 4.4, portrait.position[2] + 3.5],
-      }
-      const migrated = validateDocument({
-        ...createDocument(),
-        portraits: [old],
-      }).portraits[0]!
-      expect(migrated).toMatchObject({
-        ...portrait,
-        position: migrated.position,
-      })
-      for (const [axis, value] of portrait.position.entries()) {
-        expect(migrated.position[axis]!).toBeCloseTo(value)
+  test('art from both former Undertone layouts migrates once without changing its metadata', () => {
+    for (const [wallId, compact, current, rotation] of [
+      ['undertone-west', [-5.78, -5.5, 11.5], [-21.78, -5.5, 11.5], Math.PI / 2],
+      ['undertone-south', [-2, -5.5, 18.28], [-2, -5.5, 32.28], Math.PI],
+      ['undertone-east', [5.78, -5.5, 8], [5.78, -5.5, 8], -Math.PI / 2],
+      ['undertone-north', [-4, -5.5, 4.72], [-4, -5.5, 4.72], 0],
+    ] as const) {
+      for (const ancient of [false, true]) {
+        const position = compact.map((n, i) => n + (ancient ? [18, 4.4, 3.5][i]! : 0)) as Vec3
+        const portrait = {
+          ...initialPortraits[0]!,
+          wallId,
+          rotation,
+          position,
+          title: 'My preserved painting',
+        }
+        const saved = validateDocument({
+          ...createDocument(),
+          portraits: [portrait],
+        })
+        expect(saved.portraits[0]).toMatchObject({
+          ...portrait,
+          position: saved.portraits[0]!.position,
+        })
+        for (const [axis, n] of current.entries()) {
+          expect(saved.portraits[0]!.position[axis]).toBeCloseTo(n)
+        }
+        expect(validateDocument(saved)).toEqual(saved)
+        expect(portrait.position).toEqual(position)
       }
     }
+    const loose = {
+      ...initialPortraits[0]!,
+      hung: false,
+      position: [18, -3.4, 18.5],
+    }
+    const saved = validateDocument({
+      ...createDocument(),
+      portraits: [loose],
+    })
+    expect(saved.portraits[0]!.position).toEqual([...undertoneRecovery])
+    expect(validateDocument(saved)).toEqual(saved)
     const portrait = newPortrait(new Blob, 'Lower arrival', 1, 1, {
-      position: [0, -6.4, 15],
+      position: [3.5, -6.4, 18.5],
       direction: [0, -1, 0],
     })
     expect(portrait.position[1]).toBeCloseTo(-7.2)
+  })
+  test('current loose artwork on the stair landing is not mistaken for the original Undertone', () => {
+    const portrait = {
+      ...initialPortraits[0]!,
+      hung: false,
+      wallId: 'undertone-east',
+      position: [15.3, -3.8, 13.3] as Vec3,
+    }
+    const saved = validateDocument({
+      ...createDocument(),
+      portraits: [portrait],
+    })
+    expect(saved.portraits[0]!.position).toEqual(portrait.position)
+    expect(validateDocument(saved)).toEqual(saved)
   })
   test('legacy paintings displaced by the east stair portal or north tunnel are laid safely inside', () => {
     for (const portrait of [
@@ -164,7 +191,7 @@ describe('lower gallery', () => {
       })
       expect(saved.portraits[0]).toMatchObject({
         hung: false,
-        position: [0, -7.8, 15],
+        position: [...undertoneRecovery],
       })
       expect(validateDocument(saved)).toEqual(saved)
     }
@@ -207,7 +234,7 @@ describe('lower gallery', () => {
             for (const block of flight.blocks) {
               for (const edge of [-0.499, 0, 0.499]) {
                 const x = block.position[0] + block.size[0] * edge
-                const ray = new Raycaster(new Vector3(x, block.top + 0.001, block.position[2]), new Vector3(0, 0, side), 0, 2)
+                const ray = new Raycaster(new Vector3(x, block.top + 0.001, block.position[2]), new Vector3(0, 0, side), 0, flight.width / 2 + 0.5)
                 expect(ray.intersectObject(mesh).length).toBeGreaterThan(0)
               }
             }
@@ -245,13 +272,18 @@ describe('lower gallery', () => {
             for (const block of stairBlocks) {
               world.createCollider(RAPIER.ColliderDesc.cuboid(block.size[0] / 2, block.size[1] / 2, block.size[2] / 2).setTranslation(...block.position))
             }
-            for (const beam of [...stairRoofs, ...stairRails]) {
+            for (const part of [stairTurn.floorGeometry(), stairTurn.roofGeometry(), stairRailGeometry('inner'), stairRailGeometry('outer')]) {
+              const [vertices, indices] = colliderGeometry(part)
+              world.createCollider(RAPIER.ColliderDesc.trimesh(vertices, indices, RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES))
+              part.dispose()
+            }
+            for (const beam of stairRoofs) {
               world.createCollider(RAPIER.ColliderDesc.cuboid(beam.size[0] / 2, beam.size[1] / 2, beam.size[2] / 2).setTranslation(...beam.position).setRotation((new Quaternion).setFromEuler(new Euler(...beam.rotation))))
             }
             world.createCollider(RAPIER.ColliderDesc.cuboid(4, 0.15, 3.5).setTranslation(0, -0.15, 11.5))
-            world.createCollider(RAPIER.ColliderDesc.cuboid(6, 0.15, 7).setTranslation(0, lower.floorY - 0.15, 11.5))
-            world.createCollider(RAPIER.ColliderDesc.cuboid(6, 0.15, 7).setTranslation(0, lower.floorY + 5.9, 11.5))
-            const path = [[3, staircase.z + offset], [stairTurn.position[0], staircase.z + offset], [stairTurn.position[0], staircase.returnZ + offset], [4.4, staircase.returnZ + offset]]
+            world.createCollider(RAPIER.ColliderDesc.cuboid(lower.size[0] / 2, 0.15, lower.size[1] / 2).setTranslation(lower.center[0], lower.floorY - 0.15, lower.center[1]))
+            world.createCollider(RAPIER.ColliderDesc.cuboid(lower.size[0] / 2, 0.15, lower.size[1] / 2).setTranslation(lower.center[0], lower.floorY + 5.9, lower.center[1]))
+            const path = [[3, staircase.z + offset], ...Array.from({length: 17}, (_, i) => stairTurn.point(i / 16 * Math.PI, stairTurn.radius - offset * (staircase.width + staircase.lowerWidth) / (2 * staircase.width))), [4.4, staircase.returnZ - offset * staircase.lowerWidth / staircase.width]]
             if (ascending) {
               path.reverse()
             }

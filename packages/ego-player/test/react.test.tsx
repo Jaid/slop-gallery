@@ -5,7 +5,7 @@ import type {RapierContext} from '@react-three/rapier'
 import {expect, test} from 'bun:test'
 
 import {createRoot, extend, useThree} from '@react-three/fiber/webgpu'
-import {Physics, useRapier} from '@react-three/rapier'
+import {CuboidCollider, Physics, RigidBody, useRapier} from '@react-three/rapier'
 import {act, createRef, StrictMode, Suspense} from 'react'
 import {Object3D, WebGPURenderer} from 'three/webgpu'
 
@@ -34,6 +34,7 @@ test('React lifecycle preserves the motor, camera ownership and ref contract wit
   let inputCalls = 0
   let latest: EgoState | undefined
   let cameraEnabled = true
+  let ceiling: number | undefined
   function Probe() {
     physics = useRapier()
     scene = useThree()
@@ -47,6 +48,10 @@ test('React lifecycle preserves the motor, camera ownership and ref contract wit
   const cameraToggle = () => cameraEnabled
   const render = (props: Partial<EgoPlayerProps> = {}, mounted = true) => <StrictMode><Suspense fallback={null}><Physics paused>
     {mounted && <EgoPlayer ref={player} input={input} pointerLock={false} gravity={0} cameraEnabled={cameraToggle} onInput={onInput} onUpdate={onUpdate} {...props}/>}
+    {ceiling !== undefined && <RigidBody key={ceiling} type="fixed" colliders={false}>
+      <CuboidCollider args={[1, 0.1, 1]} position={[4, ceiling, 0]}/>
+      <CuboidCollider args={[10, 0.1, 10]} position={[0, -0.1, 0]}/>
+    </RigidBody>}
     <Probe/>
   </Physics></Suspense></StrictMode>
   try {
@@ -74,6 +79,7 @@ test('React lifecycle preserves the motor, camera ownership and ref contract wit
     const state = scene!
     const handle = player.current!
     const body = handle.body!
+    expect(body.userData).toEqual({isPlayer: true})
     expect(context.world.bodies.len()).toBe(1)
     expect(context.world.colliders.len()).toBe(1)
     let time = 0
@@ -153,6 +159,12 @@ test('React lifecycle preserves the motor, camera ownership and ref contract wit
     }
     tick(120)
     expect(Math.hypot(latest!.velocity.x, latest!.velocity.z)).toBeCloseTo(3 * 1.2, 4)
+    const metadata = {team: 'blue'}
+    await act(async () => root.render(render({userData: metadata})))
+    expect(body.userData).toBe(metadata)
+    expect(player.current?.body).toBe(body)
+    await act(async () => root.render(render()))
+    expect(body.userData).toEqual({isPlayer: true})
     await act(async () => {
       root.render(render({}, false))
     })
@@ -161,6 +173,51 @@ test('React lifecycle preserves the motor, camera ownership and ref contract wit
     expect(context.world.colliders.len()).toBe(0)
     expect(context.beforeStepCallbacks.size).toBe(0)
     expect(context.afterStepCallbacks.size).toBe(0)
+    // Mount the player before its environment, then render before stepping physics.
+    for (const blocked of [false, true]) {
+      ceiling = blocked ? 0.6 : 1.4
+      keys = {}
+      cameraEnabled = true
+      await act(async () => root.render(render({
+        position: [4, 0.02, 0],
+        fallbackPosition: [0, 0.05, 0],
+        enabled: false,
+      })))
+      frame()
+      const restored = player.current!
+      expect(restored.getState()?.crouching).toBe(!blocked)
+      expect(restored.body!.translation().x).toBe(blocked ? 0 : 4)
+      expect(state.camera.position.x).toBe(blocked ? 0 : 4)
+      expect(state.camera.position.y).toBeCloseTo(blocked ? 1.65 : 0.92, 5)
+      tick()
+      expect(latest?.crouching).toBe(!blocked)
+      expect(latest?.position.x).toBe(blocked ? 0 : 4)
+      if (!blocked) {
+        restored.teleport([0, 0.05, 0])
+        tick(120)
+        expect(restored.getState()?.crouching).toBe(false)
+      }
+      await act(async () => root.render(render({}, false)))
+    }
+    // A mount-time restore request waits for sibling colliders and copies its arguments.
+    ceiling = 1.4
+    cameraEnabled = false
+    state.camera.position.set(8, 9, 10)
+    await act(async () => root.render(render({position: [4, 0.02, 0]})))
+    frame()
+    expect(player.current!.getState()?.crouching).toBe(true)
+    expect(state.camera.position.toArray()).toEqual([8, 9, 10])
+    await act(async () => root.render(render({}, false)))
+    await act(async () => root.render(render({position: [0, 0.05, 0]})))
+    const pending: [number, number, number] = [4, 0.02, 0]
+    player.current!.teleport(pending, [0, 1, 0, 0])
+    pending[0] = 100
+    frame()
+    expect(player.current!.getState()?.crouching).toBe(true)
+    expect(state.camera.position.toArray()[0]).toBe(4)
+    expect(state.camera.position.y).toBeCloseTo(0.92, 5)
+    expect(state.camera.quaternion.toArray()).toEqual([0, 1, 0, 0])
+    await act(async () => root.render(render({}, false)))
   } finally {
     await act(async () => root.unmount())
     if (previousActEnvironment) {

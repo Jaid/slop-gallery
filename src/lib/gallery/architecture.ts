@@ -1,9 +1,11 @@
 import type {Wall, WallOpening} from './walls.ts'
 
 import {ADDITION, Brush, Evaluator, SUBTRACTION} from 'three-bvh-csg'
-import {BoxGeometry, BufferGeometry, ExtrudeGeometry, Matrix4, MeshBasicNodeMaterial, Shape} from 'three/webgpu'
+import {mergeVertices} from 'three/addons/utils/BufferGeometryUtils.js'
+import {BoxGeometry, BufferGeometry, ExtrudeGeometry, Matrix4, MeshBasicNodeMaterial, Shape, Vector3} from 'three/webgpu'
 
 import {wallFace, wallOpeningTrim} from './architectureDimensions.ts'
+import {bendGeometry, curveSegments as bendSegments} from './CurvedBoxGeometry.ts'
 
 export {wallFace, wallOpeningTrim, wallTop} from './architectureDimensions.ts'
 
@@ -32,20 +34,51 @@ const extrude = (shape: Shape, depth: number, z: number) => {
     curveSegments,
   }).translate(0, 0, z)
 }
-const box = (width: number, height: number, depth: number, x: number, y: number, z: number) => {
-  return new BoxGeometry(width, height, depth).translate(x, y, z)
-}
 
 export type ArchitectureGeometry = ReturnType<typeof createArchitectureGeometry>
 export function colliderGeometry(geometry: BufferGeometry): [Float32Array, Uint32Array] {
-  const positions = geometry.getAttribute('position')
-  const vertices = Float32Array.from(positions.array)
-  const indices = geometry.index ? Uint32Array.from(geometry.index.array) : Uint32Array.from({length: positions.count}, (_, i) => i)
-  return [vertices, indices]
+  // UV seams and lathe poles are render attributes, not physical cracks. Weld only
+  // positions and remove zero-area faces before Rapier builds its contact topology.
+  const surface = new BufferGeometry
+  surface.setAttribute('position', geometry.getAttribute('position'))
+  surface.setIndex(geometry.index)
+  const welded = mergeVertices(surface, 1e-6)
+  try {
+    const positions = welded.getAttribute('position')
+    const vertices = Float32Array.from(positions.array)
+    const indices: Array<number> = []
+    const source = welded.index!
+    const origin = new Vector3
+    const ab = new Vector3
+    const ac = new Vector3
+    for (let i = 0; i < source.count; i += 3) {
+      const a = source.getX(i)
+      const b = source.getX(i + 1)
+      const c = source.getX(i + 2)
+      origin.fromBufferAttribute(positions, a)
+      ab.fromBufferAttribute(positions, b).sub(origin)
+      ac.fromBufferAttribute(positions, c).sub(origin)
+      if (ab.cross(ac).lengthSq() > 1e-20) {
+        indices.push(a, b, c)
+      }
+    }
+    return [vertices, Uint32Array.from(indices)]
+  } finally {
+    welded.dispose()
+    surface.dispose()
+  }
 }
 // CSG runs once per wall layout, never in the animation loop or on theme changes.
 export function createArchitectureGeometry(wall: Wall) {
   const top = wall.height + 0.3
+  const baseboardHeight = wall.baseboardHeight ?? 0.44
+  if (!Number.isFinite(baseboardHeight) || baseboardHeight <= 0.06) {
+    throw new RangeError('A baseboard needs a finite height greater than its 0.06 m cap.')
+  }
+  if (wall.curveRadius && (wall.holes?.length || wall.baseboardProfile || wall.slope)) {
+    throw new RangeError('Curved walls currently need a level rectangular profile without openings.')
+  }
+  const box = (width: number, height: number, depth: number, x: number, y: number, z: number) => new BoxGeometry(width, height, depth, wall.curveRadius ? bendSegments(width, wall.curveRadius) : 1).translate(x, y, z)
   const evaluator = new Evaluator
   evaluator.useGroups = false
   const material = new MeshBasicNodeMaterial
@@ -94,23 +127,26 @@ export function createArchitectureGeometry(wall: Wall) {
       shape.closePath()
       return brush(extrude(shape, front - wallFace, wallFace))
     }
-    let molding = baseboardBand(0, 0.38, 0.2)
-    const join = (part: Brush) => {
-      molding = evaluator.evaluate(molding, part, ADDITION, brush(new BufferGeometry))
-    }
-    join(baseboardBand(0.38, 0.06, 0.25))
-    for (const hole of wall.holes ?? []) {
-      const front = wall.trimStyle === 'plain' ? 0.25 : 0.27
-      join(brush(extrude(openingShape(hole, wallOpeningTrim, hole.bottom ? hole.bottom - wallOpeningTrim : 0), front - wallFace, wallFace)))
-      if (wall.trimStyle !== 'plain' && !hole.bottom) {
-        for (const side of [-1, 1]) {
-          join(trimBox(0.3, 0.4, 0.325, hole.u + side * (hole.width / 2 + wallOpeningTrim / 2), 0.2))
+    const trim: Array<BufferGeometry> = []
+    if (wall.trimStyle !== 'none') {
+      let molding = baseboardBand(0, baseboardHeight - 0.06, 0.2)
+      const join = (part: Brush) => {
+        molding = evaluator.evaluate(molding, part, ADDITION, brush(new BufferGeometry))
+      }
+      join(baseboardBand(baseboardHeight - 0.06, 0.06, 0.25))
+      for (const hole of wall.holes ?? []) {
+        const front = wall.trimStyle === 'plain' ? 0.25 : 0.27
+        join(brush(extrude(openingShape(hole, wallOpeningTrim, hole.bottom ? hole.bottom - wallOpeningTrim : 0), front - wallFace, wallFace)))
+        if (wall.trimStyle !== 'plain' && !hole.bottom) {
+          for (const side of [-1, 1]) {
+            join(trimBox(0.3, 0.4, 0.325, hole.u + side * (hole.width / 2 + wallOpeningTrim / 2), 0.2))
+          }
         }
       }
+      // Cut the assembled solid once, leaving a single reveal instead of coplanar faces
+      // from the baseboard, arch and plinth. Rendering and collision share this geometry.
+      trim.push(cut(molding))
     }
-    // Cut the assembled solid once, leaving a single reveal instead of coplanar faces
-    // from the baseboard, arch and plinth. Rendering and collision share this geometry.
-    const trim = [cut(molding)]
     const glazing = (wall.holes ?? []).filter(hole => hole.glassThickness).map(hole => {
       const bottom = hole.bottom ?? 0
       const geometry = extrude(openingShape(hole, 0, bottom), hole.glassThickness!, (wallFace - hole.glassThickness!) / 2)
@@ -127,9 +163,25 @@ export function createArchitectureGeometry(wall: Wall) {
         geometry.computeBoundingSphere()
       }
     }
+    const corniceBand = (height: number, depth: number, y: number, z: number) => box(wall.width * Math.hypot(1, wall.slope ?? 0), height, depth, 0, 0, 0).rotateZ(Math.atan(wall.slope ?? 0)).translate(0, y, z)
+    const cornice = wall.trimStyle === 'none' ? [] : [
+      corniceBand(0.1, 0.22, wall.height - 0.42, 0.16),
+      corniceBand(0.23, 0.32, wall.height - 0.22, 0.18),
+    ]
+    for (const part of cornice) {
+      retained.add(part)
+    }
+    for (const part of retained) {
+      if (wall.curveRadius) {
+        bendGeometry(part, wall.curveRadius)
+      }
+      part.computeBoundingBox()
+      part.computeBoundingSphere()
+    }
     const collision = [surface, ...trim, ...glazing].map(colliderGeometry)
     return {
       surface,
+      cornice,
       trim,
       glazing,
       collision,
@@ -157,7 +209,7 @@ export function createArchitectureGeometry(wall: Wall) {
 
 const cache = new Map<string, ArchitectureGeometry>
 export function architectureGeometry(wall: Wall) {
-  const key = JSON.stringify([wall.width, wall.height, wall.holes ?? [], wall.slope ?? 0, wall.baseboardProfile ?? null, wall.trimStyle ?? 'classic'])
+  const key = JSON.stringify([wall.width, wall.height, wall.holes ?? [], wall.slope ?? 0, wall.baseboardProfile ?? null, wall.trimStyle ?? 'classic', wall.curveRadius ?? 0, wall.baseboardHeight ?? 0.44])
   let geometry = cache.get(key)
   if (!geometry) {
     geometry = createArchitectureGeometry(wall)

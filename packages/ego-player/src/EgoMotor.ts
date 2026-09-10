@@ -25,6 +25,7 @@ export class EgoMotor {
   private readonly controller
   private disposed = false
   private readonly forward = new Vector3
+  private freshClearance = false
   private isCrouching = false
   private isGrounded = false
   private jumpBufferedUntil = Number.NEGATIVE_INFINITY
@@ -146,10 +147,11 @@ export class EgoMotor {
         y: feet.y + this.standingHeight / 2,
         z: feet.z,
       }, identityRotation, standingShape, this.rapier.QueryFilterFlags.EXCLUDE_SENSORS, o.collisionGroups, this.collider, this.body)
-      if (!obstruction) {
+      if (!obstruction && (!this.freshClearance || this.canOccupy([feet.x, feet.y, feet.z], this.standingHeight))) {
         this.isCrouching = false
       }
     }
+    this.freshClearance = false
     // Resize synchronously before movement and clearance checks in the next substep.
     this.updateShape()
     const inputForward = active ? Number(!!input.forward) - Number(!!input.backward) : 0
@@ -225,10 +227,38 @@ export class EgoMotor {
     }
   }
 
-  teleport(position: EgoPosition) {
-    if (!position.every(Number.isFinite)) {
+  teleport(position: EgoPosition, fallback?: EgoPosition) {
+    if (!position.every(Number.isFinite) || fallback && !fallback.every(Number.isFinite)) {
       throw new RangeError('ego-player: teleport position must be finite.')
     }
+    // Direct collider queries also see newly mounted/moved geometry before the first world step.
+    this.world.propagateModifiedBodyPositionsToColliders()
+    const destinations = fallback ? [position, fallback] : [position]
+    let selected: {crouching: boolean
+      position: EgoPosition} | undefined
+    for (const destination of destinations) {
+      if (!this.isCrouching && this.canOccupy(destination, this.standingHeight)) {
+        selected = {
+          position: destination,
+          crouching: false,
+        }
+      } else if (this.canOccupy(destination, this.crouchingHeight)) {
+        selected = {
+          position: destination,
+          crouching: true,
+        }
+      }
+      if (selected) {
+        break
+      }
+    }
+    if (!selected) {
+      throw new RangeError('ego-player: neither the destination nor its fallback fits the player capsule.')
+    }
+    position = selected.position
+    this.isCrouching = selected.crouching
+    this.freshClearance = true
+    this.updateShape()
     const translation = {
       x: position[0],
       y: position[1],
@@ -249,6 +279,32 @@ export class EgoMotor {
     this.lastGroundedAt = Number.NEGATIVE_INFINITY
     this.jumpBufferedUntil = Number.NEGATIVE_INFINITY
     // Keep the physical button latch: a held jump is not a new press after teleport.
+  }
+
+  private canOccupy(position: EgoPosition, height: number) {
+    // Inset by 0.1 mm so resting contact/float32 noise is not mistaken for penetration.
+    const shape = new this.rapier.Capsule(getCapsuleHalfHeight(height, this.radius), this.radius - 0.0001)
+    const center = {
+      x: position[0],
+      y: position[1] + height / 2,
+      z: position[2],
+    }
+    const groups = this.options.collisionGroups ?? 0xFF_FF_FF_FF
+    let clear = true
+    this.world.forEachCollider(candidate => {
+      if (!clear || candidate.handle === this.collider.handle || candidate.parent()?.handle === this.body.handle || !candidate.isEnabled() || candidate.parent()?.isEnabled() === false || candidate.isSensor()) {
+        return
+      }
+      const otherGroups = candidate.collisionGroups()
+      if (!(groups >>> 16 & otherGroups & 0xFF_FF) || !(otherGroups >>> 16 & groups & 0xFF_FF)) {
+        return
+      }
+      // Intersection queries support concave triangle meshes as well as primitive colliders.
+      if (candidate.intersectsShape(shape, center, identityRotation)) {
+        clear = false
+      }
+    })
+    return clear
   }
 
   private updateShape() {

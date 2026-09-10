@@ -1,5 +1,5 @@
 import type {EgoOptions} from './options.ts'
-import type {EgoInputReader, EgoPlayerHandle, EgoPosition, EgoState, EgoToggle} from './types.ts'
+import type {EgoInputReader, EgoPlayerHandle, EgoPosition, EgoRotation, EgoState, EgoToggle} from './types.ts'
 import type {RapierCollider, RapierRigidBody, RigidBodyProps} from '@react-three/rapier'
 import type {ComponentProps, ReactNode, Ref} from 'react'
 
@@ -20,6 +20,8 @@ export type EgoPlayerProps = EgoOptions & {
   children?: ReactNode
   /** Enables input, not gravity. May read an external store without React subscriptions. */
   enabled?: EgoToggle
+  /** Safe feet position used when a spawn/teleport fits neither standing nor crouching. */
+  fallbackPosition?: EgoPosition
   input: EgoInputReader
   /** Called for active input during a physics step. */
   onInput?: (input: ReturnType<EgoInputReader>) => void
@@ -34,6 +36,7 @@ export type EgoPlayerProps = EgoOptions & {
   ref?: Ref<EgoPlayerHandle>
   /** Defaults to true. Only a lock on this Canvas enables input. */
   requirePointerLock?: boolean
+  /** Rigid-body metadata. Defaults to {isPlayer: true}; a supplied value replaces it. */
   userData?: RigidBodyProps['userData']
   /** Initial camera yaw in radians; updates intentionally reset camera orientation. */
   yaw?: number
@@ -43,10 +46,14 @@ const initialPosition: EgoPosition = [0, 0.05, 0]
 const readToggle = (value: EgoToggle) => {
   return typeof value === 'function' ? value() : value
 }
-export function EgoPlayer({cameraEnabled = true, children, enabled = true, input, onInput, onStep, onUpdate, pointerLock = true, position = initialPosition, ref, requirePointerLock = true, userData, yaw = 0, ...options}: EgoPlayerProps) {
+export function EgoPlayer({cameraEnabled = true, children, enabled = true, fallbackPosition, input, onInput, onStep, onUpdate, pointerLock = true, position = initialPosition, ref, requirePointerLock = true, userData, yaw = 0, ...options}: EgoPlayerProps) {
+  const [defaultUserData] = useState(() => ({isPlayer: true}))
   const bodyRef = useRef<RapierRigidBody>(null)
   const colliderRef = useRef<RapierCollider>(null)
   const motorRef = useRef<EgoMotor | null>(null)
+  const initialized = useRef(false)
+  const pendingTeleport = useRef<{position: EgoPosition
+    rotation?: EgoRotation} | null>(null)
   const camera = useThree(state => state.camera)
   const renderer = useThree(state => state.renderer)
   const {rapier, world} = useRapier()
@@ -70,6 +77,7 @@ export function EgoPlayer({cameraEnabled = true, children, enabled = true, input
     }
     const motor = new EgoMotor(rapier, world, body, collider)
     motorRef.current = motor
+    initialized.current = false
     return () => {
       motorRef.current = null
       motor.dispose()
@@ -81,6 +89,30 @@ export function EgoPlayer({cameraEnabled = true, children, enabled = true, input
   useEffect(() => {
     camera.rotation.set(0, yaw, 0, 'YXZ')
   }, [camera, yaw])
+  const applyTeleport = (destination: EgoPosition, rotation?: EgoRotation, writeCamera = true) => {
+    const motor = motorRef.current!
+    motor.teleport(destination, fallbackPosition)
+    const eyeHeight = motor.crouching ? resolved.crouchEyeHeight : resolved.eyeHeight
+    view.reset(eyeHeight)
+    const actual = motor.body.translation()
+    if (writeCamera) {
+      camera.position.set(actual.x, actual.y + eyeHeight, actual.z)
+    }
+    if (rotation) {
+      camera.quaternion.set(...rotation).normalize()
+    }
+  }
+  const initialize = () => {
+    if (!motorRef.current || initialized.current) {
+      return
+    }
+    // Sibling colliders finish mounting before physics/render callbacks, independent of JSX order.
+    const pending = pendingTeleport.current
+    const feet = motorRef.current.body.translation()
+    applyTeleport(pending?.position ?? [feet.x, feet.y, feet.z], pending?.rotation, !!pending || readToggle(cameraEnabled))
+    pendingTeleport.current = null
+    initialized.current = true
+  }
   useImperativeHandle(ref, () => ({
     get body() {
       return bodyRef.current
@@ -94,16 +126,21 @@ export function EgoPlayer({cameraEnabled = true, children, enabled = true, input
       if (rotation && (!rotation.every(Number.isFinite) || Math.hypot(...rotation) === 0)) {
         throw new RangeError('ego-player: teleport rotation must be a finite, nonzero quaternion.')
       }
-      motor.teleport(destination)
-      const eyeHeight = motor.crouching ? resolved.crouchEyeHeight : resolved.eyeHeight
-      view.reset(eyeHeight)
-      camera.position.set(destination[0], destination[1] + eyeHeight, destination[2])
-      if (rotation) {
-        camera.quaternion.set(...rotation).normalize()
+      if (!destination.every(Number.isFinite)) {
+        throw new RangeError('ego-player: teleport position must be finite.')
       }
+      if (!initialized.current) {
+        pendingTeleport.current = {
+          position: [...destination],
+          rotation: rotation && [...rotation],
+        }
+        return
+      }
+      applyTeleport(destination, rotation)
     },
-  }), [camera, resolved.crouchEyeHeight, resolved.eyeHeight, view])
+  }))
   useBeforePhysicsStep(physicsWorld => {
+    initialize()
     const motor = motorRef.current
     if (!motor) {
       return
@@ -121,6 +158,7 @@ export function EgoPlayer({cameraEnabled = true, children, enabled = true, input
     }
   })
   useFrame((_, delta) => {
+    initialize()
     const motor = motorRef.current
     if (!motor) {
       return
@@ -136,10 +174,9 @@ export function EgoPlayer({cameraEnabled = true, children, enabled = true, input
   })
   return <>
     {pointerLock !== false && <PointerLockControls makeDefault {...typeof pointerLock === 'object' ? pointerLock : {}} domElement={renderer.domElement}/>}
-    <RigidBody ref={bodyRef} type="kinematicPosition" userData={userData} colliders={false} canSleep={false} position={initial.position}>
+    <RigidBody ref={bodyRef} type="kinematicPosition" userData={userData === undefined ? defaultUserData : userData} colliders={false} canSleep={false} position={initial.position}>
       <CapsuleCollider ref={colliderRef} args={[getCapsuleHalfHeight(initial.height, initial.radius), initial.radius]} position={[0, initial.height / 2, 0]} friction={0} restitution={0}/>
       {children}
     </RigidBody>
   </>
 }
-

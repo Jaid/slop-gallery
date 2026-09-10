@@ -1,12 +1,15 @@
 import type {Placement, Portrait, RoomId, Vec3} from './types.ts'
 
+import {cabin, cabinPassages, cabinRouteWalls, cabinStairFloor, cabinWindow, cabinWindowFloor, cabinWindowGlassDistance, insideCabinRoute} from './cabin.ts'
 import {daydream} from './daydream.ts'
+import {mainEntrance} from './entrance.ts'
 import {balconyFloorHeight} from './glasswellBalcony.ts'
 import {towerFloorHeight} from './glasswellTower.ts'
 import {glasswellPlatform, glasswellRamps, lowerGallery, rampFloorHeight} from './lowerGallery.ts'
 import {portraitLabel, portraitLabelLayout} from './portraitLabel.ts'
 import {insideStairway, staircase, stairFlights, stairFloorHeight, stairTurn} from './staircase.ts'
 import {tunnelDisplayWindow} from './tunnelDisplays.ts'
+import {craterTerrain} from './undertone/CraterTerrain.ts'
 
 export const placementReach = 10
 
@@ -20,16 +23,21 @@ export type WallOpening = {
 }
 
 export type Wall = {
+  baseboardHeight?: number
   baseboardProfile?: Array<readonly [number, number]>
   center: Vec3
+  /** Signed bend radius, measured from the untrimmed wall plane. */
+  curveRadius?: number
   hangable?: boolean
   height: number
   holes?: Array<WallOpening>
   id: string
+  /** Solid architectural features which must remain free of hanging artwork. */
+  reservations?: Array<WallOpening>
   room: RoomId
   rotation: number
   slope?: number
-  trimStyle?: 'classic' | 'plain'
+  trimStyle?: 'classic' | 'none' | 'plain'
   width: number
 }
 
@@ -112,22 +120,34 @@ export const rooms = [
     size: lowerGallery.glasswell.size,
     color: '#7e9298',
   },
+  {
+    id: 'cabin',
+    floorY: cabin.floorY,
+    height: cabin.height,
+    number: '08',
+    title: 'The Cabin',
+    subtitle: 'Weathered stone. Warm timber. A way back to Amber.',
+    center: cabin.center,
+    size: cabin.size,
+    color: '#936d47',
+  },
 ] as const
 
 const tunnelContains = ([x, y, z]: Vec3) => Math.abs(x - lowerGallery.tunnel.x) <= lowerGallery.tunnel.width / 2 && z >= lowerGallery.tunnel.northZ && z <= lowerGallery.tunnel.southZ && y >= lowerGallery.floorY - 1 && y <= lowerGallery.floorY + lowerGallery.tunnel.height
 const contains = (room: (typeof rooms)[number], [x, y, z]: Vec3) => {
-  return y >= room.floorY - 1 && y <= room.floorY + room.height + 0.2 && Math.abs(x - room.center[0]) <= room.size[0] / 2 && Math.abs(z - room.center[1]) <= room.size[1] / 2
+  const ground = room.id === 'undertone' ? Math.min(room.floorY, room.floorY + craterTerrain.height(x - room.center[0], z - room.center[1])) : room.floorY
+  return y >= ground - 1 && y <= room.floorY + room.height + 0.2 && Math.abs(x - room.center[0]) <= room.size[0] / 2 && Math.abs(z - room.center[1]) <= room.size[1] / 2
 }
 
 export const galleryBounds = {
-  minX: Math.min(...rooms.map(room => room.center[0] - room.size[0] / 2)),
+  minX: Math.min(...rooms.map(room => room.center[0] - room.size[0] / 2), ...cabinPassages.flatMap(passage => passage.floors.map(floor => floor.center[0] - floor.size[0] / 2))),
   maxX: Math.max(...rooms.map(room => room.center[0] + room.size[0] / 2)),
   minZ: Math.min(...rooms.map(room => room.center[1] - room.size[1] / 2)),
   maxZ: Math.max(...rooms.map(room => room.center[1] + room.size[1] / 2)),
 }
 
 export function insideGallery(position: Vec3) {
-  return position.every(Number.isFinite) && (rooms.some(room => contains(room, position)) || insideStairway(position) || tunnelContains(position))
+  return position.every(Number.isFinite) && (rooms.some(room => contains(room, position)) || insideStairway(position) || tunnelContains(position) || insideCabinRoute(position))
 }
 
 export function roomVisit(room: (typeof rooms)[number]): {position: Vec3
@@ -187,7 +207,10 @@ const doorway: Array<WallOpening> = [
   },
 ]
 export const walls: Array<Wall> = [
-  wall('daydream-north', 'daydream', 0, daydream.northZ, 0, daydream.width),
+  {
+    ...wall('daydream-north', 'daydream', 0, daydream.northZ, 0, daydream.width),
+    reservations: [mainEntrance.reservation],
+  },
   // Keep the original side walls and doorways fixed; extend only their north ends.
   wall('daydream-extension-west', 'daydream', -daydream.width / 2, (daydream.northZ + daydream.previousNorthZ) / 2, Math.PI / 2, daydream.previousNorthZ - daydream.northZ),
   wall('daydream-extension-east', 'daydream', daydream.width / 2, (daydream.northZ + daydream.previousNorthZ) / 2, -Math.PI / 2, daydream.previousNorthZ - daydream.northZ),
@@ -256,12 +279,19 @@ export const walls: Array<Wall> = [
       profile: 'arch',
     },
   ]),
-  wall('amber-west', 'amber', -20, 14, Math.PI / 2, 12),
+  wall('amber-west', 'amber', -20, 14, Math.PI / 2, 12, [
+    {
+      u: 14 - cabin.amberZ,
+      width: cabin.timberWidth,
+      height: 3.4,
+      profile: 'arch',
+    },
+  ]),
   wall('amber-east', 'amber', -8, 14, -Math.PI / 2, 12),
   wall('amber-south', 'amber', -14, 20, Math.PI, 12),
   roomWall('undertone', 'north', [
     {
-      u: 0,
+      u: lowerGallery.tunnel.x - lowerGallery.undertone.center[0],
       width: lowerGallery.tunnel.width,
       height: 3.6,
       profile: 'rectangle',
@@ -270,7 +300,7 @@ export const walls: Array<Wall> = [
   roomWall('undertone', 'east', [
     {
       u: staircase.returnZ - lowerGallery.undertone.center[1],
-      width: staircase.width,
+      width: staircase.lowerWidth,
       height: 3.6,
       profile: 'rectangle',
     },
@@ -278,44 +308,44 @@ export const walls: Array<Wall> = [
   roomWall('undertone', 'south'),
   roomWall('undertone', 'west'),
   ...stairFlights.flatMap(flight => [-1, 1].map(side => flight.wall(side))),
-  ...[
+  ...stairTurn.walls(),
+  roomWall('glasswell', 'north', [
     {
-      id: 'east',
-      x: staircase.turnX + staircase.width,
-      z: stairTurn.position[2],
-      rotation: -Math.PI / 2,
-      width: stairTurn.size[2],
+      u: cabin.entranceX,
+      bottom: cabin.floorY - lowerGallery.floorY,
+      width: cabin.passageWidth,
+      height: cabin.floorY - lowerGallery.floorY + 3.4,
+      profile: 'arch',
     },
-    {
-      id: 'north',
-      x: stairTurn.position[0],
-      z: staircase.z - staircase.width / 2,
-      rotation: 0,
-      width: staircase.width,
-    },
-    {
-      id: 'south',
-      x: stairTurn.position[0],
-      z: staircase.returnZ + staircase.width / 2,
-      rotation: Math.PI,
-      width: staircase.width,
-    },
-    {
-      id: 'divider',
-      x: staircase.turnX,
-      z: stairTurn.position[2],
-      rotation: Math.PI / 2,
-      width: staircase.returnZ - staircase.z - staircase.width,
-    },
-  ].map(part => ({
-    ...wall(`undertone-stairs-turn-${part.id}`, 'undertone', part.x, part.z, part.rotation, part.width),
-    center: [part.x, stairTurn.top - 0.3, part.z] as Vec3,
-    height: 3.6,
-    hangable: false,
-  })),
-  roomWall('glasswell', 'north'),
+  ]),
   roomWall('glasswell', 'east'),
   roomWall('glasswell', 'west'),
+  roomWall('cabin', 'north'),
+  roomWall('cabin', 'west', [
+    {
+      u: cabin.center[1] - cabin.returnZ,
+      width: cabin.timberWidth,
+      height: 3.4,
+      profile: 'arch',
+    },
+    {
+      u: cabin.center[1] - cabinWindow.z,
+      width: cabinWindow.width,
+      bottom: cabinWindow.bottom - cabin.floorY,
+      height: cabinWindow.top - cabin.floorY,
+      profile: 'rectangle',
+    },
+  ]),
+  roomWall('cabin', 'east', [
+    {
+      u: cabin.tunnelZ - cabin.center[1],
+      width: cabin.passageWidth,
+      height: 3.4,
+      profile: 'arch',
+    },
+  ]),
+  roomWall('cabin', 'south'),
+  ...cabinRouteWalls,
   roomWall('glasswell', 'south', [
     {
       u: 0,
@@ -363,17 +393,28 @@ export function roomAt(position: Vec3): RoomId {
   if (insideStairway(position)) {
     return 'undertone'
   }
+  if (insideCabinRoute(position)) {
+    return 'cabin'
+  }
   return tunnelContains(position) ? 'glasswell' : 'daydream'
 }
 
 export function wallPosition(wall: Wall, u: number, y: number, offset = 0.22): Vec3 {
   const sin = Math.sin(wall.rotation)
   const cos = Math.cos(wall.rotation)
-  return [wall.center[0] + u * cos + offset * sin, y, wall.center[2] - u * sin + offset * cos]
+  const radius = wall.curveRadius
+  const x = radius ? (radius - offset) * Math.sin(u / radius) : u
+  const z = radius ? radius - (radius - offset) * Math.cos(u / radius) : offset
+  return [wall.center[0] + x * cos + z * sin, y, wall.center[2] - x * sin + z * cos]
 }
 
 export function wallCoordinates(wall: Wall, [x, , z]: Vec3) {
-  return (x - wall.center[0]) * Math.cos(wall.rotation) - (z - wall.center[2]) * Math.sin(wall.rotation)
+  const u = (x - wall.center[0]) * Math.cos(wall.rotation) - (z - wall.center[2]) * Math.sin(wall.rotation)
+  if (wall.curveRadius) {
+    const depth = (x - wall.center[0]) * Math.sin(wall.rotation) + (z - wall.center[2]) * Math.cos(wall.rotation)
+    return Math.atan2(u / wall.curveRadius, 1 - depth / wall.curveRadius) * wall.curveRadius
+  }
+  return u
 }
 
 export function placementIssue(wall: Wall, position: Vec3, width: number, height: number, portraits: ReadonlyArray<Portrait>, ignoreId = '') {
@@ -389,7 +430,7 @@ export function placementIssue(wall: Wall, position: Vec3, width: number, height
   if (Math.abs(u) + halfWidth > wall.width / 2 - 0.24 || bottom < wall.center[1] + 0.48 || top > wall.center[1] + wall.height - 0.55) {
     return 'Leave space for the frame and its label.'
   }
-  if (wall.holes?.some(hole => Math.abs(u - hole.u) < halfWidth + hole.width / 2 + 0.14 && bottom < wall.center[1] + hole.height + 0.14)) {
+  if ([...wall.holes ?? [], ...wall.reservations ?? []].some(hole => Math.abs(u - hole.u) < halfWidth + hole.width / 2 + 0.14 && bottom < wall.center[1] + hole.height + 0.14 && top > wall.center[1] + (hole.bottom ?? 0) - 0.14)) {
     return 'Let’s keep the doorway clear.'
   }
   if (portraits.some(p => p.id !== ignoreId && p.hung && p.wallId === wall.id && Math.abs(wallCoordinates(wall, p.position) - u) < halfWidth + p.width / 2 + 0.18 && top > p.position[1] + portraitLabelLayout(p.width, p.height).bottom - portraitLabel.neighborClearance && bottom < p.position[1] + p.height / 2 + 0.23)) {
@@ -398,17 +439,46 @@ export function placementIssue(wall: Wall, position: Vec3, width: number, height
   return ''
 }
 
-export function findPlacement(origin: Vec3, direction: Vec3, width: number, height: number, portraits: ReadonlyArray<Portrait>, ignoreId = ''): Placement | null {
-  let nearest = Infinity
-  let result: Placement | null = null
-  for (const wall of walls) {
-    const nx = Math.sin(wall.rotation)
-    const nz = Math.cos(wall.rotation)
-    const facing = direction[0] * nx + direction[2] * nz
-    if (facing >= -0.0001) {
-      continue
+const wallRayDistance = (targetWall: Wall, origin: Vec3, direction: Vec3) => {
+  const sin = Math.sin(targetWall.rotation)
+  const cos = Math.cos(targetWall.rotation)
+  const facing = direction[0] * sin + direction[2] * cos
+  if (!targetWall.curveRadius) {
+    return facing < -0.0001 ? ((targetWall.center[0] - origin[0]) * sin + (targetWall.center[2] - origin[2]) * cos) / facing : Infinity
+  }
+  const radius = targetWall.curveRadius
+  const x = (origin[0] - targetWall.center[0]) * cos - (origin[2] - targetWall.center[2]) * sin
+  const z = (origin[0] - targetWall.center[0]) * sin + (origin[2] - targetWall.center[2]) * cos - radius
+  const dx = direction[0] * cos - direction[2] * sin
+  const dz = facing
+  const a = dx * dx + dz * dz
+  const b = 2 * (x * dx + z * dz)
+  const c = x * x + z * z - radius * radius
+  const discriminant = b * b - 4 * a * c
+  if (a < 1e-12 || discriminant < 0) {
+    return Infinity
+  }
+  for (const distance of [(-b - Math.sqrt(discriminant)) / (2 * a), (-b + Math.sqrt(discriminant)) / (2 * a)]) {
+    const angle = Math.atan2((x + dx * distance) / radius, -(z + dz * distance) / radius)
+    if (distance >= 0 && Math.abs(angle * radius) <= targetWall.width / 2 + 1e-9 && -dx * Math.sin(angle) + dz * Math.cos(angle) < -0.0001) {
+      return distance
     }
-    const distance = ((wall.center[0] - origin[0]) * nx + (wall.center[2] - origin[2]) * nz) / facing
+  }
+  return Infinity
+}
+
+export function findPlacement(origin: Vec3, direction: Vec3, width: number, height: number, portraits: ReadonlyArray<Portrait>, ignoreId = ''): Placement | null {
+  let nearest = cabinWindowGlassDistance(origin, direction) ?? Infinity
+  let result: Placement | null = Number.isFinite(nearest) ? {
+    inReach: nearest * Math.hypot(...direction) <= placementReach,
+    position: [origin[0] + direction[0] * nearest, origin[1] + direction[1] * nearest, origin[2] + direction[2] * nearest],
+    rotation: direction[0] < 0 ? Math.PI / 2 : -Math.PI / 2,
+    wallId: 'cabin-west',
+    valid: false,
+    reason: 'Keep the window clear.',
+  } : null
+  for (const wall of walls) {
+    const distance = wallRayDistance(wall, origin, direction)
     if (distance < 0 || distance >= nearest) {
       continue
     }
@@ -427,7 +497,7 @@ export function findPlacement(origin: Vec3, direction: Vec3, width: number, heig
     result = {
       inReach,
       position,
-      rotation: wall.rotation,
+      rotation: wall.rotation - (wall.curveRadius ? u / wall.curveRadius : 0),
       wallId: wall.id,
       valid: !reason,
       reason,
@@ -444,7 +514,21 @@ export function wallDistance(origin: Vec3, direction: Vec3) {
 // Prefer the highest nearby floor below the caller, not the first horizontal match.
 // This also recovers loose objects slightly below a slab in stacked rooms.
 export function floorHeight([x, y, z]: Vec3) {
-  const heights = rooms.filter(room => Math.abs(x - room.center[0]) <= room.size[0] / 2 && Math.abs(z - room.center[1]) <= room.size[1] / 2).map(room => room.floorY as number)
+  const heights = rooms.filter(room => Math.abs(x - room.center[0]) <= room.size[0] / 2 && Math.abs(z - room.center[1]) <= room.size[1] / 2).map(room => room.floorY + (room.id === 'undertone' ? craterTerrain.height(x - room.center[0], z - room.center[1]) : 0))
+  const sill = cabinWindowFloor(x, z)
+  if (sill !== undefined) {
+    heights.push(sill)
+  }
+  const cabinStair = cabinStairFloor(x, z)
+  if (cabinStair !== undefined) {
+    heights.push(cabinStair)
+  }
+  for (const passage of cabinPassages) {
+    const floor = passage.floorAt(x, z)
+    if (floor !== undefined) {
+      heights.push(floor)
+    }
+  }
   if (Math.abs(x - glasswellPlatform.position[0]) <= glasswellPlatform.size[0] / 2 && Math.abs(z - glasswellPlatform.position[2]) <= glasswellPlatform.size[2] / 2) {
     heights.push(glasswellPlatform.position[1] + glasswellPlatform.size[1] / 2)
   }

@@ -587,3 +587,51 @@ for (const fps of [30, 60, 120, 240]) {
     })
   }
 }
+test('restoring under a newly mounted low ceiling selects crouching before the first world step', () => {
+  floor()
+  const motor = player()
+  const roofBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(4, 1.4, 0))
+  world.createCollider(RAPIER.ColliderDesc.cuboid(1, 0.1, 1), roofBody)
+  motor.teleport([4, 0.02, 0], [0, 0.04, 0])
+  expect(motor.crouching).toBe(true)
+  expect(motor.body.translation().x).toBe(4)
+  expect(motor.body.collider(0).halfHeight()).toBeCloseTo(0.2)
+  expect(motor.body.collider(0).translation().y).toBeCloseTo(0.52)
+  tick(motor, {}, 10, false)
+  expect(motor.crouching).toBe(true)
+  roofBody.setTranslation({
+    x: 10,
+    y: 1.4,
+    z: 0,
+  }, true)
+  world.step()
+  tick(motor)
+  expect(motor.crouching).toBe(false)
+})
+test('unsafe restore falls back only when even the crouched capsule cannot fit', () => {
+  floor()
+  const motor = player()
+  world.createCollider(RAPIER.ColliderDesc.cuboid(1, 2, 1).setTranslation(4, 1, 0))
+  motor.teleport([4, 0.02, 0], [0, 0.04, 0])
+  expect(motor.body.translation()).toMatchObject({
+    x: 0,
+    z: 0,
+  })
+  expect(motor.crouching).toBe(false)
+  const before = motor.getState()
+  expect(() => motor.teleport([4, 0.02, 0])).toThrow(RangeError)
+  expect(() => motor.teleport([4, 0.02, 0], [4, 0.04, 0])).toThrow(RangeError)
+  expect(motor.getState()).toEqual(before)
+})
+test('restore clearance ignores sensors, disabled bodies and noninteracting groups before broad-phase updates', () => {
+  floor()
+  const motor = player({collisionGroups: 0x00_01_00_01})
+  world.createCollider(RAPIER.ColliderDesc.cuboid(1, 2, 1).setTranslation(4, 1, 0).setSensor(true))
+  world.createCollider(RAPIER.ColliderDesc.cuboid(1, 2, 1).setTranslation(4, 1, 0).setEnabled(false))
+  world.createCollider(RAPIER.ColliderDesc.cuboid(1, 2, 1).setTranslation(4, 1, 0).setCollisionGroups(0x00_02_00_02))
+  const disabled = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(4, 1, 0).setEnabled(false))
+  world.createCollider(RAPIER.ColliderDesc.cuboid(1, 2, 1), disabled)
+  motor.teleport([4, 0, 0])
+  expect(motor.body.translation().x).toBe(4)
+  expect(motor.crouching).toBe(false)
+})

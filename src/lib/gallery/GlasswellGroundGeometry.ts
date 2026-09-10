@@ -48,12 +48,24 @@ export class GlasswellGroundGeometry extends BufferGeometry {
         }
       }
       slope.translate(tower.x, floorY, (towerRamp.startZ + towerRamp.endZ) / 2)
-      const radius = towerArch.width / 2
+      const halfWidth = towerArch.width / 2
+      const roofSlope = (towerArch.height - towerArch.lowHeight) / towerArch.width
+      const radius = towerArch.cornerRadius
+      const cornerX = halfWidth - radius
+      const cornerY = towerArch.lowHeight + roofSlope * radius - radius * Math.hypot(1, roofSlope)
+      const highRadius = towerArch.highCornerRadius
+      const highCornerX = -halfWidth + highRadius
+      const highCornerY = towerArch.height - roofSlope * highRadius - highRadius * Math.hypot(1, roofSlope)
+      const tangentAngle = Math.atan2(1, roofSlope)
       const shape = new Shape
-      shape.moveTo(-radius, -0.1)
-      shape.lineTo(radius, -0.1)
-      shape.lineTo(radius, towerArch.height - radius)
-      shape.absarc(0, towerArch.height - radius, radius, 0, Math.PI, false)
+      // Local −X faces the taller tower end after rotation. Circular fillets
+      // join the sloping roof tangentially to both vertical jambs.
+      shape.moveTo(-halfWidth, -0.1)
+      shape.lineTo(halfWidth, -0.1)
+      shape.lineTo(halfWidth, cornerY)
+      shape.absarc(cornerX, cornerY, radius, 0, tangentAngle, false)
+      shape.lineTo(highCornerX + highRadius * Math.cos(tangentAngle), highCornerY + highRadius * Math.sin(tangentAngle))
+      shape.absarc(highCornerX, highCornerY, highRadius, tangentAngle, Math.PI, false)
       shape.closePath()
       const cutterDepth = towerRamp.width + towerRamp.baseCornerRadius * 2 + 2
       const cutter = new ExtrudeGeometry(shape, {
@@ -62,7 +74,6 @@ export class GlasswellGroundGeometry extends BufferGeometry {
         curveSegments: 64,
       })
       cutter.translate(0, 0, -cutterDepth / 2).rotateY(Math.PI / 2).translate(tower.x, floorY, towerArch.z)
-      let solid = combine(brush(slope), brush(cutter), SUBTRACTION)
       const outline = new Shape
       for (const [i, [x, z]] of towerPlatformOutline.entries()) {
         if (i === 0) {
@@ -77,7 +88,9 @@ export class GlasswellGroundGeometry extends BufferGeometry {
         bevelEnabled: false,
       })
       platform.rotateX(Math.PI / 2).translate(tower.x, tower.floorY + tower.height, tower.z)
-      solid = combine(solid, brush(platform))
+      // Cut the joined support so the platform’s rounded shoulder cannot refill the opening.
+      let solid = combine(brush(slope), brush(platform))
+      solid = combine(solid, brush(cutter), SUBTRACTION)
       solid = combine(solid, block(glasswellPlatform))
       for (const ramp of glasswellRamps) {
         solid = combine(solid, brush(new RampGeometry(ramp.width, ramp.rise, ramp.run).translate(ramp.x, ramp.floorY, ramp.startZ)))

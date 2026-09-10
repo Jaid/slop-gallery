@@ -22,10 +22,16 @@ export const towerRamp = {
   segments: 64,
   railHeight: 1,
 }
+// Keep the lower jamb fixed; the taller jamb meets the circular tower’s rear edge.
+const archStartZ = startZ + 0.75
+const archEndZ = glasswellTower.z - glasswellTower.radius
 export const towerArch = {
-  z: (startZ + endZ) / 2,
-  width: 2.2,
-  height: 2.5,
+  z: (archStartZ + archEndZ) / 2,
+  width: archEndZ - archStartZ,
+  height: 3.5,
+  lowHeight: 2.7,
+  cornerRadius: 0.7,
+  highCornerRadius: 0.45,
 }
 
 const easedHeight = (t: number) => startY + t * t * (3 - 2 * t) * (endY - startY)

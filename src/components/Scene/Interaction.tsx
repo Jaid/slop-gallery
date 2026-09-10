@@ -9,6 +9,7 @@ import {Matrix4, PerspectiveCamera, Quaternion, Raycaster, Vector2, Vector3} fro
 import PlacementPreview from '#component/PlacementPreview'
 import {InspectionLook} from '#src/lib/camera/InspectionLook.ts'
 import {cameraPose, chime, dragPose, enterGallery, findPlacement, galleryEvents, isTextInput, markControlled, narrate, notify, openPanel, roomAt, useGallery, wallDistance} from '#src/lib/gallery.ts'
+import {playerSpawn} from '#src/lib/gallery/PlayerSession.ts'
 import {isPortraitLabelHit} from '#src/lib/gallery/portraitLabel.ts'
 
 import {propObjects} from './GrabbableProp.tsx'
@@ -140,12 +141,32 @@ export default function Interaction() {
         const origin = camera.position.toArray()
         const distance = Math.min(1.45, Math.max(0.35, wallDistance(origin, d.toArray()) - 0.4))
         const pos = camera.position.clone().addScaledVector(d, distance)
-        s.commit(s.portraits.map(p => p.id === id ? {...p, hung: false, wallId: undefined, orientation: undefined, position: pos.toArray() as Vec3, rotation: Math.atan2(-d.x, -d.z), velocity: d.multiplyScalar(14).add(new Vector3(0, 1.5, 0)).toArray() as Vec3} : p))
+        s.commit(s.portraits.map(p => {
+          return p.id === id ? {
+            ...p,
+            hung: false,
+            wallId: undefined,
+            orientation: undefined,
+            position: pos.toArray(),
+            rotation: Math.atan2(-d.x, -d.z),
+            velocity: d.multiplyScalar(14).add(new Vector3(0, 1.5, 0)).toArray(),
+          } : p
+        }))
         chime(130)
       } else {
         const candidate = findPlacement(camera.position.toArray(), camera.getWorldDirection(new Vector3).toArray(), p.width, p.height, s.portraits, p.id)
         if (candidate?.valid) {
-          s.commit(s.portraits.map(p => p.id === id ? {...p, position: candidate.position, rotation: candidate.rotation, wallId: candidate.wallId, hung: true, orientation: undefined, velocity: undefined} : p))
+          s.commit(s.portraits.map(p => {
+            return p.id === id ? {
+              ...p,
+              position: candidate.position,
+              rotation: candidate.rotation,
+              wallId: candidate.wallId,
+              hung: true,
+              orientation: undefined,
+              velocity: undefined,
+            } : p
+          }))
           chime(620)
           notify('Perfectly placed. Probably.')
         } else {
@@ -281,8 +302,9 @@ export default function Interaction() {
       stopView()
       galleryEvents.dispatchEvent(new CustomEvent('teleport', {
         detail: {
-          position: [0, 1.7, 5.8],
-          rotation: [0, 0, 0, 1],
+          feet: true,
+          position: [...playerSpawn.position],
+          rotation: [0, Math.sin(playerSpawn.yaw / 2), 0, Math.cos(playerSpawn.yaw / 2)],
         },
       }))
     }

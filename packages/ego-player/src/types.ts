@@ -23,6 +23,6 @@ export type EgoPlayerHandle = {
   readonly body: RapierRigidBody | null
   /** A detached snapshot, or null before the body is ready. */
   getState: () => EgoState | null
-  /** World-space feet position and optional camera quaternion. Resets momentum and jump history. */
+  /** World-space feet position and optional camera quaternion. Resolves capsule clearance, then resets momentum and jump history. */
   teleport: (position: EgoPosition, rotation?: EgoRotation) => void
 }

@@ -4,6 +4,7 @@ import {create} from 'zustand'
 
 import {initialPortraits} from './collection.ts'
 import {validateCollectionImages} from './imagePolicy.ts'
+import {playerSession} from './PlayerSession.ts'
 
 export {maximumPortraits} from './imagePolicy.ts'
 export type Panel = 'collection' | 'help' | 'map' | 'settings' | null
@@ -30,6 +31,7 @@ type State = GallerySettings & GallerySnapshot & {
   panel: Panel
   past: Array<GallerySnapshot>
   placement: Placement | null
+  playerEpoch: number
   ready: boolean
   remove: (id: string) => void
   resetEpoch: number
@@ -101,6 +103,7 @@ export const useGallery = create<State>((set, get) => ({
   panel: null,
   room: 'daydream',
   placement: null,
+  playerEpoch: 0,
   ai: false,
   apiKey: readKey(),
   sound: true,
@@ -186,6 +189,7 @@ export function createDocument(): GalleryDocument {
     ...snapshot(s),
     version: 1,
     savedAt: (new Date).toISOString(),
+    player: playerSession.snapshot(),
     settings: {
       theme: s.theme,
       frame: s.frame,
@@ -196,9 +200,11 @@ export function createDocument(): GalleryDocument {
 
 export function restoreDocument(document: GalleryDocument) {
   validateCollectionImages(document.portraits)
+  playerSession.restore(document.player)
   useGallery.setState({
     ...snapshot(document),
     ...document.settings,
+    playerEpoch: useGallery.getState().playerEpoch + 1,
     past: [],
     future: [],
     active: null,

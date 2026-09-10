@@ -4,9 +4,10 @@ import {notify} from './actions.ts'
 import {initialPortraits} from './collection.ts'
 import {imageSize} from './ImageImporter.ts'
 import {imageExtensions, maximumBackupBytes, validateCollectionImages, validateImage} from './imagePolicy.ts'
-import {lowerGallery} from './lowerGallery.ts'
 import {migratePortrait} from './migratePortrait.ts'
+import {playerSession, playerSpawn, validatePlayerPose} from './PlayerSession.ts'
 import {createDocument, maximumPortraits, restoreDocument, useGallery} from './store.ts'
+import {undertoneRecovery} from './undertone/config.ts'
 import {insideGallery, placementIssue, wallCoordinates, wallPosition, walls} from './walls.ts'
 
 const images = new Set(initialPortraits.map(p => p.source).filter((p): p is string => typeof p === 'string'))
@@ -67,7 +68,15 @@ export function validateDocument(value: unknown): GalleryDocument {
         if (value.wallId === 'secret-east') {
           displaced = [0, 0.2, 11.5]
         } else if (wall.room === 'undertone' && Array.isArray(value.position) && value.position[0] >= 12) {
-          displaced = [0, lowerGallery.floorY + 0.2, lowerGallery.undertone.center[1] + 3.5]
+          displaced = [...undertoneRecovery]
+        } else if (wall.id === 'daydream-north') {
+          displaced = [0, 0.2, -28]
+        } else if (wall.id === 'amber-west') {
+          displaced = [-14, 0.2, 17]
+        } else if (wall.id === 'glasswell-north') {
+          displaced = [0, -4.8, -28.5]
+        } else if (wall.id === 'cabin-west') {
+          displaced = [-25, -4.8, -28.5]
         }
       }
     }
@@ -75,6 +84,7 @@ export function validateDocument(value: unknown): GalleryDocument {
       throw new Error('An artwork is outside the gallery.')
     }
     const bundled = initialPortraits.find(defaultPortrait => defaultPortrait.id === p.id && defaultPortrait.source === p.source && defaultPortrait.title === p.title && defaultPortrait.description === p.description)
+    const narration = p.narration === undefined ? bundled?.narration : p.narration
     return {
       id: p.id,
       title: p.title,
@@ -90,7 +100,7 @@ export function validateDocument(value: unknown): GalleryDocument {
       hung: p.hung && !displaced,
       wallId: typeof p.wallId === 'string' ? p.wallId : undefined,
       orientation: displaced ? [Math.SQRT1_2, 0, 0, Math.SQRT1_2] : p.orientation as Portrait['orientation'],
-      narration: p.narration === undefined ? bundled?.narration : typeof p.narration === 'string' && narrations.has(p.narration) ? p.narration : undefined,
+      narration: typeof narration === 'string' && narrations.has(narration) ? narration : undefined,
       imported: p.imported === true,
     }
   })
@@ -98,6 +108,10 @@ export function validateDocument(value: unknown): GalleryDocument {
   return {
     version: 1,
     portraits,
+    player: validatePlayerPose(value.player) ?? {
+      position: [...playerSpawn.position],
+      yaw: playerSpawn.yaw,
+    },
     savedAt: typeof value.savedAt === 'string' ? value.savedAt : '',
     settings: {
       theme: settings.theme as GalleryDocument['settings']['theme'],
@@ -261,6 +275,7 @@ export async function initializePersistence() {
     if (saved) {
       restoreDocument(saved)
     }
+    playerSession.resume(saved?.savedAt ?? '')
     useGallery.setState({
       saveStatus: 'saved',
       storageRecoveryRequired: false,
@@ -274,6 +289,17 @@ export async function initializePersistence() {
   }
   let timer: ReturnType<typeof setTimeout> | undefined
   let generation = 0
+  let playerRevision = playerSession.revision
+  const checkpoint = () => {
+    if (useGallery.getState().storageRecoveryRequired) {
+      return false
+    }
+    const saved = playerSession.checkpoint()
+    if (saved) {
+      playerRevision = playerSession.revision
+    }
+    return saved
+  }
   const flush = () => {
     clearTimeout(timer)
     timer = undefined
@@ -281,6 +307,7 @@ export async function initializePersistence() {
       return
     }
     const id = ++generation
+    checkpoint()
     useGallery.setState({saveStatus: 'saving'})
     void repository.save(createDocument()).then(() => {
       if (id === generation && !timer) {
@@ -298,23 +325,39 @@ export async function initializePersistence() {
     if (s.storageRecoveryRequired) {
       return
     }
-    if (s.storageRecoveryRequired === previous.storageRecoveryRequired && s.portraits === previous.portraits && s.theme === previous.theme && s.frame === previous.frame && s.sound === previous.sound) {
+    if (s.storageRecoveryRequired === previous.storageRecoveryRequired && s.portraits === previous.portraits && s.theme === previous.theme && s.frame === previous.frame && s.sound === previous.sound && s.playerEpoch === previous.playerEpoch) {
       return
     }
     clearTimeout(timer)
     timer = setTimeout(flush, 400)
     useGallery.setState({saveStatus: 'saving'})
   })
-  const hidden = () => {
-    if (document.visibilityState === 'hidden' && timer) {
+  // Do not rewrite a potentially large image collection every time the player moves.
+  const playerTimer = setInterval(() => {
+    if (playerSession.revision !== playerRevision && !checkpoint()) {
+      flush()
+    }
+  }, 1000)
+  const leaving = () => {
+    const saved = checkpoint()
+    if (timer || !saved && playerSession.revision !== playerRevision) {
       flush()
     }
   }
+  const hidden = () => {
+    if (document.visibilityState === 'hidden') {
+      leaving()
+    }
+  }
   document.addEventListener('visibilitychange', hidden)
+  document.defaultView?.addEventListener('pagehide', leaving)
   return () => {
+    checkpoint()
     generation++
     unsubscribe()
     clearTimeout(timer)
+    clearInterval(playerTimer)
     document.removeEventListener('visibilitychange', hidden)
+    document.defaultView?.removeEventListener('pagehide', leaving)
   }
 }

@@ -13,7 +13,7 @@ export default function PlacementPreview({width, height, source, title, creator,
   pending?: boolean
   source?: Blob | string
   title?: string
-  width: number;}) {
+  width: number}) {
   const {texture} = useArtworkTexture(source)
   const valid = useGallery(s => s.placement?.valid === true)
   const inReach = useGallery(s => s.placement?.inReach === true)

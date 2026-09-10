@@ -194,11 +194,11 @@ describe('glasswell and connecting tunnel', () => {
           {
             ...initialPortraits[0]!,
             wallId: 'glasswell-north',
-            position: [0, -5.5, z],
+            position: [-4, -5.5, z],
           },
         ],
       })
-      expect(saved.portraits[0]!.position).toEqual([0, -5.5, -30.78])
+      expect(saved.portraits[0]!.position).toEqual([-4, -5.5, -30.78])
       expect(validateDocument(saved)).toEqual(saved)
     }
   })

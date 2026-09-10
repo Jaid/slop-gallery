@@ -4,11 +4,10 @@ import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import {useEffect, useMemo} from 'react'
 import {useGraphicsQualityValue} from 'use-graphics-quality'
 
-import {rooms, walls} from '#src/lib/gallery.ts'
+import {rooms, useGallery, walls} from '#src/lib/gallery.ts'
 import {RoomFloorTextures} from '#src/lib/materials/RoomFloorTextures.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsQuality.ts'
 
-import BenchSeat from './BenchSeat.tsx'
 import Chandelier from './Chandelier.tsx'
 import {Box} from './primitives.tsx'
 
@@ -16,6 +15,7 @@ const room = rooms.find(room => room.id === 'amber')!
 const rug = [4.8, 7.2] as const
 
 export default function AmberRoom({wood}: {wood: Texture}) {
+  const resetEpoch = useGallery(s => s.resetEpoch)
   const {floorReflections} = useGraphicsQualityValue(getGraphicsProfile)
   const floor = useMemo(() => new RoomFloorTextures(...room.size, ...rug), [])
   useEffect(() => () => floor.dispose(), [floor])
@@ -37,13 +37,7 @@ export default function AmberRoom({wood}: {wood: Texture}) {
         <planeGeometry args={[...rug]}/>
         <meshStandardNodeMaterial {...floor.carpet} bumpScale={0.008} roughness={1} envMapIntensity={floorReflections ? 1 : 0}/>
       </mesh>
-      <RigidBody type="fixed" colliders="cuboid">
-        <group position={[-4.1, 0, 1.8]} rotation={[0, Math.PI / 2, 0]}>
-          <BenchSeat position={[0, 0.5, 0]} size={[2.6, 0.2, 0.9]}/>
-          {[-1, 1].map(x => <Box key={x} position={[x, 0.2, 0]} size={[0.12, 0.4, 0.65]} color="#9f7840" metalness={0.75} roughness={0.28}/>)}
-        </group>
-      </RigidBody>
-      <Chandelier/>
+      <Chandelier key={resetEpoch}/>
     </group>
     {walls.filter(wall => wall.room === 'amber').map(wall => <group key={wall.id} position={wall.center} rotation={[0, wall.rotation, 0]}>
       {Array.from({length: Math.floor(wall.width / 2)}, (_, i) => i * 2 - wall.width / 2 + 1).filter(u => !wall.holes?.some(hole => Math.abs(u - hole.u) < hole.width / 2 + 1)).map(u => <group key={u} position={[u, 0, 0]}>

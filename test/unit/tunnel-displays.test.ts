@@ -31,7 +31,7 @@ describe('widened tunnel with sealed display rooms', () => {
       }
     }
     expect(new Set(tunnelDisplays.flatMap(display => display.exhibits.map(exhibit => exhibit.kind))).size).toBe(6)
-    expect(rooms).toHaveLength(7)
+    expect(rooms).toHaveLength(8)
   })
   for (const display of tunnelDisplays) {
     test(`${display.side}: windows are real openings with glass collision, solid sills and a sealed room shell`, () => {

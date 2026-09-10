@@ -5,6 +5,7 @@ import {IDBFactory} from 'fake-indexeddb'
 import {initialPortraits} from '../../src/lib/gallery/collection.ts'
 import {GalleryRepository, initializePersistence, repository, validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import {maximumCollectionImageBytes, maximumImageBytes} from '../../src/lib/gallery/imagePolicy.ts'
+import {PlayerSession, playerSession} from '../../src/lib/gallery/PlayerSession.ts'
 import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
 
 const original = {
@@ -39,9 +40,9 @@ test('old north-wall collections follow the extension once, including custom han
     ],
   }
   const migrated = validateDocument(legacy)
-  expect(migrated.portraits.slice(0, 3)).toMatchObject(north)
-  expect(migrated.portraits[3]!.position).toEqual([-5, 2.8, -31.78])
-  expect(migrated.portraits[4]!.position).toEqual([-5, 2.8, -7.78])
+  expect(migrated.portraits.slice(0, north.length)).toMatchObject(north)
+  expect(migrated.portraits[north.length]!.position).toEqual([-5, 2.8, -31.78])
+  expect(migrated.portraits[north.length + 1]!.position).toEqual([-5, 2.8, -7.78])
   expect(validateDocument(migrated)).toEqual(migrated)
   expect(() => validateDocument({
     ...legacy,
@@ -90,9 +91,11 @@ test('the aggregate boundary round-trips through store, IndexedDB and compressed
   const repo = new GalleryRepository
   await repo.save(document)
   const loaded = (await repo.load())!
+  expect(loaded.player).toEqual(document.player)
   expect(loaded.portraits.map(p => (p.source as Blob).size)).toEqual(portraits.map(() => source.size))
   const backup = await repo.export(document)
   const imported = await repo.import(backup)
+  expect(imported.player).toEqual(document.player)
   expect(imported.portraits.map(p => (p.source as Blob).size)).toEqual(portraits.map(() => source.size))
   expect(validateDocument(imported)).toEqual(imported)
   restoreDocument(imported)
@@ -230,5 +233,74 @@ test('retired motion settings are ignored in saved collections', () => {
     restoreDocument(loaded)
     expect(useGallery.getState()).not.toHaveProperty('motion')
     expect(createDocument().settings).toEqual(document.settings)
+  }
+})
+test('movement checkpoints flush synchronously on refresh without rewriting artwork, and detach cleanly', async () => {
+  const names = ['localStorage'] as const
+  const descriptors = names.map(name => Object.getOwnPropertyDescriptor(globalThis, name))
+  const storage = new Map<string, string>
+  const page = new EventTarget
+  Object.assign(document, {defaultView: page})
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    value: {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => storage.set(key, value),
+    },
+  })
+  loadSpy = spyOn(repository, 'load').mockResolvedValue({
+    ...original,
+    savedAt: '2026-01-01T00:00:00Z',
+  })
+  saveSpy = spyOn(repository, 'save').mockResolvedValue()
+  try {
+    cleanup = await initializePersistence()
+    const pose = {
+      position: [-33, -4.98, -20] as [number, number, number],
+      yaw: 1.2,
+    }
+    playerSession.capture(pose)
+    page.dispatchEvent(new Event('pagehide'))
+    const refreshed = new PlayerSession
+    refreshed.resume('2026-01-01T00:00:00Z')
+    expect(refreshed.snapshot().position).toEqual(pose.position)
+    expect(refreshed.snapshot().yaw).toBeCloseTo(pose.yaw)
+    expect(saveSpy).not.toHaveBeenCalled()
+    playerSession.capture({
+      ...pose,
+      yaw: -0.6,
+    })
+    await Bun.sleep(1100)
+    refreshed.resume('2026-01-01T00:00:00Z')
+    expect(refreshed.snapshot().yaw).toBeCloseTo(-0.6)
+    expect(saveSpy).not.toHaveBeenCalled()
+    useGallery.setState({storageRecoveryRequired: true})
+    const protectedCheckpoint = storage.get('slop-gallery-player')
+    playerSession.capture({
+      ...pose,
+      yaw: 0.9,
+    })
+    page.dispatchEvent(new Event('pagehide'))
+    expect(storage.get('slop-gallery-player')).toBe(protectedCheckpoint)
+    cleanup()
+    cleanup = undefined
+    useGallery.setState({storageRecoveryRequired: false})
+    playerSession.capture({
+      ...pose,
+      yaw: 0.3,
+    })
+    page.dispatchEvent(new Event('pagehide'))
+    expect(storage.get('slop-gallery-player')).toBe(protectedCheckpoint)
+  } finally {
+    cleanup?.()
+    cleanup = undefined
+    for (const [i, name] of names.entries()) {
+      const descriptor = descriptors[i]
+      if (descriptor) {
+        Object.defineProperty(globalThis, name, descriptor)
+      } else {
+        Reflect.deleteProperty(globalThis, name)
+      }
+    }
   }
 })

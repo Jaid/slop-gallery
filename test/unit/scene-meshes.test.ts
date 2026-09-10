@@ -6,12 +6,13 @@ import {Box3, Mesh, MeshBasicMaterial, Raycaster, TorusKnotGeometry, Vector3} fr
 import {ChandelierGeometry} from '../../src/lib/gallery/ChandelierGeometry.ts'
 import {knotGeometryArgs} from '../../src/lib/gallery/sculptures.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
+import {chandelierPhysics} from '../../src/lib/physics/chandelier.ts'
 
 describe('chandelier geometry', () => {
-  test('four indexed parts retain the full fixture within its triangle budget', () => {
+  test('the suspended fixture and fixed canopy retain their geometry and triangle budget', () => {
     const geometry = new ChandelierGeometry
     try {
-      const parts = [geometry.brass, geometry.candles, geometry.flames, geometry.pendant]
+      const parts = [geometry.brass, geometry.candles, geometry.flames, geometry.pendant, geometry.canopy]
       const bounds = new Box3
       let triangles = 0
       let bytes = 0
@@ -36,7 +37,8 @@ describe('chandelier geometry', () => {
       expect(triangles).toBeLessThan(7500)
       expect(bytes).toBeLessThan(240_000)
       expect(bounds.min.y).toBeCloseTo(-0.506, 5)
-      expect(bounds.max.y).toBeCloseTo(1.63, 5)
+      expect(bounds.max.y).toBeCloseTo(2.13, 5)
+      expect(bounds.max.y + chandelierPhysics.height).toBeCloseTo(5.68, 5)
       expect(bounds.max.x).toBeCloseTo(1.39, 5)
       expect(bounds.min.x).toBeCloseTo(-1.39, 5)
     } finally {
@@ -62,14 +64,14 @@ describe('chandelier geometry', () => {
       material.dispose()
     }
   })
-  test('releases all four owned geometries', () => {
+  test('releases all five owned geometries', () => {
     const geometry = new ChandelierGeometry
     let disposed = 0
-    for (const part of [geometry.brass, geometry.candles, geometry.flames, geometry.pendant]) {
+    for (const part of [geometry.brass, geometry.candles, geometry.flames, geometry.pendant, geometry.canopy]) {
       part.addEventListener('dispose', () => disposed++)
     }
     geometry.dispose()
-    expect(disposed).toBe(4)
+    expect(disposed).toBe(5)
   })
 })
 describe('gold knot tessellation', () => {

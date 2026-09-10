@@ -75,11 +75,12 @@ Only one `EgoPlayer` should own a given camera and default controls. Use separat
 All coordinates are Y-up world coordinates. `position` and snapshots describe the **feet**, not the capsule center or camera. `height` includes the capsule’s round ends. Both eye-height options are distances above the feet. Put the player directly under an untransformed scene/physics root; transformed or scaled ancestors are not supported.
 
 - `position` defaults to `[0, 0.05, 0]` and is read only on mount. Rerenders, new position arrays and option changes do not respawn the player.
+- `fallbackPosition` optionally supplies a safe feet position for obstructed spawns and teleports. It is tested too; neither position is accepted if the capsule cannot fit.
 - `yaw` defaults to 0 and uses radians. Updating it intentionally resets camera pitch and roll.
 - `ref` exposes `body`, `getState()` and `teleport(feetPosition, cameraQuaternion?)`.
 - `getState()` returns a detached, readonly-typed snapshot, or null before setup and after cleanup. It contains `active`, `grounded`, `crouching`, `position` and collision-resolved `velocity`. Velocity excludes camera smoothing, bobbing and inspection.
-- Teleport resets velocity, ground/coyote history, buffered jumps and camera bob/smoothing. A held jump does not become a fresh press. It preserves crouch state, uses that stance’s eye height and optionally normalizes the supplied camera quaternion.
-- Teleport explicitly updates the camera even when `cameraEnabled` is false. It does not find a safe destination, clamp to a floor or exit an application inspection mode. Calls before setup are no-ops; use `getState()` to check readiness.
+- Teleport resets velocity, ground/coyote history, buffered jumps and camera bob/smoothing. A held jump does not become a fresh press. It preserves crouch state when possible, automatically crouches under low ceilings, uses the resolved stance’s eye height and optionally normalizes the supplied camera quaternion.
+- Teleport explicitly updates the camera even when `cameraEnabled` is false. It checks the full capsule at the destination and tries `fallbackPosition` only if neither standing nor crouching fits. If neither destination is safe, it throws before moving the player. It does not search for a floor or exit an application inspection mode. Calls before setup are no-ops; mount-time calls after setup are copied and queued until sibling colliders are mounted.
 
 ```tsx
 import type {EgoPlayerHandle} from 'ego-player'
@@ -95,7 +96,9 @@ player.current?.teleport([4, 0.04, -2], [0, 1, 0, 0])
 const sample = player.current?.getState()
 ```
 
-Supply finite positions and finite, nonzero quaternions. Use `userData` to tag the body for your collision/interaction systems; the package assigns no application-specific tags. Optional children attach to the feet-relative body; they do not automatically follow camera bob or crouch height.
+Initial placement is resolved before the first physics step or camera frame, whichever comes first. The camera snaps immediately to the resolved eye height instead of smoothing down from a standing view through the ceiling. Newly mounted colliders are checked directly, without relying on a populated physics broad phase; subsequent stand-up checks use the normal spatial query. Sensors, disabled bodies and noninteracting collision groups do not obstruct placement. Existing position-only saves work without persisting stance. Applications still validate world bounds and own persistence; checkpoint the resolved `onUpdate` position, not the requested destination.
+
+Supply finite positions and finite, nonzero quaternions. The body’s `userData` defaults to a per-player `{isPlayer: true}` object, so collision and interaction systems can recognize it without application glue. An explicit `userData` value replaces the default rather than merging with it; omit it or pass `undefined` to restore the default. Optional children attach to the feet-relative body; they do not automatically follow camera bob or crouch height.
 
 ## Callbacks
 
@@ -153,6 +156,8 @@ A nonpositive `stepHeight` or `stepMinWidth` disables autostep; nonpositive `sna
 import {EgoMotor} from 'ego-player/motor'
 
 const motor = new EgoMotor(rapier, world, body, capsuleCollider)
+// Resolve the initial stance after creating the environment colliders.
+motor.teleport([0, 0.04, 0], [4, 0.04, 0])
 motor.step(world.timestep, input, camera.quaternion, true)
 world.step()
 const state = motor.getState()
@@ -161,7 +166,7 @@ motor.configure({speed: 4})
 motor.dispose()
 ```
 
-Supply a position-based kinematic body and its dedicated capsule collider from the same initialized Rapier instance/world. The motor owns that collider’s shape and collision groups and schedules body translation. It does not free the world, body or collider. Call `step` before each world step and read snapshots afterward. `configure` replaces options, restoring omitted defaults. `dispose` removes the character controller and is idempotent; dispose before freeing the world.
+Supply a position-based kinematic body and its dedicated capsule collider from the same initialized Rapier instance/world. The motor owns that collider’s shape and collision groups and schedules body translation. It does not free the world, body or collider. Call `teleport(position, fallbackPosition?)` after mounting the environment to resolve a saved or initial stance, then call `step` before each world step and read snapshots afterward. Direct spawn/teleport clearance scans run only on those transitions, not on ordinary standing movement. `configure` replaces options, restoring omitted defaults. `dispose` removes the character controller and is idempotent; dispose before freeing the world.
 
 The `ego-player/motor` entry has no runtime React imports or browser globals and does not load Fiber, Drei or Rapier’s React bindings. The root entry also re-exports `EgoMotor` for convenience. Its public types reuse the Rapier peer’s types, so no second WASM runtime is bundled. The React component manages this lifecycle automatically.
 

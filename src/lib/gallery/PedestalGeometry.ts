@@ -4,12 +4,23 @@ import {ExtrudeGeometry, Shape, Vector2} from 'three/webgpu'
 import {mergeParts} from '../geometry.ts'
 import {colliderGeometry} from './architecture.ts'
 
+// Exact quarter-turns keep collinear cap vertices collinear during triangulation.
+const point = (x: number, y: number, side: number) => {
+  if (side === 0) {
+    return new Vector2(x, y)
+  }
+  if (side === 1) {
+    return new Vector2(-y, x)
+  }
+  if (side === 2) {
+    return new Vector2(-x, -y)
+  }
+  return new Vector2(y, -x)
+}
 function footprint(width: number, fluted = false) {
   const shape = new Shape
   const half = width / 2
   const corner = 0.025
-  // Exact quarter-turns keep collinear cap vertices collinear during triangulation.
-  const point = (x: number, y: number, side: number) => (side === 0 ? new Vector2(x, y) : side === 1 ? new Vector2(-y, x) : side === 2 ? new Vector2(-x, -y) : new Vector2(y, -x))
   shape.moveTo(-half + corner, -half)
   for (let side = 0; side < 4; side++) {
     if (fluted) {

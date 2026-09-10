@@ -56,14 +56,20 @@ describe('floor-following wall baseboards', () => {
       }
     })
   }
-  test('the north trim continues at the raised-floor height and leaves room walls and portals unchanged', () => {
+  test('the north trim follows the raised floor and surrounds the elevated Cabin portal', () => {
     const north = walls.find(value => value.id === 'glasswell-north')!
     const height = glasswellPlatform.position[1] + glasswellPlatform.size[1] / 2 - lowerGallery.floorY
     expect(north.baseboardProfile).toEqual([[-north.width / 2, height], [north.width / 2, height]])
     const geometry = createArchitectureGeometry(north)
     try {
-      expect(geometry.trim[0]!.boundingBox!.min.y).toBeCloseTo(height)
-      expect(geometry.trim[0]!.boundingBox!.max.y).toBeCloseTo(height + 0.44)
+      expect(north.holes![0]!.bottom).toBe(height)
+      expect(geometry.trim[0]!.boundingBox!.min.y).toBeCloseTo(height - 0.17)
+      expect(geometry.trim[0]!.boundingBox!.max.y).toBeCloseTo(north.holes![0]!.height + 0.17)
+      const material = new MeshBasicMaterial
+      const mesh = new Mesh(geometry.trim[0], material)
+      const hit = new Raycaster(new Vector3(-4, height + 1, 0.23), new Vector3(0, -1, 0)).intersectObject(mesh)[0]!
+      expect(hit.point.y).toBeCloseTo(height + 0.44)
+      material.dispose()
       expect(geometry.surface.boundingBox!.min.y).toBeCloseTo(0, 6)
       expect(geometry.surface.boundingBox!.max.y).toBeCloseTo(north.height + 0.3)
       expect(walls.filter(wall => wall.baseboardProfile).map(wall => wall.id).toSorted()).toEqual(['glasswell-east', 'glasswell-north', 'glasswell-west'])
