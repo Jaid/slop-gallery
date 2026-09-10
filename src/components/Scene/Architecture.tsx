@@ -6,7 +6,7 @@ import {CuboidCollider, RigidBody, TrimeshCollider} from '@react-three/rapier'
 import {useEffect, useMemo} from 'react'
 import {EquirectangularReflectionMapping, MeshStandardNodeMaterial, Shape, SRGBColorSpace} from 'three/webgpu'
 
-import {rooms, useGallery, walls} from '#src/lib/gallery.ts'
+import {rooms, walls} from '#src/lib/gallery.ts'
 import {architectureGeometry, wallTop} from '#src/lib/gallery/architecture.ts'
 import {CastleStoneMaterial} from '#src/lib/materials/CastleStoneMaterial.ts'
 import {LodgeWoodMaterial} from '#src/lib/materials/LodgeWoodMaterial.ts'
@@ -34,7 +34,6 @@ const pointLightPositions: Partial<Record<Wall['room'], Array<number>>> = {
 }
 
 export default function Architecture() {
-  const theme = useGallery(s => s.theme)
   const castleStone = useMemo(() => new CastleStoneMaterial, [])
   const lodgeWood = useMemo(() => new LodgeWoodMaterial, [])
   useEffect(() => () => {
@@ -75,7 +74,7 @@ export default function Architecture() {
     <color attach="background" args={['#ded8ca']}/><fog attach="fog" args={['#d9d4c7', 35, 70]}/>
     <ambientLight intensity={0.65}/><hemisphereLight args={['#ecf3ff', '#a29270', 1.15]}/>
     <directionalLight position={[-3, 9, 4]} intensity={2.3} color="#fff0d7" castShadow shadow-mapSize={[4096, 4096]} shadow-camera-left={-24} shadow-camera-right={24} shadow-camera-top={20} shadow-camera-bottom={-20} shadow-normalBias={0.035}/>
-    {walls.map(wall => <WallSurface key={wall.id} material={wallMaterial(wall)} wall={wall} theme={theme} plaster={wall.room === 'sienna' ? textures.damask : textures.plaster}/>)}
+    {walls.map(wall => <WallSurface key={wall.id} material={wallMaterial(wall)} wall={wall} plaster={wall.room === 'sienna' ? textures.damask : textures.plaster}/>)}
     {rooms.filter(room => room.floorY === 0 && room.id !== 'sienna').map(room => <group key={room.id} position={[room.center[0], 0, room.center[1]]}>
       <RigidBody type="fixed" colliders={false}>
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]}/>
@@ -121,9 +120,8 @@ function Alcove({width = 3.1, color = '#c8c8b6'}: {color?: string
     <mesh position={[0, 0.028, 0.004]} scale={[0.976, 0.987, 1]}><shapeGeometry args={[shape, 48]}/><meshStandardNodeMaterial color={color} roughness={0.95}/></mesh>
   </group>
 }
-function WallSurface({wall, plaster, theme, material}: {material?: Material
+function WallSurface({wall, plaster, material}: {material?: Material
   plaster: Texture
-  theme: string
   wall: Wall}) {
   const colors: Partial<Record<Wall['room'], string>> = {
     moonfall: '#14282f',
@@ -133,11 +131,7 @@ function WallSurface({wall, plaster, theme, material}: {material?: Material
     dine: '#9295a2',
     antechamber: '#ded4b8',
   }
-  const themes: Record<string, string> = {
-    sage: '#bac9b9',
-    nocturne: '#7d91a0',
-  }
-  const color = colors[wall.room] ?? themes[theme] ?? '#eee7d7'
+  const color = colors[wall.room] ?? '#eee7d7'
   const trims: Partial<Record<Wall['room'], string>> = {
     moonfall: '#253a40',
     oculus: '#303d42',

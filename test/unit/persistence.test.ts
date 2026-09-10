@@ -133,7 +133,6 @@ test('a failed load protects the stored record until explicit recovery', async (
   saveSpy = spyOn(repository, 'save').mockResolvedValue()
   cleanup = await initializePersistence()
   useGallery.setState({
-    theme: 'sage',
     sound: true,
   })
   await Bun.sleep(450)
@@ -145,7 +144,7 @@ test('a failed load protects the stored record until explicit recovery', async (
   useGallery.setState({storageRecoveryRequired: false})
   await Bun.sleep(450)
   expect(saveSpy).toHaveBeenCalledTimes(1)
-  expect(saveSpy.mock.calls[0]![0].settings.theme).toBe('sage')
+  expect(saveSpy.mock.calls[0][0].settings.sound).toBe(true)
   expect(useGallery.getState().saveStatus).toBe('saved')
 })
 test('save strips runtime ownership before structured cloning', async () => {
@@ -304,4 +303,21 @@ test('movement checkpoints flush synchronously on refresh without rewriting artw
       }
     }
   }
+})
+test('retired palette and frame settings are ignored when loading old collections', () => {
+  const legacy = {
+    ...original,
+    settings: {
+      sound: false,
+      theme: 'nocturne',
+      frame: 'black',
+    },
+  }
+  const loaded = validateDocument(legacy)
+  expect(loaded.settings).toEqual({sound: false})
+  restoreDocument(legacy)
+  expect(createDocument().settings).toEqual({sound: false})
+  expect(useGallery.getState()).not.toHaveProperty('theme')
+  expect(useGallery.getState()).not.toHaveProperty('frame')
+  expect(validateDocument(createDocument()).settings).toEqual({sound: false})
 })

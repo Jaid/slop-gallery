@@ -4,7 +4,6 @@ import type {Page} from 'puppeteer-core'
 
 import {expect, test} from 'bun:test'
 
-import * as path from 'forward-slash-path'
 import fs from 'fs-extra'
 import puppeteer from 'puppeteer-core'
 import {preview} from 'vite'
@@ -28,7 +27,7 @@ const clickText = async (page: Page, text: string) => {
   const button = await page.waitForSelector(`xpath/.//button[starts-with(normalize-space(.), "${text}")]`)
   await button!.click()
 }
-test('production gallery: visible WebGPU, physics, editing, imports, fusion and persistence', async () => {
+test('production gallery: visible WebGPU, physics, imports, fusion and persistence', async () => {
   const server = await preview({
     preview: {
       host: '127.0.0.1',
@@ -70,7 +69,7 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     expect((await snapshot(page)).hasControlled).toBe(false)
     expect(await page.$('[data-testid="menu-overlay"]')).not.toBeNull()
     expect(await page.$('[data-testid="menu-reset"]')).toBeNull()
-    expect(await page.$('[data-testid="connection"][open]')).toBeNull()
+    expect(await page.$('section[data-testid="connection"] input[type="password"]')).not.toBeNull()
     await page.screenshot({path: 'private/agent/reports/production-welcome.png'})
     await page.click('[aria-label="Mute audio"]')
     await enter(page)
@@ -144,23 +143,6 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     await page.keyboard.up('Control')
     expect((await snapshot(page)).portraits.find(p => p.id === 'goose')!.hung).toBe(true)
     await page.evaluate(() => document.exitPointerLock())
-    await page.click('[aria-label="Open collection"]')
-    await page.waitForSelector('dialog[open]')
-    expect(await page.$$eval('[data-testid="art-card"]', cards => cards.length)).toBe(16)
-    await page.type('[aria-label="Search collection"]', 'Cosmic Inconvenience')
-    expect(await page.$$eval('[data-testid="art-card"]', cards => cards.length)).toBe(1)
-    await page.click('[data-testid="art-image"]')
-    await clickText(page, 'Edit label')
-    await page.focus('[data-testid="art-detail"] form input')
-    await page.keyboard.down('Control')
-    await page.keyboard.press('a')
-    await page.keyboard.up('Control')
-    await page.keyboard.type('A tested masterpiece')
-    await clickText(page, 'Save label')
-    expect((await snapshot(page)).portraits.find(p => p.id === 'cat')!.title).toBe('A tested masterpiece')
-    await page.screenshot({path: 'private/agent/reports/production-detail.png'})
-    await page.keyboard.press('Escape')
-    await page.waitForSelector('dialog', {hidden: true})
     const image = await page.evaluate(async () => {
       const canvas = new OffscreenCanvas(600, 300)
       const context = canvas.getContext('2d')!
@@ -170,17 +152,20 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
       context.fillRect(100, 50, 300, 200)
       return new Uint8Array(await (await canvas.convertToBlob({type: 'image/png'})).arrayBuffer()).toBase64()
     })
-    await Bun.write('private/agent/reports/import-fixture.png', Buffer.from(image, 'base64'))
     await teleport(page, [0, 1.62, 4])
-    await page.click('[aria-label="Open collection"]')
-    const chooser = page.waitForFileChooser()
-    await clickText(page, 'Add artwork')
-    await (await chooser).accept([`${process.cwd()}/private/agent/reports/import-fixture.png`])
+    await page.evaluate(encoded => {
+      const clipboardData = new DataTransfer
+      clipboardData.items.add(new File([Uint8Array.fromBase64(encoded)], 'import fixture.png', {type: 'image/png'}))
+      document.body.dispatchEvent(new ClipboardEvent('paste', {
+        clipboardData,
+        bubbles: true,
+        cancelable: true,
+      }))
+    }, image)
     await page.waitForFunction(baseline => {
       const portraits = globalThis.__gallery!.snapshot!().portraits
       return portraits.length === baseline + 1 && portraits.some(p => p.title === 'import fixture')
     }, {}, baseline)
-    await page.keyboard.press('Escape')
     const imported = (await snapshot(page)).portraits.find(p => p.title === 'import fixture')!
     expect(imported.width / imported.height).toBe(2)
     expect(imported.hung).toBe(false)
@@ -204,40 +189,12 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     await Bun.sleep(700)
     await page.reload({waitUntil: 'domcontentloaded'})
     await page.waitForFunction(() => globalThis.__gallery?.snapshot?.().ready)
-    expect((await snapshot(page)).portraits.find(p => p.id === 'cat')!.title).toBe('A tested masterpiece')
     expect((await snapshot(page)).portraits.find(p => p.id === 'orange')!.title).toBe('An unexpected collaboration')
-    const downloadPath = path.resolve(`private/agent/reports/downloads-${Date.now()}`)
-    await fs.ensureDir(downloadPath)
-    const client = await browser.target().createCDPSession()
-    await client.send('Browser.setDownloadBehavior', {
-      behavior: 'allow',
-      downloadPath,
-      eventsEnabled: true,
-    })
-    await page.click('[aria-label="Gallery settings"]')
-    await clickText(page, 'Export collection')
-    const backupName = `slop-gallery-${(new Date).toISOString().slice(0, 10)}.slop`
-    const backupPath = `${downloadPath}/${backupName}`
-    for (let i = 0; i < 100 && !await Bun.file(backupPath).exists(); i++) {
-      await Bun.sleep(50)
-    }
-    const backup = JSON.parse(await new Response(Bun.file(backupPath).stream().pipeThrough(new DecompressionStream('gzip'))).text()) as {portraits: Array<{id: string
-      source: {mime: string}}>
-    version: number}
-    expect(backup.version).toBe(1)
-    expect(backup.portraits).toHaveLength(baseline)
-    expect(backup.portraits.find(p => p.id === 'orange')!.source.mime).toBe('image/webp')
-    expect(backup).not.toHaveProperty('apiKey')
-    await page.keyboard.press('Escape')
     await clickText(page, 'Reset gallery')
     await clickText(page, 'Confirm reset')
     expect((await snapshot(page)).portraits.find(p => p.id === 'orange')!.title).toBe('A Slightly Larger Tomorrow')
-    await page.click('[aria-label="Gallery settings"]')
-    await (await page.$('input[aria-label="Restore gallery backup"]'))!.uploadFile(backupPath)
-    await page.waitForSelector('[data-testid="confirmation"]')
-    await clickText(page, 'Restore collection')
+    await history(page)
     expect((await snapshot(page)).portraits.find(p => p.id === 'orange')!.title).toBe('An unexpected collaboration')
-    await page.keyboard.press('Escape')
     await teleport(page, [-6.3, 1.62, -4.5], lookingUp)
     await page.waitForFunction(() => Math.abs(globalThis.__gallery!.snapshot!().camera[0] + 6.3) < 0.01)
     const drag = (type: string, offset = 0) => page.evaluate((type, encoded, offset) => {
@@ -401,7 +358,9 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
       height: 900,
     })
     const muted = await page.$eval('[aria-label="Mute audio"]', button => button.getAttribute('aria-pressed'))
-    await page.click('[aria-label="Open collection"]')
+    await enter(page)
+    await page.waitForFunction(() => !!document.pointerLockElement)
+    await page.keyboard.press('Tab')
     await page.waitForSelector('dialog[open]')
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     await page.keyboard.press('Tab')
@@ -426,6 +385,6 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     throw error
   } finally {
     await browser.close()
-    await new Promise<void>((resolve, reject) => server.httpServer.close(error => error ? reject(error) : resolve()))
+    await new Promise<void>((resolve, reject) => server.httpServer.close(error => (error ? reject(error) : resolve())))
   }
 }, 180_000)

@@ -21,11 +21,11 @@ Open the printed localhost URL in current Chrome or Edge with hardware accelerat
 
 Use `?ai=false&telemetry=false` for a completely local gallery session. The OpenRouter manager in the menu is optional – no provider requests happen without a key. All exhibition artwork, recordings and environment textures are bundled or generated locally. UI fonts use locally installed Geologica and JetBrains Mono with system fallbacks; no fonts are downloaded.
 
-The gallery starts in a minimal menu over a dimmed, blurred view. Enter to explore; Esc returns to the menu. The HUD keeps the aiming dot, a contextual artwork overlay when you look at a title plate and a compact narrator indicator with live audio visualization while a story is playing. Audio mute, full/lightweight graphics and the expandable OpenRouter manager live in the menu. Collection, controls and preferences/backups remain available through secondary links. Reset appears only after the first in-game movement, look or action; this is remembered on the device. Opening the menu or clicking Enter alone does not reveal it.
+The gallery starts in a minimal menu over a dimmed, blurred view. Enter to explore; Esc returns to the menu. The HUD keeps the aiming dot, a contextual artwork overlay when you look at a title plate and a compact narrator indicator with live audio visualization while a story is playing. Audio mute, full/lightweight graphics and the always-expanded OpenRouter connection live in the menu. Collection, Controls and Preferences panels and the menu’s keyboard hint are removed; Tab still opens the floor plan while exploring. Reset appears only after the first in-game movement, look or action; this is remembered on the device. Opening the menu or clicking Enter alone does not reveal it.
 
 ## UI components
 
-Styled UI components live in their own `src/components/<Name>/` folders with `index.tsx` and `style.module.sass`, imported as `css`. The collection cards, detail editor, filters, upload action, atmosphere settings, backups, menu controls and drag overlay have separate owners. `src/style.sass` contains only local font declarations, document defaults and element resets; `src/style/_ui.sass` shares small visual mixins without emitting global classes. Shared colors live in `src/style/_colors.sass` and compile to literal values; styles do not use CSS custom properties. The interface uses a simple dark palette instead of the former display-font styling.
+Styled UI components live in their own `src/components/<Name>/` folders with `index.tsx` and `style.module.sass`, imported as `css`. The menu controls, OpenRouter connection, floor plan, narration indicators and drag overlay have separate owners. `src/style.sass` contains only local font declarations, document defaults and element resets; `src/style/_ui.sass` shares small visual mixins without emitting global classes. Shared colors live in `src/style/_colors.sass` and compile to literal values; styles do not use CSS custom properties. The interface uses a simple dark palette instead of the former display-font styling.
 
 Renderer-free component tests compile actual Sass modules through Vite. Style tests check module exports and selector isolation; live-test selectors use stable data attributes rather than generated class names.
 
@@ -41,7 +41,7 @@ Renderer-free component tests compile actual Sass modules through Vite. Style te
 | Throw a held frame or sculpture | Right mouse button or Q |
 | Listen to an artwork | Right mouse button or R while aiming at it |
 | Inspect an artwork | Hold V |
-| Collection / help / floor plan | G / H / Tab |
+| Floor plan | Tab |
 | Mute | M |
 | Undo / redo | Ctrl+Z / Ctrl+Shift+Z or Ctrl+Y |
 | Open menu / cancel a move | Esc |
@@ -50,11 +50,11 @@ Frames snap to valid wall surfaces, not arbitrary mesh hits. The preview include
 
 Two additional interactive specimens stand near the front of the botanical display: 33, a bird of paradise with nine pluckable leaves, and 34, a peace lily with ten leaves and three pluckable flowers. Their stalks break at varied heights, leaving stumps attached to the pot; the pot unlocks after the last leaf or flower is plucked. Reset restores both plants. Specimens 04 (snake plant) and 06 (calathea) have three stages: rip off their leaves, grab the exposed root/stalk bundle, then pick up the empty pot. Their original geometry and numbering stay unchanged. Reset restores these specimens too. The jade bonsai remains decorative.
 
-Add PNG, JPEG, WebP, AVIF or GIF files with Add artwork in Collection, drag and drop or clipboard paste. A drop on a suitable wall hangs the work there; otherwise it arrives as a loose frame. Images retain their aspect ratio and are normalized to WebP. Limits: twelve files per batch, 25 mb per image, 64 million decoded pixels 150 mb of embedded images and 120 works per collection. Animated inputs become still images.
+Add PNG, JPEG, WebP, AVIF or GIF files with drag and drop or clipboard paste. A drop on a suitable wall hangs the work there; otherwise it arrives as a loose frame. Images retain their aspect ratio and are normalized to WebP. Limits: twelve files per batch, 25 mb per image, 64 million decoded pixels 150 mb of embedded images and 120 works per collection. Animated inputs become still images.
 
-Collection and preferences expose Undo/Redo buttons, and keyboard history remains available inside panels except when an editable field has focus. Without native WebGPU, the app displays its requirements instead of starting an alternate gallery mode.
+Keyboard Undo/Redo remains available, including inside the floor plan, except when an editable field has focus. Without native WebGPU, the app displays its requirements instead of starting an alternate gallery mode.
 
-Collection provides search, room filters, complete stories, editable labels and years, image downloads and shortcuts to each work. The velvet and neon Doge portraits are separate works. The book on its pedestal can be picked up and thrown like the other sculptures.
+Read artwork titles and stories by aiming at their title plates. Collection browsing, label editing and image-download UI are no longer exposed. The velvet and neon Doge portraits are separate works. The book on its pedestal can be picked up and thrown like the other sculptures.
 
 The Serious Knot uses a polished gold material with procedural color and normal maps and a locally bundled [warehouse HDR reflection environment](public/environment/readme.md). Its reflections are material-local; the other sculptures and gallery lighting are unchanged.
 
@@ -94,7 +94,7 @@ The temporary plant preview, its numbered signs and all plant placements have be
 
 ## Optional AI
 
-The menu’s OpenRouter manager exposes connection and model preferences. The query parameters are `ai`, `text_model`, `text_model_effort`, `image_model`, `audio_model`, `narrator_voice`, `narrator_character` and `eager_audio`. Defaults follow the supplied benchmark scaffold; provider availability and voice support can change.
+The menu’s OpenRouter section is always expanded and exposes only the API key and AI-enable controls. Model, voice, character, reasoning-effort and eager-audio preferences come exclusively from URL parameters (with parser defaults when absent). The query parameters are `ai`, `text_model`, `text_model_effort`, `image_model`, `audio_model`, `narrator_voice`, `narrator_character` and `eager_audio`. Defaults follow the supplied benchmark scaffold; provider availability and voice support can change.
 
 - Imports send a reduced image to the text model for streamed titles and stories.
 - Fusion sends the hanging image first and the thrown image second to the image model.
@@ -102,15 +102,15 @@ The menu’s OpenRouter manager exposes connection and model preferences. The qu
 - Without AI, fusion is explicitly a local cut-paper collage – not a simulated model response.
 - Changing AI settings cancels outstanding work. Late responses cannot overwrite a manual label edit, undo, reset or a removed source image.
 
-The key lives in this tab’s `sessionStorage`, not the URL, IndexedDB or exports. Connected provider requests may incur charges and transmit images or story text to OpenRouter and its selected provider. Browser voices depend on the operating system and may need their own network access; recorded stories work without a speech service. Stories remain readable in Collection when audio fails. The in-game narrator indicator and the menu’s expandable audio guide share five gradient bars that react to the actual narration spectrum, not a looping animation or gallery sound effects. Recorded and provider-generated audio are analyzed; browser speech uses a static speaker icon, never spectrum bars, because its audio cannot be sampled. The indicator follows the actual playback source, including provider or recording failures that fall back to browser speech. The menu also includes the full current story and a stop button. Artwork overlays show title, description, creator and year. Undated works stay explicitly undated; years supplied by the AI or edited in Collection are saved and included in backups.
+The key lives in this tab’s `sessionStorage`, not the URL, IndexedDB or exports. Connected provider requests may incur charges and transmit images or story text to OpenRouter and its selected provider. Browser voices depend on the operating system and may need their own network access; recorded stories work without a speech service. Stories remain readable on artwork overlays when audio fails. The in-game narrator indicator and the menu’s expandable audio guide share five bars that react to the actual narration spectrum, not a looping animation or gallery sound effects. Recorded and provider-generated audio are analyzed; browser speech uses a static speaker icon, never spectrum bars, because its audio cannot be sampled. The indicator follows the actual playback source, including provider or recording failures that fall back to browser speech. The menu also includes the full current story and a stop button. Artwork overlays show title, description, creator and year. Undated works stay explicitly undated; artwork years remain part of the saved collection.
 
 ## Keeping your collection
 
-Artwork, labels, placements and atmosphere preferences are automatically saved in this origin’s IndexedDB. If loading fails, the stored record is protected and autosave stays paused until you explicitly confirm its replacement in Preferences & backups. Loose frames save their final pose when they settle. Player position and yaw persist across refreshes; sculpture positions are session-only. Undo history is limited to twenty collection changes and is not persisted.
+Artwork, labels, placements and audio mute state are automatically saved in this origin’s IndexedDB. Frame finishes and the lobby palette are no longer configurable or persisted: frames use gold and the lobby uses its fixed ivory color. Old saves still load, but their retired palette and frame fields are ignored. If loading fails, the stored record is protected and autosave stays paused; there is no recovery panel. Loose frames save their final pose when they settle. Player position and yaw persist across refreshes; sculpture positions are session-only. Undo history is limited to twenty collection changes and is not persisted.
 
-Preferences & backups exports a compressed `.slop` backup containing embedded imported images. Restoring validates the document and decodes its images before asking to replace the current collection. Reset restores the original artwork, replants foliage, resets sculptures and returns to the entrance. Reset and restore are undoable collection operations; resetting session-only physics positions is not undoable. Atmosphere settings are independent of collection undo.
+The repository retains validated compressed `.slop` import/export for tooling and tests, but there is no backup or restore UI. Reset restores the original artwork, replants foliage, resets sculptures and returns to the entrance. Reset and restore are undoable collection operations; resetting session-only physics positions is not undoable. Audio mute is independent of collection undo.
 
-Browser storage is not a permanent backup. Export before clearing site data, switching browser profiles or changing the hosting origin. Use one editing tab at a time; there is no collaborative multi-tab merge protocol.
+Browser storage is not a permanent backup. Preserve browser data before clearing site data, switching browser profiles or changing the hosting origin. Use one editing tab at a time; there is no collaborative multi-tab merge protocol.
 
 ## Development mode
 
@@ -135,7 +135,7 @@ bun run check
 bun run test:live
 ```
 
-`check` runs strict TypeScript checks, ESLint with a per-file/rule warning regression gate, unit tests, the production build and an isolated packed-library consumer check. Floating/misused promises and unsafe TypeScript operations are errors. The remaining style backlog is recorded in eslint-baseline.json; run bun run lint --tighten after cleanup to reduce its allowances. `test:live` builds again, starts an isolated preview and drives a fresh headless Chrome through real WebGPU rendering, pointer lock, movement, placement, throwing, collection editing, imports, collage fusion, history, persistence, backup restoration, room navigation and lightweight rendering. It also walks through the boolean-cut portals in both directions and verifies that a non-WebGPU browser cannot start the gallery. Geometry tests compare the arched openings against rendered mesh rays and Rapier collision rays on both faces. Override `CHROME_PATH` if Chrome is installed elsewhere.
+`check` runs strict TypeScript checks, ESLint with a per-file/rule warning regression gate, unit tests, the production build and an isolated packed-library consumer check. Floating/misused promises and unsafe TypeScript operations are errors. The remaining style backlog is recorded in eslint-baseline.json; run bun run lint --tighten after cleanup to reduce its allowances. `test:live` builds again, starts an isolated preview and drives a fresh headless Chrome through real WebGPU rendering, pointer lock, movement, placement, throwing, paste/drop imports, collage fusion, history, persistence, reset, room navigation and lightweight rendering. It also walks through the boolean-cut portals in both directions and verifies that a non-WebGPU browser cannot start the gallery. Geometry tests compare the arched openings against rendered mesh rays and Rapier collision rays on both faces. Override `CHROME_PATH` if Chrome is installed elsewhere.
 
 Browser screenshots and failure diagnostics are written under ignored `private/agent/reports`. The test verifies image-region variance in the actual browser screenshot; a merely nonblack GPU buffer is not considered proof that the gallery rendered correctly. `window.__gallery.snapshot()` and `captureFrame()` expose read-only diagnostics. Mutation helpers exist only with `?test=true`.
 

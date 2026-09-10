@@ -68,7 +68,7 @@ export function colliderGeometry(geometry: BufferGeometry): [Float32Array, Uint3
     surface.dispose()
   }
 }
-// CSG runs once per wall layout, never in the animation loop or on theme changes.
+// CSG runs once per wall layout, never in the animation loop.
 export function createArchitectureGeometry(wall: Wall) {
   const top = wall.height + 0.3
   const baseboardHeight = wall.baseboardHeight ?? 0.44

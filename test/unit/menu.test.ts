@@ -44,7 +44,7 @@ afterEach(() => {
   }
 })
 describe('minimal menu', () => {
-  test('starts unlocked, with no reset or automatic OpenRouter prompt', () => {
+  test('starts unlocked, with no reset and an expanded OpenRouter section', () => {
     expect(useGallery.getState().locked).toBe(false)
     expect(useGallery.getState().hasControlled).toBe(false)
     expect(renderToStaticMarkup(createElement(ResetGallery))).toBe('')
@@ -62,7 +62,14 @@ describe('minimal menu', () => {
     expect(html).toContain('Performance graphics')
     expect(html).toContain('<small>Quality</small>')
     expect(html).toContain('OpenRouter')
-    expect(html).not.toContain('<details open')
+    expect(html).toContain('aria-labelledby="openrouter-title"')
+    expect(html).not.toContain('<summary>OpenRouter')
+    expect(html).not.toContain('Model preferences')
+    expect(html).not.toContain('Prepare custom narration')
+    expect(html).not.toContain('Open collection')
+    expect(html).not.toContain('Preferences &amp; backups')
+    expect(html).not.toContain('Controls')
+    expect(html).not.toContain('WASD to move')
     expect(html).not.toContain('Reset gallery')
     expect(html).not.toContain('<header')
     expect(html).not.toContain('<footer')
@@ -72,7 +79,7 @@ describe('minimal menu', () => {
     expect(useGallery.getState().hasControlled).toBe(false)
     useGallery.setState({locked: true})
     expect(useGallery.getState().hasControlled).toBe(false)
-    useGallery.setState({panel: 'settings'})
+    useGallery.setState({panel: 'map'})
     markControlled()
     expect(useGallery.getState().hasControlled).toBe(false)
     expect(writes).toBe(0)

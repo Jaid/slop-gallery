@@ -26,8 +26,8 @@ export function validateDocument(value: unknown): GalleryDocument {
     throw new Error('The collection timestamp is too long.')
   }
   const settings = value.settings
-  if (!['ivory', 'sage', 'nocturne'].includes(String(settings.theme)) || !['gold', 'oak', 'black'].includes(String(settings.frame)) || typeof settings.sound !== 'boolean') {
-    throw new Error('The collection has invalid settings.')
+  if (typeof settings.sound !== 'boolean') {
+    throw new TypeError('The collection has invalid settings.')
   }
   const ids = new Set<string>
   const portraits: Array<Portrait> = value.portraits.map((value: unknown) => {
@@ -115,8 +115,6 @@ export function validateDocument(value: unknown): GalleryDocument {
     },
     savedAt: typeof value.savedAt === 'string' ? value.savedAt : '',
     settings: {
-      theme: settings.theme as GalleryDocument['settings']['theme'],
-      frame: settings.frame as GalleryDocument['settings']['frame'],
       sound: settings.sound,
     },
   }
@@ -286,7 +284,7 @@ export async function initializePersistence() {
       saveStatus: 'error',
       storageRecoveryRequired: true,
     })
-    notify('Local storage could not be read. The stored record is protected. Export your current collection or choose recovery in Settings.')
+    notify('Local storage could not be read. Automatic saving is paused to protect the stored collection.')
   }
   let timer: ReturnType<typeof setTimeout> | undefined
   let generation = 0
@@ -319,14 +317,14 @@ export async function initializePersistence() {
         return
       }
       useGallery.setState({saveStatus: 'error'})
-      notify('Local save failed. Export your collection from Settings to keep a backup.')
+      notify('Local save failed. Changes in this session may not survive a reload.')
     })
   }
   const unsubscribe = useGallery.subscribe((s, previous) => {
     if (s.storageRecoveryRequired) {
       return
     }
-    if (s.storageRecoveryRequired === previous.storageRecoveryRequired && s.portraits === previous.portraits && s.theme === previous.theme && s.frame === previous.frame && s.sound === previous.sound && s.playerEpoch === previous.playerEpoch) {
+    if (s.storageRecoveryRequired === previous.storageRecoveryRequired && s.portraits === previous.portraits && s.sound === previous.sound && s.playerEpoch === previous.playerEpoch) {
       return
     }
     clearTimeout(timer)

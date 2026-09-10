@@ -3,10 +3,7 @@ import {afterEach, beforeEach, expect, spyOn, test} from 'bun:test'
 import {createElement} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
 
-import Collection from '#component/Collection'
-import History from '#component/History'
 import Map from '#component/Map'
-import Settings from '#component/Settings'
 
 import {galleryEvents, handleGalleryKey, importDroppedFiles, isTextInput, viewPortrait} from '../../src/lib/gallery/actions.ts'
 import {ImageImporter} from '../../src/lib/gallery/ImageImporter.ts'
@@ -34,25 +31,28 @@ beforeEach(() => {
   useGallery.setState({
     sound: false,
     ready: false,
-    panel: 'collection',
+    panel: 'map',
     importTarget: null,
     importFiles: null,
   })
   Object.assign(globalThis, {HTMLElement: ElementDouble})
 })
 afterEach(() => Object.assign(globalThis, previous))
-test('collection and preferences expose Add artwork, backups and visible history without a renderer', () => {
-  expect(renderToStaticMarkup(createElement(Collection))).toContain('Add artwork')
-  expect(renderToStaticMarkup(createElement(Settings))).toContain('Export collection')
-  expect(renderToStaticMarkup(createElement(Settings))).toContain('Restore a backup')
-  const history = renderToStaticMarkup(createElement(History))
-  expect(history).toContain('Collection history')
-  expect(history).toContain('Undo')
-  expect(history).toContain('Redo')
+test('the floor plan remains available without a renderer', () => {
   const map = renderToStaticMarkup(createElement(Map))
   expect(map.match(/disabled=""/g)).toHaveLength(rooms.length)
 })
-test('renderer-free drops decode, commit and support undo/redo inside Collection', async () => {
+test('retired menu shortcuts do not open panels', () => {
+  useGallery.setState({panel: null})
+  for (const code of ['KeyG', 'KeyH']) {
+    handleGalleryKey({
+      code,
+      target: new ElementDouble,
+    } as unknown as KeyboardEvent)
+    expect(useGallery.getState().panel).toBeNull()
+  }
+})
+test('renderer-free drops decode, commit and support undo/redo with a panel open', async () => {
   Object.assign(globalThis, {
     createImageBitmap: async () => ({
       width: 64,
@@ -115,11 +115,11 @@ test('scene placement is optional and ignored while a panel owns the drop', asyn
   await importDroppedFiles([], 12, 34)
   expect(calls).toEqual([undefined, target])
 })
-test('unavailable navigation does not close Collection or dispatch a visit', () => {
+test('unavailable navigation does not close the floor plan or dispatch a visit', () => {
   const spy = spyOn(galleryEvents, 'dispatchEvent')
   try {
     viewPortrait('goose')
-    expect(useGallery.getState().panel).toBe('collection')
+    expect(useGallery.getState().panel).toBe('map')
     expect(spy).not.toHaveBeenCalled()
   } finally {
     spy.mockRestore()

@@ -2,20 +2,26 @@
 @use '../../style/ui'
 
 .container
-  @include ui.details
-  > summary span
-    float: right
-    color: colors.$muted
-    font-size: 0.75rem
-  > :not(summary)
-    margin: 0.85rem
+  border: 1px solid colors.$border
+  border-radius: 4px
+  padding: 0.85rem
+  text-align: left
+  font-size: 0.85rem
+  h2
+    display: flex
+    align-items: center
+    justify-content: space-between
+    gap: 0.75rem
+    margin: 0
+    font-size: 0.9rem
+    span
+      color: colors.$muted
+      font-size: 0.75rem
   p
     @include ui.copy
   label
     display: block
     margin-bottom: 0.5rem
-  details
-    @include ui.details
 
 .note
   color: colors.$muted
@@ -32,15 +38,6 @@
 
 .textButton
   @include ui.textButton
-
-.modelField
-  margin: 0.85rem
-  font-size: 0.75rem
-  text-transform: capitalize
-  input
-    display: block
-    width: 100%
-    margin-top: 0.5rem
 
 .container .toggleRow
   @include ui.toggleRow

@@ -39,9 +39,7 @@ export type NarrationState = {id: string} & (
     status: 'preparing'}
 )
 export type GallerySettings = {
-  frame: 'black' | 'gold' | 'oak'
   sound: boolean
-  theme: 'ivory' | 'nocturne' | 'sage'
 }
 export type GallerySnapshot = {
   portraits: Array<Portrait>

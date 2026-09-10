@@ -7,7 +7,7 @@ import {validateCollectionImages} from './imagePolicy.ts'
 import {playerSession} from './PlayerSession.ts'
 
 export {maximumPortraits} from './imagePolicy.ts'
-export type Panel = 'collection' | 'help' | 'map' | 'settings' | null
+export type Panel = 'map' | null
 type State = GallerySettings & GallerySnapshot & {
   active: string | null
   activeLabel: string | null
@@ -107,8 +107,6 @@ export const useGallery = create<State>((set, get) => ({
   ai: false,
   apiKey: readKey(),
   sound: true,
-  theme: 'ivory',
-  frame: 'gold',
   narration: null,
   storageRecoveryRequired: false,
   saveStatus: 'loading',
@@ -191,8 +189,6 @@ export function createDocument(): GalleryDocument {
     savedAt: (new Date).toISOString(),
     player: playerSession.snapshot(),
     settings: {
-      theme: s.theme,
-      frame: s.frame,
       sound: s.sound,
     },
   }
@@ -203,7 +199,7 @@ export function restoreDocument(document: GalleryDocument) {
   playerSession.restore(document.player)
   useGallery.setState({
     ...snapshot(document),
-    ...document.settings,
+    sound: document.settings.sound,
     playerEpoch: useGallery.getState().playerEpoch + 1,
     past: [],
     future: [],

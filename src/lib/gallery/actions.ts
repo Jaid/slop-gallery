@@ -77,11 +77,6 @@ export function viewPortrait(id: string) {
   galleryEvents.dispatchEvent(new CustomEvent('view', {detail: id}))
 }
 
-export function upload() {
-  document.exitPointerLock?.()
-  document.querySelector<HTMLInputElement>('input[data-artwork-input]')?.click()
-}
-
 export function importRejected() {
   notify('Choose PNG, JPEG, WebP, AVIF or GIF under 25 mb. Animated images are displayed as a still.')
 }
@@ -170,12 +165,6 @@ export function handleGalleryKey(event: KeyboardEvent) {
   }
   if (event.code === 'KeyM') {
     useGallery.setState({sound: !s.sound})
-  }
-  if (event.code === 'KeyG') {
-    openPanel('collection')
-  }
-  if (event.code === 'KeyH') {
-    openPanel('help')
   }
 }
 

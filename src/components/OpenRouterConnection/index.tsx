@@ -9,8 +9,8 @@ import css from './style.module.sass'
 export default function OpenRouterConnection({params, setParams}: ReturnType<typeof useGalleryAI>) {
   const apiKey = useGallery(s => s.apiKey)
   const [key, setKey] = useState(apiKey)
-  return <details className={css.container} data-testid="connection">
-    <summary>OpenRouter <span>{apiKey ? params.ai ? 'Enabled' : 'Disabled' : 'Not connected'}</span></summary>
+  return <section className={css.container} data-testid="connection" aria-labelledby="openrouter-title">
+    <h2 id="openrouter-title">OpenRouter <span>{apiKey ? params.ai ? 'Enabled' : 'Disabled' : 'Not connected'}</span></h2>
     <p>Optional AI for artwork titles, stories and fusions. Images and text are sent to OpenRouter and may incur charges. No key is needed to explore.</p>
     <form onSubmit={event => {
       event.preventDefault()
@@ -34,6 +34,5 @@ export default function OpenRouterConnection({params, setParams}: ReturnType<typ
         notify('Key removed. AI is off.')
       }}>Disconnect & forget key</button>
     </div>}
-    <details><summary>Model preferences</summary>{(['text_model', 'image_model', 'audio_model', 'narrator_voice', 'narrator_character', 'text_model_effort'] as const).map(parameter => <label className={css.modelField} key={parameter}>{parameter.replaceAll('_', ' ')}<input value={params[parameter]} onChange={event => void setParams({[parameter]: event.target.value}).catch(() => notify('AI preferences could not be saved.'))}/></label>)}<label className={css.toggleRow}>Prepare custom narration in advance<input type="checkbox" checked={params.eager_audio} onChange={event => void setParams({eager_audio: event.target.checked}).catch(() => notify('AI preferences could not be saved.'))}/></label><p>Changing AI settings cancels active jobs without consuming their source artworks. Recorded stories keep their original voice.</p></details>
-  </details>
+  </section>
 }

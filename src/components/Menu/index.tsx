@@ -7,7 +7,7 @@ import MenuNarration from '#component/MenuNarration'
 import MenuOptions from '#component/MenuOptions'
 import OpenRouterConnection from '#component/OpenRouterConnection'
 import ResetGallery from '#component/ResetGallery'
-import {enterGallery, openPanel, useGallery} from '#src/lib/gallery.ts'
+import {enterGallery, useGallery} from '#src/lib/gallery.ts'
 
 import css from './style.module.sass'
 
@@ -24,14 +24,8 @@ export default function Menu(settings: ReturnType<typeof useGalleryAI>) {
       <button className={css.enter} id="enter-gallery" disabled={!s.ready} onClick={enterGallery}>{!s.ready ? 'Opening the gallery…' : (s.hasControlled ? 'Resume' : 'Enter gallery')}<Icon name="arrow" size={18}/></button>
       <MenuOptions/>
       <OpenRouterConnection {...settings}/>
-      <nav className={css.links} aria-label="Gallery tools">
-        <button aria-label="Open collection" onClick={() => openPanel('collection')}>Collection</button>
-        <button onClick={() => openPanel('help')}>Controls</button>
-        <button aria-label="Gallery settings" onClick={() => openPanel('settings')}>Preferences & backups</button>
-      </nav>
       <ResetGallery/>
       <MenuNarration/>
-      <p className={css.hint}>WASD to move · Mouse to look · Esc for menu</p>
     </div>
   </section>
 }

@@ -1,9 +1,7 @@
 import type {ReactNode} from 'react'
 
-import clsx from 'clsx'
 import {useEffect, useRef} from 'react'
 
-import History from '#component/History'
 import Icon from '#component/Icon'
 import Toast from '#component/Toast'
 import {openPanel, useGallery} from '#src/lib/gallery.ts'
@@ -13,7 +11,6 @@ import css from './style.module.sass'
 export default function Panel({title, children}: {children: ReactNode
   title: string}) {
   const ref = useRef<HTMLDialogElement>(null)
-  const panel = useGallery(s => s.panel)
   const notice = useGallery(s => s.notice)
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null
@@ -31,10 +28,9 @@ export default function Panel({title, children}: {children: ReactNode
       openPanel(null)
     }
   }}>
-    <section className={clsx(css.content, panel === 'collection' && css.collection)}>
+    <section className={css.content}>
       <div className={css.heading}><div><div className={css.eyebrow}>THE SLOP GALLERY</div><h2 id="panel-title">{title}</h2></div><button className={css.iconButton} aria-label="Close panel" onClick={() => openPanel(null)} autoFocus><Icon name="close"/></button></div>
       {notice && <Toast panel>{notice}</Toast>}
-      <History/>
       {children}
     </section>
   </dialog>
