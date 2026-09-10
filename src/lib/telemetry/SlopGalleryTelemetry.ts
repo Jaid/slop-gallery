@@ -1,5 +1,5 @@
 import type {GalleryState, GalleryStore, SlopGalleryTelemetryOptions} from './types.ts'
-import type {Attributes, Span} from 'telemethree'
+import type {Attributes, Span, TraceContext} from 'telemethree'
 import type {EgoTelemetryOptions} from 'telemethree-ego'
 
 import {Telemetry} from 'telemethree'
@@ -10,12 +10,16 @@ import {VictoriaExporter} from './VictoriaExporter.ts'
 
 export class SlopGalleryTelemetry extends Telemetry {
   readonly sessionId: string
+  private gameplay: Span | undefined
   private readonly sampleIntervalMs: number
+  private session: Span | undefined
+  private startup: Span | undefined
 
   constructor(options: SlopGalleryTelemetryOptions = {}) {
     const sessionId = options.sessionId ?? crypto.randomUUID()
     const endpoint = (options.endpoint ?? '/api/telemetry').replace(/\/$/u, '')
     super({
+      flushIntervalMs: 1000,
       ...options,
       exporter: options.exporter ?? new VictoriaExporter({
         endpoint,
@@ -43,15 +47,28 @@ export class SlopGalleryTelemetry extends Telemetry {
 
   /** Subscribes once per attachment; every timer/listener/span is paired with cleanup. */
   connect(store: GalleryStore, events?: EventTarget) {
+    if (this.session) {
+      throw new Error('Mount only one gallery telemetry attachment.')
+    }
     const stop = this.start()
     let saving: Span | null = null
     const initial = store.getState()
+    this.session = super.startSpan('gallery.session', {room: initial.room})
+    if (!initial.ready) {
+      this.startup = super.startSpan('gallery.startup', {}, this.session)
+    }
+    if (initial.locked) {
+      this.gameplay = super.startSpan('gallery.gameplay', {room: initial.room}, this.session)
+    }
     if (initial.saveStatus === 'saving') {
       saving = this.startSpan('gallery.save')
     }
     this.sample(initial)
     this.event('session.attached', {room: initial.room})
     const unsubscribe = store.subscribe((state, previous) => {
+      if (state.locked && !previous.locked) {
+        this.gameplay = super.startSpan('gallery.gameplay', {room: state.room}, this.session)
+      }
       if (state.room !== previous.room) {
         this.event('room.changed', {
           from: previous.room,
@@ -62,6 +79,15 @@ export class SlopGalleryTelemetry extends Telemetry {
         if (state[key] !== previous[key]) {
           this.event(`${key}.changed`, {value: state[key] ?? 'none'})
         }
+      }
+      if (!state.locked && previous.locked) {
+        this.gameplay?.end()
+        this.gameplay = undefined
+      }
+      if (state.ready && !previous.ready) {
+        this.startup?.addEvent('gallery.ready')
+        this.startup?.end()
+        this.startup = undefined
       }
       if (state.revision !== previous.revision) {
         this.event('collection.changed', {portraits: state.portraits.length})
@@ -106,6 +132,12 @@ export class SlopGalleryTelemetry extends Telemetry {
       }
       saving?.end('unset', {outcome: 'detached'})
       this.event('session.detached')
+      this.gameplay?.end('unset', {outcome: 'detached'})
+      this.startup?.end('unset', {outcome: 'detached'})
+      this.session?.end()
+      this.gameplay = undefined
+      this.startup = undefined
+      this.session = undefined
       stop()
     }
   }
@@ -119,12 +151,20 @@ export class SlopGalleryTelemetry extends Telemetry {
 
   event(name: string, attributes: Attributes = {}) {
     this.count('gallery.events', 1, {attributes: {event: name}})
-    const span = this.startSpan(`gallery.${name}`, attributes)
+    const parent = this.gameplay ?? this.startup ?? this.session
+    const span = parent ?? this.startSpan(`gallery.${name}`, attributes)
+    parent?.addEvent(`gallery.${name}`, attributes)
     this.log(`Gallery event: ${name}`, 'info', {
       'event.name': `gallery.${name}`,
       ...attributes,
     }, span)
-    span.end()
+    if (!parent) {
+      span.end()
+    }
+  }
+
+  getContext() {
+    return this.gameplay ?? this.startup ?? this.session
   }
 
   sample(state: GalleryState) {
@@ -143,5 +183,9 @@ export class SlopGalleryTelemetry extends Telemetry {
     for (const {id: room} of rooms) {
       this.metric('gallery.room.active', Number(room === state.room), {attributes: {room}})
     }
+  }
+
+  override startSpan(name: string, attributes: Attributes = {}, parent: TraceContext | undefined = this.getContext(), startTime?: number) {
+    return super.startSpan(name, attributes, parent, startTime)
   }
 }

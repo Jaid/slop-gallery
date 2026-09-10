@@ -231,3 +231,48 @@ test('native metrics coalesce millisecond collisions and reject misleading HTML 
     lastError: 'Expected HTTP 204 from VictoriaMetrics JSON import.',
   })
 })
+test('startup, gameplay and operations share a session trace with state changes as events', async () => {
+  const batches: Array<ExportBatch> = []
+  const telemetry = new SlopGalleryTelemetry({
+    exporter: {
+      export: async batch => {
+        batches.push(structuredClone(batch))
+      },
+    },
+  })
+  const store = createStore(() => initial)
+  const stop = telemetry.connect(store)
+  expect(() => telemetry.connect(store)).toThrow('one gallery telemetry')
+  await telemetry.trace('three.init', () => {})
+  store.setState({ready: true})
+  store.setState({locked: true})
+  const gameplay = telemetry.getContext()!
+  store.setState({
+    room: 'amber',
+    saveStatus: 'saving',
+  })
+  await telemetry.trace('gallery.merge', () => {})
+  store.setState({
+    saveStatus: 'saved',
+    locked: false,
+  })
+  stop()
+  await telemetry.flush()
+  const traces = batches.filter(batch => batch.signal === 'traces').flatMap(batch => batch.records) as Array<import('telemethree').Trace>
+  const session = traces.find(trace => trace.name === 'gallery.session')!
+  const startup = traces.find(trace => trace.name === 'gallery.startup')!
+  const play = traces.find(trace => trace.name === 'gallery.gameplay')!
+  expect(traces.every(trace => trace.traceId === session.traceId)).toBe(true)
+  expect(play.parentSpanId).toBe(session.spanId)
+  expect(startup.parentSpanId).toBe(session.spanId)
+  expect(traces.find(trace => trace.name === 'three.init')?.parentSpanId).toBe(startup.spanId)
+  expect(traces.find(trace => trace.name === 'gallery.save')?.parentSpanId).toBe(gameplay.spanId)
+  expect(traces.find(trace => trace.name === 'gallery.merge')?.parentSpanId).toBe(gameplay.spanId)
+  expect(play.events?.some(event => event.name === 'gallery.room.changed')).toBe(true)
+  expect(traces.some(trace => trace.name === 'gallery.room.changed')).toBe(false)
+  expect(telemetry.getContext()).toBeUndefined()
+  const detach = telemetry.connect(store)
+  expect(telemetry.getContext()?.traceId).not.toBe(session.traceId)
+  detach()
+  await telemetry.dispose()
+})

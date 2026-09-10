@@ -4,7 +4,7 @@ import type {WebGPURenderer} from 'three/webgpu'
 import {expect, test} from 'bun:test'
 
 import Info from 'three/src/renderers/common/Info.js'
-import {Group, InstancedMesh, Mesh, Scene} from 'three/webgpu'
+import {Group, InspectorBase, InstancedMesh, Mesh, Scene} from 'three/webgpu'
 
 import {ExportError, OtlpHttpExporter, Telemetry, ThreeStatistics} from '../src/main.ts'
 import {encodeOtlp, unixNano} from '../src/otlp.ts'
@@ -13,6 +13,10 @@ function testRenderer() {
   return {
     info: new Info,
     backend: {isWebGPUBackend: true},
+    inspector: new InspectorBase,
+    getPixelRatio: () => 2,
+    getDrawingBufferSize: (target: {set: (x: number, y: number) => unknown}) => target.set(1920, 1080),
+    samples: 0,
   } as unknown as WebGPURenderer
 }
 function fixture(options: Partial<ConstructorParameters<typeof Telemetry>[0]> = {}) {
@@ -284,8 +288,8 @@ test('Three statistics include all passes and distinguish draw calls from cumula
     'three.fps': 100,
     'three.frame.duration.p95': 10,
     'three.frame.duration.p99': 10,
-    'three.render.draw_calls': 8,
-    'three.render.triangles': 50,
+    'three.render.draw_calls.mean': 8,
+    'three.render.triangles.mean': 50,
     'three.scene.meshes': 3,
     'three.scene.visible_meshes': 2,
     'three.scene.instances': 8,
@@ -317,11 +321,11 @@ test('p95/p99 use nearest-rank WebGPU frame durations', async () => {
   expect(metrics['three.frame.duration.p95']).toBe(95)
   expect(metrics['three.frame.duration.p99']).toBe(99)
   expect(metrics['three.fps']).toBeCloseTo(1000 / 50.5)
-  expect(metrics['three.render.draw_calls']).toBe(7)
+  expect(metrics['three.render.draw_calls.mean']).toBe(7)
   stop()
   expect(info.autoReset).toBe(false)
 })
-test('statistics ring retains only the newest bounded sample set', async () => {
+test('statistics flush at capacity without silently losing older frames', async () => {
   const {telemetry, batches} = fixture()
   const renderer = testRenderer()
   const statistics = new ThreeStatistics(telemetry, renderer, new Scene, {
@@ -337,8 +341,8 @@ test('statistics ring retains only the newest bounded sample set', async () => {
   const metrics = Object.fromEntries((batches[0]!.records as Array<Metric>).map(metric => [metric.name, metric.value]))
   expect(metrics).toMatchObject({
     'three.frame.samples': 3,
-    'three.frame.duration.mean': 4,
-    'three.frame.duration.p99': 5,
+    'three.frame.duration.mean': 2,
+    'three.frame.duration.p99': 3,
   })
   stop()
 })

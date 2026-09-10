@@ -104,6 +104,12 @@ export function encodeOtlp(batch: ExportBatch) {
         endTimeUnixNano: unixNano(trace.endTime),
         attributes: otlpAttributes(trace.attributes),
         status: {code: statusCode[trace.status]},
+        events: trace.events?.map(event => ({
+          name: event.name,
+          timeUnixNano: unixNano(event.time),
+          attributes: otlpAttributes(event.attributes),
+        })),
+        droppedEventsCount: trace.droppedEventsCount,
       }))
       return {
         resourceSpans: [

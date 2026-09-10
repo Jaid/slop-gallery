@@ -11,7 +11,10 @@ import {useTelemetry} from './context.tsx'
 export type ThreeTelemetryOptions = ThreeStatisticsOptions & {telemetry?: Telemetry}
 
 /** Collect from the WebGPU Canvas after all render passes. */
-export function useThreeTelemetry({telemetry, intervalMs, maxSamples, attributes}: ThreeTelemetryOptions = {}) {
+export function useThreeTelemetry(options: ThreeTelemetryOptions = {}) {
+  const {telemetry, intervalMs, maxSamples, gpuIntervalMs, hitchThresholdMs, hitchCooldownMs} = options
+  const latest = useRef(options)
+  latest.current = options
   const client = useTelemetry(telemetry)
   const collector = useRef<ThreeStatistics | null>(null)
   const stop = useRef<(() => void) | null>(null)
@@ -33,20 +36,31 @@ export function useThreeTelemetry({telemetry, intervalMs, maxSamples, attributes
       previousFrame.current = null
       stopDelivery()
     }
-  }, [client, intervalMs, maxSamples, attributes])
+  }, [client, intervalMs, maxSamples, gpuIntervalMs, hitchThresholdMs, hitchCooldownMs])
   useFrame(state => {
     if (!collector.current || renderer.current !== state.renderer || scene.current !== state.scene) {
       stop.current?.()
       collector.current = new ThreeStatistics(client, state.renderer, state.scene, {
         intervalMs,
         maxSamples,
-        attributes,
+        gpuIntervalMs,
+        hitchThresholdMs,
+        hitchCooldownMs,
+        getAttributes: () => ({
+          ...latest.current.attributes,
+          ...latest.current.getAttributes?.(),
+        }),
+        getTraceContext: () => latest.current.getTraceContext?.(),
+        getHitchAttributes: () => latest.current.getHitchAttributes?.() ?? {},
+        describePass: (passScene, camera, target) => latest.current.describePass?.(passScene, camera, target),
       })
       stop.current = collector.current.connect()
       renderer.current = state.renderer
       scene.current = state.scene
     }
-    collector.current.beginFrame()
+    if (document.visibilityState !== 'hidden') {
+      collector.current.beginFrame()
+    }
   }, {phase: 'start'})
   useFrame(() => {
     if (document.visibilityState !== 'hidden') {

@@ -8,7 +8,7 @@ export function useSlopGalleryTelemetry(telemetry: SlopGalleryTelemetry | null, 
     if (!telemetry) {
       return
     }
-    const stop = telemetry.connect(store, events)
+    let stop: (() => void) | undefined = telemetry.connect(store, events)
     const flush = () => {
       telemetry.flushInBackground()
     }
@@ -17,12 +17,22 @@ export function useSlopGalleryTelemetry(telemetry: SlopGalleryTelemetry | null, 
         flush()
       }
     }
-    window.addEventListener('pagehide', flush)
+    const pagehide = () => {
+      stop?.()
+      stop = undefined
+      flush()
+    }
+    const pageshow = () => {
+      stop ??= telemetry.connect(store, events)
+    }
+    window.addEventListener('pagehide', pagehide)
+    window.addEventListener('pageshow', pageshow)
     document.addEventListener('visibilitychange', visibility)
     return () => {
-      window.removeEventListener('pagehide', flush)
+      window.removeEventListener('pagehide', pagehide)
+      window.removeEventListener('pageshow', pageshow)
       document.removeEventListener('visibilitychange', visibility)
-      stop()
+      stop?.()
     }
   }, [telemetry, store, events])
 }

@@ -18,9 +18,16 @@ export type Log = {
   message: string
   time: number
 }
+export type SpanEvent = {
+  attributes: Attributes
+  name: string
+  time: number
+}
 export type Trace = TraceContext & {
   attributes: Attributes
+  droppedEventsCount?: number
   endTime: number
+  events?: ReadonlyArray<SpanEvent>
   name: string
   parentSpanId?: string
   startTime: number

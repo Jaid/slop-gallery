@@ -124,8 +124,8 @@ export class Telemetry {
     }
   }
 
-  startSpan(name: string, attributes: Attributes = {}, parent?: TraceContext) {
-    return new Span(name, {...attributes}, this.now, trace => this.push('traces', trace), parent ? {...parent} : undefined)
+  startSpan(name: string, attributes: Attributes = {}, parent?: TraceContext, startTime?: number) {
+    return new Span(name, {...attributes}, this.now, trace => this.push('traces', trace), parent ? {...parent} : undefined, startTime)
   }
 
   status() {
