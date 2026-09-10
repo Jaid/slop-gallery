@@ -258,6 +258,7 @@ test('movement checkpoints flush synchronously on refresh without rewriting artw
     const pose = {
       position: [-33, -4.98, -20] as [number, number, number],
       yaw: 1.2,
+      pitch: 0,
     }
     playerSession.capture(pose)
     page.dispatchEvent(new Event('pagehide'))

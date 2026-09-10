@@ -30,35 +30,71 @@ afterEach(() => {
   }
 })
 describe('player save state', () => {
-  test('new and legacy collections spawn on the centerline facing the fountain', () => {
+  test('new and legacy collections spawn at the captured poolside viewpoint', () => {
     expect(playerSpawn).toEqual({
-      position: [0, 0.05, -9],
-      yaw: 0,
+      position: [0.065_056_741_237_640_38, 0.019_489_301_368_594_17, -25.913_022_994_995_117],
+      yaw: 3.135_849_777_946_853,
+      pitch: -0.108,
     })
     const {player, ...legacy} = original
     expect(player).toBeDefined()
     expect(validateDocument(legacy).player).toEqual(playerSpawn)
+  })
+  test('legacy yaw-only poses remain level and malformed pitches are rejected', () => {
+    const {pitch: spawnPitch, ...legacy} = playerSpawn
+    expect(spawnPitch).toBe(-0.108)
+    expect(validatePlayerPose(legacy)).toEqual({
+      ...legacy,
+      pitch: 0,
+    })
+    for (const pitch of [Number.NaN, Infinity, '0', null, Math.PI]) {
+      expect(validatePlayerPose({
+        ...playerSpawn,
+        pitch,
+      })).toBeNull()
+    }
+  })
+  test('pitch-only changes are checkpointed and restored', () => {
+    const session = new PlayerSession
+    const pose = {
+      ...playerSpawn,
+      pitch: 0.3,
+    }
+    session.capture(pose)
+    expect(session.revision).toBe(1)
+    session.capture(pose)
+    expect(session.revision).toBe(1)
+    expect(session.checkpoint('2026-09-10T01:00:00Z')).toBe(true)
+    const restored = new PlayerSession
+    restored.resume('2026-09-09T00:00:00Z')
+    expect(restored.snapshot()).toEqual(pose)
   })
   test('invalid or obsolete positions do not prevent artwork recovery', () => {
     for (const player of [
       null, {}, {
         position: [0, 0, -9],
         yaw: Number.NaN,
+        pitch: 0,
       }, {
         position: [0, Infinity, 0],
         yaw: 0,
+        pitch: 0,
       }, {
         position: ['0', 0, -9],
         yaw: 0,
+        pitch: 0,
       }, {
         position: [0, 0],
         yaw: 0,
+        pitch: 0,
       }, {
         position: [400, 0, 0],
         yaw: 0,
+        pitch: 0,
       }, {
         position: [-25, -4.9, -20],
         yaw: 0,
+        pitch: 0,
       },
     ]) {
       expect(validatePlayerPose(player)).toBeNull()
@@ -76,11 +112,13 @@ describe('player save state', () => {
       const pose = {
         position: [...position] as [number, number, number],
         yaw: 1.23,
+        pitch: -0.108,
       }
       playerSession.capture(pose)
       const saved = validateDocument(createDocument())
       expect(saved.player?.position).toEqual(pose.position)
       expect(saved.player?.yaw).toBeCloseTo(pose.yaw)
+      expect(saved.player?.pitch).toBeCloseTo(pose.pitch)
       restoreDocument(saved)
       saved.player!.position[0] = 900
       expect(playerSession.snapshot().position).toEqual(pose.position)
@@ -90,6 +128,7 @@ describe('player save state', () => {
     const pose = {
       position: [-25, -4.98, -31] as [number, number, number],
       yaw: -0.7,
+      pitch: 0,
     }
     let updates = 0
     const unsubscribe = useGallery.subscribe(() => updates++)
@@ -108,6 +147,7 @@ describe('player save state', () => {
     const pose = {
       position: [-33, -4.98, -20] as [number, number, number],
       yaw: 0.4,
+      pitch: 0,
     }
     const live = new PlayerSession
     live.capture(pose)
@@ -125,6 +165,7 @@ describe('player save state', () => {
       player: {
         position: [900, 900, 900],
         yaw: 0,
+        pitch: 0,
       },
       savedAt: '2027-01-01',
     }))
@@ -134,8 +175,8 @@ describe('player save state', () => {
   test('blocked storage, equivalent yaw and detached snapshots remain safe', () => {
     const session = new PlayerSession
     session.capture({
-      position: [0, 0.05, -9],
-      yaw: Math.PI * 2,
+      ...playerSpawn,
+      yaw: playerSpawn.yaw + Math.PI * 2,
     })
     expect(session.revision).toBe(0)
     session.snapshot().position[0] = 900

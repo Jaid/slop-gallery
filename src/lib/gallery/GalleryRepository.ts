@@ -111,6 +111,7 @@ export function validateDocument(value: unknown): GalleryDocument {
     player: validatePlayerPose(value.player) ?? {
       position: [...playerSpawn.position],
       yaw: playerSpawn.yaw,
+      pitch: playerSpawn.pitch,
     },
     savedAt: typeof value.savedAt === 'string' ? value.savedAt : '',
     settings: {

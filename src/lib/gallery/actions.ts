@@ -10,7 +10,7 @@ import {floorHeight} from './walls.ts'
 export const cameraPose = {
   focused: false,
   position: [playerSpawn.position[0], playerSpawn.position[1] + 1.6, playerSpawn.position[2]] as Vec3,
-  direction: [0, 0, -1] as Vec3,
+  direction: [-Math.sin(playerSpawn.yaw) * Math.cos(playerSpawn.pitch), Math.sin(playerSpawn.pitch), -Math.cos(playerSpawn.yaw) * Math.cos(playerSpawn.pitch)] as Vec3,
 }
 export const dragPose = {
   active: false,

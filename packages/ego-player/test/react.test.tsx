@@ -66,7 +66,7 @@ test('React lifecycle preserves the motor, camera ownership and ref contract wit
       },
     })
     await act(async () => {
-      root.render(render())
+      root.render(render({pitch: -0.108}))
     })
     // Physics suspends on the dynamic WASM import, even after React’s initial commit.
     for (let i = 0; !player.current?.getState() && i < 100; i++) {
@@ -90,6 +90,20 @@ test('React lifecycle preserves the motor, camera ownership and ref contract wit
       }
       frame()
     }
+    frame()
+    expect(state.camera.rotation.x).toBeCloseTo(-0.108)
+    const originalPosition = body.translation()
+    await act(async () => root.render(render({
+      pitch: 0.2,
+      yaw: 1.3,
+    })))
+    expect(player.current?.body).toBe(body)
+    expect(body.translation()).toEqual(originalPosition)
+    expect(state.camera.rotation.x).toBeCloseTo(0.2)
+    expect(state.camera.rotation.y).toBeCloseTo(1.3)
+    await act(async () => root.render(render()))
+    expect(state.camera.rotation.x).toBe(0)
+    expect(state.camera.rotation.y).toBe(0)
     keys = {forward: true}
     tick(30)
     expect(inputCalls).toBe(0)

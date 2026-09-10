@@ -29,6 +29,8 @@ export type EgoPlayerProps = EgoOptions & {
   onStep?: (state: EgoState) => void
   /** Called after physics with a detached snapshot. */
   onUpdate?: (state: EgoState) => void
+  /** Initial camera pitch in radians; updates intentionally reset camera orientation. */
+  pitch?: number
   /** false omits look controls; an object customizes Drei’s pointer-lock controls. */
   pointerLock?: EgoPointerLockOptions | boolean
   /** Initial world-space feet position. Use the ref to teleport after mounting. */
@@ -46,7 +48,7 @@ const initialPosition: EgoPosition = [0, 0.05, 0]
 const readToggle = (value: EgoToggle) => {
   return typeof value === 'function' ? value() : value
 }
-export function EgoPlayer({cameraEnabled = true, children, enabled = true, fallbackPosition, input, onInput, onStep, onUpdate, pointerLock = true, position = initialPosition, ref, requirePointerLock = true, userData, yaw = 0, ...options}: EgoPlayerProps) {
+export function EgoPlayer({cameraEnabled = true, children, enabled = true, fallbackPosition, input, onInput, onStep, onUpdate, pitch = 0, pointerLock = true, position = initialPosition, ref, requirePointerLock = true, userData, yaw = 0, ...options}: EgoPlayerProps) {
   const [defaultUserData] = useState(() => ({isPlayer: true}))
   const bodyRef = useRef<RapierRigidBody>(null)
   const colliderRef = useRef<RapierCollider>(null)
@@ -87,8 +89,8 @@ export function EgoPlayer({cameraEnabled = true, children, enabled = true, fallb
     motorRef.current?.configure(options)
   })
   useEffect(() => {
-    camera.rotation.set(0, yaw, 0, 'YXZ')
-  }, [camera, yaw])
+    camera.rotation.set(pitch, yaw, 0, 'YXZ')
+  }, [camera, pitch, yaw])
   const applyTeleport = (destination: EgoPosition, rotation?: EgoRotation, writeCamera = true) => {
     const motor = motorRef.current!
     motor.teleport(destination, fallbackPosition)

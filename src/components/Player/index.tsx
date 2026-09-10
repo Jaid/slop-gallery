@@ -4,7 +4,7 @@ import {useKeyboardControls} from '@react-three/drei/webgpu'
 import {useThree} from '@react-three/fiber/webgpu'
 import EgoPlayer from 'ego-player'
 import {useEffect, useRef, useState} from 'react'
-import {Euler} from 'three/webgpu'
+import {Euler, Quaternion} from 'three/webgpu'
 
 import {SoundEngine} from '#src/lib/audio/SoundEngine.ts'
 import {cameraPose, floorHeight, galleryEvents, markControlled, useGallery} from '#src/lib/gallery.ts'
@@ -62,16 +62,18 @@ export default function Player() {
       detail: {
         feet: true,
         position: pose.position,
-        rotation: [0, Math.sin(pose.yaw / 2), 0, Math.cos(pose.yaw / 2)],
+        rotation: (new Quaternion).setFromEuler(new Euler(pose.pitch, pose.yaw, 0, 'YXZ')).toArray(),
       },
     }))
   }, [playerEpoch])
   const onUpdate = (state: EgoState) => {
     if (!cameraPose.focused) {
       const {x, y, z} = state.position
+      angles.setFromQuaternion(camera.quaternion, 'YXZ')
       playerSession.capture({
         position: [x, y, z],
-        yaw: angles.setFromQuaternion(camera.quaternion, 'YXZ').y,
+        yaw: angles.y,
+        pitch: angles.x,
       })
     }
     const diagnostics = globalThis.__gallery
@@ -84,5 +86,5 @@ export default function Player() {
       }
     }
   }
-  return <EgoPlayer ref={player} fallbackPosition={playerSpawn.position} position={initial.position} yaw={initial.yaw} input={input} enabled={enabled} cameraEnabled={cameraEnabled} pointerLock={pointerLock} onInput={markControlled} onStep={onStep} onUpdate={onUpdate}/>
+  return <EgoPlayer ref={player} fallbackPosition={playerSpawn.position} position={initial.position} yaw={initial.yaw} pitch={initial.pitch} input={input} enabled={enabled} cameraEnabled={cameraEnabled} pointerLock={pointerLock} onInput={markControlled} onStep={onStep} onUpdate={onUpdate}/>
 }

@@ -54,6 +54,7 @@ export type GalleryDocument = GallerySnapshot & {
 }
 
 export type PlayerPose = {
+  pitch: number
   /** World-space feet position, independent of head bob and inspection cameras. */
   position: Vec3
   yaw: number

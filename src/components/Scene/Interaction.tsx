@@ -4,7 +4,7 @@ import type {Group} from 'three/webgpu'
 import {useFrame, useThree} from '@react-three/fiber/webgpu'
 import {useEffect, useRef} from 'react'
 import {PointerLockControls} from 'three/addons/controls/PointerLockControls.js'
-import {Matrix4, PerspectiveCamera, Quaternion, Raycaster, Vector2, Vector3} from 'three/webgpu'
+import {Euler, Matrix4, PerspectiveCamera, Quaternion, Raycaster, Vector2, Vector3} from 'three/webgpu'
 
 import PlacementPreview from '#component/PlacementPreview'
 import {InspectionLook} from '#src/lib/camera/InspectionLook.ts'
@@ -304,7 +304,7 @@ export default function Interaction() {
         detail: {
           feet: true,
           position: [...playerSpawn.position],
-          rotation: [0, Math.sin(playerSpawn.yaw / 2), 0, Math.cos(playerSpawn.yaw / 2)],
+          rotation: (new Quaternion).setFromEuler(new Euler(playerSpawn.pitch, playerSpawn.yaw, 0, 'YXZ')).toArray(),
         },
       }))
     }

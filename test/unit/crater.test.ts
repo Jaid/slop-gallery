@@ -103,10 +103,12 @@ describe('Undertone impact hall', () => {
       session.capture({
         position,
         yaw: 1.3,
+        pitch: 0,
       })
       expect(session.snapshot()).toEqual({
         position,
         yaw: 1.3,
+        pitch: 0,
       })
       const document = validateDocument({
         ...createDocument(),
