@@ -32,6 +32,7 @@
     "@react-three/fiber": "10.0.0-alpha.5",
     "@react-three/rapier": "2.2.0",
     "ai": "7.0.97",
+    "compose-id": "^0.2.0",
     "ego-player": "workspace:*",
     "es-toolkit": "1.52.0",
     "mount-root": "0.5.0",

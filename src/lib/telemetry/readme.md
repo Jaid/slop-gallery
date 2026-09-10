@@ -22,7 +22,7 @@ const ego = telemetry.createEgo({read: readPlayerAndAim})
 - Traces: session/startup/gameplay parents, state-change events, real persistence duration/outcome, label generation and local/AI fusion, plus sparse renderer hitch diagnostics.
 - Ego measurements use the controller’s physical feet position and collision-corrected velocity, plus the existing `AimInspector` semantics. The camera provides aim, not locomotion. Raycasting runs once per second, not every rendered frame.
 
-Only counts, flags, state names and numeric player/aim measurements are selected. Keys, artwork sources, titles, descriptions, prompts, event payloads and exception messages are not serialized. A random session ID is attached as `service.instance.id` to distinguish concurrent clients and counter lifetimes. New sessions create new series; retention/cardinality policy belongs to the deployment.
+Only counts, flags, state names and numeric player/aim measurements are selected. Keys, artwork sources, titles, descriptions, prompts, event payloads and exception messages are not serialized. A 15-character `compose-id` session ID is attached as `service.instance.id` to distinguish concurrent clients and counter lifetimes. New sessions create new series; retention/cardinality policy belongs to the deployment.
 
 ## Existing NAS setup – unchanged
 

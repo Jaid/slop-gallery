@@ -2,6 +2,7 @@ import type {GalleryState, GalleryStore, SlopGalleryTelemetryOptions} from './ty
 import type {Attributes, Span, TraceContext} from 'telemethree'
 import type {EgoTelemetryOptions} from 'telemethree-ego'
 
+import composeId from 'compose-id'
 import {Telemetry} from 'telemethree'
 import {EgoTelemetry} from 'telemethree-ego'
 
@@ -16,7 +17,7 @@ export class SlopGalleryTelemetry extends Telemetry {
   private startup: Span | undefined
 
   constructor(options: SlopGalleryTelemetryOptions = {}) {
-    const sessionId = options.sessionId ?? crypto.randomUUID()
+    const sessionId = options.sessionId ?? composeId()
     const endpoint = (options.endpoint ?? '/api/telemetry').replace(/\/$/u, '')
     super({
       flushIntervalMs: 1000,

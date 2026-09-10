@@ -108,6 +108,7 @@ test('Victoria uses native JSON metrics and the existing OTLP logs/traces endpoi
     exporter,
     now: () => 1234.5,
   })
+  expect(telemetry.sessionId).toMatch(/^[0-9A-Za-z]{15}$/u)
   telemetry.metric('ego.position.x', 4.2, {
     unit: 'm',
     attributes: {room: 'sienna'},
