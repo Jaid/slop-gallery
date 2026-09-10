@@ -1,0 +1,15 @@
+@use '../../style/ui'
+
+.container
+  @include ui.details
+  margin-top: 1rem
+  summary
+    display: flex
+    align-items: center
+    gap: 0.75rem
+  p
+    @include ui.copy
+    padding-inline: 0.85rem
+
+.textButton
+  @include ui.textButton

@@ -1,0 +1,23 @@
+.container
+  display: flex
+  gap: 0.75rem
+  margin-bottom: 1.5rem
+  select
+    max-width: 200px
+    font-size: 0.8rem
+
+.search
+  display: flex
+  align-items: center
+  gap: 0.5rem
+  flex: 1
+  min-width: 0
+  input
+    width: 100%
+    font-size: 0.8rem
+
+@media (max-width: 760px)
+  .container
+    flex-direction: column
+    select
+      max-width: none

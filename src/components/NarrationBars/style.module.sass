@@ -1,0 +1,19 @@
+@use '../../style/colors'
+
+.container
+  display: flex
+  align-items: flex-end
+  gap: 3px
+  height: 34px
+  width: 37px
+  flex: none
+  i
+    width: 5px
+    height: 100%
+    border-radius: 2px
+    background: colors.$accent
+    transform: scaleY(0.15)
+    transform-origin: bottom
+    transition: transform 90ms ease
+  &[data-status='preparing']
+    opacity: 0.5

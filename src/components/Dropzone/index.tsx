@@ -4,6 +4,7 @@ import type {DropEvent} from 'react-dropzone'
 import {useEffect} from 'react'
 import {useDropzone} from 'react-dropzone'
 
+import ArtworkDropOverlay from '#component/ArtworkDropOverlay'
 import {dragPose, galleryEvents, importRejected, notify, useGallery} from '#src/lib/gallery.ts'
 import {imageExtensions, maximumImageBytes} from '#src/lib/gallery/imagePolicy.ts'
 
@@ -53,10 +54,6 @@ export default function Dropzone({children}: PropsWithChildren) {
   return <div {...getRootProps({className: css.container})}>
     <input {...getInputProps()} data-artwork-input aria-label="Import artworks"/>
     {children}
-    {isDragActive && <div className={`drop-overlay ${isDragReject ? 'rejected' : ''}`}>
-      <div className="drop-card"><span className="eyebrow">A NEW ARRIVAL</span><h2>{isDragReject ? 'Not quite a canvas.' : placement?.valid ? 'It would look lovely here.' : 'Make an entrance.'}</h2>
-        <p>{isDragReject ? 'Choose a supported image under 25 mb.' : placement?.valid ? 'Drop to hang. The final size is checked before placement.' : 'Aim at an empty wall, or drop to place it in front of you.'}</p>
-        <small>PNG · JPEG · WEBP · AVIF · GIF / UP TO 12 AT ONCE</small></div>
-    </div>}
+    {isDragActive && <ArtworkDropOverlay rejected={isDragReject} valid={Boolean(placement?.valid)}/>}
   </div>
 }

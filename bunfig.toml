@@ -1,4 +1,4 @@
 [test]
-preload = ["./packages/three-fiber-game/test/preload.ts"]
+preload = ["./packages/three-fiber-game/test/preload.ts", "./test/preload.ts"]
 root = "test"
 maxConcurrency = 1

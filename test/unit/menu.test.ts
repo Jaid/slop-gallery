@@ -6,8 +6,9 @@ import {createElement} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
 import {GraphicsQualityProvider} from 'use-graphics-quality'
 
-import Menu from '../../src/components/App/Menu.tsx'
-import ResetGallery from '../../src/components/App/ResetGallery.tsx'
+import Menu from '#component/Menu'
+import ResetGallery from '#component/ResetGallery'
+
 import {parameterParsers} from '../../src/lib/ai/settings.ts'
 import {galleryEvents, resetGallery} from '../../src/lib/gallery/actions.ts'
 import {createDocument, markControlled, readControlled, undo, useGallery} from '../../src/lib/gallery/store.ts'

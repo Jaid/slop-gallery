@@ -1,0 +1,40 @@
+@use '../../style/colors'
+@use '../../style/ui'
+
+.intro
+  @include ui.panelIntro
+
+.level
+  border: 1px solid colors.$border
+  padding: 0.75rem
+  margin-bottom: 1rem
+  h3
+    font-size: 1rem
+  svg
+    display: block
+    width: 100%
+
+.rooms
+  button
+    display: flex
+    align-items: center
+    gap: 1rem
+    width: 100%
+    padding-block: 1rem
+    border-bottom: 1px solid colors.$border
+    text-align: left
+    > span
+      color: colors.$muted
+  strong
+    font-size: 0.9rem
+    font-weight: 400
+  small
+    display: block
+    color: colors.$muted
+    font-size: 0.75rem
+    margin-top: 0.25rem
+  em
+    margin-left: auto
+    font-size: 0.65rem
+    font-style: normal
+    color: colors.$accent

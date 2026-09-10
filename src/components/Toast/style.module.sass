@@ -1,0 +1,23 @@
+@use '../../style/colors'
+
+.container
+  position: absolute
+  z-index: 50
+  top: 1.5rem
+  left: 50%
+  translate: -50% 0
+  max-width: min(520px, 90vw)
+  padding: 0.75rem 1rem
+  border: 1px solid colors.$border
+  border-radius: 4px
+  background: colors.$surface
+  font-size: 0.8rem
+  text-align: center
+  overflow-wrap: anywhere
+  pointer-events: none
+  &.inPanel
+    position: sticky
+    top: 0
+    left: auto
+    translate: none
+    margin-bottom: 1rem

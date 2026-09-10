@@ -1,0 +1,72 @@
+@use 'sass:color'
+@use 'colors'
+
+@mixin eyebrow
+  font-size: 0.65rem
+  letter-spacing: 0.1em
+  color: colors.$muted
+
+@mixin primaryButton
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  gap: 0.75rem
+  padding: 0.75rem 1rem
+  background: colors.$accent
+  color: #222
+  &:hover
+    background: color.mix(#fff, colors.$accent, 15%, $method: rgb)
+
+@mixin textButton
+  display: inline-flex
+  align-items: center
+  gap: 0.5rem
+  padding: 0.5rem
+  font-size: 0.8rem
+  &:hover
+    text-decoration: underline
+
+@mixin panelIntro
+  margin: 0 0 1.5rem
+  color: colors.$muted
+  font-size: 0.85rem
+  line-height: 1.7
+
+@mixin actions
+  display: flex
+  flex-wrap: wrap
+  align-items: center
+  gap: 0.75rem
+  margin-block: 1.5rem
+
+@mixin section
+  padding-block: 1.5rem
+  border-top: 1px solid colors.$border
+
+@mixin sectionLabel
+  margin-bottom: 1rem
+  font-size: 0.85rem
+  color: colors.$muted
+
+@mixin toggleRow
+  display: flex
+  align-items: center
+  justify-content: space-between
+  gap: 1rem
+  margin-block: 1rem
+  font-size: 0.85rem
+  input
+    flex: none
+
+@mixin details
+  border: 1px solid colors.$border
+  border-radius: 4px
+  text-align: left
+  font-size: 0.85rem
+  summary
+    padding: 0.85rem
+
+@mixin copy
+  font-size: 0.8rem
+  line-height: 1.7
+  color: colors.$muted

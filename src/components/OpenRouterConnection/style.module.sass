@@ -1,0 +1,46 @@
+@use '../../style/colors'
+@use '../../style/ui'
+
+.container
+  @include ui.details
+  > summary span
+    float: right
+    color: colors.$muted
+    font-size: 0.75rem
+  > :not(summary)
+    margin: 0.85rem
+  p
+    @include ui.copy
+  label
+    display: block
+    margin-bottom: 0.5rem
+  details
+    @include ui.details
+
+.note
+  color: colors.$muted
+
+.keyRow
+  display: flex
+  gap: 0.5rem
+  input
+    flex: 1
+    width: 100%
+
+.primaryButton
+  @include ui.primaryButton
+
+.textButton
+  @include ui.textButton
+
+.modelField
+  margin: 0.85rem
+  font-size: 0.75rem
+  text-transform: capitalize
+  input
+    display: block
+    width: 100%
+    margin-top: 0.5rem
+
+.container .toggleRow
+  @include ui.toggleRow

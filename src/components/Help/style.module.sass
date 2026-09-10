@@ -1,0 +1,25 @@
+@use '../../style/colors'
+@use '../../style/ui'
+
+.intro
+  @include ui.panelIntro
+
+.primaryButton
+  @include ui.primaryButton
+
+.list
+  margin-bottom: 1.5rem
+  > div
+    display: flex
+    gap: 1rem
+    padding-block: 1.5rem
+    border-top: 1px solid colors.$border
+    > span
+      color: colors.$muted
+      font-size: 0.7rem
+  h3
+    margin: 0 0 0.75rem
+    font-size: 1.1rem
+  p
+    @include ui.copy
+    margin: 0

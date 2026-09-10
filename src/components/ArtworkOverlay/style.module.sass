@@ -1,0 +1,34 @@
+@use '../../style/colors'
+
+.container
+  position: absolute
+  bottom: 100px
+  left: 50%
+  translate: -50% 0
+  width: min(640px, calc(100% - 2rem))
+  max-height: calc(100% - 120px)
+  overflow: hidden
+  padding: 1rem
+  background: #111d
+  border-radius: 4px
+  text-align: center
+  pointer-events: none
+  h2
+    margin: 0
+    font-size: 1.5rem
+
+.description
+  font-size: 0.85rem
+  line-height: 1.6
+  white-space: pre-line
+
+.byline
+  margin-bottom: 0
+  color: colors.$muted
+  font-size: 0.75rem
+
+@media (max-height: 600px)
+  .container
+    bottom: 88px
+    h2
+      font-size: 1.2rem

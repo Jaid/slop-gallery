@@ -1,0 +1,31 @@
+@use '../../style/colors'
+@use '../../style/ui'
+
+.container
+  position: absolute
+  inset: 1rem
+  z-index: 60
+  display: grid
+  align-items: end
+  justify-items: center
+  padding: 1rem
+  border: 1px dashed colors.$accent
+  pointer-events: none
+  &.rejected
+    border-color: #f99
+
+.card
+  padding: 1rem
+  border-radius: 4px
+  background: #111e
+  text-align: center
+  h2
+    font-size: 1.25rem
+  p
+    @include ui.copy
+  small
+    font-size: 0.65rem
+    color: colors.$muted
+
+.eyebrow
+  @include ui.eyebrow

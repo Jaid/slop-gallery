@@ -4,8 +4,9 @@ import {createElement} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
 import {BoxGeometry, Group, Mesh, MeshBasicMaterial, PlaneGeometry, Raycaster, Vector3} from 'three/webgpu'
 
-import ArtworkOverlay from '../../src/components/App/ArtworkOverlay.tsx'
-import NarrationIndicator from '../../src/components/App/NarrationIndicator.tsx'
+import ArtworkOverlay from '#component/ArtworkOverlay'
+import NarrationIndicator from '#component/NarrationIndicator'
+
 import {initialPortraits} from '../../src/lib/gallery/collection.ts'
 import {GalleryRepository, validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import {isPortraitLabelHit, portraitLabel, portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
@@ -89,7 +90,8 @@ describe('contextual HUD', () => {
     }))
     expect(html).toContain('A story')
     expect(html).toContain('Narrator playing')
-    expect(html).toContain('audio-bars playing')
+    expect(html).toContain('data-testid="audio-bars"')
+    expect(html).toContain('data-status="playing"')
     expect(html.match(/<i>/g)).toHaveLength(5)
   })
   test('browser speech shows a static speaking icon, not a spectrum', () => {
@@ -100,8 +102,8 @@ describe('contextual HUD', () => {
     }))
     expect(html).toContain('A browser story')
     expect(html).toContain('Browser voice playing')
-    expect(html).toContain('narration-static')
-    expect(html).not.toContain('audio-bars')
+    expect(html).toContain('data-testid="narration-static"')
+    expect(html).not.toContain('data-testid="audio-bars"')
     expect(html).not.toContain('<i>')
   })
   test('preparing narration does not pretend to have audio measurements', () => {
@@ -111,7 +113,7 @@ describe('contextual HUD', () => {
       source: null,
     }))
     expect(html).toContain('Preparing narration…')
-    expect(html).not.toContain('audio-bars')
+    expect(html).not.toContain('data-testid="audio-bars"')
   })
 })
 describe('artwork year metadata', () => {

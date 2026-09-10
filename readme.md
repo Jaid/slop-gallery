@@ -19,9 +19,15 @@ The shared Vite config enables React Compiler, package-derived page titles, medi
 
 Open the printed localhost URL in current Chrome or Edge with hardware acceleration enabled. Production hosting requires HTTPS. This is a keyboard-and-mouse experience; native WebGPU is required; there is no WebGL or collection-only compatibility mode.
 
-Use `?ai=false&telemetry=false` for a completely local gallery session. The OpenRouter manager in the menu is optional – no provider requests happen without a key. All exhibition artwork, fonts, recordings and environment textures are bundled or generated locally.
+Use `?ai=false&telemetry=false` for a completely local gallery session. The OpenRouter manager in the menu is optional – no provider requests happen without a key. All exhibition artwork, recordings and environment textures are bundled or generated locally. UI fonts use locally installed Geologica and JetBrains Mono with system fallbacks; no fonts are downloaded.
 
 The gallery starts in a minimal menu over a dimmed, blurred view. Enter to explore; Esc returns to the menu. The HUD keeps the aiming dot, a contextual artwork overlay when you look at a title plate and a compact narrator indicator with live audio visualization while a story is playing. Audio mute, full/lightweight graphics and the expandable OpenRouter manager live in the menu. Collection, controls and preferences/backups remain available through secondary links. Reset appears only after the first in-game movement, look or action; this is remembered on the device. Opening the menu or clicking Enter alone does not reveal it.
+
+## UI components
+
+Styled UI components live in their own `src/components/<Name>/` folders with `index.tsx` and `style.module.sass`, imported as `css`. The collection cards, detail editor, filters, upload action, atmosphere settings, backups, menu controls and drag overlay have separate owners. `src/style.sass` contains only local font declarations, document defaults and element resets; `src/style/_ui.sass` shares small visual mixins without emitting global classes. Shared colors live in `src/style/_colors.sass` and compile to literal values; styles do not use CSS custom properties. The interface uses a simple dark palette instead of the former display-font styling.
+
+Renderer-free component tests compile actual Sass modules through Vite. Style tests check module exports and selector isolation; live-test selectors use stable data attributes rather than generated class names.
 
 ## Please touch the art
 
