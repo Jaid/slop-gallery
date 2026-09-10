@@ -1,9 +1,11 @@
+import type {MenuStage} from './MenuSession.ts'
 import type {GalleryDocument, GallerySettings, GallerySnapshot, NarrationState, Placement, Portrait, RoomId, Vec3} from './types.ts'
 
 import {create} from 'zustand'
 
 import {initialPortraits} from './collection.ts'
 import {validateCollectionImages} from './imagePolicy.ts'
+import {startMenuVisit} from './MenuSession.ts'
 import {playerSession} from './PlayerSession.ts'
 
 export {maximumPortraits} from './imagePolicy.ts'
@@ -26,6 +28,7 @@ type State = GallerySettings & GallerySnapshot & {
     origin: Vec3}) | null
   inspecting: string | null
   locked: boolean
+  menuStage: MenuStage
   narration: NarrationState | null
   notice: string
   panel: Panel
@@ -94,6 +97,7 @@ export const useGallery = create<State>((set, get) => ({
   activeLabel: null,
   held: null,
   locked: false,
+  menuStage: startMenuVisit(),
   hasControlled: readControlled(),
   resetEpoch: 0,
   ready: false,
@@ -117,7 +121,7 @@ export const useGallery = create<State>((set, get) => ({
   importFiles: null,
   importTarget: null,
   update: (id, patch) => set(s => {
-    const portraits = s.portraits.map(p => (p.id === id ? {...p, ...patch} : p))
+    const portraits = s.portraits.map(p => p.id === id ? {...p, ...patch} : p)
     if (patch.source !== undefined) {
       validateCollectionImages(portraits)
     }

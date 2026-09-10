@@ -1,16 +1,18 @@
 import type {AiSettings} from '../../src/lib/ai/settings.ts'
+import type {MenuStage} from '../../src/lib/gallery/MenuSession.ts'
 
-import {afterEach, beforeEach, describe, expect, test} from 'bun:test'
+import {afterEach, beforeEach, describe, expect, spyOn, test} from 'bun:test'
 
 import {createElement} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
 import {GraphicsQualityProvider} from 'use-graphics-quality'
 
 import Menu from '#component/Menu'
-import ResetGallery from '#component/ResetGallery'
 
 import {parameterParsers} from '../../src/lib/ai/settings.ts'
-import {galleryEvents, resetGallery} from '../../src/lib/gallery/actions.ts'
+import {SoundEngine} from '../../src/lib/audio/SoundEngine.ts'
+import {galleryEvents, resetGallery, startNewGame} from '../../src/lib/gallery/actions.ts'
+import {playerSession, playerSpawn} from '../../src/lib/gallery/PlayerSession.ts'
 import {createDocument, markControlled, readControlled, undo, useGallery} from '../../src/lib/gallery/store.ts'
 
 const state = useGallery.getState()
@@ -47,7 +49,6 @@ describe('minimal menu', () => {
   test('starts unlocked, with no reset and an expanded OpenRouter section', () => {
     expect(useGallery.getState().locked).toBe(false)
     expect(useGallery.getState().hasControlled).toBe(false)
-    expect(renderToStaticMarkup(createElement(ResetGallery))).toBe('')
     const params = Object.fromEntries(Object.entries(parameterParsers).map(([key, parser]) => [key, parser.defaultValue])) as AiSettings
     const html = renderToStaticMarkup(createElement(GraphicsQualityProvider, {
       isQuality: true,
@@ -135,4 +136,81 @@ describe('minimal menu', () => {
       galleryEvents.removeEventListener('stop-narration', stop)
     }
   })
+})
+test.each(['first', 'return', 'pause', 'unfocus'] as const)('renders the %s menu stage', (stage: MenuStage) => {
+  const initial = {...useGallery.getInitialState()}
+  Object.assign(useGallery.getInitialState(), {
+    ready: true,
+    hasControlled: true,
+    menuStage: stage,
+  })
+  try {
+    const params = Object.fromEntries(Object.entries(parameterParsers).map(([key, parser]) => [key, parser.defaultValue])) as AiSettings
+    const html = renderToStaticMarkup(createElement(GraphicsQualityProvider, {
+      isQuality: true,
+      onChange: () => {},
+      children: createElement(Menu, {
+        params,
+        setParams: async () => new URLSearchParams,
+      }),
+    }))
+    expect(html).toContain(`data-stage="${stage}"`)
+    expect(html).toContain(stage === 'first' ? 'Enter gallery' : stage === 'return' ? 'Continue' : 'Resume')
+    expect(html.includes('data-testid="minimap"')).toBe(stage === 'pause')
+    expect(html.includes('New game')).toBe(stage === 'return')
+    expect(html.includes('Your position')).toBe(stage === 'pause')
+    expect(html.includes('OpenRouter')).toBe(stage !== 'unfocus')
+    expect(html.includes('Mute audio')).toBe(stage !== 'unfocus')
+    expect(html.includes('Good taste.')).toBe(stage !== 'unfocus')
+    expect(html).not.toContain('Reset gallery')
+    expect(html).not.toContain('Confirm reset')
+    if (stage === 'unfocus') {
+      expect(html.match(/<button\b/gu)).toHaveLength(1)
+      expect(html).not.toContain('<input')
+      expect(html).not.toContain('Reset gallery')
+    }
+  } finally {
+    Object.assign(useGallery.getInitialState(), initial)
+  }
+})
+test('New game resets and enters directly; it does nothing before the scene is ready', () => {
+  const documentDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'document')
+  const engine: SoundEngine = Object.create(SoundEngine.prototype)
+  const getSound = spyOn(SoundEngine, 'get').mockReturnValue(engine)
+  const resume = spyOn(engine, 'resume').mockResolvedValue()
+  let entered = 0
+  Object.defineProperty(globalThis, 'document', {
+    configurable: true,
+    value: {
+      querySelector: () => ({
+        requestPointerLock: () => {
+          entered++
+          expect(useGallery.getState().portraits.some(p => p.id === 'goose')).toBe(true)
+          expect(playerSession.snapshot().position).toEqual(playerSpawn.position)
+        },
+      }),
+    },
+  })
+  try {
+    useGallery.getState().remove('goose')
+    startNewGame()
+    expect(entered).toBe(0)
+    expect(useGallery.getState().portraits.some(p => p.id === 'goose')).toBe(false)
+    useGallery.setState({
+      ready: true,
+      menuStage: 'return',
+    })
+    startNewGame()
+    expect(entered).toBe(1)
+    expect(useGallery.getState().panel).toBeNull()
+    expect(resume).toHaveBeenCalledTimes(1)
+  } finally {
+    resume.mockRestore()
+    getSound.mockRestore()
+    if (documentDescriptor) {
+      Object.defineProperty(globalThis, 'document', documentDescriptor)
+    } else {
+      Reflect.deleteProperty(globalThis, 'document')
+    }
+  }
 })

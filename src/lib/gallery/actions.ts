@@ -27,6 +27,7 @@ export function notify(notice: string) {
 }
 
 export function openPanel(panel: Panel) {
+  galleryEvents.dispatchEvent(new Event('release-pointer'))
   document.exitPointerLock?.()
   useGallery.setState({
     panel,
@@ -93,6 +94,14 @@ export function resetGallery() {
   stopNarration()
   galleryEvents.dispatchEvent(new Event('home'))
   notify('Back to the beginning. Your previous collection is one Undo away.')
+}
+
+export function startNewGame() {
+  if (!useGallery.getState().ready) {
+    return
+  }
+  resetGallery()
+  enterGallery()
 }
 
 export async function loadBlob(source: Blob | string) {

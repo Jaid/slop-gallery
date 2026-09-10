@@ -9,11 +9,12 @@ import {Euler, Matrix4, PerspectiveCamera, Quaternion, Raycaster, Vector2, Vecto
 import PlacementPreview from '#component/PlacementPreview'
 import {InspectionLook} from '#src/lib/camera/InspectionLook.ts'
 import {cameraPose, chime, dragPose, enterGallery, findPlacement, galleryEvents, isTextInput, markControlled, narrate, notify, openPanel, roomAt, useGallery, wallDistance} from '#src/lib/gallery.ts'
+import {MenuSession} from '#src/lib/gallery/MenuSession.ts'
 import {playerSpawn} from '#src/lib/gallery/PlayerSession.ts'
 import {isPortraitLabelHit} from '#src/lib/gallery/portraitLabel.ts'
+import {portraitObjects} from '#src/lib/gallery/portraitObjects.ts'
 
 import {propObjects} from './GrabbableProp.tsx'
-import {portraitObjects} from './Portrait.tsx'
 
 const up = new Vector3(0, 1, 0)
 
@@ -57,6 +58,9 @@ export default function Interaction() {
     return () => document.removeEventListener('mousemove', mousemove)
   }, [controls, renderer])
   useEffect(() => {
+    const menuSession = new MenuSession(useGallery.getState().menuStage)
+    menuSession.locked = document.pointerLockElement === renderer.domElement
+    const releasePointer = () => menuSession.release('unfocus')
     const cancel = () => {
       const s = useGallery.getState()
       if (s.held) {
@@ -83,8 +87,12 @@ export default function Interaction() {
     }
     const lock = () => {
       const locked = document.pointerLockElement === renderer.domElement
+      if (document.pointerLockElement && !locked) {
+        menuSession.release('unfocus')
+      }
       useGallery.setState({
         locked,
+        menuStage: menuSession.change(locked, document.hasFocus() && !document.hidden, renderer.domElement.isConnected),
         activeLabel: null,
       })
       if (!locked) {
@@ -239,6 +247,7 @@ export default function Interaction() {
       }
       const s = useGallery.getState()
       if (event.code === 'Escape') {
+        menuSession.release('pause')
         cancel()
         cancelView()
       }
@@ -320,9 +329,17 @@ export default function Interaction() {
     }
     const context = (event: Event) => event.preventDefault()
     const blur = () => {
+      menuSession.release('unfocus')
       cancel()
       cancelView()
     }
+    const visibility = () => {
+      if (document.hidden) {
+        blur()
+      }
+    }
+    document.addEventListener('visibilitychange', visibility)
+    galleryEvents.addEventListener('release-pointer', releasePointer)
     document.addEventListener('pointerlockchange', lock)
     globalThis.addEventListener('mousedown', down)
     globalThis.addEventListener('mouseup', mouseup)
@@ -339,6 +356,8 @@ export default function Interaction() {
     return () => {
       cancel()
       stopView()
+      document.removeEventListener('visibilitychange', visibility)
+      galleryEvents.removeEventListener('release-pointer', releasePointer)
       document.removeEventListener('pointerlockchange', lock)
       globalThis.removeEventListener('mousedown', down)
       globalThis.removeEventListener('mouseup', mouseup)
@@ -367,6 +386,7 @@ export default function Interaction() {
       room: useGallery.getState().room,
       placement: placement.current,
       locked: useGallery.getState().locked,
+      menuStage: useGallery.getState().menuStage,
       hasControlled: useGallery.getState().hasControlled,
       held: useGallery.getState().held,
       active: useGallery.getState().active,

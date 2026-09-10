@@ -10,9 +10,7 @@ import {Object3D, Quaternion, Vector3} from 'three/webgpu'
 import DynamicImageMaterial from '#component/DynamicImageMaterial'
 import PortraitLabel from '#component/PortraitLabel'
 import {chime, floorHeight, requestMerge, useGallery} from '#src/lib/gallery.ts'
-
-export const portraitObjects = new Map<string, {body: RapierRigidBody
-  group: Group}>
+import {portraitObjects} from '#src/lib/gallery/portraitObjects.ts'
 
 export default function Portrait({portrait: p}: {portrait: PortraitData}) {
   const body = useRef<RapierRigidBody>(null)

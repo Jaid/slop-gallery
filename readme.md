@@ -21,7 +21,7 @@ Open the printed localhost URL in current Chrome or Edge with hardware accelerat
 
 Use `?ai=false&telemetry=false` for a completely local gallery session. The OpenRouter manager in the menu is optional – no provider requests happen without a key. All exhibition artwork, recordings and environment textures are bundled or generated locally. UI fonts use locally installed Geologica and JetBrains Mono with system fallbacks; no fonts are downloaded.
 
-The gallery starts in a minimal menu over a dimmed, blurred view. Enter to explore; Esc returns to the menu. The HUD keeps the aiming dot, a contextual artwork overlay when you look at a title plate and a compact narrator indicator with live audio visualization while a story is playing. Audio mute, full/lightweight graphics and the always-expanded OpenRouter connection live in the menu. Collection, Controls and Preferences panels and the menu’s keyboard hint are removed; Tab still opens the floor plan while exploring. Reset appears only after the first in-game movement, look or action; this is remembered on the device. Opening the menu or clicking Enter alone does not reveal it.
+The gallery starts in a minimal menu over a dimmed, blurred view. The menu exposes four stages: `first` for the first page visit, `return` for later page visits, `pause` after Escape and `unfocus` after focus loss or an application-triggered unlock. First visits offer Enter gallery; returning visits offer Continue and New game, which resets and enters immediately without confirmation. Escape shows the configuration and both minimap layers side by side: monochrome wall outlines, a red viewing cone and blue dots at live portrait locations, without visible labels or room numbers. Unfocus shows only the title and Resume button. Visits are remembered in local storage independently of in-game controls. Pointer Lock does not report the unlock reason, so a focused, connected target with no application-triggered release is treated as Escape; focus loss and explicit releases take precedence. The HUD keeps the aiming dot, a contextual artwork overlay when you look at a title plate and a compact narrator indicator with live audio visualization while a story is playing. Audio mute, full/lightweight graphics and the always-expanded OpenRouter connection live in the menu. Collection, Controls and Preferences panels and the menu’s keyboard hint are removed; Tab still opens the floor plan while exploring. There is no separate Reset gallery control; use New game on a returning visit.
 
 ## UI components
 
@@ -33,7 +33,7 @@ Renderer-free component tests compile actual Sass modules through Vite. Style te
 
 | Action | Control |
 | --- | --- |
-| Enter / resume | Enter gallery / Resume |
+| Enter / resume | Enter gallery / Continue / Resume |
 | Walk | W, A, S, D or arrow keys |
 | Look around | Mouse |
 | Sprint / jump / crouch | Shift / Space / C |
