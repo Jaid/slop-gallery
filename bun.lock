@@ -31,8 +31,8 @@
       "devDependencies": {
         "@dimforge/rapier3d": "0.20.0",
         "@types/bun": "1.4.2",
-        "@types/react": "19.3.0",
-        "@types/react-dom": "19.3.0",
+        "@types/react": "19.2.18",
+        "@types/react-dom": "19.2.7",
         "@types/three": "0.185.4",
         "@vitejs/plugin-react": "6.1.1",
         "eslint": "10.10.0",
@@ -58,8 +58,8 @@
         "@react-three/drei": "^11.0.0-alpha.7",
         "@react-three/fiber": "^10.0.0-alpha.5",
         "@react-three/rapier": "^2.2.0",
-        "react": "^19.3.0",
-        "react-dom": "^19.3.0",
+        "react": "^19.2.8",
+        "react-dom": "^19.2.8",
         "three": "^0.186.0",
       },
     },
@@ -68,7 +68,7 @@
       "version": "0.1.0",
       "peerDependencies": {
         "@react-three/fiber": "^10.0.0-alpha.5",
-        "react": "^19.3.0",
+        "react": "^19.2.8",
         "three": "^0.186.0",
       },
       "optionalPeers": [
@@ -84,7 +84,7 @@
       },
       "peerDependencies": {
         "@react-three/fiber": "^10.0.0-alpha.5",
-        "react": "^19.3.0",
+        "react": "^19.2.8",
         "three": "^0.186.0",
       },
       "optionalPeers": [
@@ -99,8 +99,8 @@
         "@react-three/drei": "^11.0.0-alpha.7",
         "@react-three/fiber": "^10.0.0-alpha.5",
         "@react-three/rapier": "^2.2.0",
-        "react": "^19.3.0",
-        "react-dom": "^19.3.0",
+        "react": "^19.2.8",
+        "react-dom": "^19.2.8",
         "three": "^0.186.0",
       },
     },
@@ -108,7 +108,7 @@
       "name": "use-graphics-quality",
       "version": "0.1.0",
       "peerDependencies": {
-        "react": "^19.3.0",
+        "react": "^19.2.8",
       },
     },
     "packages/webgpu-capture-bridge": {
@@ -116,7 +116,7 @@
       "version": "0.1.0",
       "peerDependencies": {
         "@react-three/fiber": "^10.0.0-alpha.5",
-        "react": "^19.3.0",
+        "react": "^19.2.8",
         "three": "^0.186.0",
       },
       "optionalPeers": [
@@ -287,9 +287,9 @@
 
     "@types/offscreencanvas": ["@types/offscreencanvas@2019.7.3", "", {}, "sha512-ieXiYmgSRXUDeOntE1InxjWyvEelZGP63M+cGuquuRLuIKKT1osnkXjxev9B7d1nXSug5vpunx+gNlbVxMlC9A=="],
 
-    "@types/react": ["@types/react@19.3.0", "", { "dependencies": { "csstype": "^3.2.2" } }, "sha512-N0rFCuH9YoxG9/m61l9MfpJKfmLOVU0em7ipIz6TRgSSkvReLB9vL85GB+yr8Bs5leqpvg96JSwF4ZS1s4viQg=="],
+    "@types/react": ["@types/react@19.2.18", "", { "dependencies": { "csstype": "^3.2.2" } }, "sha512-AnzbBERsrLKtk2XSfTbYRLjQPdy116Sty4q+T+Bp3IC4l6jNBvreVPAHmpq9qhXQM7CXZPjLVmGMw9sy+hxQ3w=="],
 
-    "@types/react-dom": ["@types/react-dom@19.3.0", "", { "peerDependencies": { "@types/react": "^19.3.0" } }, "sha512-ZI7bU42mZXXKHn/qNLEw2IrbiINU7X5+vfgdixBHkCNpYWXjKgfQ/P+uyGb5CjOLB9UcnTeg3rylQtV2hym44Q=="],
+    "@types/react-dom": ["@types/react-dom@19.2.7", "", { "peerDependencies": { "@types/react": "^19.2.0" } }, "sha512-I8bPpDLcHBv1qiIiXDCy71Rt8eQDKJP0sMSWJphDdAcdqiJ1sGpZamavoEIRZmYzjia9LuEb2HlYdDpmoENpvQ=="],
 
     "@types/react-reconciler": ["@types/react-reconciler@0.28.9", "", { "peerDependencies": { "@types/react": "*" } }, "sha512-HHM3nxyUZ3zAylX8ZEyrDNd2XZOnQ0D5XfunJF5FLQnZbHHYq4UWvW1QfelQNXv1ICNkwYhfxjwfnqivYB6bFg=="],
 
