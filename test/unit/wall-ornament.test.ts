@@ -3,12 +3,12 @@ import {describe, expect, test} from 'bun:test'
 import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
-import {cabinetOrnaments} from '../../src/lib/gallery/cabinetOrnaments.ts'
+import {vesperOrnaments} from '../../src/lib/gallery/vesperOrnaments.ts'
 import {wallOrnament, WallOrnamentGeometry, wallOrnamentPositions} from '../../src/lib/gallery/WallOrnamentGeometry.ts'
 import {wallCoordinates, wallPosition, walls} from '../../src/lib/gallery/walls.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 
-describe('cabinet wall ornaments', () => {
+describe('vesper wall ornaments', () => {
   test('keeps the relief just above the baseboard and behind hung artwork', () => {
     const geometry = new WallOrnamentGeometry
     try {
@@ -59,12 +59,12 @@ describe('cabinet wall ornaments', () => {
     }
   })
   test('the default corner layout clears the full doorway trim', () => {
-    const cabinetWalls = walls.filter(candidate => candidate.room === 'cabinet')
-    expect(cabinetWalls.flatMap(wallOrnamentPositions)).toHaveLength(8)
-    for (const wall of cabinetWalls) {
+    const vesperWalls = walls.filter(candidate => candidate.room === 'vesper')
+    expect(vesperWalls.flatMap(wallOrnamentPositions)).toHaveLength(8)
+    for (const wall of vesperWalls) {
       const positions = wallOrnamentPositions(wall)
       expect(positions).toHaveLength(2)
-      expect(positions[0]).toBeCloseTo(wall.id === 'cabinet-south' ? -1.4 : -wall.width / 2 + 1)
+      expect(positions[0]).toBeCloseTo(wall.id === 'vesper-south' ? -1.4 : -wall.width / 2 + 1)
       expect(positions[1]).toBeCloseTo(wall.width / 2 - 1)
       for (const [i, x] of positions.entries()) {
         expect(Math.abs(x) + wallOrnament.halfWidth).toBeLessThanOrEqual(wall.width / 2 - wallOrnament.clearance)
@@ -94,21 +94,21 @@ describe('cabinet wall ornaments', () => {
     })).toEqual([])
   })
   test('matches corner clearance on both sides of the east doorway and keeps the other five unchanged', () => {
-    expect(cabinetOrnaments).toHaveLength(7)
-    const eastWall = walls.find(wall => wall.id === 'cabinet-east')!
-    const east = cabinetOrnaments.filter(ornament => ornament.wallId === eastWall.id)
+    expect(vesperOrnaments).toHaveLength(7)
+    const eastWall = walls.find(wall => wall.id === 'vesper-east')!
+    const east = vesperOrnaments.filter(ornament => ornament.wallId === eastWall.id)
     expect(east).toHaveLength(2)
     const placed = east[0]!
     expect(placed.position[0]).toBeCloseTo(-8.107, 6)
     expect(placed.position[1]).toBe(wallOrnament.height)
-    expect(cabinetOrnaments.every(ornament => ornament.position[1] === wallOrnament.height)).toBe(true)
+    expect(vesperOrnaments.every(ornament => ornament.position[1] === wallOrnament.height)).toBe(true)
     expect(placed.position[2]).toBeCloseTo(0.43, 10)
     expect(placed.rotation).toBe(eastWall.rotation)
     expect(east[1]!.position[2]).toBeCloseTo(5.57, 10)
     const doorway = eastWall.holes![0]!
     expect((wallCoordinates(eastWall, placed.position) + wallCoordinates(eastWall, east[1]!.position)) / 2).toBeCloseTo(doorway.u, 10)
-    const cornerWall = walls.find(wall => wall.id === 'cabinet-north')!
-    const corner = cabinetOrnaments.find(ornament => ornament.wallId === cornerWall.id)!
+    const cornerWall = walls.find(wall => wall.id === 'vesper-north')!
+    const corner = vesperOrnaments.find(ornament => ornament.wallId === cornerWall.id)!
     const cornerGap = cornerWall.width / 2 - Math.abs(wallCoordinates(cornerWall, corner.position)) - wallOrnament.halfWidth
     for (const ornament of east) {
       const u = wallCoordinates(eastWall, ornament.position)
@@ -116,10 +116,10 @@ describe('cabinet wall ornaments', () => {
       expect(doorGap).toBeCloseTo(wallOrnament.clearance, 10)
       expect(doorGap).toBeCloseTo(cornerGap, 10)
     }
-    for (const wall of walls.filter(candidate => candidate.room === 'cabinet')) {
-      const ornaments = cabinetOrnaments.filter(ornament => ornament.wallId === wall.id)
+    for (const wall of walls.filter(candidate => candidate.room === 'vesper')) {
+      const ornaments = vesperOrnaments.filter(ornament => ornament.wallId === wall.id)
       const defaults = wallOrnamentPositions(wall)
-      if (wall.id === 'cabinet-south') {
+      if (wall.id === 'vesper-south') {
         defaults.shift()
       }
       for (const [index, ornament] of ornaments.entries()) {
@@ -130,12 +130,12 @@ describe('cabinet wall ornaments', () => {
       }
     }
   })
-  test('removes only the south-wall ornament beside the Amber Room doorway', () => {
-    const wall = walls.find(candidate => candidate.id === 'cabinet-south')!
-    const remaining = cabinetOrnaments.filter(ornament => ornament.wallId === wall.id)
+  test('removes only the south-wall ornament beside the Sienna doorway', () => {
+    const wall = walls.find(candidate => candidate.id === 'vesper-south')!
+    const remaining = vesperOrnaments.filter(ornament => ornament.wallId === wall.id)
     expect(remaining).toHaveLength(1)
     expect(remaining[0]!.position).toEqual(wallPosition(wall, 5, wallOrnament.height, wallFace + 0.002))
-    expect(cabinetOrnaments.some(ornament => Math.abs(ornament.position[0] + 12.6) < 0.001 && Math.abs(ornament.position[2] - 7.893) < 0.001)).toBe(false)
+    expect(vesperOrnaments.some(ornament => Math.abs(ornament.position[0] + 12.6) < 0.001 && Math.abs(ornament.position[2] - 7.893) < 0.001)).toBe(false)
   })
   test('releases both shared geometry buffers', () => {
     const geometry = new WallOrnamentGeometry

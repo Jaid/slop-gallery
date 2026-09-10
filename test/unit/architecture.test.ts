@@ -128,13 +128,13 @@ describe('boolean architecture', () => {
     })
   }
   test('placement rays hit the solid arch shoulders, not the opening beneath them', () => {
-    const wall = walls.find(wall => wall.id === 'daydream-east')!
+    const wall = walls.find(wall => wall.id === 'lobby-east')!
     const hole = wall.holes![0]!
     expect(openingTop(hole, hole.u)).toBeCloseTo(3.8)
     expect(openingTop(hole, hole.u + 1.2)).toBeLessThan(3.2)
     expect(findPlacement([5, 3.5, 4.2], [1, 0, 0], 0, 0, [])?.wallId).toBe(wall.id)
     expect(findPlacement([5, 3.5, 3], [1, 0, 0], 0, 0, [])).toMatchObject({
-      wallId: 'afterhours-east',
+      wallId: 'dine-east',
       inReach: false,
       valid: false,
     })

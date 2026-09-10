@@ -117,9 +117,6 @@
   "src/components/Postprocessing/index.tsx": {
     "stylistic/no-confusing-arrow": 1
   },
-  "src/components/Scene/AmberRoom.tsx": {
-    "typescript/no-shadow": 1
-  },
   "src/components/Scene/Architecture.tsx": {
     "typescript/no-use-before-define": 2,
     "no-nested-ternary": 9,

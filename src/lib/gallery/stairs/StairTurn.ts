@@ -43,8 +43,8 @@ export class StairTurn {
     return [false, true].map(inner => {
       const radius = inner ? this.innerRadius : this.outerRadius
       return {
-        id: `undertone-stairs-turn-${inner ? 'inner' : 'outer'}`,
-        room: 'undertone',
+        id: `moonfall-stairs-turn-${inner ? 'inner' : 'outer'}`,
+        room: 'moonfall',
         center: [this.center[0] + radius, this.top, inner ? this.innerCenterZ : this.outerCenterZ],
         rotation: inner ? Math.PI / 2 : -Math.PI / 2,
         curveRadius: inner ? -radius : radius,

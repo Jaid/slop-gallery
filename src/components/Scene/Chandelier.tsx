@@ -21,7 +21,7 @@ export default function Chandelier() {
     brass.dispose()
     geometry.dispose()
   }, [brass, geometry])
-  return <group name="amber-chandelier" position={[0, chandelierPhysics.height, 0]}>
+  return <group name="sienna-chandelier" position={[0, chandelierPhysics.height, 0]}>
     <RigidBody ref={anchor} type="fixed" colliders={false} position={chandelierPhysics.anchor}/>
     <mesh name="chandelier-canopy" geometry={geometry.canopy} material={brass} castShadow/>
     <RigidBody ref={fixture} colliders={false} ccd canSleep={false} angularDamping={chandelierPhysics.angularDamping} linearDamping={chandelierPhysics.linearDamping} additionalSolverIterations={8}>

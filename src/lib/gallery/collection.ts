@@ -1,6 +1,6 @@
 import type {Portrait} from './types.ts'
 
-import {daydream} from './daydream.ts'
+import {lobby} from './lobby.ts'
 
 export const initialPortraits: Array<Portrait> = [
   {
@@ -13,18 +13,18 @@ export const initialPortraits: Array<Portrait> = [
     position: [
       -3.6,
       2.5,
-      daydream.northZ + 0.22,
+      lobby.northZ + 0.22,
     ],
     rotation: 0,
     width: 2.05,
     height: 2.05,
     hung: true,
-    wallId: 'daydream-north',
+    wallId: 'lobby-north',
   },
   {
     id: 'orange',
     title: 'A Slightly Larger Tomorrow',
-    creator: 'The Department of Daydreams',
+    creator: 'The Department of Lobbys',
     description: 'The village had asked for a little more sunshine. The universe, as usual, misunderstood the brief.',
     source: '/art/orange.webp',
     narration: '/audio/orange.opus',
@@ -37,7 +37,7 @@ export const initialPortraits: Array<Portrait> = [
     width: 2.7,
     height: 2.7,
     hung: true,
-    wallId: 'daydream-extension-east',
+    wallId: 'lobby-extension-east',
   },
   {
     id: 'dog',
@@ -49,13 +49,13 @@ export const initialPortraits: Array<Portrait> = [
     position: [
       3.6,
       2.5,
-      daydream.northZ + 0.22,
+      lobby.northZ + 0.22,
     ],
     rotation: 0,
     width: 2.05,
     height: 2.05,
     hung: true,
-    wallId: 'daydream-north',
+    wallId: 'lobby-north',
   },
   {
     id: 'wolf',
@@ -73,7 +73,7 @@ export const initialPortraits: Array<Portrait> = [
     width: 2.05,
     height: 2.05,
     hung: true,
-    wallId: 'daydream-south',
+    wallId: 'lobby-south',
   },
   {
     id: 'tree',
@@ -91,7 +91,7 @@ export const initialPortraits: Array<Portrait> = [
     width: 2.6,
     height: 2.6,
     hung: true,
-    wallId: 'daydream-west',
+    wallId: 'lobby-west',
   },
   {
     id: 'pigeon',
@@ -109,7 +109,7 @@ export const initialPortraits: Array<Portrait> = [
     width: 1.45,
     height: 1.45,
     hung: true,
-    wallId: 'daydream-east',
+    wallId: 'lobby-east',
   },
   {
     id: 'toast',
@@ -127,7 +127,7 @@ export const initialPortraits: Array<Portrait> = [
     width: 1.45,
     height: 1.45,
     hung: true,
-    wallId: 'afterhours-east',
+    wallId: 'dine-east',
   },
   {
     id: 'cat',
@@ -145,7 +145,7 @@ export const initialPortraits: Array<Portrait> = [
     width: 1.9,
     height: 1.9,
     hung: true,
-    wallId: 'cabinet-north',
+    wallId: 'vesper-north',
   },
   {
     id: 'fruit',
@@ -163,7 +163,7 @@ export const initialPortraits: Array<Portrait> = [
     width: 3.1,
     height: 2.06,
     hung: true,
-    wallId: 'cabinet-north',
+    wallId: 'vesper-north',
   },
   {
     id: 'ghosts',
@@ -181,7 +181,7 @@ export const initialPortraits: Array<Portrait> = [
     width: 2.7,
     height: 1.8,
     hung: true,
-    wallId: 'cabinet-west',
+    wallId: 'vesper-west',
   },
   {
     id: 'shrimp',
@@ -199,7 +199,7 @@ export const initialPortraits: Array<Portrait> = [
     width: 1.8975,
     height: 2.53,
     hung: true,
-    wallId: 'afterhours-north',
+    wallId: 'dine-north',
   },
   {
     id: 'duck',
@@ -235,7 +235,7 @@ export const initialPortraits: Array<Portrait> = [
     width: 1.8,
     height: 1.8,
     hung: true,
-    wallId: 'afterhours-north',
+    wallId: 'dine-north',
   },
   {
     id: 'frog',
@@ -253,7 +253,7 @@ export const initialPortraits: Array<Portrait> = [
     width: 1.8,
     height: 1.8,
     hung: true,
-    wallId: 'cabinet-south',
+    wallId: 'vesper-south',
   },
   {
     id: 'flower',
@@ -271,7 +271,7 @@ export const initialPortraits: Array<Portrait> = [
     width: 1.6,
     height: 2,
     hung: true,
-    wallId: 'afterhours-south',
+    wallId: 'dine-south',
   },
   {
     id: 'lobster',
@@ -289,6 +289,6 @@ export const initialPortraits: Array<Portrait> = [
     width: 2.05,
     height: 2.05,
     hung: true,
-    wallId: 'daydream-south',
+    wallId: 'lobby-south',
   },
 ]

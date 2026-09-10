@@ -282,7 +282,7 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     }, {}, baseline)
     expect((await snapshot(page)).portraits.some(p => p.title === 'pasted fixture')).toBe(true)
     await history(page)
-    for (const [x, room] of [[-14, 'cabinet'], [14, 'afterhours']] as const) {
+    for (const [x, room] of [[-14, 'vesper'], [14, 'dine']] as const) {
       await teleport(page, [x, 1.62, 3])
       await page.waitForFunction(room => globalThis.__gallery!.snapshot!().room === room, {}, room)
       await page.screenshot({path: `private/agent/reports/production-${room}.png`})

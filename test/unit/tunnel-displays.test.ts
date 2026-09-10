@@ -5,8 +5,8 @@ import {EgoMotor} from 'ego-player/motor'
 import {Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {createArchitectureGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
-import {glasswellBalcony} from '../../src/lib/gallery/glasswellBalcony.ts'
 import {lowerGallery} from '../../src/lib/gallery/lowerGallery.ts'
+import {oculusBalcony} from '../../src/lib/gallery/oculusBalcony.ts'
 import {tunnelDisplays, tunnelDisplayWindow} from '../../src/lib/gallery/tunnelDisplays.ts'
 import {findPlacement, insideGallery, rooms, walls} from '../../src/lib/gallery/walls.ts'
 
@@ -15,10 +15,10 @@ const {tunnel, floorY} = lowerGallery
 describe('widened tunnel with sealed display rooms', () => {
   test('both portals, floor bounds and balcony follow the wider tunnel, without adding visitable rooms', () => {
     expect(tunnel.width).toBe(4.2)
-    for (const id of ['glasswell-south', 'undertone-north']) {
+    for (const id of ['oculus-south', 'moonfall-north']) {
       expect(walls.find(wall => wall.id === id)!.holes![0]!.width).toBe(tunnel.width)
     }
-    expect(glasswellBalcony.width).toBe(tunnel.width + 1)
+    expect(oculusBalcony.width).toBe(tunnel.width + 1)
     expect(tunnelDisplays).toHaveLength(2)
     expect(tunnelDisplays[0]!.center[0]).toBe(-tunnelDisplays[1]!.center[0])
     for (const display of tunnelDisplays) {
@@ -31,11 +31,11 @@ describe('widened tunnel with sealed display rooms', () => {
       }
     }
     expect(new Set(tunnelDisplays.flatMap(display => display.exhibits.map(exhibit => exhibit.kind))).size).toBe(6)
-    expect(rooms).toHaveLength(8)
+    expect(rooms).toHaveLength(9)
   })
   for (const display of tunnelDisplays) {
     test(`${display.side}: windows are real openings with glass collision, solid sills and a sealed room shell`, () => {
-      const wall = walls.find(value => value.id === `glasswell-tunnel-${display.side}`)!
+      const wall = walls.find(value => value.id === `oculus-tunnel-${display.side}`)!
       const geometry = createArchitectureGeometry(wall)
       const material = new MeshBasicMaterial
       const opaque = [geometry.surface, ...geometry.trim].map(part => new Mesh(part, material))
@@ -92,7 +92,7 @@ describe('widened tunnel with sealed display rooms', () => {
     })
     test(`${display.side}: glass blocks artwork placement through the display window`, () => {
       const hit = findPlacement([tunnel.x, floorY + 1.6, display.center[1]], [Math.sign(display.frontX), 0, 0], 1, 1, [])
-      expect(hit?.wallId).toBe(`glasswell-tunnel-${display.side}`)
+      expect(hit?.wallId).toBe(`oculus-tunnel-${display.side}`)
       expect(hit?.valid).toBe(false)
     })
     for (const fps of [30, 60, 120]) {
@@ -104,7 +104,7 @@ describe('widened tunnel with sealed display rooms', () => {
             z: 0,
           })
           world.timestep = 1 / fps
-          const wall = walls.find(value => value.id === `glasswell-tunnel-${display.side}`)!
+          const wall = walls.find(value => value.id === `oculus-tunnel-${display.side}`)!
           const geometry = createArchitectureGeometry(wall)
           for (const collision of geometry.collision) {
             world.createCollider(RAPIER.ColliderDesc.trimesh(...collision).setTranslation(...wall.center).setRotation((new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)))

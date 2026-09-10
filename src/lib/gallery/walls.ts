@@ -1,15 +1,16 @@
 import type {Placement, Portrait, RoomId, Vec3} from './types.ts'
 
-import {cabin, cabinPassages, cabinRouteWalls, cabinStairFloor, cabinWindow, cabinWindowFloor, cabinWindowGlassDistance, insideCabinRoute} from './cabin.ts'
-import {daydream} from './daydream.ts'
+import {corridor, corridorPassage, corridorStairFloor, corridorWalls, insideCorridor} from './corridor.ts'
 import {mainEntrance} from './entrance.ts'
-import {balconyFloorHeight} from './glasswellBalcony.ts'
-import {towerFloorHeight} from './glasswellTower.ts'
-import {glasswellPlatform, glasswellRamps, lowerGallery, rampFloorHeight} from './lowerGallery.ts'
+import {lobby} from './lobby.ts'
+import {insideLodgeAccess, lodge, lodgeTunnel, lodgeTunnelWalls, lodgeWindow, lodgeWindowFloor, lodgeWindowGlassDistance} from './lodge.ts'
+import {lowerGallery, oculusPlatform, oculusRamps, rampFloorHeight} from './lowerGallery.ts'
+import {craterTerrain} from './moonfall/CraterTerrain.ts'
+import {balconyFloorHeight} from './oculusBalcony.ts'
+import {towerFloorHeight} from './oculusTower.ts'
 import {portraitLabel, portraitLabelLayout} from './portraitLabel.ts'
 import {insideStairway, staircase, stairFlights, stairFloorHeight, stairTurn} from './staircase.ts'
 import {tunnelDisplayWindow} from './tunnelDisplays.ts'
-import {craterTerrain} from './undertone/CraterTerrain.ts'
 
 export const placementReach = 10
 
@@ -43,33 +44,33 @@ export type Wall = {
 
 export const rooms = [
   {
-    id: 'daydream',
+    id: 'lobby',
     floorY: 0,
     height: 5.8,
     number: '01',
-    title: 'The Daydream Wing',
+    title: 'Lobby',
     subtitle: 'Nothing here is quite as it seems.',
-    center: [0, (daydream.northZ + daydream.southZ) / 2],
-    size: [daydream.width, daydream.southZ - daydream.northZ],
+    center: [0, (lobby.northZ + lobby.southZ) / 2],
+    size: [lobby.width, lobby.southZ - lobby.northZ],
     color: '#c6c7ae',
   },
   {
-    id: 'cabinet',
+    id: 'vesper',
     floorY: 0,
     height: 5.8,
     number: '02',
-    title: 'Cabinet of Curiosities',
+    title: 'The Vesper',
     subtitle: 'Old masters. New misunderstandings.',
     center: [-14, 0],
     size: [12, 16],
     color: '#7b9986',
   },
   {
-    id: 'afterhours',
+    id: 'dine',
     floorY: 0,
     height: 5.8,
     number: '03',
-    title: 'The Afterhours Salon',
+    title: 'Dine',
     subtitle: 'A change of perspective is encouraged.',
     center: [14, 0],
     size: [12, 16],
@@ -87,77 +88,96 @@ export const rooms = [
     color: '#d4be90',
   },
   {
-    id: 'amber',
+    id: 'sienna',
     floorY: 0,
     height: 5.8,
     number: '05',
-    title: 'The Amber Room',
+    title: 'The Sienna',
     subtitle: 'Low light. Rich textures. Questionable company.',
     center: [-14, 14],
     size: [12, 12],
     color: '#674b37',
   },
   {
-    id: 'undertone',
+    id: 'moonfall',
     floorY: lowerGallery.floorY,
     height: 5.8,
     number: '06',
-    title: 'The Undertone',
+    title: 'Moonfall',
     subtitle: 'Down the stairs. Out of the ordinary.',
-    center: lowerGallery.undertone.center,
-    size: lowerGallery.undertone.size,
+    center: lowerGallery.moonfall.center,
+    size: lowerGallery.moonfall.size,
     color: '#264c54',
   },
   {
-    id: 'glasswell',
+    id: 'oculus',
     floorY: lowerGallery.floorY,
     // Stop at the ceiling underside, not the upper room’s walkable surface.
-    height: lowerGallery.glasswell.ceiling.topY - lowerGallery.glasswell.ceiling.thickness - lowerGallery.floorY,
+    height: lowerGallery.oculus.ceiling.topY - lowerGallery.oculus.ceiling.thickness - lowerGallery.floorY,
     number: '07',
-    title: 'The Glasswell',
+    title: 'Oculus',
     subtitle: 'Borrowed light from the gallery above.',
-    center: lowerGallery.glasswell.center,
-    size: lowerGallery.glasswell.size,
+    center: lowerGallery.oculus.center,
+    size: lowerGallery.oculus.size,
     color: '#7e9298',
   },
   {
-    id: 'cabin',
-    floorY: cabin.floorY,
-    height: cabin.height,
+    id: 'lodge',
+    floorY: lodge.floorY,
+    height: lodge.height,
     number: '08',
-    title: 'The Cabin',
-    subtitle: 'Weathered stone. Warm timber. A way back to Amber.',
-    center: cabin.center,
-    size: cabin.size,
+    title: 'Lodge',
+    subtitle: 'Weathered stone. Warm timber. A way back through the corridor.',
+    center: lodge.center,
+    size: lodge.size,
     color: '#936d47',
+  },
+  {
+    id: 'corridor',
+    floorY: corridor.floorY,
+    height: corridor.height,
+    number: '09',
+    title: 'Corridor',
+    subtitle: 'Timber, turns and the long way back to Sienna.',
+    center: corridor.center,
+    size: corridor.size,
+    color: '#8c6747',
   },
 ] as const
 
 const tunnelContains = ([x, y, z]: Vec3) => Math.abs(x - lowerGallery.tunnel.x) <= lowerGallery.tunnel.width / 2 && z >= lowerGallery.tunnel.northZ && z <= lowerGallery.tunnel.southZ && y >= lowerGallery.floorY - 1 && y <= lowerGallery.floorY + lowerGallery.tunnel.height
-const contains = (room: (typeof rooms)[number], [x, y, z]: Vec3) => {
-  const ground = room.id === 'undertone' ? Math.min(room.floorY, room.floorY + craterTerrain.height(x - room.center[0], z - room.center[1])) : room.floorY
+const contains = (room: (typeof rooms)[number], position: Vec3) => {
+  if (room.id === 'corridor') {
+    return insideCorridor(position)
+  }
+  const [x, y, z] = position
+  const ground = room.id === 'moonfall' ? Math.min(room.floorY, room.floorY + craterTerrain.height(x - room.center[0], z - room.center[1])) : room.floorY
   return y >= ground - 1 && y <= room.floorY + room.height + 0.2 && Math.abs(x - room.center[0]) <= room.size[0] / 2 && Math.abs(z - room.center[1]) <= room.size[1] / 2
 }
-
 export const galleryBounds = {
-  minX: Math.min(...rooms.map(room => room.center[0] - room.size[0] / 2), ...cabinPassages.flatMap(passage => passage.floors.map(floor => floor.center[0] - floor.size[0] / 2))),
+  minX: Math.min(...rooms.map(room => room.center[0] - room.size[0] / 2), ...[lodgeTunnel, corridorPassage].flatMap(passage => passage.floors.map(floor => floor.center[0] - floor.size[0] / 2))),
   maxX: Math.max(...rooms.map(room => room.center[0] + room.size[0] / 2)),
   minZ: Math.min(...rooms.map(room => room.center[1] - room.size[1] / 2)),
   maxZ: Math.max(...rooms.map(room => room.center[1] + room.size[1] / 2)),
 }
 
 export function insideGallery(position: Vec3) {
-  return position.every(Number.isFinite) && (rooms.some(room => contains(room, position)) || insideStairway(position) || tunnelContains(position) || insideCabinRoute(position))
+  return position.every(Number.isFinite) && (rooms.some(room => contains(room, position)) || insideStairway(position) || tunnelContains(position) || insideLodgeAccess(position))
 }
 
 export function roomVisit(room: (typeof rooms)[number]): {position: Vec3
   rotation: [number, number, number, number]} {
+  if (room.id === 'corridor') {
+    return {
+      position: [corridor.center[0], corridor.floorY + 1.7, corridor.center[1]],
+      rotation: [0, 0, 0, 1],
+    }
+  }
   return {
     position: [room.center[0], room.floorY + 1.7, room.center[1] + (room.id === 'antechamber' ? -1.1 : room.size[1] / 2 - 2.4)],
     rotation: room.id === 'antechamber' ? [0, 1, 0, 0] : [0, 0, 0, 1],
   }
 }
-
 const wall = (id: string, room: RoomId, x: number, z: number, rotation: number, width: number, holes?: Wall['holes']): Wall => ({
   id,
   room,
@@ -179,13 +199,13 @@ const roomWall = (roomId: RoomId, side: 'east' | 'north' | 'south' | 'west', hol
   } as const
   const [wallX, wallZ, rotation, length] = sides[side]
   const result = wall(`${roomId}-${side}`, roomId, wallX, wallZ, rotation, length, holes)
-  if (roomId === 'glasswell') {
+  if (roomId === 'oculus') {
     result.trimStyle = 'plain'
     if (side === 'north') {
-      const height = glasswellPlatform.position[1] + glasswellPlatform.size[1] / 2 - room.floorY
+      const height = oculusPlatform.position[1] + oculusPlatform.size[1] / 2 - room.floorY
       result.baseboardProfile = [[-length / 2, height], [length / 2, height]]
     } else {
-      const ramp = glasswellRamps.find(value => value.side === side)
+      const ramp = oculusRamps.find(value => value.side === side)
       if (ramp) {
         result.baseboardProfile = [
           [room.center[1] - depth / 2, ramp.rise],
@@ -208,14 +228,14 @@ const doorway: Array<WallOpening> = [
 ]
 export const walls: Array<Wall> = [
   {
-    ...wall('daydream-north', 'daydream', 0, daydream.northZ, 0, daydream.width),
+    ...wall('lobby-north', 'lobby', 0, lobby.northZ, 0, lobby.width),
     reservations: [mainEntrance.reservation],
   },
   // Keep the original side walls and doorways fixed; extend only their north ends.
-  wall('daydream-extension-west', 'daydream', -daydream.width / 2, (daydream.northZ + daydream.previousNorthZ) / 2, Math.PI / 2, daydream.previousNorthZ - daydream.northZ),
-  wall('daydream-extension-east', 'daydream', daydream.width / 2, (daydream.northZ + daydream.previousNorthZ) / 2, -Math.PI / 2, daydream.previousNorthZ - daydream.northZ),
-  wall('daydream-west', 'daydream', -8, 0, Math.PI / 2, 16, doorway),
-  wall('daydream-east', 'daydream', 8, 0, -Math.PI / 2, 16, [
+  wall('lobby-extension-west', 'lobby', -lobby.width / 2, (lobby.northZ + lobby.previousNorthZ) / 2, Math.PI / 2, lobby.previousNorthZ - lobby.northZ),
+  wall('lobby-extension-east', 'lobby', lobby.width / 2, (lobby.northZ + lobby.previousNorthZ) / 2, -Math.PI / 2, lobby.previousNorthZ - lobby.northZ),
+  wall('lobby-west', 'lobby', -8, 0, Math.PI / 2, 16, doorway),
+  wall('lobby-east', 'lobby', 8, 0, -Math.PI / 2, 16, [
     {
       u: 3,
       width: 2.8,
@@ -223,7 +243,7 @@ export const walls: Array<Wall> = [
       profile: 'arch',
     },
   ]),
-  wall('daydream-south', 'daydream', 0, 8, Math.PI, 16, [
+  wall('lobby-south', 'lobby', 0, 8, Math.PI, 16, [
     {
       u: 0,
       width: 2.6,
@@ -231,9 +251,9 @@ export const walls: Array<Wall> = [
       profile: 'rectangle',
     },
   ]),
-  wall('cabinet-north', 'cabinet', -14, -8, 0, 12),
-  wall('cabinet-west', 'cabinet', -20, 0, Math.PI / 2, 16),
-  wall('cabinet-south', 'cabinet', -14, 8, Math.PI, 12, [
+  wall('vesper-north', 'vesper', -14, -8, 0, 12),
+  wall('vesper-west', 'vesper', -20, 0, Math.PI / 2, 16),
+  wall('vesper-south', 'vesper', -14, 8, Math.PI, 12, [
     {
       u: -3.8,
       width: 2.8,
@@ -241,7 +261,7 @@ export const walls: Array<Wall> = [
       profile: 'arch',
     },
   ]),
-  wall('cabinet-east', 'cabinet', -8, 0, -Math.PI / 2, 16, [
+  wall('vesper-east', 'vesper', -8, 0, -Math.PI / 2, 16, [
     {
       u: 3,
       width: 2.8,
@@ -249,10 +269,10 @@ export const walls: Array<Wall> = [
       profile: 'arch',
     },
   ]),
-  wall('afterhours-north', 'afterhours', 14, -8, 0, 12),
-  wall('afterhours-east', 'afterhours', 20, 0, -Math.PI / 2, 16),
-  wall('afterhours-south', 'afterhours', 14, 8, Math.PI, 12),
-  wall('afterhours-west', 'afterhours', 8, 0, Math.PI / 2, 16, doorway),
+  wall('dine-north', 'dine', 14, -8, 0, 12),
+  wall('dine-east', 'dine', 20, 0, -Math.PI / 2, 16),
+  wall('dine-south', 'dine', 14, 8, Math.PI, 12),
+  wall('dine-west', 'dine', 8, 0, Math.PI / 2, 16, doorway),
   wall('antechamber-north', 'antechamber', 0, 8, 0, 8, [
     {
       u: 0,
@@ -271,7 +291,7 @@ export const walls: Array<Wall> = [
     },
   ]),
   wall('antechamber-south', 'antechamber', 0, 15, Math.PI, 8),
-  wall('amber-north', 'amber', -14, 8, 0, 12, [
+  wall('sienna-north', 'sienna', -14, 8, 0, 12, [
     {
       u: 3.8,
       width: 2.8,
@@ -279,74 +299,75 @@ export const walls: Array<Wall> = [
       profile: 'arch',
     },
   ]),
-  wall('amber-west', 'amber', -20, 14, Math.PI / 2, 12, [
+  wall('sienna-west', 'sienna', -20, 14, Math.PI / 2, 12, [
     {
-      u: 14 - cabin.amberZ,
-      width: cabin.timberWidth,
+      u: 14 - lodge.siennaZ,
+      width: lodge.timberWidth,
       height: 3.4,
       profile: 'arch',
     },
   ]),
-  wall('amber-east', 'amber', -8, 14, -Math.PI / 2, 12),
-  wall('amber-south', 'amber', -14, 20, Math.PI, 12),
-  roomWall('undertone', 'north', [
+  wall('sienna-east', 'sienna', -8, 14, -Math.PI / 2, 12),
+  wall('sienna-south', 'sienna', -14, 20, Math.PI, 12),
+  roomWall('moonfall', 'north', [
     {
-      u: lowerGallery.tunnel.x - lowerGallery.undertone.center[0],
+      u: lowerGallery.tunnel.x - lowerGallery.moonfall.center[0],
       width: lowerGallery.tunnel.width,
       height: 3.6,
       profile: 'rectangle',
     },
   ]),
-  roomWall('undertone', 'east', [
+  roomWall('moonfall', 'east', [
     {
-      u: staircase.returnZ - lowerGallery.undertone.center[1],
+      u: staircase.returnZ - lowerGallery.moonfall.center[1],
       width: staircase.lowerWidth,
       height: 3.6,
       profile: 'rectangle',
     },
   ]),
-  roomWall('undertone', 'south'),
-  roomWall('undertone', 'west'),
+  roomWall('moonfall', 'south'),
+  roomWall('moonfall', 'west'),
   ...stairFlights.flatMap(flight => [-1, 1].map(side => flight.wall(side))),
   ...stairTurn.walls(),
-  roomWall('glasswell', 'north', [
+  roomWall('oculus', 'north', [
     {
-      u: cabin.entranceX,
-      bottom: cabin.floorY - lowerGallery.floorY,
-      width: cabin.passageWidth,
-      height: cabin.floorY - lowerGallery.floorY + 3.4,
+      u: lodge.entranceX,
+      bottom: lodge.floorY - lowerGallery.floorY,
+      width: lodge.passageWidth,
+      height: lodge.floorY - lowerGallery.floorY + 3.4,
       profile: 'arch',
     },
   ]),
-  roomWall('glasswell', 'east'),
-  roomWall('glasswell', 'west'),
-  roomWall('cabin', 'north'),
-  roomWall('cabin', 'west', [
+  roomWall('oculus', 'east'),
+  roomWall('oculus', 'west'),
+  roomWall('lodge', 'north'),
+  roomWall('lodge', 'west', [
     {
-      u: cabin.center[1] - cabin.returnZ,
-      width: cabin.timberWidth,
+      u: lodge.center[1] - lodge.returnZ,
+      width: lodge.timberWidth,
       height: 3.4,
       profile: 'arch',
     },
     {
-      u: cabin.center[1] - cabinWindow.z,
-      width: cabinWindow.width,
-      bottom: cabinWindow.bottom - cabin.floorY,
-      height: cabinWindow.top - cabin.floorY,
+      u: lodge.center[1] - lodgeWindow.z,
+      width: lodgeWindow.width,
+      bottom: lodgeWindow.bottom - lodge.floorY,
+      height: lodgeWindow.top - lodge.floorY,
       profile: 'rectangle',
     },
   ]),
-  roomWall('cabin', 'east', [
+  roomWall('lodge', 'east', [
     {
-      u: cabin.tunnelZ - cabin.center[1],
-      width: cabin.passageWidth,
+      u: lodge.tunnelZ - lodge.center[1],
+      width: lodge.passageWidth,
       height: 3.4,
       profile: 'arch',
     },
   ]),
-  roomWall('cabin', 'south'),
-  ...cabinRouteWalls,
-  roomWall('glasswell', 'south', [
+  roomWall('lodge', 'south'),
+  ...lodgeTunnelWalls,
+  ...corridorWalls,
+  roomWall('oculus', 'south', [
     {
       u: 0,
       width: lowerGallery.tunnel.width,
@@ -355,7 +376,7 @@ export const walls: Array<Wall> = [
     },
   ]),
   ...[-1, 1].map(side => ({
-    ...wall(`glasswell-tunnel-${side < 0 ? 'west' : 'east'}`, 'glasswell', lowerGallery.tunnel.x + side * lowerGallery.tunnel.width / 2, (lowerGallery.tunnel.northZ + lowerGallery.tunnel.southZ) / 2, side < 0 ? Math.PI / 2 : -Math.PI / 2, lowerGallery.tunnel.southZ - lowerGallery.tunnel.northZ, [
+    ...wall(`oculus-tunnel-${side < 0 ? 'west' : 'east'}`, 'oculus', lowerGallery.tunnel.x + side * lowerGallery.tunnel.width / 2, (lowerGallery.tunnel.northZ + lowerGallery.tunnel.southZ) / 2, side < 0 ? Math.PI / 2 : -Math.PI / 2, lowerGallery.tunnel.southZ - lowerGallery.tunnel.northZ, [
       {
         u: 0,
         bottom: tunnelDisplayWindow.bottom,
@@ -386,19 +407,21 @@ export function insideOpening(hole: WallOpening, u: number, y: number) {
 }
 
 export function roomAt(position: Vec3): RoomId {
-  const room = rooms.find(value => contains(value, position))
+  if (insideCorridor(position)) {
+    return 'corridor'
+  }
+  const room = rooms.find(value => value.id !== 'corridor' && contains(value, position))
   if (room) {
     return room.id
   }
   if (insideStairway(position)) {
-    return 'undertone'
+    return 'moonfall'
   }
-  if (insideCabinRoute(position)) {
-    return 'cabin'
+  if (insideLodgeAccess(position)) {
+    return 'lodge'
   }
-  return tunnelContains(position) ? 'glasswell' : 'daydream'
+  return tunnelContains(position) ? 'oculus' : 'lobby'
 }
-
 export function wallPosition(wall: Wall, u: number, y: number, offset = 0.22): Vec3 {
   const sin = Math.sin(wall.rotation)
   const cos = Math.cos(wall.rotation)
@@ -468,12 +491,12 @@ const wallRayDistance = (targetWall: Wall, origin: Vec3, direction: Vec3) => {
 }
 
 export function findPlacement(origin: Vec3, direction: Vec3, width: number, height: number, portraits: ReadonlyArray<Portrait>, ignoreId = ''): Placement | null {
-  let nearest = cabinWindowGlassDistance(origin, direction) ?? Infinity
+  let nearest = lodgeWindowGlassDistance(origin, direction) ?? Infinity
   let result: Placement | null = Number.isFinite(nearest) ? {
     inReach: nearest * Math.hypot(...direction) <= placementReach,
     position: [origin[0] + direction[0] * nearest, origin[1] + direction[1] * nearest, origin[2] + direction[2] * nearest],
     rotation: direction[0] < 0 ? Math.PI / 2 : -Math.PI / 2,
-    wallId: 'cabin-west',
+    wallId: 'lodge-west',
     valid: false,
     reason: 'Keep the window clear.',
   } : null
@@ -514,23 +537,23 @@ export function wallDistance(origin: Vec3, direction: Vec3) {
 // Prefer the highest nearby floor below the caller, not the first horizontal match.
 // This also recovers loose objects slightly below a slab in stacked rooms.
 export function floorHeight([x, y, z]: Vec3) {
-  const heights = rooms.filter(room => Math.abs(x - room.center[0]) <= room.size[0] / 2 && Math.abs(z - room.center[1]) <= room.size[1] / 2).map(room => room.floorY + (room.id === 'undertone' ? craterTerrain.height(x - room.center[0], z - room.center[1]) : 0))
-  const sill = cabinWindowFloor(x, z)
+  const heights = rooms.filter(room => Math.abs(x - room.center[0]) <= room.size[0] / 2 && Math.abs(z - room.center[1]) <= room.size[1] / 2).map(room => room.floorY + (room.id === 'moonfall' ? craterTerrain.height(x - room.center[0], z - room.center[1]) : 0))
+  const sill = lodgeWindowFloor(x, z)
   if (sill !== undefined) {
     heights.push(sill)
   }
-  const cabinStair = cabinStairFloor(x, z)
-  if (cabinStair !== undefined) {
-    heights.push(cabinStair)
+  const corridorStair = corridorStairFloor(x, z)
+  if (corridorStair !== undefined) {
+    heights.push(corridorStair)
   }
-  for (const passage of cabinPassages) {
+  for (const passage of [lodgeTunnel, corridorPassage]) {
     const floor = passage.floorAt(x, z)
     if (floor !== undefined) {
       heights.push(floor)
     }
   }
-  if (Math.abs(x - glasswellPlatform.position[0]) <= glasswellPlatform.size[0] / 2 && Math.abs(z - glasswellPlatform.position[2]) <= glasswellPlatform.size[2] / 2) {
-    heights.push(glasswellPlatform.position[1] + glasswellPlatform.size[1] / 2)
+  if (Math.abs(x - oculusPlatform.position[0]) <= oculusPlatform.size[0] / 2 && Math.abs(z - oculusPlatform.position[2]) <= oculusPlatform.size[2] / 2) {
+    heights.push(oculusPlatform.position[1] + oculusPlatform.size[1] / 2)
   }
   const balcony = balconyFloorHeight(x, z)
   if (balcony !== undefined) {

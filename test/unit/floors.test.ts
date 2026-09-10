@@ -5,12 +5,12 @@ import {describe, expect, test} from 'bun:test'
 import RAPIER from '@dimforge/rapier3d-compat'
 import {BoxGeometry, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
-import {daydream} from '../../src/lib/gallery/daydream.ts'
 import {floorGlassThickness, roomFloorPlan, subtractFloorOpening} from '../../src/lib/gallery/floors.ts'
+import {lobby} from '../../src/lib/gallery/lobby.ts'
 import {insideGallery, rooms, roomVisit, walls} from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
-const room = rooms.find(value => value.id === 'daydream')!
+const room = rooms.find(value => value.id === 'lobby')!
 const plan = roomFloorPlan(room)
 const area = (rectangles: Array<FloorRectangle>) => rectangles.reduce((sum, rectangle) => sum + rectangle.size[0] * rectangle.size[1], 0)
 describe('rectangular floor openings', () => {
@@ -43,17 +43,17 @@ describe('rectangular floor openings', () => {
     }))).toBe(80)
   })
   test('reserves an 8 × 8 square with at least four meters of padding', () => {
-    expect(daydream.previousNorthZ - daydream.northZ).toBe(24)
-    expect(daydream.opening.size).toEqual([8, 8])
+    expect(lobby.previousNorthZ - lobby.northZ).toBe(24)
+    expect(lobby.opening.size).toEqual([8, 8])
     expect(area(plan.slabs)).toBe(16 * 40 - 8 * 8)
     expect(plan.slabs).toHaveLength(4)
     expect(plan.glazing).toEqual({
       center: [0, -8],
       size: [8, 8],
     })
-    expect((daydream.width - daydream.opening.size[0]) / 2).toBe(4)
-    expect(daydream.opening.center[1] - daydream.opening.size[1] / 2 - daydream.northZ).toBe(8)
-    expect(daydream.previousNorthZ - (daydream.opening.center[1] + daydream.opening.size[1] / 2)).toBe(8)
+    expect((lobby.width - lobby.opening.size[0]) / 2).toBe(4)
+    expect(lobby.opening.center[1] - lobby.opening.size[1] / 2 - lobby.northZ).toBe(8)
+    expect(lobby.previousNorthZ - (lobby.opening.center[1] + lobby.opening.size[1] / 2)).toBe(8)
     const visit = roomVisit(room)
     expect(visit.position[0]).toBe(0)
     expect(visit.position[1]).toBe(1.7)
@@ -61,24 +61,24 @@ describe('rectangular floor openings', () => {
     expect(insideGallery([7, 1.7, -20])).toBe(true)
     expect(insideGallery([0, 1.7, -31])).toBe(true)
     expect(insideGallery([9, 1.7, -20])).toBe(false)
-    expect(walls.find(wall => wall.id === 'daydream-north')!.center).toEqual([0, 0, -32])
+    expect(walls.find(wall => wall.id === 'lobby-north')!.center).toEqual([0, 0, -32])
     for (const side of ['west', 'east']) {
-      const extension = walls.find(wall => wall.id === `daydream-extension-${side}`)!
+      const extension = walls.find(wall => wall.id === `lobby-extension-${side}`)!
       expect(extension.center[2] - extension.width / 2).toBe(-32)
       expect(extension.center[2] + extension.width / 2).toBe(-8)
-      expect(walls.find(wall => wall.id === `daydream-${side}`)!.center[2]).toBe(0)
+      expect(walls.find(wall => wall.id === `lobby-${side}`)!.center[2]).toBe(0)
     }
   })
   test('slabs, grout and inlays are all absent over the opening', () => {
     const opening: FloorRectangle = {
-      center: [daydream.opening.center[0] - room.center[0], daydream.opening.center[1] - room.center[1]],
-      size: daydream.opening.size,
+      center: [lobby.opening.center[0] - room.center[0], lobby.opening.center[1] - room.center[1]],
+      size: lobby.opening.size,
     }
     for (const rectangle of [...plan.slabs, ...plan.seams, ...plan.inlays]) {
       expect(subtractFloorOpening(rectangle, opening)).toEqual([rectangle])
       expect(rectangle.size.every(value => value > 0 && Number.isFinite(value))).toBe(true)
     }
-    for (const other of rooms.filter(value => value.id !== 'daydream')) {
+    for (const other of rooms.filter(value => value.id !== 'lobby')) {
       expect(roomFloorPlan(other).glazing).toBeUndefined()
       expect(roomFloorPlan(other).slabs).toEqual([
         {

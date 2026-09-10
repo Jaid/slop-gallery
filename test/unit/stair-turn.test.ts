@@ -18,7 +18,7 @@ describe('round stair landing', () => {
         const [x, z] = stairTurn.point(angle, radius)
         expect(stairFloorHeight(x, z)).toBe(stairTurn.top)
         expect(insideGallery([x, stairTurn.top + 1.6, z])).toBe(true)
-        expect(roomAt([x, stairTurn.top + 1.6, z])).toBe('undertone')
+        expect(roomAt([x, stairTurn.top + 1.6, z])).toBe('moonfall')
       }
     }
     expect(stairTurn.point(0)[1]).toBeCloseTo(staircase.z)
@@ -146,7 +146,7 @@ describe('round stair landing', () => {
   })
   test('the lower flight, ceiling, rails and room doorway all use the wider span', () => {
     expect(staircase.lowerWidth).toBeCloseTo(staircase.width * 2)
-    const doorway = walls.find(wall => wall.id === 'undertone-east')!.holes!.find(hole => hole.width === staircase.lowerWidth)!
+    const doorway = walls.find(wall => wall.id === 'moonfall-east')!.holes!.find(hole => hole.width === staircase.lowerWidth)!
     expect(doorway.width).toBe(staircase.lowerWidth)
     const [upper, lower] = stairFlights
     expect(upper!.width).toBe(staircase.width)

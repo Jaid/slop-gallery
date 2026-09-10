@@ -26,7 +26,7 @@ export default function Settings() {
   }
   return <>
     <section className="settings-section"><div className="section-label">Atmosphere</div>
-      <span className="field-label">Daydream wall palette</span><div className="swatches">{(['ivory', 'sage', 'nocturne'] as const).map(theme => <button aria-pressed={s.theme === theme} className={s.theme === theme ? 'chosen' : ''} onClick={() => useGallery.setState({theme})} key={theme}><i style={{background: theme === 'ivory' ? '#e7dfcc' : (theme === 'sage' ? '#a4b7a6' : '#536571')}}/>{theme}</button>)}</div>
+      <span className="field-label">Lobby wall palette</span><div className="swatches">{(['ivory', 'sage', 'nocturne'] as const).map(theme => <button aria-pressed={s.theme === theme} className={s.theme === theme ? 'chosen' : ''} onClick={() => useGallery.setState({theme})} key={theme}><i style={{background: theme === 'ivory' ? '#e7dfcc' : (theme === 'sage' ? '#a4b7a6' : '#536571')}}/>{theme}</button>)}</div>
       <span className="field-label">Frame finish</span><div className="segmented">{(['gold', 'oak', 'black'] as const).map(frame => <button key={frame} aria-pressed={s.frame === frame} className={s.frame === frame ? 'chosen' : ''} onClick={() => useGallery.setState({frame})}>{frame}</button>)}</div>
       <label className="toggle-row">Sound<input type="checkbox" checked={s.sound} onChange={event => useGallery.setState({sound: event.target.checked})}/></label>
     </section>

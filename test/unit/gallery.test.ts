@@ -45,23 +45,23 @@ describe('wall geometry', () => {
   })
   test('hits the facing wall and preserves the frame offset', () => {
     expect(findPlacement([4, 2.5, -24], [0, 0, -1], 2, 2, [])).toMatchObject({
-      wallId: 'daydream-north',
+      wallId: 'lobby-north',
       position: [4, 2.5, -31.78],
       valid: true,
     })
     expect(findPlacement([0, 2.5, 5], [0, 0, -1], 2, 2, [])).toMatchObject({
-      wallId: 'daydream-north',
+      wallId: 'lobby-north',
       inReach: false,
       valid: false,
     })
   })
   test('doorways are not hanging surfaces', () => {
     expect(findPlacement([0, 2, 3], [-1, 0, 0], 2, 2, [])).toMatchObject({
-      wallId: 'cabinet-west',
+      wallId: 'vesper-west',
       inReach: false,
       valid: false,
     })
-    const wall = walls.find(w => w.id === 'daydream-west')!
+    const wall = walls.find(w => w.id === 'lobby-west')!
     expect(placementIssue(wall, wallPosition(wall, -4.6, 2.5), 2, 2, [])).toContain('doorway')
   })
   test('rejects edges, low labels, ceilings and overlaps', () => {
@@ -76,7 +76,7 @@ describe('wall geometry', () => {
   test('keeps distant wall previews but never accepts them as placements', () => {
     for (const z of [-21.999, 5, 7.5]) {
       expect(findPlacement([4, 2.5, z], [0, 0, -1], 2, 2, [])).toMatchObject({
-        wallId: 'daydream-north',
+        wallId: 'lobby-north',
         position: [4, 2.5, -31.78],
         inReach: false,
         valid: false,
@@ -106,7 +106,7 @@ describe('wall geometry', () => {
     expect(findPlacement([0, 2.5, 0], [0, 1, 0], 2, 2, [])).toBeNull()
     expect(findPlacement([0, 2.5, 0], [0, 0, 0], 2, 2, [])).toBeNull()
     expect(findPlacement([0, 2.5, 0], [-1, 0, 0], 2, 2, [])).toMatchObject({
-      wallId: 'daydream-west',
+      wallId: 'lobby-west',
       inReach: true,
     })
     expect(findPlacement([0, 2.5, 0], [0, 0, 1], 2, 2, [])).toMatchObject({
@@ -121,38 +121,38 @@ describe('wall geometry', () => {
       valid: true,
     })
     expect(findPlacement([0, 2.5, 10], [0, 0, -1], 2, 2, [])).toMatchObject({
-      wallId: 'daydream-north',
+      wallId: 'lobby-north',
       inReach: false,
     })
   })
-  test('the Amber Room connects through matching Cabinet arches in both directions', () => {
-    const cabinet = walls.find(wall => wall.id === 'cabinet-south')!
-    const amber = walls.find(wall => wall.id === 'amber-north')!
-    const entrance = wallPosition(cabinet, cabinet.holes![0]!.u, 2, 0)
-    const exit = wallPosition(amber, amber.holes![0]!.u, 2, 0)
+  test('the Sienna connects through matching Vesper arches in both directions', () => {
+    const vesper = walls.find(wall => wall.id === 'vesper-south')!
+    const sienna = walls.find(wall => wall.id === 'sienna-north')!
+    const entrance = wallPosition(vesper, vesper.holes![0]!.u, 2, 0)
+    const exit = wallPosition(sienna, sienna.holes![0]!.u, 2, 0)
     for (const [i, value] of entrance.entries()) {
       expect(value).toBeCloseTo(exit[i]!)
     }
     expect(findPlacement([-10.2, 2.5, 6], [0, 0, 1], 2, 2, [])).toMatchObject({
-      wallId: 'amber-south',
+      wallId: 'sienna-south',
       inReach: false,
     })
     expect(findPlacement([-10.2, 2.5, 10], [0, 0, -1], 2, 2, [])).toMatchObject({
-      wallId: 'cabinet-north',
+      wallId: 'vesper-north',
       inReach: false,
     })
     expect(findPlacement([-14, 2.5, 6], [0, 0, 1], 2, 2, [])).toMatchObject({
-      wallId: 'cabinet-south',
+      wallId: 'vesper-south',
       inReach: true,
     })
     expect(findPlacement([-14, 2.5, 10], [0, 0, -1], 2, 2, [])).toMatchObject({
-      wallId: 'amber-north',
+      wallId: 'sienna-north',
       inReach: true,
     })
   })
-  test('the Amber Room has usable hanging walls', () => {
+  test('the Sienna has usable hanging walls', () => {
     expect(findPlacement([-14, 2.5, 14], [0, 0, 1], 2, 2, [])).toMatchObject({
-      wallId: 'amber-south',
+      wallId: 'sienna-south',
       position: [-14, 2.5, 19.78],
       inReach: true,
       valid: true,
@@ -179,8 +179,8 @@ describe('wall geometry', () => {
       expect(roomAt(visit.position)).toBe(room.id)
       expect(Math.hypot(...visit.rotation)).toBeCloseTo(1)
     }
-    expect(roomAt([-10.2, 2, 7.99])).toBe('cabinet')
-    expect(roomAt([-10.2, 2, 8.01])).toBe('amber')
+    expect(roomAt([-10.2, 2, 7.99])).toBe('vesper')
+    expect(roomAt([-10.2, 2, 8.01])).toBe('sienna')
   })
   test('label clearance follows the physical sign footprint', () => {
     const wall = walls[0]!
@@ -190,10 +190,10 @@ describe('wall geometry', () => {
     expect(placementIssue(wall, wallPosition(wall, 4, lowestCenter + 0.001), 2, 2, [])).toBe('')
   })
   test('room boundaries are shared by UI and interaction', () => {
-    expect(roomAt([-14, 2, 0])).toBe('cabinet')
-    expect(roomAt([14, 2, 0])).toBe('afterhours')
+    expect(roomAt([-14, 2, 0])).toBe('vesper')
+    expect(roomAt([14, 2, 0])).toBe('dine')
     expect(roomAt([0, 2, 11])).toBe('antechamber')
-    expect(roomAt([0, 2, 3])).toBe('daydream')
+    expect(roomAt([0, 2, 3])).toBe('lobby')
   })
 })
 describe('image dimensions', () => {
@@ -383,8 +383,8 @@ describe('backup validation', () => {
     expect(result.id).toBe(custom.id)
     expect(result.source).toBe(source)
   })
-  test('round-trips artwork hung in the Amber Room', () => {
-    const wall = walls.find(wall => wall.id === 'amber-south')!
+  test('round-trips artwork hung in the Sienna', () => {
+    const wall = walls.find(wall => wall.id === 'sienna-south')!
     const portrait = {
       ...initialPortraits[0]!,
       wallId: wall.id,
@@ -397,6 +397,33 @@ describe('backup validation', () => {
     })
     expect(saved.portraits[0]).toMatchObject(portrait)
     expect(validateDocument(saved)).toEqual(saved)
+  })
+  test('rejects wall IDs from before the room rename', () => {
+    const renames = [
+      ['daydream-west', 'lobby-west'],
+      ['cabinet-north', 'vesper-north'],
+      ['afterhours-east', 'dine-east'],
+      ['amber-south', 'sienna-south'],
+      ['cabin-north', 'lodge-north'],
+      ['cabin-approach-wall-0', 'corridor-wall-0'],
+      ['cabin-stairs-return-north', 'corridor-stairs-return-north'],
+      ['undertone-west', 'moonfall-west'],
+      ['glasswell-east', 'oculus-east'],
+    ] as const
+    for (const [legacyId, wallId] of renames) {
+      const wall = walls.find(candidate => candidate.id === wallId)!
+      expect(() => validateDocument({
+        ...original,
+        portraits: [
+          {
+            ...initialPortraits[0]!,
+            wallId: legacyId,
+            rotation: wall.rotation,
+            position: wallPosition(wall, 0, wall.center[1] + 2.5),
+          },
+        ],
+      })).toThrow('invalid wall')
+    }
   })
   test('rejects loose artwork outside the actual room footprint', () => {
     expect(() => validateDocument({

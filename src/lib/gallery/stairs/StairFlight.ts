@@ -29,7 +29,7 @@ export class StairFlight {
   readonly run: number
   readonly slope: number
 
-  constructor(readonly id: string, readonly start: Vec3, readonly end: Vec3, readonly width: number, readonly count: number, readonly entryLanding = 0, readonly exitLanding = 0, readonly room: RoomId = 'undertone') {
+  constructor(readonly id: string, readonly start: Vec3, readonly end: Vec3, readonly width: number, readonly count: number, readonly entryLanding = 0, readonly exitLanding = 0, readonly room: RoomId = 'moonfall') {
     this.axis = start[0] === end[0] ? 2 : 0
     this.crossAxis = this.axis === 0 ? 2 : 0
     this.direction = Math.sign(end[this.axis] - start[this.axis])

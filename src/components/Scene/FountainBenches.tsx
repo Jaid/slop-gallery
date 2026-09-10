@@ -26,12 +26,12 @@ export default function FountainBenches({wood}: {wood: Texture}) {
     metal.dispose()
   }, [geometry, timber, metal])
   const {width, height, depth} = fountainBench
-  return <group name="daydream-fountain-benches">
+  return <group name="lobby-fountain-benches">
     {fountainBenches.map((pose, i) => <RigidBody key={i} type="fixed" colliders={false} {...pose}>
       <CuboidCollider position={[0, height - 0.0425, 0]} args={[width / 2, 0.0425, depth / 2]}/>
       {[-1.04, 1.04].flatMap(x => [-1, 1].map(side => <CuboidCollider key={`${x}:${side}`} position={[x, (height - 0.1) / 2, side * (depth / 2 - 0.075)]} args={[0.0425, (height - 0.1) / 2, 0.025]}/>))}
-      <mesh name="daydream-bench-teak-slats" geometry={geometry.wood} material={timber} castShadow receiveShadow/>
-      <mesh name="daydream-bench-brushed-frame" geometry={geometry.metal} material={metal} castShadow receiveShadow/>
+      <mesh name="lobby-bench-teak-slats" geometry={geometry.wood} material={timber} castShadow receiveShadow/>
+      <mesh name="lobby-bench-brushed-frame" geometry={geometry.metal} material={metal} castShadow receiveShadow/>
     </RigidBody>)}
   </group>
 }

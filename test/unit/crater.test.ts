@@ -10,21 +10,21 @@ import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/galler
 import {initialPortraits} from '../../src/lib/gallery/collection.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import {lowerGallery} from '../../src/lib/gallery/lowerGallery.ts'
+import {moonfallCrater} from '../../src/lib/gallery/moonfall/config.ts'
+import {CraterGeometry} from '../../src/lib/gallery/moonfall/CraterGeometry.ts'
+import {craterTerrain, CraterTerrain} from '../../src/lib/gallery/moonfall/CraterTerrain.ts'
 import {PlayerSession} from '../../src/lib/gallery/PlayerSession.ts'
 import {RopeRing} from '../../src/lib/gallery/railings/RopeRing.ts'
 import {StanchionRingGeometry} from '../../src/lib/gallery/railings/StanchionRingGeometry.ts'
 import {staircase} from '../../src/lib/gallery/staircase.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
-import {undertoneCrater} from '../../src/lib/gallery/undertone/config.ts'
-import {CraterGeometry} from '../../src/lib/gallery/undertone/CraterGeometry.ts'
-import {craterTerrain, CraterTerrain} from '../../src/lib/gallery/undertone/CraterTerrain.ts'
 import {floorHeight, insideGallery, roomAt, rooms, roomVisit, wallPosition, walls} from '../../src/lib/gallery/walls.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 
 await RAPIER.init()
-const room = rooms.find(value => value.id === 'undertone')!
+const room = rooms.find(value => value.id === 'moonfall')!
 const geometry = new CraterGeometry
-const fence = new StanchionRingGeometry(undertoneCrater.fenceRadius, undertoneCrater.fencePosts)
+const fence = new StanchionRingGeometry(moonfallCrater.fenceRadius, moonfallCrater.fencePosts)
 const surfaceCollisions = [geometry.floor, geometry.terrain, geometry.rocks, fence.posts, fence.rope].map(colliderGeometry)
 afterAll(() => {
   geometry.dispose()
@@ -42,21 +42,21 @@ function worldAt(fps = 60) {
   }
   return world
 }
-describe('Undertone impact hall', () => {
+describe('Moonfall impact hall', () => {
   test('the square expansion leaves both existing doorway endpoints connected', () => {
     expect(room.size).toEqual([28, 28])
     expect(room.size[0] * room.size[1]).toBeGreaterThan(4 * 12 * 14)
-    const north = walls.find(wall => wall.id === 'undertone-north')!
-    const east = walls.find(wall => wall.id === 'undertone-east')!
+    const north = walls.find(wall => wall.id === 'moonfall-north')!
+    const east = walls.find(wall => wall.id === 'moonfall-east')!
     expect(wallPosition(north, north.holes![0]!.u, room.floorY, 0)).toEqual([lowerGallery.tunnel.x, room.floorY, lowerGallery.tunnel.southZ])
     const portal = wallPosition(east, east.holes![0]!.u, room.floorY, 0)
     expect(portal[0]).toBe(staircase.endX)
     expect(portal[2]).toBeCloseTo(staircase.returnZ)
     const visit = roomVisit(room).position
-    expect(Math.hypot(visit[0] - room.center[0], visit[2] - room.center[1])).toBeGreaterThan(undertoneCrater.fenceRadius + 0.6)
+    expect(Math.hypot(visit[0] - room.center[0], visit[2] - room.center[1])).toBeGreaterThan(moonfallCrater.fenceRadius + 0.6)
     for (const [x, z] of [[-20, 6], [-20, 30], [4, 30]]) {
       expect(insideGallery([x!, -6.4, z!])).toBe(true)
-      expect(roomAt([x!, -6.4, z!])).toBe('undertone')
+      expect(roomAt([x!, -6.4, z!])).toBe('moonfall')
     }
   })
   test('the floor has a real circular void and the crater is deep, deterministic and textured', () => {
@@ -98,7 +98,7 @@ describe('Undertone impact hall', () => {
       const position: Vec3 = [x! + room.center[0], ground + 0.15, z! + room.center[1]]
       expect(floorHeight(position)).toBeCloseTo(ground)
       expect(insideGallery(position)).toBe(true)
-      expect(roomAt(position)).toBe('undertone')
+      expect(roomAt(position)).toBe('moonfall')
       const session = new PlayerSession
       session.capture({
         position,
@@ -146,18 +146,18 @@ describe('Undertone impact hall', () => {
     }
   })
   test('the rope closes exactly, sags between posts and stays outside the cut edge', () => {
-    const rope = new RopeRing(undertoneCrater.fenceRadius, undertoneCrater.fencePosts)
+    const rope = new RopeRing(moonfallCrater.fenceRadius, moonfallCrater.fencePosts)
     expect(rope.getPoint(0).distanceTo(rope.getPoint(1))).toBeLessThan(1e-10)
-    expect(rope.getPoint(0.5 / undertoneCrater.fencePosts).y).toBeCloseTo(0.85)
-    expect(rope.getPoint(1 / undertoneCrater.fencePosts).y).toBeCloseTo(1.02)
+    expect(rope.getPoint(0.5 / moonfallCrater.fencePosts).y).toBeCloseTo(0.85)
+    expect(rope.getPoint(1 / moonfallCrater.fencePosts).y).toBeCloseTo(1.02)
     for (let i = 0; i <= 256; i++) {
       const {x, z} = rope.getPoint(i / 256)
-      expect(Math.hypot(x, z)).toBeGreaterThan(undertoneCrater.radius + 0.8)
+      expect(Math.hypot(x, z)).toBeGreaterThan(moonfallCrater.radius + 0.8)
     }
     const world = worldAt()
     try {
       world.step()
-      const angle = Math.PI / undertoneCrater.fencePosts
+      const angle = Math.PI / moonfallCrater.fencePosts
       const origin = new Vector3(Math.cos(angle) * 11, 0.4, Math.sin(angle) * 11)
       const direction = new Vector3(-Math.cos(angle), 0, -Math.sin(angle))
       expect(world.castRay(new RAPIER.Ray(origin, direction), 1.5, true)).toBeNull()
@@ -182,7 +182,7 @@ describe('Undertone impact hall', () => {
             world.step()
           }
           const p = body.translation()
-          expect(Math.hypot(p.x, p.z)).toBeGreaterThan(undertoneCrater.fenceRadius + 0.2)
+          expect(Math.hypot(p.x, p.z)).toBeGreaterThan(moonfallCrater.fenceRadius + 0.2)
           expect(p.y).toBeCloseTo(0.02, 2)
           motor.dispose()
           world.removeRigidBody(body)
@@ -194,7 +194,7 @@ describe('Undertone impact hall', () => {
   }
   test('a full walking circuit around the protected crater stays open', () => {
     const world = worldAt()
-    const architecture = walls.filter(w => w.room === 'undertone' && !w.id.includes('stairs')).map(wall => ({
+    const architecture = walls.filter(w => w.room === 'moonfall' && !w.id.includes('stairs')).map(wall => ({
       wall,
       geometry: createArchitectureGeometry(wall),
     }))

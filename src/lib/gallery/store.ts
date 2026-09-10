@@ -101,7 +101,7 @@ export const useGallery = create<State>((set, get) => ({
   inspecting: null,
   notice: '',
   panel: null,
-  room: 'daydream',
+  room: 'lobby',
   placement: null,
   playerEpoch: 0,
   ai: false,

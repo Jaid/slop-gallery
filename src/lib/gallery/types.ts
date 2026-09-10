@@ -1,6 +1,6 @@
 export type Vec3 = [number, number, number]
 export type Quat = [number, number, number, number]
-export type RoomId = 'afterhours' | 'amber' | 'antechamber' | 'cabin' | 'cabinet' | 'daydream' | 'glasswell' | 'undertone'
+export type RoomId = 'antechamber' | 'corridor' | 'dine' | 'lobby' | 'lodge' | 'moonfall' | 'oculus' | 'sienna' | 'vesper'
 export type Portrait = {
   creator: string
   description: string

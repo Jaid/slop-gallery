@@ -37,7 +37,7 @@ export default function Fountain() {
     water.pool.dispose()
     water.stream.dispose()
   }, [water])
-  return <group name="daydream-fountain" position={fountain.position}>
+  return <group name="lobby-fountain" position={fountain.position}>
     <RigidBody type="fixed" colliders={false}>
       <MeshSurfaceCollider args={collision}/>
       <mesh name="fountain-carved-stone" geometry={geometry.stone} material={stone} receiveShadow castShadow/>

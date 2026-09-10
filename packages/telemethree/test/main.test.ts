@@ -41,7 +41,7 @@ function fixture(options: Partial<ConstructorParameters<typeof Telemetry>[0]> = 
 }
 test('gauges and cumulative counters snapshot attributes and preserve start time', async () => {
   const {telemetry, batches, advance} = fixture()
-  const attributes = {room: 'amber'}
+  const attributes = {room: 'sienna'}
   telemetry.metric('fps', 120, {attributes})
   attributes.room = 'secret'
   telemetry.count('steps', 2)
@@ -53,7 +53,7 @@ test('gauges and cumulative counters snapshot attributes and preserve start time
   await telemetry.flush()
   const records = batches[0]!.records as Array<Metric>
   expect(records.map(record => record.value)).toEqual([120, 2, 5])
-  expect(records[0]!.attributes.room).toBe('amber')
+  expect(records[0]!.attributes.room).toBe('sienna')
   expect(records[2]).toMatchObject({
     time: 1010,
     startTime: 1000,

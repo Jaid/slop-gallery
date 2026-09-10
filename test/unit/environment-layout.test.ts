@@ -3,10 +3,11 @@ import {expect, test} from 'bun:test'
 import {Box3, Euler, Matrix4, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import {cabin, cabinApproach, cabinStairs, cabinWindowRibCutouts} from '../../src/lib/gallery/cabin.ts'
+import {corridorPassage, corridorStairs} from '../../src/lib/gallery/corridor.ts'
 import {fountainBench, fountainBenches} from '../../src/lib/gallery/fountain/benches.ts'
 import {fountain} from '../../src/lib/gallery/fountain/config.ts'
 import {SlattedBenchGeometry} from '../../src/lib/gallery/fountain/SlattedBenchGeometry.ts'
+import {lodge, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import {TimberGeometry} from '../../src/lib/gallery/passages/TimberGeometry.ts'
 import {playerSpawn} from '../../src/lib/gallery/PlayerSession.ts'
 import {walls} from '../../src/lib/gallery/walls.ts'
@@ -67,16 +68,16 @@ test('timber entrances have a single exposed face across the ribs, lining and st
   const material = new MeshBasicMaterial
   const entrances = [
     {
-      timber: TimberGeometry.stairs(cabinStairs),
-      start: cabinStairs.start,
-      width: cabinStairs.width,
-      wallIds: ['amber-west', 'cabin-stairs-return-north', 'cabin-stairs-return-south'],
+      timber: TimberGeometry.stairs(corridorStairs),
+      start: corridorStairs.start,
+      width: corridorStairs.width,
+      wallIds: ['sienna-west', 'corridor-stairs-return-north', 'corridor-stairs-return-south'],
     },
     {
-      timber: TimberGeometry.passage(cabinApproach, cabinWindowRibCutouts),
-      start: [cabinApproach.path[0]![0], cabinApproach.floorY, cabinApproach.path[0]![1]],
-      width: cabinApproach.width,
-      wallIds: ['cabin-west', ...cabinApproach.walls.map(wall => wall.id)],
+      timber: TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts),
+      start: [corridorPassage.path[0]![0], corridorPassage.floorY, corridorPassage.path[0]![1]],
+      width: corridorPassage.width,
+      wallIds: ['lodge-west', ...corridorPassage.walls.map(wall => wall.id)],
     },
   ]
   try {
@@ -126,9 +127,9 @@ test('timber entrances have a single exposed face across the ribs, lining and st
   }
 })
 test('the reported timber rib no longer shares its visible face with a wall baseboard', () => {
-  const wall = walls.find(value => value.id === 'cabin-approach-wall-4')!
+  const wall = walls.find(value => value.id === 'corridor-wall-4')!
   const architecture = createArchitectureGeometry(wall)
-  const timber = TimberGeometry.passage(cabinApproach, cabinWindowRibCutouts)
+  const timber = TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts)
   const material = new MeshBasicMaterial
   try {
     expect(wall.trimStyle).toBe('none')
@@ -138,12 +139,12 @@ test('the reported timber rib no longer shares its visible face with a wall base
     surface.rotation.y = wall.rotation
     surface.updateMatrixWorld()
     const meshes = [surface, new Mesh(timber.ribs, material), new Mesh(timber.shell, material)]
-    const ray = new Raycaster(new Vector3(cabin.approachX, cabin.floorY + 0.3, -20), new Vector3(-1, 0, 0))
+    const ray = new Raycaster(new Vector3(lodge.approachX, lodge.floorY + 0.3, -20), new Vector3(-1, 0, 0))
     const hits = ray.intersectObjects(meshes)
-    expect(hits[0]!.point.x).toBeLessThan(cabin.approachX - cabinApproach.width / 2 + 0.3)
+    expect(hits[0]!.point.x).toBeLessThan(lodge.approachX - corridorPassage.width / 2 + 0.3)
     expect(hits[1]!.distance - hits[0]!.distance).toBeGreaterThan(0.01)
-    expect(walls.filter(value => value.id.startsWith('cabin-stairs-') || value.id.startsWith('cabin-approach-')).every(value => value.trimStyle === 'none')).toBe(true)
-    expect(walls.filter(value => value.id.startsWith('cabin-tunnel-')).every(value => value.trimStyle === 'plain')).toBe(true)
+    expect(walls.filter(value => value.room === 'corridor').every(value => value.trimStyle === 'none')).toBe(true)
+    expect(walls.filter(value => value.id.startsWith('lodge-tunnel-')).every(value => value.trimStyle === 'plain')).toBe(true)
   } finally {
     material.dispose()
     architecture.dispose()
@@ -151,7 +152,7 @@ test('the reported timber rib no longer shares its visible face with a wall base
   }
 })
 test('environmental room names and taglines are removed without removing artwork captions', async () => {
-  for (const name of ['UndertoneRoom', 'GalleryStairs', 'CabinRoom', 'CabinPassages', 'Fountain', 'MainEntrance']) {
+  for (const name of ['MoonfallRoom', 'GalleryStairs', 'LodgeRoom', 'LodgeCorridorRoute', 'Fountain', 'MainEntrance']) {
     expect(await Bun.file(`src/components/Scene/${name}.tsx`).text()).not.toContain('CanvasText')
   }
   expect(await Bun.file('src/components/PortraitLabel/index.tsx').text()).toContain('CanvasText')

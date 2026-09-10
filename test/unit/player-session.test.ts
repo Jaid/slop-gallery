@@ -1,8 +1,9 @@
 import {afterEach, beforeEach, describe, expect, test} from 'bun:test'
 
 import {resetGallery} from '../../src/lib/gallery/actions.ts'
-import {cabin, cabinStairs, cabinWindow} from '../../src/lib/gallery/cabin.ts'
+import {corridorStairs} from '../../src/lib/gallery/corridor.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
+import {lodge, lodgeWindow} from '../../src/lib/gallery/lodge.ts'
 import {PlayerSession, playerSession, playerSpawn, validatePlayerPose} from '../../src/lib/gallery/PlayerSession.ts'
 import {createDocument, restoreDocument, undo, useGallery} from '../../src/lib/gallery/store.ts'
 
@@ -107,8 +108,8 @@ describe('player save state', () => {
     }
   })
   test('room, tunnel and stair poses round-trip without camera-height offsets or shared arrays', () => {
-    const tread = cabinStairs.blocks[12]!
-    for (const position of [[0, 0.02, -9], [-25, cabin.floorY + 0.02, -31], [-33, cabin.floorY + 0.02, -20], [(cabinWindow.roomX + cabinWindow.tunnelX) / 2, cabinWindow.bottom + 0.02, cabinWindow.z], [tread.position[0], tread.top + 0.02, tread.position[2]]] as const) {
+    const tread = corridorStairs.blocks[12]!
+    for (const position of [[0, 0.02, -9], [-25, lodge.floorY + 0.02, -31], [-33, lodge.floorY + 0.02, -20], [(lodgeWindow.roomX + lodgeWindow.tunnelX) / 2, lodgeWindow.bottom + 0.02, lodgeWindow.z], [tread.position[0], tread.top + 0.02, tread.position[2]]] as const) {
       const pose = {
         position: [...position] as [number, number, number],
         yaw: 1.23,

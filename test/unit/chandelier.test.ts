@@ -56,7 +56,7 @@ function simulate(mass: number, miss = false, fixture = chandelierPhysics) {
     geometry.dispose()
   }
 }
-describe('suspended Amber chandelier', () => {
+describe('suspended Sienna chandelier', () => {
   test('a thrown sculpture swings it, a heavier pot swings it farther and damping settles it', () => {
     const light = simulate(1.8)
     const heavy = simulate(5)

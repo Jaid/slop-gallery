@@ -163,10 +163,10 @@ describe('aim inspection', () => {
   })
   test('returns useful hierarchy metadata without leaking live or circular references', () => {
     const parent = new Group
-    parent.name = 'cabinet-wall'
+    parent.name = 'vesper-wall'
     parent.userData = {
-      wallId: 'cabinet-east',
-      room: 'cabinet',
+      wallId: 'vesper-east',
+      room: 'vesper',
       nested: {ignored: true},
     }
     const mesh = box(-2, 'trim')
@@ -181,10 +181,10 @@ describe('aim inspection', () => {
     scene.add(parent)
     const result = inspector.getAim()
     expect(result.hit!.ancestors[0]).toMatchObject({
-      name: 'cabinet-wall',
+      name: 'vesper-wall',
       metadata: {
-        wallId: 'cabinet-east',
-        room: 'cabinet',
+        wallId: 'vesper-east',
+        room: 'vesper',
       },
     })
     expect(result.hit!.mesh.metadata).toEqual({

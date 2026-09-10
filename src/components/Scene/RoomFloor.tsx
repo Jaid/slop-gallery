@@ -20,11 +20,11 @@ export default function RoomFloor({room, stone, wood}: {room: FloorRoom
   const envMapIntensity = floorReflections ? 1 : 0
   const surfaces: Partial<Record<FloorRoom['id'], {color: string
     map?: Texture}>> = {
-    cabinet: {
+    vesper: {
       map: wood,
       color: '#c5a585',
     },
-    afterhours: {color: '#23201d'},
+    dine: {color: '#23201d'},
   }
   const surface = surfaces[room.id] ?? {
     map: stone,
@@ -44,9 +44,9 @@ export default function RoomFloor({room, stone, wood}: {room: FloorRoom
         </mesh>
       </group>}
     </RigidBody>
-    {room.id === 'cabinet' && <WoodFloor width={room.size[0]} depth={room.size[1]} texture={wood}/>}
-    {room.id === 'afterhours' && <CheckerMarbleFloor width={room.size[0]} depth={room.size[1]}/>}
-    {room.id !== 'afterhours' && <>
+    {room.id === 'vesper' && <WoodFloor width={room.size[0]} depth={room.size[1]} texture={wood}/>}
+    {room.id === 'dine' && <CheckerMarbleFloor width={room.size[0]} depth={room.size[1]}/>}
+    {room.id !== 'dine' && <>
       {plan.seams.map(({center: [x, z], size: [width, depth]}, i) => <Box key={i} position={[x, 0.008, z]} size={[width, 0.008, depth]} color="#a8a18f" envMapIntensity={envMapIntensity}/>)}
       {plan.inlays.map(({center: [x, z], size: [width, depth]}, i) => <Box key={i} position={[x, 0.015, z]} size={[width, 0.012, depth]} color="#9d8354" metalness={0.45} envMapIntensity={envMapIntensity}/>)}
     </>}

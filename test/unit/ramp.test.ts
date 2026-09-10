@@ -6,19 +6,19 @@ import {computeMeshVolume} from 'three-bvh-csg'
 import {Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import {glasswellPlatform, glasswellRamps, lowerGallery, rampFloorHeight} from '../../src/lib/gallery/lowerGallery.ts'
+import {lowerGallery, oculusPlatform, oculusRamps, rampFloorHeight} from '../../src/lib/gallery/lowerGallery.ts'
 import {RampGeometry} from '../../src/lib/gallery/RampGeometry.ts'
 import {floorHeight, walls} from '../../src/lib/gallery/walls.ts'
-import {addGlasswellRailings} from './helpers/glasswellRailings.ts'
+import {addOculusRailings} from './helpers/oculusRailings.ts'
 
 await RAPIER.init()
 test('matching access ramps flank the room with a clear central floor', () => {
-  expect(glasswellRamps).toHaveLength(2)
-  const [west, east] = glasswellRamps
+  expect(oculusRamps).toHaveLength(2)
+  const [west, east] = oculusRamps
   expect(west!.x).toBe(-7.9)
   expect(east!.x).toBe(7.9)
-  expect(west!.x - west!.width / 2).toBe(-lowerGallery.glasswell.size[0] / 2)
-  expect(east!.x + east!.width / 2).toBe(lowerGallery.glasswell.size[0] / 2)
+  expect(west!.x - west!.width / 2).toBe(-lowerGallery.oculus.size[0] / 2)
+  expect(east!.x + east!.width / 2).toBe(lowerGallery.oculus.size[0] / 2)
   expect({
     ...west,
     side: east!.side,
@@ -26,7 +26,7 @@ test('matching access ramps flank the room with a clear central floor', () => {
   }).toEqual(east!)
   expect(rampFloorHeight(0, -20)).toBeUndefined()
 })
-for (const ramp of glasswellRamps) {
+for (const ramp of oculusRamps) {
   describe(`${ramp.side}-wall access ramp`, () => {
     test('a closed cuboid-sided wedge meets the ground and raised platform exactly', () => {
       const geometry = new RampGeometry(ramp.width, ramp.rise, ramp.run)
@@ -38,8 +38,8 @@ for (const ramp of glasswellRamps) {
         const mesh = new Mesh(geometry, material)
         mesh.position.set(ramp.x, ramp.floorY, ramp.startZ)
         mesh.updateMatrixWorld(true)
-        expect(ramp.startZ - ramp.run).toBe(glasswellPlatform.position[2] + glasswellPlatform.size[2] / 2)
-        expect(ramp.floorY + ramp.rise).toBe(glasswellPlatform.position[1] + glasswellPlatform.size[1] / 2)
+        expect(ramp.startZ - ramp.run).toBe(oculusPlatform.position[2] + oculusPlatform.size[2] / 2)
+        expect(ramp.floorY + ramp.rise).toBe(oculusPlatform.position[1] + oculusPlatform.size[1] / 2)
         for (const distance of [0.01, 1, 4.5, 8, 8.99]) {
           const z = ramp.startZ - distance
           const top = ramp.floorY + distance / ramp.run * ramp.rise
@@ -62,7 +62,7 @@ for (const ramp of glasswellRamps) {
           for (const ascending of [false, true]) {
             test(`${ascending ? 'ascends' : 'descends'} with handrails at ${fps} Hz, offset ${offset}, sprint ${sprint}`, () => {
               const geometry = new RampGeometry(ramp.width, ramp.rise, ramp.run)
-              const wall = walls.find(value => value.id === `glasswell-${ramp.side}`)!
+              const wall = walls.find(value => value.id === `oculus-${ramp.side}`)!
               const wallGeometry = createArchitectureGeometry(wall)
               const world = new RAPIER.World({
                 x: 0,
@@ -75,9 +75,9 @@ for (const ramp of glasswellRamps) {
               for (const [wallVertices, wallIndices] of wallGeometry.collision) {
                 world.createCollider(RAPIER.ColliderDesc.trimesh(wallVertices, wallIndices).setTranslation(...wall.center).setRotation((new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)))
               }
-              world.createCollider(RAPIER.ColliderDesc.cuboid(glasswellPlatform.size[0] / 2, glasswellPlatform.size[1] / 2, glasswellPlatform.size[2] / 2).setTranslation(...glasswellPlatform.position))
-              world.createCollider(RAPIER.ColliderDesc.cuboid(lowerGallery.glasswell.size[0] / 2, 0.12, lowerGallery.glasswell.size[1] / 2).setTranslation(0, ramp.floorY - 0.12, lowerGallery.glasswell.center[1]))
-              addGlasswellRailings(world)
+              world.createCollider(RAPIER.ColliderDesc.cuboid(oculusPlatform.size[0] / 2, oculusPlatform.size[1] / 2, oculusPlatform.size[2] / 2).setTranslation(...oculusPlatform.position))
+              world.createCollider(RAPIER.ColliderDesc.cuboid(lowerGallery.oculus.size[0] / 2, 0.12, lowerGallery.oculus.size[1] / 2).setTranslation(0, ramp.floorY - 0.12, lowerGallery.oculus.center[1]))
+              addOculusRailings(world)
               const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(ramp.x + offset, ramp.floorY + (ascending ? 0 : ramp.rise) + 0.04, ascending ? ramp.startZ + 0.8 : ramp.startZ - ramp.run - 1))
               const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
               const motor = new EgoMotor(RAPIER, world, body, collider)

@@ -5,15 +5,15 @@ import {computeMeshVolume} from 'three-bvh-csg'
 import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {architectureGeometry, colliderGeometry, createArchitectureGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
-import {glasswellPlatform, glasswellRamps, lowerGallery} from '../../src/lib/gallery/lowerGallery.ts'
+import {lowerGallery, oculusPlatform, oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
 import {walls} from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
 describe('floor-following wall baseboards', () => {
   for (const side of ['west', 'east'] as const) {
     test(`${side}: constant-height trim follows the floor, ramp and raised base without buried horizontal stubs`, () => {
-      const wall = walls.find(value => value.id === `glasswell-${side}`)!
-      const ramp = glasswellRamps.find(value => value.side === side)!
+      const wall = walls.find(value => value.id === `oculus-${side}`)!
+      const ramp = oculusRamps.find(value => value.side === side)!
       const geometry = createArchitectureGeometry(wall)
       const material = new MeshBasicMaterial
       const meshes = geometry.trim.map(part => new Mesh(part, material))
@@ -56,9 +56,9 @@ describe('floor-following wall baseboards', () => {
       }
     })
   }
-  test('the north trim follows the raised floor and surrounds the elevated Cabin portal', () => {
-    const north = walls.find(value => value.id === 'glasswell-north')!
-    const height = glasswellPlatform.position[1] + glasswellPlatform.size[1] / 2 - lowerGallery.floorY
+  test('the north trim follows the raised floor and surrounds the elevated Lodge portal', () => {
+    const north = walls.find(value => value.id === 'oculus-north')!
+    const height = oculusPlatform.position[1] + oculusPlatform.size[1] / 2 - lowerGallery.floorY
     expect(north.baseboardProfile).toEqual([[-north.width / 2, height], [north.width / 2, height]])
     const geometry = createArchitectureGeometry(north)
     try {
@@ -72,14 +72,14 @@ describe('floor-following wall baseboards', () => {
       material.dispose()
       expect(geometry.surface.boundingBox!.min.y).toBeCloseTo(0, 6)
       expect(geometry.surface.boundingBox!.max.y).toBeCloseTo(north.height + 0.3)
-      expect(walls.filter(wall => wall.baseboardProfile).map(wall => wall.id).toSorted()).toEqual(['glasswell-east', 'glasswell-north', 'glasswell-west'])
+      expect(walls.filter(wall => wall.baseboardProfile).map(wall => wall.id).toSorted()).toEqual(['oculus-east', 'oculus-north', 'oculus-west'])
     } finally {
       geometry.dispose()
     }
   })
   test('geometry caching distinguishes mirrored and flat floor profiles', () => {
-    const west = walls.find(value => value.id === 'glasswell-west')!
-    const east = walls.find(value => value.id === 'glasswell-east')!
+    const west = walls.find(value => value.id === 'oculus-west')!
+    const east = walls.find(value => value.id === 'oculus-east')!
     const left = architectureGeometry(west)
     const right = architectureGeometry(east)
     expect(left).not.toBe(right)

@@ -1,11 +1,11 @@
 import type {Vec3} from './types.ts'
 
-import {daydream} from './daydream.ts'
 import {floorThickness, subtractFloorOpening} from './floors.ts'
+import {lobby} from './lobby.ts'
 
 export const lowerGallery = {
   floorY: -8,
-  undertone: {
+  moonfall: {
     // Keep the north tunnel and east stair landing fixed; expand west and south.
     center: [-8, 18.5],
     size: [28, 28],
@@ -14,8 +14,8 @@ export const lowerGallery = {
     previousCenter: [18, 15],
     previousFloorY: -3.6,
   },
-  glasswell: {
-    center: [daydream.opening.center[0], daydream.opening.center[1] - 2.5],
+  oculus: {
+    center: [lobby.opening.center[0], lobby.opening.center[1] - 2.5],
     size: [18, 17],
     ceiling: {
       topY: -floorThickness,
@@ -24,42 +24,42 @@ export const lowerGallery = {
   },
   tunnel: {
     x: 0,
-    northZ: daydream.opening.center[1] + 6,
+    northZ: lobby.opening.center[1] + 6,
     southZ: 4.5,
     width: 4.2,
     height: 3.6,
   },
 } as const
 
-export const glasswellCeiling = subtractFloorOpening({
+export const oculusCeiling = subtractFloorOpening({
   center: [0, 0],
-  size: lowerGallery.glasswell.size,
+  size: lowerGallery.oculus.size,
 }, {
-  center: [daydream.opening.center[0] - lowerGallery.glasswell.center[0], daydream.opening.center[1] - lowerGallery.glasswell.center[1]],
-  size: daydream.opening.size,
+  center: [lobby.opening.center[0] - lowerGallery.oculus.center[0], lobby.opening.center[1] - lowerGallery.oculus.center[1]],
+  size: lobby.opening.size,
 })
 
-export const glasswellPlatform: {position: Vec3
+export const oculusPlatform: {position: Vec3
   size: Vec3} = {
-  position: [lowerGallery.glasswell.center[0], lowerGallery.floorY + 1.5, lowerGallery.glasswell.center[1] - lowerGallery.glasswell.size[1] / 2 + 2.5],
-  size: [lowerGallery.glasswell.size[0], 3, 5],
+  position: [lowerGallery.oculus.center[0], lowerGallery.floorY + 1.5, lowerGallery.oculus.center[1] - lowerGallery.oculus.size[1] / 2 + 2.5],
+  size: [lowerGallery.oculus.size[0], 3, 5],
 }
 
-export const glasswellRamps = (['west', 'east'] as const).map(side => ({
+export const oculusRamps = (['west', 'east'] as const).map(side => ({
   side,
-  x: lowerGallery.glasswell.center[0] + (side === 'west' ? -1 : 1) * (lowerGallery.glasswell.size[0] / 2 - 1.1),
-  startZ: glasswellPlatform.position[2] + glasswellPlatform.size[2] / 2 + 9,
+  x: lowerGallery.oculus.center[0] + (side === 'west' ? -1 : 1) * (lowerGallery.oculus.size[0] / 2 - 1.1),
+  startZ: oculusPlatform.position[2] + oculusPlatform.size[2] / 2 + 9,
   floorY: lowerGallery.floorY,
   width: 2.2,
-  rise: glasswellPlatform.size[1],
+  rise: oculusPlatform.size[1],
   run: 9,
   railHeight: 1,
 }))
 
-export type GlasswellRampLayout = (typeof glasswellRamps)[number]
+export type OculusRampLayout = (typeof oculusRamps)[number]
 
 export function rampFloorHeight(x: number, z: number) {
-  const ramp = glasswellRamps.find(value => Math.abs(x - value.x) <= value.width / 2 && z <= value.startZ && z >= value.startZ - value.run)
+  const ramp = oculusRamps.find(value => Math.abs(x - value.x) <= value.width / 2 && z <= value.startZ && z >= value.startZ - value.run)
   if (!ramp) {
     return
   }

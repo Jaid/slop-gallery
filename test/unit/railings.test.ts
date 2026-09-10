@@ -3,19 +3,19 @@ import {describe, expect, test} from 'bun:test'
 import RAPIER from '@dimforge/rapier3d-compat'
 import {BoxGeometry, Mesh, MeshBasicMaterial, Quaternion, Raycaster, TubeGeometry, Vector3} from 'three/webgpu'
 
-import {GlasswellGroundGeometry} from '../../src/lib/gallery/GlasswellGroundGeometry.ts'
-import {towerRamp as ramp, glasswellTower as tower} from '../../src/lib/gallery/glasswellTower.ts'
-import {glasswellRamps, lowerGallery} from '../../src/lib/gallery/lowerGallery.ts'
+import {lowerGallery, oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
+import {OculusGroundGeometry} from '../../src/lib/gallery/OculusGroundGeometry.ts'
+import {towerRamp as ramp, oculusTower as tower} from '../../src/lib/gallery/oculusTower.ts'
 import {RailingPath} from '../../src/lib/gallery/railings/RailingPath.ts'
-import {addGlasswellRailings, glasswellRailing as railing} from './helpers/glasswellRailings.ts'
+import {addOculusRailings, oculusRailing as railing} from './helpers/oculusRailings.ts'
 
 await RAPIER.init()
-describe('connected Glasswell railings', () => {
+describe('connected Oculus railings', () => {
   test('one finite path connects both lower ramps, the base and the entire open tower perimeter', () => {
     const first = railing.anchors[0]!
     const last = railing.anchors.at(-1)!
-    expect(first.ground[2]).toBe(glasswellRamps[0]!.startZ)
-    expect(last.ground[2]).toBe(glasswellRamps[1]!.startZ)
+    expect(first.ground[2]).toBe(oculusRamps[0]!.startZ)
+    expect(last.ground[2]).toBe(oculusRamps[1]!.startZ)
     expect(first.ground[0]).toBeCloseTo(-last.ground[0])
     expect(railing.length).toBeGreaterThan(45)
     for (let i = 0; i <= 200; i++) {
@@ -81,7 +81,7 @@ describe('connected Glasswell railings', () => {
       z: 0,
     })
     try {
-      addGlasswellRailings(world)
+      addOculusRailings(world)
       world.step()
       const axis = new Vector3(0, 1, 0)
       for (const [i, segment] of railing.segments.entries()) {
@@ -98,8 +98,8 @@ describe('connected Glasswell railings', () => {
     }
   })
   test('every post stands on the existing stone instead of floating outside the rounded edges', () => {
-    const ground = new GlasswellGroundGeometry
-    const floor = new BoxGeometry(lowerGallery.glasswell.size[0], 0.24, lowerGallery.glasswell.size[1]).translate(lowerGallery.glasswell.center[0], lowerGallery.floorY - 0.12, lowerGallery.glasswell.center[1])
+    const ground = new OculusGroundGeometry
+    const floor = new BoxGeometry(lowerGallery.oculus.size[0], 0.24, lowerGallery.oculus.size[1]).translate(lowerGallery.oculus.center[0], lowerGallery.floorY - 0.12, lowerGallery.oculus.center[1])
     const material = new MeshBasicMaterial
     const meshes = [new Mesh(ground, material), new Mesh(floor, material)]
     try {

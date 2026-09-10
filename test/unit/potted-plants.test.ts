@@ -25,22 +25,22 @@ describe('placed pots', () => {
   test('only the requested pots are placed', () => {
     expect(potPlacements).toEqual([
       {
-        id: 'prop-afterhours-southwest-plant',
+        id: 'prop-dine-southwest-plant',
         pot: 'ivory',
         position: [8.95, 0.001, 7.1],
       },
       {
-        id: 'prop-afterhours-northeast-plant',
+        id: 'prop-dine-northeast-plant',
         pot: 'ivory',
         position: [19.05, 0.001, -7.05],
       },
       {
-        id: 'prop-daydream-northwest-plant',
+        id: 'prop-lobby-northwest-plant',
         pot: 'celadon',
         position: [-7.09, 0, -7.01],
       },
       {
-        id: 'prop-daydream-northeast-plant',
+        id: 'prop-lobby-northeast-plant',
         pot: 'celadon',
         position: [7.09, 0, -7.01],
       },

@@ -4,16 +4,16 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import {Box3, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry} from '../../src/lib/gallery/architecture.ts'
-import {daydream} from '../../src/lib/gallery/daydream.ts'
 import {EntranceGeometry} from '../../src/lib/gallery/EntranceGeometry.ts'
 import {fountain} from '../../src/lib/gallery/fountain/config.ts'
 import {FountainGeometry} from '../../src/lib/gallery/fountain/FountainGeometry.ts'
 import {FountainSpray} from '../../src/lib/gallery/fountain/FountainSpray.ts'
+import {lobby} from '../../src/lib/gallery/lobby.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 import {FountainWaterMaterial} from '../../src/lib/materials/FountainWaterMaterial.ts'
 
 await RAPIER.init()
-describe('Daydream fountain', () => {
+describe('Lobby fountain', () => {
   test('the indexed basins and streams stay finite, below the ceiling and clear of the glass floor', () => {
     const geometry = new FountainGeometry
     try {
@@ -32,7 +32,7 @@ describe('Daydream fountain', () => {
       expect(bounds.max.y).toBeLessThan(4.5)
       expect(bounds.max.y).toBeGreaterThan(4)
       expect(bounds.min.x).toBeCloseTo(-fountain.radius)
-      expect(fountain.position[2] - fountain.radius).toBeGreaterThan(daydream.opening.center[1] + daydream.opening.size[1] / 2 + 1)
+      expect(fountain.position[2] - fountain.radius).toBeGreaterThan(lobby.opening.center[1] + lobby.opening.size[1] / 2 + 1)
     } finally {
       geometry.dispose()
     }

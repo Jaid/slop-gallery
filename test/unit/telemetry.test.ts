@@ -18,7 +18,7 @@ async function status(url: string, init?: RequestInit) {
 }
 const initial: GalleryState = {
   portraits: [{hung: true}],
-  room: 'daydream',
+  room: 'lobby',
   ready: false,
   locked: false,
   held: null,
@@ -55,7 +55,7 @@ test('gallery adapters record bounded state, lifecycle events and save spans, th
   const events = new EventTarget
   const stop = telemetry.connect(store, events)
   store.setState({
-    room: 'amber',
+    room: 'sienna',
     ready: true,
     saveStatus: 'saving',
   })
@@ -82,7 +82,7 @@ test('gallery adapters record bounded state, lifecycle events and save spans, th
   await telemetry.flush()
   expect(batches).toHaveLength(count)
   const metrics = batches.filter(batch => batch.signal === 'metrics').flatMap(batch => batch.records) as Array<Metric>
-  expect(metrics.filter(metric => metric.name === 'gallery.room.active').slice(-rooms.length).map(metric => metric.value)).toEqual(rooms.map(room => Number(room.id === 'amber')))
+  expect(metrics.filter(metric => metric.name === 'gallery.room.active').slice(-rooms.length).map(metric => metric.value)).toEqual(rooms.map(room => Number(room.id === 'sienna')))
   await telemetry.dispose()
 })
 test('Victoria uses native JSON metrics and the existing OTLP logs/traces endpoints', async () => {
@@ -110,7 +110,7 @@ test('Victoria uses native JSON metrics and the existing OTLP logs/traces endpoi
   })
   telemetry.metric('ego.position.x', 4.2, {
     unit: 'm',
-    attributes: {room: 'amber'},
+    attributes: {room: 'sienna'},
   })
   telemetry.event('verification')
   await telemetry.flush()
@@ -120,7 +120,7 @@ test('Victoria uses native JSON metrics and the existing OTLP logs/traces endpoi
   expect(metric).toMatchObject({
     metric: {
       __name__: 'ego.position.x',
-      room: 'amber',
+      room: 'sienna',
       'service.name': 'slop-gallery',
     },
     values: [4.2],
@@ -248,7 +248,7 @@ test('startup, gameplay and operations share a session trace with state changes 
   store.setState({locked: true})
   const gameplay = telemetry.getContext()!
   store.setState({
-    room: 'amber',
+    room: 'sienna',
     saveStatus: 'saving',
   })
   await telemetry.trace('gallery.merge', () => {})

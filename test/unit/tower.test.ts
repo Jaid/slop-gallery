@@ -5,14 +5,14 @@ import {EgoMotor} from 'ego-player/motor'
 import {Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry} from '../../src/lib/gallery/architecture.ts'
-import {GlasswellGroundGeometry} from '../../src/lib/gallery/GlasswellGroundGeometry.ts'
-import {towerRamp as ramp, glasswellTower as tower, towerArch, towerFloorHeight, towerPlatformOutline, towerRampGradient, towerRampHalfWidth, towerRampHeight} from '../../src/lib/gallery/glasswellTower.ts'
-import {glasswellRamps, lowerGallery} from '../../src/lib/gallery/lowerGallery.ts'
+import {lowerGallery, oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
+import {OculusGroundGeometry} from '../../src/lib/gallery/OculusGroundGeometry.ts'
+import {towerRamp as ramp, oculusTower as tower, towerArch, towerFloorHeight, towerPlatformOutline, towerRampGradient, towerRampHalfWidth, towerRampHeight} from '../../src/lib/gallery/oculusTower.ts'
 import {floorHeight} from '../../src/lib/gallery/walls.ts'
-import {addGlasswellRailings} from './helpers/glasswellRailings.ts'
+import {addOculusRailings} from './helpers/oculusRailings.ts'
 
 await RAPIER.init()
-const geometry = new GlasswellGroundGeometry
+const geometry = new OculusGroundGeometry
 const collision = colliderGeometry(geometry)
 function createWorld() {
   const world = new RAPIER.World({
@@ -21,11 +21,11 @@ function createWorld() {
     z: 0,
   })
   world.createCollider(RAPIER.ColliderDesc.trimesh(...collision))
-  world.createCollider(RAPIER.ColliderDesc.cuboid(lowerGallery.glasswell.size[0] / 2, 0.12, lowerGallery.glasswell.size[1] / 2).setTranslation(lowerGallery.glasswell.center[0], tower.floorY - 0.12, lowerGallery.glasswell.center[1]))
-  addGlasswellRailings(world)
+  world.createCollider(RAPIER.ColliderDesc.cuboid(lowerGallery.oculus.size[0] / 2, 0.12, lowerGallery.oculus.size[1] / 2).setTranslation(lowerGallery.oculus.center[0], tower.floorY - 0.12, lowerGallery.oculus.center[1]))
+  addOculusRailings(world)
   return world
 }
-describe('cylindrical Glasswell platform', () => {
+describe('cylindrical Oculus platform', () => {
   test('both base corners are rounded with matching visible, collision and navigation surfaces', () => {
     const radius = ramp.baseCornerRadius
     expect(towerRampHalfWidth(ramp.startZ)).toBe(ramp.width / 2 + radius)
@@ -91,7 +91,7 @@ describe('cylindrical Glasswell platform', () => {
     const material = new MeshBasicMaterial
     const mesh = new Mesh(geometry, material)
     try {
-      for (const slope of glasswellRamps) {
+      for (const slope of oculusRamps) {
         for (const z of [slope.startZ - 0.01, -20, -25.99, -26.01]) {
           const hits = new Raycaster(new Vector3(slope.x, -2, z), new Vector3(0, -1, 0)).intersectObject(mesh)
           expect(hits).toHaveLength(1)

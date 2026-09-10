@@ -8,7 +8,7 @@ import {Euler, Quaternion} from 'three/webgpu'
 
 import {SoundEngine} from '#src/lib/audio/SoundEngine.ts'
 import {cameraPose, floorHeight, galleryEvents, markControlled, useGallery} from '#src/lib/gallery.ts'
-import {cabinTunnel} from '#src/lib/gallery/cabin.ts'
+import {lodgeTunnel} from '#src/lib/gallery/lodge.ts'
 import {playerSession, playerSpawn} from '#src/lib/gallery/PlayerSession.ts'
 import {playerTelemetry} from '#src/lib/telemetry/index.ts'
 
@@ -19,7 +19,7 @@ const onStep = (state: EgoState) => {
   const {sound, room} = useGallery.getState()
   if (sound) {
     const {x, y, z} = state.position
-    const wooden = ['cabinet', 'amber'].includes(room) || room === 'cabin' && !cabinTunnel.contains([x, y, z])
+    const wooden = ['vesper', 'sienna', 'corridor'].includes(room) || room === 'lodge' && !lodgeTunnel.contains([x, y, z])
     SoundEngine.existing()?.step(wooden)
   }
 }

@@ -36,7 +36,7 @@ export default function GalleryStairs() {
       part.geometry.dispose()
     }
   }, [turn])
-  return <group name="undertone-stairway">
+  return <group name="moonfall-stairway">
     <RigidBody type="fixed" colliders={false}>
       {stairBlocks.map(({position, size}, i) => <group key={i}>
         <CuboidCollider position={position} args={[size[0] / 2, size[1] / 2, size[2] / 2]}/>

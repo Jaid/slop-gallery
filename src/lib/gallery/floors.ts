@@ -1,6 +1,6 @@
 import type {rooms} from './walls.ts'
 
-import {daydream} from './daydream.ts'
+import {lobby} from './lobby.ts'
 
 export type FloorRectangle = {
   center: readonly [number, number]
@@ -42,9 +42,9 @@ export function subtractFloorOpening(rectangle: FloorRectangle, opening?: FloorR
 }
 
 export function roomFloorPlan(room: FloorRoom) {
-  const opening: FloorRectangle | undefined = room.id === 'daydream' ? {
-    center: [daydream.opening.center[0] - room.center[0], daydream.opening.center[1] - room.center[1]],
-    size: daydream.opening.size,
+  const opening: FloorRectangle | undefined = room.id === 'lobby' ? {
+    center: [lobby.opening.center[0] - room.center[0], lobby.opening.center[1] - room.center[1]],
+    size: lobby.opening.size,
   } : undefined
   const cut = (rectangle: FloorRectangle) => subtractFloorOpening(rectangle, opening)
   const [width, depth] = room.size

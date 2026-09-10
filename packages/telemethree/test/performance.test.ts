@@ -49,7 +49,7 @@ function fixture() {
 }
 test('all workload distributions share frame samples, room boundaries and exact slow counters', async () => {
   const {telemetry, renderer, metrics} = fixture()
-  let room = 'amber'
+  let room = 'sienna'
   const stats = new ThreeStatistics(telemetry, renderer, new Scene, {
     getAttributes: () => ({room}),
     intervalMs: 1000,
@@ -63,14 +63,14 @@ test('all workload distributions share frame samples, room boundaries and exact 
     renderer.info.render.drawCalls = draws!
     stats.endFrame(duration! / 1000)
   }
-  room = 'daydream'
+  room = 'lobby'
   stats.beginFrame()
   renderer.info.render.frameCalls = 100
   stats.endFrame(0.02)
   stop()
   await telemetry.flush()
-  const amber = metrics().filter(metric => metric.attributes.room === 'amber')
-  expect(Object.fromEntries(amber.map(metric => [metric.name, metric.value]))).toMatchObject({
+  const sienna = metrics().filter(metric => metric.attributes.room === 'sienna')
+  expect(Object.fromEntries(sienna.map(metric => [metric.name, metric.value]))).toMatchObject({
     'three.frame.duration.mean': 25,
     'three.frame.duration.p50': 10,
     'three.render.passes.mean': 4,
@@ -78,8 +78,8 @@ test('all workload distributions share frame samples, room boundaries and exact 
     'three.render.draw_calls.mean': 50,
     'three.frames': 2,
   })
-  expect(amber.filter(metric => metric.name === 'three.frames.slow').map(metric => metric.value)).toEqual([1, 1, 0, 0, 0, 0])
-  expect(metrics().find(metric => metric.name === 'three.render.passes.mean' && metric.attributes.room === 'daydream')?.value).toBe(100)
+  expect(sienna.filter(metric => metric.name === 'three.frames.slow').map(metric => metric.value)).toEqual([1, 1, 0, 0, 0, 0])
+  expect(metrics().find(metric => metric.name === 'three.render.passes.mean' && metric.attributes.room === 'lobby')?.value).toBe(100)
   expect(metrics().some(metric => metric.name === 'three.render.passes')).toBe(false)
 })
 test('capacity, output changes and visibility flush without losing or inventing samples', async () => {
@@ -143,9 +143,9 @@ test('span events have bounded bytes/count, historical times, snapshots and OTLP
   const {telemetry, traces, batches} = fixture()
   const parent = telemetry.startSpan('session')
   const span = telemetry.startSpan('hitch', {}, parent, 1234.5)
-  const attributes = {room: 'amber'}
+  const attributes = {room: 'sienna'}
   span.addEvent('changed', attributes, 1240)
-  attributes.room = 'daydream'
+  attributes.room = 'lobby'
   for (let index = 0; index < 100; index++) {
     span.addEvent('event', {}, 1241)
   }
@@ -164,7 +164,7 @@ test('span events have bounded bytes/count, historical times, snapshots and OTLP
   expect(traces()[0]!.events).toHaveLength(64)
   expect(traces()[0]!.events![0]).toMatchObject({
     time: 1240,
-    attributes: {room: 'amber'},
+    attributes: {room: 'sienna'},
   })
   const encoded = encodeOtlp(batches.find(batch => batch.signal === 'traces')!)
   const encodedSpan = encoded.resourceSpans?.[0]?.scopeSpans[0]?.spans[0]
@@ -227,9 +227,9 @@ test('GPU resolves both types once, checks exact UIDs and keeps captured context
   const camera = new PerspectiveCamera
   renderer.inspector.beginRender('r:1:1:f42', new Scene, camera, null!)
   renderer.inspector.beginCompute('c:1:1:f42', {} as ComputeNode)
-  const attributes = {room: 'amber'}
+  const attributes = {room: 'sienna'}
   diagnostics.endFrame(20, attributes, () => ({}))
-  attributes.room = 'daydream'
+  attributes.room = 'lobby'
   expect(calls).toEqual(['render', 'compute'])
   diagnostics.beginFrame()
   expect(backend.trackTimestamp).toBe(false)
@@ -242,7 +242,7 @@ test('GPU resolves both types once, checks exact UIDs and keeps captured context
   await telemetry.flush()
   expect(metrics().find(metric => metric.name === 'three.gpu.render.duration')).toMatchObject({
     value: 12,
-    attributes: {room: 'amber'},
+    attributes: {room: 'sienna'},
   })
   expect(metrics().find(metric => metric.name === 'three.gpu.compute.duration')?.value).toBe(3)
   diagnostics.beginFrame()

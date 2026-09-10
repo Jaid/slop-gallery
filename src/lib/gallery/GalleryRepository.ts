@@ -5,9 +5,9 @@ import {initialPortraits} from './collection.ts'
 import {imageSize} from './ImageImporter.ts'
 import {imageExtensions, maximumBackupBytes, validateCollectionImages, validateImage} from './imagePolicy.ts'
 import {migratePortrait} from './migratePortrait.ts'
+import {moonfallRecovery} from './moonfall/config.ts'
 import {playerSession, playerSpawn, validatePlayerPose} from './PlayerSession.ts'
 import {createDocument, maximumPortraits, restoreDocument, useGallery} from './store.ts'
-import {undertoneRecovery} from './undertone/config.ts'
 import {insideGallery, placementIssue, wallCoordinates, wallPosition, walls} from './walls.ts'
 
 const images = new Set(initialPortraits.map(p => p.source).filter((p): p is string => typeof p === 'string'))
@@ -67,15 +67,15 @@ export function validateDocument(value: unknown): GalleryDocument {
       if (object(value) && placementIssue(wall, pos, p.width, p.height, []) === 'Let’s keep the doorway clear.') {
         if (value.wallId === 'secret-east') {
           displaced = [0, 0.2, 11.5]
-        } else if (wall.room === 'undertone' && Array.isArray(value.position) && value.position[0] >= 12) {
-          displaced = [...undertoneRecovery]
-        } else if (wall.id === 'daydream-north') {
+        } else if (wall.room === 'moonfall' && Array.isArray(value.position) && value.position[0] >= 12) {
+          displaced = [...moonfallRecovery]
+        } else if (wall.id === 'lobby-north') {
           displaced = [0, 0.2, -28]
-        } else if (wall.id === 'amber-west') {
+        } else if (wall.id === 'sienna-west') {
           displaced = [-14, 0.2, 17]
-        } else if (wall.id === 'glasswell-north') {
+        } else if (wall.id === 'oculus-north') {
           displaced = [0, -4.8, -28.5]
-        } else if (wall.id === 'cabin-west') {
+        } else if (wall.id === 'lodge-west') {
           displaced = [-25, -4.8, -28.5]
         }
       }

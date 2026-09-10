@@ -18,7 +18,7 @@ const previous = {
   createImageBitmap: globalThis.createImageBitmap,
 }
 test('old north-wall collections follow the extension once, including custom hanging positions', () => {
-  const north = initialPortraits.filter(portrait => portrait.wallId === 'daydream-north')
+  const north = initialPortraits.filter(portrait => portrait.wallId === 'lobby-north')
   const custom = {
     ...north[0]!,
     id: 'custom',

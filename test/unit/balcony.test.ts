@@ -4,24 +4,24 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
-import {glasswellBalcony as balcony, balconyFloorHeight} from '../../src/lib/gallery/glasswellBalcony.ts'
-import {GlasswellBalconyGeometry} from '../../src/lib/gallery/GlasswellBalconyGeometry.ts'
-import {GlasswellGroundGeometry} from '../../src/lib/gallery/GlasswellGroundGeometry.ts'
-import {glasswellTower as tower} from '../../src/lib/gallery/glasswellTower.ts'
 import {lowerGallery} from '../../src/lib/gallery/lowerGallery.ts'
+import {oculusBalcony as balcony, balconyFloorHeight} from '../../src/lib/gallery/oculusBalcony.ts'
+import {OculusBalconyGeometry} from '../../src/lib/gallery/OculusBalconyGeometry.ts'
+import {OculusGroundGeometry} from '../../src/lib/gallery/OculusGroundGeometry.ts'
+import {oculusTower as tower} from '../../src/lib/gallery/oculusTower.ts'
 import {floorHeight, walls} from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
-describe('separate semicircular Glasswell balcony', () => {
+describe('separate semicircular Oculus balcony', () => {
   test('the larger tower stays separated from a wall-mounted balcony above the doorway', () => {
     expect(tower.radius).toBe(2.2)
     expect(balcony.topY).toBe(tower.floorY + tower.height)
-    expect(balcony.z).toBe(walls.find(wall => wall.id === 'glasswell-south')!.center[2])
+    expect(balcony.z).toBe(walls.find(wall => wall.id === 'oculus-south')!.center[2])
     expect(balcony.z - balcony.depth - (tower.z + tower.radius)).toBeCloseTo(2.6)
     expect(balcony.topY - balcony.thickness).toBeCloseTo(lowerGallery.floorY + lowerGallery.tunnel.height + wallOpeningTrim)
     const material = new MeshBasicMaterial
-    const geometry = new GlasswellBalconyGeometry
-    const ground = new GlasswellGroundGeometry
+    const geometry = new OculusBalconyGeometry
+    const ground = new OculusGroundGeometry
     const meshes = [new Mesh(geometry, material), new Mesh(ground, material)]
     try {
       for (const z of [-17.5, -17, -16.5, -16, -15.5]) {
@@ -38,9 +38,9 @@ describe('separate semicircular Glasswell balcony', () => {
     }
   })
   test('the enlarged slab meets the doorway frame without changing its walking height or footprint', () => {
-    const wall = walls.find(value => value.id === 'glasswell-south')!
+    const wall = walls.find(value => value.id === 'oculus-south')!
     const frame = createArchitectureGeometry(wall)
-    const geometry = new GlasswellBalconyGeometry
+    const geometry = new OculusBalconyGeometry
     const material = new MeshBasicMaterial
     try {
       const frameTop = wall.center[1] + frame.trim[0]!.boundingBox!.max.y
@@ -59,7 +59,7 @@ describe('separate semicircular Glasswell balcony', () => {
     }
   })
   test('the curved slab and collider agree, support weight and leave the entrance clear underneath', () => {
-    const geometry = new GlasswellBalconyGeometry
+    const geometry = new OculusBalconyGeometry
     const material = new MeshBasicMaterial
     const mesh = new Mesh(geometry, material)
     const world = new RAPIER.World({

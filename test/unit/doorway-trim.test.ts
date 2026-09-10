@@ -8,8 +8,8 @@ import {walls} from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
 describe('plain doorway trim', () => {
-  test('both Glasswell jambs meet the baseboard cap without protruding plinths or doubled surfaces', () => {
-    const wall = walls.find(value => value.id === 'glasswell-south')!
+  test('both Oculus jambs meet the baseboard cap without protruding plinths or doubled surfaces', () => {
+    const wall = walls.find(value => value.id === 'oculus-south')!
     expect(wall.trimStyle).toBe('plain')
     const geometry = createArchitectureGeometry(wall)
     const material = new MeshBasicMaterial
@@ -53,7 +53,7 @@ describe('plain doorway trim', () => {
     }
   })
   test('plain trim has its own cache entry and does not replace classic molding elsewhere', () => {
-    const wall = walls.find(value => value.id === 'glasswell-south')!
+    const wall = walls.find(value => value.id === 'oculus-south')!
     const plain = architectureGeometry(wall)
     const classic = architectureGeometry({
       ...wall,
@@ -66,6 +66,6 @@ describe('plain doorway trim', () => {
       trimStyle: undefined,
     })).toBe(classic)
     expect(classic.trim[0]!.boundingBox!.max.z).toBeCloseTo(0.325, 6)
-    expect(walls.filter(value => value.trimStyle === 'plain').every(value => ['glasswell', 'cabin'].includes(value.room))).toBe(true)
+    expect(walls.filter(value => value.trimStyle === 'plain').every(value => ['oculus', 'lodge'].includes(value.room))).toBe(true)
   })
 })
