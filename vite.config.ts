@@ -7,21 +7,30 @@ import postcssAutoprefixer from 'autoprefixer'
 import cssnano from 'cssnano-preset-advanced'
 import postcssNormalize from 'postcss-normalize'
 import {loadEnv, mergeConfig} from 'vite'
+import avifOnly from 'vite-plugin-avif-only'
+import gameLevelPlugin, {selectGameLevel} from 'vite-plugin-game-level'
 import mediaMixinsPlugin from 'vite-plugin-media-mixins'
 import titlePlugin from 'vite-plugin-title'
 
+import levels, {defaultLevel, levelIds} from '#src/data/levels.ts'
 import {victoriaTelemetry} from '#src/lib/telemetry/vite.ts'
 
 const getCommonConfig = (context: ConfigEnv) => {
   const env = loadEnv(context.mode, process.cwd(), 'SLOP_VICTORIA_')
+  const level = selectGameLevel(loadEnv(context.mode, process.cwd(), 'GAME_LEVEL').GAME_LEVEL, levelIds, defaultLevel)
   const config: UserConfig = {
     build: {
       target: 'chrome153',
-      chunkSizeWarningLimit: 6000,
+      chunkSizeWarningLimit: 10_000,
       sourcemap: true,
     },
     plugins: [
-      titlePlugin(),
+      titlePlugin(levels[level].title),
+      gameLevelPlugin({
+        level,
+        levels,
+        sharedPublicAssets: ['icon.svg'],
+      }),
       reactPlugin(),
       babelPlugin({
         presets: [reactCompilerPreset()],
@@ -34,8 +43,8 @@ const getCommonConfig = (context: ConfigEnv) => {
       }),
     ],
     resolve: {
-      // Rapier and other dependencies must share the app’s WebGPU-only Fiber implementation.
       alias: [
+       // Rapier and other dependencies must share the app’s WebGPU-only Fiber implementation.
         {
           find: /^@react-three\/fiber$/u,
           replacement: '@react-three/fiber/webgpu',
@@ -70,6 +79,7 @@ const getProductionConfig = () => {
     zindex: false,
   }).plugins.filter(([, options]) => !(options && 'exclude' in options && options.exclude)).map(([createPlugin, options]) => createPlugin(options))
   const config: UserConfig = {
+    plugins: [avifOnly()],
     build: {
       outDir: 'dist',
       assetsDir: '',

@@ -7,7 +7,7 @@ import {EgoMotor} from 'ego-player/motor'
 import {Children, isValidElement} from 'react'
 import {BoxGeometry, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
-import renderOculusRoom from '../../src/components/Scene/OculusRoom.tsx'
+import renderOculusRoom from '../../src/components/levels/gallery/OculusRoom/index.tsx'
 import {createArchitectureGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
 import {initialPortraits} from '../../src/lib/gallery/collection.ts'
 import {floorThickness, roomFloorPlan} from '../../src/lib/gallery/floors.ts'
@@ -32,7 +32,7 @@ describe('oculus and connecting tunnel', () => {
     expect(tunnel.x).toBe(0)
     expect(oculusCeiling.reduce((sum, slab) => sum + slab.size[0] * slab.size[1], 0)).toBe(18 * 17 - 8 * 8)
   })
-  test('art follows either widened side wall exactly once without moving loose art', () => {
+  test('rejects obsolete hanging positions without moving loose art', () => {
     for (const side of [-1, 1]) {
       const portrait = {
         ...initialPortraits[0],
@@ -40,13 +40,10 @@ describe('oculus and connecting tunnel', () => {
         position: [side * 5.78, -5.5, -20] as [number, number, number],
         rotation: side === -1 ? Math.PI / 2 : -Math.PI / 2,
       }
-      const saved = validateDocument({
+      expect(() => validateDocument({
         ...createDocument(),
         portraits: [portrait],
-      })
-      expect(saved.portraits[0].position[0]).toBeCloseTo(side * 8.78)
-      expect(saved.portraits[0].position.slice(1)).toEqual([-5.5, -20])
-      expect(validateDocument(saved)).toEqual(saved)
+      })).toThrow('detached')
       const loose = validateDocument({
         ...createDocument(),
         portraits: [
@@ -184,22 +181,6 @@ describe('oculus and connecting tunnel', () => {
         mesh.geometry.dispose()
       }
       material.dispose()
-    }
-  })
-  test('art on either previous north-wall position migrates once', () => {
-    for (const z of [-25.78, -27.78]) {
-      const saved = validateDocument({
-        ...createDocument(),
-        portraits: [
-          {
-            ...initialPortraits[0],
-            wallId: 'oculus-north',
-            position: [-4, -5.5, z],
-          },
-        ],
-      })
-      expect(saved.portraits[0].position).toEqual([-4, -5.5, -30.78])
-      expect(validateDocument(saved)).toEqual(saved)
     }
   })
   for (const fps of [30, 60, 120]) {

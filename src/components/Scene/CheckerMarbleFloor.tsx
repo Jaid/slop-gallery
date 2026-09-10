@@ -6,11 +6,13 @@ import {getGraphicsProfile} from '#src/lib/rendering/graphicsQuality.ts'
 
 import {checkerMarbleTexture} from './materials.ts'
 
-export default function CheckerMarbleFloor({width, depth}: {depth: number
+export default function CheckerMarbleFloor({width, depth, reflections}: {depth: number
+  reflections?: boolean
   width: number}) {
   const texture = useMemo(() => checkerMarbleTexture(width, depth), [width, depth])
   const {floorReflections} = useGraphicsQualityValue(getGraphicsProfile)
-  const material = useMemo(() => new MarbleFloorMaterial(texture, floorReflections), [texture, floorReflections])
+  const reflective = reflections ?? floorReflections
+  const material = useMemo(() => new MarbleFloorMaterial(texture, reflective), [texture, reflective])
   useEffect(() => () => texture.dispose(), [texture])
   useEffect(() => () => material.dispose(), [material])
   return <mesh name="knot-room-marble-floor" position={[0, 0.001, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>

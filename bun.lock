@@ -28,6 +28,8 @@
         "three-mesh-bvh": "0.9.15",
         "use-graphics-quality": "workspace:*",
         "use-pause-menu": "workspace:*",
+        "vite-plugin-avif-only": "workspace:*",
+        "vite-plugin-game-level": "workspace:*",
         "webgpu-capture-bridge": "workspace:*",
         "zustand": "5.0.15",
       },
@@ -135,6 +137,28 @@
       "optionalPeers": [
         "react",
       ],
+    },
+    "packages/vite-plugin-avif-only": {
+      "name": "vite-plugin-avif-only",
+      "version": "0.1.0",
+      "dependencies": {
+        "@babel/parser": "^8.0.0",
+        "fs-extra": "11.4.0",
+        "magic-string": "^0.30.21",
+      },
+      "peerDependencies": {
+        "vite": "^8.2.2",
+      },
+    },
+    "packages/vite-plugin-game-level": {
+      "name": "vite-plugin-game-level",
+      "version": "0.1.0",
+      "dependencies": {
+        "fs-extra": "11.4.0",
+      },
+      "peerDependencies": {
+        "vite": "^8.2.2",
+      },
     },
     "packages/webgpu-capture-bridge": {
       "name": "webgpu-capture-bridge",
@@ -776,6 +800,8 @@
 
     "maath": ["maath@0.10.8", "", { "peerDependencies": { "@types/three": ">=0.134.0", "three": ">=0.134.0" } }, "sha512-tRvbDF0Pgqz+9XUa4jjfgAQ8/aPKmQdWXilFu2tMy4GWj4NOsx99HlULO4IeREfbO3a0sA145DZYyvXPkybm0g=="],
 
+    "magic-string": ["magic-string@0.30.21", "", { "dependencies": { "@jridgewell/sourcemap-codec": "^1.5.5" } }, "sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ=="],
+
     "mdn-data": ["mdn-data@2.27.1", "", {}, "sha512-9Yubnt3e8A0OKwxYSXyhLymGW4sCufcLG6VdiDdUGVkPhpqLxlvP5vl1983gQjJl3tqbrM731mjaZaP68AgosQ=="],
 
     "meshoptimizer": ["meshoptimizer@1.1.1", "", {}, "sha512-oRFNWJRDA/WTrVj7NWvqa5HqE1t9MYDj2VaWirQCzCCrAd2GHrqR/sQezCxiWATPNlKTcRaPRHPJwIRoPBAp5g=="],
@@ -1093,6 +1119,10 @@
     "verkit": ["verkit@0.3.2", "", {}, "sha512-zj/ob3UsvJGN0whEAKFp53REA5X66hvffVqoCtVQAakJKnKlH+/PcOfMoFwIG/o4rElqLv/ycAFlx8ZlXUorCg=="],
 
     "vite": ["vite@8.2.2", "", { "dependencies": { "lightningcss": "^1.33.0", "picomatch": "^4.0.5", "postcss": "^8.5.26", "rolldown": "~1.2.4", "tinyglobby": "^0.2.17" }, "optionalDependencies": { "fsevents": "~2.3.3" }, "peerDependencies": { "@types/node": "^20.19.0 || >=22.12.0", "@vitejs/devtools": "^0.4.0 || ^0.5.0", "esbuild": "^0.27.0 || ^0.28.0", "jiti": ">=1.21.0", "less": "^4.0.0", "sass": "^1.70.0", "sass-embedded": "^1.70.0", "stylus": ">=0.54.8", "sugarss": "^5.0.0", "terser": "^5.16.0", "tsx": "^4.8.1", "yaml": "^2.4.2" }, "optionalPeers": ["@types/node", "@vitejs/devtools", "esbuild", "jiti", "less", "sass", "sass-embedded", "stylus", "sugarss", "terser", "tsx", "yaml"], "bin": { "vite": "bin/vite.js" } }, "sha512-cFKLV/PRgAUlIRm5WjMjJ86jrftzpqcgH+Us+DS8mI3CDNiH30Whrz8uHL3+MOLPAgqbMBAqWdAHAphOAM+z/Q=="],
+
+    "vite-plugin-avif-only": ["vite-plugin-avif-only@workspace:packages/vite-plugin-avif-only"],
+
+    "vite-plugin-game-level": ["vite-plugin-game-level@workspace:packages/vite-plugin-game-level"],
 
     "vite-plugin-media-mixins": ["vite-plugin-media-mixins@0.10.0", "", { "peerDependencies": { "vite": "^8.0.16" } }, "sha512-CFctDKYijEKj/lOHFoj+x/V1kllgZHz0FTazUTpAo7ATFwQ2HXSmI7dRrzFQdmDE8RJeWp3CmOy31zHWK+6+xQ=="],
 

@@ -1,0 +1,92 @@
+import {useEffect, useMemo} from 'react'
+import {attribute, texture, uv, vec2} from 'three/tsl'
+import {DataTexture, InstancedBufferAttribute, InstancedMesh, LinearFilter, LinearMipmapLinearFilter, Matrix4, MeshBasicNodeMaterial, PlaneGeometry, RGBAFormat, SRGBColorSpace} from 'three/webgpu'
+
+import {knotExhibition} from '#src/lib/knots/exhibition.ts'
+
+import {drawLabel, labelHeight as height, labelWidth as width} from './drawLabel.ts'
+import {loadModelIcons} from './modelIcons.ts'
+
+/** One atlas and one instanced draw replace hundreds of label meshes/materials. */
+export default function KnotLabels() {
+  const resources = useMemo(() => {
+    const columns = 8
+    const rows = Math.ceil(knotExhibition.length / columns)
+    const canvas = document.createElement('canvas')
+    canvas.width = columns * width
+    canvas.height = rows * height
+    const context = canvas.getContext('2d')!
+    context.fillStyle = '#122029'
+    context.fillRect(0, 0, canvas.width, canvas.height)
+    const offsets = new Float32Array(knotExhibition.length * 2)
+    for (const [index, exhibit] of knotExhibition.entries()) {
+      const column = index % columns
+      const row = Math.floor(index / columns)
+      const x = column * width
+      const y = row * height
+      offsets[index * 2] = column / columns
+      offsets[index * 2 + 1] = 1 - (row + 1) / rows
+      drawLabel(context, exhibit, x, y)
+    }
+    const atlas = new DataTexture(new Uint8Array(context.getImageData(0, 0, canvas.width, canvas.height).data.buffer), canvas.width, canvas.height, RGBAFormat)
+    atlas.name = 'Knot challenge label atlas'
+    atlas.flipY = true
+    atlas.colorSpace = SRGBColorSpace
+    atlas.generateMipmaps = true
+    atlas.minFilter = LinearMipmapLinearFilter
+    atlas.magFilter = LinearFilter
+    atlas.anisotropy = 8
+    atlas.needsUpdate = true
+    const geometry = new PlaneGeometry(1.45, 0.6)
+    geometry.setAttribute('labelOffset', new InstancedBufferAttribute(offsets, 2))
+    const material = new MeshBasicNodeMaterial
+    material.name = 'Knot challenge labels'
+    material.toneMapped = false
+    material.colorNode = texture(atlas, uv().mul(vec2(1 / columns, 1 / rows)).add(attribute('labelOffset', 'vec2')))
+    const mesh = new InstancedMesh(geometry, material, knotExhibition.length)
+    mesh.name = 'knot-nameplates'
+    const matrix = new Matrix4
+    for (const [index, exhibit] of knotExhibition.entries()) {
+      matrix.makeRotationY(exhibit.rotation)
+      matrix.setPosition(exhibit.position[0], 0.35, exhibit.position[2] + Math.cos(exhibit.rotation) * 0.8)
+      mesh.setMatrixAt(index, matrix)
+    }
+    mesh.instanceMatrix.needsUpdate = true
+    mesh.computeBoundingBox()
+    mesh.computeBoundingSphere()
+    return {
+      atlas,
+      updateIcons(icons: ReadonlyMap<string, HTMLImageElement>) {
+        for (const [index, exhibit] of knotExhibition.entries()) {
+          const url = exhibit.modelIcon
+          drawLabel(context, exhibit, index % columns * width, Math.floor(index / columns) * height, url ? icons.get(url) : undefined)
+        }
+        atlas.image.data!.set(context.getImageData(0, 0, canvas.width, canvas.height).data)
+        atlas.needsUpdate = true
+      },
+      geometry,
+      material,
+      mesh,
+    }
+  }, [])
+  useEffect(() => {
+    let active = true
+    void loadModelIcons(knotExhibition.map(exhibit => exhibit.modelIcon)).then(icons => {
+      if (active) {
+        resources.updateIcons(icons)
+      }
+    }).catch(error => {
+      console.warn('Knot label atlas could not be updated.', error)
+    })
+    return () => {
+      active = false
+    }
+  }, [resources])
+  useEffect(() => () => {
+    resources.mesh.dispose()
+    resources.geometry.dispose()
+    resources.material.dispose()
+    resources.atlas.dispose()
+  }, [resources])
+  return <primitive object={resources.mesh}/>
+}

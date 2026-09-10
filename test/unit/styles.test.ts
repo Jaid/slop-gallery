@@ -15,7 +15,7 @@ function expectStaticStyles(code: string) {
   })
 }
 test('components use real, locally scoped Sass module exports', async () => {
-  const files = [...new Bun.Glob('src/components/*/style.module.sass').scanSync()].toSorted()
+  const files = [...new Bun.Glob('src/components/**/style.module.sass').scanSync()].toSorted()
   expect(files.length).toBeGreaterThan(0)
   for (const file of files) {
     const source = await Bun.file(file).text()

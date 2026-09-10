@@ -239,7 +239,7 @@ describe('Lodge through-window', () => {
     expect(insideGallery(point)).toBe(true)
     expect(roomAt(point)).toBe('lodge')
   })
-  test('preserves artwork displaced by the new rectangular opening as a loose frame', () => {
+  test('rejects artwork overlapping the rectangular opening', () => {
     const wall = walls.find(value => value.id === 'lodge-west')!
     const portrait = {
       ...initialPortraits[0],
@@ -250,13 +250,10 @@ describe('Lodge through-window', () => {
       position: wallPosition(wall, lodge.center[1] - lodgeWindow.z, (lodgeWindow.bottom + lodgeWindow.top) / 2),
     }
     expect(placementIssue(wall, portrait.position, portrait.width, portrait.height, [])).toContain('doorway')
-    const saved = validateDocument({
+    expect(() => validateDocument({
       ...createDocument(),
       portraits: [portrait],
-    })
-    expect(saved.portraits[0].hung).toBe(false)
-    expect(saved.portraits[0].source).toBe(portrait.source)
+    })).toThrow('overlaps a doorway')
     expect(portrait.hung).toBe(true)
-    expect(validateDocument(saved)).toEqual(saved)
   })
 })

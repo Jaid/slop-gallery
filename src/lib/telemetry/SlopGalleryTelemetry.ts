@@ -7,6 +7,7 @@ import {Telemetry} from 'telemethree'
 import {EgoTelemetry} from 'telemethree-ego'
 
 import {rooms} from '../gallery/walls.ts'
+import {galleryLevel} from '../level.ts'
 import {VictoriaExporter} from './VictoriaExporter.ts'
 
 export class SlopGalleryTelemetry extends Telemetry {
@@ -31,7 +32,7 @@ export class SlopGalleryTelemetry extends Telemetry {
         },
       }),
       resource: {
-        'service.name': 'slop-gallery',
+        'service.name': galleryLevel,
         'service.namespace': 'games',
         'service.version': options.version ?? '0.1.0',
         'deployment.environment.name': options.environment ?? 'development',

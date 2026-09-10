@@ -268,11 +268,11 @@ test('production gallery: visible WebGPU, physics, imports, fusion and persisten
       }
     }
     // Carried sculptures must never become moving platforms for the character controller.
-    await teleport(page, [13.3, 1.62, 3.5], [Math.sin(0.07), 0, 0, Math.cos(0.07)])
+    await teleport(page, [-12.25, 1.62, -39.4], [Math.sin(0.12), 0, 0, Math.cos(0.12)])
     await enter(page)
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().active === 'prop-knot')
+    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().active === 'prop-knot-astra1')
     await page.keyboard.press('e')
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().held === 'prop-knot')
+    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().held === 'prop-knot-astra1')
     for (const [position, rotation] of [
       [[19.45, 1.62, 3], [0, -Math.SQRT1_2, 0, Math.SQRT1_2]],
       [[16, 1.62, 3], [-Math.sin(0.65), 0, 0, Math.cos(0.65)]],
@@ -282,7 +282,7 @@ test('production gallery: visible WebGPU, physics, imports, fusion and persisten
       await Bun.sleep(1000)
       const state = await snapshot(page)
       expect(Math.hypot(...state.camera.map((value, axis) => value - position[axis]))).toBeLessThan(0.05)
-      const knot = state.props.find(prop => prop.id === 'prop-knot')!
+      const knot = state.props.find(prop => prop.id === 'prop-knot-astra1')!
       expect(knot.bodyType).toBe(1)
       expect(knot.collidersEnabled.length).toBeGreaterThan(0)
       expect(knot.collidersEnabled.every(enabled => !enabled)).toBe(true)
@@ -291,17 +291,17 @@ test('production gallery: visible WebGPU, physics, imports, fusion and persisten
     await Bun.sleep(500)
     const released = await snapshot(page)
     expect(Math.hypot(...released.camera.map((value, axis) => value - [18, 1.62, 7.45][axis]))).toBeLessThan(0.05)
-    expect(released.props.find(prop => prop.id === 'prop-knot')!.bodyType).toBe(0)
-    expect(released.props.find(prop => prop.id === 'prop-knot')!.collidersEnabled.every(Boolean)).toBe(true)
-    expect(released.props.find(prop => prop.id === 'prop-knot')!.position.z).toBeLessThan(7)
-    await teleport(page, [13.3, 1.62, 3.5], [Math.sin(0.07), 0, 0, Math.cos(0.07)])
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().active === 'prop-knot')
+    expect(released.props.find(prop => prop.id === 'prop-knot-astra1')!.bodyType).toBe(0)
+    expect(released.props.find(prop => prop.id === 'prop-knot-astra1')!.collidersEnabled.every(Boolean)).toBe(true)
+    expect(released.props.find(prop => prop.id === 'prop-knot-astra1')!.position.z).toBeLessThan(7)
+    await teleport(page, [-12.25, 1.62, -39.4], [Math.sin(0.12), 0, 0, Math.cos(0.12)])
+    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().active === 'prop-knot-astra1')
     await page.keyboard.press('e')
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().held === 'prop-knot')
-    const beforeThrow = (await snapshot(page)).props.find(prop => prop.id === 'prop-knot')!.position
+    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().held === 'prop-knot-astra1')
+    const beforeThrow = (await snapshot(page)).props.find(prop => prop.id === 'prop-knot-astra1')!.position
     await page.keyboard.press('q')
     await Bun.sleep(400)
-    const thrown = (await snapshot(page)).props.find(prop => prop.id === 'prop-knot')!
+    const thrown = (await snapshot(page)).props.find(prop => prop.id === 'prop-knot-astra1')!
     expect(thrown.bodyType).toBe(0)
     expect(thrown.collidersEnabled.every(Boolean)).toBe(true)
     expect(Math.hypot(thrown.position.x - beforeThrow.x, thrown.position.y - beforeThrow.y, thrown.position.z - beforeThrow.z)).toBeGreaterThan(0.2)

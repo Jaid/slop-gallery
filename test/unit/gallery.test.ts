@@ -27,8 +27,8 @@ describe('wall geometry', () => {
   test('the two Doge images are independent, normally hung portraits', () => {
     const velvet = initialPortraits.find(p => p.id === 'dog')!
     const neon = initialPortraits.find(p => p.id === 'wolf')!
-    expect(velvet.source).toBe('/art/dog.webp')
-    expect(neon.source).toBe('/art/wolf.webp')
+    expect(velvet.source).toBe('/art/dog.jxl')
+    expect(neon.source).toBe('/art/wolf.jxl')
     expect(velvet.hung).toBe(true)
     expect(neon.hung).toBe(true)
     expect(velvet.position).not.toEqual(neon.position)
@@ -293,7 +293,7 @@ describe('backup validation', () => {
         throw new TypeError('Default artworks must reference bundled images.')
       }
       expect(p.id).toMatch(/^[a-z]+(?:-[a-z]+)*$/)
-      expect(p.source).toMatch(new RegExp(String.raw`^/art/${p.id}\.(webp|png|avif)$`))
+      expect(p.source).toMatch(new RegExp(String.raw`^/art/${p.id}\.jxl$`))
       expect(await Bun.file(new URL(`../../public${p.source}`, import.meta.url)).exists()).toBe(true)
       expect(p.narration).toBe(`/audio/${p.id}.opus`)
       if (p.narration) {
@@ -302,73 +302,30 @@ describe('backup validation', () => {
       }
     }
   })
-  test('renamed defaults in saved collections preserve edits and migrate asset paths', () => {
-    const shrimp = initialPortraits.find(p => p.id === 'shrimp')!
-    const old = {
-      ...shrimp,
-      id: 'shrimpman',
-      source: '/art/shrimpman.webp',
-      narration: '/audio/shrimpman.opus',
-      title: 'My custom title',
-      description: 'My custom story.',
-    }
-    const result = validateDocument({
-      ...original,
-      portraits: [old],
-    }).portraits[0]
-    expect(result).toMatchObject({
-      ...shrimp,
-      title: old.title,
-      description: old.description,
-    })
-    expect(old.id).toBe('shrimpman')
-    expect(validateDocument({
-      ...original,
-      portraits: [result],
-    }).portraits[0]).toEqual(result)
-    expect(() => validateDocument({
-      ...original,
-      portraits: [old, shrimp],
-    })).toThrow()
-  })
-  for (const id of ['doge-neon', 'dog-neon']) {
-    test(`migrates ${id} to wolf`, () => {
-      const wolf = initialPortraits.find(p => p.id === 'wolf')!
-      const result = validateDocument({
+  test('rejects obsolete image paths, recordings and wall positions instead of migrating saves', () => {
+    for (const patch of [{source: '/art/goose.webp'}, {source: '/art/work-0.webp'}, {narration: '/audio/doge.opus'}, {wallId: 'secret-east'}, {position: [0, 2.5, -7.78]}]) {
+      expect(() => validateDocument({
         ...original,
         portraits: [
           {
-            ...wolf,
-            id,
-            source: `/art/${id}.webp`,
+            ...initialPortraits[0],
+            ...patch,
           },
         ],
-      }).portraits[0]
-      expect(result).toMatchObject(wolf)
-    })
-  }
-  test('existing unedited defaults gain recordings without replacing edited stories', () => {
-    const goose = initialPortraits.find(p => p.id === 'goose')!
+      })).toThrow()
+    }
+  })
+  test('does not add recordings omitted from a save', () => {
     const saved = {
-      ...goose,
+      ...initialPortraits[0],
       narration: undefined,
     }
-    const load = (patch = {}) => validateDocument({
+    expect(validateDocument({
       ...original,
-      portraits: [
-        {
-          ...saved,
-          ...patch,
-        },
-      ],
-    }).portraits[0]
-    expect(load().narration).toBe('/audio/goose.opus')
-    expect(load({title: 'My title'}).narration).toBeUndefined()
-    expect(load({description: 'My story.'}).narration).toBeUndefined()
-    expect(load({source: new Blob(['pixels'], {type: 'image/webp'})}).narration).toBeUndefined()
-    expect(saved.narration).toBeUndefined()
+      portraits: [saved],
+    }).portraits[0].narration).toBeUndefined()
   })
-  test('renaming defaults does not replace imported images', () => {
+  test('preserves imported image identity', () => {
     const source = new Blob(['pixels'], {type: 'image/webp'})
     const custom = {
       ...initialPortraits[0],
@@ -455,32 +412,6 @@ describe('backup validation', () => {
       expect(useGallery.getState().portraits).toHaveLength(16)
     })
   }
-  test('loads an existing Doge without retaining its retired recording or alternate image', () => {
-    const doge = initialPortraits.find(p => p.id === 'dog')!
-    const document = validateDocument({
-      ...original,
-      portraits: [
-        {
-          ...doge,
-          alternateSource: '/art/wolf.webp',
-          narration: '/audio/doge.opus',
-        },
-      ],
-    })
-    expect(document.portraits).toHaveLength(1)
-    expect(document.portraits[0].source).toBe(doge.source)
-    expect(document.portraits[0].narration).toBeUndefined()
-    expect(document.portraits[0]).not.toHaveProperty('alternateSource')
-    expect(() => validateDocument({
-      ...original,
-      portraits: [
-        {
-          ...doge,
-          narration: '/audio/unknown.opus',
-        },
-      ],
-    })).toThrow()
-  })
   test('strips unknown settings instead of spreading them into the store', () => {
     expect(validateDocument({
       ...original,

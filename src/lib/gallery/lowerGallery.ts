@@ -9,10 +9,6 @@ export const lowerGallery = {
     // Keep the north tunnel and east stair landing fixed; expand west and south.
     center: [-8, 18.5],
     size: [28, 28],
-    compactCenter: [0, 11.5],
-    compactSize: [12, 14],
-    previousCenter: [18, 15],
-    previousFloorY: -3.6,
   },
   oculus: {
     center: [lobby.opening.center[0], lobby.opening.center[1] - 2.5],

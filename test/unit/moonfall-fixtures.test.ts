@@ -40,10 +40,10 @@ test('every Moonfall LED is backed by solid wall across its entire housing', () 
 })
 test('Sienna and Moonfall have no bench meshes or their automatic colliders', async () => {
   for (const room of ['SiennaRoom', 'MoonfallRoom']) {
-    const source = await Bun.file(`src/components/Scene/${room}.tsx`).text()
+    const source = await Bun.file(`src/components/levels/gallery/${room}/index.tsx`).text()
     expect(source).not.toContain('BenchSeat')
     expect(source).not.toContain('colliders="cuboid"')
     expect(source).toContain('CuboidCollider')
   }
-  expect(await Bun.file('src/components/Scene/LodgeRoom.tsx').text()).toContain('BenchSeat')
+  expect(await Bun.file("src/components/levels/gallery/LodgeRoom/index.tsx").text()).toContain('BenchSeat')
 })

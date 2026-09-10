@@ -6,9 +6,9 @@ import EgoPlayer from 'ego-player'
 import {useEffect, useRef, useState} from 'react'
 import {Euler, Quaternion} from 'three/webgpu'
 
+import {insideLevel, levelFloorHeight, woodenFloor} from '#level/navigation.ts'
 import {SoundEngine} from '#src/lib/audio/SoundEngine.ts'
-import {cameraPose, floorHeight, galleryEvents, markControlled, useGallery} from '#src/lib/gallery.ts'
-import {lodgeTunnel} from '#src/lib/gallery/lodge.ts'
+import {cameraPose, galleryEvents, markControlled, useGallery} from '#src/lib/gallery.ts'
 import {playerSession, playerSpawn} from '#src/lib/gallery/PlayerSession.ts'
 import {playerTelemetry} from '#src/lib/telemetry/index.ts'
 
@@ -19,7 +19,7 @@ const onStep = (state: EgoState) => {
   const {sound, room} = useGallery.getState()
   if (sound) {
     const {x, y, z} = state.position
-    const wooden = ['vesper', 'sienna', 'corridor'].includes(room) || room === 'lodge' && !lodgeTunnel.contains([x, y, z])
+    const wooden = woodenFloor(room, [x, y, z])
     SoundEngine.existing()?.step(wooden)
   }
 }
@@ -40,7 +40,10 @@ export default function Player() {
         rotation: [number, number, number, number]}>).detail
       cameraPose.focused = false
       // Gallery navigation describes camera poses; ego-player consistently uses feet.
-      const destination = feet ? position : [position[0], Math.max(floorHeight(position) + 0.04, position[1] - 1.6), position[2]] as [number, number, number]
+      const destination = feet ? position : [position[0], Math.max(levelFloorHeight(position) + 0.04, position[1] - 1.6), position[2]] as [number, number, number]
+      if (!insideLevel(destination)) {
+        return
+      }
       player.current?.teleport(destination, rotation)
       // onUpdate checkpoints the resolved physical destination, including any safe-spawn fallback.
     }

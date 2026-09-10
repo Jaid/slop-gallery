@@ -73,7 +73,7 @@ test('gallery adapters record bounded state, lifecycle events and save spans, th
   expect(records).not.toContain('private artwork')
   expect(records).not.toContain('private-first-id')
   expect(batches[0].resource).toMatchObject({
-    'service.name': 'slop-gallery',
+    'service.name': 'gallery',
     'service.instance.id': 'test-session',
   })
   const count = batches.length
@@ -122,7 +122,7 @@ test('Victoria uses native JSON metrics and the existing OTLP logs/traces endpoi
     metric: {
       __name__: 'ego.position.x',
       room: 'sienna',
-      'service.name': 'slop-gallery',
+      'service.name': 'gallery',
     },
     values: [4.2],
     timestamps: [1234],

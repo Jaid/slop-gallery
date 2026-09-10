@@ -41,8 +41,12 @@ export class AvifCache {
       pending = this.encode(bytes, output)
       this.pending.set(key, pending)
     }
-    try {return await pending} finally {
-      if (this.pending.get(key) === pending) this.pending.delete(key)
+    try {
+      return await pending
+    } finally {
+      if (this.pending.get(key) === pending) {
+        this.pending.delete(key)
+      }
     }
   }
 

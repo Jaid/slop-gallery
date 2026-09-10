@@ -1,19 +1,16 @@
 import type {GalleryDocument, Portrait} from './types.ts'
 
+import {galleryStorageKey} from '../level.ts'
 import {notify} from './actions.ts'
 import {initialPortraits} from './collection.ts'
 import {imageSize} from './ImageImporter.ts'
 import {imageExtensions, maximumBackupBytes, validateCollectionImages, validateImage} from './imagePolicy.ts'
-import {migratePortrait} from './migratePortrait.ts'
-import {moonfallRecovery} from './moonfall/config.ts'
 import {playerSession, playerSpawn, validatePlayerPose} from './PlayerSession.ts'
 import {createDocument, maximumPortraits, restoreDocument, useGallery} from './store.ts'
 import {insideGallery, placementIssue, wallCoordinates, wallPosition, walls} from './walls.ts'
 
 const images = new Set(initialPortraits.map(p => p.source).filter((p): p is string => typeof p === 'string'))
 const narrations = new Set(initialPortraits.map(p => p.narration).filter((p): p is string => typeof p === 'string'))
-// Retired recordings remain valid in saved collections but no longer play.
-const retiredNarrations = new Set(['/audio/doge.opus'])
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 const vector = (value: unknown, length: number) => Array.isArray(value) && value.length === length && value.every(v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) < 1000)
 const shortText = (value: unknown, max: number): value is string => typeof value === 'string' && value.length <= max
@@ -30,8 +27,7 @@ export function validateDocument(value: unknown): GalleryDocument {
     throw new TypeError('The collection has invalid settings.')
   }
   const ids = new Set<string>
-  const portraits: Array<Portrait> = value.portraits.map((value: unknown) => {
-    const p = object(value) ? migratePortrait(value) : value
+  const portraits: Array<Portrait> = value.portraits.map((p: unknown) => {
     if (!object(p) || !shortText(p.id, 100) || !p.id || ids.has(p.id) || !shortText(p.title, 300) || !shortText(p.creator, 200) || !shortText(p.description, 5000) || !vector(p.position, 3) || typeof p.rotation !== 'number' || !Number.isFinite(p.rotation) || typeof p.hung !== 'boolean' || typeof p.width !== 'number' || typeof p.height !== 'number' || !(p.width >= 0.15 && p.width <= 4 && p.height >= 0.15 && p.height <= 4)) {
       throw new Error('The collection contains an invalid artwork.')
     }
@@ -47,7 +43,7 @@ export function validateDocument(value: unknown): GalleryDocument {
     } else if (typeof p.source !== 'string' || !images.has(p.source)) {
       throw new Error('The collection references an unknown image.')
     }
-    if (p.narration !== undefined && (typeof p.narration !== 'string' || !narrations.has(p.narration) && !retiredNarrations.has(p.narration))) {
+    if (p.narration !== undefined && (typeof p.narration !== 'string' || !narrations.has(p.narration))) {
       throw new Error('The narration asset is invalid.')
     }
     if (p.orientation !== undefined && (!vector(p.orientation, 4) || Math.abs(Math.hypot(...p.orientation as Array<number>) - 1) > 0.01)) {
@@ -56,7 +52,6 @@ export function validateDocument(value: unknown): GalleryDocument {
     if (p.hung && (!walls.some(wall => wall.id === p.wallId) || p.orientation)) {
       throw new Error('A hanging artwork has an invalid wall.')
     }
-    let displaced: Portrait['position'] | undefined
     if (p.hung) {
       const wall = walls.find(w => w.id === p.wallId)!
       const pos = p.position as Portrait['position']
@@ -64,27 +59,13 @@ export function validateDocument(value: unknown): GalleryDocument {
       if (Math.hypot(...expected.map((n, i) => n - pos[i])) > 0.025 || Math.abs(Math.sin((p.rotation - wall.rotation) / 2)) > 0.001) {
         throw new Error('A hanging artwork is detached from its wall.')
       }
-      if (object(value) && placementIssue(wall, pos, p.width, p.height, []) === 'Let’s keep the doorway clear.') {
-        if (value.wallId === 'secret-east') {
-          displaced = [0, 0.2, 11.5]
-        } else if (wall.room === 'moonfall' && Array.isArray(value.position) && value.position[0] >= 12) {
-          displaced = [...moonfallRecovery]
-        } else if (wall.id === 'lobby-north') {
-          displaced = [0, 0.2, -28]
-        } else if (wall.id === 'sienna-west') {
-          displaced = [-14, 0.2, 17]
-        } else if (wall.id === 'oculus-north') {
-          displaced = [0, -4.8, -28.5]
-        } else if (wall.id === 'lodge-west') {
-          displaced = [-25, -4.8, -28.5]
-        }
+      if (placementIssue(wall, pos, p.width, p.height, []) === 'Let’s keep the doorway clear.') {
+        throw new Error('A hanging artwork overlaps a doorway.')
       }
     }
     if (!insideGallery(p.position as Portrait['position'])) {
       throw new Error('An artwork is outside the gallery.')
     }
-    const bundled = initialPortraits.find(defaultPortrait => defaultPortrait.id === p.id && defaultPortrait.source === p.source && defaultPortrait.title === p.title && defaultPortrait.description === p.description)
-    const narration = p.narration === undefined ? bundled?.narration : p.narration
     return {
       id: p.id,
       title: p.title,
@@ -92,15 +73,14 @@ export function validateDocument(value: unknown): GalleryDocument {
       ...typeof p.year === 'number' ? {year: p.year} : {},
       description: p.description,
       source: p.source,
-      // Lay legacy frames displaced by a new portal safely inside their room.
-      position: displaced ?? p.position as Portrait['position'],
+      position: p.position as Portrait['position'],
       rotation: p.rotation,
       width: p.width,
       height: p.height,
-      hung: p.hung && !displaced,
+      hung: p.hung,
       wallId: typeof p.wallId === 'string' ? p.wallId : undefined,
-      orientation: displaced ? [Math.SQRT1_2, 0, 0, Math.SQRT1_2] : p.orientation as Portrait['orientation'],
-      narration: typeof narration === 'string' && narrations.has(narration) ? narration : undefined,
+      orientation: p.orientation as Portrait['orientation'],
+      narration: p.narration,
       imported: p.imported === true,
     }
   })
@@ -234,7 +214,7 @@ export class GalleryRepository {
     }
     let blocked = false
     const pending = new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open('slop-gallery', 1)
+      const request = indexedDB.open(galleryStorageKey, 1)
       request.onupgradeneeded = () => request.result.createObjectStore('collections')
       request.onsuccess = () => {
         // A previously blocked request can succeed after its caller has already failed.

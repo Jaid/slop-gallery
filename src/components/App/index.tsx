@@ -9,6 +9,7 @@ import RenderBoundary from '#component/RenderBoundary'
 import RenderError from '#component/RenderError'
 import Toast from '#component/Toast'
 import {galleryEvents, useGallery} from '#src/lib/gallery.ts'
+import {galleryTitle} from '#src/lib/level.ts'
 import {telemetry} from '#src/lib/telemetry/index.ts'
 import {useSlopGalleryTelemetry} from '#src/lib/telemetry/useSlopGalleryTelemetry.ts'
 import useGalleryAI from '#src/lib/useGalleryAI.ts'
@@ -28,7 +29,7 @@ export default function App() {
   const [renderFailed, setRenderFailed] = useState(false)
   const gpu = navigator.gpu !== undefined && globalThis.isSecureContext
   if (!gpu) {
-    return <RenderError><h2>WebGPU is unavailable.</h2><p>Slop Gallery requires native WebGPU. Open it in current Chrome or Edge with hardware acceleration enabled, using HTTPS or localhost.</p></RenderError>
+    return <RenderError><h2>WebGPU is unavailable.</h2><p>{galleryTitle} requires native WebGPU. Open it in current Chrome or Edge with hardware acceleration enabled, using HTTPS or localhost.</p></RenderError>
   }
   return <GraphicsQuality><Dropzone>
     <main className={css.viewport} aria-label="Interactive 3D gallery">

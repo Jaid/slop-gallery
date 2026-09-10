@@ -14,7 +14,8 @@
   "imports": {
     "#src/*": "./src/*",
     "#root/*": "./*",
-    "#component/*": "./src/components/*/index.tsx"
+    "#component/*": "./src/components/*/index.tsx",
+    "#level/*": "./src/levels/gallery/*"
   },
   "scripts": {
     "build": "bun run vite build",
@@ -27,7 +28,13 @@
     "test": "bun test --max-concurrency 1 ./test",
     "test:live": "bun run build && bun test ./test/live.test.ts",
     "typecheck": "tsc --noEmit --noUnusedLocals --noUnusedParameters --pretty false",
-    "vite": "bun node_modules/vite/dist/node/cli.js --configLoader runner"
+    "vite": "bun --bun node_modules/vite/dist/node/cli.js --configLoader native",
+    "update:knots": "bun scripts/updateKnots.ts",
+    "check:levels": "bun test/build/levels.ts",
+    "build:gallery": "GAME_LEVEL=gallery bun run build --outDir dist/gallery",
+    "dev:gallery": "GAME_LEVEL=gallery bun run dev",
+    "build:knottingham": "GAME_LEVEL=knottingham bun run build --outDir dist/knottingham",
+    "dev:knottingham": "GAME_LEVEL=knottingham bun run dev"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.19.2",
@@ -54,7 +61,9 @@
     "use-graphics-quality": "workspace:*",
     "webgpu-capture-bridge": "workspace:*",
     "zustand": "5.0.15",
-    "use-pause-menu": "workspace:*"
+    "use-pause-menu": "workspace:*",
+    "vite-plugin-game-level": "workspace:*",
+    "vite-plugin-avif-only": "workspace:*"
   },
   "devDependencies": {
     "@babel/core": "8.0.1",

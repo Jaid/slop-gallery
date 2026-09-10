@@ -6,12 +6,13 @@ import {useEffect, useRef} from 'react'
 import {PointerLockControls} from 'three/addons/controls/PointerLockControls.js'
 import {Euler, Matrix4, PerspectiveCamera, Quaternion, Raycaster, Vector2, Vector3} from 'three/webgpu'
 
-import PlacementPreview from '#component/PlacementPreview'
+import {PlacementPreview} from '#level/components.ts'
 import {InspectionLook} from '#src/lib/camera/InspectionLook.ts'
 import {cameraPose, chime, dragPose, enterGallery, findPlacement, galleryEvents, isTextInput, markControlled, narrate, notify, openPanel, roomAt, useGallery, wallDistance} from '#src/lib/gallery.ts'
 import {playerSpawn} from '#src/lib/gallery/PlayerSession.ts'
 import {isPortraitLabelHit} from '#src/lib/gallery/portraitLabel.ts'
 import {portraitObjects} from '#src/lib/gallery/portraitObjects.ts'
+import {isKnottingham} from '#src/lib/level.ts'
 import {pauseMenu} from '#src/lib/pauseMenu.ts'
 
 import {propObjects} from './GrabbableProp.tsx'
@@ -452,7 +453,7 @@ export default function Interaction() {
     camera.getWorldDirection(direction.current)
     cameraPose.position = camera.position.toArray()
     cameraPose.direction = direction.current.toArray()
-    const room = roomAt(cameraPose.position)
+    const room = isKnottingham ? 'lobby' : roomAt(cameraPose.position)
     if (room !== s.room) {
       useGallery.setState({room})
     }
@@ -491,7 +492,7 @@ export default function Interaction() {
     } else if (s.activeLabel) {
       useGallery.setState({activeLabel: null})
     }
-    if (!ghost.current) {
+    if (isKnottingham || !ghost.current) {
       return
     }
     const p = s.portraits.find(p => p.id === s.held)
@@ -512,6 +513,6 @@ export default function Interaction() {
     }
   })
   return <group ref={ghost} visible={false}>
-    {(artwork || dragging) && !held?.startsWith('prop-') && <PlacementPreview key={artwork?.id ?? 'import'} width={artwork?.width ?? 2.4} height={artwork?.height ?? 2.4} source={artwork?.source} title={artwork?.title} creator={artwork?.creator} pending={artwork?.pending}/>}
+    {!isKnottingham && (artwork || dragging) && !held?.startsWith('prop-') && <PlacementPreview key={artwork?.id ?? 'import'} width={artwork?.width ?? 2.4} height={artwork?.height ?? 2.4} source={artwork?.source} title={artwork?.title} creator={artwork?.creator} pending={artwork?.pending}/>}
   </group>
 }

@@ -1,13 +1,12 @@
 import type {PlayerPose} from './types.ts'
 
-import {insideGallery} from './walls.ts'
+import {insideLevel, playerSpawn} from '#level/navigation.ts'
 
-export const playerSpawn: PlayerPose = {
-  position: [0.065_056_741_237_640_38, 0.019_489_301_368_594_17, -25.913_022_994_995_117],
-  yaw: 3.135_849_777_946_853,
-  pitch: -0.108,
-}
-const checkpointKey = 'slop-gallery-player'
+import {galleryStorageKey} from '../level.ts'
+
+export {playerSpawn} from '#level/navigation.ts'
+
+const checkpointKey = `${galleryStorageKey}-player`
 const copy = (pose: PlayerPose): PlayerPose => ({
   position: [...pose.position],
   yaw: pose.yaw,
@@ -28,7 +27,7 @@ export function validatePlayerPose(value: unknown): PlayerPose | null {
     yaw: Math.atan2(Math.sin(yaw), Math.cos(yaw)),
     pitch,
   }
-  return insideGallery(pose.position) ? pose : null
+  return insideLevel(pose.position) ? pose : null
 }
 
 /** Live movement stays outside React and artwork undo history; checkpoints contain no images. */

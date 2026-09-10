@@ -20,9 +20,9 @@ const isNode = (value: unknown): value is Ast => !!value && typeof value === 'ob
 const clean = (url: string) => {
   const query = url.indexOf('?')
   const fragment = url.indexOf('#', 1)
-  return url.slice(0, Math.min(query < 0 ? url.length : query, fragment < 0 ? url.length : fragment))
+  return url.slice(0, Math.min(query === -1 ? url.length : query, fragment === -1 ? url.length : fragment))
 }
-const isJxl = (url: string) => /\.jxl(?:[#?]|$)/iu.test(url) && !/^\/\//u.test(url) && (!/^[a-z]+:/iu.test(url) || isAbsolute(url)) && !/[&?]raw(?:&|$)/u.test(url)
+const isJxl = (url: string) => /\.jxl(?:[#?]|$)/iu.test(url) && !url.startsWith('//') && (!/^[a-z]+:/iu.test(url) || isAbsolute(url)) && !/[&?]raw(?:&|$)/u.test(url)
 const avifUrl = (url: string) => url.replace(/\.jxl(?=[#?]|$)/iu, '.avif')
 
 /** JXL source assets, AVIF browser URLs. No client-side decoder or format detection. */
@@ -50,8 +50,11 @@ export default function avifOnly(options: AvifOnlyOptions = {}): Plugin {
       return
     }
     let file = resolve(dirname(clean(importer)), path)
-    if (path.startsWith('/@fs/')) file = path.slice(5)
-    else if (path.startsWith('/')) file = resolve(config.root, `.${path}`)
+    if (path.startsWith('/@fs/')) {
+      file = path.slice(5)
+    } else if (path.startsWith('/')) {
+      file = resolve(config.root, `.${path}`)
+    }
     if (await fs.pathExists(file)) {
       return {
         path: file,
@@ -63,7 +66,9 @@ export default function avifOnly(options: AvifOnlyOptions = {}): Plugin {
     if (!isJxl(url)) {
       return
     }
-    if (kind === 'import' && !url.startsWith('.') && !url.startsWith('/')) return
+    if (kind === 'import' && !url.startsWith('.') && !url.startsWith('/')) {
+      return
+    }
     const source = await sourceFor(url, importer, kind === 'public')
     if (!source) {
       return
@@ -108,10 +113,17 @@ export default function avifOnly(options: AvifOnlyOptions = {}): Plugin {
         const args = parent?.arguments
         const url = parent?.type === 'NewExpression' && isNode(parent.callee) && parent.callee.name === 'URL' && Array.isArray(args) && args[0] === node && isNode(args[1]) && code.slice(args[1].start, args[1].end) === 'import.meta.url'
         if (importing || url || value.startsWith('/')) {
-          let kind: 'import' | 'url' | 'public' = 'public'
-          if (importing) kind = 'import'
-          else if (url) kind = 'url'
-          matches.push({node, value, kind})
+          let kind: 'import' | 'public' | 'url' = 'public'
+          if (importing) {
+            kind = 'import'
+          } else if (url) {
+            kind = 'url'
+          }
+          matches.push({
+            node,
+            value,
+            kind,
+          })
         }
       }
       for (const property of Object.values(node)) {
@@ -138,7 +150,13 @@ export default function avifOnly(options: AvifOnlyOptions = {}): Plugin {
       result.overwrite(node.start, node.end, JSON.stringify(target))
     }
     if (result.hasChanged()) {
-      return {code: result.toString(), map: result.generateMap({hires: true, source: id})}
+      return {
+        code: result.toString(),
+        map: result.generateMap({
+          hires: true,
+          source: id,
+        }),
+      }
     }
   }
   async function rewriteMarkup(code: string, id: string, html = false) {
@@ -190,9 +208,13 @@ export default function avifOnly(options: AvifOnlyOptions = {}): Plugin {
       cache = new AvifCache(resolve(config.root, options.cacheDir ?? 'temp/vite-plugin-avif-only/cache'), options)
     },
     async resolveId(source, importer) {
-      if (!isJxl(source)) return
+      if (!isJxl(source)) {
+        return
+      }
       const resolved = await this.resolve(source, importer, {skipSelf: true})
-      if (!resolved || resolved.external || !await fs.pathExists(clean(resolved.id))) return
+      if (!resolved || resolved.external || !await fs.pathExists(clean(resolved.id))) {
+        return
+      }
       this.addWatchFile(clean(resolved.id))
       const output = await cache.convert(clean(resolved.id))
       return this.resolve(output + resolved.id.slice(clean(resolved.id).length), importer, {skipSelf: true})
@@ -219,24 +241,26 @@ export default function avifOnly(options: AvifOnlyOptions = {}): Plugin {
         }
         void (async () => {
           try {
-          const file = await serve(server, request.url!)
-          if (!file) {
-            return next()
+            const file = await serve(server, request.url!)
+            if (!file) {
+              return next()
+            }
+            const bytes = await fs.readFile(file)
+            const etag = `"${createHash('sha256').update(bytes).digest('hex')}"`
+            response.setHeader('Content-Type', 'image/avif')
+            response.setHeader('Cache-Control', 'no-cache')
+            response.setHeader('X-Content-Type-Options', 'nosniff')
+            response.setHeader('ETag', etag)
+            if (request.headers['if-none-match'] === etag) {
+              response.statusCode = 304
+              response.end()
+              return
+            }
+            response.setHeader('Content-Length', bytes.length)
+            response.end(request.method === 'HEAD' ? undefined : bytes)
+          } catch (error) {
+            next(error)
           }
-          const bytes = await fs.readFile(file)
-          const etag = `"${createHash('sha256').update(bytes).digest('hex')}"`
-          response.setHeader('Content-Type', 'image/avif')
-          response.setHeader('Cache-Control', 'no-cache')
-          response.setHeader('X-Content-Type-Options', 'nosniff')
-          response.setHeader('ETag', etag)
-          if (request.headers['if-none-match'] === etag) {
-            response.statusCode = 304
-            response.end()
-            return
-          }
-          response.setHeader('Content-Length', bytes.length)
-          response.end(request.method === 'HEAD' ? undefined : bytes)
-          } catch (error) {next(error)}
         })()
       })
     },
@@ -251,11 +275,12 @@ export default function avifOnly(options: AvifOnlyOptions = {}): Plugin {
       async handler() {
         // Runs after normal public copying and level-specific public-asset filters.
         const directory = isAbsolute(config.build.outDir) ? config.build.outDir : resolve(config.root, config.build.outDir)
-        for await (const path of new Bun.Glob('**/*.jxl').scan(directory)) {
+        const paths = await Array.fromAsync(new Bun.Glob('**/*.jxl').scan(directory))
+        await Promise.all(paths.map(async path => {
           const source = resolve(directory, path)
           await fs.copyFile(await cache.convert(source), source.replace(/\.jxl$/iu, '.avif'))
           await fs.remove(source)
-        }
+        }))
       },
     },
   }

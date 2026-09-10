@@ -6,11 +6,9 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import {EgoMotor} from 'ego-player/motor'
 import {BoxGeometry, Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
-import {newPortrait} from '../../src/lib/gallery/actions.ts'
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import {initialPortraits} from '../../src/lib/gallery/collection.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
-import {moonfallRecovery} from '../../src/lib/gallery/moonfall/config.ts'
 import {stairBlocks, staircase, stairFlights, stairFloorHeight, stairRailGeometry, stairRoofs, stairTurn} from '../../src/lib/gallery/staircase.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
 import {findPlacement, floorHeight, insideGallery, placementIssue, roomAt, rooms, roomVisit, wallPosition, walls} from '../../src/lib/gallery/walls.ts'
@@ -60,102 +58,6 @@ describe('lower gallery', () => {
       reason: 'Keep the stairway clear.',
     })
   })
-  test('legacy wall IDs migrate without replacing custom artwork or mutating the backup', () => {
-    for (const side of ['north', 'east', 'south', 'west']) {
-      const wall = walls.find(candidate => candidate.id === `antechamber-${side}`)!
-      const portrait = {
-        ...initialPortraits[0],
-        title: 'My custom title',
-        width: 0.8,
-        height: 0.8,
-        wallId: `secret-${side}`,
-        rotation: wall.rotation,
-        position: wallPosition(wall, 2.5, 2.5),
-      }
-      const saved = validateDocument({
-        ...createDocument(),
-        portraits: [portrait],
-      })
-      expect(saved.portraits[0]).toMatchObject({
-        ...portrait,
-        wallId: wall.id,
-      })
-      expect(portrait.wallId).toBe(`secret-${side}`)
-      expect(validateDocument(saved)).toEqual(saved)
-    }
-  })
-  test('an old frame covering the new stairway is preserved as a loose, reachable frame', () => {
-    const wall = walls.find(candidate => candidate.id === 'antechamber-east')!
-    const portrait = {
-      ...initialPortraits[0],
-      title: 'Saved doorway art',
-      wallId: 'secret-east',
-      rotation: wall.rotation,
-      position: wallPosition(wall, 0, 2.5),
-    }
-    const saved = validateDocument({
-      ...createDocument(),
-      portraits: [portrait],
-    })
-    expect(saved.portraits[0]).toMatchObject({
-      id: portrait.id,
-      title: portrait.title,
-      source: portrait.source,
-      hung: false,
-      position: [0, 0.2, 11.5],
-    })
-    expect(saved.portraits[0].orientation).toEqual([Math.SQRT1_2, 0, 0, Math.SQRT1_2])
-    expect(validateDocument(saved)).toEqual(saved)
-    expect(portrait.hung).toBe(true)
-  })
-  test('art from both former Moonfall layouts migrates once without changing its metadata', () => {
-    for (const [wallId, compact, current, rotation] of [
-      ['moonfall-west', [-5.78, -5.5, 11.5], [-21.78, -5.5, 11.5], Math.PI / 2],
-      ['moonfall-south', [-2, -5.5, 18.28], [-2, -5.5, 32.28], Math.PI],
-      ['moonfall-east', [5.78, -5.5, 8], [5.78, -5.5, 8], -Math.PI / 2],
-      ['moonfall-north', [-4, -5.5, 4.72], [-4, -5.5, 4.72], 0],
-    ] as const) {
-      for (const ancient of [false, true]) {
-        const position = compact.map((n, i) => n + (ancient ? [18, 4.4, 3.5][i] : 0)) as Vec3
-        const portrait = {
-          ...initialPortraits[0],
-          wallId,
-          rotation,
-          position,
-          title: 'My preserved painting',
-        }
-        const saved = validateDocument({
-          ...createDocument(),
-          portraits: [portrait],
-        })
-        expect(saved.portraits[0]).toMatchObject({
-          ...portrait,
-          position: saved.portraits[0].position,
-        })
-        for (const [axis, n] of current.entries()) {
-          expect(saved.portraits[0].position[axis]).toBeCloseTo(n)
-        }
-        expect(validateDocument(saved)).toEqual(saved)
-        expect(portrait.position).toEqual(position)
-      }
-    }
-    const loose = {
-      ...initialPortraits[0],
-      hung: false,
-      position: [18, -3.4, 18.5],
-    }
-    const saved = validateDocument({
-      ...createDocument(),
-      portraits: [loose],
-    })
-    expect(saved.portraits[0].position).toEqual([...moonfallRecovery])
-    expect(validateDocument(saved)).toEqual(saved)
-    const portrait = newPortrait(new Blob, 'Lower arrival', 1, 1, {
-      position: [3.5, -6.4, 18.5],
-      direction: [0, -1, 0],
-    })
-    expect(portrait.position[1]).toBeCloseTo(-7.2)
-  })
   test('current loose artwork on the stair landing is not mistaken for the original Moonfall', () => {
     const portrait = {
       ...initialPortraits[0],
@@ -169,32 +71,6 @@ describe('lower gallery', () => {
     })
     expect(saved.portraits[0].position).toEqual(portrait.position)
     expect(validateDocument(saved)).toEqual(saved)
-  })
-  test('legacy paintings displaced by the east stair portal or north tunnel are laid safely inside', () => {
-    for (const portrait of [
-      {
-        ...initialPortraits[0],
-        wallId: 'moonfall-east',
-        rotation: -Math.PI / 2,
-        position: [23.78, -1.1, 18.6],
-      },
-      {
-        ...initialPortraits[0],
-        wallId: 'moonfall-north',
-        rotation: 0,
-        position: [18, -1.1, 8.22],
-      },
-    ]) {
-      const saved = validateDocument({
-        ...createDocument(),
-        portraits: [portrait],
-      })
-      expect(saved.portraits[0]).toMatchObject({
-        hung: false,
-        position: [...moonfallRecovery],
-      })
-      expect(validateDocument(saved)).toEqual(saved)
-    }
   })
   test('every tread matches the physical floor, and sidewalls close every tread edge', () => {
     const world = new RAPIER.World({

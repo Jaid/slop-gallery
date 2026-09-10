@@ -1,7 +1,6 @@
 import {describe, expect, test} from 'bun:test'
 
-import {HDRLoader} from 'three/addons/loaders/HDRLoader.js'
-import {DataUtils, NoColorSpace, RepeatWrapping, SRGBColorSpace} from 'three/webgpu'
+import {NoColorSpace, RepeatWrapping, SRGBColorSpace} from 'three/webgpu'
 
 import {GoldTextures} from '../../src/lib/materials/GoldTextures.ts'
 
@@ -58,25 +57,5 @@ describe('polished gold', () => {
     textures.normal.addEventListener('dispose', () => disposed.push('normal'))
     textures.dispose()
     expect(disposed).toEqual(['color', 'normal'])
-  })
-  test('the bundled reflection environment contains finite HDR lighting', async () => {
-    const bytes = await Bun.file(new URL('../../public/environment/warehouse.hdr', import.meta.url)).arrayBuffer()
-    const hdr = (new HDRLoader).parse(bytes)
-    expect(hdr.width).toBe(1024)
-    expect(hdr.height).toBe(512)
-    if (!hdr.data) {
-      throw new Error('Missing HDR pixels.')
-    }
-    let maximum = 0
-    for (let i = 0; i < hdr.data.length; i += 4) {
-      for (let channel = 0; channel < 3; channel++) {
-        const value = DataUtils.fromHalfFloat(hdr.data[i + channel])
-        if (!Number.isFinite(value) || value < 0) {
-          throw new Error('Invalid HDR radiance.')
-        }
-        maximum = Math.max(maximum, value)
-      }
-    }
-    expect(maximum).toBeGreaterThan(1)
   })
 })

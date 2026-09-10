@@ -49,21 +49,21 @@ With `?development=true`, inspect `window['slop.gallery'].getTelemetry()` for th
 MetricsQL:
 
 ```text
-{__name__="three.fps","service.name"="slop-gallery"}
-{__name__="three.frame.duration.p99","service.name"="slop-gallery"}
-{__name__="ego.speed","service.name"="slop-gallery"}
+{__name__="three.fps","service.name"="gallery"}
+{__name__="three.frame.duration.p99","service.name"="gallery"}
+{__name__="ego.speed","service.name"="gallery"}
 ```
 
 VictoriaLogs LogsQL:
 
 ```text
-_time:10m "service.name":="slop-gallery"
+_time:10m "service.name":="gallery"
 ```
 
 VictoriaTraces’ underlying LogsQL fields use a resource prefix:
 
 ```text
-_time:10m "resource_attr:service.name":="slop-gallery"
+_time:10m "resource_attr:service.name":="gallery"
 ```
 
 ## Performance capture workflow
@@ -89,26 +89,26 @@ Example MetricsQL for the proportion of locked frames slower than 33.33 millisec
 ```text
 100 *
 sum by (room, graphics.profile) (
-  increase({__name__="three.frames.slow","service.name"="slop-gallery",locked="true","threshold.ms"="33.33"}[10m])
+  increase({__name__="three.frames.slow","service.name"="gallery",locked="true","threshold.ms"="33.33"}[10m])
 )
 /
 (sum by (room, graphics.profile) (
-  increase({__name__="three.frames","service.name"="slop-gallery",locked="true"}[10m])
+  increase({__name__="three.frames","service.name"="gallery",locked="true"}[10m])
 ) > 0)
 ```
 
 Thresholds overlap; never sum different thresholds together. Counter increases need at least two exported samples; use traces to inspect a one-off short interval.
 
 ```text
-{__name__=~"three.gpu.render.(duration|frame_duration)","service.name"="slop-gallery"}
-{__name__="three.render.passes.mean","service.name"="slop-gallery"}
-{__name__=~"three.memory.*bytes","service.name"="slop-gallery"}
+{__name__=~"three.gpu.render.(duration|frame_duration)","service.name"="gallery"}
+{__name__="three.render.passes.mean","service.name"="gallery"}
+{__name__=~"three.memory.*bytes","service.name"="gallery"}
 ```
 
 Hitch spans in VictoriaTraces:
 
 ```text
-`resource_attr:service.name`:=slop-gallery name:=three.frame.hitch _time:30m
+`resource_attr:service.name`:=gallery name:=three.frame.hitch _time:30m
 | sort by (_time desc)
 | limit 50
 ```
