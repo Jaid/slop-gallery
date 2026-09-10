@@ -1,0 +1,26 @@
+{
+  "name": "vite-plugin-avif-only",
+  "version": "0.1.0",
+  "type": "module",
+  "funding": "https://github.com/sponsors/Jaid",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jaid/slop-gallery.git"
+  },
+  "license": "MIT",
+  "main": "src/main.ts",
+  "scripts": {
+    "test": "bun test --max-concurrency 1 ./test"
+  },
+  "exports": {
+    ".": "./src/main.ts"
+  },
+  "dependencies": {
+    "@babel/parser": "^8.0.0",
+    "fs-extra": "11.4.0",
+    "magic-string": "^0.30.21"
+  },
+  "peerDependencies": {
+    "vite": "^8.2.2"
+  }
+}
