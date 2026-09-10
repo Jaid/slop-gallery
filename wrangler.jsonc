@@ -2,9 +2,6 @@
   "$schema": "https://raw.esm.sh/wrangler/config-schema.json",
   "name": "slop-gallery",
   "pages_build_output_dir": "dist",
-  "build": {
-    "command": "bun run build"
-  },
   "vars": {
     "SKIP_DEPENDENCY_INSTALL": "1",
     "BUN_VERSION": "1.4.2"
