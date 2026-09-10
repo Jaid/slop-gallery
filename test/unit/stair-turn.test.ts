@@ -47,7 +47,7 @@ describe('round stair landing', () => {
           const [x, z] = stairTurn.point(i / 32 * Math.PI, radius)
           const origin = new Vector3(x, stairTurn.top + 2, z)
           const direction = new Vector3(0, -1, 0)
-          expect(new Raycaster(origin, direction).intersectObject(mesh)[0]!.point.y).toBeCloseTo(stairTurn.top, 5)
+          expect(new Raycaster(origin, direction).intersectObject(mesh)[0].point.y).toBeCloseTo(stairTurn.top, 5)
           expect(world.castRay(new RAPIER.Ray(origin, direction), 3, true)!.timeOfImpact).toBeCloseTo(2, 5)
         }
       }
@@ -78,7 +78,7 @@ describe('round stair landing', () => {
             const surface = new Vector3(...wallPosition(wall, u, y, wallFace))
             const direction = surface.clone().sub(origin).normalize()
             expect(wallCoordinates(wall, wallPosition(wall, u, y))).toBeCloseTo(u, 5)
-            const hit = new Raycaster(origin, direction).intersectObject(mesh)[0]!
+            const hit = new Raycaster(origin, direction).intersectObject(mesh)[0]
             expect(hit.distance).toBeCloseTo(0.8 - wallFace, 2)
             const placement = findPlacement(origin.toArray(), direction.toArray(), 1, 1, [])
             expect(placement?.wallId).toBe(wall.id)
@@ -112,8 +112,8 @@ describe('round stair landing', () => {
     try {
       for (const {wall, geometry} of architecture) {
         expect(geometry.surface.boundingBox!.min.y + wall.center[1]).toBeCloseTo(stairTurn.top, 5)
-        expect(geometry.trim[0]!.boundingBox!.max.y + wall.center[1]).toBeCloseTo(stairTurn.top + 0.14, 5)
-        expect(geometry.cornice[1]!.boundingBox!.max.y + wall.center[1]).toBeCloseTo(stairTurn.top + 3.195, 5)
+        expect(geometry.trim[0].boundingBox!.max.y + wall.center[1]).toBeCloseTo(stairTurn.top + 0.14, 5)
+        expect(geometry.cornice[1].boundingBox!.max.y + wall.center[1]).toBeCloseTo(stairTurn.top + 3.195, 5)
         for (const part of [geometry.surface, ...geometry.trim]) {
           const mesh = new Mesh(part, material)
           mesh.position.set(...wall.center)
@@ -132,8 +132,8 @@ describe('round stair landing', () => {
           const ray = new Raycaster(new Vector3(staircase.turnX - 1, stairTurn.top - depth, z), new Vector3(1, 0, 0), 0, 1.01)
           const hits = ray.intersectObjects(meshes, false)
           expect(hits).toHaveLength(1)
-          expect(hits[0]!.object).toBe(meshes[0]!)
-          expect(hits[0]!.distance).toBeCloseTo(1, 5)
+          expect(hits[0].object).toBe(meshes[0])
+          expect(hits[0].distance).toBeCloseTo(1, 5)
         }
       }
     } finally {
@@ -149,16 +149,16 @@ describe('round stair landing', () => {
     const doorway = walls.find(wall => wall.id === 'moonfall-east')!.holes!.find(hole => hole.width === staircase.lowerWidth)!
     expect(doorway.width).toBe(staircase.lowerWidth)
     const [upper, lower] = stairFlights
-    expect(upper!.width).toBe(staircase.width)
-    expect(lower!.width).toBe(staircase.lowerWidth)
-    expect(lower!.start[2] - lower!.width / 2).toBeCloseTo(13.8)
-    for (const block of lower!.blocks) {
+    expect(upper.width).toBe(staircase.width)
+    expect(lower.width).toBe(staircase.lowerWidth)
+    expect(lower.start[2] - lower.width / 2).toBeCloseTo(13.8)
+    for (const block of lower.blocks) {
       expect(block.size[2]).toBe(staircase.lowerWidth)
       for (const side of [-1, 1]) {
         expect(stairFloorHeight(block.position[0], block.position[2] + side * (staircase.lowerWidth / 2 - 0.05))).toBe(block.top)
       }
     }
-    expect(stairRoofs[1]!.size[2]).toBe(staircase.lowerWidth)
+    expect(stairRoofs[1].size[2]).toBe(staircase.lowerWidth)
   })
   test('rejects collapsed bends and invalid dimensions', () => {
     expect(() => new StairTurn([0, 0], 0, 1, 2)).toThrow(RangeError)

@@ -52,7 +52,7 @@ describe('cylindrical Oculus platform', () => {
             const top = towerFloorHeight(x, z)
             if (inset > 0) {
               expect(top).toBeDefined()
-              expect(hit!.point.y).toBeCloseTo(top!, 4)
+              expect(hit.point.y).toBeCloseTo(top!, 4)
               expect(-2 - physical!.timeOfImpact).toBeCloseTo(top!, 4)
             } else {
               expect(top).toBeUndefined()
@@ -96,7 +96,7 @@ describe('cylindrical Oculus platform', () => {
           const hits = new Raycaster(new Vector3(slope.x, -2, z), new Vector3(0, -1, 0)).intersectObject(mesh)
           expect(hits).toHaveLength(1)
           const expected = z < slope.startZ - slope.run ? slope.floorY + slope.rise : slope.floorY + (slope.startZ - z) / slope.run * slope.rise
-          expect(hits[0]!.point.y).toBeCloseTo(expected, 5)
+          expect(hits[0].point.y).toBeCloseTo(expected, 5)
         }
       }
     } finally {
@@ -111,7 +111,7 @@ describe('cylindrical Oculus platform', () => {
       for (const z of [-21.55, -21.3, -21.01, -20.8, -20.13]) {
         const hits = new Raycaster(new Vector3(0.37, -2, z), new Vector3(0, -1, 0)).intersectObject(mesh)
         expect(hits).toHaveLength(1)
-        expect(hits[0]!.point.y).toBeCloseTo(ramp.endY, 5)
+        expect(hits[0].point.y).toBeCloseTo(ramp.endY, 5)
       }
     } finally {
       material.dispose()
@@ -168,7 +168,7 @@ describe('cylindrical Oculus platform', () => {
         const z = towerArch.z - u
         const origin = new Vector3(tower.x, tower.floorY + 0.5, z)
         const direction = new Vector3(0, 1, 0)
-        const visible = new Raycaster(origin, direction).intersectObject(mesh)[0]!
+        const visible = new Raycaster(origin, direction).intersectObject(mesh)[0]
         const physical = world.castRay(new RAPIER.Ray(origin, direction), 5, true)!
         expect(visible.point.y).toBeCloseTo(tower.floorY + height, 3)
         expect(origin.y + physical.timeOfImpact).toBeCloseTo(visible.point.y, 4)
@@ -251,7 +251,7 @@ describe('cylindrical Oculus platform', () => {
           const origin = new Vector3(x, -2, z)
           const direction = new Vector3(0, -1, 0)
           const height = towerFloorHeight(x, z)!
-          expect(new Raycaster(origin, direction).intersectObjects(meshes)[0]!.point.y).toBeCloseTo(height, 5)
+          expect(new Raycaster(origin, direction).intersectObjects(meshes)[0].point.y).toBeCloseTo(height, 5)
           expect(world.castRay(new RAPIER.Ray(origin, direction), 10, true)!.timeOfImpact).toBeCloseTo(origin.y - height, 4)
         }
       }

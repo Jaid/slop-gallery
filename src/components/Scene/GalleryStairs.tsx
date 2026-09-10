@@ -59,7 +59,7 @@ export default function GalleryStairs() {
       {stairRoofs.map((beam, i) => <Box key={i} name="stairway-ceiling" {...beam} color="#101e24" envMapIntensity={0}/>)}
     </RigidBody>
     {stairFlights.flatMap(flight => [3, 10, 17].map(index => {
-      const step = flight.blocks[index]!
+      const step = flight.blocks[index]
       return <pointLight key={flight.id + index} position={[step.position[0], step.top + 0.65, step.position[2]]} color="#8ad6cd" intensity={2} distance={3} decay={2}/>
     }))}
     <pointLight position={[stairTurn.position[0], stairTurn.top + 2.8, stairTurn.position[2]]} color="#8ad6cd" intensity={4} distance={5} decay={2}/>

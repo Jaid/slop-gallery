@@ -9,7 +9,7 @@ export const previewColors = {
   valid: '#36ff72',
   invalid: '#ff3b45',
 }
-export const previewOpacity = (inReach: boolean) => inReach ? 1 : 0.18
+export const previewOpacity = (inReach: boolean) => (inReach ? 1 : 0.18)
 
 /** A closed ribbon whose U coordinate measures distance around the frame. */
 export function previewBorderGeometry(width: number, height: number, thickness = 0.028) {
@@ -22,7 +22,7 @@ export function previewBorderGeometry(width: number, height: number, thickness =
   const indices: Array<number> = []
   for (const [index, [cx, cy]] of corners.entries()) {
     positions.push(cx, cy, 0, cx - Math.sign(cx) * thickness, cy - Math.sign(cy) * thickness, 0)
-    uvs.push(distances[index]!, 0, distances[index]!, 1)
+    uvs.push(distances[index], 0, distances[index], 1)
     if (index < 4) {
       const i = index * 2
       indices.push(i, i + 2, i + 1, i + 2, i + 3, i + 1)

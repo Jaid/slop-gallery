@@ -29,7 +29,7 @@ describe('separate semicircular Oculus balcony', () => {
         expect(floorHeight([0, -2, z])).toBe(lowerGallery.floorY)
       }
       for (const x of [-2.1, 2.1]) {
-        expect(new Raycaster(new Vector3(x, -2, tower.z), new Vector3(0, -1, 0)).intersectObjects(meshes)[0]!.point.y).toBeCloseTo(balcony.topY)
+        expect(new Raycaster(new Vector3(x, -2, tower.z), new Vector3(0, -1, 0)).intersectObjects(meshes)[0].point.y).toBeCloseTo(balcony.topY)
       }
     } finally {
       material.dispose()
@@ -43,14 +43,14 @@ describe('separate semicircular Oculus balcony', () => {
     const geometry = new OculusBalconyGeometry
     const material = new MeshBasicMaterial
     try {
-      const frameTop = wall.center[1] + frame.trim[0]!.boundingBox!.max.y
+      const frameTop = wall.center[1] + frame.trim[0].boundingBox!.max.y
       expect(geometry.boundingBox!.min.y).toBeCloseTo(frameTop, 6)
       expect(geometry.boundingBox!.max.y).toBeCloseTo(tower.floorY + tower.height, 6)
       expect(balcony.thickness).toBeCloseTo(0.73, 6)
       const mesh = new Mesh(geometry, material)
       for (const x of [-lowerGallery.tunnel.width / 2, 0, lowerGallery.tunnel.width / 2]) {
         const hits = new Raycaster(new Vector3(x, lowerGallery.floorY + 1.7, balcony.z - 0.25), new Vector3(0, 1, 0)).intersectObject(mesh)
-        expect(hits[0]!.point.y).toBeCloseTo(frameTop, 6)
+        expect(hits[0].point.y).toBeCloseTo(frameTop, 6)
       }
     } finally {
       frame.dispose()
@@ -81,7 +81,7 @@ describe('separate semicircular Oculus balcony', () => {
         expect(collision !== null).toBe(inside)
         expect(balconyFloorHeight(x, z)).toBe(inside ? balcony.topY : undefined)
         if (inside) {
-          expect(hits[0]!.point.y).toBeCloseTo(balcony.topY)
+          expect(hits[0].point.y).toBeCloseTo(balcony.topY)
           expect(collision!.timeOfImpact).toBeCloseTo(origin.y - balcony.topY)
           expect(floorHeight([x, balcony.topY + 1.6, z])).toBe(balcony.topY)
           expect(floorHeight([x, lowerGallery.floorY + 1.6, z])).toBe(lowerGallery.floorY)

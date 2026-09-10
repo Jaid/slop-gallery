@@ -40,12 +40,12 @@ describe('floor-following wall baseboards', () => {
             expect(collision !== null).toBe(visible)
             if (visible) {
               const front = offset < 0.38 ? 0.2 : 0.25
-              expect(hits[0]!.point.z).toBeCloseTo(front, 5)
+              expect(hits[0].point.z).toBeCloseTo(front, 5)
               expect(collision!.timeOfImpact).toBeCloseTo(1 - front, 5)
             }
           }
           const topRay = new Raycaster(new Vector3(u, floor + 0.6, 0.23), new Vector3(0, -1, 0), 0, 1)
-          expect(topRay.intersectObjects(meshes)[0]!.point.y).toBeCloseTo(floor + 0.44, 5)
+          expect(topRay.intersectObjects(meshes)[0].point.y).toBeCloseTo(floor + 0.44, 5)
         }
         const volume = geometry.trim.reduce((sum, part) => sum + Number(computeMeshVolume(part)), 0)
         expect(volume).toBeCloseTo(wall.width * (0.38 * (0.2 - wallFace) + 0.06 * (0.25 - wallFace)), 4)
@@ -62,12 +62,12 @@ describe('floor-following wall baseboards', () => {
     expect(north.baseboardProfile).toEqual([[-north.width / 2, height], [north.width / 2, height]])
     const geometry = createArchitectureGeometry(north)
     try {
-      expect(north.holes![0]!.bottom).toBe(height)
-      expect(geometry.trim[0]!.boundingBox!.min.y).toBeCloseTo(height - 0.17)
-      expect(geometry.trim[0]!.boundingBox!.max.y).toBeCloseTo(north.holes![0]!.height + 0.17)
+      expect(north.holes![0].bottom).toBe(height)
+      expect(geometry.trim[0].boundingBox!.min.y).toBeCloseTo(height - 0.17)
+      expect(geometry.trim[0].boundingBox!.max.y).toBeCloseTo(north.holes![0].height + 0.17)
       const material = new MeshBasicMaterial
       const mesh = new Mesh(geometry.trim[0], material)
-      const hit = new Raycaster(new Vector3(-4, height + 1, 0.23), new Vector3(0, -1, 0)).intersectObject(mesh)[0]!
+      const hit = new Raycaster(new Vector3(-4, height + 1, 0.23), new Vector3(0, -1, 0)).intersectObject(mesh)[0]
       expect(hit.point.y).toBeCloseTo(height + 0.44)
       material.dispose()
       expect(geometry.surface.boundingBox!.min.y).toBeCloseTo(0, 6)

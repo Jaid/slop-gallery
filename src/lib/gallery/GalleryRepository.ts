@@ -61,7 +61,7 @@ export function validateDocument(value: unknown): GalleryDocument {
       const wall = walls.find(w => w.id === p.wallId)!
       const pos = p.position as Portrait['position']
       const expected = wallPosition(wall, wallCoordinates(wall, pos), pos[1])
-      if (Math.hypot(...expected.map((n, i) => n - pos[i]!)) > 0.025 || Math.abs(Math.sin((p.rotation - wall.rotation) / 2)) > 0.001) {
+      if (Math.hypot(...expected.map((n, i) => n - pos[i])) > 0.025 || Math.abs(Math.sin((p.rotation - wall.rotation) / 2)) > 0.001) {
         throw new Error('A hanging artwork is detached from its wall.')
       }
       if (object(value) && placementIssue(wall, pos, p.width, p.height, []) === 'Let’s keep the doorway clear.') {

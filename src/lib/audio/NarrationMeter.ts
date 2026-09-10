@@ -8,7 +8,7 @@ export function frequencyLevels(frequencies: Uint8Array, sampleRate: number, fft
     const last = Math.min(frequencies.length, Math.ceil(maximum / binHz))
     let squares = 0
     for (let i = first; i < last; i++) {
-      squares += (frequencies[i]! / 255) ** 2
+      squares += (frequencies[i] / 255) ** 2
     }
     output[band] = last > first ? Math.sqrt(squares / (last - first)) : 0
   }

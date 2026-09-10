@@ -18,11 +18,11 @@ describe('continuous stair handrails', () => {
         const edges = new Map<string, {count: number
           direction: number}>
         for (let i = 0; i < indices.length; i += 3) {
-          const triangle = [indices[i]!, indices[i + 1]!, indices[i + 2]!]
-          expect(triangle.every(index => Math.abs(positions[index * 3]! - stairTurn.center[0]) < 0.000_01)).toBe(false)
+          const triangle = [indices[i], indices[i + 1], indices[i + 2]]
+          expect(triangle.every(index => Math.abs(positions[index * 3] - stairTurn.center[0]) < 0.000_01)).toBe(false)
           for (let edge = 0; edge < 3; edge++) {
-            const a = triangle[edge]!
-            const b = triangle[(edge + 1) % 3]!
+            const a = triangle[edge]
+            const b = triangle[(edge + 1) % 3]
             const key = [Math.min(a, b), Math.max(a, b)].join(':')
             const value = edges.get(key) ?? {
               count: 0,
@@ -76,7 +76,7 @@ describe('continuous stair handrails', () => {
               for (const direction of [-1, 1]) {
                 const origin = new Vector3(stairTurn.center[0] + dx, y - direction, z + across)
                 const aim = new Vector3(0, direction, 0)
-                const hit = new Raycaster(origin, aim, 0, 2).intersectObject(mesh)[0]!
+                const hit = new Raycaster(origin, aim, 0, 2).intersectObject(mesh)[0]
                 expect(hit.distance).toBeCloseTo(1 - 0.065 / 2, 5)
                 expect(world.castRay(new RAPIER.Ray(origin, aim), 2, true)!.timeOfImpact).toBeCloseTo(hit.distance, 5)
               }

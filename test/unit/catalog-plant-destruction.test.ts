@@ -106,10 +106,10 @@ describe('existing specimen geometry', () => {
     for (const name of ['normal', 'color', 'uv']) {
       expect(model.leaves.flatMap(leaf => values(leaf.geometry, name))).toEqual(values(source.foliage, name))
     }
-    const positions = model.leaves.flatMap(leaf => values(leaf.geometry, 'position').map((value, i) => value + leaf.position[i % 3]!))
+    const positions = model.leaves.flatMap(leaf => values(leaf.geometry, 'position').map((value, i) => value + leaf.position[i % 3]))
     const original = values(source.foliage, 'position')
     expect(positions).toHaveLength(original.length)
-    expect(Math.max(...positions.map((value, i) => Math.abs(value - original[i]!)))).toBeLessThan(0.000_001)
+    expect(Math.max(...positions.map((value, i) => Math.abs(value - original[i])))).toBeLessThan(0.000_001)
     let offset = 0
     const indices = model.leaves.flatMap(leaf => {
       const result = [...leaf.geometry.index!.array].map(index => index + offset)
@@ -126,7 +126,7 @@ describe('existing specimen geometry', () => {
     const parts = [model.stems, ...model.leaves.map(leaf => leaf.geometry)]
     const counts = parts.map(() => 0)
     for (const [i, part] of parts.entries()) {
-      part.addEventListener('dispose', () => counts[i]!++)
+      part.addEventListener('dispose', () => counts[i]++)
     }
     model.dispose()
     expect(counts.every(count => count === 1)).toBe(true)
@@ -195,13 +195,13 @@ describe('catalog plant destruction', () => {
       root.move([0, 2, 3], [0, 2, 4], 0.05)
     }
     root.release(false, [0, 0, 1])
-    leaves[0]!.body.setTranslation({
+    leaves[0].body.setTranslation({
       x: 0,
       y: -13,
       z: 0,
     }, true)
-    leaves[0]!.recover()
-    expect(leaves[0]!.body.isDynamic()).toBe(true)
+    leaves[0].recover()
+    expect(leaves[0].body.isDynamic()).toBe(true)
     root.body.setTranslation({
       x: 0,
       y: -13,

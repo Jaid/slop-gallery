@@ -24,11 +24,11 @@ test('clay maps have deterministic, independently owned and correctly filtered p
       const pixels = map.image.data!
       const values = new Set<number>
       for (let i = 0; i < pixels.length; i += 4) {
-        values.add(pixels[i]!)
+        values.add(pixels[i])
         if (pixels[i + 3] !== 255) {
           throw new Error('Clay must be opaque.')
         }
-        if (key === 'roughnessMap' && pixels[i + 1]! < 210) {
+        if (key === 'roughnessMap' && pixels[i + 1] < 210) {
           throw new Error('Unglazed clay must stay matte.')
         }
       }
@@ -58,7 +58,7 @@ test('pores average out at a distance instead of forming cloudy patches', () => 
         let total = 0
         for (let dy = 0; dy < 32; dy++) {
           for (let dx = 0; dx < 32; dx++) {
-            total += data![((y + dy) * width + x + dx) * 4]!
+            total += data![((y + dy) * width + x + dx) * 4]
           }
         }
         averages.push(total / 1024)

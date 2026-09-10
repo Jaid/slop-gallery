@@ -74,7 +74,7 @@ export class DestructiblePlantGeometry extends DestructibleGeometry {
     const stemLength = axis.length()
     // Keep detachable stalks above the solid hull of every catalog pot.
     const rimClearance = Math.min(1, (0.12 - root.y) / (tip.y - root.y))
-    const cutFraction = Math.max(rimClearance, [1, 0.35, 0.7, 0.15, 0.5][this.leaves.length % 5]!)
+    const cutFraction = Math.max(rimClearance, [1, 0.35, 0.7, 0.15, 0.5][this.leaves.length % 5])
     const bottomRadius = this.kind === 'birdOfParadise' ? 0.012 : 0.007
     const topRadius = flower ? 0.003 : bottomRadius * 0.5
     const cutRadius = bottomRadius + (topRadius - bottomRadius) * cutFraction

@@ -64,7 +64,7 @@ describe('boolean architecture', () => {
                 const origin = new Vector3(u, y, side)
                 const direction = new Vector3(0, 0, -side)
                 const ray = new Raycaster(origin, direction, 0, 2)
-                expect(ray.intersectObject(meshes[0]!).length > 0).toBe(solid)
+                expect(ray.intersectObject(meshes[0]).length > 0).toBe(solid)
                 expect(ray.intersectObjects(meshes).length > 0).toBe(solid)
                 expect(!!world.castRay(new RAPIER.Ray(origin, direction), 2, true)).toBe(solid || !!opening?.glassThickness)
               }
@@ -112,9 +112,9 @@ describe('boolean architecture', () => {
                   if (hole.profile === 'arch' && aboveSpring > 0) {
                     // Wider arches start curving lower; their reveal is not a vertical jamb.
                     const reach = Math.sqrt(radius ** 2 - aboveSpring ** 2)
-                    expect(Math.abs(hits[0]!.distance - reach)).toBeLessThan(0.001)
+                    expect(Math.abs(hits[0].distance - reach)).toBeLessThan(0.001)
                   } else {
-                    expect(hits[0]!.distance).toBeCloseTo(radius, 5)
+                    expect(hits[0].distance).toBeCloseTo(radius, 5)
                   }
                 }
               }
@@ -129,7 +129,7 @@ describe('boolean architecture', () => {
   }
   test('placement rays hit the solid arch shoulders, not the opening beneath them', () => {
     const wall = walls.find(wall => wall.id === 'lobby-east')!
-    const hole = wall.holes![0]!
+    const hole = wall.holes![0]
     expect(openingTop(hole, hole.u)).toBeCloseTo(3.8)
     expect(openingTop(hole, hole.u + 1.2)).toBeLessThan(3.2)
     expect(findPlacement([5, 3.5, 4.2], [1, 0, 0], 0, 0, [])?.wallId).toBe(wall.id)
@@ -141,7 +141,7 @@ describe('boolean architecture', () => {
   })
   test('supports multiple independent openings without leaving a bottom sill', () => {
     const wall = {
-      ...walls[0]!,
+      ...walls[0],
       holes: [
         {
           u: -3,

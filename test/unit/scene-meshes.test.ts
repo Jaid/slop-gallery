@@ -55,9 +55,9 @@ describe('chandelier geometry', () => {
       for (let i = 0; i < 8; i++) {
         const position = new Vector3(1.25, 2, 0).applyAxisAngle(new Vector3(0, 1, 0), i * Math.PI / 4)
         const ray = new Raycaster(position, new Vector3(0, -1, 0))
-        expect(ray.intersectObject(brass)[0]!.point.y).toBeCloseTo(0.21, 5)
-        expect(ray.intersectObject(candles)[0]!.point.y).toBeCloseTo(0.44, 5)
-        expect(ray.intersectObject(flames)[0]!.point.y).toBeCloseTo(0.615, 5)
+        expect(ray.intersectObject(brass)[0].point.y).toBeCloseTo(0.21, 5)
+        expect(ray.intersectObject(candles)[0].point.y).toBeCloseTo(0.44, 5)
+        expect(ray.intersectObject(flames)[0].point.y).toBeCloseTo(0.615, 5)
       }
     } finally {
       geometry.dispose()

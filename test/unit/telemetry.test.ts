@@ -72,7 +72,7 @@ test('gallery adapters record bounded state, lifecycle events and save spans, th
   expect(records).not.toContain('secret-key')
   expect(records).not.toContain('private artwork')
   expect(records).not.toContain('private-first-id')
-  expect(batches[0]!.resource).toMatchObject({
+  expect(batches[0].resource).toMatchObject({
     'service.name': 'slop-gallery',
     'service.instance.id': 'test-session',
   })
@@ -116,8 +116,8 @@ test('Victoria uses native JSON metrics and the existing OTLP logs/traces endpoi
   telemetry.event('verification')
   await telemetry.flush()
   expect(requests.map(item => item.url)).toEqual(['/relay/metrics', '/relay/logs', '/relay/traces'])
-  const lines = (requests[0]!.init?.body as string).trim().split('\n')
-  const metric: unknown = JSON.parse(lines[0]!)
+  const lines = (requests[0].init?.body as string).trim().split('\n')
+  const metric: unknown = JSON.parse(lines[0])
   expect(metric).toMatchObject({
     metric: {
       __name__: 'ego.position.x',
@@ -127,8 +127,8 @@ test('Victoria uses native JSON metrics and the existing OTLP logs/traces endpoi
     values: [4.2],
     timestamps: [1234],
   })
-  expect(JSON.parse((requests[1]!.init?.body as string))).toHaveProperty('resourceLogs')
-  expect(JSON.parse((requests[2]!.init?.body as string))).toHaveProperty('resourceSpans')
+  expect(JSON.parse((requests[1].init?.body as string))).toHaveProperty('resourceLogs')
+  expect(JSON.parse((requests[2].init?.body as string))).toHaveProperty('resourceSpans')
 })
 test('relay restricts routes, methods, origins, content types and payload size without forwarding credentials', async () => {
   const calls: Array<{init: RequestInit | undefined
@@ -183,14 +183,14 @@ test('relay restricts routes, methods, origins, content types and payload size w
       body: '{}',
     })
     expect(response.status).toBe(200)
-    expect(calls[0]!.url).toBe('http://10.0.0.22:4318/v1/logs')
-    expect(calls[0]!.init?.headers).toEqual({'Content-Type': 'application/json'})
+    expect(calls[0].url).toBe('http://10.0.0.22:4318/v1/logs')
+    expect(calls[0].init?.headers).toEqual({'Content-Type': 'application/json'})
     expect(await status(`${url}/api/telemetry/metrics`, {
       method: 'POST',
       headers: {'Content-Type': 'application/stream+json'},
       body: '{}\n',
     })).toBe(200)
-    expect(calls[1]!.url).toBe('http://10.0.0.22:3304/api/v1/import')
+    expect(calls[1].url).toBe('http://10.0.0.22:3304/api/v1/import')
   } finally {
     await new Promise<void>((resolve, reject) => server.close(error => {
       if (error) {

@@ -30,7 +30,7 @@ export class OculusGroundGeometry extends BufferGeometry {
       const vertices = slope.getAttribute('position')
       for (let i = 0; i < vertices.count; i++) {
         const section = Math.round((vertices.getZ(i) / (towerRamp.endZ - towerRamp.startZ) + 0.5) * (towerRampSections.length - 1))
-        const z = towerRampSections[section]!
+        const z = towerRampSections[section]
         const fraction = (z - towerRamp.startZ) / (towerRamp.endZ - towerRamp.startZ)
         const height = towerRampHeight(fraction) - floorY
         vertices.setX(i, Math.sign(vertices.getX(i)) * towerRampHalfWidth(z))

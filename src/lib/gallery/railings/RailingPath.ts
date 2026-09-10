@@ -29,7 +29,7 @@ export class RailingPath extends Curve<Vector3> {
       if (distance < 0.000_001) {
         throw new RangeError('Consecutive railing anchors must be distinct.')
       }
-      this.distances.push(this.distances[i - 1]! + distance)
+      this.distances.push(this.distances[i - 1] + distance)
     }
     this.length = this.distances.at(-1)!
     this.segments = anchors.slice(1).map((_, i) => {
@@ -64,23 +64,23 @@ export class RailingPath extends Curve<Vector3> {
     let high = this.distances.length - 1
     while (low + 1 < high) {
       const mid = low + high >>> 1
-      if (this.distances[mid]! <= distance) {
+      if (this.distances[mid] <= distance) {
         low = mid
       } else {
         high = mid
       }
     }
-    const a = this.anchors[low]!
-    const b = this.anchors[high]!
-    const f = (distance - this.distances[low]!) / (this.distances[high]! - this.distances[low]!)
+    const a = this.anchors[low]
+    const b = this.anchors[high]
+    const f = (distance - this.distances[low]) / (this.distances[high] - this.distances[low])
     return {
-      ground: a.ground.map((value, i) => value + (b.ground[i]! - value) * f) as Vec3,
+      ground: a.ground.map((value, i) => value + (b.ground[i] - value) * f) as Vec3,
       height: a.height + (b.height - a.height) * f,
     }
   }
 
   private top(index: number) {
-    const {ground, height} = this.anchors[index]!
+    const {ground, height} = this.anchors[index]
     return new Vector3(ground[0], ground[1] + height, ground[2])
   }
 }

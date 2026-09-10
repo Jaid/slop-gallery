@@ -24,7 +24,7 @@ test('every Moonfall LED is backed by solid wall across its entire housing', () 
           for (const offset of [-0.124, 0, 0.124]) {
             for (const y of [0.801, 2.2, 3.599]) {
               const origin = new Vector3(room.center[0] + lightX - side * 0.075, lowerGallery.floorY + y, room.center[1] + z + offset)
-              const hit = new Raycaster(origin, new Vector3(side, 0, 0), 0, 0.3).intersectObject(mesh)[0]!
+              const hit = new Raycaster(origin, new Vector3(side, 0, 0), 0, 0.3).intersectObject(mesh)[0]
               expect(hit).toBeDefined()
               expect(hit.distance).toBeCloseTo(0.145, 5)
             }

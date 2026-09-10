@@ -28,8 +28,8 @@ export const stairTurn = new StairTurn([staircase.turnX, (staircase.z + staircas
 export const stairBlocks = stairFlights.flatMap(flight => flight.blocks)
 export const stairRoofs: Array<StairBeam> = stairFlights.map(flight => flight.beam(stairHeadroom, 0.18, flight.width))
 export function stairRailGeometry(side: 'inner' | 'outer') {
-  const start = stairFlights[0]!.start
-  const end = stairFlights[1]!.end
+  const start = stairFlights[0].start
+  const end = stairFlights[1].end
   return new StairHandrailGeometry(stairTurn, side, [start[0], start[1]], [end[0], end[1]])
 }
 

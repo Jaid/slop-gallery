@@ -42,8 +42,8 @@ describe('inspection look', () => {
     })
     let previousRatio = 2
     for (let i = 1; i < offsets.length; i++) {
-      expect(offsets[i]!).toBeGreaterThan(offsets[i - 1]!)
-      const ratio = offsets[i]! / offsets[i - 1]!
+      expect(offsets[i]).toBeGreaterThan(offsets[i - 1])
+      const ratio = offsets[i] / offsets[i - 1]
       expect(ratio).toBeLessThan(previousRatio)
       previousRatio = ratio
     }
@@ -67,7 +67,7 @@ describe('inspection look', () => {
       return look.rotation
     })
     for (const result of results) {
-      expect(result.angleTo(results[0]!)).toBeLessThan(0.0001)
+      expect(result.angleTo(results[0])).toBeLessThan(0.0001)
     }
   })
   test('handles yaw wrapping and sustained resistance without invalid rotations', () => {
@@ -109,7 +109,7 @@ describe('inspection look', () => {
       return look.rotation
     })
     for (const result of results) {
-      expect(result.angleTo(results[0]!)).toBeLessThan(0.0001)
+      expect(result.angleTo(results[0])).toBeLessThan(0.0001)
     }
   })
   test('filters uneven input batches instead of producing frame-to-frame jumps', () => {

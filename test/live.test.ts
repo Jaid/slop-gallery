@@ -3,9 +3,9 @@ import type {Vec3} from '../src/lib/gallery/types.ts'
 import type {Page} from 'puppeteer-core'
 
 import {expect, test} from 'bun:test'
-import fs from 'fs-extra'
-import * as path from 'forward-slash-path'
 
+import * as path from 'forward-slash-path'
+import fs from 'fs-extra'
 import puppeteer from 'puppeteer-core'
 import {preview} from 'vite'
 
@@ -48,7 +48,7 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
   const errors: Array<string> = []
   const external: Array<string> = []
   const page = await browser.newPage()
-  const baseUrl = server.resolvedUrls!.local[0]!
+  const baseUrl = server.resolvedUrls!.local[0]
   try {
     page.on('pageerror', error => errors.push(String(error)))
     page.on('console', message => {
@@ -86,7 +86,7 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
       context.drawImage(bitmap, 0, 0)
       bitmap.close()
       const pixels = context.getImageData(655, 395, 125, 125).data
-      const values = Array.from({length: pixels.length / 4}, (_, i) => pixels[i * 4]!)
+      const values = Array.from({length: pixels.length / 4}, (_, i) => pixels[i * 4])
       const mean = values.reduce((a, b) => a + b) / values.length
       return values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / values.length
     }, Buffer.from(screenshot).toString('base64'))
@@ -323,7 +323,7 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
       await teleport(page, position, rotation)
       await Bun.sleep(1000)
       const state = await snapshot(page)
-      expect(Math.hypot(...state.camera.map((value, axis) => value - position[axis]!))).toBeLessThan(0.05)
+      expect(Math.hypot(...state.camera.map((value, axis) => value - position[axis]))).toBeLessThan(0.05)
       const knot = state.props.find(prop => prop.id === 'prop-knot')!
       expect(knot.bodyType).toBe(1)
       expect(knot.collidersEnabled.length).toBeGreaterThan(0)
@@ -332,7 +332,7 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     await page.keyboard.press('e')
     await Bun.sleep(500)
     const released = await snapshot(page)
-    expect(Math.hypot(...released.camera.map((value, axis) => value - [18, 1.62, 7.45][axis]!))).toBeLessThan(0.05)
+    expect(Math.hypot(...released.camera.map((value, axis) => value - [18, 1.62, 7.45][axis]))).toBeLessThan(0.05)
     expect(released.props.find(prop => prop.id === 'prop-knot')!.bodyType).toBe(0)
     expect(released.props.find(prop => prop.id === 'prop-knot')!.collidersEnabled.every(Boolean)).toBe(true)
     expect(released.props.find(prop => prop.id === 'prop-knot')!.position.z).toBeLessThan(7)
@@ -371,7 +371,7 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     expect(heldBook.bodyType).toBe(1)
     expect(heldBook.collidersEnabled.every(enabled => !enabled)).toBe(true)
     expect(heldBook.visualPosition[2]).toBeCloseTo(5.65, 1)
-    expect(Math.hypot(...heldBook.visualPosition.map((value, i) => value - [heldBook.position.x, heldBook.position.y, heldBook.position.z][i]!))).toBeLessThan(0.03)
+    expect(Math.hypot(...heldBook.visualPosition.map((value, i) => value - [heldBook.position.x, heldBook.position.y, heldBook.position.z][i]))).toBeLessThan(0.03)
     await page.mouse.up({button: 'left'})
     await page.waitForFunction(() => globalThis.__gallery!.snapshot!().held === null)
     expect((await snapshot(page)).props.find(prop => prop.id === 'prop-book')!.bodyType).toBe(0)
@@ -426,6 +426,6 @@ test('production gallery: visible WebGPU, physics, editing, imports, fusion and 
     throw error
   } finally {
     await browser.close()
-    await new Promise<void>((resolve, reject) => server.httpServer.close(error => (error ? reject(error) : resolve())))
+    await new Promise<void>((resolve, reject) => server.httpServer.close(error => error ? reject(error) : resolve()))
   }
 }, 180_000)

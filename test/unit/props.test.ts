@@ -17,7 +17,7 @@ afterEach(() => world.free())
 function book() {
   const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, 1.42, 1.6))
   for (const [width, height, depth, y] of [[0.64, 0.095, 0.86, 0], [0.69, 0.025, 0.91, -0.06], [0.69, 0.025, 0.91, 0.06]]) {
-    world.createCollider(RAPIER.ColliderDesc.cuboid(width! / 2, height! / 2, depth! / 2).setTranslation(0, y!, 0).setEnabled(false), body)
+    world.createCollider(RAPIER.ColliderDesc.cuboid(width / 2, height / 2, depth / 2).setTranslation(0, y, 0).setEnabled(false), body)
   }
   return new PropPlacement(world, body)
 }
@@ -165,7 +165,7 @@ describe('carried prop flight', () => {
       const next = placement.follow(destination, 1 / 60)!
       expect(next).not.toBeNull()
       expect(placement.hasRoom(next, false)).toBe(true)
-      expect(Math.hypot(...next.map((v, i) => v - previous[i]!))).toBeLessThanOrEqual(20 / 60 + 0.0001)
+      expect(Math.hypot(...next.map((v, i) => v - previous[i]))).toBeLessThanOrEqual(20 / 60 + 0.0001)
       if (i === 0) {
         expect(next[1]).toBeGreaterThan(1.42)
         expect(next[2]).toBeGreaterThan(1.6 - 20 / 60)

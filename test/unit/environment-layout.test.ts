@@ -46,14 +46,14 @@ test('four matching slatted benches surround the relocated fountain and leave th
         const z = (slat + 0.5) * pitch - (depth + slatGap) / 2
         for (const x of [-1.3, -0.8, 0, 0.8, 1.3]) {
           const ray = new Raycaster(new Vector3(x, 1, z), new Vector3(0, -1, 0))
-          expect(ray.intersectObject(mesh)[0]!.point.y).toBeCloseTo(fountainBench.height)
+          expect(ray.intersectObject(mesh)[0].point.y).toBeCloseTo(fountainBench.height)
           if (slat < slats - 1) {
             ray.ray.origin.z += pitch / 2
             expect(ray.intersectObject(mesh)).toHaveLength(0)
           }
         }
-        const left = new Raycaster(new Vector3(-1, 1, z), new Vector3(0, -1, 0)).intersectObject(mesh)[0]!
-        const right = new Raycaster(new Vector3(1, 1, z), new Vector3(0, -1, 0)).intersectObject(mesh)[0]!
+        const left = new Raycaster(new Vector3(-1, 1, z), new Vector3(0, -1, 0)).intersectObject(mesh)[0]
+        const right = new Raycaster(new Vector3(1, 1, z), new Vector3(0, -1, 0)).intersectObject(mesh)[0]
         expect(left.uv!.x).toBeCloseTo(right.uv!.x)
         expect(Math.abs(left.uv!.y - right.uv!.y)).toBeGreaterThan(0.6)
       }
@@ -75,7 +75,7 @@ test('timber entrances have a single exposed face across the ribs, lining and st
     },
     {
       timber: TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts),
-      start: [corridorPassage.path[0]![0], corridorPassage.floorY, corridorPassage.path[0]![1]],
+      start: [corridorPassage.path[0][0], corridorPassage.floorY, corridorPassage.path[0][1]],
       width: corridorPassage.width,
       wallIds: ['lodge-west', ...corridorPassage.walls.map(wall => wall.id)],
     },
@@ -100,17 +100,17 @@ test('timber entrances have a single exposed face across the ribs, lining and st
         for (const side of [-1, 1]) {
           for (const cross of [1.06, 1.12, 1.19, 1.2, 1.215, 1.22, 1.24, 1.28, 1.31]) {
             for (const height of [0.1, 0.41, 0.83, 1.37, 1.9, 2.2, 2.9, 3.35]) {
-              const origin = new Vector3(start[0]! + 0.8, start[1]! + height, start[2]! + side * (width / 2 - 1.3 + cross))
+              const origin = new Vector3(start[0] + 0.8, start[1] + height, start[2] + side * (width / 2 - 1.3 + cross))
               const hits = new Raycaster(origin, new Vector3(-1, 0, 0), 0, 2).intersectObjects(meshes)
               expect(hits.length).toBeGreaterThan(0)
-              const front = hits.filter(hit => Math.abs(hit.distance - hits[0]!.distance) < 0.0001)
+              const front = hits.filter(hit => Math.abs(hit.distance - hits[0].distance) < 0.0001)
               expect(new Set(front.map(hit => hit.object)).size).toBe(1)
             }
           }
         }
         // The timber is a real projecting reveal, not a depth-biased material or an open ceiling seam.
-        const origin = new Vector3(start[0]! + 0.015, start[1]! + 1.6, start[2])
-        const ceiling = new Raycaster(origin, new Vector3(0, 1, 0), 0, 3).intersectObjects(meshes)[0]!
+        const origin = new Vector3(start[0] + 0.015, start[1] + 1.6, start[2])
+        const ceiling = new Raycaster(origin, new Vector3(0, 1, 0), 0, 3).intersectObjects(meshes)[0]
         expect(ceiling.distance).toBeGreaterThan(1.5)
         expect(ceiling.distance).toBeLessThan(2.1)
       } finally {
@@ -141,8 +141,8 @@ test('the reported timber rib no longer shares its visible face with a wall base
     const meshes = [surface, new Mesh(timber.ribs, material), new Mesh(timber.shell, material)]
     const ray = new Raycaster(new Vector3(lodge.approachX, lodge.floorY + 0.3, -20), new Vector3(-1, 0, 0))
     const hits = ray.intersectObjects(meshes)
-    expect(hits[0]!.point.x).toBeLessThan(lodge.approachX - corridorPassage.width / 2 + 0.3)
-    expect(hits[1]!.distance - hits[0]!.distance).toBeGreaterThan(0.01)
+    expect(hits[0].point.x).toBeLessThan(lodge.approachX - corridorPassage.width / 2 + 0.3)
+    expect(hits[1].distance - hits[0].distance).toBeGreaterThan(0.01)
     expect(walls.filter(value => value.room === 'corridor').every(value => value.trimStyle === 'none')).toBe(true)
     expect(walls.filter(value => value.id.startsWith('lodge-tunnel-')).every(value => value.trimStyle === 'plain')).toBe(true)
   } finally {

@@ -3,7 +3,7 @@ import {lowerGallery} from '../lowerGallery.ts'
 import {walls} from '../walls.ts'
 
 const room = lowerGallery.moonfall
-const stairDoor = walls.find(wall => wall.id === 'moonfall-east')!.holes![0]!
+const stairDoor = walls.find(wall => wall.id === 'moonfall-east')!.holes![0]
 const doorMin = stairDoor.u - stairDoor.width / 2
 const doorMax = stairDoor.u + stairDoor.width / 2
 

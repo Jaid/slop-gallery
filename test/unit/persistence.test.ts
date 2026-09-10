@@ -20,7 +20,7 @@ const previous = {
 test('old north-wall collections follow the extension once, including custom hanging positions', () => {
   const north = initialPortraits.filter(portrait => portrait.wallId === 'lobby-north')
   const custom = {
-    ...north[0]!,
+    ...north[0],
     id: 'custom',
     position: [-5, 2.8, -7.78],
   }
@@ -41,8 +41,8 @@ test('old north-wall collections follow the extension once, including custom han
   }
   const migrated = validateDocument(legacy)
   expect(migrated.portraits.slice(0, north.length)).toMatchObject(north)
-  expect(migrated.portraits[north.length]!.position).toEqual([-5, 2.8, -31.78])
-  expect(migrated.portraits[north.length + 1]!.position).toEqual([-5, 2.8, -7.78])
+  expect(migrated.portraits[north.length].position).toEqual([-5, 2.8, -31.78])
+  expect(migrated.portraits[north.length + 1].position).toEqual([-5, 2.8, -7.78])
   expect(validateDocument(migrated)).toEqual(migrated)
   expect(() => validateDocument({
     ...legacy,
@@ -109,7 +109,7 @@ test('one byte beyond the aggregate limit is rejected by every admission and ser
   }))
   useGallery.getState().commit(portraits)
   const extra = {
-    ...initialPortraits[6]!,
+    ...initialPortraits[6],
     source: new Blob(['x'], {type: 'image/png'}),
   }
   const invalid = {
@@ -125,7 +125,7 @@ test('one byte beyond the aggregate limit is rejected by every admission and ser
   await expect(repo.export(invalid)).rejects.toThrow('150')
   expect(await repo.load()).toBeNull()
   expect(useGallery.getState().portraits).toHaveLength(6)
-  useGallery.getState().commit([...portraits, initialPortraits[6]!])
+  useGallery.getState().commit([...portraits, initialPortraits[6]])
   expect(() => useGallery.getState().update(extra.id, {source: extra.source})).toThrow('150')
 })
 test('a failed load protects the stored record until explicit recovery', async () => {
@@ -154,7 +154,7 @@ test('save strips runtime ownership before structured cloning', async () => {
     ...original,
     portraits: [
       {
-        ...initialPortraits[0]!,
+        ...initialPortraits[0],
         mergeJob: Symbol(),
         flavorJob: Symbol(),
         pending: true,
@@ -211,7 +211,7 @@ test('metadata limits leave room for image encoding in every exported collection
     ...original,
     portraits: [
       {
-        ...initialPortraits[0]!,
+        ...initialPortraits[0],
         hung: false,
         wallId: 'x'.repeat(101),
       },

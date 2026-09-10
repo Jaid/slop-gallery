@@ -36,16 +36,16 @@ describe('title plate targeting', () => {
     return ray.intersectObject(portrait, true)[0]
   }
   test('aiming at either lettering or the plate backing identifies the plate', () => {
-    const lettering = target(0, layout.y + 0.047)!
+    const lettering = target(0, layout.y + 0.047)
     expect(lettering.object).toBe(text)
     expect(isPortraitLabelHit(lettering.object, portrait)).toBe(true)
-    const plate = target(layout.width / 2 - 0.01, layout.y - 0.12)!
+    const plate = target(layout.width / 2 - 0.01, layout.y - 0.12)
     expect(plate.object).toBe(backing)
     expect(isPortraitLabelHit(plate.object, portrait)).toBe(true)
   })
   test('the image, frame and empty space do not identify a title plate', () => {
-    expect(isPortraitLabelHit(target(0, 0)!.object, portrait)).toBe(false)
-    expect(isPortraitLabelHit(target(1.07, 0)!.object, portrait)).toBe(false)
+    expect(isPortraitLabelHit(target(0, 0).object, portrait)).toBe(false)
+    expect(isPortraitLabelHit(target(1.07, 0).object, portrait)).toBe(false)
     expect(target(0, layout.y - 0.4)).toBeUndefined()
   })
   test('preview labels are not readable artwork targets', () => {
@@ -59,7 +59,7 @@ describe('title plate targeting', () => {
 describe('contextual HUD', () => {
   test('the artwork overlay includes title, description, creator and year', () => {
     const p = {
-      ...initialPortraits[0]!,
+      ...initialPortraits[0],
       year: 1924,
     }
     const html = renderToStaticMarkup(createElement(ArtworkOverlay, {portrait: p}))
@@ -71,7 +71,7 @@ describe('contextual HUD', () => {
   test('year zero is not mistaken for a missing year', () => {
     const html = renderToStaticMarkup(createElement(ArtworkOverlay, {
       portrait: {
-        ...initialPortraits[0]!,
+        ...initialPortraits[0],
         year: 0,
       },
     }))
@@ -79,7 +79,7 @@ describe('contextual HUD', () => {
     expect(html).not.toContain('Undated')
   })
   test('missing years are explicitly undated', () => {
-    expect(renderToStaticMarkup(createElement(ArtworkOverlay, {portrait: initialPortraits[0]!}))).toContain('Undated')
+    expect(renderToStaticMarkup(createElement(ArtworkOverlay, {portrait: initialPortraits[0]}))).toContain('Undated')
   })
   test('recorded and provider audio show the real five-band visualization', () => {
     const html = renderToStaticMarkup(createElement(NarrationIndicator, {
@@ -116,17 +116,17 @@ describe('contextual HUD', () => {
 })
 describe('artwork year metadata', () => {
   test('existing collections remain valid without years', () => {
-    expect(validateDocument(createDocument()).portraits[0]!.year).toBeUndefined()
+    expect(validateDocument(createDocument()).portraits[0].year).toBeUndefined()
   })
   test('years survive validation and compressed backup round-trips', async () => {
     const document = createDocument()
     document.portraits[0] = {
-      ...document.portraits[0]!,
+      ...document.portraits[0],
       year: 1924,
     }
     const repository = new GalleryRepository
     const result = await repository.import(await repository.export(document))
-    expect(result.portraits[0]!.year).toBe(1924)
+    expect(result.portraits[0].year).toBe(1924)
   })
   for (const year of [1924.5, '', '2026', Number.NaN, Infinity, Number.MAX_SAFE_INTEGER + 1, {value: 2026}]) {
     test(`invalid year metadata is rejected: ${JSON.stringify(year)}`, () => {

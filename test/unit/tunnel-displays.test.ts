@@ -16,11 +16,11 @@ describe('widened tunnel with sealed display rooms', () => {
   test('both portals, floor bounds and balcony follow the wider tunnel, without adding visitable rooms', () => {
     expect(tunnel.width).toBe(4.2)
     for (const id of ['oculus-south', 'moonfall-north']) {
-      expect(walls.find(wall => wall.id === id)!.holes![0]!.width).toBe(tunnel.width)
+      expect(walls.find(wall => wall.id === id)!.holes![0].width).toBe(tunnel.width)
     }
     expect(oculusBalcony.width).toBe(tunnel.width + 1)
     expect(tunnelDisplays).toHaveLength(2)
-    expect(tunnelDisplays[0]!.center[0]).toBe(-tunnelDisplays[1]!.center[0])
+    expect(tunnelDisplays[0].center[0]).toBe(-tunnelDisplays[1].center[0])
     for (const display of tunnelDisplays) {
       expect(display.exhibits).toHaveLength(3)
       expect(insideGallery([display.center[0], floorY + 1.6, display.center[1]])).toBe(false)
@@ -58,7 +58,7 @@ describe('widened tunnel with sealed display rooms', () => {
               const direction = new Vector3(0, 0, -side)
               const ray = new Raycaster(origin, direction, 0, 2)
               expect(ray.intersectObjects(opaque)).toHaveLength(0)
-              const hit = ray.intersectObjects(glass)[0]!
+              const hit = ray.intersectObjects(glass)[0]
               expect(hit.point.z).toBeCloseTo((wallFace + side * tunnelDisplayWindow.glassThickness) / 2, 6)
               expect(world.castRay(new RAPIER.Ray(origin, direction), 2, true)!.timeOfImpact).toBeCloseTo(hit.distance, 6)
             }

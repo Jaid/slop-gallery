@@ -15,15 +15,15 @@ await RAPIER.init()
 test('matching access ramps flank the room with a clear central floor', () => {
   expect(oculusRamps).toHaveLength(2)
   const [west, east] = oculusRamps
-  expect(west!.x).toBe(-7.9)
-  expect(east!.x).toBe(7.9)
-  expect(west!.x - west!.width / 2).toBe(-lowerGallery.oculus.size[0] / 2)
-  expect(east!.x + east!.width / 2).toBe(lowerGallery.oculus.size[0] / 2)
+  expect(west.x).toBe(-7.9)
+  expect(east.x).toBe(7.9)
+  expect(west.x - west.width / 2).toBe(-lowerGallery.oculus.size[0] / 2)
+  expect(east.x + east.width / 2).toBe(lowerGallery.oculus.size[0] / 2)
   expect({
     ...west,
-    side: east!.side,
-    x: east!.x,
-  }).toEqual(east!)
+    side: east.side,
+    x: east.x,
+  }).toEqual(east)
   expect(rampFloorHeight(0, -20)).toBeUndefined()
 })
 for (const ramp of oculusRamps) {
@@ -46,7 +46,7 @@ for (const ramp of oculusRamps) {
           expect(rampFloorHeight(ramp.x, z)).toBeCloseTo(top)
           expect(floorHeight([ramp.x, top + 1.6, z])).toBeCloseTo(top)
           const ray = new Raycaster(new Vector3(ramp.x, 0, z), new Vector3(0, -1, 0))
-          expect(ray.intersectObject(mesh)[0]!.point.y).toBeCloseTo(top)
+          expect(ray.intersectObject(mesh)[0].point.y).toBeCloseTo(top)
         }
         expect(rampFloorHeight(ramp.x + ramp.width, ramp.startZ)).toBeUndefined()
         expect(rampFloorHeight(ramp.x, ramp.startZ + 0.01)).toBeUndefined()

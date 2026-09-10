@@ -212,7 +212,7 @@ const roomWall = (roomId: RoomId, side: 'east' | 'north' | 'south' | 'west', hol
           [ramp.startZ - ramp.run, ramp.rise],
           [ramp.startZ, 0],
           [room.center[1] + depth / 2, 0],
-        ].map(([worldZ, y]): [number, number] => [(worldZ! - room.center[1]) * (side === 'east' ? 1 : -1), y!]).toSorted((a, b) => a[0] - b[0])
+        ].map(([worldZ, y]): [number, number] => [(worldZ - room.center[1]) * (side === 'east' ? 1 : -1), y]).toSorted((a, b) => a[0] - b[0])
       }
     }
   }
@@ -531,7 +531,7 @@ export function findPlacement(origin: Vec3, direction: Vec3, width: number, heig
 
 export function wallDistance(origin: Vec3, direction: Vec3) {
   const hit = findPlacement(origin, direction, 0, 0, [])
-  return hit ? Math.hypot(...hit.position.map((v, i) => v - origin[i]!) as Vec3) + 0.3 : Infinity
+  return hit ? Math.hypot(...hit.position.map((v, i) => v - origin[i]) as Vec3) + 0.3 : Infinity
 }
 
 // Prefer the highest nearby floor below the caller, not the first horizontal match.

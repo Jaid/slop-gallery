@@ -39,6 +39,6 @@ export function imageFilename(title: string, mime: string) {
   if (!Object.hasOwn(imageExtensions, mime)) {
     throw new Error('The artwork has an unsupported image type.')
   }
-  const extension = imageExtensions[mime as keyof typeof imageExtensions][0]!
+  const extension = imageExtensions[mime as keyof typeof imageExtensions][0]
   return `${title.replaceAll(/[^\p{L}\p{N} -]/gu, '').slice(0, 70) || 'artwork'}${extension}`
 }

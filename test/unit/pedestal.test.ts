@@ -76,8 +76,8 @@ describe('sculpture pedestals', () => {
         }
       }
     }
-    const stone = meshes[0]!
-    const depth = (x: number) => new Raycaster(new Vector3(x, 0.7, 2), new Vector3(0, 0, -1)).intersectObject(stone)[0]!.distance
+    const stone = meshes[0]
+    const depth = (x: number) => new Raycaster(new Vector3(x, 0.7, 2), new Vector3(0, 0, -1)).intersectObject(stone)[0].distance
     expect(depth(0.047) - depth(0)).toBeCloseTo(0.022, 5)
   })
   test('keeps a dropped sculpture resting on the cap', () => {

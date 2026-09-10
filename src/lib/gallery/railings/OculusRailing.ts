@@ -12,7 +12,7 @@ export class OculusRailing extends RailingPath {
     const left: Array<RailingAnchor> = []
     const add = (ground: Vec3, height = ramp.railHeight) => {
       const previous = left.at(-1)
-      if (!previous || Math.hypot(...ground.map((value, i) => value - previous.ground[i]!)) > 0.000_01 || height !== previous.height) {
+      if (!previous || Math.hypot(...ground.map((value, i) => value - previous.ground[i])) > 0.000_01 || height !== previous.height) {
         left.push({
           ground,
           height,
@@ -44,7 +44,7 @@ export class OculusRailing extends RailingPath {
     }
     // Offset the open perimeter, not its closing entrance chord. Offsetting the
     // chord pulls the endpoints forward and makes the rail double back at the shoulders.
-    const outline = [towerPlatformOutline[0]!, ...towerPlatformOutline.slice(1, -1).toReversed()]
+    const outline = [towerPlatformOutline[0], ...towerPlatformOutline.slice(1, -1).toReversed()]
     const perimeter = outline.map((point, i): RailingAnchor => {
       if (i === 0 || i === outline.length - 1) {
         return {
@@ -52,21 +52,21 @@ export class OculusRailing extends RailingPath {
           height: ramp.railHeight / 2,
         }
       }
-      const previous = outline[i - 1]!
-      const next = outline[i + 1]!
+      const previous = outline[i - 1]
+      const next = outline[i + 1]
       const before = [point[0] - previous[0], point[1] - previous[1]]
       const after = [next[0] - point[0], next[1] - point[1]]
       const beforeLength = Math.hypot(...before)
       const afterLength = Math.hypot(...after)
-      const n1 = [before[1]! / beforeLength, -before[0]! / beforeLength]
-      const n2 = [after[1]! / afterLength, -after[0]! / afterLength]
-      const scale = inset / (1 + n1[0]! * n2[0]! + n1[1]! * n2[1]!)
+      const n1 = [before[1] / beforeLength, -before[0] / beforeLength]
+      const n2 = [after[1] / afterLength, -after[0] / afterLength]
+      const scale = inset / (1 + n1[0] * n2[0] + n1[1] * n2[1])
       return {
-        ground: [tower.x + point[0] + (n1[0]! + n2[0]!) * scale, ramp.endY, tower.z + point[1] + (n1[1]! + n2[1]!) * scale],
+        ground: [tower.x + point[0] + (n1[0] + n2[0]) * scale, ramp.endY, tower.z + point[1] + (n1[1] + n2[1]) * scale],
         height: ramp.railHeight / 2,
       }
     })
-    const towerLeft = perimeter[0]!
+    const towerLeft = perimeter[0]
     add(towerLeft.ground, towerLeft.height)
     // One open path runs up the west ramp, around the tower and down the east ramp.
     // The entrance chord is deliberately omitted, keeping the tower accessible.

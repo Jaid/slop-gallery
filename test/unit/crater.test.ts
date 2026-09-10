@@ -48,15 +48,15 @@ describe('Moonfall impact hall', () => {
     expect(room.size[0] * room.size[1]).toBeGreaterThan(4 * 12 * 14)
     const north = walls.find(wall => wall.id === 'moonfall-north')!
     const east = walls.find(wall => wall.id === 'moonfall-east')!
-    expect(wallPosition(north, north.holes![0]!.u, room.floorY, 0)).toEqual([lowerGallery.tunnel.x, room.floorY, lowerGallery.tunnel.southZ])
-    const portal = wallPosition(east, east.holes![0]!.u, room.floorY, 0)
+    expect(wallPosition(north, north.holes![0].u, room.floorY, 0)).toEqual([lowerGallery.tunnel.x, room.floorY, lowerGallery.tunnel.southZ])
+    const portal = wallPosition(east, east.holes![0].u, room.floorY, 0)
     expect(portal[0]).toBe(staircase.endX)
     expect(portal[2]).toBeCloseTo(staircase.returnZ)
     const visit = roomVisit(room).position
     expect(Math.hypot(visit[0] - room.center[0], visit[2] - room.center[1])).toBeGreaterThan(moonfallCrater.fenceRadius + 0.6)
     for (const [x, z] of [[-20, 6], [-20, 30], [4, 30]]) {
-      expect(insideGallery([x!, -6.4, z!])).toBe(true)
-      expect(roomAt([x!, -6.4, z!])).toBe('moonfall')
+      expect(insideGallery([x, -6.4, z])).toBe(true)
+      expect(roomAt([x, -6.4, z])).toBe('moonfall')
     }
   })
   test('the floor has a real circular void and the crater is deep, deterministic and textured', () => {
@@ -74,10 +74,10 @@ describe('Moonfall impact hall', () => {
       for (const [x, z] of [[0, 0], [2, 1], [-4, -3], [7.1, 0], [0, 8.99]]) {
         const ray = new Raycaster(new Vector3(x, 3, z), new Vector3(0, -1, 0))
         expect(ray.intersectObject(floor)).toHaveLength(0)
-        const hit = ray.intersectObject(terrain)[0]!
+        const hit = ray.intersectObject(terrain)[0]
         expect(hit).toBeDefined()
-        expect(hit.point.y).toBeCloseTo(craterTerrain.height(x!, z!), 1)
-        expect(second.height(x!, z!)).toBe(craterTerrain.height(x!, z!))
+        expect(hit.point.y).toBeCloseTo(craterTerrain.height(x, z), 1)
+        expect(second.height(x, z)).toBe(craterTerrain.height(x, z))
       }
       expect(craterTerrain.height(0, 0)).toBeLessThan(-2.8)
       expect(craterTerrain.height(2.5, 0)).toBeLessThan(-3)
@@ -86,7 +86,7 @@ describe('Moonfall impact hall', () => {
         expect(craterTerrain.height(Math.cos(angle) * 9, Math.sin(angle) * 9)).toBeCloseTo(0, 8)
       }
       const outside = new Raycaster(new Vector3(10.5, 2, 0), new Vector3(0, -1, 0))
-      expect(outside.intersectObject(floor)[0]!.point.y).toBeCloseTo(0)
+      expect(outside.intersectObject(floor)[0].point.y).toBeCloseTo(0)
       expect(outside.intersectObject(terrain)).toHaveLength(0)
     } finally {
       material.dispose()
@@ -94,8 +94,8 @@ describe('Moonfall impact hall', () => {
   })
   test('the crater floor participates in prop recovery, room lookup and saved player poses', () => {
     for (const [x, z] of [[0, 0], [2.5, -1], [-4, 2]]) {
-      const ground = room.floorY + craterTerrain.height(x!, z!)
-      const position: Vec3 = [x! + room.center[0], ground + 0.15, z! + room.center[1]]
+      const ground = room.floorY + craterTerrain.height(x, z)
+      const position: Vec3 = [x + room.center[0], ground + 0.15, z + room.center[1]]
       expect(floorHeight(position)).toBeCloseTo(ground)
       expect(insideGallery(position)).toBe(true)
       expect(roomAt(position)).toBe('moonfall')
@@ -115,7 +115,7 @@ describe('Moonfall impact hall', () => {
         player: session.snapshot(),
         portraits: [
           {
-            ...initialPortraits[0]!,
+            ...initialPortraits[0],
             hung: false,
             position,
           },
@@ -127,7 +127,7 @@ describe('Moonfall impact hall', () => {
   test('dropped objects land inside the depression, not on an invisible flat floor', () => {
     const world = worldAt()
     const bodies = [[0, 0], [2.5, 0], [-2.2, -1.5]].map(([x, z]) => {
-      const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(x!, 1, z!).setCcdEnabled(true))
+      const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(x, 1, z).setCcdEnabled(true))
       world.createCollider(RAPIER.ColliderDesc.ball(0.13).setRestitution(0), body)
       return body
     })

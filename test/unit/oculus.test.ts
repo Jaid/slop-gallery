@@ -35,7 +35,7 @@ describe('oculus and connecting tunnel', () => {
   test('art follows either widened side wall exactly once without moving loose art', () => {
     for (const side of [-1, 1]) {
       const portrait = {
-        ...initialPortraits[0]!,
+        ...initialPortraits[0],
         wallId: side === -1 ? 'oculus-west' : 'oculus-east',
         position: [side * 5.78, -5.5, -20] as [number, number, number],
         rotation: side === -1 ? Math.PI / 2 : -Math.PI / 2,
@@ -44,8 +44,8 @@ describe('oculus and connecting tunnel', () => {
         ...createDocument(),
         portraits: [portrait],
       })
-      expect(saved.portraits[0]!.position[0]).toBeCloseTo(side * 8.78)
-      expect(saved.portraits[0]!.position.slice(1)).toEqual([-5.5, -20])
+      expect(saved.portraits[0].position[0]).toBeCloseTo(side * 8.78)
+      expect(saved.portraits[0].position.slice(1)).toEqual([-5.5, -20])
       expect(validateDocument(saved)).toEqual(saved)
       const loose = validateDocument({
         ...createDocument(),
@@ -56,7 +56,7 @@ describe('oculus and connecting tunnel', () => {
           },
         ],
       })
-      expect(loose.portraits[0]!.position).toEqual(portrait.position)
+      expect(loose.portraits[0].position).toEqual(portrait.position)
     }
   })
   test('lower walls meet the ceiling underside without coplanar faces in the upper floor', () => {
@@ -81,7 +81,7 @@ describe('oculus and connecting tunnel', () => {
           const ray = new Raycaster(origin, new Vector3(0, -1, 0), 0, 1 + floorThickness)
           expect(ray.intersectObject(mesh)).toHaveLength(0)
           ray.far = 2
-          expect(ray.intersectObject(mesh)[0]!.point.y).toBeCloseTo(ceilingBottom, 5)
+          expect(ray.intersectObject(mesh)[0].point.y).toBeCloseTo(ceilingBottom, 5)
         } finally {
           geometry.dispose()
         }
@@ -115,7 +115,7 @@ describe('oculus and connecting tunnel', () => {
       world.step()
       const origin = new Vector3(0, -3, -28.5)
       const direction = new Vector3(0, -1, 0)
-      expect(new Raycaster(origin, direction).intersectObject(mesh)[0]!.point.y).toBe(-5)
+      expect(new Raycaster(origin, direction).intersectObject(mesh)[0].point.y).toBe(-5)
       expect(world.castRay(new RAPIER.Ray(origin, direction), 4, true)!.timeOfImpact).toBe(2)
     } finally {
       geometry.dispose()
@@ -192,13 +192,13 @@ describe('oculus and connecting tunnel', () => {
         ...createDocument(),
         portraits: [
           {
-            ...initialPortraits[0]!,
+            ...initialPortraits[0],
             wallId: 'oculus-north',
             position: [-4, -5.5, z],
           },
         ],
       })
-      expect(saved.portraits[0]!.position).toEqual([-4, -5.5, -30.78])
+      expect(saved.portraits[0].position).toEqual([-4, -5.5, -30.78])
       expect(validateDocument(saved)).toEqual(saved)
     }
   })

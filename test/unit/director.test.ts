@@ -54,7 +54,7 @@ test('fusion keeps both originals until success and commits one undoable change'
   director.result.resolve(merged)
   await job
   expect(useGallery.getState().portraits).toHaveLength(1)
-  expect(useGallery.getState().portraits[0]!.source).toBe(merged)
+  expect(useGallery.getState().portraits[0].source).toBe(merged)
   expect(undo()).toBe(true)
   expect(useGallery.getState().portraits.map(p => p.source)).toEqual([a, b])
   director.dispose()
@@ -91,10 +91,10 @@ test('canceling a director prevents late changes', async () => {
 })
 test('streamed labels never overwrite a subsequent manual edit', async () => {
   const director = new TestDirector(defaults, 'test')
-  const job = director.flavor(useGallery.getState().portraits[0]!)
+  const job = director.flavor(useGallery.getState().portraits[0])
   await Promise.resolve()
   director.partial?.({title: 'Streaming title'})
-  expect(useGallery.getState().portraits[0]!.title).toBe('Streaming title')
+  expect(useGallery.getState().portraits[0].title).toBe('Streaming title')
   useGallery.getState().update('a', {
     title: 'My label',
     pending: false,
@@ -102,23 +102,23 @@ test('streamed labels never overwrite a subsequent manual edit', async () => {
   director.partial?.({title: 'Late stream'})
   director.flavorResult.resolve({title: 'Late final'})
   await job
-  expect(useGallery.getState().portraits[0]!.title).toBe('My label')
+  expect(useGallery.getState().portraits[0].title).toBe('My label')
   director.dispose()
 })
 test('streamed artwork years are retained and invalid provider years are ignored', async () => {
   const director = new TestDirector(defaults, 'test')
   try {
-    const job = director.flavor(useGallery.getState().portraits[0]!)
+    const job = director.flavor(useGallery.getState().portraits[0])
     await Promise.resolve()
     director.partial?.({year: 1924})
-    expect(useGallery.getState().portraits[0]!.year).toBe(1924)
+    expect(useGallery.getState().portraits[0].year).toBe(1924)
     director.partial?.({year: 1924.5})
-    expect(useGallery.getState().portraits[0]!.year).toBe(1924)
+    expect(useGallery.getState().portraits[0].year).toBe(1924)
     director.partial?.({year: Infinity})
-    expect(useGallery.getState().portraits[0]!.year).toBe(1924)
+    expect(useGallery.getState().portraits[0].year).toBe(1924)
     director.flavorResult.resolve({year: 1925})
     await job
-    expect(createDocument().portraits[0]!.year).toBe(1925)
+    expect(createDocument().portraits[0].year).toBe(1925)
   } finally {
     director.dispose()
   }
@@ -138,8 +138,8 @@ test('obsolete merge cleanup cannot cancel its replacement', async () => {
     const job = replacement.merge('a', 'b')
     old.result.resolve(new Blob(['obsolete'], {type: 'image/webp'}))
     await obsolete
-    expect(useGallery.getState().portraits[0]!.merging).toBe(true)
-    expect(useGallery.getState().portraits[1]!.reserved).toBe(true)
+    expect(useGallery.getState().portraits[0].merging).toBe(true)
+    expect(useGallery.getState().portraits[1].reserved).toBe(true)
     const merged = new Blob(['replacement'], {type: 'image/webp'})
     replacement.result.resolve(merged)
     await job
@@ -153,7 +153,7 @@ test('disposing a different director does not release another director’s label
   const unrelated = new TestDirector(defaults, 'test')
   const job = owner.merge('a', 'b')
   unrelated.dispose()
-  expect(useGallery.getState().portraits[0]!.merging).toBe(true)
+  expect(useGallery.getState().portraits[0].merging).toBe(true)
   owner.result.reject(new Error('test'))
   await job
   owner.dispose()

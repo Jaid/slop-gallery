@@ -91,7 +91,7 @@ describe('Lodge and Corridor route', () => {
     expect(lodge.approachX + corridorPassage.width / 2).toBeCloseTo(-31.7)
     for (const id of ['sienna-west', 'lodge-west']) {
       const wall = walls.find(value => value.id === id)!
-      const hole = wall.holes![0]!
+      const hole = wall.holes![0]
       expect(hole.width).toBe(corridorPassage.width)
       expect(Math.abs(hole.u) + hole.width / 2 + 0.17).toBeLessThan(wall.width / 2)
     }
@@ -105,7 +105,7 @@ describe('Lodge and Corridor route', () => {
           expect(corridorPassage.floorAt(x, z)).toBe(lodge.floorY)
           expect(insideRoute([x, lodge.floorY + 1.6, z])).toBe(true)
           expect(corridorPassage.floorAt(lodge.approachX + side * (corridorPassage.width / 2 + 0.01), z)).toBeUndefined()
-          const hit = new Raycaster(new Vector3(lodge.approachX, lodge.floorY + 1.6, z), new Vector3(side, 0, 0)).intersectObjects(meshes)[0]!
+          const hit = new Raycaster(new Vector3(lodge.approachX, lodge.floorY + 1.6, z), new Vector3(side, 0, 0)).intersectObjects(meshes)[0]
           expect(hit.distance).toBeGreaterThan(corridorPassage.width / 2 - 0.26)
           expect(hit.distance).toBeLessThan(corridorPassage.width / 2 - 0.08)
         }
@@ -149,7 +149,7 @@ describe('Lodge and Corridor route', () => {
     expect(lodgeTunnel.width).toBe(4.4)
     for (const id of ['oculus-north', 'lodge-east']) {
       const wall = walls.find(value => value.id === id)!
-      const hole = wall.holes![0]!
+      const hole = wall.holes![0]
       expect(hole.width).toBe(lodgeTunnel.width)
       expect(hole.height - (hole.bottom ?? 0)).toBeCloseTo(lodgeTunnel.height)
       expect(Math.abs(hole.u) + hole.width / 2 + 0.17).toBeLessThan(wall.width / 2)
@@ -164,7 +164,7 @@ describe('Lodge and Corridor route', () => {
           mesh.updateMatrixWorld()
           return mesh
         })),
-        ...[vaults[0]!.shell, vaults[0]!.ribs].map(geometry => new Mesh(geometry, material)),
+        ...[vaults[0].shell, vaults[0].ribs].map(geometry => new Mesh(geometry, material)),
       ]
       for (const offset of [-1.65, 1.65]) {
         const x = lodge.entranceX + offset
@@ -233,17 +233,17 @@ describe('Lodge and Corridor route', () => {
   })
   test('the Oculus entrance starts at its platform, not at the buried lower floor', () => {
     const wall = walls.find(candidate => candidate.id === 'oculus-north')!
-    expect(wall.center[1] + wall.holes![0]!.bottom!).toBe(lodge.floorY)
-    expect(wallPosition(wall, wall.holes![0]!.u, lodge.floorY, 0)).toEqual([lodge.entranceX, lodge.floorY, lodge.entranceZ])
+    expect(wall.center[1] + wall.holes![0].bottom!).toBe(lodge.floorY)
+    expect(wallPosition(wall, wall.holes![0].u, lodge.floorY, 0)).toEqual([lodge.entranceX, lodge.floorY, lodge.entranceZ])
     const sienna = walls.find(candidate => candidate.id === 'sienna-west')!
-    expect(wallPosition(sienna, sienna.holes![0]!.u, 0, 0)[2]).toBeCloseTo(lodge.siennaZ)
-    expect(sienna.holes![0]!.u + lodge.timberWidth / 2 + 0.17).toBeLessThan(sienna.width / 2)
+    expect(wallPosition(sienna, sienna.holes![0].u, 0, 0)[2]).toBeCloseTo(lodge.siennaZ)
+    expect(sienna.holes![0].u + lodge.timberWidth / 2 + 0.17).toBeLessThan(sienna.width / 2)
     const west = walls.find(candidate => candidate.id === 'lodge-west')!
-    expect(wallPosition(west, west.holes![0]!.u, lodge.floorY, 0)).toEqual([-30, lodge.floorY, lodge.returnZ])
+    expect(wallPosition(west, west.holes![0].u, lodge.floorY, 0)).toEqual([-30, lodge.floorY, lodge.returnZ])
     expect(walls.find(candidate => candidate.id === 'lodge-south')!.holes).toBeUndefined()
   })
   test('Sienna opens directly onto descending treads with half-round pads contained on every step', () => {
-    const first = corridorStairs.blocks[0]!
+    const first = corridorStairs.blocks[0]
     expect(first.tread).toBe(true)
     expect(first.top).toBeLessThan(0)
     expect(first.position[0] + first.size[0] / 2).toBe(-20)
@@ -279,7 +279,7 @@ describe('Lodge and Corridor route', () => {
           if (returning) {
             path.reverse()
           }
-          const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(path[0]![0]!, (returning ? 0 : lodge.floorY) + 0.04, path[0]![1]!))
+          const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(path[0][0], (returning ? 0 : lodge.floorY) + 0.04, path[0][1]))
           const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
           const motor = new EgoMotor(RAPIER, world, body, collider)
           const facing = new Quaternion
@@ -287,8 +287,8 @@ describe('Lodge and Corridor route', () => {
             let target = 1
             for (let i = 0; i < fps * 80 && target < path.length; i++) {
               const position = body.translation()
-              const dx = path[target]![0]! - position.x
-              const dz = path[target]![1]! - position.z
+              const dx = path[target][0] - position.x
+              const dz = path[target][1] - position.z
               if (Math.hypot(dx, dz) < Math.max(0.15, (sprint ? 8 : 3) / fps)) {
                 target++
                 continue
@@ -323,7 +323,7 @@ describe('Lodge and Corridor route', () => {
     for (const [id, u, y] of [['lobby-north', 0, 2.65], ['oculus-north', lodge.entranceX, -3], ['sienna-west', 14 - lodge.siennaZ, 2.5], ['lodge-west', lodge.center[1] - lodge.returnZ, -2.9]] as const) {
       const wall = walls.find(candidate => candidate.id === id)!
       const portrait = {
-        ...initialPortraits[0]!,
+        ...initialPortraits[0],
         id: 'saved-doorway-art',
         title: 'Keep this custom title',
         width: 1,
@@ -337,7 +337,7 @@ describe('Lodge and Corridor route', () => {
         ...createDocument(),
         portraits: [portrait],
       })
-      const restored = saved.portraits[0]!
+      const restored = saved.portraits[0]
       expect(restored.hung).toBe(false)
       expect(restored.title).toBe(portrait.title)
       expect(restored.source).toBe(portrait.source)
@@ -350,7 +350,7 @@ describe('Lodge and Corridor route', () => {
   test('the new room accepts hanging and loose artwork in backups', () => {
     const wall = walls.find(candidate => candidate.id === 'lodge-north')!
     const portrait = {
-      ...initialPortraits[0]!,
+      ...initialPortraits[0],
       wallId: wall.id,
       position: wallPosition(wall, -2.5, lodge.floorY + 2.1),
       width: 1.2,
@@ -366,7 +366,7 @@ describe('Lodge and Corridor route', () => {
   })
   test('loose frames in the removed return corridor recover inside the Lodge', () => {
     const portrait = {
-      ...initialPortraits[0]!,
+      ...initialPortraits[0],
       hung: false,
       position: [-25, -4.8, -20] as Vec3,
     }
@@ -374,8 +374,8 @@ describe('Lodge and Corridor route', () => {
       ...createDocument(),
       portraits: [portrait],
     })
-    expect(saved.portraits[0]!.position).toEqual([-25, -4.8, -28.5])
-    expect(saved.portraits[0]!.source).toBe(portrait.source)
+    expect(saved.portraits[0].position).toEqual([-25, -4.8, -28.5])
+    expect(saved.portraits[0].source).toBe(portrait.source)
     expect(portrait.position).toEqual([-25, -4.8, -20])
     expect(validateDocument(saved)).toEqual(saved)
   })
@@ -408,7 +408,7 @@ test('faceted timber portals keep their centerlines and level elbows open', () =
     }
     // The faceted roof really closes the passage above the player.
     const upward = new Raycaster(new Vector3(lodge.approachX, lodge.floorY + 1.6, -20), new Vector3(0, 1, 0))
-    const hit = upward.intersectObjects(meshes)[0]!
+    const hit = upward.intersectObjects(meshes)[0]
     expect(hit.distance).toBeGreaterThan(1.5)
     expect(hit.distance).toBeLessThanOrEqual(1.81)
   } finally {
@@ -446,7 +446,7 @@ test('timber geometry handles trimmed-away spans and rejects invalid inputs', ()
     ])).toThrow(RangeError)
   }
   for (const [width, radius] of [[0, 0.3], [2, 0], [Number.NaN, 0.3], [2, Number.POSITIVE_INFINITY]]) {
-    expect(() => new StairCarpetGeometry(width!, radius!)).toThrow(RangeError)
+    expect(() => new StairCarpetGeometry(width, radius)).toThrow(RangeError)
   }
   for (const entryProjection of [-0.01, Number.NaN, Number.POSITIVE_INFINITY]) {
     expect(() => new TimberGeometry([

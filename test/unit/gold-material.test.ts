@@ -31,16 +31,16 @@ describe('polished gold', () => {
       let maximumRed = 0
       let variedNormals = false
       for (let i = 0; i < color.length; i += 4) {
-        minimumRed = Math.min(minimumRed, color[i]!)
-        maximumRed = Math.max(maximumRed, color[i]!)
+        minimumRed = Math.min(minimumRed, color[i])
+        maximumRed = Math.max(maximumRed, color[i])
         if (normal[i] !== 128 || normal[i + 1] !== 128) {
           variedNormals = true
         }
-        if (!(color[i]! > color[i + 1]! && color[i + 1]! > color[i + 2]! && color[i + 3] === 255)) {
+        if (!(color[i] > color[i + 1] && color[i + 1] > color[i + 2] && color[i + 3] === 255)) {
           throw new Error('Invalid gold color.')
         }
-        const length = Math.hypot(normal[i]! / 255 * 2 - 1, normal[i + 1]! / 255 * 2 - 1, normal[i + 2]! / 255 * 2 - 1)
-        if (Math.abs(length - 1) > 0.015 || normal[i + 2]! < 230 || normal[i + 3] !== 255) {
+        const length = Math.hypot(normal[i] / 255 * 2 - 1, normal[i + 1] / 255 * 2 - 1, normal[i + 2] / 255 * 2 - 1)
+        if (Math.abs(length - 1) > 0.015 || normal[i + 2] < 230 || normal[i + 3] !== 255) {
           throw new Error('Invalid surface normal.')
         }
       }
@@ -70,7 +70,7 @@ describe('polished gold', () => {
     let maximum = 0
     for (let i = 0; i < hdr.data.length; i += 4) {
       for (let channel = 0; channel < 3; channel++) {
-        const value = DataUtils.fromHalfFloat(hdr.data[i + channel]!)
+        const value = DataUtils.fromHalfFloat(hdr.data[i + channel])
         if (!Number.isFinite(value) || value < 0) {
           throw new Error('Invalid HDR radiance.')
         }

@@ -92,7 +92,7 @@ function wood() {
   for (let i = 0; i < pixels.data.length; i += 4) {
     const grain = (rng() - 0.5) * 0.05 * 255
     for (let channel = 0; channel < 3; channel++) {
-      pixels.data[i + channel]! += grain
+      pixels.data[i + channel] += grain
     }
   }
   context.putImageData(pixels, 0, 0)

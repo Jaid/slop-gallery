@@ -27,7 +27,7 @@ beforeEach(() => {
   soundSpy = spyOn(SoundEngine, 'get').mockReturnValue({
     resume: async () => {},
     context: {},
-  } as SoundEngine)
+  })
   meterSpy = spyOn(narrationMeter, 'connect').mockImplementation(() => () => {
     disconnected++
   })
@@ -129,7 +129,7 @@ test('TTS keeps character steering out of the spoken transcript and caches audio
   expect(fetchSpy).toHaveBeenCalledTimes(1)
 })
 test('provider failure falls back to readable browser narration', async () => {
-  soundSpy = spyOn(SoundEngine, 'get').mockReturnValue({resume: async () => {}} as SoundEngine)
+  soundSpy = spyOn(SoundEngine, 'get').mockReturnValue({resume: async () => {}})
   fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(new Response('Unavailable', {status: 503}))
   narrator = new Narrator(settings, 'test-key')
   await narrator.speak('goose')
@@ -174,7 +174,7 @@ test('stopping while the audio context resumes cannot start stale playback or me
       started(); return resumed
     },
     context: {},
-  } as SoundEngine)
+  })
   useGallery.setState({portraits: initialPortraits.map(p => ({...p}))})
   fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(new Response(new Blob(['audio'], {type: 'audio/ogg'})))
   narrator = new Narrator({
@@ -221,7 +221,7 @@ test('a manual edit releases queued narration without waiting for the old genera
   useGallery.getState().update('goose', {pending: true})
   await narrator.speak('goose')
   const s = useGallery.getState()
-  s.commit(s.portraits.map(p => (p.id === 'goose' ? {...p, title: 'My label', description: 'My story', pending: false} : p)))
+  s.commit(s.portraits.map(p => p.id === 'goose' ? {...p, title: 'My label', description: 'My story', pending: false} : p))
   expect(spoken).toEqual(['My label. My story.'])
   expect(useGallery.getState().narration).toMatchObject({
     status: 'playing',

@@ -18,7 +18,7 @@ export default function NarrationBars({status}: {status: 'playing' | 'preparing'
         last = time
         const levels = narrationMeter.read()
         for (const [i, bar] of bars.entries()) {
-          bar.style.transform = `scaleY(${Math.max(0.15, Math.min(1, levels[i]! * 2.4))})`
+          bar.style.transform = `scaleY(${Math.max(0.15, Math.min(1, levels[i] * 2.4))})`
         }
       }
       frame = requestAnimationFrame(update)

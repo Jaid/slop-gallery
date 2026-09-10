@@ -64,7 +64,7 @@ describe('lower gallery', () => {
     for (const side of ['north', 'east', 'south', 'west']) {
       const wall = walls.find(candidate => candidate.id === `antechamber-${side}`)!
       const portrait = {
-        ...initialPortraits[0]!,
+        ...initialPortraits[0],
         title: 'My custom title',
         width: 0.8,
         height: 0.8,
@@ -87,7 +87,7 @@ describe('lower gallery', () => {
   test('an old frame covering the new stairway is preserved as a loose, reachable frame', () => {
     const wall = walls.find(candidate => candidate.id === 'antechamber-east')!
     const portrait = {
-      ...initialPortraits[0]!,
+      ...initialPortraits[0],
       title: 'Saved doorway art',
       wallId: 'secret-east',
       rotation: wall.rotation,
@@ -104,7 +104,7 @@ describe('lower gallery', () => {
       hung: false,
       position: [0, 0.2, 11.5],
     })
-    expect(saved.portraits[0]!.orientation).toEqual([Math.SQRT1_2, 0, 0, Math.SQRT1_2])
+    expect(saved.portraits[0].orientation).toEqual([Math.SQRT1_2, 0, 0, Math.SQRT1_2])
     expect(validateDocument(saved)).toEqual(saved)
     expect(portrait.hung).toBe(true)
   })
@@ -116,9 +116,9 @@ describe('lower gallery', () => {
       ['moonfall-north', [-4, -5.5, 4.72], [-4, -5.5, 4.72], 0],
     ] as const) {
       for (const ancient of [false, true]) {
-        const position = compact.map((n, i) => n + (ancient ? [18, 4.4, 3.5][i]! : 0)) as Vec3
+        const position = compact.map((n, i) => n + (ancient ? [18, 4.4, 3.5][i] : 0)) as Vec3
         const portrait = {
-          ...initialPortraits[0]!,
+          ...initialPortraits[0],
           wallId,
           rotation,
           position,
@@ -130,17 +130,17 @@ describe('lower gallery', () => {
         })
         expect(saved.portraits[0]).toMatchObject({
           ...portrait,
-          position: saved.portraits[0]!.position,
+          position: saved.portraits[0].position,
         })
         for (const [axis, n] of current.entries()) {
-          expect(saved.portraits[0]!.position[axis]).toBeCloseTo(n)
+          expect(saved.portraits[0].position[axis]).toBeCloseTo(n)
         }
         expect(validateDocument(saved)).toEqual(saved)
         expect(portrait.position).toEqual(position)
       }
     }
     const loose = {
-      ...initialPortraits[0]!,
+      ...initialPortraits[0],
       hung: false,
       position: [18, -3.4, 18.5],
     }
@@ -148,7 +148,7 @@ describe('lower gallery', () => {
       ...createDocument(),
       portraits: [loose],
     })
-    expect(saved.portraits[0]!.position).toEqual([...moonfallRecovery])
+    expect(saved.portraits[0].position).toEqual([...moonfallRecovery])
     expect(validateDocument(saved)).toEqual(saved)
     const portrait = newPortrait(new Blob, 'Lower arrival', 1, 1, {
       position: [3.5, -6.4, 18.5],
@@ -158,7 +158,7 @@ describe('lower gallery', () => {
   })
   test('current loose artwork on the stair landing is not mistaken for the original Moonfall', () => {
     const portrait = {
-      ...initialPortraits[0]!,
+      ...initialPortraits[0],
       hung: false,
       wallId: 'moonfall-east',
       position: [15.3, -3.8, 13.3] as Vec3,
@@ -167,19 +167,19 @@ describe('lower gallery', () => {
       ...createDocument(),
       portraits: [portrait],
     })
-    expect(saved.portraits[0]!.position).toEqual(portrait.position)
+    expect(saved.portraits[0].position).toEqual(portrait.position)
     expect(validateDocument(saved)).toEqual(saved)
   })
   test('legacy paintings displaced by the east stair portal or north tunnel are laid safely inside', () => {
     for (const portrait of [
       {
-        ...initialPortraits[0]!,
+        ...initialPortraits[0],
         wallId: 'moonfall-east',
         rotation: -Math.PI / 2,
         position: [23.78, -1.1, 18.6],
       },
       {
-        ...initialPortraits[0]!,
+        ...initialPortraits[0],
         wallId: 'moonfall-north',
         rotation: 0,
         position: [18, -1.1, 8.22],
@@ -216,7 +216,7 @@ describe('lower gallery', () => {
           mesh.updateMatrixWorld(true)
           const origin = new Vector3(block.position[0], 2, block.position[2])
           const direction = new Vector3(0, -1, 0)
-          expect(new Raycaster(origin, direction).intersectObject(mesh)[0]!.point.y).toBeCloseTo(block.top)
+          expect(new Raycaster(origin, direction).intersectObject(mesh)[0].point.y).toBeCloseTo(block.top)
           expect(world.castRay(new RAPIER.Ray(origin, direction), 12, true)!.timeOfImpact).toBeCloseTo(2 - block.top)
         } finally {
           geometry.dispose()
@@ -287,7 +287,7 @@ describe('lower gallery', () => {
             if (ascending) {
               path.reverse()
             }
-            const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(path[0]![0]!, (ascending ? lower.floorY : 0) + 0.04, path[0]![1]!))
+            const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(path[0][0], (ascending ? lower.floorY : 0) + 0.04, path[0][1]))
             const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
             const motor = new EgoMotor(RAPIER, world, body, collider)
             const facing = new Quaternion
@@ -299,8 +299,8 @@ describe('lower gallery', () => {
               let target = 1
               for (let i = 0; i < fps * 16 && target < path.length; i++) {
                 const position = body.translation()
-                const dx = path[target]![0]! - position.x
-                const dz = path[target]![1]! - position.z
+                const dx = path[target][0] - position.x
+                const dz = path[target][1] - position.z
                 if (Math.hypot(dx, dz) < Math.max(0.14, (sprint ? 8 : 3) / fps)) {
                   target++
                   continue

@@ -89,8 +89,8 @@ export function towerFloorHeight(x: number, z: number) {
   const localZ = z - oculusTower.z
   let inside = false
   for (let i = 0, j = towerPlatformOutline.length - 1; i < towerPlatformOutline.length; j = i++) {
-    const a = towerPlatformOutline[i]!
-    const b = towerPlatformOutline[j]!
+    const a = towerPlatformOutline[i]
+    const b = towerPlatformOutline[j]
     if (a[1] > localZ !== b[1] > localZ && localX < (b[0] - a[0]) * (localZ - a[1]) / (b[1] - a[1]) + a[0]) {
       inside = !inside
     }

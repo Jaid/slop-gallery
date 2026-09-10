@@ -32,12 +32,12 @@ describe('modular botanical catalog', () => {
           const shell = new Mesh(geometry.shell, material)
           shell.updateMatrixWorld(true)
           const down = new Raycaster(new Vector3(0.1, 1, 0), new Vector3(0, -1, 0)).intersectObject(shell)
-          expect(down[0]!.point.y).toBeLessThan(pot.soilHeight - 0.1)
+          expect(down[0].point.y).toBeLessThan(pot.soilHeight - 0.1)
           for (let i = 0; i < 16; i++) {
             const angle = i * Math.PI / 8
             const inside = new Raycaster(new Vector3(0, pot.soilHeight, 0), new Vector3(Math.cos(angle), 0, Math.sin(angle))).intersectObject(shell)
-            expect(inside[0]!.distance).toBeGreaterThanOrEqual(pot.soilRadius)
-            expect(inside[0]!.distance - pot.soilRadius).toBeLessThan(0.006)
+            expect(inside[0].distance).toBeGreaterThanOrEqual(pot.soilRadius)
+            expect(inside[0].distance - pot.soilRadius).toBeLessThan(0.006)
           }
           geometry.soil.computeBoundingBox()
           expect(geometry.soil.boundingBox!.max.y).toBeCloseTo(pot.soilHeight)
@@ -55,7 +55,7 @@ describe('modular botanical catalog', () => {
     }
   })
   test('pot 01 stays within its triangle budget, including soil', () => {
-    const geometry = new PotGeometry(plantCombinations[0]!.pot)
+    const geometry = new PotGeometry(plantCombinations[0].pot)
     try {
       const triangles = triangleCount(geometry.shell) + triangleCount(geometry.soil) + triangleCount(geometry.trim)
       expect(triangles).toBeGreaterThanOrEqual(2500)
@@ -65,7 +65,7 @@ describe('modular botanical catalog', () => {
     }
   })
   test('pot 09 stays within its triangle budget and retains all 40 evenly spaced flutes', () => {
-    const geometry = new PotGeometry(plantCombinations[8]!.pot)
+    const geometry = new PotGeometry(plantCombinations[8].pot)
     try {
       const triangles = triangleCount(geometry.shell) + triangleCount(geometry.soil) + triangleCount(geometry.trim)
       expect(triangles).toBeGreaterThanOrEqual(4000)
@@ -94,7 +94,7 @@ describe('modular botanical catalog', () => {
     }
   })
   test('pot 17 stays within its triangle budget, including soil', () => {
-    const geometry = new PotGeometry(plantCombinations[16]!.pot)
+    const geometry = new PotGeometry(plantCombinations[16].pot)
     try {
       const triangles = triangleCount(geometry.shell) + triangleCount(geometry.soil) + triangleCount(geometry.trim)
       expect(triangles).toBeGreaterThanOrEqual(3000)
@@ -104,7 +104,7 @@ describe('modular botanical catalog', () => {
     }
   })
   test('pot 25 stays within its triangle budget, including soil and brass hardware', () => {
-    const geometry = new PotGeometry(plantCombinations[24]!.pot)
+    const geometry = new PotGeometry(plantCombinations[24].pot)
     try {
       expect(geometry.trim).not.toBeNull()
       const triangles = triangleCount(geometry.shell) + triangleCount(geometry.soil) + triangleCount(geometry.trim)

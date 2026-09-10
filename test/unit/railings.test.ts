@@ -12,10 +12,10 @@ import {addOculusRailings, oculusRailing as railing} from './helpers/oculusRaili
 await RAPIER.init()
 describe('connected Oculus railings', () => {
   test('one finite path connects both lower ramps, the base and the entire open tower perimeter', () => {
-    const first = railing.anchors[0]!
+    const first = railing.anchors[0]
     const last = railing.anchors.at(-1)!
-    expect(first.ground[2]).toBe(oculusRamps[0]!.startZ)
-    expect(last.ground[2]).toBe(oculusRamps[1]!.startZ)
+    expect(first.ground[2]).toBe(oculusRamps[0].startZ)
+    expect(last.ground[2]).toBe(oculusRamps[1].startZ)
     expect(first.ground[0]).toBeCloseTo(-last.ground[0])
     expect(railing.length).toBeGreaterThan(45)
     for (let i = 0; i <= 200; i++) {
@@ -37,8 +37,8 @@ describe('connected Oculus railings', () => {
   test('tower junctions never reverse direction or fold the rendered tube inside out', () => {
     const points = railing.anchors.map(({ground, height}) => new Vector3(ground[0], ground[1] + height, ground[2]))
     for (let i = 1; i < points.length - 1; i++) {
-      const incoming = points[i]!.clone().sub(points[i - 1]!)
-      const outgoing = points[i + 1]!.clone().sub(points[i]!)
+      const incoming = points[i].clone().sub(points[i - 1])
+      const outgoing = points[i + 1].clone().sub(points[i])
       expect(incoming.angleTo(outgoing)).toBeLessThan(Math.PI / 6)
     }
     const tube = new TubeGeometry(railing, Math.ceil(railing.length / 0.04), railing.radius, 12, false)
@@ -49,7 +49,7 @@ describe('connected Oculus railings', () => {
       for (let i = 0; i < indices.count; i += 3) {
         const ids = [indices.getX(i), indices.getX(i + 1), indices.getX(i + 2)]
         const [a, b, c] = ids.map(index => (new Vector3).fromBufferAttribute(positions, index))
-        const face = b!.sub(a!).cross(c!.sub(a!)).normalize()
+        const face = b.sub(a).cross(c.sub(a)).normalize()
         const outward = ids.reduce((sum, index) => sum.add((new Vector3).fromBufferAttribute(normals, index)), new Vector3).normalize()
         expect(face.dot(outward)).toBeGreaterThan(0.9)
       }
@@ -88,8 +88,8 @@ describe('connected Oculus railings', () => {
         const rotation = new Quaternion(...segment.rotation)
         const start = new Vector3(...segment.position).add(axis.clone().applyQuaternion(rotation).multiplyScalar(-segment.halfLength))
         const end = new Vector3(...segment.position).add(axis.clone().applyQuaternion(rotation).multiplyScalar(segment.halfLength))
-        expect(start.distanceTo(railing.getPoint(railing.distances[i]! / railing.length))).toBeLessThan(0.000_01)
-        expect(end.distanceTo(railing.getPoint(railing.distances[i + 1]! / railing.length))).toBeLessThan(0.000_01)
+        expect(start.distanceTo(railing.getPoint(railing.distances[i] / railing.length))).toBeLessThan(0.000_01)
+        expect(end.distanceTo(railing.getPoint(railing.distances[i + 1] / railing.length))).toBeLessThan(0.000_01)
       }
       expect(world.castRay(new RAPIER.Ray(new Vector3(tower.x, ramp.endY + 0.4, ramp.endZ - 0.4), new Vector3(0, 0, 1)), 1.5, true)).toBeNull()
       expect(world.castRay(new RAPIER.Ray(new Vector3(tower.x, ramp.endY + 0.5, tower.z), new Vector3(0, 0, 1)), tower.radius + 0.5, true)).not.toBeNull()
@@ -107,7 +107,7 @@ describe('connected Oculus railings', () => {
         const baseY = post.position[1] - post.height / 2
         const hit = new Raycaster(new Vector3(post.position[0], baseY + 0.1, post.position[2]), new Vector3(0, -1, 0), 0, 0.2).intersectObjects(meshes)[0]
         expect(hit).toBeDefined()
-        expect(hit!.point.y).toBeCloseTo(baseY, 2)
+        expect(hit.point.y).toBeCloseTo(baseY, 2)
       }
     } finally {
       ground.dispose()

@@ -31,7 +31,7 @@ export class FountainGeometry {
     }
     this.stone = mergeParts(stone)
     this.brass = mergeParts(brass)
-    this.pools = mergeParts([[1.82, fountain.poolY], [1.04, 1.82], [0.565, 2.8]].map(([radius, y]) => new CircleGeometry(radius, 96).rotateX(-Math.PI / 2).translate(0, y!, 0)))
+    this.pools = mergeParts([[1.82, fountain.poolY], [1.04, 1.82], [0.565, 2.8]].map(([radius, y]) => new CircleGeometry(radius, 96).rotateX(-Math.PI / 2).translate(0, y, 0)))
     const streams: Array<BufferGeometry> = []
     // A central jet separates into falling strands before reaching the upper bowl.
     for (let i = 0; i < 6; i++) {

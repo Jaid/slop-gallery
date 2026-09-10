@@ -43,7 +43,7 @@ describe('aim inspection', () => {
     const front = box(-2.123_456_789, 'front')
     const result = inspector.getAim()
     expect(result.hits).toHaveLength(2)
-    expect(result.hit).toBe(result.hits[0]!)
+    expect(result.hit).toBe(result.hits[0])
     expect(result.hits.map(hit => hit.mesh.uuid)).toEqual([front.uuid, back.uuid])
     expect(result.hit!.distance).toBeCloseTo(1.623_456_789, 10)
     expect(result.hit!.point).toEqual({
@@ -122,7 +122,7 @@ describe('aim inspection', () => {
   })
   test('filters individual material groups before choosing the nearest mesh surface', () => {
     const materials = Array.from({length: 6}, () => new MeshBasicMaterial({side: DoubleSide}))
-    materials[4]!.visible = false
+    materials[4].visible = false
     const mesh = new Mesh(new BoxGeometry(1, 1, 1), materials)
     mesh.position.z = -2
     scene.add(mesh)
@@ -130,7 +130,7 @@ describe('aim inspection', () => {
     expect(result.hits).toHaveLength(1)
     expect(result.hit!.point.z).toBeCloseTo(-2.5)
     expect(result.hit!.material.index).toBe(5)
-    expect(result.hit!.material.uuid).toBe(materials[5]!.uuid)
+    expect(result.hit!.material.uuid).toBe(materials[5].uuid)
   })
   test('identifies separate instances and transforms their points and normals correctly', () => {
     const parent = new Group
@@ -159,7 +159,7 @@ describe('aim inspection', () => {
     expect(result.hit!.normal!.x).toBeCloseTo(normal.x)
     expect(result.hit!.normal!.y).toBeCloseTo(normal.y)
     expect(result.hit!.normal!.z).toBeCloseTo(normal.z)
-    expect(result.hits[1]!.point.z).toBeCloseTo(-5)
+    expect(result.hits[1].point.z).toBeCloseTo(-5)
   })
   test('returns useful hierarchy metadata without leaking live or circular references', () => {
     const parent = new Group

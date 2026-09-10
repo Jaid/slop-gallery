@@ -23,9 +23,9 @@ test('soil has deterministic brown grains and matching relief with owned resourc
     const shades = new Set<number>
     const relief = new Set<number>
     for (let i = 0; i < color.length; i += 4) {
-      shades.add(color[i]!)
-      relief.add(bump[i]!)
-      if (!(color[i]! > color[i + 1]! && color[i + 1]! > color[i + 2]! && color[i + 3] === 255 && bump[i + 3] === 255)) {
+      shades.add(color[i])
+      relief.add(bump[i])
+      if (!(color[i] > color[i + 1] && color[i + 1] > color[i + 2] && color[i + 3] === 255 && bump[i + 3] === 255)) {
         throw new Error('Expected opaque brown soil.')
       }
     }

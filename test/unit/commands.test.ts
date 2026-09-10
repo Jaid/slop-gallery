@@ -133,7 +133,7 @@ test('only editable controls retain native text undo, not whole dialogs', () => 
 })
 for (const [mime, extension] of [['image/png', 'png'], ['image/jpeg', 'jpg'], ['image/webp', 'webp'], ['image/avif', 'avif'], ['image/gif', 'gif']]) {
   test(`download filenames preserve ${mime}`, () => {
-    expect(imageFilename('Pigeon / 🐦', mime!)).toBe(`Pigeon  .${extension}`)
+    expect(imageFilename('Pigeon / 🐦', mime)).toBe(`Pigeon  .${extension}`)
   })
 }
 test('unknown download types are never mislabeled as WebP', () => {

@@ -41,8 +41,8 @@ export class Passage {
     const half = width / 2
     const rectangles: Array<Rectangle> = []
     for (let i = 1; i < path.length; i++) {
-      const start = path[i - 1]!
-      const end = path[i]!
+      const start = path[i - 1]
+      const end = path[i]
       const fixedX = start[0] === end[0]
       const fixedZ = start[1] === end[1]
       if (fixedX === fixedZ) {
@@ -75,10 +75,10 @@ export class Passage {
     const edges: Array<Edge> = []
     for (let x = 1; x < xs.length; x++) {
       for (let z = 1; z < zs.length; z++) {
-        const minX = xs[x - 1]!
-        const maxX = xs[x]!
-        const minZ = zs[z - 1]!
-        const maxZ = zs[z]!
+        const minX = xs[x - 1]
+        const maxX = xs[x]
+        const minZ = zs[z - 1]
+        const maxZ = zs[z]
         const cx = (minX + maxX) / 2
         const cz = (minZ + maxZ) / 2
         if (!occupied(cx, cz)) {
@@ -112,11 +112,11 @@ export class Passage {
         }
       }
     }
-    const ends = [[path[0]!, path[1]!], [path.at(-1)!, path.at(-2)!]] as const
+    const ends = [[path[0], path[1]], [path.at(-1)!, path.at(-2)!]] as const
     const closed = edges.filter(edge => !ends.some(([end, neighbor]) => {
       const travel = end[0] === neighbor[0] ? 2 : 0
       const cross = travel === 0 ? 2 : 0
-      return edge.axis === cross && Math.abs(edge.cross - end[travel / 2]!) < 1e-6 && edge.min >= end[cross / 2]! - half - 1e-6 && edge.max <= end[cross / 2]! + half + 1e-6
+      return edge.axis === cross && Math.abs(edge.cross - end[travel / 2]) < 1e-6 && edge.min >= end[cross / 2] - half - 1e-6 && edge.max <= end[cross / 2] + half + 1e-6
     }))
     const merged: Array<Edge> = []
     for (const edge of closed.toSorted((a, b) => a.axis - b.axis || a.cross - b.cross || a.side - b.side || a.min - b.min)) {

@@ -108,7 +108,7 @@ describe('player save state', () => {
     }
   })
   test('room, tunnel and stair poses round-trip without camera-height offsets or shared arrays', () => {
-    const tread = corridorStairs.blocks[12]!
+    const tread = corridorStairs.blocks[12]
     for (const position of [[0, 0.02, -9], [-25, lodge.floorY + 0.02, -31], [-33, lodge.floorY + 0.02, -20], [(lodgeWindow.roomX + lodgeWindow.tunnelX) / 2, lodgeWindow.bottom + 0.02, lodgeWindow.z], [tread.position[0], tread.top + 0.02, tread.position[2]]] as const) {
       const pose = {
         position: [...position] as [number, number, number],

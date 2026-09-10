@@ -13,16 +13,16 @@ function connectedParts(geometry: BufferGeometry) {
   const root = (vertex: number): number => {
     let current = vertex
     while (parents[current] !== current) {
-      parents[current] = parents[parents[current]!]!
+      parents[current] = parents[parents[current]]!
       current = parents[current]!
     }
     return current
   }
   const indices = geometry.index!.array
   for (let i = 0; i < indices.length; i += 3) {
-    const a = root(indices[i]!)
-    parents[root(indices[i + 1]!)] = a
-    parents[root(indices[i + 2]!)] = a
+    const a = root(indices[i])
+    parents[root(indices[i + 1])] = a
+    parents[root(indices[i + 2])] = a
   }
   return new Set([...indices].map(root)).size
 }

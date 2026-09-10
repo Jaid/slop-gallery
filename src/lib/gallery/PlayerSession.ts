@@ -38,7 +38,7 @@ export class PlayerSession {
 
   capture(value: PlayerPose) {
     const pose = validatePlayerPose(value)
-    if (!pose || Math.abs(pose.yaw - this.pose.yaw) < 1e-6 && Math.abs(pose.pitch - this.pose.pitch) < 1e-6 && pose.position.every((n, i) => Math.abs(n - this.pose.position[i]!) < 1e-6)) {
+    if (!pose || Math.abs(pose.yaw - this.pose.yaw) < 1e-6 && Math.abs(pose.pitch - this.pose.pitch) < 1e-6 && pose.position.every((n, i) => Math.abs(n - this.pose.position[i]) < 1e-6)) {
       return
     }
     this.pose = pose

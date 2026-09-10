@@ -50,7 +50,7 @@ export default function CorridorStairs({timber, lining}: {lining: Material
       </group>)}
     </RigidBody>
     {[4, 13, 23].map(index => {
-      const block = corridorStairs.blocks[index]!
+      const block = corridorStairs.blocks[index]
       return <group key={index} position={[block.position[0], block.top + 2.5, block.position[2]]}>
         <mesh><sphereGeometry args={[0.08, 12, 8]}/><meshStandardNodeMaterial color="#fff0cb" emissive="#ffd69a" emissiveIntensity={2}/></mesh>
         <pointLight color="#ffdca3" intensity={14} distance={6}/>

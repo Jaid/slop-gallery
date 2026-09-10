@@ -25,10 +25,10 @@ export class LodgeWindowGeometry {
     const edgeX = (level: number) => {
       const upper = profile.findIndex(point => point.y >= level)
       if (upper <= 0) {
-        return (upper < 0 ? profile.at(-1)! : profile[0]!).x
+        return (upper < 0 ? profile.at(-1)! : profile[0]).x
       }
-      const a = profile[upper - 1]!
-      const b = profile[upper]!
+      const a = profile[upper - 1]
+      const b = profile[upper]
       return a.x + (b.x - a.x) * (level - a.y) / (b.y - a.y)
     }
     const panel = (from: number, to: number, startZ: number, depth: number) => {

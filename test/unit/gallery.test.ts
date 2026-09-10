@@ -65,11 +65,11 @@ describe('wall geometry', () => {
     expect(placementIssue(wall, wallPosition(wall, -4.6, 2.5), 2, 2, [])).toContain('doorway')
   })
   test('rejects edges, low labels, ceilings and overlaps', () => {
-    const wall = walls[0]!
+    const wall = walls[0]
     for (const [u, y] of [[7, 2.5], [0, 1], [0, 5]] as const) {
       expect(placementIssue(wall, wallPosition(wall, u, y), 2, 2, [])).not.toBe('')
     }
-    const p = initialPortraits[0]!
+    const p = initialPortraits[0]
     expect(placementIssue(wall, p.position, p.width, p.height, initialPortraits)).toContain('close')
     expect(placementIssue(wall, p.position, p.width, p.height, initialPortraits, p.id)).toBe('')
   })
@@ -128,10 +128,10 @@ describe('wall geometry', () => {
   test('the Sienna connects through matching Vesper arches in both directions', () => {
     const vesper = walls.find(wall => wall.id === 'vesper-south')!
     const sienna = walls.find(wall => wall.id === 'sienna-north')!
-    const entrance = wallPosition(vesper, vesper.holes![0]!.u, 2, 0)
-    const exit = wallPosition(sienna, sienna.holes![0]!.u, 2, 0)
+    const entrance = wallPosition(vesper, vesper.holes![0].u, 2, 0)
+    const exit = wallPosition(sienna, sienna.holes![0].u, 2, 0)
     for (const [i, value] of entrance.entries()) {
-      expect(value).toBeCloseTo(exit[i]!)
+      expect(value).toBeCloseTo(exit[i])
     }
     expect(findPlacement([-10.2, 2.5, 6], [0, 0, 1], 2, 2, [])).toMatchObject({
       wallId: 'sienna-south',
@@ -183,7 +183,7 @@ describe('wall geometry', () => {
     expect(roomAt([-10.2, 2, 8.01])).toBe('sienna')
   })
   test('label clearance follows the physical sign footprint', () => {
-    const wall = walls[0]!
+    const wall = walls[0]
     const layout = portraitLabelLayout(2, 2)
     const lowestCenter = 0.48 - layout.bottom + portraitLabel.clearance
     expect(placementIssue(wall, wallPosition(wall, 4, lowestCenter - 0.001), 2, 2, [])).toContain('label')
@@ -227,7 +227,7 @@ describe('image dimensions', () => {
   })
   for (const dimensions of [[0, 100], [-1, 100], [Number.NaN, 100], [Infinity, 100], [9000, 9000], [1300, 100], [100, 1300]]) {
     test(`rejects ${dimensions.join('×')}`, () => {
-      expect(() => imageSize(dimensions[0]!, dimensions[1]!)).toThrow()
+      expect(() => imageSize(dimensions[0], dimensions[1])).toThrow()
     })
   }
 })
@@ -235,7 +235,7 @@ describe('transactional history', () => {
   test('undo/redo preserves Blob identity without restoring active jobs', () => {
     const source = new Blob(['pixels'], {type: 'image/webp'})
     const state = useGallery.getState()
-    const first = state.portraits[0]!
+    const first = state.portraits[0]
     state.update(first.id, {
       source,
       pending: true,
@@ -249,7 +249,7 @@ describe('transactional history', () => {
       merging: false,
       reserved: false,
     })
-    expect(useGallery.getState().portraits[0]!.source).toBe(source)
+    expect(useGallery.getState().portraits[0].source).toBe(source)
     expect(redo()).toBe(true)
     expect(useGallery.getState().portraits.some(p => p.id === first.id)).toBe(false)
   })
@@ -263,7 +263,7 @@ describe('transactional history', () => {
     expect(redo()).toBe(false)
   })
   test('enforces collection capacity', () => {
-    const p = initialPortraits[0]!
+    const p = initialPortraits[0]
     useGallery.setState({
       portraits: Array.from({length: maximumPortraits}, (_, i) => ({
         ...p,
@@ -315,7 +315,7 @@ describe('backup validation', () => {
     const result = validateDocument({
       ...original,
       portraits: [old],
-    }).portraits[0]!
+    }).portraits[0]
     expect(result).toMatchObject({
       ...shrimp,
       title: old.title,
@@ -343,7 +343,7 @@ describe('backup validation', () => {
             source: `/art/${id}.webp`,
           },
         ],
-      }).portraits[0]!
+      }).portraits[0]
       expect(result).toMatchObject(wolf)
     })
   }
@@ -361,7 +361,7 @@ describe('backup validation', () => {
           ...patch,
         },
       ],
-    }).portraits[0]!
+    }).portraits[0]
     expect(load().narration).toBe('/audio/goose.opus')
     expect(load({title: 'My title'}).narration).toBeUndefined()
     expect(load({description: 'My story.'}).narration).toBeUndefined()
@@ -371,7 +371,7 @@ describe('backup validation', () => {
   test('renaming defaults does not replace imported images', () => {
     const source = new Blob(['pixels'], {type: 'image/webp'})
     const custom = {
-      ...initialPortraits[0]!,
+      ...initialPortraits[0],
       id: 'my-artwork',
       source,
       imported: true,
@@ -379,14 +379,14 @@ describe('backup validation', () => {
     const result = validateDocument({
       ...original,
       portraits: [custom],
-    }).portraits[0]!
+    }).portraits[0]
     expect(result.id).toBe(custom.id)
     expect(result.source).toBe(source)
   })
   test('round-trips artwork hung in the Sienna', () => {
     const wall = walls.find(wall => wall.id === 'sienna-south')!
     const portrait = {
-      ...initialPortraits[0]!,
+      ...initialPortraits[0],
       wallId: wall.id,
       rotation: wall.rotation,
       position: wallPosition(wall, 0, 2.5),
@@ -416,7 +416,7 @@ describe('backup validation', () => {
         ...original,
         portraits: [
           {
-            ...initialPortraits[0]!,
+            ...initialPortraits[0],
             wallId: legacyId,
             rotation: wall.rotation,
             position: wallPosition(wall, 0, wall.center[1] + 2.5),
@@ -430,7 +430,7 @@ describe('backup validation', () => {
       ...original,
       portraits: [
         {
-          ...initialPortraits[0]!,
+          ...initialPortraits[0],
           hung: false,
           position: [-6, 2, 18],
         },
@@ -449,7 +449,7 @@ describe('backup validation', () => {
       expect(document).toEqual(validateDocument(original))
       expect(document).not.toHaveProperty('secretOpen')
       restoreDocument(document)
-      useGallery.getState().remove(original.portraits[0]!.id)
+      useGallery.getState().remove(original.portraits[0].id)
       expect(undo()).toBe(true)
       expect(createDocument()).not.toHaveProperty('secretOpen')
       expect(useGallery.getState().portraits).toHaveLength(16)
@@ -468,8 +468,8 @@ describe('backup validation', () => {
       ],
     })
     expect(document.portraits).toHaveLength(1)
-    expect(document.portraits[0]!.source).toBe(doge.source)
-    expect(document.portraits[0]!.narration).toBeUndefined()
+    expect(document.portraits[0].source).toBe(doge.source)
+    expect(document.portraits[0].narration).toBeUndefined()
     expect(document.portraits[0]).not.toHaveProperty('alternateSource')
     expect(() => validateDocument({
       ...original,

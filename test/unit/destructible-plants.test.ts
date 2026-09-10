@@ -112,8 +112,8 @@ describe('new destructible botanical models', () => {
     expect(geometry.leaves.some(leaf => !leaf.stem)).toBe(true)
     expect(geometry.leaves.some(leaf => leaf.stem)).toBe(true)
     for (const [i, leaf] of geometry.leaves.entries()) {
-      expect(leaf.vertices).toEqual(repeat.leaves[i]!.vertices)
-      expect(geometry.stemColliders[i]!.vertices).toEqual(repeat.stemColliders[i]!.vertices)
+      expect(leaf.vertices).toEqual(repeat.leaves[i].vertices)
+      expect(geometry.stemColliders[i].vertices).toEqual(repeat.stemColliders[i].vertices)
       expect(leaf.vertices).toEqual(Float32Array.from(leaf.geometry.getAttribute('position').array))
       expect(leaf.geometry.getAttribute('color').count).toBe(leaf.geometry.getAttribute('position').count)
       expect(leaf.mass).toBeGreaterThan(0)
@@ -123,7 +123,7 @@ describe('new destructible botanical models', () => {
           expect([...attribute.array].every(Number.isFinite)).toBe(true)
         }
       }
-      expect([...geometry.stemColliders[i]!.vertices].every(Number.isFinite)).toBe(true)
+      expect([...geometry.stemColliders[i].vertices].every(Number.isFinite)).toBe(true)
     }
     expect(geometry.leaves.filter(leaf => leaf.title.includes('flower'))).toHaveLength(kind === 'peaceLily' ? 3 : 0)
   })
@@ -182,7 +182,7 @@ for (const kind of ['birdOfParadise', 'peaceLily'] as const) {
     test('plucking, canceling and re-grabbing preserve attachment rules', () => {
       const {attachments, leaves, pot} = plant(kind)
       expect(pot.grab()).toBe(false)
-      const leaf = leaves[1]!
+      const leaf = leaves[1]
       const original = leaf.body.translation()
       const rotation = leaf.body.rotation()
       expect(leaf.grab()).toBe(true)
@@ -222,7 +222,7 @@ for (const kind of ['birdOfParadise', 'peaceLily'] as const) {
     test('leaves and carried stalks become a single throwable compound body and land on the floor', () => {
       const {geometry, leaves} = plant(kind)
       world.createCollider(RAPIER.ColliderDesc.cuboid(40, 0.1, 40).setTranslation(0, -0.1, 0))
-      const leaf = leaves[1]!
+      const leaf = leaves[1]
       expect(leaf.body.numColliders()).toBe(2)
       leaf.grab()
       leaf.body.setTranslation({
@@ -237,7 +237,7 @@ for (const kind of ['birdOfParadise', 'peaceLily'] as const) {
         expect(leaf.body.collider(i).isEnabled()).toBe(true)
       }
       world.step()
-      expect(leaf.body.mass()).toBeCloseTo(geometry.leaves[1]!.mass + geometry.leaves[1]!.stemMass, 5)
+      expect(leaf.body.mass()).toBeCloseTo(geometry.leaves[1].mass + geometry.leaves[1].stemMass, 5)
       for (let i = 0; i < 360; i++) {
         world.step()
       }
@@ -267,8 +267,8 @@ for (const kind of ['birdOfParadise', 'peaceLily'] as const) {
     })
     test('carried stalks participate in held clearance, not just their leaf heads', () => {
       const {geometry, leaves} = plant(kind)
-      const leaf = leaves[1]!
-      const definition = geometry.leaves[1]!
+      const leaf = leaves[1]
+      const definition = geometry.leaves[1]
       const position = leaf.body.translation()
       const rotation = leaf.body.rotation()
       const head = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(position.x, position.y, position.z).setRotation(rotation))
@@ -284,10 +284,10 @@ for (const kind of ['birdOfParadise', 'peaceLily'] as const) {
       const {geometry, leaves, pot} = plant(kind)
       pluckAll(leaves)
       const collider = pot.body.collider(2)
-      const vertices = geometry.stemColliders[0]!.vertices
+      const vertices = geometry.stemColliders[0].vertices
       let top = 0
       for (let i = 3; i < vertices.length; i += 3) {
-        if (vertices[i + 1]! > vertices[top + 1]!) {
+        if (vertices[i + 1] > vertices[top + 1]) {
           top = i
         }
       }
@@ -354,7 +354,7 @@ for (const kind of ['birdOfParadise', 'peaceLily'] as const) {
     test('lost leaves reattach only while their pot remains anchored', () => {
       const {attachments, leaves, pot} = plant(kind)
       pluckAll(leaves)
-      const leaf = leaves[0]!
+      const leaf = leaves[0]
       const handle = leaf.body.handle
       leaf.body.setTranslation({
         x: 0,

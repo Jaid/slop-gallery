@@ -44,31 +44,31 @@ export class StairHandrailGeometry extends BufferGeometry {
     const quad = (points: Array<Vector3>, faceNormals: Array<Vector3>, from: number, to: number) => {
       const base = positions.length / 3
       for (let i = 0; i < 4; i++) {
-        positions.push(...points[i]!)
-        normals.push(...faceNormals[i]!)
+        positions.push(...points[i])
+        normals.push(...faceNormals[i])
         uvs.push(i < 2 ? from : to, i === 0 || i === 3 ? 0 : half * 2)
       }
       indices.push(base, base + 1, base + 2, base, base + 2, base + 3)
     }
     let distance = 0
     for (let i = 1; i < rings.length; i++) {
-      const from = rings[i - 1]!
-      const to = rings[i]!
-      const nextDistance = distance + stations[i]!.point.distanceTo(stations[i - 1]!.point)
+      const from = rings[i - 1]
+      const to = rings[i]
+      const nextDistance = distance + stations[i].point.distanceTo(stations[i - 1].point)
       for (let face = 0; face < 4; face++) {
         const next = (face + 1) % 4
-        const points = [from[face]!, from[next]!, to[next]!, to[face]!]
-        const normal = points[1]!.clone().sub(points[0]!).cross(points[2]!.clone().sub(points[0]!)).normalize()
+        const points = [from[face], from[next], to[next], to[face]]
+        const normal = points[1].clone().sub(points[0]).cross(points[2].clone().sub(points[0])).normalize()
         // Smooth the circular sides, retaining crisp top/bottom edges and grade changes.
-        const fromNormal = face % 2 ? stations[i - 1]!.normal.clone().multiplyScalar(face === 1 ? -1 : 1) : normal
-        const toNormal = face % 2 ? stations[i]!.normal.clone().multiplyScalar(face === 1 ? -1 : 1) : normal
+        const fromNormal = face % 2 ? stations[i - 1].normal.clone().multiplyScalar(face === 1 ? -1 : 1) : normal
+        const toNormal = face % 2 ? stations[i].normal.clone().multiplyScalar(face === 1 ? -1 : 1) : normal
         quad(points, [fromNormal, fromNormal, toNormal, toNormal], distance, nextDistance)
       }
       distance = nextDistance
     }
     // Only the two room ends are capped; there are no internal faces at either landing join.
     const capNormal = new Vector3(-1, 0, 0)
-    quad(rings[0]!.toReversed(), Array.from({length: 4}, () => capNormal), 0, half * 2)
+    quad(rings[0].toReversed(), Array.from({length: 4}, () => capNormal), 0, half * 2)
     quad(rings.at(-1)!, Array.from({length: 4}, () => capNormal), 0, half * 2)
     this.setAttribute('position', new Float32BufferAttribute(positions, 3))
     this.setAttribute('normal', new Float32BufferAttribute(normals, 3))

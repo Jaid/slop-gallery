@@ -63,8 +63,8 @@ export class GoldTextures {
     }
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
-        const dx = (heights[y * size + wrap(x + 1, size)]! - heights[y * size + wrap(x - 1, size)]!) * 2
-        const dy = (heights[wrap(y + 1, size) * size + x]! - heights[wrap(y - 1, size) * size + x]!) * 2
+        const dx = (heights[y * size + wrap(x + 1, size)] - heights[y * size + wrap(x - 1, size)]) * 2
+        const dy = (heights[wrap(y + 1, size) * size + x] - heights[wrap(y - 1, size) * size + x]) * 2
         const length = Math.hypot(dx, dy, 1)
         const i = (y * size + x) * 4
         normals[i] = Math.round((0.5 - dx / length * 0.5) * 255)

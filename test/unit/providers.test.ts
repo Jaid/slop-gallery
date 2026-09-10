@@ -43,7 +43,7 @@ test('the real text adapter consumes streamed structured output', async () => {
   const request = JSON.parse(fetchSpy.mock.calls[0]![1]!.body as string) as {messages: Array<{content: Array<{image_url: {url: string}}>}>
     model: string}
   expect(request.model).toBe('test-model')
-  expect(request.messages.at(-1)!.content[0]!.image_url.url).toStartWith('data:image/webp;base64,')
+  expect(request.messages.at(-1)!.content[0].image_url.url).toStartWith('data:image/webp;base64,')
 })
 test('the real image adapter keeps hanging/thrown attachment order', async () => {
   const data = new Uint8Array(await Bun.file('public/art/goose.webp').arrayBuffer())

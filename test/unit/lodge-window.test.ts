@@ -66,12 +66,12 @@ describe('Lodge through-window', () => {
             const origin = new Vector3(lodge.approachX, lodge.floorY + height, z)
             const aim = new Vector3(direction, 0, 0)
             const ray = new Raycaster(origin, aim, 0, lodge.timberWidth)
-            const oldHit = ray.intersectObjects(before, false)[0]!
-            const newHit = ray.intersectObjects(after, false)[0]!
+            const oldHit = ray.intersectObjects(before, false)[0]
+            const newHit = ray.intersectObjects(after, false)[0]
             expect(newHit).toBeDefined()
             expect(world.castRay(new RAPIER.Ray(origin, aim), lodge.timberWidth, true)!.timeOfImpact).toBeCloseTo(newHit.distance, 5)
             if (direction > 0 && Math.abs(z - lodgeWindow.z) < lodgeWindow.width / 2) {
-              expect(newHit.object).toBe(after[0]!)
+              expect(newHit.object).toBe(after[0])
               expect(newHit.point.x).toBeCloseTo(lodgeWindow.tunnelX, 5)
               removed ||= oldHit.distance < newHit.distance - 0.1
             } else {
@@ -134,8 +134,8 @@ describe('Lodge through-window', () => {
       for (let i = 0; i < positions.count; i++) {
         const y = positions.getY(i) - lodge.floorY
         const upper = profile.findIndex(point => point.y >= y)
-        const a = profile[upper - 1]!
-        const b = profile[upper]!
+        const a = profile[upper - 1]
+        const b = profile[upper]
         const boundary = lodge.approachX + a.x + (b.x - a.x) * (y - a.y) / (b.y - a.y)
         expect(positions.getX(i)).toBeGreaterThanOrEqual(boundary - 0.000_01)
       }
@@ -212,7 +212,7 @@ describe('Lodge through-window', () => {
       for (const side of [-1, 1]) {
         const origin = new Vector3(side < 0 ? lodgeWindow.roomX + 0.5 : lodgeWindow.tunnelX - 0.5, (lodgeWindow.bottom + lodgeWindow.top) / 2, lodgeWindow.z)
         const direction = new Vector3(side, 0, 0)
-        const hit = new Raycaster(origin, direction).intersectObjects([...opaque, glass], false)[0]!
+        const hit = new Raycaster(origin, direction).intersectObjects([...opaque, glass], false)[0]
         expect(hit.object).toBe(glass)
         expect(hit.point.x).toBeCloseTo(lodgeWindow.tunnelX + (side < 0 ? lodgeWindow.glassThickness : 0), 5)
         expect(world.castRay(new RAPIER.Ray(origin, direction), 10, true)!.timeOfImpact).toBeCloseTo(hit.distance, 5)
@@ -231,7 +231,7 @@ describe('Lodge through-window', () => {
     for (const direction of [new Vector3(0, 1, 0), new Vector3(0, -1, 0), new Vector3(0, 0, 1), new Vector3(0, 0, -1)]) {
       const hits = new Raycaster(new Vector3(x, y, lodgeWindow.z), direction, 0, 2).intersectObjects(opaque, false)
       expect(hits.length).toBeGreaterThan(0)
-      expect(hits.filter(hit => Math.abs(hit.distance - hits[0]!.distance) < 0.0001)).toHaveLength(1)
+      expect(hits.filter(hit => Math.abs(hit.distance - hits[0].distance) < 0.0001)).toHaveLength(1)
     }
     expect(lodgeWindowFloor(x, lodgeWindow.z)).toBe(lodgeWindow.bottom)
     const point: [number, number, number] = [x, lodgeWindow.bottom + 0.2, lodgeWindow.z]
@@ -242,7 +242,7 @@ describe('Lodge through-window', () => {
   test('preserves artwork displaced by the new rectangular opening as a loose frame', () => {
     const wall = walls.find(value => value.id === 'lodge-west')!
     const portrait = {
-      ...initialPortraits[0]!,
+      ...initialPortraits[0],
       wallId: wall.id,
       rotation: wall.rotation,
       width: 1,
@@ -254,8 +254,8 @@ describe('Lodge through-window', () => {
       ...createDocument(),
       portraits: [portrait],
     })
-    expect(saved.portraits[0]!.hung).toBe(false)
-    expect(saved.portraits[0]!.source).toBe(portrait.source)
+    expect(saved.portraits[0].hung).toBe(false)
+    expect(saved.portraits[0].source).toBe(portrait.source)
     expect(portrait.hung).toBe(true)
     expect(validateDocument(saved)).toEqual(saved)
   })

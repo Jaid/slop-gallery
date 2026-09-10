@@ -7,7 +7,7 @@ export function surfaceTexture(kind: 'plaster' | 'stone' | 'wood') {
   const c = document.createElement('canvas')
   c.width = c.height = 512
   const ctx = c.getContext('2d')!
-  ctx.fillStyle = kind === 'wood' ? '#735139' : (kind === 'stone' ? '#c9c3b1' : '#e5e0d2')
+  ctx.fillStyle = kind === 'wood' ? '#735139' : kind === 'stone' ? '#c9c3b1' : '#e5e0d2'
   ctx.fillRect(0, 0, 512, 512)
   let seed = 91
   const rand = () => {
@@ -61,7 +61,7 @@ export function damaskTexture(width: number, height: number) {
       const fiber = (random() - 0.5) * 5
       const offset = (y * size + x) * 4
       for (let channel = 0; channel < 3; channel++) {
-        pixels.data[offset + channel] = base[channel]! * (1 - mix) + shade[channel]! * mix + fiber
+        pixels.data[offset + channel] = base[channel] * (1 - mix) + shade[channel] * mix + fiber
       }
       pixels.data[offset + 3] = 255
     }

@@ -24,7 +24,7 @@ describe('plain doorway trim', () => {
         world.createCollider(RAPIER.ColliderDesc.trimesh(...collision))
       }
       world.step()
-      expect(geometry.trim[0]!.boundingBox!.max.z).toBeCloseTo(0.25, 6)
+      expect(geometry.trim[0].boundingBox!.max.z).toBeCloseTo(0.25, 6)
       for (const hole of wall.holes!) {
         for (const side of [-1, 1]) {
           for (const offset of [0.04, wallOpeningTrim - 0.001, wallOpeningTrim + 0.001, 0.21, 0.3]) {
@@ -39,7 +39,7 @@ describe('plain doorway trim', () => {
               }
               const hits = new Raycaster(origin, direction, 0, 2).intersectObjects(meshes)
               const hit = world.castRay(new RAPIER.Ray(origin, direction), 2, true)
-              expect(hits[0]!.point.z).toBeCloseTo(front, 6)
+              expect(hits[0].point.z).toBeCloseTo(front, 6)
               expect(hit!.timeOfImpact).toBeCloseTo(1 - front, 6)
               expect(hits.filter(value => Math.abs(value.point.z - front) < 0.000_01)).toHaveLength(1)
             }
@@ -65,7 +65,7 @@ describe('plain doorway trim', () => {
       ...wall,
       trimStyle: undefined,
     })).toBe(classic)
-    expect(classic.trim[0]!.boundingBox!.max.z).toBeCloseTo(0.325, 6)
+    expect(classic.trim[0].boundingBox!.max.z).toBeCloseTo(0.325, 6)
     expect(walls.filter(value => value.trimStyle === 'plain').every(value => ['oculus', 'lodge'].includes(value.room))).toBe(true)
   })
 })

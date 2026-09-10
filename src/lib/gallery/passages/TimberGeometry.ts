@@ -38,9 +38,9 @@ export function timberProfile(radius: number, height: number, inset: number) {
 function timberRing(inside: Array<Vector2>, outside: Array<Vector2>, depth: number, distance: number, transform: Matrix4) {
   const parts: Array<BufferGeometry> = []
   for (let i = 1; i < inside.length; i++) {
-    const a = inside[i - 1]!
-    const b = inside[i]!
-    const shape = new Shape([a, b, outside[i]!, outside[i - 1]!])
+    const a = inside[i - 1]
+    const b = inside[i]
+    const shape = new Shape([a, b, outside[i], outside[i - 1]])
     const geometry = new ExtrudeGeometry(shape, {
       depth,
       bevelEnabled: false,
