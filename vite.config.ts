@@ -55,10 +55,6 @@ const getCommonConfig = (context: ConfigEnv) => {
 }
 const getDevelopmentConfig = (context: ConfigEnv) => {
   const config: UserConfig = {
-    server: {
-      host: '0.0.0.0',
-      allowedHosts: ['vite.tower.lan'],
-    },
     build: {
       outDir: `out/build/${context.mode}`,
     },
