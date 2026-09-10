@@ -11,6 +11,17 @@
   background: #1119
   backdrop-filter: blur(5px)
 
+.layout
+  display: grid
+  align-items: center
+  gap: 2rem
+  width: min(440px, 100%)
+  margin: auto
+
+.container[data-stage='pause'] .layout
+  width: min(1500px, 100%)
+  grid-template-columns: repeat(3, minmax(0, 1fr))
+
 .content
   width: min(440px, 100%)
   min-width: 0

@@ -159,9 +159,14 @@ test.each(['first', 'return', 'pause', 'unfocus'] as const)('renders the %s menu
     expect(html.includes('data-testid="minimap"')).toBe(stage === 'pause')
     expect(html.includes('New game')).toBe(stage === 'return')
     expect(html.includes('Your position')).toBe(stage === 'pause')
+    if (stage === 'pause') {
+      expect(html.match(/data-testid="minimap"/gu)).toHaveLength(2)
+      expect(html.indexOf('aria-label="Upper gallery map"')).toBeLessThan(html.indexOf('id="menu-title"'))
+      expect(html.indexOf('aria-label="Lower gallery map"')).toBeGreaterThan(html.indexOf('id="openrouter-title"'))
+    }
     expect(html.includes('OpenRouter')).toBe(stage !== 'unfocus')
     expect(html.includes('Mute audio')).toBe(stage !== 'unfocus')
-    expect(html.includes('Good taste.')).toBe(stage !== 'unfocus')
+    expect(html.includes('Good taste.')).toBe(stage === 'first' || stage === 'return')
     expect(html).not.toContain('Reset gallery')
     expect(html).not.toContain('Confirm reset')
     if (stage === 'unfocus') {
@@ -212,5 +217,24 @@ test('New game resets and enters directly; it does nothing before the scene is r
     } else {
       Reflect.deleteProperty(globalThis, 'document')
     }
+  }
+})
+
+test.each(['lobby', 'oculus'] as const)('pause heading identifies the %s room and floor', room => {
+  const initial = {...useGallery.getInitialState()}
+  Object.assign(useGallery.getInitialState(), {menuStage: 'pause', room})
+  try {
+    const params = Object.fromEntries(Object.entries(parameterParsers).map(([key, parser]) => [key, parser.defaultValue])) as AiSettings
+    const html = renderToStaticMarkup(createElement(GraphicsQualityProvider, {
+      isQuality: true,
+      onChange: () => {},
+      children: createElement(Menu, {params, setParams: async () => new URLSearchParams}),
+    }))
+    expect(html).toContain(room === 'lobby' ? '>Lobby</h1>' : '>Oculus</h1>')
+    expect(html).toContain(room === 'lobby' ? '>upper floor room</p>' : '>lower floor room</p>')
+    expect(html).not.toContain('>Slop Gallery</h1>')
+    expect(html).not.toContain('Good taste.')
+  } finally {
+    Object.assign(useGallery.getInitialState(), initial)
   }
 })

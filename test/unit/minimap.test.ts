@@ -44,7 +44,7 @@ test('both layers share a scale and contain all wall outlines', () => {
 test('both layers render without visible labels, numbers, legends or room fills', () => {
   cameraPose.position = [1, 1.6, 2]
   cameraPose.direction = [1, 0, 0]
-  const html = renderToStaticMarkup(createElement(Minimap))
+  const html = [false, true].map(lower => renderToStaticMarkup(createElement(Minimap, {lower}))).join('')
   expect(html.match(/<svg\b/gu)).toHaveLength(2)
   expect(html.match(/viewBox="/gu)).toHaveLength(2)
   expect(html).not.toContain('Upper level')
