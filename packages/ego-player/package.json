@@ -27,7 +27,7 @@
     "three": "^0.186.0"
   },
   "devDependencies": {
-    "@dimforge/rapier3d-compat": "0.20.0"
+    "@dimforge/rapier3d-compat": "0.19.2"
   },
   "files": [
     "src",

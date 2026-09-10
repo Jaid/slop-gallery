@@ -27,6 +27,7 @@
     "typecheck": "tsc --noEmit --noUnusedLocals --noUnusedParameters --pretty false"
   },
   "dependencies": {
+    "@dimforge/rapier3d-compat": "0.19.2",
     "@openrouter/ai-sdk-provider": "3.0.0",
     "@react-three/drei": "11.0.0-alpha.7",
     "@react-three/fiber": "10.0.0-alpha.5",
@@ -51,7 +52,6 @@
     "zustand": "5.0.15"
   },
   "devDependencies": {
-    "@dimforge/rapier3d": "0.20.0",
     "@types/bun": "1.4.2",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.7",
