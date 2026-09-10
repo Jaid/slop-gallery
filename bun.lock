@@ -40,7 +40,6 @@
         "fake-indexeddb": "6.2.5",
         "puppeteer-core": "25.10.0",
         "sass-embedded": "1.104.0",
-        "tsconfig-jaid-bun": "16.0.0",
         "type-fest": "5.9.0",
         "typescript": "npm:typescript-classic@6.0.4",
         "vite": "8.2.2",
@@ -824,8 +823,6 @@
     "ts-api-utils": ["ts-api-utils@2.5.0", "", { "peerDependencies": { "typescript": ">=4.8.4" } }, "sha512-OJ/ibxhPlqrMM0UiNHJ/0CKQkoKF243/AEmplt3qpRgkW8VG7IfOS41h7V8TjITqdByHzrjcS/2si+y4lIh8NA=="],
 
     "ts-declaration-location": ["ts-declaration-location@1.0.7", "", { "dependencies": { "picomatch": "^4.0.2" }, "peerDependencies": { "typescript": ">=4.0.0" } }, "sha512-EDyGAwH1gO0Ausm9gV6T2nUvBgXT5kGoCMJPllOaooZ+4VvJiKBdZE7wK18N1deEowhcUptS+5GXZK8U/fvpwA=="],
-
-    "tsconfig-jaid-bun": ["tsconfig-jaid-bun@16.0.0", "", { "dependencies": { "@types/bun": "^1" }, "peerDependencies": { "typescript": "^6" } }, "sha512-3+C3lZC1muRks3QEMBwz+9yRH0ZmUOwDiG0CLtFXazvQI5elD0p8awwX+vQIR3Rzw0gAKd0iXy4ngms+VFG1KA=="],
 
     "tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
