@@ -54,6 +54,7 @@
         "fake-indexeddb": "6.2.5",
         "forward-slash-path": "0.3.0",
         "fs-extra": "11.4.0",
+        "get-free": "0.2.0",
         "postcss": "8.5.28",
         "postcss-normalize": "13.0.1",
         "puppeteer-core": "25.10.0",
@@ -722,6 +723,8 @@
     "get-caller-file": ["get-caller-file@2.0.5", "", {}, "sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg=="],
 
     "get-east-asian-width": ["get-east-asian-width@1.6.0", "", {}, "sha512-QRbvDIbx6YklUe6RxeTeleMR0yv3cYH6PsPZHcnVn7xv7zO1BHN8r0XETu8n6Ye3Q+ahtSarc3WgtNWmehIBfA=="],
+
+    "get-free": ["get-free@0.2.0", "", {}, "sha512-5KBlAqkX/GMg2SpeWCN/GwqwZZQVdrYtKoiI10OE6bwcFQYMQEPEDVJJ3+5bi4bCzTAujLD7lO+RKHg8U8RsiA=="],
 
     "get-tsconfig": ["get-tsconfig@4.14.3", "", { "dependencies": { "resolve-pkg-maps": "^1.0.0" } }, "sha512-++QEw4DIY7WGoukz+/+A/8dGYPT9l9yIadnmSgZ8Rjr3YVSVDipQSO9CdnJo9ePqFqUUqh+wk9uIaoiAwsiPkA=="],
 
