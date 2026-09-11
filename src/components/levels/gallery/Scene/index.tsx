@@ -1,7 +1,6 @@
 import Architecture from '#component/levels/gallery/Architecture'
 import Portrait from '#component/levels/gallery/Portrait'
 import Props from '#component/levels/gallery/Props'
-import SoundEffectLab from '#src/components/Scene/SoundEffectLab.tsx'
 import {useGallery} from '#src/lib/gallery.ts'
 
 export default function GalleryScene() {
@@ -10,7 +9,6 @@ export default function GalleryScene() {
   return <>
     <Architecture/>
     <Props key={resetEpoch}/>
-    <SoundEffectLab/>
     {portraits.map(p => <Portrait key={p.id} portrait={p}/>)}
   </>
 }

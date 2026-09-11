@@ -11,6 +11,9 @@ import museumPortraits from '../../src/levels/gallery/collection.ts'
 import {insideLevel as insideMuseum, playerSpawn as museumSpawn} from '../../src/levels/gallery/navigation.ts'
 import knotPortraits from '../../src/levels/knottingham/collection.ts'
 import {insideLevel as insideKnots, playerSpawn as knotSpawn, levelFloorHeight, woodenFloor} from '../../src/levels/knottingham/navigation.ts'
+import soundboardPortraits from '../../src/levels/soundboard/collection.ts'
+import {insideLevel as insideSoundboard, playerSpawn as soundboardSpawn} from '../../src/levels/soundboard/navigation.ts'
+import {soundboardBounds} from '../../src/lib/audio/soundboard.ts'
 import {knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
 
 const farKnotPosition: PlayerPose['position'] = [knotGalleryBounds.maxX - 2, 0.04, knotGalleryBounds.northZ + 2]
@@ -20,39 +23,55 @@ describe('build-time levels', () => {
     const files = await Array.fromAsync(new Bun.Glob('src/components/levels/**/*.tsx').scan())
     expect(files.length).toBeGreaterThan(40)
     for (const file of files) {
-      expect(file.replaceAll('\\', '/')).toMatch(/^src\/components\/levels\/(gallery|knottingham)\/[^/]+\/index\.tsx$/u)
+      expect(file.replaceAll('\\', '/')).toMatch(/^src\/components\/levels\/(gallery|knottingham|soundboard)\/[^/]+\/index\.tsx$/u)
     }
   })
   test('defines level titles, entry directories and assets in the shared data module', () => {
-    expect(levelIds).toEqual(['gallery', 'knottingham'])
-    expect(levels.gallery).toEqual({
+    expect(levelIds).toEqual(['gallery', 'knottingham', 'soundboard'])
+    expect(levels.gallery).toMatchObject({
       title: 'Slop Gallery',
       directory: 'src/levels/gallery',
       publicAssets: ['art', 'audio'],
+      storageKey: 'slop-gallery',
+      supportsMap: true,
     })
-    expect(levels.knottingham).toEqual({
+    expect(levels.knottingham).toMatchObject({
       title: 'Knottingham',
       directory: 'src/levels/knottingham',
       publicAssets: [],
+      storageKey: 'knot-gallery',
+      supportsMap: true,
     })
+    expect(levels.soundboard).toMatchObject({
+      title: 'Soundboard',
+      directory: 'src/levels/soundboard',
+      publicAssets: [],
+      storageKey: 'slop-soundboard',
+      supportsMap: false,
+    })
+    expect(new Set(levelIds.map(id => levels[id].storageKey)).size).toBe(levelIds.length)
   })
   test('defaults to the museum and rejects invalid selections instead of silently deploying the wrong world', () => {
     expect(parseGalleryLevel()).toBe('gallery')
     expect(parseGalleryLevel('gallery')).toBe('gallery')
     expect(parseGalleryLevel('knottingham')).toBe('knottingham')
-    for (const value of ['', 'knots', 'Knot-Gallery', 'slop-gallery', 'knot-gallery']) {
+    expect(parseGalleryLevel('soundboard')).toBe('soundboard')
+    for (const value of ['', 'knots', 'Knot-Gallery', 'slop-gallery', 'knot-gallery', 'sounds']) {
       expect(() => parseGalleryLevel(value)).toThrow('Invalid game level')
     }
   })
   test('uses independent spawn bounds and collections', () => {
     expect(insideKnots(knotSpawn.position)).toBe(true)
     expect(insideMuseum(museumSpawn.position)).toBe(true)
+    expect(insideSoundboard(soundboardSpawn.position)).toBe(true)
     expect(insideKnots(farKnotPosition)).toBe(true)
     expect(insideMuseum(farKnotPosition)).toBe(false)
     expect(insideKnots([0, 0, knotGalleryBounds.northZ - 1])).toBe(false)
     expect(levelFloorHeight(farKnotPosition)).toBe(0)
     expect(woodenFloor('vesper', [0, 0, 0])).toBe(false)
     expect(knotPortraits).toEqual([])
+    expect(soundboardPortraits).toEqual([])
+    expect(insideSoundboard([soundboardBounds.maxX + 1, 0.04, 0])).toBe(false)
     expect(museumPortraits).toHaveLength(16)
   })
 })
@@ -108,7 +127,7 @@ test('Knottingham resets only its exhibition, without duplicate sibling keys or 
       {
         name: 'scene-children',
         setup(build) {
-          build.onResolve({filter: new RegExp(String.raw`^#(?:component/|src/components/Scene/SoundEffectLab\.tsx$|src/lib/gallery\.ts$)`, 'u')}, args => ({
+          build.onResolve({filter: new RegExp(String.raw`^#(?:component/|src/lib/gallery\.ts$)`, 'u')}, args => ({
             path: args.path,
             namespace: 'scene-stub',
           }))
@@ -129,13 +148,8 @@ test('Knottingham resets only its exhibition, without duplicate sibling keys or 
   const children = scene().props.children
   expect(children.map(child => child.type)).toEqual([
     '#component/levels/knottingham/KnotLobby',
-    '#src/components/Scene/SoundEffectLab.tsx',
     '#component/levels/knottingham/KnotSpectation',
     '#component/levels/knottingham/KnotExhibition',
   ])
-  expect(children.map(child => child.key)).toEqual([null, null, null, '42'])
-  expect(children[1].props).toMatchObject({
-    position: [-28, 2.75, 7.36],
-    rotationY: Math.PI,
-  })
+  expect(children.map(child => child.key)).toEqual([null, null, '42'])
 })

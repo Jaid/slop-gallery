@@ -1,6 +1,6 @@
 import type SoundEngine from './SoundEngine.ts'
 
-export type TemporarySoundEffect = {id: string
+export type SoundEffect = {id: string
   label: string
   voices: Array<Voice>}
 type FilterSpec = {endFrequency?: number
@@ -40,7 +40,7 @@ const noise = (duration: number, volume: number, filter: FilterSpec, options: Pa
   ...options,
 })
 
-export const temporarySoundEffects: Array<TemporarySoundEffect> = [
+export const soundEffects: Array<SoundEffect> = [
   {
     id: 'SFX-01',
     label: 'Pebble Click',
@@ -471,10 +471,10 @@ export const temporarySoundEffects: Array<TemporarySoundEffect> = [
   },
 ]
 
-const byId = new Map(temporarySoundEffects.map(effect => [effect.id, effect]))
+const byId = new Map(soundEffects.map(effect => [effect.id, effect]))
 
 /** Preferred effects captured from the in-world audition, in selection order. */
-export const selectedSoundEffectIds = [
+export const enabledSoundEffectIds: ReadonlyArray<string> = [
   'SFX-28',
   'SFX-07',
   'SFX-04',
@@ -486,9 +486,11 @@ export const selectedSoundEffectIds = [
   'SFX-09',
   'SFX-06',
   'SFX-03',
-] as const
+]
 
-export const selectedSoundEffects = selectedSoundEffectIds.map(id => byId.get(id)!)
+export const enabledSoundEffects = enabledSoundEffectIds.map(id => byId.get(id)!)
+const enabledIds = new Set<string>(enabledSoundEffectIds)
+export const archivedSoundEffects = soundEffects.filter(effect => !enabledIds.has(effect.id))
 const floor = 0.0001
 function connect(source: AudioNode, gain: GainNode, master: GainNode, filter?: BiquadFilterNode) {
   if (filter) {
@@ -567,7 +569,7 @@ function playVoice(sound: SoundEngine, voice: Voice, seed: string) {
     gain.disconnect()
   }, {once: true})
 }
-function playTemporarySoundEffect(sound: SoundEngine, id: string) {
+function playSoundEffect(sound: SoundEngine, id: string) {
   const effect = byId.get(id)
   if (!effect) {
     return false
@@ -577,4 +579,4 @@ function playTemporarySoundEffect(sound: SoundEngine, id: string) {
   }
   return true
 }
-export {playTemporarySoundEffect}
+export {playSoundEffect}

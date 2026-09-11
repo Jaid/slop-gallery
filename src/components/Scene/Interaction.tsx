@@ -14,7 +14,7 @@ import {interactiveObjects} from '#src/lib/gallery/interactiveObjects.ts'
 import {playerSpawn} from '#src/lib/gallery/PlayerSession.ts'
 import {isPortraitLabelHit} from '#src/lib/gallery/portraitLabel.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
-import {isKnottingham} from '#src/lib/level.ts'
+import {gallerySupportsMap, isGallery} from '#src/lib/level.ts'
 import pauseMenu from '#src/lib/pauseMenu.ts'
 
 import {propObjects} from './GrabbableProp.tsx'
@@ -244,7 +244,7 @@ export default function Interaction() {
         cancel()
         cancelView()
       }
-      if (event.code === 'Tab' && !s.panel && s.locked) {
+      if (event.code === 'Tab' && gallerySupportsMap && !s.panel && s.locked) {
         event.preventDefault()
         openPanel('map')
       }
@@ -406,7 +406,7 @@ export default function Interaction() {
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.06)
     const s = useGallery.getState()
-    if (!isKnottingham && s.locked && !introduced.current && firstPose.current && (camera.position.distanceTo(firstPose.current.position) > 0.12 || camera.quaternion.angleTo(firstPose.current.rotation) > 0.1)) {
+    if (isGallery && s.locked && !introduced.current && firstPose.current && (camera.position.distanceTo(firstPose.current.position) > 0.12 || camera.quaternion.angleTo(firstPose.current.rotation) > 0.1)) {
       introduced.current = true
       narrate('__intro')
     }
@@ -439,7 +439,7 @@ export default function Interaction() {
     camera.getWorldDirection(direction.current)
     cameraPose.position = camera.position.toArray()
     cameraPose.direction = direction.current.toArray()
-    const room = isKnottingham ? 'lobby' : roomAt(cameraPose.position)
+    const room = isGallery ? roomAt(cameraPose.position) : 'lobby'
     if (room !== s.room) {
       useGallery.setState({room})
     }
@@ -478,7 +478,7 @@ export default function Interaction() {
     } else if (s.activeLabel) {
       useGallery.setState({activeLabel: null})
     }
-    if (isKnottingham || !ghost.current) {
+    if (!isGallery || !ghost.current) {
       return
     }
     const p = s.portraits.find(p => p.id === s.held)
@@ -499,6 +499,6 @@ export default function Interaction() {
     }
   })
   return <group ref={ghost} visible={false}>
-    {!isKnottingham && (artwork || dragging) && !held?.startsWith('prop-') && <PlacementPreview key={artwork?.id ?? 'import'} width={artwork?.width ?? 2.4} height={artwork?.height ?? 2.4} source={artwork?.source} title={artwork?.title} creator={artwork?.creator} pending={artwork?.pending}/>}
+    {isGallery && (artwork || dragging) && !held?.startsWith('prop-') && <PlacementPreview key={artwork?.id ?? 'import'} width={artwork?.width ?? 2.4} height={artwork?.height ?? 2.4} source={artwork?.source} title={artwork?.title} creator={artwork?.creator} pending={artwork?.pending}/>}
   </group>
 }
