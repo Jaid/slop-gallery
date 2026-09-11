@@ -20,8 +20,8 @@
   "scripts": {
     "build": "bun run vite build",
     "build:dev": "bun run vite build --mode development",
-    "build:gallery": "GAME_LEVEL=gallery bun run build --outDir dist/gallery",
-    "build:knottingham": "GAME_LEVEL=knottingham bun run build --outDir dist/knottingham",
+    "build:gallery": "GAME_LEVEL=gallery bun run build --outDir out/production/gallery",
+    "build:knottingham": "GAME_LEVEL=knottingham bun run build --outDir out/production/knottingham",
     "check": "bun run typecheck && bun run lint && bun run test && bun run build && bun run check:package",
     "check:levels": "bun test/build/levels.ts",
     "check:package": "bun scripts/checkPackage.ts",
