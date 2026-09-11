@@ -20,21 +20,21 @@
   "scripts": {
     "build": "bun run vite build",
     "build:dev": "bun run vite build --mode development",
+    "build:gallery": "GAME_LEVEL=gallery bun run build --outDir dist/gallery",
+    "build:knottingham": "GAME_LEVEL=knottingham bun run build --outDir dist/knottingham",
     "check": "bun run typecheck && bun run lint && bun run test && bun run build && bun run check:package",
+    "check:levels": "bun test/build/levels.ts",
     "check:package": "bun scripts/checkPackage.ts",
     "dev": "bun run vite --mode development",
+    "dev:gallery": "GAME_LEVEL=gallery bun run dev",
+    "dev:knottingham": "GAME_LEVEL=knottingham bun run dev",
     "lint": "bun scripts/lint.ts",
     "preview": "bun run vite preview --host 127.0.0.1",
     "test": "bun test --max-concurrency 1 ./test",
     "test:live": "bun run build && bun test ./test/live.test.ts",
     "typecheck": "tsc --noEmit --noUnusedLocals --noUnusedParameters --pretty false",
-    "vite": "bun --bun node_modules/vite/dist/node/cli.js --configLoader native",
     "update:knots": "bun scripts/updateKnots.ts",
-    "check:levels": "bun test/build/levels.ts",
-    "build:gallery": "GAME_LEVEL=gallery bun run build --outDir dist/gallery",
-    "dev:gallery": "GAME_LEVEL=gallery bun run dev",
-    "build:knottingham": "GAME_LEVEL=knottingham bun run build --outDir dist/knottingham",
-    "dev:knottingham": "GAME_LEVEL=knottingham bun run dev"
+    "vite": "bun --bun node_modules/vite/dist/node/cli.js --configLoader native"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.20.0",
@@ -59,11 +59,11 @@
     "three-fiber-game": "workspace:*",
     "three-mesh-bvh": "0.9.15",
     "use-graphics-quality": "workspace:*",
-    "webgpu-capture-bridge": "workspace:*",
-    "zustand": "5.0.15",
     "use-pause-menu": "workspace:*",
+    "vite-plugin-avif-only": "workspace:*",
     "vite-plugin-game-level": "workspace:*",
-    "vite-plugin-avif-only": "workspace:*"
+    "webgpu-capture-bridge": "workspace:*",
+    "zustand": "5.0.15"
   },
   "devDependencies": {
     "@babel/core": "8.0.5",

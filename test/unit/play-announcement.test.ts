@@ -5,7 +5,7 @@ import {playAnnouncement} from '../../src/lib/audio/playAnnouncement.ts'
 import {SoundEngine} from '../../src/lib/audio/SoundEngine.ts'
 
 const originalAudio = Object.getOwnPropertyDescriptor(globalThis, 'Audio')
-const spies: Array<{mockRestore(): void}> = []
+const spies: Array<{mockRestore: () => void}> = []
 afterEach(() => {
   for (const spy of spies.splice(0)) {
     spy.mockRestore()
@@ -25,11 +25,23 @@ function setup() {
     removeAttribute: mock((_name: string) => {}),
     volume: 0,
   })
-  Object.defineProperty(globalThis, 'Audio', {configurable: true, value: function () {return audio}})
+  Object.defineProperty(globalThis, 'Audio', {
+    configurable: true,
+    value() {
+      return audio
+    },
+  })
   const disconnect = mock(() => {})
-  spies.push(spyOn(SoundEngine, 'get').mockReturnValue({resume: async () => {}, context: {}} as SoundEngine))
+  spies.push(spyOn(SoundEngine, 'get').mockReturnValue({
+    resume: async () => {},
+    context: {},
+  } as SoundEngine))
   spies.push(spyOn(narrationMeter, 'connect').mockReturnValue(disconnect))
-  return {audio, ready, disconnect}
+  return {
+    audio,
+    ready,
+    disconnect,
+  }
 }
 test('local announcement waits for ended and disconnects its audio graph', async () => {
   const {audio, ready, disconnect} = setup()
@@ -66,7 +78,7 @@ test('aborting while play is pending cannot publish stale playing state', async 
 test('media errors clean up and suppress a late play completion', async () => {
   const {audio, ready, disconnect} = setup()
   const playing = mock(() => {})
-  const result = playAnnouncement('/announce.opus', new AbortController().signal, playing)
+  const result = playAnnouncement('/announce.opus', (new AbortController).signal, playing)
   const rejection = result.catch(error => error)
   await Promise.resolve()
   audio.dispatchEvent(new Event('error'))

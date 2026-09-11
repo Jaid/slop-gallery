@@ -1,7 +1,9 @@
 import type {Texture} from 'three/webgpu'
 
 import {cameraPosition, color, mix, modelWorldMatrixInverse, mx_noise_float, normalViewGeometry, positionGeometry, positionView, positionViewDirection, time, vec3, vec4} from 'three/tsl'
+
 import {filament, proceduralNormal, spectralColor} from '#src/lib/knots/shared.ts'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
 import knotData from './data.ts'
 
@@ -52,7 +54,7 @@ export default class SeraphimVeilMaterial extends KnotMaterial {
     this.sheenRoughness = 0.31
     this.clearcoat = 0.38
     this.clearcoatRoughness = 0.11
-    this.normalNode = proceduralNormal(mx_noise_float(p.mul(46)).mul(near), 0.00022)
+    this.normalNode = proceduralNormal(mx_noise_float(p.mul(46)).mul(near), 0.000_22)
     this.emissiveNode = color('#ffe5b1').mul(fibresA).mul(flashA.mul(1.6).add(0.22)).add(color('#bbd8ff').mul(fibresB).mul(flashB.mul(1.4).add(0.28))).add(color('#fffaf0').mul(hair).mul(1.2)).add(pearl.mul(rim).mul(0.075))
   }
 }

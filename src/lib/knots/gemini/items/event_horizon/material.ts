@@ -1,9 +1,11 @@
 import type {Texture} from 'three/webgpu'
 
 import {cameraPosition, color, mix, modelWorldMatrixInverse, mx_noise_float, normalViewGeometry, positionGeometry, positionView, positionViewDirection, time, vec3, vec4} from 'three/tsl'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
-import knotData from './data.ts'
 import {liquidNormal, opticalLine} from '../../helpers.ts'
+import knotData from './data.ts'
+
 export default class EventHorizonMaterial extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)

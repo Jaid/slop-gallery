@@ -1,9 +1,11 @@
 import type {Texture} from 'three/webgpu'
 
 import {cameraPosition, color, mix, modelWorldMatrixInverse, mx_noise_float, normalViewGeometry, positionGeometry, positionView, positionViewDirection, time, vec4} from 'three/tsl'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import {opticalBands, opticalLine, spectralColor} from '../../helpers.ts'
 import knotData from './data.ts'
-import {spectralColor, opticalLine, opticalBands} from '../../helpers.ts'
+
 export default class QuantumSuperconductorMaterial extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)

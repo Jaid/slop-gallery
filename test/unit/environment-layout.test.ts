@@ -155,5 +155,5 @@ test('environmental room names and taglines are removed without removing artwork
   for (const name of ['MoonfallRoom', 'GalleryStairs', 'LodgeRoom', 'LodgeCorridorRoute', 'Fountain', 'MainEntrance']) {
     expect(await Bun.file(`src/components/levels/gallery/${name}/index.tsx`).text()).not.toContain('CanvasText')
   }
-  expect(await Bun.file("src/components/levels/gallery/PortraitLabel/index.tsx").text()).toContain('CanvasText')
+  expect(await Bun.file('src/components/levels/gallery/PortraitLabel/index.tsx').text()).toContain('CanvasText')
 })

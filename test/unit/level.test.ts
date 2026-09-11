@@ -6,16 +6,14 @@ import {resolve} from 'node:path'
 
 import {selectGameLevel} from 'vite-plugin-game-level'
 
-import {knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
-
-const farKnotPosition: PlayerPose['position'] = [knotGalleryBounds.maxX - 2, 0.04, knotGalleryBounds.northZ + 2]
-
 import levels, {defaultLevel, levelIds} from '../../src/data/levels.ts'
 import {initialPortraits as museumPortraits} from '../../src/levels/gallery/collection.ts'
 import {insideLevel as insideMuseum, playerSpawn as museumSpawn} from '../../src/levels/gallery/navigation.ts'
 import {initialPortraits as knotPortraits} from '../../src/levels/knottingham/collection.ts'
 import {insideLevel as insideKnots, playerSpawn as knotSpawn, levelFloorHeight, woodenFloor} from '../../src/levels/knottingham/navigation.ts'
+import {knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
 
+const farKnotPosition: PlayerPose['position'] = [knotGalleryBounds.maxX - 2, 0.04, knotGalleryBounds.northZ + 2]
 const parseGalleryLevel = (value?: string) => selectGameLevel(value, levelIds, defaultLevel)
 describe('build-time levels', () => {
   test('keeps every level-specific component in its own index entry', async () => {

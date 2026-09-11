@@ -1,9 +1,11 @@
 import type {Texture} from 'three/webgpu'
 
 import {color, mix, mx_noise_float, normalWorld, reflectVector, time, vec3} from 'three/tsl'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import {starfield, viewerFrame} from '../../helpers.ts'
 import knotData from './data.ts'
-import {viewerFrame, starfield} from '../../helpers.ts'
+
 export default class EventHorizonMaterial extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)
@@ -12,7 +14,7 @@ export default class EventHorizonMaterial extends KnotMaterial {
     // around the silhouette, a photon ring tightens as you approach, and the ring is Doppler-shifted:
     // the side orbiting toward you burns blue-white, the side receding smoulders red.
     this.envMapIntensity = 0.2
-    const { p, view, facing, grazing, near, intimate } = viewerFrame()
+    const {p, view, facing, grazing, near, intimate} = viewerFrame()
     const lensed = reflectVector.add(normalWorld.mul(grazing.pow(3).mul(0.8))).normalize()
     const stars = starfield(lensed, 46, 0.958)
     const halo = facing.smoothstep(0.22, 0.68).oneMinus()

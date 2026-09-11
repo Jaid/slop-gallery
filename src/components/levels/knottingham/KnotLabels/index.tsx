@@ -4,7 +4,7 @@ import {DataTexture, InstancedBufferAttribute, InstancedMesh, LinearFilter, Line
 
 import {knotExhibition} from '#src/lib/knots/exhibition.ts'
 
-import {drawLabel, labelFontFamily, labelHeight as height, labelWidth as width} from './drawLabel.ts'
+import {drawLabel, labelHeight as height, labelFontFamily, labelWidth as width} from './drawLabel.ts'
 import {loadModelIcons} from './modelIcons.ts'
 
 /** One atlas and one instanced draw replace hundreds of label meshes/materials. */

@@ -1,16 +1,16 @@
 import type {KnotData} from '../../../types.ts'
 
 export default {
-  icon: new URL('./icon.jxl', import.meta.url).href,
+  icon: new URL('icon.jxl', import.meta.url).href,
   id: 'sunken_cathedral',
   number: 77,
   title: 'Sunken Cathedral',
   author: {
     model: {
       title: 'GPT-6 Astra',
-      slug: 'openai/gpt-6-astra'
-    }
+      slug: 'openai/gpt-6-astra',
+    },
   },
   accent: '#8cdeef',
-  highlighted: false
+  highlighted: false,
 } as const satisfies KnotData

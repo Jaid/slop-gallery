@@ -1,9 +1,11 @@
 import type {Texture} from 'three/webgpu'
 
 import {color, mix, mx_noise_float, normalViewGeometry, positionGeometry, positionViewDirection, vec3} from 'three/tsl'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import {glacierField, premiumDetail, premiumIntimate, premiumLine, premiumNormal, premiumView} from '../../helpers.ts'
 import knotData from './data.ts'
-import {premiumLine, premiumNormal, premiumView, premiumDetail, premiumIntimate, glacierField} from '../../helpers.ts'
+
 export default class GlacialMemoryMaterial extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)
@@ -39,8 +41,8 @@ export default class GlacialMemoryMaterial extends KnotMaterial {
     this.clearcoat = 0.65
     this.clearcoatRoughnessNode = frost.mul(0.16).add(0.035)
     const relief = surfaceCracks.mul(-0.5).add(crystalGrain.mul(frost).mul(intimate).mul(0.17))
-    this.normalNode = premiumNormal(relief.mul(detail), 0.00065)
-    this.clearcoatNormalNode = premiumNormal(mx_noise_float(p.mul(11)), 0.00012)
+    this.normalNode = premiumNormal(relief.mul(detail), 0.000_65)
+    this.clearcoatNormalNode = premiumNormal(mx_noise_float(p.mul(11)), 0.000_12)
     this.emissiveNode = color('#d4f8ff').mul(surfaceCracks).mul(fractureFlash.mul(0.8).add(0.07)).add(color('#8bc7e2').mul(middleCracks).mul(detail).mul(fractureFlash2.mul(0.5).add(0.13))).add(color('#438aaa').mul(deepCracks).mul(intimate).mul(0.19)).add(color('#cbefff').mul(grazing.pow(6)).mul(frost).mul(0.08))
     this.envMapIntensity = 0.95
   }

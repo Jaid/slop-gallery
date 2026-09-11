@@ -1,12 +1,13 @@
 import type {Node} from 'three/webgpu'
 
 import {cameraPosition, color, float, mix, modelWorldMatrixInverse, normalViewGeometry, positionGeometry, positionView, positionViewDirection, time, vec3, vec4} from 'three/tsl'
+
 import {cellNoiseVec3 as mx_cell_noise_vec3} from '#src/lib/knots/cellNoise.ts'
 
 export type Triple = [
   number,
   number,
-  number
+  number,
 ]
 
 /** Everything a finish needs to know about where the visitor stands, evaluated once per fragment. */

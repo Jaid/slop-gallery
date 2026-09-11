@@ -1,9 +1,11 @@
 import type {Texture} from 'three/webgpu'
 
 import {color, float, mix, mx_noise_float, mx_noise_vec3, positionGeometry, uv, vec3} from 'three/tsl'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import {premiumDetail, premiumIntimate, premiumLine, premiumNormal, TAU} from '../../helpers.ts'
 import knotData from './data.ts'
-import {TAU, premiumLine, premiumNormal, premiumDetail, premiumIntimate} from '../../helpers.ts'
+
 export default class ImperialPorcelainMaterial extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)
@@ -41,8 +43,8 @@ export default class ImperialPorcelainMaterial extends KnotMaterial {
     this.clearcoatRoughness = 0.055
     const ceramic = mx_noise_float(p.mul(82)).mul(intimate).mul(0.025)
     const relief = goldCore.mul(0.34).sub(fissure.mul(0.75)).add(ceramic)
-    this.normalNode = premiumNormal(relief.mul(detail), 0.00065)
-    this.clearcoatNormalNode = premiumNormal(mx_noise_float(p.mul(9)), 0.00012)
+    this.normalNode = premiumNormal(relief.mul(detail), 0.000_65)
+    this.clearcoatNormalNode = premiumNormal(mx_noise_float(p.mul(9)), 0.000_12)
     this.envMapIntensity = 0.92
   }
 }

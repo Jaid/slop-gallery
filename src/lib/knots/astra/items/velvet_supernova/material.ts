@@ -1,7 +1,9 @@
 import type {Texture} from 'three/webgpu'
 
 import {cameraPosition, color, mix, modelWorldMatrixInverse, mx_noise_float, normalViewGeometry, positionGeometry, positionView, positionViewDirection, vec3, vec4} from 'three/tsl'
+
 import {opticalLine, proceduralNormal} from '#src/lib/knots/shared.ts'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
 import knotData from './data.ts'
 
@@ -27,7 +29,7 @@ export default class VelvetSupernovaMaterial extends KnotMaterial {
     this.sheen = 1
     this.sheenNode = mix(color('#6840c4'), color('#ffd1a2'), flash)
     this.sheenRoughness = 0.38
-    this.normalNode = proceduralNormal(mx_noise_float(p.mul(42)).mul(near), 0.00025)
+    this.normalNode = proceduralNormal(mx_noise_float(p.mul(42)).mul(near), 0.000_25)
     this.emissiveNode = mix(color('#682773'), color('#f78a46'), flash).mul(nebula).mul(grazing.mul(0.35).add(0.15)).add(color('#ffe0ba').mul(starlight).mul(flash.mul(1.8).add(0.3)))
   }
 }

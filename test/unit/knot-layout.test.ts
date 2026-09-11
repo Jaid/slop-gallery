@@ -1,4 +1,5 @@
 import {expect, test} from 'bun:test'
+
 import {KnotLayout} from '../../src/lib/knots/KnotLayout.ts'
 
 test('room width follows the longest displayed row and depth follows creator count', () => {
@@ -17,7 +18,9 @@ test('room width follows the longest displayed row and depth follows creator cou
   }
 })
 test('rejects invalid row sizes and left-aligns sparse rows', () => {
-  for (const count of [0, -1, 0.5, Infinity, NaN]) expect(() => new KnotLayout([count])).toThrow()
+  for (const count of [0, -1, 0.5, Infinity, Number.NaN]) {
+    expect(() => new KnotLayout([count])).toThrow()
+  }
   const layout = new KnotLayout([1, 17])
   expect(layout.rowCenterX(1)).toBe(-layout.rowHalfWidth)
   expect(layout.rowCenterX(17)).toBe(0)

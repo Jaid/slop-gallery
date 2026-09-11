@@ -1,7 +1,9 @@
 import type {Texture} from 'three/webgpu'
 
 import {color, mix, mx_noise_float, normalViewGeometry, positionGeometry, positionView, positionViewDirection} from 'three/tsl'
+
 import {liquidNormal} from '#src/lib/knots/shared.ts'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
 import knotData from './data.ts'
 

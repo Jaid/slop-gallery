@@ -1,10 +1,13 @@
 import type {Texture} from 'three/webgpu'
 
 import {color, mx_noise_float, time, vec3} from 'three/tsl'
+
 import {proceduralNormal} from '#src/lib/knots/shared.ts'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
-import knotData from './data.ts'
 import {viewerFrame} from '../../helpers.ts'
+import knotData from './data.ts'
+
 export default class QuicksilverEchoMaterial extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)
@@ -12,7 +15,7 @@ export default class QuicksilverEchoMaterial extends KnotMaterial {
     // A flawless mercury mirror from a distance. Walk up and it senses you: concentric ripples spread from the
     // point of the surface nearest to your eyes and follow you as you move, while a soft white presence glows
     // exactly where the surface faces you, as if the sculpture were reflecting your gaze.
-    const { p, cameraLocal, facing, distance } = viewerFrame()
+    const {p, cameraLocal, facing, distance} = viewerFrame()
     const reach = cameraLocal.sub(p).length()
     const wake = distance.smoothstep(0.9, 5).oneMinus()
     const ringsA = reach.mul(48).sub(time.mul(3.2)).sin()

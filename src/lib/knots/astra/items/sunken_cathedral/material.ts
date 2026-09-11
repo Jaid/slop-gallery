@@ -1,9 +1,11 @@
 import type {Texture} from 'three/webgpu'
 
 import {color, mix, mx_noise_float, normalViewGeometry, positionGeometry, positionViewDirection, time, vec2, vec3} from 'three/tsl'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import {cathedralTracery, premiumDetail, premiumIntimate, premiumNormal, premiumView} from '../../helpers.ts'
 import knotData from './data.ts'
-import {premiumNormal, premiumView, premiumDetail, premiumIntimate, cathedralTracery} from '../../helpers.ts'
+
 export default class SunkenCathedralMaterial extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)
@@ -39,7 +41,7 @@ export default class SunkenCathedralMaterial extends KnotMaterial {
     this.roughness = 0.045
     this.clearcoat = 1
     this.clearcoatRoughness = 0.026
-    this.normalNode = premiumNormal(mx_noise_float(p.mul(7)), 0.00014)
+    this.normalNode = premiumNormal(mx_noise_float(p.mul(7)), 0.000_14)
     const architecture = color('#b1e5eb').mul(front).mul(0.33).add(color('#74c3d4').mul(middle).mul(occlusion1).mul(detail.mul(0.45).add(0.24))).add(color('#398aab').mul(back).mul(occlusion1).mul(occlusion2).mul(detail).mul(0.46)).add(color('#ddb879').mul(sanctuary).mul(intimate).mul(0.55)).add(color('#3b91a7').mul(transept).mul(detail).mul(0.19))
     this.emissiveNode = architecture.mul(facing.mul(0.3).add(0.7)).mul(waterLight.mul(0.13).add(0.87)).add(color('#ffe1a0').mul(lanterns).mul(0.85))
     this.envMapIntensity = 0.8

@@ -39,8 +39,8 @@ test('the real text adapter consumes streamed structured output', async () => {
   const result = await new FlavorGenerator('test-key', 'test-model').generate(new Blob(['pixels'], {type: 'image/webp'}), partial => partials.push(partial))
   expect(result).toEqual(flavor)
   expect(partials.length).toBeGreaterThan(0)
-  expect(fetchSpy.mock.calls[0]![0]).toBe('https://openrouter.ai/api/v1/chat/completions')
-  const request = JSON.parse(fetchSpy.mock.calls[0]![1]!.body as string) as {messages: Array<{content: Array<{image_url: {url: string}}>}>
+  expect(fetchSpy.mock.calls[0][0]).toBe('https://openrouter.ai/api/v1/chat/completions')
+  const request = JSON.parse(fetchSpy.mock.calls[0][1]!.body as string) as {messages: Array<{content: Array<{image_url: {url: string}}>}>
     model: string}
   expect(request.model).toBe('test-model')
   expect(request.messages.at(-1)!.content[0].image_url.url).toStartWith('data:image/webp;base64,')
@@ -55,8 +55,8 @@ test('the real image adapter keeps hanging/thrown attachment order', async () =>
   const second = new Blob([Uint8Array.fromBase64('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACAQMAAABIeJ9nAAAAA1BMVEUAAP+KeNJXAAAADElEQVQI12NgYGAAAAAEAAEnNCcKAAAAAElFTkSuQmCC')], {type: 'image/png'})
   const result = await new MergeGenerator('test-key', 'test-image-model').generate(first, second)
   expect(result.size).toBe(data.byteLength)
-  expect(fetchSpy.mock.calls[0]![0]).toBe('https://openrouter.ai/api/v1/images')
-  const request = JSON.parse(fetchSpy.mock.calls[0]![1]!.body as string) as {input_references: Array<{image_url: {url: string}}>}
+  expect(fetchSpy.mock.calls[0][0]).toBe('https://openrouter.ai/api/v1/images')
+  const request = JSON.parse(fetchSpy.mock.calls[0][1]!.body as string) as {input_references: Array<{image_url: {url: string}}>}
   expect(request.input_references.map((r: {image_url: {url: string}}) => r.image_url.url.split(',')[1])).toEqual([
     new Uint8Array(await first.arrayBuffer()).toBase64(),
     new Uint8Array(await second.arrayBuffer()).toBase64(),

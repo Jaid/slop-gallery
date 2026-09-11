@@ -34,7 +34,6 @@ test('the detailed map retains the model and item labels without an opaque floor
   expect(html).toContain('GLM 5.3')
   expect(html).toContain('#105')
 })
-
 test('minimap viewBox and hall outline share the dynamically sized room', () => {
   const html = renderToStaticMarkup(createElement(KnotGalleryMinimap, {lower: false}))
   expect(html).toContain(`viewBox="${knotGalleryBounds.minX - 1} ${knotGalleryBounds.northZ - 1} ${knotGallerySize[0] + 2} ${knotGallerySize[2] + 2}"`)

@@ -1,9 +1,11 @@
 import type {Texture} from 'three/webgpu'
 
 import {cameraPosition, color, mix, modelWorldMatrixInverse, normalViewGeometry, positionGeometry, positionView, positionViewDirection, time, vec3, vec4} from 'three/tsl'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import {opticalLine, spectralColor} from '../../helpers.ts'
 import knotData from './data.ts'
-import {spectralColor, opticalLine} from '../../helpers.ts'
+
 export default class AstralLoomMaterial extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)

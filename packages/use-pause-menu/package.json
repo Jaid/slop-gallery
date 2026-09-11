@@ -2,29 +2,22 @@
   "name": "use-pause-menu",
   "version": "0.1.0",
   "type": "module",
+  "description": "Headless pointer-lock pause menus with persistent visits and a React subscription",
   "funding": "https://github.com/sponsors/Jaid",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Jaid/slop-gallery.git",
     "directory": "packages/use-pause-menu"
   },
-  "license": "MIT",
   "main": "src/main.ts",
-  "scripts": {
-    "test": "bun test --max-concurrency 1 ./test"
-  },
-  "description": "Headless pointer-lock pause menus with persistent visits and a React subscription",
   "exports": {
     ".": "./src/main.ts",
     "./core": "./src/core.ts"
   },
-  "types": "./src/main.ts",
-  "files": [
-    "src",
-    "readme.md",
-    "license.txt"
-  ],
-  "sideEffects": false,
+  "scripts": {
+    "test": "bun test --max-concurrency 1 ./test"
+  },
   "peerDependencies": {
     "react": "^19.3.0"
   },
@@ -32,5 +25,12 @@
     "react": {
       "optional": true
     }
-  }
+  },
+  "files": [
+    "src",
+    "readme.md",
+    "license.txt"
+  ],
+  "sideEffects": false,
+  "types": "./src/main.ts"
 }

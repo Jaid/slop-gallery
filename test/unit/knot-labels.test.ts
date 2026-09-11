@@ -1,8 +1,8 @@
 import {describe, expect, test} from 'bun:test'
 
 import {drawLabel, labelHeight, labelWidth, modelLineLayout} from '../../src/components/levels/knottingham/KnotLabels/drawLabel.ts'
-import {knotsByNumber} from '../../src/lib/knots/index.ts'
 import {knotBays, knotExhibition} from '../../src/lib/knots/exhibition.ts'
+import {knotsByNumber} from '../../src/lib/knots/index.ts'
 
 describe('Knot model plates', () => {
   test('renders each plate at twice the width and height without extra draw batches', () => {
@@ -46,7 +46,9 @@ describe('Knot model plates', () => {
     const rectangles: Array<Array<number>> = []
     const fonts: Array<string> = []
     const context = {
-      set font(value: string) {fonts.push(value)},
+      set font(value: string) {
+        fonts.push(value)
+      },
       fillRect: (...args: Array<number>) => rectangles.push(args),
       fillText: (...args: Array<unknown>) => text.push(args),
       drawImage: (...args: Array<unknown>) => images.push(args),

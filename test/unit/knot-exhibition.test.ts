@@ -1,15 +1,15 @@
 import type {Node} from 'three/webgpu'
 
 import {describe, expect, test} from 'bun:test'
+import {resolve} from 'node:path'
 
 import {cameraPosition, positionView} from 'three/tsl'
 import {EquirectangularReflectionMapping, FloatType} from 'three/webgpu'
 
-import {knots, knotsByNumber} from '../../src/lib/knots/index.ts'
-import {knotBays, knotExhibition, knotFloatHeight, knotPreviewX, knotRowHalfWidth, knotSpacing} from '../../src/lib/knots/exhibition.ts'
 import {insideKnotGallery, knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
 import {createKnotGeometry, knotGeometryArgs} from '../../src/lib/gallery/sculptures.ts'
-import {resolve} from 'node:path'
+import {knotBays, knotExhibition, knotFloatHeight, knotPreviewX, knotRowHalfWidth, knotSpacing} from '../../src/lib/knots/exhibition.ts'
+import {knots, knotsByNumber} from '../../src/lib/knots/index.ts'
 import {StudioEnvironment} from '../../src/lib/materials/StudioEnvironment.ts'
 
 describe('multi-model Knot challenge', () => {
@@ -26,7 +26,7 @@ describe('multi-model Knot challenge', () => {
     for (const item of knotExhibition) {
       expect(item.archived).not.toBe(true)
       expect(knotsByNumber.get(item.number)!.id).toBe(item.id)
-      expect(item.id).toBe(item.model + '/' + item.sourceId)
+      expect(item.id).toBe(`${item.model}/${item.sourceId}`)
     }
     expect(knotsByNumber.get(12)!.title).toBe('Stained Requiem')
     expect(knotsByNumber.get(89)!.modelTitle).toBe('Claude Fable 5.1')
@@ -100,7 +100,7 @@ describe('multi-model Knot challenge', () => {
             expect(material.positionNode).toBeNull()
           }
           const dependencies = new Set<Node>
-          for (const value of Object.values(material) as Array<unknown>) {
+          for (const value of Object.values(material)) {
             if (value && typeof value === 'object' && 'isNode' in value && value.isNode) {
               (value as Node).traverse(node => dependencies.add(node))
             }

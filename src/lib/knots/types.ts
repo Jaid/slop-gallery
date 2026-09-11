@@ -2,39 +2,39 @@ import type {MeshPhysicalNodeMaterial, Texture} from 'three/webgpu'
 
 export type KnotAuthor = {
   model: {
-    title: string
-    slug?: string
     effortLevel?: string
+    slug?: string
+    title: string
   }
 }
 
 export type KnotData = {
+  accent: string
+  archived?: boolean
   author: KnotAuthor
+  /** Conservative maximum vertex displacement in meters, used for culling and collision bounds. */
+  displacement?: number
+  highlighted: boolean
+  icon: string
   id: string
   number: number
   title: string
-  accent: string
-  highlighted: boolean
-  archived?: boolean
-  /** Conservative maximum vertex displacement in meters, used for culling and collision bounds. */
-  displacement?: number
-  icon: string
 }
 
 export type KnotCandidateData = {
-  id: string
-  title: string
-  icon: string
-  overview: string
   /** Override the default eight-item display while reviewing a larger batch. */
   displayLimit?: number
+  icon: string
+  id: string
+  overview: string
+  title: string
 }
 
 export type KnotEntry = KnotData & {
-  sourceId: string
   model: string
-  modelTitle: string
   modelIcon: string
+  modelTitle: string
+  sourceId: string
 }
 
 export type KnotMaterialConstructor = new (environment: Texture) => MeshPhysicalNodeMaterial

@@ -1,10 +1,13 @@
 import type {Texture} from 'three/webgpu'
 
 import {color, float, mix, mx_fractal_noise_float, mx_noise_float, time, uv, vec2, vec3} from 'three/tsl'
+
 import {opticalLine, proceduralNormal} from '#src/lib/knots/shared.ts'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
-import knotData from './data.ts'
 import {viewerFrame} from '../../helpers.ts'
+import knotData from './data.ts'
+
 export default class DamascusTideMaterial extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)
@@ -12,7 +15,7 @@ export default class DamascusTideMaterial extends KnotMaterial {
     // Folded, acid-etched steel with real anisotropic brushing following the layer flow. The watered pattern sits
     // a hair under the polish, so it slides against the highlights as you circle; temper colours bloom at grazing
     // angles, and only up close do the micro brush strokes and a faint forge memory in the seams resolve.
-    const { p, view, grazing, intimate } = viewerFrame()
+    const {p, view, grazing, intimate} = viewerFrame()
     const tube = uv()
     const warp = mx_fractal_noise_float(p.mul(3.8).add(vec3(0, time.mul(0.04), 0)), 3, 2.2, 0.55)
     const fold = p.dot(vec3(0.55, 1, 0.35).normalize()).mul(34).add(warp.mul(7.5)).add(view.x.mul(0.7)).add(time.mul(0.1))

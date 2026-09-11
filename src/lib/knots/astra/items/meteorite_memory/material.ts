@@ -1,9 +1,11 @@
 import type {Texture} from 'three/webgpu'
 
 import {color, mix, mx_noise_float, positionGeometry, vec2, vec3} from 'three/tsl'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import {premiumBands, premiumDetail, premiumHash, premiumIntimate, premiumLine, premiumNormal, premiumView} from '../../helpers.ts'
 import knotData from './data.ts'
-import {premiumLine, premiumBands, premiumNormal, premiumView, premiumDetail, premiumIntimate, premiumHash} from '../../helpers.ts'
+
 export default class MeteoriteMemoryMaterial extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)

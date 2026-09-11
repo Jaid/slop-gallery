@@ -1,9 +1,11 @@
 import type {Texture} from 'three/webgpu'
 
 import {color, float, mix, mx_noise_float, normalViewGeometry, positionGeometry, positionViewDirection, uv, vec2} from 'three/tsl'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import {premiumDetail, premiumIntimate, premiumLine, premiumNormal, TAU} from '../../helpers.ts'
 import knotData from './data.ts'
-import {TAU, premiumLine, premiumNormal, premiumDetail, premiumIntimate} from '../../helpers.ts'
+
 export default class SolarReliquaryMaterial extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)
@@ -37,7 +39,7 @@ export default class SolarReliquaryMaterial extends KnotMaterial {
     this.clearcoat = 1
     this.clearcoatRoughness = 0.035
     const engraving = engine.mul(panels).mul(-0.65).sub(border.mul(0.4)).add(grain.mul(intimate).mul(0.025))
-    this.normalNode = premiumNormal(engraving, 0.00048)
+    this.normalNode = premiumNormal(engraving, 0.000_48)
     // A restrained edge warmth, not a luminous replacement for metallic light.
     this.emissiveNode = color('#d19434').mul(border).mul(grazing.pow(5)).mul(0.055)
     this.envMapIntensity = 1.15

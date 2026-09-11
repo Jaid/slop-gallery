@@ -1,9 +1,11 @@
 import type {Texture} from 'three/webgpu'
 
 import {color, mix, mx_cell_noise_float, normalViewGeometry, positionGeometry, positionView, positionViewDirection} from 'three/tsl'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import {opticalLine, proceduralNormal, spectralColor} from '../../helpers.ts'
 import knotData from './data.ts'
-import {spectralColor, opticalLine, proceduralNormal} from '../../helpers.ts'
+
 export default class ScarabAegisMaterial extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)

@@ -1,11 +1,14 @@
 import type {Texture} from 'three/webgpu'
 
 import {color, float, mix, mx_fractal_noise_float, mx_noise_float, normalViewGeometry, uv, vec3} from 'three/tsl'
+
 import {cellNoiseVec3 as mx_cell_noise_vec3} from '#src/lib/knots/cellNoise.ts'
 import {opticalLine, proceduralNormal} from '#src/lib/knots/shared.ts'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import {glints, viewerFrame} from '../../helpers.ts'
 import knotData from './data.ts'
-import {viewerFrame, glints} from '../../helpers.ts'
+
 export default class MakieLacquerMaterial extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)
@@ -13,7 +16,7 @@ export default class MakieLacquerMaterial extends KnotMaterial {
     // Urushi lacquer, black when faced and blood-red at the edges, with sprinkled gold flakes under the coat.
     // Every flake has its own tilt so glints ignite and die with each step; the flakes gather in drifts like
     // real maki-e, and a second gold thread wound around the knot only reveals itself at arm's length.
-    const { p, view, grazing, rim, near, intimate } = viewerFrame()
+    const {p, view, grazing, rim, near, intimate} = viewerFrame()
     const tube = uv()
     const inner = p.sub(view.mul(0.012))
     const q = inner.mul(85)

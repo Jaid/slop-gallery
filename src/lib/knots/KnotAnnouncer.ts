@@ -12,10 +12,6 @@ export class KnotAnnouncer {
   private controller?: AbortController
   constructor(private readonly audio: AnnouncementAudio, readonly announcedCreators = new Set<string>, readonly announcedItems = new Set<string>) {}
 
-  hasAnnounced(item: KnotEntry) {
-    return this.announcedItems.has(knotAnnouncementPaths(item).item)
-  }
-
   async announce(item: KnotEntry) {
     if (this.hasAnnounced(item)) {
       return
@@ -46,6 +42,10 @@ export class KnotAnnouncer {
         this.controller = undefined
       }
     }
+  }
+
+  hasAnnounced(item: KnotEntry) {
+    return this.announcedItems.has(knotAnnouncementPaths(item).item)
   }
 
   stop() {

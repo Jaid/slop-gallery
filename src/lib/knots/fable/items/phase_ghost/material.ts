@@ -2,11 +2,14 @@ import type {Texture} from 'three/webgpu'
 
 import {color, mix, mx_cell_noise_float, positionWorld, screenUV, time, uv, vec3} from 'three/tsl'
 import {DoubleSide} from 'three/webgpu'
+
 import {cellNoiseVec3 as mx_cell_noise_vec3} from '#src/lib/knots/cellNoise.ts'
 import {opticalLine} from '#src/lib/knots/shared.ts'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
-import knotData from './data.ts'
 import {viewerFrame} from '../../helpers.ts'
+import knotData from './data.ts'
+
 export default class PhaseGhostMaterial extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)
@@ -18,7 +21,7 @@ export default class PhaseGhostMaterial extends KnotMaterial {
     this.transparent = true
     this.depthWrite = false
     this.side = DoubleSide
-    const { p, view, facing, grazing, near, intimate } = viewerFrame()
+    const {p, view, facing, grazing, near, intimate} = viewerFrame()
     const tube = uv()
     const tick = time.mul(7).floor()
     const band = mx_cell_noise_float(vec3(positionWorld.y.mul(11).add(tick.mul(0.37)), tick, 4.2))

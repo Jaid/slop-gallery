@@ -1,7 +1,9 @@
 import type {Texture} from 'three/webgpu'
 
 import {cameraPosition, color, mix, modelWorldMatrixInverse, mx_noise_float, normalViewGeometry, positionGeometry, positionView, positionViewDirection, time, vec3, vec4} from 'three/tsl'
+
 import {opticalLine, proceduralNormal} from '#src/lib/knots/shared.ts'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
 import knotData from './data.ts'
 
@@ -52,7 +54,7 @@ export default class QuantumMoireMaterial extends KnotMaterial {
     this.iridescenceThicknessNode = hueA.mul(360).add(90)
     this.clearcoat = 1
     this.clearcoatRoughness = 0.028
-    this.normalNode = proceduralNormal(phaseA.sin(), 0.00075)
+    this.normalNode = proceduralNormal(phaseA.sin(), 0.000_75)
     this.emissiveNode = cyanMagenta.mul(gratingA).mul(grazing.mul(0.55).add(0.18)).add(violetGold.mul(gratingB).mul(0.62)).add(color('#f2fbff').mul(ghost).mul(1.35)).add(cyanMagenta.mul(subGrating).mul(0.6))
   }
 }

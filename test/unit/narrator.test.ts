@@ -112,7 +112,7 @@ test('TTS keeps character steering out of the spoken transcript and caches audio
   narrator = new Narrator(settings, 'test-key')
   await narrator.speak('goose')
   expect(fetchSpy).toHaveBeenCalledTimes(1)
-  const [url, request] = fetchSpy.mock.calls[0]!
+  const [url, request] = fetchSpy.mock.calls[0]
   expect(url).toBe('https://openrouter.ai/api/v1/audio/speech')
   const body = JSON.parse(request!.body as string) as {input: string
     provider: {options: {google: {instructions: string}}}
@@ -148,7 +148,7 @@ test('bundled recordings play without a key or a speech provider request', async
   }, '')
   await narrator.speak('goose')
   expect(fetchSpy).toHaveBeenCalledTimes(1)
-  expect(fetchSpy.mock.calls[0]![0]).toBe('/audio/goose.opus')
+  expect(fetchSpy.mock.calls[0][0]).toBe('/audio/goose.opus')
   expect(spoken).toHaveLength(0)
   expect(useGallery.getState().narration).toEqual({
     id: 'goose',
@@ -221,7 +221,7 @@ test('a manual edit releases queued narration without waiting for the old genera
   useGallery.getState().update('goose', {pending: true})
   await narrator.speak('goose')
   const s = useGallery.getState()
-  s.commit(s.portraits.map(p => p.id === 'goose' ? {...p, title: 'My label', description: 'My story', pending: false} : p))
+  s.commit(s.portraits.map(p => (p.id === 'goose' ? {...p, title: 'My label', description: 'My story', pending: false} : p)))
   expect(spoken).toEqual(['My label. My story.'])
   expect(useGallery.getState().narration).toMatchObject({
     status: 'playing',

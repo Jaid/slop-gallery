@@ -1,28 +1,32 @@
 import type {Node, Texture} from 'three/webgpu'
 
 import {cameraPosition, color, Fn, mix, modelWorldMatrixInverse, negateOnBackSide, positionView, positionViewDirection, time, transformNormalToView, uv, varying, vec2, vec3, vec4} from 'three/tsl'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
 import knotData from './data.ts'
+
 function crownFields(tube: Node<'vec2'>) {
   const u = tube.x.mul(Math.PI * 24).add(tube.y.mul(Math.PI * 8).sin().mul(0.35))
   const v = tube.y.mul(Math.PI * 8)
-  const radius = u.mul(0.5).sin().abs().pow(2).add(v.mul(0.5).sin().abs().pow(2)).max(0.00001).sqrt()
+  const radius = u.mul(0.5).sin().abs().pow(2).add(v.mul(0.5).sin().abs().pow(2)).max(0.000_01).sqrt()
   return {
     crown: radius.sub(0.48).abs().pow(2).mul(-26).exp(),
     bowl: radius.pow(2).mul(-18).exp(),
     breath: time.mul(0.55).add(u.mul(0.25)).sin().mul(0.075).add(0.925),
   }
 }
-const knotCurve = Fn(([angle]: [
-  Node<'float'>
+const knotCurve = Fn(([
+  angle]: [
+  Node<'float'>,
 ]) => {
   const phase = angle.mul(1.5)
   const radius = phase.cos().add(2).mul(0.225)
   return vec3(radius.mul(angle.cos()), radius.mul(angle.sin()), phase.sin().mul(0.225))
 })
 // The same parametric frame as TorusKnotGeometry(0.45, 0.13, ..., 2, 3).
-const reliefPosition = Fn(([tube]: [
-  Node<'vec2'>
+const reliefPosition = Fn(([
+  tube]: [
+  Node<'vec2'>,
 ]) => {
   const angle = tube.x.mul(Math.PI * 4)
   const center = knotCurve(angle)
@@ -35,7 +39,7 @@ const reliefPosition = Fn(([tube]: [
   const p = center.add(normal.mul(0.13))
   const cameraLocal = modelWorldMatrixInverse.mul(vec4(cameraPosition, 1)).xyz
   const proximity = cameraLocal.sub(p).length().smoothstep(1, 5).oneMinus()
-  const { crown, bowl, breath } = crownFields(tube)
+  const {crown, bowl, breath} = crownFields(tube)
   const height = crown.mul(knotData.displacement).mul(breath).sub(bowl.mul(0.04)).mul(proximity.mul(0.28).add(0.72))
   return p.add(normal.mul(height))
 })
@@ -44,7 +48,7 @@ export default class CorallineCrownMaterial extends KnotMaterial {
     super(environment)
     this.name = knotData.id
     const tube = uv()
-    const { crown, bowl, breath } = crownFields(tube)
+    const {crown, bowl, breath} = crownFields(tube)
     this.positionNode = reliefPosition(tube)
     // Sample neighboring surface points in the vertex stage, then interpolate the true displaced normal.
     const epsilon = 0.0001

@@ -1,10 +1,13 @@
 import type {Node, Texture} from 'three/webgpu'
 
 import {color, float, mix, time, vec3} from 'three/tsl'
+
 import {opticalBands, proceduralNormal} from '#src/lib/knots/shared.ts'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
-import knotData from './data.ts'
 import {viewerFrame} from '../../helpers.ts'
+import knotData from './data.ts'
+
 export default class MoireSanctumMaterial extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)
@@ -12,7 +15,7 @@ export default class MoireSanctumMaterial extends KnotMaterial {
     // Bone porcelain drawn with ink stripes on the glaze and an identical set just beneath it. Parallax between
     // the layers creates moiré: from far away the whole sculpture flickers between lined and blank as you turn,
     // up close the fringes multiply across the surface. Where the stripes cancel, gold leaf shines through.
-    const { p, view, facing, grazing, intimate } = viewerFrame()
+    const {p, view, facing, grazing, intimate} = viewerFrame()
     const depth = 0.055
     const inner = p.sub(view.mul(depth))
     const k1 = vec3(2, 9, 4).normalize()

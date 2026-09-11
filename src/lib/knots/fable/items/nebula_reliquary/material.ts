@@ -1,9 +1,11 @@
 import type {Node, Texture} from 'three/webgpu'
 
 import {color, float, mx_cell_noise_float, mx_noise_float, time, vec3} from 'three/tsl'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import {cosinePalette, viewerFrame} from '../../helpers.ts'
 import knotData from './data.ts'
-import {viewerFrame, cosinePalette} from '../../helpers.ts'
+
 export default class NebulaReliquaryMaterial extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)
@@ -11,7 +13,7 @@ export default class NebulaReliquaryMaterial extends KnotMaterial {
     // Black glass sealing a genuine volume of gas: the interior is ray-marched along your line of sight, so the
     // filaments have true depth and drift past one another as you circle. Deeper samples shift hue, the tube
     // core glows brightest, and tiny embers ignite in the depths only when you lean in.
-    const { p, view, facing, rim, near, intimate } = viewerFrame()
+    const {p, view, facing, rim, near, intimate} = viewerFrame()
     const dir = view.negate()
     const chord = facing.mul(0.24).add(0.03)
     const drift = vec3(time.mul(0.03), time.mul(-0.02), time.mul(0.015))

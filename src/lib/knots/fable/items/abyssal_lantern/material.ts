@@ -1,11 +1,14 @@
 import type {Texture} from 'three/webgpu'
 
 import {color, mix, mx_noise_float, time, uv, vec2, vec3} from 'three/tsl'
+
 import {cellNoiseVec3 as mx_cell_noise_vec3} from '#src/lib/knots/cellNoise.ts'
 import {opticalLine, proceduralNormal} from '#src/lib/knots/shared.ts'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
-import knotData from './data.ts'
 import {viewerFrame} from '../../helpers.ts'
+import knotData from './data.ts'
+
 export default class AbyssalLanternMaterial extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)
@@ -14,7 +17,7 @@ export default class AbyssalLanternMaterial extends KnotMaterial {
     // step closer and the creature notices you: waves of light race outward from the point nearest to you,
     // the organs brighten, and some blush from cyan to gold. Photophores are lensed, brightest when faced.
     this.envMapIntensity = 0.4
-    const { p, facing, rim, distance } = viewerFrame()
+    const {p, facing, rim, distance} = viewerFrame()
     const tube = uv()
     const rows = 6
     const cols = 44

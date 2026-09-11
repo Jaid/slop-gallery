@@ -1,7 +1,9 @@
 import type {Node, Texture} from 'three/webgpu'
 
 import {cameraPosition, color, modelWorldMatrixInverse, positionGeometry, positionView, time, vec3, vec4} from 'three/tsl'
+
 import {filament} from '#src/lib/knots/shared.ts'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
 import knotData from './data.ts'
 

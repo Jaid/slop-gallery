@@ -1,9 +1,11 @@
 import type {Texture} from 'three/webgpu'
 
 import {color, mix, mx_noise_float, normalLocal, positionGeometry, vec3} from 'three/tsl'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import {premiumBands, premiumDetail, premiumIntimate, premiumNormal, premiumView} from '../../helpers.ts'
 import knotData from './data.ts'
-import {premiumBands, premiumNormal, premiumView, premiumDetail, premiumIntimate} from '../../helpers.ts'
+
 export default class TigerIronMaterial extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)
@@ -38,7 +40,7 @@ export default class TigerIronMaterial extends KnotMaterial {
     this.ior = 1.56
     this.clearcoat = 1
     this.clearcoatRoughness = 0.045
-    this.normalNode = premiumNormal(fineLayers.mul(0.13).add(fibers.mul(intimate).mul(0.06)).mul(detail), 0.00045)
+    this.normalNode = premiumNormal(fineLayers.mul(0.13).add(fibers.mul(intimate).mul(0.06)).mul(detail), 0.000_45)
     // A small subsurface-like contribution keeps the narrow eye readable.
     this.emissiveNode = color('#d48a2a').mul(eye).mul(hematite.oneMinus()).mul(0.075)
     this.envMapIntensity = 1.05

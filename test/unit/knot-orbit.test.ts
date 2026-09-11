@@ -1,5 +1,7 @@
 import {describe, expect, test} from 'bun:test'
+
 import {PerspectiveCamera, Vector3} from 'three/webgpu'
+
 import {OrbitInspection} from '../../src/lib/camera/OrbitInspection.ts'
 
 const center = new Vector3(0, 1, 0)
@@ -7,10 +9,15 @@ function setup() {
   const camera = new PerspectiveCamera(75, 16 / 9, 0.05, 200)
   camera.position.set(3, 1.05, 4)
   camera.lookAt(center)
-  return {camera, orbit: new OrbitInspection(camera, center, 0.85)}
+  return {
+    camera,
+    orbit: new OrbitInspection(camera, center, 0.85),
+  }
 }
 function settle(orbit: OrbitInspection) {
-  for (let i = 0; i < 300; i++) orbit.update(center, 1 / 60)
+  for (let i = 0; i < 300; i++) {
+    orbit.update(center, 1 / 60)
+  }
 }
 describe('hold-to-orbit camera', () => {
   test('approaches smoothly, narrows FOV and stays aimed at the Knot', () => {
@@ -51,8 +58,10 @@ describe('hold-to-orbit camera', () => {
     settle(orbit)
     expect(camera.position.y).toBeGreaterThanOrEqual(0.1799)
     const before = camera.position.clone()
-    orbit.addInput(NaN, Infinity)
-    for (const delta of [0, -1, NaN, Infinity]) orbit.update(center, delta)
+    orbit.addInput(Number.NaN, Infinity)
+    for (const delta of [0, -1, Number.NaN, Infinity]) {
+      orbit.update(center, delta)
+    }
     expect(camera.position.toArray()).toEqual(before.toArray())
     orbit.release()
     orbit.addInput(10, 10)
@@ -63,8 +72,12 @@ describe('hold-to-orbit camera', () => {
     const a = setup()
     const b = setup()
     a.camera.aspect = b.camera.aspect = 0.5
-    for (let i = 0; i < 60; i++) a.orbit.update(center, 1 / 60)
-    for (let i = 0; i < 120; i++) b.orbit.update(center, 1 / 120)
+    for (let i = 0; i < 60; i++) {
+      a.orbit.update(center, 1 / 60)
+    }
+    for (let i = 0; i < 120; i++) {
+      b.orbit.update(center, 1 / 120)
+    }
     expect(a.camera.position.distanceTo(b.camera.position)).toBeLessThan(1e-8)
     expect(a.camera.fov).toBeCloseTo(b.camera.fov, 8)
     expect(a.camera.position.distanceTo(center)).toBeGreaterThan(2)

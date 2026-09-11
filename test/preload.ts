@@ -2,7 +2,6 @@ import {preprocessCSS, resolveConfig} from 'vite'
 
 // Direct Bun tests use the gallery entry points from package.json, regardless of the dev level.
 Bun.env.GAME_LEVEL = 'gallery'
-
 // Compile real modules for renderer-free component tests instead of mocking class names.
 const config = resolveConfig({
   configLoader: 'runner',

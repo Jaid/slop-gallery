@@ -1,9 +1,11 @@
 import type {Texture} from 'three/webgpu'
 
 import {color, float, mix, mx_noise_float, normalViewGeometry, positionGeometry, positionViewDirection, uv, vec3} from 'three/tsl'
+
 import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import {premiumBands, premiumDetail, premiumIntimate, premiumLine, premiumNormal, premiumView, TAU} from '../../helpers.ts'
 import knotData from './data.ts'
-import {TAU, premiumLine, premiumBands, premiumNormal, premiumView, premiumDetail, premiumIntimate} from '../../helpers.ts'
+
 export default class CardinalVelvetMaterial extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)
@@ -39,7 +41,7 @@ export default class CardinalVelvetMaterial extends KnotMaterial {
     this.anisotropy = 0.62
     this.anisotropyRotation = Math.PI * 0.5
     this.specularIntensity = 0.32
-    this.normalNode = premiumNormal(weave.mul(0.12).add(cord.mul(0.7)).add(nap.mul(0.1)).mul(detail), 0.00065)
+    this.normalNode = premiumNormal(weave.mul(0.12).add(cord.mul(0.7)).add(nap.mul(0.1)).mul(detail), 0.000_65)
     this.envMapIntensity = 0.8
   }
 }

@@ -6,7 +6,7 @@ import {expect, test} from 'bun:test'
 import {Children, isValidElement} from 'react'
 import {Euler, Matrix4, MeshBasicMaterial, Texture, Vector3} from 'three/webgpu'
 
-import renderLodgeRoom from "../../src/components/levels/gallery/LodgeRoom/index.tsx"
+import renderLodgeRoom from '../../src/components/levels/gallery/LodgeRoom/index.tsx'
 import {lodge} from '../../src/lib/gallery/lodge.ts'
 
 type Props = {children?: ReactNode

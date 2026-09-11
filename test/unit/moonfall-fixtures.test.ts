@@ -45,5 +45,5 @@ test('Sienna and Moonfall have no bench meshes or their automatic colliders', as
     expect(source).not.toContain('colliders="cuboid"')
     expect(source).toContain('CuboidCollider')
   }
-  expect(await Bun.file("src/components/levels/gallery/LodgeRoom/index.tsx").text()).toContain('BenchSeat')
+  expect(await Bun.file('src/components/levels/gallery/LodgeRoom/index.tsx').text()).toContain('BenchSeat')
 })
