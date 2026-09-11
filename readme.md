@@ -29,3 +29,7 @@ Each character makes five independent, stateless TTS requests with the same voic
 Prompts and presets are in `scripts/lib/knots/voiceAuditions.ts`. Each character’s manifest preserves its five request bodies, generation IDs, source hashes and durations; the top-level manifest lists completed auditions. Source recordings are cached and paid requests are reserved to prevent accidental retries. To select characters, append their IDs to the command. After inspecting a failed/interrupted attempt, pass `--retry-failed` to explicitly authorize another request; successful clips are reused and prior request reservations are preserved.
 
 Run `bun scripts/auditionKnots.ts 15-grok-iris` for only the selected Iris voice. It uses the same five independent calls and untouched delivery as the other consistency tests.
+
+### Iris quality review
+
+`bun scripts/auditionIrisQuality.ts` compares direct Grok with OpenRouter using `<loud>`, quality-first latency, 48 kHz PCM requests and character timestamps, with text normalization on/off. Each preview still uses five independent calls. `bun scripts/benchmarkIrisLatency.ts` measures direct WebSocket startup with timestamps on/off and new/reused connections. Both are offline review tools; neither changes the approved narrator preset or game assets. See [the measured results and caveats](docs/iris-quality-review.md).
