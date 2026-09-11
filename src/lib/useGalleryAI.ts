@@ -3,12 +3,12 @@ import type {Portrait} from './gallery.ts'
 import {useQueryStates} from 'nuqs'
 import {useEffect} from 'react'
 
-import {GalleryDirector} from './ai/GalleryDirector.ts'
-import {parameterParsers} from './ai/settings.ts'
-import {SoundEngine} from './audio/SoundEngine.ts'
+import GalleryDirector from './ai/GalleryDirector.ts'
+import parameterParsers from './ai/settings.ts'
+import SoundEngine from './audio/SoundEngine.ts'
 import {galleryEvents, notify, useGallery} from './gallery.ts'
 
-export {parameterParsers} from './ai/settings.ts'
+export {default as parameterParsers} from './ai/settings.ts'
 
 export default function useGalleryAI() {
   const [params, setParams] = useQueryStates(parameterParsers)

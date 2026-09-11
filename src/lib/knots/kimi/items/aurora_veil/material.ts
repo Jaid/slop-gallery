@@ -4,7 +4,7 @@ import {cameraPosition, color, mix, modelWorldMatrixInverse, mx_noise_float, mx_
 
 import {liquidNormal, opticalLine, spectralColor} from '#src/lib/knots/shared.ts'
 
-import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import KnotMaterial from '../../../base/KnotMaterial.ts'
 import knotData from './data.ts'
 
 export default class AuroraVeilMaterial extends KnotMaterial {

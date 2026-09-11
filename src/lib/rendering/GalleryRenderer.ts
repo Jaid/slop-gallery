@@ -6,7 +6,7 @@ import {WebgpuRenderer} from 'three-fiber-game'
 import {telemetry} from '#src/lib/telemetry/index.ts'
 
 /** Instrument real lifecycle operations without adding an implicit scene prewarm. */
-export class GalleryRenderer extends WebgpuRenderer {
+export default class GalleryRenderer extends WebgpuRenderer {
   private initialization?: Promise<this>
 
   constructor(options: WebgpuRendererOptions) {

@@ -17,7 +17,7 @@ export type PassSample = {cpuMs?: number
   width?: number}
 
 /** Metadata only: never retains scenes, cameras, materials or render targets. */
-export class ThreeInspector extends InspectorBase {
+export default class ThreeInspector extends InspectorBase {
   dropped = 0
   readonly passes: Array<PassSample> = []
   private readonly active = new Map<string, PassSample>

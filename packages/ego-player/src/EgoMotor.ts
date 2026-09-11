@@ -19,7 +19,7 @@ const identityRotation = {
 /**
   * Owns one Rapier character controller, not the supplied world, body or collider.
   */
-export class EgoMotor {
+export default class EgoMotor {
   private active = false
   private clock = 0
   private readonly controller
@@ -299,8 +299,10 @@ export class EgoMotor {
       if (!(groups >>> 16 & otherGroups & 0xFF_FF) || !(otherGroups >>> 16 & groups & 0xFF_FF)) {
         return
       }
-      // Intersection queries support concave triangle meshes as well as primitive colliders.
-      if (candidate.intersectsShape(shape, center, identityRotation)) {
+      // GJK intersection tests can report a small positive separation as overlap.
+      // Signed contact distance distinguishes a resting floor from actual penetration.
+      const contact = candidate.contactShape(shape, center, identityRotation, 0)
+      if (contact && contact.distance < 0) {
         clear = false
       }
     })
@@ -317,6 +319,13 @@ export class EgoMotor {
       x: 0,
       y: height / 2,
       z: 0,
+    })
+    // Shape casts in this same substep must use the new center, not the previous height.
+    const feet = this.body.translation()
+    this.collider.setTranslation({
+      x: feet.x,
+      y: feet.y + height / 2,
+      z: feet.z,
     })
     this.shapeHeight = height
     this.shapeRadius = this.radius

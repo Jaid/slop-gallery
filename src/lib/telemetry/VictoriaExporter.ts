@@ -3,7 +3,7 @@ import type {ExportBatch, Metric} from 'telemethree'
 import {ExportError, OtlpHttpExporter} from 'telemethree'
 
 /** Native VictoriaMetrics JSON import, plus OTLP JSON for VictoriaLogs/VictoriaTraces collectors. */
-export class VictoriaExporter extends OtlpHttpExporter {
+export default class VictoriaExporter extends OtlpHttpExporter {
   override async export(batch: ExportBatch) {
     if (batch.signal !== 'metrics') {
       return super.export(batch)

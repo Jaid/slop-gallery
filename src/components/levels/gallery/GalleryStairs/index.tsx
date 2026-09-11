@@ -2,7 +2,7 @@ import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import {useEffect, useMemo} from 'react'
 
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
-import {Box} from '#src/components/Scene/primitives.tsx'
+import Box from '#src/components/Scene/primitives.tsx'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import {stairBlocks, stairFlights, stairRailGeometry, stairRoofs, stairTurn} from '#src/lib/gallery/staircase.ts'
 

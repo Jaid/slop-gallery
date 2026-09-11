@@ -4,7 +4,7 @@ import type {RigidBody, World} from '@dimforge/rapier3d-compat'
 import {RigidBodyType} from '@dimforge/rapier3d-compat'
 
 import {floorHeight} from '../gallery/walls.ts'
-import {PropPlacement} from './PropPlacement.ts'
+import PropPlacement from './PropPlacement.ts'
 
 export type GrabbableBodyOptions = {
   attachmentBody?: () => RigidBody | undefined
@@ -25,7 +25,7 @@ type BodyPose = {
 
 // Shared by sculptures, the book and detachable foliage. A canceled pluck restores
 // the original fixed attachment; a canceled re-grab restores a loose dynamic leaf.
-export class GrabbableBody {
+export default class GrabbableBody {
   readonly placement: PropPlacement
   private home: BodyPose | null = null
   private lastClear: Vec3 | null = null

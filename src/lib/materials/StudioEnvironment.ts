@@ -7,7 +7,7 @@ function panel(u: number, v: number, center: number, halfWidth: number, centerY:
 }
 
 /** Linear radiance from a softly lit studio, warm softboxes and a cool strip light – no assets. */
-export class StudioEnvironment extends DataTexture {
+export default class StudioEnvironment extends DataTexture {
   constructor() {
     const width = 512
     const height = 256

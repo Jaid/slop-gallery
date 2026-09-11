@@ -1,8 +1,8 @@
 import {useFrame} from '@react-three/fiber/webgpu'
 import {useEffect, useRef} from 'react'
 
-import DevelopmentBridge from '#component/DevelopmentBridge'
 import Player from '#component/Player'
+import WebmcpBridge from '#component/WebmcpBridge'
 import {Scene as LevelScene} from '#level/components.ts'
 import {useGallery} from '#src/lib/gallery.ts'
 import {pendingImages} from '#src/lib/useArtworkTexture.ts'
@@ -14,7 +14,7 @@ export default function Scene() {
     <LevelScene/>
     <Player/>
     <Interaction/>
-    <DevelopmentBridge/>
+    <WebmcpBridge/>
     <Ready/>
   </>
 }

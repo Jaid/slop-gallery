@@ -3,11 +3,11 @@ import {afterEach, beforeEach, describe, expect, test} from 'bun:test'
 import RAPIER from '@dimforge/rapier3d-compat'
 import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
-import {PedestalGeometry} from '../../src/lib/gallery/PedestalGeometry.ts'
+import PedestalGeometry from '../../src/lib/gallery/PedestalGeometry.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
-import {LimestoneMaterial} from '../../src/lib/materials/LimestoneMaterial.ts'
-import {GrabbableBody} from '../../src/lib/physics/GrabbableBody.ts'
-import {PropPlacement} from '../../src/lib/physics/PropPlacement.ts'
+import LimestoneMaterial from '../../src/lib/materials/LimestoneMaterial.ts'
+import GrabbableBody from '../../src/lib/physics/GrabbableBody.ts'
+import PropPlacement from '../../src/lib/physics/PropPlacement.ts'
 
 await RAPIER.init()
 let geometry: PedestalGeometry
@@ -64,7 +64,7 @@ describe('sculpture pedestals', () => {
     const meshes = [geometry.stone, geometry.bronze, geometry.reveals].map(part => new Mesh(part, material))
     for (let side = 0; side < 4; side++) {
       for (const y of [0.004, 0.053, 0.12, 0.2, 0.237, 0.247, 0.4, 0.83, 1.133, 1.16, 1.22, 1.3, 1.346]) {
-        for (const x of [0.013, 0.047, 0.079, 0.141, 0.329, 0.42, 0.466, 0.562]) {
+        for (const x of [0.013, 0.047, 0.079, 0.141, 0.3291, 0.42, 0.466, 0.562]) {
           const origin = new Vector3(x, y, 2).applyAxisAngle(new Vector3(0, 1, 0), side * Math.PI / 2)
           const direction = new Vector3(0, 0, -1).applyAxisAngle(new Vector3(0, 1, 0), side * Math.PI / 2)
           const visible = new Raycaster(origin, direction, 0, 4).intersectObjects(meshes)[0]

@@ -4,8 +4,8 @@ import {describe, expect, test} from 'bun:test'
 
 import {BoxGeometry, Float32BufferAttribute, PlaneGeometry} from 'three/webgpu'
 
-import {sampleGrid} from '../../src/lib/gallery/plantDecorations/geometry.ts'
-import {PlantGeometry} from '../../src/lib/gallery/plantDecorations/PlantGeometry.ts'
+import sampleGrid from '../../src/lib/gallery/plantDecorations/geometry.ts'
+import PlantGeometry from '../../src/lib/gallery/plantDecorations/PlantGeometry.ts'
 import {mergeParts, triangleCount} from '../../src/lib/geometry.ts'
 
 function connectedParts(geometry: BufferGeometry) {

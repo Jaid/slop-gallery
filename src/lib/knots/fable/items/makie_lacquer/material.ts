@@ -2,10 +2,10 @@ import type {Texture} from 'three/webgpu'
 
 import {color, float, mix, mx_fractal_noise_float, mx_noise_float, normalViewGeometry, uv, vec3} from 'three/tsl'
 
-import {cellNoiseVec3 as mx_cell_noise_vec3} from '#src/lib/knots/cellNoise.ts'
+import mx_cell_noise_vec3 from '#src/lib/knots/cellNoise.ts'
 import {opticalLine, proceduralNormal} from '#src/lib/knots/shared.ts'
 
-import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import KnotMaterial from '../../../base/KnotMaterial.ts'
 import {glints, viewerFrame} from '../../helpers.ts'
 import knotData from './data.ts'
 

@@ -1,6 +1,6 @@
 import type {RapierRigidBody} from '@react-three/rapier'
 
-export type EgoAction = 'backward' | 'crouch' | 'forward' | 'jump' | 'left' | 'right' | 'sprint'
+export type EgoAction = 'backward' | 'crouch' | 'dump' | 'forward' | 'interact' | 'jump' | 'left' | 'modifier' | 'right' | 'sprint' | 'zoom'
 /** Omitted actions are inactive. The reader may return a shared input object. */
 export type EgoInput = Readonly<Partial<Record<EgoAction, boolean>>>
 export type EgoInputReader = () => EgoInput
@@ -23,6 +23,8 @@ export type EgoPlayerHandle = {
   readonly body: RapierRigidBody | null
   /** A detached snapshot, or null before the body is ready. */
   getState: () => EgoState | null
+  /** Restore zoom before another camera controller snapshots the current FOV. */
+  releaseZoom: () => void
   /** World-space feet position and optional camera quaternion. Resolves capsule clearance, then resets momentum and jump history. */
   teleport: (position: EgoPosition, rotation?: EgoRotation) => void
 }

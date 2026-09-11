@@ -1,1 +1,1 @@
-export {useEgoTelemetry} from './useEgoTelemetry.ts'
+export {default} from './useEgoTelemetry.ts'

@@ -3,5 +3,6 @@ const recordings = import.meta.glob<string>('./*/{items,slug}/*/announce.opus', 
   query: '?url',
   import: 'default',
 })
+const knotAnnouncementUrl = (id: string) => recordings[`./${id}/announce.opus`]
 
-export const knotAnnouncementUrl = (id: string) => recordings[`./${id}/announce.opus`]
+export default knotAnnouncementUrl

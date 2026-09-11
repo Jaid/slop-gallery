@@ -1,6 +1,6 @@
 import RAPIER from '@dimforge/rapier3d-compat'
 
-import {OculusRailing} from '../../../src/lib/gallery/railings/OculusRailing.ts'
+import OculusRailing from '../../../src/lib/gallery/railings/OculusRailing.ts'
 
 export const oculusRailing = new OculusRailing
 

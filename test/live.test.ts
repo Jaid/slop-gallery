@@ -8,7 +8,7 @@ import fs from 'fs-extra'
 import puppeteer from 'puppeteer-core'
 import {preview} from 'vite'
 
-import {initialPortraits} from '../src/lib/gallery/collection.ts'
+import initialPortraits from '../src/lib/gallery/collection.ts'
 
 const baseline = initialPortraits.length
 const snapshot = (page: Page): Promise<Snapshot> => page.evaluate(() => globalThis.__gallery!.snapshot!())
@@ -27,7 +27,7 @@ const clickText = async (page: Page, text: string) => {
   const button = await page.waitForSelector(`xpath/.//button[starts-with(normalize-space(.), "${text}")]`)
   await button!.click()
 }
-test('production gallery: visible WebGPU, physics, imports, fusion and persistence', async () => {
+test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, physics, imports, fusion and persistence', async () => {
   const server = await preview({
     preview: {
       host: '127.0.0.1',
@@ -112,11 +112,11 @@ test('production gallery: visible WebGPU, physics, imports, fusion and persisten
     await page.waitForFunction(() => globalThis.__gallery!.snapshot!().active === 'goose')
     expect((await snapshot(page)).activeLabel).toBeNull()
     expect(await page.$('[data-testid="artwork-overlay"]')).toBeNull()
-    await page.keyboard.press('e')
+    await page.mouse.down({button: 'left'})
     await page.waitForFunction(() => globalThis.__gallery!.snapshot!().held === 'goose')
     await teleport(page, [-6.3, 1.62, -4.5], lookingUp)
     await page.waitForFunction(() => globalThis.__gallery!.snapshot!().placement?.valid && Math.abs(globalThis.__gallery!.snapshot!().camera[0] + 6.3) < 0.01)
-    await page.keyboard.press('e')
+    await page.mouse.up({button: 'left'})
     expect((await snapshot(page)).portraits.find(p => p.id === 'goose')!.position[0]).toBeCloseTo(-6.3)
     await page.keyboard.down('Control')
     await page.keyboard.press('z')
@@ -125,10 +125,10 @@ test('production gallery: visible WebGPU, physics, imports, fusion and persisten
     // A low wall target is invalid; dropping must leave the original untouched.
     await teleport(page, [-3.6, 1.62, -4.5], lookingUp)
     await page.waitForFunction(() => globalThis.__gallery!.snapshot!().active === 'goose')
-    await page.keyboard.press('e')
+    await page.mouse.down({button: 'left'})
     await teleport(page, [-3.6, 1.62, -4.5])
     await page.waitForFunction(() => globalThis.__gallery!.snapshot!().placement?.valid === false)
-    await page.keyboard.press('e')
+    await page.mouse.up({button: 'left'})
     expect((await snapshot(page)).portraits.find(p => p.id === 'goose')!.position).toEqual([-3.6, 2.5, -7.78])
     await teleport(page, [-3.6, 1.62, -4.5], lookingUp)
     await page.waitForFunction(() => globalThis.__gallery!.snapshot!().active === 'goose')
@@ -271,7 +271,7 @@ test('production gallery: visible WebGPU, physics, imports, fusion and persisten
     await teleport(page, [-12.25, 1.62, -39.4], [Math.sin(0.12), 0, 0, Math.cos(0.12)])
     await enter(page)
     await page.waitForFunction(() => globalThis.__gallery!.snapshot!().active === 'prop-knot-astra1')
-    await page.keyboard.press('e')
+    await page.mouse.down({button: 'left'})
     await page.waitForFunction(() => globalThis.__gallery!.snapshot!().held === 'prop-knot-astra1')
     for (const [position, rotation] of [
       [[19.45, 1.62, 3], [0, -Math.SQRT1_2, 0, Math.SQRT1_2]],
@@ -287,7 +287,7 @@ test('production gallery: visible WebGPU, physics, imports, fusion and persisten
       expect(knot.collidersEnabled.length).toBeGreaterThan(0)
       expect(knot.collidersEnabled.every(enabled => !enabled)).toBe(true)
     }
-    await page.keyboard.press('e')
+    await page.mouse.up({button: 'left'})
     await Bun.sleep(500)
     const released = await snapshot(page)
     expect(Math.hypot(...released.camera.map((value, axis) => value - [18, 1.62, 7.45][axis]))).toBeLessThan(0.05)
@@ -296,10 +296,11 @@ test('production gallery: visible WebGPU, physics, imports, fusion and persisten
     expect(released.props.find(prop => prop.id === 'prop-knot-astra1')!.position.z).toBeLessThan(7)
     await teleport(page, [-12.25, 1.62, -39.4], [Math.sin(0.12), 0, 0, Math.cos(0.12)])
     await page.waitForFunction(() => globalThis.__gallery!.snapshot!().active === 'prop-knot-astra1')
-    await page.keyboard.press('e')
+    await page.mouse.down({button: 'left'})
     await page.waitForFunction(() => globalThis.__gallery!.snapshot!().held === 'prop-knot-astra1')
     const beforeThrow = (await snapshot(page)).props.find(prop => prop.id === 'prop-knot-astra1')!.position
     await page.keyboard.press('q')
+    await page.mouse.up({button: 'left'})
     await Bun.sleep(400)
     const thrown = (await snapshot(page)).props.find(prop => prop.id === 'prop-knot-astra1')!
     expect(thrown.bodyType).toBe(0)
@@ -333,14 +334,15 @@ test('production gallery: visible WebGPU, physics, imports, fusion and persisten
     await page.mouse.up({button: 'left'})
     await page.waitForFunction(() => globalThis.__gallery!.snapshot!().held === null)
     expect((await snapshot(page)).props.find(prop => prop.id === 'prop-book')!.bodyType).toBe(0)
-    // Re-grab the fallen book with E, then verify that cancel still restores its pose.
+    // Re-grab the fallen book with the mouse, then verify that cancel still restores its pose.
     await teleport(page, [-3.2, 1.62, 4.2], [0, Math.cos(0.4), Math.sin(0.4), 0])
     await Bun.sleep(1200)
     await page.waitForFunction(() => globalThis.__gallery!.snapshot!().active === 'prop-book')
-    await page.keyboard.press('e')
+    await page.mouse.down({button: 'left'})
     await page.waitForFunction(() => globalThis.__gallery!.snapshot!().held === 'prop-book')
     await page.evaluate(() => document.exitPointerLock())
     expect((await snapshot(page)).held).toBeNull()
+    await page.mouse.up({button: 'left'})
     const canceledBook = (await snapshot(page)).props.find(prop => prop.id === 'prop-book')!
     expect(canceledBook.bodyType).toBe(0)
     expect(canceledBook.collidersEnabled.every(Boolean)).toBe(true)

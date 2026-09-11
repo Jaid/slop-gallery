@@ -2,7 +2,7 @@ import {expect, test} from 'bun:test'
 
 import {NoColorSpace, RepeatWrapping, SRGBColorSpace} from 'three/webgpu'
 
-import {TerracottaTextures} from '../../src/lib/materials/TerracottaTextures.ts'
+import TerracottaTextures from '../../src/lib/materials/TerracottaTextures.ts'
 
 test('clay maps have deterministic, independently owned and correctly filtered pixels', () => {
   const a = new TerracottaTextures

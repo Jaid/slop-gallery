@@ -1,9 +1,9 @@
 import type {Vec3} from './types.ts'
 
 import {floorThickness, subtractFloorOpening} from './floors.ts'
-import {lobby} from './lobby.ts'
+import lobby from './lobby.ts'
 
-export const lowerGallery = {
+const lowerGallery = {
   floorY: -8,
   moonfall: {
     // Keep the north tunnel and east stair landing fixed; expand west and south.
@@ -61,3 +61,5 @@ export function rampFloorHeight(x: number, z: number) {
   }
   return ramp.floorY + (ramp.startZ - z) / ramp.run * ramp.rise
 }
+
+export default lowerGallery

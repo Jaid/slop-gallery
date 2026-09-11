@@ -31,7 +31,7 @@ export function validatePlayerPose(value: unknown): PlayerPose | null {
 }
 
 /** Live movement stays outside React and artwork undo history; checkpoints contain no images. */
-export class PlayerSession {
+export default class PlayerSession {
   revision = 0
   private pose = copy(playerSpawn)
 
@@ -71,10 +71,12 @@ export class PlayerSession {
       const pose = validatePlayerPose(value.player)
       if (pose && Number.isFinite(time) && time >= (Date.parse(savedAt) || 0)) {
         this.restore(pose)
+        return true
       }
     } catch {
       // A damaged or unavailable checkpoint must never prevent loading the collection.
     }
+    return false
   }
 
   snapshot() {

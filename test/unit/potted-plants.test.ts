@@ -5,11 +5,11 @@ import {describe, expect, test} from 'bun:test'
 import {Box3, Euler, Matrix4, Quaternion, Vector3} from 'three/webgpu'
 
 import {wallFace} from '../../src/lib/gallery/architecture.ts'
-import {destructiblePlants} from '../../src/lib/gallery/destructiblePlants/catalog.ts'
-import {DestructiblePlantGeometry} from '../../src/lib/gallery/destructiblePlants/DestructiblePlantGeometry.ts'
+import destructiblePlants from '../../src/lib/gallery/destructiblePlants/catalog.ts'
+import DestructiblePlantGeometry from '../../src/lib/gallery/destructiblePlants/DestructiblePlantGeometry.ts'
 import {plants, potDefinition} from '../../src/lib/gallery/plantDecorations/catalog.ts'
 import {potPlacements, pottedPlantKinds} from '../../src/lib/gallery/plantDecorations/placements.ts'
-import {PlantGeometry} from '../../src/lib/gallery/plantDecorations/PlantGeometry.ts'
+import PlantGeometry from '../../src/lib/gallery/plantDecorations/PlantGeometry.ts'
 import {rooms} from '../../src/lib/gallery/walls.ts'
 
 function roomBounds(position: Vec3, inset: number) {

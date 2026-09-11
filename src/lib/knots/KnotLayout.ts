@@ -1,7 +1,7 @@
 import type {Vec3} from '../gallery/types.ts'
 
 /** One left-aligned row per displayed creator, with walking space around every edge. */
-export class KnotLayout {
+export default class KnotLayout {
   readonly bounds: {height: number
     maxX: number
     minX: number

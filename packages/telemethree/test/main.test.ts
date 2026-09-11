@@ -6,7 +6,7 @@ import {expect, test} from 'bun:test'
 import Info from 'three/src/renderers/common/Info.js'
 import {Group, InspectorBase, InstancedMesh, Mesh, Scene} from 'three/webgpu'
 
-import {ExportError, OtlpHttpExporter, Telemetry, ThreeStatistics} from '../src/main.ts'
+import Telemetry, {ExportError, OtlpHttpExporter, ThreeStatistics} from '../src/main.ts'
 import {encodeOtlp, unixNano} from '../src/otlp.ts'
 
 function testRenderer() {
@@ -51,9 +51,9 @@ test('gauges and cumulative counters snapshot attributes and preserve start time
   telemetry.metric('invalid', Number.NaN)
   telemetry.count('steps', -1)
   await telemetry.flush()
-  const records = batches[0]!.records as Array<Metric>
+  const records = batches[0].records as Array<Metric>
   expect(records.map(record => record.value)).toEqual([120, 2, 5])
-  expect(records[0]!.attributes.room).toBe('sienna')
+  expect(records[0].attributes.room).toBe('sienna')
   expect(records[2]).toMatchObject({
     time: 1010,
     startTime: 1000,
@@ -123,7 +123,7 @@ test('queues and batches are bounded, in-flight records survive concurrent appen
   const second = telemetry.flush()
   release!()
   await second
-  expect((batches[1]!.records[0] as Metric).value).toBe(3)
+  expect((batches[1].records[0] as Metric).value).toBe(3)
 })
 test('signal failures are isolated and retry identical data only after backoff', async () => {
   let fail = true
@@ -283,7 +283,7 @@ test('Three statistics include all passes and distinguish draw calls from cumula
     stats.endFrame(0.01)
   }
   await telemetry.flush()
-  const metrics = Object.fromEntries((batches[0]!.records as Array<Metric>).map(metric => [metric.name, metric.value]))
+  const metrics = Object.fromEntries((batches[0].records as Array<Metric>).map(metric => [metric.name, metric.value]))
   expect(metrics).toMatchObject({
     'three.fps': 100,
     'three.frame.duration.p95': 10,
@@ -317,7 +317,7 @@ test('p95/p99 use nearest-rank WebGPU frame durations', async () => {
     stats.endFrame(duration / 1000)
   }
   await telemetry.flush()
-  const metrics = Object.fromEntries((batches[0]!.records as Array<Metric>).map(metric => [metric.name, metric.value]))
+  const metrics = Object.fromEntries((batches[0].records as Array<Metric>).map(metric => [metric.name, metric.value]))
   expect(metrics['three.frame.duration.p95']).toBe(95)
   expect(metrics['three.frame.duration.p99']).toBe(99)
   expect(metrics['three.fps']).toBeCloseTo(1000 / 50.5)
@@ -338,7 +338,7 @@ test('statistics flush at capacity without silently losing older frames', async 
     statistics.endFrame(milliseconds / 1000)
   }
   await telemetry.flush()
-  const metrics = Object.fromEntries((batches[0]!.records as Array<Metric>).map(metric => [metric.name, metric.value]))
+  const metrics = Object.fromEntries((batches[0].records as Array<Metric>).map(metric => [metric.name, metric.value]))
   expect(metrics).toMatchObject({
     'three.frame.samples': 3,
     'three.frame.duration.mean': 2,
@@ -383,7 +383,7 @@ test('OTLP groups a metric descriptor once and rejects malformed partial-success
   advance(1)
   telemetry.metric('x', 2)
   await telemetry.flush()
-  const encoded = encodeOtlp(batches[0]!)
+  const encoded = encodeOtlp(batches[0])
   const metrics = encoded.resourceMetrics?.[0]?.scopeMetrics[0]?.metrics
   expect(metrics).toHaveLength(1)
   expect(metrics?.[0]).toMatchObject({gauge: {dataPoints: [{asDouble: 1}, {asDouble: 2}]}})
@@ -393,6 +393,6 @@ test('OTLP groups a metric descriptor once and rejects malformed partial-success
       endpoint: '/otlp',
       fetch: request,
     })
-    await expect(exporter.export(batches[0]!)).rejects.toMatchObject({retryable: false})
+    await expect(exporter.export(batches[0])).rejects.toMatchObject({retryable: false})
   }
 })

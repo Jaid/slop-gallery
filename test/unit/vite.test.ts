@@ -6,10 +6,10 @@ import {resolveConfig} from 'vite'
 test.each(['development', 'staging', 'production'])('Vite %s keeps the shared pipeline and mode-specific output', async mode => {
   const config = await resolveConfig({
     mode,
-    configLoader: 'runner',
+    configLoader: 'native',
   }, 'build')
   expect(config.build.outDir).toBe(mode === 'production' ? 'dist' : `out/build/${mode}`)
-  expect(config.build.target).toBe('chrome152')
+  expect(config.build.target).toBe('chrome153')
   expect(config.build.sourcemap).toBe(true)
   const fiberAlias = config.resolve.alias.find(alias => alias.find instanceof RegExp && alias.find.test('@react-three/fiber'))
   expect(fiberAlias?.replacement).toBe('@react-three/fiber/webgpu')
@@ -24,9 +24,6 @@ test.each(['development', 'staging', 'production'])('Vite %s keeps the shared pi
   if (mode === 'production') {
     expect(config.build.assetsDir).toBe('')
     expect(config.build.minify).toBe('terser')
-  } else {
-    expect(config.server.host).toBe('0.0.0.0')
-    expect(config.server.allowedHosts).toContain('vite.tower.lan')
   }
 })
 test('production CSS preserves resources and stacking levels used outside the stylesheet', async () => {

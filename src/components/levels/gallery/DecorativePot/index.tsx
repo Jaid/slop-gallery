@@ -3,7 +3,7 @@ import type {PotKind} from '#src/lib/gallery/plantDecorations/catalog.ts'
 import {ConvexHullCollider, CylinderCollider, RigidBody} from '@react-three/rapier'
 import {useGraphicsQualityValue} from 'use-graphics-quality'
 
-import {decorationResources} from '#src/lib/gallery/plantDecorations/DecorationResources.ts'
+import decorationResources from '#src/lib/gallery/plantDecorations/DecorationResources.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsQuality.ts'
 
 export type PotProps = {kind: PotKind

@@ -1,7 +1,7 @@
 import {BufferGeometry, Float32BufferAttribute} from 'three/webgpu'
 
 // A closed triangular prism: the visible slope is also its collision surface.
-export class RampGeometry extends BufferGeometry {
+export default class RampGeometry extends BufferGeometry {
   constructor(width: number, rise: number, run: number) {
     super()
     if (![width, rise, run].every(value => Number.isFinite(value) && value > 0)) {

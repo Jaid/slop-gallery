@@ -1,7 +1,7 @@
 import type {Vec3} from '../gallery/types.ts'
 
 import {knotCandidates} from './index.ts'
-import {KnotLayout} from './KnotLayout.ts'
+import KnotLayout from './KnotLayout.ts'
 
 export const knotFloatHeight = 1
 const selectedBays = knotCandidates.map(candidate => ({

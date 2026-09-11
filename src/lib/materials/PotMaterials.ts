@@ -1,10 +1,10 @@
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
-import {SoilTextures} from './SoilTextures.ts'
-import {TerracottaTextures} from './TerracottaTextures.ts'
+import SoilTextures from './SoilTextures.ts'
+import TerracottaTextures from './TerracottaTextures.ts'
 
 /** A shared pot finish set; only the detailed variant allocates procedural textures. */
-export class PotMaterials {
+export default class PotMaterials {
   readonly shells
   readonly soil: MeshStandardNodeMaterial
   private readonly clayTextures: TerracottaTextures | null

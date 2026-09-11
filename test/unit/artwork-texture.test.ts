@@ -1,6 +1,6 @@
 import {afterEach, beforeEach, expect, mock, test} from 'bun:test'
 
-import {loadArtworkTexture} from '../../src/lib/loadArtworkTexture.ts'
+import loadArtworkTexture from '../../src/lib/loadArtworkTexture.ts'
 
 const original = {
   fetch: globalThis.fetch,

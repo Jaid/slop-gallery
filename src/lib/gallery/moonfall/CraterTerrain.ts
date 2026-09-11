@@ -8,7 +8,7 @@ const smooth = (from: number, to: number, value: number) => {
 }
 
 /** The same deterministic height field drives visible relief, floor queries and collision. */
-export class CraterTerrain {
+export default class CraterTerrain {
   private noise: SimplexNoise
   private secondary = [
     [-3.3, -1.6, 1.1],

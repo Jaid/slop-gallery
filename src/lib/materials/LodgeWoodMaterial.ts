@@ -2,7 +2,7 @@ import {bumpMap, color, float, mix, mx_noise_float, positionWorld, vec3} from 't
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 /** Vertical cedar boards, with narrow dark seams and grain at physical scale. */
-export class LodgeWoodMaterial extends MeshStandardNodeMaterial {
+export default class LodgeWoodMaterial extends MeshStandardNodeMaterial {
   constructor() {
     super({
       roughness: 0.78,

@@ -4,12 +4,12 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
-import {lowerGallery} from '../../src/lib/gallery/lowerGallery.ts'
-import {oculusBalcony as balcony, balconyFloorHeight} from '../../src/lib/gallery/oculusBalcony.ts'
-import {OculusBalconyGeometry} from '../../src/lib/gallery/OculusBalconyGeometry.ts'
-import {OculusGroundGeometry} from '../../src/lib/gallery/OculusGroundGeometry.ts'
-import {oculusTower as tower} from '../../src/lib/gallery/oculusTower.ts'
-import {floorHeight, walls} from '../../src/lib/gallery/walls.ts'
+import lowerGallery from '../../src/lib/gallery/lowerGallery.ts'
+import balcony, {balconyFloorHeight} from '../../src/lib/gallery/oculusBalcony.ts'
+import OculusBalconyGeometry from '../../src/lib/gallery/OculusBalconyGeometry.ts'
+import OculusGroundGeometry from '../../src/lib/gallery/OculusGroundGeometry.ts'
+import tower from '../../src/lib/gallery/oculusTower.ts'
+import walls, {floorHeight} from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
 describe('separate semicircular Oculus balcony', () => {

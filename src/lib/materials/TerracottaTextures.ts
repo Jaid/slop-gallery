@@ -17,7 +17,7 @@ function texture(pixels: Uint8Array, color = false) {
 }
 
 /** Unglazed clay: fine surface grain, tiny pores and occasional pale mineral grains. */
-export class TerracottaTextures {
+export default class TerracottaTextures {
   readonly bumpMap: DataTexture
   readonly map: DataTexture
   readonly roughnessMap: DataTexture

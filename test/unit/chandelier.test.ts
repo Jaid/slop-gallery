@@ -3,7 +3,7 @@ import {describe, expect, test} from 'bun:test'
 import RAPIER from '@dimforge/rapier3d-compat'
 import {Quaternion, Vector3} from 'three/webgpu'
 
-import {ChandelierGeometry} from '../../src/lib/gallery/ChandelierGeometry.ts'
+import ChandelierGeometry from '../../src/lib/gallery/ChandelierGeometry.ts'
 import {chandelierPhysics} from '../../src/lib/physics/chandelier.ts'
 
 await RAPIER.init()

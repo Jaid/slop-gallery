@@ -18,13 +18,13 @@ import RoomFloor from '#component/levels/gallery/RoomFloor'
 import SiennaRoom from '#component/levels/gallery/SiennaRoom'
 import VesperOrnaments from '#component/levels/gallery/VesperOrnaments'
 import {damaskTexture, surfaceTexture} from '#src/components/Scene/materials.ts'
-import {Box} from '#src/components/Scene/primitives.tsx'
+import Box from '#src/components/Scene/primitives.tsx'
 import WallSurface from '#src/components/Scene/WallSurface.tsx'
 import {rooms, walls} from '#src/lib/gallery.ts'
 import {wallTop} from '#src/lib/gallery/architecture.ts'
-import {CastleStoneMaterial} from '#src/lib/materials/CastleStoneMaterial.ts'
-import {LodgeWoodMaterial} from '#src/lib/materials/LodgeWoodMaterial.ts'
-import {canvasTexture} from '#src/lib/texture.ts'
+import CastleStoneMaterial from '#src/lib/materials/CastleStoneMaterial.ts'
+import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
+import canvasTexture from '#src/lib/texture.ts'
 
 const pointLightPositions: Partial<Record<Wall['room'], Array<number>>> = {
   antechamber: [0],
@@ -69,7 +69,7 @@ export default function Architecture() {
   }
   return <>
     <ReflectionEnvironment/>
-    <color attach="background" args={['#ded8ca']}/><fog attach="fog" args={['#d9d4c7', 35, 70]}/>
+    <color attach="background" args={['#ded8ca']}/>
     <ambientLight intensity={0.65}/><hemisphereLight args={['#ecf3ff', '#a29270', 1.15]}/>
     <directionalLight position={[-3, 9, 4]} intensity={2.3} color="#fff0d7" castShadow shadow-mapSize={[4096, 4096]} shadow-camera-left={-24} shadow-camera-right={24} shadow-camera-top={20} shadow-camera-bottom={-20} shadow-normalBias={0.035}/>
     {walls.map(wall => <WallSurface key={wall.id} material={wallMaterial(wall)} wall={wall} plaster={wall.room === 'sienna' ? textures.damask : textures.plaster}/>)}

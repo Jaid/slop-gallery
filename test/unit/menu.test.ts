@@ -9,12 +9,12 @@ import {GraphicsQualityProvider} from 'use-graphics-quality'
 
 import Menu from '#component/Menu'
 
-import {parameterParsers} from '../../src/lib/ai/settings.ts'
-import {SoundEngine} from '../../src/lib/audio/SoundEngine.ts'
+import parameterParsers from '../../src/lib/ai/settings.ts'
+import SoundEngine from '../../src/lib/audio/SoundEngine.ts'
 import {galleryEvents, resetGallery, startNewGame} from '../../src/lib/gallery/actions.ts'
 import {playerSession, playerSpawn} from '../../src/lib/gallery/PlayerSession.ts'
 import {createDocument, markControlled, readControlled, undo, useGallery} from '../../src/lib/gallery/store.ts'
-import {pauseMenu} from '../../src/lib/pauseMenu.ts'
+import pauseMenu from '../../src/lib/pauseMenu.ts'
 
 const state = useGallery.getState()
 const storageDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')
@@ -138,7 +138,7 @@ describe('minimal menu', () => {
     }
   })
 })
-test.each(['first', 'return', 'pause', 'unfocus'] as const)('renders the %s menu stage', (stage: MenuStage) => {
+test.each(['first', 'reset', 'return', 'pause', 'unfocus'] as const)('renders the %s menu stage', (stage: MenuStage) => {
   const initial = {...useGallery.getInitialState()}
   const snapshot = spyOn(pauseMenu, 'getServerSnapshot').mockReturnValue({
     stage,
@@ -159,9 +159,9 @@ test.each(['first', 'return', 'pause', 'unfocus'] as const)('renders the %s menu
       }),
     }))
     expect(html).toContain(`data-stage="${stage}"`)
-    expect(html).toContain(stage === 'first' ? 'Enter gallery' : (stage === 'return' ? 'Continue' : 'Resume'))
+    expect(html).toContain(stage === 'reset' ? 'New game' : stage === 'first' ? 'Enter gallery' : stage === 'return' ? 'Continue' : 'Resume')
     expect(html.includes('data-testid="minimap"')).toBe(stage === 'pause')
-    expect(html.includes('New game')).toBe(stage === 'return')
+    expect(html.includes('New game')).toBe(stage === 'return' || stage === 'reset')
     expect(html.includes('Your position')).toBe(stage === 'pause')
     if (stage === 'pause') {
       expect(html.match(/data-testid="minimap"/gu)).toHaveLength(2)
@@ -170,7 +170,7 @@ test.each(['first', 'return', 'pause', 'unfocus'] as const)('renders the %s menu
     }
     expect(html.includes('OpenRouter')).toBe(stage !== 'unfocus')
     expect(html.includes('Mute audio')).toBe(stage !== 'unfocus')
-    expect(html.includes('Good taste.')).toBe(stage === 'first' || stage === 'return')
+    expect(html.includes('Good taste.')).toBe(stage === 'first' || stage === 'return' || stage === 'reset')
     expect(html).not.toContain('Reset gallery')
     expect(html).not.toContain('Confirm reset')
     if (stage === 'unfocus') {

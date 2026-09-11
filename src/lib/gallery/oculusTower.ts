@@ -1,7 +1,7 @@
-import {lobby} from './lobby.ts'
-import {lowerGallery, oculusPlatform} from './lowerGallery.ts'
+import lobby from './lobby.ts'
+import lowerGallery, {oculusPlatform} from './lowerGallery.ts'
 
-export const oculusTower = {
+const oculusTower = {
   x: lobby.opening.center[0],
   z: lobby.opening.center[1],
   radius: 2.2,
@@ -102,3 +102,5 @@ export function towerFloorHeight(x: number, z: number) {
     return towerRampHeight((z - startZ) / (endZ - startZ))
   }
 }
+
+export default oculusTower

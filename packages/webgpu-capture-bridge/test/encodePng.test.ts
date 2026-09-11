@@ -1,6 +1,6 @@
 import {afterEach, describe, expect, test} from 'bun:test'
 
-import {encodePng} from '../src/encodePng.ts'
+import encodePng from '../src/encodePng.ts'
 
 const originalDocument = Object.getOwnPropertyDescriptor(globalThis, 'document')
 const originalImageData = Object.getOwnPropertyDescriptor(globalThis, 'ImageData')

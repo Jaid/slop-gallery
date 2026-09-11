@@ -3,9 +3,9 @@ import type {Metric} from 'telemethree'
 
 import {expect, test} from 'bun:test'
 
-import {Telemetry} from 'telemethree'
+import Telemetry from 'telemethree'
 
-import {EgoTelemetry} from '../src/main.ts'
+import EgoTelemetry from '../src/main.ts'
 
 function fixture() {
   const metrics: Array<Metric> = []

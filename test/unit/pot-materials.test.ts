@@ -1,7 +1,7 @@
 import {expect, test} from 'bun:test'
 
-import {decorationResources} from '../../src/lib/gallery/plantDecorations/DecorationResources.ts'
-import {PotMaterials} from '../../src/lib/materials/PotMaterials.ts'
+import decorationResources from '../../src/lib/gallery/plantDecorations/DecorationResources.ts'
+import PotMaterials from '../../src/lib/materials/PotMaterials.ts'
 import {getGraphicsProfile} from '../../src/lib/rendering/graphicsQuality.ts'
 
 test('performance pots and soil have warm, matte colors without noise maps', () => {

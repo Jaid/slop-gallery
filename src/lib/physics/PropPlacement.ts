@@ -5,7 +5,7 @@ import {Quaternion, Vector3} from 'three/webgpu'
 
 const skin = 0.025
 
-export class PropPlacement {
+export default class PropPlacement {
   private carryObstacle = (collider: Collider) => {
     const data = collider.parent()?.userData
     const player = data && typeof data === 'object' && 'isPlayer' in data && data.isPlayer === true

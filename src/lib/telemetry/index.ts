@@ -1,9 +1,9 @@
 import type {Point3} from 'telemethree-ego'
 
-import {SlopGalleryTelemetry} from './SlopGalleryTelemetry.ts'
+import SlopGalleryTelemetry from './SlopGalleryTelemetry.ts'
 
 const params = new URLSearchParams(typeof location === 'undefined' ? '' : location.search)
-const endpoint: string | undefined = import.meta.env.VITE_TELEMETRY_ENDPOINT
+const endpoint: string | undefined = import.meta.env.TELEMETRY_INGESTION_RELAY_ENDPOINT || undefined
 const enabled = params.get('telemetry') !== 'false' && params.get('test') !== 'true' && (import.meta.env.DEV || Boolean(endpoint))
 
 export const telemetry = enabled ? new SlopGalleryTelemetry({

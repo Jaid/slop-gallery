@@ -5,10 +5,10 @@ import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import {wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
-import {CurvedBoxGeometry} from '../../src/lib/gallery/CurvedBoxGeometry.ts'
-import {staircase, stairFlights, stairFloorHeight, stairRoofs, stairTurn} from '../../src/lib/gallery/staircase.ts'
-import {StairTurn} from '../../src/lib/gallery/stairs/StairTurn.ts'
-import {findPlacement, insideGallery, roomAt, wallCoordinates, wallPosition, walls} from '../../src/lib/gallery/walls.ts'
+import CurvedBoxGeometry from '../../src/lib/gallery/CurvedBoxGeometry.ts'
+import staircase, {stairFlights, stairFloorHeight, stairRoofs, stairTurn} from '../../src/lib/gallery/staircase.ts'
+import StairTurn from '../../src/lib/gallery/stairs/StairTurn.ts'
+import walls, {findPlacement, insideGallery, roomAt, wallCoordinates, wallPosition} from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
 describe('round stair landing', () => {

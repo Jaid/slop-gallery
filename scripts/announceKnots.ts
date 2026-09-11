@@ -13,26 +13,19 @@ export const announcementModel = 'google/gemini-3.1-flash-tts-preview'
 export const announcementVoice = 'Algenib'
 export const announcementCharacter = 'Calm, wise museum narrator. Speak in clear American English with measured, natural pacing. Read exactly the transcript once, then stop.'
 
-export function announcementInput(item: {id: string, text: string}) {
+export function announcementInput(item: {id: string
+  text: string}) {
   const direction = item.id.includes('/slug/') ? 'Read model letters and version numbers in English.' : 'Speak the title as words, without spelling it out or adding anything.'
-  const transcript = /[.!?]$/u.test(item.text) ? item.text : `${item.text}.`
+  const transcript = /[!.?]$/u.test(item.text) ? item.text : `${item.text}.`
   return `## character\n${announcementCharacter} ${direction}\n\n## transcript\n${transcript}`
 }
 
-export function announcementDurationLimit(item: {id: string, text: string}) {
+export function announcementDurationLimit(item: {id: string
+  text: string}) {
   return item.id.includes('/slug/') ? 8 : Math.max(4, item.text.split(/\s+/u).length * 1.2 + 1)
 }
 
-class KnotNarrationGenerator extends NarrationGenerator {
-  constructor(key: string) {
-    super(key, announcementModel, announcementVoice)
-    // Recordings are cached locally; do not replay a cached provider error.
-    this.headers['X-OpenRouter-Cache'] = 'false'
-    delete this.headers['X-OpenRouter-Cache-TTL']
-  }
-}
-
-export async function announceKnots({ids = [], all = false, force = false, key = Bun.env.OPENROUTER_API_KEY}: {
+export default async function announceKnots({ids = [], all = false, force = false, key = Bun.env.OPENROUTER_API_KEY}: {
   all?: boolean
   force?: boolean
   ids?: ReadonlyArray<string>
@@ -105,6 +98,14 @@ export async function announceKnots({ids = [], all = false, force = false, key =
   return generated
 }
 
+class KnotNarrationGenerator extends NarrationGenerator {
+  constructor(key: string) {
+    super(key, announcementModel, announcementVoice)
+    // Recordings are cached locally; do not replay a cached provider error.
+    this.headers['X-OpenRouter-Cache'] = 'false'
+    delete this.headers['X-OpenRouter-Cache-TTL']
+  }
+}
 if (import.meta.main) {
   const {values, positionals} = parseArgs({
     args: Bun.argv.slice(2),

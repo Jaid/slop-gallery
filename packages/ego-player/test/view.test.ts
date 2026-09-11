@@ -1,6 +1,6 @@
 import {expect, test} from 'bun:test'
 
-import {EgoView} from '../src/EgoView.ts'
+import EgoView from '../src/EgoView.ts'
 import {defaultEgoOptions} from '../src/options.ts'
 
 test('camera height is feet-relative and crouching eases toward its target', () => {
@@ -11,7 +11,7 @@ test('camera height is feet-relative and crouching eases toward its target', () 
   for (let i = 0; i < 120; i++) {
     view.update(1 / 60, 0, true, true, defaultEgoOptions)
   }
-  expect(view.height).toBeCloseTo(0.9)
+  expect(view.height).toBeCloseTo(defaultEgoOptions.crouchEyeHeight)
 })
 test('stride callbacks are frame-rate independent and do not require visible bob', () => {
   for (const fps of [30, 60, 144, 240]) {

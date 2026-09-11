@@ -36,7 +36,7 @@ export function encodeOtlp(batch: ExportBatch) {
     case 'metrics': {
       const groups = Map.groupBy(batch.records as ReadonlyArray<Metric>, metric => metric.name)
       const metrics = Array.from(groups.values(), records => {
-        const metric = records[0]!
+        const metric = records[0]
         const dataPoints = records.map(point => ({
           attributes: otlpAttributes(point.attributes),
           timeUnixNano: unixNano(point.time),

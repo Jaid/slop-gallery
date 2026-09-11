@@ -1,9 +1,9 @@
 import {LinearMipmapLinearFilter, SRGBColorSpace} from 'three/webgpu'
 
-import {canvasTexture} from './texture.ts'
+import canvasTexture from './texture.ts'
 
 /** URL loads can fail while the dev server restarts; never permanently cache that failure. */
-export async function loadArtworkTexture(source: Blob | string, retryDelay = 500) {
+export default async function loadArtworkTexture(source: Blob | string, retryDelay = 500) {
   const attempts = typeof source === 'string' ? 3 : 1
   for (let attempt = 0; attempt < attempts; attempt++) {
     try {

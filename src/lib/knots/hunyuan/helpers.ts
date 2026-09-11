@@ -1,6 +1,6 @@
 import {cameraPosition, modelWorldMatrixInverse, normalViewGeometry, positionGeometry, positionView, positionViewDirection, vec4} from 'three/tsl'
 
-export function viewerFrame() {
+export default function viewerFrame() {
   const p = positionGeometry
   const cameraLocal = modelWorldMatrixInverse.mul(vec4(cameraPosition, 1)).xyz
   const view = cameraLocal.sub(p).normalize()
@@ -20,5 +20,5 @@ export function viewerFrame() {
   }
 }
 
-export {cellNoiseVec3} from '../cellNoise.ts'
+export {default as cellNoiseVec3} from '../cellNoise.ts'
 export {liquidNormal, opticalLine, proceduralNormal, spectralColor} from '../shared.ts'

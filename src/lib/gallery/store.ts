@@ -3,7 +3,7 @@ import type {GalleryDocument, GallerySettings, GallerySnapshot, NarrationState, 
 import {create} from 'zustand'
 
 import {readControlled} from '../pauseMenu.ts'
-import {initialPortraits} from './collection.ts'
+import initialPortraits from './collection.ts'
 import {validateCollectionImages} from './imagePolicy.ts'
 import {playerSession} from './PlayerSession.ts'
 

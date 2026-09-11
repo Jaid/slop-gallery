@@ -2,9 +2,9 @@ import type {Texture} from 'three/webgpu'
 
 import {expect, test} from 'bun:test'
 
-import {KnotMaterial} from '../../src/lib/knots/base/KnotMaterial.ts'
+import KnotMaterial from '../../src/lib/knots/base/KnotMaterial.ts'
 import {knotsByNumber} from '../../src/lib/knots/index.ts'
-import {KnotResources} from '../../src/lib/knots/KnotResources.ts'
+import KnotResources from '../../src/lib/knots/KnotResources.ts'
 
 class TestMaterial extends KnotMaterial {}
 test('shares geometry by displacement bound and keeps collider and culling bounds expanded', () => {

@@ -17,7 +17,7 @@ export function GraphicsQualityProvider({children, isQuality, onChange}: Graphic
 }
 
 /** Read whether quality is enabled without subscribing to the change callback. */
-export function useGraphicsQuality() {
+export default function useGraphicsQuality() {
   const isQuality = useContext(QualityContext)
   if (isQuality === null) {
     throw new Error('useGraphicsQuality requires a GraphicsQualityProvider.')

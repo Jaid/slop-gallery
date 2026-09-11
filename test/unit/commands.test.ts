@@ -6,7 +6,7 @@ import {renderToStaticMarkup} from 'react-dom/server'
 import Map from '#component/Map'
 
 import {galleryEvents, handleGalleryKey, importDroppedFiles, isTextInput, viewPortrait} from '../../src/lib/gallery/actions.ts'
-import {ImageImporter} from '../../src/lib/gallery/ImageImporter.ts'
+import ImageImporter from '../../src/lib/gallery/ImageImporter.ts'
 import {imageFilename} from '../../src/lib/gallery/imagePolicy.ts'
 import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
 import {rooms} from '../../src/lib/gallery/walls.ts'

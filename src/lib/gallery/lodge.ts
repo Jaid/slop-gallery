@@ -1,13 +1,12 @@
 import type {PassageCutout} from './passages/Passage.ts'
 import type {Vec3} from './types.ts'
 
-import {lowerGallery, oculusPlatform} from './lowerGallery.ts'
-import {oculusTower} from './oculusTower.ts'
-import {Passage} from './passages/Passage.ts'
+import lowerGallery, {oculusPlatform} from './lowerGallery.ts'
+import oculusTower from './oculusTower.ts'
+import Passage from './passages/Passage.ts'
 
 const timberWidth = 4
-
-export const lodge = {
+const lodge = {
   center: [-25, -31],
   size: [10, 10],
   floorY: oculusPlatform.position[1] + oculusPlatform.size[1] / 2,
@@ -76,3 +75,5 @@ export function insideLodgeAccess(position: Vec3) {
   }
   return lodgeTunnel.contains(position)
 }
+
+export default lodge

@@ -2,7 +2,7 @@ import type {FloorRectangle} from '../floors.ts'
 import type {RoomId, Vec3} from '../types.ts'
 import type {Wall} from '../walls.ts'
 
-import {passageOrientation} from './orientation.ts'
+import passageOrientation from './orientation.ts'
 
 export type PassageCutout = {
   position: Vec3
@@ -23,7 +23,7 @@ type Edge = {axis: 0 | 2
   side: number}
 
 /** An open-ended, level passage. One footprint drives its floors, walls and navigation. */
-export class Passage {
+export default class Passage {
   readonly floors: Array<FloorRectangle> = []
   readonly spans: Array<{
     end: Point

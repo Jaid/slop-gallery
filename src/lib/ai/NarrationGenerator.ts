@@ -1,4 +1,4 @@
-import {pcmWave} from '../audio/pcmWave.ts'
+import pcmWave from '../audio/pcmWave.ts'
 import ExternalGenerator from './ExternalGenerator.ts'
 
 export default class NarrationGenerator extends ExternalGenerator {

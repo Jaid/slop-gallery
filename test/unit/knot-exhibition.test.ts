@@ -10,7 +10,7 @@ import {insideKnotGallery, knotGalleryBounds} from '../../src/lib/gallery/knotGa
 import {createKnotGeometry, knotGeometryArgs} from '../../src/lib/gallery/sculptures.ts'
 import {knotBays, knotExhibition, knotFloatHeight, knotPreviewX, knotRowHalfWidth, knotSpacing} from '../../src/lib/knots/exhibition.ts'
 import {knots, knotsByNumber} from '../../src/lib/knots/index.ts'
-import {StudioEnvironment} from '../../src/lib/materials/StudioEnvironment.ts'
+import StudioEnvironment from '../../src/lib/materials/StudioEnvironment.ts'
 
 describe('multi-model Knot challenge', () => {
   test('keeps stable numbers and credits while grouping batches under one candidate', () => {

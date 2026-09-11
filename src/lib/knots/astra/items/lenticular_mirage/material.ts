@@ -4,7 +4,7 @@ import {cameraPosition, color, mix, modelWorldMatrixInverse, mx_noise_float, pos
 
 import {opticalBands, opticalLine, spectralColor} from '#src/lib/knots/shared.ts'
 
-import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import KnotMaterial from '../../../base/KnotMaterial.ts'
 import knotData from './data.ts'
 
 export default class LenticularMirageMaterial extends KnotMaterial {

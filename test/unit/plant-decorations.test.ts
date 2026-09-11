@@ -4,8 +4,8 @@ import {BoxGeometry, BufferGeometry, Mesh, MeshBasicNodeMaterial, Raycaster, Vec
 
 import {plantCombinations, plants, pots} from '../../src/lib/gallery/plantDecorations/catalog.ts'
 import {complexityLabel, decorationComplexity} from '../../src/lib/gallery/plantDecorations/complexity.ts'
-import {PlantGeometry} from '../../src/lib/gallery/plantDecorations/PlantGeometry.ts'
-import {PotGeometry} from '../../src/lib/gallery/plantDecorations/PotGeometry.ts'
+import PlantGeometry from '../../src/lib/gallery/plantDecorations/PlantGeometry.ts'
+import PotGeometry from '../../src/lib/gallery/plantDecorations/PotGeometry.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 
 describe('modular botanical catalog', () => {

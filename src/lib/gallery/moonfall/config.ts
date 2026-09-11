@@ -1,4 +1,4 @@
-import {lowerGallery} from '../lowerGallery.ts'
+import lowerGallery from '../lowerGallery.ts'
 
 export const moonfallCrater = {
   radius: 9,

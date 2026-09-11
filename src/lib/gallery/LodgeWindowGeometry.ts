@@ -4,11 +4,11 @@ import {BoxGeometry, ExtrudeGeometry, Shape} from 'three/webgpu'
 
 import {mergeParts} from '../geometry.ts'
 import {corridorPassage} from './corridor.ts'
-import {lodge, lodgeWindow} from './lodge.ts'
+import lodge, {lodgeWindow} from './lodge.ts'
 import {timberProfile} from './passages/TimberGeometry.ts'
 
 /** A wood-lined through-wall recess with its only pane at the tunnel end. */
-export class LodgeWindowGeometry {
+export default class LodgeWindowGeometry {
   readonly frame: BufferGeometry
   readonly glass: BoxGeometry
   readonly lining: BufferGeometry

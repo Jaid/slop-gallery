@@ -1,6 +1,6 @@
 import {Curve, Vector3} from 'three/webgpu'
 
-export class RopeRing extends Curve<Vector3> {
+export default class RopeRing extends Curve<Vector3> {
   constructor(readonly radius: number, readonly count: number) {
     super()
   }

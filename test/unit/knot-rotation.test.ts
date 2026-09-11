@@ -3,7 +3,7 @@ import {afterEach, beforeEach, expect, test} from 'bun:test'
 import RAPIER from '@dimforge/rapier3d-compat'
 
 import {knotsByNumber} from '../../src/lib/knots/index.ts'
-import {KnotRotation} from '../../src/lib/physics/KnotRotation.ts'
+import KnotRotation from '../../src/lib/physics/KnotRotation.ts'
 
 await RAPIER.init()
 let world: RAPIER.World

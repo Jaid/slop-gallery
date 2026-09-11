@@ -64,7 +64,7 @@ function leaf(length: number, width: number) {
 }
 
 /** Shallow carved foliage and gilded scrolls, shared by every wall instance. */
-export class WallOrnamentGeometry {
+export default class WallOrnamentGeometry {
   readonly brass: BufferGeometry
   readonly foliage: BufferGeometry
 

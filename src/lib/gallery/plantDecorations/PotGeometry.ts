@@ -21,7 +21,7 @@ const radialSegments: Record<PotKind, number> = {
 }
 
 /** Hollow ceramic shells with finished rims; the recessed substrate belongs to the pot. */
-export class PotGeometry {
+export default class PotGeometry {
   readonly shell: LatheGeometry
   readonly soil: CylinderGeometry
   readonly trim: BufferGeometry | null

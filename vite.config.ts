@@ -1,5 +1,5 @@
 import type {AcceptedPlugin} from 'postcss'
-import type {ConfigEnv, Plugin, UserConfig, UserConfigFn} from 'vite'
+import type {ConfigEnv, UserConfig, UserConfigFn} from 'vite'
 
 import babelPlugin from '@rolldown/plugin-babel'
 import reactPlugin, {reactCompilerPreset} from '@vitejs/plugin-react'
@@ -13,31 +13,17 @@ import mediaMixinsPlugin from 'vite-plugin-media-mixins'
 import titlePlugin from 'vite-plugin-title'
 
 import levels, {defaultLevel, levelIds} from '#src/data/levels.ts'
-import {knotExhibition} from '#src/lib/knots/exhibition.ts'
 import {victoriaTelemetry} from '#src/lib/telemetry/vite.ts'
+import knotMaterialsPlugin from '#src/lib/vite/knotMaterialsPlugin.ts'
 
-const knotMaterialsModule = 'virtual:knot-exhibition-materials'
-const resolvedKnotMaterialsModule = `\0${knotMaterialsModule}`
-const knotMaterialsPlugin = (): Plugin => ({
-  name: 'knot-exhibition-materials',
-  resolveId(id) {
-    if (id === knotMaterialsModule) {
-      return resolvedKnotMaterialsModule
-    }
-  },
-  load(id) {
-    if (id !== resolvedKnotMaterialsModule) {
-      return
-    }
-    const imports = knotExhibition.map((item, index) => `import Material${index} from ${JSON.stringify(`/src/lib/knots/${item.model}/items/${item.sourceId}/material.ts`)}`)
-    const constructors = knotExhibition.map((_, index) => `Material${index}`)
-    return `${imports.join('\n')}\nexport default [${constructors.join(', ')}]\n`
-  },
-})
 const getCommonConfig = (context: ConfigEnv) => {
-  const env = loadEnv(context.mode, process.cwd(), 'SLOP_VICTORIA_')
+  const env = loadEnv(context.mode, process.cwd(), 'TELEMETRY_INGESTION_')
   const level = selectGameLevel(loadEnv(context.mode, process.cwd(), 'GAME_LEVEL').GAME_LEVEL, levelIds, defaultLevel)
   const config: UserConfig = {
+    // Only the public relay prefix enters the client bundle, never private ingestion destinations.
+    define: {
+      'import.meta.env.TELEMETRY_INGESTION_RELAY_ENDPOINT': JSON.stringify(env.TELEMETRY_INGESTION_RELAY_ENDPOINT ?? ''),
+    },
     build: {
       target: 'chrome153',
       chunkSizeWarningLimit: 10_000,
@@ -57,9 +43,9 @@ const getCommonConfig = (context: ConfigEnv) => {
       }),
       mediaMixinsPlugin(),
       victoriaTelemetry({
-        metrics: env.SLOP_VICTORIA_METRICS_URL,
-        logs: env.SLOP_VICTORIA_LOGS_URL,
-        traces: env.SLOP_VICTORIA_TRACES_URL,
+        metrics: env.TELEMETRY_INGESTION_METRICS_ENDPOINT,
+        logs: env.TELEMETRY_INGESTION_LOGS_ENDPOINT,
+        traces: env.TELEMETRY_INGESTION_TRACES_ENDPOINT,
       }),
     ],
     resolve: {

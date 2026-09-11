@@ -3,10 +3,10 @@ import type {CaptureFrame} from '../types.ts'
 import {useThree} from '@react-three/fiber/webgpu'
 import {useCallback, useEffect, useRef} from 'react'
 
-import {WebgpuCapture} from '../WebgpuCapture.ts'
+import WebgpuCapture from '../WebgpuCapture.ts'
 
 /** Capture the current Fiber scene and camera, including its active render pipeline. */
-export const useCaptureFrame = (): CaptureFrame => {
+const useCaptureFrame = (): CaptureFrame => {
   const renderer = useThree(state => state.renderer)
   const scene = useThree(state => state.scene)
   const camera = useThree(state => state.camera)
@@ -32,3 +32,5 @@ export const useCaptureFrame = (): CaptureFrame => {
     return captureRef.current.captureFrame()
   }, [])
 }
+
+export default useCaptureFrame

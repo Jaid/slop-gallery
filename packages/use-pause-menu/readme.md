@@ -36,6 +36,7 @@ React is an optional peer for the framework-free core entry; it is required when
 | --- | --- |
 | `first` | This page visit has not been recognized as a returning visitor. |
 | `return` | A previous visit was recorded, or the application supplied `initialStage: 'return'`. |
+| `reset` | A previous visit was recorded, but the application reports no stored game data. |
 | `pause` | Pointer lock was released by Escape or `release('pause')`. |
 | `unfocus` | Focus was lost, the canvas disappeared, lock transferred elsewhere or the application called `release()`. |
 
@@ -45,9 +46,10 @@ The browser does not expose the reason for `pointerlockchange` and may consume E
 
 ## Controller
 
-`PauseMenu` is also exported from `use-pause-menu/core`, which imports no React code.
+`PauseMenu` is the default export of `use-pause-menu/core`, which imports no React code.
 
-- `new PauseMenu(options?)`: Constructs an inert controller. `initialStage` defaults to `first` and can be `return` for migrations or server-provided history.
+- `new PauseMenu(options?)`: Constructs an inert controller. `initialStage` defaults to `first` and can be `return` or `reset` for application-provided history. Set `hasGameData` when saved-game availability is already known.
+- `setGameData(present)`: Reports asynchronous saved-game availability. Returning visitors without data see `reset`; genuine first visits remain `first`. Does not replace a gameplay pause/unfocus reason. Storage failures are unknown, not proof that data is absent.
 - `start()`: Resolves and records this visit exactly once. Called automatically by `attach()` and the hook effect.
 - `attach(element)`: Observes the element’s owner document and window, synchronizes an existing lock and returns an idempotent cleanup. One active attachment per controller. Attaching a new target disconnects the previous one; stale cleanup cannot detach a newer attachment.
 - `ref`: A stable React 19 callback ref returning attachment-owned cleanup. Use either this or `attach()`, not both for the same canvas.
@@ -70,7 +72,7 @@ const menu = new PauseMenu({
 
 Omit `storageKey` for memory-only operation. Otherwise the default storage is `localStorage`; supply a lazy `storage` resolver for `sessionStorage`, a test double or another synchronous `getItem`/`setItem` store. The marker is the string `true`. Each game should use a distinct key. Storage read, write and access errors never prevent playing. A failed write does not erase an already recognized returning visit. New-game actions do not clear visit history.
 
-Existing games can inspect their old storage format themselves and pass `initialStage: 'return'`. The package deliberately knows nothing about saved worlds, account identities, legacy keys, first movement or onboarding completion.
+The package does not inspect saved worlds or account identities. After reading persistence, call `menu.setGameData(saved !== null)`. Count any independent player checkpoints as game data too. Keep the visit marker separate from game saves so deleting a save does not turn a returning visitor into a first-time visitor.
 
 ## React Three Fiber
 

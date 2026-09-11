@@ -4,13 +4,13 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import {Box3, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry} from '../../src/lib/gallery/architecture.ts'
-import {EntranceGeometry} from '../../src/lib/gallery/EntranceGeometry.ts'
-import {fountain} from '../../src/lib/gallery/fountain/config.ts'
-import {FountainGeometry} from '../../src/lib/gallery/fountain/FountainGeometry.ts'
-import {FountainSpray} from '../../src/lib/gallery/fountain/FountainSpray.ts'
-import {lobby} from '../../src/lib/gallery/lobby.ts'
+import EntranceGeometry from '../../src/lib/gallery/EntranceGeometry.ts'
+import fountain from '../../src/lib/gallery/fountain/config.ts'
+import FountainGeometry from '../../src/lib/gallery/fountain/FountainGeometry.ts'
+import FountainSpray from '../../src/lib/gallery/fountain/FountainSpray.ts'
+import lobby from '../../src/lib/gallery/lobby.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
-import {FountainWaterMaterial} from '../../src/lib/materials/FountainWaterMaterial.ts'
+import FountainWaterMaterial from '../../src/lib/materials/FountainWaterMaterial.ts'
 
 await RAPIER.init()
 describe('Lobby fountain', () => {
@@ -50,7 +50,8 @@ describe('Lobby fountain', () => {
       world.step()
       const mesh = new Mesh(geometry.stone, material)
       for (const x of [0, 0.7, 1.5, 1.93, 2.1]) {
-        const origin = new Vector3(x, 5, 0)
+        // Avoid an exact lathe UV-seam edge, where float32 and float64 ray tests can choose different triangles.
+        const origin = new Vector3(x, 5, 0.001)
         const direction = new Vector3(0, -1, 0)
         const visual = new Raycaster(origin, direction).intersectObject(mesh)[0]
         const physical = world.castRay(new RAPIER.Ray(origin, direction), 6, true)

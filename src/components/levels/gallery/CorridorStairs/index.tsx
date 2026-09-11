@@ -5,11 +5,11 @@ import {useEffect, useMemo} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import TimberFrame from '#component/levels/gallery/TimberFrame'
-import {Box} from '#src/components/Scene/primitives.tsx'
+import Box from '#src/components/Scene/primitives.tsx'
 import {corridorRails, corridorStairs} from '#src/lib/gallery/corridor.ts'
-import {TimberGeometry} from '#src/lib/gallery/passages/TimberGeometry.ts'
-import {StairCarpetGeometry} from '#src/lib/gallery/stairs/StairCarpetGeometry.ts'
-import {RoomFloorTextures} from '#src/lib/materials/RoomFloorTextures.ts'
+import TimberGeometry from '#src/lib/gallery/passages/TimberGeometry.ts'
+import StairCarpetGeometry from '#src/lib/gallery/stairs/StairCarpetGeometry.ts'
+import RoomFloorTextures from '#src/lib/materials/RoomFloorTextures.ts'
 
 export default function CorridorStairs({timber, lining}: {lining: Material
   timber: Material}) {

@@ -3,7 +3,7 @@ import type {WebGPURenderer} from 'three/webgpu'
 
 import {PerspectiveCamera, RenderTarget, Scene, Vector2} from 'three/webgpu'
 
-import {WebgpuCapture} from '../src/main.ts'
+import WebgpuCapture from '../src/main.ts'
 
 export class TestRenderer {
   autoClear = false

@@ -2,7 +2,7 @@ import type {Node, Texture} from 'three/webgpu'
 
 import {cameraPosition, color, Fn, mix, modelWorldMatrixInverse, negateOnBackSide, positionView, positionViewDirection, time, transformNormalToView, uv, varying, vec2, vec3, vec4} from 'three/tsl'
 
-import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import KnotMaterial from '../../../base/KnotMaterial.ts'
 import knotData from './data.ts'
 
 function crownFields(tube: Node<'vec2'>) {

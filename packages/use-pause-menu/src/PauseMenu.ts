@@ -1,7 +1,7 @@
 import type {PauseMenuOptions, PauseMenuSnapshot, PauseReason} from './types.ts'
 
 /** One page visit and one pointer-lock target, independent of React and any renderer. */
-export class PauseMenu {
+export default class PauseMenu {
   /** Attach from an effect. The returned cleanup owns only this attachment. */
   attach = (target: HTMLElement) => {
     const document = target.ownerDocument
@@ -126,13 +126,25 @@ export class PauseMenu {
     }
   }
 
+  /** Resolve saved-game availability after loading storage. Never replace a gameplay pause reason. */
+  setGameData = (present: boolean) => {
+    this.hasGameData = present
+    const {stage, locked} = this.snapshot
+    if (!locked && (stage === 'return' || stage === 'reset')) {
+      this.publish({
+        locked,
+        stage: present ? 'return' : 'reset',
+      })
+    }
+  }
+
   /** Mark this page visit once. Repeated calls and React effect replay are harmless. */
   start = () => {
     if (this.started) {
       return
     }
     this.started = true
-    let returning = this.snapshot.stage === 'return'
+    let returning = this.snapshot.stage === 'return' || this.snapshot.stage === 'reset'
     const {storageKey} = this.options
     if (storageKey !== undefined) {
       let storage
@@ -148,8 +160,12 @@ export class PauseMenu {
         // A write failure must not discard a successfully read visit.
       }
     }
+    let stage: PauseMenuSnapshot['stage'] = 'first'
+    if (returning) {
+      stage = this.hasGameData === false ? 'reset' : 'return'
+    }
     this.publish({
-      stage: returning ? 'return' : 'first',
+      stage,
       locked: this.snapshot.locked,
     })
   }
@@ -163,18 +179,20 @@ export class PauseMenu {
   private connection: {disconnect: () => void
     target: HTMLElement} | undefined
 
-  private readonly listeners = new Set<() => void>
+  private hasGameData: boolean | undefined
 
+  private readonly listeners = new Set<() => void>
   private reason: PauseReason | undefined
+
   private releasedTarget: HTMLElement | undefined
 
   private readonly serverSnapshot: PauseMenuSnapshot
 
   private snapshot: PauseMenuSnapshot
-
   private started = false
 
   constructor(private readonly options: PauseMenuOptions = {}) {
+    this.hasGameData = options.hasGameData ?? (options.initialStage === 'reset' ? false : undefined)
     this.snapshot = Object.freeze({
       stage: options.initialStage ?? 'first',
       locked: false,

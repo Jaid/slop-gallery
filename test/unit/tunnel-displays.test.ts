@@ -1,14 +1,14 @@
 import {describe, expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
-import {EgoMotor} from 'ego-player/motor'
+import EgoMotor from 'ego-player/motor'
 import {Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {createArchitectureGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
-import {lowerGallery} from '../../src/lib/gallery/lowerGallery.ts'
-import {oculusBalcony} from '../../src/lib/gallery/oculusBalcony.ts'
-import {tunnelDisplays, tunnelDisplayWindow} from '../../src/lib/gallery/tunnelDisplays.ts'
-import {findPlacement, insideGallery, rooms, walls} from '../../src/lib/gallery/walls.ts'
+import lowerGallery from '../../src/lib/gallery/lowerGallery.ts'
+import oculusBalcony from '../../src/lib/gallery/oculusBalcony.ts'
+import tunnelDisplays, {tunnelDisplayWindow} from '../../src/lib/gallery/tunnelDisplays.ts'
+import walls, {findPlacement, insideGallery, rooms} from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
 const {tunnel, floorY} = lowerGallery

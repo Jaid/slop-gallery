@@ -1,0 +1,39 @@
+{
+  "name": "telemethree-pause-menu",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Pause-menu lifecycle logs for telemethree",
+  "funding": "https://github.com/sponsors/Jaid",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jaid/slop-gallery.git"
+  },
+  "main": "src/main.ts",
+  "exports": {
+    ".": "./src/main.ts",
+    "./react": "./src/react/main.ts"
+  },
+  "scripts": {
+    "test": "bun test --max-concurrency 1 ./test"
+  },
+  "dependencies": {
+    "telemethree": "workspace:*",
+    "use-pause-menu": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^19.3.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "files": [
+    "src",
+    "readme.md",
+    "license.txt"
+  ],
+  "sideEffects": false,
+  "types": "./src/main.ts"
+}

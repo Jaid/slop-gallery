@@ -1,6 +1,6 @@
 import {parseAsBoolean, parseAsString} from 'nuqs'
 
-export const parameterParsers = {
+const parameterParsers = {
   ai: parseAsBoolean.withDefault(true),
   text_model: parseAsString.withDefault('google/gemini-3.8-flash'),
   text_model_effort: parseAsString.withDefault('low'),
@@ -11,3 +11,5 @@ export const parameterParsers = {
   eager_audio: parseAsBoolean.withDefault(false),
 }
 export type AiSettings = {[Key in keyof typeof parameterParsers]: (typeof parameterParsers)[Key]['defaultValue']}
+
+export default parameterParsers

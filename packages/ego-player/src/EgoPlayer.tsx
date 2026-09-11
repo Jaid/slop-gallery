@@ -1,3 +1,4 @@
+import type {EgoDump} from './EgoDiagnostics.ts'
 import type {EgoOptions} from './options.ts'
 import type {EgoInputReader, EgoPlayerHandle, EgoPosition, EgoRotation, EgoState, EgoToggle} from './types.ts'
 import type {RapierCollider, RapierRigidBody, RigidBodyProps} from '@react-three/rapier'
@@ -8,8 +9,10 @@ import {useFrame, useThree} from '@react-three/fiber/webgpu'
 import {CapsuleCollider, RigidBody, useAfterPhysicsStep, useBeforePhysicsStep, useRapier} from '@react-three/rapier'
 import {useEffect, useImperativeHandle, useRef, useState} from 'react'
 
-import {EgoMotor} from './EgoMotor.ts'
-import {EgoView} from './EgoView.ts'
+import EgoDiagnostics from './EgoDiagnostics.ts'
+import EgoMotor from './EgoMotor.ts'
+import EgoView from './EgoView.ts'
+import EgoZoom from './EgoZoom.ts'
 import {getCapsuleHalfHeight} from './math.ts'
 import {resolveEgoOptions} from './options.ts'
 
@@ -23,8 +26,12 @@ export type EgoPlayerProps = EgoOptions & {
   /** Safe feet position used when a spawn/teleport fits neither standing nor crouching. */
   fallbackPosition?: EgoPosition
   input: EgoInputReader
+  /** Enables the dump action. Called once per press with a detached diagnostic snapshot. */
+  onDump?: (dump: EgoDump) => void
   /** Called for active input during a physics step. */
   onInput?: (input: ReturnType<EgoInputReader>) => void
+  /** Called once per interact press while input is active. */
+  onInteract?: () => void
   /** Called once per stride, independently of audio and head-bob amplitude. */
   onStep?: (state: EgoState) => void
   /** Called after physics with a detached snapshot. */
@@ -42,14 +49,24 @@ export type EgoPlayerProps = EgoOptions & {
   userData?: RigidBodyProps['userData']
   /** Initial camera yaw in radians; updates intentionally reset camera orientation. */
   yaw?: number
+  /** FOV divisor while zoom is held. Defaults to 2. */
+  zoomFactor?: number
 }
 
 const initialPosition: EgoPosition = [0, 0.05, 0]
 const readToggle = (value: EgoToggle) => {
   return typeof value === 'function' ? value() : value
 }
-export function EgoPlayer({cameraEnabled = true, children, enabled = true, fallbackPosition, input, onInput, onStep, onUpdate, pitch = 0, pointerLock = true, position = initialPosition, ref, requirePointerLock = true, userData, yaw = 0, ...options}: EgoPlayerProps) {
+export default function EgoPlayer({cameraEnabled = true, children, enabled = true, fallbackPosition, input, onDump, onInteract, zoomFactor = 2, onInput, onStep, onUpdate, pitch = 0, pointerLock = true, position = initialPosition, ref, requirePointerLock = true, userData, yaw = 0, ...options}: EgoPlayerProps) {
   const [defaultUserData] = useState(() => ({isPlayer: true}))
+  if (!Number.isFinite(zoomFactor) || zoomFactor < 1) {
+    throw new RangeError('ego-player: zoomFactor must be finite and at least 1.')
+  }
+  const actionKeys = useRef({
+    interact: false,
+    dump: false,
+  })
+  const [zoom] = useState(() => new EgoZoom)
   const bodyRef = useRef<RapierRigidBody>(null)
   const colliderRef = useRef<RapierCollider>(null)
   const motorRef = useRef<EgoMotor | null>(null)
@@ -57,6 +74,15 @@ export function EgoPlayer({cameraEnabled = true, children, enabled = true, fallb
   const pendingTeleport = useRef<{position: EgoPosition
     rotation?: EgoRotation} | null>(null)
   const camera = useThree(state => state.camera)
+  const scene = useThree(state => state.scene)
+  const diagnostics = useRef<EgoDiagnostics | null>(null)
+  useEffect(() => {
+    diagnostics.current = onDump ? new EgoDiagnostics(scene, camera) : null
+    return () => {
+      diagnostics.current = null
+    }
+  }, [scene, camera, onDump])
+  useEffect(() => () => zoom.reset(), [zoom, camera])
   const renderer = useThree(state => state.renderer)
   const {rapier, world} = useRapier()
   const resolved = resolveEgoOptions(options)
@@ -92,6 +118,7 @@ export function EgoPlayer({cameraEnabled = true, children, enabled = true, fallb
     camera.rotation.set(pitch, yaw, 0, 'YXZ')
   }, [camera, pitch, yaw])
   const applyTeleport = (destination: EgoPosition, rotation?: EgoRotation, writeCamera = true) => {
+    zoom.reset()
     const motor = motorRef.current!
     motor.teleport(destination, fallbackPosition)
     const eyeHeight = motor.crouching ? resolved.crouchEyeHeight : resolved.eyeHeight
@@ -116,6 +143,7 @@ export function EgoPlayer({cameraEnabled = true, children, enabled = true, fallb
     initialized.current = true
   }
   useImperativeHandle(ref, () => ({
+    releaseZoom: () => zoom.reset(),
     get body() {
       return bodyRef.current
     },
@@ -149,7 +177,7 @@ export function EgoPlayer({cameraEnabled = true, children, enabled = true, fallb
     }
     const keys = input()
     const active = readToggle(enabled) && (!requirePointerLock || renderer.domElement.ownerDocument.pointerLockElement === renderer.domElement)
-    if (active && onInput && (keys.forward || keys.backward || keys.left || keys.right || keys.jump || keys.crouch || keys.sprint)) {
+    if (active && onInput && (keys.forward || keys.backward || keys.left || keys.right || keys.jump || keys.crouch || keys.sprint || !keys.modifier && (keys.zoom || keys.interact && onInteract || keys.dump && onDump))) {
       onInput(keys)
     }
     motor.step(physicsWorld.timestep, keys, camera.quaternion, active)
@@ -172,6 +200,19 @@ export function EgoPlayer({cameraEnabled = true, children, enabled = true, fallb
     if (readToggle(cameraEnabled)) {
       const translation = motor.body.translation()
       camera.position.set(translation.x, translation.y + offset, translation.z)
+    }
+    const keys = input()
+    const active = readToggle(enabled) && !keys.modifier && (!requirePointerLock || renderer.domElement.ownerDocument.pointerLockElement === renderer.domElement)
+    zoom.update(camera, active && readToggle(cameraEnabled) && !!keys.zoom, zoomFactor)
+    if (active && keys.interact && !actionKeys.current.interact) {
+      onInteract?.()
+    }
+    if (active && keys.dump && !actionKeys.current.dump && onDump && diagnostics.current) {
+      onDump(diagnostics.current.capture(motor.getState(), keys))
+    }
+    actionKeys.current = {
+      interact: !!keys.interact,
+      dump: !!keys.dump,
     }
   })
   return <>

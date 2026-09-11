@@ -6,8 +6,8 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import {BoxGeometry, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {floorGlassThickness, roomFloorPlan, subtractFloorOpening} from '../../src/lib/gallery/floors.ts'
-import {lobby} from '../../src/lib/gallery/lobby.ts'
-import {insideGallery, rooms, roomVisit, walls} from '../../src/lib/gallery/walls.ts'
+import lobby from '../../src/lib/gallery/lobby.ts'
+import walls, {insideGallery, rooms, roomVisit} from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
 const room = rooms.find(value => value.id === 'lobby')!

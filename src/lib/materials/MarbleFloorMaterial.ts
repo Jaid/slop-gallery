@@ -2,10 +2,10 @@ import type {Texture} from 'three/webgpu'
 
 import {texture} from 'three/tsl'
 
-import {FloorMaterial} from './FloorMaterial.ts'
+import FloorMaterial from './FloorMaterial.ts'
 
 /** Polished, reflective marble in quality; honed stone in performance. */
-export class MarbleFloorMaterial extends FloorMaterial {
+export default class MarbleFloorMaterial extends FloorMaterial {
   constructor(map: Texture, reflections = true) {
     super(map, {
       color: '#e8dfd0',

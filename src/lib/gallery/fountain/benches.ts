@@ -1,6 +1,6 @@
 import type {Vec3} from '../types.ts'
 
-import {fountain} from './config.ts'
+import fountain from './config.ts'
 
 export const fountainBench = {
   width: 2.8,

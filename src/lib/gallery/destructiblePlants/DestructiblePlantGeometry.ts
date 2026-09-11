@@ -5,8 +5,8 @@ import type {BufferGeometry} from 'three/webgpu'
 import {Color, CylinderGeometry, Euler, Float32BufferAttribute, Matrix4, Quaternion, SphereGeometry, Vector3} from 'three/webgpu'
 
 import {mergeParts} from '../../geometry.ts'
-import {bladeGeometry} from '../plantDecorations/bladeGeometry.ts'
-import {DestructibleGeometry} from './base/DestructibleGeometry.ts'
+import bladeGeometry from '../plantDecorations/bladeGeometry.ts'
+import DestructibleGeometry from './base/DestructibleGeometry.ts'
 
 type LeafOptions = {
   angle: number
@@ -22,7 +22,7 @@ const up = new Vector3(0, 1, 0)
 const radial = (angle: number, radius: number, y: number): Vec3 => [Math.cos(angle) * radius, y, Math.sin(angle) * radius]
 
 /** Shared model data only; attachment state and rigid bodies belong to each mounted plant. */
-export class DestructiblePlantGeometry extends DestructibleGeometry {
+export default class DestructiblePlantGeometry extends DestructibleGeometry {
   readonly stems: BufferGeometry
   private readonly roots: Array<BufferGeometry> = []
 

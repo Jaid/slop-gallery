@@ -7,14 +7,21 @@ import {useEffect, useRef, useState} from 'react'
 import {Euler, Quaternion} from 'three/webgpu'
 
 import {insideLevel, levelFloorHeight, woodenFloor} from '#level/navigation.ts'
-import {SoundEngine} from '#src/lib/audio/SoundEngine.ts'
-import {cameraPose, galleryEvents, markControlled, useGallery} from '#src/lib/gallery.ts'
+import SoundEngine from '#src/lib/audio/SoundEngine.ts'
+import {cameraPose, galleryEvents, markControlled, narrate, useGallery} from '#src/lib/gallery.ts'
 import {playerSession, playerSpawn} from '#src/lib/gallery/PlayerSession.ts'
 import {playerTelemetry} from '#src/lib/telemetry/index.ts'
+import recordPlayerDump from '#src/lib/telemetry/recordPlayerDump.ts'
 
 const enabled = () => !cameraPose.focused && !useGallery.getState().panel
 const cameraEnabled = () => !cameraPose.focused
 const pointerLock = {selector: '#pointer-lock-managed-by-gallery'}
+const onInteract = () => {
+  const {active, held} = useGallery.getState()
+  if (active && !held) {
+    narrate(active)
+  }
+}
 const onStep = (state: EgoState) => {
   const {sound, room} = useGallery.getState()
   if (sound) {
@@ -34,6 +41,8 @@ export default function Player() {
   useEffect(() => {
     const read = () => player.current?.getState() ?? null
     playerTelemetry.read = read
+    const releaseZoom = () => player.current?.releaseZoom()
+    galleryEvents.addEventListener('release-zoom', releaseZoom)
     const teleport = (event: Event) => {
       const {position, rotation, feet} = (event as CustomEvent<{feet?: boolean
         position: [number, number, number]
@@ -49,6 +58,7 @@ export default function Player() {
     }
     galleryEvents.addEventListener('teleport', teleport)
     return () => {
+      galleryEvents.removeEventListener('release-zoom', releaseZoom)
       galleryEvents.removeEventListener('teleport', teleport)
       if (playerTelemetry.read === read) {
         playerTelemetry.read = null
@@ -89,5 +99,5 @@ export default function Player() {
       }
     }
   }
-  return <EgoPlayer ref={player} fallbackPosition={playerSpawn.position} position={initial.position} yaw={initial.yaw} pitch={initial.pitch} input={input} enabled={enabled} cameraEnabled={cameraEnabled} pointerLock={pointerLock} onInput={markControlled} onStep={onStep} onUpdate={onUpdate}/>
+  return <EgoPlayer ref={player} fallbackPosition={playerSpawn.position} position={initial.position} yaw={initial.yaw} pitch={initial.pitch} input={input} enabled={enabled} cameraEnabled={cameraEnabled} pointerLock={pointerLock} onDump={recordPlayerDump} onInteract={onInteract} onInput={markControlled} onStep={onStep} onUpdate={onUpdate}/>
 }

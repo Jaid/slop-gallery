@@ -16,7 +16,7 @@ function texture(pixels: Uint8Array, color = false) {
 }
 
 /** Small soil crumbs, grit and mineral flecks over a dark, matte substrate. */
-export class SoilTextures {
+export default class SoilTextures {
   readonly bumpMap: DataTexture
   readonly map: DataTexture
 

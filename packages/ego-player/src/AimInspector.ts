@@ -75,7 +75,7 @@ function visibleMaterial(material: Material) {
 }
 
 /** On-demand geometric picking, independent of pointer lock, the HUD and physics. */
-export class AimInspector {
+export default class AimInspector {
   private readonly center = new Vector2(0, 0)
   private readonly raycaster = new Raycaster
 

@@ -31,7 +31,7 @@ export function curveSegments(width: number, radius: number) {
 }
 
 /** A closed, rectangular-section circular beam; signed radius selects the bend direction. */
-export class CurvedBoxGeometry extends BoxGeometry {
+export default class CurvedBoxGeometry extends BoxGeometry {
   constructor(width: number, height: number, depth: number, radius: number) {
     if (![width, height, depth, radius].every(Number.isFinite) || Math.min(width, height, depth) <= 0 || Math.abs(radius) <= depth / 2 || width / Math.abs(radius) > Math.PI * 2) {
       throw new RangeError('A curved box needs positive dimensions, a radius outside its section and at most one revolution.')

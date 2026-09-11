@@ -3,8 +3,8 @@
 Composable metrics, logs, explicit traces and Three statistics. The core has no React runtime dependency, network destination, global instrumentation or timers until started. Optional hooks target Fiber 10’s phased scheduler and React 19.
 
 ```tsx
-import {Telemetry, OtlpHttpExporter} from 'telemethree'
-import {TelemetryProvider, useTelemetry, useThreeTelemetry} from 'telemethree/react'
+import Telemetry, {OtlpHttpExporter} from 'telemethree'
+import useThreeTelemetry, {TelemetryProvider, useTelemetry} from 'telemethree/react'
 
 const telemetry = new Telemetry({
   resource: {'service.name': 'my-game'},

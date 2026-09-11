@@ -1,14 +1,14 @@
 import {describe, expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
-import {EgoMotor} from 'ego-player/motor'
+import EgoMotor from 'ego-player/motor'
 import {computeMeshVolume} from 'three-bvh-csg'
 import {Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import {lowerGallery, oculusPlatform, oculusRamps, rampFloorHeight} from '../../src/lib/gallery/lowerGallery.ts'
-import {RampGeometry} from '../../src/lib/gallery/RampGeometry.ts'
-import {floorHeight, walls} from '../../src/lib/gallery/walls.ts'
+import lowerGallery, {oculusPlatform, oculusRamps, rampFloorHeight} from '../../src/lib/gallery/lowerGallery.ts'
+import RampGeometry from '../../src/lib/gallery/RampGeometry.ts'
+import walls, {floorHeight} from '../../src/lib/gallery/walls.ts'
 import {addOculusRailings} from './helpers/oculusRailings.ts'
 
 await RAPIER.init()

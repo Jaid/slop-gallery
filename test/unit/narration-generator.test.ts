@@ -2,7 +2,7 @@ import {afterEach, expect, spyOn, test} from 'bun:test'
 
 import ExternalGenerator from '../../src/lib/ai/ExternalGenerator.ts'
 import NarrationGenerator from '../../src/lib/ai/NarrationGenerator.ts'
-import {pcmWave} from '../../src/lib/audio/pcmWave.ts'
+import pcmWave from '../../src/lib/audio/pcmWave.ts'
 
 let fetchSpy: ReturnType<typeof spyOn<typeof globalThis, 'fetch'>> | undefined
 afterEach(() => fetchSpy?.mockRestore())

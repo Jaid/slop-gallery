@@ -3,7 +3,7 @@ import type {Node} from 'three/webgpu'
 import {negateOnBackSide, normalViewGeometry, positionView} from 'three/tsl'
 
 /** Surface-gradient bump mapping for arbitrary procedural heights, not UV texture samples. */
-export function proceduralNormal(height: Node<'float'>, strength: number) {
+export default function proceduralNormal(height: Node<'float'>, strength: number) {
   const dx = positionView.dFdx()
   const dy = positionView.dFdy()
   const normal = normalViewGeometry

@@ -1,7 +1,7 @@
 import {useEffect} from 'react'
 
 import {galleryEvents, handleGalleryKey, importDroppedFiles, isTextInput, notify, useGallery} from './gallery.ts'
-import {ImageImporter} from './gallery/ImageImporter.ts'
+import ImageImporter from './gallery/ImageImporter.ts'
 
 export default function useGalleryCommands() {
   useEffect(() => {

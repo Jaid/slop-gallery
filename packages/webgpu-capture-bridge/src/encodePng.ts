@@ -1,6 +1,6 @@
 import type {FrameEncoder} from './types.ts'
 
-export const encodePng: FrameEncoder = ({pixels, width, height}) => {
+const encodePng: FrameEncoder = ({pixels, width, height}) => {
   if (typeof document === 'undefined') {
     throw new TypeError('PNG capture encoding requires a document. Provide an encode function outside the browser.')
   }
@@ -18,3 +18,5 @@ export const encodePng: FrameEncoder = ({pixels, width, height}) => {
   }
   return dataUrl
 }
+
+export default encodePng

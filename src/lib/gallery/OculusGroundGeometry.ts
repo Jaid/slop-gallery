@@ -1,12 +1,12 @@
 import {ADDITION, Brush, Evaluator, SUBTRACTION} from 'three-bvh-csg'
 import {BoxGeometry, BufferGeometry, ExtrudeGeometry, Float32BufferAttribute, MeshBasicNodeMaterial, Shape} from 'three/webgpu'
 
-import {lowerGallery, oculusPlatform, oculusRamps} from './lowerGallery.ts'
-import {oculusTower as tower, towerArch, towerPlatformOutline, towerRamp, towerRampGradient, towerRampHalfWidth, towerRampHeight, towerRampSections} from './oculusTower.ts'
-import {RampGeometry} from './RampGeometry.ts'
+import lowerGallery, {oculusPlatform, oculusRamps} from './lowerGallery.ts'
+import tower, {towerArch, towerPlatformOutline, towerRamp, towerRampGradient, towerRampHalfWidth, towerRampHeight, towerRampSections} from './oculusTower.ts'
+import RampGeometry from './RampGeometry.ts'
 
 // One architectural solid supplies both the visible surface and collision.
-export class OculusGroundGeometry extends BufferGeometry {
+export default class OculusGroundGeometry extends BufferGeometry {
   constructor() {
     super()
     const evaluator = new Evaluator

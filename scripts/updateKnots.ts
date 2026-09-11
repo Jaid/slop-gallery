@@ -1,4 +1,5 @@
-import type {KnotPreviewRenderer, PreviewCandidate} from './lib/knots/KnotPreviewRenderer.ts'
+import type KnotPreviewRenderer from './lib/knots/KnotPreviewRenderer.ts'
+import type {PreviewCandidate} from './lib/knots/KnotPreviewRenderer.ts'
 import type {Browser} from 'puppeteer-core'
 
 import {dirname, join, resolve} from 'node:path'
@@ -12,7 +13,7 @@ import {encodeJxl} from './lib/images/encodeJxl.ts'
 
 const root = resolve(import.meta.dir, '..')
 
-export async function updateKnots({candidates = [], browserURL = 'http://127.0.0.1:9223', pageURL = 'https://vite.tower.lan'}: {
+export default async function updateKnots({candidates = [], browserURL = 'http://127.0.0.1:9223', pageURL = 'https://vite.tower.lan'}: {
   browserURL?: string
   candidates?: ReadonlyArray<string>
   pageURL?: string
@@ -55,7 +56,7 @@ export async function updateKnots({candidates = [], browserURL = 'http://127.0.0
     // Vite resolves the same Three/TSL modules as the game. No navigation, new tabs or viewport changes.
     const handle = await page.evaluateHandle(async () => {
       const path = `/scripts/lib/knots/KnotPreviewRenderer.ts?t=${Date.now()}`
-      const {KnotPreviewRenderer} = await import(/* @vite-ignore */ path) as typeof import('./lib/knots/KnotPreviewRenderer.ts')
+      const {default: KnotPreviewRenderer} = await import(/* @vite-ignore */ path) as typeof import('./lib/knots/KnotPreviewRenderer.ts')
       const renderer = new KnotPreviewRenderer
       try {
         await renderer.init()

@@ -3,12 +3,12 @@ import type {BufferGeometry} from 'three/webgpu'
 import {Color, ExtrudeGeometry, Float32BufferAttribute, BufferGeometry as Geometry, IcosahedronGeometry, Path, Shape} from 'three/webgpu'
 
 import {mergeParts} from '../../geometry.ts'
-import {lowerGallery} from '../lowerGallery.ts'
+import lowerGallery from '../lowerGallery.ts'
 import {moonfallCrater} from './config.ts'
 import {craterTerrain} from './CraterTerrain.ts'
 
 /** A true circular opening, rough impact bowl and scattered angular ejecta. */
-export class CraterGeometry {
+export default class CraterGeometry {
   readonly floor: BufferGeometry
   readonly rocks: BufferGeometry
   readonly terrain: BufferGeometry

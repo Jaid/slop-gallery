@@ -1,6 +1,6 @@
 import {BufferGeometry, Color, Float32BufferAttribute, Matrix4, Quaternion, SphereGeometry, Vector3} from 'three/webgpu'
 
-import {sampleGrid} from './geometry.ts'
+import sampleGrid from './geometry.ts'
 
 export type Blade = {
   at: Point
@@ -16,7 +16,7 @@ type Point = [number, number, number]
 type BladeStyle = 'fiddle' | 'gold' | 'lance' | 'oval' | 'silver' | 'split' | 'succulent'
 const up = new Vector3(0, 1, 0)
 
-export function bladeGeometry({at, direction, length, width, bend = 0.12, roll = 0, color = '#37623b', style = 'oval'}: Blade) {
+export default function bladeGeometry({at, direction, length, width, bend = 0.12, roll = 0, color = '#37623b', style = 'oval'}: Blade) {
   let rows = 24
   if (style === 'split') {
     rows = 48

@@ -5,7 +5,7 @@ Slop Gallery instrumentation layered on `telemethree` and `telemethree-ego`, wit
 The browser-only `index.ts` owns the configured `telemetry` singleton and the controller’s `playerTelemetry` source. Import the classes directly when constructing an isolated client, such as in unit tests.
 
 ```ts
-import {SlopGalleryTelemetry} from '#src/lib/telemetry/SlopGalleryTelemetry.ts'
+import SlopGalleryTelemetry from '#src/lib/telemetry/SlopGalleryTelemetry.ts'
 
 const telemetry = new SlopGalleryTelemetry({endpoint: '/api/telemetry'})
 const disconnect = telemetry.connect(galleryStore, galleryEvents)
@@ -22,7 +22,7 @@ const ego = telemetry.createEgo({read: readPlayerAndAim})
 - Traces: session/startup/gameplay parents, state-change events, real persistence duration/outcome, label generation and local/AI fusion, plus sparse renderer hitch diagnostics.
 - Ego measurements use the controller’s physical feet position and collision-corrected velocity, plus the existing `AimInspector` semantics. The camera provides aim, not locomotion. Raycasting runs once per second, not every rendered frame.
 
-Only counts, flags, state names and numeric player/aim measurements are selected. Keys, artwork sources, titles, descriptions, prompts, event payloads and exception messages are not serialized. A 15-character `compose-id` session ID is attached as `service.instance.id` to distinguish concurrent clients and counter lifetimes. New sessions create new series; retention/cardinality policy belongs to the deployment.
+Automatic telemetry selects only counts, flags, state names and numeric player/aim measurements. Explicit X-key dumps additionally include scene object names and scalar metadata as described below. Those automatic samples do not serialize keys, artwork sources, titles, descriptions, prompts, event payloads or exception messages. A 15-character `compose-id` session ID is attached as `service.instance.id` to distinguish concurrent clients and counter lifetimes. New sessions create new series; retention/cardinality policy belongs to the deployment.
 
 ## Existing NAS setup – unchanged
 
@@ -38,11 +38,11 @@ The server-only `vite.ts` module exports `victoriaTelemetry()` and `createVictor
 
 The relay avoids browser CORS/private-network access, omits cookies and authorization forwarding, rejects cross-origin browser requests and bounds request bodies to 262 kb. It only accepts exact routes, POST and the correct content type. Destinations are server-controlled. Network failures return 502 for retry. Keep this development relay bound to loopback; it is not an authenticated public ingestion gateway.
 
-The Vite config supports server-only `SLOP_VICTORIA_METRICS_URL`, `SLOP_VICTORIA_LOGS_URL` and `SLOP_VICTORIA_TRACES_URL`, each a full upstream URL. No NAS configuration changes are needed.
+The Vite config supports server-only `TELEMETRY_INGESTION_METRICS_ENDPOINT`, `TELEMETRY_INGESTION_LOGS_ENDPOINT` and `TELEMETRY_INGESTION_TRACES_ENDPOINT`, each a full upstream URL. No NAS configuration changes are needed.
 
-The app enables telemetry in Vite development by default. `?telemetry=false` disables it; `?test=true` also disables it. Production builds are off unless `VITE_TELEMETRY_ENDPOINT` is set to a relay prefix (for example `/api/telemetry`). Static hosting must supply that relay separately; the Vite plugin also supports local preview. `?ai=false` disables AI, not telemetry; use both flags for a fully local session.
+The app enables telemetry in Vite development by default. `?telemetry=false` disables it; `?test=true` also disables it. Production builds are off unless `TELEMETRY_INGESTION_RELAY_ENDPOINT` is set to a relay prefix (for example `/api/telemetry`). Static hosting must supply that relay separately; the Vite plugin also supports local preview. `?ai=false` disables AI, not telemetry; use both flags for a fully local session.
 
-With `?development=true`, inspect `window['slop.gallery'].getTelemetry()` for the session ID and per-signal pending/sent/dropped/retry/error status. This is read-only. Delivery is bounded and best-effort; upstream acceptance is not a durable end-to-end acknowledgment.
+Invoke the native WebMCP `get_telemetry` tool for the session ID and per-signal pending/sent/dropped/retry/error status. This is read-only. Delivery is bounded and best-effort; upstream acceptance is not a durable end-to-end acknowledgment.
 
 ## Queries
 
@@ -74,7 +74,7 @@ The gallery renderer opts into timestamp queries only when telemetry is enabled.
 
 `gallery.session` parents startup and pointer-lock gameplay intervals. Startup ends on readiness; unlock ends gameplay. State changes are bounded span events with the existing correlated logs/counters, not independent traces. Save/AI/merge operations inherit the active context at their start and retain it across async boundaries. Parent spans export when ended, so an ongoing session/gameplay parent may not yet be visible. Pagehide closes the attachment and attempts delivery; pageshow reconnects after a back/forward-cache restore. Event overflow is explicit; logs continue independently.
 
-The app flushes every second to drain the richer reports without growing an online backlog; statistics still report every five seconds. Delivery remains bounded and best-effort. Use `getTelemetry()` to check dropped records or failed delivery before interpreting missing GPU/trace data.
+The app flushes every second to drain the richer reports without growing an online backlog; statistics still report every five seconds. Delivery remains bounded and best-effort. Use `get_telemetry` to check dropped records or failed delivery before interpreting missing GPU/trace data.
 
 ### Manual comparison
 
@@ -114,3 +114,13 @@ Hitch spans in VictoriaTraces:
 ```
 
 Use the returned trace ID for the gameplay/startup/operation context. Detailed pass UIDs and script URLs exist only in traces, never metric labels. GPU samples are sparse; missing GPU time is unknown, not evidence of a CPU-only stall.
+
+## Player dumps and WebMCP
+
+Press X while playing to capture a detached diagnostic snapshot. The app prints it with `console.dir` and emits an `ego.dump` log, followed by one `ego.dump.hit` log per visible mesh/instance hit. Join records by `dump.id`; `hit.index` preserves near-to-far order. The summary includes the closest hit, expected hit count, player state, camera matrices/FOV, timestamp, level, room and session ID. Per-hit records keep long sightlines from overflowing a single telemetry record. Normal queue/delivery limits still apply; compare the expected hit count when reconstructing a dump. No dump is sent when telemetry is disabled.
+
+Query VictoriaLogs with `service.name:=gallery event.name:=ego.dump _time:1h | sort by(_time desc)` (use `knottingham` for that level). World-space `aim.hit.point` and `aim.hit.normal` in the JSON message provide placement coordinates. Use `dump.id` to retrieve all hit records for a snapshot.
+
+Native WebMCP exposes read-only `get_aim` and `get_telemetry` through `document.modelContext`. The tools do not move the player, acquire focus or enable telemetry. Their registrations are removed on unmount/HMR using AbortSignals. There is no replacement window namespace or compatibility API.
+
+Pause-menu events use `telemethree-pause-menu`: discrete `pause_menu.attached`, `pause_menu.changed` and `pause_menu.detached` logs include the current/previous stage and lock state. They share the app’s Victoria exporter and session identity.

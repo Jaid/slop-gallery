@@ -2,8 +2,8 @@ import {describe, expect, test} from 'bun:test'
 
 import {DataTexture, Vector3} from 'three/webgpu'
 
-import {previewBorderGeometry, previewOpacity, PreviewVisual} from '../../src/components/levels/gallery/PlacementPreview/PreviewVisual.ts'
-import {portraitLabel, portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
+import PreviewVisual, {previewBorderGeometry, previewOpacity} from '../../src/components/levels/gallery/PlacementPreview/PreviewVisual.ts'
+import portraitLabel, {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
 
 describe('placement preview', () => {
   for (const [width, height] of [[2.62, 2.62], [4.22, 1.22], [0.52, 3.22]] as const) {

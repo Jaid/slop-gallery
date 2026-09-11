@@ -84,7 +84,7 @@ export async function compositeImages(first: Blob | string, second: Blob | strin
   }
 }
 
-export class ImageImporter {
+export default class ImageImporter {
   private disposed = false
   private queue = Promise.resolve()
 

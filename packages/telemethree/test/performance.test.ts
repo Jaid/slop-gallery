@@ -7,10 +7,10 @@ import {expect, test} from 'bun:test'
 import Info from 'three/src/renderers/common/Info.js'
 import {InspectorBase, PerspectiveCamera, RenderTarget, Scene, Vector2} from 'three/webgpu'
 
-import {Telemetry, ThreeStatistics} from '../src/main.ts'
+import Telemetry, {ThreeStatistics} from '../src/main.ts'
 import {encodeOtlp} from '../src/otlp.ts'
-import {ThreeDiagnostics} from '../src/ThreeDiagnostics.ts'
-import {ThreeInspector} from '../src/ThreeInspector.ts'
+import ThreeDiagnostics from '../src/ThreeDiagnostics.ts'
+import ThreeInspector from '../src/ThreeInspector.ts'
 
 function fixture() {
   let now = performance.timeOrigin + 1000
@@ -61,7 +61,7 @@ test('all workload distributions share frame samples, room boundaries and exact 
     stats.beginFrame()
     renderer.info.render.frameCalls = passes!
     renderer.info.render.drawCalls = draws!
-    stats.endFrame(duration! / 1000)
+    stats.endFrame(duration / 1000)
   }
   room = 'lobby'
   stats.beginFrame()
@@ -161,8 +161,8 @@ test('span events have bounded bytes/count, historical times, snapshots and OTLP
     parentSpanId: parent.spanId,
     droppedEventsCount: 38,
   })
-  expect(traces()[0]!.events).toHaveLength(64)
-  expect(traces()[0]!.events![0]).toMatchObject({
+  expect(traces()[0].events).toHaveLength(64)
+  expect(traces()[0].events![0]).toMatchObject({
     time: 1240,
     attributes: {room: 'sienna'},
   })
@@ -179,7 +179,7 @@ test('span events have bounded bytes/count, historical times, snapshots and OTLP
   }
   oversized.end()
   await telemetry.flush()
-  expect(traces()[1]!.events!.length).toBeLessThan(10)
+  expect(traces()[1].events!.length).toBeLessThan(10)
   expect(telemetry.status().traces.dropped).toBe(0)
 })
 function gpuFixture() {
@@ -319,7 +319,7 @@ test('hitches retain real stall duration, resource deltas and sparse severity-es
       'ego.speed': 2,
     },
   })
-  expect(traces()[0]!.events?.find(event => event.name === 'three.render.pass')).toMatchObject({
+  expect(traces()[0].events?.find(event => event.name === 'three.render.pass')).toMatchObject({
     attributes: {
       kind: 'main',
       'cpu.inclusive_ms': 100,
@@ -400,7 +400,7 @@ test('long animation frames join only overlapping hitches and sanitize script UR
     } as unknown as PerformanceObserverEntryList, {} as PerformanceObserver)
     stop()
     await telemetry.flush()
-    const events = traces()[0]!.events!
+    const events = traces()[0].events!
     expect(events.filter(event => event.name === 'browser.long_animation_frame')).toHaveLength(1)
     expect(events.find(event => event.name === 'browser.long_animation_frame.script')?.attributes['source.url']).toBe('https://example.test/src/render.ts')
     expect(JSON.stringify(traces())).not.toContain('secret')

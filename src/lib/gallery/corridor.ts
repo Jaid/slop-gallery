@@ -1,10 +1,10 @@
 import type {Vec3} from './types.ts'
 
-import {lodge, lodgeWindowCutout} from './lodge.ts'
-import {Passage} from './passages/Passage.ts'
-import {StairFlight, stairHeadroom} from './stairs/StairFlight.ts'
+import lodge, {lodgeWindowCutout} from './lodge.ts'
+import Passage from './passages/Passage.ts'
+import StairFlight, {stairHeadroom} from './stairs/StairFlight.ts'
 
-export const corridor = {
+const corridor = {
   center: [lodge.approachX, (lodge.returnZ + lodge.siennaZ) / 2],
   size: [lodge.timberWidth, lodge.siennaZ - lodge.returnZ],
   floorY: lodge.floorY,
@@ -28,3 +28,5 @@ export function insideCorridor(position: Vec3) {
   const floor = corridorStairFloor(position[0], position[2])
   return corridorPassage.contains(position) || floor !== undefined && position[1] >= floor - 1 && position[1] <= floor + stairHeadroom
 }
+
+export default corridor

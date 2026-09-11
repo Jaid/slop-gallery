@@ -1,11 +1,10 @@
 import {wallOpeningTrim} from './architectureDimensions.ts'
-import {lowerGallery} from './lowerGallery.ts'
-import {oculusTower} from './oculusTower.ts'
+import lowerGallery from './lowerGallery.ts'
+import oculusTower from './oculusTower.ts'
 
 const topY = oculusTower.floorY + oculusTower.height
 const doorwayTopY = lowerGallery.floorY + lowerGallery.tunnel.height + wallOpeningTrim
-
-export const oculusBalcony = {
+const oculusBalcony = {
   x: lowerGallery.tunnel.x,
   z: lowerGallery.tunnel.northZ,
   topY,
@@ -21,3 +20,5 @@ export function balconyFloorHeight(x: number, z: number) {
     return oculusBalcony.topY
   }
 }
+
+export default oculusBalcony

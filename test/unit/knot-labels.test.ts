@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'bun:test'
 
-import {drawLabel, labelHeight, labelWidth, modelLineLayout} from '../../src/components/levels/knottingham/KnotLabels/drawLabel.ts'
+import drawLabel, {labelHeight, labelWidth, modelLineLayout} from '../../src/components/levels/knottingham/KnotLabels/drawLabel.ts'
 import {knotBays, knotExhibition} from '../../src/lib/knots/exhibition.ts'
 import {knotsByNumber} from '../../src/lib/knots/index.ts'
 

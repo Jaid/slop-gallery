@@ -5,7 +5,7 @@ import {useEffect, useMemo} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import {fountainBench, fountainBenches} from '#src/lib/gallery/fountain/benches.ts'
-import {SlattedBenchGeometry} from '#src/lib/gallery/fountain/SlattedBenchGeometry.ts'
+import SlattedBenchGeometry from '#src/lib/gallery/fountain/SlattedBenchGeometry.ts'
 
 export default function FountainBenches({wood}: {wood: Texture}) {
   const geometry = useMemo(() => new SlattedBenchGeometry, [])

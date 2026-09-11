@@ -3,14 +3,14 @@ import type {Attributes, Span, TraceContext} from 'telemethree'
 import type {EgoTelemetryOptions} from 'telemethree-ego'
 
 import composeId from 'compose-id'
-import {Telemetry} from 'telemethree'
-import {EgoTelemetry} from 'telemethree-ego'
+import Telemetry from 'telemethree'
+import EgoTelemetry from 'telemethree-ego'
 
 import {rooms} from '../gallery/walls.ts'
 import {galleryLevel} from '../level.ts'
-import {VictoriaExporter} from './VictoriaExporter.ts'
+import VictoriaExporter from './VictoriaExporter.ts'
 
-export class SlopGalleryTelemetry extends Telemetry {
+export default class SlopGalleryTelemetry extends Telemetry {
   readonly sessionId: string
   private gameplay: Span | undefined
   private readonly sampleIntervalMs: number

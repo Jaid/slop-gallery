@@ -4,7 +4,7 @@ import NarrationGenerator from '../ai/NarrationGenerator.ts'
 import {notify} from '../gallery/actions.ts'
 import {useGallery} from '../gallery/store.ts'
 import {narrationMeter} from './NarrationMeter.ts'
-import {SoundEngine} from './SoundEngine.ts'
+import SoundEngine from './SoundEngine.ts'
 
 export const intro = {
   id: '__intro',
@@ -12,7 +12,7 @@ export const intro = {
   description: 'Where the art is questionable and the insurance is imaginary. Take a walk, touch the paintings and bring a little of your own chaos. The curator has already left.',
 }
 
-export class Narrator {
+export default class Narrator {
   private audio: HTMLAudioElement | undefined
   private cache = new Map<string, Blob>
   private controller = new AbortController

@@ -1,7 +1,7 @@
 import {SimplexNoise} from 'three/addons/math/SimplexNoise.js'
 import {RepeatWrapping, SRGBColorSpace} from 'three/webgpu'
 
-import {canvasTexture} from '#src/lib/texture.ts'
+import canvasTexture from '#src/lib/texture.ts'
 
 export function surfaceTexture(kind: 'plaster' | 'stone' | 'wood') {
   const c = document.createElement('canvas')

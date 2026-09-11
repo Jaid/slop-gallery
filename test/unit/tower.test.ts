@@ -1,13 +1,13 @@
 import {describe, expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
-import {EgoMotor} from 'ego-player/motor'
+import EgoMotor from 'ego-player/motor'
 import {Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry} from '../../src/lib/gallery/architecture.ts'
-import {lowerGallery, oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
-import {OculusGroundGeometry} from '../../src/lib/gallery/OculusGroundGeometry.ts'
-import {towerRamp as ramp, oculusTower as tower, towerArch, towerFloorHeight, towerPlatformOutline, towerRampGradient, towerRampHalfWidth, towerRampHeight} from '../../src/lib/gallery/oculusTower.ts'
+import lowerGallery, {oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
+import OculusGroundGeometry from '../../src/lib/gallery/OculusGroundGeometry.ts'
+import tower, {towerRamp as ramp, towerArch, towerFloorHeight, towerPlatformOutline, towerRampGradient, towerRampHalfWidth, towerRampHeight} from '../../src/lib/gallery/oculusTower.ts'
 import {floorHeight} from '../../src/lib/gallery/walls.ts'
 import {addOculusRailings} from './helpers/oculusRailings.ts'
 

@@ -3,13 +3,13 @@ import type {BufferGeometry} from 'three/webgpu'
 import {Vector3} from 'three/webgpu'
 
 import {plants} from '../plantDecorations/catalog.ts'
-import {PlantGeometry} from '../plantDecorations/PlantGeometry.ts'
-import {DestructibleGeometry} from './base/DestructibleGeometry.ts'
+import PlantGeometry from '../plantDecorations/PlantGeometry.ts'
+import DestructibleGeometry from './base/DestructibleGeometry.ts'
 
 export type DestructibleCatalogKind = 'calathea' | 'snake'
 
 /** Split the existing recipes without changing a single visible triangle or its shading. */
-export class CatalogPlantGeometry extends DestructibleGeometry {
+export default class CatalogPlantGeometry extends DestructibleGeometry {
   override readonly foliageMaterial = 'foliage' as const
   override readonly removableRoot = true
   readonly stems: BufferGeometry

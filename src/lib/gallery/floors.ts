@@ -1,6 +1,6 @@
 import type {rooms} from './walls.ts'
 
-import {lobby} from './lobby.ts'
+import lobby from './lobby.ts'
 
 export type FloorRectangle = {
   center: readonly [number, number]

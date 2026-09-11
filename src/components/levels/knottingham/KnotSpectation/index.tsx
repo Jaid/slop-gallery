@@ -4,13 +4,13 @@ import {PointerLockControls} from 'three/addons/controls/PointerLockControls.js'
 import {PerspectiveCamera, Vector3} from 'three/webgpu'
 
 import {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
-import {playAnnouncement} from '#src/lib/audio/playAnnouncement.ts'
-import {OrbitInspection} from '#src/lib/camera/OrbitInspection.ts'
+import playAnnouncement from '#src/lib/audio/playAnnouncement.ts'
+import OrbitInspection from '#src/lib/camera/OrbitInspection.ts'
 import {cameraPose, galleryEvents, isTextInput, markControlled, notify, stopNarration, useGallery} from '#src/lib/gallery.ts'
 import {createKnotGeometry} from '#src/lib/gallery/sculptures.ts'
-import {knotAnnouncementUrl} from '#src/lib/knots/announcementAssets.ts'
+import knotAnnouncementUrl from '#src/lib/knots/announcementAssets.ts'
 import {knotExhibition} from '#src/lib/knots/exhibition.ts'
-import {KnotAnnouncer} from '#src/lib/knots/KnotAnnouncer.ts'
+import KnotAnnouncer from '#src/lib/knots/KnotAnnouncer.ts'
 
 const exhibits = new Map(knotExhibition.map(item => [`prop-knot-${item.id}`, item]))
 const announcedCreators = new Set<string>
@@ -72,15 +72,15 @@ export default function KnotSpectation() {
       }
       narrationId = undefined
     }
-    const announce = (id: string) => {
+    const announce = (id: string, repeat = false) => {
       const item = exhibits.get(id)
-      if (!item || !useGallery.getState().sound || announcer.hasAnnounced(item)) {
+      if (!item || !useGallery.getState().sound || !repeat && announcer.hasAnnounced(item)) {
         return
       }
       stopNarration()
       const version = ++narrationVersion
       narrationId = id
-      void announcer.announce(item).catch(error => {
+      void announcer.announce(item, repeat).catch(error => {
         if (version === narrationVersion) {
           notify(error instanceof Error ? error.message : 'The announcement could not be played.')
         }
@@ -142,6 +142,7 @@ export default function KnotSpectation() {
         return
       }
       const enabled = controls.enabled
+      galleryEvents.dispatchEvent(new Event('release-zoom'))
       controls.enabled = false
       session.current = {
         id: state.active,
@@ -169,7 +170,7 @@ export default function KnotSpectation() {
       finish(false)
       stopAnnouncement()
     }
-    const narrate = (event: Event) => announce((event as CustomEvent<string>).detail)
+    const narrate = (event: Event) => announce((event as CustomEvent<string>).detail, true)
     const unsubscribe = useGallery.subscribe((state, previous) => {
       if (state.panel || !state.locked) {
         release()

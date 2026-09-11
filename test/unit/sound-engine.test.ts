@@ -1,6 +1,6 @@
 import {afterEach, expect, mock, test} from 'bun:test'
 
-import {SoundEngine} from '../../src/lib/audio/SoundEngine.ts'
+import SoundEngine from '../../src/lib/audio/SoundEngine.ts'
 
 const originalContext = Object.getOwnPropertyDescriptor(globalThis, 'AudioContext')
 afterEach(() => {

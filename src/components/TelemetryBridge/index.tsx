@@ -1,17 +1,23 @@
 import type {Attributes} from 'telemethree'
 
 import {useThree} from '@react-three/fiber/webgpu'
+import {AimInspector} from 'ego-player'
 import {useMemo} from 'react'
-import {useEgoTelemetry} from 'telemethree-ego/react'
-import {useThreeTelemetry} from 'telemethree/react'
-import {useGraphicsQuality} from 'use-graphics-quality'
+import useEgoTelemetry from 'telemethree-ego/react'
+import usePauseMenuTelemetry from 'telemethree-pause-menu/react'
+import useThreeTelemetry from 'telemethree/react'
+import useGraphicsQuality from 'use-graphics-quality'
 
-import {AimInspector} from '#src/lib/development/AimInspector.ts'
 import {useGallery} from '#src/lib/gallery.ts'
+import pauseMenu from '#src/lib/pauseMenu.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsQuality.ts'
 import {playerTelemetry, telemetry} from '#src/lib/telemetry/index.ts'
 
 function Collectors() {
+  usePauseMenuTelemetry({
+    menu: pauseMenu,
+    telemetry: telemetry!,
+  })
   const scene = useThree(state => state.scene)
   const camera = useThree(state => state.camera)
   const inspector = useMemo(() => new AimInspector(scene, camera), [scene, camera])

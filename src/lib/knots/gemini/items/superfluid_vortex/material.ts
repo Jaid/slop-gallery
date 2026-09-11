@@ -4,7 +4,7 @@ import {cameraPosition, color, modelWorldMatrixInverse, mx_noise_float, normalVi
 
 import {liquidNormal, opticalLine} from '#src/lib/knots/shared.ts'
 
-import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import KnotMaterial from '../../../base/KnotMaterial.ts'
 import knotData from './data.ts'
 
 export default class SuperfluidVortexMaterial extends KnotMaterial {

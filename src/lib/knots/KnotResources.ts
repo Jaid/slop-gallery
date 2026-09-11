@@ -4,9 +4,9 @@ import type {BufferGeometry, MeshPhysicalNodeMaterial} from 'three/webgpu'
 import {Vector3} from 'three/webgpu'
 
 import {createKnotGeometry} from '../gallery/sculptures.ts'
-import {StudioEnvironment} from '../materials/StudioEnvironment.ts'
+import StudioEnvironment from '../materials/StudioEnvironment.ts'
 
-export class KnotResources {
+export default class KnotResources {
   readonly environment = new StudioEnvironment
   readonly items: Array<{colliderArgs: [number, number, number]
     colliderPosition: [number, number, number]

@@ -1,11 +1,11 @@
 import {beforeEach, describe, expect, test} from 'bun:test'
 
-import {initialPortraits} from '../../src/lib/gallery/collection.ts'
+import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
-import {containedRect, ImageImporter, imageSize} from '../../src/lib/gallery/ImageImporter.ts'
-import {portraitLabel, portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
+import ImageImporter, {containedRect, imageSize} from '../../src/lib/gallery/ImageImporter.ts'
+import portraitLabel, {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
 import {createDocument, maximumPortraits, redo, restoreDocument, undo, useGallery} from '../../src/lib/gallery/store.ts'
-import {findPlacement, galleryBounds, insideGallery, placementIssue, roomAt, rooms, roomVisit, wallCoordinates, wallPosition, walls} from '../../src/lib/gallery/walls.ts'
+import walls, {findPlacement, galleryBounds, insideGallery, placementIssue, roomAt, rooms, roomVisit, wallCoordinates, wallPosition} from '../../src/lib/gallery/walls.ts'
 
 const original = {
   ...createDocument(),

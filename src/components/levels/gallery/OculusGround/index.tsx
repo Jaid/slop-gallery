@@ -4,7 +4,7 @@ import {RigidBody, TrimeshCollider} from '@react-three/rapier'
 import {useEffect, useMemo} from 'react'
 
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
-import {OculusGroundGeometry} from '#src/lib/gallery/OculusGroundGeometry.ts'
+import OculusGroundGeometry from '#src/lib/gallery/OculusGroundGeometry.ts'
 
 export default function OculusGround({material}: {material: Material}) {
   const geometry = useMemo(() => new OculusGroundGeometry, [])

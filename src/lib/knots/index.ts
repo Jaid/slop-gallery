@@ -6,7 +6,7 @@ import * as glm from './glm/index.ts'
 import * as grok from './grok/index.ts'
 import * as hunyuan from './hunyuan/index.ts'
 import * as kimi from './kimi/index.ts'
-import {indexKnots, KnotCandidate} from './KnotCandidate.ts'
+import KnotCandidate, {indexKnots} from './KnotCandidate.ts'
 import * as muse from './muse/index.ts'
 import * as qwen from './qwen/index.ts'
 import * as sol from './sol/index.ts'
@@ -17,5 +17,5 @@ export const knotCandidates = candidates.map(({data, ...items}) => new KnotCandi
 export const knotsByNumber = indexKnots(knotCandidates)
 export const knots = [...knotsByNumber.values()].sort((a, b) => a.number - b.number)
 
-export {defaultKnotDisplayLimit, KnotCandidate} from './KnotCandidate.ts'
+export {defaultKnotDisplayLimit, default as KnotCandidate} from './KnotCandidate.ts'
 export type {KnotAuthor, KnotCandidateData, KnotData, KnotEntry, KnotMaterialConstructor} from './types.ts'

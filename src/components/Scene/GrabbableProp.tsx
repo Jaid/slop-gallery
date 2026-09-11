@@ -9,7 +9,7 @@ import {RigidBody, useRapier} from '@react-three/rapier'
 import {useEffect, useRef} from 'react'
 
 import {cameraPose, notify, useGallery} from '#src/lib/gallery.ts'
-import {GrabbableBody} from '#src/lib/physics/GrabbableBody.ts'
+import GrabbableBody from '#src/lib/physics/GrabbableBody.ts'
 
 export type PropHandle = {
   body: RapierRigidBody

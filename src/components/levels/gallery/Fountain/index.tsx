@@ -1,15 +1,15 @@
 import {RigidBody} from '@react-three/rapier'
 import {useEffect, useMemo} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
-import {useGraphicsQuality} from 'use-graphics-quality'
+import useGraphicsQuality from 'use-graphics-quality'
 
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
-import {fountain} from '#src/lib/gallery/fountain/config.ts'
-import {FountainGeometry} from '#src/lib/gallery/fountain/FountainGeometry.ts'
-import {FountainSpray} from '#src/lib/gallery/fountain/FountainSpray.ts'
-import {FountainWaterMaterial} from '#src/lib/materials/FountainWaterMaterial.ts'
-import {LimestoneMaterial} from '#src/lib/materials/LimestoneMaterial.ts'
+import fountain from '#src/lib/gallery/fountain/config.ts'
+import FountainGeometry from '#src/lib/gallery/fountain/FountainGeometry.ts'
+import FountainSpray from '#src/lib/gallery/fountain/FountainSpray.ts'
+import FountainWaterMaterial from '#src/lib/materials/FountainWaterMaterial.ts'
+import LimestoneMaterial from '#src/lib/materials/LimestoneMaterial.ts'
 
 export default function Fountain() {
   const isQuality = useGraphicsQuality()

@@ -2,7 +2,7 @@ import {bumpMap, color, float, mix, mx_noise_float, normalWorld, positionWorld} 
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 /** Meter-scaled, staggered ashlar with recessed joints and chipped mineral grain. */
-export class CastleStoneMaterial extends MeshStandardNodeMaterial {
+export default class CastleStoneMaterial extends MeshStandardNodeMaterial {
   constructor() {
     super({
       roughness: 0.96,

@@ -1,7 +1,7 @@
 // Boost procedural effects by 12 dB without changing narration or individual envelopes.
 const effectsGain = 0.6 * 10 ** (12 / 20)
 
-export class SoundEngine {
+export default class SoundEngine {
   private static instance: SoundEngine | undefined
   static existing() {
     return this.instance

@@ -6,9 +6,9 @@ import {Object3D} from 'three/webgpu'
 
 import MoonfallCrater from '#component/levels/gallery/MoonfallCrater'
 import MoonfallOrbit from '#component/levels/gallery/MoonfallOrbit'
-import {Box} from '#src/components/Scene/primitives.tsx'
+import Box from '#src/components/Scene/primitives.tsx'
 import {rooms} from '#src/lib/gallery.ts'
-import {moonfallWallFixtures} from '#src/lib/gallery/moonfall/fixtures.ts'
+import moonfallWallFixtures from '#src/lib/gallery/moonfall/fixtures.ts'
 
 const room = rooms.find(candidate => candidate.id === 'moonfall')!
 

@@ -2,7 +2,7 @@ import type {DataTexture} from 'three/webgpu'
 
 import {useEffect, useState} from 'react'
 
-import {loadArtworkTexture} from './loadArtworkTexture.ts'
+import loadArtworkTexture from './loadArtworkTexture.ts'
 
 type Asset = {promise: Promise<DataTexture>
   refs: number
@@ -11,7 +11,7 @@ const assets = new Map<Blob | string, Asset>
 let pending = 0
 export const pendingImages = () => pending
 
-export function useArtworkTexture(source: Blob | string | null | undefined) {
+export default function useArtworkTexture(source: Blob | string | null | undefined) {
   const [result, setResult] = useState<{failed: boolean
     texture: DataTexture | null}>({
     texture: null,

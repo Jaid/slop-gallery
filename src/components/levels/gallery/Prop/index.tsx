@@ -1,7 +1,7 @@
 import type {Vec3} from '#src/lib/gallery.ts'
 
 import GrabbableProp from '#src/components/Scene/GrabbableProp.tsx'
-import {Box} from '#src/components/Scene/primitives.tsx'
+import Box from '#src/components/Scene/primitives.tsx'
 
 export default function Prop({id, position, kind, title}: {id: string
   kind: 'apple' | 'book'

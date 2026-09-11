@@ -3,8 +3,8 @@ import {afterEach, beforeEach, describe, expect, test} from 'bun:test'
 import {resetGallery} from '../../src/lib/gallery/actions.ts'
 import {corridorStairs} from '../../src/lib/gallery/corridor.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
-import {lodge, lodgeWindow} from '../../src/lib/gallery/lodge.ts'
-import {PlayerSession, playerSession, playerSpawn, validatePlayerPose} from '../../src/lib/gallery/PlayerSession.ts'
+import lodge, {lodgeWindow} from '../../src/lib/gallery/lodge.ts'
+import PlayerSession, {playerSession, playerSpawn, validatePlayerPose} from '../../src/lib/gallery/PlayerSession.ts'
 import {createDocument, restoreDocument, undo, useGallery} from '../../src/lib/gallery/store.ts'
 
 const original = createDocument()

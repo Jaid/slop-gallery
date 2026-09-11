@@ -7,8 +7,8 @@ import {createServer} from 'node:http'
 import {createStore} from 'zustand/vanilla'
 
 import {rooms} from '../../src/lib/gallery/walls.ts'
-import {SlopGalleryTelemetry} from '../../src/lib/telemetry/SlopGalleryTelemetry.ts'
-import {VictoriaExporter} from '../../src/lib/telemetry/VictoriaExporter.ts'
+import SlopGalleryTelemetry from '../../src/lib/telemetry/SlopGalleryTelemetry.ts'
+import VictoriaExporter from '../../src/lib/telemetry/VictoriaExporter.ts'
 import {createVictoriaRelay} from '../../src/lib/telemetry/vite.ts'
 
 async function status(url: string, init?: RequestInit) {

@@ -1,5 +1,6 @@
 export * from './gallery/actions.ts'
-export {initialPortraits} from './gallery/collection.ts'
+export {default as initialPortraits} from './gallery/collection.ts'
 export * from './gallery/store.ts'
 export type * from './gallery/types.ts'
 export * from './gallery/walls.ts'
+export {default as walls} from './gallery/walls.ts'

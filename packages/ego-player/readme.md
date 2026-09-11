@@ -1,5 +1,17 @@
 # ego-player
 
+## Interaction and diagnostics
+
+The default controls include E (`interact`), Z (`zoom`) and X (`dump`). E calls `onInteract` once per press. Z halves the perspective camera FOV while held (`zoomFactor` defaults to 2) and restores it on release, input loss or camera handoff. Control, Alt and Meta bindings set `modifier` to suppress these actions during shortcuts such as Ctrl+Z.
+
+X does nothing unless `onDump` is supplied. It calls the handler once per press with an `EgoDump`: unique ID, timestamp, detached player/input state, camera matrices/FOV and full-precision aim hits. Hits include world/local points, normals, UVs, mesh/instance identifiers, material identity and scalar ancestor metadata. Dump raycasts run only on demand; there is no diagnostic raycast when the handler is absent. `AimInspector` is also available as a named package export for read-only inspection outside the controller.
+
+```tsx
+<EgoPlayer input={readControls} onInteract={interact} onDump={dump => console.dir(dump, {depth: null})}/>
+```
+
+Callbacks require active input and, by default, this player’s canvas pointer lock. Custom readers should return the corresponding action booleans and `modifier` for shortcut suppression. Gameplay remains responsible for the selected target, narration and telemetry delivery.
+
 A composable first-person player for WebGPU React Three Fiber and Rapier: capsule collisions, acceleration, air control, sprinting, directional dodging, crouch clearance, buffered variable-height jumps, coyote time, stairs, slopes and a smoothed camera.
 
 The package owns movement, not your game. Input is an explicit reader; audio, menus, inspection, navigation and telemetry belong to the application. There are no gallery imports, singleton player state, hardcoded DOM selectors or storage dependencies.
@@ -153,7 +165,7 @@ A nonpositive `stepHeight` or `stepMinWidth` disables autostep; nonpositive `sna
 `EgoMotor` supports headless simulation and custom scene integration:
 
 ```ts
-import {EgoMotor} from 'ego-player/motor'
+import EgoMotor from 'ego-player/motor'
 
 const motor = new EgoMotor(rapier, world, body, capsuleCollider)
 // Resolve the initial stance after creating the environment colliders.
@@ -185,3 +197,5 @@ Do not bundle a second Fiber instance. The package deliberately adds no WebGL co
 Run `bun test` in this directory. Tests exercise real Rapier movement, collisions, clearance, directional sprint/dodge boosts, jumps, teleport resets, independent motors and camera stride timing. A headless React/Fiber test covers Strict Mode, updates without respawning, canvas-specific lock gating, camera ownership, refs and cleanup. Its renderer is inert: this is not an interactive or visual playtest.
 
 The repository’s `bun run check:package` packs the package and runs its public-API physics and React tests, typechecks consumers and bundles browser usage outside the workspace. Tests and consumer bundles explicitly match Vite’s ESM/WebGPU dependency resolution.
+
+Use `ref.current.releaseZoom()` before another controller captures the camera FOV for an inspection animation. Teleports also release the current zoom. The application coordinates the handoff; merely disabling camera position updates cannot retroactively change a FOV another controller already captured.

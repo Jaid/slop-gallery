@@ -1,6 +1,6 @@
 import type {Vec3} from './types.ts'
 
-import {lowerGallery} from './lowerGallery.ts'
+import lowerGallery from './lowerGallery.ts'
 
 const {tunnel, floorY} = lowerGallery
 export const tunnelDisplayWindow = {
@@ -14,7 +14,7 @@ const depth = 3.2
 const thickness = 0.18
 export type DisplayBox = {position: Vec3
   size: Vec3}
-export const tunnelDisplays = (['west', 'east'] as const).map((side, index) => {
+const tunnelDisplays = (['west', 'east'] as const).map((side, index) => {
   const direction = side === 'west' ? -1 : 1
   const frontX = tunnel.x + direction * tunnel.width / 2
   const backX = frontX + direction * depth
@@ -51,3 +51,5 @@ export const tunnelDisplays = (['west', 'east'] as const).map((side, index) => {
     })),
   }
 })
+
+export default tunnelDisplays

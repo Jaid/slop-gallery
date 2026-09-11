@@ -1,11 +1,11 @@
 import type {Vec3} from '../types.ts'
 import type {Wall} from '../walls.ts'
 
-import {CurvedBoxGeometry} from '../CurvedBoxGeometry.ts'
+import CurvedBoxGeometry from '../CurvedBoxGeometry.ts'
 import {stairHeadroom, stairThickness} from './StairFlight.ts'
 
 /** A level U-turn with tangent circular walls, widening smoothly between parallel stair flights. */
-export class StairTurn {
+export default class StairTurn {
   readonly innerCenterZ: number
   readonly innerRadius: number
   readonly outerCenterZ: number

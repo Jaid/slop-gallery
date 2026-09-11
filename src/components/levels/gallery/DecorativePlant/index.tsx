@@ -1,6 +1,6 @@
 import type {PlantKind} from '#src/lib/gallery/plantDecorations/catalog.ts'
 
-import {decorationResources} from '#src/lib/gallery/plantDecorations/DecorationResources.ts'
+import decorationResources from '#src/lib/gallery/plantDecorations/DecorationResources.ts'
 
 export default function DecorativePlant({kind}: {kind: PlantKind}) {
   const resources = decorationResources()

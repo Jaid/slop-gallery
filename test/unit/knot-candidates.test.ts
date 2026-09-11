@@ -4,7 +4,7 @@ import {describe, expect, test} from 'bun:test'
 
 import {formatKnotLabels} from '../../src/lib/knots/exhibition.ts'
 import {knotCandidates, knots} from '../../src/lib/knots/index.ts'
-import {defaultKnotDisplayLimit, indexKnots, KnotCandidate} from '../../src/lib/knots/KnotCandidate.ts'
+import KnotCandidate, {defaultKnotDisplayLimit, indexKnots} from '../../src/lib/knots/KnotCandidate.ts'
 
 const candidateData: KnotCandidateData = {
   id: 'fable',

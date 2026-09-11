@@ -1,16 +1,16 @@
-import type {DestructibleGeometry} from '../destructiblePlants/base/DestructibleGeometry.ts'
+import type DestructibleGeometry from '../destructiblePlants/base/DestructibleGeometry.ts'
 import type {DestructiblePlantKind} from '../destructiblePlants/catalog.ts'
 import type {DestructibleCatalogKind} from '../destructiblePlants/CatalogPlantGeometry.ts'
 import type {PlantKind, PotKind} from './catalog.ts'
 
 import {DoubleSide, MeshStandardNodeMaterial} from 'three/webgpu'
 
-import {PotMaterials} from '#src/lib/materials/PotMaterials.ts'
+import PotMaterials from '#src/lib/materials/PotMaterials.ts'
 
-import {CatalogPlantGeometry} from '../destructiblePlants/CatalogPlantGeometry.ts'
-import {DestructiblePlantGeometry} from '../destructiblePlants/DestructiblePlantGeometry.ts'
-import {PlantGeometry} from './PlantGeometry.ts'
-import {PotGeometry} from './PotGeometry.ts'
+import CatalogPlantGeometry from '../destructiblePlants/CatalogPlantGeometry.ts'
+import DestructiblePlantGeometry from '../destructiblePlants/DestructiblePlantGeometry.ts'
+import PlantGeometry from './PlantGeometry.ts'
+import PotGeometry from './PotGeometry.ts'
 
 /** Module-owned shared assets; preview unmounts never dispose another decoration’s meshes. */
 class DecorationResources {
@@ -92,7 +92,7 @@ class DecorationResources {
   }
 }
 let shared: DecorationResources | undefined
-export function decorationResources() {
+export default function decorationResources() {
   shared ??= new DecorationResources
   return shared
 }

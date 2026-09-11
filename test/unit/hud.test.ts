@@ -7,9 +7,9 @@ import {BoxGeometry, Group, Mesh, MeshBasicMaterial, PlaneGeometry, Raycaster, V
 import ArtworkOverlay from '#component/ArtworkOverlay'
 import NarrationIndicator from '#component/NarrationIndicator'
 
-import {initialPortraits} from '../../src/lib/gallery/collection.ts'
-import {GalleryRepository, validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
-import {isPortraitLabelHit, portraitLabel, portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
+import initialPortraits from '../../src/lib/gallery/collection.ts'
+import GalleryRepository, {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
+import portraitLabel, {isPortraitLabelHit, portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
 
 describe('title plate targeting', () => {

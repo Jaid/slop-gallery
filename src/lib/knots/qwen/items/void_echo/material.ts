@@ -4,7 +4,7 @@ import {cameraPosition, color, mix, modelWorldMatrixInverse, negateOnBackSide, n
 
 import {opticalLine} from '#src/lib/knots/shared.ts'
 
-import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import KnotMaterial from '../../../base/KnotMaterial.ts'
 import knotData from './data.ts'
 
 export default class VoidEchoMaterial extends KnotMaterial {

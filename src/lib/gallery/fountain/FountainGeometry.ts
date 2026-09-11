@@ -3,13 +3,13 @@ import type {BufferGeometry} from 'three/webgpu'
 import {CircleGeometry, CylinderGeometry, LatheGeometry, QuadraticBezierCurve3, SphereGeometry, TorusGeometry, TubeGeometry, Vector2, Vector3} from 'three/webgpu'
 
 import {mergeParts} from '../../geometry.ts'
-import {fountain} from './config.ts'
+import fountain from './config.ts'
 
 const ring = (radius: number, tube: number, y: number) => new TorusGeometry(radius, tube, 8, 96).rotateX(Math.PI / 2).translate(0, y, 0)
 const stream = (start: Vector3, control: Vector3, end: Vector3, radius: number) => new TubeGeometry(new QuadraticBezierCurve3(start, control, end), 32, radius, 8, false)
 
 /** Three carved basins and real parabolic water paths, merged by material. */
-export class FountainGeometry {
+export default class FountainGeometry {
   readonly brass: BufferGeometry
   readonly pools: BufferGeometry
   readonly stone: BufferGeometry

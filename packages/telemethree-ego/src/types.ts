@@ -1,4 +1,5 @@
-import type {Attributes, Telemetry} from 'telemethree'
+import type Telemetry from 'telemethree'
+import type {Attributes} from 'telemethree'
 
 export type Point3 = Readonly<{x: number
   y: number

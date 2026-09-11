@@ -1,13 +1,13 @@
-import type {DestructibleGeometry} from '#src/lib/gallery/destructiblePlants/base/DestructibleGeometry.ts'
-import type {RootedPlantAttachment} from '#src/lib/physics/RootedPlantAttachment.ts'
+import type DestructibleGeometry from '#src/lib/gallery/destructiblePlants/base/DestructibleGeometry.ts'
+import type RootedPlantAttachment from '#src/lib/physics/RootedPlantAttachment.ts'
 
 import {ConvexHullCollider} from '@react-three/rapier'
 import {useMemo} from 'react'
 import {Vector3} from 'three/webgpu'
 
 import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
-import {decorationResources} from '#src/lib/gallery/plantDecorations/DecorationResources.ts'
-import {initializeFoliageCollider} from '#src/lib/physics/initializeFoliageCollider.ts'
+import decorationResources from '#src/lib/gallery/plantDecorations/DecorationResources.ts'
+import initializeFoliageCollider from '#src/lib/physics/initializeFoliageCollider.ts'
 
 export default function DestructiblePlantRoot({id, geometry, attachments}: {attachments: RootedPlantAttachment
   geometry: DestructibleGeometry

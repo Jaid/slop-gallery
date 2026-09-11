@@ -1,5 +1,5 @@
 /** Exact, bounded reporting window. The owner flushes before capacity is exceeded. */
-export class Distribution {
+export default class Distribution {
   count = 0
   sum = 0
   private readonly values: Float64Array
@@ -20,7 +20,7 @@ export class Distribution {
 
   summarize() {
     const sorted = this.values.subarray(0, this.count).toSorted()
-    const rank = (fraction: number) => sorted[Math.ceil(this.count * fraction) - 1]!
+    const rank = (fraction: number) => sorted[Math.ceil(this.count * fraction) - 1]
     return {
       mean: this.sum / this.count,
       p50: rank(0.5),

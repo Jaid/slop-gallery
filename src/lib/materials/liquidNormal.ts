@@ -3,7 +3,7 @@ import type {Node} from 'three/webgpu'
 import {negateOnBackSide, normalLocal, positionGeometry, time, transformNormalToView, vec3} from 'three/tsl'
 
 /** Analytic derivatives of warped waves: smooth fluid normals without screen-quad stepping. */
-export function liquidNormal(detail: Node<'float'>, strength = 1) {
+export default function liquidNormal(detail: Node<'float'>, strength = 1) {
   const p = positionGeometry
   const a = vec3(4, 6, 3)
   const b = vec3(-3, 5, 7)

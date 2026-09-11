@@ -1,17 +1,17 @@
-import type {Telemetry} from '../Telemetry.ts'
+import type Telemetry from '../Telemetry.ts'
 import type {ThreeStatisticsOptions} from '../ThreeStatistics.ts'
 import type {Scene, WebGPURenderer} from 'three/webgpu'
 
 import {useFrame} from '@react-three/fiber/webgpu'
 import {useEffect, useRef} from 'react'
 
-import {ThreeStatistics} from '../ThreeStatistics.ts'
+import ThreeStatistics from '../ThreeStatistics.ts'
 import {useTelemetry} from './context.tsx'
 
 export type ThreeTelemetryOptions = ThreeStatisticsOptions & {telemetry?: Telemetry}
 
 /** Collect from the WebGPU Canvas after all render passes. */
-export function useThreeTelemetry(options: ThreeTelemetryOptions = {}) {
+export default function useThreeTelemetry(options: ThreeTelemetryOptions = {}) {
   const {telemetry, intervalMs, maxSamples, gpuIntervalMs, hitchThresholdMs, hitchCooldownMs} = options
   const latest = useRef(options)
   latest.current = options

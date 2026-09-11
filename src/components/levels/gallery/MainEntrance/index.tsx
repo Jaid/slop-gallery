@@ -1,8 +1,8 @@
 import {useEffect, useMemo} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
-import {EntranceGeometry} from '#src/lib/gallery/EntranceGeometry.ts'
-import {LimestoneMaterial} from '#src/lib/materials/LimestoneMaterial.ts'
+import EntranceGeometry from '#src/lib/gallery/EntranceGeometry.ts'
+import LimestoneMaterial from '#src/lib/materials/LimestoneMaterial.ts'
 
 export default function MainEntrance() {
   const geometry = useMemo(() => new EntranceGeometry, [])

@@ -2,7 +2,7 @@ import type {Texture} from 'three/webgpu'
 
 import {cameraPosition, color, mix, modelWorldMatrixInverse, mx_noise_float, normalViewGeometry, positionGeometry, positionView, positionViewDirection, time, vec3, vec4} from 'three/tsl'
 
-import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import KnotMaterial from '../../../base/KnotMaterial.ts'
 import {opticalLine} from '../../helpers.ts'
 import knotData from './data.ts'
 

@@ -3,7 +3,7 @@ import type {Material} from 'three/webgpu'
 
 import Alcove from '#component/levels/gallery/Alcove'
 import MainEntrance from '#component/levels/gallery/MainEntrance'
-import {Box} from '#src/components/Scene/primitives.tsx'
+import Box from '#src/components/Scene/primitives.tsx'
 
 export default function WallDecorations({wall, trim, material}: {material?: Material
   trim: string

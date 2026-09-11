@@ -1,7 +1,7 @@
 import type {RoomId, Vec3} from '../types.ts'
 import type {Wall} from '../walls.ts'
 
-import {passageOrientation} from '../passages/orientation.ts'
+import passageOrientation from '../passages/orientation.ts'
 
 export type StairBlock = {
   axis?: 0 | 2
@@ -19,7 +19,7 @@ export type StairBeam = {
 export const stairThickness = 0.6
 export const stairHeadroom = 3.6
 
-export class StairFlight {
+export default class StairFlight {
   readonly axis: 0 | 2
   readonly blocks: Array<StairBlock>
   readonly crossAxis: 0 | 2

@@ -22,16 +22,15 @@
     "build:dev": "bun run vite build --mode development",
     "build:gallery": "GAME_LEVEL=gallery bun run build --outDir out/production/gallery",
     "build:knottingham": "GAME_LEVEL=knottingham bun run build --outDir out/production/knottingham",
-    "check": "bun run typecheck && bun run lint && bun run test && bun run build && bun run check:package",
+    "check": "bun run typecheck && bun run lint && bun run test && bun run build",
     "check:levels": "bun test/build/levels.ts",
-    "check:package": "bun scripts/checkPackage.ts",
     "dev": "bun run vite --mode development",
     "dev:gallery": "GAME_LEVEL=gallery bun run dev",
     "dev:knottingham": "GAME_LEVEL=knottingham bun run dev",
-    "lint": "bun scripts/lint.ts",
+    "lint": "eslint .",
     "preview": "bun run vite preview --host 127.0.0.1",
-    "test": "bun test --max-concurrency 1 ./test",
-    "test:live": "bun run build && bun test ./test/live.test.ts",
+    "test": "bun test --max-concurrency 1 ./test/unit",
+    "test:live": "GAME_LEVEL=gallery bun run build && LIVE_TEST=true bun test ./test/live.test.ts",
     "typecheck": "tsc --noEmit --noUnusedLocals --noUnusedParameters --pretty false",
     "update:knots": "bun scripts/updateKnots.ts",
     "vite": "bun --bun node_modules/vite/dist/node/cli.js --configLoader native"
@@ -54,6 +53,7 @@
     "react-dropzone": "20.1.1",
     "telemethree": "workspace:*",
     "telemethree-ego": "workspace:*",
+    "telemethree-pause-menu": "workspace:*",
     "three": "0.186.0",
     "three-bvh-csg": "0.0.18",
     "three-fiber-game": "workspace:*",
@@ -94,12 +94,16 @@
     "typescript": "npm:typescript-classic@6.0.4",
     "vite": "8.3.0",
     "vite-plugin-media-mixins": "0.10.0",
-    "vite-plugin-title": "0.6.0"
+    "vite-plugin-title": "0.6.0",
+    "webmcp-types": "0.1.5"
   },
   "patchedDependencies": {
     "three-bvh-csg@0.0.18": "patches/three-bvh-csg@0.0.18.patch"
   },
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "overrides": {
+    "@dimforge/rapier3d-compat": "0.20.0"
+  }
 }

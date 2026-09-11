@@ -2,7 +2,7 @@ import type {Texture} from 'three/webgpu'
 
 import {color, mix, mx_noise_float, time} from 'three/tsl'
 
-import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import KnotMaterial from '../../../base/KnotMaterial.ts'
 import {bell, cellNoiseVec3, proceduralNormal, spectralColor, viewerFrame} from '../../flashHelpers.ts'
 import knotData from './data.ts'
 

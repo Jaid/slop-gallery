@@ -35,7 +35,7 @@ class InspectionSpring {
   }
 }
 
-export class InspectionLook {
+export default class InspectionLook {
   readonly rotation: Quaternion
   private readonly angles = new Euler(0, 0, 0, 'YXZ')
   private readonly pending = new Vector2

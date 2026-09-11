@@ -20,6 +20,6 @@ const orientations = {
 } as const
 
 /** The inward-facing wall on either side of an axis-aligned passage. */
-export function passageOrientation(axis: 0 | 2, side: number) {
+export default function passageOrientation(axis: 0 | 2, side: number) {
   return orientations[axis][side < 0 ? 0 : 1]
 }

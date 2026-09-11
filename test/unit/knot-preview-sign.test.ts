@@ -31,7 +31,7 @@ test('preview material is replaced when an asynchronous texture arrives or chang
             filter: /.*/u,
             namespace: 'fixture',
           }, ({path}) => ({
-            contents: path.includes('useArtworkTexture') ? 'let result; export const setResult = value => {result = value}; export const useArtworkTexture = () => result' : path.includes('exhibition') ? 'export const knotPreviewX = -10' : 'export default "canvas-text"',
+            contents: path.includes('useArtworkTexture') ? 'let result; export const setResult = value => {result = value}; export default () => result' : path.includes('exhibition') ? 'export const knotPreviewX = -10' : 'export default "canvas-text"',
             loader: 'js',
           }))
         },

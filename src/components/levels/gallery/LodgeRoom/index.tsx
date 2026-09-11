@@ -3,8 +3,8 @@ import type {Material, Texture} from 'three/webgpu'
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 
 import BenchSeat from '#component/levels/gallery/BenchSeat'
-import {Box} from '#src/components/Scene/primitives.tsx'
-import {lodge} from '#src/lib/gallery/lodge.ts'
+import Box from '#src/components/Scene/primitives.tsx'
+import lodge from '#src/lib/gallery/lodge.ts'
 
 export default function LodgeRoom({wood, stone}: {stone: Material
   wood: Texture}) {

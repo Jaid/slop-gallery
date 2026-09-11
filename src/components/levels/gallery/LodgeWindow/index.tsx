@@ -5,7 +5,7 @@ import {useEffect, useMemo} from 'react'
 
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
-import {LodgeWindowGeometry} from '#src/lib/gallery/LodgeWindowGeometry.ts'
+import LodgeWindowGeometry from '#src/lib/gallery/LodgeWindowGeometry.ts'
 
 export default function LodgeWindow({material}: {material: Material}) {
   const geometry = useMemo(() => new LodgeWindowGeometry, [])

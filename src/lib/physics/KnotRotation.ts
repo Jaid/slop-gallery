@@ -3,7 +3,7 @@ import type {RigidBody} from '@dimforge/rapier3d-compat'
 import {Quaternion} from 'three/webgpu'
 
 /** One gentle revolution every 40 seconds, with colliders following the sculpture. */
-export class KnotRotation {
+export default class KnotRotation {
   private readonly increment = new Quaternion
   private readonly rotation = new Quaternion
 

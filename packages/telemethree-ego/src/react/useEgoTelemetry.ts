@@ -3,9 +3,9 @@ import type {EgoTelemetryOptions} from '../types.ts'
 import {useFrame} from '@react-three/fiber/webgpu'
 import {useEffect, useRef} from 'react'
 
-import {EgoTelemetry} from '../EgoTelemetry.ts'
+import EgoTelemetry from '../EgoTelemetry.ts'
 
-export function useEgoTelemetry(options: EgoTelemetryOptions) {
+export default function useEgoTelemetry(options: EgoTelemetryOptions) {
   const read = useRef(options.read)
   read.current = options.read
   const collector = useRef<EgoTelemetry | null>(null)

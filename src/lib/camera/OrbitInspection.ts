@@ -5,7 +5,7 @@ import {MathUtils, Matrix4, Quaternion, Spherical, Vector3} from 'three/webgpu'
 const up = new Vector3(0, 1, 0)
 
 /** A temporary camera owner; orbiting never changes the player’s physical pose. */
-export class OrbitInspection {
+export default class OrbitInspection {
   readonly originalFov: number
   readonly originalPosition: Vector3
   readonly originalRotation: Quaternion

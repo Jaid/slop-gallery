@@ -7,7 +7,7 @@ import {Children, isValidElement} from 'react'
 import {Euler, Matrix4, MeshBasicMaterial, Texture, Vector3} from 'three/webgpu'
 
 import renderLodgeRoom from '../../src/components/levels/gallery/LodgeRoom/index.tsx'
-import {lodge} from '../../src/lib/gallery/lodge.ts'
+import lodge from '../../src/lib/gallery/lodge.ts'
 
 type Props = {children?: ReactNode
   colliders?: false | string

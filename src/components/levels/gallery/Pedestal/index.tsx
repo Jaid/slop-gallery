@@ -3,8 +3,8 @@ import type {Vec3} from '#src/lib/gallery.ts'
 import {RigidBody, TrimeshCollider} from '@react-three/rapier'
 import {useEffect, useMemo} from 'react'
 
-import {PedestalGeometry} from '#src/lib/gallery/PedestalGeometry.ts'
-import {LimestoneMaterial} from '#src/lib/materials/LimestoneMaterial.ts'
+import PedestalGeometry from '#src/lib/gallery/PedestalGeometry.ts'
+import LimestoneMaterial from '#src/lib/materials/LimestoneMaterial.ts'
 
 export function usePedestal() {
   const resources = useMemo(() => ({

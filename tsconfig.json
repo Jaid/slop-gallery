@@ -1,6 +1,10 @@
 {
   "extends": "./node_modules/tsconfig-jaid-react/base.json",
   "compilerOptions": {
-    "types": ["bun", "vite/client"]
+    "types": [
+      "bun",
+      "vite/client",
+      "webmcp-types"
+    ]
   }
 }

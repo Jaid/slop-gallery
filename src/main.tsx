@@ -6,7 +6,7 @@ import {NuqsAdapter} from 'nuqs/adapters/react'
 import App from '#component/App'
 
 import {initializePersistence} from './lib/gallery/GalleryRepository.ts'
-import {pauseMenu} from './lib/pauseMenu.ts'
+import pauseMenu from './lib/pauseMenu.ts'
 
 import css from './style.module.sass'
 

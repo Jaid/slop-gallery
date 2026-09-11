@@ -4,8 +4,8 @@ import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import {useMemo} from 'react'
 import {Object3D} from 'three/webgpu'
 
-import {Box} from '#src/components/Scene/primitives.tsx'
-import {tunnelDisplays} from '#src/lib/gallery/tunnelDisplays.ts'
+import Box from '#src/components/Scene/primitives.tsx'
+import tunnelDisplays from '#src/lib/gallery/tunnelDisplays.ts'
 
 const DisplayExhibit = ({kind, material}: {kind: number
   material: Material}) => {

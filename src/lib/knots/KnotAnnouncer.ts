@@ -8,12 +8,12 @@ export type AnnouncementAudio = {
 }
 
 /** Latest inspection wins. Recordings are remembered only after playback finishes. */
-export class KnotAnnouncer {
+export default class KnotAnnouncer {
   private controller?: AbortController
   constructor(private readonly audio: AnnouncementAudio, readonly announcedCreators = new Set<string>, readonly announcedItems = new Set<string>) {}
 
-  async announce(item: KnotEntry) {
-    if (this.hasAnnounced(item)) {
+  async announce(item: KnotEntry, repeat = false) {
+    if (!repeat && this.hasAnnounced(item)) {
       return
     }
     this.stop()

@@ -6,8 +6,8 @@ import OculusBalcony from '#component/levels/gallery/OculusBalcony'
 import OculusGround from '#component/levels/gallery/OculusGround'
 import OculusRailings from '#component/levels/gallery/OculusRailings'
 import TunnelDisplays from '#component/levels/gallery/TunnelDisplays'
-import {Box} from '#src/components/Scene/primitives.tsx'
-import {lowerGallery, oculusCeiling} from '#src/lib/gallery/lowerGallery.ts'
+import Box from '#src/components/Scene/primitives.tsx'
+import lowerGallery, {oculusCeiling} from '#src/lib/gallery/lowerGallery.ts'
 
 const {oculus, tunnel, floorY} = lowerGallery
 const ceilingY = oculus.ceiling.topY - oculus.ceiling.thickness / 2

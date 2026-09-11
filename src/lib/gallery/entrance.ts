@@ -1,5 +1,5 @@
 /** A closed architectural entrance; the exterior is deliberately not part of the gallery. */
-export const mainEntrance = {
+const mainEntrance = {
   width: 3.3,
   height: 4.85,
   spring: 3.2,
@@ -11,3 +11,5 @@ export const mainEntrance = {
     profile: 'arch' as const,
   },
 }
+
+export default mainEntrance

@@ -1,5 +1,5 @@
 /** Gemini TTS emits mono 16-bit little-endian PCM at 24 kHz. Add a lossless WAV container. */
-export function pcmWave(pcm: ArrayBuffer, sampleRate = 24_000) {
+export default function pcmWave(pcm: ArrayBuffer, sampleRate = 24_000) {
   if (!pcm.byteLength || pcm.byteLength % 2 || !Number.isSafeInteger(sampleRate) || sampleRate <= 0) {
     throw new Error('Invalid PCM audio.')
   }

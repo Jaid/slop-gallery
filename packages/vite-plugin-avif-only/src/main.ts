@@ -9,7 +9,7 @@ import fs from 'fs-extra'
 import MagicString from 'magic-string'
 import {isFileServingAllowed, normalizePath} from 'vite'
 
-import {AvifCache} from './AvifCache.ts'
+import AvifCache from './AvifCache.ts'
 
 export type AvifOnlyOptions = AvifOptions & {cacheDir?: string}
 type Ast = {[key: string]: unknown

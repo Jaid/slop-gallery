@@ -76,6 +76,50 @@ test('visit persistence is opt-in', () => {
   expect(() => menu.start()).not.toThrow()
   expect(menu.getSnapshot().stage).toBe('first')
 })
+test('reset distinguishes a returning visitor without a saved game, including async loading', () => {
+  const values = new Map<string, string>
+  const options = {
+    storageKey: 'game',
+    hasGameData: false,
+    storage: () => ({
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        values.set(key, value)
+      },
+    }),
+  }
+  const first = new PauseMenu(options)
+  first.start()
+  expect(first.getSnapshot().stage).toBe('first')
+  const returning = new PauseMenu(options)
+  returning.start()
+  expect(returning.getSnapshot().stage).toBe('reset')
+  const asyncMenu = new PauseMenu({
+    ...options,
+    hasGameData: undefined,
+  })
+  asyncMenu.start()
+  expect(asyncMenu.getSnapshot().stage).toBe('return')
+  asyncMenu.setGameData(false)
+  expect(asyncMenu.getSnapshot().stage).toBe('reset')
+  asyncMenu.setGameData(true)
+  expect(asyncMenu.getSnapshot().stage).toBe('return')
+  const target = new TestTarget
+  asyncMenu.attach(target.element)
+  target.ownerDocument.change(target)
+  target.ownerDocument.change(null)
+  asyncMenu.setGameData(false)
+  expect(asyncMenu.getSnapshot().stage).toBe('pause')
+})
+test('saved-game availability can arrive before visit tracking starts', () => {
+  const menu = new PauseMenu({initialStage: 'return'})
+  menu.setGameData(false)
+  menu.start()
+  expect(menu.getSnapshot().stage).toBe('reset')
+  const reset = new PauseMenu({initialStage: 'reset'})
+  reset.start()
+  expect(reset.getSnapshot().stage).toBe('reset')
+})
 test('a failed write preserves a successfully read visit', () => {
   const menu = new PauseMenu({
     storageKey: 'game',

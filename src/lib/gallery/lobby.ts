@@ -1,5 +1,5 @@
 // The north extension reserves a glazed floor opening for a future lower room.
-export const lobby = {
+const lobby = {
   previousNorthZ: -8,
   northZ: -32,
   southZ: 8,
@@ -9,3 +9,5 @@ export const lobby = {
     size: [8, 8],
   },
 } as const
+
+export default lobby

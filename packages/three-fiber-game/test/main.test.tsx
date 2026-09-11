@@ -9,7 +9,8 @@ import {Physics} from '@react-three/rapier'
 import {createContext, createRef, isValidElement, useContext} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
 
-import DefaultGame, {Game as createGame, normalizeControls, WebgpuRenderer} from '../src/main.ts'
+import DefaultGame, {normalizeControls, WebgpuRenderer} from '../src/main.ts'
+import createGame from '../src/main.ts'
 
 function element<Props>(node: ReactNode): ReactElement<Props> {
   if (!isValidElement<Props>(node)) {
@@ -70,14 +71,14 @@ test('full Drei entries preserve release behavior without exposing caller-owned 
   ])
   expect(normalized).not.toBe(controls)
   expect(normalized[0]).not.toBe(entry)
-  normalized[0]!.keys.push('KeyJ')
+  normalized[0].keys.push('KeyJ')
   expect(entry.keys).toEqual(['Space'])
   expect(normalizeControls([])).toEqual([])
 })
 test('record normalization also detaches mutable key arrays', () => {
   const keys = ['Space']
   const normalized = normalizeControls({jump: keys})
-  normalized[0]!.keys.push('KeyJ')
+  normalized[0].keys.push('KeyJ')
   expect(keys).toEqual(['Space'])
 })
 const onCreated = () => {}

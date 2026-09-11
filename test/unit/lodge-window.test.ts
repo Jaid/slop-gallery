@@ -1,19 +1,19 @@
 import {afterAll, describe, expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
-import {EgoMotor} from 'ego-player/motor'
+import EgoMotor, {defaultEgoOptions} from 'ego-player/motor'
 import {Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import {initialPortraits} from '../../src/lib/gallery/collection.ts'
+import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {corridorPassage} from '../../src/lib/gallery/corridor.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
-import {lodge, lodgeWindow, lodgeWindowFloor, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
-import {LodgeWindowGeometry} from '../../src/lib/gallery/LodgeWindowGeometry.ts'
-import {TimberGeometry, timberProfile} from '../../src/lib/gallery/passages/TimberGeometry.ts'
-import {PlayerSession, playerSpawn} from '../../src/lib/gallery/PlayerSession.ts'
+import lodge, {lodgeWindow, lodgeWindowFloor, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
+import LodgeWindowGeometry from '../../src/lib/gallery/LodgeWindowGeometry.ts'
+import TimberGeometry, {timberProfile} from '../../src/lib/gallery/passages/TimberGeometry.ts'
+import PlayerSession, {playerSpawn} from '../../src/lib/gallery/PlayerSession.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
-import {findPlacement, floorHeight, insideGallery, placementIssue, roomAt, wallPosition, walls} from '../../src/lib/gallery/walls.ts'
+import walls, {findPlacement, floorHeight, insideGallery, placementIssue, roomAt, wallPosition} from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
 const material = new MeshBasicMaterial
@@ -113,7 +113,7 @@ describe('Lodge through-window', () => {
       motor.teleport(saved.position, playerSpawn.position)
       expect(motor.crouching).toBe(true)
       expect(body.translation().x).toBeCloseTo(saved.position[0], 5)
-      expect(collider.halfHeight()).toBeCloseTo(0.2)
+      expect(collider.halfHeight()).toBeCloseTo(defaultEgoOptions.crouchHeight / 2 - defaultEgoOptions.radius)
       for (let i = 0; i < 60; i++) {
         motor.step(1 / 60, {}, new Quaternion, false)
         world.step()
@@ -121,7 +121,7 @@ describe('Lodge through-window', () => {
       expect(motor.crouching).toBe(true)
       expect(motor.grounded).toBe(true)
       expect(body.translation().y).toBeCloseTo(saved.position[1], 2)
-      expect(body.translation().y + 0.9).toBeLessThan(lodgeWindow.top)
+      expect(body.translation().y + defaultEgoOptions.crouchEyeHeight).toBeLessThan(lodgeWindow.top)
     } finally {
       motor.dispose()
       world.free()
@@ -172,7 +172,7 @@ describe('Lodge through-window', () => {
       motor.step(world.timestep, {}, facing)
       world.step()
       expect(motor.crouching).toBe(true)
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < 60; i++) {
         motor.step(world.timestep, {
           crouch: true,
           backward: true,

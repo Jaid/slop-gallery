@@ -16,7 +16,7 @@ export function modelLineLayout(textWidth: number, hasIcon: boolean) {
   }
 }
 
-export function drawLabel(context: CanvasRenderingContext2D, exhibit: KnotExhibit, x: number, y: number, icon?: HTMLImageElement) {
+export default function drawLabel(context: CanvasRenderingContext2D, exhibit: KnotExhibit, x: number, y: number, icon?: HTMLImageElement) {
   context.fillStyle = '#122029'
   context.fillRect(x, y, labelWidth, labelHeight)
   context.fillStyle = exhibit.accent

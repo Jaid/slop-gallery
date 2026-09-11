@@ -2,10 +2,10 @@ import type {KnotEntry} from '../../../src/lib/knots/types.ts'
 
 import {ACESFilmicToneMapping, AmbientLight, DirectionalLight, HalfFloatType, HemisphereLight, Mesh, PerspectiveCamera, RenderTarget, Scene} from 'three/webgpu'
 
-import {WebgpuRenderer} from '../../../packages/three-fiber-game/src/WebgpuRenderer.ts'
+import WebgpuRenderer from '../../../packages/three-fiber-game/src/WebgpuRenderer.ts'
 import {createKnotGeometry} from '../../../src/lib/gallery/sculptures.ts'
-import {loadKnotMaterial} from '../../../src/lib/knots/materials.ts'
-import {StudioEnvironment} from '../../../src/lib/materials/StudioEnvironment.ts'
+import loadKnotMaterial from '../../../src/lib/knots/materials.ts'
+import StudioEnvironment from '../../../src/lib/materials/StudioEnvironment.ts'
 import {previewTileRect, visibleBounds} from './previewLayout.ts'
 
 export type PreviewCandidate = {
@@ -28,7 +28,7 @@ const canvas = (width: number, height = width) => Object.assign(document.createE
 const png = (image: HTMLCanvasElement) => image.toDataURL('image/png').split(',')[1]
 
 /** Owns a detached WebGPU scene. Never reads or changes the live game or its input. */
-export class KnotPreviewRenderer {
+export default class KnotPreviewRenderer {
   private readonly camera = new PerspectiveCamera(50, 1, 0.05, 100)
   private readonly environment = new StudioEnvironment
   private readonly errors: Array<string> = []

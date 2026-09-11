@@ -1,7 +1,7 @@
 import type {Attributes, ExportBatch, Log, MetricOptions, Records, Signal, TelemetryOptions, TraceContext} from './types.ts'
 
-import {ExportError} from './ExportError.ts'
-import {Span} from './Span.ts'
+import ExportError from './ExportError.ts'
+import Span from './Span.ts'
 
 const signals = ['metrics', 'logs', 'traces'] as const
 const positiveInteger = (value: number, name: string) => {
@@ -29,7 +29,7 @@ const createQueue = (): Queue => ({
 })
 
 /** Framework-independent, bounded, best-effort telemetry. Construction performs no I/O. */
-export class Telemetry {
+export default class Telemetry {
   readonly now: () => number
   private readonly counters = new Map<string, {startTime: number
     value: number}>

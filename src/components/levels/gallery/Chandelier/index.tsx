@@ -4,7 +4,7 @@ import {BallCollider, ConvexHullCollider, CylinderCollider, RigidBody, useSpheri
 import {useEffect, useMemo, useRef} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
-import {ChandelierGeometry} from '#src/lib/gallery/ChandelierGeometry.ts'
+import ChandelierGeometry from '#src/lib/gallery/ChandelierGeometry.ts'
 import {chandelierPhysics, chandelierStemCenter, chandelierStemHalfHeight} from '#src/lib/physics/chandelier.ts'
 
 export default function Chandelier() {

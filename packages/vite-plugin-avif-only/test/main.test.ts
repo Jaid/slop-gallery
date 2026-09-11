@@ -5,7 +5,7 @@ import fs from 'fs-extra'
 import {build, createServer} from 'vite'
 
 import gameLevel from '../../vite-plugin-game-level/src/main.ts'
-import {AvifCache} from '../src/AvifCache.ts'
+import AvifCache from '../src/AvifCache.ts'
 import avifOnly from '../src/main.ts'
 
 const roots: Array<string> = []

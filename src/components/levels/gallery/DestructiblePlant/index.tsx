@@ -11,11 +11,11 @@ import Leaf from '#component/levels/gallery/DestructiblePlantLeaf'
 import Root from '#component/levels/gallery/DestructiblePlantRoot'
 import GrabbableProp from '#src/components/Scene/GrabbableProp.tsx'
 import {potDefinition} from '#src/lib/gallery/plantDecorations/catalog.ts'
-import {decorationResources} from '#src/lib/gallery/plantDecorations/DecorationResources.ts'
-import {initializeFoliageCollider} from '#src/lib/physics/initializeFoliageCollider.ts'
-import {PlantAttachment} from '#src/lib/physics/PlantAttachment.ts'
+import decorationResources from '#src/lib/gallery/plantDecorations/DecorationResources.ts'
+import initializeFoliageCollider from '#src/lib/physics/initializeFoliageCollider.ts'
+import PlantAttachment from '#src/lib/physics/PlantAttachment.ts'
 import {potPhysics} from '#src/lib/physics/plantPhysics.ts'
-import {RootedPlantAttachment} from '#src/lib/physics/RootedPlantAttachment.ts'
+import RootedPlantAttachment from '#src/lib/physics/RootedPlantAttachment.ts'
 
 export type DestructiblePlantProps = {
   id: string

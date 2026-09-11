@@ -12,7 +12,7 @@ type FloorReflection = {
 }
 
 /** Optional planar reflection ownership; performance materials allocate no reflection targets. */
-export class FloorMaterial extends MeshStandardNodeMaterial {
+export default class FloorMaterial extends MeshStandardNodeMaterial {
   readonly reflection: ReturnType<typeof reflector> | null
 
   constructor(map: Texture, {color, roughness, reflection}: {

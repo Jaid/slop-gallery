@@ -2,7 +2,7 @@ import {describe, expect, test} from 'bun:test'
 
 import {NoColorSpace, RepeatWrapping, SRGBColorSpace} from 'three/webgpu'
 
-import {GoldTextures} from '../../src/lib/materials/GoldTextures.ts'
+import GoldTextures from '../../src/lib/materials/GoldTextures.ts'
 
 describe('polished gold', () => {
   test('generates deterministic, independently owned color and normal maps', () => {

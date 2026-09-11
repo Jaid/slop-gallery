@@ -6,9 +6,9 @@ import {renderToStaticMarkup} from 'react-dom/server'
 import Minimap from '#component/Minimap'
 
 import {cameraPose, initialPortraits, useGallery} from '../../src/lib/gallery.ts'
-import {lowerGallery} from '../../src/lib/gallery/lowerGallery.ts'
+import lowerGallery from '../../src/lib/gallery/lowerGallery.ts'
 import {minimapHeading, minimapPortrait, minimapViewBox, minimapWalls} from '../../src/lib/gallery/minimap.ts'
-import {portraitObjects} from '../../src/lib/gallery/portraitObjects.ts'
+import portraitObjects from '../../src/lib/gallery/portraitObjects.ts'
 
 const initial = {...useGallery.getInitialState()}
 const pose = {
@@ -75,7 +75,9 @@ test('portrait dots follow rigid bodies instead of stale saved positions', () =>
     id: 'minimap-test',
     hung: false,
   }
-  const physical = {
+  const physical: {x: number
+    y: number
+    z: number} = {
     x: lowerGallery.oculus.center[0],
     y: lowerGallery.floorY + 1,
     z: lowerGallery.oculus.center[1],

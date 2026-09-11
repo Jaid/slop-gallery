@@ -1,12 +1,12 @@
 import type {StairBeam} from './stairs/StairFlight.ts'
 import type {Vec3} from './types.ts'
 
-import {lowerGallery} from './lowerGallery.ts'
-import {StairFlight, stairHeadroom} from './stairs/StairFlight.ts'
-import {StairHandrailGeometry} from './stairs/StairHandrailGeometry.ts'
-import {StairTurn} from './stairs/StairTurn.ts'
+import lowerGallery from './lowerGallery.ts'
+import StairFlight, {stairHeadroom} from './stairs/StairFlight.ts'
+import StairHandrailGeometry from './stairs/StairHandrailGeometry.ts'
+import StairTurn from './stairs/StairTurn.ts'
 
-export const staircase = {
+const staircase = {
   startX: 4,
   turnX: 14,
   endX: 6,
@@ -44,3 +44,5 @@ export function insideStairway([x, y, z]: Vec3) {
   const floor = stairFloorHeight(x, z)
   return floor !== undefined && y >= floor - 1 && y <= floor + stairHeadroom
 }
+
+export default staircase

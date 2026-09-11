@@ -5,12 +5,12 @@ import {Box3, Euler, Matrix4, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 
 import {createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import {corridorPassage, corridorStairs} from '../../src/lib/gallery/corridor.ts'
 import {fountainBench, fountainBenches} from '../../src/lib/gallery/fountain/benches.ts'
-import {fountain} from '../../src/lib/gallery/fountain/config.ts'
-import {SlattedBenchGeometry} from '../../src/lib/gallery/fountain/SlattedBenchGeometry.ts'
-import {lodge, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
-import {TimberGeometry} from '../../src/lib/gallery/passages/TimberGeometry.ts'
+import fountain from '../../src/lib/gallery/fountain/config.ts'
+import SlattedBenchGeometry from '../../src/lib/gallery/fountain/SlattedBenchGeometry.ts'
+import lodge, {lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
+import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
 import {playerSpawn} from '../../src/lib/gallery/PlayerSession.ts'
-import {walls} from '../../src/lib/gallery/walls.ts'
+import walls from '../../src/lib/gallery/walls.ts'
 
 test('four matching slatted benches surround the relocated fountain and leave the spawn clear', () => {
   expect(fountain.position).toEqual([0, 0, -6])

@@ -1,7 +1,7 @@
 import {useEffect, useMemo} from 'react'
 import {useGraphicsQualityValue} from 'use-graphics-quality'
 
-import {MarbleFloorMaterial} from '#src/lib/materials/MarbleFloorMaterial.ts'
+import MarbleFloorMaterial from '#src/lib/materials/MarbleFloorMaterial.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsQuality.ts'
 
 import {checkerMarbleTexture} from './materials.ts'

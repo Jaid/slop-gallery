@@ -2,10 +2,10 @@ import type {Vec3} from '../types.ts'
 import type {RailingAnchor} from './RailingPath.ts'
 
 import {oculusRamps} from '../lowerGallery.ts'
-import {towerRamp as ramp, oculusTower as tower, towerPlatformOutline, towerRampHeight} from '../oculusTower.ts'
-import {RailingPath} from './RailingPath.ts'
+import tower, {towerRamp as ramp, towerPlatformOutline, towerRampHeight} from '../oculusTower.ts'
+import RailingPath from './RailingPath.ts'
 
-export class OculusRailing extends RailingPath {
+export default class OculusRailing extends RailingPath {
   constructor() {
     const inset = 0.12
     const west = oculusRamps.find(value => value.side === 'west')!

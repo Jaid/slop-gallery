@@ -1,8 +1,8 @@
 import {wallFace, wallOpeningTrim} from './architecture.ts'
 import {wallOrnament, wallOrnamentPositions} from './WallOrnamentGeometry.ts'
-import {wallPosition, walls} from './walls.ts'
+import walls, {wallPosition} from './walls.ts'
 
-export const vesperOrnaments = walls.filter(wall => wall.room === 'vesper').flatMap(wall => {
+const vesperOrnaments = walls.filter(wall => wall.room === 'vesper').flatMap(wall => {
   const positions = wallOrnamentPositions(wall)
   if (wall.id === 'vesper-south') {
     // Leave the wall beside the Sienna doorway undecorated.
@@ -21,3 +21,5 @@ export const vesperOrnaments = walls.filter(wall => wall.room === 'vesper').flat
     rotation: wall.rotation,
   }))
 })
+
+export default vesperOrnaments

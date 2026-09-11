@@ -1,7 +1,7 @@
 import {useEffect, useMemo} from 'react'
 
-import {GoldTextures} from '#src/lib/materials/GoldTextures.ts'
-import {StudioEnvironment} from '#src/lib/materials/StudioEnvironment.ts'
+import GoldTextures from '#src/lib/materials/GoldTextures.ts'
+import StudioEnvironment from '#src/lib/materials/StudioEnvironment.ts'
 
 export default function GoldMaterial() {
   const environment = useMemo(() => new StudioEnvironment, [])

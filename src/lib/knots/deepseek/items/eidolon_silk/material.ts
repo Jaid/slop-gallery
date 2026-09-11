@@ -2,7 +2,7 @@ import type {Node, Texture} from 'three/webgpu'
 
 import {bitangentView, color, mix, positionViewDirection, tangentView, uv, vec3} from 'three/tsl'
 
-import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import KnotMaterial from '../../../base/KnotMaterial.ts'
 import {liquidNormal, opticalLine, viewerFrame} from '../../flashHelpers.ts'
 import knotData from './data.ts'
 

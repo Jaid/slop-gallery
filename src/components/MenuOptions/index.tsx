@@ -1,4 +1,4 @@
-import {useGraphicsQuality, useSetGraphicsQuality} from 'use-graphics-quality'
+import useGraphicsQuality, {useSetGraphicsQuality} from 'use-graphics-quality'
 
 import Icon from '#component/Icon'
 import {useGallery} from '#src/lib/gallery.ts'

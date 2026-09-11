@@ -10,7 +10,7 @@ export type AvifOptions = {
 }
 
 /** Content-addressed, concurrency-limited conversions shared by development and builds. */
-export class AvifCache {
+export default class AvifCache {
   readonly magick: string
   readonly quality: number
   readonly speed: number

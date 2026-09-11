@@ -1,4 +1,4 @@
-import type {EgoInput, EgoPlayerHandle, EgoPlayerProps, EgoState} from '../src/main.ts'
+import type {EgoDump, EgoInput, EgoPlayerHandle, EgoPlayerProps, EgoState} from '../src/main.ts'
 import type {RootState} from '@react-three/fiber/webgpu'
 import type {RapierContext} from '@react-three/rapier'
 
@@ -117,10 +117,68 @@ test('React lifecycle preserves the motor, camera ownership and ref contract wit
     expect(latest?.active).toBe(true)
     expect(latest?.position.z).toBeLessThan(0)
     expect(state.camera.position.y).toBeCloseTo(body.translation().y + 1.6)
+    let interactions = 0
+    const dumps: Array<EgoDump> = []
+    const actions = {
+      onInteract: () => interactions++,
+      onDump: (dump: EgoDump) => {
+        dumps.push(dump)
+      },
+    }
+    await act(async () => root.render(render(actions)))
+    keys = {
+      interact: true,
+      dump: true,
+      zoom: true,
+    }
+    const originalFov = 'fov' in state.camera ? state.camera.fov : 0
+    tick(3)
+    frame()
+    expect(interactions).toBe(1)
+    expect(dumps).toHaveLength(1)
+    expect(dumps[0].camera.fov).toBe(Number(originalFov) / 2)
+    keys = {}
+    tick()
+    expect('fov' in state.camera && state.camera.fov).toBe(originalFov)
+    keys = {
+      interact: true,
+      dump: true,
+      zoom: true,
+      modifier: true,
+    }
+    tick()
+    expect(dumps).toHaveLength(1)
+    expect(interactions).toBe(1)
+    expect('fov' in state.camera && state.camera.fov).toBe(originalFov)
+    keys = {}
+    tick()
+    ownerDocument.pointerLockElement = null
+    keys = {
+      interact: true,
+      dump: true,
+      zoom: true,
+    }
+    tick()
+    expect(dumps).toHaveLength(1)
+    ownerDocument.pointerLockElement = canvas
+    keys = {}
+    tick()
+    keys = {dump: true}
+    tick()
+    expect(dumps).toHaveLength(2)
+    expect(dumps[1].id).not.toBe(dumps[0].id)
+    keys = {}
+    tick()
+    await act(async () => root.render(render()))
+    const calls = inputCalls
+    keys = {dump: true}
+    tick()
+    expect(dumps).toHaveLength(2)
+    expect(inputCalls).toBe(calls)
     keys = {crouch: true}
     tick()
     expect(handle.getState()?.crouching).toBe(true)
-    expect(body.collider(0).halfHeight()).toBeCloseTo(0.2)
+    expect(body.collider(0).halfHeight()).toBeCloseTo(0.3)
     await act(async () => {
       root.render(render({
         speed: 4,
@@ -129,8 +187,8 @@ test('React lifecycle preserves the motor, camera ownership and ref contract wit
     })
     expect(player.current?.body).toBe(body)
     expect(body.translation().x).toBe(0)
-    expect(body.collider(0).halfHeight()).toBeCloseTo(0.2)
-    expect(body.collider(0).translation().y - body.translation().y).toBeCloseTo(0.5)
+    expect(body.collider(0).halfHeight()).toBeCloseTo(0.3)
+    expect(body.collider(0).translation().y - body.translation().y).toBeCloseTo(0.6)
     cameraEnabled = false
     state.camera.position.set(8, 9, 10)
     tick()
@@ -141,7 +199,7 @@ test('React lifecycle preserves the motor, camera ownership and ref contract wit
       y: 0,
       z: 0,
     })
-    expect(state.camera.position.toArray()).toEqual([3, 4.9, 5])
+    expect(state.camera.position.toArray()).toEqual([3, 5.2, 5])
     expect(state.camera.quaternion.toArray()).toEqual([0, 1, 0, 0])
     expect(() => handle.teleport([0, 0, 0], [0, 0, 0, 0])).toThrow(RangeError)
     expect(handle.getState()?.position).toEqual({
@@ -202,7 +260,7 @@ test('React lifecycle preserves the motor, camera ownership and ref contract wit
       expect(restored.getState()?.crouching).toBe(!blocked)
       expect(restored.body!.translation().x).toBe(blocked ? 0 : 4)
       expect(state.camera.position.x).toBe(blocked ? 0 : 4)
-      expect(state.camera.position.y).toBeCloseTo(blocked ? 1.65 : 0.92, 5)
+      expect(state.camera.position.y).toBeCloseTo(blocked ? 1.65 : 1.22, 5)
       tick()
       expect(latest?.crouching).toBe(!blocked)
       expect(latest?.position.x).toBe(blocked ? 0 : 4)
@@ -229,7 +287,7 @@ test('React lifecycle preserves the motor, camera ownership and ref contract wit
     frame()
     expect(player.current!.getState()?.crouching).toBe(true)
     expect(state.camera.position.toArray()[0]).toBe(4)
-    expect(state.camera.position.y).toBeCloseTo(0.92, 5)
+    expect(state.camera.position.y).toBeCloseTo(1.22, 5)
     expect(state.camera.quaternion.toArray()).toEqual([0, 1, 0, 0])
     await act(async () => root.render(render({}, false)))
   } finally {

@@ -6,7 +6,7 @@ import {mergeParts} from '../geometry.ts'
 import {chandelierPhysics, chandelierStemCenter, chandelierStemHalfHeight} from '../physics/chandelier.ts'
 
 /** Consolidated by material and shadow behavior, with all eight candle arms retained. */
-export class ChandelierGeometry {
+export default class ChandelierGeometry {
   readonly armColliders: Array<Float32Array> = []
   readonly brass: BufferGeometry
   readonly candles: BufferGeometry

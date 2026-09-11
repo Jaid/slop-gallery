@@ -4,7 +4,7 @@ import {color, float, mix, mx_fractal_noise_float, mx_noise_float, time, uv, vec
 
 import {opticalLine, proceduralNormal} from '#src/lib/knots/shared.ts'
 
-import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import KnotMaterial from '../../../base/KnotMaterial.ts'
 import {viewerFrame} from '../../helpers.ts'
 import knotData from './data.ts'
 

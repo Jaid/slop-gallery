@@ -8,13 +8,13 @@ import {Euler, Matrix4, PerspectiveCamera, Quaternion, Raycaster, Vector2, Vecto
 
 import {PlacementPreview} from '#level/components.ts'
 import {levelWallDistance} from '#level/navigation.ts'
-import {InspectionLook} from '#src/lib/camera/InspectionLook.ts'
+import InspectionLook from '#src/lib/camera/InspectionLook.ts'
 import {cameraPose, chime, dragPose, enterGallery, findPlacement, galleryEvents, isTextInput, markControlled, narrate, notify, openPanel, roomAt, useGallery} from '#src/lib/gallery.ts'
 import {playerSpawn} from '#src/lib/gallery/PlayerSession.ts'
 import {isPortraitLabelHit} from '#src/lib/gallery/portraitLabel.ts'
-import {portraitObjects} from '#src/lib/gallery/portraitObjects.ts'
+import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
 import {isKnottingham} from '#src/lib/level.ts'
-import {pauseMenu} from '#src/lib/pauseMenu.ts'
+import pauseMenu from '#src/lib/pauseMenu.ts'
 
 import {propObjects} from './GrabbableProp.tsx'
 
@@ -40,7 +40,6 @@ export default function Interaction() {
   const firstPose = useRef<{position: Vector3
     rotation: Quaternion} | null>(null)
   const introduced = useRef(false)
-  const keyboardGrab = useRef(false)
   useEffect(() => pauseMenu.attach(renderer.domElement), [renderer])
   useEffect(() => {
     if (!(controls instanceof PointerLockControls)) {
@@ -71,7 +70,6 @@ export default function Interaction() {
         placement: null,
       })
       placement.current = null
-      keyboardGrab.current = false
     }
     const stopView = () => {
       view.current?.restoreControls()
@@ -117,7 +115,6 @@ export default function Interaction() {
       const prop = propObjects.get(s.active)
       if (prop && !prop.grab()) {
         useGallery.setState({held: null})
-        keyboardGrab.current = false
         return
       }
       chime(440)
@@ -135,7 +132,6 @@ export default function Interaction() {
           held: null,
           placement: null,
         })
-        keyboardGrab.current = false
         chime(throwing ? 130 : 400)
         return
       }
@@ -185,7 +181,6 @@ export default function Interaction() {
         placement: null,
       })
       placement.current = null
-      keyboardGrab.current = false
     }
     const down = (event: MouseEvent) => {
       if (event.target !== renderer.domElement || useGallery.getState().panel) {
@@ -207,13 +202,11 @@ export default function Interaction() {
         const s = useGallery.getState()
         if (s.held) {
           release(true)
-        } else if (s.active && portraitObjects.has(s.active)) {
-          narrate(s.active)
         }
       }
     }
     const mouseup = (event: MouseEvent) => {
-      if (event.button === 0 && !keyboardGrab.current) {
+      if (event.button === 0) {
         release()
       }
     }
@@ -222,6 +215,7 @@ export default function Interaction() {
         return
       }
       const wasEnabled = controls.enabled
+      galleryEvents.dispatchEvent(new Event('release-zoom'))
       // The spring is the only rotation writer until inspection and its return finish.
       controls.enabled = false
       view.current = {
@@ -238,7 +232,7 @@ export default function Interaction() {
       useGallery.setState({inspecting: id})
     }
     const keydown = (event: KeyboardEvent) => {
-      if (isTextInput(event.target)) {
+      if (event.ctrlKey || event.metaKey || event.altKey || isTextInput(event.target)) {
         return
       }
       if (event.repeat) {
@@ -256,7 +250,7 @@ export default function Interaction() {
       if (!s.locked || s.panel) {
         return
       }
-      if (['KeyE', 'KeyQ', 'KeyR', 'KeyV'].includes(event.code)) {
+      if (['KeyQ', 'KeyV'].includes(event.code)) {
         markControlled()
       }
       if (event.code === 'KeyV' && s.active && portraitObjects.has(s.active)) {
@@ -266,19 +260,8 @@ export default function Interaction() {
           beginView(s.active)
         }
       }
-      if (event.code === 'KeyE') {
-        if (s.held) {
-          release()
-        } else {
-          keyboardGrab.current = true
-          grab()
-        }
-      }
       if (event.code === 'KeyQ' && s.held) {
         release(true)
-      }
-      if (event.code === 'KeyR' && s.active) {
-        narrate(s.active)
       }
     }
     const keyup = (event: KeyboardEvent) => {
@@ -293,6 +276,7 @@ export default function Interaction() {
         return
       }
       const normal = new Vector3(Math.sin(p.rotation), 0, Math.cos(p.rotation))
+      galleryEvents.dispatchEvent(new Event('release-zoom'))
       const distance = camera instanceof PerspectiveCamera ? Math.max(p.height + 0.65, p.width / camera.aspect) / (2 * Math.tan(camera.fov * Math.PI / 360)) * 1.14 : 3
       const position = new Vector3(...p.position).addScaledVector(normal, distance)
       const rotation = (new Quaternion).setFromRotationMatrix((new Matrix4).lookAt(position, new Vector3(...p.position), up))

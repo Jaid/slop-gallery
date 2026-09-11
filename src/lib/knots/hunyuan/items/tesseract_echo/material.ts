@@ -2,8 +2,8 @@ import type {Node, Texture} from 'three/webgpu'
 
 import {color, mx_rotate2d, time, uv} from 'three/tsl'
 
-import {KnotMaterial} from '../../../base/KnotMaterial.ts'
-import {opticalLine, proceduralNormal, spectralColor, viewerFrame} from '../../helpers.ts'
+import KnotMaterial from '../../../base/KnotMaterial.ts'
+import viewerFrame, {opticalLine, proceduralNormal, spectralColor} from '../../helpers.ts'
 import knotData from './data.ts'
 
 export default class TesseractEchoMaterial extends KnotMaterial {

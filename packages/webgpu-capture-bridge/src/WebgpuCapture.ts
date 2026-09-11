@@ -2,11 +2,11 @@ import type {CaptureFrame, CaptureFrameApi, CaptureFrameResult, WebgpuCaptureOpt
 
 import {RenderTarget, RGBAFormat, UnsignedByteType, Vector2} from 'three/webgpu'
 
-import {encodePng} from './encodePng.ts'
+import encodePng from './encodePng.ts'
 import {analyzeFrame, unpackRgba, validateSize} from './pixels.ts'
 
 /** Owns one reusable capture target, but never the renderer, scene or pipeline. */
-export class WebgpuCapture implements CaptureFrameApi, Disposable {
+export default class WebgpuCapture implements CaptureFrameApi, Disposable {
   /** Concurrent callers share the same frame and promise. Safe to pass as a callback. */
   readonly captureFrame: CaptureFrame = () => {
     if (this.disposed) {

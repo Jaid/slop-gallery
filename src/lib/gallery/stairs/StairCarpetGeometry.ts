@@ -1,7 +1,7 @@
 import {ExtrudeGeometry, Shape} from 'three/webgpu'
 
 /** A wide, shallow half-round tread pad, with its straight edge at local z = 0. */
-export class StairCarpetGeometry extends ExtrudeGeometry {
+export default class StairCarpetGeometry extends ExtrudeGeometry {
   constructor(width: number, radius: number) {
     if (![width, radius].every(Number.isFinite) || width <= 0 || radius <= 0) {
       throw new RangeError('A tread pad needs a positive finite width and depth.')

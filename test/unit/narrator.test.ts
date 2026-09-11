@@ -2,11 +2,11 @@ import type {AiSettings} from '../../src/lib/ai/settings.ts'
 
 import {afterEach, beforeEach, expect, spyOn, test} from 'bun:test'
 
-import {parameterParsers} from '../../src/lib/ai/settings.ts'
+import parameterParsers from '../../src/lib/ai/settings.ts'
 import {narrationMeter} from '../../src/lib/audio/NarrationMeter.ts'
-import {Narrator} from '../../src/lib/audio/Narrator.ts'
-import {SoundEngine} from '../../src/lib/audio/SoundEngine.ts'
-import {initialPortraits} from '../../src/lib/gallery/collection.ts'
+import Narrator from '../../src/lib/audio/Narrator.ts'
+import SoundEngine from '../../src/lib/audio/SoundEngine.ts'
+import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {useGallery} from '../../src/lib/gallery/store.ts'
 
 const settings = Object.fromEntries(Object.entries(parameterParsers).map(([key, parser]) => [key, parser.defaultValue])) as AiSettings
@@ -27,7 +27,7 @@ beforeEach(() => {
   soundSpy = spyOn(SoundEngine, 'get').mockReturnValue({
     resume: async () => {},
     context: {},
-  })
+  } as unknown as SoundEngine)
   meterSpy = spyOn(narrationMeter, 'connect').mockImplementation(() => () => {
     disconnected++
   })
@@ -129,7 +129,7 @@ test('TTS keeps character steering out of the spoken transcript and caches audio
   expect(fetchSpy).toHaveBeenCalledTimes(1)
 })
 test('provider failure falls back to readable browser narration', async () => {
-  soundSpy = spyOn(SoundEngine, 'get').mockReturnValue({resume: async () => {}})
+  soundSpy = spyOn(SoundEngine, 'get').mockReturnValue({resume: async () => {}} as SoundEngine)
   fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(new Response('Unavailable', {status: 503}))
   narrator = new Narrator(settings, 'test-key')
   await narrator.speak('goose')
@@ -174,7 +174,7 @@ test('stopping while the audio context resumes cannot start stale playback or me
       started(); return resumed
     },
     context: {},
-  })
+  } as unknown as SoundEngine)
   useGallery.setState({portraits: initialPortraits.map(p => ({...p}))})
   fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(new Response(new Blob(['audio'], {type: 'audio/ogg'})))
   narrator = new Narrator({

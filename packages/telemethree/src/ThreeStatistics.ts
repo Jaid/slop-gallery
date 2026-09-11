@@ -1,12 +1,12 @@
-import type {Telemetry} from './Telemetry.ts'
+import type Telemetry from './Telemetry.ts'
 import type {ThreeDiagnosticsOptions} from './ThreeDiagnostics.ts'
 import type {Attributes, TraceContext} from './types.ts'
 import type {Scene, WebGPURenderer} from 'three/webgpu'
 
 import {InstancedMesh, Mesh, Vector2} from 'three/webgpu'
 
-import {Distribution} from './Distribution.ts'
-import {ThreeDiagnostics} from './ThreeDiagnostics.ts'
+import Distribution from './Distribution.ts'
+import ThreeDiagnostics from './ThreeDiagnostics.ts'
 
 export type ThreeStatisticsOptions = ThreeDiagnosticsOptions & {
   attributes?: Attributes
@@ -40,7 +40,7 @@ type Output = {dpr: number
 const equalAttributes = (a: Attributes, b: Attributes) => Object.keys(a).length === Object.keys(b).length && Object.entries(a).every(([key, value]) => b[key] === value)
 
 /** Owns per-frame statistics across every reflection, shadow and postprocessing render. */
-export class ThreeStatistics {
+export default class ThreeStatistics {
   private attributes: Attributes = {}
   private autoReset = true
   private connected = false
@@ -156,11 +156,11 @@ export class ThreeStatistics {
     this.duration.add(ms)
     const values = [render.frameCalls, render.drawCalls, render.triangles, render.points, render.lines, compute.frameCalls]
     for (const [index, value] of values.entries()) {
-      this.work[index]!.add(value)
+      this.work[index].add(value)
     }
     for (const [index, threshold] of thresholds.entries()) {
       if (ms > threshold) {
-        this.slow[index]!++
+        this.slow[index]++
       }
     }
     if (this.duration.sum >= this.intervalMs || this.duration.count === this.duration.capacity) {
@@ -277,7 +277,7 @@ export class ThreeStatistics {
       })
     }
     for (const [index, workName] of workNames.entries()) {
-      distribution(workName, this.work[index]!)
+      distribution(workName, this.work[index])
     }
     const memory = this.renderer.info.memory
     for (const [key, name] of Object.entries(memoryNames)) {

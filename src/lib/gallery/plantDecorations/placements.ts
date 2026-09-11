@@ -2,7 +2,7 @@ import type {DestructiblePlantKind} from '../destructiblePlants/catalog.ts'
 import type {Vec3} from '../types.ts'
 import type {PlantKind, PotKind} from './catalog.ts'
 
-import {destructiblePlants} from '../destructiblePlants/catalog.ts'
+import destructiblePlants from '../destructiblePlants/catalog.ts'
 import {plants} from './catalog.ts'
 
 export type PottedPlantKind = DestructiblePlantKind | PlantKind

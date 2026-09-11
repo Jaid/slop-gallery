@@ -1,5 +1,5 @@
 import {createParser} from 'nuqs'
-import {useGraphicsQuality} from 'use-graphics-quality'
+import useGraphicsQuality from 'use-graphics-quality'
 
 /** Keep names at the URL boundary; all application state is boolean. */
 export const graphicsQualityParser = createParser({

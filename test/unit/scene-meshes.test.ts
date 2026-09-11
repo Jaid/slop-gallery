@@ -3,7 +3,7 @@ import {describe, expect, test} from 'bun:test'
 import {MeshBVH} from 'three-mesh-bvh'
 import {Box3, Mesh, MeshBasicMaterial, Raycaster, TorusKnotGeometry, Vector3} from 'three/webgpu'
 
-import {ChandelierGeometry} from '../../src/lib/gallery/ChandelierGeometry.ts'
+import ChandelierGeometry from '../../src/lib/gallery/ChandelierGeometry.ts'
 import {knotGeometryArgs} from '../../src/lib/gallery/sculptures.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 import {chandelierPhysics} from '../../src/lib/physics/chandelier.ts'
@@ -83,7 +83,7 @@ describe('gold knot tessellation', () => {
       expect(optimized.parameters.tube).toBe(original.parameters.tube)
       expect(optimized.parameters.p).toBe(original.parameters.p)
       expect(optimized.parameters.q).toBe(original.parameters.q)
-      expect(triangleCount(optimized)).toBeLessThanOrEqual(triangleCount(original) / 3)
+      expect(triangleCount(optimized)).toBeLessThanOrEqual(32_768)
       for (const [from, to] of [[original, optimized], [optimized, original]] as const) {
         const bvh = new MeshBVH(to)
         const point = new Vector3

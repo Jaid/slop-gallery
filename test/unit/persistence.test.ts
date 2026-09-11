@@ -2,10 +2,10 @@ import {afterEach, beforeEach, expect, spyOn, test} from 'bun:test'
 
 import {IDBFactory} from 'fake-indexeddb'
 
-import {initialPortraits} from '../../src/lib/gallery/collection.ts'
-import {GalleryRepository, initializePersistence, repository, validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
+import initialPortraits from '../../src/lib/gallery/collection.ts'
+import GalleryRepository, {initializePersistence, repository, validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import {maximumCollectionImageBytes, maximumImageBytes} from '../../src/lib/gallery/imagePolicy.ts'
-import {PlayerSession, playerSession} from '../../src/lib/gallery/PlayerSession.ts'
+import PlayerSession, {playerSession} from '../../src/lib/gallery/PlayerSession.ts'
 import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
 
 const original = {

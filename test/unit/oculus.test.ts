@@ -3,20 +3,20 @@ import type {ReactNode} from 'react'
 import {describe, expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
-import {EgoMotor} from 'ego-player/motor'
+import EgoMotor from 'ego-player/motor'
 import {Children, isValidElement} from 'react'
 import {BoxGeometry, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import renderOculusRoom from '../../src/components/levels/gallery/OculusRoom/index.tsx'
 import {createArchitectureGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
-import {initialPortraits} from '../../src/lib/gallery/collection.ts'
+import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {floorThickness, roomFloorPlan} from '../../src/lib/gallery/floors.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
-import {lobby} from '../../src/lib/gallery/lobby.ts'
-import {lowerGallery, oculusCeiling, oculusPlatform} from '../../src/lib/gallery/lowerGallery.ts'
-import {StairFlight} from '../../src/lib/gallery/stairs/StairFlight.ts'
+import lobby from '../../src/lib/gallery/lobby.ts'
+import lowerGallery, {oculusCeiling, oculusPlatform} from '../../src/lib/gallery/lowerGallery.ts'
+import StairFlight from '../../src/lib/gallery/stairs/StairFlight.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
-import {floorHeight, insideGallery, roomAt, rooms, walls} from '../../src/lib/gallery/walls.ts'
+import walls, {floorHeight, insideGallery, roomAt, rooms} from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
 const {floorY, oculus, tunnel, moonfall} = lowerGallery

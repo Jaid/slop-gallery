@@ -11,7 +11,7 @@ type RailingSegment = {halfLength: number
   position: Vec3
   rotation: [number, number, number, number]}
 
-export class RailingPath extends Curve<Vector3> {
+export default class RailingPath extends Curve<Vector3> {
   readonly distances = [0]
   readonly length: number
   readonly postRadius = 0.035

@@ -4,7 +4,7 @@ import {color, mix, mx_noise_vec3, positionGeometry, positionView, time} from 't
 
 import {proceduralNormal, spectralColor} from '#src/lib/knots/shared.ts'
 
-import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import KnotMaterial from '../../../base/KnotMaterial.ts'
 import knotData from './data.ts'
 
 export default class PrismFractureMaterial extends KnotMaterial {

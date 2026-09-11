@@ -2,7 +2,7 @@ import type {Texture} from 'three/webgpu'
 
 import {color, mix, normalViewGeometry, positionViewDirection, uv, vec2, vec3} from 'three/tsl'
 
-import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import KnotMaterial from '../../../base/KnotMaterial.ts'
 import {premiumBands, premiumDetail, premiumLine, premiumNormal, premiumView, TAU} from '../../helpers.ts'
 import knotData from './data.ts'
 

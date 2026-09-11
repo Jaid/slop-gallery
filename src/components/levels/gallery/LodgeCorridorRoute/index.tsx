@@ -8,7 +8,7 @@ import CoveredPassage from '#component/levels/gallery/CoveredPassage'
 import {surfaceTexture} from '#src/components/Scene/materials.ts'
 import {corridorPassage} from '#src/lib/gallery/corridor.ts'
 import {lodgeTunnel, lodgeWindowRibCutouts} from '#src/lib/gallery/lodge.ts'
-import {LodgeWoodMaterial} from '#src/lib/materials/LodgeWoodMaterial.ts'
+import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
 
 export default function LodgeCorridorRoute({material}: {material: Material}) {
   const lining = useMemo(() => new LodgeWoodMaterial, [])

@@ -8,7 +8,7 @@ No renderer, global store, hardware detection, URL library or persistence depend
 
 ```tsx
 import {useState} from 'react'
-import {GraphicsQualityProvider, useGraphicsQuality, useGraphicsQualityValue, useSetGraphicsQuality} from 'use-graphics-quality'
+import useGraphicsQuality, {GraphicsQualityProvider, useGraphicsQualityValue, useSetGraphicsQuality} from 'use-graphics-quality'
 
 const detailedBudget = {shadows: true, particles: 1000}
 const fastBudget = {shadows: false, particles: 100}

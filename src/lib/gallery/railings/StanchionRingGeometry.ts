@@ -3,10 +3,10 @@ import type {BufferGeometry} from 'three/webgpu'
 import {LatheGeometry, SphereGeometry, TubeGeometry, Vector2} from 'three/webgpu'
 
 import {mergeParts} from '../../geometry.ts'
-import {RopeRing} from './RopeRing.ts'
+import RopeRing from './RopeRing.ts'
 
 /** A closed museum barrier with weighted posts, softly sagging ropes and mesh-accurate collision. */
-export class StanchionRingGeometry {
+export default class StanchionRingGeometry {
   readonly posts: BufferGeometry
   readonly rope: BufferGeometry
 

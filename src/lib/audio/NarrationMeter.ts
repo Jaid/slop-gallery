@@ -16,7 +16,7 @@ export function frequencyLevels(frequencies: Uint8Array, sampleRate: number, fft
 }
 
 /** Analyses narration only, never footsteps or other gallery sound effects. */
-export class NarrationMeter {
+export default class NarrationMeter {
   private analyser: AnalyserNode | undefined
   private audio: HTMLAudioElement | undefined
   private frequencies = new Uint8Array(1024)

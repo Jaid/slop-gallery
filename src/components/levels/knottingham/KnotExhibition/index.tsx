@@ -5,8 +5,8 @@ import constructors from 'virtual:knot-exhibition-materials'
 import KnotLabels from '#component/levels/knottingham/KnotLabels'
 import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
 import {knotExhibition, knotFloatHeight} from '#src/lib/knots/exhibition.ts'
-import {KnotResources} from '#src/lib/knots/KnotResources.ts'
-import {KnotRotation} from '#src/lib/physics/KnotRotation.ts'
+import KnotResources from '#src/lib/knots/KnotResources.ts'
+import KnotRotation from '#src/lib/physics/KnotRotation.ts'
 
 export default function KnotExhibition() {
   const rotation = useMemo(() => new KnotRotation, [])

@@ -2,10 +2,10 @@ import {expect, test} from 'bun:test'
 
 import {NuqsTestingAdapter} from 'nuqs/adapters/testing'
 import {renderToStaticMarkup} from 'react-dom/server'
-import {useGraphicsQuality, useGraphicsQualityValue} from 'use-graphics-quality'
+import useGraphicsQuality, {useGraphicsQualityValue} from 'use-graphics-quality'
 
 import GraphicsQuality from '../../src/components/App/GraphicsQuality.tsx'
-import {parameterParsers} from '../../src/lib/ai/settings.ts'
+import parameterParsers from '../../src/lib/ai/settings.ts'
 import {getGraphicsProfile, graphicsQualityParser} from '../../src/lib/rendering/graphicsQuality.ts'
 
 function ReadProfile() {

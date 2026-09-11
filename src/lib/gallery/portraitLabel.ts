@@ -1,7 +1,7 @@
 import type {Object3D} from 'three/webgpu'
 
 // Shared by the hung label, its placement preview and wall clearance checks.
-export const portraitLabel = {
+const portraitLabel = {
   height: 0.31,
   depth: 0.045,
   offset: 0.37,
@@ -29,3 +29,5 @@ export function isPortraitLabelHit(object: Object3D, portrait: Object3D) {
   }
   return false
 }
+
+export default portraitLabel

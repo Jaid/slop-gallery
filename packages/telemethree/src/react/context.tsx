@@ -1,4 +1,4 @@
-import type {Telemetry} from '../Telemetry.ts'
+import type Telemetry from '../Telemetry.ts'
 import type {PropsWithChildren} from 'react'
 
 import {createContext, useContext, useEffect} from 'react'

@@ -1,5 +1,5 @@
 import CanvasText from '#component/CanvasText'
-import {portraitLabel, portraitLabelLayout} from '#src/lib/gallery/portraitLabel.ts'
+import portraitLabel, {portraitLabelLayout} from '#src/lib/gallery/portraitLabel.ts'
 
 type PortraitLabelProps = {
   creator?: string

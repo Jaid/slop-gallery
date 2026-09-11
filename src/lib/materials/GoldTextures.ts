@@ -42,7 +42,7 @@ function texture(pixels: Uint8Array, color = false) {
 }
 
 /** Owned, deterministic gold maps with periodic grain and matching UV scales. */
-export class GoldTextures {
+export default class GoldTextures {
   readonly map: DataTexture
   readonly normal: DataTexture
 

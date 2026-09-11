@@ -1,7 +1,7 @@
 import {BufferGeometry, Float32BufferAttribute} from 'three/webgpu'
 
 /** Decimate a row-major blade grid while retaining the sampled normals, colors and UVs. */
-export function sampleGrid(source: BufferGeometry, sourceColumns: number, rows: ReadonlyArray<number>, columns: ReadonlyArray<number>) {
+export default function sampleGrid(source: BufferGeometry, sourceColumns: number, rows: ReadonlyArray<number>, columns: ReadonlyArray<number>) {
   const geometry = new BufferGeometry
   for (const [name, attribute] of Object.entries(source.attributes)) {
     const values: Array<number> = []

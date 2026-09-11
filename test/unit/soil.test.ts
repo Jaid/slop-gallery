@@ -2,7 +2,7 @@ import {expect, test} from 'bun:test'
 
 import {NoColorSpace, SRGBColorSpace} from 'three/webgpu'
 
-import {SoilTextures} from '../../src/lib/materials/SoilTextures.ts'
+import SoilTextures from '../../src/lib/materials/SoilTextures.ts'
 
 test('soil has deterministic brown grains and matching relief with owned resources', () => {
   const a = new SoilTextures

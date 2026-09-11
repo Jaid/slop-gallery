@@ -1,11 +1,7 @@
-import type {DevelopmentApi} from '../../src/lib/development/api.ts'
-
 import {afterEach, beforeEach, describe, expect, test} from 'bun:test'
 
+import {AimInspector} from 'ego-player'
 import {BoxGeometry, DoubleSide, Group, InstancedMesh, Matrix3, Matrix4, Mesh, MeshBasicMaterial, OrthographicCamera, PerspectiveCamera, PlaneGeometry, Scene, Vector3} from 'three/webgpu'
-
-import {AimInspector} from '../../src/lib/development/AimInspector.ts'
-import {installDevelopmentApi} from '../../src/lib/development/api.ts'
 
 let scene: Scene
 let camera: PerspectiveCamera
@@ -208,42 +204,5 @@ describe('aim inspection', () => {
     expect(orthoInspector.getAim().hits.map(hit => hit.mesh.name)).toEqual(['inside'])
     orthographic.position.x = 5
     expect(orthoInspector.getAim().hit).toBeNull()
-  })
-})
-const makeApi = (): DevelopmentApi => ({getAim: () => inspector.getAim()})
-describe('development namespace', () => {
-  test('requires the explicit development=true query parameter', () => {
-    for (const search of ['', '?development', '?development=false', '?development=1', '?development=TRUE', '?test=true']) {
-      const host: {'slop.gallery'?: DevelopmentApi} = {}
-      let created = false
-      expect(installDevelopmentApi(host, search, () => {
-        created = true
-        return makeApi()
-      })).toBeUndefined()
-      expect(created).toBe(false)
-      expect('slop.gallery' in host).toBe(false)
-    }
-  })
-  test('installs a callable API and removes it on unmount, including remounts', () => {
-    const host: {'slop.gallery'?: DevelopmentApi} = {}
-    for (let mount = 0; mount < 2; mount++) {
-      const cleanup = installDevelopmentApi(host, '?ai=false&development=true', makeApi)
-      expect(host['slop.gallery']!.getAim().hit).toBeNull()
-      cleanup!()
-      expect('slop.gallery' in host).toBe(false)
-    }
-  })
-  test('restores an earlier API without deleting a newer owner during cleanup', () => {
-    const previous = makeApi()
-    const host = {'slop.gallery': previous}
-    const cleanup = installDevelopmentApi(host, '?development=true', makeApi)!
-    expect(host['slop.gallery']).not.toBe(previous)
-    cleanup()
-    expect(host['slop.gallery']).toBe(previous)
-    const stop = installDevelopmentApi(host, '?development=true', makeApi)!
-    const replacement = makeApi()
-    host['slop.gallery'] = replacement
-    stop()
-    expect(host['slop.gallery']).toBe(replacement)
   })
 })

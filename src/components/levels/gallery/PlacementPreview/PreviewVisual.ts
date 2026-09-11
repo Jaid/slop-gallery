@@ -3,7 +3,7 @@ import type {DataTexture} from 'three/webgpu'
 import {float, Fn, fwidth, luminance, max, mix, sin, smoothstep, texture, uniform, uv, vec2} from 'three/tsl'
 import {BufferGeometry, Color, Float32BufferAttribute, MeshBasicNodeMaterial} from 'three/webgpu'
 
-import {portraitLabel, portraitLabelLayout} from '#src/lib/gallery/portraitLabel.ts'
+import portraitLabel, {portraitLabelLayout} from '#src/lib/gallery/portraitLabel.ts'
 
 export const previewColors = {
   valid: '#36ff72',
@@ -36,7 +36,7 @@ export function previewBorderGeometry(width: number, height: number, thickness =
   return geometry
 }
 
-export class PreviewVisual {
+export default class PreviewVisual {
   readonly border: BufferGeometry
   readonly borderMaterial: MeshBasicNodeMaterial
   readonly imageMaterial = new MeshBasicNodeMaterial({

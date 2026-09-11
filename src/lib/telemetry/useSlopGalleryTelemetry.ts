@@ -1,9 +1,9 @@
-import type {SlopGalleryTelemetry} from './SlopGalleryTelemetry.ts'
+import type SlopGalleryTelemetry from './SlopGalleryTelemetry.ts'
 import type {GalleryStore} from './types.ts'
 
 import {useEffect} from 'react'
 
-export function useSlopGalleryTelemetry(telemetry: SlopGalleryTelemetry | null, store: GalleryStore, events?: EventTarget) {
+export default function useSlopGalleryTelemetry(telemetry: SlopGalleryTelemetry | null, store: GalleryStore, events?: EventTarget) {
   useEffect(() => {
     if (!telemetry) {
       return

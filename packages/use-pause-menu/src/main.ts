@@ -1,2 +1,3 @@
 export * from './core.ts'
-export {usePauseMenu as default, usePauseMenu} from './usePauseMenu.ts'
+export {default as PauseMenu} from './core.ts'
+export {default} from './usePauseMenu.ts'

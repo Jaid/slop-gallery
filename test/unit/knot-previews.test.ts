@@ -2,7 +2,7 @@ import {expect, test} from 'bun:test'
 import {fileURLToPath} from 'node:url'
 
 import {visibleBounds} from '../../scripts/lib/knots/previewLayout.ts'
-import {updateKnots} from '../../scripts/updateKnots.ts'
+import updateKnots from '../../scripts/updateKnots.ts'
 import {knotCandidates} from '../../src/lib/knots/index.ts'
 
 async function dimensions(url: string) {

@@ -2,10 +2,10 @@ import {useFrame} from '@react-three/fiber/webgpu'
 import {useEffect, useMemo} from 'react'
 
 import PortraitLabel from '#component/levels/gallery/PortraitLabel'
-import {previewColors, previewOpacity, PreviewVisual} from '#src/components/levels/gallery/PlacementPreview/PreviewVisual.ts'
+import PreviewVisual, {previewColors, previewOpacity} from '#src/components/levels/gallery/PlacementPreview/PreviewVisual.ts'
 import {useGallery} from '#src/lib/gallery.ts'
-import {portraitLabel, portraitLabelLayout} from '#src/lib/gallery/portraitLabel.ts'
-import {useArtworkTexture} from '#src/lib/useArtworkTexture.ts'
+import portraitLabel, {portraitLabelLayout} from '#src/lib/gallery/portraitLabel.ts'
+import useArtworkTexture from '#src/lib/useArtworkTexture.ts'
 
 export default function PlacementPreview({width, height, source, title, creator, pending}: {creator?: string
   height: number

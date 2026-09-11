@@ -1,6 +1,6 @@
 import type {ExportBatch, Signal, TelemetryExporter} from './types.ts'
 
-import {ExportError} from './ExportError.ts'
+import ExportError from './ExportError.ts'
 import {encodeOtlp} from './otlp.ts'
 
 export type HttpRequest = (url: string, init: RequestInit) => Promise<Response>
@@ -13,7 +13,7 @@ export type HttpExporterOptions = {
 }
 const object = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value)
 
-export class OtlpHttpExporter implements TelemetryExporter {
+export default class OtlpHttpExporter implements TelemetryExporter {
   constructor(protected readonly options: HttpExporterOptions) {}
 
   async export(batch: ExportBatch) {

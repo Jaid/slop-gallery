@@ -2,7 +2,7 @@ import {describe, expect, test} from 'bun:test'
 
 import {Euler, Quaternion} from 'three/webgpu'
 
-import {InspectionLook} from '../../src/lib/camera/InspectionLook.ts'
+import InspectionLook from '../../src/lib/camera/InspectionLook.ts'
 
 const rotation = (yaw = 0, pitch = 0) => (new Quaternion).setFromEuler(new Euler(pitch, yaw, 0, 'YXZ'))
 describe('inspection look', () => {

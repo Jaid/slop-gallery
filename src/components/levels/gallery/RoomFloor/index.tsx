@@ -7,7 +7,7 @@ import {useGraphicsQualityValue} from 'use-graphics-quality'
 
 import WoodFloor from '#component/levels/gallery/WoodFloor'
 import CheckerMarbleFloor from '#src/components/Scene/CheckerMarbleFloor.tsx'
-import {Box} from '#src/components/Scene/primitives.tsx'
+import Box from '#src/components/Scene/primitives.tsx'
 import {floorGlassThickness, floorThickness, roomFloorPlan} from '#src/lib/gallery/floors.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsQuality.ts'
 

@@ -61,7 +61,7 @@ function block(width: number, bottom: number, top: number, bevel: number, fluted
 }
 
 /** A fluted stone plinth with a stepped foot, recessed collars and a beveled cap. */
-export class PedestalGeometry {
+export default class PedestalGeometry {
   readonly bronze = mergeParts([
     block(0.974, 0.232, 0.242, 0.002),
     block(0.974, 1.128, 1.138, 0.002),

@@ -4,7 +4,7 @@ import {cameraPosition, color, mix, modelWorldMatrixInverse, mx_noise_float, nor
 
 import {liquidNormal, opticalBands} from '#src/lib/knots/shared.ts'
 
-import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import KnotMaterial from '../../../base/KnotMaterial.ts'
 import knotData from './data.ts'
 
 export default class MercuryTideMaterial extends KnotMaterial {

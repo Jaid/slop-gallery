@@ -1,13 +1,14 @@
 import type {GalleryDocument, Portrait} from './types.ts'
 
 import {galleryStorageKey} from '../level.ts'
+import pauseMenu from '../pauseMenu.ts'
 import {notify} from './actions.ts'
-import {initialPortraits} from './collection.ts'
+import initialPortraits from './collection.ts'
 import {imageSize} from './ImageImporter.ts'
 import {imageExtensions, maximumBackupBytes, validateCollectionImages, validateImage} from './imagePolicy.ts'
 import {playerSession, playerSpawn, validatePlayerPose} from './PlayerSession.ts'
 import {createDocument, maximumPortraits, restoreDocument, useGallery} from './store.ts'
-import {insideGallery, placementIssue, wallCoordinates, wallPosition, walls} from './walls.ts'
+import walls, {insideGallery, placementIssue, wallCoordinates, wallPosition} from './walls.ts'
 
 const images = new Set(initialPortraits.map(p => p.source).filter((p): p is string => typeof p === 'string'))
 const narrations = new Set(initialPortraits.map(p => p.narration).filter((p): p is string => typeof p === 'string'))
@@ -100,7 +101,7 @@ export function validateDocument(value: unknown): GalleryDocument {
   }
 }
 
-export class GalleryRepository {
+export default class GalleryRepository {
   private database: Promise<IDBDatabase> | undefined
   private writes = Promise.resolve()
 
@@ -254,7 +255,8 @@ export async function initializePersistence() {
     if (saved) {
       restoreDocument(saved)
     }
-    playerSession.resume(saved?.savedAt ?? '')
+    const resumed = playerSession.resume(saved?.savedAt ?? '')
+    pauseMenu.setGameData(saved !== null || resumed === true)
     useGallery.setState({
       saveStatus: 'saved',
       storageRecoveryRequired: false,

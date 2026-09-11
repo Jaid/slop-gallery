@@ -2,7 +2,7 @@ import type {Attributes, SpanEvent, Trace, TraceContext} from './types.ts'
 
 const id = (bytes: number) => Array.from(crypto.getRandomValues(new Uint8Array(bytes)), value => value.toString(16).padStart(2, '0')).join('')
 
-export class Span implements TraceContext {
+export default class Span implements TraceContext {
   readonly spanId = id(8)
   readonly traceId: string
   private droppedEventsCount = 0

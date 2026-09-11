@@ -19,7 +19,7 @@ export type StemCollider = {mass: number
   vertices: Float32Array}
 
 /** Shared immutable meshes; each mounted specimen owns its attachment state and bodies. */
-export abstract class DestructibleGeometry {
+export default abstract class DestructibleGeometry {
   readonly foliageMaterial: 'foliage' | 'waxyFoliage' = 'waxyFoliage'
   readonly leaves: Array<DestructibleLeaf> = []
   readonly removableRoot: boolean = false

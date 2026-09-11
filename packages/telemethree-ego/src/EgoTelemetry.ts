@@ -8,7 +8,7 @@ const zero = {
 const finite = (point: Point3) => Number.isFinite(point.x) && Number.isFinite(point.y) && Number.isFinite(point.z)
 
 /** Samples a player/controller adapter, never keyboard events, DOM state or a physics engine. */
-export class EgoTelemetry {
+export default class EgoTelemetry {
   private readonly intervalMs: number
   private readonly maxGap: number
   private nextSample = 0

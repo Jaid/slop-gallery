@@ -36,9 +36,9 @@ export const analyzeFrame = ({pixels, width, height}: RgbaFrame): Pick<CaptureFr
   let luminanceTotal = 0
   let nonBlackCount = 0
   for (let index = 0; index < pixels.length; index += 4) {
-    const r = pixels[index]!
-    const g = pixels[index + 1]!
-    const b = pixels[index + 2]!
+    const r = pixels[index]
+    const g = pixels[index + 1]
+    const b = pixels[index + 2]
     luminanceTotal += 0.2126 * r + 0.7152 * g + 0.0722 * b
     if (r > 8 || g > 8 || b > 8) {
       nonBlackCount += 1
@@ -46,7 +46,7 @@ export const analyzeFrame = ({pixels, width, height}: RgbaFrame): Pick<CaptureFr
   }
   const centerOffset = (Math.floor(height / 2) * width + Math.floor(width / 2)) * 4
   return {
-    centerPixel: [pixels[centerOffset]!, pixels[centerOffset + 1]!, pixels[centerOffset + 2]!, pixels[centerOffset + 3]!],
+    centerPixel: [pixels[centerOffset], pixels[centerOffset + 1], pixels[centerOffset + 2], pixels[centerOffset + 3]],
     meanLuminance: luminanceTotal / (width * height),
     nonBlackFraction: nonBlackCount / (width * height),
   }

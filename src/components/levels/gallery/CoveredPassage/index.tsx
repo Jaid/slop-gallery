@@ -1,4 +1,5 @@
-import type {Passage, PassageCutout} from '#src/lib/gallery/passages/Passage.ts'
+import type Passage from '#src/lib/gallery/passages/Passage.ts'
+import type {PassageCutout} from '#src/lib/gallery/passages/Passage.ts'
 import type {Material} from 'three/webgpu'
 
 import {CuboidCollider, RigidBody, TrimeshCollider} from '@react-three/rapier'
@@ -6,10 +7,10 @@ import {useEffect, useMemo} from 'react'
 import {BoxGeometry} from 'three/webgpu'
 
 import TimberFrame from '#component/levels/gallery/TimberFrame'
-import {Box} from '#src/components/Scene/primitives.tsx'
+import Box from '#src/components/Scene/primitives.tsx'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
-import {TimberGeometry} from '#src/lib/gallery/passages/TimberGeometry.ts'
-import {VaultGeometry} from '#src/lib/gallery/passages/VaultGeometry.ts'
+import TimberGeometry from '#src/lib/gallery/passages/TimberGeometry.ts'
+import VaultGeometry from '#src/lib/gallery/passages/VaultGeometry.ts'
 import {mergeParts} from '#src/lib/geometry.ts'
 
 export default function CoveredPassage({passage, material, timber, ribCutouts}: {material: Material

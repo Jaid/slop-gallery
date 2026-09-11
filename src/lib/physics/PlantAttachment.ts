@@ -1,5 +1,5 @@
 // Session-local attachment bookkeeping. Re-grabbing a loose leaf cannot count twice.
-export class PlantAttachment {
+export default class PlantAttachment {
   canGrabPot = () => this.remaining === 0
   potAttached = true
   recoverLeafAsDynamic = () => !this.potAttached

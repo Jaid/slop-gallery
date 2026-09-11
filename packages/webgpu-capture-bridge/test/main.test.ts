@@ -2,7 +2,7 @@ import {describe, expect, test} from 'bun:test'
 
 import {PerspectiveCamera, RenderPipeline, RGBAFormat, Scene, UnsignedByteType} from 'three/webgpu'
 
-import {WebgpuCapture} from '../src/main.ts'
+import WebgpuCapture from '../src/main.ts'
 import {encode, TestCapture, TestRenderer} from './helpers.ts'
 
 describe('WebgpuCapture', () => {

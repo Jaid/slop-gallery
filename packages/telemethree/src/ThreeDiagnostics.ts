@@ -1,12 +1,12 @@
-import type {Span} from './Span.ts'
-import type {Telemetry} from './Telemetry.ts'
+import type Span from './Span.ts'
+import type Telemetry from './Telemetry.ts'
 import type {DescribeRenderPass, PassSample} from './ThreeInspector.ts'
 import type {Attributes, TraceContext} from './types.ts'
 import type {WebGPURenderer} from 'three/webgpu'
 
 import {InspectorBase} from 'three/webgpu'
 
-import {ThreeInspector} from './ThreeInspector.ts'
+import ThreeInspector from './ThreeInspector.ts'
 
 // r186 public backend API is not yet represented by @types/three r185.
 export type TimestampBackend = WebGPURenderer['backend'] & {
@@ -39,7 +39,7 @@ type PendingHitch = {end: number
   timer: ReturnType<typeof setTimeout>}
 
 /** Sparse exact-frame GPU samples and bounded forensic traces. No render-loop awaits. */
-export class ThreeDiagnostics {
+export default class ThreeDiagnostics {
   readonly gpuAvailable: boolean
   readonly inspector: ThreeInspector
   readonly longFramesAvailable = typeof PerformanceObserver !== 'undefined' && PerformanceObserver.supportedEntryTypes.includes('long-animation-frame')
@@ -119,7 +119,7 @@ export class ThreeDiagnostics {
     let hitch: PendingHitch | undefined
     if (durationMs >= this.hitchThresholdMs) {
       const severity = [250, 1000].filter(threshold => durationMs >= threshold).length
-      if (end - this.lastHitch[severity]! >= this.hitchCooldownMs && this.pending.size < 4) {
+      if (end - this.lastHitch[severity] >= this.hitchCooldownMs && this.pending.size < 4) {
         for (let level = 0; level <= severity; level++) {
           this.lastHitch[level] = end
         }

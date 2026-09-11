@@ -3,7 +3,7 @@
 The player layer between `telemethree` and application-specific instrumentation. No Rapier, input, game-store or development-API dependency.
 
 ```tsx
-import {useEgoTelemetry} from 'telemethree-ego/react'
+import useEgoTelemetry from 'telemethree-ego/react'
 
 function PlayerMetrics({telemetry, controller, aim}) {
   useEgoTelemetry({

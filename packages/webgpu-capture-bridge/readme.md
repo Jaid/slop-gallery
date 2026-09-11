@@ -7,7 +7,7 @@ Targets Three r186 (`three@^0.186.0`). The renderer belongs to the caller; wait 
 ## Three.js
 
 ```typescript
-import {WebgpuCapture} from 'webgpu-capture-bridge'
+import WebgpuCapture from 'webgpu-capture-bridge'
 
 await renderer.init()
 
@@ -59,7 +59,7 @@ For access outside the canvas, use the ref component:
 import type {CaptureFrameApi} from 'webgpu-capture-bridge'
 import {Canvas} from '@react-three/fiber/webgpu'
 import {useRef} from 'react'
-import {WebgpuCaptureBridge} from 'webgpu-capture-bridge/react'
+import WebgpuCaptureBridge from 'webgpu-capture-bridge/react'
 
 function Viewer() {
   const capture = useRef<CaptureFrameApi>(null)

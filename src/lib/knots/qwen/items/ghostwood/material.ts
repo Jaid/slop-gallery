@@ -4,7 +4,7 @@ import {color, mix, mx_noise_float, normalViewGeometry, positionGeometry, positi
 
 import {opticalBands, proceduralNormal} from '#src/lib/knots/shared.ts'
 
-import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import KnotMaterial from '../../../base/KnotMaterial.ts'
 import knotData from './data.ts'
 
 export default class GhostwoodMaterial extends KnotMaterial {

@@ -1,5 +1,5 @@
 /** Reusable interactive models, retaining their original preview catalog numbers. */
-export const destructiblePlants = [
+const destructiblePlants = [
   {
     id: 'birdOfParadise',
     title: 'Bird of paradise',
@@ -14,3 +14,5 @@ export const destructiblePlants = [
   },
 ] as const
 export type DestructiblePlantKind = (typeof destructiblePlants)[number]['id']
+
+export default destructiblePlants

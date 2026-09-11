@@ -3,10 +3,10 @@ import {describe, expect, test} from 'bun:test'
 import RAPIER from '@dimforge/rapier3d-compat'
 import {BoxGeometry, Mesh, MeshBasicMaterial, Quaternion, Raycaster, TubeGeometry, Vector3} from 'three/webgpu'
 
-import {lowerGallery, oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
-import {OculusGroundGeometry} from '../../src/lib/gallery/OculusGroundGeometry.ts'
-import {towerRamp as ramp, oculusTower as tower} from '../../src/lib/gallery/oculusTower.ts'
-import {RailingPath} from '../../src/lib/gallery/railings/RailingPath.ts'
+import lowerGallery, {oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
+import OculusGroundGeometry from '../../src/lib/gallery/OculusGroundGeometry.ts'
+import tower, {towerRamp as ramp} from '../../src/lib/gallery/oculusTower.ts'
+import RailingPath from '../../src/lib/gallery/railings/RailingPath.ts'
 import {addOculusRailings, oculusRailing as railing} from './helpers/oculusRailings.ts'
 
 await RAPIER.init()

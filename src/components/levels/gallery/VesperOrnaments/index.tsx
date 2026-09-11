@@ -4,8 +4,8 @@ import {useEffect, useLayoutEffect, useMemo, useRef} from 'react'
 import {Matrix4} from 'three/webgpu'
 
 import GoldMaterial from '#component/levels/gallery/GoldMaterial'
-import {vesperOrnaments} from '#src/lib/gallery/vesperOrnaments.ts'
-import {WallOrnamentGeometry} from '#src/lib/gallery/WallOrnamentGeometry.ts'
+import vesperOrnaments from '#src/lib/gallery/vesperOrnaments.ts'
+import WallOrnamentGeometry from '#src/lib/gallery/WallOrnamentGeometry.ts'
 
 const placements = vesperOrnaments.map(({position, rotation}) => (new Matrix4).makeRotationY(rotation).setPosition(...position))
 

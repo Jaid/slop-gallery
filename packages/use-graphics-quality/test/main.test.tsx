@@ -4,7 +4,7 @@ import {expect, test} from 'bun:test'
 
 import {renderToStaticMarkup} from 'react-dom/server'
 
-import {GraphicsQualityProvider, useGraphicsQuality, useGraphicsQualityValue, useSetGraphicsQuality} from '../src/main.ts'
+import useGraphicsQuality, {GraphicsQualityProvider, useGraphicsQualityValue, useSetGraphicsQuality} from '../src/main.ts'
 
 const detailed = {samples: 16} as const
 const fast = {samples: 0} as const

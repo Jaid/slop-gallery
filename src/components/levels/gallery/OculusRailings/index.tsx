@@ -2,7 +2,7 @@ import {CapsuleCollider, CuboidCollider, RigidBody} from '@react-three/rapier'
 import {useEffect, useMemo} from 'react'
 import {TubeGeometry} from 'three/webgpu'
 
-import {OculusRailing} from '#src/lib/gallery/railings/OculusRailing.ts'
+import OculusRailing from '#src/lib/gallery/railings/OculusRailing.ts'
 
 export default function OculusRailings() {
   const path = useMemo(() => new OculusRailing, [])

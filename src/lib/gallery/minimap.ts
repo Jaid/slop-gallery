@@ -1,7 +1,7 @@
 import type {Portrait, RoomId, Vec3} from './types.ts'
 
-import {portraitObjects} from './portraitObjects.ts'
-import {roomAt, rooms, wallPosition, walls} from './walls.ts'
+import portraitObjects from './portraitObjects.ts'
+import walls, {roomAt, rooms, wallPosition} from './walls.ts'
 
 export const isLowerRoom = (id: RoomId) => rooms.find(room => room.id === id)!.floorY < 0
 export const minimapHeading = ([x, , z]: Vec3) => Math.atan2(x, -z) * 180 / Math.PI

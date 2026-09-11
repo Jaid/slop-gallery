@@ -3,9 +3,9 @@ import {expect, test} from 'bun:test'
 import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import {lowerGallery} from '../../src/lib/gallery/lowerGallery.ts'
-import {moonfallWallFixtures} from '../../src/lib/gallery/moonfall/fixtures.ts'
-import {walls} from '../../src/lib/gallery/walls.ts'
+import lowerGallery from '../../src/lib/gallery/lowerGallery.ts'
+import moonfallWallFixtures from '../../src/lib/gallery/moonfall/fixtures.ts'
+import walls from '../../src/lib/gallery/walls.ts'
 
 test('every Moonfall LED is backed by solid wall across its entire housing', () => {
   const room = lowerGallery.moonfall

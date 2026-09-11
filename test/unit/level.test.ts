@@ -7,9 +7,9 @@ import {resolve} from 'node:path'
 import {selectGameLevel} from 'vite-plugin-game-level'
 
 import levels, {defaultLevel, levelIds} from '../../src/data/levels.ts'
-import {initialPortraits as museumPortraits} from '../../src/levels/gallery/collection.ts'
+import museumPortraits from '../../src/levels/gallery/collection.ts'
 import {insideLevel as insideMuseum, playerSpawn as museumSpawn} from '../../src/levels/gallery/navigation.ts'
-import {initialPortraits as knotPortraits} from '../../src/levels/knottingham/collection.ts'
+import knotPortraits from '../../src/levels/knottingham/collection.ts'
 import {insideLevel as insideKnots, playerSpawn as knotSpawn, levelFloorHeight, woodenFloor} from '../../src/levels/knottingham/navigation.ts'
 import {knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
 
@@ -74,7 +74,7 @@ test('Knot build retains poses beyond the museum bounds and falls back safely', 
     throw new Error(JSON.stringify(result.logs))
   }
   const source = await result.outputs[0].text()
-  const {PlayerSession, validatePlayerPose, playerSpawn} = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`) as typeof import('../../src/lib/gallery/PlayerSession.ts')
+  const {default: PlayerSession, validatePlayerPose, playerSpawn} = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`) as typeof import('../../src/lib/gallery/PlayerSession.ts')
   const session = new PlayerSession
   const pose: PlayerPose = {
     position: farKnotPosition,

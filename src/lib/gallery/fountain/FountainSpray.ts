@@ -1,10 +1,10 @@
 import {attribute, time, vec3} from 'three/tsl'
 import {InstancedBufferAttribute, InstancedMesh, MeshStandardNodeMaterial, SphereGeometry} from 'three/webgpu'
 
-import {fountain} from './config.ts'
+import fountain from './config.ts'
 
 /** Ballistic droplets animated entirely on the GPU; no per-frame allocations or React updates. */
-export class FountainSpray extends InstancedMesh<SphereGeometry, MeshStandardNodeMaterial> {
+export default class FountainSpray extends InstancedMesh<SphereGeometry, MeshStandardNodeMaterial> {
   constructor(count = fountain.sprayCount) {
     const geometry = new SphereGeometry(0.014, 6, 4)
     const origins: Array<number> = []

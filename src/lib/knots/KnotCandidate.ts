@@ -21,7 +21,7 @@ export function indexKnots(candidates: ReadonlyArray<KnotCandidate>) {
   return numbers
 }
 
-export class KnotCandidate {
+export default class KnotCandidate {
   readonly items: ReadonlyArray<KnotEntry>
   constructor(readonly data: KnotCandidateData, items: ReadonlyArray<KnotData>) {
     if (!identifier.test(data.id)) {

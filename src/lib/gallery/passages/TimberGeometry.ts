@@ -1,6 +1,7 @@
-import type {StairFlight} from '../stairs/StairFlight.ts'
+import type StairFlight from '../stairs/StairFlight.ts'
 import type {Vec3} from '../types.ts'
-import type {Passage, PassageCutout} from './Passage.ts'
+import type Passage from './Passage.ts'
+import type {PassageCutout} from './Passage.ts'
 
 import {Brush, Evaluator, SUBTRACTION} from 'three-bvh-csg'
 import {BoxGeometry, BufferGeometry, ExtrudeGeometry, Matrix4, MeshBasicNodeMaterial, Shape, Vector2} from 'three/webgpu'
@@ -96,7 +97,7 @@ function cutTimber(geometry: BufferGeometry, cutouts: ReadonlyArray<PassageCutou
 }
 
 /** Faceted timber portals with mitered knees, a flat crown and continuous plank backing. */
-export class TimberGeometry {
+export default class TimberGeometry {
   static passage(passage: Passage, ribCutouts: ReadonlyArray<PassageCutout> = []) {
     return new TimberGeometry(passage.spans.map(({start, end}, i) => ({
       start: [start[0], passage.floorY, start[1]],

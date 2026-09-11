@@ -1,15 +1,15 @@
 import type {Placement, Portrait, RoomId, Vec3} from './types.ts'
 
-import {corridor, corridorPassage, corridorStairFloor, corridorWalls, insideCorridor} from './corridor.ts'
-import {mainEntrance} from './entrance.ts'
-import {lobby} from './lobby.ts'
-import {insideLodgeAccess, lodge, lodgeTunnel, lodgeTunnelWalls, lodgeWindow, lodgeWindowFloor, lodgeWindowGlassDistance} from './lodge.ts'
-import {lowerGallery, oculusPlatform, oculusRamps, rampFloorHeight} from './lowerGallery.ts'
+import corridor, {corridorPassage, corridorStairFloor, corridorWalls, insideCorridor} from './corridor.ts'
+import mainEntrance from './entrance.ts'
+import lobby from './lobby.ts'
+import lodge, {insideLodgeAccess, lodgeTunnel, lodgeTunnelWalls, lodgeWindow, lodgeWindowFloor, lodgeWindowGlassDistance} from './lodge.ts'
+import lowerGallery, {oculusPlatform, oculusRamps, rampFloorHeight} from './lowerGallery.ts'
 import {craterTerrain} from './moonfall/CraterTerrain.ts'
 import {balconyFloorHeight} from './oculusBalcony.ts'
 import {towerFloorHeight} from './oculusTower.ts'
-import {portraitLabel, portraitLabelLayout} from './portraitLabel.ts'
-import {insideStairway, staircase, stairFlights, stairFloorHeight, stairTurn} from './staircase.ts'
+import portraitLabel, {portraitLabelLayout} from './portraitLabel.ts'
+import staircase, {insideStairway, stairFlights, stairFloorHeight, stairTurn} from './staircase.ts'
 import {tunnelDisplayWindow} from './tunnelDisplays.ts'
 
 export const placementReach = 10
@@ -226,7 +226,7 @@ const doorway: Array<WallOpening> = [
     profile: 'arch',
   },
 ]
-export const walls: Array<Wall> = [
+const walls: Array<Wall> = [
   {
     ...wall('lobby-north', 'lobby', 0, lobby.northZ, 0, lobby.width),
     reservations: [mainEntrance.reservation],
@@ -577,3 +577,5 @@ export function floorHeight([x, y, z]: Vec3) {
   heights.sort((a, b) => b - a)
   return heights.find(height => y >= height - 1) ?? heights.at(-1) ?? 0
 }
+
+export default walls

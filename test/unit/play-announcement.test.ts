@@ -1,8 +1,8 @@
 import {afterEach, expect, mock, spyOn, test} from 'bun:test'
 
 import {narrationMeter} from '../../src/lib/audio/NarrationMeter.ts'
-import {playAnnouncement} from '../../src/lib/audio/playAnnouncement.ts'
-import {SoundEngine} from '../../src/lib/audio/SoundEngine.ts'
+import playAnnouncement from '../../src/lib/audio/playAnnouncement.ts'
+import SoundEngine from '../../src/lib/audio/SoundEngine.ts'
 
 const originalAudio = Object.getOwnPropertyDescriptor(globalThis, 'Audio')
 const spies: Array<{mockRestore: () => void}> = []
@@ -27,7 +27,7 @@ function setup() {
   })
   Object.defineProperty(globalThis, 'Audio', {
     configurable: true,
-    value() {
+    value: function Audio() {
       return audio
     },
   })

@@ -2,7 +2,7 @@ import {describe, expect, test} from 'bun:test'
 
 import {PerspectiveCamera, Vector3} from 'three/webgpu'
 
-import {OrbitInspection} from '../../src/lib/camera/OrbitInspection.ts'
+import OrbitInspection from '../../src/lib/camera/OrbitInspection.ts'
 
 const center = new Vector3(0, 1, 0)
 function setup() {

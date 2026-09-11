@@ -1,5 +1,5 @@
-import type {PlantGeometry} from './PlantGeometry.ts'
-import type {PotGeometry} from './PotGeometry.ts'
+import type PlantGeometry from './PlantGeometry.ts'
+import type PotGeometry from './PotGeometry.ts'
 
 import {triangleCount} from '../../geometry.ts'
 

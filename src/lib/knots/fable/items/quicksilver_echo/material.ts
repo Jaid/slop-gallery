@@ -4,7 +4,7 @@ import {color, mx_noise_float, time, vec3} from 'three/tsl'
 
 import {proceduralNormal} from '#src/lib/knots/shared.ts'
 
-import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import KnotMaterial from '../../../base/KnotMaterial.ts'
 import {viewerFrame} from '../../helpers.ts'
 import knotData from './data.ts'
 

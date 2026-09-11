@@ -5,8 +5,8 @@ import {computeMeshVolume} from 'three-bvh-csg'
 import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {architectureGeometry, colliderGeometry, createArchitectureGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
-import {lowerGallery, oculusPlatform, oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
-import {walls} from '../../src/lib/gallery/walls.ts'
+import lowerGallery, {oculusPlatform, oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
+import walls from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
 describe('floor-following wall baseboards', () => {

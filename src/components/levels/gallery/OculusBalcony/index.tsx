@@ -4,7 +4,7 @@ import {RigidBody, TrimeshCollider} from '@react-three/rapier'
 import {useEffect, useMemo} from 'react'
 
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
-import {OculusBalconyGeometry} from '#src/lib/gallery/OculusBalconyGeometry.ts'
+import OculusBalconyGeometry from '#src/lib/gallery/OculusBalconyGeometry.ts'
 
 export default function OculusBalcony({material}: {material: Material}) {
   const geometry = useMemo(() => new OculusBalconyGeometry, [])

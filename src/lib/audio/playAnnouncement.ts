@@ -1,8 +1,8 @@
 import {narrationMeter} from './NarrationMeter.ts'
-import {SoundEngine} from './SoundEngine.ts'
+import SoundEngine from './SoundEngine.ts'
 
 /** Plays a local recording and resolves on completion, not merely when playback starts. */
-export async function playAnnouncement(url: string, signal: AbortSignal, onPlaying: () => void) {
+export default async function playAnnouncement(url: string, signal: AbortSignal, onPlaying: () => void) {
   signal.throwIfAborted()
   const sound = SoundEngine.get()
   await sound.resume()

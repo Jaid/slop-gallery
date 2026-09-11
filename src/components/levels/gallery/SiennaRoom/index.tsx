@@ -5,9 +5,9 @@ import {useEffect, useMemo} from 'react'
 import {useGraphicsQualityValue} from 'use-graphics-quality'
 
 import Chandelier from '#component/levels/gallery/Chandelier'
-import {Box} from '#src/components/Scene/primitives.tsx'
+import Box from '#src/components/Scene/primitives.tsx'
 import {rooms, useGallery, walls} from '#src/lib/gallery.ts'
-import {RoomFloorTextures} from '#src/lib/materials/RoomFloorTextures.ts'
+import RoomFloorTextures from '#src/lib/materials/RoomFloorTextures.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsQuality.ts'
 
 const room = rooms.find(candidate => candidate.id === 'sienna')!

@@ -3,9 +3,9 @@ import {describe, expect, test} from 'bun:test'
 import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
-import {vesperOrnaments} from '../../src/lib/gallery/vesperOrnaments.ts'
-import {wallOrnament, WallOrnamentGeometry, wallOrnamentPositions} from '../../src/lib/gallery/WallOrnamentGeometry.ts'
-import {wallCoordinates, wallPosition, walls} from '../../src/lib/gallery/walls.ts'
+import vesperOrnaments from '../../src/lib/gallery/vesperOrnaments.ts'
+import WallOrnamentGeometry, {wallOrnament, wallOrnamentPositions} from '../../src/lib/gallery/WallOrnamentGeometry.ts'
+import walls, {wallCoordinates, wallPosition} from '../../src/lib/gallery/walls.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 
 describe('vesper wall ornaments', () => {

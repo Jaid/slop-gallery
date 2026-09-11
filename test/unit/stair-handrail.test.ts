@@ -6,7 +6,7 @@ import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry} from '../../src/lib/gallery/architecture.ts'
 import {stairFlights, stairRailGeometry, stairTurn} from '../../src/lib/gallery/staircase.ts'
-import {StairHandrailGeometry} from '../../src/lib/gallery/stairs/StairHandrailGeometry.ts'
+import StairHandrailGeometry from '../../src/lib/gallery/stairs/StairHandrailGeometry.ts'
 
 await RAPIER.init()
 describe('continuous stair handrails', () => {
@@ -69,7 +69,7 @@ describe('continuous stair handrails', () => {
         const radius = side === 'inner' ? stairTurn.innerRadius + 0.22 : stairTurn.outerRadius - 0.22
         const centerZ = side === 'inner' ? stairTurn.innerCenterZ : stairTurn.outerCenterZ
         for (const [i, flight] of stairFlights.entries()) {
-          for (const dx of [-0.04, -0.01, 0, 0.01, 0.04]) {
+          for (const dx of [-0.04, -0.01, -0.0001, 0.0001, 0.01, 0.04]) {
             const z = centerZ + (i === 0 ? -1 : 1) * (dx <= 0 ? radius : Math.sqrt(radius ** 2 - dx ** 2))
             const y = stairTurn.top + 1 + (dx < 0 ? dx * flight.slope : 0)
             for (const across of [-0.017, 0.013]) {

@@ -1,4 +1,6 @@
-import {PauseMenu} from 'use-pause-menu/core'
+import PauseMenu from 'use-pause-menu/core'
+
+import {galleryStorageKey} from './level.ts'
 
 export function readControlled() {
   try {
@@ -8,8 +10,8 @@ export function readControlled() {
   }
 }
 
-// Only the gallery knows about its pre-package visit marker.
-export const pauseMenu = new PauseMenu({
-  initialStage: readControlled() ? 'return' : 'first',
-  storageKey: 'slop-gallery-visited',
+const pauseMenu = new PauseMenu({
+  storageKey: `${galleryStorageKey}-visited`,
 })
+
+export default pauseMenu

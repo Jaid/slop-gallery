@@ -8,7 +8,7 @@ for (const level of ['gallery', 'knottingham'] as const) {
   if (await build.exited !== 0) {
     throw new Error(`Failed to build ${level}.`)
   }
-  const directory = join('dist', level)
+  const directory = join('out/production', level)
   const report = await Bun.file(join(directory, 'level-build.json')).json() as {level: string
     modules: Array<string>}
   const knot = level === 'knottingham'
@@ -33,6 +33,10 @@ for (const level of ['gallery', 'knottingham'] as const) {
     throw new Error(`Knot material code escaped the main chunk in ${level}.`)
   }
   const rapierMap = await Bun.file(join(directory, 'rapier.js.map')).json() as {sources: Array<string>}
+  const physicsSources = rapierMap.sources.filter(source => source.includes('/@dimforge/rapier3d-compat/'))
+  if (physicsSources.length !== 1 || !physicsSources[0].includes('@dimforge+rapier3d-compat@0.20.0/')) {
+    throw new Error(`Expected exactly one Rapier 0.20 implementation in ${level}.`)
+  }
   if (!rapierMap.sources.length || rapierMap.sources.some(source => !/\/node_modules\/(?:@[^/]+\/)?rapier[^/]*\//u.test(source.replaceAll('\\', '/')))) {
     throw new Error(`The Rapier chunk contains code outside Rapier packages in ${level}.`)
   }

@@ -8,9 +8,9 @@ import {KeyboardControls} from '@react-three/drei/webgpu'
 import {Canvas} from '@react-three/fiber/webgpu'
 import {Physics} from '@react-three/rapier'
 
-import {normalizeControls} from './normalizeControls.ts'
-import {WebgpuRenderer} from './WebgpuRenderer.ts'
-import {wrap} from './wrap.tsx'
+import normalizeControls from './normalizeControls.ts'
+import WebgpuRenderer from './WebgpuRenderer.ts'
+import wrap from './wrap.tsx'
 
 export type GameRenderer = (options: WebgpuRendererOptions) => Promise<WebgpuRenderer> | WebgpuRenderer
 export type GamePhysicsProps = Omit<PhysicsProps, 'children'>
@@ -32,7 +32,7 @@ const createRenderer: GameRenderer = options => new WebgpuRenderer({
   antialias: false,
 })
 
-export function Game<Actions extends string = string>({controls, children, physics = false, renderer = createRenderer, wrapper, sceneWrapper, ...canvasProps}: GameProps<Actions>) {
+export default function Game<Actions extends string = string>({controls, children, physics = false, renderer = createRenderer, wrapper, sceneWrapper, ...canvasProps}: GameProps<Actions>) {
   let world = children
   if (physics) {
     world = <Physics {...physics === true ? defaultPhysics : physics}>{world}</Physics>

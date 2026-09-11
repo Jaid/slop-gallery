@@ -1,6 +1,6 @@
 import {expect, test} from 'bun:test'
 
-import {frequencyLevels, NarrationMeter} from '../../src/lib/audio/NarrationMeter.ts'
+import NarrationMeter, {frequencyLevels} from '../../src/lib/audio/NarrationMeter.ts'
 
 test('frequency bands measure silence, full scale and isolated speech frequencies', () => {
   const frequencies = new Uint8Array(1024)

@@ -2,8 +2,8 @@ import type {Texture} from 'three/webgpu'
 
 import {color, mx_noise_float, time, vec3} from 'three/tsl'
 
-import {KnotMaterial} from '../../../base/KnotMaterial.ts'
-import {cellNoiseVec3, proceduralNormal, spectralColor, viewerFrame} from '../../helpers.ts'
+import KnotMaterial from '../../../base/KnotMaterial.ts'
+import viewerFrame, {cellNoiseVec3, proceduralNormal, spectralColor} from '../../helpers.ts'
 import knotData from './data.ts'
 
 export default class PlanckFoamMaterial extends KnotMaterial {

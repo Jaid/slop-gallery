@@ -2,8 +2,8 @@ import type {Node, Texture} from 'three/webgpu'
 
 import {color, mix, mx_rotate2d, time, uv, vec3} from 'three/tsl'
 
-import {KnotMaterial} from '../../../base/KnotMaterial.ts'
-import {cellNoiseVec3, opticalLine, proceduralNormal, viewerFrame} from '../../helpers.ts'
+import KnotMaterial from '../../../base/KnotMaterial.ts'
+import viewerFrame, {cellNoiseVec3, opticalLine, proceduralNormal} from '../../helpers.ts'
 import knotData from './data.ts'
 
 export default class CelestialAstrolabeMaterial extends KnotMaterial {

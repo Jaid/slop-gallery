@@ -3,7 +3,7 @@ import type {BufferGeometry} from 'three/webgpu'
 import {BoxGeometry, CylinderGeometry, ExtrudeGeometry, Shape, SphereGeometry, TorusGeometry} from 'three/webgpu'
 
 import {mergeParts} from '../geometry.ts'
-import {mainEntrance} from './entrance.ts'
+import mainEntrance from './entrance.ts'
 
 const extrude = (shape: Shape, thickness: number, z: number) => new ExtrudeGeometry(shape, {
   depth: thickness,
@@ -12,7 +12,7 @@ const extrude = (shape: Shape, thickness: number, z: number) => new ExtrudeGeome
 }).translate(0, 0, z)
 
 /** A paired, arched walnut door in a deep limestone and bronze surround. */
-export class EntranceGeometry {
+export default class EntranceGeometry {
   readonly frame: BufferGeometry
   readonly leaves: BufferGeometry
   readonly metal: BufferGeometry

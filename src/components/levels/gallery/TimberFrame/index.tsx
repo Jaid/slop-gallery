@@ -1,4 +1,4 @@
-import type {TimberGeometry} from '#src/lib/gallery/passages/TimberGeometry.ts'
+import type TimberGeometry from '#src/lib/gallery/passages/TimberGeometry.ts'
 import type {Material} from 'three/webgpu'
 
 import {TrimeshCollider} from '@react-three/rapier'

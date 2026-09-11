@@ -1,4 +1,4 @@
-export async function loadModelIcons(sources: Iterable<string>) {
+export default async function loadModelIcons(sources: Iterable<string>) {
   const urls = new Set(sources)
   const images = new Map<string, HTMLImageElement>
   await Promise.all(Array.from(urls, async url => {

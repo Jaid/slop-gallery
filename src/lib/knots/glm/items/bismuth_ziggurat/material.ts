@@ -2,7 +2,7 @@ import type {Texture} from 'three/webgpu'
 
 import {color, float, mix, negateOnBackSide, positionView, positionViewDirection, time, transformNormalToView, uv, varying, vec2} from 'three/tsl'
 
-import {KnotMaterial} from '../../../base/KnotMaterial.ts'
+import KnotMaterial from '../../../base/KnotMaterial.ts'
 import {spectralColor, terraceFields, terracePosition} from '../../flashHelpers.ts'
 import knotData from './data.ts'
 

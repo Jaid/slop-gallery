@@ -1,13 +1,13 @@
 import type {Portrait} from '../gallery/types.ts'
 import type {AiSettings} from './settings.ts'
 
-import {Narrator} from '../audio/Narrator.ts'
+import Narrator from '../audio/Narrator.ts'
 import {chime, loadBlob, notify} from '../gallery/actions.ts'
 import {compositeImages, fitGeneratedImage} from '../gallery/ImageImporter.ts'
 import {useGallery} from '../gallery/store.ts'
 import {telemetry} from '../telemetry/index.ts'
 
-export class GalleryDirector {
+export default class GalleryDirector {
   readonly narrator: Narrator
   private controller = new AbortController
   private flavors = new Map<string, symbol>

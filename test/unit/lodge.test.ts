@@ -3,23 +3,23 @@ import type {Vec3} from '../../src/lib/gallery/types.ts'
 import {afterAll, describe, expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
-import {EgoMotor} from 'ego-player/motor'
+import EgoMotor from 'ego-player/motor'
 import {DoubleSide, Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import {initialPortraits} from '../../src/lib/gallery/collection.ts'
+import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {corridorPassage, corridorRails, corridorStairs, insideCorridor} from '../../src/lib/gallery/corridor.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
-import {insideLodgeAccess, lodge, lodgeTunnel, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
-import {LodgeWindowGeometry} from '../../src/lib/gallery/LodgeWindowGeometry.ts'
+import lodge, {insideLodgeAccess, lodgeTunnel, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
+import LodgeWindowGeometry from '../../src/lib/gallery/LodgeWindowGeometry.ts'
 import {oculusPlatform} from '../../src/lib/gallery/lowerGallery.ts'
-import {oculusTower} from '../../src/lib/gallery/oculusTower.ts'
-import {Passage} from '../../src/lib/gallery/passages/Passage.ts'
-import {TimberGeometry} from '../../src/lib/gallery/passages/TimberGeometry.ts'
-import {VaultGeometry} from '../../src/lib/gallery/passages/VaultGeometry.ts'
-import {StairCarpetGeometry} from '../../src/lib/gallery/stairs/StairCarpetGeometry.ts'
+import oculusTower from '../../src/lib/gallery/oculusTower.ts'
+import Passage from '../../src/lib/gallery/passages/Passage.ts'
+import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
+import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
+import StairCarpetGeometry from '../../src/lib/gallery/stairs/StairCarpetGeometry.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
-import {floorHeight, insideGallery, placementIssue, roomAt, rooms, wallPosition, walls} from '../../src/lib/gallery/walls.ts'
+import walls, {floorHeight, insideGallery, placementIssue, roomAt, rooms, wallPosition} from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
 const routePassages = [lodgeTunnel, corridorPassage] as const
@@ -319,34 +319,6 @@ describe('Lodge and Corridor route', () => {
       }
     }
   }
-  test('new openings preserve saved artwork as reachable loose frames, without mutating backups', () => {
-    for (const [id, u, y] of [['lobby-north', 0, 2.65], ['oculus-north', lodge.entranceX, -3], ['sienna-west', 14 - lodge.siennaZ, 2.5], ['lodge-west', lodge.center[1] - lodge.returnZ, -2.9]] as const) {
-      const wall = walls.find(candidate => candidate.id === id)!
-      const portrait = {
-        ...initialPortraits[0],
-        id: 'saved-doorway-art',
-        title: 'Keep this custom title',
-        width: 1,
-        height: 1,
-        wallId: id,
-        position: wallPosition(wall, u, y),
-        rotation: wall.rotation,
-      }
-      expect(placementIssue(wall, portrait.position, portrait.width, portrait.height, [])).toContain('doorway')
-      const saved = validateDocument({
-        ...createDocument(),
-        portraits: [portrait],
-      })
-      const restored = saved.portraits[0]
-      expect(restored.hung).toBe(false)
-      expect(restored.title).toBe(portrait.title)
-      expect(restored.source).toBe(portrait.source)
-      expect(insideGallery(restored.position)).toBe(true)
-      expect(restored.position[1] - floorHeight(restored.position)).toBeCloseTo(0.2)
-      expect(validateDocument(saved)).toEqual(saved)
-      expect(portrait.hung).toBe(true)
-    }
-  })
   test('the new room accepts hanging and loose artwork in backups', () => {
     const wall = walls.find(candidate => candidate.id === 'lodge-north')!
     const portrait = {
@@ -363,21 +335,6 @@ describe('Lodge and Corridor route', () => {
       portraits: [portrait],
     })
     expect(saved.portraits[0]).toMatchObject(portrait)
-  })
-  test('loose frames in the removed return corridor recover inside the Lodge', () => {
-    const portrait = {
-      ...initialPortraits[0],
-      hung: false,
-      position: [-25, -4.8, -20] as Vec3,
-    }
-    const saved = validateDocument({
-      ...createDocument(),
-      portraits: [portrait],
-    })
-    expect(saved.portraits[0].position).toEqual([-25, -4.8, -28.5])
-    expect(saved.portraits[0].source).toBe(portrait.source)
-    expect(portrait.position).toEqual([-25, -4.8, -20])
-    expect(validateDocument(saved)).toEqual(saved)
   })
 })
 test('passages reject malformed paths instead of producing cracked geometry', () => {

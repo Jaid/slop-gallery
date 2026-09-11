@@ -6,13 +6,13 @@ import {afterEach, beforeEach, describe, expect, test} from 'bun:test'
 import RAPIER from '@dimforge/rapier3d-compat'
 import {Vector3} from 'three/webgpu'
 
-import {CatalogPlantGeometry} from '../../src/lib/gallery/destructiblePlants/CatalogPlantGeometry.ts'
+import CatalogPlantGeometry from '../../src/lib/gallery/destructiblePlants/CatalogPlantGeometry.ts'
 import {potDefinition} from '../../src/lib/gallery/plantDecorations/catalog.ts'
-import {PlantGeometry} from '../../src/lib/gallery/plantDecorations/PlantGeometry.ts'
-import {PotGeometry} from '../../src/lib/gallery/plantDecorations/PotGeometry.ts'
+import PlantGeometry from '../../src/lib/gallery/plantDecorations/PlantGeometry.ts'
+import PotGeometry from '../../src/lib/gallery/plantDecorations/PotGeometry.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
-import {GrabbableBody} from '../../src/lib/physics/GrabbableBody.ts'
-import {RootedPlantAttachment} from '../../src/lib/physics/RootedPlantAttachment.ts'
+import GrabbableBody from '../../src/lib/physics/GrabbableBody.ts'
+import RootedPlantAttachment from '../../src/lib/physics/RootedPlantAttachment.ts'
 
 await RAPIER.init()
 let world: RAPIER.World

@@ -2,7 +2,7 @@ import {afterEach, beforeEach, describe, expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
 
-import {PropPlacement} from '../../src/lib/physics/PropPlacement.ts'
+import PropPlacement from '../../src/lib/physics/PropPlacement.ts'
 
 await RAPIER.init()
 let world: RAPIER.World

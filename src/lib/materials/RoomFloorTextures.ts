@@ -3,7 +3,7 @@ import type {DataTexture} from 'three/webgpu'
 import {SimplexNoise} from 'three/addons/math/SimplexNoise.js'
 import {MirroredRepeatWrapping, RepeatWrapping} from 'three/webgpu'
 
-import {canvasTexture} from '#src/lib/texture.ts'
+import canvasTexture from '#src/lib/texture.ts'
 
 const random = (seed: number) => () => {
   seed = seed + 0x6D_2B_79_F5 | 0
@@ -130,7 +130,7 @@ function carpet() {
 }
 
 /** Maps are owned by one room mount; both color and relief use the same physical scale. */
-export class RoomFloorTextures {
+export default class RoomFloorTextures {
   readonly carpet = carpet()
   readonly wood = wood()
 

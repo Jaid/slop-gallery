@@ -5,7 +5,7 @@ import type {BufferGeometry} from 'three/webgpu'
 import {CatmullRomCurve3, TubeGeometry, Vector3} from 'three/webgpu'
 
 import {mergeParts} from '../../geometry.ts'
-import {bladeGeometry} from './bladeGeometry.ts'
+import bladeGeometry from './bladeGeometry.ts'
 
 // Callbacks borrow builder-owned geometry before merging; clone any mesh to retain it.
 export type PlantGeometryCapture = {
@@ -17,7 +17,7 @@ type Point = [number, number, number]
 const radial = (angle: number, radius: number, y: number): Point => [Math.cos(angle) * radius, y, Math.sin(angle) * radius]
 
 /** Deterministic botanical mesh builder. The root origin is the pot’s soil surface. */
-export class PlantGeometry {
+export default class PlantGeometry {
   readonly foliage: BufferGeometry
   readonly stems: BufferGeometry
   private readonly blades: Array<BufferGeometry> = []

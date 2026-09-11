@@ -1,8 +1,8 @@
 import type {Portrait} from '#src/lib/gallery/types.ts'
 
-import {lobby} from '#src/lib/gallery/lobby.ts'
+import lobby from '#src/lib/gallery/lobby.ts'
 
-export const initialPortraits: Array<Portrait> = [
+const initialPortraits: Array<Portrait> = [
   {
     id: 'goose',
     title: 'His Unbothered Majesty',
@@ -292,3 +292,5 @@ export const initialPortraits: Array<Portrait> = [
     wallId: 'lobby-south',
   },
 ]
+
+export default initialPortraits

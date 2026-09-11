@@ -7,7 +7,7 @@ import {mergeParts} from '../../geometry.ts'
 import {fountainBench} from './benches.ts'
 
 /** Lengthwise teak battens on two brushed-metal U-frames, shared by all four benches. */
-export class SlattedBenchGeometry {
+export default class SlattedBenchGeometry {
   readonly metal: BufferGeometry
   readonly wood: BufferGeometry
 

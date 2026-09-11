@@ -2,7 +2,7 @@ import {expect, test} from 'bun:test'
 
 import {knotAnnouncementPaths, knotAnnouncements} from '../../src/lib/knots/announcements.ts'
 import {knotsByNumber} from '../../src/lib/knots/index.ts'
-import {KnotAnnouncer} from '../../src/lib/knots/KnotAnnouncer.ts'
+import KnotAnnouncer from '../../src/lib/knots/KnotAnnouncer.ts'
 
 const item = knotsByNumber.get(98)!
 test('plays each model and title once, without a key or network generator', async () => {
@@ -114,4 +114,18 @@ test('interrupted or failed titles remain available until successfully completed
   audio.play = async () => {}
   await announcer.announce(item)
   expect(announcer.hasAnnounced(item)).toBe(true)
+})
+test('explicit interaction repeats the title without repeating its completed creator', async () => {
+  const played: Array<string> = []
+  const announcer = new KnotAnnouncer({
+    resolve: id => id,
+    play: async url => {
+      played.push(url)
+    },
+  })
+  await announcer.announce(item)
+  await announcer.announce(item, true)
+  await announcer.announce(item)
+  const paths = knotAnnouncementPaths(item)
+  expect(played).toEqual([paths.creator, paths.item, paths.item])
 })

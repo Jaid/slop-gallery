@@ -4,7 +4,7 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {architectureGeometry, createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
-import {walls} from '../../src/lib/gallery/walls.ts'
+import walls from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
 describe('plain doorway trim', () => {

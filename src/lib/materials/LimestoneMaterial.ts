@@ -2,7 +2,7 @@ import {color, mx_noise_float, positionGeometry, vec3} from 'three/tsl'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 /** Honed limestone with restrained mineral bedding and fine, non-repeating grain. */
-export class LimestoneMaterial extends MeshStandardNodeMaterial {
+export default class LimestoneMaterial extends MeshStandardNodeMaterial {
   constructor() {
     super({roughness: 0.72})
     // Object-space stone continues across the cap, chamfers and carved channels.

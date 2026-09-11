@@ -3,15 +3,15 @@ import type {Vec3} from '../../src/lib/gallery/types.ts'
 import {describe, expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
-import {EgoMotor} from 'ego-player/motor'
+import EgoMotor from 'ego-player/motor'
 import {BoxGeometry, Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import {initialPortraits} from '../../src/lib/gallery/collection.ts'
+import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
-import {stairBlocks, staircase, stairFlights, stairFloorHeight, stairRailGeometry, stairRoofs, stairTurn} from '../../src/lib/gallery/staircase.ts'
+import staircase, {stairBlocks, stairFlights, stairFloorHeight, stairRailGeometry, stairRoofs, stairTurn} from '../../src/lib/gallery/staircase.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
-import {findPlacement, floorHeight, insideGallery, placementIssue, roomAt, rooms, roomVisit, wallPosition, walls} from '../../src/lib/gallery/walls.ts'
+import walls, {findPlacement, floorHeight, insideGallery, placementIssue, roomAt, rooms, roomVisit, wallPosition} from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
 const lower = rooms.find(candidate => candidate.id === 'moonfall')!

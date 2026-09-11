@@ -1,9 +1,9 @@
-import type {StairTurn} from './StairTurn.ts'
+import type StairTurn from './StairTurn.ts'
 
 import {BufferGeometry, Float32BufferAttribute, Vector3} from 'three/webgpu'
 
 /** One closed rail across two grades and a level bend, with shared vertical join profiles. */
-export class StairHandrailGeometry extends BufferGeometry {
+export default class StairHandrailGeometry extends BufferGeometry {
   constructor(turn: StairTurn, side: 'inner' | 'outer', start: readonly [number, number], end: readonly [number, number]) {
     if (![...start, ...end].every(Number.isFinite) || start[0] >= turn.center[0] || end[0] >= turn.center[0]) {
       throw new RangeError('A stair handrail needs finite flight endpoints before the turn plane.')

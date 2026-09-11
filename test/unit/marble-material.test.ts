@@ -2,8 +2,8 @@ import {expect, test} from 'bun:test'
 
 import {PerspectiveCamera, Texture} from 'three/webgpu'
 
-import {MarbleFloorMaterial} from '../../src/lib/materials/MarbleFloorMaterial.ts'
-import {WoodFloorMaterial} from '../../src/lib/materials/WoodFloorMaterial.ts'
+import MarbleFloorMaterial from '../../src/lib/materials/MarbleFloorMaterial.ts'
+import WoodFloorMaterial from '../../src/lib/materials/WoodFloorMaterial.ts'
 import {getGraphicsProfile} from '../../src/lib/rendering/graphicsQuality.ts'
 
 for (const Material of [MarbleFloorMaterial, WoodFloorMaterial]) {

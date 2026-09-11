@@ -3,7 +3,7 @@ import type {EgoOptions} from './options.ts'
 import {clamp} from './math.ts'
 
 /** Per-player camera smoothing and stride phase, independent of renderer and audio policy. */
-export class EgoView {
+export default class EgoView {
   height: number
   private phase = 0
 

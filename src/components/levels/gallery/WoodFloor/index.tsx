@@ -3,7 +3,7 @@ import type {Texture} from 'three/webgpu'
 import {useEffect, useMemo} from 'react'
 import {useGraphicsQualityValue} from 'use-graphics-quality'
 
-import {WoodFloorMaterial} from '#src/lib/materials/WoodFloorMaterial.ts'
+import WoodFloorMaterial from '#src/lib/materials/WoodFloorMaterial.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsQuality.ts'
 
 export default function WoodFloor({width, depth, texture, reflections}: {depth: number

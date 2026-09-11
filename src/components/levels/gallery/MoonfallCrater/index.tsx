@@ -7,9 +7,9 @@ import {MeshStandardNodeMaterial} from 'three/webgpu'
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import {moonfallCrater} from '#src/lib/gallery/moonfall/config.ts'
-import {CraterGeometry} from '#src/lib/gallery/moonfall/CraterGeometry.ts'
-import {StanchionRingGeometry} from '#src/lib/gallery/railings/StanchionRingGeometry.ts'
-import {CraterMaterial} from '#src/lib/materials/CraterMaterial.ts'
+import CraterGeometry from '#src/lib/gallery/moonfall/CraterGeometry.ts'
+import StanchionRingGeometry from '#src/lib/gallery/railings/StanchionRingGeometry.ts'
+import CraterMaterial from '#src/lib/materials/CraterMaterial.ts'
 
 export default function MoonfallCrater({stone}: {stone: Texture}) {
   const geometry = useMemo(() => new CraterGeometry, [])

@@ -1,8 +1,8 @@
 import {ExtrudeGeometry, Shape} from 'three/webgpu'
 
-import {oculusBalcony as balcony} from './oculusBalcony.ts'
+import balcony from './oculusBalcony.ts'
 
-export class OculusBalconyGeometry extends ExtrudeGeometry {
+export default class OculusBalconyGeometry extends ExtrudeGeometry {
   constructor() {
     const shape = new Shape
     shape.absellipse(0, 0, balcony.width / 2, balcony.depth, Math.PI, 2 * Math.PI, false, 0)

@@ -11,7 +11,7 @@ import Toast from '#component/Toast'
 import {galleryEvents, useGallery} from '#src/lib/gallery.ts'
 import {galleryTitle} from '#src/lib/level.ts'
 import {telemetry} from '#src/lib/telemetry/index.ts'
-import {useSlopGalleryTelemetry} from '#src/lib/telemetry/useSlopGalleryTelemetry.ts'
+import useSlopGalleryTelemetry from '#src/lib/telemetry/useSlopGalleryTelemetry.ts'
 import useGalleryAI from '#src/lib/useGalleryAI.ts'
 import useGalleryCommands from '#src/lib/useGalleryCommands.ts'
 

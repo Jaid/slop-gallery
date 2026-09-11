@@ -2,7 +2,7 @@ import {bumpMap, color, float, mix, mx_noise_float, normalLocal, positionGeometr
 import {DoubleSide, MeshPhysicalNodeMaterial} from 'three/webgpu'
 
 /** Dielectric water with animated ripples, moving flow streaks and aerated edges. */
-export class FountainWaterMaterial extends MeshPhysicalNodeMaterial {
+export default class FountainWaterMaterial extends MeshPhysicalNodeMaterial {
   constructor(stream = false, quality = true) {
     const transmission = stream ? 0.8 : 0.55
     super({

@@ -3,7 +3,7 @@ import type {PlayerPose, Vec3} from '../../src/lib/gallery/types.ts'
 import {describe, expect, test} from 'bun:test'
 
 import {insideKnotGallery, knotGalleryBounds, knotGalleryWalls} from '../../src/lib/gallery/knotGallery.ts'
-import {rooms, walls} from '../../src/lib/gallery/walls.ts'
+import walls, {rooms} from '../../src/lib/gallery/walls.ts'
 
 describe('permanent Knot Gallery', () => {
   test('independently seals an exhibition hall sized for the candidate rows', () => {

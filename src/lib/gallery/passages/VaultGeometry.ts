@@ -1,4 +1,4 @@
-import type {Passage} from './Passage.ts'
+import type Passage from './Passage.ts'
 import type {BufferGeometry} from 'three/webgpu'
 
 import {ExtrudeGeometry, Shape} from 'three/webgpu'
@@ -6,7 +6,7 @@ import {ExtrudeGeometry, Shape} from 'three/webgpu'
 import {mergeParts} from '../../geometry.ts'
 
 /** Barrel vaults stop short of elbows, where the continuous roof closes the turn. */
-export class VaultGeometry {
+export default class VaultGeometry {
   readonly ribs: BufferGeometry
   readonly shell: BufferGeometry
 

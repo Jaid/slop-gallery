@@ -5,7 +5,8 @@ import {afterEach, beforeEach, expect, test} from 'bun:test'
 import RAPIER from '@dimforge/rapier3d-compat'
 import {Quaternion, Vector3} from 'three/webgpu'
 
-import DefaultPlayer, {defaultEgoOptions, egoControls, EgoMotor, EgoPlayer} from '../src/main.ts'
+import DefaultPlayer, {defaultEgoOptions, egoControls, EgoMotor} from '../src/main.ts'
+import EgoPlayer from '../src/EgoPlayer.tsx'
 
 await RAPIER.init()
 let world: RAPIER.World
@@ -97,8 +98,8 @@ test('sprint and crouch speeds preserve feet and resize the collider synchronous
   }, 90)
   expect(motor.crouching).toBe(true)
   expect(motor.horizontalSpeed).toBeCloseTo(defaultEgoOptions.speed * defaultEgoOptions.crouchFactor, 2)
-  expect(motor.body.collider(0).halfHeight()).toBeCloseTo(0.2)
-  expect(motor.body.collider(0).translation().y - motor.body.translation().y).toBeCloseTo(0.5)
+  expect(motor.body.collider(0).halfHeight()).toBeCloseTo(0.3)
+  expect(motor.body.collider(0).translation().y - motor.body.translation().y).toBeCloseTo(0.6)
   expect(motor.body.translation().y).toBeCloseTo(0.02, 2)
   tick(motor)
   expect(motor.crouching).toBe(false)
@@ -277,9 +278,11 @@ test('options update without losing momentum and undefined restores defaults', (
   })
   expect(motor.horizontalSpeed).toBeCloseTo(defaultEgoOptions.speed, 2)
   expect(motor.body.collider(0).radius()).toBeCloseTo(0.4)
+  expect(motor.body.collider(0).translation().y - motor.body.translation().y).toBeCloseTo(1, 5)
   tick(motor, {forward: true}, 60)
   expect(motor.horizontalSpeed).toBeCloseTo(4, 2)
   motor.configure({speed: undefined})
+  expect(motor.body.collider(0).translation().y - motor.body.translation().y).toBeCloseTo(defaultEgoOptions.height / 2, 5)
   tick(motor, {forward: true}, 60)
   expect(motor.horizontalSpeed).toBeCloseTo(defaultEgoOptions.speed, 2)
 })
@@ -595,8 +598,8 @@ test('restoring under a newly mounted low ceiling selects crouching before the f
   motor.teleport([4, 0.02, 0], [0, 0.04, 0])
   expect(motor.crouching).toBe(true)
   expect(motor.body.translation().x).toBe(4)
-  expect(motor.body.collider(0).halfHeight()).toBeCloseTo(0.2)
-  expect(motor.body.collider(0).translation().y).toBeCloseTo(0.52)
+  expect(motor.body.collider(0).halfHeight()).toBeCloseTo(0.3)
+  expect(motor.body.collider(0).translation().y).toBeCloseTo(0.62)
   tick(motor, {}, 10, false)
   expect(motor.crouching).toBe(true)
   roofBody.setTranslation({

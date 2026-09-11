@@ -2,8 +2,8 @@ import type {Texture} from 'three/webgpu'
 
 import {color, mix, mx_cell_noise_float, mx_noise_float, mx_worley_noise_float, time, vec3} from 'three/tsl'
 
-import {KnotMaterial} from '../../../base/KnotMaterial.ts'
-import {liquidNormal, opticalLine, viewerFrame} from '../../helpers.ts'
+import KnotMaterial from '../../../base/KnotMaterial.ts'
+import viewerFrame, {liquidNormal, opticalLine} from '../../helpers.ts'
 import knotData from './data.ts'
 
 export default class AbyssalBloomMaterial extends KnotMaterial {

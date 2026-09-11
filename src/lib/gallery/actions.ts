@@ -1,9 +1,9 @@
 import type {Panel} from './store.ts'
 import type {Portrait, Vec3} from './types.ts'
 
-import {SoundEngine} from '../audio/SoundEngine.ts'
-import {pauseMenu} from '../pauseMenu.ts'
-import {initialPortraits} from './collection.ts'
+import SoundEngine from '../audio/SoundEngine.ts'
+import pauseMenu from '../pauseMenu.ts'
+import initialPortraits from './collection.ts'
 import {playerSession, playerSpawn} from './PlayerSession.ts'
 import {redo, undo, useGallery} from './store.ts'
 import {floorHeight} from './walls.ts'
