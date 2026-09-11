@@ -1,5 +1,5 @@
 import type {AcceptedPlugin} from 'postcss'
-import type {ConfigEnv, UserConfig, UserConfigFn} from 'vite'
+import type {ConfigEnv, Plugin, UserConfig, UserConfigFn} from 'vite'
 
 import babelPlugin from '@rolldown/plugin-babel'
 import reactPlugin, {reactCompilerPreset} from '@vitejs/plugin-react'
@@ -13,8 +13,27 @@ import mediaMixinsPlugin from 'vite-plugin-media-mixins'
 import titlePlugin from 'vite-plugin-title'
 
 import levels, {defaultLevel, levelIds} from '#src/data/levels.ts'
+import {knotExhibition} from '#src/lib/knots/exhibition.ts'
 import {victoriaTelemetry} from '#src/lib/telemetry/vite.ts'
 
+const knotMaterialsModule = 'virtual:knot-exhibition-materials'
+const resolvedKnotMaterialsModule = `\0${knotMaterialsModule}`
+const knotMaterialsPlugin = (): Plugin => ({
+  name: 'knot-exhibition-materials',
+  resolveId(id) {
+    if (id === knotMaterialsModule) {
+      return resolvedKnotMaterialsModule
+    }
+  },
+  load(id) {
+    if (id !== resolvedKnotMaterialsModule) {
+      return
+    }
+    const imports = knotExhibition.map((item, index) => `import Material${index} from ${JSON.stringify(`/src/lib/knots/${item.model}/items/${item.sourceId}/material.ts`)}`)
+    const constructors = knotExhibition.map((_, index) => `Material${index}`)
+    return `${imports.join('\n')}\nexport default [${constructors.join(', ')}]\n`
+  },
+})
 const getCommonConfig = (context: ConfigEnv) => {
   const env = loadEnv(context.mode, process.cwd(), 'SLOP_VICTORIA_')
   const level = selectGameLevel(loadEnv(context.mode, process.cwd(), 'GAME_LEVEL').GAME_LEVEL, levelIds, defaultLevel)
@@ -25,6 +44,7 @@ const getCommonConfig = (context: ConfigEnv) => {
       sourcemap: true,
     },
     plugins: [
+      knotMaterialsPlugin(),
       titlePlugin(levels[level].title),
       gameLevelPlugin({
         level,
@@ -102,6 +122,9 @@ const getProductionConfig = () => {
           minify: true,
           topLevelVar: true,
           chunkFileNames: chunkInfo => {
+            if (chunkInfo.name === 'rapier' && chunkInfo.isDynamicEntry) {
+              return 'rapier-entry.js'
+            }
             if (chunkInfo.name === 'rolldown-runtime') {
               return 'runtime.js'
             }
@@ -116,14 +139,30 @@ const getProductionConfig = () => {
           codeSplitting: {
             groups: [
               {
+                name: 'rapier',
+                test: /[/\\]node_modules[/\\](?:@[^/\\]+[/\\])?rapier[^/\\]*[/\\]/u,
+                priority: 6,
+                includeDependenciesRecursively: false,
+              },
+              {
+                name: 'three',
+                test: /[/\\]node_modules[/\\]three[/\\]/u,
+                priority: 5,
+              },
+              {
                 name: 'react',
                 test: /[/\\]node_modules[/\\]react(-dom)?[/\\]/u,
+                priority: 4,
+              },
+              {
+                name: 'sub',
+                test: /[/\\]packages[/\\]/u,
                 priority: 2,
               },
               {
                 name: 'vendor',
                 test: /node_modules/u,
-                priority: 1,
+                priority: 3,
               },
               {
                 name: 'main',
