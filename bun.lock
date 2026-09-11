@@ -15,6 +15,7 @@
         "compose-id": "0.2.0",
         "ego-player": "workspace:*",
         "es-toolkit": "1.52.0",
+        "grok-speaker": "workspace:*",
         "mount-root": "0.5.0",
         "nuqs": "2.10.1",
         "react": "19.3.0",
@@ -80,6 +81,13 @@
         "react": "^19.3.0",
         "react-dom": "^19.3.0",
         "three": "^0.186.0",
+      },
+    },
+    "packages/grok-speaker": {
+      "name": "grok-speaker",
+      "version": "0.1.0",
+      "dependencies": {
+        "optis": "^0.1.0",
       },
     },
     "packages/telemethree": {
@@ -727,6 +735,8 @@
 
     "graceful-fs": ["graceful-fs@4.2.11", "", {}, "sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ=="],
 
+    "grok-speaker": ["grok-speaker@workspace:packages/grok-speaker"],
+
     "has-flag": ["has-flag@4.0.0", "", {}, "sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ=="],
 
     "hashery": ["hashery@1.5.1", "", { "dependencies": { "hookified": "^1.15.0" } }, "sha512-iZyKG96/JwPz1N55vj2Ie2vXbhu440zfUfJvSwEqEbeLluk7NnapfGqa7LH0mOsnDxTF85Mx8/dyR6HfqcbmbQ=="],
@@ -854,6 +864,8 @@
     "obug": ["obug@2.2.1", "", {}, "sha512-XrsrhT5sybtKI6wakr2SPOlGZWWYbUXZ7a0jT8/QOeAPau+1X/bSegNe5YR75oJmEZQbKningirmGOEJCIk61Q=="],
 
     "optionator": ["optionator@0.9.4", "", { "dependencies": { "deep-is": "^0.1.3", "fast-levenshtein": "^2.0.6", "levn": "^0.4.1", "prelude-ls": "^1.2.1", "type-check": "^0.4.0", "word-wrap": "^1.2.5" } }, "sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g=="],
+
+    "optis": ["optis@0.1.0", "", {}, "sha512-bNqJJ1ezkJwMZMlBru5pMLbN9i5XgRjjWdAmVRpKC2j+zXLUT/FI7h7ZKPyqxUo8kq6QVvwV3eGx+W+kOhLL9g=="],
 
     "p-limit": ["p-limit@3.1.0", "", { "dependencies": { "yocto-queue": "^0.1.0" } }, "sha512-TYOanM3wGwNGsZN2cVTYPArw454xnXj5qmWF1bEoAc4+cU/ol7GVh7odevjp1FNHduHc3KZMcFduxU5Xc6uJRQ=="],
 

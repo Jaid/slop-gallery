@@ -1,0 +1,29 @@
+{
+  "name": "grok-speaker",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Quality-mode Grok TTS with warm PCM streaming, WAV generation and typed speech tags",
+  "funding": "https://github.com/sponsors/Jaid",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jaid/slop-gallery.git"
+  },
+  "main": "src/main.ts",
+  "exports": {
+    ".": "./src/main.ts"
+  },
+  "scripts": {
+    "test": "bun test --max-concurrency 1 ./test"
+  },
+  "dependencies": {
+    "optis": "^0.1.0"
+  },
+  "files": [
+    "src",
+    "readme.md",
+    "license.txt"
+  ],
+  "sideEffects": false,
+  "types": "./src/main.ts"
+}

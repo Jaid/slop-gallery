@@ -46,6 +46,7 @@
     "compose-id": "0.2.0",
     "ego-player": "workspace:*",
     "es-toolkit": "1.52.0",
+    "grok-speaker": "workspace:*",
     "mount-root": "0.5.0",
     "nuqs": "2.10.1",
     "react": "19.3.0",
