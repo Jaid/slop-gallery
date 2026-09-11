@@ -41,6 +41,7 @@ const CanvasText = ({color = '#ffffff',
   useEffect(() => {
     let cancelled = false
     const render = async () => {
+      await document.fonts?.load(`${fontWeight} 16px "${fontFamily}"`, text)
       await document.fonts?.ready
       if (cancelled) {
         return

@@ -1,9 +1,11 @@
 import type {PlayerPose, RoomId, Vec3} from '#src/lib/gallery/types.ts'
 
-export {insideKnotGallery as insideLevel} from '#src/lib/gallery/knotGallery.ts'
+import {knotLayout} from '#src/lib/knots/exhibition.ts'
+
+export {insideKnotGallery as insideLevel, knotGalleryWallDistance as levelWallDistance} from '#src/lib/gallery/knotGallery.ts'
 
 export const playerSpawn: PlayerPose = {
-  position: [0, 0.04, -12],
+  position: [-knotLayout.rowHalfWidth, 0.04, knotLayout.firstRowZ + 2.75],
   yaw: 0,
   pitch: 0,
 }

@@ -6,9 +6,9 @@ import {insideKnotGallery, knotGalleryBounds, knotGalleryWalls} from '../../src/
 import {rooms, walls} from '../../src/lib/gallery/walls.ts'
 
 describe('permanent Knot Gallery', () => {
-  test('independently seals a 56 × 74 m exhibition hall', () => {
-    expect(knotGalleryBounds.maxX - knotGalleryBounds.minX).toBe(56)
-    expect(knotGalleryBounds.southZ - knotGalleryBounds.northZ).toBe(74)
+  test('independently seals an exhibition hall sized for the candidate rows', () => {
+    expect(knotGalleryBounds.maxX - knotGalleryBounds.minX).toBe(69.25)
+    expect(knotGalleryBounds.southZ - knotGalleryBounds.northZ).toBe(55)
     expect(knotGalleryWalls).toHaveLength(4)
     for (const wall of knotGalleryWalls) {
       expect(wall.holes).toBeUndefined()
@@ -26,11 +26,11 @@ describe('permanent Knot Gallery', () => {
       pitch: -0.1,
     }
     expect(insideKnotGallery(pose.position)).toBe(true)
-    for (const position of [[28, 0, -20], [-28, 0, -20], [0, 0, -64], [0, 0, 10], [0, -6, -20], [0, 6, -20], [Number.NaN, 0, -20], [0, 0, Infinity]] as Array<Vec3>) {
+    for (const position of [[knotGalleryBounds.maxX, 0, -20], [knotGalleryBounds.minX, 0, -20], [0, 0, knotGalleryBounds.northZ], [0, 0, knotGalleryBounds.southZ], [0, -6, -20], [0, 6, -20], [Number.NaN, 0, -20], [0, 0, Infinity]] as Array<Vec3>) {
       expect(insideKnotGallery(position)).toBe(false)
     }
     const outside: PlayerPose = {
-      position: [40, 0.04, 0],
+      position: [knotGalleryBounds.maxX + 1, 0.04, 0],
       yaw: 1,
       pitch: 0.2,
     }

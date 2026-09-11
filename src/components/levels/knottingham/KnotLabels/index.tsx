@@ -4,7 +4,7 @@ import {DataTexture, InstancedBufferAttribute, InstancedMesh, LinearFilter, Line
 
 import {knotExhibition} from '#src/lib/knots/exhibition.ts'
 
-import {drawLabel, labelHeight as height, labelWidth as width} from './drawLabel.ts'
+import {drawLabel, labelFontFamily, labelHeight as height, labelWidth as width} from './drawLabel.ts'
 import {loadModelIcons} from './modelIcons.ts'
 
 /** One atlas and one instanced draw replace hundreds of label meshes/materials. */
@@ -71,7 +71,11 @@ export default function KnotLabels() {
   }, [])
   useEffect(() => {
     let active = true
-    void loadModelIcons(knotExhibition.map(exhibit => exhibit.modelIcon)).then(icons => {
+    void Promise.all([
+      loadModelIcons(knotExhibition.map(exhibit => exhibit.modelIcon)),
+      document.fonts.load(`600 84px ${labelFontFamily}`),
+      document.fonts.load(`44px ${labelFontFamily}`),
+    ]).then(([icons]) => {
       if (active) {
         resources.updateIcons(icons)
       }

@@ -1,3 +1,6 @@
+// Boost procedural effects by 12 dB without changing narration or individual envelopes.
+const effectsGain = 0.6 * 10 ** (12 / 20)
+
 export class SoundEngine {
   private static instance: SoundEngine | undefined
   static existing() {
@@ -12,12 +15,12 @@ export class SoundEngine {
   private lastStep = 0
 
   private constructor() {
-    this.master.gain.value = 0.6
+    this.master.gain.value = effectsGain
     this.master.connect(this.context.destination)
   }
 
   mute(muted: boolean) {
-    this.master.gain.setTargetAtTime(muted ? 0 : 0.6, this.context.currentTime, 0.08)
+    this.master.gain.setTargetAtTime(muted ? 0 : effectsGain, this.context.currentTime, 0.08)
   }
 
   async resume() {

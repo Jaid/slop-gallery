@@ -62,7 +62,7 @@ describe('arbitrary Knot batches', () => {
         expect(await Bun.file('src/lib/knots/' + entry.model + '/items/' + entry.sourceId + '/material.ts').exists()).toBe(true)
       }
     }
-    expect(knots.map(item => item.number)).toEqual(Array.from({length: 97}, (_, index) => index + 1))
+    expect(knots.map(item => item.number)).toEqual(Array.from({length: 137}, (_, index) => index + 1))
   })
   test('groups Gemini versions together without losing per-item author fidelity', () => {
     const gemini = knotCandidates.filter(candidate => candidate.data.id === 'gemini')
@@ -78,10 +78,41 @@ describe('arbitrary Knot batches', () => {
     expect(original.modelIcon).toBe(latest.modelIcon)
     expect(() => new KnotCandidate(candidateData, [{...item(1), author: {model: {title: ' '}}}])).toThrow('author')
   })
+  test('keeps the requested next-batch model credits and all previous review selections', () => {
+    const expected = [
+      {candidate: 'deepseek', first: 106, model: {title: 'DeepSeek 4.1 Flash', slug: 'deepseek/deepseek-v4.1-flash', effortLevel: 'max'}},
+      {candidate: 'muse', first: 114, model: {title: 'Muse Spark 1.3', slug: 'meta/muse-spark-1.3-contributor', effortLevel: 'xhigh'}},
+      {candidate: 'glm', first: 130, model: {title: 'GLM 5.3 Flash', slug: 'z-ai/glm-5.3-flash', effortLevel: 'max'}},
+      {candidate: 'hunyuan', first: 122, model: {title: 'HY4 Preview', slug: 'tencent/hy4-preview', effortLevel: 'high'}},
+    ]
+    for (const batch of expected) {
+      const candidate = knotCandidates.find(candidate => candidate.data.id === batch.candidate)!
+      const entries = candidate.items.filter(item => item.number >= batch.first && item.number < batch.first + 8)
+      expect(entries).toHaveLength(8)
+      for (const entry of entries) {
+        expect(entry.author.model).toEqual(batch.model)
+        expect(candidate.select()).toContain(entry)
+      }
+    }
+    expect(numbers(knotCandidates.find(candidate => candidate.data.id === 'deepseek')!)).toEqual([17, 19, 24, 106, 107, 108, 109, 110, 111, 112, 113])
+    expect(knots.find(item => item.number === 111)!.sourceId).toBe('quantum_foam_2')
+    expect(knots.find(item => item.number === 114)!.displacement).toBe(0.02)
+  })
   test('formats only truly consecutive selections as ranges', () => {
     expect(formatKnotLabels([])).toBe('')
     expect(formatKnotLabels([6])).toBe('#06')
     expect(formatKnotLabels([89, 90, 91])).toBe('#89–#91')
     expect(formatKnotLabels([6, 75, 97])).toBe('#06 · #75 · #97')
+  })
+  test('adds the new GLM batch without replacing its highlighted original', () => {
+    const glm = knotCandidates.find(candidate => candidate.data.id === 'glm')!
+    expect(glm.items).toHaveLength(24)
+    expect(numbers(glm)).toEqual([40, 98, 99, 100, 101, 102, 103, 104, 105, 130, 131, 132, 133, 134, 135, 136, 137])
+    for (const entry of glm.items.filter(item => item.number >= 98 && item.number <= 105)) {
+      expect(entry.author.model).toEqual({title: 'GLM 5.3', slug: 'z-ai/glm-5.3', effortLevel: 'max'})
+      expect(entry.highlighted).toBe(false)
+      expect(entry.archived).not.toBe(true)
+    }
+    expect(glm.items.find(item => item.number === 40)!.highlighted).toBe(true)
   })
 })

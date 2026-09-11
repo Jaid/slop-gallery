@@ -7,8 +7,9 @@ import {PointerLockControls} from 'three/addons/controls/PointerLockControls.js'
 import {Euler, Matrix4, PerspectiveCamera, Quaternion, Raycaster, Vector2, Vector3} from 'three/webgpu'
 
 import {PlacementPreview} from '#level/components.ts'
+import {levelWallDistance} from '#level/navigation.ts'
 import {InspectionLook} from '#src/lib/camera/InspectionLook.ts'
-import {cameraPose, chime, dragPose, enterGallery, findPlacement, galleryEvents, isTextInput, markControlled, narrate, notify, openPanel, roomAt, useGallery, wallDistance} from '#src/lib/gallery.ts'
+import {cameraPose, chime, dragPose, enterGallery, findPlacement, galleryEvents, isTextInput, markControlled, narrate, notify, openPanel, roomAt, useGallery} from '#src/lib/gallery.ts'
 import {playerSpawn} from '#src/lib/gallery/PlayerSession.ts'
 import {isPortraitLabelHit} from '#src/lib/gallery/portraitLabel.ts'
 import {portraitObjects} from '#src/lib/gallery/portraitObjects.ts'
@@ -145,7 +146,7 @@ export default function Interaction() {
       if (throwing) {
         const d = camera.getWorldDirection(new Vector3)
         const origin = camera.position.toArray()
-        const distance = Math.min(1.45, Math.max(0.35, wallDistance(origin, d.toArray()) - 0.4))
+        const distance = Math.min(1.45, Math.max(0.35, levelWallDistance(origin, d.toArray()) - 0.4))
         const pos = camera.position.clone().addScaledVector(d, distance)
         s.commit(s.portraits.map(p => {
           return p.id === id ? {
@@ -420,7 +421,7 @@ export default function Interaction() {
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.06)
     const s = useGallery.getState()
-    if (s.locked && !introduced.current && firstPose.current && (camera.position.distanceTo(firstPose.current.position) > 0.12 || camera.quaternion.angleTo(firstPose.current.rotation) > 0.1)) {
+    if (!isKnottingham && s.locked && !introduced.current && firstPose.current && (camera.position.distanceTo(firstPose.current.position) > 0.12 || camera.quaternion.angleTo(firstPose.current.rotation) > 0.1)) {
       introduced.current = true
       narrate('__intro')
     }
@@ -465,7 +466,7 @@ export default function Interaction() {
     ray.current.setFromCamera(cursor.current, camera)
     ray.current.far = 9
     if (!dragPose.active) {
-      let closest = wallDistance(cameraPose.position, cameraPose.direction)
+      let closest = levelWallDistance(cameraPose.position, cameraPose.direction)
       let active: string | null = null
       let activeLabel: string | null = null
       for (const [id, object] of [...portraitObjects, ...propObjects]) {

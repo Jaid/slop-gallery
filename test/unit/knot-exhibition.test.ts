@@ -14,14 +14,14 @@ import {StudioEnvironment} from '../../src/lib/materials/StudioEnvironment.ts'
 
 describe('multi-model Knot challenge', () => {
   test('keeps stable numbers and credits while grouping batches under one candidate', () => {
-    expect(knots).toHaveLength(97)
-    expect(knotsByNumber.size).toBe(97)
-    expect(knotExhibition).toHaveLength(30)
-    expect(new Set(knotExhibition.map(item => item.id)).size).toBe(30)
-    expect(knotBays).toHaveLength(7)
+    expect(knots).toHaveLength(137)
+    expect(knotsByNumber.size).toBe(137)
+    expect(knotExhibition).toHaveLength(70)
+    expect(new Set(knotExhibition.map(item => item.id)).size).toBe(70)
+    expect(knotBays).toHaveLength(9)
     expect(knotBays.find(bay => bay.model === 'astra')!.finishes.map(item => item.number)).toEqual([6, 75, 76, 77, 78, 79, 80, 97])
     expect(knotBays.find(bay => bay.model === 'fable')!.finishes.map(item => item.number)).toEqual([89, 90, 91, 92, 93, 94, 95, 96])
-    expect(knotBays.find(bay => bay.model === 'deepseek')!.labels).toBe('#17 · #19 · #24')
+    expect(knotBays.find(bay => bay.model === 'deepseek')!.labels).toBe('#17 · #19 · #24 · #106 · #107 · #108 · #109 · #110 · #111 · #112 · #113')
     expect(knotBays.find(bay => bay.model === 'sol')!.labels).toBe('#72')
     for (const item of knotExhibition) {
       expect(item.archived).not.toBe(true)
@@ -80,7 +80,7 @@ describe('multi-model Knot challenge', () => {
       }
     }
   })
-  test('all 97 item modules construct independently while sharing caller-owned lighting', async () => {
+  test('all item modules construct independently while sharing caller-owned lighting', async () => {
     const environment = new StudioEnvironment
     let disposed = false
     environment.addEventListener('dispose', () => disposed = true)

@@ -6,6 +6,10 @@ import {resolve} from 'node:path'
 
 import {selectGameLevel} from 'vite-plugin-game-level'
 
+import {knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
+
+const farKnotPosition: PlayerPose['position'] = [knotGalleryBounds.maxX - 2, 0.04, knotGalleryBounds.northZ + 2]
+
 import levels, {defaultLevel, levelIds} from '../../src/data/levels.ts'
 import {initialPortraits as museumPortraits} from '../../src/levels/gallery/collection.ts'
 import {insideLevel as insideMuseum, playerSpawn as museumSpawn} from '../../src/levels/gallery/navigation.ts'
@@ -45,10 +49,10 @@ describe('build-time levels', () => {
   test('uses independent spawn bounds and collections', () => {
     expect(insideKnots(knotSpawn.position)).toBe(true)
     expect(insideMuseum(museumSpawn.position)).toBe(true)
-    expect(insideKnots([23, 0.04, -58.5])).toBe(true)
-    expect(insideMuseum([23, 0.04, -58.5])).toBe(false)
-    expect(insideKnots([0, 0, -64])).toBe(false)
-    expect(levelFloorHeight([23, 0.04, -58.5])).toBe(0)
+    expect(insideKnots(farKnotPosition)).toBe(true)
+    expect(insideMuseum(farKnotPosition)).toBe(false)
+    expect(insideKnots([0, 0, knotGalleryBounds.northZ - 1])).toBe(false)
+    expect(levelFloorHeight(farKnotPosition)).toBe(0)
     expect(woodenFloor('vesper', [0, 0, 0])).toBe(false)
     expect(knotPortraits).toEqual([])
     expect(museumPortraits).toHaveLength(16)
@@ -75,7 +79,7 @@ test('Knot build retains poses beyond the museum bounds and falls back safely', 
   const {PlayerSession, validatePlayerPose, playerSpawn} = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`) as typeof import('../../src/lib/gallery/PlayerSession.ts')
   const session = new PlayerSession
   const pose: PlayerPose = {
-    position: [23, 0.04, -58.5],
+    position: farKnotPosition,
     yaw: 0.8,
     pitch: -0.1,
   }
@@ -88,7 +92,7 @@ test('Knot build retains poses beyond the museum bounds and falls back safely', 
     throw new Error('Knot position was not restored.')
   }
   session.restore({
-    position: [40, 0, 0],
+    position: [knotGalleryBounds.maxX + 1, 0, 0],
     yaw: 0,
     pitch: 0,
   })
@@ -127,7 +131,8 @@ test('Knottingham resets only its exhibition, without duplicate sibling keys or 
   const children = scene().props.children
   expect(children.map(child => child.type)).toEqual([
     '#component/levels/knottingham/KnotLobby',
+    '#component/levels/knottingham/KnotSpectation',
     '#component/levels/knottingham/KnotExhibition',
   ])
-  expect(children.map(child => child.key)).toEqual([null, '42'])
+  expect(children.map(child => child.key)).toEqual([null, null, '42'])
 })

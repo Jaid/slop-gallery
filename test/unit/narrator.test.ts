@@ -119,7 +119,7 @@ test('TTS keeps character steering out of the spoken transcript and caches audio
     response_format: string}
   expect(body.input).not.toContain(settings.narrator_character)
   expect(body.provider.options.google.instructions).toBe(settings.narrator_character)
-  expect(body.response_format).toBe('mp3')
+  expect(body.response_format).toBe('pcm')
   expect(useGallery.getState().narration).toMatchObject({
     status: 'playing',
     source: 'audio',

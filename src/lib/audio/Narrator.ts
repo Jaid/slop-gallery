@@ -1,5 +1,6 @@
 import type {AiSettings} from '../ai/settings.ts'
 
+import NarrationGenerator from '../ai/NarrationGenerator.ts'
 import {notify} from '../gallery/actions.ts'
 import {useGallery} from '../gallery/store.ts'
 import {narrationMeter} from './NarrationMeter.ts'
@@ -17,16 +18,17 @@ export class Narrator {
   private controller = new AbortController
   private disconnectAudio: (() => void) | undefined
   private jobs = new Map<string, Promise<Blob>>
+  private speakingId: string | undefined
   private unsubscribe: () => void
   private url: string | undefined
-  private version = 0
 
+  private version = 0
   private waiting: string | undefined
 
   constructor(private settings: AiSettings, private key: string) {
     this.unsubscribe = useGallery.subscribe((s, before) => {
       const id = s.narration?.id
-      if (!id) {
+      if (!id || id !== this.speakingId) {
         return
       }
       const p = s.portraits.find(p => p.id === id)
@@ -74,6 +76,7 @@ export class Narrator {
     }
     if (play) {
       this.stop()
+      this.speakingId = id
     }
     const version = this.version
     if (p.pending || p.merging) {
@@ -183,7 +186,10 @@ export class Narrator {
     this.waiting = undefined
     this.clearAudio()
     globalThis.speechSynthesis?.cancel()
-    useGallery.setState({narration: null})
+    if (this.speakingId && useGallery.getState().narration?.id === this.speakingId) {
+      useGallery.setState({narration: null})
+    }
+    this.speakingId = undefined
   }
 
   private browserSpeech(id: string, text: string, current: () => boolean) {
@@ -238,37 +244,9 @@ export class Narrator {
 
   private async generate(input: string) {
     await SoundEngine.get().resume()
-    const response = await fetch('https://openrouter.ai/api/v1/audio/speech', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.key}`,
-        'Content-Type': 'application/json',
-      },
+    return new NarrationGenerator(this.key, this.settings.audio_model, this.settings.narrator_voice).generate(input, {
       signal: AbortSignal.any([this.controller.signal, AbortSignal.timeout(90_000)]),
-      body: JSON.stringify({
-        model: this.settings.audio_model,
-        voice: this.settings.narrator_voice,
-        input,
-        response_format: 'mp3',
-        provider: {
-          options: {
-            openai: {instructions: this.settings.narrator_character},
-            google: {instructions: this.settings.narrator_character},
-          },
-        },
-      }),
+      character: this.settings.narrator_character,
     })
-    if (!response.ok) {
-      throw new Error(`Narration unavailable (${response.status}). Check the audio model in the OpenRouter menu.`)
-    }
-    const type = response.headers.get('content-type') ?? ''
-    if (!/audio\/(mp3|mpeg|ogg|wav)/.test(type)) {
-      throw new Error('The speech provider returned an unsupported audio format.')
-    }
-    const blob = await response.blob()
-    if (!blob.size || blob.size > 25_000_000) {
-      throw new Error('The speech provider returned invalid audio.')
-    }
-    return blob
   }
 }

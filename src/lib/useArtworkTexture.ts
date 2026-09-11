@@ -1,9 +1,8 @@
 import type {DataTexture} from 'three/webgpu'
 
 import {useEffect, useState} from 'react'
-import {LinearMipmapLinearFilter, SRGBColorSpace} from 'three/webgpu'
 
-import {canvasTexture} from '#src/lib/texture.ts'
+import {loadArtworkTexture} from './loadArtworkTexture.ts'
 
 type Asset = {promise: Promise<DataTexture>
   refs: number
@@ -54,7 +53,9 @@ export function useArtworkTexture(source: Blob | string | null | undefined) {
         if (entry.refs !== 0) {
           return
         }
-        assets.delete(source)
+        if (assets.get(source) === entry) {
+          assets.delete(source)
+        }
         void entry.promise.then(texture => texture.dispose()).catch(() => {})
       })
     }
@@ -66,28 +67,7 @@ function acquire(source: Blob | string) {
   let asset = assets.get(source)
   if (!asset) {
     pending++
-    const promise = (async () => {
-      const response = typeof source === 'string' ? await fetch(source, {signal: AbortSignal.timeout(20_000)}) : null
-      if (response && !response.ok) {
-        throw new Error('Artwork image could not be loaded.')
-      }
-      const bitmap = await createImageBitmap(response ? await response.blob() : source as Blob)
-      try {
-        const scale = Math.min(1, 3072 / Math.max(bitmap.width, bitmap.height))
-        const canvas = document.createElement('canvas')
-        canvas.width = Math.max(1, Math.round(bitmap.width * scale))
-        canvas.height = Math.max(1, Math.round(bitmap.height * scale))
-        const context = canvas.getContext('2d')!
-        context.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
-        const texture = canvasTexture(canvas)
-        texture.colorSpace = SRGBColorSpace
-        texture.minFilter = LinearMipmapLinearFilter
-        texture.anisotropy = 16
-        return texture
-      } finally {
-        bitmap.close()
-      }
-    })().finally(() => {
+    const promise = loadArtworkTexture(source).finally(() => {
       pending--
     })
     asset = {
@@ -97,7 +77,12 @@ function acquire(source: Blob | string) {
     const entry = asset
     void promise.then(texture => {
       entry.texture = texture
-    }).catch(() => {})
+    }).catch(error => {
+      if (assets.get(source) === entry) {
+        assets.delete(source)
+      }
+      console.warn('Artwork texture failed to load:', source, error)
+    })
     assets.set(source, asset)
   }
   asset.refs++

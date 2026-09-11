@@ -5,6 +5,13 @@ import {knotsByNumber} from '../../src/lib/knots/index.ts'
 import {knotBays, knotExhibition} from '../../src/lib/knots/exhibition.ts'
 
 describe('Knot model plates', () => {
+  test('renders each plate at twice the width and height without extra draw batches', () => {
+    expect(labelWidth).toBe(384 * 2)
+    expect(labelHeight).toBe(160 * 2)
+    expect(labelWidth * labelHeight).toBe(384 * 160 * 4)
+    expect(8 * labelWidth).toBeLessThanOrEqual(8192)
+    expect(Math.ceil(knotExhibition.length / 8) * labelHeight).toBeLessThanOrEqual(8192)
+  })
   test('ships a local icon for every exhibited model and reuses family marks', async () => {
     const urls = new Set<string>
     for (const bay of knotBays) {
@@ -13,7 +20,7 @@ describe('Knot model plates', () => {
       expect(new Uint8Array(await Bun.file(new URL(url)).arrayBuffer())[0]).toBe(255)
       urls.add(Bun.hash(await Bun.file(new URL(url)).arrayBuffer()).toString())
     }
-    expect(urls.size).toBe(5)
+    expect(urls.size).toBe(7)
     const icon = async (number: number) => Bun.hash(await Bun.file(new URL(knotsByNumber.get(number)!.modelIcon)).arrayBuffer())
     expect(await icon(6)).toBe(await icon(73))
     expect(await icon(73)).toBe(await icon(97))
@@ -25,11 +32,11 @@ describe('Knot model plates', () => {
     for (const measured of [90, 240, 400, 1000]) {
       for (const hasIcon of [true, false]) {
         const line = modelLineLayout(measured, hasIcon)
-        expect(line.left).toBeGreaterThanOrEqual(12)
+        expect(line.left).toBeGreaterThanOrEqual(24)
         expect(line.left * 2 + line.iconSize + line.gap + line.textWidth).toBe(labelWidth)
         expect(line.textWidth).toBeLessThanOrEqual(measured)
-        expect(line.iconSize).toBe(hasIcon ? 26 : 0)
-        expect(line.gap).toBe(hasIcon ? 8 : 0)
+        expect(line.iconSize).toBe(hasIcon ? 52 : 0)
+        expect(line.gap).toBe(hasIcon ? 16 : 0)
       }
     }
   })
@@ -37,7 +44,9 @@ describe('Knot model plates', () => {
     const text: Array<Array<unknown>> = []
     const images: Array<Array<unknown>> = []
     const rectangles: Array<Array<number>> = []
+    const fonts: Array<string> = []
     const context = {
+      set font(value: string) {fonts.push(value)},
       fillRect: (...args: Array<number>) => rectangles.push(args),
       fillText: (...args: Array<unknown>) => text.push(args),
       drawImage: (...args: Array<unknown>) => images.push(args),
@@ -49,14 +58,15 @@ describe('Knot model plates', () => {
     } as HTMLImageElement
     const exhibit = knotExhibition[0]
     drawLabel(context, exhibit, labelWidth, labelHeight, icon)
+    expect(fonts).toEqual(['600 84px main', '600 46px main', '44px main'])
     expect(rectangles[0]).toEqual([labelWidth, labelHeight, labelWidth, labelHeight])
     expect(text.map(line => line[0])).toEqual([exhibit.label, exhibit.title, exhibit.modelTitle])
     const {left} = modelLineLayout(240, true)
-    expect(images).toEqual([[icon, labelWidth + left, labelHeight + 132 - 6.5, 26, 13]])
-    expect(text[2]).toEqual([exhibit.modelTitle, labelWidth + left + 34, labelHeight + 132, 240])
+    expect(images).toEqual([[icon, labelWidth + left, labelHeight + 264 - 13, 52, 26]])
+    expect(text[2]).toEqual([exhibit.modelTitle, labelWidth + left + 68, labelHeight + 264, 240])
     images.length = 0
     drawLabel(context, exhibit, 0, 0)
     expect(images).toEqual([])
-    expect(text.at(-1)).toEqual([exhibit.modelTitle, 72, 132, 240])
+    expect(text.at(-1)).toEqual([exhibit.modelTitle, 264, 264, 240])
   })
 })
