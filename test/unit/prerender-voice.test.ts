@@ -96,6 +96,7 @@ const intercept = (respond: (index: number) => Response = () => Response.json({}
 test('CLI requires named input and defaults forceTelemetry to true', () => {
   expect(parsePrerenderVoiceArgs(['--input', 'Hi'])).toEqual({
     input: 'Hi',
+    bitrate: 20_000,
     output: undefined,
     telemetryEndpoint: undefined,
     forceTelemetry: true,
@@ -172,6 +173,7 @@ test('generates loud 48 kHz Opus with timings and a correlated trace after an ac
     'voice.modifier': 'loud',
     'audio.sample_rate': 48_000,
     'audio.opus.compression_level': 10,
+    'audio.opus.bitrate': 20_000,
     'xai.trace.id': 'provider-trace',
     'voice.timings.count': 2,
   })
@@ -367,4 +369,39 @@ test('trim false preserves edges and timing coordinates and does not create a tr
   const all = requests.flatMap(request => spans(request.body))
   expect(all.some(span => span.name === 'voice.prerender.trim')).toBe(false)
   expect(attributes(all.find(span => span.name === 'voice.prerender')!)['audio.trim.enabled']).toBe(false)
+})
+test('bitrate supports CLI overrides and rejects invalid values before any network access', async () => {
+  expect(parsePrerenderVoiceArgs(['--input', 'Hi', '--bitrate', '100000'])?.bitrate).toBe(100_000)
+  const fetch = spyOn(globalThis, 'fetch')
+  for (const bitrate of [0, -1, 499, 256_001, 20_000.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+    expect(() => parsePrerenderVoiceArgs(['--input', 'Hi', '--bitrate', String(bitrate)])).toThrow('bitrate')
+    await expect(prerenderVoice({
+      ...options(),
+      bitrate,
+    })).rejects.toThrow('bitrate')
+  }
+  expect(() => parsePrerenderVoiceArgs(['--input', 'Hi', '--bitrate', '20k'])).toThrow('bitrate')
+  expect(fetch).not.toHaveBeenCalled()
+})
+test('custom bitrate reaches the encoder, receipt, recovery request and trace', async () => {
+  intercept()
+  spyOn(GrokSpeaker.prototype, 'generate').mockResolvedValue(generated)
+  const result = await prerenderVoice({
+    ...options(),
+    bitrate: 100_000,
+  })
+  caches.add(result.cache)
+  expect(result.bitrate).toBe(100_000)
+  expect(await Bun.file(path.resolve(result.cache, 'request.json')).json()).toMatchObject({
+    bitrate: 100_000,
+    trim: true,
+  })
+  const parent = requests.flatMap(request => spans(request.body)).find(span => span.name === 'voice.prerender')!
+  expect(attributes(parent)['audio.opus.bitrate']).toBe(100_000)
+  const direct = path.resolve(root, 'direct.opus')
+  const source = path.resolve(result.cache, 'prepared.wav')
+  await Bun.$`ffmpeg -nostdin -hide_banner -loglevel error -i ${source} -map 0:a:0 -map_metadata -1 -c:a libopus -b:a 100000 -vbr on -compression_level 10 -application audio ${direct}`.quiet()
+  const actual: unknown = await Bun.$`ffprobe -v error -show_packets -show_data_hash sha256 -show_entries packet=data_hash -of json ${result.output}`.json()
+  const expected: unknown = await Bun.$`ffprobe -v error -show_packets -show_data_hash sha256 -show_entries packet=data_hash -of json ${direct}`.json()
+  expect(actual).toEqual(expected)
 })

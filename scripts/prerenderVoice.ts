@@ -12,6 +12,7 @@ import PrerenderTrace from './lib/voice/PrerenderTrace.ts'
 import trimVoice from './lib/voice/trimVoice.ts'
 
 export type PrerenderVoiceOptions = {
+  bitrate?: number
   forceTelemetry?: boolean
   input: string
   key?: string
@@ -20,11 +21,12 @@ export type PrerenderVoiceOptions = {
   trim?: boolean
 }
 
-const help = `Usage: bun scripts/prerenderVoice.ts --input <string> [--output <file.opus>] [--telemetry-endpoint <url>] [--force-telemetry | --no-force-telemetry] [--trim | --no-trim]
+const help = `Usage: bun scripts/prerenderVoice.ts --input <string> [--output <file.opus>] [--bitrate <bits-per-second>] [--telemetry-endpoint <url>] [--force-telemetry | --no-force-telemetry] [--trim | --no-trim]
 
 Renders Iris through direct xAI: loud, Quality mode, 48 kHz PCM and character timings.
-Encodes Opus at 80 kb/s VBR with compression level 10, without volume normalization.
+Encodes Opus at 20 kb/s VBR by default with compression level 10, without volume normalization.
 
+--bitrate                Integer bits per second, 500–256 000. Defaults to 20 000.
 --output                 Defaults to private/prerender-voice/voice.opus.
                          Existing names get a free numeric suffix; nothing is overwritten.
 --telemetry-endpoint     Full OTLP/HTTP trace ingestion URL. Defaults to
@@ -45,6 +47,12 @@ trace records under private/prerender-voice/<run-id>, including after delivery f
 Never retries paid synthesis automatically. Ingestion acceptance is not a guarantee
 of durable downstream storage or continued availability after the preflight.
 `
+const validateBitrate = (bitrate: number) => {
+  if (!Number.isSafeInteger(bitrate) || bitrate < 500 || bitrate > 256_000) {
+    throw new TypeError('bitrate must be an integer between 500 and 256 000 bits per second.')
+  }
+  return bitrate
+}
 const reserveOutput = async (requested: string) => {
   const {dir, name, ext} = path.parse(requested)
   await fs.ensureDir(dir)
@@ -80,6 +88,10 @@ export function parsePrerenderVoiceArgs(args: Array<string>) {
     allowNegative: true,
     options: {
       input: {type: 'string'},
+      bitrate: {
+        type: 'string',
+        default: '20000',
+      },
       output: {type: 'string'},
       'telemetry-endpoint': {type: 'string'},
       'force-telemetry': {
@@ -101,6 +113,7 @@ export function parsePrerenderVoiceArgs(args: Array<string>) {
   }
   return {
     input: values.input,
+    bitrate: validateBitrate(Number(values.bitrate)),
     output: values.output,
     telemetryEndpoint: values['telemetry-endpoint'],
     forceTelemetry: values['force-telemetry'],
@@ -109,7 +122,8 @@ export function parsePrerenderVoiceArgs(args: Array<string>) {
 }
 
 /** Stage paid assets and require acknowledged telemetry before publishing to a reserved, unused output name. */
-export default async function prerenderVoice({input, output, telemetryEndpoint = Bun.env.TELEMETRY_INGESTION_TRACES_ENDPOINT ?? 'http://10.0.0.22:4318/v1/traces', forceTelemetry = true, trim = true, key = Bun.env.XAI_API_KEY ?? ''}: PrerenderVoiceOptions) {
+export default async function prerenderVoice({input, output, bitrate = 20_000, telemetryEndpoint = Bun.env.TELEMETRY_INGESTION_TRACES_ENDPOINT ?? 'http://10.0.0.22:4318/v1/traces', forceTelemetry = true, trim = true, key = Bun.env.XAI_API_KEY ?? ''}: PrerenderVoiceOptions) {
+  validateBitrate(bitrate)
   if (typeof input !== 'string' || !input.trim()) {
     throw new TypeError('Input must be a nonempty string.')
   }
@@ -153,7 +167,7 @@ export default async function prerenderVoice({input, output, telemetryEndpoint =
     'audio.sample_rate': 48_000,
     'audio.codec': 'opus',
     'audio.trim.enabled': trim,
-    'audio.opus.bitrate': 80_000,
+    'audio.opus.bitrate': bitrate,
     'audio.opus.compression_level': 10,
     'output.requested.path': requested,
     'telemetry.required': forceTelemetry,
@@ -178,6 +192,8 @@ export default async function prerenderVoice({input, output, telemetryEndpoint =
       quality: 0,
       timestamps: true,
       normalization: false,
+      bitrate,
+      trim,
       traceId: trace.root.traceId,
     }, {spaces: 2})
     const synthesis = trace.startSpan('voice.prerender.synthesize')
@@ -237,7 +253,7 @@ export default async function prerenderVoice({input, output, telemetryEndpoint =
     trace.timings(audio.timestamps)
     const encoding = trace.startSpan('voice.prerender.encode')
     try {
-      await Bun.$`ffmpeg -nostdin -hide_banner -loglevel error -y -i ${encodingWave} -map 0:a:0 -map_metadata -1 -c:a libopus -b:a 80000 -vbr on -compression_level 10 -application audio ${encoded}`.quiet()
+      await Bun.$`ffmpeg -nostdin -hide_banner -loglevel error -y -i ${encodingWave} -map 0:a:0 -map_metadata -1 -c:a libopus -b:a ${bitrate} -vbr on -compression_level 10 -application audio ${encoded}`.quiet()
       const probe = await Bun.$`ffprobe -v error -show_entries stream=codec_name,sample_rate,channels:format=duration -of json ${encoded}`.json() as {format: {duration: string}
         streams: Array<{channels: number
           codec_name: string
@@ -273,6 +289,7 @@ export default async function prerenderVoice({input, output, telemetryEndpoint =
     await fs.link(temporary, destination)
     return {
       output: destination,
+      bitrate,
       timingsPath,
       cache,
       traceId: trace.root.traceId,
