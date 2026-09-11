@@ -1,6 +1,6 @@
 export const auditionTranscript = ['Abyssal Lantern.', 'Kintsugi Dawn.', 'Quantum Moiré.', 'Porcelain Constellation.', 'GPT-6 Astra.']
 
-export const voiceAuditions = [
+const geminiVoices = [
   {
     id: '01-sparkle-guide',
     title: 'Sparkle guide',
@@ -63,6 +63,42 @@ export const voiceAuditions = [
   },
 ] as const
 
-export function auditionInput(character: string) {
-  return `## character\n${character} Speak clear American English. Read only the five transcript lines, in order, exactly once, with a short pause between them. Spell GPT as English letters and read the number six. Do not read headings, add dialogue, laugh, use sound effects or add music.\n\n## transcript\n${auditionTranscript.join('\n')}`
+export const voiceAuditions = [
+  ...geminiVoices.map(candidate => ({
+    ...candidate,
+    model: 'google/gemini-3.1-flash-tts-preview',
+  })),
+  ...[8, 5, 2, 3].map((index, i) => ({
+    ...geminiVoices[index],
+    id: `${11 + i}-longan-${geminiVoices[index].id.slice(3)}`,
+    title: `Longan – ${geminiVoices[index].title}`,
+    voice: 'longanlingxin',
+    model: 'qwen/qwen-audio-3.0-tts-plus',
+  })),
+]
+
+export type VoiceAudition = typeof voiceAuditions[number]
+
+export function auditionInput(character: string, text: string) {
+  return `Read aloud in this voice: ${character}\n\nSay exactly: ${text}`
+}
+
+export function auditionRequest(candidate: VoiceAudition, text: string) {
+  const google = candidate.model.startsWith('google/')
+  return {
+    model: candidate.model,
+    voice: candidate.voice,
+    input: google ? auditionInput(candidate.character, text) : text,
+    response_format: 'pcm',
+    ...google ? {} : {
+      provider: {
+        options: {
+          alibaba: {
+            instruction: `${candidate.character} Speak clear American English. Read only the supplied text, exactly once, then stop. Spell GPT as English letters and read the number six.`,
+            sample_rate: 24_000,
+          },
+        },
+      },
+    },
+  }
 }

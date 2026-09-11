@@ -16,6 +16,10 @@
 
 ## Knot voice auditions
 
-Run `bun scripts/auditionKnots.ts` with `OPENROUTER_API_KEY` to generate ten character auditions in `private/knot-voice-auditions`. Each Opus contains Abyssal Lantern, Kintsugi Dawn, Quantum Moiré, Porcelain Constellation and GPT-6 Astra. The prompts and voice presets are in `scripts/lib/knots/voiceAuditions.ts`; the output manifest preserves the exact generation requests. Recordings are cached and paid requests are reserved to prevent accidental retries. After a failed/interrupted request, inspect the cache before explicitly removing its reservation to retry.
+Run `bun scripts/auditionKnots.ts` with `OPENROUTER_API_KEY` to generate consistency auditions in `private/knot-voice-consistency`: ten Gemini characters and four `longanlingxin` character variations using Qwen Audio 3.0 TTS Plus. `longanlingxin` is a Qwen voice, not a Gemini voice.
+
+Each character makes five independent, stateless TTS requests with the same voice and character direction: Abyssal Lantern, Kintsugi Dawn, Quantum Moiré, Porcelain Constellation and GPT-6 Astra. The five lossless recordings are stitched in that order with 500 ms of silence between them, then encoded once to Opus. No crossfade, gain normalization, pitch correction, shared conversation or audio reference hides differences between requests. The previous single-request auditions in `private/knot-voice-auditions` are not consistency tests.
+
+Prompts and presets are in `scripts/lib/knots/voiceAuditions.ts`. Each character’s manifest preserves its five request bodies, generation IDs, source hashes and durations; the top-level manifest lists completed auditions. Source recordings are cached and paid requests are reserved to prevent accidental retries. To select characters, append their IDs to the command. After inspecting a failed/interrupted attempt, pass `--retry-failed` to explicitly authorize another request; successful clips are reused and prior request reservations are preserved.
 
 Existing game narration is unchanged until a character is selected.
