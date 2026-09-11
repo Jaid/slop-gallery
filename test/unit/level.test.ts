@@ -134,5 +134,8 @@ test('Knottingham resets only its exhibition, without duplicate sibling keys or 
     '#component/levels/knottingham/KnotExhibition',
   ])
   expect(children.map(child => child.key)).toEqual([null, null, null, '42'])
-  expect(children[1].props).toMatchObject({position: [-28, 2.75, 7.36], rotationY: Math.PI})
+  expect(children[1].props).toMatchObject({
+    position: [-28, 2.75, 7.36],
+    rotationY: Math.PI,
+  })
 })
