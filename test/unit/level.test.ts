@@ -108,7 +108,7 @@ test('Knottingham resets only its exhibition, without duplicate sibling keys or 
       {
         name: 'scene-children',
         setup(build) {
-          build.onResolve({filter: new RegExp(String.raw`^#(?:component/|src/lib/gallery\.ts$)`, 'u')}, args => ({
+          build.onResolve({filter: new RegExp(String.raw`^#(?:component/|src/components/Scene/SoundEffectLab\.tsx$|src/lib/gallery\.ts$)`, 'u')}, args => ({
             path: args.path,
             namespace: 'scene-stub',
           }))
@@ -129,8 +129,10 @@ test('Knottingham resets only its exhibition, without duplicate sibling keys or 
   const children = scene().props.children
   expect(children.map(child => child.type)).toEqual([
     '#component/levels/knottingham/KnotLobby',
+    '#src/components/Scene/SoundEffectLab.tsx',
     '#component/levels/knottingham/KnotSpectation',
     '#component/levels/knottingham/KnotExhibition',
   ])
-  expect(children.map(child => child.key)).toEqual([null, null, '42'])
+  expect(children.map(child => child.key)).toEqual([null, null, null, '42'])
+  expect(children[1].props).toMatchObject({position: [-28, 2.75, 7.36], rotationY: Math.PI})
 })

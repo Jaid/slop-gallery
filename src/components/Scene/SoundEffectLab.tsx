@@ -1,3 +1,4 @@
+import type {Vec3} from '#src/lib/gallery/types.ts'
 import type {Group} from 'three/webgpu'
 
 import {useEffect, useMemo, useRef} from 'react'
@@ -94,8 +95,9 @@ function EffectButton({effect, index}: {effect: (typeof temporarySoundEffects)[n
   </group>
 }
 /** Temporary in-world audition wall. Remove after the preferred sound IDs are selected. */
-function SoundEffectLab() {
-  return <group name="temporary-sound-effect-lab" position={[-7.82, 2.75, -26]} rotation={[0, Math.PI / 2, 0]}>
+function SoundEffectLab({position = [-7.82, 2.75, -26], rotationY = Math.PI / 2}: {position?: Vec3
+  rotationY?: number}) {
+  return <group name="temporary-sound-effect-lab" position={position} rotation={[0, rotationY, 0]}>
     <Box size={[5.25, 5.3, 0.08]} color="#17191b" metalness={0.12} roughness={0.58}/>
     <Header/>
     {temporarySoundEffects.map((effect, index) => <EffectButton key={effect.id} effect={effect} index={index}/>)}

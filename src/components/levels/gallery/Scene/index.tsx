@@ -1,7 +1,7 @@
 import Architecture from '#component/levels/gallery/Architecture'
 import Portrait from '#component/levels/gallery/Portrait'
 import Props from '#component/levels/gallery/Props'
-import SoundEffectLab from '#component/levels/gallery/SoundEffectLab'
+import SoundEffectLab from '#src/components/Scene/SoundEffectLab.tsx'
 import {useGallery} from '#src/lib/gallery.ts'
 
 export default function GalleryScene() {
