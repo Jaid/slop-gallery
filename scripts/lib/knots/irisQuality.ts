@@ -12,8 +12,8 @@ type TimestampEnvelope = {
 }
 
 /** Offline review settings only. Do not change the approved in-game narrator preset. */
-export function irisQualityRequest(transport: IrisTransport, text: string, normalization = false) {
-  const input = `<loud>${text}</loud>`
+export function irisQualityRequest(transport: IrisTransport, text: string, {normalization = false, loud = true} = {}) {
+  const input = loud ? `<loud>${text}</loud>` : text
   const options = {
     language: 'en',
     output_format: {

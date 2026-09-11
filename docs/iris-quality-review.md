@@ -17,6 +17,12 @@ Every generation requests Iris, English, `<loud>…</loud>`, PCM at 48 kHz, `o
 
 The matching subdirectory contains `review.wav`, `timestamps.json` and `manifest.json`. Each clip retains the complete original response, request, response hash, native `source.pcm`, lossless `source.wav`, timestamps and provider identifiers. Opus previews are encoded once at 256 kb/s, the maximum mono Opus bitrate. The WAV masters preserve the source rate; no local upsampling disguises the router’s output.
 
+## Loud versus plain follow-up
+
+`bun scripts/auditionIrisQuality.ts --compare-loud` adds `private/iris-quality/xai-quality.opus` without changing the existing `xai-loud-quality.opus`. The plain preview contains five new, independent direct Grok calls with the same names, 48 kHz PCM, Quality mode, timestamps and text normalization off. The request bodies differ only by removing `<loud>…</loud>`. No volume matching is applied. Its lossless duration is 10.344 s; native PCM/WAV sources and timestamps are in `private/iris-quality/xai-quality`. All five plain takes returned nonuniform timestamps, without XML-tag characters.
+
+The original loud preview was verified byte-for-byte unchanged. This is a review comparison, not a production preset change.
+
 ## What OpenRouter changes in these tests
 
 - All ten OpenRouter requests returned 24 kHz despite the 48 kHz `provider.options.xai.output_format.sample_rate` request. All ten direct requests returned 48 kHz. The rate was checked against decoded PCM frame count and the provider’s duration, not just an HTTP header.

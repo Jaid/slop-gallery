@@ -18,13 +18,16 @@ export default class IrisQualityAudition extends ExternalGenerator {
     delete this.headers['X-OpenRouter-Cache-TTL']
   }
 
-  async run(normalization = false) {
-    const id = `${this.transport}-loud-quality${normalization ? '-normalized' : ''}`
+  async run({normalization = false, loud = true} = {}) {
+    const id = `${this.transport}-${loud ? 'loud-' : ''}quality${normalization ? '-normalized' : ''}`
     const directory = resolve(this.output, id)
     const clips = []
     let offset = 0
     for (const [index, text] of auditionTranscript.entries()) {
-      const request = irisQualityRequest(this.transport, text, normalization)
+      const request = irisQualityRequest(this.transport, text, {
+        normalization,
+        loud,
+      })
       const hash = createHash('sha256').update(JSON.stringify(request)).digest('hex')
       const cache = resolve(directory, 'clips', `${index + 1}-${hash}`)
       await fs.ensureDir(cache)
@@ -129,6 +132,7 @@ export default class IrisQualityAudition extends ExternalGenerator {
       id,
       transport: this.transport,
       normalization,
+      loud,
       sampleRate,
       duration: offset - 0.5,
       opus,

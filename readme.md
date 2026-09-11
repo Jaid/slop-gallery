@@ -32,4 +32,6 @@ Run `bun scripts/auditionKnots.ts 15-grok-iris` for only the selected Iris voice
 
 ### Iris quality review
 
+For a direct Grok comparison with/without `<loud>`, run `bun scripts/auditionIrisQuality.ts --compare-loud`. This preserves the existing loud preview and generates `private/iris-quality/xai-quality.opus` with otherwise identical settings and five independent calls.
+
 `bun scripts/auditionIrisQuality.ts` compares direct Grok with OpenRouter using `<loud>`, quality-first latency, 48 kHz PCM requests and character timestamps, with text normalization on/off. Each preview still uses five independent calls. `bun scripts/benchmarkIrisLatency.ts` measures direct WebSocket startup with timestamps on/off and new/reused connections. Both are offline review tools; neither changes the approved narrator preset or game assets. See [the measured results and caveats](docs/iris-quality-review.md).
