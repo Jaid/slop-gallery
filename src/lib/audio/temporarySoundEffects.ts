@@ -472,6 +472,23 @@ export const temporarySoundEffects: Array<TemporarySoundEffect> = [
 ]
 
 const byId = new Map(temporarySoundEffects.map(effect => [effect.id, effect]))
+
+/** Preferred effects captured from the in-world audition, in selection order. */
+export const selectedSoundEffectIds = [
+  'SFX-28',
+  'SFX-07',
+  'SFX-04',
+  'SFX-02',
+  'SFX-08',
+  'SFX-14',
+  'SFX-23',
+  'SFX-29',
+  'SFX-09',
+  'SFX-06',
+  'SFX-03',
+] as const
+
+export const selectedSoundEffects = selectedSoundEffectIds.map(id => byId.get(id)!)
 const floor = 0.0001
 function connect(source: AudioNode, gain: GainNode, master: GainNode, filter?: BiquadFilterNode) {
   if (filter) {
