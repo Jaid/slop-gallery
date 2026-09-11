@@ -10,6 +10,7 @@ import {PlacementPreview} from '#level/components.ts'
 import {levelWallDistance} from '#level/navigation.ts'
 import InspectionLook from '#src/lib/camera/InspectionLook.ts'
 import {cameraPose, chime, dragPose, enterGallery, findPlacement, galleryEvents, isTextInput, markControlled, narrate, notify, openPanel, roomAt, useGallery} from '#src/lib/gallery.ts'
+import {interactiveObjects} from '#src/lib/gallery/interactiveObjects.ts'
 import {playerSpawn} from '#src/lib/gallery/PlayerSession.ts'
 import {isPortraitLabelHit} from '#src/lib/gallery/portraitLabel.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
@@ -453,7 +454,7 @@ export default function Interaction() {
       let closest = levelWallDistance(cameraPose.position, cameraPose.direction)
       let active: string | null = null
       let activeLabel: string | null = null
-      for (const [id, object] of [...portraitObjects, ...propObjects]) {
+      for (const [id, object] of [...portraitObjects, ...propObjects, ...interactiveObjects]) {
         if (id === s.held || !object.group.visible) {
           continue
         }

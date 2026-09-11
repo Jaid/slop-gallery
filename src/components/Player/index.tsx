@@ -9,6 +9,7 @@ import {Euler, Quaternion} from 'three/webgpu'
 import {insideLevel, levelFloorHeight, woodenFloor} from '#level/navigation.ts'
 import SoundEngine from '#src/lib/audio/SoundEngine.ts'
 import {cameraPose, galleryEvents, markControlled, narrate, useGallery} from '#src/lib/gallery.ts'
+import {activateInteractiveObject} from '#src/lib/gallery/interactiveObjects.ts'
 import {playerSession, playerSpawn} from '#src/lib/gallery/PlayerSession.ts'
 import {playerTelemetry} from '#src/lib/telemetry/index.ts'
 import recordPlayerDump from '#src/lib/telemetry/recordPlayerDump.ts'
@@ -18,7 +19,7 @@ const cameraEnabled = () => !cameraPose.focused
 const pointerLock = {selector: '#pointer-lock-managed-by-gallery'}
 const onInteract = () => {
   const {active, held} = useGallery.getState()
-  if (active && !held) {
+  if (active && !held && !activateInteractiveObject(active)) {
     narrate(active)
   }
 }
