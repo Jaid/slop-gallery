@@ -18,8 +18,8 @@ test('audition requests explicitly disable inherited response caching', async ()
   }
 })
 test('each character has five single-transcript requests with a fixed voice and style', () => {
-  expect(voiceAuditions).toHaveLength(14)
-  expect(new Set(voiceAuditions.map(voice => voice.id)).size).toBe(14)
+  expect(voiceAuditions).toHaveLength(15)
+  expect(new Set(voiceAuditions.map(voice => voice.id)).size).toBe(15)
   expect(auditionTranscript).toHaveLength(5)
   expect(auditionTranscript.at(-1)).toBe('GPT-6 Astra.')
   for (const voice of voiceAuditions) {
@@ -30,13 +30,17 @@ test('each character has five single-transcript requests with a fixed voice and 
       if (voice.model.startsWith('google/')) {
         expect(request.input).toContain(voice.character)
         expect(request.input.split('\n\nSay exactly: ')[1]).toBe(auditionTranscript[index])
-        expect(request.provider).toBeUndefined()
+        expect(request).not.toHaveProperty('provider')
+      } else if (voice.model === 'x-ai/grok-voice-tts-1.0') {
+        expect(request.voice).toBe('iris')
+        expect(request.input).toBe(auditionTranscript[index])
+        expect(request).toHaveProperty('provider', {options: {xai: {language: 'en'}}})
       } else {
         expect(request.model).toBe('qwen/qwen-audio-3.0-tts-plus')
         expect(request.voice).toBe('longanlingxin')
         expect(request.input).toBe(auditionTranscript[index])
-        expect(request.provider?.options.alibaba.instruction).toContain(voice.character)
-        expect(request.provider?.options.alibaba.sample_rate).toBe(24_000)
+        expect(request).toHaveProperty('provider.options.alibaba.instruction', expect.stringContaining(voice.character))
+        expect(request).toHaveProperty('provider.options.alibaba.sample_rate', 24_000)
       }
     }
   }

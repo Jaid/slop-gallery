@@ -6,9 +6,10 @@ export default class NarrationGenerator extends ExternalGenerator {
     super(key)
   }
 
-  async generate(input: string, {signal, format = this.model.startsWith('google/gemini-') ? 'pcm' : 'mp3', character}: {
+  async generate(input: string, {signal, format = this.model.startsWith('google/gemini-') ? 'pcm' : 'mp3', character, providerOptions}: {
     character?: string
     format?: 'mp3' | 'pcm'
+    providerOptions?: Record<string, Record<string, unknown>>
     signal?: AbortSignal
   } = {}) {
     const response = await this.request('audio/speech', {
@@ -19,18 +20,22 @@ export default class NarrationGenerator extends ExternalGenerator {
         voice: this.voice,
         input,
         response_format: format,
-        ...character ? {
+        ...character || providerOptions ? {
           provider: {
             options: {
-              openai: {instructions: character},
-              google: {instructions: character},
+              ...character ? {
+                openai: {instructions: character},
+                google: {instructions: character},
+              } : {},
+              ...providerOptions,
             },
           },
         } : {},
       }),
     })
     if (!response.ok) {
-      throw new Error(`Narration unavailable (${response.status}): ${(await response.text()).slice(0, 2000)}`)
+      const error = await response.text()
+      throw new Error(`Narration unavailable (${response.status}): ${error.slice(0, 2000)}`)
     }
     const type = response.headers.get('content-type') ?? ''
     if (!/^audio\/(?:l16|mp3|mpeg|ogg|pcm|wav|x-wav)(?:;|$)/i.test(type)) {
@@ -40,6 +45,14 @@ export default class NarrationGenerator extends ExternalGenerator {
     if (!blob.size || blob.size > 25_000_000) {
       throw new Error('The speech provider returned invalid audio.')
     }
-    return /audio\/(l16|pcm)/i.test(type) ? pcmWave(await blob.arrayBuffer()) : blob
+    if (/audio\/(l16|pcm)/i.test(type)) {
+      const rate = /(?:^|;)\s*rate=(\d+)/iu.exec(type)?.[1]
+      const channels = /(?:^|;)\s*channels=(\d+)/iu.exec(type)?.[1]
+      if (channels && Number(channels) !== 1) {
+        throw new Error(`Expected mono PCM audio, received ${type}.`)
+      }
+      return pcmWave(await blob.arrayBuffer(), rate ? Number(rate) : 24_000)
+    }
+    return blob
   }
 }

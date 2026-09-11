@@ -4,20 +4,16 @@ import {parseArgs} from 'node:util'
 
 import fs from 'fs-extra'
 
-import NarrationGenerator from '../src/lib/ai/NarrationGenerator.ts'
 import {knotAnnouncements} from '../src/lib/knots/announcements.ts'
 import {knots} from '../src/lib/knots/index.ts'
+import KnotNarrationGenerator from './lib/knots/KnotNarrationGenerator.ts'
+import narrator from './lib/knots/narrator.ts'
 
 const root = resolve(import.meta.dir, '..')
-export const announcementModel = 'google/gemini-3.1-flash-tts-preview'
-export const announcementVoice = 'Algenib'
-export const announcementCharacter = 'Calm, wise museum narrator. Speak in clear American English with measured, natural pacing. Read exactly the transcript once, then stop.'
 
 export function announcementInput(item: {id: string
   text: string}) {
-  const direction = item.id.includes('/slug/') ? 'Read model letters and version numbers in English.' : 'Speak the title as words, without spelling it out or adding anything.'
-  const transcript = /[!.?]$/u.test(item.text) ? item.text : `${item.text}.`
-  return `## character\n${announcementCharacter} ${direction}\n\n## transcript\n${transcript}`
+  return /[!.?]$/u.test(item.text) ? item.text : `${item.text}.`
 }
 
 export function announcementDurationLimit(item: {id: string
@@ -25,11 +21,14 @@ export function announcementDurationLimit(item: {id: string
   return item.id.includes('/slug/') ? 8 : Math.max(4, item.text.split(/\s+/u).length * 1.2 + 1)
 }
 
-export default async function announceKnots({ids = [], all = false, force = false, key = Bun.env.OPENROUTER_API_KEY}: {
+export default async function announceKnots({ids = [], all = false, force = false, retryFailed = false, key = Bun.env.OPENROUTER_API_KEY, outputRoot = resolve(root, 'src/lib/knots'), cacheRoot = resolve(root, 'private/knot-announcements')}: {
   all?: boolean
+  cacheRoot?: string
   force?: boolean
   ids?: ReadonlyArray<string>
   key?: string
+  outputRoot?: string
+  retryFailed?: boolean
 } = {}) {
   const inventory = knotAnnouncements(knots)
   if (!all && !ids.length) {
@@ -41,18 +40,24 @@ export default async function announceKnots({ids = [], all = false, force = fals
     }
   }
   const selected = inventory.filter(item => all || ids.includes(item.id))
-  const generated: Array<string> = []
+  const staged: Array<{output: string
+    temporary: string}> = []
   const failures: Array<{error: string
     id: string}> = []
   for (const item of selected) {
     try {
-      const output = resolve(root, 'src/lib/knots', item.id, 'announce.opus')
+      const output = resolve(outputRoot, item.id, 'announce.opus')
       if (!force && await fs.pathExists(output)) {
         continue
       }
       const input = announcementInput(item)
-      const hash = createHash('sha256').update(JSON.stringify([announcementModel, announcementVoice, input, 'pcm-wave-v1'])).digest('hex')
-      const cache = resolve(root, 'private/knot-announcements', hash)
+      const request = {
+        ...narrator,
+        input,
+        format: 'pcm',
+      }
+      const hash = createHash('sha256').update(JSON.stringify(request)).digest('hex')
+      const cache = resolve(cacheRoot, hash)
       const recording = resolve(cache, 'source.wav')
       await fs.ensureDir(cache)
       if (!await fs.pathExists(recording)) {
@@ -60,26 +65,35 @@ export default async function announceKnots({ids = [], all = false, force = fals
           throw new Error('OPENROUTER_API_KEY is missing.')
         }
         // Exclusive reservation prevents accidental paid retries after interrupted requests.
-        await fs.writeFile(resolve(cache, 'request.json'), JSON.stringify({
-          model: announcementModel,
-          voice: announcementVoice,
-          input,
-        }, null, 2), {flag: 'wx'})
-        const audio = await new KnotNarrationGenerator(key).generate(input)
+        const reservation = resolve(cache, 'request.json')
+        if (retryFailed && await fs.pathExists(reservation)) {
+          await fs.move(reservation, resolve(cache, `request-${crypto.randomUUID()}.json`))
+        }
+        await fs.writeJson(reservation, request, {
+          flag: 'wx',
+          spaces: 2,
+        })
+        const audio = await new KnotNarrationGenerator(key, cache).generate(input, {
+          format: 'pcm',
+          providerOptions: narrator.providerOptions,
+        })
         await Bun.write(recording, audio)
       }
       await fs.ensureDir(dirname(output))
       const temporary = resolve(cache, 'announce.opus')
-      await Bun.$`ffmpeg -nostdin -hide_banner -loglevel error -y -i ${recording} -map_metadata -1 -vn -ac 1 -c:a libopus -b:a 64k -vbr on -compression_level 10 ${temporary}`
-      const check = await Bun.$`ffprobe -v error -show_entries stream=codec_name:format=duration -of json ${temporary}`.json()
+      await Bun.$`ffmpeg -nostdin -hide_banner -loglevel error -y -i ${recording} -map_metadata -1 -vn -ac 1 -c:a libopus -b:a 80000 -vbr on -compression_level 10 -application audio ${temporary}`
+      const check = await Bun.$`ffprobe -v error -show_entries stream=codec_name:format=duration -of json ${temporary}`.json() as {format?: {duration: string}
+        streams?: Array<{codec_name: string}>}
       if (check.streams?.[0]?.codec_name !== 'opus' || !(Number(check.format?.duration) > 0)) {
         throw new Error(`Invalid Opus announcement: ${item.id}`)
       }
-      if (Number(check.format.duration) > announcementDurationLimit(item)) {
+      if (Number(check.format?.duration) > announcementDurationLimit(item)) {
         throw new Error(`Announcement is unexpectedly long; review the cached audio before publishing: ${item.id}`)
       }
-      await fs.copyFile(temporary, output)
-      generated.push(output)
+      staged.push({
+        temporary,
+        output,
+      })
       console.log(`${item.text} → ${output}`)
     } catch (error) {
       const failure = {
@@ -90,22 +104,18 @@ export default async function announceKnots({ids = [], all = false, force = fals
       console.error(`${failure.id}: ${failure.error}`)
     }
   }
-  await fs.ensureDir(resolve(root, 'private/knot-announcements'))
-  await fs.writeJson(resolve(root, 'private/knot-announcements/failures.json'), failures, {spaces: 2})
+  await fs.ensureDir(cacheRoot)
+  await fs.writeJson(resolve(cacheRoot, 'failures.json'), failures, {spaces: 2})
   if (failures.length) {
-    throw new Error(`${failures.length} announcements failed; successful recordings are saved. See private/knot-announcements/failures.json.`)
+    throw new Error(`${failures.length} announcements failed; no announcements were published. Successful recordings are cached. See ${resolve(cacheRoot, 'failures.json')}.`)
   }
-  return generated
+  // Finish and validate the entire selection before replacing the previous voice.
+  for (const {temporary, output} of staged) {
+    await fs.copyFile(temporary, output)
+  }
+  return staged.map(item => item.output)
 }
 
-class KnotNarrationGenerator extends NarrationGenerator {
-  constructor(key: string) {
-    super(key, announcementModel, announcementVoice)
-    // Recordings are cached locally; do not replay a cached provider error.
-    this.headers['X-OpenRouter-Cache'] = 'false'
-    delete this.headers['X-OpenRouter-Cache-TTL']
-  }
-}
 if (import.meta.main) {
   const {values, positionals} = parseArgs({
     args: Bun.argv.slice(2),
@@ -113,11 +123,13 @@ if (import.meta.main) {
     options: {
       all: {type: 'boolean'},
       force: {type: 'boolean'},
+      'retry-failed': {type: 'boolean'},
     },
   })
   await announceKnots({
     ids: positionals,
     all: values.all,
     force: values.force,
+    retryFailed: values['retry-failed'],
   })
 }

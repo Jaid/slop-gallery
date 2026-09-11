@@ -1,3 +1,5 @@
+import narrator from './narrator.ts'
+
 export const auditionTranscript = ['Abyssal Lantern.', 'Kintsugi Dawn.', 'Quantum Moiré.', 'Porcelain Constellation.', 'GPT-6 Astra.']
 
 const geminiVoices = [
@@ -75,6 +77,13 @@ export const voiceAuditions = [
     voice: 'longanlingxin',
     model: 'qwen/qwen-audio-3.0-tts-plus',
   })),
+  {
+    id: '15-grok-iris',
+    title: 'Iris – natural voice',
+    character: '',
+    model: narrator.model,
+    voice: narrator.voice,
+  },
 ]
 
 export type VoiceAudition = typeof voiceAuditions[number]
@@ -85,18 +94,28 @@ export function auditionInput(character: string, text: string) {
 
 export function auditionRequest(candidate: VoiceAudition, text: string) {
   const google = candidate.model.startsWith('google/')
-  return {
+  const request = {
     model: candidate.model,
     voice: candidate.voice,
     input: google ? auditionInput(candidate.character, text) : text,
     response_format: 'pcm',
-    ...google ? {} : {
-      provider: {
-        options: {
-          alibaba: {
-            instruction: `${candidate.character} Speak clear American English. Read only the supplied text, exactly once, then stop. Spell GPT as English letters and read the number six.`,
-            sample_rate: 24_000,
-          },
+  }
+  if (google) {
+    return request
+  }
+  if (candidate.model === narrator.model) {
+    return {
+      ...request,
+      provider: {options: narrator.providerOptions},
+    }
+  }
+  return {
+    ...request,
+    provider: {
+      options: {
+        alibaba: {
+          instruction: `${candidate.character} Speak clear American English. Read only the supplied text, exactly once, then stop. Spell GPT as English letters and read the number six.`,
+          sample_rate: 24_000,
         },
       },
     },

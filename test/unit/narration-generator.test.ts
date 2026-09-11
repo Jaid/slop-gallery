@@ -6,6 +6,25 @@ import pcmWave from '../../src/lib/audio/pcmWave.ts'
 
 let fetchSpy: ReturnType<typeof spyOn<typeof globalThis, 'fetch'>> | undefined
 afterEach(() => fetchSpy?.mockRestore())
+test('Grok Iris uses English provider options and preserves the declared PCM sample rate', async () => {
+  fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(new Response(new Int16Array(100), {headers: {'content-type': 'audio/pcm;rate=48000;channels=1'}}))
+  const blob = await new NarrationGenerator('test-key', 'x-ai/grok-voice-tts-1.0', 'iris').generate('GPT-6 Astra.', {
+    format: 'pcm',
+    providerOptions: {xai: {language: 'en'}},
+  })
+  expect(JSON.parse(fetchSpy.mock.calls[0][1]!.body as string)).toEqual({
+    model: 'x-ai/grok-voice-tts-1.0',
+    voice: 'iris',
+    input: 'GPT-6 Astra.',
+    response_format: 'pcm',
+    provider: {options: {xai: {language: 'en'}}},
+  })
+  expect(new DataView(await blob.arrayBuffer()).getUint32(24, true)).toBe(48_000)
+})
+test('stereo PCM cannot silently become a mono file at the wrong speed', async () => {
+  fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(new Response(new Int16Array(100), {headers: {'content-type': 'audio/pcm;rate=24000;channels=2'}}))
+  await expect(new NarrationGenerator('test-key', 'x-ai/grok-voice-tts-1.0', 'iris').generate('Hello.', {format: 'pcm'})).rejects.toThrow('Expected mono PCM')
+})
 test('Gemini speech uses PCM and the central Slop Gallery app attribution', async () => {
   fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(new Response(new Uint8Array([0, 0, 1, 0]), {headers: {'content-type': 'audio/pcm'}}))
   const blob = await new NarrationGenerator('test-key', 'google/gemini-3.1-flash-tts-preview', 'Algenib').generate('GLM 5.3')
