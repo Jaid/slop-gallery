@@ -9,6 +9,7 @@ import getFree from 'get-free'
 import GrokSpeaker, {serializeText} from 'grok-speaker'
 
 import PrerenderTrace from './lib/voice/PrerenderTrace.ts'
+import trimVoice from './lib/voice/trimVoice.ts'
 
 export type PrerenderVoiceOptions = {
   forceTelemetry?: boolean
@@ -16,9 +17,10 @@ export type PrerenderVoiceOptions = {
   key?: string
   output?: string
   telemetryEndpoint?: string
+  trim?: boolean
 }
 
-const help = `Usage: bun scripts/prerenderVoice.ts --input <string> [--output <file.opus>] [--telemetry-endpoint <url>] [--force-telemetry | --no-force-telemetry]
+const help = `Usage: bun scripts/prerenderVoice.ts --input <string> [--output <file.opus>] [--telemetry-endpoint <url>] [--force-telemetry | --no-force-telemetry] [--trim | --no-trim]
 
 Renders Iris through direct xAI: loud, Quality mode, 48 kHz PCM and character timings.
 Encodes Opus at 80 kb/s VBR with compression level 10, without volume normalization.
@@ -30,6 +32,13 @@ Encodes Opus at 80 kb/s VBR with compression level 10, without volume normaliz
 --force-telemetry        Enabled by default. Requires accepted OTLP preflight before TTS
                          and accepted final traces before publishing the Opus file.
 --no-force-telemetry     Explicitly allow rendering when trace delivery fails.
+--trim                   Enabled by default. Removes outer silence below −50 dBFS
+                         lasting ≥20 ms, retaining 10 ms of padding per edge.
+--no-trim                Preserve the complete provider recording.
+
+Trimming preserves internal pauses, shifts character timings to the output timeline
+and clamps intervals outside the retained audio to its edges. Original WAV and
+source-timings.json remain untouched; timings.json describes the encoded output.
 
 Requires XAI_API_KEY, ffmpeg and ffprobe. Always retains lossless WAV, timings and
 trace records under private/prerender-voice/<run-id>, including after delivery failure.
@@ -77,6 +86,10 @@ export function parsePrerenderVoiceArgs(args: Array<string>) {
         type: 'boolean',
         default: true,
       },
+      trim: {
+        type: 'boolean',
+        default: true,
+      },
       help: {type: 'boolean'},
     },
   })
@@ -91,16 +104,20 @@ export function parsePrerenderVoiceArgs(args: Array<string>) {
     output: values.output,
     telemetryEndpoint: values['telemetry-endpoint'],
     forceTelemetry: values['force-telemetry'],
+    trim: values.trim,
   }
 }
 
 /** Stage paid assets and require acknowledged telemetry before publishing to a reserved, unused output name. */
-export default async function prerenderVoice({input, output, telemetryEndpoint = Bun.env.TELEMETRY_INGESTION_TRACES_ENDPOINT ?? 'http://10.0.0.22:4318/v1/traces', forceTelemetry = true, key = Bun.env.XAI_API_KEY ?? ''}: PrerenderVoiceOptions) {
+export default async function prerenderVoice({input, output, telemetryEndpoint = Bun.env.TELEMETRY_INGESTION_TRACES_ENDPOINT ?? 'http://10.0.0.22:4318/v1/traces', forceTelemetry = true, trim = true, key = Bun.env.XAI_API_KEY ?? ''}: PrerenderVoiceOptions) {
   if (typeof input !== 'string' || !input.trim()) {
     throw new TypeError('Input must be a nonempty string.')
   }
   if (typeof forceTelemetry !== 'boolean') {
     throw new TypeError('forceTelemetry must be a boolean.')
+  }
+  if (typeof trim !== 'boolean') {
+    throw new TypeError('trim must be a boolean.')
   }
   const segment = {
     text: input,
@@ -135,6 +152,7 @@ export default async function prerenderVoice({input, output, telemetryEndpoint =
     'voice.text_normalization': false,
     'audio.sample_rate': 48_000,
     'audio.codec': 'opus',
+    'audio.trim.enabled': trim,
     'audio.opus.bitrate': 80_000,
     'audio.opus.compression_level': 10,
     'output.requested.path': requested,
@@ -168,7 +186,7 @@ export default async function prerenderVoice({input, output, telemetryEndpoint =
       audio = await speaker.generate(segment, {timestamps: true})
       // Keep the paid response even if validation, encoding or telemetry later fails.
       await Bun.write(wave, audio.wav)
-      await fs.writeJson(timingsPath, audio.timestamps, {spaces: 2})
+      await fs.writeJson(path.resolve(cache, 'source-timings.json'), audio.timestamps, {spaces: 2})
       await fs.writeJson(path.resolve(cache, 'response.json'), {
         sampleRate: audio.sampleRate,
         duration: audio.duration,
@@ -187,10 +205,39 @@ export default async function prerenderVoice({input, output, telemetryEndpoint =
       synthesis.end('error', {'error.type': error instanceof Error ? error.name : typeof error})
       throw error
     }
+    let encodingWave = wave
+    let trimming: Awaited<ReturnType<typeof trimVoice>>['trim'] | undefined
+    if (trim) {
+      const span = trace.startSpan('voice.prerender.trim')
+      try {
+        const result = await trimVoice(audio)
+        audio = result.audio
+        trimming = result.trim
+        encodingWave = path.resolve(cache, 'prepared.wav')
+        await Bun.write(encodingWave, audio.wav)
+        await fs.writeJson(path.resolve(cache, 'trim.json'), trimming, {spaces: 2})
+        span.end('ok', {
+          'audio.trim.changed': trimming.changed,
+          'audio.trim.threshold_dbfs': trimming.thresholdDb,
+          'audio.trim.padding_seconds': trimming.paddingSeconds,
+          'audio.trim.minimum_silence_seconds': trimming.minimumSilenceSeconds,
+          'audio.trim.start_sample': trimming.startSample,
+          'audio.trim.end_sample': trimming.endSample,
+          'audio.trim.removed_start_seconds': trimming.removedStartSeconds,
+          'audio.trim.removed_end_seconds': trimming.removedEndSeconds,
+          'audio.source_duration': trimming.sourceDuration,
+          'audio.duration': audio.duration,
+        })
+      } catch (error) {
+        span.end('error', {'error.type': error instanceof Error ? error.name : typeof error})
+        throw error
+      }
+    }
+    await fs.writeJson(timingsPath, audio.timestamps, {spaces: 2})
     trace.timings(audio.timestamps)
     const encoding = trace.startSpan('voice.prerender.encode')
     try {
-      await Bun.$`ffmpeg -nostdin -hide_banner -loglevel error -y -i ${wave} -map 0:a:0 -map_metadata -1 -c:a libopus -b:a 80000 -vbr on -compression_level 10 -application audio ${encoded}`.quiet()
+      await Bun.$`ffmpeg -nostdin -hide_banner -loglevel error -y -i ${encodingWave} -map 0:a:0 -map_metadata -1 -c:a libopus -b:a 80000 -vbr on -compression_level 10 -application audio ${encoded}`.quiet()
       const probe = await Bun.$`ffprobe -v error -show_entries stream=codec_name,sample_rate,channels:format=duration -of json ${encoded}`.json() as {format: {duration: string}
         streams: Array<{channels: number
           codec_name: string
@@ -208,6 +255,8 @@ export default async function prerenderVoice({input, output, telemetryEndpoint =
     const bytes = await Bun.file(encoded).bytes()
     trace.root.end('ok', {
       'voice.stage': 'prepared',
+      'audio.trim.changed': trimming?.changed ?? false,
+      'voice.timings.basis': 'output',
       'output.path': destination,
       'voice.timings.count': audio.timestamps.length,
       'xai.trace.id': audio.traceId ?? '',
@@ -230,6 +279,7 @@ export default async function prerenderVoice({input, output, telemetryEndpoint =
       sampleRate: audio.sampleRate,
       duration: audio.duration,
       telemetryDelivered,
+      trim: trimming,
     }
   } catch (error) {
     trace.root.end('error', {'error.type': error instanceof Error ? error.name : typeof error})

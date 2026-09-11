@@ -99,9 +99,12 @@ test('CLI requires named input and defaults forceTelemetry to true', () => {
     output: undefined,
     telemetryEndpoint: undefined,
     forceTelemetry: true,
+    trim: true,
   })
   expect(parsePrerenderVoiceArgs(['--input', 'Hi', '--no-force-telemetry'])?.forceTelemetry).toBe(false)
   expect(parsePrerenderVoiceArgs(['--input', 'Hi', '--force-telemetry'])?.forceTelemetry).toBe(true)
+  expect(parsePrerenderVoiceArgs(['--input', 'Hi', '--no-trim'])?.trim).toBe(false)
+  expect(parsePrerenderVoiceArgs(['--input', 'Hi', '--trim'])?.trim).toBe(true)
   expect(parsePrerenderVoiceArgs(['--input', 'Hi', '--output', 'hello.opus', '--telemetry-endpoint', 'https://example.test/v1/traces'])).toMatchObject({
     output: 'hello.opus',
     telemetryEndpoint: 'https://example.test/v1/traces',
@@ -311,4 +314,57 @@ test('get-free preserves existing renders and reserves distinct names for concur
   expect(await Bun.file(options().output).text()).toBe('existing voice')
   const files = await fs.readdir(root)
   expect(files.toSorted()).toEqual(['voice.opus', 'voice_2.opus', 'voice_3.opus'])
+})
+test('default trimming is traced and the published timestamps describe the trimmed audio', async () => {
+  intercept()
+  const pcm = new Int16Array(14_400)
+  pcm.fill(5000, 4800, 9600)
+  generated.wav = new Uint8Array(await pcmWave(pcm.buffer, 48_000).arrayBuffer())
+  generated.duration = 0.3
+  generated.timestamps = [
+    {
+      char: 'a',
+      start: 0.1,
+      end: 0.2,
+    },
+  ]
+  spyOn(GrokSpeaker.prototype, 'generate').mockResolvedValue(generated)
+  const result = await prerenderVoice(options())
+  caches.add(result.cache)
+  expect(result.duration).toBe(0.12)
+  expect(result.trim?.removedStartSeconds).toBe(0.09)
+  expect(result.trim?.removedEndSeconds).toBe(0.09)
+  expect(await Bun.file(path.resolve(result.cache, 'source-timings.json')).json()).toEqual(generated.timestamps)
+  const timings = await Bun.file(result.timingsPath).json() as GeneratedSpeech['timestamps']
+  expect(timings[0].start).toBeCloseTo(0.01)
+  expect(timings[0].end).toBeCloseTo(0.11)
+  const all = requests.flatMap(request => spans(request.body))
+  const trimming = all.find(span => span.name === 'voice.prerender.trim')!
+  expect(trimming.status.code).toBe(1)
+  expect(attributes(trimming)).toMatchObject({
+    'audio.trim.removed_start_seconds': 0.09,
+    'audio.trim.removed_end_seconds': 0.09,
+    'audio.duration': 0.12,
+  })
+  const remote = all.find(span => span.name === 'voice.prerender.timings')!
+  expect(JSON.parse(attributes(remote)['voice.timings.json'] as string)).toEqual(timings)
+})
+test('trim false preserves edges and timing coordinates and does not create a trim span', async () => {
+  intercept()
+  const pcm = new Int16Array(14_400)
+  pcm.fill(5000, 4800, 9600)
+  generated.wav = new Uint8Array(await pcmWave(pcm.buffer, 48_000).arrayBuffer())
+  generated.duration = 0.3
+  spyOn(GrokSpeaker.prototype, 'generate').mockResolvedValue(generated)
+  const result = await prerenderVoice({
+    ...options(),
+    trim: false,
+  })
+  caches.add(result.cache)
+  expect(result.duration).toBe(0.3)
+  expect(result.trim).toBeUndefined()
+  expect(await Bun.file(result.timingsPath).json()).toEqual(generated.timestamps)
+  const all = requests.flatMap(request => spans(request.body))
+  expect(all.some(span => span.name === 'voice.prerender.trim')).toBe(false)
+  expect(attributes(all.find(span => span.name === 'voice.prerender')!)['audio.trim.enabled']).toBe(false)
 })
