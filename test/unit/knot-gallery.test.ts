@@ -4,11 +4,12 @@ import {describe, expect, test} from 'bun:test'
 
 import {insideKnotGallery, knotGalleryBounds, knotGalleryWalls} from '../../src/lib/gallery/knotGallery.ts'
 import walls, {rooms} from '../../src/lib/gallery/walls.ts'
+import {knotLayout} from '../../src/lib/knots/exhibition.ts'
 
 describe('permanent Knot Gallery', () => {
   test('independently seals an exhibition hall sized for the candidate rows', () => {
-    expect(knotGalleryBounds.maxX - knotGalleryBounds.minX).toBe(93.75)
-    expect(knotGalleryBounds.southZ - knotGalleryBounds.northZ).toBe(71.5)
+    expect(knotGalleryBounds.maxX - knotGalleryBounds.minX).toBe(knotLayout.size[0])
+    expect(knotGalleryBounds.southZ - knotGalleryBounds.northZ).toBe(knotLayout.size[2])
     expect(knotGalleryWalls).toHaveLength(4)
     for (const wall of knotGalleryWalls) {
       expect(wall.holes).toBeUndefined()
