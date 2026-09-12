@@ -15,6 +15,6 @@ export default function GameScene({children}: GameWrapperProps) {
     <WebgpuCaptureBridge/>
     <TelemetryBridge/>
     {children}
-    <Branch if={profile.postprocessing}><Postprocessing/></Branch>
+    <Branch if={profile.postprocessing} then={Postprocessing}/>
   </>
 }
