@@ -1,3 +1,5 @@
+import type {KnotBay} from '#src/lib/knots/exhibition.ts'
+
 import {useFrame, useThree} from '@react-three/fiber/webgpu'
 import {useEffect, useRef} from 'react'
 import {PointerLockControls} from 'three/addons/controls/PointerLockControls.js'
@@ -13,7 +15,7 @@ import {knotBays, knotExhibition} from '#src/lib/knots/exhibition.ts'
 import KnotAnnouncer from '#src/lib/knots/KnotAnnouncer.ts'
 
 const exhibits = new Map(knotExhibition.map(item => [`prop-knot-${item.id}`, item]))
-const billboards = new Map(knotBays.map(bay => [`preview-${bay.model}`, bay]))
+const billboards = new Map<string, KnotBay>(knotBays.flatMap(bay => [[`preview-${bay.model}`, bay], [`model-sign-${bay.model}`, bay]] as const))
 const announcedCreators = new Set<string>
 const announcedItems = new Set<string>
 const baseRadius = (() => {

@@ -6,11 +6,11 @@ import {BoxGeometry, CylinderGeometry, DataTexture, Euler, InstancedBufferAttrib
 import useGraphicsQuality from 'use-graphics-quality'
 
 import {knotExhibition} from '#src/lib/knots/exhibition.ts'
+import loadModelIcons from '#src/lib/knots/loadModelIcons.ts'
 import {knotSign, knotSignParts, knotSignPosition, knotSignRoundParts} from '#src/lib/knots/signs.ts'
 import {signSupportMaterial} from '#src/lib/materials/SignMetalMaterial.ts'
 
 import drawLabel, {labelHeight as height, labelAtlasColumns, labelFontFamily, labelWidth as width} from './drawLabel.ts'
-import loadModelIcons from './modelIcons.ts'
 
 /** One atlas and one instanced draw replace hundreds of label meshes/materials. */
 export default function KnotLabels() {

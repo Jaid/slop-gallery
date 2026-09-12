@@ -1,6 +1,7 @@
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import {useEffect, useMemo} from 'react'
 
+import KnotModelSign from '#component/levels/knottingham/KnotModelSign'
 import KnotPreviewSign from '#component/levels/knottingham/KnotPreviewSigns'
 import CheckerMarbleFloor from '#src/components/Scene/CheckerMarbleFloor.tsx'
 import {surfaceTexture} from '#src/components/Scene/materials.ts'
@@ -37,6 +38,7 @@ export default function KnotLobby() {
           <meshBasicNodeMaterial color="#fff3d8"/>
         </mesh>
         <KnotPreviewSign bay={bay}/>
+        <KnotModelSign bay={bay}/>
       </group>)}
 
     </group>
