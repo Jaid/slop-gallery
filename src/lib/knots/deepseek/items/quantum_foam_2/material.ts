@@ -12,8 +12,7 @@ export default class QuantumFoam2Material extends KnotMaterial {
     super(environment, 0.9)
     this.name = knotData.id
     this.envMapIntensity = 0.3
-    this.transparent = true
-    this.depthWrite = false
+    this.alphaHash = true
     this.side = DoubleSide
     const {p, view, rim, near, intimate} = viewerFrame()
     const phase = p.dot(view).mul(18).add(time.mul(1.7))

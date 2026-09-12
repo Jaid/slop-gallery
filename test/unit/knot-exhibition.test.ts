@@ -1,3 +1,4 @@
+import type KnotMaterial from '../../src/lib/knots/base/KnotMaterial.ts'
 import type {Node} from 'three/webgpu'
 
 import {describe, expect, test} from 'bun:test'
@@ -86,13 +87,18 @@ describe('multi-model Knot challenge', () => {
     environment.addEventListener('dispose', () => disposed = true)
     try {
       for (const exhibit of knots) {
-        const {default: Material} = await import(resolve(import.meta.dir, '../../src/lib/knots', exhibit.model, 'items', exhibit.sourceId, 'material.ts'))
+        const {default: Material} = await import(resolve(import.meta.dir, '../../src/lib/knots', exhibit.model, 'items', exhibit.sourceId, 'material.ts')) as {default: new(environment: StudioEnvironment) => KnotMaterial}
         const material = new Material(environment)
         try {
           expect(material.name).toBe(exhibit.sourceId)
           expect(material.envMap).toBe(environment)
           expect(material.isMeshPhysicalNodeMaterial).toBe(true)
           expect(material.map).toBeNull()
+          if (material.opacityNode) {
+            expect(material.transparent, exhibit.id).toBe(false)
+            expect(material.depthWrite, exhibit.id).toBe(true)
+            expect(material.alphaHash, exhibit.id).toBe(true)
+          }
           if (exhibit.displacement) {
             expect(material.positionNode).not.toBeNull()
             expect(material.normalNode).not.toBeNull()

@@ -18,8 +18,7 @@ export default class PhaseGhostMaterial extends KnotMaterial {
     // you approach: coarse wireframe first, then a four-times finer lattice and blinking data blocks that live
     // inside the volume. Screen-space scanlines, a scanning plane and world-space glitch bands remind you it is light.
     this.envMapIntensity = 0
-    this.transparent = true
-    this.depthWrite = false
+    this.alphaHash = true
     this.side = DoubleSide
     const {p, view, facing, grazing, near, intimate} = viewerFrame()
     const tube = uv()
