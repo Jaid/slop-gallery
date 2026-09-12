@@ -90,7 +90,10 @@ test('museum stand has a slender stem, round grounded foot and upward-facing pla
 test('stand stays on the left with its back turned toward its knot', () => {
   expect(knotSign.sideOffset).toBeLessThan(0)
   for (const rotation of [0, Math.PI / 2, Math.PI, -Math.PI / 2]) {
-    const position = knotSignPosition({position: [0, 0, 0], rotation})
+    const position = knotSignPosition({
+      position: [0, 0, 0],
+      rotation,
+    })
     const towardKnot = new Vector3(-position[0], 0, -position[2]).normalize()
     const back = new Vector3(0, 0, -1).applyAxisAngle(new Vector3(0, 1, 0), rotation + knotSign.inwardRotation)
     expect(back.dot(towardKnot)).toBeGreaterThan(0.8)
