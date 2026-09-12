@@ -19,6 +19,7 @@ export default class PhaseGhostMaterial extends KnotMaterial {
     // inside the volume. Screen-space scanlines, a scanning plane and world-space glitch bands remind you it is light.
     this.envMapIntensity = 0
     // Alpha hashing currently produces an invalid Tint pipeline for these procedural opacity graphs.
+    // TODO: Migrate to alphaHash again when Chromium WebGPU Tint compiler is less buggy.
     // Depth-writing alpha blending keeps the fade smooth while avoiding the old self-sorting flicker.
     this.transparent = true
     this.depthWrite = true
