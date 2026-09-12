@@ -1,3 +1,4 @@
+import Branch from 'branch-component'
 import clsx from 'clsx'
 
 import ArtworkOverlay from '#component/ArtworkOverlay'
@@ -9,14 +10,12 @@ import css from './style.module.sass'
 
 export default function Hud() {
   const s = useGallery()
-  if (!s.locked || s.panel || s.dragging) {
-    return null
-  }
+
   const artwork = !s.held && s.portraits.find(p => p.id === s.activeLabel && p.hung && !p.reserved)
   const speaking = s.narration?.title ? {title: s.narration.title} : s.narration?.id === '__intro' ? intro : s.portraits.find(p => p.id === s.narration?.id)
-  return <>
+  return <Branch if={s.locked} none={[s.panel, s.dragging]}><>
     <div className={clsx(css.crosshair, s.active && css.targeted)} aria-hidden="true"/>
     {artwork && <ArtworkOverlay portrait={artwork}/>}
     {s.narration && speaking && <NarrationIndicator title={speaking.title} status={s.narration.status} source={s.narration.source}/>}
-  </>
+  </></Branch>
 }

@@ -44,6 +44,7 @@
     "@react-three/fiber": "10.0.0-alpha.5",
     "@react-three/rapier": "2.2.0",
     "ai": "7.0.97",
+    "branch-component": "0.1.0",
     "clsx": "2.1.1",
     "compose-id": "0.2.0",
     "ego-player": "workspace:*",

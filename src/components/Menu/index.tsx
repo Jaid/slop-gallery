@@ -1,5 +1,6 @@
 import type useGalleryAI from '#src/lib/useGalleryAI.ts'
 
+import Branch from 'branch-component'
 import {useEffect, useRef} from 'react'
 import usePauseMenu from 'use-pause-menu'
 
@@ -25,19 +26,19 @@ export default function Menu(settings: ReturnType<typeof useGalleryAI>) {
   }, [])
   return <section className={css.container} data-testid="menu-overlay" data-stage={stage} aria-labelledby="menu-title">
     <div className={css.layout}>
-      {stage === 'pause' && gallerySupportsMap && <Minimap lower={false}/>}
+      <Branch all={[stage === 'pause', gallerySupportsMap]}><Minimap lower={false}/></Branch>
       <div className={css.content}>
-        <h1 ref={heading} id="menu-title" tabIndex={-1}>{stage === 'pause' && isGallery ? room.title : galleryTitle}</h1>
-        {stage !== 'unfocus' && <p className={css.tagline}>{tagline}</p>}
+        <h1 ref={heading} id="menu-title" tabIndex={-1}><Branch all={[stage === 'pause', isGallery]} then={room.title} else={galleryTitle}/></h1>
+        <Branch unless={stage === 'unfocus'}><p className={css.tagline}>{tagline}</p></Branch>
         <button className={css.enter} id="enter-gallery" disabled={!s.ready} onClick={enterGallery}>{!s.ready ? `Opening ${galleryTitle}…` : stage === 'reset' ? 'New game' : stage === 'first' ? galleryEnterLabel : stage === 'return' ? 'Continue' : 'Resume'}<Icon name="arrow" size={18}/></button>
-        {stage === 'return' && <button className={css.newGame} disabled={!s.ready} onClick={startNewGame}>New game</button>}
-        {stage !== 'unfocus' && <>
+        <Branch if={stage === 'return'}><button className={css.newGame} disabled={!s.ready} onClick={startNewGame}>New game</button></Branch>
+        <Branch unless={stage === 'unfocus'}><>
           <MenuOptions/>
           <OpenRouterConnection {...settings}/>
           <MenuNarration/>
-        </>}
+        </></Branch>
       </div>
-      {stage === 'pause' && gallerySupportsMap && <Minimap lower/>}
+      <Branch all={[stage === 'pause', gallerySupportsMap]}><Minimap lower/></Branch>
     </div>
   </section>
 }

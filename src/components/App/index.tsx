@@ -1,3 +1,4 @@
+import Branch from 'branch-component'
 import {lazy, Suspense, useState} from 'react'
 
 import Dropzone from '#component/Dropzone'
@@ -35,9 +36,9 @@ export default function App() {
     <main className={css.viewport} aria-label="Interactive 3D gallery">
       <RenderBoundary onFailure={() => setRenderFailed(true)}><Suspense fallback={null}><World/></Suspense></RenderBoundary>
     </main>
-    {!s.locked && !s.panel && !s.dragging && !renderFailed && <Menu {...settings}/>}
+    <Branch none={[s.locked, s.panel, s.dragging, renderFailed]}><Menu {...settings}/></Branch>
     <Hud/>
-    {s.notice && !s.panel && <Toast>{s.notice}</Toast>}
-    {s.panel === 'map' && <Panel title="Floor plan"><Map/></Panel>}
+    <Branch if={s.notice} unless={s.panel}><Toast>{s.notice}</Toast></Branch>
+    <Branch if={s.panel === 'map'}><Panel title="Floor plan"><Map/></Panel></Branch>
   </Dropzone></GraphicsQuality>
 }

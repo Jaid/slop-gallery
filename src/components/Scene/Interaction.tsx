@@ -2,6 +2,7 @@ import type {Placement, Vec3} from '#src/lib/gallery.ts'
 import type {Group} from 'three/webgpu'
 
 import {useFrame, useThree} from '@react-three/fiber/webgpu'
+import Branch from 'branch-component'
 import {useEffect, useRef} from 'react'
 import {PointerLockControls} from 'three/addons/controls/PointerLockControls.js'
 import {Euler, Matrix4, PerspectiveCamera, Quaternion, Raycaster, Vector2, Vector3} from 'three/webgpu'
@@ -499,6 +500,6 @@ export default function Interaction() {
     }
   })
   return <group ref={ghost} visible={false}>
-    {isGallery && (artwork || dragging) && !held?.startsWith('prop-') && <PlacementPreview key={artwork?.id ?? 'import'} width={artwork?.width ?? 2.4} height={artwork?.height ?? 2.4} source={artwork?.source} title={artwork?.title} creator={artwork?.creator} pending={artwork?.pending}/>}
+    <Branch if={isGallery} some={[artwork, dragging]} unless={held?.startsWith('prop-')}><PlacementPreview key={artwork?.id ?? 'import'} width={artwork?.width ?? 2.4} height={artwork?.height ?? 2.4} source={artwork?.source} title={artwork?.title} creator={artwork?.creator} pending={artwork?.pending}/></Branch>
   </group>
 }
