@@ -1,6 +1,7 @@
 import type {PotKind} from '#src/lib/gallery/plantDecorations/catalog.ts'
 
 import {ConvexHullCollider, CylinderCollider, RigidBody} from '@react-three/rapier'
+import Branch from 'branch-component'
 import {useGraphicsQualityValue} from 'use-graphics-quality'
 
 import decorationResources from '#src/lib/gallery/plantDecorations/DecorationResources.ts'
@@ -17,14 +18,14 @@ export default function DecorativePot({kind, solid}: PotProps) {
   const contents = <group name={`pot-${kind}`} dispose={null}>
     <mesh name="ceramic-shell" geometry={geometry.shell} material={materials.shells[kind]} castShadow receiveShadow/>
     <mesh name="baked-in-soil" geometry={geometry.soil} material={materials.soil} receiveShadow/>
-    {geometry.trim && <mesh name="brass-foot-and-rim" geometry={geometry.trim} material={resources.brass} castShadow receiveShadow/>}
+    <Branch if={geometry.trim}><mesh name="brass-foot-and-rim" geometry={geometry.trim!} material={resources.brass} castShadow receiveShadow/></Branch>
   </group>
   if (!solid) {
     return contents
   }
   return <RigidBody type="fixed" colliders={false} name={`decoration-pot-${kind}`}>
     <ConvexHullCollider args={[geometry.vertices]} friction={0.85}/>
-    {kind === 'noir' && <CylinderCollider args={[0.065, 0.24]} position={[0, 0.065, 0]}/>}
+    <Branch if={kind === 'noir'}><CylinderCollider args={[0.065, 0.24]} position={[0, 0.065, 0]}/></Branch>
     {contents}
   </RigidBody>
 }

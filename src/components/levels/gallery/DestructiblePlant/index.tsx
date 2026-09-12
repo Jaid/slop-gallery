@@ -4,6 +4,7 @@ import type {PotKind} from '#src/lib/gallery/plantDecorations/catalog.ts'
 import type {Vec3} from '#src/lib/gallery/types.ts'
 
 import {ConvexHullCollider, CylinderCollider} from '@react-three/rapier'
+import Branch from 'branch-component'
 import {useMemo} from 'react'
 
 import Pot from '#component/levels/gallery/DecorativePot'
@@ -52,16 +53,16 @@ export default function DestructiblePlant({id, kind, pot, position, rotation = 0
         <Pot kind={pot} solid={false}/>
         <ConvexHullCollider args={[vessel.vertices]} mass={3.8}/>
         <CylinderCollider args={[0.015, definition.soilRadius]} position={[0, definition.soilHeight - 0.015, 0]} mass={0.8}/>
-        {pot === 'noir' && <CylinderCollider args={[0.065, 0.24]} position={[0, 0.065, 0]} mass={0.3}/>}
-        {!rooted && <group position={[0, definition.soilHeight, 0]}>
+        <Branch if={pot === 'noir'}><CylinderCollider args={[0.065, 0.24]} position={[0, 0.065, 0]} mass={0.3}/></Branch>
+        <Branch unless={rooted}><group position={[0, definition.soilHeight, 0]}>
           <mesh name="remaining-stems" geometry={geometry.stems} material={resources[geometry.stemMaterial]} castShadow receiveShadow/>
           {geometry.stemColliders.map((collider, i) => <ConvexHullCollider key={i} ref={initializeFoliageCollider} args={[collider.vertices]} mass={collider.mass}/>)}
-        </group>}
+        </group></Branch>
       </group>
     </GrabbableProp>
     {/* Loose leaves remain siblings of the pot, so moving it never drags them along. */}
     <group position={[0, definition.soilHeight, 0]}>
-      {rooted && <Root id={id} geometry={geometry} attachments={attachments}/>}
+      <Branch if={rooted}><Root id={id} geometry={geometry} attachments={attachments as RootedPlantAttachment}/></Branch>
       {geometry.leaves.map(leaf => <Leaf anchorId={`${id}-pot`} foliageMaterial={geometry.foliageMaterial} key={leaf.id} id={`${id}-${leaf.id}`} leaf={leaf} attachments={attachments}/>)}
     </group>
   </group>

@@ -18,6 +18,9 @@
   "scripts": {
     "test": "bun test ./test"
   },
+  "dependencies": {
+    "branch-component": "0.1.0"
+  },
   "peerDependencies": {
     "@react-three/drei": "^11.0.0-alpha.7",
     "@react-three/fiber": "^10.0.0-alpha.5",

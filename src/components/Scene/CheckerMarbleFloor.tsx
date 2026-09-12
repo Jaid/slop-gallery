@@ -1,3 +1,4 @@
+import Branch from 'branch-component'
 import {useEffect, useMemo} from 'react'
 import {useGraphicsQualityValue} from 'use-graphics-quality'
 
@@ -15,9 +16,10 @@ export default function CheckerMarbleFloor({width, depth, reflections}: {depth: 
   const material = useMemo(() => new MarbleFloorMaterial(texture, reflective), [texture, reflective])
   useEffect(() => () => texture.dispose(), [texture])
   useEffect(() => () => material.dispose(), [material])
+  const reflection = material.reflection?.target
   return <mesh name="knot-room-marble-floor" position={[0, 0.001, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
     <planeGeometry args={[width, depth]}/>
     <primitive object={material} attach="material"/>
-    {material.reflection && <primitive object={material.reflection.target}/>}
+    <Branch if={reflection}><primitive object={reflection!}/></Branch>
   </mesh>
 }

@@ -2,6 +2,7 @@ import type {DestructibleLeaf} from '#src/lib/gallery/destructiblePlants/base/De
 import type PlantAttachment from '#src/lib/physics/PlantAttachment.ts'
 
 import {ConvexHullCollider} from '@react-three/rapier'
+import Branch from 'branch-component'
 
 import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
 import decorationResources from '#src/lib/gallery/plantDecorations/DecorationResources.ts'
@@ -21,10 +22,10 @@ export default function DestructiblePlantLeaf({id, leaf, attachments, anchorId, 
   >
     <ConvexHullCollider ref={initializeFoliageCollider} args={[leaf.vertices]} mass={leaf.mass}/>
     <mesh name="pluckable-blade" geometry={leaf.geometry} material={resources[foliageMaterial]} castShadow receiveShadow/>
-    {leaf.stem && leaf.stemVertices && <>
-      <ConvexHullCollider ref={initializeFoliageCollider} args={[leaf.stemVertices]} mass={leaf.stemMass}/>
-      <mesh name="carried-stalk" geometry={leaf.stem} material={resources.stems} castShadow receiveShadow/>
-    </>}
+    <Branch all={[leaf.stem, leaf.stemVertices]}><>
+      <ConvexHullCollider ref={initializeFoliageCollider} args={[leaf.stemVertices!]} mass={leaf.stemMass}/>
+      <mesh name="carried-stalk" geometry={leaf.stem!} material={resources.stems} castShadow receiveShadow/>
+    </></Branch>
   </GrabbableProp>
 }
 

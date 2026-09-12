@@ -4,6 +4,7 @@ import type {Group, InstancedMesh} from 'three/webgpu'
 
 import {useFrame} from '@react-three/fiber/webgpu'
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
+import Branch from 'branch-component'
 import {useEffect, useMemo, useRef} from 'react'
 import {Object3D, Quaternion, Vector3} from 'three/webgpu'
 
@@ -127,7 +128,7 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
         <mesh position={[side * (w / 2 + 0.055), 0, 0.1]}><boxGeometry args={[0.022, h + 0.14, 0.026]}/><meshStandardNodeMaterial color="#ddbc7c" metalness={0.6} roughness={0.3}/></mesh>
         <mesh position={[0, side * (h / 2 + 0.055), 0.1]}><boxGeometry args={[w + 0.14, 0.022, 0.026]}/><meshStandardNodeMaterial color="#ddbc7c" metalness={0.6} roughness={0.3}/></mesh>
       </group>)}
-      {p.hung && <PortraitLabel width={w} height={h} title={p.title} creator={p.creator} pending={p.pending}/>}
+      <Branch if={p.hung}><PortraitLabel width={w} height={h} title={p.title} creator={p.creator} pending={p.pending}/></Branch>
       <instancedMesh ref={magic} args={[undefined, undefined, 64]} visible={!!p.merging} frustumCulled={false}><octahedronGeometry args={[1]}/><meshBasicNodeMaterial color="#efcf84" toneMapped={false}/></instancedMesh>
     </group>
   </RigidBody>

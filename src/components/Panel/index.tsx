@@ -1,5 +1,6 @@
 import type {ReactNode} from 'react'
 
+import Branch from 'branch-component'
 import {useEffect, useRef} from 'react'
 
 import Icon from '#component/Icon'
@@ -30,7 +31,7 @@ export default function Panel({title, children}: {children: ReactNode
   }}>
     <section className={css.content}>
       <div className={css.heading}><div><div className={css.eyebrow}>THE SLOP GALLERY</div><h2 id="panel-title">{title}</h2></div><button className={css.iconButton} aria-label="Close panel" onClick={() => openPanel(null)} autoFocus><Icon name="close"/></button></div>
-      {notice && <Toast panel>{notice}</Toast>}
+      <Branch if={notice}><Toast panel>{notice}</Toast></Branch>
       {children}
     </section>
   </dialog>

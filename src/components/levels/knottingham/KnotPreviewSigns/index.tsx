@@ -1,5 +1,7 @@
 import type {KnotBay} from '#src/lib/knots/exhibition.ts'
 
+import Branch from 'branch-component'
+
 import CanvasText from '#component/CanvasText'
 import {knotPreviewX} from '#src/lib/knots/exhibition.ts'
 import useArtworkTexture from '#src/lib/useArtworkTexture.ts'
@@ -15,7 +17,7 @@ export default function KnotPreviewSign({bay}: {bay: KnotBay}) {
       <planeGeometry args={[width, height]}/>
       <meshBasicNodeMaterial key={texture?.uuid ?? 'loading'} map={texture} color={texture ? '#ffffff' : '#122029'} toneMapped={false}/>
     </mesh>
-    {failed && <CanvasText fontFamily="main" text="Preview could not be loaded" width={width - 0.2} height={0.35} position={[0, 0, 0.01]} color="#ffb4a3"/>}
+    <Branch if={failed}><CanvasText fontFamily="main" text="Preview could not be loaded" width={width - 0.2} height={0.35} position={[0, 0, 0.01]} color="#ffb4a3"/></Branch>
     <CanvasText fontFamily="main" text={`${bay.labels} · ${bay.title}`} width={4.8} height={0.32} position={[0, height / 2 + 0.28, 0]} color="#17202b" fontWeight={600}/>
   </group>
 }

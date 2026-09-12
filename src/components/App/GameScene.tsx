@@ -1,5 +1,6 @@
 import type {GameWrapperProps} from 'three-fiber-game'
 
+import Branch from 'branch-component'
 import {useGraphicsQualityValue} from 'use-graphics-quality'
 
 import Postprocessing from '#component/Postprocessing'
@@ -14,6 +15,6 @@ export default function GameScene({children}: GameWrapperProps) {
     <WebgpuCaptureBridge/>
     <TelemetryBridge/>
     {children}
-    {profile.postprocessing && <Postprocessing/>}
+    <Branch if={profile.postprocessing}><Postprocessing/></Branch>
   </>
 }

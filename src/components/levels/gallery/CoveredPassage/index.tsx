@@ -3,6 +3,7 @@ import type {PassageCutout} from '#src/lib/gallery/passages/Passage.ts'
 import type {Material} from 'three/webgpu'
 
 import {CuboidCollider, RigidBody, TrimeshCollider} from '@react-three/rapier'
+import Branch from 'branch-component'
 import {useEffect, useMemo} from 'react'
 import {BoxGeometry} from 'three/webgpu'
 
@@ -37,7 +38,7 @@ export default function CoveredPassage({passage, material, timber, ribCutouts}: 
         <CuboidCollider position={[x, passage.floorY + passage.height + 0.12, z]} args={[width / 2, 0.12, depth / 2]}/>
         <Box position={[x, passage.floorY + passage.height + 0.12, z]} size={[width, 0.24, depth]} material={material}/>
       </group>)}
-      {!timber && collision.map((args, i) => <TrimeshCollider key={i} args={args}/>)}
+      <Branch unless={timber}>{collision.map((args, i) => <TrimeshCollider key={i} args={args}/>)}</Branch>
       {timber ? <TimberFrame geometry={geometry} material={timber} lining={material}/> : <>
         <mesh name="castle-barrel-vault" geometry={geometry.shell} material={material} receiveShadow castShadow/>
         <mesh name="castle-vault-ribs" geometry={geometry.ribs} material={material} receiveShadow castShadow/>

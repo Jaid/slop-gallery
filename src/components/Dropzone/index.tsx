@@ -1,6 +1,7 @@
 import type {PropsWithChildren} from 'react'
 import type {DropEvent} from 'react-dropzone'
 
+import Branch from 'branch-component'
 import {useEffect} from 'react'
 import {useDropzone} from 'react-dropzone'
 
@@ -54,6 +55,6 @@ export default function Dropzone({children}: PropsWithChildren) {
   return <div {...getRootProps({className: css.container})}>
     <input {...getInputProps()} data-artwork-input aria-label="Import artworks"/>
     {children}
-    {isDragActive && <ArtworkDropOverlay rejected={isDragReject} valid={Boolean(placement?.valid)}/>}
+    <Branch if={isDragActive}><ArtworkDropOverlay rejected={isDragReject} valid={Boolean(placement?.valid)}/></Branch>
   </div>
 }

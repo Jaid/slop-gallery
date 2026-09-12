@@ -7,6 +7,7 @@ import type {ComponentProps, ReactNode, Ref} from 'react'
 import {PointerLockControls} from '@react-three/drei/webgpu'
 import {useFrame, useThree} from '@react-three/fiber/webgpu'
 import {CapsuleCollider, RigidBody, useAfterPhysicsStep, useBeforePhysicsStep, useRapier} from '@react-three/rapier'
+import Branch from 'branch-component'
 import {useEffect, useImperativeHandle, useRef, useState} from 'react'
 
 import EgoDiagnostics from './EgoDiagnostics.ts'
@@ -216,7 +217,7 @@ export default function EgoPlayer({cameraEnabled = true, children, enabled = tru
     }
   })
   return <>
-    {pointerLock !== false && <PointerLockControls makeDefault {...typeof pointerLock === 'object' ? pointerLock : {}} domElement={renderer.domElement}/>}
+    <Branch if={pointerLock !== false}><PointerLockControls makeDefault {...typeof pointerLock === 'object' ? pointerLock : {}} domElement={renderer.domElement}/></Branch>
     <RigidBody ref={bodyRef} type="kinematicPosition" userData={userData === undefined ? defaultUserData : userData} colliders={false} canSleep={false} position={initial.position}>
       <CapsuleCollider ref={colliderRef} args={[getCapsuleHalfHeight(initial.height, initial.radius), initial.radius]} position={[0, initial.height / 2, 0]} friction={0} restitution={0}/>
       {children}

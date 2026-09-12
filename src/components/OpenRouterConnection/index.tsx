@@ -1,5 +1,6 @@
 import type useGalleryAI from '#src/lib/useGalleryAI.ts'
 
+import Branch from 'branch-component'
 import {useState} from 'react'
 
 import {notify, setApiKey, useGallery} from '#src/lib/gallery.ts'
@@ -25,7 +26,7 @@ export default function OpenRouterConnection({params, setParams}: ReturnType<typ
       <div className={css.keyRow}><input id="settings-key" type="password" autoComplete="off" spellCheck={false} placeholder="sk-or-…" value={key} onChange={event => setKey(event.target.value)}/><button className={css.primaryButton} disabled={!key.trim()}>{apiKey ? 'Update' : 'Connect'}</button></div>
     </form>
     <p className={css.note}>Your key stays in this tab and is never included in backups. Saving a key does not verify it or make a paid request.</p>
-    {apiKey && <div>
+    <Branch if={apiKey}><div>
       <label className={css.toggleRow}>Enable AI<input type="checkbox" checked={params.ai} onChange={event => void setParams({ai: event.target.checked}).catch(() => notify('AI preferences could not be saved.'))}/></label>
       <button className={css.textButton} onClick={() => {
         setApiKey('')
@@ -33,6 +34,6 @@ export default function OpenRouterConnection({params, setParams}: ReturnType<typ
         void setParams({ai: false}).catch(() => notify('AI preferences could not be saved.'))
         notify('Key removed. AI is off.')
       }}>Disconnect & forget key</button>
-    </div>}
+    </div></Branch>
   </section>
 }

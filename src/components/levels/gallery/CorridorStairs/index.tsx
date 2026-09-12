@@ -1,6 +1,7 @@
 import type {Material} from 'three/webgpu'
 
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
+import Branch from 'branch-component'
 import {useEffect, useMemo} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
@@ -40,7 +41,7 @@ export default function CorridorStairs({timber, lining}: {lining: Material
       {corridorStairs.blocks.map((block, i) => <group key={i}>
         <CuboidCollider position={block.position} args={[block.size[0] / 2, block.size[1] / 2, block.size[2] / 2]}/>
         <Box name="corridor-stair-tread" position={block.position} size={block.size} material={wood}/>
-        {block.tread && <mesh name="corridor-half-round-tread-carpet" geometry={carpet} material={fabric} position={[block.position[0] + block.size[0] / 2 - 0.025, block.top + 0.001, block.position[2]]} rotation={[0, Math.PI / 2, 0]} receiveShadow/>}
+        <Branch if={block.tread}><mesh name="corridor-half-round-tread-carpet" geometry={carpet} material={fabric} position={[block.position[0] + block.size[0] / 2 - 0.025, block.top + 0.001, block.position[2]]} rotation={[0, Math.PI / 2, 0]} receiveShadow/></Branch>
       </group>)}
       <TimberFrame geometry={frame} material={timber} lining={lining}/>
       {corridorRails.map((beam, i) => <group key={i} position={beam.position} rotation={beam.rotation}>

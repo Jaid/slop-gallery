@@ -73,6 +73,9 @@
     "packages/ego-player": {
       "name": "ego-player",
       "version": "0.1.0",
+      "dependencies": {
+        "branch-component": "0.1.0",
+      },
       "devDependencies": {
         "@dimforge/rapier3d-compat": "0.20.0",
       },
