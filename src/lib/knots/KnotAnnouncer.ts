@@ -16,32 +16,36 @@ export default class KnotAnnouncer {
     if (!repeat && this.hasAnnounced(item)) {
       return
     }
-    this.stop()
-    const controller = new AbortController
-    this.controller = controller
-    const {signal} = controller
     const paths = knotAnnouncementPaths(item)
-    try {
-      const creator = this.audio.resolve(paths.creator)
-      if (creator && !this.announcedCreators.has(paths.creator)) {
-        await this.audio.play(creator, signal, item.modelTitle)
-        if (signal.aborted) {
-          return
-        }
-        this.announcedCreators.add(paths.creator)
-      }
-      const recording = this.audio.resolve(paths.item)
-      if (!signal.aborted && recording) {
-        await this.audio.play(recording, signal, item.title)
-        if (!signal.aborted) {
-          this.announcedItems.add(paths.item)
-        }
-      }
-    } finally {
-      if (this.controller === controller) {
-        this.controller = undefined
-      }
-    }
+    return this.play([
+      ...this.announcedCreators.has(paths.creator) ? [] : [
+        {
+          id: paths.creator,
+          title: item.modelTitle,
+          completed: this.announcedCreators,
+        },
+      ],
+      {
+        id: paths.item,
+        title: item.title,
+        completed: this.announcedItems,
+      },
+    ])
+  }
+
+  /** Billboards explicitly replay each displayed model version, never item titles. */
+  announceCreators(items: ReadonlyArray<KnotEntry>) {
+    const creators = new Map(items.map(item => {
+      const id = knotAnnouncementPaths(item).creator
+      return [
+        id, {
+          id,
+          title: item.modelTitle,
+          completed: this.announcedCreators,
+        },
+      ]
+    }))
+    return this.play([...creators.values()])
   }
 
   hasAnnounced(item: KnotEntry) {
@@ -51,5 +55,32 @@ export default class KnotAnnouncer {
   stop() {
     this.controller?.abort()
     this.controller = undefined
+  }
+
+  private async play(recordings: ReadonlyArray<{completed: Set<string>
+    id: string
+    title: string}>) {
+    this.stop()
+    const controller = new AbortController
+    this.controller = controller
+    const {signal} = controller
+    try {
+      for (const recording of recordings) {
+        if (signal.aborted) {
+          return
+        }
+        const url = this.audio.resolve(recording.id)
+        if (url) {
+          await this.audio.play(url, signal, recording.title)
+          if (!signal.aborted) {
+            recording.completed.add(recording.id)
+          }
+        }
+      }
+    } finally {
+      if (this.controller === controller) {
+        this.controller = undefined
+      }
+    }
   }
 }

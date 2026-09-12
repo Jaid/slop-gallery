@@ -7,7 +7,9 @@ import {knotBays} from '../../src/lib/knots/exhibition.ts'
 
 type Element = ReactElement<{children: Array<Element>
   color?: string
-  map?: unknown;}>
+  id?: string
+  map?: unknown
+  onActivate?: () => void;}>
 
 test('preview material is replaced when an asynchronous texture arrives or changes', async () => {
   const entry = resolve(import.meta.dir, '../../src/components/levels/knottingham/KnotPreviewSigns/index.tsx')
@@ -20,7 +22,7 @@ test('preview material is replaced when an asynchronous texture arrives or chang
         name: 'preview-sign-fixture',
         setup(build) {
           build.onLoad({filter: /KnotPreviewSigns[/\\]index\.tsx$/u}, async ({path}) => ({
-            contents: `${await Bun.file(path).text()}\nexport {setResult} from "#src/lib/useArtworkTexture.ts"`,
+            contents: `${await Bun.file(path).text()}\nexport {setResult} from "#src/lib/useArtworkTexture.ts"; export {getNarrated} from "#src/lib/gallery/actions.ts"`,
             loader: 'tsx',
           }))
           build.onResolve({filter: /^#/u}, ({path}) => ({
@@ -31,7 +33,7 @@ test('preview material is replaced when an asynchronous texture arrives or chang
             filter: /.*/u,
             namespace: 'fixture',
           }, ({path}) => ({
-            contents: path.includes('useArtworkTexture') ? 'let result; export const setResult = value => {result = value}; export default () => result' : path.includes('exhibition') ? 'export const knotPreviewX = -10' : 'export default "canvas-text"',
+            contents: path.includes('gallery/actions') ? 'let narrated; export const narrate = id => {narrated = id}; export const getNarrated = () => narrated' : path.includes('useArtworkTexture') ? 'let result; export const setResult = value => {result = value}; export default () => result' : path.includes('exhibition') ? 'export const knotPreviewX = -10' : 'export default "canvas-text"',
             loader: 'js',
           }))
         },
@@ -40,8 +42,9 @@ test('preview material is replaced when an asynchronous texture arrives or chang
   })
   expect(result.success).toBe(true)
   const source = await result.outputs[0].text()
-  const {default: Preview, setResult} = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`) as {
+  const {default: Preview, setResult, getNarrated} = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`) as {
     default: (props: {bay: typeof knotBays[number]}) => Element
+    getNarrated: () => string
     setResult: (value: {failed: boolean
       texture: {image: {height: number
         width: number}
@@ -52,6 +55,10 @@ test('preview material is replaced when an asynchronous texture arrives or chang
     texture: null,
     failed: false,
   })
+  const target = Preview({bay: knotBays[0]})
+  expect(target.props.id).toBe(`preview-${knotBays[0].model}`)
+  target.props.onActivate!()
+  expect(getNarrated()).toBe(`preview-${knotBays[0].model}`)
   const loading = material()
   expect(loading.key).toBe('loading')
   expect(loading.props.map).toBeNull()

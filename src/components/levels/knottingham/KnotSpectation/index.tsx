@@ -9,10 +9,11 @@ import OrbitInspection from '#src/lib/camera/OrbitInspection.ts'
 import {cameraPose, galleryEvents, isTextInput, markControlled, notify, stopNarration, useGallery} from '#src/lib/gallery.ts'
 import {createKnotGeometry} from '#src/lib/gallery/sculptures.ts'
 import knotAnnouncementUrl from '#src/lib/knots/announcementAssets.ts'
-import {knotExhibition} from '#src/lib/knots/exhibition.ts'
+import {knotBays, knotExhibition} from '#src/lib/knots/exhibition.ts'
 import KnotAnnouncer from '#src/lib/knots/KnotAnnouncer.ts'
 
 const exhibits = new Map(knotExhibition.map(item => [`prop-knot-${item.id}`, item]))
+const billboards = new Map(knotBays.map(bay => [`preview-${bay.model}`, bay]))
 const announcedCreators = new Set<string>
 const announcedItems = new Set<string>
 const baseRadius = (() => {
@@ -74,13 +75,15 @@ export default function KnotSpectation() {
     }
     const announce = (id: string, repeat = false) => {
       const item = exhibits.get(id)
-      if (!item || !useGallery.getState().sound || !repeat && announcer.hasAnnounced(item)) {
+      const billboard = billboards.get(id)
+      if (!item && !billboard || !useGallery.getState().sound || item && !repeat && announcer.hasAnnounced(item)) {
         return
       }
       stopNarration()
       const version = ++narrationVersion
       narrationId = id
-      void announcer.announce(item, repeat).catch(error => {
+      const playback = billboard ? announcer.announceCreators(billboard.finishes) : announcer.announce(item!, repeat)
+      void playback.catch(error => {
         if (version === narrationVersion) {
           notify(error instanceof Error ? error.message : 'The announcement could not be played.')
         }

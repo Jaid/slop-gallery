@@ -129,3 +129,52 @@ test('explicit interaction repeats the title without repeating its completed cre
   const paths = knotAnnouncementPaths(item)
   expect(played).toEqual([paths.creator, paths.item, paths.item])
 })
+test('billboards replay only distinct creator announcements, including mixed-model bays', async () => {
+  const played: Array<string> = []
+  const announcer = new KnotAnnouncer({
+    resolve: id => id,
+    play: async url => {
+      played.push(url)
+    },
+  })
+  const flash = knotsByNumber.get(130)!
+  const items = [item, knotsByNumber.get(101)!, flash]
+  const creator = knotAnnouncementPaths(item).creator
+  const flashCreator = knotAnnouncementPaths(flash).creator
+  await announcer.announceCreators(items)
+  await announcer.announceCreators(items)
+  expect(played).toEqual([creator, flashCreator, creator, flashCreator])
+  expect(announcer.announcedItems.size).toBe(0)
+  await announcer.announce(item)
+  expect(played.at(-1)).toBe(knotAnnouncementPaths(item).item)
+  expect(played).toHaveLength(5)
+})
+test('a newer billboard announcement cancels an unfinished sequence without marking it complete', async () => {
+  const played: Array<string> = []
+  const announcer = new KnotAnnouncer({
+    resolve: id => id,
+    play: async (url, signal) => {
+      played.push(url)
+      await new Promise<void>((_resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason), {once: true}))
+    },
+  })
+  const flash = knotsByNumber.get(130)!
+  const first = announcer.announceCreators([item, flash]).catch(() => {})
+  const second = announcer.announceCreators([flash]).catch(() => {})
+  await first
+  expect(played).toEqual([knotAnnouncementPaths(item).creator, knotAnnouncementPaths(flash).creator])
+  expect(announcer.announcedCreators.size).toBe(0)
+  announcer.stop()
+  await second
+  expect(announcer.announcedCreators.size).toBe(0)
+})
+test('missing billboard recordings do not mark creators as announced', async () => {
+  const announcer = new KnotAnnouncer({
+    resolve: () => {},
+    play: async () => {
+      throw new Error('Should not play')
+    },
+  })
+  await announcer.announceCreators([item])
+  expect(announcer.announcedCreators.size).toBe(0)
+})
