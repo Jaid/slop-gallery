@@ -8,6 +8,7 @@ export const titleStickerHeight = 192
 export const creatorStickerWidth = 512
 export const creatorStickerHeight = 96
 export const labelFontFamily = 'main'
+export const labelBackground = '#122029'
 export const titleStickerSize = [0.8, 0.24] as const
 export const titleStickerY = 0.075
 export const creatorStickerSize = [0.75, 0.14] as const
@@ -32,7 +33,7 @@ export function modelLineLayout(textWidth: number, hasIcon: boolean) {
 }
 
 export function drawTitleSticker(context: CanvasRenderingContext2D, exhibit: KnotExhibit, x: number, y: number) {
-  context.fillStyle = '#122029'
+  context.fillStyle = labelBackground
   context.fillRect(x, y, titleStickerWidth, titleStickerHeight)
   context.textAlign = 'center'
   context.textBaseline = 'middle'
@@ -45,7 +46,7 @@ export function drawTitleSticker(context: CanvasRenderingContext2D, exhibit: Kno
 }
 
 export function drawCreatorSticker(context: CanvasRenderingContext2D, exhibit: KnotExhibit, x: number, y: number, icon?: HTMLImageElement) {
-  context.fillStyle = '#122029'
+  context.fillStyle = labelBackground
   context.fillRect(x, y, creatorStickerWidth, creatorStickerHeight)
   context.textBaseline = 'middle'
   context.fillStyle = '#c5d0d9'

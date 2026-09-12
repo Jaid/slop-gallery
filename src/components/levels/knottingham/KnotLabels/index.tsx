@@ -15,9 +15,10 @@ import {knotSign, knotSignId, knotSignParts, knotSignPosition, knotSignRoundPart
 import {signSupportMaterial} from '#src/lib/materials/SignMetalMaterial.ts'
 import InstancedPropVisuals from '#src/lib/physics/InstancedPropVisuals.ts'
 
-import {accentLineSize, accentLineY, creatorStickerHeight, creatorStickerSize, creatorStickerWidth, creatorStickerY, drawCreatorSticker, drawTitleSticker, labelAtlasColumns, labelFontFamily, titleStickerHeight, titleStickerSize, titleStickerWidth, titleStickerY} from './drawLabel.ts'
+import {accentLineSize, accentLineY, creatorStickerHeight, creatorStickerSize, creatorStickerWidth, creatorStickerY, drawCreatorSticker, drawTitleSticker, labelAtlasColumns, labelBackground, labelFontFamily, titleStickerHeight, titleStickerSize, titleStickerWidth, titleStickerY} from './drawLabel.ts'
 
 const stickerLift = 0.0015
+const surfaceLift = stickerLift / 3
 /** Two compact sticker atlases plus a vector accent stripe replace one full-panel raster atlas. */
 export default function KnotLabels() {
   const isQuality = useGraphicsQuality()
@@ -50,6 +51,14 @@ export default function KnotLabels() {
     const accentGeometry = stickerGeometry(...accentLineSize, accentLineY, new Float32Array(offsets.length))
     accentGeometry.deleteAttribute('labelOffset')
     accentGeometry.setAttribute('accentColor', new InstancedBufferAttribute(accents, 3))
+    const surfaceGeometry = new PlaneGeometry(knotSignParts[0].size[0], knotSignParts[0].size[1])
+    surfaceGeometry.translate(0, 0, surfaceLift)
+    surfaceGeometry.rotateX(knotSign.tilt)
+    const surfaceMaterial = new MeshBasicNodeMaterial({color: labelBackground})
+    surfaceMaterial.name = 'Knot nameplate surface material'
+    surfaceMaterial.toneMapped = false
+    const surfaceMesh = new InstancedMesh(surfaceGeometry, surfaceMaterial, knotExhibition.length)
+    surfaceMesh.name = 'knot-nameplate-surfaces'
     const titleMaterial = stickerMaterial(title.atlas, title.columns, title.rows, 'Knot title sticker material')
     const creatorMaterial = stickerMaterial(creator.atlas, creator.columns, creator.rows, 'Knot creator sticker material')
     const accentMaterial = new MeshBasicNodeMaterial
@@ -78,11 +87,11 @@ export default function KnotLabels() {
     for (const [index, exhibit] of knotExhibition.entries()) {
       matrix.makeRotationY(exhibit.rotation + knotSign.inwardRotation)
       matrix.setPosition(...knotSignPosition(exhibit))
-      for (const mesh of [titleMesh, creatorMesh, accentMesh, supports]) {
+      for (const mesh of [surfaceMesh, titleMesh, creatorMesh, accentMesh, supports]) {
         mesh.setMatrixAt(index, matrix)
       }
     }
-    for (const mesh of [titleMesh, creatorMesh, accentMesh, supports]) {
+    for (const mesh of [surfaceMesh, titleMesh, creatorMesh, accentMesh, supports]) {
       mesh.instanceMatrix.needsUpdate = true
       mesh.computeBoundingBox()
       mesh.computeBoundingSphere()
@@ -96,11 +105,14 @@ export default function KnotLabels() {
       creatorMaterial,
       creatorMesh,
       supports,
+      surfaceGeometry,
+      surfaceMaterial,
+      surfaceMesh,
       title,
       titleGeometry,
       titleMaterial,
       titleMesh,
-      visuals: new InstancedPropVisuals([titleMesh, creatorMesh, accentMesh, supports], knotExhibition.map(exhibit => knotSignId(exhibit.id))),
+      visuals: new InstancedPropVisuals([surfaceMesh, titleMesh, creatorMesh, accentMesh, supports], knotExhibition.map(exhibit => knotSignId(exhibit.id))),
       updateStickers(icons: ReadonlyMap<string, HTMLImageElement>) {
         for (const [index, exhibit] of knotExhibition.entries()) {
           const column = index % title.columns
@@ -136,13 +148,13 @@ export default function KnotLabels() {
   useEffect(() => () => {
     resources.supports.dispose()
     resources.supports.geometry.dispose()
-    for (const mesh of [resources.titleMesh, resources.creatorMesh, resources.accentMesh]) {
+    for (const mesh of [resources.surfaceMesh, resources.titleMesh, resources.creatorMesh, resources.accentMesh]) {
       mesh.dispose()
     }
-    for (const geometry of [resources.titleGeometry, resources.creatorGeometry, resources.accentGeometry]) {
+    for (const geometry of [resources.surfaceGeometry, resources.titleGeometry, resources.creatorGeometry, resources.accentGeometry]) {
       geometry.dispose()
     }
-    for (const material of [resources.titleMaterial, resources.creatorMaterial, resources.accentMaterial]) {
+    for (const material of [resources.surfaceMaterial, resources.titleMaterial, resources.creatorMaterial, resources.accentMaterial]) {
       material.dispose()
     }
     resources.title.atlas.dispose()
@@ -150,6 +162,7 @@ export default function KnotLabels() {
   }, [resources])
   useFrame(() => resources.visuals.update(id => propObjects.get(id)?.group))
   return <>
+    <primitive object={resources.surfaceMesh}/>
     <primitive object={resources.titleMesh}/>
     <primitive object={resources.creatorMesh}/>
     <primitive object={resources.accentMesh}/>
