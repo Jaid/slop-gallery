@@ -9,7 +9,7 @@ import {knotExhibition} from '#src/lib/knots/exhibition.ts'
 import {knotSign, knotSignParts, knotSignPosition, knotSignRoundParts} from '#src/lib/knots/signs.ts'
 import {signSupportMaterial} from '#src/lib/materials/SignMetalMaterial.ts'
 
-import drawLabel, {labelHeight as height, labelFontFamily, labelWidth as width} from './drawLabel.ts'
+import drawLabel, {labelHeight as height, labelAtlasColumns, labelFontFamily, labelWidth as width} from './drawLabel.ts'
 import loadModelIcons from './modelIcons.ts'
 
 /** One atlas and one instanced draw replace hundreds of label meshes/materials. */
@@ -18,7 +18,7 @@ export default function KnotLabels() {
   const supportMaterial = useMemo(() => signSupportMaterial(isQuality), [isQuality])
   useEffect(() => () => supportMaterial.dispose(), [supportMaterial])
   const resources = useMemo(() => {
-    const columns = 8
+    const columns = labelAtlasColumns
     const rows = Math.ceil(knotExhibition.length / columns)
     const canvas = document.createElement('canvas')
     canvas.width = columns * width

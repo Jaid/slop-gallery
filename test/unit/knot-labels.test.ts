@@ -1,19 +1,19 @@
 import {describe, expect, test} from 'bun:test'
 
-import drawLabel, {labelHeight, labelVerticalPadding, labelWidth, modelLineLayout} from '../../src/components/levels/knottingham/KnotLabels/drawLabel.ts'
+import drawLabel, {labelAtlasColumns, labelHeight, labelVerticalPadding, labelWidth, modelLineLayout} from '../../src/components/levels/knottingham/KnotLabels/drawLabel.ts'
 import {knotBays, knotExhibition} from '../../src/lib/knots/exhibition.ts'
 import {knotsByNumber} from '../../src/lib/knots/index.ts'
 import {knotSign} from '../../src/lib/knots/signs.ts'
 
 describe('Knot model plates', () => {
-  test('pads each plate to 4:3 without extra draw batches', () => {
+  test('pads each plate to portrait 2:3 without extra draw batches', () => {
     expect(labelWidth).toBe(384 * 2)
-    expect(labelWidth / labelHeight).toBe(4 / 3)
-    expect(labelVerticalPadding).toBe(128)
+    expect(labelWidth / labelHeight).toBe(2 / 3)
+    expect(labelVerticalPadding).toBe(416)
     expect(knotSign.width / knotSign.height).toBeCloseTo(labelWidth / labelHeight)
     expect(knotSign.elevation).toBe(0.8)
-    expect(8 * labelWidth).toBeLessThanOrEqual(8192)
-    expect(Math.ceil(knotExhibition.length / 8) * labelHeight).toBeLessThanOrEqual(8192)
+    expect(labelAtlasColumns * labelWidth).toBeLessThanOrEqual(8192)
+    expect(Math.ceil(knotExhibition.length / labelAtlasColumns) * labelHeight).toBeLessThanOrEqual(8192)
   })
   test('ships a local icon for every exhibited model and reuses family marks', async () => {
     const urls = new Set<string>

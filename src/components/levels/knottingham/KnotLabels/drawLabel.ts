@@ -1,7 +1,8 @@
 import type {KnotExhibit} from '#src/lib/knots/exhibition.ts'
 
+export const labelAtlasColumns = 10
 export const labelWidth = 768
-export const labelHeight = labelWidth * 3 / 4
+export const labelHeight = labelWidth * 3 / 2
 export const labelVerticalPadding = (labelHeight - 320) / 2
 export const labelFontFamily = 'main'
 
