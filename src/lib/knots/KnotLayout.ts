@@ -10,6 +10,7 @@ export default class KnotLayout {
   readonly center: Vec3
   readonly firstRowZ = 2
   readonly itemSpacing = 3.5
+  readonly maxRowLength: number
   readonly previewX: number
   readonly rowHalfWidth: number
   readonly rowSpacing = 5.5
@@ -19,6 +20,7 @@ export default class KnotLayout {
     if (rowLengths.some(length => !Number.isSafeInteger(length) || length < 1)) {
       throw new Error('Knot rows must contain a positive number of items.')
     }
+    this.maxRowLength = Math.max(0, ...rowLengths)
     this.rowHalfWidth = Math.max(0, ...rowLengths.map(length => (length - 1) * this.itemSpacing / 2))
     this.previewX = -this.rowHalfWidth - 6.25
     this.bounds = {
@@ -39,5 +41,12 @@ export default class KnotLayout {
 
   rowZ(index: number) {
     return this.firstRowZ - index * this.rowSpacing
+  }
+
+  slotX(index: number) {
+    if (!Number.isSafeInteger(index) || index < 0 || index >= this.maxRowLength) {
+      throw new RangeError(`Invalid Knot slot index: ${index}`)
+    }
+    return -this.rowHalfWidth + index * this.itemSpacing
   }
 }

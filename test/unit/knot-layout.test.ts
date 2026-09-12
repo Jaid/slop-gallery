@@ -9,6 +9,9 @@ test('room width follows the longest displayed row and depth follows creator cou
   expect(eight.size[0] - one.size[0]).toBe(7 * one.itemSpacing)
   expect(nine.size[0] - eight.size[0]).toBe(9 * one.itemSpacing)
   expect(nine.size[2] - eight.size[2]).toBe(8 * one.rowSpacing)
+  expect(one.maxRowLength).toBe(1)
+  expect(eight.maxRowLength).toBe(8)
+  expect(nine.maxRowLength).toBe(17)
   expect(nine.size).toEqual([69.25, 5.8, 55])
   for (const layout of [one, eight, nine, new KnotLayout([])]) {
     expect(layout.previewX).toBeGreaterThan(layout.bounds.minX)
@@ -24,4 +27,7 @@ test('rejects invalid row sizes and left-aligns sparse rows', () => {
   const layout = new KnotLayout([1, 17])
   expect(layout.rowCenterX(1)).toBe(-layout.rowHalfWidth)
   expect(layout.rowCenterX(17)).toBe(0)
+  expect(layout.slotX(0)).toBe(-layout.rowHalfWidth)
+  expect(layout.slotX(16)).toBe(layout.rowHalfWidth)
+  expect(() => layout.slotX(17)).toThrow(RangeError)
 })
