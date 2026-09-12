@@ -29,7 +29,6 @@ const getCommonConfig = (context: ConfigEnv) => {
     build: {
       target: 'chrome153',
       chunkSizeWarningLimit: 10_000,
-      sourcemap: true,
     },
     plugins: [
       knotMaterialsPlugin(),
@@ -75,6 +74,7 @@ const getDevelopmentConfig = (context: ConfigEnv) => {
   const config: UserConfig = {
     build: {
       outDir: `out/build/${context.mode}`,
+      sourcemap: true,
     },
   }
   return config
