@@ -6,7 +6,9 @@ import {attribute, texture, uv, vec2} from 'three/tsl'
 import {BoxGeometry, CylinderGeometry, DataTexture, Euler, InstancedBufferAttribute, InstancedMesh, LinearFilter, LinearMipmapLinearFilter, Matrix4, MeshBasicNodeMaterial, PlaneGeometry, RGBAFormat, SRGBColorSpace} from 'three/webgpu'
 import useGraphicsQuality from 'use-graphics-quality'
 
+import InteractiveObject from '#component/InteractiveObject'
 import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
+import {narrate} from '#src/lib/gallery/actions.ts'
 import {knotExhibition} from '#src/lib/knots/exhibition.ts'
 import loadModelIcons from '#src/lib/knots/loadModelIcons.ts'
 import {knotSign, knotSignId, knotSignParts, knotSignPosition, knotSignRoundParts} from '#src/lib/knots/signs.ts'
@@ -131,7 +133,9 @@ export default function KnotLabels() {
     <primitive object={resources.supports}><primitive object={supportMaterial} attach="material"/></primitive>
     {knotExhibition.map(exhibit => <GrabbableProp key={exhibit.id} id={knotSignId(exhibit.id)} title={`${exhibit.title} · nameplate`} colliders={false} type="dynamic" position={knotSignPosition(exhibit)} rotation={[0, exhibit.rotation + knotSign.inwardRotation, 0]} restitution={0.1} friction={0.9} linearDamping={0.1} angularDamping={0.15}>
       {/* Raycast-only copy; visible geometry remains in the two instanced batches. */}
-      <mesh geometry={resources.supports.geometry} material={supportMaterial} visible={false} dispose={null}/>
+      <InteractiveObject id={knotSignId(exhibit.id)} onActivate={() => narrate(`prop-knot-${exhibit.id}`)}>
+        <mesh geometry={resources.supports.geometry} material={supportMaterial} visible={false} dispose={null}/>
+      </InteractiveObject>
       {knotSignParts.map(({position, rotation, size}, index) => <CuboidCollider key={index} position={position} rotation={rotation} args={[size[0] / 2, size[1] / 2, size[2] / 2]} mass={knotSign.plateMass}/>)}
       {knotSignRoundParts.map(({position, radius, height: partHeight, mass}, index) => <CylinderCollider key={index} position={position} args={[partHeight / 2, radius]} mass={mass}/>)}
     </GrabbableProp>)}
