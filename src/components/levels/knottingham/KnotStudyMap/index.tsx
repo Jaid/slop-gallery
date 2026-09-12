@@ -7,7 +7,7 @@ import {knotBays, knotExhibition, knotLayout} from '#src/lib/knots/exhibition.ts
 
 import css from './style.module.sass'
 
-export default function KnotStudyMap({compact = false}: {compact?: boolean} = {}) {
+export default function KnotStudyMap({compact}: {compact?: boolean} = {}) {
   const player = useRef<SVGPathElement>(null)
   useEffect(() => {
     let frame: number

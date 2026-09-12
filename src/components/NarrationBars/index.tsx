@@ -4,7 +4,7 @@ import {narrationBands, narrationMeter} from '#src/lib/audio/NarrationMeter.ts'
 
 import css from './style.module.sass'
 
-export default function NarrationBars({status}: {status: 'playing' | 'preparing'}) {
+export default function NarrationBars() {
   const container = useRef<HTMLSpanElement>(null)
   useEffect(() => {
     const bars = [...container.current!.children] as Array<HTMLElement>
@@ -26,13 +26,11 @@ export default function NarrationBars({status}: {status: 'playing' | 'preparing'
       frame = requestAnimationFrame(update)
     }
     reset()
-    if (status === 'playing') {
-      frame = requestAnimationFrame(update)
-    }
+    frame = requestAnimationFrame(update)
     return () => {
       cancelAnimationFrame(frame)
       reset()
     }
-  }, [status])
-  return <span ref={container} className={css.container} data-status={status} data-testid="audio-bars" aria-hidden="true">{narrationBands.map(([minimum]) => <i key={minimum}/>)}</span>
+  }, [])
+  return <span ref={container} className={css.container} data-testid="audio-bars" aria-hidden="true">{narrationBands.map(([minimum]) => <i key={minimum}/>)}</span>
 }

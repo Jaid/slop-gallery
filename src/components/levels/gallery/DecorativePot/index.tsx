@@ -9,7 +9,7 @@ import {getGraphicsProfile} from '#src/lib/rendering/graphicsQuality.ts'
 export type PotProps = {kind: PotKind
   solid?: boolean}
 
-export default function DecorativePot({kind, solid = false}: PotProps) {
+export default function DecorativePot({kind, solid}: PotProps) {
   const {noiseTextures} = useGraphicsQualityValue(getGraphicsProfile)
   const resources = decorationResources()
   const materials = resources.potMaterials(noiseTextures)

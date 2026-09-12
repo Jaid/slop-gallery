@@ -48,7 +48,7 @@ export default class DestructiblePlantGeometry extends DestructibleGeometry {
     }
   }
 
-  private leaf({angle, at, direction, length, width, bend, color, flower = false}: LeafOptions) {
+  private leaf({angle, at, direction, length, width, bend, color, flower}: LeafOptions) {
     const quaternion = (new Quaternion).setFromUnitVectors(up, new Vector3(...direction).normalize()).multiply((new Quaternion).setFromAxisAngle(up, -angle - Math.PI / 2))
     const position = new Vector3(0, length / 2, 0).applyQuaternion(quaternion).add(new Vector3(...at))
     const rotation = (new Euler).setFromQuaternion(quaternion)
