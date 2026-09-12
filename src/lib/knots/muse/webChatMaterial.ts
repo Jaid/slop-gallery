@@ -206,7 +206,7 @@ export class KnotMaterial extends MeshPhysicalNodeMaterial {
         this.roughnessNode = float(0.04).add(droplets.mul(0.18)).add(grazing.mul(0.06))
         this.clearcoat = 1
         this.clearcoatRoughness = 0.02
-        this.normalNode = mercuryNormal.add(proceduralNormal(droplets.add(fingerprint).mul(0.9), 0.0025))
+        this.normalNode = mercuryNormal.add(proceduralNormal(droplets.add(fingerprint).mul(0.9), 0.0025)).normalize()
         this.emissiveNode = color('#aee8ff').mul(rim.pow(4).mul(0.12))
         this.envMapIntensity = 1.45
         this.ior = 1.8

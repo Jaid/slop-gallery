@@ -102,6 +102,10 @@ describe('multi-model Knot challenge', () => {
             expect(material.depthWrite, exhibit.id).toBe(true)
             expect(material.alphaHash, exhibit.id).toBe(false)
           }
+          if (exhibit.id === 'muse/mnemonic_mercury') {
+            const normal = material.normalNode as Node & {node?: {method?: string}}
+            expect(normal.node?.method).toBe('normalize')
+          }
           if (exhibit.displacement) {
             expect(material.positionNode).not.toBeNull()
             expect(material.normalNode).not.toBeNull()
