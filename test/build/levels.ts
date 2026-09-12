@@ -30,28 +30,15 @@ for (const level of levelIds) {
     throw new Error(`Knot shaders or catalog leaked into ${level}.`)
   }
   const files = await Array.fromAsync(new Bun.Glob('**/*').scan(directory))
+  if (files.some(file => file.endsWith('.map'))) {
+    throw new Error(`Production source map escaped into ${level}.`)
+  }
   const primaryChunks = ['main.js', 'sub.js', 'react.js', 'three.js', 'rapier.js', 'vendor.js']
   if (primaryChunks.some(file => !files.includes(file))) {
     throw new Error(`Missing production chunk in ${level}.`)
   }
   if (files.some(file => /^material\d*\.js$/u.test(file))) {
     throw new Error(`Knot material code escaped the main chunk in ${level}.`)
-  }
-  const rapierMap = await Bun.file(join(directory, 'rapier.js.map')).json() as {sources: Array<string>}
-  const physicsSources = rapierMap.sources.filter(source => source.includes('/@dimforge/rapier3d-compat/'))
-  if (physicsSources.length !== 1 || !physicsSources[0].includes('@dimforge+rapier3d-compat@0.20.0/')) {
-    throw new Error(`Expected exactly one Rapier 0.20 implementation in ${level}.`)
-  }
-  if (!rapierMap.sources.length || rapierMap.sources.some(source => !/\/node_modules\/(?:@[^/]+\/)?rapier[^/]*\//u.test(source.replaceAll('\\', '/')))) {
-    throw new Error(`The Rapier chunk contains code outside Rapier packages in ${level}.`)
-  }
-  const subMap = await Bun.file(join(directory, 'sub.js.map')).json() as {sources: Array<string>}
-  if (!subMap.sources.length || subMap.sources.some(source => !source.replaceAll('\\', '/').includes('/packages/'))) {
-    throw new Error(`The sub chunk contains code outside local packages in ${level}.`)
-  }
-  const mainMap = await Bun.file(join(directory, 'main.js.map')).json() as {sources: Array<string>}
-  if (mainMap.sources.some(source => source.replaceAll('\\', '/').includes('/packages/'))) {
-    throw new Error(`Local package code leaked into the main chunk in ${level}.`)
   }
   if (files.some(file => file.endsWith('.jxl'))) {
     throw new Error(`Unsupported JXL escaped the production build in ${level}.`)

@@ -10,7 +10,6 @@ test.each(['development', 'staging', 'production'])('Vite %s keeps the shared pi
   }, 'build')
   expect(config.build.outDir).toBe(mode === 'production' ? 'dist' : `out/build/${mode}`)
   expect(config.build.target).toBe('chrome153')
-  expect(config.build.sourcemap).toBe(mode !== 'production')
   const fiberAlias = config.resolve.alias.find(alias => alias.find instanceof RegExp && alias.find.test('@react-three/fiber'))
   expect(fiberAlias?.replacement).toBe('@react-three/fiber/webgpu')
   if (fiberAlias?.find instanceof RegExp) {
@@ -22,8 +21,11 @@ test.each(['development', 'staging', 'production'])('Vite %s keeps the shared pi
   expect(config.plugins.some(plugin => plugin.name === 'title')).toBe(true)
   expect(config.plugins.some(plugin => plugin.name.includes('babel'))).toBe(true)
   if (mode === 'production') {
+    expect(config.build.sourcemap).toBe(false)
     expect(config.build.assetsDir).toBe('')
     expect(config.build.minify).toBe('terser')
+  } else {
+    expect(config.build.sourcemap).toBe(true)
   }
 })
 test('production CSS preserves resources and stacking levels used outside the stylesheet', async () => {
