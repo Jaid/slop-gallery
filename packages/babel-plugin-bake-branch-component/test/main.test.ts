@@ -35,6 +35,16 @@ describe('Branch compilation', () => {
     expect(code).toContain('ready ? _renderBranchOutput(Success) : _renderBranchOutput(fallback())')
     expect(code).toContain('typeof _output === "function" ? _createElement(_output) : _output ?? null')
   })
+  test('reuses an existing React createElement import', () => {
+    const code = compile(`
+      import {createElement as h} from 'react'
+      import Branch from 'branch-component'
+      const view = <Branch if={ready} then={Success} />
+    `)
+    expect(code.match(/from ["']react["']/g)).toHaveLength(1)
+    expect(code).toContain('typeof _output === "function" ? h(_output) : _output ?? null')
+    expect(code).not.toContain('_createElement')
+  })
   test('renders then before children in a fragment', () => {
     const code = compile(`
       import Branch from 'branch-component'
