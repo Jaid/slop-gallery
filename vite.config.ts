@@ -8,6 +8,7 @@ import cssnano from 'cssnano-preset-advanced'
 import postcssNormalize from 'postcss-normalize'
 import {loadEnv, mergeConfig} from 'vite'
 import avifOnly from 'vite-plugin-avif-only'
+import bakeBranchComponentPlugin from 'vite-plugin-bake-branch-component'
 import gameLevelPlugin, {selectGameLevel} from 'vite-plugin-game-level'
 import mediaMixinsPlugin from 'vite-plugin-media-mixins'
 import titlePlugin from 'vite-plugin-title'
@@ -19,6 +20,7 @@ import knotMaterialsPlugin from '#src/lib/vite/knotMaterialsPlugin.ts'
 const getCommonConfig = (context: ConfigEnv) => {
   const env = loadEnv(context.mode, process.cwd(), 'TELEMETRY_INGESTION_')
   const level = selectGameLevel(loadEnv(context.mode, process.cwd(), 'GAME_LEVEL').GAME_LEVEL, levelIds, defaultLevel)
+  const productionPlugins = context.mode === 'production' ? [bakeBranchComponentPlugin()] : []
   const config: UserConfig = {
     // Only the public relay prefix enters the client bundle, never private ingestion destinations.
     define: {
@@ -38,6 +40,7 @@ const getCommonConfig = (context: ConfigEnv) => {
         sharedPublicAssets: ['icon.svg'],
       }),
       reactPlugin(),
+      ...productionPlugins,
       babelPlugin({
         presets: [reactCompilerPreset()],
       }),

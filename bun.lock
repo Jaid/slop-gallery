@@ -32,6 +32,7 @@
         "use-graphics-quality": "workspace:*",
         "use-pause-menu": "workspace:*",
         "vite-plugin-avif-only": "workspace:*",
+        "vite-plugin-bake-branch-component": "workspace:*",
         "vite-plugin-game-level": "workspace:*",
         "webgpu-capture-bridge": "workspace:*",
         "zustand": "5.0.15",
@@ -68,6 +69,13 @@
         "vite-plugin-media-mixins": "0.10.0",
         "vite-plugin-title": "0.6.0",
         "webmcp-types": "0.1.7",
+      },
+    },
+    "packages/babel-plugin-bake-branch-component": {
+      "name": "babel-plugin-bake-branch-component",
+      "version": "0.1.0",
+      "peerDependencies": {
+        "@babel/core": "^8.0.0",
       },
     },
     "packages/ego-player": {
@@ -177,6 +185,16 @@
       },
       "peerDependencies": {
         "vite": "^8.3.0",
+      },
+    },
+    "packages/vite-plugin-bake-branch-component": {
+      "name": "vite-plugin-bake-branch-component",
+      "version": "0.1.0",
+      "dependencies": {
+        "babel-plugin-bake-branch-component": "workspace:*",
+      },
+      "peerDependencies": {
+        "@rolldown/plugin-babel": "^0.2.4",
       },
     },
     "packages/vite-plugin-game-level": {
@@ -517,6 +535,8 @@
     "attr-accept": ["attr-accept@4.0.0", "", {}, "sha512-hmCnJClmeKNKlsBHgbM8yLZRiQZ4/20UXbLJb6OUT16eWcM5/xNZerr80a/zCYob768KIGq++aLrQNTuwPsIOQ=="],
 
     "autoprefixer": ["autoprefixer@10.5.6", "", { "dependencies": { "browserslist": "^4.28.9", "caniuse-lite": "^1.0.30001810", "fraction.js": "^5.3.4", "picocolors": "^1.1.1", "postcss-value-parser": "^4.2.0" }, "peerDependencies": { "postcss": "^8.1.0" }, "bin": { "autoprefixer": "bin/autoprefixer" } }, "sha512-HiH4oYNc5+DQEx/b8FPfMj+WHH/WWUBmbN5r1Uf/ixtfyFkk+wGIlfJT/RD5eAyzlwkeYRtZUCI8qrEi26pl2g=="],
+
+    "babel-plugin-bake-branch-component": ["babel-plugin-bake-branch-component@workspace:packages/babel-plugin-bake-branch-component"],
 
     "babel-plugin-react-compiler": ["babel-plugin-react-compiler@1.0.0", "", { "dependencies": { "@babel/types": "^7.26.0" } }, "sha512-Ixm8tFfoKKIPYdCCKYTsqv+Fd4IJ0DQqMyEimo+pxUOMUR9cVPlwTrFt9Avu+3cb6Zp3mAzl+t1MrG2fxxKsxw=="],
 
@@ -1163,6 +1183,8 @@
     "vite": ["vite@8.3.0", "", { "dependencies": { "lightningcss": "^1.33.0", "picomatch": "^4.0.7", "postcss": "^8.5.28", "rolldown": "~1.2.6", "tinyglobby": "^0.2.17" }, "optionalDependencies": { "fsevents": "~2.3.3" }, "peerDependencies": { "@types/node": "^20.19.0 || >=22.12.0", "@vitejs/devtools": "^0.7.1", "esbuild": "^0.27.0 || ^0.28.0", "jiti": ">=1.21.0", "less": "^4.0.0", "sass": "^1.70.0", "sass-embedded": "^1.70.0", "stylus": ">=0.54.8", "sugarss": "^5.0.0", "terser": "^5.16.0", "tsx": "^4.8.1", "yaml": "^2.4.2" }, "optionalPeers": ["@types/node", "@vitejs/devtools", "esbuild", "jiti", "less", "sass", "sass-embedded", "stylus", "sugarss", "terser", "tsx", "yaml"], "bin": { "vite": "bin/vite.js" } }, "sha512-lhZBVvEHefgE+HQZC9O7EBJgCU/nVzFNl7vkS4RE0APtWLP02/8QVIkQtzBxPquh7lq5/78NHipTj7ODQ6XuyQ=="],
 
     "vite-plugin-avif-only": ["vite-plugin-avif-only@workspace:packages/vite-plugin-avif-only"],
+
+    "vite-plugin-bake-branch-component": ["vite-plugin-bake-branch-component@workspace:packages/vite-plugin-bake-branch-component"],
 
     "vite-plugin-game-level": ["vite-plugin-game-level@workspace:packages/vite-plugin-game-level"],
 
