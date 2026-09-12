@@ -1,5 +1,5 @@
 import type {FloorRoom} from '#src/lib/gallery/floors.ts'
-import type {Texture} from 'three/webgpu'
+import type {Material, Texture} from 'three/webgpu'
 
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import {useMemo} from 'react'
@@ -11,7 +11,8 @@ import Box from '#src/components/Scene/primitives.tsx'
 import {floorGlassThickness, floorThickness, roomFloorPlan} from '#src/lib/gallery/floors.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsQuality.ts'
 
-export default function RoomFloor({room, stone, wood}: {room: FloorRoom
+export default function RoomFloor({glass, room, stone, wood}: {glass: Material
+  room: FloorRoom
   stone: Texture
   wood: Texture}) {
   const {floorReflections} = useGraphicsQualityValue(getGraphicsProfile)
@@ -37,9 +38,8 @@ export default function RoomFloor({room, stone, wood}: {room: FloorRoom
       </group>)}
       {plan.glazing && <group position={[plan.glazing.center[0], -floorGlassThickness / 2, plan.glazing.center[1]]}>
         <CuboidCollider args={[plan.glazing.size[0] / 2, floorGlassThickness / 2, plan.glazing.size[1] / 2]}/>
-        <mesh name={`${room.id}-floor-glass`}>
+        <mesh name={`${room.id}-floor-glass`} material={glass}>
           <boxGeometry args={[plan.glazing.size[0], floorGlassThickness, plan.glazing.size[1]]}/>
-          <meshStandardNodeMaterial color="#a6ced6" transparent opacity={0.32} roughness={0.18} depthWrite={false}/>
         </mesh>
       </group>}
     </RigidBody>

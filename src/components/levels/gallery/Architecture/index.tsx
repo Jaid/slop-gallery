@@ -4,6 +4,7 @@ import {useThree} from '@react-three/fiber/webgpu'
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import {useEffect, useMemo} from 'react'
 import {EquirectangularReflectionMapping, MeshStandardNodeMaterial, SRGBColorSpace} from 'three/webgpu'
+import useGraphicsQuality from 'use-graphics-quality'
 
 import Fountain from '#component/levels/gallery/Fountain'
 import FountainBenches from '#component/levels/gallery/FountainBenches'
@@ -22,6 +23,7 @@ import Box from '#src/components/Scene/primitives.tsx'
 import WallSurface from '#src/components/Scene/WallSurface.tsx'
 import {rooms, walls} from '#src/lib/gallery.ts'
 import {wallTop} from '#src/lib/gallery/architecture.ts'
+import {createArchitecturalGlassMaterials, disposeArchitecturalGlassMaterials} from '#src/lib/materials/ArchitecturalGlassMaterials.ts'
 import CastleStoneMaterial from '#src/lib/materials/CastleStoneMaterial.ts'
 import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
 import canvasTexture from '#src/lib/texture.ts'
@@ -32,8 +34,11 @@ const pointLightPositions: Partial<Record<Wall['room'], Array<number>>> = {
 }
 
 export default function Architecture() {
+  const isQuality = useGraphicsQuality()
+  const glass = useMemo(() => createArchitecturalGlassMaterials(isQuality), [isQuality])
   const castleStone = useMemo(() => new CastleStoneMaterial, [])
   const lodgeWood = useMemo(() => new LodgeWoodMaterial, [])
+  useEffect(() => () => disposeArchitecturalGlassMaterials(glass), [glass])
   useEffect(() => () => {
     castleStone.dispose()
     lodgeWood.dispose()
@@ -77,7 +82,7 @@ export default function Architecture() {
       <RigidBody type="fixed" colliders={false}>
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]}/>
       </RigidBody>
-      <RoomFloor room={room} stone={textures.stone} wood={textures.wood}/>
+      <RoomFloor room={room} stone={textures.stone} wood={textures.wood} glass={glass.lobby}/>
       <Box position={[0, 5.78, 0]} size={[room.size[0], 0.18, room.size[1]]} color={room.id === 'vesper' ? '#7c9586' : '#e1dccc'}/>
       {(room.id === 'antechamber' ? [0] : Array.from({length: room.size[1] / 4 - 1}, (_, i) => i * 4 - room.size[1] / 2 + 4)).map(z => <group key={z}>
         <Box position={[0, 5.6, z]} size={[room.size[0] * 0.48, 0.1, 2.6]} color="#a29982"/>
@@ -90,7 +95,7 @@ export default function Architecture() {
     <Fountain/>
     <FountainBenches wood={textures.wood}/>
     <LodgeRoom wood={textures.wood} stone={castleStone}/>
-    <LodgeWindow material={lodgeWood}/>
+    <LodgeWindow material={lodgeWood} glass={glass.cabin}/>
     <LodgeCorridorRoute material={castleStone}/>
     <VesperOrnaments/>
     <SiennaRoom wood={textures.wood}/>
