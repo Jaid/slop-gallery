@@ -1,14 +1,8 @@
 import type {ReactNode} from 'react'
 
 const paths = {
-  sound:
-      <>
-        <path d="m11 4-6 5H2v6h3l6 5zM15 8c3 2 3 6 0 8M18 4c6 4 6 12 0 16" />
-      </>,
-  mute:
-      <>
-        <path d="m11 4-6 5H2v6h3l6 5zM16 9l6 6m0-6-6 6" />
-      </>,
+  sound: <path d="m11 4-6 5H2v6h3l6 5zM15 8c3 2 3 6 0 8M18 4c6 4 6 12 0 16" />,
+  mute: <path d="m11 4-6 5H2v6h3l6 5zM16 9l6 6m0-6-6 6" />,
   settings:
       <>
         <path d="M4 7h16M4 17h16" />
