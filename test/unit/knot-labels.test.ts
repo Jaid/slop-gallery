@@ -6,10 +6,10 @@ import {knotsByNumber} from '../../src/lib/knots/index.ts'
 import {knotSign} from '../../src/lib/knots/signs.ts'
 
 describe('Knot model plates', () => {
-  test('pads each plate to portrait 2:3 without extra draw batches', () => {
+  test('pads each plate to landscape 3:2 without extra draw batches', () => {
     expect(labelWidth).toBe(384 * 2)
-    expect(labelWidth / labelHeight).toBe(2 / 3)
-    expect(labelVerticalPadding).toBe(416)
+    expect(labelWidth / labelHeight).toBe(3 / 2)
+    expect(labelVerticalPadding).toBe(96)
     expect(knotSign.width / knotSign.height).toBeCloseTo(labelWidth / labelHeight)
     expect(knotSign.elevation).toBe(0.8)
     expect(labelAtlasColumns * labelWidth).toBeLessThanOrEqual(8192)
