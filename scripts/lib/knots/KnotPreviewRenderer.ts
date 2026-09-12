@@ -122,7 +122,9 @@ export default class KnotPreviewRenderer {
     mesh.frustumCulled = false
     this.scene.add(mesh)
     try {
+      await this.renderer.compileAsync(this.scene, this.camera)
       this.renderer.render(this.scene, this.camera)
+      await this.device.queue.onSubmittedWorkDone()
       const image = canvas(iconSize)
       image.getContext('2d')!.drawImage(this.renderer.domElement, 0, 0)
       this.renderer.setRenderTarget(this.target)
