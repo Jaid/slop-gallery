@@ -51,12 +51,15 @@ export default function KnotLabels() {
     const accentGeometry = stickerGeometry(...accentLineSize, accentLineY, new Float32Array(offsets.length))
     accentGeometry.deleteAttribute('labelOffset')
     accentGeometry.setAttribute('accentColor', new InstancedBufferAttribute(accents, 3))
-    const surfaceGeometry = new PlaneGeometry(knotSignParts[0].size[0], knotSignParts[0].size[1])
+    const surfaceGeometry = new PlaneGeometry(knotSign.width, knotSign.height)
     surfaceGeometry.translate(0, 0, surfaceLift)
     surfaceGeometry.rotateX(knotSign.tilt)
     const surfaceMaterial = new MeshBasicNodeMaterial({color: labelBackground})
     surfaceMaterial.name = 'Knot nameplate surface material'
     surfaceMaterial.toneMapped = false
+    surfaceMaterial.polygonOffset = true
+    surfaceMaterial.polygonOffsetFactor = -1
+    surfaceMaterial.polygonOffsetUnits = -1
     const surfaceMesh = new InstancedMesh(surfaceGeometry, surfaceMaterial, knotExhibition.length)
     surfaceMesh.name = 'knot-nameplate-surfaces'
     const titleMaterial = stickerMaterial(title.atlas, title.columns, title.rows, 'Knot title sticker material')
@@ -64,6 +67,9 @@ export default function KnotLabels() {
     const accentMaterial = new MeshBasicNodeMaterial
     accentMaterial.name = 'Knot accent stripe material'
     accentMaterial.toneMapped = false
+    accentMaterial.polygonOffset = true
+    accentMaterial.polygonOffsetFactor = -2
+    accentMaterial.polygonOffsetUnits = -2
     accentMaterial.colorNode = attribute('accentColor', 'vec3')
     const titleMesh = new InstancedMesh(titleGeometry, titleMaterial, knotExhibition.length)
     titleMesh.name = 'knot-title-stickers'
@@ -213,6 +219,9 @@ function stickerMaterial(atlas: DataTexture, columns: number, rows: number, name
   const material = new MeshBasicNodeMaterial
   material.name = name
   material.toneMapped = false
+  material.polygonOffset = true
+  material.polygonOffsetFactor = -2
+  material.polygonOffsetUnits = -2
   material.colorNode = texture(atlas, uv().mul(vec2(1 / columns, 1 / rows)).add(attribute('labelOffset', 'vec2')))
   return material
 }
