@@ -5,6 +5,7 @@ export default {
   id: 'saffron_cathedral',
   number: 4,
   title: 'Saffron Cathedral',
+  harness: 'Codex',
   author: {
     model: {
       title: 'GPT-6 Astra',

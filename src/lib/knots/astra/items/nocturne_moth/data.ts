@@ -5,6 +5,7 @@ export default {
   id: 'nocturne_moth',
   number: 80,
   title: 'Nocturne Moth',
+  harness: 'Codex',
   author: {
     model: {
       title: 'GPT-6 Astra',

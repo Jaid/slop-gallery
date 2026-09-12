@@ -5,6 +5,7 @@ export default {
   id: 'tempest_eye',
   number: 120,
   title: 'Tempest Eye',
+  harness: 'none',
   author: {
     model: {
       title: 'Muse Spark 1.3',

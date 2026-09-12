@@ -5,6 +5,7 @@ export default {
   id: 'tiger_iron',
   number: 78,
   title: 'Tiger Iron',
+  harness: 'Codex',
   author: {
     model: {
       title: 'GPT-6 Astra',

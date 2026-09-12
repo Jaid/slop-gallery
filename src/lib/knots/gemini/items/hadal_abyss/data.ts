@@ -5,6 +5,7 @@ export default {
   id: 'hadal_abyss',
   number: 82,
   title: 'Hadal Siphonophore',
+  harness: 'none',
   author: {
     model: {
       title: 'Gemini 3.8 Flash',

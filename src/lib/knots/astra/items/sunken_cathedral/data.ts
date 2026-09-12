@@ -5,6 +5,7 @@ export default {
   id: 'sunken_cathedral',
   number: 77,
   title: 'Sunken Cathedral',
+  harness: 'Codex',
   author: {
     model: {
       title: 'GPT-6 Astra',

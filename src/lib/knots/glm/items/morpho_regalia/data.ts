@@ -5,6 +5,7 @@ export default {
   id: 'morpho_regalia',
   number: 102,
   title: 'Morpho Regalia',
+  harness: 'none',
   author: {
     model: {
       title: 'GLM 5.3',

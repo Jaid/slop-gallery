@@ -5,6 +5,7 @@ export default {
   id: 'astral_orrery',
   number: 110,
   title: 'Astral Orrery',
+  harness: 'none',
   author: {
     model: {
       title: 'DeepSeek 4.1 Flash',

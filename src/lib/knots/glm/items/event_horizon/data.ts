@@ -5,6 +5,7 @@ export default {
   id: 'event_horizon',
   number: 98,
   title: 'Event Horizon',
+  harness: 'none',
   author: {
     model: {
       title: 'GLM 5.3',

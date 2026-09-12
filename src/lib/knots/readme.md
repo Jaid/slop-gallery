@@ -4,6 +4,7 @@ Each candidate owns `data.ts`, an `index.ts` forwarding its metadata and an arbi
 
 - Use stable snake_case IDs and a globally unique plate number. Export item data from the candidate’s index, then register new candidates in the root index.
 - Keep exact model provenance in each item’s `author.model`: required `title`, optional `slug` and `effortLevel`. Candidate folders group batches and versions; plates credit the individual author.
+- Optional top-level `harness` records the generation harness. Use a harness name such as `Codex` when known, `none` for knots retrieved directly through OpenRouter, and omit it when legacy/manual provenance is not established.
 - All non-archived items are displayed per candidate, in ascending plate-number order.
 - `archived: true` hides an item regardless of highlighting without removing it from the catalog or prompt examples.
 - For vertex displacement, declare its conservative maximum distance in meters as `displacement`. Geometry culling and collision bounds expand automatically; materials with equal bounds share geometry.

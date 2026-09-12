@@ -5,6 +5,7 @@ export default {
   id: 'emberheart',
   number: 101,
   title: 'Emberheart',
+  harness: 'none',
   author: {
     model: {
       title: 'GLM 5.3',

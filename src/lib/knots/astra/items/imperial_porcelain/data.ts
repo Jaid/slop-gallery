@@ -5,6 +5,7 @@ export default {
   id: 'imperial_porcelain',
   number: 74,
   title: 'Imperial Porcelain',
+  harness: 'Codex',
   author: {
     model: {
       title: 'GPT-6 Astra',

@@ -5,6 +5,7 @@ export default {
   id: 'nacreous_bloom',
   number: 112,
   title: 'Nacreous Bloom',
+  harness: 'none',
   author: {
     model: {
       title: 'DeepSeek 4.1 Flash',

@@ -5,6 +5,7 @@ export default {
   id: 'diamond_cathedral',
   number: 118,
   title: 'Diamond Cathedral',
+  harness: 'none',
   author: {
     model: {
       title: 'Muse Spark 1.3',

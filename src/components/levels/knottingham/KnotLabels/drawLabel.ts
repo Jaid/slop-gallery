@@ -5,6 +5,17 @@ export const labelWidth = 768
 export const labelHeight = labelWidth * 2 / 3
 export const labelFontFamily = 'main'
 
+export function knotDetailLine(harness?: string, effortLevel?: string) {
+  const details: Array<string> = []
+  if (harness && harness !== 'none') {
+    details.push(harness)
+  }
+  if (effortLevel) {
+    details.push(`${effortLevel} effort`)
+  }
+  return details.join(', ')
+}
+
 export function modelLineLayout(textWidth: number, hasIcon: boolean) {
   const iconSize = hasIcon ? 52 : 0
   const gap = hasIcon ? 16 : 0
@@ -41,11 +52,11 @@ export default function drawLabel(context: CanvasRenderingContext2D, exhibit: Kn
   }
   context.textAlign = 'left'
   context.fillText(exhibit.modelTitle, x + left + iconSize + gap, y + 400, textWidth)
-  const effort = exhibit.author.model.effortLevel
-  if (effort) {
+  const detail = knotDetailLine(exhibit.harness, exhibit.author.model.effortLevel)
+  if (detail) {
     context.textAlign = 'center'
     context.fillStyle = '#91a0ad'
     context.font = `32px ${labelFontFamily}`
-    context.fillText(`${effort} effort`, x + labelWidth / 2, y + 454, labelWidth - 48)
+    context.fillText(detail, x + labelWidth / 2, y + 454, labelWidth - 48)
   }
 }

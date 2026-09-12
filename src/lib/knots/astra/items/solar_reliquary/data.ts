@@ -5,6 +5,7 @@ export default {
   id: 'solar_reliquary',
   number: 73,
   title: 'Solar Reliquary',
+  harness: 'Codex',
   author: {
     model: {
       title: 'GPT-6 Astra',

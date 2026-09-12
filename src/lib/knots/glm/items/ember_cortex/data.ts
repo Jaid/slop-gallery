@@ -5,6 +5,7 @@ export default {
   id: 'ember_cortex',
   number: 130,
   title: 'Ember Cortex',
+  harness: 'none',
   author: {
     model: {
       title: 'GLM 5.3 Flash',

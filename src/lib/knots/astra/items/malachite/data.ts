@@ -5,6 +5,7 @@ export default {
   id: 'malachite',
   number: 1,
   title: 'Emerald Heart',
+  harness: 'Codex',
   author: {
     model: {
       title: 'GPT-6 Astra',

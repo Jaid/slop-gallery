@@ -5,6 +5,7 @@ export default {
   id: 'helios_forge',
   number: 107,
   title: 'Helios Forge',
+  harness: 'none',
   author: {
     model: {
       title: 'DeepSeek 4.1 Flash',

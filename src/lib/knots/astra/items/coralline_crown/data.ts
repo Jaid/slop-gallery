@@ -5,6 +5,7 @@ export default {
   id: 'coralline_crown',
   number: 97,
   title: 'Coralline Crown',
+  harness: 'Codex',
   author: {
     model: {
       title: 'GPT-6 Astra',

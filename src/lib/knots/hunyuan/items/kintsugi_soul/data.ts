@@ -5,6 +5,7 @@ export default {
   id: 'kintsugi_soul',
   number: 129,
   title: 'Kintsugi Soul',
+  harness: 'none',
   author: {
     model: {
       title: 'HY4 Preview',

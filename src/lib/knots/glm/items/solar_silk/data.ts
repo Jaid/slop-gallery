@@ -5,6 +5,7 @@ export default {
   id: 'solar_silk',
   number: 99,
   title: 'Solar Silk',
+  harness: 'none',
   author: {
     model: {
       title: 'GLM 5.3',

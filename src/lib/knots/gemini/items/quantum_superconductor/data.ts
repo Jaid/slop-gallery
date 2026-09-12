@@ -5,6 +5,7 @@ export default {
   id: 'quantum_superconductor',
   number: 83,
   title: 'Quantum Superconductor',
+  harness: 'none',
   author: {
     model: {
       title: 'Gemini 3.8 Flash',

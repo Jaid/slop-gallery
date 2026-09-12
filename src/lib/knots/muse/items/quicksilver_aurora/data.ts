@@ -5,6 +5,7 @@ export default {
   id: 'quicksilver_aurora',
   number: 116,
   title: 'Quicksilver Aurora',
+  harness: 'none',
   author: {
     model: {
       title: 'Muse Spark 1.3',

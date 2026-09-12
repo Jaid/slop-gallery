@@ -5,6 +5,7 @@ export default {
   id: 'liquid_chrome',
   number: 123,
   title: 'Liquid Chrome',
+  harness: 'none',
   author: {
     model: {
       title: 'HY4 Preview',

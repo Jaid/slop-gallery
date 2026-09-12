@@ -5,6 +5,7 @@ export default {
   id: 'abyssal_bloom',
   number: 114,
   title: 'Abyssal Bloom',
+  harness: 'none',
   author: {
     model: {
       title: 'Muse Spark 1.3',

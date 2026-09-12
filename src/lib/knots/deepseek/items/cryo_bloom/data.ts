@@ -5,6 +5,7 @@ export default {
   id: 'cryo_bloom',
   number: 108,
   title: 'Cryo Bloom',
+  harness: 'none',
   author: {
     model: {
       title: 'DeepSeek 4.1 Flash',

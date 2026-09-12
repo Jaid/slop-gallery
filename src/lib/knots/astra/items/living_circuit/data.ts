@@ -5,6 +5,7 @@ export default {
   id: 'living_circuit',
   number: 2,
   title: 'Photon Lattice',
+  harness: 'Codex',
   author: {
     model: {
       title: 'GPT-6 Astra',

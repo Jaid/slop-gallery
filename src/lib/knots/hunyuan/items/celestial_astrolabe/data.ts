@@ -5,6 +5,7 @@ export default {
   id: 'celestial_astrolabe',
   number: 126,
   title: 'Celestial Astrolabe',
+  harness: 'none',
   author: {
     model: {
       title: 'HY4 Preview',

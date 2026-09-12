@@ -5,6 +5,7 @@ export default {
   id: 'makie_lacquer',
   number: 95,
   title: 'Maki-e Lacquer',
+  harness: 'none',
   author: {
     model: {
       title: 'Claude Fable 5.1',

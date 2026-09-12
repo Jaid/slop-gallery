@@ -5,6 +5,7 @@ export default {
   id: 'eidolon_silk',
   number: 113,
   title: 'Eidolon Silk',
+  harness: 'none',
   author: {
     model: {
       title: 'DeepSeek 4.1 Flash',

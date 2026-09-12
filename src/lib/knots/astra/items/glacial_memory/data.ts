@@ -5,6 +5,7 @@ export default {
   id: 'glacial_memory',
   number: 79,
   title: 'Glacial Memory',
+  harness: 'Codex',
   author: {
     model: {
       title: 'GPT-6 Astra',

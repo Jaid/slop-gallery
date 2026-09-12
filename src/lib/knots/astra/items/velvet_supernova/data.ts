@@ -5,6 +5,7 @@ export default {
   id: 'velvet_supernova',
   number: 5,
   title: 'Velvet Supernova',
+  harness: 'Codex',
   author: {
     model: {
       title: 'GPT-6 Astra',

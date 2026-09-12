@@ -5,6 +5,7 @@ export default {
   id: 'vantablack_filigree',
   number: 127,
   title: 'Vantablack Filigree',
+  harness: 'none',
   author: {
     model: {
       title: 'HY4 Preview',

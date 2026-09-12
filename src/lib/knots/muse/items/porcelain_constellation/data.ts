@@ -5,6 +5,7 @@ export default {
   id: 'porcelain_constellation',
   number: 121,
   title: 'Porcelain Constellation',
+  harness: 'none',
   author: {
     model: {
       title: 'Muse Spark 1.3',

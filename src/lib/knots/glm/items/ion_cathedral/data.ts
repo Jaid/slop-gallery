@@ -5,6 +5,7 @@ export default {
   id: 'ion_cathedral',
   number: 134,
   title: 'Ion Cathedral',
+  harness: 'none',
   author: {
     model: {
       title: 'GLM 5.3 Flash',

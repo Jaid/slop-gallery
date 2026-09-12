@@ -5,6 +5,7 @@ export default {
   id: 'moire_sanctum',
   number: 92,
   title: 'Moiré Sanctum',
+  harness: 'none',
   author: {
     model: {
       title: 'Claude Fable 5.1',

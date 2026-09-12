@@ -5,6 +5,7 @@ export default {
   id: 'midnight_opal',
   number: 131,
   title: 'Midnight Opal',
+  harness: 'none',
   author: {
     model: {
       title: 'GLM 5.3 Flash',

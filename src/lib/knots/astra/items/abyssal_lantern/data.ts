@@ -5,6 +5,7 @@ export default {
   id: 'abyssal_lantern',
   number: 3,
   title: 'Abyssal Lantern',
+  harness: 'Codex',
   author: {
     model: {
       title: 'GPT-6 Astra',

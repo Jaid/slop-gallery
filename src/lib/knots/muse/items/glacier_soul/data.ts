@@ -5,6 +5,7 @@ export default {
   id: 'glacier_soul',
   number: 117,
   title: 'Glacier Soul',
+  harness: 'none',
   author: {
     model: {
       title: 'Muse Spark 1.3',

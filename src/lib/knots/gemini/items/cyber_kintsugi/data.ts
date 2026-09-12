@@ -5,6 +5,7 @@ export default {
   id: 'cyber_kintsugi',
   number: 88,
   title: 'Cyber Kintsugi',
+  harness: 'none',
   author: {
     model: {
       title: 'Gemini 3.8 Flash',

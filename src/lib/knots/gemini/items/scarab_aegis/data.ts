@@ -5,6 +5,7 @@ export default {
   id: 'scarab_aegis',
   number: 84,
   title: 'Scarab Aegis',
+  harness: 'none',
   author: {
     model: {
       title: 'Gemini 3.8 Flash',

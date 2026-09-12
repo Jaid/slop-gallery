@@ -5,6 +5,7 @@ export default {
   id: 'photon_weave',
   number: 137,
   title: 'Photon Weave',
+  harness: 'none',
   author: {
     model: {
       title: 'GLM 5.3 Flash',

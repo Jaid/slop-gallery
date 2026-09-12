@@ -5,6 +5,7 @@ export default {
   id: 'event_horizon',
   number: 89,
   title: 'Event Horizon',
+  harness: 'none',
   author: {
     model: {
       title: 'Claude Fable 5.1',

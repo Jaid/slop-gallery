@@ -5,6 +5,7 @@ export default {
   id: 'tempest_urn',
   number: 136,
   title: 'Tempest Urn',
+  harness: 'none',
   author: {
     model: {
       title: 'GLM 5.3 Flash',

@@ -5,6 +5,7 @@ export default {
   id: 'obsidian_heartbeat',
   number: 115,
   title: 'Obsidian Heartbeat',
+  harness: 'none',
   author: {
     model: {
       title: 'Muse Spark 1.3',

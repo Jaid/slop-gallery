@@ -5,6 +5,7 @@ export default {
   id: 'abyssal_bloom',
   number: 124,
   title: 'Abyssal Bloom',
+  harness: 'none',
   author: {
     model: {
       title: 'HY4 Preview',

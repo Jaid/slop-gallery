@@ -5,6 +5,7 @@ export default {
   id: 'frost_bloom',
   number: 105,
   title: 'Frost Bloom',
+  harness: 'none',
   author: {
     model: {
       title: 'GLM 5.3',

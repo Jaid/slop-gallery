@@ -5,6 +5,7 @@ export default {
   id: 'astral_loom',
   number: 85,
   title: 'Astral Loom',
+  harness: 'none',
   author: {
     model: {
       title: 'Gemini 3.8 Flash',

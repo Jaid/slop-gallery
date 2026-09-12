@@ -5,6 +5,7 @@ export default {
   id: 'tesseract_echo',
   number: 128,
   title: 'Tesseract Echo',
+  harness: 'none',
   author: {
     model: {
       title: 'HY4 Preview',

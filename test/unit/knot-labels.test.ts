@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'bun:test'
 
-import drawLabel, {labelAtlasColumns, labelHeight, labelWidth, modelLineLayout} from '../../src/components/levels/knottingham/KnotLabels/drawLabel.ts'
+import drawLabel, {knotDetailLine, labelAtlasColumns, labelHeight, labelWidth, modelLineLayout} from '../../src/components/levels/knottingham/KnotLabels/drawLabel.ts'
 import {knotBays, knotExhibition} from '../../src/lib/knots/exhibition.ts'
 import {knotsByNumber} from '../../src/lib/knots/index.ts'
 import {knotSign} from '../../src/lib/knots/signs.ts'
@@ -62,6 +62,7 @@ describe('Knot model plates', () => {
     } as HTMLImageElement
     const exhibit = {
       ...knotExhibition[0],
+      harness: undefined,
       author: {model: {title: knotExhibition[0].modelTitle}},
     }
     drawLabel(context, exhibit, labelWidth, labelHeight, icon)
@@ -78,8 +79,46 @@ describe('Knot model plates', () => {
     expect(images).toEqual([])
     expect(text.at(-1)).toEqual([exhibit.modelTitle, 264, 400, 240])
   })
-  test('adds a smaller thinking-effort line only when supplied', () => {
-    for (const effortLevel of [undefined, '', 'high', 'xhigh', 'max']) {
+  test('combines harness and thinking effort on the smaller detail line', () => {
+    const cases = [
+      {
+        harness: undefined,
+        effortLevel: undefined,
+        expected: '',
+      },
+      {
+        harness: '',
+        effortLevel: '',
+        expected: '',
+      },
+      {
+        harness: 'none',
+        effortLevel: undefined,
+        expected: '',
+      },
+      {
+        harness: 'none',
+        effortLevel: 'high',
+        expected: 'high effort',
+      },
+      {
+        harness: 'Codex',
+        effortLevel: undefined,
+        expected: 'Codex',
+      },
+      {
+        harness: undefined,
+        effortLevel: 'high',
+        expected: 'high effort',
+      },
+      {
+        harness: 'Codex',
+        effortLevel: 'high',
+        expected: 'Codex, high effort',
+      },
+    ] as const
+    for (const {harness, effortLevel, expected} of cases) {
+      expect(knotDetailLine(harness, effortLevel)).toBe(expected)
       const lines: Array<{align: string
         args: Array<unknown>
         font: string}> = []
@@ -98,6 +137,7 @@ describe('Knot model plates', () => {
       }
       const exhibit = {
         ...knotExhibition[0],
+        harness,
         author: {
           model: {
             title: knotExhibition[0].modelTitle,
@@ -106,11 +146,11 @@ describe('Knot model plates', () => {
         },
       }
       drawLabel(context as unknown as CanvasRenderingContext2D, exhibit, labelWidth, labelHeight)
-      expect(lines).toHaveLength(effortLevel ? 4 : 3)
+      expect(lines).toHaveLength(expected ? 4 : 3)
       expect(lines[2].args[2]).toBe(labelHeight + 400)
-      if (effortLevel) {
+      if (expected) {
         expect(lines[3]).toEqual({
-          args: [`${effortLevel} effort`, labelWidth * 1.5, labelHeight + 454, labelWidth - 48],
+          args: [expected, labelWidth * 1.5, labelHeight + 454, labelWidth - 48],
           font: '32px main',
           align: 'center',
         })

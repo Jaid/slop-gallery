@@ -5,6 +5,7 @@ export default {
   id: 'frozen_lightning',
   number: 7,
   title: 'Frozen Lightning',
+  harness: 'Codex',
   author: {
     model: {
       title: 'GPT-6 Astra',

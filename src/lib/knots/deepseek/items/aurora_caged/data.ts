@@ -5,6 +5,7 @@ export default {
   id: 'aurora_caged',
   number: 106,
   title: 'Aurora Caged',
+  harness: 'none',
   author: {
     model: {
       title: 'DeepSeek 4.1 Flash',

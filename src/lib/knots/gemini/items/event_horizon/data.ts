@@ -5,6 +5,7 @@ export default {
   id: 'event_horizon',
   number: 81,
   title: 'Event Horizon',
+  harness: 'none',
   author: {
     model: {
       title: 'Gemini 3.8 Flash',

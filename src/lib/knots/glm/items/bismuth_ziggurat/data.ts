@@ -5,6 +5,7 @@ export default {
   id: 'bismuth_ziggurat',
   number: 133,
   title: 'Bismuth Ziggurat',
+  harness: 'none',
   author: {
     model: {
       title: 'GLM 5.3 Flash',

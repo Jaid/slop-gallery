@@ -5,6 +5,7 @@ export default {
   id: 'abyssal_lumen',
   number: 109,
   title: 'Abyssal Lumen',
+  harness: 'none',
   author: {
     model: {
       title: 'DeepSeek 4.1 Flash',

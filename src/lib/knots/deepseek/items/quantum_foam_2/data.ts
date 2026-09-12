@@ -5,6 +5,7 @@ export default {
   id: 'quantum_foam_2',
   number: 111,
   title: 'Quantum Foam',
+  harness: 'none',
   author: {
     model: {
       title: 'DeepSeek 4.1 Flash',

@@ -5,6 +5,7 @@ export default {
   id: 'morpho_veil',
   number: 132,
   title: 'Morpho Veil',
+  harness: 'none',
   author: {
     model: {
       title: 'GLM 5.3 Flash',

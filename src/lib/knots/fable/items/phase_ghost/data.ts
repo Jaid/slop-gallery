@@ -5,6 +5,7 @@ export default {
   id: 'phase_ghost',
   number: 96,
   title: 'Phase Ghost',
+  harness: 'none',
   author: {
     model: {
       title: 'Claude Fable 5.1',

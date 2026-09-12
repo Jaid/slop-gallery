@@ -5,6 +5,7 @@ export default {
   id: 'aurora_veil',
   number: 122,
   title: 'Aurora Veil',
+  harness: 'none',
   author: {
     model: {
       title: 'HY4 Preview',

@@ -5,6 +5,7 @@ export default {
   id: 'planck_foam',
   number: 125,
   title: 'Planck Foam',
+  harness: 'none',
   author: {
     model: {
       title: 'HY4 Preview',

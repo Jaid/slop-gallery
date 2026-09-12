@@ -5,6 +5,7 @@ export default {
   id: 'damascus_tide',
   number: 90,
   title: 'Damascus Tide',
+  harness: 'none',
   author: {
     model: {
       title: 'Claude Fable 5.1',

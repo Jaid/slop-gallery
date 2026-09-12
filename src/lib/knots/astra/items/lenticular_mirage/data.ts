@@ -5,6 +5,7 @@ export default {
   id: 'lenticular_mirage',
   number: 6,
   title: 'Lenticular Mirage',
+  harness: 'Codex',
   author: {
     model: {
       title: 'GPT-6 Astra',

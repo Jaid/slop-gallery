@@ -5,6 +5,7 @@ export default {
   id: 'stardust_relic',
   number: 100,
   title: 'Stardust Relic',
+  harness: 'none',
   author: {
     model: {
       title: 'GLM 5.3',

@@ -5,6 +5,7 @@ export default {
   id: 'meteorite_memory',
   number: 76,
   title: 'Meteorite Memory',
+  harness: 'Codex',
   author: {
     model: {
       title: 'GPT-6 Astra',

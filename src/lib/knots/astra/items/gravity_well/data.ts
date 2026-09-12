@@ -5,6 +5,7 @@ export default {
   id: 'gravity_well',
   number: 8,
   title: 'Gravity Well',
+  harness: 'Codex',
   author: {
     model: {
       title: 'GPT-6 Astra',

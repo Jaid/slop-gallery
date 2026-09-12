@@ -177,6 +177,17 @@ describe('arbitrary Knot batches', () => {
     expect(knots.find(item => item.number === 111)!.sourceId).toBe('quantum_foam_2')
     expect(knots.find(item => item.number === 114)!.displacement).toBe(0.02)
   })
+  test('records known generation harnesses without guessing legacy manual provenance', () => {
+    const astra = knots.filter(entry => entry.model === 'astra')
+    const openRouter = knots.filter(entry => entry.model !== 'astra' && entry.author.model.slug)
+    const legacy = knots.filter(entry => entry.model !== 'astra' && !entry.author.model.slug)
+    expect(astra).toHaveLength(17)
+    expect(openRouter).toHaveLength(56)
+    expect(legacy).toHaveLength(64)
+    expect(astra.every(entry => entry.harness === 'Codex')).toBe(true)
+    expect(openRouter.every(entry => entry.harness === 'none')).toBe(true)
+    expect(legacy.every(entry => entry.harness === undefined)).toBe(true)
+  })
   test('formats only truly consecutive selections as ranges', () => {
     expect(formatKnotLabels([])).toBe('')
     expect(formatKnotLabels([6])).toBe('#06')

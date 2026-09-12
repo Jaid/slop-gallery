@@ -5,6 +5,7 @@ export default {
   id: 'aurora_cocoon',
   number: 135,
   title: 'Aurora Cocoon',
+  harness: 'none',
   author: {
     model: {
       title: 'GLM 5.3 Flash',

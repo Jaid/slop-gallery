@@ -5,6 +5,7 @@ export default {
   id: 'quicksilver_echo',
   number: 93,
   title: 'Quicksilver Echo',
+  harness: 'none',
   author: {
     model: {
       title: 'Claude Fable 5.1',

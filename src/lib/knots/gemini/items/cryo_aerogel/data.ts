@@ -5,6 +5,7 @@ export default {
   id: 'cryo_aerogel',
   number: 87,
   title: 'Cryo Aerogel',
+  harness: 'none',
   author: {
     model: {
       title: 'Gemini 3.8 Flash',

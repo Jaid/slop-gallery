@@ -5,6 +5,7 @@ export default {
   id: 'mycelium_oracle',
   number: 119,
   title: 'Mycelium Oracle',
+  harness: 'none',
   author: {
     model: {
       title: 'Muse Spark 1.3',

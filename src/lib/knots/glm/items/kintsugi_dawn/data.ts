@@ -5,6 +5,7 @@ export default {
   id: 'kintsugi_dawn',
   number: 104,
   title: 'Kintsugi Dawn',
+  harness: 'none',
   author: {
     model: {
       title: 'GLM 5.3',

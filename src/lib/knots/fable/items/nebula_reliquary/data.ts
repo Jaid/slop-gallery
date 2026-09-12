@@ -5,6 +5,7 @@ export default {
   id: 'nebula_reliquary',
   number: 94,
   title: 'Nebula Reliquary',
+  harness: 'none',
   author: {
     model: {
       title: 'Claude Fable 5.1',

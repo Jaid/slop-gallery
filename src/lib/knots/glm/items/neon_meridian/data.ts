@@ -5,6 +5,7 @@ export default {
   id: 'neon_meridian',
   number: 103,
   title: 'Neon Meridian',
+  harness: 'none',
   author: {
     model: {
       title: 'GLM 5.3',

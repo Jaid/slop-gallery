@@ -5,6 +5,7 @@ export default {
   id: 'abyssal_lantern',
   number: 91,
   title: 'Abyssal Lantern',
+  harness: 'none',
   author: {
     model: {
       title: 'Claude Fable 5.1',

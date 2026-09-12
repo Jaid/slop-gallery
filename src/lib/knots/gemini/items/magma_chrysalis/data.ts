@@ -5,6 +5,7 @@ export default {
   id: 'magma_chrysalis',
   number: 86,
   title: 'Magma Chrysalis',
+  harness: 'none',
   author: {
     model: {
       title: 'Gemini 3.8 Flash',
