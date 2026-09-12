@@ -18,8 +18,9 @@ test('player dumps preserve precision, join separate hit logs and respect disabl
   scene.add(mesh)
   const dump = new EgoDiagnostics(scene, camera).capture({} as EgoState, {dump: true})
   const dir = spyOn(console, 'dir').mockImplementation(() => {})
+  const warn = spyOn(console, 'warn').mockImplementation(() => {})
   try {
-    for (const enabled of [true, false]) {
+    for (const [enabled, sound, audioFails] of [[true, true, false], [false, true, false], [true, false, false], [false, false, false], [true, true, true], [false, true, true]]) {
       const build = await Bun.build({
         entrypoints: [source],
         target: 'bun',
@@ -29,7 +30,7 @@ test('player dumps preserve precision, join separate hit logs and respect disabl
             setup(builder) {
               builder.onLoad({filter: /recordPlayerDump\.ts$/u}, async () => ({
                 loader: 'ts',
-                contents: `${await Bun.file(source).text()}\nexport {telemetry}`,
+                contents: `${await Bun.file(source).text()}\nexport {telemetry}; export {played} from "../audio/soundEffects.ts"; export {default as SoundEngine} from "../audio/SoundEngine.ts"`,
               }))
               builder.onLoad({filter: /telemetry[/\\]index\.ts$/u}, () => ({
                 loader: 'ts',
@@ -37,7 +38,15 @@ test('player dumps preserve precision, join separate hit logs and respect disabl
               }))
               builder.onLoad({filter: /lib[/\\]gallery\.ts$/u}, () => ({
                 loader: 'ts',
-                contents: "export const useGallery = {getState: () => ({room: 'lobby', active: null, held: null, inspecting: null, locked: true})}",
+                contents: `export const useGallery = {getState: () => ({room: 'lobby', active: null, held: null, inspecting: null, locked: true, sound: ${sound}})}`,
+              }))
+              builder.onLoad({filter: /audio[/\\]SoundEngine\.ts$/u}, () => ({
+                loader: 'ts',
+                contents: `export default class SoundEngine {static requests = 0; static get() {this.requests++; return {resume: async () => {${audioFails ? "throw new Error('Unavailable')" : ''}}}}}`,
+              }))
+              builder.onLoad({filter: /audio[/\\]soundEffects\.ts$/u}, () => ({
+                loader: 'ts',
+                contents: 'export const played = []; export const playSoundEffect = (_sound, id) => played.push(id)',
               }))
               builder.onLoad({filter: /lib[/\\]level\.ts$/u}, () => ({
                 loader: 'ts',
@@ -50,9 +59,14 @@ test('player dumps preserve precision, join separate hit logs and respect disabl
       expect(build.success).toBe(true)
       const module = await import(`data:text/javascript;base64,${Buffer.from(await build.outputs[0].text()).toString('base64')}`) as {
         default: (dump: EgoDump) => void
+        played: Array<string>
+        SoundEngine: {requests: number}
         telemetry: {records: Array<[string, string, Record<string, unknown>]>} | null
       }
       module.default(dump)
+      await Bun.sleep(0)
+      expect(module.played).toEqual(sound && !audioFails ? ['SFX-04'] : [])
+      expect(module.SoundEngine.requests).toBe(sound ? 1 : 0)
       expect(dir).toHaveBeenLastCalledWith({
         ...dump,
         context: {
@@ -86,6 +100,7 @@ test('player dumps preserve precision, join separate hit logs and respect disabl
     }
   } finally {
     dir.mockRestore()
+    warn.mockRestore()
     geometry.dispose()
     material.dispose()
   }

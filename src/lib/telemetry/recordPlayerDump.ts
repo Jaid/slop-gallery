@@ -1,5 +1,7 @@
 import type {EgoDump} from 'ego-player'
 
+import {playSoundEffect} from '../audio/soundEffects.ts'
+import SoundEngine from '../audio/SoundEngine.ts'
 import {useGallery} from '../gallery.ts'
 import {galleryLevel} from '../level.ts'
 import {telemetry} from './index.ts'
@@ -19,6 +21,9 @@ export default function recordPlayerDump(dump: EgoDump) {
     ...dump,
     context,
   }, {depth: null})
+  if (useGallery.getState().sound) {
+    void confirmDump()
+  }
   if (!telemetry) {
     return
   }
@@ -43,5 +48,17 @@ export default function recordPlayerDump(dump: EgoDump) {
       'event.name': 'ego.dump.hit',
       'hit.index': index,
     })
+  }
+}
+
+async function confirmDump() {
+  try {
+    const sound = SoundEngine.get()
+    await sound.resume()
+    if (useGallery.getState().sound) {
+      playSoundEffect(sound, 'SFX-04')
+    }
+  } catch (error) {
+    console.warn('Dump confirmation sound could not be played.', error)
   }
 }
