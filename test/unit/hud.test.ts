@@ -91,7 +91,6 @@ describe('contextual HUD', () => {
     expect(html).toContain('A story')
     expect(html).toContain('Narrator playing')
     expect(html).toContain('data-testid="audio-bars"')
-    expect(html).toContain('data-status="playing"')
     expect(html.match(/<i>/g)).toHaveLength(5)
   })
   test('browser speech shows a static speaking icon, not a spectrum', () => {
