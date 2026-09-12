@@ -10,7 +10,7 @@ test.each(['development', 'staging', 'production'])('Vite %s keeps the shared pi
   }, 'build')
   expect(config.build.outDir).toBe(mode === 'production' ? 'dist' : `out/build/${mode}`)
   expect(config.build.target).toBe('chrome153')
-  expect(config.build.sourcemap).toBe(true)
+  expect(config.build.sourcemap).toBe(mode !== 'production')
   const fiberAlias = config.resolve.alias.find(alias => alias.find instanceof RegExp && alias.find.test('@react-three/fiber'))
   expect(fiberAlias?.replacement).toBe('@react-three/fiber/webgpu')
   if (fiberAlias?.find instanceof RegExp) {
