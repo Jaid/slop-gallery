@@ -17,14 +17,14 @@ describe('multi-model Knot challenge', () => {
   test('keeps stable numbers and credits while grouping batches under one candidate', () => {
     expect(knots).toHaveLength(137)
     expect(knotsByNumber.size).toBe(137)
-    expect(knotExhibition).toHaveLength(137)
-    expect(new Set(knotExhibition.map(item => item.id)).size).toBe(137)
-    expect(knotBays).toHaveLength(12)
-    expect(knotExhibition.map(item => item.number).toSorted((a, b) => a - b)).toEqual(knots.map(item => item.number))
-    expect(knotBays.find(bay => bay.model === 'astra')!.finishes.map(item => item.number)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 73, 74, 75, 76, 77, 78, 79, 80, 97])
-    expect(knotBays.find(bay => bay.model === 'fable')!.finishes.map(item => item.number)).toEqual([89, 90, 91, 92, 93, 94, 95, 96])
-    expect(knotBays.find(bay => bay.model === 'deepseek')!.labels).toBe('#17 · #18 · #19 · #20 · #21 · #22 · #23 · #24 · #106 · #107 · #108 · #109 · #110 · #111 · #112 · #113')
-    expect(knotBays.find(bay => bay.model === 'sol')!.labels).toBe('#65–#72')
+    const displayedKnots = knots.filter(item => !item.archived)
+    expect(knotExhibition).toHaveLength(displayedKnots.length)
+    expect(new Set(knotExhibition.map(item => item.id)).size).toBe(displayedKnots.length)
+    expect(knotBays).toHaveLength(new Set(displayedKnots.map(item => item.model)).size)
+    expect(knotExhibition.map(item => item.number).toSorted((a, b) => a - b)).toEqual(displayedKnots.map(item => item.number))
+    for (const bay of knotBays) {
+      expect(bay.finishes.map(item => item.number)).toEqual(displayedKnots.filter(item => item.model === bay.model).map(item => item.number))
+    }
     for (const item of knotExhibition) {
       expect(item.archived).not.toBe(true)
       expect(knotsByNumber.get(item.number)!.id).toBe(item.id)
