@@ -30,7 +30,7 @@ export default function KnotLobby() {
         <CuboidCollider args={[knotGallerySize[0] / 2, 0.09, knotGallerySize[2] / 2]} position={[knotGalleryCenter[0], knotGalleryBounds.height, knotGalleryCenter[2]]}/>
       </RigidBody>
       <Box position={[knotGalleryCenter[0], -0.12, knotGalleryCenter[2]]} size={[knotGallerySize[0], 0.24, knotGallerySize[2]]} color="#23201d" roughness={0.8}/>
-      <group position={knotGalleryCenter}><CheckerMarbleFloor width={knotGallerySize[0]} depth={knotGallerySize[2]} reflections/></group>
+      <group position={knotGalleryCenter}><CheckerMarbleFloor width={knotGallerySize[0]} depth={knotGallerySize[2]}/></group>
       <Box position={[knotGalleryCenter[0], knotGalleryBounds.height, knotGalleryCenter[2]]} size={[knotGallerySize[0], 0.18, knotGallerySize[2]]} color="#7c9586"/>
       {knotBays.map(bay => <group key={bay.model} position={bay.center}>
         <mesh position={[knotLayout.rowCenterX(bay.finishes.length), knotGalleryBounds.height - 0.15, 0]} rotation={[Math.PI / 2, 0, 0]}>
