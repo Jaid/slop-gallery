@@ -83,8 +83,8 @@ test('museum stand has a slender stem, round grounded foot and upward-facing pla
   expect(stem.position[1] - stem.height / 2 + knotSign.elevation).toBeCloseTo(0)
   expect(stem.position[1] + stem.height / 2).toBeCloseTo(0)
   const normal = new Vector3(0, 0, 1).applyEuler(new Euler(knotSign.tilt, 0, 0))
-  expect(normal.y).toBeGreaterThan(0)
-  expect(normal.z).toBeGreaterThan(0.8)
+  expect(normal.y).toBeCloseTo(Math.SQRT1_2)
+  expect(normal.z).toBeCloseTo(Math.SQRT1_2)
   expect(Math.abs(knotSign.sideOffset) - knotSign.width / 2).toBeGreaterThan(0.5)
 })
 test('stand stays on the left with its back turned toward its knot', () => {
