@@ -101,7 +101,7 @@ describe('arbitrary Knot batches', () => {
     }
     const materialFiles = await Array.fromAsync(new Bun.Glob('src/lib/knots/*/items/*/material.ts').scan('.'))
     expect(new Set(materialFiles.map(path => path.replaceAll('\\', '/')))).toEqual(new Set(knots.map(item => `src/lib/knots/${item.model}/items/${item.sourceId}/material.ts`)))
-    expect(knots.map(item => item.number)).toEqual(Array.from({length: 193}, (_, index) => index + 1))
+    expect(knots.map(item => item.number)).toEqual(Array.from({length: 201}, (_, index) => index + 1))
   })
   test('groups Gemini versions together without losing per-item author fidelity', () => {
     const gemini = knotCandidates.filter(candidate => candidate.data.id === 'gemini')
@@ -183,7 +183,7 @@ describe('arbitrary Knot batches', () => {
     const webChat = knots.filter(entry => entry.model !== 'astra' && !entry.author.model.slug && entry.harness)
     const legacy = knots.filter(entry => entry.model !== 'astra' && !entry.author.model.slug && !entry.harness)
     expect(astra).toHaveLength(17)
-    expect(openRouter).toHaveLength(56)
+    expect(openRouter).toHaveLength(64)
     expect(webChat).toHaveLength(56)
     expect(legacy).toHaveLength(64)
     expect(astra.every(entry => entry.harness === 'Codex')).toBe(true)
@@ -213,6 +213,21 @@ describe('arbitrary Knot batches', () => {
     expect(formatKnotLabels([6])).toBe('#06')
     expect(formatKnotLabels([89, 90, 91])).toBe('#89–#91')
     expect(formatKnotLabels([6, 75, 97])).toBe('#06 · #75 · #97')
+  })
+  test('adds a second Fable 5.1 batch with OpenRouter provenance', () => {
+    const fable = knotCandidates.find(candidate => candidate.data.id === 'fable')!
+    expect(fable.items).toHaveLength(16)
+    expect(catalogNumbers(fable)).toEqual([89, 90, 91, 92, 93, 94, 95, 96, 194, 195, 196, 197, 198, 199, 200, 201])
+    for (const entry of fable.items.filter(candidateItem => candidateItem.number >= 194)) {
+      expect(entry.author.model).toEqual({
+        title: 'Claude Fable 5.1',
+        slug: 'anthropic/claude-fable-5.1',
+      })
+      expect(entry.harness).toBe('none')
+      expect(entry.highlighted).toBe(false)
+      expect(entry.archived).not.toBe(true)
+    }
+    expect(fable.items.find(candidateItem => candidateItem.number === 196)!.displacement).toBe(0.006)
   })
   test('adds the new GLM batch without replacing its highlighted original', () => {
     const glm = knotCandidates.find(candidate => candidate.data.id === 'glm')!
