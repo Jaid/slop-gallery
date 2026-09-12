@@ -54,7 +54,7 @@ export default function DestructiblePlant({id, kind, pot, position, rotation = 0
         <ConvexHullCollider args={[vessel.vertices]} mass={3.8}/>
         <CylinderCollider args={[0.015, definition.soilRadius]} position={[0, definition.soilHeight - 0.015, 0]} mass={0.8}/>
         <Branch if={pot === 'noir'}><CylinderCollider args={[0.065, 0.24]} position={[0, 0.065, 0]} mass={0.3}/></Branch>
-        <Branch unless={rooted}><group position={[0, definition.soilHeight, 0]}>
+        <Branch not={rooted}><group position={[0, definition.soilHeight, 0]}>
           <mesh name="remaining-stems" geometry={geometry.stems} material={resources[geometry.stemMaterial]} castShadow receiveShadow/>
           {geometry.stemColliders.map((collider, i) => <ConvexHullCollider key={i} ref={initializeFoliageCollider} args={[collider.vertices]} mass={collider.mass}/>)}
         </group></Branch>

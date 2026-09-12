@@ -102,7 +102,7 @@ export default function Map({css}: {css: Record<string, string>}) {
           <rect x={level.x(oculusPlatform.position[0] - oculusPlatform.size[0] / 2)} y={level.y(oculusPlatform.position[2] - oculusPlatform.size[2] / 2)} width={oculusPlatform.size[0] * scale - 4} height={oculusPlatform.size[2] * scale} fill="#718c8e"/>
           <text x={level.x(oculusPlatform.position[0]) - 2} y={level.y(oculusPlatform.position[2])} textAnchor="middle" fill="#f0f0e5" fontSize="10">RAISED FLOOR</text>
         </g></Branch>
-        <Branch unless={level.lower}><g aria-label="Glass floor above the Oculus">
+        <Branch not={level.lower}><g aria-label="Glass floor above the Oculus">
           {fountainBenches.map(({position, rotation}, i) => <rect key={i} aria-label="Fountain bench" x={level.x(position[0]) - fountainBench.width * scale / 2} y={level.y(position[2]) - fountainBench.depth * scale / 2} width={fountainBench.width * scale} height={fountainBench.depth * scale} fill="#977455" transform={`rotate(${-rotation[1] * 180 / Math.PI} ${level.x(position[0])} ${level.y(position[2])})`}/>)}
           <circle aria-label="Lobby fountain" cx={level.x(fountain.position[0])} cy={level.y(fountain.position[2])} r={fountain.radius * scale} fill="#73a9a1" stroke="#b1a283" strokeWidth="2"/>
           <path aria-label="Closed main entrance" d={`M ${level.x(-1.65)} ${level.y(lobby.northZ)} H ${level.x(1.65)}`} stroke="#8d7044" strokeWidth="4"/>

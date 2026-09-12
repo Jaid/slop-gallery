@@ -38,7 +38,7 @@ export default function App() {
     </main>
     <Branch none={[s.locked, s.panel, s.dragging, renderFailed]}><Menu {...settings}/></Branch>
     <Hud/>
-    <Branch if={s.notice} unless={s.panel}><Toast>{s.notice}</Toast></Branch>
+    <Branch if={s.notice} not={s.panel}><Toast>{s.notice}</Toast></Branch>
     <Branch if={s.panel === 'map'}><Panel title="Floor plan"><Map/></Panel></Branch>
   </Dropzone></GraphicsQuality>
 }

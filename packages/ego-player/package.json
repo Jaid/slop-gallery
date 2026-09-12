@@ -19,7 +19,7 @@
     "test": "bun test ./test"
   },
   "dependencies": {
-    "branch-component": "0.1.0"
+    "branch-component": "0.2.0"
   },
   "peerDependencies": {
     "@react-three/drei": "^11.0.0-alpha.7",

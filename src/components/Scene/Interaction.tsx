@@ -500,6 +500,6 @@ export default function Interaction() {
     }
   })
   return <group ref={ghost} visible={false}>
-    <Branch if={isGallery} some={[artwork, dragging]} unless={held?.startsWith('prop-')}><PlacementPreview key={artwork?.id ?? 'import'} width={artwork?.width ?? 2.4} height={artwork?.height ?? 2.4} source={artwork?.source} title={artwork?.title} creator={artwork?.creator} pending={artwork?.pending}/></Branch>
+    <Branch if={isGallery} some={[artwork, dragging]} not={held?.startsWith('prop-')}><PlacementPreview key={artwork?.id ?? 'import'} width={artwork?.width ?? 2.4} height={artwork?.height ?? 2.4} source={artwork?.source} title={artwork?.title} creator={artwork?.creator} pending={artwork?.pending}/></Branch>
   </group>
 }
