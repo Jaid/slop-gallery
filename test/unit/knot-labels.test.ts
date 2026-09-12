@@ -1,14 +1,17 @@
 import {describe, expect, test} from 'bun:test'
 
-import drawLabel, {labelHeight, labelWidth, modelLineLayout} from '../../src/components/levels/knottingham/KnotLabels/drawLabel.ts'
+import drawLabel, {labelHeight, labelVerticalPadding, labelWidth, modelLineLayout} from '../../src/components/levels/knottingham/KnotLabels/drawLabel.ts'
 import {knotBays, knotExhibition} from '../../src/lib/knots/exhibition.ts'
 import {knotsByNumber} from '../../src/lib/knots/index.ts'
+import {knotSign} from '../../src/lib/knots/signs.ts'
 
 describe('Knot model plates', () => {
-  test('renders each plate at twice the width and height without extra draw batches', () => {
+  test('pads each plate to 4:3 without extra draw batches', () => {
     expect(labelWidth).toBe(384 * 2)
-    expect(labelHeight).toBe(160 * 2)
-    expect(labelWidth * labelHeight).toBe(384 * 160 * 4)
+    expect(labelWidth / labelHeight).toBe(4 / 3)
+    expect(labelVerticalPadding).toBe(128)
+    expect(knotSign.width / knotSign.height).toBeCloseTo(labelWidth / labelHeight)
+    expect(knotSign.elevation).toBe(0.8)
     expect(8 * labelWidth).toBeLessThanOrEqual(8192)
     expect(Math.ceil(knotExhibition.length / 8) * labelHeight).toBeLessThanOrEqual(8192)
   })
@@ -64,11 +67,11 @@ describe('Knot model plates', () => {
     expect(rectangles[0]).toEqual([labelWidth, labelHeight, labelWidth, labelHeight])
     expect(text.map(line => line[0])).toEqual([exhibit.label, exhibit.title, exhibit.modelTitle])
     const {left} = modelLineLayout(240, true)
-    expect(images).toEqual([[icon, labelWidth + left, labelHeight + 264 - 13, 52, 26]])
-    expect(text[2]).toEqual([exhibit.modelTitle, labelWidth + left + 68, labelHeight + 264, 240])
+    expect(images).toEqual([[icon, labelWidth + left, labelHeight + labelVerticalPadding + 264 - 13, 52, 26]])
+    expect(text[2]).toEqual([exhibit.modelTitle, labelWidth + left + 68, labelHeight + labelVerticalPadding + 264, 240])
     images.length = 0
     drawLabel(context, exhibit, 0, 0)
     expect(images).toEqual([])
-    expect(text.at(-1)).toEqual([exhibit.modelTitle, 264, 264, 240])
+    expect(text.at(-1)).toEqual([exhibit.modelTitle, 264, labelVerticalPadding + 264, 240])
   })
 })

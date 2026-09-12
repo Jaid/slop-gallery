@@ -7,8 +7,8 @@ export type SignPart = {position: Vec3
 
 export const knotSign = {
   width: 0.85,
-  height: 0.36,
-  elevation: 1.05,
+  height: 0.85 * 3 / 4,
+  elevation: 0.8,
   thickness: 0.018,
   tilt: -Math.PI / 9,
   sideOffset: -1,

@@ -1,7 +1,8 @@
 import type {KnotExhibit} from '#src/lib/knots/exhibition.ts'
 
 export const labelWidth = 768
-export const labelHeight = 320
+export const labelHeight = labelWidth * 3 / 4
+export const labelVerticalPadding = (labelHeight - 320) / 2
 export const labelFontFamily = 'main'
 
 export function modelLineLayout(textWidth: number, hasIcon: boolean) {
@@ -19,6 +20,7 @@ export function modelLineLayout(textWidth: number, hasIcon: boolean) {
 export default function drawLabel(context: CanvasRenderingContext2D, exhibit: KnotExhibit, x: number, y: number, icon?: HTMLImageElement) {
   context.fillStyle = '#122029'
   context.fillRect(x, y, labelWidth, labelHeight)
+  y += labelVerticalPadding
   context.fillStyle = exhibit.accent
   context.fillRect(x + 24, y + 16, labelWidth - 48, 8)
   context.textAlign = 'center'
