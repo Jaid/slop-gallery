@@ -101,7 +101,7 @@ describe('arbitrary Knot batches', () => {
     }
     const materialFiles = await Array.fromAsync(new Bun.Glob('src/lib/knots/*/items/*/material.ts').scan('.'))
     expect(new Set(materialFiles.map(path => path.replaceAll('\\', '/')))).toEqual(new Set(knots.map(item => `src/lib/knots/${item.model}/items/${item.sourceId}/material.ts`)))
-    expect(knots.map(item => item.number)).toEqual(Array.from({length: 185}, (_, index) => index + 1))
+    expect(knots.map(item => item.number)).toEqual(Array.from({length: 193}, (_, index) => index + 1))
   })
   test('groups Gemini versions together without losing per-item author fidelity', () => {
     const gemini = knotCandidates.filter(candidate => candidate.data.id === 'gemini')
@@ -173,7 +173,7 @@ describe('arbitrary Knot batches', () => {
         expect(entry.author.model).toEqual(batch.model)
       }
     }
-    expect(catalogNumbers(knotCandidates.find(candidate => candidate.data.id === 'deepseek')!)).toEqual([17, 18, 19, 20, 21, 22, 23, 24, 106, 107, 108, 109, 110, 111, 112, 113])
+    expect(catalogNumbers(knotCandidates.find(candidate => candidate.data.id === 'deepseek')!)).toEqual([17, 18, 19, 20, 21, 22, 23, 24, 106, 107, 108, 109, 110, 111, 112, 113, 186, 187, 188, 189, 190, 191, 192, 193])
     expect(knots.find(item => item.number === 111)!.sourceId).toBe('quantum_foam_2')
     expect(knots.find(item => item.number === 114)!.displacement).toBe(0.02)
   })
@@ -184,18 +184,19 @@ describe('arbitrary Knot batches', () => {
     const legacy = knots.filter(entry => entry.model !== 'astra' && !entry.author.model.slug && !entry.harness)
     expect(astra).toHaveLength(17)
     expect(openRouter).toHaveLength(56)
-    expect(webChat).toHaveLength(48)
+    expect(webChat).toHaveLength(56)
     expect(legacy).toHaveLength(64)
     expect(astra.every(entry => entry.harness === 'Codex')).toBe(true)
     expect(openRouter.every(entry => entry.harness === 'none')).toBe(true)
     expect(legacy.every(entry => entry.harness === undefined)).toBe(true)
-    expect(Object.fromEntries(['chat.z.ai', 'grok.com Build', 'grok.com', 'kimi.ai', 'meta.ai', 'chat.qwen.ai'].map(harness => [harness, webChat.filter(entry => entry.harness === harness).length]))).toEqual({
+    expect(Object.fromEntries(['chat.z.ai', 'grok.com Build', 'grok.com', 'kimi.ai', 'meta.ai', 'chat.qwen.ai', 'chat.deepseek.com'].map(harness => [harness, webChat.filter(entry => entry.harness === harness).length]))).toEqual({
       'chat.z.ai': 8,
       'grok.com Build': 8,
       'grok.com': 8,
       'kimi.ai': 8,
       'meta.ai': 8,
       'chat.qwen.ai': 8,
+      'chat.deepseek.com': 8,
     })
   })
   test('filters candidates and caps shots from Knottingham URL parameters', () => {

@@ -15,8 +15,8 @@ import StudioEnvironment from '../../src/lib/materials/StudioEnvironment.ts'
 
 describe('multi-model Knot challenge', () => {
   test('keeps stable numbers and credits while grouping batches under one candidate', () => {
-    expect(knots).toHaveLength(185)
-    expect(knotsByNumber.size).toBe(185)
+    expect(knots).toHaveLength(193)
+    expect(knotsByNumber.size).toBe(193)
     const displayedKnots = knots.filter(item => !item.archived)
     expect(knotExhibition).toHaveLength(displayedKnots.length)
     expect(new Set(knotExhibition.map(item => item.id)).size).toBe(displayedKnots.length)
