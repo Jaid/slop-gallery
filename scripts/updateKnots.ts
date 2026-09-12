@@ -2,11 +2,12 @@ import type KnotPreviewRenderer from './lib/knots/KnotPreviewRenderer.ts'
 import type {PreviewCandidate} from './lib/knots/KnotPreviewRenderer.ts'
 import type {Browser} from 'puppeteer-core'
 
+import {tmpdir} from 'node:os'
 import {dirname, join, resolve} from 'node:path'
 import {parseArgs} from 'node:util'
 
 import fs from 'fs-extra'
-import puppeteer from 'puppeteer-core'
+import puppeteer, {TargetType} from 'puppeteer-core'
 
 import {knotCandidates} from '../src/lib/knots/index.ts'
 import {encodeJxl} from './lib/images/encodeJxl.ts'
@@ -31,9 +32,8 @@ export default async function updateKnots({candidates = [], browserURL = 'http:/
     selected: candidate.select().map(item => item.number),
     symbol: await Bun.file(join(root, 'scripts/assets/knots', `${candidate.data.id}.svg`)).text(),
   })))
-  const privateDirectory = join(root, 'private')
-  await fs.ensureDir(privateDirectory)
-  const staging = await fs.mkdtemp(join(privateDirectory, 'knot-previews-'))
+  // Keep staging outside the Vite project root so generated intermediates cannot trigger a live-page reload.
+  const staging = await fs.mkdtemp(join(tmpdir(), 'slop-gallery-knot-previews-'))
   let browser: Browser | undefined
   try {
     browser = await puppeteer.connect({
@@ -42,20 +42,21 @@ export default async function updateKnots({candidates = [], browserURL = 'http:/
       protocolTimeout: 300_000,
     })
     const origin = new URL(pageURL).origin
-    const pages = await browser.pages()
-    const page = pages.find(tab => {
+    const target = browser.targets().find(candidate => {
       try {
-        return new URL(tab.url()).origin === origin
+        return candidate.type() === TargetType.PAGE && new URL(candidate.url()).origin === origin
       } catch {
         return false
       }
     })
+    const page = await target?.page()
     if (!page) {
       throw new Error(`Open the Vite page at ${origin} in the debug browser first.`)
     }
+    await page.waitForFunction(expectedOrigin => location.origin === expectedOrigin && document.readyState === 'complete', {timeout: 30_000}, origin)
     // Vite resolves the same Three/TSL modules as the game. No navigation, new tabs or viewport changes.
-    const handle = await page.evaluateHandle(async () => {
-      const path = `/scripts/lib/knots/KnotPreviewRenderer.ts?t=${Date.now()}`
+    const handle = await page.evaluateHandle(async baseURL => {
+      const path = `${baseURL}/scripts/lib/knots/KnotPreviewRenderer.ts?t=${Date.now()}`
       const {default: KnotPreviewRenderer} = await import(/* @vite-ignore */ path) as typeof import('./lib/knots/KnotPreviewRenderer.ts')
       const renderer = new KnotPreviewRenderer
       try {
@@ -65,7 +66,7 @@ export default async function updateKnots({candidates = [], browserURL = 'http:/
         renderer.dispose()
         throw error
       }
-    })
+    }, origin)
     const outputs: Array<string> = []
     const stage = async (path: string, image: string) => {
       const output = join(staging, path)
