@@ -4,7 +4,7 @@ import {describe, expect, test} from 'bun:test'
 
 import {formatKnotLabels} from '../../src/lib/knots/exhibition.ts'
 import {knotCandidates, knots} from '../../src/lib/knots/index.ts'
-import KnotCandidate, {defaultKnotDisplayLimit, indexKnots} from '../../src/lib/knots/KnotCandidate.ts'
+import KnotCandidate, {indexKnots} from '../../src/lib/knots/KnotCandidate.ts'
 
 const candidateData: KnotCandidateData = {
   id: 'fable',
@@ -21,27 +21,19 @@ const item = (number: number, highlighted = false): KnotData => ({
   author: {model: {title: 'Claude Fable 5.1'}},
   highlighted,
 })
-const numbers = (candidate: KnotCandidate, limit?: number) => candidate.select(limit).map(item => item.number)
+const numbers = (candidate: KnotCandidate) => candidate.select().map(item => item.number)
 describe('arbitrary Knot batches', () => {
-  test('keeps favorites when a second batch grows a candidate to 16 entries', () => {
-    const items = Array.from({length: 16}, (_, index) => item(index + 1, [1, 3, 6, 8].includes(index + 1)))
-    const candidate = new KnotCandidate(candidateData, items)
-    expect(defaultKnotDisplayLimit).toBe(8)
-    expect(candidate.items).toHaveLength(16)
-    expect(numbers(candidate)).toEqual([1, 3, 6, 8, 13, 14, 15, 16])
-    expect(numbers(candidate, 16)).toEqual(Array.from({length: 16}, (_, index) => index + 1))
-    expect(numbers(new KnotCandidate({
-      ...candidateData,
-      displayLimit: 16,
-    }, items))).toHaveLength(16)
-    expect(items.map(item => item.number)).toEqual(Array.from({length: 16}, (_, index) => index + 1))
+  test('displays every entry in plate-number order regardless of highlights or export order', () => {
+    const items = Array.from({length: 24}, (_, index) => item(index + 1, index % 2 === 0))
+    const expected = items.map(item => item.number)
+    const reversed = items.toReversed()
+    const candidate = new KnotCandidate(candidateData, reversed)
+    expect(candidate.items).toHaveLength(24)
+    expect(numbers(candidate)).toEqual(expected)
+    expect(numbers(new KnotCandidate(candidateData, items))).toEqual(expected)
+    expect(reversed.map(item => item.number)).toEqual(expected.toReversed())
   })
-  test('is independent of export order, including when highlights exceed capacity', () => {
-    const items = Array.from({length: 11}, (_, index) => item(index + 1, true))
-    expect(numbers(new KnotCandidate(candidateData, items))).toEqual([4, 5, 6, 7, 8, 9, 10, 11])
-    expect(numbers(new KnotCandidate(candidateData, items.toReversed()))).toEqual([4, 5, 6, 7, 8, 9, 10, 11])
-  })
-  test('handles empty, partial and hidden rows without padding or reintroducing archives', () => {
+  test('handles empty and partial rows without padding or reintroducing archives', () => {
     expect(numbers(new KnotCandidate(candidateData, []))).toEqual([])
     const candidate = new KnotCandidate(candidateData, [
       item(1), {
@@ -50,18 +42,9 @@ describe('arbitrary Knot batches', () => {
       }, item(3),
     ])
     expect(numbers(candidate)).toEqual([1, 3])
-    expect(numbers(candidate, 0)).toEqual([])
     expect(candidate.items).toHaveLength(3)
   })
-  test('rejects invalid caps, identifiers, numbers and displacement bounds', () => {
-    const candidate = new KnotCandidate(candidateData, [])
-    for (const limit of [-1, 0.5, Infinity, Number.NaN, Number.MAX_SAFE_INTEGER + 1]) {
-      expect(() => candidate.select(limit)).toThrow(RangeError)
-      expect(() => new KnotCandidate({
-        ...candidateData,
-        displayLimit: limit,
-      }, [])).toThrow(RangeError)
-    }
+  test('rejects invalid identifiers, numbers and displacement bounds', () => {
     expect(() => new KnotCandidate({
       ...candidateData,
       id: '../fable',
@@ -115,13 +98,15 @@ describe('arbitrary Knot batches', () => {
         expect(await Bun.file(`src/lib/knots/${entry.model}/items/${entry.sourceId}/material.ts`).exists()).toBe(true)
       }
     }
+    const materialFiles = await Array.fromAsync(new Bun.Glob('src/lib/knots/*/items/*/material.ts').scan('.'))
+    expect(new Set(materialFiles.map(path => path.replaceAll('\\', '/')))).toEqual(new Set(knots.map(item => `src/lib/knots/${item.model}/items/${item.sourceId}/material.ts`)))
     expect(knots.map(item => item.number)).toEqual(Array.from({length: 137}, (_, index) => index + 1))
   })
   test('groups Gemini versions together without losing per-item author fidelity', () => {
     const gemini = knotCandidates.filter(candidate => candidate.data.id === 'gemini')
     expect(gemini).toHaveLength(1)
     expect(gemini[0].items).toHaveLength(16)
-    expect(numbers(gemini[0])).toEqual([32, 82, 83, 84, 85, 86, 87, 88])
+    expect(numbers(gemini[0])).toEqual([25, 26, 27, 28, 29, 30, 31, 32, 81, 82, 83, 84, 85, 86, 87, 88])
     const original = gemini[0].items.find(item => item.number === 32)!
     const latest = gemini[0].items.find(item => item.number === 88)!
     expect(original.author.model).toEqual({title: 'Gemini 3.6 Flash'})
@@ -188,7 +173,7 @@ describe('arbitrary Knot batches', () => {
         expect(candidate.select()).toContain(entry)
       }
     }
-    expect(numbers(knotCandidates.find(candidate => candidate.data.id === 'deepseek')!)).toEqual([17, 19, 24, 106, 107, 108, 109, 110, 111, 112, 113])
+    expect(numbers(knotCandidates.find(candidate => candidate.data.id === 'deepseek')!)).toEqual([17, 18, 19, 20, 21, 22, 23, 24, 106, 107, 108, 109, 110, 111, 112, 113])
     expect(knots.find(item => item.number === 111)!.sourceId).toBe('quantum_foam_2')
     expect(knots.find(item => item.number === 114)!.displacement).toBe(0.02)
   })
@@ -201,7 +186,7 @@ describe('arbitrary Knot batches', () => {
   test('adds the new GLM batch without replacing its highlighted original', () => {
     const glm = knotCandidates.find(candidate => candidate.data.id === 'glm')!
     expect(glm.items).toHaveLength(24)
-    expect(numbers(glm)).toEqual([40, 98, 99, 100, 101, 102, 103, 104, 105, 130, 131, 132, 133, 134, 135, 136, 137])
+    expect(numbers(glm)).toEqual([33, 34, 35, 36, 37, 38, 39, 40, 98, 99, 100, 101, 102, 103, 104, 105, 130, 131, 132, 133, 134, 135, 136, 137])
     for (const entry of glm.items.filter(item => item.number >= 98 && item.number <= 105)) {
       expect(entry.author.model).toEqual({
         title: 'GLM 5.3',

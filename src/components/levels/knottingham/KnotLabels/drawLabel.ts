@@ -1,6 +1,6 @@
 import type {KnotExhibit} from '#src/lib/knots/exhibition.ts'
 
-export const labelAtlasColumns = 8
+export const labelAtlasColumns = 10
 export const labelWidth = 768
 export const labelHeight = labelWidth * 2 / 3
 export const labelFontFamily = 'main'

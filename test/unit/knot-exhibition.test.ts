@@ -17,13 +17,14 @@ describe('multi-model Knot challenge', () => {
   test('keeps stable numbers and credits while grouping batches under one candidate', () => {
     expect(knots).toHaveLength(137)
     expect(knotsByNumber.size).toBe(137)
-    expect(knotExhibition).toHaveLength(70)
-    expect(new Set(knotExhibition.map(item => item.id)).size).toBe(70)
-    expect(knotBays).toHaveLength(9)
-    expect(knotBays.find(bay => bay.model === 'astra')!.finishes.map(item => item.number)).toEqual([6, 75, 76, 77, 78, 79, 80, 97])
+    expect(knotExhibition).toHaveLength(137)
+    expect(new Set(knotExhibition.map(item => item.id)).size).toBe(137)
+    expect(knotBays).toHaveLength(12)
+    expect(knotExhibition.map(item => item.number).toSorted((a, b) => a - b)).toEqual(knots.map(item => item.number))
+    expect(knotBays.find(bay => bay.model === 'astra')!.finishes.map(item => item.number)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 73, 74, 75, 76, 77, 78, 79, 80, 97])
     expect(knotBays.find(bay => bay.model === 'fable')!.finishes.map(item => item.number)).toEqual([89, 90, 91, 92, 93, 94, 95, 96])
-    expect(knotBays.find(bay => bay.model === 'deepseek')!.labels).toBe('#17 · #19 · #24 · #106 · #107 · #108 · #109 · #110 · #111 · #112 · #113')
-    expect(knotBays.find(bay => bay.model === 'sol')!.labels).toBe('#72')
+    expect(knotBays.find(bay => bay.model === 'deepseek')!.labels).toBe('#17 · #18 · #19 · #20 · #21 · #22 · #23 · #24 · #106 · #107 · #108 · #109 · #110 · #111 · #112 · #113')
+    expect(knotBays.find(bay => bay.model === 'sol')!.labels).toBe('#65–#72')
     for (const item of knotExhibition) {
       expect(item.archived).not.toBe(true)
       expect(knotsByNumber.get(item.number)!.id).toBe(item.id)
@@ -61,7 +62,6 @@ describe('multi-model Knot challenge', () => {
     }
   })
   test('aligns every row to the summary-board side regardless of item count', () => {
-    expect(knotBays.some(bay => bay.finishes.length === 1)).toBe(true)
     expect(new Set(knotBays.map(bay => bay.finishes.length)).size).toBeGreaterThan(1)
     for (const bay of knotBays) {
       const row = knotExhibition.filter(exhibit => exhibit.model === bay.model)

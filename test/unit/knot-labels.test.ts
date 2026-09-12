@@ -22,7 +22,7 @@ describe('Knot model plates', () => {
       expect(new Uint8Array(await Bun.file(new URL(url)).arrayBuffer())[0]).toBe(255)
       urls.add(Bun.hash(await Bun.file(new URL(url)).arrayBuffer()).toString())
     }
-    expect(urls.size).toBe(7)
+    expect(urls.size).toBe(10)
     const icon = async (number: number) => Bun.hash(await Bun.file(new URL(knotsByNumber.get(number)!.modelIcon)).arrayBuffer())
     expect(await icon(6)).toBe(await icon(73))
     expect(await icon(73)).toBe(await icon(97))

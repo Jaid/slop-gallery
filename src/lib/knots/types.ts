@@ -22,8 +22,6 @@ export type KnotData = {
 }
 
 export type KnotCandidateData = {
-  /** Override the default eight-item display while reviewing a larger batch. */
-  displayLimit?: number
   icon: string
   id: string
   overview: string

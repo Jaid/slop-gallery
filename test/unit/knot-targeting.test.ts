@@ -7,16 +7,16 @@ import {levelWallDistance} from '../../src/levels/knottingham/navigation.ts'
 import {knotGalleryBounds, knotGalleryCenter} from '../../src/lib/gallery/knotGallery.ts'
 import {createKnotGeometry} from '../../src/lib/gallery/sculptures.ts'
 import CryoBloomMaterial from '../../src/lib/knots/deepseek/items/cryo_bloom/material.ts'
-import {knotExhibition, knotFloatHeight} from '../../src/lib/knots/exhibition.ts'
+import {knotFloatHeight} from '../../src/lib/knots/exhibition.ts'
 
-test('#108 can be targeted across the museum wall that does not exist in Knottingham', () => {
-  const item = knotExhibition.find(item => item.number === 108)!
+test('a knot can be targeted across the museum wall that does not exist in Knottingham', () => {
   const environment = new Texture
   const geometry = createKnotGeometry()
   const material = new CryoBloomMaterial(environment)
   try {
     const mesh = new Mesh(geometry, material)
-    mesh.position.set(item.position[0], knotFloatHeight, item.position[2])
+    // Fixed regression location across a museum wall, independent of exhibition ordering.
+    mesh.position.set(-10.5, knotFloatHeight, -9)
     mesh.updateMatrixWorld()
     const origin = mesh.position.clone().add(new Vector3(Math.SQRT2, 0, Math.SQRT2))
     const direction = mesh.position.clone().sub(origin).normalize()

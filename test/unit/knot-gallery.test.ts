@@ -7,8 +7,8 @@ import walls, {rooms} from '../../src/lib/gallery/walls.ts'
 
 describe('permanent Knot Gallery', () => {
   test('independently seals an exhibition hall sized for the candidate rows', () => {
-    expect(knotGalleryBounds.maxX - knotGalleryBounds.minX).toBe(69.25)
-    expect(knotGalleryBounds.southZ - knotGalleryBounds.northZ).toBe(55)
+    expect(knotGalleryBounds.maxX - knotGalleryBounds.minX).toBe(93.75)
+    expect(knotGalleryBounds.southZ - knotGalleryBounds.northZ).toBe(71.5)
     expect(knotGalleryWalls).toHaveLength(4)
     for (const wall of knotGalleryWalls) {
       expect(wall.holes).toBeUndefined()

@@ -1,6 +1,5 @@
 import type {KnotCandidateData, KnotData, KnotEntry} from './types.ts'
 
-export const defaultKnotDisplayLimit = 8
 const identifier = /^[a-z][0-9_a-z]*$/u
 
 export function indexKnots(candidates: ReadonlyArray<KnotCandidate>) {
@@ -56,16 +55,8 @@ export default class KnotCandidate {
         modelIcon: data.icon,
       }
     })
-    this.validateLimit(data.displayLimit ?? defaultKnotDisplayLimit)
   }
-  select(limit = this.data.displayLimit ?? defaultKnotDisplayLimit) {
-    this.validateLimit(limit)
-    // Retain favorites first, favor newer submissions on ties, then restore plate-number order.
-    return this.items.filter(item => !item.archived).toSorted((a, b) => Number(b.highlighted) - Number(a.highlighted) || b.number - a.number).slice(0, limit).sort((a, b) => a.number - b.number)
-  }
-  private validateLimit(limit: number) {
-    if (!Number.isSafeInteger(limit) || limit < 0) {
-      throw new RangeError('Knot display limit must be a nonnegative safe integer.')
-    }
+  select() {
+    return this.items.filter(item => !item.archived).toSorted((a, b) => a.number - b.number)
   }
 }

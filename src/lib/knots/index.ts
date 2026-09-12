@@ -17,5 +17,5 @@ export const knotCandidates = candidates.map(({data, ...items}) => new KnotCandi
 export const knotsByNumber = indexKnots(knotCandidates)
 export const knots = [...knotsByNumber.values()].sort((a, b) => a.number - b.number)
 
-export {defaultKnotDisplayLimit, default as KnotCandidate} from './KnotCandidate.ts'
+export {default as KnotCandidate} from './KnotCandidate.ts'
 export type {KnotAuthor, KnotCandidateData, KnotData, KnotEntry, KnotMaterialConstructor} from './types.ts'

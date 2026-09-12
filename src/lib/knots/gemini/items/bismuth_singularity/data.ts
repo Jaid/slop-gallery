@@ -12,5 +12,4 @@ export default {
   },
   accent: '#ff62df',
   highlighted: false,
-  archived: true,
 } as const satisfies KnotData
