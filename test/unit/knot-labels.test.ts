@@ -110,7 +110,7 @@ describe('Knot model plates', () => {
       expect(lines[2].args[2]).toBe(labelHeight + 400)
       if (effortLevel) {
         expect(lines[3]).toEqual({
-          args: [`Thinking effort: ${effortLevel}`, labelWidth * 1.5, labelHeight + 454, labelWidth - 48],
+          args: [`${effortLevel} effort`, labelWidth * 1.5, labelHeight + 454, labelWidth - 48],
           font: '32px main',
           align: 'center',
         })

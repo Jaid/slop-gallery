@@ -46,6 +46,6 @@ export default function drawLabel(context: CanvasRenderingContext2D, exhibit: Kn
     context.textAlign = 'center'
     context.fillStyle = '#91a0ad'
     context.font = `32px ${labelFontFamily}`
-    context.fillText(`Thinking effort: ${effort}`, x + labelWidth / 2, y + 454, labelWidth - 48)
+    context.fillText(`${effort} effort`, x + labelWidth / 2, y + 454, labelWidth - 48)
   }
 }
