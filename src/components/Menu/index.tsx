@@ -32,11 +32,11 @@ export default function Menu(settings: ReturnType<typeof useGalleryAI>) {
         <Branch unless={stage === 'unfocus'}><p className={css.tagline}>{tagline}</p></Branch>
         <button className={css.enter} id="enter-gallery" disabled={!s.ready} onClick={enterGallery}>{!s.ready ? `Opening ${galleryTitle}…` : stage === 'reset' ? 'New game' : stage === 'first' ? galleryEnterLabel : stage === 'return' ? 'Continue' : 'Resume'}<Icon name="arrow" size={18}/></button>
         <Branch if={stage === 'return'}><button className={css.newGame} disabled={!s.ready} onClick={startNewGame}>New game</button></Branch>
-        <Branch unless={stage === 'unfocus'}><>
+        <Branch unless={stage === 'unfocus'}>
           <MenuOptions/>
           <OpenRouterConnection {...settings}/>
           <MenuNarration/>
-        </></Branch>
+        </Branch>
       </div>
       <Branch all={[stage === 'pause', gallerySupportsMap]}><Minimap lower/></Branch>
     </div>
