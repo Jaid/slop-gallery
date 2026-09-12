@@ -6,30 +6,42 @@ export type SignPart = {position: Vec3
   size: Vec3}
 
 export const knotSign = {
-  width: 1.45,
-  height: 0.6,
-  elevation: 0.75,
-  thickness: 0.024,
+  width: 0.85,
+  height: 0.36,
+  elevation: 1.05,
+  thickness: 0.018,
+  tilt: -Math.PI / 9,
+  sideOffset: -1,
+  inwardRotation: Math.PI / 8,
+  frontOffset: 0.7,
 }
 
-// Coordinates are relative to the printed face, with supports extending behind it.
+// The stand origin is the plaque's center; only the plaque tilts, not the stem.
 export const knotSignParts: Array<SignPart> = [
   {
-    position: [0, 0, -knotSign.thickness / 2],
-    size: [knotSign.width, knotSign.height, knotSign.thickness],
+    position: [0, Math.sin(knotSign.tilt) * knotSign.thickness / 2, -Math.cos(knotSign.tilt) * knotSign.thickness / 2],
+    rotation: [knotSign.tilt, 0, 0],
+    size: [knotSign.width + 0.024, knotSign.height + 0.024, knotSign.thickness],
+  },
+]
+
+export const knotSignRoundParts = [
+  {
+    position: [0, -knotSign.elevation / 2, -0.03] as Vec3,
+    radius: 0.018,
+    height: knotSign.elevation,
   },
   {
-    position: [0, -0.45, -0.05],
-    size: [0.055, 0.6, 0.055],
-  },
-  {
-    position: [0, -0.735, -0.05],
-    size: [0.32, 0.03, 0.28],
+    position: [0, -knotSign.elevation + 0.014, -0.03] as Vec3,
+    radius: 0.2,
+    height: 0.028,
   },
 ]
 
 export function knotSignPosition(exhibit: Pick<KnotExhibit, 'position' | 'rotation'>): Vec3 {
-  return [exhibit.position[0] + Math.sin(exhibit.rotation) * 0.8, knotSign.elevation, exhibit.position[2] + Math.cos(exhibit.rotation) * 0.8]
+  const sine = Math.sin(exhibit.rotation)
+  const cosine = Math.cos(exhibit.rotation)
+  return [exhibit.position[0] + cosine * knotSign.sideOffset + sine * knotSign.frontOffset, knotSign.elevation, exhibit.position[2] - sine * knotSign.sideOffset + cosine * knotSign.frontOffset]
 }
 
 export function billboardParts(width: number, height: number): Array<SignPart> {

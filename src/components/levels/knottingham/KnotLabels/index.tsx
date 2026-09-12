@@ -1,17 +1,22 @@
-import {CuboidCollider, RigidBody} from '@react-three/rapier'
+import {CuboidCollider, CylinderCollider, RigidBody} from '@react-three/rapier'
 import {useEffect, useMemo} from 'react'
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js'
 import {attribute, texture, uv, vec2} from 'three/tsl'
-import {BoxGeometry, DataTexture, InstancedBufferAttribute, InstancedMesh, LinearFilter, LinearMipmapLinearFilter, Matrix4, MeshBasicNodeMaterial, MeshStandardNodeMaterial, PlaneGeometry, RGBAFormat, SRGBColorSpace} from 'three/webgpu'
+import {BoxGeometry, CylinderGeometry, DataTexture, Euler, InstancedBufferAttribute, InstancedMesh, LinearFilter, LinearMipmapLinearFilter, Matrix4, MeshBasicNodeMaterial, PlaneGeometry, RGBAFormat, SRGBColorSpace} from 'three/webgpu'
+import useGraphicsQuality from 'use-graphics-quality'
 
 import {knotExhibition} from '#src/lib/knots/exhibition.ts'
-import {knotSign, knotSignParts, knotSignPosition} from '#src/lib/knots/signs.ts'
+import {knotSign, knotSignParts, knotSignPosition, knotSignRoundParts} from '#src/lib/knots/signs.ts'
+import {signSupportMaterial} from '#src/lib/materials/SignMetalMaterial.ts'
 
 import drawLabel, {labelHeight as height, labelFontFamily, labelWidth as width} from './drawLabel.ts'
 import loadModelIcons from './modelIcons.ts'
 
 /** One atlas and one instanced draw replace hundreds of label meshes/materials. */
 export default function KnotLabels() {
+  const isQuality = useGraphicsQuality()
+  const supportMaterial = useMemo(() => signSupportMaterial(isQuality), [isQuality])
+  useEffect(() => () => supportMaterial.dispose(), [supportMaterial])
   const resources = useMemo(() => {
     const columns = 8
     const rows = Math.ceil(knotExhibition.length / columns)
@@ -41,6 +46,8 @@ export default function KnotLabels() {
     atlas.anisotropy = 8
     atlas.needsUpdate = true
     const geometry = new PlaneGeometry(knotSign.width, knotSign.height)
+    geometry.translate(0, 0, 0.001)
+    geometry.rotateX(knotSign.tilt)
     geometry.setAttribute('labelOffset', new InstancedBufferAttribute(offsets, 2))
     const material = new MeshBasicNodeMaterial
     material.name = 'Knot challenge labels'
@@ -48,27 +55,23 @@ export default function KnotLabels() {
     material.colorNode = texture(atlas, uv().mul(vec2(1 / columns, 1 / rows)).add(attribute('labelOffset', 'vec2')))
     const mesh = new InstancedMesh(geometry, material, knotExhibition.length)
     mesh.name = 'knot-nameplates'
-    const parts = knotSignParts.map(({position, size}) => new BoxGeometry(...size).translate(...position))
+    const parts = [
+      ...knotSignParts.map(({position, rotation = [0, 0, 0], size}) => new BoxGeometry(...size).applyMatrix4((new Matrix4).makeRotationFromEuler(new Euler(...rotation))).translate(...position)),
+      ...knotSignRoundParts.map(({position, radius, height: partHeight}) => new CylinderGeometry(radius, radius, partHeight, 48).translate(...position)),
+    ]
     const supportGeometry = mergeGeometries(parts)
     for (const part of parts) {
       part.dispose()
     }
-    const supportMaterial = new MeshStandardNodeMaterial({
-      color: '#9ca6ad',
-      metalness: 0.9,
-      roughness: 0.32,
-    })
-    const supports = new InstancedMesh(supportGeometry, supportMaterial, knotExhibition.length)
+    const supports = new InstancedMesh(supportGeometry, [], knotExhibition.length)
     supports.name = 'knot-nameplate-supports'
     supports.castShadow = true
     supports.receiveShadow = true
     const matrix = new Matrix4
     for (const [index, exhibit] of knotExhibition.entries()) {
-      matrix.makeRotationY(exhibit.rotation)
+      matrix.makeRotationY(exhibit.rotation + knotSign.inwardRotation)
       matrix.setPosition(...knotSignPosition(exhibit))
       supports.setMatrixAt(index, matrix)
-      matrix.elements[12] += Math.sin(exhibit.rotation) * 0.001
-      matrix.elements[14] += Math.cos(exhibit.rotation) * 0.001
       mesh.setMatrixAt(index, matrix)
     }
     supports.instanceMatrix.needsUpdate = true
@@ -113,7 +116,6 @@ export default function KnotLabels() {
   useEffect(() => () => {
     resources.supports.dispose()
     resources.supports.geometry.dispose()
-    resources.supports.material.dispose()
     resources.mesh.dispose()
     resources.geometry.dispose()
     resources.material.dispose()
@@ -121,10 +123,11 @@ export default function KnotLabels() {
   }, [resources])
   return <>
     <primitive object={resources.mesh}/>
-    <primitive object={resources.supports}/>
+    <primitive object={resources.supports}><primitive object={supportMaterial} attach="material"/></primitive>
     <RigidBody name="knot-nameplate-colliders" type="fixed" colliders={false}>
-      {knotExhibition.map(exhibit => <group key={exhibit.id} position={knotSignPosition(exhibit)} rotation={[0, exhibit.rotation, 0]}>
-        {knotSignParts.map(({position, size}, index) => <CuboidCollider key={index} position={position} args={[size[0] / 2, size[1] / 2, size[2] / 2]}/>)}
+      {knotExhibition.map(exhibit => <group key={exhibit.id} position={knotSignPosition(exhibit)} rotation={[0, exhibit.rotation + knotSign.inwardRotation, 0]}>
+        {knotSignParts.map(({position, rotation, size}, index) => <CuboidCollider key={index} position={position} rotation={rotation} args={[size[0] / 2, size[1] / 2, size[2] / 2]}/>)}
+        {knotSignRoundParts.map(({position, radius, height: partHeight}, index) => <CylinderCollider key={index} position={position} args={[partHeight / 2, radius]}/>)}
       </group>)}
     </RigidBody>
   </>
