@@ -2,7 +2,7 @@ import type {KnotCandidateData, KnotData} from '../../src/lib/knots/types.ts'
 
 import {describe, expect, test} from 'bun:test'
 
-import {formatKnotLabels} from '../../src/lib/knots/exhibition.ts'
+import {formatKnotLabels, selectKnotBays} from '../../src/lib/knots/exhibition.ts'
 import {knotCandidates, knots} from '../../src/lib/knots/index.ts'
 import KnotCandidate, {indexKnots} from '../../src/lib/knots/KnotCandidate.ts'
 
@@ -24,15 +24,15 @@ const item = (number: number, highlighted = false): KnotData => ({
 const numbers = (candidate: KnotCandidate) => candidate.select().map(item => item.number)
 const catalogNumbers = (candidate: KnotCandidate) => candidate.items.map(item => item.number).toSorted((a, b) => a - b)
 describe('arbitrary Knot batches', () => {
-  test('displays every entry in plate-number order regardless of highlights or export order', () => {
-    const items = Array.from({length: 24}, (_, index) => item(index + 1, index % 2 === 0))
-    const expected = items.map(item => item.number)
-    const reversed = items.toReversed()
-    const candidate = new KnotCandidate(candidateData, reversed)
-    expect(candidate.items).toHaveLength(24)
-    expect(numbers(candidate)).toEqual(expected)
+  test('places highlighted entries at the far end while using them first for shot limits', () => {
+    const items = [item(1), item(2, true), item(3), item(4, true), item(5)]
+    const expected = [1, 3, 5, 2, 4]
     expect(numbers(new KnotCandidate(candidateData, items))).toEqual(expected)
-    expect(reversed.map(item => item.number)).toEqual(expected.toReversed())
+    expect(numbers(new KnotCandidate(candidateData, items.toReversed()))).toEqual(expected)
+    const limited = new KnotCandidate(candidateData, items).select(3)
+    expect(limited.map(item => item.number)).toEqual([1, 2, 4])
+    expect(limited.map(item => item.highlighted)).toEqual([false, true, true])
+    expect(() => new KnotCandidate(candidateData, items).select(0)).toThrow('shot limit')
   })
   test('handles empty and partial rows without padding or reintroducing archives', () => {
     expect(numbers(new KnotCandidate(candidateData, []))).toEqual([])
@@ -101,7 +101,7 @@ describe('arbitrary Knot batches', () => {
     }
     const materialFiles = await Array.fromAsync(new Bun.Glob('src/lib/knots/*/items/*/material.ts').scan('.'))
     expect(new Set(materialFiles.map(path => path.replaceAll('\\', '/')))).toEqual(new Set(knots.map(item => `src/lib/knots/${item.model}/items/${item.sourceId}/material.ts`)))
-    expect(knots.map(item => item.number)).toEqual(Array.from({length: 137}, (_, index) => index + 1))
+    expect(knots.map(item => item.number)).toEqual(Array.from({length: 185}, (_, index) => index + 1))
   })
   test('groups Gemini versions together without losing per-item author fidelity', () => {
     const gemini = knotCandidates.filter(candidate => candidate.data.id === 'gemini')
@@ -177,16 +177,35 @@ describe('arbitrary Knot batches', () => {
     expect(knots.find(item => item.number === 111)!.sourceId).toBe('quantum_foam_2')
     expect(knots.find(item => item.number === 114)!.displacement).toBe(0.02)
   })
-  test('records known generation harnesses without guessing legacy manual provenance', () => {
+  test('records OpenRouter, Codex and web-chat harness provenance without guessing legacy sources', () => {
     const astra = knots.filter(entry => entry.model === 'astra')
     const openRouter = knots.filter(entry => entry.model !== 'astra' && entry.author.model.slug)
-    const legacy = knots.filter(entry => entry.model !== 'astra' && !entry.author.model.slug)
+    const webChat = knots.filter(entry => entry.model !== 'astra' && !entry.author.model.slug && entry.harness)
+    const legacy = knots.filter(entry => entry.model !== 'astra' && !entry.author.model.slug && !entry.harness)
     expect(astra).toHaveLength(17)
     expect(openRouter).toHaveLength(56)
+    expect(webChat).toHaveLength(48)
     expect(legacy).toHaveLength(64)
     expect(astra.every(entry => entry.harness === 'Codex')).toBe(true)
     expect(openRouter.every(entry => entry.harness === 'none')).toBe(true)
     expect(legacy.every(entry => entry.harness === undefined)).toBe(true)
+    expect(Object.fromEntries(['chat.z.ai', 'grok.com Build', 'grok.com', 'kimi.ai', 'meta.ai', 'chat.qwen.ai'].map(harness => [harness, webChat.filter(entry => entry.harness === harness).length]))).toEqual({
+      'chat.z.ai': 8,
+      'grok.com Build': 8,
+      'grok.com': 8,
+      'kimi.ai': 8,
+      'meta.ai': 8,
+      'chat.qwen.ai': 8,
+    })
+  })
+  test('filters candidates and caps shots from Knottingham URL parameters', () => {
+    const bays = selectKnotBays('?candidates=glm,gemini&shots=2')
+    expect(bays.map(bay => bay.candidate.data.id)).toEqual(['gemini', 'glm'])
+    expect(bays.map(bay => bay.finishes.map(item => item.number))).toEqual([[25, 32], [34, 40]])
+    expect(bays.flatMap(bay => bay.finishes).filter(item => item.highlighted).map(item => item.number)).toEqual([32, 40])
+    expect(selectKnotBays('?candidates=astra&shots=3')[0].finishes.map(item => item.number)).toEqual([1, 6, 97])
+    expect(() => selectKnotBays('?shots=0')).toThrow('shots')
+    expect(() => selectKnotBays('?candidates=missing')).toThrow('candidate')
   })
   test('formats only truly consecutive selections as ranges', () => {
     expect(formatKnotLabels([])).toBe('')
@@ -196,8 +215,8 @@ describe('arbitrary Knot batches', () => {
   })
   test('adds the new GLM batch without replacing its highlighted original', () => {
     const glm = knotCandidates.find(candidate => candidate.data.id === 'glm')!
-    expect(glm.items).toHaveLength(24)
-    expect(catalogNumbers(glm)).toEqual([33, 34, 35, 36, 37, 38, 39, 40, 98, 99, 100, 101, 102, 103, 104, 105, 130, 131, 132, 133, 134, 135, 136, 137])
+    expect(glm.items).toHaveLength(32)
+    expect(catalogNumbers(glm)).toEqual([33, 34, 35, 36, 37, 38, 39, 40, 98, 99, 100, 101, 102, 103, 104, 105, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145])
     for (const entry of glm.items.filter(item => item.number >= 98 && item.number <= 105)) {
       expect(entry.author.model).toEqual({
         title: 'GLM 5.3',

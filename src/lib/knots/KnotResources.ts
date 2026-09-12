@@ -14,15 +14,12 @@ export default class KnotResources {
     material: MeshPhysicalNodeMaterial}>
   private readonly geometries = new Map<number, BufferGeometry>
   private readonly materials: Array<MeshPhysicalNodeMaterial> = []
-  constructor(entries: ReadonlyArray<KnotEntry>, constructors: ReadonlyArray<KnotMaterialConstructor>) {
+  constructor(entries: ReadonlyArray<KnotEntry>, constructors: ReadonlyMap<string, KnotMaterialConstructor>) {
     try {
-      if (entries.length !== constructors.length) {
-        throw new Error('Every displayed Knot needs a material constructor.')
-      }
       const base = createKnotGeometry()
       base.computeBoundingSphere()
       this.geometries.set(0, base)
-      this.items = entries.map((entry, index) => {
+      this.items = entries.map(entry => {
         const displacement = entry.displacement ?? 0
         let geometry = this.geometries.get(displacement)
         if (!geometry) {
@@ -32,7 +29,11 @@ export default class KnotResources {
           geometry.boundingSphere!.radius += displacement
           this.geometries.set(displacement, geometry)
         }
-        const material = new constructors[index](this.environment)
+        const Material = constructors.get(entry.id)
+        if (!Material) {
+          throw new Error(`Missing material constructor for ${entry.id}.`)
+        }
+        const material = new Material(this.environment)
         this.materials.push(material)
         material.name = entry.id
         return {

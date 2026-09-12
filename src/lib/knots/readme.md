@@ -5,7 +5,7 @@ Each candidate owns `data.ts`, an `index.ts` forwarding its metadata and an arbi
 - Use stable snake_case IDs and a globally unique plate number. Export item data from the candidate’s index, then register new candidates in the root index.
 - Keep exact model provenance in each item’s `author.model`: required `title`, optional `slug` and `effortLevel`. Candidate folders group batches and versions; plates credit the individual author.
 - Optional top-level `harness` records the generation harness. Use a harness name such as `Codex` when known, `none` for knots retrieved directly through OpenRouter, and omit it when legacy/manual provenance is not established.
-- All non-archived items are displayed per candidate, in ascending plate-number order.
+- All non-archived items are displayed per candidate. Ordinary items stay in ascending plate-number order, while highlighted items are placed at the far end of the row. `?shots=N` caps each candidate after prioritizing highlighted items for inclusion, and `?candidates=id,id` limits Knottingham to the requested candidates.
 - `archived: true` hides an item regardless of highlighting without removing it from the catalog or prompt examples.
 - For vertex displacement, declare its conservative maximum distance in meters as `displacement`. Geometry culling and collision bounds expand automatically; materials with equal bounds share geometry.
 - Each item owns `icon.jxl`. Each candidate owns its model `icon.jxl` and its generated `overview.jxl`. Static `new URL(…, import.meta.url)` references let Vite include these assets without requiring them to exist when adding metadata.
@@ -16,7 +16,7 @@ The metadata barrels never import shaders. Vite discovers material modules autom
 
 With Vite and its page open in the debug browser, run `bun scripts/updateKnots.ts`. To update only some candidates, use `bun scripts/updateKnots.ts gemini fable`. Optional `--browser-url` and `--page-url` override `http://127.0.0.1:9223` and `https://vite.tower.lan`.
 
-The script renders all item icons on a transparent 640 × 640 canvas, including archived items, then crops to their visible alpha bounds. Each overview contains exactly the current non-archived selection in plate-number order, with four columns and enough rows. Cropped icons are centered and proportionally contained inside square tiles with 12 pixels of padding; the overview keeps its dark background. Model symbols are rasterized at 256 × 256 from the editable SVG sources in `scripts/assets/knots/{candidate}.svg`.
+The script renders all item icons on a transparent 640 × 640 canvas, including archived items, then crops to their visible alpha bounds. Each overview contains exactly the current non-archived selection in exhibition order, with four columns and enough rows. Cropped icons are centered and proportionally contained inside square tiles with 12 pixels of padding; the overview keeps its dark background. Model symbols are rasterized at 256 × 256 from the editable SVG sources in `scripts/assets/knots/{candidate}.svg`.
 
 Regenerate after changing materials, titles or archives. Outputs are staged until the requested candidates render successfully. The script uses its own detached WebGPU renderer, validates finite HDR output and never navigates the browser or changes the live scene, camera or viewport. The gallery only loads the generated boards – it no longer composes them during startup.
 

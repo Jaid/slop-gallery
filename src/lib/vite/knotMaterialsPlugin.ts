@@ -1,6 +1,6 @@
 import type {Plugin} from 'vite'
 
-import {knotExhibition} from '../knots/exhibition.ts'
+import {knots} from '../knots/index.ts'
 
 const knotMaterialsModule = 'virtual:knot-exhibition-materials'
 const resolvedKnotMaterialsModule = `\0${knotMaterialsModule}`
@@ -15,9 +15,10 @@ const knotMaterialsPlugin = (): Plugin => ({
     if (id !== resolvedKnotMaterialsModule) {
       return
     }
-    const imports = knotExhibition.map((item, index) => `import Material${index} from ${JSON.stringify(`/src/lib/knots/${item.model}/items/${item.sourceId}/material.ts`)}`)
-    const constructors = knotExhibition.map((_, index) => `Material${index}`)
-    return `${imports.join('\n')}\nexport default [${constructors.join(', ')}]\n`
+    const displayed = knots.filter(item => !item.archived)
+    const imports = displayed.map((item, index) => `import Material${index} from ${JSON.stringify(`/src/lib/knots/${item.model}/items/${item.sourceId}/material.ts`)}`)
+    const constructors = displayed.map((item, index) => `[${JSON.stringify(item.id)}, Material${index}]`)
+    return `${imports.join('\n')}\nexport default new Map([${constructors.join(', ')}])\n`
   },
 })
 

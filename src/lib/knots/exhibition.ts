@@ -4,10 +4,31 @@ import {knotCandidates} from './index.ts'
 import KnotLayout from './KnotLayout.ts'
 
 export const knotFloatHeight = 1
-const selectedBays = knotCandidates.map(candidate => ({
-  candidate,
-  finishes: candidate.select(),
-})).filter(bay => bay.finishes.length > 0)
+
+export function selectKnotBays(search = '') {
+  const params = new URLSearchParams(search)
+  const requested = [...new Set(params.getAll('candidates').flatMap(value => value.split(',')).map(value => value.trim()).filter(Boolean))]
+  const known = new Set(knotCandidates.map(candidate => candidate.data.id))
+  const unknown = requested.filter(id => !known.has(id))
+  if (unknown.length) {
+    throw new Error(`Unknown Knot candidate URL selection: ${unknown.join(', ')}`)
+  }
+  const rawShots = params.get('shots')
+  let shots: number | undefined
+  if (rawShots !== null) {
+    shots = Number(rawShots)
+    if (!Number.isSafeInteger(shots) || shots < 1) {
+      throw new Error('Knot shots URL parameter must be a positive integer.')
+    }
+  }
+  const selected = requested.length ? knotCandidates.filter(candidate => requested.includes(candidate.data.id)) : knotCandidates
+  return selected.map(candidate => ({
+    candidate,
+    finishes: candidate.select(shots),
+  })).filter(bay => bay.finishes.length > 0)
+}
+
+const selectedBays = selectKnotBays(typeof location === 'undefined' ? '' : location.search)
 export const knotLayout = new KnotLayout(selectedBays.map(bay => bay.finishes.length))
 export const knotSpacing = knotLayout.itemSpacing
 const label = (number: number) => `#${String(number).padStart(2, '0')}`

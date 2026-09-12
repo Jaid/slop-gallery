@@ -1,18 +1,27 @@
 import {describe, expect, test} from 'bun:test'
 
-import drawLabel, {knotDetailLine, labelAtlasColumns, labelHeight, labelWidth, modelLineLayout} from '../../src/components/levels/knottingham/KnotLabels/drawLabel.ts'
+import {accentLineSize, creatorStickerHeight, creatorStickerSize, creatorStickerWidth, drawCreatorSticker, drawTitleSticker, knotDetailLine, labelAtlasColumns, modelLineLayout, titleStickerHeight, titleStickerSize, titleStickerWidth} from '../../src/components/levels/knottingham/KnotLabels/drawLabel.ts'
 import {knotBays, knotExhibition} from '../../src/lib/knots/exhibition.ts'
 import {knotsByNumber} from '../../src/lib/knots/index.ts'
 import {knotSign} from '../../src/lib/knots/signs.ts'
 
+const iconHash = async (number: number) => Bun.hash(await Bun.file(new URL(knotsByNumber.get(number)!.modelIcon)).arrayBuffer())
 describe('Knot model plates', () => {
-  test('pads each plate to landscape 3:2 without extra draw batches', () => {
-    expect(labelWidth).toBe(384 * 2)
-    expect(labelWidth / labelHeight).toBe(3 / 2)
-    expect(knotSign.width / knotSign.height).toBeCloseTo(labelWidth / labelHeight)
-    expect(knotSign.elevation).toBe(0.8)
-    expect(labelAtlasColumns * labelWidth).toBeLessThanOrEqual(8192)
-    expect(Math.ceil(knotExhibition.length / labelAtlasColumns) * labelHeight).toBeLessThanOrEqual(8192)
+  test('uses two compact sticker atlases and a non-rasterized accent line', () => {
+    const oldTilePixels = 768 * 512
+    const stickerPixels = titleStickerWidth * titleStickerHeight + creatorStickerWidth * creatorStickerHeight
+    expect(stickerPixels).toBeLessThan(oldTilePixels / 2)
+    expect(labelAtlasColumns * titleStickerWidth).toBeLessThanOrEqual(8192)
+    expect(labelAtlasColumns * creatorStickerWidth).toBeLessThanOrEqual(8192)
+    const rows = Math.ceil(knotExhibition.length / labelAtlasColumns)
+    expect(rows * titleStickerHeight).toBeLessThanOrEqual(8192)
+    expect(rows * creatorStickerHeight).toBeLessThanOrEqual(8192)
+    expect(titleStickerSize[0]).toBeLessThan(knotSign.width)
+    expect(titleStickerSize[1]).toBeLessThan(knotSign.height)
+    expect(creatorStickerSize[0]).toBeLessThan(knotSign.width)
+    expect(creatorStickerSize[1]).toBeLessThan(knotSign.height)
+    expect(accentLineSize[0]).toBeLessThan(knotSign.width)
+    expect(accentLineSize[1]).toBeLessThan(0.02)
   })
   test('ships a local icon for every exhibited model and reuses family marks', async () => {
     const urls = new Set<string>
@@ -23,36 +32,53 @@ describe('Knot model plates', () => {
       urls.add(Bun.hash(await Bun.file(new URL(url)).arrayBuffer()).toString())
     }
     expect(urls.size).toBe(10)
-    const icon = async (number: number) => Bun.hash(await Bun.file(new URL(knotsByNumber.get(number)!.modelIcon)).arrayBuffer())
-    expect(await icon(6)).toBe(await icon(73))
-    expect(await icon(73)).toBe(await icon(97))
-    expect(await icon(72)).toBe(await icon(6))
-    expect(await icon(15)).toBe(await icon(89))
-    expect(await icon(32)).toBe(await icon(81))
+    expect(await iconHash(6)).toBe(await iconHash(73))
+    expect(await iconHash(73)).toBe(await iconHash(97))
+    expect(await iconHash(72)).toBe(await iconHash(6))
+    expect(await iconHash(15)).toBe(await iconHash(89))
+    expect(await iconHash(32)).toBe(await iconHash(81))
   })
-  test('centers the icon and text together and fits long names inside the plate', () => {
+  test('centers the creator icon and text together and fits long names', () => {
     for (const measured of [90, 240, 400, 1000]) {
       for (const hasIcon of [true, false]) {
         const line = modelLineLayout(measured, hasIcon)
-        expect(line.left).toBeGreaterThanOrEqual(24)
-        expect(line.left * 2 + line.iconSize + line.gap + line.textWidth).toBe(labelWidth)
+        expect(line.left).toBeGreaterThanOrEqual(16)
+        expect(line.left * 2 + line.iconSize + line.gap + line.textWidth).toBe(creatorStickerWidth)
         expect(line.textWidth).toBeLessThanOrEqual(measured)
-        expect(line.iconSize).toBe(hasIcon ? 52 : 0)
-        expect(line.gap).toBe(hasIcon ? 16 : 0)
+        expect(line.iconSize).toBe(hasIcon ? 40 : 0)
+        expect(line.gap).toBe(hasIcon ? 12 : 0)
       }
     }
   })
-  test('draws three text lines and a proportional icon into the existing atlas tile', () => {
-    const text: Array<Array<unknown>> = []
-    const images: Array<Array<unknown>> = []
-    const rectangles: Array<Array<number>> = []
-    const fonts: Array<string> = []
-    const context = {
+  test('draws title and creator as independent stickers', () => {
+    const titleText: Array<Array<unknown>> = []
+    const titleRects: Array<Array<number>> = []
+    const titleFonts: Array<string> = []
+    const titleContext = {
       set font(value: string) {
-        fonts.push(value)
+        titleFonts.push(value)
       },
-      fillRect: (...args: Array<number>) => rectangles.push(args),
-      fillText: (...args: Array<unknown>) => text.push(args),
+      fillRect: (...args: Array<number>) => titleRects.push(args),
+      fillText: (...args: Array<unknown>) => titleText.push(args),
+    } as unknown as CanvasRenderingContext2D
+    const exhibit = {
+      ...knotExhibition[0],
+      harness: undefined,
+      author: {model: {title: knotExhibition[0].modelTitle}},
+    }
+    drawTitleSticker(titleContext, exhibit, titleStickerWidth, titleStickerHeight)
+    expect(titleFonts).toEqual(['600 70px main', '600 42px main'])
+    expect(titleRects).toEqual([[titleStickerWidth, titleStickerHeight, titleStickerWidth, titleStickerHeight]])
+    expect(titleText.map(line => line[0])).toEqual([exhibit.label, exhibit.title])
+    const creatorText: Array<Array<unknown>> = []
+    const images: Array<Array<unknown>> = []
+    const creatorFonts: Array<string> = []
+    const creatorContext = {
+      set font(value: string) {
+        creatorFonts.push(value)
+      },
+      fillRect() {},
+      fillText: (...args: Array<unknown>) => creatorText.push(args),
       drawImage: (...args: Array<unknown>) => images.push(args),
       measureText: () => ({width: 240}),
     } as unknown as CanvasRenderingContext2D
@@ -60,26 +86,13 @@ describe('Knot model plates', () => {
       naturalWidth: 256,
       naturalHeight: 128,
     } as HTMLImageElement
-    const exhibit = {
-      ...knotExhibition[0],
-      harness: undefined,
-      author: {model: {title: knotExhibition[0].modelTitle}},
-    }
-    drawLabel(context, exhibit, labelWidth, labelHeight, icon)
-    expect(fonts).toEqual(['600 84px main', '600 46px main', '44px main'])
-    expect(rectangles[0]).toEqual([labelWidth, labelHeight, labelWidth, labelHeight])
-    expect(text.map(line => line[0])).toEqual([exhibit.label, exhibit.title, exhibit.modelTitle])
-    expect(text[0]).toEqual([exhibit.label, labelWidth * 1.5, labelHeight + 136, labelWidth - 48])
-    expect(text[1]).toEqual([exhibit.title, labelWidth * 1.5, labelHeight + 232, labelWidth - 48])
+    drawCreatorSticker(creatorContext, exhibit, creatorStickerWidth, creatorStickerHeight, icon)
+    expect(creatorFonts).toEqual(['32px main'])
     const {left} = modelLineLayout(240, true)
-    expect(images).toEqual([[icon, labelWidth + left, labelHeight + 400 - 13, 52, 26]])
-    expect(text[2]).toEqual([exhibit.modelTitle, labelWidth + left + 68, labelHeight + 400, 240])
-    images.length = 0
-    drawLabel(context, exhibit, 0, 0)
-    expect(images).toEqual([])
-    expect(text.at(-1)).toEqual([exhibit.modelTitle, 264, 400, 240])
+    expect(images).toEqual([[icon, creatorStickerWidth + left, creatorStickerHeight + 21, 40, 20]])
+    expect(creatorText).toEqual([[exhibit.modelTitle, creatorStickerWidth + left + 52, creatorStickerHeight + 31, 240]])
   })
-  test('combines harness and thinking effort on the smaller detail line', () => {
+  test('formats harness and thinking effort with flattenString.list semantics', () => {
     const cases = [
       {
         harness: undefined,
@@ -94,12 +107,12 @@ describe('Knot model plates', () => {
       {
         harness: 'none',
         effortLevel: undefined,
-        expected: '',
+        expected: 'non-agentic',
       },
       {
         harness: 'none',
         effortLevel: 'high',
-        expected: 'high effort',
+        expected: 'non-agentic, high effort',
       },
       {
         harness: 'Codex',
@@ -145,13 +158,13 @@ describe('Knot model plates', () => {
           },
         },
       }
-      drawLabel(context as unknown as CanvasRenderingContext2D, exhibit, labelWidth, labelHeight)
-      expect(lines).toHaveLength(expected ? 4 : 3)
-      expect(lines[2].args[2]).toBe(labelHeight + 400)
+      drawCreatorSticker(context as unknown as CanvasRenderingContext2D, exhibit, 0, 0)
+      expect(lines).toHaveLength(expected ? 2 : 1)
+      expect(lines[0].args[1]).toBeGreaterThanOrEqual(0)
       if (expected) {
-        expect(lines[3]).toEqual({
-          args: [expected, labelWidth * 1.5, labelHeight + 454, labelWidth - 48],
-          font: '32px main',
+        expect(lines[1]).toEqual({
+          args: [expected, creatorStickerWidth / 2, 72, creatorStickerWidth - 24],
+          font: '24px main',
           align: 'center',
         })
       }

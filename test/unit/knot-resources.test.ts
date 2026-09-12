@@ -18,7 +18,12 @@ test('shares geometry by displacement bound and keeps collider and culling bound
       ...relief,
       id: 'another_relief',
     },
-  ], [TestMaterial, TestMaterial, TestMaterial, TestMaterial])
+  ], new Map([
+    [base.id, TestMaterial],
+    ['second', TestMaterial],
+    [relief.id, TestMaterial],
+    ['another_relief', TestMaterial],
+  ]))
   const [a, b, c, d] = resources.items
   try {
     expect(a.geometry).toBe(b.geometry)
@@ -52,8 +57,15 @@ test('disposes shared GPU resources once and cleans up after partial constructio
       super(environment); throw new Error('Broken shader.')
     }
   }
-  expect(() => new KnotResources([entry, entry], [Tracked, Broken])).toThrow('Broken shader')
+  const brokenEntry = {
+    ...entry,
+    id: 'broken',
+  }
+  expect(() => new KnotResources([entry, brokenEntry], new Map([
+    [entry.id, Tracked],
+    [brokenEntry.id, Broken],
+  ]))).toThrow('Broken shader')
   expect(materialDisposals).toBe(1)
   expect(environmentDisposals).toBe(1)
-  expect(() => new KnotResources([entry], [])).toThrow('constructor')
+  expect(() => new KnotResources([entry], new Map)).toThrow('constructor')
 })

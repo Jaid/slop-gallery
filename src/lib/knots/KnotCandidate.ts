@@ -56,7 +56,13 @@ export default class KnotCandidate {
       }
     })
   }
-  select() {
-    return this.items.filter(item => !item.archived).toSorted((a, b) => a.number - b.number)
+  select(limit?: number) {
+    const available = this.items.filter(item => !item.archived)
+    if (limit !== undefined && (!Number.isSafeInteger(limit) || limit < 1)) {
+      throw new Error('Knot shot limit must be a positive integer.')
+    }
+    const ordered = available.toSorted((a, b) => a.number - b.number)
+    const prioritized = limit === undefined ? ordered : [...ordered.filter(item => item.highlighted), ...ordered.filter(item => !item.highlighted)].slice(0, limit)
+    return prioritized.toSorted((a, b) => Number(a.highlighted) - Number(b.highlighted) || a.number - b.number)
   }
 }

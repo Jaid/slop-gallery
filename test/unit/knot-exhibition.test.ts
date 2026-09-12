@@ -15,15 +15,19 @@ import StudioEnvironment from '../../src/lib/materials/StudioEnvironment.ts'
 
 describe('multi-model Knot challenge', () => {
   test('keeps stable numbers and credits while grouping batches under one candidate', () => {
-    expect(knots).toHaveLength(137)
-    expect(knotsByNumber.size).toBe(137)
+    expect(knots).toHaveLength(185)
+    expect(knotsByNumber.size).toBe(185)
     const displayedKnots = knots.filter(item => !item.archived)
     expect(knotExhibition).toHaveLength(displayedKnots.length)
     expect(new Set(knotExhibition.map(item => item.id)).size).toBe(displayedKnots.length)
     expect(knotBays).toHaveLength(new Set(displayedKnots.map(item => item.model)).size)
     expect(knotExhibition.map(item => item.number).toSorted((a, b) => a - b)).toEqual(displayedKnots.map(item => item.number))
     for (const bay of knotBays) {
-      expect(bay.finishes.map(item => item.number)).toEqual(displayedKnots.filter(item => item.model === bay.model).map(item => item.number))
+      expect(bay.finishes.map(item => item.number).toSorted((a, b) => a - b)).toEqual(displayedKnots.filter(item => item.model === bay.model).map(item => item.number))
+      const firstHighlighted = bay.finishes.findIndex(item => item.highlighted)
+      if (firstHighlighted !== -1) {
+        expect(bay.finishes.slice(firstHighlighted).every(item => item.highlighted)).toBe(true)
+      }
     }
     for (const item of knotExhibition) {
       expect(item.archived).not.toBe(true)
