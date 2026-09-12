@@ -10,6 +10,7 @@ export const knotSign = {
   height: 0.85 * 2 / 3,
   elevation: 0.8,
   thickness: 0.018,
+  plateMass: 0.8,
   tilt: -Math.PI / 9,
   sideOffset: -1,
   inwardRotation: -Math.PI / 8,
@@ -29,11 +30,13 @@ export const knotSignRoundParts = [
   {
     position: [0, -knotSign.elevation / 2, -0.03] as Vec3,
     radius: 0.018,
+    mass: 0.2,
     height: knotSign.elevation,
   },
   {
     position: [0, -knotSign.elevation + 0.014, -0.03] as Vec3,
     radius: 0.2,
+    mass: 2.5,
     height: 0.028,
   },
 ]
@@ -72,3 +75,5 @@ export function billboardParts(width: number, height: number): Array<SignPart> {
     })),
   ]
 }
+
+export const knotSignId = (id: string) => `prop-knot-sign-${id}`

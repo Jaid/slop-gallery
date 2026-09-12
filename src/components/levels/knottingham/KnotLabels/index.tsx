@@ -1,14 +1,17 @@
-import {CuboidCollider, CylinderCollider, RigidBody} from '@react-three/rapier'
+import {useFrame} from '@react-three/fiber/webgpu'
+import {CuboidCollider, CylinderCollider} from '@react-three/rapier'
 import {useEffect, useMemo} from 'react'
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js'
 import {attribute, texture, uv, vec2} from 'three/tsl'
 import {BoxGeometry, CylinderGeometry, DataTexture, Euler, InstancedBufferAttribute, InstancedMesh, LinearFilter, LinearMipmapLinearFilter, Matrix4, MeshBasicNodeMaterial, PlaneGeometry, RGBAFormat, SRGBColorSpace} from 'three/webgpu'
 import useGraphicsQuality from 'use-graphics-quality'
 
+import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
 import {knotExhibition} from '#src/lib/knots/exhibition.ts'
 import loadModelIcons from '#src/lib/knots/loadModelIcons.ts'
-import {knotSign, knotSignParts, knotSignPosition, knotSignRoundParts} from '#src/lib/knots/signs.ts'
+import {knotSign, knotSignId, knotSignParts, knotSignPosition, knotSignRoundParts} from '#src/lib/knots/signs.ts'
 import {signSupportMaterial} from '#src/lib/materials/SignMetalMaterial.ts'
+import InstancedPropVisuals from '#src/lib/physics/InstancedPropVisuals.ts'
 
 import drawLabel, {labelHeight as height, labelAtlasColumns, labelFontFamily, labelWidth as width} from './drawLabel.ts'
 
@@ -83,6 +86,7 @@ export default function KnotLabels() {
     return {
       atlas,
       supports,
+      visuals: new InstancedPropVisuals([mesh, supports], knotExhibition.map(exhibit => knotSignId(exhibit.id))),
       updateIcons(icons: ReadonlyMap<string, HTMLImageElement>) {
         for (const [index, exhibit] of knotExhibition.entries()) {
           const url = exhibit.modelIcon
@@ -121,14 +125,15 @@ export default function KnotLabels() {
     resources.material.dispose()
     resources.atlas.dispose()
   }, [resources])
+  useFrame(() => resources.visuals.update(id => propObjects.get(id)?.group))
   return <>
     <primitive object={resources.mesh}/>
     <primitive object={resources.supports}><primitive object={supportMaterial} attach="material"/></primitive>
-    <RigidBody name="knot-nameplate-colliders" type="fixed" colliders={false}>
-      {knotExhibition.map(exhibit => <group key={exhibit.id} position={knotSignPosition(exhibit)} rotation={[0, exhibit.rotation + knotSign.inwardRotation, 0]}>
-        {knotSignParts.map(({position, rotation, size}, index) => <CuboidCollider key={index} position={position} rotation={rotation} args={[size[0] / 2, size[1] / 2, size[2] / 2]}/>)}
-        {knotSignRoundParts.map(({position, radius, height: partHeight}, index) => <CylinderCollider key={index} position={position} args={[partHeight / 2, radius]}/>)}
-      </group>)}
-    </RigidBody>
+    {knotExhibition.map(exhibit => <GrabbableProp key={exhibit.id} id={knotSignId(exhibit.id)} title={`${exhibit.title} · nameplate`} colliders={false} type="dynamic" position={knotSignPosition(exhibit)} rotation={[0, exhibit.rotation + knotSign.inwardRotation, 0]} restitution={0.1} friction={0.9} linearDamping={0.1} angularDamping={0.15}>
+      {/* Raycast-only copy; visible geometry remains in the two instanced batches. */}
+      <mesh geometry={resources.supports.geometry} material={supportMaterial} visible={false} dispose={null}/>
+      {knotSignParts.map(({position, rotation, size}, index) => <CuboidCollider key={index} position={position} rotation={rotation} args={[size[0] / 2, size[1] / 2, size[2] / 2]} mass={knotSign.plateMass}/>)}
+      {knotSignRoundParts.map(({position, radius, height: partHeight, mass}, index) => <CylinderCollider key={index} position={position} args={[partHeight / 2, radius]} mass={mass}/>)}
+    </GrabbableProp>)}
   </>
 }
