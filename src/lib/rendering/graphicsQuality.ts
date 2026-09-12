@@ -13,7 +13,7 @@ export const graphicsQualityParser = createParser({
     return null
   },
   serialize: useGraphicsQuality.getName,
-}).withDefault(true)
+}).withDefault(false)
 
 type GraphicsProfile = {
   dpr: [number, number] | number

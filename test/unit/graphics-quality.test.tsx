@@ -13,8 +13,8 @@ function ReadProfile() {
   const profile = useGraphicsQualityValue(getGraphicsProfile)
   return <span>{String(isQuality)}:{JSON.stringify(profile)}</span>
 }
-test('graphics URL names round-trip through boolean state and default to quality', () => {
-  expect(graphicsQualityParser.defaultValue).toBe(true)
+test('graphics URL names round-trip through boolean state and default to performance', () => {
+  expect(graphicsQualityParser.defaultValue).toBe(false)
   for (const isQuality of [true, false]) {
     const name = graphicsQualityParser.serialize(isQuality)
     expect(name).toBe(useGraphicsQuality.getName(isQuality))
@@ -27,7 +27,7 @@ test('graphics URL names round-trip through boolean state and default to quality
   expect(parameterParsers).not.toHaveProperty('graphics')
 })
 test('the URL-backed provider exposes isQuality and selects the scene budget', () => {
-  for (const [query, isQuality] of [['', true], ['?graphics=quality', true], ['?graphics=performance', false], ['?graphics=invalid', true], ['?lite=true', true]] as const) {
+  for (const [query, isQuality] of [['', false], ['?graphics=quality', true], ['?graphics=performance', false], ['?graphics=invalid', false], ['?lite=true', false]] as const) {
     const html = renderToStaticMarkup(<NuqsTestingAdapter searchParams={query}><GraphicsQuality><ReadProfile/></GraphicsQuality></NuqsTestingAdapter>)
     expect(html).toStartWith(`<span>${String(isQuality)}:`)
     expect(html).toContain(isQuality ? '[1,2]' : 'dpr&quot;:1')

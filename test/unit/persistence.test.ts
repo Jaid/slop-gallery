@@ -43,6 +43,9 @@ afterEach(() => {
   saveSpy?.mockRestore()
   Object.assign(globalThis, previous)
 })
+test('new gallery documents default to muted audio', () => {
+  expect(original.settings).toEqual({sound: false})
+})
 test('the aggregate boundary round-trips through store, IndexedDB and compressed backup', async () => {
   const source = new Blob([new Uint8Array(maximumImageBytes)], {type: 'image/webp'})
   const portraits = initialPortraits.slice(0, maximumCollectionImageBytes / maximumImageBytes).map(p => ({

@@ -102,7 +102,7 @@ export const useGallery = create<State>((set, get) => ({
   playerEpoch: 0,
   ai: false,
   apiKey: readKey(),
-  sound: true,
+  sound: false,
   narration: null,
   storageRecoveryRequired: false,
   saveStatus: 'loading',
