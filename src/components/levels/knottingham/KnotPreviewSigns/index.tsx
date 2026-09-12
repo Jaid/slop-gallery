@@ -3,6 +3,7 @@ import type {KnotBay} from '#src/lib/knots/exhibition.ts'
 import Branch from 'branch-component'
 
 import CanvasText from '#component/CanvasText'
+import Support from '#component/levels/knottingham/KnotBillboardSupport'
 import {knotPreviewX} from '#src/lib/knots/exhibition.ts'
 import useArtworkTexture from '#src/lib/useArtworkTexture.ts'
 
@@ -13,10 +14,11 @@ export default function KnotPreviewSign({bay}: {bay: KnotBay}) {
   const width = Math.min(4.8, 2.75 * aspect)
   const height = width / aspect
   return <group name={`preview-${bay.model}`} position={[knotPreviewX, 1.5, 0]} rotation={[0, Math.PI / 2, 0]}>
-    <mesh name={`preview-image-${bay.model}`}>
+    <mesh name={`preview-image-${bay.model}`} position={[0, 0, 0.001]}>
       <planeGeometry args={[width, height]}/>
       <meshBasicNodeMaterial key={texture?.uuid ?? 'loading'} map={texture} color={texture ? '#ffffff' : '#122029'} toneMapped={false}/>
     </mesh>
+    <Support width={width} height={height}/>
     <Branch if={failed}><CanvasText fontFamily="main" text="Preview could not be loaded" width={width - 0.2} height={0.35} position={[0, 0, 0.01]} color="#ffb4a3"/></Branch>
     <CanvasText fontFamily="main" text={`${bay.labels} · ${bay.title}`} width={4.8} height={0.32} position={[0, height / 2 + 0.28, 0]} color="#17202b" fontWeight={600}/>
   </group>

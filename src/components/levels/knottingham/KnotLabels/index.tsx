@@ -1,8 +1,11 @@
+import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import {useEffect, useMemo} from 'react'
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js'
 import {attribute, texture, uv, vec2} from 'three/tsl'
-import {DataTexture, InstancedBufferAttribute, InstancedMesh, LinearFilter, LinearMipmapLinearFilter, Matrix4, MeshBasicNodeMaterial, PlaneGeometry, RGBAFormat, SRGBColorSpace} from 'three/webgpu'
+import {BoxGeometry, DataTexture, InstancedBufferAttribute, InstancedMesh, LinearFilter, LinearMipmapLinearFilter, Matrix4, MeshBasicNodeMaterial, MeshStandardNodeMaterial, PlaneGeometry, RGBAFormat, SRGBColorSpace} from 'three/webgpu'
 
 import {knotExhibition} from '#src/lib/knots/exhibition.ts'
+import {knotSign, knotSignParts, knotSignPosition} from '#src/lib/knots/signs.ts'
 
 import drawLabel, {labelHeight as height, labelFontFamily, labelWidth as width} from './drawLabel.ts'
 import loadModelIcons from './modelIcons.ts'
@@ -37,7 +40,7 @@ export default function KnotLabels() {
     atlas.magFilter = LinearFilter
     atlas.anisotropy = 8
     atlas.needsUpdate = true
-    const geometry = new PlaneGeometry(1.45, 0.6)
+    const geometry = new PlaneGeometry(knotSign.width, knotSign.height)
     geometry.setAttribute('labelOffset', new InstancedBufferAttribute(offsets, 2))
     const material = new MeshBasicNodeMaterial
     material.name = 'Knot challenge labels'
@@ -45,17 +48,38 @@ export default function KnotLabels() {
     material.colorNode = texture(atlas, uv().mul(vec2(1 / columns, 1 / rows)).add(attribute('labelOffset', 'vec2')))
     const mesh = new InstancedMesh(geometry, material, knotExhibition.length)
     mesh.name = 'knot-nameplates'
+    const parts = knotSignParts.map(({position, size}) => new BoxGeometry(...size).translate(...position))
+    const supportGeometry = mergeGeometries(parts)
+    for (const part of parts) {
+      part.dispose()
+    }
+    const supportMaterial = new MeshStandardNodeMaterial({
+      color: '#9ca6ad',
+      metalness: 0.9,
+      roughness: 0.32,
+    })
+    const supports = new InstancedMesh(supportGeometry, supportMaterial, knotExhibition.length)
+    supports.name = 'knot-nameplate-supports'
+    supports.castShadow = true
+    supports.receiveShadow = true
     const matrix = new Matrix4
     for (const [index, exhibit] of knotExhibition.entries()) {
       matrix.makeRotationY(exhibit.rotation)
-      matrix.setPosition(exhibit.position[0], 0.35, exhibit.position[2] + Math.cos(exhibit.rotation) * 0.8)
+      matrix.setPosition(...knotSignPosition(exhibit))
+      supports.setMatrixAt(index, matrix)
+      matrix.elements[12] += Math.sin(exhibit.rotation) * 0.001
+      matrix.elements[14] += Math.cos(exhibit.rotation) * 0.001
       mesh.setMatrixAt(index, matrix)
     }
+    supports.instanceMatrix.needsUpdate = true
+    supports.computeBoundingBox()
+    supports.computeBoundingSphere()
     mesh.instanceMatrix.needsUpdate = true
     mesh.computeBoundingBox()
     mesh.computeBoundingSphere()
     return {
       atlas,
+      supports,
       updateIcons(icons: ReadonlyMap<string, HTMLImageElement>) {
         for (const [index, exhibit] of knotExhibition.entries()) {
           const url = exhibit.modelIcon
@@ -87,10 +111,21 @@ export default function KnotLabels() {
     }
   }, [resources])
   useEffect(() => () => {
+    resources.supports.dispose()
+    resources.supports.geometry.dispose()
+    resources.supports.material.dispose()
     resources.mesh.dispose()
     resources.geometry.dispose()
     resources.material.dispose()
     resources.atlas.dispose()
   }, [resources])
-  return <primitive object={resources.mesh}/>
+  return <>
+    <primitive object={resources.mesh}/>
+    <primitive object={resources.supports}/>
+    <RigidBody name="knot-nameplate-colliders" type="fixed" colliders={false}>
+      {knotExhibition.map(exhibit => <group key={exhibit.id} position={knotSignPosition(exhibit)} rotation={[0, exhibit.rotation, 0]}>
+        {knotSignParts.map(({position, size}, index) => <CuboidCollider key={index} position={position} args={[size[0] / 2, size[1] / 2, size[2] / 2]}/>)}
+      </group>)}
+    </RigidBody>
+  </>
 }
