@@ -1,5 +1,5 @@
 import Branch from 'branch-component'
-import {lazy, Suspense, useState} from 'react'
+import {useState} from 'react'
 
 import Dropzone from '#component/Dropzone'
 import Hud from '#component/Hud'
@@ -17,10 +17,9 @@ import useGalleryAI from '#src/lib/useGalleryAI.ts'
 import useGalleryCommands from '#src/lib/useGalleryCommands.ts'
 
 import GraphicsQuality from './GraphicsQuality.tsx'
+import World from './World.tsx'
 
 import css from './style.module.sass'
-
-const World = lazy(() => import('./World.tsx'))
 
 export default function App() {
   useSlopGalleryTelemetry(telemetry, useGallery, galleryEvents)
@@ -34,7 +33,7 @@ export default function App() {
   }
   return <GraphicsQuality><Dropzone>
     <main className={css.viewport} aria-label="Interactive 3D gallery">
-      <RenderBoundary onFailure={() => setRenderFailed(true)}><Suspense fallback={null}><World/></Suspense></RenderBoundary>
+      <RenderBoundary onFailure={() => setRenderFailed(true)}><World/></RenderBoundary>
     </main>
     <Branch none={[s.locked, s.panel, s.dragging, renderFailed]}><Menu {...settings}/></Branch>
     <Hud/>
