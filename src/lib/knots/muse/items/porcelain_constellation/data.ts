@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'porcelain_constellation',
-  number: 121,
   title: 'Porcelain Constellation',
   harness: 'none',
   author: {

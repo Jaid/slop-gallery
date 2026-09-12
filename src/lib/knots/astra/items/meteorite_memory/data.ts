@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'meteorite_memory',
-  number: 76,
   title: 'Meteorite Memory',
   harness: 'Codex',
   author: {

@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'ferrofluid_crown',
-  number: 167,
   title: 'Ferrofluid Crown',
   harness: 'kimi.ai',
   author: {

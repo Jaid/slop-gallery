@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'interference_shrine',
-  number: 142,
   title: 'Interference Shrine',
   harness: 'chat.z.ai',
   author: {

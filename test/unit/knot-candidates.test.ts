@@ -2,114 +2,90 @@ import type {KnotCandidateData, KnotData} from '../../src/lib/knots/types.ts'
 
 import {describe, expect, test} from 'bun:test'
 
-import {formatKnotLabels, selectKnotBays} from '../../src/lib/knots/exhibition.ts'
-import {knotCandidates, knots} from '../../src/lib/knots/index.ts'
+import {enumerateKnotBays, formatKnotLabels, selectKnotBays} from '../../src/lib/knots/exhibition.ts'
+import {knotCandidates, knots, knotsById} from '../../src/lib/knots/index.ts'
 import KnotCandidate, {indexKnots} from '../../src/lib/knots/KnotCandidate.ts'
 
 const candidateData: KnotCandidateData = {
   id: 'fable',
   title: 'Claude Fable 5.1',
   icon: 'icon.jxl',
-  overview: 'overview.jxl',
 }
-const item = (number: number, highlighted = false): KnotData => ({
-  id: `item_${number}`,
-  number,
-  title: `Knot ${number}`,
+const item = (id: string, highlighted = false): KnotData => ({
+  id,
+  title: id.replaceAll('_', ' '),
   accent: '#fff',
   icon: 'icon.jxl',
   author: {model: {title: 'Claude Fable 5.1'}},
   highlighted,
 })
-const numbers = (candidate: KnotCandidate) => candidate.select().map(item => item.number)
-const catalogNumbers = (candidate: KnotCandidate) => candidate.items.map(item => item.number).toSorted((a, b) => a - b)
+const ids = (candidate: KnotCandidate) => candidate.select().map(entry => entry.sourceId)
+const byId = (id: string) => knotsById.get(id)!
+
 describe('arbitrary Knot batches', () => {
   test('places highlighted entries at the far end while using them first for shot limits', () => {
-    const items = [item(1), item(2, true), item(3), item(4, true), item(5)]
-    const expected = [1, 3, 5, 2, 4]
-    expect(numbers(new KnotCandidate(candidateData, items))).toEqual(expected)
-    expect(numbers(new KnotCandidate(candidateData, items.toReversed()))).toEqual(expected)
+    const items = [item('zeta'), item('beta', true), item('alpha'), item('gamma', true), item('delta')]
+    const expected = ['alpha', 'delta', 'zeta', 'beta', 'gamma']
+    expect(ids(new KnotCandidate(candidateData, items))).toEqual(expected)
+    expect(ids(new KnotCandidate(candidateData, items.toReversed()))).toEqual(expected)
     const limited = new KnotCandidate(candidateData, items).select(3)
-    expect(limited.map(item => item.number)).toEqual([1, 2, 4])
-    expect(limited.map(item => item.highlighted)).toEqual([false, true, true])
+    expect(limited.map(entry => entry.sourceId)).toEqual(['alpha', 'beta', 'gamma'])
+    expect(limited.map(entry => entry.highlighted)).toEqual([false, true, true])
     expect(() => new KnotCandidate(candidateData, items).select(0)).toThrow('shot limit')
   })
+
   test('handles empty and partial rows without padding or reintroducing archives', () => {
-    expect(numbers(new KnotCandidate(candidateData, []))).toEqual([])
+    expect(ids(new KnotCandidate(candidateData, []))).toEqual([])
     const candidate = new KnotCandidate(candidateData, [
-      item(1), {
-        ...item(2, true),
+      item('alpha'), {
+        ...item('beta', true),
         archived: true,
-      }, item(3),
+      }, item('gamma'),
     ])
-    expect(numbers(candidate)).toEqual([1, 3])
+    expect(ids(candidate)).toEqual(['alpha', 'gamma'])
     expect(candidate.items).toHaveLength(3)
   })
-  test('rejects invalid identifiers, numbers and displacement bounds', () => {
-    expect(() => new KnotCandidate({
-      ...candidateData,
-      id: '../fable',
-    }, [])).toThrow('ID')
-    expect(() => new KnotCandidate(candidateData, [
-      {
-        ...item(1),
-        id: '../other',
-      },
-    ])).toThrow('ID')
-    expect(() => new KnotCandidate(candidateData, [
-      item(1), {
-        ...item(2),
-        id: 'item_1',
-      },
-    ])).toThrow('ID')
-    expect(() => new KnotCandidate(candidateData, [
-      item(1), {
-        ...item(1),
-        id: 'another',
-      },
-    ])).toThrow('number')
-    for (const number of [0, -1, 0.5, Number.NaN, Infinity]) {
-      expect(() => new KnotCandidate(candidateData, [item(number)])).toThrow()
-    }
+
+  test('rejects invalid identifiers, duplicate IDs and displacement bounds', () => {
+    expect(() => new KnotCandidate({...candidateData, id: '../fable'}, [])).toThrow('ID')
+    expect(() => new KnotCandidate(candidateData, [{...item('alpha'), id: '../other'}])).toThrow('ID')
+    expect(() => new KnotCandidate(candidateData, [item('alpha'), item('alpha')])).toThrow('ID')
     for (const displacement of [-1, Number.NaN, Infinity]) {
-      expect(() => new KnotCandidate(candidateData, [
-        {
-          ...item(1),
-          displacement,
-        },
-      ])).toThrow('displacement')
+      expect(() => new KnotCandidate(candidateData, [{...item('alpha'), displacement}])).toThrow('displacement')
     }
+    expect(() => new KnotCandidate(candidateData, [{...item('alpha'), author: {model: {title: ' '}}}])).toThrow('author')
   })
-  test('rejects duplicate candidate IDs and globally duplicated plate numbers', () => {
-    const a = new KnotCandidate(candidateData, [item(1)])
-    const b = new KnotCandidate({
-      ...candidateData,
-      id: 'astra',
-    }, [item(1)])
+
+  test('indexes by stable full ID and rejects duplicate candidate IDs', () => {
+    const a = new KnotCandidate(candidateData, [item('alpha')])
+    const b = new KnotCandidate({...candidateData, id: 'astra'}, [item('alpha')])
+    expect([...indexKnots([a, b]).keys()]).toEqual(['fable/alpha', 'astra/alpha'])
     expect(() => indexKnots([a, a])).toThrow('candidate')
-    expect(() => indexKnots([a, b])).toThrow('number')
   })
-  test('every forwarded entry has its own matching data and material files', async () => {
+
+  test('item metadata has no persisted plate numbers or billboard overviews', async () => {
     for (const candidate of knotCandidates) {
       const barrel = await import(`../../src/lib/knots/${candidate.data.id}/index.ts`)
       expect(Object.keys(barrel)).toHaveLength(candidate.items.length + 1)
+      expect('overview' in candidate.data).toBe(false)
       for (const entry of candidate.items) {
-        expect(barrel[entry.sourceId].number).toBe(entry.number)
         expect(barrel[entry.sourceId].id).toBe(entry.sourceId)
+        expect('number' in barrel[entry.sourceId]).toBe(false)
         expect(await Bun.file(`src/lib/knots/${entry.model}/items/${entry.sourceId}/material.ts`).exists()).toBe(true)
+        const dataSource = await Bun.file(`src/lib/knots/${entry.model}/items/${entry.sourceId}/data.ts`).text()
+        expect(dataSource).not.toMatch(/\bnumber\s*:/u)
       }
     }
     const materialFiles = await Array.fromAsync(new Bun.Glob('src/lib/knots/*/items/*/material.ts').scan('.'))
-    expect(new Set(materialFiles.map(path => path.replaceAll('\\', '/')))).toEqual(new Set(knots.map(item => `src/lib/knots/${item.model}/items/${item.sourceId}/material.ts`)))
-    expect(knots.map(item => item.number)).toEqual(Array.from({length: 201}, (_, index) => index + 1))
+    expect(new Set(materialFiles.map(path => path.replaceAll('\\', '/')))).toEqual(new Set(knots.map(entry => `src/lib/knots/${entry.model}/items/${entry.sourceId}/material.ts`)))
+    expect(knotsById.size).toBe(knots.length)
   })
-  test('groups Gemini versions together without losing per-item author fidelity', () => {
-    const gemini = knotCandidates.filter(candidate => candidate.data.id === 'gemini')
-    expect(gemini).toHaveLength(1)
-    expect(gemini[0].items).toHaveLength(16)
-    expect(catalogNumbers(gemini[0])).toEqual([25, 26, 27, 28, 29, 30, 31, 32, 81, 82, 83, 84, 85, 86, 87, 88])
-    const original = gemini[0].items.find(item => item.number === 32)!
-    const latest = gemini[0].items.find(item => item.number === 88)!
+
+  test('groups model versions without losing per-item author fidelity', () => {
+    const gemini = knotCandidates.find(candidate => candidate.data.id === 'gemini')!
+    expect(gemini.items).toHaveLength(16)
+    const original = byId('gemini/superfluid_vortex')
+    const latest = byId('gemini/cyber_kintsugi')
     expect(original.author.model).toEqual({title: 'Gemini 3.6 Flash'})
     expect(latest.author.model).toEqual({
       title: 'Gemini 3.8 Flash',
@@ -119,64 +95,25 @@ describe('arbitrary Knot batches', () => {
     expect(original.modelTitle).toBe(original.author.model.title)
     expect(latest.modelTitle).toBe(latest.author.model.title)
     expect(original.modelIcon).toBe(latest.modelIcon)
-    expect(() => new KnotCandidate(candidateData, [
-      {
-        ...item(1),
-        author: {model: {title: ' '}},
-      },
-    ])).toThrow('author')
   })
-  test('keeps the requested next-batch model credits and catalog entries', () => {
+
+  test('keeps batch model credits and displacement metadata by stable identity', () => {
     const expected = [
-      {
-        candidate: 'deepseek',
-        first: 106,
-        model: {
-          title: 'DeepSeek 4.1 Flash',
-          slug: 'deepseek/deepseek-v4.1-flash',
-          effortLevel: 'max',
-        },
-      },
-      {
-        candidate: 'muse',
-        first: 114,
-        model: {
-          title: 'Muse Spark 1.3',
-          slug: 'meta/muse-spark-1.3-contributor',
-          effortLevel: 'xhigh',
-        },
-      },
-      {
-        candidate: 'glm',
-        first: 130,
-        model: {
-          title: 'GLM 5.3 Flash',
-          slug: 'z-ai/glm-5.3-flash',
-          effortLevel: 'max',
-        },
-      },
-      {
-        candidate: 'hunyuan',
-        first: 122,
-        model: {
-          title: 'HY4 Preview',
-          slug: 'tencent/hy4-preview',
-          effortLevel: 'high',
-        },
-      },
-    ]
-    for (const batch of expected) {
-      const candidate = knotCandidates.find(candidate => candidate.data.id === batch.candidate)!
-      const entries = candidate.items.filter(item => item.number >= batch.first && item.number < batch.first + 8)
+      ['DeepSeek 4.1 Flash', 'deepseek/deepseek-v4.1-flash', 'max'],
+      ['Muse Spark 1.3', 'meta/muse-spark-1.3-contributor', 'xhigh'],
+      ['GLM 5.3 Flash', 'z-ai/glm-5.3-flash', 'max'],
+      ['HY4 Preview', 'tencent/hy4-preview', 'high'],
+    ] as const
+    for (const [title, slug, effortLevel] of expected) {
+      const entries = knots.filter(entry => entry.author.model.slug === slug)
       expect(entries).toHaveLength(8)
-      for (const entry of entries) {
-        expect(entry.author.model).toEqual(batch.model)
-      }
+      expect(entries.every(entry => entry.author.model.title === title && entry.author.model.effortLevel === effortLevel)).toBe(true)
     }
-    expect(catalogNumbers(knotCandidates.find(candidate => candidate.data.id === 'deepseek')!)).toEqual([17, 18, 19, 20, 21, 22, 23, 24, 106, 107, 108, 109, 110, 111, 112, 113, 186, 187, 188, 189, 190, 191, 192, 193])
-    expect(knots.find(item => item.number === 111)!.sourceId).toBe('quantum_foam_2')
-    expect(knots.find(item => item.number === 114)!.displacement).toBe(0.02)
+    expect(byId('deepseek/quantum_foam_2').archived).toBe(true)
+    expect(byId('muse/abyssal_bloom').displacement).toBe(0.02)
+    expect(byId('fable/chladni_resonance').displacement).toBe(0.006)
   })
+
   test('records OpenRouter, Codex and web-chat harness provenance without guessing legacy sources', () => {
     const astra = knots.filter(entry => entry.model === 'astra')
     const openRouter = knots.filter(entry => entry.model !== 'astra' && entry.author.model.slug)
@@ -199,49 +136,41 @@ describe('arbitrary Knot batches', () => {
       'chat.deepseek.com': 8,
     })
   })
-  test('filters candidates and caps shots from Knottingham URL parameters', () => {
+
+  test('filters candidates, caps shots and enumerates only after final selection', () => {
     const bays = selectKnotBays('?candidates=glm,gemini&shots=2')
     expect(bays.map(bay => bay.candidate.data.id)).toEqual(['gemini', 'glm'])
-    expect(bays.map(bay => bay.finishes.map(item => item.number))).toEqual([[25, 32], [34, 40]])
-    expect(bays.flatMap(bay => bay.finishes).filter(item => item.highlighted).map(item => item.number)).toEqual([32, 40])
-    expect(selectKnotBays('?candidates=astra&shots=3')[0].finishes.map(item => item.number)).toEqual([1, 6, 97])
+    expect(bays.map(bay => bay.finishes.map(entry => entry.sourceId))).toEqual([['bismuth_singularity', 'superfluid_vortex'], ['abyssal_choir', 'hourglass_heart']])
+    const numbered = enumerateKnotBays(bays)
+    expect(numbered.flatMap(bay => bay.finishes.map(entry => entry.number))).toEqual([1, 2, 3, 4])
+    expect(numbered.flatMap(bay => bay.finishes).filter(entry => entry.highlighted).map(entry => entry.sourceId)).toEqual(['superfluid_vortex', 'hourglass_heart'])
+    const astra = enumerateKnotBays(selectKnotBays('?candidates=astra&shots=3'))
+    expect(astra[0].finishes.map(entry => entry.number)).toEqual([1, 2, 3])
+    expect(astra[0].finishes.map(entry => entry.sourceId)).toEqual(['abyssal_lantern', 'coralline_crown', 'lenticular_mirage'])
     expect(() => selectKnotBays('?shots=0')).toThrow('shots')
     expect(() => selectKnotBays('?candidates=missing')).toThrow('candidate')
   })
-  test('formats only truly consecutive selections as ranges', () => {
+
+  test('formats runtime number sequences compactly', () => {
     expect(formatKnotLabels([])).toBe('')
-    expect(formatKnotLabels([6])).toBe('#06')
-    expect(formatKnotLabels([89, 90, 91])).toBe('#89–#91')
-    expect(formatKnotLabels([6, 75, 97])).toBe('#06 · #75 · #97')
+    expect(formatKnotLabels([1])).toBe('#01')
+    expect(formatKnotLabels([1, 2, 3])).toBe('#01–#03')
+    expect(formatKnotLabels([1, 3, 4])).toBe('#01 · #03 · #04')
   })
-  test('adds a second Fable 5.1 batch with OpenRouter provenance', () => {
+
+  test('keeps the second Fable batch and new GLM batch identifiable without plate numbers', () => {
     const fable = knotCandidates.find(candidate => candidate.data.id === 'fable')!
     expect(fable.items).toHaveLength(16)
-    expect(catalogNumbers(fable)).toEqual([89, 90, 91, 92, 93, 94, 95, 96, 194, 195, 196, 197, 198, 199, 200, 201])
-    for (const entry of fable.items.filter(candidateItem => candidateItem.number >= 194)) {
-      expect(entry.author.model).toEqual({
-        title: 'Claude Fable 5.1',
-        slug: 'anthropic/claude-fable-5.1',
-      })
-      expect(entry.harness).toBe('none')
-      expect(entry.highlighted).toBe(false)
-      expect(entry.archived).not.toBe(true)
-    }
-    expect(fable.items.find(candidateItem => candidateItem.number === 196)!.displacement).toBe(0.006)
-  })
-  test('adds the new GLM batch without replacing its highlighted original', () => {
+    const fableOpenRouter = fable.items.filter(entry => entry.author.model.slug === 'anthropic/claude-fable-5.1')
+    expect(fableOpenRouter).toHaveLength(16)
+    expect(fableOpenRouter.every(entry => entry.harness === 'none')).toBe(true)
+    expect(byId('fable/chladni_resonance').displacement).toBe(0.006)
+
     const glm = knotCandidates.find(candidate => candidate.data.id === 'glm')!
     expect(glm.items).toHaveLength(32)
-    expect(catalogNumbers(glm)).toEqual([33, 34, 35, 36, 37, 38, 39, 40, 98, 99, 100, 101, 102, 103, 104, 105, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145])
-    for (const entry of glm.items.filter(item => item.number >= 98 && item.number <= 105)) {
-      expect(entry.author.model).toEqual({
-        title: 'GLM 5.3',
-        slug: 'z-ai/glm-5.3',
-        effortLevel: 'max',
-      })
-      expect(entry.highlighted).toBe(false)
-      expect(entry.archived).not.toBe(true)
-    }
-    expect(glm.items.find(item => item.number === 40)!.highlighted).toBe(true)
+    const glmOpenRouter = glm.items.filter(entry => entry.author.model.slug === 'z-ai/glm-5.3')
+    expect(glmOpenRouter).toHaveLength(8)
+    expect(glmOpenRouter.every(entry => !entry.highlighted && entry.archived !== true)).toBe(true)
+    expect(byId('glm/hourglass_heart').highlighted).toBe(true)
   })
 })

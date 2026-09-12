@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'clockwork_oracle',
-  number: 191,
   title: 'Clockwork Oracle',
   harness: 'chat.deepseek.com',
   author: {

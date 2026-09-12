@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'morpho_veil',
-  number: 132,
   title: 'Morpho Veil',
   harness: 'none',
   author: {

@@ -3,13 +3,13 @@ import type {Texture} from 'three/webgpu'
 import {expect, test} from 'bun:test'
 
 import KnotMaterial from '../../src/lib/knots/base/KnotMaterial.ts'
-import {knotsByNumber} from '../../src/lib/knots/index.ts'
+import {knotsById} from '../../src/lib/knots/index.ts'
 import KnotResources from '../../src/lib/knots/KnotResources.ts'
 
 class TestMaterial extends KnotMaterial {}
 test('shares geometry by displacement bound and keeps collider and culling bounds expanded', () => {
-  const base = knotsByNumber.get(6)!
-  const relief = knotsByNumber.get(97)!
+  const base = knotsById.get('astra/lenticular_mirage')!
+  const relief = knotsById.get('astra/coralline_crown')!
   const resources = new KnotResources([
     base, {
       ...base,
@@ -42,7 +42,7 @@ test('shares geometry by displacement bound and keeps collider and culling bound
   }
 })
 test('disposes shared GPU resources once and cleans up after partial construction failures', () => {
-  const entry = knotsByNumber.get(6)!
+  const entry = knotsById.get('astra/lenticular_mirage')!
   let materialDisposals = 0
   let environmentDisposals = 0
   class Tracked extends KnotMaterial {

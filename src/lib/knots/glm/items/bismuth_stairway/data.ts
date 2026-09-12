@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'bismuth_stairway',
-  number: 37,
   title: 'Bismuth Stairway',
   author: {
     model: {

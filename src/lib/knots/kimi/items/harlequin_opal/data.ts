@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'harlequin_opal',
-  number: 168,
   title: 'Harlequin Opal',
   harness: 'kimi.ai',
   author: {

@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'lichtenberg_stormglass',
-  number: 146,
   title: 'Lichtenberg Stormglass',
   harness: 'grok.com Build',
   author: {

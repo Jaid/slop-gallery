@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'planck_foam',
-  number: 125,
   title: 'Planck Foam',
   harness: 'none',
   author: {

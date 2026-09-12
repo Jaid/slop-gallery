@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'nocturne_opal',
-  number: 172,
   title: 'Nocturne Opal',
   harness: 'meta.ai',
   author: {

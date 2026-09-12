@@ -14,8 +14,8 @@ import * as sonnet from './sonnet/index.ts'
 
 const candidates = [astra, sonnet, deepseek, gemini, glm, grok, kimi, qwen, sol, fable, muse, hunyuan]
 export const knotCandidates = candidates.map(({data, ...items}) => new KnotCandidate(data, Object.values(items)))
-export const knotsByNumber = indexKnots(knotCandidates)
-export const knots = [...knotsByNumber.values()].sort((a, b) => a.number - b.number)
+export const knotsById = indexKnots(knotCandidates)
+export const knots = [...knotsById.values()]
 
 export {default as KnotCandidate} from './KnotCandidate.ts'
 export type {KnotAuthor, KnotCandidateData, KnotData, KnotEntry, KnotMaterialConstructor} from './types.ts'

@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'vantablack_filigree',
-  number: 127,
   title: 'Vantablack Filigree',
   harness: 'none',
   author: {

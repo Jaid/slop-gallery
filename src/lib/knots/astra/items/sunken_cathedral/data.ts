@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'sunken_cathedral',
-  number: 77,
   title: 'Sunken Cathedral',
   harness: 'Codex',
   author: {

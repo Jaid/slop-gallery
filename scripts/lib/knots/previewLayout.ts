@@ -17,10 +17,3 @@ export function visibleBounds({data, width, height}: Pick<ImageData, 'data' | 'h
   }
   return right < left ? undefined : [left, top, right - left + 1, bottom - top + 1] as const
 }
-
-export function previewTileRect(width: number, height: number, size: number, padding = 12) {
-  const scale = (size - padding * 2) / Math.max(width, height)
-  const w = width * scale
-  const h = height * scale
-  return [(size - w) / 2, (size - h) / 2, w, h] as const
-}

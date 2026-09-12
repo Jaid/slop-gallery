@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'mycelium_oracle',
-  number: 119,
   title: 'Mycelium Oracle',
   harness: 'none',
   author: {

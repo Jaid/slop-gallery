@@ -10,20 +10,19 @@ import {EquirectangularReflectionMapping, FloatType} from 'three/webgpu'
 import {insideKnotGallery, knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
 import {createKnotGeometry, knotGeometryArgs} from '../../src/lib/gallery/sculptures.ts'
 import {knotBays, knotExhibition, knotFloatHeight, knotPreviewX, knotRowHalfWidth, knotSpacing} from '../../src/lib/knots/exhibition.ts'
-import {knots, knotsByNumber} from '../../src/lib/knots/index.ts'
+import {knots, knotsById} from '../../src/lib/knots/index.ts'
 import StudioEnvironment from '../../src/lib/materials/StudioEnvironment.ts'
 
 describe('multi-model Knot challenge', () => {
-  test('keeps stable numbers and credits while grouping batches under one candidate', () => {
+  test('enumerates displayed Knots at initialization while keeping stable identities', () => {
     expect(knots).toHaveLength(201)
-    expect(knotsByNumber.size).toBe(201)
+    expect(knotsById.size).toBe(201)
     const displayedKnots = knots.filter(item => !item.archived)
     expect(knotExhibition).toHaveLength(displayedKnots.length)
     expect(new Set(knotExhibition.map(item => item.id)).size).toBe(displayedKnots.length)
     expect(knotBays).toHaveLength(new Set(displayedKnots.map(item => item.model)).size)
-    expect(knotExhibition.map(item => item.number).toSorted((a, b) => a - b)).toEqual(displayedKnots.map(item => item.number))
+    expect(knotExhibition.map(item => item.number)).toEqual(Array.from({length: displayedKnots.length}, (_, index) => index + 1))
     for (const bay of knotBays) {
-      expect(bay.finishes.map(item => item.number).toSorted((a, b) => a - b)).toEqual(displayedKnots.filter(item => item.model === bay.model).map(item => item.number))
       const firstHighlighted = bay.finishes.findIndex(item => item.highlighted)
       if (firstHighlighted !== -1) {
         expect(bay.finishes.slice(firstHighlighted).every(item => item.highlighted)).toBe(true)
@@ -31,11 +30,11 @@ describe('multi-model Knot challenge', () => {
     }
     for (const item of knotExhibition) {
       expect(item.archived).not.toBe(true)
-      expect(knotsByNumber.get(item.number)!.id).toBe(item.id)
+      expect(knotsById.get(item.id)?.sourceId).toBe(item.sourceId)
       expect(item.id).toBe(`${item.model}/${item.sourceId}`)
     }
-    expect(knotsByNumber.get(12)!.title).toBe('Stained Requiem')
-    expect(knotsByNumber.get(89)!.modelTitle).toBe('Claude Fable 5.1')
+    expect(knotsById.get('sonnet/stained_requiem')?.title).toBe('Stained Requiem')
+    expect(knotsById.get('fable/event_horizon')?.modelTitle).toBe('Claude Fable 5.1')
   })
   test('keeps every floating Knot inside the expanded lobby with walking clearance', () => {
     for (const [index, exhibit] of knotExhibition.entries()) {
@@ -118,7 +117,7 @@ describe('multi-model Knot challenge', () => {
           expect(dependencies.has(positionView), exhibit.id).toBe(true)
           // Some submissions express the angular response only through physical Fresnel
           // or view normals, so do not demand object-local cameraPosition from all models.
-          if (exhibit.number === 6) {
+          if (exhibit.id === 'astra/lenticular_mirage') {
             expect(dependencies.has(cameraPosition), exhibit.id).toBe(true)
           }
         } finally {

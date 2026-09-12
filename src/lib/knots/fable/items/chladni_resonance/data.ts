@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'chladni_resonance',
-  number: 196,
   title: 'Chladni Resonance',
   harness: 'none',
   author: {

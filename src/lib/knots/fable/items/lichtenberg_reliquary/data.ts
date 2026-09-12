@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'lichtenberg_reliquary',
-  number: 195,
   title: 'Lichtenberg Reliquary',
   harness: 'none',
   author: {

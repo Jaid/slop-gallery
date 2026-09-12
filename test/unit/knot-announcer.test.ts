@@ -1,10 +1,10 @@
 import {expect, test} from 'bun:test'
 
 import {knotAnnouncementPaths, knotAnnouncements} from '../../src/lib/knots/announcements.ts'
-import {knotsByNumber} from '../../src/lib/knots/index.ts'
+import {knotsById} from '../../src/lib/knots/index.ts'
 import KnotAnnouncer from '../../src/lib/knots/KnotAnnouncer.ts'
 
-const item = knotsByNumber.get(98)!
+const item = knotsById.get('glm/event_horizon')!
 test('plays each model and title once, without a key or network generator', async () => {
   const played: Array<string> = []
   const announcer = new KnotAnnouncer({
@@ -15,10 +15,10 @@ test('plays each model and title once, without a key or network generator', asyn
   })
   await announcer.announce(item)
   await announcer.announce(item)
-  await announcer.announce(knotsByNumber.get(101)!)
-  await announcer.announce(knotsByNumber.get(101)!)
+  await announcer.announce(knotsById.get('glm/emberheart')!)
+  await announcer.announce(knotsById.get('glm/emberheart')!)
   expect(played).toEqual(['glm/slug/glm-5.3/announce.opus', 'glm/items/event_horizon/announce.opus', 'glm/items/emberheart/announce.opus'])
-  await announcer.announce(knotsByNumber.get(130)!)
+  await announcer.announce(knotsById.get('glm/ember_cortex')!)
   expect(played.at(-2)).toBe('glm/slug/glm-5.3-flash/announce.opus')
 })
 test('does not mark an interrupted creator as announced or continue stale titles', async () => {
@@ -61,7 +61,7 @@ test('missing recordings stay silent, never triggering paid generation', async (
 test('announcement inventory deduplicates creator versions and keeps safe local paths', () => {
   const paths = knotAnnouncementPaths(item)
   expect(paths.creator).toBe('glm/slug/glm-5.3')
-  const entries = knotAnnouncements([item, knotsByNumber.get(101)!, knotsByNumber.get(130)!])
+  const entries = knotAnnouncements([item, knotsById.get('glm/emberheart')!, knotsById.get('glm/ember_cortex')!])
   expect(entries).toHaveLength(5)
   expect(new Set(entries.map(entry => entry.id)).size).toBe(entries.length)
   expect(() => knotAnnouncementPaths({
@@ -137,8 +137,8 @@ test('billboards replay only distinct creator announcements, including mixed-mod
       played.push(url)
     },
   })
-  const flash = knotsByNumber.get(130)!
-  const items = [item, knotsByNumber.get(101)!, flash]
+  const flash = knotsById.get('glm/ember_cortex')!
+  const items = [item, knotsById.get('glm/emberheart')!, flash]
   const creator = knotAnnouncementPaths(item).creator
   const flashCreator = knotAnnouncementPaths(flash).creator
   await announcer.announceCreators(items)
@@ -158,7 +158,7 @@ test('a newer billboard announcement cancels an unfinished sequence without mark
       await new Promise<void>((_resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason), {once: true}))
     },
   })
-  const flash = knotsByNumber.get(130)!
+  const flash = knotsById.get('glm/ember_cortex')!
   const first = announcer.announceCreators([item, flash]).catch(() => {})
   const second = announcer.announceCreators([flash]).catch(() => {})
   await first

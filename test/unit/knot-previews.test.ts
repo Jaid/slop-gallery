@@ -12,12 +12,14 @@ async function dimensions(url: string) {
   const size = await Bun.$`magick identify -format '%w %h' ${file}`.text()
   return size.trim().split(' ').map(Number)
 }
-test('every candidate and item owns a generated JXL, including archived entries', async () => {
+
+test('candidate and item icons are generated JXLs while billboards remain runtime-only', async () => {
+  const overviewFiles = await Array.fromAsync(new Bun.Glob('src/lib/knots/*/overview.jxl').scan('.'))
+  expect(overviewFiles).toEqual([])
   for (const candidate of knotCandidates) {
     expect(candidate.data.icon).toEndWith(`/${candidate.data.id}/icon.jxl`)
-    expect(candidate.data.overview).toEndWith(`/${candidate.data.id}/overview.jxl`)
+    expect('overview' in candidate.data).toBe(false)
     expect(await dimensions(candidate.data.icon)).toEqual([256, 256])
-    expect(await dimensions(candidate.data.overview)).toEqual([1280, Math.max(2, Math.ceil(candidate.select().length / 4)) * 366])
     for (const item of candidate.items) {
       expect(item.icon).toEndWith(`/${item.model}/items/${item.sourceId}/icon.jxl`)
       const [width, height] = await dimensions(item.icon)
@@ -37,6 +39,7 @@ test('every candidate and item owns a generated JXL, including archived entries'
     }
   }
 }, 60_000)
+
 test('generation rejects unknown candidates before connecting to the browser', async () => {
   await expect(updateKnots({
     candidates: ['../wrong'],

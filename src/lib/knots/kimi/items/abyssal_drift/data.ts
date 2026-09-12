@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'abyssal_drift',
-  number: 165,
   title: 'Abyssal Drift',
   harness: 'kimi.ai',
   author: {

@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'neutron_crust',
-  number: 30,
   title: 'Neutron Crust',
   author: {
     model: {

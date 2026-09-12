@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'mercury_tide',
-  number: 14,
   title: 'Mercury Tide',
   author: {
     model: {

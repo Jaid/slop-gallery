@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'quantum_foam_2',
-  number: 111,
   title: 'Quantum Foam',
   harness: 'none',
   author: {

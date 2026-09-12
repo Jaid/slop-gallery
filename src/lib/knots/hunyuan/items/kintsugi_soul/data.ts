@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'kintsugi_soul',
-  number: 129,
   title: 'Kintsugi Soul',
   harness: 'none',
   author: {

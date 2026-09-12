@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'nacreous_bloom',
-  number: 112,
   title: 'Nacreous Bloom',
   harness: 'none',
   author: {

@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'eidolon_silk',
-  number: 113,
   title: 'Eidolon Silk',
   harness: 'none',
   author: {

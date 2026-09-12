@@ -27,9 +27,7 @@ export default async function updateKnots({candidates = [], browserURL = 'http:/
   const selected = knotCandidates.filter(candidate => !candidates.length || candidates.includes(candidate.data.id))
   const inputs: Array<PreviewCandidate> = await Promise.all(selected.map(async candidate => ({
     id: candidate.data.id,
-    title: candidate.data.title,
     items: candidate.items,
-    selected: candidate.select().map(item => item.number),
     symbol: await Bun.file(join(root, 'scripts/assets/knots', `${candidate.data.id}.svg`)).text(),
   })))
   // Keep staging outside the Vite project root so generated intermediates cannot trigger a live-page reload.
@@ -83,12 +81,11 @@ export default async function updateKnots({candidates = [], browserURL = 'http:/
     try {
       for (const candidate of inputs) {
         const result = await handle.evaluate((renderer: KnotPreviewRenderer, input) => renderer.renderCandidate(input), candidate)
-        await stage(`${candidate.id}/overview.jxl`, result.overview)
         await stage(`${candidate.id}/icon.jxl`, result.icon)
         for (const item of result.items) {
           await stage(`${candidate.id}/items/${item.id}/icon.jxl`, item.image)
         }
-        console.log(`${candidate.id}: ${result.items.length} item icons, model icon and overview.`)
+        console.log(`${candidate.id}: ${result.items.length} item icons and model icon.`)
       }
     } finally {
       await handle.evaluate(renderer => renderer.dispose())

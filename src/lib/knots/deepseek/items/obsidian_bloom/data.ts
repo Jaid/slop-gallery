@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'obsidian_bloom',
-  number: 18,
   title: 'Obsidian Bloom',
   author: {
     model: {

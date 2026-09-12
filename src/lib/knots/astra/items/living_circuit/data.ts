@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'living_circuit',
-  number: 2,
   title: 'Photon Lattice',
   harness: 'Codex',
   author: {

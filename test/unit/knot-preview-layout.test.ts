@@ -1,6 +1,6 @@
 import {expect, test} from 'bun:test'
 
-import {previewTileRect, visibleBounds} from '../../scripts/lib/knots/previewLayout.ts'
+import {visibleBounds} from '../../scripts/lib/knots/previewLayout.ts'
 
 test('crops by alpha, preserving faint edge pixels and ignoring invisible RGB', () => {
   const data = new Uint8ClampedArray(6 * 5 * 4)
@@ -22,17 +22,4 @@ test('crops by alpha, preserving faint edge pixels and ignoring invisible RGB', 
     width: 1,
     height: 1,
   })).toEqual([0, 0, 1, 1])
-})
-test('contains differently cropped icons in square tiles without stretching or spilling into captions', () => {
-  for (const [width, height] of [[200, 400], [400, 200], [640, 640], [1, 100]]) {
-    const [x, y, w, h] = previewTileRect(width, height, 320)
-    expect(w / h).toBeCloseTo(width / height)
-    expect(x + w / 2).toBeCloseTo(160)
-    expect(y + h / 2).toBeCloseTo(160)
-    expect(x).toBeGreaterThanOrEqual(12)
-    expect(y).toBeGreaterThanOrEqual(12)
-    expect(x + w).toBeLessThanOrEqual(308)
-    expect(y + h).toBeLessThanOrEqual(308)
-    expect(Math.max(w, h)).toBeCloseTo(296)
-  }
 })

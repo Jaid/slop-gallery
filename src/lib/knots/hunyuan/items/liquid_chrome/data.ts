@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'liquid_chrome',
-  number: 123,
   title: 'Liquid Chrome',
   harness: 'none',
   author: {

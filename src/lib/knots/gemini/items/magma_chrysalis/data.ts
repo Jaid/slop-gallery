@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'magma_chrysalis',
-  number: 86,
   title: 'Magma Chrysalis',
   harness: 'none',
   author: {

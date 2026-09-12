@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'event_horizon',
-  number: 98,
   title: 'Event Horizon',
   harness: 'none',
   author: {

@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'hyperborean_aurora',
-  number: 26,
   title: 'Hyperborean Aurora',
   author: {
     model: {

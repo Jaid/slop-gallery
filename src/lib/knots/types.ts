@@ -18,14 +18,12 @@ export type KnotData = {
   highlighted: boolean
   icon: string
   id: string
-  number: number
   title: string
 }
 
 export type KnotCandidateData = {
   icon: string
   id: string
-  overview: string
   title: string
 }
 

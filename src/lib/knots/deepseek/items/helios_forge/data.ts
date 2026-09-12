@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'helios_forge',
-  number: 107,
   title: 'Helios Forge',
   harness: 'none',
   author: {

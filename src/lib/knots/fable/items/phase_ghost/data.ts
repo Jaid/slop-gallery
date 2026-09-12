@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'phase_ghost',
-  number: 96,
   title: 'Phase Ghost',
   harness: 'none',
   author: {

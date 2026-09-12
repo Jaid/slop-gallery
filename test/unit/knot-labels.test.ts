@@ -2,10 +2,10 @@ import {describe, expect, test} from 'bun:test'
 
 import {accentLineSize, creatorStickerHeight, creatorStickerSize, creatorStickerWidth, drawCreatorSticker, drawTitleSticker, knotDetailLine, labelAtlasColumns, modelLineLayout, titleStickerHeight, titleStickerSize, titleStickerWidth} from '../../src/components/levels/knottingham/KnotLabels/drawLabel.ts'
 import {knotBays, knotExhibition} from '../../src/lib/knots/exhibition.ts'
-import {knotsByNumber} from '../../src/lib/knots/index.ts'
+import {knotsById} from '../../src/lib/knots/index.ts'
 import {knotSign} from '../../src/lib/knots/signs.ts'
 
-const iconHash = async (number: number) => Bun.hash(await Bun.file(new URL(knotsByNumber.get(number)!.modelIcon)).arrayBuffer())
+const iconHash = async (id: string) => Bun.hash(await Bun.file(new URL(knotsById.get(id)!.modelIcon)).arrayBuffer())
 describe('Knot model plates', () => {
   test('uses two compact sticker atlases and a non-rasterized accent line', () => {
     const oldTilePixels = 768 * 512
@@ -32,11 +32,11 @@ describe('Knot model plates', () => {
       urls.add(Bun.hash(await Bun.file(new URL(url)).arrayBuffer()).toString())
     }
     expect(urls.size).toBe(10)
-    expect(await iconHash(6)).toBe(await iconHash(73))
-    expect(await iconHash(73)).toBe(await iconHash(97))
-    expect(await iconHash(72)).toBe(await iconHash(6))
-    expect(await iconHash(15)).toBe(await iconHash(89))
-    expect(await iconHash(32)).toBe(await iconHash(81))
+    expect(await iconHash('astra/lenticular_mirage')).toBe(await iconHash('astra/solar_reliquary'))
+    expect(await iconHash('astra/solar_reliquary')).toBe(await iconHash('astra/coralline_crown'))
+    expect(await iconHash('sol/celestial_rose')).toBe(await iconHash('astra/lenticular_mirage'))
+    expect(await iconHash('sonnet/opal_fire')).toBe(await iconHash('fable/event_horizon'))
+    expect(await iconHash('gemini/superfluid_vortex')).toBe(await iconHash('gemini/event_horizon'))
   })
   test('centers the creator icon and text together and fits long names', () => {
     for (const measured of [90, 240, 400, 1000]) {

@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'cryo_aerogel',
-  number: 87,
   title: 'Cryo Aerogel',
   harness: 'none',
   author: {

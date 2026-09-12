@@ -1,23 +1,24 @@
 import type {KnotCandidateData, KnotData, KnotEntry} from './types.ts'
 
 const identifier = /^[a-z][0-9_a-z]*$/u
+const bySourceId = (a: KnotEntry, b: KnotEntry) => a.sourceId.localeCompare(b.sourceId)
 
 export function indexKnots(candidates: ReadonlyArray<KnotCandidate>) {
   const models = new Set<string>
-  const numbers = new Map<number, KnotEntry>
+  const entries = new Map<string, KnotEntry>
   for (const candidate of candidates) {
     if (models.has(candidate.data.id)) {
       throw new Error(`Duplicate Knot candidate: ${candidate.data.id}`)
     }
     models.add(candidate.data.id)
     for (const item of candidate.items) {
-      if (numbers.has(item.number)) {
-        throw new Error(`Duplicate Knot number: ${item.number}`)
+      if (entries.has(item.id)) {
+        throw new Error(`Duplicate Knot ID: ${item.id}`)
       }
-      numbers.set(item.number, item)
+      entries.set(item.id, item)
     }
   }
-  return numbers
+  return entries
 }
 
 export default class KnotCandidate {
@@ -27,13 +28,9 @@ export default class KnotCandidate {
       throw new Error(`Invalid Knot candidate ID: ${data.id}`)
     }
     const ids = new Set<string>
-    const numbers = new Set<number>
     this.items = items.map(item => {
       if (!identifier.test(item.id) || ids.has(item.id)) {
         throw new Error(`Invalid or duplicate Knot ID: ${data.id}/${item.id}`)
-      }
-      if (!Number.isSafeInteger(item.number) || item.number < 1 || numbers.has(item.number)) {
-        throw new Error(`Invalid or duplicate Knot number: ${item.number}`)
       }
       if (typeof item.highlighted !== 'boolean') {
         throw new TypeError('Knot highlighted must be a boolean.')
@@ -45,7 +42,6 @@ export default class KnotCandidate {
         throw new Error('Knot author needs a model title.')
       }
       ids.add(item.id)
-      numbers.add(item.number)
       return {
         ...item,
         id: `${data.id}/${item.id}`,
@@ -54,15 +50,14 @@ export default class KnotCandidate {
         modelTitle: item.author.model.title,
         modelIcon: data.icon,
       }
-    })
+    }).toSorted(bySourceId)
   }
   select(limit?: number) {
     const available = this.items.filter(item => !item.archived)
     if (limit !== undefined && (!Number.isSafeInteger(limit) || limit < 1)) {
       throw new Error('Knot shot limit must be a positive integer.')
     }
-    const ordered = available.toSorted((a, b) => a.number - b.number)
-    const prioritized = limit === undefined ? ordered : [...ordered.filter(item => item.highlighted), ...ordered.filter(item => !item.highlighted)].slice(0, limit)
-    return prioritized.toSorted((a, b) => Number(a.highlighted) - Number(b.highlighted) || a.number - b.number)
+    const prioritized = limit === undefined ? available : [...available.filter(item => item.highlighted), ...available.filter(item => !item.highlighted)].slice(0, limit)
+    return prioritized.toSorted((a, b) => Number(a.highlighted) - Number(b.highlighted) || bySourceId(a, b))
   }
 }

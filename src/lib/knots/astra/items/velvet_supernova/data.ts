@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'velvet_supernova',
-  number: 5,
   title: 'Velvet Supernova',
   harness: 'Codex',
   author: {

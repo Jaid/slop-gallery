@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'ion_wake',
-  number: 158,
   title: 'Ion Wake',
   harness: 'grok.com',
   author: {

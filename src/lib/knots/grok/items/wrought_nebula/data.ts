@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'wrought_nebula',
-  number: 43,
   title: 'Wrought Nebula',
   author: {
     model: {

@@ -6,20 +6,15 @@ import WebgpuRenderer from '../../../packages/three-fiber-game/src/WebgpuRendere
 import {createKnotGeometry} from '../../../src/lib/gallery/sculptures.ts'
 import loadKnotMaterial from '../../../src/lib/knots/materials.ts'
 import StudioEnvironment from '../../../src/lib/materials/StudioEnvironment.ts'
-import {previewTileRect, visibleBounds} from './previewLayout.ts'
+import {visibleBounds} from './previewLayout.ts'
 
 export type PreviewCandidate = {
   id: string
   items: ReadonlyArray<KnotEntry>
-  selected: ReadonlyArray<number>
   symbol: string
-  title: string
 }
 
 const iconSize = 640
-const tileSize = 320
-const tileHeight = 366
-const columns = 4
 const canvas = (width: number, height = width) => Object.assign(document.createElement('canvas'), {
   width,
   height,
@@ -69,11 +64,6 @@ export default class KnotPreviewRenderer {
   }
 
   async renderCandidate(candidate: PreviewCandidate) {
-    const overview = canvas(columns * tileSize, Math.max(2, Math.ceil(candidate.selected.length / columns)) * tileHeight)
-    const context = overview.getContext('2d')!
-    context.fillStyle = '#17202b'
-    context.fillRect(0, 0, overview.width, overview.height)
-    context.textAlign = 'center'
     const items: Array<{id: string
       image: string}> = []
     for (const item of candidate.items) {
@@ -82,22 +72,6 @@ export default class KnotPreviewRenderer {
         id: item.sourceId,
         image: png(image),
       })
-      const index = candidate.selected.indexOf(item.number)
-      if (index === -1) {
-        continue
-      }
-      const x = index % columns * tileSize
-      const y = Math.floor(index / columns) * tileHeight
-      const [left, top, width, height] = previewTileRect(image.width, image.height, tileSize)
-      context.drawImage(image, x + left, y + top, width, height)
-      context.fillStyle = item.accent
-      context.font = '19px sans-serif'
-      context.fillText(`#${String(item.number).padStart(2, '0')} · ${item.title}`, x + tileSize / 2, y + tileSize + 29, tileSize - 12)
-    }
-    if (!candidate.selected.length) {
-      context.fillStyle = '#8696a5'
-      context.font = '28px sans-serif'
-      context.fillText(`${candidate.title} · No displayed Knots`, overview.width / 2, overview.height / 2)
     }
     const symbol = new Image
     symbol.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(candidate.symbol)}`
@@ -109,7 +83,6 @@ export default class KnotPreviewRenderer {
     icon.getContext('2d')!.drawImage(symbol, (icon.width - width) / 2, (icon.height - height) / 2, width, height)
     return {
       items,
-      overview: png(overview),
       icon: png(icon),
     }
   }

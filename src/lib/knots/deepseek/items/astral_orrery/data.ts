@@ -3,7 +3,6 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'astral_orrery',
-  number: 110,
   title: 'Astral Orrery',
   harness: 'none',
   author: {
