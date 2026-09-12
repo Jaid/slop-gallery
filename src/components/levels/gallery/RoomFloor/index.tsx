@@ -42,9 +42,9 @@ export default function RoomFloor({glass, room, stone, wood}: {glass: Material
     </RigidBody>
     <Branch if={room.id === 'vesper'}><WoodFloor width={room.size[0]} depth={room.size[1]} texture={wood}/></Branch>
     <Branch if={room.id === 'dine'}><CheckerMarbleFloor width={room.size[0]} depth={room.size[1]}/></Branch>
-    <Branch if={room.id !== 'dine'}><>
+    <Branch if={room.id !== 'dine'}>
       {plan.seams.map(({center: [x, z], size: [width, depth]}, i) => <Box key={i} position={[x, 0.008, z]} size={[width, 0.008, depth]} color="#a8a18f" envMapIntensity={envMapIntensity}/>)}
       {plan.inlays.map(({center: [x, z], size: [width, depth]}, i) => <Box key={i} position={[x, 0.015, z]} size={[width, 0.012, depth]} color="#9d8354" metalness={0.45} envMapIntensity={envMapIntensity}/>)}
-    </></Branch>
+    </Branch>
   </group>
 }

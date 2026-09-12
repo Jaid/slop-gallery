@@ -22,10 +22,10 @@ export default function DestructiblePlantLeaf({id, leaf, attachments, anchorId, 
   >
     <ConvexHullCollider ref={initializeFoliageCollider} args={[leaf.vertices]} mass={leaf.mass}/>
     <mesh name="pluckable-blade" geometry={leaf.geometry} material={resources[foliageMaterial]} castShadow receiveShadow/>
-    <Branch all={[leaf.stem, leaf.stemVertices]}><>
+    <Branch all={[leaf.stem, leaf.stemVertices]}>
       <ConvexHullCollider ref={initializeFoliageCollider} args={[leaf.stemVertices!]} mass={leaf.stemMass}/>
       <mesh name="carried-stalk" geometry={leaf.stem!} material={resources.stems} castShadow receiveShadow/>
-    </></Branch>
+    </Branch>
   </GrabbableProp>
 }
 
