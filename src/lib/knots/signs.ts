@@ -12,7 +12,7 @@ export const knotSign = {
   thickness: 0.018,
   tilt: -Math.PI / 9,
   sideOffset: -1,
-  inwardRotation: Math.PI / 8,
+  inwardRotation: -Math.PI / 8,
   frontOffset: 0.7,
 }
 
