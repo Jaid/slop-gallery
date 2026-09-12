@@ -12,7 +12,10 @@ export default class QuantumFoam2Material extends KnotMaterial {
     super(environment, 0.9)
     this.name = knotData.id
     this.envMapIntensity = 0.3
-    this.alphaHash = true
+    // Alpha hashing currently produces an invalid Tint pipeline for these procedural opacity graphs.
+    // Depth-writing alpha blending keeps the fade smooth while avoiding the old self-sorting flicker.
+    this.transparent = true
+    this.depthWrite = true
     this.side = DoubleSide
     const {p, view, rim, near, intimate} = viewerFrame()
     const phase = p.dot(view).mul(18).add(time.mul(1.7))

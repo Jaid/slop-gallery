@@ -98,9 +98,9 @@ describe('multi-model Knot challenge', () => {
           expect(material.isMeshPhysicalNodeMaterial).toBe(true)
           expect(material.map).toBeNull()
           if (material.opacityNode) {
-            expect(material.transparent, exhibit.id).toBe(false)
+            expect(material.transparent, exhibit.id).toBe(true)
             expect(material.depthWrite, exhibit.id).toBe(true)
-            expect(material.alphaHash, exhibit.id).toBe(true)
+            expect(material.alphaHash, exhibit.id).toBe(false)
           }
           if (exhibit.displacement) {
             expect(material.positionNode).not.toBeNull()
