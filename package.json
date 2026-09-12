@@ -67,6 +67,7 @@
     "vite-plugin-avif-only": "workspace:*",
     "vite-plugin-bake-branch-component": "workspace:*",
     "vite-plugin-game-level": "workspace:*",
+    "vite-plugin-hoist-popular-constants": "workspace:*",
     "webgpu-capture-bridge": "workspace:*",
     "zustand": "5.0.15"
   },

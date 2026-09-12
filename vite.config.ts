@@ -10,6 +10,7 @@ import {loadEnv, mergeConfig} from 'vite'
 import avifOnly from 'vite-plugin-avif-only'
 import bakeBranchComponentPlugin from 'vite-plugin-bake-branch-component'
 import gameLevelPlugin, {selectGameLevel} from 'vite-plugin-game-level'
+import hoistPopularConstantsPlugin from 'vite-plugin-hoist-popular-constants'
 import mediaMixinsPlugin from 'vite-plugin-media-mixins'
 import titlePlugin from 'vite-plugin-title'
 
@@ -20,7 +21,7 @@ import knotMaterialsPlugin from '#src/lib/vite/knotMaterialsPlugin.ts'
 const getCommonConfig = (context: ConfigEnv) => {
   const env = loadEnv(context.mode, process.cwd(), 'TELEMETRY_INGESTION_')
   const level = selectGameLevel(loadEnv(context.mode, process.cwd(), 'GAME_LEVEL').GAME_LEVEL, levelIds, defaultLevel)
-  const productionPlugins = context.mode === 'production' ? [bakeBranchComponentPlugin()] : []
+  const productionPlugins = context.mode === 'production' ? [bakeBranchComponentPlugin(), hoistPopularConstantsPlugin()] : []
   const config: UserConfig = {
     // Only the public relay prefix enters the client bundle, never private ingestion destinations.
     define: {
