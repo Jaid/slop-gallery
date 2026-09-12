@@ -26,10 +26,10 @@ export default function drawLabel(context: CanvasRenderingContext2D, exhibit: Kn
   context.textBaseline = 'middle'
   context.fillStyle = '#fff3d9'
   context.font = `600 84px ${labelFontFamily}`
-  context.fillText(exhibit.label, x + labelWidth / 2, y + 112, labelWidth - 48)
+  context.fillText(exhibit.label, x + labelWidth / 2, y + 136, labelWidth - 48)
   context.fillStyle = exhibit.accent
   context.font = `600 46px ${labelFontFamily}`
-  context.fillText(exhibit.title, x + labelWidth / 2, y + 208, labelWidth - 48)
+  context.fillText(exhibit.title, x + labelWidth / 2, y + 232, labelWidth - 48)
   context.fillStyle = '#c5d0d9'
   context.font = `44px ${labelFontFamily}`
   const {left, textWidth, iconSize, gap} = modelLineLayout(context.measureText(exhibit.modelTitle).width, Boolean(icon))
