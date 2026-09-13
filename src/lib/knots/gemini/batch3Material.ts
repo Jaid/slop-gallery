@@ -291,7 +291,8 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
         const deepTrackSample = p.sub(view.mul(0.12))
         const trackField = mx_noise_float(deepTrackSample.mul(36))
         const impactTrack = opticalLine(trackField, 0.02).mul(intimate)
-        const stardustSparks = mx_cell_noise_float(p.mul(70)).smoothstep(0.97, 0.99)
+        // Compact stardust inclusions, not entire glowing spatial cells.
+        const stardustSparks = cellularPoints(p.mul(70), 0.03, 0.18, 0.65)
         this.colorNode = color('#02090f')
         this.transmission = 0.88
         this.thickness = 0.65

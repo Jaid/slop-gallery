@@ -33,6 +33,7 @@ describe('Knot cellular fields', () => {
     const cases: Array<[string, string]> = [
       ['gemini/batch2Material.ts', 'celestial_astrolabe'],
       ['gemini/batch3Material.ts', 'photonic_morpho'],
+      ['gemini/batch3Material.ts', 'opaline_aerogel'],
       ['grok/buildMaterial.ts', 'birefringent_glacier'],
       ['grok/buildMaterial.ts', 'mycelium_choir'],
       ['grok/webChatMaterial.ts', 'gossamer_dew'],
