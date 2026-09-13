@@ -34,6 +34,7 @@ describe('Knot cellular fields', () => {
       ['gemini/batch2Material.ts', 'celestial_astrolabe'],
       ['gemini/batch3Material.ts', 'photonic_morpho'],
       ['gemini/batch3Material.ts', 'opaline_aerogel'],
+      ['gemini/batch3Material.ts', 'radiometric_guilloche'],
       ['grok/buildMaterial.ts', 'birefringent_glacier'],
       ['grok/buildMaterial.ts', 'mycelium_choir'],
       ['grok/webChatMaterial.ts', 'gossamer_dew'],
@@ -48,6 +49,13 @@ describe('Knot cellular fields', () => {
       expect(text, id).toContain('cellularPoints(')
       expect(text, id).not.toContain('mx_cell_noise_float(')
     }
+  })
+  test('retains stochastic alpha scintillation without moving cell-shaped patches', async () => {
+    const text = await finish('gemini/batch3Material.ts', 'radiometric_guilloche')
+    expect(text).toContain('const tick = time.mul(28).floor()')
+    expect(text).toContain('cellularPoints(p.mul(85).add(vec3(0, 0, tick)), 0.025, 0.16, 0.7)')
+    expect(text).toContain("const radiumPhosphor = color('#55ff77')")
+    expect(text).toContain('proceduralNormal(rosette.mul(0.25), 0.004)')
   })
   test('uses continuous solar granulation and genuine Voronoi fractures', async () => {
     for (const id of ['cryogenic_kintsugi', 'chromospheric_spicule']) {

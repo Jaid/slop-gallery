@@ -6,7 +6,6 @@ import {cameraPosition,
   float,
   mix,
   modelWorldMatrixInverse,
-  mx_cell_noise_float,
   mx_fractal_noise_float,
   mx_noise_float,
   mx_noise_vec3,
@@ -228,7 +227,8 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
         const dialSurface = mix(ruthenium, roseGold, rosette)
                 // Radium-226 alpha ionization sparks (stochastic scintillation)
         const tick = time.mul(28).floor()
-        const alphaSpark = mx_cell_noise_float(p.mul(85).add(vec3(0, 0, tick))).smoothstep(0.978, 0.995)
+        // Each tick reseeds compact ionization points, never whole glowing grid cells.
+        const alphaSpark = cellularPoints(p.mul(85).add(vec3(0, 0, tick)), 0.025, 0.16, 0.7)
         const vaporTrail = mx_noise_float(p.mul(32).sub(view.mul(0.08))).smoothstep(0.6, 0.85)
         this.colorNode = dialSurface
         this.metalnessNode = rosette.mul(0.3).add(0.68)
