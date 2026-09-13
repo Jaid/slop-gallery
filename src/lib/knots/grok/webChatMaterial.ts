@@ -4,6 +4,8 @@ import * as tsl from 'three/tsl'
 import {cameraPosition, color, float, mix, modelWorldMatrixInverse, mx_cell_noise_float, mx_fractal_noise_float, mx_noise_float, mx_noise_vec3, negateOnBackSide, normalLocal, normalViewGeometry, positionGeometry, positionView, positionViewDirection, time, transformNormalToView, uv, vec3, vec4} from 'three/tsl'
 import {DoubleSide, MeshPhysicalNodeMaterial} from 'three/webgpu'
 
+import {cellularPoints} from '../cellularField.ts'
+
 export function spectralColor(phase: Node<'float'>) {
   return vec3(phase, phase.add(2.0944), phase.add(4.1888)).cos().mul(0.46).add(0.54)
 }
@@ -200,8 +202,7 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
         const silkV = opticalLine(tube.y.mul(14).add(tube.x.mul(2.5).sin().mul(0.4)).fract().sub(0.5), 0.04)
         const silkFine = opticalLine(tube.x.mul(520).add(mx_noise_float(p.mul(8)).mul(2)).fract().sub(0.5), 0.02).mul(intimate)
         const silk = silkU.max(silkV).add(silkFine.mul(0.7)).clamp()
-        const dewNoise = mx_cell_noise_float(p.mul(42).add(vec3(17.3, 41.9, 8.2)))
-        const dew = dewNoise.smoothstep(0.91, 0.985).mul(near.mul(0.55).add(0.45))
+        const dew = cellularPoints(p.mul(42).add(vec3(17.3, 41.9, 8.2)), 0.08, 0.24, 0.3).mul(near.mul(0.55).add(0.45))
         const film = spectralColor(p.x.mul(1.7).add(p.y.mul(1.1)).add(grazing.mul(2.6)))
         const weave = silk.mul(0.72).add(dew.mul(0.48)).clamp()
         this.colorNode = mix(color('#263746'), film, weave.mul(0.65).add(0.12))
@@ -302,7 +303,7 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
         const wakeB = opticalLine(sheetB.sin(), 0.028)
         const wakeC = opticalLine(sheetC.mul(1.6).sin(), 0.022).mul(intimate)
         const braid = wakeA.mul(0.9).add(wakeB.mul(0.75)).add(wakeC.mul(0.55)).clamp()
-        const scintilla = mx_cell_noise_float(p.mul(48).add(vec3(0, time.mul(2.4), 0))).smoothstep(0.97, 0.992).mul(intimate)
+        const scintilla = cellularPoints(p.mul(48).add(vec3(0, time.mul(2.4), 0)), 0.03, 0.18, 0.65).mul(intimate)
         const doppler = magnetic.dot(vec3(p.x, 0, p.z).normalize()).mul(0.5).add(0.5)
         const plasma = mix(color('#3a6cff'), mix(color('#79fff2'), color('#f0b8ff'), doppler), braid)
         const corona = grazing.pow(2.2).mul(near.mul(0.4).add(0.5))

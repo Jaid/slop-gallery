@@ -1,7 +1,7 @@
 import type {Node, Texture} from 'three/webgpu'
 
 import * as tsl from 'three/tsl'
-import {cameraPosition, color, float, Fn, mix, modelWorldMatrixInverse, mx_atan2, mx_cell_noise_float, mx_fractal_noise_float, mx_noise_float, negateOnBackSide, normalViewGeometry, positionGeometry, positionView, positionViewDirection, reflectVector, time, transformNormalToView, uv, varying, vec2, vec3, vec4} from 'three/tsl'
+import {cameraPosition, color, float, Fn, mix, modelWorldMatrixInverse, mx_atan2, mx_cell_noise_float, mx_fractal_noise_float, mx_noise_float, mx_worley_noise_float, negateOnBackSide, normalViewGeometry, positionGeometry, positionView, positionViewDirection, reflectVector, time, transformNormalToView, uv, varying, vec2, vec3, vec4} from 'three/tsl'
 import {MeshPhysicalNodeMaterial} from 'three/webgpu'
 
 /**
@@ -273,11 +273,9 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
         this.envMapIntensity = 0.25
         const {p, facing, grazing, near, intimate} = viewerFrame()
         const qA = p.mul(17).add(vec3(0, time.mul(0.22), time.mul(-0.09)))
-        const rndA = cellNoiseVec3(qA)
-        const domeA = qA.fract().sub(rndA.mul(0.6).add(0.2)).length().smoothstep(0.16, 0.6).oneMinus().mul(rndA.y.mul(0.5).add(0.75))
+        const domeA = mx_worley_noise_float(qA, 1, 0).smoothstep(0.16, 0.6).oneMinus().mul(mx_noise_float(qA.mul(0.7)).mul(0.25).add(1))
         const qB = p.mul(11).add(vec3(time.mul(-0.06), 0, time.mul(0.13)))
-        const rndB = cellNoiseVec3(qB)
-        const domeB = qB.fract().sub(rndB.mul(0.6).add(0.2)).length().smoothstep(0.2, 0.66).oneMinus()
+        const domeB = mx_worley_noise_float(qB, 1, 0).smoothstep(0.2, 0.66).oneMinus()
         const gran = domeA.mul(0.62).add(domeB.mul(0.38))
         const spotField = mx_fractal_noise_float(p.mul(2.1), 2, 2, 0.5)
         const umbra = spotField.negate().smoothstep(0.42, 0.72)

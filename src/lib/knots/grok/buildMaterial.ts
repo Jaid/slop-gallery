@@ -26,6 +26,7 @@ import {cameraPosition,
 import {DoubleSide} from 'three/webgpu'
 
 import BaseKnotMaterial from '../base/KnotMaterial.ts'
+import {cellularPoints} from '../cellularField.ts'
 
 export function spectralColor(phase: Node<'float'>) {
   return vec3(phase, phase.add(2.0944), phase.add(4.1888)).cos().mul(0.46).add(0.54)
@@ -283,7 +284,7 @@ export class GrokBuildMaterial extends BaseKnotMaterial {
         const {p, view, facing, grazing, rim, near, intimate} = viewerFrame()
         const inner = p.sub(view.mul(0.045))
         const stack = mx_noise_float(inner.mul(6.2)).add(mx_fractal_noise_float(inner.mul(2.4), 3, 2.1, 0.48).mul(0.45))
-        const platelets = mx_cell_noise_float(inner.mul(36))
+        const platelets = mx_noise_float(inner.mul(36)).mul(0.5).add(0.5)
         const terrace = opticalBands(stack.mul(38).add(platelets.mul(8)))
         const path = inner
           .dot(view)
@@ -296,7 +297,7 @@ export class GrokBuildMaterial extends BaseKnotMaterial {
         const abalone = mix(color('#07120f'), play, facing.mul(0.45).add(grazing.mul(0.7)).clamp())
         const tile = uv()
         const growth = opticalLine(tile.x.mul(28).add(stack.mul(2)).fract().sub(0.5), 0.06).mul(intimate)
-        const sparkle = glints(normalViewGeometry.add(cellNoiseVec3(inner.mul(22)).mul(2).sub(1).mul(0.2)).normalize(), 70)
+        const sparkle = glints(normalViewGeometry.add(mx_noise_vec3(inner.mul(22)).mul(0.2)).normalize(), 70)
         this.colorNode = mix(abalone, play.mul(1.15), terrace.mul(0.28).add(growth.mul(0.35)))
         this.metalness = 0.18
         this.roughnessNode = terrace.mul(0.08).add(grazing.mul(0.12)).add(0.08)
@@ -384,11 +385,11 @@ export class GrokBuildMaterial extends BaseKnotMaterial {
         const veinField = mx_noise_float(inner.mul(7.2).add(vec3(0, time.mul(0.04), 0)))
         const hyphae = opticalLine(veinField, 0.045)
         const hyphaeFine = opticalLine(mx_noise_float(inner.mul(18.5).add(veinField.mul(1.4))), 0.03).mul(near.mul(0.4).add(intimate))
-        const nodes = mx_cell_noise_float(inner.mul(22)).smoothstep(0.9, 0.97)
+        const nodes = cellularPoints(inner.mul(22), 0.08, 0.24, 0.3)
         const pulse = choirPulse()
         const choir = hyphae.mul(pulse.mul(0.75).add(0.25)).add(hyphaeFine.mul(0.65)).add(nodes.mul(pulse).mul(1.2))
         const fruit = mx_worley_noise_float(inner.mul(8.5)).oneMinus().pow(5).mul(intimate)
-        const spores = mx_cell_noise_float(p.sub(view.mul(0.14)).mul(54)).smoothstep(0.982, 0.992).mul(intimate)
+        const spores = cellularPoints(p.sub(view.mul(0.14)).mul(54), 0.025, 0.15, 0.7).mul(intimate)
         const rind = mix(color('#1c1712'), color('#5a4a38'), bark.mul(0.5).add(0.5))
         const pale = mix(color('#c4b49a'), color('#7a6a52'), grazing)
         this.colorNode = mix(mix(rind, pale, facing.mul(0.25)), color('#2a241c'), hyphae.mul(0.55))
@@ -423,7 +424,7 @@ export class GrokBuildMaterial extends BaseKnotMaterial {
         const slow = spectralColor(stress.mul(5).add(polar.mul(3.2)).add(view.x.mul(2)))
         const fast = spectralColor(stress.mul(5).add(polar.mul(3.2)).add(2.094).add(view.y.mul(1.5)))
         const biref = mix(slow, fast, polar.mul(0.65).add(grazing.mul(0.35)))
-        const bubbles = mx_cell_noise_float(inner.mul(28)).smoothstep(0.93, 0.985)
+        const bubbles = cellularPoints(inner.mul(28), 0.08, 0.24, 0.4)
         const caustic = mx_noise_float(vec3(p.x.mul(9), p.y.mul(2).add(time.mul(0.18)), p.z.mul(9)))
           .mul(7)
           .sin()

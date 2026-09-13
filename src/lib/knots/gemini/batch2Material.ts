@@ -19,6 +19,8 @@ import {cameraPosition,
   vec4} from 'three/tsl'
 import {MeshPhysicalNodeMaterial} from 'three/webgpu'
 
+import {cellularPoints} from '../cellularField.ts'
+
 // --- Utility Functions & Shading Helpers ---
 
 export function spectralColor(phase: Node<'float'>) {
@@ -162,8 +164,7 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
         const brass = mix(color('#8b5f1f'), color('#ffe17d'), facing.mul(0.4).add(0.6))
         const baseColor = mix(brass, patinaColor, patinaMask.mul(0.85))
                 // Star cluster coordinates embedded within the dials
-        const starPoints = cellNoiseVec3(p.mul(38))
-        const stars = starPoints.x.smoothstep(0.91, 0.95).mul(starPoints.y)
+        const stars = cellularPoints(p.mul(38), 0.035, 0.2)
         const constellationWeb = opticalLine(mx_noise_float(p.mul(14)).mul(7).sin(), 0.045)
         this.colorNode = baseColor
         this.metalnessNode = patinaMask.oneMinus().mul(0.92)

@@ -1,8 +1,10 @@
 import type {Node, Texture} from 'three/webgpu'
 
 import * as tsl from 'three/tsl'
-import {cameraPosition, color, cos, float, Fn, max, mix, modelWorldMatrixInverse, mx_cell_noise_float, mx_fractal_noise_float, mx_noise_float, negateOnBackSide, normalLocal, normalViewGeometry, positionGeometry, positionView, positionViewDirection, sin, time, transformNormalToView, uv, vec3, vec4} from 'three/tsl'
+import {cameraPosition, color, cos, float, Fn, max, mix, modelWorldMatrixInverse, mx_fractal_noise_float, mx_noise_float, negateOnBackSide, normalLocal, normalViewGeometry, positionGeometry, positionView, positionViewDirection, sin, time, transformNormalToView, uv, vec3, vec4} from 'three/tsl'
 import {DoubleSide, MeshPhysicalNodeMaterial} from 'three/webgpu'
+
+import {cellularPoints} from '../cellularField.ts'
 
 export function spectralColor(phase: Node<'float'>) {
   return vec3(phase, phase.add(2.0944), phase.add(4.1888)).cos().mul(0.46).add(0.54)
@@ -304,8 +306,7 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
         const warp = sin(tube.x.mul(300)).abs().pow(10)
         const weft = sin(tube.y.mul(300)).abs().pow(10)
         const weave = max(warp, weft)
-        const starNoise = mx_cell_noise_float(p.mul(50))
-        const stars = starNoise.smoothstep(0.95, 0.98)
+        const stars = cellularPoints(p.mul(50), 0.035, 0.2)
         const threadColor = mix(color('#1a1a2e'), color('#e94560'), stars)
         this.colorNode = color('#05050a')
         this.metalness = 0.1

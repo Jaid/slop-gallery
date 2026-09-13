@@ -9,6 +9,7 @@ import {cameraPosition,
   mx_cell_noise_float,
   mx_fractal_noise_float,
   mx_noise_float,
+  mx_noise_vec3,
   negateOnBackSide,
   normalViewGeometry,
   positionGeometry,
@@ -21,6 +22,8 @@ import {cameraPosition,
   vec3,
   vec4} from 'three/tsl'
 import {MeshPhysicalNodeMaterial} from 'three/webgpu'
+
+import {cellularBoundary, cellularPoints} from '../cellularField.ts'
 
 // ============================================================================
 // Core Helper Mathematical Functions
@@ -139,12 +142,12 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
       case 'cryogenic_kintsugi': {
         const {p, view, rim, near, intimate} = viewerFrame()
                 // Multi-depth voronoi fracture networks
-        const shallowFracture = cellNoiseVec3(p.sub(view.mul(0.06)).mul(18))
-        const deepFracture = cellNoiseVec3(p.sub(view.mul(0.18)).mul(12))
-        const crackDistA = shallowFracture.x.sub(shallowFracture.y).abs()
-        const crackDistB = deepFracture.x.sub(deepFracture.z).abs()
-        const veinSurface = opticalLine(crackDistA.sub(0.04), 0.015)
-        const veinDeep = opticalLine(crackDistB.sub(0.05), 0.02).mul(intimate)
+        const shallow = p.sub(view.mul(0.06))
+        const deep = p.sub(view.mul(0.18))
+        const crackDistA = cellularBoundary(shallow.mul(18).add(mx_noise_vec3(shallow.mul(3)).mul(0.65)))
+        const crackDistB = cellularBoundary(deep.mul(12).add(mx_noise_vec3(deep.mul(2)).mul(0.65)))
+        const veinSurface = opticalLine(crackDistA, 0.025)
+        const veinDeep = opticalLine(crackDistB, 0.035).mul(intimate)
         const veinNetwork = veinSurface.max(veinDeep)
                 // Superconducting plasma pulses flowing through the faults
         const pulse = p.y.mul(22).add(p.x.mul(14)).add(time.mul(2.2)).sin().mul(0.5).add(0.5)
@@ -249,8 +252,8 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
         const {p, grazing, near, intimate} = viewerFrame()
         const tube = uv()
                 // Convective solar granulation base
-        const granule = cellNoiseVec3(p.mul(26))
-        const cellBorders = granule.x.sub(granule.y).abs().smoothstep(0.02, 0.1)
+        const granule = cellularBoundary(p.mul(26).add(mx_noise_vec3(p.mul(4)).mul(0.6)))
+        const cellBorders = granule.smoothstep(0.02, 0.1)
                 // Magnetic loop arcades bursting across the knot
         const loopCoord = tube.y.mul(Math.PI * 6).sin().abs()
         const magneticTurbulence = mx_noise_float(vec3(p.x.mul(14), p.y.mul(5).add(time.mul(1.2)), p.z.mul(14)))
@@ -356,7 +359,7 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
         const structuralFlash = morphoBlue.mul(braggPeakA).add(morphoCyan.mul(braggPeakB.mul(0.8)))
                 // Sub-dermal emerald bioluminescent breathing micro-pores
         const breath = time.mul(0.7).sin().mul(0.3).add(0.7)
-        const pores = mx_cell_noise_float(p.mul(50)).smoothstep(0.92, 0.98).mul(breath).mul(intimate)
+        const pores = cellularPoints(p.mul(50), 0.04, 0.18).mul(breath).mul(intimate)
         this.colorNode = color('#040508')
         this.metalnessNode = structuralFlash.length().mul(0.65)
         this.roughnessNode = microRibs.mul(0.08).add(0.24)

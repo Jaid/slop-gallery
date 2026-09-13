@@ -2,9 +2,13 @@ import type {Node, Texture} from 'three/webgpu'
 
 import * as tsl from 'three/tsl'
 import {cameraPosition, color, float, mix, modelWorldMatrixInverse, mx_cell_noise_float,
-  mx_fractal_noise_float, mx_noise_float, negateOnBackSide, normalViewGeometry, positionGeometry,
+  mx_fractal_noise_float, mx_noise_float,
+  mx_noise_vec3,
+  mx_worley_noise_float, negateOnBackSide, normalViewGeometry, positionGeometry,
   positionView, positionViewDirection, time, uv, vec3, vec4} from 'three/tsl'
 import {MeshPhysicalNodeMaterial} from 'three/webgpu'
+
+import {cellularPoints} from '../cellularField.ts'
 
 // KnotMaterialPremium.ts
 
@@ -178,10 +182,10 @@ export class KnotMaterial extends MeshPhysicalNodeMaterial {
                 // Barnacles — spherical blisters scattered across the surface.
         const q = p.mul(31)
         const rnd = cellNoiseVec3(q)
-        const rnd2 = cellNoiseVec3(q.add(vec3(23.3, 91.7, 47.1)))
+        const rnd2 = cellNoiseVec3(q.floor().add(vec3(23, 92, 47)))
         const d = q.fract().sub(rnd.mul(0.5).add(0.25)).length()
         const fp = q.fwidth().length().max(0.002)
-        const barnacle = d.smoothstep(0.16, fp.add(0.22)).oneMinus()
+        const barnacle = d.smoothstep(0.16, fp.add(0.22).min(0.24)).oneMinus()
         const barnacleTint = mix(color('#e8e2cc'), color('#9c8c70'), rnd2.y)
                 // Algae — fractal noise mottling the stone.
         const algae = mx_fractal_noise_float(p.mul(4.2), 3, 2, 0.55).mul(0.5).add(0.5)
@@ -193,9 +197,7 @@ export class KnotMaterial extends MeshPhysicalNodeMaterial {
         const silt = mx_noise_float(p.mul(18)).mul(0.4).add(0.6)
         const surfaceCol = mix(stone, barnacleTint, barnacle.mul(silt))
                 // Bioluminescent motes hovering around the mesh.
-        const moteField = mx_cell_noise_float(p.mul(48).add(vec3(0, time.mul(0.06), 0)))
-        const moteGate = mx_cell_noise_float(p.mul(48).add(vec3(0, time.mul(0.06), 0)).add(17.3))
-        const motes = moteField.smoothstep(0.93, 0.965).mul(moteGate.smoothstep(0.5, 0.55))
+        const motes = cellularPoints(p.mul(48).add(vec3(0, time.mul(0.06), 0)), 0.03, 0.18)
         this.colorNode = surfaceCol
         this.roughnessNode = barnacle.mul(-0.55).add(0.9)
         this.metalness = 0.04
@@ -282,9 +284,10 @@ export class KnotMaterial extends MeshPhysicalNodeMaterial {
         const {p, facing, grazing, rim, intimate} = viewerFrame()
         const tube = uv()
                 // Convective granulation — cellular boiling surface.
-        const granCell = cellNoiseVec3(p.mul(24).add(vec3(time.mul(0.18), time.mul(0.12), 0)))
-        const granCell2 = cellNoiseVec3(p.mul(11).sub(vec3(0, time.mul(0.22), 0)))
-        const gran = granCell.x.mul(0.55).add(granCell2.x.mul(0.45))
+        const granWarp = mx_noise_vec3(p.mul(3).add(time.mul(0.08))).mul(0.6)
+        const granCell = mx_worley_noise_float(p.mul(24).add(granWarp).add(vec3(time.mul(0.18), time.mul(0.12), 0)), 1, 0)
+        const granCell2 = mx_worley_noise_float(p.mul(11).sub(granWarp).sub(vec3(0, time.mul(0.22), 0)), 1, 0)
+        const gran = granCell.smoothstep(0.1, 0.8).oneMinus().mul(0.55).add(granCell2.smoothstep(0.1, 0.8).oneMinus().mul(0.45))
                 // Magnetic sunspots — cooler, darker.
         const spotField = mx_fractal_noise_float(p.mul(1.7).add(time.mul(0.02)), 3, 2, 0.55)
         const spotCore = spotField.smoothstep(0.32, 0.55).oneMinus()

@@ -4,6 +4,8 @@ import * as tsl from 'three/tsl'
 import {cameraPosition, color, float, mix, modelWorldMatrixInverse, mx_cell_noise_float, mx_fractal_noise_float, mx_noise_float, mx_worley_noise_float, negateOnBackSide, normalLocal, normalViewGeometry, positionGeometry, positionView, positionViewDirection, time, transformNormalToView, uv, vec2, vec3, vec4} from 'three/tsl'
 import {MeshPhysicalNodeMaterial} from 'three/webgpu'
 
+import {cellularPoints} from '../cellularField.ts'
+
 export function spectralColor(phase: Node<'float'>) {
   return vec3(phase, phase.add(2.0944), phase.add(4.1888)).cos().mul(0.46).add(0.54)
 }
@@ -335,21 +337,22 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
         this.sheenRoughness = 0.45
         const {p, view, rim, near, intimate} = viewerFrame()
         const cellP = p.sub(view.mul(0.12)).mul(4.2)
-        const id = cellNoiseVec3(cellP)
-        const id2 = cellNoiseVec3(cellP.add(17.31))
-        const centre = id.mul(0.6).add(0.2)
-        const d = cellP.fract().sub(centre).length()
+        // Jitter 0.2 separates sites by at least 0.8: capped support dies before their ID boundary.
+        const feature = mx_worley_noise_float(cellP, 0.2, 1)
+        const id = cellNoiseVec3(vec3(feature.mul(65_536), 7, 19))
+        const id2 = cellNoiseVec3(vec3(feature.mul(65_536), 31, 43))
+        const d = mx_worley_noise_float(cellP, 0.2, 0)
         const footprint = cellP.fwidth().length().max(0.001)
-        const patch = d.smoothstep(0.08, footprint.mul(1.5).add(0.34)).oneMinus()
+        const patch = d.smoothstep(0.08, footprint.mul(1.5).add(0.34).min(0.39)).oneMinus()
         const present = id2.x.smoothstep(0.42, 0.55)
         const ignition = view.x.mul(2.6).add(view.y.mul(1.9)).add(id.z.mul(6.283)).cos().mul(0.5).add(0.5).pow(3)
         const playColor = spectralColor(id.y.mul(6).add(view.x.mul(2)).add(view.y.mul(1.2)))
         const flash = patch.mul(present).mul(ignition)
-        const pin = mx_cell_noise_float(p.sub(view.mul(0.06)).mul(70)).smoothstep(0.975, 0.99).mul(intimate)
+        const pin = cellularPoints(p.sub(view.mul(0.06)).mul(70), 0.025, 0.16, 0.65).mul(intimate)
         this.colorNode = mix(color('#efe9df'), color('#dfd5c6'), mx_noise_float(p.mul(5)).mul(0.5).add(0.5))
         this.normalNode = proceduralNormal(mx_noise_float(p.mul(8)), 0.0006)
         this.emissiveNode = playColor.mul(flash).mul(1.7).mul(near.mul(0.5).add(0.6))
-          .add(spectralColor(id.z.mul(9).add(2)).mul(pin).mul(1.6))
+          .add(spectralColor(mx_noise_float(p.mul(7)).mul(9).add(2)).mul(pin).mul(1.6))
           .add(color('#ffd9ec').mul(rim).mul(0.12))
         break
       }

@@ -4,6 +4,8 @@ import * as tsl from 'three/tsl'
 import {cameraPosition, color, float, mix, modelWorldMatrixInverse, mx_cell_noise_float, mx_fractal_noise_float, mx_noise_float, mx_worley_noise_float, negateOnBackSide, normalLocal, normalViewGeometry, positionGeometry, positionLocal, positionView, positionViewDirection, time, transformNormalToView, uv, vec3, vec4} from 'three/tsl'
 import {MeshPhysicalNodeMaterial} from 'three/webgpu'
 
+import {cellularPoints} from '../cellularField.ts'
+
 // --- shared helpers (same signatures as original) ---
 
 export function spectralColor(phase: Node<'float'>) {
@@ -226,7 +228,7 @@ export class KnotMaterial extends MeshPhysicalNodeMaterial {
         const fireMask = fireField.smoothstep(0.2, 0.85)
         const hue = fireField.mul(1.4).add(view.x.mul(0.4)).add(time.mul(0.03))
         const opalTint = cosinePalette(hue, [0.55, 0.45, 0.6], [0.45, 0.35, 0.45], [1, 1, 1], [0.02, 0.15, 0.33])
-        const flecks = mx_cell_noise_float(p.mul(42)).pow(3).mul(8).clamp()
+        const flecks = cellularPoints(p.mul(42), 0.08, 0.24, 0.15)
         const fleckMask = flecks.mul(fireMask).mul(near.mul(0.6).add(0.4))
         const parallax = facing.pow(0.8)
         this.colorNode = color('#06070c')

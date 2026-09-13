@@ -635,7 +635,8 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
         const disc = cellDistance
           .smoothstep(radius, radius
             .add(cellAA.mul(1.35))
-            .add(0.004))
+            .add(0.004)
+            .min(0.235))
           .oneMinus()
           .mul(cellAA
             .smoothstep(0.1, 0.36)
@@ -644,13 +645,14 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
         const fineDisc = fineDistance
           .smoothstep(fineRadius, fineRadius
             .add(fineAA.mul(1.3))
-            .add(0.003))
+            .add(0.003)
+            .min(0.245))
           .oneMinus()
           .mul(fineAA
             .smoothstep(0.16, 0.55)
             .oneMinus())
           .mul(intimate)
-        const structuralNoise = mx_noise_float(p.mul(24).add(rnd.y.mul(3)))
+        const structuralNoise = mx_noise_float(p.mul(24))
           .mul(0.5)
           .add(0.5)
         const structural = grazing
@@ -689,7 +691,7 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
           .add(fineDisc.mul(0.12))
           .clamp()
         this.iridescenceIOR = 1.31
-        this.iridescenceThicknessNode = rnd.z
+        this.iridescenceThicknessNode = structuralNoise
           .mul(260)
           .add(110)
         const skinNormal = proceduralNormal(papillaHeight
