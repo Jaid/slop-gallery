@@ -1,7 +1,8 @@
 import type {ThreeElements} from '@react-three/fiber/webgpu'
 
-import {useEffect, useMemo} from 'react'
-import {DataTexture, LinearFilter, LinearMipmapLinearFilter, SRGBColorSpace} from 'three/webgpu'
+import {loadCanvasFonts} from 'canvas-textures'
+import useCanvasTexture from 'canvas-textures/react'
+import {useMemo} from 'react'
 
 type CanvasTextProps = Omit<ThreeElements['mesh'], 'children'> & {
   color?: string
@@ -25,32 +26,19 @@ const CanvasText = ({color = '#ffffff',
   text,
   width,
   ...meshProps}: CanvasTextProps) => {
-  const canvas = useMemo(() => document.createElement('canvas'), [])
-  const texture = useMemo(() => {
-    canvas.width = textureWidth
-    canvas.height = Math.max(64, Math.round(textureWidth * height / width))
-    const result = new DataTexture(new Uint8Array(canvas.width * canvas.height * 4), canvas.width, canvas.height)
-    result.flipY = true
-    result.generateMipmaps = true
-    result.colorSpace = SRGBColorSpace
-    result.magFilter = LinearFilter
-    result.minFilter = LinearMipmapLinearFilter
-    result.anisotropy = 16
-    return result
-  }, [canvas, height, width])
-  useEffect(() => {
-    let cancelled = false
-    const render = async () => {
-      await document.fonts?.load(`${fontWeight} 16px "${fontFamily}"`, text)
-      await document.fonts?.ready
-      if (cancelled) {
-        return
-      }
-      const context = canvas.getContext('2d')
-      if (!context) {
-        return
-      }
-      context.clearRect(0, 0, canvas.width, canvas.height)
+  const texture = useCanvasTexture(useMemo(() => ({
+    width: textureWidth,
+    height: Math.max(64, Math.round(textureWidth * height / width)),
+    name: `Canvas text: ${text}`,
+    mipmaps: false,
+    prepare: () => loadCanvasFonts([
+      {
+        font: `${fontWeight} 16px "${fontFamily}"`,
+        text,
+      },
+    ]),
+    draw(context: CanvasRenderingContext2D) {
+      const canvas = context.canvas
       const requestedPx = Math.max(12, Math.floor(canvas.height * fontSize))
       context.font = `${fontWeight} ${requestedPx}px "${fontFamily}"`
       const measured = context.measureText(text).width || 1
@@ -61,16 +49,9 @@ const CanvasText = ({color = '#ffffff',
       context.textAlign = 'center'
       context.textBaseline = 'middle'
       context.fillText(text, canvas.width / 2, canvas.height / 2)
-      texture.image.data = new Uint8Array(context.getImageData(0, 0, canvas.width, canvas.height).data.buffer)
-      texture.needsUpdate = true
-    }
-    void render().catch(error => console.error('Canvas text rendering failed.', error))
-    return () => {
-      cancelled = true
-    }
-  }, [canvas, color, fontFamily, fontSize, fontWeight, maxWidth, text, texture])
-  useEffect(() => () => texture.dispose(), [texture])
-  return <mesh {...meshProps}>
+    },
+  }), [color, fontFamily, fontSize, fontWeight, height, maxWidth, text, width]))
+  return <mesh {...meshProps} visible={Boolean(texture) && meshProps.visible !== false}>
     <planeGeometry args={[width, height]}/>
     <meshBasicNodeMaterial {...materialProps} map={texture} transparent depthWrite={false} toneMapped={false}/>
   </mesh>

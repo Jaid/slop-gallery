@@ -45,6 +45,7 @@
     "@react-three/rapier": "2.2.0",
     "ai": "7.0.99",
     "branch-component": "0.2.0",
+    "canvas-textures": "workspace:*",
     "clsx": "2.1.1",
     "compose-id": "0.2.0",
     "ego-player": "workspace:*",

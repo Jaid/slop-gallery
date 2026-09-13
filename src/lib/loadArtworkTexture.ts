@@ -1,6 +1,4 @@
-import {LinearMipmapLinearFilter, SRGBColorSpace} from 'three/webgpu'
-
-import canvasTexture from './texture.ts'
+import renderCanvasTexture from 'canvas-textures/three'
 
 /** URL loads can fail while the dev server restarts; never permanently cache that failure. */
 export default async function loadArtworkTexture(source: Blob | string, retryDelay = 500) {
@@ -14,16 +12,13 @@ export default async function loadArtworkTexture(source: Blob | string, retryDel
       const bitmap = await createImageBitmap(response ? await response.blob() : source as Blob)
       try {
         const scale = Math.min(1, 3072 / Math.max(bitmap.width, bitmap.height))
-        const canvas = document.createElement('canvas')
-        canvas.width = Math.max(1, Math.round(bitmap.width * scale))
-        canvas.height = Math.max(1, Math.round(bitmap.height * scale))
-        const context = canvas.getContext('2d')!
-        context.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
-        const texture = canvasTexture(canvas)
-        texture.colorSpace = SRGBColorSpace
-        texture.minFilter = LinearMipmapLinearFilter
-        texture.anisotropy = 16
-        return texture
+        const width = Math.max(1, Math.round(bitmap.width * scale))
+        const height = Math.max(1, Math.round(bitmap.height * scale))
+        return renderCanvasTexture({
+          width,
+          height,
+          draw: context => context.drawImage(bitmap, 0, 0, width, height),
+        })
       } finally {
         bitmap.close()
       }

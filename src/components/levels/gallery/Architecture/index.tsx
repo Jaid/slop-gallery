@@ -2,6 +2,7 @@ import type {Wall} from '#src/lib/gallery.ts'
 
 import {useThree} from '@react-three/fiber/webgpu'
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
+import renderCanvasTexture from 'canvas-textures/three'
 import {useEffect, useMemo} from 'react'
 import {EquirectangularReflectionMapping, MeshStandardNodeMaterial, SRGBColorSpace} from 'three/webgpu'
 import useGraphicsQuality from 'use-graphics-quality'
@@ -26,7 +27,6 @@ import {wallTop} from '#src/lib/gallery/architecture.ts'
 import {createArchitecturalGlassMaterials, disposeArchitecturalGlassMaterials} from '#src/lib/materials/ArchitecturalGlassMaterials.ts'
 import CastleStoneMaterial from '#src/lib/materials/CastleStoneMaterial.ts'
 import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
-import canvasTexture from '#src/lib/texture.ts'
 
 const pointLightPositions: Partial<Record<Wall['room'], Array<number>>> = {
   antechamber: [0],
@@ -109,22 +109,23 @@ export default function Architecture() {
 function ReflectionEnvironment() {
   const scene = useThree(s => s.scene)
   useEffect(() => {
-    const canvas = document.createElement('canvas')
-    canvas.width = 1024
-    canvas.height = 512
-    const context = canvas.getContext('2d')!
-    const gradient = context.createLinearGradient(0, 0, 0, 512)
-    gradient.addColorStop(0, '#e6eeed')
-    gradient.addColorStop(0.4, '#b6bcac')
-    gradient.addColorStop(0.55, '#7d816c')
-    gradient.addColorStop(1, '#4b4c3d')
-    context.fillStyle = gradient
-    context.fillRect(0, 0, 1024, 512)
-    context.fillStyle = '#fff9e6'
-    for (let i = 0; i < 4; i++) {
-      context.fillRect(i * 256 + 35, 50, 90, 100)
-    }
-    const texture = canvasTexture(canvas)
+    const texture = renderCanvasTexture({
+      width: 1024,
+      height: 512,
+      draw(context) {
+        const gradient = context.createLinearGradient(0, 0, 0, 512)
+        gradient.addColorStop(0, '#e6eeed')
+        gradient.addColorStop(0.4, '#b6bcac')
+        gradient.addColorStop(0.55, '#7d816c')
+        gradient.addColorStop(1, '#4b4c3d')
+        context.fillStyle = gradient
+        context.fillRect(0, 0, 1024, 512)
+        context.fillStyle = '#fff9e6'
+        for (let i = 0; i < 4; i++) {
+          context.fillRect(i * 256 + 35, 50, 90, 100)
+        }
+      },
+    })
     texture.mapping = EquirectangularReflectionMapping
     texture.colorSpace = SRGBColorSpace
     const previous = scene.environment

@@ -1,9 +1,10 @@
+export const modelSignBackground = '#10252b'
 export const modelSignTextureSize = [2048, 491] as const
 
 /** A single opaque printed face, with no detached text planes or duplicate number range. */
 export default function drawFace(context: CanvasRenderingContext2D, title: string, icon?: HTMLImageElement) {
   const [width, height] = modelSignTextureSize
-  context.fillStyle = '#10252b'
+  context.fillStyle = modelSignBackground
   context.fillRect(0, 0, width, height)
   context.strokeStyle = '#ac9270'
   context.lineWidth = 6

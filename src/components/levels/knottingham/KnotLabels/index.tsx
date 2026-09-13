@@ -1,9 +1,11 @@
 import {useFrame} from '@react-three/fiber/webgpu'
 import {CuboidCollider, CylinderCollider} from '@react-three/rapier'
+import {loadCanvasFonts} from 'canvas-textures'
+import useCanvasTexture from 'canvas-textures/react'
 import {useEffect, useMemo} from 'react'
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js'
 import {attribute, texture, uv, vec2} from 'three/tsl'
-import {BoxGeometry, Color, CylinderGeometry, DataTexture, Euler, InstancedBufferAttribute, InstancedMesh, LinearFilter, LinearMipmapLinearFilter, Matrix4, MeshBasicNodeMaterial, PlaneGeometry, RGBAFormat, SRGBColorSpace} from 'three/webgpu'
+import {BoxGeometry, Color, CylinderGeometry, Euler, InstancedBufferAttribute, InstancedMesh, Matrix4, MeshBasicNodeMaterial, PlaneGeometry} from 'three/webgpu'
 import useGraphicsQuality from 'use-graphics-quality'
 
 import InteractiveObject from '#component/InteractiveObject'
@@ -25,8 +27,8 @@ export default function KnotLabels() {
   const supportMaterial = useMemo(() => signSupportMaterial(isQuality), [isQuality])
   useEffect(() => () => supportMaterial.dispose(), [supportMaterial])
   const resources = useMemo(() => {
-    const title = createAtlas(titleStickerWidth, titleStickerHeight, knotExhibition.length, 'Knot title stickers')
-    const creator = createAtlas(creatorStickerWidth, creatorStickerHeight, knotExhibition.length, 'Knot creator stickers')
+    const title = atlasLayout(titleStickerWidth, titleStickerHeight, knotExhibition.length)
+    const creator = atlasLayout(creatorStickerWidth, creatorStickerHeight, knotExhibition.length)
     const offsets = new Float32Array(knotExhibition.length * 2)
     const accents = new Float32Array(knotExhibition.length * 3)
     const accent = new Color
@@ -37,15 +39,7 @@ export default function KnotLabels() {
       offsets[index * 2 + 1] = 1 - (row + 1) / title.rows
       accent.set(exhibit.accent)
       accents.set([accent.r, accent.g, accent.b], index * 3)
-      drawTitleSticker(title.context, exhibit, column * title.width, row * title.height)
-      drawCreatorSticker(creator.context, exhibit, column * creator.width, row * creator.height)
     }
-    const upload = (resource: ReturnType<typeof createAtlas>) => {
-      resource.atlas.image.data!.set(resource.context.getImageData(0, 0, resource.canvas.width, resource.canvas.height).data)
-      resource.atlas.needsUpdate = true
-    }
-    upload(title)
-    upload(creator)
     const titleGeometry = stickerGeometry(...titleStickerSize, titleStickerY, offsets)
     const creatorGeometry = stickerGeometry(...creatorStickerSize, creatorStickerY, new Float32Array(offsets))
     const accentGeometry = stickerGeometry(...accentLineSize, accentLineY, new Float32Array(offsets.length))
@@ -62,8 +56,8 @@ export default function KnotLabels() {
     surfaceMaterial.polygonOffsetUnits = -1
     const surfaceMesh = new InstancedMesh(surfaceGeometry, surfaceMaterial, knotExhibition.length)
     surfaceMesh.name = 'knot-nameplate-surfaces'
-    const titleMaterial = stickerMaterial(title.atlas, title.columns, title.rows, 'Knot title sticker material')
-    const creatorMaterial = stickerMaterial(creator.atlas, creator.columns, creator.rows, 'Knot creator sticker material')
+    const titleMaterial = stickerMaterial('Knot title sticker material')
+    const creatorMaterial = stickerMaterial('Knot creator sticker material')
     const accentMaterial = new MeshBasicNodeMaterial
     accentMaterial.name = 'Knot accent stripe material'
     accentMaterial.toneMapped = false
@@ -119,38 +113,66 @@ export default function KnotLabels() {
       titleMaterial,
       titleMesh,
       visuals: new InstancedPropVisuals([surfaceMesh, titleMesh, creatorMesh, accentMesh, supports], knotExhibition.map(exhibit => knotSignId(exhibit.id))),
-      updateStickers(icons: ReadonlyMap<string, HTMLImageElement>) {
-        for (const [index, exhibit] of knotExhibition.entries()) {
-          const column = index % title.columns
-          const row = Math.floor(index / title.columns)
-          drawTitleSticker(title.context, exhibit, column * title.width, row * title.height)
-          const url = exhibit.modelIcon
-          drawCreatorSticker(creator.context, exhibit, column * creator.width, row * creator.height, url ? icons.get(url) : undefined)
-        }
-        upload(title)
-        upload(creator)
-      },
+
     }
   }, [])
-  useEffect(() => {
-    let active = true
-    void Promise.all([
-      loadModelIcons(knotExhibition.map(exhibit => exhibit.modelIcon)),
-      document.fonts.load(`600 70px ${labelFontFamily}`),
-      document.fonts.load(`600 42px ${labelFontFamily}`),
-      document.fonts.load(`32px ${labelFontFamily}`),
-      document.fonts.load(`24px ${labelFontFamily}`),
-    ]).then(([icons]) => {
-      if (active) {
-        resources.updateStickers(icons)
+  const titleTexture = useCanvasTexture(useMemo(() => ({
+    width: resources.title.columns * resources.title.width,
+    height: resources.title.rows * resources.title.height,
+    name: 'Knot title stickers',
+    mipmaps: false,
+    prepare: () => loadCanvasFonts([
+      {
+        font: `600 70px ${labelFontFamily}`,
+        text: knotExhibition.map(exhibit => exhibit.label).join(' '),
+      },
+      {
+        font: `600 42px ${labelFontFamily}`,
+        text: knotExhibition.map(exhibit => exhibit.title).join(' '),
+      },
+    ]),
+    draw(context: CanvasRenderingContext2D) {
+      const {columns, width, height} = resources.title
+      for (const [index, exhibit] of knotExhibition.entries()) {
+        drawTitleSticker(context, exhibit, index % columns * width, Math.floor(index / columns) * height)
       }
-    }).catch(error => {
-      console.warn('Knot sticker atlases could not be updated.', error)
-    })
-    return () => {
-      active = false
+    },
+  }), [resources]))
+  const creatorTexture = useCanvasTexture(useMemo(() => ({
+    width: resources.creator.columns * resources.creator.width,
+    height: resources.creator.rows * resources.creator.height,
+    name: 'Knot creator stickers',
+    mipmaps: false,
+    prepare: async () => {
+      const [icons] = await Promise.all([
+        loadModelIcons(knotExhibition.map(exhibit => exhibit.modelIcon)),
+        loadCanvasFonts([
+          {
+            font: `32px ${labelFontFamily}`,
+            text: knotExhibition.map(exhibit => exhibit.modelTitle).join(' '),
+          },
+          {font: `24px ${labelFontFamily}`},
+        ]),
+      ])
+      return icons
+    },
+    draw(context: CanvasRenderingContext2D, icons: ReadonlyMap<string, HTMLImageElement>) {
+      const {columns, width, height} = resources.creator
+      for (const [index, exhibit] of knotExhibition.entries()) {
+        drawCreatorSticker(context, exhibit, index % columns * width, Math.floor(index / columns) * height, icons.get(exhibit.modelIcon))
+      }
+    },
+  }), [resources]))
+  useEffect(() => {
+    for (const [material, atlas, layout] of [
+      [resources.titleMaterial, titleTexture, resources.title],
+      [resources.creatorMaterial, creatorTexture, resources.creator],
+    ] as const) {
+      // A ready atlas replaces the plain matching background, not its geometry.
+      material.colorNode = atlas ? texture(atlas, uv().mul(vec2(1 / layout.columns, 1 / layout.rows)).add(attribute('labelOffset', 'vec2'))) : null
+      material.needsUpdate = true
     }
-  }, [resources])
+  }, [resources, titleTexture, creatorTexture])
   useEffect(() => () => {
     resources.supports.dispose()
     resources.supports.geometry.dispose()
@@ -163,8 +185,6 @@ export default function KnotLabels() {
     for (const material of [resources.surfaceMaterial, resources.titleMaterial, resources.creatorMaterial, resources.accentMaterial]) {
       material.dispose()
     }
-    resources.title.atlas.dispose()
-    resources.creator.atlas.dispose()
   }, [resources])
   useFrame(() => resources.visuals.update(id => propObjects.get(id)?.group))
   return <>
@@ -183,29 +203,12 @@ export default function KnotLabels() {
     </GrabbableProp>)}
   </>
 }
-function createAtlas(width: number, height: number, count: number, name: string) {
-  const columns = labelAtlasColumns
-  const rows = Math.ceil(count / columns)
-  const canvas = document.createElement('canvas')
-  canvas.width = columns * width
-  canvas.height = rows * height
-  const context = canvas.getContext('2d')!
-  const atlas = new DataTexture(new Uint8Array(canvas.width * canvas.height * 4), canvas.width, canvas.height, RGBAFormat)
-  atlas.name = name
-  atlas.flipY = true
-  atlas.colorSpace = SRGBColorSpace
-  atlas.generateMipmaps = true
-  atlas.minFilter = LinearMipmapLinearFilter
-  atlas.magFilter = LinearFilter
-  atlas.anisotropy = 8
+function atlasLayout(width: number, height: number, count: number) {
   return {
-    atlas,
-    canvas,
-    columns,
-    context,
-    height,
-    rows,
+    columns: labelAtlasColumns,
+    rows: Math.max(1, Math.ceil(count / labelAtlasColumns)),
     width,
+    height,
   }
 }
 function stickerGeometry(width: number, height: number, y: number, offsets: Float32Array) {
@@ -215,13 +218,12 @@ function stickerGeometry(width: number, height: number, y: number, offsets: Floa
   geometry.setAttribute('labelOffset', new InstancedBufferAttribute(offsets, 2))
   return geometry
 }
-function stickerMaterial(atlas: DataTexture, columns: number, rows: number, name: string) {
-  const material = new MeshBasicNodeMaterial
+function stickerMaterial(name: string) {
+  const material = new MeshBasicNodeMaterial({color: labelBackground})
   material.name = name
   material.toneMapped = false
   material.polygonOffset = true
   material.polygonOffsetFactor = -2
   material.polygonOffsetUnits = -2
-  material.colorNode = texture(atlas, uv().mul(vec2(1 / columns, 1 / rows)).add(attribute('labelOffset', 'vec2')))
   return material
 }

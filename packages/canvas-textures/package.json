@@ -1,0 +1,40 @@
+{
+  "name": "canvas-textures",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Readback-first Canvas2D rasterization with owned pixels, Three.js textures and optional React lifecycles",
+  "funding": "https://github.com/sponsors/Jaid",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jaid/slop-gallery.git"
+  },
+  "main": "src/main.ts",
+  "exports": {
+    ".": "./src/main.ts",
+    "./three": "./src/three/main.ts",
+    "./react": "./src/react/main.ts"
+  },
+  "scripts": {
+    "test": "bun test --max-concurrency 1 ./test"
+  },
+  "peerDependencies": {
+    "react": "^19.3.0",
+    "three": "^0.186.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "three": {
+      "optional": true
+    }
+  },
+  "files": [
+    "src",
+    "readme.md",
+    "license.txt"
+  ],
+  "sideEffects": false,
+  "types": "./src/main.ts"
+}
