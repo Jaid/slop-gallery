@@ -1,6 +1,5 @@
 import type {Node, Texture} from 'three/webgpu'
 
-import * as tsl from 'three/tsl'
 import {cameraPosition,
   color,
   float,
@@ -27,10 +26,6 @@ import {cellularBoundary, cellularPoints} from '../cellularField.ts'
 // ============================================================================
 // Core Helper Mathematical Functions
 // ============================================================================
-
-export const cellNoiseVec3 = (tsl as typeof tsl & {
-  mx_cell_noise_vec3: (position: Node<'vec3'>) => Node<'vec3'>
-}).mx_cell_noise_vec3
 
 export type Triple = [number, number, number]
 
@@ -188,8 +183,7 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
         const chladni = mix(modeA, modeB, resonanceShift)
                 // Luminescent quantum dust trapped strictly along nodal lines (where amplitude = 0)
         const nodalBand = chladni.abs().smoothstep(0.02, 0.14).oneMinus()
-        const dustNoise = cellNoiseVec3(p.mul(64).add(vec3(0, time.mul(0.2), 0)))
-        const dustParticles = dustNoise.x.smoothstep(0.65, 0.95).mul(nodalBand)
+        const dustParticles = cellularPoints(p.mul(64).add(vec3(0, time.mul(0.2), 0)), 0.06, 0.22, 0.2).mul(nodalBand)
                 // Obsidian ultrasonic micro-vibrations
         const vibrationRipples = chladni.mul(24).sin().mul(0.08)
         const obsidianNormal = proceduralNormal(vibrationRipples, 0.003)

@@ -35,6 +35,7 @@ describe('Knot cellular fields', () => {
       ['gemini/batch3Material.ts', 'photonic_morpho'],
       ['gemini/batch3Material.ts', 'opaline_aerogel'],
       ['gemini/batch3Material.ts', 'radiometric_guilloche'],
+      ['gemini/batch3Material.ts', 'resonant_cymatics'],
       ['grok/buildMaterial.ts', 'birefringent_glacier'],
       ['grok/buildMaterial.ts', 'mycelium_choir'],
       ['grok/webChatMaterial.ts', 'gossamer_dew'],
@@ -56,6 +57,13 @@ describe('Knot cellular fields', () => {
     expect(text).toContain('cellularPoints(p.mul(85).add(vec3(0, 0, tick)), 0.025, 0.16, 0.7)')
     expect(text).toContain("const radiumPhosphor = color('#55ff77')")
     expect(text).toContain('proceduralNormal(rosette.mul(0.25), 0.004)')
+  })
+  test('keeps moving cymatic dust confined to the evolving acoustic nodes', async () => {
+    const text = await finish('gemini/batch3Material.ts', 'resonant_cymatics')
+    expect(text).toContain('const chladni = mix(modeA, modeB, resonanceShift)')
+    expect(text).toContain('const nodalBand = chladni.abs().smoothstep(0.02, 0.14).oneMinus()')
+    expect(text).toContain('cellularPoints(p.mul(64).add(vec3(0, time.mul(0.2), 0)), 0.06, 0.22, 0.2).mul(nodalBand)')
+    expect(text).not.toContain('cellNoiseVec3(')
   })
   test('uses continuous solar granulation and genuine Voronoi fractures', async () => {
     for (const id of ['cryogenic_kintsugi', 'chromospheric_spicule']) {
