@@ -9,6 +9,7 @@ export default {
     model: {
       title: 'Claude Fable 5.1',
       slug: 'anthropic/claude-fable-5.1',
+      effortLevel: 'max',
     },
   },
   accent: '#ff6a1a',

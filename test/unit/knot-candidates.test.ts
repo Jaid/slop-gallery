@@ -125,10 +125,13 @@ describe('arbitrary Knot batches', () => {
     expect(codex.every(entry => entry.model === 'astra')).toBe(true)
     expect(legacy.every(entry => entry.harness === undefined)).toBe(true)
     const astraApi = api.filter(entry => entry.model === 'astra')
+    const fableApi = api.filter(entry => entry.model === 'fable')
     const solApi = api.filter(entry => entry.model === 'sol')
     expect(astraApi).toHaveLength(8)
+    expect(fableApi).toHaveLength(16)
     expect(solApi).toHaveLength(8)
     expect(astraApi.every(entry => entry.author.model.slug === 'openai/gpt-6-astra' && entry.author.model.effortLevel === 'max')).toBe(true)
+    expect(fableApi.every(entry => entry.author.model.slug === 'anthropic/claude-fable-5.1' && entry.author.model.effortLevel === 'max')).toBe(true)
     expect(solApi.every(entry => entry.author.model.slug === 'openai/gpt-5.6-sol' && entry.author.model.effortLevel === 'max')).toBe(true)
     expect(Object.fromEntries(['chat.z.ai', 'grok.com Build', 'grok.com', 'kimi.ai', 'meta.ai', 'chat.qwen.ai', 'chat.deepseek.com'].map(harness => [harness, webChat.filter(entry => entry.harness === harness).length]))).toEqual({
       'chat.z.ai': 8,
