@@ -2,7 +2,7 @@ import {expect, test} from 'bun:test'
 
 import drawPreview, {knotPreviewBackground} from '../../src/components/levels/knottingham/KnotPreviewSigns/drawPreview.ts'
 import {knotBays, knotNumberLabel} from '../../src/lib/knots/exhibition.ts'
-import {knotPreviewGrid, knotPreviewMaximumHeight, knotPreviewMaximumWidth, knotPreviewTextureLayout, knotPreviewTextureRowHeight, knotPreviewTextureWidth, knotPreviewTile} from '../../src/lib/knots/KnotPreviewLayout.ts'
+import {knotPreviewGrid, knotPreviewMaximumHeight, knotPreviewMaximumWidth, knotPreviewTextureLayout, knotPreviewTextureRowHeight, knotPreviewTextureWidth} from '../../src/lib/knots/KnotPreviewLayout.ts'
 
 test('runtime billboard layout preserves physical bounds and matches its raster aspect', () => {
   for (const count of [1, 4, 5, 17, 22]) {
@@ -14,11 +14,6 @@ test('runtime billboard layout preserves physical bounds and matches its raster 
     expect(grid.width / grid.height).toBeCloseTo(raster.width / raster.height)
     expect(raster.width).toBe(knotPreviewTextureWidth)
     expect(raster.height).toBe(raster.rows * knotPreviewTextureRowHeight)
-    for (let index = 0; index < count; index++) {
-      const tile = knotPreviewTile(count, index)
-      expect(Math.abs(tile.x)).toBeLessThan(grid.width / 2)
-      expect(Math.abs(tile.y)).toBeLessThan(grid.height / 2)
-    }
   }
 })
 test('one runtime atlas per candidate keeps the complete preview population below 96 MiB', () => {

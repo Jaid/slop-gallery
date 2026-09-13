@@ -34,17 +34,3 @@ export function knotPreviewGrid(count: number) {
     width,
   }
 }
-
-export function knotPreviewTile(count: number, index: number) {
-  const grid = knotPreviewGrid(count)
-  if (!Number.isSafeInteger(index) || index < 0 || index >= count) {
-    throw new RangeError(`Invalid Knot preview index: ${index}`)
-  }
-  const column = index % grid.columns
-  const row = Math.floor(index / grid.columns)
-  return {
-    ...grid,
-    x: -grid.width / 2 + grid.tileWidth * (column + 0.5),
-    y: grid.height / 2 - grid.rowHeight * (row + 0.5),
-  }
-}

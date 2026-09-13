@@ -24,7 +24,7 @@ const texture = renderCanvasTexture({
 // texture.dispose() when that material no longer needs it.
 ```
 
-GPU rasters use an sRGB canvas without readback optimization. Drawing is synchronous. The returned ordinary Three texture owns that canvas until disposal. No `getImageData()`, CPU pixel buffer, or `createImageBitmap(canvas)` snapshot is involved. Snapshotting a GPU-backed canvas can synchronously block on GPU work even though the API returns a promise..
+GPU rasters use an sRGB canvas without readback optimization. Drawing is synchronous. The returned ordinary Three texture owns that canvas until disposal. No `getImageData()`, CPU pixel buffer, or `createImageBitmap(canvas)` snapshot is involved. Snapshotting a GPU-backed canvas can synchronously block on GPU work even though the API returns a promise.
 
 Three's WebGPU backend uploads the canvas through `copyExternalImageToTexture()`, not the `DataTexture` / `writeTexture()` path. This is not a guarantee of zero-copy transport. `texture.dispose()` releases canvas storage exactly once. Do not reuse a disposed texture.
 
@@ -100,7 +100,7 @@ try {
 }
 ```
 
-CPU algorithms remain independent: `ReadbackCanvas` requests `willReadFrequently: true` and exposes its canvas and context for multi-step algorithms. `read()` takes an owned snapshot without a redundant copy. `dispose()` releases canvas backing storage and is idempotent. `rasterizeCanvas({width, height, draw})` combines those operations without any renderer dependency. `textureFromPixels()` accepts tightly packed RGBA8 data by reference; do not detach or repurpose it while the texture uses it.
+CPU algorithms remain independent: `ReadbackCanvas` requests `willReadFrequently: true` and exposes its canvas and context for multi-step algorithms. `read()` takes an owned snapshot without a redundant copy. `dispose()` releases canvas backing storage and is idempotent. `textureFromPixels()` accepts tightly packed RGBA8 data by reference; do not detach or repurpose it while the texture uses it.
 
 ## Texture policy
 

@@ -3,7 +3,7 @@ import type {CanvasTextureOptions} from './types.ts'
 import {LinearFilter, LinearMipmapLinearFilter, NoColorSpace, SRGBColorSpace, Texture} from 'three/webgpu'
 
 /** Owns its external image until disposal; keep it alive for uploads and device recovery. */
-export default function textureFromImage<T extends HTMLCanvasElement | ImageBitmap>(image: T, release: () => void, {color = true, mipmaps = true, anisotropy = 16, name = ''}: CanvasTextureOptions) {
+export default function textureFromImage(image: HTMLCanvasElement, release: () => void, {color = true, mipmaps = true, anisotropy = 16, name = ''}: CanvasTextureOptions) {
   const texture = new Texture(image)
   texture.name = name
   texture.colorSpace = color ? SRGBColorSpace : NoColorSpace
