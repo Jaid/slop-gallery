@@ -36,7 +36,7 @@ describe('Knot model plates', () => {
     expect(await iconHash('astra/solar_reliquary')).toBe(await iconHash('astra/coralline_crown'))
     expect(await iconHash('sol/celestial_rose')).toBe(await iconHash('astra/lenticular_mirage'))
     expect(await iconHash('sonnet/opal_fire')).toBe(await iconHash('fable/event_horizon'))
-    expect(await iconHash('gemini/superfluid_vortex')).toBe(await iconHash('gemini/event_horizon'))
+    expect(await iconHash('gemini/cyber_kintsugi')).toBe(await iconHash('gemini/event_horizon'))
   })
   test('centers the creator icon and text together and fits long names', () => {
     for (const measured of [90, 240, 400, 1000]) {

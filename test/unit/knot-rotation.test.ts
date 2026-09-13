@@ -16,7 +16,7 @@ afterEach(() => world.free())
 test('uses the corrected contributor titles', () => {
   expect(knotsById.get('sonnet/opal_fire')!.modelTitle).toBe('Claude Sonnet 5')
   expect(knotsById.get('deepseek/aurora_veil')!.modelTitle).toBe('DeepSeek 4.1 Flash')
-  expect(knotsById.get('gemini/superfluid_vortex')!.modelTitle).toBe('Gemini 3.6 Flash')
+  expect(knotsById.get('gemini/cyber_kintsugi')!.modelTitle).toBe('Gemini 3.8 Flash')
 })
 test('rotates fixed Knots and colliders together without translating them', () => {
   const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(2, 1, 3))

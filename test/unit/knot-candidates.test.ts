@@ -81,20 +81,13 @@ describe('arbitrary Knot batches', () => {
     expect(knotsById.size).toBe(knots.length)
   })
 
-  test('groups model versions without losing per-item author fidelity', () => {
+  test('keeps every Gemini item on current model provenance', () => {
     const gemini = knotCandidates.find(candidate => candidate.data.id === 'gemini')!
-    expect(gemini.items).toHaveLength(16)
-    const original = byId('gemini/superfluid_vortex')
-    const latest = byId('gemini/cyber_kintsugi')
-    expect(original.author.model).toEqual({title: 'Gemini 3.6 Flash'})
-    expect(latest.author.model).toEqual({
-      title: 'Gemini 3.8 Flash',
-      slug: 'google/gemini-3.8-flash',
-      effortLevel: 'high',
-    })
-    expect(original.modelTitle).toBe(original.author.model.title)
-    expect(latest.modelTitle).toBe(latest.author.model.title)
-    expect(original.modelIcon).toBe(latest.modelIcon)
+    expect(gemini.items).toHaveLength(24)
+    expect(gemini.items.every(entry => entry.author.model.title === 'Gemini 3.8 Flash'
+      && entry.author.model.slug === 'google/gemini-3.8-flash'
+      && entry.author.model.effortLevel === 'high'
+      && entry.harness === 'none')).toBe(true)
   })
 
   test('keeps batch model credits and displacement metadata by stable identity', () => {
@@ -112,6 +105,7 @@ describe('arbitrary Knot batches', () => {
     expect(byId('deepseek/quantum_foam_2').archived).toBe(true)
     expect(byId('muse/abyssal_bloom').displacement).toBe(0.02)
     expect(byId('fable/chladni_resonance').displacement).toBe(0.006)
+    expect(byId('gemini/magma_chrysalis_2').displacement).toBe(0.018)
   })
 
   test('records OpenRouter, Codex and web-chat harness provenance without guessing legacy sources', () => {
@@ -120,9 +114,9 @@ describe('arbitrary Knot batches', () => {
     const webChat = knots.filter(entry => entry.model !== 'astra' && !entry.author.model.slug && entry.harness)
     const legacy = knots.filter(entry => entry.model !== 'astra' && !entry.author.model.slug && !entry.harness)
     expect(astra).toHaveLength(17)
-    expect(openRouter).toHaveLength(64)
+    expect(openRouter).toHaveLength(80)
     expect(webChat).toHaveLength(56)
-    expect(legacy).toHaveLength(64)
+    expect(legacy).toHaveLength(56)
     expect(astra.every(entry => entry.harness === 'Codex')).toBe(true)
     expect(openRouter.every(entry => entry.harness === 'none')).toBe(true)
     expect(legacy.every(entry => entry.harness === undefined)).toBe(true)
@@ -140,10 +134,10 @@ describe('arbitrary Knot batches', () => {
   test('filters candidates, caps shots and enumerates only after final selection', () => {
     const bays = selectKnotBays('?candidates=glm,gemini&shots=2')
     expect(bays.map(bay => bay.candidate.data.id)).toEqual(['gemini', 'glm'])
-    expect(bays.map(bay => bay.finishes.map(entry => entry.sourceId))).toEqual([['bismuth_singularity', 'superfluid_vortex'], ['abyssal_choir', 'hourglass_heart']])
+    expect(bays.map(bay => bay.finishes.map(entry => entry.sourceId))).toEqual([['abyssal_bioluminescence', 'birefringent_crystal'], ['abyssal_choir', 'hourglass_heart']])
     const numbered = enumerateKnotBays(bays)
     expect(numbered.flatMap(bay => bay.finishes.map(entry => entry.number))).toEqual([1, 2, 3, 4])
-    expect(numbered.flatMap(bay => bay.finishes).filter(entry => entry.highlighted).map(entry => entry.sourceId)).toEqual(['superfluid_vortex', 'hourglass_heart'])
+    expect(numbered.flatMap(bay => bay.finishes).filter(entry => entry.highlighted).map(entry => entry.sourceId)).toEqual(['hourglass_heart'])
     const astra = enumerateKnotBays(selectKnotBays('?candidates=astra&shots=3'))
     expect(astra[0].finishes.map(entry => entry.number)).toEqual([1, 2, 3])
     expect(astra[0].finishes.map(entry => entry.sourceId)).toEqual(['abyssal_lantern', 'coralline_crown', 'lenticular_mirage'])
