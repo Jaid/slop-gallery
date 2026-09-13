@@ -46,6 +46,7 @@ describe('Knot cellular fields', () => {
       ['kimi/webChatMaterial.ts', 'magma_heart'],
       ['qwen/webChatMaterial.ts', 'eventide_silk'],
       ['muse/webChatMaterial.ts', 'nocturne_opal'],
+      ['muse/webChatMaterial.ts', 'kairothic_frost'],
     ]
     for (const [file, id] of cases) {
       const text = await finish(file, id)
@@ -98,6 +99,13 @@ describe('Knot cellular fields', () => {
     expect(text).toContain('const crackLarge = filament(wLarge1.sub(wLarge2), 0.035)')
     expect(text).toContain('const crackFine = filament(wFine1.sub(wFine2), 0.02)')
     expect(text).toContain("color('#ff8a00').mul(embers).mul(2.5)")
+  })
+  test('confines drifting frost sparkles without altering geometric frost growth', async () => {
+    const text = await finish('muse/webChatMaterial.ts', 'kairothic_frost')
+    expect(text).toContain('cellularPoints(p.mul(62).add(vec3(0, time.mul(0.5), 0)), 0.04, 0.22, 0.4).mul(frostMask).mul(near)')
+    expect(text).not.toContain('cellNoiseVec3(')
+    expect(text).toContain('this.positionNode = positionLocal.add(normalLocal.mul(frostMask.mul(0.018).mul(near)))')
+    expect(text).toContain("color('#a8e6ff').mul(sparkle).mul(1.2)")
   })
   test('uses continuous solar granulation and genuine Voronoi fractures', async () => {
     for (const id of ['cryogenic_kintsugi', 'chromospheric_spicule']) {

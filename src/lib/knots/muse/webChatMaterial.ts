@@ -322,8 +322,8 @@ export class KnotMaterial extends MeshPhysicalNodeMaterial {
         const dendriteDir = tube.x.mul(40).add(tube.y.mul(8))
         const dendrite = opticalLine(dendriteDir.fract().sub(0.5), 0.04).mul(frostMask)
         const feather = opticalLine(tube.x.mul(120).add(tube.y.mul(24).sin().mul(2)).fract().sub(0.5), 0.025).mul(frostMask).mul(intimate)
-        const sparkleCell = cellNoiseVec3(p.mul(62).add(vec3(0, time.mul(0.5), 0)))
-        const sparkle = sparkleCell.x.smoothstep(0.92, 0.96).mul(frostMask).mul(near)
+        // Compact glints confined to growing frost, rather than illuminated spatial cells.
+        const sparkle = cellularPoints(p.mul(62).add(vec3(0, time.mul(0.5), 0)), 0.04, 0.22, 0.4).mul(frostMask).mul(near)
         this.positionNode = positionLocal.add(normalLocal.mul(frostMask.mul(0.018).mul(near)))
         this.colorNode = mix(mix(color('#e6f3ff'), color('#ffffff'), frostMask.mul(0.85)), color('#7ab8ff'), facing.oneMinus().mul(0.35))
         this.transmission = 0.92
