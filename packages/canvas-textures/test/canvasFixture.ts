@@ -3,6 +3,19 @@ import {mock} from 'bun:test'
 /** Canvas double deliberately returns an offset view to catch accidental whole-buffer uploads. */
 export function canvasFixture() {
   const original = globalThis.document
+  const originalCreateImageBitmap = globalThis.createImageBitmap
+  const bitmaps: Array<{close: ReturnType<typeof mock>
+    height: number
+    width: number}> = []
+  const createImageBitmap = mock(async (canvas: HTMLCanvasElement): Promise<ImageBitmap> => {
+    const bitmap = {
+      width: canvas.width,
+      height: canvas.height,
+      close: mock(() => {}),
+    }
+    bitmaps.push(bitmap)
+    return bitmap
+  })
   const surfaces: Array<ReturnType<typeof createCanvas>> = []
   function createCanvas() {
     const canvas = {
@@ -40,6 +53,7 @@ export function canvasFixture() {
     ready: new Promise(() => {}),
   }
   Object.assign(globalThis, {
+    createImageBitmap,
     document: {
       createElement,
       fonts,
@@ -47,9 +61,14 @@ export function canvasFixture() {
   })
   return {
     surfaces,
+    bitmaps,
+    createImageBitmap,
     createElement,
     fonts,
-    restore: () => Object.assign(globalThis, {document: original}),
+    restore: () => Object.assign(globalThis, {
+      document: original,
+      createImageBitmap: originalCreateImageBitmap,
+    }),
   }
 }
 

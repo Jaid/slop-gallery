@@ -3,7 +3,7 @@ import type {CanvasTextureOptions} from './types.ts'
 
 import {DataTexture, LinearFilter, LinearMipmapLinearFilter, NoColorSpace, RGBAFormat, SRGBColorSpace, UnsignedByteType} from 'three/webgpu'
 
-import {validateCanvasSize} from '../ReadbackCanvas.ts'
+import {validateCanvasSize} from '../CanvasSurface.ts'
 
 /** Transfers pixel ownership to the texture by reference; no copy or external-image upload. */
 export default function textureFromPixels({data, width, height}: CanvasPixels, {color = true, mipmaps = true, anisotropy = 16, name = ''}: CanvasTextureOptions = {}) {

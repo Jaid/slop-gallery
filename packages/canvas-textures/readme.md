@@ -1,13 +1,13 @@
 # canvas-textures
 
-A readback-first pipeline for browser Canvas2D graphics. The core has no Three.js or React imports; optional adapters turn final pixels into Three/WebGPU textures and manage their React lifecycle.
+Separate CPU-pixel and GPU-image pipelines for browser Canvas2D graphics. The core has no Three.js or React imports; optional adapters own external-image Three/WebGPU textures and manage their React lifecycle.
 
 ## Final texture in one pass
 
 ```ts
-import renderCanvasTexture from 'canvas-textures/three'
+import {renderCanvasBitmapTexture} from 'canvas-textures/three'
 
-const texture = renderCanvasTexture({
+const texture = await renderCanvasBitmapTexture({
   width: 1024,
   height: 256,
   mipmaps: false,
@@ -24,9 +24,11 @@ const texture = renderCanvasTexture({
 // texture.dispose() when that material no longer needs it.
 ```
 
-Every raster owns a newly created canvas. Its **first** context request includes `willReadFrequently: true` and sRGB. Drawing is synchronous; one final `getImageData()` supplies an exact `Uint8Array` view including its byte offset and length. No zero-filled placeholder image and no second pixel-buffer copy are created. Temporary canvas storage is released in a `finally` block; the texture retains its independent pixel buffer.
+GPU rasters use an sRGB canvas without readback optimization. Drawing is synchronous; `createImageBitmap()` snapshots the canvas without `getImageData()` or a CPU pixel buffer. Canvas storage is released after snapshot completion, including failure. The returned ordinary Three texture owns its bitmap and closes it exactly once on disposal. It retains the bitmap until then, not just until the first upload, to support subsequent uploads.
 
-This is zero **additional** pixel copying, not a zero-copy GPU upload: Canvas2D readback and the eventual GPU upload still happen. Readback hints can trade GPU-accelerated drawing for faster reads; profile the whole raster operation.
+Three's WebGPU backend uploads these images through `copyExternalImageToTexture()`, not the `DataTexture` / `writeTexture()` path. This is not a guarantee of zero-copy GPU transport or a measured speedup.
+
+The default export, `renderCanvasTexture(options)`, is the synchronous variant for surface/material constructors. It uses the same external-image upload path but retains its canvas until texture disposal instead of creating a bitmap. Prefer the bitmap API for asynchronous consumers and large static atlases.
 
 ## Fonts and asynchronous inputs
 
@@ -50,7 +52,7 @@ const texture = await prepareCanvasTexture({
 // A consumer cancelled after this promise resolved must also dispose its result.
 ```
 
-`prepare(signal)` can return any typed input: decoded images, fonts, data, or a tuple of these. `draw(context, inputs)` receives that result. An optional `disposeInputs(inputs)` releases temporary decoded resources after the one final draw, including cancellation after preparation and draw/readback failures. No canvas is allocated until preparation finishes; aborted preparations, including late rejections, return null. Other errors propagate. Synchronous drawing/readback cannot be preempted by an abort signal. Draw callbacks must not resize the surface or return asynchronous work.
+`prepare(signal)` can return any typed input: decoded images, fonts, data, or a tuple of these. `draw(context, inputs)` receives that result. An optional `disposeInputs(inputs)` releases temporary decoded resources after the one final draw, including cancellation after preparation and draw/snapshot failures. No canvas is allocated until preparation finishes; aborted preparations, including late rejections, return null. Other errors propagate. Synchronous drawing cannot be preempted by an abort signal. Cancellation during asynchronous snapshot creation disposes the late bitmap texture before returning null. Prepared and React recipes always use the bitmap path. Draw callbacks must not resize the surface or return asynchronous work.
 
 `loadCanvasBitmaps(urls, signal)` decodes URL images without creating individual GPU textures; pair it with `disposeInputs: images => closeCanvasBitmaps(images.values())` when composing an atlas. `loadCanvasFonts()` waits only for the requested faces, not unrelated `document.fonts.ready` work. Each rejected font is reported through its optional second argument (default: a warning), then drawing can use Canvas2D's fallback font. It never schedules a later redraw. Choose missing-image behavior in your own loader. Release decoded ImageBitmaps in their owner's `finally` block.
 
@@ -98,7 +100,7 @@ try {
 }
 ```
 
-`ReadbackCanvas` exposes its canvas and context for multi-step algorithms. `read()` takes an owned snapshot without a redundant copy. `dispose()` releases canvas backing storage and is idempotent. `rasterizeCanvas({width, height, draw})` combines those operations without any renderer dependency. `textureFromPixels()` accepts tightly packed RGBA8 data by reference; do not detach or repurpose it while the texture uses it.
+CPU algorithms remain independent: `ReadbackCanvas` requests `willReadFrequently: true` and exposes its canvas and context for multi-step algorithms. `read()` takes an owned snapshot without a redundant copy. `dispose()` releases canvas backing storage and is idempotent. `rasterizeCanvas({width, height, draw})` combines those operations without any renderer dependency. `textureFromPixels()` accepts tightly packed RGBA8 data by reference; do not detach or repurpose it while the texture uses it.
 
 ## Texture policy
 
@@ -109,6 +111,6 @@ try {
 | `color` | `true` | sRGB color pixels; false leaves bump/height data in NoColorSpace. |
 | `name` | empty | Three texture label for diagnostics. |
 
-Orientation remains top-to-bottom canvas pixels with `flipY = true` for Three UVs; alpha remains unpremultiplied and preserved. Removing mipmaps reduces storage/generation work, but can cause distance/angle shimmering. The package does not lower resolution, cache final textures, schedule GPU uploads, move work to workers, or invent asset fallback policy. It currently uses HTMLCanvasElement and requires a browser document at raster time, not import time.
+Orientation remains top-to-bottom canvas images with `flipY = true` for Three UVs; alpha remains unpremultiplied and preserved. Removing mipmaps reduces storage/generation work, but can cause distance/angle shimmering. The package does not lower resolution, cache final textures, schedule GPU uploads, move work to workers, or invent asset fallback policy. It currently uses HTMLCanvasElement and requires a browser document at raster time, not import time.
 
 Run `bun test ./packages/canvas-textures/test` from the workspace root.

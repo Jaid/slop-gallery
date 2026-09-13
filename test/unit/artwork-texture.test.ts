@@ -25,7 +25,9 @@ beforeEach(() => {
           height: 0,
           getContext: () => ({
             drawImage: draw,
-            getImageData: () => ({data: new Uint8ClampedArray(canvas.width * canvas.height * 4)}),
+            getImageData: () => {
+              throw new Error('Artwork must not read back pixels.')
+            },
           }),
         }
         return canvas
@@ -34,7 +36,7 @@ beforeEach(() => {
   })
 })
 afterEach(() => Object.assign(globalThis, original))
-test('retries a temporary server failure and uploads owned image pixels', async () => {
+test('retries a temporary server failure and creates an owned external-image texture', async () => {
   const fetch = mock(async () => new Response('image', {headers: {'Content-Type': 'image/jxl'}}))
   fetch.mockImplementationOnce(async () => new Response('', {status: 503}))
   Object.assign(globalThis, {fetch})
@@ -49,6 +51,7 @@ test('retries a temporary server failure and uploads owned image pixels', async 
   } finally {
     texture.dispose()
   }
+  expect(close).toHaveBeenCalledTimes(2)
 })
 test('bounds failed URL retries and keeps the HTTP error actionable', async () => {
   const fetch = mock(async () => new Response('', {status: 404}))
@@ -72,14 +75,14 @@ test('recovers from a failed decode without leaking the successful bitmap', asyn
   })
   const texture = await loadArtworkTexture('/overview.jxl', 0)
   texture.dispose()
-  expect(decode).toHaveBeenCalledTimes(2)
-  expect(close).toHaveBeenCalledTimes(1)
+  expect(decode).toHaveBeenCalledTimes(3)
+  expect(close).toHaveBeenCalledTimes(2)
 })
-test('closes bitmap resources on upload failure and does not retry immutable blobs', async () => {
+test('closes bitmap resources on draw failure and does not retry immutable blobs', async () => {
   draw.mockImplementation(() => {
-    throw new Error('Canvas read failed.')
+    throw new Error('Canvas draw failed.')
   })
-  await expect(loadArtworkTexture(new Blob(['image']), 0)).rejects.toThrow('Canvas read failed.')
+  await expect(loadArtworkTexture(new Blob(['image']), 0)).rejects.toThrow('Canvas draw failed.')
   expect(draw).toHaveBeenCalledTimes(1)
   expect(close).toHaveBeenCalledTimes(1)
 })

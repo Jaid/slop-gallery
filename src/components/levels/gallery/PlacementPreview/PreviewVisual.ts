@@ -1,4 +1,4 @@
-import type {DataTexture} from 'three/webgpu'
+import type {Texture} from 'three/webgpu'
 
 import {float, Fn, fwidth, luminance, max, mix, sin, smoothstep, texture, uniform, uv, vec2} from 'three/tsl'
 import {BufferGeometry, Color, Float32BufferAttribute, MeshBasicNodeMaterial} from 'three/webgpu'
@@ -51,7 +51,8 @@ export default class PreviewVisual {
   readonly time = uniform(0)
   readonly tint = uniform(new Color)
 
-  constructor(width: number, height: number, artwork: DataTexture | null) {
+  constructor(width: number, height: number, artwork: Texture<{height: number
+    width: number}> | null) {
     const outerWidth = width + 0.22
     const outerHeight = height + 0.22
     this.border = previewBorderGeometry(outerWidth, outerHeight)

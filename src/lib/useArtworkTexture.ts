@@ -1,19 +1,19 @@
-import type {DataTexture} from 'three/webgpu'
+import type {Texture} from 'three/webgpu'
 
 import {useEffect, useState} from 'react'
 
 import loadArtworkTexture from './loadArtworkTexture.ts'
 
-type Asset = {promise: Promise<DataTexture>
+type Asset = {promise: Promise<Texture<ImageBitmap>>
   refs: number
-  texture?: DataTexture}
+  texture?: Texture<ImageBitmap>}
 const assets = new Map<Blob | string, Asset>
 let pending = 0
 export const pendingImages = () => pending
 
 export default function useArtworkTexture(source: Blob | string | null | undefined) {
   const [result, setResult] = useState<{failed: boolean
-    texture: DataTexture | null}>({
+    texture: Texture<ImageBitmap> | null}>({
     texture: null,
     failed: false,
   })

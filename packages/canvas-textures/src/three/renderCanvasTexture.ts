@@ -1,9 +1,10 @@
 import type {CanvasTextureRaster} from './types.ts'
 
-import rasterizeCanvas from '../rasterizeCanvas.ts'
-import textureFromPixels from './textureFromPixels.ts'
+import drawCanvas from './drawCanvas.ts'
+import textureFromImage from './textureFromImage.ts'
 
-/** Synchronous final raster. No placeholder buffer and no redundant pixel copy. */
+/** Synchronous external-image texture. Its canvas is retained until texture disposal. */
 export default function renderCanvasTexture(options: CanvasTextureRaster) {
-  return textureFromPixels(rasterizeCanvas(options), options)
+  const surface = drawCanvas(options)
+  return textureFromImage(surface.canvas, () => surface.dispose(), options)
 }

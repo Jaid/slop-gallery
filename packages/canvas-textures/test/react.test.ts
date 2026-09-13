@@ -1,5 +1,5 @@
 import type {ReactCanvasTextureRecipe} from '../src/react/main.ts'
-import type {DataTexture} from 'three/webgpu'
+import type {Texture} from 'three/webgpu'
 
 import {afterEach, beforeEach, expect, mock, test} from 'bun:test'
 import {resolve} from 'node:path'
@@ -45,10 +45,10 @@ const build = await Bun.build({
           contents: path === 'react' ? hooks : `
       export {default} from ${JSON.stringify(resolve(import.meta.dir, '../src/react/main.ts').replaceAll('\\', '/'))};
       export {commit, replay, unmount, reset, readState} from 'react';
-      import {DataTexture} from 'three/webgpu';
+      import {Texture} from 'three/webgpu';
       export const disposed = [];
-      const dispose = DataTexture.prototype.dispose;
-      DataTexture.prototype.dispose = function() { disposed.push(this); dispose.call(this); };
+      const dispose = Texture.prototype.dispose;
+      Texture.prototype.dispose = function() { disposed.push(this); dispose.call(this); };
     `,
         }))
       },
@@ -60,9 +60,9 @@ if (!build.success) {
 }
 const harness = await import(`data:text/javascript;base64,${Buffer.from(await build.outputs[0].text()).toString('base64')}`) as {
   commit: () => void
-  default: <T>(recipe: ReactCanvasTextureRecipe<T>) => DataTexture | null
-  disposed: Array<DataTexture>
-  readState: () => {texture: DataTexture} | null
+  default: <T>(recipe: ReactCanvasTextureRecipe<T>) => Texture | null
+  disposed: Array<Texture>
+  readState: () => {texture: Texture} | null
   replay: () => void
   reset: () => void
   unmount: () => void

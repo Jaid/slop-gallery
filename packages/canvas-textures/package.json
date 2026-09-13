@@ -2,7 +2,7 @@
   "name": "canvas-textures",
   "version": "0.1.0",
   "type": "module",
-  "description": "Readback-first Canvas2D rasterization with owned pixels, Three.js textures and optional React lifecycles",
+  "description": "Canvas2D pipelines with owned CPU pixels, external-image Three.js textures and optional React lifecycles",
   "funding": "https://github.com/sponsors/Jaid",
   "license": "MIT",
   "repository": {

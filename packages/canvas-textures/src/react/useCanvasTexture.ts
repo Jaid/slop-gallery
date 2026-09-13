@@ -1,5 +1,5 @@
 import type {CanvasTextureRecipe} from '../three/types.ts'
-import type {DataTexture} from 'three/webgpu'
+import type {Texture} from 'three/webgpu'
 
 import {useEffect, useState} from 'react'
 
@@ -10,10 +10,10 @@ export type ReactCanvasTextureRecipe<T> = CanvasTextureRecipe<T> & {onError?: (e
 /** Memoize the recipe. Each identity owns one final raster and its cleanup, even under StrictMode. */
 export default function useCanvasTexture<T>(recipe: ReactCanvasTextureRecipe<T>) {
   const [result, setResult] = useState<{recipe: ReactCanvasTextureRecipe<T>
-    texture: DataTexture} | null>(null)
+    texture: Texture<ImageBitmap>} | null>(null)
   useEffect(() => {
     const controller = new AbortController
-    let owned: DataTexture | null = null
+    let owned: Texture<ImageBitmap> | null = null
     const render = async () => {
       try {
         const texture = await prepareCanvasTexture(recipe, controller.signal)
