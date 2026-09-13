@@ -62,7 +62,7 @@ const initialPosition: EgoPosition = [0, 0.05, 0]
 const readToggle = (value: EgoToggle) => {
   return typeof value === 'function' ? value() : value
 }
-export default function EgoPlayer({cameraEnabled = true, children, enabled = true, fallbackPosition, input, onDump, onInteract, onZoomChange, zoomFactor = 2, zoomTransition = 0.2, onInput, onStep, onUpdate, pitch = 0, pointerLock = true, position = initialPosition, ref, requirePointerLock = true, userData, yaw = 0, ...options}: EgoPlayerProps) {
+export default function EgoPlayer({cameraEnabled = true, children, enabled = true, fallbackPosition, input, onDump, onInteract, onZoomChange, zoomFactor = 2.5, zoomTransition = 0.2, onInput, onStep, onUpdate, pitch = 0, pointerLock = true, position = initialPosition, ref, requirePointerLock = true, userData, yaw = 0, ...options}: EgoPlayerProps) {
   const [defaultUserData] = useState(() => ({isPlayer: true}))
   if (!Number.isFinite(zoomFactor) || zoomFactor < 1) {
     throw new RangeError('ego-player: zoomFactor must be finite and at least 1.')
