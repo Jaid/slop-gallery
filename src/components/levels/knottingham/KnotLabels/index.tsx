@@ -123,11 +123,11 @@ export default function KnotLabels() {
     mipmaps: false,
     prepare: () => loadCanvasFonts([
       {
-        font: `600 35px ${labelFontFamily}`,
+        font: `600 70px ${labelFontFamily}`,
         text: knotExhibition.map(exhibit => exhibit.label).join(' '),
       },
       {
-        font: `600 21px ${labelFontFamily}`,
+        font: `600 42px ${labelFontFamily}`,
         text: knotExhibition.map(exhibit => exhibit.title).join(' '),
       },
     ]),
@@ -148,10 +148,10 @@ export default function KnotLabels() {
         loadModelIcons(knotExhibition.map(exhibit => exhibit.modelIcon)),
         loadCanvasFonts([
           {
-            font: `16px ${labelFontFamily}`,
+            font: `32px ${labelFontFamily}`,
             text: knotExhibition.map(exhibit => exhibit.modelTitle).join(' '),
           },
-          {font: `12px ${labelFontFamily}`},
+          {font: `24px ${labelFontFamily}`},
         ]),
       ])
       return icons
