@@ -32,6 +32,7 @@ describe('Knot cellular fields', () => {
   test('uses localized inclusions instead of whole-cell point masks', async () => {
     const cases: Array<[string, string]> = [
       ['gemini/batch2Material.ts', 'celestial_astrolabe'],
+      ['gemini/batch2Material.ts', 'elytra_iridescence'],
       ['gemini/batch3Material.ts', 'photonic_morpho'],
       ['gemini/batch3Material.ts', 'opaline_aerogel'],
       ['gemini/batch3Material.ts', 'radiometric_guilloche'],
@@ -64,6 +65,15 @@ describe('Knot cellular fields', () => {
     expect(text).toContain('const nodalBand = chladni.abs().smoothstep(0.02, 0.14).oneMinus()')
     expect(text).toContain('cellularPoints(p.mul(64).add(vec3(0, time.mul(0.2), 0)), 0.06, 0.22, 0.2).mul(nodalBand)')
     expect(text).not.toContain('cellNoiseVec3(')
+  })
+  test('localizes scarab platelet glints while retaining their individual orientations', async () => {
+    const text = await finish('gemini/batch2Material.ts', 'elytra_iridescence')
+    expect(text).toContain('const q = p.mul(95)')
+    expect(text).toContain('const sparkleRnd = cellNoiseVec3(q)')
+    expect(text).toContain('const sparkleGlint = glints(sparkleNormal, 120)')
+    expect(text).toContain('const sparkleMask = cellularPoints(q, 0.07, 0.24, 0.3)')
+    expect(text).toContain('.mul(sparkleGlint).mul(sparkleMask)')
+    expect(text).toContain('this.iridescenceThicknessNode = microRibs.mul(190).add(370)')
   })
   test('uses continuous solar granulation and genuine Voronoi fractures', async () => {
     for (const id of ['cryogenic_kintsugi', 'chromospheric_spicule']) {

@@ -254,7 +254,8 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
         const sparkleRnd = cellNoiseVec3(q)
         const sparkleNormal = normalViewGeometry.add(sparkleRnd.mul(2).sub(1).mul(0.35)).normalize()
         const sparkleGlint = glints(sparkleNormal, 120)
-        const sparkleMask = sparkleRnd.x.smoothstep(0.78, 0.88)
+        // Per-platelet normals only contribute inside compact inclusions, never across a whole cell.
+        const sparkleMask = cellularPoints(q, 0.07, 0.24, 0.3)
         this.emissiveNode = mix(color('#00ffaa'), color('#ff00aa'), grazing.pow(2)).mul(sparkleGlint).mul(sparkleMask).mul(2.5).mul(near.mul(0.6).add(0.5))
         break
       }
