@@ -18,6 +18,7 @@ const exhibits = new Map(knotExhibition.map(item => [`prop-knot-${item.id}`, ite
 const billboards = new Map<string, KnotBay>(knotBays.flatMap(bay => [[`preview-${bay.model}`, bay], [`model-sign-${bay.model}`, bay]] as const))
 const announcedCreators = new Set<string>
 const announcedItems = new Set<string>
+const inspectionDistanceSpeed = 0.45
 const baseRadius = (() => {
   const geometry = createKnotGeometry()
   geometry.computeBoundingSphere()
@@ -35,6 +36,7 @@ type Session = {
 export default function KnotSpectation() {
   const {camera, controls, renderer} = useThree()
   const session = useRef<Session | null>(null)
+  const distanceKeys = useRef(new Set<'KeyS' | 'KeyW'>)
   const center = useRef(new Vector3)
   useEffect(() => {
     if (!(camera instanceof PerspectiveCamera) || !(controls instanceof PointerLockControls)) {
@@ -110,18 +112,31 @@ export default function KnotSpectation() {
         camera.updateProjectionMatrix()
       }
       current.restoreControls()
+      distanceKeys.current.clear()
       session.current = null
       cameraPose.focused = false
       useGallery.setState({inspecting: null})
     }
     const release = () => {
+      distanceKeys.current.clear()
       session.current?.orbit.release()
       if (session.current && useGallery.getState().inspecting !== null) {
         useGallery.setState({inspecting: null})
       }
     }
     const down = (event: KeyboardEvent) => {
-      if (event.code !== 'KeyV' || event.repeat || event.ctrlKey || event.metaKey || event.altKey || isTextInput(event.target)) {
+      if (event.ctrlKey || event.metaKey || event.altKey || isTextInput(event.target)) {
+        return
+      }
+      if ((event.code === 'KeyW' || event.code === 'KeyS') && session.current && !session.current.orbit.returning) {
+        event.preventDefault()
+        if (!event.repeat) {
+          markControlled()
+          distanceKeys.current.add(event.code)
+        }
+        return
+      }
+      if (event.code !== 'KeyV' || event.repeat) {
         return
       }
       const state = useGallery.getState()
@@ -161,7 +176,9 @@ export default function KnotSpectation() {
       announce(state.active)
     }
     const up = (event: KeyboardEvent) => {
-      if (event.code === 'KeyV') {
+      if (event.code === 'KeyW' || event.code === 'KeyS') {
+        distanceKeys.current.delete(event.code)
+      } else if (event.code === 'KeyV') {
         release()
       }
     }
@@ -214,11 +231,16 @@ export default function KnotSpectation() {
     const object = propObjects.get(current.id)
     if (object?.group.visible) {
       object.group.getWorldPosition(center.current)
+      const keys = distanceKeys.current
+      const distanceDirection = Number(keys.has('KeyS')) - Number(keys.has('KeyW'))
+      current.orbit.adjustDistance(distanceDirection * inspectionDistanceSpeed * delta)
     } else {
+      distanceKeys.current.clear()
       current.orbit.release()
     }
     if (current.orbit.update(center.current, delta)) {
       current.restoreControls()
+      distanceKeys.current.clear()
       session.current = null
       cameraPose.focused = false
       useGallery.setState({inspecting: null})

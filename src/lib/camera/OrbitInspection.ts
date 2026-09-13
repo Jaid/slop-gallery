@@ -3,6 +3,9 @@ import type {PerspectiveCamera} from 'three/webgpu'
 import {MathUtils, Matrix4, Quaternion, Spherical, Vector3} from 'three/webgpu'
 
 const up = new Vector3(0, 1, 0)
+const inspectionFovFactor = 0.8
+const minDistanceFactor = 0.8
+const maxDistanceFactor = 1.2
 
 /** A temporary camera owner; orbiting never changes the player’s physical pose. */
 export default class OrbitInspection {
@@ -11,6 +14,7 @@ export default class OrbitInspection {
   readonly originalRotation: Quaternion
   returning = false
   private readonly destination = new Spherical
+  private distanceFactor = 1
   private readonly matrix = new Matrix4
   private readonly offset = new Vector3
   private phi: number
@@ -41,6 +45,13 @@ export default class OrbitInspection {
     this.phi = MathUtils.clamp(this.phi - pitch, 0.05, Math.PI - 0.05)
   }
 
+  adjustDistance(amount: number) {
+    if (this.returning || !Number.isFinite(amount)) {
+      return
+    }
+    this.distanceFactor = MathUtils.clamp(this.distanceFactor + amount, minDistanceFactor, maxDistanceFactor)
+  }
+
   release() {
     this.returning = true
   }
@@ -57,7 +68,7 @@ export default class OrbitInspection {
       return false
     }
     const blend = 1 - Math.exp(-Math.min(delta, 0.06) * 10)
-    const fov = this.returning ? this.originalFov : this.originalFov * 0.85
+    const fov = this.returning ? this.originalFov : this.originalFov * inspectionFovFactor
     if (this.returning) {
       // Return around the object, not straight through it after a half orbit.
       this.sphere.setFromVector3(this.offset.copy(this.camera.position).sub(this.pivot))
@@ -72,7 +83,7 @@ export default class OrbitInspection {
       this.pivot.copy(center)
       const vertical = MathUtils.degToRad(fov)
       const horizontal = 2 * Math.atan(Math.tan(vertical / 2) * this.camera.aspect)
-      const distance = this.radius / Math.sin(Math.min(vertical, horizontal) / 2) * 0.96
+      const distance = this.radius / Math.sin(Math.min(vertical, horizontal) / 2) * 0.96 * this.distanceFactor
       const floorLimit = Math.acos(MathUtils.clamp((0.18 - center.y) / distance, -1, 1))
       const phi = Math.min(this.phi, floorLimit)
       this.sphere.set(distance, phi, this.theta)
