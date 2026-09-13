@@ -1,30 +1,19 @@
 import {describe, expect, test} from 'bun:test'
 
-import {accentLineSize, creatorStickerHeight, creatorStickerSize, creatorStickerWidth, drawCreatorSticker, drawTitleSticker, knotDetailLine, labelAtlasColumns, modelLineLayout, titleStickerHeight, titleStickerSize, titleStickerWidth} from '../../src/components/levels/knottingham/KnotLabels/drawLabel.ts'
+import drawLabel, {knotDetailLine, labelAtlasColumns, labelBackground, labelFonts, labelHeight, labelWidth, modelLineLayout} from '../../src/components/levels/knottingham/KnotLabels/drawLabel.ts'
 import {knotBays, knotExhibition} from '../../src/lib/knots/exhibition.ts'
 import {knotsById} from '../../src/lib/knots/index.ts'
 import {knotSign} from '../../src/lib/knots/signs.ts'
 
 const iconHash = async (id: string) => Bun.hash(await Bun.file(new URL(knotsById.get(id)!.modelIcon)).arrayBuffer())
 describe('Knot model plates', () => {
-  test('uses two compact sticker atlases and a non-rasterized accent line', () => {
-    expect([titleStickerWidth, titleStickerHeight]).toEqual([640, 192])
-    expect([creatorStickerWidth, creatorStickerHeight]).toEqual([512, 96])
-    const stickerPixels = titleStickerWidth * titleStickerHeight + creatorStickerWidth * creatorStickerHeight
-    expect(stickerPixels).toBe(640 * 192 + 512 * 96)
-    expect(titleStickerSize).toEqual([0.8, 0.24])
-    expect(creatorStickerSize).toEqual([0.75, 0.14])
-    expect(labelAtlasColumns * titleStickerWidth).toBeLessThanOrEqual(8192)
-    expect(labelAtlasColumns * creatorStickerWidth).toBeLessThanOrEqual(8192)
-    const rows = Math.ceil(knotExhibition.length / labelAtlasColumns)
-    expect(rows * titleStickerHeight).toBeLessThanOrEqual(8192)
-    expect(rows * creatorStickerHeight).toBeLessThanOrEqual(8192)
-    expect(titleStickerSize[0]).toBeLessThan(knotSign.width)
-    expect(titleStickerSize[1]).toBeLessThan(knotSign.height)
-    expect(creatorStickerSize[0]).toBeLessThan(knotSign.width)
-    expect(creatorStickerSize[1]).toBeLessThan(knotSign.height)
-    expect(accentLineSize[0]).toBeLessThan(knotSign.width)
-    expect(accentLineSize[1]).toBeLessThan(0.02)
+  test('a complete face preserves text density and the atlas fits the current exhibition', () => {
+    expect([labelWidth, labelHeight]).toEqual([720, 480])
+    expect(labelWidth / labelHeight).toBeCloseTo(knotSign.width / knotSign.height)
+    expect(labelWidth / knotSign.width).toBeGreaterThanOrEqual(800)
+    expect(labelHeight / knotSign.height).toBeGreaterThanOrEqual(800)
+    expect(labelAtlasColumns * labelWidth).toBeLessThanOrEqual(8192)
+    expect(Math.ceil(knotExhibition.length / labelAtlasColumns) * labelHeight).toBeLessThanOrEqual(8192)
   })
   test('ships a local icon for every exhibited model and reuses family marks', async () => {
     const urls = new Set<string>
@@ -45,55 +34,65 @@ describe('Knot model plates', () => {
     for (const measured of [90, 240, 400, 1000]) {
       for (const hasIcon of [true, false]) {
         const line = modelLineLayout(measured, hasIcon)
-        expect(line.left).toBeGreaterThanOrEqual(16)
-        expect(line.left * 2 + line.iconSize + line.gap + line.textWidth).toBe(creatorStickerWidth)
+        expect(line.left).toBeGreaterThanOrEqual(62)
+        expect(line.left * 2 + line.iconSize + line.gap + line.textWidth).toBe(labelWidth)
         expect(line.textWidth).toBeLessThanOrEqual(measured)
-        expect(line.iconSize).toBe(hasIcon ? 40 : 0)
-        expect(line.gap).toBe(hasIcon ? 12 : 0)
+        expect(line.iconSize).toBe(hasIcon ? 50 : 0)
+        expect(line.gap).toBe(hasIcon ? 15 : 0)
       }
     }
   })
-  test('draws title and creator as independent stickers', () => {
-    const titleText: Array<Array<unknown>> = []
-    const titleRects: Array<Array<number>> = []
-    const titleFonts: Array<string> = []
-    const titleContext = {
-      set font(value: string) {
-        titleFonts.push(value)
-      },
-      fillRect: (...args: Array<number>) => titleRects.push(args),
-      fillText: (...args: Array<unknown>) => titleText.push(args),
-    } as unknown as CanvasRenderingContext2D
-    const exhibit = {
-      ...knotExhibition[0],
-      harness: undefined,
-      author: {model: {title: knotExhibition[0].modelTitle}},
+  test('draws the complete face once at any atlas offset, with centered icons and bounded text', () => {
+    for (const [x, y] of [[0, 0], [labelWidth, labelHeight], [6 * labelWidth, 16 * labelHeight]]) {
+      const texts: Array<Array<unknown>> = []
+      const rects: Array<{args: Array<number>
+        color: string}> = []
+      const images: Array<Array<unknown>> = []
+      const fonts: Array<string> = []
+      const context = {
+        fillStyle: '',
+        set font(value: string) {
+          fonts.push(value)
+        },
+        fillRect(...args: Array<number>) {
+          rects.push({
+            args,
+            color: this.fillStyle,
+          })
+        },
+        fillText: (...args: Array<unknown>) => texts.push(args),
+        drawImage: (...args: Array<unknown>) => images.push(args),
+        measureText: () => ({width: 240}),
+      }
+      const exhibit = {
+        ...knotExhibition[0],
+        harness: undefined,
+        author: {model: {title: knotExhibition[0].modelTitle}},
+      }
+      const icon = {
+        naturalWidth: 256,
+        naturalHeight: 128,
+      } as HTMLImageElement
+      drawLabel(context as unknown as CanvasRenderingContext2D, exhibit, x, y, icon)
+      expect(fonts).toEqual([labelFonts.number, labelFonts.title, labelFonts.model])
+      expect(rects).toEqual([
+        {
+          args: [x, y, labelWidth, labelHeight],
+          color: labelBackground,
+        },
+        {
+          args: [x + 38, y + 41, 644, 8],
+          color: exhibit.accent,
+        },
+      ])
+      const {left} = modelLineLayout(240, true)
+      expect(images).toEqual([[icon, x + left, y + 351.5, 50, 25]])
+      expect(texts).toEqual([
+        [exhibit.label, x + labelWidth / 2, y + 132, 644],
+        [exhibit.title, x + labelWidth / 2, y + 225, 644],
+        [exhibit.modelTitle, x + left + 65, y + 364, 240],
+      ])
     }
-    drawTitleSticker(titleContext, exhibit, titleStickerWidth, titleStickerHeight)
-    expect(titleFonts).toEqual(['600 70px main', '600 42px main'])
-    expect(titleRects).toEqual([[titleStickerWidth, titleStickerHeight, titleStickerWidth, titleStickerHeight]])
-    expect(titleText.map(line => line[0])).toEqual([exhibit.label, exhibit.title])
-    const creatorText: Array<Array<unknown>> = []
-    const images: Array<Array<unknown>> = []
-    const creatorFonts: Array<string> = []
-    const creatorContext = {
-      set font(value: string) {
-        creatorFonts.push(value)
-      },
-      fillRect() {},
-      fillText: (...args: Array<unknown>) => creatorText.push(args),
-      drawImage: (...args: Array<unknown>) => images.push(args),
-      measureText: () => ({width: 240}),
-    } as unknown as CanvasRenderingContext2D
-    const icon = {
-      naturalWidth: 256,
-      naturalHeight: 128,
-    } as HTMLImageElement
-    drawCreatorSticker(creatorContext, exhibit, creatorStickerWidth, creatorStickerHeight, icon)
-    expect(creatorFonts).toEqual(['32px main'])
-    const {left} = modelLineLayout(240, true)
-    expect(images).toEqual([[icon, creatorStickerWidth + left, creatorStickerHeight + 21, 40, 20]])
-    expect(creatorText).toEqual([[exhibit.modelTitle, creatorStickerWidth + left + 52, creatorStickerHeight + 31, 240]])
   })
   test('formats harness and thinking effort with flattenString.list semantics', () => {
     const cases = [
@@ -161,13 +160,13 @@ describe('Knot model plates', () => {
           },
         },
       }
-      drawCreatorSticker(context as unknown as CanvasRenderingContext2D, exhibit, 0, 0)
-      expect(lines).toHaveLength(expected ? 2 : 1)
+      drawLabel(context as unknown as CanvasRenderingContext2D, exhibit, 0, 0)
+      expect(lines).toHaveLength(expected ? 4 : 3)
       expect(lines[0].args[1]).toBeGreaterThanOrEqual(0)
       if (expected) {
-        expect(lines[1]).toEqual({
-          args: [expected, creatorStickerWidth / 2, 72, creatorStickerWidth - 24],
-          font: '24px main',
+        expect(lines[3]).toEqual({
+          args: [expected, labelWidth / 2, 414, 606],
+          font: labelFonts.detail,
           align: 'center',
         })
       }

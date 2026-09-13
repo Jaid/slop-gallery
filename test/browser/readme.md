@@ -17,3 +17,11 @@ bun test/browser/run.ts progressiveMaterials.ts
 ```
 
 This fixture uses real Captured Tempest shading. It renders placeholders while two native asynchronous material pipelines compile and checks that activation does not synchronously compile a full-material variant. It also checks WebGPU validation and deferred resource cleanup. Cached driver results are not cold-start benchmarks.
+
+For full-size nameplate atlas uploads, instanced UV row boundaries and late material invalidation:
+
+```sh
+bun test/browser/run.ts knotLabels.ts
+```
+
+This fixture uploads a 7200 × 8160 canvas atlas and checks the accent and background pixels of its first, row-boundary and final populated tiles. It does not interact with the live gallery.
