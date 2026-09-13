@@ -134,3 +134,38 @@ test('real preparation failures propagate without allocating a placeholder', asy
   }, (new AbortController).signal)).rejects.toBe(failure)
   expect(fixture.createElement).not.toHaveBeenCalled()
 })
+test('prepared inputs are released after success, cancellation and draw failure', async () => {
+  const release = mock(() => {})
+  const success = await prepareCanvasTexture({
+    width: 4,
+    height: 2,
+    prepare: async () => 'success',
+    disposeInputs: release,
+    draw() {},
+  }, (new AbortController).signal)
+  expect(release).toHaveBeenCalledWith('success')
+  success!.dispose()
+  const controller = new AbortController
+  const gate = Promise.withResolvers<string>()
+  const cancelled = prepareCanvasTexture({
+    width: 4,
+    height: 2,
+    prepare: () => gate.promise,
+    disposeInputs: release,
+    draw() {},
+  }, controller.signal)
+  controller.abort()
+  gate.resolve('cancelled')
+  expect(await cancelled).toBeNull()
+  expect(release).toHaveBeenCalledWith('cancelled')
+  await expect(prepareCanvasTexture({
+    width: 4,
+    height: 2,
+    prepare: async () => 'failed draw',
+    disposeInputs: release,
+    draw() {
+      throw new Error('draw failed')
+    },
+  }, (new AbortController).signal)).rejects.toThrow('draw failed')
+  expect(release).toHaveBeenCalledWith('failed draw')
+})

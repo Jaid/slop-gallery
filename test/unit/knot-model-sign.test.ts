@@ -3,7 +3,7 @@ import {expect, test} from 'bun:test'
 import RAPIER from '@dimforge/rapier3d-compat'
 import {Quaternion, Vector3} from 'three/webgpu'
 
-import drawFace, {modelSignTextureSize} from '../../src/components/levels/knottingham/KnotModelSign/drawFace.ts'
+import drawFace, {modelSignFontSize, modelSignTextureSize} from '../../src/components/levels/knottingham/KnotModelSign/drawFace.ts'
 import {knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 import KnotModelSignGeometry from '../../src/lib/knots/KnotModelSignGeometry.ts'
@@ -94,7 +94,9 @@ test('large physical signs have two ceiling mounts, bounded chain geometry and r
     geometry.dispose()
   }
 })
-test('printed faces contain a fitted model name and proportional icon, without exhibit numbers', () => {
+test('printed faces use a compact raster with fitted model name and proportional icon, without exhibit numbers', () => {
+  expect(modelSignTextureSize).toEqual([1024, 246])
+  expect(modelSignTextureSize[0] * modelSignTextureSize[1] * 4 * 12).toBeLessThan(12 * 1024 ** 2)
   for (const withIcon of [true, false]) {
     const text: Array<Array<unknown>> = []
     const images: Array<Array<unknown>> = []
@@ -117,10 +119,10 @@ test('printed faces contain a fitted model name and proportional icon, without e
     expect(text).toHaveLength(1)
     expect(text[0][0]).toBe('A very long model name')
     expect(text[0][2]).toBe(modelSignTextureSize[1] / 2)
-    expect(Number.parseInt(fonts[1].split(' ')[1], 10)).toBeLessThan(190)
+    expect(Number.parseInt(fonts[1].split(' ')[1], 10)).toBeLessThan(modelSignFontSize)
     expect(images).toHaveLength(withIcon ? 1 : 0)
     if (withIcon) {
-      expect(images[0]).toEqual([icon, 90, (modelSignTextureSize[1] - 150) / 2, 300, 150])
+      expect(images[0]).toEqual([icon, 45, (modelSignTextureSize[1] - 75) / 2, 150, 75])
     }
   }
 })

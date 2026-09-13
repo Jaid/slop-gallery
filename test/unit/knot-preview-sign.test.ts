@@ -1,22 +1,19 @@
-import type {ReactElement} from 'react'
-
-type Element = ReactElement<{children?: Element | Array<Element>
-  color?: string
-  map?: {image: {height: number
-    width: number}}
-  text?: string}>
-
 import {expect, test} from 'bun:test'
-import {resolve} from 'node:path'
 
-import {knotPreviewGrid, knotPreviewMaximumHeight, knotPreviewMaximumWidth, knotPreviewTile} from '../../src/lib/knots/KnotPreviewLayout.ts'
+import drawPreview, {knotPreviewBackground} from '../../src/components/levels/knottingham/KnotPreviewSigns/drawPreview.ts'
+import {knotBays, knotNumberLabel} from '../../src/lib/knots/exhibition.ts'
+import {knotPreviewGrid, knotPreviewMaximumHeight, knotPreviewMaximumWidth, knotPreviewTextureLayout, knotPreviewTextureRowHeight, knotPreviewTextureWidth, knotPreviewTile} from '../../src/lib/knots/KnotPreviewLayout.ts'
 
-test('runtime billboard layout preserves the previous physical bounds without a combined texture', () => {
+test('runtime billboard layout preserves physical bounds and matches its raster aspect', () => {
   for (const count of [1, 4, 5, 17, 22]) {
     const grid = knotPreviewGrid(count)
+    const raster = knotPreviewTextureLayout(count)
     expect(grid.width).toBeLessThanOrEqual(knotPreviewMaximumWidth)
     expect(grid.height).toBeLessThanOrEqual(knotPreviewMaximumHeight)
     expect(grid.rows).toBe(Math.max(2, Math.ceil(count / 4)))
+    expect(grid.width / grid.height).toBeCloseTo(raster.width / raster.height)
+    expect(raster.width).toBe(knotPreviewTextureWidth)
+    expect(raster.height).toBe(raster.rows * knotPreviewTextureRowHeight)
     for (let index = 0; index < count; index++) {
       const tile = knotPreviewTile(count, index)
       expect(Math.abs(tile.x)).toBeLessThan(grid.width / 2)
@@ -24,63 +21,64 @@ test('runtime billboard layout preserves the previous physical bounds without a 
     }
   }
 })
-
-test('billboard tiles use each Knot icon and render their runtime number and title dynamically', async () => {
-  const entry = resolve(import.meta.dir, '../../src/components/levels/knottingham/KnotPreviewSigns/index.tsx')
-  const result = await Bun.build({
-    entrypoints: [entry],
-    target: 'bun',
-    define: {'process.env.NODE_ENV': JSON.stringify('production')},
-    plugins: [{
-      name: 'runtime-knot-preview-fixture',
-      setup(build) {
-        build.onResolve({filter: /^#/u}, ({path}) => ({path, namespace: 'fixture'}))
-        build.onLoad({filter: /.*/u, namespace: 'fixture'}, ({path}) => {
-          if (path.includes('gallery/actions')) {
-            return {contents: 'export const narrate = () => {}', loader: 'js'}
-          }
-          if (path.includes('knots/exhibition')) {
-            return {contents: 'export const knotPreviewX = -10; export const knotNumberLabel = n => "#" + String(n).padStart(2, "0")', loader: 'js'}
-          }
-          if (path.includes('KnotPreviewLayout')) {
-            return {contents: 'export const knotPreviewGrid = () => ({width:4.8,height:2.75,tileWidth:1.2,rowHeight:1.375,columns:4,rows:2}); export const knotPreviewTile = () => ({width:4.8,height:2.75,tileWidth:1.2,rowHeight:1.375,columns:4,rows:2,x:0,y:0})', loader: 'js'}
-          }
-          if (path.includes('useArtworkTexture')) {
-            return {contents: 'export default source => ({texture:{uuid:source,image:{width:200,height:100}},failed:false})', loader: 'js'}
-          }
-          return {contents: 'export default function Stub(props){ return props }', loader: 'js'}
-        })
-      },
-    }],
+test('one runtime atlas per candidate keeps the complete preview population below 80 MiB', () => {
+  const bytes = knotBays.reduce((total, bay) => {
+    const raster = knotPreviewTextureLayout(bay.finishes.length)
+    return total + raster.width * raster.height * 4
+  }, 0)
+  expect(bytes).toBeLessThan(80 * 1024 ** 2)
+  expect(knotBays.every(bay => bay.finishes.length > 0)).toBe(true)
+})
+test('candidate atlas draws dynamic numbers, titles, accents and image fallbacks in one surface', () => {
+  const bay = knotBays[0]
+  const layout = knotPreviewTextureLayout(bay.finishes.length)
+  const fills: Array<{args: Array<number>
+    style: string}> = []
+  const texts: Array<{args: Array<unknown>
+    style: string}> = []
+  const images: Array<Array<unknown>> = []
+  let fillStyle = ''
+  const context = {
+    canvas: {
+      width: layout.width,
+      height: layout.height,
+    },
+    font: '',
+    textAlign: '',
+    textBaseline: '',
+    get fillStyle() {
+      return fillStyle
+    },
+    set fillStyle(value: string) {
+      fillStyle = value
+    },
+    fillRect: (...args: Array<number>) => fills.push({
+      args,
+      style: fillStyle,
+    }),
+    drawImage: (...args: Array<unknown>) => images.push(args),
+    measureText: () => ({width: 180}),
+    fillText: (...args: Array<unknown>) => texts.push({
+      args,
+      style: fillStyle,
+    }),
+  } as unknown as CanvasRenderingContext2D
+  const bitmap = {
+    width: 200,
+    height: 100,
+  } as ImageBitmap
+  const bitmaps = new Map([[bay.finishes[0].icon, bitmap]])
+  drawPreview(context, bay, bitmaps)
+  expect(fills[0]).toEqual({
+    args: [0, 0, layout.width, layout.height],
+    style: knotPreviewBackground,
   })
-  expect(result.success).toBe(true)
-  const source = await result.outputs[0].text()
-  const module = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64')) as {
-    KnotPreviewTile: (props: {count: number
-      finish: {accent: string
-        icon: string
-        id: string
-        number: number
-        title: string}
-      index: number}) => ReactElement
+  expect(images).toHaveLength(1)
+  expect(images[0][0]).toBe(bitmap)
+  expect(fills.filter(fill => fill.style === '#5d2929')).toHaveLength(bay.finishes.length - 1)
+  expect(texts).toHaveLength(bay.finishes.length)
+  for (const [index, finish] of bay.finishes.entries()) {
+    expect(texts[index].args[0]).toBe(`${knotNumberLabel(finish.number)} · ${finish.title}`)
+    expect(texts[index].style).toBe(finish.accent)
   }
-  const finish = {
-    accent: '#abcdef',
-    icon: 'knot-icon.jxl',
-    id: 'model/example',
-    number: 7,
-    title: 'Example Knot',
-  }
-  const tile = module.KnotPreviewTile({
-    count: 1,
-    finish,
-    index: 0,
-  }) as Element
-  const children = tile.props.children as Array<Element>
-  const icon = children[0]
-  const caption = children[1]
-  const material = (icon.props.children as Array<Element>)[1]
-  expect(material.props.map!.image).toEqual({width: 200, height: 100})
-  expect(caption.props.text).toBe('#07 \u00B7 Example Knot')
-  expect(caption.props.color).toBe('#abcdef')
 })

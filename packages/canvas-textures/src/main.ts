@@ -1,3 +1,5 @@
+export {closeCanvasBitmaps, default as loadCanvasBitmaps} from './loadCanvasBitmaps.ts'
+export type {CanvasBitmapLoadError} from './loadCanvasBitmaps.ts'
 export {default as loadCanvasFonts} from './loadCanvasFonts.ts'
 export {default as rasterizeCanvas} from './rasterizeCanvas.ts'
 export {default} from './ReadbackCanvas.ts'

@@ -16,7 +16,7 @@ import KnotModelSignGeometry from '#src/lib/knots/KnotModelSignGeometry.ts'
 import loadModelIcons from '#src/lib/knots/loadModelIcons.ts'
 import {knotModelSign, modelSignSuspensionCenter, modelSignSuspensionHeight} from '#src/lib/physics/knotModelSign.ts'
 
-import drawFace, {modelSignBackground, modelSignTextureSize} from './drawFace.ts'
+import drawFace, {modelSignBackground, modelSignFontSize, modelSignTextureSize} from './drawFace.ts'
 
 export default function KnotModelSign({bay}: {bay: KnotBay}) {
   const anchor = useRef<RapierRigidBody>(null!)
@@ -44,7 +44,7 @@ export default function KnotModelSign({bay}: {bay: KnotBay}) {
         loadModelIcons([bay.icon]),
         loadCanvasFonts([
           {
-            font: '600 190px main',
+            font: `600 ${modelSignFontSize}px main`,
             text: bay.title,
           },
         ]),

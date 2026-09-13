@@ -18,16 +18,20 @@ export default async function prepareCanvasTexture<T>(recipe: CanvasTextureRecip
     }
     throw error
   }
-  if (cancelled()) {
-    return null
+  try {
+    if (cancelled()) {
+      return null
+    }
+    const texture = renderCanvasTexture({
+      ...recipe,
+      draw: context => recipe.draw(context, inputs),
+    })
+    if (cancelled()) {
+      texture.dispose()
+      return null
+    }
+    return texture
+  } finally {
+    recipe.disposeInputs?.(inputs)
   }
-  const texture = renderCanvasTexture({
-    ...recipe,
-    draw: context => recipe.draw(context, inputs),
-  })
-  if (cancelled()) {
-    texture.dispose()
-    return null
-  }
-  return texture
 }
