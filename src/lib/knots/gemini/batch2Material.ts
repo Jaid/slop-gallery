@@ -8,6 +8,9 @@ import {cameraPosition,
   mx_cell_noise_float,
   mx_fractal_noise_float,
   mx_noise_float,
+  mx_noise_vec3,
+  mx_worley_noise_float,
+  mx_worley_noise_vec3,
   negateOnBackSide,
   normalLocal,
   normalViewGeometry, positionGeometry,
@@ -262,10 +265,13 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
              */
       case 'magma_chrysalis': {
         const {p, near} = viewerFrame()
-                // Voronoi tectonic rift partition
-        const cell = mx_cell_noise_float(p.mul(8.5))
-        const fissure = cell.smoothstep(0.1, 0.24).oneMinus()
-        const fissureCore = cell.smoothstep(0.03, 0.12).oneMinus()
+                // Irregular Voronoi tectonic plates: F2 - F1 approaches zero at cell boundaries.
+                // A low-frequency vector warp breaks the remaining cellular regularity without moving the cracks over time.
+        const fractureWarp = mx_noise_vec3(p.mul(2.3).add(vec3(17.3, 3.1, 8.7))).mul(0.72)
+        const fractureDistances = mx_worley_noise_vec3(p.mul(7.4).add(fractureWarp), 1, 0)
+        const fractureBoundary = fractureDistances.y.sub(fractureDistances.x)
+        const fissure = fractureBoundary.smoothstep(0.035, 0.16).oneMinus()
+        const fissureCore = fractureBoundary.smoothstep(0.012, 0.055).oneMinus()
                 // True vertex silhouette displacement: basalt plates lift up while magma chasms sink
         const crustLift = fissure.oneMinus().mul(0.018)
         this.positionNode = positionGeometry.add(normalLocal.mul(crustLift))
@@ -279,8 +285,12 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
         this.metalness = 0.08
         this.roughnessNode = mix(float(0.92), float(0.18), fissure)
         this.normalNode = proceduralNormal(fissure.mul(1.8).add(mx_noise_float(p.mul(28)).mul(0.2)), 0.0035)
-                // Cooling cinder embers scattered across the crust
-        const embers = mx_cell_noise_float(p.mul(45)).smoothstep(0.965, 0.99).mul(color('#ff4500')).mul(2.5)
+                // Cooling cinder embers: the nearest Worley feature supplies both a compact round core and a per-site random gate.
+        const emberSample = p.mul(45)
+        const emberDistance = mx_worley_noise_float(emberSample, 1, 0)
+        const emberGate = mx_worley_noise_float(emberSample, 1, 1).smoothstep(0.965, 0.99)
+        const emberCore = emberDistance.smoothstep(0.025, 0.12).oneMinus().mul(emberGate)
+        const embers = emberCore.mul(color('#ff4500')).mul(2.5)
         const magmaRadiance = magmaColor.mul(fissure).mul(heat.mul(4.5).add(1.2))
         this.emissiveNode = magmaRadiance.add(embers).mul(near.mul(0.6).add(0.5))
         break
