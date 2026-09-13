@@ -25,7 +25,7 @@ const up = new Vector3(0, 1, 0)
 export default function Interaction() {
   const {camera, renderer, controls} = useThree()
   const ghost = useRef<Group>(null)
-  const ray = useRef(new Raycaster)
+  const ray = useRef(Object.assign(new Raycaster, {firstHitOnly: true}))
   const placement = useRef<Placement | null>(null)
   const direction = useRef(new Vector3)
   const cursor = useRef(new Vector2)

@@ -1,14 +1,18 @@
+import {useThree} from '@react-three/fiber/webgpu'
 import {CuboidCollider, useBeforePhysicsStep} from '@react-three/rapier'
-import {useEffect, useMemo} from 'react'
+import useDisposable from 'disposable-lifetime/react'
+import {useMemo} from 'react'
 import constructors from 'virtual:knot-exhibition-materials'
 
 import KnotLabels from '#component/levels/knottingham/KnotLabels'
 import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
 import {knotExhibition, knotFloatHeight} from '#src/lib/knots/exhibition.ts'
-import KnotResources from '#src/lib/knots/KnotResources.ts'
+import ProgressiveKnotMaterials from '#src/lib/knots/ProgressiveKnotMaterials.ts'
 import KnotRotation from '#src/lib/physics/KnotRotation.ts'
 
 export default function KnotExhibition() {
+  const camera = useThree(state => state.camera)
+  const renderer = useThree(state => state.renderer)
   const rotation = useMemo(() => new KnotRotation, [])
   useBeforePhysicsStep(world => {
     for (const exhibit of knotExhibition) {
@@ -18,17 +22,17 @@ export default function KnotExhibition() {
       }
     }
   })
-  const resources = useMemo(() => new KnotResources(knotExhibition, constructors), [])
-  useEffect(() => () => resources.dispose(), [resources])
+  const materials = useMemo(() => new ProgressiveKnotMaterials(renderer, camera, knotExhibition, constructors), [renderer, camera])
+  useDisposable(materials)
+  const {resources} = materials
   return <group name="lobby-knot-exhibition">
     <KnotLabels/>
     {knotExhibition.map((finish, index) => {
-      const {geometry, material, colliderArgs, colliderPosition} = resources.items[index]
+      const {geometry, colliderArgs, colliderPosition} = resources.items[index]
       return <GrabbableProp key={finish.id} id={`prop-knot-${finish.id}`} title={`${finish.label} · ${finish.title} · ${finish.modelTitle}`} colliders={false} type="fixed" rotation={[0, finish.rotation, 0]} position={[finish.position[0], knotFloatHeight, finish.position[2]]}>
         <CuboidCollider args={colliderArgs} position={colliderPosition}/>
-        <mesh name={`knot-${finish.id}`} castShadow receiveShadow>
+        <mesh ref={materials.refs[index]} onBeforeRender={materials.observers[index]} material={materials.placeholder} name={`knot-${finish.id}`} raycast={resources.raycast} castShadow receiveShadow>
           <primitive object={geometry} attach="geometry"/>
-          <primitive object={material} attach="material"/>
         </mesh>
       </GrabbableProp>
     })}

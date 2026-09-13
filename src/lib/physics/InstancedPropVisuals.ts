@@ -6,21 +6,26 @@ import {Matrix4} from 'three/webgpu'
 export default class InstancedPropVisuals {
   private readonly inverse = new Matrix4
   private readonly matrix = new Matrix4
+  private readonly objects: Array<Object3D | undefined> = []
   private readonly previous = new Matrix4
 
   constructor(readonly meshes: ReadonlyArray<InstancedMesh>, readonly ids: ReadonlyArray<string>) {}
 
   update(resolve: (id: string) => Object3D | undefined) {
+    // One source transform feeds every visual layer of the same prop.
+    for (const [index, id] of this.ids.entries()) {
+      const object = resolve(id)
+      object?.updateWorldMatrix(true, false)
+      this.objects[index] = object
+    }
     for (const mesh of this.meshes) {
       mesh.updateWorldMatrix(true, false)
       this.inverse.copy(mesh.matrixWorld).invert()
       let updated = false
-      for (const [index, id] of this.ids.entries()) {
-        const object = resolve(id)
+      for (const [index, object] of this.objects.entries()) {
         if (!object) {
           continue
         }
-        object.updateWorldMatrix(true, false)
         this.matrix.multiplyMatrices(this.inverse, object.matrixWorld)
         // Instance buffers use float32. Compare at that precision so sleeping props
         // do not trigger uploads and bounding-volume rebuilds on every frame.

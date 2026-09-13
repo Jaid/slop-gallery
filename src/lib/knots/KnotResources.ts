@@ -1,10 +1,13 @@
 import type {KnotEntry, KnotMaterialConstructor} from './types.ts'
-import type {BufferGeometry, MeshPhysicalNodeMaterial} from 'three/webgpu'
+import type {BufferGeometry, Mesh, MeshPhysicalNodeMaterial} from 'three/webgpu'
 
+import {MeshBVH} from 'three-mesh-bvh'
 import {Vector3} from 'three/webgpu'
 
 import {createKnotGeometry} from '../gallery/sculptures.ts'
 import StudioEnvironment from '../materials/StudioEnvironment.ts'
+
+export type KnotResourceEntry = Pick<KnotEntry, 'displacement' | 'id'>
 
 export default class KnotResources {
   readonly environment = new StudioEnvironment
@@ -12,13 +15,23 @@ export default class KnotResources {
     colliderPosition: [number, number, number]
     geometry: BufferGeometry
     material: MeshPhysicalNodeMaterial}>
+  readonly raycast: Mesh['raycast']
   private readonly geometries = new Map<number, BufferGeometry>
   private readonly materials: Array<MeshPhysicalNodeMaterial> = []
-  constructor(entries: ReadonlyArray<KnotEntry>, constructors: ReadonlyMap<string, KnotMaterialConstructor>) {
+  constructor(entries: ReadonlyArray<KnotResourceEntry>, constructors: ReadonlyMap<string, KnotMaterialConstructor>) {
     try {
       const base = createKnotGeometry()
       base.computeBoundingSphere()
       this.geometries.set(0, base)
+      // All displacement variants have identical CPU triangles. One indirect tree
+      // preserves index/face identities and the expanded culling/collider bounds.
+      const bounds = new MeshBVH(base, {
+        indirect: true,
+        setBoundingBox: false,
+      })
+      this.raycast = function (this: Mesh, raycaster, intersects) {
+        bounds.raycastObject3D(this, raycaster, intersects)
+      }
       this.items = entries.map(entry => {
         const displacement = entry.displacement ?? 0
         let geometry = this.geometries.get(displacement)

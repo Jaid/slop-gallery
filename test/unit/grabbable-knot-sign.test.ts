@@ -1,4 +1,4 @@
-import {expect, test} from 'bun:test'
+import {expect, mock, spyOn, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
 import {BoxGeometry, Euler, Group, InstancedMesh, Matrix4, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
@@ -120,6 +120,41 @@ test('instanced faces and supports follow prop transforms, even outside their or
   } finally {
     faces.dispose()
     supports.dispose()
+    geometry.dispose()
+    material.dispose()
+  }
+})
+test('instanced layers resolve and update each source once, including replacement and missing props', () => {
+  const geometry = new BoxGeometry
+  const material = new MeshBasicMaterial
+  const meshes = Array.from({length: 5}, () => new InstancedMesh(geometry, material, 1))
+  const first = new Group
+  const next = new Group
+  first.position.x = 2
+  next.position.x = 7
+  const update = spyOn(first, 'updateWorldMatrix')
+  const resolve = mock((): Group | undefined => first)
+  const visuals = new InstancedPropVisuals(meshes, ['prop'])
+  const matrix = new Matrix4
+  try {
+    visuals.update(resolve)
+    expect(resolve).toHaveBeenCalledTimes(1)
+    expect(update).toHaveBeenCalledTimes(1)
+    resolve.mockImplementation(() => next)
+    visuals.update(resolve)
+    for (const mesh of meshes) {
+      mesh.getMatrixAt(0, matrix)
+      expect(matrix.elements[12]).toBe(7)
+    }
+    const versions = meshes.map(mesh => mesh.instanceMatrix.version)
+    resolve.mockImplementation(() => {})
+    visuals.update(resolve)
+    expect(meshes.map(mesh => mesh.instanceMatrix.version)).toEqual(versions)
+  } finally {
+    update.mockRestore()
+    for (const mesh of meshes) {
+      mesh.dispose()
+    }
     geometry.dispose()
     material.dispose()
   }

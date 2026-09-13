@@ -16,12 +16,14 @@ const paths: Record<string, string> = {
   'react/jsx-dev-runtime': '/node_modules/.vite/deps/react_jsx-dev-runtime.js',
   'react/jsx-runtime': '/node_modules/.vite/deps/react_jsx-runtime.js',
   'react-dom/client': '/node_modules/.vite/deps/react-dom_client.js',
+  'three-mesh-bvh': '/node_modules/.vite/deps/three-mesh-bvh.js',
+  'three/tsl': '/node_modules/.vite/deps/three_tsl.js',
   'three/webgpu': '/node_modules/.vite/deps/three_webgpu.js',
   'disposable-lifetime/react': '/packages/disposable-lifetime/src/react/main.ts',
   'canvas-textures/three': '/packages/canvas-textures/src/three/main.ts',
 }
 const build = await Bun.build({
-  entrypoints: [fileURLToPath(new URL('canvasTextures.tsx', import.meta.url))],
+  entrypoints: [fileURLToPath(new URL(process.argv[2] ?? 'canvasTextures.tsx', import.meta.url))],
   target: 'browser',
   plugins: [
     {
@@ -84,7 +86,7 @@ try {
     throw new Error('The existing game page is unavailable.')
   }
   const result = await page.evaluate(async fixtureUrl => {
-    const {default: verify} = await import(fixtureUrl) as typeof import('./canvasTextures.tsx')
+    const {default: verify} = await import(fixtureUrl) as {default: () => Promise<unknown>}
     return verify()
   }, source)
   console.log(JSON.stringify(result, null, 2))
