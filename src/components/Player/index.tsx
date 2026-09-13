@@ -12,6 +12,7 @@ import {cameraPose, galleryEvents, markControlled, narrate, useGallery} from '#s
 import {activateInteractiveObject} from '#src/lib/gallery/interactiveObjects.ts'
 import {playerSession, playerSpawn} from '#src/lib/gallery/PlayerSession.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
+import {setPlayerZoom} from '#src/lib/rendering/playerView.ts'
 import {playerTelemetry} from '#src/lib/telemetry/index.ts'
 import recordPlayerDump from '#src/lib/telemetry/recordPlayerDump.ts'
 
@@ -104,5 +105,5 @@ export default function Player() {
       }
     }
   }
-  return <EgoPlayer ref={player} fallbackPosition={playerSpawn.position} position={initial.position} yaw={initial.yaw} pitch={initial.pitch} input={input} enabled={enabled} cameraEnabled={cameraEnabled} pointerLock={pointerLock} onDump={recordPlayerDump} onInteract={onInteract} onInput={markControlled} onStep={onStep} onUpdate={onUpdate}/>
+  return <EgoPlayer ref={player} fallbackPosition={playerSpawn.position} position={initial.position} yaw={initial.yaw} pitch={initial.pitch} input={input} enabled={enabled} cameraEnabled={cameraEnabled} pointerLock={pointerLock} onDump={recordPlayerDump} onInteract={onInteract} onInput={markControlled} onZoomChange={setPlayerZoom} onStep={onStep} onUpdate={onUpdate}/>
 }

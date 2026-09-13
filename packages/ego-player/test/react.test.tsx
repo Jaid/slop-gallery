@@ -119,8 +119,10 @@ test('React lifecycle preserves the motor, camera ownership and ref contract wit
     expect(state.camera.position.y).toBeCloseTo(body.translation().y + 1.6)
     let interactions = 0
     const dumps: Array<EgoDump> = []
+    const zoomAmounts: Array<number> = []
     const actions = {
       zoomTransition: 0,
+      onZoomChange: (amount: number) => zoomAmounts.push(amount),
       onInteract: () => interactions++,
       onDump: (dump: EgoDump) => {
         dumps.push(dump)
@@ -138,9 +140,11 @@ test('React lifecycle preserves the motor, camera ownership and ref contract wit
     expect(interactions).toBe(1)
     expect(dumps).toHaveLength(1)
     expect(dumps[0].camera.fov).toBe(Number(originalFov) / 2)
+    expect(zoomAmounts.at(-1)).toBe(1)
     keys = {}
     tick()
     expect('fov' in state.camera && state.camera.fov).toBe(originalFov)
+    expect(zoomAmounts.at(-1)).toBe(0)
     keys = {
       interact: true,
       dump: true,

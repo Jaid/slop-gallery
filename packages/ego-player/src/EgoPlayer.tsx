@@ -37,6 +37,8 @@ export type EgoPlayerProps = EgoOptions & {
   onStep?: (state: EgoState) => void
   /** Called after physics with a detached snapshot. */
   onUpdate?: (state: EgoState) => void
+  /** Called as the eased zoom changes. Zero is normal FOV and one is fully zoomed. */
+  onZoomChange?: (amount: number) => void
   /** Initial camera pitch in radians; updates intentionally reset camera orientation. */
   pitch?: number
   /** false omits look controls; an object customizes Drei’s pointer-lock controls. */
@@ -60,7 +62,7 @@ const initialPosition: EgoPosition = [0, 0.05, 0]
 const readToggle = (value: EgoToggle) => {
   return typeof value === 'function' ? value() : value
 }
-export default function EgoPlayer({cameraEnabled = true, children, enabled = true, fallbackPosition, input, onDump, onInteract, zoomFactor = 2, zoomTransition = 0.2, onInput, onStep, onUpdate, pitch = 0, pointerLock = true, position = initialPosition, ref, requirePointerLock = true, userData, yaw = 0, ...options}: EgoPlayerProps) {
+export default function EgoPlayer({cameraEnabled = true, children, enabled = true, fallbackPosition, input, onDump, onInteract, onZoomChange, zoomFactor = 2, zoomTransition = 0.2, onInput, onStep, onUpdate, pitch = 0, pointerLock = true, position = initialPosition, ref, requirePointerLock = true, userData, yaw = 0, ...options}: EgoPlayerProps) {
   const [defaultUserData] = useState(() => ({isPlayer: true}))
   if (!Number.isFinite(zoomFactor) || zoomFactor < 1) {
     throw new RangeError('ego-player: zoomFactor must be finite and at least 1.')
@@ -73,6 +75,20 @@ export default function EgoPlayer({cameraEnabled = true, children, enabled = tru
     dump: false,
   })
   const [zoom] = useState(() => new EgoZoom)
+  const zoomAmount = useRef(0)
+  const onZoomChangeRef = useRef(onZoomChange)
+  onZoomChangeRef.current = onZoomChange
+  const reportZoom = (amount: number) => {
+    if (amount === zoomAmount.current) {
+      return
+    }
+    zoomAmount.current = amount
+    onZoomChangeRef.current?.(amount)
+  }
+  const resetZoom = () => {
+    zoom.reset()
+    reportZoom(0)
+  }
   const bodyRef = useRef<RapierRigidBody>(null)
   const colliderRef = useRef<RapierCollider>(null)
   const motorRef = useRef<EgoMotor | null>(null)
@@ -88,7 +104,13 @@ export default function EgoPlayer({cameraEnabled = true, children, enabled = tru
       diagnostics.current = null
     }
   }, [scene, camera, onDump])
-  useEffect(() => () => zoom.reset(), [zoom, camera])
+  useEffect(() => () => {
+    zoom.reset()
+    if (zoomAmount.current !== 0) {
+      zoomAmount.current = 0
+      onZoomChangeRef.current?.(0)
+    }
+  }, [zoom, camera])
   const renderer = useThree(state => state.renderer)
   const {rapier, world} = useRapier()
   const resolved = resolveEgoOptions(options)
@@ -124,7 +146,7 @@ export default function EgoPlayer({cameraEnabled = true, children, enabled = tru
     camera.rotation.set(pitch, yaw, 0, 'YXZ')
   }, [camera, pitch, yaw])
   const applyTeleport = (destination: EgoPosition, rotation?: EgoRotation, writeCamera = true) => {
-    zoom.reset()
+    resetZoom()
     const motor = motorRef.current!
     motor.teleport(destination, fallbackPosition)
     const eyeHeight = motor.crouching ? resolved.crouchEyeHeight : resolved.eyeHeight
@@ -149,7 +171,7 @@ export default function EgoPlayer({cameraEnabled = true, children, enabled = tru
     initialized.current = true
   }
   useImperativeHandle(ref, () => ({
-    releaseZoom: () => zoom.reset(),
+    releaseZoom: resetZoom,
     get body() {
       return bodyRef.current
     },
@@ -209,7 +231,7 @@ export default function EgoPlayer({cameraEnabled = true, children, enabled = tru
     }
     const keys = input()
     const active = readToggle(enabled) && !keys.modifier && (!requirePointerLock || renderer.domElement.ownerDocument.pointerLockElement === renderer.domElement)
-    zoom.update(camera, active && readToggle(cameraEnabled) && !!keys.zoom, zoomFactor, zoomTransition, delta)
+    reportZoom(zoom.update(camera, active && readToggle(cameraEnabled) && !!keys.zoom, zoomFactor, zoomTransition, delta))
     if (active && keys.interact && !actionKeys.current.interact) {
       onInteract?.()
     }

@@ -3,10 +3,14 @@ import type {Camera} from 'three/webgpu'
 import {Easing, Tween} from '@tweenjs/tween.js'
 import {PerspectiveCamera} from 'three/webgpu'
 
-type ZoomTweenState = {fov: number}
+type ZoomTweenState = {
+  amount: number
+  fov: number
+}
 
 /** Owns only its own FOV writes; inspection cameras can take over without a stale restore. */
 export default class EgoZoom {
+  private amount = 0
   private camera?: PerspectiveCamera
   private original?: number
   private target?: number
@@ -21,6 +25,7 @@ export default class EgoZoom {
       this.camera.updateProjectionMatrix()
     }
     this.clear()
+    return this.amount
   }
 
   update(camera: Camera, held: boolean, factor: number, transition: number, delta: number) {
@@ -28,12 +33,11 @@ export default class EgoZoom {
       this.reset()
     }
     if (!(camera instanceof PerspectiveCamera)) {
-      this.reset()
-      return
+      return this.reset()
     }
     if (!this.camera) {
       if (!held) {
-        return
+        return this.amount
       }
       this.camera = camera
       this.original = camera.fov
@@ -41,15 +45,17 @@ export default class EgoZoom {
     }
     const target = held ? this.original! / factor : this.original!
     if (target !== this.target) {
-      this.retarget(target, transition)
+      this.retarget(target, held ? 1 : 0, transition)
     }
     if (Number.isFinite(delta) && delta > 0) {
       this.time += delta * 1000
       this.tween?.update(this.time)
     }
+    return this.amount
   }
 
   private clear() {
+    this.amount = 0
     this.camera = undefined
     this.original = undefined
     this.target = undefined
@@ -57,7 +63,7 @@ export default class EgoZoom {
     this.written = undefined
   }
 
-  private retarget(target: number, transition: number) {
+  private retarget(target: number, targetAmount: number, transition: number) {
     this.tween?.stop()
     this.tween = undefined
     this.target = target
@@ -65,18 +71,26 @@ export default class EgoZoom {
       return
     }
     if (transition === 0 || this.camera.fov === target) {
+      this.amount = targetAmount
       this.write(target)
       if (target === this.original) {
         this.clear()
       }
       return
     }
-    const state = {fov: this.camera.fov}
+    const state = {
+      amount: this.amount,
+      fov: this.camera.fov,
+    }
     const tween = new Tween(state, false)
-      .to({fov: target}, transition * 1000)
+      .to({
+        amount: targetAmount,
+        fov: target,
+      }, transition * 1000)
       .easing(Easing.Cubic.InOut)
-      .onUpdate(({fov}) => {
+      .onUpdate(({amount, fov}) => {
         if (this.tween === tween) {
+          this.amount = amount
           this.write(fov)
         }
       })
@@ -85,6 +99,7 @@ export default class EgoZoom {
           return
         }
         this.tween = undefined
+        this.amount = targetAmount
         this.write(target)
         if (target === this.original) {
           this.clear()

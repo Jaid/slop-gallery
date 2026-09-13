@@ -3,8 +3,11 @@ import {useEffect} from 'react'
 import {bloom} from 'three/addons/tsl/display/BloomNode.js'
 import {ao} from 'three/addons/tsl/display/GTAONode.js'
 import {smaa} from 'three/addons/tsl/display/SMAANode.js'
-import {float, length, mrt, normalView, output, pass, screenUV, smoothstep, vec3, vec4} from 'three/tsl'
+import {float, length, mrt, normalView, output, pass, screenUV, smoothstep, uniform, vec3, vec4} from 'three/tsl'
 import {RenderPipeline} from 'three/webgpu'
+
+import {getPlayerZoom} from '#src/lib/rendering/playerView.ts'
+import tiltShift from '#src/lib/rendering/tiltShift.ts'
 
 const Postprocessing = () => {
   const renderer = useThree(state => state.renderer)
@@ -27,16 +30,21 @@ const Postprocessing = () => {
     ambientOcclusion.radius.value = 0.3
     ambientOcclusion.scale.value = 0.85
     ambientOcclusion.samples.value = 16
+    const zoomAmount = uniform(0).onRenderUpdate(getPlayerZoom)
     const occluded = color.mul(vec4(vec3(ambientOcclusion.getTextureNode().r), 1))
-    const bloomPass = bloom(occluded, 0.18, 0.25, 1)
+    const {blurPass, node: shifted} = tiltShift(occluded, zoomAmount)
+    const bloomPass = bloom(shifted, 0.18, 0.25, 1)
     const edge = smoothstep(float(0.26), float(0.78), length(screenUV.sub(0.5)))
     const vignette = float(1).sub(edge.mul(0.2))
-    const antialias = smaa(occluded.add(bloomPass).mul(vec4(vec3(vignette), 1)))
+    const antialias = smaa(shifted.add(bloomPass).mul(vec4(vec3(vignette), 1)))
     pipeline.outputNode = antialias
     set({renderPipeline: pipeline})
     return () => {
-      set(state => state.renderPipeline === pipeline ? {renderPipeline: null} : {})
+      set(state => {
+        return state.renderPipeline === pipeline ? {renderPipeline: null} : {}
+      })
       antialias.dispose()
+      blurPass.dispose()
       ambientOcclusion.dispose()
       bloomPass.dispose()
       scenePass.dispose()

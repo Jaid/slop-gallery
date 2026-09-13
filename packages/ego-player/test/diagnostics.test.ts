@@ -8,13 +8,13 @@ import EgoZoom from '../src/EgoZoom.ts'
 test('zoom uses an eased reversible tween and does not overwrite another camera owner', () => {
   const camera = new PerspectiveCamera(62)
   const zoom = new EgoZoom
-  zoom.update(camera, true, 2, 0.2, 0.05)
+  expect(zoom.update(camera, true, 2, 0.2, 0.05)).toBeCloseTo(0.0625)
   expect(camera.fov).toBeCloseTo(60.0625)
-  zoom.update(camera, true, 2, 0.2, 0.05)
+  expect(zoom.update(camera, true, 2, 0.2, 0.05)).toBeCloseTo(0.5)
   expect(camera.fov).toBeCloseTo(46.5)
-  zoom.update(camera, false, 2, 0.2, 0.1)
+  expect(zoom.update(camera, false, 2, 0.2, 0.1)).toBeCloseTo(0.25)
   expect(camera.fov).toBeCloseTo(54.25)
-  zoom.update(camera, false, 2, 0.2, 0.1)
+  expect(zoom.update(camera, false, 2, 0.2, 0.1)).toBe(0)
   expect(camera.fov).toBe(62)
   zoom.update(camera, true, 2, 0, 0)
   expect(camera.fov).toBe(31)
