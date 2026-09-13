@@ -1,8 +1,9 @@
 import type {Node, Texture} from 'three/webgpu'
 
-import {color, float, mx_cell_noise_float, mx_noise_float, time, vec3} from 'three/tsl'
+import {color, float, mx_noise_float, time, vec3} from 'three/tsl'
 
 import KnotMaterial from '../../../base/KnotMaterial.ts'
+import {cellularPoints} from '../../../cellularField.ts'
 import {cosinePalette, viewerFrame} from '../../helpers.ts'
 import knotData from './data.ts'
 
@@ -35,7 +36,8 @@ export default class NebulaReliquaryMaterial extends KnotMaterial {
       glow = glow.add(tint.mul(density).mul(veil).mul(0.55 + core * 0.9))
       veil = veil.mul(density.mul(0.4).oneMinus().clamp())
     }
-    const embers = mx_cell_noise_float(p.sub(view.mul(0.12)).mul(60)).smoothstep(0.985, 0.99).mul(intimate)
+    // Compact inclusions at the original parallax depth, not luminous spatial cells.
+    const embers = cellularPoints(p.sub(view.mul(0.12)).mul(60), 0.025, 0.16, 0.7).mul(intimate)
     this.colorNode = color('#060309')
     this.metalness = 0
     this.roughness = 0.02

@@ -83,6 +83,14 @@ describe('Knot cellular fields', () => {
     expect(text).toContain('const beat = time.mul(1.6).fract()')
     expect(text).toContain("color('#ffcf7a').mul(embers).mul(1.2)")
   })
+  test('localizes Nebula Reliquary embers without changing its volume integration', async () => {
+    const text = await source('fable/items/nebula_reliquary/material.ts')
+    expect(text).toContain('cellularPoints(p.sub(view.mul(0.12)).mul(60), 0.025, 0.16, 0.7).mul(intimate)')
+    expect(text).not.toContain('mx_cell_noise_float')
+    expect(text).toContain('const steps = 8')
+    expect(text).toContain('const q = p.add(dir.mul(chord.mul(t)))')
+    expect(text).toContain("color('#fff1c8').mul(embers).mul(1.5)")
+  })
   test('uses continuous solar granulation and genuine Voronoi fractures', async () => {
     for (const id of ['cryogenic_kintsugi', 'chromospheric_spicule']) {
       const text = await finish('gemini/batch3Material.ts', id)
