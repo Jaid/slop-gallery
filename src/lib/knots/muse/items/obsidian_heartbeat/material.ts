@@ -1,8 +1,9 @@
 import type {Texture} from 'three/webgpu'
 
-import {color, mix, mx_cell_noise_float, mx_noise_float, mx_worley_noise_float, time, vec3} from 'three/tsl'
+import {color, mix, mx_noise_float, mx_worley_noise_float, time, vec3} from 'three/tsl'
 
 import KnotMaterial from '../../../base/KnotMaterial.ts'
+import {cellularPoints} from '../../../cellularField.ts'
 import {filament, proceduralNormal, viewerFrame} from '../../helpers.ts'
 import knotData from './data.ts'
 
@@ -33,7 +34,8 @@ export default class ObsidianHeartbeatMaterial extends KnotMaterial {
     this.clearcoatRoughness = 0.03
     this.envMapIntensity = 1.2
     this.normalNode = proceduralNormal(wLarge1.mul(0.4).add(flow.mul(0.4)), 0.0012)
-    const emberCell = mx_cell_noise_float(p.sub(view.mul(0.1)).mul(52)).smoothstep(0.972, 0.99).mul(intimate.mul(0.8).add(0.2))
-    this.emissiveNode = lava.mul(cracks).mul(3.2).mul(facing.mul(0.6).add(0.4)).mul(near.mul(0.4).add(0.8)).add(color('#ff8a00').mul(emberCell).mul(2.5)).add(color('#ff2a00').mul(rim).mul(0.35)).add(color('#4a0d00').mul(grazing.pow(2)).mul(0.3))
+    // Compact embers at their original interior depth, not entire glowing cells.
+    const embers = cellularPoints(p.sub(view.mul(0.1)).mul(52), 0.035, 0.2, 0.6).mul(intimate.mul(0.8).add(0.2))
+    this.emissiveNode = lava.mul(cracks).mul(3.2).mul(facing.mul(0.6).add(0.4)).mul(near.mul(0.4).add(0.8)).add(color('#ff8a00').mul(embers).mul(2.5)).add(color('#ff2a00').mul(rim).mul(0.35)).add(color('#4a0d00').mul(grazing.pow(2)).mul(0.3))
   }
 }

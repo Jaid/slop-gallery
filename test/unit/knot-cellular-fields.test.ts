@@ -91,6 +91,14 @@ describe('Knot cellular fields', () => {
     expect(text).toContain('const q = p.add(dir.mul(chord.mul(t)))')
     expect(text).toContain("color('#fff1c8').mul(embers).mul(1.5)")
   })
+  test('localizes Obsidian Heartbeat embers without replacing its continuous fractures', async () => {
+    const text = await source('muse/items/obsidian_heartbeat/material.ts')
+    expect(text).toContain('cellularPoints(p.sub(view.mul(0.1)).mul(52), 0.035, 0.2, 0.6).mul(intimate.mul(0.8).add(0.2))')
+    expect(text).not.toContain('mx_cell_noise_float')
+    expect(text).toContain('const crackLarge = filament(wLarge1.sub(wLarge2), 0.035)')
+    expect(text).toContain('const crackFine = filament(wFine1.sub(wFine2), 0.02)')
+    expect(text).toContain("color('#ff8a00').mul(embers).mul(2.5)")
+  })
   test('uses continuous solar granulation and genuine Voronoi fractures', async () => {
     for (const id of ['cryogenic_kintsugi', 'chromospheric_spicule']) {
       const text = await finish('gemini/batch3Material.ts', id)
