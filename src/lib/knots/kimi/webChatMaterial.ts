@@ -1,7 +1,7 @@
 import type {Node, Texture} from 'three/webgpu'
 
 import * as tsl from 'three/tsl'
-import {cameraPosition, color, float, mix, modelWorldMatrixInverse, mx_cell_noise_float, mx_fractal_noise_float, mx_noise_float, mx_worley_noise_float, negateOnBackSide, normalLocal, normalViewGeometry, positionGeometry, positionView, positionViewDirection, time, transformNormalToView, uv, vec2, vec3, vec4} from 'three/tsl'
+import {cameraPosition, color, float, mix, modelWorldMatrixInverse, mx_fractal_noise_float, mx_noise_float, mx_worley_noise_float, negateOnBackSide, normalLocal, normalViewGeometry, positionGeometry, positionView, positionViewDirection, time, transformNormalToView, uv, vec2, vec3, vec4} from 'three/tsl'
 import {MeshPhysicalNodeMaterial} from 'three/webgpu'
 
 import {cellularPoints} from '../cellularField.ts'
@@ -193,7 +193,8 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
         const heat = thump.mul(0.8).add(0.6).add(near.mul(0.35))
         const deepGlow = mx_noise_float(p.sub(view.mul(0.2)).mul(4)).mul(0.5).add(0.5)
         const lava = mix(color('#ff2d00'), color('#ffc23d'), cracksWide.pow(2).mul(heat).add(deepGlow.mul(0.3)).clamp())
-        const embers = mx_cell_noise_float(p.mul(90).add(vec3(0, time.mul(0.35), 0))).smoothstep(0.985, 0.995).mul(intimate)
+        // Round drifting embers rather than illuminated spatial cells.
+        const embers = cellularPoints(p.mul(90).add(vec3(0, time.mul(0.35), 0)), 0.025, 0.16, 0.7).mul(intimate)
         this.colorNode = mix(color('#0b0909'), color('#2b1d18'), crust.mul(0.5).add(0.5).pow(2))
         this.metalness = 0
         this.roughnessNode = crust.mul(0.5).add(0.5).mul(0.35).add(0.55).sub(crackMask.mul(0.3)).clamp()

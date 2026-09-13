@@ -43,6 +43,7 @@ describe('Knot cellular fields', () => {
       ['grok/webChatMaterial.ts', 'ion_wake'],
       ['deepseek/webChatMaterial.ts', 'abyssal_cathedral'],
       ['kimi/webChatMaterial.ts', 'harlequin_opal'],
+      ['kimi/webChatMaterial.ts', 'magma_heart'],
       ['qwen/webChatMaterial.ts', 'eventide_silk'],
       ['muse/webChatMaterial.ts', 'nocturne_opal'],
     ]
@@ -74,6 +75,13 @@ describe('Knot cellular fields', () => {
     expect(text).toContain('const sparkleMask = cellularPoints(q, 0.07, 0.24, 0.3)')
     expect(text).toContain('.mul(sparkleGlint).mul(sparkleMask)')
     expect(text).toContain('this.iridescenceThicknessNode = microRibs.mul(190).add(370)')
+  })
+  test('retains Magma Heart ember drift, proximity gating and its pulsing lava field', async () => {
+    const text = await finish('kimi/webChatMaterial.ts', 'magma_heart')
+    expect(text).toContain('cellularPoints(p.mul(90).add(vec3(0, time.mul(0.35), 0)), 0.025, 0.16, 0.7).mul(intimate)')
+    expect(text).toContain('const cracksWide = filament(crackFieldA, 0.1)')
+    expect(text).toContain('const beat = time.mul(1.6).fract()')
+    expect(text).toContain("color('#ffcf7a').mul(embers).mul(1.2)")
   })
   test('uses continuous solar granulation and genuine Voronoi fractures', async () => {
     for (const id of ['cryogenic_kintsugi', 'chromospheric_spicule']) {
