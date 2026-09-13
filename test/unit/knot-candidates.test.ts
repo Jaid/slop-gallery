@@ -141,18 +141,18 @@ describe('arbitrary Knot batches', () => {
     })
   })
 
-  test('filters candidates, caps shots and enumerates only after final selection', () => {
-    const bays = selectKnotBays('?candidates=glm,gemini&shots=2')
-    expect(bays.map(bay => bay.candidate.data.id)).toEqual(['gemini', 'glm'])
-    expect(bays.flatMap(bay => bay.finishes)).toHaveLength(4)
+  test('filters models, caps shots and enumerates only after final selection', () => {
+    const bays = selectKnotBays('?models=glm,muse,qwen,astra&shots=2')
+    expect(bays.map(bay => bay.candidate.data.id)).toEqual(['astra', 'glm', 'qwen', 'muse'])
+    expect(bays.flatMap(bay => bay.finishes)).toHaveLength(8)
     expect(bays.every(bay => bay.finishes.length === 2 && bay.finishes.every(entry => entry.model === bay.candidate.data.id))).toBe(true)
     const numbered = enumerateKnotBays(bays)
-    expect(numbered.flatMap(bay => bay.finishes.map(entry => entry.number))).toEqual([1, 2, 3, 4])
-    const astra = enumerateKnotBays(selectKnotBays('?candidates=astra&shots=3'))
+    expect(numbered.flatMap(bay => bay.finishes.map(entry => entry.number))).toEqual([1, 2, 3, 4, 5, 6, 7, 8])
+    const astra = enumerateKnotBays(selectKnotBays('?models=astra&shots=3'))
     expect(astra[0].finishes).toHaveLength(3)
     expect(astra[0].finishes.map(entry => entry.number)).toEqual([1, 2, 3])
     expect(() => selectKnotBays('?shots=0')).toThrow('shots')
-    expect(() => selectKnotBays('?candidates=missing')).toThrow('candidate')
+    expect(() => selectKnotBays('?models=missing')).toThrow('model')
   })
 
   test('formats runtime number sequences compactly', () => {
