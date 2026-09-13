@@ -8,9 +8,10 @@ import {knotSign} from '../../src/lib/knots/signs.ts'
 const iconHash = async (id: string) => Bun.hash(await Bun.file(new URL(knotsById.get(id)!.modelIcon)).arrayBuffer())
 describe('Knot model plates', () => {
   test('uses two compact sticker atlases and a non-rasterized accent line', () => {
-    const oldTilePixels = 768 * 512
     const stickerPixels = titleStickerWidth * titleStickerHeight + creatorStickerWidth * creatorStickerHeight
-    expect(stickerPixels).toBeLessThan(oldTilePixels / 2)
+    expect(stickerPixels).toBe((640 * 192 + 512 * 96) / 4)
+    expect(titleStickerSize).toEqual([0.8, 0.24])
+    expect(creatorStickerSize).toEqual([0.75, 0.14])
     expect(labelAtlasColumns * titleStickerWidth).toBeLessThanOrEqual(8192)
     expect(labelAtlasColumns * creatorStickerWidth).toBeLessThanOrEqual(8192)
     const rows = Math.ceil(knotExhibition.length / labelAtlasColumns)
@@ -42,11 +43,11 @@ describe('Knot model plates', () => {
     for (const measured of [90, 240, 400, 1000]) {
       for (const hasIcon of [true, false]) {
         const line = modelLineLayout(measured, hasIcon)
-        expect(line.left).toBeGreaterThanOrEqual(16)
+        expect(line.left).toBeGreaterThanOrEqual(8)
         expect(line.left * 2 + line.iconSize + line.gap + line.textWidth).toBe(creatorStickerWidth)
         expect(line.textWidth).toBeLessThanOrEqual(measured)
-        expect(line.iconSize).toBe(hasIcon ? 40 : 0)
-        expect(line.gap).toBe(hasIcon ? 12 : 0)
+        expect(line.iconSize).toBe(hasIcon ? 20 : 0)
+        expect(line.gap).toBe(hasIcon ? 6 : 0)
       }
     }
   })
@@ -67,7 +68,7 @@ describe('Knot model plates', () => {
       author: {model: {title: knotExhibition[0].modelTitle}},
     }
     drawTitleSticker(titleContext, exhibit, titleStickerWidth, titleStickerHeight)
-    expect(titleFonts).toEqual(['600 70px main', '600 42px main'])
+    expect(titleFonts).toEqual(['600 35px main', '600 21px main'])
     expect(titleRects).toEqual([[titleStickerWidth, titleStickerHeight, titleStickerWidth, titleStickerHeight]])
     expect(titleText.map(line => line[0])).toEqual([exhibit.label, exhibit.title])
     const creatorText: Array<Array<unknown>> = []
@@ -87,10 +88,10 @@ describe('Knot model plates', () => {
       naturalHeight: 128,
     } as HTMLImageElement
     drawCreatorSticker(creatorContext, exhibit, creatorStickerWidth, creatorStickerHeight, icon)
-    expect(creatorFonts).toEqual(['32px main'])
+    expect(creatorFonts).toEqual(['16px main'])
     const {left} = modelLineLayout(240, true)
-    expect(images).toEqual([[icon, creatorStickerWidth + left, creatorStickerHeight + 21, 40, 20]])
-    expect(creatorText).toEqual([[exhibit.modelTitle, creatorStickerWidth + left + 52, creatorStickerHeight + 31, 240]])
+    expect(images).toEqual([[icon, creatorStickerWidth + left, creatorStickerHeight + 10.5, 20, 10]])
+    expect(creatorText).toEqual([[exhibit.modelTitle, creatorStickerWidth + left + 26, creatorStickerHeight + 15.5, modelLineLayout(240, true).textWidth]])
   })
   test('formats harness and thinking effort with flattenString.list semantics', () => {
     const cases = [
@@ -163,8 +164,8 @@ describe('Knot model plates', () => {
       expect(lines[0].args[1]).toBeGreaterThanOrEqual(0)
       if (expected) {
         expect(lines[1]).toEqual({
-          args: [expected, creatorStickerWidth / 2, 72, creatorStickerWidth - 24],
-          font: '24px main',
+          args: [expected, creatorStickerWidth / 2, 36, creatorStickerWidth - 12],
+          font: '12px main',
           align: 'center',
         })
       }
