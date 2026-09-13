@@ -51,7 +51,7 @@ test('retries a temporary server failure and creates an owned external-image tex
   } finally {
     texture.dispose()
   }
-  expect(close).toHaveBeenCalledTimes(2)
+  expect(close).toHaveBeenCalledTimes(1)
 })
 test('bounds failed URL retries and keeps the HTTP error actionable', async () => {
   const fetch = mock(async () => new Response('', {status: 404}))
@@ -75,8 +75,8 @@ test('recovers from a failed decode without leaking the successful bitmap', asyn
   })
   const texture = await loadArtworkTexture('/overview.jxl', 0)
   texture.dispose()
-  expect(decode).toHaveBeenCalledTimes(3)
-  expect(close).toHaveBeenCalledTimes(2)
+  expect(decode).toHaveBeenCalledTimes(2)
+  expect(close).toHaveBeenCalledTimes(1)
 })
 test('closes bitmap resources on draw failure and does not retry immutable blobs', async () => {
   draw.mockImplementation(() => {

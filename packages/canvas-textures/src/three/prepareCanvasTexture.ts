@@ -1,9 +1,9 @@
 import type {CanvasTextureRecipe} from './types.ts'
 import type {Texture} from 'three/webgpu'
 
-import renderCanvasBitmapTexture from './renderCanvasBitmapTexture.ts'
+import renderCanvasTexture from './renderCanvasTexture.ts'
 
-/** Cancelled inputs skip drawing; cancelled snapshots are disposed. The caller owns a returned texture. */
+/** Cancelled inputs skip drawing; cancelled rasters are disposed. The caller owns a returned texture. */
 export default async function prepareCanvasTexture<T>(recipe: CanvasTextureRecipe<T>, signal: AbortSignal) {
   // Read afresh after await: cancellation can happen outside this function.
   const cancelled = () => signal.aborted
@@ -19,12 +19,12 @@ export default async function prepareCanvasTexture<T>(recipe: CanvasTextureRecip
     }
     throw error
   }
-  let texture: Texture<ImageBitmap> | null = null
+  let texture: Texture<HTMLCanvasElement> | null = null
   try {
     if (cancelled()) {
       return null
     }
-    texture = await renderCanvasBitmapTexture({
+    texture = renderCanvasTexture({
       ...recipe,
       draw: context => recipe.draw(context, inputs),
     })

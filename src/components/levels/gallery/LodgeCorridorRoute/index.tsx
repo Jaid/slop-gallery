@@ -1,6 +1,7 @@
 import type {Material} from 'three/webgpu'
 
-import {useEffect, useMemo} from 'react'
+import useDisposable from 'disposable-lifetime/react'
+import {useMemo} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import CorridorStairs from '#component/levels/gallery/CorridorStairs'
@@ -21,11 +22,9 @@ export default function LodgeCorridorRoute({material}: {material: Material}) {
     roughness: 0.72,
     envMapIntensity: 0.2,
   }), [grain])
-  useEffect(() => () => {
-    lining.dispose()
-    grain.dispose()
-    timber.dispose()
-  }, [lining, grain, timber])
+  useDisposable(lining)
+  useDisposable(grain)
+  useDisposable(timber)
   return <group name="lodge-corridor-route">
     <CoveredPassage passage={lodgeTunnel} material={material}/>
     <CoveredPassage passage={corridorPassage} material={lining} timber={timber} ribCutouts={lodgeWindowRibCutouts}/>

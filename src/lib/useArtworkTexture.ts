@@ -4,16 +4,16 @@ import {useEffect, useState} from 'react'
 
 import loadArtworkTexture from './loadArtworkTexture.ts'
 
-type Asset = {promise: Promise<Texture<ImageBitmap>>
+type Asset = {promise: Promise<Texture<HTMLCanvasElement>>
   refs: number
-  texture?: Texture<ImageBitmap>}
+  texture?: Texture<HTMLCanvasElement>}
 const assets = new Map<Blob | string, Asset>
 let pending = 0
 export const pendingImages = () => pending
 
 export default function useArtworkTexture(source: Blob | string | null | undefined) {
   const [result, setResult] = useState<{failed: boolean
-    texture: Texture<ImageBitmap> | null}>({
+    texture: Texture<HTMLCanvasElement> | null}>({
     texture: null,
     failed: false,
   })

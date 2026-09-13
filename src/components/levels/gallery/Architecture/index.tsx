@@ -3,6 +3,7 @@ import type {Wall} from '#src/lib/gallery.ts'
 import {useThree} from '@react-three/fiber/webgpu'
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import renderCanvasTexture from 'canvas-textures/three'
+import useDisposable from 'disposable-lifetime/react'
 import {useEffect, useMemo} from 'react'
 import {EquirectangularReflectionMapping, MeshStandardNodeMaterial, SRGBColorSpace} from 'three/webgpu'
 import useGraphicsQuality from 'use-graphics-quality'
@@ -56,11 +57,10 @@ export default function Architecture() {
     envMapIntensity: 0,
   }), [textures])
   useEffect(() => () => oculusMaterial.dispose(), [oculusMaterial])
-  useEffect(() => () => {
-    for (const t of Object.values(textures)) {
-      t.dispose()
-    }
-  }, [textures])
+  useDisposable(textures.stone)
+  useDisposable(textures.plaster)
+  useDisposable(textures.wood)
+  useDisposable(textures.damask)
   const wallMaterial = (wall: Wall) => {
     if (wall.room === 'oculus') {
       return oculusMaterial

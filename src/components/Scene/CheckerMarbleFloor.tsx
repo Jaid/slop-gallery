@@ -1,5 +1,6 @@
 import Branch from 'branch-component'
-import {useEffect, useMemo} from 'react'
+import useDisposable from 'disposable-lifetime/react'
+import {useMemo} from 'react'
 import {useGraphicsQualityValue} from 'use-graphics-quality'
 
 import MarbleFloorMaterial from '#src/lib/materials/MarbleFloorMaterial.ts'
@@ -14,8 +15,8 @@ export default function CheckerMarbleFloor({width, depth, reflections}: {depth: 
   const {floorReflections} = useGraphicsQualityValue(getGraphicsProfile)
   const reflective = reflections ?? floorReflections
   const material = useMemo(() => new MarbleFloorMaterial(texture, reflective), [texture, reflective])
-  useEffect(() => () => texture.dispose(), [texture])
-  useEffect(() => () => material.dispose(), [material])
+  useDisposable(texture)
+  useDisposable(material)
   const reflection = material.reflection?.target
   return <mesh name="knot-room-marble-floor" position={[0, 0.001, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
     <planeGeometry args={[width, depth]}/>

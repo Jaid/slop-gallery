@@ -5,9 +5,9 @@ Separate CPU-pixel and GPU-image pipelines for browser Canvas2D graphics. The co
 ## Final texture in one pass
 
 ```ts
-import {renderCanvasBitmapTexture} from 'canvas-textures/three'
+import renderCanvasTexture from 'canvas-textures/three'
 
-const texture = await renderCanvasBitmapTexture({
+const texture = renderCanvasTexture({
   width: 1024,
   height: 256,
   mipmaps: false,
@@ -24,11 +24,11 @@ const texture = await renderCanvasBitmapTexture({
 // texture.dispose() when that material no longer needs it.
 ```
 
-GPU rasters use an sRGB canvas without readback optimization. Drawing is synchronous; `createImageBitmap()` snapshots the canvas without `getImageData()` or a CPU pixel buffer. Canvas storage is released after snapshot completion, including failure. The returned ordinary Three texture owns its bitmap and closes it exactly once on disposal. It retains the bitmap until then, not just until the first upload, to support subsequent uploads.
+GPU rasters use an sRGB canvas without readback optimization. Drawing is synchronous. The returned ordinary Three texture owns that canvas until disposal. No `getImageData()`, CPU pixel buffer, or `createImageBitmap(canvas)` snapshot is involved. Snapshotting a GPU-backed canvas can synchronously block on GPU work even though the API returns a promise..
 
-Three's WebGPU backend uploads these images through `copyExternalImageToTexture()`, not the `DataTexture` / `writeTexture()` path. This is not a guarantee of zero-copy GPU transport or a measured speedup.
+Three's WebGPU backend uploads the canvas through `copyExternalImageToTexture()`, not the `DataTexture` / `writeTexture()` path. This is not a guarantee of zero-copy transport. `texture.dispose()` releases canvas storage exactly once. Do not reuse a disposed texture.
 
-The default export, `renderCanvasTexture(options)`, is the synchronous variant for surface/material constructors. It uses the same external-image upload path but retains its canvas until texture disposal instead of creating a bitmap. Prefer the bitmap API for asynchronous consumers and large static atlases.
+For synchronous textures held in React memoized resources, use an effect-replay-safe owner such as `useDisposable(texture)` from `disposable-lifetime/react`. A plain `useEffect(() => () => texture.dispose(), [texture])` destroys the still-mounted canvas during StrictMode effect replay. Prepared textures should use the hook below, which allocates each resource inside its effect and owns cleanup itself.
 
 ## Fonts and asynchronous inputs
 
@@ -52,7 +52,7 @@ const texture = await prepareCanvasTexture({
 // A consumer cancelled after this promise resolved must also dispose its result.
 ```
 
-`prepare(signal)` can return any typed input: decoded images, fonts, data, or a tuple of these. `draw(context, inputs)` receives that result. An optional `disposeInputs(inputs)` releases temporary decoded resources after the one final draw, including cancellation after preparation and draw/snapshot failures. No canvas is allocated until preparation finishes; aborted preparations, including late rejections, return null. Other errors propagate. Synchronous drawing cannot be preempted by an abort signal. Cancellation during asynchronous snapshot creation disposes the late bitmap texture before returning null. Prepared and React recipes always use the bitmap path. Draw callbacks must not resize the surface or return asynchronous work.
+`prepare(signal)` can return any typed input: decoded images, fonts, data, or a tuple of these. `draw(context, inputs)` receives that result. An optional `disposeInputs(inputs)` releases temporary decoded resources after the one final draw, including cancellation after preparation and draw failures. No canvas is allocated until preparation finishes; aborted preparations, including late rejections, return null. Other errors propagate. Synchronous drawing cannot be preempted by an abort signal. Cancellation after rasterization disposes the late canvas texture before returning null. Draw callbacks must not resize the surface or return asynchronous work.
 
 `loadCanvasBitmaps(urls, signal)` decodes URL images without creating individual GPU textures; pair it with `disposeInputs: images => closeCanvasBitmaps(images.values())` when composing an atlas. `loadCanvasFonts()` waits only for the requested faces, not unrelated `document.fonts.ready` work. Each rejected font is reported through its optional second argument (default: a warning), then drawing can use Canvas2D's fallback font. It never schedules a later redraw. Choose missing-image behavior in your own loader. Release decoded ImageBitmaps in their owner's `finally` block.
 
@@ -76,12 +76,12 @@ function Caption({text}: {text: string}) {
   }), [text]))
   return <mesh visible={Boolean(texture)}>
     <planeGeometry args={[4, 1]}/>
-    <meshBasicNodeMaterial map={texture} transparent toneMapped={false}/>
+    <meshBasicNodeMaterial key={texture?.uuid ?? 'pending'} map={texture} transparent toneMapped={false}/>
   </mesh>
 }
 ```
 
-**Memoize the recipe.** Its identity is the effect key. The hook returns null until the final texture is ready; use a plain material/background or hide the decoration while loading. It aborts obsolete recipes, disposes late results, suppresses stale state updates, and owns disposal on replacement/unmount. StrictMode's initial effect replay cancels its first preparation before rasterization. Do not separately dispose the hook's texture. An optional `onError` handles non-cancellation failures; otherwise they are logged.
+**Memoize the recipe.** Its identity is the effect key. The hook returns null until the final texture is ready; use a plain material/background or hide the decoration while loading. It aborts obsolete recipes, disposes late results, suppresses stale state updates, and owns disposal on replacement/unmount. StrictMode's initial effect replay cancels its first preparation before rasterization. Do not separately dispose the hook's texture. When a material can render before its map arrives, key it by texture identity (as above) or explicitly invalidate its shader when map presence changes. An optional `onError` handles non-cancellation failures; otherwise they are logged.
 
 ## Lower-level canvas and pixel ownership
 

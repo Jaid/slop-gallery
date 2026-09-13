@@ -1,4 +1,4 @@
-import {renderCanvasBitmapTexture} from 'canvas-textures/three'
+import renderCanvasTexture from 'canvas-textures/three'
 
 /** URL loads can fail while the dev server restarts; never permanently cache that failure. */
 export default async function loadArtworkTexture(source: Blob | string, retryDelay = 500) {
@@ -14,7 +14,7 @@ export default async function loadArtworkTexture(source: Blob | string, retryDel
         const scale = Math.min(1, 3072 / Math.max(bitmap.width, bitmap.height))
         const width = Math.max(1, Math.round(bitmap.width * scale))
         const height = Math.max(1, Math.round(bitmap.height * scale))
-        return await renderCanvasBitmapTexture({
+        return renderCanvasTexture({
           width,
           height,
           draw: context => context.drawImage(bitmap, 0, 0, width, height),

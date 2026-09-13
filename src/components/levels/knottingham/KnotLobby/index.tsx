@@ -1,5 +1,6 @@
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
-import {useEffect, useMemo} from 'react'
+import useDisposable from 'disposable-lifetime/react'
+import {useMemo} from 'react'
 
 import KnotLights from '#component/levels/knottingham/KnotLights'
 import KnotModelSign from '#component/levels/knottingham/KnotModelSign'
@@ -16,9 +17,7 @@ export default function KnotLobby() {
   const textures = useMemo(() => ({
     plaster: surfaceTexture('plaster'),
   }), [])
-  useEffect(() => () => {
-    textures.plaster.dispose()
-  }, [textures])
+  useDisposable(textures.plaster)
   return <>
     <color attach="background" args={['#ded8ca']}/>
     <group name="knottingham-lobby">
