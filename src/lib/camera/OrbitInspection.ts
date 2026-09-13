@@ -3,9 +3,9 @@ import type {PerspectiveCamera} from 'three/webgpu'
 import {MathUtils, Matrix4, Quaternion, Spherical, Vector3} from 'three/webgpu'
 
 const up = new Vector3(0, 1, 0)
-const inspectionFovFactor = 0.8
-const minDistanceFactor = 0.8
-const maxDistanceFactor = 1.2
+const inspectionFov = 50
+const minDistanceFactor = 0.5
+const maxDistanceFactor = 1.75
 
 /** A temporary camera owner; orbiting never changes the player’s physical pose. */
 export default class OrbitInspection {
@@ -68,7 +68,7 @@ export default class OrbitInspection {
       return false
     }
     const blend = 1 - Math.exp(-Math.min(delta, 0.06) * 10)
-    const fov = this.returning ? this.originalFov : this.originalFov * inspectionFovFactor
+    const fov = this.returning ? this.originalFov : inspectionFov
     if (this.returning) {
       // Return around the object, not straight through it after a half orbit.
       this.sphere.setFromVector3(this.offset.copy(this.camera.position).sub(this.pivot))
