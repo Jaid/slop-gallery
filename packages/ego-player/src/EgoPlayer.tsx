@@ -52,16 +52,21 @@ export type EgoPlayerProps = EgoOptions & {
   yaw?: number
   /** FOV divisor while zoom is held. Defaults to 2. */
   zoomFactor?: number
+  /** Duration in seconds for the eased FOV tween in either direction. Defaults to 0.2; zero is instant. */
+  zoomTransition?: number
 }
 
 const initialPosition: EgoPosition = [0, 0.05, 0]
 const readToggle = (value: EgoToggle) => {
   return typeof value === 'function' ? value() : value
 }
-export default function EgoPlayer({cameraEnabled = true, children, enabled = true, fallbackPosition, input, onDump, onInteract, zoomFactor = 2, onInput, onStep, onUpdate, pitch = 0, pointerLock = true, position = initialPosition, ref, requirePointerLock = true, userData, yaw = 0, ...options}: EgoPlayerProps) {
+export default function EgoPlayer({cameraEnabled = true, children, enabled = true, fallbackPosition, input, onDump, onInteract, zoomFactor = 2, zoomTransition = 0.2, onInput, onStep, onUpdate, pitch = 0, pointerLock = true, position = initialPosition, ref, requirePointerLock = true, userData, yaw = 0, ...options}: EgoPlayerProps) {
   const [defaultUserData] = useState(() => ({isPlayer: true}))
   if (!Number.isFinite(zoomFactor) || zoomFactor < 1) {
     throw new RangeError('ego-player: zoomFactor must be finite and at least 1.')
+  }
+  if (!Number.isFinite(zoomTransition) || zoomTransition < 0) {
+    throw new RangeError('ego-player: zoomTransition must be finite and nonnegative.')
   }
   const actionKeys = useRef({
     interact: false,
@@ -204,7 +209,7 @@ export default function EgoPlayer({cameraEnabled = true, children, enabled = tru
     }
     const keys = input()
     const active = readToggle(enabled) && !keys.modifier && (!requirePointerLock || renderer.domElement.ownerDocument.pointerLockElement === renderer.domElement)
-    zoom.update(camera, active && readToggle(cameraEnabled) && !!keys.zoom, zoomFactor)
+    zoom.update(camera, active && readToggle(cameraEnabled) && !!keys.zoom, zoomFactor, zoomTransition, delta)
     if (active && keys.interact && !actionKeys.current.interact) {
       onInteract?.()
     }

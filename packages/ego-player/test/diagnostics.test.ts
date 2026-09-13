@@ -5,23 +5,26 @@ import {BoxGeometry, Mesh, MeshBasicMaterial, PerspectiveCamera, Scene} from 'th
 import EgoDiagnostics from '../src/EgoDiagnostics.ts'
 import EgoZoom from '../src/EgoZoom.ts'
 
-test('zoom restores the original FOV without overwriting another camera owner', () => {
+test('zoom uses an eased reversible tween and does not overwrite another camera owner', () => {
   const camera = new PerspectiveCamera(62)
   const zoom = new EgoZoom
-  zoom.update(camera, true, 2)
-  expect(camera.fov).toBe(31)
-  zoom.update(camera, true, 2)
-  expect(camera.fov).toBe(31)
-  zoom.update(camera, false, 2)
+  zoom.update(camera, true, 2, 0.2, 0.05)
+  expect(camera.fov).toBeCloseTo(60.0625)
+  zoom.update(camera, true, 2, 0.2, 0.05)
+  expect(camera.fov).toBeCloseTo(46.5)
+  zoom.update(camera, false, 2, 0.2, 0.1)
+  expect(camera.fov).toBeCloseTo(54.25)
+  zoom.update(camera, false, 2, 0.2, 0.1)
   expect(camera.fov).toBe(62)
-  zoom.update(camera, true, 2)
+  zoom.update(camera, true, 2, 0, 0)
+  expect(camera.fov).toBe(31)
   camera.fov = 45
   zoom.reset()
   expect(camera.fov).toBe(45)
-  zoom.update(camera, true, 3)
+  zoom.update(camera, true, 3, 0, 0)
   expect(camera.fov).toBe(15)
   const next = new PerspectiveCamera(60)
-  zoom.update(next, true, 2)
+  zoom.update(next, true, 2, 0, 0)
   expect(camera.fov).toBe(45)
   expect(next.fov).toBe(30)
   zoom.reset()

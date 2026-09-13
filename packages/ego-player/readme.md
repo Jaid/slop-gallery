@@ -2,7 +2,7 @@
 
 ## Interaction and diagnostics
 
-The default controls include E (`interact`), Z (`zoom`) and X (`dump`). E calls `onInteract` once per press. Z halves the perspective camera FOV while held (`zoomFactor` defaults to 2) and restores it on release, input loss or camera handoff. Control, Alt and Meta bindings set `modifier` to suppress these actions during shortcuts such as Ctrl+Z.
+The default controls include E (`interact`), Z (`zoom`) and X (`dump`). E calls `onInteract` once per press. Z halves the perspective camera FOV while held (`zoomFactor` defaults to 2) and restores it on release or input loss. Both directions use a cubic in-out tween over `zoomTransition` seconds (0.2 by default); set it to 0 for an instant change. Explicit camera handoff through `releaseZoom()` remains immediate so another controller can safely snapshot the unzoomed FOV. Control, Alt and Meta bindings set `modifier` to suppress these actions during shortcuts such as Ctrl+Z.
 
 X does nothing unless `onDump` is supplied. It calls the handler once per press with an `EgoDump`: unique ID, timestamp, detached player/input state, camera matrices/FOV and full-precision aim hits. Hits include world/local points, normals, UVs, mesh/instance identifiers, material identity and scalar ancestor metadata. Dump raycasts run only on demand; there is no diagnostic raycast when the handler is absent. `AimInspector` is also available as a named package export for read-only inspection outside the controller.
 
