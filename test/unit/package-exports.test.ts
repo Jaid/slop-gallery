@@ -4,6 +4,8 @@ import {dirname} from 'node:path'
 import * as canvases from 'canvas-textures'
 import * as canvasReact from 'canvas-textures/react'
 import * as canvasTextures from 'canvas-textures/three'
+import * as lifetime from 'disposable-lifetime'
+import * as lifetimeReact from 'disposable-lifetime/react'
 import * as ego from 'ego-player'
 import * as motor from 'ego-player/motor'
 import fs from 'fs-extra'
@@ -17,7 +19,7 @@ import * as pauseCore from 'use-pause-menu/core'
 import * as capture from 'webgpu-capture-bridge'
 
 test('primary package exports have one canonical default and no named alias', () => {
-  for (const [module, name] of [[canvases, 'ReadbackCanvas'], [canvasTextures, 'renderCanvasTexture'], [canvasReact, 'useCanvasTexture'], [ego, 'EgoPlayer'], [telemetry, 'Telemetry'], [egoTelemetry, 'EgoTelemetry'], [pauseTelemetry, 'PauseMenuTelemetry'], [game, 'Game'], [graphics, 'useGraphicsQuality'], [pause, 'usePauseMenu'], [pauseCore, 'PauseMenu'], [capture, 'WebgpuCapture']] as const) {
+  for (const [module, name] of [[lifetime, 'DisposableLifetime'], [lifetimeReact, 'useDisposable'], [canvases, 'ReadbackCanvas'], [canvasTextures, 'renderCanvasTexture'], [canvasReact, 'useCanvasTexture'], [ego, 'EgoPlayer'], [telemetry, 'Telemetry'], [egoTelemetry, 'EgoTelemetry'], [pauseTelemetry, 'PauseMenuTelemetry'], [game, 'Game'], [graphics, 'useGraphicsQuality'], [pause, 'usePauseMenu'], [pauseCore, 'PauseMenu'], [capture, 'WebgpuCapture']] as const) {
     expect(module.default).toBeFunction()
     expect(Object.hasOwn(module, name)).toBe(false)
   }

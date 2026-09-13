@@ -48,6 +48,7 @@
     "canvas-textures": "workspace:*",
     "clsx": "2.1.1",
     "compose-id": "0.2.0",
+    "disposable-lifetime": "workspace:*",
     "ego-player": "workspace:*",
     "es-toolkit": "1.52.0",
     "flatten-string": "^0.2.0",

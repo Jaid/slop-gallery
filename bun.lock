@@ -15,6 +15,7 @@
         "canvas-textures": "workspace:*",
         "clsx": "2.1.1",
         "compose-id": "0.2.0",
+        "disposable-lifetime": "workspace:*",
         "ego-player": "workspace:*",
         "es-toolkit": "1.52.0",
         "flatten-string": "^0.2.0",
@@ -106,6 +107,16 @@
       "optionalPeers": [
         "react",
         "three",
+      ],
+    },
+    "packages/disposable-lifetime": {
+      "name": "disposable-lifetime",
+      "version": "0.1.0",
+      "peerDependencies": {
+        "react": "^19.3.0",
+      },
+      "optionalPeers": [
+        "react",
       ],
     },
     "packages/ego-player": {
@@ -682,6 +693,8 @@
     "devtools-protocol": ["devtools-protocol@0.0.1666840", "", {}, "sha512-gCcO42XCHKEs7Ag0S7aGYsnJ7hlgrO3qderYqeiY0Eqk+0GFfuvT13IA0hHreJTa2KCdDVyGMeOhdMNmrrTjVg=="],
 
     "diff-sequences": ["diff-sequences@29.6.3", "", {}, "sha512-EjePK1srD3P08o2j4f0ExnylqRs5B9tJjcp9t1krH2qRi8CCdsYfwe9JgSLurFBWwq4uOlipzfk5fHNvwFKr8Q=="],
+
+    "disposable-lifetime": ["disposable-lifetime@workspace:packages/disposable-lifetime"],
 
     "dom-serializer": ["dom-serializer@2.0.0", "", { "dependencies": { "domelementtype": "^2.3.0", "domhandler": "^5.0.2", "entities": "^4.2.0" } }, "sha512-wIkAryiqt/nV5EQKqQpo3SToSOV9J0DnbJqwK7Wv/Trc92zIAYZ4FlMu+JPFW1DfGFt81ZTCGgDEabffXeLyJg=="],
 
