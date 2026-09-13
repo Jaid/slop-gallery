@@ -10,13 +10,19 @@ The runner attaches with `defaultViewport: null`. It does not navigate, focus, r
 
 Run after source edits and Vite dependency optimization settle. A page reload during the test destroys its execution context and requires a new run.
 
-For progressive full-material loading in main MRT and reflection-style targets:
+For the reusable material queue in main MRT and reflection-style targets:
+
+```sh
+bun test/browser/run.ts ../../packages/three-async-materials/test/browser/materials.ts
+```
+
+For the same checks using the gallery’s real Captured Tempest material:
 
 ```sh
 bun test/browser/run.ts progressiveMaterials.ts
 ```
 
-This fixture uses real Captured Tempest shading. It renders placeholders while two native asynchronous material pipelines compile and checks that activation does not synchronously compile a full-material variant. It also checks WebGPU validation and deferred resource cleanup. Cached driver results are not cold-start benchmarks.
+The shared fixture lives in packages/three-async-materials/test/browser/materials.ts; the gallery wrapper supplies Captured Tempest shading. It renders placeholders while two native asynchronous material pipelines compile and checks that activation does not synchronously compile a full-material variant. It also checks WebGPU validation and deferred resource cleanup. Cached driver results are not cold-start benchmarks.
 
 For full-size nameplate atlas uploads, instanced UV row boundaries and late material invalidation:
 

@@ -65,3 +65,7 @@ InstancedPropVisuals.update accounts for about 6.43 s inclusively. Each sign's s
 ## Measurement caveats
 
 Profile self time is sampled wall time, not native thread CPU time. Inclusive stack totals overlap and must not be added. GPU-process task durations measure CPU-side processing, not GPU timestamp-query execution. Trace 4 and trace 5 cover different intervals, so their cumulative totals are not a startup-speed comparison. Development and production results also need separate measurements.
+
+## Reusable material queue extraction
+
+The compilation mechanism now lives in packages/three-async-materials as the React-independent AsyncMaterials class. ProgressiveKnotMaterials remains a small gallery owner for KnotResources, neutral placeholders, live distance priority and knot.material.compile telemetry. The package never disposes caller-owned resources; the gallery waits for queue shutdown before releasing them. The package GPU fixture and the real Captured Tempest integration fixture both verify asynchronous main/reflection variants. This extraction preserves behavior and is not a new performance claim.

@@ -1,6 +1,6 @@
 import type {WebGPURenderer} from 'three/webgpu'
 
-import {expect, spyOn, test} from 'bun:test'
+import {expect, test} from 'bun:test'
 
 import DisposableLifetime from 'disposable-lifetime'
 import {Mesh, PerspectiveCamera, RenderTarget, Scene} from 'three/webgpu'
@@ -40,6 +40,8 @@ function fixture(third = false) {
     getOutputRenderTarget: () => output,
     setOutputRenderTarget: (next: RenderTarget | null) => output = next,
     getMRT: () => mrt,
+    getActiveCubeFace: () => 0,
+    getActiveMipmapLevel: () => 0,
     setMRT: (next: typeof mrt) => mrt = next,
     compileAsync(mesh: Mesh) {
       const gate = Promise.withResolvers<void>()
@@ -62,7 +64,7 @@ function fixture(third = false) {
   })
   const observe = (index: number, pass = main) => {
     renderer.setRenderTarget(pass)
-    materials.observers[index](renderer as unknown as Parameters<Mesh['onBeforeRender']>[0], scene, camera, meshes[index].geometry, materials.placeholder, null as never)
+    materials.observers[index].call(meshes[index], renderer as unknown as Parameters<Mesh['onBeforeRender']>[0], scene, camera, meshes[index].geometry, materials.placeholder, null as never)
     renderer.setRenderTarget(null)
   }
   const dispose = () => {
@@ -88,37 +90,6 @@ async function flush() {
   }
 }
 class TestMaterial extends KnotMaterial {}
-test('warms nearest first, restores render state synchronously and activates only after every observed context', async () => {
-  const f = fixture()
-  try {
-    f.observe(0)
-    f.observe(1)
-    f.observe(1, f.reflection)
-    await flush()
-    expect(f.calls).toHaveLength(1)
-    expect(f.calls[0].mesh).toBe(f.meshes[1])
-    expect(f.calls[0].material).toBe(f.materials.resources.items[1].material)
-    expect(f.calls[0].target).toBe(f.main)
-    expect(f.renderer.getRenderTarget()).toBeNull()
-    expect(f.meshes[1].material).toBe(f.materials.placeholder)
-    expect(f.meshes[1].frustumCulled).toBe(true)
-    f.calls[0].gate.resolve()
-    await flush()
-    expect(f.calls).toHaveLength(2)
-    expect(f.calls[1].target).toBe(f.reflection)
-    expect(f.meshes[1].material).toBe(f.materials.placeholder)
-    f.calls[1].gate.resolve()
-    await flush()
-    expect(f.meshes[1].material).toBe(f.materials.resources.items[1].material)
-    expect(f.calls).toHaveLength(3)
-    expect(f.calls[2].mesh).toBe(f.meshes[0])
-    f.calls[2].gate.resolve()
-    await flush()
-    expect(f.meshes[0].material).toBe(f.materials.resources.items[0].material)
-  } finally {
-    f.dispose()
-  }
-})
 test('unmount waits for in-flight compilation before releasing resources and never activates late results', async () => {
   const f = fixture()
   let releases = 0
@@ -134,54 +105,6 @@ test('unmount waits for in-flight compilation before releasing resources and nev
   f.dispose()
   expect(releases).toBe(1)
   expect(f.calls).toHaveLength(1)
-})
-test('disposing before the scheduled microtask skips compilation', async () => {
-  const f = fixture()
-  f.observe(0)
-  f.dispose()
-  await flush()
-  expect(f.calls).toHaveLength(0)
-})
-test('a reflection context observed during compilation is warmed before activation', async () => {
-  const f = fixture()
-  try {
-    f.observe(0)
-    await flush()
-    f.observe(0, f.reflection)
-    f.calls[0].gate.resolve()
-    await flush()
-    expect(f.calls).toHaveLength(2)
-    expect(f.meshes[0].material).toBe(f.materials.placeholder)
-    expect(f.calls[1].target).toBe(f.reflection)
-    f.calls[1].gate.resolve()
-    await flush()
-    expect(f.meshes[0].material).toBe(f.materials.resources.items[0].material)
-  } finally {
-    f.dispose()
-  }
-})
-test('a failed material retains its placeholder without preventing other materials from loading', async () => {
-  const f = fixture()
-  const error = spyOn(console, 'error').mockImplementation(() => {})
-  try {
-    f.observe(0)
-    f.observe(1)
-    await flush()
-    f.calls[0].gate.reject(new Error('Pipeline failed'))
-    await flush()
-    expect(error).toHaveBeenCalledTimes(1)
-    expect(f.meshes[1].material).toBe(f.materials.placeholder)
-    expect(f.calls).toHaveLength(2)
-    f.calls[1].gate.resolve()
-    await flush()
-    expect(f.meshes[0].material).toBe(f.materials.resources.items[0].material)
-    f.observe(1)
-    await flush()
-    expect(f.calls).toHaveLength(2)
-  } finally {
-    f.dispose()
-    error.mockRestore()
-  }
 })
 test('effect replay neither restarts compilation nor disposes its live resources', async () => {
   const f = fixture()
