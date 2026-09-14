@@ -4,6 +4,8 @@ import * as tsl from 'three/tsl'
 import {cameraPosition, color, float, Fn, mix, modelWorldMatrixInverse, mx_atan2, mx_cell_noise_float, mx_fractal_noise_float, mx_noise_float, mx_worley_noise_float, negateOnBackSide, normalViewGeometry, positionGeometry, positionView, positionViewDirection, reflectVector, time, transformNormalToView, uv, varying, vec2, vec3, vec4} from 'three/tsl'
 import {MeshPhysicalNodeMaterial} from 'three/webgpu'
 
+import interferenceLattice from './interferenceLattice.ts'
+
 /**
  * KnotMaterialPremium — the second wing of the Infinity Knot collection.
  *
@@ -316,10 +318,7 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
         const packet = frac.smoothstep(0.02, 0.18).mul(frac.smoothstep(0.55, 0.98))
         const rings = opticalLine(ringPhase.sin(), 0.22).mul(packet)
         const flash = measure.mul(frac.mul(-9).exp())
-        const latticeQ = p.mul(9.5)
-        const lrnd = cellNoiseVec3(latticeQ)
-        const dots = latticeQ.fract().sub(lrnd.mul(0.5).add(0.25)).length().smoothstep(0.08, 0.45).oneMinus()
-        const shimmer = time.mul(2.5).add(lrnd.x.mul(19)).sin().mul(0.5).add(0.5)
+        const lattice = interferenceLattice(p.mul(9.5))
         this.colorNode = mix(mix(color('#0a0c15'), diffraction, 0.7), order2, grooves.mul(0.35))
         this.metalness = 1
         this.roughnessNode = grooves.mul(0.05).add(0.09)
@@ -329,7 +328,7 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
         this.iridescenceThicknessNode = facing.mul(380).add(140)
         this.clearcoat = 0.5
         this.clearcoatRoughness = 0.1
-        this.emissiveNode = color('#7fe0ff').mul(rings).mul(measure).mul(2.2).mul(near.mul(0.5).add(intimate.mul(0.3)).add(0.35)).add(mix(color('#9fe8ff'), color('#eaffff'), lrnd.y).mul(dots).mul(shimmer).mul(0.55).mul(near.mul(0.7).add(0.3))).add(diffraction.mul(flash).mul(1.4)).add(spectralColor(hue.mul(0.6).add(facing.mul(3))).mul(grazing.pow(2.5)).mul(0.55)).add(diffraction.mul(glints(normalViewGeometry, 180)).mul(near).mul(0.45))
+        this.emissiveNode = color('#7fe0ff').mul(rings).mul(measure).mul(2.2).mul(near.mul(0.5).add(intimate.mul(0.3)).add(0.35)).add(lattice.mul(0.55).mul(near.mul(0.7).add(0.3))).add(diffraction.mul(flash).mul(1.4)).add(spectralColor(hue.mul(0.6).add(facing.mul(3))).mul(grazing.pow(2.5)).mul(0.55)).add(diffraction.mul(glints(normalViewGeometry, 180)).mul(near).mul(0.45))
         break
       }
       case 'abyssal_choir': {

@@ -117,6 +117,20 @@ describe('Knot cellular fields', () => {
     expect(text).toContain('const pulse2 = tube.x.mul(-9).sub(time.mul(0.95)).fract()')
     expect(text).toContain('sporeGlow.mul(colorPink).mul(3.2)')
   })
+  test('evaluates neighboring shrine emitters without switching their tint or shimmer identity', async () => {
+    const text = await finish('glm/webChatMaterial.ts', 'interference_shrine')
+    expect(text).toContain('interferenceLattice(p.mul(9.5))')
+    expect(text).not.toContain('latticeQ.fract()')
+    expect(text).toContain('mx_cell_noise_float(vec3(tick, 6.6, 2.2))')
+    const lattice = await source('glm/interferenceLattice.ts')
+    expect(lattice).toContain('Loop(27, ({i}) =>')
+    expect(lattice).toContain('vec3(i.mod(3), i.div(3).mod(3), i.div(9)).sub(1)')
+    expect(lattice).toContain('cellNoiseVec3(cell.add(offset))')
+    expect(lattice).toContain('offset.add(random.mul(0.5).add(0.25))')
+    expect(lattice).toContain('smoothstep(0.08, 0.45).oneMinus()')
+    expect(lattice).toContain('time.mul(2.5).add(random.x.mul(19))')
+    expect(lattice).toContain('glow.addAssign(tint.mul(dot).mul(shimmer))')
+  })
   test('uses continuous solar granulation and genuine Voronoi fractures', async () => {
     for (const id of ['cryogenic_kintsugi', 'chromospheric_spicule']) {
       const text = await finish('gemini/batch3Material.ts', id)
