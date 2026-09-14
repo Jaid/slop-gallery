@@ -1,15 +1,24 @@
+import type {Node} from 'three/webgpu'
+
 import {useThree} from '@react-three/fiber/webgpu'
 import {useEffect} from 'react'
 import {bloom} from 'three/addons/tsl/display/BloomNode.js'
+import {gaussianBlur} from 'three/addons/tsl/display/GaussianBlurNode.js'
 import {ao} from 'three/addons/tsl/display/GTAONode.js'
 import {smaa} from 'three/addons/tsl/display/SMAANode.js'
-import {float, length, mrt, normalView, output, pass, screenUV, smoothstep, uniform, vec3, vec4} from 'three/tsl'
+import {float, length, max, mix, mrt, normalView, output, pass, screenUV, smoothstep, uniform, vec3, vec4} from 'three/tsl'
 import {RenderPipeline} from 'three/webgpu'
 
-import {getPlayerZoom} from '#src/lib/rendering/playerView.ts'
+import {galleryEvents} from '#src/lib/gallery/actions.ts'
+import {getKnotFocus, getKnotFocusDistance, getPlayerZoom} from '#src/lib/rendering/playerView.ts'
 import tiltShift from '#src/lib/rendering/tiltShift.ts'
 
-const Postprocessing = () => {
+type PostprocessingProps = {
+  knotFocus?: boolean
+  quality?: boolean
+}
+
+const Postprocessing = ({knotFocus = false, quality = true}: PostprocessingProps) => {
   const renderer = useThree(state => state.renderer)
   const scene = useThree(state => state.scene)
   const camera = useThree(state => state.camera)
@@ -23,34 +32,65 @@ const Postprocessing = () => {
       normal: normalView,
     }))
     const color = scenePass.getTextureNode('output')
-    const normal = scenePass.getTextureNode('normal')
-    const depth = scenePass.getTextureNode('depth')
-    const ambientOcclusion = ao(depth, normal, camera)
-    ambientOcclusion.resolutionScale = 0.5
-    ambientOcclusion.radius.value = 0.3
-    ambientOcclusion.scale.value = 0.85
-    ambientOcclusion.samples.value = 16
-    const zoomAmount = uniform(0).onRenderUpdate(getPlayerZoom)
-    const occluded = color.mul(vec4(vec3(ambientOcclusion.getTextureNode().r), 1))
-    const {blurPass, node: shifted} = tiltShift(occluded, zoomAmount)
-    const bloomPass = bloom(shifted, 0.18, 0.25, 1)
-    const edge = smoothstep(float(0.26), float(0.78), length(screenUV.sub(0.5)))
-    const vignette = float(1).sub(edge.mul(0.2))
-    const antialias = smaa(shifted.add(bloomPass).mul(vec4(vec3(vignette), 1)))
-    pipeline.outputNode = antialias
-    set({renderPipeline: pipeline})
-    return () => {
+    const viewZ = scenePass.getViewZNode()
+    const knotAmount = uniform(0).onRenderUpdate(knotFocus ? getKnotFocus : () => 0)
+    const knotDistance = uniform(1).onRenderUpdate(knotFocus ? getKnotFocusDistance : () => 1)
+    const zoomAmount = uniform(0).onRenderUpdate(quality ? getPlayerZoom : () => 0)
+    let base: Node<'vec4'> = color
+    let ambientOcclusion: ReturnType<typeof ao> | undefined
+    if (quality) {
+      const normal = scenePass.getTextureNode('normal')
+      ambientOcclusion = ao(scenePass.getTextureNode('depth'), normal, camera)
+      ambientOcclusion.resolutionScale = 0.5
+      ambientOcclusion.radius.value = 0.3
+      ambientOcclusion.scale.value = 0.85
+      ambientOcclusion.samples.value = 16
+      base = color.mul(vec4(vec3(ambientOcclusion.getTextureNode().r), 1))
+    }
+    // One half-resolution separable Gaussian serves both Z zoom tilt-shift and Knot background focus.
+    const blurStrength = max(zoomAmount.mul(1.5), knotAmount.mul(1.25))
+    const blurPass = gaussianBlur(base, blurStrength, 2, {resolutionScale: 0.5})
+    const shifted = quality ? tiltShift(base, blurPass, zoomAmount) : base
+    // KnotSpectation supplies the far edge of the Knot's bounding sphere, so only geometry behind it is blurred.
+    const background = smoothstep(knotDistance.add(0.2), knotDistance.add(1.35), viewZ.negate()).mul(knotAmount)
+    const focused = mix(shifted, blurPass, background)
+    let antialias: ReturnType<typeof smaa> | undefined
+    let bloomPass: ReturnType<typeof bloom> | undefined
+    if (quality) {
+      bloomPass = bloom(focused, 0.18, 0.25, 1)
+      const edge = smoothstep(float(0.26), float(0.78), length(screenUV.sub(0.5)))
+      const vignette = float(1).sub(edge.mul(0.2))
+      antialias = smaa(focused.add(bloomPass).mul(vec4(vec3(vignette), 1)))
+      pipeline.outputNode = antialias
+    } else {
+      pipeline.outputNode = focused
+    }
+    const activate = () => set({renderPipeline: pipeline})
+    const deactivate = () => {
       set(state => {
         return state.renderPipeline === pipeline ? {renderPipeline: null} : {}
       })
-      antialias.dispose()
+    }
+    if (quality) {
+      activate()
+    } else if (knotFocus) {
+      galleryEvents.addEventListener('knot-focus-start', activate)
+      galleryEvents.addEventListener('knot-focus-end', deactivate)
+    }
+    return () => {
+      if (!quality && knotFocus) {
+        galleryEvents.removeEventListener('knot-focus-start', activate)
+        galleryEvents.removeEventListener('knot-focus-end', deactivate)
+      }
+      deactivate()
+      antialias?.dispose()
       blurPass.dispose()
-      ambientOcclusion.dispose()
-      bloomPass.dispose()
+      ambientOcclusion?.dispose()
+      bloomPass?.dispose()
       scenePass.dispose()
       pipeline.dispose()
     }
-  }, [camera, renderer, scene, set])
+  }, [camera, knotFocus, quality, renderer, scene, set])
   return null
 }
 export default Postprocessing

@@ -3,7 +3,7 @@ import type {KnotBay} from '#src/lib/knots/exhibition.ts'
 import {useFrame, useThree} from '@react-three/fiber/webgpu'
 import {useEffect, useRef} from 'react'
 import {PointerLockControls} from 'three/addons/controls/PointerLockControls.js'
-import {PerspectiveCamera, Vector3} from 'three/webgpu'
+import {MathUtils, PerspectiveCamera, Vector3} from 'three/webgpu'
 
 import {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
 import playAnnouncement from '#src/lib/audio/playAnnouncement.ts'
@@ -13,6 +13,7 @@ import {createKnotGeometry} from '#src/lib/gallery/sculptures.ts'
 import knotAnnouncementUrl from '#src/lib/knots/announcementAssets.ts'
 import {knotBays, knotExhibition} from '#src/lib/knots/exhibition.ts'
 import KnotAnnouncer from '#src/lib/knots/KnotAnnouncer.ts'
+import {setKnotFocus} from '#src/lib/rendering/playerView.ts'
 
 const exhibits = new Map(knotExhibition.map(item => [`prop-knot-${item.id}`, item]))
 const billboards = new Map<string, KnotBay>(knotBays.flatMap(bay => [[`preview-${bay.model}`, bay], [`model-sign-${bay.model}`, bay]] as const))
@@ -20,6 +21,7 @@ const announcedCreators = new Set<string>
 const announcedItems = new Set<string>
 const inspectionDistanceSpeed = 0.45
 const inspectionOrbitSpeed = 1.5
+const inspectionFocusSpeed = 8
 const baseRadius = (() => {
   const geometry = createKnotGeometry()
   geometry.computeBoundingSphere()
@@ -36,9 +38,12 @@ type Session = {
 
 export default function KnotSpectation() {
   const {camera, controls, renderer} = useThree()
+  const pointerSpeed = controls instanceof PointerLockControls ? controls.pointerSpeed : 1
   const session = useRef<Session | null>(null)
   const distanceKeys = useRef(new Set<'KeyS' | 'KeyW'>)
   const orbitKeys = useRef(new Set<'KeyA' | 'KeyD'>)
+  const focusAmount = useRef(0)
+  const focusPipelineActive = useRef(false)
   const center = useRef(new Vector3)
   useEffect(() => {
     if (!(camera instanceof PerspectiveCamera) || !(controls instanceof PointerLockControls)) {
@@ -117,6 +122,12 @@ export default function KnotSpectation() {
       distanceKeys.current.clear()
       orbitKeys.current.clear()
       session.current = null
+      focusAmount.current = 0
+      setKnotFocus(0, 1)
+      if (focusPipelineActive.current) {
+        focusPipelineActive.current = false
+        galleryEvents.dispatchEvent(new Event('knot-focus-end'))
+      }
       cameraPose.focused = false
       useGallery.setState({inspecting: null})
     }
@@ -178,13 +189,17 @@ export default function KnotSpectation() {
       const enabled = controls.enabled
       galleryEvents.dispatchEvent(new Event('release-zoom'))
       controls.enabled = false
+      const target = object.group.getWorldPosition(center.current)
       session.current = {
         id: state.active,
-        orbit: new OrbitInspection(camera, object.group.getWorldPosition(center.current), baseRadius + (item.displacement ?? 0)),
+        orbit: new OrbitInspection(camera, target, baseRadius + (item.displacement ?? 0)),
         restoreControls: () => {
           controls.enabled = enabled
         },
       }
+      focusPipelineActive.current = true
+      setKnotFocus(0, camera.position.distanceTo(target) + session.current.orbit.radius)
+      galleryEvents.dispatchEvent(new Event('knot-focus-start'))
       cameraPose.focused = true
       useGallery.setState({inspecting: state.active})
       announce(state.active)
@@ -241,16 +256,27 @@ export default function KnotSpectation() {
   }, [camera, controls, renderer])
   useFrame((_, delta) => {
     const current = session.current
+    const focusTarget = current && !current.orbit.returning ? 1 : 0
+    focusAmount.current = MathUtils.lerp(focusAmount.current, focusTarget, 1 - Math.exp(-Math.min(delta, 0.06) * inspectionFocusSpeed))
+    if (!focusTarget && focusAmount.current < 0.002) {
+      focusAmount.current = 0
+    }
     if (!current) {
+      setKnotFocus(focusAmount.current, 1)
+      if (!focusAmount.current && focusPipelineActive.current) {
+        focusPipelineActive.current = false
+        galleryEvents.dispatchEvent(new Event('knot-focus-end'))
+      }
       return
     }
     const object = propObjects.get(current.id)
     if (object?.group.visible) {
       object.group.getWorldPosition(center.current)
+      setKnotFocus(focusAmount.current, camera.position.distanceTo(center.current) + current.orbit.radius)
       const distanceDirection = Number(distanceKeys.current.has('KeyS')) - Number(distanceKeys.current.has('KeyW'))
       const orbitDirection = Number(orbitKeys.current.has('KeyD')) - Number(orbitKeys.current.has('KeyA'))
       current.orbit.adjustDistance(distanceDirection * inspectionDistanceSpeed * delta)
-      current.orbit.addInput(orbitDirection * inspectionOrbitSpeed * controls.pointerSpeed * delta, 0)
+      current.orbit.addInput(orbitDirection * inspectionOrbitSpeed * pointerSpeed * delta, 0)
     } else {
       distanceKeys.current.clear()
       orbitKeys.current.clear()

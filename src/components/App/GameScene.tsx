@@ -1,11 +1,11 @@
 import type {GameWrapperProps} from 'three-fiber-game'
 
-import Branch from 'branch-component'
 import {useGraphicsQualityValue} from 'use-graphics-quality'
 
 import Postprocessing from '#component/Postprocessing'
 import TelemetryBridge from '#component/TelemetryBridge'
 import WebgpuCaptureBridge from '#component/WebgpuCaptureBridge'
+import {isKnottingham} from '#src/lib/level.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsQuality.ts'
 
 /** Gallery integrations stay outside the physics subtree and share the WebGPU Canvas. */
@@ -15,6 +15,6 @@ export default function GameScene({children}: GameWrapperProps) {
     <WebgpuCaptureBridge/>
     <TelemetryBridge/>
     {children}
-    <Branch if={profile.postprocessing} then={Postprocessing}/>
+    {(profile.postprocessing || isKnottingham) && <Postprocessing quality={profile.postprocessing} knotFocus={isKnottingham}/>}
   </>
 }
