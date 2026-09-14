@@ -13,7 +13,7 @@ import useGraphicsQuality from 'use-graphics-quality'
 import {useGallery} from '#src/lib/gallery.ts'
 import {knotGalleryBounds} from '#src/lib/gallery/knotGallery.ts'
 import {knotBays, knotLayout} from '#src/lib/knots/exhibition.ts'
-import KnotLightDamage, {knotLight, knotLightEmissionGroups, knotLightSlots} from '#src/lib/knots/KnotLights.ts'
+import KnotLightDamage, {knotLight, knotLightSlots} from '#src/lib/knots/KnotLights.ts'
 
 RectAreaLightNode.setLTC(RectAreaLightTexturesLib.init())
 const ledEmissionColor = '#fff3d8'
@@ -41,26 +41,22 @@ export default function KnotLights() {
   const slots = useMemo(() => knotLightSlots(knotLayout, knotBays.length, knotGalleryBounds.height), [])
   const damage = useMemo(() => new KnotLightDamage(slots.length), [resetEpoch, slots.length])
   const time = useRef(0)
-  const [damageRevision, redraw] = useReducer(value => value + 1, 0)
-  const emissionGroups = useMemo(() => {
+  const rowIntensities = useRef(new Float32Array(knotBays.length))
+  const [, redraw] = useReducer(value => value + 1, 0)
+  // Three hashes built-in light IDs into every lit render object. Keep this light set stable across damage, or a hit recompiles the scene.
+  const emitters = useMemo(() => {
     if (!quality) {
       return []
     }
-    return knotLightEmissionGroups(slots, slots.map((_, index) => damage.stage(index)))
-  }, [damage, damageRevision, quality, slots])
-  const emitters = useMemo(() => emissionGroups.map(group => {
-    const width = diffuserSize[0] + knotLayout.itemSpacing * (group.lastSlot - group.firstSlot)
-    const centerX = (knotLayout.slotX(group.firstSlot) + knotLayout.slotX(group.lastSlot)) / 2
-    const initialIntensity = group.damageIndex === null ? ledEmissionIntensity : ledEmissionIntensity * damage.intensity(group.damageIndex, time.current)
-    const light = new RectAreaLight(ledEmissionColor, initialIntensity, width, diffuserSize[2])
-    light.name = `knot-led-emission-${group.id}`
-    light.position.set(centerX, knotGalleryBounds.height - knotLight.ceilingInset - 0.065, knotLayout.rowZ(group.row))
-    light.lookAt(light.position.x, 0, light.position.z)
-    return {
-      group,
-      light,
-    }
-  }), [damage, emissionGroups])
+    const width = diffuserSize[0] + knotLayout.itemSpacing * (knotLayout.maxRowLength - 1)
+    return knotBays.map((_, row) => {
+      const light = new RectAreaLight(ledEmissionColor, ledEmissionIntensity, width, diffuserSize[2])
+      light.name = `knot-led-emission-row-${row}`
+      light.position.set(knotLayout.rowCenterX(knotLayout.maxRowLength), knotGalleryBounds.height - knotLight.ceilingInset - 0.065, knotLayout.rowZ(row))
+      light.lookAt(light.position.x, 0, light.position.z)
+      return light
+    })
+  }, [quality])
   const resources = useMemo(() => {
     const housingGeometry = new RoundedBoxGeometry(...housingSize, 2, 0.045)
     const diffuserGeometry = new RoundedBoxGeometry(...diffuserSize, 2, 0.025)
@@ -123,9 +119,12 @@ export default function KnotLights() {
   useFrame((_, delta) => {
     time.current += delta
     const values = resources.intensities.array as Float32Array
+    const rows = rowIntensities.current
+    rows.fill(0)
     let changed = false
     for (let index = 0; index < damage.count; index++) {
       const intensity = damage.intensity(index, time.current)
+      rows[Math.floor(index / knotLayout.maxRowLength)] += intensity
       if (Math.abs(values[index] - intensity) > 0.001) {
         values[index] = intensity
         changed = true
@@ -134,11 +133,8 @@ export default function KnotLights() {
     if (changed) {
       resources.intensities.needsUpdate = true
     }
-    for (const emitter of emitters) {
-      const index = emitter.group.damageIndex
-      if (index !== null) {
-        emitter.light.intensity = ledEmissionIntensity * values[index]
-      }
+    for (const [row, emitter] of emitters.entries()) {
+      emitter.intensity = ledEmissionIntensity * rows[row] / knotLayout.maxRowLength
     }
   })
   const onImpact = (index: number, event: CollisionEnterPayload) => {
@@ -149,15 +145,18 @@ export default function KnotLights() {
     const velocity = body.linvel()
     const speed = Math.hypot(velocity.x, velocity.y, velocity.z)
     if (damage.hit(index, body.mass(), speed, time.current)) {
-      setDiffuserMatrix(resources.diffuser, index, slots[index], damage.stage(index))
+      const stage = damage.stage(index)
+      setDiffuserMatrix(resources.diffuser, index, slots[index], stage)
       resources.diffuser.instanceMatrix.needsUpdate = true
-      redraw()
+      if (stage === 2) {
+        redraw()
+      }
     }
   }
   return <group name="knot-slot-lights">
     <primitive object={resources.housings}/>
     <primitive object={resources.diffuser}/>
-    {emitters.map(({group, light}) => <primitive key={group.id} object={light}/>)}
+    {emitters.map(light => <primitive key={light.name} object={light}/>)}
     <RigidBody type="fixed" colliders={false}>
       {slots.map((slot, index) => damage.stage(index) < 2 && <CuboidCollider key={slot.id} position={slot.position} args={[knotLight.size[0] / 2, knotLight.size[1] / 2, knotLight.size[2] / 2]} restitution={0.08} friction={0.6} onCollisionEnter={event => onImpact(index, event)}/>)}
     </RigidBody>
