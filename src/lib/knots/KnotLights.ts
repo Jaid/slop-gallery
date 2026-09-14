@@ -48,33 +48,32 @@ export function knotLightEmissionGroups(slots: ReadonlyArray<KnotLightSlot>, sta
     stage: stages[index],
   })).toSorted((a, b) => a.slot.row - b.slot.row || a.slot.slot - b.slot.slot)
   const groups: Array<KnotLightEmissionGroup> = []
-  let healthy: {firstSlot: number
-    lastSlot: number
-    row: number} | null = null
+  let healthyRow = -1
+  let healthyFirst = -1
+  let healthyLast = -1
   const flushHealthy = () => {
-    if (!healthy) {
+    if (healthyFirst < 0) {
       return
     }
     groups.push({
-      id: `healthy:${healthy.row}:${healthy.firstSlot}-${healthy.lastSlot}`,
-      row: healthy.row,
-      firstSlot: healthy.firstSlot,
-      lastSlot: healthy.lastSlot,
+      id: `healthy:${healthyRow}:${healthyFirst}-${healthyLast}`,
+      row: healthyRow,
+      firstSlot: healthyFirst,
+      lastSlot: healthyLast,
       damageIndex: null,
     })
-    healthy = null
+    healthyFirst = -1
+    healthyLast = -1
   }
   for (const {index, slot, stage} of indexed) {
     if (stage === 0) {
-      if (healthy?.row !== slot.row || slot.slot !== healthy.lastSlot + 1) {
+      if (healthyFirst < 0 || healthyRow !== slot.row || slot.slot !== healthyLast + 1) {
         flushHealthy()
-        healthy = {
-          firstSlot: slot.slot,
-          lastSlot: slot.slot,
-          row: slot.row,
-        }
+        healthyRow = slot.row
+        healthyFirst = slot.slot
+        healthyLast = slot.slot
       } else {
-        healthy.lastSlot = slot.slot
+        healthyLast = slot.slot
       }
       continue
     }

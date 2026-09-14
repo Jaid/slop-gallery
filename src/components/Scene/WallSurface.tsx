@@ -7,8 +7,9 @@ import Branch from 'branch-component'
 import {WallDecorations} from '#level/components.ts'
 import {architectureGeometry} from '#src/lib/gallery/architecture.ts'
 
-export default function WallSurface({wall, plaster, material, surfaceRoom = wall.room}: {material?: Material
+export default function WallSurface({wall, plaster, material, surfaceMaterial, surfaceRoom = wall.room}: {material?: Material
   plaster: Texture
+  surfaceMaterial?: Material
   surfaceRoom?: Wall['room']
   wall: Wall}) {
   const colors: Partial<Record<Wall['room'], string>> = {
@@ -35,7 +36,7 @@ export default function WallSurface({wall, plaster, material, surfaceRoom = wall
   }} position={wall.center} rotation={[0, wall.rotation, 0]}>
     <RigidBody type="fixed" colliders={false}>
       {geometry.collision.map((args, i) => <TrimeshCollider key={i} args={args}/>)}
-      <mesh name={`wall-${wall.id}`} receiveShadow castShadow material={material}><primitive object={geometry.surface} attach="geometry"/><Branch not={material}><meshStandardNodeMaterial color={color} map={plaster} envMapIntensity={surfaceRoom === 'moonfall' ? 0.08 : 1} roughness={surfaceRoom === 'sienna' ? 0.86 : 0.9}/></Branch></mesh>
+      <mesh name={`wall-${wall.id}`} receiveShadow castShadow material={surfaceMaterial ?? material}><primitive object={geometry.surface} attach="geometry"/><Branch not={surfaceMaterial ?? material}><meshStandardNodeMaterial color={color} map={plaster} envMapIntensity={surfaceRoom === 'moonfall' ? 0.08 : 1} roughness={surfaceRoom === 'sienna' ? 0.86 : 0.9}/></Branch></mesh>
       {geometry.trim.map((part, i) => <mesh key={i} receiveShadow castShadow material={material}><primitive object={part} attach="geometry"/><Branch not={material}><meshStandardNodeMaterial color={trim} roughness={0.6}/></Branch></mesh>)}
       {geometry.glazing.map((part, i) => <mesh key={i} name={`glass-${wall.id}`} geometry={part}>
         <meshStandardNodeMaterial color="#b7d8d9" transparent opacity={0.16} roughness={0.16} metalness={0.1} depthWrite={false}/>

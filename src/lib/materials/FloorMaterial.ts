@@ -5,7 +5,7 @@ import {float, mix, normalView, output, positionViewDirection, reflector, vec4} 
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 type FloorReflection = {
-  blur: number
+  blur: Node<'float'> | number
   grazingStrength: number
   mask?: Node<'float'>
   strength: number
@@ -36,7 +36,8 @@ export default class FloorMaterial extends MeshStandardNodeMaterial {
     if (this.reflection && reflection) {
       const grazing = normalView.dot(positionViewDirection).abs().oneMinus().pow(5)
       const reflectance = grazing.mul(reflection.grazingStrength).add(reflection.strength).mul(reflection.mask ?? float(1))
-      this.outputNode = vec4(mix(output.rgb, this.reflection.level(float(reflection.blur)).rgb, reflectance), output.a)
+      const blur = typeof reflection.blur === 'number' ? float(reflection.blur) : reflection.blur
+      this.outputNode = vec4(mix(output.rgb, this.reflection.level(blur).rgb, reflectance), output.a)
     }
   }
 

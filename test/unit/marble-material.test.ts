@@ -2,6 +2,8 @@ import {expect, test} from 'bun:test'
 
 import {PerspectiveCamera, Texture} from 'three/webgpu'
 
+import ArchitecturalPlasterMaterial from '../../src/lib/materials/ArchitecturalPlasterMaterial.ts'
+import DetailedMarbleFloorMaterial from '../../src/lib/materials/DetailedMarbleFloorMaterial.ts'
 import MarbleFloorMaterial from '../../src/lib/materials/MarbleFloorMaterial.ts'
 import WoodFloorMaterial from '../../src/lib/materials/WoodFloorMaterial.ts'
 import {getGraphicsProfile} from '../../src/lib/rendering/graphicsQuality.ts'
@@ -71,6 +73,52 @@ test('quality restores the original polished marble and softer wood varnish', ()
   } finally {
     wood.dispose()
     marble.dispose()
+    texture.dispose()
+  }
+})
+test('detailed marble varies polish and reflection blur only when reflections are active', () => {
+  const texture = new Texture
+  const quality = new DetailedMarbleFloorMaterial(texture, true)
+  const performance = new DetailedMarbleFloorMaterial(texture, false)
+  try {
+    expect(quality.reflection).not.toBeNull()
+    expect(quality.roughnessNode).not.toBeNull()
+    expect(quality.outputNode).not.toBeNull()
+    expect(performance.reflection).toBeNull()
+    expect(performance.roughnessNode).toBeNull()
+    expect(performance.roughness).toBe(0.8)
+  } finally {
+    quality.dispose()
+    performance.dispose()
+    texture.dispose()
+  }
+})
+test('architectural plaster adds procedural color, roughness and relief only in quality', () => {
+  const texture = new Texture
+  const quality = new ArchitecturalPlasterMaterial({
+    baseColor: '#658578',
+    map: texture,
+    quality: true,
+    roughness: 0.9,
+  })
+  const performance = new ArchitecturalPlasterMaterial({
+    baseColor: '#658578',
+    map: texture,
+    quality: false,
+    roughness: 0.9,
+  })
+  try {
+    expect(quality.map).toBeNull()
+    expect(quality.colorNode).not.toBeNull()
+    expect(quality.roughnessNode).not.toBeNull()
+    expect(quality.normalNode).not.toBeNull()
+    expect(performance.map).toBe(texture)
+    expect(performance.colorNode).toBeNull()
+    expect(performance.roughnessNode).toBeNull()
+    expect(performance.normalNode).toBeNull()
+  } finally {
+    quality.dispose()
+    performance.dispose()
     texture.dispose()
   }
 })

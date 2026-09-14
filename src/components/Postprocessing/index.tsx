@@ -14,11 +14,12 @@ import {getKnotFocus, getKnotFocusDistance, getPlayerZoom} from '#src/lib/render
 import tiltShift from '#src/lib/rendering/tiltShift.ts'
 
 type PostprocessingProps = {
+  contactDarkening?: boolean
   knotFocus?: boolean
   quality?: boolean
 }
 
-const Postprocessing = ({knotFocus = false, quality = true}: PostprocessingProps) => {
+const Postprocessing = ({contactDarkening = false, knotFocus = false, quality = true}: PostprocessingProps) => {
   const renderer = useThree(state => state.renderer)
   const scene = useThree(state => state.scene)
   const camera = useThree(state => state.camera)
@@ -42,8 +43,9 @@ const Postprocessing = ({knotFocus = false, quality = true}: PostprocessingProps
       const normal = scenePass.getTextureNode('normal')
       ambientOcclusion = ao(scenePass.getTextureNode('depth'), normal, camera)
       ambientOcclusion.resolutionScale = 0.75
-      ambientOcclusion.radius.value = 0.3
-      ambientOcclusion.scale.value = 0.85
+      ambientOcclusion.radius.value = contactDarkening ? 0.18 : 0.3
+      ambientOcclusion.thickness.value = contactDarkening ? 0.6 : 1
+      ambientOcclusion.scale.value = contactDarkening ? 1.18 : 0.85
       ambientOcclusion.samples.value = 16
       base = color.mul(vec4(vec3(ambientOcclusion.getTextureNode().r), 1))
     }
@@ -90,7 +92,7 @@ const Postprocessing = ({knotFocus = false, quality = true}: PostprocessingProps
       scenePass.dispose()
       pipeline.dispose()
     }
-  }, [camera, knotFocus, quality, renderer, scene, set])
+  }, [camera, contactDarkening, knotFocus, quality, renderer, scene, set])
   return null
 }
 export default Postprocessing
