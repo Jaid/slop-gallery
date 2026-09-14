@@ -22,10 +22,11 @@ describe('permanent Knot Gallery', () => {
   })
   test('preserves saves in the enlarged areas, but rejects walls and disabled elevations', () => {
     const pose: PlayerPose = {
-      position: [23, 0.04, -35],
+      position: [knotGalleryBounds.maxX - 1, 0.04, knotLayout.center[2]],
       yaw: 0.8,
       pitch: -0.1,
     }
+    expect(pose.position[0]).toBeGreaterThan(rooms.find(room => room.id === 'lobby')!.size[0] / 2)
     expect(insideKnotGallery(pose.position)).toBe(true)
     for (const position of [[knotGalleryBounds.maxX, 0, -20], [knotGalleryBounds.minX, 0, -20], [0, 0, knotGalleryBounds.northZ], [0, 0, knotGalleryBounds.southZ], [0, -6, -20], [0, 6, -20], [Number.NaN, 0, -20], [0, 0, Infinity]] as Array<Vec3>) {
       expect(insideKnotGallery(position)).toBe(false)

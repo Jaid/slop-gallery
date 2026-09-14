@@ -18,10 +18,12 @@ describe('multi-model Knot challenge', () => {
     expect(knots).toHaveLength(225)
     expect(knotsById.size).toBe(225)
     const displayedKnots = knots.filter(item => !item.archived)
-    expect(knotExhibition).toHaveLength(displayedKnots.length)
-    expect(new Set(knotExhibition.map(item => item.id)).size).toBe(displayedKnots.length)
-    expect(knotBays).toHaveLength(new Set(displayedKnots.map(item => item.model)).size)
-    expect(knotExhibition.map(item => item.number)).toEqual(Array.from({length: displayedKnots.length}, (_, index) => index + 1))
+    const displayedByModel = Map.groupBy(displayedKnots, item => item.model)
+    const expectedCount = [...displayedByModel.values()].reduce((sum, items) => sum + Math.min(items.length, 8), 0)
+    expect(knotExhibition).toHaveLength(expectedCount)
+    expect(new Set(knotExhibition.map(item => item.id)).size).toBe(expectedCount)
+    expect(knotBays).toHaveLength(displayedByModel.size)
+    expect(knotExhibition.map(item => item.number)).toEqual(Array.from({length: expectedCount}, (_, index) => index + 1))
     for (const bay of knotBays) {
       const firstHighlighted = bay.finishes.findIndex(item => item.highlighted)
       if (firstHighlighted !== -1) {
