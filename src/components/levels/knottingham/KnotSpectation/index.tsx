@@ -19,6 +19,7 @@ const billboards = new Map<string, KnotBay>(knotBays.flatMap(bay => [[`preview-$
 const announcedCreators = new Set<string>
 const announcedItems = new Set<string>
 const inspectionDistanceSpeed = 0.45
+const inspectionOrbitSpeed = 1.5
 const baseRadius = (() => {
   const geometry = createKnotGeometry()
   geometry.computeBoundingSphere()
@@ -37,6 +38,7 @@ export default function KnotSpectation() {
   const {camera, controls, renderer} = useThree()
   const session = useRef<Session | null>(null)
   const distanceKeys = useRef(new Set<'KeyS' | 'KeyW'>)
+  const orbitKeys = useRef(new Set<'KeyA' | 'KeyD'>)
   const center = useRef(new Vector3)
   useEffect(() => {
     if (!(camera instanceof PerspectiveCamera) || !(controls instanceof PointerLockControls)) {
@@ -113,12 +115,14 @@ export default function KnotSpectation() {
       }
       current.restoreControls()
       distanceKeys.current.clear()
+      orbitKeys.current.clear()
       session.current = null
       cameraPose.focused = false
       useGallery.setState({inspecting: null})
     }
     const release = () => {
       distanceKeys.current.clear()
+      orbitKeys.current.clear()
       session.current?.orbit.release()
       if (session.current && useGallery.getState().inspecting !== null) {
         useGallery.setState({inspecting: null})
@@ -128,13 +132,23 @@ export default function KnotSpectation() {
       if (event.ctrlKey || event.metaKey || event.altKey || isTextInput(event.target)) {
         return
       }
-      if ((event.code === 'KeyW' || event.code === 'KeyS') && session.current && !session.current.orbit.returning) {
-        event.preventDefault()
-        if (!event.repeat) {
-          markControlled()
-          distanceKeys.current.add(event.code)
+      if (session.current && !session.current.orbit.returning) {
+        if (event.code === 'KeyW' || event.code === 'KeyS') {
+          event.preventDefault()
+          if (!event.repeat) {
+            markControlled()
+            distanceKeys.current.add(event.code)
+          }
+          return
         }
-        return
+        if (event.code === 'KeyA' || event.code === 'KeyD') {
+          event.preventDefault()
+          if (!event.repeat) {
+            markControlled()
+            orbitKeys.current.add(event.code)
+          }
+          return
+        }
       }
       if (event.code !== 'KeyV' || event.repeat) {
         return
@@ -178,6 +192,8 @@ export default function KnotSpectation() {
     const up = (event: KeyboardEvent) => {
       if (event.code === 'KeyW' || event.code === 'KeyS') {
         distanceKeys.current.delete(event.code)
+      } else if (event.code === 'KeyA' || event.code === 'KeyD') {
+        orbitKeys.current.delete(event.code)
       } else if (event.code === 'KeyV') {
         release()
       }
@@ -231,16 +247,19 @@ export default function KnotSpectation() {
     const object = propObjects.get(current.id)
     if (object?.group.visible) {
       object.group.getWorldPosition(center.current)
-      const keys = distanceKeys.current
-      const distanceDirection = Number(keys.has('KeyS')) - Number(keys.has('KeyW'))
+      const distanceDirection = Number(distanceKeys.current.has('KeyS')) - Number(distanceKeys.current.has('KeyW'))
+      const orbitDirection = Number(orbitKeys.current.has('KeyD')) - Number(orbitKeys.current.has('KeyA'))
       current.orbit.adjustDistance(distanceDirection * inspectionDistanceSpeed * delta)
+      current.orbit.addInput(orbitDirection * inspectionOrbitSpeed * controls.pointerSpeed * delta, 0)
     } else {
       distanceKeys.current.clear()
+      orbitKeys.current.clear()
       current.orbit.release()
     }
     if (current.orbit.update(center.current, delta)) {
       current.restoreControls()
       distanceKeys.current.clear()
+      orbitKeys.current.clear()
       session.current = null
       cameraPose.focused = false
       useGallery.setState({inspecting: null})
