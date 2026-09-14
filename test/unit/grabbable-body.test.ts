@@ -3,6 +3,7 @@ import {afterEach, beforeEach, describe, expect, test} from 'bun:test'
 import RAPIER from '@dimforge/rapier3d-compat'
 
 import GrabbableBody from '../../src/lib/physics/GrabbableBody.ts'
+import {bodyThrow} from '../../src/lib/physics/ThrowState.ts'
 
 await RAPIER.init()
 let world: RAPIER.World
@@ -63,6 +64,25 @@ describe('shared grabbing regressions', () => {
     for (let i = 0; i < body.numColliders(); i++) {
       expect(body.collider(i).isEnabled()).toBe(true)
     }
+  })
+  test('each deliberate throw gets one stable attack identity until the prop is grabbed again', () => {
+    const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(1, 2, 3))
+    world.createCollider(RAPIER.ColliderDesc.cuboid(0.3, 0.05, 0.4), body)
+    const carried = new GrabbableBody(body, world)
+    expect(bodyThrow(body)).toBeUndefined()
+    expect(carried.grab()).toBe(true)
+    carried.release(true, [0, 0, 1])
+    const first = bodyThrow(body)
+    expect(first?.id).toBeGreaterThan(0)
+    expect(bodyThrow(body)).toBe(first)
+    expect(carried.grab()).toBe(true)
+    expect(bodyThrow(body)).toBeUndefined()
+    carried.release(true, [0, 0, 1])
+    const second = bodyThrow(body)
+    expect(second?.id).toBeGreaterThan(first!.id)
+    expect(carried.grab()).toBe(true)
+    carried.release(false, [0, 0, 1])
+    expect(bodyThrow(body)).toBeUndefined()
   })
   test('cancel after a completed throw does not stop or teleport the prop', () => {
     const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(1, 2, 3))

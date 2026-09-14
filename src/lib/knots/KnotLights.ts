@@ -54,7 +54,7 @@ export function knotLightFracture(point: readonly [number, number], velocity: re
   const vx = Number.isFinite(velocity[0]) ? velocity[0] : 0
   const vz = Number.isFinite(velocity[1]) ? velocity[1] : 0
   const chooseSign = (position: number, speed: number, sample: number) => {
-    if (Math.abs(position) > 0.04) {
+    if (Math.abs(position) > 0.000_001) {
       return Math.sign(position)
     }
     if (Math.abs(speed) > 0.001) {
@@ -87,6 +87,9 @@ export function knotLightFracture(point: readonly [number, number], velocity: re
 /** Deterministic stepped noise: repeatable per pane, but deliberately erratic to the eye. */
 export function knotLightFlicker(seed: number, elapsed: number) {
   const time = Math.max(0, elapsed)
+  if (time < 0.12) {
+    return 1
+  }
   const fast = noise(seed, Math.floor(time * 37))
   const medium = noise(seed + 101, Math.floor(time * 17))
   const slow = noise(seed + 307, Math.floor(time * 7))
@@ -98,6 +101,7 @@ export function knotLightFlicker(seed: number, elapsed: number) {
 
 export default class KnotLightDamage {
   private readonly damagedAt: Float64Array
+  private readonly lastAttack: Float64Array
   private readonly lastImpact: Float64Array
   private readonly stages: Uint8Array
 
@@ -106,15 +110,17 @@ export default class KnotLightDamage {
       throw new RangeError('Knot light count must be a non-negative integer.')
     }
     this.stages = new Uint8Array(count)
+    this.lastAttack = new Float64Array(count).fill(Number.NaN)
     this.lastImpact = new Float64Array(count).fill(Number.NEGATIVE_INFINITY)
     this.damagedAt = new Float64Array(count).fill(Number.POSITIVE_INFINITY)
   }
 
-  hit(index: number, mass: number, speed: number, time: number) {
+  hit(index: number, mass: number, speed: number, time: number, attackId: number) {
     this.assertIndex(index)
-    if (this.stage(index) === 2 || !Number.isFinite(time) || time - this.lastImpact[index] < knotLight.impactCooldown || !isKnotLightDamageImpact(mass, speed)) {
+    if (!Number.isSafeInteger(attackId) || attackId <= 0 || this.lastAttack[index] === attackId || this.stage(index) === 2 || !Number.isFinite(time) || time - this.lastImpact[index] < knotLight.impactCooldown || !isKnotLightDamageImpact(mass, speed)) {
       return false
     }
+    this.lastAttack[index] = attackId
     this.lastImpact[index] = time
     if (this.stages[index] === 0) {
       this.stages[index] = 1

@@ -7,13 +7,14 @@ import {useEffect, useMemo, useReducer, useRef} from 'react'
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 import {RectAreaLightTexturesLib} from 'three/addons/lights/RectAreaLightTexturesLib.js'
 import {attribute, color, float, length, mix, positionLocal, smoothstep, uv, vec2} from 'three/tsl'
-import {Euler, InstancedBufferAttribute, InstancedMesh, Matrix4, MeshBasicNodeMaterial, MeshStandardNodeMaterial, RectAreaLight, RectAreaLightNode} from 'three/webgpu'
+import {Euler, InstancedBufferAttribute, InstancedMesh, Matrix4, MeshBasicNodeMaterial, MeshStandardNodeMaterial, Quaternion, RectAreaLight, RectAreaLightNode, Vector3} from 'three/webgpu'
 import useGraphicsQuality from 'use-graphics-quality'
 
 import {useGallery} from '#src/lib/gallery.ts'
 import {knotGalleryBounds} from '#src/lib/gallery/knotGallery.ts'
 import {knotBays, knotLayout} from '#src/lib/knots/exhibition.ts'
 import KnotLightDamage, {knotLight, knotLightFracture, knotLightSlots} from '#src/lib/knots/KnotLights.ts'
+import {bodyThrow} from '#src/lib/physics/ThrowState.ts'
 
 RectAreaLightNode.setLTC(RectAreaLightTexturesLib.init())
 const ledEmissionColor = '#fff3d8'
@@ -24,6 +25,78 @@ const housingYOffset = 0.025
 const diffuserYOffset = -0.026
 const diffuserTilt = [0, 0.055, 0.16] as const
 const diffuserDrop = [0, 0.035, 0.09] as const
+const colliderWorldPoint = (collider: CollisionEnterPayload['target']['collider'], point: {x: number
+  y: number
+  z: number}) => {
+  const rotation = collider.rotation()
+  const translation = collider.translation()
+  return new Vector3(point.x, point.y, point.z)
+    .applyQuaternion(new Quaternion(rotation.x, rotation.y, rotation.z, rotation.w))
+    .add(new Vector3(translation.x, translation.y, translation.z))
+}
+const collisionImpactPoint = (event: CollisionEnterPayload, fallback: {x: number
+  y: number
+  z: number}) => {
+  const weighted = new Vector3
+  let totalWeight = 0
+  const unweighted = new Vector3
+  let contacts = 0
+  for (let contact = 0; contact < event.manifold.numContacts(); contact++) {
+    const first = event.manifold.localContactPoint1(contact)
+    const second = event.manifold.localContactPoint2(contact)
+    if (!first || !second) {
+      continue
+    }
+    // react-three-rapier exposes the same manifold to both collider callbacks, so determine
+    // which local point belongs to our target by testing both assignments in world space.
+    const targetFirst = colliderWorldPoint(event.target.collider, first)
+    const otherSecond = colliderWorldPoint(event.other.collider, second)
+    const targetSecond = colliderWorldPoint(event.target.collider, second)
+    const otherFirst = colliderWorldPoint(event.other.collider, first)
+    const firstGap = targetFirst.distanceToSquared(otherSecond)
+    const secondGap = targetSecond.distanceToSquared(otherFirst)
+    const candidate = firstGap <= secondGap ? targetFirst : targetSecond
+    unweighted.add(candidate)
+    contacts++
+    const rawImpulse = event.manifold.contactImpulse(contact)
+    const impulse = Number.isFinite(rawImpulse) ? Math.abs(rawImpulse) : 0
+    if (impulse > 0) {
+      weighted.addScaledVector(candidate, impulse)
+      totalWeight += impulse
+    }
+  }
+  if (totalWeight > 0) {
+    return weighted.multiplyScalar(1 / totalWeight)
+  }
+  if (contacts) {
+    return unweighted.multiplyScalar(1 / contacts)
+  }
+  const total = new Vector3
+  let count = 0
+  for (let contact = 0; contact < event.manifold.numSolverContacts(); contact++) {
+    const point = event.manifold.solverContactPoint(contact)
+    if (point) {
+      total.add(new Vector3(point.x, point.y, point.z))
+      count++
+    }
+  }
+  return count ? total.multiplyScalar(1 / count) : new Vector3(fallback.x, fallback.y, fallback.z)
+}
+const collisionImpactSpeed = (event: CollisionEnterPayload, mass: number, currentSpeed: number) => {
+  if (!Number.isFinite(mass) || mass <= 0) {
+    return currentSpeed
+  }
+  let impulse = 0
+  for (let contact = 0; contact < event.manifold.numContacts(); contact++) {
+    const value = event.manifold.contactImpulse(contact)
+    if (Number.isFinite(value)) {
+      impulse += Math.abs(value)
+    }
+  }
+  // Collision callbacks run after Rapier's solver, so linvel() may already contain only
+  // the small rebound velocity. Normal impulse / mass recovers the missing impact scale.
+  return Math.max(currentSpeed, impulse / mass)
+}
 const setDiffuserMatrix = (mesh: InstancedMesh, index: number, slot: KnotLightSlot, stage: KnotLightStage) => {
   const direction = index % 2 === 0 ? 1 : -1
   const tilt = diffuserTilt[stage]
@@ -169,32 +242,21 @@ export default function KnotLights() {
     if (!body) {
       return
     }
+    const attack = bodyThrow(body)
+    if (!attack) {
+      return
+    }
     const velocity = body.linvel()
-    const speed = Math.hypot(velocity.x, velocity.y, velocity.z)
-    if (damage.hit(index, body.mass(), speed, time.current)) {
+    const mass = body.mass()
+    const speed = collisionImpactSpeed(event, mass, Math.hypot(velocity.x, velocity.y, velocity.z))
+    if (damage.hit(index, mass, speed, time.current, attack.id)) {
       const stage = damage.stage(index)
       if (stage === 1) {
-        const fallback = body.translation()
-        let contactX = 0
-        let contactZ = 0
-        let contacts = 0
-        for (let contact = 0; contact < event.manifold.numSolverContacts(); contact++) {
-          const point = event.manifold.solverContactPoint(contact)
-          if (point) {
-            contactX += point.x
-            contactZ += point.z
-            contacts++
-          }
-        }
-        if (contacts === 0) {
-          contactX = fallback.x
-          contactZ = fallback.z
-          contacts = 1
-        }
+        const impact = collisionImpactPoint(event, body.translation())
         const slot = slots[index]
         const fracture = knotLightFracture([
-          (contactX / contacts - slot.position[0]) / (diffuserSize[0] / 2),
-          (contactZ / contacts - slot.position[2]) / (diffuserSize[2] / 2),
+          (impact.x - slot.position[0]) / (diffuserSize[0] / 2),
+          (impact.z - slot.position[2]) / (diffuserSize[2] / 2),
         ], [velocity.x, velocity.z], index)
         resources.fracturePoints.setXY(index, ...fracture.point)
         resources.fractureNormals.setXY(index, ...fracture.normal)
@@ -216,7 +278,7 @@ export default function KnotLights() {
     <primitive object={resources.diffuser}/>
     {emitters.map(light => <primitive key={light.name} object={light}/>)}
     <RigidBody type="fixed" colliders={false}>
-      {slots.map((slot, index) => damage.stage(index) < 2 && <CuboidCollider key={slot.id} position={slot.position} args={[knotLight.size[0] / 2, knotLight.size[1] / 2, knotLight.size[2] / 2]} restitution={0.08} friction={0.6} onCollisionEnter={event => onImpact(index, event)}/>)}
+      {slots.map((slot, index) => damage.stage(index) < 2 && <CuboidCollider key={slot.id} position={slot.position} args={[housingSize[0] / 2, knotLight.size[1] / 2, housingSize[2] / 2]} restitution={0.08} friction={0.6} onCollisionEnter={event => onImpact(index, event)}/>)}
     </RigidBody>
   </group>
 }

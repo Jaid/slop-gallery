@@ -5,6 +5,7 @@ import {RigidBodyType} from '@dimforge/rapier3d-compat'
 
 import {floorHeight} from '../gallery/walls.ts'
 import PropPlacement from './PropPlacement.ts'
+import {beginBodyThrow, clearBodyThrow} from './ThrowState.ts'
 
 export type GrabbableBodyOptions = {
   attachmentBody?: () => RigidBody | undefined
@@ -54,6 +55,7 @@ export default class GrabbableBody {
       return false
     }
     this.rememberHome()
+    clearBodyThrow(this.body)
     this.saved = this.capture()
     this.lastClear = this.saved.position
     for (const collider of this.colliders()) {
@@ -133,6 +135,11 @@ export default class GrabbableBody {
       y: throwing ? 2 : 0,
       z: throwing ? 1 : 0,
     }, true)
+    if (throwing) {
+      beginBodyThrow(this.body)
+    } else {
+      clearBodyThrow(this.body)
+    }
     return returned
   }
 
@@ -158,6 +165,7 @@ export default class GrabbableBody {
   }
 
   private restore(pose: BodyPose) {
+    clearBodyThrow(this.body)
     this.body.setBodyType(pose.type, true)
     this.translate(pose.position)
     this.body.setRotation(pose.rotation, true)
