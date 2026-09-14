@@ -16,6 +16,13 @@ export type KnotLightSlot = {
   row: number
   slot: number
 }
+export type KnotLightEmissionGroup = {
+  damageIndex: number | null
+  firstSlot: number
+  id: string
+  lastSlot: number
+  row: number
+}
 
 export function knotLightSlots(layout: KnotLayout, rowCount: number, ceilingHeight: number): Array<KnotLightSlot> {
   return Array.from({length: rowCount * layout.maxRowLength}, (_, index) => {
@@ -28,6 +35,62 @@ export function knotLightSlots(layout: KnotLayout, rowCount: number, ceilingHeig
       slot,
     }
   })
+}
+
+/** Groups contiguous healthy panes while isolating flickering panes and omitting dead panes. */
+export function knotLightEmissionGroups(slots: ReadonlyArray<KnotLightSlot>, stages: ReadonlyArray<KnotLightStage>): Array<KnotLightEmissionGroup> {
+  if (slots.length !== stages.length) {
+    throw new RangeError('Knot light slots and damage stages must have the same length.')
+  }
+  const indexed = slots.map((slot, index) => ({
+    index,
+    slot,
+    stage: stages[index],
+  })).toSorted((a, b) => a.slot.row - b.slot.row || a.slot.slot - b.slot.slot)
+  const groups: Array<KnotLightEmissionGroup> = []
+  let healthy: {firstSlot: number
+    lastSlot: number
+    row: number} | null = null
+  const flushHealthy = () => {
+    if (!healthy) {
+      return
+    }
+    groups.push({
+      id: `healthy:${healthy.row}:${healthy.firstSlot}-${healthy.lastSlot}`,
+      row: healthy.row,
+      firstSlot: healthy.firstSlot,
+      lastSlot: healthy.lastSlot,
+      damageIndex: null,
+    })
+    healthy = null
+  }
+  for (const {index, slot, stage} of indexed) {
+    if (stage === 0) {
+      if (healthy?.row !== slot.row || slot.slot !== healthy.lastSlot + 1) {
+        flushHealthy()
+        healthy = {
+          firstSlot: slot.slot,
+          lastSlot: slot.slot,
+          row: slot.row,
+        }
+      } else {
+        healthy.lastSlot = slot.slot
+      }
+      continue
+    }
+    flushHealthy()
+    if (stage === 1) {
+      groups.push({
+        id: `damaged:${slot.id}`,
+        row: slot.row,
+        firstSlot: slot.slot,
+        lastSlot: slot.slot,
+        damageIndex: index,
+      })
+    }
+  }
+  flushHealthy()
+  return groups
 }
 
 export function knotLightImpactEnergy(mass: number, speed: number) {

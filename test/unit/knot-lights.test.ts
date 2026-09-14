@@ -3,7 +3,7 @@ import {expect, test} from 'bun:test'
 import {knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
 import {knotBays, knotLayout} from '../../src/lib/knots/exhibition.ts'
 import KnotLayout from '../../src/lib/knots/KnotLayout.ts'
-import KnotLightDamage, {isKnotLightDamageImpact, knotLight, knotLightFlicker, knotLightImpactEnergy, knotLightSlots} from '../../src/lib/knots/KnotLights.ts'
+import KnotLightDamage, {isKnotLightDamageImpact, knotLight, knotLightEmissionGroups, knotLightFlicker, knotLightImpactEnergy, knotLightSlots} from '../../src/lib/knots/KnotLights.ts'
 
 test('every candidate row gets a pane over every slot in the longest row', () => {
   const exhibitionSlots = knotLightSlots(knotLayout, knotBays.length, knotGalleryBounds.height)
@@ -20,6 +20,62 @@ test('every candidate row gets a pane over every slot in the longest row', () =>
     expect(rowSlots.every(slot => slot.position[1] === 5.8 - knotLight.ceilingInset)).toBe(true)
     expect(rowSlots.every(slot => slot.position[2] === layout.rowZ(row))).toBe(true)
   }
+})
+test('emission groups split around a flickering pane and omit it once broken', () => {
+  const layout = new KnotLayout([5])
+  const slots = knotLightSlots(layout, 1, 5.8)
+  const damage = new KnotLightDamage(slots.length)
+  const groups = () => knotLightEmissionGroups(slots, slots.map((_, index) => damage.stage(index)))
+  expect(groups()).toEqual([
+    {
+      id: 'healthy:0:0-4',
+      row: 0,
+      firstSlot: 0,
+      lastSlot: 4,
+      damageIndex: null,
+    },
+  ])
+  expect(damage.hit(2, 4.6, 10, 1)).toBe(true)
+  expect(groups()).toEqual([
+    {
+      id: 'healthy:0:0-1',
+      row: 0,
+      firstSlot: 0,
+      lastSlot: 1,
+      damageIndex: null,
+    },
+    {
+      id: 'damaged:0:2',
+      row: 0,
+      firstSlot: 2,
+      lastSlot: 2,
+      damageIndex: 2,
+    },
+    {
+      id: 'healthy:0:3-4',
+      row: 0,
+      firstSlot: 3,
+      lastSlot: 4,
+      damageIndex: null,
+    },
+  ])
+  expect(damage.hit(2, 4.6, 10, 1 + knotLight.impactCooldown + 0.01)).toBe(true)
+  expect(groups()).toEqual([
+    {
+      id: 'healthy:0:0-1',
+      row: 0,
+      firstSlot: 0,
+      lastSlot: 1,
+      damageIndex: null,
+    },
+    {
+      id: 'healthy:0:3-4',
+      row: 0,
+      firstSlot: 3,
+      lastSlot: 4,
+      damageIndex: null,
+    },
+  ])
 })
 test('only thrown heavy objects advance a pane from healthy to flickering to broken', () => {
   expect(knotLightImpactEnergy(4.6, 10)).toBe(230)
