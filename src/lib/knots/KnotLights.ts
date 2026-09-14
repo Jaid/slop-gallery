@@ -39,6 +39,50 @@ export function isKnotLightDamageImpact(mass: number, speed: number) {
 
 const fract = (value: number) => value - Math.floor(value)
 const noise = (seed: number, sample: number) => fract(Math.sin((seed + 1) * 12.9898 + (sample + 1) * 78.233) * 43_758.5453)
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
+
+export type KnotLightFracture = {
+  liveFraction: number
+  normal: readonly [number, number]
+  point: readonly [number, number]
+}
+
+/** Builds a line through the impact that cuts the nearest diffuser corner into one dead triangle. */
+export function knotLightFracture(point: readonly [number, number], velocity: readonly [number, number], seed = 0): KnotLightFracture {
+  const px = clamp(Number.isFinite(point[0]) ? point[0] : 0, -0.94, 0.94)
+  const pz = clamp(Number.isFinite(point[1]) ? point[1] : 0, -0.94, 0.94)
+  const vx = Number.isFinite(velocity[0]) ? velocity[0] : 0
+  const vz = Number.isFinite(velocity[1]) ? velocity[1] : 0
+  const chooseSign = (position: number, speed: number, sample: number) => {
+    if (Math.abs(position) > 0.04) {
+      return Math.sign(position)
+    }
+    if (Math.abs(speed) > 0.001) {
+      return Math.sign(speed)
+    }
+    return noise(seed, sample) < 0.5 ? -1 : 1
+  }
+  const cornerX = chooseSign(px, vx, 701)
+  const cornerZ = chooseSign(pz, vz, 709)
+  const xDistance = 1 - cornerX * px
+  const zDistance = 1 - cornerZ * pz
+  const minLambda = xDistance / 2
+  const maxLambda = 1 - zDistance / 2
+  const planarSpeed = Math.abs(vx) + Math.abs(vz)
+  const velocityBias = planarSpeed > 0.001 ? (Math.abs(vz) - Math.abs(vx)) / planarSpeed * 0.16 : 0
+  const jitter = (noise(seed, 719) - 0.5) * 0.16
+  const lambda = clamp(0.5 + velocityBias + jitter, Math.min(minLambda, maxLambda), Math.max(minLambda, maxLambda))
+  const xIntercept = xDistance / Math.max(lambda, 0.0001)
+  const zIntercept = zDistance / Math.max(1 - lambda, 0.0001)
+  const nx = cornerX / xIntercept
+  const nz = cornerZ / zIntercept
+  const length = Math.hypot(nx, nz) || 1
+  return {
+    point: [px, pz],
+    normal: [nx / length, nz / length],
+    liveFraction: 1 - xIntercept * zIntercept / 8,
+  }
+}
 
 /** Deterministic stepped noise: repeatable per pane, but deliberately erratic to the eye. */
 export function knotLightFlicker(seed: number, elapsed: number) {

@@ -6,14 +6,14 @@ import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import {useEffect, useMemo, useReducer, useRef} from 'react'
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 import {RectAreaLightTexturesLib} from 'three/addons/lights/RectAreaLightTexturesLib.js'
-import {attribute, color, float, length, mix, smoothstep, uv, vec2} from 'three/tsl'
+import {attribute, color, float, length, mix, positionLocal, smoothstep, uv, vec2} from 'three/tsl'
 import {Euler, InstancedBufferAttribute, InstancedMesh, Matrix4, MeshBasicNodeMaterial, MeshStandardNodeMaterial, RectAreaLight, RectAreaLightNode} from 'three/webgpu'
 import useGraphicsQuality from 'use-graphics-quality'
 
 import {useGallery} from '#src/lib/gallery.ts'
 import {knotGalleryBounds} from '#src/lib/gallery/knotGallery.ts'
 import {knotBays, knotLayout} from '#src/lib/knots/exhibition.ts'
-import KnotLightDamage, {knotLight, knotLightSlots} from '#src/lib/knots/KnotLights.ts'
+import KnotLightDamage, {knotLight, knotLightFracture, knotLightSlots} from '#src/lib/knots/KnotLights.ts'
 
 RectAreaLightNode.setLTC(RectAreaLightTexturesLib.init())
 const ledEmissionColor = '#fff3d8'
@@ -42,6 +42,7 @@ export default function KnotLights() {
   const damage = useMemo(() => new KnotLightDamage(slots.length), [resetEpoch, slots.length])
   const time = useRef(0)
   const rowIntensities = useRef(new Float32Array(knotBays.length))
+  const paneEmissionScales = useRef(new Float32Array(slots.length).fill(1))
   const [, redraw] = useReducer(value => value + 1, 0)
   // Three hashes built-in light IDs into every lit render object. Keep this light set stable across damage, or a hit recompiles the scene.
   const emitters = useMemo(() => {
@@ -61,14 +62,33 @@ export default function KnotLights() {
     const housingGeometry = new RoundedBoxGeometry(...housingSize, 2, 0.045)
     const diffuserGeometry = new RoundedBoxGeometry(...diffuserSize, 2, 0.025)
     const intensities = new InstancedBufferAttribute(new Float32Array(slots.length).fill(1), 1)
+    const fracturePoints = new InstancedBufferAttribute(new Float32Array(slots.length * 2), 2)
+    const fractureNormals = new InstancedBufferAttribute(new Float32Array(slots.length * 2), 2)
+    const fractureActive = new InstancedBufferAttribute(new Float32Array(slots.length), 1)
+    for (let index = 0; index < slots.length; index++) {
+      fractureNormals.setXY(index, 1, 0)
+    }
     diffuserGeometry.setAttribute('lightIntensity', intensities)
+    diffuserGeometry.setAttribute('fracturePoint', fracturePoints)
+    diffuserGeometry.setAttribute('fractureNormal', fractureNormals)
+    diffuserGeometry.setAttribute('fractureActive', fractureActive)
     const diffuserMaterial = new MeshBasicNodeMaterial
     diffuserMaterial.name = 'Knot slot LED diffusers'
     diffuserMaterial.toneMapped = false
     const radial = length(uv().sub(vec2(0.5)))
     const center = float(1).sub(smoothstep(0.34, 0.7, radial))
-    const luminance = attribute('lightIntensity', 'float').mul(center.mul(0.2).add(0.8)).clamp()
-    diffuserMaterial.colorNode = mix(color('#171916'), color('#fff3d8'), luminance)
+    const intensity = attribute('lightIntensity', 'float')
+    const fracture = attribute('fractureActive', 'float')
+    const fracturePoint = attribute('fracturePoint', 'vec2')
+    const fractureNormal = attribute('fractureNormal', 'vec2')
+    const localPlanar = positionLocal.xz.div(vec2(diffuserSize[0] / 2, diffuserSize[2] / 2))
+    const fractureDistance = localPlanar.sub(fracturePoint).dot(fractureNormal)
+    const dead = fractureDistance.smoothstep(-0.012, 0.012).mul(fracture)
+    const live = dead.oneMinus()
+    const seam = fractureDistance.abs().smoothstep(0.006, 0.028).oneMinus().mul(fracture).mul(intensity)
+    const luminance = intensity.mul(center.mul(0.2).add(0.8)).mul(live).add(seam.mul(0.62)).clamp()
+    const unlit = mix(color('#171916'), color('#070806'), dead.mul(0.9))
+    diffuserMaterial.colorNode = mix(unlit, color('#fff3d8'), luminance)
     const housingMaterial = new MeshStandardNodeMaterial({
       color: '#333936',
       roughness: 0.32,
@@ -97,6 +117,9 @@ export default function KnotLights() {
       diffuserGeometry,
       diffuserMaterial,
       housingGeometry,
+      fractureActive,
+      fractureNormals,
+      fracturePoints,
       housingMaterial,
       housings,
       intensities,
@@ -106,8 +129,12 @@ export default function KnotLights() {
     for (const [index, slot] of slots.entries()) {
       setDiffuserMatrix(resources.diffuser, index, slot, damage.stage(index))
     }
+    const fractureActive = resources.fractureActive.array as Float32Array
+    fractureActive.fill(0)
+    paneEmissionScales.current.fill(1)
+    resources.fractureActive.needsUpdate = true
     resources.diffuser.instanceMatrix.needsUpdate = true
-  }, [damage, resources.diffuser, slots])
+  }, [damage, resources.diffuser, resources.fractureActive, slots])
   useEffect(() => () => {
     resources.diffuser.dispose()
     resources.housings.dispose()
@@ -124,7 +151,7 @@ export default function KnotLights() {
     let changed = false
     for (let index = 0; index < damage.count; index++) {
       const intensity = damage.intensity(index, time.current)
-      rows[Math.floor(index / knotLayout.maxRowLength)] += intensity
+      rows[Math.floor(index / knotLayout.maxRowLength)] += intensity * paneEmissionScales.current[index]
       if (Math.abs(values[index] - intensity) > 0.001) {
         values[index] = intensity
         changed = true
@@ -146,6 +173,37 @@ export default function KnotLights() {
     const speed = Math.hypot(velocity.x, velocity.y, velocity.z)
     if (damage.hit(index, body.mass(), speed, time.current)) {
       const stage = damage.stage(index)
+      if (stage === 1) {
+        const fallback = body.translation()
+        let contactX = 0
+        let contactZ = 0
+        let contacts = 0
+        for (let contact = 0; contact < event.manifold.numSolverContacts(); contact++) {
+          const point = event.manifold.solverContactPoint(contact)
+          if (point) {
+            contactX += point.x
+            contactZ += point.z
+            contacts++
+          }
+        }
+        if (contacts === 0) {
+          contactX = fallback.x
+          contactZ = fallback.z
+          contacts = 1
+        }
+        const slot = slots[index]
+        const fracture = knotLightFracture([
+          (contactX / contacts - slot.position[0]) / (diffuserSize[0] / 2),
+          (contactZ / contacts - slot.position[2]) / (diffuserSize[2] / 2),
+        ], [velocity.x, velocity.z], index)
+        resources.fracturePoints.setXY(index, ...fracture.point)
+        resources.fractureNormals.setXY(index, ...fracture.normal)
+        paneEmissionScales.current[index] = fracture.liveFraction
+        resources.fractureActive.setX(index, 1)
+        resources.fracturePoints.needsUpdate = true
+        resources.fractureNormals.needsUpdate = true
+        resources.fractureActive.needsUpdate = true
+      }
       setDiffuserMatrix(resources.diffuser, index, slots[index], stage)
       resources.diffuser.instanceMatrix.needsUpdate = true
       if (stage === 2) {

@@ -3,7 +3,7 @@ import {expect, test} from 'bun:test'
 import {knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
 import {knotBays, knotLayout} from '../../src/lib/knots/exhibition.ts'
 import KnotLayout from '../../src/lib/knots/KnotLayout.ts'
-import KnotLightDamage, {isKnotLightDamageImpact, knotLight, knotLightFlicker, knotLightImpactEnergy, knotLightSlots} from '../../src/lib/knots/KnotLights.ts'
+import KnotLightDamage, {isKnotLightDamageImpact, knotLight, knotLightFlicker, knotLightFracture, knotLightImpactEnergy, knotLightSlots} from '../../src/lib/knots/KnotLights.ts'
 
 test('every candidate row gets a pane over every slot in the longest row', () => {
   const exhibitionSlots = knotLightSlots(knotLayout, knotBays.length, knotGalleryBounds.height)
@@ -20,6 +20,20 @@ test('every candidate row gets a pane over every slot in the longest row', () =>
     expect(rowSlots.every(slot => slot.position[1] === 5.8 - knotLight.ceilingInset)).toBe(true)
     expect(rowSlots.every(slot => slot.position[2] === layout.rowZ(row))).toBe(true)
   }
+})
+test('impact fractures isolate exactly one dead diffuser corner behind a line through the impact', () => {
+  for (const [index, point] of [[0.34, -0.42], [-0.76, 0.18], [0.02, 0.03], [0.88, 0.79]].entries()) {
+    const fracture = knotLightFracture(point as [number, number], [4 - index, 1 + index], 17 + index)
+    const signedAtImpact = (fracture.point[0] - fracture.point[0]) * fracture.normal[0] + (fracture.point[1] - fracture.point[1]) * fracture.normal[1]
+    expect(Math.abs(signedAtImpact)).toBeLessThan(1e-9)
+    expect(Math.hypot(...fracture.normal)).toBeCloseTo(1, 9)
+    expect(fracture.liveFraction).toBeGreaterThanOrEqual(0.5)
+    expect(fracture.liveFraction).toBeLessThan(1)
+    const deadCorners = [[-1, -1], [-1, 1], [1, -1], [1, 1]].filter(([x, z]) => (x - fracture.point[0]) * fracture.normal[0] + (z - fracture.point[1]) * fracture.normal[1] > 1e-6)
+    expect(deadCorners).toHaveLength(1)
+  }
+  expect(knotLightFracture([0.2, -0.25], [6, 0.2], 9)).not.toEqual(knotLightFracture([0.2, -0.25], [0.2, 6], 9))
+  expect(knotLightFracture([0.2, -0.25], [6, 0.2], 9)).toEqual(knotLightFracture([0.2, -0.25], [6, 0.2], 9))
 })
 test('only thrown heavy objects advance a pane from healthy to flickering to broken', () => {
   expect(knotLightImpactEnergy(4.6, 10)).toBe(230)
