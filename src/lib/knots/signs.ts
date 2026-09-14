@@ -48,7 +48,7 @@ export const knotSignRoundParts: Array<SignRoundPart> = [
   // A short sleeve makes the slender stem terminate deliberately instead of
   // disappearing into the plaque at a single point.
   {
-    position: [0, -0.04, -0.03],
+    position: [0, -0.085, -0.03],
     radius: 0.036,
     mass: 0.06,
     height: 0.08,
