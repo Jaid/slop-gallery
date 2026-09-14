@@ -10,6 +10,14 @@ The runner attaches with `defaultViewport: null`. It does not navigate, focus, r
 
 Run after source edits and Vite dependency optimization settle. A page reload during the test destroys its execution context and requires a new run.
 
+For same-size WebGPU render-target recreation (Three #34301), which previously left cached render-pass descriptors pointing at destroyed GPU textures:
+
+```sh
+bun test/browser/run.ts webgpuRenderTargetRecreation.ts
+```
+
+Restart Vite first after changing a patched dependency so its optimized Three bundle includes the patch. The fixture renders to a detached RGBA16F target, forces `texture.needsUpdate` without changing target dimensions, renders again, and rejects any WebGPU validation error.
+
 For the reusable material queue in main MRT and reflection-style targets:
 
 ```sh

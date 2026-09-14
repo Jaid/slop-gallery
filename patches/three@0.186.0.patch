@@ -1,0 +1,106 @@
+diff --git a/build/three.webgpu.js b/build/three.webgpu.js
+--- a/build/three.webgpu.js
++++ b/build/three.webgpu.js
+@@ -87630,20 +87630,49 @@
+ 		const renderTargetData = this.get( renderTarget );
+ 		const hasExternalTexture = this._hasExternalTexture( renderContext );
+ 
+ 		let descriptors = renderTargetData.descriptors;
+ 
++		// A render-target Texture can recreate its GPUTexture without changing JS identity,
++		// dimensions or samples (for example when texture.needsUpdate is set). Cached
++		// render-pass descriptors retain GPUTextureViews, so invalidate them whenever any
++		// underlying color/MSAA/depth GPU texture changes identity. See three.js #34301.
++		const attachmentTextures = [];
++		for ( const texture of renderContext.textures ) {
++
++			const textureData = this.get( texture );
++			attachmentTextures.push( textureData.texture, textureData.msaaTexture );
++			if ( textureData.msaaTextures !== undefined ) attachmentTextures.push( ...textureData.msaaTextures );
++
++		}
++
++		if ( renderContext.depth && renderContext.depthTexture != null ) {
++
++			const depthTextureData = this.get( renderContext.depthTexture );
++			attachmentTextures.push( depthTextureData.texture, depthTextureData.msaaTexture );
++			if ( depthTextureData.msaaTextures !== undefined ) attachmentTextures.push( ...depthTextureData.msaaTextures );
++
++		}
++
++		const previousAttachmentTextures = renderTargetData.descriptorAttachmentTextures;
++		const attachmentsChanged = previousAttachmentTextures !== undefined && (
++			previousAttachmentTextures.length !== attachmentTextures.length ||
++			previousAttachmentTextures.some( ( texture, index ) => texture !== attachmentTextures[ index ] )
++		);
++
+ 		if ( descriptors === undefined ||
+ 			renderTargetData.width !== renderTarget.width ||
+ 			renderTargetData.height !== renderTarget.height ||
+ 			renderTargetData.samples !== renderTarget.samples ||
++			attachmentsChanged ||
+ 			hasExternalTexture
+ 		) {
+ 
+ 			descriptors = {};
+ 
+ 			renderTargetData.descriptors = descriptors;
++			renderTargetData.descriptorAttachmentTextures = attachmentTextures;
+ 
+ 		}
+ 
+ 		const cacheKey = renderContext.getCacheKey();
+ 		let descriptorBase = descriptors[ cacheKey ];
+diff --git a/src/renderers/webgpu/WebGPUBackend.js b/src/renderers/webgpu/WebGPUBackend.js
+--- a/src/renderers/webgpu/WebGPUBackend.js
++++ b/src/renderers/webgpu/WebGPUBackend.js
+@@ -673,20 +673,49 @@
+ 		const renderTargetData = this.get( renderTarget );
+ 		const hasExternalTexture = this._hasExternalTexture( renderContext );
+ 
+ 		let descriptors = renderTargetData.descriptors;
+ 
++		// A render-target Texture can recreate its GPUTexture without changing JS identity,
++		// dimensions or samples (for example when texture.needsUpdate is set). Cached
++		// render-pass descriptors retain GPUTextureViews, so invalidate them whenever any
++		// underlying color/MSAA/depth GPU texture changes identity. See three.js #34301.
++		const attachmentTextures = [];
++		for ( const texture of renderContext.textures ) {
++
++			const textureData = this.get( texture );
++			attachmentTextures.push( textureData.texture, textureData.msaaTexture );
++			if ( textureData.msaaTextures !== undefined ) attachmentTextures.push( ...textureData.msaaTextures );
++
++		}
++
++		if ( renderContext.depth && renderContext.depthTexture != null ) {
++
++			const depthTextureData = this.get( renderContext.depthTexture );
++			attachmentTextures.push( depthTextureData.texture, depthTextureData.msaaTexture );
++			if ( depthTextureData.msaaTextures !== undefined ) attachmentTextures.push( ...depthTextureData.msaaTextures );
++
++		}
++
++		const previousAttachmentTextures = renderTargetData.descriptorAttachmentTextures;
++		const attachmentsChanged = previousAttachmentTextures !== undefined && (
++			previousAttachmentTextures.length !== attachmentTextures.length ||
++			previousAttachmentTextures.some( ( texture, index ) => texture !== attachmentTextures[ index ] )
++		);
++
+ 		if ( descriptors === undefined ||
+ 			renderTargetData.width !== renderTarget.width ||
+ 			renderTargetData.height !== renderTarget.height ||
+ 			renderTargetData.samples !== renderTarget.samples ||
++			attachmentsChanged ||
+ 			hasExternalTexture
+ 		) {
+ 
+ 			descriptors = {};
+ 
+ 			renderTargetData.descriptors = descriptors;
++			renderTargetData.descriptorAttachmentTextures = attachmentTextures;
+ 
+ 		}
+ 
+ 		const cacheKey = renderContext.getCacheKey();
+ 		let descriptorBase = descriptors[ cacheKey ];
