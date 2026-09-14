@@ -1,6 +1,8 @@
 import type {AsyncMaterialsOptions, MaterialBinding, MaterialCompilation} from './types.ts'
 import type {Camera, Material, Mesh, Scene, WebGPURenderer} from 'three/webgpu'
 
+type RenderTargetLike = NonNullable<ReturnType<WebGPURenderer['getRenderTarget']>>
+
 type Context = {
   camera: Camera
   face: number
@@ -19,6 +21,22 @@ type Pending = {
   ready: boolean
 }
 
+// RenderContexts keys raw sample counts while WebGPU normalizes them to either 1 or 4.
+// Use the alternate raw value in the same normalized class so async warmup gets an
+// isolated RenderContext without creating a different pipeline variant.
+function isolatedSamples(samples: number) {
+  if (samples === 4) {
+    return 5
+  }
+  if (samples >= 4) {
+    return 4
+  }
+  if (samples === 1) {
+    return 2
+  }
+  return 1
+}
+
 /** One queue per renderer. Caller owns every mesh, material, target and geometry. */
 export default class AsyncMaterials {
   private readonly disposal = Promise.withResolvers<void>()
@@ -26,6 +44,7 @@ export default class AsyncMaterials {
   private readonly pending: Array<Pending> = []
   private running = false
   private scheduled = false
+  private readonly scratchTargets = new Map<RenderTargetLike, RenderTargetLike>
 
   constructor(private readonly renderer: WebGPURenderer, private readonly options: AsyncMaterialsOptions = {}) {}
 
@@ -101,6 +120,8 @@ export default class AsyncMaterials {
 
   private compile(mesh: Mesh, fullMaterial: Material, context: Context) {
     const {renderer} = this
+    const compileTarget = this.scratchTarget(context.target, context.mip)
+    const compileOutput = this.scratchTarget(context.output, context.mip)
     const material = mesh.material
     const visible = mesh.visible
     const culled = mesh.frustumCulled
@@ -110,8 +131,8 @@ export default class AsyncMaterials {
     const face = renderer.getActiveCubeFace()
     const mip = renderer.getActiveMipmapLevel()
     try {
-      renderer.setRenderTarget(context.target, context.face, context.mip)
-      renderer.setOutputRenderTarget(context.output)
+      renderer.setRenderTarget(compileTarget, context.face, context.mip)
+      renderer.setOutputRenderTarget(compileOutput)
       renderer.setMRT(context.mrt)
       mesh.material = fullMaterial
       mesh.visible = true
@@ -133,6 +154,10 @@ export default class AsyncMaterials {
 
   private release() {
     this.pending.length = 0
+    for (const target of this.scratchTargets.values()) {
+      target.dispose()
+    }
+    this.scratchTargets.clear()
     this.disposal.resolve()
   }
 
@@ -238,5 +263,28 @@ export default class AsyncMaterials {
         this.run().catch(error => console.error('Async material warmup failed:', error))
       }
     })
+  }
+
+  private scratchTarget(target: Context['output'], mip: number): Context['output'] {
+    if (target === null) {
+      return null
+    }
+    let scratch = this.scratchTargets.get(target)
+    if (!scratch) {
+      scratch = target.clone()
+      scratch.samples = isolatedSamples(target.samples)
+      // RenderTarget.copy() can preserve an externally supplied depth texture by reference.
+      // Compilation targets must own every attachment independently of the live pass.
+      if (target.depthTexture !== null) {
+        scratch.depthTexture = target.depthTexture.clone()
+        scratch.depthTexture.renderTarget = scratch
+      }
+      this.scratchTargets.set(target, scratch)
+    }
+    const extent = Math.max(1, 2 ** Math.max(0, mip))
+    if (scratch.width !== extent || scratch.height !== extent || scratch.depth !== target.depth) {
+      scratch.setSize(extent, extent, target.depth)
+    }
+    return scratch
   }
 }

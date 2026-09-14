@@ -11,8 +11,10 @@ import AsyncMaterials from '../src/main.ts'
 function fixture(third = false, prioritized = true) {
   const scene = new Scene
   const camera = new PerspectiveCamera
-  const main = new RenderTarget
-  const reflection = new RenderTarget
+  const main = new RenderTarget(32, 24)
+  main.texture.name = 'main-target'
+  const reflection = new RenderTarget(16, 12)
+  reflection.texture.name = 'reflection-target'
   const geometry = new BoxGeometry
   const placeholder = new MeshStandardNodeMaterial
   const full = Array.from({length: third ? 3 : 2}, () => new MeshStandardNodeMaterial)
@@ -135,14 +137,18 @@ test('warms nearest first, restores render state synchronously and activates onl
     expect(f.calls).toHaveLength(1)
     expect(f.calls[0].mesh).toBe(f.meshes[1])
     expect(f.calls[0].material).toBe(f.full[1])
-    expect(f.calls[0].target).toBe(f.main)
+    expect(f.calls[0].target).not.toBe(f.main)
+    expect(f.calls[0].target?.texture.name).toBe('main-target')
+    expect(f.calls[0].target?.width).toBe(1)
+    expect(f.calls[0].target?.height).toBe(1)
     expect(f.renderer.getRenderTarget()).toBeNull()
     expect(f.meshes[1].material).toBe(f.placeholder)
     expect(f.meshes[1].frustumCulled).toBe(true)
     f.calls[0].gate.resolve()
     await flush()
     expect(f.calls).toHaveLength(2)
-    expect(f.calls[1].target).toBe(f.reflection)
+    expect(f.calls[1].target).not.toBe(f.reflection)
+    expect(f.calls[1].target?.texture.name).toBe('reflection-target')
     expect(f.meshes[1].material).toBe(f.placeholder)
     f.calls[1].gate.resolve()
     await flush()
@@ -152,6 +158,30 @@ test('warms nearest first, restores render state synchronously and activates onl
     f.calls[2].gate.resolve()
     await flush()
     expect(f.meshes[0].material).toBe(f.full[0])
+  } finally {
+    await f.dispose()
+  }
+})
+test('live target resizing cannot invalidate an in-flight compile target', async () => {
+  const f = fixture()
+  try {
+    f.observe(0)
+    await flush()
+    expect(f.calls).toHaveLength(1)
+    const scratch = f.calls[0].target
+    expect(scratch).not.toBe(f.main)
+    expect(scratch?.width).toBe(1)
+    expect(scratch?.height).toBe(1)
+    expect(scratch?.samples).toBe(1)
+    expect(f.main.samples).toBe(0)
+    f.main.setSize(96, 72)
+    f.main.dispose()
+    expect(scratch?.width).toBe(1)
+    expect(scratch?.height).toBe(1)
+    f.calls[0].gate.resolve()
+    await flush()
+    expect(f.meshes[0].material).toBe(f.full[0])
+    expect(f.results[0]).toMatchObject({status: 'ready', contexts: 1})
   } finally {
     await f.dispose()
   }
@@ -199,7 +229,8 @@ test('a reflection context observed during compilation is warmed before activati
     await flush()
     expect(f.calls).toHaveLength(2)
     expect(f.meshes[0].material).toBe(f.placeholder)
-    expect(f.calls[1].target).toBe(f.reflection)
+    expect(f.calls[1].target).not.toBe(f.reflection)
+    expect(f.calls[1].target?.texture.name).toBe('reflection-target')
     f.calls[1].gate.resolve()
     await flush()
     expect(f.meshes[0].material).toBe(f.full[0])
@@ -286,14 +317,18 @@ test('deduplicates exact contexts and restores targets, MRT, face, mip and mesh 
     await flush()
     expect(f.calls).toHaveLength(1)
     expect(f.calls[0]).toMatchObject({
-      target: f.main,
-      output: f.reflection,
       mrt: observedMrt,
       face: 2,
       mip: 1,
       camera: f.camera,
       scene: f.scene,
     })
+    expect(f.calls[0].target).not.toBe(f.main)
+    expect(f.calls[0].target?.texture.name).toBe('main-target')
+    expect(f.calls[0].target?.width).toBe(2)
+    expect(f.calls[0].target?.height).toBe(2)
+    expect(f.calls[0].output).not.toBe(f.reflection)
+    expect(f.calls[0].output?.texture.name).toBe('reflection-target')
     expect(f.renderer.getRenderTarget()).toBe(f.reflection)
     expect(f.renderer.getOutputRenderTarget()).toBe(f.main)
     expect(f.renderer.getMRT()).toBe(previousMrt)
@@ -394,7 +429,8 @@ test('replacing a bound mesh during compilation cannot activate it with the old 
     expect(replacement.material).toBe(f.placeholder)
     expect(f.results[0].status).toBe('cancelled')
     expect(f.calls[1].mesh).toBe(replacement)
-    expect(f.calls[1].target).toBe(f.reflection)
+    expect(f.calls[1].target).not.toBe(f.reflection)
+    expect(f.calls[1].target?.texture.name).toBe('reflection-target')
     f.calls[1].gate.resolve()
     await flush()
     expect(replacement.material).toBe(f.full[0])
