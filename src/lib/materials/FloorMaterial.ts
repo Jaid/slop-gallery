@@ -28,7 +28,8 @@ export default class FloorMaterial extends MeshStandardNodeMaterial {
       envMapIntensity: reflection ? 1 : 0,
     })
     this.reflection = reflection ? reflector({
-      resolutionScale: 0.75,
+      // Mipmap LOD already softens rough reflections; keep the source render at full drawing-buffer resolution.
+      resolutionScale: 1,
       generateMipmaps: true,
       bounces: false,
     }) : null
