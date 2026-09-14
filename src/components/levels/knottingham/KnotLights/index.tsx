@@ -7,7 +7,7 @@ import {useEffect, useMemo, useReducer, useRef} from 'react'
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 import {RectAreaLightTexturesLib} from 'three/addons/lights/RectAreaLightTexturesLib.js'
 import {attribute, color, float, length, mix, smoothstep, uv, vec2} from 'three/tsl'
-import {BufferGeometry, DoubleSide, Euler, Float32BufferAttribute, InstancedBufferAttribute, InstancedMesh, Matrix4, MeshBasicNodeMaterial, MeshStandardNodeMaterial, Quaternion, RectAreaLight, RectAreaLightNode, Vector3} from 'three/webgpu'
+import {BufferGeometry, DoubleSide, Euler, Float32BufferAttribute, InstancedBufferAttribute, InstancedMesh, Matrix4, MeshBasicNodeMaterial, MeshPhysicalNodeMaterial, MeshStandardNodeMaterial, Quaternion, RectAreaLight, RectAreaLightNode, Vector3} from 'three/webgpu'
 import useGraphicsQuality from 'use-graphics-quality'
 
 import {useGallery} from '#src/lib/gallery.ts'
@@ -23,14 +23,13 @@ const housingSize = [knotLight.size[0] + 0.16, 0.1, knotLight.size[2] + 0.16] as
 const diffuserSize = [knotLight.size[0] - 0.12, 0.038, knotLight.size[2] - 0.12] as const
 const housingYOffset = 0.025
 const diffuserYOffset = -0.026
+const emitterYOffset = -0.001
+const emitterThickness = 0.006
 const diffuserTilt = [0, 0, 0.16] as const
 const diffuserDrop = [0, 0, 0.09] as const
-const deadTriangleSurfaceY = diffuserYOffset - diffuserSize[1] / 2 - 0.002
-const fractureGapWidth = 0.012
-const deadTriangleOverlap = fractureGapWidth * 0.65
-const deadShardThickness = diffuserSize[1] * 0.72
-const deadShardSeamDrop = 0.004
-const deadShardCornerDrop = 0.018
+const deadMaskSurfaceY = emitterYOffset - emitterThickness / 2 - 0.001
+const fractureSeamWidth = 0.005
+const deadMaskOverlap = fractureSeamWidth * 0.55
 type PlanarPoint = readonly [number, number]
 const hideDamageGeometry = (mesh: InstancedMesh, index: number) => {
   mesh.setMatrixAt(index, (new Matrix4).makeScale(0, 0, 0))
@@ -54,32 +53,20 @@ const fractureDeadNormal = (triangle: readonly [[number, number], [number, numbe
   }
   return [nx, nz] as const
 }
-const setDeadBackingMatrix = (mesh: InstancedMesh, index: number, slot: KnotLightSlot, triangle: readonly [PlanarPoint, PlanarPoint, PlanarPoint]) => {
+const setDeadMaskMatrix = (mesh: InstancedMesh, index: number, slot: KnotLightSlot, triangle: readonly [PlanarPoint, PlanarPoint, PlanarPoint]) => {
   const worldTriangle = fractureWorldTriangle(slot, triangle)
   const [[ax, az], [bx, bz], [cx, cz]] = worldTriangle
   const [deadNormalX, deadNormalZ] = fractureDeadNormal(worldTriangle)
-  const overlapX = -deadNormalX * deadTriangleOverlap
-  const overlapZ = -deadNormalZ * deadTriangleOverlap
-  const expandedBX = bx + overlapX
-  const expandedBZ = bz + overlapZ
-  const expandedCX = cx + overlapX
-  const expandedCZ = cz + overlapZ
-  const matrix = (new Matrix4).set(expandedBX - ax, 0, expandedCX - ax, ax, 0, 1, 0, slot.position[1] + deadTriangleSurfaceY, expandedBZ - az, 0, expandedCZ - az, az, 0, 0, 0, 1)
+  const overlapX = -deadNormalX * deadMaskOverlap
+  const overlapZ = -deadNormalZ * deadMaskOverlap
+  const matrix = (new Matrix4).set(bx + overlapX - ax, 0, cx + overlapX - ax, ax, 0, 1, 0, slot.position[1] + deadMaskSurfaceY, bz + overlapZ - az, 0, cz + overlapZ - az, az, 0, 0, 0, 1)
   mesh.setMatrixAt(index, matrix)
 }
-const setDeadShardMatrix = (mesh: InstancedMesh, index: number, slot: KnotLightSlot, triangle: readonly [PlanarPoint, PlanarPoint, PlanarPoint]) => {
+const setFractureSeamMatrix = (mesh: InstancedMesh, index: number, slot: KnotLightSlot, triangle: readonly [PlanarPoint, PlanarPoint, PlanarPoint]) => {
   const worldTriangle = fractureWorldTriangle(slot, triangle)
-  const [[ax, az], [bx, bz], [cx, cz]] = worldTriangle
+  const [, [bx, bz], [cx, cz]] = worldTriangle
   const [deadNormalX, deadNormalZ] = fractureDeadNormal(worldTriangle)
-  const insetX = deadNormalX * fractureGapWidth
-  const insetZ = deadNormalZ * fractureGapWidth
-  const shardBX = bx + insetX
-  const shardBZ = bz + insetZ
-  const shardCX = cx + insetX
-  const shardCZ = cz + insetZ
-  const cornerY = slot.position[1] + deadTriangleSurfaceY - deadShardCornerDrop
-  const seamY = slot.position[1] + deadTriangleSurfaceY - deadShardSeamDrop
-  const matrix = (new Matrix4).set(shardBX - ax, 0, shardCX - ax, ax, seamY - cornerY, deadShardThickness, seamY - cornerY, cornerY, shardBZ - az, 0, shardCZ - az, az, 0, 0, 0, 1)
+  const matrix = (new Matrix4).set(cx - bx, 0, deadNormalX * fractureSeamWidth, bx, 0, 1, 0, slot.position[1] + deadMaskSurfaceY - 0.001, cz - bz, 0, deadNormalZ * fractureSeamWidth, bz, 0, 0, 0, 1)
   mesh.setMatrixAt(index, matrix)
 }
 const colliderWorldPoint = (collider: CollisionEnterPayload['target']['collider'], point: {x: number
@@ -191,91 +178,79 @@ export default function KnotLights() {
   const resources = useMemo(() => {
     const housingGeometry = new RoundedBoxGeometry(...housingSize, 2, 0.045)
     const diffuserGeometry = new RoundedBoxGeometry(...diffuserSize, 2, 0.025)
+    const emitterGeometry = new RoundedBoxGeometry(diffuserSize[0] - 0.08, emitterThickness, diffuserSize[2] - 0.08, 1, 0.012)
     const intensities = new InstancedBufferAttribute(new Float32Array(slots.length).fill(1), 1)
-    diffuserGeometry.setAttribute('lightIntensity', intensities)
-    const diffuserMaterial = new MeshBasicNodeMaterial
-    diffuserMaterial.name = 'Knot slot LED diffusers'
-    diffuserMaterial.toneMapped = false
+    emitterGeometry.setAttribute('lightIntensity', intensities)
+    const emitterMaterial = new MeshBasicNodeMaterial
+    emitterMaterial.name = 'Knot slot LED emitter sheets'
+    emitterMaterial.toneMapped = false
     const radial = length(uv().sub(vec2(0.5)))
     const center = float(1).sub(smoothstep(0.34, 0.7, radial))
     const intensity = attribute('lightIntensity', 'float')
-    const luminance = intensity.mul(center.mul(0.2).add(0.8)).clamp()
-    diffuserMaterial.colorNode = mix(color('#171916'), color('#fff3d8'), luminance)
-    const deadBackingGeometry = new BufferGeometry
-    deadBackingGeometry.setAttribute('position', new Float32BufferAttribute([
-      0,
-      0,
-      0,
-      1,
-      0,
-      0,
-      0,
-      0,
-      1,
-    ], 3))
-    const deadBackingMaterial = new MeshBasicNodeMaterial({
-      color: '#2c2d27',
-      side: DoubleSide,
-    })
-    deadBackingMaterial.name = 'Knot slot LED fracture backing'
-    deadBackingMaterial.toneMapped = false
-    const deadShardGeometry = new BufferGeometry
-    deadShardGeometry.setAttribute('position', new Float32BufferAttribute([
-      0,
-      0,
-      0,
-      1,
-      0,
-      0,
-      0,
-      0,
-      1,
-      0,
-      1,
-      0,
-      1,
-      1,
-      0,
-      0,
-      1,
-      1,
-    ], 3))
-    deadShardGeometry.setIndex([
-      0,
-      1,
-      2,
-      3,
-      5,
-      4,
-      0,
-      3,
-      4,
-      0,
-      4,
-      1,
-      1,
-      4,
-      5,
-      1,
-      5,
-      2,
-      2,
-      5,
-      3,
-      2,
-      3,
-      0,
-    ])
-    deadShardGeometry.computeVertexNormals()
-    const deadShardMaterial = new MeshStandardNodeMaterial({
-      color: '#aaa79c',
-      roughness: 0.78,
+    const luminance = intensity.mul(center.mul(0.16).add(0.84)).clamp()
+    emitterMaterial.colorNode = mix(color('#181a17'), color('#fff3d8'), luminance)
+    const diffuserMaterial = quality ? new MeshPhysicalNodeMaterial({
+      color: '#f4eee2',
+      roughness: 0.46,
       metalness: 0,
-      envMapIntensity: 0.4,
-      flatShading: true,
+      transmission: 0.5,
+      ior: 1.46,
+      thickness: diffuserSize[1],
+      attenuationColor: '#fff0d2',
+      attenuationDistance: 0.18,
+      clearcoat: 0.18,
+      clearcoatRoughness: 0.38,
+      envMapIntensity: 0.55,
+    }) : new MeshStandardNodeMaterial({
+      color: '#ece6dc',
+      roughness: 0.72,
+      metalness: 0,
+      transparent: true,
+      opacity: 0.24,
+      depthWrite: false,
+      envMapIntensity: 0,
+    })
+    diffuserMaterial.name = 'Knot slot LED continuous diffuser lenses'
+    const deadMaskGeometry = new BufferGeometry
+    deadMaskGeometry.setAttribute('position', new Float32BufferAttribute([
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+    ], 3))
+    const deadMaskMaterial = new MeshBasicNodeMaterial({
+      color: '#3f403a',
       side: DoubleSide,
     })
-    deadShardMaterial.name = 'Knot slot LED dead diffuser shards'
+    deadMaskMaterial.name = 'Knot slot LED dead internal masks'
+    deadMaskMaterial.toneMapped = false
+    const fractureSeamGeometry = new BufferGeometry
+    fractureSeamGeometry.setAttribute('position', new Float32BufferAttribute([
+      0,
+      0,
+      -0.5,
+      1,
+      0,
+      -0.5,
+      1,
+      0,
+      0.5,
+      0,
+      0,
+      0.5,
+    ], 3))
+    fractureSeamGeometry.setIndex([0, 1, 2, 0, 2, 3])
+    const fractureSeamMaterial = new MeshBasicNodeMaterial({
+      color: '#171813',
+      side: DoubleSide,
+    })
+    fractureSeamMaterial.name = 'Knot slot LED internal fracture seams'
+    fractureSeamMaterial.toneMapped = false
     const housingMaterial = new MeshStandardNodeMaterial({
       color: '#333936',
       roughness: 0.32,
@@ -284,72 +259,86 @@ export default function KnotLights() {
     })
     housingMaterial.name = 'Knot slot LED housings'
     const diffuser = new InstancedMesh(diffuserGeometry, diffuserMaterial, slots.length)
-    diffuser.name = 'knot-slot-led-diffusers'
-    const deadBackings = new InstancedMesh(deadBackingGeometry, deadBackingMaterial, slots.length)
-    deadBackings.name = 'knot-slot-led-fracture-backings'
-    deadBackings.frustumCulled = false
-    const deadShards = new InstancedMesh(deadShardGeometry, deadShardMaterial, slots.length)
-    deadShards.name = 'knot-slot-led-dead-shards'
-    deadShards.frustumCulled = false
+    diffuser.name = 'knot-slot-led-diffuser-lenses'
+    diffuser.renderOrder = 3
+    const emitterPanels = new InstancedMesh(emitterGeometry, emitterMaterial, slots.length)
+    emitterPanels.name = 'knot-slot-led-emitter-sheets'
+    const deadMasks = new InstancedMesh(deadMaskGeometry, deadMaskMaterial, slots.length)
+    deadMasks.name = 'knot-slot-led-dead-masks'
+    deadMasks.frustumCulled = false
+    const fractureSeams = new InstancedMesh(fractureSeamGeometry, fractureSeamMaterial, slots.length)
+    fractureSeams.name = 'knot-slot-led-fracture-seams'
+    fractureSeams.frustumCulled = false
     const housings = new InstancedMesh(housingGeometry, housingMaterial, slots.length)
     housings.name = 'knot-slot-led-housings'
     const matrix = new Matrix4
     for (const [index, slot] of slots.entries()) {
       matrix.makeTranslation(slot.position[0], slot.position[1] + housingYOffset, slot.position[2])
       housings.setMatrixAt(index, matrix)
+      matrix.makeTranslation(slot.position[0], slot.position[1] + emitterYOffset, slot.position[2])
+      emitterPanels.setMatrixAt(index, matrix)
       setDiffuserMatrix(diffuser, index, slot, 0)
-      hideDamageGeometry(deadBackings, index)
-      hideDamageGeometry(deadShards, index)
+      hideDamageGeometry(deadMasks, index)
+      hideDamageGeometry(fractureSeams, index)
     }
     housings.instanceMatrix.needsUpdate = true
+    emitterPanels.instanceMatrix.needsUpdate = true
     diffuser.instanceMatrix.needsUpdate = true
-    deadBackings.instanceMatrix.needsUpdate = true
-    deadShards.instanceMatrix.needsUpdate = true
+    deadMasks.instanceMatrix.needsUpdate = true
+    fractureSeams.instanceMatrix.needsUpdate = true
     housings.computeBoundingBox()
     housings.computeBoundingSphere()
+    emitterPanels.computeBoundingBox()
+    emitterPanels.computeBoundingSphere()
     diffuser.computeBoundingBox()
     diffuser.computeBoundingSphere()
     return {
       diffuser,
       diffuserGeometry,
       diffuserMaterial,
-      deadBackingGeometry,
-      deadBackingMaterial,
-      deadBackings,
-      deadShardGeometry,
-      deadShardMaterial,
-      deadShards,
+      emitterGeometry,
+      emitterMaterial,
+      emitterPanels,
+      deadMaskGeometry,
+      deadMaskMaterial,
+      deadMasks,
+      fractureSeamGeometry,
+      fractureSeamMaterial,
+      fractureSeams,
       housingGeometry,
       housingMaterial,
       housings,
       intensities,
     }
-  }, [slots])
+  }, [quality, slots])
   useEffect(() => {
     for (const [index, slot] of slots.entries()) {
       setDiffuserMatrix(resources.diffuser, index, slot, damage.stage(index))
     }
     for (let index = 0; index < slots.length; index++) {
-      hideDamageGeometry(resources.deadBackings, index)
-      hideDamageGeometry(resources.deadShards, index)
+      hideDamageGeometry(resources.deadMasks, index)
+      hideDamageGeometry(resources.fractureSeams, index)
     }
     paneEmissionScales.current.fill(1)
-    resources.deadBackings.instanceMatrix.needsUpdate = true
-    resources.deadShards.instanceMatrix.needsUpdate = true
+    resources.deadMasks.instanceMatrix.needsUpdate = true
+    resources.fractureSeams.instanceMatrix.needsUpdate = true
     resources.diffuser.instanceMatrix.needsUpdate = true
-  }, [damage, resources.deadBackings, resources.deadShards, resources.diffuser, slots])
+  }, [damage, resources.deadMasks, resources.fractureSeams, resources.diffuser, slots])
   useEffect(() => () => {
     resources.diffuser.dispose()
-    resources.deadBackings.dispose()
-    resources.deadShards.dispose()
+    resources.emitterPanels.dispose()
+    resources.deadMasks.dispose()
+    resources.fractureSeams.dispose()
     resources.housings.dispose()
     resources.diffuserGeometry.dispose()
-    resources.deadBackingGeometry.dispose()
-    resources.deadShardGeometry.dispose()
+    resources.emitterGeometry.dispose()
+    resources.deadMaskGeometry.dispose()
+    resources.fractureSeamGeometry.dispose()
     resources.housingGeometry.dispose()
     resources.diffuserMaterial.dispose()
-    resources.deadBackingMaterial.dispose()
-    resources.deadShardMaterial.dispose()
+    resources.emitterMaterial.dispose()
+    resources.deadMaskMaterial.dispose()
+    resources.fractureSeamMaterial.dispose()
     resources.housingMaterial.dispose()
   }, [resources])
   useFrame((_, delta) => {
@@ -394,17 +383,17 @@ export default function KnotLights() {
           (impact.x - slot.position[0]) / (diffuserSize[0] / 2),
           (impact.z - slot.position[2]) / (diffuserSize[2] / 2),
         ], [velocity.x, velocity.z], index)
-        setDeadBackingMatrix(resources.deadBackings, index, slot, fracture.deadTriangle)
-        setDeadShardMatrix(resources.deadShards, index, slot, fracture.deadTriangle)
+        setDeadMaskMatrix(resources.deadMasks, index, slot, fracture.deadTriangle)
+        setFractureSeamMatrix(resources.fractureSeams, index, slot, fracture.deadTriangle)
         paneEmissionScales.current[index] = fracture.liveFraction
-        resources.deadBackings.instanceMatrix.needsUpdate = true
-        resources.deadShards.instanceMatrix.needsUpdate = true
+        resources.deadMasks.instanceMatrix.needsUpdate = true
+        resources.fractureSeams.instanceMatrix.needsUpdate = true
       }
       if (stage === 2) {
-        hideDamageGeometry(resources.deadBackings, index)
-        hideDamageGeometry(resources.deadShards, index)
-        resources.deadBackings.instanceMatrix.needsUpdate = true
-        resources.deadShards.instanceMatrix.needsUpdate = true
+        hideDamageGeometry(resources.deadMasks, index)
+        hideDamageGeometry(resources.fractureSeams, index)
+        resources.deadMasks.instanceMatrix.needsUpdate = true
+        resources.fractureSeams.instanceMatrix.needsUpdate = true
       }
       setDiffuserMatrix(resources.diffuser, index, slots[index], stage)
       resources.diffuser.instanceMatrix.needsUpdate = true
@@ -415,9 +404,10 @@ export default function KnotLights() {
   }
   return <group name="knot-slot-lights">
     <primitive object={resources.housings}/>
+    <primitive object={resources.emitterPanels}/>
+    <primitive object={resources.deadMasks}/>
+    <primitive object={resources.fractureSeams}/>
     <primitive object={resources.diffuser}/>
-    <primitive object={resources.deadBackings}/>
-    <primitive object={resources.deadShards}/>
     {emitters.map(light => <primitive key={light.name} object={light}/>)}
     <RigidBody type="fixed" colliders={false}>
       {slots.map((slot, index) => damage.stage(index) < 2 && <CuboidCollider key={slot.id} position={slot.position} args={[housingSize[0] / 2, knotLight.size[1] / 2, housingSize[2] / 2]} restitution={0.08} friction={0.6} onCollisionEnter={event => onImpact(index, event)}/>)}
