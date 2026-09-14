@@ -1,4 +1,7 @@
-const recordings = import.meta.glob<string>('./*/{items,slug}/*/announce.opus', {
+const recordings = import.meta.glob<string>([
+  './*/candidate/announce.opus',
+  './*/{items,slug}/*/announce.opus',
+], {
   eager: true,
   query: '?url',
   import: 'default',

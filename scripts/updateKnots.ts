@@ -85,7 +85,7 @@ export default async function updateKnots({candidates = [], browserURL = 'http:/
         for (const item of result.items) {
           await stage(`${candidate.id}/items/${item.id}/icon.jxl`, item.image)
         }
-        console.log(`${candidate.id}: ${result.items.length} item icons and model icon.`)
+        console.log(`${candidate.id}: ${result.items.length} item icons and candidate icon.`)
       }
     } finally {
       await handle.evaluate(renderer => renderer.dispose())

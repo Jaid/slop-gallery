@@ -13,7 +13,7 @@ import InteractiveObject from '#component/InteractiveObject'
 import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
 import {narrate} from '#src/lib/gallery/actions.ts'
 import {knotExhibition} from '#src/lib/knots/exhibition.ts'
-import loadModelIcons from '#src/lib/knots/loadModelIcons.ts'
+import loadCandidateIcons from '#src/lib/knots/loadCandidateIcons.ts'
 import {knotSign, knotSignId, knotSignParts, knotSignPosition, knotSignRoundParts} from '#src/lib/knots/signs.ts'
 import {signSupportMaterial} from '#src/lib/materials/SignMetalMaterial.ts'
 import InstancedPropVisuals from '#src/lib/physics/InstancedPropVisuals.ts'
@@ -90,7 +90,7 @@ export default function KnotLabels() {
     mipmaps: false,
     prepare: async () => {
       const [icons] = await Promise.all([
-        loadModelIcons(knotExhibition.map(exhibit => exhibit.modelIcon)),
+        loadCandidateIcons(knotExhibition.map(exhibit => exhibit.candidate.icon)),
         loadCanvasFonts([
           {
             font: labelFonts.number,
@@ -111,7 +111,7 @@ export default function KnotLabels() {
     },
     draw(context: CanvasRenderingContext2D, icons: ReadonlyMap<string, HTMLImageElement>) {
       for (const [index, exhibit] of knotExhibition.entries()) {
-        drawLabel(context, exhibit, index % labelAtlasColumns * labelWidth, Math.floor(index / labelAtlasColumns) * labelHeight, icons.get(exhibit.modelIcon))
+        drawLabel(context, exhibit, index % labelAtlasColumns * labelWidth, Math.floor(index / labelAtlasColumns) * labelHeight, icons.get(exhibit.candidate.icon))
       }
     },
   }), []))

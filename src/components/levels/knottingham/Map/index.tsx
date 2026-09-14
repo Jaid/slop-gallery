@@ -5,9 +5,9 @@ import {knotBays, knotExhibition, knotRowHalfWidth} from '#src/lib/knots/exhibit
 export default function KnotGalleryMap({css}: {css: Record<string, string>}) {
   const ready = useGallery(s => s.ready)
   return <>
-    <p className={css.intro}>{knotExhibition.length} floating Knots · {knotBays.length} model rows. Select a model to visit its display. </p>
+    <p className={css.intro}>{knotExhibition.length} floating Knots · {knotBays.length} candidate rows. Select a candidate to visit its display. </p>
     <KnotStudyMap/>
-    <div className={css.rooms}>{knotBays.map(bay => <button key={bay.model} disabled={!ready} onClick={() => {
+    <div className={css.rooms}>{knotBays.map(bay => <button key={bay.candidate.id} disabled={!ready} onClick={() => {
       openPanel(null)
       galleryEvents.dispatchEvent(new CustomEvent('teleport', {
         detail: {
@@ -16,7 +16,7 @@ export default function KnotGalleryMap({css}: {css: Record<string, string>}) {
           feet: true,
         },
       }))
-      notify(bay.title)
-    }}><strong>{bay.title}</strong><small>{bay.labels}</small></button>)}</div>
+      notify(bay.candidate.title)
+    }}><strong>{bay.candidate.title}</strong><small>{bay.labels}</small></button>)}</div>
   </>
 }

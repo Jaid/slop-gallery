@@ -1,14 +1,14 @@
-export const modelSignBackground = '#10252b'
-const modelSignDesignSize = [2048, 491] as const
-export const modelSignTextureSize = [1024, 246] as const
-const scale = modelSignTextureSize[0] / modelSignDesignSize[0]
-export const modelSignFontSize = Math.round(190 * scale)
+export const candidateSignBackground = '#10252b'
+const candidateSignDesignSize = [2048, 491] as const
+export const candidateSignTextureSize = [1024, 246] as const
+const scale = candidateSignTextureSize[0] / candidateSignDesignSize[0]
+export const candidateSignFontSize = Math.round(190 * scale)
 
 /** A single opaque printed face, with no detached text planes or duplicate number range. */
 export default function drawFace(context: CanvasRenderingContext2D, title: string, icon?: HTMLImageElement) {
-  const [width, height] = modelSignTextureSize
+  const [width, height] = candidateSignTextureSize
   const border = 22 * scale
-  context.fillStyle = modelSignBackground
+  context.fillStyle = candidateSignBackground
   context.fillRect(0, 0, width, height)
   context.strokeStyle = '#ac9270'
   context.lineWidth = 6 * scale
@@ -17,9 +17,9 @@ export default function drawFace(context: CanvasRenderingContext2D, title: strin
   const iconLeft = 90 * scale
   const textLeft = icon ? iconLeft + iconSize + 80 * scale : 90 * scale
   const textWidth = width - textLeft - 90 * scale
-  context.font = `600 ${modelSignFontSize}px main`
+  context.font = `600 ${candidateSignFontSize}px main`
   const measured = context.measureText(title).width || 1
-  const fontSize = Math.floor(modelSignFontSize * Math.min(1, textWidth / measured))
+  const fontSize = Math.floor(candidateSignFontSize * Math.min(1, textWidth / measured))
   context.font = `600 ${fontSize}px main`
   context.fillStyle = '#fff3d9'
   context.textAlign = 'center'

@@ -4,7 +4,7 @@ import type {KnotEntry, KnotMaterialModule} from './types.ts'
 const materials = import.meta.glob<KnotMaterialModule>('./*/items/*/material.ts')
 
 export default async function loadKnotMaterial(item: KnotEntry) {
-  const load = materials[`./${item.model}/items/${item.sourceId}/material.ts`]
+  const load = materials[`./${item.candidate.id}/items/${item.sourceId}/material.ts`]
   if (!load) {
     throw new Error(`Unknown Knot material: ${item.id}`)
   }

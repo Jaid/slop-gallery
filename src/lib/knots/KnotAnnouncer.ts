@@ -1,16 +1,16 @@
-import type {KnotEntry} from './types.ts'
+import type {KnotCandidateData, KnotEntry} from './types.ts'
 
-import {knotAnnouncementPaths} from './announcements.ts'
+import {knotAnnouncementPaths, knotCandidateAnnouncementPath} from './announcements.ts'
 
 export type AnnouncementAudio = {
   play: (url: string, signal: AbortSignal, title: string) => Promise<void>
   resolve: (id: string) => string | undefined
 }
 
-/** Latest inspection wins. Recordings are remembered only after playback finishes. */
+/** Latest announcement wins. Model and item recordings are remembered only after playback finishes. */
 export default class KnotAnnouncer {
   private controller?: AbortController
-  constructor(private readonly audio: AnnouncementAudio, readonly announcedCreators = new Set<string>, readonly announcedItems = new Set<string>) {}
+  constructor(private readonly audio: AnnouncementAudio, readonly announcedModels = new Set<string>, readonly announcedItems = new Set<string>) {}
 
   async announce(item: KnotEntry, repeat = false) {
     if (!repeat && this.hasAnnounced(item)) {
@@ -18,11 +18,11 @@ export default class KnotAnnouncer {
     }
     const paths = knotAnnouncementPaths(item)
     return this.play([
-      ...this.announcedCreators.has(paths.creator) ? [] : [
+      ...this.announcedModels.has(paths.model) ? [] : [
         {
-          id: paths.creator,
+          id: paths.model,
           title: item.modelTitle,
-          completed: this.announcedCreators,
+          completed: this.announcedModels,
         },
       ],
       {
@@ -33,23 +33,37 @@ export default class KnotAnnouncer {
     ])
   }
 
-  /** Billboards explicitly replay each displayed model version, never item titles. */
-  announceCreators(items: ReadonlyArray<KnotEntry>) {
-    const creators = new Map(items.map(item => {
-      const id = knotAnnouncementPaths(item).creator
-      return [
-        id, {
-          id,
-          title: item.modelTitle,
-          completed: this.announcedCreators,
-        },
-      ]
-    }))
-    return this.play([...creators.values()])
+  /** Candidate surfaces explicitly replay the candidate name and do not mark any model as introduced. */
+  announceCandidate(candidate: KnotCandidateData) {
+    return this.play([
+      {
+        id: knotCandidateAnnouncementPath(candidate),
+        title: candidate.title,
+      },
+    ])
+  }
+
+  /** Knot interaction introduces its author model once per session. */
+  announceModel(item: KnotEntry) {
+    const {model} = knotAnnouncementPaths(item)
+    if (this.announcedModels.has(model)) {
+      return
+    }
+    return this.play([
+      {
+        id: model,
+        title: item.modelTitle,
+        completed: this.announcedModels,
+      },
+    ])
   }
 
   hasAnnounced(item: KnotEntry) {
     return this.announcedItems.has(knotAnnouncementPaths(item).item)
+  }
+
+  hasAnnouncedModel(item: KnotEntry) {
+    return this.announcedModels.has(knotAnnouncementPaths(item).model)
   }
 
   stop() {
@@ -57,7 +71,7 @@ export default class KnotAnnouncer {
     this.controller = undefined
   }
 
-  private async play(recordings: ReadonlyArray<{completed: Set<string>
+  private async play(recordings: ReadonlyArray<{completed?: Set<string>
     id: string
     title: string}>) {
     this.stop()
@@ -72,9 +86,7 @@ export default class KnotAnnouncer {
         const url = this.audio.resolve(recording.id)
         if (url) {
           await this.audio.play(url, signal, recording.title)
-          if (!signal.aborted) {
-            recording.completed.add(recording.id)
-          }
+          recording.completed?.add(recording.id)
         }
       }
     } finally {

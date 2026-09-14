@@ -28,8 +28,7 @@ export type KnotCandidateData = {
 }
 
 export type KnotEntry = KnotData & {
-  model: string
-  modelIcon: string
+  candidate: KnotCandidateData
   modelTitle: string
   sourceId: string
 }

@@ -19,10 +19,10 @@ export default function KnotStudyMap({compact}: {compact?: boolean} = {}) {
     update()
     return () => cancelAnimationFrame(frame)
   }, [])
-  return <svg className={css.container} viewBox={`${knotGalleryBounds.minX - 1} ${knotGalleryBounds.northZ - 1} ${knotGallerySize[0] + 2} ${knotGallerySize[2] + 2}`} role="img" aria-label={`Knottingham: ${knotBays.length} model rows in the exhibition hall`}>
+  return <svg className={css.container} viewBox={`${knotGalleryBounds.minX - 1} ${knotGalleryBounds.northZ - 1} ${knotGallerySize[0] + 2} ${knotGallerySize[2] + 2}`} role="img" aria-label={`Knottingham: ${knotBays.length} candidate rows in the exhibition hall`}>
     <rect x={knotGalleryBounds.minX} y={knotGalleryBounds.northZ} width={knotGallerySize[0]} height={knotGallerySize[2]} fill="none" stroke="#888" strokeWidth="0.2"/>
-    {knotBays.map(bay => <path key={bay.model} d={`M ${knotLayout.previewX} ${bay.center[2] - 2.4} v 4.8`} stroke="#b7a885" strokeWidth="0.25"><title>{`${bay.title} overview`}</title></path>)}
-    <Branch not={compact}>{knotBays.map(bay => <text key={bay.model} x={knotLayout.rowCenterX(bay.finishes.length)} y={bay.center[2] - 1.5} textAnchor="middle" className={css.label} fontSize="1.3" fontWeight="600">{bay.title}</text>)}</Branch>
+    {knotBays.map(bay => <path key={bay.candidate.id} d={`M ${knotLayout.previewX} ${bay.center[2] - 2.4} v 4.8`} stroke="#b7a885" strokeWidth="0.25"><title>{`${bay.candidate.title} overview`}</title></path>)}
+    <Branch not={compact}>{knotBays.map(bay => <text key={bay.candidate.id} x={knotLayout.rowCenterX(bay.finishes.length)} y={bay.center[2] - 1.5} textAnchor="middle" className={css.label} fontSize="1.3" fontWeight="600">{bay.candidate.title}</text>)}</Branch>
     {knotExhibition.map(exhibit => <g key={exhibit.id}>
       <title>{`${exhibit.label} · ${exhibit.title} · ${exhibit.modelTitle}`}</title>
       <circle data-knot={exhibit.id} cx={exhibit.position[0]} cy={exhibit.position[2]} r="0.6" className={css.item}/>

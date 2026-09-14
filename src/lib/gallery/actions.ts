@@ -65,6 +65,11 @@ export function narrate(id: string) {
   galleryEvents.dispatchEvent(new CustomEvent('narrate', {detail: id}))
 }
 
+export function narrateModel(id: string) {
+  void SoundEngine.get().resume().catch(() => notify('Audio could not be enabled.'))
+  galleryEvents.dispatchEvent(new CustomEvent('narrate-model', {detail: id}))
+}
+
 export function stopNarration() {
   galleryEvents.dispatchEvent(new Event('stop-narration'))
 }

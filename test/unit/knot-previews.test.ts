@@ -21,7 +21,7 @@ test('candidate and item icons are generated JXLs while billboards remain runtim
     expect('overview' in candidate.data).toBe(false)
     expect(await dimensions(candidate.data.icon)).toEqual([256, 256])
     for (const item of candidate.items) {
-      expect(item.icon).toEndWith(`/${item.model}/items/${item.sourceId}/icon.jxl`)
+      expect(item.icon).toEndWith(`/${item.candidate.id}/items/${item.sourceId}/icon.jxl`)
       const [width, height] = await dimensions(item.icon)
       expect(width).toBeGreaterThan(0)
       expect(height).toBeGreaterThan(0)

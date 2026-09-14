@@ -5,8 +5,8 @@ import {knotBays, knotExhibition} from '../../src/lib/knots/exhibition.ts'
 import {knotsById} from '../../src/lib/knots/index.ts'
 import {knotSign} from '../../src/lib/knots/signs.ts'
 
-const iconHash = async (id: string) => Bun.hash(await Bun.file(new URL(knotsById.get(id)!.modelIcon)).arrayBuffer())
-describe('Knot model plates', () => {
+const iconHash = async (id: string) => Bun.hash(await Bun.file(new URL(knotsById.get(id)!.candidate.icon)).arrayBuffer())
+describe('Knot nameplates', () => {
   test('a complete face preserves text density and the atlas fits the current exhibition', () => {
     expect([labelWidth, labelHeight]).toEqual([720, 480])
     expect(labelWidth / labelHeight).toBeCloseTo(knotSign.width / knotSign.height)
@@ -18,7 +18,7 @@ describe('Knot model plates', () => {
   test('ships a local icon for every exhibited model and reuses family marks', async () => {
     const urls = new Set<string>
     for (const bay of knotBays) {
-      const url = bay.icon
+      const url = bay.candidate.icon
       expect(url).toBeDefined()
       expect(new Uint8Array(await Bun.file(new URL(url)).arrayBuffer())[0]).toBe(255)
       urls.add(Bun.hash(await Bun.file(new URL(url)).arrayBuffer()).toString())
@@ -30,7 +30,7 @@ describe('Knot model plates', () => {
     expect(await iconHash('sonnet/opal_fire')).toBe(await iconHash('fable/event_horizon'))
     expect(await iconHash('gemini/cyber_kintsugi')).toBe(await iconHash('gemini/event_horizon'))
   })
-  test('centers the creator icon and text together and fits long names', () => {
+  test('centers the candidate icon and model text together and fits long names', () => {
     for (const measured of [90, 240, 400, 1000]) {
       for (const hasIcon of [true, false]) {
         const line = modelLineLayout(measured, hasIcon)

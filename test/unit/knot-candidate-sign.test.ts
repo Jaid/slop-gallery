@@ -3,11 +3,11 @@ import {expect, test} from 'bun:test'
 import RAPIER from '@dimforge/rapier3d-compat'
 import {Quaternion, Vector3} from 'three/webgpu'
 
-import drawFace, {modelSignFontSize, modelSignTextureSize} from '../../src/components/levels/knottingham/KnotModelSign/drawFace.ts'
+import drawFace, {candidateSignFontSize, candidateSignTextureSize} from '../../src/components/levels/knottingham/KnotCandidateSign/drawFace.ts'
 import {knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
-import KnotModelSignGeometry from '../../src/lib/knots/KnotModelSignGeometry.ts'
-import {knotModelSign, modelSignSuspensionCenter, modelSignSuspensionHeight} from '../../src/lib/physics/knotModelSign.ts'
+import KnotCandidateSignGeometry from '../../src/lib/knots/KnotCandidateSignGeometry.ts'
+import {candidateSignSuspensionCenter, candidateSignSuspensionHeight, knotCandidateSign} from '../../src/lib/physics/knotCandidateSign.ts'
 
 await RAPIER.init()
 function simulate(mass: number, miss = false, yaw = 0) {
@@ -18,18 +18,18 @@ function simulate(mass: number, miss = false, yaw = 0) {
   })
   world.timestep = 1 / 120
   const rotation = (new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), yaw)
-  const elevation = knotGalleryBounds.height - knotModelSign.ceilingInset - knotModelSign.anchor[1]
-  const pivot = new Vector3(0, elevation + knotModelSign.anchor[1], 0)
+  const elevation = knotGalleryBounds.height - knotCandidateSign.ceilingInset - knotCandidateSign.anchor[1]
+  const pivot = new Vector3(0, elevation + knotCandidateSign.anchor[1], 0)
   const anchor = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(pivot.x, pivot.y, pivot.z).setRotation(rotation))
-  const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(0, elevation, 0).setRotation(rotation).setCcdEnabled(true).setCanSleep(false).setAngularDamping(knotModelSign.angularDamping).setLinearDamping(knotModelSign.linearDamping).setAdditionalSolverIterations(8))
-  world.createCollider(RAPIER.ColliderDesc.cuboid(knotModelSign.size[0] / 2, knotModelSign.size[1] / 2, knotModelSign.size[2] / 2).setMass(knotModelSign.mass).setRestitution(0.15), body)
-  for (const x of knotModelSign.suspensionX) {
-    world.createCollider(RAPIER.ColliderDesc.cylinder(modelSignSuspensionHeight / 2, 0.014).setTranslation(x, modelSignSuspensionCenter, 0).setMass(knotModelSign.suspensionMass), body)
+  const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(0, elevation, 0).setRotation(rotation).setCcdEnabled(true).setCanSleep(false).setAngularDamping(knotCandidateSign.angularDamping).setLinearDamping(knotCandidateSign.linearDamping).setAdditionalSolverIterations(8))
+  world.createCollider(RAPIER.ColliderDesc.cuboid(knotCandidateSign.size[0] / 2, knotCandidateSign.size[1] / 2, knotCandidateSign.size[2] / 2).setMass(knotCandidateSign.mass).setRestitution(0.15), body)
+  for (const x of knotCandidateSign.suspensionX) {
+    world.createCollider(RAPIER.ColliderDesc.cylinder(candidateSignSuspensionHeight / 2, 0.014).setTranslation(x, candidateSignSuspensionCenter, 0).setMass(knotCandidateSign.suspensionMass), body)
   }
-  const joint = world.createImpulseJoint(RAPIER.JointData.revolute(new Vector3, new Vector3(...knotModelSign.anchor), new Vector3(...knotModelSign.axis)), anchor, body, true)
+  const joint = world.createImpulseJoint(RAPIER.JointData.revolute(new Vector3, new Vector3(...knotCandidateSign.anchor), new Vector3(...knotCandidateSign.axis)), anchor, body, true)
   expect(joint).toBeInstanceOf(RAPIER.RevoluteImpulseJoint)
   if (joint instanceof RAPIER.RevoluteImpulseJoint) {
-    joint.setLimits(...knotModelSign.limits)
+    joint.setLimits(...knotCandidateSign.limits)
   }
   const displacement = () => Math.hypot(body.translation().x, body.translation().z)
   try {
@@ -48,11 +48,11 @@ function simulate(mass: number, miss = false, yaw = 0) {
       peak = Math.max(peak, displacement())
       const q = body.rotation()
       const position = body.translation()
-      const pin = new Vector3(...knotModelSign.anchor).applyQuaternion(new Quaternion(q.x, q.y, q.z, q.w)).add(new Vector3(position.x, position.y, position.z))
+      const pin = new Vector3(...knotCandidateSign.anchor).applyQuaternion(new Quaternion(q.x, q.y, q.z, q.w)).add(new Vector3(position.x, position.y, position.z))
       drift = Math.max(drift, pin.distanceTo(pivot))
     }
     expect(drift).toBeLessThan(0.015)
-    expect(peak).toBeLessThan(knotModelSign.anchor[1] * Math.sin(knotModelSign.limits[1]) + 0.03)
+    expect(peak).toBeLessThan(knotCandidateSign.anchor[1] * Math.sin(knotCandidateSign.limits[1]) + 0.03)
     world.removeRigidBody(projectile)
     for (let i = 0; i < 5400; i++) {
       world.step()
@@ -73,14 +73,14 @@ test('ceiling-mounted signs swing after real impacts and settle without detachin
   expect(simulate(5, true)).toBeLessThan(0.001)
 })
 test('large physical signs have two ceiling mounts, bounded chain geometry and room above the billboards', () => {
-  const geometry = new KnotModelSignGeometry
+  const geometry = new KnotCandidateSignGeometry
   try {
-    const bottom = knotGalleryBounds.height - knotModelSign.ceilingInset - knotModelSign.anchor[1] - knotModelSign.size[1] / 2
+    const bottom = knotGalleryBounds.height - knotCandidateSign.ceilingInset - knotCandidateSign.anchor[1] - knotCandidateSign.size[1] / 2
     expect(bottom).toBeGreaterThan(1.5 + 2.75 / 2 + 0.5)
-    expect(knotModelSign.suspensionX).toHaveLength(2)
+    expect(knotCandidateSign.suspensionX).toHaveLength(2)
     expect(geometry.panel.groups).toHaveLength(6)
     expect(triangleCount(geometry.chains)).toBeLessThan(6000)
-    expect(geometry.canopy.boundingBox!.max.y + knotGalleryBounds.height - knotModelSign.ceilingInset - knotModelSign.anchor[1]).toBeGreaterThan(knotGalleryBounds.height - 0.09)
+    expect(geometry.canopy.boundingBox!.max.y + knotGalleryBounds.height - knotCandidateSign.ceilingInset - knotCandidateSign.anchor[1]).toBeGreaterThan(knotGalleryBounds.height - 0.09)
     for (const part of [geometry.panel, geometry.chains, geometry.canopy]) {
       expect([...part.getAttribute('position').array].every(Number.isFinite)).toBe(true)
     }
@@ -95,8 +95,8 @@ test('large physical signs have two ceiling mounts, bounded chain geometry and r
   }
 })
 test('printed faces use a compact raster with fitted model name and proportional icon, without exhibit numbers', () => {
-  expect(modelSignTextureSize).toEqual([1024, 246])
-  expect(modelSignTextureSize[0] * modelSignTextureSize[1] * 4 * 12).toBeLessThan(12 * 1024 ** 2)
+  expect(candidateSignTextureSize).toEqual([1024, 246])
+  expect(candidateSignTextureSize[0] * candidateSignTextureSize[1] * 4 * 12).toBeLessThan(12 * 1024 ** 2)
   for (const withIcon of [true, false]) {
     const text: Array<Array<unknown>> = []
     const images: Array<Array<unknown>> = []
@@ -118,11 +118,11 @@ test('printed faces use a compact raster with fitted model name and proportional
     drawFace(context, 'A very long model name', withIcon ? icon : undefined)
     expect(text).toHaveLength(1)
     expect(text[0][0]).toBe('A very long model name')
-    expect(text[0][2]).toBe(modelSignTextureSize[1] / 2)
-    expect(Number.parseInt(fonts[1].split(' ')[1], 10)).toBeLessThan(modelSignFontSize)
+    expect(text[0][2]).toBe(candidateSignTextureSize[1] / 2)
+    expect(Number.parseInt(fonts[1].split(' ')[1], 10)).toBeLessThan(candidateSignFontSize)
     expect(images).toHaveLength(withIcon ? 1 : 0)
     if (withIcon) {
-      expect(images[0]).toEqual([icon, 45, (modelSignTextureSize[1] - 75) / 2, 150, 75])
+      expect(images[0]).toEqual([icon, 45, (candidateSignTextureSize[1] - 75) / 2, 150, 75])
     }
   }
 })

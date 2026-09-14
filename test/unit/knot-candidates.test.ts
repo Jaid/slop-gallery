@@ -8,7 +8,7 @@ import KnotCandidate, {indexKnots} from '../../src/lib/knots/KnotCandidate.ts'
 
 const candidateData: KnotCandidateData = {
   id: 'fable',
-  title: 'Claude Fable 5.1',
+  title: 'Claude Fable',
   icon: 'icon.jxl',
 }
 const item = (id: string, highlighted = false): KnotData => ({
@@ -71,14 +71,32 @@ describe('arbitrary Knot batches', () => {
       for (const entry of candidate.items) {
         expect(barrel[entry.sourceId].id).toBe(entry.sourceId)
         expect('number' in barrel[entry.sourceId]).toBe(false)
-        expect(await Bun.file(`src/lib/knots/${entry.model}/items/${entry.sourceId}/material.ts`).exists()).toBe(true)
-        const dataSource = await Bun.file(`src/lib/knots/${entry.model}/items/${entry.sourceId}/data.ts`).text()
+        expect(await Bun.file(`src/lib/knots/${entry.candidate.id}/items/${entry.sourceId}/material.ts`).exists()).toBe(true)
+        const dataSource = await Bun.file(`src/lib/knots/${entry.candidate.id}/items/${entry.sourceId}/data.ts`).text()
         expect(dataSource).not.toMatch(/\bnumber\s*:/u)
       }
     }
     const materialFiles = await Array.fromAsync(new Bun.Glob('src/lib/knots/*/items/*/material.ts').scan('.'))
-    expect(new Set(materialFiles.map(path => path.replaceAll('\\', '/')))).toEqual(new Set(knots.map(entry => `src/lib/knots/${entry.model}/items/${entry.sourceId}/material.ts`)))
+    expect(new Set(materialFiles.map(path => path.replaceAll('\\', '/')))).toEqual(new Set(knots.map(entry => `src/lib/knots/${entry.candidate.id}/items/${entry.sourceId}/material.ts`)))
     expect(knotsById.size).toBe(knots.length)
+  })
+
+  test('uses candidate titles independently from author model titles', () => {
+    expect(Object.fromEntries(knotCandidates.map(candidate => [candidate.data.id, candidate.data.title]))).toMatchObject({
+      astra: 'GPT Astra',
+      fable: 'Claude Fable',
+      gemini: 'Gemini Flash',
+      glm: 'GLM',
+      glm_flash: 'GLM Flash',
+      grok: 'Grok',
+      hunyuan: 'Hy',
+      kimi: 'Kimi',
+      muse: 'Muse Spark',
+      qwen: 'Qwen Max',
+      sol: 'GPT Sol',
+      sonnet: 'Claude Sonnet',
+    })
+    expect(knotCandidates.find(candidate => candidate.data.id === 'fable')!.items.every(entry => entry.modelTitle === 'Claude Fable 5.1')).toBe(true)
   })
 
   test('keeps every Gemini item on current model provenance', () => {
@@ -95,7 +113,7 @@ describe('arbitrary Knot batches', () => {
       ['DeepSeek 4.1 Flash', 'deepseek/deepseek-v4.1-flash', 'max'],
       ['Muse Spark 1.3', 'meta/muse-spark-1.3-contributor', 'xhigh'],
       ['GLM 5.3 Flash', 'z-ai/glm-5.3-flash', 'max'],
-      ['HY4 Preview', 'tencent/hy4-preview', 'high'],
+      ['Hy4 Preview', 'tencent/hy4-preview', 'high'],
     ] as const
     for (const [title, slug, effortLevel] of expected) {
       const entries = knots.filter(entry => entry.author.model.slug === slug)
@@ -122,11 +140,11 @@ describe('arbitrary Knot batches', () => {
     expect(webChat).toHaveLength(56)
     expect(legacy).toHaveLength(56)
     expect(api.every(entry => entry.harness === 'none')).toBe(true)
-    expect(codex.every(entry => entry.model === 'astra')).toBe(true)
+    expect(codex.every(entry => entry.candidate.id === 'astra')).toBe(true)
     expect(legacy.every(entry => entry.harness === undefined)).toBe(true)
-    const astraApi = api.filter(entry => entry.model === 'astra')
-    const fableApi = api.filter(entry => entry.model === 'fable')
-    const solApi = api.filter(entry => entry.model === 'sol')
+    const astraApi = api.filter(entry => entry.candidate.id === 'astra')
+    const fableApi = api.filter(entry => entry.candidate.id === 'fable')
+    const solApi = api.filter(entry => entry.candidate.id === 'sol')
     expect(astraApi).toHaveLength(8)
     expect(fableApi).toHaveLength(16)
     expect(solApi).toHaveLength(8)
@@ -145,22 +163,22 @@ describe('arbitrary Knot batches', () => {
   })
 
   test('defaults to eight shots per candidate when the URL omits shots', () => {
-    const bays = selectKnotBays('?models=fable,astra')
+    const bays = selectKnotBays('?candidates=fable,astra')
     expect(bays.map(bay => [bay.candidate.data.id, bay.finishes.length])).toEqual([['astra', 8], ['fable', 8]])
   })
 
-  test('filters models, caps shots and enumerates only after final selection', () => {
-    const bays = selectKnotBays('?models=glm,muse,qwen,astra&shots=2')
+  test('filters candidates, caps shots and enumerates only after final selection', () => {
+    const bays = selectKnotBays('?candidates=glm,muse,qwen,astra&shots=2')
     expect(bays.map(bay => bay.candidate.data.id)).toEqual(['astra', 'glm', 'qwen', 'muse'])
     expect(bays.flatMap(bay => bay.finishes)).toHaveLength(8)
-    expect(bays.every(bay => bay.finishes.length === 2 && bay.finishes.every(entry => entry.model === bay.candidate.data.id))).toBe(true)
+    expect(bays.every(bay => bay.finishes.length === 2 && bay.finishes.every(entry => entry.candidate.id === bay.candidate.data.id))).toBe(true)
     const numbered = enumerateKnotBays(bays)
     expect(numbered.flatMap(bay => bay.finishes.map(entry => entry.number))).toEqual([1, 2, 3, 4, 5, 6, 7, 8])
-    const astra = enumerateKnotBays(selectKnotBays('?models=astra&shots=3'))
+    const astra = enumerateKnotBays(selectKnotBays('?candidates=astra&shots=3'))
     expect(astra[0].finishes).toHaveLength(3)
     expect(astra[0].finishes.map(entry => entry.number)).toEqual([1, 2, 3])
     expect(() => selectKnotBays('?shots=0')).toThrow('shots')
-    expect(() => selectKnotBays('?models=missing')).toThrow('model')
+    expect(() => selectKnotBays('?candidates=missing')).toThrow('candidate')
   })
 
   test('formats runtime number sequences compactly', () => {
@@ -179,7 +197,13 @@ describe('arbitrary Knot batches', () => {
     expect(byId('fable/chladni_resonance').displacement).toBe(0.006)
 
     const glm = knotCandidates.find(candidate => candidate.data.id === 'glm')!
-    expect(glm.items).toHaveLength(32)
+    const glmFlash = knotCandidates.find(candidate => candidate.data.id === 'glm_flash')!
+    expect(glm.data.title).toBe('GLM')
+    expect(glmFlash.data.title).toBe('GLM Flash')
+    expect(glm.items).toHaveLength(24)
+    expect(glmFlash.items).toHaveLength(8)
+    expect(glm.items.every(entry => entry.author.model.title !== 'GLM 5.3 Flash')).toBe(true)
+    expect(glmFlash.items.every(entry => entry.author.model.slug === 'z-ai/glm-5.3-flash')).toBe(true)
     const glmOpenRouter = glm.items.filter(entry => entry.author.model.slug === 'z-ai/glm-5.3')
     expect(glmOpenRouter).toHaveLength(8)
     expect(glmOpenRouter.every(entry => entry.archived !== true)).toBe(true)

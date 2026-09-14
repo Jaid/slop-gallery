@@ -4,7 +4,7 @@ import * as path from 'forward-slash-path'
 
 import portraits from '../src/levels/gallery/collection.ts'
 import {knotAnnouncements} from '../src/lib/knots/announcements.ts'
-import {knots} from '../src/lib/knots/index.ts'
+import {knotCandidates} from '../src/lib/knots/index.ts'
 import {announcementDurationLimit, announcementInput} from './announceKnots.ts'
 import VoicePrerenderBatch from './lib/voice/VoicePrerenderBatch.ts'
 
@@ -12,7 +12,7 @@ const root = path.resolve(import.meta.dir, '..')
 
 export function prerenderInventory() {
   return [
-    ...knotAnnouncements(knots).map(item => ({
+    ...knotAnnouncements(knotCandidates).map(item => ({
       id: `knots/${item.id}`,
       input: announcementInput(item),
       maximumDuration: announcementDurationLimit(item),

@@ -8,11 +8,11 @@ export const knotFloatHeight = 1
 
 export function selectKnotBays(search = '') {
   const params = new URLSearchParams(search)
-  const requested = [...new Set(params.getAll('models').flatMap(value => value.split(',')).map(value => value.trim()).filter(Boolean))]
+  const requested = [...new Set(params.getAll('candidates').flatMap(value => value.split(',')).map(value => value.trim()).filter(Boolean))]
   const known = new Set(knotCandidates.map(candidate => candidate.data.id))
   const unknown = requested.filter(id => !known.has(id))
   if (unknown.length) {
-    throw new Error(`Unknown Knot model URL selection: ${unknown.join(', ')}`)
+    throw new Error(`Unknown Knot candidate URL selection: ${unknown.join(', ')}`)
   }
   const rawShots = params.get('shots')
   let shots = 8
@@ -53,9 +53,7 @@ export function formatKnotLabels(numbers: ReadonlyArray<number>) {
 }
 
 export const knotBays = selectedBays.map(({candidate, finishes}, index) => ({
-  model: candidate.data.id,
-  title: candidate.data.title,
-  icon: candidate.data.icon,
+  candidate: candidate.data,
   finishes,
   labels: formatKnotLabels(finishes.map(item => item.number)),
   center: [0, 0, knotLayout.rowZ(index)] as Vec3,

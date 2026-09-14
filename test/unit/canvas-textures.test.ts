@@ -2,7 +2,7 @@ import {expect, test} from 'bun:test'
 
 // Behavioral ownership/readiness tests live with the reusable package. These guard game policy.
 test('all generated signage uses the prepared pipeline without placeholder rasters or mipmaps', async () => {
-  for (const file of ['src/components/CanvasText/index.tsx', 'src/components/levels/knottingham/KnotLabels/index.tsx', 'src/components/levels/knottingham/KnotModelSign/index.tsx']) {
+  for (const file of ['src/components/CanvasText/index.tsx', 'src/components/levels/knottingham/KnotLabels/index.tsx', 'src/components/levels/knottingham/KnotCandidateSign/index.tsx']) {
     const source = await Bun.file(file).text()
     expect(source).toContain("from 'canvas-textures/react'")
     expect(source).toContain('mipmaps: false')

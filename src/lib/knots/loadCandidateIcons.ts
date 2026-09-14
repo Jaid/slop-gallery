@@ -1,4 +1,4 @@
-export default async function loadModelIcons(sources: Iterable<string>) {
+export default async function loadCandidateIcons(sources: Iterable<string>) {
   const urls = new Set(sources)
   const images = new Map<string, HTMLImageElement>
   await Promise.all(Array.from(urls, async url => {
@@ -8,7 +8,7 @@ export default async function loadModelIcons(sources: Iterable<string>) {
       await image.decode()
       images.set(url, image)
     } catch (error) {
-      console.warn('Knot model icon could not be loaded.', url, error)
+      console.warn('Knot candidate icon could not be loaded.', url, error)
     }
   }))
   return images

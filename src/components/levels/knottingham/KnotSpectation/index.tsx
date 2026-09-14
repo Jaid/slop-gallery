@@ -16,8 +16,8 @@ import KnotAnnouncer from '#src/lib/knots/KnotAnnouncer.ts'
 import {setKnotFocus} from '#src/lib/rendering/playerView.ts'
 
 const exhibits = new Map(knotExhibition.map(item => [`prop-knot-${item.id}`, item]))
-const billboards = new Map<string, KnotBay>(knotBays.flatMap(bay => [[`preview-${bay.model}`, bay], [`model-sign-${bay.model}`, bay]] as const))
-const announcedCreators = new Set<string>
+const candidateSurfaces = new Map<string, KnotBay>(knotBays.flatMap(bay => [[`preview-${bay.candidate.id}`, bay], [`candidate-sign-${bay.candidate.id}`, bay]] as const))
+const announcedModels = new Set<string>
 const announcedItems = new Set<string>
 const inspectionDistanceSpeed = 0.45
 const inspectionOrbitSpeed = 1.5
@@ -75,7 +75,7 @@ export default function KnotSpectation() {
           })
         })
       },
-    }, announcedCreators, announcedItems)
+    }, announcedModels, announcedItems)
     const stopAnnouncement = () => {
       narrationVersion++
       announcer.stop()
@@ -86,14 +86,14 @@ export default function KnotSpectation() {
     }
     const announce = (id: string, repeat = false) => {
       const item = exhibits.get(id)
-      const billboard = billboards.get(id)
-      if (!item && !billboard || !useGallery.getState().sound || item && !repeat && announcer.hasAnnounced(item)) {
+      const candidateBay = candidateSurfaces.get(id)
+      if (!item && !candidateBay || !useGallery.getState().sound || item && !repeat && announcer.hasAnnounced(item)) {
         return
       }
       stopNarration()
       const version = ++narrationVersion
       narrationId = id
-      const playback = billboard ? announcer.announceCreators(billboard.finishes) : announcer.announce(item!, repeat)
+      const playback = candidateBay ? announcer.announceCandidate(candidateBay.candidate) : announcer.announce(item!, repeat)
       void playback.catch(error => {
         if (version === narrationVersion) {
           notify(error instanceof Error ? error.message : 'The announcement could not be played.')
@@ -224,6 +224,28 @@ export default function KnotSpectation() {
       stopAnnouncement()
     }
     const narrate = (event: Event) => announce((event as CustomEvent<string>).detail, true)
+    const narrateModel = (event: Event) => {
+      const id = (event as CustomEvent<string>).detail
+      const item = exhibits.get(id)
+      if (!item || !useGallery.getState().sound || announcer.hasAnnouncedModel(item)) {
+        return
+      }
+      stopNarration()
+      const version = ++narrationVersion
+      narrationId = id
+      void Promise.resolve(announcer.announceModel(item)).catch(error => {
+        if (version === narrationVersion) {
+          notify(error instanceof Error ? error.message : 'The model announcement could not be played.')
+        }
+      }).finally(() => {
+        if (version === narrationVersion) {
+          if (useGallery.getState().narration?.id === id) {
+            useGallery.setState({narration: null})
+          }
+          narrationId = undefined
+        }
+      })
+    }
     const unsubscribe = useGallery.subscribe((state, previous) => {
       if (state.panel || !state.locked) {
         release()
@@ -240,6 +262,7 @@ export default function KnotSpectation() {
     galleryEvents.addEventListener('teleport', teleport)
     galleryEvents.addEventListener('stop-narration', stopAnnouncement)
     galleryEvents.addEventListener('narrate', narrate)
+    galleryEvents.addEventListener('narrate-model', narrateModel)
     return () => {
       unsubscribe()
       globalThis.removeEventListener('keydown', down)
@@ -250,6 +273,7 @@ export default function KnotSpectation() {
       galleryEvents.removeEventListener('teleport', teleport)
       galleryEvents.removeEventListener('stop-narration', stopAnnouncement)
       galleryEvents.removeEventListener('narrate', narrate)
+      galleryEvents.removeEventListener('narrate-model', narrateModel)
       finish(true)
       stopAnnouncement()
     }

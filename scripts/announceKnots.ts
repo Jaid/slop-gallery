@@ -3,7 +3,7 @@ import {parseArgs} from 'node:util'
 import * as path from 'forward-slash-path'
 
 import {knotAnnouncements} from '../src/lib/knots/announcements.ts'
-import {knots} from '../src/lib/knots/index.ts'
+import {knotCandidates} from '../src/lib/knots/index.ts'
 import VoicePrerenderBatch from './lib/voice/VoicePrerenderBatch.ts'
 
 const root = path.resolve(import.meta.dir, '..')
@@ -15,7 +15,7 @@ export function announcementInput(item: {id: string
 
 export function announcementDurationLimit(item: {id: string
   text: string}) {
-  return item.id.includes('/slug/') ? 8 : Math.max(4, item.text.split(/\s+/u).length * 1.2 + 1)
+  return item.id.endsWith('/candidate') || item.id.includes('/slug/') ? 8 : Math.max(4, item.text.split(/\s+/u).length * 1.2 + 1)
 }
 
 export default async function announceKnots({ids = [], all = false, force = false, retryFailed = false, key = Bun.env.XAI_API_KEY, telemetryEndpoint, outputRoot = path.resolve(root, 'src/lib/knots'), cacheRoot = path.resolve(root, 'private/production-voices')}: {
@@ -28,7 +28,7 @@ export default async function announceKnots({ids = [], all = false, force = fals
   retryFailed?: boolean
   telemetryEndpoint?: string
 } = {}) {
-  const inventory = knotAnnouncements(knots)
+  const inventory = knotAnnouncements(knotCandidates)
   if (!all && !ids.length) {
     throw new Error('Specify announcement IDs, or --all after reviewing the samples.')
   }

@@ -18,11 +18,11 @@ describe('multi-model Knot challenge', () => {
     expect(knots).toHaveLength(225)
     expect(knotsById.size).toBe(225)
     const displayedKnots = knots.filter(item => !item.archived)
-    const displayedByModel = Map.groupBy(displayedKnots, item => item.model)
-    const expectedCount = [...displayedByModel.values()].reduce((sum, items) => sum + Math.min(items.length, 8), 0)
+    const displayedByCandidate = Map.groupBy(displayedKnots, item => item.candidate.id)
+    const expectedCount = [...displayedByCandidate.values()].reduce((sum, items) => sum + Math.min(items.length, 8), 0)
     expect(knotExhibition).toHaveLength(expectedCount)
     expect(new Set(knotExhibition.map(item => item.id)).size).toBe(expectedCount)
-    expect(knotBays).toHaveLength(displayedByModel.size)
+    expect(knotBays).toHaveLength(displayedByCandidate.size)
     expect(knotExhibition.map(item => item.number)).toEqual(Array.from({length: expectedCount}, (_, index) => index + 1))
     for (const bay of knotBays) {
       const firstHighlighted = bay.finishes.findIndex(item => item.highlighted)
@@ -33,7 +33,7 @@ describe('multi-model Knot challenge', () => {
     for (const item of knotExhibition) {
       expect(item.archived).not.toBe(true)
       expect(knotsById.get(item.id)?.sourceId).toBe(item.sourceId)
-      expect(item.id).toBe(`${item.model}/${item.sourceId}`)
+      expect(item.id).toBe(`${item.candidate.id}/${item.sourceId}`)
     }
     expect(knotsById.get('sonnet/stained_requiem')?.title).toBe('Stained Requiem')
     expect(knotsById.get('fable/event_horizon')?.modelTitle).toBe('Claude Fable 5.1')
@@ -46,7 +46,7 @@ describe('multi-model Knot challenge', () => {
       expect(x + 0.58).toBeLessThan(knotGalleryBounds.maxX - 1)
       expect(z - 0.58).toBeGreaterThan(knotGalleryBounds.northZ + 1)
       expect(z + 0.58).toBeLessThan(knotGalleryBounds.southZ - 1)
-      const bay = knotBays.find(candidate => candidate.model === exhibit.model)!
+      const bay = knotBays.find(bay => bay.candidate.id === exhibit.candidate.id)!
       expect(z).toBe(bay.center[2])
       expect(exhibit.rotation).toBe(0)
       expect(exhibit.label).toBe(`#${String(exhibit.number).padStart(2, '0')}`)
@@ -59,7 +59,7 @@ describe('multi-model Knot challenge', () => {
   test('floats at crouching eye height in one row per candidate', () => {
     expect(knotFloatHeight).toBe(1)
     for (const bay of knotBays) {
-      const row = knotExhibition.filter(exhibit => exhibit.model === bay.model)
+      const row = knotExhibition.filter(exhibit => exhibit.candidate.id === bay.candidate.id)
       expect(new Set(row.map(exhibit => exhibit.position[2])).size).toBe(1)
       for (let i = 1; i < row.length; i++) {
         expect(row[i].position[0] - row[i - 1].position[0]).toBe(3.5)
@@ -69,7 +69,7 @@ describe('multi-model Knot challenge', () => {
   test('aligns every row to the summary-board side regardless of item count', () => {
     expect(new Set(knotBays.map(bay => bay.finishes.length)).size).toBeGreaterThan(1)
     for (const bay of knotBays) {
-      const row = knotExhibition.filter(exhibit => exhibit.model === bay.model)
+      const row = knotExhibition.filter(exhibit => exhibit.candidate.id === bay.candidate.id)
       expect(row[0].position[0]).toBe(-knotRowHalfWidth)
       expect(row[0].position[0] - knotPreviewX).toBe(6.25)
       for (const [index, exhibit] of row.entries()) {
@@ -92,7 +92,7 @@ describe('multi-model Knot challenge', () => {
     environment.addEventListener('dispose', () => disposed = true)
     try {
       for (const exhibit of knots) {
-        const {default: Material} = await import(resolve(import.meta.dir, '../../src/lib/knots', exhibit.model, 'items', exhibit.sourceId, 'material.ts')) as {default: new(environment: StudioEnvironment) => KnotMaterial}
+        const {default: Material} = await import(resolve(import.meta.dir, '../../src/lib/knots', exhibit.candidate.id, 'items', exhibit.sourceId, 'material.ts')) as {default: new(environment: StudioEnvironment) => KnotMaterial}
         const material = new Material(environment)
         try {
           expect(material.name).toBe(exhibit.sourceId)

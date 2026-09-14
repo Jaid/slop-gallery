@@ -2,8 +2,8 @@ import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 
+import KnotCandidateSign from '#component/levels/knottingham/KnotCandidateSign'
 import KnotLights from '#component/levels/knottingham/KnotLights'
-import KnotModelSign from '#component/levels/knottingham/KnotModelSign'
 import KnotPreviewSign from '#component/levels/knottingham/KnotPreviewSigns'
 import CheckerMarbleFloor from '#src/components/Scene/CheckerMarbleFloor.tsx'
 import {surfaceTexture} from '#src/components/Scene/materials.ts'
@@ -33,9 +33,9 @@ export default function KnotLobby() {
       <group position={knotGalleryCenter}><CheckerMarbleFloor width={knotGallerySize[0]} depth={knotGallerySize[2]}/></group>
       <Box position={[knotGalleryCenter[0], knotGalleryBounds.height, knotGalleryCenter[2]]} size={[knotGallerySize[0], 0.18, knotGallerySize[2]]} color="#7c9586"/>
       <KnotLights/>
-      {knotBays.map(bay => <group key={bay.model} position={bay.center}>
+      {knotBays.map(bay => <group key={bay.candidate.id} position={bay.center}>
         <KnotPreviewSign bay={bay}/>
-        <KnotModelSign bay={bay}/>
+        <KnotCandidateSign bay={bay}/>
       </group>)}
 
     </group>

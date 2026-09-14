@@ -2,7 +2,7 @@ import {expect, test} from 'bun:test'
 
 import KnotLayout from '../../src/lib/knots/KnotLayout.ts'
 
-test('room width follows the longest displayed row and depth follows creator count', () => {
+test('room width follows the longest displayed row and depth follows candidate count', () => {
   const one = new KnotLayout([1])
   const eight = new KnotLayout([8])
   const nine = new KnotLayout([8, 1, 3, 8, 17, 1, 8, 8, 8])
