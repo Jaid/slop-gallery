@@ -19,8 +19,8 @@ test('a complete nameplate can be picked up, canceled, thrown and picked up agai
   for (const {size, position, rotation = [0, 0, 0]} of knotSignParts) {
     world.createCollider(RAPIER.ColliderDesc.cuboid(size[0] / 2, size[1] / 2, size[2] / 2).setTranslation(...position).setRotation((new Quaternion).setFromEuler(new Euler(...rotation))).setMass(knotSign.plateMass).setFriction(0.9).setRestitution(0.1), body)
   }
-  for (const {radius, height, position, mass} of knotSignRoundParts) {
-    world.createCollider(RAPIER.ColliderDesc.cylinder(height / 2, radius).setTranslation(...position).setMass(mass).setFriction(0.9).setRestitution(0.1), body)
+  for (const {radius, height, position, rotation = [0, 0, 0], mass} of knotSignRoundParts) {
+    world.createCollider(RAPIER.ColliderDesc.cylinder(height / 2, radius).setTranslation(...position).setRotation((new Quaternion).setFromEuler(new Euler(...rotation))).setMass(mass).setFriction(0.9).setRestitution(0.1), body)
   }
   const carried = new GrabbableBody(body, world)
   try {
@@ -28,7 +28,7 @@ test('a complete nameplate can be picked up, canceled, thrown and picked up agai
       world.step()
     }
     expect(body.translation().y).toBeCloseTo(knotSign.elevation, 2)
-    expect(body.mass()).toBeCloseTo(3.5)
+    expect(body.mass()).toBeCloseTo(knotSign.plateMass * knotSignParts.length + knotSignRoundParts.reduce((mass, part) => mass + part.mass, 0))
     const resting = body.translation()
     const rotation = body.rotation()
     body.sleep()

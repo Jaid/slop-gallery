@@ -30,12 +30,13 @@ for (const [title, parts, elevation] of [
         world.createCollider(RAPIER.ColliderDesc.cuboid(size[0] / 2, size[1] / 2, size[2] / 2).setTranslation(...position).setRotation((new Quaternion).setFromEuler(new Euler(...rotation))))
       }
       if (title === 'nameplate') {
-        for (const {position, radius, height} of knotSignRoundParts) {
+        for (const {position, rotation = [0, 0, 0], radius, height} of knotSignRoundParts) {
           const mesh = new Mesh(new CylinderGeometry(radius, radius, height, 48), material)
           mesh.position.set(...position)
+          mesh.rotation.set(rotation[0], rotation[1], rotation[2])
           mesh.updateMatrixWorld()
           meshes.push(mesh)
-          world.createCollider(RAPIER.ColliderDesc.cylinder(height / 2, radius).setTranslation(...position))
+          world.createCollider(RAPIER.ColliderDesc.cylinder(height / 2, radius).setTranslation(...position).setRotation((new Quaternion).setFromEuler(new Euler(...rotation))))
         }
         expect(Math.min(...knotSignRoundParts.map(part => part.position[1] - part.height / 2)) + elevation).toBeCloseTo(0, 6)
       } else {
@@ -77,9 +78,13 @@ test('nameplates stay diagonally beside rotated exhibits', () => {
   }
 })
 test('museum stand has a slender stem, round grounded foot and upward-facing plaque', () => {
-  const [stem, base] = knotSignRoundParts
+  const [stem, base, collar, boss] = knotSignRoundParts
   expect(stem.radius).toBeLessThan(0.025)
   expect(base.radius).toBeGreaterThan(stem.radius * 8)
+  expect(collar.radius).toBeGreaterThan(stem.radius)
+  expect(collar.position[1] + collar.height / 2).toBeCloseTo(0)
+  expect(boss.radius).toBeGreaterThan(collar.radius)
+  expect(boss.rotation?.[0]).toBeCloseTo(Math.PI / 2 + knotSign.tilt)
   expect(stem.position[1] - stem.height / 2 + knotSign.elevation).toBeCloseTo(0)
   expect(stem.position[1] + stem.height / 2).toBeCloseTo(0)
   const normal = new Vector3(0, 0, 1).applyEuler(new Euler(knotSign.tilt, 0, 0))

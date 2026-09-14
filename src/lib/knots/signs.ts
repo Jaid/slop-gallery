@@ -5,6 +5,12 @@ export type SignPart = {position: Vec3
   rotation?: Vec3
   size: Vec3}
 
+export type SignRoundPart = {height: number
+  mass: number
+  position: Vec3
+  radius: number
+  rotation?: Vec3}
+
 export const knotSign = {
   width: 0.85,
   height: 0.85 * 2 / 3,
@@ -26,7 +32,7 @@ export const knotSignParts: Array<SignPart> = [
   },
 ]
 
-export const knotSignRoundParts = [
+export const knotSignRoundParts: Array<SignRoundPart> = [
   {
     position: [0, -knotSign.elevation / 2, -0.03] as Vec3,
     radius: 0.018,
@@ -38,6 +44,22 @@ export const knotSignRoundParts = [
     radius: 0.2,
     mass: 2.5,
     height: 0.028,
+  },
+  // A short sleeve makes the slender stem terminate deliberately instead of
+  // disappearing into the plaque at a single point.
+  {
+    position: [0, -0.04, -0.03],
+    radius: 0.036,
+    mass: 0.06,
+    height: 0.08,
+  },
+  // Round mounting boss, flush against the rear of the tilted plaque.
+  {
+    position: [0, Math.sin(knotSign.tilt) * (knotSign.thickness + 0.02), -Math.cos(knotSign.tilt) * (knotSign.thickness + 0.02)],
+    rotation: [Math.PI / 2 + knotSign.tilt, 0, 0],
+    radius: 0.07,
+    mass: 0.08,
+    height: 0.04,
   },
 ]
 

@@ -46,7 +46,7 @@ export default function KnotLabels() {
     faces.name = 'knot-nameplates'
     const parts = [
       ...knotSignParts.map(({position, rotation = [0, 0, 0], size}) => new BoxGeometry(...size).applyMatrix4((new Matrix4).makeRotationFromEuler(new Euler(...rotation))).translate(...position)),
-      ...knotSignRoundParts.map(({position, radius, height: partHeight}) => new CylinderGeometry(radius, radius, partHeight, 48).translate(...position)),
+      ...knotSignRoundParts.map(({position, rotation = [0, 0, 0], radius, height: partHeight}) => new CylinderGeometry(radius, radius, partHeight, 48).applyMatrix4((new Matrix4).makeRotationFromEuler(new Euler(...rotation))).translate(...position)),
     ]
     const supportGeometry = mergeGeometries(parts)
     for (const part of parts) {
@@ -131,7 +131,7 @@ export default function KnotLabels() {
         <mesh geometry={resources.supports.geometry} material={supportMaterial} visible={false} dispose={null}/>
       </InteractiveObject>
       {knotSignParts.map(({position, rotation, size}, index) => <CuboidCollider key={index} position={position} rotation={rotation} args={[size[0] / 2, size[1] / 2, size[2] / 2]} mass={knotSign.plateMass}/>)}
-      {knotSignRoundParts.map(({position, radius, height: partHeight, mass}, index) => <CylinderCollider key={index} position={position} args={[partHeight / 2, radius]} mass={mass}/>)}
+      {knotSignRoundParts.map(({position, rotation, radius, height: partHeight, mass}, index) => <CylinderCollider key={index} position={position} rotation={rotation} args={[partHeight / 2, radius]} mass={mass}/>)}
     </GrabbableProp>)}
   </>
 }
