@@ -29,6 +29,12 @@ test('impact fractures isolate exactly one dead diffuser corner behind a line th
     expect(Math.hypot(...fracture.normal)).toBeCloseTo(1, 9)
     expect(fracture.liveFraction).toBeGreaterThanOrEqual(0.5)
     expect(fracture.liveFraction).toBeLessThan(1)
+    const [corner, firstEdge, secondEdge] = fracture.deadTriangle
+    const edgeCross = (firstEdge[0] - fracture.point[0]) * (secondEdge[1] - fracture.point[1]) - (firstEdge[1] - fracture.point[1]) * (secondEdge[0] - fracture.point[0])
+    expect(Math.abs(edgeCross)).toBeLessThan(1e-9)
+    expect(corner.every(value => Math.abs(value) === 1)).toBe(true)
+    expect(firstEdge.every(value => Math.abs(value) <= 1 + 1e-9)).toBe(true)
+    expect(secondEdge.every(value => Math.abs(value) <= 1 + 1e-9)).toBe(true)
     const deadCorners = [[-1, -1], [-1, 1], [1, -1], [1, 1]].filter(([x, z]) => (x - fracture.point[0]) * fracture.normal[0] + (z - fracture.point[1]) * fracture.normal[1] > 1e-6)
     expect(deadCorners).toHaveLength(1)
   }

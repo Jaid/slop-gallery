@@ -42,6 +42,7 @@ const noise = (seed: number, sample: number) => fract(Math.sin((seed + 1) * 12.9
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
 
 export type KnotLightFracture = {
+  deadTriangle: readonly [readonly [number, number], readonly [number, number], readonly [number, number]]
   liveFraction: number
   normal: readonly [number, number]
   point: readonly [number, number]
@@ -77,9 +78,13 @@ export function knotLightFracture(point: readonly [number, number], velocity: re
   const nx = cornerX / xIntercept
   const nz = cornerZ / zIntercept
   const length = Math.hypot(nx, nz) || 1
+  const corner = [cornerX, cornerZ] as const
+  const xEdge = [cornerX - cornerX * xIntercept, cornerZ] as const
+  const zEdge = [cornerX, cornerZ - cornerZ * zIntercept] as const
   return {
     point: [px, pz],
     normal: [nx / length, nz / length],
+    deadTriangle: [corner, xEdge, zEdge],
     liveFraction: 1 - xIntercept * zIntercept / 8,
   }
 }
