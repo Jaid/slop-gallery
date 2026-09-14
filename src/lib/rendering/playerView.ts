@@ -1,3 +1,5 @@
+import aimDot from '#src/lib/aimDot.ts'
+
 let zoom = 0
 let knotFocus = 0
 let knotFocusDistance = 1
@@ -8,6 +10,7 @@ export function getPlayerZoom() {
 
 export function setPlayerZoom(amount: number) {
   zoom = Math.max(0, Math.min(1, amount))
+  aimDot.setBlocked('zoom', zoom > 0)
 }
 
 export function getKnotFocus() {

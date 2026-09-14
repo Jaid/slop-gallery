@@ -10,7 +10,7 @@ import {Euler, Matrix4, PerspectiveCamera, Quaternion, Raycaster, Vector2, Vecto
 import {PlacementPreview} from '#level/components.ts'
 import {levelWallDistance} from '#level/navigation.ts'
 import InspectionLook from '#src/lib/camera/InspectionLook.ts'
-import {cameraPose, chime, dragPose, enterGallery, findPlacement, galleryEvents, isTextInput, markControlled, narrate, notify, openPanel, roomAt, useGallery} from '#src/lib/gallery.ts'
+import {cameraPose, chime, dragPose, enterGallery, findPlacement, galleryEvents, isTextInput, markControlled, narrate, notify, openPanel, roomAt, setCameraFocused, useGallery} from '#src/lib/gallery.ts'
 import {interactiveObjects} from '#src/lib/gallery/interactiveObjects.ts'
 import {playerSpawn} from '#src/lib/gallery/PlayerSession.ts'
 import {isPortraitLabelHit} from '#src/lib/gallery/portraitLabel.ts'
@@ -76,7 +76,7 @@ export default function Interaction() {
     const stopView = () => {
       view.current?.restoreControls()
       view.current = null
-      cameraPose.focused = false
+      setCameraFocused(false)
       useGallery.setState({inspecting: null})
     }
     const cancelView = () => {
@@ -230,7 +230,7 @@ export default function Interaction() {
         position: camera.position.clone(),
         rotation: camera.quaternion.clone(),
       }
-      cameraPose.focused = true
+      setCameraFocused(true)
       useGallery.setState({inspecting: id})
     }
     const keydown = (event: KeyboardEvent) => {
@@ -434,7 +434,7 @@ export default function Interaction() {
       if (viewing.returning && camera.position.distanceTo(target) < 0.01 && camera.quaternion.angleTo(rotation) < 0.005) {
         viewing.restoreControls()
         view.current = null
-        cameraPose.focused = false
+        setCameraFocused(false)
       }
     }
     camera.getWorldDirection(direction.current)

@@ -8,7 +8,7 @@ import {MathUtils, PerspectiveCamera, Vector3} from 'three/webgpu'
 import {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
 import playAnnouncement from '#src/lib/audio/playAnnouncement.ts'
 import OrbitInspection from '#src/lib/camera/OrbitInspection.ts'
-import {cameraPose, galleryEvents, isTextInput, markControlled, notify, stopNarration, useGallery} from '#src/lib/gallery.ts'
+import {cameraPose, galleryEvents, isTextInput, markControlled, notify, setCameraFocused, stopNarration, useGallery} from '#src/lib/gallery.ts'
 import {createKnotGeometry} from '#src/lib/gallery/sculptures.ts'
 import knotAnnouncementUrl from '#src/lib/knots/announcementAssets.ts'
 import {knotBays, knotExhibition} from '#src/lib/knots/exhibition.ts'
@@ -128,7 +128,7 @@ export default function KnotSpectation() {
         focusPipelineActive.current = false
         galleryEvents.dispatchEvent(new Event('knot-focus-end'))
       }
-      cameraPose.focused = false
+      setCameraFocused(false)
       useGallery.setState({inspecting: null})
     }
     const release = () => {
@@ -200,7 +200,7 @@ export default function KnotSpectation() {
       focusPipelineActive.current = true
       setKnotFocus(0, camera.position.distanceTo(target) + session.current.orbit.radius)
       galleryEvents.dispatchEvent(new Event('knot-focus-start'))
-      cameraPose.focused = true
+      setCameraFocused(true)
       useGallery.setState({inspecting: state.active})
       announce(state.active)
     }
@@ -287,7 +287,7 @@ export default function KnotSpectation() {
       distanceKeys.current.clear()
       orbitKeys.current.clear()
       session.current = null
-      cameraPose.focused = false
+      setCameraFocused(false)
       useGallery.setState({inspecting: null})
     }
   })

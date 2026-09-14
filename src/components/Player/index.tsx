@@ -8,7 +8,7 @@ import {Euler, Quaternion} from 'three/webgpu'
 
 import {insideLevel, levelFloorHeight, woodenFloor} from '#level/navigation.ts'
 import SoundEngine from '#src/lib/audio/SoundEngine.ts'
-import {cameraPose, galleryEvents, markControlled, narrate, useGallery} from '#src/lib/gallery.ts'
+import {cameraPose, galleryEvents, markControlled, narrate, setCameraFocused, useGallery} from '#src/lib/gallery.ts'
 import {activateInteractiveObject} from '#src/lib/gallery/interactiveObjects.ts'
 import {playerSession, playerSpawn} from '#src/lib/gallery/PlayerSession.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
@@ -53,7 +53,7 @@ export default function Player() {
       const {position, rotation, feet} = (event as CustomEvent<{feet?: boolean
         position: [number, number, number]
         rotation: [number, number, number, number]}>).detail
-      cameraPose.focused = false
+      setCameraFocused(false)
       // Gallery navigation describes camera poses; ego-player consistently uses feet.
       const destination = feet ? position : [position[0], Math.max(levelFloorHeight(position) + 0.04, position[1] - 1.6), position[2]] as [number, number, number]
       if (!insideLevel(destination)) {

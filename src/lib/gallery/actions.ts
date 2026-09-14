@@ -1,6 +1,7 @@
 import type {Panel} from './store.ts'
 import type {Portrait, Vec3} from './types.ts'
 
+import aimDot from '../aimDot.ts'
 import SoundEngine from '../audio/SoundEngine.ts'
 import pauseMenu from '../pauseMenu.ts'
 import initialPortraits from './collection.ts'
@@ -13,6 +14,11 @@ export const cameraPose = {
   position: [playerSpawn.position[0], playerSpawn.position[1] + 1.6, playerSpawn.position[2]] as Vec3,
   direction: [-Math.sin(playerSpawn.yaw) * Math.cos(playerSpawn.pitch), Math.sin(playerSpawn.pitch), -Math.cos(playerSpawn.yaw) * Math.cos(playerSpawn.pitch)] as Vec3,
 }
+export function setCameraFocused(focused: boolean) {
+  cameraPose.focused = focused
+  aimDot.setBlocked('viewing', focused)
+}
+
 export const dragPose = {
   active: false,
   x: 0,
