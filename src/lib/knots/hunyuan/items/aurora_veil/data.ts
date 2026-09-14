@@ -7,7 +7,7 @@ export default {
   harness: 'none',
   author: {
     model: {
-      title: 'HY4 Preview',
+      title: 'Hy4 Preview',
       slug: 'tencent/hy4-preview',
       effortLevel: 'high',
     },
