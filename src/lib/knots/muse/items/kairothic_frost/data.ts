@@ -7,7 +7,7 @@ export default {
   harness: 'meta.ai',
   author: {
     model: {
-      title: 'Meta Muse Thinking',
+      title: 'Muse Spark',
     },
   },
   accent: '#a8e6ff',
