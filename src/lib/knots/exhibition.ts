@@ -15,7 +15,7 @@ export function selectKnotBays(search = '') {
     throw new Error(`Unknown Knot model URL selection: ${unknown.join(', ')}`)
   }
   const rawShots = params.get('shots')
-  let shots: number | undefined
+  let shots = 8
   if (rawShots !== null) {
     shots = Number(rawShots)
     if (!Number.isSafeInteger(shots) || shots < 1) {

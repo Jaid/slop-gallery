@@ -144,6 +144,11 @@ describe('arbitrary Knot batches', () => {
     })
   })
 
+  test('defaults to eight shots per candidate when the URL omits shots', () => {
+    const bays = selectKnotBays('?models=fable,astra')
+    expect(bays.map(bay => [bay.candidate.data.id, bay.finishes.length])).toEqual([['astra', 8], ['fable', 8]])
+  })
+
   test('filters models, caps shots and enumerates only after final selection', () => {
     const bays = selectKnotBays('?models=glm,muse,qwen,astra&shots=2')
     expect(bays.map(bay => bay.candidate.data.id)).toEqual(['astra', 'glm', 'qwen', 'muse'])
