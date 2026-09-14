@@ -94,9 +94,9 @@ export function knotLightFlicker(seed: number, elapsed: number) {
   const medium = noise(seed + 101, Math.floor(time * 17))
   const slow = noise(seed + 307, Math.floor(time * 7))
   if (fast < 0.1 || medium < 0.045) {
-    return 0.025 + slow * 0.06
+    return 0.38 + slow * 0.12
   }
-  return Math.min(1, 0.18 + fast * 0.52 + medium * 0.22 + slow * 0.16)
+  return Math.min(1, 0.54 + fast * 0.24 + medium * 0.12 + slow * 0.1)
 }
 
 export default class KnotLightDamage {

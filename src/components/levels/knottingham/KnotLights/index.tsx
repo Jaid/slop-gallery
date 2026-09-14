@@ -23,8 +23,8 @@ const housingSize = [knotLight.size[0] + 0.16, 0.1, knotLight.size[2] + 0.16] as
 const diffuserSize = [knotLight.size[0] - 0.12, 0.038, knotLight.size[2] - 0.12] as const
 const housingYOffset = 0.025
 const diffuserYOffset = -0.026
-const diffuserTilt = [0, 0.055, 0.16] as const
-const diffuserDrop = [0, 0.035, 0.09] as const
+const diffuserTilt = [0, 0, 0.16] as const
+const diffuserDrop = [0, 0, 0.09] as const
 const colliderWorldPoint = (collider: CollisionEnterPayload['target']['collider'], point: {x: number
   y: number
   z: number}) => {
