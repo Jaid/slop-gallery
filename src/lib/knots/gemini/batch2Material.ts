@@ -209,8 +209,10 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
                 // Internal bioluminescent organ filaments & glowing colonial spores
         const organNoise = mx_noise_float(deep1.mul(15))
         const filaments = opticalLine(organNoise.mul(16).sin(), 0.045)
-        const spores = cellNoiseVec3(deep2.mul(30))
-        const sporeGlow = spores.x.smoothstep(0.92, 0.96).mul(spores.y).mul(intimate)
+        const sporeSample = deep2.mul(30)
+        const spores = cellNoiseVec3(sporeSample)
+        // Per-spore brightness only contributes inside a compact, round inclusion.
+        const sporeGlow = cellularPoints(sporeSample, 0.06, 0.24, 0.35).mul(spores.y).mul(intimate)
         const colorCyan = color('#00ffd0')
         const colorPink = color('#ff007f')
         const colorIndigo = color('#7928ca')

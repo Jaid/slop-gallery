@@ -32,6 +32,7 @@ describe('Knot cellular fields', () => {
   test('uses localized inclusions instead of whole-cell point masks', async () => {
     const cases: Array<[string, string]> = [
       ['gemini/batch2Material.ts', 'celestial_astrolabe'],
+      ['gemini/batch2Material.ts', 'abyssal_bioluminescence'],
       ['gemini/batch2Material.ts', 'elytra_iridescence'],
       ['gemini/batch3Material.ts', 'photonic_morpho'],
       ['gemini/batch3Material.ts', 'opaline_aerogel'],
@@ -106,6 +107,15 @@ describe('Knot cellular fields', () => {
     expect(text).not.toContain('cellNoiseVec3(')
     expect(text).toContain('this.positionNode = positionLocal.add(normalLocal.mul(frostMask.mul(0.018).mul(near)))')
     expect(text).toContain("color('#a8e6ff').mul(sparkle).mul(1.2)")
+  })
+  test('localizes bioluminescent spores while preserving their depth and neural pulses', async () => {
+    const text = await finish('gemini/batch2Material.ts', 'abyssal_bioluminescence')
+    expect(text).toContain('const deep2 = p.sub(view.mul(0.28))')
+    expect(text).toContain('const sporeSample = deep2.mul(30)')
+    expect(text).toContain('cellularPoints(sporeSample, 0.06, 0.24, 0.35).mul(spores.y).mul(intimate)')
+    expect(text).toContain('const pulse1 = tube.x.mul(14).sub(time.mul(1.5)).fract()')
+    expect(text).toContain('const pulse2 = tube.x.mul(-9).sub(time.mul(0.95)).fract()')
+    expect(text).toContain('sporeGlow.mul(colorPink).mul(3.2)')
   })
   test('uses continuous solar granulation and genuine Voronoi fractures', async () => {
     for (const id of ['cryogenic_kintsugi', 'chromospheric_spicule']) {
