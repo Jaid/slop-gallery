@@ -41,7 +41,7 @@ const Postprocessing = ({knotFocus = false, quality = true}: PostprocessingProps
     if (quality) {
       const normal = scenePass.getTextureNode('normal')
       ambientOcclusion = ao(scenePass.getTextureNode('depth'), normal, camera)
-      ambientOcclusion.resolutionScale = 0.5
+      ambientOcclusion.resolutionScale = 0.75
       ambientOcclusion.radius.value = 0.3
       ambientOcclusion.scale.value = 0.85
       ambientOcclusion.samples.value = 16

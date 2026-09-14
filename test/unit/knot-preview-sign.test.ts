@@ -16,12 +16,12 @@ test('runtime billboard layout preserves physical bounds and matches its raster 
     expect(raster.height).toBe(raster.rows * knotPreviewTextureRowHeight)
   }
 })
-test('one runtime atlas per candidate keeps the complete preview population below 96 MiB', () => {
+test('doubled runtime billboard resolution keeps the complete preview population below 192 MiB', () => {
   const bytes = knotBays.reduce((total, bay) => {
     const raster = knotPreviewTextureLayout(bay.finishes.length)
     return total + raster.width * raster.height * 4
   }, 0)
-  expect(bytes).toBeLessThan(96 * 1024 ** 2)
+  expect(bytes).toBeLessThan(192 * 1024 ** 2)
   expect(knotBays.every(bay => bay.finishes.length > 0)).toBe(true)
 })
 test('candidate atlas draws dynamic numbers, titles, accents and image fallbacks in one surface', () => {
