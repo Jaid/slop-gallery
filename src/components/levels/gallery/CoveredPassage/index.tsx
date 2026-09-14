@@ -4,7 +4,7 @@ import type {Material} from 'three/webgpu'
 
 import {CuboidCollider, RigidBody, TrimeshCollider} from '@react-three/rapier'
 import Branch from 'branch-component'
-import {useEffect, useMemo} from 'react'
+import {useEffect} from 'react'
 import {BoxGeometry} from 'three/webgpu'
 
 import TimberFrame from '#component/levels/gallery/TimberFrame'
@@ -18,17 +18,13 @@ export default function CoveredPassage({passage, material, timber, ribCutouts}: 
   passage: Passage
   ribCutouts?: ReadonlyArray<PassageCutout>
   timber?: Material}) {
-  const lantern = useMemo(() => mergeParts([
+  const lantern = mergeParts([
     ...[-1, 1].map(side => new BoxGeometry(0.22, 0.03, 0.22).translate(0, side * 0.17, 0)),
     ...[-1, 1].flatMap(x => [-1, 1].map(z => new BoxGeometry(0.018, 0.32, 0.018).translate(x * 0.09, 0, z * 0.09))),
-  ]), [])
+  ])
   useEffect(() => () => lantern.dispose(), [lantern])
-  const geometry = useMemo(() => {
-    return timber ? TimberGeometry.passage(passage, ribCutouts) : new VaultGeometry(passage)
-  }, [passage, timber, ribCutouts])
-  const collision = useMemo(() => {
-    return timber ? [] : [geometry.shell, geometry.ribs].map(colliderGeometry)
-  }, [geometry, timber])
+  const geometry = timber ? TimberGeometry.passage(passage, ribCutouts) : new VaultGeometry(passage)
+  const collision = timber ? [] : [geometry.shell, geometry.ribs].map(colliderGeometry)
   useEffect(() => () => geometry.dispose(), [geometry])
   return <group name={passage.id}>
     <RigidBody type="fixed" colliders={false}>

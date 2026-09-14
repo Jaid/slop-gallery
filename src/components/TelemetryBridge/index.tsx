@@ -2,7 +2,6 @@ import type {Attributes} from 'telemethree'
 
 import {useThree} from '@react-three/fiber/webgpu'
 import {AimInspector} from 'ego-player'
-import {useMemo} from 'react'
 import useEgoTelemetry from 'telemethree-ego/react'
 import usePauseMenuTelemetry from 'telemethree-pause-menu/react'
 import useThreeTelemetry from 'telemethree/react'
@@ -20,7 +19,7 @@ function Collectors() {
   })
   const scene = useThree(state => state.scene)
   const camera = useThree(state => state.camera)
-  const inspector = useMemo(() => new AimInspector(scene, camera), [scene, camera])
+  const inspector = new AimInspector(scene, camera)
   const isQuality = useGraphicsQuality()
   const profile = getGraphicsProfile(isQuality)
   useThreeTelemetry({

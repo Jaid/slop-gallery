@@ -2,7 +2,6 @@ import type DestructibleGeometry from '#src/lib/gallery/destructiblePlants/base/
 import type RootedPlantAttachment from '#src/lib/physics/RootedPlantAttachment.ts'
 
 import {ConvexHullCollider} from '@react-three/rapier'
-import {useMemo} from 'react'
 import {Vector3} from 'three/webgpu'
 
 import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
@@ -13,7 +12,7 @@ export default function DestructiblePlantRoot({id, geometry, attachments}: {atta
   geometry: DestructibleGeometry
   id: string}) {
   const resources = decorationResources()
-  const center = useMemo(() => geometry.stems.boundingBox!.getCenter(new Vector3), [geometry])
+  const center = geometry.stems.boundingBox!.getCenter(new Vector3)
   return <GrabbableProp id={`${id}-root`} title="The plant’s root and stalks" position={center.toArray()} type="fixed" colliders={false}
     canGrab={attachments.canGrabRoot}
     blockedMessage={() => `Rip off all leaves before uprooting this plant (${attachments.remaining} remaining).`}

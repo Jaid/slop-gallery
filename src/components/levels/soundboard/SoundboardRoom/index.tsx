@@ -1,6 +1,5 @@
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
-import {useMemo} from 'react'
 
 import SoundboardWall from '#component/levels/soundboard/SoundboardWall'
 import CheckerMarbleFloor from '#src/components/Scene/CheckerMarbleFloor.tsx'
@@ -11,7 +10,7 @@ import {soundboardBounds, soundboardSize, soundboardWalls} from '#src/lib/audio/
 import {archivedSoundEffects, enabledSoundEffects} from '#src/lib/audio/soundEffects.ts'
 
 export default function SoundboardRoom() {
-  const plaster = useMemo(() => surfaceTexture('plaster'), [])
+  const plaster = surfaceTexture('plaster')
   useDisposable(plaster)
   const enabledWall = soundboardWalls.find(wall => wall.id === 'soundboard-enabled')!
   const archivedWall = soundboardWalls.find(wall => wall.id === 'soundboard-archived')!

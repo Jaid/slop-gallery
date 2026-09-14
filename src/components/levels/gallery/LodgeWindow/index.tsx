@@ -1,7 +1,7 @@
 import type {Material} from 'three/webgpu'
 
 import {RigidBody} from '@react-three/rapier'
-import {useEffect, useMemo} from 'react'
+import {useEffect} from 'react'
 
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
@@ -9,8 +9,8 @@ import LodgeWindowGeometry from '#src/lib/gallery/LodgeWindowGeometry.ts'
 
 export default function LodgeWindow({glass, material}: {glass: Material
   material: Material}) {
-  const geometry = useMemo(() => new LodgeWindowGeometry, [])
-  const collision = useMemo(() => [geometry.lining, geometry.glass, geometry.frame].map(colliderGeometry), [geometry])
+  const geometry = new LodgeWindowGeometry
+  const collision = [geometry.lining, geometry.glass, geometry.frame].map(colliderGeometry)
   useEffect(() => () => geometry.dispose(), [geometry])
   return <group name="lodge-tunnel-window">
     <RigidBody type="fixed" colliders={false}>

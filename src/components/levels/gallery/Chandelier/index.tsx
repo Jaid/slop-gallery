@@ -1,7 +1,7 @@
 import type {RapierRigidBody} from '@react-three/rapier'
 
 import {BallCollider, ConvexHullCollider, CylinderCollider, RigidBody, useSphericalJoint} from '@react-three/rapier'
-import {useEffect, useMemo, useRef} from 'react'
+import {useEffect, useRef} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import ChandelierGeometry from '#src/lib/gallery/ChandelierGeometry.ts'
@@ -11,12 +11,12 @@ export default function Chandelier() {
   const anchor = useRef<RapierRigidBody>(null!)
   const fixture = useRef<RapierRigidBody>(null!)
   useSphericalJoint(anchor, fixture, [[0, 0, 0], chandelierPhysics.anchor])
-  const brass = useMemo(() => new MeshStandardNodeMaterial({
+  const brass = new MeshStandardNodeMaterial({
     color: '#bd924c',
     metalness: 0.88,
     roughness: 0.2,
-  }), [])
-  const geometry = useMemo(() => new ChandelierGeometry, [])
+  })
+  const geometry = new ChandelierGeometry
   useEffect(() => () => {
     brass.dispose()
     geometry.dispose()

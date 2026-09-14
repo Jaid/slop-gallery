@@ -1,5 +1,5 @@
 import {RigidBody} from '@react-three/rapier'
-import {useEffect, useMemo} from 'react'
+import {useEffect} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 import useGraphicsQuality from 'use-graphics-quality'
 
@@ -13,19 +13,19 @@ import LimestoneMaterial from '#src/lib/materials/LimestoneMaterial.ts'
 
 export default function Fountain() {
   const isQuality = useGraphicsQuality()
-  const geometry = useMemo(() => new FountainGeometry, [])
-  const collision = useMemo(() => colliderGeometry(geometry.stone), [geometry])
-  const stone = useMemo(() => new LimestoneMaterial, [])
-  const brass = useMemo(() => new MeshStandardNodeMaterial({
+  const geometry = new FountainGeometry
+  const collision = colliderGeometry(geometry.stone)
+  const stone = new LimestoneMaterial
+  const brass = new MeshStandardNodeMaterial({
     color: '#ba9650',
     roughness: 0.27,
     metalness: 0.85,
-  }), [])
-  const spray = useMemo(() => new FountainSpray, [])
-  const water = useMemo(() => ({
+  })
+  const spray = new FountainSpray
+  const water = {
     pool: new FountainWaterMaterial(false, isQuality),
     stream: new FountainWaterMaterial(true, isQuality),
-  }), [isQuality])
+  }
   useEffect(() => () => {
     geometry.dispose()
     stone.dispose()

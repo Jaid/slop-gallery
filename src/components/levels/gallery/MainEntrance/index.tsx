@@ -1,21 +1,21 @@
-import {useEffect, useMemo} from 'react'
+import {useEffect} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import EntranceGeometry from '#src/lib/gallery/EntranceGeometry.ts'
 import LimestoneMaterial from '#src/lib/materials/LimestoneMaterial.ts'
 
 export default function MainEntrance() {
-  const geometry = useMemo(() => new EntranceGeometry, [])
-  const stone = useMemo(() => new LimestoneMaterial, [])
-  const wood = useMemo(() => new MeshStandardNodeMaterial({
+  const geometry = new EntranceGeometry
+  const stone = new LimestoneMaterial
+  const wood = new MeshStandardNodeMaterial({
     color: '#33251e',
     roughness: 0.55,
-  }), [])
-  const brass = useMemo(() => new MeshStandardNodeMaterial({
+  })
+  const brass = new MeshStandardNodeMaterial({
     color: '#c3a062',
     roughness: 0.3,
     metalness: 0.85,
-  }), [])
+  })
   useEffect(() => () => {
     geometry.dispose()
     stone.dispose()

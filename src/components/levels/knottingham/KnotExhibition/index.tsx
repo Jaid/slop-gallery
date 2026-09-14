@@ -1,7 +1,6 @@
 import {useThree} from '@react-three/fiber/webgpu'
 import {CuboidCollider, useBeforePhysicsStep} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
-import {useMemo} from 'react'
 import constructors from 'virtual:knot-exhibition-materials'
 
 import InteractiveObject from '#component/InteractiveObject'
@@ -15,7 +14,7 @@ import KnotRotation from '#src/lib/physics/KnotRotation.ts'
 export default function KnotExhibition() {
   const camera = useThree(state => state.camera)
   const renderer = useThree(state => state.renderer)
-  const rotation = useMemo(() => new KnotRotation, [])
+  const rotation = new KnotRotation
   useBeforePhysicsStep(world => {
     for (const exhibit of knotExhibition) {
       const body = propObjects.get(`prop-knot-${exhibit.id}`)?.body
@@ -24,7 +23,7 @@ export default function KnotExhibition() {
       }
     }
   })
-  const materials = useMemo(() => new ProgressiveKnotMaterials(renderer, camera, knotExhibition, constructors), [renderer, camera])
+  const materials = new ProgressiveKnotMaterials(renderer, camera, knotExhibition, constructors)
   useDisposable(materials)
   const {resources} = materials
   return <group name="lobby-knot-exhibition">

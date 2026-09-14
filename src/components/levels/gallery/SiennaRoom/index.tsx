@@ -1,7 +1,7 @@
 import type {Texture} from 'three/webgpu'
 
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
-import {useEffect, useMemo} from 'react'
+import {useEffect} from 'react'
 import {useGraphicsQualityValue} from 'use-graphics-quality'
 
 import Chandelier from '#component/levels/gallery/Chandelier'
@@ -16,7 +16,7 @@ const rug = [4.8, 7.2] as const
 export default function SiennaRoom({wood}: {wood: Texture}) {
   const resetEpoch = useGallery(s => s.resetEpoch)
   const {floorReflections} = useGraphicsQualityValue(getGraphicsProfile)
-  const floor = useMemo(() => new RoomFloorTextures(...room.size, ...rug), [])
+  const floor = new RoomFloorTextures(...room.size, ...rug)
   useEffect(() => () => floor.dispose(), [floor])
   return <>
     <group position={[room.center[0], 0, room.center[1]]}>

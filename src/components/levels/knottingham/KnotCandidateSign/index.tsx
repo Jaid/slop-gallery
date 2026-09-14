@@ -4,7 +4,7 @@ import type {RapierRigidBody} from '@react-three/rapier'
 import {CuboidCollider, CylinderCollider, RigidBody, useRevoluteJoint} from '@react-three/rapier'
 import {loadCanvasFonts} from 'canvas-textures'
 import useCanvasTexture from 'canvas-textures/react'
-import {useEffect, useMemo, useRef} from 'react'
+import {useEffect, useRef} from 'react'
 import {MeshBasicNodeMaterial, MeshStandardNodeMaterial} from 'three/webgpu'
 import useGraphicsQuality from 'use-graphics-quality'
 
@@ -23,19 +23,14 @@ export default function KnotCandidateSign({bay}: {bay: KnotBay}) {
   const sign = useRef<RapierRigidBody>(null!)
   useRevoluteJoint(anchor, sign, [[0, 0, 0], knotCandidateSign.anchor, knotCandidateSign.axis, knotCandidateSign.limits])
   const isQuality = useGraphicsQuality()
-  const metal = useMemo(() => {
-    if (isQuality) {
-      return new MeshStandardNodeMaterial({
-        color: '#ac9270',
-        metalness: 0.85,
-        roughness: 0.3,
-      })
-    }
-    return new MeshBasicNodeMaterial({color: '#ac9270'})
-  }, [isQuality])
-  const geometry = useMemo(() => new KnotCandidateSignGeometry, [])
+  const metal = isQuality ? new MeshStandardNodeMaterial({
+    color: '#ac9270',
+    metalness: 0.85,
+    roughness: 0.3,
+  }) : new MeshBasicNodeMaterial({color: '#ac9270'})
+  const geometry = new KnotCandidateSignGeometry
   const {candidate} = bay
-  const texture = useCanvasTexture(useMemo(() => ({
+  const texture = useCanvasTexture({
     width: candidateSignTextureSize[0],
     height: candidateSignTextureSize[1],
     name: `Candidate sign: ${candidate.title}`,
@@ -53,12 +48,12 @@ export default function KnotCandidateSign({bay}: {bay: KnotBay}) {
       return icons.get(candidate.icon)
     },
     draw: (context: CanvasRenderingContext2D, icon: HTMLImageElement | undefined) => drawFace(context, candidate.title, icon),
-  }), [candidate.icon, candidate.title]))
-  const face = useMemo(() => new MeshBasicNodeMaterial({
+  })
+  const face = new MeshBasicNodeMaterial({
     map: texture,
     color: texture ? '#ffffff' : candidateSignBackground,
     toneMapped: false,
-  }), [texture])
+  })
   useEffect(() => () => face.dispose(), [face])
   useEffect(() => () => metal.dispose(), [metal])
   useEffect(() => () => {

@@ -1,6 +1,5 @@
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
-import {useMemo} from 'react'
 
 import KnotCandidateSign from '#component/levels/knottingham/KnotCandidateSign'
 import KnotLights from '#component/levels/knottingham/KnotLights'
@@ -14,9 +13,9 @@ import {knotBays} from '#src/lib/knots/exhibition.ts'
 
 /** The Knot level’s shell and lighting, without museum rooms or their physics. */
 export default function KnotLobby() {
-  const textures = useMemo(() => ({
+  const textures = {
     plaster: surfaceTexture('plaster'),
-  }), [])
+  }
   useDisposable(textures.plaster)
   return <>
     <color attach="background" args={['#ded8ca']}/>

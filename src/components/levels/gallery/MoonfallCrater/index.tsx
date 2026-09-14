@@ -1,7 +1,7 @@
 import type {Texture} from 'three/webgpu'
 
 import {RigidBody} from '@react-three/rapier'
-import {useEffect, useMemo} from 'react'
+import {useEffect} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
@@ -12,16 +12,16 @@ import StanchionRingGeometry from '#src/lib/gallery/railings/StanchionRingGeomet
 import CraterMaterial from '#src/lib/materials/CraterMaterial.ts'
 
 export default function MoonfallCrater({stone}: {stone: Texture}) {
-  const geometry = useMemo(() => new CraterGeometry, [])
-  const fence = useMemo(() => new StanchionRingGeometry(moonfallCrater.fenceRadius, moonfallCrater.fencePosts), [])
-  const collision = useMemo(() => [geometry.floor, geometry.terrain, geometry.rocks, fence.posts, fence.rope].map(colliderGeometry), [geometry, fence])
-  const rock = useMemo(() => new CraterMaterial(false), [])
-  const terrain = useMemo(() => new CraterMaterial, [])
-  const bronze = useMemo(() => new MeshStandardNodeMaterial({
+  const geometry = new CraterGeometry
+  const fence = new StanchionRingGeometry(moonfallCrater.fenceRadius, moonfallCrater.fencePosts)
+  const collision = [geometry.floor, geometry.terrain, geometry.rocks, fence.posts, fence.rope].map(colliderGeometry)
+  const rock = new CraterMaterial(false)
+  const terrain = new CraterMaterial
+  const bronze = new MeshStandardNodeMaterial({
     color: '#ad9470',
     metalness: 0.78,
     roughness: 0.32,
-  }), [])
+  })
   useEffect(() => () => {
     geometry.dispose()
     fence.dispose()

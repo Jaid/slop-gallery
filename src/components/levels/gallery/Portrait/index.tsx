@@ -5,7 +5,7 @@ import type {Group, InstancedMesh} from 'three/webgpu'
 import {useFrame} from '@react-three/fiber/webgpu'
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import Branch from 'branch-component'
-import {useEffect, useMemo, useRef} from 'react'
+import {useEffect, useRef} from 'react'
 import {Object3D, Quaternion, Vector3} from 'three/webgpu'
 
 import DynamicImageMaterial from '#component/levels/gallery/DynamicImageMaterial'
@@ -18,7 +18,7 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
   const group = useRef<Group>(null)
   const magic = useRef<InstancedMesh>(null)
   const held = useGallery(s => s.held === p.id)
-  const dummy = useMemo(() => new Object3D, [])
+  const dummy = new Object3D
   const clock = useRef(0)
   const lastImpact = useRef(0)
   const w = p.width

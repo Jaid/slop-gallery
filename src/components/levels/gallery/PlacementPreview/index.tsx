@@ -1,5 +1,5 @@
 import {useFrame} from '@react-three/fiber/webgpu'
-import {useEffect, useMemo} from 'react'
+import {useEffect} from 'react'
 
 import PortraitLabel from '#component/levels/gallery/PortraitLabel'
 import PreviewVisual, {previewColors, previewOpacity} from '#src/components/levels/gallery/PlacementPreview/PreviewVisual.ts'
@@ -17,7 +17,7 @@ export default function PlacementPreview({width, height, source, title, creator,
   const valid = useGallery(s => s.placement?.valid === true)
   const inReach = useGallery(s => s.placement?.inReach === true)
   const label = portraitLabelLayout(width, height)
-  const visual = useMemo(() => new PreviewVisual(width, height, texture), [width, height, texture])
+  const visual = new PreviewVisual(width, height, texture)
   useEffect(() => () => visual.dispose(), [visual])
   useFrame((_, delta) => {
     const {placement} = useGallery.getState()

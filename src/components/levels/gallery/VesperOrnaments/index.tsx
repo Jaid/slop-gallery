@@ -1,6 +1,6 @@
 import type {InstancedMesh} from 'three/webgpu'
 
-import {useEffect, useLayoutEffect, useMemo, useRef} from 'react'
+import {useEffect, useLayoutEffect, useRef} from 'react'
 import {Matrix4} from 'three/webgpu'
 
 import GoldMaterial from '#component/levels/gallery/GoldMaterial'
@@ -10,7 +10,7 @@ import WallOrnamentGeometry from '#src/lib/gallery/WallOrnamentGeometry.ts'
 const placements = vesperOrnaments.map(({position, rotation}) => (new Matrix4).makeRotationY(rotation).setPosition(...position))
 
 export default function VesperOrnaments() {
-  const geometry = useMemo(() => new WallOrnamentGeometry, [])
+  const geometry = new WallOrnamentGeometry
   const foliage = useRef<InstancedMesh>(null)
   const brass = useRef<InstancedMesh>(null)
   useEffect(() => () => geometry.dispose(), [geometry])

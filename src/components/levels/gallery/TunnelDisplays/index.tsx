@@ -2,19 +2,19 @@ import type {Material} from 'three/webgpu'
 
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import Branch from 'branch-component'
-import {useMemo} from 'react'
 import {Object3D} from 'three/webgpu'
 
 import Box from '#src/components/Scene/primitives.tsx'
 import tunnelDisplays from '#src/lib/gallery/tunnelDisplays.ts'
 
+const displayLightTarget = () => {
+  const target = new Object3D
+  target.position.set(0, 1.4, 0)
+  return target
+}
 const DisplayExhibit = ({kind, material}: {kind: number
   material: Material}) => {
-  const target = useMemo(() => {
-    const object = new Object3D
-    object.position.set(0, 1.4, 0)
-    return object
-  }, [])
+  const target = displayLightTarget()
   return <>
     <primitive object={target}/>
     <Box position={[0, 0.45, 0]} size={[1.15, 0.9, 1.15]} material={material}/>

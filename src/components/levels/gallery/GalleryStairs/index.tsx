@@ -1,5 +1,5 @@
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
-import {useEffect, useMemo} from 'react'
+import {useEffect} from 'react'
 
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
 import Box from '#src/components/Scene/primitives.tsx'
@@ -7,7 +7,7 @@ import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import {stairBlocks, stairFlights, stairRailGeometry, stairRoofs, stairTurn} from '#src/lib/gallery/staircase.ts'
 
 export default function GalleryStairs() {
-  const turn = useMemo(() => [
+  const turn = [
     {
       name: 'landing',
       geometry: stairTurn.floorGeometry(),
@@ -29,7 +29,7 @@ export default function GalleryStairs() {
   ].map(part => ({
     ...part,
     collision: colliderGeometry(part.geometry),
-  })), [])
+  }))
   useEffect(() => () => {
     for (const part of turn) {
       part.geometry.dispose()

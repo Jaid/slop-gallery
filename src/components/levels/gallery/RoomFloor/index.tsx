@@ -3,7 +3,6 @@ import type {Material, Texture} from 'three/webgpu'
 
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import Branch from 'branch-component'
-import {useMemo} from 'react'
 import {useGraphicsQualityValue} from 'use-graphics-quality'
 
 import FloorGlass from '#component/levels/gallery/FloorGlass'
@@ -18,7 +17,7 @@ export default function RoomFloor({glass, room, stone, wood}: {glass: Material
   stone: Texture
   wood: Texture}) {
   const {floorReflections} = useGraphicsQualityValue(getGraphicsProfile)
-  const plan = useMemo(() => roomFloorPlan(room), [room])
+  const plan = roomFloorPlan(room)
   const envMapIntensity = floorReflections ? 1 : 0
   const surfaces: Partial<Record<FloorRoom['id'], {color: string
     map?: Texture}>> = {

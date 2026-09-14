@@ -4,7 +4,7 @@ import {useThree} from '@react-three/fiber/webgpu'
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import renderCanvasTexture from 'canvas-textures/three'
 import useDisposable from 'disposable-lifetime/react'
-import {useEffect, useMemo} from 'react'
+import {useEffect} from 'react'
 import {EquirectangularReflectionMapping, MeshStandardNodeMaterial, SRGBColorSpace} from 'three/webgpu'
 import useGraphicsQuality from 'use-graphics-quality'
 
@@ -36,26 +36,26 @@ const pointLightPositions: Partial<Record<Wall['room'], Array<number>>> = {
 
 export default function Architecture() {
   const isQuality = useGraphicsQuality()
-  const glass = useMemo(() => createArchitecturalGlassMaterials(isQuality), [isQuality])
-  const castleStone = useMemo(() => new CastleStoneMaterial, [])
-  const lodgeWood = useMemo(() => new LodgeWoodMaterial, [])
+  const glass = createArchitecturalGlassMaterials(isQuality)
+  const castleStone = new CastleStoneMaterial
+  const lodgeWood = new LodgeWoodMaterial
   useEffect(() => () => disposeArchitecturalGlassMaterials(glass), [glass])
   useEffect(() => () => {
     castleStone.dispose()
     lodgeWood.dispose()
   }, [castleStone, lodgeWood])
-  const textures = useMemo(() => ({
+  const textures = {
     stone: surfaceTexture('stone'),
     plaster: surfaceTexture('plaster'),
     wood: surfaceTexture('wood'),
     damask: damaskTexture(rooms.find(room => room.id === 'sienna')!.size[0], wallTop),
-  }), [])
-  const oculusMaterial = useMemo(() => new MeshStandardNodeMaterial({
+  }
+  const oculusMaterial = new MeshStandardNodeMaterial({
     map: textures.stone,
     color: '#4c5558',
     roughness: 0.95,
     envMapIntensity: 0,
-  }), [textures])
+  })
   useEffect(() => () => oculusMaterial.dispose(), [oculusMaterial])
   useDisposable(textures.stone)
   useDisposable(textures.plaster)

@@ -1,7 +1,6 @@
 import type {Texture} from 'three/webgpu'
 
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
-import {useMemo} from 'react'
 import {Object3D} from 'three/webgpu'
 
 import MoonfallCrater from '#component/levels/gallery/MoonfallCrater'
@@ -11,13 +10,14 @@ import {rooms} from '#src/lib/gallery.ts'
 import moonfallWallFixtures from '#src/lib/gallery/moonfall/fixtures.ts'
 
 const room = rooms.find(candidate => candidate.id === 'moonfall')!
+const moonfallLightTarget = () => {
+  const target = new Object3D
+  target.position.set(0, -1.5, 0)
+  return target
+}
 
 export default function MoonfallRoom({stone}: {stone: Texture}) {
-  const target = useMemo(() => {
-    const object = new Object3D
-    object.position.set(0, -1.5, 0)
-    return object
-  }, [])
+  const target = moonfallLightTarget()
   const [width, depth] = room.size
   return <group name="moonfall-room" position={[room.center[0], room.floorY, room.center[1]]}>
     <MoonfallCrater stone={stone}/>

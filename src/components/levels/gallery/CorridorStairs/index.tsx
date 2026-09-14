@@ -2,7 +2,7 @@ import type {Material} from 'three/webgpu'
 
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import Branch from 'branch-component'
-import {useEffect, useMemo} from 'react'
+import {useEffect} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import TimberFrame from '#component/levels/gallery/TimberFrame'
@@ -14,22 +14,22 @@ import RoomFloorTextures from '#src/lib/materials/RoomFloorTextures.ts'
 
 export default function CorridorStairs({timber, lining}: {lining: Material
   timber: Material}) {
-  const frame = useMemo(() => TimberGeometry.stairs(corridorStairs), [])
+  const frame = TimberGeometry.stairs(corridorStairs)
   useEffect(() => () => frame.dispose(), [frame])
-  const textures = useMemo(() => new RoomFloorTextures(corridorStairs.width, corridorStairs.run, 1, 1), [])
-  const carpet = useMemo(() => new StairCarpetGeometry(corridorStairs.width - 0.5, Math.min(0.38, corridorStairs.run - 0.05)), [])
-  const wood = useMemo(() => new MeshStandardNodeMaterial({
+  const textures = new RoomFloorTextures(corridorStairs.width, corridorStairs.run, 1, 1)
+  const carpet = new StairCarpetGeometry(corridorStairs.width - 0.5, Math.min(0.38, corridorStairs.run - 0.05))
+  const wood = new MeshStandardNodeMaterial({
     ...textures.wood,
     bumpScale: 0.035,
     roughness: 0.64,
     envMapIntensity: 0.2,
-  }), [textures])
-  const fabric = useMemo(() => new MeshStandardNodeMaterial({
+  })
+  const fabric = new MeshStandardNodeMaterial({
     ...textures.carpet,
     bumpScale: 0.008,
     roughness: 1,
     envMapIntensity: 0,
-  }), [textures])
+  })
   useEffect(() => () => {
     textures.dispose()
     carpet.dispose()

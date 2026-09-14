@@ -1,25 +1,25 @@
 import type {Texture} from 'three/webgpu'
 
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
-import {useEffect, useMemo} from 'react'
+import {useEffect} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import {fountainBench, fountainBenches} from '#src/lib/gallery/fountain/benches.ts'
 import SlattedBenchGeometry from '#src/lib/gallery/fountain/SlattedBenchGeometry.ts'
 
 export default function FountainBenches({wood}: {wood: Texture}) {
-  const geometry = useMemo(() => new SlattedBenchGeometry, [])
-  const timber = useMemo(() => new MeshStandardNodeMaterial({
+  const geometry = new SlattedBenchGeometry
+  const timber = new MeshStandardNodeMaterial({
     map: wood,
     color: '#ffffff',
     roughness: 0.63,
     envMapIntensity: 0.35,
-  }), [wood])
-  const metal = useMemo(() => new MeshStandardNodeMaterial({
+  })
+  const metal = new MeshStandardNodeMaterial({
     color: '#c0c0b2',
     metalness: 0.8,
     roughness: 0.38,
-  }), [])
+  })
   useEffect(() => () => {
     geometry.dispose()
     timber.dispose()
