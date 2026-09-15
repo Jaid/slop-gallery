@@ -6,8 +6,8 @@ import {pipeline} from 'node:stream/promises'
 import {parseArgs} from 'node:util'
 import {createBrotliCompress, constants as zlibConstants} from 'node:zlib'
 
-import {encode} from '@msgpack/msgpack'
 import getFree from 'get-free'
+import {Packr} from 'msgpackr'
 
 const categories = [
   'devtools.timeline',
@@ -43,6 +43,10 @@ Output:
 `
 const traceEventsPrefixPattern = /^\s*\{\s*"traceEvents"\s*:\s*\[/
 const metadataMarkerPattern = /^(.*)\],\s*"metadata"\s*:\s*$/
+const messagePack = new Packr({
+  useRecords: false,
+  variableMapSize: true,
+})
 type Pending = {
   reject: (error: Error) => void
   resolve: (value: any) => void
@@ -87,7 +91,7 @@ async function encodeTraceJsonAsMessagePack(input: string, output: string) {
   const metadataLines: Array<string> = []
   try {
     await write(Uint8Array.of(0x82))
-    await write(encode('traceEvents'))
+    await write(messagePack.pack('traceEvents'))
     const eventCountOffset = position + 1
     await write(Uint8Array.of(0xDD, 0, 0, 0, 0))
     const writeEvent = async (line: string) => {
@@ -98,7 +102,7 @@ async function encodeTraceJsonAsMessagePack(input: string, output: string) {
       if (json.endsWith(',')) {
         json = json.slice(0, -1)
       }
-      await write(encode(JSON.parse(json)))
+      await write(messagePack.pack(JSON.parse(json)))
       eventCount++
     }
     for await (let line of lines) {
@@ -133,8 +137,8 @@ async function encodeTraceJsonAsMessagePack(input: string, output: string) {
       throw new Error('Unexpected Chromium trace JSON footer.')
     }
     const metadataJson = metadataWithOuterBrace.slice(0, -1).trimEnd()
-    await write(encode('metadata'))
-    await write(encode(JSON.parse(metadataJson)))
+    await write(messagePack.pack('metadata'))
+    await write(messagePack.pack(JSON.parse(metadataJson)))
     await flush()
     const count = Buffer.allocUnsafe(4)
     count.writeUInt32BE(eventCount)
