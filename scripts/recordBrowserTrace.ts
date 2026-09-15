@@ -266,7 +266,7 @@ export default async function recordBrowserTrace({port = 9222,
         }
       }
     } catch (error) {
-      tracingCompleteReject(error instanceof Error ? error : new Error(String(error)))
+      tracingCompleteReject(Error.isError(error) ? error : new Error(String(error)))
     }
   })
   socket.addEventListener('close', () => {
