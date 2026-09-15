@@ -60,6 +60,9 @@ function fixture(third = false, prioritized = true) {
         face,
         mip,
       })
+      // Three's WebGPU compileAsync traverses the object synchronously before
+      // returning its native-pipeline Promise, including onBeforeRender hooks.
+      mesh.onBeforeRender(renderer as unknown as Parameters<Mesh['onBeforeRender']>[0], scene as Scene, camera as PerspectiveCamera, mesh.geometry, mesh.material as never, null as never)
       return gate.promise
     },
   }
@@ -158,6 +161,20 @@ test('warms nearest first, restores render state synchronously and activates onl
     f.calls[2].gate.resolve()
     await flush()
     expect(f.meshes[0].material).toBe(f.full[0])
+  } finally {
+    await f.dispose()
+  }
+})
+test('synthetic compile traversal cannot recursively admit scratch targets', async () => {
+  const f = fixture()
+  try {
+    f.observe(0)
+    await flush()
+    expect(f.calls).toHaveLength(1)
+    f.calls[0].gate.resolve()
+    await flush()
+    expect(f.calls).toHaveLength(1)
+    expect(f.results[0]).toMatchObject({status: 'ready', contexts: 1})
   } finally {
     await f.dispose()
   }
