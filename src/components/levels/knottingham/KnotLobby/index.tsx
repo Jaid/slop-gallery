@@ -2,6 +2,7 @@ import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
+import {MeshStandardNodeMaterial} from 'three/webgpu'
 import useGraphicsQuality from 'use-graphics-quality'
 
 import KnotCandidateSign from '#component/levels/knottingham/KnotCandidateSign'
@@ -18,16 +19,22 @@ import ArchitecturalPlasterMaterial from '#src/lib/materials/ArchitecturalPlaste
 export default function KnotLobby() {
   const quality = useGraphicsQuality()
   const plaster = useMemo(() => surfaceTexture('plaster'), [])
+  const wood = useMemo(() => surfaceTexture('wood'), [])
   const shell = useMemo(() => ({
     floor: new RoundedBoxGeometry(knotGallerySize[0], 0.24, knotGallerySize[2], 2, 0.035),
     ceiling: new RoundedBoxGeometry(knotGallerySize[0], 0.18, knotGallerySize[2], 2, 0.045),
   }), [])
   const wallMaterial = useMemo(() => new ArchitecturalPlasterMaterial({
-    baseColor: '#658578',
+    baseColor: '#8a3138',
     map: plaster,
     quality,
     roughness: 0.9,
   }), [plaster, quality])
+  const trimMaterial = useMemo(() => new MeshStandardNodeMaterial({
+    color: '#6d4a35',
+    map: wood,
+    roughness: 0.68,
+  }), [wood])
   const ceilingMaterial = useMemo(() => new ArchitecturalPlasterMaterial({
     baseColor: '#7c9586',
     map: plaster,
@@ -35,9 +42,11 @@ export default function KnotLobby() {
     roughness: 0.86,
   }), [plaster, quality])
   useDisposable(plaster)
+  useDisposable(wood)
   useDisposable(shell.floor)
   useDisposable(shell.ceiling)
   useDisposable(wallMaterial)
+  useDisposable(trimMaterial)
   useDisposable(ceilingMaterial)
   return <>
     <color attach="background" args={['#ded8ca']}/>
@@ -45,7 +54,7 @@ export default function KnotLobby() {
       <ambientLight intensity={0.45}/>
       <hemisphereLight args={['#e1edff', '#80705d', 1.3]}/>
       <directionalLight position={[-3, 9, -16]} intensity={2.3} color="#fff0d7"/>
-      {knotGalleryWalls.map(wall => <WallSurface key={wall.id} wall={wall} surfaceRoom="vesper" plaster={plaster} surfaceMaterial={wallMaterial}/>)}
+      {knotGalleryWalls.map(wall => <WallSurface key={wall.id} wall={wall} surfaceRoom="vesper" plaster={plaster} material={trimMaterial} surfaceMaterial={wallMaterial}/>)}
       <RigidBody type="fixed" colliders={false}>
         <CuboidCollider args={[knotGallerySize[0] / 2, 0.12, knotGallerySize[2] / 2]} position={[knotGalleryCenter[0], -0.12, knotGalleryCenter[2]]}/>
         <CuboidCollider args={[knotGallerySize[0] / 2, 0.09, knotGallerySize[2] / 2]} position={[knotGalleryCenter[0], knotGalleryBounds.height, knotGalleryCenter[2]]}/>
