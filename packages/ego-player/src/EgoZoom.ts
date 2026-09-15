@@ -82,7 +82,7 @@ export default class EgoZoom {
       amount: this.amount,
       fov: this.camera.fov,
     }
-    const tween = new Tween(state, false)
+    const tween = new Tween(state)
       .to({
         amount: targetAmount,
         fov: target,
