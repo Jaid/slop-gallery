@@ -1,22 +1,31 @@
-import {mkdir, open, rename, rm} from 'node:fs/promises'
+import {createReadStream, createWriteStream} from 'node:fs'
+import {mkdir, open, rename, rm, stat} from 'node:fs/promises'
 import {resolve} from 'node:path'
+import {createInterface} from 'node:readline'
+import {pipeline} from 'node:stream/promises'
 import {parseArgs} from 'node:util'
+import {createBrotliCompress, constants as zlibConstants} from 'node:zlib'
 
+import {encode} from '@msgpack/msgpack'
 import getFree from 'get-free'
 
 const categories = [
   'devtools.timeline',
+  'v8',
   'v8.execute',
   'toplevel',
-  'blink.console',
   'blink.user_timing',
+  'loading',
   'latencyInfo',
+  'graphics.pipeline',
+  'gpu',
+  'viz',
   'disabled-by-default-devtools.timeline',
   'disabled-by-default-devtools.timeline.frame',
   'disabled-by-default-devtools.timeline.stack',
-  'disabled-by-default-devtools.timeline.invalidationTracking',
+  'disabled-by-default-devtools.timeline.inputs',
+  'disabled-by-default-gpu.dawn',
   'disabled-by-default-v8.cpu_profiler',
-  'disabled-by-default-v8.cpu_profiler.hires',
 ]
 const help = `Usage: bun scripts/recordBrowserTrace.ts [options]
 
@@ -29,13 +38,121 @@ Options:
   --help                Show this help
 
 Output:
-  ../temp/trace.json5 relative to this script, with numeric increments
-  (trace2.json5, trace3.json5, …) chosen via get-free.
+  ../temp/trace.msgpack.br relative to this script, with numeric increments
+  (trace2.msgpack.br, trace3.msgpack.br, …) chosen via get-free.
 `
-
+const traceEventsPrefixPattern = /^\s*\{\s*"traceEvents"\s*:\s*\[/
+const metadataMarkerPattern = /^(.*)\],\s*"metadata"\s*:\s*$/
 type Pending = {
   reject: (error: Error) => void
   resolve: (value: any) => void
+}
+async function encodeTraceJsonAsMessagePack(input: string, output: string) {
+  const source = createReadStream(input, {encoding: 'utf8'})
+  const lines = createInterface({
+    input: source,
+    crlfDelay: Infinity,
+  })
+  const file = await open(output, 'w')
+  let position = 0
+  let bufferedBytes = 0
+  let buffers: Array<Uint8Array> = []
+  const flush = async () => {
+    if (!bufferedBytes) {
+      return
+    }
+    const data = Buffer.concat(buffers, bufferedBytes)
+    let offset = 0
+    while (offset < data.byteLength) {
+      const {bytesWritten} = await file.write(data, offset)
+      if (!bytesWritten) {
+        throw new Error('Failed to write MessagePack trace.')
+      }
+      offset += bytesWritten
+    }
+    buffers = []
+    bufferedBytes = 0
+  }
+  const write = async (data: Uint8Array) => {
+    buffers.push(data)
+    bufferedBytes += data.byteLength
+    position += data.byteLength
+    if (bufferedBytes >= 4 * 1024 * 1024) {
+      await flush()
+    }
+  }
+  let eventCount = 0
+  let sawHeader = false
+  let sawMetadata = false
+  const metadataLines: Array<string> = []
+  try {
+    await write(Uint8Array.of(0x82))
+    await write(encode('traceEvents'))
+    const eventCountOffset = position + 1
+    await write(Uint8Array.of(0xDD, 0, 0, 0, 0))
+    const writeEvent = async (line: string) => {
+      let json = line.trim()
+      if (!json) {
+        return
+      }
+      if (json.endsWith(',')) {
+        json = json.slice(0, -1)
+      }
+      await write(encode(JSON.parse(json)))
+      eventCount++
+    }
+    for await (let line of lines) {
+      if (!sawHeader) {
+        const header = traceEventsPrefixPattern.exec(line)
+        if (header) {
+          line = line.slice(header[0].length)
+        } else if (!line.trim()) {
+          continue
+        } else if (!line.trimStart().startsWith('{')) {
+          throw new Error(`Unexpected Chromium trace JSON header: ${JSON.stringify(line.slice(0, 200))}`)
+        }
+        sawHeader = true
+      }
+      if (!sawMetadata) {
+        const metadataMarker = metadataMarkerPattern.exec(line)
+        if (metadataMarker) {
+          await writeEvent(metadataMarker[1])
+          sawMetadata = true
+        } else {
+          await writeEvent(line)
+        }
+      } else {
+        metadataLines.push(line)
+      }
+    }
+    if (!sawMetadata) {
+      throw new Error('Chromium trace JSON ended without metadata.')
+    }
+    const metadataWithOuterBrace = metadataLines.join('\n').trim()
+    if (!metadataWithOuterBrace.endsWith('}')) {
+      throw new Error('Unexpected Chromium trace JSON footer.')
+    }
+    const metadataJson = metadataWithOuterBrace.slice(0, -1).trimEnd()
+    await write(encode('metadata'))
+    await write(encode(JSON.parse(metadataJson)))
+    await flush()
+    const count = Buffer.allocUnsafe(4)
+    count.writeUInt32BE(eventCount)
+    await file.write(count, 0, count.byteLength, eventCountOffset)
+  } finally {
+    lines.close()
+    await file.close()
+  }
+  return eventCount
+}
+async function brotliCompressFile(input: string, output: string) {
+  const {size} = await stat(input)
+  await pipeline(createReadStream(input), createBrotliCompress({
+    params: {
+      [zlibConstants.BROTLI_PARAM_QUALITY]: 6,
+      [zlibConstants.BROTLI_PARAM_SIZE_HINT]: size,
+    },
+  }), createWriteStream(output))
 }
 
 export default async function recordBrowserTrace({port = 9223,
@@ -51,8 +168,8 @@ export default async function recordBrowserTrace({port = 9223,
   }
   const outputRoot = resolve(import.meta.dir, '../temp')
   await mkdir(outputRoot, {recursive: true})
-  const outputName = await getFree('trace', candidate => Bun.file(resolve(outputRoot, `${candidate}.json5`)).exists())
-  const output = resolve(outputRoot, `${outputName}.json5`)
+  const outputName = await getFree('trace', candidate => Bun.file(resolve(outputRoot, `${candidate}.msgpack.br`)).exists())
+  const output = resolve(outputRoot, `${outputName}.msgpack.br`)
   const versionResponse = await fetch(`http://127.0.0.1:${port}/json/version`)
   if (!versionResponse.ok) {
     throw new Error(`CDP /json/version returned HTTP ${versionResponse.status}.`)
@@ -180,10 +297,14 @@ export default async function recordBrowserTrace({port = 9223,
   })
   const stream = await tracingComplete
   process.stdin.pause()
-  const temporary = `${output}.partial`
-  await rm(temporary, {force: true})
-  const file = await open(temporary, 'w')
-  let bytes = 0
+  const traceJsonTemporary = `${output}.json.partial`
+  const messagePackTemporary = `${output}.msgpack.partial`
+  const compressedTemporary = `${output}.partial`
+  await rm(traceJsonTemporary, {force: true})
+  await rm(messagePackTemporary, {force: true})
+  await rm(compressedTemporary, {force: true})
+  const file = await open(traceJsonTemporary, 'w')
+  let traceJsonBytes = 0
   try {
     while (true) {
       const chunk = await call('IO.read', {
@@ -197,7 +318,7 @@ export default async function recordBrowserTrace({port = 9223,
       const data = chunk.base64Encoded ? Buffer.from(chunk.data, 'base64') : Buffer.from(chunk.data, 'utf8')
       if (data.length) {
         await file.write(data)
-        bytes += data.length
+        traceJsonBytes += data.length
       }
       if (chunk.eof) {
         break
@@ -208,11 +329,20 @@ export default async function recordBrowserTrace({port = 9223,
     try {
       await call('IO.close', {handle: stream})
     } catch {}
+    socket.close()
   }
-  await rm(output, {force: true})
-  await rename(temporary, output)
-  socket.close()
-  console.error(`Saved ${output} (${(bytes / 1024 / 1024).toFixed(1)} MiB)`)
+  try {
+    const eventCount = await encodeTraceJsonAsMessagePack(traceJsonTemporary, messagePackTemporary)
+    await brotliCompressFile(messagePackTemporary, compressedTemporary)
+    await rm(output, {force: true})
+    await rename(compressedTemporary, output)
+    const {size} = await stat(output)
+    console.error(`Saved ${output} (${(size / 1024 / 1024).toFixed(1)} MiB, ${eventCount.toLocaleString()} events; source JSON ${(traceJsonBytes / 1024 / 1024).toFixed(1)} MiB)`)
+  } finally {
+    await rm(traceJsonTemporary, {force: true})
+    await rm(messagePackTemporary, {force: true})
+    await rm(compressedTemporary, {force: true})
+  }
   return output
 }
 
