@@ -15,8 +15,10 @@ export type DestructibleLeaf = {
   title: string
   vertices: Float32Array
 }
-export type StemCollider = {mass: number
-  vertices: Float32Array}
+export type StemCollider = {
+  mass: number
+  vertices: Float32Array
+}
 
 /** Shared immutable meshes; each mounted specimen owns its attachment state and bodies. */
 export default abstract class DestructibleGeometry {

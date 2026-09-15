@@ -57,7 +57,8 @@ export const cellNoiseVec3 = (tsl as typeof tsl & {
 }).mx_cell_noise_vec3
 
 export const knotCurve = Fn(([
-  angle]: [
+  angle,
+]: [
   Node<'float'>,
 ]) => {
   const phase = angle.mul(1.5)
@@ -96,7 +97,8 @@ export function terraceFields(tube: Node<'vec2'>) {
 }
 
 export const terracePosition = Fn(([
-  tube]: [
+  tube,
+]: [
   Node<'vec2'>,
 ]) => {
   const angle = tube.x.mul(Math.PI * 4)

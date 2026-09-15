@@ -1,28 +1,7 @@
 import type {Node, Texture} from 'three/webgpu'
 
 import * as tsl from 'three/tsl'
-import {cameraPosition,
-  color,
-  float,
-  mix,
-  modelWorldMatrixInverse,
-  mx_cell_noise_float,
-  mx_fractal_noise_float,
-  mx_noise_float,
-  mx_noise_vec3,
-  mx_worley_noise_float,
-  negateOnBackSide,
-  normalLocal,
-  normalViewGeometry,
-  positionGeometry,
-  positionView,
-  positionViewDirection,
-  time,
-  transformNormalToView,
-  uv,
-  vec2,
-  vec3,
-  vec4} from 'three/tsl'
+import {cameraPosition, color, float, mix, modelWorldMatrixInverse, mx_cell_noise_float, mx_fractal_noise_float, mx_noise_float, mx_noise_vec3, mx_worley_noise_float, negateOnBackSide, normalLocal, normalViewGeometry, positionGeometry, positionView, positionViewDirection, time, transformNormalToView, uv, vec2, vec3, vec4} from 'three/tsl'
 import {DoubleSide} from 'three/webgpu'
 
 import BaseKnotMaterial from '../base/KnotMaterial.ts'
@@ -116,11 +95,7 @@ export const cellNoiseVec3 = (
 
 export type Triple = [number, number, number]
 
-export function cosinePalette(t: Node<'float'>,
-  bias: Triple,
-  amplitude: Triple,
-  frequency: Triple,
-  phase: Triple) {
+export function cosinePalette(t: Node<'float'>, bias: Triple, amplitude: Triple, frequency: Triple, phase: Triple) {
   return vec3(...bias).add(vec3(...amplitude).mul(vec3(...frequency).mul(t).add(vec3(...phase)).mul(Math.PI * 2).cos()))
 }
 

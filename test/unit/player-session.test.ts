@@ -72,27 +72,34 @@ describe('player save state', () => {
   })
   test('invalid or obsolete positions do not prevent artwork recovery', () => {
     for (const player of [
-      null, {}, {
+      null,
+      {},
+      {
         position: [0, 0, -9],
         yaw: Number.NaN,
         pitch: 0,
-      }, {
+      },
+      {
         position: [0, Infinity, 0],
         yaw: 0,
         pitch: 0,
-      }, {
+      },
+      {
         position: ['0', 0, -9],
         yaw: 0,
         pitch: 0,
-      }, {
+      },
+      {
         position: [0, 0],
         yaw: 0,
         pitch: 0,
-      }, {
+      },
+      {
         position: [400, 0, 0],
         yaw: 0,
         pitch: 0,
-      }, {
+      },
+      {
         position: [-25, -4.9, -20],
         yaw: 0,
         pitch: 0,

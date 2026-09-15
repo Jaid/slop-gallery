@@ -16,7 +16,8 @@ function crownFields(tube: Node<'vec2'>) {
   }
 }
 const knotCurve = Fn(([
-  angle]: [
+  angle,
+]: [
   Node<'float'>,
 ]) => {
   const phase = angle.mul(1.5)
@@ -25,7 +26,8 @@ const knotCurve = Fn(([
 })
 // The same parametric frame as TorusKnotGeometry(0.45, 0.13, ..., 2, 3).
 const reliefPosition = Fn(([
-  tube]: [
+  tube,
+]: [
   Node<'vec2'>,
 ]) => {
   const angle = tube.x.mul(Math.PI * 4)

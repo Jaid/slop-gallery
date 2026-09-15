@@ -15,9 +15,7 @@ describe('continuous stair handrails', () => {
       const geometry = stairRailGeometry(side)
       try {
         const [positions, indices] = colliderGeometry(geometry)
-        const edges = new Map<string, {count: number
-          direction: number}>
-        for (let i = 0; i < indices.length; i += 3) {
+        const edges = new Map<string, {count: number,direction: number}>for (let i = 0; i < indices.length; i += 3) {
           const triangle = [indices[i], indices[i + 1], indices[i + 2]]
           expect(triangle.every(index => Math.abs(positions[index * 3] - stairTurn.center[0]) < 0.00001)).toBe(false)
           for (let edge = 0; edge < 3; edge++) {

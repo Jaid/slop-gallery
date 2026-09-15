@@ -152,8 +152,10 @@ export default class RoomFloorTextures {
     }
   }
 
-  private tile(surface: {bumpMap: DataTexture
-    map: DataTexture}, width: number, depth: number, metersPerTile: number) {
+  private tile(surface: {
+    bumpMap: DataTexture
+    map: DataTexture
+  }, width: number, depth: number, metersPerTile: number) {
     for (const texture of Object.values(surface)) {
       texture.repeat.set(width / metersPerTile, depth / metersPerTile)
     }

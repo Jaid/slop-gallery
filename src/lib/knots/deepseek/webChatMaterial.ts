@@ -1,11 +1,7 @@
 import type {Node, Texture} from 'three/webgpu'
 
 import * as tsl from 'three/tsl'
-import {cameraPosition, color, float, mix, modelWorldMatrixInverse, mx_cell_noise_float,
-  mx_fractal_noise_float, mx_noise_float,
-  mx_noise_vec3,
-  mx_worley_noise_float, negateOnBackSide, normalViewGeometry, positionGeometry,
-  positionView, positionViewDirection, time, uv, vec3, vec4} from 'three/tsl'
+import {cameraPosition, color, float, mix, modelWorldMatrixInverse, mx_cell_noise_float, mx_fractal_noise_float, mx_noise_float, mx_noise_vec3, mx_worley_noise_float, negateOnBackSide, normalViewGeometry, positionGeometry, positionView, positionViewDirection, time, uv, vec3, vec4} from 'three/tsl'
 import {MeshPhysicalNodeMaterial} from 'three/webgpu'
 
 import {cellularPoints} from '../cellularField.ts'
@@ -88,8 +84,7 @@ export function starfield(direction: Node<'vec3'>, scale: number, threshold: num
   const energy = footprint.smoothstep(0.3, 1.2).oneMinus()
   return tint.mul(core.abs().pow(2)).mul(gate).mul(twinkle).mul(energy)
 }
-export function cosinePalette(t: Node<'float'>,
-  bias: Triple, amplitude: Triple, frequency: Triple, phase: Triple) {
+export function cosinePalette(t: Node<'float'>, bias: Triple, amplitude: Triple, frequency: Triple, phase: Triple) {
   return vec3(...bias).add(vec3(...amplitude).mul(vec3(...frequency).mul(t).add(vec3(...phase)).mul(Math.PI * 2).cos()))
 }
 

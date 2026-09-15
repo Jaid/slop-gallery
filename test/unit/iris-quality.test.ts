@@ -71,7 +71,8 @@ test('timed PCM is decoded from its actual envelope and its real sample rate, no
         {
           start: 0,
           end: 0.2,
-        }, {
+        },
+        {
           start: 0.3,
           end: 1,
         },
@@ -113,8 +114,10 @@ test('both transports retain five independent responses and never send the direc
   const parent = resolve(import.meta.dir, '../../private/agent')
   await fs.ensureDir(parent)
   const output = await fs.mkdtemp(resolve(parent, 'iris-quality-test-'))
-  const requests: Array<{body: unknown
-    url: string}> = []
+  const requests: Array<{
+    body: unknown
+    url: string
+  }> = []
   const mockFetch = Object.assign(async (input: RequestInfo | URL, options?: RequestInit) => {
     const url = input instanceof Request ? input.url : String(input)
     const direct = url.startsWith('https://api.x.ai/')

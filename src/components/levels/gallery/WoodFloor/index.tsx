@@ -7,18 +7,20 @@ import {useGraphicsQualityValue} from 'use-graphics-quality'
 import WoodFloorMaterial from '#src/lib/materials/WoodFloorMaterial.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsQuality.ts'
 
-export default function WoodFloor({width, depth, texture, reflections}: {depth: number
+export default function WoodFloor({width, depth, texture, reflections}: {
+  depth: number
   reflections?: boolean
   texture: Texture
-  width: number}) {
+  width: number
+}) {
   const {floorReflections} = useGraphicsQualityValue(getGraphicsProfile)
   const reflective = reflections ?? floorReflections
   const material = new WoodFloorMaterial(texture, reflective)
   useEffect(() => () => material.dispose(), [material])
   const reflection = material.reflection?.target
-  return <mesh name='mona-ribbit-room-wood-floor' position={[0, 0.001, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+  return <mesh name='mona-ribbit-room-wood-floor' position={[0, 0.001, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
     <planeGeometry args={[width, depth]} />
-    <primitive object={material} attach='material' />
+    <primitive attach='material' object={material} />
     <Branch if={reflection}><primitive object={reflection!} /></Branch>
   </mesh>
 }

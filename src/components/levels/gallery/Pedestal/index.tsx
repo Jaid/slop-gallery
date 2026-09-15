@@ -19,18 +19,18 @@ export function usePedestal() {
 }
 
 export default function Pedestal({position, geometry, material}: ReturnType<typeof usePedestal> & {position: Vec3}) {
-  return <RigidBody type='fixed' colliders={false} position={position}>
-    {geometry.collision.map((args, i) => <TrimeshCollider key={i} args={args} />)}
-    <mesh name='pedestal-stone' castShadow receiveShadow>
-      <primitive object={geometry.stone} attach='geometry' />
-      <primitive object={material} attach='material' />
+  return <RigidBody colliders={false} position={position} type='fixed'>
+    {geometry.collision.map((args, i) => <TrimeshCollider args={args} key={i} />)}
+    <mesh castShadow name='pedestal-stone' receiveShadow>
+      <primitive attach='geometry' object={geometry.stone} />
+      <primitive attach='material' object={material} />
     </mesh>
-    <mesh name='pedestal-bronze' castShadow receiveShadow>
-      <primitive object={geometry.bronze} attach='geometry' />
+    <mesh castShadow name='pedestal-bronze' receiveShadow>
+      <primitive attach='geometry' object={geometry.bronze} />
       <meshStandardNodeMaterial color='#8c7044' metalness={0.78} roughness={0.38} />
     </mesh>
-    <mesh name='pedestal-reveals' castShadow receiveShadow>
-      <primitive object={geometry.reveals} attach='geometry' />
+    <mesh castShadow name='pedestal-reveals' receiveShadow>
+      <primitive attach='geometry' object={geometry.reveals} />
       <meshStandardNodeMaterial color='#514a3d' roughness={0.85} />
     </mesh>
   </RigidBody>

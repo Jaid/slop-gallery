@@ -8,7 +8,7 @@ export default function Props() {
   const pedestal = usePedestal()
   return <>
     <Pedestal {...pedestal} position={[13.3, 0, 1.4]} />
-    <GrabbableProp id='prop-knot' title='A very serious knot' position={[13.3, 1.9, 1.4]}><mesh castShadow receiveShadow><torusKnotGeometry args={knotGeometryArgs} /><GoldMaterial /></mesh></GrabbableProp>
+    <GrabbableProp id='prop-knot' position={[13.3, 1.9, 1.4]} title='A very serious knot'><mesh castShadow receiveShadow><torusKnotGeometry args={knotGeometryArgs} /><GoldMaterial /></mesh></GrabbableProp>
     {([
       {
         id: 'prop-book',
@@ -16,7 +16,8 @@ export default function Props() {
         position: [-3.2, 1.43, 6.8],
         kind: 'book',
         title: 'A suspiciously well-read book',
-      }, {
+      },
+      {
         id: 'prop-apple',
         position: [-14, 1.57, 1],
         kind: 'apple',

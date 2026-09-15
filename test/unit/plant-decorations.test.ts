@@ -23,8 +23,7 @@ describe('modular botanical catalog', () => {
   })
   test('every pot is hollow above its fitted, recessed soil and has a distinct silhouette', () => {
     const material = new MeshBasicNodeMaterial
-    const hashes = new Set<bigint | number>
-    try {
+    const hashes = new Set<bigint | number>try {
       for (const pot of pots) {
         const geometry = new PotGeometry(pot.id)
         try {
@@ -115,8 +114,7 @@ describe('modular botanical catalog', () => {
     }
   })
   test('all eight plants are deterministic, rooted, finite and individually modeled', () => {
-    const hashes = new Set<bigint | number>
-    for (const plant of plants) {
+    const hashes = new Set<bigint | number>for (const plant of plants) {
       const geometry = new PlantGeometry(plant.id)
       const repeat = new PlantGeometry(plant.id)
       try {

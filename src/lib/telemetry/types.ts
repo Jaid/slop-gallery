@@ -6,13 +6,17 @@ export type GalleryState = {
   held: string | null
   inspecting: string | null
   locked: boolean
-  narration: {source: string | null
-    status: string} | null
+  narration: {
+    source: string | null
+    status: string
+  } | null
   panel: string | null
-  portraits: ReadonlyArray<{hung: boolean
+  portraits: ReadonlyArray<{
+    hung: boolean
     imported?: boolean
     merging?: boolean
-    pending?: boolean}>
+    pending?: boolean
+  }>
   ready: boolean
   resetEpoch: number
   revision: number

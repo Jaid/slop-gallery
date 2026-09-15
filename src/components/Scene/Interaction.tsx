@@ -32,15 +32,19 @@ export default function Interaction() {
   const held = useGallery(s => s.held)
   const artwork = useGallery(s => s.portraits.find(p => p.id === s.held))
   const dragging = useGallery(s => s.dragging)
-  const view = useRef<{id: string
+  const view = useRef<{
+    id: string
     look: InspectionLook
     position: Vector3
     restoreControls: () => void
     returning: boolean
-    rotation: Quaternion} | null>(null)
+    rotation: Quaternion
+  } | null>(null)
   const previousHeld = useRef<string | null>(null)
-  const firstPose = useRef<{position: Vector3
-    rotation: Quaternion} | null>(null)
+  const firstPose = useRef<{
+    position: Vector3
+    rotation: Quaternion
+  } | null>(null)
   const introduced = useRef(false)
   useEffect(() => pauseMenu.attach(renderer.domElement), [renderer])
   useEffect(() => {
@@ -500,6 +504,6 @@ export default function Interaction() {
     }
   })
   return <group ref={ghost} visible={false}>
-    <Branch if={isGallery} some={[artwork, dragging]} not={held?.startsWith('prop-')}><PlacementPreview key={artwork?.id ?? 'import'} width={artwork?.width ?? 2.4} height={artwork?.height ?? 2.4} source={artwork?.source} title={artwork?.title} creator={artwork?.creator} pending={artwork?.pending} /></Branch>
+    <Branch if={isGallery} not={held?.startsWith('prop-')} some={[artwork, dragging]}><PlacementPreview creator={artwork?.creator} height={artwork?.height ?? 2.4} key={artwork?.id ?? 'import'} pending={artwork?.pending} source={artwork?.source} title={artwork?.title} width={artwork?.width ?? 2.4} /></Branch>
   </group>
 }

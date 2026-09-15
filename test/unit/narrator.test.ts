@@ -49,8 +49,10 @@ beforeEach(() => {
     speechSynthesis: {
       cancel() {},
       getVoices: () => [],
-      speak: (utterance: {onstart: () => void
-        text: string}) => {
+      speak: (utterance: {
+        onstart: () => void
+        text: string
+      }) => {
         spoken.push(utterance.text)
         utterance.onstart()
       },
@@ -114,9 +116,11 @@ test('TTS keeps character steering out of the spoken transcript and caches audio
   expect(fetchSpy).toHaveBeenCalledTimes(1)
   const [url, request] = fetchSpy.mock.calls[0]
   expect(url).toBe('https://openrouter.ai/api/v1/audio/speech')
-  const body = JSON.parse(request!.body as string) as {input: string
+  const body = JSON.parse(request!.body as string) as {
+    input: string
     provider: {options: {google: {instructions: string}}}
-    response_format: string}
+    response_format: string
+  }
   expect(body.input).not.toContain(settings.narrator_character)
   expect(body.provider.options.google.instructions).toBe(settings.narrator_character)
   expect(body.response_format).toBe('pcm')
@@ -221,7 +225,7 @@ test('a manual edit releases queued narration without waiting for the old genera
   useGallery.getState().update('goose', {pending: true})
   await narrator.speak('goose')
   const s = useGallery.getState()
-  s.commit(s.portraits.map(p => (p.id === 'goose' ? {...p, title: 'My label', description: 'My story', pending: false} : p)))
+  s.commit(s.portraits.map(p => p.id === 'goose' ? {...p, title: 'My label', description: 'My story', pending: false} : p))
   expect(spoken).toEqual(['My label. My story.'])
   expect(useGallery.getState().narration).toMatchObject({
     status: 'playing',

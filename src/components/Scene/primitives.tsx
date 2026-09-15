@@ -4,12 +4,14 @@ import type {Texture} from 'three/webgpu'
 
 import Branch from 'branch-component'
 
-export default function Box({size, color = '#dad2bf', map, material, metalness = 0, roughness = 0.7, envMapIntensity = 1, ...props}: Omit<ThreeElements['mesh'], 'children'> & {color?: string
+export default function Box({size, color = '#dad2bf', map, material, metalness = 0, roughness = 0.7, envMapIntensity = 1, ...props}: Omit<ThreeElements['mesh'], 'children'> & {
+  color?: string
   envMapIntensity?: number
   map?: Texture
   metalness?: number
   roughness?: number
-  size: Vec3}) {
-  return <mesh castShadow receiveShadow material={material} {...props}><boxGeometry args={size} /><Branch not={material}><meshStandardNodeMaterial color={color} map={map} roughness={roughness} metalness={metalness} envMapIntensity={envMapIntensity} /></Branch></mesh>
+  size: Vec3
+}) {
+  return <mesh castShadow material={material} receiveShadow {...props}><boxGeometry args={size} /><Branch not={material}><meshStandardNodeMaterial color={color} envMapIntensity={envMapIntensity} map={map} metalness={metalness} roughness={roughness} /></Branch></mesh>
 }
 

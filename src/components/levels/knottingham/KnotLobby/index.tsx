@@ -49,21 +49,21 @@ export default function KnotLobby() {
   useDisposable(trimMaterial)
   useDisposable(ceilingMaterial)
   return <>
-    <color attach='background' args={['#ded8ca']} />
+    <color args={['#ded8ca']} attach='background' />
     <group name='knottingham-lobby'>
       <ambientLight intensity={0.45} />
       <hemisphereLight args={['#e1edff', '#80705d', 1.3]} />
-      <directionalLight position={[-3, 9, -16]} intensity={2.3} color='#fff0d7' />
-      {knotGalleryWalls.map(wall => <WallSurface key={wall.id} wall={wall} surfaceRoom='vesper' plaster={plaster} material={trimMaterial} surfaceMaterial={wallMaterial} />)}
-      <RigidBody type='fixed' colliders={false}>
+      <directionalLight color='#fff0d7' intensity={2.3} position={[-3, 9, -16]} />
+      {knotGalleryWalls.map(wall => <WallSurface key={wall.id} material={trimMaterial} plaster={plaster} surfaceMaterial={wallMaterial} surfaceRoom='vesper' wall={wall} />)}
+      <RigidBody colliders={false} type='fixed'>
         <CuboidCollider args={[knotGallerySize[0] / 2, 0.12, knotGallerySize[2] / 2]} position={[knotGalleryCenter[0], -0.12, knotGalleryCenter[2]]} />
         <CuboidCollider args={[knotGallerySize[0] / 2, 0.09, knotGallerySize[2] / 2]} position={[knotGalleryCenter[0], knotGalleryBounds.height, knotGalleryCenter[2]]} />
       </RigidBody>
-      <mesh name='knottingham-floor-slab' geometry={shell.floor} position={[knotGalleryCenter[0], -0.12, knotGalleryCenter[2]]} castShadow receiveShadow>
+      <mesh castShadow geometry={shell.floor} name='knottingham-floor-slab' position={[knotGalleryCenter[0], -0.12, knotGalleryCenter[2]]} receiveShadow>
         <meshStandardNodeMaterial color='#23201d' roughness={0.8} />
       </mesh>
-      <group position={knotGalleryCenter}><CheckerMarbleFloor width={knotGallerySize[0]} depth={knotGallerySize[2]} detailed /></group>
-      <mesh name='knottingham-ceiling' geometry={shell.ceiling} material={ceilingMaterial} position={[knotGalleryCenter[0], knotGalleryBounds.height, knotGalleryCenter[2]]} castShadow receiveShadow />
+      <group position={knotGalleryCenter}><CheckerMarbleFloor depth={knotGallerySize[2]} detailed width={knotGallerySize[0]} /></group>
+      <mesh castShadow geometry={shell.ceiling} material={ceilingMaterial} name='knottingham-ceiling' position={[knotGalleryCenter[0], knotGalleryBounds.height, knotGalleryCenter[2]]} receiveShadow />
       <KnotLights />
       {knotBays.map(bay => <group key={bay.candidate.id} position={bay.center}>
         <KnotPreviewSign bay={bay} />

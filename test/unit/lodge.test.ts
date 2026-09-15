@@ -24,7 +24,7 @@ import walls, {floorHeight, insideGallery, placementIssue, roomAt, rooms, wallPo
 await RAPIER.init()
 const routePassages = [lodgeTunnel, corridorPassage] as const
 const insideRoute = (position: Vec3) => insideLodgeAccess(position) || insideCorridor(position)
-const routeWalls = walls.filter(wall => ['lodge', 'corridor'].includes(wall.room) || ['sienna-west', 'oculus-north', 'vesper-west'].includes(wall.id))
+const routeWalls = walls.filter(wall => ['corridor', 'lodge'].includes(wall.room) || ['oculus-north', 'sienna-west', 'vesper-west'].includes(wall.id))
 const architecture = routeWalls.map(wall => ({
   wall,
   geometry: createArchitectureGeometry(wall),

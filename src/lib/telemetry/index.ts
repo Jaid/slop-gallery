@@ -12,8 +12,10 @@ export const telemetry = enabled ? new SlopGalleryTelemetry({
 }) : null
 
 /** The controller owns this source; camera bob/inspection never masquerades as player movement. */
-export const playerTelemetry: {read: (() => {position: Point3
-  velocity: Point3} | null) | null} = {read: null}
+export const playerTelemetry: {read: (() => {
+  position: Point3
+  velocity: Point3
+} | null) | null} = {read: null}
 
 if (import.meta.env.DEV) {
   import.meta.hot.dispose(() => {

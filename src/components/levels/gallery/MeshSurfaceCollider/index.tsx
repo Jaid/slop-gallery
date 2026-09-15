@@ -9,5 +9,5 @@ export default function MeshSurfaceCollider({args, ...props}: Omit<TrimeshCollid
   const initialize = useCallback((collider: RapierCollider | null) => {
     collider?.setShape(new rapier.TriMesh(args[0], args[1], rapier.TriMeshFlags.FIX_INTERNAL_EDGES))
   }, [args, rapier])
-  return <TrimeshCollider {...props} ref={initialize} args={args} />
+  return <TrimeshCollider {...props} args={args} ref={initialize} />
 }

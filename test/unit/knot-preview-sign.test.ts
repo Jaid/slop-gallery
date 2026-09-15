@@ -27,10 +27,14 @@ test('doubled runtime billboard resolution keeps the complete preview population
 test('candidate atlas draws dynamic numbers, titles, accents and image fallbacks in one surface', () => {
   const bay = knotBays[0]
   const layout = knotPreviewTextureLayout(bay.finishes.length)
-  const fills: Array<{args: Array<number>
-    style: string}> = []
-  const texts: Array<{args: Array<unknown>
-    style: string}> = []
+  const fills: Array<{
+    args: Array<number>
+    style: string
+  }> = []
+  const texts: Array<{
+    args: Array<unknown>
+    style: string
+  }> = []
   const images: Array<Array<unknown>> = []
   let fillStyle = ''
   const context = {

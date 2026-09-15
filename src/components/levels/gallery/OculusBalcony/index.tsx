@@ -10,8 +10,8 @@ export default function OculusBalcony({material}: {material: Material}) {
   const geometry = new OculusBalconyGeometry
   const collision = colliderGeometry(geometry)
   useEffect(() => () => geometry.dispose(), [geometry])
-  return <RigidBody type='fixed' colliders={false}>
+  return <RigidBody colliders={false} type='fixed'>
     <TrimeshCollider args={collision} />
-    <mesh name='oculus-balcony' geometry={geometry} material={material} castShadow receiveShadow />
+    <mesh castShadow geometry={geometry} material={material} name='oculus-balcony' receiveShadow />
   </RigidBody>
 }

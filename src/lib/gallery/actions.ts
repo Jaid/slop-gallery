@@ -123,8 +123,10 @@ export async function loadBlob(source: Blob | string) {
   return response.blob()
 }
 
-export function newPortrait(source: Blob, title: string, width: number, height: number, pose: {direction: Vec3
-  position: Vec3} = cameraPose): Portrait {
+export function newPortrait(source: Blob, title: string, width: number, height: number, pose: {
+  direction: Vec3
+  position: Vec3
+} = cameraPose): Portrait {
   const d = pose.direction
   const p = pose.position
   return {

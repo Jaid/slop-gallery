@@ -9,10 +9,10 @@ import {useGallery} from '#src/lib/gallery.ts'
 export default function Hud() {
   const s = useGallery()
   const artwork = s.held ? undefined : s.portraits.find(p => p.id === s.activeLabel && p.hung && !p.reserved)
-  const speaking = s.narration?.title ? {title: s.narration.title} : (s.narration?.id === '__intro' ? intro : s.portraits.find(p => p.id === s.narration?.id))
+  const speaking = s.narration?.title ? {title: s.narration.title} : s.narration?.id === '__intro' ? intro : s.portraits.find(p => p.id === s.narration?.id)
   return <Branch if={s.locked} none={[s.panel, s.dragging]}>
     <AimDot />
     <Branch if={artwork}><ArtworkOverlay portrait={artwork!} /></Branch>
-    <Branch all={[s.narration, speaking]}><NarrationIndicator title={speaking?.title ?? ''} status={s.narration?.status ?? 'preparing'} source={s.narration?.source ?? null} /></Branch>
+    <Branch all={[s.narration, speaking]}><NarrationIndicator source={s.narration?.source ?? null} status={s.narration?.status ?? 'preparing'} title={speaking?.title ?? ''} /></Branch>
   </Branch>
 }

@@ -74,28 +74,28 @@ export default function Architecture() {
   }
   return <>
     <ReflectionEnvironment />
-    <color attach='background' args={['#ded8ca']} />
+    <color args={['#ded8ca']} attach='background' />
     <ambientLight intensity={0.65} /><hemisphereLight args={['#ecf3ff', '#a29270', 1.15]} />
-    <directionalLight position={[-3, 9, 4]} intensity={2.3} color='#fff0d7' castShadow shadow-mapSize={[4096, 4096]} shadow-camera-left={-24} shadow-camera-right={24} shadow-camera-top={20} shadow-camera-bottom={-20} shadow-normalBias={0.035} />
-    {walls.map(wall => <WallSurface key={wall.id} material={wallMaterial(wall)} wall={wall} plaster={wall.room === 'sienna' ? textures.damask : textures.plaster} />)}
+    <directionalLight castShadow color='#fff0d7' intensity={2.3} position={[-3, 9, 4]} shadow-camera-bottom={-20} shadow-camera-left={-24} shadow-camera-right={24} shadow-camera-top={20} shadow-mapSize={[4096, 4096]} shadow-normalBias={0.035} />
+    {walls.map(wall => <WallSurface key={wall.id} material={wallMaterial(wall)} plaster={wall.room === 'sienna' ? textures.damask : textures.plaster} wall={wall} />)}
     {rooms.filter(room => room.floorY === 0 && room.id !== 'sienna').map(room => <group key={room.id} position={[room.center[0], 0, room.center[1]]}>
-      <RigidBody type='fixed' colliders={false}>
+      <RigidBody colliders={false} type='fixed'>
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]} />
       </RigidBody>
-      <RoomFloor room={room} stone={textures.stone} wood={textures.wood} glass={glass.lobby} />
-      <Box position={[0, 5.78, 0]} size={[room.size[0], 0.18, room.size[1]]} color={room.id === 'vesper' ? '#7c9586' : '#e1dccc'} />
+      <RoomFloor glass={glass.lobby} room={room} stone={textures.stone} wood={textures.wood} />
+      <Box color={room.id === 'vesper' ? '#7c9586' : '#e1dccc'} position={[0, 5.78, 0]} size={[room.size[0], 0.18, room.size[1]]} />
       {(room.id === 'antechamber' ? [0] : Array.from({length: room.size[1] / 4 - 1}, (_, i) => i * 4 - room.size[1] / 2 + 4)).map(z => <group key={z}>
-        <Box position={[0, 5.6, z]} size={[room.size[0] * 0.48, 0.1, 2.6]} color='#a29982' />
+        <Box color='#a29982' position={[0, 5.6, z]} size={[room.size[0] * 0.48, 0.1, 2.6]} />
         <mesh position={[0, 5.54, z]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[room.size[0] * 0.48 - 0.1, 2.45]} /><meshBasicNodeMaterial color={room.id === 'dine' ? '#efe6ff' : '#fff3d8'} /></mesh>
-        {[-1, 0, 1].map(x => <Box key={x} position={[x * room.size[0] * 0.12, 5.5, z]} size={[0.045, 0.12, 2.5]} color='#c0b7a1' />)}
+        {[-1, 0, 1].map(x => <Box color='#c0b7a1' key={x} position={[x * room.size[0] * 0.12, 5.5, z]} size={[0.045, 0.12, 2.5]} />)}
       </group>)}
-      {(pointLightPositions[room.id] ?? [-3.5, 3.5]).map(z => <pointLight key={z} position={[0, 4.9, z]} intensity={room.id === 'vesper' ? 40 : 32} distance={room.id === 'lobby' && z === -8 ? 22 : 14} decay={2} castShadow={room.id === 'lobby' && z === -8} shadow-mapSize={[1024, 1024]} shadow-normalBias={0.03} color={room.id === 'dine' ? '#eee3ff' : '#fff1d8'} />)}
+      {(pointLightPositions[room.id] ?? [-3.5, 3.5]).map(z => <pointLight castShadow={room.id === 'lobby' && z === -8} color={room.id === 'dine' ? '#eee3ff' : '#fff1d8'} decay={2} distance={room.id === 'lobby' && z === -8 ? 22 : 14} intensity={room.id === 'vesper' ? 40 : 32} key={z} position={[0, 4.9, z]} shadow-mapSize={[1024, 1024]} shadow-normalBias={0.03} />)}
     </group>)}
     <PottedPlants />
     <Fountain />
     <FountainBenches wood={textures.wood} />
-    <LodgeRoom wood={textures.wood} stone={castleStone} />
-    <LodgeWindow material={lodgeWood} glass={glass.cabin} />
+    <LodgeRoom stone={castleStone} wood={textures.wood} />
+    <LodgeWindow glass={glass.cabin} material={lodgeWood} />
     <LodgeCorridorRoute material={castleStone} />
     <VesperOrnaments />
     <SiennaRoom wood={textures.wood} />

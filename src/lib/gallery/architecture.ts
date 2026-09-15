@@ -83,8 +83,7 @@ export function createArchitectureGeometry(wall: Wall) {
   evaluator.useGroups = false
   const material = new MeshBasicNodeMaterial
   const brushes: Array<Brush> = []
-  const retained = new Set<BufferGeometry>
-  const brush = (geometry: BufferGeometry) => {
+  const retained = new Set<BufferGeometry>const brush = (geometry: BufferGeometry) => {
     const result = new Brush(geometry, material)
     result.updateMatrixWorld(true)
     brushes.push(result)
@@ -207,8 +206,7 @@ export function createArchitectureGeometry(wall: Wall) {
   }
 }
 
-const cache = new Map<string, ArchitectureGeometry>
-export function architectureGeometry(wall: Wall) {
+const cache = new Map<string, ArchitectureGeometry>export function architectureGeometry(wall: Wall) {
   const key = JSON.stringify([wall.width, wall.height, wall.holes ?? [], wall.slope ?? 0, wall.baseboardProfile ?? null, wall.trimStyle ?? 'classic', wall.curveRadius ?? 0, wall.baseboardHeight ?? 0.44])
   let geometry = cache.get(key)
   if (!geometry) {

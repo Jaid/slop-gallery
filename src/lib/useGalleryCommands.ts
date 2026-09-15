@@ -8,9 +8,11 @@ export default function useGalleryCommands() {
     const importer = new ImageImporter(p => galleryEvents.dispatchEvent(new CustomEvent('imported', {detail: p})))
     useGallery.setState({importFiles: (files, target) => importer.import(files, target)})
     const drop = (event: Event) => {
-      const {files, x, y} = (event as CustomEvent<{files: Array<File>
+      const {files, x, y} = (event as CustomEvent<{
+        files: Array<File>
         x: number
-        y: number}>).detail
+        y: number
+      }>).detail
       void importDroppedFiles(files, x, y).catch(() => notify('The images could not be imported.'))
     }
     const paste = (event: ClipboardEvent) => {

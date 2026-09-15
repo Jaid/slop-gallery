@@ -12,7 +12,8 @@ import ProgressiveKnotMaterials from '../../src/lib/knots/ProgressiveKnotMateria
 function fixture(third = false) {
   const entry = knotsById.get('astra/lenticular_mirage')!
   const entries = [
-    entry, {
+    entry,
+    {
       ...entry,
       id: 'near',
     },
@@ -30,10 +31,12 @@ function fixture(third = false) {
   let target: RenderTarget | null = null
   let output: RenderTarget | null = null
   let mrt: ReturnType<WebGPURenderer['getMRT']> | null = null
-  const calls: Array<{gate: ReturnType<typeof Promise.withResolvers<void>>
+  const calls: Array<{
+    gate: ReturnType<typeof Promise.withResolvers<void>>
     material: unknown
     mesh: Mesh
-    target: RenderTarget | null}> = []
+    target: RenderTarget | null
+  }> = []
   const renderer = {
     getRenderTarget: () => target,
     setRenderTarget: (next: RenderTarget | null) => target = next,

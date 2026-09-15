@@ -3,7 +3,8 @@ const orientations = {
     {
       name: 'north',
       rotation: 0,
-    }, {
+    },
+    {
       name: 'south',
       rotation: Math.PI,
     },
@@ -12,7 +13,8 @@ const orientations = {
     {
       name: 'west',
       rotation: Math.PI / 2,
-    }, {
+    },
+    {
       name: 'east',
       rotation: -Math.PI / 2,
     },

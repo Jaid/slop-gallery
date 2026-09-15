@@ -16,11 +16,13 @@ type Rectangle = {
   minX: number
   minZ: number
 }
-type Edge = {axis: 0 | 2
+type Edge = {
+  axis: 0 | 2
   cross: number
   max: number
   min: number
-  side: number}
+  side: number
+}
 
 /** An open-ended, level passage. One footprint drives its floors, walls and navigation. */
 export default class Passage {

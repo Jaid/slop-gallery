@@ -93,8 +93,10 @@ export default class ImageImporter {
     this.disposed = true
   }
 
-  import(files: Array<File>, target?: {direction: Vec3
-    origin: Vec3}) {
+  import(files: Array<File>, target?: {
+    direction: Vec3
+    origin: Vec3
+  }) {
     const epoch = useGallery.getState().importEpoch
     // Capture the drop location before decoding; walking must not move an in-flight import.
     const pose = {

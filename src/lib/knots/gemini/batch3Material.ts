@@ -1,24 +1,6 @@
 import type {Node, Texture} from 'three/webgpu'
 
-import {cameraPosition,
-  color,
-  float,
-  mix,
-  modelWorldMatrixInverse,
-  mx_fractal_noise_float,
-  mx_noise_float,
-  mx_noise_vec3,
-  negateOnBackSide,
-  normalViewGeometry,
-  positionGeometry,
-  positionView,
-  positionViewDirection,
-  tangentView,
-  time,
-  uv,
-  vec2,
-  vec3,
-  vec4} from 'three/tsl'
+import {cameraPosition, color, float, mix, modelWorldMatrixInverse, mx_fractal_noise_float, mx_noise_float, mx_noise_vec3, negateOnBackSide, normalViewGeometry, positionGeometry, positionView, positionViewDirection, tangentView, time, uv, vec2, vec3, vec4} from 'three/tsl'
 import {MeshPhysicalNodeMaterial} from 'three/webgpu'
 
 import {cellularBoundary, cellularPoints} from '../cellularField.ts'

@@ -32,12 +32,18 @@ export type Placement = {
   valid: boolean
   wallId: string
 }
-export type NarrationState = {id: string
-  title?: string} & (
-  | {source: 'audio' | 'browser'
-    status: 'playing'}
-  | {source: null
-    status: 'preparing'}
+export type NarrationState = {
+  id: string
+  title?: string
+} & (
+  | {
+    source: 'audio' | 'browser'
+    status: 'playing'
+  }
+  | {
+    source: null
+    status: 'preparing'
+  }
 )
 export type GallerySettings = {
   sound: boolean

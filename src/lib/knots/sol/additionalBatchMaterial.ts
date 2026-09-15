@@ -1,28 +1,7 @@
 import type {Node, Texture} from 'three/webgpu'
 
 import * as tsl from 'three/tsl'
-import {bitangentView,
-  cameraPosition,
-  color,
-  float,
-  mix,
-  modelWorldMatrixInverse,
-  mx_cell_noise_float,
-  mx_fractal_noise_float,
-  mx_noise_float,
-  negateOnBackSide,
-  normalLocal,
-  normalViewGeometry,
-  positionGeometry,
-  positionView,
-  positionViewDirection,
-  positionWorld,
-  tangentView,
-  time,
-  uv,
-  vec2,
-  vec3,
-  vec4} from 'three/tsl'
+import {bitangentView, cameraPosition, color, float, mix, modelWorldMatrixInverse, mx_cell_noise_float, mx_fractal_noise_float, mx_noise_float, negateOnBackSide, normalLocal, normalViewGeometry, positionGeometry, positionView, positionViewDirection, positionWorld, tangentView, time, uv, vec2, vec3, vec4} from 'three/tsl'
 import {MeshPhysicalNodeMaterial} from 'three/webgpu'
 
 const TAU = Math.PI * 2
@@ -84,9 +63,7 @@ function proceduralNormal(height: Node<'float'>, strength: number) {
     .div(determinant.abs().max(1e-12))
   return negateOnBackSide(normal.sub(gradient.mul(strength)).normalize())
 }
-function cellGrain(position: Node<'vec3'>,
-  scale: number,
-  threshold: number) {
+function cellGrain(position: Node<'vec3'>, scale: number, threshold: number) {
   const cell = position.mul(scale)
   const rnd = cellNoiseVec3(cell)
   const centre = rnd.mul(0.5).add(0.25)
@@ -119,9 +96,7 @@ function multiGlint(normal: Node<'vec3'>, sharpness: number) {
   }
   return sum
 }
-function iceFracture(q: Node<'vec3'>,
-  seed: number,
-  detail: number) {
+function iceFracture(q: Node<'vec3'>, seed: number, detail: number) {
   const offset = vec3(seed * 7.13, seed * -3.71, seed * 5.47)
   const direction = vec3(0.31 + seed * 0.07, 0.87 - seed * 0.04, -0.36 + seed * 0.03).normalize()
   const guide = mx_noise_float(q.mul(4.1).add(offset))
@@ -147,8 +122,7 @@ function iceFracture(q: Node<'vec3'>,
     .add(crystalPlane.mul(territory).mul(0.22))
     .clamp()
 }
-function hyphae(q: Node<'vec3'>,
-  seed: number) {
+function hyphae(q: Node<'vec3'>, seed: number) {
   const offset = vec3(seed * 4.7, seed * -7.1, seed * 2.9)
   const guide = mx_noise_float(q.mul(3.2).add(offset))
   const trunkField = mx_noise_float(q.mul(10.5)
@@ -168,8 +142,7 @@ function hyphae(q: Node<'vec3'>,
     .add(hairs.mul(territory).mul(0.65))
     .clamp()
 }
-function stormBolt(q: Node<'vec3'>,
-  seed: number) {
+function stormBolt(q: Node<'vec3'>, seed: number) {
   const family = Math.abs(Math.floor(seed * 3)) % 3
   const axis = [
     vec3(0.27, 0.93, 0.24).normalize(),
@@ -294,8 +267,7 @@ export type KnotPremiumFinish
   = typeof knotPremiumFinishes[number]['id']
 
 export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
-  constructor(finish: KnotPremiumFinish,
-    environment: Texture) {
+  constructor(finish: KnotPremiumFinish, environment: Texture) {
     super({
       envMap: environment,
       envMapIntensity: 0.9,
@@ -304,13 +276,7 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
     switch (finish) {
       case 'glacial_cipher': {
         this.envMapIntensity = 1.1
-        const {p,
-          view,
-          facing,
-          grazing,
-          rim,
-          near,
-          intimate} = viewerFrame()
+        const {p, view, facing, grazing, rim, near, intimate} = viewerFrame()
         const shallow = iceFracture(p.sub(view.mul(0.035)), 1.1, 17)
         const middle = iceFracture(p.sub(view.mul(0.11)), 2.3, 21)
         const deep = iceFracture(p.sub(view.mul(0.21)), 3.7, 27)
@@ -439,10 +405,7 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
           .mul(0.041)
           .add(domain.mul(0.0025))
         this.positionNode = p.add(normalLocal.mul(height))
-        const {facing,
-          grazing,
-          near,
-          intimate} = viewerFrame()
+        const {facing, grazing, near, intimate} = viewerFrame()
         const domainWall = filament(domain, 0.032)
         const oxideRaw = mx_fractal_noise_float(p.mul(9), 3, 2, 0.5)
           .mul(0.5)
@@ -494,13 +457,7 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
       }
       case 'mycelial_lantern': {
         this.envMapIntensity = 0.55
-        const {p,
-          view,
-          facing,
-          grazing,
-          rim,
-          near,
-          intimate} = viewerFrame()
+        const {p, view, facing, grazing, rim, near, intimate} = viewerFrame()
         const shallow = hyphae(p.sub(view.mul(0.025)), 1.2)
         const middle = hyphae(p.sub(view.mul(0.085)), 3.1)
         const deep = hyphae(p.sub(view.mul(0.15)), 5.4)
@@ -626,11 +583,7 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
             .mul(proximity)
             .mul(0.002))
         this.positionNode = p.add(normalLocal.mul(papillaHeight))
-        const {view,
-          facing,
-          grazing,
-          near,
-          intimate} = viewerFrame()
+        const {view, facing, grazing, near, intimate} = viewerFrame()
         const cellAA = cellDistance.fwidth().max(0.001)
         const disc = cellDistance
           .smoothstep(radius, radius
@@ -714,11 +667,7 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
       }
       case 'pentimento_fresco': {
         this.envMapIntensity = 0.62
-        const {p,
-          view,
-          grazing,
-          near,
-          intimate} = viewerFrame()
+        const {p, view, grazing, near, intimate} = viewerFrame()
         const topGesture = mx_fractal_noise_float(p.mul(3.1), 3, 2, 0.5)
           .mul(0.5)
           .add(0.5)
@@ -814,11 +763,7 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
       }
       case 'velvet_chiaroscuro': {
         this.envMapIntensity = 0.72
-        const {p,
-          view,
-          grazing,
-          near,
-          intimate} = viewerFrame()
+        const {p, view, grazing, near, intimate} = viewerFrame()
         const tube = uv()
         const orientation = mx_noise_float(p.mul(3.1))
           .mul(2.4)
@@ -920,12 +865,7 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
       }
       case 'captured_tempest': {
         this.envMapIntensity = 0.42
-        const {p,
-          view,
-          facing,
-          rim,
-          near,
-          intimate} = viewerFrame()
+        const {p, view, facing, rim, near, intimate} = viewerFrame()
         const chord = facing
           .mul(0.3)
           .add(0.06)
@@ -1004,10 +944,7 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
       }
       case 'weeping_basalt': {
         this.envMapIntensity = 1.2
-        const {p,
-          grazing,
-          near,
-          intimate} = viewerFrame()
+        const {p, grazing, near, intimate} = viewerFrame()
         const world = positionWorld
         const verticalWarp = mx_noise_float(vec3(world.x.mul(2.3), world.z.mul(2.3), world.y.mul(0.65)))
         const streamPhase = world.x

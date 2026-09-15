@@ -1,8 +1,10 @@
 import {useMemo} from 'react'
 import {Shape} from 'three/webgpu'
 
-export default function Alcove({width = 3.1, color = '#c8c8b6'}: {color?: string
-  width?: number}) {
+export default function Alcove({width = 3.1, color = '#c8c8b6'}: {
+  color?: string
+  width?: number
+}) {
   const shape = useMemo(() => {
     const shape = new Shape
     const radius = width / 2

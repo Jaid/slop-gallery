@@ -1,13 +1,18 @@
 import type SoundEngine from './SoundEngine.ts'
 
-export type SoundEffect = {id: string
+export type SoundEffect = {
+  id: string
   label: string
-  voices: Array<Voice>}
-type FilterSpec = {endFrequency?: number
+  voices: Array<Voice>
+}
+type FilterSpec = {
+  endFrequency?: number
   frequency: number
   q?: number
-  type: BiquadFilterType}
-type OscillatorVoice = {attack?: number
+  type: BiquadFilterType
+}
+type OscillatorVoice = {
+  attack?: number
   delay?: number
   duration: number
   endFrequency?: number
@@ -15,13 +20,16 @@ type OscillatorVoice = {attack?: number
   frequency: number
   kind: 'oscillator'
   type?: OscillatorType
-  volume: number}
-type NoiseVoice = {attack?: number
+  volume: number
+}
+type NoiseVoice = {
+  attack?: number
   delay?: number
   duration: number
   filter: FilterSpec
   kind: 'noise'
-  volume: number}
+  volume: number
+}
 type Voice = NoiseVoice | OscillatorVoice
 
 const osc = (frequency: number, duration: number, volume: number, options: Partial<Omit<OscillatorVoice, 'duration' | 'frequency' | 'kind' | 'volume'>> = {}): OscillatorVoice => ({

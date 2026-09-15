@@ -100,9 +100,11 @@ export default class PropPlacement {
   }
 
   private sweep(origin: Vec3, direction: Vector3, distance: number, clearance = skin) {
-    let nearest: {center: Vector3
+    let nearest: {
+      center: Vector3
       hit: NonNullable<ReturnType<World['castShape']>>
-      orientation: Quaternion} | null = null
+      orientation: Quaternion
+    } | null = null
     for (const {center, orientation, shape} of this.shapes(origin)) {
       const hit = this.world.castShape(center, orientation, direction, shape, clearance, distance, false, undefined, undefined, undefined, this.body, this.carryObstacle)
       if (hit) {

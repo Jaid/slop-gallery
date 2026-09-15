@@ -15,22 +15,22 @@ export default function SoundboardRoom() {
   const enabledWall = soundboardWalls.find(wall => wall.id === 'soundboard-enabled')!
   const archivedWall = soundboardWalls.find(wall => wall.id === 'soundboard-archived')!
   return <>
-    <color attach='background' args={['#1f2528']} />
+    <color args={['#1f2528']} attach='background' />
     <group name='soundboard-room'>
       <ambientLight intensity={0.48} />
       <hemisphereLight args={['#d8ecf1', '#514942', 1.15]} />
-      <directionalLight position={[-3, 8, 2]} intensity={2.1} color='#fff0d7' />
-      <pointLight position={[0, soundboardBounds.height - 0.7, 0]} intensity={34} distance={Math.max(soundboardSize[0], soundboardSize[2]) * 1.6} decay={2} color='#e5f2ff' />
-      {soundboardWalls.map(wall => <WallSurface key={wall.id} wall={wall} plaster={plaster} />)}
-      <RigidBody type='fixed' colliders={false}>
+      <directionalLight color='#fff0d7' intensity={2.1} position={[-3, 8, 2]} />
+      <pointLight color='#e5f2ff' decay={2} distance={Math.max(soundboardSize[0], soundboardSize[2]) * 1.6} intensity={34} position={[0, soundboardBounds.height - 0.7, 0]} />
+      {soundboardWalls.map(wall => <WallSurface key={wall.id} plaster={plaster} wall={wall} />)}
+      <RigidBody colliders={false} type='fixed'>
         <CuboidCollider args={[soundboardSize[0] / 2, 0.12, soundboardSize[2] / 2]} position={[0, -0.12, 0]} />
         <CuboidCollider args={[soundboardSize[0] / 2, 0.09, soundboardSize[2] / 2]} position={[0, soundboardBounds.height, 0]} />
       </RigidBody>
-      <Box position={[0, -0.12, 0]} size={[soundboardSize[0], 0.24, soundboardSize[2]]} color='#23201d' roughness={0.82} />
-      <CheckerMarbleFloor width={soundboardSize[0]} depth={soundboardSize[2]} />
-      <Box position={[0, soundboardBounds.height, 0]} size={[soundboardSize[0], 0.18, soundboardSize[2]]} color='#48545a' roughness={0.85} />
-      <SoundboardWall section='enabled' effects={enabledSoundEffects} position={enabledWall.center} rotationY={enabledWall.rotation} />
-      <SoundboardWall section='archived' effects={archivedSoundEffects} position={archivedWall.center} rotationY={archivedWall.rotation} />
+      <Box color='#23201d' position={[0, -0.12, 0]} roughness={0.82} size={[soundboardSize[0], 0.24, soundboardSize[2]]} />
+      <CheckerMarbleFloor depth={soundboardSize[2]} width={soundboardSize[0]} />
+      <Box color='#48545a' position={[0, soundboardBounds.height, 0]} roughness={0.85} size={[soundboardSize[0], 0.18, soundboardSize[2]]} />
+      <SoundboardWall effects={enabledSoundEffects} position={enabledWall.center} rotationY={enabledWall.rotation} section='enabled' />
+      <SoundboardWall effects={archivedSoundEffects} position={archivedWall.center} rotationY={archivedWall.rotation} section='archived' />
     </group>
   </>
 }

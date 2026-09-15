@@ -151,7 +151,8 @@ describe('new destructible botanical models', () => {
   test.each(['birdOfParadise', 'peaceLily'] as const)('%s releases every owned buffer', kind => {
     const geometry = new DestructiblePlantGeometry(kind)
     const parts = [
-      geometry.stems, ...geometry.leaves.flatMap(leaf => {
+      geometry.stems,
+      ...geometry.leaves.flatMap(leaf => {
         return leaf.stem ? [leaf.geometry, leaf.stem] : [leaf.geometry]
       }),
     ]

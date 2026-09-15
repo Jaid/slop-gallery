@@ -2,11 +2,13 @@ import type {Vec3} from '../gallery/types.ts'
 
 /** One left-aligned row per displayed creator, with walking space around every edge. */
 export default class KnotLayout {
-  readonly bounds: {height: number
+  readonly bounds: {
+    height: number
     maxX: number
     minX: number
     northZ: number
-    southZ: number}
+    southZ: number
+  }
   readonly center: Vec3
   readonly firstRowZ = 2
   readonly itemSpacing = 3.5

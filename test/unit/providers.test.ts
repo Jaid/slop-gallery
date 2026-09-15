@@ -40,8 +40,10 @@ test('the real text adapter consumes streamed structured output', async () => {
   expect(result).toEqual(flavor)
   expect(partials.length).toBeGreaterThan(0)
   expect(fetchSpy.mock.calls[0][0]).toBe('https://openrouter.ai/api/v1/chat/completions')
-  const request = JSON.parse(fetchSpy.mock.calls[0][1]!.body as string) as {messages: Array<{content: Array<{image_url: {url: string}}>}>
-    model: string}
+  const request = JSON.parse(fetchSpy.mock.calls[0][1]!.body as string) as {
+    messages: Array<{content: Array<{image_url: {url: string}}>}>
+    model: string
+  }
   expect(request.model).toBe('test-model')
   expect(request.messages.at(-1)!.content[0].image_url.url).toStartWith('data:image/webp;base64,')
 })

@@ -11,10 +11,13 @@ test('shares geometry by displacement bound and keeps collider and culling bound
   const base = knotsById.get('astra/lenticular_mirage')!
   const relief = knotsById.get('astra/coralline_crown')!
   const resources = new KnotResources([
-    base, {
+    base,
+    {
       ...base,
       id: 'second',
-    }, relief, {
+    },
+    relief,
+    {
       ...relief,
       id: 'another_relief',
     },

@@ -12,8 +12,10 @@ export const tunnelDisplayWindow = {
 const centerZ = (tunnel.northZ + tunnel.southZ) / 2
 const depth = 3.2
 const thickness = 0.18
-export type DisplayBox = {position: Vec3
-  size: Vec3}
+export type DisplayBox = {
+  position: Vec3
+  size: Vec3
+}
 const tunnelDisplays = (['west', 'east'] as const).map((side, index) => {
   const direction = side === 'west' ? -1 : 1
   const frontX = tunnel.x + direction * tunnel.width / 2

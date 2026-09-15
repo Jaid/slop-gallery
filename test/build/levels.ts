@@ -16,8 +16,10 @@ for (const level of levelIds) {
     throw new Error(`Failed to build ${level}.`)
   }
   const directory = join('out/production', level)
-  const report = await Bun.file(join(directory, 'level-build.json')).json() as {level: string
-    modules: Array<string>}
+  const report = await Bun.file(join(directory, 'level-build.json')).json() as {
+    level: string
+    modules: Array<string>
+  }
   if (report.level !== level || !report.modules.includes(requiredModules[level])) {
     throw new Error(`Invalid scene graph in ${level}.`)
   }

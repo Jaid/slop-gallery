@@ -23,10 +23,14 @@ type State = GallerySettings & GallerySnapshot & {
   hasControlled: boolean
   held: string | null
   importEpoch: number
-  importFiles: ((files: Array<File>, target?: {direction: Vec3
-    origin: Vec3}) => Promise<void>) | null
-  importTarget: ((x: number, y: number) => {direction: Vec3
-    origin: Vec3}) | null
+  importFiles: ((files: Array<File>, target?: {
+    direction: Vec3
+    origin: Vec3
+  }) => Promise<void>) | null
+  importTarget: ((x: number, y: number) => {
+    direction: Vec3
+    origin: Vec3
+  }) | null
   inspecting: string | null
   locked: boolean
   narration: NarrationState | null
@@ -113,7 +117,7 @@ export const useGallery = create<State>((set, get) => ({
   importFiles: null,
   importTarget: null,
   update: (id, patch) => set(s => {
-    const portraits = s.portraits.map(p => p.id === id ? {...p, ...patch} : p)
+    const portraits = s.portraits.map(p => (p.id === id ? {...p, ...patch} : p))
     if (patch.source !== undefined) {
       validateCollectionImages(portraits)
     }

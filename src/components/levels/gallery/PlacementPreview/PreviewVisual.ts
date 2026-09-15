@@ -9,7 +9,7 @@ export const previewColors = {
   valid: '#36ff72',
   invalid: '#ff3b45',
 }
-export const previewOpacity = (inReach: boolean) => (inReach ? 1 : 0.18)
+export const previewOpacity = (inReach: boolean) => inReach ? 1 : 0.18
 
 /** A closed ribbon whose U coordinate measures distance around the frame. */
 export function previewBorderGeometry(width: number, height: number, thickness = 0.028) {
@@ -51,8 +51,10 @@ export default class PreviewVisual {
   readonly time = uniform(0)
   readonly tint = uniform(new Color)
 
-  constructor(width: number, height: number, artwork: Texture<{height: number
-    width: number}> | null) {
+  constructor(width: number, height: number, artwork: Texture<{
+    height: number
+    width: number
+  }> | null) {
     const outerWidth = width + 0.22
     const outerHeight = height + 0.22
     this.border = previewBorderGeometry(outerWidth, outerHeight)

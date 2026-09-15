@@ -22,20 +22,20 @@ export default function Chandelier() {
     geometry.dispose()
   }, [brass, geometry])
   return <group name='sienna-chandelier' position={[0, chandelierPhysics.height, 0]}>
-    <RigidBody ref={anchor} type='fixed' colliders={false} position={chandelierPhysics.anchor} />
-    <mesh name='chandelier-canopy' geometry={geometry.canopy} material={brass} castShadow />
-    <RigidBody ref={fixture} colliders={false} ccd canSleep={false} angularDamping={chandelierPhysics.angularDamping} linearDamping={chandelierPhysics.linearDamping} additionalSolverIterations={8}>
+    <RigidBody colliders={false} position={chandelierPhysics.anchor} ref={anchor} type='fixed' />
+    <mesh castShadow geometry={geometry.canopy} material={brass} name='chandelier-canopy' />
+    <RigidBody additionalSolverIterations={8} angularDamping={chandelierPhysics.angularDamping} canSleep={false} ccd colliders={false} linearDamping={chandelierPhysics.linearDamping} ref={fixture}>
       <BallCollider args={[0.21]} mass={chandelierPhysics.hubMass} />
-      <BallCollider args={[0.12]} position={[0, -0.38, 0]} mass={chandelierPhysics.pendantMass} />
-      <CylinderCollider args={[chandelierStemHalfHeight, 0.022]} position={[0, chandelierStemCenter, 0]} mass={chandelierPhysics.stemMass} />
-      {geometry.armColliders.map((vertices, i) => <ConvexHullCollider key={i} args={[vertices]} mass={chandelierPhysics.armMass} restitution={0.15} />)}
-      {geometry.ringColliders.map((vertices, i) => <ConvexHullCollider key={`ring-${i}`} args={[vertices]} mass={chandelierPhysics.ringMass} restitution={0.15} />)}
-      <mesh name='chandelier-brass' geometry={geometry.brass} castShadow><primitive object={brass} attach='material' /></mesh>
-      <mesh name='chandelier-candles' geometry={geometry.candles} castShadow><meshStandardNodeMaterial color='#e7c991' roughness={0.65} /></mesh>
-      <mesh name='chandelier-flames' geometry={geometry.flames}><meshStandardNodeMaterial color='#fff0b6' emissive='#ffd36c' emissiveIntensity={4} toneMapped={false} /></mesh>
-      <mesh name='chandelier-pendant' geometry={geometry.pendant}><primitive object={brass} attach='material' /></mesh>
+      <BallCollider args={[0.12]} mass={chandelierPhysics.pendantMass} position={[0, -0.38, 0]} />
+      <CylinderCollider args={[chandelierStemHalfHeight, 0.022]} mass={chandelierPhysics.stemMass} position={[0, chandelierStemCenter, 0]} />
+      {geometry.armColliders.map((vertices, i) => <ConvexHullCollider args={[vertices]} key={i} mass={chandelierPhysics.armMass} restitution={0.15} />)}
+      {geometry.ringColliders.map((vertices, i) => <ConvexHullCollider args={[vertices]} key={`ring-${i}`} mass={chandelierPhysics.ringMass} restitution={0.15} />)}
+      <mesh castShadow geometry={geometry.brass} name='chandelier-brass'><primitive attach='material' object={brass} /></mesh>
+      <mesh castShadow geometry={geometry.candles} name='chandelier-candles'><meshStandardNodeMaterial color='#e7c991' roughness={0.65} /></mesh>
+      <mesh geometry={geometry.flames} name='chandelier-flames'><meshStandardNodeMaterial color='#fff0b6' emissive='#ffd36c' emissiveIntensity={4} toneMapped={false} /></mesh>
+      <mesh geometry={geometry.pendant} name='chandelier-pendant'><primitive attach='material' object={brass} /></mesh>
       {/* Keep the shared light below the metalwork so the fixture cannot shadow its own source. */}
-      <pointLight position={[0, -0.6, 0]} color='#ffd36c' intensity={110} distance={13} decay={2} castShadow shadow-mapSize={[1024, 1024]} shadow-camera-near={0.1} shadow-camera-far={13} shadow-normalBias={0.035} />
+      <pointLight castShadow color='#ffd36c' decay={2} distance={13} intensity={110} position={[0, -0.6, 0]} shadow-camera-far={13} shadow-camera-near={0.1} shadow-mapSize={[1024, 1024]} shadow-normalBias={0.035} />
     </RigidBody>
   </group>
 }

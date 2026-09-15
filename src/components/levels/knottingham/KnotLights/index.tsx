@@ -69,18 +69,22 @@ const setFractureSeamMatrix = (mesh: InstancedMesh, index: number, slot: KnotLig
   const matrix = (new Matrix4).set(cx - bx, 0, deadNormalX * fractureSeamWidth, bx, 0, 1, 0, slot.position[1] + deadMaskSurfaceY - 0.001, cz - bz, 0, deadNormalZ * fractureSeamWidth, bz, 0, 0, 0, 1)
   mesh.setMatrixAt(index, matrix)
 }
-const colliderWorldPoint = (collider: CollisionEnterPayload['target']['collider'], point: {x: number
+const colliderWorldPoint = (collider: CollisionEnterPayload['target']['collider'], point: {
+  x: number
   y: number
-  z: number}) => {
+  z: number
+}) => {
   const rotation = collider.rotation()
   const translation = collider.translation()
   return new Vector3(point.x, point.y, point.z)
     .applyQuaternion(new Quaternion(rotation.x, rotation.y, rotation.z, rotation.w))
     .add(new Vector3(translation.x, translation.y, translation.z))
 }
-const collisionImpactPoint = (event: CollisionEnterPayload, fallback: {x: number
+const collisionImpactPoint = (event: CollisionEnterPayload, fallback: {
+  x: number
   y: number
-  z: number}) => {
+  z: number
+}) => {
   const weighted = new Vector3
   let totalWeight = 0
   const unweighted = new Vector3
@@ -409,8 +413,8 @@ export default function KnotLights() {
     <primitive object={resources.fractureSeams} />
     <primitive object={resources.diffuser} />
     {emitters.map(light => <primitive key={light.name} object={light} />)}
-    <RigidBody type='fixed' colliders={false}>
-      {slots.map((slot, index) => damage.stage(index) < 2 && <CuboidCollider key={slot.id} position={slot.position} args={[housingSize[0] / 2, knotLight.size[1] / 2, housingSize[2] / 2]} restitution={0.08} friction={0.6} onCollisionEnter={event => onImpact(index, event)} />)}
+    <RigidBody colliders={false} type='fixed'>
+      {slots.map((slot, index) => damage.stage(index) < 2 && <CuboidCollider args={[housingSize[0] / 2, knotLight.size[1] / 2, housingSize[2] / 2]} friction={0.6} key={slot.id} onCollisionEnter={event => onImpact(index, event)} position={slot.position} restitution={0.08} />)}
     </RigidBody>
   </group>
 }

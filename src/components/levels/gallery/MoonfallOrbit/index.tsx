@@ -11,7 +11,7 @@ export default function MoonfallOrbit() {
     }
   })
   return <group name='moonfall-orbital-sculpture' position={[0, 2.5, 0]}>
-    <mesh castShadow><icosahedronGeometry args={[0.7, 2]} /><meshStandardNodeMaterial color='#11252c' metalness={0.8} roughness={0.3} envMapIntensity={0.35} /></mesh>
+    <mesh castShadow><icosahedronGeometry args={[0.7, 2]} /><meshStandardNodeMaterial color='#11252c' envMapIntensity={0.35} metalness={0.8} roughness={0.3} /></mesh>
     <group ref={orbit}>
       {[0, 1, 2].map(i => <group key={i} rotation={[0.65 + i * 0.7, i * Math.PI / 3, i * 0.35]}>
         <mesh><torusGeometry args={[1.25 + i * 0.26, 0.018, 8, 128]} /><meshStandardNodeMaterial color={i === 1 ? '#d5ad73' : '#8ad6cd'} emissive={i === 1 ? '#d5ad73' : '#62b6b1'} emissiveIntensity={2.2} roughness={0.4} /></mesh>

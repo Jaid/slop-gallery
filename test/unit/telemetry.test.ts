@@ -86,8 +86,10 @@ test('gallery adapters record bounded state, lifecycle events and save spans, th
   await telemetry.dispose()
 })
 test('Victoria uses native JSON metrics and the existing OTLP logs/traces endpoints', async () => {
-  const requests: Array<{init: RequestInit | undefined
-    url: string}> = []
+  const requests: Array<{
+    init: RequestInit | undefined
+    url: string
+  }> = []
   const request = (async (url, init) => {
     requests.push({
       url: url instanceof Request ? url.url : String(url),
@@ -127,12 +129,14 @@ test('Victoria uses native JSON metrics and the existing OTLP logs/traces endpoi
     values: [4.2],
     timestamps: [1234],
   })
-  expect(JSON.parse((requests[1].init?.body as string))).toHaveProperty('resourceLogs')
-  expect(JSON.parse((requests[2].init?.body as string))).toHaveProperty('resourceSpans')
+  expect(JSON.parse(requests[1].init?.body as string)).toHaveProperty('resourceLogs')
+  expect(JSON.parse(requests[2].init?.body as string)).toHaveProperty('resourceSpans')
 })
 test('relay restricts routes, methods, origins, content types and payload size without forwarding credentials', async () => {
-  const calls: Array<{init: RequestInit | undefined
-    url: string}> = []
+  const calls: Array<{
+    init: RequestInit | undefined
+    url: string
+  }> = []
   const upstream = (async (url, init) => {
     calls.push({
       url: url instanceof Request ? url.url : String(url),

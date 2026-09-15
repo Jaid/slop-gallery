@@ -9,12 +9,14 @@ import {Euler, Matrix4, MeshBasicMaterial, Texture, Vector3} from 'three/webgpu'
 import renderLodgeRoom from '../../src/components/levels/gallery/LodgeRoom/index.tsx'
 import lodge from '../../src/lib/gallery/lodge.ts'
 
-type Props = {children?: ReactNode
+type Props = {
+  children?: ReactNode
   colliders?: false | string
   name?: string
   position?: Vec3
   rotation?: Vec3
-  type?: string}
+  type?: string
+}
 const descendants = (node: ReactNode): Array<ReactElement<Props>> => Children.toArray(node).flatMap(child => {
   return isValidElement<Props>(child) ? [child, ...descendants(child.props.children)] : []
 })

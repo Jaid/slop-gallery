@@ -25,9 +25,9 @@ export default function LodgeCorridorRoute({material}: {material: Material}) {
   useDisposable(grain)
   useDisposable(timber)
   return <group name='lodge-corridor-route'>
-    <CoveredPassage passage={lodgeTunnel} material={material} />
-    <CoveredPassage passage={corridorPassage} material={lining} timber={timber} ribCutouts={lodgeWindowRibCutouts} />
-    <CorridorStairs timber={timber} lining={lining} />
+    <CoveredPassage material={material} passage={lodgeTunnel} />
+    <CoveredPassage material={lining} passage={corridorPassage} ribCutouts={lodgeWindowRibCutouts} timber={timber} />
+    <CorridorStairs lining={lining} timber={timber} />
   </group>
 }
 

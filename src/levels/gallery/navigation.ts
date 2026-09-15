@@ -9,4 +9,4 @@ export const playerSpawn: PlayerPose = {
   yaw: 3.135849777946853,
   pitch: -0.108,
 }
-export const woodenFloor = (room: RoomId, position: Vec3) => ['vesper', 'sienna', 'corridor'].includes(room) || room === 'lodge' && !lodgeTunnel.contains(position)
+export const woodenFloor = (room: RoomId, position: Vec3) => ['corridor', 'sienna', 'vesper'].includes(room) || room === 'lodge' && !lodgeTunnel.contains(position)

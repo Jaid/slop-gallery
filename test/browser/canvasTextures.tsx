@@ -80,7 +80,7 @@ export default async function verifyCanvasTextures() {
     function Plane({texture}: {texture: Texture | null}) {
       return <mesh>
         <planeGeometry args={[2, 2]} />
-        <meshBasicNodeMaterial key={texture?.uuid ?? 'pending'} map={texture} transparent toneMapped={false} />
+        <meshBasicNodeMaterial key={texture?.uuid ?? 'pending'} map={texture} toneMapped={false} transparent />
       </mesh>
     }
     const store = root.render(<Plane texture={null} />)

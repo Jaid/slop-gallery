@@ -15,6 +15,6 @@ export default function GameScene({children}: GameWrapperProps) {
     <WebgpuCaptureBridge />
     <TelemetryBridge />
     {children}
-    {profile.postprocessing && <Postprocessing knotFocus={isKnottingham} contactDarkening={isKnottingham} />}
+    {profile.postprocessing && <Postprocessing contactDarkening={isKnottingham} knotFocus={isKnottingham} />}
   </>
 }

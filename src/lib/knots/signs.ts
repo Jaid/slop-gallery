@@ -1,15 +1,19 @@
 import type {Vec3} from '../gallery/types.ts'
 import type {KnotExhibit} from './exhibition.ts'
 
-export type SignPart = {position: Vec3
+export type SignPart = {
+  position: Vec3
   rotation?: Vec3
-  size: Vec3}
+  size: Vec3
+}
 
-export type SignRoundPart = {height: number
+export type SignRoundPart = {
+  height: number
   mass: number
   position: Vec3
   radius: number
-  rotation?: Vec3}
+  rotation?: Vec3
+}
 
 export const knotSign = {
   width: 0.85,

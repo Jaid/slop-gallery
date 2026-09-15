@@ -32,5 +32,5 @@ export default function NarrationBars() {
       reset()
     }
   }, [])
-  return <span ref={container} className={css.container} data-testid='audio-bars' aria-hidden='true'>{narrationBands.map(([minimum]) => <i key={minimum} />)}</span>
+  return <span aria-hidden='true' className={css.container} data-testid='audio-bars' ref={container}>{narrationBands.map(([minimum]) => <i key={minimum} />)}</span>
 }

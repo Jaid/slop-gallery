@@ -92,20 +92,7 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
     }
   })
   return <RigidBody
-    ref={body} type={p.hung ? 'fixed' : 'dynamic'} position={p.position} rotation={[0, p.rotation, 0]} colliders={false} ccd restitution={0.32} friction={0.75} linearDamping={0.22} angularDamping={0.7} userData={{portraitId: p.id}}
-    onSleep={() => {
-      if (!body.current || p.hung || held || p.reserved) {
-        return
-      }
-      const pos = body.current.translation()
-      const q = body.current.rotation()
-      useGallery.getState().update(p.id, {
-        position: [pos.x, pos.y, pos.z] as Vec3,
-        orientation: [q.x, q.y, q.z, q.w] as Quat,
-        velocity: undefined,
-      })
-    }}
-    onCollisionEnter={event => {
+    angularDamping={0.7} ccd colliders={false} friction={0.75} linearDamping={0.22} onCollisionEnter={event => {
       if (p.hung || p.reserved || held) {
         return
       }
@@ -119,19 +106,32 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
       if (target?.hung) {
         requestMerge(target.id, p.id)
       }
-    }}
+    }} onSleep={() => {
+      if (!body.current || p.hung || held || p.reserved) {
+        return
+      }
+      const pos = body.current.translation()
+      const q = body.current.rotation()
+      useGallery.getState().update(p.id, {
+        position: [pos.x, pos.y, pos.z] as Vec3,
+        orientation: [q.x, q.y, q.z, q.w] as Quat,
+        velocity: undefined,
+      })
+    }} position={p.position} ref={body} restitution={0.32} rotation={[0, p.rotation, 0]}
+    type={p.hung ? 'fixed' : 'dynamic'}
+    userData={{portraitId: p.id}}
   >
     <CuboidCollider args={[(w + 0.18) / 2, (h + 0.18) / 2, 0.085]} mass={2} />
     <group ref={group} userData={{portraitId: p.id}} visible={!p.reserved}>
-      <mesh castShadow receiveShadow><boxGeometry args={[w + 0.18, h + 0.18, 0.16]} /><meshStandardNodeMaterial color='#a5804b' roughness={0.32} metalness={0.75} transparent opacity={held ? 0.3 : 1} /></mesh>
+      <mesh castShadow receiveShadow><boxGeometry args={[w + 0.18, h + 0.18, 0.16]} /><meshStandardNodeMaterial color='#a5804b' metalness={0.75} opacity={held ? 0.3 : 1} roughness={0.32} transparent /></mesh>
       <mesh position={[0, 0, 0.087]}><planeGeometry args={[w + 0.045, h + 0.045]} /><meshStandardNodeMaterial color='#29261d' /></mesh>
-      <mesh position={[0, 0, 0.096]}><planeGeometry args={[w, h]} /><DynamicImageMaterial source={p.source} toneMapped={false} transparent opacity={held ? 0.3 : 1} /></mesh>
+      <mesh position={[0, 0, 0.096]}><planeGeometry args={[w, h]} /><DynamicImageMaterial opacity={held ? 0.3 : 1} source={p.source} toneMapped={false} transparent /></mesh>
       {[-1, 1].map(side => <group key={side}>
         <mesh position={[side * (w / 2 + 0.055), 0, 0.1]}><boxGeometry args={[0.022, h + 0.14, 0.026]} /><meshStandardNodeMaterial color='#ddbc7c' metalness={0.6} roughness={0.3} /></mesh>
         <mesh position={[0, side * (h / 2 + 0.055), 0.1]}><boxGeometry args={[w + 0.14, 0.022, 0.026]} /><meshStandardNodeMaterial color='#ddbc7c' metalness={0.6} roughness={0.3} /></mesh>
       </group>)}
-      <Branch if={p.hung}><PortraitLabel width={w} height={h} title={p.title} creator={p.creator} pending={p.pending} /></Branch>
-      <instancedMesh ref={magic} args={[undefined, undefined, 64]} visible={!!p.merging} frustumCulled={false}><octahedronGeometry args={[1]} /><meshBasicNodeMaterial color='#efcf84' toneMapped={false} /></instancedMesh>
+      <Branch if={p.hung}><PortraitLabel creator={p.creator} height={h} pending={p.pending} title={p.title} width={w} /></Branch>
+      <instancedMesh args={[undefined, undefined, 64]} frustumCulled={false} ref={magic} visible={!!p.merging}><octahedronGeometry args={[1]} /><meshBasicNodeMaterial color='#efcf84' toneMapped={false} /></instancedMesh>
     </group>
   </RigidBody>
 }

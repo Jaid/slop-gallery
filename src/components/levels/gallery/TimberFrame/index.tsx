@@ -6,13 +6,15 @@ import {TrimeshCollider} from '@react-three/rapier'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 
 /** The enclosing fixed body and geometry ownership belong to the passage or stair flight. */
-export default function TimberFrame({geometry, material, lining}: {geometry: TimberGeometry
+export default function TimberFrame({geometry, material, lining}: {
+  geometry: TimberGeometry
   lining: Material
-  material: Material}) {
+  material: Material
+}) {
   const collision = [geometry.shell, geometry.ribs].map(colliderGeometry)
   return <>
-    {collision.map((args, i) => <TrimeshCollider key={i} args={args} />)}
-    <mesh name='timber-plank-shell' geometry={geometry.shell} material={lining} receiveShadow castShadow />
-    <mesh name='timber-faceted-portals' geometry={geometry.ribs} material={material} receiveShadow castShadow />
+    {collision.map((args, i) => <TrimeshCollider args={args} key={i} />)}
+    <mesh castShadow geometry={geometry.shell} material={lining} name='timber-plank-shell' receiveShadow />
+    <mesh castShadow geometry={geometry.ribs} material={material} name='timber-faceted-portals' receiveShadow />
   </>
 }

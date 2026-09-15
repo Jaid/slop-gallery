@@ -72,9 +72,11 @@ test('voice replacements are staged until every selected announcement succeeds a
     expect(generate).toHaveBeenCalledTimes(3)
     expect(await Array.fromAsync(new Bun.Glob('**/request-*.json').scan(cacheRoot))).toHaveLength(1)
     const receipts = await Array.fromAsync(new Bun.Glob('*/receipt.json').scan(cacheRoot))
-    const receipt = await fs.readJson(path.resolve(cacheRoot, receipts[0])) as {bitrate: number
+    const receipt = await fs.readJson(path.resolve(cacheRoot, receipts[0])) as {
+      bitrate: number
       output: string
-      telemetryDelivered: boolean}
+      telemetryDelivered: boolean
+    }
     expect(receipt.bitrate).toBe(20_000)
     expect(receipt.telemetryDelivered).toBe(true)
     const previous = await Promise.all(paths.map(file => Bun.file(file).bytes()))

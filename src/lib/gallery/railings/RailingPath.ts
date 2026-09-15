@@ -2,14 +2,20 @@ import type {Vec3} from '../types.ts'
 
 import {Curve, Quaternion, Vector3} from 'three/webgpu'
 
-export type RailingAnchor = {ground: Vec3
-  height: number}
+export type RailingAnchor = {
+  ground: Vec3
+  height: number
+}
 
-type RailingPost = {height: number
-  position: Vec3}
-type RailingSegment = {halfLength: number
+type RailingPost = {
+  height: number
   position: Vec3
-  rotation: [number, number, number, number]}
+}
+type RailingSegment = {
+  halfLength: number
+  position: Vec3
+  rotation: [number, number, number, number]
+}
 
 export default class RailingPath extends Curve<Vector3> {
   readonly distances = [0]

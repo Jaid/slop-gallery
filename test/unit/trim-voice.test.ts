@@ -40,15 +40,18 @@ test('shifts timestamps and clamps removed intervals without deleting provider c
       char: '<',
       start: 0,
       end: 0.05,
-    }, {
+    },
+    {
       char: 'a',
       start: 0.08,
       end: 0.15,
-    }, {
+    },
+    {
       char: 'b',
       start: 0.2,
       end: 0.4,
-    }, {
+    },
+    {
       char: '>',
       start: 0.45,
       end: 0.5,

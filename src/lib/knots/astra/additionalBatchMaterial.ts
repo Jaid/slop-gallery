@@ -15,32 +15,7 @@
 import type {Node, Texture} from 'three/webgpu'
 
 import * as tsl from 'three/tsl'
-import {bitangentView,
-  cameraPosition,
-  color,
-  float,
-  Fn as fn,
-  mix,
-  modelViewMatrix,
-  modelWorldMatrixInverse,
-  mx_atan2,
-  mx_noise_float,
-  negateOnBackSide,
-  normalLocal,
-  normalViewGeometry,
-  positionGeometry,
-  positionView,
-  positionViewDirection,
-  positionWorld,
-  select,
-  tangentView,
-  time,
-  transformNormalToView,
-  uv,
-  varying,
-  vec2,
-  vec3,
-  vec4} from 'three/tsl'
+import {bitangentView, cameraPosition, color, float, Fn as fn, mix, modelViewMatrix, modelWorldMatrixInverse, mx_atan2, mx_noise_float, negateOnBackSide, normalLocal, normalViewGeometry, positionGeometry, positionView, positionViewDirection, positionWorld, select, tangentView, time, transformNormalToView, uv, varying, vec2, vec3, vec4} from 'three/tsl'
 import {MeshPhysicalNodeMaterial} from 'three/webgpu'
 
 const TAU = Math.PI * 2
@@ -102,8 +77,7 @@ function annulus(radius: Node<'float'>, inner: number, outer: number) {
  * Height is expressed in object-scale metres, rather than arbitrary
  * normal-map RGB values. Works with both the original and sculpted normals.
  */
-function bumpNormal(height: Node<'float'>,
-  normal: Node<'vec3'> = normalViewGeometry) {
+function bumpNormal(height: Node<'float'>, normal: Node<'vec3'> = normalViewGeometry) {
   const N = normal.normalize()
   const dx = positionView.dFdx()
   const dy = positionView.dFdy()
@@ -130,7 +104,9 @@ function wrapCell(cell: Node<'vec2'>, period: Node<'vec2'>) {
  * branchless, and derivatives are taken only after the search completes.
  */
 const packedCells = fn(([
-  q, period]: [
+  q,
+  period,
+]: [
   Node<'vec2'>,
   Node<'vec2'>,
 ]) => {
@@ -167,7 +143,9 @@ const knotCurve = fn(([angle]: [Node<'float'>]) => {
   return vec3(radius.mul(angle.cos()), radius.mul(angle.sin()), phase.sin().mul(0.225))
 })
 const knotShell = fn(([
-  tube, inset]: [
+  tube,
+  inset,
+]: [
   Node<'vec2'>,
   Node<'float'>,
 ]) => {
@@ -235,10 +213,7 @@ function chladniField(tube: Node<'vec2'>) {
     .sub(U.mul(12).cos().mul(V.mul(3).sin()).mul(balance))
     .add(U.mul(6).sin().mul(V.cos()).mul(0.2))
 }
-function watchGear(point: Node<'vec2'>,
-  radius: number,
-  teeth: number,
-  rotation: Node<'float'>) {
+function watchGear(point: Node<'vec2'>, radius: number, teeth: number, rotation: Node<'float'>) {
   const r = point.length()
   const theta = (mx_atan2(point.y, point.x.add(0.000001)) as unknown as Node<'float'>).sub(rotation)
   const footprint = point.fwidth().length().max(0.00001)
@@ -491,12 +466,7 @@ export class KnotMaterial extends MeshPhysicalNodeMaterial {
             // gooseflesh and reveals a shallow pigment-capillary network.
             // ---------------------------------------------------------------
       case 'blushing_matter': {
-        const {p,
-          view,
-          facing,
-          grazing,
-          near,
-          intimate} = viewerFrame()
+        const {p, view, facing, grazing, near, intimate} = viewerFrame()
         const mottling = mx_noise_float(p.mul(4.2))
         const pulse = time.mul(0.72)
           .add(p.y.mul(5))

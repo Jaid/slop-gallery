@@ -10,10 +10,7 @@ import {telemetry} from '../telemetry/index.ts'
 export default class GalleryDirector {
   readonly narrator: Narrator
   private controller = new AbortController
-  private flavors = new Map<string, symbol>
-  private merges = new Map<string, symbol>
-
-  constructor(private settings: AiSettings, private key: string) {
+  private flavors = new Map<string, symbol>private merges = new Map<string, symbol>constructor(private settings: AiSettings, private key: string) {
     this.narrator = new Narrator(settings, key)
   }
 
@@ -95,7 +92,7 @@ export default class GalleryDirector {
 
   protected async generateFlavor(image: Blob, onPartial: (partial: Partial<Portrait>) => void, signal: AbortSignal): Promise<Partial<Portrait>> {
     const {default: FlavorGenerator} = await import('./FlavorGenerator.ts')
-    const effort = ['none', 'minimal', 'low', 'medium', 'high'].includes(this.settings.text_model_effort) ? this.settings.text_model_effort : 'low'
+    const effort = ['high', 'low', 'medium', 'minimal', 'none'].includes(this.settings.text_model_effort) ? this.settings.text_model_effort : 'low'
     return new FlavorGenerator(this.key, this.settings.text_model, effort as 'low').generate(image, onPartial, signal)
   }
   protected async generateMerge(first: Portrait['source'], second: Portrait['source'], signal: AbortSignal, aspect: number) {
@@ -157,7 +154,7 @@ export default class GalleryDirector {
         description: `“${a.title}” met “${b.title}”. Neither had planned to share a frame. ${this.settings.ai && this.key ? 'An AI-assisted collaboration.' : 'A locally made cut-paper collage, joined with a little gold.'}`.slice(0, 5000),
       }
       const state = useGallery.getState()
-      state.commit(state.portraits.filter(p => p.id !== second).map(p => p.id === first ? result : p))
+      state.commit(state.portraits.filter(p => p.id !== second).map(p => (p.id === first ? result : p)))
       chime(900)
       notify('Something wonderfully unexpected. Undo will bring both originals back.')
       void this.flavor(result).catch(() => notify('The label could not be prepared.'))

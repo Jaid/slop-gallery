@@ -2,9 +2,7 @@ export type AimDotBlocker = 'viewing' | 'zoom'
 
 type Listener = () => void
 
-const blockers = new Set<AimDotBlocker>
-const listeners = new Set<Listener>
-let visible = true
+const blockers = new Set<AimDotBlocker>const listeners = new Set<Listener>let visible = true
 function publish() {
   const next = blockers.size === 0
   if (next === visible) {

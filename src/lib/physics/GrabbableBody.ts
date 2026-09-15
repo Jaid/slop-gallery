@@ -17,10 +17,12 @@ export type GrabbableBodyOptions = {
 type BodyPose = {
   collisions: Array<boolean>
   position: Vec3
-  rotation: {w: number
+  rotation: {
+    w: number
     x: number
     y: number
-    z: number}
+    z: number
+  }
   type: ReturnType<RigidBody['bodyType']>
 }
 

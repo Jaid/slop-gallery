@@ -165,8 +165,10 @@ export function insideGallery(position: Vec3) {
   return position.every(Number.isFinite) && (rooms.some(room => contains(room, position)) || insideStairway(position) || tunnelContains(position) || insideLodgeAccess(position))
 }
 
-export function roomVisit(room: (typeof rooms)[number]): {position: Vec3
-  rotation: [number, number, number, number]} {
+export function roomVisit(room: (typeof rooms)[number]): {
+  position: Vec3
+  rotation: [number, number, number, number]
+} {
   if (room.id === 'corridor') {
     return {
       position: [corridor.center[0], corridor.floorY + 1.7, corridor.center[1]],

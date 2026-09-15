@@ -35,10 +35,10 @@ export default function KnotPreviewSign({bay}: {bay: KnotBay}) {
     disposeInputs: (images: ReadonlyMap<string, ImageBitmap>) => closeCanvasBitmaps(images.values()),
     draw: (context: CanvasRenderingContext2D, images: ReadonlyMap<string, ImageBitmap>) => drawPreview(context, bay, images),
   })
-  return <InteractiveObject id={`preview-${bay.candidate.id}`} onActivate={() => narrate(`preview-${bay.candidate.id}`)} name={`preview-${bay.candidate.id}`} position={[knotPreviewX, 1.5, 0]} rotation={[0, Math.PI / 2, 0]}>
+  return <InteractiveObject id={`preview-${bay.candidate.id}`} name={`preview-${bay.candidate.id}`} onActivate={() => narrate(`preview-${bay.candidate.id}`)} position={[knotPreviewX, 1.5, 0]} rotation={[0, Math.PI / 2, 0]}>
     <mesh name={`preview-surface-${bay.candidate.id}`} position={[0, 0, 0.003]}>
-      <planeGeometry args={[grid.width, grid.height]} /><meshBasicNodeMaterial key={texture?.uuid ?? 'pending'} map={texture} color={texture ? '#ffffff' : knotPreviewBackground} toneMapped={false} />
+      <planeGeometry args={[grid.width, grid.height]} /><meshBasicNodeMaterial color={texture ? '#ffffff' : knotPreviewBackground} key={texture?.uuid ?? 'pending'} map={texture} toneMapped={false} />
     </mesh>
-    <Support width={grid.width} height={grid.height} />
+    <Support height={grid.height} width={grid.width} />
   </InteractiveObject>
 }

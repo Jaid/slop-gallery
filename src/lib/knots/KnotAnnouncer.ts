@@ -71,9 +71,11 @@ export default class KnotAnnouncer {
     this.controller = undefined
   }
 
-  private async play(recordings: ReadonlyArray<{completed?: Set<string>
+  private async play(recordings: ReadonlyArray<{
+    completed?: Set<string>
     id: string
-    title: string}>) {
+    title: string
+  }>) {
     this.stop()
     const controller = new AbortController
     this.controller = controller

@@ -37,14 +37,14 @@ export default function Fountain() {
     water.stream.dispose()
   }, [water])
   return <group name='lobby-fountain' position={fountain.position}>
-    <RigidBody type='fixed' colliders={false}>
+    <RigidBody colliders={false} type='fixed'>
       <MeshSurfaceCollider args={collision} />
-      <mesh name='fountain-carved-stone' geometry={geometry.stone} material={stone} receiveShadow castShadow />
-      <mesh name='fountain-brass-inlay' geometry={geometry.brass} material={brass} receiveShadow castShadow />
+      <mesh castShadow geometry={geometry.stone} material={stone} name='fountain-carved-stone' receiveShadow />
+      <mesh castShadow geometry={geometry.brass} material={brass} name='fountain-brass-inlay' receiveShadow />
     </RigidBody>
-    <mesh name='fountain-pools' geometry={geometry.pools} material={water.pool} />
-    <mesh name='fountain-cascades' geometry={geometry.streams} material={water.stream} />
+    <mesh geometry={geometry.pools} material={water.pool} name='fountain-pools' />
+    <mesh geometry={geometry.streams} material={water.stream} name='fountain-cascades' />
     <primitive object={spray} />
-    <pointLight position={[0, 0.85, 0]} color='#8edbce' intensity={4} distance={4} />
+    <pointLight color='#8edbce' distance={4} intensity={4} position={[0, 0.85, 0]} />
   </group>
 }

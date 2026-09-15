@@ -27,8 +27,7 @@ export function validateDocument(value: unknown): GalleryDocument {
   if (typeof settings.sound !== 'boolean') {
     throw new TypeError('The collection has invalid settings.')
   }
-  const ids = new Set<string>
-  const portraits: Array<Portrait> = value.portraits.map((p: unknown) => {
+  const ids = new Set<string>const portraits: Array<Portrait> = value.portraits.map((p: unknown) => {
     if (!object(p) || !shortText(p.id, 100) || !p.id || ids.has(p.id) || !shortText(p.title, 300) || !shortText(p.creator, 200) || !shortText(p.description, 5000) || !vector(p.position, 3) || typeof p.rotation !== 'number' || !Number.isFinite(p.rotation) || typeof p.hung !== 'boolean' || typeof p.width !== 'number' || typeof p.height !== 'number' || !(p.width >= 0.15 && p.width <= 4 && p.height >= 0.15 && p.height <= 4)) {
       throw new Error('The collection contains an invalid artwork.')
     }

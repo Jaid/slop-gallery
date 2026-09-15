@@ -12,16 +12,20 @@ export type GalleryDiagnostics = {
   locked: boolean
   menuStage: PauseMenuStage
   placement: Placement | null
-  portraits: Array<Pick<Portrait, 'height' | 'hung' | 'id' | 'merging' | 'pending' | 'position' | 'reserved' | 'title' | 'wallId' | 'width'> & {physical?: {x: number
+  portraits: Array<Pick<Portrait, 'height' | 'hung' | 'id' | 'merging' | 'pending' | 'position' | 'reserved' | 'title' | 'wallId' | 'width'> & {physical?: {
+    x: number
     y: number
-    z: number}}>
+    z: number
+  }}>
   props: Array<{
     bodyType: number
     collidersEnabled: Array<boolean>
     id: string
-    position: {x: number
+    position: {
+      x: number
       y: number
-      z: number}
+      z: number
+    }
     sleeping: boolean
     visualPosition: Vec3
   }>
@@ -34,12 +38,16 @@ export type GalleryDiagnostics = {
 }
 type GalleryDebugApi = Partial<CaptureFrameApi> & {
   merge?: (first: string, second: string) => void
-  player?: {enabled: boolean
+  player?: {
+    enabled: boolean
     grounded: boolean
     keys: Record<string, boolean>
-    position: {x: number
+    position: {
+      x: number
       y: number
-      z: number}}
+      z: number
+    }
+  }
   snapshot?: () => GalleryDiagnostics
   teleport?: (position: Vec3, rotation: Array<number>) => void
 }

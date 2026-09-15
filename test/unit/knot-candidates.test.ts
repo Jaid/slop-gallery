@@ -35,10 +35,12 @@ describe('arbitrary Knot batches', () => {
   test('handles empty and partial rows without padding or reintroducing archives', () => {
     expect(ids(new KnotCandidate(candidateData, []))).toEqual([])
     const candidate = new KnotCandidate(candidateData, [
-      item('alpha'), {
+      item('alpha'),
+      {
         ...item('beta', true),
         archived: true,
-      }, item('gamma'),
+      },
+      item('gamma'),
     ])
     expect(ids(candidate)).toEqual(['alpha', 'gamma'])
     expect(candidate.items).toHaveLength(3)

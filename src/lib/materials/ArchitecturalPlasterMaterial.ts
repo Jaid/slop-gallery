@@ -5,10 +5,12 @@ import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 /** Restrained architectural plaster: large mottling plus fine surface grain in quality mode. */
 export default class ArchitecturalPlasterMaterial extends MeshStandardNodeMaterial {
-  constructor({baseColor, map, quality, roughness}: {baseColor: string
+  constructor({baseColor, map, quality, roughness}: {
+    baseColor: string
     map?: Texture
     quality: boolean
-    roughness: number}) {
+    roughness: number
+  }) {
     super({
       color: baseColor,
       map: quality ? null : map,

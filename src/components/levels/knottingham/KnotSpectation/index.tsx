@@ -17,9 +17,7 @@ import {setKnotFocus} from '#src/lib/rendering/playerView.ts'
 
 const exhibits = new Map(knotExhibition.map(item => [`prop-knot-${item.id}`, item]))
 const candidateSurfaces = new Map<string, KnotBay>(knotBays.flatMap(bay => [[`preview-${bay.candidate.id}`, bay], [`candidate-sign-${bay.candidate.id}`, bay]] as const))
-const announcedModels = new Set<string>
-const announcedItems = new Set<string>
-const inspectionDistanceSpeed = 0.45
+const announcedModels = new Set<string>const announcedItems = new Set<string>const inspectionDistanceSpeed = 0.45
 const inspectionOrbitSpeed = 1.5
 const inspectionFocusSpeed = 8
 const baseRadius = (() => {

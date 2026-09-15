@@ -19,15 +19,15 @@ export default function KnotStudyMap({compact}: {compact?: boolean} = {}) {
     update()
     return () => cancelAnimationFrame(frame)
   }, [])
-  return <svg className={css.container} viewBox={`${knotGalleryBounds.minX - 1} ${knotGalleryBounds.northZ - 1} ${knotGallerySize[0] + 2} ${knotGallerySize[2] + 2}`} role='img' aria-label={`Knottingham: ${knotBays.length} candidate rows in the exhibition hall`}>
-    <rect x={knotGalleryBounds.minX} y={knotGalleryBounds.northZ} width={knotGallerySize[0]} height={knotGallerySize[2]} fill='none' stroke='#888' strokeWidth='0.2' />
-    {knotBays.map(bay => <path key={bay.candidate.id} d={`M ${knotLayout.previewX} ${bay.center[2] - 2.4} v 4.8`} stroke='#b7a885' strokeWidth='0.25'><title>{`${bay.candidate.title} overview`}</title></path>)}
-    <Branch not={compact}>{knotBays.map(bay => <text key={bay.candidate.id} x={knotLayout.rowCenterX(bay.finishes.length)} y={bay.center[2] - 1.5} textAnchor='middle' className={css.label} fontSize='1.3' fontWeight='600'>{bay.candidate.title}</text>)}</Branch>
+  return <svg aria-label={`Knottingham: ${knotBays.length} candidate rows in the exhibition hall`} className={css.container} role='img' viewBox={`${knotGalleryBounds.minX - 1} ${knotGalleryBounds.northZ - 1} ${knotGallerySize[0] + 2} ${knotGallerySize[2] + 2}`}>
+    <rect fill='none' height={knotGallerySize[2]} stroke='#888' strokeWidth='0.2' width={knotGallerySize[0]} x={knotGalleryBounds.minX} y={knotGalleryBounds.northZ} />
+    {knotBays.map(bay => <path d={`M ${knotLayout.previewX} ${bay.center[2] - 2.4} v 4.8`} key={bay.candidate.id} stroke='#b7a885' strokeWidth='0.25'><title>{`${bay.candidate.title} overview`}</title></path>)}
+    <Branch not={compact}>{knotBays.map(bay => <text className={css.label} fontSize='1.3' fontWeight='600' key={bay.candidate.id} textAnchor='middle' x={knotLayout.rowCenterX(bay.finishes.length)} y={bay.center[2] - 1.5}>{bay.candidate.title}</text>)}</Branch>
     {knotExhibition.map(exhibit => <g key={exhibit.id}>
       <title>{`${exhibit.label} · ${exhibit.title} · ${exhibit.modelTitle}`}</title>
-      <circle data-knot={exhibit.id} cx={exhibit.position[0]} cy={exhibit.position[2]} r='0.6' className={css.item} />
-      <Branch not={compact}><text x={exhibit.position[0]} y={exhibit.position[2] + 1.4} textAnchor='middle' className={css.label} fontSize='0.75'>{exhibit.label}</text></Branch>
+      <circle className={css.item} cx={exhibit.position[0]} cy={exhibit.position[2]} data-knot={exhibit.id} r='0.6' />
+      <Branch not={compact}><text className={css.label} fontSize='0.75' textAnchor='middle' x={exhibit.position[0]} y={exhibit.position[2] + 1.4}>{exhibit.label}</text></Branch>
     </g>)}
-    <path ref={player} className={css.player} aria-label='Your position' d='M 0 -2.4 L 1.35 1.5 L 0 0.85 L -1.35 1.5 Z' transform={`translate(${cameraPose.position[0]} ${cameraPose.position[2]}) rotate(${minimapHeading(cameraPose.direction)})`} />
+    <path aria-label='Your position' className={css.player} d='M 0 -2.4 L 1.35 1.5 L 0 0.85 L -1.35 1.5 Z' ref={player} transform={`translate(${cameraPose.position[0]} ${cameraPose.position[2]}) rotate(${minimapHeading(cameraPose.direction)})`} />
   </svg>
 }

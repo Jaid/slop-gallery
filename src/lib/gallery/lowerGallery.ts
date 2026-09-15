@@ -35,8 +35,10 @@ export const oculusCeiling = subtractFloorOpening({
   size: lobby.opening.size,
 })
 
-export const oculusPlatform: {position: Vec3
-  size: Vec3} = {
+export const oculusPlatform: {
+  position: Vec3
+  size: Vec3
+} = {
   position: [lowerGallery.oculus.center[0], lowerGallery.floorY + 1.5, lowerGallery.oculus.center[1] - lowerGallery.oculus.size[1] / 2 + 2.5],
   size: [lowerGallery.oculus.size[0], 3, 5],
 }

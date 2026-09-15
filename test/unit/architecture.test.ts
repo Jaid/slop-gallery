@@ -148,7 +148,8 @@ describe('boolean architecture', () => {
           width: 2,
           height: 3.5,
           profile: 'arch' as const,
-        }, {
+        },
+        {
           u: 3,
           width: 2.5,
           height: 3.6,

@@ -1,9 +1,7 @@
 import type {Node, Texture} from 'three/webgpu'
 
 import * as tsl from 'three/tsl'
-import {cameraPosition, color, float, mix, modelWorldMatrixInverse, mx_fractal_noise_float, mx_noise_float, mx_noise_vec3,
-  mx_worley_noise_vec2, negateOnBackSide, normalLocal, normalViewGeometry, normalWorld, pmremTexture,
-  positionGeometry, positionView, positionViewDirection, positionWorld, time, uv, vec2, vec3, vec4} from 'three/tsl'
+import {cameraPosition, color, float, mix, modelWorldMatrixInverse, mx_fractal_noise_float, mx_noise_float, mx_noise_vec3, mx_worley_noise_vec2, negateOnBackSide, normalLocal, normalViewGeometry, normalWorld, pmremTexture, positionGeometry, positionView, positionViewDirection, positionWorld, time, uv, vec2, vec3, vec4} from 'three/tsl'
 import {MeshPhysicalNodeMaterial} from 'three/webgpu'
 
 // KnotMaterialPremium.ts

@@ -17,8 +17,10 @@ const messages = {
   },
 }
 
-export default function ArtworkDropOverlay({rejected, valid}: {rejected: boolean
-  valid: boolean}) {
+export default function ArtworkDropOverlay({rejected, valid}: {
+  rejected: boolean
+  valid: boolean
+}) {
   let message = messages.idle
   if (rejected) {
     message = messages.rejected

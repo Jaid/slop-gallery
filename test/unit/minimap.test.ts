@@ -75,9 +75,11 @@ test('portrait dots follow rigid bodies instead of stale saved positions', () =>
     id: 'minimap-test',
     hung: false,
   }
-  const physical: {x: number
+  const physical: {
+    x: number
     y: number
-    z: number} = {
+    z: number
+  } = {
     x: lowerGallery.oculus.center[0],
     y: lowerGallery.floorY + 1,
     z: lowerGallery.oculus.center[1],

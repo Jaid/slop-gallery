@@ -203,8 +203,7 @@ test('retired motion settings are ignored in saved collections', () => {
 test('movement checkpoints flush synchronously on refresh without rewriting artwork, and detach cleanly', async () => {
   const names = ['localStorage'] as const
   const descriptors = names.map(name => Object.getOwnPropertyDescriptor(globalThis, name))
-  const storage = new Map<string, string>
-  const page = new EventTarget
+  const storage = new Map<string, string>const page = new EventTarget
   Object.assign(document, {defaultView: page})
   Object.defineProperty(globalThis, 'localStorage', {
     configurable: true,

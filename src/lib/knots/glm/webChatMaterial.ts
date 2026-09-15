@@ -78,7 +78,8 @@ export function wrap01(x: Node<'float'>) {
 }
 
 const knotCurve = Fn(([
-  angle]: [
+  angle,
+]: [
   Node<'float'>,
 ]) => {
   const phase = angle.mul(1.5)
@@ -103,7 +104,8 @@ function hopperFields(tube: Node<'vec2'>) {
   }
 }
 const hopperPosition = Fn(([
-  tube]: [
+  tube,
+]: [
   Node<'vec2'>,
 ]) => {
   const angle = tube.x.mul(Math.PI * 4)

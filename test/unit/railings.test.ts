@@ -121,7 +121,8 @@ describe('connected Oculus railings', () => {
       {
         ground: [0, 0, 0],
         height: 1,
-      }, {
+      },
+      {
         ground: [0, 0, 0],
         height: 1,
       },
@@ -130,7 +131,8 @@ describe('connected Oculus railings', () => {
       {
         ground: [0, 0, 0],
         height: 1,
-      }, {
+      },
+      {
         ground: [1, 0, 0],
         height: 0,
       },

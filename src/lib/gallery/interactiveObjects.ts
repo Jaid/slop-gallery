@@ -5,9 +5,7 @@ export type InteractiveObject = {
   group: Object3D
 }
 
-export const interactiveObjects = new Map<string, InteractiveObject>
-
-export function registerInteractiveObject(id: string, object: InteractiveObject) {
+export const interactiveObjects = new Map<string, InteractiveObject>export function registerInteractiveObject(id: string, object: InteractiveObject) {
   interactiveObjects.set(id, object)
   return () => {
     if (interactiveObjects.get(id) === object) {

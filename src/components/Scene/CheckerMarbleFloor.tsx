@@ -8,10 +8,12 @@ import {getGraphicsProfile} from '#src/lib/rendering/graphicsQuality.ts'
 
 import {checkerMarbleTexture} from './materials.ts'
 
-export default function CheckerMarbleFloor({width, depth, reflections, detailed = false}: {depth: number
+export default function CheckerMarbleFloor({width, depth, reflections, detailed = false}: {
+  depth: number
   detailed?: boolean
   reflections?: boolean
-  width: number}) {
+  width: number
+}) {
   const texture = checkerMarbleTexture(width, depth)
   const {floorReflections} = useGraphicsQualityValue(getGraphicsProfile)
   const reflective = reflections ?? floorReflections
@@ -19,9 +21,9 @@ export default function CheckerMarbleFloor({width, depth, reflections, detailed 
   useDisposable(texture)
   useDisposable(material)
   const reflection = material.reflection?.target
-  return <mesh name='knot-room-marble-floor' position={[0, 0.001, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+  return <mesh name='knot-room-marble-floor' position={[0, 0.001, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
     <planeGeometry args={[width, depth]} />
-    <primitive object={material} attach='material' />
+    <primitive attach='material' object={material} />
     <Branch if={reflection}><primitive object={reflection!} /></Branch>
   </mesh>
 }

@@ -3,8 +3,10 @@ import type Telemetry from 'telemethree'
 
 export type WebmcpBridge = {
   getAim: () => AimSnapshot
-  getTelemetry: () => {sessionId: string
-    signals: ReturnType<Telemetry['status']>} | null
+  getTelemetry: () => {
+    sessionId: string
+    signals: ReturnType<Telemetry['status']>
+  } | null
 }
 
 export default function createWebmcpTools(getBridge: () => WebmcpBridge): Array<WebMCP.ModelContextTool> {

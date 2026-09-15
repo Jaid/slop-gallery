@@ -16,16 +16,7 @@ type CanvasTextProps = Omit<ThreeElements['mesh'], 'children'> & {
   width: number
 }
 const textureWidth = 1536
-const CanvasText = ({color = '#ffffff',
-  fontFamily = 'sans-serif',
-  fontSize = 0.7,
-  fontWeight = 400,
-  height,
-  maxWidth = 0.9,
-  materialProps,
-  text,
-  width,
-  ...meshProps}: CanvasTextProps) => {
+const CanvasText = ({color = '#ffffff', fontFamily = 'sans-serif', fontSize = 0.7, fontWeight = 400, height, maxWidth = 0.9, materialProps, text, width, ...meshProps}: CanvasTextProps) => {
   const texture = useCanvasTexture(useMemo(() => ({
     width: textureWidth,
     height: Math.max(64, Math.round(textureWidth * height / width)),
@@ -53,7 +44,7 @@ const CanvasText = ({color = '#ffffff',
   }), [color, fontFamily, fontSize, fontWeight, height, maxWidth, text, width]))
   return <mesh {...meshProps} visible={Boolean(texture) && meshProps.visible !== false}>
     <planeGeometry args={[width, height]} />
-    <meshBasicNodeMaterial key={texture?.uuid ?? 'pending'} {...materialProps} map={texture} transparent depthWrite={false} toneMapped={false} />
+    <meshBasicNodeMaterial key={texture?.uuid ?? 'pending'} {...materialProps} depthWrite={false} map={texture} toneMapped={false} transparent />
   </mesh>
 }
 export default CanvasText

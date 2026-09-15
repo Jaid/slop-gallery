@@ -8,5 +8,5 @@ export default function GoldMaterial() {
   useEffect(() => () => environment.dispose(), [environment])
   const textures = new GoldTextures
   useEffect(() => () => textures.dispose(), [textures])
-  return <meshStandardNodeMaterial map={textures.map} normalMap={textures.normal} normalScale={[0.5, 0.5]} metalness={0.9} roughness={0.12} envMap={environment} envMapIntensity={0.35} />
+  return <meshStandardNodeMaterial envMap={environment} envMapIntensity={0.35} map={textures.map} metalness={0.9} normalMap={textures.normal} normalScale={[0.5, 0.5]} roughness={0.12} />
 }

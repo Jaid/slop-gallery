@@ -114,8 +114,7 @@ describe('multi-model Knot challenge', () => {
           } else {
             expect(material.positionNode).toBeNull()
           }
-          const dependencies = new Set<Node>
-          for (const value of Object.values(material)) {
+          const dependencies = new Set<Node>for (const value of Object.values(material)) {
             if (value && typeof value === 'object' && 'isNode' in value && value.isNode) {
               (value as Node).traverse(node => dependencies.add(node))
             }

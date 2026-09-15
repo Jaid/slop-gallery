@@ -14,11 +14,11 @@ export default function World() {
   const profile = useGraphicsQualityValue(getGraphicsProfile)
   const [initial] = useState(() => playerSession.snapshot())
   return <Game
-    renderer={createGalleryRenderer} controls={controls} physics sceneWrapper={GameScene} shadows={profile.shadows} dpr={profile.dpr} camera={{
+    camera={{
       fov: 62,
       position: [initial.position[0], initial.position[1] + 1.6, initial.position[2]],
       near: 0.05,
       far: 90,
-    }}
+    }} controls={controls} dpr={profile.dpr} physics renderer={createGalleryRenderer} sceneWrapper={GameScene} shadows={profile.shadows}
   ><Scene /></Game>
 }

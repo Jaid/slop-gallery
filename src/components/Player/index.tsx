@@ -50,9 +50,11 @@ export default function Player() {
     const releaseZoom = () => player.current?.releaseZoom()
     galleryEvents.addEventListener('release-zoom', releaseZoom)
     const teleport = (event: Event) => {
-      const {position, rotation, feet} = (event as CustomEvent<{feet?: boolean
+      const {position, rotation, feet} = (event as CustomEvent<{
+        feet?: boolean
         position: [number, number, number]
-        rotation: [number, number, number, number]}>).detail
+        rotation: [number, number, number, number]
+      }>).detail
       setCameraFocused(false)
       // Gallery navigation describes camera poses; ego-player consistently uses feet.
       const destination = feet ? position : [position[0], Math.max(levelFloorHeight(position) + 0.04, position[1] - 1.6), position[2]] as [number, number, number]
@@ -105,5 +107,5 @@ export default function Player() {
       }
     }
   }
-  return <EgoPlayer ref={player} fallbackPosition={playerSpawn.position} position={initial.position} yaw={initial.yaw} pitch={initial.pitch} input={input} enabled={enabled} cameraEnabled={cameraEnabled} pointerLock={pointerLock} onDump={recordPlayerDump} onInteract={onInteract} onInput={markControlled} onZoomChange={setPlayerZoom} onStep={onStep} onUpdate={onUpdate} />
+  return <EgoPlayer cameraEnabled={cameraEnabled} enabled={enabled} fallbackPosition={playerSpawn.position} input={input} onDump={recordPlayerDump} onInput={markControlled} onInteract={onInteract} onStep={onStep} onUpdate={onUpdate} onZoomChange={setPlayerZoom} pitch={initial.pitch} pointerLock={pointerLock} position={initial.position} ref={player} yaw={initial.yaw} />
 }

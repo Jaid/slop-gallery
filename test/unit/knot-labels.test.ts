@@ -16,8 +16,7 @@ describe('Knot nameplates', () => {
     expect(Math.ceil(knotExhibition.length / labelAtlasColumns) * labelHeight).toBeLessThanOrEqual(8192)
   })
   test('ships a local icon for every exhibited model and reuses family marks', async () => {
-    const urls = new Set<string>
-    for (const bay of knotBays) {
+    const urls = new Set<string>for (const bay of knotBays) {
       const url = bay.candidate.icon
       expect(url).toBeDefined()
       expect(new Uint8Array(await Bun.file(new URL(url)).arrayBuffer())[0]).toBe(255)
@@ -45,8 +44,7 @@ describe('Knot nameplates', () => {
   test('draws the complete face once at any atlas offset, with centered icons and bounded text', () => {
     for (const [x, y] of [[0, 0], [labelWidth, labelHeight], [6 * labelWidth, 16 * labelHeight]]) {
       const texts: Array<Array<unknown>> = []
-      const rects: Array<{args: Array<number>
-        color: string}> = []
+      const rects: Array<{args: Array<number>,color: string}> = []
       const images: Array<Array<unknown>> = []
       const fonts: Array<string> = []
       const context = {
@@ -134,9 +132,7 @@ describe('Knot nameplates', () => {
     ] as const
     for (const {harness, effortLevel, expected} of cases) {
       expect(knotDetailLine(harness, effortLevel)).toBe(expected)
-      const lines: Array<{align: string
-        args: Array<unknown>
-        font: string}> = []
+      const lines: Array<{align: string,args: Array<unknown>,font: string}> = []
       const context = {
         font: '',
         textAlign: '',

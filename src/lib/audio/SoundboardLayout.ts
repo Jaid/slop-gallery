@@ -20,11 +20,13 @@ const bottomClearance = 0.65
 
 /** Derives a compact two-wall room from the current effect inventory. */
 export default class SoundboardLayout {
-  readonly bounds: {height: number
+  readonly bounds: {
+    height: number
     maxX: number
     minX: number
     northZ: number
-    southZ: number}
+    southZ: number
+  }
   readonly sections: Record<SoundboardSection, SectionLayout>
   readonly size: [number, number, number]
 

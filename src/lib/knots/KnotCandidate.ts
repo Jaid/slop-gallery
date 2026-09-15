@@ -4,9 +4,7 @@ const identifier = /^[a-z][0-9_a-z]*$/u
 const bySourceId = (a: KnotEntry, b: KnotEntry) => a.sourceId.localeCompare(b.sourceId)
 
 export function indexKnots(candidates: ReadonlyArray<KnotCandidate>) {
-  const candidateIds = new Set<string>
-  const entries = new Map<string, KnotEntry>
-  for (const candidate of candidates) {
+  const candidateIds = new Set<string>const entries = new Map<string, KnotEntry>for (const candidate of candidates) {
     if (candidateIds.has(candidate.data.id)) {
       throw new Error(`Duplicate Knot candidate: ${candidate.data.id}`)
     }
@@ -27,8 +25,7 @@ export default class KnotCandidate {
     if (!identifier.test(data.id)) {
       throw new Error(`Invalid Knot candidate ID: ${data.id}`)
     }
-    const ids = new Set<string>
-    this.items = items.map(item => {
+    const ids = new Set<string>this.items = items.map(item => {
       if (!identifier.test(item.id) || ids.has(item.id)) {
         throw new Error(`Invalid or duplicate Knot ID: ${data.id}/${item.id}`)
       }

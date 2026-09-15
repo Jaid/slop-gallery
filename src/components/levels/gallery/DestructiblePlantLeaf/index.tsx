@@ -9,23 +9,25 @@ import decorationResources from '#src/lib/gallery/plantDecorations/DecorationRes
 import initializeFoliageCollider from '#src/lib/physics/initializeFoliageCollider.ts'
 import {leafPhysics} from '#src/lib/physics/plantPhysics.ts'
 
-export default function DestructiblePlantLeaf({id, leaf, attachments, anchorId, foliageMaterial}: {anchorId: string
+export default function DestructiblePlantLeaf({id, leaf, attachments, anchorId, foliageMaterial}: {
+  anchorId: string
   attachments: PlantAttachment
   foliageMaterial: 'foliage' | 'waxyFoliage'
   id: string
-  leaf: DestructibleLeaf}) {
+  leaf: DestructibleLeaf
+}) {
   const resources = decorationResources()
   return <GrabbableProp
-    id={id} title={leaf.title} position={leaf.position} rotation={leaf.rotation} type='fixed' colliders={false} {...leafPhysics} mass={leaf.mass}
-    attachmentBody={() => propObjects.get(anchorId)?.body}
+    colliders={false} id={id} position={leaf.position} rotation={leaf.rotation} title={leaf.title} type='fixed' {...leafPhysics} attachmentBody={() => propObjects.get(anchorId)?.body}
+    mass={leaf.mass}
     onAttachmentChange={attached => attachments.setLeafAttached(id, attached)}
     recoverAsDynamic={attachments.recoverLeafAsDynamic}
   >
-    <ConvexHullCollider ref={initializeFoliageCollider} args={[leaf.vertices]} mass={leaf.mass} />
-    <mesh name='pluckable-blade' geometry={leaf.geometry} material={resources[foliageMaterial]} castShadow receiveShadow />
+    <ConvexHullCollider args={[leaf.vertices]} mass={leaf.mass} ref={initializeFoliageCollider} />
+    <mesh castShadow geometry={leaf.geometry} material={resources[foliageMaterial]} name='pluckable-blade' receiveShadow />
     <Branch all={[leaf.stem, leaf.stemVertices]}>
-      <ConvexHullCollider ref={initializeFoliageCollider} args={[leaf.stemVertices!]} mass={leaf.stemMass} />
-      <mesh name='carried-stalk' geometry={leaf.stem!} material={resources.stems} castShadow receiveShadow />
+      <ConvexHullCollider args={[leaf.stemVertices!]} mass={leaf.stemMass} ref={initializeFoliageCollider} />
+      <mesh castShadow geometry={leaf.stem!} material={resources.stems} name='carried-stalk' receiveShadow />
     </Branch>
   </GrabbableProp>
 }
