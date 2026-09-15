@@ -35,6 +35,7 @@ Press Enter or Ctrl+C to stop and save the trace.
 Options:
   --port <number>       CDP port. Default: 9222
   --buffer-mib <number> Trace buffer size in MiB. Default: 1024
+  --reload <boolean>    Reload the target page when tracing begins. Default: false
   --help                Show this help
 
 Output:
@@ -160,15 +161,20 @@ async function brotliCompressFile(input: string, output: string) {
 }
 
 export default async function recordBrowserTrace({port = 9222,
-  bufferMiB = 1024}: {
+  bufferMiB = 1024,
+  reload = false}: {
   bufferMiB?: number
   port?: number
+  reload?: boolean
 } = {}) {
   if (!Number.isSafeInteger(port) || port < 1 || port > 65_535) {
     throw new TypeError('port must be an integer between 1 and 65535.')
   }
   if (!Number.isSafeInteger(bufferMiB) || bufferMiB < 1) {
     throw new TypeError('bufferMiB must be a positive integer.')
+  }
+  if (typeof reload !== 'boolean') {
+    throw new TypeError('reload must be a boolean.')
   }
   const outputRoot = resolve(import.meta.dir, '../temp')
   await mkdir(outputRoot, {recursive: true})
@@ -198,7 +204,7 @@ export default async function recordBrowserTrace({port = 9222,
     tracingCompleteResolve = resolveComplete
     tracingCompleteReject = rejectComplete
   })
-  const call = (method: string, params: unknown = {}) => {
+  const call = (method: string, params: unknown = {}, sessionId?: string) => {
     const id = ++nextId
     return new Promise<any>((resolveCall, rejectCall) => {
       pending.set(id, {
@@ -209,6 +215,7 @@ export default async function recordBrowserTrace({port = 9222,
         id,
         method,
         params,
+        sessionId,
       }))
     })
   }
@@ -277,6 +284,27 @@ export default async function recordBrowserTrace({port = 9222,
     pending.clear()
     tracingCompleteReject(error)
   }, {once: true})
+  let reloadSessionId: string | undefined
+  let reloadTargetUrl: string | undefined
+  if (reload) {
+    const {targetInfos} = await call('Target.getTargets') as {
+      targetInfos: Array<{
+        targetId: string
+        type: string
+        url: string
+      }>
+    }
+    const pageTarget = targetInfos.find(target => target.type === 'page')
+    if (!pageTarget) {
+      throw new Error('No page target found to reload.')
+    }
+    const attached = await call('Target.attachToTarget', {
+      targetId: pageTarget.targetId,
+      flatten: true,
+    }) as {sessionId: string}
+    reloadSessionId = attached.sessionId
+    reloadTargetUrl = pageTarget.url
+  }
   await call('Tracing.start', {
     transferMode: 'ReturnAsStream',
     bufferUsageReportingInterval: 5000,
@@ -288,6 +316,11 @@ export default async function recordBrowserTrace({port = 9222,
       includedCategories: categories,
     },
   })
+  if (reloadSessionId) {
+    await call('Page.reload', {}, reloadSessionId)
+    await call('Target.detachFromTarget', {sessionId: reloadSessionId})
+    console.error(`Reloaded ${reloadTargetUrl || 'page target'}`)
+  }
   console.error(`Recording ${version.Browser ?? 'Brave/Chromium'} on :${port}`)
   console.error(`Buffer: ${bufferMiB} MiB`)
   console.error(`Output: ${output}`)
@@ -364,15 +397,23 @@ if (import.meta.main) {
         type: 'string',
         default: '1024',
       },
+      reload: {
+        type: 'string',
+        default: 'false',
+      },
       help: {type: 'boolean'},
     },
   })
   if (values.help) {
     console.log(help)
   } else {
+    if (values.reload !== 'true' && values.reload !== 'false') {
+      throw new TypeError('--reload must be true or false.')
+    }
     await recordBrowserTrace({
       port: Number(values.port),
       bufferMiB: Number(values['buffer-mib']),
+      reload: values.reload === 'true',
     })
   }
 }
