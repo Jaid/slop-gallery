@@ -52,8 +52,8 @@ const CanvasText = ({color = '#ffffff',
     },
   }), [color, fontFamily, fontSize, fontWeight, height, maxWidth, text, width]))
   return <mesh {...meshProps} visible={Boolean(texture) && meshProps.visible !== false}>
-    <planeGeometry args={[width, height]}/>
-    <meshBasicNodeMaterial key={texture?.uuid ?? 'pending'} {...materialProps} map={texture} transparent depthWrite={false} toneMapped={false}/>
+    <planeGeometry args={[width, height]} />
+    <meshBasicNodeMaterial key={texture?.uuid ?? 'pending'} {...materialProps} map={texture} transparent depthWrite={false} toneMapped={false} />
   </mesh>
 }
 export default CanvasText

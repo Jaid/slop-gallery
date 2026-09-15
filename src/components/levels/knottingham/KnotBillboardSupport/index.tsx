@@ -13,10 +13,10 @@ export default function Support({width, height}: {height: number
   useEffect(() => () => panel.dispose(), [panel])
   const material = new LodgeWoodMaterial
   useEffect(() => () => material.dispose(), [material])
-  return <RigidBody name="billboard-support" type="fixed" colliders={false}>
+  return <RigidBody name='billboard-support' type='fixed' colliders={false}>
     {parts.map(({position, rotation, size}, index) => <group key={index} position={position} rotation={rotation}>
-      {index === 0 ? <mesh geometry={panel} material={material} castShadow receiveShadow/> : <Box size={size} material={material}/>}
-      <CuboidCollider args={[size[0] / 2, size[1] / 2, size[2] / 2]}/>
+      {index === 0 ? <mesh geometry={panel} material={material} castShadow receiveShadow /> : <Box size={size} material={material} />}
+      <CuboidCollider args={[size[0] / 2, size[1] / 2, size[2] / 2]} />
     </group>)}
   </RigidBody>
 }

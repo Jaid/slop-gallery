@@ -897,10 +897,10 @@ export class KnotMaterialPremium extends MeshPhysicalNodeMaterial {
           .clamp()
         const weaveHeight = warpPhase
           .sin()
-          .mul(0.000_16)
+          .mul(0.00016)
           .add(weftPhase
             .sin()
-            .mul(0.000_13))
+            .mul(0.00013))
           .mul(intimate)
           .add(brushed.mul(0.0007))
         const velvetNormal = proceduralNormal(weaveHeight, 1)

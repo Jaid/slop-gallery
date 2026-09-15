@@ -55,7 +55,7 @@ export function knotLightFracture(point: readonly [number, number], velocity: re
   const vx = Number.isFinite(velocity[0]) ? velocity[0] : 0
   const vz = Number.isFinite(velocity[1]) ? velocity[1] : 0
   const chooseSign = (position: number, speed: number, sample: number) => {
-    if (Math.abs(position) > 0.000_001) {
+    if (Math.abs(position) > 0.000001) {
       return Math.sign(position)
     }
     if (Math.abs(speed) > 0.001) {

@@ -41,7 +41,7 @@ export default class CardinalVelvetMaterial extends KnotMaterial {
     this.anisotropy = 0.62
     this.anisotropyRotation = Math.PI * 0.5
     this.specularIntensity = 0.32
-    this.normalNode = premiumNormal(weave.mul(0.12).add(cord.mul(0.7)).add(nap.mul(0.1)).mul(detail), 0.000_65)
+    this.normalNode = premiumNormal(weave.mul(0.12).add(cord.mul(0.7)).add(nap.mul(0.1)).mul(detail), 0.00065)
     this.envMapIntensity = 0.8
   }
 }

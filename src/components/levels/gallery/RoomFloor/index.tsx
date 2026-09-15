@@ -32,18 +32,18 @@ export default function RoomFloor({glass, room, stone, wood}: {glass: Material
     color: '#f3eddf',
   }
   return <group name={`${room.id}-floor`}>
-    <RigidBody type="fixed" colliders={false}>
+    <RigidBody type='fixed' colliders={false}>
       {plan.slabs.map(({center: [x, z], size: [width, depth]}, i) => <group key={i}>
-        <CuboidCollider args={[width / 2, floorThickness / 2, depth / 2]} position={[x, -floorThickness / 2, z]}/>
-        <Box position={[x, -floorThickness / 2, z]} size={[width, floorThickness, depth]} {...surface} roughness={floorReflections ? 0.36 : 0.8} envMapIntensity={envMapIntensity}/>
+        <CuboidCollider args={[width / 2, floorThickness / 2, depth / 2]} position={[x, -floorThickness / 2, z]} />
+        <Box position={[x, -floorThickness / 2, z]} size={[width, floorThickness, depth]} {...surface} roughness={floorReflections ? 0.36 : 0.8} envMapIntensity={envMapIntensity} />
       </group>)}
-      <Branch if={plan.glazing}><FloorGlass glass={glass} glazing={plan.glazing!} name={room.id}/></Branch>
+      <Branch if={plan.glazing}><FloorGlass glass={glass} glazing={plan.glazing!} name={room.id} /></Branch>
     </RigidBody>
-    <Branch if={room.id === 'vesper'}><WoodFloor width={room.size[0]} depth={room.size[1]} texture={wood}/></Branch>
-    <Branch if={room.id === 'dine'}><CheckerMarbleFloor width={room.size[0]} depth={room.size[1]}/></Branch>
+    <Branch if={room.id === 'vesper'}><WoodFloor width={room.size[0]} depth={room.size[1]} texture={wood} /></Branch>
+    <Branch if={room.id === 'dine'}><CheckerMarbleFloor width={room.size[0]} depth={room.size[1]} /></Branch>
     <Branch if={room.id !== 'dine'}>
-      {plan.seams.map(({center: [x, z], size: [width, depth]}, i) => <Box key={i} position={[x, 0.008, z]} size={[width, 0.008, depth]} color="#a8a18f" envMapIntensity={envMapIntensity}/>)}
-      {plan.inlays.map(({center: [x, z], size: [width, depth]}, i) => <Box key={i} position={[x, 0.015, z]} size={[width, 0.012, depth]} color="#9d8354" metalness={0.45} envMapIntensity={envMapIntensity}/>)}
+      {plan.seams.map(({center: [x, z], size: [width, depth]}, i) => <Box key={i} position={[x, 0.008, z]} size={[width, 0.008, depth]} color='#a8a18f' envMapIntensity={envMapIntensity} />)}
+      {plan.inlays.map(({center: [x, z], size: [width, depth]}, i) => <Box key={i} position={[x, 0.015, z]} size={[width, 0.012, depth]} color='#9d8354' metalness={0.45} envMapIntensity={envMapIntensity} />)}
     </Branch>
   </group>
 }

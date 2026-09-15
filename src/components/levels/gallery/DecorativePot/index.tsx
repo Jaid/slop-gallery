@@ -16,16 +16,16 @@ export default function DecorativePot({kind, solid}: PotProps) {
   const materials = resources.potMaterials(noiseTextures)
   const geometry = resources.pot(kind)
   const contents = <group name={`pot-${kind}`} dispose={null}>
-    <mesh name="ceramic-shell" geometry={geometry.shell} material={materials.shells[kind]} castShadow receiveShadow/>
-    <mesh name="baked-in-soil" geometry={geometry.soil} material={materials.soil} receiveShadow/>
-    <Branch if={geometry.trim}><mesh name="brass-foot-and-rim" geometry={geometry.trim!} material={resources.brass} castShadow receiveShadow/></Branch>
+    <mesh name='ceramic-shell' geometry={geometry.shell} material={materials.shells[kind]} castShadow receiveShadow />
+    <mesh name='baked-in-soil' geometry={geometry.soil} material={materials.soil} receiveShadow />
+    <Branch if={geometry.trim}><mesh name='brass-foot-and-rim' geometry={geometry.trim!} material={resources.brass} castShadow receiveShadow /></Branch>
   </group>
   if (!solid) {
     return contents
   }
-  return <RigidBody type="fixed" colliders={false} name={`decoration-pot-${kind}`}>
-    <ConvexHullCollider args={[geometry.vertices]} friction={0.85}/>
-    <Branch if={kind === 'noir'}><CylinderCollider args={[0.065, 0.24]} position={[0, 0.065, 0]}/></Branch>
+  return <RigidBody type='fixed' colliders={false} name={`decoration-pot-${kind}`}>
+    <ConvexHullCollider args={[geometry.vertices]} friction={0.85} />
+    <Branch if={kind === 'noir'}><CylinderCollider args={[0.065, 0.24]} position={[0, 0.065, 0]} /></Branch>
     {contents}
   </RigidBody>
 }

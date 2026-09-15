@@ -156,7 +156,7 @@ export default class ImageImporter {
           count++
           this.onImport(p)
         } catch (error) {
-          notify(error instanceof Error ? `${file.name}: ${error.message}` : 'That image could not be imported.')
+          notify(Error.isError(error) ? `${file.name}: ${error.message}` : 'That image could not be imported.')
         }
       }
       if (count) {

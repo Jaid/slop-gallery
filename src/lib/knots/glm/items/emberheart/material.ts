@@ -37,7 +37,7 @@ export default class EmberheartMaterial extends KnotMaterial {
     this.clearcoat = 0.3
     this.clearcoatRoughness = 0.22
     this.envMapIntensity = 0.85
-    this.normalNode = proceduralNormal(mx_noise_float(p.mul(9)).mul(swell).add(crust.mul(0.35)), 0.000_42)
+    this.normalNode = proceduralNormal(mx_noise_float(p.mul(9)).mul(swell).add(crust.mul(0.35)), 0.00042)
     this.emissiveNode = color('#c81601').mul(cracksWide).mul(0.55)
       .add(color('#ff5e12').mul(cracks).mul(1.25))
       .add(color('#ffd9a0').mul(deepCracks).mul(2.1))

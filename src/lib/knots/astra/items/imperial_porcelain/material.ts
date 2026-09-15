@@ -43,8 +43,8 @@ export default class ImperialPorcelainMaterial extends KnotMaterial {
     this.clearcoatRoughness = 0.055
     const ceramic = mx_noise_float(p.mul(82)).mul(intimate).mul(0.025)
     const relief = goldCore.mul(0.34).sub(fissure.mul(0.75)).add(ceramic)
-    this.normalNode = premiumNormal(relief.mul(detail), 0.000_65)
-    this.clearcoatNormalNode = premiumNormal(mx_noise_float(p.mul(9)), 0.000_12)
+    this.normalNode = premiumNormal(relief.mul(detail), 0.00065)
+    this.clearcoatNormalNode = premiumNormal(mx_noise_float(p.mul(9)), 0.00012)
     this.envMapIntensity = 0.92
   }
 }

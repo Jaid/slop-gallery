@@ -61,14 +61,14 @@ export default function KnotCandidateSign({bay}: {bay: KnotBay}) {
   }, [geometry])
   const [width, height, depth] = knotCandidateSign.size
   return <group name={`candidate-sign-${candidate.id}`} position={[knotPreviewX, knotGalleryBounds.height - knotCandidateSign.ceilingInset - knotCandidateSign.anchor[1], 0]} rotation={[0, Math.PI / 2, 0]}>
-    <RigidBody ref={anchor} type="fixed" colliders={false} position={knotCandidateSign.anchor}/>
-    <mesh geometry={geometry.canopy} material={metal} castShadow receiveShadow/>
+    <RigidBody ref={anchor} type='fixed' colliders={false} position={knotCandidateSign.anchor} />
+    <mesh geometry={geometry.canopy} material={metal} castShadow receiveShadow />
     <RigidBody ref={sign} colliders={false} ccd canSleep={false} angularDamping={knotCandidateSign.angularDamping} linearDamping={knotCandidateSign.linearDamping} additionalSolverIterations={8}>
-      <CuboidCollider args={[width / 2, height / 2, depth / 2]} mass={knotCandidateSign.mass} restitution={0.15}/>
-      {knotCandidateSign.suspensionX.map(x => <CylinderCollider key={x} args={[candidateSignSuspensionHeight / 2, 0.014]} position={[x, candidateSignSuspensionCenter, 0]} mass={knotCandidateSign.suspensionMass}/>)}
+      <CuboidCollider args={[width / 2, height / 2, depth / 2]} mass={knotCandidateSign.mass} restitution={0.15} />
+      {knotCandidateSign.suspensionX.map(x => <CylinderCollider key={x} args={[candidateSignSuspensionHeight / 2, 0.014]} position={[x, candidateSignSuspensionCenter, 0]} mass={knotCandidateSign.suspensionMass} />)}
       <InteractiveObject id={`candidate-sign-${candidate.id}`} onActivate={() => narrate(`candidate-sign-${candidate.id}`)}>
-        <mesh geometry={geometry.panel} material={[metal, metal, metal, metal, face, face]} castShadow receiveShadow/>
-        <mesh geometry={geometry.chains} material={metal} castShadow receiveShadow/>
+        <mesh geometry={geometry.panel} material={[metal, metal, metal, metal, face, face]} castShadow receiveShadow />
+        <mesh geometry={geometry.chains} material={metal} castShadow receiveShadow />
       </InteractiveObject>
     </RigidBody>
   </group>

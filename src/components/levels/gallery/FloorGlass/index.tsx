@@ -11,9 +11,9 @@ export default function FloorGlass({glass, glazing, name}: {glass: Material
   glazing: FloorGlazing
   name: string}) {
   return <group position={[glazing.center[0], -floorGlassThickness / 2, glazing.center[1]]}>
-    <CuboidCollider args={[glazing.size[0] / 2, floorGlassThickness / 2, glazing.size[1] / 2]}/>
+    <CuboidCollider args={[glazing.size[0] / 2, floorGlassThickness / 2, glazing.size[1] / 2]} />
     <mesh name={`${name}-floor-glass`} material={glass}>
-      <boxGeometry args={[glazing.size[0], floorGlassThickness, glazing.size[1]]}/>
+      <boxGeometry args={[glazing.size[0], floorGlassThickness, glazing.size[1]]} />
     </mesh>
   </group>
 }

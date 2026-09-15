@@ -9,14 +9,14 @@ describe('inspection look', () => {
   test('buffers mouse changes without exposing raw camera jumps', () => {
     const look = new InspectionLook(rotation())
     look.addInput(0.3, 0)
-    expect(look.rotation.angleTo(rotation())).toBeLessThan(0.000_001)
+    expect(look.rotation.angleTo(rotation())).toBeLessThan(0.000001)
     const next = look.update(rotation(), 1 / 60).clone()
     expect(next.angleTo(rotation())).toBeGreaterThan(0)
     expect(next.angleTo(rotation())).toBeLessThan(0.1)
     for (let i = 0; i < 240; i++) {
       look.update(rotation(), 1 / 60)
     }
-    expect(look.rotation.angleTo(rotation())).toBeLessThan(0.000_001)
+    expect(look.rotation.angleTo(rotation())).toBeLessThan(0.000001)
   })
   test('increases the fraction pulled back as angular distance grows', () => {
     for (const axis of ['yaw', 'pitch']) {
@@ -56,7 +56,7 @@ describe('inspection look', () => {
     for (let i = 0; i < 10; i++) {
       many.addInput(0.03, 0)
     }
-    expect(one.update(rotation(), 1 / 60).angleTo(many.update(rotation(), 1 / 60))).toBeLessThan(0.000_001)
+    expect(one.update(rotation(), 1 / 60).angleTo(many.update(rotation(), 1 / 60))).toBeLessThan(0.000001)
   })
   test('keeps settling consistent across refresh rates', () => {
     const results = [30, 60, 144, 240].map(fps => {
@@ -83,7 +83,7 @@ describe('inspection look', () => {
     for (let i = 0; i < 240; i++) {
       look.update(target, 1 / 60)
     }
-    expect(look.rotation.angleTo(target)).toBeLessThan(0.000_001)
+    expect(look.rotation.angleTo(target)).toBeLessThan(0.000001)
   })
   test('returns monotonically even from a nearly opposite heading', () => {
     for (const yaw of [-3, -1, -0.1, 0.1, 1, 3]) {
@@ -96,7 +96,7 @@ describe('inspection look', () => {
         expect(current).toBeLessThanOrEqual(previous)
         previous = current
       }
-      expect(previous).toBeLessThan(0.000_001)
+      expect(previous).toBeLessThan(0.000001)
     }
   })
   test('has the same driven response at different refresh rates', () => {
@@ -141,7 +141,7 @@ describe('inspection look', () => {
     for (let i = 0; i < 120; i++) {
       look.update(rotation(), 1 / 60)
     }
-    expect(look.rotation.angleTo(rotation())).toBeLessThan(0.000_001)
+    expect(look.rotation.angleTo(rotation())).toBeLessThan(0.000001)
   })
   test('keeps pitch inside the poles and ignores nonfinite input', () => {
     const look = new InspectionLook(rotation(0, Math.PI / 2 - 0.001))
@@ -153,21 +153,21 @@ describe('inspection look', () => {
       const angles = (new Euler).setFromQuaternion(look.rotation, 'YXZ')
       expect(angles.x).toBeGreaterThan(1.5)
       expect(angles.x).toBeLessThanOrEqual(Math.PI / 2)
-      expect(Math.abs(angles.y)).toBeLessThan(0.000_001)
+      expect(Math.abs(angles.y)).toBeLessThan(0.000001)
     }
   })
   test('supports return targets and invalid frame durations', () => {
     const look = new InspectionLook(rotation())
     for (const delta of [0, -1, Number.NaN, Infinity]) {
-      expect(look.update(rotation(1), delta).angleTo(rotation())).toBeLessThan(0.000_001)
+      expect(look.update(rotation(1), delta).angleTo(rotation())).toBeLessThan(0.000001)
     }
     const bounded = new InspectionLook(rotation()).update(rotation(1), 0.06)
-    expect(look.update(rotation(1), 5).angleTo(bounded)).toBeLessThan(0.000_001)
+    expect(look.update(rotation(1), 5).angleTo(bounded)).toBeLessThan(0.000001)
     look.addInput(-1, 0)
-    expect(look.update(rotation(0.4), 1 / 60).angleTo(rotation(0.4))).toBeGreaterThan(0.000_001)
+    expect(look.update(rotation(0.4), 1 / 60).angleTo(rotation(0.4))).toBeGreaterThan(0.000001)
     for (let i = 0; i < 240; i++) {
       look.update(rotation(0.4), 1 / 60)
     }
-    expect(look.update(rotation(0.4), 1 / 60).angleTo(rotation(0.4))).toBeLessThan(0.000_001)
+    expect(look.update(rotation(0.4), 1 / 60).angleTo(rotation(0.4))).toBeLessThan(0.000001)
   })
 })

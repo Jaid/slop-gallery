@@ -40,7 +40,7 @@ export default class TigerIronMaterial extends KnotMaterial {
     this.ior = 1.56
     this.clearcoat = 1
     this.clearcoatRoughness = 0.045
-    this.normalNode = premiumNormal(fineLayers.mul(0.13).add(fibers.mul(intimate).mul(0.06)).mul(detail), 0.000_45)
+    this.normalNode = premiumNormal(fineLayers.mul(0.13).add(fibers.mul(intimate).mul(0.06)).mul(detail), 0.00045)
     // A small subsurface-like contribution keeps the narrow eye readable.
     this.emissiveNode = color('#d48a2a').mul(eye).mul(hematite.oneMinus()).mul(0.075)
     this.envMapIntensity = 1.05

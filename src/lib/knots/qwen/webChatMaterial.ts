@@ -117,7 +117,7 @@ export function glints(normal: Node<'vec3'>, sharpness: number) {
 function crownFields(tube: Node<'vec2'>) {
   const u = tube.x.mul(Math.PI * 24).add(tube.y.mul(Math.PI * 8).sin().mul(0.35))
   const v = tube.y.mul(Math.PI * 8)
-  const radius = u.mul(0.5).sin().abs().pow(2).add(v.mul(0.5).sin().abs().pow(2)).max(0.000_01).sqrt()
+  const radius = u.mul(0.5).sin().abs().pow(2).add(v.mul(0.5).sin().abs().pow(2)).max(0.00001).sqrt()
   return {
     crown: radius.sub(0.48).abs().pow(2).mul(-26).exp(),
     bowl: radius.pow(2).mul(-18).exp(),
@@ -145,7 +145,7 @@ const reliefPosition = Fn(([tube]: [Node<'vec2'>]) => {
   const height = crown.mul(0.085).mul(breath).sub(bowl.mul(0.04)).mul(proximity.mul(0.28).add(0.72))
   return p.add(normal.mul(height))
 })
-void reliefPosition
+reliefPosition
 
 export const knotFinishesPremium = [
   {

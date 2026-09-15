@@ -26,7 +26,7 @@ export default class RailingPath extends Curve<Vector3> {
     }
     for (let i = 1; i < anchors.length; i++) {
       const distance = this.top(i).distanceTo(this.top(i - 1))
-      if (distance < 0.000_001) {
+      if (distance < 0.000001) {
         throw new RangeError('Consecutive railing anchors must be distinct.')
       }
       this.distances.push(this.distances[i - 1] + distance)

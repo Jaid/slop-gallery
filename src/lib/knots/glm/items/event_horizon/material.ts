@@ -42,7 +42,7 @@ export default class EventHorizonMaterial extends KnotMaterial {
     this.clearcoat = 1
     this.clearcoatRoughness = 0.045
     this.envMapIntensity = 1.15
-    this.normalNode = proceduralNormal(mx_noise_float(p.mul(17)).mul(corona), 0.000_22)
+    this.normalNode = proceduralNormal(mx_noise_float(p.mul(17)).mul(corona), 0.00022)
     this.emissiveNode = color('#fff8ec').mul(photonCore).mul(4.4)
       .add(color('#ffb257').mul(photon).mul(1.4))
       .add(color('#ff6a2a').mul(streaks).mul(0.9))

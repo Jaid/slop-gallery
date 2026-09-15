@@ -12,15 +12,15 @@ export default class FountainSpray extends InstancedMesh<SphereGeometry, MeshSta
     const phases: Array<number> = []
     const lifetimes: Array<number> = []
     for (let i = 0; i < count; i++) {
-      const angle = i * 2.399_963_229_728_653
+      const angle = i * 2.399963229728653
       const splash = i % 3 !== 0
       const radius = splash ? 1.63 : 0.15
       const outlet = Math.round(angle / (Math.PI / 6)) * Math.PI / 6
-      const speed = 0.2 + i * 0.618_033_988_75 % 1 * 0.45
+      const speed = 0.2 + i * 0.61803398875 % 1 * 0.45
       const up = splash ? 0.9 + speed : 1.5 + speed
       origins.push(Math.cos(outlet) * radius, splash ? fountain.poolY : 3.23, Math.sin(outlet) * radius)
       velocities.push(Math.cos(angle) * speed, up, Math.sin(angle) * speed)
-      phases.push(i * 0.754_877_666 % 1)
+      phases.push(i * 0.754877666 % 1)
       lifetimes.push(splash ? up * 2 / 9.81 : (up + Math.sqrt(up * up + 2 * 9.81 * 0.43)) / 9.81)
     }
     geometry.setAttribute('sprayOrigin', new InstancedBufferAttribute(new Float32Array(origins), 3))

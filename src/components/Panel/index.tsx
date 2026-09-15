@@ -21,16 +21,18 @@ export default function Panel({title, children}: {children: ReactNode
       previous?.focus()
     }
   }, [])
-  return <dialog ref={ref} className={css.container} aria-labelledby="panel-title" onCancel={event => {
-    event.preventDefault()
-    openPanel(null)
-  }} onClick={event => {
-    if (event.target === ref.current) {
+  return <dialog
+    ref={ref} className={css.container} aria-labelledby='panel-title' onCancel={event => {
+      event.preventDefault()
       openPanel(null)
-    }
-  }}>
+    }} onClick={event => {
+      if (event.target === ref.current) {
+        openPanel(null)
+      }
+    }}
+  >
     <section className={css.content}>
-      <div className={css.heading}><div><div className={css.eyebrow}>THE SLOP GALLERY</div><h2 id="panel-title">{title}</h2></div><button className={css.iconButton} aria-label="Close panel" onClick={() => openPanel(null)} autoFocus><Icon name="close"/></button></div>
+      <div className={css.heading}><div><div className={css.eyebrow}>THE SLOP GALLERY</div><h2 id='panel-title'>{title}</h2></div><button className={css.iconButton} aria-label='Close panel' onClick={() => openPanel(null)} autoFocus><Icon name='close' /></button></div>
       <Branch if={notice}><Toast panel>{notice}</Toast></Branch>
       {children}
     </section>

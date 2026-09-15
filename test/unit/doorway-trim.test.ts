@@ -41,7 +41,7 @@ describe('plain doorway trim', () => {
               const hit = world.castRay(new RAPIER.Ray(origin, direction), 2, true)
               expect(hits[0].point.z).toBeCloseTo(front, 6)
               expect(hit!.timeOfImpact).toBeCloseTo(1 - front, 6)
-              expect(hits.filter(value => Math.abs(value.point.z - front) < 0.000_01)).toHaveLength(1)
+              expect(hits.filter(value => Math.abs(value.point.z - front) < 0.00001)).toHaveLength(1)
             }
           }
         }

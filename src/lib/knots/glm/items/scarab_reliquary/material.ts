@@ -32,7 +32,7 @@ export default class ScarabReliquaryMaterial extends KnotMaterial {
     this.iridescenceThicknessNode = view.y.mul(90).add(430)
     this.clearcoat = 1
     this.clearcoatRoughness = 0.03
-    this.normalNode = proceduralNormal(groove.sin(), 0.000_35)
+    this.normalNode = proceduralNormal(groove.sin(), 0.00035)
     this.emissiveNode = sheen.mul(threads).mul(rim).mul(near.mul(0.5).add(0.12)).mul(0.5).add(color('#ffd98a').mul(goldDust).mul(near).mul(0.85))
   }
 }

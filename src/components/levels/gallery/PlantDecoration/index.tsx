@@ -14,12 +14,14 @@ export type PlantDecorationProps = {
 }
 
 export default function PlantDecoration({plant, pot, position, rotation = 0, solid = true}: PlantDecorationProps) {
-  return <group name={`plant-decoration-${pot}-${plant}`} position={position} rotation={[0, rotation, 0]} userData={{
-    pot,
-    plant,
-  }}>
-    <Pot kind={pot} solid={solid}/>
-    <group position={[0, potDefinition(pot).soilHeight, 0]}><Plant kind={plant}/></group>
+  return <group
+    name={`plant-decoration-${pot}-${plant}`} position={position} rotation={[0, rotation, 0]} userData={{
+      pot,
+      plant,
+    }}
+  >
+    <Pot kind={pot} solid={solid} />
+    <group position={[0, potDefinition(pot).soilHeight, 0]}><Plant kind={plant} /></group>
   </group>
 }
 

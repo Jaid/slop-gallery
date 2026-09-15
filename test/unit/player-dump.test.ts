@@ -14,7 +14,7 @@ test('player dumps preserve precision, join separate hit logs and respect disabl
   const geometry = new BoxGeometry
   const material = new MeshBasicMaterial
   const mesh = new Mesh(geometry, material)
-  mesh.position.z = -3.123_456_789
+  mesh.position.z = -3.123456789
   scene.add(mesh)
   const dump = new EgoDiagnostics(scene, camera).capture({} as EgoState, {dump: true})
   const dir = spyOn(console, 'dir').mockImplementation(() => {})

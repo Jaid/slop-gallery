@@ -109,7 +109,7 @@ describe('existing specimen geometry', () => {
     const positions = model.leaves.flatMap(leaf => values(leaf.geometry, 'position').map((value, i) => value + leaf.position[i % 3]))
     const original = values(source.foliage, 'position')
     expect(positions).toHaveLength(original.length)
-    expect(Math.max(...positions.map((value, i) => Math.abs(value - original[i])))).toBeLessThan(0.000_001)
+    expect(Math.max(...positions.map((value, i) => Math.abs(value - original[i])))).toBeLessThan(0.000001)
     let offset = 0
     const indices = model.leaves.flatMap(leaf => {
       const result = [...leaf.geometry.index!.array].map(index => index + offset)

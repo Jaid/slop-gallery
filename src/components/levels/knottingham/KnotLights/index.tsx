@@ -402,15 +402,15 @@ export default function KnotLights() {
       }
     }
   }
-  return <group name="knot-slot-lights">
-    <primitive object={resources.housings}/>
-    <primitive object={resources.emitterPanels}/>
-    <primitive object={resources.deadMasks}/>
-    <primitive object={resources.fractureSeams}/>
-    <primitive object={resources.diffuser}/>
-    {emitters.map(light => <primitive key={light.name} object={light}/>)}
-    <RigidBody type="fixed" colliders={false}>
-      {slots.map((slot, index) => damage.stage(index) < 2 && <CuboidCollider key={slot.id} position={slot.position} args={[housingSize[0] / 2, knotLight.size[1] / 2, housingSize[2] / 2]} restitution={0.08} friction={0.6} onCollisionEnter={event => onImpact(index, event)}/>)}
+  return <group name='knot-slot-lights'>
+    <primitive object={resources.housings} />
+    <primitive object={resources.emitterPanels} />
+    <primitive object={resources.deadMasks} />
+    <primitive object={resources.fractureSeams} />
+    <primitive object={resources.diffuser} />
+    {emitters.map(light => <primitive key={light.name} object={light} />)}
+    <RigidBody type='fixed' colliders={false}>
+      {slots.map((slot, index) => damage.stage(index) < 2 && <CuboidCollider key={slot.id} position={slot.position} args={[housingSize[0] / 2, knotLight.size[1] / 2, housingSize[2] / 2]} restitution={0.08} friction={0.6} onCollisionEnter={event => onImpact(index, event)} />)}
     </RigidBody>
   </group>
 }

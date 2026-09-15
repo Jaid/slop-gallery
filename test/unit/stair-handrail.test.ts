@@ -19,7 +19,7 @@ describe('continuous stair handrails', () => {
           direction: number}>
         for (let i = 0; i < indices.length; i += 3) {
           const triangle = [indices[i], indices[i + 1], indices[i + 2]]
-          expect(triangle.every(index => Math.abs(positions[index * 3] - stairTurn.center[0]) < 0.000_01)).toBe(false)
+          expect(triangle.every(index => Math.abs(positions[index * 3] - stairTurn.center[0]) < 0.00001)).toBe(false)
           for (let edge = 0; edge < 3; edge++) {
             const a = triangle[edge]
             const b = triangle[(edge + 1) % 3]

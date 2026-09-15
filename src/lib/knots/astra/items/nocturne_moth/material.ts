@@ -53,7 +53,7 @@ export default class NocturneMothMaterial extends KnotMaterial {
     this.sheenRoughness = 0.52
     this.clearcoat = 0.2
     this.clearcoatRoughness = 0.2
-    this.normalNode = premiumNormal(dome.mul(scalesResolved).mul(0.7).sub(scaleEdge.mul(0.27)).add(ribs.mul(0.035)), 0.000_38)
+    this.normalNode = premiumNormal(dome.mul(scalesResolved).mul(0.7).sub(scaleEdge.mul(0.27)).add(ribs.mul(0.035)), 0.00038)
     this.emissiveNode = color('#267d77').mul(eyespotRing).mul(grazing.pow(3)).mul(0.07)
     this.envMapIntensity = 1.05
   }

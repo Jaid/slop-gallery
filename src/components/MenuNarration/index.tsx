@@ -11,7 +11,7 @@ export default function MenuNarration() {
     return null
   }
   return <details className={css.container}>
-    <summary><NarrationActivity status={s.narration.status} source={s.narration.source}/>{speaking.title}</summary>
+    <summary><NarrationActivity status={s.narration.status} source={s.narration.source} />{speaking.title}</summary>
     <p>{speaking.description}</p>
     <button className={css.textButton} onClick={stopNarration}>Stop narration</button>
   </details>

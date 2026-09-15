@@ -25,20 +25,22 @@ export default function PlacementPreview({width, height, source, title, creator,
   })
   return <>
     <mesh position={[0, 0, 0.115]}>
-      <planeGeometry args={[width, height]}/>
-      <primitive object={visual.imageMaterial} attach="material"/>
+      <planeGeometry args={[width, height]} />
+      <primitive object={visual.imageMaterial} attach='material' />
     </mesh>
     <mesh position={[0, 0, 0.12]}>
-      <primitive object={visual.border} attach="geometry"/>
-      <primitive object={visual.borderMaterial} attach="material"/>
+      <primitive object={visual.border} attach='geometry' />
+      <primitive object={visual.borderMaterial} attach='material' />
     </mesh>
-    <PortraitLabel width={width} height={height} title={title} creator={creator} pending={pending} preview={{
-      color: valid ? previewColors.valid : previewColors.invalid,
-      opacity: previewOpacity(inReach),
-    }}/>
+    <PortraitLabel
+      width={width} height={height} title={title} creator={creator} pending={pending} preview={{
+        color: valid ? previewColors.valid : previewColors.invalid,
+        opacity: previewOpacity(inReach),
+      }}
+    />
     <mesh position={[0, label.y, portraitLabel.depth / 2 + 0.018]}>
-      <primitive object={visual.labelBorder} attach="geometry"/>
-      <primitive object={visual.labelBorderMaterial} attach="material"/>
+      <primitive object={visual.labelBorder} attach='geometry' />
+      <primitive object={visual.labelBorderMaterial} attach='material' />
     </mesh>
   </>
 }

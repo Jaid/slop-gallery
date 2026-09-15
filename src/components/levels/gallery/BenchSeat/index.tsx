@@ -9,8 +9,8 @@ export default function BenchSeat({position, size}: {position: Vec3
   const [width, height, depth] = size
   const geometry = new RoundedBoxGeometry(width, height, depth, 4, Math.min(0.065, height / 2))
   useEffect(() => () => geometry.dispose(), [geometry])
-  return <mesh name="bench-seat" position={position} castShadow receiveShadow>
-    <primitive object={geometry} attach="geometry"/>
-    <meshStandardNodeMaterial color="#6e4f30" roughness={0.5}/>
+  return <mesh name='bench-seat' position={position} castShadow receiveShadow>
+    <primitive object={geometry} attach='geometry' />
+    <meshStandardNodeMaterial color='#6e4f30' roughness={0.5} />
   </mesh>
 }

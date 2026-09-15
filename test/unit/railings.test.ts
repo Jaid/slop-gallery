@@ -88,8 +88,8 @@ describe('connected Oculus railings', () => {
         const rotation = new Quaternion(...segment.rotation)
         const start = new Vector3(...segment.position).add(axis.clone().applyQuaternion(rotation).multiplyScalar(-segment.halfLength))
         const end = new Vector3(...segment.position).add(axis.clone().applyQuaternion(rotation).multiplyScalar(segment.halfLength))
-        expect(start.distanceTo(railing.getPoint(railing.distances[i] / railing.length))).toBeLessThan(0.000_01)
-        expect(end.distanceTo(railing.getPoint(railing.distances[i + 1] / railing.length))).toBeLessThan(0.000_01)
+        expect(start.distanceTo(railing.getPoint(railing.distances[i] / railing.length))).toBeLessThan(0.00001)
+        expect(end.distanceTo(railing.getPoint(railing.distances[i + 1] / railing.length))).toBeLessThan(0.00001)
       }
       expect(world.castRay(new RAPIER.Ray(new Vector3(tower.x, ramp.endY + 0.4, ramp.endZ - 0.4), new Vector3(0, 0, 1)), 1.5, true)).toBeNull()
       expect(world.castRay(new RAPIER.Ray(new Vector3(tower.x, ramp.endY + 0.5, tower.z), new Vector3(0, 0, 1)), tower.radius + 0.5, true)).not.toBeNull()

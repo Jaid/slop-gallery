@@ -52,7 +52,7 @@ describe('sculpture pedestals', () => {
       }
       expect(unitNormals).toBe(true)
       expect(part.boundingBox!.min.y).toBeGreaterThanOrEqual(-1e-6)
-      expect(part.boundingBox!.max.y).toBeLessThanOrEqual(1.350_001)
+      expect(part.boundingBox!.max.y).toBeLessThanOrEqual(1.350001)
       triangles += triangleCount(part)
       expect(part.index).not.toBeNull()
       bytes += part.index!.array.byteLength + Object.values(part.attributes).reduce((sum, attribute) => sum + attribute.array.byteLength, 0)

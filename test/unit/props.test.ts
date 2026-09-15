@@ -132,7 +132,7 @@ describe('carried prop flight', () => {
       setPosition(placement, next)
       previous = next[2]
     }
-    expect(previous).toBeGreaterThan(0.499_99)
+    expect(previous).toBeGreaterThan(0.49999)
   })
   test('settles at the same rate at 30, 60, 144 and 240 fps', () => {
     const placement = book()

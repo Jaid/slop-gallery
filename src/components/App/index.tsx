@@ -32,12 +32,12 @@ export default function App() {
     return <RenderError><h2>WebGPU is unavailable.</h2><p>{galleryTitle} requires native WebGPU. Open it in current Chrome or Edge with hardware acceleration enabled, using HTTPS or localhost.</p></RenderError>
   }
   return <GraphicsQuality><Dropzone>
-    <main className={css.viewport} aria-label="Interactive 3D gallery">
-      <RenderBoundary onFailure={() => setRenderFailed(true)}><World/></RenderBoundary>
+    <main className={css.viewport} aria-label='Interactive 3D gallery'>
+      <RenderBoundary onFailure={() => setRenderFailed(true)}><World /></RenderBoundary>
     </main>
-    <Branch none={[s.locked, s.panel, s.dragging, renderFailed]}><Menu {...settings}/></Branch>
-    <Hud/>
+    <Branch none={[s.locked, s.panel, s.dragging, renderFailed]}><Menu {...settings} /></Branch>
+    <Hud />
     <Branch if={s.notice} not={s.panel}><Toast>{s.notice}</Toast></Branch>
-    <Branch if={s.panel === 'map'}><Panel title="Floor plan"><Map/></Panel></Branch>
+    <Branch if={s.panel === 'map'}><Panel title='Floor plan'><Map /></Panel></Branch>
   </Dropzone></GraphicsQuality>
 }

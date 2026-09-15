@@ -36,15 +36,15 @@ export default function Fountain() {
     water.pool.dispose()
     water.stream.dispose()
   }, [water])
-  return <group name="lobby-fountain" position={fountain.position}>
-    <RigidBody type="fixed" colliders={false}>
-      <MeshSurfaceCollider args={collision}/>
-      <mesh name="fountain-carved-stone" geometry={geometry.stone} material={stone} receiveShadow castShadow/>
-      <mesh name="fountain-brass-inlay" geometry={geometry.brass} material={brass} receiveShadow castShadow/>
+  return <group name='lobby-fountain' position={fountain.position}>
+    <RigidBody type='fixed' colliders={false}>
+      <MeshSurfaceCollider args={collision} />
+      <mesh name='fountain-carved-stone' geometry={geometry.stone} material={stone} receiveShadow castShadow />
+      <mesh name='fountain-brass-inlay' geometry={geometry.brass} material={brass} receiveShadow castShadow />
     </RigidBody>
-    <mesh name="fountain-pools" geometry={geometry.pools} material={water.pool}/>
-    <mesh name="fountain-cascades" geometry={geometry.streams} material={water.stream}/>
-    <primitive object={spray}/>
-    <pointLight position={[0, 0.85, 0]} color="#8edbce" intensity={4} distance={4}/>
+    <mesh name='fountain-pools' geometry={geometry.pools} material={water.pool} />
+    <mesh name='fountain-cascades' geometry={geometry.streams} material={water.stream} />
+    <primitive object={spray} />
+    <pointLight position={[0, 0.85, 0]} color='#8edbce' intensity={4} distance={4} />
   </group>
 }

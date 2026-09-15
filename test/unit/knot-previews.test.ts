@@ -12,7 +12,6 @@ async function dimensions(url: string) {
   const size = await Bun.$`magick identify -format '%w %h' ${file}`.text()
   return size.trim().split(' ').map(Number)
 }
-
 test('candidate and item icons are generated JXLs while billboards remain runtime-only', async () => {
   const overviewFiles = await Array.fromAsync(new Bun.Glob('src/lib/knots/*/overview.jxl').scan('.'))
   expect(overviewFiles).toEqual([])
@@ -39,7 +38,6 @@ test('candidate and item icons are generated JXLs while billboards remain runtim
     }
   }
 }, 60_000)
-
 test('generation rejects unknown candidates before connecting to the browser', async () => {
   await expect(updateKnots({
     candidates: ['../wrong'],

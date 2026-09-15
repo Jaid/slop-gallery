@@ -11,11 +11,11 @@ import Interaction from './Interaction.tsx'
 
 export default function Scene() {
   return <>
-    <LevelScene/>
-    <Player/>
-    <Interaction/>
-    <WebmcpBridge/>
-    <Ready/>
+    <LevelScene />
+    <Player />
+    <Interaction />
+    <WebmcpBridge />
+    <Ready />
   </>
 }
 

@@ -12,7 +12,7 @@ export default class OculusRailing extends RailingPath {
     const left: Array<RailingAnchor> = []
     const add = (ground: Vec3, height = ramp.railHeight) => {
       const previous = left.at(-1)
-      if (!previous || Math.hypot(...ground.map((value, i) => value - previous.ground[i])) > 0.000_01 || height !== previous.height) {
+      if (!previous || Math.hypot(...ground.map((value, i) => value - previous.ground[i])) > 0.00001 || height !== previous.height) {
         left.push({
           ground,
           height,

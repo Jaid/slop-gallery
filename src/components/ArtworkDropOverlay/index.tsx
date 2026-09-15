@@ -25,7 +25,7 @@ export default function ArtworkDropOverlay({rejected, valid}: {rejected: boolean
   } else if (valid) {
     message = messages.valid
   }
-  return <div className={clsx(css.container, rejected && css.rejected)} data-testid="drop-overlay">
+  return <div className={clsx(css.container, rejected && css.rejected)} data-testid='drop-overlay'>
     <div className={css.card}><span className={css.eyebrow}>A NEW ARRIVAL</span><h2>{message.title}</h2>
       <p>{message.description}</p>
       <small>PNG · JPEG · WEBP · AVIF · GIF / UP TO 12 AT ONCE</small></div>

@@ -615,7 +615,7 @@ export class KnotMaterial extends MeshPhysicalNodeMaterial {
                 // Intimate inner glow when the viewer crowds the surface.
         const innerGlow = intimate.mul(facing.pow(1.6))
                 // Sharp facet tilt for procedural normal.
-        const facetTilt = facetRnd.mul(2).sub(1).dot(vec3(0.577_350_269)).mul(0.55)
+        const facetTilt = facetRnd.mul(2).sub(1).dot(vec3(0.577350269)).mul(0.55)
         this.colorNode = facetTinted
         this.transmission = 0.55
         this.thickness = 0.5

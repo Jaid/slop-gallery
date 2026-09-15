@@ -19,7 +19,7 @@ test('model and narration preferences remain configurable through URL parameters
     narrator_character: 'custom-character',
     eager_audio: 'true',
   }).toString()
-  const html = renderToStaticMarkup(<NuqsTestingAdapter searchParams={searchParams}><ReadSettings/></NuqsTestingAdapter>)
+  const html = renderToStaticMarkup(<NuqsTestingAdapter searchParams={searchParams}><ReadSettings /></NuqsTestingAdapter>)
   for (const value of ['custom-text', 'custom-image', 'custom-audio', 'high', 'custom-voice', 'custom-character']) {
     expect(html).toContain(value)
   }

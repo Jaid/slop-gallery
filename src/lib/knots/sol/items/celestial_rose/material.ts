@@ -64,7 +64,7 @@ export default class CelestialRoseMaterial extends KnotMaterial {
     this.iridescenceNode = grazing.mul(0.32).add(0.06)
     this.iridescenceIOR = 1.28
     this.iridescenceThicknessNode = roseAField.abs().mul(210).add(160)
-    this.normalNode = proceduralNormal(mx_noise_float(p.mul(31)).mul(intimate), 0.000_18)
+    this.normalNode = proceduralNormal(mx_noise_float(p.mul(31)).mul(intimate), 0.00018)
     this.emissiveNode = rainbow.mul(roseA).mul(near.mul(0.45).add(0.34)).add(rainbowDeep.mul(roseB).mul(0.72)).add(color('#fff0a8').mul(roseC).mul(1.3)).add(color('#fff7d8').mul(halo).mul(sanctum.mul(1.1).add(0.22))).add(color('#ffffff').mul(rim.pow(2)).mul(sanctum).mul(0.35))
   }
 }

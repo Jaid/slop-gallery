@@ -7,8 +7,8 @@ export default function GalleryScene() {
   const resetEpoch = useGallery(s => s.resetEpoch)
   const portraits = useGallery(s => s.portraits)
   return <>
-    <Architecture/>
-    <Props key={resetEpoch}/>
-    {portraits.map(p => <Portrait key={p.id} portrait={p}/>)}
+    <Architecture />
+    <Props key={resetEpoch} />
+    {portraits.map(p => <Portrait key={p.id} portrait={p} />)}
   </>
 }

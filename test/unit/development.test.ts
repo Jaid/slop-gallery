@@ -36,16 +36,16 @@ function box(z: number, name: string) {
 describe('aim inspection', () => {
   test('returns full-precision world hits ordered by distance, once per mesh', () => {
     const back = box(-6, 'behind')
-    const front = box(-2.123_456_789, 'front')
+    const front = box(-2.123456789, 'front')
     const result = inspector.getAim()
     expect(result.hits).toHaveLength(2)
     expect(result.hit).toBe(result.hits[0])
     expect(result.hits.map(hit => hit.mesh.uuid)).toEqual([front.uuid, back.uuid])
-    expect(result.hit!.distance).toBeCloseTo(1.623_456_789, 10)
+    expect(result.hit!.distance).toBeCloseTo(1.623456789, 10)
     expect(result.hit!.point).toEqual({
       x: 0,
       y: 0,
-      z: -1.623_456_789,
+      z: -1.623456789,
     })
     expect(result.hit!.localPoint).toEqual({
       x: 0,

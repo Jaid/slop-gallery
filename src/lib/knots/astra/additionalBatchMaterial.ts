@@ -86,11 +86,11 @@ function filteredWave(phase: Node<'float'>) {
 }
 function line(field: Node<'float'>, width: number) {
   return field.abs()
-    .smoothstep(width, field.fwidth().max(0.000_01).add(width))
+    .smoothstep(width, field.fwidth().max(0.00001).add(width))
     .oneMinus()
 }
 function disk(radius: Node<'float'>, size: number) {
-  const footprint = radius.fwidth().max(0.000_01)
+  const footprint = radius.fwidth().max(0.00001)
   return radius
     .smoothstep(footprint.negate().add(size), footprint.add(size))
     .oneMinus()
@@ -240,8 +240,8 @@ function watchGear(point: Node<'vec2'>,
   teeth: number,
   rotation: Node<'float'>) {
   const r = point.length()
-  const theta = (mx_atan2(point.y, point.x.add(0.000_001)) as unknown as Node<'float'>).sub(rotation)
-  const footprint = point.fwidth().length().max(0.000_01)
+  const theta = (mx_atan2(point.y, point.x.add(0.000001)) as unknown as Node<'float'>).sub(rotation)
+  const footprint = point.fwidth().length().max(0.00001)
   const angularFootprint = footprint.div(r.max(radius * 0.2))
   const toothVisibility = visibility(angularFootprint.mul(teeth), 0.7, 2.7)
   const teethWave = theta.mul(teeth).cos().smoothstep(-0.2, 0.2)
@@ -337,10 +337,10 @@ export class KnotMaterial extends MeshPhysicalNodeMaterial {
           .add(time.mul(0.25))
         const microHeight = filteredWave(capillaryPhase)
           .mul(near)
-          .mul(0.000_06)
+          .mul(0.00006)
           .add(mx_noise_float(p.mul(75))
             .mul(microVisibility)
-            .mul(0.000_025))
+            .mul(0.000025))
         this.envMapIntensity = 1.3
         this.colorNode = mix(color('#111d23'), color('#8ba4ad'), tip.pow(0.6).mul(near.mul(0.5).add(0.28)))
         this.metalness = 0.92
@@ -398,7 +398,7 @@ export class KnotMaterial extends MeshPhysicalNodeMaterial {
         const vessels = mx_noise_float(vesselQ)
           .smoothstep(0.24, 0.52)
           .mul(vesselVisibility)
-        const rayAngle = mx_atan2(growthPoint.y, growthPoint.x.add(0.000_001)) as unknown as Node<'float'>
+        const rayAngle = mx_atan2(growthPoint.y, growthPoint.x.add(0.000001)) as unknown as Node<'float'>
         const rayPhase = rayAngle.mul(48).add(radial.mul(14))
         const rayVisibility = visibility(growthPoint.fwidth().length()
           .div(radial.max(0.03))
@@ -428,9 +428,9 @@ export class KnotMaterial extends MeshPhysicalNodeMaterial {
           .mul(0.72)
         this.clearcoat = 0.15
         this.clearcoatRoughness = 0.24
-        this.normalNode = negateOnBackSide(bumpNormal(filteredWave(grainPhase).mul(0.000_16)
-          .sub(vessels.mul(0.000_28))
-          .add(rays.mul(0.000_08))))
+        this.normalNode = negateOnBackSide(bumpNormal(filteredWave(grainPhase).mul(0.00016)
+          .sub(vessels.mul(0.00028))
+          .add(rays.mul(0.00008))))
         break
       }
             // ---------------------------------------------------------------
@@ -462,7 +462,7 @@ export class KnotMaterial extends MeshPhysicalNodeMaterial {
         const sandTint = mix(color('#d5b67b'), color('#fff0cb'), random.z.mul(0.55).add(0.35))
         const membraneWave = tube.x.mul(TAU * 8).sin()
           .mul(tube.y.mul(TAU * 2).sin())
-          .mul(0.000_05)
+          .mul(0.00005)
         const pileNormal = bumpNormal(pile.mul(0.0033).add(membraneWave), N)
         const facetStrength = grainVisibility.mul(coverage).mul(0.5)
         const grainNormal = pileNormal
@@ -633,7 +633,7 @@ export class KnotMaterial extends MeshPhysicalNodeMaterial {
         const a = q.mod(pitch).sub(halfPitch)
         const b = q.add(halfPitch).mod(pitch).sub(halfPitch)
         const local = select(a.dot(a).lessThan(b.dot(b)), a, b)
-        const footprint = q.fwidth().length().max(0.000_01)
+        const footprint = q.fwidth().length().max(0.00001)
         const facetVisibility = visibility(footprint, 0.16, 0.7)
         const edgeDistance = float(0.5).sub(local.x.abs().max(local.x.abs().mul(0.5)
           .add(local.y.abs().mul(SQRT3 * 0.5))))
@@ -718,7 +718,7 @@ export class KnotMaterial extends MeshPhysicalNodeMaterial {
           .sub(inkFacet.mul(0.22))
           .add(fibres.mul(0.018))
           .clamp(0.55, 0.95)
-        this.normalNode = negateOnBackSide(bumpNormal(fibres.mul(0.000_08), foldedNormal))
+        this.normalNode = negateOnBackSide(bumpNormal(fibres.mul(0.00008), foldedNormal))
         this.aoNode = valley.pow(3).mul(-0.28).add(1)
         break
       }
@@ -747,7 +747,7 @@ export class KnotMaterial extends MeshPhysicalNodeMaterial {
         const backVisible = disk(backPoint.length(), 0.421)
         const springPoint = backPoint.sub(vec2(0.025, -0.025))
         const springRadius = springPoint.length()
-        const springAngle = mx_atan2(springPoint.y, springPoint.x.add(0.000_001)) as unknown as Node<'float'>
+        const springAngle = mx_atan2(springPoint.y, springPoint.x.add(0.000001)) as unknown as Node<'float'>
         const balanceMotion = time.mul(1.15)
           .add(random.x.mul(TAU))
           .sin()
@@ -820,7 +820,7 @@ export class KnotMaterial extends MeshPhysicalNodeMaterial {
           .add(bezel.mul(0.0024))
           .add(bridge.mul(0.003))
           .add(screwHeads.mul(0.0038))
-          .add(bigMask.mul(interiorVisibility).mul(0.000_75))
+          .add(bigMask.mul(interiorVisibility).mul(0.00075))
           .add(smallMask.mul(interiorVisibility).mul(0.0011))
           .add(visibleJewel.mul(0.0012))
           .sub(slots.mul(0.0006))

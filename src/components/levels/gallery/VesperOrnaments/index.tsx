@@ -28,12 +28,12 @@ export default function VesperOrnaments() {
     }
   }, [geometry])
   // Seven ornaments in two draw calls; relief stays behind hung frames.
-  return <group name="vesper-wall-ornaments">
-    <instancedMesh ref={foliage} name="vesper-carved-foliage" args={[geometry.foliage, undefined, placements.length]} receiveShadow>
-      <meshStandardNodeMaterial color="#9baa8b" roughness={0.68}/>
+  return <group name='vesper-wall-ornaments'>
+    <instancedMesh ref={foliage} name='vesper-carved-foliage' args={[geometry.foliage, undefined, placements.length]} receiveShadow>
+      <meshStandardNodeMaterial color='#9baa8b' roughness={0.68} />
     </instancedMesh>
-    <instancedMesh ref={brass} name="vesper-gilded-scrollwork" args={[geometry.brass, undefined, placements.length]} receiveShadow>
-      <GoldMaterial/>
+    <instancedMesh ref={brass} name='vesper-gilded-scrollwork' args={[geometry.brass, undefined, placements.length]} receiveShadow>
+      <GoldMaterial />
     </instancedMesh>
   </group>
 }

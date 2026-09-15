@@ -29,21 +29,21 @@ export default function MoonfallCrater({stone}: {stone: Texture}) {
     terrain.dispose()
     bronze.dispose()
   }, [geometry, fence, rock, terrain, bronze])
-  return <group name="moonfall-impact-crater">
-    <RigidBody type="fixed" colliders={false}>
-      {collision.map((args, i) => <MeshSurfaceCollider key={i} args={args}/>)}
-      <mesh name="moonfall-slate-floor" geometry={geometry.floor} receiveShadow castShadow>
-        <meshStandardNodeMaterial color="#24373d" map={stone} roughness={0.9} envMapIntensity={0.08}/>
+  return <group name='moonfall-impact-crater'>
+    <RigidBody type='fixed' colliders={false}>
+      {collision.map((args, i) => <MeshSurfaceCollider key={i} args={args} />)}
+      <mesh name='moonfall-slate-floor' geometry={geometry.floor} receiveShadow castShadow>
+        <meshStandardNodeMaterial color='#24373d' map={stone} roughness={0.9} envMapIntensity={0.08} />
       </mesh>
-      <mesh name="moonfall-crater-terrain" geometry={geometry.terrain} material={terrain} receiveShadow castShadow/>
-      <mesh name="moonfall-impact-ejecta" geometry={geometry.rocks} material={rock} receiveShadow castShadow/>
-      <mesh name="moonfall-crater-stanchions" geometry={fence.posts} material={bronze} receiveShadow castShadow/>
-      <mesh name="moonfall-crater-rope" geometry={fence.rope} receiveShadow castShadow>
-        <meshStandardNodeMaterial color="#293f40" roughness={0.96} envMapIntensity={0.1}/>
+      <mesh name='moonfall-crater-terrain' geometry={geometry.terrain} material={terrain} receiveShadow castShadow />
+      <mesh name='moonfall-impact-ejecta' geometry={geometry.rocks} material={rock} receiveShadow castShadow />
+      <mesh name='moonfall-crater-stanchions' geometry={fence.posts} material={bronze} receiveShadow castShadow />
+      <mesh name='moonfall-crater-rope' geometry={fence.rope} receiveShadow castShadow>
+        <meshStandardNodeMaterial color='#293f40' roughness={0.96} envMapIntensity={0.1} />
       </mesh>
     </RigidBody>
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.006, 0]} material={bronze}>
-      <ringGeometry args={[moonfallCrater.radius, moonfallCrater.radius + 0.055, moonfallCrater.angularSegments]}/>
+      <ringGeometry args={[moonfallCrater.radius, moonfallCrater.radius + 0.055, moonfallCrater.angularSegments]} />
     </mesh>
   </group>
 }

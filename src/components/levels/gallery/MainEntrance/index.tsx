@@ -23,10 +23,10 @@ export default function MainEntrance() {
     brass.dispose()
   }, [geometry, stone, wood, brass])
   // The existing solid north wall remains its collider: there is no unfinished exterior.
-  return <group name="lobby-main-entrance" userData={{closed: true}}>
-    <mesh name="entrance-walnut-doors" geometry={geometry.leaves} material={wood} castShadow receiveShadow/>
-    <mesh name="entrance-stone-surround" geometry={geometry.frame} material={stone} castShadow receiveShadow/>
-    <mesh name="entrance-bronze-details" geometry={geometry.metal} material={brass} castShadow receiveShadow/>
-    <mesh position={[0, 4.25, 0.31]}><torusGeometry args={[0.28, 0.018, 8, 48]}/><primitive object={brass} attach="material"/></mesh>
+  return <group name='lobby-main-entrance' userData={{closed: true}}>
+    <mesh name='entrance-walnut-doors' geometry={geometry.leaves} material={wood} castShadow receiveShadow />
+    <mesh name='entrance-stone-surround' geometry={geometry.frame} material={stone} castShadow receiveShadow />
+    <mesh name='entrance-bronze-details' geometry={geometry.metal} material={brass} castShadow receiveShadow />
+    <mesh position={[0, 4.25, 0.31]}><torusGeometry args={[0.28, 0.018, 8, 48]} /><primitive object={brass} attach='material' /></mesh>
   </group>
 }

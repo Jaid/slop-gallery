@@ -96,7 +96,7 @@ export default function KnotSpectation() {
       const playback = candidateBay ? announcer.announceCandidate(candidateBay.candidate) : announcer.announce(item!, repeat)
       void playback.catch(error => {
         if (version === narrationVersion) {
-          notify(error instanceof Error ? error.message : 'The announcement could not be played.')
+          notify(Error.isError(error) ? error.message : 'The announcement could not be played.')
         }
       }).finally(() => {
         if (version === narrationVersion) {
@@ -235,7 +235,7 @@ export default function KnotSpectation() {
       narrationId = id
       void Promise.resolve(announcer.announceModel(item)).catch(error => {
         if (version === narrationVersion) {
-          notify(error instanceof Error ? error.message : 'The model announcement could not be played.')
+          notify(Error.isError(error) ? error.message : 'The model announcement could not be played.')
         }
       }).finally(() => {
         if (version === narrationVersion) {

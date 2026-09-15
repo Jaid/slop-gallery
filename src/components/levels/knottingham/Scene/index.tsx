@@ -6,8 +6,8 @@ import {useGallery} from '#src/lib/gallery.ts'
 export default function KnottinghamScene() {
   const resetEpoch = useGallery(s => s.resetEpoch)
   return <>
-    <Lobby/>
-    <KnotSpectation/>
-    <KnotExhibition key={resetEpoch}/>
+    <Lobby />
+    <KnotSpectation />
+    <KnotExhibition key={resetEpoch} />
   </>
 }

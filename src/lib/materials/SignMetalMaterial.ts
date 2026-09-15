@@ -26,6 +26,6 @@ export default class SignMetalMaterial extends MeshPhysicalNodeMaterial {
     const machining = mix(phase.sin().mul(0.5).add(0.5), float(0.5), phase.fwidth().smoothstep(1, 3))
     this.colorNode = mix(color('#89949f'), color('#c5cbd0'), grain.mul(0.12).add(0.65))
     this.roughnessNode = machining.mul(0.08).add(grain.mul(0.025)).add(0.24)
-    this.normalNode = bumpMap(machining, float(0.000_12))
+    this.normalNode = bumpMap(machining, float(0.00012))
   }
 }

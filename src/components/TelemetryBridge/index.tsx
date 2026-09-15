@@ -55,6 +55,6 @@ function Collectors() {
   return null
 }
 function TelemetryBridge() {
-  return telemetry ? <Collectors/> : null
+  return telemetry ? <Collectors /> : null
 }
 export default TelemetryBridge

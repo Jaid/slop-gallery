@@ -8,7 +8,6 @@ const item = knotsById.get('glm/event_horizon')!
 const flash = knotsById.get('glm_flash/ember_cortex')!
 const glm = knotCandidates.find(candidate => candidate.data.id === 'glm')!
 const glmFlash = knotCandidates.find(candidate => candidate.data.id === 'glm_flash')!
-
 test('plays each model introduction and knot title once', async () => {
   const played: Array<string> = []
   const announcer = new KnotAnnouncer({
@@ -25,7 +24,6 @@ test('plays each model introduction and knot title once', async () => {
   await announcer.announce(flash)
   expect(played.at(-2)).toBe('glm_flash/slug/glm-5.3-flash/announce.opus')
 })
-
 test('does not mark an interrupted model as announced or continue stale titles', async () => {
   const played: Array<string> = []
   let finish: () => void = () => {}
@@ -51,7 +49,6 @@ test('does not mark an interrupted model as announced or continue stale titles',
   finish()
   await second
 })
-
 test('missing recordings stay silent, never triggering paid generation', async () => {
   let count = 0
   const announcer = new KnotAnnouncer({
@@ -64,14 +61,19 @@ test('missing recordings stay silent, never triggering paid generation', async (
   expect(count).toBe(0)
   expect(announcer.announcedModels.size).toBe(0)
 })
-
 test('announcement inventory includes candidates, models and knot titles with safe local paths', () => {
   const paths = knotAnnouncementPaths(item)
   expect(paths.model).toBe('glm/slug/glm-5.3')
   expect(knotCandidateAnnouncementPath(glm.data)).toBe('glm/candidate')
   const entries = knotAnnouncements([
-    {data: glm.data, items: [item, knotsById.get('glm/emberheart')!]},
-    {data: glmFlash.data, items: [flash]},
+    {
+      data: glm.data,
+      items: [item, knotsById.get('glm/emberheart')!],
+    },
+    {
+      data: glmFlash.data,
+      items: [flash],
+    },
   ])
   expect(entries.map(entry => entry.id)).toEqual([
     'glm/candidate',
@@ -85,10 +87,14 @@ test('announcement inventory includes candidates, models and knot titles with sa
   expect(new Set(entries.map(entry => entry.id)).size).toBe(entries.length)
   expect(() => knotAnnouncementPaths({
     ...item,
-    author: {model: {title: 'Bad', slug: 'vendor/..'}},
+    author: {
+      model: {
+        title: 'Bad',
+        slug: 'vendor/..',
+      },
+    },
   })).toThrow()
 })
-
 test('completed model and title state survives announcer remounts within a session', async () => {
   const played: Array<string> = []
   const audio = {
@@ -109,7 +115,6 @@ test('completed model and title state survives announcer remounts within a sessi
   await new KnotAnnouncer(audio).announce(item)
   expect(played).toHaveLength(4)
 })
-
 test('interrupted or failed knot titles remain available until successfully completed', async () => {
   const paths = knotAnnouncementPaths(item)
   const audio = {
@@ -132,7 +137,6 @@ test('interrupted or failed knot titles remain available until successfully comp
   await announcer.announce(item)
   expect(announcer.hasAnnounced(item)).toBe(true)
 })
-
 test('explicit knot interaction repeats its title without repeating its completed model introduction', async () => {
   const played: Array<string> = []
   const announcer = new KnotAnnouncer({
@@ -147,7 +151,6 @@ test('explicit knot interaction repeats its title without repeating its complete
   const paths = knotAnnouncementPaths(item)
   expect(played).toEqual([paths.model, paths.item, paths.item])
 })
-
 test('knot interaction introduces an unseen author model once without playing the knot title', async () => {
   const played: Array<string> = []
   const announcer = new KnotAnnouncer({
@@ -162,7 +165,6 @@ test('knot interaction introduces an unseen author model once without playing th
   expect(announcer.hasAnnouncedModel(item)).toBe(true)
   expect(announcer.hasAnnounced(item)).toBe(false)
 })
-
 test('candidate interaction replays only the candidate and does not introduce its models', async () => {
   const played: Array<string> = []
   const announcer = new KnotAnnouncer({
@@ -179,7 +181,6 @@ test('candidate interaction replays only the candidate and does not introduce it
   await announcer.announce(item)
   expect(played.slice(-2)).toEqual([knotAnnouncementPaths(item).model, knotAnnouncementPaths(item).item])
 })
-
 test('a newer candidate announcement cancels an unfinished one without changing model state', async () => {
   const played: Array<string> = []
   const announcer = new KnotAnnouncer({
@@ -197,7 +198,6 @@ test('a newer candidate announcement cancels an unfinished one without changing 
   announcer.stop()
   await second
 })
-
 test('missing candidate recordings do not affect model announcement state', async () => {
   const announcer = new KnotAnnouncer({
     resolve: () => {},

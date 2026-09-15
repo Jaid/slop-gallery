@@ -27,17 +27,17 @@ export default function CoveredPassage({passage, material, timber, ribCutouts}: 
   const collision = timber ? [] : [geometry.shell, geometry.ribs].map(colliderGeometry)
   useEffect(() => () => geometry.dispose(), [geometry])
   return <group name={passage.id}>
-    <RigidBody type="fixed" colliders={false}>
+    <RigidBody type='fixed' colliders={false}>
       {passage.floors.map(({center: [x, z], size: [width, depth]}, i) => <group key={i}>
-        <CuboidCollider position={[x, passage.floorY - 0.12, z]} args={[width / 2, 0.12, depth / 2]}/>
-        <Box position={[x, passage.floorY - 0.12, z]} size={[width, 0.24, depth]} material={material}/>
-        <CuboidCollider position={[x, passage.floorY + passage.height + 0.12, z]} args={[width / 2, 0.12, depth / 2]}/>
-        <Box position={[x, passage.floorY + passage.height + 0.12, z]} size={[width, 0.24, depth]} material={material}/>
+        <CuboidCollider position={[x, passage.floorY - 0.12, z]} args={[width / 2, 0.12, depth / 2]} />
+        <Box position={[x, passage.floorY - 0.12, z]} size={[width, 0.24, depth]} material={material} />
+        <CuboidCollider position={[x, passage.floorY + passage.height + 0.12, z]} args={[width / 2, 0.12, depth / 2]} />
+        <Box position={[x, passage.floorY + passage.height + 0.12, z]} size={[width, 0.24, depth]} material={material} />
       </group>)}
-      <Branch not={timber}>{collision.map((args, i) => <TrimeshCollider key={i} args={args}/>)}</Branch>
-      {timber ? <TimberFrame geometry={geometry} material={timber} lining={material}/> : <>
-        <mesh name="castle-barrel-vault" geometry={geometry.shell} material={material} receiveShadow castShadow/>
-        <mesh name="castle-vault-ribs" geometry={geometry.ribs} material={material} receiveShadow castShadow/>
+      <Branch not={timber}>{collision.map((args, i) => <TrimeshCollider key={i} args={args} />)}</Branch>
+      {timber ? <TimberFrame geometry={geometry} material={timber} lining={material} /> : <>
+        <mesh name='castle-barrel-vault' geometry={geometry.shell} material={material} receiveShadow castShadow />
+        <mesh name='castle-vault-ribs' geometry={geometry.ribs} material={material} receiveShadow castShadow />
       </>}
     </RigidBody>
     {passage.spans.flatMap(({start, end}, span) => {
@@ -47,9 +47,9 @@ export default function CoveredPassage({passage, material, timber, ribCutouts}: 
         const x = start[0] + (end[0] - start[0]) * t
         const z = start[1] + (end[1] - start[1]) * t
         return <group key={`${span}:${i}`} position={[x, passage.floorY + 2.8, z]}>
-          <mesh geometry={lantern}><meshStandardNodeMaterial color="#34291d" metalness={0.75} roughness={0.4}/></mesh>
-          <mesh><boxGeometry args={[0.13, 0.24, 0.13]}/><meshStandardNodeMaterial color="#ffdb99" emissive="#ffb54b" emissiveIntensity={3}/></mesh>
-          <pointLight color="#ffcd8a" intensity={12} distance={7} decay={2}/>
+          <mesh geometry={lantern}><meshStandardNodeMaterial color='#34291d' metalness={0.75} roughness={0.4} /></mesh>
+          <mesh><boxGeometry args={[0.13, 0.24, 0.13]} /><meshStandardNodeMaterial color='#ffdb99' emissive='#ffb54b' emissiveIntensity={3} /></mesh>
+          <pointLight color='#ffcd8a' intensity={12} distance={7} decay={2} />
         </group>
       })
     })}

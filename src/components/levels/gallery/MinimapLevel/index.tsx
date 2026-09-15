@@ -38,18 +38,20 @@ export default function MinimapLevel({lower}: {lower: boolean}) {
     update()
     return () => cancelAnimationFrame(frame)
   }, [lower, portraits])
-  return <svg className={css.container} viewBox={minimapViewBox} role="img" aria-label={lower ? 'Lower gallery minimap' : 'Upper gallery minimap'}>
-    <g className={css.walls}>{minimapWalls.filter(wall => wall.lower === lower).map((wall, i) => <polyline key={i} points={wall.path}/>)}</g>
+  return <svg className={css.container} viewBox={minimapViewBox} role='img' aria-label={lower ? 'Lower gallery minimap' : 'Upper gallery minimap'}>
+    <g className={css.walls}>{minimapWalls.filter(wall => wall.lower === lower).map((wall, i) => <polyline key={i} points={wall.path} />)}</g>
     <g className={css.portraits}>{portraits.map(portrait => {
       const marker = minimapPortrait(portrait)
-      return <circle key={portrait.id} ref={element => {
-        if (element) {
-          dots.current.set(portrait.id, element)
-        } else {
-          dots.current.delete(portrait.id)
-        }
-      }} data-portrait={portrait.id} cx={marker.position[0]} cy={marker.position[2]} r="0.6" display={!portrait.reserved && marker.lower === lower ? 'inline' : 'none'}/>
+      return <circle
+        key={portrait.id} ref={element => {
+          if (element) {
+            dots.current.set(portrait.id, element)
+          } else {
+            dots.current.delete(portrait.id)
+          }
+        }} data-portrait={portrait.id} cx={marker.position[0]} cy={marker.position[2]} r='0.6' display={!portrait.reserved && marker.lower === lower ? 'inline' : 'none'}
+      />
     })}</g>
-    <path ref={player} className={css.player} aria-label="Your position" d="M 0 -2.4 L 1.35 1.5 L 0 0.85 L -1.35 1.5 Z" transform={`translate(${cameraPose.position[0]} ${cameraPose.position[2]}) rotate(${minimapHeading(cameraPose.direction)})`} display={isLowerRoom(current) === lower ? 'inline' : 'none'}/>
+    <path ref={player} className={css.player} aria-label='Your position' d='M 0 -2.4 L 1.35 1.5 L 0 0.85 L -1.35 1.5 Z' transform={`translate(${cameraPose.position[0]} ${cameraPose.position[2]}) rotate(${minimapHeading(cameraPose.direction)})`} display={isLowerRoom(current) === lower ? 'inline' : 'none'} />
   </svg>
 }

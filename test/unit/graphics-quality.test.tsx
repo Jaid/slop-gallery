@@ -28,7 +28,7 @@ test('graphics URL names round-trip through boolean state and default to perform
 })
 test('the URL-backed provider exposes isQuality and selects the scene budget', () => {
   for (const [query, isQuality] of [['', false], ['?graphics=quality', true], ['?graphics=performance', false], ['?graphics=invalid', false], ['?lite=true', false]] as const) {
-    const html = renderToStaticMarkup(<NuqsTestingAdapter searchParams={query}><GraphicsQuality><ReadProfile/></GraphicsQuality></NuqsTestingAdapter>)
+    const html = renderToStaticMarkup(<NuqsTestingAdapter searchParams={query}><GraphicsQuality><ReadProfile /></GraphicsQuality></NuqsTestingAdapter>)
     expect(html).toStartWith(`<span>${String(isQuality)}:`)
     expect(html).toContain(isQuality ? '[1,2]' : 'dpr&quot;:1')
     expect(html).toContain(isQuality ? 'postprocessing&quot;:true' : 'postprocessing&quot;:false')

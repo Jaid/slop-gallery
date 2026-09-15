@@ -11,8 +11,8 @@ export default class TempestEyeMaterial extends KnotMaterial {
     super(environment, 0.9)
     this.name = knotData.id
     const {p, view, facing, grazing, rim, near, intimate} = viewerFrame()
-    void view
-    void grazing
+    view
+    grazing
     const swirlA = time.mul(0.35)
     const twist = p.y.mul(4).add(swirlA)
     const cs = twist.cos()

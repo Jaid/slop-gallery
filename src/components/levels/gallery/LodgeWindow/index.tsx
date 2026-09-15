@@ -12,13 +12,13 @@ export default function LodgeWindow({glass, material}: {glass: Material
   const geometry = new LodgeWindowGeometry
   const collision = [geometry.lining, geometry.glass, geometry.frame].map(colliderGeometry)
   useEffect(() => () => geometry.dispose(), [geometry])
-  return <group name="lodge-tunnel-window">
-    <RigidBody type="fixed" colliders={false}>
-      {collision.map((args, i) => <MeshSurfaceCollider key={i} args={args}/>)}
-      <mesh name="lodge-window-reveal" geometry={geometry.lining} material={material} receiveShadow castShadow/>
-      <mesh name="lodge-window-tunnel-glass" geometry={geometry.glass} material={glass}/>
-      <mesh name="lodge-window-glazing-stop" geometry={geometry.frame} receiveShadow castShadow>
-        <meshStandardNodeMaterial color="#ac8c58" roughness={0.4} metalness={0.65}/>
+  return <group name='lodge-tunnel-window'>
+    <RigidBody type='fixed' colliders={false}>
+      {collision.map((args, i) => <MeshSurfaceCollider key={i} args={args} />)}
+      <mesh name='lodge-window-reveal' geometry={geometry.lining} material={material} receiveShadow castShadow />
+      <mesh name='lodge-window-tunnel-glass' geometry={geometry.glass} material={glass} />
+      <mesh name='lodge-window-glazing-stop' geometry={geometry.frame} receiveShadow castShadow>
+        <meshStandardNodeMaterial color='#ac8c58' roughness={0.4} metalness={0.65} />
       </mesh>
     </RigidBody>
   </group>

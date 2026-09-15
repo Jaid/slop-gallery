@@ -137,7 +137,7 @@ describe('Lodge through-window', () => {
         const a = profile[upper - 1]
         const b = profile[upper]
         const boundary = lodge.approachX + a.x + (b.x - a.x) * (y - a.y) / (b.y - a.y)
-        expect(positions.getX(i)).toBeGreaterThanOrEqual(boundary - 0.000_01)
+        expect(positions.getX(i)).toBeGreaterThanOrEqual(boundary - 0.00001)
       }
     }
   })

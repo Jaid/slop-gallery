@@ -7,8 +7,8 @@ import {knotGeometryArgs} from '#src/lib/gallery/sculptures.ts'
 export default function Props() {
   const pedestal = usePedestal()
   return <>
-    <Pedestal {...pedestal} position={[13.3, 0, 1.4]}/>
-    <GrabbableProp id="prop-knot" title="A very serious knot" position={[13.3, 1.9, 1.4]}><mesh castShadow receiveShadow><torusKnotGeometry args={knotGeometryArgs}/><GoldMaterial/></mesh></GrabbableProp>
+    <Pedestal {...pedestal} position={[13.3, 0, 1.4]} />
+    <GrabbableProp id='prop-knot' title='A very serious knot' position={[13.3, 1.9, 1.4]}><mesh castShadow receiveShadow><torusKnotGeometry args={knotGeometryArgs} /><GoldMaterial /></mesh></GrabbableProp>
     {([
       {
         id: 'prop-book',
@@ -23,8 +23,8 @@ export default function Props() {
         title: 'The original forbidden download',
       },
     ] as const).map(prop => <group key={prop.id}>
-      <Pedestal {...pedestal} position={[prop.position[0], 0, prop.position[2]]}/>
-      <Prop {...prop} position={[...prop.position]}/>
+      <Pedestal {...pedestal} position={[prop.position[0], 0, prop.position[2]]} />
+      <Prop {...prop} position={[...prop.position]} />
     </group>)}
   </>
 }

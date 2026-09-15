@@ -53,8 +53,8 @@ export default function Dropzone({children}: PropsWithChildren) {
     }
   }, [isDragActive])
   return <div {...getRootProps({className: css.container})}>
-    <input {...getInputProps()} data-artwork-input aria-label="Import artworks"/>
+    <input {...getInputProps()} data-artwork-input aria-label='Import artworks' />
     {children}
-    <Branch if={isDragActive}><ArtworkDropOverlay rejected={isDragReject} valid={Boolean(placement?.valid)}/></Branch>
+    <Branch if={isDragActive}><ArtworkDropOverlay rejected={isDragReject} valid={Boolean(placement?.valid)} /></Branch>
   </div>
 }

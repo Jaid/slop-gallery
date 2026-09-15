@@ -25,7 +25,7 @@ export default class LodgeWindowGeometry {
     const edgeX = (level: number) => {
       const upper = profile.findIndex(point => point.y >= level)
       if (upper <= 0) {
-        return (upper < 0 ? profile.at(-1)! : profile[0]).x
+        return (upper === -1 ? profile.at(-1)! : profile[0]).x
       }
       const a = profile[upper - 1]
       const b = profile[upper]

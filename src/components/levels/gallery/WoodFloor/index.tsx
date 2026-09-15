@@ -16,9 +16,9 @@ export default function WoodFloor({width, depth, texture, reflections}: {depth: 
   const material = new WoodFloorMaterial(texture, reflective)
   useEffect(() => () => material.dispose(), [material])
   const reflection = material.reflection?.target
-  return <mesh name="mona-ribbit-room-wood-floor" position={[0, 0.001, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-    <planeGeometry args={[width, depth]}/>
-    <primitive object={material} attach="material"/>
-    <Branch if={reflection}><primitive object={reflection!}/></Branch>
+  return <mesh name='mona-ribbit-room-wood-floor' position={[0, 0.001, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+    <planeGeometry args={[width, depth]} />
+    <primitive object={material} attach='material' />
+    <Branch if={reflection}><primitive object={reflection!} /></Branch>
   </mesh>
 }

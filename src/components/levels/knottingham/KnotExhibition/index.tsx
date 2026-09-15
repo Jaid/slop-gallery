@@ -26,15 +26,15 @@ export default function KnotExhibition() {
   const materials = new ProgressiveKnotMaterials(renderer, camera, knotExhibition, constructors)
   useDisposable(materials)
   const {resources} = materials
-  return <group name="lobby-knot-exhibition">
-    <KnotLabels/>
+  return <group name='lobby-knot-exhibition'>
+    <KnotLabels />
     {knotExhibition.map((finish, index) => {
       const {geometry, colliderArgs, colliderPosition} = resources.items[index]
-      return <GrabbableProp key={finish.id} id={`prop-knot-${finish.id}`} title={`${finish.label} · ${finish.title} · ${finish.modelTitle}`} colliders={false} type="fixed" rotation={[0, finish.rotation, 0]} position={[finish.position[0], knotFloatHeight, finish.position[2]]}>
-        <CuboidCollider args={colliderArgs} position={colliderPosition}/>
+      return <GrabbableProp key={finish.id} id={`prop-knot-${finish.id}`} title={`${finish.label} · ${finish.title} · ${finish.modelTitle}`} colliders={false} type='fixed' rotation={[0, finish.rotation, 0]} position={[finish.position[0], knotFloatHeight, finish.position[2]]}>
+        <CuboidCollider args={colliderArgs} position={colliderPosition} />
         <InteractiveObject id={`prop-knot-${finish.id}`} onActivate={() => narrateModel(`prop-knot-${finish.id}`)}>
           <mesh ref={materials.refs[index]} onBeforeRender={materials.observers[index]} material={materials.placeholder} name={`knot-${finish.id}`} raycast={resources.raycast} castShadow receiveShadow>
-            <primitive object={geometry} attach="geometry"/>
+            <primitive object={geometry} attach='geometry' />
           </mesh>
         </InteractiveObject>
       </GrabbableProp>

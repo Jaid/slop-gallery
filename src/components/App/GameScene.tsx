@@ -12,9 +12,9 @@ import {getGraphicsProfile} from '#src/lib/rendering/graphicsQuality.ts'
 export default function GameScene({children}: GameWrapperProps) {
   const profile = useGraphicsQualityValue(getGraphicsProfile)
   return <>
-    <WebgpuCaptureBridge/>
-    <TelemetryBridge/>
+    <WebgpuCaptureBridge />
+    <TelemetryBridge />
     {children}
-    {profile.postprocessing && <Postprocessing knotFocus={isKnottingham} contactDarkening={isKnottingham}/>}
+    {profile.postprocessing && <Postprocessing knotFocus={isKnottingham} contactDarkening={isKnottingham} />}
   </>
 }

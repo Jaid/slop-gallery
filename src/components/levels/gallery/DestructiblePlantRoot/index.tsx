@@ -13,7 +13,8 @@ export default function DestructiblePlantRoot({id, geometry, attachments}: {atta
   id: string}) {
   const resources = decorationResources()
   const center = geometry.stems.boundingBox!.getCenter(new Vector3)
-  return <GrabbableProp id={`${id}-root`} title="The plant’s root and stalks" position={center.toArray()} type="fixed" colliders={false}
+  return <GrabbableProp
+    id={`${id}-root`} title='The plant’s root and stalks' position={center.toArray()} type='fixed' colliders={false}
     canGrab={attachments.canGrabRoot}
     blockedMessage={() => `Rip off all leaves before uprooting this plant (${attachments.remaining} remaining).`}
     onAttachmentChange={attachments.setRootAttached}
@@ -22,8 +23,8 @@ export default function DestructiblePlantRoot({id, geometry, attachments}: {atta
     linearDamping={0.3} angularDamping={0.4} restitution={0.15} friction={0.8}
   >
     <group position={[-center.x, -center.y, -center.z]}>
-      <mesh name="uprootable-trunk" geometry={geometry.stems} material={resources[geometry.stemMaterial]} castShadow receiveShadow/>
-      {geometry.stemColliders.map((collider, i) => <ConvexHullCollider key={i} ref={initializeFoliageCollider} args={[collider.vertices]} mass={collider.mass}/>)}
+      <mesh name='uprootable-trunk' geometry={geometry.stems} material={resources[geometry.stemMaterial]} castShadow receiveShadow />
+      {geometry.stemColliders.map((collider, i) => <ConvexHullCollider key={i} ref={initializeFoliageCollider} args={[collider.vertices]} mass={collider.mass} />)}
     </group>
   </GrabbableProp>
 }

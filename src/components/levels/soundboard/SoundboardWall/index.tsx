@@ -56,12 +56,14 @@ const SoundButton = ({effect, index, section}: {effect: SoundEffect
     return registerInteractiveObject(effect.id, target)
   }, [effect.id, effect.label])
   const [x, y] = soundboardLayout.buttonPosition(section, index)
-  return <group ref={group} name={`soundboard-effect-${effect.id}`} userData={{
-    soundEffectId: effect.id,
-    soundStatus: section,
-  }} position={[x, y, 0.16]}>
-    <Box size={[soundboardButton.width, soundboardButton.height, 0.14]} color={palette[section].button} metalness={0.16} roughness={0.4}/>
-    <CanvasText position={[0, 0, 0.071]} width={soundboardButton.width - 0.1} height={soundboardButton.height - 0.13} text={`${effect.id} · ${effect.label}`} color={palette[section].label} fontSize={0.48} fontWeight={650}/>
+  return <group
+    ref={group} name={`soundboard-effect-${effect.id}`} userData={{
+      soundEffectId: effect.id,
+      soundStatus: section,
+    }} position={[x, y, 0.16]}
+  >
+    <Box size={[soundboardButton.width, soundboardButton.height, 0.14]} color={palette[section].button} metalness={0.16} roughness={0.4} />
+    <CanvasText position={[0, 0, 0.071]} width={soundboardButton.width - 0.1} height={soundboardButton.height - 0.13} text={`${effect.id} · ${effect.label}`} color={palette[section].label} fontSize={0.48} fontWeight={650} />
   </group>
 }
 
@@ -71,7 +73,7 @@ export default function SoundboardWall({section, effects, position, rotationY}: 
   section: SoundboardSection}) {
   const style = palette[section]
   return <group name={`soundboard-${section}-wall`} position={position} rotation={[0, rotationY, 0]}>
-    <CanvasText position={[0, soundboardLayout.headingY(), 0.16]} width={Math.min(soundboardLayout.size[0] - 1.2, 5.4)} height={0.58} text={`${section.toUpperCase()} · ${effects.length}`} color={style.heading} fontSize={0.62} fontWeight={750}/>
-    {effects.map((effect, index) => <SoundButton key={effect.id} effect={effect} index={index} section={section}/>)}
+    <CanvasText position={[0, soundboardLayout.headingY(), 0.16]} width={Math.min(soundboardLayout.size[0] - 1.2, 5.4)} height={0.58} text={`${section.toUpperCase()} · ${effects.length}`} color={style.heading} fontSize={0.62} fontWeight={750} />
+    {effects.map((effect, index) => <SoundButton key={effect.id} effect={effect} index={index} section={section} />)}
   </group>
 }

@@ -10,8 +10,8 @@ export default function OculusGround({material}: {material: Material}) {
   const geometry = new OculusGroundGeometry
   const collision = colliderGeometry(geometry)
   useEffect(() => () => geometry.dispose(), [geometry])
-  return <RigidBody type="fixed" colliders={false}>
-    <TrimeshCollider args={collision}/>
-    <mesh name="oculus-ground" geometry={geometry} material={material} castShadow receiveShadow/>
+  return <RigidBody type='fixed' colliders={false}>
+    <TrimeshCollider args={collision} />
+    <mesh name='oculus-ground' geometry={geometry} material={material} castShadow receiveShadow />
   </RigidBody>
 }

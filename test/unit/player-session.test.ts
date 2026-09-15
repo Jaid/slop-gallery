@@ -33,8 +33,8 @@ afterEach(() => {
 describe('player save state', () => {
   test('new and legacy collections spawn at the captured poolside viewpoint', () => {
     expect(playerSpawn).toEqual({
-      position: [0.065_056_741_237_640_38, 0.019_489_301_368_594_17, -25.913_022_994_995_117],
-      yaw: 3.135_849_777_946_853,
+      position: [0.06505674123764038, 0.01948930136859417, -25.913022994995117],
+      yaw: 3.135849777946853,
       pitch: -0.108,
     })
     const {player, ...legacy} = original

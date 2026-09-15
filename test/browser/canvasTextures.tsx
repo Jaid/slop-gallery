@@ -48,7 +48,7 @@ export default async function verifyCanvasTextures() {
   let unmountFiber: (() => Promise<void>) | undefined
   const errors: Array<string> = []
   try {
-    owner.render(<StrictMode><Owner/></StrictMode>)
+    owner.render(<StrictMode><Owner /></StrictMode>)
     await until(() => setups === 2)
     assert(cleanups === 1, 'StrictMode did not replay the ownership effect.')
     assert(owned?.image.width === 4, 'StrictMode destroyed the live canvas.')
@@ -79,11 +79,11 @@ export default async function verifyCanvasTextures() {
     unmountFiber = () => new Promise(resolve => unmountComponentAtNode(canvas, () => resolve()))
     function Plane({texture}: {texture: Texture | null}) {
       return <mesh>
-        <planeGeometry args={[2, 2]}/>
-        <meshBasicNodeMaterial key={texture?.uuid ?? 'pending'} map={texture} transparent toneMapped={false}/>
+        <planeGeometry args={[2, 2]} />
+        <meshBasicNodeMaterial key={texture?.uuid ?? 'pending'} map={texture} transparent toneMapped={false} />
       </mesh>
     }
-    const store = root.render(<Plane texture={null}/>)
+    const store = root.render(<Plane texture={null} />)
     const scene = store.getState().scene
     scene.background = new Color('#0000ff')
     await until(() => scene.children.some(child => child instanceof Mesh))
@@ -91,7 +91,7 @@ export default async function verifyCanvasTextures() {
     renderer.render(scene, camera)
     await renderer.readRenderTargetPixelsAsync(target, 0, 0, renderWidth, 4)
     const oldMaterial = (scene.children.find(child => child instanceof Mesh) as Mesh).material
-    root.render(<Plane texture={owned}/>)
+    root.render(<Plane texture={owned} />)
     await until(() => (scene.children.find(child => child instanceof Mesh) as Mesh).material !== oldMaterial)
     renderer.render(scene, camera)
     const pixels = await renderer.readRenderTargetPixelsAsync(target, 0, 0, renderWidth, 4)

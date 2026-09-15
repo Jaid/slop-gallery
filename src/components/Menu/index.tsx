@@ -19,26 +19,26 @@ export default function Menu(settings: ReturnType<typeof useGalleryAI>) {
   const s = useGallery()
   const {stage} = usePauseMenu(pauseMenu)
   const room = rooms.find(room => room.id === s.room)!
-  const tagline = isGallery && stage === 'pause' ? room.floorY < 0 ? 'lower floor room' : 'upper floor room' : galleryTagline
+  const tagline = isGallery && stage === 'pause' ? (room.floorY < 0 ? 'lower floor room' : 'upper floor room') : galleryTagline
   const heading = useRef<HTMLHeadingElement>(null)
   useEffect(() => {
     heading.current?.focus({preventScroll: true})
   }, [])
-  return <section className={css.container} data-testid="menu-overlay" data-stage={stage} aria-labelledby="menu-title">
+  return <section className={css.container} data-testid='menu-overlay' data-stage={stage} aria-labelledby='menu-title'>
     <div className={css.layout}>
-      <Branch all={[stage === 'pause', gallerySupportsMap]}><Minimap lower={false}/></Branch>
+      <Branch all={[stage === 'pause', gallerySupportsMap]}><Minimap lower={false} /></Branch>
       <div className={css.content}>
-        <h1 ref={heading} id="menu-title" tabIndex={-1}><Branch all={[stage === 'pause', isGallery]} then={room.title} else={galleryTitle}/></h1>
+        <h1 ref={heading} id='menu-title' tabIndex={-1}><Branch all={[stage === 'pause', isGallery]} then={room.title} else={galleryTitle} /></h1>
         <Branch not={stage === 'unfocus'}><p className={css.tagline}>{tagline}</p></Branch>
-        <button className={css.enter} id="enter-gallery" disabled={!s.ready} onClick={enterGallery}>{!s.ready ? `Opening ${galleryTitle}…` : stage === 'reset' ? 'New game' : stage === 'first' ? galleryEnterLabel : stage === 'return' ? 'Continue' : 'Resume'}<Icon name="arrow" size={18}/></button>
+        <button className={css.enter} id='enter-gallery' disabled={!s.ready} onClick={enterGallery}>{!s.ready ? `Opening ${galleryTitle}…` : stage === 'reset' ? 'New game' : stage === 'first' ? galleryEnterLabel : stage === 'return' ? 'Continue' : 'Resume'}<Icon name='arrow' size={18} /></button>
         <Branch if={stage === 'return'}><button className={css.newGame} disabled={!s.ready} onClick={startNewGame}>New game</button></Branch>
         <Branch not={stage === 'unfocus'}>
-          <MenuOptions/>
-          <OpenRouterConnection {...settings}/>
-          <MenuNarration/>
+          <MenuOptions />
+          <OpenRouterConnection {...settings} />
+          <MenuNarration />
         </Branch>
       </div>
-      <Branch all={[stage === 'pause', gallerySupportsMap]}><Minimap lower/></Branch>
+      <Branch all={[stage === 'pause', gallerySupportsMap]}><Minimap lower /></Branch>
     </div>
   </section>
 }

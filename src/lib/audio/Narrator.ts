@@ -111,7 +111,7 @@ export default class Narrator {
       }
       failed = true
       this.clearAudio()
-      notify(error instanceof Error ? `${error.message} Using the browser voice instead.` : 'Using the browser voice instead.')
+      notify(Error.isError(error) ? `${error.message} Using the browser voice instead.` : 'Using the browser voice instead.')
       this.browserSpeech(id, transcript, current)
     }
     try {
