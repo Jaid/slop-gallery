@@ -33,7 +33,7 @@ Records a Chromium/Brave performance trace through the browser CDP endpoint.
 Press Enter or Ctrl+C to stop and save the trace.
 
 Options:
-  --port <number>       CDP port. Default: 9223
+  --port <number>       CDP port. Default: 9222
   --buffer-mib <number> Trace buffer size in MiB. Default: 1024
   --help                Show this help
 
@@ -159,7 +159,7 @@ async function brotliCompressFile(input: string, output: string) {
   }), createWriteStream(output))
 }
 
-export default async function recordBrowserTrace({port = 9223,
+export default async function recordBrowserTrace({port = 9222,
   bufferMiB = 1024}: {
   bufferMiB?: number
   port?: number
@@ -358,7 +358,7 @@ if (import.meta.main) {
     options: {
       port: {
         type: 'string',
-        default: '9223',
+        default: '9222',
       },
       'buffer-mib': {
         type: 'string',
