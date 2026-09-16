@@ -256,8 +256,8 @@ export default function KnotLights() {
     fractureSeamMaterial.name = 'Knot slot LED internal fracture seams'
     fractureSeamMaterial.toneMapped = false
     const housingMaterial = new MeshStandardNodeMaterial({
-      color: '#333936',
-      roughness: 0.32,
+      color: '#171614',
+      roughness: 0.42,
       metalness: 0.18,
       envMapIntensity: 1.1,
     })
