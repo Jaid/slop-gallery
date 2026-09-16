@@ -43,7 +43,7 @@ Press Enter or Ctrl+C to stop and save the trace.
 
 Options:
   --port <number>       CDP port. Default: 9222
-  --buffer-mib <number> Trace buffer size in MiB. Default: 1024
+  --buffer <number>     Trace buffer size in bytes. Default: 4000000000
   --reload <boolean>    Reload the target page when tracing begins. Default: false
   --help                Show this help
 
@@ -70,17 +70,17 @@ type Pending = {
 const consoleEventMethods = new Set<string>(['Log.entryAdded', 'Runtime.consoleAPICalled', 'Runtime.exceptionThrown'])
 const isConsoleEventMethod = (method: string | undefined): method is ConsoleEventMethod => method !== undefined && consoleEventMethods.has(method)
 export default async function recordBrowserTrace({port = 9222,
-  bufferMiB = 1024,
+  buffer = 4_000_000_000,
   reload = false}: {
-  bufferMiB?: number
+  buffer?: number
   port?: number
   reload?: boolean
 } = {}) {
   if (!Number.isSafeInteger(port) || port < 1 || port > 65_535) {
     throw new TypeError('port must be an integer between 1 and 65535.')
   }
-  if (!Number.isSafeInteger(bufferMiB) || bufferMiB < 1) {
-    throw new TypeError('bufferMiB must be a positive integer.')
+  if (!Number.isSafeInteger(buffer) || buffer < 1) {
+    throw new TypeError('buffer must be a positive integer.')
   }
   if (typeof reload !== 'boolean') {
     throw new TypeError('reload must be a boolean.')
@@ -233,7 +233,7 @@ export default async function recordBrowserTrace({port = 9222,
     bufferUsageReportingInterval: 5000,
     traceConfig: {
       recordMode: 'recordUntilFull',
-      traceBufferSizeInKb: bufferMiB * 1024,
+      traceBufferSizeInKb: Math.ceil(buffer / 1024),
       enableSystrace: false,
       enableArgumentFilter: false,
       includedCategories: categories,
@@ -245,7 +245,7 @@ export default async function recordBrowserTrace({port = 9222,
     console.error(`Reloaded ${pageTarget.url || 'page target'}`)
   }
   console.error(`Recording ${version.Browser ?? 'Brave/Chromium'} on :${port}`)
-  console.error(`Buffer: ${bufferMiB} MiB`)
+  console.error(`Buffer: ${buffer.toLocaleString()} bytes`)
   console.error(`Output: ${output}`)
   console.error('Press Enter or Ctrl+C to stop.')
   process.stdin.resume()
@@ -450,9 +450,9 @@ if (import.meta.main) {
         type: 'string',
         default: '9222',
       },
-      'buffer-mib': {
+      buffer: {
         type: 'string',
-        default: '1024',
+        default: '4000000000',
       },
       reload: {
         type: 'string',
@@ -469,7 +469,7 @@ if (import.meta.main) {
     }
     await recordBrowserTrace({
       port: Number(values.port),
-      bufferMiB: Number(values['buffer-mib']),
+      buffer: Number(values.buffer),
       reload: values.reload === 'true',
     })
   }
