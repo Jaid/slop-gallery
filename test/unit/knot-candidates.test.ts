@@ -115,6 +115,14 @@ describe('arbitrary Knot batches', () => {
     })
     expect(knotCandidates.find(candidate => candidate.data.id === 'fable')!.items.every(entry => entry.modelTitle === 'Claude Fable 5.1')).toBe(true)
   })
+  test('collapses effort labels and spelling variants into one model identity', () => {
+    const kimi = knotCandidates.find(candidate => candidate.data.id === 'kimi')!
+    expect(new Set(kimi.items.map(entry => entry.modelTitle))).toEqual(new Set(['Kimi K3']))
+    expect(kimi.items.filter(entry => entry.harness === 'kimi.ai')).toHaveLength(8)
+    expect(kimi.items.filter(entry => entry.harness === 'kimi.ai').every(entry => entry.author.model.effortLevel === 'max')).toBe(true)
+    const qwen = knotCandidates.find(candidate => candidate.data.id === 'qwen')!
+    expect(new Set(qwen.items.map(entry => entry.modelTitle))).toEqual(new Set(['Qwen 3.8 Max']))
+  })
   test('keeps every Gemini item on current model provenance', () => {
     const gemini = knotCandidates.find(candidate => candidate.data.id === 'gemini')!
     expect(gemini.items).toHaveLength(24)

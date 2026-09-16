@@ -6,7 +6,7 @@ export default {
   title: 'Obsidian Leviathan',
   author: {
     model: {
-      title: 'Qwen3.8 Max',
+      title: 'Qwen 3.8 Max',
     },
   },
   accent: '#00e5ff',

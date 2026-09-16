@@ -6,7 +6,7 @@ export default {
   title: 'Spirit Birch',
   author: {
     model: {
-      title: 'Qwen3.8 Max',
+      title: 'Qwen 3.8 Max',
     },
   },
   accent: '#e6f2ff',

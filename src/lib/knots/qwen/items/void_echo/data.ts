@@ -6,7 +6,7 @@ export default {
   title: 'Singularity',
   author: {
     model: {
-      title: 'Qwen3.8 Max',
+      title: 'Qwen 3.8 Max',
     },
   },
   accent: '#8a2be2',

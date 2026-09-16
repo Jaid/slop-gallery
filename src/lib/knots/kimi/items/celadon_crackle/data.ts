@@ -7,7 +7,7 @@ export default {
   harness: 'kimi.ai',
   author: {
     model: {
-      title: 'Kimi K3 Max',
+      title: 'Kimi K3',
       effortLevel: 'max',
     },
   },

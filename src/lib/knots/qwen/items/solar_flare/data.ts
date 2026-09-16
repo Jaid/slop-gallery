@@ -6,7 +6,7 @@ export default {
   title: 'Coronal Mass',
   author: {
     model: {
-      title: 'Qwen3.8 Max',
+      title: 'Qwen 3.8 Max',
     },
   },
   accent: '#ff7700',

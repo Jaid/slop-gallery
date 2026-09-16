@@ -6,7 +6,7 @@ export default {
   title: 'Ferrofluid Bloom',
   author: {
     model: {
-      title: 'Qwen3.8 Max',
+      title: 'Qwen 3.8 Max',
     },
   },
   accent: '#e0e0e0',
