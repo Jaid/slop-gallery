@@ -1,6 +1,6 @@
 # branch-component/prefer-branch-component
 
-Prefer Branch elements for conditional rendering. This rule is fixable and takes no options.
+Prefer Branch elements for conditional rendering. This rule is fixable.
 
 ```tsx
 // Before
@@ -20,9 +20,9 @@ const view = ready ? null : <Fallback />
 const view = <Branch not={ready}><Fallback /></Branch>
 ```
 
-The rule also handles string/number ternaries directly inside JSX children and Boolean `&&` guards such as `count > 0 && <Content />`, `!!visible && <Content />`, `Boolean(visible) && <Content />`, and identifiers explicitly annotated as `boolean`.
+Boolean `&&` guards such as `count > 0 && <Content />`, `!!visible && <Content />`, `Boolean(visible) && <Content />`, and identifiers explicitly annotated as `boolean` are also handled.
 
-Ordinary value computations and conditional string props are not targeted:
+Ordinary value computations and conditional props are not targeted:
 
 ```tsx
 const width = ready ? 100 : 50
@@ -31,9 +31,56 @@ const view = <div className={ready ? 'active' : 'idle'} />
 
 Unknown `&&` conditions, `||`, and `??` are left alone. In particular, `count && <Content />` can render `0`; replacing it with a truthiness-only branch could hide that output. The rule does not require type-checker services or infer Boolean types from arbitrary expressions.
 
-## Imports
+## Options
 
-An existing, unshadowed default import is reused, including renamed default imports and namespace `.default` access. Otherwise the fixer inserts a default import named `BranchComponent`, adding a numeric suffix when needed. Type-only imports are never reused as values. Import insertion preserves shebangs, directives, comments, quote style and line endings. Script/CommonJS source mode is reported without adding an ESM import.
+### `keepPrimitives`
+
+Type: `boolean`
+
+Default: `true`
+
+Keep JSX-child ternaries when both branches are syntactically primitive values. This avoids turning simple labels into Branch elements:
+
+```tsx
+<h3>{level.lower ? 'Lower level' : 'Upper level'}</h3>
+<button>{apiKey ? 'Update' : 'Connect'}</button>
+<small>{isQuality ? 'Quality' : 'Performance'}</small>
+<small>{status === 'preparing' ? 'Preparing narration…' : playing}</small>
+```
+
+String, number, Boolean and null literals are primitives, as are template literals and expressions whose syntax guarantees a primitive result, such as unary and binary expressions. A ternary with JSX on either side is still converted.
+
+Set `keepPrimitives: false` to retain the previous behavior:
+
+```ts
+{
+  'branch-component/prefer-branch-component': ['warn', {keepPrimitives: false}],
+}
+```
+
+Then a JSX-child primitive ternary such as `{ready ? 'Yes' : 'No'}` is converted to Branch.
+
+### `name`
+
+Type: `string`
+
+Default: `Branch`
+
+Set the local name used when the fixer needs to insert a new default import:
+
+```ts
+{
+  'branch-component/prefer-branch-component': ['warn', {name: 'When'}],
+}
+```
+
+```tsx
+import When from 'branch-component'
+
+const view = <When if={ready}><Content /></When>
+```
+
+An existing, unshadowed default import is reused regardless of this option, including renamed default imports and namespace `.default` access. When a new import name is already occupied, the fixer adds a numeric suffix such as `Branch2`. Type-only imports are never reused as values. Import insertion preserves shebangs, directives, comments, quote style and line endings. Script/CommonJS source mode is reported without adding an ESM import.
 
 ## Eager evaluation
 

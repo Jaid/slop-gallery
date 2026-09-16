@@ -7,6 +7,10 @@ import createRule from '../createRule.ts'
 import {commentsAreWithin, expressionText, isEagerSafe, isJsx, isJsxChild} from '../jsx.ts'
 
 const isNull = (expression: TSESTree.Expression) => expression.type === AST.Literal && expression.value === null
+type Options = [{
+  keepPrimitives?: boolean
+  name?: string
+}]
 function isBoolean(node: TSESTree.Expression, sourceCode: TSESLint.SourceCode): boolean {
   switch (node.type) {
     case AST.Literal: {
@@ -38,19 +42,32 @@ function isBoolean(node: TSESTree.Expression, sourceCode: TSESLint.SourceCode): 
   }
 }
 
-export default createRule({
+export default createRule<Options, 'prefer'>({
   name: 'prefer-branch-component',
   meta: {
     type: 'suggestion',
-    docs: {description: 'Prefer BranchComponent over conditional rendering expressions.'},
+    docs: {description: 'Prefer Branch over conditional rendering expressions.'},
     fixable: 'code',
-    schema: [],
-    messages: {prefer: 'Use BranchComponent for conditional rendering.'},
+    schema: [{
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        keepPrimitives: {type: 'boolean'},
+        name: {
+          type: 'string',
+          pattern: '^[A-Za-z_$][A-Za-z0-9_$]*$',
+        },
+      },
+    }],
+    messages: {prefer: 'Use Branch for conditional rendering.'},
   },
-  defaultOptions: [],
-  create(context) {
+  defaultOptions: [{
+    keepPrimitives: true,
+    name: 'Branch',
+  }],
+  create(context, [{keepPrimitives = true, name = 'Branch'}]) {
     const {sourceCode} = context
-    const resolveImport = createImportResolver(sourceCode)
+    const resolveImport = createImportResolver(sourceCode, name)
     function report(node: TSESTree.ConditionalExpression | TSESTree.LogicalExpression, condition: TSESTree.Expression, success: TSESTree.Expression, failure?: TSESTree.Expression) {
       const retained = [condition, success, ...failure ? [failure] : []]
       // Branch props are eager at runtime. Never turn a guarded property access,
@@ -77,6 +94,9 @@ export default createRule({
     }
     return {
       ConditionalExpression(node) {
+        if (keepPrimitives && isJsxChild(node) && !isJsx(node.consequent) && !isJsx(node.alternate)) {
+          return
+        }
         if (isJsxChild(node) || isJsx(node.consequent) || isJsx(node.alternate)) {
           report(node, node.test, node.consequent, node.alternate)
         }

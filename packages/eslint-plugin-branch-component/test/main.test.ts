@@ -42,7 +42,7 @@ describe('plugin architecture', () => {
     expect(Object.keys(plugin.rules).toSorted()).toEqual(['expand-children', 'prefer-branch-component', 'prefer-positive', 'simplify-children', 'simplify-classname'])
     for (const [name, rule] of Object.entries(rules)) {
       expect(rule.meta.fixable).toBe('code')
-      expect(rule.meta.schema).toEqual([])
+      expect(rule.meta.schema).toHaveLength(name === 'prefer-branch-component' ? 1 : 0)
       expect(rule.meta.docs?.url).toEndWith(`/docs/rules/${name}.md`)
       expect(typeof rule.create).toBe('function')
     }
@@ -94,8 +94,8 @@ describe('combined autofixes', () => {
       test('inserts one import for many independent conditionals', () => {
         const count = 20
         const children = Array.from({length: count}, (_, i) => `{ok${i} ? <Content /> : null}`).join('')
-        const expected = Array.from({length: count}, (_, i) => `<BranchComponent if={ok${i}} then={Content} />`).join('')
-        expectStable(`const view = <>${children}</>`, `import BranchComponent from 'branch-component'\nconst view = <>${expected}</>`, undefined, typescript)
+        const expected = Array.from({length: count}, (_, i) => `<Branch if={ok${i}} then={Content} />`).join('')
+        expectStable(`const view = <>${children}</>`, `import Branch from 'branch-component'\nconst view = <>${expected}</>`, undefined, typescript)
       })
       test('handles overlapping nested fixes over multiple passes', () => {
         expectStable(
@@ -117,14 +117,14 @@ describe('combined autofixes', () => {
   }
   test('does not reuse type-only imports or capture unresolved names', () => {
     expectStable(
-      "import type BranchComponent from 'branch-component';\nconst view = () => { use(BranchComponent2); return ok ? <Content /> : null }",
-      "import BranchComponent3 from 'branch-component';\nimport type BranchComponent from 'branch-component';\nconst view = () => { use(BranchComponent2); return <BranchComponent3 if={ok} then={Content} /> }",
+      "import type Branch from 'branch-component';\nconst view = () => { use(Branch2); return ok ? <Content /> : null }",
+      "import Branch3 from 'branch-component';\nimport type Branch from 'branch-component';\nconst view = () => { use(Branch2); return <Branch3 if={ok} then={Content} /> }",
     )
   })
   test('preserves a byte order mark, CRLF, directives and a shebang', () => {
     expectStable(
       '\u{FEFF}#!/usr/bin/env node\r\n"use client";\r\nconst view = ok ? <Content /> : null',
-      '\u{FEFF}#!/usr/bin/env node\r\n"use client";\r\nimport BranchComponent from \'branch-component\'\r\nconst view = <BranchComponent if={ok} then={Content} />',
+      '\u{FEFF}#!/usr/bin/env node\r\n"use client";\r\nimport Branch from \'branch-component\'\r\nconst view = <Branch if={ok} then={Content} />',
     )
   })
   test('does not move a children read across a later side effect', () => {

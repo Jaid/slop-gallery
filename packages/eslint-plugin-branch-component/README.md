@@ -23,13 +23,13 @@ The repository root ESLint configuration includes this preset after `makeEslintC
 
 | Rule | Autofix |
 | --- | --- |
-| [prefer-branch-component](docs/rules/prefer-branch-component.md) | Replace rendering ternaries and explicitly Boolean JSX guards with Branch elements; insert or reuse the import. |
+| [prefer-branch-component](docs/rules/prefer-branch-component.md) | Replace non-trivial rendering ternaries and explicitly Boolean JSX guards with Branch elements; insert or reuse the import. |
 | [prefer-positive](docs/rules/prefer-positive.md) | Replace negated `if={!value}` conditions with `not={value}`. |
 | [simplify-classname](docs/rules/simplify-classname.md) | Hoist identical top-level output `className` props to `Branch`. |
 | [simplify-children](docs/rules/simplify-children.md) | Replace bare component elements with `then={Content}` or `else={Fallback}`. |
 | [expand-children](docs/rules/expand-children.md) | Move complex successful JSX from `then` or an explicit `children` prop into nested children. |
 
-All rules have an empty options schema. With the preset enabled:
+`prefer-branch-component` accepts `keepPrimitives` (default `true`) and `name` (default `Branch`); the other rules take no options. With the preset enabled:
 
 ```tsx
 // Before

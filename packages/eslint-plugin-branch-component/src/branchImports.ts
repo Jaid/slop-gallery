@@ -28,13 +28,13 @@ export function isBranchElement(node: TSESTree.JSXElement, sourceCode: TSESLint.
   }) ?? false
 }
 
-export function createImportResolver(sourceCode: TSESLint.SourceCode) {
+export function createImportResolver(sourceCode: TSESLint.SourceCode, preferredName = 'Branch') {
   const imports = sourceCode.ast.body.filter((statement): statement is TSESTree.ImportDeclaration => statement.type === AST.ImportDeclaration && statement.source.value === moduleName && statement.importKind !== 'type')
   // Reserving every token also avoids capturing unresolved references in inner scopes.
   const usedNames = new Set(sourceCode.getTokens(sourceCode.ast).map(token => token.value))
-  let newName = 'BranchComponent'
+  let newName = preferredName
   for (let suffix = 2; usedNames.has(newName); suffix++) {
-    newName = `BranchComponent${suffix}`
+    newName = `${preferredName}${suffix}`
   }
   return (node: TSESTree.Node): {
     insert?: (fixer: TSESLint.RuleFixer) => TSESLint.RuleFix
