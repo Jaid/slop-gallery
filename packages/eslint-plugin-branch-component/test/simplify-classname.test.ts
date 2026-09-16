@@ -7,7 +7,6 @@ ruleTester.run('simplify-classname', rule, {
     `${branchImport}<Branch if={ok}><Content className={first} /><Other className={second} /></Branch>`,
     `${branchImport}<Branch if={ok}><Content className={shared} /><Other /></Branch>`,
     `${branchImport}<Branch if={ok} then={Content}><Other className={shared} /><Third className={shared} /></Branch>`,
-    `${branchImport}<Branch if={ok} className={base}><Content className={shared} /><Other className={shared} /></Branch>`,
     `${branchImport}<Branch {...props} if={ok}><Content className={shared} /><Other className={shared} /></Branch>`,
     `${branchImport}<Branch if={ok}><Content {...props} className={shared} /><Other className={shared} /></Branch>`,
     `${branchImport}<Branch if={ok}><Content className={makeClass()} /><Other className={makeClass()} /></Branch>`,
@@ -22,6 +21,21 @@ ruleTester.run('simplify-classname', rule, {
     "import Branch from 'other'; const view = <Branch if={ok}><Content className={shared} /><Other className={shared} /></Branch>",
   ],
   invalid: [
+    {
+      code: `${branchImport}<Branch if={ok} className={css.a} then={<Leaf className={css.b} />} else={<Leaf className={css.b} />} />`,
+      output: `${branchImport}<Branch if={ok} className={[css.b, css.a]} then={<Leaf />} else={<Leaf />} />`,
+      errors: [{messageId: 'simplify'}],
+    },
+    {
+      code: `${branchImport}<Branch if={ok} className='a'><Content className='b' /><Other className="b" /></Branch>`,
+      output: `${branchImport}<Branch if={ok} className={['b', 'a']}><Content /><Other /></Branch>`,
+      errors: [{messageId: 'simplify'}],
+    },
+    {
+      code: `${branchImport}<Branch if={ok} className={[css.a, active ? css.c : undefined]}><Content className={css.b} /><Other className={css.b} /></Branch>`,
+      output: `${branchImport}<Branch if={ok} className={[css.b, ...[css.a, active ? css.c : undefined]]}><Content /><Other /></Branch>`,
+      errors: [{messageId: 'simplify'}],
+    },
     {
       code: `${branchImport}<Branch if={ok}><Content className={active ? css.active : undefined} /><Other className={active ? css.active : undefined} /></Branch>`,
       output: `${branchImport}<Branch if={ok} className={active ? css.active : undefined}><Content /><Other /></Branch>`,

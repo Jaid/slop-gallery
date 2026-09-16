@@ -8,6 +8,7 @@ import {attributesNamed, hasSpread, meaningfulChildren} from '../jsx.ts'
 
 type ClassNameTarget = {
   attribute: TSESTree.JSXAttribute
+  expressionText: string
   key: string
   valueText: string
 }
@@ -104,6 +105,22 @@ function isSafeClassNameExpression(node: TSESTree.Expression): boolean {
     }
   }
 }
+const isSafeClassNameArrayExpression = (node: TSESTree.ArrayExpression): boolean => node.elements.every(element => element === null || element.type !== AST.SpreadElement && (isSafeClassNameExpression(element) || isNullishExpression(element)))
+const mergedBranchClassNameValue = (attribute: TSESTree.JSXAttribute, shared: string, sourceCode: TSESLint.SourceCode): string | undefined => {
+  const {value} = attribute
+  if (value?.type === AST.Literal && typeof value.value === 'string') {
+    return `{[${shared}, ${sourceCode.getText(value)}]}`
+  }
+  if (value?.type !== AST.JSXExpressionContainer || value.expression.type === AST.JSXEmptyExpression) {
+    return
+  }
+  const expression = value.expression
+  const existing = sourceCode.getText(expression)
+  if (expression.type === AST.ArrayExpression) {
+    return isSafeClassNameArrayExpression(expression) ? `{[${shared}, ...${existing}]}` : undefined
+  }
+  return isSafeClassNameExpression(expression) || isNullishExpression(expression) ? `{[${shared}, ${existing}]}` : undefined
+}
 const classNameTarget = (node: TSESTree.JSXElement, sourceCode: TSESLint.SourceCode): Collected => {
   if (hasSpread(node)) {
     return unsafe()
@@ -124,6 +141,7 @@ const classNameTarget = (node: TSESTree.JSXElement, sourceCode: TSESLint.SourceC
   if (value?.type === AST.Literal && typeof value.value === 'string') {
     return safe([{
       attribute,
+      expressionText: sourceCode.getText(value),
       key: `string:${value.value}`,
       valueText: sourceCode.getText(value),
     }])
@@ -133,6 +151,7 @@ const classNameTarget = (node: TSESTree.JSXElement, sourceCode: TSESLint.SourceC
   }
   return safe([{
     attribute,
+    expressionText: sourceCode.getText(value.expression),
     key: `expression:${sourceCode.getText(value.expression)}`,
     valueText: sourceCode.getText(value),
   }])
@@ -192,7 +211,15 @@ export default createRule({
     const {sourceCode} = context
     return {
       JSXElement(node) {
-        if (!isBranchElement(node, sourceCode) || hasSpread(node) || attributesNamed(node, 'className').length) {
+        if (!isBranchElement(node, sourceCode) || hasSpread(node)) {
+          return
+        }
+        const branchClassNames = attributesNamed(node, 'className')
+        if (branchClassNames.length > 1) {
+          return
+        }
+        const branchClassName = branchClassNames.at(0)
+        if (branchClassName && sourceCode.getCommentsInside(branchClassName).length) {
           return
         }
         const outputAttributes = ['then', 'else', 'children'].flatMap(name => attributesNamed(node, name))
@@ -216,14 +243,23 @@ export default createRule({
         if (!collected.targets.every(target => target.key === first.key)) {
           return
         }
+        const mergedBranchClassName = branchClassName ? mergedBranchClassNameValue(branchClassName, first.expressionText, sourceCode) : undefined
+        if (branchClassName && mergedBranchClassName === undefined) {
+          return
+        }
         context.report({
           node: first.attribute,
           messageId: 'simplify',
           fix(fixer) {
-            const opening = node.openingElement
-            const insertionPoint = opening.range[1] - (opening.selfClosing ? 2 : 1)
-            const prefix = /\s/u.test(sourceCode.text[insertionPoint - 1] ?? '') ? '' : ' '
-            const fixes: Array<TSESLint.RuleFix> = [fixer.insertTextBeforeRange([insertionPoint, insertionPoint + 1], `${prefix}className=${first.valueText}`)]
+            const fixes: Array<TSESLint.RuleFix> = []
+            if (branchClassName) {
+              fixes.push(fixer.replaceText(branchClassName.value!, mergedBranchClassName!))
+            } else {
+              const opening = node.openingElement
+              const insertionPoint = opening.range[1] - (opening.selfClosing ? 2 : 1)
+              const prefix = /\s/u.test(sourceCode.text[insertionPoint - 1] ?? '') ? '' : ' '
+              fixes.push(fixer.insertTextBeforeRange([insertionPoint, insertionPoint + 1], `${prefix}className=${first.valueText}`))
+            }
             for (const {attribute} of collected.targets) {
               let start = attribute.range[0]
               while (start > 0 && /[\t ]/u.test(sourceCode.text[start - 1])) {
