@@ -52,6 +52,26 @@ describe('Branch compilation', () => {
     `)
     expect(code).toContain('ready ? <>{_renderBranchOutput(Header)}<Content /></> : null')
   })
+  test('forwards className to the selected output', () => {
+    const code = compile(`
+      import Branch from 'branch-component'
+      const view = <Branch if={ready} className={[classes.item, maybe ? classes.active : undefined, null]} then={Success} else={<Fallback className='fallback' />} />
+    `)
+    expect(code).not.toContain('branch-component')
+    expect(code).toContain("_applyBranchClassName([classes.item, maybe ? classes.active : undefined, null], ready ? _renderBranchOutput(Success) : _renderBranchOutput(<Fallback className='fallback' />))")
+    expect(code).toContain('const _classNames = (Array.isArray(_className) ? _className : [_className]).filter(_value => _value !== void 0 && _value !== null)')
+    expect(code).toContain('const _normalizedClassName = _classNames.join(" ")')
+    expect(code).toContain('className: [_output.props.className, _normalizedClassName].filter(Boolean).join(" ")')
+  })
+  test('forwards className through multiple children', () => {
+    const code = compile(`
+      import Branch from 'branch-component'
+      const view = <Branch if={ready} className='branch'><Content className='own' /><Other /></Branch>
+    `)
+    expect(code).toContain("_applyBranchClassName('branch', ready ? [<Content className='own' />, <Other />] : null)")
+    expect(code).toContain('Array.isArray(_output)')
+    expect(code).toContain('_output.type === _Fragment')
+  })
   test('compiles nested branches from the inside out', () => {
     const code = compile(`
       import Branch from 'branch-component'

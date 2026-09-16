@@ -7,17 +7,17 @@ import template from '@babel/template'
 
 const branchModule = 'branch-component'
 const conditionNames = ['if', 'not', 'some', 'none', 'all'] as const
-const supportedNames = new Set([...conditionNames, 'then', 'else', 'children'])
+const supportedNames = new Set([...conditionNames, 'then', 'else', 'children', 'className'])
 const outputHelperTemplate = template.statement(`
   const %%helper%% = (%%output%%) =>
     typeof %%output%% === "function"
       ? %%createElement%%(%%output%%)
       : %%output%% ?? null
 `)
-
 type BranchConditionName = typeof conditionNames[number]
 type BakeState = {
   branchImports?: Map<string, NodePath<t.ImportDefaultSpecifier>>
+  classNameHelperId?: t.Identifier
   outputHelperId?: t.Identifier
 }
 type PluginState = BakeState & PluginPass
@@ -89,6 +89,10 @@ const getNamedImport = (path: NodePath<t.Program>, source: string, importedName:
   importPosition: 'after',
   nameHint: importedName,
 })
+const getClassNameHelperId = (state: PluginState): t.Identifier => {
+  state.classNameHelperId ??= state.file.path.scope.generateUidIdentifier('applyBranchClassName')
+  return state.classNameHelperId
+}
 const getOutputHelperId = (state: PluginState): t.Identifier => {
   state.outputHelperId ??= state.file.path.scope.generateUidIdentifier('renderBranchOutput')
   return state.outputHelperId
@@ -157,7 +161,9 @@ const replaceBranch = (path: NodePath<t.JSXElement>, state: PluginState) => {
     throw path.buildCodeFrameError('Compiled Branch requires at least one condition.')
   }
   const condition = conditions.reduce((left, right) => t.logicalExpression('&&', left, right))
-  const expression = t.conditionalExpression(condition, buildOutput(path, attributes, state), buildFailureOutput(attributes, state))
+  const conditional = t.conditionalExpression(condition, buildOutput(path, attributes, state), buildFailureOutput(attributes, state))
+  const className = attributes.get('className')
+  const expression = className === undefined ? conditional : t.callExpression(t.cloneNode(getClassNameHelperId(state)), [className, conditional])
   if (path.parentPath.isJSXElement() || path.parentPath.isJSXFragment()) {
     path.replaceWith(t.jsxExpressionContainer(expression))
   } else {
@@ -183,6 +189,45 @@ const removeUnusedBranchImports = (path: NodePath<t.Program>, state: PluginState
     if (!declaration.removed && declaration.node.specifiers.length === 0) {
       declaration.remove()
     }
+  }
+}
+const addClassNameHelper = (path: NodePath<t.Program>, state: PluginState) => {
+  if (!state.classNameHelperId) {
+    return
+  }
+  const cloneElement = getNamedImport(path, 'react', 'cloneElement')
+  const fragment = getNamedImport(path, 'react', 'Fragment')
+  const isValidElement = getNamedImport(path, 'react', 'isValidElement')
+  const className = path.scope.generateUidIdentifier('className')
+  const classNames = path.scope.generateUidIdentifier('classNames')
+  const child = path.scope.generateUidIdentifier('child')
+  const normalizedClassName = path.scope.generateUidIdentifier('normalizedClassName')
+  const output = path.scope.generateUidIdentifier('output')
+  const value = path.scope.generateUidIdentifier('value')
+  const helper = template.statement(`
+    const ${state.classNameHelperId.name} = (${className.name}, ${output.name}) => {
+      const ${classNames.name} = (Array.isArray(${className.name}) ? ${className.name} : [${className.name}]).filter(${value.name} => ${value.name} !== void 0 && ${value.name} !== null)
+      if (!${classNames.name}.length) {
+        return ${output.name}
+      }
+      const ${normalizedClassName.name} = ${classNames.name}.join(" ")
+      if (Array.isArray(${output.name})) {
+        return ${output.name}.map(${child.name} => ${state.classNameHelperId.name}(${normalizedClassName.name}, ${child.name}))
+      }
+      if (!${isValidElement.name}(${output.name})) {
+        return ${output.name}
+      }
+      if (${output.name}.type === ${fragment.name}) {
+        return ${cloneElement.name}(${output.name}, void 0, ${state.classNameHelperId.name}(${normalizedClassName.name}, ${output.name}.props.children))
+      }
+      return ${cloneElement.name}(${output.name}, {className: [${output.name}.props.className, ${normalizedClassName.name}].filter(Boolean).join(" ")})
+    }
+  `)()
+  const lastImport = path.get('body').findLast(statement => statement.isImportDeclaration())
+  if (lastImport) {
+    lastImport.insertAfter(helper)
+  } else {
+    path.unshiftContainer('body', helper)
   }
 }
 const addOutputHelper = (path: NodePath<t.Program>, state: PluginState) => {
@@ -212,6 +257,7 @@ export default declare<BakeState>(api => {
       Program: {
         enter(path, state) {
           state.branchImports = new Map
+          state.classNameHelperId = undefined
           state.outputHelperId = undefined
           for (const statement of path.get('body')) {
             if (!statement.isImportDeclaration() || statement.node.source.value !== branchModule) {
@@ -226,6 +272,7 @@ export default declare<BakeState>(api => {
         },
         exit(path, state) {
           removeUnusedBranchImports(path, state)
+          addClassNameHelper(path, state)
           addOutputHelper(path, state)
         },
       },
