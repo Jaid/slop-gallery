@@ -1,7 +1,7 @@
 import {execFile} from 'node:child_process'
 import {once} from 'node:events'
 import {createReadStream, createWriteStream} from 'node:fs'
-import {mkdir, open, rename, rm, stat} from 'node:fs/promises'
+import {mkdir, open, readFile, rename, rm, stat} from 'node:fs/promises'
 import {resolve} from 'node:path'
 import {createInterface} from 'node:readline'
 import type {Readable} from 'node:stream'
@@ -65,6 +65,10 @@ export type BrowserConsoleEvent = {
   params: unknown
   sessionId?: string
 }
+export type BrowserFlags = {
+  customValues: Record<string, string>
+  entries: Array<string>
+}
 type ConsoleEventMethod = 'Log.entryAdded' | 'Runtime.consoleAPICalled' | 'Runtime.exceptionThrown'
 type Pending = {
   reject: (error: Error) => void
@@ -72,6 +76,31 @@ type Pending = {
 }
 const consoleEventMethods = new Set<string>(['Log.entryAdded', 'Runtime.consoleAPICalled', 'Runtime.exceptionThrown'])
 const isConsoleEventMethod = (method: string | undefined): method is ConsoleEventMethod => method !== undefined && consoleEventMethods.has(method)
+const getUserDataDirFromCommandLine = (commandLine: string) => {
+  const match = /(?:^|\s)"?--user-data-dir=(?:"([^"]*)"|'([^']*)'|([^\s"]+))"?/.exec(commandLine)
+  return match?.[1] ?? match?.[2] ?? match?.[3]
+}
+export const readBrowserFlags = async (userDataDir: string): Promise<BrowserFlags> => {
+  const localState = JSON.parse(await readFile(resolve(userDataDir, 'Local State'), 'utf8')) as {
+    browser?: {
+      enabled_labs_experiments?: unknown
+      enabled_labs_experiments_origin_lists?: unknown
+    }
+  }
+  const entries: Array<string> = []
+  if (Array.isArray(localState.browser?.enabled_labs_experiments)) {
+    entries.push(...localState.browser.enabled_labs_experiments.filter((entry): entry is string => typeof entry === 'string'))
+  }
+  const originLists = localState.browser?.enabled_labs_experiments_origin_lists
+  let customValues: Record<string, string> = {}
+  if (originLists && typeof originLists === 'object' && !Array.isArray(originLists)) {
+    customValues = Object.fromEntries(Object.entries(originLists).filter((entry): entry is [string, string] => typeof entry[1] === 'string'))
+  }
+  return {
+    customValues,
+    entries,
+  }
+}
 const findJsonValueEnd = (json: string) => {
   const first = json[0]
   if (first !== '{' && first !== '[') {
@@ -268,6 +297,7 @@ export default async function recordBrowserTrace({port = 9222,
     tracingCompleteReject(error)
   }, {once: true})
   let browserCommandLine: string | undefined
+  let browserFlags: BrowserFlags | undefined
   try {
     const {processInfo} = await call('SystemInfo.getProcessInfo') as {
       processInfo: Array<{
@@ -282,6 +312,18 @@ export default async function recordBrowserTrace({port = 9222,
     browserCommandLine = await getWindowsProcessCommandLine(browserProcess.id)
   } catch (error) {
     console.error(`Browser command line unavailable: ${Error.isError(error) ? error.message : String(error)}`)
+  }
+  if (browserCommandLine) {
+    const userDataDir = getUserDataDirFromCommandLine(browserCommandLine)
+    if (userDataDir) {
+      try {
+        browserFlags = await readBrowserFlags(userDataDir)
+      } catch (error) {
+        console.error(`Browser flags unavailable: ${Error.isError(error) ? error.message : String(error)}`)
+      }
+    } else {
+      console.error('Browser flags unavailable: browser command line has no --user-data-dir switch.')
+    }
   }
   const {targetInfos} = await call('Target.getTargets') as {
     targetInfos: Array<{
@@ -340,6 +382,7 @@ export default async function recordBrowserTrace({port = 9222,
   let compressedTraceBytes = 0
   const encoding = encodeTraceJsonAsMessagePack(gunzip, messagePackTemporary, consoleEvents, {
     Browser: version.Browser,
+    BraveFlags: browserFlags,
     CommandLine: browserCommandLine,
     'V8-Version': version['V8-Version'],
   })

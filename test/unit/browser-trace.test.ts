@@ -5,8 +5,30 @@ import {createGunzip, gzipSync} from 'node:zlib'
 import fs from 'fs-extra'
 import {unpack} from 'msgpackr'
 
-import {encodeTraceJsonAsMessagePack} from '../../scripts/recordBrowserTrace.ts'
+import {encodeTraceJsonAsMessagePack, readBrowserFlags} from '../../scripts/recordBrowserTrace.ts'
 
+test('reads persisted browser flag selections and custom values', async () => {
+  const root = await fs.mkdtemp(resolve(import.meta.dir, '../../private/agent/browser-flags-test-'))
+  try {
+    await fs.writeJson(resolve(root, 'Local State'), {
+      browser: {
+        enabled_labs_experiments: ['enable-gpu-rasterization', 'some-choice@2', 123],
+        enabled_labs_experiments_origin_lists: {
+          'origin-list-flag': 'https://example.com,https://example.org',
+          ignored: 123,
+        },
+      },
+    })
+    expect(await readBrowserFlags(root)).toEqual({
+      customValues: {
+        'origin-list-flag': 'https://example.com,https://example.org',
+      },
+      entries: ['enable-gpu-rasterization', 'some-choice@2'],
+    })
+  } finally {
+    await fs.remove(root)
+  }
+})
 test('encodes Chromium compact metadata footers without mistaking event metadata for the footer', async () => {
   const root = await fs.mkdtemp(resolve(import.meta.dir, '../../private/agent/browser-trace-test-'))
   const input = resolve(root, 'trace.json')
@@ -27,6 +49,10 @@ test('encodes Chromium compact metadata footers without mistaking event metadata
     }]
     const eventCount = await encodeTraceJsonAsMessagePack(input, output, consoleEvents, {
       Browser: 'Chrome/153.0.8010.37',
+      BraveFlags: {
+        customValues: {'origin-list-flag': 'https://example.com'},
+        entries: ['enable-gpu-rasterization'],
+      },
       CommandLine: String.raw`"C:\portable\brave\brave.exe" --remote-debugging-port=9222`,
       'V8-Version': '15.3.76.10',
     })
@@ -49,6 +75,10 @@ test('encodes Chromium compact metadata footers without mistaking event metadata
         'clock-domain': 'MONOTONIC',
         perfetto_trace_stats: {total_buffers: 1},
         Browser: 'Chrome/153.0.8010.37',
+        BraveFlags: {
+          customValues: {'origin-list-flag': 'https://example.com'},
+          entries: ['enable-gpu-rasterization'],
+        },
         CommandLine: String.raw`"C:\portable\brave\brave.exe" --remote-debugging-port=9222`,
         'V8-Version': '15.3.76.10',
       },
