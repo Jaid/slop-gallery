@@ -38,8 +38,8 @@ describe('plugin architecture', () => {
       namespace: 'branch-component',
     })
   })
-  test('exports all three documented, fixable rules', () => {
-    expect(Object.keys(plugin.rules).toSorted()).toEqual(['expand-children', 'prefer-branch-component', 'simplify-children'])
+  test('exports all five documented, fixable rules', () => {
+    expect(Object.keys(plugin.rules).toSorted()).toEqual(['expand-children', 'prefer-branch-component', 'prefer-positive', 'simplify-children', 'simplify-classname'])
     for (const [name, rule] of Object.entries(rules)) {
       expect(rule.meta.fixable).toBe('code')
       expect(rule.meta.schema).toEqual([])
@@ -50,7 +50,7 @@ describe('plugin architecture', () => {
   test('recommended is a self-contained flat config', () => {
     const config: Linter.Config = plugin.configs.recommended
     expect(config.plugins?.['branch-component']).toBe(plugin)
-    expect(Object.keys(config.rules ?? {})).toHaveLength(3)
+    expect(Object.keys(config.rules ?? {})).toHaveLength(5)
     expect(config.name).toBe('branch-component/recommended')
   })
 })
@@ -74,6 +74,14 @@ describe('combined autofixes', () => {
         ]) {
           expectStable(branchImport + input, branchImport + output, childrenRules, typescript)
         }
+      })
+      test('className hoisting and positive conditions converge with child simplification', () => {
+        expectStable(
+          `${branchImport}const view = <Branch if={!ok} then={<Content className={shared} />} else={<Fallback className={shared} />} />`,
+          `${branchImport}const view = <Branch not={ok} else={Fallback} className={shared} then={Content} />`,
+          undefined,
+          typescript,
+        )
       })
       test('a conditional flows through to the canonical then/else form', () => {
         expectStable(

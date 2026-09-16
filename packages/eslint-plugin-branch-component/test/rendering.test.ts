@@ -40,6 +40,8 @@ describe('autofixes against the installed Branch runtime', () => {
     '<Branch if={ok} then={<Header />} children={<Content />} />',
     '<Branch if={ok} then={<div><Content /></div>} else={<aside><Fallback /></aside>} />',
     '<Branch if={ok} then={<Content />} else={<Fallback />}><footer>Footer</footer></Branch>',
+    '<Branch if={!ok} then={<main className="shared">Content</main>} else={<aside className="shared">Fallback</aside>} />',
+    '<Branch if={ok}><header className="shared" key="header">Header</header><main className="shared" key="main">Content</main></Branch>',
   ]) {
     for (const ok of [true, false]) {
       test(`${expression}, condition=${ok}`, () => {

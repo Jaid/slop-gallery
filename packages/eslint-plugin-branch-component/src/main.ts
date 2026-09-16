@@ -3,12 +3,16 @@ import type {ESLint, Linter} from 'eslint'
 import packageJson from '../package.json' with {type: 'json'}
 import expandChildren from './rules/expand-children.ts'
 import preferBranchComponent from './rules/prefer-branch-component.ts'
+import preferPositive from './rules/prefer-positive.ts'
 import simplifyChildren from './rules/simplify-children.ts'
+import simplifyClassName from './rules/simplify-classname.ts'
 
 export const rules = {
   'expand-children': expandChildren,
   'prefer-branch-component': preferBranchComponent,
+  'prefer-positive': preferPositive,
   'simplify-children': simplifyChildren,
+  'simplify-classname': simplifyClassName,
 }
 
 const plugin = {
@@ -29,7 +33,9 @@ plugin.configs.recommended = {
   plugins: {'branch-component': plugin},
   rules: {
     'branch-component/prefer-branch-component': 'error',
+    'branch-component/prefer-positive': 'error',
     'branch-component/simplify-children': 'error',
+    'branch-component/simplify-classname': 'error',
     'branch-component/expand-children': 'error',
   },
 }
