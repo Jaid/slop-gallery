@@ -52,7 +52,7 @@ Output:
   (trace2.msgpack.br, trace3.msgpack.br, …) chosen via get-free.
 `
 const traceEventsPrefixPattern = /^\s*\{\s*"traceEvents"\s*:\s*\[/
-const metadataMarkerPattern = /^(.*)\],\s*"metadata"\s*:\s*$/
+const metadataMarkerPattern = /^(.*)\],\s*"metadata"\s*:\s*(.*)$/
 const messagePack = new Packr({
   useRecords: false,
   variableMapSize: true,
@@ -283,7 +283,7 @@ export default async function recordBrowserTrace({port = 9222,
   }
   return output
 }
-async function encodeTraceJsonAsMessagePack(input: string, output: string) {
+export async function encodeTraceJsonAsMessagePack(input: string, output: string) {
   const source = createReadStream(input, {encoding: 'utf8'})
   const lines = createInterface({
     input: source,
@@ -326,16 +326,25 @@ async function encodeTraceJsonAsMessagePack(input: string, output: string) {
     await write(messagePack.pack('traceEvents'))
     const eventCountOffset = position + 1
     await write(Uint8Array.of(0xDD, 0, 0, 0, 0))
-    const writeEvent = async (line: string) => {
+    const parseEvent = (line: string): unknown => {
       let json = line.trim()
       if (!json) {
-        return
+        return null
       }
       if (json.endsWith(',')) {
         json = json.slice(0, -1)
       }
-      await write(messagePack.pack(JSON.parse(json)))
+      return JSON.parse(json) as unknown
+    }
+    const writeParsedEvent = async (event: unknown) => {
+      await write(messagePack.pack(event))
       eventCount++
+    }
+    const writeEvent = async (line: string) => {
+      const event = parseEvent(line)
+      if (event !== null) {
+        await writeParsedEvent(event)
+      }
     }
     for await (let line of lines) {
       if (!sawHeader) {
@@ -350,10 +359,18 @@ async function encodeTraceJsonAsMessagePack(input: string, output: string) {
         sawHeader = true
       }
       if (!sawMetadata) {
+        try {
+          const event = parseEvent(line)
+          if (event !== null) {
+            await writeParsedEvent(event)
+            continue
+          }
+        } catch {}
         const metadataMarker = metadataMarkerPattern.exec(line)
         if (metadataMarker) {
           await writeEvent(metadataMarker[1])
           sawMetadata = true
+          metadataLines.push(metadataMarker[2])
         } else {
           await writeEvent(line)
         }
