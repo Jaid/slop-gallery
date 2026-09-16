@@ -16,7 +16,8 @@ describe('Knot nameplates', () => {
     expect(Math.ceil(knotExhibition.length / labelAtlasColumns) * labelHeight).toBeLessThanOrEqual(8192)
   })
   test('ships a local icon for every exhibited model and reuses family marks', async () => {
-    const urls = new Set<string>for (const bay of knotBays) {
+    const urls = new Set<string>
+    for (const bay of knotBays) {
       const url = bay.candidate.icon
       expect(url).toBeDefined()
       expect(new Uint8Array(await Bun.file(new URL(url)).arrayBuffer())[0]).toBe(255)

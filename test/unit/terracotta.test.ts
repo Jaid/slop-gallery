@@ -22,7 +22,8 @@ test('clay maps have deterministic, independently owned and correctly filtered p
       expect(map.anisotropy).toBe(16)
       expect(map.repeat.toArray()).toEqual([1, 1])
       const pixels = map.image.data!
-      const values = new Set<number>for (let i = 0; i < pixels.length; i += 4) {
+      const values = new Set<number>
+      for (let i = 0; i < pixels.length; i += 4) {
         values.add(pixels[i])
         if (pixels[i + 3] !== 255) {
           throw new Error('Clay must be opaque.')

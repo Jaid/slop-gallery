@@ -37,7 +37,11 @@ class DecorationResources {
     color: '#78614a',
     roughness: 0.92,
   })
-  private readonly destructibleCache = new Map<DestructibleCatalogKind | DestructiblePlantKind, DestructibleGeometry>private readonly materialCache = new Map<boolean, PotMaterials>private readonly plantCache = new Map<PlantKind, PlantGeometry>private readonly potCache = new Map<PotKind, PotGeometry>destructiblePlant(kind: DestructibleCatalogKind | DestructiblePlantKind) {
+  private readonly destructibleCache = new Map<DestructibleCatalogKind | DestructiblePlantKind, DestructibleGeometry>
+  private readonly materialCache = new Map<boolean, PotMaterials>
+  private readonly plantCache = new Map<PlantKind, PlantGeometry>
+  private readonly potCache = new Map<PotKind, PotGeometry>
+  destructiblePlant(kind: DestructibleCatalogKind | DestructiblePlantKind) {
     let geometry = this.destructibleCache.get(kind)
     if (!geometry) {
       geometry = kind === 'snake' || kind === 'calathea' ? new CatalogPlantGeometry(kind) : new DestructiblePlantGeometry(kind)

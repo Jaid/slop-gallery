@@ -10,7 +10,9 @@ import {telemetry} from '../telemetry/index.ts'
 export default class GalleryDirector {
   readonly narrator: Narrator
   private controller = new AbortController
-  private flavors = new Map<string, symbol>private merges = new Map<string, symbol>constructor(private settings: AiSettings, private key: string) {
+  private flavors = new Map<string, symbol>
+  private merges = new Map<string, symbol>
+  constructor(private settings: AiSettings, private key: string) {
     this.narrator = new Narrator(settings, key)
   }
 

@@ -9,7 +9,8 @@ export default class VictoriaExporter extends OtlpHttpExporter {
       return super.export(batch)
     }
     // VictoriaMetrics timestamps have millisecond resolution. Keep the latest value per series/ms.
-    const points = new Map<string, Metric>for (const metric of batch.records as ReadonlyArray<Metric>) {
+    const points = new Map<string, Metric>
+    for (const metric of batch.records as ReadonlyArray<Metric>) {
       const key = JSON.stringify([metric.name, Math.trunc(metric.time), Object.entries(metric.attributes).toSorted(([a], [b]) => a.localeCompare(b))])
       points.set(key, metric)
     }

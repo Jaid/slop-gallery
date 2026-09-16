@@ -14,9 +14,11 @@ export const intro = {
 
 export default class Narrator {
   private audio: HTMLAudioElement | undefined
-  private cache = new Map<string, Blob>private controller = new AbortController
+  private cache = new Map<string, Blob>
+  private controller = new AbortController
   private disconnectAudio: (() => void) | undefined
-  private jobs = new Map<string, Promise<Blob>>private speakingId: string | undefined
+  private jobs = new Map<string, Promise<Blob>>
+  private speakingId: string | undefined
   private unsubscribe: () => void
   private url: string | undefined
 

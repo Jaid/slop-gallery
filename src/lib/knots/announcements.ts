@@ -26,7 +26,8 @@ export function knotCandidateAnnouncementPath(candidate: KnotCandidateData) {
 }
 
 export function knotAnnouncements(candidates: ReadonlyArray<AnnouncementCandidate>) {
-  const entries = new Map<string, {id: string,text: string}>for (const candidate of candidates) {
+  const entries = new Map<string, {id: string,text: string}>
+  for (const candidate of candidates) {
     const candidateId = knotCandidateAnnouncementPath(candidate.data)
     entries.set(candidateId, {
       id: candidateId,

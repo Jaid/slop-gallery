@@ -20,7 +20,8 @@ export type PropHandle = {
   release: (throwing: boolean) => void
   title: string
 }
-export const propObjects = new Map<string, PropHandle>type GrabbablePropProps = Omit<RigidBodyProps, 'children' | 'position' | 'ref'> & GrabbableBodyOptions & {
+export const propObjects = new Map<string, PropHandle>
+type GrabbablePropProps = Omit<RigidBodyProps, 'children' | 'position' | 'ref'> & GrabbableBodyOptions & {
   blockedMessage?: () => string
   children: ReactNode
   id: string

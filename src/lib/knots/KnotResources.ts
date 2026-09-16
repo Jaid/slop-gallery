@@ -13,7 +13,8 @@ export default class KnotResources {
   readonly environment = new StudioEnvironment
   readonly items: Array<{colliderArgs: [number, number, number],colliderPosition: [number, number, number],geometry: BufferGeometry,material: MeshPhysicalNodeMaterial}>
   readonly raycast: Mesh['raycast']
-  private readonly geometries = new Map<number, BufferGeometry>private readonly materials: Array<MeshPhysicalNodeMaterial> = []
+  private readonly geometries = new Map<number, BufferGeometry>
+  private readonly materials: Array<MeshPhysicalNodeMaterial> = []
   constructor(entries: ReadonlyArray<KnotResourceEntry>, constructors: ReadonlyMap<string, KnotMaterialConstructor>) {
     try {
       const base = createKnotGeometry()

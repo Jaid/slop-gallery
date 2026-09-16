@@ -4,7 +4,8 @@ export type BodyThrow = {
   id: number
 }
 
-const throws = new WeakMap<RigidBody, BodyThrow>let nextId = 1
+const throws = new WeakMap<RigidBody, BodyThrow>
+let nextId = 1
 
 export function beginBodyThrow(body: RigidBody): BodyThrow {
   const state = {id: nextId++}

@@ -16,7 +16,9 @@ const spans = (body: OtlpRequest) => body.resourceSpans.flatMap(resource => reso
 const attributes = (span: OtlpSpan) => Object.fromEntries(span.attributes.map(({key, value}) => [key, value.stringValue ?? value.doubleValue ?? value.boolValue]))
 let root: string
 let generated: GeneratedSpeech
-const caches = new Set<string>const outputs = new Set<string>const requests: Array<{body: OtlpRequest,url: string}> = []
+const caches = new Set<string>
+const outputs = new Set<string>
+const requests: Array<{body: OtlpRequest,url: string}> = []
 beforeEach(async () => {
   root = await fs.mkdtemp(path.resolve(import.meta.dir, '../../private/agent/prerender-test-'))
   requests.length = 0

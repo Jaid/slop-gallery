@@ -103,7 +103,9 @@ test('completed model and title state survives announcer remounts within a sessi
       played.push(url)
     },
   }
-  const models = new Set<string>const titles = new Set<string>const first = new KnotAnnouncer(audio, models, titles)
+  const models = new Set<string>
+  const titles = new Set<string>
+  const first = new KnotAnnouncer(audio, models, titles)
   await first.announce(item)
   expect(first.hasAnnounced(item)).toBe(true)
   expect(first.hasAnnouncedModel(item)).toBe(true)

@@ -5,7 +5,8 @@ import {useEffect, useState} from 'react'
 import loadArtworkTexture from './loadArtworkTexture.ts'
 
 type Asset = {promise: Promise<Texture<HTMLCanvasElement>>,refs: number,texture?: Texture<HTMLCanvasElement>}
-const assets = new Map<Blob | string, Asset>let pending = 0
+const assets = new Map<Blob | string, Asset>
+let pending = 0
 export const pendingImages = () => pending
 
 export default function useArtworkTexture(source: Blob | string | null | undefined) {
