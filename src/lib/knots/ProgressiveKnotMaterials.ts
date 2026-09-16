@@ -3,7 +3,7 @@ import type {KnotEntry, KnotMaterialConstructor} from './types.ts'
 import type {Camera, Mesh, MeshPhysicalNodeMaterial, WebGPURenderer} from 'three/webgpu'
 
 import AsyncMaterials from 'three-async-materials'
-import {MeshStandardNodeMaterial, Vector3} from 'three/webgpu'
+import {Color, DoubleSide, MeshStandardNodeMaterial, Vector3} from 'three/webgpu'
 
 import StudioEnvironment from '../materials/StudioEnvironment.ts'
 import KnotResources from './KnotResources.ts'
@@ -30,12 +30,26 @@ export default class ProgressiveKnotMaterials {
   constructor(renderer: WebGPURenderer, camera: Camera, entries: ReadonlyArray<KnotMaterialEntry>, constructors: ReadonlyMap<string, KnotMaterialConstructor>, quality: boolean) {
     this.resources = new KnotResources(entries)
     this.flavorMaterials = entries.map(entry => {
+      const accent = new Color(entry.accent)
+      if (quality) {
+        const material = new MeshStandardNodeMaterial({
+          color: accent.clone().lerp(new Color('white'), 0.25),
+          metalness: 0.06,
+          roughness: 0.18,
+          transparent: true,
+          opacity: 0.34,
+          side: DoubleSide,
+          depthWrite: true,
+        })
+        material.name = `${entry.id} ghost placeholder`
+        return material
+      }
       const material = new MeshStandardNodeMaterial({
-        color: entry.accent,
-        metalness: quality ? 0.85 : 0,
-        roughness: quality ? 0.24 : 0.72,
+        color: accent,
+        metalness: 0,
+        roughness: 0.72,
       })
-      material.name = quality ? `${entry.id} metallic flavor placeholder` : `${entry.id} performance flavor`
+      material.name = `${entry.id} performance flavor`
       return material
     })
     if (!quality) {

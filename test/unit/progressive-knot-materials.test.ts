@@ -94,14 +94,15 @@ async function flush() {
     await Promise.resolve()
   }
 }
-test('quality placeholders use metallic lit flavor-color materials until full materials are ready', () => {
+test('quality placeholders use transparent ghost materials until full materials are ready', () => {
   const f = fixture()
   try {
     const placeholder = f.materials.flavorMaterials[0]
     expect(placeholder.isMeshStandardNodeMaterial).toBe(true)
-    expect(placeholder.color.getHexString()).toBe(new Color(f.entry.accent).getHexString())
-    expect(placeholder.metalness).toBe(0.85)
-    expect(placeholder.roughness).toBe(0.24)
+    expect(placeholder.transparent).toBe(true)
+    expect(placeholder.opacity).toBe(0.34)
+    expect(placeholder.metalness).toBe(0.06)
+    expect(placeholder.roughness).toBe(0.18)
     expect(f.meshes[0].material).toBe(placeholder)
   } finally {
     f.dispose()
