@@ -29,7 +29,7 @@ export default class FloorMaterial extends MeshStandardNodeMaterial {
     })
     this.reflection = reflection ? reflector({
       // Mipmap LOD already softens rough reflections; modest supersampling preserves detail before filtering.
-      resolutionScale: 1.25,
+      resolutionScale: 1,
       generateMipmaps: true,
       bounces: false,
     }) : null
