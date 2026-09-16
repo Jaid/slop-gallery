@@ -1,5 +1,5 @@
 import type {Candidate} from './candidates.ts'
-import type {BakeAdapter, BakeDiagnostic, BakeOptions, NativeType} from './types.ts'
+import type {BakeAdapter, BakeDiagnostic, BakeOptions, NativeType, SnapshotCodec} from './types.ts'
 import type {Plugin, ResolvedConfig} from 'vite'
 
 import {createHash} from 'node:crypto'
@@ -28,6 +28,7 @@ const matches = (filter: ((id: string) => boolean) | RegExp | undefined, id: str
 }
 type Artifact = {
   bytes: Uint8Array
+  codecs: Map<string, SnapshotCodec>
   compressed: boolean
   constructors: Map<string, NativeType>
   reference?: string
@@ -93,8 +94,13 @@ export default function createBakePlugin(adapter: BakeAdapter, options: BakeOpti
         imports.push(`import {${type.name} as C${index}} from ${JSON.stringify(type.module)}`)
         constructors.push(`${JSON.stringify(type.name)}:C${index}`)
       }
+      const codecs: Array<string> = []
+      for (const [index, codec] of [...artifact.codecs.values()].entries()) {
+        imports.push(`import {${codec.exportName} as R${index}} from ${JSON.stringify(codec.module)}`)
+        codecs.push(`${JSON.stringify(codec.name)}:R${index}`)
+      }
       const placeholder = this.meta.rolldownVersion ? 'ROLLDOWN' : 'ROLLUP'
-      return `${imports.join('\n')}\nexport default await loadSnapshot(import.meta.${placeholder}_FILE_URL_${artifact.reference},{${constructors.join(',')}},${artifact.compressed})\n`
+      return `${imports.join('\n')}\nexport default await loadSnapshot(import.meta.${placeholder}_FILE_URL_${artifact.reference},{${constructors.join(',')}},${artifact.compressed},{${codecs.join(',')}})\n`
     },
     async transform(code, rawId) {
       const id = normalize(rawId)
@@ -108,7 +114,7 @@ export default function createBakePlugin(adapter: BakeAdapter, options: BakeOpti
         return
       }
       const source = await graph.input(id, code)
-      const candidates: Array<Candidate> = []
+      const candidates: Array<Candidate> = [...await adapter.candidates?.(source) ?? []]
       source.path.traverse({
         CallExpression(path) {
           candidates.push({
@@ -140,13 +146,13 @@ export default function createBakePlugin(adapter: BakeAdapter, options: BakeOpti
           }
         },
       })
-      candidates.sort((a, b) => a.path.node.start! - b.path.node.start! || b.path.node.end! - a.path.node.end!)
+      candidates.sort((a, b) => (a.start ?? a.path.node.start!) - (b.start ?? b.path.node.start!) || (b.end ?? b.path.node.end!) - (a.end ?? a.path.node.end!))
       const output = new MagicString(code)
       const imports = new Map<string, string>
       let replacedUntil = -1
       for (const candidate of candidates) {
         const {path} = candidate
-        if (path.node.start! < replacedUntil) {
+        if ((candidate.start ?? path.node.start!) < replacedUntil) {
           continue
         }
         const recipe = new Recipe(graph, adapter)
@@ -187,6 +193,7 @@ export default function createBakePlugin(adapter: BakeAdapter, options: BakeOpti
           artifacts.set(hash, artifacts.get(hash) ?? {
             bytes,
             constructors: writer.constructors,
+            codecs: writer.codecs,
             compressed,
           })
           let factory = imports.get(hash)
@@ -194,7 +201,15 @@ export default function createBakePlugin(adapter: BakeAdapter, options: BakeOpti
             factory = source.path.scope.generateUidIdentifier('bakedResource').name
             imports.set(hash, factory)
           }
-          if (candidate.kind === 'class' && path.isClassDeclaration()) {
+          if (candidate.kind === 'custom') {
+            for (const edit of candidate.edits!(factory)) {
+              if (edit.start === edit.end) {
+                output.appendLeft(edit.start, edit.text)
+              } else {
+                output.overwrite(edit.start, edit.end, edit.text)
+              }
+            }
+          } else if (candidate.kind === 'class' && path.isClassDeclaration()) {
             const body = path.get('body')
             let hasConstructor = false
             for (const member of body.get('body')) {
@@ -213,7 +228,7 @@ export default function createBakePlugin(adapter: BakeAdapter, options: BakeOpti
           } else {
             output.overwrite(path.node.start!, path.node.end!, `${factory}(${constructor ?? ''})`)
           }
-          replacedUntil = path.node.end!
+          replacedUntil = candidate.end ?? path.node.end!
           for (const dependency of evaluated.dependencies) {
             this.addWatchFile(dependency)
           }

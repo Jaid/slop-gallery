@@ -1,5 +1,10 @@
 import type {Atom, Snapshot, SnapshotNode} from './types.ts'
 
+export type RuntimeCodec = {
+  allocate: () => object
+  hydrate: (target: object, data: unknown) => void
+}
+export type RuntimeCodecs = Readonly<Record<string, RuntimeCodec>>
 export type Constructors = Readonly<Record<string, Constructor>>
 type Constructor = {
   new (...args: Array<unknown>): object
@@ -29,7 +34,7 @@ const textDecoder = new TextDecoder
 const magic = 'BAKE0001'
 
 /** Parse once; every invocation of the returned factory owns a fresh object graph. */
-export function decodeSnapshot(bytes: Uint8Array, constructors: Constructors = {}) {
+export function decodeSnapshot(bytes: Uint8Array, constructors: Constructors = {}, codecs: RuntimeCodecs = {}) {
   const header = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
   if (textDecoder.decode(bytes.subarray(0, 8)) !== magic) {
     throw new Error('Invalid baked-resource artifact.')
@@ -38,31 +43,41 @@ export function decodeSnapshot(bytes: Uint8Array, constructors: Constructors = {
   const snapshot = JSON.parse(textDecoder.decode(bytes.subarray(12, 12 + size))) as Snapshot
   const payload = bytes.subarray(Math.ceil((12 + size) / 8) * 8)
   return (rootConstructor?: Constructor) => {
-    const reader = new SnapshotReader(snapshot, payload, constructors, rootConstructor)
-    return reader.read(snapshot.root)
+    const reader = new SnapshotReader(snapshot, payload, constructors, rootConstructor, codecs)
+    const result = reader.read(snapshot.root)
+    reader.finish()
+    return result
   }
 }
 
 /** Top-level-await loading keeps original resource constructors synchronous. */
-export async function loadSnapshot(url: string, constructors: Constructors = {}, compressed = true) {
+export async function loadSnapshot(url: string, constructors: Constructors = {}, compressed = true, codecs: RuntimeCodecs = {}) {
   const response = await fetch(url)
   if (!response.ok) {
     throw new Error(`Could not load baked resource (${response.status}): ${url}`)
   }
   const decoded = compressed ? new Response(response.body!.pipeThrough(new DecompressionStream('gzip'))) : response
-  return decodeSnapshot(new Uint8Array(await decoded.arrayBuffer()), constructors)
+  return decodeSnapshot(new Uint8Array(await decoded.arrayBuffer()), constructors, codecs)
 }
 
 class SnapshotReader {
   private readonly canvases = new WeakSet<object>
   private readonly objects = new Map<number, object>
+  private readonly pending: Array<() => void> = []
 
   constructor(
     private readonly snapshot: Snapshot,
     private readonly payload: Uint8Array,
     private readonly constructors: Constructors,
     private readonly rootConstructor?: Constructor,
+    private readonly codecs: RuntimeCodecs = {},
   ) {}
+
+  finish() {
+    for (const hydrate of this.pending) {
+      hydrate()
+    }
+  }
 
   read(atom: Atom): unknown {
     if (atom === null || typeof atom !== 'object') {
@@ -85,6 +100,12 @@ class SnapshotReader {
     const result = this.allocate(node)
     this.objects.set(atom.ref, result)
     switch (node.kind) {
+      case 'codec': {
+        const data = this.read(node.data)
+        // All geometry attributes and graph back-references must exist before derived-resource hydration.
+        this.pending.push(() => this.codecs[node.codec].hydrate(result, data))
+        break
+      }
       case 'array': {
         const array = result as Array<unknown>
         for (const value of node.values) {
@@ -126,6 +147,7 @@ class SnapshotReader {
 
   private allocate(node: SnapshotNode): object {
     switch (node.kind) {
+      case 'codec': { return this.codecs[node.codec].allocate() }
       case 'buffer': {
         // Fresh per invocation; views within this graph keep their original aliases.
         return this.payload.slice(node.offset, node.offset + node.length).buffer

@@ -1,42 +1,117 @@
-import type {RenderBundlesOptions} from './features/renderBundles.ts'
-import type {StaticInstancingOptions} from './features/staticInstancing.ts'
-import type {Plugin} from 'vite'
+import type {R3fStaticRenderingOptions} from './options.ts'
+import type {StaticDiagnostic} from './plan.ts'
+import type {Plugin, ResolvedConfig} from 'vite'
 
-import {defaultRenderBundlesOptions} from './features/renderBundles.ts'
-import {defaultStaticInstancingOptions} from './features/staticInstancing.ts'
+import {relative} from 'node:path'
 
-export type R3fStaticRenderingOptions = {
-  renderBundles?: RenderBundlesOptions | false
-  staticInstancing?: StaticInstancingOptions | false
-}
+import {SourceGraph} from 'vite-plugin-bake-core'
 
-export type ResolvedR3fStaticRenderingOptions = {
-  renderBundles: Required<RenderBundlesOptions> | false
-  staticInstancing: Required<StaticInstancingOptions> | false
-}
+import {compileStaticRendering} from './compile.ts'
+import {constructorsFor} from './optimize.ts'
+import {resolveR3fStaticRenderingOptions} from './options.ts'
 
-export function resolveR3fStaticRenderingOptions(options: R3fStaticRenderingOptions = {}): ResolvedR3fStaticRenderingOptions {
-  return {
-    staticInstancing: options.staticInstancing === false ? false : {
-      ...defaultStaticInstancingOptions,
-      ...options.staticInstancing,
-    },
-    renderBundles: options.renderBundles === false ? false : {
-      ...defaultRenderBundlesOptions,
-      ...options.renderBundles,
-    },
+const normalize = (id: string) => id.replaceAll('\\', '/')
+const matches = (filter: R3fStaticRenderingOptions['include'], id: string) => {
+  if (!filter) {
+    return false
   }
+  if (typeof filter === 'function') {
+    return filter(id)
+  }
+  filter.lastIndex = 0
+  return filter.test(id)
 }
 
-/**
- * Package scaffold only. The shared proof model and feature ownership are fixed,
- * but transforms are intentionally not enabled until their semantic regressions exist.
- */
-export default function r3fStaticRendering(_options: R3fStaticRenderingOptions = {}): Plugin {
+export default function r3fStaticRendering(options: R3fStaticRenderingOptions = {}): Plugin {
+  const resolved = resolveR3fStaticRenderingOptions(options)
+  const prefix = 'virtual:r3f-static-rendering:'
+  const modules = new Map<string, string>
+  const diagnostics: Array<StaticDiagnostic> = []
+  let config: ResolvedConfig
+  let graph: SourceGraph
   return {
     name: 'r3f-static-rendering',
     apply: 'build',
     enforce: 'pre',
+    configResolved(value) {
+      config = value
+    },
+    buildStart() {
+      modules.clear()
+      diagnostics.length = 0
+      graph = new SourceGraph(async (source, importer) => {
+        const result = await this.resolve(source, importer, {skipSelf: true})
+        return result && !result.external ? normalize(result.id) : undefined
+      })
+    },
+    shouldTransformCachedModule() {
+      return true
+    },
+    resolveId(id) {
+      if (id.startsWith(prefix)) {
+        return {
+          id: `\0${id}`,
+          moduleSideEffects: false,
+        }
+      }
+    },
+    load(id) {
+      if (id.startsWith(`\0${prefix}`)) {
+        return modules.get(id.slice(1))
+      }
+    },
+    async transform(code, rawId) {
+      if ((!resolved.staticInstancing || !resolved.staticInstancing.enabled) && (!resolved.renderBundles || !resolved.renderBundles.enabled)) {
+        return
+      }
+      const id = normalize(rawId)
+      if (config.build.ssr || !/\.[jt]sx$/u.test(id) || id.includes('/node_modules/') || id.includes('\0')) {
+        return
+      }
+      if (options.include ? !matches(options.include, id) : !id.startsWith(`${normalize(config.root)}/`)) {
+        return
+      }
+      if (matches(options.exclude, id)) {
+        return
+      }
+      const result = await compileStaticRendering(code, id, options, graph)
+      diagnostics.push(...result.diagnostics.map(item => ({
+        ...item,
+        file: normalize(relative(config.root, item.file)),
+      })))
+      for (const dependency of result.dependencies) {
+        this.addWatchFile(dependency)
+      }
+      if (!result.plans.length) {
+        return
+      }
+      for (const {hash, plan} of result.plans) {
+        const types = constructorsFor(plan)
+        modules.set(`${prefix}${hash}`, `import {${types.join(',')}} from 'three/webgpu';\nexport default {plan:${JSON.stringify(plan)},constructors:{${types.join(',')}}};`)
+      }
+      return {
+        code: result.code,
+        map: result.map,
+      }
+    },
+    generateBundle(_options, bundle) {
+      const retained = new Set(Object.values(bundle).flatMap(output => (output.type === 'chunk' ? Object.keys(output.modules).filter(id => id.startsWith(`\0${prefix}`)) : [])))
+      const optimized = diagnostics.filter(item => item.status === 'optimized')
+      if (options.report !== false) {
+        this.emitFile({
+          type: 'asset',
+          fileName: 'r3f-static-rendering.json',
+          source: JSON.stringify({
+            regions: optimized.length,
+            retainedPlans: retained.size,
+            diagnostics,
+          }, null, 2),
+        })
+      }
+      if (optimized.length) {
+        config.logger.info(`[r3f-static-rendering] ${optimized.length} regions, ${retained.size} retained plans`)
+      }
+    },
   }
 }
 
@@ -45,3 +120,7 @@ export {canBundle, defaultRenderBundlesOptions} from './features/renderBundles.t
 export type {RenderBundlesOptions} from './features/renderBundles.ts'
 export {canInstance, defaultStaticInstancingOptions} from './features/staticInstancing.ts'
 export type {StaticInstancingOptions} from './features/staticInstancing.ts'
+export {resolveR3fStaticRenderingOptions} from './options.ts'
+
+export type {R3fStaticRenderingOptions, ResolvedR3fStaticRenderingOptions} from './options.ts'
+export type {StaticDiagnostic, StaticPlan} from './plan.ts'

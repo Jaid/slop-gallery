@@ -8,9 +8,17 @@ import {importInfo} from './SourceGraph.ts'
 
 export type Candidate = {
   body?: NodePath<t.BlockStatement | t.Expression>
+  /** Successful custom candidates may replace coupled expressions as one atomic rewrite. */
+  edits?: (factory: string) => ReadonlyArray<{
+    end: number
+    start: number
+    text: string
+  }>
+  end?: number
   expression: t.CallExpression | t.NewExpression
-  kind: 'class' | 'expression' | 'function'
+  kind: 'class' | 'custom' | 'expression' | 'function'
   path: NodePath
+  start?: number
 }
 
 /** Parameterless definitions can keep their public identity while dropping the entire generator body. */

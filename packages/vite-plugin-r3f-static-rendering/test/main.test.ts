@@ -26,7 +26,7 @@ const candidate = (changes: Partial<StaticRenderCandidate> = {}): StaticRenderCa
   renderBundle: true,
   ...changes,
 })
-test('scaffolds one build plugin with both optimizations enabled by default', () => {
+test('creates one build plugin with both optimizations enabled by default', () => {
   expect(r3fStaticRendering()).toMatchObject({
     name: 'r3f-static-rendering',
     apply: 'build',

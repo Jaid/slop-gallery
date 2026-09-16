@@ -48,28 +48,28 @@ Snapshots contain **final buffers**, not `BufferGeometry.toJSON()` recipes that 
 
 Every factory invocation creates fresh resources, IDs, UUIDs and mutable buffers. Aliases within one result are preserved; separate mounts do not share buffers or disposal lifetimes. Custom class methods are retained rather than replaced with a generic disposer. Shared singletons, captured mutable resource aliases, private class state and callback-bearing snapshots are declined.
 
-This plugin does **not** serialize Rapier worlds or MeshBVHs. It can preserve already-computed collider input arrays, but adding a BVH serializer is a separate adapter feature.
+## MeshBVH baking
 
-## MeshBVH belongs here
+MeshBVH is an optional feature of this geometry package, enabled by default with `meshBvh: true`. The `three-mesh-bvh` peer is optional and loaded only when a reachable recipe imports it. Set `meshBvh: false` to leave BVH construction at runtime. There is no separate BVH Vite plugin.
 
-Serialized `MeshBVH` is the next feature of this package, not a separate Vite plugin. It is a deterministic derivative of a baked `BufferGeometry` and should share that recipe's cache key, dependency graph and artifact lifetime.
+The codec calls the library's `MeshBVH.serialize()` and `MeshBVH.deserialize()`. Serialized roots, index and indirect buffers travel in the **same object graph and binary artifact as their exact geometry**. Restoration uses the graph's geometry reference, not a name/hash lookup against some other runtime geometry. Shared index buffers are encoded once, and direct/indirect trees preserve face-index semantics, groups and draw ranges. Refit behavior and geometry-to-tree back-reference cycles are covered by tests.
 
-The intended extension is:
+Existing local ownership patterns can be recognized without annotations:
 
-```text
-geometry recipe
-  ├─ render attributes/index/bounds
-  ├─ collider arrays
-  └─ MeshBVH.serialize(...)
-       ↓
-one content-addressed geometry artifact
-       ↓
-MeshBVH.deserialize(..., restoredGeometry)
+```ts
+const geometry = createGeometry()
+geometry.computeBoundingSphere()
+const tree = new MeshBVH(geometry, {indirect: true, setBoundingBox: false})
+// Runtime consumers keep using geometry and tree normally.
 ```
 
-The feature should be optional because applications that do not use `three-mesh-bvh` should not acquire it as a runtime/build dependency. The serializer should live in this package while the generic snapshot machinery stays in `vite-plugin-bake-core`. Geometry and BVH must be restored together so the serialized index/indirect buffers cannot silently attach to a non-identical geometry.
+The compiler evaluates the pair as one closed recipe, replaces both expressions atomically and leaves dynamic downstream consumers untouched. This also works inside a constructor with runtime arguments when the geometry/tree pair itself is independent of those arguments. A straightforward intervening registration into an owned `this.field = new Map()` is supported; unknown intervening statements, observed map-field/method mutation and arbitrary side effects prevent pair fusion. Bounds-only calculations may be included in the recipe. A direct closed recipe returning a BVH or a geometry/tree aggregate is also supported.
 
-A future option can therefore be a feature block on `bakeThreeGeometry()`, rather than another top-level plugin. No public option is exposed yet because the serializer/deserializer path is not implemented.
+Each factory call restores a fresh tree and geometry, with fresh mutable buffers; refitting one instance does not affect another mount. Runtime raycasting behavior and closures surrounding the tree are retained in application code. The codec does not install global raycast overrides.
+
+Callbacks, shared-memory buffers, unknown instance fields, BVH subclasses and runtime geometry inputs are declined. Library API restoration creates an instance-owned triangle-index resolver; the codec rebinds that resolver to its graph placeholder to preserve cycles and later refit/init behavior. This is one explicit version-sensitive layout assumption, covered against the installed `three-mesh-bvh` line by the direct/indirect regression tests. Rebuild artifacts with the runtime dependency version; do not mix independently generated geometry and BVH blobs.
+
+The package still does **not** serialize Rapier worlds, generate navigation meshes or perform scene-wide collision inference. Owned collider input arrays can be serialized alongside render geometry.
 
 ## Limits
 
@@ -91,6 +91,7 @@ Generated assets for tree-shaken recipes are removed. High-resolution source map
 
 ```ts
 bakeThreeGeometry({
+  meshBvh: true,
   include: /\/src\//u,
   exclude: /\/experimental\//u,
   minimumBytes: 32 * 1024,

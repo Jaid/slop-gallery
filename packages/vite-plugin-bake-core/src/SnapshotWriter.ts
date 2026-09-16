@@ -1,4 +1,4 @@
-import type {Atom, BakeAdapter, NativeType, Snapshot, SnapshotNode} from './types.ts'
+import type {Atom, BakeAdapter, NativeType, Snapshot, SnapshotCodec, SnapshotNode} from './types.ts'
 
 import {types} from 'node:util'
 
@@ -6,6 +6,7 @@ import {NotBakeableError} from './types.ts'
 
 /** Object-graph serialization, not Three.toJSON(): stores the final buffers, never constructor recipes. */
 export default class SnapshotWriter {
+  readonly codecs = new Map<string, SnapshotCodec>
   readonly constructors = new Map<string, NativeType>
   needsRootConstructor = false
   readonly resources = new Set<string>
@@ -158,6 +159,16 @@ export default class SnapshotWriter {
         width: canvas.width,
         height: canvas.height,
         pixels: this.atom(canvas.data),
+      }
+    }
+    const codec = this.adapter.codecs?.find(candidate => candidate.test(value))
+    if (codec) {
+      this.codecs.set(codec.name, codec)
+      this.resources.add(codec.resource)
+      return {
+        kind: 'codec',
+        codec: codec.name,
+        data: this.atom(codec.encode(value)),
       }
     }
     const prototype = Object.getPrototypeOf(value) as object | null

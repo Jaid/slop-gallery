@@ -85,8 +85,13 @@ export default class Recipe {
   constructor(private readonly graph: SourceGraph, private readonly adapter: BakeAdapter) {}
 
   async evaluate(path: NodePath, timeoutMs: number, input: t.CallExpression | t.NewExpression = path.node as t.CallExpression | t.NewExpression): Promise<EvaluatedRecipe> {
+    return this.evaluateValue(path, timeoutMs, input, true)
+  }
+
+  /** Shared closed-data evaluator for compilers which do not produce Three resources. */
+  async evaluateValue(path: NodePath, timeoutMs: number, input: t.Expression, requireResource = false): Promise<EvaluatedRecipe> {
     const expression = await this.rewrite(t.cloneNode(input, true), path, this.graph.source(path))
-    if (!this.usesResource) {
+    if (requireResource && !this.usesResource) {
       throw new NotBakeableError('Not a recognized resource recipe.')
     }
     const nativeRoot = t.isNewExpression(input) && t.isIdentifier(input.callee) ? input.callee.name : undefined

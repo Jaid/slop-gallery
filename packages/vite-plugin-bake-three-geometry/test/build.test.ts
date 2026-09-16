@@ -62,8 +62,8 @@ test('Vite specializes class definitions, preserves subclassing, and removes dea
     const fetches: Array<string> = []
     globalThis.fetch = (async input => {
       const url = input instanceof Request ? input.url : String(input)
-      fetches.push(String(url))
-      const file = assets.find(item => String(url).endsWith(item.fileName))
+      fetches.push(url)
+      const file = assets.find(item => url.endsWith(item.fileName))
       if (!file || file.type !== 'asset') {
         throw new Error(`Unexpected resource URL: ${url}`)
       }
@@ -71,8 +71,14 @@ test('Vite specializes class definitions, preserves subclassing, and removes dea
     }) as typeof fetch
     const file = join(directory, 'output.mjs')
     await writeFile(file, code)
-    type Sculpture = {geometry: BoxGeometry, dispose: () => void}
-    const module = await import(pathToFileURL(file).href) as {Sculpture: new () => Sculpture, Child: new () => Sculpture & {child: number}}
+    type Sculpture = {
+      dispose: () => void
+      geometry: BoxGeometry
+    }
+    const module = await import(pathToFileURL(file).href) as {
+      Child: new () => Sculpture & {child: number}
+      Sculpture: new () => Sculpture
+    }
     const first = new module.Sculpture
     const second = new module.Sculpture
     const child = new module.Child

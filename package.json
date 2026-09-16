@@ -32,7 +32,7 @@
     "lint": "eslint .",
     "preview": "bun run vite preview --host 127.0.0.1",
     "test": "bun test --max-concurrency 1 ./test/unit",
-    "test:baking": "bun test --max-concurrency 1 ./packages/vite-plugin-bake-core/test ./packages/vite-plugin-bake-three-geometry/test ./packages/vite-plugin-bake-static-textures/test",
+    "test:baking": "bun test --max-concurrency 1 ./packages/vite-plugin-bake-core/test ./packages/vite-plugin-bake-three-geometry/test ./packages/vite-plugin-bake-static-textures/test ./packages/vite-plugin-r3f-static-rendering/test",
     "test:live": "GAME_LEVEL=gallery bun run build && LIVE_TEST=true bun test ./test/live.test.ts",
     "typecheck": "tsc --noEmit --noUnusedLocals --noUnusedParameters --pretty false",
     "update:knots": "bun scripts/updateKnots.ts",
@@ -110,6 +110,7 @@
     "vite-plugin-bake-static-textures": "workspace:*",
     "vite-plugin-bake-three-geometry": "workspace:*",
     "vite-plugin-media-mixins": "0.10.0",
+    "vite-plugin-r3f-static-rendering": "workspace:*",
     "vite-plugin-title": "0.6.0",
     "webmcp-types": "0.1.8"
   },

@@ -1,6 +1,10 @@
+export type {Candidate as BakeCandidate} from './candidates.ts'
 export {default} from './plugin.ts'
 export {default as Recipe} from './Recipe.ts'
 export {default as SnapshotWriter} from './SnapshotWriter.ts'
 export {default as SourceGraph} from './SourceGraph.ts'
+export {assertConstant, importInfo} from './SourceGraph.ts'
+
 export {NotBakeableError} from './types.ts'
 export type {BakeAdapter, BakeDiagnostic, BakeOptions, CanvasPixels, NativeType} from './types.ts'
+export type {SnapshotCodec, SourceModule} from './types.ts'

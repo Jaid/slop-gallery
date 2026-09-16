@@ -49,6 +49,14 @@ Resource instances are never pooled across calls. The format preserves cycles, M
 
 ## Build and transport behavior
 
+### Specialized codecs and coupled expressions
+
+An adapter can supply `SnapshotCodec` records with `test(value)`, `encode(value)`, a resource kind and the runtime module/export to import. The payload is encoded through the same snapshot graph, preserving aliases to other resources and avoiding duplicate buffers. Browser codecs provide `allocate()` and `hydrate(target, data)`. Allocation produces stable placeholders; hydration runs after the ordinary object graph is restored, allowing cycles such as `geometry.boundsTree.geometry === geometry`. Codecs must handle their own native-library state and must not invoke a full expensive rebuild during hydration.
+
+Adapters can also contribute custom `BakeCandidate`s containing a closed expression and a set of source edits. These edits are applied together only after successful evaluation, serialization and size checks. This supports coupled recipes such as an owned geometry initializer plus its later MeshBVH constructor without teaching the generic compiler about BVHs. Existing definition and expression candidates continue to work normally.
+
+`Recipe.evaluateValue(path, timeout, expression)` exposes the same bounded, guarded dependency evaluation for compilers that produce plain data rather than serialized resources. The R3F compiler uses it after lowering supported JSX to inert data. It does not turn the evaluator into a React renderer or allow executing arbitrary browser APIs.
+
 Snapshots use a small JSON graph header followed by binary buffer payloads. Gzip is a transport choice, not image conversion or numeric quantization. The default browser path requires ES-module top-level await, fetch and DecompressionStream; disabling `compress` removes the last requirement.
 
 Each plugin instance has separate build state. Watch builds start fresh, and referenced source/re-export files are watched. Artifacts deduplicate by content hash and can be cached by the serving infrastructure. There is no persistent evaluation cache.

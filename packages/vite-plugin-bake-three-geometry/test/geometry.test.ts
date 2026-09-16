@@ -105,7 +105,9 @@ test('recognizes arbitrary class names and retains custom disposal methods witho
     const result = new Specimen
   `)
   const path = source.path.scope.getBinding('result')!.path.get('init')
-  if (Array.isArray(path) || !path.isNewExpression()) { throw new Error('Expected constructor initializer') }
+  if (Array.isArray(path) || !path.isNewExpression()) {
+    throw new Error('Expected constructor initializer')
+  }
   const evaluated = await new Recipe(graph, adapter).evaluate(path, 1000)
   const writer = new SnapshotWriter(adapter, 1024 * 1024, evaluated.isShared, evaluated.rootPrototype)
   const create = decodeSnapshot(writer.write(evaluated.value), constructors)

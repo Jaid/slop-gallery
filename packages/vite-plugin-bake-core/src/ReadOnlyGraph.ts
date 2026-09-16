@@ -27,7 +27,9 @@ export default class ReadOnlyGraph {
       get: (target, key): unknown => {
         // Array species is read internally by map/filter/slice, not by the recipe source.
         if (key === 'constructor' && Array.isArray(target)) {
-          if (!Array.isArray(Object.getPrototypeOf(target))) { throw new NotBakeableError('Captured array subclasses are not supported.') }
+          if (!Array.isArray(Object.getPrototypeOf(target))) {
+            throw new NotBakeableError('Captured array subclasses are not supported.')
+          }
           return Array
         }
         if (typeof key === 'string' && reflection.has(key)) {

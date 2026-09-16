@@ -17,11 +17,19 @@
     "test": "bun test --max-concurrency 1 ./test"
   },
   "dependencies": {
+    "@babel/traverse": "^8.0.5",
+    "@babel/types": "^8.0.5",
     "vite-plugin-bake-core": "workspace:*"
   },
   "peerDependencies": {
     "three": "^0.186.0",
+    "three-mesh-bvh": "^0.9.15",
     "vite": "^8.3.0"
+  },
+  "peerDependenciesMeta": {
+    "three-mesh-bvh": {
+      "optional": true
+    }
   },
   "files": [
     "src",

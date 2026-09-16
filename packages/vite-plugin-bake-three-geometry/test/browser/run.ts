@@ -66,7 +66,7 @@ try {
     executablePath,
     userDataDir: profile,
     headless: true,
-    args: ['--enable-gpu', '--force-high-performance-gpu'],
+    args: ['--enable-gpu', '--enable-unsafe-webgpu', '--ignore-gpu-blocklist'],
   })
   try {
     const page = await browser.newPage()

@@ -113,8 +113,16 @@ test('keeps aliases within a snapshot but never between factory calls', async ()
     })()
   `)
   const create = roundTrip(evaluated)
-  const first = create() as Resource<{array: Float32Array, same: Float32Array, view: Float32Array}>
-  const second = create() as Resource<{array: Float32Array, same: Float32Array, view: Float32Array}>
+  const first = create() as Resource<{
+    array: Float32Array
+    same: Float32Array
+    view: Float32Array
+  }>
+  const second = create() as Resource<{
+    array: Float32Array
+    same: Float32Array
+    view: Float32Array
+  }>
   expect(first).toBeInstanceOf(Resource)
   expect(first.data.array).toBe(first.data.same)
   expect(first.data.array.buffer).toBe(first.data.view.buffer)
@@ -133,7 +141,11 @@ test('preserves special numbers, null prototypes, maps and cycles', async () => 
       return new Resource(data)
     })()
   `)
-  type Data = {self: Data, map: Map<Data, number>, values: Array<number | undefined>}
+  type Data = {
+    map: Map<Data, number>
+    self: Data
+    values: Array<number | undefined>
+  }
   const value = (roundTrip(evaluated)() as Resource<Data>).data
   expect(Object.getPrototypeOf(value)).toBe(null)
   expect(value.self).toBe(value)

@@ -1,3 +1,4 @@
+import type {Candidate} from './candidates.ts'
 import type {NodePath} from '@babel/traverse'
 import type * as t from '@babel/types'
 
@@ -18,6 +19,11 @@ export type SnapshotNode =
     length: number
     offset: number
     type: string
+  }
+  | {
+    codec: string
+    data: Atom
+    kind: 'codec'
   }
   | {
     entries: Array<[Atom, Atom]>
@@ -61,8 +67,19 @@ export type CanvasPixels = {
   height: number
   width: number
 }
+/** A codec restores one specialized object without teaching the generic runtime its library. */
+export type SnapshotCodec = {
+  encode: (value: object) => unknown
+  exportName: string
+  module: string
+  name: string
+  resource: string
+  test: (value: object) => boolean
+}
 export type BakeAdapter = {
   accepts: (resources: ReadonlySet<string>) => boolean
+  candidates?: (source: SourceModule) => Promise<ReadonlyArray<Candidate>>
+  codecs?: ReadonlyArray<SnapshotCodec>
   /** Lazily resolve optional, explicitly approved native modules. */
   loadModule?: (source: string) => Promise<Readonly<Record<string, unknown>> | undefined>
   /** These modules are trusted capabilities, not arbitrary application imports. */

@@ -1,3 +1,5 @@
+import type {SceneNode} from './plan.ts'
+
 export type StaticRenderReason =
   | 'dynamic-children'
   | 'dynamic-geometry'
@@ -42,16 +44,31 @@ export type StaticRenderCandidate = {
   instanceGroup?: StaticInstanceGroup
   /** Present when this subtree can be represented by a static WebGPU BundleGroup. */
   renderBundle: boolean
+  renderObjectCount?: number
 }
 
 /**
  * Shared proof model for all R3F static-render transforms.
  *
- * The eventual analyzer should resolve bindings and closed data through the same
- * SourceGraph/Recipe infrastructure used by the resource bakers, then add JSX-
- * specific facts here. Feature transforms consume facts; they must not each grow
+ * SourceGraph/Recipe resolves closed data; the JSX decoder validates the complete
+ * supported scene shape before deriving these facts. Feature transforms consume facts; they must not each grow
  * their own, subtly different definition of “static”.
  */
 export type StaticRenderAnalyzer = {
   analyze: (id: string, code: string) => Promise<ReadonlyArray<StaticRenderCandidate>>
+}
+
+/** Only called after sceneFromValue has validated the complete closed descriptor graph. */
+export function staticRenderFacts(nodes: ReadonlyArray<SceneNode>): StaticRenderFacts {
+  const named = (items: ReadonlyArray<SceneNode>): boolean => items.some(node => Boolean(node.props.name) || named(node.children))
+  return {
+    geometry: true,
+    material: true,
+    structure: true,
+    transforms: true,
+    imperativeFree: true,
+    interactionFree: !named(nodes),
+    renderableOnly: true,
+    reasons: new Set,
+  }
 }
