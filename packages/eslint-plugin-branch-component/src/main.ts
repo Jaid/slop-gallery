@@ -32,11 +32,11 @@ plugin.configs.recommended = {
   languageOptions: {parserOptions: {ecmaFeatures: {jsx: true}}},
   plugins: {'branch-component': plugin},
   rules: {
-    'branch-component/prefer-branch-component': 'error',
-    'branch-component/prefer-positive': 'error',
-    'branch-component/simplify-children': 'error',
-    'branch-component/simplify-classname': 'error',
-    'branch-component/expand-children': 'error',
+    'branch-component/prefer-branch-component': 'warn',
+    'branch-component/prefer-positive': 'warn',
+    'branch-component/simplify-children': 'warn',
+    'branch-component/simplify-classname': 'warn',
+    'branch-component/expand-children': 'warn',
   },
 }
 

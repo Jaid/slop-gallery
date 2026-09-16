@@ -17,7 +17,7 @@ export default [
 
 The preset registers the plugin and enables all five rules for `**/*.{jsx,tsx}`. It enables JSX syntax without replacing your parser. Extend its `files` pattern to lint JSX in `.js` files. Alternatively, register `plugins: {'branch-component': branchComponent}` and select rules individually.
 
-The root ESLint configuration is not changed automatically. Adopting the preset throughout the application is separate from implementing this package.
+The repository root ESLint configuration includes this preset after `makeEslintConfig()`, enabling all five rules for JSX and TSX files across the workspace.
 
 ## Rules
 
