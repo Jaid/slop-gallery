@@ -17,7 +17,7 @@ The metadata barrels never import shaders. Vite discovers material modules autom
 
 ## Updating images
 
-With Vite and its page open in the debug browser, run `bun scripts/updateKnots.ts`. To update only some candidates, use `bun scripts/updateKnots.ts gemini fable`. Optional `--browser-url` and `--page-url` override `http://127.0.0.1:9223` and `https://vite.tower.lan`.
+With Vite and its page open in the debug browser, run `bun scripts/updateKnots.ts`. To update only some candidates, use `bun scripts/updateKnots.ts gemini_flash claude_fable`. Optional `--browser-url` and `--page-url` override `http://127.0.0.1:9223` and `https://vite.tower.lan`.
 
 The script renders all item icons on a transparent 640 × 640 canvas, including archived items, then crops to their visible alpha bounds. Candidate symbols are rasterized at 256 × 256 from the editable SVG sources in `scripts/assets/knots/{candidate}.svg`. It does not generate billboard images.
 

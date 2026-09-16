@@ -6,7 +6,7 @@ import {knotsById} from '../../src/lib/knots/index.ts'
 import KnotResources from '../../src/lib/knots/KnotResources.ts'
 
 test('shared Knot BVH preserves native hits, face indices, UVs, sides and transformed distances', () => {
-  const entries = [knotsById.get('astra/lenticular_mirage')!, knotsById.get('astra/coralline_crown')!]
+  const entries = [knotsById.get('gpt_astra/lenticular_mirage')!, knotsById.get('gpt_astra/coralline_crown')!]
   const resources = new KnotResources(entries)
   let hits = 0
   try {
@@ -69,7 +69,7 @@ test('shared Knot BVH preserves native hits, face indices, UVs, sides and transf
   }
 })
 test('accelerated raycasts bypass the linear Mesh vertex walk without patching Three prototypes', () => {
-  const entry = knotsById.get('astra/lenticular_mirage')!
+  const entry = knotsById.get('gpt_astra/lenticular_mirage')!
   const resources = new KnotResources([entry])
   const {geometry} = resources.items[0]
   const material = new MeshBasicNodeMaterial

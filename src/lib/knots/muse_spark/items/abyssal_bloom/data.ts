@@ -2,17 +2,18 @@ import type {KnotData} from '../../../types.ts'
 
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
-  id: 'nacreous_bloom',
-  title: 'Nacreous Bloom',
+  id: 'abyssal_bloom',
+  title: 'Abyssal Bloom',
   harness: 'none',
   author: {
     model: {
-      title: 'DeepSeek 4.1 Flash',
-      slug: 'deepseek/deepseek-4.1-flash',
-      effortLevel: 'max',
+      title: 'Muse Spark 1.3',
+      slug: 'meta/muse-spark-1.3',
+      effortLevel: 'xhigh',
     },
   },
-  accent: '#ffb7e8',
+  accent: '#00f0ff',
   archived: true,
   highlighted: false,
+  displacement: 0.02,
 } as const satisfies KnotData

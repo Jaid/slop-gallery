@@ -24,11 +24,11 @@ describe('Knot nameplates', () => {
       urls.add(Bun.hash(await Bun.file(new URL(url)).arrayBuffer()).toString())
     }
     expect(urls.size).toBe(10)
-    expect(await iconHash('astra/lenticular_mirage')).toBe(await iconHash('astra/solar_reliquary'))
-    expect(await iconHash('astra/solar_reliquary')).toBe(await iconHash('astra/coralline_crown'))
-    expect(await iconHash('sol/celestial_rose')).toBe(await iconHash('astra/lenticular_mirage'))
-    expect(await iconHash('sonnet/opal_fire')).toBe(await iconHash('fable/event_horizon'))
-    expect(await iconHash('gemini/cyber_kintsugi')).toBe(await iconHash('gemini/event_horizon'))
+    expect(await iconHash('gpt_astra/lenticular_mirage')).toBe(await iconHash('gpt_astra/solar_reliquary'))
+    expect(await iconHash('gpt_astra/solar_reliquary')).toBe(await iconHash('gpt_astra/coralline_crown'))
+    expect(await iconHash('gpt_sol/celestial_rose')).toBe(await iconHash('gpt_astra/lenticular_mirage'))
+    expect(await iconHash('claude_sonnet/opal_fire')).toBe(await iconHash('claude_fable/event_horizon'))
+    expect(await iconHash('gemini_flash/cyber_kintsugi')).toBe(await iconHash('gemini_flash/event_horizon'))
   })
   test('centers the candidate icon and model text together and fits long names', () => {
     for (const measured of [90, 240, 400, 1000]) {

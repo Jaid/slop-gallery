@@ -2,12 +2,14 @@ import type {KnotCandidateData, KnotData} from '../../src/lib/knots/types.ts'
 
 import {describe, expect, test} from 'bun:test'
 
+import {knotAnnouncementPaths} from '../../src/lib/knots/announcements.ts'
+
 import {enumerateKnotBays, formatKnotLabels, selectKnotBays} from '../../src/lib/knots/exhibition.ts'
 import {knotCandidates, knots, knotsById} from '../../src/lib/knots/index.ts'
 import KnotCandidate, {indexKnots} from '../../src/lib/knots/KnotCandidate.ts'
 
 const candidateData: KnotCandidateData = {
-  id: 'fable',
+  id: 'claude_fable',
   title: 'Claude Fable',
   icon: 'icon.jxl',
 }
@@ -76,9 +78,9 @@ describe('arbitrary Knot batches', () => {
     const a = new KnotCandidate(candidateData, [item('alpha')])
     const b = new KnotCandidate({
       ...candidateData,
-      id: 'astra',
+      id: 'gpt_astra',
     }, [item('alpha')])
-    expect([...indexKnots([a, b]).keys()]).toEqual(['fable/alpha', 'astra/alpha'])
+    expect([...indexKnots([a, b]).keys()]).toEqual(['claude_fable/alpha', 'gpt_astra/alpha'])
     expect(() => indexKnots([a, a])).toThrow('candidate')
   })
   test('item metadata has no persisted plate numbers or billboard overviews', async () => {
@@ -98,34 +100,46 @@ describe('arbitrary Knot batches', () => {
     expect(new Set(materialFiles.map(path => path.replaceAll('\\', '/')))).toEqual(new Set(knots.map(entry => `src/lib/knots/${entry.candidate.id}/items/${entry.sourceId}/material.ts`)))
     expect(knotsById.size).toBe(knots.length)
   })
+  test('uses canonical candidate and model IDs', () => {
+    expect(knotCandidates.map(candidate => candidate.data.id)).toEqual([
+      'gpt_astra', 'claude_sonnet', 'claude_opus', 'deepseek', 'gemini_flash', 'glm', 'glm_flash',
+      'grok', 'kimi', 'qwen_max', 'gpt_sol', 'claude_fable', 'muse_spark', 'hy',
+    ])
+    const modelIds = new Set(knots.map(entry => knotAnnouncementPaths(entry).model.split('/slug/')[1]))
+    expect(modelIds).toEqual(new Set([
+      'gpt-6-astra', 'claude-sonnet-5', 'claude-opus-5', 'deepseek', 'deepseek-4.1-flash',
+      'gemini-3.8-flash', 'glm-5.3', 'glm-5.3-flash', 'grok-4.6', 'kimi-k3', 'qwen-3.8-max',
+      'gpt-5.6-sol', 'claude-fable-5.1', 'muse-spark-1.3', 'muse-spark', 'hy4-preview',
+    ]))
+  })
   test('uses candidate titles independently from author model titles', () => {
     expect(Object.fromEntries(knotCandidates.map(candidate => [candidate.data.id, candidate.data.title]))).toMatchObject({
-      astra: 'GPT Astra',
-      fable: 'Claude Fable',
-      gemini: 'Gemini Flash',
+      gpt_astra: 'GPT Astra',
+      claude_fable: 'Claude Fable',
+      gemini_flash: 'Gemini Flash',
       glm: 'GLM',
       glm_flash: 'GLM Flash',
       grok: 'Grok',
-      hunyuan: 'Hy',
+      hy: 'Hy',
       kimi: 'Kimi',
-      muse: 'Muse Spark',
-      qwen: 'Qwen Max',
-      sol: 'GPT Sol',
-      sonnet: 'Claude Sonnet',
-      opus: 'Claude Opus',
+      muse_spark: 'Muse Spark',
+      qwen_max: 'Qwen Max',
+      gpt_sol: 'GPT Sol',
+      claude_sonnet: 'Claude Sonnet',
+      claude_opus: 'Claude Opus',
     })
-    expect(knotCandidates.find(candidate => candidate.data.id === 'fable')!.items.every(entry => entry.modelTitle === 'Claude Fable 5.1')).toBe(true)
+    expect(knotCandidates.find(candidate => candidate.data.id === 'claude_fable')!.items.every(entry => entry.modelTitle === 'Claude Fable 5.1')).toBe(true)
   })
   test('collapses effort labels and spelling variants into one model identity', () => {
     const kimi = knotCandidates.find(candidate => candidate.data.id === 'kimi')!
     expect(new Set(kimi.items.map(entry => entry.modelTitle))).toEqual(new Set(['Kimi K3']))
     expect(kimi.items.filter(entry => entry.harness === 'kimi.ai')).toHaveLength(8)
     expect(kimi.items.filter(entry => entry.harness === 'kimi.ai').every(entry => entry.author.model.effortLevel === 'max')).toBe(true)
-    const qwen = knotCandidates.find(candidate => candidate.data.id === 'qwen')!
+    const qwen = knotCandidates.find(candidate => candidate.data.id === 'qwen_max')!
     expect(new Set(qwen.items.map(entry => entry.modelTitle))).toEqual(new Set(['Qwen 3.8 Max']))
   })
   test('keeps every Gemini item on current model provenance', () => {
-    const gemini = knotCandidates.find(candidate => candidate.data.id === 'gemini')!
+    const gemini = knotCandidates.find(candidate => candidate.data.id === 'gemini_flash')!
     expect(gemini.items).toHaveLength(24)
     expect(gemini.items.every(entry => entry.author.model.title === 'Gemini 3.8 Flash'
       && entry.author.model.slug === 'google/gemini-3.8-flash'
@@ -134,8 +148,8 @@ describe('arbitrary Knot batches', () => {
   })
   test('keeps API model credits and displacement metadata by stable identity', () => {
     const expected = [
-      ['DeepSeek 4.1 Flash', 'deepseek/deepseek-v4.1-flash', {max: 8}],
-      ['Muse Spark 1.3', 'meta/muse-spark-1.3-contributor', {xhigh: 8}],
+      ['DeepSeek 4.1 Flash', 'deepseek/deepseek-4.1-flash', {max: 8}],
+      ['Muse Spark 1.3', 'meta/muse-spark-1.3', {xhigh: 8}],
       ['GLM 5.3 Flash', 'z-ai/glm-5.3-flash', {max: 8}],
       ['Hy4 Preview', 'tencent/hy4-preview', {high: 8, medium: 16}],
       ['Claude Sonnet 5', 'anthropic/claude-sonnet-5', {medium: 8}],
@@ -148,13 +162,13 @@ describe('arbitrary Knot batches', () => {
       expect(Object.fromEntries(Map.groupBy(entries, entry => entry.author.model.effortLevel).entries().map(([effort, grouped]) => [effort, grouped.length]))).toEqual(effortCounts)
     }
     expect(byId('deepseek/quantum_foam_2').archived).toBe(true)
-    expect(byId('muse/abyssal_bloom').displacement).toBe(0.02)
-    expect(byId('fable/chladni_resonance').displacement).toBe(0.006)
-    expect(byId('gemini/magma_chrysalis_2').displacement).toBe(0.018)
-    expect(byId('astra/ferrothorn').displacement).toBe(0.048)
-    expect(byId('astra/folded_silence').displacement).toBe(0.048)
-    expect(byId('sol/magnetite_field').displacement).toBe(0.046)
-    expect(byId('sol/chromatophore_skin').displacement).toBe(0.014)
+    expect(byId('muse_spark/abyssal_bloom').displacement).toBe(0.02)
+    expect(byId('claude_fable/chladni_resonance').displacement).toBe(0.006)
+    expect(byId('gemini_flash/magma_chrysalis_2').displacement).toBe(0.018)
+    expect(byId('gpt_astra/ferrothorn').displacement).toBe(0.048)
+    expect(byId('gpt_astra/folded_silence').displacement).toBe(0.048)
+    expect(byId('gpt_sol/magnetite_field').displacement).toBe(0.046)
+    expect(byId('gpt_sol/chromatophore_skin').displacement).toBe(0.014)
   })
   test('records API, Codex and web-chat harness provenance without guessing legacy sources', () => {
     const api = knots.filter(entry => entry.author.model.slug && entry.harness === 'none')
@@ -166,14 +180,14 @@ describe('arbitrary Knot batches', () => {
     expect(webChat).toHaveLength(56)
     expect(legacy).toHaveLength(56)
     expect(api.every(entry => entry.harness === 'none')).toBe(true)
-    expect(codex.every(entry => entry.candidate.id === 'astra')).toBe(true)
+    expect(codex.every(entry => entry.candidate.id === 'gpt_astra')).toBe(true)
     expect(legacy.every(entry => entry.harness === undefined)).toBe(true)
-    const astraApi = api.filter(entry => entry.candidate.id === 'astra')
-    const fableApi = api.filter(entry => entry.candidate.id === 'fable')
-    const solApi = api.filter(entry => entry.candidate.id === 'sol')
-    const sonnetApi = api.filter(entry => entry.candidate.id === 'sonnet')
-    const opusApi = api.filter(entry => entry.candidate.id === 'opus')
-    const hy4Api = api.filter(entry => entry.candidate.id === 'hunyuan')
+    const astraApi = api.filter(entry => entry.candidate.id === 'gpt_astra')
+    const fableApi = api.filter(entry => entry.candidate.id === 'claude_fable')
+    const solApi = api.filter(entry => entry.candidate.id === 'gpt_sol')
+    const sonnetApi = api.filter(entry => entry.candidate.id === 'claude_sonnet')
+    const opusApi = api.filter(entry => entry.candidate.id === 'claude_opus')
+    const hy4Api = api.filter(entry => entry.candidate.id === 'hy')
     expect(astraApi).toHaveLength(8)
     expect(fableApi).toHaveLength(16)
     expect(solApi).toHaveLength(8)
@@ -197,17 +211,17 @@ describe('arbitrary Knot batches', () => {
     })
   })
   test('defaults to eight shots per candidate when the URL omits shots', () => {
-    const bays = selectKnotBays('?candidates=fable,astra')
-    expect(bays.map(bay => [bay.candidate.data.id, bay.finishes.length])).toEqual([['astra', 8], ['fable', 8]])
+    const bays = selectKnotBays('?candidates=claude_fable,gpt_astra')
+    expect(bays.map(bay => [bay.candidate.data.id, bay.finishes.length])).toEqual([['gpt_astra', 8], ['claude_fable', 8]])
   })
   test('filters candidates, caps shots and enumerates only after final selection', () => {
-    const bays = selectKnotBays('?candidates=glm,muse,qwen,astra&shots=2')
-    expect(bays.map(bay => bay.candidate.data.id)).toEqual(['astra', 'glm', 'qwen', 'muse'])
+    const bays = selectKnotBays('?candidates=glm,muse_spark,qwen_max,gpt_astra&shots=2')
+    expect(bays.map(bay => bay.candidate.data.id)).toEqual(['gpt_astra', 'glm', 'qwen_max', 'muse_spark'])
     expect(bays.flatMap(bay => bay.finishes)).toHaveLength(8)
     expect(bays.every(bay => bay.finishes.length === 2 && bay.finishes.every(entry => entry.candidate.id === bay.candidate.data.id))).toBe(true)
     const numbered = enumerateKnotBays(bays)
     expect(numbered.flatMap(bay => bay.finishes.map(entry => entry.number))).toEqual([1, 2, 3, 4, 5, 6, 7, 8])
-    const astra = enumerateKnotBays(selectKnotBays('?candidates=astra&shots=3'))
+    const astra = enumerateKnotBays(selectKnotBays('?candidates=gpt_astra&shots=3'))
     expect(astra[0].finishes).toHaveLength(3)
     expect(astra[0].finishes.map(entry => entry.number)).toEqual([1, 2, 3])
     expect(() => selectKnotBays('?shots=0')).toThrow('shots')
@@ -220,12 +234,12 @@ describe('arbitrary Knot batches', () => {
     expect(formatKnotLabels([1, 3, 4])).toBe('#01 · #03 · #04')
   })
   test('keeps the second Fable batch and new GLM batch identifiable without plate numbers', () => {
-    const fable = knotCandidates.find(candidate => candidate.data.id === 'fable')!
+    const fable = knotCandidates.find(candidate => candidate.data.id === 'claude_fable')!
     expect(fable.items).toHaveLength(16)
     const fableOpenRouter = fable.items.filter(entry => entry.author.model.slug === 'anthropic/claude-fable-5.1')
     expect(fableOpenRouter).toHaveLength(16)
     expect(fableOpenRouter.every(entry => entry.harness === 'none')).toBe(true)
-    expect(byId('fable/chladni_resonance').displacement).toBe(0.006)
+    expect(byId('claude_fable/chladni_resonance').displacement).toBe(0.006)
     const glm = knotCandidates.find(candidate => candidate.data.id === 'glm')!
     const glmFlash = knotCandidates.find(candidate => candidate.data.id === 'glm_flash')!
     expect(glm.data.title).toBe('GLM')

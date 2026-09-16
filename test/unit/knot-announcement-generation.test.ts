@@ -13,7 +13,7 @@ test('voice replacements are staged until every selected announcement succeeds a
   const root = await fs.mkdtemp(path.resolve(parent, 'iris-test-'))
   const outputRoot = path.resolve(root, 'output')
   const cacheRoot = path.resolve(root, 'cache')
-  const ids = ['astra/slug/gpt-6-astra', 'astra/items/malachite']
+  const ids = ['gpt_astra/slug/gpt-6-astra', 'gpt_astra/items/malachite']
   const paths = ids.map(id => path.resolve(outputRoot, id, 'announce.opus'))
   for (const output of paths) {
     await fs.outputFile(output, 'previous voice')

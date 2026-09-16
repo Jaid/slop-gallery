@@ -31,13 +31,13 @@ describe('Knot cellular fields', () => {
   })
   test('uses localized inclusions instead of whole-cell point masks', async () => {
     const cases: Array<[string, string]> = [
-      ['gemini/batch2Material.ts', 'celestial_astrolabe'],
-      ['gemini/batch2Material.ts', 'abyssal_bioluminescence'],
-      ['gemini/batch2Material.ts', 'elytra_iridescence'],
-      ['gemini/batch3Material.ts', 'photonic_morpho'],
-      ['gemini/batch3Material.ts', 'opaline_aerogel'],
-      ['gemini/batch3Material.ts', 'radiometric_guilloche'],
-      ['gemini/batch3Material.ts', 'resonant_cymatics'],
+      ['gemini_flash/batch2Material.ts', 'celestial_astrolabe'],
+      ['gemini_flash/batch2Material.ts', 'abyssal_bioluminescence'],
+      ['gemini_flash/batch2Material.ts', 'elytra_iridescence'],
+      ['gemini_flash/batch3Material.ts', 'photonic_morpho'],
+      ['gemini_flash/batch3Material.ts', 'opaline_aerogel'],
+      ['gemini_flash/batch3Material.ts', 'radiometric_guilloche'],
+      ['gemini_flash/batch3Material.ts', 'resonant_cymatics'],
       ['grok/buildMaterial.ts', 'birefringent_glacier'],
       ['grok/buildMaterial.ts', 'mycelium_choir'],
       ['grok/webChatMaterial.ts', 'gossamer_dew'],
@@ -45,9 +45,9 @@ describe('Knot cellular fields', () => {
       ['deepseek/webChatMaterial.ts', 'abyssal_cathedral'],
       ['kimi/webChatMaterial.ts', 'harlequin_opal'],
       ['kimi/webChatMaterial.ts', 'magma_heart'],
-      ['qwen/webChatMaterial.ts', 'eventide_silk'],
-      ['muse/webChatMaterial.ts', 'nocturne_opal'],
-      ['muse/webChatMaterial.ts', 'kairothic_frost'],
+      ['qwen_max/webChatMaterial.ts', 'eventide_silk'],
+      ['muse_spark/webChatMaterial.ts', 'nocturne_opal'],
+      ['muse_spark/webChatMaterial.ts', 'kairothic_frost'],
     ]
     for (const [file, id] of cases) {
       const text = await finish(file, id)
@@ -56,21 +56,21 @@ describe('Knot cellular fields', () => {
     }
   })
   test('retains stochastic alpha scintillation without moving cell-shaped patches', async () => {
-    const text = await finish('gemini/batch3Material.ts', 'radiometric_guilloche')
+    const text = await finish('gemini_flash/batch3Material.ts', 'radiometric_guilloche')
     expect(text).toContain('const tick = time.mul(28).floor()')
     expect(text).toContain('cellularPoints(p.mul(85).add(vec3(0, 0, tick)), 0.025, 0.16, 0.7)')
     expect(text).toContain("const radiumPhosphor = color('#55ff77')")
     expect(text).toContain('proceduralNormal(rosette.mul(0.25), 0.004)')
   })
   test('keeps moving cymatic dust confined to the evolving acoustic nodes', async () => {
-    const text = await finish('gemini/batch3Material.ts', 'resonant_cymatics')
+    const text = await finish('gemini_flash/batch3Material.ts', 'resonant_cymatics')
     expect(text).toContain('const chladni = mix(modeA, modeB, resonanceShift)')
     expect(text).toContain('const nodalBand = chladni.abs().smoothstep(0.02, 0.14).oneMinus()')
     expect(text).toContain('cellularPoints(p.mul(64).add(vec3(0, time.mul(0.2), 0)), 0.06, 0.22, 0.2).mul(nodalBand)')
     expect(text).not.toContain('cellNoiseVec3(')
   })
   test('localizes scarab platelet glints while retaining their individual orientations', async () => {
-    const text = await finish('gemini/batch2Material.ts', 'elytra_iridescence')
+    const text = await finish('gemini_flash/batch2Material.ts', 'elytra_iridescence')
     expect(text).toContain('const q = p.mul(95)')
     expect(text).toContain('const sparkleRnd = cellNoiseVec3(q)')
     expect(text).toContain('const sparkleGlint = glints(sparkleNormal, 120)')
@@ -86,7 +86,7 @@ describe('Knot cellular fields', () => {
     expect(text).toContain("color('#ffcf7a').mul(embers).mul(1.2)")
   })
   test('localizes Nebula Reliquary embers without changing its volume integration', async () => {
-    const text = await source('fable/items/nebula_reliquary/material.ts')
+    const text = await source('claude_fable/items/nebula_reliquary/material.ts')
     expect(text).toContain('cellularPoints(p.sub(view.mul(0.12)).mul(60), 0.025, 0.16, 0.7).mul(intimate)')
     expect(text).not.toContain('mx_cell_noise_float')
     expect(text).toContain('const steps = 8')
@@ -94,7 +94,7 @@ describe('Knot cellular fields', () => {
     expect(text).toContain("color('#fff1c8').mul(embers).mul(1.5)")
   })
   test('localizes Obsidian Heartbeat embers without replacing its continuous fractures', async () => {
-    const text = await source('muse/items/obsidian_heartbeat/material.ts')
+    const text = await source('muse_spark/items/obsidian_heartbeat/material.ts')
     expect(text).toContain('cellularPoints(p.sub(view.mul(0.1)).mul(52), 0.035, 0.2, 0.6).mul(intimate.mul(0.8).add(0.2))')
     expect(text).not.toContain('mx_cell_noise_float')
     expect(text).toContain('const crackLarge = filament(wLarge1.sub(wLarge2), 0.035)')
@@ -102,14 +102,14 @@ describe('Knot cellular fields', () => {
     expect(text).toContain("color('#ff8a00').mul(embers).mul(2.5)")
   })
   test('confines drifting frost sparkles without altering geometric frost growth', async () => {
-    const text = await finish('muse/webChatMaterial.ts', 'kairothic_frost')
+    const text = await finish('muse_spark/webChatMaterial.ts', 'kairothic_frost')
     expect(text).toContain('cellularPoints(p.mul(62).add(vec3(0, time.mul(0.5), 0)), 0.04, 0.22, 0.4).mul(frostMask).mul(near)')
     expect(text).not.toContain('cellNoiseVec3(')
     expect(text).toContain('this.positionNode = positionLocal.add(normalLocal.mul(frostMask.mul(0.018).mul(near)))')
     expect(text).toContain("color('#a8e6ff').mul(sparkle).mul(1.2)")
   })
   test('localizes bioluminescent spores while preserving their depth and neural pulses', async () => {
-    const text = await finish('gemini/batch2Material.ts', 'abyssal_bioluminescence')
+    const text = await finish('gemini_flash/batch2Material.ts', 'abyssal_bioluminescence')
     expect(text).toContain('const deep2 = p.sub(view.mul(0.28))')
     expect(text).toContain('const sporeSample = deep2.mul(30)')
     expect(text).toContain('cellularPoints(sporeSample, 0.06, 0.24, 0.35).mul(spores.y).mul(intimate)')
@@ -133,7 +133,7 @@ describe('Knot cellular fields', () => {
   })
   test('uses continuous solar granulation and genuine Voronoi fractures', async () => {
     for (const id of ['cryogenic_kintsugi', 'chromospheric_spicule']) {
-      const text = await finish('gemini/batch3Material.ts', id)
+      const text = await finish('gemini_flash/batch3Material.ts', id)
       expect(text).toContain('cellularBoundary(')
       expect(text).not.toContain('cellNoiseVec3(')
     }
@@ -145,7 +145,7 @@ describe('Knot cellular fields', () => {
     expect(await finish('glm/webChatMaterial.ts', 'caged_star')).toContain('mx_cell_noise_float(vec3(flareTick')
   })
   test('keeps skin and nacre backgrounds continuous without removing contained papillae', async () => {
-    const skin = await finish('sol/additionalBatchMaterial.ts', 'chromatophore_skin')
+    const skin = await finish('gpt_sol/additionalBatchMaterial.ts', 'chromatophore_skin')
     expect(skin).toContain('const rnd = cellNoiseVec3(q)')
     expect(skin).toContain('this.positionNode = p.add(normalLocal.mul(papillaHeight))')
     expect(skin).toContain('mx_noise_float(p.mul(24))')

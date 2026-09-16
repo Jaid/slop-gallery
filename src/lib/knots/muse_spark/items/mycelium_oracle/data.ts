@@ -2,16 +2,16 @@ import type {KnotData} from '../../../types.ts'
 
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
-  id: 'aurora_caged',
-  title: 'Aurora Caged',
+  id: 'mycelium_oracle',
+  title: 'Mycelium Oracle',
   harness: 'none',
   author: {
     model: {
-      title: 'DeepSeek 4.1 Flash',
-      slug: 'deepseek/deepseek-4.1-flash',
-      effortLevel: 'max',
+      title: 'Muse Spark 1.3',
+      slug: 'meta/muse-spark-1.3',
+      effortLevel: 'xhigh',
     },
   },
-  accent: '#7dffb2',
-  highlighted: true,
+  accent: '#b4ff5c',
+  highlighted: false,
 } as const satisfies KnotData

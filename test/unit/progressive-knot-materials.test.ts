@@ -11,7 +11,7 @@ import ProgressiveKnotMaterials from '../../src/lib/knots/ProgressiveKnotMateria
 
 function fixture(third = false) {
   class TestMaterial extends KnotMaterial {}
-  const entry = knotsById.get('astra/lenticular_mirage')!
+  const entry = knotsById.get('gpt_astra/lenticular_mirage')!
   const entries = [
     entry,
     {
@@ -163,7 +163,7 @@ test('moving the player reprioritizes queued meshes without needing another visi
   }
 })
 test('performance mode keeps only lit flavor-color materials and never constructs full knot materials', async () => {
-  const entry = knotsById.get('astra/lenticular_mirage')!
+  const entry = knotsById.get('gpt_astra/lenticular_mirage')!
   let constructions = 0
   class TrackedMaterial extends KnotMaterial {
     constructor(environment: Texture) {

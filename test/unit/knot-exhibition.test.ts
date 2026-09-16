@@ -35,8 +35,8 @@ describe('multi-model Knot challenge', () => {
       expect(knotsById.get(item.id)?.sourceId).toBe(item.sourceId)
       expect(item.id).toBe(`${item.candidate.id}/${item.sourceId}`)
     }
-    expect(knotsById.get('sonnet/stained_requiem')?.title).toBe('Stained Requiem')
-    expect(knotsById.get('fable/event_horizon')?.modelTitle).toBe('Claude Fable 5.1')
+    expect(knotsById.get('claude_sonnet/stained_requiem')?.title).toBe('Stained Requiem')
+    expect(knotsById.get('claude_fable/event_horizon')?.modelTitle).toBe('Claude Fable 5.1')
   })
   test('keeps every floating Knot inside the expanded lobby with walking clearance', () => {
     for (const [index, exhibit] of knotExhibition.entries()) {
@@ -104,7 +104,7 @@ describe('multi-model Knot challenge', () => {
             expect(material.depthWrite, exhibit.id).toBe(true)
             expect(material.alphaHash, exhibit.id).toBe(false)
           }
-          if (exhibit.id === 'muse/mnemonic_mercury') {
+          if (exhibit.id === 'muse_spark/mnemonic_mercury') {
             const normal = material.normalNode as Node & {node?: {method?: string}}
             expect(normal.node?.method).toBe('normalize')
           }
@@ -123,7 +123,7 @@ describe('multi-model Knot challenge', () => {
           expect(dependencies.has(positionView), exhibit.id).toBe(true)
           // Some submissions express the angular response only through physical Fresnel
           // or view normals, so do not demand object-local cameraPosition from all models.
-          if (exhibit.id === 'astra/lenticular_mirage') {
+          if (exhibit.id === 'gpt_astra/lenticular_mirage') {
             expect(dependencies.has(cameraPosition), exhibit.id).toBe(true)
           }
         } finally {

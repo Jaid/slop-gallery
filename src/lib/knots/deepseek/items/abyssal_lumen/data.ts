@@ -8,7 +8,7 @@ export default {
   author: {
     model: {
       title: 'DeepSeek 4.1 Flash',
-      slug: 'deepseek/deepseek-v4.1-flash',
+      slug: 'deepseek/deepseek-4.1-flash',
       effortLevel: 'max',
     },
   },

@@ -1,20 +1,20 @@
-import * as astra from './astra/index.ts'
+import * as gptAstra from './gpt_astra/index.ts'
 import * as deepseek from './deepseek/index.ts'
-import * as fable from './fable/index.ts'
-import * as gemini from './gemini/index.ts'
+import * as claudeFable from './claude_fable/index.ts'
+import * as geminiFlash from './gemini_flash/index.ts'
 import * as glm from './glm/index.ts'
 import * as glmFlash from './glm_flash/index.ts'
 import * as grok from './grok/index.ts'
-import * as hunyuan from './hunyuan/index.ts'
+import * as hy from './hy/index.ts'
 import * as kimi from './kimi/index.ts'
 import KnotCandidate, {indexKnots} from './KnotCandidate.ts'
-import * as muse from './muse/index.ts'
-import * as opus from './opus/index.ts'
-import * as qwen from './qwen/index.ts'
-import * as sol from './sol/index.ts'
-import * as sonnet from './sonnet/index.ts'
+import * as museSpark from './muse_spark/index.ts'
+import * as claudeOpus from './claude_opus/index.ts'
+import * as qwenMax from './qwen_max/index.ts'
+import * as gptSol from './gpt_sol/index.ts'
+import * as claudeSonnet from './claude_sonnet/index.ts'
 
-const candidates = [astra, sonnet, opus, deepseek, gemini, glm, glmFlash, grok, kimi, qwen, sol, fable, muse, hunyuan]
+const candidates = [gptAstra, claudeSonnet, claudeOpus, deepseek, geminiFlash, glm, glmFlash, grok, kimi, qwenMax, gptSol, claudeFable, museSpark, hy]
 export const knotCandidates = candidates.map(({data, ...items}) => new KnotCandidate(data, Object.values(items)))
 export const knotsById = indexKnots(knotCandidates)
 export const knots = [...knotsById.values()]
