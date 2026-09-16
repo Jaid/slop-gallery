@@ -23,7 +23,8 @@ The plugin applies to client builds, not development serving or SSR. Slop Galler
 ## Package graph
 
 ```text
-vite-plugin-bake-core
+vite-plugin-bake-three
+├─ vite-plugin-bake-core
 ├─ vite-plugin-bake-three-geometry
 │  ├─ geometry and owned collider arrays
 │  └─ optional MeshBVH serialization
@@ -109,8 +110,8 @@ Either feature can be set to `false` or `{enabled: false}`. Minimum thresholds m
 ## Tests
 
 ```sh
-bun test ./packages/vite-plugin-r3f-static-rendering/test
-bun packages/vite-plugin-r3f-static-rendering/test/browser/run.ts
+bun test ./test
+bun test/browser/run.ts
 ```
 
 The suite includes executable Vite builds, source-map/directive behavior, dependency changes, feature controls, unsafe-case exclusions, transform composition, source identity, fresh resources, disposal and bundle invalidation. The browser regression compiles plans, then compares the original and optimized scenes using native WebGPU readback: instancing, initial/cached bundle rendering, camera movement beyond the original frustum, target switching/resizing and light-topology changes.

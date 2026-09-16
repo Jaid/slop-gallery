@@ -1,0 +1,40 @@
+{
+  "name": "vite-plugin-bake-three",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Annotation-free ahead-of-time baking and static rendering optimizations for Three.js and React Three Fiber",
+  "funding": "https://github.com/sponsors/Jaid",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jaid/slop-gallery.git"
+  },
+  "main": "src/main.ts",
+  "exports": {
+    ".": "./src/main.ts",
+    "./r3f-static-rendering/runtime": "./src/r3fStaticRenderingRuntime.ts"
+  },
+  "scripts": {
+    "test": "bun test --max-concurrency 1 ./test && bun run --cwd packages/vite-plugin-bake-core test && bun run --cwd packages/vite-plugin-bake-three-geometry test && bun run --cwd packages/vite-plugin-bake-static-textures test && bun run --cwd packages/vite-plugin-r3f-static-rendering test",
+    "test:browser": "bun packages/vite-plugin-r3f-static-rendering/test/browser/run.ts"
+  },
+  "dependencies": {
+    "vite-plugin-bake-static-textures": "workspace:*",
+    "vite-plugin-bake-three-geometry": "workspace:*",
+    "vite-plugin-r3f-static-rendering": "workspace:*"
+  },
+  "peerDependencies": {
+    "@react-three/fiber": "^10.0.0-alpha.5",
+    "react": "^19.3.0",
+    "three": "^0.186.0",
+    "vite": "^8.3.0"
+  },
+  "files": [
+    "src",
+    "readme.md"
+  ],
+  "types": "./src/main.ts",
+  "workspaces": [
+    "packages/*"
+  ]
+}

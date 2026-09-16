@@ -13,6 +13,8 @@ export type R3fStaticRenderingOptions = {
   onDiagnostic?: (diagnostic: StaticDiagnostic) => void
   renderBundles?: RenderBundlesOptions | false
   report?: boolean
+  /** Module specifier used by generated client code for the StaticScene runtime. */
+  runtimeModule?: string
   staticInstancing?: StaticInstancingOptions | false
   timeoutMs?: number
 }

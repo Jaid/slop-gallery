@@ -290,7 +290,7 @@ export async function compileStaticRendering(code: string, id: string, options: 
     }
   }
   if (plans.size) {
-    const prefix = `\nimport {StaticScene as ${component}} from 'vite-plugin-r3f-static-rendering/runtime';\n${[...imports].map(([hash, name]) => `import ${name} from 'virtual:r3f-static-rendering:${hash}';\n`).join('')}`
+    const prefix = `\nimport {StaticScene as ${component}} from '${options.runtimeModule ?? 'vite-plugin-r3f-static-rendering/runtime'}';\n${[...imports].map(([hash, name]) => `import ${name} from 'virtual:r3f-static-rendering:${hash}';\n`).join('')}`
     const directiveEnd = source.ast.program.directives.at(-1)?.end ?? 0
     output.appendLeft(directiveEnd, prefix)
   }

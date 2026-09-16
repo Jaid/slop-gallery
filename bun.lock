@@ -73,34 +73,10 @@
         "type-fest": "5.9.0",
         "typescript": "npm:typescript-classic@6.0.4",
         "vite": "8.3.0",
-        "vite-plugin-bake-static-textures": "workspace:*",
-        "vite-plugin-bake-three-geometry": "workspace:*",
+        "vite-plugin-bake-three": "workspace:*",
         "vite-plugin-media-mixins": "0.10.0",
-        "vite-plugin-r3f-static-rendering": "workspace:*",
         "vite-plugin-title": "0.6.0",
         "webmcp-types": "0.1.8",
-      },
-    },
-    "packages/babel-plugin-bake-branch-component": {
-      "name": "babel-plugin-bake-branch-component",
-      "version": "0.1.0",
-      "dependencies": {
-        "@babel/helper-module-imports": "8.0.0",
-        "@babel/helper-plugin-utils": "8.0.1",
-        "@babel/template": "8.0.0",
-      },
-      "peerDependencies": {
-        "@babel/core": "^8.0.5",
-      },
-    },
-    "packages/babel-plugin-hoist-popular-constants": {
-      "name": "babel-plugin-hoist-popular-constants",
-      "version": "0.1.0",
-      "dependencies": {
-        "@babel/helper-plugin-utils": "8.0.1",
-      },
-      "peerDependencies": {
-        "@babel/core": "^8.0.5",
       },
     },
     "packages/canvas-textures": {
@@ -270,7 +246,34 @@
         "@rolldown/plugin-babel": "^0.2.4",
       },
     },
-    "packages/vite-plugin-bake-core": {
+    "packages/vite-plugin-bake-branch-component/packages/babel-plugin-bake-branch-component": {
+      "name": "babel-plugin-bake-branch-component",
+      "version": "0.1.0",
+      "dependencies": {
+        "@babel/helper-module-imports": "8.0.0",
+        "@babel/helper-plugin-utils": "8.0.1",
+        "@babel/template": "8.0.0",
+      },
+      "peerDependencies": {
+        "@babel/core": "^8.0.5",
+      },
+    },
+    "packages/vite-plugin-bake-three": {
+      "name": "vite-plugin-bake-three",
+      "version": "0.1.0",
+      "dependencies": {
+        "vite-plugin-bake-static-textures": "workspace:*",
+        "vite-plugin-bake-three-geometry": "workspace:*",
+        "vite-plugin-r3f-static-rendering": "workspace:*",
+      },
+      "peerDependencies": {
+        "@react-three/fiber": "^10.0.0-alpha.5",
+        "react": "^19.3.0",
+        "three": "^0.186.0",
+        "vite": "^8.3.0",
+      },
+    },
+    "packages/vite-plugin-bake-three/packages/vite-plugin-bake-core": {
       "name": "vite-plugin-bake-core",
       "version": "0.1.0",
       "dependencies": {
@@ -292,7 +295,7 @@
         "three-bvh-csg",
       ],
     },
-    "packages/vite-plugin-bake-static-textures": {
+    "packages/vite-plugin-bake-three/packages/vite-plugin-bake-static-textures": {
       "name": "vite-plugin-bake-static-textures",
       "version": "0.1.0",
       "dependencies": {
@@ -304,7 +307,7 @@
         "vite": "^8.3.0",
       },
     },
-    "packages/vite-plugin-bake-three-geometry": {
+    "packages/vite-plugin-bake-three/packages/vite-plugin-bake-three-geometry": {
       "name": "vite-plugin-bake-three-geometry",
       "version": "0.1.0",
       "dependencies": {
@@ -320,6 +323,23 @@
       "optionalPeers": [
         "three-mesh-bvh",
       ],
+    },
+    "packages/vite-plugin-bake-three/packages/vite-plugin-r3f-static-rendering": {
+      "name": "vite-plugin-r3f-static-rendering",
+      "version": "0.1.0",
+      "dependencies": {
+        "@babel/traverse": "^8.0.5",
+        "@babel/types": "^8.0.5",
+        "disposable-lifetime": "workspace:*",
+        "magic-string": "^1.4.1",
+        "vite-plugin-bake-core": "workspace:*",
+      },
+      "peerDependencies": {
+        "@react-three/fiber": "^10.0.0-alpha.5",
+        "react": "^19.3.0",
+        "three": "^0.186.0",
+        "vite": "^8.3.0",
+      },
     },
     "packages/vite-plugin-game-level": {
       "name": "vite-plugin-game-level",
@@ -342,21 +362,14 @@
         "vite": "^8.3.0",
       },
     },
-    "packages/vite-plugin-r3f-static-rendering": {
-      "name": "vite-plugin-r3f-static-rendering",
+    "packages/vite-plugin-hoist-popular-constants/packages/babel-plugin-hoist-popular-constants": {
+      "name": "babel-plugin-hoist-popular-constants",
       "version": "0.1.0",
       "dependencies": {
-        "@babel/traverse": "^8.0.5",
-        "@babel/types": "^8.0.5",
-        "disposable-lifetime": "workspace:*",
-        "magic-string": "^1.4.1",
-        "vite-plugin-bake-core": "workspace:*",
+        "@babel/helper-plugin-utils": "8.0.1",
       },
       "peerDependencies": {
-        "@react-three/fiber": "^10.0.0-alpha.5",
-        "react": "^19.3.0",
-        "three": "^0.186.0",
-        "vite": "^8.3.0",
+        "@babel/core": "^8.0.5",
       },
     },
     "packages/webgpu-capture-bridge": {
@@ -769,9 +782,9 @@
 
     "autoprefixer": ["autoprefixer@10.6.1", "", { "dependencies": { "browserslist": "^4.28.9", "caniuse-lite": "^1.0.30001810", "fraction.js": "^5.3.4", "picocolors": "^1.1.1", "postcss-value-parser": "^4.2.0" }, "peerDependencies": { "postcss": "^8.1.0" }, "bin": { "autoprefixer": "bin/autoprefixer" } }, "sha512-cL1Qz6ADZhcEbny/8HPfe99J6HhNoYtpX2LFLIbhgGE7Q1hlQVkYFdetDN7Id3KiQxhDrHwzlHr/YQCnZ8+xSA=="],
 
-    "babel-plugin-bake-branch-component": ["babel-plugin-bake-branch-component@workspace:packages/babel-plugin-bake-branch-component"],
+    "babel-plugin-bake-branch-component": ["babel-plugin-bake-branch-component@workspace:packages/vite-plugin-bake-branch-component/packages/babel-plugin-bake-branch-component"],
 
-    "babel-plugin-hoist-popular-constants": ["babel-plugin-hoist-popular-constants@workspace:packages/babel-plugin-hoist-popular-constants"],
+    "babel-plugin-hoist-popular-constants": ["babel-plugin-hoist-popular-constants@workspace:packages/vite-plugin-hoist-popular-constants/packages/babel-plugin-hoist-popular-constants"],
 
     "babel-plugin-react-compiler": ["babel-plugin-react-compiler@1.0.0", "", { "dependencies": { "@babel/types": "^7.26.0" } }, "sha512-Ixm8tFfoKKIPYdCCKYTsqv+Fd4IJ0DQqMyEimo+pxUOMUR9cVPlwTrFt9Avu+3cb6Zp3mAzl+t1MrG2fxxKsxw=="],
 
@@ -1465,11 +1478,13 @@
 
     "vite-plugin-bake-branch-component": ["vite-plugin-bake-branch-component@workspace:packages/vite-plugin-bake-branch-component"],
 
-    "vite-plugin-bake-core": ["vite-plugin-bake-core@workspace:packages/vite-plugin-bake-core"],
+    "vite-plugin-bake-core": ["vite-plugin-bake-core@workspace:packages/vite-plugin-bake-three/packages/vite-plugin-bake-core"],
 
-    "vite-plugin-bake-static-textures": ["vite-plugin-bake-static-textures@workspace:packages/vite-plugin-bake-static-textures"],
+    "vite-plugin-bake-static-textures": ["vite-plugin-bake-static-textures@workspace:packages/vite-plugin-bake-three/packages/vite-plugin-bake-static-textures"],
 
-    "vite-plugin-bake-three-geometry": ["vite-plugin-bake-three-geometry@workspace:packages/vite-plugin-bake-three-geometry"],
+    "vite-plugin-bake-three": ["vite-plugin-bake-three@workspace:packages/vite-plugin-bake-three"],
+
+    "vite-plugin-bake-three-geometry": ["vite-plugin-bake-three-geometry@workspace:packages/vite-plugin-bake-three/packages/vite-plugin-bake-three-geometry"],
 
     "vite-plugin-game-level": ["vite-plugin-game-level@workspace:packages/vite-plugin-game-level"],
 
@@ -1477,7 +1492,7 @@
 
     "vite-plugin-media-mixins": ["vite-plugin-media-mixins@0.10.0", "", { "peerDependencies": { "vite": "^8.0.16" } }, "sha512-CFctDKYijEKj/lOHFoj+x/V1kllgZHz0FTazUTpAo7ATFwQ2HXSmI7dRrzFQdmDE8RJeWp3CmOy31zHWK+6+xQ=="],
 
-    "vite-plugin-r3f-static-rendering": ["vite-plugin-r3f-static-rendering@workspace:packages/vite-plugin-r3f-static-rendering"],
+    "vite-plugin-r3f-static-rendering": ["vite-plugin-r3f-static-rendering@workspace:packages/vite-plugin-bake-three/packages/vite-plugin-r3f-static-rendering"],
 
     "vite-plugin-title": ["vite-plugin-title@0.6.0", "", { "dependencies": { "fs-extra": "^11.3.5" }, "peerDependencies": { "vite": "^8" } }, "sha512-GNS8GAizPccHDFXhao6RTuT0+kg8AjL4yPQfJvL9qi0vsUJNEcgyIT3w7uJmK33ymALQlxXvWb7hiCpDIlx4cQ=="],
 

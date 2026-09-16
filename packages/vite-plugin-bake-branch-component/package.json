@@ -13,12 +13,15 @@
     ".": "./src/main.ts"
   },
   "scripts": {
-    "test": "bun test --max-concurrency 1 ./test"
+    "test": "bun test --max-concurrency 1 ./test ./packages/babel-plugin-bake-branch-component/test"
   },
   "dependencies": {
     "babel-plugin-bake-branch-component": "workspace:*"
   },
   "peerDependencies": {
     "@rolldown/plugin-babel": "^0.2.4"
-  }
+  },
+  "workspaces": [
+    "packages/*"
+  ]
 }

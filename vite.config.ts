@@ -9,12 +9,10 @@ import postcssNormalize from 'postcss-normalize'
 import {loadEnv, mergeConfig} from 'vite'
 import avifOnly from 'vite-plugin-avif-only'
 import bakeBranchComponentPlugin from 'vite-plugin-bake-branch-component'
-import bakeStaticTextures from 'vite-plugin-bake-static-textures'
-import bakeThreeGeometry from 'vite-plugin-bake-three-geometry'
+import bakeThree from 'vite-plugin-bake-three'
 import gameLevelPlugin, {selectGameLevel} from 'vite-plugin-game-level'
 import hoistPopularConstantsPlugin from 'vite-plugin-hoist-popular-constants'
 import mediaMixinsPlugin from 'vite-plugin-media-mixins'
-import r3fStaticRendering from 'vite-plugin-r3f-static-rendering'
 import titlePlugin from 'vite-plugin-title'
 
 import levels, {defaultLevel, levelIds} from '#src/data/levels.ts'
@@ -24,7 +22,7 @@ import knotMaterialsPlugin from '#src/lib/vite/knotMaterialsPlugin.ts'
 const getCommonConfig = (context: ConfigEnv) => {
   const env = loadEnv(context.mode, process.cwd(), 'TELEMETRY_INGESTION_')
   const level = selectGameLevel(loadEnv(context.mode, process.cwd(), 'GAME_LEVEL').GAME_LEVEL, levelIds, defaultLevel)
-  const productionPlugins = context.mode === 'production' ? [bakeThreeGeometry(), bakeStaticTextures(), r3fStaticRendering(), bakeBranchComponentPlugin(), hoistPopularConstantsPlugin()] : []
+  const productionPlugins = context.mode === 'production' ? [...bakeThree(), bakeBranchComponentPlugin(), hoistPopularConstantsPlugin()] : []
   const config: UserConfig = {
     // Only the public relay prefix enters the client bundle, never private ingestion destinations.
     define: {

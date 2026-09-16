@@ -1,6 +1,6 @@
 # vite-plugin-bake-core
 
-Shared infrastructure for annotation-free Vite resource compilers. The user-facing plugins are `vite-plugin-bake-three-geometry` and `vite-plugin-bake-static-textures`.
+Shared infrastructure for annotation-free Vite resource compilers. The primary user-facing package is `vite-plugin-bake-three`; its geometry, texture and R3F passes are nested workspace packages built on this core.
 
 ## Separation of responsibilities
 
@@ -68,7 +68,7 @@ The timeout bounds JavaScript execution of a recipe; it is not a memory sandbox 
 ## Tests
 
 ```sh
-bun test ./packages/vite-plugin-bake-core/test
+bun test ./test
 ```
 
 Compiler tests exercise binding identity, re-exports, TypeScript, captured-state rejection, timeout handling and snapshot identity. The two resource packages supply format-specific and real Vite integration regressions.

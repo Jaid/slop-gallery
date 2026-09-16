@@ -91,7 +91,7 @@ Measure startup transfer/decode/generation tradeoffs for the target workload. Mo
 ## Tests
 
 ```sh
-bun test ./packages/vite-plugin-bake-static-textures/test
+bun test ./test
 ```
 
 Tests cover exact pixel representations, sampling/orientation, source aliases, fresh lifetimes, Canvas2D round-trips and declined font-dependent drawing. The geometry package also contains an optional detached native-WebGPU regression for both plugins' restored resources.

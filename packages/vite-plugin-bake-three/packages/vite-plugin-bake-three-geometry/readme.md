@@ -113,8 +113,8 @@ bakeThreeGeometry({
 ## Validation
 
 ```sh
-bun test ./packages/vite-plugin-bake-three-geometry/test
-bun packages/vite-plugin-bake-three-geometry/test/browser/run.ts
+bun test ./test
+bun test/browser/run.ts
 ```
 
 The optional browser regression requires `BROWSER` to name a Chromium executable with native WebGPU. It launches a separate headless process and temporary profile, never the visible game session, and compares original/baked geometry, data textures and canvas textures through GPU readback. It fails rather than silently claiming success when a GPU adapter is unavailable.
