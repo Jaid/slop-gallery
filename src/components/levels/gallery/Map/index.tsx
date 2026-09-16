@@ -63,7 +63,7 @@ export default function Map({css}: {css: Record<string, string>}) {
   return <>
     <p className={css.intro}>Nine rooms across the upper and lower galleries. The Oculus’s raised north platform leads through a stone tunnel to the Lodge. The Corridor follows the timber return route from the Lodge to Sienna.</p>
     {levels.map(level => <div className={css.level} key={String(level.lower)}>
-      <h3>{level.lower ? 'Lower level' : 'Upper level'}</h3>
+      <h3><Branch else='Upper level' if={level.lower}>Lower level</Branch></h3>
       <svg aria-label={level.lower ? 'Moonfall below the Antechamber, connected north by tunnel to the Oculus beneath the glass floor' : 'Upper gallery and U-turn stairs from the Antechamber'} role='img' viewBox={`0 0 ${level.width} ${level.height}`}>
         <g aria-label='Lodge access and Corridor to Sienna'>
           {routePassages.filter(passage => passage.floorY < 0 === level.lower).flatMap(passage => passage.floors.map(({center, size}, i) => <rect fill={routeFill(passage.room, current)} height={size[1] * scale} key={passage.id + i} width={size[0] * scale} x={level.x(center[0] - size[0] / 2)} y={level.y(center[1] - size[1] / 2)} />))}
@@ -111,6 +111,6 @@ export default function Map({css}: {css: Record<string, string>}) {
         </g></Branch>
       </svg>
     </div>)}
-    <div className={css.rooms}>{rooms.map(room => <button disabled={!ready} key={room.id} onClick={() => visit(room)}><span>{room.number}</span><div><strong>{room.title}</strong><small>{room.subtitle}</small></div><em>{room.id === current ? 'YOU ARE HERE' : '↗'}</em></button>)}</div>
+    <div className={css.rooms}>{rooms.map(room => <button disabled={!ready} key={room.id} onClick={() => visit(room)}><span>{room.number}</span><div><strong>{room.title}</strong><small>{room.subtitle}</small></div><em><Branch else='↗' if={room.id === current}>YOU ARE HERE</Branch></em></button>)}</div>
   </>
 }

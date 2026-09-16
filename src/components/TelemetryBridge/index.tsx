@@ -1,6 +1,7 @@
 import type {Attributes} from 'telemethree'
 
 import {useThree} from '@react-three/fiber/webgpu'
+import BranchComponent from 'branch-component'
 import {AimInspector} from 'ego-player'
 import useEgoTelemetry from 'telemethree-ego/react'
 import usePauseMenuTelemetry from 'telemethree-pause-menu/react'
@@ -55,6 +56,6 @@ function Collectors() {
   return null
 }
 function TelemetryBridge() {
-  return telemetry ? <Collectors /> : null
+  return <BranchComponent if={telemetry} then={Collectors} />
 }
 export default TelemetryBridge

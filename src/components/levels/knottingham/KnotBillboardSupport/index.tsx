@@ -1,4 +1,5 @@
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
+import BranchComponent from 'branch-component'
 import {useEffect} from 'react'
 
 import Box from '#src/components/Scene/primitives.tsx'
@@ -17,7 +18,7 @@ export default function Support({width, height}: {
   useEffect(() => () => material.dispose(), [material])
   return <RigidBody colliders={false} name='billboard-support' type='fixed'>
     {parts.map(({position, rotation, size}, index) => <group key={index} position={position} rotation={rotation}>
-      {index === 0 ? <mesh castShadow geometry={panel} material={material} receiveShadow /> : <Box material={material} size={size} />}
+      <BranchComponent else={<Box material={material} size={size} />} if={index === 0}><mesh castShadow geometry={panel} material={material} receiveShadow /></BranchComponent>
       <CuboidCollider args={[size[0] / 2, size[1] / 2, size[2] / 2]} />
     </group>)}
   </RigidBody>
