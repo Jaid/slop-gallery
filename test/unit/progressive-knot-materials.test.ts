@@ -1,15 +1,16 @@
-import type {WebGPURenderer} from 'three/webgpu'
+import type {Texture, WebGPURenderer} from 'three/webgpu'
 
 import {expect, test} from 'bun:test'
 
 import DisposableLifetime from 'disposable-lifetime'
-import {Mesh, PerspectiveCamera, RenderTarget, Scene} from 'three/webgpu'
+import {Color, Mesh, PerspectiveCamera, RenderTarget, Scene} from 'three/webgpu'
 
 import KnotMaterial from '../../src/lib/knots/base/KnotMaterial.ts'
 import {knotsById} from '../../src/lib/knots/index.ts'
 import ProgressiveKnotMaterials from '../../src/lib/knots/ProgressiveKnotMaterials.ts'
 
 function fixture(third = false) {
+  class TestMaterial extends KnotMaterial {}
   const entry = knotsById.get('astra/lenticular_mirage')!
   const entries = [
     entry,
@@ -57,9 +58,9 @@ function fixture(third = false) {
       return gate.promise
     },
   }
-  const materials = new ProgressiveKnotMaterials(renderer as unknown as WebGPURenderer, camera, entries, new Map(entries.map(entry => [entry.id, TestMaterial])))
+  const materials = new ProgressiveKnotMaterials(renderer as unknown as WebGPURenderer, camera, entries, new Map(entries.map(item => [item.id, TestMaterial])), true)
   const meshes = materials.resources.items.map(({geometry}, index) => {
-    const mesh = new Mesh(geometry, materials.placeholder)
+    const mesh: Mesh = new Mesh(geometry, materials.flavorMaterials[index])
     mesh.position.z = [-8, -2, -5][index]
     mesh.updateMatrixWorld()
     materials.refs[index](mesh)
@@ -67,7 +68,7 @@ function fixture(third = false) {
   })
   const observe = (index: number, pass = main) => {
     renderer.setRenderTarget(pass)
-    materials.observers[index].call(meshes[index], renderer as unknown as Parameters<Mesh['onBeforeRender']>[0], scene, camera, meshes[index].geometry, materials.placeholder, null as never)
+    materials.observers[index].call(meshes[index], renderer as unknown as Parameters<Mesh['onBeforeRender']>[0], scene, camera, meshes[index].geometry, materials.flavorMaterials[index], null as never)
     renderer.setRenderTarget(null)
   }
   const dispose = () => {
@@ -92,7 +93,6 @@ async function flush() {
     await Promise.resolve()
   }
 }
-class TestMaterial extends KnotMaterial {}
 test('unmount waits for in-flight compilation before releasing resources and never activates late results', async () => {
   const f = fixture()
   let releases = 0
@@ -104,7 +104,7 @@ test('unmount waits for in-flight compilation before releasing resources and nev
   f.calls[0].gate.resolve()
   await flush()
   expect(releases).toBe(1)
-  expect(f.meshes[0].material).toBe(f.materials.placeholder)
+  expect(f.meshes[0].material).toBe(f.materials.flavorMaterials[0])
   f.dispose()
   expect(releases).toBe(1)
   expect(f.calls).toHaveLength(1)
@@ -120,7 +120,7 @@ test('effect replay neither restarts compilation nor disposes its live resources
   expect(f.calls).toHaveLength(1)
   f.calls[0].gate.resolve()
   await flush()
-  expect(f.meshes[0].material).toBe(f.materials.resources.items[0].material)
+  expect(f.meshes[0].material).toBe(f.materials.fullMaterials[0])
   replay()
   await f.materials.disposeAsync()
   f.dispose()
@@ -145,5 +145,24 @@ test('moving the player reprioritizes queued meshes without needing another visi
     await flush()
   } finally {
     f.dispose()
+  }
+})
+test('performance mode keeps only flavor-color materials and never constructs full knot materials', async () => {
+  const entry = knotsById.get('astra/lenticular_mirage')!
+  let constructions = 0
+  class TrackedMaterial extends KnotMaterial {
+    constructor(environment: Texture) {
+      constructions++
+      super(environment)
+    }
+  }
+  const materials = new ProgressiveKnotMaterials({} as WebGPURenderer, new PerspectiveCamera, [entry], new Map([[entry.id, TrackedMaterial]]), false)
+  try {
+    expect(constructions).toBe(0)
+    expect(materials.fullMaterials).toHaveLength(0)
+    expect(materials.flavorMaterials).toHaveLength(1)
+    expect(materials.flavorMaterials[0].color.getHexString()).toBe(new Color(entry.accent).getHexString())
+  } finally {
+    await materials.disposeAsync()
   }
 })

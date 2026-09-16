@@ -1,6 +1,7 @@
 import {useThree} from '@react-three/fiber/webgpu'
 import {CuboidCollider, useBeforePhysicsStep} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
+import useGraphicsQuality from 'use-graphics-quality'
 import constructors from 'virtual:knot-exhibition-materials'
 
 import InteractiveObject from '#component/InteractiveObject'
@@ -14,6 +15,7 @@ import KnotRotation from '#src/lib/physics/KnotRotation.ts'
 export default function KnotExhibition() {
   const camera = useThree(state => state.camera)
   const renderer = useThree(state => state.renderer)
+  const isQuality = useGraphicsQuality()
   const rotation = new KnotRotation
   useBeforePhysicsStep(world => {
     for (const exhibit of knotExhibition) {
@@ -23,7 +25,7 @@ export default function KnotExhibition() {
       }
     }
   })
-  const materials = new ProgressiveKnotMaterials(renderer, camera, knotExhibition, constructors)
+  const materials = new ProgressiveKnotMaterials(renderer, camera, knotExhibition, constructors, isQuality)
   useDisposable(materials)
   const {resources} = materials
   return <group name='lobby-knot-exhibition'>
@@ -33,7 +35,7 @@ export default function KnotExhibition() {
       return <GrabbableProp colliders={false} id={`prop-knot-${finish.id}`} key={finish.id} position={[finish.position[0], knotFloatHeight, finish.position[2]]} rotation={[0, finish.rotation, 0]} title={`${finish.label} · ${finish.title} · ${finish.modelTitle}`} type='fixed'>
         <CuboidCollider args={colliderArgs} position={colliderPosition} />
         <InteractiveObject id={`prop-knot-${finish.id}`} onActivate={() => narrateModel(`prop-knot-${finish.id}`)}>
-          <mesh castShadow material={materials.placeholder} name={`knot-${finish.id}`} onBeforeRender={materials.observers[index]} raycast={resources.raycast} receiveShadow ref={materials.refs[index]}>
+          <mesh castShadow material={materials.flavorMaterials[index]} name={`knot-${finish.id}`} onBeforeRender={materials.observers[index]} raycast={resources.raycast} receiveShadow ref={materials.refs[index]}>
             <primitive attach='geometry' object={geometry} />
           </mesh>
         </InteractiveObject>

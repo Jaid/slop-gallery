@@ -1,12 +1,8 @@
-import type {Texture} from 'three/webgpu'
-
 import {expect, test} from 'bun:test'
 
-import KnotMaterial from '../../src/lib/knots/base/KnotMaterial.ts'
 import {knotsById} from '../../src/lib/knots/index.ts'
 import KnotResources from '../../src/lib/knots/KnotResources.ts'
 
-class TestMaterial extends KnotMaterial {}
 test('shares geometry by displacement bound and keeps collider and culling bounds expanded', () => {
   const base = knotsById.get('astra/lenticular_mirage')!
   const relief = knotsById.get('astra/coralline_crown')!
@@ -21,12 +17,7 @@ test('shares geometry by displacement bound and keeps collider and culling bound
       ...relief,
       id: 'another_relief',
     },
-  ], new Map([
-    [base.id, TestMaterial],
-    ['second', TestMaterial],
-    [relief.id, TestMaterial],
-    ['another_relief', TestMaterial],
-  ]))
+  ])
   const [a, b, c, d] = resources.items
   try {
     expect(a.geometry).toBe(b.geometry)
@@ -38,37 +29,30 @@ test('shares geometry by displacement bound and keeps collider and culling bound
       expect(c.colliderArgs[axis] - a.colliderArgs[axis]).toBeCloseTo(relief.displacement!, 8)
     }
     expect(c.colliderPosition).toEqual(a.colliderPosition)
-    expect(c.material.name).toBe(relief.id)
-    expect(c.material.envMap).toBe(resources.environment)
   } finally {
     resources.dispose()
   }
 })
-test('disposes shared GPU resources once and cleans up after partial construction failures', () => {
-  const entry = knotsById.get('astra/lenticular_mirage')!
-  let materialDisposals = 0
-  let environmentDisposals = 0
-  class Tracked extends KnotMaterial {
-    constructor(environment: Texture) {
-      super(environment)
-      this.addEventListener('dispose', () => materialDisposals++)
-      environment.addEventListener('dispose', () => environmentDisposals++)
-    }
+test('disposes each shared geometry resource once', () => {
+  const base = knotsById.get('astra/lenticular_mirage')!
+  const relief = knotsById.get('astra/coralline_crown')!
+  const resources = new KnotResources([
+    base,
+    {
+      ...base,
+      id: 'second',
+    },
+    relief,
+    {
+      ...relief,
+      id: 'another_relief',
+    },
+  ])
+  const geometries = new Set(resources.items.map(item => item.geometry))
+  let disposals = 0
+  for (const geometry of geometries) {
+    geometry.addEventListener('dispose', () => disposals++)
   }
-  class Broken extends KnotMaterial {
-    constructor(environment: Texture) {
-      super(environment); throw new Error('Broken shader.')
-    }
-  }
-  const brokenEntry = {
-    ...entry,
-    id: 'broken',
-  }
-  expect(() => new KnotResources([entry, brokenEntry], new Map([
-    [entry.id, Tracked],
-    [brokenEntry.id, Broken],
-  ]))).toThrow('Broken shader')
-  expect(materialDisposals).toBe(1)
-  expect(environmentDisposals).toBe(1)
-  expect(() => new KnotResources([entry], new Map)).toThrow('constructor')
+  resources.dispose()
+  expect(disposals).toBe(geometries.size)
 })

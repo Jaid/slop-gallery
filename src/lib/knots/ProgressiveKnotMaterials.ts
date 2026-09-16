@@ -1,27 +1,70 @@
 import type {KnotResourceEntry} from './KnotResources.ts'
-import type {KnotMaterialConstructor} from './types.ts'
-import type {Camera, Mesh, WebGPURenderer} from 'three/webgpu'
+import type {KnotEntry, KnotMaterialConstructor} from './types.ts'
+import type {Camera, Mesh, MeshPhysicalNodeMaterial, WebGPURenderer} from 'three/webgpu'
 
 import AsyncMaterials from 'three-async-materials'
-import {MeshStandardNodeMaterial, Vector3} from 'three/webgpu'
+import {MeshBasicNodeMaterial, Vector3} from 'three/webgpu'
 
+import StudioEnvironment from '../materials/StudioEnvironment.ts'
 import KnotResources from './KnotResources.ts'
 
-/** Gallery ownership, placeholders and nearest-first policy; compilation lives in the package. */
+type KnotMaterialEntry = KnotResourceEntry & Pick<KnotEntry, 'accent'>
+
+function noopRef(_mesh: Mesh | null) {}
+function noopRender(this: Mesh) {}
+function repeat<Value>(value: Value, count: number) {
+  return Array.from({length: count}, () => value)
+}
+
+/** Gallery ownership, flavor-color fallbacks and nearest-first material warmup. */
 export default class ProgressiveKnotMaterials {
+  readonly flavorMaterials: Array<MeshBasicNodeMaterial>
+  readonly fullMaterials: Array<MeshPhysicalNodeMaterial>
   readonly observers: Array<Mesh['onBeforeRender']>
-  readonly placeholder = new MeshStandardNodeMaterial({
-    color: '#687078',
-    roughness: 0.8,
-  })
   readonly refs: Array<(mesh: Mesh | null) => void>
   readonly resources: KnotResources
   private disposal?: Promise<void>
-  private readonly queue: AsyncMaterials
+  private readonly environment?: StudioEnvironment
+  private readonly queue?: AsyncMaterials
 
-  constructor(renderer: WebGPURenderer, camera: Camera, entries: ReadonlyArray<KnotResourceEntry>, constructors: ReadonlyMap<string, KnotMaterialConstructor>) {
-    this.resources = new KnotResources(entries, constructors)
-    this.placeholder.name = 'Knot material loading placeholder'
+  constructor(renderer: WebGPURenderer, camera: Camera, entries: ReadonlyArray<KnotMaterialEntry>, constructors: ReadonlyMap<string, KnotMaterialConstructor>, quality: boolean) {
+    this.resources = new KnotResources(entries)
+    this.flavorMaterials = entries.map(entry => {
+      const material = new MeshBasicNodeMaterial({color: entry.accent})
+      material.name = `${entry.id} flavor color`
+      return material
+    })
+    if (!quality) {
+      this.fullMaterials = []
+      this.refs = repeat(noopRef, entries.length)
+      this.observers = repeat(noopRender, entries.length)
+      return
+    }
+    const environment = new StudioEnvironment
+    const fullMaterials: Array<MeshPhysicalNodeMaterial> = []
+    try {
+      for (const entry of entries) {
+        const Material = constructors.get(entry.id)
+        if (!Material) {
+          throw new Error(`Missing material constructor for ${entry.id}.`)
+        }
+        const material = new Material(environment)
+        material.name = entry.id
+        fullMaterials.push(material)
+      }
+    } catch (error) {
+      for (const material of fullMaterials) {
+        material.dispose()
+      }
+      environment.dispose()
+      for (const material of this.flavorMaterials) {
+        material.dispose()
+      }
+      this.resources.dispose()
+      throw error
+    }
+    this.environment = environment
+    this.fullMaterials = fullMaterials
     const eye = new Vector3
     const position = new Vector3
     this.queue = new AsyncMaterials(renderer, {
@@ -45,7 +88,7 @@ export default class ProgressiveKnotMaterials {
         })
       },
     })
-    const bindings = this.resources.items.map(({material}) => this.queue.add(material))
+    const bindings = this.fullMaterials.map(material => this.queue!.add(material))
     this.refs = bindings.map(binding => binding.ref)
     this.observers = bindings.map(binding => binding.onBeforeRender)
   }
@@ -63,9 +106,15 @@ export default class ProgressiveKnotMaterials {
   }
 
   private async release() {
-    // The queue never owns these resources; keep them alive until compilation stops.
-    await this.queue.disposeAsync()
+    // The queue never owns these resources; keep full materials alive until compilation stops.
+    await this.queue?.disposeAsync()
     this.resources.dispose()
-    this.placeholder.dispose()
+    for (const material of this.fullMaterials) {
+      material.dispose()
+    }
+    this.environment?.dispose()
+    for (const material of this.flavorMaterials) {
+      material.dispose()
+    }
   }
 }
