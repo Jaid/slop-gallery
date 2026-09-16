@@ -287,7 +287,7 @@
       },
       "peerDependencies": {
         "three": "^0.186.0",
-        "three-bvh-csg": "^0.0.18",
+        "three-bvh-csg": "latest",
         "vite": "^8.3.0",
       },
       "optionalPeers": [
@@ -317,7 +317,7 @@
       },
       "peerDependencies": {
         "three": "^0.186.0",
-        "three-mesh-bvh": "^0.9.15",
+        "three-mesh-bvh": "latest",
         "vite": "^8.3.0",
       },
       "optionalPeers": [
@@ -335,7 +335,7 @@
         "vite-plugin-bake-core": "workspace:*",
       },
       "peerDependencies": {
-        "@react-three/fiber": "^10.0.0-alpha.5",
+        "@react-three/fiber": "^10.0.0-canary.fd3335d",
         "react": "^19.3.0",
         "three": "^0.186.0",
         "vite": "^8.3.0",

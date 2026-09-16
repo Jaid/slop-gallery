@@ -29,7 +29,7 @@
   },
   "peerDependencies": {
     "three": "^0.186.0",
-    "three-bvh-csg": "^0.0.18",
+    "three-bvh-csg": "latest",
     "vite": "^8.3.0"
   },
   "peerDependenciesMeta": {
