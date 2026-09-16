@@ -1,6 +1,6 @@
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
-import {useMemo} from 'react'
+import {useEffect, useMemo, useState} from 'react'
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 import useGraphicsQuality from 'use-graphics-quality'
@@ -11,9 +11,43 @@ import KnotPreviewSign from '#component/levels/knottingham/KnotPreviewSigns'
 import CheckerMarbleFloor from '#src/components/Scene/CheckerMarbleFloor.tsx'
 import {surfaceTexture} from '#src/components/Scene/materials.ts'
 import WallSurface from '#src/components/Scene/WallSurface.tsx'
+import {isTextInput, notify} from '#src/lib/gallery.ts'
 import {knotGalleryBounds, knotGalleryCenter, knotGallerySize, knotGalleryWalls} from '#src/lib/gallery/knotGallery.ts'
 import {knotBays} from '#src/lib/knots/exhibition.ts'
 import ArchitecturalPlasterMaterial from '#src/lib/materials/ArchitecturalPlasterMaterial.ts'
+
+const ceilingVariants = [
+  {
+    color: '#191715',
+    label: 'Charcoal plaster',
+    roughness: 0.92,
+    surface: 'plaster',
+  },
+  {
+    color: '#381b1d',
+    label: 'Oxblood plaster',
+    roughness: 0.9,
+    surface: 'plaster',
+  },
+  {
+    color: '#56342d',
+    label: 'Smoked walnut',
+    roughness: 0.74,
+    surface: 'wood',
+  },
+  {
+    color: '#682d27',
+    label: 'Red mahogany',
+    roughness: 0.67,
+    surface: 'wood',
+  },
+  {
+    color: '#4c3a2d',
+    label: 'Tobacco oak',
+    roughness: 0.79,
+    surface: 'wood',
+  },
+] as const
 
 /** The Knot level’s shell and lighting, without museum rooms or their physics. */
 export default function KnotLobby() {
@@ -35,19 +69,52 @@ export default function KnotLobby() {
     map: wood,
     roughness: 0.68,
   }), [wood])
-  const ceilingMaterial = useMemo(() => new ArchitecturalPlasterMaterial({
-    baseColor: '#7c9586',
-    map: plaster,
-    quality,
-    roughness: 0.86,
-  }), [plaster, quality])
+  const ceilingMaterials = useDisposable(useMemo(() => {
+    const variants = ceilingVariants.map(variant => {
+      if (variant.surface === 'plaster') {
+        return new ArchitecturalPlasterMaterial({
+          baseColor: variant.color,
+          map: plaster,
+          quality,
+          roughness: variant.roughness,
+        })
+      }
+      return new MeshStandardNodeMaterial({
+        color: variant.color,
+        envMapIntensity: 0.7,
+        map: wood,
+        metalness: 0,
+        roughness: variant.roughness,
+      })
+    })
+    return {
+      variants,
+      dispose() {
+        for (const material of variants) {
+          material.dispose()
+        }
+      },
+    }
+  }, [plaster, quality, wood]))
+  const [ceilingVariant, setCeilingVariant] = useState(0)
+  useEffect(() => {
+    const down = (event: KeyboardEvent) => {
+      if (event.code !== 'KeyK' || event.repeat || event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || isTextInput(event.target)) {
+        return
+      }
+      const next = (ceilingVariant + 1) % ceilingVariants.length
+      setCeilingVariant(next)
+      notify(`Ceiling ${next + 1}/${ceilingVariants.length} · ${ceilingVariants[next].label}`)
+    }
+    globalThis.addEventListener('keydown', down)
+    return () => globalThis.removeEventListener('keydown', down)
+  }, [ceilingVariant])
   useDisposable(plaster)
   useDisposable(wood)
   useDisposable(shell.floor)
   useDisposable(shell.ceiling)
   useDisposable(wallMaterial)
   useDisposable(trimMaterial)
-  useDisposable(ceilingMaterial)
   return <>
     <color args={['#ded8ca']} attach='background' />
     <group name='knottingham-lobby'>
@@ -63,7 +130,7 @@ export default function KnotLobby() {
         <meshStandardNodeMaterial color='#23201d' roughness={0.8} />
       </mesh>
       <group position={knotGalleryCenter}><CheckerMarbleFloor depth={knotGallerySize[2]} detailed width={knotGallerySize[0]} /></group>
-      <mesh castShadow geometry={shell.ceiling} material={ceilingMaterial} name='knottingham-ceiling' position={[knotGalleryCenter[0], knotGalleryBounds.height, knotGalleryCenter[2]]} receiveShadow />
+      <mesh castShadow geometry={shell.ceiling} material={ceilingMaterials.variants[ceilingVariant]} name='knottingham-ceiling' position={[knotGalleryCenter[0], knotGalleryBounds.height, knotGalleryCenter[2]]} receiveShadow />
       <KnotLights />
       {knotBays.map(bay => <group key={bay.candidate.id} position={bay.center}>
         <KnotPreviewSign bay={bay} />
