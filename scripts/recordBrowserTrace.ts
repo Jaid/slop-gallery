@@ -132,6 +132,7 @@ export default async function recordBrowserTrace({port = 9222,
   }
   const version = await versionResponse.json() as {
     Browser?: string
+    'V8-Version'?: string
     webSocketDebuggerUrl?: string
   }
   if (!version.webSocketDebuggerUrl) {
@@ -301,7 +302,10 @@ export default async function recordBrowserTrace({port = 9222,
   await rm(compressedTemporary, {force: true})
   const gunzip = createGunzip()
   let compressedTraceBytes = 0
-  const encoding = encodeTraceJsonAsMessagePack(gunzip, messagePackTemporary, consoleEvents)
+  const encoding = encodeTraceJsonAsMessagePack(gunzip, messagePackTemporary, consoleEvents, {
+    Browser: version.Browser,
+    'V8-Version': version['V8-Version'],
+  })
   const drainTraceStream = async () => {
     while (true) {
       const chunk = await call('IO.read', {
@@ -354,7 +358,7 @@ export default async function recordBrowserTrace({port = 9222,
   return output
 }
 
-export async function encodeTraceJsonAsMessagePack(input: Readable | string, output: string, consoleEvents: ReadonlyArray<BrowserConsoleEvent> = []) {
+export async function encodeTraceJsonAsMessagePack(input: Readable | string, output: string, consoleEvents: ReadonlyArray<BrowserConsoleEvent> = [], metadataAdditions: Readonly<Record<string, unknown>> = {}) {
   const source = typeof input === 'string' ? createReadStream(input, {encoding: 'utf8'}) : input
   const lines = createInterface({
     input: source,
@@ -459,6 +463,15 @@ export async function encodeTraceJsonAsMessagePack(input: Readable | string, out
         throw new Error('Unexpected Chromium trace JSON footer.')
       }
       extraFields = JSON.parse(`{${objectTail.slice(1)}`) as Record<string, unknown>
+    }
+    const definedMetadataAdditions = Object.fromEntries(Object.entries(metadataAdditions).filter(([, value]) => value !== undefined))
+    if (Object.keys(definedMetadataAdditions).length) {
+      const metadata = extraFields.metadata
+      const existingMetadata = metadata && typeof metadata === 'object' && !Array.isArray(metadata) ? metadata : {}
+      extraFields.metadata = {
+        ...existingMetadata,
+        ...definedMetadataAdditions,
+      }
     }
     for (const [key, value] of Object.entries(extraFields)) {
       await write(messagePack.pack(key))

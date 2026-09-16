@@ -25,7 +25,10 @@ test('encodes Chromium compact metadata footers without mistaking event metadata
       },
       sessionId: 'page-session',
     }]
-    const eventCount = await encodeTraceJsonAsMessagePack(input, output, consoleEvents)
+    const eventCount = await encodeTraceJsonAsMessagePack(input, output, consoleEvents, {
+      Browser: 'Chrome/153.0.8010.37',
+      'V8-Version': '15.3.76.10',
+    })
     expect(eventCount).toBe(2)
     expect(unpack(await fs.readFile(output))).toEqual({
       traceEvents: [
@@ -44,6 +47,8 @@ test('encodes Chromium compact metadata footers without mistaking event metadata
       metadata: {
         'clock-domain': 'MONOTONIC',
         perfetto_trace_stats: {total_buffers: 1},
+        Browser: 'Chrome/153.0.8010.37',
+        'V8-Version': '15.3.76.10',
       },
       consoleEvents,
     })
