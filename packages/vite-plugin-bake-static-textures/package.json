@@ -1,0 +1,32 @@
+{
+  "name": "vite-plugin-bake-static-textures",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Automatically bake deterministic Three.js pixel and Canvas2D texture recipes at build time",
+  "funding": "https://github.com/sponsors/Jaid",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jaid/slop-gallery.git"
+  },
+  "main": "src/main.ts",
+  "exports": {
+    ".": "./src/main.ts"
+  },
+  "scripts": {
+    "test": "bun test --max-concurrency 1 ./test"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.80",
+    "vite-plugin-bake-core": "workspace:*"
+  },
+  "peerDependencies": {
+    "three": "^0.186.0",
+    "vite": "^8.0.0"
+  },
+  "files": [
+    "src",
+    "readme.md"
+  ],
+  "types": "./src/main.ts"
+}

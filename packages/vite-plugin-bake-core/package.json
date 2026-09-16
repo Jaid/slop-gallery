@@ -1,0 +1,48 @@
+{
+  "name": "vite-plugin-bake-core",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Conservative annotation-free resource baking with dependency slicing, binary assets and synchronous runtime factories",
+  "funding": "https://github.com/sponsors/Jaid",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jaid/slop-gallery.git"
+  },
+  "main": "src/main.ts",
+  "exports": {
+    ".": "./src/main.ts",
+    "./runtime": "./src/runtime.ts",
+    "./three": "./src/three.ts"
+  },
+  "scripts": {
+    "test": "bun test --max-concurrency 1 ./test"
+  },
+  "dependencies": {
+    "@babel/core": "8.0.5",
+    "@babel/generator": "^8.0.0",
+    "@babel/parser": "^8.0.0",
+    "@babel/plugin-transform-typescript": "^8.0.0",
+    "@babel/traverse": "^8.0.0",
+    "@babel/types": "^8.0.0",
+    "magic-string": "^0.30.17"
+  },
+  "peerDependencies": {
+    "three": "^0.186.0",
+    "three-bvh-csg": "^0.0.18",
+    "vite": "^8.0.0"
+  },
+  "peerDependenciesMeta": {
+    "three": {
+      "optional": true
+    },
+    "three-bvh-csg": {
+      "optional": true
+    }
+  },
+  "files": [
+    "src",
+    "readme.md"
+  ],
+  "types": "./src/main.ts"
+}
