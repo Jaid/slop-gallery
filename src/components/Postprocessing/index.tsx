@@ -52,9 +52,10 @@ const Postprocessing = ({contactDarkening = false, knotFocus = false, quality = 
     }
     // One half-resolution separable Gaussian serves both Z zoom tilt-shift and Knot background focus.
     // Keep the default inspection distance near the old strength while making close views substantially blurrier.
-    const knotBlurStrength = knotProximity.mul(knotProximity).mul(1.35).add(0.75).mul(knotAmount)
+    const knotBlurStrength = knotProximity.mul(knotProximity).mul(knotProximity).mul(3).add(0.75).mul(knotAmount)
     const blurStrength = max(zoomAmount.mul(1.5), knotBlurStrength)
-    const blurPass = gaussianBlur(base, blurStrength, 3, {resolutionScale: 1})
+    const blurSigma = 8
+    const blurPass = gaussianBlur(base, blurStrength.div(2), blurSigma, {resolutionScale: 1})
     const shifted = quality ? tiltShift(base, blurPass, zoomAmount) : base
     // KnotSpectation supplies the far edge of the Knot's bounding sphere, so only geometry behind it is blurred.
     const background = smoothstep(knotDistance.add(0.2), knotDistance.add(1.35), viewZ.negate()).mul(knotAmount)
