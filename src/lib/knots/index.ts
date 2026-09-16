@@ -9,11 +9,12 @@ import * as hunyuan from './hunyuan/index.ts'
 import * as kimi from './kimi/index.ts'
 import KnotCandidate, {indexKnots} from './KnotCandidate.ts'
 import * as muse from './muse/index.ts'
+import * as opus from './opus/index.ts'
 import * as qwen from './qwen/index.ts'
 import * as sol from './sol/index.ts'
 import * as sonnet from './sonnet/index.ts'
 
-const candidates = [astra, sonnet, deepseek, gemini, glm, glmFlash, grok, kimi, qwen, sol, fable, muse, hunyuan]
+const candidates = [astra, sonnet, opus, deepseek, gemini, glm, glmFlash, grok, kimi, qwen, sol, fable, muse, hunyuan]
 export const knotCandidates = candidates.map(({data, ...items}) => new KnotCandidate(data, Object.values(items)))
 export const knotsById = indexKnots(knotCandidates)
 export const knots = [...knotsById.values()]

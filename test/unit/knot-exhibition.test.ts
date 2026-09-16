@@ -15,8 +15,8 @@ import StudioEnvironment from '../../src/lib/materials/StudioEnvironment.ts'
 
 describe('multi-model Knot challenge', () => {
   test('enumerates displayed Knots at initialization while keeping stable identities', () => {
-    expect(knots).toHaveLength(225)
-    expect(knotsById.size).toBe(225)
+    expect(knots).toHaveLength(265)
+    expect(knotsById.size).toBe(265)
     const displayedKnots = knots.filter(item => !item.archived)
     const displayedByCandidate = Map.groupBy(displayedKnots, item => item.candidate.id)
     const expectedCount = [...displayedByCandidate.values()].reduce((sum, items) => sum + Math.min(items.length, 8), 0)

@@ -2,8 +2,8 @@ export const knotPreviewColumns = 4
 export const knotPreviewMinimumRows = 2
 export const knotPreviewMaximumWidth = 4.8
 export const knotPreviewMaximumHeight = 2.75
-export const knotPreviewTextureWidth = 2560
-export const knotPreviewTextureRowHeight = 732
+export const knotPreviewTextureWidth = 2500
+export const knotPreviewTextureRowHeight = 715
 
 export function knotPreviewTextureLayout(count: number) {
   if (!Number.isSafeInteger(count) || count < 0) {

@@ -112,6 +112,7 @@ describe('arbitrary Knot batches', () => {
       qwen: 'Qwen Max',
       sol: 'GPT Sol',
       sonnet: 'Claude Sonnet',
+      opus: 'Claude Opus',
     })
     expect(knotCandidates.find(candidate => candidate.data.id === 'fable')!.items.every(entry => entry.modelTitle === 'Claude Fable 5.1')).toBe(true)
   })
@@ -131,17 +132,20 @@ describe('arbitrary Knot batches', () => {
       && entry.author.model.effortLevel === 'high'
       && entry.harness === 'none')).toBe(true)
   })
-  test('keeps batch model credits and displacement metadata by stable identity', () => {
+  test('keeps API model credits and displacement metadata by stable identity', () => {
     const expected = [
-      ['DeepSeek 4.1 Flash', 'deepseek/deepseek-v4.1-flash', 'max'],
-      ['Muse Spark 1.3', 'meta/muse-spark-1.3-contributor', 'xhigh'],
-      ['GLM 5.3 Flash', 'z-ai/glm-5.3-flash', 'max'],
-      ['Hy4 Preview', 'tencent/hy4-preview', 'high'],
+      ['DeepSeek 4.1 Flash', 'deepseek/deepseek-v4.1-flash', {max: 8}],
+      ['Muse Spark 1.3', 'meta/muse-spark-1.3-contributor', {xhigh: 8}],
+      ['GLM 5.3 Flash', 'z-ai/glm-5.3-flash', {max: 8}],
+      ['Hy4 Preview', 'tencent/hy4-preview', {high: 8, medium: 16}],
+      ['Claude Sonnet 5', 'anthropic/claude-sonnet-5', {medium: 8}],
+      ['Claude Opus 5', 'anthropic/claude-opus-5', {medium: 16}],
     ] as const
-    for (const [title, slug, effortLevel] of expected) {
+    for (const [title, slug, effortCounts] of expected) {
       const entries = knots.filter(entry => entry.author.model.slug === slug)
-      expect(entries).toHaveLength(8)
-      expect(entries.every(entry => entry.author.model.title === title && entry.author.model.effortLevel === effortLevel)).toBe(true)
+      expect(entries).toHaveLength(Object.values(effortCounts).reduce((sum, count) => sum + count, 0))
+      expect(entries.every(entry => entry.author.model.title === title)).toBe(true)
+      expect(Object.fromEntries(Map.groupBy(entries, entry => entry.author.model.effortLevel).entries().map(([effort, grouped]) => [effort, grouped.length]))).toEqual(effortCounts)
     }
     expect(byId('deepseek/quantum_foam_2').archived).toBe(true)
     expect(byId('muse/abyssal_bloom').displacement).toBe(0.02)
@@ -157,7 +161,7 @@ describe('arbitrary Knot batches', () => {
     const codex = knots.filter(entry => entry.harness === 'Codex')
     const webChat = knots.filter(entry => !entry.author.model.slug && entry.harness && entry.harness !== 'Codex')
     const legacy = knots.filter(entry => !entry.author.model.slug && !entry.harness)
-    expect(api).toHaveLength(96)
+    expect(api).toHaveLength(136)
     expect(codex).toHaveLength(17)
     expect(webChat).toHaveLength(56)
     expect(legacy).toHaveLength(56)
@@ -167,12 +171,21 @@ describe('arbitrary Knot batches', () => {
     const astraApi = api.filter(entry => entry.candidate.id === 'astra')
     const fableApi = api.filter(entry => entry.candidate.id === 'fable')
     const solApi = api.filter(entry => entry.candidate.id === 'sol')
+    const sonnetApi = api.filter(entry => entry.candidate.id === 'sonnet')
+    const opusApi = api.filter(entry => entry.candidate.id === 'opus')
+    const hy4Api = api.filter(entry => entry.candidate.id === 'hunyuan')
     expect(astraApi).toHaveLength(8)
     expect(fableApi).toHaveLength(16)
     expect(solApi).toHaveLength(8)
+    expect(sonnetApi).toHaveLength(8)
+    expect(opusApi).toHaveLength(16)
+    expect(hy4Api).toHaveLength(24)
     expect(astraApi.every(entry => entry.author.model.slug === 'openai/gpt-6-astra' && entry.author.model.effortLevel === 'max')).toBe(true)
     expect(fableApi.every(entry => entry.author.model.slug === 'anthropic/claude-fable-5.1' && entry.author.model.effortLevel === 'max')).toBe(true)
     expect(solApi.every(entry => entry.author.model.slug === 'openai/gpt-5.6-sol' && entry.author.model.effortLevel === 'max')).toBe(true)
+    expect(sonnetApi.every(entry => entry.author.model.slug === 'anthropic/claude-sonnet-5' && entry.author.model.effortLevel === 'medium')).toBe(true)
+    expect(opusApi.every(entry => entry.author.model.slug === 'anthropic/claude-opus-5' && entry.author.model.effortLevel === 'medium')).toBe(true)
+    expect(hy4Api.filter(entry => entry.author.model.effortLevel === 'medium')).toHaveLength(16)
     expect(Object.fromEntries(['chat.z.ai', 'grok.com Build', 'grok.com', 'kimi.ai', 'meta.ai', 'chat.qwen.ai', 'chat.deepseek.com'].map(harness => [harness, webChat.filter(entry => entry.harness === harness).length]))).toEqual({
       'chat.z.ai': 8,
       'grok.com Build': 8,
