@@ -11,7 +11,12 @@ export type KnotResourceEntry = Pick<KnotEntry, 'displacement' | 'id'>
 
 export default class KnotResources {
   readonly environment = new StudioEnvironment
-  readonly items: Array<{colliderArgs: [number, number, number],colliderPosition: [number, number, number],geometry: BufferGeometry,material: MeshPhysicalNodeMaterial}>
+  readonly items: Array<{
+    colliderArgs: [number, number, number]
+    colliderPosition: [number, number, number]
+    geometry: BufferGeometry
+    material: MeshPhysicalNodeMaterial
+  }>
   readonly raycast: Mesh['raycast']
   private readonly geometries = new Map<number, BufferGeometry>
   private readonly materials: Array<MeshPhysicalNodeMaterial> = []

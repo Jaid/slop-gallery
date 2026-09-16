@@ -9,16 +9,36 @@ import GrokSpeaker from 'grok-speaker'
 import prerenderVoice, {parsePrerenderVoiceArgs} from '../../scripts/prerenderVoice.ts'
 import pcmWave from '../../src/lib/audio/pcmWave.ts'
 
-type OtlpAttribute = {key: string,value: {boolValue?: boolean,doubleValue?: number,stringValue?: string}}
-type OtlpSpan = {attributes: Array<OtlpAttribute>,name: string,parentSpanId?: string,spanId: string,status: {code: number},traceId: string}
-type OtlpRequest = {resourceSpans: Array<{resource: {attributes: Array<OtlpAttribute>},scopeSpans: Array<{spans: Array<OtlpSpan>}>}>}
+type OtlpAttribute = {
+  key: string
+  value: {
+    boolValue?: boolean
+    doubleValue?: number
+    stringValue?: string
+  }
+}
+type OtlpSpan = {
+  attributes: Array<OtlpAttribute>
+  name: string
+  parentSpanId?: string
+  spanId: string
+  status: {code: number}
+  traceId: string
+}
+type OtlpRequest = {resourceSpans: Array<{
+  resource: {attributes: Array<OtlpAttribute>}
+  scopeSpans: Array<{spans: Array<OtlpSpan>}>
+}>}
 const spans = (body: OtlpRequest) => body.resourceSpans.flatMap(resource => resource.scopeSpans.flatMap(scope => scope.spans))
 const attributes = (span: OtlpSpan) => Object.fromEntries(span.attributes.map(({key, value}) => [key, value.stringValue ?? value.doubleValue ?? value.boolValue]))
 let root: string
 let generated: GeneratedSpeech
 const caches = new Set<string>
 const outputs = new Set<string>
-const requests: Array<{body: OtlpRequest,url: string}> = []
+const requests: Array<{
+  body: OtlpRequest
+  url: string
+}> = []
 beforeEach(async () => {
   root = await fs.mkdtemp(path.resolve(import.meta.dir, '../../private/agent/prerender-test-'))
   requests.length = 0
@@ -32,8 +52,8 @@ beforeEach(async () => {
         char: 'H',
         start: 0,
         end: 0.05,
-      }, 
-{
+      },
+      {
         char: 'i',
         start: 0.05,
         end: 0.1,
@@ -112,8 +132,8 @@ test.each([
   ['malformed JSON', () => new Response('{', {headers: {'content-type': 'application/json'}})],
   ['rejected span', () => Response.json({partialSuccess: {rejectedSpans: '1'}})],
   [
-    'partial warning', 
-() => Response.json({
+    'partial warning',
+    () => Response.json({
       partialSuccess: {
         rejectedSpans: '0',
         errorMessage: 'Data discarded.',
