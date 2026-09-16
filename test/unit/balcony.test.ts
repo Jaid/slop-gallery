@@ -80,12 +80,13 @@ describe('separate semicircular Oculus balcony', () => {
         expect(hits.length > 0).toBe(inside)
         expect(collision !== null).toBe(inside)
         expect(balconyFloorHeight(x, z)).toBe(inside ? balcony.topY : undefined)
-        if (inside) {
-          expect(hits[0].point.y).toBeCloseTo(balcony.topY)
-          expect(collision!.timeOfImpact).toBeCloseTo(origin.y - balcony.topY)
-          expect(floorHeight([x, balcony.topY + 1.6, z])).toBe(balcony.topY)
-          expect(floorHeight([x, lowerGallery.floorY + 1.6, z])).toBe(lowerGallery.floorY)
+        if (!inside) {
+          continue
         }
+        expect(hits[0].point.y).toBeCloseTo(balcony.topY)
+        expect(collision!.timeOfImpact).toBeCloseTo(origin.y - balcony.topY)
+        expect(floorHeight([x, balcony.topY + 1.6, z])).toBe(balcony.topY)
+        expect(floorHeight([x, lowerGallery.floorY + 1.6, z])).toBe(lowerGallery.floorY)
       }
       expect(world.castRay(new RAPIER.Ray(new Vector3(0, lowerGallery.floorY + 1.7, -13), new Vector3(0, 0, -1)), 3, true)).toBeNull()
       const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(0, balcony.topY + 1, balcony.z - 0.5))

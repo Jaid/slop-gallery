@@ -9,7 +9,7 @@ import knotData from './data.ts'
 
 export default class NacreShellMaterial extends KnotMaterial {
   constructor(environment: Texture) {
-    super(environment, 1.0)
+    super(environment, 1)
     this.name = knotData.id
     const p = positionGeometry
     const facing = normalViewGeometry.dot(positionViewDirection).abs().clamp()

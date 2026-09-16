@@ -107,13 +107,14 @@ export default class PropPlacement {
     } | null = null
     for (const {center, orientation, shape} of this.shapes(origin)) {
       const hit = this.world.castShape(center, orientation, direction, shape, clearance, distance, false, undefined, undefined, undefined, this.body, this.carryObstacle)
-      if (hit) {
-        distance = Math.max(0, hit.time_of_impact)
-        nearest = {
-          hit,
-          center,
-          orientation,
-        }
+      if (!hit) {
+        continue
+      }
+      distance = Math.max(0, hit.time_of_impact)
+      nearest = {
+        hit,
+        center,
+        orientation,
       }
     }
     return nearest

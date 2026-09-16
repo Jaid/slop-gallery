@@ -468,11 +468,12 @@ export default function Interaction() {
           continue
         }
         const hits = ray.current.intersectObject(object.group, true)
-        if (hits[0] && hits[0].distance < closest) {
-          closest = hits[0].distance
-          active = id
-          activeLabel = s.locked && !s.panel && p?.hung && isPortraitLabelHit(hits[0].object, object.group) ? id : null
+        if (!(hits[0] && hits[0].distance < closest)) {
+          continue
         }
+        closest = hits[0].distance
+        active = id
+        activeLabel = s.locked && !s.panel && p?.hung && isPortraitLabelHit(hits[0].object, object.group) ? id : null
       }
       if (active !== s.active || activeLabel !== s.activeLabel) {
         useGallery.setState({

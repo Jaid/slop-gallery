@@ -25,5 +25,6 @@ export default function PlantDecoration({plant, pot, position, rotation = 0, sol
   </group>
 }
 
-export {Plant, Pot}
-export type {PlantKind, PotKind}
+export {default as Plant} from '#component/levels/gallery/DecorativePlant'
+export {default as Pot} from '#component/levels/gallery/DecorativePot'
+export {type PlantKind, type PotKind} from '#src/lib/gallery/plantDecorations/catalog.ts'

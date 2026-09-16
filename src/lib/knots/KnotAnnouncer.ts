@@ -86,10 +86,11 @@ export default class KnotAnnouncer {
           return
         }
         const url = this.audio.resolve(recording.id)
-        if (url) {
-          await this.audio.play(url, signal, recording.title)
-          recording.completed?.add(recording.id)
+        if (!url) {
+          continue
         }
+        await this.audio.play(url, signal, recording.title)
+        recording.completed?.add(recording.id)
       }
     } finally {
       if (this.controller === controller) {

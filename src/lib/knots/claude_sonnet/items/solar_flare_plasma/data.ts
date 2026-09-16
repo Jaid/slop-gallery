@@ -3,7 +3,7 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'solar_flare_plasma',
-  title: "Solar Flare Plasma",
+  title: 'Solar Flare Plasma',
   harness: 'none',
   author: {
     model: {

@@ -40,12 +40,13 @@ export default class OculusGroundGeometry extends BufferGeometry {
       slope.computeVertexNormals()
       const topNormals = slope.getAttribute('normal')
       for (let i = 0; i < vertices.count; i++) {
-        if (topNormals.getY(i) > 0.5) {
-          const fraction = vertices.getZ(i) / (towerRamp.endZ - towerRamp.startZ) + 0.5
-          const gradient = towerRampGradient(fraction)
-          const length = Math.hypot(1, gradient)
-          topNormals.setXYZ(i, 0, 1 / length, -gradient / length)
+        if (!(topNormals.getY(i) > 0.5)) {
+          continue
         }
+        const fraction = vertices.getZ(i) / (towerRamp.endZ - towerRamp.startZ) + 0.5
+        const gradient = towerRampGradient(fraction)
+        const length = Math.hypot(1, gradient)
+        topNormals.setXYZ(i, 0, 1 / length, -gradient / length)
       }
       slope.translate(tower.x, floorY, (towerRamp.startZ + towerRamp.endZ) / 2)
       const halfWidth = towerArch.width / 2

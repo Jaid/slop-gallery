@@ -47,10 +47,11 @@ test('four matching slatted benches surround the relocated fountain and leave th
         for (const x of [-1.3, -0.8, 0, 0.8, 1.3]) {
           const ray = new Raycaster(new Vector3(x, 1, z), new Vector3(0, -1, 0))
           expect(ray.intersectObject(mesh)[0].point.y).toBeCloseTo(fountainBench.height)
-          if (slat < slats - 1) {
-            ray.ray.origin.z += pitch / 2
-            expect(ray.intersectObject(mesh)).toHaveLength(0)
+          if (!(slat < slats - 1)) {
+            continue
           }
+          ray.ray.origin.z += pitch / 2
+          expect(ray.intersectObject(mesh)).toHaveLength(0)
         }
         const left = new Raycaster(new Vector3(-1, 1, z), new Vector3(0, -1, 0)).intersectObject(mesh)[0]
         const right = new Raycaster(new Vector3(1, 1, z), new Vector3(0, -1, 0)).intersectObject(mesh)[0]

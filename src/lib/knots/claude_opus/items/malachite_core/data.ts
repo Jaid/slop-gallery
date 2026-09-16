@@ -3,7 +3,7 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'malachite_core',
-  title: "Malachite Core",
+  title: 'Malachite Core',
   harness: 'none',
   author: {
     model: {

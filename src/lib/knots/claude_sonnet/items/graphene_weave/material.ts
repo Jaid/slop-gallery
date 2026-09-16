@@ -13,8 +13,8 @@ export default class GrapheneWeaveMaterial extends KnotMaterial {
     this.name = knotData.id
     const tube = uv()
     const rot = (mx_rotate2d(tube.sub(0.5), 0.785) as unknown as Node<'vec2'>).add(0.5)
-    const weaveA = rot.x.mul(40).fract().sub(0.5).abs().smoothstep(0.0, 0.3)
-    const weaveB = rot.y.mul(40).fract().sub(0.5).abs().smoothstep(0.0, 0.3)
+    const weaveA = rot.x.mul(40).fract().sub(0.5).abs().smoothstep(0, 0.3)
+    const weaveB = rot.y.mul(40).fract().sub(0.5).abs().smoothstep(0, 0.3)
     const weave = weaveA.mul(weaveB)
     const p = positionGeometry
     const grain = mx_noise_float(p.mul(20)).mul(0.5).add(0.5)

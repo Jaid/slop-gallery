@@ -3,7 +3,7 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'iris_membrane',
-  title: "Iris Membrane",
+  title: 'Iris Membrane',
   harness: 'none',
   author: {
     model: {

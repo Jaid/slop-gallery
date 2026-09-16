@@ -1,8 +1,8 @@
 import type {Texture} from 'three/webgpu'
 
 import {verifyMaterialCompilation} from '../../packages/three-async-materials/test/browser/materials.ts'
-import KnotResources from '../../src/lib/knots/KnotResources.ts'
 import {KnotMaterialPremium} from '../../src/lib/knots/gpt_sol/additionalBatchMaterial.ts'
+import KnotResources from '../../src/lib/knots/KnotResources.ts'
 import StudioEnvironment from '../../src/lib/materials/StudioEnvironment.ts'
 
 /** Exercise the package's GPU regression with an actual expensive gallery material. */

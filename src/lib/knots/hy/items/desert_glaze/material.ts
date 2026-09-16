@@ -1,6 +1,6 @@
 import type {Texture} from 'three/webgpu'
 
-import {color, mix, mx_noise_float, mx_worley_noise_float, positionGeometry, normalViewGeometry, positionViewDirection} from 'three/tsl'
+import {color, mix, mx_noise_float, mx_worley_noise_float, normalViewGeometry, positionGeometry, positionViewDirection} from 'three/tsl'
 
 import {opticalLine, proceduralNormal} from '#src/lib/knots/shared.ts'
 

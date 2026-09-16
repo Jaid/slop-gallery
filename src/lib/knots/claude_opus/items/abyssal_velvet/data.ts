@@ -3,7 +3,7 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'abyssal_velvet',
-  title: "Abyssal Velvet",
+  title: 'Abyssal Velvet',
   harness: 'none',
   author: {
     model: {

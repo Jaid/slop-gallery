@@ -171,13 +171,14 @@ export default class GalleryRepository {
     const document = validateDocument(parsed)
     // Decode every embedded image before replacing anything in the current collection.
     for (const p of document.portraits) {
-      if (p.source instanceof Blob) {
-        const bitmap = await createImageBitmap(p.source)
-        try {
-          imageSize(bitmap.width, bitmap.height)
-        } finally {
-          bitmap.close()
-        }
+      if (!(p.source instanceof Blob)) {
+        continue
+      }
+      const bitmap = await createImageBitmap(p.source)
+      try {
+        imageSize(bitmap.width, bitmap.height)
+      } finally {
+        bitmap.close()
       }
     }
     return document

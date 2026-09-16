@@ -25,10 +25,11 @@ export function validateCollectionImages(portraits: ReadonlyArray<Portrait>) {
   }
   let bytes = 0
   for (const {source} of portraits) {
-    if (source instanceof Blob) {
-      validateImage(source)
-      bytes += source.size
+    if (!(source instanceof Blob)) {
+      continue
     }
+    validateImage(source)
+    bytes += source.size
   }
   if (bytes > maximumCollectionImageBytes) {
     throw new Error('The collection can hold up to 150 mb of embedded images. Remove a work before adding more.')

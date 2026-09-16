@@ -3,7 +3,7 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'basalt_flux',
-  title: "Basalt Flux",
+  title: 'Basalt Flux',
   harness: 'none',
   author: {
     model: {

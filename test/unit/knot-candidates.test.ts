@@ -3,7 +3,6 @@ import type {KnotCandidateData, KnotData} from '../../src/lib/knots/types.ts'
 import {describe, expect, test} from 'bun:test'
 
 import {knotAnnouncementPaths} from '../../src/lib/knots/announcements.ts'
-
 import {enumerateKnotBays, formatKnotLabels, selectKnotBays} from '../../src/lib/knots/exhibition.ts'
 import {knotCandidates, knots, knotsById} from '../../src/lib/knots/index.ts'
 import KnotCandidate, {indexKnots} from '../../src/lib/knots/KnotCandidate.ts'
@@ -102,14 +101,39 @@ describe('arbitrary Knot batches', () => {
   })
   test('uses canonical candidate and model IDs', () => {
     expect(knotCandidates.map(candidate => candidate.data.id)).toEqual([
-      'gpt_astra', 'claude_sonnet', 'claude_opus', 'deepseek', 'gemini_flash', 'glm', 'glm_flash',
-      'grok', 'kimi', 'qwen_max', 'gpt_sol', 'claude_fable', 'muse_spark', 'hy',
+      'gpt_astra',
+      'claude_sonnet',
+      'claude_opus',
+      'deepseek',
+      'gemini_flash',
+      'glm',
+      'glm_flash',
+      'grok',
+      'kimi',
+      'qwen_max',
+      'gpt_sol',
+      'claude_fable',
+      'muse_spark',
+      'hy',
     ])
     const modelIds = new Set(knots.map(entry => knotAnnouncementPaths(entry).model.split('/slug/')[1]))
     expect(modelIds).toEqual(new Set([
-      'gpt-6-astra', 'claude-sonnet-5', 'claude-opus-5', 'deepseek', 'deepseek-4.1-flash',
-      'gemini-3.8-flash', 'glm-5.3', 'glm-5.3-flash', 'grok-4.6', 'kimi-k3', 'qwen-3.8-max',
-      'gpt-5.6-sol', 'claude-fable-5.1', 'muse-spark-1.3', 'muse-spark', 'hy4-preview',
+      'gpt-6-astra',
+      'claude-sonnet-5',
+      'claude-opus-5',
+      'deepseek',
+      'deepseek-4.1-flash',
+      'gemini-3.8-flash',
+      'glm-5.3',
+      'glm-5.3-flash',
+      'grok-4.6',
+      'kimi-k3',
+      'qwen-3.8-max',
+      'gpt-5.6-sol',
+      'claude-fable-5.1',
+      'muse-spark-1.3',
+      'muse-spark',
+      'hy4-preview',
     ]))
   })
   test('uses candidate titles independently from author model titles', () => {
@@ -151,7 +175,10 @@ describe('arbitrary Knot batches', () => {
       ['DeepSeek 4.1 Flash', 'deepseek/deepseek-4.1-flash', {max: 8}],
       ['Muse Spark 1.3', 'meta/muse-spark-1.3', {xhigh: 8}],
       ['GLM 5.3 Flash', 'z-ai/glm-5.3-flash', {max: 8}],
-      ['Hy4 Preview', 'tencent/hy4-preview', {high: 8, medium: 16}],
+      ['Hy4 Preview', 'tencent/hy4-preview', {
+        high: 8,
+        medium: 16,
+      }],
       ['Claude Sonnet 5', 'anthropic/claude-sonnet-5', {medium: 8}],
       ['Claude Opus 5', 'anthropic/claude-opus-5', {medium: 16}],
     ] as const

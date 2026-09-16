@@ -108,10 +108,11 @@ const collisionImpactPoint = (event: CollisionEnterPayload, fallback: {
     contacts++
     const rawImpulse = event.manifold.contactImpulse(contact)
     const impulse = Number.isFinite(rawImpulse) ? Math.abs(rawImpulse) : 0
-    if (impulse > 0) {
-      weighted.addScaledVector(candidate, impulse)
-      totalWeight += impulse
+    if (!(impulse > 0)) {
+      continue
     }
+    weighted.addScaledVector(candidate, impulse)
+    totalWeight += impulse
   }
   if (totalWeight > 0) {
     return weighted.multiplyScalar(1 / totalWeight)
@@ -123,10 +124,11 @@ const collisionImpactPoint = (event: CollisionEnterPayload, fallback: {
   let count = 0
   for (let contact = 0; contact < event.manifold.numSolverContacts(); contact++) {
     const point = event.manifold.solverContactPoint(contact)
-    if (point) {
-      total.add(new Vector3(point.x, point.y, point.z))
-      count++
+    if (!point) {
+      continue
     }
+    total.add(new Vector3(point.x, point.y, point.z))
+    count++
   }
   return count ? total.multiplyScalar(1 / count) : new Vector3(fallback.x, fallback.y, fallback.z)
 }
@@ -354,10 +356,11 @@ export default function KnotLights() {
     for (let index = 0; index < damage.count; index++) {
       const intensity = damage.intensity(index, time.current)
       rows[Math.floor(index / knotLayout.maxRowLength)] += intensity * paneEmissionScales.current[index]
-      if (Math.abs(values[index] - intensity) > 0.001) {
-        values[index] = intensity
-        changed = true
+      if (!(Math.abs(values[index] - intensity) > 0.001)) {
+        continue
       }
+      values[index] = intensity
+      changed = true
     }
     if (changed) {
       resources.intensities.needsUpdate = true

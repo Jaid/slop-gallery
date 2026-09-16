@@ -22,7 +22,7 @@ export default class FilamentLatticeMaterial extends KnotMaterial {
     const lattice = strands.max(rungs)
     // A slow current travels along the strands and heats them as it passes.
     const current = tube.x.mul(2.5).sub(time.mul(0.09)).fract()
-    const heat = current.smoothstep(0.0, 0.35).mul(current.smoothstep(0.75, 0.42)).clamp()
+    const heat = current.smoothstep(0, 0.35).mul(current.smoothstep(0.75, 0.42)).clamp()
     const grit = mx_noise_float(p.mul(30)).mul(0.5).add(0.5)
     const glow = mix(color('#5a1a00'), color('#ffd9a0'), heat.pow(0.7))
     this.colorNode = mix(color('#14161b'), color('#2a2118'), lattice).mul(grit.mul(0.12).add(0.94))

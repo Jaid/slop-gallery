@@ -39,12 +39,13 @@ export default class InstancedPropVisuals {
         mesh.setMatrixAt(index, this.matrix)
         updated = true
       }
-      if (updated) {
-        mesh.instanceMatrix.needsUpdate = true
-        // Thrown objects can leave the initial exhibition bounds.
-        mesh.computeBoundingBox()
-        mesh.computeBoundingSphere()
+      if (!updated) {
+        continue
       }
+      mesh.instanceMatrix.needsUpdate = true
+      // Thrown objects can leave the initial exhibition bounds.
+      mesh.computeBoundingBox()
+      mesh.computeBoundingSphere()
     }
   }
 }

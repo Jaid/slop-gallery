@@ -72,10 +72,11 @@ export default class InspectionLook {
       this.angles.x = this.targetAngles.x + this.pitch.update(pitchError, this.pending.x, step)
       this.angles.y = wrapAngle(this.targetAngles.y + this.yaw.update(yawError, this.pending.y, step))
       const pitch = Math.max(-Math.PI / 2 + 0.0001, Math.min(Math.PI / 2 - 0.0001, this.angles.x))
-      if (pitch !== this.angles.x) {
-        this.angles.x = pitch
-        this.pitch.velocity = 0
+      if (!(pitch !== this.angles.x)) {
+        continue
       }
+      this.angles.x = pitch
+      this.pitch.velocity = 0
     }
     this.pending.set(0, 0)
     this.angles.z = 0

@@ -9,7 +9,7 @@ import knotData from './data.ts'
 
 export default class VerdigrisBronzeMaterial extends KnotMaterial {
   constructor(environment: Texture) {
-    super(environment, 1.0)
+    super(environment, 1)
     this.name = knotData.id
     const p = positionGeometry
     const patina = mx_fractal_noise_float(p.mul(2.4), 4, 2, 0.55).mul(0.5).add(0.5)

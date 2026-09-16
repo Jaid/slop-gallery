@@ -3,7 +3,7 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'damascus_fold',
-  title: "Damascus Fold",
+  title: 'Damascus Fold',
   harness: 'none',
   author: {
     model: {

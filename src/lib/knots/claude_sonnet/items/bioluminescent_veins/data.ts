@@ -3,7 +3,7 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'bioluminescent_veins',
-  title: "Bioluminescent Veins",
+  title: 'Bioluminescent Veins',
   harness: 'none',
   author: {
     model: {

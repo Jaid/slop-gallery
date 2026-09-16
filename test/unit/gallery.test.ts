@@ -296,10 +296,11 @@ describe('backup validation', () => {
       expect(p.source).toMatch(new RegExp(String.raw`^/art/${p.id}\.jxl$`))
       expect(await Bun.file(new URL(`../../public${p.source}`, import.meta.url)).exists()).toBe(true)
       expect(p.narration).toBe(`/audio/${p.id}.opus`)
-      if (p.narration) {
-        expect(p.narration).toBe(`/audio/${p.id}.opus`)
-        expect(await Bun.file(new URL(`../../public${p.narration}`, import.meta.url)).exists()).toBe(true)
+      if (!p.narration) {
+        continue
       }
+      expect(p.narration).toBe(`/audio/${p.id}.opus`)
+      expect(await Bun.file(new URL(`../../public${p.narration}`, import.meta.url)).exists()).toBe(true)
     }
   })
   test('rejects obsolete image paths, recordings and wall positions instead of migrating saves', () => {

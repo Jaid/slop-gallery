@@ -3,7 +3,7 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'ferro_crown',
-  title: "Ferro Crown",
+  title: 'Ferro Crown',
   harness: 'none',
   author: {
     model: {

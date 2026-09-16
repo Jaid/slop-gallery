@@ -3,7 +3,7 @@ import type {KnotData} from '../../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'voltaic_lattice',
-  title: "Voltaic Lattice",
+  title: 'Voltaic Lattice',
   harness: 'none',
   author: {
     model: {
