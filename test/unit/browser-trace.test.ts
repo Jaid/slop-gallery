@@ -133,3 +133,39 @@ test('encodes a gzip Chromium trace stream across chunk boundaries', async () =>
     await fs.remove(root)
   }
 })
+test('recovers complete streamed trace events when Chromium omits the JSON footer', async () => {
+  const root = await fs.mkdtemp(resolve(import.meta.dir, '../../private/agent/browser-trace-recovery-test-'))
+  const output = resolve(root, 'trace.msgpack')
+  try {
+    const gunzip = createGunzip()
+    const encoding = encodeTraceJsonAsMessagePack(gunzip, output, [], {
+      Browser: 'Chrome/153.0.8010.37',
+    }, {allowMissingFooter: true})
+    gunzip.end(gzipSync('{"traceEvents":[{"name":"first"},\n{"name":"last-complete"}'))
+    expect(await encoding).toBe(2)
+    expect(unpack(await fs.readFile(output))).toEqual({
+      traceEvents: [
+        {name: 'first'},
+        {name: 'last-complete'},
+      ],
+      metadata: {
+        Browser: 'Chrome/153.0.8010.37',
+        TraceJsonFooterMissing: true,
+      },
+      consoleEvents: [],
+    })
+  } finally {
+    await fs.remove(root)
+  }
+})
+test('still rejects a missing Chromium trace footer by default', async () => {
+  const root = await fs.mkdtemp(resolve(import.meta.dir, '../../private/agent/browser-trace-strict-footer-test-'))
+  const input = resolve(root, 'trace.json')
+  const output = resolve(root, 'trace.msgpack')
+  try {
+    await fs.writeFile(input, '{"traceEvents":[{"name":"complete"}')
+    expect(encodeTraceJsonAsMessagePack(input, output)).rejects.toThrow('Chromium trace JSON ended before the traceEvents array closed.')
+  } finally {
+    await fs.remove(root)
+  }
+})

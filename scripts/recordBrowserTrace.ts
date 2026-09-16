@@ -385,7 +385,7 @@ export default async function recordBrowserTrace({port = 9222,
     BraveFlags: browserFlags,
     CommandLine: browserCommandLine,
     'V8-Version': version['V8-Version'],
-  })
+  }, {allowMissingFooter: true})
   const drainTraceStream = async () => {
     while (true) {
       const chunk = await call('IO.read', {
@@ -438,7 +438,7 @@ export default async function recordBrowserTrace({port = 9222,
   return output
 }
 
-export async function encodeTraceJsonAsMessagePack(input: Readable | string, output: string, consoleEvents: ReadonlyArray<BrowserConsoleEvent> = [], metadataAdditions: Readonly<Record<string, unknown>> = {}) {
+export async function encodeTraceJsonAsMessagePack(input: Readable | string, output: string, consoleEvents: ReadonlyArray<BrowserConsoleEvent> = [], metadataAdditions: Readonly<Record<string, unknown>> = {}, {allowMissingFooter = false}: {allowMissingFooter?: boolean} = {}) {
   const source = typeof input === 'string' ? createReadStream(input, {encoding: 'utf8'}) : input
   const lines = createInterface({
     input: source,
@@ -529,22 +529,29 @@ export async function encodeTraceJsonAsMessagePack(input: Readable | string, out
       }
       throw new Error(`Unexpected Chromium trace event suffix: ${JSON.stringify(remainder.slice(0, 200))}`)
     }
-    if (!sawFooter) {
+    if (!sawFooter && !allowMissingFooter) {
       throw new Error('Chromium trace JSON ended before the traceEvents array closed.')
     }
-    const footer = footerLines.join('\n').trim()
-    if (!footer.startsWith(']')) {
-      throw new Error('Unexpected Chromium trace JSON footer.')
-    }
-    const objectTail = footer.slice(1).trim()
     let extraFields: Record<string, unknown> = {}
-    if (objectTail !== '}') {
-      if (!objectTail.startsWith(',')) {
+    if (sawFooter) {
+      const footer = footerLines.join('\n').trim()
+      if (!footer.startsWith(']')) {
         throw new Error('Unexpected Chromium trace JSON footer.')
       }
-      extraFields = JSON.parse(`{${objectTail.slice(1)}`) as Record<string, unknown>
+      const objectTail = footer.slice(1).trim()
+      if (objectTail !== '}') {
+        if (!objectTail.startsWith(',')) {
+          throw new Error('Unexpected Chromium trace JSON footer.')
+        }
+        extraFields = JSON.parse(`{${objectTail.slice(1)}`) as Record<string, unknown>
+      }
+    } else {
+      console.error(`Chromium trace stream ended after ${eventCount.toLocaleString()} complete events without a JSON footer; saving the recoverable trace.`)
     }
-    const definedMetadataAdditions = Object.fromEntries(Object.entries(metadataAdditions).filter(([, value]) => value !== undefined))
+    const definedMetadataAdditions = Object.fromEntries(Object.entries({
+      ...metadataAdditions,
+      ...sawFooter ? {} : {TraceJsonFooterMissing: true},
+    }).filter(([, value]) => value !== undefined))
     if (Object.keys(definedMetadataAdditions).length) {
       const metadata = extraFields.metadata
       const existingMetadata = metadata && typeof metadata === 'object' && !Array.isArray(metadata) ? metadata : {}
