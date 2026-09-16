@@ -27,6 +27,7 @@ test('encodes Chromium compact metadata footers without mistaking event metadata
     }]
     const eventCount = await encodeTraceJsonAsMessagePack(input, output, consoleEvents, {
       Browser: 'Chrome/153.0.8010.37',
+      CommandLine: String.raw`"C:\portable\brave\brave.exe" --remote-debugging-port=9222`,
       'V8-Version': '15.3.76.10',
     })
     expect(eventCount).toBe(2)
@@ -48,6 +49,7 @@ test('encodes Chromium compact metadata footers without mistaking event metadata
         'clock-domain': 'MONOTONIC',
         perfetto_trace_stats: {total_buffers: 1},
         Browser: 'Chrome/153.0.8010.37',
+        CommandLine: String.raw`"C:\portable\brave\brave.exe" --remote-debugging-port=9222`,
         'V8-Version': '15.3.76.10',
       },
       consoleEvents,

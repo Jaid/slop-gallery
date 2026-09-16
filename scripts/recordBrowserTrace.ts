@@ -1,3 +1,4 @@
+import {execFile} from 'node:child_process'
 import {once} from 'node:events'
 import {createReadStream, createWriteStream} from 'node:fs'
 import {mkdir, open, rename, rm, stat} from 'node:fs/promises'
@@ -5,7 +6,7 @@ import {resolve} from 'node:path'
 import {createInterface} from 'node:readline'
 import type {Readable} from 'node:stream'
 import {pipeline} from 'node:stream/promises'
-import {parseArgs} from 'node:util'
+import {parseArgs, promisify} from 'node:util'
 import {createBrotliCompress, createGunzip, constants as zlibConstants} from 'node:zlib'
 
 import getFree from 'get-free'
@@ -54,6 +55,7 @@ Output:
   (trace2.msgpack.br, trace3.msgpack.br, …) chosen via get-free.
 `
 const traceEventsPrefixPattern = /^\s*\{\s*"traceEvents"\s*:\s*\[/
+const execFileAsync = promisify(execFile)
 const messagePack = new Packr({
   useRecords: false,
   variableMapSize: true,
@@ -105,6 +107,24 @@ const findJsonValueEnd = (json: string) => {
     }
   }
   return -1
+}
+const getWindowsProcessCommandLine = async (processId: number) => {
+  if (!Number.isSafeInteger(processId) || processId < 1) {
+    throw new TypeError('processId must be a positive integer.')
+  }
+  const powershell = `
+$ErrorActionPreference = 'Stop'
+$process = Get-CimInstance Win32_Process -Filter 'ProcessId = ${processId}'
+if (-not $process -or [string]::IsNullOrWhiteSpace($process.CommandLine)) {
+  throw 'No command line found for process ${processId}.'
+}
+$process.CommandLine
+`
+  const {stdout} = await execFileAsync('pwsh', ['-NoProfile', '-NonInteractive', '-Command', powershell], {
+    encoding: 'utf8',
+    windowsHide: true,
+  })
+  return stdout.trim()
 }
 export default async function recordBrowserTrace({port = 9222,
   buffer = 4_000_000_000,
@@ -247,6 +267,22 @@ export default async function recordBrowserTrace({port = 9222,
     pending.clear()
     tracingCompleteReject(error)
   }, {once: true})
+  let browserCommandLine: string | undefined
+  try {
+    const {processInfo} = await call('SystemInfo.getProcessInfo') as {
+      processInfo: Array<{
+        id: number
+        type: string
+      }>
+    }
+    const browserProcess = processInfo.find(process => process.type === 'browser')
+    if (!browserProcess) {
+      throw new Error('CDP did not report a browser process.')
+    }
+    browserCommandLine = await getWindowsProcessCommandLine(browserProcess.id)
+  } catch (error) {
+    console.error(`Browser command line unavailable: ${Error.isError(error) ? error.message : String(error)}`)
+  }
   const {targetInfos} = await call('Target.getTargets') as {
     targetInfos: Array<{
       targetId: string
@@ -304,6 +340,7 @@ export default async function recordBrowserTrace({port = 9222,
   let compressedTraceBytes = 0
   const encoding = encodeTraceJsonAsMessagePack(gunzip, messagePackTemporary, consoleEvents, {
     Browser: version.Browser,
+    CommandLine: browserCommandLine,
     'V8-Version': version['V8-Version'],
   })
   const drainTraceStream = async () => {
