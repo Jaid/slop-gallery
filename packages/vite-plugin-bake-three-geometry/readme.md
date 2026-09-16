@@ -50,6 +50,27 @@ Every factory invocation creates fresh resources, IDs, UUIDs and mutable buffers
 
 This plugin does **not** serialize Rapier worlds or MeshBVHs. It can preserve already-computed collider input arrays, but adding a BVH serializer is a separate adapter feature.
 
+## MeshBVH belongs here
+
+Serialized `MeshBVH` is the next feature of this package, not a separate Vite plugin. It is a deterministic derivative of a baked `BufferGeometry` and should share that recipe's cache key, dependency graph and artifact lifetime.
+
+The intended extension is:
+
+```text
+geometry recipe
+  ├─ render attributes/index/bounds
+  ├─ collider arrays
+  └─ MeshBVH.serialize(...)
+       ↓
+one content-addressed geometry artifact
+       ↓
+MeshBVH.deserialize(..., restoredGeometry)
+```
+
+The feature should be optional because applications that do not use `three-mesh-bvh` should not acquire it as a runtime/build dependency. The serializer should live in this package while the generic snapshot machinery stays in `vite-plugin-bake-core`. Geometry and BVH must be restored together so the serialized index/indirect buffers cannot silently attach to a non-identical geometry.
+
+A future option can therefore be a feature block on `bakeThreeGeometry()`, rather than another top-level plugin. No public option is exposed yet because the serializer/deserializer path is not implemented.
+
 ## Limits
 
 Automatic does not mean arbitrary JavaScript can be proven constant. Open parameters, state/props, clocks, unseeded randomness, unknown external APIs, browser globals, async work, accessors, reflective operations and observed captured-state mutations prevent baking. The original code remains in place, and recognized skipped recipes appear in the report.
