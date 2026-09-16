@@ -24,7 +24,9 @@ test('Knottingham minimap has a transparent hall outline, no visible labels and 
   expect(html.match(/data-knot=/gu)).toHaveLength(knotExhibition.length)
   expect(html).toContain('translate(-14 -9) rotate(90)')
   for (const item of knotExhibition) {
-    expect(html).toContain(`data-knot="${item.id}" cx="${item.position[0]}" cy="${item.position[2]}"`)
+    const circle = new RegExp(`<circle[^>]+data-knot="${item.id}"[^>]*>`, 'u').exec(html)?.[0]
+    expect(circle).toContain(`cx="${item.position[0]}"`)
+    expect(circle).toContain(`cy="${item.position[2]}"`)
   }
 })
 test('the detailed map retains the model and item labels without an opaque floor', () => {
@@ -37,5 +39,9 @@ test('the detailed map retains the model and item labels without an opaque floor
 test('minimap viewBox and hall outline share the dynamically sized room', () => {
   const html = renderToStaticMarkup(createElement(KnotGalleryMinimap, {lower: false}))
   expect(html).toContain(`viewBox="${knotGalleryBounds.minX - 1} ${knotGalleryBounds.northZ - 1} ${knotGallerySize[0] + 2} ${knotGallerySize[2] + 2}"`)
-  expect(html).toContain(`<rect x="${knotGalleryBounds.minX}" y="${knotGalleryBounds.northZ}" width="${knotGallerySize[0]}" height="${knotGallerySize[2]}"`)
+  const outline = /<rect[^>]+fill="none"[^>]*>/u.exec(html)?.[0]
+  expect(outline).toContain(`x="${knotGalleryBounds.minX}"`)
+  expect(outline).toContain(`y="${knotGalleryBounds.northZ}"`)
+  expect(outline).toContain(`width="${knotGallerySize[0]}"`)
+  expect(outline).toContain(`height="${knotGallerySize[2]}"`)
 })
