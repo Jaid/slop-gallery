@@ -1,5 +1,6 @@
 import {expect, test} from 'bun:test'
 import {resolve} from 'node:path'
+import {createGunzip, gzipSync} from 'node:zlib'
 
 import fs from 'fs-extra'
 import {unpack} from 'msgpackr'
@@ -45,6 +46,30 @@ test('encodes Chromium compact metadata footers without mistaking event metadata
         perfetto_trace_stats: {total_buffers: 1},
       },
       consoleEvents,
+    })
+  } finally {
+    await fs.remove(root)
+  }
+})
+test('encodes a gzip Chromium trace stream across chunk boundaries', async () => {
+  const root = await fs.mkdtemp(resolve(import.meta.dir, '../../private/agent/browser-trace-gzip-test-'))
+  const output = resolve(root, 'trace.msgpack')
+  const json = '{"traceEvents":[{"name":"streamed","args":{}}],"metadata":{"clock-domain":"MONOTONIC"}}'
+  try {
+    const compressed = gzipSync(json)
+    const gunzip = createGunzip()
+    const encoding = encodeTraceJsonAsMessagePack(gunzip, output)
+    const split = Math.floor(compressed.length / 2)
+    gunzip.write(compressed.subarray(0, split))
+    gunzip.end(compressed.subarray(split))
+    expect(await encoding).toBe(1)
+    expect(unpack(await fs.readFile(output))).toEqual({
+      traceEvents: [{
+        name: 'streamed',
+        args: {},
+      }],
+      metadata: {'clock-domain': 'MONOTONIC'},
+      consoleEvents: [],
     })
   } finally {
     await fs.remove(root)

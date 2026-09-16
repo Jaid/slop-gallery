@@ -1,10 +1,12 @@
+import {once} from 'node:events'
 import {createReadStream, createWriteStream} from 'node:fs'
 import {mkdir, open, rename, rm, stat} from 'node:fs/promises'
 import {resolve} from 'node:path'
 import {createInterface} from 'node:readline'
+import type {Readable} from 'node:stream'
 import {pipeline} from 'node:stream/promises'
 import {parseArgs} from 'node:util'
-import {createBrotliCompress, constants as zlibConstants} from 'node:zlib'
+import {createBrotliCompress, createGunzip, constants as zlibConstants} from 'node:zlib'
 
 import getFree from 'get-free'
 import {Packr} from 'msgpackr'
@@ -230,6 +232,7 @@ export default async function recordBrowserTrace({port = 9222,
   ])
   await call('Tracing.start', {
     transferMode: 'ReturnAsStream',
+    streamCompression: 'gzip',
     bufferUsageReportingInterval: 5000,
     traceConfig: {
       recordMode: 'recordUntilFull',
@@ -257,15 +260,14 @@ export default async function recordBrowserTrace({port = 9222,
   })
   const stream = await tracingComplete
   process.stdin.pause()
-  const traceJsonTemporary = `${output}.json.partial`
   const messagePackTemporary = `${output}.msgpack.partial`
   const compressedTemporary = `${output}.partial`
-  await rm(traceJsonTemporary, {force: true})
   await rm(messagePackTemporary, {force: true})
   await rm(compressedTemporary, {force: true})
-  const file = await open(traceJsonTemporary, 'w')
-  let traceJsonBytes = 0
-  try {
+  const gunzip = createGunzip()
+  let compressedTraceBytes = 0
+  const encoding = encodeTraceJsonAsMessagePack(gunzip, messagePackTemporary, consoleEvents)
+  const drainTraceStream = async () => {
     while (true) {
       const chunk = await call('IO.read', {
         handle: stream,
@@ -277,15 +279,25 @@ export default async function recordBrowserTrace({port = 9222,
       }
       const data = chunk.base64Encoded ? Buffer.from(chunk.data, 'base64') : Buffer.from(chunk.data, 'utf8')
       if (data.length) {
-        await file.write(data)
-        traceJsonBytes += data.length
+        compressedTraceBytes += data.length
+        if (!gunzip.write(data)) {
+          await once(gunzip, 'drain')
+        }
       }
       if (chunk.eof) {
-        break
+        gunzip.end()
+        return
       }
     }
+  }
+  let eventCount = 0
+  try {
+    const [, encodedEventCount] = await Promise.all([drainTraceStream(), encoding])
+    eventCount = encodedEventCount
+  } catch (error) {
+    gunzip.destroy(Error.isError(error) ? error : new Error(String(error)))
+    throw error
   } finally {
-    await file.close()
     try {
       await call('IO.close', {handle: stream})
     } catch {}
@@ -295,26 +307,24 @@ export default async function recordBrowserTrace({port = 9222,
     socket.close()
   }
   try {
-    const eventCount = await encodeTraceJsonAsMessagePack(traceJsonTemporary, messagePackTemporary, consoleEvents)
     await brotliCompressFile(messagePackTemporary, compressedTemporary)
     await rm(output, {force: true})
     await rename(compressedTemporary, output)
     const {size} = await stat(output)
-    console.error(`Saved ${output} (${(size / 1024 / 1024).toFixed(1)} MiB, ${eventCount.toLocaleString()} trace events, ${consoleEvents.length.toLocaleString()} console events; source JSON ${(traceJsonBytes / 1024 / 1024).toFixed(1)} MiB)`)
+    console.error(`Saved ${output} (${(size / 1024 / 1024).toFixed(1)} MiB, ${eventCount.toLocaleString()} trace events, ${consoleEvents.length.toLocaleString()} console events; CDP gzip ${(compressedTraceBytes / 1024 / 1024).toFixed(1)} MiB)`)
   } finally {
-    await rm(traceJsonTemporary, {force: true})
     await rm(messagePackTemporary, {force: true})
     await rm(compressedTemporary, {force: true})
   }
   return output
 }
-export async function encodeTraceJsonAsMessagePack(input: string, output: string, consoleEvents: ReadonlyArray<BrowserConsoleEvent> = []) {
-  const source = createReadStream(input, {encoding: 'utf8'})
+export async function encodeTraceJsonAsMessagePack(input: Readable | string, output: string, consoleEvents: ReadonlyArray<BrowserConsoleEvent> = []) {
+  const source = typeof input === 'string' ? createReadStream(input, {encoding: 'utf8'}) : input
   const lines = createInterface({
     input: source,
     crlfDelay: Infinity,
   })
-  const file = await open(output, 'w')
+  const sink = createWriteStream(output)
   let position = 0
   let bufferedBytes = 0
   let buffers: Array<Uint8Array> = []
@@ -323,13 +333,8 @@ export async function encodeTraceJsonAsMessagePack(input: string, output: string
       return
     }
     const data = Buffer.concat(buffers, bufferedBytes)
-    let offset = 0
-    while (offset < data.byteLength) {
-      const {bytesWritten} = await file.write(data, offset)
-      if (!bytesWritten) {
-        throw new Error('Failed to write MessagePack trace.')
-      }
-      offset += bytesWritten
+    if (!sink.write(data)) {
+      await once(sink, 'drain')
     }
     buffers = []
     bufferedBytes = 0
@@ -346,10 +351,12 @@ export async function encodeTraceJsonAsMessagePack(input: string, output: string
   let sawHeader = false
   let sawMetadata = false
   const metadataLines: Array<string> = []
+  let eventCountOffset = 0
+  let completed = false
   try {
     await write(Uint8Array.of(0x83))
     await write(messagePack.pack('traceEvents'))
-    const eventCountOffset = position + 1
+    eventCountOffset = position + 1
     await write(Uint8Array.of(0xDD, 0, 0, 0, 0))
     const parseEvent = (line: string): unknown => {
       let json = line.trim()
@@ -422,13 +429,24 @@ export async function encodeTraceJsonAsMessagePack(input: string, output: string
       await write(messagePack.pack(consoleEvent))
     }
     await flush()
-    const count = Buffer.allocUnsafe(4)
-    count.writeUInt32BE(eventCount)
-    await file.write(count, 0, count.byteLength, eventCountOffset)
+    completed = true
   } finally {
     lines.close()
-    await file.close()
+    if (completed) {
+      sink.end()
+    } else {
+      sink.destroy()
+    }
+    if (!sink.closed) {
+      try {
+        await once(sink, 'close')
+      } catch {}
+    }
   }
+  const count = Buffer.allocUnsafe(4)
+  count.writeUInt32BE(eventCount)
+  await using file = await open(output, 'r+')
+  await file.write(count, 0, count.byteLength, eventCountOffset)
   return eventCount
 }
 async function brotliCompressFile(input: string, output: string) {
