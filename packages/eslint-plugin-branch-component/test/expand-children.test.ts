@@ -1,0 +1,116 @@
+import rule from '../src/rules/expand-children.ts'
+import {branchImport, ruleTester} from './ruleTester.ts'
+
+ruleTester.run('expand-children', rule, {
+  valid: [
+    ...[
+      '<Branch if={ok} children={Content} />',
+      '<Branch if={ok} children={<Content />} />',
+      '<Branch if={ok} children={<UI.Content />} />',
+      '<Branch if={ok} children={() => <Content />} />',
+      '<Branch if={ok} children="text" />',
+      '<Branch if={ok} children={value} />',
+      '<Branch if={ok}><div><Content /></div></Branch>',
+      '<Branch if={ok} children={<div />}><Other /></Branch>',
+      '<Branch if={ok} children={<div />}> </Branch>',
+      '<Branch if={ok} children={<div />}>{/* keep */}</Branch>',
+      '<Branch if={ok} children={<div />} children={<span />} />',
+      '<Branch if={ok} children={<div />} {...props} />',
+      'function view(Branch) { return <Branch children={<div />} /> }',
+    ].map(code => branchImport + code),
+    'const view = <Branch children={<div />} />',
+    "import Branch from 'other'; const view = <Branch children={<div />} />",
+    "import type Branch from 'branch-component'; const view = <Branch children={<div />} />",
+  ],
+  invalid: [
+    ...[
+      ['<Branch if={ok} children={<div><Content /></div>} />', '<Branch if={ok}><div><Content /></div></Branch>'],
+      ['<Branch if={ok} children={<Content value={value} />} />', '<Branch if={ok}><Content value={value} /></Branch>'],
+      ['<Branch if={ok} children={<Content {...props} />} />', '<Branch if={ok}><Content {...props} /></Branch>'],
+      ['<Branch if={ok} children={<Content key="stable" />} />', '<Branch if={ok}><Content key="stable" /></Branch>'],
+      ['<Branch if={ok} children={<Content ref={ref} />} />', '<Branch if={ok}><Content ref={ref} /></Branch>'],
+      ['<Branch if={ok} children={<><Content /><Other /></>} />', '<Branch if={ok}><><Content /><Other /></></Branch>'],
+      ['<Branch if={ok} children={<div>{/* keep */}<Content /></div>} />', '<Branch if={ok}><div>{/* keep */}<Content /></div></Branch>'],
+      ['<Branch if={ok} children={<div />} />', '<Branch if={ok}><div /></Branch>'],
+      ['<Branch if={ok} children={<div />}></Branch>', '<Branch if={ok}><div /></Branch>'],
+      ['<Branch if={ok} children={<div />}>\n</Branch>', '<Branch if={ok}><div /></Branch>'],
+      ['<Branch children={<div />} if={ok} />', '<Branch if={ok}><div /></Branch>'],
+      ['<Branch\n  if={ok}\n  children={<div />}\n/>', '<Branch\n  if={ok}><div /></Branch>'],
+      ['<Branch {...props} children={<div />} />', '<Branch {...props}><div /></Branch>'],
+      ['<Branch if={ok} then={Header} else={Fallback} children={<div />} />', '<Branch if={ok} then={Header} else={Fallback}><div /></Branch>'],
+      ['<Branch if={ok} children={(<div />)} />', '<Branch if={ok}><div /></Branch>'],
+      ['<Branch if={ok} children={<Content<string> />} />', '<Branch if={ok}><Content<string> /></Branch>'],
+      ['<Branch if={ok} children={<Content> </Content>} />', '<Branch if={ok}><Content> </Content></Branch>'],
+      ['<Branch if={ok} children={<div>{effect()}</div>} />', '<Branch if={ok}><div>{effect()}</div></Branch>'],
+    ].map(([code, output]) => ({
+      code: branchImport + code,
+      output: branchImport + output,
+      errors: [{messageId: 'expand' as const}],
+    })),
+    ...[
+      '<Branch if={ok} children={/* keep */ <div />} />',
+      '<Branch children={<div>{effect()}</div>} if={otherEffect()} />',
+      '<Branch children={<div>{effect()}</div>} if={ok} />',
+    ].map(code => ({
+      code: branchImport + code,
+      output: null,
+      errors: [{messageId: 'expand' as const}],
+    })),
+    {
+      code: "import B from 'branch-component'; const view = <B children={<div />} />",
+      output: "import B from 'branch-component'; const view = <B><div /></B>",
+      errors: [{messageId: 'expand'}],
+    },
+    {
+      code: "import * as branches from 'branch-component'; const view = <branches.default children={<div />} />",
+      output: "import * as branches from 'branch-component'; const view = <branches.default><div /></branches.default>",
+      errors: [{messageId: 'expand'}],
+    },
+  ],
+})
+ruleTester.run('expand-children-outputs', rule, {
+  valid: [
+    '<Branch if={ok} then={Content} else={Fallback} />',
+    '<Branch if={ok} then={<Content />} />',
+    '<Branch if={ok} then={<UI.Content />} />',
+    '<Branch if={ok} then={() => <div />} />',
+    '<Branch if={ok} then={<div />}><Other /></Branch>',
+    '<Branch if={ok} then={<div />}> </Branch>',
+    '<Branch if={ok} then={<div />}>{/* keep */}</Branch>',
+    '<Branch if={ok} then={<div />} children={value} />',
+    '<Branch if={ok} then={<div />} then={<span />} />',
+    '<Branch if={ok} {...props} then={<div />} />',
+    '<Branch if={ok} then={<div />} {...props} />',
+    '<Branch if={ok} else={<div><Fallback /></div>} />',
+    '<Branch if={ok} then={Content} else={<div />} />',
+  ].map(code => branchImport + code),
+  invalid: [
+    ...[
+      ['<Branch if={ok} then={<div><Content /></div>} />', '<Branch if={ok}><div><Content /></div></Branch>'],
+      ['<Branch if={ok} then={<Content value={value} />} />', '<Branch if={ok}><Content value={value} /></Branch>'],
+      ['<Branch if={ok} then={<Content key="stable" />} />', '<Branch if={ok}><Content key="stable" /></Branch>'],
+      ['<Branch if={ok} then={<Content ref={ref} />} />', '<Branch if={ok}><Content ref={ref} /></Branch>'],
+      ['<Branch if={ok} then={<Content {...props} />} />', '<Branch if={ok}><Content {...props} /></Branch>'],
+      ['<Branch if={ok} then={<><Content /><Other /></>} />', '<Branch if={ok}><><Content /><Other /></></Branch>'],
+      ['<Branch if={ok} then={<div>{/* keep */}<Content /></div>} />', '<Branch if={ok}><div>{/* keep */}<Content /></div></Branch>'],
+      ['<Branch if={ok} then={<div />} else={<Fallback />} />', '<Branch if={ok} else={<Fallback />}><div /></Branch>'],
+      ['<Branch if={ok} then={(<div />)} />', '<Branch if={ok}><div /></Branch>'],
+      ['<Branch if={ok} then={<Content<string> />} />', '<Branch if={ok}><Content<string> /></Branch>'],
+      ['<Branch if={ok} then={<div>{effect()}</div>} />', '<Branch if={ok}><div>{effect()}</div></Branch>'],
+      ['<Branch then={<div />} if={ok} />', '<Branch if={ok}><div /></Branch>'],
+    ].map(([code, output]) => ({
+      code: branchImport + code,
+      output: branchImport + output,
+      errors: [{messageId: 'expand' as const}],
+    })),
+    ...[
+      '<Branch if={ok} then={/* keep */ <div />} />',
+      '<Branch then={<div>{value}</div>} if={changeValue()} />',
+      '<Branch then={<div>{effect()}</div>} if={ok} />',
+    ].map(code => ({
+      code: branchImport + code,
+      output: null,
+      errors: [{messageId: 'expand' as const}],
+    })),
+  ],
+})
