@@ -90,7 +90,7 @@
     "caniuse-lite": "1.0.30001810",
     "cssnano-preset-advanced": "9.0.4",
     "eslint": "10.10.0",
-    "eslint-config-jaid": "30.0.0",
+    "eslint-config-jaid": "31.0.0",
     "fake-indexeddb": "6.2.5",
     "forward-slash-path": "0.3.0",
     "fs-extra": "11.4.0",
@@ -107,7 +107,7 @@
     "vite": "8.3.0",
     "vite-plugin-media-mixins": "0.10.0",
     "vite-plugin-title": "0.6.0",
-    "webmcp-types": "0.1.7"
+    "webmcp-types": "0.1.8"
   },
   "overrides": {
     "@dimforge/rapier3d-compat": "0.20.0"
