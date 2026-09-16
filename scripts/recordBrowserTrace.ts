@@ -57,10 +57,18 @@ const messagePack = new Packr({
   useRecords: false,
   variableMapSize: true,
 })
+export type BrowserConsoleEvent = {
+  method: ConsoleEventMethod
+  params: unknown
+  sessionId?: string
+}
+type ConsoleEventMethod = 'Log.entryAdded' | 'Runtime.consoleAPICalled' | 'Runtime.exceptionThrown'
 type Pending = {
   reject: (error: Error) => void
   resolve: (value: any) => void
 }
+const consoleEventMethods = new Set<string>(['Log.entryAdded', 'Runtime.consoleAPICalled', 'Runtime.exceptionThrown'])
+const isConsoleEventMethod = (method: string | undefined): method is ConsoleEventMethod => method !== undefined && consoleEventMethods.has(method)
 export default async function recordBrowserTrace({port = 9222,
   bufferMiB = 1024,
   reload = false}: {
@@ -99,6 +107,8 @@ export default async function recordBrowserTrace({port = 9222,
   })
   let nextId = 0
   const pending = new Map<number, Pending>
+  const consoleEvents: Array<BrowserConsoleEvent> = []
+  let captureConsoleEvents = false
   let tracingCompleteResolve!: (stream: string) => void
   let tracingCompleteReject!: (error: Error) => void
   const tracingComplete = new Promise<string>((resolveComplete, rejectComplete) => {
@@ -126,6 +136,7 @@ export default async function recordBrowserTrace({port = 9222,
       return
     }
     stopRequested = true
+    captureConsoleEvents = false
     console.error(`Stopping trace (${reason})…`)
     await call('Tracing.end')
   }
@@ -137,11 +148,13 @@ export default async function recordBrowserTrace({port = 9222,
         id?: number
         method?: string
         params?: {
+          [key: string]: unknown
           percentFull?: number
           stream?: string
           value?: number
         }
         result?: unknown
+        sessionId?: string
       }
       if (data.id !== undefined) {
         const entry = pending.get(data.id)
@@ -156,6 +169,16 @@ export default async function recordBrowserTrace({port = 9222,
         }
         return
       }
+      if (captureConsoleEvents && isConsoleEventMethod(data.method)) {
+        const consoleEvent: BrowserConsoleEvent = {
+          method: data.method,
+          params: data.params ?? {},
+        }
+        if (data.sessionId) {
+          consoleEvent.sessionId = data.sessionId
+        }
+        consoleEvents.push(consoleEvent)
+      }
       if (data.method === 'Tracing.bufferUsage') {
         const value = data.params?.percentFull ?? data.params?.value
         if (typeof value === 'number') {
@@ -166,6 +189,7 @@ export default async function recordBrowserTrace({port = 9222,
           }
         }
       } else if (data.method === 'Tracing.tracingComplete') {
+        captureConsoleEvents = false
         const stream = data.params?.stream
         if (stream) {
           tracingCompleteResolve(stream)
@@ -185,27 +209,25 @@ export default async function recordBrowserTrace({port = 9222,
     pending.clear()
     tracingCompleteReject(error)
   }, {once: true})
-  let reloadSessionId: string | undefined
-  let reloadTargetUrl: string | undefined
-  if (reload) {
-    const {targetInfos} = await call('Target.getTargets') as {
-      targetInfos: Array<{
-        targetId: string
-        type: string
-        url: string
-      }>
-    }
-    const pageTarget = targetInfos.find(target => target.type === 'page')
-    if (!pageTarget) {
-      throw new Error('No page target found to reload.')
-    }
-    const attached = await call('Target.attachToTarget', {
-      targetId: pageTarget.targetId,
-      flatten: true,
-    }) as {sessionId: string}
-    reloadSessionId = attached.sessionId
-    reloadTargetUrl = pageTarget.url
+  const {targetInfos} = await call('Target.getTargets') as {
+    targetInfos: Array<{
+      targetId: string
+      type: string
+      url: string
+    }>
   }
+  const pageTarget = targetInfos.find(target => target.type === 'page')
+  if (!pageTarget) {
+    throw new Error('No page target found for console capture.')
+  }
+  const {sessionId: pageSessionId} = await call('Target.attachToTarget', {
+    targetId: pageTarget.targetId,
+    flatten: true,
+  }) as {sessionId: string}
+  await Promise.all([
+    call('Runtime.enable', {}, pageSessionId),
+    call('Log.enable', {}, pageSessionId),
+  ])
   await call('Tracing.start', {
     transferMode: 'ReturnAsStream',
     bufferUsageReportingInterval: 5000,
@@ -217,10 +239,10 @@ export default async function recordBrowserTrace({port = 9222,
       includedCategories: categories,
     },
   })
-  if (reloadSessionId) {
-    await call('Page.reload', {}, reloadSessionId)
-    await call('Target.detachFromTarget', {sessionId: reloadSessionId})
-    console.error(`Reloaded ${reloadTargetUrl || 'page target'}`)
+  captureConsoleEvents = true
+  if (reload) {
+    await call('Page.reload', {}, pageSessionId)
+    console.error(`Reloaded ${pageTarget.url || 'page target'}`)
   }
   console.error(`Recording ${version.Browser ?? 'Brave/Chromium'} on :${port}`)
   console.error(`Buffer: ${bufferMiB} MiB`)
@@ -267,15 +289,18 @@ export default async function recordBrowserTrace({port = 9222,
     try {
       await call('IO.close', {handle: stream})
     } catch {}
+    try {
+      await call('Target.detachFromTarget', {sessionId: pageSessionId})
+    } catch {}
     socket.close()
   }
   try {
-    const eventCount = await encodeTraceJsonAsMessagePack(traceJsonTemporary, messagePackTemporary)
+    const eventCount = await encodeTraceJsonAsMessagePack(traceJsonTemporary, messagePackTemporary, consoleEvents)
     await brotliCompressFile(messagePackTemporary, compressedTemporary)
     await rm(output, {force: true})
     await rename(compressedTemporary, output)
     const {size} = await stat(output)
-    console.error(`Saved ${output} (${(size / 1024 / 1024).toFixed(1)} MiB, ${eventCount.toLocaleString()} events; source JSON ${(traceJsonBytes / 1024 / 1024).toFixed(1)} MiB)`)
+    console.error(`Saved ${output} (${(size / 1024 / 1024).toFixed(1)} MiB, ${eventCount.toLocaleString()} trace events, ${consoleEvents.length.toLocaleString()} console events; source JSON ${(traceJsonBytes / 1024 / 1024).toFixed(1)} MiB)`)
   } finally {
     await rm(traceJsonTemporary, {force: true})
     await rm(messagePackTemporary, {force: true})
@@ -283,7 +308,7 @@ export default async function recordBrowserTrace({port = 9222,
   }
   return output
 }
-export async function encodeTraceJsonAsMessagePack(input: string, output: string) {
+export async function encodeTraceJsonAsMessagePack(input: string, output: string, consoleEvents: ReadonlyArray<BrowserConsoleEvent> = []) {
   const source = createReadStream(input, {encoding: 'utf8'})
   const lines = createInterface({
     input: source,
@@ -322,7 +347,7 @@ export async function encodeTraceJsonAsMessagePack(input: string, output: string
   let sawMetadata = false
   const metadataLines: Array<string> = []
   try {
-    await write(Uint8Array.of(0x82))
+    await write(Uint8Array.of(0x83))
     await write(messagePack.pack('traceEvents'))
     const eventCountOffset = position + 1
     await write(Uint8Array.of(0xDD, 0, 0, 0, 0))
@@ -388,6 +413,14 @@ export async function encodeTraceJsonAsMessagePack(input: string, output: string
     const metadataJson = metadataWithOuterBrace.slice(0, -1).trimEnd()
     await write(messagePack.pack('metadata'))
     await write(messagePack.pack(JSON.parse(metadataJson)))
+    await write(messagePack.pack('consoleEvents'))
+    const consoleEventHeader = Buffer.allocUnsafe(5)
+    consoleEventHeader[0] = 0xDD
+    consoleEventHeader.writeUInt32BE(consoleEvents.length, 1)
+    await write(consoleEventHeader)
+    for (const consoleEvent of consoleEvents) {
+      await write(messagePack.pack(consoleEvent))
+    }
     await flush()
     const count = Buffer.allocUnsafe(4)
     count.writeUInt32BE(eventCount)

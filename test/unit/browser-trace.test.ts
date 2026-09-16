@@ -12,7 +12,19 @@ test('encodes Chromium compact metadata footers without mistaking event metadata
   const output = resolve(root, 'trace.msgpack')
   try {
     await fs.writeFile(input, '{"traceEvents":[{"name":"first","args":{"items":[],"metadata":{"nested":true}}},\n{"name":"second","args":{}}],"metadata":{"clock-domain":"MONOTONIC","perfetto_trace_stats":{"total_buffers":1}}}')
-    const eventCount = await encodeTraceJsonAsMessagePack(input, output)
+    const consoleEvents = [{
+      method: 'Runtime.consoleAPICalled' as const,
+      params: {
+        type: 'error',
+        args: [{
+          type: 'string',
+          value: 'boom',
+        }],
+        timestamp: 1234,
+      },
+      sessionId: 'page-session',
+    }]
+    const eventCount = await encodeTraceJsonAsMessagePack(input, output, consoleEvents)
     expect(eventCount).toBe(2)
     expect(unpack(await fs.readFile(output))).toEqual({
       traceEvents: [
@@ -32,6 +44,7 @@ test('encodes Chromium compact metadata footers without mistaking event metadata
         'clock-domain': 'MONOTONIC',
         perfetto_trace_stats: {total_buffers: 1},
       },
+      consoleEvents,
     })
   } finally {
     await fs.remove(root)
