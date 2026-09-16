@@ -2,6 +2,7 @@ import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {useEffect, useMemo, useState} from 'react'
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
+import {color, mix, texture} from 'three/tsl'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 import useGraphicsQuality from 'use-graphics-quality'
 
@@ -71,21 +72,16 @@ export default function KnotLobby() {
   }), [wood])
   const ceilingMaterials = useDisposable(useMemo(() => {
     const variants = ceilingVariants.map(variant => {
-      if (variant.surface === 'plaster') {
-        return new ArchitecturalPlasterMaterial({
-          baseColor: variant.color,
-          map: plaster,
-          quality,
-          roughness: variant.roughness,
-        })
-      }
-      return new MeshStandardNodeMaterial({
-        color: variant.color,
+      const material = new MeshStandardNodeMaterial({
         envMapIntensity: 0.7,
-        map: wood,
         metalness: 0,
         roughness: variant.roughness,
       })
+      const detail = texture(variant.surface === 'wood' ? wood : plaster).rgb
+      const finish = mix(detail, color(variant.color), variant.surface === 'wood' ? 0.58 : 0.82)
+      material.colorNode = finish
+      material.emissiveNode = finish.mul(variant.surface === 'wood' ? 0.24 : 0.18)
+      return material
     })
     return {
       variants,
@@ -95,7 +91,7 @@ export default function KnotLobby() {
         }
       },
     }
-  }, [plaster, quality, wood]))
+  }, [plaster, wood]))
   const [ceilingVariant, setCeilingVariant] = useState(0)
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
