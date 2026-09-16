@@ -54,7 +54,6 @@ Output:
   (trace2.msgpack.br, trace3.msgpack.br, …) chosen via get-free.
 `
 const traceEventsPrefixPattern = /^\s*\{\s*"traceEvents"\s*:\s*\[/
-const metadataMarkerPattern = /^(.*)\],\s*"metadata"\s*:\s*(.*)$/
 const messagePack = new Packr({
   useRecords: false,
   variableMapSize: true,
@@ -71,6 +70,42 @@ type Pending = {
 }
 const consoleEventMethods = new Set<string>(['Log.entryAdded', 'Runtime.consoleAPICalled', 'Runtime.exceptionThrown'])
 const isConsoleEventMethod = (method: string | undefined): method is ConsoleEventMethod => method !== undefined && consoleEventMethods.has(method)
+const findJsonValueEnd = (json: string) => {
+  const first = json[0]
+  if (first !== '{' && first !== '[') {
+    return -1
+  }
+  const stack = [first]
+  let inString = false
+  let escaped = false
+  for (let index = 1; index < json.length; index++) {
+    const character = json[index]
+    if (inString) {
+      if (escaped) {
+        escaped = false
+      } else if (character === '\\') {
+        escaped = true
+      } else if (character === '"') {
+        inString = false
+      }
+      continue
+    }
+    if (character === '"') {
+      inString = true
+    } else if (character === '{' || character === '[') {
+      stack.push(character)
+    } else if (character === '}' || character === ']') {
+      const opener = stack.pop()
+      if (character === '}' && opener !== '{' || character === ']' && opener !== '[') {
+        return -1
+      }
+      if (!stack.length) {
+        return index + 1
+      }
+    }
+  }
+  return -1
+}
 export default async function recordBrowserTrace({port = 9222,
   buffer = 4_000_000_000,
   reload = false}: {
@@ -318,6 +353,7 @@ export default async function recordBrowserTrace({port = 9222,
   }
   return output
 }
+
 export async function encodeTraceJsonAsMessagePack(input: Readable | string, output: string, consoleEvents: ReadonlyArray<BrowserConsoleEvent> = []) {
   const source = typeof input === 'string' ? createReadStream(input, {encoding: 'utf8'}) : input
   const lines = createInterface({
@@ -348,35 +384,22 @@ export async function encodeTraceJsonAsMessagePack(input: Readable | string, out
     }
   }
   let eventCount = 0
+  let mapCount = 1
   let sawHeader = false
-  let sawMetadata = false
-  const metadataLines: Array<string> = []
+  let sawFooter = false
+  const footerLines: Array<string> = []
+  let mapCountOffset = 0
   let eventCountOffset = 0
   let completed = false
   try {
-    await write(Uint8Array.of(0x83))
+    mapCountOffset = position + 1
+    await write(Uint8Array.of(0xDF, 0, 0, 0, 0))
     await write(messagePack.pack('traceEvents'))
     eventCountOffset = position + 1
     await write(Uint8Array.of(0xDD, 0, 0, 0, 0))
-    const parseEvent = (line: string): unknown => {
-      let json = line.trim()
-      if (!json) {
-        return null
-      }
-      if (json.endsWith(',')) {
-        json = json.slice(0, -1)
-      }
-      return JSON.parse(json) as unknown
-    }
-    const writeParsedEvent = async (event: unknown) => {
-      await write(messagePack.pack(event))
+    const writeEvent = async (json: string) => {
+      await write(messagePack.pack(JSON.parse(json) as unknown))
       eventCount++
-    }
-    const writeEvent = async (line: string) => {
-      const event = parseEvent(line)
-      if (event !== null) {
-        await writeParsedEvent(event)
-      }
     }
     for await (let line of lines) {
       if (!sawHeader) {
@@ -385,41 +408,63 @@ export async function encodeTraceJsonAsMessagePack(input: Readable | string, out
           line = line.slice(header[0].length)
         } else if (!line.trim()) {
           continue
-        } else if (!line.trimStart().startsWith('{')) {
+        } else {
           throw new Error(`Unexpected Chromium trace JSON header: ${JSON.stringify(line.slice(0, 200))}`)
         }
         sawHeader = true
       }
-      if (!sawMetadata) {
-        try {
-          const event = parseEvent(line)
-          if (event !== null) {
-            await writeParsedEvent(event)
-            continue
-          }
-        } catch {}
-        const metadataMarker = metadataMarkerPattern.exec(line)
-        if (metadataMarker) {
-          await writeEvent(metadataMarker[1])
-          sawMetadata = true
-          metadataLines.push(metadataMarker[2])
-        } else {
-          await writeEvent(line)
-        }
-      } else {
-        metadataLines.push(line)
+      if (sawFooter) {
+        footerLines.push(line)
+        continue
       }
+      let json = line.trim()
+      if (!json) {
+        continue
+      }
+      if (json.startsWith(',')) {
+        json = json.slice(1).trimStart()
+      }
+      if (json.startsWith(']')) {
+        sawFooter = true
+        footerLines.push(json)
+        continue
+      }
+      const eventEnd = findJsonValueEnd(json)
+      if (eventEnd === -1) {
+        throw new Error(`Unexpected multiline Chromium trace event: ${JSON.stringify(json.slice(0, 200))}`)
+      }
+      await writeEvent(json.slice(0, eventEnd))
+      const remainder = json.slice(eventEnd).trim()
+      if (!remainder || remainder === ',') {
+        continue
+      }
+      if (remainder.startsWith(']')) {
+        sawFooter = true
+        footerLines.push(remainder)
+        continue
+      }
+      throw new Error(`Unexpected Chromium trace event suffix: ${JSON.stringify(remainder.slice(0, 200))}`)
     }
-    if (!sawMetadata) {
-      throw new Error('Chromium trace JSON ended without metadata.')
+    if (!sawFooter) {
+      throw new Error('Chromium trace JSON ended before the traceEvents array closed.')
     }
-    const metadataWithOuterBrace = metadataLines.join('\n').trim()
-    if (!metadataWithOuterBrace.endsWith('}')) {
+    const footer = footerLines.join('\n').trim()
+    if (!footer.startsWith(']')) {
       throw new Error('Unexpected Chromium trace JSON footer.')
     }
-    const metadataJson = metadataWithOuterBrace.slice(0, -1).trimEnd()
-    await write(messagePack.pack('metadata'))
-    await write(messagePack.pack(JSON.parse(metadataJson)))
+    const objectTail = footer.slice(1).trim()
+    let extraFields: Record<string, unknown> = {}
+    if (objectTail !== '}') {
+      if (!objectTail.startsWith(',')) {
+        throw new Error('Unexpected Chromium trace JSON footer.')
+      }
+      extraFields = JSON.parse(`{${objectTail.slice(1)}`) as Record<string, unknown>
+    }
+    for (const [key, value] of Object.entries(extraFields)) {
+      await write(messagePack.pack(key))
+      await write(messagePack.pack(value))
+      mapCount++
+    }
     await write(messagePack.pack('consoleEvents'))
     const consoleEventHeader = Buffer.allocUnsafe(5)
     consoleEventHeader[0] = 0xDD
@@ -428,6 +473,7 @@ export async function encodeTraceJsonAsMessagePack(input: Readable | string, out
     for (const consoleEvent of consoleEvents) {
       await write(messagePack.pack(consoleEvent))
     }
+    mapCount++
     await flush()
     completed = true
   } finally {
@@ -444,11 +490,14 @@ export async function encodeTraceJsonAsMessagePack(input: Readable | string, out
     }
   }
   const count = Buffer.allocUnsafe(4)
-  count.writeUInt32BE(eventCount)
   await using file = await open(output, 'r+')
+  count.writeUInt32BE(mapCount)
+  await file.write(count, 0, count.byteLength, mapCountOffset)
+  count.writeUInt32BE(eventCount)
   await file.write(count, 0, count.byteLength, eventCountOffset)
   return eventCount
 }
+
 async function brotliCompressFile(input: string, output: string) {
   const {size} = await stat(input)
   await pipeline(createReadStream(input), createBrotliCompress({

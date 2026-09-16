@@ -51,6 +51,27 @@ test('encodes Chromium compact metadata footers without mistaking event metadata
     await fs.remove(root)
   }
 })
+test('accepts Chromium footers without metadata and preserves extra top-level fields', async () => {
+  const root = await fs.mkdtemp(resolve(import.meta.dir, '../../private/agent/browser-trace-footer-test-'))
+  const input = resolve(root, 'trace.json')
+  const output = resolve(root, 'trace.msgpack')
+  try {
+    await fs.writeFile(input, '{"traceEvents":[{"name":"final","args":{"nested":[1,{"closingBracket":"]"}]}}],"systemTraceEvents":{"source":"etw"}}')
+    expect(await encodeTraceJsonAsMessagePack(input, output)).toBe(1)
+    expect(unpack(await fs.readFile(output))).toEqual({
+      traceEvents: [{
+        name: 'final',
+        args: {
+          nested: [1, {closingBracket: ']'}],
+        },
+      }],
+      systemTraceEvents: {source: 'etw'},
+      consoleEvents: [],
+    })
+  } finally {
+    await fs.remove(root)
+  }
+})
 test('encodes a gzip Chromium trace stream across chunk boundaries', async () => {
   const root = await fs.mkdtemp(resolve(import.meta.dir, '../../private/agent/browser-trace-gzip-test-'))
   const output = resolve(root, 'trace.msgpack')
