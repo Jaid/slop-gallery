@@ -86,6 +86,7 @@ function fixture(third = false) {
     dispose,
     main,
     reflection,
+    entry,
   }
 }
 async function flush() {
@@ -93,6 +94,19 @@ async function flush() {
     await Promise.resolve()
   }
 }
+test('quality placeholders use metallic lit flavor-color materials until full materials are ready', () => {
+  const f = fixture()
+  try {
+    const placeholder = f.materials.flavorMaterials[0]
+    expect(placeholder.isMeshStandardNodeMaterial).toBe(true)
+    expect(placeholder.color.getHexString()).toBe(new Color(f.entry.accent).getHexString())
+    expect(placeholder.metalness).toBe(0.85)
+    expect(placeholder.roughness).toBe(0.24)
+    expect(f.meshes[0].material).toBe(placeholder)
+  } finally {
+    f.dispose()
+  }
+})
 test('unmount waits for in-flight compilation before releasing resources and never activates late results', async () => {
   const f = fixture()
   let releases = 0
@@ -147,7 +161,7 @@ test('moving the player reprioritizes queued meshes without needing another visi
     f.dispose()
   }
 })
-test('performance mode keeps only flavor-color materials and never constructs full knot materials', async () => {
+test('performance mode keeps only lit flavor-color materials and never constructs full knot materials', async () => {
   const entry = knotsById.get('astra/lenticular_mirage')!
   let constructions = 0
   class TrackedMaterial extends KnotMaterial {
@@ -161,7 +175,11 @@ test('performance mode keeps only flavor-color materials and never constructs fu
     expect(constructions).toBe(0)
     expect(materials.fullMaterials).toHaveLength(0)
     expect(materials.flavorMaterials).toHaveLength(1)
-    expect(materials.flavorMaterials[0].color.getHexString()).toBe(new Color(entry.accent).getHexString())
+    const surface = materials.flavorMaterials[0]
+    expect(surface.isMeshStandardNodeMaterial).toBe(true)
+    expect(surface.color.getHexString()).toBe(new Color(entry.accent).getHexString())
+    expect(surface.metalness).toBe(0)
+    expect(surface.roughness).toBe(0.72)
   } finally {
     await materials.disposeAsync()
   }
