@@ -123,7 +123,7 @@ export default function KnotSpectation() {
       orbitKeys.current.clear()
       session.current = null
       focusAmount.current = 0
-      setKnotFocus(0, 1)
+      setKnotFocus(0, 1, 0)
       if (focusPipelineActive.current) {
         focusPipelineActive.current = false
         galleryEvents.dispatchEvent(new Event('knot-focus-end'))
@@ -198,7 +198,7 @@ export default function KnotSpectation() {
         },
       }
       focusPipelineActive.current = true
-      setKnotFocus(0, camera.position.distanceTo(target) + session.current.orbit.radius)
+      setKnotFocus(0, camera.position.distanceTo(target) + session.current.orbit.radius, session.current.orbit.getProximity(target))
       galleryEvents.dispatchEvent(new Event('knot-focus-start'))
       setCameraFocused(true)
       useGallery.setState({inspecting: state.active})
@@ -286,7 +286,7 @@ export default function KnotSpectation() {
       focusAmount.current = 0
     }
     if (!current) {
-      setKnotFocus(focusAmount.current, 1)
+      setKnotFocus(focusAmount.current, 1, 0)
       if (!focusAmount.current && focusPipelineActive.current) {
         focusPipelineActive.current = false
         galleryEvents.dispatchEvent(new Event('knot-focus-end'))
@@ -296,7 +296,6 @@ export default function KnotSpectation() {
     const object = propObjects.get(current.id)
     if (object?.group.visible) {
       object.group.getWorldPosition(center.current)
-      setKnotFocus(focusAmount.current, camera.position.distanceTo(center.current) + current.orbit.radius)
       const distanceDirection = Number(distanceKeys.current.has('KeyS')) - Number(distanceKeys.current.has('KeyW'))
       const orbitDirection = Number(orbitKeys.current.has('KeyD')) - Number(orbitKeys.current.has('KeyA'))
       current.orbit.adjustDistance(distanceDirection * inspectionDistanceSpeed * delta)
@@ -306,7 +305,11 @@ export default function KnotSpectation() {
       orbitKeys.current.clear()
       current.orbit.release()
     }
-    if (current.orbit.update(center.current, delta)) {
+    const complete = current.orbit.update(center.current, delta)
+    if (object?.group.visible && !complete) {
+      setKnotFocus(focusAmount.current, camera.position.distanceTo(center.current) + current.orbit.radius, current.orbit.getProximity(center.current))
+    }
+    if (complete) {
       current.restoreControls()
       distanceKeys.current.clear()
       orbitKeys.current.clear()

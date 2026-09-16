@@ -52,6 +52,11 @@ export default class OrbitInspection {
     this.distanceFactor = MathUtils.clamp(this.distanceFactor + amount, minDistanceFactor, maxDistanceFactor)
   }
 
+  getProximity(center: Vector3) {
+    const distanceFactor = this.camera.position.distanceTo(center) / this.getBaseDistance()
+    return 1 - MathUtils.clamp((distanceFactor - minDistanceFactor) / (maxDistanceFactor - minDistanceFactor), 0, 1)
+  }
+
   release() {
     this.returning = true
   }
@@ -81,9 +86,7 @@ export default class OrbitInspection {
       this.targetRotation.copy(this.originalRotation)
     } else {
       this.pivot.copy(center)
-      const vertical = MathUtils.degToRad(fov)
-      const horizontal = 2 * Math.atan(Math.tan(vertical / 2) * this.camera.aspect)
-      const distance = this.radius / Math.sin(Math.min(vertical, horizontal) / 2) * 0.96 * this.distanceFactor
+      const distance = this.getBaseDistance() * this.distanceFactor
       const floorLimit = Math.acos(MathUtils.clamp((0.18 - center.y) / distance, -1, 1))
       const phi = Math.min(this.phi, floorLimit)
       this.sphere.set(distance, phi, this.theta)
@@ -99,5 +102,11 @@ export default class OrbitInspection {
       return true
     }
     return false
+  }
+
+  private getBaseDistance() {
+    const vertical = MathUtils.degToRad(inspectionFov)
+    const horizontal = 2 * Math.atan(Math.tan(vertical / 2) * this.camera.aspect)
+    return this.radius / Math.sin(Math.min(vertical, horizontal) / 2) * 0.96
   }
 }

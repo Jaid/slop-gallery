@@ -10,7 +10,7 @@ import {float, length, max, mix, mrt, normalView, output, pass, screenUV, smooth
 import {RenderPipeline} from 'three/webgpu'
 
 import {galleryEvents} from '#src/lib/gallery/actions.ts'
-import {getKnotFocus, getKnotFocusDistance, getPlayerZoom} from '#src/lib/rendering/playerView.ts'
+import {getKnotFocus, getKnotFocusDistance, getKnotFocusProximity, getPlayerZoom} from '#src/lib/rendering/playerView.ts'
 import tiltShift from '#src/lib/rendering/tiltShift.ts'
 
 type PostprocessingProps = {
@@ -36,6 +36,7 @@ const Postprocessing = ({contactDarkening = false, knotFocus = false, quality = 
     const viewZ = scenePass.getViewZNode()
     const knotAmount = uniform(0).onRenderUpdate(knotFocus ? getKnotFocus : () => 0)
     const knotDistance = uniform(1).onRenderUpdate(knotFocus ? getKnotFocusDistance : () => 1)
+    const knotProximity = uniform(0).onRenderUpdate(knotFocus ? getKnotFocusProximity : () => 0)
     const zoomAmount = uniform(0).onRenderUpdate(quality ? getPlayerZoom : () => 0)
     let base: Node<'vec4'> = color
     let ambientOcclusion: ReturnType<typeof ao> | undefined
@@ -50,7 +51,9 @@ const Postprocessing = ({contactDarkening = false, knotFocus = false, quality = 
       base = color.mul(vec4(vec3(ambientOcclusion.getTextureNode().r), 1))
     }
     // One half-resolution separable Gaussian serves both Z zoom tilt-shift and Knot background focus.
-    const blurStrength = max(zoomAmount.mul(1.5), knotAmount.mul(1.25))
+    // Keep the default inspection distance near the old strength while making close views substantially blurrier.
+    const knotBlurStrength = knotProximity.mul(knotProximity).mul(1.35).add(0.75).mul(knotAmount)
+    const blurStrength = max(zoomAmount.mul(1.5), knotBlurStrength)
     const blurPass = gaussianBlur(base, blurStrength, 3, {resolutionScale: 1})
     const shifted = quality ? tiltShift(base, blurPass, zoomAmount) : base
     // KnotSpectation supplies the far edge of the Knot's bounding sphere, so only geometry behind it is blurred.
