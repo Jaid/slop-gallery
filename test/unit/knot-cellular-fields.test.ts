@@ -28,6 +28,7 @@ describe('Knot cellular fields', () => {
     const cases: Array<string> = [
       'celestial_astrolabe',
       'abyssal_bioluminescence',
+      'abyssal_lumen',
       'elytra_iridescence',
       'photonic_morpho',
       'opaline_aerogel',
@@ -49,6 +50,13 @@ describe('Knot cellular fields', () => {
       expect(text, id).toContain('cellularPoints(')
       expect(text, id).not.toContain('mx_cell_noise_float(')
     }
+  })
+  test('rounds Abyssal Lumen spots without changing their drift, pulse or proximity response', async () => {
+    const text = await source('abyssal_lumen')
+    expect(text).toContain('cellularPoints(p.mul(30).add(time.mul(0.03)), 0.06, 0.24, 0.86)')
+    expect(text).toContain('const pulse = time.mul(0.8).add(bodyNoise.mul(4)).sin().mul(0.5).add(0.5)')
+    expect(text).toContain("color('#ff4fd8').mul(spots).mul(pulse).mul(intimate.mul(0.8).add(0.3))")
+    expect(text).toContain('this.transmission = 0.6')
   })
   test('retains stochastic alpha scintillation without moving cell-shaped patches', async () => {
     const text = await source('radiometric_guilloche')

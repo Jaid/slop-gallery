@@ -1,7 +1,8 @@
 import type {Texture} from 'three/webgpu'
 
-import {color, mix, mx_cell_noise_float, mx_fractal_noise_float, mx_noise_float, time, vec3} from 'three/tsl'
+import {color, mix, mx_fractal_noise_float, mx_noise_float, time, vec3} from 'three/tsl'
 
+import {cellularPoints} from '../../lib/cellularPoints.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {liquidNormal} from '../../lib/liquidNormal.ts'
 import {opticalLine} from '../../lib/opticalLine.ts'
@@ -18,7 +19,8 @@ export default class AbyssalLumenMaterial extends KnotMaterial {
     const bodyNoise = mx_fractal_noise_float(p.mul(5).add(drift), 3, 2, 0.5)
     const veinField = mx_noise_float(p.mul(18).add(bodyNoise.mul(2)).sub(drift.mul(2)))
     const vein = opticalLine(veinField.mul(24).sin(), 0.025)
-    const spots = mx_cell_noise_float(p.mul(30).add(time.mul(0.03))).smoothstep(0.86, 0.9)
+    // Confine each bioluminescent spot to a soft round core, not an entire noise cell.
+    const spots = cellularPoints(p.mul(30).add(time.mul(0.03)), 0.06, 0.24, 0.86)
     const pulse = time.mul(0.8).add(bodyNoise.mul(4)).sin().mul(0.5).add(0.5)
     const flesh = mix(color('#021014'), color('#0f4a4a'), bodyNoise.mul(0.5).add(0.5))
     this.colorNode = flesh
