@@ -3,6 +3,18 @@ import type {Camera} from 'three/webgpu'
 import {Easing, Tween} from '@tweenjs/tween.js'
 import {PerspectiveCamera} from 'three/webgpu'
 
+export type EgoZoomMode = 'casual' | 'extended' | 'none'
+export type EgoZoomOptions = {
+  /** FOV divisor while zoom is held. Defaults to 2. */
+  casualZoomFactor: number
+  /** Seconds to enter/leave casual zoom. Defaults to 0.2; zero is instant. */
+  casualZoomTransition: number
+  /** FOV divisor while zoom and sprint are held at rest. Defaults to 3. */
+  extendedZoomFactor: number
+  /** Seconds to enter/leave extended zoom. Defaults to 0.2; zero is instant. */
+  extendedZoomTransition: number
+}
+
 type ZoomTweenState = {
   amount: number
   fov: number
@@ -12,6 +24,7 @@ type ZoomTweenState = {
 export default class EgoZoom {
   private amount = 0
   private camera?: PerspectiveCamera
+  private mode: EgoZoomMode = 'none'
   private original?: number
   private target?: number
   private time = 0
@@ -28,13 +41,14 @@ export default class EgoZoom {
     return this.amount
   }
 
-  update(camera: Camera, held: boolean, factor: number, transition: number, delta: number) {
+  update(camera: Camera, mode: EgoZoomMode, options: EgoZoomOptions, delta: number) {
     if (this.camera && (camera !== this.camera || this.camera.fov !== this.written)) {
       this.reset()
     }
     if (!(camera instanceof PerspectiveCamera)) {
       return this.reset()
     }
+    const held = mode !== 'none'
     if (!this.camera) {
       if (!held) {
         return this.amount
@@ -43,7 +57,11 @@ export default class EgoZoom {
       this.original = camera.fov
       this.written = camera.fov
     }
+    const factor = mode === 'extended' ? options.extendedZoomFactor : options.casualZoomFactor
     const target = held ? this.original! / factor : this.original!
+    // Leaving extended zoom uses its own duration too, including a direct release to normal FOV.
+    const transition = mode === 'extended' || this.mode === 'extended' ? options.extendedZoomTransition : options.casualZoomTransition
+    this.mode = mode
     if (target !== this.target) {
       this.retarget(target, held ? 1 : 0, transition)
     }
@@ -57,6 +75,7 @@ export default class EgoZoom {
   private clear() {
     this.amount = 0
     this.camera = undefined
+    this.mode = 'none'
     this.original = undefined
     this.target = undefined
     this.tween = undefined
@@ -87,7 +106,7 @@ export default class EgoZoom {
         amount: targetAmount,
         fov: target,
       }, transition * 1000)
-      .easing(Easing.Cubic.InOut)
+      .easing(Easing.Quintic.InOut)
       .onUpdate(({amount, fov}) => {
         if (this.tween === tween) {
           this.amount = amount

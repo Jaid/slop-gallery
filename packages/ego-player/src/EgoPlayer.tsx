@@ -1,4 +1,5 @@
 import type {EgoDump} from './EgoDiagnostics.ts'
+import type {EgoZoomMode, EgoZoomOptions} from './EgoZoom.ts'
 import type {EgoOptions} from './options.ts'
 import type {EgoInputReader, EgoPlayerHandle, EgoPosition, EgoRotation, EgoState, EgoToggle} from './types.ts'
 import type {RapierCollider, RapierRigidBody, RigidBodyProps} from '@react-three/rapier'
@@ -18,7 +19,7 @@ import {getCapsuleHalfHeight} from './math.ts'
 import {resolveEgoOptions} from './options.ts'
 
 export type EgoPointerLockOptions = Omit<ComponentProps<typeof PointerLockControls>, 'camera' | 'domElement' | 'ref'>
-export type EgoPlayerProps = EgoOptions & {
+export type EgoPlayerProps = EgoOptions & Partial<EgoZoomOptions> & {
   /** Only the camera position writer; disable while another system owns the view. */
   cameraEnabled?: EgoToggle
   children?: ReactNode
@@ -37,7 +38,7 @@ export type EgoPlayerProps = EgoOptions & {
   onStep?: (state: EgoState) => void
   /** Called after physics with a detached snapshot. */
   onUpdate?: (state: EgoState) => void
-  /** Called as the eased zoom changes. Zero is normal FOV and one is fully zoomed. */
+  /** Called as the eased zoom changes. Zero is normal FOV; one is either fully zoomed mode. */
   onZoomChange?: (amount: number) => void
   /** Initial camera pitch in radians; updates intentionally reset camera orientation. */
   pitch?: number
@@ -52,23 +53,35 @@ export type EgoPlayerProps = EgoOptions & {
   userData?: RigidBodyProps['userData']
   /** Initial camera yaw in radians; updates intentionally reset camera orientation. */
   yaw?: number
-  /** FOV divisor while zoom is held. Defaults to 2. */
-  zoomFactor?: number
-  /** Duration in seconds for the eased FOV tween in either direction. Defaults to 0.2; zero is instant. */
-  zoomTransition?: number
 }
 
 const initialPosition: EgoPosition = [0, 0.05, 0]
 const readToggle = (value: EgoToggle) => {
   return typeof value === 'function' ? value() : value
 }
-export default function EgoPlayer({cameraEnabled = true, children, enabled = true, fallbackPosition, input, onDump, onInteract, onZoomChange, zoomFactor = 2.5, zoomTransition = 0.2, onInput, onStep, onUpdate, pitch = 0, pointerLock = true, position = initialPosition, ref, requirePointerLock = true, userData, yaw = 0, ...options}: EgoPlayerProps) {
+export default function EgoPlayer({cameraEnabled = true, casualZoomFactor = 2, casualZoomTransition = 0.2, children, enabled = true, extendedZoomFactor = 3, extendedZoomTransition = 0.2, fallbackPosition, input, onDump, onInteract, onZoomChange, onInput, onStep, onUpdate, pitch = 0, pointerLock = true, position = initialPosition, ref, requirePointerLock = true, userData, yaw = 0, ...options}: EgoPlayerProps) {
   const [defaultUserData] = useState(() => ({isPlayer: true}))
-  if (!Number.isFinite(zoomFactor) || zoomFactor < 1) {
-    throw new RangeError('ego-player: zoomFactor must be finite and at least 1.')
+  for (const [name, factor] of Object.entries({
+    casualZoomFactor,
+    extendedZoomFactor,
+  })) {
+    if (!Number.isFinite(factor) || factor < 1) {
+      throw new RangeError(`ego-player: ${name} must be finite and at least 1.`)
+    }
   }
-  if (!Number.isFinite(zoomTransition) || zoomTransition < 0) {
-    throw new RangeError('ego-player: zoomTransition must be finite and nonnegative.')
+  for (const [name, transition] of Object.entries({
+    casualZoomTransition,
+    extendedZoomTransition,
+  })) {
+    if (!Number.isFinite(transition) || transition < 0) {
+      throw new RangeError(`ego-player: ${name} must be finite and nonnegative.`)
+    }
+  }
+  const zoomOptions = {
+    casualZoomFactor,
+    casualZoomTransition,
+    extendedZoomFactor,
+    extendedZoomTransition,
   }
   const actionKeys = useRef({
     interact: false,
@@ -231,7 +244,14 @@ export default function EgoPlayer({cameraEnabled = true, children, enabled = tru
     }
     const keys = input()
     const active = readToggle(enabled) && !keys.modifier && (!requirePointerLock || renderer.domElement.ownerDocument.pointerLockElement === renderer.domElement)
-    reportZoom(zoom.update(camera, active && readToggle(cameraEnabled) && !!keys.zoom, zoomFactor, zoomTransition, delta))
+    // Intent cancels extended zoom before acceleration; physical motion also excludes coasting.
+    // The small speed tolerance ignores resting-contact noise, not camera bob or mouse look.
+    const stationary = motor.grounded && motor.horizontalSpeed < 0.01 && !keys.forward && !keys.backward && !keys.left && !keys.right && !keys.jump
+    let zoomMode: EgoZoomMode = 'none'
+    if (active && readToggle(cameraEnabled) && keys.zoom) {
+      zoomMode = keys.sprint && stationary ? 'extended' : 'casual'
+    }
+    reportZoom(zoom.update(camera, zoomMode, zoomOptions, delta))
     if (active && keys.interact && !actionKeys.current.interact) {
       onInteract?.()
     }

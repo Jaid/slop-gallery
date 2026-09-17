@@ -121,7 +121,8 @@ test('React lifecycle preserves the motor, camera ownership and ref contract wit
     const dumps: Array<EgoDump> = []
     const zoomAmounts: Array<number> = []
     const actions = {
-      zoomTransition: 0,
+      casualZoomTransition: 0,
+      extendedZoomTransition: 0,
       onZoomChange: (amount: number) => zoomAmounts.push(amount),
       onInteract: () => interactions++,
       onDump: (dump: EgoDump) => {
