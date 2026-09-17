@@ -23,7 +23,7 @@ Zoom sweeps follow `ego-player`'s actual FOV transition direction and duration. 
 
 ## Movement
 
-The player adapter passes collision-resolved horizontal speed to `SoundEngine.step(wood, speed)`. Each stride combines a low impact, filtered sole noise and a delayed scuff. Speed continuously changes amplitude, pitch, brightness and duration; consecutive steps use different seeded noise and subtle pitch variation. Wooden and hard floors have distinct recipes. The stride callback controls cadence without a separate fixed footstep cooldown.
+The player adapter passes collision-resolved horizontal speed and crouch state to `SoundEngine.step(wood, speed, crouching)`. Each stride combines a low impact, filtered sole noise and a delayed scuff. Speed continuously changes amplitude, pitch, brightness and duration; crouching selects a quieter, darker, softer recipe while preserving surface differences. Consecutive steps use different seeded noise and subtle pitch variation. Wooden and hard floors have distinct recipes. The stride callback controls cadence without a separate fixed footstep cooldown.
 
 Landing sounds use `ego-player`'s downward speed immediately before collision resolution, not the nearly zero post-impact vertical velocity. Larger impacts are heavier, with a bounded maximum. Initial placement and teleport settling are silent, as are contact interruptions shorter than 0.06 seconds. A landing suppresses a duplicate footfall for 0.1 seconds, then ordinary strides resume.
 
@@ -37,4 +37,4 @@ The reusable `ego-player` package emits `onLand` and `onZoomTransition` but cont
 
 Run `bun test ./test/unit/sound-engine.test.ts ./test/unit/sound-effects.test.ts ./test/unit/player-audio.test.ts ./test/unit/soundboard-layout.test.ts` and `bun run --cwd packages/ego-player test`.
 
-With the usual development server and existing debug browser running, `bun test/browser/run.ts playerAudio.ts` renders silent offline buffers. It checks all eight cues, speed/impact-dependent output, headroom, silent tails, held-zoom cancellation and mid-transition reversal. It does not play audio, simulate input, navigate, focus or resize the user's browser. This checks synthesis and lifecycle behavior, not subjective in-game loudness or timbre.
+With the usual development server and existing debug browser running, `bun test/browser/run.ts playerAudio.ts` renders silent offline buffers. It checks all eight cues, speed/crouch/impact-dependent output, headroom, silent tails, held-zoom cancellation and mid-transition reversal. It does not play audio, simulate input, navigate, focus or resize the user's browser. This checks synthesis and lifecycle behavior, not subjective in-game loudness or timbre.
