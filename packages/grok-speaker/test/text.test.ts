@@ -35,10 +35,18 @@ describe('text', () => {
     })).toBe(`<${modifier}>Test.</${modifier}>`)
   })
   test.each([
-    '', ' ', [], null, 3, {text: 'a'}, {action: 'dance'}, {
+    '',
+    ' ',
+    [],
+    null,
+    3,
+    {text: 'a'},
+    {action: 'dance'},
+    {
       text: 'a',
       modifier: 'shout',
-    }, {
+    },
+    {
       action: 'pause',
       text: 'a',
     },

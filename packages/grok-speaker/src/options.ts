@@ -23,7 +23,7 @@ export default function resolveOptions(input: GrokSpeakerOptions) {
   if (typeof key !== 'string' || !key || /\s/u.test(key)) {
     throw new TypeError('A nonempty API key without whitespace is required.')
   }
-  if (!['auto', 'xai', 'openrouter'].includes(provider)) {
+  if (!['auto', 'openrouter', 'xai'].includes(provider)) {
     throw new TypeError('Unknown speech provider.')
   }
   // Never test an unknown credential against multiple providers.

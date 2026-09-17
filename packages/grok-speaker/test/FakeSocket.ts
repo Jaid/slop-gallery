@@ -4,8 +4,10 @@ export default class FakeSocket extends EventTarget {
   static instances: Array<FakeSocket> = []
   static readonly OPEN = 1
   readyState = 0
-  sent: Array<{delta?: string
-    type: string}> = []
+  sent: Array<{
+    delta?: string
+    type: string
+  }> = []
 
   constructor(readonly url: URL, readonly options: Bun.WebSocketOptions) {
     super()
@@ -51,7 +53,9 @@ export default class FakeSocket extends EventTarget {
     if (this.readyState !== FakeSocket.OPEN) {
       throw new Error('Socket is not open.')
     }
-    this.sent.push(JSON.parse(data) as {delta?: string
-      type: string})
+    this.sent.push(JSON.parse(data) as {
+      delta?: string
+      type: string
+    })
   }
 }

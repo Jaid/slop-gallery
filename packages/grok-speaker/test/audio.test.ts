@@ -39,7 +39,8 @@ test.each([24_000, 48_000])('decodes truthful %s Hz timed PCM', rate => {
       char: 'H',
       start: 0,
       end: 0.2,
-    }, {
+    },
+    {
       char: 'i',
       start: 0.2,
       end: 1,
@@ -53,14 +54,16 @@ test('accepts timestamp pairs and objects, preserving provider alignment', () =>
       {
         start: 0,
         end: 0.5,
-      }, [0.5, 1],
+      },
+      [0.5, 1],
     ],
   })).toEqual([
     {
       char: '<',
       start: 0,
       end: 0.5,
-    }, {
+    },
+    {
       char: 'a',
       start: 0.5,
       end: 1,
@@ -68,16 +71,21 @@ test('accepts timestamp pairs and objects, preserving provider alignment', () =>
   ])
 })
 test.each([
-  null, {}, {
+  null,
+  {},
+  {
     graph_chars: ['a'],
     graph_times: [],
-  }, {
+  },
+  {
     graph_chars: ['a'],
     graph_times: [null],
-  }, {
+  },
+  {
     graph_chars: ['a'],
     graph_times: [[1, 0]],
-  }, {
+  },
+  {
     graph_chars: ['a'],
     graph_times: [[0, Infinity]],
   },

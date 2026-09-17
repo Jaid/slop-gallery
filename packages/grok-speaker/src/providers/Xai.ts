@@ -47,8 +47,10 @@ export default class Xai extends Provider {
       })
       signal.throwIfAborted()
       const activeSocket = socket
-      const queue: Array<{event: SpeechEvent
-        size: number}> = []
+      const queue: Array<{
+        event: SpeechEvent
+        size: number
+      }> = []
       let buffered = 0
       let remainder: Uint8Array = new Uint8Array
       let received = false

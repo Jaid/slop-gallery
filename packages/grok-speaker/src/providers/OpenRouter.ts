@@ -50,13 +50,14 @@ export default class OpenRouter extends Provider {
         const bytes = remainder.length ? Buffer.concat([remainder, value]) : value
         const length = bytes.byteLength - bytes.byteLength % 2
         remainder = Uint8Array.from(bytes.subarray(length))
-        if (length) {
-          received = true
-          yield {
-            type: 'audio',
-            pcm: bytes.subarray(0, length),
-            sampleRate,
-          }
+        if (!length) {
+          continue
+        }
+        received = true
+        yield {
+          type: 'audio',
+          pcm: bytes.subarray(0, length),
+          sampleRate,
         }
       }
       if (remainder.length || !received) {
