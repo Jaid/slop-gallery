@@ -148,7 +148,9 @@ test('automatically discovers canvas-textures through aliased imports', async ()
     }})
   `)
   const path = source.path.scope.getBinding('result')!.path.get('init')
-  if (Array.isArray(path) || !path.isCallExpression()) { throw new Error('Expected call initializer') }
+  if (Array.isArray(path) || !path.isCallExpression()) {
+    throw new Error('Expected call initializer')
+  }
   const evaluated = await new Recipe(graph, adapter).evaluate(path, 1000)
   const writer = new SnapshotWriter(adapter, 1024 * 1024, evaluated.isShared)
   const bytes = writer.write(evaluated.value)
