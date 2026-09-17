@@ -1,8 +1,9 @@
 import type {Texture} from 'three/webgpu'
 
-import {color, float, mix, mx_cell_noise_float, mx_fractal_noise_float, mx_noise_float, time, uv, vec3} from 'three/tsl'
+import {color, float, mix, mx_fractal_noise_float, mx_noise_float, time, uv, vec3} from 'three/tsl'
 
 import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
+import {cellularPoints} from '../../lib/cellularPoints.ts'
 import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {opticalLine} from '../../lib/opticalLine.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
@@ -48,10 +49,10 @@ export default class Material extends BaseKnotMaterial {
       .add(tube.y.mul(Math.PI * 2)).sin().mul(0.5).add(0.5).pow(7)
     const pulseTertiary = tube.x.mul(Math.PI * 2 * 3).sub(time.mul(0.65))
       .sin().mul(0.5).add(0.5).pow(9).mul(0.6)
-    // Nearby floating spores.
+    // Nearby spores. Use compact round features; thresholding raw cell noise
+    // lights whole lattice cells, which reads as tiny floating rectangles.
     const sporeQ = p.mul(140).add(vec3(time.mul(0.08), 0, time.mul(-0.06)))
-    const spore = mx_cell_noise_float(sporeQ)
-    const spores = spore.smoothstep(0.965, 0.982)
+    const spores = cellularPoints(sporeQ, 0.03, 0.13, 0.78)
     // Colour pair — cyan when the pulse passes, violet behind it.
     const bioCyan = color('#44ffdd')
     const bioViolet = color('#aa66ff')
