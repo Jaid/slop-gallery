@@ -63,7 +63,7 @@ const initialPosition: EgoPosition = [0, 0.05, 0]
 const readToggle = (value: EgoToggle) => {
   return typeof value === 'function' ? value() : value
 }
-export default function EgoPlayer({cameraEnabled = true, casualZoomFactor = 2, casualZoomTransition = 0.2, children, enabled = true, extendedZoomFactor = 3, extendedZoomTransition = 0.2, fallbackPosition, input, onDump, onInteract, onLand, onZoomChange, onZoomTransition, onInput, onStep, onUpdate, pitch = 0, pointerLock = true, position = initialPosition, ref, requirePointerLock = true, userData, yaw = 0, ...options}: EgoPlayerProps) {
+export default function EgoPlayer({cameraEnabled = true, casualZoomFactor = 2, casualZoomTransition = 0.2, children, enabled = true, extendedZoomFactor = 4, extendedZoomTransition = 0.5, fallbackPosition, input, onDump, onInteract, onLand, onZoomChange, onZoomTransition, onInput, onStep, onUpdate, pitch = 0, pointerLock = true, position = initialPosition, ref, requirePointerLock = true, userData, yaw = 0, ...options}: EgoPlayerProps) {
   const [defaultUserData] = useState(() => ({isPlayer: true}))
   for (const [name, factor] of Object.entries({
     casualZoomFactor,

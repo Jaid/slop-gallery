@@ -117,7 +117,7 @@ test('extended zoom requires Shift after Z and rest, yields held Shift to moveme
       sprint: true,
     }
     frame()
-    expect(camera.fov).toBe(normalFov / 3)
+    expect(camera.fov).toBe(normalFov / 4)
     expect(zoomAmounts).toHaveLength(casualReports)
     expect(transitions.at(-1)).toEqual({
       from: 'casual',
@@ -140,7 +140,7 @@ test('extended zoom requires Shift after Z and rest, yields held Shift to moveme
         sprint: true,
       }
       tick(60)
-      expect(camera.fov).toBe(normalFov / 3)
+      expect(camera.fov).toBe(normalFov / 4)
       keys = {
         zoom: true,
         sprint: true,
@@ -164,7 +164,7 @@ test('extended zoom requires Shift after Z and rest, yields held Shift to moveme
       tick()
       expect(camera.fov).toBe(normalFov / 2)
       tick(60)
-      expect(camera.fov).toBe(normalFov / 3)
+      expect(camera.fov).toBe(normalFov / 4)
     }
     keys = {
       zoom: true,
@@ -186,7 +186,7 @@ test('extended zoom requires Shift after Z and rest, yields held Shift to moveme
       sprint: true,
     }
     tick(60)
-    expect(camera.fov).toBe(normalFov / 3)
+    expect(camera.fov).toBe(normalFov / 4)
     keys = {
       zoom: true,
       sprint: true,
@@ -206,7 +206,7 @@ test('extended zoom requires Shift after Z and rest, yields held Shift to moveme
     expect(camera.fov).toBe(normalFov / 2)
     tick(180)
     expect(handle.getState()?.grounded).toBe(true)
-    expect(camera.fov).toBe(normalFov / 3)
+    expect(camera.fov).toBe(normalFov / 4)
     expect(landings).toHaveLength(1)
     expect(landings[0]).toBeGreaterThan(1)
     handle.teleport([0, 5, 0])
@@ -218,7 +218,7 @@ test('extended zoom requires Shift after Z and rest, yields held Shift to moveme
     expect(handle.getState()?.grounded).toBe(false)
     expect(camera.fov).toBe(normalFov / 2)
     tick(180)
-    expect(camera.fov).toBe(normalFov / 3)
+    expect(camera.fov).toBe(normalFov / 4)
     keys = {
       zoom: true,
       sprint: true,
@@ -231,32 +231,32 @@ test('extended zoom requires Shift after Z and rest, yields held Shift to moveme
       sprint: true,
     }
     frame()
-    expect(camera.fov).toBe(normalFov / 3)
+    expect(camera.fov).toBe(normalFov / 4)
     ownerDocument.pointerLockElement = null
     frame()
     expect(camera.fov).toBe(normalFov)
     ownerDocument.pointerLockElement = canvas
     frame()
-    expect(camera.fov).toBe(normalFov / 3)
+    expect(camera.fov).toBe(normalFov / 4)
     enabled = false
     frame()
     expect(camera.fov).toBe(normalFov)
     enabled = true
     frame()
-    expect(camera.fov).toBe(normalFov / 3)
+    expect(camera.fov).toBe(normalFov / 4)
     cameraEnabled = false
     frame()
     expect(camera.fov).toBe(normalFov)
     cameraEnabled = true
     frame()
-    expect(camera.fov).toBe(normalFov / 3)
+    expect(camera.fov).toBe(normalFov / 4)
     const beforeRelease = transitions.length
     handle.releaseZoom()
     expect(transitions).toHaveLength(beforeRelease)
     expect(camera.fov).toBe(normalFov)
     expect(zoomAmounts.at(-1)).toBe(0)
     frame()
-    expect(camera.fov).toBe(normalFov / 3)
+    expect(camera.fov).toBe(normalFov / 4)
     const body = handle.body
     await act(async () => root.render(render({
       casualZoomFactor: 3,
@@ -296,12 +296,12 @@ test('extended zoom requires Shift after Z and rest, yields held Shift to moveme
       sprint: true,
     }
     frame(0)
-    frame(0.05)
-    expect(camera.fov).toBeCloseTo(normalFov / 2 - normalFov / 6 * 0.015625, 8)
-    frame(0.05)
-    expect(camera.fov).toBeCloseTo(normalFov * 5 / 12, 8)
-    frame(0.1)
-    expect(camera.fov).toBeCloseTo(normalFov / 3, 8)
+    frame(0.125)
+    expect(camera.fov).toBeCloseTo(normalFov / 2 - normalFov / 4 * 0.015625, 8)
+    frame(0.125)
+    expect(camera.fov).toBeCloseTo(normalFov * 3 / 8, 8)
+    frame(0.25)
+    expect(camera.fov).toBeCloseTo(normalFov / 4, 8)
     keys = {
       zoom: true,
       sprint: true,
@@ -311,7 +311,7 @@ test('extended zoom requires Shift after Z and rest, yields held Shift to moveme
     const beforeSprint = handle.body!.translation().z
     tick()
     expect(handle.body!.translation().z).toBeLessThan(beforeSprint)
-    expect(camera.fov).toBeGreaterThan(normalFov / 3)
+    expect(camera.fov).toBeGreaterThan(normalFov / 4)
     expect(camera.fov).toBeLessThan(normalFov / 2)
     // Sprint acceleration proceeds while the extended-zoom retraction is still animating.
     tick(90)
@@ -322,7 +322,7 @@ test('extended zoom requires Shift after Z and rest, yields held Shift to moveme
       sprint: true,
     }
     tick(90)
-    expect(camera.fov).toBe(normalFov / 3)
+    expect(camera.fov).toBe(normalFov / 4)
     expect(zoomAmounts.every(amount => amount >= 0 && amount <= 1)).toBe(true)
     await act(async () => root.render(render({}, false)))
     expect(camera.fov).toBe(normalFov)

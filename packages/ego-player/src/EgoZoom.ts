@@ -16,9 +16,9 @@ export type EgoZoomOptions = {
   casualZoomFactor: number
   /** Seconds to enter/leave casual zoom. Defaults to 0.2; zero is instant. */
   casualZoomTransition: number
-  /** FOV divisor while zoom and sprint are held at rest. Defaults to 3. */
+  /** FOV divisor while zoom and sprint are held at rest. Defaults to 4. */
   extendedZoomFactor: number
-  /** Seconds to enter/leave extended zoom. Defaults to 0.2; zero is instant. */
+  /** Seconds to enter/leave extended zoom. Defaults to 0.5; zero is instant. */
   extendedZoomTransition: number
 }
 
