@@ -142,6 +142,18 @@ describe('Knot cellular fields', () => {
     expect(lattice).toContain('time.mul(2.5).add(random.x.mul(19))')
     expect(lattice).toContain('glow.addAssign(tint.mul(dot).mul(shimmer))')
   })
+  test('keeps Cryo Bloom frost continuous and places cracks on real crystal boundaries', async () => {
+    const text = await source('cryo_bloom')
+    expect(text).not.toContain('mx_cell_noise_float')
+    expect(text).not.toContain('cellNoiseVec3')
+    expect(text).toContain('const frostWarp = mx_noise_vec3(p.mul(14)).mul(0.5).add(0.5)')
+    expect(text).toContain('mx_noise_float(p.mul(28).add(frostWarp.mul(1.5)))')
+    expect(text).toContain('const crystal = cellularBoundary(p.mul(22))')
+    expect(text).toContain('opticalLine(cellularBoundary(p.mul(9)), 0.03)')
+    expect(text).toContain('proceduralNormal(facet.mul(0.7).add(frost.mul(0.2)), 0.002)')
+    expect(text).toContain('this.transmission = 0.85')
+    expect(text).toContain('this.ior = 1.31')
+  })
   test('uses continuous solar granulation and genuine Voronoi fractures', async () => {
     for (const id of ['cryogenic_kintsugi', 'chromospheric_spicule']) {
       const text = await source(id)

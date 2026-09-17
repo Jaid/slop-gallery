@@ -1,8 +1,8 @@
 import type {Texture} from 'three/webgpu'
 
-import {color, mix, mx_cell_noise_float, mx_noise_float} from 'three/tsl'
+import {color, mix, mx_noise_float, mx_noise_vec3} from 'three/tsl'
 
-import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
+import {cellularBoundary} from '../../lib/cellularBoundary.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {opticalLine} from '../../lib/opticalLine.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
@@ -15,12 +15,14 @@ export default class CryoBloomMaterial extends KnotMaterial {
     this.name = knotData.id
     this.envMapIntensity = 1.2
     const {p, facing, rim, near, intimate} = viewerFrame()
-    const cell = cellNoiseVec3(p.mul(14))
-    const frost = mx_noise_float(p.mul(28).add(cell.mul(1.5)))
-    const crystal = mx_cell_noise_float(p.mul(22))
-    const facet = crystal.smoothstep(0.4, 0.6)
+    // Smooth distortion keeps frost continuous across the underlying noise lattice.
+    const frostWarp = mx_noise_vec3(p.mul(14)).mul(0.5).add(0.5)
+    const frost = mx_noise_float(p.mul(28).add(frostWarp.mul(1.5)))
+    // Crystal interiors fade into irregular boundaries instead of revealing cubic noise cells.
+    const crystal = cellularBoundary(p.mul(22))
+    const facet = crystal.smoothstep(0.04, 0.24)
     const frostLine = opticalLine(frost.mul(20).sin(), 0.04)
-    const crack = opticalLine(cellNoiseVec3(p.mul(9)).x.mul(18).sin(), 0.03)
+    const crack = opticalLine(cellularBoundary(p.mul(9)), 0.03)
     const ice = mix(color('#0b3a4a'), color('#bff7ff'), facet.mul(0.7).add(frostLine.mul(0.4)))
     this.colorNode = ice
     this.transmission = 0.85
