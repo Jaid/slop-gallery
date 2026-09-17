@@ -1,7 +1,8 @@
 import type {Texture} from 'three/webgpu'
 
-import {color, mix, mx_cell_noise_float, mx_noise_float, mx_worley_noise_float, time, vec3} from 'three/tsl'
+import {color, mix, mx_noise_float, mx_worley_noise_float, time, vec3} from 'three/tsl'
 
+import {cellularPoints} from '../../lib/cellularPoints.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {liquidNormal} from '../../lib/liquidNormal.ts'
 import {opticalLine} from '../../lib/opticalLine.ts'
@@ -15,7 +16,7 @@ export default class AbyssalBloomMaterial extends KnotMaterial {
     const {p, rim, near} = viewerFrame()
     const pulse = time.mul(1.1).add(mx_noise_float(p.mul(1.8)).mul(2)).sin().mul(0.5).add(0.5)
     const veins = opticalLine(mx_worley_noise_float(p.mul(3.5).add(vec3(0, time.mul(0.12), 0))).sub(0.3), 0.012)
-    const dots = mx_cell_noise_float(p.mul(28)).smoothstep(0.93, 0.97).mul(pulse)
+    const dots = cellularPoints(p.mul(28), 0.06, 0.24, 0.93).mul(pulse)
     const glowColor = mix(color('#00ffcc'), color('#ff007f'), mx_noise_float(p.mul(1.2)).mul(0.5).add(0.5))
     this.colorNode = color('#04121f')
     this.transmission = 0.88

@@ -28,6 +28,7 @@ describe('Knot cellular fields', () => {
     const cases: Array<string> = [
       'celestial_astrolabe',
       'abyssal_bioluminescence',
+      'abyssal_bloom',
       'abyssal_lumen',
       'zero_point_lather',
       'elytra_iridescence',
@@ -296,5 +297,19 @@ describe('Knot cellular fields', () => {
     expect(text).toContain('fruiting.mul(fruitMask).mul(0.6)')
     expect(text).toContain('fruiting.mul(fruitMask).mul(breath).mul(0.9)')
     expect(text).toContain('this.envMapIntensity = 0.4')
+  })
+  test('rounds Hy Abyssal Bloom dots while preserving the moving rings, pulse and liquid glass', async () => {
+    const text = await source('abyssal_bloom')
+    expect(text).toContain('cellularPoints(p.mul(28), 0.06, 0.24, 0.93).mul(pulse)')
+    expect(text).not.toContain('mx_cell_noise_float')
+    expect(text).toContain('time.mul(1.1).add(mx_noise_float(p.mul(1.8)).mul(2)).sin().mul(0.5).add(0.5)')
+    expect(text).toContain('opticalLine(mx_worley_noise_float(p.mul(3.5).add(vec3(0, time.mul(0.12), 0))).sub(0.3), 0.012)')
+    expect(text).toContain("mix(color('#00ffcc'), color('#ff007f'), mx_noise_float(p.mul(1.2)).mul(0.5).add(0.5))")
+    expect(text).toContain('this.transmission = 0.88')
+    expect(text).toContain('this.thickness = 1.4')
+    expect(text).toContain('this.ior = 1.34')
+    expect(text).toContain('liquidNormal(near, 0.28)')
+    expect(text).toContain('veins.mul(1.4).add(dots.mul(2.2))')
+    expect(text).toContain('near.mul(0.9).add(0.35)')
   })
 })
