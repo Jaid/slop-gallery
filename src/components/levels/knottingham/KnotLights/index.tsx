@@ -19,6 +19,7 @@ import {bodyThrow} from '#src/lib/physics/ThrowState.ts'
 RectAreaLightNode.setLTC(RectAreaLightTexturesLib.init())
 const ledEmissionColor = '#fff3d8'
 const ledEmissionIntensity = 1.35
+const ledSurfaceIntensity = 2.5
 const housingSize = [knotLight.size[0] + 0.16, 0.1, knotLight.size[2] + 0.16] as const
 const diffuserSize = [knotLight.size[0] - 0.12, 0.038, knotLight.size[2] - 0.12] as const
 const housingYOffset = 0.025
@@ -194,7 +195,7 @@ export default function KnotLights() {
     const center = float(1).sub(smoothstep(0.34, 0.7, radial))
     const intensity = attribute('lightIntensity', 'float')
     const luminance = intensity.mul(center.mul(0.16).add(0.84)).clamp()
-    emitterMaterial.colorNode = mix(color('#181a17'), color('#fff3d8'), luminance)
+    emitterMaterial.colorNode = mix(color('#181a17'), color(ledEmissionColor).mul(ledSurfaceIntensity), luminance)
     const diffuserMaterial = quality ? new MeshPhysicalNodeMaterial({
       color: '#f4eee2',
       roughness: 0.46,
