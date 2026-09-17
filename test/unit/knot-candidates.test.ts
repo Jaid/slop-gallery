@@ -29,13 +29,16 @@ const byId = (id: string) => knotsById.get(id)!
 describe('arbitrary Knot batches', () => {
   test('places rarer entries at the far end while prioritizing them for shot limits', () => {
     const items = [item('washi_lantern'), item('lichtenberg_reliquary'), item('damascus_ember'), item('chladni_resonance'), item('glacial_aurora')]
-    const expected = ['damascus_ember', 'glacial_aurora', 'washi_lantern', 'lichtenberg_reliquary', 'chladni_resonance']
-    expect(ids(new KnotCandidate(candidateData, items))).toEqual(expected)
-    expect(ids(new KnotCandidate(candidateData, items.toReversed()))).toEqual(expected)
-    const limited = new KnotCandidate(candidateData, items).select(3)
-    expect(limited.map(entry => entry.id)).toEqual(['damascus_ember', 'lichtenberg_reliquary', 'chladni_resonance'])
-    expect(limited.map(entry => entry.rarity)).toEqual([1, 3, 4])
-    expect(() => new KnotCandidate(candidateData, items).select(0)).toThrow('shot limit')
+    const candidate = new KnotCandidate(candidateData, items)
+    const byRarityThenId = (a: typeof candidate.items[number], b: typeof candidate.items[number]) => a.rarity - b.rarity || a.id.localeCompare(b.id)
+    const expected = candidate.items.toSorted(byRarityThenId)
+    expect(ids(candidate)).toEqual(expected.map(entry => entry.id))
+    expect(ids(new KnotCandidate(candidateData, items.toReversed()))).toEqual(expected.map(entry => entry.id))
+    const limited = candidate.select(3)
+    const expectedLimited = candidate.items.toSorted((a, b) => b.rarity - a.rarity || a.id.localeCompare(b.id)).slice(0, 3).toSorted(byRarityThenId)
+    expect(limited.map(entry => entry.id)).toEqual(expectedLimited.map(entry => entry.id))
+    expect(limited.map(entry => entry.rarity)).toEqual(expectedLimited.map(entry => entry.rarity))
+    expect(() => candidate.select(0)).toThrow('shot limit')
   })
   test('handles empty and partial rows without padding or reintroducing archives', () => {
     expect(ids(new KnotCandidate(candidateData, []))).toEqual([])
