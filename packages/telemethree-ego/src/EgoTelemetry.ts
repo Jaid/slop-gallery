@@ -13,8 +13,10 @@ export default class EgoTelemetry {
   private readonly maxGap: number
   private nextSample = 0
   private readonly now: () => number
-  private previous: {position: Point3
-    time: number} | null = null
+  private previous: {
+    position: Point3
+    time: number
+  } | null = null
   private readonly scale: number
 
   constructor(private readonly options: EgoTelemetryOptions) {

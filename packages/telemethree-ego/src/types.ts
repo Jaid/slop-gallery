@@ -1,13 +1,17 @@
 import type Telemetry from 'telemethree'
 import type {Attributes} from 'telemethree'
 
-export type Point3 = Readonly<{x: number
+export type Point3 = Readonly<{
+  x: number
   y: number
-  z: number}>
+  z: number
+}>
 export type Aim = {
   direction: Point3
-  hit?: {distance: number
-    point: Point3} | null
+  hit?: {
+    distance: number
+    point: Point3
+  } | null
   origin: Point3
 }
 export type EgoSample = {
