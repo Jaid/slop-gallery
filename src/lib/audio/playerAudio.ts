@@ -14,7 +14,7 @@ const stop = () => SoundEngine.existing()?.stopPlayerSounds()
 
 export function onPlayerStep(state: EgoState) {
   if (state.active && useGallery.getState().sound) {
-    SoundEngine.existing()?.step(isWood(state), Math.hypot(state.velocity.x, state.velocity.z))
+    SoundEngine.existing()?.step(isWood(state), Math.hypot(state.velocity.x, state.velocity.z), state.crouching)
   }
 }
 

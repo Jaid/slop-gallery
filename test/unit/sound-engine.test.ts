@@ -43,22 +43,22 @@ test('stride callbacks at time zero and closer than the old cooldown all produce
   const {sound, context, sources, buffers} = setup()
   for (const time of [0, 0.18, 0.36]) {
     context.currentTime = time
-    sound.step(true, 9)
+    sound.step(true, 9, false)
   }
   expect(sources).toHaveLength(9)
   expect(buffers[0]).not.toEqual(buffers[2])
-  sound.step(false, 0)
+  sound.step(false, 0, false)
   expect(sources).toHaveLength(9)
 })
 test('landing prevents a duplicate footfall at impact, not subsequent strides', () => {
   const {sound, context, sources} = setup()
   sound.land(false, 5)
-  sound.step(false, 3)
+  sound.step(false, 3, false)
   context.currentTime = 0.05
-  sound.step(false, 3)
+  sound.step(false, 3, false)
   expect(sources).toHaveLength(3)
   context.currentTime = 0.11
-  sound.step(false, 3)
+  sound.step(false, 3, false)
   expect(sources).toHaveLength(6)
 })
 test('zoom sweeps use the transition duration and reversals fade the previous sound', () => {
@@ -105,7 +105,7 @@ test('muting and cleanup stop sustained and transitioning sounds without queuing
   sound.setZoom(1)
   sound.zoomTransition(false, false, 0.2)
   sound.viewTransition(false)
-  sound.step(false, 9)
+  sound.step(false, 9, false)
   sound.land(false, 8)
   sound.tone(320)
   expect(sources).toHaveLength(count)
@@ -134,7 +134,7 @@ test('viewing mode reversal cancels its delayed voices and completed nodes disco
 })
 test('delayed footstep layers are intrinsically silent before their scheduled attack', () => {
   const {sound, gains} = setup()
-  sound.step(false, 9)
+  sound.step(false, 9, false)
   for (const envelope of gains.slice(2)) {
     expect(envelope.gain.value).toBe(0)
   }

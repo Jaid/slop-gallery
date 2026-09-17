@@ -69,9 +69,25 @@ test('footsteps become stronger, brighter, and shorter as actual speed increases
     }
     expect(slow[0].kind === 'oscillator' && slow[0].frequency).toBeLessThan(sprint[0].kind === 'oscillator' ? sprint[0].frequency : 0)
     expect(footstepVoices(wood, 9)).toEqual(footstepVoices(wood, 90))
-    expect(footstepVoices(wood, 3, -0.5)).not.toEqual(footstepVoices(wood, 3, 0.5))
+    expect(footstepVoices(wood, 3, {variation: -0.5})).not.toEqual(footstepVoices(wood, 3, {variation: 0.5}))
   }
   expect(footstepVoices(true, 3)).not.toEqual(footstepVoices(false, 3))
+})
+test('crouching footsteps are quieter, darker, and softer than normal walking', () => {
+  for (const wood of [false, true]) {
+    const walk = footstepVoices(wood, 3)
+    const sneak = footstepVoices(wood, 3, {crouching: true})
+    for (const [index, voice] of sneak.entries()) {
+      expect(voice.volume).toBeLessThan(walk[index].volume)
+    }
+    expect(sneak[0].attack).toBeGreaterThan(walk[0].attack ?? 0)
+    const walkNoise = walk.filter(voice => voice.kind === 'noise')
+    const sneakNoise = sneak.filter(voice => voice.kind === 'noise')
+    expect(walkNoise.some(voice => voice.filter.type === 'highpass')).toBe(false)
+    expect(sneakNoise.some(voice => voice.filter.type === 'highpass')).toBe(false)
+    expect(Math.max(...sneakNoise.map(voice => voice.filter.frequency))).toBeLessThan(Math.max(...walkNoise.map(voice => voice.filter.frequency)))
+    expect(Math.max(...sneakNoise.map(voice => voice.filter.endFrequency ?? voice.filter.frequency))).toBeLessThan(Math.max(...walkNoise.map(voice => voice.filter.endFrequency ?? voice.filter.frequency)))
+  }
 })
 test('landing volume follows impact speed with a bounded heavy-landing ceiling', () => {
   expect(landingVoices(false, 2)[0].volume).toBeLessThan(landingVoices(false, 8)[0].volume)

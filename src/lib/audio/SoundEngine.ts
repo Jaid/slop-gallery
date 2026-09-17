@@ -73,13 +73,16 @@ export default class SoundEngine {
     this.updateZoomGain()
   }
 
-  step(wood: boolean, speed: number) {
+  step(wood: boolean, speed: number, crouching: boolean) {
     if (this.muted || speed < 0.1 || this.context.currentTime - this.lastLanding < 0.1) {
       return
     }
     // The stride callback owns cadence; no fixed cooldown may discard faster steps.
     const index = this.contactIndex++
-    playVoices(this, footstepVoices(wood, speed, Math.sin(index * 2.39996)), `step:${index}`)
+    playVoices(this, footstepVoices(wood, speed, {
+      crouching,
+      variation: Math.sin(index * 2.39996),
+    }), `step:${index}`)
   }
 
   stopPlayerSounds() {

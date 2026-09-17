@@ -3,25 +3,47 @@ import type {SoundEffect, Voice} from './proceduralAudio.ts'
 import {noise, osc} from './proceduralAudio.ts'
 
 /** Speed is actual horizontal world units/second, not the requested movement or Shift state. */
-export function footstepVoices(wood: boolean, speed: number, variation = 0): Array<Voice> {
+export function footstepVoices(wood: boolean, speed: number, {crouching = false, variation = 0}: {
+  crouching?: boolean
+  variation?: number
+} = {}): Array<Voice> {
   const effort = Math.max(0, Math.min(1, speed / 9))
-  const pitch = 0.92 + effort * 0.22 + variation * 0.045
-  const duration = 0.115 - effort * 0.045
+  const pitch = (crouching ? 0.82 + effort * 0.08 : 0.88 + effort * 0.16) + variation * (crouching ? 0.018 : 0.03)
+  const duration = crouching ? 0.16 - effort * 0.02 : 0.13 - effort * 0.035
+  const bodyVolume = crouching ? 0.0025 + effort * 0.0055 : 0.0055 + effort * 0.015
+  const soleVolume = crouching ? 0.0014 + effort * 0.0038 : 0.0035 + effort * 0.0105
+  const scuffVolume = crouching ? 0.0006 + effort * 0.0014 : 0.0012 + effort * 0.0032
+  let soleFrequency = wood ? 560 : 1180
+  let soleEndFrequency = wood ? 240 : 520
+  let scuffFrequency = wood ? 900 : 1550
+  let scuffEndFrequency = wood ? 340 : 650
+  if (crouching) {
+    soleFrequency = wood ? 410 : 720
+    soleEndFrequency = wood ? 190 : 330
+    scuffFrequency = wood ? 620 : 980
+    scuffEndFrequency = wood ? 240 : 420
+  }
   return [
-    osc((wood ? 135 : 225) * pitch, duration, 0.007 + effort * 0.019, {
-      endFrequency: (wood ? 65 : 105) * pitch,
+    osc((wood ? 128 : 205) * pitch, duration, bodyVolume, {
+      endFrequency: (wood ? 62 : 96) * pitch,
       type: wood ? 'sine' : 'triangle',
+      attack: crouching ? 0.014 : 0.008,
     }),
-    noise(duration * 0.65, 0.006 + effort * 0.017, {
+    noise(duration * (crouching ? 0.8 : 0.7), soleVolume, {
       type: 'bandpass',
-      frequency: (wood ? 720 : 1800) * pitch,
-      endFrequency: wood ? 280 : 700,
-      q: 0.65,
+      frequency: soleFrequency * pitch,
+      endFrequency: soleEndFrequency,
+      q: crouching ? 0.45 : 0.55,
+    }, {attack: crouching ? 0.022 : 0.012}),
+    noise(duration * (crouching ? 0.62 : 0.48), scuffVolume, {
+      type: 'lowpass',
+      frequency: scuffFrequency * pitch,
+      endFrequency: scuffEndFrequency,
+      q: 0.5,
+    }, {
+      attack: crouching ? 0.025 : 0.014,
+      delay: duration * (crouching ? 0.18 : 0.25),
     }),
-    noise(duration * 0.4, 0.002 + effort * 0.006, {
-      type: 'highpass',
-      frequency: wood ? 1100 : 2600,
-    }, {delay: duration * 0.3}),
   ]
 }
 

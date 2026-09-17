@@ -61,7 +61,9 @@ export default async function verify() {
     const slow = await render(footstepVoices(wood, 0.9), 'step')
     const walk = await render(footstepVoices(wood, 3), 'step')
     const sprint = await render(footstepVoices(wood, 9), 'step')
+    const sneak = await render(footstepVoices(wood, 3, {crouching: true}), 'sneak')
     assert(slow.rms < walk.rms && walk.rms < sprint.rms, 'Footstep energy must grow with speed')
+    assert(sneak.rms < walk.rms, 'Sneaking must be quieter than normal walking')
     const lightLanding = await render(landingVoices(wood, 2), 'land')
     const heavyLanding = await render(landingVoices(wood, 9), 'land')
     assert(lightLanding.rms < heavyLanding.rms, 'Landing energy must grow with impact')
@@ -70,6 +72,7 @@ export default async function verify() {
       slow,
       walk,
       sprint,
+      sneak,
       lightLanding,
       heavyLanding,
     })

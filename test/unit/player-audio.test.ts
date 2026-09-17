@@ -9,7 +9,7 @@ import {getPlayerZoom, setPlayerZoom} from '../../src/lib/rendering/playerView.t
 
 const original = useGallery.getState()
 const sound = {
-  step: mock((_wood: boolean, _speed: number) => {}),
+  step: mock((_wood: boolean, _speed: number, _crouching: boolean) => {}),
   land: mock((_wood: boolean, _speed: number) => {}),
   zoomTransition: mock((_extended: boolean, _retract: boolean, _duration: number) => {}),
   setZoom: mock((_amount: number) => {}),
@@ -55,7 +55,12 @@ afterEach(() => {
 })
 test('player footsteps use horizontal physical speed and landings use pre-impact speed', () => {
   onPlayerStep(state)
-  expect(sound.step).toHaveBeenCalledWith(expect.any(Boolean), 5)
+  expect(sound.step).toHaveBeenCalledWith(expect.any(Boolean), 5, false)
+  onPlayerStep({
+    ...state,
+    crouching: true,
+  })
+  expect(sound.step).toHaveBeenLastCalledWith(expect.any(Boolean), 5, true)
   onPlayerLand(state, 7)
   expect(sound.land).toHaveBeenCalledWith(expect.any(Boolean), 7)
   onPlayerStep({
@@ -69,7 +74,7 @@ test('player footsteps use horizontal physical speed and landings use pre-impact
   useGallery.setState({sound: false})
   onPlayerStep(state)
   onPlayerLand(state, 8)
-  expect(sound.step).toHaveBeenCalledTimes(1)
+  expect(sound.step).toHaveBeenCalledTimes(2)
   expect(sound.land).toHaveBeenCalledTimes(1)
 })
 test('visual zoom remains independent of mute while audio uses the actual transition kind', () => {
