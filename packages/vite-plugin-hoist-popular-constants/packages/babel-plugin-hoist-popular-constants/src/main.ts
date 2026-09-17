@@ -155,10 +155,11 @@ const hoistCandidates = (path: NodePath<t.Program>, state: HoistPluginState, opt
     let bestSavings = Number.NEGATIVE_INFINITY
     for (const [index, candidate] of remaining.entries()) {
       const savings = estimatedSavings(candidate, next.name.length, first)
-      if (savings > bestSavings) {
-        bestIndex = index
-        bestSavings = savings
+      if (!(savings > bestSavings)) {
+        continue
       }
+      bestIndex = index
+      bestSavings = savings
     }
     if (bestSavings < minimumSavingsBytes) {
       break
