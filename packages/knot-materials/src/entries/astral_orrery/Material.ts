@@ -2,6 +2,7 @@ import type {Texture} from 'three/webgpu'
 
 import {color, mix, mx_cell_noise_float, mx_noise_float, time, uv, vec3} from 'three/tsl'
 
+import {cellularPoints} from '../../lib/cellularPoints.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {opticalLine} from '../../lib/opticalLine.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
@@ -21,7 +22,8 @@ export default class AstralOrreryMaterial extends KnotMaterial {
     const lat = opticalLine(tube.y.mul(12).fract().sub(0.5), 0.05)
     const latFine = opticalLine(tube.y.mul(48).fract().sub(0.5), 0.04).mul(intimate)
     const engrave = rings.max(lat).add(fineRings.add(latFine).mul(0.6)).add(gearTeeth.mul(0.4)).clamp()
-    const constellation = mx_cell_noise_float(p.mul(24).add(vec3(0, time.mul(0.01), 0))).smoothstep(0.92, 0.94)
+    // Stars need localized round cores; whole noise cells reveal cyan rectangular patches.
+    const constellation = cellularPoints(p.mul(24).add(vec3(0, time.mul(0.01), 0)), 0.06, 0.24, 0.92)
     const patina = mx_noise_float(p.mul(3).add(time.mul(0.005))).mul(0.5).add(0.5)
     const brass = mix(color('#3a2308'), color('#d4a44a'), patina.mul(0.6).add(0.3))
     this.colorNode = mix(brass, color('#ffe9a8'), engrave.mul(0.7))

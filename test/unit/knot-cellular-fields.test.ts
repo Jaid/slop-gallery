@@ -58,6 +58,14 @@ describe('Knot cellular fields', () => {
     expect(text).toContain("color('#ff4fd8').mul(spots).mul(pulse).mul(intimate.mul(0.8).add(0.3))")
     expect(text).toContain('this.transmission = 0.6')
   })
+  test('localizes Astral Orrery stars while preserving its rectangular gear teeth and engraved rings', async () => {
+    const text = await source('astral_orrery')
+    expect(text).toContain('const constellation = cellularPoints(p.mul(24).add(vec3(0, time.mul(0.01), 0)), 0.06, 0.24, 0.92)')
+    expect(text).toContain('const gearTeeth = mx_cell_noise_float(vec3(tube.x.mul(180), tube.y.mul(8), 0)).smoothstep(0.6, 0.7)')
+    expect(text).toContain('const rings = opticalLine(tube.x.mul(48).fract().sub(0.5), 0.04)')
+    expect(text).toContain('proceduralNormal(engrave.mul(0.6).add(constellation.mul(0.3)), 0.0015)')
+    expect(text).toContain("color('#8cf5ff').mul(constellation).mul(near.mul(0.7).add(0.2)).mul(1.2)")
+  })
   test('retains stochastic alpha scintillation without moving cell-shaped patches', async () => {
     const text = await source('radiometric_guilloche')
     expect(text).toContain('const tick = time.mul(28).floor()')
