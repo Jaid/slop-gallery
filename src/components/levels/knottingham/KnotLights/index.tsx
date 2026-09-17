@@ -1,8 +1,10 @@
-import type {KnotLightSlot, KnotLightStage} from '#src/lib/knots/KnotLights.ts'
 import type {CollisionEnterPayload} from '@react-three/rapier'
+import type {KnotLightSlot, KnotLightStage} from 'knot-materials/KnotLights.ts'
 
 import {useFrame} from '@react-three/fiber/webgpu'
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
+import {knotBays, knotLayout} from 'knot-materials/exhibition.ts'
+import KnotLightDamage, {knotLight, knotLightFracture, knotLightSlots} from 'knot-materials/KnotLights.ts'
 import {useEffect, useMemo, useReducer, useRef} from 'react'
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 import {RectAreaLightTexturesLib} from 'three/addons/lights/RectAreaLightTexturesLib.js'
@@ -12,8 +14,6 @@ import useGraphicsQuality from 'use-graphics-quality'
 
 import {useGallery} from '#src/lib/gallery.ts'
 import {knotGalleryBounds} from '#src/lib/gallery/knotGallery.ts'
-import {knotBays, knotLayout} from '#src/lib/knots/exhibition.ts'
-import KnotLightDamage, {knotLight, knotLightFracture, knotLightSlots} from '#src/lib/knots/KnotLights.ts'
 import {bodyThrow} from '#src/lib/physics/ThrowState.ts'
 
 RectAreaLightNode.setLTC(RectAreaLightTexturesLib.init())

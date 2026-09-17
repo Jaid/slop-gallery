@@ -124,3 +124,7 @@ Query VictoriaLogs with `service.name:=gallery event.name:=ego.dump _time:1h | s
 Native WebMCP exposes read-only `get_aim` and `get_telemetry` through `document.modelContext`. The tools do not move the player, acquire focus or enable telemetry. Their registrations are removed on unmount/HMR using AbortSignals. There is no replacement window namespace or compatibility API.
 
 Pause-menu events use `telemethree-pause-menu`: discrete `pause_menu.attached`, `pause_menu.changed` and `pause_menu.detached` logs include the current/previous stage and lock state. They share the app’s Victoria exporter and session identity.
+
+## Knot rarity curation
+
+Knottingham’s `?rarity=edit` mode emits explicit `knot.rarity.changed` logs and matching spans on nameplate activation. See `packages/knot-materials/readme.md` for field names, retrieval queries, and the session-local editing policy. These records intentionally carry knot identity and chosen ratings; normal automatic telemetry still avoids titles and user content. Synthetic relay checks use service `knottingham-rarity-test`, never the real `knottingham` curation feed.

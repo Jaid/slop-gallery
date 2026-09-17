@@ -1,10 +1,10 @@
 import {parseArgs} from 'node:util'
 
 import * as path from 'forward-slash-path'
+import {knotCandidates} from 'knot-materials'
+import {knotAnnouncements} from 'knot-materials/announcements.ts'
 
 import portraits from '../src/levels/gallery/collection.ts'
-import {knotAnnouncements} from '../src/lib/knots/announcements.ts'
-import {knotCandidates} from '../src/lib/knots/index.ts'
 import {announcementDurationLimit, announcementInput} from './announceKnots.ts'
 import VoicePrerenderBatch from './lib/voice/VoicePrerenderBatch.ts'
 
@@ -16,7 +16,7 @@ export function prerenderInventory() {
       id: `knots/${item.id}`,
       input: announcementInput(item),
       maximumDuration: announcementDurationLimit(item),
-      output: path.resolve(root, 'src/lib/knots/candidates', item.id, 'announce.opus'),
+      output: path.resolve(root, 'packages/knot-materials/src', item.id, 'announce.opus'),
     })),
     ...portraits.map(portrait => ({
       id: `gallery/${portrait.id}`,

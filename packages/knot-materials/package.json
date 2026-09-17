@@ -1,0 +1,51 @@
+{
+  "name": "knot-materials",
+  "version": "0.1.0",
+  "type": "module",
+  "funding": "https://github.com/sponsors/Jaid",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jaid/slop-gallery.git",
+    "directory": "packages/knot-materials"
+  },
+  "license": "MIT",
+  "main": "src/main.ts",
+  "scripts": {
+    "test": "bun test --max-concurrency 1 ./test",
+    "make:prompt": "bun scripts/makePrompt.ts",
+    "make:icon": "bun scripts/makeIcon.ts",
+    "update:icons": "bun scripts/updateIcons.ts",
+    "make:animated-icon": "bun scripts/makeAnimatedIcon.ts"
+  },
+  "description": "Procedural Three.js/TSL knot materials, metadata, placeholders and generation tools",
+  "types": "./src/main.ts",
+  "exports": {
+    ".": "./src/main.ts",
+    "./scripts/*": "./scripts/*",
+    "./*": "./src/*"
+  },
+  "sideEffects": false,
+  "files": [
+    "src",
+    "scripts",
+    "readme.md",
+    "license.txt",
+    "migration.md"
+  ],
+  "dependencies": {
+    "three-async-materials": "workspace:*",
+    "three-mesh-bvh": "^0.9.15"
+  },
+  "peerDependencies": {
+    "three": "^0.186.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.186.0",
+    "@types/fs-extra": "^11.0.4",
+    "fs-extra": "^11.4.0",
+    "puppeteer-core": "^25.11.0",
+    "vite": "^8.3.0",
+    "three-fiber-game": "workspace:*",
+    "typescript": "npm:typescript-classic@6.0.4"
+  }
+}

@@ -1,8 +1,8 @@
 import {afterEach, beforeEach, expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
+import {knotsById} from 'knot-materials'
 
-import {knotsById} from '../../src/lib/knots/index.ts'
 import KnotRotation from '../../src/lib/physics/KnotRotation.ts'
 
 await RAPIER.init()
@@ -14,9 +14,9 @@ beforeEach(() => world = new RAPIER.World({
 }))
 afterEach(() => world.free())
 test('uses the corrected contributor titles', () => {
-  expect(knotsById.get('claude_sonnet/opal_fire')!.modelTitle).toBe('Claude Sonnet 5')
-  expect(knotsById.get('deepseek/aurora_veil')!.modelTitle).toBe('DeepSeek 4.1 Flash')
-  expect(knotsById.get('gemini_flash/cyber_kintsugi')!.modelTitle).toBe('Gemini 3.8 Flash')
+  expect(knotsById.get('opal_fire')!.modelTitle).toBe('Claude Sonnet 5')
+  expect(knotsById.get('aurora_veil')!.modelTitle).toBe('DeepSeek 4.1 Flash')
+  expect(knotsById.get('cyber_kintsugi')!.modelTitle).toBe('Gemini 3.8 Flash')
 })
 test('rotates fixed Knots and colliders together without translating them', () => {
   const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(2, 1, 3))

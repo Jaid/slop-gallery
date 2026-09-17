@@ -1,5 +1,6 @@
 import {afterEach, expect, test} from 'bun:test'
 
+import {knotExhibition} from 'knot-materials/exhibition.ts'
 import {createElement} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
 
@@ -7,7 +8,6 @@ import KnotStudyMap from '../../src/components/levels/knottingham/KnotStudyMap/i
 import KnotGalleryMinimap from '../../src/components/levels/knottingham/Minimap/index.tsx'
 import {cameraPose} from '../../src/lib/gallery.ts'
 import {knotGalleryBounds, knotGallerySize} from '../../src/lib/gallery/knotGallery.ts'
-import {knotExhibition} from '../../src/lib/knots/exhibition.ts'
 
 const pose = {
   position: cameraPose.position,

@@ -1,10 +1,10 @@
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import BranchComponent from 'branch-component'
+import BillboardPanelGeometry from 'knot-materials/BillboardPanelGeometry.ts'
+import {billboardParts} from 'knot-materials/signs.ts'
 import {useEffect} from 'react'
 
 import Box from '#src/components/Scene/primitives.tsx'
-import BillboardPanelGeometry from '#src/lib/knots/BillboardPanelGeometry.ts'
-import {billboardParts} from '#src/lib/knots/signs.ts'
 import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
 
 export default function Support({width, height}: {

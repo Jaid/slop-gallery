@@ -1,6 +1,7 @@
+import {knotBays, knotExhibition, knotRowHalfWidth} from 'knot-materials/exhibition.ts'
+
 import KnotStudyMap from '#component/levels/knottingham/KnotStudyMap'
 import {galleryEvents, notify, openPanel, useGallery} from '#src/lib/gallery.ts'
-import {knotBays, knotExhibition, knotRowHalfWidth} from '#src/lib/knots/exhibition.ts'
 
 export default function KnotGalleryMap({css}: {css: Record<string, string>}) {
   const ready = useGallery(s => s.ready)

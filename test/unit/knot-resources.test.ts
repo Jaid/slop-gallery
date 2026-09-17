@@ -1,11 +1,11 @@
 import {expect, test} from 'bun:test'
 
-import {knotsById} from '../../src/lib/knots/index.ts'
-import KnotResources from '../../src/lib/knots/KnotResources.ts'
+import {knotsById} from 'knot-materials'
+import KnotResources from 'knot-materials/KnotResources.ts'
 
 test('shares geometry by displacement bound and keeps collider and culling bounds expanded', () => {
-  const base = knotsById.get('gpt_astra/lenticular_mirage')!
-  const relief = knotsById.get('gpt_astra/coralline_crown')!
+  const base = knotsById.get('lenticular_mirage')!
+  const relief = knotsById.get('coralline_crown')!
   const resources = new KnotResources([
     base,
     {
@@ -34,8 +34,8 @@ test('shares geometry by displacement bound and keeps collider and culling bound
   }
 })
 test('disposes each shared geometry resource once', () => {
-  const base = knotsById.get('gpt_astra/lenticular_mirage')!
-  const relief = knotsById.get('gpt_astra/coralline_crown')!
+  const base = knotsById.get('lenticular_mirage')!
+  const relief = knotsById.get('coralline_crown')!
   const resources = new KnotResources([
     base,
     {

@@ -1,11 +1,11 @@
 import {expect, test} from 'bun:test'
 
-import {knotAnnouncementPaths, knotAnnouncements, knotCandidateAnnouncementPath} from '../../src/lib/knots/announcements.ts'
-import {knotCandidates, knotsById} from '../../src/lib/knots/index.ts'
-import KnotAnnouncer from '../../src/lib/knots/KnotAnnouncer.ts'
+import {knotCandidates, knotsById} from 'knot-materials'
+import {knotAnnouncementPaths, knotAnnouncements, knotCandidateAnnouncementPath} from 'knot-materials/announcements.ts'
+import KnotAnnouncer from 'knot-materials/KnotAnnouncer.ts'
 
-const item = knotsById.get('glm/event_horizon')!
-const flash = knotsById.get('glm_flash/ember_cortex')!
+const item = knotsById.get('singularity_crown')!
+const flash = knotsById.get('ember_cortex')!
 const glm = knotCandidates.find(candidate => candidate.data.id === 'glm')!
 const glmFlash = knotCandidates.find(candidate => candidate.data.id === 'glm_flash')!
 test('plays each model introduction and knot title once', async () => {
@@ -18,11 +18,11 @@ test('plays each model introduction and knot title once', async () => {
   })
   await announcer.announce(item)
   await announcer.announce(item)
-  await announcer.announce(knotsById.get('glm/emberheart')!)
-  await announcer.announce(knotsById.get('glm/emberheart')!)
-  expect(played).toEqual(['glm/slug/glm-5.3/announce.opus', 'glm/items/event_horizon/announce.opus', 'glm/items/emberheart/announce.opus'])
+  await announcer.announce(knotsById.get('emberheart')!)
+  await announcer.announce(knotsById.get('emberheart')!)
+  expect(played).toEqual(['candidates/glm/slug/glm-5.3/announce.opus', 'entries/singularity_crown/announce.opus', 'entries/emberheart/announce.opus'])
   await announcer.announce(flash)
-  expect(played.at(-2)).toBe('glm_flash/slug/glm-5.3-flash/announce.opus')
+  expect(played.at(-2)).toBe('candidates/glm_flash/slug/glm-5.3-flash/announce.opus')
 })
 test('does not mark an interrupted model as announced or continue stale titles', async () => {
   const played: Array<string> = []
@@ -63,12 +63,12 @@ test('missing recordings stay silent, never triggering paid generation', async (
 })
 test('announcement inventory includes candidates, models and knot titles with safe local paths', () => {
   const paths = knotAnnouncementPaths(item)
-  expect(paths.model).toBe('glm/slug/glm-5.3')
-  expect(knotCandidateAnnouncementPath(glm.data)).toBe('glm/candidate')
+  expect(paths.model).toBe('candidates/glm/slug/glm-5.3')
+  expect(knotCandidateAnnouncementPath(glm.data)).toBe('candidates/glm/candidate')
   const entries = knotAnnouncements([
     {
       data: glm.data,
-      items: [item, knotsById.get('glm/emberheart')!],
+      items: [item, knotsById.get('emberheart')!],
     },
     {
       data: glmFlash.data,
@@ -76,13 +76,13 @@ test('announcement inventory includes candidates, models and knot titles with sa
     },
   ])
   expect(entries.map(entry => entry.id)).toEqual([
-    'glm/candidate',
-    'glm/slug/glm-5.3',
-    'glm/items/event_horizon',
-    'glm/items/emberheart',
-    'glm_flash/candidate',
-    'glm_flash/slug/glm-5.3-flash',
-    'glm_flash/items/ember_cortex',
+    'candidates/glm/candidate',
+    'candidates/glm/slug/glm-5.3',
+    'entries/singularity_crown',
+    'entries/emberheart',
+    'candidates/glm_flash/candidate',
+    'candidates/glm_flash/slug/glm-5.3-flash',
+    'entries/ember_cortex',
   ])
   expect(new Set(entries.map(entry => entry.id)).size).toBe(entries.length)
   expect(() => knotAnnouncementPaths({
@@ -175,7 +175,7 @@ test('candidate interaction replays only the candidate and does not introduce it
   })
   await announcer.announceCandidate(glm.data)
   await announcer.announceCandidate(glm.data)
-  expect(played).toEqual(['glm/candidate', 'glm/candidate'])
+  expect(played).toEqual(['candidates/glm/candidate', 'candidates/glm/candidate'])
   expect(announcer.announcedModels.size).toBe(0)
   expect(announcer.announcedItems.size).toBe(0)
   await announcer.announce(item)
@@ -193,7 +193,7 @@ test('a newer candidate announcement cancels an unfinished one without changing 
   const first = announcer.announceCandidate(glm.data).catch(() => {})
   const second = announcer.announceCandidate(glmFlash.data).catch(() => {})
   await first
-  expect(played).toEqual(['glm/candidate', 'glm_flash/candidate'])
+  expect(played).toEqual(['candidates/glm/candidate', 'candidates/glm_flash/candidate'])
   expect(announcer.announcedModels.size).toBe(0)
   announcer.stop()
   await second

@@ -1,8 +1,9 @@
+import {knotGeometryArgs} from 'knot-materials/geometry.ts'
+
 import GoldMaterial from '#component/levels/gallery/GoldMaterial'
 import Pedestal, {usePedestal} from '#component/levels/gallery/Pedestal'
 import Prop from '#component/levels/gallery/Prop'
 import GrabbableProp from '#src/components/Scene/GrabbableProp.tsx'
-import {knotGeometryArgs} from '#src/lib/gallery/sculptures.ts'
 
 export default function Props() {
   const pedestal = usePedestal()
@@ -29,4 +30,3 @@ export default function Props() {
     </group>)}
   </>
 }
-

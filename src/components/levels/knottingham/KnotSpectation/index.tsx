@@ -1,6 +1,10 @@
-import type {KnotBay} from '#src/lib/knots/exhibition.ts'
+import type {KnotBay} from 'knot-materials/exhibition.ts'
 
 import {useFrame, useThree} from '@react-three/fiber/webgpu'
+import knotAnnouncementUrl from 'knot-materials/announcementAssets.ts'
+import {knotBays, knotExhibition} from 'knot-materials/exhibition.ts'
+import {createKnotGeometry} from 'knot-materials/geometry.ts'
+import KnotAnnouncer from 'knot-materials/KnotAnnouncer.ts'
 import {useEffect, useRef} from 'react'
 import {PointerLockControls} from 'three/addons/controls/PointerLockControls.js'
 import {MathUtils, PerspectiveCamera, Vector3} from 'three/webgpu'
@@ -9,10 +13,6 @@ import {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
 import playAnnouncement from '#src/lib/audio/playAnnouncement.ts'
 import OrbitInspection from '#src/lib/camera/OrbitInspection.ts'
 import {cameraPose, galleryEvents, isTextInput, markControlled, notify, setCameraFocused, stopNarration, useGallery} from '#src/lib/gallery.ts'
-import {createKnotGeometry} from '#src/lib/gallery/sculptures.ts'
-import knotAnnouncementUrl from '#src/lib/knots/announcementAssets.ts'
-import {knotBays, knotExhibition} from '#src/lib/knots/exhibition.ts'
-import KnotAnnouncer from '#src/lib/knots/KnotAnnouncer.ts'
 import {setKnotFocus} from '#src/lib/rendering/playerView.ts'
 
 const exhibits = new Map(knotExhibition.map(item => [`prop-knot-${item.id}`, item]))

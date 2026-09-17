@@ -1,0 +1,22 @@
+import type {KnotData} from '../../types.ts'
+
+export default {
+  icon: new URL('icon.jxl', import.meta.url).href,
+  id: 'ember_cortex',
+  candidateId: 'glm_flash',
+  title: 'Ember Cortex',
+  harness: 'none',
+  author: {
+    model: {
+      title: 'GLM 5.3 Flash',
+      slug: 'z-ai/glm-5.3-flash',
+      effortLevel: 'max',
+    },
+  },
+  flavorText: 'Old thoughts flare briefly through the branching folds of a coal.',
+  placeholder: {
+    color: '#ff5a1f',
+    shading: 'smooth',
+  },
+  archived: true,
+} as const satisfies KnotData

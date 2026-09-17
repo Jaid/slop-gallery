@@ -1,7 +1,6 @@
+import {knotSign} from 'knot-materials/signs.ts'
 import {bumpMap, color, float, mix, mx_noise_float, positionLocal, vec2, vec3} from 'three/tsl'
 import {MeshBasicNodeMaterial, MeshPhysicalNodeMaterial} from 'three/webgpu'
-
-import {knotSign} from '../knots/signs.ts'
 
 export function signSupportMaterial(isQuality: boolean) {
   return isQuality ? new SignMetalMaterial : new MeshBasicNodeMaterial({color: '#9ca6ad'})

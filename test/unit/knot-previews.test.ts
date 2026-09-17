@@ -1,9 +1,10 @@
 import {expect, test} from 'bun:test'
 import {fileURLToPath} from 'node:url'
 
+import {knotCandidates} from 'knot-materials'
+
 import {visibleBounds} from '../../scripts/lib/knots/previewLayout.ts'
 import updateKnots from '../../scripts/updateKnots.ts'
-import {knotCandidates} from '../../src/lib/knots/index.ts'
 
 async function dimensions(url: string) {
   const file = fileURLToPath(url)
@@ -13,14 +14,14 @@ async function dimensions(url: string) {
   return size.trim().split(' ').map(Number)
 }
 test('candidate and item icons are generated JXLs while billboards remain runtime-only', async () => {
-  const overviewFiles = await Array.fromAsync(new Bun.Glob('src/lib/knots/candidates/*/overview.jxl').scan('.'))
+  const overviewFiles = await Array.fromAsync(new Bun.Glob('packages/knot-materials/src/candidates/*/overview.jxl').scan('.'))
   expect(overviewFiles).toEqual([])
   for (const candidate of knotCandidates) {
     expect(candidate.data.icon).toEndWith(`/${candidate.data.id}/icon.jxl`)
     expect('overview' in candidate.data).toBe(false)
     expect(await dimensions(candidate.data.icon)).toEqual([256, 256])
     for (const item of candidate.items) {
-      expect(item.icon).toEndWith(`/${item.candidate.id}/items/${item.sourceId}/icon.jxl`)
+      expect(item.icon).toEndWith(`/entries/${item.id}/icon.jxl`)
       const [width, height] = await dimensions(item.icon)
       expect(width).toBeGreaterThan(0)
       expect(height).toBeGreaterThan(0)

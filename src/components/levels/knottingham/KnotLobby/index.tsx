@@ -1,5 +1,6 @@
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
+import {knotBays} from 'knot-materials/exhibition.ts'
 import {useMemo} from 'react'
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 import {color, mix, texture} from 'three/tsl'
@@ -13,7 +14,6 @@ import CheckerMarbleFloor from '#src/components/Scene/CheckerMarbleFloor.tsx'
 import {surfaceTexture} from '#src/components/Scene/materials.ts'
 import WallSurface from '#src/components/Scene/WallSurface.tsx'
 import {knotGalleryBounds, knotGalleryCenter, knotGallerySize, knotGalleryWalls} from '#src/lib/gallery/knotGallery.ts'
-import {knotBays} from '#src/lib/knots/exhibition.ts'
 import {createKnotWallCarpetTextures, disposeKnotWallCarpetTextures} from '#src/lib/materials/KnotWallCarpetTextures.ts'
 
 /** The Knot level’s shell and lighting, without museum rooms or their physics. */

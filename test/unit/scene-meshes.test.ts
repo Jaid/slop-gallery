@@ -1,10 +1,10 @@
 import {describe, expect, test} from 'bun:test'
 
+import {knotGeometryArgs} from 'knot-materials/geometry.ts'
 import {MeshBVH} from 'three-mesh-bvh'
 import {Box3, Mesh, MeshBasicMaterial, Raycaster, TorusKnotGeometry, Vector3} from 'three/webgpu'
 
 import ChandelierGeometry from '../../src/lib/gallery/ChandelierGeometry.ts'
-import {knotGeometryArgs} from '../../src/lib/gallery/sculptures.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 import {chandelierPhysics} from '../../src/lib/physics/chandelier.ts'
 

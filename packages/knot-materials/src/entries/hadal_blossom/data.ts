@@ -1,0 +1,23 @@
+import type {KnotData} from '../../types.ts'
+
+export default {
+  icon: new URL('icon.jxl', import.meta.url).href,
+  id: 'hadal_blossom',
+  candidateId: 'muse_spark',
+  title: 'Abyssal Bloom',
+  harness: 'none',
+  author: {
+    model: {
+      title: 'Muse Spark 1.3',
+      slug: 'meta/muse-spark-1.3',
+      effortLevel: 'xhigh',
+    },
+  },
+  flavorText: 'A flower opens where the ocean is deepest and no season ever changes.',
+  placeholder: {
+    color: '#00f0ff',
+    shading: 'fabric',
+  },
+  archived: true,
+  displacement: 0.02,
+} as const satisfies KnotData

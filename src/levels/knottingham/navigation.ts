@@ -1,6 +1,6 @@
 import type {PlayerPose, RoomId, Vec3} from '#src/lib/gallery/types.ts'
 
-import {knotLayout} from '#src/lib/knots/exhibition.ts'
+import {knotLayout} from 'knot-materials/exhibition.ts'
 
 export {insideKnotGallery as insideLevel, knotGalleryWallDistance as levelWallDistance} from '#src/lib/gallery/knotGallery.ts'
 

@@ -4,14 +4,14 @@ import {announcementDurationLimit, announcementInput} from '../../scripts/announ
 
 test('Grok receives only the knot title, not spoken character instructions', () => {
   const input = announcementInput({
-    id: 'deepseek/items/astral_orrery',
+    id: 'entries/astral_orrery',
     text: 'Astral Orrery',
   })
   expect(input).toBe('Astral Orrery')
 })
 test('model names preserve their letters and version without a Gemini prompt', () => {
   const input = announcementInput({
-    id: 'glm/slug/glm-5.3',
+    id: 'candidates/glm/slug/glm-5.3',
     text: 'GLM 5.3',
   })
   expect(input).toBe('GLM 5.3')

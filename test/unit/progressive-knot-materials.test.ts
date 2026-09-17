@@ -3,15 +3,21 @@ import type {Texture, WebGPURenderer} from 'three/webgpu'
 import {expect, test} from 'bun:test'
 
 import RetainedLifetime from 'disposable-lifetime'
+import {knotsById} from 'knot-materials'
+import KnotMaterial from 'knot-materials/lib/KnotMaterial.ts'
+import ProgressiveKnotMaterials from 'knot-materials/ProgressiveKnotMaterials.ts'
 import {Color, Mesh, PerspectiveCamera, RenderTarget, Scene} from 'three/webgpu'
-
-import KnotMaterial from '../../src/lib/knots/base/KnotMaterial.ts'
-import {knotsById} from '../../src/lib/knots/index.ts'
-import ProgressiveKnotMaterials from '../../src/lib/knots/ProgressiveKnotMaterials.ts'
 
 function fixture(third = false) {
   class TestMaterial extends KnotMaterial {}
-  const entry = knotsById.get('gpt_astra/lenticular_mirage')!
+  const original = knotsById.get('lenticular_mirage')!
+  const entry = {
+    ...original,
+    placeholder: {
+      ...original.placeholder,
+      shading: 'ghost' as const,
+    },
+  }
   const entries = [
     entry,
     {
@@ -60,7 +66,7 @@ function fixture(third = false) {
   }
   const materials = new ProgressiveKnotMaterials(renderer as unknown as WebGPURenderer, camera, entries, new Map(entries.map(item => [item.id, TestMaterial])), true)
   const meshes = materials.resources.items.map(({geometry}, index) => {
-    const mesh: Mesh = new Mesh(geometry, materials.flavorMaterials[index])
+    const mesh: Mesh = new Mesh(geometry, materials.placeholderMaterials[index])
     mesh.position.z = [-8, -2, -5][index]
     mesh.updateMatrixWorld()
     materials.refs[index](mesh)
@@ -68,7 +74,7 @@ function fixture(third = false) {
   })
   const observe = (index: number, pass = main) => {
     renderer.setRenderTarget(pass)
-    materials.observers[index].call(meshes[index], renderer as unknown as Parameters<Mesh['onBeforeRender']>[0], scene, camera, meshes[index].geometry, materials.flavorMaterials[index], null as never)
+    materials.observers[index].call(meshes[index], renderer as unknown as Parameters<Mesh['onBeforeRender']>[0], scene, camera, meshes[index].geometry, materials.placeholderMaterials[index], null as never)
     renderer.setRenderTarget(null)
   }
   const dispose = () => {
@@ -97,7 +103,7 @@ async function flush() {
 test('quality placeholders use transparent ghost materials until full materials are ready', () => {
   const f = fixture()
   try {
-    const placeholder = f.materials.flavorMaterials[0]
+    const placeholder = f.materials.placeholderMaterials[0]
     expect(placeholder.isMeshStandardNodeMaterial).toBe(true)
     expect(placeholder.transparent).toBe(true)
     expect(placeholder.opacity).toBe(0.34)
@@ -119,7 +125,7 @@ test('unmount waits for in-flight compilation before releasing resources and nev
   f.calls[0].gate.resolve()
   await flush()
   expect(releases).toBe(1)
-  expect(f.meshes[0].material).toBe(f.materials.flavorMaterials[0])
+  expect(f.meshes[0].material).toBe(f.materials.placeholderMaterials[0])
   f.dispose()
   expect(releases).toBe(1)
   expect(f.calls).toHaveLength(1)
@@ -162,8 +168,8 @@ test('moving the player reprioritizes queued meshes without needing another visi
     f.dispose()
   }
 })
-test('performance mode keeps only lit flavor-color materials and never constructs full knot materials', async () => {
-  const entry = knotsById.get('gpt_astra/lenticular_mirage')!
+test('performance mode keeps only lit placeholder materials and never constructs full knot materials', async () => {
+  const entry = knotsById.get('lenticular_mirage')!
   let constructions = 0
   class TrackedMaterial extends KnotMaterial {
     constructor(environment: Texture) {
@@ -175,12 +181,12 @@ test('performance mode keeps only lit flavor-color materials and never construct
   try {
     expect(constructions).toBe(0)
     expect(materials.fullMaterials).toHaveLength(0)
-    expect(materials.flavorMaterials).toHaveLength(1)
-    const surface = materials.flavorMaterials[0]
+    expect(materials.placeholderMaterials).toHaveLength(1)
+    const surface = materials.placeholderMaterials[0]
     expect(surface.isMeshStandardNodeMaterial).toBe(true)
-    expect(surface.color.getHexString()).toBe(new Color(entry.accent).getHexString())
+    expect(surface.color.getHexString()).toBe(new Color(entry.placeholder.color).getHexString())
     expect(surface.metalness).toBe(0)
-    expect(surface.roughness).toBe(0.72)
+    expect(surface.roughness).toBe(0.45)
   } finally {
     await materials.disposeAsync()
   }

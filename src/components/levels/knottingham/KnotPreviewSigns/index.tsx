@@ -1,13 +1,13 @@
-import type {KnotBay} from '#src/lib/knots/exhibition.ts'
+import type {KnotBay} from 'knot-materials/exhibition.ts'
 
 import {closeCanvasBitmaps, loadCanvasBitmaps, loadCanvasFonts} from 'canvas-textures'
 import useCanvasTexture from 'canvas-textures/react'
+import {knotNumberLabel, knotPreviewX} from 'knot-materials/exhibition.ts'
+import {knotPreviewGrid, knotPreviewTextureLayout} from 'knot-materials/KnotPreviewLayout.ts'
 
 import InteractiveObject from '#component/InteractiveObject'
 import Support from '#component/levels/knottingham/KnotBillboardSupport'
 import {narrate} from '#src/lib/gallery/actions.ts'
-import {knotNumberLabel, knotPreviewX} from '#src/lib/knots/exhibition.ts'
-import {knotPreviewGrid, knotPreviewTextureLayout} from '#src/lib/knots/KnotPreviewLayout.ts'
 
 import drawPreview, {knotPreviewBackground, knotPreviewCaptionFontFamily, knotPreviewCaptionFontSize, knotPreviewCaptionFontWeight} from './drawPreview.ts'
 

@@ -1,10 +1,10 @@
 import Branch from 'branch-component'
+import {knotBays, knotExhibition, knotLayout} from 'knot-materials/exhibition.ts'
 import {useEffect, useRef} from 'react'
 
 import {cameraPose} from '#src/lib/gallery.ts'
 import {knotGalleryBounds, knotGallerySize} from '#src/lib/gallery/knotGallery.ts'
 import {minimapHeading} from '#src/lib/gallery/minimap.ts'
-import {knotBays, knotExhibition, knotLayout} from '#src/lib/knots/exhibition.ts'
 
 import css from './style.module.sass'
 

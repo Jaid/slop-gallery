@@ -1,8 +1,7 @@
 import {expect, test} from 'bun:test'
 
+import BillboardPanelGeometry from 'knot-materials/BillboardPanelGeometry.ts'
 import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
-
-import BillboardPanelGeometry from '../../src/lib/knots/BillboardPanelGeometry.ts'
 
 test('billboard timber has no competing front face, but retains its back and edges', () => {
   const geometry = new BillboardPanelGeometry(4.8, 2.75, 0.05)

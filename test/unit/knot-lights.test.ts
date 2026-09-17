@@ -1,9 +1,10 @@
 import {expect, test} from 'bun:test'
 
+import {knotBays, knotLayout} from 'knot-materials/exhibition.ts'
+import KnotLayout from 'knot-materials/KnotLayout.ts'
+import KnotLightDamage, {isKnotLightDamageImpact, knotLight, knotLightFlicker, knotLightFracture, knotLightImpactEnergy, knotLightSlots} from 'knot-materials/KnotLights.ts'
+
 import {knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
-import {knotBays, knotLayout} from '../../src/lib/knots/exhibition.ts'
-import KnotLayout from '../../src/lib/knots/KnotLayout.ts'
-import KnotLightDamage, {isKnotLightDamageImpact, knotLight, knotLightFlicker, knotLightFracture, knotLightImpactEnergy, knotLightSlots} from '../../src/lib/knots/KnotLights.ts'
 
 test('every candidate row gets a pane over every slot in the longest row', () => {
   const exhibitionSlots = knotLightSlots(knotLayout, knotBays.length, knotGalleryBounds.height)

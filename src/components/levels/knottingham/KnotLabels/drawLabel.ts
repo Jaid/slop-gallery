@@ -1,4 +1,6 @@
-import type {KnotExhibit} from '#src/lib/knots/exhibition.ts'
+import type {KnotExhibit} from 'knot-materials/exhibition.ts'
+import type {Rarity} from 'knot-materials/rarities.ts'
+import type {Texture} from 'three/webgpu'
 
 import flattenString from 'flatten-string'
 
@@ -12,6 +14,7 @@ export const labelFonts = {
   number: '600 74px main',
   title: '600 44.5px main',
   model: '40px main',
+  rarity: '32px sans-serif',
   detail: '30px main',
 }
 
@@ -31,20 +34,32 @@ export function modelLineLayout(textWidth: number, hasIcon: boolean) {
   }
 }
 
+/** Redraw only the stars so live edits do not rebuild the atlas or its shader. */
+export function drawRarity(context: CanvasRenderingContext2D, rarity: Rarity, x: number, y: number) {
+  context.fillStyle = labelBackground
+  context.fillRect(x + 200, y + 264, 320, 52)
+  context.fillStyle = '#e5cf87'
+  context.textAlign = 'center'
+  context.textBaseline = 'middle'
+  context.font = labelFonts.rarity
+  context.fillText(Array.from({length: rarity}, () => '★').join(' '), x + labelWidth / 2, y + 290, 300)
+}
+
 /** Complete face in atlas pixel coordinates; no overlapping sticker geometry. */
 export default function drawLabel(context: CanvasRenderingContext2D, exhibit: KnotExhibit, x: number, y: number, icon?: HTMLImageElement) {
   context.fillStyle = labelBackground
   context.fillRect(x, y, labelWidth, labelHeight)
-  context.fillStyle = exhibit.accent
+  context.fillStyle = exhibit.placeholder.color
   context.fillRect(x + 38, y + 41, 644, 8)
   context.textAlign = 'center'
   context.textBaseline = 'middle'
   context.fillStyle = '#fff3d9'
   context.font = labelFonts.number
   context.fillText(exhibit.label, x + labelWidth / 2, y + 132, 644)
-  context.fillStyle = exhibit.accent
+  context.fillStyle = exhibit.placeholder.color
   context.font = labelFonts.title
   context.fillText(exhibit.title, x + labelWidth / 2, y + 225, 644)
+  drawRarity(context, exhibit.rarity, x, y)
   context.fillStyle = '#c5d0d9'
   context.font = labelFonts.model
   const {left, textWidth, iconSize, gap} = modelLineLayout(context.measureText(exhibit.modelTitle).width, Boolean(icon))
@@ -63,4 +78,12 @@ export default function drawLabel(context: CanvasRenderingContext2D, exhibit: Kn
     context.font = labelFonts.detail
     context.fillText(detail, x + labelWidth / 2, y + 414, 606)
   }
+}
+
+export function updateRarityAtlas(atlas: Texture, exhibits: ReadonlyArray<KnotExhibit>, ratings: ReadonlyMap<string, Rarity>) {
+  const context = (atlas.image as HTMLCanvasElement).getContext('2d')!
+  for (const [index, exhibit] of exhibits.entries()) {
+    drawRarity(context, ratings.get(exhibit.id)!, index % labelAtlasColumns * labelWidth, Math.floor(index / labelAtlasColumns) * labelHeight)
+  }
+  atlas.needsUpdate = true
 }

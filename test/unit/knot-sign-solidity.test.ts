@@ -1,9 +1,8 @@
 import {expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
+import {billboardParts, knotSign, knotSignParts, knotSignPosition, knotSignRoundParts} from 'knot-materials/signs.ts'
 import {BoxGeometry, CylinderGeometry, Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
-
-import {billboardParts, knotSign, knotSignParts, knotSignPosition, knotSignRoundParts} from '../../src/lib/knots/signs.ts'
 
 await RAPIER.init()
 for (const [title, parts, elevation] of [

@@ -1,49 +1,53 @@
-import type {KnotCandidateData, KnotData} from '../../src/lib/knots/types.ts'
+import type {KnotCandidateData, KnotData, KnotId} from 'knot-materials/types.ts'
 
 import {describe, expect, test} from 'bun:test'
 
-import {knotAnnouncementPaths} from '../../src/lib/knots/announcements.ts'
-import {enumerateKnotBays, formatKnotLabels, selectKnotBays} from '../../src/lib/knots/exhibition.ts'
-import {knotCandidates, knots, knotsById} from '../../src/lib/knots/index.ts'
-import KnotCandidate, {indexKnots} from '../../src/lib/knots/KnotCandidate.ts'
+import {entries, knotCandidates, knots, knotsById} from 'knot-materials'
+import {knotAnnouncementPaths} from 'knot-materials/announcements.ts'
+import {enumerateKnotBays, formatKnotLabels, selectKnotBays} from 'knot-materials/exhibition.ts'
+import KnotCandidate, {indexKnots} from 'knot-materials/KnotCandidate.ts'
 
 const candidateData: KnotCandidateData = {
   id: 'claude_fable',
   title: 'Claude Fable',
   icon: 'icon.jxl',
 }
-const item = (id: string, highlighted = false): KnotData => ({
+const item = (id: string): KnotData => ({
   id,
   title: id.replaceAll('_', ' '),
-  accent: '#fff',
+  candidateId: 'claude_fable',
+  placeholder: {
+    color: '#ffffff',
+    shading: 'smooth',
+  },
+  flavorText: 'A quiet relic of an impossible place.',
   icon: 'icon.jxl',
   author: {model: {title: 'Claude Fable 5.1'}},
-  highlighted,
 })
-const ids = (candidate: KnotCandidate) => candidate.select().map(entry => entry.sourceId)
+const ids = (candidate: KnotCandidate) => candidate.select().map(entry => entry.id)
 const byId = (id: string) => knotsById.get(id)!
 describe('arbitrary Knot batches', () => {
-  test('places highlighted entries at the far end while using them first for shot limits', () => {
-    const items = [item('zeta'), item('beta', true), item('alpha'), item('gamma', true), item('delta')]
-    const expected = ['alpha', 'delta', 'zeta', 'beta', 'gamma']
+  test('places rarer entries at the far end while prioritizing them for shot limits', () => {
+    const items = [item('washi_lantern'), item('lichtenberg_reliquary'), item('damascus_ember'), item('chladni_resonance'), item('glacial_aurora')]
+    const expected = ['damascus_ember', 'glacial_aurora', 'washi_lantern', 'lichtenberg_reliquary', 'chladni_resonance']
     expect(ids(new KnotCandidate(candidateData, items))).toEqual(expected)
     expect(ids(new KnotCandidate(candidateData, items.toReversed()))).toEqual(expected)
     const limited = new KnotCandidate(candidateData, items).select(3)
-    expect(limited.map(entry => entry.sourceId)).toEqual(['alpha', 'beta', 'gamma'])
-    expect(limited.map(entry => entry.highlighted)).toEqual([false, true, true])
+    expect(limited.map(entry => entry.id)).toEqual(['damascus_ember', 'lichtenberg_reliquary', 'chladni_resonance'])
+    expect(limited.map(entry => entry.rarity)).toEqual([1, 3, 4])
     expect(() => new KnotCandidate(candidateData, items).select(0)).toThrow('shot limit')
   })
   test('handles empty and partial rows without padding or reintroducing archives', () => {
     expect(ids(new KnotCandidate(candidateData, []))).toEqual([])
     const candidate = new KnotCandidate(candidateData, [
-      item('alpha'),
+      item('damascus_ember'),
       {
-        ...item('beta', true),
+        ...item('lichtenberg_reliquary'),
         archived: true,
       },
-      item('gamma'),
+      item('chladni_resonance'),
     ])
-    expect(ids(candidate)).toEqual(['alpha', 'gamma'])
+    expect(ids(candidate)).toEqual(['damascus_ember', 'chladni_resonance'])
     expect(candidate.items).toHaveLength(3)
   })
   test('rejects invalid identifiers, duplicate IDs and displacement bounds', () => {
@@ -53,50 +57,60 @@ describe('arbitrary Knot batches', () => {
     }, [])).toThrow('ID')
     expect(() => new KnotCandidate(candidateData, [
       {
-        ...item('alpha'),
+        ...item('damascus_ember'),
         id: '../other',
       },
     ])).toThrow('ID')
-    expect(() => new KnotCandidate(candidateData, [item('alpha'), item('alpha')])).toThrow('ID')
+    expect(() => new KnotCandidate(candidateData, [item('damascus_ember'), item('damascus_ember')])).toThrow('ID')
     for (const displacement of [-1, Number.NaN, Infinity]) {
       expect(() => new KnotCandidate(candidateData, [
         {
-          ...item('alpha'),
+          ...item('damascus_ember'),
           displacement,
         },
       ])).toThrow('displacement')
     }
     expect(() => new KnotCandidate(candidateData, [
       {
-        ...item('alpha'),
+        ...item('damascus_ember'),
         author: {model: {title: ' '}},
       },
     ])).toThrow('author')
   })
-  test('indexes by stable full ID and rejects duplicate candidate IDs', () => {
-    const a = new KnotCandidate(candidateData, [item('alpha')])
-    const b = new KnotCandidate({
+  test('indexes globally unique IDs and rejects duplicate candidates or cross-candidate collisions', () => {
+    const a = new KnotCandidate(candidateData, [item('damascus_ember')])
+    const astra = {
       ...candidateData,
       id: 'gpt_astra',
-    }, [item('alpha')])
-    expect([...indexKnots([a, b]).keys()]).toEqual(['claude_fable/alpha', 'gpt_astra/alpha'])
+    }
+    const b = new KnotCandidate(astra, [{
+      ...item('lenticular_mirage'),
+      candidateId: 'gpt_astra',
+    }])
+    expect([...indexKnots([a, b]).keys()]).toEqual(['damascus_ember', 'lenticular_mirage'])
+    const duplicate = new KnotCandidate(astra, [{
+      ...item('damascus_ember'),
+      candidateId: 'gpt_astra',
+    }])
+    expect(() => indexKnots([a, duplicate])).toThrow('Duplicate Knot ID')
     expect(() => indexKnots([a, a])).toThrow('candidate')
   })
-  test('item metadata has no persisted plate numbers or billboard overviews', async () => {
+  test('flat metadata has no persisted plate numbers or billboard overviews', async () => {
+    expect(Object.keys(entries)).toHaveLength(knots.length)
     for (const candidate of knotCandidates) {
-      const barrel = await import(`../../src/lib/knots/candidates/${candidate.data.id}/index.ts`)
-      expect(Object.keys(barrel)).toHaveLength(candidate.items.length + 1)
       expect('overview' in candidate.data).toBe(false)
       for (const entry of candidate.items) {
-        expect(barrel[entry.sourceId].id).toBe(entry.sourceId)
-        expect('number' in barrel[entry.sourceId]).toBe(false)
-        expect(await Bun.file(`src/lib/knots/candidates/${entry.candidate.id}/items/${entry.sourceId}/material.ts`).exists()).toBe(true)
-        const dataSource = await Bun.file(`src/lib/knots/candidates/${entry.candidate.id}/items/${entry.sourceId}/data.ts`).text()
+        const data = entries[entry.id as KnotId]
+        expect(entry.id).toBe(data.id)
+        expect(candidate.data.id).toBe(data.candidateId)
+        expect('number' in data).toBe(false)
+        expect(await Bun.file(`packages/knot-materials/src/entries/${entry.id}/Material.ts`).exists()).toBe(true)
+        const dataSource = await Bun.file(`packages/knot-materials/src/entries/${entry.id}/data.ts`).text()
         expect(dataSource).not.toMatch(/\bnumber\s*:/u)
       }
     }
-    const materialFiles = await Array.fromAsync(new Bun.Glob('src/lib/knots/candidates/*/items/*/material.ts').scan('.'))
-    expect(new Set(materialFiles.map(path => path.replaceAll('\\', '/')))).toEqual(new Set(knots.map(entry => `src/lib/knots/candidates/${entry.candidate.id}/items/${entry.sourceId}/material.ts`)))
+    const materialFiles = await Array.fromAsync(new Bun.Glob('packages/knot-materials/src/entries/*/Material.ts').scan('.'))
+    expect(new Set(materialFiles.map(path => path.replaceAll('\\', '/')))).toEqual(new Set(knots.map(entry => `packages/knot-materials/src/entries/${entry.id}/Material.ts`)))
     expect(knotsById.size).toBe(knots.length)
   })
   test('uses canonical candidate and model IDs', () => {
@@ -188,14 +202,14 @@ describe('arbitrary Knot batches', () => {
       expect(entries.every(entry => entry.author.model.title === title)).toBe(true)
       expect(Object.fromEntries(Map.groupBy(entries, entry => entry.author.model.effortLevel).entries().map(([effort, grouped]) => [effort, grouped.length]))).toEqual(effortCounts)
     }
-    expect(byId('deepseek/quantum_foam_2').archived).toBe(true)
-    expect(byId('muse_spark/abyssal_bloom').displacement).toBe(0.02)
-    expect(byId('claude_fable/chladni_resonance').displacement).toBe(0.006)
-    expect(byId('gemini_flash/magma_chrysalis_2').displacement).toBe(0.018)
-    expect(byId('gpt_astra/ferrothorn').displacement).toBe(0.048)
-    expect(byId('gpt_astra/folded_silence').displacement).toBe(0.048)
-    expect(byId('gpt_sol/magnetite_field').displacement).toBe(0.046)
-    expect(byId('gpt_sol/chromatophore_skin').displacement).toBe(0.014)
+    expect(byId('zero_point_lather').archived).toBe(true)
+    expect(byId('hadal_blossom').displacement).toBe(0.02)
+    expect(byId('chladni_resonance').displacement).toBe(0.006)
+    expect(byId('volcanic_chrysalis').displacement).toBe(0.018)
+    expect(byId('ferrothorn').displacement).toBe(0.048)
+    expect(byId('folded_silence').displacement).toBe(0.048)
+    expect(byId('magnetite_field').displacement).toBe(0.046)
+    expect(byId('chromatophore_skin').displacement).toBe(0.014)
   })
   test('records API, Codex and web-chat harness provenance without guessing legacy sources', () => {
     const api = knots.filter(entry => entry.author.model.slug && entry.harness === 'none')
@@ -266,7 +280,7 @@ describe('arbitrary Knot batches', () => {
     const fableOpenRouter = fable.items.filter(entry => entry.author.model.slug === 'anthropic/claude-fable-5.1')
     expect(fableOpenRouter).toHaveLength(16)
     expect(fableOpenRouter.every(entry => entry.harness === 'none')).toBe(true)
-    expect(byId('claude_fable/chladni_resonance').displacement).toBe(0.006)
+    expect(byId('chladni_resonance').displacement).toBe(0.006)
     const glm = knotCandidates.find(candidate => candidate.data.id === 'glm')!
     const glmFlash = knotCandidates.find(candidate => candidate.data.id === 'glm_flash')!
     expect(glm.data.title).toBe('GLM')

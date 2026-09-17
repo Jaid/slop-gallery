@@ -1,0 +1,22 @@
+import type {KnotData} from '../../types.ts'
+
+export default {
+  icon: new URL('icon.jxl', import.meta.url).href,
+  id: 'bismuth_ziggurat',
+  candidateId: 'glm_flash',
+  title: 'Bismuth Ziggurat',
+  harness: 'none',
+  author: {
+    model: {
+      title: 'GLM 5.3 Flash',
+      slug: 'z-ai/glm-5.3-flash',
+      effortLevel: 'max',
+    },
+  },
+  flavorText: 'A miniature citadel rises from the orderly dreams of cooling metal.',
+  placeholder: {
+    color: '#ff9af0',
+    shading: 'metal',
+  },
+  displacement: 0.055,
+} as const satisfies KnotData

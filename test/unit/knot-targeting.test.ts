@@ -1,13 +1,13 @@
 import {expect, test} from 'bun:test'
 
+import CryoBloomMaterial from 'knot-materials/entries/cryo_bloom/Material.ts'
+import {knotFloatHeight} from 'knot-materials/exhibition.ts'
+import {createKnotGeometry} from 'knot-materials/geometry.ts'
 import {Mesh, Raycaster, Texture, Vector3} from 'three/webgpu'
 
 import {levelWallDistance as museumWallDistance} from '../../src/levels/gallery/navigation.ts'
 import {levelWallDistance} from '../../src/levels/knottingham/navigation.ts'
 import {knotGalleryBounds, knotGalleryCenter} from '../../src/lib/gallery/knotGallery.ts'
-import {createKnotGeometry} from '../../src/lib/gallery/sculptures.ts'
-import CryoBloomMaterial from '../../src/lib/knots/candidates/deepseek/items/cryo_bloom/material.ts'
-import {knotFloatHeight} from '../../src/lib/knots/exhibition.ts'
 
 test('a knot can be targeted across the museum wall that does not exist in Knottingham', () => {
   const environment = new Texture

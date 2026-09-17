@@ -1,4 +1,4 @@
-import type {KnotExhibit} from '../../src/lib/knots/exhibition.ts'
+import type {KnotExhibit} from 'knot-materials/exhibition.ts'
 
 import renderCanvasTexture from 'canvas-textures/three'
 import {attribute, texture, uv, vec2} from 'three/tsl'
@@ -22,10 +22,14 @@ export default async function verifyKnotLabels() {
         const exhibit = {
           label: `#${index + 1}`,
           title: 'Abyssal Lantern',
+          rarity: 2,
           modelTitle: 'GPT-6 Astra',
           harness: 'Codex',
           author: {model: {title: 'GPT-6 Astra'}},
-          accent: accents[indices.indexOf(index)] ?? '#46d6ff',
+          placeholder: {
+            color: accents[indices.indexOf(index)] ?? '#46d6ff',
+            shading: 'smooth',
+          },
         } as KnotExhibit
         drawLabel(context, exhibit, index % labelAtlasColumns * labelWidth, Math.floor(index / labelAtlasColumns) * labelHeight)
       }

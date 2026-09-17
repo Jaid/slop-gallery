@@ -1,13 +1,13 @@
 import {expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
+import {candidateSignSuspensionCenter, candidateSignSuspensionHeight, knotCandidateSign} from 'knot-materials/knotCandidateSign.ts'
+import KnotCandidateSignGeometry from 'knot-materials/KnotCandidateSignGeometry.ts'
 import {Quaternion, Vector3} from 'three/webgpu'
 
 import drawFace, {candidateSignFontSize, candidateSignTextureSize} from '../../src/components/levels/knottingham/KnotCandidateSign/drawFace.ts'
 import {knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
-import KnotCandidateSignGeometry from '../../src/lib/knots/KnotCandidateSignGeometry.ts'
-import {candidateSignSuspensionCenter, candidateSignSuspensionHeight, knotCandidateSign} from '../../src/lib/physics/knotCandidateSign.ts'
 
 await RAPIER.init()
 function simulate(mass: number, miss = false, yaw = 0) {

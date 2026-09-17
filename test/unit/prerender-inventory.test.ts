@@ -1,9 +1,10 @@
 import {expect, test} from 'bun:test'
 
+import {knotCandidates} from 'knot-materials'
+import {knotAnnouncements} from 'knot-materials/announcements.ts'
+
 import {prerenderInventory} from '../../scripts/prerenderAllVoices.ts'
 import portraits from '../../src/levels/gallery/collection.ts'
-import {knotAnnouncements} from '../../src/lib/knots/announcements.ts'
-import {knotCandidates} from '../../src/lib/knots/index.ts'
 
 test('the replacement inventory covers every knot, model and bundled portrait exactly once', () => {
   const inventory = prerenderInventory()

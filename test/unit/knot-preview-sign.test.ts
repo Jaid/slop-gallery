@@ -1,8 +1,9 @@
 import {expect, test} from 'bun:test'
 
+import {knotBays, knotNumberLabel} from 'knot-materials/exhibition.ts'
+import {knotPreviewGrid, knotPreviewMaximumHeight, knotPreviewMaximumWidth, knotPreviewTextureLayout, knotPreviewTextureRowHeight, knotPreviewTextureWidth} from 'knot-materials/KnotPreviewLayout.ts'
+
 import drawPreview, {knotPreviewBackground} from '../../src/components/levels/knottingham/KnotPreviewSigns/drawPreview.ts'
-import {knotBays, knotNumberLabel} from '../../src/lib/knots/exhibition.ts'
-import {knotPreviewGrid, knotPreviewMaximumHeight, knotPreviewMaximumWidth, knotPreviewTextureLayout, knotPreviewTextureRowHeight, knotPreviewTextureWidth} from '../../src/lib/knots/KnotPreviewLayout.ts'
 
 test('runtime billboard layout preserves physical bounds and matches its raster aspect', () => {
   for (const count of [1, 4, 5, 17, 22]) {
@@ -78,6 +79,6 @@ test('candidate atlas draws dynamic numbers, titles, accents and image fallbacks
   expect(texts).toHaveLength(bay.finishes.length)
   for (const [index, finish] of bay.finishes.entries()) {
     expect(texts[index].args[0]).toBe(`${knotNumberLabel(finish.number)} · ${finish.title}`)
-    expect(texts[index].style).toBe(finish.accent)
+    expect(texts[index].style).toBe(finish.placeholder.color)
   }
 })

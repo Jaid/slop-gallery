@@ -1,9 +1,9 @@
 import {expect, mock, spyOn, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
+import {knotSign, knotSignId, knotSignParts, knotSignRoundParts} from 'knot-materials/signs.ts'
 import {BoxGeometry, Euler, Group, InstancedMesh, Matrix4, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
-import {knotSign, knotSignId, knotSignParts, knotSignRoundParts} from '../../src/lib/knots/signs.ts'
 import GrabbableBody from '../../src/lib/physics/GrabbableBody.ts'
 import InstancedPropVisuals from '../../src/lib/physics/InstancedPropVisuals.ts'
 

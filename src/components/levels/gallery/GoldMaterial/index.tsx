@@ -1,7 +1,7 @@
+import StudioEnvironment from 'knot-materials/StudioEnvironment.ts'
 import {useEffect} from 'react'
 
 import GoldTextures from '#src/lib/materials/GoldTextures.ts'
-import StudioEnvironment from '#src/lib/materials/StudioEnvironment.ts'
 
 export default function GoldMaterial() {
   const environment = new StudioEnvironment

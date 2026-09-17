@@ -1,7 +1,7 @@
-import type {KnotBay} from '#src/lib/knots/exhibition.ts'
+import type {KnotBay} from 'knot-materials/exhibition.ts'
 
-import {knotNumberLabel} from '#src/lib/knots/exhibition.ts'
-import {knotPreviewTextureLayout, knotPreviewTextureRowHeight} from '#src/lib/knots/KnotPreviewLayout.ts'
+import {knotNumberLabel} from 'knot-materials/exhibition.ts'
+import {knotPreviewTextureLayout, knotPreviewTextureRowHeight} from 'knot-materials/KnotPreviewLayout.ts'
 
 export const knotPreviewBackground = '#17202b'
 export const knotPreviewCaptionFontFamily = 'main'
@@ -46,7 +46,7 @@ export default function drawPreview(context: CanvasRenderingContext2D, bay: Knot
     const targetWidth = boxWidth * captionMaximumWidth
     const fittedPx = Math.max(10, Math.floor(requestedPx * Math.min(1, targetWidth / measured)))
     context.font = `${knotPreviewCaptionFontWeight} ${fittedPx}px "${knotPreviewCaptionFontFamily}"`
-    context.fillStyle = finish.accent
+    context.fillStyle = finish.placeholder.color
     context.textAlign = 'center'
     context.textBaseline = 'middle'
     context.fillText(text, centerX, centerY + layout.rowHeight * captionCenterOffset)

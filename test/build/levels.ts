@@ -28,7 +28,7 @@ for (const level of levelIds) {
       throw new Error(`${other} components leaked into ${level}.`)
     }
   }
-  if (level !== 'knottingham' && report.modules.some(id => id.startsWith('src/lib/knots/'))) {
+  if (level !== 'knottingham' && report.modules.some(id => id.startsWith('packages/knot-materials/src/entries/') || id.startsWith('packages/knot-materials/src/candidates/'))) {
     throw new Error(`Knot shaders or catalog leaked into ${level}.`)
   }
   const files = await Array.fromAsync(new Bun.Glob('**/*').scan(directory))
@@ -39,7 +39,7 @@ for (const level of levelIds) {
   if (primaryChunks.some(file => !files.includes(file))) {
     throw new Error(`Missing production chunk in ${level}.`)
   }
-  if (files.some(file => /^material\d*\.js$/u.test(file))) {
+  if (files.some(file => /^material\d*\.js$/iu.test(file))) {
     throw new Error(`Knot material code escaped the main chunk in ${level}.`)
   }
   if (files.some(file => file.endsWith('.jxl'))) {

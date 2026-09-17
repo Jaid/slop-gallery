@@ -1,17 +1,17 @@
-import type KnotMaterial from '../../src/lib/knots/base/KnotMaterial.ts'
+import type KnotMaterial from 'knot-materials/lib/KnotMaterial.ts'
 import type {Node} from 'three/webgpu'
 
 import {describe, expect, test} from 'bun:test'
 import {resolve} from 'node:path'
 
+import {knots, knotsById} from 'knot-materials'
+import {knotBays, knotExhibition, knotFloatHeight, knotPreviewX, knotRowHalfWidth, knotSpacing} from 'knot-materials/exhibition.ts'
+import {createKnotGeometry, knotGeometryArgs} from 'knot-materials/geometry.ts'
+import StudioEnvironment from 'knot-materials/StudioEnvironment.ts'
 import {cameraPosition, positionView} from 'three/tsl'
 import {EquirectangularReflectionMapping, FloatType} from 'three/webgpu'
 
 import {insideKnotGallery, knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
-import {createKnotGeometry, knotGeometryArgs} from '../../src/lib/gallery/sculptures.ts'
-import {knotBays, knotExhibition, knotFloatHeight, knotPreviewX, knotRowHalfWidth, knotSpacing} from '../../src/lib/knots/exhibition.ts'
-import {knots, knotsById} from '../../src/lib/knots/index.ts'
-import StudioEnvironment from '../../src/lib/materials/StudioEnvironment.ts'
 
 describe('multi-model Knot challenge', () => {
   test('enumerates displayed Knots at initialization while keeping stable identities', () => {
@@ -25,18 +25,16 @@ describe('multi-model Knot challenge', () => {
     expect(knotBays).toHaveLength(displayedByCandidate.size)
     expect(knotExhibition.map(item => item.number)).toEqual(Array.from({length: expectedCount}, (_, index) => index + 1))
     for (const bay of knotBays) {
-      const firstHighlighted = bay.finishes.findIndex(item => item.highlighted)
-      if (firstHighlighted !== -1) {
-        expect(bay.finishes.slice(firstHighlighted).every(item => item.highlighted)).toBe(true)
-      }
+      expect(bay.finishes.map(item => item.rarity)).toEqual(bay.finishes.map(item => item.rarity).toSorted((a, b) => a - b))
     }
     for (const item of knotExhibition) {
       expect(item.archived).not.toBe(true)
-      expect(knotsById.get(item.id)?.sourceId).toBe(item.sourceId)
-      expect(item.id).toBe(`${item.candidate.id}/${item.sourceId}`)
+      expect(knotsById.get(item.id)?.id).toBe(item.id)
+      expect(item.id).toMatch(/^[a-z][0-9_a-z]*$/u)
+      expect(item.candidate.id).toBe(item.candidateId)
     }
-    expect(knotsById.get('claude_sonnet/stained_requiem')?.title).toBe('Stained Requiem')
-    expect(knotsById.get('claude_fable/event_horizon')?.modelTitle).toBe('Claude Fable 5.1')
+    expect(knotsById.get('stained_requiem')?.title).toBe('Stained Requiem')
+    expect(knotsById.get('event_horizon')?.modelTitle).toBe('Claude Fable 5.1')
   })
   test('keeps every floating Knot inside the expanded lobby with walking clearance', () => {
     for (const [index, exhibit] of knotExhibition.entries()) {
@@ -92,10 +90,10 @@ describe('multi-model Knot challenge', () => {
     environment.addEventListener('dispose', () => disposed = true)
     try {
       for (const exhibit of knots) {
-        const {default: Material} = await import(resolve(import.meta.dir, '../../src/lib/knots/candidates', exhibit.candidate.id, 'items', exhibit.sourceId, 'material.ts')) as {default: new(environment: StudioEnvironment) => KnotMaterial}
+        const {default: Material} = await import(resolve(import.meta.dir, '../../packages/knot-materials/src/entries', exhibit.id, 'Material.ts')) as {default: new(environment: StudioEnvironment) => KnotMaterial}
         const material = new Material(environment)
         try {
-          expect(material.name).toBe(exhibit.sourceId)
+          expect(material.name).toBe(exhibit.id)
           expect(material.envMap).toBe(environment)
           expect(material.isMeshPhysicalNodeMaterial).toBe(true)
           expect(material.map).toBeNull()
@@ -104,7 +102,7 @@ describe('multi-model Knot challenge', () => {
             expect(material.depthWrite, exhibit.id).toBe(true)
             expect(material.alphaHash, exhibit.id).toBe(false)
           }
-          if (exhibit.id === 'muse_spark/mnemonic_mercury') {
+          if (exhibit.id === 'mnemonic_mercury') {
             const normal = material.normalNode as Node & {node?: {method?: string}}
             expect(normal.node?.method).toBe('normalize')
           }
@@ -123,7 +121,7 @@ describe('multi-model Knot challenge', () => {
           expect(dependencies.has(positionView), exhibit.id).toBe(true)
           // Some submissions express the angular response only through physical Fresnel
           // or view normals, so do not demand object-local cameraPosition from all models.
-          if (exhibit.id === 'gpt_astra/lenticular_mirage') {
+          if (exhibit.id === 'lenticular_mirage') {
             expect(dependencies.has(cameraPosition), exhibit.id).toBe(true)
           }
         } finally {

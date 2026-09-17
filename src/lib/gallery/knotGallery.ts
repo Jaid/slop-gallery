@@ -1,7 +1,7 @@
 import type {Vec3} from './types.ts'
 import type {Wall} from './walls.ts'
 
-import {knotLayout} from '../knots/exhibition.ts'
+import {knotLayout} from 'knot-materials/exhibition.ts'
 
 export const knotGalleryBounds = knotLayout.bounds
 export const knotGallerySize = knotLayout.size

@@ -1,9 +1,14 @@
+import type {Texture} from 'three/webgpu'
+
 import {useFrame} from '@react-three/fiber/webgpu'
 import {CuboidCollider, CylinderCollider} from '@react-three/rapier'
 import {loadCanvasFonts} from 'canvas-textures'
 import useCanvasTexture from 'canvas-textures/react'
 import useDisposable from 'disposable-lifetime/react'
-import {useEffect, useMemo} from 'react'
+import {knotExhibition} from 'knot-materials/exhibition.ts'
+import loadCandidateIcons from 'knot-materials/loadCandidateIcons.ts'
+import {knotSign, knotSignId, knotSignParts, knotSignPosition, knotSignRoundParts} from 'knot-materials/signs.ts'
+import {useEffect, useMemo, useSyncExternalStore} from 'react'
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js'
 import {attribute, texture, uv, vec2} from 'three/tsl'
 import {BoxGeometry, CylinderGeometry, Euler, InstancedBufferAttribute, InstancedMesh, Matrix4, MeshBasicNodeMaterial, PlaneGeometry} from 'three/webgpu'
@@ -11,19 +16,17 @@ import useGraphicsQuality from 'use-graphics-quality'
 
 import InteractiveObject from '#component/InteractiveObject'
 import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
-import {narrate} from '#src/lib/gallery/actions.ts'
-import {knotExhibition} from '#src/lib/knots/exhibition.ts'
-import loadCandidateIcons from '#src/lib/knots/loadCandidateIcons.ts'
-import {knotSign, knotSignId, knotSignParts, knotSignPosition, knotSignRoundParts} from '#src/lib/knots/signs.ts'
+import {activateKnotSign, knotRarityEditor} from '#src/levels/knottingham/rarity.ts'
 import {signSupportMaterial} from '#src/lib/materials/SignMetalMaterial.ts'
 import InstancedPropVisuals from '#src/lib/physics/InstancedPropVisuals.ts'
 
-import drawLabel, {labelAtlasColumns, labelBackground, labelFonts, labelHeight, labelWidth} from './drawLabel.ts'
+import drawLabel, {labelAtlasColumns, labelBackground, labelFonts, labelHeight, labelWidth, updateRarityAtlas} from './drawLabel.ts'
 
 const atlasRows = Math.ceil(knotExhibition.length / labelAtlasColumns)
 /** One complete face atlas and two instanced batches: faces and physical supports. */
 export default function KnotLabels() {
   const isQuality = useGraphicsQuality()
+  const ratings = useSyncExternalStore(knotRarityEditor.subscribe, knotRarityEditor.getSnapshot, knotRarityEditor.getSnapshot)
   const supportMaterial = useDisposable(useMemo(() => signSupportMaterial(isQuality), [isQuality]))
   const resources = useDisposable(useMemo(() => {
     const offsets = new Float32Array(knotExhibition.length * 2)
@@ -73,6 +76,10 @@ export default function KnotLabels() {
     return {
       faces,
       supports,
+      setAtlas(atlas: Texture | null) {
+        material.colorNode = atlas ? texture(atlas, uv().mul(vec2(1 / labelAtlasColumns, 1 / atlasRows)).add(attribute('labelOffset', 'vec2'))) : null
+        material.needsUpdate = true
+      },
       visuals: new InstancedPropVisuals(meshes, knotExhibition.map(exhibit => knotSignId(exhibit.id))),
       dispose() {
         for (const mesh of meshes) {
@@ -105,6 +112,10 @@ export default function KnotLabels() {
             text: knotExhibition.map(exhibit => exhibit.modelTitle).join(' '),
           },
           {font: labelFonts.detail},
+          {
+            font: labelFonts.rarity,
+            text: '★',
+          },
         ]),
       ])
       return icons
@@ -116,18 +127,21 @@ export default function KnotLabels() {
     },
   }), []))
   useEffect(() => {
-    // Invalidate the placeholder shader when the prepared atlas arrives.
-    const {material} = resources.faces
-    material.colorNode = atlas ? texture(atlas, uv().mul(vec2(1 / labelAtlasColumns, 1 / atlasRows)).add(attribute('labelOffset', 'vec2'))) : null
-    material.needsUpdate = true
+    resources.setAtlas(atlas)
   }, [resources, atlas])
+  useEffect(() => {
+    if (!atlas) {
+      return
+    }
+    updateRarityAtlas(atlas, knotExhibition, ratings)
+  }, [atlas, ratings])
   useFrame(() => resources.visuals.update(id => propObjects.get(id)?.group))
   return <>
     <primitive object={resources.faces} />
     <primitive object={resources.supports}><primitive attach='material' object={supportMaterial} /></primitive>
     {knotExhibition.map(exhibit => <GrabbableProp angularDamping={0.15} colliders={false} friction={0.9} id={knotSignId(exhibit.id)} key={exhibit.id} linearDamping={0.1} position={knotSignPosition(exhibit)} restitution={0.1} rotation={[0, exhibit.rotation + knotSign.inwardRotation, 0]} title={`${exhibit.title} · nameplate`} type='dynamic'>
       {/* Raycast-only copy; visible geometry remains instanced. */}
-      <InteractiveObject id={knotSignId(exhibit.id)} onActivate={() => narrate(`prop-knot-${exhibit.id}`)}>
+      <InteractiveObject id={knotSignId(exhibit.id)} onActivate={() => activateKnotSign(exhibit)}>
         <mesh dispose={null} geometry={resources.supports.geometry} material={supportMaterial} visible={false} />
       </InteractiveObject>
       {knotSignParts.map(({position, rotation, size}, index) => <CuboidCollider args={[size[0] / 2, size[1] / 2, size[2] / 2]} key={index} mass={knotSign.plateMass} position={position} rotation={rotation} />)}

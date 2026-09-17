@@ -1,18 +1,12 @@
-import type {Texture} from 'three/webgpu'
+import CapturedTempestMaterial from 'knot-materials/entries/captured_tempest/Material.ts'
+import KnotResources from 'knot-materials/KnotResources.ts'
+import StudioEnvironment from 'knot-materials/StudioEnvironment.ts'
 
 import {verifyMaterialCompilation} from '../../packages/three-async-materials/test/browser/materials.ts'
-import {KnotMaterialPremium} from '../../src/lib/knots/candidates/gpt_sol/additionalBatchMaterial.ts'
-import KnotResources from '../../src/lib/knots/KnotResources.ts'
-import StudioEnvironment from '../../src/lib/materials/StudioEnvironment.ts'
 
 /** Exercise the package's GPU regression with an actual expensive gallery material. */
 export default async function verifyProgressiveMaterials() {
-  class CapturedTempestMaterial extends KnotMaterialPremium {
-    constructor(environment: Texture) {
-      super('captured_tempest', environment)
-    }
-  }
-  const entry = {id: 'gpt_sol/captured_tempest'}
+  const entry = {id: 'captured_tempest'}
   const resources = new KnotResources([entry])
   const environment = new StudioEnvironment
   const material = new CapturedTempestMaterial(environment)

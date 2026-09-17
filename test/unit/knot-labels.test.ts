@@ -1,9 +1,10 @@
 import {describe, expect, test} from 'bun:test'
 
-import drawLabel, {knotDetailLine, labelAtlasColumns, labelBackground, labelFonts, labelHeight, labelWidth, modelLineLayout} from '../../src/components/levels/knottingham/KnotLabels/drawLabel.ts'
-import {knotBays, knotExhibition} from '../../src/lib/knots/exhibition.ts'
-import {knotsById} from '../../src/lib/knots/index.ts'
-import {knotSign} from '../../src/lib/knots/signs.ts'
+import {knotsById} from 'knot-materials'
+import {knotBays, knotExhibition} from 'knot-materials/exhibition.ts'
+import {knotSign} from 'knot-materials/signs.ts'
+
+import drawLabel, {drawRarity, knotDetailLine, labelAtlasColumns, labelBackground, labelFonts, labelHeight, labelWidth, modelLineLayout} from '../../src/components/levels/knottingham/KnotLabels/drawLabel.ts'
 
 const iconHash = async (id: string) => Bun.hash(await Bun.file(new URL(knotsById.get(id)!.candidate.icon)).arrayBuffer())
 describe('Knot nameplates', () => {
@@ -24,11 +25,11 @@ describe('Knot nameplates', () => {
       urls.add(Bun.hash(await Bun.file(new URL(url)).arrayBuffer()).toString())
     }
     expect(urls.size).toBe(10)
-    expect(await iconHash('gpt_astra/lenticular_mirage')).toBe(await iconHash('gpt_astra/solar_reliquary'))
-    expect(await iconHash('gpt_astra/solar_reliquary')).toBe(await iconHash('gpt_astra/coralline_crown'))
-    expect(await iconHash('gpt_sol/celestial_rose')).toBe(await iconHash('gpt_astra/lenticular_mirage'))
-    expect(await iconHash('claude_sonnet/opal_fire')).toBe(await iconHash('claude_fable/event_horizon'))
-    expect(await iconHash('gemini_flash/cyber_kintsugi')).toBe(await iconHash('gemini_flash/event_horizon'))
+    expect(await iconHash('lenticular_mirage')).toBe(await iconHash('solar_reliquary'))
+    expect(await iconHash('solar_reliquary')).toBe(await iconHash('coralline_crown'))
+    expect(await iconHash('celestial_rose')).toBe(await iconHash('lenticular_mirage'))
+    expect(await iconHash('opal_fire')).toBe(await iconHash('event_horizon'))
+    expect(await iconHash('cyber_kintsugi')).toBe(await iconHash('schwarzschild_vault'))
   })
   test('centers the candidate icon and model text together and fits long names', () => {
     for (const measured of [90, 240, 400, 1000]) {
@@ -76,7 +77,7 @@ describe('Knot nameplates', () => {
         naturalHeight: 128,
       } as HTMLImageElement
       drawLabel(context as unknown as CanvasRenderingContext2D, exhibit, x, y, icon)
-      expect(fonts).toEqual([labelFonts.number, labelFonts.title, labelFonts.model])
+      expect(fonts).toEqual([labelFonts.number, labelFonts.title, labelFonts.rarity, labelFonts.model])
       expect(rects).toEqual([
         {
           args: [x, y, labelWidth, labelHeight],
@@ -84,7 +85,11 @@ describe('Knot nameplates', () => {
         },
         {
           args: [x + 38, y + 41, 644, 8],
-          color: exhibit.accent,
+          color: exhibit.placeholder.color,
+        },
+        {
+          args: [x + 200, y + 264, 320, 52],
+          color: labelBackground,
         },
       ])
       const {left} = modelLineLayout(240, true)
@@ -92,6 +97,7 @@ describe('Knot nameplates', () => {
       expect(texts).toEqual([
         [exhibit.label, x + labelWidth / 2, y + 132, 644],
         [exhibit.title, x + labelWidth / 2, y + 225, 644],
+        [Array.from({length: exhibit.rarity}, () => '★').join(' '), x + labelWidth / 2, y + 290, 300],
         [exhibit.modelTitle, x + left + 65, y + 364, 240],
       ])
     }
@@ -165,10 +171,10 @@ describe('Knot nameplates', () => {
         },
       }
       drawLabel(context as unknown as CanvasRenderingContext2D, exhibit, 0, 0)
-      expect(lines).toHaveLength(expected ? 4 : 3)
+      expect(lines).toHaveLength(expected ? 5 : 4)
       expect(lines[0].args[1]).toBeGreaterThanOrEqual(0)
       if (expected) {
-        expect(lines[3]).toEqual({
+        expect(lines[4]).toEqual({
           args: [expected, labelWidth / 2, 414, 606],
           font: labelFonts.detail,
           align: 'center',
@@ -176,4 +182,16 @@ describe('Knot nameplates', () => {
       }
     }
   })
+})
+test('star strip paints one through four stars and clears the previous count at any atlas offset', () => {
+  for (const rarity of [1, 2, 3, 4] as const) {
+    const calls: Array<Array<unknown>> = []
+    const context = {
+      fillRect: (...args: Array<unknown>) => calls.push(args),
+      fillText: (...args: Array<unknown>) => calls.push(args),
+    }
+    drawRarity(context as unknown as CanvasRenderingContext2D, rarity, 720, 960)
+    expect(calls[0]).toEqual([920, 1224, 320, 52])
+    expect(calls[1]).toEqual([Array.from({length: rarity}, () => '★').join(' '), 1080, 1250, 300])
+  }
 })
