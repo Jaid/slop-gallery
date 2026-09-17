@@ -1,30 +1,27 @@
-export type Disposable = {dispose: () => void}
+export type Disposer = () => void
 
 /** An effect replay may reacquire a resource before the queued final release. */
-export default class DisposableLifetime {
+export default class RetainedLifetime {
   private disposed = false
   private references = 0
 
-  constructor(private readonly resource: Disposable) {}
+  constructor(private readonly dispose: Disposer) {}
 
-  retain() {
+  retain(): DisposableStack {
     if (this.disposed) {
       throw new Error('Cannot retain a disposed resource.')
     }
     this.references++
-    let released = false
-    return () => {
-      if (released) {
-        return
-      }
-      released = true
+    const lease = new DisposableStack
+    lease.defer(() => {
       this.references--
       queueMicrotask(() => {
         if (!this.disposed && this.references === 0) {
           this.disposed = true
-          this.resource.dispose()
+          this.dispose()
         }
       })
-    }
+    })
+    return lease
   }
 }

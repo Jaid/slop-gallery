@@ -2,7 +2,7 @@ import type {Texture, WebGPURenderer} from 'three/webgpu'
 
 import {expect, test} from 'bun:test'
 
-import DisposableLifetime from 'disposable-lifetime'
+import RetainedLifetime from 'disposable-lifetime'
 import {Color, Mesh, PerspectiveCamera, RenderTarget, Scene} from 'three/webgpu'
 
 import KnotMaterial from '../../src/lib/knots/base/KnotMaterial.ts'
@@ -126,17 +126,17 @@ test('unmount waits for in-flight compilation before releasing resources and nev
 })
 test('effect replay neither restarts compilation nor disposes its live resources', async () => {
   const f = fixture()
-  const lifetime = new DisposableLifetime(f.materials)
+  const lifetime = new RetainedLifetime(() => f.materials.dispose())
   const first = lifetime.retain()
   f.observe(0)
-  first()
+  first[Symbol.dispose]()
   const replay = lifetime.retain()
   await flush()
   expect(f.calls).toHaveLength(1)
   f.calls[0].gate.resolve()
   await flush()
   expect(f.meshes[0].material).toBe(f.materials.fullMaterials[0])
-  replay()
+  replay[Symbol.dispose]()
   await f.materials.disposeAsync()
   f.dispose()
 })

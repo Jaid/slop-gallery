@@ -2,7 +2,7 @@
   "name": "disposable-lifetime",
   "version": "0.1.0",
   "type": "module",
-  "description": "Reference-counted disposal with effect-replay-safe lifetimes and optional React ownership",
+  "description": "Reference-counted disposal with native Disposable leases and effect-replay-safe React ownership",
   "funding": "https://github.com/sponsors/Jaid",
   "license": "MIT",
   "repository": {

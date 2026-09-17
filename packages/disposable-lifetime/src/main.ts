@@ -1,2 +1,2 @@
-export {default} from './DisposableLifetime.ts'
-export type {Disposable} from './DisposableLifetime.ts'
+export {default} from './RetainedLifetime.ts'
+export type {Disposer} from './RetainedLifetime.ts'
