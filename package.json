@@ -122,6 +122,8 @@
   },
   "workspaces": [
     "packages/*",
-    "packages/*/packages/*"
+    "packages/vite-plugin-bake-branch-component/packages/*",
+    "packages/vite-plugin-bake-three/packages/*",
+    "packages/vite-plugin-hoist-popular-constants/packages/*"
   ]
 }
