@@ -22,6 +22,9 @@ const identityRotation = {
 export default class EgoMotor {
   private active = false
   private clock = 0
+  private airborneTime = 0
+  private hadGroundContact = false
+  private lastLandingSpeed = 0
   private readonly controller
   private disposed = false
   private readonly forward = new Vector3
@@ -62,6 +65,11 @@ export default class EgoMotor {
 
   get horizontalSpeed() {
     return Math.hypot(this.physicalVelocity.x, this.physicalVelocity.z)
+  }
+
+  /** Downward speed before impact on the latest step; zero without a new landing. */
+  get landingSpeed() {
+    return this.lastLandingSpeed
   }
 
   get radius() {
@@ -118,6 +126,7 @@ export default class EgoMotor {
   }
 
   step(delta: number, input: EgoInput, rotation: Quaternion, active = true) {
+    this.lastLandingSpeed = 0
     if (this.disposed || !Number.isFinite(delta) || delta <= 0) {
       return
     }
@@ -216,14 +225,25 @@ export default class EgoMotor {
       z: translation.z + movement.z,
     })
     // Keep requested horizontal momentum separate from collision-resolved velocity. Autostep can spend a tick lifting the capsule; feeding that short horizontal displacement back into acceleration makes every riser behave like a wall. Physical velocity above still reports only the movement that actually happened.
-    this.isGrounded = this.controller.computedGrounded()
+    // Rapier can still report the takeoff floor within its contact distance at high tick rates.
+    // Positive jump velocity is airborne even during those first short upward displacements.
+    this.isGrounded = this.verticalVelocity <= 0 && this.controller.computedGrounded()
     if (this.isGrounded) {
+      // Suppress initial placement and brief contact flicker on stairs/slopes.
+      if (!grounded && this.hadGroundContact && this.airborneTime >= 0.06) {
+        this.lastLandingSpeed = Math.max(0, -this.verticalVelocity)
+      }
+      this.hadGroundContact = true
+      this.airborneTime = 0
       this.lastGroundedAt = now
       if (this.verticalVelocity < 0) {
         this.verticalVelocity = 0
       }
-    } else if (this.movement.y > 0 && movement.y + 0.0001 < this.movement.y) {
-      this.verticalVelocity = 0
+    } else {
+      this.airborneTime += dt
+      if (this.movement.y > 0 && movement.y + 0.0001 < this.movement.y) {
+        this.verticalVelocity = 0
+      }
     }
   }
 
@@ -275,6 +295,9 @@ export default class EgoMotor {
     this.velocity.set(0, 0, 0)
     this.physicalVelocity.set(0, 0, 0)
     this.verticalVelocity = 0
+    this.airborneTime = 0
+    this.hadGroundContact = false
+    this.lastLandingSpeed = 0
     this.isGrounded = false
     this.lastGroundedAt = Number.NEGATIVE_INFINITY
     this.jumpBufferedUntil = Number.NEGATIVE_INFINITY

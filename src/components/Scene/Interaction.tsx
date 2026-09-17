@@ -422,8 +422,9 @@ export default function Interaction() {
     const viewing = view.current
     if (viewing) {
       const p = s.portraits.find(p => p.id === viewing.id)
-      if (!p?.hung) {
+      if (!p?.hung && !viewing.returning) {
         viewing.returning = true
+        useGallery.setState({inspecting: null})
       }
       let target = viewing.position
       let rotation = viewing.rotation

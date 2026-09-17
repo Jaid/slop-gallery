@@ -304,6 +304,9 @@ export default function KnotSpectation() {
       distanceKeys.current.clear()
       orbitKeys.current.clear()
       current.orbit.release()
+      if (useGallery.getState().inspecting !== null) {
+        useGallery.setState({inspecting: null})
+      }
     }
     const complete = current.orbit.update(center.current, delta)
     if (object?.group.visible && !complete) {

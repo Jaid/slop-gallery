@@ -1,5 +1,5 @@
 import type {EgoDump} from './EgoDiagnostics.ts'
-import type {EgoZoomMode, EgoZoomOptions} from './EgoZoom.ts'
+import type {EgoZoomMode, EgoZoomOptions, EgoZoomTransition} from './EgoZoom.ts'
 import type {EgoOptions} from './options.ts'
 import type {EgoInputReader, EgoPlayerHandle, EgoPosition, EgoRotation, EgoState, EgoToggle} from './types.ts'
 import type {RapierCollider, RapierRigidBody, RigidBodyProps} from '@react-three/rapier'
@@ -34,12 +34,16 @@ export type EgoPlayerProps = EgoOptions & Partial<EgoZoomOptions> & {
   onInput?: (input: ReturnType<EgoInputReader>) => void
   /** Called once per interact press while input is active. */
   onInteract?: () => void
+  /** Called after a new landing, with downward pre-impact speed. Initial placement is silent. */
+  onLand?: (state: EgoState, impactSpeed: number) => void
   /** Called once per stride, independently of audio and head-bob amplitude. */
   onStep?: (state: EgoState) => void
   /** Called after physics with a detached snapshot. */
   onUpdate?: (state: EgoState) => void
   /** Called as the eased zoom changes. Zero is normal FOV; one is either fully zoomed mode. */
   onZoomChange?: (amount: number) => void
+  /** Called once when a real FOV transition begins or reverses; explicit release/teleport is silent. */
+  onZoomTransition?: (transition: EgoZoomTransition) => void
   /** Initial camera pitch in radians; updates intentionally reset camera orientation. */
   pitch?: number
   /** false omits look controls; an object customizes Drei’s pointer-lock controls. */
@@ -59,7 +63,7 @@ const initialPosition: EgoPosition = [0, 0.05, 0]
 const readToggle = (value: EgoToggle) => {
   return typeof value === 'function' ? value() : value
 }
-export default function EgoPlayer({cameraEnabled = true, casualZoomFactor = 2, casualZoomTransition = 0.2, children, enabled = true, extendedZoomFactor = 3, extendedZoomTransition = 0.2, fallbackPosition, input, onDump, onInteract, onZoomChange, onInput, onStep, onUpdate, pitch = 0, pointerLock = true, position = initialPosition, ref, requirePointerLock = true, userData, yaw = 0, ...options}: EgoPlayerProps) {
+export default function EgoPlayer({cameraEnabled = true, casualZoomFactor = 2, casualZoomTransition = 0.2, children, enabled = true, extendedZoomFactor = 3, extendedZoomTransition = 0.2, fallbackPosition, input, onDump, onInteract, onLand, onZoomChange, onZoomTransition, onInput, onStep, onUpdate, pitch = 0, pointerLock = true, position = initialPosition, ref, requirePointerLock = true, userData, yaw = 0, ...options}: EgoPlayerProps) {
   const [defaultUserData] = useState(() => ({isPlayer: true}))
   for (const [name, factor] of Object.entries({
     casualZoomFactor,
@@ -224,8 +228,13 @@ export default function EgoPlayer({cameraEnabled = true, casualZoomFactor = 2, c
     motor.step(physicsWorld.timestep, keys, camera.quaternion, active)
   })
   useAfterPhysicsStep(() => {
-    if (onUpdate && motorRef.current) {
-      onUpdate(motorRef.current.getState())
+    const motor = motorRef.current
+    if (motor && (onUpdate || onLand && motor.landingSpeed > 0)) {
+      const state = motor.getState()
+      if (motor.landingSpeed > 0) {
+        onLand?.(state, motor.landingSpeed)
+      }
+      onUpdate?.(state)
     }
   })
   useFrame((_, delta) => {
@@ -251,7 +260,7 @@ export default function EgoPlayer({cameraEnabled = true, casualZoomFactor = 2, c
     if (active && readToggle(cameraEnabled) && keys.zoom) {
       zoomMode = keys.sprint && stationary ? 'extended' : 'casual'
     }
-    reportZoom(zoom.update(camera, zoomMode, zoomOptions, delta))
+    reportZoom(zoom.update(camera, zoomMode, zoomOptions, delta, onZoomTransition))
     if (active && keys.interact && !actionKeys.current.interact) {
       onInteract?.()
     }

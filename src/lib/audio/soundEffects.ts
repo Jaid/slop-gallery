@@ -1,52 +1,9 @@
-import type SoundEngine from './SoundEngine.ts'
+import type {AudioOutput, SoundEffect} from './proceduralAudio.ts'
 
-export type SoundEffect = {
-  id: string
-  label: string
-  voices: Array<Voice>
-}
-type FilterSpec = {
-  endFrequency?: number
-  frequency: number
-  q?: number
-  type: BiquadFilterType
-}
-type OscillatorVoice = {
-  attack?: number
-  delay?: number
-  duration: number
-  endFrequency?: number
-  filter?: FilterSpec
-  frequency: number
-  kind: 'oscillator'
-  type?: OscillatorType
-  volume: number
-}
-type NoiseVoice = {
-  attack?: number
-  delay?: number
-  duration: number
-  filter: FilterSpec
-  kind: 'noise'
-  volume: number
-}
-type Voice = NoiseVoice | OscillatorVoice
+import {playerSoundEffects} from './playerSoundEffects.ts'
+import {noise, osc, playVoices} from './proceduralAudio.ts'
 
-const osc = (frequency: number, duration: number, volume: number, options: Partial<Omit<OscillatorVoice, 'duration' | 'frequency' | 'kind' | 'volume'>> = {}): OscillatorVoice => ({
-  kind: 'oscillator',
-  type: 'sine',
-  frequency,
-  duration,
-  volume,
-  ...options,
-})
-const noise = (duration: number, volume: number, filter: FilterSpec, options: Partial<Omit<NoiseVoice, 'duration' | 'filter' | 'kind' | 'volume'>> = {}): NoiseVoice => ({
-  kind: 'noise',
-  duration,
-  volume,
-  filter,
-  ...options,
-})
+export type {SoundEffect} from './proceduralAudio.ts'
 
 export const soundEffects: Array<SoundEffect> = [
   {
@@ -477,6 +434,7 @@ export const soundEffects: Array<SoundEffect> = [
       }),
     ],
   },
+  ...Object.values(playerSoundEffects),
 ]
 
 const byId = new Map(soundEffects.map(effect => [effect.id, effect]))
@@ -494,97 +452,17 @@ export const enabledSoundEffectIds: ReadonlyArray<string> = [
   'SFX-09',
   'SFX-06',
   'SFX-03',
+  ...Object.values(playerSoundEffects).map(effect => effect.id),
 ]
 
 export const enabledSoundEffects = enabledSoundEffectIds.map(id => byId.get(id)!)
 const enabledIds = new Set<string>(enabledSoundEffectIds)
 export const archivedSoundEffects = soundEffects.filter(effect => !enabledIds.has(effect.id))
-const floor = 0.0001
-function connect(source: AudioNode, gain: GainNode, master: GainNode, filter?: BiquadFilterNode) {
-  if (filter) {
-    source.connect(filter)
-    filter.connect(gain)
-  } else {
-    source.connect(gain)
-  }
-  gain.connect(master)
-}
-function createFilter(context: AudioContext, spec: FilterSpec, start: number, end: number) {
-  const filter = context.createBiquadFilter()
-  filter.type = spec.type
-  filter.Q.value = spec.q ?? 1
-  filter.frequency.setValueAtTime(spec.frequency, start)
-  if (spec.endFrequency) {
-    filter.frequency.exponentialRampToValueAtTime(spec.endFrequency, end)
-  }
-  return filter
-}
-function createEnvelope(context: AudioContext, voice: Voice, start: number) {
-  const gain = context.createGain()
-  const end = start + voice.duration
-  const attack = Math.min(voice.attack ?? 0.003, voice.duration * 0.35)
-  gain.gain.setValueAtTime(floor, start)
-  gain.gain.exponentialRampToValueAtTime(Math.max(floor, voice.volume), start + attack)
-  gain.gain.exponentialRampToValueAtTime(floor, end)
-  return {
-    end,
-    gain,
-  }
-}
-function fillNoise(data: Float32Array, seed: string) {
-  let state = 2_166_136_261
-  for (const character of seed) {
-    state = Math.imul(state ^ character.codePointAt(0)!, 16_777_619) >>> 0
-  }
-  for (let i = 0; i < data.length; i++) {
-    state = Math.imul(state, 1_664_525) + 1_013_904_223 >>> 0
-    data[i] = state / 2_147_483_648 - 1
-  }
-}
-function playVoice(sound: SoundEngine, voice: Voice, seed: string) {
-  const context = sound.context
-  const start = context.currentTime + (voice.delay ?? 0)
-  const {end, gain} = createEnvelope(context, voice, start)
-  const filter = voice.filter ? createFilter(context, voice.filter, start, end) : undefined
-  if (voice.kind === 'oscillator') {
-    const source = context.createOscillator()
-    source.type = voice.type ?? 'sine'
-    source.frequency.setValueAtTime(voice.frequency, start)
-    if (voice.endFrequency) {
-      source.frequency.exponentialRampToValueAtTime(voice.endFrequency, end)
-    }
-    connect(source, gain, sound.master, filter)
-    source.start(start)
-    source.stop(end)
-    source.addEventListener('ended', () => {
-      source.disconnect()
-      filter?.disconnect()
-      gain.disconnect()
-    }, {once: true})
-    return
-  }
-  const length = Math.max(1, Math.ceil(context.sampleRate * voice.duration))
-  const buffer = context.createBuffer(1, length, context.sampleRate)
-  fillNoise(buffer.getChannelData(0), seed)
-  const source = context.createBufferSource()
-  source.buffer = buffer
-  connect(source, gain, sound.master, filter)
-  source.start(start)
-  source.stop(end)
-  source.addEventListener('ended', () => {
-    source.disconnect()
-    filter?.disconnect()
-    gain.disconnect()
-  }, {once: true})
-}
-function playSoundEffect(sound: SoundEngine, id: string) {
+export function playSoundEffect(sound: AudioOutput, id: string) {
   const effect = byId.get(id)
   if (!effect) {
     return false
   }
-  for (const [index, voice] of effect.voices.entries()) {
-    playVoice(sound, voice, `${id}:${index}`)
-  }
+  playVoices(sound, effect.voices, id)
   return true
 }
-export {playSoundEffect}

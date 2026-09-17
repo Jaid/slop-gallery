@@ -9,8 +9,8 @@ test('soundboard inventory drives both generated walls without a manual button l
   expect(soundboardLayout.sections.enabled.count).toBe(enabledSoundEffects.length)
   expect(soundboardLayout.sections.archived.count).toBe(archivedSoundEffects.length)
   expect(soundboardLayout.sections.enabled).toMatchObject({
-    columns: 4,
-    rows: 3,
+    columns: 5,
+    rows: 4,
   })
   expect(soundboardLayout.sections.archived).toMatchObject({
     columns: 5,

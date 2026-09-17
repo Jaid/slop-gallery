@@ -638,3 +638,44 @@ test('restore clearance ignores sensors, disabled bodies and noninteracting grou
   expect(motor.body.translation().x).toBe(4)
   expect(motor.crouching).toBe(false)
 })
+
+for (const rate of [30, 60, 120, 240]) {
+  test('landing reports one pre-impact speed after a jump at ' + rate + ' Hz, never initial placement', () => {
+    world.timestep = 1 / rate
+    floor()
+    const motor = player()
+    for (let i = 0; i < rate; i++) {
+      tick(motor)
+      expect(motor.landingSpeed).toBe(0)
+    }
+    const impacts: Array<number> = []
+    for (let i = 0; i < rate * 3; i++) {
+      tick(motor, {jump: true})
+      if (motor.landingSpeed > 0) {
+        impacts.push(motor.landingSpeed)
+        expect(motor.grounded).toBe(true)
+        expect(motor.landingSpeed).toBeGreaterThan(3)
+      }
+    }
+    expect(impacts).toHaveLength(1)
+    expect(motor.landingSpeed).toBe(0)
+  })
+}
+test('teleport clears pending landing history and a one-tick ground interruption is silent', () => {
+  const ground = floor()
+  const motor = player()
+  tick(motor, {}, 60)
+  ground.setEnabled(false)
+  tick(motor)
+  ground.setEnabled(true)
+  for (let i = 0; i < 30; i++) {
+    tick(motor)
+    expect(motor.landingSpeed).toBe(0)
+  }
+  tick(motor, {jump: true}, 10)
+  motor.teleport([0, 0.04, 0])
+  for (let i = 0; i < 60; i++) {
+    tick(motor)
+    expect(motor.landingSpeed).toBe(0)
+  }
+})

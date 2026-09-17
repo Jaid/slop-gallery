@@ -1,4 +1,4 @@
-import type {EgoInput, EgoPlayerHandle, EgoPlayerProps} from '../src/main.ts'
+import type {EgoInput, EgoPlayerHandle, EgoPlayerProps, EgoZoomTransition} from '../src/main.ts'
 import type {RootState} from '@react-three/fiber/webgpu'
 import type {RapierContext} from '@react-three/rapier'
 
@@ -33,6 +33,8 @@ test('extended zoom requires rest, yields held Shift to movement, and preserves 
   let enabled = true
   let cameraEnabled = true
   const zoomAmounts: Array<number> = []
+  const transitions: Array<EgoZoomTransition> = []
+  const landings: Array<number> = []
   const input = () => keys
   const inputToggle = () => enabled
   const cameraToggle = () => cameraEnabled
@@ -43,7 +45,12 @@ test('extended zoom requires rest, yields held Shift to movement, and preserves 
     return null
   }
   const render = (props: Partial<EgoPlayerProps> = {}, mounted = true) => <StrictMode><Suspense fallback={null}><Physics paused>
-    {mounted && <EgoPlayer cameraEnabled={cameraToggle} casualZoomTransition={0} enabled={inputToggle} extendedZoomTransition={0} input={input} onZoomChange={onZoomChange} pointerLock={false} ref={player} {...props} />}
+    {mounted && <EgoPlayer
+      cameraEnabled={cameraToggle} casualZoomTransition={0} enabled={inputToggle} extendedZoomTransition={0} input={input} onLand={(state, speed) => {
+        expect(state.grounded).toBe(true)
+          landings.push(speed)
+      }} onZoomChange={onZoomChange} onZoomTransition={transition => transitions.push(transition)} pointerLock={false} ref={player} {...props}
+    />}
     <RigidBody colliders={false} type='fixed'>
       <CuboidCollider args={[100, 0.1, 100]} position={[0, -0.1, 0]} />
     </RigidBody>
@@ -81,10 +88,19 @@ test('extended zoom requires rest, yields held Shift to movement, and preserves 
     }
     tick(60)
     expect(handle.getState()?.grounded).toBe(true)
+    expect(landings).toHaveLength(0)
     keys = {zoom: true}
     frame()
     expect(camera.fov).toBe(normalFov / 2)
     expect(zoomAmounts.at(-1)).toBe(1)
+    expect(transitions).toEqual([{
+      from: 'none',
+      to: 'casual',
+      direction: 'forward',
+      duration: 0,
+    }])
+    frame()
+    expect(transitions).toHaveLength(1)
     const casualReports = zoomAmounts.length
     keys = {
       zoom: true,
@@ -93,6 +109,12 @@ test('extended zoom requires rest, yields held Shift to movement, and preserves 
     frame()
     expect(camera.fov).toBe(normalFov / 3)
     expect(zoomAmounts).toHaveLength(casualReports)
+    expect(transitions.at(-1)).toEqual({
+      from: 'casual',
+      to: 'extended',
+      direction: 'forward',
+      duration: 0,
+    })
     keys = {zoom: true}
     frame()
     expect(camera.fov).toBe(normalFov / 2)
@@ -173,6 +195,8 @@ test('extended zoom requires rest, yields held Shift to movement, and preserves 
     tick(180)
     expect(handle.getState()?.grounded).toBe(true)
     expect(camera.fov).toBe(normalFov / 3)
+    expect(landings).toHaveLength(1)
+    expect(landings[0]).toBeGreaterThan(1)
     handle.teleport([0, 5, 0])
     expect(camera.fov).toBe(normalFov)
     expect(zoomAmounts.at(-1)).toBe(0)
@@ -214,7 +238,9 @@ test('extended zoom requires rest, yields held Shift to movement, and preserves 
     cameraEnabled = true
     frame()
     expect(camera.fov).toBe(normalFov / 3)
+    const beforeRelease = transitions.length
     handle.releaseZoom()
+    expect(transitions).toHaveLength(beforeRelease)
     expect(camera.fov).toBe(normalFov)
     expect(zoomAmounts.at(-1)).toBe(0)
     frame()

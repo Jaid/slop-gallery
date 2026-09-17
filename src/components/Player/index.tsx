@@ -6,13 +6,12 @@ import EgoPlayer from 'ego-player'
 import {useEffect, useRef, useState} from 'react'
 import {Euler, Quaternion} from 'three/webgpu'
 
-import {insideLevel, levelFloorHeight, woodenFloor} from '#level/navigation.ts'
-import SoundEngine from '#src/lib/audio/SoundEngine.ts'
+import {insideLevel, levelFloorHeight} from '#level/navigation.ts'
+import {attachPlayerAudio, onPlayerLand, onPlayerStep, onPlayerZoomChange, onPlayerZoomTransition} from '#src/lib/audio/playerAudio.ts'
 import {cameraPose, galleryEvents, markControlled, narrate, setCameraFocused, useGallery} from '#src/lib/gallery.ts'
 import {activateInteractiveObject} from '#src/lib/gallery/interactiveObjects.ts'
 import {playerSession, playerSpawn} from '#src/lib/gallery/PlayerSession.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
-import {setPlayerZoom} from '#src/lib/rendering/playerView.ts'
 import {playerTelemetry} from '#src/lib/telemetry/index.ts'
 import recordPlayerDump from '#src/lib/telemetry/recordPlayerDump.ts'
 
@@ -28,16 +27,8 @@ const onInteract = () => {
     narrate(active)
   }
 }
-const onStep = (state: EgoState) => {
-  const {sound, room} = useGallery.getState()
-  if (sound) {
-    const {x, y, z} = state.position
-    const wooden = woodenFloor(room, [x, y, z])
-    SoundEngine.existing()?.step(wooden)
-  }
-}
-
 export default function Player() {
+  useEffect(attachPlayerAudio, [])
   const player = useRef<EgoPlayerHandle>(null)
   const input = useKeyboardControls<EgoAction>()[1]
   const camera = useThree(s => s.camera)
@@ -107,5 +98,5 @@ export default function Player() {
       }
     }
   }
-  return <EgoPlayer cameraEnabled={cameraEnabled} enabled={enabled} fallbackPosition={playerSpawn.position} input={input} onDump={recordPlayerDump} onInput={markControlled} onInteract={onInteract} onStep={onStep} onUpdate={onUpdate} onZoomChange={setPlayerZoom} pitch={initial.pitch} pointerLock={pointerLock} position={initial.position} ref={player} yaw={initial.yaw} />
+  return <EgoPlayer cameraEnabled={cameraEnabled} enabled={enabled} fallbackPosition={playerSpawn.position} input={input} onDump={recordPlayerDump} onInput={markControlled} onInteract={onInteract} onLand={onPlayerLand} onStep={onPlayerStep} onUpdate={onUpdate} onZoomChange={onPlayerZoomChange} onZoomTransition={onPlayerZoomTransition} pitch={initial.pitch} pointerLock={pointerLock} position={initial.position} ref={player} yaw={initial.yaw} />
 }

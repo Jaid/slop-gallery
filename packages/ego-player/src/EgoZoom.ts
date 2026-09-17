@@ -4,6 +4,13 @@ import {Easing, Tween} from '@tweenjs/tween.js'
 import {PerspectiveCamera} from 'three/webgpu'
 
 export type EgoZoomMode = 'casual' | 'extended' | 'none'
+export type EgoZoomTransition = {
+  direction: 'forward' | 'retract'
+  /** Actual transition duration in seconds, including zero for an immediate change. */
+  duration: number
+  from: EgoZoomMode
+  to: EgoZoomMode
+}
 export type EgoZoomOptions = {
   /** FOV divisor while zoom is held. Defaults to 2. */
   casualZoomFactor: number
@@ -41,7 +48,7 @@ export default class EgoZoom {
     return this.amount
   }
 
-  update(camera: Camera, mode: EgoZoomMode, options: EgoZoomOptions, delta: number) {
+  update(camera: Camera, mode: EgoZoomMode, options: EgoZoomOptions, delta: number, onTransition?: (transition: EgoZoomTransition) => void) {
     if (this.camera && (camera !== this.camera || this.camera.fov !== this.written)) {
       this.reset()
     }
@@ -61,8 +68,17 @@ export default class EgoZoom {
     const target = held ? this.original! / factor : this.original!
     // Leaving extended zoom uses its own duration too, including a direct release to normal FOV.
     const transition = mode === 'extended' || this.mode === 'extended' ? options.extendedZoomTransition : options.casualZoomTransition
+    const from = this.mode
     this.mode = mode
     if (target !== this.target) {
+      if (camera.fov !== target) {
+        onTransition?.({
+          from,
+          to: mode,
+          direction: target < camera.fov ? 'forward' : 'retract',
+          duration: transition,
+        })
+      }
       this.retarget(target, held ? 1 : 0, transition)
     }
     if (Number.isFinite(delta) && delta > 0) {

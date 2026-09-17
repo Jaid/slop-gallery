@@ -224,3 +224,49 @@ test('settled modes do not repeatedly update the projection matrix', () => {
     projection.mockRestore()
   }
 })
+test('transition notifications follow FOV direction and duration, never repeat on held frames', () => {
+  const camera = new PerspectiveCamera(60)
+  const zoom = new EgoZoom
+  const events: Array<unknown> = []
+  const report = (event: unknown) => events.push(event)
+  const timings = {
+    casualZoomFactor: 2,
+    extendedZoomFactor: 3,
+    casualZoomTransition: 0.2,
+    extendedZoomTransition: 0.4,
+  }
+  zoom.update(camera, 'casual', timings, 0.05, report)
+  zoom.update(camera, 'casual', timings, 0.05, report)
+  expect(events).toEqual([{
+    from: 'none',
+    to: 'casual',
+    direction: 'forward',
+    duration: 0.2,
+  }])
+  zoom.update(camera, 'extended', timings, 0.4, report)
+  zoom.update(camera, 'casual', timings, 0.1, report)
+  expect(events.at(-1)).toEqual({
+    from: 'extended',
+    to: 'casual',
+    direction: 'retract',
+    duration: 0.4,
+  })
+  zoom.update(camera, 'extended', timings, 0, report)
+  expect(events.at(-1)).toEqual({
+    from: 'casual',
+    to: 'extended',
+    direction: 'forward',
+    duration: 0.4,
+  })
+  zoom.update(camera, 'none', timings, 0.4, report)
+  expect(events.at(-1)).toEqual({
+    from: 'extended',
+    to: 'none',
+    direction: 'retract',
+    duration: 0.4,
+  })
+  const count = events.length
+  zoom.update(camera, 'none', timings, 1, report)
+  zoom.reset()
+  expect(events).toHaveLength(count)
+})
