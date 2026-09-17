@@ -1,7 +1,8 @@
 import type {Texture} from 'three/webgpu'
 
-import {color, float, mix, mx_cell_noise_float, mx_fractal_noise_float, mx_noise_float, mx_worley_noise_float, normalLocal, positionLocal, time} from 'three/tsl'
+import {color, float, mix, mx_fractal_noise_float, mx_noise_float, mx_worley_noise_float, normalLocal, positionLocal, time} from 'three/tsl'
 
+import {cellularPoints} from '../../lib/cellularPoints.ts'
 import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
@@ -25,7 +26,7 @@ export default class Material extends BaseKnotMaterial {
     const lichenTint2 = color('#a0ff66')
     const fruiting = color('#ffe066')
     const lichenColor = mix(lichenTint1, lichenTint2, mx_noise_float(p.mul(8)).mul(0.5).add(0.5))
-    const fruitMask = mx_cell_noise_float(p.mul(28)).smoothstep(0.88, 0.93).mul(lichenBaseMask)
+    const fruitMask = cellularPoints(p.mul(28), 0.06, 0.24, 0.88).mul(lichenBaseMask)
     this.positionNode = positionLocal.add(normalLocal.mul(lichenBaseMask.mul(0.025).mul(near).mul(detailLichen.mul(0.5).add(0.5))))
     this.colorNode = mix(stoneColor, lichenColor, lichenBaseMask.mul(0.85)).add(fruiting.mul(fruitMask).mul(0.6))
     this.roughnessNode = float(0.85).sub(lichenBaseMask.mul(0.45)).add(detailLichen.mul(0.1))

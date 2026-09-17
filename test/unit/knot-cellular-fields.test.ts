@@ -40,6 +40,7 @@ describe('Knot cellular fields', () => {
       'gossamer_dew',
       'ion_wake',
       'abyssal_cathedral',
+      'lichen_cathedral',
       'harlequin_opal',
       'magma_heart',
       'eventide_silk',
@@ -283,5 +284,17 @@ describe('Knot cellular fields', () => {
     expect(text).toContain('0.035).mul(intimate)')
     expect(text).toContain('this.clearcoatRoughness = 0.035')
     expect(text).toContain('flakeSparkle.mul(1.4).mul(near.mul(0.6).add(0.5))')
+  })
+  test('rounds Lichen Cathedral fruiting bodies without changing the sheltered growth or breathing stone', async () => {
+    const text = await source('lichen_cathedral')
+    expect(text).toContain('cellularPoints(p.mul(28), 0.06, 0.24, 0.88).mul(lichenBaseMask)')
+    expect(text).not.toContain('mx_cell_noise_float')
+    expect(text).toContain('mx_worley_noise_float(p.mul(6.2))')
+    expect(text).toContain('lichenNoise.smoothstep(0.25, 0.65).mul(shelterMask)')
+    expect(text).toContain('time.mul(0.35).sin().mul(0.15).add(0.85)')
+    expect(text).toContain('normalLocal.mul(lichenBaseMask.mul(0.025).mul(near).mul(detailLichen.mul(0.5).add(0.5)))')
+    expect(text).toContain('fruiting.mul(fruitMask).mul(0.6)')
+    expect(text).toContain('fruiting.mul(fruitMask).mul(breath).mul(0.9)')
+    expect(text).toContain('this.envMapIntensity = 0.4')
   })
 })
