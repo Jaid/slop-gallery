@@ -102,7 +102,8 @@ test('builds AVIF-only imports, new URLs, CSS and public images after level filt
             publicAssets: ['art'],
           },
         },
-      }), avifOnly(),
+      }),
+      avifOnly(),
     ],
     build: {assetsInlineLimit: 0},
   })

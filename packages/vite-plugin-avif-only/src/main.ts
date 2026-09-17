@@ -12,10 +12,12 @@ import {isFileServingAllowed, normalizePath} from 'vite'
 import AvifCache from './AvifCache.ts'
 
 export type AvifOnlyOptions = AvifOptions & {cacheDir?: string}
-type Ast = {[key: string]: unknown
+type Ast = {
+  [key: string]: unknown
   end: number
   start: number
-  type: string}
+  type: string
+}
 const isNode = (value: unknown): value is Ast => !!value && typeof value === 'object' && 'type' in value && typeof value.type === 'string'
 const clean = (url: string) => {
   const query = url.indexOf('?')
@@ -94,9 +96,11 @@ export default function avifOnly(options: AvifOnlyOptions = {}): Plugin {
       sourceType: 'unambiguous',
       plugins: [/\.[cm]?tsx?(?:\?|$)/u.test(id) ? 'typescript' : null, /\.[jt]sx(?:\?|$)/u.test(id) ? 'jsx' : null].filter(value => value !== null) as Array<'jsx' | 'typescript'>,
     })
-    const matches: Array<{kind: 'import' | 'public' | 'url'
+    const matches: Array<{
+      kind: 'import' | 'public' | 'url'
       node: Ast
-      value: string}> = []
+      value: string
+    }> = []
     const visit = (node: unknown, parent?: Ast) => {
       if (!isNode(node)) {
         return
@@ -109,7 +113,7 @@ export default function avifOnly(options: AvifOnlyOptions = {}): Plugin {
         }
       }
       if (value && isJxl(value)) {
-        const importing = parent && ['ImportDeclaration', 'ExportNamedDeclaration', 'ExportAllDeclaration', 'ImportExpression'].includes(parent.type) && parent.source === node
+        const importing = parent && ['ExportAllDeclaration', 'ExportNamedDeclaration', 'ImportDeclaration', 'ImportExpression'].includes(parent.type) && parent.source === node
         const args = parent?.arguments
         const url = parent?.type === 'NewExpression' && isNode(parent.callee) && parent.callee.name === 'URL' && Array.isArray(args) && args[0] === node && isNode(args[1]) && code.slice(args[1].start, args[1].end) === 'import.meta.url'
         if (importing || url || value.startsWith('/')) {
