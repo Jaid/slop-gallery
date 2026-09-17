@@ -29,6 +29,7 @@ describe('Knot cellular fields', () => {
       'celestial_astrolabe',
       'abyssal_bioluminescence',
       'abyssal_lumen',
+      'zero_point_lather',
       'elytra_iridescence',
       'photonic_morpho',
       'opaline_aerogel',
@@ -65,6 +66,17 @@ describe('Knot cellular fields', () => {
     expect(text).toContain('const rings = opticalLine(tube.x.mul(48).fract().sub(0.5), 0.04)')
     expect(text).toContain('proceduralNormal(engrave.mul(0.6).add(constellation.mul(0.3)), 0.0015)')
     expect(text).toContain("color('#8cf5ff').mul(constellation).mul(near.mul(0.7).add(0.2)).mul(1.2)")
+  })
+  test('localizes Quantum Foam collapse events while retaining interference and transparency', async () => {
+    const text = await source('zero_point_lather')
+    expect(text).toContain('const collapse = cellularPoints(p.mul(26).add(view.mul(3)).add(time.mul(0.5)), 0.06, 0.24, 0.75)')
+    expect(text).toContain('const phase = p.dot(view).mul(18).add(time.mul(1.7))')
+    expect(text).toContain('const interference = phase.sin().mul(phase.mul(0.7).add(view.x.mul(4)).cos()).abs()')
+    expect(text).toContain('const probability = interference.mul(0.6).add(collapse.mul(0.8)).add(voidNoise.mul(0.2)).clamp()')
+    expect(text).toContain('this.opacityNode = probability.mul(0.55).add(collapse.mul(0.3)).add(intimate.mul(0.15)).clamp()')
+    expect(text).toContain('this.transparent = true')
+    expect(text).toContain('this.depthWrite = true')
+    expect(text).toContain('this.side = DoubleSide')
   })
   test('retains stochastic alpha scintillation without moving cell-shaped patches', async () => {
     const text = await source('radiometric_guilloche')

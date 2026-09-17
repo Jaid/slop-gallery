@@ -1,8 +1,9 @@
 import type {Texture} from 'three/webgpu'
 
-import {color, mix, mx_cell_noise_float, mx_noise_float, time} from 'three/tsl'
+import {color, mix, mx_noise_float, time} from 'three/tsl'
 import {DoubleSide} from 'three/webgpu'
 
+import {cellularPoints} from '../../lib/cellularPoints.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
@@ -21,7 +22,8 @@ export default class QuantumFoam2Material extends KnotMaterial {
     const {p, view, rim, near, intimate} = viewerFrame()
     const phase = p.dot(view).mul(18).add(time.mul(1.7))
     const interference = phase.sin().mul(phase.mul(0.7).add(view.x.mul(4)).cos()).abs()
-    const collapse = mx_cell_noise_float(p.mul(26).add(view.mul(3)).add(time.mul(0.5))).smoothstep(0.75, 0.8)
+    // Localize collapse events so emission and opacity never expose whole cubic noise cells.
+    const collapse = cellularPoints(p.mul(26).add(view.mul(3)).add(time.mul(0.5)), 0.06, 0.24, 0.75)
     const voidNoise = mx_noise_float(p.mul(9).sub(time.mul(0.2)))
     const probability = interference.mul(0.6).add(collapse.mul(0.8)).add(voidNoise.mul(0.2)).clamp()
     const quantum = mix(color('#1a0033'), color('#b18cff'), probability).add(color('#00f5ff').mul(collapse).mul(0.8))
