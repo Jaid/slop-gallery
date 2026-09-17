@@ -1,7 +1,8 @@
 import type {Texture} from 'three/webgpu'
 
-import {color, mix, mx_cell_noise_float, normalViewGeometry, positionGeometry, positionView, positionViewDirection} from 'three/tsl'
+import {color, mix, normalViewGeometry, positionGeometry, positionView, positionViewDirection} from 'three/tsl'
 
+import {cellularBoundary} from '../../lib/cellularBoundary.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {opticalLine} from '../../lib/opticalLine.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
@@ -22,8 +23,10 @@ export default class ScarabAegisMaterial extends KnotMaterial {
     const braggPhase = grazing.pow(1.6).mul(4.5).add(0.4)
     const structuralColor = spectralColor(braggPhase)
     const jewelColor = mix(mix(color('#10b981'), color('#fbbf24'), facing.abs().pow(2)), color('#7c3aed'), grazing.pow(1.8))
-    const cuticle = mx_cell_noise_float(p.mul(36))
-    const facetEdges = opticalLine(cuticle.sub(0.5).abs(), 0.05)
+    // Shape jewel plates from real boundaries, not constant values in cubic noise cells.
+    const plateBoundary = cellularBoundary(p.mul(36))
+    const cuticle = plateBoundary.smoothstep(0.02, 0.3)
+    const facetEdges = opticalLine(plateBoundary, 0.05)
     const facetNormal = proceduralNormal(cuticle.mul(intimate), 0.0018)
     this.metalness = 0.58
     this.normalNode = facetNormal

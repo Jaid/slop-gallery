@@ -166,6 +166,17 @@ describe('Knot cellular fields', () => {
     expect(text).toContain('this.transmission = 0.85')
     expect(text).toContain('this.ior = 1.31')
   })
+  test('shapes Scarab Aegis cuticle and edge glow from genuine plate boundaries', async () => {
+    const text = await source('scarab_aegis')
+    expect(text).not.toContain('mx_cell_noise_float')
+    expect(text).toContain('const plateBoundary = cellularBoundary(p.mul(36))')
+    expect(text).toContain('const cuticle = plateBoundary.smoothstep(0.02, 0.3)')
+    expect(text).toContain('const facetEdges = opticalLine(plateBoundary, 0.05)')
+    expect(text).toContain('proceduralNormal(cuticle.mul(intimate), 0.0018)')
+    expect(text).toContain('this.iridescenceThicknessNode = cuticle.mul(220).add(360)')
+    expect(text).toContain('const braggPhase = grazing.pow(1.6).mul(4.5).add(0.4)')
+    expect(text).toContain('structuralColor.mul(facetEdges).mul(near.mul(0.65).add(0.35)).mul(0.7)')
+  })
   test('uses continuous solar granulation and genuine Voronoi fractures', async () => {
     for (const id of ['cryogenic_kintsugi', 'chromospheric_spicule']) {
       const text = await source(id)
