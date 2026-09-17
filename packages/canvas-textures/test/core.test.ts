@@ -50,7 +50,8 @@ test('font readiness is scoped to the requested faces, not global document.fonts
     {
       font: '600 70px main',
       text: 'Title',
-    }, {
+    },
+    {
       font: '32px main',
       text: 'Creator',
     },

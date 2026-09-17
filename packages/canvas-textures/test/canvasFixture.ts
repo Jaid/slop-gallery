@@ -4,9 +4,11 @@ import {mock} from 'bun:test'
 export function canvasFixture() {
   const original = globalThis.document
   const originalCreateImageBitmap = globalThis.createImageBitmap
-  const bitmaps: Array<{close: ReturnType<typeof mock>
+  const bitmaps: Array<{
+    close: ReturnType<typeof mock>
     height: number
-    width: number}> = []
+    width: number
+  }> = []
   const createImageBitmap = mock(async (canvas: HTMLCanvasElement): Promise<ImageBitmap> => {
     const bitmap = {
       width: canvas.width,

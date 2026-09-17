@@ -9,8 +9,10 @@ export type ReactCanvasTextureRecipe<T> = CanvasTextureRecipe<T> & {onError?: (e
 
 /** Memoize the recipe. Each identity owns one final raster and its cleanup, even under StrictMode. */
 export default function useCanvasTexture<T>(recipe: ReactCanvasTextureRecipe<T>) {
-  const [result, setResult] = useState<{recipe: ReactCanvasTextureRecipe<T>
-    texture: Texture<HTMLCanvasElement>} | null>(null)
+  const [result, setResult] = useState<{
+    recipe: ReactCanvasTextureRecipe<T>
+    texture: Texture<HTMLCanvasElement>
+  } | null>(null)
   useEffect(() => {
     const controller = new AbortController
     let owned: Texture<HTMLCanvasElement> | null = null
