@@ -93,7 +93,7 @@ export default async function updateKnots({candidates = [], browserURL = 'http:/
     }
     // Publish only after every requested shader and symbol has rendered successfully.
     for (const path of outputs) {
-      const destination = join(root, 'src/lib/knots', path)
+      const destination = join(root, 'src/lib/knots/candidates', path)
       await fs.ensureDir(dirname(destination))
       await fs.rename(join(staging, path), destination)
     }

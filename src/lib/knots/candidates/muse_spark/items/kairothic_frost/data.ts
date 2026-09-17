@@ -1,0 +1,16 @@
+import type {KnotData} from '../../../../types.ts'
+
+export default {
+  icon: new URL('icon.jxl', import.meta.url).href,
+  id: 'kairothic_frost',
+  title: 'Kairothic Frost',
+  harness: 'meta.ai',
+  author: {
+    model: {
+      title: 'Muse Spark',
+    },
+  },
+  accent: '#a8e6ff',
+  highlighted: true,
+  displacement: 0.018,
+} as const satisfies KnotData

@@ -92,7 +92,7 @@ describe('multi-model Knot challenge', () => {
     environment.addEventListener('dispose', () => disposed = true)
     try {
       for (const exhibit of knots) {
-        const {default: Material} = await import(resolve(import.meta.dir, '../../src/lib/knots', exhibit.candidate.id, 'items', exhibit.sourceId, 'material.ts')) as {default: new(environment: StudioEnvironment) => KnotMaterial}
+        const {default: Material} = await import(resolve(import.meta.dir, '../../src/lib/knots/candidates', exhibit.candidate.id, 'items', exhibit.sourceId, 'material.ts')) as {default: new(environment: StudioEnvironment) => KnotMaterial}
         const material = new Material(environment)
         try {
           expect(material.name).toBe(exhibit.sourceId)

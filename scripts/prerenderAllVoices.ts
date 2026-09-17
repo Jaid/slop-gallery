@@ -16,7 +16,7 @@ export function prerenderInventory() {
       id: `knots/${item.id}`,
       input: announcementInput(item),
       maximumDuration: announcementDurationLimit(item),
-      output: path.resolve(root, 'src/lib/knots', item.id, 'announce.opus'),
+      output: path.resolve(root, 'src/lib/knots/candidates', item.id, 'announce.opus'),
     })),
     ...portraits.map(portrait => ({
       id: `gallery/${portrait.id}`,

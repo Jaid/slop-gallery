@@ -13,7 +13,7 @@ async function dimensions(url: string) {
   return size.trim().split(' ').map(Number)
 }
 test('candidate and item icons are generated JXLs while billboards remain runtime-only', async () => {
-  const overviewFiles = await Array.fromAsync(new Bun.Glob('src/lib/knots/*/overview.jxl').scan('.'))
+  const overviewFiles = await Array.fromAsync(new Bun.Glob('src/lib/knots/candidates/*/overview.jxl').scan('.'))
   expect(overviewFiles).toEqual([])
   for (const candidate of knotCandidates) {
     expect(candidate.data.icon).toEndWith(`/${candidate.data.id}/icon.jxl`)

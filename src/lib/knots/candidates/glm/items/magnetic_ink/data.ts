@@ -1,0 +1,15 @@
+import type {KnotData} from '../../../../types.ts'
+
+export default {
+  icon: new URL('icon.jxl', import.meta.url).href,
+  id: 'magnetic_ink',
+  title: 'Magnetic Ink',
+  author: {
+    model: {
+      title: 'GLM 5.3',
+    },
+  },
+  accent: '#8f7bff',
+  archived: true,
+  highlighted: false,
+} as const satisfies KnotData

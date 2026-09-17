@@ -5,7 +5,8 @@ import {vec3} from 'three/tsl'
 
 import {cellularBoundary, cellularPoints} from '../../src/lib/knots/cellularField.ts'
 
-const source = (file: string) => fs.readFile(new URL(`../../src/lib/knots/${file}`, import.meta.url), 'utf8')
+const knotSource = (file: string) => fs.readFile(new URL(`../../src/lib/knots/${file}`, import.meta.url), 'utf8')
+const source = (file: string) => fs.readFile(new URL(`../../src/lib/knots/candidates/${file}`, import.meta.url), 'utf8')
 const finish = async (file: string, id: string) => {
   const text = await source(file)
   const start = text.indexOf(`case '${id}':`)
@@ -22,7 +23,7 @@ describe('Knot cellular fields', () => {
     }
   })
   test('keeps feature identity out of the point distance and bounds its support before gating', async () => {
-    const text = await source('cellularField.ts')
+    const text = await knotSource('cellularField.ts')
     expect(text).toContain('cellNoiseVec3(cell).mul(0.5).add(0.25)')
     expect(text).toContain('position.fract().sub(center).length()')
     expect(text).toContain('mx_cell_noise_float(cell)')

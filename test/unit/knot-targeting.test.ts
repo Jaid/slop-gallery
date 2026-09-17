@@ -6,7 +6,7 @@ import {levelWallDistance as museumWallDistance} from '../../src/levels/gallery/
 import {levelWallDistance} from '../../src/levels/knottingham/navigation.ts'
 import {knotGalleryBounds, knotGalleryCenter} from '../../src/lib/gallery/knotGallery.ts'
 import {createKnotGeometry} from '../../src/lib/gallery/sculptures.ts'
-import CryoBloomMaterial from '../../src/lib/knots/deepseek/items/cryo_bloom/material.ts'
+import CryoBloomMaterial from '../../src/lib/knots/candidates/deepseek/items/cryo_bloom/material.ts'
 import {knotFloatHeight} from '../../src/lib/knots/exhibition.ts'
 
 test('a knot can be targeted across the museum wall that does not exist in Knottingham', () => {

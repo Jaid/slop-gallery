@@ -1,0 +1,15 @@
+import type {KnotData} from '../../../../types.ts'
+
+export default {
+  icon: new URL('icon.jxl', import.meta.url).href,
+  id: 'tide_nacre',
+  title: 'Tide Nacre',
+  author: {
+    model: {
+      title: 'Grok 4.6',
+    },
+  },
+  accent: '#7ef0d6',
+  archived: true,
+  highlighted: false,
+} as const satisfies KnotData

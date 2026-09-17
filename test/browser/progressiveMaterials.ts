@@ -1,7 +1,7 @@
 import type {Texture} from 'three/webgpu'
 
 import {verifyMaterialCompilation} from '../../packages/three-async-materials/test/browser/materials.ts'
-import {KnotMaterialPremium} from '../../src/lib/knots/gpt_sol/additionalBatchMaterial.ts'
+import {KnotMaterialPremium} from '../../src/lib/knots/candidates/gpt_sol/additionalBatchMaterial.ts'
 import KnotResources from '../../src/lib/knots/KnotResources.ts'
 import StudioEnvironment from '../../src/lib/materials/StudioEnvironment.ts'
 

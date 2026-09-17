@@ -18,7 +18,7 @@ export function announcementDurationLimit(item: {id: string
   return item.id.endsWith('/candidate') || item.id.includes('/slug/') ? 8 : Math.max(4, item.text.split(/\s+/u).length * 1.2 + 1)
 }
 
-export default async function announceKnots({ids = [], all = false, force = false, retryFailed = false, key = Bun.env.XAI_API_KEY, telemetryEndpoint, outputRoot = path.resolve(root, 'src/lib/knots'), cacheRoot = path.resolve(root, 'private/production-voices')}: {
+export default async function announceKnots({ids = [], all = false, force = false, retryFailed = false, key = Bun.env.XAI_API_KEY, telemetryEndpoint, outputRoot = path.resolve(root, 'src/lib/knots/candidates'), cacheRoot = path.resolve(root, 'private/production-voices')}: {
   all?: boolean
   cacheRoot?: string
   force?: boolean

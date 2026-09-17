@@ -1,0 +1,15 @@
+import type {KnotData} from '../../../../types.ts'
+
+export default {
+  icon: new URL('icon.jxl', import.meta.url).href,
+  id: 'petrichor',
+  title: 'Petrichor',
+  author: {
+    model: {
+      title: 'GLM 5.3',
+    },
+  },
+  accent: '#9fd8ff',
+  archived: true,
+  highlighted: false,
+} as const satisfies KnotData

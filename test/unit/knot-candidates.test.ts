@@ -84,19 +84,19 @@ describe('arbitrary Knot batches', () => {
   })
   test('item metadata has no persisted plate numbers or billboard overviews', async () => {
     for (const candidate of knotCandidates) {
-      const barrel = await import(`../../src/lib/knots/${candidate.data.id}/index.ts`)
+      const barrel = await import(`../../src/lib/knots/candidates/${candidate.data.id}/index.ts`)
       expect(Object.keys(barrel)).toHaveLength(candidate.items.length + 1)
       expect('overview' in candidate.data).toBe(false)
       for (const entry of candidate.items) {
         expect(barrel[entry.sourceId].id).toBe(entry.sourceId)
         expect('number' in barrel[entry.sourceId]).toBe(false)
-        expect(await Bun.file(`src/lib/knots/${entry.candidate.id}/items/${entry.sourceId}/material.ts`).exists()).toBe(true)
-        const dataSource = await Bun.file(`src/lib/knots/${entry.candidate.id}/items/${entry.sourceId}/data.ts`).text()
+        expect(await Bun.file(`src/lib/knots/candidates/${entry.candidate.id}/items/${entry.sourceId}/material.ts`).exists()).toBe(true)
+        const dataSource = await Bun.file(`src/lib/knots/candidates/${entry.candidate.id}/items/${entry.sourceId}/data.ts`).text()
         expect(dataSource).not.toMatch(/\bnumber\s*:/u)
       }
     }
-    const materialFiles = await Array.fromAsync(new Bun.Glob('src/lib/knots/*/items/*/material.ts').scan('.'))
-    expect(new Set(materialFiles.map(path => path.replaceAll('\\', '/')))).toEqual(new Set(knots.map(entry => `src/lib/knots/${entry.candidate.id}/items/${entry.sourceId}/material.ts`)))
+    const materialFiles = await Array.fromAsync(new Bun.Glob('src/lib/knots/candidates/*/items/*/material.ts').scan('.'))
+    expect(new Set(materialFiles.map(path => path.replaceAll('\\', '/')))).toEqual(new Set(knots.map(entry => `src/lib/knots/candidates/${entry.candidate.id}/items/${entry.sourceId}/material.ts`)))
     expect(knotsById.size).toBe(knots.length)
   })
   test('uses canonical candidate and model IDs', () => {
