@@ -177,6 +177,14 @@ describe('Knot cellular fields', () => {
     expect(text).toContain('const braggPhase = grazing.pow(1.6).mul(4.5).add(0.4)')
     expect(text).toContain('structuralColor.mul(facetEdges).mul(near.mul(0.65).add(0.35)).mul(0.7)')
   })
+  test('bounds Mycelium Choir fruit before exponentiation to keep transmission finite', async () => {
+    const text = await source('mycelium_choir')
+    expect(text).toContain('mx_worley_noise_float(inner.mul(8.5)).oneMinus().clamp().pow(5).mul(intimate)')
+    expect(text).not.toContain('.oneMinus().pow(5)')
+    expect(text).toContain('this.transmissionNode = fruit.mul(0.35).add(spores.mul(0.15))')
+    expect(text).toContain('const pulse = choirPulse()')
+    expect(text).toContain('proceduralNormal(bark.mul(0.5).add(hyphae.mul(0.35)), 0.0026)')
+  })
   test('uses continuous solar granulation and genuine Voronoi fractures', async () => {
     for (const id of ['cryogenic_kintsugi', 'chromospheric_spicule']) {
       const text = await source(id)

@@ -23,7 +23,8 @@ export default class Material extends BaseKnotMaterial {
     const nodes = cellularPoints(inner.mul(22), 0.08, 0.24, 0.3)
     const pulse = choirPulse()
     const choir = hyphae.mul(pulse.mul(0.75).add(0.25)).add(hyphaeFine.mul(0.65)).add(nodes.mul(pulse).mul(1.2))
-    const fruit = mx_worley_noise_float(inner.mul(8.5)).oneMinus().pow(5).mul(intimate)
+    // Worley distances can exceed one; a negative pow base poisons transmission with NaNs.
+    const fruit = mx_worley_noise_float(inner.mul(8.5)).oneMinus().clamp().pow(5).mul(intimate)
     const spores = cellularPoints(p.sub(view.mul(0.14)).mul(54), 0.025, 0.15, 0.7).mul(intimate)
     const rind = mix(color('#1c1712'), color('#5a4a38'), bark.mul(0.5).add(0.5))
     const pale = mix(color('#c4b49a'), color('#7a6a52'), grazing)
