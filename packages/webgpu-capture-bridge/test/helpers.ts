@@ -64,9 +64,11 @@ export const encode: FrameEncoder = ({width, height}: RgbaFrame) => `data:image/
 
 /** Test-only adapter: deliberately small doubles do not broaden the published renderer API. */
 export class TestCapture extends WebgpuCapture {
-  constructor(options: {encode: FrameEncoder
+  constructor(options: {
+    encode: FrameEncoder
     render: () => void
-    renderer: TestRenderer}) {
+    renderer: TestRenderer
+  }) {
     options.renderer.onRender = options.render
     super({
       renderer: options.renderer.asRenderer(),
