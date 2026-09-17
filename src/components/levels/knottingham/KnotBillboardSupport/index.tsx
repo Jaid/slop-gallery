@@ -1,5 +1,5 @@
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
-import BranchComponent from 'branch-component'
+import Branch from 'branch-component'
 import BillboardPanelGeometry from 'knot-materials/BillboardPanelGeometry.ts'
 import {billboardParts} from 'knot-materials/signs.ts'
 import {useEffect} from 'react'
@@ -18,7 +18,7 @@ export default function Support({width, height}: {
   useEffect(() => () => material.dispose(), [material])
   return <RigidBody colliders={false} name='billboard-support' type='fixed'>
     {parts.map(({position, rotation, size}, index) => <group key={index} position={position} rotation={rotation}>
-      <BranchComponent else={<Box material={material} size={size} />} if={index === 0}><mesh castShadow geometry={panel} material={material} receiveShadow /></BranchComponent>
+      <Branch else={<Box material={material} size={size} />} if={index === 0}><mesh castShadow geometry={panel} material={material} receiveShadow /></Branch>
       <CuboidCollider args={[size[0] / 2, size[1] / 2, size[2] / 2]} />
     </group>)}
   </RigidBody>
