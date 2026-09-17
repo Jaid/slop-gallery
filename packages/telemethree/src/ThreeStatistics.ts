@@ -33,10 +33,12 @@ const memoryNames = {
   uniformBuffers: 'uniform_buffers',
   readbackBuffers: 'readback_buffers',
 } as const
-type Output = {dpr: number
+type Output = {
+  dpr: number
   height: number
   samples: number
-  width: number}
+  width: number
+}
 const equalAttributes = (a: Attributes, b: Attributes) => Object.keys(a).length === Object.keys(b).length && Object.entries(a).every(([key, value]) => b[key] === value)
 
 /** Owns per-frame statistics across every reflection, shadow and postprocessing render. */

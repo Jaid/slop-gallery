@@ -10,14 +10,18 @@ const positiveInteger = (value: number, name: string) => {
   }
   return value
 }
-type Pending = {bytes: number
-  record: Records[Signal]}
-type Queue = {dropped: number
+type Pending = {
+  bytes: number
+  record: Records[Signal]
+}
+type Queue = {
+  dropped: number
   failures: number
   lastError: string | null
   pending: Array<Pending>
   retryAt: number
-  sent: number}
+  sent: number
+}
 
 const createQueue = (): Queue => ({
   pending: [],
@@ -31,8 +35,10 @@ const createQueue = (): Queue => ({
 /** Framework-independent, bounded, best-effort telemetry. Construction performs no I/O. */
 export default class Telemetry {
   readonly now: () => number
-  private readonly counters = new Map<string, {startTime: number
-    value: number}>
+  private readonly counters = new Map<string, {
+    startTime: number
+    value: number
+  }>
   private readonly descriptors = new Map<string, string>
   private disposed = false
   private readonly flushIntervalMs: number
@@ -132,7 +138,8 @@ export default class Telemetry {
     return Object.fromEntries(signals.map(signal => {
       const {pending, ...status} = this.queues[signal]
       return [
-        signal, {
+        signal,
+        {
           ...status,
           pending: pending.length,
         },
@@ -147,7 +154,7 @@ export default class Telemetry {
       span.end()
       return result
     } catch (error) {
-      span.end('error', {'error.type': error instanceof Error ? error.name : typeof error})
+      span.end('error', {'error.type': Error.isError(error) ? error.name : typeof error})
       throw error
     }
   }
@@ -189,7 +196,7 @@ export default class Telemetry {
       queue.retryAt = 0
       queue.lastError = result?.warning ?? (rejected ? `Exporter rejected ${rejected} records.` : null)
     } catch (error) {
-      queue.lastError = error instanceof Error ? error.message : String(error)
+      queue.lastError = Error.isError(error) ? error.message : String(error)
       if (error instanceof ExportError && !error.retryable) {
         queue.pending.splice(0, pending.length)
         queue.dropped += pending.length

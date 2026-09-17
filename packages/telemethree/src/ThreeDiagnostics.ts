@@ -25,18 +25,22 @@ export type ThreeDiagnosticsOptions = {
 type LongFrame = PerformanceEntry & {
   blockingDuration: number
   renderStart: number
-  scripts: ReadonlyArray<{duration: number
+  scripts: ReadonlyArray<{
+    duration: number
     forcedStyleAndLayoutDuration: number
     invokerType: string
     sourceFunctionName: string
-    sourceURL: string}>
+    sourceURL: string
+  }>
   styleAndLayoutStart: number
 }
-type PendingHitch = {end: number
+type PendingHitch = {
+  end: number
   passes: Array<PassSample>
   span: Span
   start: number
-  timer: ReturnType<typeof setTimeout>}
+  timer: ReturnType<typeof setTimeout>
+}
 
 /** Sparse exact-frame GPU samples and bounded forensic traces. No render-loop awaits. */
 export default class ThreeDiagnostics {
@@ -246,7 +250,7 @@ export default class ThreeDiagnostics {
       }
     } catch (error) {
       if (this.connected && generation === this.generation) {
-        this.telemetry.log('GPU timing resolution failed.', 'warn', {'error.type': error instanceof Error ? error.name : typeof error})
+        this.telemetry.log('GPU timing resolution failed.', 'warn', {'error.type': Error.isError(error) ? error.name : typeof error})
       }
     } finally {
       this.resolving = false

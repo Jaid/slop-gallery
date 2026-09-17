@@ -3,10 +3,13 @@ import type {Camera, ComputeNode, RenderTarget, Scene} from 'three/webgpu'
 import {InspectorBase} from 'three/webgpu'
 
 export type RenderPassKind = 'fullscreen' | 'main' | 'offscreen' | 'shadow' | 'unknown'
-export type RenderPassDescription = {kind: RenderPassKind
-  name?: string}
+export type RenderPassDescription = {
+  kind: RenderPassKind
+  name?: string
+}
 export type DescribeRenderPass = (scene: Scene, camera: Camera, target: RenderTarget | null) => RenderPassDescription | undefined
-export type PassSample = {cpuMs?: number
+export type PassSample = {
+  cpuMs?: number
   gpuMs?: number
   height?: number
   kind: RenderPassKind | 'compute'
@@ -14,7 +17,8 @@ export type PassSample = {cpuMs?: number
   samples?: number
   start: number
   uid: string
-  width?: number}
+  width?: number
+}
 
 /** Metadata only: never retains scenes, cameras, materials or render targets. */
 export default class ThreeInspector extends InspectorBase {

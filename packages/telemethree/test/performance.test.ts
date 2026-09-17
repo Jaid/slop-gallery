@@ -392,7 +392,8 @@ test('long animation frames join only overlapping hitches and sanitize script UR
     }
     callback!({
       getEntries: () => [
-        entry, {
+        entry,
+        {
           ...entry,
           startTime: 5000,
         },

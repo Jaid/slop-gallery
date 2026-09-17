@@ -1,7 +1,9 @@
 export type Attributes = Readonly<Record<string, boolean | number | string>>
 export type Signal = 'logs' | 'metrics' | 'traces'
-export type TraceContext = {spanId: string
-  traceId: string}
+export type TraceContext = {
+  spanId: string
+  traceId: string
+}
 export type Metric = {
   attributes: Attributes
   kind: 'counter' | 'gauge'
@@ -33,21 +35,27 @@ export type Trace = TraceContext & {
   startTime: number
   status: 'error' | 'ok' | 'unset'
 }
-export type Records = {logs: Log
+export type Records = {
+  logs: Log
   metrics: Metric
-  traces: Trace}
+  traces: Trace
+}
 export type ExportBatch<S extends Signal = Signal> = {
   records: ReadonlyArray<Records[S]>
   resource: Attributes
   signal: S
 }
-export type ExportResult = {rejected?: number
-  warning?: string} | undefined
+export type ExportResult = {
+  rejected?: number
+  warning?: string
+} | undefined
 export interface TelemetryExporter {
   export: (batch: ExportBatch) => Promise<ExportResult>
 }
-export type MetricOptions = {attributes?: Attributes
-  unit?: string}
+export type MetricOptions = {
+  attributes?: Attributes
+  unit?: string
+}
 export type TelemetryOptions = {
   exporter: TelemetryExporter
   flushIntervalMs?: number
