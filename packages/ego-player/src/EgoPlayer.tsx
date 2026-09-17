@@ -9,7 +9,7 @@ import {PointerLockControls} from '@react-three/drei/webgpu'
 import {useFrame, useThree} from '@react-three/fiber/webgpu'
 import {CapsuleCollider, RigidBody, useAfterPhysicsStep, useBeforePhysicsStep, useRapier} from '@react-three/rapier'
 import Branch from 'branch-component'
-import {useEffect, useImperativeHandle, useRef, useState} from 'react'
+import {useEffect, useImperativeHandle, useLayoutEffect, useRef, useState} from 'react'
 
 import EgoDiagnostics from './EgoDiagnostics.ts'
 import EgoMotor from './EgoMotor.ts'
@@ -99,7 +99,9 @@ export default function EgoPlayer({cameraEnabled = true, casualZoomFactor = 2, c
   const [zoom] = useState(() => new EgoZoom)
   const zoomAmount = useRef(0)
   const onZoomChangeRef = useRef(onZoomChange)
-  onZoomChangeRef.current = onZoomChange
+  useLayoutEffect(() => {
+    onZoomChangeRef.current = onZoomChange
+  }, [onZoomChange])
   const reportZoom = (amount: number) => {
     if (amount === zoomAmount.current) {
       return
