@@ -18,5 +18,4 @@ export default {
     color: '#b18cff',
     shading: 'smooth',
   },
-  archived: true,
 } as const satisfies KnotData

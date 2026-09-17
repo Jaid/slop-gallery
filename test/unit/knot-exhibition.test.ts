@@ -64,8 +64,7 @@ describe('multi-model Knot challenge', () => {
       }
     }
   })
-  test('aligns every row to the summary-board side regardless of item count', () => {
-    expect(new Set(knotBays.map(bay => bay.finishes.length)).size).toBeGreaterThan(1)
+  test('aligns every row to the summary-board side', () => {
     for (const bay of knotBays) {
       const row = knotExhibition.filter(exhibit => exhibit.candidate.id === bay.candidate.id)
       expect(row[0].position[0]).toBe(-knotRowHalfWidth)

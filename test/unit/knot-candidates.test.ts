@@ -103,6 +103,7 @@ describe('arbitrary Knot batches', () => {
         const data = entries[entry.id as KnotId]
         expect(entry.id).toBe(data.id)
         expect(candidate.data.id).toBe(data.candidateId)
+        expect(entry.archived).not.toBe(true)
         expect('number' in data).toBe(false)
         expect(await Bun.file(`packages/knot-materials/src/entries/${entry.id}/Material.ts`).exists()).toBe(true)
         const dataSource = await Bun.file(`packages/knot-materials/src/entries/${entry.id}/data.ts`).text()
@@ -202,7 +203,6 @@ describe('arbitrary Knot batches', () => {
       expect(entries.every(entry => entry.author.model.title === title)).toBe(true)
       expect(Object.fromEntries(Map.groupBy(entries, entry => entry.author.model.effortLevel).entries().map(([effort, grouped]) => [effort, grouped.length]))).toEqual(effortCounts)
     }
-    expect(byId('zero_point_lather').archived).toBe(true)
     expect(byId('hadal_blossom').displacement).toBe(0.02)
     expect(byId('chladni_resonance').displacement).toBe(0.006)
     expect(byId('volcanic_chrysalis').displacement).toBe(0.018)
