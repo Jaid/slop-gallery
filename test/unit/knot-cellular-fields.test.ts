@@ -185,6 +185,16 @@ describe('Knot cellular fields', () => {
     expect(text).toContain('const pulse = choirPulse()')
     expect(text).toContain('proceduralNormal(bark.mul(0.5).add(hyphae.mul(0.35)), 0.0026)')
   })
+  test('bounds Abyssal Leviathan scales before powering and sharing the material mask', async () => {
+    const text = await source('abyssal_leviathan')
+    expect(text).toContain('mx_fractal_noise_float(scalePos, 3, 2, 0.5).mul(0.5).add(0.5).clamp().pow(3)')
+    expect(text).not.toContain('.add(0.5).pow(3)')
+    expect(text).toContain('const scalePos = p.mul(12).add(vec3(0, time.mul(0.1), 0))')
+    expect(text).toContain('this.anisotropyNode = scales')
+    expect(text).toContain('this.roughnessNode = scales.mul(0.3).add(0.2)')
+    expect(text).toContain('proceduralNormal(scales, 0.05)')
+    expect(text).toContain('deepGlow.mul(pulse).mul(intimate.mul(0.8).add(0.2)).mul(scales.oneMinus())')
+  })
   test('uses continuous solar granulation and genuine Voronoi fractures', async () => {
     for (const id of ['cryogenic_kintsugi', 'chromospheric_spicule']) {
       const text = await source(id)

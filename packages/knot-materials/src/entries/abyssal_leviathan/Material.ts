@@ -13,7 +13,8 @@ export default class Material extends BaseKnotMaterial {
     this.name = knotData.id
     const {p, facing, rim, intimate} = viewerFrame()
     const scalePos = p.mul(12).add(vec3(0, time.mul(0.1), 0))
-    const scales = mx_fractal_noise_float(scalePos, 3, 2, 0.5).mul(0.5).add(0.5).pow(3)
+    // Fractal octaves can exceed [-1, 1]; bound the mask before pow and material inputs.
+    const scales = mx_fractal_noise_float(scalePos, 3, 2, 0.5).mul(0.5).add(0.5).clamp().pow(3)
     const scaleNormal = proceduralNormal(scales, 0.05)
     const iridescence = mix(color('#0a1128'), color('#1c7299'), facing.mul(scales))
     const deepGlow = mix(color('#00ffcc'), color('#ff00aa'), sin(time.mul(0.5).add(p.y.mul(3))).mul(0.5).add(0.5))
