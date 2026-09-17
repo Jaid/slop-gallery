@@ -7,9 +7,11 @@ export type EgoInputReader = () => EgoInput
 export type EgoToggle = (() => boolean) | boolean
 export type EgoPosition = readonly [number, number, number]
 export type EgoRotation = readonly [number, number, number, number]
-export type EgoPoint = Readonly<{x: number
+export type EgoPoint = Readonly<{
+  x: number
   y: number
-  z: number}>
+  z: number
+}>
 export type EgoState = Readonly<{
   active: boolean
   crouching: boolean

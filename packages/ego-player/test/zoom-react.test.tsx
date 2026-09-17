@@ -48,7 +48,7 @@ test('extended zoom requires rest, yields held Shift to movement, and preserves 
     {mounted && <EgoPlayer
       cameraEnabled={cameraToggle} casualZoomTransition={0} enabled={inputToggle} extendedZoomTransition={0} input={input} onLand={(state, speed) => {
         expect(state.grounded).toBe(true)
-          landings.push(speed)
+        landings.push(speed)
       }} onZoomChange={onZoomChange} onZoomTransition={transition => transitions.push(transition)} pointerLock={false} ref={player} {...props}
     />}
     <RigidBody colliders={false} type='fixed'>

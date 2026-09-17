@@ -10,7 +10,7 @@ test('diagnostic dumps detach all data and preserve precise surface placement in
   const geometry = new BoxGeometry(2, 2, 2)
   const material = new MeshBasicMaterial
   const wall = new Mesh(geometry, material)
-  wall.position.z = -5.123_456_789
+  wall.position.z = -5.123456789
   wall.userData = {wallId: 'test-wall'}
   scene.add(wall)
   const diagnostics = new EgoDiagnostics(scene, camera)
@@ -32,7 +32,7 @@ test('diagnostic dumps detach all data and preserve precise surface placement in
   const keys = {dump: true}
   try {
     const dump = diagnostics.capture(state, keys)
-    expect(dump.aim.hit?.point.z).toBeCloseTo(-4.123_456_789, 10)
+    expect(dump.aim.hit?.point.z).toBeCloseTo(-4.123456789, 10)
     expect(dump.aim.hit?.normal).toEqual({
       x: 0,
       y: 0,

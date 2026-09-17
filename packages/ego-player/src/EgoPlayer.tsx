@@ -110,8 +110,10 @@ export default function EgoPlayer({cameraEnabled = true, casualZoomFactor = 2, c
   const colliderRef = useRef<RapierCollider>(null)
   const motorRef = useRef<EgoMotor | null>(null)
   const initialized = useRef(false)
-  const pendingTeleport = useRef<{position: EgoPosition
-    rotation?: EgoRotation} | null>(null)
+  const pendingTeleport = useRef<{
+    position: EgoPosition
+    rotation?: EgoRotation
+  } | null>(null)
   const camera = useThree(state => state.camera)
   const scene = useThree(state => state.scene)
   const diagnostics = useRef<EgoDiagnostics | null>(null)
@@ -273,9 +275,9 @@ export default function EgoPlayer({cameraEnabled = true, casualZoomFactor = 2, c
     }
   })
   return <>
-    <Branch if={pointerLock !== false}><PointerLockControls makeDefault {...typeof pointerLock === 'object' ? pointerLock : {}} domElement={renderer.domElement}/></Branch>
-    <RigidBody ref={bodyRef} type="kinematicPosition" userData={userData === undefined ? defaultUserData : userData} colliders={false} canSleep={false} position={initial.position}>
-      <CapsuleCollider ref={colliderRef} args={[getCapsuleHalfHeight(initial.height, initial.radius), initial.radius]} position={[0, initial.height / 2, 0]} friction={0} restitution={0}/>
+    <Branch if={pointerLock !== false}><PointerLockControls makeDefault {...typeof pointerLock === 'object' ? pointerLock : {}} domElement={renderer.domElement} /></Branch>
+    <RigidBody canSleep={false} colliders={false} position={initial.position} ref={bodyRef} type='kinematicPosition' userData={userData === undefined ? defaultUserData : userData}>
+      <CapsuleCollider args={[getCapsuleHalfHeight(initial.height, initial.radius), initial.radius]} friction={0} position={[0, initial.height / 2, 0]} ref={colliderRef} restitution={0} />
       {children}
     </RigidBody>
   </>

@@ -8,10 +8,12 @@ export type AimHit = {
   faceIndex: number | null
   instanceId: number | null
   localPoint: Point3
-  material: {index: number
+  material: {
+    index: number
     name: string
     type: string
-    uuid: string}
+    uuid: string
+  }
   mesh: ObjectInfo & {geometryType: string}
   normal: Point3 | null
   point: Point3
@@ -24,9 +26,11 @@ export type AimSnapshot = {
   origin: Point3
 }
 
-type Point3 = {x: number
+type Point3 = {
+  x: number
   y: number
-  z: number}
+  z: number
+}
 
 type Scalar = boolean | number | string | null
 

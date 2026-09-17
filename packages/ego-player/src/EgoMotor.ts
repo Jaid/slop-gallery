@@ -21,19 +21,19 @@ const identityRotation = {
   */
 export default class EgoMotor {
   private active = false
-  private clock = 0
   private airborneTime = 0
-  private hadGroundContact = false
-  private lastLandingSpeed = 0
+  private clock = 0
   private readonly controller
   private disposed = false
   private readonly forward = new Vector3
   private freshClearance = false
+  private hadGroundContact = false
   private isCrouching = false
   private isGrounded = false
   private jumpBufferedUntil = Number.NEGATIVE_INFINITY
   private jumpHeld = false
   private lastGroundedAt = Number.NEGATIVE_INFINITY
+  private lastLandingSpeed = 0
   private readonly movement = new Vector3
   private options = resolveEgoOptions()
   private readonly physicalVelocity = new Vector3
@@ -181,7 +181,7 @@ export default class EgoMotor {
     if (hasInput) {
       this.forward.set(0, 0, -1).applyQuaternion(rotation)
       this.forward.y = 0
-      if (this.forward.lengthSq() < 0.000_001) {
+      if (this.forward.lengthSq() < 0.000001) {
         // Camera-local right retains yaw even at the vertical look limit.
         this.right.set(1, 0, 0).applyQuaternion(rotation)
         this.forward.crossVectors(up, this.right).normalize()
@@ -254,8 +254,10 @@ export default class EgoMotor {
     // Direct collider queries also see newly mounted/moved geometry before the first world step.
     this.world.propagateModifiedBodyPositionsToColliders()
     const destinations = fallback ? [position, fallback] : [position]
-    let selected: {crouching: boolean
-      position: EgoPosition} | undefined
+    let selected: {
+      crouching: boolean
+      position: EgoPosition
+    } | undefined
     for (const destination of destinations) {
       if (!this.isCrouching && this.canOccupy(destination, this.standingHeight)) {
         selected = {

@@ -5,8 +5,8 @@ import {afterEach, beforeEach, expect, test} from 'bun:test'
 import RAPIER from '@dimforge/rapier3d-compat'
 import {Quaternion, Vector3} from 'three/webgpu'
 
-import DefaultPlayer, {defaultEgoOptions, egoControls, EgoMotor} from '../src/main.ts'
 import EgoPlayer from '../src/EgoPlayer.tsx'
+import DefaultPlayer, {defaultEgoOptions, egoControls, EgoMotor} from '../src/main.ts'
 
 await RAPIER.init()
 let world: RAPIER.World
@@ -357,45 +357,57 @@ test('upward collision stops a jump at the ceiling', () => {
 const boostedDirections: Array<[string, EgoInput, 'dodge' | 'sprint']> = [
   ['forward', {forward: true}, 'sprint'],
   [
-    'forward-left', {
+    'forward-left',
+    {
       forward: true,
       left: true,
-    }, 'sprint',
+    },
+    'sprint',
   ],
   [
-    'forward-right', {
+    'forward-right',
+    {
       forward: true,
       right: true,
-    }, 'sprint',
+    },
+    'sprint',
   ],
   ['left', {left: true}, 'dodge'],
   ['right', {right: true}, 'dodge'],
   ['backward', {backward: true}, 'dodge'],
   [
-    'backward-left', {
+    'backward-left',
+    {
       backward: true,
       left: true,
-    }, 'dodge',
+    },
+    'dodge',
   ],
   [
-    'backward-right', {
+    'backward-right',
+    {
       backward: true,
       right: true,
-    }, 'dodge',
+    },
+    'dodge',
   ],
   [
-    'canceled forward plus left', {
+    'canceled forward plus left',
+    {
       forward: true,
       backward: true,
       left: true,
-    }, 'dodge',
+    },
+    'dodge',
   ],
   [
-    'canceled sideways plus forward', {
+    'canceled sideways plus forward',
+    {
       forward: true,
       left: true,
       right: true,
-    }, 'sprint',
+    },
+    'sprint',
   ],
 ]
 test.each(boostedDirections)('%s uses its directional boost speed', (_name, input, mode) => {
@@ -578,10 +590,11 @@ for (const fps of [30, 60, 120, 240]) {
           sprint,
         })
         elapsed += world.timestep
-        if (elapsed > 0.2) {
-          stalled = Math.abs(motor.body.translation().z - previousZ) < 0.001 ? stalled + world.timestep : 0
-          longestStall = Math.max(longestStall, stalled)
+        if (!(elapsed > 0.2)) {
+          continue
         }
+        stalled = Math.abs(motor.body.translation().z - previousZ) < 0.001 ? stalled + world.timestep : 0
+        longestStall = Math.max(longestStall, stalled)
       }
       expect(elapsed).toBeLessThan(sprint ? 1.7 : 4.2)
       expect(longestStall).toBeLessThan(0.035)
@@ -638,9 +651,8 @@ test('restore clearance ignores sensors, disabled bodies and noninteracting grou
   expect(motor.body.translation().x).toBe(4)
   expect(motor.crouching).toBe(false)
 })
-
 for (const rate of [30, 60, 120, 240]) {
-  test('landing reports one pre-impact speed after a jump at ' + rate + ' Hz, never initial placement', () => {
+  test(`landing reports one pre-impact speed after a jump at ${rate} Hz, never initial placement`, () => {
     world.timestep = 1 / rate
     floor()
     const motor = player()
@@ -651,11 +663,12 @@ for (const rate of [30, 60, 120, 240]) {
     const impacts: Array<number> = []
     for (let i = 0; i < rate * 3; i++) {
       tick(motor, {jump: true})
-      if (motor.landingSpeed > 0) {
-        impacts.push(motor.landingSpeed)
-        expect(motor.grounded).toBe(true)
-        expect(motor.landingSpeed).toBeGreaterThan(3)
+      if (!(motor.landingSpeed > 0)) {
+        continue
       }
+      impacts.push(motor.landingSpeed)
+      expect(motor.grounded).toBe(true)
+      expect(motor.landingSpeed).toBeGreaterThan(3)
     }
     expect(impacts).toHaveLength(1)
     expect(motor.landingSpeed).toBe(0)
