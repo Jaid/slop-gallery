@@ -55,6 +55,7 @@
     "eslint-plugin-branch-component": "workspace:*",
     "flatten-string": "^0.2.0",
     "grok-speaker": "workspace:*",
+    "knot-materials": "workspace:*",
     "mount-root": "0.5.0",
     "nuqs": "2.10.1",
     "react": "19.3.0",
@@ -75,8 +76,7 @@
     "vite-plugin-game-level": "workspace:*",
     "vite-plugin-hoist-popular-constants": "workspace:*",
     "webgpu-capture-bridge": "workspace:*",
-    "zustand": "5.0.15",
-    "knot-materials": "workspace:*"
+    "zustand": "5.0.15"
   },
   "devDependencies": {
     "@babel/core": "8.0.5",
