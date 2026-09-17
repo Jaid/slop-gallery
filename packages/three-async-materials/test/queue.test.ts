@@ -23,7 +23,8 @@ function fixture(third = false, prioritized = true) {
   let mrt: ReturnType<WebGPURenderer['getMRT']> | null = null
   let face = 0
   let mip = 0
-  const calls: Array<{camera: unknown
+  const calls: Array<{
+    camera: unknown
     face: number
     gate: ReturnType<typeof Promise.withResolvers<void>>
     material: unknown
@@ -32,7 +33,8 @@ function fixture(third = false, prioritized = true) {
     mrt: ReturnType<WebGPURenderer['getMRT']> | null
     output: RenderTarget | null
     scene: unknown
-    target: RenderTarget | null;}> = []
+    target: RenderTarget | null
+  }> = []
   const renderer = {
     getRenderTarget: () => target,
     setRenderTarget(next: RenderTarget | null, nextFace = 0, nextMip = 0) {
@@ -174,7 +176,10 @@ test('synthetic compile traversal cannot recursively admit scratch targets', asy
     f.calls[0].gate.resolve()
     await flush()
     expect(f.calls).toHaveLength(1)
-    expect(f.results[0]).toMatchObject({status: 'ready', contexts: 1})
+    expect(f.results[0]).toMatchObject({
+      status: 'ready',
+      contexts: 1,
+    })
   } finally {
     await f.dispose()
   }
@@ -198,7 +203,10 @@ test('live target resizing cannot invalidate an in-flight compile target', async
     f.calls[0].gate.resolve()
     await flush()
     expect(f.meshes[0].material).toBe(f.full[0])
-    expect(f.results[0]).toMatchObject({status: 'ready', contexts: 1})
+    expect(f.results[0]).toMatchObject({
+      status: 'ready',
+      contexts: 1,
+    })
   } finally {
     await f.dispose()
   }
@@ -496,7 +504,7 @@ test('reporting exceptions do not interrupt subsequent materials', async () => {
 })
 test('invalid priority fails only its binding and reports the reason', async () => {
   const f = fixture()
-  f.options.priority = mesh => (mesh === f.meshes[1] ? Number.NaN : 0)
+  f.options.priority = mesh => mesh === f.meshes[1] ? Number.NaN : 0
   try {
     f.observe(0)
     f.observe(1)
@@ -513,7 +521,6 @@ test('invalid priority fails only its binding and reports the reason', async () 
     await f.dispose()
   }
 })
-
 test('unseen and foreign-renderer observations do not admit work', async () => {
   const f = fixture()
   try {

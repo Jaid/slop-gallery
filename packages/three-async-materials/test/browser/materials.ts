@@ -32,8 +32,10 @@ export async function verifyMaterialCompilation(geometry: BufferGeometry, materi
   const errors: Array<string> = []
   const backend = renderer.backend as typeof renderer.backend & {device: GPUDevice}
   backend.device.addEventListener('uncapturederror', event => errors.push(event.error.message))
-  const descriptors: Array<{kind: string
-    label: string}> = []
+  const descriptors: Array<{
+    kind: string
+    label: string
+  }> = []
   let synchronousPipelines = 0
   let asynchronousPipelines = 0
   const createSync = backend.device.createRenderPipeline.bind(backend.device)
