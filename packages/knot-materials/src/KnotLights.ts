@@ -4,7 +4,6 @@ import type {Vec3} from './types.ts'
 export const knotLight = {
   size: [2.4, 0.08, 2.2] as const,
   ceilingInset: 0.16,
-  minImpactMass: 3,
   minImpactEnergy: 12,
   impactCooldown: 0.55,
 } as const
@@ -34,7 +33,7 @@ export function knotLightImpactEnergy(mass: number, speed: number) {
 }
 
 export function isKnotLightDamageImpact(mass: number, speed: number) {
-  return mass >= knotLight.minImpactMass && knotLightImpactEnergy(mass, speed) >= knotLight.minImpactEnergy
+  return knotLightImpactEnergy(mass, speed) >= knotLight.minImpactEnergy
 }
 
 const fract = (value: number) => value - Math.floor(value)

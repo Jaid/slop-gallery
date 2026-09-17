@@ -4,7 +4,7 @@ import puppeteer, {TargetType} from 'puppeteer-core'
 
 const origin = 'https://vite.tower.lan'
 // Resolve the running Vite optimizer generation without loading the fixture through Vite HMR.
-const response = await fetch('http://localhost:5173/packages/canvas-textures/src/three/textureFromImage.ts')
+const response = await fetch('http://127.0.0.1:5173/packages/canvas-textures/src/three/textureFromImage.ts')
 const transformed = await response.text()
 const version = /three_webgpu\.js\?v=([^"']+)/u.exec(transformed)?.[1]
 if (!version) {
@@ -16,6 +16,7 @@ const paths: Record<string, string> = {
   'react/jsx-dev-runtime': '/node_modules/.vite/deps/react_jsx-dev-runtime.js',
   'react/jsx-runtime': '/node_modules/.vite/deps/react_jsx-runtime.js',
   'react-dom/client': '/node_modules/.vite/deps/react-dom_client.js',
+  'three/addons/geometries/RoundedBoxGeometry.js': '/node_modules/.vite/deps/three_addons_geometries_RoundedBoxGeometry__js.js',
   'three-mesh-bvh': '/node_modules/.vite/deps/three-mesh-bvh.js',
   'three/tsl': '/node_modules/.vite/deps/three_tsl.js',
   'three/webgpu': '/node_modules/.vite/deps/three_webgpu.js',
@@ -75,7 +76,7 @@ if (!build.success) {
 }
 const source = `data:text/javascript;base64,${Buffer.from(await build.outputs[0].text()).toString('base64')}`
 const browser = await puppeteer.connect({
-  browserURL: 'http://localhost:9223',
+  browserURL: 'http://127.0.0.1:9222',
   defaultViewport: null,
   protocolTimeout: 180_000,
 })
