@@ -83,7 +83,7 @@ test('record normalization also detaches mutable key arrays', () => {
 })
 const onCreated = () => {}
 test('Canvas receives children and native props without requiring any gallery provider', () => {
-  const children = <group/>
+  const children = <group />
   const camera = {position: [0, 2, 5] as [number, number, number]}
   const ref = createRef<HTMLCanvasElement>()
   const result = canvas({
@@ -112,7 +112,7 @@ test('Canvas receives children and native props without requiring any gallery pr
   expect(result.props).not.toHaveProperty('sceneWrapper')
 })
 test('physics is opt-in and true uses Earth gravity', () => {
-  const children = <group/>
+  const children = <group />
   for (const physics of [undefined, false]) {
     expect(canvas({
       children,
@@ -128,7 +128,7 @@ test('physics is opt-in and true uses Earth gravity', () => {
   expect(world.props.children).toBe(children)
 })
 test('physics options pass through, including an empty options object', () => {
-  const children = <group/>
+  const children = <group />
   const physics = {
     gravity: [0, 0, 0] as [number, number, number],
     paused: true,
@@ -162,7 +162,7 @@ test('keyboard controls surround outer wrappers so both render roots can access 
   expect(element(outer.props.children).type).toBe(Canvas)
 })
 test('omitted and empty controls skip KeyboardControls without removing supplied wrappers', () => {
-  const children = <group/>
+  const children = <group />
   for (const controls of [undefined, Object.freeze({}), Object.freeze([])]) {
     expect(canvas({
       controls,
@@ -187,7 +187,8 @@ test('omitted and empty controls skip KeyboardControls without removing supplied
 })
 test('declared actions with no assigned keys still provide keyboard state', () => {
   for (const controls of [
-    {jump: []}, [
+    {jump: []},
+    [
       {
         name: 'jump',
         keys: [],
@@ -216,7 +217,7 @@ test('single wrappers and readonly lists nest first-to-last without mutating the
   expect(element(createGame({wrapper: []})).type).toBe(Canvas)
 })
 test('scene wrappers run inside Canvas but outside Physics', () => {
-  const children = <group/>
+  const children = <group />
   const outer = element<GameWrapperProps>(canvas({
     children,
     physics: true,
@@ -235,7 +236,7 @@ test('scene wrappers run inside Canvas but outside Physics', () => {
 })
 const Dependency = createContext('missing')
 function Inject({children}: GameWrapperProps) {
-  return <Dependency value="injected"><span>before</span>{children}<span>after</span></Dependency>
+  return <Dependency value='injected'><span>before</span>{children}<span>after</span></Dependency>
 }
 function Consume() {
   return <span>{useContext(Dependency)}</span>
@@ -243,7 +244,7 @@ function Consume() {
 test('scene wrappers can inject dependencies and ordered sibling content', () => {
   const scene = canvas({
     sceneWrapper: [Inject, Inner],
-    children: <Consume/>,
+    children: <Consume />,
   }).props.children
   expect(renderToStaticMarkup(scene)).toBe('<span>before</span><article><span>injected</span></article><span>after</span>')
 })
@@ -294,8 +295,10 @@ test('default renderer is opaque native WebGPU with stable non-multisampled targ
   expect(renderer.alpha).toBe(false)
   expect(renderer.samples).toBe(0)
 })
-function RequiresToken(_props: {children: ReactNode
-  token: string}) {
+function RequiresToken(_props: {
+  children: ReactNode
+  token: string
+}) {
   return null
 }
 test('public types preserve action names and exclude legacy renderer switches', () => {
