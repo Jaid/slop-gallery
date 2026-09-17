@@ -176,8 +176,10 @@ export default class PauseMenu {
       this.listeners.delete(listener)
     }
   }
-  private connection: {disconnect: () => void
-    target: HTMLElement} | undefined
+  private connection: {
+    disconnect: () => void
+    target: HTMLElement
+  } | undefined
 
   private hasGameData: boolean | undefined
 
