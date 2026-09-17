@@ -53,8 +53,10 @@ test('builds only the selected entry graph, constant and public assets, and dete
         },
       })
       const other = level === 'forest' ? 'ocean' : 'forest'
-      const manifest = await fs.readJson(resolve(root, 'dist/level-build.json')) as {level: string
-        modules: Array<string>}
+      const manifest = await fs.readJson(resolve(root, 'dist/level-build.json')) as {
+        level: string
+        modules: Array<string>
+      }
       expect(manifest.level).toBe(level)
       expect(manifest.modules).toContain(`${level}/main.js`)
       expect(manifest.modules).not.toContain(`${other}/main.js`)
