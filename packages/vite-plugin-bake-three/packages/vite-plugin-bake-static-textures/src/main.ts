@@ -27,7 +27,7 @@ export function staticTexturesAdapter() {
 /** Bake closed pixel/Canvas2D recipes without changing application constructors or hooks. */
 export default function bakeStaticTextures(options: BakeStaticTexturesOptions = {}) {
   return createBakePlugin(staticTexturesAdapter(), {
-    minimumBytes: 8 * 1024,
+    minimumBytes: 4097,
     ...options,
   })
 }

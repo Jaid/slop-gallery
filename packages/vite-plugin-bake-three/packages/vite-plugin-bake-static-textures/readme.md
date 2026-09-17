@@ -74,7 +74,7 @@ Retained snapshots are emitted as content-addressed gzip-compressed `.bin` asset
 ```ts
 bakeStaticTextures({
   include: /\/src\//u,
-  minimumBytes: 8 * 1024,
+  minimumBytes: 4097,
   maxBytes: 64 * 1024 * 1024,
   timeoutMs: 10_000,
   compress: true,
