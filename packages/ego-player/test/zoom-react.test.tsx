@@ -11,7 +11,7 @@ import {PerspectiveCamera, WebGPURenderer} from 'three/webgpu'
 
 import EgoPlayer, {defaultEgoOptions} from '../src/main.ts'
 
-test('extended zoom requires rest, yields held Shift to movement, and preserves camera ownership', async () => {
+test('extended zoom requires Shift after Z and rest, yields held Shift to movement, and preserves camera ownership', async () => {
   const previousActEnvironment = Object.getOwnPropertyDescriptor(globalThis, 'IS_REACT_ACT_ENVIRONMENT')
   Object.assign(globalThis, {IS_REACT_ACT_ENVIRONMENT: true})
   const ownerDocument = {pointerLockElement: null as unknown}
@@ -89,7 +89,13 @@ test('extended zoom requires rest, yields held Shift to movement, and preserves 
     tick(60)
     expect(handle.getState()?.grounded).toBe(true)
     expect(landings).toHaveLength(0)
-    keys = {zoom: true}
+    keys = {sprint: true}
+    frame()
+    expect(camera.fov).toBe(normalFov)
+    keys = {
+      zoom: true,
+      sprint: true,
+    }
     frame()
     expect(camera.fov).toBe(normalFov / 2)
     expect(zoomAmounts.at(-1)).toBe(1)
@@ -100,8 +106,12 @@ test('extended zoom requires rest, yields held Shift to movement, and preserves 
       duration: 0,
     }])
     frame()
+    expect(camera.fov).toBe(normalFov / 2)
     expect(transitions).toHaveLength(1)
     const casualReports = zoomAmounts.length
+    keys = {zoom: true}
+    frame()
+    expect(camera.fov).toBe(normalFov / 2)
     keys = {
       zoom: true,
       sprint: true,
@@ -123,6 +133,8 @@ test('extended zoom requires rest, yields held Shift to movement, and preserves 
     expect(camera.fov).toBe(normalFov)
     expect(zoomAmounts.at(-1)).toBe(0)
     for (const direction of ['forward', 'backward', 'left', 'right'] as const) {
+      keys = {zoom: true}
+      frame()
       keys = {
         zoom: true,
         sprint: true,

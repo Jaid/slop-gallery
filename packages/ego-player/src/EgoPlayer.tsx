@@ -91,6 +91,11 @@ export default function EgoPlayer({cameraEnabled = true, casualZoomFactor = 2, c
     interact: false,
     dump: false,
   })
+  const zoomKeys = useRef({
+    extendedEligible: false,
+    sprint: false,
+    zoom: false,
+  })
   const [zoom] = useState(() => new EgoZoom)
   const zoomAmount = useRef(0)
   const onZoomChangeRef = useRef(onZoomChange)
@@ -258,10 +263,21 @@ export default function EgoPlayer({cameraEnabled = true, casualZoomFactor = 2, c
     // Intent cancels extended zoom before acceleration; physical motion also excludes coasting.
     // The small speed tolerance ignores resting-contact noise, not camera bob or mouse look.
     const stationary = motor.grounded && motor.horizontalSpeed < 0.01 && !keys.forward && !keys.backward && !keys.left && !keys.right && !keys.jump
-    let zoomMode: EgoZoomMode = 'none'
-    if (active && readToggle(cameraEnabled) && keys.zoom) {
-      zoomMode = keys.sprint && stationary ? 'extended' : 'casual'
+    const zoomHeld = !!keys.zoom
+    const sprintHeld = !!keys.sprint
+    const sprintPressed = sprintHeld && !zoomKeys.current.sprint
+    if (!zoomHeld || !sprintHeld) {
+      zoomKeys.current.extendedEligible = false
+    } else if (sprintPressed && zoomKeys.current.zoom) {
+      // Shift must begin while Z is already held. Simultaneous observation and Shift-before-Z stay casual.
+      zoomKeys.current.extendedEligible = true
     }
+    let zoomMode: EgoZoomMode = 'none'
+    if (active && readToggle(cameraEnabled) && zoomHeld) {
+      zoomMode = sprintHeld && zoomKeys.current.extendedEligible && stationary ? 'extended' : 'casual'
+    }
+    zoomKeys.current.zoom = zoomHeld
+    zoomKeys.current.sprint = sprintHeld
     reportZoom(zoom.update(camera, zoomMode, zoomOptions, delta, onZoomTransition))
     if (active && keys.interact && !actionKeys.current.interact) {
       onInteract?.()
