@@ -2,7 +2,8 @@ import type {RarityChange} from '../src/KnotRarityEditor.ts'
 
 import {describe, expect, test} from 'bun:test'
 
-import {knotPreviewX, knotRowHalfWidth, knotSpacing, selectKnotBays} from '../src/exhibition.ts'
+import parseCandidateOrder from '../src/candidateOrder.ts'
+import {candidateScore, knotPreviewX, knotRowHalfWidth, knotSpacing, selectKnotBays} from '../src/exhibition.ts'
 import KnotRarityEditor from '../src/KnotRarityEditor.ts'
 import {knotCandidates, knots} from '../src/main.ts'
 import parseRarityMode from '../src/rarityMode.ts'
@@ -45,6 +46,29 @@ describe('rarity selection policy', () => {
       expect(selected.map(item => item.id)).toEqual(expected.map(item => item.id))
       expect(selectKnotBays(`${search}&rarity=edit`)).toEqual(selectKnotBays(`${search}&rarity=true`))
     }
+  })
+})
+describe('candidate ordering', () => {
+  test('parses score and name, defaulting to score', () => {
+    expect(parseCandidateOrder()).toBe('score')
+    expect(parseCandidateOrder('?candidate_order=score')).toBe('score')
+    expect(parseCandidateOrder('?candidate_order=name')).toBe('name')
+    for (const value of ['', 'rarity', 'SCORE']) {
+      expect(() => parseCandidateOrder(`?candidate_order=${value}`)).toThrow('candidate_order')
+    }
+  })
+  test('score is average knot rarity and sorts candidates descending', () => {
+    for (const candidate of knotCandidates) {
+      expect(candidateScore(candidate)).toBe(candidate.items.reduce((sum, item) => sum + item.rarity, 0) / candidate.items.length)
+    }
+    const bays = selectKnotBays()
+    const scores = bays.map(bay => candidateScore(bay.candidate))
+    expect(scores).toEqual(scores.toSorted((a, b) => b - a))
+  })
+  test('name sorts by candidate title', () => {
+    const bays = selectKnotBays('?candidate_order=name')
+    const titles = bays.map(bay => bay.candidate.data.title)
+    expect(titles).toEqual(titles.toSorted((a, b) => a.localeCompare(b)))
   })
 })
 describe('session rarity editor', () => {

@@ -118,22 +118,22 @@ describe('arbitrary Knot batches', () => {
     expect(knotsById.size).toBe(knots.length)
   })
   test('uses canonical candidate and model IDs', () => {
-    expect(knotCandidates.map(candidate => candidate.data.id)).toEqual([
-      'gpt_astra',
-      'claude_sonnet',
+    expect(new Set(knotCandidates.map(candidate => candidate.data.id))).toEqual(new Set([
+      'claude_fable',
       'claude_opus',
+      'claude_sonnet',
       'deepseek',
       'gemini_flash',
       'glm',
       'glm_flash',
-      'grok',
-      'kimi',
-      'qwen_max',
+      'gpt_astra',
       'gpt_sol',
-      'claude_fable',
-      'muse_spark',
+      'grok',
       'hy',
-    ])
+      'kimi',
+      'muse_spark',
+      'qwen_max',
+    ]))
     const modelIds = new Set(knots.map(entry => knotAnnouncementPaths(entry).model.split('/slug/')[1]))
     expect(modelIds).toEqual(new Set([
       'gpt-6-astra',
@@ -256,11 +256,12 @@ describe('arbitrary Knot batches', () => {
   })
   test('defaults to eight shots per candidate when the URL omits shots', () => {
     const bays = selectKnotBays('?candidates=claude_fable,gpt_astra')
-    expect(bays.map(bay => [bay.candidate.data.id, bay.finishes.length])).toEqual([['gpt_astra', 8], ['claude_fable', 8]])
+    expect(new Set(bays.map(bay => bay.candidate.data.id))).toEqual(new Set(['claude_fable', 'gpt_astra']))
+    expect(bays.every(bay => bay.finishes.length === 8)).toBe(true)
   })
   test('filters candidates, caps shots and enumerates only after final selection', () => {
     const bays = selectKnotBays('?candidates=glm,muse_spark,qwen_max,gpt_astra&shots=2')
-    expect(bays.map(bay => bay.candidate.data.id)).toEqual(['gpt_astra', 'glm', 'qwen_max', 'muse_spark'])
+    expect(new Set(bays.map(bay => bay.candidate.data.id))).toEqual(new Set(['glm', 'muse_spark', 'qwen_max', 'gpt_astra']))
     expect(bays.flatMap(bay => bay.finishes)).toHaveLength(8)
     expect(bays.every(bay => bay.finishes.length === 2 && bay.finishes.every(entry => entry.candidate.id === bay.candidate.data.id))).toBe(true)
     const numbered = enumerateKnotBays(bays)

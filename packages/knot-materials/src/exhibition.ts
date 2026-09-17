@@ -1,14 +1,20 @@
 import type {KnotEntry, Vec3} from './types.ts'
 
+import parseCandidateOrder from './candidateOrder.ts'
 import KnotLayout from './KnotLayout.ts'
 import {knotCandidates} from './main.ts'
 import parseRarityMode from './rarityMode.ts'
 
 export const knotFloatHeight = 1
 
+export function candidateScore(candidate: (typeof knotCandidates)[number]) {
+  return candidate.items.reduce((sum, item) => sum + item.rarity, 0) / candidate.items.length
+}
+
 export function selectKnotBays(search = '') {
   const params = new URLSearchParams(search)
   const rarityMode = parseRarityMode(search)
+  const candidateOrder = parseCandidateOrder(search)
   const requested = [...new Set(params.getAll('candidates').flatMap(value => value.split(',')).map(value => value.trim()).filter(Boolean))]
   const known = new Set(knotCandidates.map(candidate => candidate.data.id))
   const unknown = requested.filter(id => !known.has(id))
@@ -24,7 +30,10 @@ export function selectKnotBays(search = '') {
     }
   }
   const selected = requested.length ? knotCandidates.filter(candidate => requested.includes(candidate.data.id)) : knotCandidates
-  return selected.map(candidate => ({
+  const byName = (a: (typeof knotCandidates)[number], b: (typeof knotCandidates)[number]) => a.data.title.localeCompare(b.data.title) || a.data.id.localeCompare(b.data.id)
+  const byScore = (a: (typeof knotCandidates)[number], b: (typeof knotCandidates)[number]) => candidateScore(b) - candidateScore(a) || byName(a, b)
+  const ordered = selected.toSorted(candidateOrder === 'score' ? byScore : byName)
+  return ordered.map(candidate => ({
     candidate,
     finishes: candidate.select(shots, rarityMode !== 'false'),
   })).filter(bay => bay.finishes.length > 0)
