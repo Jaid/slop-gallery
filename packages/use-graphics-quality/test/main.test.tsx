@@ -33,7 +33,7 @@ test('selectors receive booleans and preserve selected identity and literal valu
     return samples
   }
   for (const isQuality of [true, false]) {
-    renderToStaticMarkup(<GraphicsQualityProvider isQuality={isQuality} onChange={() => {}}><ReadBudget/></GraphicsQualityProvider>)
+    renderToStaticMarkup(<GraphicsQualityProvider isQuality={isQuality} onChange={() => {}}><ReadBudget /></GraphicsQualityProvider>)
     expect(selected).toBe(selectBudget(isQuality))
   }
   expect(received).toEqual([true, false])
@@ -53,9 +53,9 @@ test('provider state is controlled, and its boolean change callback passes throu
   }
   function Controls() {
     request = useSetGraphicsQuality()
-    return <ReadQuality/>
+    return <ReadQuality />
   }
-  const render = () => renderToStaticMarkup(<GraphicsQualityProvider isQuality={isQuality} onChange={onChange}><Controls/></GraphicsQualityProvider>)
+  const render = () => renderToStaticMarkup(<GraphicsQualityProvider isQuality={isQuality} onChange={onChange}><Controls /></GraphicsQualityProvider>)
   expect(render()).toBe('<span>true:quality</span>')
   expect(request).toBe(onChange)
   request!(false)
@@ -69,16 +69,16 @@ test('nested providers isolate booleans and callbacks without leaking into sibli
   const callbacks: Array<ReturnType<typeof useSetGraphicsQuality>> = []
   function Read() {
     callbacks.push(useSetGraphicsQuality())
-    return <ReadQuality/>
+    return <ReadQuality />
   }
   const html = renderToStaticMarkup(<GraphicsQualityProvider isQuality onChange={outer}>
-    <Read/>
-    <GraphicsQualityProvider isQuality={false} onChange={inner}><Read/></GraphicsQualityProvider>
-    <Read/>
+    <Read />
+    <GraphicsQualityProvider isQuality={false} onChange={inner}><Read /></GraphicsQualityProvider>
+    <Read />
   </GraphicsQualityProvider>)
   expect(html).toBe('<span>true:quality</span><span>false:performance</span><span>true:quality</span>')
   expect(callbacks).toEqual([outer, inner, outer])
-  expect(() => renderToStaticMarkup(<ReadQuality/>)).toThrow('requires a GraphicsQualityProvider')
+  expect(() => renderToStaticMarkup(<ReadQuality />)).toThrow('requires a GraphicsQualityProvider')
 })
 test('every hook fails clearly outside a provider', () => {
   for (const hook of [useGraphicsQuality, useSetGraphicsQuality, () => useGraphicsQualityValue(selectBudget)]) {
@@ -86,6 +86,6 @@ test('every hook fails clearly outside a provider', () => {
       hook()
       return null
     }
-    expect(() => renderToStaticMarkup(<MissingProvider/>)).toThrow('requires a GraphicsQualityProvider')
+    expect(() => renderToStaticMarkup(<MissingProvider />)).toThrow('requires a GraphicsQualityProvider')
   }
 })
