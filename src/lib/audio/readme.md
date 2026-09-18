@@ -23,7 +23,7 @@ Zoom sweeps follow `ego-player`'s actual FOV transition direction and duration. 
 
 ## Movement
 
-The player adapter passes collision-resolved horizontal speed and crouch state to `SoundEngine.step(wood, speed, crouching)`. Each stride combines a low impact, filtered sole noise and a delayed scuff. Speed continuously changes amplitude, pitch, brightness and duration; crouching selects a quieter, darker, softer recipe while preserving surface differences. Consecutive steps use different seeded noise and subtle pitch variation. Wooden and hard floors have distinct recipes. The stride callback controls cadence without a separate fixed footstep cooldown.
+The player adapter passes collision-resolved horizontal speed and crouch state to `SoundEngine.step(wood, speed, crouching)`. Footsteps currently have five audition candidates: **Soft Sole**, **Heel / Toe**, **Brushed Sole**, **Rubber Flex**, and **Dusty Floor**. Pressing **K** cycles the active candidate and shows its number/name in the notice UI; the first candidate is active after startup. Every candidate still responds continuously to actual speed, surface, crouching and per-stride variation. Crouching lowers level and brightness across all five, while wooden and hard floors retain distinct voicing. The stride callback controls cadence without a separate fixed footstep cooldown.
 
 Landing sounds use `ego-player`'s downward speed immediately before collision resolution, not the nearly zero post-impact vertical velocity. Larger impacts are heavier, with a bounded maximum. Initial placement and teleport settling are silent, as are contact interruptions shorter than 0.06 seconds. A landing suppresses a duplicate footfall for 0.1 seconds, then ordinary strides resume.
 

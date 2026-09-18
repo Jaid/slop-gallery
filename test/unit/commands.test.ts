@@ -5,6 +5,7 @@ import {renderToStaticMarkup} from 'react-dom/server'
 
 import Map from '#component/Map'
 
+import SoundEngine from '../../src/lib/audio/SoundEngine.ts'
 import {galleryEvents, handleGalleryKey, importDroppedFiles, isTextInput, viewPortrait} from '../../src/lib/gallery/actions.ts'
 import ImageImporter from '../../src/lib/gallery/ImageImporter.ts'
 import {imageFilename} from '../../src/lib/gallery/imagePolicy.ts'
@@ -50,6 +51,25 @@ test('retired menu shortcuts do not open panels', () => {
       target: new ElementDouble,
     } as unknown as KeyboardEvent)
     expect(useGallery.getState().panel).toBeNull()
+  }
+})
+test('K cycles the footstep audition and reports the selected candidate', () => {
+  useGallery.setState({panel: null})
+  const cycleFootstepStyle = spyOn(SoundEngine, 'get').mockReturnValue({
+    cycleFootstepStyle: () => ({
+      index: 2,
+      label: 'Heel / Toe',
+      total: 5,
+    }),
+  } as SoundEngine)
+  try {
+    handleGalleryKey({
+      code: 'KeyK',
+      target: new ElementDouble,
+    } as unknown as KeyboardEvent)
+    expect(useGallery.getState().notice).toBe('Footsteps 2/5 · Heel / Toe')
+  } finally {
+    cycleFootstepStyle.mockRestore()
   }
 })
 test('renderer-free drops decode, commit and support undo/redo with a panel open', async () => {

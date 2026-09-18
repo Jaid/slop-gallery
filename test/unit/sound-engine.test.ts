@@ -39,6 +39,13 @@ test('effects retain their 12 dB boost and mute only schedules changes', () => {
   sound.mute(false)
   expect(master.gain.setTargetAtTime).toHaveBeenLastCalledWith(master.gain.value, 2, 0.08)
 })
+test('footstep audition cycles through all five replacements and wraps', () => {
+  const {sound} = setup()
+  const selections = Array.from({length: 5}, () => sound.cycleFootstepStyle())
+  expect(selections.map(selection => selection.label)).toEqual(['Heel / Toe', 'Brushed Sole', 'Rubber Flex', 'Dusty Floor', 'Soft Sole'])
+  expect(selections.map(selection => selection.index)).toEqual([2, 3, 4, 5, 1])
+  expect(selections[0].total).toBe(5)
+})
 test('stride callbacks at time zero and closer than the old cooldown all produce footsteps', () => {
   const {sound, context, sources, buffers} = setup()
   for (const time of [0, 0.18, 0.36]) {
