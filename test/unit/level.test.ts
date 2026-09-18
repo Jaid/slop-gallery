@@ -10,7 +10,7 @@ import levels, {defaultLevel, levelIds} from '../../src/data/levels.ts'
 import museumPortraits from '../../src/levels/gallery/collection.ts'
 import {insideLevel as insideMuseum, playerSpawn as museumSpawn} from '../../src/levels/gallery/navigation.ts'
 import knotPortraits from '../../src/levels/knottingham/collection.ts'
-import {insideLevel as insideKnots, playerSpawn as knotSpawn, levelFloorHeight, woodenFloor} from '../../src/levels/knottingham/navigation.ts'
+import {groundSurface, insideLevel as insideKnots, playerSpawn as knotSpawn, levelFloorHeight} from '../../src/levels/knottingham/navigation.ts'
 import soundboardPortraits from '../../src/levels/soundboard/collection.ts'
 import {insideLevel as insideSoundboard, playerSpawn as soundboardSpawn} from '../../src/levels/soundboard/navigation.ts'
 import {soundboardBounds} from '../../src/lib/audio/soundboard.ts'
@@ -68,7 +68,7 @@ describe('build-time levels', () => {
     expect(insideMuseum(farKnotPosition)).toBe(false)
     expect(insideKnots([0, 0, knotGalleryBounds.northZ - 1])).toBe(false)
     expect(levelFloorHeight(farKnotPosition)).toBe(0)
-    expect(woodenFloor('vesper', [0, 0, 0])).toBe(false)
+    expect(groundSurface('vesper', [0, 0, 0])).toBe('generic')
     expect(knotPortraits).toEqual([])
     expect(soundboardPortraits).toEqual([])
     expect(insideSoundboard([soundboardBounds.maxX + 1, 0.04, 0])).toBe(false)

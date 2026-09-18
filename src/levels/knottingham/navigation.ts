@@ -10,4 +10,4 @@ export const playerSpawn: PlayerPose = {
   pitch: 0,
 }
 export const levelFloorHeight = (_position: Vec3) => 0
-export const woodenFloor = (_room: RoomId, _position: Vec3) => false
+export const groundSurface = (_room: RoomId, _position: Vec3) => 'generic' as const

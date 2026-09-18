@@ -1,3 +1,4 @@
+import type {FootstepSurface} from './playerSoundEffects.ts'
 import type {ProceduralPlayback} from './proceduralAudio.ts'
 
 import {footstepVoices, impactFootstepStrength, playerSoundEffects} from './playerSoundEffects.ts'
@@ -31,13 +32,13 @@ export default class SoundEngine {
     this.master.connect(this.context.destination)
   }
 
-  land(wood: boolean, speed: number, crouching: boolean, impactSpeed: number) {
+  land(surface: FootstepSurface, speed: number, crouching: boolean, impactSpeed: number) {
     if (this.muted) {
       return
     }
     this.lastLanding = this.context.currentTime
     const index = this.contactIndex++
-    playVoices(this, footstepVoices(wood, speed, {
+    playVoices(this, footstepVoices(surface, speed, {
       crouching,
       strength: impactFootstepStrength(impactSpeed),
       variation: Math.sin(index * 2.39996),
@@ -78,13 +79,13 @@ export default class SoundEngine {
     this.updateZoomGain()
   }
 
-  step(wood: boolean, speed: number, crouching: boolean) {
+  step(surface: FootstepSurface, speed: number, crouching: boolean) {
     if (this.muted || speed < 0.1 || this.context.currentTime - this.lastLanding < 0.1) {
       return
     }
     // The stride callback owns cadence; no fixed cooldown may discard faster steps.
     const index = this.contactIndex++
-    playVoices(this, footstepVoices(wood, speed, {
+    playVoices(this, footstepVoices(surface, speed, {
       crouching,
       variation: Math.sin(index * 2.39996),
     }), `step:${index}`)

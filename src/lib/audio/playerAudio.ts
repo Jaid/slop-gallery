@@ -1,26 +1,26 @@
 import type {EgoState, EgoZoomTransition} from 'ego-player'
 
-import {woodenFloor} from '#level/navigation.ts'
+import {groundSurface} from '#level/navigation.ts'
 import {useGallery} from '#src/lib/gallery/store.ts'
 import {getPlayerZoom, setPlayerZoom} from '#src/lib/rendering/playerView.ts'
 
 import SoundEngine from './SoundEngine.ts'
 
-const isWood = (state: EgoState) => {
+const surface = (state: EgoState) => {
   const {x, y, z} = state.position
-  return woodenFloor(useGallery.getState().room, [x, y, z])
+  return groundSurface(useGallery.getState().room, [x, y, z])
 }
 const stop = () => SoundEngine.existing()?.stopPlayerSounds()
 
 export function onPlayerStep(state: EgoState) {
   if (state.active && useGallery.getState().sound) {
-    SoundEngine.existing()?.step(isWood(state), Math.hypot(state.velocity.x, state.velocity.z), state.crouching)
+    SoundEngine.existing()?.step(surface(state), Math.hypot(state.velocity.x, state.velocity.z), state.crouching)
   }
 }
 
 export function onPlayerLand(state: EgoState, impactSpeed: number) {
   if (state.active && useGallery.getState().sound) {
-    SoundEngine.existing()?.land(isWood(state), Math.hypot(state.velocity.x, state.velocity.z), state.crouching, impactSpeed)
+    SoundEngine.existing()?.land(surface(state), Math.hypot(state.velocity.x, state.velocity.z), state.crouching, impactSpeed)
   }
 }
 

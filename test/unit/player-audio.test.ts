@@ -2,6 +2,7 @@ import type {EgoState} from 'ego-player'
 
 import {afterEach, beforeEach, expect, mock, spyOn, test} from 'bun:test'
 
+import {groundSurface} from '../../src/levels/gallery/navigation.ts'
 import {attachPlayerAudio, onPlayerLand, onPlayerStep, onPlayerZoomChange, onPlayerZoomTransition} from '../../src/lib/audio/playerAudio.ts'
 import SoundEngine from '../../src/lib/audio/SoundEngine.ts'
 import {useGallery} from '../../src/lib/gallery/store.ts'
@@ -9,8 +10,8 @@ import {getPlayerZoom, setPlayerZoom} from '../../src/lib/rendering/playerView.t
 
 const original = useGallery.getState()
 const sound = {
-  step: mock((_wood: boolean, _speed: number, _crouching: boolean) => {}),
-  land: mock((_wood: boolean, _speed: number, _crouching: boolean, _impactSpeed: number) => {}),
+  step: mock((_surface: string, _speed: number, _crouching: boolean) => {}),
+  land: mock((_surface: string, _speed: number, _crouching: boolean, _impactSpeed: number) => {}),
   zoomTransition: mock((_extended: boolean, _retract: boolean, _duration: number) => {}),
   setZoom: mock((_amount: number) => {}),
   viewTransition: mock((_entering: boolean) => {}),
@@ -53,16 +54,25 @@ afterEach(() => {
   useGallery.setState(original)
   setPlayerZoom(0)
 })
+test('ground surface resolver maps visible floor materials to modifiers', () => {
+  expect(groundSurface('lobby', [0, 0, -20])).toBe('glass')
+  expect(groundSurface('lobby', [0, 0, -10])).toBe('generic')
+  expect(groundSurface('vesper', [-14, 0, 0])).toBe('hollow')
+  expect(groundSurface('sienna', [-14, 0, 14])).toBe('fabric')
+  expect(groundSurface('sienna', [-10, 0, 14])).toBe('hollow')
+  expect(groundSurface('moonfall', [-8, -8, 18.5])).toBe('fabric')
+  expect(groundSurface('moonfall', [2, -8, 18.5])).toBe('generic')
+})
 test('player footsteps use horizontal physical speed and landings use pre-impact speed', () => {
   onPlayerStep(state)
-  expect(sound.step).toHaveBeenCalledWith(expect.any(Boolean), 5, false)
+  expect(sound.step).toHaveBeenCalledWith('generic', 5, false)
   onPlayerStep({
     ...state,
     crouching: true,
   })
-  expect(sound.step).toHaveBeenLastCalledWith(expect.any(Boolean), 5, true)
+  expect(sound.step).toHaveBeenLastCalledWith('generic', 5, true)
   onPlayerLand(state, 7)
-  expect(sound.land).toHaveBeenCalledWith(expect.any(Boolean), 5, false, 7)
+  expect(sound.land).toHaveBeenCalledWith('generic', 5, false, 7)
   onPlayerStep({
     ...state,
     active: false,

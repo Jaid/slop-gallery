@@ -57,18 +57,18 @@ export default async function verify() {
     })
   }
   const steps = []
-  for (const wood of [false, true]) {
-    const slow = await render(footstepVoices(wood, 0.9), 'step')
-    const walk = await render(footstepVoices(wood, 3), 'step')
-    const sprint = await render(footstepVoices(wood, 9), 'step')
-    const sneak = await render(footstepVoices(wood, 3, {crouching: true}), 'sneak')
+  for (const surface of ['generic', 'hollow', 'glass', 'fabric'] as const) {
+    const slow = await render(footstepVoices(surface, 0.9), 'step')
+    const walk = await render(footstepVoices(surface, 3), 'step')
+    const sprint = await render(footstepVoices(surface, 9), 'step')
+    const sneak = await render(footstepVoices(surface, 3, {crouching: true}), 'sneak')
     assert(slow.rms < walk.rms && walk.rms < sprint.rms, 'Footstep energy must grow with speed')
     assert(sneak.rms < walk.rms, 'Sneaking must be quieter than normal walking')
-    const lightLanding = await render(footstepVoices(wood, 3, {strength: impactFootstepStrength(2)}), 'land-light')
-    const heavyLanding = await render(footstepVoices(wood, 3, {strength: impactFootstepStrength(10)}), 'land-heavy')
+    const lightLanding = await render(footstepVoices(surface, 3, {strength: impactFootstepStrength(2)}), 'land-light')
+    const heavyLanding = await render(footstepVoices(surface, 3, {strength: impactFootstepStrength(10)}), 'land-heavy')
     assert(lightLanding.rms < heavyLanding.rms, 'Landing energy must grow with impact')
     steps.push({
-      wood,
+      surface,
       slow,
       walk,
       sprint,

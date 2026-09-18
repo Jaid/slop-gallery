@@ -2,35 +2,89 @@ import type {SoundEffect, Voice} from './proceduralAudio.ts'
 
 import {noise, osc} from './proceduralAudio.ts'
 
+export type FootstepSurface = 'fabric' | 'generic' | 'glass' | 'hollow'
+
 type FootstepOptions = {
   crouching?: boolean
   strength?: number
   variation?: number
 }
 
+const surfaceProfiles = {
+  generic: {
+    attack: 1,
+    body: [86, 57],
+    brightness: 1,
+    contact: [360, 180],
+    gain: 1,
+    q: 0.3,
+    tail: [125, 82],
+    duration: 1,
+  },
+  hollow: {
+    attack: 1,
+    body: [68, 48],
+    brightness: 1,
+    contact: [280, 140],
+    gain: 1,
+    q: 0.3,
+    tail: [105, 72],
+    duration: 1,
+  },
+  glass: {
+    attack: 0.78,
+    body: [136, 92],
+    brightness: 1.08,
+    contact: [620, 290],
+    gain: 0.82,
+    q: 0.42,
+    tail: [225, 148],
+    duration: 0.82,
+  },
+  fabric: {
+    attack: 1.45,
+    body: [56, 42],
+    brightness: 0.68,
+    contact: [170, 95],
+    gain: 0.58,
+    q: 0.24,
+    tail: [78, 54],
+    duration: 0.94,
+  },
+} satisfies Record<FootstepSurface, {
+  attack: number
+  body: readonly [number, number]
+  brightness: number
+  contact: readonly [number, number]
+  duration: number
+  gain: number
+  q: number
+  tail: readonly [number, number]
+}>
+
 /** Speed is actual horizontal world units/second, not the requested movement or Shift state. */
-export function footstepVoices(wood: boolean, speed: number, {crouching = false, strength = 1, variation = 0}: FootstepOptions = {}): Array<Voice> {
+export function footstepVoices(surface: FootstepSurface, speed: number, {crouching = false, strength = 1, variation = 0}: FootstepOptions = {}): Array<Voice> {
+  const profile = surfaceProfiles[surface]
   const effort = Math.max(0, Math.min(1, speed / 9))
   const pitch = (0.95 + effort * 0.08) * (1 + variation * 0.008)
-  const brightness = (crouching ? 0.62 : 1) * (0.82 + effort * 0.12)
-  const gain = (crouching ? 0.34 : 1) * Math.max(0, Math.min(12, strength))
-  const duration = crouching ? 0.105 - effort * 0.01 : 0.085 - effort * 0.018
-  const attack = crouching ? 0.016 : 0.006
+  const brightness = (crouching ? 0.62 : 1) * (0.82 + effort * 0.12) * profile.brightness
+  const gain = (crouching ? 0.34 : 1) * Math.max(0, Math.min(12, strength)) * profile.gain
+  const duration = (crouching ? 0.105 - effort * 0.01 : 0.085 - effort * 0.018) * profile.duration
+  const attack = (crouching ? 0.016 : 0.006) * profile.attack
   const body = (base: number, growth: number) => (base + effort * growth) * gain
-  const frequency = (woodFrequency: number, hardFrequency: number) => (wood ? woodFrequency : hardFrequency) * pitch * brightness
   return [
-    osc((wood ? 68 : 86) * pitch, duration, body(0.002, 0.0042), {
-      endFrequency: (wood ? 48 : 57) * pitch,
+    osc(profile.body[0] * pitch, duration, body(0.002, 0.0042), {
+      endFrequency: profile.body[1] * pitch,
       attack: attack * 1.5,
     }),
     noise(duration * 0.72, body(0.0012, 0.0025), {
       type: 'lowpass',
-      frequency: frequency(280, 360),
-      endFrequency: frequency(140, 180),
-      q: 0.3,
+      frequency: profile.contact[0] * pitch * brightness,
+      endFrequency: profile.contact[1] * pitch * brightness,
+      q: profile.q,
     }, {attack: attack * 1.7}),
-    osc((wood ? 105 : 125) * pitch, duration * 0.4, body(0.0006, 0.0012), {
-      endFrequency: (wood ? 72 : 82) * pitch,
+    osc(profile.tail[0] * pitch, duration * 0.4, body(0.0006, 0.0012), {
+      endFrequency: profile.tail[1] * pitch,
       attack: attack * 1.4,
       delay: duration * 0.09,
     }),

@@ -58,7 +58,7 @@ test('all seven player cues are enabled and independently auditionable', () => {
   expect(new Set(cues.map(cue => JSON.stringify(cue.voices))).size).toBe(7)
 })
 test('Soft Weight keeps a restrained three-layer recipe', () => {
-  const walk = footstepVoices(false, 3)
+  const walk = footstepVoices('generic', 3)
   expect(walk).toHaveLength(3)
   expect(walk.filter(voice => voice.kind === 'noise')).toHaveLength(1)
   const noiseVoice = walk.find(voice => voice.kind === 'noise')
@@ -66,26 +66,39 @@ test('Soft Weight keeps a restrained three-layer recipe', () => {
   expect(noiseVoice?.filter.frequency).toBeLessThan(400)
   expect(walk.reduce((sum, voice) => sum + voice.volume, 0)).toBeLessThan(0.01)
 })
+test('surface modifiers keep one Soft Weight family while changing material character', () => {
+  const generic = footstepVoices('generic', 3)
+  const hollow = footstepVoices('hollow', 3)
+  const glass = footstepVoices('glass', 3)
+  const fabric = footstepVoices('fabric', 3)
+  expect(new Set([generic, hollow, glass, fabric].map(recipe => JSON.stringify(recipe))).size).toBe(4)
+  expect(hollow[0].kind === 'oscillator' && hollow[0].frequency).toBeLessThan(generic[0].kind === 'oscillator' ? generic[0].frequency : 0)
+  expect(glass[0].kind === 'oscillator' && glass[0].frequency).toBeGreaterThan(generic[0].kind === 'oscillator' ? generic[0].frequency : Infinity)
+  expect(fabric.reduce((sum, voice) => sum + voice.volume, 0)).toBeLessThan(generic.reduce((sum, voice) => sum + voice.volume, 0))
+  const fabricNoise = fabric.find(voice => voice.kind === 'noise')
+  const genericNoise = generic.find(voice => voice.kind === 'noise')
+  expect(fabricNoise?.filter.frequency).toBeLessThan(genericNoise?.filter.frequency ?? 0)
+})
 test('footsteps become stronger, brighter, and shorter as actual speed increases', () => {
-  for (const wood of [false, true]) {
-    const slow = footstepVoices(wood, 0.9)
-    const walk = footstepVoices(wood, 3)
-    const sprint = footstepVoices(wood, 9)
+  for (const surface of ['generic', 'hollow', 'glass', 'fabric'] as const) {
+    const slow = footstepVoices(surface, 0.9)
+    const walk = footstepVoices(surface, 3)
+    const sprint = footstepVoices(surface, 9)
     for (const i of [0, 1, 2]) {
       expect(slow[i].volume).toBeLessThan(walk[i].volume)
       expect(walk[i].volume).toBeLessThan(sprint[i].volume)
       expect(slow[i].duration).toBeGreaterThan(sprint[i].duration)
     }
     expect(slow[0].kind === 'oscillator' && slow[0].frequency).toBeLessThan(sprint[0].kind === 'oscillator' ? sprint[0].frequency : 0)
-    expect(footstepVoices(wood, 9)).toEqual(footstepVoices(wood, 90))
-    expect(footstepVoices(wood, 3, {variation: -0.5})).not.toEqual(footstepVoices(wood, 3, {variation: 0.5}))
+    expect(footstepVoices(surface, 9)).toEqual(footstepVoices(surface, 90))
+    expect(footstepVoices(surface, 3, {variation: -0.5})).not.toEqual(footstepVoices(surface, 3, {variation: 0.5}))
   }
-  expect(footstepVoices(true, 3)).not.toEqual(footstepVoices(false, 3))
+  expect(footstepVoices('hollow', 3)).not.toEqual(footstepVoices('generic', 3))
 })
 test('crouching footsteps are quieter, darker, and softer than normal walking', () => {
-  for (const wood of [false, true]) {
-    const walk = footstepVoices(wood, 3)
-    const sneak = footstepVoices(wood, 3, {crouching: true})
+  for (const surface of ['generic', 'hollow', 'glass', 'fabric'] as const) {
+    const walk = footstepVoices(surface, 3)
+    const sneak = footstepVoices(surface, 3, {crouching: true})
     for (const [index, voice] of sneak.entries()) {
       expect(voice.volume).toBeLessThan(walk[index].volume)
     }
@@ -99,9 +112,9 @@ test('crouching footsteps are quieter, darker, and softer than normal walking', 
   }
 })
 test('landing strength reuses Soft Weight and scales with pre-impact fall speed', () => {
-  const normal = footstepVoices(false, 3)
-  const light = footstepVoices(false, 3, {strength: impactFootstepStrength(2)})
-  const heavy = footstepVoices(false, 3, {strength: impactFootstepStrength(10)})
+  const normal = footstepVoices('generic', 3)
+  const light = footstepVoices('generic', 3, {strength: impactFootstepStrength(2)})
+  const heavy = footstepVoices('generic', 3, {strength: impactFootstepStrength(10)})
   expect(impactFootstepStrength(2)).toBeLessThan(impactFootstepStrength(5))
   expect(impactFootstepStrength(5)).toBeLessThan(impactFootstepStrength(10))
   expect(impactFootstepStrength(10)).toBeGreaterThan(8)

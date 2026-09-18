@@ -43,18 +43,18 @@ test('stride callbacks at time zero and closer than the old cooldown all produce
   const {sound, context, sources, buffers} = setup()
   for (const time of [0, 0.18, 0.36]) {
     context.currentTime = time
-    sound.step(true, 9, false)
+    sound.step('hollow', 9, false)
   }
   expect(sources).toHaveLength(9)
   expect(buffers[0]).not.toEqual(buffers[2])
-  sound.step(false, 0, false)
+  sound.step('generic', 0, false)
   expect(sources).toHaveLength(9)
 })
 test('landing reuses the Soft Weight timbre and increases strength with fall speed', () => {
   const light = setup()
-  light.sound.land(false, 5, false, 2)
+  light.sound.land('generic', 5, false, 2)
   const heavy = setup()
-  heavy.sound.land(false, 5, false, 9)
+  heavy.sound.land('generic', 5, false, 9)
   expect(light.sources[0].frequency.setValueAtTime.mock.calls[0][0]).toBe(heavy.sources[0].frequency.setValueAtTime.mock.calls[0][0])
   const lightPeak = Math.max(...light.gains.slice(2).map(gain => gain.gain.linearRampToValueAtTime.mock.calls[0]?.[0] ?? 0))
   const heavyPeak = Math.max(...heavy.gains.slice(2).map(gain => gain.gain.linearRampToValueAtTime.mock.calls[0]?.[0] ?? 0))
@@ -62,13 +62,13 @@ test('landing reuses the Soft Weight timbre and increases strength with fall spe
 })
 test('landing prevents a duplicate footfall at impact, not subsequent strides', () => {
   const {sound, context, sources} = setup()
-  sound.land(false, 3, false, 5)
-  sound.step(false, 3, false)
+  sound.land('generic', 3, false, 5)
+  sound.step('generic', 3, false)
   context.currentTime = 0.05
-  sound.step(false, 3, false)
+  sound.step('generic', 3, false)
   expect(sources).toHaveLength(3)
   context.currentTime = 0.11
-  sound.step(false, 3, false)
+  sound.step('generic', 3, false)
   expect(sources).toHaveLength(6)
 })
 test('zoom sweeps use the transition duration and reversals fade the previous sound', () => {
@@ -115,8 +115,8 @@ test('muting and cleanup stop sustained and transitioning sounds without queuing
   sound.setZoom(1)
   sound.zoomTransition(false, false, 0.2)
   sound.viewTransition(false)
-  sound.step(false, 9, false)
-  sound.land(false, 3, false, 8)
+  sound.step('generic', 9, false)
+  sound.land('generic', 3, false, 8)
   sound.tone(320)
   expect(sources).toHaveLength(count)
   sound.mute(false)
@@ -144,7 +144,7 @@ test('viewing mode reversal cancels its delayed voices and completed nodes disco
 })
 test('delayed footstep layers are intrinsically silent before their scheduled attack', () => {
   const {sound, gains} = setup()
-  sound.step(false, 9, false)
+  sound.step('generic', 9, false)
   for (const envelope of gains.slice(2)) {
     expect(envelope.gain.value).toBe(0)
   }

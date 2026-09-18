@@ -7,16 +7,16 @@ import {useGraphicsQualityValue} from 'use-graphics-quality'
 import Chandelier from '#component/levels/gallery/Chandelier'
 import Box from '#src/components/Scene/primitives.tsx'
 import {rooms, useGallery, walls} from '#src/lib/gallery.ts'
+import {siennaRugSize} from '#src/lib/gallery/sienna.ts'
 import RoomFloorTextures from '#src/lib/materials/RoomFloorTextures.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsQuality.ts'
 
 const room = rooms.find(candidate => candidate.id === 'sienna')!
-const rug = [4.8, 7.2] as const
 
 export default function SiennaRoom({wood}: {wood: Texture}) {
   const resetEpoch = useGallery(s => s.resetEpoch)
   const {floorReflections} = useGraphicsQualityValue(getGraphicsProfile)
-  const floor = new RoomFloorTextures(...room.size, ...rug)
+  const floor = new RoomFloorTextures(...room.size, ...siennaRugSize)
   useEffect(() => () => floor.dispose(), [floor])
   return <>
     <group position={[room.center[0], 0, room.center[1]]}>
@@ -31,9 +31,9 @@ export default function SiennaRoom({wood}: {wood: Texture}) {
         <meshStandardNodeMaterial {...floor.wood} bumpScale={0.035} envMapIntensity={floorReflections ? 1 : 0} roughness={floorReflections ? 0.55 : 0.72} />
       </mesh>
       {[-4, 0, 4].map(x => <Box color='#493226' key={x} map={wood} position={[x, 5.56, 0]} size={[0.18, 0.3, room.size[1]]} />)}
-      <Box color='#3b1010' envMapIntensity={floorReflections ? 1 : 0} position={[0, 0.007, 0]} roughness={1} size={[rug[0], 0.012, rug[1]]} />
+      <Box color='#3b1010' envMapIntensity={floorReflections ? 1 : 0} position={[0, 0.007, 0]} roughness={1} size={[siennaRugSize[0], 0.012, siennaRugSize[1]]} />
       <mesh name='sienna-carpet' position={[0, 0.014, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[...rug]} />
+        <planeGeometry args={[...siennaRugSize]} />
         <meshStandardNodeMaterial {...floor.carpet} bumpScale={0.008} envMapIntensity={floorReflections ? 1 : 0} roughness={1} />
       </mesh>
       <Chandelier key={resetEpoch} />
