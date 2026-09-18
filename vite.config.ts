@@ -118,9 +118,6 @@ const getProductionConfig = () => {
           minify: true,
           topLevelVar: true,
           chunkFileNames: chunkInfo => {
-            if (chunkInfo.name === 'rapier' && chunkInfo.isDynamicEntry) {
-              return 'rapier-entry.js'
-            }
             if (chunkInfo.name === 'rolldown-runtime') {
               return 'runtime.js'
             }

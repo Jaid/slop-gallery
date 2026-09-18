@@ -26,6 +26,31 @@ test('monaco preset captures the editor packages from dependencies or workspaces
   expect(matches.test('/repo/packages/monacozen/src/main.ts')).toBe(true)
   expect(matches.test('/repo/node_modules/react/index.js')).toBe(false)
 })
+test('owns the Rapier dynamic-entry filename without taking over consumer naming', () => {
+  const plugin = thematicChunks()
+  if (typeof plugin.outputOptions !== 'function') {
+    throw new TypeError('Expected an outputOptions hook.')
+  }
+  const options = plugin.outputOptions.call({} as never, {
+    chunkFileNames: (chunkInfo: {name: string}) => `consumer-${chunkInfo.name}.js`,
+  } as never)
+  if (!options || options instanceof Promise || typeof options.chunkFileNames !== 'function') {
+    throw new TypeError('Expected synchronous chunk filename options.')
+  }
+  const chunkFileNames = options.chunkFileNames
+  expect(chunkFileNames({
+    name: 'rapier',
+    isDynamicEntry: true,
+  } as never)).toBe('rapier-entry.js')
+  expect(chunkFileNames({
+    name: 'rapier',
+    isDynamicEntry: false,
+  } as never)).toBe('consumer-rapier.js')
+  expect(chunkFileNames({
+    name: 'other',
+    isDynamicEntry: true,
+  } as never)).toBe('consumer-other.js')
+})
 test('build emits only groups that capture modules and monaco wins overlapping groups', async () => {
   const root = await fs.mkdtemp(resolve(tmpdir(), 'thematic-chunks-'))
   try {

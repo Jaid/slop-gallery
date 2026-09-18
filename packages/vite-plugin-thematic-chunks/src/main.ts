@@ -57,5 +57,23 @@ export default function thematicChunks(): Plugin {
         },
       }
     },
+    outputOptions(options) {
+      const chunkFileNames = options.chunkFileNames
+      if (chunkFileNames === undefined) {
+        return options
+      }
+      return {
+        ...options,
+        chunkFileNames: chunkInfo => {
+          if (chunkInfo.name === 'rapier' && chunkInfo.isDynamicEntry) {
+            return 'rapier-entry.js'
+          }
+          if (typeof chunkFileNames === 'function') {
+            return chunkFileNames(chunkInfo)
+          }
+          return chunkFileNames
+        },
+      }
+    },
   }
 }
