@@ -39,7 +39,7 @@ export default class SoundboardLayout {
     const rows = Math.max(this.sections.enabled.rows, this.sections.archived.rows)
     const height = Math.max(4.4, headingClearance + bottomClearance + soundboardButton.height + Math.max(0, rows - 1) * soundboardButton.rowPitch)
     const width = contentWidth + sidePadding * 2
-    const depth = Math.max(7.2, width * 0.76)
+    const depth = Math.max(40, width * 0.76)
     this.size = [width, height, depth]
     this.bounds = {
       minX: -width / 2,
