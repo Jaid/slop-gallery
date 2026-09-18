@@ -1,0 +1,25 @@
+{
+  "name": "vite-plugin-thematic-chunks",
+  "version": "0.1.0",
+  "type": "module",
+  "funding": "https://github.com/sponsors/Jaid",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jaid/slop-gallery.git",
+    "directory": "packages/vite-plugin-thematic-chunks"
+  },
+  "main": "src/main.ts",
+  "exports": {
+    ".": "./src/main.ts"
+  },
+  "scripts": {
+    "test": "bun test --max-concurrency 1 ./test"
+  },
+  "peerDependencies": {
+    "vite": "^8.3.0"
+  },
+  "devDependencies": {
+    "fs-extra": "11.4.0"
+  }
+}

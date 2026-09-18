@@ -13,6 +13,7 @@ import bakeThreePlugin from 'vite-plugin-bake-three'
 import gameLevelPlugin, {selectGameLevel} from 'vite-plugin-game-level'
 import hoistPopularConstantsPlugin from 'vite-plugin-hoist-popular-constants'
 import mediaMixinsPlugin from 'vite-plugin-media-mixins'
+import thematicChunksPlugin from 'vite-plugin-thematic-chunks'
 import titlePlugin from 'vite-plugin-title'
 
 import levels, {defaultLevel, levelIds} from '#src/data/levels.ts'
@@ -93,6 +94,7 @@ const getProductionConfig = () => {
       bakeThreePlugin(),
       bakeBranchComponentPlugin(),
       hoistPopularConstantsPlugin(),
+      thematicChunksPlugin(),
     ],
     build: {
       outDir: 'dist',
@@ -129,39 +131,6 @@ const getProductionConfig = () => {
               return 'style.css'
             }
             return '[name].[ext]'
-          },
-          codeSplitting: {
-            groups: [
-              {
-                name: 'rapier',
-                test: /[/\\]node_modules[/\\](?:@[^/\\]+[/\\])?rapier[^/\\]*[/\\]/u,
-                priority: 6,
-                includeDependenciesRecursively: false,
-              },
-              {
-                name: 'three',
-                test: /[/\\]node_modules[/\\]three[/\\]/u,
-                priority: 5,
-              },
-              {
-                name: 'react',
-                test: /[/\\]node_modules[/\\]react(-dom)?[/\\]/u,
-                priority: 4,
-              },
-              {
-                name: 'sub',
-                test: /[/\\]packages[/\\]/u,
-                priority: 2,
-              },
-              {
-                name: 'vendor',
-                test: /node_modules/u,
-                priority: 3,
-              },
-              {
-                name: 'main',
-              },
-            ],
           },
         },
         checks: {
