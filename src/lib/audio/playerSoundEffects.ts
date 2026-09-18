@@ -2,323 +2,38 @@ import type {SoundEffect, Voice} from './proceduralAudio.ts'
 
 import {noise, osc} from './proceduralAudio.ts'
 
-export const footstepStyles = [
-  {
-    id: 'soft-sole',
-    label: 'Soft Sole',
-  },
-  {
-    id: 'heel-toe',
-    label: 'Heel / Toe',
-  },
-  {
-    id: 'brushed-sole',
-    label: 'Brushed Sole',
-  },
-  {
-    id: 'rubber-flex',
-    label: 'Rubber Flex',
-  },
-  {
-    id: 'dusty-floor',
-    label: 'Dusty Floor',
-  },
-  {
-    id: 'felt-pad',
-    label: 'Felt Pad',
-  },
-  {
-    id: 'suede',
-    label: 'Suede',
-  },
-  {
-    id: 'muted-tap',
-    label: 'Muted Tap',
-  },
-  {
-    id: 'floor-hush',
-    label: 'Floor Hush',
-  },
-  {
-    id: 'soft-weight',
-    label: 'Soft Weight',
-  },
-] as const
-
-export type FootstepStyle = (typeof footstepStyles)[number]['id']
-
 type FootstepOptions = {
   crouching?: boolean
-  style?: FootstepStyle
   variation?: number
 }
 
 /** Speed is actual horizontal world units/second, not the requested movement or Shift state. */
-export function footstepVoices(wood: boolean, speed: number, {crouching = false, style = footstepStyles[0].id, variation = 0}: FootstepOptions = {}): Array<Voice> {
+export function footstepVoices(wood: boolean, speed: number, {crouching = false, variation = 0}: FootstepOptions = {}): Array<Voice> {
   const effort = Math.max(0, Math.min(1, speed / 9))
-  const pitch = (0.9 + effort * 0.16) * (1 + variation * 0.025)
-  const brightness = (crouching ? 0.68 : 1) * (0.88 + effort * 0.18)
-  const gain = crouching ? 0.42 : 1
-  const duration = crouching ? 0.16 - effort * 0.02 : 0.13 - effort * 0.035
-  const attack = crouching ? 0.02 : 0.008
+  const pitch = (0.95 + effort * 0.08) * (1 + variation * 0.008)
+  const brightness = (crouching ? 0.62 : 1) * (0.82 + effort * 0.12)
+  const gain = crouching ? 0.34 : 1
+  const duration = crouching ? 0.105 - effort * 0.01 : 0.085 - effort * 0.018
+  const attack = crouching ? 0.016 : 0.006
   const body = (base: number, growth: number) => (base + effort * growth) * gain
   const frequency = (woodFrequency: number, hardFrequency: number) => (wood ? woodFrequency : hardFrequency) * pitch * brightness
-  // The second audition batch deliberately has less pitch wandering, shorter tails and less upper-mid energy.
-  const calmPitch = (0.95 + effort * 0.08) * (1 + variation * 0.008)
-  const calmBrightness = (crouching ? 0.62 : 1) * (0.82 + effort * 0.12)
-  const calmGain = crouching ? 0.34 : 1
-  const calmDuration = crouching ? 0.105 - effort * 0.01 : 0.085 - effort * 0.018
-  const calmAttack = crouching ? 0.016 : 0.006
-  const quietBody = (base: number, growth: number) => (base + effort * growth) * calmGain
-  const calmFrequency = (woodFrequency: number, hardFrequency: number) => (wood ? woodFrequency : hardFrequency) * calmPitch * calmBrightness
-  switch (style) {
-    case 'soft-sole': {
-      return [
-        osc((wood ? 112 : 148) * pitch, duration, body(0.0045, 0.011), {
-          endFrequency: (wood ? 54 : 70) * pitch,
-          type: 'sine',
-          attack,
-        }),
-        noise(duration * 0.82, body(0.0026, 0.007), {
-          type: 'bandpass',
-          frequency: frequency(430, 680),
-          endFrequency: frequency(180, 260),
-          q: 0.5,
-        }, {attack: attack * 1.25}),
-        noise(duration * 0.55, body(0.0009, 0.0024), {
-          type: 'lowpass',
-          frequency: frequency(760, 1050),
-          endFrequency: frequency(260, 360),
-          q: 0.45,
-        }, {
-          attack: attack * 1.3,
-          delay: duration * 0.22,
-        }),
-      ]
-    }
-    case 'heel-toe': {
-      return [
-        osc((wood ? 160 : 220) * pitch, duration * 0.62, body(0.0036, 0.0085), {
-          endFrequency: (wood ? 82 : 108) * pitch,
-          type: 'triangle',
-          attack: attack * 0.8,
-        }),
-        osc((wood ? 235 : 315) * pitch, duration * 0.52, body(0.0024, 0.0058), {
-          endFrequency: (wood ? 112 : 145) * pitch,
-          type: 'sine',
-          attack,
-          delay: duration * 0.16,
-        }),
-        noise(duration * 0.48, body(0.0014, 0.0038), {
-          type: 'bandpass',
-          frequency: frequency(610, 900),
-          endFrequency: frequency(270, 390),
-          q: 0.7,
-        }, {
-          attack: attack * 1.1,
-          delay: duration * 0.2,
-        }),
-      ]
-    }
-    case 'brushed-sole': {
-      return [
-        noise(duration, body(0.0032, 0.0078), {
-          type: 'lowpass',
-          frequency: frequency(520, 760),
-          endFrequency: frequency(210, 300),
-          q: 0.4,
-        }, {attack: attack * 1.5}),
-        noise(duration * 0.7, body(0.0023, 0.0052), {
-          type: 'bandpass',
-          frequency: frequency(360, 540),
-          endFrequency: frequency(190, 280),
-          q: 0.38,
-        }, {
-          attack: attack * 1.8,
-          delay: duration * 0.12,
-        }),
-        noise(duration * 0.5, body(0.001, 0.0025), {
-          type: 'lowpass',
-          frequency: frequency(820, 1150),
-          endFrequency: frequency(300, 420),
-          q: 0.35,
-        }, {
-          attack: attack * 1.7,
-          delay: duration * 0.32,
-        }),
-      ]
-    }
-    case 'rubber-flex': {
-      return [
-        osc((wood ? 92 : 118) * pitch, duration * 1.08, body(0.0048, 0.0105), {
-          endFrequency: (wood ? 62 : 78) * pitch,
-          type: 'sine',
-          attack: attack * 1.3,
-        }),
-        osc((wood ? 190 : 245) * pitch, duration * 0.72, body(0.0019, 0.0048), {
-          endFrequency: (wood ? 118 : 148) * pitch,
-          type: 'triangle',
-          attack: attack * 1.45,
-          delay: duration * 0.08,
-        }),
-        noise(duration * 0.58, body(0.0012, 0.0034), {
-          type: 'lowpass',
-          frequency: frequency(500, 720),
-          endFrequency: frequency(220, 310),
-          q: 0.5,
-        }, {
-          attack: attack * 1.5,
-          delay: duration * 0.24,
-        }),
-      ]
-    }
-    case 'dusty-floor': {
-      return [
-        noise(duration * 0.88, body(0.0034, 0.0082), {
-          type: 'bandpass',
-          frequency: frequency(300, 430),
-          endFrequency: frequency(170, 240),
-          q: 0.42,
-        }, {attack: attack * 1.35}),
-        noise(duration * 0.62, body(0.0022, 0.0054), {
-          type: 'lowpass',
-          frequency: frequency(860, 1180),
-          endFrequency: frequency(330, 450),
-          q: 0.45,
-        }, {
-          attack: attack * 1.45,
-          delay: duration * 0.12,
-        }),
-        noise(duration * 0.48, body(0.0013, 0.0032), {
-          type: 'bandpass',
-          frequency: frequency(510, 720),
-          endFrequency: frequency(240, 330),
-          q: 0.35,
-        }, {
-          attack: attack * 1.6,
-          delay: duration * 0.3,
-        }),
-      ]
-    }
-    case 'felt-pad': {
-      return [
-        osc((wood ? 82 : 105) * calmPitch, calmDuration * 0.9, quietBody(0.0018, 0.0035), {
-          endFrequency: (wood ? 54 : 67) * calmPitch,
-          attack: calmAttack * 1.4,
-        }),
-        noise(calmDuration, quietBody(0.0016, 0.003), {
-          type: 'lowpass',
-          frequency: calmFrequency(320, 410),
-          endFrequency: calmFrequency(150, 190),
-          q: 0.35,
-        }, {attack: calmAttack * 1.6}),
-        noise(calmDuration * 0.5, quietBody(0.00045, 0.0009), {
-          type: 'lowpass',
-          frequency: calmFrequency(520, 650),
-          endFrequency: calmFrequency(200, 250),
-          q: 0.3,
-        }, {
-          attack: calmAttack * 1.5,
-          delay: calmDuration * 0.14,
-        }),
-      ]
-    }
-    case 'suede': {
-      return [
-        noise(calmDuration * 1.05, quietBody(0.0018, 0.0035), {
-          type: 'lowpass',
-          frequency: calmFrequency(260, 380),
-          endFrequency: calmFrequency(150, 190),
-          q: 0.3,
-        }, {attack: calmAttack * 1.7}),
-        noise(calmDuration * 0.6, quietBody(0.0011, 0.002), {
-          type: 'bandpass',
-          frequency: calmFrequency(190, 270),
-          endFrequency: calmFrequency(130, 170),
-          q: 0.28,
-        }, {
-          attack: calmAttack * 1.8,
-          delay: calmDuration * 0.1,
-        }),
-        noise(calmDuration * 0.42, quietBody(0.0005, 0.001), {
-          type: 'lowpass',
-          frequency: calmFrequency(460, 600),
-          endFrequency: calmFrequency(220, 270),
-          q: 0.25,
-        }, {
-          attack: calmAttack * 1.8,
-          delay: calmDuration * 0.2,
-        }),
-      ]
-    }
-    case 'muted-tap': {
-      return [
-        osc((wood ? 135 : 175) * calmPitch, calmDuration * 0.5, quietBody(0.0018, 0.004), {
-          endFrequency: (wood ? 90 : 115) * calmPitch,
-          type: 'triangle',
-          attack: calmAttack,
-        }),
-        noise(calmDuration * 0.45, quietBody(0.001, 0.002), {
-          type: 'bandpass',
-          frequency: calmFrequency(380, 520),
-          endFrequency: calmFrequency(220, 280),
-          q: 0.35,
-        }, {attack: calmAttack * 1.25}),
-        osc((wood ? 75 : 90) * calmPitch, calmDuration * 0.85, quietBody(0.0012, 0.0025), {
-          endFrequency: (wood ? 52 : 61) * calmPitch,
-          attack: calmAttack * 1.3,
-          delay: calmDuration * 0.04,
-        }),
-      ]
-    }
-    case 'floor-hush': {
-      return [
-        noise(calmDuration * 0.78, quietBody(0.0016, 0.0032), {
-          type: 'lowpass',
-          frequency: calmFrequency(230, 320),
-          endFrequency: calmFrequency(130, 170),
-          q: 0.22,
-        }, {attack: calmAttack * 1.8}),
-        noise(calmDuration * 0.5, quietBody(0.0009, 0.0018), {
-          type: 'bandpass',
-          frequency: calmFrequency(300, 410),
-          endFrequency: calmFrequency(180, 230),
-          q: 0.25,
-        }, {
-          attack: calmAttack * 1.6,
-          delay: calmDuration * 0.08,
-        }),
-        noise(calmDuration * 0.36, quietBody(0.0004, 0.0008), {
-          type: 'lowpass',
-          frequency: calmFrequency(430, 540),
-          endFrequency: calmFrequency(200, 250),
-          q: 0.2,
-        }, {
-          attack: calmAttack * 1.8,
-          delay: calmDuration * 0.18,
-        }),
-      ]
-    }
-    case 'soft-weight': {
-      return [
-        osc((wood ? 68 : 86) * calmPitch, calmDuration, quietBody(0.002, 0.0042), {
-          endFrequency: (wood ? 48 : 57) * calmPitch,
-          attack: calmAttack * 1.5,
-        }),
-        noise(calmDuration * 0.72, quietBody(0.0012, 0.0025), {
-          type: 'lowpass',
-          frequency: calmFrequency(280, 360),
-          endFrequency: calmFrequency(140, 180),
-          q: 0.3,
-        }, {attack: calmAttack * 1.7}),
-        osc((wood ? 105 : 125) * calmPitch, calmDuration * 0.4, quietBody(0.0006, 0.0012), {
-          endFrequency: (wood ? 72 : 82) * calmPitch,
-          attack: calmAttack * 1.4,
-          delay: calmDuration * 0.09,
-        }),
-      ]
-    }
-  }
+  return [
+    osc((wood ? 68 : 86) * pitch, duration, body(0.002, 0.0042), {
+      endFrequency: (wood ? 48 : 57) * pitch,
+      attack: attack * 1.5,
+    }),
+    noise(duration * 0.72, body(0.0012, 0.0025), {
+      type: 'lowpass',
+      frequency: frequency(280, 360),
+      endFrequency: frequency(140, 180),
+      q: 0.3,
+    }, {attack: attack * 1.7}),
+    osc((wood ? 105 : 125) * pitch, duration * 0.4, body(0.0006, 0.0012), {
+      endFrequency: (wood ? 72 : 82) * pitch,
+      attack: attack * 1.4,
+      delay: duration * 0.09,
+    }),
+  ]
 }
 
 /** Impact uses downward speed before collision resolution removes it. */

@@ -1,6 +1,6 @@
 import type {Voice} from '../../src/lib/audio/proceduralAudio.ts'
 
-import {footstepStyles, footstepVoices, landingVoices, playerSoundEffects} from '../../src/lib/audio/playerSoundEffects.ts'
+import {footstepVoices, landingVoices, playerSoundEffects} from '../../src/lib/audio/playerSoundEffects.ts'
 import {playVoices} from '../../src/lib/audio/proceduralAudio.ts'
 
 const rate = 48_000
@@ -56,20 +56,6 @@ export default async function verify() {
       ...await render(effect.voices, effect.id),
     })
   }
-  const candidateSteps = []
-  for (const style of footstepStyles) {
-    const walk = await render(footstepVoices(false, 3, {style: style.id}), `step:${style.id}`)
-    const sneak = await render(footstepVoices(false, 3, {
-      crouching: true,
-      style: style.id,
-    }), `sneak:${style.id}`)
-    assert(sneak.rms < walk.rms, `${style.label} sneaking must be quieter than walking`)
-    candidateSteps.push({
-      style: style.id,
-      walk,
-      sneak,
-    })
-  }
   const steps = []
   for (const wood of [false, true]) {
     const slow = await render(footstepVoices(wood, 0.9), 'step')
@@ -117,7 +103,6 @@ export default async function verify() {
   assert(stats(reverseSamples.slice(rate * 0.5)).peak === 0, 'Interrupted voices leaked')
   return {
     cues,
-    candidateSteps,
     steps,
     heldZoomRelease: 'passed',
     interruptedTransitions: 'passed',

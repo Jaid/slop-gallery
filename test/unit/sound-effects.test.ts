@@ -1,6 +1,6 @@
 import {expect, test} from 'bun:test'
 
-import {footstepStyles, footstepVoices, landingVoices, playerSoundEffects} from '../../src/lib/audio/playerSoundEffects.ts'
+import {footstepVoices, landingVoices, playerSoundEffects} from '../../src/lib/audio/playerSoundEffects.ts'
 import {archivedSoundEffects, enabledSoundEffectIds, enabledSoundEffects, soundEffects} from '../../src/lib/audio/soundEffects.ts'
 
 test('sound effect catalog has 38 stable unique IDs with playable recipes', () => {
@@ -57,44 +57,14 @@ test('all eight player cues are enabled and independently auditionable', () => {
   expect(cues.map(cue => cue.id)).toEqual(enabledSoundEffectIds.slice(11))
   expect(new Set(cues.map(cue => JSON.stringify(cue.voices))).size).toBe(8)
 })
-test('ten distinct footstep replacements preserve surface, speed, variation and crouch response', () => {
-  expect(footstepStyles).toHaveLength(10)
-  const styleIds = new Set(footstepStyles.map(style => style.id))
-  expect(styleIds.size).toBe(10)
-  const recipes = footstepStyles.map(style => footstepVoices(false, 3, {style: style.id}))
-  const uniqueRecipes = new Set(recipes.map(recipe => JSON.stringify(recipe)))
-  expect(uniqueRecipes.size).toBe(10)
-  for (const style of footstepStyles) {
-    const walk = footstepVoices(false, 3, {style: style.id})
-    const sprint = footstepVoices(false, 9, {style: style.id})
-    const sneak = footstepVoices(false, 3, {
-      crouching: true,
-      style: style.id,
-    })
-    expect(walk).toHaveLength(3)
-    expect(walk.reduce((sum, voice) => sum + voice.volume, 0)).toBeLessThan(sprint.reduce((sum, voice) => sum + voice.volume, 0))
-    expect(sneak.reduce((sum, voice) => sum + voice.volume, 0)).toBeLessThan(walk.reduce((sum, voice) => sum + voice.volume, 0))
-    expect(footstepVoices(true, 3, {style: style.id})).not.toEqual(walk)
-    expect(footstepVoices(false, 3, {
-      style: style.id,
-      variation: -0.5,
-    })).not.toEqual(footstepVoices(false, 3, {
-      style: style.id,
-      variation: 0.5,
-    }))
-  }
-})
-test('second footstep batch is quieter and less bright at walking speed', () => {
-  const firstBatch = footstepStyles.slice(0, 5)
-  const secondBatch = footstepStyles.slice(5)
-  const totalVolume = (style: (typeof footstepStyles)[number]) => footstepVoices(false, 3, {style: style.id}).reduce((sum, voice) => sum + voice.volume, 0)
-  const maxNoiseFrequency = (style: (typeof footstepStyles)[number]) => Math.max(...footstepVoices(false, 3, {style: style.id}).filter(voice => voice.kind === 'noise').map(voice => voice.filter.frequency), 0)
-  const firstAverageVolume = firstBatch.reduce((sum, style) => sum + totalVolume(style), 0) / firstBatch.length
-  const secondAverageVolume = secondBatch.reduce((sum, style) => sum + totalVolume(style), 0) / secondBatch.length
-  const firstAverageBrightness = firstBatch.reduce((sum, style) => sum + maxNoiseFrequency(style), 0) / firstBatch.length
-  const secondAverageBrightness = secondBatch.reduce((sum, style) => sum + maxNoiseFrequency(style), 0) / secondBatch.length
-  expect(secondAverageVolume).toBeLessThan(firstAverageVolume)
-  expect(secondAverageBrightness).toBeLessThan(firstAverageBrightness)
+test('Soft Weight keeps a restrained three-layer recipe', () => {
+  const walk = footstepVoices(false, 3)
+  expect(walk).toHaveLength(3)
+  expect(walk.filter(voice => voice.kind === 'noise')).toHaveLength(1)
+  const noiseVoice = walk.find(voice => voice.kind === 'noise')
+  expect(noiseVoice?.filter.type).toBe('lowpass')
+  expect(noiseVoice?.filter.frequency).toBeLessThan(400)
+  expect(walk.reduce((sum, voice) => sum + voice.volume, 0)).toBeLessThan(0.01)
 })
 test('footsteps become stronger, brighter, and shorter as actual speed increases', () => {
   for (const wood of [false, true]) {

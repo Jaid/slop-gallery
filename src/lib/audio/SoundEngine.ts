@@ -1,11 +1,10 @@
 import type {ProceduralPlayback} from './proceduralAudio.ts'
 
-import {footstepStyles, footstepVoices, landingVoices, playerSoundEffects} from './playerSoundEffects.ts'
+import {footstepVoices, landingVoices, playerSoundEffects} from './playerSoundEffects.ts'
 import {osc, playVoices} from './proceduralAudio.ts'
 
 // Boost procedural effects by 12 dB without changing narration.
 const effectsGain = 0.6 * 10 ** (12 / 20)
-const initialFootstepStyleIndex = footstepStyles.findIndex(style => style.id === 'felt-pad')
 
 export default class SoundEngine {
   private static instance: SoundEngine | undefined
@@ -20,7 +19,6 @@ export default class SoundEngine {
 
   private contactIndex = 0
   private extendedZoom = false
-  private footstepStyleIndex = initialFootstepStyleIndex
   private lastLanding = Number.NEGATIVE_INFINITY
   private muted = false
   private viewMotion?: ProceduralPlayback
@@ -31,15 +29,6 @@ export default class SoundEngine {
   private constructor() {
     this.master.gain.value = effectsGain
     this.master.connect(this.context.destination)
-  }
-
-  cycleFootstepStyle() {
-    this.footstepStyleIndex = (this.footstepStyleIndex + 1) % footstepStyles.length
-    return {
-      index: this.footstepStyleIndex + 1,
-      label: footstepStyles[this.footstepStyleIndex].label,
-      total: footstepStyles.length,
-    }
   }
 
   land(wood: boolean, impactSpeed: number) {
@@ -92,7 +81,6 @@ export default class SoundEngine {
     const index = this.contactIndex++
     playVoices(this, footstepVoices(wood, speed, {
       crouching,
-      style: footstepStyles[this.footstepStyleIndex].id,
       variation: Math.sin(index * 2.39996),
     }), `step:${index}`)
   }

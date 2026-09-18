@@ -182,11 +182,6 @@ export function handleGalleryKey(event: KeyboardEvent) {
   if (event.repeat || event.ctrlKey || event.metaKey || event.altKey || s.panel) {
     return
   }
-  if (event.code === 'KeyK') {
-    const style = SoundEngine.get().cycleFootstepStyle()
-    notify(`Footsteps ${style.index}/${style.total} · ${style.label}`)
-    return
-  }
   if (event.code === 'KeyM') {
     useGallery.setState({sound: !s.sound})
   }
