@@ -26,27 +26,27 @@ export function soundboardGroundSurface([x]: Vec3) {
 export const soundboardWalls: Array<Wall> = [
   {
     id: 'soundboard-enabled',
-    center: [0, 0, soundboardBounds.northZ],
-    rotation: 0,
-    width: soundboardSize[0],
-  },
-  {
-    id: 'soundboard-archived',
-    center: [0, 0, soundboardBounds.southZ],
-    rotation: Math.PI,
-    width: soundboardSize[0],
-  },
-  {
-    id: 'soundboard-west',
     center: [soundboardBounds.minX, 0, 0],
     rotation: Math.PI / 2,
     width: soundboardSize[2],
   },
   {
-    id: 'soundboard-east',
+    id: 'soundboard-archived',
     center: [soundboardBounds.maxX, 0, 0],
     rotation: -Math.PI / 2,
     width: soundboardSize[2],
+  },
+  {
+    id: 'soundboard-north',
+    center: [0, 0, soundboardBounds.northZ],
+    rotation: 0,
+    width: soundboardSize[0],
+  },
+  {
+    id: 'soundboard-south',
+    center: [0, 0, soundboardBounds.southZ],
+    rotation: Math.PI,
+    width: soundboardSize[0],
   },
 ].map(wall => ({
   ...wall,

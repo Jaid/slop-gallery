@@ -2,6 +2,7 @@ import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import Branch from 'branch-component'
 import useDisposable from 'disposable-lifetime/react'
 
+import AnnouncerSamples from '#component/levels/soundboard/AnnouncerSamples'
 import SoundboardWall from '#component/levels/soundboard/SoundboardWall'
 import CheckerMarbleFloor from '#src/components/Scene/CheckerMarbleFloor.tsx'
 import {surfaceTexture} from '#src/components/Scene/materials.ts'
@@ -17,6 +18,7 @@ export default function SoundboardRoom() {
   useDisposable(wood)
   const enabledWall = soundboardWalls.find(wall => wall.id === 'soundboard-enabled')!
   const archivedWall = soundboardWalls.find(wall => wall.id === 'soundboard-archived')!
+  const announcerWall = soundboardWalls.find(wall => wall.id === 'soundboard-north')!
   return <>
     <color args={['#1f2528']} attach='background' />
     <group name='soundboard-room'>
@@ -42,6 +44,7 @@ export default function SoundboardRoom() {
       <Box color='#48545a' position={[0, soundboardBounds.height, 0]} roughness={0.85} size={[soundboardSize[0], 0.18, soundboardSize[2]]} />
       <SoundboardWall effects={enabledSoundEffects} position={enabledWall.center} rotationY={enabledWall.rotation} section='enabled' />
       <SoundboardWall effects={archivedSoundEffects} position={archivedWall.center} rotationY={archivedWall.rotation} section='archived' />
+      <AnnouncerSamples position={announcerWall.center} rotationY={announcerWall.rotation} />
     </group>
   </>
 }

@@ -1,5 +1,6 @@
 import {expect, test} from 'bun:test'
 
+import {announcerSamples} from '../../src/lib/audio/announcerSamples.ts'
 import {insideSoundboard, soundboardBounds, soundboardGroundStripes, soundboardGroundSurface, soundboardLayout, soundboardSize, soundboardWallDistance, soundboardWalls} from '../../src/lib/audio/soundboard.ts'
 import SoundboardLayout, {soundboardButton} from '../../src/lib/audio/SoundboardLayout.ts'
 import {archivedSoundEffects, enabledSoundEffects, soundEffects} from '../../src/lib/audio/soundEffects.ts'
@@ -17,6 +18,25 @@ test('soundboard inventory drives both generated walls without a manual button l
     rows: 6,
   })
   expect(soundboardWalls.filter(wall => wall.id === 'soundboard-enabled' || wall.id === 'soundboard-archived')).toHaveLength(2)
+})
+test('SFX inventories occupy the long walls and leave both short walls free for auxiliary panels', () => {
+  const enabled = soundboardWalls.find(wall => wall.id === 'soundboard-enabled')!
+  const archived = soundboardWalls.find(wall => wall.id === 'soundboard-archived')!
+  const north = soundboardWalls.find(wall => wall.id === 'soundboard-north')!
+  const south = soundboardWalls.find(wall => wall.id === 'soundboard-south')!
+  expect(enabled.center[0]).toBe(soundboardBounds.minX)
+  expect(archived.center[0]).toBe(soundboardBounds.maxX)
+  expect(enabled.width).toBe(soundboardSize[2])
+  expect(archived.width).toBe(soundboardSize[2])
+  expect(north.width).toBe(soundboardSize[0])
+  expect(south.width).toBe(soundboardSize[0])
+})
+test('announcer wall exposes a small prerecorded sample set on the north short wall', () => {
+  const north = soundboardWalls.find(wall => wall.id === 'soundboard-north')!
+  expect(north.center[2]).toBe(soundboardBounds.northZ)
+  expect(announcerSamples).toHaveLength(6)
+  expect(new Set(announcerSamples.map(sample => sample.id)).size).toBe(announcerSamples.length)
+  expect(announcerSamples.every(sample => sample.audio.endsWith('.opus'))).toBe(true)
 })
 test('sprint lane spans four equal longitudinal material stripes', () => {
   expect(soundboardSize[2]).toBeGreaterThanOrEqual(40)
