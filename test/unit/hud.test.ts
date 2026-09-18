@@ -6,7 +6,7 @@ import {BoxGeometry, Group, Mesh, MeshBasicMaterial, PlaneGeometry, Raycaster, V
 
 import ArtworkOverlay from '#component/ArtworkOverlay'
 import {lingerBarScale} from '#component/NarrationBars'
-import NarrationIndicator, {NarrationIndicatorStack} from '#component/NarrationIndicator'
+import NarrationIndicator, {lingerOpacity, NarrationIndicatorStack} from '#component/NarrationIndicator'
 
 import initialPortraits from '../../src/lib/gallery/collection.ts'
 import GalleryRepository, {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
@@ -64,6 +64,11 @@ describe('narration linger animation', () => {
     expect(lingerBarScale(0.8, 0.5)).toBeCloseTo(0.7)
     expect(lingerBarScale(0.8, 0.9)).toBeCloseTo(0.2168)
     expect(lingerBarScale(0.8, 1)).toBe(0)
+  })
+  test('fades the whole indicator across the linger phase', () => {
+    expect(lingerOpacity(0)).toBe(1)
+    expect(lingerOpacity(0.5)).toBe(0.5)
+    expect(lingerOpacity(1)).toBe(0)
   })
 })
 describe('contextual HUD', () => {
