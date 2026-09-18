@@ -17,8 +17,8 @@
     "test": "bun test --max-concurrency 1 ./test"
   },
   "dependencies": {
-    "@napi-rs/canvas": "^1.0.9",
-    "vite-plugin-bake-core": "workspace:*"
+    "vite-plugin-bake-core": "workspace:*",
+    "@napi-rs/canvas": "^1.0.9"
   },
   "peerDependencies": {
     "three": "^0.186.0",
