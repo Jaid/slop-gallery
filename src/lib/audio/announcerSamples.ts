@@ -21,7 +21,8 @@ export const announcerSamples = [
   },
 ] as const
 
-export const announcerPriorityModes = ['normal', 'high', 'inject', 'async'] as const
+export const announcerSamplePriority = 'normal' as const
+export const announcerPriorityModes = ['volatile', 'high', 'inject', 'async'] as const
 
 export const announcerPrioritySamples = [
   {
@@ -45,3 +46,11 @@ export const announcerPrioritySamples = [
     audio: String(new URL('announcerSamples/grok.opus', import.meta.url)),
   },
 ] as const
+export const announcerPriorityDemos = announcerPriorityModes.map((priority, index) => {
+  const sample = announcerPrioritySamples[index]
+  return {
+    priority,
+    sample,
+    title: `${priority.toUpperCase()} · ${sample.label}`,
+  }
+})

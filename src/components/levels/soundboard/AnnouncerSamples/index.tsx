@@ -5,7 +5,7 @@ import {useEffect, useRef} from 'react'
 
 import CanvasText from '#component/CanvasText'
 import Box from '#src/components/Scene/primitives.tsx'
-import {announcerPriorityModes, announcerPrioritySamples, announcerSamples} from '#src/lib/audio/announcerSamples.ts'
+import {announcerPriorityDemos, announcerSamplePriority, announcerSamples} from '#src/lib/audio/announcerSamples.ts'
 import {narrator} from '#src/lib/audio/narration.ts'
 import {soundboardBounds} from '#src/lib/audio/soundboard.ts'
 import {notify} from '#src/lib/gallery/actions.ts'
@@ -18,13 +18,14 @@ const button = {
   columnPitch: 2.75,
   rowPitch: 0.92,
 } as const
-type AnnouncerSample = typeof announcerPrioritySamples[number] | typeof announcerSamples[number]
+type AnnouncerSample = typeof announcerPriorityDemos[number]['sample'] | typeof announcerSamples[number]
 
-function AnnouncerButton({index, sample, priority = 'destructive', priorityDemo = false}: {
+function AnnouncerButton({index, sample, priority = announcerSamplePriority, priorityDemo = false, title}: {
   index: number
   priority?: AudioPriority
   priorityDemo?: boolean
   sample: AnnouncerSample
+  title?: string
 }) {
   const group = useRef<Group>(null)
   useEffect(() => {
@@ -40,7 +41,7 @@ function AnnouncerButton({index, sample, priority = 'destructive', priorityDemo 
           narrator.push({
             audio: sample.audio,
             text: sample.label,
-            title: priorityDemo ? `Priority · ${priority}` : `Announcer · ${sample.label}`,
+            title: priorityDemo ? `Priority · ${priority} · ${sample.label}` : `Announcer · ${sample.label}`,
           }, {priority})
         }
       },
@@ -49,7 +50,7 @@ function AnnouncerButton({index, sample, priority = 'destructive', priorityDemo 
   const column = index
   const x = (column - (announcerSamples.length - 1) / 2) * button.columnPitch
   const y = soundboardBounds.height - 1.55 - (priorityDemo ? button.rowPitch : 0)
-  const label = priorityDemo ? priority.toUpperCase() : sample.label
+  const label = title ?? sample.label
   return <group name={priorityDemo ? `announcer-priority-${priority}` : `announcer-sample-${sample.id}`} position={[x, y, 0.16]} ref={group}>
     <Box color={priorityDemo ? '#65527a' : '#514e72'} metalness={0.12} roughness={0.42} size={[button.width, button.height, 0.14]} />
     <CanvasText color='#f1ecff' fontSize={0.48} fontWeight={650} height={button.height - 0.13} position={[0, 0, 0.071]} text={label} width={button.width - 0.12} />
@@ -62,7 +63,7 @@ function AnnouncerSamples({position, rotationY}: {
   return <group name='soundboard-announcer-samples' position={position} rotation={[0, rotationY, 0]}>
     <CanvasText color='#e6dcff' fontSize={0.62} fontWeight={750} height={0.58} position={[0, soundboardBounds.height - 0.62, 0.16]} text={`ANNOUNCER SAMPLES · ${announcerSamples.length}`} width={6.8} />
     {announcerSamples.map((sample, index) => <AnnouncerButton index={index} key={sample.id} sample={sample} />)}
-    {announcerPriorityModes.map((priority, index) => <AnnouncerButton index={index} key={priority} priority={priority} priorityDemo sample={announcerPrioritySamples[index]} />)}
+    {announcerPriorityDemos.map(({priority, sample, title}, index) => <AnnouncerButton index={index} key={priority} priority={priority} priorityDemo sample={sample} title={title} />)}
   </group>
 }
 
