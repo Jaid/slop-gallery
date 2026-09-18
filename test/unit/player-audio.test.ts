@@ -117,17 +117,17 @@ test('visual zoom remains independent of mute while audio uses the actual transi
   })
   expect(sound.zoomTransition).toHaveBeenCalledTimes(2)
 })
-test('pause menu uses Toggle Off and subsequent resume uses Toggle On', () => {
+test('pause menu uses SFX-42 and subsequent resume uses SFX-43', () => {
   const events = new EventTarget
   dispose = attachPlayerAudio(events)
   // Initial entry is not a resume.
   useGallery.setState({locked: true})
   expect(sound.playEffect).not.toHaveBeenCalled()
   useGallery.setState({locked: false})
-  expect(sound.playEffect).toHaveBeenLastCalledWith('SFX-43')
-  useGallery.setState({locked: true})
   expect(sound.playEffect).toHaveBeenLastCalledWith('SFX-42')
-  expect(sound.playEffect.mock.calls).toEqual([['SFX-43'], ['SFX-42']])
+  useGallery.setState({locked: true})
+  expect(sound.playEffect).toHaveBeenLastCalledWith('SFX-43')
+  expect(sound.playEffect.mock.calls).toEqual([['SFX-42'], ['SFX-43']])
   useGallery.setState({sound: false})
   useGallery.setState({locked: false})
   useGallery.setState({locked: true})

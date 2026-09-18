@@ -46,11 +46,11 @@ export function attachPlayerAudio(events: Pick<EventTarget, 'addEventListener' |
     if (state.locked !== previous.locked) {
       if (!state.locked && previous.locked) {
         if (state.sound) {
-          sound?.playEffect('SFX-43')
+          sound?.playEffect('SFX-42')
         }
         hasEnteredGame = true
       } else if (state.locked && hasEnteredGame && state.sound) {
-        sound?.playEffect('SFX-42')
+        sound?.playEffect('SFX-43')
       }
       if (state.locked) {
         hasEnteredGame = true
