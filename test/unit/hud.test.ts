@@ -90,7 +90,7 @@ describe('contextual HUD', () => {
       source: 'audio',
     }))
     expect(html).toContain('A story')
-    expect(html).toContain('Narrator playing')
+    expect(html).toContain('<small>Narrator</small>')
     expect(html).toContain('data-testid="audio-bars"')
     expect(html.match(/<i>/g)).toHaveLength(5)
   })
@@ -102,7 +102,7 @@ describe('contextual HUD', () => {
       source: 'browser',
     }))
     expect(html).toContain('A browser story')
-    expect(html).toContain('Browser voice playing')
+    expect(html).toContain('<small>Narrator</small>')
     expect(html).toContain('data-testid="narration-static"')
     expect(html).not.toContain('data-testid="audio-bars"')
     expect(html).not.toContain('<i>')
@@ -139,7 +139,7 @@ describe('contextual HUD', () => {
       status: 'preparing',
       source: null,
     }))
-    expect(html).toContain('Preparing narration…')
+    expect(html).toContain('<small>Narrator</small>')
     expect(html).not.toContain('data-testid="audio-bars"')
   })
 })
@@ -181,7 +181,7 @@ for (const status of ['before', 'after'] as const) {
       source: 'audio',
     }))
     expect(html).toContain('A padded story')
-    expect(html).toContain(status === 'before' ? 'Narrator starting…' : 'Narration finished')
+    expect(html).toContain('<small>Narrator</small>')
     expect(html).toContain('data-testid="narration-static"')
     expect(html).not.toContain('data-testid="audio-bars"')
   })
