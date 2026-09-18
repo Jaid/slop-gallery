@@ -5,6 +5,7 @@ import {osc, playVoices} from './proceduralAudio.ts'
 
 // Boost procedural effects by 12 dB without changing narration.
 const effectsGain = 0.6 * 10 ** (12 / 20)
+const initialFootstepStyleIndex = footstepStyles.findIndex(style => style.id === 'felt-pad')
 
 export default class SoundEngine {
   private static instance: SoundEngine | undefined
@@ -19,7 +20,7 @@ export default class SoundEngine {
 
   private contactIndex = 0
   private extendedZoom = false
-  private footstepStyleIndex = 0
+  private footstepStyleIndex = initialFootstepStyleIndex
   private lastLanding = Number.NEGATIVE_INFINITY
   private muted = false
   private viewMotion?: ProceduralPlayback

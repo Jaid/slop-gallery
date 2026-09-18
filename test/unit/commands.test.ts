@@ -59,7 +59,7 @@ test('K cycles the footstep audition and reports the selected candidate', () => 
     cycleFootstepStyle: () => ({
       index: 2,
       label: 'Heel / Toe',
-      total: 5,
+      total: 10,
     }),
   } as SoundEngine)
   try {
@@ -67,7 +67,7 @@ test('K cycles the footstep audition and reports the selected candidate', () => 
       code: 'KeyK',
       target: new ElementDouble,
     } as unknown as KeyboardEvent)
-    expect(useGallery.getState().notice).toBe('Footsteps 2/5 · Heel / Toe')
+    expect(useGallery.getState().notice).toBe('Footsteps 2/10 · Heel / Toe')
   } finally {
     cycleFootstepStyle.mockRestore()
   }

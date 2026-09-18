@@ -57,13 +57,13 @@ test('all eight player cues are enabled and independently auditionable', () => {
   expect(cues.map(cue => cue.id)).toEqual(enabledSoundEffectIds.slice(11))
   expect(new Set(cues.map(cue => JSON.stringify(cue.voices))).size).toBe(8)
 })
-test('five distinct footstep replacements preserve surface, speed, variation and crouch response', () => {
-  expect(footstepStyles).toHaveLength(5)
+test('ten distinct footstep replacements preserve surface, speed, variation and crouch response', () => {
+  expect(footstepStyles).toHaveLength(10)
   const styleIds = new Set(footstepStyles.map(style => style.id))
-  expect(styleIds.size).toBe(5)
+  expect(styleIds.size).toBe(10)
   const recipes = footstepStyles.map(style => footstepVoices(false, 3, {style: style.id}))
   const uniqueRecipes = new Set(recipes.map(recipe => JSON.stringify(recipe)))
-  expect(uniqueRecipes.size).toBe(5)
+  expect(uniqueRecipes.size).toBe(10)
   for (const style of footstepStyles) {
     const walk = footstepVoices(false, 3, {style: style.id})
     const sprint = footstepVoices(false, 9, {style: style.id})
@@ -83,6 +83,18 @@ test('five distinct footstep replacements preserve surface, speed, variation and
       variation: 0.5,
     }))
   }
+})
+test('second footstep batch is quieter and less bright at walking speed', () => {
+  const firstBatch = footstepStyles.slice(0, 5)
+  const secondBatch = footstepStyles.slice(5)
+  const totalVolume = (style: (typeof footstepStyles)[number]) => footstepVoices(false, 3, {style: style.id}).reduce((sum, voice) => sum + voice.volume, 0)
+  const maxNoiseFrequency = (style: (typeof footstepStyles)[number]) => Math.max(...footstepVoices(false, 3, {style: style.id}).filter(voice => voice.kind === 'noise').map(voice => voice.filter.frequency), 0)
+  const firstAverageVolume = firstBatch.reduce((sum, style) => sum + totalVolume(style), 0) / firstBatch.length
+  const secondAverageVolume = secondBatch.reduce((sum, style) => sum + totalVolume(style), 0) / secondBatch.length
+  const firstAverageBrightness = firstBatch.reduce((sum, style) => sum + maxNoiseFrequency(style), 0) / firstBatch.length
+  const secondAverageBrightness = secondBatch.reduce((sum, style) => sum + maxNoiseFrequency(style), 0) / secondBatch.length
+  expect(secondAverageVolume).toBeLessThan(firstAverageVolume)
+  expect(secondAverageBrightness).toBeLessThan(firstAverageBrightness)
 })
 test('footsteps become stronger, brighter, and shorter as actual speed increases', () => {
   for (const wood of [false, true]) {
