@@ -16,9 +16,9 @@
     "test": "bun test --max-concurrency 1 ./test"
   },
   "dependencies": {
-    "@babel/parser": "^8.0.6",
     "fs-extra": "11.4.0",
-    "magic-string": "^1.4.1"
+    "magic-string": "^1.4.1",
+    "@babel/parser": "^8.0.6"
   },
   "peerDependencies": {
     "vite": "^8.3.0"
