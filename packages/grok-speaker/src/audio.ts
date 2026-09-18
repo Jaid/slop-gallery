@@ -94,7 +94,7 @@ export function pcmRate(contentType: string | null, defaultRate?: number) {
   const channels = /;\s*channels=(\d+)/iu.exec(contentType)?.[1]
   const rate = /;\s*rate=(\d+)/iu.exec(contentType)?.[1]
   const sampleRate = rate ? Number(rate) : defaultRate
-  if (channels && channels !== '1' || !sampleRate || ![16_000, 22_050, 24_000, 44_100, 48_000, 8000].includes(sampleRate)) {
+  if (channels && channels !== '1' || !sampleRate || ![8000, 16_000, 22_050, 24_000, 44_100, 48_000].includes(sampleRate)) {
     throw new Error('Expected mono PCM with a supported sample rate.')
   }
   return sampleRate
