@@ -20,7 +20,7 @@ export function onPlayerStep(state: EgoState) {
 
 export function onPlayerLand(state: EgoState, impactSpeed: number) {
   if (state.active && useGallery.getState().sound) {
-    SoundEngine.existing()?.land(isWood(state), impactSpeed)
+    SoundEngine.existing()?.land(isWood(state), Math.hypot(state.velocity.x, state.velocity.z), state.crouching, impactSpeed)
   }
 }
 

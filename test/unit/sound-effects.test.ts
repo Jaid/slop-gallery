@@ -1,12 +1,12 @@
 import {expect, test} from 'bun:test'
 
-import {footstepVoices, landingVoices, playerSoundEffects} from '../../src/lib/audio/playerSoundEffects.ts'
+import {footstepVoices, impactFootstepStrength, playerSoundEffects} from '../../src/lib/audio/playerSoundEffects.ts'
 import {archivedSoundEffects, enabledSoundEffectIds, enabledSoundEffects, soundEffects} from '../../src/lib/audio/soundEffects.ts'
 
-test('sound effect catalog has 38 stable unique IDs with playable recipes', () => {
-  expect(soundEffects).toHaveLength(38)
-  expect(soundEffects.map(effect => effect.id)).toEqual(Array.from({length: 38}, (_, index) => `SFX-${String(index + 1).padStart(2, '0')}`))
-  expect(new Set(soundEffects.map(effect => effect.label)).size).toBe(38)
+test('sound effect catalog has 37 stable unique IDs with playable recipes', () => {
+  expect(soundEffects).toHaveLength(37)
+  expect(soundEffects.map(effect => effect.id)).toEqual(Array.from({length: 37}, (_, index) => `SFX-${String(index + 1).padStart(2, '0')}`))
+  expect(new Set(soundEffects.map(effect => effect.label)).size).toBe(37)
   for (const effect of soundEffects) {
     expect(effect.voices.length).toBeGreaterThan(0)
     for (const voice of effect.voices) {
@@ -46,16 +46,16 @@ test('preferred sound effects preserve the X-dump audition selection', () => {
   ])
 })
 test('every non-enabled sound is archived automatically', () => {
-  expect(enabledSoundEffects).toHaveLength(19)
+  expect(enabledSoundEffects).toHaveLength(18)
   expect(archivedSoundEffects).toHaveLength(soundEffects.length - enabledSoundEffects.length)
   expect(new Set([...enabledSoundEffects, ...archivedSoundEffects].map(effect => effect.id))).toEqual(new Set(soundEffects.map(effect => effect.id)))
   expect(archivedSoundEffects.some(effect => enabledSoundEffectIds.includes(effect.id))).toBe(false)
 })
-test('all eight player cues are enabled and independently auditionable', () => {
+test('all seven player cues are enabled and independently auditionable', () => {
   const cues = Object.values(playerSoundEffects)
-  expect(cues).toHaveLength(8)
+  expect(cues).toHaveLength(7)
   expect(cues.map(cue => cue.id)).toEqual(enabledSoundEffectIds.slice(11))
-  expect(new Set(cues.map(cue => JSON.stringify(cue.voices))).size).toBe(8)
+  expect(new Set(cues.map(cue => JSON.stringify(cue.voices))).size).toBe(7)
 })
 test('Soft Weight keeps a restrained three-layer recipe', () => {
   const walk = footstepVoices(false, 3)
@@ -98,8 +98,15 @@ test('crouching footsteps are quieter, darker, and softer than normal walking', 
     expect(Math.max(...sneakNoise.map(voice => voice.filter.endFrequency ?? voice.filter.frequency))).toBeLessThan(Math.max(...walkNoise.map(voice => voice.filter.endFrequency ?? voice.filter.frequency)))
   }
 })
-test('landing volume follows impact speed with a bounded heavy-landing ceiling', () => {
-  expect(landingVoices(false, 2)[0].volume).toBeLessThan(landingVoices(false, 8)[0].volume)
-  expect(landingVoices(false, 10)).toEqual(landingVoices(false, 30))
-  expect(landingVoices(false, 5)).not.toEqual(landingVoices(true, 5))
+test('landing strength reuses Soft Weight and scales with pre-impact fall speed', () => {
+  const normal = footstepVoices(false, 3)
+  const light = footstepVoices(false, 3, {strength: impactFootstepStrength(2)})
+  const heavy = footstepVoices(false, 3, {strength: impactFootstepStrength(9)})
+  expect(impactFootstepStrength(2)).toBeLessThan(impactFootstepStrength(9))
+  expect(impactFootstepStrength(10)).toBe(impactFootstepStrength(30))
+  for (const index of [0, 1, 2]) {
+    expect(light[index].volume).toBeGreaterThan(normal[index].volume)
+    expect(heavy[index].volume).toBeGreaterThan(light[index].volume)
+    expect(heavy[index].duration).toBe(normal[index].duration)
+  }
 })

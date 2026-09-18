@@ -13,9 +13,8 @@ Player effects use Web Audio synthesis only: no recordings, downloads, generated
 | SFX-35 | Viewing Mode Enter | Portrait or Knottingham V-inspection begins or resumes. |
 | SFX-36 | Viewing Mode Leave | V-inspection is released, including target removal. |
 | SFX-37 | Zoom Focus | A quiet two-tone layer sustained while zoomed. |
-| SFX-38 | Ground Contact | Renewed ground contact after a jump or fall. |
 
-All eight appear on the soundboard's enabled wall after the previously selected effects. The held zoom layer has a finite 1.2-second soundboard audition; gameplay holds it until released. New cues do not change the previous catalog IDs or audition selection order.
+All seven appear on the soundboard's enabled wall after the previously selected effects. The held zoom layer has a finite 1.2-second soundboard audition; gameplay holds it until released. New cues do not change the previous catalog IDs or audition selection order.
 
 Zoom sweeps follow `ego-player`'s actual FOV transition direction and duration. Extended transitions use the extended family, including direct returns to normal FOV. Instant transitions produce no sweep. Reversing replaces the previous sweep with a short fade instead of stacking sounds. Explicit camera handoff, teleport and unmount release zoom audio without fabricating another transition.
 
@@ -25,7 +24,7 @@ Zoom sweeps follow `ego-player`'s actual FOV transition direction and duration. 
 
 The player adapter passes collision-resolved horizontal speed and crouch state to `SoundEngine.step(wood, speed, crouching)`. Footsteps use the selected **Soft Weight** recipe: a short low body impact, one dark low-pass contact layer and a very quiet delayed weight cue. Actual speed continuously changes level, pitch, brightness and duration; per-stride pitch variation remains intentionally subtle to avoid listening fatigue. Crouching lowers level and brightness further, while wooden and hard floors retain distinct voicing. The stride callback controls cadence without a separate fixed footstep cooldown.
 
-Landing sounds use `ego-player`'s downward speed immediately before collision resolution, not the nearly zero post-impact vertical velocity. Larger impacts are heavier, with a bounded maximum. Initial placement and teleport settling are silent, as are contact interruptions shorter than 0.06 seconds. A landing suppresses a duplicate footfall for 0.1 seconds, then ordinary strides resume.
+Renewed ground contact uses the exact same **Soft Weight** footstep recipe rather than a separate landing sound. Horizontal physical speed and crouch state keep the ordinary footstep timbre, while `ego-player`'s downward speed immediately before collision resolution drives a strong 2.5×–6× volume factor. The factor saturates at 10 world units/second to preserve headroom. Initial placement and teleport settling are silent, as are contact interruptions shorter than 0.06 seconds. A landing suppresses a duplicate stride footfall for 0.1 seconds, then ordinary strides resume.
 
 The reusable `ego-player` package emits `onLand` and `onZoomTransition` but contains no sound engine or gallery imports. `playerAudio.ts` owns surface selection, active-input policy, mute/lock gating and shared portrait/knot inspection state observation. Pause, blur, pointer-lock loss, mute and unmount stop held/transition audio even without another rendered frame. Narration uses the shared controller in `narration.ts` (`use-narrator` / `use-audio-queue`), with a separate output path from procedural player effects. Its meter retains paused connections for injection/resume and keys each explicitly concurrent voice separately, so overlapping `async` narration gets independent stacked HUD indicators and independent spectra.
 
@@ -37,4 +36,4 @@ The reusable `ego-player` package emits `onLand` and `onZoomTransition` but cont
 
 Run `bun test ./test/unit/sound-engine.test.ts ./test/unit/sound-effects.test.ts ./test/unit/player-audio.test.ts ./test/unit/soundboard-layout.test.ts` and `bun run --cwd packages/ego-player test`.
 
-With the usual development server and existing debug browser running, `bun test/browser/run.ts playerAudio.ts` renders silent offline buffers. It checks all eight cues, speed/crouch/impact-dependent output, headroom, silent tails, held-zoom cancellation and mid-transition reversal. It does not play audio, simulate input, navigate, focus or resize the user's browser. This checks synthesis and lifecycle behavior, not subjective in-game loudness or timbre.
+With the usual development server and existing debug browser running, `bun test/browser/run.ts playerAudio.ts` renders silent offline buffers. It checks all seven cues, speed/crouch/impact-dependent output, headroom, silent tails, held-zoom cancellation and mid-transition reversal. It does not play audio, simulate input, navigate, focus or resize the user's browser. This checks synthesis and lifecycle behavior, not subjective in-game loudness or timbre.

@@ -1,6 +1,6 @@
 import type {ProceduralPlayback} from './proceduralAudio.ts'
 
-import {footstepVoices, landingVoices, playerSoundEffects} from './playerSoundEffects.ts'
+import {footstepVoices, impactFootstepStrength, playerSoundEffects} from './playerSoundEffects.ts'
 import {osc, playVoices} from './proceduralAudio.ts'
 
 // Boost procedural effects by 12 dB without changing narration.
@@ -31,12 +31,17 @@ export default class SoundEngine {
     this.master.connect(this.context.destination)
   }
 
-  land(wood: boolean, impactSpeed: number) {
+  land(wood: boolean, speed: number, crouching: boolean, impactSpeed: number) {
     if (this.muted) {
       return
     }
     this.lastLanding = this.context.currentTime
-    playVoices(this, landingVoices(wood, impactSpeed), `land:${this.contactIndex++}`)
+    const index = this.contactIndex++
+    playVoices(this, footstepVoices(wood, speed, {
+      crouching,
+      strength: impactFootstepStrength(impactSpeed),
+      variation: Math.sin(index * 2.39996),
+    }), `land:${index}`)
   }
 
   mute(muted: boolean) {

@@ -10,7 +10,7 @@ import {getPlayerZoom, setPlayerZoom} from '../../src/lib/rendering/playerView.t
 const original = useGallery.getState()
 const sound = {
   step: mock((_wood: boolean, _speed: number, _crouching: boolean) => {}),
-  land: mock((_wood: boolean, _speed: number) => {}),
+  land: mock((_wood: boolean, _speed: number, _crouching: boolean, _impactSpeed: number) => {}),
   zoomTransition: mock((_extended: boolean, _retract: boolean, _duration: number) => {}),
   setZoom: mock((_amount: number) => {}),
   viewTransition: mock((_entering: boolean) => {}),
@@ -62,7 +62,7 @@ test('player footsteps use horizontal physical speed and landings use pre-impact
   })
   expect(sound.step).toHaveBeenLastCalledWith(expect.any(Boolean), 5, true)
   onPlayerLand(state, 7)
-  expect(sound.land).toHaveBeenCalledWith(expect.any(Boolean), 7)
+  expect(sound.land).toHaveBeenCalledWith(expect.any(Boolean), 5, false, 7)
   onPlayerStep({
     ...state,
     active: false,

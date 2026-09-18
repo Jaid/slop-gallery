@@ -1,6 +1,6 @@
 import type {Voice} from '../../src/lib/audio/proceduralAudio.ts'
 
-import {footstepVoices, landingVoices, playerSoundEffects} from '../../src/lib/audio/playerSoundEffects.ts'
+import {footstepVoices, impactFootstepStrength, playerSoundEffects} from '../../src/lib/audio/playerSoundEffects.ts'
 import {playVoices} from '../../src/lib/audio/proceduralAudio.ts'
 
 const rate = 48_000
@@ -64,8 +64,8 @@ export default async function verify() {
     const sneak = await render(footstepVoices(wood, 3, {crouching: true}), 'sneak')
     assert(slow.rms < walk.rms && walk.rms < sprint.rms, 'Footstep energy must grow with speed')
     assert(sneak.rms < walk.rms, 'Sneaking must be quieter than normal walking')
-    const lightLanding = await render(landingVoices(wood, 2), 'land')
-    const heavyLanding = await render(landingVoices(wood, 9), 'land')
+    const lightLanding = await render(footstepVoices(wood, 3, {strength: impactFootstepStrength(2)}), 'land-light')
+    const heavyLanding = await render(footstepVoices(wood, 3, {strength: impactFootstepStrength(9)}), 'land-heavy')
     assert(lightLanding.rms < heavyLanding.rms, 'Landing energy must grow with impact')
     steps.push({
       wood,
