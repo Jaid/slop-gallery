@@ -1,6 +1,6 @@
 import {expect, test} from 'bun:test'
 
-import {announcerPriorityModes, announcerSamples} from '../../src/lib/audio/announcerSamples.ts'
+import {announcerPriorityModes, announcerPrioritySamples, announcerSamples} from '../../src/lib/audio/announcerSamples.ts'
 import {insideSoundboard, soundboardBounds, soundboardGroundStripes, soundboardGroundSurface, soundboardLayout, soundboardSize, soundboardWallDistance, soundboardWalls} from '../../src/lib/audio/soundboard.ts'
 import SoundboardLayout, {soundboardButton} from '../../src/lib/audio/SoundboardLayout.ts'
 import {archivedSoundEffects, enabledSoundEffects, soundEffects} from '../../src/lib/audio/soundEffects.ts'
@@ -38,6 +38,9 @@ test('announcer wall exposes a small prerecorded sample set on the north short w
   expect(new Set(announcerSamples.map(sample => sample.id)).size).toBe(announcerSamples.length)
   expect(announcerSamples.every(sample => sample.audio.endsWith('.opus'))).toBe(true)
   expect(announcerPriorityModes).toEqual(['normal', 'high', 'inject', 'async'])
+  expect(announcerPrioritySamples).toHaveLength(4)
+  expect(announcerPrioritySamples.map(sample => sample.label)).toEqual(['Gemini Flash', 'GLM', 'GPT Astra', 'Grok'])
+  expect(new Set([...announcerSamples, ...announcerPrioritySamples].map(sample => sample.audio)).size).toBe(8)
 })
 test('sprint lane spans four equal longitudinal material stripes', () => {
   expect(soundboardSize[2]).toBeGreaterThanOrEqual(40)

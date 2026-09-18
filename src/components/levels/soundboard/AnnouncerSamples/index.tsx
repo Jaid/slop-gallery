@@ -5,7 +5,7 @@ import {useEffect, useRef} from 'react'
 
 import CanvasText from '#component/CanvasText'
 import Box from '#src/components/Scene/primitives.tsx'
-import {announcerPriorityModes, announcerSamples} from '#src/lib/audio/announcerSamples.ts'
+import {announcerPriorityModes, announcerPrioritySamples, announcerSamples} from '#src/lib/audio/announcerSamples.ts'
 import {narrator} from '#src/lib/audio/narration.ts'
 import {soundboardBounds} from '#src/lib/audio/soundboard.ts'
 import {notify} from '#src/lib/gallery/actions.ts'
@@ -18,12 +18,14 @@ const button = {
   columnPitch: 2.75,
   rowPitch: 0.92,
 } as const
-function AnnouncerButton({index, priority = 'destructive', priorityDemo = false}: {
+type AnnouncerSample = typeof announcerPrioritySamples[number] | typeof announcerSamples[number]
+
+function AnnouncerButton({index, sample, priority = 'destructive', priorityDemo = false}: {
   index: number
   priority?: AudioPriority
   priorityDemo?: boolean
+  sample: AnnouncerSample
 }) {
-  const sample = announcerSamples[index]
   const group = useRef<Group>(null)
   useEffect(() => {
     if (!group.current) {
@@ -33,7 +35,7 @@ function AnnouncerButton({index, priority = 'destructive', priorityDemo = false}
       group: group.current,
       activate: () => {
         const muted = !useGallery.getState().sound
-        notify(`${priorityDemo ? `Priority ${priority}` : `Announcer · ${sample.label}`}${muted ? ' · audio muted' : ''}`)
+        notify(`${priorityDemo ? `Priority ${priority} · ${sample.label}` : `Announcer · ${sample.label}`}${muted ? ' · audio muted' : ''}`)
         if (!muted) {
           narrator.push({
             audio: sample.audio,
@@ -59,8 +61,8 @@ function AnnouncerSamples({position, rotationY}: {
 }) {
   return <group name='soundboard-announcer-samples' position={position} rotation={[0, rotationY, 0]}>
     <CanvasText color='#e6dcff' fontSize={0.62} fontWeight={750} height={0.58} position={[0, soundboardBounds.height - 0.62, 0.16]} text={`ANNOUNCER SAMPLES · ${announcerSamples.length}`} width={6.8} />
-    {announcerSamples.map((sample, index) => <AnnouncerButton index={index} key={sample.id} />)}
-    {announcerPriorityModes.map((priority, index) => <AnnouncerButton index={index} key={priority} priority={priority} priorityDemo />)}
+    {announcerSamples.map((sample, index) => <AnnouncerButton index={index} key={sample.id} sample={sample} />)}
+    {announcerPriorityModes.map((priority, index) => <AnnouncerButton index={index} key={priority} priority={priority} priorityDemo sample={announcerPrioritySamples[index]} />)}
   </group>
 }
 

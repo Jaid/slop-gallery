@@ -22,3 +22,26 @@ export const announcerSamples = [
 ] as const
 
 export const announcerPriorityModes = ['normal', 'high', 'inject', 'async'] as const
+
+export const announcerPrioritySamples = [
+  {
+    id: 'gemini-flash',
+    label: 'Gemini Flash',
+    audio: String(new URL('announcerSamples/gemini-flash.opus', import.meta.url)),
+  },
+  {
+    id: 'glm',
+    label: 'GLM',
+    audio: String(new URL('announcerSamples/glm.opus', import.meta.url)),
+  },
+  {
+    id: 'gpt-astra',
+    label: 'GPT Astra',
+    audio: String(new URL('announcerSamples/gpt-astra.opus', import.meta.url)),
+  },
+  {
+    id: 'grok',
+    label: 'Grok',
+    audio: String(new URL('announcerSamples/grok.opus', import.meta.url)),
+  },
+] as const
