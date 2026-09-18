@@ -9,20 +9,6 @@ export type AudioFileOptions = {
   volume?: number
 }
 
-function sourceFor(reference: AudioReference) {
-  if (reference instanceof Blob) {
-    const source = URL.createObjectURL(reference)
-    return {
-      owned: source,
-      source,
-    }
-  }
-  return {
-    owned: undefined,
-    source: reference instanceof URL ? reference.href : reference,
-  }
-}
-
 /** Lazy, independently pausable HTML audio. Caller-owned URLs are never revoked. */
 export function audioFile<T extends object = Record<string, never>>(reference: AudioReference, options: AudioFileOptions = {}): AudioTask<T> {
   return async ({signal}) => {
@@ -104,5 +90,19 @@ export function audioFile<T extends object = Record<string, never>>(reference: A
       dispose()
       throw error
     }
+  }
+}
+
+function sourceFor(reference: AudioReference) {
+  if (reference instanceof Blob) {
+    const source = URL.createObjectURL(reference)
+    return {
+      owned: source,
+      source,
+    }
+  }
+  return {
+    owned: undefined,
+    source: reference instanceof URL ? reference.href : reference,
   }
 }
