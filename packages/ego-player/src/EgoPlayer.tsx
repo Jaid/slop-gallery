@@ -294,8 +294,8 @@ export default function EgoPlayer({cameraEnabled = true, casualZoomFactor = 2, c
   })
   return <>
     <Branch if={pointerLock !== false}><PointerLockControls makeDefault {...typeof pointerLock === 'object' ? pointerLock : {}} domElement={renderer.domElement} /></Branch>
-    <RigidBody canSleep={false} colliders={false} position={initial.position} ref={bodyRef} type='kinematicPosition' userData={userData === undefined ? defaultUserData : userData}>
-      <CapsuleCollider args={[getCapsuleHalfHeight(initial.height, initial.radius), initial.radius]} friction={0} position={[0, initial.height / 2, 0]} ref={colliderRef} restitution={0} />
+    <RigidBody canSleep={false} colliders={false} position={initial.position} type='kinematicPosition' userData={userData === undefined ? defaultUserData : userData} ref={bodyRef}>
+      <CapsuleCollider args={[getCapsuleHalfHeight(initial.height, initial.radius), initial.radius]} friction={0} position={[0, initial.height / 2, 0]} restitution={0} ref={colliderRef} />
       {children}
     </RigidBody>
   </>

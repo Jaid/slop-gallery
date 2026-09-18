@@ -46,10 +46,10 @@ test('extended zoom requires Shift after Z and rest, yields held Shift to moveme
   }
   const render = (props: Partial<EgoPlayerProps> = {}, mounted = true) => <StrictMode><Suspense fallback={null}><Physics paused>
     {mounted && <EgoPlayer
-      cameraEnabled={cameraToggle} casualZoomTransition={0} enabled={inputToggle} extendedZoomTransition={0} input={input} onLand={(state, speed) => {
+      cameraEnabled={cameraToggle} casualZoomTransition={0} enabled={inputToggle} extendedZoomTransition={0} input={input} pointerLock={false} ref={player} onLand={(state, speed) => {
         expect(state.grounded).toBe(true)
         landings.push(speed)
-      }} onZoomChange={onZoomChange} onZoomTransition={transition => transitions.push(transition)} pointerLock={false} ref={player} {...props}
+      }} onZoomChange={onZoomChange} onZoomTransition={transition => transitions.push(transition)} {...props}
     />}
     <RigidBody colliders={false} type='fixed'>
       <CuboidCollider args={[100, 0.1, 100]} position={[0, -0.1, 0]} />

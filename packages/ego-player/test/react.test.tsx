@@ -47,8 +47,8 @@ test('React lifecycle preserves the motor, camera ownership and ref contract wit
   }
   const cameraToggle = () => cameraEnabled
   const render = (props: Partial<EgoPlayerProps> = {}, mounted = true) => <StrictMode><Suspense fallback={null}><Physics paused>
-    {mounted && <EgoPlayer cameraEnabled={cameraToggle} gravity={0} input={input} onInput={onInput} onUpdate={onUpdate} pointerLock={false} ref={player} {...props} />}
-    {ceiling !== undefined && <RigidBody colliders={false} key={ceiling} type='fixed'>
+    {mounted && <EgoPlayer cameraEnabled={cameraToggle} gravity={0} input={input} pointerLock={false} ref={player} onInput={onInput} onUpdate={onUpdate} {...props} />}
+    {ceiling !== undefined && <RigidBody key={ceiling} colliders={false} type='fixed'>
       <CuboidCollider args={[1, 0.1, 1]} position={[4, ceiling, 0]} />
       <CuboidCollider args={[10, 0.1, 10]} position={[0, -0.1, 0]} />
     </RigidBody>}

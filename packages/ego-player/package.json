@@ -19,16 +19,16 @@
     "test": "bun test ./test"
   },
   "dependencies": {
-    "@tweenjs/tween.js": "25.0.0",
-    "branch-component": "0.4.0"
+    "branch-component": "0.4.0",
+    "@tweenjs/tween.js": "25.0.0"
   },
   "peerDependencies": {
-    "@react-three/drei": "^11.0.0-alpha.7",
-    "@react-three/fiber": "^10.0.0-alpha.5",
-    "@react-three/rapier": "^2.2.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "three": "^0.186.0"
+    "three": "^0.186.0",
+    "@react-three/drei": "^11.0.0-alpha.7",
+    "@react-three/fiber": "^10.0.0-alpha.5",
+    "@react-three/rapier": "^2.2.0"
   },
   "devDependencies": {
     "@dimforge/rapier3d-compat": "0.20.0"
