@@ -69,7 +69,9 @@
     "three-bvh-csg": "0.0.18",
     "three-fiber-game": "workspace:*",
     "three-mesh-bvh": "0.9.15",
+    "use-audio-queue": "workspace:*",
     "use-graphics-quality": "workspace:*",
+    "use-narrator": "workspace:*",
     "use-pause-menu": "workspace:*",
     "vite-plugin-avif-only": "workspace:*",
     "vite-plugin-bake-branch-component": "workspace:*",
@@ -122,6 +124,7 @@
   },
   "workspaces": [
     "packages/*",
+    "packages/use-narrator/packages/*",
     "packages/vite-plugin-bake-branch-component/packages/*",
     "packages/vite-plugin-bake-three/packages/*",
     "packages/vite-plugin-hoist-popular-constants/packages/*"

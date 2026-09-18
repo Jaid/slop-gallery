@@ -1,0 +1,334 @@
+import {expect, test} from 'bun:test'
+
+import {AudioQueue} from '../src/core.ts'
+import {FakeClock, FakePlayback, flush} from './helpers.ts'
+
+const setup = (options = {}) => {
+  const clock = new FakeClock
+  const queue = new AudioQueue({
+    clock,
+    ...options,
+  })
+  const players = new Map<string, FakePlayback>
+  const push = (name: string, options: Parameters<typeof queue.push>[1] = {}) => {
+    const player = new FakePlayback(name)
+    players.set(name, player)
+    return queue.push(() => player, options)
+  }
+  return {
+    queue,
+    clock,
+    players,
+    push,
+  }
+}
+test('normal and high are stable FIFO lanes; high never interrupts current playback', async () => {
+  const {queue, players, push} = setup()
+  const a = push('a')
+  const b = push('b')
+  const c = push('c')
+  const h1 = push('h1', {priority: 'high'})
+  const h2 = push('h2', {priority: 'high'})
+  await flush()
+  expect(queue.getSnapshot().pending.map(job => job.id)).toEqual([h1.id, h2.id, b.id, c.id])
+  for (const [name, handle] of [['a', a], ['h1', h1], ['h2', h2], ['b', b], ['c', c]] as const) {
+    expect(queue.getSnapshot().current?.id).toBe(handle.id)
+    expect(players.get(name)!.playing).toBe(true)
+    players.get(name)!.end()
+    await flush()
+    expect(await handle.finished).toEqual({status: 'completed'})
+  }
+  expect(queue.getSnapshot().idle).toBe(true)
+})
+test('nested injections suspend and resume the same transport and position in LIFO order', async () => {
+  const {queue, players, push} = setup()
+  const a = push('a')
+  const later = push('later')
+  await flush()
+  players.get('a')!.position = 3.5
+  const first = push('first', {priority: 'inject'})
+  await flush()
+  players.get('first')!.position = 1.2
+  const second = push('second', {priority: 'inject'})
+  await flush()
+  expect(queue.getSnapshot().interrupted.map(job => job.id)).toEqual([a.id, first.id])
+  expect(players.get('a')!.pauses).toBe(1)
+  expect(players.get('first')!.pauses).toBe(1)
+  players.get('second')!.end()
+  await flush()
+  expect(await second.finished).toEqual({status: 'completed'})
+  expect(players.get('first')!.position).toBe(1.2)
+  expect(players.get('first')!.plays).toBe(2)
+  players.get('first')!.end()
+  await flush()
+  expect(players.get('a')!.plays).toBe(2)
+  expect(players.get('a')!.position).toBe(3.5)
+  players.get('a')!.end()
+  await flush()
+  expect(queue.getSnapshot().current?.id).toBe(later.id)
+  queue.dispose()
+})
+test('destructive cancels current, suspended, queued and explicitly concurrent jobs', async () => {
+  const {queue, players, push} = setup()
+  const old = [push('a'), push('b')]
+  await flush()
+  old.push(push('injection', {priority: 'inject'}), push('parallel', {priority: 'async'}))
+  await flush()
+  const replacement = push('replacement', {priority: 'destructive'})
+  await flush()
+  expect(queue.getSnapshot().current?.id).toBe(replacement.id)
+  expect(queue.getSnapshot().pending).toHaveLength(0)
+  expect(queue.getSnapshot().interrupted).toHaveLength(0)
+  expect(queue.getSnapshot().concurrent).toHaveLength(0)
+  for (const handle of old) {
+    expect((await handle.finished).status).toBe('cancelled')
+  }
+  for (const name of ['a', 'injection', 'parallel']) {
+    expect(players.get(name)!.disposals).toBe(1)
+  }
+  expect(players.get('b')!.plays).toBe(0)
+  queue.dispose()
+})
+test('async bypasses the serial queue without advancing it on completion', async () => {
+  const {queue, players, push} = setup()
+  const a = push('a')
+  const b = push('b')
+  const parallel = push('parallel', {priority: 'async'})
+  await flush()
+  expect(players.get('a')!.playing).toBe(true)
+  expect(players.get('parallel')!.playing).toBe(true)
+  players.get('parallel')!.end()
+  await flush()
+  expect((await parallel.finished).status).toBe('completed')
+  expect(queue.getSnapshot().current?.id).toBe(a.id)
+  players.get('a')!.end()
+  await flush()
+  expect(queue.getSnapshot().current?.id).toBe(b.id)
+  queue.dispose()
+})
+for (const priority of ['normal', 'high', 'inject', 'async', 'destructive'] as const) {
+  test(`gentle yields permanently to ${priority}`, async () => {
+    const {queue, players, push} = setup()
+    const gentle = push('gentle', {priority: 'gentle'})
+    await flush()
+    push('other', {priority})
+    await flush()
+    expect((await gentle.finished).status).toBe('cancelled')
+    expect(players.get('gentle')!.disposals).toBe(1)
+    players.get('other')!.end()
+    await flush()
+    expect(players.get('gentle')!.plays).toBe(1)
+    expect(queue.getSnapshot().idle).toBe(true)
+  })
+}
+test('gentle is skipped rather than deferred when either lane is occupied', async () => {
+  const {queue, push} = setup()
+  push('parallel', {priority: 'async'})
+  const quiet = push('quiet', {priority: 'gentle'})
+  expect(await quiet.finished).toEqual({
+    status: 'skipped',
+    reason: 'busy',
+  })
+  queue.dispose()
+})
+test('before/after indicator padding contributes to the minimum audible gap', async () => {
+  const {queue, clock, players, push} = setup({
+    gap: 1,
+    prependedSilence: 0.2,
+    appendedSilence: 0.3,
+  })
+  const a = push('a')
+  const b = push('b')
+  await flush()
+  expect(queue.getSnapshot().current?.phase).toBe('before')
+  await clock.advance(0.19)
+  expect(players.get('a')!.plays).toBe(0)
+  await clock.advance(0.01)
+  expect(players.get('a')!.plays).toBe(1)
+  await clock.advance(0.5)
+  players.get('a')!.end()
+  await flush()
+  expect(queue.getSnapshot().current?.phase).toBe('after')
+  await clock.advance(0.29)
+  expect(queue.getSnapshot().current?.id).toBe(a.id)
+  await clock.advance(0.01)
+  expect((await a.finished).status).toBe('completed')
+  expect(queue.getSnapshot().current?.id).toBe(b.id)
+  await clock.advance(0.69)
+  expect(players.get('b')!.plays).toBe(0)
+  await clock.advance(0.01)
+  expect(players.get('b')!.plays).toBe(1)
+  queue.dispose()
+  expect(clock.size).toBe(0)
+})
+test('injection freezes and restores unconsumed leading silence', async () => {
+  const {queue, clock, players, push} = setup({prependedSilence: 1})
+  push('a')
+  await clock.advance(0.4)
+  push('inserted', {
+    priority: 'inject',
+    prependedSilence: 0,
+  })
+  await flush()
+  await clock.advance(4)
+  expect(players.get('a')!.plays).toBe(0)
+  players.get('inserted')!.end()
+  await flush()
+  await clock.advance(0.59)
+  expect(players.get('a')!.plays).toBe(0)
+  await clock.advance(0.01)
+  expect(players.get('a')!.plays).toBe(1)
+  queue.dispose()
+})
+test('injection preserves trailing silence without replaying completed audio', async () => {
+  const {queue, clock, players, push} = setup({appendedSilence: 1})
+  const a = push('a')
+  await flush()
+  players.get('a')!.end()
+  await clock.advance(0.4)
+  push('inserted', {
+    priority: 'inject',
+    appendedSilence: 0,
+  })
+  await flush()
+  players.get('inserted')!.end()
+  await flush()
+  await clock.advance(0.6)
+  expect(await a.finished).toEqual({status: 'completed'})
+  expect(players.get('a')!.plays).toBe(1)
+  expect(queue.getSnapshot().idle).toBe(true)
+})
+test('preparation completing under an injection cannot start the suspended sound', async () => {
+  const {queue, players, push} = setup()
+  const ready = Promise.withResolvers<FakePlayback>()
+  const original = new FakePlayback('original')
+  queue.push(() => ready.promise)
+  await flush()
+  push('injection', {priority: 'inject'})
+  await flush()
+  ready.resolve(original)
+  await flush()
+  expect(original.plays).toBe(0)
+  players.get('injection')!.end()
+  await flush()
+  expect(original.plays).toBe(1)
+  queue.dispose()
+})
+test('a cancelled provider result is disposed even when its provider ignored abort', async () => {
+  const queue = new AudioQueue
+  const ready = Promise.withResolvers<FakePlayback>()
+  const playback = new FakePlayback
+  const handle = queue.push(() => ready.promise)
+  await flush()
+  handle.cancel('obsolete')
+  expect(await handle.finished).toEqual({
+    status: 'cancelled',
+    reason: 'obsolete',
+  })
+  ready.resolve(playback)
+  await flush()
+  expect(playback.plays).toBe(0)
+  expect(playback.disposals).toBe(1)
+  expect(queue.getSnapshot().idle).toBe(true)
+})
+test('an old pending play rejection after injection does not kill resumed audio', async () => {
+  const {queue, players, push} = setup()
+  const starting = Promise.withResolvers<void>()
+  const original = new FakePlayback
+  let attempts = 0
+  const handle = queue.push(() => ({
+    ...original,
+    play: () => (++attempts === 1 ? starting.promise : undefined)}))
+  await flush()
+  push('injection', {priority: 'inject'})
+  await flush()
+  starting.reject(new Error('Paused while starting'))
+  await flush()
+  players.get('injection')!.end()
+  await flush()
+  expect(queue.getSnapshot().current?.id).toBe(handle.id)
+  expect(queue.getSnapshot().current?.phase).toBe('playing')
+  expect(attempts).toBe(2)
+  queue.dispose()
+})
+for (const stage of ['prepare', 'start', 'playback'] as const) {
+  test(`${stage} failure settles and advances the queue exactly once`, async () => {
+    const {queue, push} = setup()
+    const bad = new FakePlayback
+    const failure = new Error(stage)
+    const handle = queue.push(() => {
+      if (stage === 'prepare') {
+        throw failure
+      }
+      if (stage === 'start') {
+        bad.play = () => {
+          throw failure
+        }
+      }
+      return bad
+    })
+    const next = push('next')
+    await flush()
+    if (stage === 'playback') {
+      bad.completion.reject(failure)
+    }
+    await flush()
+    expect(await handle.finished).toEqual({
+      status: 'failed',
+      error: failure,
+    })
+    expect(queue.getSnapshot().current?.id).toBe(next.id)
+    expect(bad.disposals).toBe(stage === 'prepare' ? 0 : 1)
+    queue.dispose()
+  })
+}
+test('external abort cancels pending and suspended items without cancelling the injection', async () => {
+  const {queue, push} = setup()
+  const controller = new AbortController
+  const a = push('a', {signal: controller.signal})
+  const pending = push('pending', {signal: controller.signal})
+  await flush()
+  const injection = push('injection', {priority: 'inject'})
+  await flush()
+  controller.abort('owner unmounted')
+  await flush()
+  expect((await a.finished).status).toBe('cancelled')
+  expect((await pending.finished).status).toBe('cancelled')
+  expect(queue.getSnapshot().current?.id).toBe(injection.id)
+  expect(queue.getSnapshot().interrupted).toHaveLength(0)
+  queue.dispose()
+})
+test('key deduplication, stable snapshots, validation and idempotent disposal', async () => {
+  const {queue, push} = setup()
+  const initial = queue.getSnapshot()
+  expect(queue.getSnapshot()).toBe(initial)
+  const first = push('first', {key: 'same'})
+  expect(push('duplicate', {key: 'same'})).toBe(first)
+  for (const value of [-1, NaN, Infinity]) {
+    expect(() => {
+      queue.gap = value
+    }).toThrow(RangeError)
+    expect(() => queue.push(() => new FakePlayback, {appendedSilence: value})).toThrow(RangeError)
+  }
+  await flush()
+  queue.dispose()
+  queue.dispose()
+  expect((await first.finished).status).toBe('cancelled')
+  expect(() => push('late')).toThrow('disposed')
+})
+test('reentrant subscribers can replace newly prepared jobs without resurrecting them', async () => {
+  const {queue, players, push} = setup()
+  let replaced = false
+  queue.subscribe(() => {
+    if (!replaced && queue.getSnapshot().current) {
+      replaced = true
+      push('replacement', {priority: 'destructive'})
+    }
+  })
+  const original = push('original')
+  await flush()
+  expect((await original.finished).status).toBe('cancelled')
+  expect(players.get('original')!.plays).toBe(0)
+  expect(players.get('replacement')!.plays).toBe(1)
+  queue.dispose()
+})

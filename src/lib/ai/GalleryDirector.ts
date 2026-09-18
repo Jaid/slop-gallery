@@ -1,19 +1,19 @@
 import type {Portrait} from '../gallery/types.ts'
 import type {AiSettings} from './settings.ts'
 
-import Narrator from '../audio/Narrator.ts'
+import PortraitNarration from '../audio/PortraitNarration.ts'
 import {chime, loadBlob, notify} from '../gallery/actions.ts'
 import {compositeImages, fitGeneratedImage} from '../gallery/ImageImporter.ts'
 import {useGallery} from '../gallery/store.ts'
 import {telemetry} from '../telemetry/index.ts'
 
 export default class GalleryDirector {
-  readonly narrator: Narrator
+  readonly narrator: PortraitNarration
   private controller = new AbortController
   private flavors = new Map<string, symbol>
   private merges = new Map<string, symbol>
   constructor(private settings: AiSettings, private key: string) {
-    this.narrator = new Narrator(settings, key)
+    this.narrator = new PortraitNarration(settings, key)
   }
 
   dispose() {

@@ -4,21 +4,19 @@ import {useFrame, useThree} from '@react-three/fiber/webgpu'
 import knotAnnouncementUrl from 'knot-materials/announcementAssets.ts'
 import {knotBays, knotExhibition} from 'knot-materials/exhibition.ts'
 import {createKnotGeometry} from 'knot-materials/geometry.ts'
-import KnotAnnouncer from 'knot-materials/KnotAnnouncer.ts'
 import {useEffect, useRef} from 'react'
 import {PointerLockControls} from 'three/addons/controls/PointerLockControls.js'
 import {MathUtils, PerspectiveCamera, Vector3} from 'three/webgpu'
 
 import {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
-import playAnnouncement from '#src/lib/audio/playAnnouncement.ts'
+import KnotNarration from '#src/lib/audio/KnotNarration.ts'
+import {narrator} from '#src/lib/audio/narration.ts'
 import OrbitInspection from '#src/lib/camera/OrbitInspection.ts'
-import {cameraPose, galleryEvents, isTextInput, markControlled, notify, setCameraFocused, stopNarration, useGallery} from '#src/lib/gallery.ts'
+import {cameraPose, galleryEvents, isTextInput, markControlled, setCameraFocused, useGallery} from '#src/lib/gallery.ts'
 import {setKnotFocus} from '#src/lib/rendering/playerView.ts'
 
 const exhibits = new Map(knotExhibition.map(item => [`prop-knot-${item.id}`, item]))
 const candidateSurfaces = new Map<string, KnotBay>(knotBays.flatMap(bay => [[`preview-${bay.candidate.id}`, bay], [`candidate-sign-${bay.candidate.id}`, bay]] as const))
-const announcedModels = new Set<string>
-const announcedItems = new Set<string>
 const inspectionDistanceSpeed = 0.45
 const inspectionOrbitSpeed = 1.5
 const inspectionFocusSpeed = 8
@@ -49,63 +47,24 @@ export default function KnotSpectation() {
     if (!(camera instanceof PerspectiveCamera) || !(controls instanceof PointerLockControls)) {
       return
     }
-    let narrationVersion = 0
-    let narrationId: string | undefined
-    const announcer = new KnotAnnouncer({
-      resolve: knotAnnouncementUrl,
-      play: async (url, signal, title) => {
-        signal.throwIfAborted()
-        const id = narrationId!
-        useGallery.setState({
-          narration: {
-            id,
-            title,
-            status: 'preparing',
-            source: null,
-          },
-        })
-        await playAnnouncement(url, signal, () => {
-          useGallery.setState({
-            narration: {
-              id,
-              title,
-              status: 'playing',
-              source: 'audio',
-            },
-          })
-        })
-      },
-    }, announcedModels, announcedItems)
-    const stopAnnouncement = () => {
-      narrationVersion++
-      announcer.stop()
-      if (narrationId && useGallery.getState().narration?.id === narrationId) {
-        useGallery.setState({narration: null})
-      }
-      narrationId = undefined
-    }
+    const owner = new AbortController
+    const announcements = new KnotNarration(narrator, knotAnnouncementUrl)
     const announce = (id: string, repeat = false) => {
-      const item = exhibits.get(id)
-      const candidateBay = candidateSurfaces.get(id)
-      if (!item && !candidateBay || !useGallery.getState().sound || item && !repeat && announcer.hasAnnounced(item)) {
+      if (!useGallery.getState().sound) {
         return
       }
-      stopNarration()
-      const version = ++narrationVersion
-      narrationId = id
-      const playback = candidateBay ? announcer.announceCandidate(candidateBay.candidate) : announcer.announce(item!, repeat)
-      void playback.catch(error => {
-        if (version === narrationVersion) {
-          notify(Error.isError(error) ? error.message : 'The announcement could not be played.')
-        }
-      }).finally(() => {
-        if (version === narrationVersion) {
-          if (useGallery.getState().narration?.id === id) {
-            useGallery.setState({narration: null})
-          }
-          narrationId = undefined
-        }
-      })
+      const item = exhibits.get(id)
+      const candidateBay = candidateSurfaces.get(id)
+      const options = {
+        id,
+        repeat,
+        signal: owner.signal,
+      }
+      if (candidateBay) {
+        announcements.enqueueCandidate(candidateBay.candidate, options)
+      } else if (item) {
+        announcements.enqueue(item, options)
+      }
     }
     const finish = (restorePosition: boolean) => {
       const current = session.current
@@ -221,37 +180,21 @@ export default function KnotSpectation() {
     }
     const teleport = () => {
       finish(false)
-      stopAnnouncement()
     }
     const narrate = (event: Event) => announce((event as CustomEvent<string>).detail, true)
     const narrateModel = (event: Event) => {
       const id = (event as CustomEvent<string>).detail
       const item = exhibits.get(id)
-      if (!item || !useGallery.getState().sound || announcer.hasAnnouncedModel(item)) {
-        return
+      if (item && useGallery.getState().sound) {
+        announcements.enqueueModel(item, {
+          id,
+          signal: owner.signal,
+        })
       }
-      stopNarration()
-      const version = ++narrationVersion
-      narrationId = id
-      void Promise.resolve(announcer.announceModel(item)).catch(error => {
-        if (version === narrationVersion) {
-          notify(Error.isError(error) ? error.message : 'The model announcement could not be played.')
-        }
-      }).finally(() => {
-        if (version === narrationVersion) {
-          if (useGallery.getState().narration?.id === id) {
-            useGallery.setState({narration: null})
-          }
-          narrationId = undefined
-        }
-      })
     }
-    const unsubscribe = useGallery.subscribe((state, previous) => {
+    const unsubscribe = useGallery.subscribe(state => {
       if (state.panel || !state.locked) {
         release()
-      }
-      if (!state.sound && previous.sound) {
-        stopAnnouncement()
       }
     })
     globalThis.addEventListener('keydown', down)
@@ -260,7 +203,6 @@ export default function KnotSpectation() {
     document.addEventListener('mousemove', move)
     galleryEvents.addEventListener('cancel-view', release)
     galleryEvents.addEventListener('teleport', teleport)
-    galleryEvents.addEventListener('stop-narration', stopAnnouncement)
     galleryEvents.addEventListener('narrate', narrate)
     galleryEvents.addEventListener('narrate-model', narrateModel)
     return () => {
@@ -271,11 +213,10 @@ export default function KnotSpectation() {
       document.removeEventListener('mousemove', move)
       galleryEvents.removeEventListener('cancel-view', release)
       galleryEvents.removeEventListener('teleport', teleport)
-      galleryEvents.removeEventListener('stop-narration', stopAnnouncement)
       galleryEvents.removeEventListener('narrate', narrate)
       galleryEvents.removeEventListener('narrate-model', narrateModel)
       finish(true)
-      stopAnnouncement()
+      owner.abort()
     }
   }, [camera, controls, renderer])
   useFrame((_, delta) => {

@@ -144,3 +144,16 @@ describe('artwork year metadata', () => {
     })
   }
 })
+for (const status of ['before', 'after'] as const) {
+  test(`narrator indicator remains visible during ${status} silence without fake audio bars`, () => {
+    const html = renderToStaticMarkup(createElement(NarrationIndicator, {
+      title: 'A padded story',
+      status,
+      source: 'audio',
+    }))
+    expect(html).toContain('A padded story')
+    expect(html).toContain(status === 'before' ? 'Narrator starting…' : 'Narration finished')
+    expect(html).toContain('data-testid="narration-static"')
+    expect(html).not.toContain('data-testid="audio-bars"')
+  })
+}

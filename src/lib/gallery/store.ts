@@ -33,6 +33,7 @@ type State = GallerySettings & GallerySnapshot & {
   }) | null
   inspecting: string | null
   locked: boolean
+  /** Read-only projection for telemetry; the shared narrator owns playback and UI state. */
   narration: NarrationState | null
   notice: string
   panel: Panel

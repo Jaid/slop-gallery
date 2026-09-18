@@ -27,7 +27,7 @@ The player adapter passes collision-resolved horizontal speed and crouch state t
 
 Landing sounds use `ego-player`'s downward speed immediately before collision resolution, not the nearly zero post-impact vertical velocity. Larger impacts are heavier, with a bounded maximum. Initial placement and teleport settling are silent, as are contact interruptions shorter than 0.06 seconds. A landing suppresses a duplicate footfall for 0.1 seconds, then ordinary strides resume.
 
-The reusable `ego-player` package emits `onLand` and `onZoomTransition` but contains no sound engine or gallery imports. `playerAudio.ts` owns surface selection, active-input policy, mute/lock gating and shared portrait/knot inspection state observation. Pause, blur, pointer-lock loss, mute and unmount stop held/transition audio even without another rendered frame. Narration retains its existing independent output path.
+The reusable `ego-player` package emits `onLand` and `onZoomTransition` but contains no sound engine or gallery imports. `playerAudio.ts` owns surface selection, active-input policy, mute/lock gating and shared portrait/knot inspection state observation. Pause, blur, pointer-lock loss, mute and unmount stop held/transition audio even without another rendered frame. Narration uses the shared controller in `narration.ts` (`use-narrator` / `use-audio-queue`), with a separate output path from procedural player effects. Its meter retains paused connections for injection/resume and includes explicitly concurrent voices.
 
 ## Playback ownership
 

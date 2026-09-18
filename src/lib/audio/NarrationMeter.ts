@@ -15,10 +15,13 @@ export function frequencyLevels(frequencies: Uint8Array, sampleRate: number, fft
   return output
 }
 
-/** Analyses narration only, never footsteps or other gallery sound effects. */
+/** Analyses narration only. Suspended voices remain connected; concurrent voices are included. */
 export default class NarrationMeter {
-  private analyser: AnalyserNode | undefined
-  private audio: HTMLAudioElement | undefined
+  private readonly bands = new Float32Array(narrationBands.length)
+  private connections = new Set<{
+    analyser: AnalyserNode
+    audio: HTMLAudioElement
+  }>
   private frequencies = new Uint8Array(1024)
   private readonly levels = new Float32Array(narrationBands.length)
 
@@ -30,30 +33,35 @@ export default class NarrationMeter {
     analyser.minDecibels = -90
     analyser.maxDecibels = -10
     source.connect(analyser)
-    // Preserve the existing narration volume; the effects mixer has a separate gain.
     analyser.connect(context.destination)
-    this.analyser = analyser
-    this.audio = audio
-    this.levels.fill(0)
+    const connection = {
+      audio,
+      analyser,
+    }
+    this.connections.add(connection)
     return () => {
+      if (!this.connections.delete(connection)) {
+        return
+      }
       source.disconnect()
       analyser.disconnect()
-      // A stale playback callback must not clear a newer story’s meter.
-      if (this.analyser === analyser) {
-        this.analyser = undefined
-        this.audio = undefined
-        this.levels.fill(0)
-      }
     }
   }
 
   read() {
-    const {analyser, audio} = this
-    if (!analyser || !audio || audio.paused || audio.ended || audio.muted || audio.volume === 0 || analyser.context.state !== 'running') {
-      return this.levels.fill(0)
+    this.levels.fill(0)
+    for (const {audio, analyser} of this.connections) {
+      if (audio.paused || audio.ended || audio.muted || audio.volume === 0 || analyser.context.state !== 'running') {
+        continue
+      }
+      analyser.getByteFrequencyData(this.frequencies)
+      frequencyLevels(this.frequencies, analyser.context.sampleRate, analyser.fftSize, this.bands)
+      // Show the strongest measured voice in each band, without fabricating levels for silent padding.
+      for (let band = 0; band < this.levels.length; band++) {
+        this.levels[band] = Math.max(this.levels[band], this.bands[band])
+      }
     }
-    analyser.getByteFrequencyData(this.frequencies)
-    return frequencyLevels(this.frequencies, analyser.context.sampleRate, analyser.fftSize, this.levels)
+    return this.levels
   }
 }
 

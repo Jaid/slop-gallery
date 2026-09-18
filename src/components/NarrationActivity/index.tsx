@@ -1,4 +1,4 @@
-import type {NarrationState} from '#src/lib/gallery.ts'
+import type {NarrationState} from 'use-narrator/core'
 
 import Icon from '#component/Icon'
 import NarrationBars from '#component/NarrationBars'
@@ -9,5 +9,13 @@ export default function NarrationActivity({status, source}: Pick<NarrationState,
   if (source === 'audio' && status === 'playing') {
     return <NarrationBars />
   }
-  return <span aria-hidden='true' className={css.container} data-testid='narration-static' title={source === 'browser' ? 'Browser speech has no audio visualization.' : 'Preparing narration…'}><Icon name='sound' size={22} /></span>
+  let title = 'Preparing narration…'
+  if (status === 'before') {
+    title = 'Narration starts shortly.'
+  } else if (status === 'after') {
+    title = 'Narration finished.'
+  } else if (source === 'browser') {
+    title = 'Browser speech has no audio visualization.'
+  }
+  return <span aria-hidden='true' className={css.container} data-testid='narration-static' title={title}><Icon name='sound' size={22} /></span>
 }

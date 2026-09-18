@@ -35,7 +35,9 @@
         "three-bvh-csg": "0.0.18",
         "three-fiber-game": "workspace:*",
         "three-mesh-bvh": "0.9.15",
+        "use-audio-queue": "workspace:*",
         "use-graphics-quality": "workspace:*",
+        "use-narrator": "workspace:*",
         "use-pause-menu": "workspace:*",
         "vite-plugin-avif-only": "workspace:*",
         "vite-plugin-bake-branch-component": "workspace:*",
@@ -234,6 +236,29 @@
       "peerDependencies": {
         "react": "^19.3.0",
       },
+    },
+    "packages/use-narrator": {
+      "name": "use-narrator",
+      "version": "0.1.0",
+      "dependencies": {
+        "use-audio-queue": "workspace:*",
+      },
+      "peerDependencies": {
+        "react": "^19.3.0",
+      },
+      "optionalPeers": [
+        "react",
+      ],
+    },
+    "packages/use-narrator/packages/use-audio-queue": {
+      "name": "use-audio-queue",
+      "version": "0.1.0",
+      "peerDependencies": {
+        "react": "^19.3.0",
+      },
+      "optionalPeers": [
+        "react",
+      ],
     },
     "packages/use-pause-menu": {
       "name": "use-pause-menu",
@@ -1485,7 +1510,11 @@
 
     "uri-js": ["uri-js@4.4.1", "", { "dependencies": { "punycode": "^2.1.0" } }, "sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg=="],
 
+    "use-audio-queue": ["use-audio-queue@workspace:packages/use-narrator/packages/use-audio-queue"],
+
     "use-graphics-quality": ["use-graphics-quality@workspace:packages/use-graphics-quality"],
+
+    "use-narrator": ["use-narrator@workspace:packages/use-narrator"],
 
     "use-pause-menu": ["use-pause-menu@workspace:packages/use-pause-menu"],
 
