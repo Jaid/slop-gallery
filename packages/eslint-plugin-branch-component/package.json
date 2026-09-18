@@ -23,12 +23,12 @@
     "eslint": "^9.39.0 || ^10.0.0"
   },
   "devDependencies": {
-    "@typescript-eslint/parser": "8.70.0",
-    "@typescript-eslint/rule-tester": "8.70.0",
     "branch-component": "0.4.0",
     "eslint": "10.10.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "@typescript-eslint/parser": "8.70.0",
+    "@typescript-eslint/rule-tester": "8.70.0"
   },
   "files": [
     "src",
