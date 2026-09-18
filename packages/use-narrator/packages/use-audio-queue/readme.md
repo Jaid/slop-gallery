@@ -22,7 +22,7 @@ queue.dispose()
 
 ## Scheduling contract
 
-`normal` appends FIFO. `high` inserts FIFO ahead of pending normal work without interrupting the current entry. `inject` suspends the current entry, including remaining silence, and resumes it after the injection; nested injections unwind LIFO before queued work. `async` runs independently in an explicit concurrent lane. `gentle` is skipped when any work exists; otherwise it is cancelled permanently by the next accepted request. `destructive` cancels current, queued, suspended and concurrent work, then schedules the replacement.
+`normal` appends FIFO. `high` inserts FIFO ahead of pending normal work without interrupting the current entry. `inject` suspends the current entry, including remaining silence, and resumes it after the injection; nested injections unwind LIFO before queued work. `async` runs independently in an explicit concurrent lane. `volatile` appends like normal work, but once it becomes current it is cancelled permanently by the next accepted request instead of resuming later. `shy` is skipped when any work exists; otherwise it is cancelled permanently by the next accepted request. `destructive` cancels current, queued, suspended and concurrent work, then schedules the replacement.
 
 All timing values are seconds. `gap`, `prependedSilence` and `appendedSilence` are mutable, validated finite non-negative properties. Padding can be overridden per entry and is captured on push. The current gap value is used when scheduling a transition; changes do not rewrite an already-running timer.
 

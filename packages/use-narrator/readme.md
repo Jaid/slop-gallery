@@ -29,7 +29,8 @@ A **bare string means text**, not an audio URL. String URLs must be wrapped in `
 | `destructive` | Cancels all owned current, pending, interrupted **and concurrent** entries, then starts the new entry. |
 | `inject` | Pauses the current entry and resumes it afterward. Nested injections unwind in last-in, first-out order before pending high/normal entries. |
 | `async` | Starts independently of the serialized lane. Overlap is explicit rather than accidental. |
-| `gentle` | Skips immediately when any lane is occupied. Otherwise plays until completion or until another accepted request arrives, then is cancelled permanently. |
+| `volatile` | Queues at normal FIFO priority. Once current, the next accepted request cancels it permanently instead of letting it resume. |
+| `shy` | Skips immediately when any lane is occupied. Otherwise plays until completion or until another accepted request arrives, then is cancelled permanently. |
 
 Immediate priorities preempt immediately, but still honor configured leading silence and the minimum serialized gap. A deduplicated push does not count as a new request. No priority bypasses a disabled narrator.
 

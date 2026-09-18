@@ -1,4 +1,4 @@
-export type AudioPriority = 'async' | 'destructive' | 'gentle' | 'high' | 'inject' | 'normal'
+export type AudioPriority = 'async' | 'destructive' | 'high' | 'inject' | 'normal' | 'shy' | 'volatile'
 export type AudioPhase = 'after' | 'before' | 'playing' | 'preparing' | 'queued' | 'starting'
 
 /** play resolves when playback starts; finished resolves only at the end. pause preserves position. */

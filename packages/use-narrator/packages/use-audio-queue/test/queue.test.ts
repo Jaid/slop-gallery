@@ -106,29 +106,98 @@ test('async bypasses the serial queue without advancing it on completion', async
   expect(queue.getSnapshot().current?.id).toBe(b.id)
   queue.dispose()
 })
-for (const priority of ['normal', 'high', 'inject', 'async', 'destructive'] as const) {
-  test(`gentle yields permanently to ${priority}`, async () => {
+for (const priority of ['normal', 'high', 'inject', 'async', 'destructive', 'volatile'] as const) {
+  test(`shy yields permanently to ${priority}`, async () => {
     const {queue, players, push} = setup()
-    const gentle = push('gentle', {priority: 'gentle'})
+    const shy = push('shy', {priority: 'shy'})
     await flush()
     push('other', {priority})
     await flush()
-    expect((await gentle.finished).status).toBe('cancelled')
-    expect(players.get('gentle')!.disposals).toBe(1)
+    expect((await shy.finished).status).toBe('cancelled')
+    expect(players.get('shy')!.disposals).toBe(1)
     players.get('other')!.end()
     await flush()
-    expect(players.get('gentle')!.plays).toBe(1)
+    expect(players.get('shy')!.plays).toBe(1)
     expect(queue.getSnapshot().idle).toBe(true)
   })
 }
-test('gentle is skipped rather than deferred when either lane is occupied', async () => {
+test('shy is skipped rather than deferred when either lane is occupied', async () => {
   const {queue, push} = setup()
   push('parallel', {priority: 'async'})
-  const quiet = push('quiet', {priority: 'gentle'})
+  const quiet = push('quiet', {priority: 'shy'})
   expect(await quiet.finished).toEqual({
     status: 'skipped',
     reason: 'busy',
   })
+  queue.dispose()
+})
+test('a new shy request is skipped without interrupting the current shy request', async () => {
+  const {queue, players, push} = setup()
+  const current = push('current-shy', {priority: 'shy'})
+  await flush()
+  const skipped = push('new-shy', {priority: 'shy'})
+  expect(await skipped.finished).toEqual({
+    status: 'skipped',
+    reason: 'busy',
+  })
+  expect(queue.getSnapshot().current?.id).toBe(current.id)
+  expect(players.get('current-shy')!.playing).toBe(true)
+  players.get('current-shy')!.end()
+  await flush()
+  expect((await current.finished).status).toBe('completed')
+})
+test('volatile queues normally behind current work and ahead of later normal work', async () => {
+  const {queue, players, push} = setup()
+  const first = push('first')
+  const volatile = push('volatile', {priority: 'volatile'})
+  const later = push('later')
+  await flush()
+  expect(queue.getSnapshot().current?.id).toBe(first.id)
+  expect(queue.getSnapshot().pending.map(job => job.id)).toEqual([volatile.id, later.id])
+  players.get('first')!.end()
+  await flush()
+  expect(queue.getSnapshot().current?.id).toBe(volatile.id)
+  expect(players.get('volatile')!.playing).toBe(true)
+  players.get('volatile')!.end()
+  await flush()
+  expect((await volatile.finished).status).toBe('completed')
+  expect(queue.getSnapshot().current?.id).toBe(later.id)
+  queue.dispose()
+})
+for (const priority of ['normal', 'high', 'inject', 'async', 'destructive', 'volatile'] as const) {
+  test(`current volatile yields permanently to ${priority}`, async () => {
+    const {queue, players, push} = setup()
+    const volatile = push('volatile', {priority: 'volatile'})
+    await flush()
+    const replacement = push('other', {priority})
+    await flush()
+    expect(await volatile.finished).toEqual({
+      status: 'cancelled',
+      reason: priority === 'destructive' ? 'destructive' : 'yielded',
+    })
+    expect(players.get('volatile')!.disposals).toBe(1)
+    expect(players.get('volatile')!.plays).toBe(1)
+    players.get('other')!.end()
+    await flush()
+    expect((await replacement.finished).status).toBe('completed')
+    expect(players.get('volatile')!.plays).toBe(1)
+    queue.dispose()
+  })
+}
+test('pending volatile survives newly queued work until it becomes current', async () => {
+  const {queue, players, push} = setup()
+  const first = push('first')
+  const volatile = push('volatile', {priority: 'volatile'})
+  const high = push('high', {priority: 'high'})
+  await flush()
+  expect(queue.getSnapshot().current?.id).toBe(first.id)
+  expect(queue.getSnapshot().pending.map(job => job.id)).toEqual([high.id, volatile.id])
+  players.get('first')!.end()
+  await flush()
+  players.get('high')!.end()
+  await flush()
+  expect(queue.getSnapshot().current?.id).toBe(volatile.id)
+  expect(players.get('volatile')!.playing).toBe(true)
   queue.dispose()
 })
 test('before/after indicator padding contributes to the minimum audible gap', async () => {

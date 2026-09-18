@@ -33,7 +33,7 @@ export function seconds(value: number) {
   }
   return value
 }
-const priorities = new Set<AudioPriority>(['normal', 'destructive', 'high', 'inject', 'async', 'gentle'])
+const priorities = new Set<AudioPriority>(['normal', 'destructive', 'high', 'inject', 'async', 'volatile', 'shy'])
 
 /** One serialized lane, a resumable interruption stack, and explicitly concurrent jobs. */
 export default class AudioQueue<T extends object = Record<string, never>> implements Disposable {
@@ -158,8 +158,8 @@ export default class AudioQueue<T extends object = Record<string, never>> implem
       })
       return handle
     }
-    // A gentle request is never deferred; even another gentle/concurrent job makes it busy.
-    if (priority === 'gentle' && this.jobs.size) {
+    // A shy request is never deferred; even another shy/concurrent job makes it busy.
+    if (priority === 'shy' && this.jobs.size) {
       completion.resolve({
         status: 'skipped',
         reason: 'busy',
@@ -194,7 +194,9 @@ export default class AudioQueue<T extends object = Record<string, never>> implem
         }
       } else {
         for (const old of this.jobs.values()) {
-          if (old.priority === 'gentle') {
+          const yieldingShy = old.priority === 'shy'
+          const yieldingVolatile = old === this.current && old.priority === 'volatile'
+          if (yieldingShy || yieldingVolatile) {
             this.finish(old, {
               status: 'cancelled',
               reason: 'yielded',
