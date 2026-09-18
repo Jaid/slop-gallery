@@ -8,7 +8,7 @@ import {Narrator} from 'use-narrator/core'
 export const narrator = new Narrator({
   gap: 0.15,
   prependedSilence: 0.12,
-  appendedSilence: 0.25,
+  appendedSilence: 0.5,
   audio: {volume: 0.85},
   onError: (error, narration) => console.error(narration.title, error),
 })
@@ -128,7 +128,7 @@ See the [Web Speech specification](https://webaudio.github.io/web-speech-api/) f
 
 ## Slop Gallery integration
 
-`src/lib/audio/narration.ts` owns the one application narrator, its 0.15-second gap, 0.12-second leading silence and 0.25-second trailing silence. It wires mute, stop, teleport, page-hide, the real audio meter and a read-only gallery-state projection for existing telemetry.
+`src/lib/audio/narration.ts` owns the one application narrator, its 0.15-second gap, 0.12-second leading silence and 0.5-second trailing silence. It wires mute, stop, teleport, page-hide, the real audio meter and a read-only gallery-state projection for existing telemetry.
 
 `PortraitNarration.ts` handles portrait readiness and provider configuration. `KnotNarration.ts` selects bundled model/candidate/knot recordings. Neither owns audio elements, speech synthesis, timers or indicator state. Components can enqueue directly on the shared narrator. Player sound effects remain separate by design.
 

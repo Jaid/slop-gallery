@@ -10,7 +10,7 @@ export const narrator = new Narrator({
   enabled: false,
   gap: 0.15,
   prependedSilence: 0.12,
-  appendedSilence: 0.25,
+  appendedSilence: 0.5,
   audio: {
     volume: 0.85,
     prepare: () => SoundEngine.get().resume(),
