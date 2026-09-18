@@ -30,7 +30,7 @@ const DisplayExhibit = ({kind, material}: {
       <Branch if={kind === 5}><icosahedronGeometry args={[0.64, 1]} /></Branch>
       <meshStandardNodeMaterial color={kind % 2 === 0 ? '#9c957d' : '#83999a'} metalness={0.65} roughness={0.3} />
     </mesh>
-    <Branch if={kind === 2}>{[0, 1, 2].map(i => <mesh castShadow key={i} position={[0, 1.65, 0]} rotation={[i * Math.PI / 3, Math.PI / 4, 0]}>
+    <Branch if={kind === 2}>{[0, 1, 2].map(i => <mesh key={i} castShadow position={[0, 1.65, 0]} rotation={[i * Math.PI / 3, Math.PI / 4, 0]}>
       <torusGeometry args={[0.63, 0.025, 8, 64]} /><meshStandardNodeMaterial color='#b1ada0' metalness={0.8} roughness={0.25} />
     </mesh>)}</Branch>
     <Box color='#242f32' position={[0, 3.47, 0]} size={[0.5, 0.1, 0.5]} />

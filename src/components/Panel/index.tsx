@@ -24,17 +24,17 @@ export default function Panel({title, children}: {
     }
   }, [])
   return <dialog
-    aria-labelledby='panel-title' className={css.container} onCancel={event => {
+    className={css.container} aria-labelledby='panel-title' ref={ref} onCancel={event => {
       event.preventDefault()
       openPanel(null)
     }} onClick={event => {
       if (event.target === ref.current) {
         openPanel(null)
       }
-    }} ref={ref}
+    }}
   >
     <section className={css.content}>
-      <div className={css.heading}><div><div className={css.eyebrow}>THE SLOP GALLERY</div><h2 id='panel-title'>{title}</h2></div><button aria-label='Close panel' autoFocus className={css.iconButton} onClick={() => openPanel(null)}><Icon name='close' /></button></div>
+      <div className={css.heading}><div><div className={css.eyebrow}>THE SLOP GALLERY</div><h2 id='panel-title'>{title}</h2></div><button className={css.iconButton} aria-label='Close panel' autoFocus onClick={() => openPanel(null)}><Icon name='close' /></button></div>
       <Branch if={notice}><Toast panel>{notice}</Toast></Branch>
       {children}
     </section>

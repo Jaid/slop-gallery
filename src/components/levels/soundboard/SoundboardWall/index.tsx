@@ -61,10 +61,10 @@ const SoundButton = ({effect, index, section}: {
   }, [effect.id, effect.label])
   const [x, y] = soundboardLayout.buttonPosition(section, index)
   return <group
-    name={`soundboard-effect-${effect.id}`} position={[x, y, 0.16]} ref={group} userData={{
+    name={`soundboard-effect-${effect.id}`} position={[x, y, 0.16]} userData={{
       soundEffectId: effect.id,
       soundStatus: section,
-    }}
+    }} ref={group}
   >
     <Box color={palette[section].button} metalness={0.16} roughness={0.4} size={[soundboardButton.width, soundboardButton.height, 0.14]} />
     <CanvasText color={palette[section].label} fontSize={0.48} fontWeight={650} height={soundboardButton.height - 0.13} position={[0, 0, 0.071]} text={`${effect.id} · ${effect.label}`} width={soundboardButton.width - 0.1} />
@@ -80,6 +80,6 @@ export default function SoundboardWall({section, effects, position, rotationY}: 
   const style = palette[section]
   return <group name={`soundboard-${section}-wall`} position={position} rotation={[0, rotationY, 0]}>
     <CanvasText color={style.heading} fontSize={0.62} fontWeight={750} height={0.58} position={[0, soundboardLayout.headingY(), 0.16]} text={`${section.toUpperCase()} · ${effects.length}`} width={Math.min(soundboardLayout.size[0] - 1.2, 5.4)} />
-    {effects.map((effect, index) => <SoundButton effect={effect} index={index} key={effect.id} section={section} />)}
+    {effects.map((effect, index) => <SoundButton key={effect.id} effect={effect} index={index} section={section} />)}
   </group>
 }

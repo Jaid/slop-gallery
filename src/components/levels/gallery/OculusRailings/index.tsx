@@ -10,11 +10,11 @@ export default function OculusRailings() {
   useEffect(() => () => handrail.dispose(), [handrail])
   return <RigidBody colliders={false} type='fixed'>
     <mesh castShadow geometry={handrail} name='oculus-continuous-handrail'><meshStandardNodeMaterial color='#7c898c' metalness={0.85} roughness={0.25} /></mesh>
-    {path.segments.map((segment, i) => <CapsuleCollider args={[segment.halfLength, path.radius]} key={i} position={segment.position} quaternion={segment.rotation} />)}
+    {path.segments.map((segment, i) => <CapsuleCollider key={i} args={[segment.halfLength, path.radius]} position={segment.position} quaternion={segment.rotation} />)}
     {path.posts.map((post, i) => <group key={i} position={post.position}>
       <CuboidCollider args={[path.postRadius, post.height / 2, path.postRadius]} />
       <mesh castShadow name='oculus-railing-post'><cylinderGeometry args={[path.postRadius, path.postRadius, post.height, 12]} /><meshStandardNodeMaterial color='#7c898c' metalness={0.85} roughness={0.25} /></mesh>
     </group>)}
-    {[0, 1].map(t => <mesh castShadow key={t} position={path.getPoint(t)}><sphereGeometry args={[path.radius, 12, 8]} /><meshStandardNodeMaterial color='#7c898c' metalness={0.85} roughness={0.25} /></mesh>)}
+    {[0, 1].map(t => <mesh key={t} castShadow position={path.getPoint(t)}><sphereGeometry args={[path.radius, 12, 8]} /><meshStandardNodeMaterial color='#7c898c' metalness={0.85} roughness={0.25} /></mesh>)}
   </RigidBody>
 }

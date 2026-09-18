@@ -36,7 +36,7 @@ export default function CoveredPassage({passage, material, timber, ribCutouts}: 
         <CuboidCollider args={[width / 2, 0.12, depth / 2]} position={[x, passage.floorY + passage.height + 0.12, z]} />
         <Box material={material} position={[x, passage.floorY + passage.height + 0.12, z]} size={[width, 0.24, depth]} />
       </group>)}
-      <Branch not={timber}>{collision.map((args, i) => <TrimeshCollider args={args} key={i} />)}</Branch>
+      <Branch not={timber}>{collision.map((args, i) => <TrimeshCollider key={i} args={args} />)}</Branch>
       {timber ? <TimberFrame geometry={geometry} lining={material} material={timber} /> : <>
         <mesh castShadow geometry={geometry.shell} material={material} name='castle-barrel-vault' receiveShadow />
         <mesh castShadow geometry={geometry.ribs} material={material} name='castle-vault-ribs' receiveShadow />

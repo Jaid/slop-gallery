@@ -98,5 +98,5 @@ export default function Player() {
       }
     }
   }
-  return <EgoPlayer cameraEnabled={cameraEnabled} enabled={enabled} fallbackPosition={playerSpawn.position} input={input} onDump={recordPlayerDump} onInput={markControlled} onInteract={onInteract} onLand={onPlayerLand} onStep={onPlayerStep} onUpdate={onUpdate} onZoomChange={onPlayerZoomChange} onZoomTransition={onPlayerZoomTransition} pitch={initial.pitch} pointerLock={pointerLock} position={initial.position} ref={player} yaw={initial.yaw} />
+  return <EgoPlayer cameraEnabled={cameraEnabled} enabled={enabled} fallbackPosition={playerSpawn.position} input={input} pitch={initial.pitch} pointerLock={pointerLock} position={initial.position} yaw={initial.yaw} ref={player} onDump={recordPlayerDump} onInput={markControlled} onInteract={onInteract} onLand={onPlayerLand} onStep={onPlayerStep} onUpdate={onUpdate} onZoomChange={onPlayerZoomChange} onZoomTransition={onPlayerZoomTransition} />
 }

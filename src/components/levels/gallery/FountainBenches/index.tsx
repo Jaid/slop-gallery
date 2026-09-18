@@ -27,9 +27,9 @@ export default function FountainBenches({wood}: {wood: Texture}) {
   }, [geometry, timber, metal])
   const {width, height, depth} = fountainBench
   return <group name='lobby-fountain-benches'>
-    {fountainBenches.map((pose, i) => <RigidBody colliders={false} key={i} type='fixed' {...pose}>
+    {fountainBenches.map((pose, i) => <RigidBody key={i} colliders={false} type='fixed' {...pose}>
       <CuboidCollider args={[width / 2, 0.0425, depth / 2]} position={[0, height - 0.0425, 0]} />
-      {[-1.04, 1.04].flatMap(x => [-1, 1].map(side => <CuboidCollider args={[0.0425, (height - 0.1) / 2, 0.025]} key={`${x}:${side}`} position={[x, (height - 0.1) / 2, side * (depth / 2 - 0.075)]} />))}
+      {[-1.04, 1.04].flatMap(x => [-1, 1].map(side => <CuboidCollider key={`${x}:${side}`} args={[0.0425, (height - 0.1) / 2, 0.025]} position={[x, (height - 0.1) / 2, side * (depth / 2 - 0.075)]} />))}
       <mesh castShadow geometry={geometry.wood} material={timber} name='lobby-bench-teak-slats' receiveShadow />
       <mesh castShadow geometry={geometry.metal} material={metal} name='lobby-bench-brushed-frame' receiveShadow />
     </RigidBody>)}

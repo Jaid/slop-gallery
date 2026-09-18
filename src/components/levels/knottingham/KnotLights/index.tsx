@@ -79,11 +79,11 @@ function KnotLightSystem() {
     {quality && emitters.map(light => <primitive key={light.name} object={light} />)}
     <RigidBody colliders={false} type='fixed'>
       {slots.map((slot, index) => <group key={slot.id} position={slot.position}>
-        <CuboidCollider args={[knotLightHousingSize[0] / 2, knotLightHousingSize[1] / 2, knotLightHousingSize[2] / 2]} friction={0.6} position={[0, knotLightHousingY, 0]} ref={collider => impacts.register(collider, index)} restitution={0.08} />
-        {!broken.has(index) && <CuboidCollider args={[knotLightDiffuserSize[0] / 2, knotLightDiffuserSize[1] / 2, knotLightDiffuserSize[2] / 2]} contactSkin={knotLightDiffuserContactSkin} position={[0, knotLightDiffuserY, 0]} ref={collider => impacts.register(collider, index)} restitution={0.08} />}
+        <CuboidCollider args={[knotLightHousingSize[0] / 2, knotLightHousingSize[1] / 2, knotLightHousingSize[2] / 2]} friction={0.6} position={[0, knotLightHousingY, 0]} restitution={0.08} ref={collider => impacts.register(collider, index)} />
+        {!broken.has(index) && <CuboidCollider args={[knotLightDiffuserSize[0] / 2, knotLightDiffuserSize[1] / 2, knotLightDiffuserSize[2] / 2]} contactSkin={knotLightDiffuserContactSkin} position={[0, knotLightDiffuserY, 0]} restitution={0.08} ref={collider => impacts.register(collider, index)} />}
       </group>)}
     </RigidBody>
-    {slots.map((slot, index) => broken.has(index) && <RigidBody angularDamping={0.4} ccd colliders={false} key={slot.id} position={[slot.position[0], slot.position[1] + knotLightDiffuserY, slot.position[2]]}>
+    {slots.map((slot, index) => broken.has(index) && <RigidBody key={slot.id} angularDamping={0.4} ccd colliders={false} position={[slot.position[0], slot.position[1] + knotLightDiffuserY, slot.position[2]]}>
       <CuboidCollider args={[knotLightDiffuserSize[0] / 2, knotLightDiffuserSize[1] / 2, knotLightDiffuserSize[2] / 2]} contactSkin={knotLightDiffuserContactSkin} friction={0.7} mass={0.35} restitution={0.1} />
       <mesh castShadow dispose={null} geometry={panels.diffuserGeometry} material={panels.debrisMaterial} name={`knot-led-fallen-diffuser-${slot.id}`} receiveShadow />
     </RigidBody>)}

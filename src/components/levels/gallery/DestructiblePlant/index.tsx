@@ -45,7 +45,7 @@ export default function DestructiblePlant({id, kind, pot, position, rotation = 0
     }}
   >
     <GrabbableProp
-      colliders={false} id={`${id}-pot`} position={[0, center, 0]} title='A pot with nothing left to lose' type='fixed' {...potPhysics}
+      id={`${id}-pot`} colliders={false} position={[0, center, 0]} title='A pot with nothing left to lose' type='fixed' {...potPhysics}
       blockedMessage={() => {
         return rooted ? 'Remove all leaves, then uproot the plant before picking up this pot.' : `Pluck all foliage before picking up this pot (${attachments.remaining} remaining).`
       }}
@@ -59,14 +59,14 @@ export default function DestructiblePlant({id, kind, pot, position, rotation = 0
         <Branch if={pot === 'noir'}><CylinderCollider args={[0.065, 0.24]} mass={0.3} position={[0, 0.065, 0]} /></Branch>
         <Branch not={rooted}><group position={[0, definition.soilHeight, 0]}>
           <mesh castShadow geometry={geometry.stems} material={resources[geometry.stemMaterial]} name='remaining-stems' receiveShadow />
-          {geometry.stemColliders.map((collider, i) => <ConvexHullCollider args={[collider.vertices]} key={i} mass={collider.mass} ref={initializeFoliageCollider} />)}
+          {geometry.stemColliders.map((collider, i) => <ConvexHullCollider key={i} args={[collider.vertices]} mass={collider.mass} ref={initializeFoliageCollider} />)}
         </group></Branch>
       </group>
     </GrabbableProp>
     {/* Loose leaves remain siblings of the pot, so moving it never drags them along. */}
     <group position={[0, definition.soilHeight, 0]}>
-      <Branch if={rooted}><Root attachments={attachments as RootedPlantAttachment} geometry={geometry} id={id} /></Branch>
-      {geometry.leaves.map(leaf => <Leaf anchorId={`${id}-pot`} attachments={attachments} foliageMaterial={geometry.foliageMaterial} id={`${id}-${leaf.id}`} key={leaf.id} leaf={leaf} />)}
+      <Branch if={rooted}><Root id={id} attachments={attachments as RootedPlantAttachment} geometry={geometry} /></Branch>
+      {geometry.leaves.map(leaf => <Leaf key={leaf.id} id={`${id}-${leaf.id}`} anchorId={`${id}-pot`} attachments={attachments} foliageMaterial={geometry.foliageMaterial} leaf={leaf} />)}
     </group>
   </group>
 }

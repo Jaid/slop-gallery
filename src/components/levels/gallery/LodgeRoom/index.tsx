@@ -17,16 +17,16 @@ export default function LodgeRoom({wood, stone}: {
       <CuboidCollider args={[width / 2, 0.12, depth / 2]} position={[0, lodge.height + 0.12, 0]} />
       <Box color='#765036' envMapIntensity={0.2} map={wood} position={[0, -0.15, 0]} roughness={0.86} size={[width, 0.3, depth]} />
       <Box color='#513a29' map={wood} position={[0, lodge.height + 0.12, 0]} size={[width, 0.24, depth]} />
-      {[-3.5, 0, 3.5].map(z => <Box color='#302319' key={z} map={wood} position={[0, lodge.height - 0.16, z]} size={[width, 0.32, 0.3]} />)}
+      {[-3.5, 0, 3.5].map(z => <Box key={z} color='#302319' map={wood} position={[0, lodge.height - 0.16, z]} size={[width, 0.32, 0.3]} />)}
     </RigidBody>
     <RigidBody colliders='cuboid' type='fixed'>
       <group position={[-3.7, 0, 1.5]} rotation={[0, Math.PI / 2, 0]}>
         <BenchSeat position={[0, 0.52, 0]} size={[3.3, 0.23, 0.85]} />
-        {[-1.2, 1.2].map(x => <Box color='#37291d' key={x} position={[x, 0.21, 0]} size={[0.22, 0.42, 0.65]} />)}
+        {[-1.2, 1.2].map(x => <Box key={x} color='#37291d' position={[x, 0.21, 0]} size={[0.22, 0.42, 0.65]} />)}
         <Box color='#60432c' map={wood} position={[0, 0.95, -0.36]} size={[3.3, 0.52, 0.13]} />
       </group>
       <Box color='#65432b' map={wood} position={[0, 0.7, -1.3]} size={[2.5, 0.25, 1.05]} />
-      {[-0.95, 0.95].map(x => <Box color='#342319' key={x} position={[x, 0.3, -1.3]} size={[0.18, 0.6, 0.75]} />)}
+      {[-0.95, 0.95].map(x => <Box key={x} color='#342319' position={[x, 0.3, -1.3]} size={[0.18, 0.6, 0.75]} />)}
     </RigidBody>
     <group name='lodge-fireplace' rotation={[0, Math.PI, 0]}>
       <RigidBody colliders='cuboid' type='fixed'>
@@ -35,7 +35,7 @@ export default function LodgeRoom({wood, stone}: {
         <Box material={stone} position={[0, 2.1, -4.35]} size={[3.8, 0.4, 1.1]} />
         <Box material={stone} position={[0, 3, -4.62]} size={[3, 1.6, 0.18]} />
         <Box color='#120e0b' position={[0, 0.95, -4.7]} size={[2.3, 1.5, 0.06]} />
-        {[-0.27, 0.27].map(z => <mesh castShadow key={z} position={[0, 0.42, -4.2 + z]} rotation={[0, 0, Math.PI / 2]}>
+        {[-0.27, 0.27].map(z => <mesh key={z} castShadow position={[0, 0.42, -4.2 + z]} rotation={[0, 0, Math.PI / 2]}>
           <cylinderGeometry args={[0.15, 0.18, 1.65, 12]} /><meshStandardNodeMaterial color='#352015' roughness={1} />
         </mesh>)}
       </RigidBody>

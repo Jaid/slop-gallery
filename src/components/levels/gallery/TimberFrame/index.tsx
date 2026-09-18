@@ -13,7 +13,7 @@ export default function TimberFrame({geometry, material, lining}: {
 }) {
   const collision = [geometry.shell, geometry.ribs].map(colliderGeometry)
   return <>
-    {collision.map((args, i) => <TrimeshCollider args={args} key={i} />)}
+    {collision.map((args, i) => <TrimeshCollider key={i} args={args} />)}
     <mesh castShadow geometry={geometry.shell} material={lining} name='timber-plank-shell' receiveShadow />
     <mesh castShadow geometry={geometry.ribs} material={material} name='timber-faceted-portals' receiveShadow />
   </>

@@ -22,14 +22,14 @@ export default function Chandelier() {
     geometry.dispose()
   }, [brass, geometry])
   return <group name='sienna-chandelier' position={[0, chandelierPhysics.height, 0]}>
-    <RigidBody colliders={false} position={chandelierPhysics.anchor} ref={anchor} type='fixed' />
+    <RigidBody colliders={false} position={chandelierPhysics.anchor} type='fixed' ref={anchor} />
     <mesh castShadow geometry={geometry.canopy} material={brass} name='chandelier-canopy' />
     <RigidBody additionalSolverIterations={8} angularDamping={chandelierPhysics.angularDamping} canSleep={false} ccd colliders={false} linearDamping={chandelierPhysics.linearDamping} ref={fixture}>
       <BallCollider args={[0.21]} mass={chandelierPhysics.hubMass} />
       <BallCollider args={[0.12]} mass={chandelierPhysics.pendantMass} position={[0, -0.38, 0]} />
       <CylinderCollider args={[chandelierStemHalfHeight, 0.022]} mass={chandelierPhysics.stemMass} position={[0, chandelierStemCenter, 0]} />
-      {geometry.armColliders.map((vertices, i) => <ConvexHullCollider args={[vertices]} key={i} mass={chandelierPhysics.armMass} restitution={0.15} />)}
-      {geometry.ringColliders.map((vertices, i) => <ConvexHullCollider args={[vertices]} key={`ring-${i}`} mass={chandelierPhysics.ringMass} restitution={0.15} />)}
+      {geometry.armColliders.map((vertices, i) => <ConvexHullCollider key={i} args={[vertices]} mass={chandelierPhysics.armMass} restitution={0.15} />)}
+      {geometry.ringColliders.map((vertices, i) => <ConvexHullCollider key={`ring-${i}`} args={[vertices]} mass={chandelierPhysics.ringMass} restitution={0.15} />)}
       <mesh castShadow geometry={geometry.brass} name='chandelier-brass'><primitive attach='material' object={brass} /></mesh>
       <mesh castShadow geometry={geometry.candles} name='chandelier-candles'><meshStandardNodeMaterial color='#e7c991' roughness={0.65} /></mesh>
       <mesh geometry={geometry.flames} name='chandelier-flames'><meshStandardNodeMaterial color='#fff0b6' emissive='#ffd36c' emissiveIntensity={4} toneMapped={false} /></mesh>

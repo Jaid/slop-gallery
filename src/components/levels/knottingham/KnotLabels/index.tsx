@@ -139,13 +139,13 @@ export default function KnotLabels() {
   return <>
     <primitive object={resources.faces} />
     <primitive object={resources.supports}><primitive attach='material' object={supportMaterial} /></primitive>
-    {knotExhibition.map(exhibit => <GrabbableProp angularDamping={0.15} colliders={false} friction={0.9} id={knotSignId(exhibit.id)} key={exhibit.id} linearDamping={0.1} position={knotSignPosition(exhibit)} restitution={0.1} rotation={[0, exhibit.rotation + knotSign.inwardRotation, 0]} title={`${exhibit.title} · nameplate`} type='dynamic'>
+    {knotExhibition.map(exhibit => <GrabbableProp key={exhibit.id} id={knotSignId(exhibit.id)} angularDamping={0.15} colliders={false} friction={0.9} linearDamping={0.1} position={knotSignPosition(exhibit)} restitution={0.1} rotation={[0, exhibit.rotation + knotSign.inwardRotation, 0]} title={`${exhibit.title} · nameplate`} type='dynamic'>
       {/* Raycast-only copy; visible geometry remains instanced. */}
       <InteractiveObject id={knotSignId(exhibit.id)} onActivate={() => activateKnotSign(exhibit)}>
         <mesh dispose={null} geometry={resources.supports.geometry} material={supportMaterial} visible={false} />
       </InteractiveObject>
-      {knotSignParts.map(({position, rotation, size}, index) => <CuboidCollider args={[size[0] / 2, size[1] / 2, size[2] / 2]} key={index} mass={knotSign.plateMass} position={position} rotation={rotation} />)}
-      {knotSignRoundParts.map(({position, rotation, radius, height: partHeight, mass}, index) => <CylinderCollider args={[partHeight / 2, radius]} key={index} mass={mass} position={position} rotation={rotation} />)}
+      {knotSignParts.map(({position, rotation, size}, index) => <CuboidCollider key={index} args={[size[0] / 2, size[1] / 2, size[2] / 2]} mass={knotSign.plateMass} position={position} rotation={rotation} />)}
+      {knotSignRoundParts.map(({position, rotation, radius, height: partHeight, mass}, index) => <CylinderCollider key={index} args={[partHeight / 2, radius]} mass={mass} position={position} rotation={rotation} />)}
     </GrabbableProp>)}
   </>
 }

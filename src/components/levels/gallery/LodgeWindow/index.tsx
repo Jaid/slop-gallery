@@ -16,7 +16,7 @@ export default function LodgeWindow({glass, material}: {
   useEffect(() => () => geometry.dispose(), [geometry])
   return <group name='lodge-tunnel-window'>
     <RigidBody colliders={false} type='fixed'>
-      {collision.map((args, i) => <MeshSurfaceCollider args={args} key={i} />)}
+      {collision.map((args, i) => <MeshSurfaceCollider key={i} args={args} />)}
       <mesh castShadow geometry={geometry.lining} material={material} name='lodge-window-reveal' receiveShadow />
       <mesh geometry={geometry.glass} material={glass} name='lodge-window-tunnel-glass' />
       <mesh castShadow geometry={geometry.frame} name='lodge-window-glazing-stop' receiveShadow>

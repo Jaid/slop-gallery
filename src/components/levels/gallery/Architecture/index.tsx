@@ -87,9 +87,9 @@ export default function Architecture() {
       {(room.id === 'antechamber' ? [0] : Array.from({length: room.size[1] / 4 - 1}, (_, i) => i * 4 - room.size[1] / 2 + 4)).map(z => <group key={z}>
         <Box color='#a29982' position={[0, 5.6, z]} size={[room.size[0] * 0.48, 0.1, 2.6]} />
         <mesh position={[0, 5.54, z]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[room.size[0] * 0.48 - 0.1, 2.45]} /><meshBasicNodeMaterial color={room.id === 'dine' ? '#efe6ff' : '#fff3d8'} /></mesh>
-        {[-1, 0, 1].map(x => <Box color='#c0b7a1' key={x} position={[x * room.size[0] * 0.12, 5.5, z]} size={[0.045, 0.12, 2.5]} />)}
+        {[-1, 0, 1].map(x => <Box key={x} color='#c0b7a1' position={[x * room.size[0] * 0.12, 5.5, z]} size={[0.045, 0.12, 2.5]} />)}
       </group>)}
-      {(pointLightPositions[room.id] ?? [-3.5, 3.5]).map(z => <pointLight castShadow={room.id === 'lobby' && z === -8} color={room.id === 'dine' ? '#eee3ff' : '#fff1d8'} decay={2} distance={room.id === 'lobby' && z === -8 ? 22 : 14} intensity={room.id === 'vesper' ? 40 : 32} key={z} position={[0, 4.9, z]} shadow-mapSize={[1024, 1024]} shadow-normalBias={0.03} />)}
+      {(pointLightPositions[room.id] ?? [-3.5, 3.5]).map(z => <pointLight key={z} castShadow={room.id === 'lobby' && z === -8} color={room.id === 'dine' ? '#eee3ff' : '#fff1d8'} decay={2} distance={room.id === 'lobby' && z === -8 ? 22 : 14} intensity={room.id === 'vesper' ? 40 : 32} position={[0, 4.9, z]} shadow-mapSize={[1024, 1024]} shadow-normalBias={0.03} />)}
     </group>)}
     <PottedPlants />
     <Fountain />

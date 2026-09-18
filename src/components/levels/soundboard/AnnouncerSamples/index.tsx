@@ -62,8 +62,8 @@ function AnnouncerSamples({position, rotationY}: {
 }) {
   return <group name='soundboard-announcer-samples' position={position} rotation={[0, rotationY, 0]}>
     <CanvasText color='#e6dcff' fontSize={0.62} fontWeight={750} height={0.58} position={[0, soundboardBounds.height - 0.62, 0.16]} text={`ANNOUNCER SAMPLES · ${announcerSamples.length}`} width={6.8} />
-    {announcerSamples.map((sample, index) => <AnnouncerButton index={index} key={sample.id} sample={sample} />)}
-    {announcerPriorityDemos.map(({priority, sample, title}, index) => <AnnouncerButton index={index} key={priority} priority={priority} priorityDemo sample={sample} title={title} />)}
+    {announcerSamples.map((sample, index) => <AnnouncerButton key={sample.id} index={index} sample={sample} />)}
+    {announcerPriorityDemos.map(({priority, sample, title}, index) => <AnnouncerButton key={priority} index={index} priority={priority} priorityDemo sample={sample} title={title} />)}
   </group>
 }
 

@@ -76,5 +76,5 @@ export default function NarrationBars({instanceId, status, statusEndsAt}: Props)
     }
   }, [instanceId, status, statusEndsAt])
   const idle = status === 'before' || status === 'preparing'
-  return <span aria-hidden='true' className={css.container} data-testid='audio-bars' ref={container}>{narrationBands.map(([minimum]) => <i key={minimum} style={idle ? idleBarStyle : undefined} />)}</span>
+  return <span className={css.container} aria-hidden='true' data-testid='audio-bars' ref={container}>{narrationBands.map(([minimum]) => <i key={minimum} style={idle ? idleBarStyle : undefined} />)}</span>
 }

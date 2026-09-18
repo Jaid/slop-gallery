@@ -16,17 +16,17 @@ export default function DestructiblePlantRoot({id, geometry, attachments}: {
   const resources = decorationResources()
   const center = geometry.stems.boundingBox!.getCenter(new Vector3)
   return <GrabbableProp
-    angularDamping={0.4} attachmentBody={() => propObjects.get(`${id}-pot`)?.body} blockedMessage={() => `Rip off all leaves before uprooting this plant (${attachments.remaining} remaining).`} canGrab={attachments.canGrabRoot} colliders={false}
+    id={`${id}-root`} angularDamping={0.4} attachmentBody={() => propObjects.get(`${id}-pot`)?.body} blockedMessage={() => `Rip off all leaves before uprooting this plant (${attachments.remaining} remaining).`} canGrab={attachments.canGrabRoot}
+    colliders={false}
     friction={0.8}
-    id={`${id}-root`}
     linearDamping={0.3}
-    onAttachmentChange={attachments.setRootAttached}
     position={center.toArray()}
-    recoverAsDynamic={attachments.recoverRootAsDynamic} restitution={0.15} title='The plant’s root and stalks' type='fixed'
+    recoverAsDynamic={attachments.recoverRootAsDynamic}
+    restitution={0.15} title='The plant’s root and stalks' type='fixed' onAttachmentChange={attachments.setRootAttached}
   >
     <group position={[-center.x, -center.y, -center.z]}>
       <mesh castShadow geometry={geometry.stems} material={resources[geometry.stemMaterial]} name='uprootable-trunk' receiveShadow />
-      {geometry.stemColliders.map((collider, i) => <ConvexHullCollider args={[collider.vertices]} key={i} mass={collider.mass} ref={initializeFoliageCollider} />)}
+      {geometry.stemColliders.map((collider, i) => <ConvexHullCollider key={i} args={[collider.vertices]} mass={collider.mass} ref={initializeFoliageCollider} />)}
     </group>
   </GrabbableProp>
 }

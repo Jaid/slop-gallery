@@ -32,10 +32,10 @@ export default function KnotExhibition() {
     <KnotLabels />
     {knotExhibition.map((finish, index) => {
       const {geometry, colliderArgs, colliderPosition} = resources.items[index]
-      return <GrabbableProp colliders={false} id={`prop-knot-${finish.id}`} key={finish.id} position={[finish.position[0], knotFloatHeight, finish.position[2]]} rotation={[0, finish.rotation, 0]} title={`${finish.label} · ${finish.title} · ${finish.modelTitle}`} type='fixed'>
+      return <GrabbableProp key={finish.id} id={`prop-knot-${finish.id}`} colliders={false} position={[finish.position[0], knotFloatHeight, finish.position[2]]} rotation={[0, finish.rotation, 0]} title={`${finish.label} · ${finish.title} · ${finish.modelTitle}`} type='fixed'>
         <CuboidCollider args={colliderArgs} position={colliderPosition} />
         <InteractiveObject id={`prop-knot-${finish.id}`} onActivate={() => narrateModel(`prop-knot-${finish.id}`)}>
-          <mesh castShadow material={materials.placeholderMaterials[index]} name={`knot-${finish.id}`} onBeforeRender={materials.observers[index]} raycast={resources.raycast} receiveShadow ref={materials.refs[index]}>
+          <mesh castShadow material={materials.placeholderMaterials[index]} name={`knot-${finish.id}`} raycast={resources.raycast} receiveShadow ref={materials.refs[index]} onBeforeRender={materials.observers[index]}>
             <primitive attach='geometry' object={geometry} />
           </mesh>
         </InteractiveObject>

@@ -31,7 +31,7 @@ export default function MoonfallCrater({stone}: {stone: Texture}) {
   }, [geometry, fence, rock, terrain, bronze])
   return <group name='moonfall-impact-crater'>
     <RigidBody colliders={false} type='fixed'>
-      {collision.map((args, i) => <MeshSurfaceCollider args={args} key={i} />)}
+      {collision.map((args, i) => <MeshSurfaceCollider key={i} args={args} />)}
       <mesh castShadow geometry={geometry.floor} name='moonfall-slate-floor' receiveShadow>
         <meshStandardNodeMaterial color='#24373d' envMapIntensity={0.08} map={stone} roughness={0.9} />
       </mesh>

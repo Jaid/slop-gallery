@@ -9,7 +9,7 @@ export default function KnotGalleryMap({css}: {css: Record<string, string>}) {
     <p className={css.intro}>{knotExhibition.length} floating Knots · {knotBays.length} candidate rows. Select a candidate to visit its display. </p>
     <KnotStudyMap />
     <div className={css.rooms}>{knotBays.map(bay => <button
-      disabled={!ready} key={bay.candidate.id} onClick={() => {
+      key={bay.candidate.id} disabled={!ready} onClick={() => {
         openPanel(null)
         galleryEvents.dispatchEvent(new CustomEvent('teleport', {
           detail: {

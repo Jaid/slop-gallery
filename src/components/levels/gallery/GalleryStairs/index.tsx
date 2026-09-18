@@ -59,7 +59,7 @@ export default function GalleryStairs() {
     </RigidBody>
     {stairFlights.flatMap(flight => [3, 10, 17].map(index => {
       const step = flight.blocks[index]
-      return <pointLight color='#8ad6cd' decay={2} distance={3} intensity={2} key={flight.id + index} position={[step.position[0], step.top + 0.65, step.position[2]]} />
+      return <pointLight key={flight.id + index} color='#8ad6cd' decay={2} distance={3} intensity={2} position={[step.position[0], step.top + 0.65, step.position[2]]} />
     }))}
     <pointLight color='#8ad6cd' decay={2} distance={5} intensity={4} position={[stairTurn.position[0], stairTurn.top + 2.8, stairTurn.position[2]]} />
   </group>

@@ -18,7 +18,7 @@ export default function Support({width, height}: {
   useEffect(() => () => material.dispose(), [material])
   return <RigidBody colliders={false} name='billboard-support' type='fixed'>
     {parts.map(({position, rotation, size}, index) => <group key={index} position={position} rotation={rotation}>
-      <Branch else={<Box material={material} size={size} />} if={index === 0}><mesh castShadow geometry={panel} material={material} receiveShadow /></Branch>
+      <Branch if={index === 0} else={<Box material={material} size={size} />}><mesh castShadow geometry={panel} material={material} receiveShadow /></Branch>
       <CuboidCollider args={[size[0] / 2, size[1] / 2, size[2] / 2]} />
     </group>)}
   </RigidBody>

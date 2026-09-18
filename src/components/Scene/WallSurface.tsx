@@ -39,14 +39,14 @@ export default function WallSurface({wall, plaster, material, surfaceMaterial, s
     }}
   >
     <RigidBody colliders={false} type='fixed'>
-      {geometry.collision.map((args, i) => <TrimeshCollider args={args} key={i} />)}
+      {geometry.collision.map((args, i) => <TrimeshCollider key={i} args={args} />)}
       <mesh castShadow material={surfaceMaterial ?? material} name={`wall-${wall.id}`} receiveShadow><primitive attach='geometry' object={geometry.surface} /><Branch not={surfaceMaterial ?? material}><meshStandardNodeMaterial color={color} envMapIntensity={surfaceRoom === 'moonfall' ? 0.08 : 1} map={plaster} roughness={surfaceRoom === 'sienna' ? 0.86 : 0.9} /></Branch></mesh>
-      {geometry.trim.map((part, i) => <mesh castShadow key={i} material={material} receiveShadow><primitive attach='geometry' object={part} /><Branch not={material}><meshStandardNodeMaterial color={trim} roughness={0.6} /></Branch></mesh>)}
-      {geometry.glazing.map((part, i) => <mesh geometry={part} key={i} name={`glass-${wall.id}`}>
+      {geometry.trim.map((part, i) => <mesh key={i} castShadow material={material} receiveShadow><primitive attach='geometry' object={part} /><Branch not={material}><meshStandardNodeMaterial color={trim} roughness={0.6} /></Branch></mesh>)}
+      {geometry.glazing.map((part, i) => <mesh key={i} geometry={part} name={`glass-${wall.id}`}>
         <meshStandardNodeMaterial color='#b7d8d9' depthWrite={false} metalness={0.1} opacity={0.16} roughness={0.16} transparent />
       </mesh>)}
     </RigidBody>
-    {geometry.cornice.map((part, i) => <mesh castShadow geometry={part} key={i} material={material} receiveShadow><Branch not={material}><meshStandardNodeMaterial color={trim} roughness={0.6} /></Branch></mesh>)}
+    {geometry.cornice.map((part, i) => <mesh key={i} castShadow geometry={part} material={material} receiveShadow><Branch not={material}><meshStandardNodeMaterial color={trim} roughness={0.6} /></Branch></mesh>)}
     <WallDecorations material={material} trim={trim} wall={wall} />
   </group>
 }

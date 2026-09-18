@@ -38,12 +38,12 @@ export default function MinimapLevel({lower}: {lower: boolean}) {
     update()
     return () => cancelAnimationFrame(frame)
   }, [lower, portraits])
-  return <svg aria-label={lower ? 'Lower gallery minimap' : 'Upper gallery minimap'} className={css.container} role='img' viewBox={minimapViewBox}>
+  return <svg className={css.container} aria-label={lower ? 'Lower gallery minimap' : 'Upper gallery minimap'} role='img' viewBox={minimapViewBox}>
     <g className={css.walls}>{minimapWalls.filter(wall => wall.lower === lower).map((wall, i) => <polyline key={i} points={wall.path} />)}</g>
     <g className={css.portraits}>{portraits.map(portrait => {
       const marker = minimapPortrait(portrait)
       return <circle
-        cx={marker.position[0]} cy={marker.position[2]} data-portrait={portrait.id} display={!portrait.reserved && marker.lower === lower ? 'inline' : 'none'} key={portrait.id} r='0.6' ref={element => {
+        key={portrait.id} cx={marker.position[0]} cy={marker.position[2]} data-portrait={portrait.id} display={!portrait.reserved && marker.lower === lower ? 'inline' : 'none'} r='0.6' ref={element => {
           if (element) {
             dots.current.set(portrait.id, element)
           } else {
@@ -52,6 +52,6 @@ export default function MinimapLevel({lower}: {lower: boolean}) {
         }}
       />
     })}</g>
-    <path aria-label='Your position' className={css.player} d='M 0 -2.4 L 1.35 1.5 L 0 0.85 L -1.35 1.5 Z' display={isLowerRoom(current) === lower ? 'inline' : 'none'} ref={player} transform={`translate(${cameraPose.position[0]} ${cameraPose.position[2]}) rotate(${minimapHeading(cameraPose.direction)})`} />
+    <path className={css.player} aria-label='Your position' d='M 0 -2.4 L 1.35 1.5 L 0 0.85 L -1.35 1.5 Z' display={isLowerRoom(current) === lower ? 'inline' : 'none'} transform={`translate(${cameraPose.position[0]} ${cameraPose.position[2]}) rotate(${minimapHeading(cameraPose.direction)})`} ref={player} />
   </svg>
 }

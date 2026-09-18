@@ -17,5 +17,5 @@ export default function NarrationActivity({instanceId, status, statusEndsAt, sou
   } else if (source === 'browser') {
     title = 'Browser speech has no audio visualization.'
   }
-  return <span aria-hidden='true' className={css.container} data-testid='narration-static' title={title}><Icon name='sound' size={44} /></span>
+  return <span className={css.container} aria-hidden='true' data-testid='narration-static' title={title}><Icon name='sound' size={44} /></span>
 }

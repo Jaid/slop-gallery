@@ -20,7 +20,7 @@ export function usePedestal() {
 
 export default function Pedestal({position, geometry, material}: ReturnType<typeof usePedestal> & {position: Vec3}) {
   return <RigidBody colliders={false} position={position} type='fixed'>
-    {geometry.collision.map((args, i) => <TrimeshCollider args={args} key={i} />)}
+    {geometry.collision.map((args, i) => <TrimeshCollider key={i} args={args} />)}
     <mesh castShadow name='pedestal-stone' receiveShadow>
       <primitive attach='geometry' object={geometry.stone} />
       <primitive attach='material' object={material} />

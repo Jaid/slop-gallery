@@ -505,7 +505,7 @@ export default function Interaction() {
       ghost.current.rotation.set(0, candidate.rotation, 0)
     }
   })
-  return <group ref={ghost} visible={false}>
-    <Branch if={isGallery} not={held?.startsWith('prop-')} some={[artwork, dragging]}><PlacementPreview creator={artwork?.creator} height={artwork?.height ?? 2.4} key={artwork?.id ?? 'import'} pending={artwork?.pending} source={artwork?.source} title={artwork?.title} width={artwork?.width ?? 2.4} /></Branch>
+  return <group visible={false} ref={ghost}>
+    <Branch if={isGallery} some={[artwork, dragging]} not={held?.startsWith('prop-')}><PlacementPreview key={artwork?.id ?? 'import'} creator={artwork?.creator} height={artwork?.height ?? 2.4} pending={artwork?.pending} source={artwork?.source} title={artwork?.title} width={artwork?.width ?? 2.4} /></Branch>
   </group>
 }

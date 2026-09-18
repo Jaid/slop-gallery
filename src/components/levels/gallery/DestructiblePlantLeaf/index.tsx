@@ -18,10 +18,10 @@ export default function DestructiblePlantLeaf({id, leaf, attachments, anchorId, 
 }) {
   const resources = decorationResources()
   return <GrabbableProp
-    colliders={false} id={id} position={leaf.position} rotation={leaf.rotation} title={leaf.title} type='fixed' {...leafPhysics} attachmentBody={() => propObjects.get(anchorId)?.body}
+    id={id} colliders={false} position={leaf.position} rotation={leaf.rotation} title={leaf.title} type='fixed' {...leafPhysics} attachmentBody={() => propObjects.get(anchorId)?.body}
     mass={leaf.mass}
-    onAttachmentChange={attached => attachments.setLeafAttached(id, attached)}
     recoverAsDynamic={attachments.recoverLeafAsDynamic}
+    onAttachmentChange={attached => attachments.setLeafAttached(id, attached)}
   >
     <ConvexHullCollider args={[leaf.vertices]} mass={leaf.mass} ref={initializeFoliageCollider} />
     <mesh castShadow geometry={leaf.geometry} material={resources[foliageMaterial]} name='pluckable-blade' receiveShadow />

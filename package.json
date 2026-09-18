@@ -12,10 +12,10 @@
     "url": "git+https://github.com/Jaid/slop-gallery.git"
   },
   "imports": {
-    "#src/*": "./src/*",
-    "#root/*": "./*",
     "#component/*": "./src/components/*/index.tsx",
-    "#level/*": "./src/levels/gallery/*"
+    "#level/*": "./src/levels/gallery/*",
+    "#src/*": "./src/*",
+    "#root/*": "./*"
   },
   "scripts": {
     "build": "bun run vite build",
@@ -38,12 +38,14 @@
     "update:knots": "bun scripts/updateKnots.ts",
     "vite": "bun --bun node_modules/vite/dist/node/cli.js --configLoader native"
   },
+  "overrides": {
+    "@dimforge/rapier3d-compat": "0.20.0"
+  },
+  "patchedDependencies": {
+    "three@0.186.0": "patches/three@0.186.0.patch",
+    "three-bvh-csg@0.0.18": "patches/three-bvh-csg@0.0.18.patch"
+  },
   "dependencies": {
-    "@dimforge/rapier3d-compat": "0.20.0",
-    "@openrouter/ai-sdk-provider": "3.0.0",
-    "@react-three/drei": "11.0.0-alpha.7",
-    "@react-three/fiber": "10.0.0-alpha.5",
-    "@react-three/rapier": "2.2.0",
     "ai": "7.0.106",
     "branch-component": "0.4.0",
     "canvas-textures": "workspace:*",
@@ -79,17 +81,14 @@
     "vite-plugin-hoist-popular-constants": "workspace:*",
     "vite-plugin-thematic-chunks": "workspace:*",
     "webgpu-capture-bridge": "workspace:*",
-    "zustand": "5.0.15"
+    "zustand": "5.0.15",
+    "@dimforge/rapier3d-compat": "0.20.0",
+    "@openrouter/ai-sdk-provider": "3.0.0",
+    "@react-three/drei": "11.0.0-alpha.7",
+    "@react-three/fiber": "10.0.0-alpha.5",
+    "@react-three/rapier": "2.2.0"
   },
   "devDependencies": {
-    "@babel/core": "8.0.6",
-    "@rolldown/plugin-babel": "0.2.4",
-    "@types/bun": "1.4.2",
-    "@types/postcss-normalize": "9.0.4",
-    "@types/react": "19.3.0",
-    "@types/react-dom": "19.3.0",
-    "@types/three": "0.186.0",
-    "@vitejs/plugin-react": "6.1.1",
     "autoprefixer": "10.6.1",
     "babel-plugin-react-compiler": "1.0.0",
     "browserslist": "4.29.0",
@@ -114,14 +113,15 @@
     "vite-plugin-bake-three": "workspace:*",
     "vite-plugin-media-mixins": "0.10.0",
     "vite-plugin-title": "0.6.0",
-    "webmcp-types": "0.1.9"
-  },
-  "overrides": {
-    "@dimforge/rapier3d-compat": "0.20.0"
-  },
-  "patchedDependencies": {
-    "three-bvh-csg@0.0.18": "patches/three-bvh-csg@0.0.18.patch",
-    "three@0.186.0": "patches/three@0.186.0.patch"
+    "webmcp-types": "0.1.9",
+    "@babel/core": "8.0.6",
+    "@rolldown/plugin-babel": "0.2.4",
+    "@vitejs/plugin-react": "6.1.1",
+    "@types/bun": "1.4.2",
+    "@types/postcss-normalize": "9.0.4",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@types/three": "0.186.0"
   },
   "workspaces": [
     "packages/*",

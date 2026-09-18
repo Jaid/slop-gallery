@@ -12,7 +12,7 @@ export default function PottedPlant({id, pot, position}: PotPlacement) {
   const [plant] = useState(() => sample(pottedPlantKinds))
   const resetEpoch = useGallery(s => s.resetEpoch)
   if (plant === 'snake' || plant === 'calathea' || plant === 'birdOfParadise' || plant === 'peaceLily') {
-    return <DestructiblePlant id={id} key={resetEpoch} kind={plant} position={position} pot={pot} />
+    return <DestructiblePlant key={resetEpoch} id={id} kind={plant} position={position} pot={pot} />
   }
   return <group name={id}><PlantDecoration plant={plant} position={position} pot={pot} /></group>
 }

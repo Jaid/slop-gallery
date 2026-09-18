@@ -25,7 +25,7 @@ export default function MoonfallRoom({stone}: {stone: Texture}) {
       <CuboidCollider args={[width / 2, 0.15, depth / 2]} position={[0, 5.9, 0]} />
       <Box color='#0b141d' envMapIntensity={0} name='moonfall-ceiling' position={[0, 5.78, 0]} size={[width, 0.18, depth]} />
     </RigidBody>
-    {[-10, -6, -2, 2, 6, 10].map(x => <Box color='#16252d' envMapIntensity={0} key={x} position={[x, 5.5, 0]} size={[0.16, 0.4, depth]} />)}
+    {[-10, -6, -2, 2, 6, 10].map(x => <Box key={x} color='#16252d' envMapIntensity={0} position={[x, 5.5, 0]} size={[0.16, 0.4, depth]} />)}
     {moonfallWallFixtures.map(({side, lightX, lightZs}) => <group key={side}>
       <mesh position={[side * (width / 2 - 0.35), 0.012, 0]}><boxGeometry args={[0.025, 0.012, depth - 0.7]} /><meshBasicNodeMaterial color='#538e8a' toneMapped={false} /></mesh>
       <mesh position={[0, 0.012, side * (depth / 2 - 0.35)]}><boxGeometry args={[width - 0.7, 0.012, 0.025]} /><meshBasicNodeMaterial color='#538e8a' toneMapped={false} /></mesh>
