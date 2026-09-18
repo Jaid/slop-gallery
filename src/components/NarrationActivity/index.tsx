@@ -5,9 +5,9 @@ import NarrationBars from '#component/NarrationBars'
 
 import css from './style.module.sass'
 
-export default function NarrationActivity({status, source}: Pick<NarrationState, 'source' | 'status'>) {
+export default function NarrationActivity({instanceId, status, source}: Pick<NarrationState, 'instanceId' | 'source' | 'status'>) {
   if (source === 'audio' && status === 'playing') {
-    return <NarrationBars />
+    return <NarrationBars instanceId={instanceId} />
   }
   let title = 'Preparing narration…'
   if (status === 'before') {

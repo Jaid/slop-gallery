@@ -107,6 +107,7 @@ export default class Narrator implements Disposable {
     const immediate = typeof input === 'function' ? undefined : normalize(input)
     let metadata: NarrationMetadata = {
       id: options.id ?? crypto.randomUUID(),
+      instanceId: crypto.randomUUID(),
       title: options.title ?? immediate?.title ?? immediate?.text?.slice(0, 100) ?? 'Narration',
       text: immediate?.text,
       source: null,
@@ -157,7 +158,12 @@ export default class Narrator implements Disposable {
       try {
         const audio = 'audio' in reference ? reference.audio : await synthesize!(reference, signal)
         signal.throwIfAborted()
-        playback = await (this.options.createAudio ? this.options.createAudio(audio, signal) : audioFile<NarrationMetadata>(audio, this.options.audio)(context))
+        const narrationAudio = this.options.audio
+        const fileOptions = narrationAudio && {
+          ...narrationAudio,
+          connect: narrationAudio.connect ? (element: HTMLAudioElement) => narrationAudio.connect!(element, metadata.instanceId) : undefined,
+        }
+        playback = await (this.options.createAudio ? this.options.createAudio(audio, signal) : audioFile<NarrationMetadata>(audio, fileOptions)(context))
         if (signal.aborted) {
           void playback.finished.catch(() => {})
           playback.dispose()

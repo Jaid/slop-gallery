@@ -4,7 +4,7 @@ import {narrationBands, narrationMeter} from '#src/lib/audio/NarrationMeter.ts'
 
 import css from './style.module.sass'
 
-export default function NarrationBars() {
+export default function NarrationBars({instanceId}: {instanceId: string}) {
   const container = useRef<HTMLSpanElement>(null)
   useEffect(() => {
     const bars = [...container.current!.children] as Array<HTMLElement>
@@ -18,7 +18,7 @@ export default function NarrationBars() {
     const update = (time: number) => {
       if (time - last >= 80) {
         last = time
-        const levels = narrationMeter.read()
+        const levels = narrationMeter.read(instanceId)
         for (const [i, bar] of bars.entries()) {
           bar.style.transform = `scaleY(${Math.max(0.15, Math.min(1, levels[i] * 2.4))})`
         }
@@ -31,6 +31,6 @@ export default function NarrationBars() {
       cancelAnimationFrame(frame)
       reset()
     }
-  }, [])
+  }, [instanceId])
   return <span aria-hidden='true' className={css.container} data-testid='audio-bars' ref={container}>{narrationBands.map(([minimum]) => <i key={minimum} />)}</span>
 }

@@ -14,7 +14,7 @@ export const narrator = new Narrator({
   audio: {
     volume: 0.85,
     prepare: () => SoundEngine.get().resume(),
-    connect: audio => narrationMeter.connect(audio, SoundEngine.get().context),
+    connect: (audio, instanceId) => narrationMeter.connect(instanceId, audio, SoundEngine.get().context),
   },
   onError: error => notify(Error.isError(error) ? error.message : 'The narration could not be played.'),
   onFallback: () => notify('The recorded voice is unavailable. Using the browser voice instead.'),

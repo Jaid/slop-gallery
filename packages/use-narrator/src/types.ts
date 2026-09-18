@@ -25,6 +25,8 @@ export type NarrationInput = ((signal: AbortSignal) => NarrationReference | Prom
 export type SpeechSynthesizer = (speech: SpeechReference, signal: AbortSignal) => AudioReference | Promise<AudioReference>
 export type NarrationMetadata = {
   id: string
+  /** Unique per accepted narration instance; suitable for UI keys and per-playback instrumentation. */
+  instanceId: string
   source: 'audio' | 'browser' | null
   text?: string
   title: string
@@ -37,8 +39,11 @@ export type NarrationPushOptions = Omit<AudioPushOptions<NarrationMetadata>, 'me
   repeat?: boolean
   title?: string
 }
+export type NarratorAudioOptions = Omit<AudioFileOptions, 'connect'> & {
+  connect?: (audio: HTMLAudioElement, instanceId: string) => () => void
+}
 export type NarratorOptions = AudioQueueOptions & {
-  audio?: AudioFileOptions
+  audio?: NarratorAudioOptions
   /** Injectable transports keep the controller usable outside browsers and testable without sound. */
   createAudio?: (reference: AudioReference, signal: AbortSignal) => AudioPlayback | Promise<AudioPlayback>
   createSpeech?: (speech: SpeechReference, signal: AbortSignal) => AudioPlayback | Promise<AudioPlayback>

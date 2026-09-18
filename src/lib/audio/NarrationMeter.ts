@@ -1,3 +1,9 @@
+type Connection = {
+  analyser: AnalyserNode
+  audio: HTMLAudioElement
+  disconnect: () => void
+}
+
 export const narrationBands = [[20, 120], [120, 500], [500, 2000], [2000, 6000], [6000, 12_000]] as const
 
 /** RMS of the analyser’s normalized frequency magnitudes, grouped like the reference visualizer. */
@@ -15,17 +21,14 @@ export function frequencyLevels(frequencies: Uint8Array, sampleRate: number, fft
   return output
 }
 
-/** Analyses narration only. Suspended voices remain connected; concurrent voices are included. */
+/** Analyses narration only. Each narrator instance retains its own meter while async voices overlap. */
 export default class NarrationMeter {
   private readonly bands = new Float32Array(narrationBands.length)
-  private connections = new Set<{
-    analyser: AnalyserNode
-    audio: HTMLAudioElement
-  }>
+  private connections = new Map<string, Connection>
   private frequencies = new Uint8Array(1024)
   private readonly levels = new Float32Array(narrationBands.length)
 
-  connect(audio: HTMLAudioElement, context: AudioContext) {
+  connect(instanceId: string, audio: HTMLAudioElement, context: AudioContext) {
     const source = context.createMediaElementSource(audio)
     const analyser = context.createAnalyser()
     analyser.fftSize = 2048
@@ -37,31 +40,50 @@ export default class NarrationMeter {
     const connection = {
       audio,
       analyser,
+      disconnect: () => {
+        source.disconnect()
+        analyser.disconnect()
+      },
     }
-    this.connections.add(connection)
+    this.connections.get(instanceId)?.disconnect()
+    this.connections.set(instanceId, connection)
     return () => {
-      if (!this.connections.delete(connection)) {
+      if (this.connections.get(instanceId) !== connection) {
         return
       }
-      source.disconnect()
-      analyser.disconnect()
+      this.connections.delete(instanceId)
+      connection.disconnect()
     }
   }
 
-  read() {
+  read(instanceId?: string) {
     this.levels.fill(0)
-    for (const {audio, analyser} of this.connections) {
-      if (audio.paused || audio.ended || audio.muted || audio.volume === 0 || analyser.context.state !== 'running') {
-        continue
+    if (instanceId) {
+      const connection = this.connections.get(instanceId)
+      if (connection) {
+        this.measure(connection)
       }
-      analyser.getByteFrequencyData(this.frequencies)
-      frequencyLevels(this.frequencies, analyser.context.sampleRate, analyser.fftSize, this.bands)
-      // Show the strongest measured voice in each band, without fabricating levels for silent padding.
-      for (let band = 0; band < this.levels.length; band++) {
-        this.levels[band] = Math.max(this.levels[band], this.bands[band])
-      }
+      return this.levels
+    }
+    for (const connection of this.connections.values()) {
+      this.measure(connection, true)
     }
     return this.levels
+  }
+
+  private measure({audio, analyser}: Connection, merge = false) {
+    if (audio.paused || audio.ended || audio.muted || audio.volume === 0 || analyser.context.state !== 'running') {
+      return
+    }
+    analyser.getByteFrequencyData(this.frequencies)
+    frequencyLevels(this.frequencies, analyser.context.sampleRate, analyser.fftSize, this.bands)
+    if (!merge) {
+      this.levels.set(this.bands)
+      return
+    }
+    for (let band = 0; band < this.levels.length; band++) {
+      this.levels[band] = Math.max(this.levels[band], this.bands[band])
+    }
   }
 }
 

@@ -4,7 +4,7 @@ import {createElement} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
 
 import {FakeClock, FakePlayback, flush} from '../packages/use-audio-queue/test/helpers.ts'
-import useNarrator, {narrationState, Narrator} from '../src/main.ts'
+import useNarrator, {narrationState, narrationStates, Narrator} from '../src/main.ts'
 
 const setup = (options: ConstructorParameters<typeof Narrator>[0] = {}) => {
   const clock = new FakeClock
@@ -277,16 +277,24 @@ test('disabling narration clears both lanes and skips new requests until re-enab
   expect(players.at(-1)!.name).toBe('speech:Enabled')
   narrator.dispose()
 })
-test('concurrent-only narration remains visible, and foreground metadata takes precedence', async () => {
+test('concurrent narration exposes separate visible states while the singular projection keeps foreground precedence', async () => {
   const {narrator} = setup()
-  narrator.push('Parallel', {
+  narrator.push('Parallel one', {
     priority: 'async',
-    id: 'parallel',
+    id: 'parallel-one',
+  })
+  narrator.push('Parallel two', {
+    priority: 'async',
+    id: 'parallel-two',
   })
   await flush()
-  expect(narrationState(narrator.getSnapshot())?.id).toBe('parallel')
+  expect(narrationStates(narrator.getSnapshot()).map(state => state.id)).toEqual(['parallel-one', 'parallel-two'])
+  expect(narrationState(narrator.getSnapshot())?.id).toBe('parallel-two')
   narrator.push('Foreground', {id: 'foreground'})
   await flush()
+  const states = narrationStates(narrator.getSnapshot())
+  expect(states.map(state => state.id)).toEqual(['foreground', 'parallel-one', 'parallel-two'])
+  expect(new Set(states.map(state => state.instanceId)).size).toBe(3)
   expect(narrationState(narrator.getSnapshot())?.id).toBe('foreground')
   narrator.dispose()
 })

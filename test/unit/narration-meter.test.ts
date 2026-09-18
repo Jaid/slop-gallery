@@ -44,7 +44,7 @@ test('meter routes narration once, clears silence and protects newer connections
     muted: false,
     volume: 0.85,
   }
-  const connect = () => meter.connect(audio as HTMLAudioElement, context as unknown as AudioContext)
+  const connect = (instanceId = 'story') => meter.connect(instanceId, audio as HTMLAudioElement, context as unknown as AudioContext)
   expect([...meter.read()]).toEqual([0, 0, 0, 0, 0])
   const old = connect()
   expect(routes).toHaveLength(2)
@@ -55,22 +55,59 @@ test('meter routes narration once, clears silence and protects newer connections
     minDecibels: -90,
     maxDecibels: -10,
   })
-  expect(meter.read()[2]).toBeCloseTo(128 / 255)
+  expect(meter.read('story')[2]).toBeCloseTo(128 / 255)
   for (const property of ['paused', 'ended', 'muted'] as const) {
     audio[property] = true
-    expect([...meter.read()]).toEqual([0, 0, 0, 0, 0])
+    expect([...meter.read('story')]).toEqual([0, 0, 0, 0, 0])
     audio[property] = false
   }
   audio.volume = 0
-  expect([...meter.read()]).toEqual([0, 0, 0, 0, 0])
+  expect([...meter.read('story')]).toEqual([0, 0, 0, 0, 0])
   audio.volume = 0.85
   context.state = 'suspended'
-  expect([...meter.read()]).toEqual([0, 0, 0, 0, 0])
+  expect([...meter.read('story')]).toEqual([0, 0, 0, 0, 0])
   context.state = 'running'
   const latest = connect()
   old()
-  expect(meter.read()[2]).toBeCloseTo(128 / 255)
+  expect(meter.read('story')[2]).toBeCloseTo(128 / 255)
   latest()
-  expect([...meter.read()]).toEqual([0, 0, 0, 0, 0])
+  expect([...meter.read('story')]).toEqual([0, 0, 0, 0, 0])
   expect(disconnected).toBe(4)
+})
+test('meter keeps concurrent narration spectra independent by instance ID', () => {
+  let magnitude = 64
+  const context = {
+    state: 'running',
+    sampleRate: 48_000,
+    destination: {},
+    createMediaElementSource: () => ({
+      connect() {},
+      disconnect() {},
+    }),
+    createAnalyser: () => {
+      const level = magnitude
+      return {
+        context,
+        fftSize: 0,
+        connect() {},
+        disconnect() {},
+        getByteFrequencyData: (target: Uint8Array) => target.fill(level),
+      }
+    },
+  }
+  const audio = {
+    paused: false,
+    ended: false,
+    muted: false,
+    volume: 0.85,
+  } as HTMLAudioElement
+  const meter = new NarrationMeter
+  const first = meter.connect('first', audio, context as unknown as AudioContext)
+  magnitude = 192
+  const second = meter.connect('second', audio, context as unknown as AudioContext)
+  expect(meter.read('first')[2]).toBeCloseTo(64 / 255)
+  expect(meter.read('second')[2]).toBeCloseTo(192 / 255)
+  expect(meter.read()[2]).toBeCloseTo(192 / 255)
+  first()
+  second()
 })

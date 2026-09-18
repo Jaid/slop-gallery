@@ -48,16 +48,15 @@ narrator.appendedSilence = 0.3
 
 `gap` is the minimum interval between serialized sounds stopping and starting. Padding already contributes to that interval: it is not added to the gap twice. For example, a 0.3-second trailing silence and 0.2-second leading silence already satisfy a 0.4-second gap. The current gap setting is used when the next transition is scheduled; changing it does not rewrite a timer already running. Concurrent entries have their own padding but do not participate in the serialized gap.
 
-`narrationState()` projects a snapshot into a simple indicator state. The foreground entry takes precedence; when only concurrent entries exist, it shows the newest one. The status is `preparing`, `before`, `playing` or `after`; `source` is `audio`, `browser` or `null`. The raw snapshot also exposes every pending, interrupted and concurrent entry.
+`narrationState()` projects a snapshot into one primary indicator state. The foreground entry takes precedence; when only concurrent entries exist, it shows the newest one. `narrationStates()` returns every visible narration instead: serialized foreground first, followed by all concurrent `async` entries. Each state has a unique `instanceId` for React keys and per-playback instrumentation. The status is `preparing`, `before`, `playing` or `after`; `source` is `audio`, `browser` or `null`.
 
 ```tsx
-import useNarrator, {narrationState} from 'use-narrator'
+import useNarrator, {narrationStates} from 'use-narrator'
 import {narrator} from './narration.ts'
 
-export function NarratorIndicator() {
-  const state = narrationState(useNarrator(narrator))
-  if (!state) return null
-  return <aside role='status'>{state.title} · {state.status}</aside>
+export function NarratorIndicators() {
+  const states = narrationStates(useNarrator(narrator))
+  return states.map(state => <aside key={state.instanceId} role='status'>{state.title} · {state.status}</aside>)
 }
 ```
 

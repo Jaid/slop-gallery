@@ -5,7 +5,7 @@ import {renderToStaticMarkup} from 'react-dom/server'
 import {BoxGeometry, Group, Mesh, MeshBasicMaterial, PlaneGeometry, Raycaster, Vector3} from 'three/webgpu'
 
 import ArtworkOverlay from '#component/ArtworkOverlay'
-import NarrationIndicator from '#component/NarrationIndicator'
+import NarrationIndicator, {NarrationIndicatorStack} from '#component/NarrationIndicator'
 
 import initialPortraits from '../../src/lib/gallery/collection.ts'
 import GalleryRepository, {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
@@ -84,6 +84,7 @@ describe('contextual HUD', () => {
   })
   test('recorded and provider audio show the real five-band visualization', () => {
     const html = renderToStaticMarkup(createElement(NarrationIndicator, {
+      instanceId: 'story',
       title: 'A story',
       status: 'playing',
       source: 'audio',
@@ -95,6 +96,7 @@ describe('contextual HUD', () => {
   })
   test('browser speech shows a static speaking icon, not a spectrum', () => {
     const html = renderToStaticMarkup(createElement(NarrationIndicator, {
+      instanceId: 'browser-story',
       title: 'A browser story',
       status: 'playing',
       source: 'browser',
@@ -105,8 +107,34 @@ describe('contextual HUD', () => {
     expect(html).not.toContain('data-testid="audio-bars"')
     expect(html).not.toContain('<i>')
   })
+  test('overlapping async narration renders as separate stacked indicator boxes', () => {
+    const html = renderToStaticMarkup(createElement(NarrationIndicatorStack, {
+      narrations: [
+        {
+          id: 'main',
+          instanceId: 'main-instance',
+          source: 'audio',
+          status: 'playing',
+          title: 'Main narration',
+        },
+        {
+          id: 'parallel',
+          instanceId: 'parallel-instance',
+          source: 'audio',
+          status: 'playing',
+          title: 'Parallel narration',
+        },
+      ],
+    }))
+    expect(html).toContain('data-testid="narration-stack"')
+    expect(html).toContain('Main narration')
+    expect(html).toContain('Parallel narration')
+    expect(html.match(/aria-label="Audio guide"/g)).toHaveLength(2)
+    expect(html.match(/data-testid="audio-bars"/g)).toHaveLength(2)
+  })
   test('preparing narration does not pretend to have audio measurements', () => {
     const html = renderToStaticMarkup(createElement(NarrationIndicator, {
+      instanceId: 'story',
       title: 'A story',
       status: 'preparing',
       source: null,
@@ -147,6 +175,7 @@ describe('artwork year metadata', () => {
 for (const status of ['before', 'after'] as const) {
   test(`narrator indicator remains visible during ${status} silence without fake audio bars`, () => {
     const html = renderToStaticMarkup(createElement(NarrationIndicator, {
+      instanceId: `padded-${status}`,
       title: 'A padded story',
       status,
       source: 'audio',
