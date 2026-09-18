@@ -21,8 +21,8 @@
     "test:browser": "bun test/browser/run.ts"
   },
   "dependencies": {
-    "@babel/traverse": "^8.0.5",
-    "@babel/types": "^8.0.5",
+    "@babel/traverse": "^8.0.6",
+    "@babel/types": "^8.0.6",
     "disposable-lifetime": "workspace:*",
     "magic-string": "^1.4.1",
     "vite-plugin-bake-core": "workspace:*"

@@ -17,8 +17,8 @@
     "test": "bun test --max-concurrency 1 ./test"
   },
   "dependencies": {
-    "@babel/traverse": "^8.0.5",
-    "@babel/types": "^8.0.5",
+    "@babel/traverse": "^8.0.6",
+    "@babel/types": "^8.0.6",
     "vite-plugin-bake-core": "workspace:*"
   },
   "peerDependencies": {

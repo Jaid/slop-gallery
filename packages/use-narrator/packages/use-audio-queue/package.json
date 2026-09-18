@@ -20,7 +20,7 @@
     "test": "bun test --max-concurrency 1 ./test"
   },
   "peerDependencies": {
-    "react": "^19.3.0"
+    "react": "latest"
   },
   "peerDependenciesMeta": {
     "react": {
