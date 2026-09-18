@@ -13,8 +13,8 @@ test('soundboard inventory drives both generated walls without a manual button l
     rows: 4,
   })
   expect(soundboardLayout.sections.archived).toMatchObject({
-    columns: 5,
-    rows: 4,
+    columns: 7,
+    rows: 6,
   })
   expect(soundboardWalls.filter(wall => wall.id === 'soundboard-enabled' || wall.id === 'soundboard-archived')).toHaveLength(2)
 })
@@ -41,7 +41,7 @@ test('generated button positions stay inside the content wall and center partial
 })
 test('room dimensions grow automatically with the catalog and navigation follows the generated shell', () => {
   const expanded = new SoundboardLayout({
-    enabled: 40,
+    enabled: 80,
     archived: archivedSoundEffects.length,
   })
   expect(expanded.size[0]).toBeGreaterThan(soundboardSize[0])

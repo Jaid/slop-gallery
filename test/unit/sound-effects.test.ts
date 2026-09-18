@@ -3,10 +3,10 @@ import {expect, test} from 'bun:test'
 import {footstepVoices, impactFootstepStrength, playerSoundEffects} from '../../src/lib/audio/playerSoundEffects.ts'
 import {archivedSoundEffects, enabledSoundEffectIds, enabledSoundEffects, soundEffects} from '../../src/lib/audio/soundEffects.ts'
 
-test('sound effect catalog has 37 stable unique IDs with playable recipes', () => {
-  expect(soundEffects).toHaveLength(37)
-  expect(soundEffects.map(effect => effect.id)).toEqual(Array.from({length: 37}, (_, index) => `SFX-${String(index + 1).padStart(2, '0')}`))
-  expect(new Set(soundEffects.map(effect => effect.label)).size).toBe(37)
+test('sound effect catalog has 57 stable unique IDs with playable recipes', () => {
+  expect(soundEffects).toHaveLength(57)
+  expect(soundEffects.map(effect => effect.id)).toEqual(Array.from({length: 57}, (_, index) => `SFX-${String(index + 1).padStart(2, '0')}`))
+  expect(new Set(soundEffects.map(effect => effect.label)).size).toBe(57)
   for (const effect of soundEffects) {
     expect(effect.voices.length).toBeGreaterThan(0)
     for (const voice of effect.voices) {
@@ -50,6 +50,35 @@ test('every non-enabled sound is archived automatically', () => {
   expect(archivedSoundEffects).toHaveLength(soundEffects.length - enabledSoundEffects.length)
   expect(new Set([...enabledSoundEffects, ...archivedSoundEffects].map(effect => effect.id))).toEqual(new Set(soundEffects.map(effect => effect.id)))
   expect(archivedSoundEffects.some(effect => enabledSoundEffectIds.includes(effect.id))).toBe(false)
+})
+test('twenty new utility cues remain archived for audition', () => {
+  const additions = soundEffects.slice(37)
+  expect(additions.map(effect => effect.id)).toEqual(Array.from({length: 20}, (_, index) => `SFX-${String(index + 38).padStart(2, '0')}`))
+  expect(additions.map(effect => effect.label)).toEqual([
+    'Menu Open',
+    'Menu Close',
+    'Hover Tick',
+    'Selection Step',
+    'Toggle On',
+    'Toggle Off',
+    'Unlock',
+    'Lock',
+    'Item Pickup',
+    'Item Drop',
+    'Objective Update',
+    'Achievement Glow',
+    'Warning Pulse',
+    'Error Soft',
+    'Door Latch',
+    'Heavy Mechanism',
+    'Servo Move',
+    'Camera Shutter',
+    'Page Flick',
+    'Phase Shift',
+  ])
+  expect(additions.every(effect => archivedSoundEffects.includes(effect))).toBe(true)
+  const recipes = new Set(additions.map(effect => JSON.stringify(effect.voices)))
+  expect(recipes.size).toBe(additions.length)
 })
 test('all seven player cues are enabled and independently auditionable', () => {
   const cues = Object.values(playerSoundEffects)

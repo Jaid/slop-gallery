@@ -435,6 +435,348 @@ export const soundEffects: Array<SoundEffect> = [
     ],
   },
   ...Object.values(playerSoundEffects),
+  {
+    id: 'SFX-38',
+    label: 'Menu Open',
+    voices: [
+      osc(330, 0.16, 0.018, {
+        endFrequency: 620,
+        type: 'triangle',
+        attack: 0.025,
+      }),
+      noise(0.12, 0.009, {
+        type: 'bandpass',
+        frequency: 650,
+        endFrequency: 1800,
+        q: 0.7,
+      }, {attack: 0.035}),
+    ],
+  },
+  {
+    id: 'SFX-39',
+    label: 'Menu Close',
+    voices: [
+      osc(620, 0.15, 0.018, {
+        endFrequency: 280,
+        type: 'triangle',
+        attack: 0.02,
+      }),
+      noise(0.11, 0.008, {
+        type: 'bandpass',
+        frequency: 1700,
+        endFrequency: 520,
+        q: 0.7,
+      }, {attack: 0.025}),
+    ],
+  },
+  {
+    id: 'SFX-40',
+    label: 'Hover Tick',
+    voices: [
+      osc(940, 0.055, 0.014, {
+        endFrequency: 720,
+        type: 'sine',
+      }),
+      noise(0.035, 0.006, {
+        type: 'highpass',
+        frequency: 4200,
+      }),
+    ],
+  },
+  {
+    id: 'SFX-41',
+    label: 'Selection Step',
+    voices: [
+      osc(440, 0.075, 0.016, {type: 'triangle'}),
+      osc(587.33, 0.09, 0.014, {
+        delay: 0.055,
+        type: 'triangle',
+      }),
+    ],
+  },
+  {
+    id: 'SFX-42',
+    label: 'Toggle On',
+    voices: [
+      osc(180, 0.065, 0.018, {
+        endFrequency: 120,
+        type: 'triangle',
+      }),
+      osc(660, 0.13, 0.017, {
+        delay: 0.035,
+        endFrequency: 920,
+      }),
+    ],
+  },
+  {
+    id: 'SFX-43',
+    label: 'Toggle Off',
+    voices: [
+      osc(180, 0.065, 0.018, {
+        endFrequency: 110,
+        type: 'triangle',
+      }),
+      osc(720, 0.13, 0.016, {
+        delay: 0.035,
+        endFrequency: 390,
+      }),
+    ],
+  },
+  {
+    id: 'SFX-44',
+    label: 'Unlock',
+    voices: [
+      osc(392, 0.11, 0.017, {type: 'triangle'}),
+      osc(587.33, 0.13, 0.017, {
+        delay: 0.07,
+        type: 'triangle',
+      }),
+      osc(880, 0.2, 0.016, {delay: 0.14}),
+    ],
+  },
+  {
+    id: 'SFX-45',
+    label: 'Lock',
+    voices: [
+      osc(420, 0.11, 0.018, {
+        endFrequency: 250,
+        type: 'triangle',
+      }),
+      osc(145, 0.15, 0.018, {
+        delay: 0.065,
+        endFrequency: 82,
+      }),
+      noise(0.045, 0.008, {
+        type: 'lowpass',
+        frequency: 620,
+        endFrequency: 240,
+      }, {delay: 0.055}),
+    ],
+  },
+  {
+    id: 'SFX-46',
+    label: 'Item Pickup',
+    voices: [
+      osc(620, 0.09, 0.016, {
+        endFrequency: 920,
+        type: 'triangle',
+      }),
+      osc(1240, 0.16, 0.014, {
+        delay: 0.055,
+        endFrequency: 1680,
+      }),
+      noise(0.055, 0.006, {
+        type: 'highpass',
+        frequency: 5200,
+      }, {delay: 0.075}),
+    ],
+  },
+  {
+    id: 'SFX-47',
+    label: 'Item Drop',
+    voices: [
+      osc(170, 0.13, 0.022, {endFrequency: 72}),
+      noise(0.075, 0.011, {
+        type: 'lowpass',
+        frequency: 850,
+        endFrequency: 250,
+      }),
+      osc(310, 0.07, 0.008, {
+        delay: 0.035,
+        endFrequency: 180,
+        type: 'triangle',
+      }),
+    ],
+  },
+  {
+    id: 'SFX-48',
+    label: 'Objective Update',
+    voices: [
+      osc(349.23, 0.14, 0.016, {type: 'triangle'}),
+      osc(523.25, 0.17, 0.017, {
+        delay: 0.085,
+        type: 'triangle',
+      }),
+      osc(698.46, 0.24, 0.016, {delay: 0.17}),
+    ],
+  },
+  {
+    id: 'SFX-49',
+    label: 'Achievement Glow',
+    voices: [
+      osc(261.63, 0.34, 0.015, {attack: 0.025}),
+      osc(392, 0.38, 0.015, {
+        delay: 0.06,
+        attack: 0.025,
+      }),
+      osc(659.25, 0.46, 0.014, {
+        delay: 0.12,
+        attack: 0.03,
+      }),
+      osc(1046.5, 0.32, 0.009, {
+        delay: 0.22,
+        attack: 0.02,
+      }),
+    ],
+  },
+  {
+    id: 'SFX-50',
+    label: 'Warning Pulse',
+    voices: [
+      osc(330, 0.13, 0.021, {
+        type: 'square',
+        filter: {
+          type: 'lowpass',
+          frequency: 1300,
+        },
+      }),
+      osc(330, 0.16, 0.021, {
+        delay: 0.19,
+        type: 'square',
+        filter: {
+          type: 'lowpass',
+          frequency: 1300,
+        },
+      }),
+    ],
+  },
+  {
+    id: 'SFX-51',
+    label: 'Error Soft',
+    voices: [
+      osc(392, 0.15, 0.018, {
+        endFrequency: 330,
+        type: 'triangle',
+      }),
+      osc(277.18, 0.22, 0.019, {
+        delay: 0.085,
+        endFrequency: 220,
+        type: 'triangle',
+      }),
+    ],
+  },
+  {
+    id: 'SFX-52',
+    label: 'Door Latch',
+    voices: [
+      noise(0.04, 0.013, {
+        type: 'bandpass',
+        frequency: 2200,
+        endFrequency: 900,
+        q: 1.4,
+      }),
+      osc(210, 0.09, 0.019, {
+        delay: 0.018,
+        endFrequency: 92,
+        type: 'triangle',
+      }),
+      osc(780, 0.045, 0.007, {
+        delay: 0.04,
+        endFrequency: 510,
+      }),
+    ],
+  },
+  {
+    id: 'SFX-53',
+    label: 'Heavy Mechanism',
+    voices: [
+      osc(82, 0.32, 0.032, {
+        endFrequency: 44,
+        attack: 0.012,
+      }),
+      noise(0.2, 0.018, {
+        type: 'lowpass',
+        frequency: 520,
+        endFrequency: 130,
+      }, {attack: 0.018}),
+      osc(190, 0.12, 0.011, {
+        delay: 0.08,
+        endFrequency: 105,
+        type: 'triangle',
+      }),
+    ],
+  },
+  {
+    id: 'SFX-54',
+    label: 'Servo Move',
+    voices: [
+      osc(230, 0.25, 0.015, {
+        endFrequency: 880,
+        type: 'sawtooth',
+        filter: {
+          type: 'lowpass',
+          frequency: 1600,
+        },
+      }),
+      noise(0.22, 0.008, {
+        type: 'bandpass',
+        frequency: 720,
+        endFrequency: 2100,
+        q: 1.2,
+      }, {attack: 0.045}),
+    ],
+  },
+  {
+    id: 'SFX-55',
+    label: 'Camera Shutter',
+    voices: [
+      noise(0.025, 0.019, {
+        type: 'bandpass',
+        frequency: 2600,
+        q: 1.4,
+      }),
+      osc(240, 0.045, 0.014, {
+        delay: 0.018,
+        endFrequency: 130,
+        type: 'triangle',
+      }),
+      noise(0.028, 0.016, {
+        type: 'highpass',
+        frequency: 3800,
+      }, {delay: 0.055}),
+    ],
+  },
+  {
+    id: 'SFX-56',
+    label: 'Page Flick',
+    voices: [
+      noise(0.16, 0.012, {
+        type: 'bandpass',
+        frequency: 1250,
+        endFrequency: 4300,
+        q: 0.55,
+      }, {attack: 0.045}),
+      noise(0.11, 0.007, {
+        type: 'highpass',
+        frequency: 5000,
+      }, {
+        delay: 0.055,
+        attack: 0.02,
+      }),
+    ],
+  },
+  {
+    id: 'SFX-57',
+    label: 'Phase Shift',
+    voices: [
+      noise(0.28, 0.012, {
+        type: 'bandpass',
+        frequency: 380,
+        endFrequency: 3200,
+        q: 0.75,
+      }, {attack: 0.07}),
+      osc(185, 0.3, 0.016, {
+        endFrequency: 740,
+        type: 'triangle',
+        attack: 0.045,
+      }),
+      osc(1110, 0.18, 0.009, {
+        delay: 0.16,
+        endFrequency: 555,
+        attack: 0.03,
+      }),
+    ],
+  },
 ]
 
 const byId = new Map(soundEffects.map(effect => [effect.id, effect]))
