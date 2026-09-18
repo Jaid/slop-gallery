@@ -7,28 +7,45 @@ import {narrationBands, narrationMeter} from '#src/lib/audio/NarrationMeter.ts'
 import css from './style.module.sass'
 
 const idleBarStyle = {transform: 'scaleY(0.03)'}
-const lingerEasing = 'cubic-bezier(0.55, 0, 1, 0.45)'
 
 type Props = Pick<NarrationState, 'instanceId' | 'status' | 'statusEndsAt'>
+
+export function lingerBarScale(startScale: number, progress: number) {
+  const clamped = Math.max(0, Math.min(1, progress))
+  return startScale * (1 - clamped ** 3)
+}
 
 export default function NarrationBars({instanceId, status, statusEndsAt}: Props) {
   const container = useRef<HTMLSpanElement>(null)
   useEffect(() => {
     const bars = [...container.current!.children] as Array<HTMLElement>
     if (status === 'after') {
-      const now = performance.now() / 1000
-      const duration = Math.max(0, ((statusEndsAt ?? now) - now) * 1000)
-      const animations = bars.map(bar => bar.animate([
-        {transform: getComputedStyle(bar).transform},
-        {transform: 'scaleY(0)'},
-      ], {
-        duration,
-        easing: lingerEasing,
-        fill: 'forwards',
-      }))
+      const startedAt = performance.now() / 1000
+      const endsAt = Math.max(startedAt, statusEndsAt ?? startedAt)
+      const duration = endsAt - startedAt
+      const startScales = bars.map(bar => {
+        const matrix = new DOMMatrixReadOnly(getComputedStyle(bar).transform)
+        return matrix.m22
+      })
+      for (const [index, bar] of bars.entries()) {
+        bar.style.transition = 'none'
+        bar.style.transform = `scaleY(${startScales[index]})`
+      }
+      let frame = 0
+      const update = (time: number) => {
+        const progress = duration ? (time / 1000 - startedAt) / duration : 1
+        for (const [index, bar] of bars.entries()) {
+          bar.style.transform = `scaleY(${lingerBarScale(startScales[index], progress)})`
+        }
+        if (progress < 1) {
+          frame = requestAnimationFrame(update)
+        }
+      }
+      frame = requestAnimationFrame(update)
       return () => {
-        for (const animation of animations) {
-          animation.cancel()
+        cancelAnimationFrame(frame)
+        for (const bar of bars) {
+          bar.style.transition = ''
         }
       }
     }

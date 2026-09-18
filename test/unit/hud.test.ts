@@ -5,6 +5,7 @@ import {renderToStaticMarkup} from 'react-dom/server'
 import {BoxGeometry, Group, Mesh, MeshBasicMaterial, PlaneGeometry, Raycaster, Vector3} from 'three/webgpu'
 
 import ArtworkOverlay from '#component/ArtworkOverlay'
+import {lingerBarScale} from '#component/NarrationBars'
 import NarrationIndicator, {NarrationIndicatorStack} from '#component/NarrationIndicator'
 
 import initialPortraits from '../../src/lib/gallery/collection.ts'
@@ -55,6 +56,14 @@ describe('title plate targeting', () => {
     const previewText = new Group
     preview.add(previewText)
     expect(isPortraitLabelHit(previewText, portrait)).toBe(false)
+  })
+})
+describe('narration linger animation', () => {
+  test('falls slowly at first, accelerates, and reaches zero at the deadline', () => {
+    expect(lingerBarScale(0.8, 0)).toBe(0.8)
+    expect(lingerBarScale(0.8, 0.5)).toBeCloseTo(0.7)
+    expect(lingerBarScale(0.8, 0.9)).toBeCloseTo(0.2168)
+    expect(lingerBarScale(0.8, 1)).toBe(0)
   })
 })
 describe('contextual HUD', () => {
