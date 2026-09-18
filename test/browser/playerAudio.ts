@@ -65,7 +65,7 @@ export default async function verify() {
     assert(slow.rms < walk.rms && walk.rms < sprint.rms, 'Footstep energy must grow with speed')
     assert(sneak.rms < walk.rms, 'Sneaking must be quieter than normal walking')
     const lightLanding = await render(footstepVoices(wood, 3, {strength: impactFootstepStrength(2)}), 'land-light')
-    const heavyLanding = await render(footstepVoices(wood, 3, {strength: impactFootstepStrength(9)}), 'land-heavy')
+    const heavyLanding = await render(footstepVoices(wood, 3, {strength: impactFootstepStrength(10)}), 'land-heavy')
     assert(lightLanding.rms < heavyLanding.rms, 'Landing energy must grow with impact')
     steps.push({
       wood,

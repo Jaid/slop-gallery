@@ -13,7 +13,7 @@ export function footstepVoices(wood: boolean, speed: number, {crouching = false,
   const effort = Math.max(0, Math.min(1, speed / 9))
   const pitch = (0.95 + effort * 0.08) * (1 + variation * 0.008)
   const brightness = (crouching ? 0.62 : 1) * (0.82 + effort * 0.12)
-  const gain = (crouching ? 0.34 : 1) * Math.max(0, Math.min(6, strength))
+  const gain = (crouching ? 0.34 : 1) * Math.max(0, Math.min(12, strength))
   const duration = crouching ? 0.105 - effort * 0.01 : 0.085 - effort * 0.018
   const attack = crouching ? 0.016 : 0.006
   const body = (base: number, growth: number) => (base + effort * growth) * gain
@@ -37,9 +37,10 @@ export function footstepVoices(wood: boolean, speed: number, {crouching = false,
   ]
 }
 
-/** Landing is the same Soft Weight recipe, only stronger according to pre-impact fall speed. */
+/** Landing strength follows impact energy (speed squared), then caps before clipping becomes a concern. */
 export function impactFootstepStrength(impactSpeed: number) {
-  return 2.5 + Math.max(0, Math.min(1, impactSpeed / 10)) * 3.5
+  const normalized = Math.max(0, Math.min(1, impactSpeed / 12))
+  return 2.5 + normalized * normalized * 9.5
 }
 
 /** Sonic families share a texture, but casual/extended and forward/retract remain distinct. */

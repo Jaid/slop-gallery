@@ -101,9 +101,12 @@ test('crouching footsteps are quieter, darker, and softer than normal walking', 
 test('landing strength reuses Soft Weight and scales with pre-impact fall speed', () => {
   const normal = footstepVoices(false, 3)
   const light = footstepVoices(false, 3, {strength: impactFootstepStrength(2)})
-  const heavy = footstepVoices(false, 3, {strength: impactFootstepStrength(9)})
-  expect(impactFootstepStrength(2)).toBeLessThan(impactFootstepStrength(9))
-  expect(impactFootstepStrength(10)).toBe(impactFootstepStrength(30))
+  const heavy = footstepVoices(false, 3, {strength: impactFootstepStrength(10)})
+  expect(impactFootstepStrength(2)).toBeLessThan(impactFootstepStrength(5))
+  expect(impactFootstepStrength(5)).toBeLessThan(impactFootstepStrength(10))
+  expect(impactFootstepStrength(10)).toBeGreaterThan(8)
+  expect(impactFootstepStrength(12)).toBe(12)
+  expect(impactFootstepStrength(12)).toBe(impactFootstepStrength(30))
   for (const index of [0, 1, 2]) {
     expect(light[index].volume).toBeGreaterThan(normal[index].volume)
     expect(heavy[index].volume).toBeGreaterThan(light[index].volume)
