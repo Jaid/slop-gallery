@@ -111,7 +111,7 @@ export default class SnapshotWriter {
       }
     }
     if (ArrayBuffer.isView(value)) {
-      if (!['BigInt64Array', 'BigUint64Array', 'DataView', 'Float32Array', 'Float64Array', 'Int16Array', 'Int32Array', 'Int8Array', 'Uint16Array', 'Uint32Array', 'Uint8Array', 'Uint8ClampedArray'].includes(value.constructor.name)) {
+      if (!['BigInt64Array', 'BigUint64Array', 'DataView', 'Float32Array', 'Float64Array', 'Int8Array', 'Int16Array', 'Int32Array', 'Uint8Array', 'Uint8ClampedArray', 'Uint16Array', 'Uint32Array'].includes(value.constructor.name)) {
         throw new NotBakeableError('Custom typed-array subclasses are not supported.')
       }
       return {

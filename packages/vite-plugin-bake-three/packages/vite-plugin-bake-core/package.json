@@ -19,13 +19,13 @@
     "test": "bun test --max-concurrency 1 ./test"
   },
   "dependencies": {
+    "magic-string": "^1.4.1",
     "@babel/core": "8.0.6",
     "@babel/generator": "^8.0.6",
     "@babel/parser": "^8.0.6",
     "@babel/plugin-transform-typescript": "^8.0.5",
     "@babel/traverse": "^8.0.6",
-    "@babel/types": "^8.0.6",
-    "magic-string": "^1.4.1"
+    "@babel/types": "^8.0.6"
   },
   "peerDependencies": {
     "three": "^0.186.0",
