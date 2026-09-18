@@ -1,9 +1,9 @@
 import type {PlayerPose, RoomId, Vec3} from '#src/lib/gallery/types.ts'
 
-import {soundboardBounds, soundboardGroundSurface} from '#src/lib/audio/soundboard.ts'
+import {soundboardBounds, soundboardGroundStripes, soundboardGroundSurface} from '#src/lib/audio/soundboard.ts'
 
 export const playerSpawn: PlayerPose = {
-  position: [0, 0.04, soundboardBounds.southZ - 3.2],
+  position: [soundboardGroundStripes[0].centerX, 0.04, soundboardBounds.southZ - 3.2],
   yaw: 0,
   pitch: 0,
 }

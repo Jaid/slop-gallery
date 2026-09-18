@@ -1,6 +1,6 @@
 import {expect, test} from 'bun:test'
 
-import {insideSoundboard, soundboardBounds, soundboardGroundBands, soundboardGroundSurface, soundboardLayout, soundboardSize, soundboardWallDistance, soundboardWalls} from '../../src/lib/audio/soundboard.ts'
+import {insideSoundboard, soundboardBounds, soundboardGroundStripes, soundboardGroundSurface, soundboardLayout, soundboardSize, soundboardWallDistance, soundboardWalls} from '../../src/lib/audio/soundboard.ts'
 import SoundboardLayout, {soundboardButton} from '../../src/lib/audio/SoundboardLayout.ts'
 import {archivedSoundEffects, enabledSoundEffects, soundEffects} from '../../src/lib/audio/soundEffects.ts'
 
@@ -18,14 +18,14 @@ test('soundboard inventory drives both generated walls without a manual button l
   })
   expect(soundboardWalls.filter(wall => wall.id === 'soundboard-enabled' || wall.id === 'soundboard-archived')).toHaveLength(2)
 })
-test('sprint lane spans four equal material bands from the spawn end', () => {
+test('sprint lane spans four equal longitudinal material stripes', () => {
   expect(soundboardSize[2]).toBeGreaterThanOrEqual(40)
-  expect(soundboardGroundBands.map(band => band.surface)).toEqual(['generic', 'hollow', 'glass', 'fabric'])
-  const bandDepths = new Set(soundboardGroundBands.map(band => band.depth))
-  expect(bandDepths).toEqual(new Set([soundboardSize[2] / 4]))
-  expect(soundboardGroundSurface([0, 0.04, soundboardBounds.southZ - 3.2])).toBe('generic')
-  for (const band of soundboardGroundBands) {
-    expect(soundboardGroundSurface([0, 0.04, band.centerZ])).toBe(band.surface)
+  expect(soundboardGroundStripes.map(stripe => stripe.surface)).toEqual(['generic', 'hollow', 'glass', 'fabric'])
+  const stripeWidths = new Set(soundboardGroundStripes.map(stripe => stripe.width))
+  expect(stripeWidths).toEqual(new Set([soundboardSize[0] / 4]))
+  for (const stripe of soundboardGroundStripes) {
+    expect(soundboardGroundSurface([stripe.centerX, 0.04, soundboardBounds.southZ - 3.2])).toBe(stripe.surface)
+    expect(soundboardGroundSurface([stripe.centerX, 0.04, soundboardBounds.northZ + 3.2])).toBe(stripe.surface)
   }
 })
 test('generated button positions stay inside the content wall and center partial rows', () => {

@@ -7,7 +7,7 @@ import CheckerMarbleFloor from '#src/components/Scene/CheckerMarbleFloor.tsx'
 import {surfaceTexture} from '#src/components/Scene/materials.ts'
 import Box from '#src/components/Scene/primitives.tsx'
 import WallSurface from '#src/components/Scene/WallSurface.tsx'
-import {soundboardBounds, soundboardGroundBands, soundboardSize, soundboardWalls} from '#src/lib/audio/soundboard.ts'
+import {soundboardBounds, soundboardGroundStripes, soundboardSize, soundboardWalls} from '#src/lib/audio/soundboard.ts'
 import {archivedSoundEffects, enabledSoundEffects} from '#src/lib/audio/soundEffects.ts'
 
 export default function SoundboardRoom() {
@@ -30,14 +30,14 @@ export default function SoundboardRoom() {
         <CuboidCollider args={[soundboardSize[0] / 2, 0.09, soundboardSize[2] / 2]} position={[0, soundboardBounds.height, 0]} />
       </RigidBody>
       <Box color='#23201d' position={[0, -0.12, 0]} roughness={0.82} size={[soundboardSize[0], 0.24, soundboardSize[2]]} />
-      {soundboardGroundBands.map(({surface, centerZ, depth}) => <group key={surface} position={[0, 0, centerZ]}>
-        <Branch if={surface === 'generic'}><CheckerMarbleFloor depth={depth} width={soundboardSize[0]} /></Branch>
-        <Branch if={surface === 'hollow'}><Box color='#6d4a2c' map={wood} position={[0, 0.006, 0]} roughness={0.72} size={[soundboardSize[0], 0.012, depth]} /></Branch>
+      {soundboardGroundStripes.map(({surface, centerX, width}) => <group key={surface} position={[centerX, 0, 0]}>
+        <Branch if={surface === 'generic'}><CheckerMarbleFloor depth={soundboardSize[2]} width={width} /></Branch>
+        <Branch if={surface === 'hollow'}><Box color='#6d4a2c' map={wood} position={[0, 0.006, 0]} roughness={0.72} size={[width, 0.012, soundboardSize[2]]} /></Branch>
         <Branch if={surface === 'glass'}><mesh position={[0, 0.012, 0]} receiveShadow>
-          <boxGeometry args={[soundboardSize[0], 0.024, depth]} />
+          <boxGeometry args={[width, 0.024, soundboardSize[2]]} />
           <meshPhysicalNodeMaterial color='#8fc7d0' metalness={0.05} opacity={0.72} roughness={0.08} thickness={0.08} transmission={0.82} transparent />
         </mesh></Branch>
-        <Branch if={surface === 'fabric'}><Box color='#5d242b' envMapIntensity={0} position={[0, 0.008, 0]} roughness={1} size={[soundboardSize[0], 0.016, depth]} /></Branch>
+        <Branch if={surface === 'fabric'}><Box color='#5d242b' envMapIntensity={0} position={[0, 0.008, 0]} roughness={1} size={[width, 0.016, soundboardSize[2]]} /></Branch>
       </group>)}
       <Box color='#48545a' position={[0, soundboardBounds.height, 0]} roughness={0.85} size={[soundboardSize[0], 0.18, soundboardSize[2]]} />
       <SoundboardWall effects={enabledSoundEffects} position={enabledWall.center} rotationY={enabledWall.rotation} section='enabled' />

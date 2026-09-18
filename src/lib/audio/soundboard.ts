@@ -11,15 +11,15 @@ export const soundboardBounds = soundboardLayout.bounds
 export const soundboardSize = soundboardLayout.size
 export const soundboardCenter: Vec3 = [0, 0, 0]
 export const soundboardGroundSurfaces = ['generic', 'hollow', 'glass', 'fabric'] as const
-const soundboardGroundDepth = soundboardSize[2] / soundboardGroundSurfaces.length
-export const soundboardGroundBands = soundboardGroundSurfaces.map((surface, index) => ({
+const soundboardGroundWidth = soundboardSize[0] / soundboardGroundSurfaces.length
+export const soundboardGroundStripes = soundboardGroundSurfaces.map((surface, index) => ({
   surface,
-  centerZ: soundboardBounds.southZ - soundboardGroundDepth * (index + 0.5),
-  depth: soundboardGroundDepth,
+  centerX: soundboardBounds.minX + soundboardGroundWidth * (index + 0.5),
+  width: soundboardGroundWidth,
 }))
 
-export function soundboardGroundSurface([, , z]: Vec3) {
-  const index = Math.max(0, Math.min(soundboardGroundSurfaces.length - 1, Math.floor((soundboardBounds.southZ - z) / soundboardGroundDepth)))
+export function soundboardGroundSurface([x]: Vec3) {
+  const index = Math.max(0, Math.min(soundboardGroundSurfaces.length - 1, Math.floor((x - soundboardBounds.minX) / soundboardGroundWidth)))
   return soundboardGroundSurfaces[index]
 }
 
