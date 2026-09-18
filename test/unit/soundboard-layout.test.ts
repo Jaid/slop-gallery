@@ -1,6 +1,6 @@
 import {expect, test} from 'bun:test'
 
-import {announcerSamples} from '../../src/lib/audio/announcerSamples.ts'
+import {announcerPriorityModes, announcerSamples} from '../../src/lib/audio/announcerSamples.ts'
 import {insideSoundboard, soundboardBounds, soundboardGroundStripes, soundboardGroundSurface, soundboardLayout, soundboardSize, soundboardWallDistance, soundboardWalls} from '../../src/lib/audio/soundboard.ts'
 import SoundboardLayout, {soundboardButton} from '../../src/lib/audio/SoundboardLayout.ts'
 import {archivedSoundEffects, enabledSoundEffects, soundEffects} from '../../src/lib/audio/soundEffects.ts'
@@ -34,9 +34,10 @@ test('SFX inventories occupy the long walls and leave both short walls free for 
 test('announcer wall exposes a small prerecorded sample set on the north short wall', () => {
   const north = soundboardWalls.find(wall => wall.id === 'soundboard-north')!
   expect(north.center[2]).toBe(soundboardBounds.northZ)
-  expect(announcerSamples).toHaveLength(6)
+  expect(announcerSamples).toHaveLength(4)
   expect(new Set(announcerSamples.map(sample => sample.id)).size).toBe(announcerSamples.length)
   expect(announcerSamples.every(sample => sample.audio.endsWith('.opus'))).toBe(true)
+  expect(announcerPriorityModes).toEqual(['normal', 'high', 'inject', 'async'])
 })
 test('sprint lane spans four equal longitudinal material stripes', () => {
   expect(soundboardSize[2]).toBeGreaterThanOrEqual(40)

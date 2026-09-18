@@ -19,14 +19,6 @@ export const announcerSamples = [
     label: 'DeepSeek Flash',
     audio: String(new URL('announcerSamples/deepseek-flash.opus', import.meta.url)),
   },
-  {
-    id: 'gemini-flash',
-    label: 'Gemini Flash',
-    audio: String(new URL('announcerSamples/gemini-flash.opus', import.meta.url)),
-  },
-  {
-    id: 'glm',
-    label: 'GLM',
-    audio: String(new URL('announcerSamples/glm.opus', import.meta.url)),
-  },
 ] as const
+
+export const announcerPriorityModes = ['normal', 'high', 'inject', 'async'] as const
