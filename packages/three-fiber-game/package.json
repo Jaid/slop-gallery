@@ -18,12 +18,12 @@
     "test": "bun test ./test"
   },
   "peerDependencies": {
-    "@react-three/drei": "^11.0.0-alpha.7",
-    "@react-three/fiber": "^10.0.0-alpha.5",
-    "@react-three/rapier": "^2.2.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "three": "^0.186.0"
+    "three": "^0.186.0",
+    "@react-three/drei": "^11.0.0-alpha.7",
+    "@react-three/fiber": "^10.0.0-alpha.5",
+    "@react-three/rapier": "^2.2.0"
   },
   "files": [
     "src",
