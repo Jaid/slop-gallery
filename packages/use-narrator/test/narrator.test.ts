@@ -69,6 +69,7 @@ test('indicator metadata remains visible through both silent phases', async () =
   expect(narrationState(narrator.getSnapshot())).toMatchObject({
     title: 'Title',
     status: 'after',
+    statusEndsAt: 0.5,
   })
   await clock.advance(0.3)
   expect(await handle.finished).toEqual({status: 'completed'})

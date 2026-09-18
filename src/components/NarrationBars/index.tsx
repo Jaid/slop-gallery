@@ -1,3 +1,5 @@
+import type {NarrationState} from 'use-narrator/core'
+
 import {useEffect, useRef} from 'react'
 
 import {narrationBands, narrationMeter} from '#src/lib/audio/NarrationMeter.ts'
@@ -5,17 +7,34 @@ import {narrationBands, narrationMeter} from '#src/lib/audio/NarrationMeter.ts'
 import css from './style.module.sass'
 
 const idleBarStyle = {transform: 'scaleY(0.03)'}
+const lingerEasing = 'cubic-bezier(0.55, 0, 1, 0.45)'
 
-export default function NarrationBars({active = true, instanceId}: {
-  active?: boolean
-  instanceId: string
-}) {
+type Props = Pick<NarrationState, 'instanceId' | 'status' | 'statusEndsAt'>
+
+export default function NarrationBars({instanceId, status, statusEndsAt}: Props) {
   const container = useRef<HTMLSpanElement>(null)
   useEffect(() => {
-    if (!active) {
+    const bars = [...container.current!.children] as Array<HTMLElement>
+    if (status === 'after') {
+      const now = performance.now() / 1000
+      const duration = Math.max(0, ((statusEndsAt ?? now) - now) * 1000)
+      const animations = bars.map(bar => bar.animate([
+        {transform: getComputedStyle(bar).transform},
+        {transform: 'scaleY(0)'},
+      ], {
+        duration,
+        easing: lingerEasing,
+        fill: 'forwards',
+      }))
+      return () => {
+        for (const animation of animations) {
+          animation.cancel()
+        }
+      }
+    }
+    if (status !== 'playing') {
       return
     }
-    const bars = [...container.current!.children] as Array<HTMLElement>
     let frame = 0
     let last = -Infinity
     const reset = () => {
@@ -38,6 +57,7 @@ export default function NarrationBars({active = true, instanceId}: {
     return () => {
       cancelAnimationFrame(frame)
     }
-  }, [active, instanceId])
-  return <span aria-hidden='true' className={css.container} data-testid='audio-bars' ref={container}>{narrationBands.map(([minimum]) => <i key={minimum} style={active ? undefined : idleBarStyle} />)}</span>
+  }, [instanceId, status, statusEndsAt])
+  const idle = status === 'before' || status === 'preparing'
+  return <span aria-hidden='true' className={css.container} data-testid='audio-bars' ref={container}>{narrationBands.map(([minimum]) => <i key={minimum} style={idle ? idleBarStyle : undefined} />)}</span>
 }

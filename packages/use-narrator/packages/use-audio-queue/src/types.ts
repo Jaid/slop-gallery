@@ -39,6 +39,8 @@ export type AudioEntry<T> = Readonly<{
   key?: string
   metadata: Readonly<T>
   phase: AudioPhase
+  /** Monotonic queue-clock deadline for the active timed phase. */
+  phaseEndsAt?: number
   priority: AudioPriority
   suspended: boolean
 }>

@@ -61,7 +61,7 @@ The scheduler owns each returned playback, but never closes shared application r
 
 `key` shares an existing unfinished handle; the existing entry's options and ownership win. Pass an owner `signal` to cancel a component's work independently. `cancel(id)`, `clear()` and `dispose()` cancel owned jobs, including timers and suspended resources; disposal is idempotent and supports `[Symbol.dispose]`. Pushing after disposal throws. `has(id)` reports whether a handle still belongs to live work.
 
-`getSnapshot()` returns a stable, frozen snapshot until something changes: `current`, `pending`, `interrupted`, `concurrent`, `idle`. Entry phases are `queued`, `preparing`, `before`, `starting`, `playing`, `after`. Snapshot metadata is shallowly immutable. Subscribe with `subscribe(listener)` or React:
+`getSnapshot()` returns a stable, frozen snapshot until something changes: `current`, `pending`, `interrupted`, `concurrent`, `idle`. Entry phases are `queued`, `preparing`, `before`, `starting`, `playing`, `after`. Active timed `before`/`after` entries expose `phaseEndsAt`, the absolute deadline in the queue clock's monotonic seconds, so UI can synchronize an animation to removal even when padding was interrupted and resumed. Snapshot metadata is shallowly immutable. Subscribe with `subscribe(listener)` or React:
 
 ```tsx
 import useAudioQueue from 'use-audio-queue'

@@ -53,4 +53,8 @@ export type NarratorOptions = AudioQueueOptions & {
   synthesize?: SpeechSynthesizer
 }
 
-export type NarrationState = NarrationMetadata & {status: 'after' | 'before' | 'playing' | 'preparing'}
+export type NarrationState = NarrationMetadata & {
+  status: 'after' | 'before' | 'playing' | 'preparing'
+  /** Monotonic deadline for a timed before/after phase. */
+  statusEndsAt?: number
+}

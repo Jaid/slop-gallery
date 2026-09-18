@@ -13,6 +13,7 @@ const stateFor = (entry: AudioEntry<NarrationMetadata>): NarrationState => {
   return {
     ...entry.metadata,
     status,
+    statusEndsAt: entry.phaseEndsAt,
   }
 }
 

@@ -183,7 +183,11 @@ for (const status of ['before', 'after'] as const) {
     expect(html).toContain('A padded story')
     expect(html).toContain('<small>Narrator</small>')
     expect(html).toContain('data-testid="audio-bars"')
-    expect(html).toContain('scaleY(0.03)')
+    if (status === 'before') {
+      expect(html).toContain('scaleY(0.03)')
+    } else {
+      expect(html).not.toContain('scaleY(0.03)')
+    }
     expect(html).not.toContain('data-testid="narration-static"')
   })
 }

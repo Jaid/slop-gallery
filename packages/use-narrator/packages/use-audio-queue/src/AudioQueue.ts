@@ -341,6 +341,7 @@ export default class AudioQueue<T extends object = Record<string, never>> implem
           metadata: Object.freeze({...job.metadata}),
           priority: job.priority,
           phase: job.phase,
+          phaseEndsAt: !job.suspended && job.timer && (job.phase === 'before' || job.phase === 'after') ? job.deadline : undefined,
           suspended: job.suspended,
         })
         this.snapshot = Object.freeze({
