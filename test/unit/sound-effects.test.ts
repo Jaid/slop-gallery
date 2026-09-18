@@ -46,12 +46,12 @@ test('preferred sound effects preserve the X-dump audition selection', () => {
   ])
 })
 test('every non-enabled sound is archived automatically', () => {
-  expect(enabledSoundEffects).toHaveLength(18)
+  expect(enabledSoundEffects).toHaveLength(20)
   expect(archivedSoundEffects).toHaveLength(soundEffects.length - enabledSoundEffects.length)
   expect(new Set([...enabledSoundEffects, ...archivedSoundEffects].map(effect => effect.id))).toEqual(new Set(soundEffects.map(effect => effect.id)))
   expect(archivedSoundEffects.some(effect => enabledSoundEffectIds.includes(effect.id))).toBe(false)
 })
-test('twenty new utility cues remain archived for audition', () => {
+test('pause and resume utility cues are active while the other new candidates remain archived', () => {
   const additions = soundEffects.slice(37)
   expect(additions.map(effect => effect.id)).toEqual(Array.from({length: 20}, (_, index) => `SFX-${String(index + 38).padStart(2, '0')}`))
   expect(additions.map(effect => effect.label)).toEqual([
@@ -76,14 +76,16 @@ test('twenty new utility cues remain archived for audition', () => {
     'Page Flick',
     'Phase Shift',
   ])
-  expect(additions.every(effect => archivedSoundEffects.includes(effect))).toBe(true)
+  expect(enabledSoundEffectIds.slice(11, 13)).toEqual(['SFX-42', 'SFX-43'])
+  expect(additions.filter(effect => enabledSoundEffectIds.includes(effect.id)).map(effect => effect.id)).toEqual(['SFX-42', 'SFX-43'])
+  expect(additions.filter(effect => !enabledSoundEffectIds.includes(effect.id)).every(effect => archivedSoundEffects.includes(effect))).toBe(true)
   const recipes = new Set(additions.map(effect => JSON.stringify(effect.voices)))
   expect(recipes.size).toBe(additions.length)
 })
 test('all seven player cues are enabled and independently auditionable', () => {
   const cues = Object.values(playerSoundEffects)
   expect(cues).toHaveLength(7)
-  expect(cues.map(cue => cue.id)).toEqual(enabledSoundEffectIds.slice(11))
+  expect(cues.map(cue => cue.id)).toEqual(enabledSoundEffectIds.slice(13))
   expect(new Set(cues.map(cue => JSON.stringify(cue.voices))).size).toBe(7)
 })
 test('Soft Weight keeps a restrained three-layer recipe', () => {

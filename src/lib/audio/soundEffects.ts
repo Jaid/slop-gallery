@@ -794,6 +794,8 @@ export const enabledSoundEffectIds: ReadonlyArray<string> = [
   'SFX-09',
   'SFX-06',
   'SFX-03',
+  'SFX-42',
+  'SFX-43',
   ...Object.values(playerSoundEffects).map(effect => effect.id),
 ]
 
