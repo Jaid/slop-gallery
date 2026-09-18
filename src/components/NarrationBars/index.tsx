@@ -4,9 +4,17 @@ import {narrationBands, narrationMeter} from '#src/lib/audio/NarrationMeter.ts'
 
 import css from './style.module.sass'
 
-export default function NarrationBars({instanceId}: {instanceId: string}) {
+const idleBarStyle = {transform: 'scaleY(0.03)'}
+
+export default function NarrationBars({active = true, instanceId}: {
+  active?: boolean
+  instanceId: string
+}) {
   const container = useRef<HTMLSpanElement>(null)
   useEffect(() => {
+    if (!active) {
+      return
+    }
     const bars = [...container.current!.children] as Array<HTMLElement>
     let frame = 0
     let last = -Infinity
@@ -29,8 +37,7 @@ export default function NarrationBars({instanceId}: {instanceId: string}) {
     frame = requestAnimationFrame(update)
     return () => {
       cancelAnimationFrame(frame)
-      reset()
     }
-  }, [instanceId])
-  return <span aria-hidden='true' className={css.container} data-testid='audio-bars' ref={container}>{narrationBands.map(([minimum]) => <i key={minimum} />)}</span>
+  }, [active, instanceId])
+  return <span aria-hidden='true' className={css.container} data-testid='audio-bars' ref={container}>{narrationBands.map(([minimum]) => <i key={minimum} style={active ? undefined : idleBarStyle} />)}</span>
 }
