@@ -12,6 +12,7 @@ const original = useGallery.getState()
 const sound = {
   step: mock((_surface: string, _speed: number, _crouching: boolean) => {}),
   land: mock((_surface: string, _speed: number, _crouching: boolean, _impactSpeed: number) => {}),
+  playEffect: mock((_id: string) => {}),
   zoomTransition: mock((_extended: boolean, _retract: boolean, _duration: number) => {}),
   setZoom: mock((_amount: number) => {}),
   viewTransition: mock((_entering: boolean) => {}),
@@ -115,6 +116,22 @@ test('visual zoom remains independent of mute while audio uses the actual transi
     duration: 0.2,
   })
   expect(sound.zoomTransition).toHaveBeenCalledTimes(2)
+})
+test('pause menu uses Toggle Off and subsequent resume uses Toggle On', () => {
+  const events = new EventTarget
+  dispose = attachPlayerAudio(events)
+  // Initial entry is not a resume.
+  useGallery.setState({locked: true})
+  expect(sound.playEffect).not.toHaveBeenCalled()
+  useGallery.setState({locked: false})
+  expect(sound.playEffect).toHaveBeenLastCalledWith('SFX-43')
+  useGallery.setState({locked: true})
+  expect(sound.playEffect).toHaveBeenLastCalledWith('SFX-42')
+  expect(sound.playEffect.mock.calls).toEqual([['SFX-43'], ['SFX-42']])
+  useGallery.setState({sound: false})
+  useGallery.setState({locked: false})
+  useGallery.setState({locked: true})
+  expect(sound.playEffect).toHaveBeenCalledTimes(2)
 })
 test('inspection cues fire once for entry/leave, not repeated state updates or focus targets', () => {
   dispose = attachPlayerAudio(new EventTarget)

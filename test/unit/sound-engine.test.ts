@@ -39,6 +39,15 @@ test('effects retain their 12 dB boost and mute only schedules changes', () => {
   sound.mute(false)
   expect(master.gain.setTargetAtTime).toHaveBeenLastCalledWith(master.gain.value, 2, 0.08)
 })
+test('catalog effects respect the SoundEngine mute state', () => {
+  const {sound, sources} = setup()
+  sound.playEffect('SFX-42')
+  expect(sources.length).toBeGreaterThan(0)
+  const count = sources.length
+  sound.mute(true)
+  sound.playEffect('SFX-43')
+  expect(sources).toHaveLength(count)
+})
 test('stride callbacks at time zero and closer than the old cooldown all produce footsteps', () => {
   const {sound, context, sources, buffers} = setup()
   for (const time of [0, 0.18, 0.36]) {

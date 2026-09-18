@@ -40,8 +40,22 @@ export function onPlayerZoomTransition(transition: EgoZoomTransition) {
 /** Both portrait and knot inspection publish inspecting on entry/release, not on every frame. */
 export function attachPlayerAudio(events: Pick<EventTarget, 'addEventListener' | 'removeEventListener'> = globalThis) {
   events.addEventListener('blur', stop)
+  let hasEnteredGame = useGallery.getState().locked
   const unsubscribe = useGallery.subscribe((state, previous) => {
     const sound = SoundEngine.existing()
+    if (state.locked !== previous.locked) {
+      if (!state.locked && previous.locked) {
+        if (state.sound) {
+          sound?.playEffect('SFX-43')
+        }
+        hasEnteredGame = true
+      } else if (state.locked && hasEnteredGame && state.sound) {
+        sound?.playEffect('SFX-42')
+      }
+      if (state.locked) {
+        hasEnteredGame = true
+      }
+    }
     if (state.sound !== previous.sound) {
       sound?.mute(!state.sound)
       sound?.setZoom(state.sound && state.locked && !state.panel ? getPlayerZoom() : 0)

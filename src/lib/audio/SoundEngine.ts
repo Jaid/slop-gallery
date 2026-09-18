@@ -3,6 +3,7 @@ import type {ProceduralPlayback} from './proceduralAudio.ts'
 
 import {footstepVoices, impactFootstepStrength, playerSoundEffects} from './playerSoundEffects.ts'
 import {osc, playVoices} from './proceduralAudio.ts'
+import {playSoundEffect} from './soundEffects.ts'
 
 // Boost procedural effects by 12 dB without changing narration.
 const effectsGain = 0.6 * 10 ** (12 / 20)
@@ -53,6 +54,12 @@ export default class SoundEngine {
     this.master.gain.setTargetAtTime(muted ? 0 : effectsGain, this.context.currentTime, 0.08)
     if (muted) {
       this.stopPlayerSounds()
+    }
+  }
+
+  playEffect(id: string) {
+    if (!this.muted) {
+      playSoundEffect(this, id)
     }
   }
 
