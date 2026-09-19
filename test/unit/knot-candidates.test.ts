@@ -214,7 +214,7 @@ describe('arbitrary Knot batches', () => {
     expect(byId('magnetite_field').displacement).toBe(0.046)
     expect(byId('chromatophore_skin').displacement).toBe(0.014)
   })
-  test('records API, Codex and web-chat harness provenance without guessing legacy sources', () => {
+  test('records API, Codex, Mage and web-chat harness provenance without guessing legacy sources', () => {
     const api = knots.filter(entry => entry.author.model.slug && entry.harness === 'none')
     const codex = knots.filter(entry => entry.harness === 'Codex')
     const webChat = knots.filter(entry => !entry.author.model.slug && entry.harness && entry.harness !== 'Codex')
@@ -226,6 +226,13 @@ describe('arbitrary Knot batches', () => {
     expect(api.every(entry => entry.harness === 'none')).toBe(true)
     expect(codex.every(entry => entry.candidate.id === 'gpt_astra')).toBe(true)
     expect(legacy.every(entry => entry.harness === undefined)).toBe(true)
+    const astraMage = knots.filter(entry => entry.candidate.id === 'gpt_astra' && entry.harness === 'Mage')
+    expect(astraMage).toHaveLength(12)
+    expect(astraMage.every(entry => entry.author.model.title === 'GPT-6 Astra' && entry.author.model.slug === 'openai/gpt-6-astra')).toBe(true)
+    expect(Object.fromEntries(Map.groupBy(astraMage, entry => entry.author.model.effortLevel).entries().map(([effort, grouped]) => [effort, grouped.length]))).toEqual({
+      high: 6,
+      max: 6,
+    })
     const astraApi = api.filter(entry => entry.candidate.id === 'gpt_astra')
     const fableApi = api.filter(entry => entry.candidate.id === 'claude_fable')
     const solApi = api.filter(entry => entry.candidate.id === 'gpt_sol')

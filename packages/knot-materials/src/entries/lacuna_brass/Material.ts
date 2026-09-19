@@ -1,0 +1,35 @@
+import type {Texture} from 'three/webgpu'
+
+import {color, float, mix, positionGeometry, uv, vec2} from 'three/tsl'
+import {DoubleSide} from 'three/webgpu'
+
+import KnotMaterial from '../../lib/KnotMaterial.ts'
+import {proceduralNormal} from '../../lib/proceduralNormal.ts'
+import knotData from './data.ts'
+import {brassPunch} from './util.ts'
+
+export default class LacunaBrassMaterial extends KnotMaterial {
+  constructor(environment: Texture) {
+    super(environment, 1.1)
+    this.name = knotData.id
+    const {distance, open, q} = brassPunch(uv())
+    const footprint = q.fwidth().length().max(0.0001)
+    const aperture = distance.smoothstep(footprint.negate(), footprint)
+    // Opaque cutouts, not sorted transparent shells. MSAA coverage softens the punched edges.
+    this.opacityNode = open.select(aperture, float(1))
+    this.alphaTest = 0.5
+    this.alphaToCoverage = true
+    this.side = DoubleSide
+    const rim = distance.abs().smoothstep(0.018, footprint.add(0.045)).oneMinus().mul(open.select(1, 0))
+    const rail = q.y.mul(Math.PI / 2).cos().smoothstep(0.94, 0.995)
+    const brushPhase = positionGeometry.length().mul(1800)
+    const brush = brushPhase.sin().mul(brushPhase.fwidth().smoothstep(0.5, 2).oneMinus())
+    const brass = color('#c79b50').mul(brush.mul(0.035).add(0.95))
+    this.colorNode = mix(mix(brass, color('#1b5358'), rail), color('#f6d493'), rim.mul(0.7))
+    this.metalnessNode = mix(float(0.9), float(0.25), rail)
+    this.roughnessNode = float(0.31).add(rail.mul(0.12)).sub(rim.mul(0.09))
+    this.anisotropy = 0.45
+    this.anisotropyNode = vec2(1, 0).mul(0.45)
+    this.normalNode = proceduralNormal(rim.mul(0.0007).add(brush.mul(0.000015)), 1)
+  }
+}

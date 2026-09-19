@@ -15,8 +15,8 @@ import {insideKnotGallery, knotGalleryBounds} from '../../src/lib/gallery/knotGa
 
 describe('multi-model Knot challenge', () => {
   test('enumerates displayed Knots at initialization while keeping stable identities', () => {
-    expect(knots).toHaveLength(265)
-    expect(knotsById.size).toBe(265)
+    expect(knots).toHaveLength(277)
+    expect(knotsById.size).toBe(277)
     const displayedKnots = knots.filter(item => !item.archived)
     const displayedByCandidate = Map.groupBy(displayedKnots, item => item.candidate.id)
     const expectedCount = [...displayedByCandidate.values()].reduce((sum, items) => sum + Math.min(items.length, 8), 0)
@@ -97,7 +97,12 @@ describe('multi-model Knot challenge', () => {
           expect(material.isMeshPhysicalNodeMaterial).toBe(true)
           expect(material.map).toBeNull()
           if (material.opacityNode) {
-            expect(material.transparent, exhibit.id).toBe(true)
+            if (material.alphaTest > 0) {
+              expect(material.transparent, exhibit.id).toBe(false)
+              expect(material.alphaToCoverage, exhibit.id).toBe(true)
+            } else {
+              expect(material.transparent, exhibit.id).toBe(true)
+            }
             expect(material.depthWrite, exhibit.id).toBe(true)
             expect(material.alphaHash, exhibit.id).toBe(false)
           }
