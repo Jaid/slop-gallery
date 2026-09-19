@@ -1,35 +1,31 @@
-@use '../../style/colors'
-
 .stack
   position: absolute
-  right: 1.5rem
-  bottom: 1.5rem
+  right: 16px
+  bottom: 16px
   display: flex
   flex-direction: column-reverse
   align-items: flex-end
-  gap: 16px
-  max-width: min(680px, calc(100% - 3rem))
+  gap: 8px
+  max-width: 500px
   pointer-events: none
 
 .container
   display: flex
   align-items: center
   gap: 24px
-  width: fit-content
   max-width: 100%
-  padding: 8px
+  padding: 12px
   background: rgb(0 0 0 / 50%)
   backdrop-filter: blur(8px)
   > div
     min-width: 0
   small
-    display: block
-    margin-bottom: 8px
-    color: colors.$muted
+    color: hsl(from currentcolor h s l / 50%)
     font-size: 18px
   div > span
-    display: block
+    display: -webkit-box
     overflow: hidden
-    text-overflow: ellipsis
-    white-space: nowrap
+    -webkit-box-orient: vertical
+    -webkit-line-clamp: 2
+    text-fit: shrink
     font-size: 24px
