@@ -62,6 +62,41 @@ describe('popular constant hoisting', () => {
     const code = compile('const a=0;sink("popular-long-string","popular-long-string")')
     expect(code).toStartWith('var _="popular-long-string";')
   })
+  test('keeps built-in constants opt-in', () => {
+    const code = compile('sink(Math.PI,Math.PI,Math.PI,Math.PI)')
+    expect(code).not.toContain('var ')
+    expect(code.match(/Math\.PI/gu)).toHaveLength(4)
+  })
+  test('pools stable Math and Number constants when enabled', () => {
+    const mathNames = ['E', 'LN10', 'LN2', 'LOG10E', 'LOG2E', 'PI', 'SQRT1_2', 'SQRT2']
+    const numberNames = ['EPSILON', 'MAX_SAFE_INTEGER', 'MAX_VALUE', 'MIN_SAFE_INTEGER', 'MIN_VALUE', 'NaN', 'NEGATIVE_INFINITY', 'POSITIVE_INFINITY']
+    const values = [
+      ...mathNames.flatMap(name => Array.from({length: 3}, () => `Math.${name}`)),
+      ...numberNames.flatMap(name => Array.from({length: 3}, () => `Number.${name}`)),
+    ].join(',')
+    const code = compile(`sink(${values})`, {stableBuiltins: true})
+    for (const name of mathNames) {
+      expect(code.split(`Math.${name}`)).toHaveLength(2)
+    }
+    for (const name of numberNames) {
+      expect(code.split(`Number.${name}`)).toHaveLength(2)
+    }
+    expect(code.match(/\bvar\b/gu)).toHaveLength(1)
+  })
+  test('does not treat shadowed built-in objects as stable', () => {
+    const code = compile('function f(Math,Number){sink(Math.PI,Math.PI,Math.PI,Math.PI,Number.NaN,Number.NaN,Number.NaN)}', {stableBuiltins: true})
+    expect(code).not.toContain('var _=')
+    expect(code.match(/Math\.PI/gu)).toHaveLength(4)
+    expect(code.match(/Number\.NaN/gu)).toHaveLength(3)
+  })
+  test('does not hoist built-in constants used as mutation targets', () => {
+    const source = 'Math.PI++;delete Math.PI;for(Math.PI in source){};({value:Number.NaN}=source)'
+    expect(compile(source, {
+      minimumOccurrences: 1,
+      minimumSavingsBytes: -100,
+      stableBuiltins: true,
+    })).not.toContain('var ')
+  })
   test('respects an explicit savings threshold', () => {
     const source = 'sink("popular-long-string","popular-long-string")'
     expect(compile(source, {minimumSavingsBytes: 100})).not.toContain('var ')

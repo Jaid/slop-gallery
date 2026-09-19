@@ -8,15 +8,19 @@ import {declare} from '@babel/helper-plugin-utils'
 export type HoistPopularConstantsOptions = {
   minimumOccurrences?: number
   minimumSavingsBytes?: number
+  /** Assume unbound built-in objects are stable, enabling constant properties such as Math.PI and Number.NaN to be pooled. */
+  stableBuiltins?: boolean
 }
 
 type PopularLiteral = t.BigIntLiteral | t.BooleanLiteral | t.NullLiteral | t.NumericLiteral | t.StringLiteral
 type PopularLiteralPath = NodePath<t.BigIntLiteral> | NodePath<t.BooleanLiteral> | NodePath<t.NullLiteral> | NodePath<t.NumericLiteral> | NodePath<t.StringLiteral>
+type CandidateExpression = PopularLiteral | t.MemberExpression
+type CandidatePath = NodePath<t.MemberExpression> | PopularLiteralPath
 type Candidate = {
-  literal: PopularLiteral
-  literalBytes: number
+  expression: CandidateExpression
+  expressionBytes: number
   occurrences: number
-  paths: Array<PopularLiteralPath>
+  paths: Array<CandidatePath>
   rawBytes: number
 }
 type HoistState = {
@@ -27,6 +31,28 @@ type HoistPluginState = HoistState & PluginPass
 
 const firstIdentifierCharacters = '_$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 const identifierCharacters = `${firstIdentifierCharacters}0123456789`
+const stableBuiltinConstants = new Map([
+  ['Math', new Set([
+    'E',
+    'LN10',
+    'LN2',
+    'LOG10E',
+    'LOG2E',
+    'PI',
+    'SQRT1_2',
+    'SQRT2',
+  ])],
+  ['Number', new Set([
+    'EPSILON',
+    'MAX_SAFE_INTEGER',
+    'MAX_VALUE',
+    'MIN_SAFE_INTEGER',
+    'MIN_VALUE',
+    'NaN',
+    'NEGATIVE_INFINITY',
+    'POSITIVE_INFINITY',
+  ])],
+])
 const identifierFromIndex = (index: number) => {
   let remainder = index
   let name = firstIdentifierCharacters[remainder % firstIdentifierCharacters.length]
@@ -85,32 +111,63 @@ const isHoistable = (path: PopularLiteralPath) => {
   }
   return !(path.parentPath.isUnaryExpression({operator: 'delete'}) && path.key === 'argument')
 }
-const addCandidate = (path: PopularLiteralPath, state: HoistPluginState) => {
-  if (!isHoistable(path)) {
-    return
+const isStableBuiltinRead = (path: NodePath<t.MemberExpression>) => {
+  if (!path.isReferenced()) {
+    return false
   }
+  const parent = path.parentPath
+  if (parent.isUpdateExpression() || parent.isUnaryExpression({operator: 'delete'}) && path.key === 'argument') {
+    return false
+  }
+  if ((parent.isAssignmentExpression() || parent.isForInStatement() || parent.isForOfStatement()) && path.key === 'left') {
+    return false
+  }
+  return !path.findParent(ancestor => ancestor.isArrayPattern()
+    || ancestor.isAssignmentPattern()
+    || ancestor.isObjectPattern()
+    || ancestor.isRestElement())
+}
+const addCandidate = (path: CandidatePath, state: HoistPluginState, key: string, raw: string) => {
   const candidates = state.candidates!
-  const key = literalKey(path.node)
-  const raw = literalRaw(path.node)
   const bytes = Buffer.byteLength(raw)
   const candidate = candidates.get(key)
   if (candidate) {
     candidate.occurrences++
     candidate.paths.push(path)
     candidate.rawBytes += bytes
-    if (bytes < candidate.literalBytes) {
-      candidate.literal = t.cloneNode(path.node)
-      candidate.literalBytes = bytes
+    if (bytes < candidate.expressionBytes) {
+      candidate.expression = t.cloneNode(path.node)
+      candidate.expressionBytes = bytes
     }
     return
   }
   candidates.set(key, {
-    literal: t.cloneNode(path.node),
-    literalBytes: bytes,
+    expression: t.cloneNode(path.node),
+    expressionBytes: bytes,
     occurrences: 1,
     paths: [path],
     rawBytes: bytes,
   })
+}
+const addLiteralCandidate = (path: PopularLiteralPath, state: HoistPluginState) => {
+  if (!isHoistable(path)) {
+    return
+  }
+  addCandidate(path, state, literalKey(path.node), literalRaw(path.node))
+}
+const addStableBuiltinCandidate = (path: NodePath<t.MemberExpression>, state: HoistPluginState, options: HoistPopularConstantsOptions) => {
+  if (!options.stableBuiltins || path.node.computed || !isStableBuiltinRead(path)) {
+    return
+  }
+  if (!t.isIdentifier(path.node.object) || path.scope.getBinding(path.node.object.name)) {
+    return
+  }
+  const constants = stableBuiltinConstants.get(path.node.object.name)
+  if (!constants || !t.isIdentifier(path.node.property) || !constants.has(path.node.property.name)) {
+    return
+  }
+  const raw = `${path.node.object.name}.${path.node.property.name}`
+  addCandidate(path, state, `builtin:${raw}`, raw)
 }
 const isIdentifierAvailable = (path: NodePath<t.Program>, chosen: ReadonlySet<string>, name: string) => t.isValidIdentifier(name, true)
   && !chosen.has(name)
@@ -132,7 +189,7 @@ const nextIdentifier = (path: NodePath<t.Program>, chosen: ReadonlySet<string>, 
 }
 const estimatedSavings = (candidate: Candidate, identifierLength: number, first: boolean) => {
   const declarationOverhead = first ? 6 : 2
-  return candidate.rawBytes - ((candidate.occurrences + 1) * identifierLength + candidate.literalBytes + declarationOverhead)
+  return candidate.rawBytes - ((candidate.occurrences + 1) * identifierLength + candidate.expressionBytes + declarationOverhead)
 }
 const hoistCandidates = (path: NodePath<t.Program>, state: HoistPluginState, options: HoistPopularConstantsOptions) => {
   if (state.hasDirectEval) {
@@ -171,7 +228,7 @@ const hoistCandidates = (path: NodePath<t.Program>, state: HoistPluginState, opt
     for (const candidatePath of candidate.paths) {
       candidatePath.replaceWith(t.cloneNode(identifier))
     }
-    declarations.push(t.variableDeclarator(identifier, t.cloneNode(candidate.literal)))
+    declarations.push(t.variableDeclarator(identifier, t.cloneNode(candidate.expression)))
   }
   if (!declarations.length) {
     return false
@@ -202,19 +259,22 @@ export default declare<HoistState, HoistPopularConstantsOptions>((api, options) 
         }
       },
       BigIntLiteral(path, state) {
-        addCandidate(path, state)
+        addLiteralCandidate(path, state)
       },
       BooleanLiteral(path, state) {
-        addCandidate(path, state)
+        addLiteralCandidate(path, state)
+      },
+      MemberExpression(path, state) {
+        addStableBuiltinCandidate(path, state, options)
       },
       NullLiteral(path, state) {
-        addCandidate(path, state)
+        addLiteralCandidate(path, state)
       },
       NumericLiteral(path, state) {
-        addCandidate(path, state)
+        addLiteralCandidate(path, state)
       },
       StringLiteral(path, state) {
-        addCandidate(path, state)
+        addLiteralCandidate(path, state)
       },
     },
   }

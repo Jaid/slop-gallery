@@ -6,10 +6,11 @@ import hoistPopularConstants from 'babel-plugin-hoist-popular-constants'
 
 export type VitePluginHoistPopularConstantsOptions = HoistPopularConstantsOptions
 
-/** Pools profitable primitive literals after chunk rendering, before final minification. */
+/** Pools profitable primitive constants after chunk rendering, before final minification. */
 export default function vitePluginHoistPopularConstants(options: VitePluginHoistPopularConstantsOptions = {}): Plugin {
   const babelOptions: HoistPopularConstantsOptions = {
     minimumSavingsBytes: 0,
+    stableBuiltins: true,
     ...options,
   }
   return {

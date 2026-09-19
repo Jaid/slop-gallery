@@ -33,6 +33,13 @@ describe('Vite adapter', () => {
     expect(await render(source)).toStartWith('var _="1234567";')
     expect(await render(source, {minimumSavingsBytes: 1})).toBe(source)
   })
+  test('enables stable built-in pooling by default', async () => {
+    const source = 'sink(Math.PI,Math.PI,Math.PI)'
+    const code = await render(source)
+    expect(code).toStartWith('var _=Math.PI;')
+    expect(code.match(/Math\.PI/gu)).toHaveLength(1)
+    expect(await render(source, {stableBuiltins: false})).toBe(source)
+  })
   test('runs as a post-build post-renderChunk plugin', () => {
     const plugin = vitePluginHoistPopularConstants()
     expect(plugin.name).toBe('hoist-popular-constants')
