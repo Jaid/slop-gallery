@@ -23,7 +23,7 @@ export const meshBvhCodec: RuntimeCodec = {
       configurable: true,
       enumerable: true,
       writable: true,
-      value: (index: number) => bvh._indirectBuffer ? bvh._indirectBuffer[index] : index,
+      value: (index: number) => (bvh._indirectBuffer ? bvh._indirectBuffer[index] : index),
     })
   },
 }
