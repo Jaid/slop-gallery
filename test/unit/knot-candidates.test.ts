@@ -280,6 +280,19 @@ describe('arbitrary Knot batches', () => {
     expect(() => selectKnotBays('?candidate_limit=0')).toThrow('candidate_limit')
     expect(() => selectKnotBays('?candidates=missing')).toThrow('candidate')
   })
+  test('knot_id is an exact comma-separated exhibition whitelist', () => {
+    const requested = knotCandidates.slice(0, 9).map(entryCandidate => entryCandidate.items.find(knot => !knot.archived)!.id)
+    const bays = selectKnotBays(`?knot_id=${requested.join(',')}`)
+    expect(new Set(bays.flatMap(bay => bay.finishes.map(entry => entry.id)))).toEqual(new Set(requested))
+    expect(bays).toHaveLength(9)
+    const candidateWithFive = knotCandidates.find(entryCandidate => entryCandidate.items.filter(knot => !knot.archived).length >= 5)!
+    const five = candidateWithFive.items.filter(knot => !knot.archived).slice(0, 5).map(knot => knot.id)
+    const exact = selectKnotBays(`?knot_id=${five.join(',')}`)
+    expect(exact).toHaveLength(1)
+    expect(new Set(exact[0].finishes.map(entry => entry.id))).toEqual(new Set(five))
+    expect(exact[0].finishes).toHaveLength(5)
+    expect(() => selectKnotBays('?knot_id=missing_knot')).toThrow('Knot ID')
+  })
   test('formats runtime number sequences compactly', () => {
     expect(formatKnotLabels([])).toBe('')
     expect(formatKnotLabels([1])).toBe('#01')

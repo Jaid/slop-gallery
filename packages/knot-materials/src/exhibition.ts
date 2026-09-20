@@ -32,16 +32,36 @@ export function selectKnotBays(search = '') {
   if (unknown.length) {
     throw new Error(`Unknown Knot candidate URL selection: ${unknown.join(', ')}`)
   }
+  const requestedKnotIds = [...new Set(params.getAll('knot_id').flatMap(value => value.split(',')).map(value => value.trim()).filter(Boolean))]
+  const knownKnotIds = new Set(knotCandidates.flatMap(candidate => candidate.items.map(item => item.id)))
+  const unknownKnotIds = requestedKnotIds.filter(id => !knownKnotIds.has(id))
+  if (unknownKnotIds.length) {
+    throw new Error(`Unknown Knot ID URL selection: ${unknownKnotIds.join(', ')}`)
+  }
   const shots = positiveIntegerParam('shots', 4)
   const candidateLimit = positiveIntegerParam('candidate_limit', 8)
-  const selected = requested.length ? knotCandidates.filter(candidate => requested.includes(candidate.data.id)) : knotCandidates
+  const requestedKnotIdSet = new Set(requestedKnotIds)
+  const exactKnotSelection = requestedKnotIds.length > 0
+  let selected = knotCandidates
+  if (exactKnotSelection) {
+    selected = knotCandidates.filter(candidate => candidate.items.some(item => requestedKnotIdSet.has(item.id)))
+  } else if (requested.length) {
+    selected = knotCandidates.filter(candidate => requested.includes(candidate.data.id))
+  }
   const byName = (a: (typeof knotCandidates)[number], b: (typeof knotCandidates)[number]) => a.data.title.localeCompare(b.data.title) || a.data.id.localeCompare(b.data.id)
   const byScore = (a: (typeof knotCandidates)[number], b: (typeof knotCandidates)[number]) => candidateScore(b) - candidateScore(a) || byName(a, b)
-  const ordered = selected.toSorted(candidateOrder === 'score' ? byScore : byName).slice(0, candidateLimit)
-  return ordered.map(candidate => ({
-    candidate,
-    finishes: candidate.select(shots, rarityMode !== 'false'),
-  })).filter(bay => bay.finishes.length > 0)
+  const ordered = selected.toSorted(candidateOrder === 'score' ? byScore : byName)
+  const candidates = exactKnotSelection ? ordered : ordered.slice(0, candidateLimit)
+  return candidates.map(candidate => {
+    let finishes = candidate.select(exactKnotSelection ? undefined : shots, rarityMode !== 'false')
+    if (exactKnotSelection) {
+      finishes = finishes.filter(item => requestedKnotIdSet.has(item.id))
+    }
+    return {
+      candidate,
+      finishes,
+    }
+  }).filter(bay => bay.finishes.length > 0)
 }
 
 export function enumerateKnotBays(bays: ReturnType<typeof selectKnotBays>) {
