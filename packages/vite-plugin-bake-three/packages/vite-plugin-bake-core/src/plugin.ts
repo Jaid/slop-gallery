@@ -263,7 +263,7 @@ export default function createBakePlugin(adapter: BakeAdapter, options: BakeOpti
       }
     },
     generateBundle(_outputOptions, bundle) {
-      const retained = new Set(Object.values(bundle).flatMap(output => output.type === 'chunk' ? Object.keys(output.modules).filter(id => id.startsWith(resolvedPrefix)).map(id => id.slice(resolvedPrefix.length)) : []))
+      const retained = new Set(Object.values(bundle).flatMap(output => (output.type === 'chunk' ? Object.keys(output.modules).filter(id => id.startsWith(resolvedPrefix)).map(id => id.slice(resolvedPrefix.length)) : [])))
       for (const [hash, artifact] of artifacts) {
         if (!retained.has(hash) && artifact.reference) {
           delete bundle[this.getFileName(artifact.reference)]
