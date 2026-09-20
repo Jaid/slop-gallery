@@ -31,23 +31,20 @@ afterEach(() => {
   }
 })
 describe('player save state', () => {
-  test('new and legacy collections spawn at the captured poolside viewpoint', () => {
+  test('current collections require the captured player pose', () => {
     expect(playerSpawn).toEqual({
       position: [0.06505674123764038, 0.01948930136859417, -25.913022994995117],
       yaw: 3.135849777946853,
       pitch: -0.108,
     })
-    const {player, ...legacy} = original
+    const {player, ...withoutPlayer} = original
     expect(player).toBeDefined()
-    expect(validateDocument(legacy).player).toEqual(playerSpawn)
+    expect(() => validateDocument(withoutPlayer)).toThrow('supported')
   })
-  test('legacy yaw-only poses remain level and malformed pitches are rejected', () => {
-    const {pitch: spawnPitch, ...legacy} = playerSpawn
+  test('pitch is required and malformed pitches are rejected', () => {
+    const {pitch: spawnPitch, ...withoutPitch} = playerSpawn
     expect(spawnPitch).toBe(-0.108)
-    expect(validatePlayerPose(legacy)).toEqual({
-      ...legacy,
-      pitch: 0,
-    })
+    expect(validatePlayerPose(withoutPitch)).toBeNull()
     for (const pitch of [Number.NaN, Infinity, '0', null, Math.PI]) {
       expect(validatePlayerPose({
         ...playerSpawn,
@@ -70,7 +67,7 @@ describe('player save state', () => {
     restored.resume('2026-09-09T00:00:00Z')
     expect(restored.snapshot()).toEqual(pose)
   })
-  test('invalid or obsolete positions do not prevent artwork recovery', () => {
+  test('invalid player poses reject the collection instead of salvaging artwork', () => {
     for (const player of [
       null,
       {},
@@ -106,12 +103,10 @@ describe('player save state', () => {
       },
     ]) {
       expect(validatePlayerPose(player)).toBeNull()
-      const saved = validateDocument({
+      expect(() => validateDocument({
         ...original,
         player,
-      })
-      expect(saved.player).toEqual(playerSpawn)
-      expect(saved.portraits).toHaveLength(original.portraits.length)
+      })).toThrow('invalid player pose')
     }
   })
   test('room, tunnel and stair poses round-trip without camera-height offsets or shared arrays', () => {
@@ -124,11 +119,11 @@ describe('player save state', () => {
       }
       playerSession.capture(pose)
       const saved = validateDocument(createDocument())
-      expect(saved.player?.position).toEqual(pose.position)
-      expect(saved.player?.yaw).toBeCloseTo(pose.yaw)
-      expect(saved.player?.pitch).toBeCloseTo(pose.pitch)
+      expect(saved.player.position).toEqual(pose.position)
+      expect(saved.player.yaw).toBeCloseTo(pose.yaw)
+      expect(saved.player.pitch).toBeCloseTo(pose.pitch)
       restoreDocument(saved)
-      saved.player!.position[0] = 900
+      saved.player.position[0] = 900
       expect(playerSession.snapshot().position).toEqual(pose.position)
     }
   })

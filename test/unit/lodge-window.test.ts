@@ -95,6 +95,7 @@ describe('Lodge through-window', () => {
     session.restore({
       position: [(lodgeWindow.roomX + lodgeWindow.tunnelX) / 2, lodgeWindow.bottom + 0.02, lodgeWindow.z],
       yaw: 0,
+      pitch: 0,
     })
     const saved = session.snapshot()
     const world = new RAPIER.World({

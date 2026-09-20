@@ -40,7 +40,7 @@ export type GallerySnapshot = {
   portraits: Array<Portrait>
 }
 export type GalleryDocument = GallerySnapshot & {
-  player?: PlayerPose
+  player: PlayerPose
   savedAt: string
   settings: GallerySettings
   version: 1

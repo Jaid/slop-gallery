@@ -183,21 +183,17 @@ test('metadata limits leave room for image encoding in every exported collection
     ],
   })).toThrow('wall identifier')
 })
-test('retired motion settings are ignored in saved collections', () => {
+test('retired motion settings are rejected', () => {
   const document = createDocument()
   expect(document.settings).not.toHaveProperty('motion')
   for (const motion of [true, false]) {
-    const loaded = validateDocument({
+    expect(() => validateDocument({
       ...document,
       settings: {
         ...document.settings,
         motion,
       },
-    })
-    expect(loaded.settings).toEqual(document.settings)
-    restoreDocument(loaded)
-    expect(useGallery.getState()).not.toHaveProperty('motion')
-    expect(createDocument().settings).toEqual(document.settings)
+    })).toThrow('invalid settings')
   }
 })
 test('movement checkpoints flush synchronously on refresh without rewriting artwork, and detach cleanly', async () => {
@@ -270,20 +266,13 @@ test('movement checkpoints flush synchronously on refresh without rewriting artw
     }
   }
 })
-test('retired palette and frame settings are ignored when loading old collections', () => {
-  const legacy = {
+test('retired palette and frame settings are rejected', () => {
+  expect(() => validateDocument({
     ...original,
     settings: {
       sound: false,
       theme: 'nocturne',
       frame: 'black',
     },
-  }
-  const loaded = validateDocument(legacy)
-  expect(loaded.settings).toEqual({sound: false})
-  restoreDocument(legacy)
-  expect(createDocument().settings).toEqual({sound: false})
-  expect(useGallery.getState()).not.toHaveProperty('theme')
-  expect(useGallery.getState()).not.toHaveProperty('frame')
-  expect(validateDocument(createDocument()).settings).toEqual({sound: false})
+  })).toThrow('invalid settings')
 })

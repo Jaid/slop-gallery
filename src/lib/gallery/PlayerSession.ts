@@ -14,11 +14,10 @@ const copy = (pose: PlayerPose): PlayerPose => ({
 })
 
 export function validatePlayerPose(value: unknown): PlayerPose | null {
-  if (!value || typeof value !== 'object' || !('position' in value) || !('yaw' in value)) {
+  if (!value || typeof value !== 'object' || !('position' in value) || !('yaw' in value) || !('pitch' in value)) {
     return null
   }
-  const {position, yaw} = value
-  const pitch = 'pitch' in value ? value.pitch : 0
+  const {position, yaw, pitch} = value
   if (!Array.isArray(position) || position.length !== 3 || !position.every(n => typeof n === 'number' && Number.isFinite(n)) || typeof yaw !== 'number' || !Number.isFinite(yaw) || typeof pitch !== 'number' || !Number.isFinite(pitch) || Math.abs(pitch) > Math.PI / 2) {
     return null
   }

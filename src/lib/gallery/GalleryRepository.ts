@@ -6,7 +6,7 @@ import {notify} from './actions.ts'
 import initialPortraits from './collection.ts'
 import {imageSize} from './ImageImporter.ts'
 import {imageExtensions, maximumBackupBytes, validateCollectionImages, validateImage} from './imagePolicy.ts'
-import {playerSession, playerSpawn, validatePlayerPose} from './PlayerSession.ts'
+import {playerSession, validatePlayerPose} from './PlayerSession.ts'
 import {createDocument, maximumPortraits, restoreDocument, useGallery} from './store.ts'
 import walls, {insideGallery, placementIssue, wallCoordinates, wallPosition} from './walls.ts'
 
@@ -15,16 +15,17 @@ const narrations = new Set(initialPortraits.map(p => p.narration).filter((p): p 
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 const vector = (value: unknown, length: number) => Array.isArray(value) && value.length === length && value.every(v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) < 1000)
 const shortText = (value: unknown, max: number): value is string => typeof value === 'string' && value.length <= max
+const exactKeys = (value: Record<string, unknown>, keys: ReadonlyArray<string>) => Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value, key))
 
 export function validateDocument(value: unknown): GalleryDocument {
-  if (!object(value) || value.version !== 1 || !Array.isArray(value.portraits) || value.portraits.length > maximumPortraits || !object(value.settings)) {
+  if (!object(value) || !exactKeys(value, ['version', 'portraits', 'player', 'savedAt', 'settings']) || value.version !== 1 || !Array.isArray(value.portraits) || value.portraits.length > maximumPortraits || !object(value.settings)) {
     throw new Error('This is not a supported Slop Gallery collection.')
   }
-  if (typeof value.savedAt === 'string' && !shortText(value.savedAt, 100)) {
+  if (!shortText(value.savedAt, 100)) {
     throw new Error('The collection timestamp is too long.')
   }
   const settings = value.settings
-  if (typeof settings.sound !== 'boolean') {
+  if (!exactKeys(settings, ['sound']) || typeof settings.sound !== 'boolean') {
     throw new TypeError('The collection has invalid settings.')
   }
   const ids = new Set<string>
@@ -86,15 +87,15 @@ export function validateDocument(value: unknown): GalleryDocument {
     }
   })
   validateCollectionImages(portraits)
+  const player = validatePlayerPose(value.player)
+  if (!player) {
+    throw new Error('The collection has an invalid player pose.')
+  }
   return {
     version: 1,
     portraits,
-    player: validatePlayerPose(value.player) ?? {
-      position: [...playerSpawn.position],
-      yaw: playerSpawn.yaw,
-      pitch: playerSpawn.pitch,
-    },
-    savedAt: typeof value.savedAt === 'string' ? value.savedAt : '',
+    player,
+    savedAt: value.savedAt,
     settings: {
       sound: settings.sound,
     },

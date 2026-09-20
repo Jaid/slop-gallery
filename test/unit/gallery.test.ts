@@ -399,29 +399,22 @@ describe('backup validation', () => {
     expect(validateDocument(original).portraits).toHaveLength(16)
   })
   for (const secretOpen of [false, true]) {
-    test(`ignores the retired puzzle state in existing collections (${secretOpen})`, () => {
-      const document = validateDocument({
+    test(`rejects the retired puzzle state (${secretOpen})`, () => {
+      expect(() => validateDocument({
         ...original,
         secretOpen,
-      })
-      expect(document).toEqual(validateDocument(original))
-      expect(document).not.toHaveProperty('secretOpen')
-      restoreDocument(document)
-      useGallery.getState().remove(original.portraits[0].id)
-      expect(undo()).toBe(true)
-      expect(createDocument()).not.toHaveProperty('secretOpen')
-      expect(useGallery.getState().portraits).toHaveLength(16)
+      })).toThrow('supported')
     })
   }
-  test('strips unknown settings instead of spreading them into the store', () => {
-    expect(validateDocument({
+  test('rejects unknown settings instead of silently stripping them', () => {
+    expect(() => validateDocument({
       ...original,
       settings: {
         ...original.settings,
         apiKey: 'injected',
         ready: true,
       },
-    }).settings).toEqual(original.settings)
+    })).toThrow('invalid settings')
   })
   for (const patch of [{source: 'https://example.com/tracker'}, {source: '/audio/doge.opus'}, {position: [Number.NaN, 2, 0]}, {width: 0}, {wallId: 'missing'}, {rotation: Math.PI}, {position: [0, 2, 0]}, {orientation: [0, 0, 0, 0]}]) {
     test(`rejects malformed artwork ${JSON.stringify(patch)}`, () => {
