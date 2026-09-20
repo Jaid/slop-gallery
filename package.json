@@ -46,7 +46,7 @@
     "three-bvh-csg@0.0.18": "patches/three-bvh-csg@0.0.18.patch"
   },
   "dependencies": {
-    "ai": "7.0.106",
+    "ai": "7.0.107",
     "branch-component": "0.4.0",
     "canvas-textures": "workspace:*",
     "clsx": "2.1.1",
@@ -83,7 +83,7 @@
     "webgpu-capture-bridge": "workspace:*",
     "zustand": "5.0.15",
     "@dimforge/rapier3d-compat": "0.20.0",
-    "@openrouter/ai-sdk-provider": "3.0.0",
+    "@openrouter/ai-sdk-provider": "3.1.0",
     "@react-three/drei": "11.0.0-alpha.7",
     "@react-three/fiber": "10.0.0-alpha.5",
     "@react-three/rapier": "2.2.0"
@@ -94,7 +94,7 @@
     "browserslist": "4.29.0",
     "caniuse-lite": "1.0.30001810",
     "cssnano-preset-advanced": "9.0.5",
-    "eslint": "10.10.0",
+    "eslint": "10.11.0",
     "eslint-config-jaid": "33.0.0",
     "fake-indexeddb": "6.2.5",
     "forward-slash-path": "0.3.0",
