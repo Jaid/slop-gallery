@@ -118,7 +118,10 @@ export const useGallery = create<State>((set, get) => ({
   importFiles: null,
   importTarget: null,
   update: (id, patch) => set(s => {
-    const portraits = s.portraits.map(p => (p.id === id ? {...p, ...patch} : p))
+    const portraits = s.portraits.map(p => (p.id === id ? {
+      ...p,
+      ...patch,
+    } : p))
     if (patch.source !== undefined) {
       validateCollectionImages(portraits)
     }

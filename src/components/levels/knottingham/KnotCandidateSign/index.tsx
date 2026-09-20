@@ -24,11 +24,11 @@ export default function KnotCandidateSign({bay}: {bay: KnotBay}) {
   const sign = useRef<RapierRigidBody>(null!)
   useRevoluteJoint(anchor, sign, [[0, 0, 0], knotCandidateSign.anchor, knotCandidateSign.axis, knotCandidateSign.limits])
   const isQuality = useGraphicsQuality()
-  const metal = useDisposable(useMemo(() => isQuality ? new MeshStandardNodeMaterial({
+  const metal = useDisposable(useMemo(() => (isQuality ? new MeshStandardNodeMaterial({
     color: '#ac9270',
     metalness: 0.85,
     roughness: 0.3,
-  }) : new MeshBasicNodeMaterial({color: '#ac9270'}), [isQuality]))
+  }) : new MeshBasicNodeMaterial({color: '#ac9270'})), [isQuality]))
   const geometry = useDisposable(useMemo(() => new KnotCandidateSignGeometry, []))
   const {candidate} = bay
   const texture = useCanvasTexture({

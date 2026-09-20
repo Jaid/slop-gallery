@@ -25,7 +25,7 @@ export default function CoveredPassage({passage, material, timber, ribCutouts}: 
     ...[-1, 1].map(side => new BoxGeometry(0.22, 0.03, 0.22).translate(0, side * 0.17, 0)),
     ...[-1, 1].flatMap(x => [-1, 1].map(z => new BoxGeometry(0.018, 0.32, 0.018).translate(x * 0.09, 0, z * 0.09))),
   ]), []))
-  const geometry = useDisposable(useMemo(() => timber ? TimberGeometry.passage(passage, ribCutouts) : new VaultGeometry(passage), [passage, ribCutouts, timber]))
+  const geometry = useDisposable(useMemo(() => (timber ? TimberGeometry.passage(passage, ribCutouts) : new VaultGeometry(passage)), [passage, ribCutouts, timber]))
   const collision = timber ? [] : [geometry.shell, geometry.ribs].map(colliderGeometry)
   return <group name={passage.id}>
     <RigidBody colliders={false} type='fixed'>

@@ -149,7 +149,12 @@ test('a manual label edit releases pending narration without waiting for the old
   producer.enqueue('goose')
   await flush()
   const state = useGallery.getState()
-  state.commit(state.portraits.map(p => (p.id === 'goose' ? {...p, title: 'My label', description: 'My story', pending: false} : p)))
+  state.commit(state.portraits.map(p => (p.id === 'goose' ? {
+    ...p,
+    title: 'My label',
+    description: 'My story',
+    pending: false,
+  } : p)))
   await flush()
   expect(spoken).toEqual(['My label. My story.'])
   producer.ready('goose')

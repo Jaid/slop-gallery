@@ -9,7 +9,7 @@ export const previewColors = {
   valid: '#36ff72',
   invalid: '#ff3b45',
 }
-export const previewOpacity = (inReach: boolean) => inReach ? 1 : 0.18
+export const previewOpacity = (inReach: boolean) => (inReach ? 1 : 0.18)
 
 /** A closed ribbon whose U coordinate measures distance around the frame. */
 export function previewBorderGeometry(width: number, height: number, thickness = 0.028) {
