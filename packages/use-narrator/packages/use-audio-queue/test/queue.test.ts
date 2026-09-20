@@ -309,7 +309,8 @@ test('an old pending play rejection after injection does not kill resumed audio'
   let attempts = 0
   const handle = queue.push(() => ({
     ...original,
-    play: () => (++attempts === 1 ? starting.promise : undefined)}))
+    play: () => (++attempts === 1 ? starting.promise : undefined),
+  }))
   await flush()
   push('injection', {priority: 'inject'})
   await flush()
