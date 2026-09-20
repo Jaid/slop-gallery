@@ -57,13 +57,31 @@ describe('candidate ordering', () => {
       expect(() => parseCandidateOrder(`?candidate_order=${value}`)).toThrow('candidate_order')
     }
   })
-  test('score is average knot rarity and sorts candidates descending', () => {
+  test('score is average knot rarity and the default selects the best eight candidates', () => {
     for (const candidate of knotCandidates) {
       expect(candidateScore(candidate)).toBe(candidate.items.reduce((sum, item) => sum + item.rarity, 0) / candidate.items.length)
     }
     const bays = selectKnotBays()
     const scores = bays.map(bay => candidateScore(bay.candidate))
+    expect(bays).toHaveLength(8)
+    expect(bays.every(bay => bay.finishes.length === 4)).toBe(true)
     expect(scores).toEqual(scores.toSorted((a, b) => b - a))
+  })
+  test('candidate_limit truncates after candidate ordering', () => {
+    const byScore = selectKnotBays('?candidate_limit=3')
+    expect(byScore).toHaveLength(3)
+    const expectedByScore = knotCandidates.toSorted((a, b) => candidateScore(b) - candidateScore(a)
+      || a.data.title.localeCompare(b.data.title)
+      || a.data.id.localeCompare(b.data.id))
+      .slice(0, 3)
+    expect(byScore.map(bay => bay.candidate.data.id)).toEqual(expectedByScore.map(candidate => candidate.data.id))
+    const byName = selectKnotBays('?candidate_order=name&candidate_limit=3')
+    const expectedByName = knotCandidates.toSorted((a, b) => a.data.title.localeCompare(b.data.title) || a.data.id.localeCompare(b.data.id))
+      .slice(0, 3)
+    expect(byName.map(bay => bay.candidate.data.id)).toEqual(expectedByName.map(candidate => candidate.data.id))
+    for (const value of ['0', '-1', '1.5', '']) {
+      expect(() => selectKnotBays(`?candidate_limit=${value}`)).toThrow('candidate_limit')
+    }
   })
   test('name sorts by candidate title', () => {
     const bays = selectKnotBays('?candidate_order=name')

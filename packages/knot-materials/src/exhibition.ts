@@ -13,6 +13,17 @@ export function candidateScore(candidate: (typeof knotCandidates)[number]) {
 
 export function selectKnotBays(search = '') {
   const params = new URLSearchParams(search)
+  function positiveIntegerParam(name: string, fallback: number) {
+    const raw = params.get(name)
+    if (raw === null) {
+      return fallback
+    }
+    const value = Number(raw)
+    if (!Number.isSafeInteger(value) || value < 1) {
+      throw new Error(`Knot ${name} URL parameter must be a positive integer.`)
+    }
+    return value
+  }
   const rarityMode = parseRarityMode(search)
   const candidateOrder = parseCandidateOrder(search)
   const requested = [...new Set(params.getAll('candidates').flatMap(value => value.split(',')).map(value => value.trim()).filter(Boolean))]
@@ -21,18 +32,12 @@ export function selectKnotBays(search = '') {
   if (unknown.length) {
     throw new Error(`Unknown Knot candidate URL selection: ${unknown.join(', ')}`)
   }
-  const rawShots = params.get('shots')
-  let shots = 8
-  if (rawShots !== null) {
-    shots = Number(rawShots)
-    if (!Number.isSafeInteger(shots) || shots < 1) {
-      throw new Error('Knot shots URL parameter must be a positive integer.')
-    }
-  }
+  const shots = positiveIntegerParam('shots', 4)
+  const candidateLimit = positiveIntegerParam('candidate_limit', 8)
   const selected = requested.length ? knotCandidates.filter(candidate => requested.includes(candidate.data.id)) : knotCandidates
   const byName = (a: (typeof knotCandidates)[number], b: (typeof knotCandidates)[number]) => a.data.title.localeCompare(b.data.title) || a.data.id.localeCompare(b.data.id)
   const byScore = (a: (typeof knotCandidates)[number], b: (typeof knotCandidates)[number]) => candidateScore(b) - candidateScore(a) || byName(a, b)
-  const ordered = selected.toSorted(candidateOrder === 'score' ? byScore : byName)
+  const ordered = selected.toSorted(candidateOrder === 'score' ? byScore : byName).slice(0, candidateLimit)
   return ordered.map(candidate => ({
     candidate,
     finishes: candidate.select(shots, rarityMode !== 'false'),

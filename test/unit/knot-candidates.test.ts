@@ -261,10 +261,10 @@ describe('arbitrary Knot batches', () => {
       'chat.deepseek.com': 8,
     })
   })
-  test('defaults to eight shots per candidate when the URL omits shots', () => {
+  test('defaults to four shots per candidate when the URL omits shots', () => {
     const bays = selectKnotBays('?candidates=claude_fable,gpt_astra')
     expect(new Set(bays.map(bay => bay.candidate.data.id))).toEqual(new Set(['claude_fable', 'gpt_astra']))
-    expect(bays.every(bay => bay.finishes.length === 8)).toBe(true)
+    expect(bays.every(bay => bay.finishes.length === 4)).toBe(true)
   })
   test('filters candidates, caps shots and enumerates only after final selection', () => {
     const bays = selectKnotBays('?candidates=glm,muse_spark,qwen_max,gpt_astra&shots=2')
@@ -277,6 +277,7 @@ describe('arbitrary Knot batches', () => {
     expect(astra[0].finishes).toHaveLength(3)
     expect(astra[0].finishes.map(entry => entry.number)).toEqual([1, 2, 3])
     expect(() => selectKnotBays('?shots=0')).toThrow('shots')
+    expect(() => selectKnotBays('?candidate_limit=0')).toThrow('candidate_limit')
     expect(() => selectKnotBays('?candidates=missing')).toThrow('candidate')
   })
   test('formats runtime number sequences compactly', () => {
