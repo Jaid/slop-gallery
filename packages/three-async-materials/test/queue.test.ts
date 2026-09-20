@@ -504,7 +504,7 @@ test('reporting exceptions do not interrupt subsequent materials', async () => {
 })
 test('invalid priority fails only its binding and reports the reason', async () => {
   const f = fixture()
-  f.options.priority = mesh => mesh === f.meshes[1] ? Number.NaN : 0
+  f.options.priority = mesh => (mesh === f.meshes[1] ? Number.NaN : 0)
   try {
     f.observe(0)
     f.observe(1)
