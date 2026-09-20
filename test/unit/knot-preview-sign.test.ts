@@ -1,23 +1,62 @@
 import {expect, test} from 'bun:test'
 
 import {knotBays, knotNumberLabel} from 'knot-materials/exhibition.ts'
-import {knotPreviewGrid, knotPreviewMaximumHeight, knotPreviewMaximumWidth, knotPreviewTextureLayout, knotPreviewTextureRowHeight, knotPreviewTextureWidth} from 'knot-materials/KnotPreviewLayout.ts'
+import {knotPreviewGrid, knotPreviewMaximumHeight, knotPreviewMaximumWidth, knotPreviewTextureCellSize, knotPreviewTextureLayout} from 'knot-materials/KnotPreviewLayout.ts'
 
 import drawPreview, {knotPreviewBackground} from '../../src/components/levels/knottingham/KnotPreviewSigns/drawPreview.ts'
 
-test('runtime billboard layout preserves physical bounds and matches its raster aspect', () => {
-  for (const count of [1, 4, 5, 17, 22]) {
+test('runtime billboard layout chooses compact formats and matches its raster aspect', () => {
+  const formats = new Map<number, [number, number]>([
+    [1, [1, 1]],
+    [2, [2, 1]],
+    [3, [2, 2]],
+    [4, [2, 2]],
+    [5, [3, 2]],
+    [6, [3, 2]],
+    [7, [3, 3]],
+    [8, [3, 3]],
+    [9, [3, 3]],
+    [10, [4, 3]],
+    [16, [4, 4]],
+    [17, [4, 5]],
+    [22, [4, 6]],
+  ])
+  for (const [count, [columns, rows]] of formats) {
     const grid = knotPreviewGrid(count)
     const raster = knotPreviewTextureLayout(count)
     expect(grid.width).toBeLessThanOrEqual(knotPreviewMaximumWidth)
     expect(grid.height).toBeLessThanOrEqual(knotPreviewMaximumHeight)
-    expect(grid.rows).toBe(Math.max(2, Math.ceil(count / 4)))
+    expect([grid.columns, grid.rows]).toEqual([columns, rows])
     expect(grid.width / grid.height).toBeCloseTo(raster.width / raster.height)
-    expect(raster.width).toBe(knotPreviewTextureWidth)
-    expect(raster.height).toBe(raster.rows * knotPreviewTextureRowHeight)
+    expect(raster.width).toBe(columns * knotPreviewTextureCellSize)
+    expect(raster.height).toBe(rows * knotPreviewTextureCellSize)
   }
+  expect(knotPreviewGrid(4).width).toBe(knotPreviewGrid(4).height)
+  expect(knotPreviewTextureLayout(4).width).toBe(knotPreviewTextureLayout(4).height)
 })
-test('doubled runtime billboard resolution keeps the complete preview population below 192 MiB', () => {
+test('incomplete final rows are centered within their billboard format', () => {
+  const source = knotBays.find(bay => bay.finishes.length >= 3)!
+  const bay = {
+    ...source,
+    finishes: source.finishes.slice(0, 3),
+  }
+  const layout = knotPreviewTextureLayout(3)
+  const texts: Array<Array<unknown>> = []
+  const context = {
+    canvas: {
+      width: layout.width,
+      height: layout.height,
+    },
+    fillRect() {},
+    drawImage() {},
+    measureText: () => ({width: 180}),
+    fillText: (...args: Array<unknown>) => texts.push(args),
+  } as unknown as CanvasRenderingContext2D
+  drawPreview(context, bay, new Map)
+  expect(texts).toHaveLength(3)
+  expect(texts[2][1]).toBe(layout.width / 2)
+})
+test('runtime billboard textures keep the default preview population below 192 MiB', () => {
   const bytes = knotBays.reduce((total, bay) => {
     const raster = knotPreviewTextureLayout(bay.finishes.length)
     return total + raster.width * raster.height * 4

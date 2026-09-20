@@ -1,22 +1,21 @@
-export const knotPreviewColumns = 4
-export const knotPreviewMinimumRows = 2
+export const knotPreviewMaximumColumns = 4
 export const knotPreviewMaximumWidth = 4.8
 export const knotPreviewMaximumHeight = 2.75
-export const knotPreviewTextureWidth = 2500
-export const knotPreviewTextureRowHeight = 715
+export const knotPreviewTextureCellSize = 715
 
 export function knotPreviewTextureLayout(count: number) {
   if (!Number.isSafeInteger(count) || count < 0) {
     throw new RangeError('Knot preview count must be a non-negative integer.')
   }
-  const rows = Math.max(knotPreviewMinimumRows, Math.ceil(count / knotPreviewColumns))
+  const columns = Math.min(knotPreviewMaximumColumns, Math.max(1, Math.ceil(Math.sqrt(count))))
+  const rows = Math.max(1, Math.ceil(count / columns))
   return {
-    columns: knotPreviewColumns,
-    height: rows * knotPreviewTextureRowHeight,
-    rowHeight: knotPreviewTextureRowHeight,
+    columns,
+    height: rows * knotPreviewTextureCellSize,
+    rowHeight: knotPreviewTextureCellSize,
     rows,
-    tileWidth: knotPreviewTextureWidth / knotPreviewColumns,
-    width: knotPreviewTextureWidth,
+    tileWidth: knotPreviewTextureCellSize,
+    width: columns * knotPreviewTextureCellSize,
   }
 }
 

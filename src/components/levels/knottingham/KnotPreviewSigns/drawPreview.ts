@@ -1,12 +1,12 @@
 import type {KnotBay} from 'knot-materials/exhibition.ts'
 
 import {knotNumberLabel} from 'knot-materials/exhibition.ts'
-import {knotPreviewTextureLayout, knotPreviewTextureRowHeight} from 'knot-materials/KnotPreviewLayout.ts'
+import {knotPreviewTextureCellSize, knotPreviewTextureLayout} from 'knot-materials/KnotPreviewLayout.ts'
 
 export const knotPreviewBackground = '#17202b'
 export const knotPreviewCaptionFontFamily = 'main'
 export const knotPreviewCaptionFontWeight = 600
-export const knotPreviewCaptionFontSize = Math.max(12, Math.floor(knotPreviewTextureRowHeight * 0.13 * 0.72))
+export const knotPreviewCaptionFontSize = Math.max(12, Math.floor(knotPreviewTextureCellSize * 0.13 * 0.72))
 const failedImageBackground = '#5d2929'
 const iconMaximumWidth = 0.925
 const iconMaximumHeight = 0.81
@@ -24,7 +24,10 @@ export default function drawPreview(context: CanvasRenderingContext2D, bay: Knot
   for (const [index, finish] of bay.finishes.entries()) {
     const column = index % layout.columns
     const row = Math.floor(index / layout.columns)
-    const centerX = layout.tileWidth * (column + 0.5)
+    const rowStart = row * layout.columns
+    const rowCount = Math.min(layout.columns, bay.finishes.length - rowStart)
+    const rowInset = (layout.columns - rowCount) / 2
+    const centerX = layout.tileWidth * (column + rowInset + 0.5)
     const centerY = layout.rowHeight * (row + 0.5)
     const iconCenterY = centerY - layout.rowHeight * iconCenterOffset
     const maxIcon = Math.min(layout.tileWidth * iconMaximumWidth, layout.rowHeight * iconMaximumHeight)
