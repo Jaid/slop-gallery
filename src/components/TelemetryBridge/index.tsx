@@ -1,4 +1,4 @@
-import type {Attributes} from 'telemethree'
+import type {Attributes} from 'victoria-browser-client'
 
 import {useThree} from '@react-three/fiber/webgpu'
 import Branch from 'branch-component'

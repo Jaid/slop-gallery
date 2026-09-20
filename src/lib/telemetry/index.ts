@@ -20,6 +20,6 @@ export const playerTelemetry: {read: (() => {
 if (import.meta.env.DEV) {
   import.meta.hot.dispose(() => {
     // eslint-disable-next-line promise/prefer-await-to-then -- HMR disposal is synchronous and telemetry must not block replacement.
-    telemetry?.dispose().catch(() => {})
+    telemetry?.shutdown().catch(() => {})
   })
 }

@@ -2,7 +2,7 @@
   "name": "telemethree",
   "version": "0.1.0",
   "type": "module",
-  "description": "Composable metrics, logs, traces and frame statistics for React Three Fiber",
+  "description": "Three/WebGPU instrumentation for victoria-browser-client",
   "funding": "https://github.com/sponsors/Jaid",
   "license": "MIT",
   "repository": {
@@ -20,6 +20,7 @@
   "peerDependencies": {
     "react": "^19.3.0",
     "three": "^0.186.0",
+    "victoria-browser-client": "^0.2.0",
     "@react-three/fiber": "^10.0.0-alpha.5"
   },
   "peerDependenciesMeta": {
@@ -29,6 +30,9 @@
     "@react-three/fiber": {
       "optional": true
     }
+  },
+  "devDependencies": {
+    "victoria-browser-client": "0.2.0"
   },
   "files": [
     "src",

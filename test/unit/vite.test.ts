@@ -15,9 +15,13 @@ test.each(['development', 'staging', 'production'])('Vite %s keeps the shared pi
   if (fiberAlias?.find instanceof RegExp) {
     expect(fiberAlias.find.test('@react-three/fiber/webgpu')).toBe(false)
   }
-  const relay = config.plugins.find(plugin => plugin.name === 'slop-gallery-victoria-telemetry')
-  expect(relay?.configureServer).toBeFunction()
-  expect(relay?.configurePreviewServer).toBeFunction()
+  for (const proxy of [config.server.proxy, config.preview.proxy]) {
+    expect(Object.keys(proxy ?? {})).toEqual([
+      '^/api/telemetry/metrics$',
+      '^/api/telemetry/logs$',
+      '^/api/telemetry/traces$',
+    ])
+  }
   expect(config.plugins.some(plugin => plugin.name === 'title')).toBe(true)
   expect(config.plugins.some(plugin => plugin.name.includes('babel'))).toBe(true)
   if (mode === 'production') {

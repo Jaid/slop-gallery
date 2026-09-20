@@ -1,8 +1,8 @@
 import type {RarityChange} from 'knot-materials/KnotRarityEditor.ts'
-import type Telemetry from 'telemethree'
+import type VictoriaClient from 'victoria-browser-client'
 
 /** Explicit curation records, not inferred preferences; no high-cardinality metric labels. */
-export default function recordRarityChange(telemetry: Pick<Telemetry, 'flushInBackground' | 'log' | 'startSpan'>, change: RarityChange) {
+export default function recordRarityChange(telemetry: Pick<VictoriaClient, 'log' | 'startSpan'>, change: RarityChange) {
   const attributes = {
     'event.name': 'knot.rarity.changed',
     'knot.id': change.id,
@@ -14,8 +14,11 @@ export default function recordRarityChange(telemetry: Pick<Telemetry, 'flushInBa
     'edit.sequence': change.sequence,
     'edit.source': 'sign',
   }
-  const span = telemetry.startSpan('knot.rarity.changed', attributes)
-  telemetry.log(JSON.stringify(attributes), 'info', attributes, span)
+  const span = telemetry.startSpan('knot.rarity.changed', {attributes})
+  telemetry.log(JSON.stringify(attributes), {
+    level: 'info',
+    attributes,
+    context: span,
+  })
   span.end()
-  telemetry.flushInBackground()
 }

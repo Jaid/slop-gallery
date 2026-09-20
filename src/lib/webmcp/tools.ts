@@ -1,11 +1,12 @@
 import type {AimSnapshot} from 'ego-player'
-import type Telemetry from 'telemethree'
+import type VictoriaClient from 'victoria-browser-client'
 
 export type WebmcpBridge = {
   getAim: () => AimSnapshot
   getTelemetry: () => {
+    collection: ReturnType<VictoriaClient['collectionStatus']>
+    delivery: ReturnType<VictoriaClient['status']>
     sessionId: string
-    signals: ReturnType<Telemetry['status']>
   } | null
 }
 
@@ -20,7 +21,7 @@ export default function createWebmcpTools(getBridge: () => WebmcpBridge): Array<
     {
       name: 'get_telemetry',
       title: 'Inspect telemetry delivery',
-      description: 'Read the current session ID and telemetry queue/export status, or null when telemetry is disabled. Use the session ID to correlate VictoriaLogs, VictoriaMetrics, VictoriaTraces and X-key ego.dump records. Does not enable telemetry or send data.',
+      description: 'Read the current session ID, collection limits and Victoria delivery status, or null when telemetry is disabled. Use the session ID to correlate VictoriaLogs, VictoriaMetrics, VictoriaTraces and X-key ego.dump records. Does not enable telemetry or send data.',
       read: () => getBridge().getTelemetry(),
     },
   ].map(({read, ...tool}) => ({

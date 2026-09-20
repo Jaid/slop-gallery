@@ -1,7 +1,7 @@
-import type Telemetry from './Telemetry.ts'
 import type {ThreeDiagnosticsOptions} from './ThreeDiagnostics.ts'
-import type {Attributes, TraceContext} from './types.ts'
+import type {TelemetryClient} from './types.ts'
 import type {Scene, WebGPURenderer} from 'three/webgpu'
+import type {Attributes, TraceContext} from 'victoria-browser-client'
 
 import {InstancedMesh, Mesh, Vector2} from 'three/webgpu'
 
@@ -62,7 +62,7 @@ export default class ThreeStatistics {
   private readonly slow = new Float64Array(thresholds.length)
   private readonly work: Array<Distribution>
 
-  constructor(private readonly telemetry: Telemetry, private readonly renderer: WebGPURenderer, private readonly scene: Scene, private readonly options: ThreeStatisticsOptions = {}) {
+  constructor(private readonly telemetry: TelemetryClient, private readonly renderer: WebGPURenderer, private readonly scene: Scene, private readonly options: ThreeStatisticsOptions = {}) {
     const size = options.maxSamples ?? 16_384
     this.intervalMs = options.intervalMs ?? 5000
     if (!Number.isSafeInteger(size) || size < 1 || !Number.isFinite(this.intervalMs) || this.intervalMs <= 0) {
@@ -265,12 +265,12 @@ export default class ThreeStatistics {
     distribution('frame.duration', this.duration, 'ms')
     metric('fps', this.duration.count / this.duration.sum * 1000, '{frame}/s')
     metric('frame.samples', this.duration.count, '{frame}')
-    this.telemetry.count('three.frames', this.duration.count, {
+    this.telemetry.increment('three.frames', this.duration.count, {
       unit: '{frame}',
       attributes,
     })
     for (const [index, threshold] of thresholds.entries()) {
-      this.telemetry.count('three.frames.slow', this.slow[index], {
+      this.telemetry.increment('three.frames.slow', this.slow[index], {
         unit: '{frame}',
         attributes: {
           ...attributes,

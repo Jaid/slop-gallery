@@ -1,21 +1,34 @@
-import type {ExportBatch} from 'telemethree'
+import type {LogOptions} from 'victoria-browser-client'
 
 import {expect, test} from 'bun:test'
 
-import Telemetry from 'telemethree'
 import PauseMenu from 'use-pause-menu/core'
+import VictoriaClient from 'victoria-browser-client'
 
 import PauseMenuTelemetry from '../src/main.ts'
 
-test('pause-menu logs capture reset resolution and clean up without duplicate subscriptions', async () => {
-  const batches: Array<ExportBatch> = []
-  const telemetry = new Telemetry({
-    exporter: {
-      export: async batch => {
-        batches.push(batch)
-      },
-    },
-  })
+class TestClient extends VictoriaClient {
+  readonly logs: Array<{
+    message: string
+    options: LogOptions
+  }> = []
+  constructor() {
+    super({
+      serviceName: 'telemethree-pause-menu-test',
+      endpoint: 'http://localhost:4318',
+      interval: false,
+    })
+  }
+  override log(message: string, options: LogOptions = {}) {
+    this.logs.push({
+      message,
+      options,
+    })
+    return true
+  }
+}
+test('pause-menu logs capture reset resolution and clean up without duplicate subscriptions', () => {
+  const telemetry = new TestClient
   const menu = new PauseMenu({initialStage: 'return'})
   const collector = new PauseMenuTelemetry({
     menu,
@@ -29,11 +42,9 @@ test('pause-menu logs capture reset resolution and clean up without duplicate su
   stop()
   stop()
   menu.setGameData(false)
-  await telemetry.flush()
-  const logs = batches.filter(batch => batch.signal === 'logs').flatMap(batch => batch.records)
-  expect(logs.map(log => log.attributes['event.name'])).toEqual(['pause_menu.attached', 'pause_menu.changed', 'pause_menu.changed', 'pause_menu.detached'])
-  expect(logs.map(log => log.attributes['pause_menu.stage'])).toEqual(['return', 'reset', 'return', 'return'])
-  expect(logs.every(log => log.attributes.level === 'test')).toBe(true)
-  expect(logs[1].attributes['pause_menu.previous_stage']).toBe('return')
-  await telemetry.dispose()
+  const logs = telemetry.logs.map(({options}) => options.attributes ?? {})
+  expect(logs.map(log => log['event.name'])).toEqual(['pause_menu.attached', 'pause_menu.changed', 'pause_menu.changed', 'pause_menu.detached'])
+  expect(logs.map(log => log['pause_menu.stage'])).toEqual(['return', 'reset', 'return', 'return'])
+  expect(logs.every(log => log.level === 'test')).toBe(true)
+  expect(logs[1]['pause_menu.previous_stage']).toBe('return')
 })

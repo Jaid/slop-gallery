@@ -1,4 +1,3 @@
-import type {ExportBatch, Metric, Trace} from '../src/main.ts'
 import type {TimestampBackend} from '../src/ThreeDiagnostics.ts'
 import type {ComputeNode, WebGPURenderer} from 'three/webgpu'
 
@@ -7,22 +6,14 @@ import {expect, test} from 'bun:test'
 import Info from 'three/src/renderers/common/Info.js'
 import {InspectorBase, PerspectiveCamera, RenderTarget, Scene, Vector2} from 'three/webgpu'
 
-import Telemetry, {ThreeStatistics} from '../src/main.ts'
-import {encodeOtlp} from '../src/otlp.ts'
+import {ThreeStatistics} from '../src/main.ts'
 import ThreeDiagnostics from '../src/ThreeDiagnostics.ts'
 import ThreeInspector from '../src/ThreeInspector.ts'
+import TestTelemetry from './TestTelemetry.ts'
 
 function fixture() {
   let now = performance.timeOrigin + 1000
-  const batches: Array<ExportBatch> = []
-  const telemetry = new Telemetry({
-    now: () => now,
-    exporter: {
-      export: async batch => {
-        batches.push(structuredClone(batch))
-      },
-    },
-  })
+  const telemetry = new TestTelemetry(() => now)
   const renderer = {
     info: new Info,
     inspector: new InspectorBase,
@@ -34,14 +25,11 @@ function fixture() {
       trackTimestamp: false,
     },
   } as unknown as WebGPURenderer
-  const metrics = () => batches.filter(batch => batch.signal === 'metrics').flatMap(batch => batch.records as ReadonlyArray<Metric>)
-  const traces = () => batches.filter(batch => batch.signal === 'traces').flatMap(batch => batch.records as ReadonlyArray<Trace>)
   return {
     telemetry,
     renderer,
-    batches,
-    metrics,
-    traces,
+    metrics: () => telemetry.metrics,
+    traces: () => telemetry.traces,
     advance: (ms: number) => {
       now += ms
     },
@@ -68,7 +56,6 @@ test('all workload distributions share frame samples, room boundaries and exact 
   renderer.info.render.frameCalls = 100
   stats.endFrame(0.02)
   stop()
-  await telemetry.flush()
   const sienna = metrics().filter(metric => metric.attributes.room === 'sienna')
   expect(Object.fromEntries(sienna.map(metric => [metric.name, metric.value]))).toMatchObject({
     'three.frame.duration.mean': 25,
@@ -104,8 +91,6 @@ test('capacity, output changes and visibility flush without losing or inventing 
   stats.beginFrame()
   stats.endFrame(0.05)
   stop()
-  await telemetry.flush()
-  await telemetry.flush()
   const samples = metrics().filter(metric => metric.name === 'three.frame.samples').map(metric => metric.value)
   expect(samples).toEqual([2, 1, 1, 1])
   expect(metrics().filter(metric => metric.name === 'three.frames').map(metric => metric.value)).toEqual([2, 3, 4, 5])
@@ -126,7 +111,6 @@ test('memory breakdown has byte estimates but no fabricated geometry or target b
   stats.endFrame(0)
   stats.endFrame(0.01)
   stop()
-  await telemetry.flush()
   expect(Object.fromEntries(metrics().map(metric => [metric.name, metric.value]))).toMatchObject({
     'three.memory.total.bytes': 1000,
     'three.memory.textures.bytes': 700,
@@ -138,49 +122,6 @@ test('memory breakdown has byte estimates but no fabricated geometry or target b
     'three.gpu.timestamp_query.available': 0,
   })
   expect(metrics().some(metric => ['three.memory.geometries.bytes', 'three.memory.render_targets.bytes'].includes(metric.name))).toBe(false)
-})
-test('span events have bounded bytes/count, historical times, snapshots and OTLP dropped counts', async () => {
-  const {telemetry, traces, batches} = fixture()
-  const parent = telemetry.startSpan('session')
-  const span = telemetry.startSpan('hitch', {}, parent, 1234.5)
-  const attributes = {room: 'sienna'}
-  span.addEvent('changed', attributes, 1240)
-  attributes.room = 'lobby'
-  for (let index = 0; index < 100; index++) {
-    span.addEvent('event', {}, 1241)
-  }
-  span.addEvent('oversized', {value: 'x'.repeat(10_000)})
-  span.end('ok', {}, 1300)
-  span.addEvent('too-late')
-  span.end()
-  await telemetry.flush()
-  expect(traces()).toHaveLength(1)
-  expect(traces()[0]).toMatchObject({
-    startTime: 1234.5,
-    endTime: 1300,
-    parentSpanId: parent.spanId,
-    droppedEventsCount: 38,
-  })
-  expect(traces()[0].events).toHaveLength(64)
-  expect(traces()[0].events![0]).toMatchObject({
-    time: 1240,
-    attributes: {room: 'sienna'},
-  })
-  const encoded = encodeOtlp(batches.find(batch => batch.signal === 'traces')!)
-  const encodedSpan = encoded.resourceSpans?.[0]?.scopeSpans[0]?.spans[0]
-  expect(encodedSpan?.droppedEventsCount).toBe(38)
-  expect(encodedSpan?.events?.[0]).toMatchObject({
-    name: 'changed',
-    timeUnixNano: '1240000000',
-  })
-  const oversized = telemetry.startSpan('bounded')
-  for (let index = 0; index < 100; index++) {
-    oversized.addEvent('big', {text: 'x'.repeat(1000)})
-  }
-  oversized.end()
-  await telemetry.flush()
-  expect(traces()[1].events!.length).toBeLessThan(10)
-  expect(telemetry.status().traces.dropped).toBe(0)
 })
 function gpuFixture() {
   const base = fixture()
@@ -239,7 +180,6 @@ test('GPU resolves both types once, checks exact UIDs and keeps captured context
   timestamps.set('c:1:1:f42', 3)
   frames.add(42)
   await settle()
-  await telemetry.flush()
   expect(metrics().find(metric => metric.name === 'three.gpu.render.duration')).toMatchObject({
     value: 12,
     attributes: {room: 'sienna'},
@@ -273,7 +213,6 @@ test('stale, unavailable and invalidated GPU samples are absent rather than repo
   timestamps.set('r:1:1:f3', 10)
   diagnostics.reset()
   await settle()
-  await telemetry.flush()
   expect(metrics()).toHaveLength(0)
   stop()
 })
@@ -309,7 +248,6 @@ test('hitches retain real stall duration, resource deltas and sparse severity-es
     stats.endFrame(ms / 1000)
   }
   stop()
-  await telemetry.flush()
   expect(traces()).toHaveLength(3)
   expect(traces().map(trace => trace.endTime - trace.startTime)).toEqual([100, 300, 20_000])
   expect(traces()[0]).toMatchObject({
@@ -400,8 +338,7 @@ test('long animation frames join only overlapping hitches and sanitize script UR
       ],
     } as unknown as PerformanceObserverEntryList, {} as PerformanceObserver)
     stop()
-    await telemetry.flush()
-    const events = traces()[0].events!
+    const events = traces()[0].events
     expect(events.filter(event => event.name === 'browser.long_animation_frame')).toHaveLength(1)
     expect(events.find(event => event.name === 'browser.long_animation_frame.script')?.attributes['source.url']).toBe('https://example.test/src/render.ts')
     expect(JSON.stringify(traces())).not.toContain('secret')

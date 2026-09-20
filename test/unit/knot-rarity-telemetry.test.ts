@@ -1,22 +1,51 @@
-import type {ExportBatch, Log, Trace} from 'telemethree'
-
 import {expect, test} from 'bun:test'
 
-import Telemetry from 'telemethree'
+import VictoriaClient from 'victoria-browser-client'
 
 import recordRarityChange from '../../src/levels/knottingham/recordRarityChange.ts'
 
-// Isolated in-memory exporter: test ratings never enter the real curation feed.
+type Attribute = {
+  key: string
+  value: {
+    boolValue?: boolean
+    doubleValue?: number
+    intValue?: number
+    stringValue?: string
+  }
+}
+const values = (entries: ReadonlyArray<Attribute>) => Object.fromEntries(entries.map(({key, value}) => [key, value.stringValue ?? value.doubleValue ?? value.intValue ?? value.boolValue]))
+const decoder = new TextDecoder
+const text = (body: BodyInit | null | undefined) => {
+  if (typeof body === 'string') {
+    return body
+  }
+  if (body instanceof Uint8Array) {
+    return decoder.decode(body)
+  }
+  return ''
+}
 test('explicit sign edits emit correlated logs and traces with stable identity and before/after values', async () => {
-  const batches: Array<ExportBatch> = []
-  const telemetry = new Telemetry({
-    resource: {
-      'service.name': 'knottingham-rarity-test',
-      'service.instance.id': 'unit-test',
+  const requests: Array<{
+    body: string
+    url: string
+  }> = []
+  const telemetry = new VictoriaClient({
+    serviceName: 'knottingham-rarity-test',
+    baseUrl: 'http://telemetry.test/',
+    interval: false,
+    endpoints: {
+      metrics: false,
+      logs: '/logs',
+      traces: '/traces',
     },
-    exporter: {async export(batch) {
-      batches.push(batch)
-    }},
+    resource: {'service.instance.id': 'unit-test'},
+    fetch: async (url, init) => {
+      requests.push({
+        url,
+        body: text(init.body),
+      })
+      return Response.json({})
+    },
   })
   try {
     recordRarityChange(telemetry, {
@@ -29,11 +58,32 @@ test('explicit sign edits emit correlated logs and traces with stable identity a
       sequence: 7,
     })
     await telemetry.flush()
-    const logs = batches.filter(batch => batch.signal === 'logs').flatMap(batch => batch.records) as Array<Log>
-    const traces = batches.filter(batch => batch.signal === 'traces').flatMap(batch => batch.records) as Array<Trace>
-    expect(logs).toHaveLength(1)
-    expect(traces).toHaveLength(1)
-    expect(logs[0].attributes).toMatchObject({
+    const logRequest = requests.find(request => request.url.endsWith('/logs'))!
+    const traceRequest = requests.find(request => request.url.endsWith('/traces'))!
+    const logBody = JSON.parse(logRequest.body) as {
+      resourceLogs: Array<{
+        resource: {attributes: Array<Attribute>}
+        scopeLogs: Array<{logRecords: Array<{
+          attributes: Array<Attribute>
+          spanId: string
+          traceId: string
+        }>}>
+      }>
+    }
+    const traceBody = JSON.parse(traceRequest.body) as {
+      resourceSpans: Array<{
+        resource: {attributes: Array<Attribute>}
+        scopeSpans: Array<{spans: Array<{
+          attributes: Array<Attribute>
+          name: string
+          spanId: string
+          traceId: string
+        }>}>
+      }>
+    }
+    const log = logBody.resourceLogs[0].scopeLogs[0].logRecords[0]
+    const span = traceBody.resourceSpans[0].scopeSpans[0].spans[0]
+    expect(values(log.attributes)).toMatchObject({
       'event.name': 'knot.rarity.changed',
       'knot.id': 'washi_lantern',
       'knot.candidate.id': 'claude_fable',
@@ -43,11 +93,13 @@ test('explicit sign edits emit correlated logs and traces with stable identity a
       'edit.sequence': 7,
       'edit.source': 'sign',
     })
-    expect(traces[0].name).toBe('knot.rarity.changed')
-    expect(traces[0].attributes).toEqual(logs[0].attributes)
-    expect(batches.every(batch => batch.resource['service.instance.id'] === 'unit-test')).toBe(true)
-    expect(batches.some(batch => batch.signal === 'metrics')).toBe(false)
+    expect(span.name).toBe('knot.rarity.changed')
+    expect(values(span.attributes)).toEqual(values(log.attributes))
+    expect(log.traceId).toBe(span.traceId)
+    expect(log.spanId).toBe(span.spanId)
+    expect(values(traceBody.resourceSpans[0].resource.attributes)['service.instance.id']).toBe('unit-test')
+    expect(requests.some(request => request.url.includes('metrics'))).toBe(false)
   } finally {
-    await telemetry.dispose()
+    await telemetry.shutdown()
   }
 })

@@ -19,11 +19,11 @@ export default class GalleryRenderer extends WebgpuRenderer {
   }
 
   override compileAsync(scene: Object3D, camera: Camera, targetScene?: Scene | null) {
-    return telemetry ? telemetry.trace('three.compile', () => super.compileAsync(scene, camera, targetScene)) : super.compileAsync(scene, camera, targetScene)
+    return telemetry ? telemetry.wrap('three.compile', () => super.compileAsync(scene, camera, targetScene)) : super.compileAsync(scene, camera, targetScene)
   }
 
   override init(): Promise<this> {
-    this.initialization ??= telemetry ? telemetry.trace('three.init', () => super.init()) : super.init()
+    this.initialization ??= telemetry ? telemetry.wrap('three.init', () => super.init()) : super.init()
     return this.initialization
   }
 }

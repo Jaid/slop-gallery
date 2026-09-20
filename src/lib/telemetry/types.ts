@@ -1,4 +1,4 @@
-import type {TelemetryOptions} from 'telemethree'
+import type {Attributes, VictoriaClientOptions} from 'victoria-browser-client'
 
 /** Telemetry only needs selected gallery state, without artwork, keys or prompts. */
 export type GalleryState = {
@@ -28,10 +28,11 @@ export type GalleryStore = {
   getState: () => GalleryState
   subscribe: (listener: (state: GalleryState, previous: GalleryState) => void) => () => void
 }
-export type SlopGalleryTelemetryOptions = Partial<TelemetryOptions> & {
-  /** A same-origin relay prefix by default, not a private network URL in the browser. */
+export type SlopGalleryTelemetryOptions = Omit<VictoriaClientOptions, 'endpoint' | 'endpoints' | 'resource' | 'serviceName'> & {
+  /** Same-origin relay prefix, never a private ingestion URL in the browser bundle. */
   endpoint?: string
   environment?: string
+  resource?: Attributes
   sampleIntervalMs?: number
   sessionId?: string
   version?: string

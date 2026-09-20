@@ -1,16 +1,14 @@
 import type {GalleryState, GalleryStore, SlopGalleryTelemetryOptions} from './types.ts'
-import type {Attributes, Span, TraceContext} from 'telemethree'
 import type {EgoTelemetryOptions} from 'telemethree-ego'
+import type {Attributes, Span, SpanOptions} from 'victoria-browser-client'
 
-import composeId from 'compose-id'
-import Telemetry from 'telemethree'
 import EgoTelemetry from 'telemethree-ego'
+import VictoriaClient from 'victoria-browser-client'
 
 import {rooms} from '../gallery/walls.ts'
 import {galleryLevel} from '../level.ts'
-import VictoriaExporter from './VictoriaExporter.ts'
 
-export default class SlopGalleryTelemetry extends Telemetry {
+export default class SlopGalleryTelemetry extends VictoriaClient {
   readonly sessionId: string
   private gameplay: Span | undefined
   private readonly sampleIntervalMs: number
@@ -18,30 +16,42 @@ export default class SlopGalleryTelemetry extends Telemetry {
   private startup: Span | undefined
 
   constructor(options: SlopGalleryTelemetryOptions = {}) {
-    const sessionId = options.sessionId ?? composeId()
-    const endpoint = (options.endpoint ?? '/api/telemetry').replace(/\/$/u, '')
+    const {
+      endpoint = '/api/telemetry',
+      environment = 'development',
+      resource = {},
+      sampleIntervalMs = 5000,
+      sessionId,
+      version = '0.1.0',
+      ...clientOptions
+    } = options
+    const prefix = endpoint.replace(/\/$/u, '')
     super({
-      flushIntervalMs: 1000,
-      ...options,
-      exporter: options.exporter ?? new VictoriaExporter({
-        endpoint,
-        endpoints: {
-          metrics: `${endpoint}/metrics`,
-          logs: `${endpoint}/logs`,
-          traces: `${endpoint}/traces`,
+      interval: 1000,
+      ...clientOptions,
+      serviceName: galleryLevel,
+      endpoints: {
+        logs: `${prefix}/logs`,
+        metrics: {
+          url: `${prefix}/metrics`,
+          format: 'victoria-json',
         },
-      }),
+        traces: `${prefix}/traces`,
+      },
       resource: {
-        'service.name': galleryLevel,
         'service.namespace': 'games',
-        'service.version': options.version ?? '0.1.0',
-        'deployment.environment.name': options.environment ?? 'development',
-        'service.instance.id': sessionId,
-        ...options.resource,
+        'service.version': version,
+        'deployment.environment.name': environment,
+        ...resource,
+        ...sessionId ? {'service.instance.id': sessionId} : {},
       },
     })
-    this.sessionId = sessionId
-    this.sampleIntervalMs = options.sampleIntervalMs ?? 5000
+    const instanceId = this.resource['service.instance.id']
+    if (typeof instanceId !== 'string') {
+      throw new TypeError('Victoria client did not provide a service instance ID.')
+    }
+    this.sessionId = instanceId
+    this.sampleIntervalMs = sampleIntervalMs
     if (!Number.isSafeInteger(this.sampleIntervalMs) || this.sampleIntervalMs <= 0) {
       throw new RangeError('sampleIntervalMs must be a positive integer.')
     }
@@ -52,15 +62,17 @@ export default class SlopGalleryTelemetry extends Telemetry {
     if (this.session) {
       throw new Error('Mount only one gallery telemetry attachment.')
     }
-    const stop = this.start()
     let saving: Span | null = null
     const initial = store.getState()
-    this.session = super.startSpan('gallery.session', {room: initial.room})
+    this.session = super.startSpan('gallery.session', {attributes: {room: initial.room}})
     if (!initial.ready) {
-      this.startup = super.startSpan('gallery.startup', {}, this.session)
+      this.startup = super.startSpan('gallery.startup', {parent: this.session})
     }
     if (initial.locked) {
-      this.gameplay = super.startSpan('gallery.gameplay', {room: initial.room}, this.session)
+      this.gameplay = super.startSpan('gallery.gameplay', {
+        attributes: {room: initial.room},
+        parent: this.session,
+      })
     }
     if (initial.saveStatus === 'saving') {
       saving = this.startSpan('gallery.save')
@@ -69,7 +81,10 @@ export default class SlopGalleryTelemetry extends Telemetry {
     this.event('session.attached', {room: initial.room})
     const unsubscribe = store.subscribe((state, previous) => {
       if (state.locked && !previous.locked) {
-        this.gameplay = super.startSpan('gallery.gameplay', {room: state.room}, this.session)
+        this.gameplay = super.startSpan('gallery.gameplay', {
+          attributes: {room: state.room},
+          parent: this.session,
+        })
       }
       if (state.room !== previous.room) {
         this.event('room.changed', {
@@ -105,7 +120,10 @@ export default class SlopGalleryTelemetry extends Telemetry {
           saving = null
         }
         if (state.saveStatus === 'error') {
-          this.log('Gallery persistence failed.', 'error', {'event.name': 'gallery.save.failed'})
+          this.log('Gallery persistence failed.', {
+            level: 'error',
+            attributes: {'event.name': 'gallery.save.failed'},
+          })
         }
       }
       if (state.narration?.status !== previous.narration?.status || state.narration?.source !== previous.narration?.source) {
@@ -140,7 +158,6 @@ export default class SlopGalleryTelemetry extends Telemetry {
       this.gameplay = undefined
       this.startup = undefined
       this.session = undefined
-      stop()
     }
   }
 
@@ -152,14 +169,18 @@ export default class SlopGalleryTelemetry extends Telemetry {
   }
 
   event(name: string, attributes: Attributes = {}) {
-    this.count('gallery.events', 1, {attributes: {event: name}})
+    this.increment('gallery.events', 1, {attributes: {event: name}})
     const parent = this.gameplay ?? this.startup ?? this.session
-    const span = parent ?? this.startSpan(`gallery.${name}`, attributes)
+    const span = parent ?? this.startSpan(`gallery.${name}`, {attributes})
     parent?.addEvent(`gallery.${name}`, attributes)
-    this.log(`Gallery event: ${name}`, 'info', {
-      'event.name': `gallery.${name}`,
-      ...attributes,
-    }, span)
+    this.log(`Gallery event: ${name}`, {
+      level: 'info',
+      attributes: {
+        'event.name': `gallery.${name}`,
+        ...attributes,
+      },
+      context: span,
+    })
     if (!parent) {
       span.end()
     }
@@ -181,13 +202,22 @@ export default class SlopGalleryTelemetry extends Telemetry {
     this.metric('gallery.inspecting', Number(state.inspecting !== null))
     this.metric('gallery.narration.active', Number(state.narration !== null))
     this.metric('gallery.save.error', Number(state.saveStatus === 'error'))
-    // Emit every bounded room state, so the previous room does not remain at 1.
     for (const {id: room} of rooms) {
       this.metric('gallery.room.active', Number(room === state.room), {attributes: {room}})
     }
   }
 
-  override startSpan(name: string, attributes: Attributes = {}, parent: TraceContext | undefined = this.getContext(), startTime?: number) {
-    return super.startSpan(name, attributes, parent, startTime)
+  override startSpan(name: string, options: SpanOptions = {}) {
+    return super.startSpan(name, {
+      ...options,
+      parent: options.parent ?? this.getContext(),
+    })
+  }
+
+  override wrap<T>(name: string, operation: (span: Span) => T, options: SpanOptions = {}): T {
+    return super.wrap(name, operation, {
+      ...options,
+      parent: options.parent ?? this.getContext(),
+    })
   }
 }

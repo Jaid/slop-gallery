@@ -82,10 +82,11 @@ const options = () => ({
 })
 const intercept = (respond: (index: number) => Response = () => Response.json({})) => {
   const handler = async (url: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => {
-    if (typeof init?.body !== 'string') {
+    const encoded = init?.body
+    if (typeof encoded !== 'string' && !(encoded instanceof Uint8Array)) {
       throw new TypeError('Expected an OTLP JSON body.')
     }
-    const body = JSON.parse(init.body) as OtlpRequest
+    const body = JSON.parse(typeof encoded === 'string' ? encoded : (new TextDecoder).decode(encoded)) as OtlpRequest
     const entries = spans(body)
     expect(entries.length).toBeGreaterThan(0)
     for (const span of entries) {
@@ -98,8 +99,8 @@ const intercept = (respond: (index: number) => Response = () => Response.json({}
       url: url instanceof Request ? url.url : String(url),
       body,
     })
-    expect(init.redirect).toBe('error')
-    expect(new Headers(init.headers).has('Authorization')).toBe(false)
+    expect(init?.redirect).toBe('error')
+    expect(new Headers(init?.headers).has('Authorization')).toBe(false)
     return respond(requests.length)
   }
   return spyOn(globalThis, 'fetch').mockImplementation(Object.assign(handler, {preconnect: globalThis.fetch.preconnect}))
@@ -131,15 +132,6 @@ test.each([
   ['HTML login', () => new Response('<html>Sign in</html>', {headers: {'content-type': 'text/html'}})],
   ['malformed JSON', () => new Response('{', {headers: {'content-type': 'application/json'}})],
   ['rejected span', () => Response.json({partialSuccess: {rejectedSpans: '1'}})],
-  [
-    'partial warning',
-    () => Response.json({
-      partialSuccess: {
-        rejectedSpans: '0',
-        errorMessage: 'Data discarded.',
-      },
-    }),
-  ],
 ] as const)('fails before synthesis when the preflight returns %s', async (_, response) => {
   intercept(response)
   const generate = spyOn(GrokSpeaker.prototype, 'generate')

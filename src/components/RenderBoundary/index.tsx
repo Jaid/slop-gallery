@@ -14,7 +14,10 @@ export default class RenderBoundary extends Component<PropsWithChildren<{onFailu
   }
   state = {failed: false}
   componentDidCatch(error: Error) {
-    telemetry?.log('Gallery rendering failed.', 'error', {'error.type': error.name})
+    telemetry?.log('Gallery rendering failed.', {
+      level: 'error',
+      attributes: {'error.type': error.name},
+    })
     useGallery.setState({
       ready: false,
       locked: false,

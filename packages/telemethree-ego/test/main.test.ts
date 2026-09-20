@@ -1,31 +1,45 @@
 import type {EgoSample} from '../src/main.ts'
-import type {Metric} from 'telemethree'
+import type {Attributes, MetricOptions} from 'victoria-browser-client'
 
 import {expect, test} from 'bun:test'
 
-import Telemetry from 'telemethree'
+import VictoriaClient from 'victoria-browser-client'
 
 import EgoTelemetry from '../src/main.ts'
 
-function fixture() {
-  const metrics: Array<Metric> = []
-  const telemetry = new Telemetry({
-    exporter: {
-      export: async batch => {
-        if (batch.signal === 'metrics') {
-          metrics.push(...batch.records as Array<Metric>)
-        }
-      },
-    },
-  })
-  return {
-    telemetry,
-    metrics,
-    values: () => Object.fromEntries(metrics.map(metric => [metric.name, metric.value])),
+type Metric = {
+  attributes: Attributes
+  name: string
+  value: number
+}
+class TestClient extends VictoriaClient {
+  static fixture() {
+    const telemetry = new TestClient
+    return {
+      telemetry,
+      metrics: telemetry.metrics,
+      values: () => Object.fromEntries(telemetry.metrics.map(metric => [metric.name, metric.value])),
+    }
+  }
+  readonly metrics: Array<Metric> = []
+  constructor() {
+    super({
+      serviceName: 'telemethree-ego-test',
+      endpoint: 'http://localhost:4318',
+      interval: false,
+    })
+  }
+  override metric(name: string, value: number, options: MetricOptions = {}) {
+    this.metrics.push({
+      name,
+      value,
+      attributes: {...options.attributes},
+    })
+    return true
   }
 }
-test('world-space position, physical velocity and normalized aim are numeric metrics, not labels', async () => {
-  const {telemetry, metrics, values} = fixture()
+test('world-space position, physical velocity and normalized aim are numeric metrics, not labels', () => {
+  const {telemetry, metrics, values} = TestClient.fixture()
   const ego = new EgoTelemetry({
     telemetry,
     metersPerUnit: 0.01,
@@ -63,7 +77,6 @@ test('world-space position, physical velocity and normalized aim are numeric met
       },
     },
   })
-  await telemetry.flush()
   expect(values()).toMatchObject({
     'ego.position.x': 1,
     'ego.velocity.x': 3,
@@ -74,8 +87,8 @@ test('world-space position, physical velocity and normalized aim are numeric met
   })
   expect(metrics.every(metric => Object.keys(metric.attributes).length === 0)).toBe(true)
 })
-test('derived velocity copies mutable positions and resets across teleports and suspension', async () => {
-  const {telemetry, values} = fixture()
+test('derived velocity copies mutable positions and resets across teleports and suspension', () => {
+  const {telemetry, values} = TestClient.fixture()
   const position = {
     x: 0,
     y: 0,
@@ -88,7 +101,6 @@ test('derived velocity copies mutable positions and resets across teleports and 
   ego.record({position}, 0)
   position.x = 2
   ego.record({position}, 1000)
-  await telemetry.flush()
   expect(values()['ego.velocity.x']).toBe(2)
   ego.record({
     position: {
@@ -98,18 +110,15 @@ test('derived velocity copies mutable positions and resets across teleports and 
     },
     discontinuity: true,
   }, 2000)
-  await telemetry.flush()
   expect(values()['ego.velocity.valid']).toBe(0)
   ego.record({position}, 60_000)
-  await telemetry.flush()
   expect(values()['ego.velocity.valid']).toBe(0)
   ego.reset()
   ego.record({position}, 61_000)
-  await telemetry.flush()
   expect(values()['ego.velocity.valid']).toBe(0)
 })
-test('sampling gates expensive sources and clears absent aim without stale hit values', async () => {
-  const {telemetry, values} = fixture()
+test('sampling gates expensive sources and clears absent aim without stale hit values', () => {
+  const {telemetry, values} = TestClient.fixture()
   let now = 0
   let reads = 0
   const sample: EgoSample = {
@@ -152,12 +161,10 @@ test('sampling gates expensive sources and clears absent aim without stale hit v
   now = 999
   ego.update()
   expect(reads).toBe(1)
-  await telemetry.flush()
   expect(values()['ego.aim.distance']).toBe(4)
   sample.aim = undefined
   now = 1000
   ego.update()
-  await telemetry.flush()
   expect(values()).toMatchObject({
     'ego.aim.valid': 0,
     'ego.aim.hit': 0,

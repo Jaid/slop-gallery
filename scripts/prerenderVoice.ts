@@ -300,9 +300,10 @@ export default async function prerenderVoice({input, output, bitrate = 20_000, t
     }
   } catch (error) {
     trace.root.end('error', {'error.type': error instanceof Error ? error.name : typeof error})
-    await fs.writeJson(tracePath, trace.records, {spaces: 2})
-    // Do not resend partially accepted final batches. A retry would duplicate trace records.
+    // The final trace is snapshotted before delivery. A permanent rejection may consume
+    // the client's outbox item, so never overwrite that recovery copy afterward.
     if (!finalExportStarted) {
+      await fs.writeJson(tracePath, trace.records, {spaces: 2})
       try {
         await trace.send()
       } catch {

@@ -1,5 +1,5 @@
-import type Telemetry from 'telemethree'
-import type {Attributes} from 'telemethree'
+import type VictoriaClient from 'victoria-browser-client'
+import type {Attributes} from 'victoria-browser-client'
 
 export type Point3 = Readonly<{
   x: number
@@ -29,5 +29,5 @@ export type EgoTelemetryOptions = {
   metersPerUnit?: number
   now?: () => number
   read: () => EgoSample | null
-  telemetry: Telemetry
+  telemetry: VictoriaClient
 }

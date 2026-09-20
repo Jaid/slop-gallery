@@ -19,7 +19,8 @@ export default function WebmcpBridge() {
         }
         return {
           sessionId: telemetry.sessionId,
-          signals: telemetry.status(),
+          collection: telemetry.collectionStatus(),
+          delivery: telemetry.status(),
         }
       },
     }

@@ -14,7 +14,6 @@
         "branch-component": "0.4.0",
         "canvas-textures": "workspace:*",
         "clsx": "2.1.1",
-        "compose-id": "0.2.0",
         "disposable-lifetime": "workspace:*",
         "ego-player": "workspace:*",
         "es-toolkit": "1.52.0",
@@ -38,6 +37,7 @@
         "use-graphics-quality": "workspace:*",
         "use-narrator": "workspace:*",
         "use-pause-menu": "workspace:*",
+        "victoria-browser-client": "0.2.0",
         "webgpu-capture-bridge": "workspace:*",
         "zustand": "5.0.15",
       },
@@ -172,10 +172,14 @@
     "packages/telemethree": {
       "name": "telemethree",
       "version": "0.1.0",
+      "devDependencies": {
+        "victoria-browser-client": "0.2.0",
+      },
       "peerDependencies": {
         "@react-three/fiber": "^10.0.0-alpha.5",
         "react": "^19.3.0",
         "three": "^0.186.0",
+        "victoria-browser-client": "^0.2.0",
       },
       "optionalPeers": [
         "@react-three/fiber",
@@ -185,13 +189,14 @@
     "packages/telemethree-ego": {
       "name": "telemethree-ego",
       "version": "0.1.0",
-      "dependencies": {
-        "telemethree": "workspace:*",
+      "devDependencies": {
+        "victoria-browser-client": "0.2.0",
       },
       "peerDependencies": {
         "@react-three/fiber": "^10.0.0-alpha.5",
         "react": "^19.3.0",
         "three": "^0.186.0",
+        "victoria-browser-client": "^0.2.0",
       },
       "optionalPeers": [
         "@react-three/fiber",
@@ -202,11 +207,14 @@
       "name": "telemethree-pause-menu",
       "version": "0.1.0",
       "dependencies": {
-        "telemethree": "workspace:*",
         "use-pause-menu": "workspace:*",
+      },
+      "devDependencies": {
+        "victoria-browser-client": "0.2.0",
       },
       "peerDependencies": {
         "react": "^19.3.0",
+        "victoria-browser-client": "^0.2.0",
       },
       "optionalPeers": [
         "react",
@@ -922,8 +930,6 @@
     "comment-parser": ["comment-parser@1.4.9", "", {}, "sha512-+2AvZKjJaNq9GQljm3tr0utwrig5BL+jgJGvz5rDpGKNIp+ojcRXWUwBbh/sGIi1QCprR6PsKFakub+w1v+4hQ=="],
 
     "compare-versions": ["compare-versions@6.1.1", "", {}, "sha512-4hm4VPpIecmlg59CHXnRDnqGplJFrbLG4aFEl5vl6cK1u76ws3LLvX7ikFnTDl5vo39sjWD6AaDPYodJp/NNHg=="],
-
-    "compose-id": ["compose-id@0.2.0", "", { "dependencies": { "flatten-string": "^0.1.0" } }, "sha512-i1JRNBEi3fKjGyTCF/bspdlHh9Lpy9IEpKqMey0FvAuoDnaT3ulbCKIwWjiGkpNjmrEcjCW3HbTShvVMdRS3Rw=="],
 
     "convert-source-map": ["convert-source-map@2.0.0", "", {}, "sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg=="],
 
@@ -1707,6 +1713,8 @@
 
     "verkit": ["verkit@0.3.2", "", {}, "sha512-zj/ob3UsvJGN0whEAKFp53REA5X66hvffVqoCtVQAakJKnKlH+/PcOfMoFwIG/o4rElqLv/ycAFlx8ZlXUorCg=="],
 
+    "victoria-browser-client": ["victoria-browser-client@0.2.0", "", {}, "sha512-viC4jp4z8oCpgt9iKyEdQX6SndBNphGJHRcpnmD0toD9SDXX9Uc3NwbFBOfOu2Vg/H1+GzBXmGKWQpQh9rIoFw=="],
+
     "vite": ["vite@8.3.0", "", { "dependencies": { "lightningcss": "^1.33.0", "picomatch": "^4.0.7", "postcss": "^8.5.28", "rolldown": "~1.2.6", "tinyglobby": "^0.2.17" }, "optionalDependencies": { "fsevents": "~2.3.3" }, "peerDependencies": { "@types/node": "^20.19.0 || >=22.12.0", "@vitejs/devtools": "^0.7.1", "esbuild": "^0.27.0 || ^0.28.0", "jiti": ">=1.21.0", "less": "^4.0.0", "sass": "^1.70.0", "sass-embedded": "^1.70.0", "stylus": ">=0.54.8", "sugarss": "^5.0.0", "terser": "^5.16.0", "tsx": "^4.8.1", "yaml": "^2.4.2" }, "optionalPeers": ["@types/node", "@vitejs/devtools", "esbuild", "jiti", "less", "sass", "sass-embedded", "stylus", "sugarss", "terser", "tsx", "yaml"], "bin": { "vite": "bin/vite.js" } }, "sha512-lhZBVvEHefgE+HQZC9O7EBJgCU/nVzFNl7vkS4RE0APtWLP02/8QVIkQtzBxPquh7lq5/78NHipTj7ODQ6XuyQ=="],
 
     "vite-plugin-avif-only": ["vite-plugin-avif-only@workspace:packages/vite-plugin-avif-only"],
@@ -1796,8 +1804,6 @@
     "chromium-bidi/zod": ["zod@3.25.76", "", {}, "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="],
 
     "cliui/string-width": ["string-width@7.2.0", "", { "dependencies": { "emoji-regex": "^10.3.0", "get-east-asian-width": "^1.0.0", "strip-ansi": "^7.1.0" } }, "sha512-tsaTIkKW9b4N+AEj+SVA+WhJzV7/zMhcSu78mLKWSk7cXMOSHsBKFWUs0fWwq8QyK3MgJBQRX6Gbi4kYbdvGkQ=="],
-
-    "compose-id/flatten-string": ["flatten-string@0.1.0", "", {}, "sha512-HE080piHX8dkviOoIOwgL7AbhAuswgZtsMwM5pr096dEwlHI21L72zcuVdzCwIZL0VX3UBI9//QQ9odWVfou/g=="],
 
     "css-tree/mdn-data": ["mdn-data@2.27.1", "", {}, "sha512-9Yubnt3e8A0OKwxYSXyhLymGW4sCufcLG6VdiDdUGVkPhpqLxlvP5vl1983gQjJl3tqbrM731mjaZaP68AgosQ=="],
 

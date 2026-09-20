@@ -17,12 +17,25 @@ import thematicChunksPlugin from 'vite-plugin-thematic-chunks'
 import titlePlugin from 'vite-plugin-title'
 
 import levels, {defaultLevel, levelIds} from '#src/data/levels.ts'
-import {victoriaTelemetry} from '#src/lib/telemetry/vite.ts'
 import knotMaterialsPlugin from '#src/lib/vite/knotMaterialsPlugin.ts'
 
+const createTelemetryProxy = (target: string) => {
+  const url = new URL(target)
+  return {
+    target: url.origin,
+    changeOrigin: true,
+    rewrite: () => `${url.pathname}${url.search}`,
+  }
+}
+const createTelemetryProxyConfig = (env: Record<string, string>) => ({
+  '^/api/telemetry/metrics$': createTelemetryProxy(env.TELEMETRY_INGESTION_METRICS_ENDPOINT || 'http://10.0.0.22:3304/api/v1/import'),
+  '^/api/telemetry/logs$': createTelemetryProxy(env.TELEMETRY_INGESTION_LOGS_ENDPOINT || 'http://10.0.0.22:4318/v1/logs'),
+  '^/api/telemetry/traces$': createTelemetryProxy(env.TELEMETRY_INGESTION_TRACES_ENDPOINT || 'http://10.0.0.22:4318/v1/traces'),
+})
 const getCommonConfig = (context: ConfigEnv) => {
   const env = loadEnv(context.mode, process.cwd(), 'TELEMETRY_INGESTION_')
   const level = selectGameLevel(loadEnv(context.mode, process.cwd(), 'GAME_LEVEL').GAME_LEVEL, levelIds, defaultLevel)
+  const telemetryProxy = createTelemetryProxyConfig(env)
   const config: UserConfig = {
     // Only the public relay prefix enters the client bundle, never private ingestion destinations.
     define: {
@@ -45,12 +58,13 @@ const getCommonConfig = (context: ConfigEnv) => {
         presets: [reactCompilerPreset()],
       }),
       mediaMixinsPlugin(),
-      victoriaTelemetry({
-        metrics: env.TELEMETRY_INGESTION_METRICS_ENDPOINT,
-        logs: env.TELEMETRY_INGESTION_LOGS_ENDPOINT,
-        traces: env.TELEMETRY_INGESTION_TRACES_ENDPOINT,
-      }),
     ],
+    server: {
+      proxy: telemetryProxy,
+    },
+    preview: {
+      proxy: telemetryProxy,
+    },
     resolve: {
       alias: [
        // Rapier and other dependencies must share the app’s WebGPU-only Fiber implementation.

@@ -1,8 +1,8 @@
 # Gallery telemetry
 
-Slop Gallery instrumentation layered on `telemethree` and `telemethree-ego`, with Victoria delivery. This application-specific implementation lives in `src/lib/telemetry`; only the reusable Three and player telemetry layers are workspace packages.
+Slop Gallery’s application-specific instrumentation is built directly on `victoria-browser-client`. The reusable `telemethree`, `telemethree-ego` and `telemethree-pause-menu` packages now contain collection/instrumentation only; Victoria queueing, encoding, retry, transport, delivery status and browser lifecycle behavior belong to `victoria-browser-client`.
 
-The browser-only `index.ts` owns the configured `telemetry` singleton and the controller’s `playerTelemetry` source. Import the classes directly when constructing an isolated client, such as in unit tests.
+The browser-only `index.ts` owns the configured `telemetry` singleton and the controller’s `playerTelemetry` source. Import `SlopGalleryTelemetry` directly when constructing an isolated client, such as in unit tests.
 
 ```ts
 import SlopGalleryTelemetry from '#src/lib/telemetry/SlopGalleryTelemetry.ts'
@@ -13,7 +13,7 @@ const ego = telemetry.createEgo({read: readPlayerAndAim})
 // Call ego.update() after controller/camera updates, then disconnect on unmount.
 ```
 
-`useSlopGalleryTelemetry(telemetry, store, events)` from `useSlopGalleryTelemetry.ts` pairs subscriptions with cleanup and attempts a flush on pagehide/visibility loss. A null client disables the hook. Use the reusable Three and ego hooks inside Canvas with this same client.
+`useSlopGalleryTelemetry(telemetry, store, events)` pairs gallery subscriptions with React cleanup. A null client disables the hook. Use the reusable Three and ego hooks inside Canvas with the same Victoria client. The hook closes application-owned session/gameplay spans on `pagehide` and reconnects after `pageshow`; `victoria-browser-client` owns the actual bounded keepalive transport, visibility delivery and periodic scheduler.
 
 ## Gallery signals
 
@@ -22,27 +22,25 @@ const ego = telemetry.createEgo({read: readPlayerAndAim})
 - Traces: session/startup/gameplay parents, state-change events, real persistence duration/outcome, label generation and local/AI fusion, plus sparse renderer hitch diagnostics.
 - Ego measurements use the controller’s physical feet position and collision-corrected velocity, plus the existing `AimInspector` semantics. The camera provides aim, not locomotion. Raycasting runs once per second, not every rendered frame.
 
-Automatic telemetry selects only counts, flags, state names and numeric player/aim measurements. Explicit X-key dumps additionally include scene object names and scalar metadata as described below. Those automatic samples do not serialize keys, artwork sources, titles, descriptions, prompts, event payloads or exception messages. A 15-character `compose-id` session ID is attached as `service.instance.id` to distinguish concurrent clients and counter lifetimes. New sessions create new series; retention/cardinality policy belongs to the deployment.
+Automatic telemetry selects only counts, flags, state names and numeric player/aim measurements. Explicit X-key dumps additionally include scene object names and scalar metadata as described below. Those automatic samples do not serialize keys, artwork sources, titles, descriptions, prompts, event payloads or exception messages. `victoria-browser-client` supplies the 15-character `service.instance.id` used to distinguish concurrent clients and counter lifetimes. New sessions create new series; retention/cardinality policy belongs to the deployment.
 
-## Existing NAS setup – unchanged
+## Victoria delivery and relay
 
-The checked configuration on 2026-09-09 has an OTLP collector for logs/traces only. Its metrics pipeline is not enabled. `VictoriaExporter` therefore uses native [VictoriaMetrics JSON import](https://docs.victoriametrics.com/victoriametrics/url-examples/#apiv1import) for metrics and OTLP/HTTP JSON for logs/traces. Metrics retain dotted names; resource/measurement attributes become labels. Duplicate series samples within the same millisecond in one batch keep their latest value.
+The checked NAS setup uses native VictoriaMetrics JSON import for metrics and OTLP/HTTP JSON for logs/traces. `SlopGalleryTelemetry` configures those formats directly on `victoria-browser-client`; there is no Slop Gallery exporter implementation anymore. Metrics retain dotted names, while resource and measurement attributes become VictoriaMetrics labels.
 
-The server-only `vite.ts` module exports `victoriaTelemetry()` and `createVictoriaRelay()`:
+The browser always targets a same-origin relay prefix. Vite development and preview use Vite’s built-in `server.proxy` / `preview.proxy` configuration for these exact route patterns:
 
-| Same-origin POST route | Fixed upstream destination |
+| Same-origin route | Default upstream destination |
 | --- | --- |
 | `/api/telemetry/metrics` | `http://10.0.0.22:3304/api/v1/import` |
 | `/api/telemetry/logs` | `http://10.0.0.22:4318/v1/logs` |
 | `/api/telemetry/traces` | `http://10.0.0.22:4318/v1/traces` |
 
-The relay avoids browser CORS/private-network access, omits cookies and authorization forwarding, rejects cross-origin browser requests and bounds request bodies to 262 kb. It only accepts exact routes, POST and the correct content type. Destinations are server-controlled. Network failures return 502 for retry. Keep this development relay bound to loopback; it is not an authenticated public ingestion gateway.
+The server-only `TELEMETRY_INGESTION_METRICS_ENDPOINT`, `TELEMETRY_INGESTION_LOGS_ENDPOINT` and `TELEMETRY_INGESTION_TRACES_ENDPOINT` variables override those upstream URLs. The Victoria client itself bounds request/item sizes, refuses redirects, omits browser credentials and keeps unload requests within its keepalive limit. The Vite proxy is development/preview plumbing, not a public authenticated ingestion gateway; static production hosting must provide the same-origin relay separately.
 
-The Vite config supports server-only `TELEMETRY_INGESTION_METRICS_ENDPOINT`, `TELEMETRY_INGESTION_LOGS_ENDPOINT` and `TELEMETRY_INGESTION_TRACES_ENDPOINT`, each a full upstream URL. No NAS configuration changes are needed.
+The app enables telemetry in Vite development by default. `?telemetry=false` disables it; `?test=true` also disables it. Production builds are off unless `TELEMETRY_INGESTION_RELAY_ENDPOINT` is set to a relay prefix such as `/api/telemetry`. `?ai=false` disables AI, not telemetry; use both flags for a fully local session.
 
-The app enables telemetry in Vite development by default. `?telemetry=false` disables it; `?test=true` also disables it. Production builds are off unless `TELEMETRY_INGESTION_RELAY_ENDPOINT` is set to a relay prefix (for example `/api/telemetry`). Static hosting must supply that relay separately; the Vite plugin also supports local preview. `?ai=false` disables AI, not telemetry; use both flags for a fully local session.
-
-Invoke the native WebMCP `get_telemetry` tool for the session ID and per-signal pending/sent/dropped/retry/error status. This is read-only. Delivery is bounded and best-effort; upstream acceptance is not a durable end-to-end acknowledgment.
+Native WebMCP `get_telemetry` returns the session ID plus `collectionStatus()` and `status()` from `victoria-browser-client`. This is read-only. Delivery is bounded and best-effort; HTTP acceptance is not a durable end-to-end storage guarantee.
 
 ## Queries
 
@@ -72,9 +70,9 @@ Performance reports carry `room`, `locked`, `graphics.profile` and the effective
 
 The gallery renderer opts into timestamp queries only when telemetry is enabled. It traces actual `init()` and `compileAsync()` calls. **No new compile/prewarm operation is introduced**: prewarming would change the baseline, and a camera-only scene compile would not warm every shadow/reflection/postprocessing variant. That is a separate optimization decision after capture.
 
-`gallery.session` parents startup and pointer-lock gameplay intervals. Startup ends on readiness; unlock ends gameplay. State changes are bounded span events with the existing correlated logs/counters, not independent traces. Save/AI/merge operations inherit the active context at their start and retain it across async boundaries. Parent spans export when ended, so an ongoing session/gameplay parent may not yet be visible. Pagehide closes the attachment and attempts delivery; pageshow reconnects after a back/forward-cache restore. Event overflow is explicit; logs continue independently.
+`gallery.session` parents startup and pointer-lock gameplay intervals. Startup ends on readiness; unlock ends gameplay. State changes are bounded span events with the existing correlated logs/counters, not independent traces. Save/AI/merge operations inherit the active context at their start and retain it across async boundaries. Parent spans export when ended, so an ongoing session/gameplay parent may not yet be visible. On `pagehide`, the app ends those open gallery spans before requesting a final client flush; the Victoria browser client owns transport semantics and also handles visibility/page lifecycle delivery. Event overflow is explicit; logs continue independently.
 
-The app flushes every second to drain the richer reports without growing an online backlog; statistics still report every five seconds. Delivery remains bounded and best-effort. Use `get_telemetry` to check dropped records or failed delivery before interpreting missing GPU/trace data.
+The Victoria client schedules delivery every second while statistics still report every five seconds. Delivery remains bounded and best-effort. Use `get_telemetry` to inspect collection limits, pending records, rejection/drop counts and delivery failures before interpreting missing GPU/trace data.
 
 ### Manual comparison
 
@@ -123,8 +121,8 @@ Query VictoriaLogs with `service.name:=gallery event.name:=ego.dump _time:1h | s
 
 Native WebMCP exposes read-only `get_aim` and `get_telemetry` through `document.modelContext`. The tools do not move the player, acquire focus or enable telemetry. Their registrations are removed on unmount/HMR using AbortSignals. There is no replacement window namespace or compatibility API.
 
-Pause-menu events use `telemethree-pause-menu`: discrete `pause_menu.attached`, `pause_menu.changed` and `pause_menu.detached` logs include the current/previous stage and lock state. They share the app’s Victoria exporter and session identity.
+Pause-menu events use `telemethree-pause-menu`: discrete `pause_menu.attached`, `pause_menu.changed` and `pause_menu.detached` logs include the current/previous stage and lock state. They share the app’s Victoria client and session identity.
 
 ## Knot rarity curation
 
-Knottingham’s `?rarity=edit` mode emits explicit `knot.rarity.changed` logs and matching spans on nameplate activation. See `packages/knot-materials/readme.md` for field names, retrieval queries, and the session-local editing policy. These records intentionally carry knot identity and chosen ratings; normal automatic telemetry still avoids titles and user content. Synthetic relay checks use service `knottingham-rarity-test`, never the real `knottingham` curation feed.
+Knottingham’s `?rarity=edit` mode emits explicit `knot.rarity.changed` logs and matching spans on nameplate activation. See `packages/knot-materials/readme.md` for field names, retrieval queries, and the session-local editing policy. These records intentionally carry knot identity and chosen ratings; normal automatic telemetry still avoids titles and user content. Synthetic telemetry tests use service `knottingham-rarity-test`, never the real `knottingham` curation feed.

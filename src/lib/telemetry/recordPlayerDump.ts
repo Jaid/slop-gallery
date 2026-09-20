@@ -41,12 +41,18 @@ export default function recordPlayerDump(dump: EgoDump) {
       hits: undefined,
     },
     hitCount: dump.aim.hits.length,
-  }), 'info', attributes)
+  }), {
+    level: 'info',
+    attributes,
+  })
   for (const [index, hit] of dump.aim.hits.entries()) {
-    telemetry.log(JSON.stringify(hit), 'info', {
-      ...attributes,
-      'event.name': 'ego.dump.hit',
-      'hit.index': index,
+    telemetry.log(JSON.stringify(hit), {
+      level: 'info',
+      attributes: {
+        ...attributes,
+        'event.name': 'ego.dump.hit',
+        'hit.index': index,
+      },
     })
   }
 }

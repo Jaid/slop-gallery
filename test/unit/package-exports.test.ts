@@ -20,10 +20,12 @@ import * as pauseCore from 'use-pause-menu/core'
 import * as capture from 'webgpu-capture-bridge'
 
 test('primary package exports have one canonical default and no named alias', () => {
-  for (const [module, name] of [[asyncMaterials, 'AsyncMaterials'], [lifetime, 'RetainedLifetime'], [lifetimeReact, 'useDisposable'], [canvases, 'ReadbackCanvas'], [canvasTextures, 'renderCanvasTexture'], [canvasReact, 'useCanvasTexture'], [ego, 'EgoPlayer'], [telemetry, 'Telemetry'], [egoTelemetry, 'EgoTelemetry'], [pauseTelemetry, 'PauseMenuTelemetry'], [game, 'Game'], [graphics, 'useGraphicsQuality'], [pause, 'usePauseMenu'], [pauseCore, 'PauseMenu'], [capture, 'WebgpuCapture']] as const) {
+  for (const [module, name] of [[asyncMaterials, 'AsyncMaterials'], [lifetime, 'RetainedLifetime'], [lifetimeReact, 'useDisposable'], [canvases, 'ReadbackCanvas'], [canvasTextures, 'renderCanvasTexture'], [canvasReact, 'useCanvasTexture'], [ego, 'EgoPlayer'], [egoTelemetry, 'EgoTelemetry'], [pauseTelemetry, 'PauseMenuTelemetry'], [game, 'Game'], [graphics, 'useGraphicsQuality'], [pause, 'usePauseMenu'], [pauseCore, 'PauseMenu'], [capture, 'WebgpuCapture']] as const) {
     expect(module.default).toBeFunction()
     expect(Object.hasOwn(module, name)).toBe(false)
   }
+  expect(telemetry.ThreeStatistics).toBeFunction()
+  expect(Object.hasOwn(telemetry, 'default')).toBe(false)
   expect(pause.PauseMenu).toBe(pauseCore.default)
   expect(motor.default).toBe(ego.EgoMotor)
   expect(Object.hasOwn(motor, 'EgoMotor')).toBe(false)

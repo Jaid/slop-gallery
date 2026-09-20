@@ -61,7 +61,12 @@ test('player dumps preserve precision, join separate hit logs and respect disabl
         default: (dump: EgoDump) => void
         played: Array<string>
         SoundEngine: {requests: number}
-        telemetry: {records: Array<[string, string, Record<string, unknown>]>} | null
+        telemetry: {
+          records: Array<[string, {
+            attributes: Record<string, unknown>
+            level: string
+          }]>
+        } | null
       }
       module.default(dump)
       await Bun.sleep(0)
@@ -86,11 +91,11 @@ test('player dumps preserve precision, join separate hit logs and respect disabl
         expect(summary.aim.hit!.point).toEqual(dump.aim.hit!.point)
         expect(summary.aim.hits).toBeUndefined()
         expect(summary.hitCount).toBe(1)
-        expect(records[0][2]).toMatchObject({
+        expect(records[0][1].attributes).toMatchObject({
           'event.name': 'ego.dump',
           'dump.id': dump.id,
         })
-        expect(records[1][2]).toMatchObject({
+        expect(records[1][1].attributes).toMatchObject({
           'event.name': 'ego.dump.hit',
           'dump.id': dump.id,
           'hit.index': 0,

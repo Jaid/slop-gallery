@@ -9,29 +9,22 @@ export default function useSlopGalleryTelemetry(telemetry: SlopGalleryTelemetry 
       return
     }
     let stop: (() => void) | undefined = telemetry.connect(store, events)
-    const flush = () => {
-      telemetry.flushInBackground()
-    }
-    const visibility = () => {
-      if (document.visibilityState === 'hidden') {
-        flush()
-      }
-    }
     const pagehide = () => {
       stop?.()
       stop = undefined
-      flush()
+      // BrowserVictoriaClient also flushes pagehide. This second pass admits the
+      // session/gameplay spans that closing the gallery attachment just produced.
+      // eslint-disable-next-line promise/prefer-await-to-then -- Page lifecycle callbacks cannot await delivery.
+      void telemetry.flush().catch(() => {})
     }
     const pageshow = () => {
       stop ??= telemetry.connect(store, events)
     }
     window.addEventListener('pagehide', pagehide)
     window.addEventListener('pageshow', pageshow)
-    document.addEventListener('visibilitychange', visibility)
     return () => {
       window.removeEventListener('pagehide', pagehide)
       window.removeEventListener('pageshow', pageshow)
-      document.removeEventListener('visibilitychange', visibility)
       stop?.()
     }
   }, [telemetry, store, events])

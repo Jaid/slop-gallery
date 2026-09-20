@@ -11,7 +11,6 @@ export default function useEgoTelemetry(options: EgoTelemetryOptions) {
   const collector = useRef<EgoTelemetry | null>(null)
   const {telemetry, intervalMs, metersPerUnit, maxVelocityGapMs, attributes, now} = options
   useEffect(() => {
-    const stopDelivery = telemetry.start()
     const instance = new EgoTelemetry({
       telemetry,
       intervalMs,
@@ -27,7 +26,6 @@ export default function useEgoTelemetry(options: EgoTelemetryOptions) {
     return () => {
       document.removeEventListener('visibilitychange', reset)
       collector.current = null
-      stopDelivery()
     }
   }, [telemetry, intervalMs, metersPerUnit, maxVelocityGapMs, attributes, now])
   useFrame(() => {

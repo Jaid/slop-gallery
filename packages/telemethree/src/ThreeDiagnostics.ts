@@ -1,8 +1,7 @@
-import type Span from './Span.ts'
-import type Telemetry from './Telemetry.ts'
 import type {DescribeRenderPass, PassSample} from './ThreeInspector.ts'
-import type {Attributes, TraceContext} from './types.ts'
+import type {TelemetryClient} from './types.ts'
 import type {WebGPURenderer} from 'three/webgpu'
+import type {Attributes, Span, TraceContext} from 'victoria-browser-client'
 
 import {InspectorBase} from 'three/webgpu'
 
@@ -63,7 +62,7 @@ export default class ThreeDiagnostics {
   private resolving = false
   private sampled = false
 
-  constructor(private readonly telemetry: Telemetry, private readonly renderer: WebGPURenderer, options: ThreeDiagnosticsOptions = {}) {
+  constructor(private readonly telemetry: TelemetryClient, private readonly renderer: WebGPURenderer, options: ThreeDiagnosticsOptions = {}) {
     this.backend = renderer.backend as TimestampBackend
     this.previousInspector = renderer.inspector
     this.previousTracking = this.backend.trackTimestamp
@@ -129,12 +128,16 @@ export default class ThreeDiagnostics {
         }
         const start = end - durationMs
         const span = this.telemetry.startSpan('three.frame.hitch', {
-          ...attributes,
-          ...snapshot(),
-          'frame.duration_ms': durationMs,
-          'render.pass_details.dropped': this.inspector.dropped,
-          'gpu.sampled': this.sampled,
-        }, parent, start)
+          attributes: {
+            ...attributes,
+            ...snapshot(),
+            'frame.duration_ms': durationMs,
+            'render.pass_details.dropped': this.inspector.dropped,
+            'gpu.sampled': this.sampled,
+          },
+          parent,
+          startTime: start,
+        })
         hitch = {
           span,
           start,
@@ -250,7 +253,10 @@ export default class ThreeDiagnostics {
       }
     } catch (error) {
       if (this.connected && generation === this.generation) {
-        this.telemetry.log('GPU timing resolution failed.', 'warn', {'error.type': Error.isError(error) ? error.name : typeof error})
+        this.telemetry.log('GPU timing resolution failed.', {
+          level: 'warn',
+          attributes: {'error.type': Error.isError(error) ? error.name : typeof error},
+        })
       }
     } finally {
       this.resolving = false
@@ -287,7 +293,7 @@ export default class ThreeDiagnostics {
         unit: 'ms',
         attributes,
       })
-      this.telemetry.count(`three.gpu.${type}.samples`, 1, {
+      this.telemetry.increment(`three.gpu.${type}.samples`, 1, {
         unit: '{frame}',
         attributes,
       })
