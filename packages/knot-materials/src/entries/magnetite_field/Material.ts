@@ -64,7 +64,8 @@ export default class Material extends BaseKnotMaterial {
       .abs()
       .pow(10)
       .mul(phaseA
-        .mul(0.63)
+        // Preserve an integer 23-cycle winding at the UV wrap; arbitrary scaling opens a visible seam.
+        .mul(23 / 36)
         .cos()
         .abs()
         .pow(7))
