@@ -6,9 +6,9 @@ import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
 
 export const aggregatePeriods = [84, 18] as const
 
-/** Periodic jittered Voronoi: return squared-distance gap and nearest chip identity.
- * Integer seed wrapping closes both UV seams without repeating a visible square stamp.
- */
+// Periodic jittered Voronoi: return squared-distance gap and nearest chip identity.
+// Integer seed wrapping closes both UV seams without repeating a visible square stamp.
+//
 export const aggregateField = Fn(([tube]: [Node<'vec2'>]) => {
   const grid = tube.mul(vec2(...aggregatePeriods))
   const cell = grid.floor()
