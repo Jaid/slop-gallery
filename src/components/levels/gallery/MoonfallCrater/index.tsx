@@ -1,7 +1,8 @@
 import type {Texture} from 'three/webgpu'
 
 import {RigidBody} from '@react-three/rapier'
-import {useEffect} from 'react'
+import useDisposable from 'disposable-lifetime/react'
+import {useMemo} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
@@ -12,23 +13,16 @@ import StanchionRingGeometry from '#src/lib/gallery/railings/StanchionRingGeomet
 import CraterMaterial from '#src/lib/materials/CraterMaterial.ts'
 
 export default function MoonfallCrater({stone}: {stone: Texture}) {
-  const geometry = new CraterGeometry
-  const fence = new StanchionRingGeometry(moonfallCrater.fenceRadius, moonfallCrater.fencePosts)
+  const geometry = useDisposable(useMemo(() => new CraterGeometry, []))
+  const fence = useDisposable(useMemo(() => new StanchionRingGeometry(moonfallCrater.fenceRadius, moonfallCrater.fencePosts), []))
   const collision = [geometry.floor, geometry.terrain, geometry.rocks, fence.posts, fence.rope].map(colliderGeometry)
-  const rock = new CraterMaterial(false)
-  const terrain = new CraterMaterial
-  const bronze = new MeshStandardNodeMaterial({
+  const rock = useDisposable(useMemo(() => new CraterMaterial(false), []))
+  const terrain = useDisposable(useMemo(() => new CraterMaterial, []))
+  const bronze = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
     color: '#ad9470',
     metalness: 0.78,
     roughness: 0.32,
-  })
-  useEffect(() => () => {
-    geometry.dispose()
-    fence.dispose()
-    rock.dispose()
-    terrain.dispose()
-    bronze.dispose()
-  }, [geometry, fence, rock, terrain, bronze])
+  }), []))
   return <group name='moonfall-impact-crater'>
     <RigidBody colliders={false} type='fixed'>
       {collision.map((args, i) => <MeshSurfaceCollider key={i} args={args} />)}

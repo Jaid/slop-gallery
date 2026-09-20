@@ -4,7 +4,7 @@ import {useThree} from '@react-three/fiber/webgpu'
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import renderCanvasTexture from 'canvas-textures/three'
 import useDisposable from 'disposable-lifetime/react'
-import {useEffect} from 'react'
+import {useEffect, useMemo} from 'react'
 import {EquirectangularReflectionMapping, MeshStandardNodeMaterial, SRGBColorSpace} from 'three/webgpu'
 import useGraphicsQuality from 'use-graphics-quality'
 
@@ -36,31 +36,25 @@ const pointLightPositions: Partial<Record<Wall['room'], Array<number>>> = {
 
 export default function Architecture() {
   const isQuality = useGraphicsQuality()
-  const glass = createArchitecturalGlassMaterials(isQuality)
-  const castleStone = new CastleStoneMaterial
-  const lodgeWood = new LodgeWoodMaterial
-  useEffect(() => () => disposeArchitecturalGlassMaterials(glass), [glass])
-  useEffect(() => () => {
-    castleStone.dispose()
-    lodgeWood.dispose()
-  }, [castleStone, lodgeWood])
-  const textures = {
-    stone: surfaceTexture('stone'),
-    plaster: surfaceTexture('plaster'),
-    wood: surfaceTexture('wood'),
-    damask: damaskTexture(rooms.find(room => room.id === 'sienna')!.size[0], wallTop),
-  }
-  const oculusMaterial = new MeshStandardNodeMaterial({
-    map: textures.stone,
+  const glass = useDisposable(useMemo(() => {
+    const materials = createArchitecturalGlassMaterials(isQuality)
+    return {
+      ...materials,
+      dispose: () => disposeArchitecturalGlassMaterials(materials),
+    }
+  }, [isQuality]))
+  const castleStone = useDisposable(useMemo(() => new CastleStoneMaterial, []))
+  const lodgeWood = useDisposable(useMemo(() => new LodgeWoodMaterial, []))
+  const stone = useDisposable(useMemo(() => surfaceTexture('stone'), []))
+  const plaster = useDisposable(useMemo(() => surfaceTexture('plaster'), []))
+  const wood = useDisposable(useMemo(() => surfaceTexture('wood'), []))
+  const damask = useDisposable(useMemo(() => damaskTexture(rooms.find(room => room.id === 'sienna')!.size[0], wallTop), []))
+  const oculusMaterial = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
+    map: stone,
     color: '#4c5558',
     roughness: 0.95,
     envMapIntensity: 0,
-  })
-  useEffect(() => () => oculusMaterial.dispose(), [oculusMaterial])
-  useDisposable(textures.stone)
-  useDisposable(textures.plaster)
-  useDisposable(textures.wood)
-  useDisposable(textures.damask)
+  }), [stone]))
   const wallMaterial = (wall: Wall) => {
     if (wall.room === 'oculus') {
       return oculusMaterial
@@ -77,12 +71,12 @@ export default function Architecture() {
     <color args={['#ded8ca']} attach='background' />
     <ambientLight intensity={0.65} /><hemisphereLight args={['#ecf3ff', '#a29270', 1.15]} />
     <directionalLight castShadow color='#fff0d7' intensity={2.3} position={[-3, 9, 4]} shadow-camera-bottom={-20} shadow-camera-left={-24} shadow-camera-right={24} shadow-camera-top={20} shadow-mapSize={[4096, 4096]} shadow-normalBias={0.035} />
-    {walls.map(wall => <WallSurface key={wall.id} material={wallMaterial(wall)} plaster={wall.room === 'sienna' ? textures.damask : textures.plaster} wall={wall} />)}
+    {walls.map(wall => <WallSurface key={wall.id} material={wallMaterial(wall)} plaster={wall.room === 'sienna' ? damask : plaster} wall={wall} />)}
     {rooms.filter(room => room.floorY === 0 && room.id !== 'sienna').map(room => <group key={room.id} position={[room.center[0], 0, room.center[1]]}>
       <RigidBody colliders={false} type='fixed'>
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]} />
       </RigidBody>
-      <RoomFloor glass={glass.lobby} room={room} stone={textures.stone} wood={textures.wood} />
+      <RoomFloor glass={glass.lobby} room={room} stone={stone} wood={wood} />
       <Box color={room.id === 'vesper' ? '#7c9586' : '#e1dccc'} position={[0, 5.78, 0]} size={[room.size[0], 0.18, room.size[1]]} />
       {(room.id === 'antechamber' ? [0] : Array.from({length: room.size[1] / 4 - 1}, (_, i) => i * 4 - room.size[1] / 2 + 4)).map(z => <group key={z}>
         <Box color='#a29982' position={[0, 5.6, z]} size={[room.size[0] * 0.48, 0.1, 2.6]} />
@@ -93,14 +87,14 @@ export default function Architecture() {
     </group>)}
     <PottedPlants />
     <Fountain />
-    <FountainBenches wood={textures.wood} />
-    <LodgeRoom stone={castleStone} wood={textures.wood} />
+    <FountainBenches wood={wood} />
+    <LodgeRoom stone={castleStone} wood={wood} />
     <LodgeWindow glass={glass.cabin} material={lodgeWood} />
     <LodgeCorridorRoute material={castleStone} />
     <VesperOrnaments />
-    <SiennaRoom wood={textures.wood} />
+    <SiennaRoom wood={wood} />
     <GalleryStairs />
-    <MoonfallRoom stone={textures.stone} />
+    <MoonfallRoom stone={stone} />
     <OculusRoom material={oculusMaterial} />
 
   </>

@@ -1,6 +1,7 @@
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import Branch from 'branch-component'
 import useDisposable from 'disposable-lifetime/react'
+import {useMemo} from 'react'
 
 import AnnouncerSamples from '#component/levels/soundboard/AnnouncerSamples'
 import SoundboardWall from '#component/levels/soundboard/SoundboardWall'
@@ -12,10 +13,8 @@ import {soundboardBounds, soundboardGroundStripes, soundboardSize, soundboardWal
 import {archivedSoundEffects, enabledSoundEffects} from '#src/lib/audio/soundEffects.ts'
 
 export default function SoundboardRoom() {
-  const plaster = surfaceTexture('plaster')
-  const wood = surfaceTexture('wood')
-  useDisposable(plaster)
-  useDisposable(wood)
+  const plaster = useDisposable(useMemo(() => surfaceTexture('plaster'), []))
+  const wood = useDisposable(useMemo(() => surfaceTexture('wood'), []))
   const enabledWall = soundboardWalls.find(wall => wall.id === 'soundboard-enabled')!
   const archivedWall = soundboardWalls.find(wall => wall.id === 'soundboard-archived')!
   const announcerWall = soundboardWalls.find(wall => wall.id === 'soundboard-north')!

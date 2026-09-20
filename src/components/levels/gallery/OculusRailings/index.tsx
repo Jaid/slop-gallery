@@ -1,13 +1,13 @@
 import {CapsuleCollider, CuboidCollider, RigidBody} from '@react-three/rapier'
-import {useEffect} from 'react'
+import useDisposable from 'disposable-lifetime/react'
+import {useMemo} from 'react'
 import {TubeGeometry} from 'three/webgpu'
 
 import OculusRailing from '#src/lib/gallery/railings/OculusRailing.ts'
 
 export default function OculusRailings() {
-  const path = new OculusRailing
-  const handrail = new TubeGeometry(path, Math.ceil(path.length / 0.04), path.radius, 12, false)
-  useEffect(() => () => handrail.dispose(), [handrail])
+  const path = useMemo(() => new OculusRailing, [])
+  const handrail = useDisposable(useMemo(() => new TubeGeometry(path, Math.ceil(path.length / 0.04), path.radius, 12, false), [path]))
   return <RigidBody colliders={false} type='fixed'>
     <mesh castShadow geometry={handrail} name='oculus-continuous-handrail'><meshStandardNodeMaterial color='#7c898c' metalness={0.85} roughness={0.25} /></mesh>
     {path.segments.map((segment, i) => <CapsuleCollider key={i} args={[segment.halfLength, path.radius]} position={segment.position} quaternion={segment.rotation} />)}

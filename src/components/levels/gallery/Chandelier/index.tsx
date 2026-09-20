@@ -1,7 +1,8 @@
 import type {RapierRigidBody} from '@react-three/rapier'
 
 import {BallCollider, ConvexHullCollider, CylinderCollider, RigidBody, useSphericalJoint} from '@react-three/rapier'
-import {useEffect, useRef} from 'react'
+import useDisposable from 'disposable-lifetime/react'
+import {useMemo, useRef} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import ChandelierGeometry from '#src/lib/gallery/ChandelierGeometry.ts'
@@ -11,16 +12,12 @@ export default function Chandelier() {
   const anchor = useRef<RapierRigidBody>(null!)
   const fixture = useRef<RapierRigidBody>(null!)
   useSphericalJoint(anchor, fixture, [[0, 0, 0], chandelierPhysics.anchor])
-  const brass = new MeshStandardNodeMaterial({
+  const brass = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
     color: '#bd924c',
     metalness: 0.88,
     roughness: 0.2,
-  })
-  const geometry = new ChandelierGeometry
-  useEffect(() => () => {
-    brass.dispose()
-    geometry.dispose()
-  }, [brass, geometry])
+  }), []))
+  const geometry = useDisposable(useMemo(() => new ChandelierGeometry, []))
   return <group name='sienna-chandelier' position={[0, chandelierPhysics.height, 0]}>
     <RigidBody colliders={false} position={chandelierPhysics.anchor} type='fixed' ref={anchor} />
     <mesh castShadow geometry={geometry.canopy} material={brass} name='chandelier-canopy' />

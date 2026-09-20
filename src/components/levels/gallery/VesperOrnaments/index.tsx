@@ -1,6 +1,7 @@
 import type {InstancedMesh} from 'three/webgpu'
 
-import {useEffect, useLayoutEffect, useRef} from 'react'
+import useDisposable from 'disposable-lifetime/react'
+import {useLayoutEffect, useMemo, useRef} from 'react'
 import {Matrix4} from 'three/webgpu'
 
 import GoldMaterial from '#component/levels/gallery/GoldMaterial'
@@ -10,10 +11,9 @@ import WallOrnamentGeometry from '#src/lib/gallery/WallOrnamentGeometry.ts'
 const placements = vesperOrnaments.map(({position, rotation}) => (new Matrix4).makeRotationY(rotation).setPosition(...position))
 
 export default function VesperOrnaments() {
-  const geometry = new WallOrnamentGeometry
+  const geometry = useDisposable(useMemo(() => new WallOrnamentGeometry, []))
   const foliage = useRef<InstancedMesh>(null)
   const brass = useRef<InstancedMesh>(null)
-  useEffect(() => () => geometry.dispose(), [geometry])
   useLayoutEffect(() => {
     for (const mesh of [foliage.current, brass.current]) {
       if (!mesh) {

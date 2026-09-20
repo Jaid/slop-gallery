@@ -4,7 +4,8 @@ import type {Material} from 'three/webgpu'
 
 import {CuboidCollider, RigidBody, TrimeshCollider} from '@react-three/rapier'
 import Branch from 'branch-component'
-import {useEffect} from 'react'
+import useDisposable from 'disposable-lifetime/react'
+import {useMemo} from 'react'
 import {BoxGeometry} from 'three/webgpu'
 
 import TimberFrame from '#component/levels/gallery/TimberFrame'
@@ -20,14 +21,12 @@ export default function CoveredPassage({passage, material, timber, ribCutouts}: 
   ribCutouts?: ReadonlyArray<PassageCutout>
   timber?: Material
 }) {
-  const lantern = mergeParts([
+  const lantern = useDisposable(useMemo(() => mergeParts([
     ...[-1, 1].map(side => new BoxGeometry(0.22, 0.03, 0.22).translate(0, side * 0.17, 0)),
     ...[-1, 1].flatMap(x => [-1, 1].map(z => new BoxGeometry(0.018, 0.32, 0.018).translate(x * 0.09, 0, z * 0.09))),
-  ])
-  useEffect(() => () => lantern.dispose(), [lantern])
-  const geometry = timber ? TimberGeometry.passage(passage, ribCutouts) : new VaultGeometry(passage)
+  ]), []))
+  const geometry = useDisposable(useMemo(() => timber ? TimberGeometry.passage(passage, ribCutouts) : new VaultGeometry(passage), [passage, ribCutouts, timber]))
   const collision = timber ? [] : [geometry.shell, geometry.ribs].map(colliderGeometry)
-  useEffect(() => () => geometry.dispose(), [geometry])
   return <group name={passage.id}>
     <RigidBody colliders={false} type='fixed'>
       {passage.floors.map(({center: [x, z], size: [width, depth]}, i) => <group key={i}>

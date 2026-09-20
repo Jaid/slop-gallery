@@ -1,21 +1,19 @@
 import type {Vec3} from '#src/lib/gallery.ts'
 
 import {RigidBody, TrimeshCollider} from '@react-three/rapier'
-import {useEffect} from 'react'
+import useDisposable from 'disposable-lifetime/react'
+import {useMemo} from 'react'
 
 import PedestalGeometry from '#src/lib/gallery/PedestalGeometry.ts'
 import LimestoneMaterial from '#src/lib/materials/LimestoneMaterial.ts'
 
 export function usePedestal() {
-  const resources = {
-    geometry: new PedestalGeometry,
-    material: new LimestoneMaterial,
+  const geometry = useDisposable(useMemo(() => new PedestalGeometry, []))
+  const material = useDisposable(useMemo(() => new LimestoneMaterial, []))
+  return {
+    geometry,
+    material,
   }
-  useEffect(() => () => {
-    resources.geometry.dispose()
-    resources.material.dispose()
-  }, [resources])
-  return resources
 }
 
 export default function Pedestal({position, geometry, material}: ReturnType<typeof usePedestal> & {position: Vec3}) {

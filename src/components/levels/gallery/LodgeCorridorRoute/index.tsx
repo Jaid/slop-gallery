@@ -1,6 +1,7 @@
 import type {Material} from 'three/webgpu'
 
 import useDisposable from 'disposable-lifetime/react'
+import {useMemo} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import CorridorStairs from '#component/levels/gallery/CorridorStairs'
@@ -11,19 +12,16 @@ import {lodgeTunnel, lodgeWindowRibCutouts} from '#src/lib/gallery/lodge.ts'
 import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
 
 export default function LodgeCorridorRoute({material}: {material: Material}) {
-  const lining = new LodgeWoodMaterial
-  const grain = surfaceTexture('wood')
-  const timber = new MeshStandardNodeMaterial({
+  const lining = useDisposable(useMemo(() => new LodgeWoodMaterial, []))
+  const grain = useDisposable(useMemo(() => surfaceTexture('wood'), []))
+  const timber = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
     map: grain,
     bumpMap: grain,
     bumpScale: 0.012,
     color: '#e9c99f',
     roughness: 0.72,
     envMapIntensity: 0.2,
-  })
-  useDisposable(lining)
-  useDisposable(grain)
-  useDisposable(timber)
+  }), [grain]))
   return <group name='lodge-corridor-route'>
     <CoveredPassage material={material} passage={lodgeTunnel} />
     <CoveredPassage material={lining} passage={corridorPassage} ribCutouts={lodgeWindowRibCutouts} timber={timber} />

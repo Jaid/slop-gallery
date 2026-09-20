@@ -3,6 +3,7 @@ import {CuboidCollider, useBeforePhysicsStep} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {knotExhibition, knotFloatHeight} from 'knot-materials/exhibition.ts'
 import ProgressiveKnotMaterials from 'knot-materials/ProgressiveKnotMaterials.ts'
+import {useMemo} from 'react'
 import useGraphicsQuality from 'use-graphics-quality'
 import constructors from 'virtual:knot-exhibition-materials'
 
@@ -16,7 +17,7 @@ export default function KnotExhibition() {
   const camera = useThree(state => state.camera)
   const renderer = useThree(state => state.renderer)
   const isQuality = useGraphicsQuality()
-  const rotation = new KnotRotation
+  const rotation = useMemo(() => new KnotRotation, [])
   useBeforePhysicsStep(world => {
     for (const exhibit of knotExhibition) {
       const body = propObjects.get(`prop-knot-${exhibit.id}`)?.body
@@ -25,8 +26,7 @@ export default function KnotExhibition() {
       }
     }
   })
-  const materials = new ProgressiveKnotMaterials(renderer, camera, knotExhibition, constructors, isQuality)
-  useDisposable(materials)
+  const materials = useDisposable(useMemo(() => new ProgressiveKnotMaterials(renderer, camera, knotExhibition, constructors, isQuality), [camera, isQuality, renderer]))
   const {resources} = materials
   return <group name='lobby-knot-exhibition'>
     <KnotLabels />

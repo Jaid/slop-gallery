@@ -1,5 +1,6 @@
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
-import {useEffect} from 'react'
+import useDisposable from 'disposable-lifetime/react'
+import {useMemo} from 'react'
 
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
 import Box from '#src/components/Scene/primitives.tsx'
@@ -7,34 +8,40 @@ import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import {stairBlocks, stairFlights, stairRailGeometry, stairRoofs, stairTurn} from '#src/lib/gallery/staircase.ts'
 
 export default function GalleryStairs() {
-  const turn = [
-    {
-      name: 'landing',
-      geometry: stairTurn.floorGeometry(),
-      color: '#26383e',
-      roughness: 0.9,
-    },
-    {
-      name: 'ceiling',
-      geometry: stairTurn.roofGeometry(),
-      color: '#101e24',
-      roughness: 0.9,
-    },
-    ...(['inner', 'outer'] as const).map(side => ({
-      name: `handrail-${side}`,
-      geometry: stairRailGeometry(side),
-      color: '#ac8c58',
-      roughness: 0.45,
-    })),
-  ].map(part => ({
-    ...part,
-    collision: colliderGeometry(part.geometry),
-  }))
-  useEffect(() => () => {
-    for (const part of turn) {
-      part.geometry.dispose()
+  const turnResource = useDisposable(useMemo(() => {
+    const parts = [
+      {
+        name: 'landing',
+        geometry: stairTurn.floorGeometry(),
+        color: '#26383e',
+        roughness: 0.9,
+      },
+      {
+        name: 'ceiling',
+        geometry: stairTurn.roofGeometry(),
+        color: '#101e24',
+        roughness: 0.9,
+      },
+      ...(['inner', 'outer'] as const).map(side => ({
+        name: `handrail-${side}`,
+        geometry: stairRailGeometry(side),
+        color: '#ac8c58',
+        roughness: 0.45,
+      })),
+    ].map(part => ({
+      ...part,
+      collision: colliderGeometry(part.geometry),
+    }))
+    return {
+      parts,
+      dispose() {
+        for (const part of parts) {
+          part.geometry.dispose()
+        }
+      },
     }
-  }, [turn])
+  }, []))
+  const {parts: turn} = turnResource
   return <group name='moonfall-stairway'>
     <RigidBody colliders={false} type='fixed'>
       {stairBlocks.map(({position, size}, i) => <group key={i}>

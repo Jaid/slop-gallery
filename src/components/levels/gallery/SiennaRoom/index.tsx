@@ -1,7 +1,8 @@
 import type {Texture} from 'three/webgpu'
 
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
-import {useEffect} from 'react'
+import useDisposable from 'disposable-lifetime/react'
+import {useMemo} from 'react'
 import {useGraphicsQualityValue} from 'use-graphics-quality'
 
 import Chandelier from '#component/levels/gallery/Chandelier'
@@ -16,8 +17,7 @@ const room = rooms.find(candidate => candidate.id === 'sienna')!
 export default function SiennaRoom({wood}: {wood: Texture}) {
   const resetEpoch = useGallery(s => s.resetEpoch)
   const {floorReflections} = useGraphicsQualityValue(getGraphicsProfile)
-  const floor = new RoomFloorTextures(...room.size, ...siennaRugSize)
-  useEffect(() => () => floor.dispose(), [floor])
+  const floor = useDisposable(useMemo(() => new RoomFloorTextures(...room.size, ...siennaRugSize), []))
   return <>
     <group position={[room.center[0], 0, room.center[1]]}>
       <RigidBody colliders={false} type='fixed'>

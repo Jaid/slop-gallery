@@ -1,7 +1,8 @@
 import type {Texture} from 'three/webgpu'
 
 import Branch from 'branch-component'
-import {useEffect} from 'react'
+import useDisposable from 'disposable-lifetime/react'
+import {useMemo} from 'react'
 import {useGraphicsQualityValue} from 'use-graphics-quality'
 
 import WoodFloorMaterial from '#src/lib/materials/WoodFloorMaterial.ts'
@@ -15,8 +16,7 @@ export default function WoodFloor({width, depth, texture, reflections}: {
 }) {
   const {floorReflections} = useGraphicsQualityValue(getGraphicsProfile)
   const reflective = reflections ?? floorReflections
-  const material = new WoodFloorMaterial(texture, reflective)
-  useEffect(() => () => material.dispose(), [material])
+  const material = useDisposable(useMemo(() => new WoodFloorMaterial(texture, reflective), [reflective, texture]))
   const reflection = material.reflection?.target
   return <mesh name='mona-ribbit-room-wood-floor' position={[0, 0.001, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
     <planeGeometry args={[width, depth]} />

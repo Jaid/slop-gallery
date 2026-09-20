@@ -1,5 +1,6 @@
 import {useFrame} from '@react-three/fiber/webgpu'
-import {useEffect} from 'react'
+import useDisposable from 'disposable-lifetime/react'
+import {useMemo} from 'react'
 
 import PortraitLabel from '#component/levels/gallery/PortraitLabel'
 import PreviewVisual, {previewColors, previewOpacity} from '#src/components/levels/gallery/PlacementPreview/PreviewVisual.ts'
@@ -19,8 +20,7 @@ export default function PlacementPreview({width, height, source, title, creator,
   const valid = useGallery(s => s.placement?.valid === true)
   const inReach = useGallery(s => s.placement?.inReach === true)
   const label = portraitLabelLayout(width, height)
-  const visual = new PreviewVisual(width, height, texture)
-  useEffect(() => () => visual.dispose(), [visual])
+  const visual = useDisposable(useMemo(() => new PreviewVisual(width, height, texture), [height, texture, width]))
   useFrame((_, delta) => {
     const {placement} = useGallery.getState()
     visual.update(placement?.valid === true, delta, placement?.inReach === true)

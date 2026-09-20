@@ -1,30 +1,26 @@
 import type {Texture} from 'three/webgpu'
 
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
-import {useEffect} from 'react'
+import useDisposable from 'disposable-lifetime/react'
+import {useMemo} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import {fountainBench, fountainBenches} from '#src/lib/gallery/fountain/benches.ts'
 import SlattedBenchGeometry from '#src/lib/gallery/fountain/SlattedBenchGeometry.ts'
 
 export default function FountainBenches({wood}: {wood: Texture}) {
-  const geometry = new SlattedBenchGeometry
-  const timber = new MeshStandardNodeMaterial({
+  const geometry = useDisposable(useMemo(() => new SlattedBenchGeometry, []))
+  const timber = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
     map: wood,
     color: '#ffffff',
     roughness: 0.63,
     envMapIntensity: 0.35,
-  })
-  const metal = new MeshStandardNodeMaterial({
+  }), [wood]))
+  const metal = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
     color: '#c0c0b2',
     metalness: 0.8,
     roughness: 0.38,
-  })
-  useEffect(() => () => {
-    geometry.dispose()
-    timber.dispose()
-    metal.dispose()
-  }, [geometry, timber, metal])
+  }), []))
   const {width, height, depth} = fountainBench
   return <group name='lobby-fountain-benches'>
     {fountainBenches.map((pose, i) => <RigidBody key={i} colliders={false} type='fixed' {...pose}>
