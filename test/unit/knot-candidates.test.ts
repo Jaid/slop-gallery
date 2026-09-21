@@ -142,6 +142,7 @@ describe('arbitrary Knot batches', () => {
       'gpt-6-astra',
       'claude-sonnet-5',
       'claude-opus-5',
+      'claude-opus-4-6-thinking',
       'deepseek',
       'deepseek-4.1-flash',
       'gemini-3.8-flash',
@@ -191,12 +192,12 @@ describe('arbitrary Knot batches', () => {
   })
   test('keeps every Gemini item on current model provenance', () => {
     const gemini = knotCandidates.find(candidate => candidate.data.id === 'gemini_flash')!
-    expect(gemini.items).toHaveLength(40)
+    expect(gemini.items).toHaveLength(48)
     expect(gemini.items.every(entry => entry.author.model.title === 'Gemini 3.8 Flash'
       && entry.author.model.slug === 'google/gemini-3.8-flash'
       && entry.author.model.effortLevel === 'high')).toBe(true)
     expect(gemini.items.filter(entry => entry.harness === 'none')).toHaveLength(24)
-    expect(gemini.items.filter(entry => entry.harness === 'Mage')).toHaveLength(16)
+    expect(gemini.items.filter(entry => entry.harness === 'Mage')).toHaveLength(24)
   })
   test('keeps API model credits and displacement metadata by stable identity', () => {
     const expected = [
@@ -237,14 +238,14 @@ describe('arbitrary Knot batches', () => {
     expect(codex.every(entry => entry.candidate.id === 'gpt_astra')).toBe(true)
     expect(legacy.every(entry => entry.harness === undefined)).toBe(true)
     const astraMage = knots.filter(entry => entry.candidate.id === 'gpt_astra' && entry.harness === 'Mage')
-    expect(astraMage).toHaveLength(20)
+    expect(astraMage).toHaveLength(28)
     expect(astraMage.every(entry => entry.author.model.title === 'GPT-6 Astra' && entry.author.model.slug === 'openai/gpt-6-astra')).toBe(true)
     expect(Object.fromEntries(Map.groupBy(astraMage, entry => entry.author.model.effortLevel).entries().map(([effort, grouped]) => [effort, grouped.length]))).toEqual({
-      high: 14,
+      high: 22,
       max: 6,
     })
     const deepseekMage = knots.filter(entry => entry.candidate.id === 'deepseek' && entry.harness === 'Mage')
-    expect(deepseekMage).toHaveLength(16)
+    expect(deepseekMage).toHaveLength(32)
     expect(deepseekMage.every(entry => entry.author.model.title === 'DeepSeek 4.1 Flash' && entry.author.model.slug === 'deepseek/deepseek-4.1-flash' && entry.author.model.effortLevel === 'xhigh')).toBe(true)
     const lunaMage = knots.filter(entry => entry.candidate.id === 'gpt_luna' && entry.harness === 'Mage')
     expect(lunaMage).toHaveLength(8)

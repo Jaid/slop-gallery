@@ -1,4 +1,5 @@
 export * from './bumpNormal.ts'
+export * from './exhibition/fields.ts'
 export * from './filteredWave.ts'
 export * from './knotShell.ts'
 export * from './line.ts'

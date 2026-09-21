@@ -50,6 +50,8 @@ describe('inference prompts', () => {
     }
     expect(prompt).toContain('flavorText')
     expect(prompt).toContain('src/rarities.ts')
+    expect(prompt).toContain('using `unknown` for new entries')
+    expect(prompt).toContain('unknown=0 (no stars)')
     expect(prompt).not.toContain('src/lib/knots/')
   })
   test('rejects invalid sampling and generation arguments before assembling a prompt', async () => {

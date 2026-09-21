@@ -1,3 +1,4 @@
+import type {Rarity} from './rarities.ts'
 import type {KnotCandidateData, KnotData, KnotEntry, KnotId} from './types.ts'
 
 import rarities from './rarities.ts'
@@ -58,11 +59,11 @@ export default class KnotCandidate {
     }).toSorted(byId)
   }
 
-  select(limit?: number, useRarity = true) {
+  select(limit?: number, useRarity = true, rarityFilter?: ReadonlySet<Rarity>) {
     if (limit !== undefined && (!Number.isSafeInteger(limit) || limit < 1)) {
       throw new Error('Knot shot limit must be a positive integer.')
     }
-    const available = this.items.filter(item => !item.archived)
+    const available = this.items.filter(item => !item.archived && (!rarityFilter || rarityFilter.has(item.rarity)))
     if (!useRarity) {
       return limit === undefined ? available : available.slice(0, limit)
     }

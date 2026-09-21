@@ -9,7 +9,7 @@ import {Color, MeshPhysicalNodeMaterial, Texture} from 'three/webgpu'
 
 import createPlaceholderMaterial, {placeholderPresets} from '../src/createPlaceholderMaterial.ts'
 import {entries, KnotCandidate, knotCandidates, knots, knotsById} from '../src/main.ts'
-import rarities, {common, ethereal, prime, rare} from '../src/rarities.ts'
+import rarities, {common, ethereal, prime, rare, unknown} from '../src/rarities.ts'
 
 const root = fileURLToPath(new URL('../src', import.meta.url))
 const source = (file: string) => readFile(resolve(root, file), 'utf8')
@@ -51,11 +51,11 @@ describe('flat knot catalogue', () => {
     }
   })
   test('rarity is exhaustive, separate from entry data, and drives selection before display ordering', () => {
-    expect([common, rare, prime, ethereal]).toEqual([1, 2, 3, 4])
+    expect([unknown, common, rare, prime, ethereal]).toEqual([0, 1, 2, 3, 4])
     expect(rarities.chladni_resonance).toBe(ethereal)
     expect(rarities.lichtenberg_reliquary).toBe(prime)
     expect(rarities.washi_lantern).toBe(common)
-    expect(new Set(Object.values(rarities))).toEqual(new Set([common, rare, prime, ethereal]))
+    expect(new Set(Object.values(rarities))).toEqual(new Set([unknown, common, rare, prime, ethereal]))
     for (const candidate of knotCandidates) {
       const available = candidate.items.filter(entry => !entry.archived)
       const selected = candidate.select(3)

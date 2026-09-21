@@ -1,6 +1,6 @@
 import type {KnotEntry} from 'knot-materials'
 
-import {knots} from 'knot-materials'
+import {knots, unknown} from 'knot-materials'
 import {knotRarityMode} from 'knot-materials/exhibition.ts'
 import KnotRarityEditor from 'knot-materials/KnotRarityEditor.ts'
 
@@ -23,7 +23,8 @@ export function activateKnotSign(entry: KnotEntry) {
   }
   try {
     const change = knotRarityEditor.cycle(entry.id)
-    notify(`${entry.title}: ${change.value}/4 stars · telemetry queued`)
+    const rating = change.value === unknown ? 'unknown' : `${change.value}/4 stars`
+    notify(`${entry.title}: ${rating} · telemetry queued`)
   } catch (error) {
     notify(Error.isError(error) ? error.message : 'The rarity edit could not be recorded.')
   }

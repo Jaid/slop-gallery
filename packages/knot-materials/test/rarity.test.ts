@@ -6,6 +6,7 @@ import parseCandidateOrder from '../src/candidateOrder.ts'
 import {candidateScore, knotPreviewX, knotRowHalfWidth, knotSpacing, selectKnotBays} from '../src/exhibition.ts'
 import KnotRarityEditor from '../src/KnotRarityEditor.ts'
 import {knotCandidates, knots} from '../src/main.ts'
+import parseRarityFilter from '../src/rarityFilter.ts'
 import parseRarityMode from '../src/rarityMode.ts'
 
 describe('rarity selection policy', () => {
@@ -17,6 +18,29 @@ describe('rarity selection policy', () => {
     for (const value of ['', '1', 'yes', 'EDIT']) {
       expect(() => parseRarityMode(`?rarity=${value}`)).toThrow('rarity')
     }
+  })
+  test('parses rarity filters as numeric tiers or enum names', () => {
+    expect(parseRarityFilter()).toBeUndefined()
+    expect([...parseRarityFilter('?rarity_filter=0')!]).toEqual([0])
+    expect([...parseRarityFilter('?rarity_filter=unknown,rare,4')!]).toEqual([0, 2, 4])
+    expect([...parseRarityFilter('?rarity_filter=common&rarity_filter=3,ethereal')!]).toEqual([1, 3, 4])
+    expect([...parseRarityFilter('?rarity_filter=0,unknown,0')!]).toEqual([0])
+    for (const value of ['', '5', '-1', '1.5', 'UNKNOWN', 'legendary', '0,,1']) {
+      expect(() => parseRarityFilter(`?rarity_filter=${value}`)).toThrow('rarity_filter')
+    }
+  })
+  test('filters before shot and candidate limits and composes with edit and knot_id', () => {
+    const unknownBays = selectKnotBays('?rarity=edit&rarity_filter=0')
+    expect(unknownBays).toHaveLength(Math.min(8, knotCandidates.filter(candidate => candidate.items.some(item => !item.archived && item.rarity === 0)).length))
+    expect(unknownBays.every(bay => bay.finishes.length > 0 && bay.finishes.length <= 4)).toBe(true)
+    expect(unknownBays.flatMap(bay => bay.finishes).every(item => item.rarity === 0)).toBe(true)
+    const mixed = selectKnotBays('?rarity_filter=unknown,rare&candidate_limit=3&shots=2')
+    expect(mixed).toHaveLength(3)
+    expect(mixed.every(bay => bay.finishes.length <= 2 && bay.finishes.every(item => item.rarity === 0 || item.rarity === 2))).toBe(true)
+    const unknownItem = knots.find(item => item.rarity === 0 && !item.archived)!
+    const ratedItem = knots.find(item => item.rarity === 4 && !item.archived)!
+    const exact = selectKnotBays(`?knot_id=${unknownItem.id},${ratedItem.id}&rarity_filter=unknown`)
+    expect(exact.flatMap(bay => bay.finishes).map(item => item.id)).toEqual([unknownItem.id])
   })
   test('omits lower rarities first for every shot cap and places rarer knots away from the billboard', () => {
     for (const candidate of knotCandidates) {
@@ -90,27 +114,31 @@ describe('candidate ordering', () => {
   })
 })
 describe('session rarity editor', () => {
-  test('cycles 1–4 and publishes immutable snapshots without mutating source rarity or layout', () => {
+  test.each([0, 1, 2, 3, 4] as const)('cycles all five rarities from %i without mutating source rarity or layout', initial => {
     const changes: Array<RarityChange> = []
     const editor = new KnotRarityEditor(knots, change => changes.push(change))
-    const item = knots.find(entry => entry.rarity === 1)!
+    const item = knots.find(entry => entry.rarity === initial)!
     const original = editor.getSnapshot()
+    const layout = selectKnotBays('?rarity=edit')
     let notifications = 0
     const unsubscribe = editor.subscribe(() => notifications++)
-    for (const expected of [2, 3, 4, 1] as const) {
-      expect(editor.cycle(item.id).value).toBe(expected)
-      expect(editor.getSnapshot().get(item.id)).toBe(expected)
-      expect(item.rarity).toBe(1)
+    const cycle = [0, 1, 2, 3, 4] as const
+    const expected = [...cycle.slice(initial + 1), ...cycle.slice(0, initial + 1)]
+    for (const value of expected) {
+      expect(editor.cycle(item.id).value).toBe(value)
+      expect(editor.getSnapshot().get(item.id)).toBe(value)
+      expect(item.rarity).toBe(initial)
     }
-    expect(original.get(item.id)).toBe(1)
+    expect(original.get(item.id)).toBe(initial)
     expect(editor.getSnapshot()).not.toBe(original)
-    expect(changes.map(change => change.sequence)).toEqual([1, 2, 3, 4])
-    expect(changes.map(change => change.previous)).toEqual([1, 2, 3, 4])
-    expect(changes.every(change => change.baseline === 1 && change.candidateId === item.candidateId)).toBe(true)
-    expect(notifications).toBe(4)
+    expect(changes.map(change => change.sequence)).toEqual([1, 2, 3, 4, 5])
+    expect(changes.map(change => change.previous)).toEqual([initial, ...expected.slice(0, -1)])
+    expect(changes.every(change => change.baseline === initial && change.candidateId === item.candidateId)).toBe(true)
+    expect(notifications).toBe(5)
+    expect(selectKnotBays('?rarity=edit')).toEqual(layout)
     unsubscribe()
     editor.cycle(item.id)
-    expect(notifications).toBe(4)
+    expect(notifications).toBe(5)
     expect(() => editor.cycle('not_a_knot')).toThrow('Unknown Knot ID')
   })
   test('does not show an accepted edit when recording fails', () => {

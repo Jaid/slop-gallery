@@ -3,6 +3,7 @@ import type {Rarity} from 'knot-materials/rarities.ts'
 import type {Texture} from 'three/webgpu'
 
 import flattenString from 'flatten-string'
+import {unknown} from 'knot-materials/rarities.ts'
 
 export const labelAtlasColumns = 10
 // 847 texels/m exceeds the previous title (800) and creator (686) densities.
@@ -38,6 +39,9 @@ export function modelLineLayout(textWidth: number, hasIcon: boolean) {
 export function drawRarity(context: CanvasRenderingContext2D, rarity: Rarity, x: number, y: number) {
   context.fillStyle = labelBackground
   context.fillRect(x + 200, y + 264, 320, 52)
+  if (rarity === unknown) {
+    return
+  }
   context.fillStyle = '#e5cf87'
   context.textAlign = 'center'
   context.textBaseline = 'middle'

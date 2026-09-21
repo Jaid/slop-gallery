@@ -4,7 +4,7 @@ import {knotsById} from 'knot-materials'
 import {knotBays, knotExhibition} from 'knot-materials/exhibition.ts'
 import {knotSign} from 'knot-materials/signs.ts'
 
-import drawLabel, {drawRarity, knotDetailLine, labelAtlasColumns, labelBackground, labelFonts, labelHeight, labelWidth, modelLineLayout} from '../../src/components/levels/knottingham/KnotLabels/drawLabel.ts'
+import drawLabel, {drawRarity, knotDetailLine, labelAtlasColumns, labelBackground, labelFonts, labelHeight, labelWidth, modelLineLayout, updateRarityAtlas} from '../../src/components/levels/knottingham/KnotLabels/drawLabel.ts'
 
 const iconHash = async (id: string) => Bun.hash(await Bun.file(new URL(knotsById.get(id)!.candidate.icon)).arrayBuffer())
 describe('Knot nameplates', () => {
@@ -195,4 +195,38 @@ test('star strip paints one through four stars and clears the previous count at 
     expect(calls[0]).toEqual([920, 1224, 320, 52])
     expect(calls[1]).toEqual([Array.from({length: rarity}, () => '★').join(' '), 1080, 1250, 300])
   }
+})
+test('unknown signs leave the star strip blank while preserving the rest of the label', () => {
+  const texts: Array<string> = []
+  const context = {
+    fillRect() {},
+    fillText: (text: string) => texts.push(text),
+    measureText: () => ({width: 240}),
+  }
+  const exhibit = {
+    ...knotExhibition[0],
+    rarity: 0 as const,
+  }
+  drawLabel(context as unknown as CanvasRenderingContext2D, exhibit, 0, 0)
+  expect(texts).toContain(exhibit.title)
+  expect(texts).toContain(exhibit.modelTitle)
+  expect(texts.some(text => text.includes('★'))).toBe(false)
+  expect(texts).not.toContain('')
+})
+test('returning to unknown clears old stars and marks the existing atlas for upload', () => {
+  const calls: Array<Array<unknown>> = []
+  const context = {
+    fillRect: (...args: Array<unknown>) => calls.push(['clear', ...args]),
+    fillText: (...args: Array<unknown>) => calls.push(['text', ...args]),
+  }
+  const exhibit = knotExhibition[0]
+  const atlas = {
+    image: {getContext: () => context},
+    needsUpdate: false,
+  }
+  drawRarity(context as unknown as CanvasRenderingContext2D, 4, 0, 0)
+  calls.length = 0
+  updateRarityAtlas(atlas as unknown as Parameters<typeof updateRarityAtlas>[0], [exhibit], new Map([[exhibit.id, 0]]))
+  expect(calls).toEqual([['clear', 200, 264, 320, 52]])
+  expect(atlas.needsUpdate).toBe(true)
 })

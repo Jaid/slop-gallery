@@ -15,8 +15,8 @@ import {insideKnotGallery, knotGalleryBounds} from '../../src/lib/gallery/knotGa
 
 describe('multi-model Knot challenge', () => {
   test('enumerates displayed Knots at initialization while keeping stable identities', () => {
-    expect(knots).toHaveLength(341)
-    expect(knotsById.size).toBe(341)
+    expect(knots).toHaveLength(382)
+    expect(knotsById.size).toBe(382)
     const displayedKnots = knots.filter(item => !item.archived)
     const displayedByCandidate = Map.groupBy(displayedKnots, item => item.candidate.id)
     expect(knotBays).toHaveLength(8)
@@ -121,7 +121,13 @@ describe('multi-model Knot challenge', () => {
           const dependencies = new Set<Node>
           for (const value of Object.values(material)) {
             if (value && typeof value === 'object' && 'isNode' in value && value.isNode) {
-              (value as Node).traverse(node => dependencies.add(node))
+              dependencies.add(value as Node)
+            }
+          }
+          // Shared shader subgraphs are a DAG, not a tree. Visit each node only once.
+          for (const node of dependencies) {
+            for (const child of node.getChildren()) {
+              dependencies.add(child)
             }
           }
           expect(dependencies.has(positionView), exhibit.id).toBe(true)

@@ -1,6 +1,8 @@
 import type {Rarity} from './rarities.ts'
 import type {KnotEntry} from './types.ts'
 
+import {ethereal, unknown} from './rarities.ts'
+
 export type RarityChange = {
   baseline: Rarity
   candidateId: string
@@ -38,7 +40,7 @@ export default class KnotRarityEditor {
       throw new Error(`Unknown Knot ID: ${id}`)
     }
     const previous = this.snapshot.get(id)!
-    const value = (previous % 4 + 1) as Rarity
+    const value = (previous === ethereal ? unknown : previous + 1) as Rarity
     const change: RarityChange = {
       id,
       candidateId: entry.candidateId,

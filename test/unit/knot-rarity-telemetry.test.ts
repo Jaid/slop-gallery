@@ -24,7 +24,23 @@ const text = (body: BodyInit | null | undefined) => {
   }
   return ''
 }
-test('explicit sign edits emit correlated logs and traces with stable identity and before/after values', async () => {
+test.each([
+  {
+    baseline: 1,
+    previous: 3,
+    value: 4,
+  },
+  {
+    baseline: 0,
+    previous: 0,
+    value: 1,
+  },
+  {
+    baseline: 0,
+    previous: 4,
+    value: 0,
+  },
+] as const)('sign edits preserve before/after values including unknown: %j', async ({baseline, previous, value}) => {
   const requests: Array<{
     body: string
     url: string
@@ -52,9 +68,9 @@ test('explicit sign edits emit correlated logs and traces with stable identity a
       id: 'washi_lantern',
       candidateId: 'claude_fable',
       title: 'Washi Lantern',
-      baseline: 1,
-      previous: 3,
-      value: 4,
+      baseline,
+      previous,
+      value,
       sequence: 7,
     })
     await telemetry.flush()
@@ -87,9 +103,9 @@ test('explicit sign edits emit correlated logs and traces with stable identity a
       'event.name': 'knot.rarity.changed',
       'knot.id': 'washi_lantern',
       'knot.candidate.id': 'claude_fable',
-      'rarity.baseline': 1,
-      'rarity.previous': 3,
-      'rarity.value': 4,
+      'rarity.baseline': baseline,
+      'rarity.previous': previous,
+      'rarity.value': value,
       'edit.sequence': 7,
       'edit.source': 'sign',
     })

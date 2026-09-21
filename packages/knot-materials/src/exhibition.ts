@@ -3,6 +3,7 @@ import type {KnotEntry, Vec3} from './types.ts'
 import parseCandidateOrder from './candidateOrder.ts'
 import KnotLayout from './KnotLayout.ts'
 import {knotCandidates} from './main.ts'
+import parseRarityFilter from './rarityFilter.ts'
 import parseRarityMode from './rarityMode.ts'
 
 export const knotFloatHeight = 1
@@ -25,6 +26,7 @@ export function selectKnotBays(search = '') {
     return value
   }
   const rarityMode = parseRarityMode(search)
+  const rarityFilter = parseRarityFilter(search)
   const candidateOrder = parseCandidateOrder(search)
   const requested = [...new Set(params.getAll('candidates').flatMap(value => value.split(',')).map(value => value.trim()).filter(Boolean))]
   const known = new Set(knotCandidates.map(candidate => candidate.data.id))
@@ -48,12 +50,15 @@ export function selectKnotBays(search = '') {
   } else if (requested.length) {
     selected = knotCandidates.filter(candidate => requested.includes(candidate.data.id))
   }
+  if (rarityFilter) {
+    selected = selected.filter(candidate => candidate.items.some(item => !item.archived && rarityFilter.has(item.rarity)))
+  }
   const byName = (a: (typeof knotCandidates)[number], b: (typeof knotCandidates)[number]) => a.data.title.localeCompare(b.data.title) || a.data.id.localeCompare(b.data.id)
   const byScore = (a: (typeof knotCandidates)[number], b: (typeof knotCandidates)[number]) => candidateScore(b) - candidateScore(a) || byName(a, b)
   const ordered = selected.toSorted(candidateOrder === 'score' ? byScore : byName)
   const candidates = exactKnotSelection ? ordered : ordered.slice(0, candidateLimit)
   return candidates.map(candidate => {
-    let finishes = candidate.select(exactKnotSelection ? undefined : shots, rarityMode !== 'false')
+    let finishes = candidate.select(exactKnotSelection ? undefined : shots, rarityMode !== 'false', rarityFilter)
     if (exactKnotSelection) {
       finishes = finishes.filter(item => requestedKnotIdSet.has(item.id))
     }

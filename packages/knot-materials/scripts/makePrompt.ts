@@ -105,7 +105,7 @@ Each metadata module must be a default object with \`as const satisfies KnotData
 - \`icon: new URL('icon.jxl', import.meta.url).href\` and \`placeholder: {color: '#rrggbb', shading: 'smooth' | 'ghost' | 'metal' | 'glass' | 'stone' | 'liquid' | 'fabric'}\`. Choose one shading literal appropriate for that entry.
 - A conservative positive \`displacement\` bound in meters whenever vertices move; omit it for undisplaced materials. New submissions are not archived.
 
-Do not add \`accent\`, \`highlighted\`, \`sourceId\`, plate numbers, or a per-entry rarity field. Supply separate export additions for \`src/entries/index.ts\` and additions to \`src/rarities.ts\` using \`common\` for new entries; rarity is curated centrally afterward. Existing rarity constants are common=1, rare=2, prime=3, ethereal=4.
+Do not add \`accent\`, \`highlighted\`, \`sourceId\`, plate numbers, or a per-entry rarity field. Supply separate export additions for \`src/entries/index.ts\` and additions to \`src/rarities.ts\` using \`unknown\` for new entries; rarity is curated centrally afterward. Existing rarity constants are unknown=0 (no stars), common=1, rare=2, prime=3, ethereal=4.
 
 ## Creative direction
 
