@@ -149,11 +149,15 @@ From `packages/knot-materials`:
 
 ```sh
 bun scripts/renderKnot.ts iris_steel
+bun scripts/renderKnot.ts iris_steel --category snapshot
+bun scripts/renderKnot.ts iris_steel --category animation,video
 ```
 
-The command writes `out/render/<id>` with three 2048 × 2048 angle stills (`angle_0.jxl`, `angle_45.jxl`, and `angle_90.jxl`), one 120-frame 640 × 640 animated JXL angle orbit, two 2048 × 2048 camera-distance stills (`distance_near.jxl` at 0.75× and `distance_far.jxl` at 1.8×), and one 960-frame 640 × 640 `animation.webm`. The animated JXL uses JPEG XL distance 4.
+`--category` accepts `snapshot`, `animation`, `video`, or any comma-separated combination. It defaults to `snapshot,animation,video`. `snapshot` covers both the angle and camera-distance stills, `animation` covers the animated JXL, and `video` covers `animation.webm`. Partial runs preserve already-rendered files from unselected categories in the destination directory.
 
-The combined 16-second video is phase-shifted so frame 0 is the least noticeable loop seam: the knot is distant, exactly side-on, and material/shader time starts at zero. The first 0.5 seconds finish the distant hold, 0.5–2.5 seconds return to normal, 2.5–4.5 hold normal, 4.5–6.5 zoom extremely close, 6.5–8.5 hold close, 8.5–10.5 return to normal, 10.5–12.5 hold normal, 12.5–14.5 move out, and 14.5–16 finish the distant hold. The 50° base FOV widens modestly at both close and distant extremes so more of the knot remains visible; the near/far distance stills use the same adjustment. Preview rendering uses 2× supersampling plus 4× MSAA, then high-quality downsampling to the final 640 px animation or 2048 px still. It completes one full Y-axis turn every two seconds, with eased rotation so broad views linger while side-on views pass faster.
+The command writes `out/render/<id>` with three 2048 × 2048 angle stills (`angle_0.jxl`, `angle_45.jxl`, and `angle_90.jxl`), one 120-frame 512 × 512 animated JXL angle orbit, two 2048 × 2048 camera-distance stills (`distance_near.jxl` at 0.75× and `distance_far.jxl` at 1.8×), and one 960-frame 1024 × 1024 `animation.webm`. The animated JXL uses JPEG XL distance 4.
+
+The combined 16-second video is phase-shifted so frame 0 is the least noticeable loop seam: the knot is distant, exactly side-on, and material/shader time starts at zero. The first 0.5 seconds finish the distant hold, 0.5–2.5 seconds return to normal, 2.5–4.5 hold normal, 4.5–6.5 zoom extremely close, 6.5–8.5 hold close, 8.5–10.5 return to normal, 10.5–12.5 hold normal, 12.5–14.5 move out, and 14.5–16 finish the distant hold. The 50° base FOV widens modestly at both close and distant extremes so more of the knot remains visible; the near/far distance stills use the same adjustment. Preview rendering uses 2× supersampling plus 4× MSAA, then high-quality downsampling to the final 512 px animated JXL, 1024 px inspection video, or 2048 px still. It completes one full Y-axis turn every two seconds, with eased rotation so broad views linger while side-on views pass faster.
 
 The command owns its Vite server, browser, offscreen renderer, temporary PNG frames and image/video encoding. Candidates only need the single command above.
 

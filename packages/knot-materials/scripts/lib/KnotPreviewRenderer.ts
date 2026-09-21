@@ -10,7 +10,7 @@ import loadKnotMaterial from '../../src/materials.ts'
 import StudioEnvironment from '../../src/StudioEnvironment.ts'
 import {animationFps, animationFrame, animationSize} from './animation.ts'
 import {visibleBounds} from './previewLayout.ts'
-import {previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from './renderSettings.ts'
+import {inspectionAnimatedJxlSize, inspectionVideoSize, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from './renderSettings.ts'
 
 export type PreviewCandidate = {
   id: string
@@ -41,6 +41,10 @@ const renderSize = (size: number) => Math.round(size * previewSupersampling)
 /** Detached scene, private frame clock, and explicit GPU readback. Never changes the live game. */
 export default class KnotPreviewRenderer {
   private active?: Mesh<typeof this.geometry, MeshPhysicalNodeMaterial>
+  private readonly animatedJxlTarget = new RenderTarget(renderSize(inspectionAnimatedJxlSize), renderSize(inspectionAnimatedJxlSize), {
+    type: UnsignedByteType,
+    samples: 4,
+  })
   private readonly camera = new PerspectiveCamera(previewBaseFov, 1, 0.05, 100)
   private readonly environment = new StudioEnvironment
   private readonly errors: Array<string> = []
@@ -59,10 +63,16 @@ export default class KnotPreviewRenderer {
     samples: 4,
   })
   private readonly validationTarget = new RenderTarget(32, 32, {type: HalfFloatType})
+  private readonly videoTarget = new RenderTarget(renderSize(inspectionVideoSize), renderSize(inspectionVideoSize), {
+    type: UnsignedByteType,
+    samples: 4,
+  })
 
   constructor() {
+    this.animatedJxlTarget.texture.colorSpace = SRGBColorSpace
     this.iconTarget.texture.colorSpace = SRGBColorSpace
     this.stillTarget.texture.colorSpace = SRGBColorSpace
+    this.videoTarget.texture.colorSpace = SRGBColorSpace
     this.renderer.setSize(renderSize(animationSize), renderSize(animationSize), false)
     this.renderer.toneMapping = ACESFilmicToneMapping
     this.renderer.setClearColor(0, 0)
@@ -107,8 +117,15 @@ export default class KnotPreviewRenderer {
       }
       mesh.rotation.y = 0
       this.positionCamera(baseDistance * frame.distanceScale, 0.18 + frame.angle, frame.distanceScale)
-      const target = frame.size === 'still' ? this.stillTarget : this.iconTarget
-      const size = frame.size === 'still' ? stillSize : animationSize
+      let target = this.animatedJxlTarget
+      let size = inspectionAnimatedJxlSize
+      if (frame.size === 'still') {
+        target = this.stillTarget
+        size = stillSize
+      } else if (frame.size === 'video') {
+        target = this.videoTarget
+        size = inspectionVideoSize
+      }
       return (await this.capture(item.id, target, size, frame.seconds)).image
     }
     return {
@@ -124,8 +141,10 @@ export default class KnotPreviewRenderer {
   async dispose() {
     this.releaseMaterial()
     this.validationTarget.dispose()
+    this.videoTarget.dispose()
     this.stillTarget.dispose()
     this.iconTarget.dispose()
+    this.animatedJxlTarget.dispose()
     this.geometry.dispose()
     this.environment.dispose()
     await this.renderer.dispose()
