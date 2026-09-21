@@ -34,7 +34,8 @@ export default class PhotonRingMaterial extends KnotMaterial {
 // The lensed background: sparse stars, and a faint violet haze that
 // thickens toward the shadow where the sky is compressed.
     const stars = starfield(sky, 190, 0.86)
-    const haze = mx_fractal_noise_float(sky.mul(4.2), 4, 2.1, 0.55).mul(0.5).add(0.5)
+    // Fractal octaves can exceed [-1, 1]; bound the remap before fractional powers.
+    const haze = mx_fractal_noise_float(sky.mul(4.2), 4, 2.1, 0.55).mul(0.5).add(0.5).clamp()
     const hazeColor = mix(color('#33195e'), color('#8f6bff'), haze.pow(1.5))
     const compression = float(0.35).div(b.max(0.08)).min(2.6)
 // The photon ring: light that orbited the singularity before leaving.

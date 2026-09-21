@@ -187,6 +187,13 @@ describe('Knot cellular fields', () => {
     expect(text).toContain('const pulse = choirPulse()')
     expect(text).toContain('proceduralNormal(bark.mul(0.5).add(hyphae.mul(0.35)), 0.0026)')
   })
+  test('bounds Photon Ring haze before fractional powers and material shading', async () => {
+    const text = await source('photon_ring')
+    expect(text).toContain('const haze = mx_fractal_noise_float(sky.mul(4.2), 4, 2.1, 0.55).mul(0.5).add(0.5).clamp()')
+    expect(text).toContain("mix(color('#33195e'), color('#8f6bff'), haze.pow(1.5))")
+    expect(text).toContain('float(0.035).add(haze.mul(0.03))')
+    expect(text).toContain('hazeColor.mul(haze.mul(0.5))')
+  })
   test('bounds Abyssal Leviathan scales before powering and sharing the material mask', async () => {
     const text = await source('abyssal_leviathan')
     expect(text).toContain('mx_fractal_noise_float(scalePos, 3, 2, 0.5).mul(0.5).add(0.5).clamp().pow(3)')
