@@ -1,0 +1,76 @@
+import type {Texture} from 'three/webgpu'
+
+import {color, float, mix, mx_noise_float} from 'three/tsl'
+
+import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
+import {cosinePalette} from '../../lib/cosinePalette.ts'
+import KnotMaterial from '../../lib/KnotMaterial.ts'
+import {spectralColor} from '../../lib/spectralColor.ts'
+import {viewerFrame} from '../../lib/viewerFrame.ts'
+import knotData from './data.ts'
+
+export default class SolarFireOpalMaterial extends KnotMaterial {
+  constructor(environment: Texture) {
+    super(environment, 1.25)
+    this.name = knotData.id
+    const {p, view, rim, near, intimate} = viewerFrame()
+    // Primary harlequin mosaic cells sampled beneath the clear glass surface
+    const subSurfaceP = p.sub(view.mul(0.038))
+    const cellCoord = subSurfaceP.mul(14.5)
+    const rnd = cellNoiseVec3(cellCoord)
+    const center = rnd.mul(0.55).add(0.22)
+    const cellDist = cellCoord.fract().sub(center).length()
+    const cellFootprint = cellCoord.fwidth().length().max(0.0001)
+    const facetMask = cellDist.smoothstep(float(0.46), float(0.38)).mul(cellFootprint.smoothstep(0.18, 0.7).oneMinus())
+    // Internal crystal lattice orientation per Voronoi cell
+    const latticeNorm = rnd.sub(0.5).normalize()
+    const viewLattice = view.dot(latticeNorm).abs()
+    // Bragg condition: light fires in narrow angular windows as camera turns
+    const braggPhase = viewLattice.mul(Math.PI * 5).add(rnd.x.mul(15.7))
+    const flash = braggPhase.cos().smoothstep(0.76, 0.98)
+    // Chromatic dispersion: color shifts across the optical spectrum with incidence angle
+    const spectralPhase = viewLattice.mul(3.6).add(rnd.y.mul(2.4))
+    const harlequinColor = cosinePalette(
+      spectralPhase,
+      [0.55, 0.48, 0.52],
+      [0.5, 0.48, 0.45],
+      [1, 1, 1],
+      [0, 0.33, 0.67],
+    )
+    // Secondary "pinfire" micro-glints deep in the matrix, visible on close inspection
+    const pinP = p.sub(view.mul(0.016))
+    const pinCoord = pinP.mul(62)
+    const pinRnd = cellNoiseVec3(pinCoord)
+    const pinCenter = pinRnd.mul(0.5).add(0.25)
+    const pinDist = pinCoord.fract().sub(pinCenter).length()
+    const pinFoot = pinCoord.fwidth().length().max(0.0001)
+    const pinPoint = pinDist.smoothstep(float(0.2), float(0.06)).mul(pinFoot.smoothstep(0.2, 0.8).oneMinus()).mul(intimate)
+    const pinNorm = pinRnd.sub(0.5).normalize()
+    const pinAngle = view.dot(pinNorm).abs()
+    const pinFlash = pinAngle.mul(Math.PI * 9).add(pinRnd.z.mul(25)).cos().smoothstep(0.86, 0.99)
+    const pinColor = spectralColor(pinRnd.x.mul(12).add(pinAngle.mul(4)))
+    // Volcanic obsidian host matrix with smoky swirls
+    const smoke = mx_noise_float(p.mul(5.5)).mul(0.5).add(0.5)
+    const hostTint = mix(color('#08060a'), color('#171020'), smoke.mul(0.35))
+    // Physical surface properties
+    this.colorNode = hostTint
+    this.metalness = 0
+    this.roughness = 0.022
+    this.ior = 1.46
+    this.clearcoat = 1
+    this.clearcoatRoughness = 0.014
+    // Thin-film silica interference on surface
+    this.iridescence = 0.35
+    this.iridescenceIOR = 1.42
+    this.iridescenceThicknessNode = smoke.mul(180).add(280)
+    // Harlequin flash emission + pinfire sparkles + deep smoky backlight
+    const harlequinEmission = harlequinColor.mul(flash).mul(facetMask).mul(near.mul(0.4).add(0.7)).mul(3.4)
+    const pinfireEmission = pinColor.mul(pinPoint).mul(pinFlash).mul(4.8)
+    const deepGlow = mix(color('#e84118'), color('#00c8ff'), rnd.z).mul(smoke.pow(2)).mul(intimate).mul(0.4)
+    const rimViolet = color('#6c5ce7').mul(rim.pow(3)).mul(0.3)
+    this.emissiveNode = harlequinEmission
+      .add(pinfireEmission)
+      .add(deepGlow)
+      .add(rimViolet)
+  }
+}

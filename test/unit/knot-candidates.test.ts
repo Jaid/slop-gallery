@@ -191,11 +191,12 @@ describe('arbitrary Knot batches', () => {
   })
   test('keeps every Gemini item on current model provenance', () => {
     const gemini = knotCandidates.find(candidate => candidate.data.id === 'gemini_flash')!
-    expect(gemini.items).toHaveLength(24)
+    expect(gemini.items).toHaveLength(40)
     expect(gemini.items.every(entry => entry.author.model.title === 'Gemini 3.8 Flash'
       && entry.author.model.slug === 'google/gemini-3.8-flash'
-      && entry.author.model.effortLevel === 'high'
-      && entry.harness === 'none')).toBe(true)
+      && entry.author.model.effortLevel === 'high')).toBe(true)
+    expect(gemini.items.filter(entry => entry.harness === 'none')).toHaveLength(24)
+    expect(gemini.items.filter(entry => entry.harness === 'Mage')).toHaveLength(16)
   })
   test('keeps API model credits and displacement metadata by stable identity', () => {
     const expected = [
