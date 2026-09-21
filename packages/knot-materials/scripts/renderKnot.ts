@@ -6,6 +6,7 @@ import fs from 'fs-extra'
 import {knotsById} from '../src/main.ts'
 import {animationFilename, animationFrames} from './lib/animation.ts'
 import {encodeAnimatedJxl, encodeWebm} from './lib/encodeAnimation.ts'
+import {encodeJxl} from './lib/encodeJxl.ts'
 import {angleAnimationFrame, angleNames, angleStillFrame, distanceAnimationFrame, distanceNames, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrames} from './lib/renderSettings.ts'
 import withPreviewRenderer from './lib/withPreviewRenderer.ts'
 
@@ -15,7 +16,7 @@ const encodeStill = async (image: string, output: string) => {
   const input = `${output}.png`
   await fs.writeFile(input, imageBytes(image))
   try {
-    await Bun.$`cjxl ${input} ${output} --distance 1 --effort 7 --num_threads 1`.quiet()
+    await encodeJxl(input, output)
   } finally {
     await fs.remove(input)
   }

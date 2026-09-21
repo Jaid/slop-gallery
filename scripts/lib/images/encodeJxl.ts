@@ -1,1 +1,1 @@
-export {encodeJxl, jxlOptions} from 'knot-materials/scripts/lib/encodeJxl.ts'
+export {encodeJxl, lossyJxlOptions} from 'knot-materials/scripts/lib/encodeJxl.ts'

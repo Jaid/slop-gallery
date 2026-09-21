@@ -2,20 +2,20 @@ import {dirname, extname} from 'node:path'
 
 import fs from 'fs-extra'
 
-export const jxlOptions = ['--allow_expert_options', '--effort', '11', '--brotli_effort', '11', '--iterations', '100', '--keep_invisible', '0', '--distance', '1', '--num_threads', '1']
+export const lossyJxlOptions = (distance = 1) => ['--effort', '10', '--brotli_effort', '11', '--distance', String(distance)]
 
 /** Keep the high-quality JXL master; intermediate PNGs never become repository assets. */
 export async function encodeJxl(input: string, output: string) {
   await fs.ensureDir(dirname(output))
   const intermediate = `${output}.input.png`
-  const supported = /\.(apng|gif|jpe?g|pam|pfm|pgx|png|pnm|ppm)$/iu.test(extname(input))
+  const supported = /\.(?:apng|gif|jpe?g|pam|pfm|pgx|png|pnm|ppm)$/iu.test(extname(input))
   const source = supported ? input : intermediate
   const encoded = `${output}.encoding.jxl`
   try {
     if (!supported) {
       await Bun.$`magick ${input} -auto-orient ${intermediate}`.quiet()
     }
-    await Bun.$`cjxl ${source} ${encoded} ${jxlOptions}`.quiet()
+    await Bun.$`cjxl ${source} ${lossyJxlOptions()} ${encoded}`.quiet()
     await fs.rename(encoded, output)
   } finally {
     await fs.remove(encoded)

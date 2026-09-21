@@ -7,6 +7,7 @@ import fs from 'fs-extra'
 
 import {animationFilename, animationFps, animationFrame, animationFrames, animationSeconds} from '../scripts/lib/animation.ts'
 import encodeAnimation, {encodeAnimatedJxl} from '../scripts/lib/encodeAnimation.ts'
+import {lossyJxlOptions} from '../scripts/lib/encodeJxl.ts'
 import PromptSources from '../scripts/lib/PromptSources.ts'
 import makeAnimatedIcon from '../scripts/makeAnimatedIcon.ts'
 import makePrompt from '../scripts/makePrompt.ts'
@@ -97,7 +98,9 @@ describe('animated icons', () => {
       const pattern = join(dir, '%03d.png')
       const filter = "format=rgba,geq=r='mod(N*2,255)':g='X*10':b=120:a='if(lt(X,8),0,255)'"
       await Bun.$`ffmpeg -hide_banner -loglevel error -y -f lavfi -i nullsrc=size=16x16:rate=60:duration=2 -vf ${filter} -frames:v 120 ${pattern}`.quiet()
-      const output = await encodeAnimatedJxl(dir, 4, 1)
+      expect(lossyJxlOptions()).toEqual(['--effort', '10', '--brotli_effort', '11', '--distance', '1'])
+      expect(lossyJxlOptions(4)).toEqual(['--effort', '10', '--brotli_effort', '11', '--distance', '4'])
+      const output = await encodeAnimatedJxl(dir, 4)
       const info = await Bun.$`jxlinfo -v ${output}`.text()
       expect(output).toEndWith('.jxl')
       expect(info).toContain('RGB+Alpha')

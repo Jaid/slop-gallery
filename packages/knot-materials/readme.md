@@ -139,7 +139,7 @@ bun packages/knot-materials/scripts/updateIcons.ts gemini_flash claude_fable
 
 By default the icon scripts start their own private Vite server and Chrome instance, so no browser or dev server needs to be prepared first. Passing `--browser-url` (and optionally `--page-url`) instead attaches to an existing debug browser. Rendering uses a detached WebGPU scene and validates finite HDR pixels before publishing images.
 
-Knot icons are rendered at 640 × 640 and cropped to visible alpha bounds. Candidate symbols are rendered at 256 × 256 from `src/candidates/<id>/symbol.svg`. PNG is an intermediate only. Encoding requires `cjxl`; ImageMagick is also required when converting an unsupported encoder input format. The existing quality settings are retained: effort 11, Brotli effort 11, 100 iterations, and distance 1.
+Knot icons are rendered at 640 × 640 and cropped to visible alpha bounds. Candidate symbols are rendered at 256 × 256 from `src/candidates/<id>/symbol.svg`. PNG is an intermediate only. Encoding requires `cjxl`; ImageMagick is also required when converting an unsupported encoder input format. Lossy JXL encoding follows the project standard: effort 10, Brotli effort 11, and distance 1.
 
 All requested outputs render and encode in temporary storage before publishing. Each destination is replaced through a same-volume atomic rename; temporary files are cleaned up through async disposal. Changing titles, rarity, archive state, selection, or plate numbers does not require icon regeneration. Changing the actual material or candidate symbol does. The application still converts JXL assets for production through its Vite image pipeline.
 

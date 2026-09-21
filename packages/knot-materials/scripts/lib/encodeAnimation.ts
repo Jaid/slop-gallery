@@ -1,6 +1,7 @@
 import {join} from 'node:path'
 
 import {animationFps, animationFrames} from './animation.ts'
+import {lossyJxlOptions} from './encodeJxl.ts'
 
 export function validateAnimationEffort(effort: number) {
   if (!Number.isSafeInteger(effort) || effort < 1 || effort > 10) {
@@ -31,14 +32,13 @@ export async function encodeApng(directory: string, output = join(directory, 'an
 }
 
 /** Encode the simple 120-frame inspection loops as animated JPEG XL. */
-export async function encodeAnimatedJxl(directory: string, distance: number, effort = 7) {
-  validateAnimationEffort(effort)
+export async function encodeAnimatedJxl(directory: string, distance: number) {
   if (!Number.isFinite(distance) || distance < 0) {
     throw new RangeError('JPEG XL distance must be a finite non-negative number.')
   }
   const apng = await encodeApng(directory)
   const output = join(directory, 'animation.jxl')
-  await Bun.$`cjxl ${apng} ${output} --distance ${distance} --effort ${effort} --num_threads 1`.quiet()
+  await Bun.$`cjxl ${apng} ${lossyJxlOptions(distance)} ${output}`.quiet()
   return output
 }
 
