@@ -4,7 +4,7 @@ import {resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
 
 import {animationFps, animationFrames} from '../scripts/lib/animation.ts'
-import {angleAnimationFrame, angleNames, angleStillFrame, distanceAnimationFrame, distanceNames, distanceScales, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrames, inspectionAnimationSeconds, inspectionNearDistanceScale, inspectionTimeSeamSeconds, stillSize} from '../scripts/lib/renderSettings.ts'
+import {angleAnimationFrame, angleNames, angleStillFrame, distanceAnimationFrame, distanceNames, distanceScales, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrames, inspectionAnimationSeconds, inspectionNearDistanceScale, inspectionTimeSeamSeconds, previewBaseFov, previewFovForDistanceScale, stillSize} from '../scripts/lib/renderSettings.ts'
 import renderKnot from '../scripts/renderKnot.ts'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
@@ -16,6 +16,9 @@ describe('knot inspection renders', () => {
     expect(distanceScales).toEqual([0.75, 1, 1.35, 1.8])
     expect(inspectionAnimatedJxlDistance).toBe(4)
     expect([inspectionAnimationSeconds, inspectionAnimationFrames]).toEqual([16, 960])
+    expect(previewFovForDistanceScale(1)).toBe(previewBaseFov)
+    expect(previewFovForDistanceScale(inspectionNearDistanceScale)).toBeCloseTo(54)
+    expect(previewFovForDistanceScale(distanceScales.at(-1)!)).toBeCloseTo(53.39, 2)
     expect(angleStillFrame(0).angle).toBe(0)
     expect(angleStillFrame(3).angle).toBe(Math.PI * 3 / 2)
     expect(distanceStillFrame(0).distanceScale).toBe(0.75)

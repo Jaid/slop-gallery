@@ -10,7 +10,7 @@ import loadKnotMaterial from '../../src/materials.ts'
 import StudioEnvironment from '../../src/StudioEnvironment.ts'
 import {animationFps, animationFrame, animationSize} from './animation.ts'
 import {visibleBounds} from './previewLayout.ts'
-import {stillSize} from './renderSettings.ts'
+import {previewBaseFov, previewFovForDistanceScale, stillSize} from './renderSettings.ts'
 
 export type PreviewCandidate = {
   id: string
@@ -44,7 +44,7 @@ const png = (image: HTMLCanvasElement) => image.toDataURL('image/png').split(','
 /** Detached scene, private frame clock, and explicit GPU readback. Never changes the live game. */
 export default class KnotPreviewRenderer {
   private active?: Mesh<typeof this.geometry, MeshPhysicalNodeMaterial>
-  private readonly camera = new PerspectiveCamera(50, 1, 0.05, 100)
+  private readonly camera = new PerspectiveCamera(previewBaseFov, 1, 0.05, 100)
   private readonly environment = new StudioEnvironment
   private readonly errors: Array<string> = []
   private readonly geometry = createKnotGeometry()
@@ -109,7 +109,7 @@ export default class KnotPreviewRenderer {
         throw new Error('The knot preview has been disposed.')
       }
       mesh.rotation.y = 0
-      this.positionCamera(baseDistance * frame.distanceScale, 0.18 + frame.angle)
+      this.positionCamera(baseDistance * frame.distanceScale, 0.18 + frame.angle, frame.distanceScale)
       const target = frame.size === 'still' ? this.stillTarget : this.iconTarget
       const size = frame.size === 'still' ? stillSize : animationSize
       return (await this.capture(item.id, target, size, frame.seconds)).image
@@ -237,7 +237,9 @@ export default class KnotPreviewRenderer {
     }
   }
 
-  private positionCamera(distance: number, angle = 0.18) {
+  private positionCamera(distance: number, angle = 0.18, distanceScale = 1) {
+    this.camera.fov = previewFovForDistanceScale(distanceScale)
+    this.camera.updateProjectionMatrix()
     this.camera.position.set(Math.sin(angle) * distance, 0, Math.cos(angle) * distance)
     this.camera.lookAt(0, 0, 0)
   }
