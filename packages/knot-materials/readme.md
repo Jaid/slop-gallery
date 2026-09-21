@@ -137,11 +137,23 @@ bun packages/knot-materials/scripts/updateIcons.ts gemini_flash claude_fable
 
 `makeIcon.ts` renders one canonical ID, including archived entries. Its default destination is that entry's `icon.jxl`; `--output` permits a separate JXL destination. `updateIcons.ts` updates all entries and the candidate symbol for the requested candidates, or all candidates when none are specified. The root `bun scripts/updateKnots.ts` command remains a forwarding entry point.
 
-Both scripts accept `--browser-url` and `--page-url`, defaulting to `http://127.0.0.1:9222` and `https://vite.tower.lan`. They connect to an already open page and use a detached WebGPU renderer. They never navigate the page or modify the live scene, camera, or viewport. The renderer validates finite HDR pixels and surfaces WebGPU errors before publishing images.
+By default the icon scripts start their own private Vite server and Chrome instance, so no browser or dev server needs to be prepared first. Passing `--browser-url` (and optionally `--page-url`) instead attaches to an existing debug browser. Rendering uses a detached WebGPU scene and validates finite HDR pixels before publishing images.
 
 Knot icons are rendered at 640 × 640 and cropped to visible alpha bounds. Candidate symbols are rendered at 256 × 256 from `src/candidates/<id>/symbol.svg`. PNG is an intermediate only. Encoding requires `cjxl`; ImageMagick is also required when converting an unsupported encoder input format. The existing quality settings are retained: effort 11, Brotli effort 11, 100 iterations, and distance 1.
 
 All requested outputs render and encode in temporary storage before publishing. Each destination is replaced through a same-volume atomic rename; temporary files are cleaned up through async disposal. Changing titles, rarity, archive state, selection, or plate numbers does not require icon regeneration. Changing the actual material or candidate symbol does. The application still converts JXL assets for production through its Vite image pipeline.
+
+## Render a knot inspection set
+
+From `packages/knot-materials`:
+
+```sh
+bun scripts/renderKnot.ts iris_steel
+```
+
+The command writes `out/render/<id>` with four 2048 × 2048 angle stills, a 2048 × 2048 2×2 angle sheet, a 120-frame 640 × 640 animated JXL angle orbit, four 2048 × 2048 camera-distance stills, a 2048 × 2048 2×2 distance sheet, and a 120-frame 640 × 640 animated JXL distance sweep. The four angle views are 0°, 90°, 180° and 270°. The distance animation moves smoothly from near to very far and back without duplicating its loop endpoint.
+
+The command owns its Vite server, browser, offscreen renderer, temporary PNG frames and JXL encoding. Candidates only need the single command above.
 
 ## Generate an animated icon
 
@@ -152,7 +164,7 @@ bun packages/knot-materials/scripts/makeAnimatedIcon.ts ferrothorn --output temp
 
 The default output is `src/entries/<id>/icon.animated.jxl`; the still `icon.jxl` is not replaced. It renders exactly 120 transparent 640 × 640 frames over two seconds, making one full Y-axis rotation. It samples 0° through 357° in 3° increments, without duplicating 360° at the loop seam. A private renderer clock advances material animation at the corresponding 60 Hz sample times. The camera and image bounds remain fixed for the entire animation, with displacement-aware framing; individual frames are never cropped independently.
 
-Capture uses explicit offscreen GPU readback, including HDR-finiteness checks. The renderer does not navigate, resize, focus, or manipulate the live game. The script accepts the same `--browser-url` and `--page-url` options as the still-image scripts.
+Capture uses explicit offscreen GPU readback, including HDR-finiteness checks. The script uses the same self-contained private renderer by default and accepts the same optional `--browser-url` and `--page-url` overrides as the still-image scripts.
 
 Encoding requires `ffmpeg` and `cjxl`. An RGBA APNG intermediate is converted to animated JXL with infinite looping. The installed libjxl importer uses millisecond timing, so cumulative timestamps are rounded to distribute 16/17 ms delays while keeping the total exactly 2000 ms. Rounding each frame separately would incorrectly shorten the result to 1920 ms. `--effort` accepts 1–10 and defaults to 7; distance is 1. All frames and intermediate images stay outside the repository and are removed on completion or failure. The destination is replaced atomically only after capture and encoding finish.
 

@@ -1,4 +1,5 @@
 import type {KnotEntry} from '../../src/types.ts'
+import type {RenderFrame} from './renderSettings.ts'
 import type {MeshPhysicalNodeMaterial, NodeFrame} from 'three/webgpu'
 
 import {WebgpuRenderer} from 'three-fiber-game'
@@ -9,6 +10,7 @@ import loadKnotMaterial from '../../src/materials.ts'
 import StudioEnvironment from '../../src/StudioEnvironment.ts'
 import {animationFps, animationFrame, animationSize} from './animation.ts'
 import {visibleBounds} from './previewLayout.ts'
+import {stillSize} from './renderSettings.ts'
 
 export type PreviewCandidate = {
   id: string
@@ -18,6 +20,14 @@ export type PreviewCandidate = {
 export type AnimationPreview = {
   dispose: () => void
   renderFrame: (index: number) => Promise<string>
+}
+export type KnotPreview = {
+  dispose: () => void
+  renderFrame: (frame: RenderFrame) => Promise<string>
+  renderSet: (frames: ReadonlyArray<RenderFrame>) => Promise<{
+    images: Array<string>
+    sheet: string
+  }>
 }
 
 type OfflineRenderer = WebgpuRenderer & {
@@ -47,10 +57,15 @@ export default class KnotPreviewRenderer {
     alpha: true,
   })
   private readonly scene = new Scene
+  private readonly stillTarget = new RenderTarget(stillSize, stillSize, {
+    type: UnsignedByteType,
+    samples: 4,
+  })
   private readonly validationTarget = new RenderTarget(32, 32, {type: HalfFloatType})
 
   constructor() {
     this.iconTarget.texture.colorSpace = SRGBColorSpace
+    this.stillTarget.texture.colorSpace = SRGBColorSpace
     this.renderer.setSize(animationSize, animationSize, false)
     this.renderer.toneMapping = ACESFilmicToneMapping
     this.renderer.setClearColor(0, 0)
@@ -75,7 +90,49 @@ export default class KnotPreviewRenderer {
         const frame = animationFrame(index)
         mesh.rotation.y = frame.rotation
         // Keep one fixed canvas and camera for the whole turn: per-frame cropping would wobble.
-        return png((await this.capture(item.id, frame.time)).image)
+        return png((await this.capture(item.id, this.iconTarget, animationSize, frame.time)).image)
+      },
+      dispose: () => {
+        if (this.active === mesh) {
+          this.releaseMaterial()
+        }
+      },
+    }
+  }
+
+  async createPreview(item: KnotEntry): Promise<KnotPreview> {
+    await this.prepare(item, true, this.stillTarget)
+    const mesh = this.active!
+    const baseDistance = this.camera.position.length()
+    const render = async (frame: RenderFrame) => {
+      if (this.active !== mesh) {
+        throw new Error('The knot preview has been disposed.')
+      }
+      mesh.rotation.y = 0
+      this.positionCamera(baseDistance * frame.distanceScale, 0.18 + frame.angle)
+      const target = frame.size === 'still' ? this.stillTarget : this.iconTarget
+      const size = frame.size === 'still' ? stillSize : animationSize
+      return (await this.capture(item.id, target, size, frame.seconds)).image
+    }
+    return {
+      renderFrame: async frame => png(await render(frame)),
+      renderSet: async frames => {
+        if (frames.length !== 4 || frames.some(frame => frame.size !== 'still')) {
+          throw new Error('Preview sheets require exactly four still frames.')
+        }
+        const images: Array<string> = []
+        const sheet = canvas(stillSize)
+        const context = sheet.getContext('2d')!
+        const cellSize = stillSize / 2
+        for (const [index, frame] of frames.entries()) {
+          const image = await render(frame)
+          images.push(png(image))
+          context.drawImage(image, index % 2 * cellSize, Math.floor(index / 2) * cellSize, cellSize, cellSize)
+        }
+        return {
+          images,
+          sheet: png(sheet),
+        }
       },
       dispose: () => {
         if (this.active === mesh) {
@@ -88,6 +145,7 @@ export default class KnotPreviewRenderer {
   async dispose() {
     this.releaseMaterial()
     this.validationTarget.dispose()
+    this.stillTarget.dispose()
     this.iconTarget.dispose()
     this.geometry.dispose()
     this.environment.dispose()
@@ -139,8 +197,9 @@ export default class KnotPreviewRenderer {
     }
   }
 
-  private async capture(id: string, seconds = 0) {
+  private async capture(id: string, target = this.iconTarget, size = animationSize, seconds = 0) {
     this.setTime(seconds)
+    this.renderer.setSize(size, size, false)
     try {
       this.renderer.setRenderTarget(this.validationTarget)
       this.renderer.render(this.scene, this.camera)
@@ -148,25 +207,25 @@ export default class KnotPreviewRenderer {
       if (hdr.some(value => (value & 0x7C_00) === 0x7C_00)) {
         throw new Error(`${id} produced non-finite HDR pixels.`)
       }
-      this.renderer.setOutputRenderTarget(this.iconTarget)
-      this.renderer.setRenderTarget(this.iconTarget)
+      this.renderer.setOutputRenderTarget(target)
+      this.renderer.setRenderTarget(target)
       this.renderer.render(this.scene, this.camera)
-      const pixels = await this.renderer.readRenderTargetPixelsAsync(this.iconTarget, 0, 0, animationSize, animationSize) as Uint8Array
+      const pixels = await this.renderer.readRenderTargetPixelsAsync(target, 0, 0, size, size) as Uint8Array
       await this.device.queue.onSubmittedWorkDone()
       if (this.errors.length) {
         throw new Error(`${id}: ${this.errors.join('\n')}`)
       }
       const output = new Uint8ClampedArray(pixels.length)
-      const stride = animationSize * 4
-      for (let y = 0; y < animationSize; y++) {
-        output.set(pixels.subarray(y * stride, (y + 1) * stride), (animationSize - 1 - y) * stride)
+      const stride = size * 4
+      for (let y = 0; y < size; y++) {
+        output.set(pixels.subarray(y * stride, (y + 1) * stride), (size - 1 - y) * stride)
       }
-      const data = new ImageData(output, animationSize, animationSize)
+      const data = new ImageData(output, size, size)
       const bounds = visibleBounds(data)
       if (!bounds) {
         throw new Error(`${id} produced an empty preview.`)
       }
-      const image = canvas(animationSize)
+      const image = canvas(size)
       image.getContext('2d')!.putImageData(data, 0, 0)
       return {
         image,
@@ -178,12 +237,12 @@ export default class KnotPreviewRenderer {
     }
   }
 
-  private positionCamera(distance: number) {
-    this.camera.position.set(Math.sin(0.18) * distance, 0, Math.cos(0.18) * distance)
+  private positionCamera(distance: number, angle = 0.18) {
+    this.camera.position.set(Math.sin(angle) * distance, 0, Math.cos(angle) * distance)
     this.camera.lookAt(0, 0, 0)
   }
 
-  private async prepare(item: KnotEntry, rotating = false) {
+  private async prepare(item: KnotEntry, rotating = false, target = this.iconTarget) {
     if (this.active) {
       throw new Error('A preview material is already active.')
     }
@@ -198,8 +257,8 @@ export default class KnotPreviewRenderer {
     this.positionCamera(rotating ? Math.max(2.1, radius / Math.sin(this.camera.fov * Math.PI / 360) * 1.08) : 2.1)
     try {
       // Compile both real offscreen contexts, rather than compiling against an unused canvas.
-      this.renderer.setOutputRenderTarget(this.iconTarget)
-      this.renderer.setRenderTarget(this.iconTarget)
+      this.renderer.setOutputRenderTarget(target)
+      this.renderer.setRenderTarget(target)
       await this.renderer.compileAsync(this.scene, this.camera)
       this.renderer.setOutputRenderTarget(null)
       this.renderer.setRenderTarget(this.validationTarget)
