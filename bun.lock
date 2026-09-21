@@ -37,7 +37,7 @@
         "use-graphics-quality": "workspace:*",
         "use-narrator": "workspace:*",
         "use-pause-menu": "workspace:*",
-        "victoria-browser-client": "0.2.0",
+        "victoria-browser-client": "0.3.0",
         "webgpu-capture-bridge": "workspace:*",
         "zustand": "5.0.15",
       },
@@ -1713,7 +1713,7 @@
 
     "verkit": ["verkit@0.3.2", "", {}, "sha512-zj/ob3UsvJGN0whEAKFp53REA5X66hvffVqoCtVQAakJKnKlH+/PcOfMoFwIG/o4rElqLv/ycAFlx8ZlXUorCg=="],
 
-    "victoria-browser-client": ["victoria-browser-client@0.2.0", "", {}, "sha512-viC4jp4z8oCpgt9iKyEdQX6SndBNphGJHRcpnmD0toD9SDXX9Uc3NwbFBOfOu2Vg/H1+GzBXmGKWQpQh9rIoFw=="],
+    "victoria-browser-client": ["victoria-browser-client@0.3.0", "", {}, "sha512-XnkAKRq0L6H6YXuHhX9RsebNBbIgvhc2y9wt+6wT1gk4G85j16Y/QbdRWFuSEck3iG3FbNR6GvJuA+5asrl2pA=="],
 
     "vite": ["vite@8.3.0", "", { "dependencies": { "lightningcss": "^1.33.0", "picomatch": "^4.0.7", "postcss": "^8.5.28", "rolldown": "~1.2.6", "tinyglobby": "^0.2.17" }, "optionalDependencies": { "fsevents": "~2.3.3" }, "peerDependencies": { "@types/node": "^20.19.0 || >=22.12.0", "@vitejs/devtools": "^0.7.1", "esbuild": "^0.27.0 || ^0.28.0", "jiti": ">=1.21.0", "less": "^4.0.0", "sass": "^1.70.0", "sass-embedded": "^1.70.0", "stylus": ">=0.54.8", "sugarss": "^5.0.0", "terser": "^5.16.0", "tsx": "^4.8.1", "yaml": "^2.4.2" }, "optionalPeers": ["@types/node", "@vitejs/devtools", "esbuild", "jiti", "less", "sass", "sass-embedded", "stylus", "sugarss", "terser", "tsx", "yaml"], "bin": { "vite": "bin/vite.js" } }, "sha512-lhZBVvEHefgE+HQZC9O7EBJgCU/nVzFNl7vkS4RE0APtWLP02/8QVIkQtzBxPquh7lq5/78NHipTj7ODQ6XuyQ=="],
 
@@ -1832,6 +1832,12 @@
     "react-dom/scheduler": ["scheduler@0.28.0", "", {}, "sha512-juorfCmIkIw8tT+p5BXSm6PJjQF/ycEYmKyzURCIt/RaZIhL+PulbQ9Yu2z1HdOJDdqDTlxA1+xKBmHXJsczAw=="],
 
     "svgo/commander": ["commander@11.1.0", "", {}, "sha512-yPVavfyCcRhmorC7rWlkHn15b4wDVgVmBA7kV4QVBsF7kv/9TKJAbAXVTxvTnwP8HHKjRCJDClKbciiYS7p0DQ=="],
+
+    "telemethree/victoria-browser-client": ["victoria-browser-client@0.2.0", "", {}, "sha512-viC4jp4z8oCpgt9iKyEdQX6SndBNphGJHRcpnmD0toD9SDXX9Uc3NwbFBOfOu2Vg/H1+GzBXmGKWQpQh9rIoFw=="],
+
+    "telemethree-ego/victoria-browser-client": ["victoria-browser-client@0.2.0", "", {}, "sha512-viC4jp4z8oCpgt9iKyEdQX6SndBNphGJHRcpnmD0toD9SDXX9Uc3NwbFBOfOu2Vg/H1+GzBXmGKWQpQh9rIoFw=="],
+
+    "telemethree-pause-menu/victoria-browser-client": ["victoria-browser-client@0.2.0", "", {}, "sha512-viC4jp4z8oCpgt9iKyEdQX6SndBNphGJHRcpnmD0toD9SDXX9Uc3NwbFBOfOu2Vg/H1+GzBXmGKWQpQh9rIoFw=="],
 
     "three-stdlib/fflate": ["fflate@0.6.11", "", {}, "sha512-3JyEFWGjFn7zHmoa9+zG1BmW7X2okcmAB+0Cnu9UFbVs/jCBnl2A8o065ZlXiw145K3eBM3uLuzrYXC0RK7eDg=="],
 

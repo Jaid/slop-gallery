@@ -201,7 +201,7 @@ describe('arbitrary Knot batches', () => {
       ['Claude Opus 5', 'anthropic/claude-opus-5', {medium: 16}],
     ] as const
     for (const [title, slug, effortCounts] of expected) {
-      const entries = knots.filter(entry => entry.author.model.slug === slug)
+      const entries = knots.filter(entry => entry.author.model.slug === slug && entry.harness === 'none')
       expect(entries).toHaveLength(Object.values(effortCounts).reduce((sum, count) => sum + count, 0))
       expect(entries.every(entry => entry.author.model.title === title)).toBe(true)
       expect(Object.fromEntries(Map.groupBy(entries, entry => entry.author.model.effortLevel).entries().map(([effort, grouped]) => [effort, grouped.length]))).toEqual(effortCounts)
@@ -233,6 +233,9 @@ describe('arbitrary Knot batches', () => {
       high: 6,
       max: 6,
     })
+    const deepseekMage = knots.filter(entry => entry.candidate.id === 'deepseek' && entry.harness === 'Mage')
+    expect(deepseekMage).toHaveLength(8)
+    expect(deepseekMage.every(entry => entry.author.model.title === 'DeepSeek 4.1 Flash' && entry.author.model.slug === 'deepseek/deepseek-4.1-flash' && entry.author.model.effortLevel === undefined)).toBe(true)
     const astraApi = api.filter(entry => entry.candidate.id === 'gpt_astra')
     const fableApi = api.filter(entry => entry.candidate.id === 'claude_fable')
     const solApi = api.filter(entry => entry.candidate.id === 'gpt_sol')

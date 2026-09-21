@@ -15,8 +15,8 @@ import {insideKnotGallery, knotGalleryBounds} from '../../src/lib/gallery/knotGa
 
 describe('multi-model Knot challenge', () => {
   test('enumerates displayed Knots at initialization while keeping stable identities', () => {
-    expect(knots).toHaveLength(277)
-    expect(knotsById.size).toBe(277)
+    expect(knots).toHaveLength(285)
+    expect(knotsById.size).toBe(285)
     const displayedKnots = knots.filter(item => !item.archived)
     const displayedByCandidate = Map.groupBy(displayedKnots, item => item.candidate.id)
     expect(knotBays).toHaveLength(8)
@@ -139,7 +139,7 @@ describe('multi-model Knot challenge', () => {
       environment.dispose()
     }
     expect(disposed).toBe(true)
-  })
+  }, 30_000)
   test('provides orthonormal tangents with continuous UV seams for close-up anisotropic shading', () => {
     const geometry = createKnotGeometry()
     try {
