@@ -1,0 +1,20 @@
+import type {KnotData} from '../../types.ts'
+
+export default {
+  icon: new URL('icon.jxl', import.meta.url).href,
+  id: 'photon_ring',
+  candidateId: 'deepseek',
+  title: 'Photon Ring',
+  harness: 'Mage',
+  author: {
+    model: {
+      title: 'DeepSeek 4.1 Flash',
+      slug: 'deepseek/deepseek-4.1-flash',
+    },
+  },
+  flavorText: 'The knot is a hole in the sky: everything behind it arrives bent, and the disk that feeds it blazes on the side sweeping toward you.',
+  placeholder: {
+    color: '#1d1436',
+    shading: 'ghost',
+  },
+} as const satisfies KnotData
