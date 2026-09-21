@@ -1,10 +1,15 @@
-import {animationFps, animationFrames} from './animation.ts'
+import {animationFps, animationFrames, animationSeconds} from './animation.ts'
 
 export const stillSize = 2048
 export const angleNames = ['000', '090', '180', '270'] as const
 export const angleRadians = [0, Math.PI / 2, Math.PI, Math.PI * 3 / 2] as const
 export const distanceNames = ['near', 'standard', 'far', 'very-far'] as const
 export const distanceScales = [0.75, 1, 1.35, 1.8] as const
+export const inspectionAnimationSeconds = 16
+export const inspectionAnimationFrames = inspectionAnimationSeconds * animationFps
+export const inspectionAnimatedJxlDistance = 4
+export const inspectionNearDistanceScale = 0.5
+export const inspectionTimeSeamSeconds = 13.5
 
 export type RenderFrame = {
   angle: number
@@ -16,6 +21,11 @@ export type RenderFrame = {
 const assertFrameIndex = (index: number) => {
   if (!Number.isSafeInteger(index) || index < 0 || index >= animationFrames) {
     throw new RangeError(`Animation frame must be between 0 and ${animationFrames - 1}.`)
+  }
+}
+const assertInspectionFrameIndex = (index: number) => {
+  if (!Number.isSafeInteger(index) || index < 0 || index >= inspectionAnimationFrames) {
+    throw new RangeError(`Inspection animation frame must be between 0 and ${inspectionAnimationFrames - 1}.`)
   }
 }
 
@@ -38,6 +48,56 @@ export const distanceAnimationFrame = (index: number): RenderFrame => {
     angle: 0,
     distanceScale: (minimum + maximum) / 2 - Math.cos(phase) * (maximum - minimum) / 2,
     seconds: index / animationFps,
+    size: 'animation',
+  }
+}
+
+const smootherstep = (value: number) => value * value * value * (value * (value * 6 - 15) + 10)
+const transition = (from: number, to: number, seconds: number, start: number) => {
+  const progress = smootherstep((seconds - start) / animationSeconds)
+  return from + (to - from) * progress
+}
+const inspectionDistanceScale = (seconds: number) => {
+  const normal = 1
+  if (seconds < 2) {
+    return normal
+  }
+  if (seconds < 4) {
+    return transition(normal, inspectionNearDistanceScale, seconds, 2)
+  }
+  if (seconds < 6) {
+    return inspectionNearDistanceScale
+  }
+  if (seconds < 8) {
+    return transition(inspectionNearDistanceScale, normal, seconds, 6)
+  }
+  if (seconds < 10) {
+    return normal
+  }
+  const far = distanceScales.at(-1)!
+  if (seconds < 12) {
+    return transition(normal, far, seconds, 10)
+  }
+  if (seconds < 14) {
+    return far
+  }
+  return transition(far, normal, seconds, 14)
+}
+const inspectionAngle = (seconds: number) => {
+  const linear = seconds / animationSeconds * Math.PI * 2
+  // Preserve every cardinal orientation while lingering near the broad front/back views.
+  return linear - 0.2 * Math.sin(linear * 2)
+}
+
+export const inspectionAnimationFrame = (index: number): RenderFrame => {
+  assertInspectionFrameIndex(index)
+  const timelineSeconds = index / animationFps
+  return {
+    angle: inspectionAngle(timelineSeconds),
+    distanceScale: inspectionDistanceScale(timelineSeconds),
+    // Keep the file boundary temporally continuous. Time-driven shader animation wraps
+    // during the far, side-on hold instead, where a discontinuity is least noticeable.
+    seconds: (timelineSeconds - inspectionTimeSeamSeconds + inspectionAnimationSeconds) % inspectionAnimationSeconds,
     size: 'animation',
   }
 }

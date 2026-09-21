@@ -19,16 +19,16 @@ export type AnimatedIconOptions = PreviewOptions & {
   output?: string
 }
 
-/** 120 fixed-size, transparent frames, one full Y-axis turn, exactly two seconds at 60 fps. */
+/** 120 fixed-size source frames, one full Y-axis turn, exactly two seconds at 60 fps. */
 export default async function makeAnimatedIcon({id, output, effort = 7, ...preview}: AnimatedIconOptions) {
   const item = knotsById.get(id)
   if (!item) {
     throw new Error(`Unknown Knot ID: ${id}`)
   }
   validateAnimationEffort(effort)
-  const destination = output ? resolve(output) : fileURLToPath(new URL(`../src/entries/${id}/icon.animated.jxl`, import.meta.url))
-  if (extname(destination).toLowerCase() !== '.jxl') {
-    throw new Error('Animated Knot icons must use the .jxl extension.')
+  const destination = output ? resolve(output) : fileURLToPath(new URL(`../src/entries/${id}/icon.animated.webm`, import.meta.url))
+  if (extname(destination).toLowerCase() !== '.webm') {
+    throw new Error('Animated Knot icons must use the .webm extension.')
   }
   const directory = await fs.mkdtemp(join(tmpdir(), 'knot-animation-'))
   try {
@@ -76,7 +76,7 @@ if (import.meta.main) {
     },
   })
   if (values.help) {
-    console.log('Usage: bun scripts/makeAnimatedIcon.ts <knot-id> [--output icon.animated.jxl] [--effort 7] [--browser-url URL] [--page-url URL]\n120 frames, 2 seconds, 360 degrees, 640x640 RGBA. Requires ffmpeg and cjxl.')
+    console.log('Usage: bun scripts/makeAnimatedIcon.ts <knot-id> [--output icon.animated.webm] [--effort 7] [--browser-url URL] [--page-url URL]\n120 frames, 2 seconds, 360 degrees, 640x640 AV1/WebM. Requires ffmpeg.')
   } else {
     if (positionals.length !== 1) {
       throw new Error('Specify exactly one canonical Knot ID. Use --help for usage.')

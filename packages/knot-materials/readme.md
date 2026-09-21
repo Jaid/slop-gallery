@@ -151,22 +151,24 @@ From `packages/knot-materials`:
 bun scripts/renderKnot.ts iris_steel
 ```
 
-The command writes `out/render/<id>` with four 2048 × 2048 angle stills, a 2048 × 2048 2×2 angle sheet, a 120-frame 640 × 640 animated JXL angle orbit, four 2048 × 2048 camera-distance stills, a 2048 × 2048 2×2 distance sheet, and a 120-frame 640 × 640 animated JXL distance sweep. The four angle views are 0°, 90°, 180° and 270°. The distance animation moves smoothly from near to very far and back without duplicating its loop endpoint.
+The command writes `out/render/<id>` with four 2048 × 2048 angle stills, a 2048 × 2048 2×2 angle sheet, a 120-frame 640 × 640 animated JXL angle orbit, four 2048 × 2048 camera-distance stills, a 2048 × 2048 2×2 distance sheet, a 120-frame 640 × 640 animated JXL distance sweep, and one 960-frame 640 × 640 `animation.webm`. The two simple animated JXLs use JPEG XL distance 4. The four angle views are 0°, 90°, 180° and 270°. The simple distance animation moves smoothly from near to very far and back without duplicating its loop endpoint.
 
-The command owns its Vite server, browser, offscreen renderer, temporary PNG frames and JXL encoding. Candidates only need the single command above.
+The combined 16-second video holds the normal view for 0–2 seconds, zooms extremely close over 2–4, holds close over 4–6, returns to normal over 6–8, holds normal over 8–10, moves out over 10–12, holds the distant view over 12–14, then returns to normal over 14–16. It completes one full Y-axis turn every two seconds. Rotation speed is eased periodically so broad views linger while side-on views pass faster. The material clock wraps at 13.5 seconds, during the distant hold and exactly at a side-on orientation, while the file boundary itself remains continuous.
+
+The command owns its Vite server, browser, offscreen renderer, temporary PNG frames and image/video encoding. Candidates only need the single command above.
 
 ## Generate an animated icon
 
 ```sh
 bun packages/knot-materials/scripts/makeAnimatedIcon.ts opal_fire
-bun packages/knot-materials/scripts/makeAnimatedIcon.ts ferrothorn --output temp/ferrothorn.animated.jxl
+bun packages/knot-materials/scripts/makeAnimatedIcon.ts ferrothorn --output temp/ferrothorn.animated.webm
 ```
 
-The default output is `src/entries/<id>/icon.animated.jxl`; the still `icon.jxl` is not replaced. It renders exactly 120 transparent 640 × 640 frames over two seconds, making one full Y-axis rotation. It samples 0° through 357° in 3° increments, without duplicating 360° at the loop seam. A private renderer clock advances material animation at the corresponding 60 Hz sample times. The camera and image bounds remain fixed for the entire animation, with displacement-aware framing; individual frames are never cropped independently.
+The default output is `src/entries/<id>/icon.animated.webm`; the still `icon.jxl` is not replaced. It renders exactly 120 640 × 640 source frames over two seconds, making one full Y-axis rotation. It samples 0° through 357° in 3° increments, without duplicating 360° at the loop seam. A private renderer clock advances material animation at the corresponding 60 Hz sample times. The camera and image bounds remain fixed for the entire animation, with displacement-aware framing; individual frames are never cropped independently.
 
 Capture uses explicit offscreen GPU readback, including HDR-finiteness checks. The script uses the same self-contained private renderer by default and accepts the same optional `--browser-url` and `--page-url` overrides as the still-image scripts.
 
-Encoding requires `ffmpeg` and `cjxl`. An RGBA APNG intermediate is converted to animated JXL with infinite looping. The installed libjxl importer uses millisecond timing, so cumulative timestamps are rounded to distribute 16/17 ms delays while keeping the total exactly 2000 ms. Rounding each frame separately would incorrectly shorten the result to 1920 ms. `--effort` accepts 1–10 and defaults to 7; distance is 1. All frames and intermediate images stay outside the repository and are removed on completion or failure. The destination is replaced atomically only after capture and encoding finish.
+Encoding requires `ffmpeg` with `libaom-av1`. The numbered PNG frames are encoded directly to 8-bit full-range 4:4:4 AV1 in a WebM container at CRF 18; there is no APNG intermediate. `--effort` accepts 1–10 and defaults to 7, mapping inversely onto libaom's `cpu-used` range. AV1 does not preserve the source alpha channel in this pipeline, so the experimental WebM output is opaque. Looping is a playback concern (for example, HTML `<video loop>`) rather than embedded animation metadata. All temporary frames stay outside the repository and are removed on completion or failure. The destination is replaced atomically only after capture and encoding finish.
 
 ## Narration assets
 
