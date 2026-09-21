@@ -4,7 +4,7 @@ import {resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
 
 import {animationFps, animationFrames} from '../scripts/lib/animation.ts'
-import {angleAnimationFrame, angleNames, angleStillFrame, distanceNames, distanceScales, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimatedJxlSize, inspectionAnimationFrame, inspectionAnimationFrames, inspectionAnimationOffsetSeconds, inspectionAnimationSeconds, inspectionNearDistanceScale, inspectionVideoSize, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from '../scripts/lib/renderSettings.ts'
+import {angleAnimationFrame, angleNames, angleStillFrame, distanceNames, distanceScales, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrames, inspectionAnimationOffsetSeconds, inspectionAnimationSeconds, inspectionAnimationSize, inspectionNearDistanceScale, inspectionVideoSize, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from '../scripts/lib/renderSettings.ts'
 import renderKnot, {parseRenderCategories, renderCategories} from '../scripts/renderKnot.ts'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
@@ -16,7 +16,7 @@ describe('knot inspection renders', () => {
     expect(distanceNames).toEqual(['near', 'far'])
     expect(distanceScales).toEqual([0.75, 1.8])
     expect(inspectionAnimatedJxlDistance).toBe(4)
-    expect(inspectionAnimatedJxlSize).toBe(512)
+    expect(inspectionAnimationSize).toBe(512)
     expect(inspectionVideoSize).toBe(1024)
     expect([inspectionAnimationSeconds, inspectionAnimationFrames]).toEqual([16, 960])
     expect(previewFovForDistanceScale(1)).toBe(previewBaseFov)
@@ -30,7 +30,7 @@ describe('knot inspection renders', () => {
     expect(previewFovForDistanceScale(distanceStillFrame(0).distanceScale)).toBeGreaterThan(previewBaseFov)
     expect(previewFovForDistanceScale(distanceStillFrame(1).distanceScale)).toBeGreaterThan(previewBaseFov)
     expect(angleAnimationFrame(0).angle).toBe(0)
-    expect(angleAnimationFrame(0).size).toBe('animatedJxl')
+    expect(angleAnimationFrame(0).size).toBe('animation')
     expect(angleAnimationFrame(animationFrames - 1).angle).toBeLessThan(Math.PI * 2)
     const frameAtSecond = (seconds: number) => inspectionAnimationFrame(seconds * animationFps)
     const firstFrame = frameAtSecond(0)
@@ -82,8 +82,8 @@ describe('knot inspection renders', () => {
     expect(exitCode, stderr).toBe(0)
     expect(stdout).toContain('--category snapshot,animation,video')
     expect(stdout).toContain('default: snapshot,animation,video')
-    expect(stdout).toContain('animation.webm')
-    expect(stdout).toContain('animated JXL')
-    expect(stdout).toContain('out/render/<knot-id>')
+    expect(stdout).toContain('--jxl')
+    expect(stdout).toContain('PNG is the default image format')
+    expect(stdout).toContain('1024x1024 AV1/WebM')
   })
 })

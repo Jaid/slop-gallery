@@ -5,7 +5,7 @@ import fs from 'fs-extra'
 
 import {knotsById} from '../src/main.ts'
 import {animationFilename, animationFrames} from './lib/animation.ts'
-import {encodeAnimatedJxl, encodeWebm} from './lib/encodeAnimation.ts'
+import {encodeAnimatedJxl, encodeApng, encodeWebm} from './lib/encodeAnimation.ts'
 import {encodeJxl} from './lib/encodeJxl.ts'
 import {angleAnimationFrame, angleNames, angleStillFrame, distanceNames, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrames} from './lib/renderSettings.ts'
 import withPreviewRenderer from './lib/withPreviewRenderer.ts'
@@ -14,12 +14,31 @@ export const renderCategories = ['snapshot', 'animation', 'video'] as const
 export type RenderCategory = typeof renderCategories[number]
 export type RenderKnotOptions = {
   categories?: ReadonlyArray<RenderCategory>
+  jxl?: boolean
+  onFile?: (filename: string) => void
 }
 
+const imageExtensions = ['png', 'jxl'] as const
 const renderCategorySet = new Set<string>(renderCategories)
 const renderRoot = resolve(import.meta.dir, '../out/render')
 const imageBytes = (image: string) => Uint8Array.fromBase64(image)
-const encodeStill = async (image: string, output: string) => {
+const getKnot = (id: string) => {
+  const item = knotsById.get(id)
+  if (!item) {
+    throw new Error(`Unknown Knot ID: ${id}`)
+  }
+  return item
+}
+const removeImageVariants = async (directory: string, stem: string) => {
+  await Promise.all(imageExtensions.map(extension => fs.remove(join(directory, `${stem}.${extension}`))))
+}
+const writeStill = async (image: string, directory: string, stem: string, jxl: boolean) => {
+  const filename = `${stem}.${jxl ? 'jxl' : 'png'}`
+  const output = join(directory, filename)
+  if (!jxl) {
+    await fs.writeFile(output, imageBytes(image))
+    return filename
+  }
   const input = `${output}.png`
   await fs.writeFile(input, imageBytes(image))
   try {
@@ -27,6 +46,7 @@ const encodeStill = async (image: string, output: string) => {
   } finally {
     await fs.remove(input)
   }
+  return filename
 }
 
 export const parseRenderCategories = (value = renderCategories.join(',')): Array<RenderCategory> => {
@@ -37,11 +57,8 @@ export const parseRenderCategories = (value = renderCategories.join(',')): Array
   return [...new Set(requested)] as Array<RenderCategory>
 }
 
-export default async function renderKnot(id: string, {categories = renderCategories}: RenderKnotOptions = {}) {
-  const item = knotsById.get(id)
-  if (!item) {
-    throw new Error(`Unknown Knot ID: ${id}`)
-  }
+export default async function renderKnot(id: string, {categories = renderCategories, jxl = false, onFile}: RenderKnotOptions = {}) {
+  const item = getKnot(id)
   const selected = new Set(categories)
   if (selected.size === 0) {
     throw new Error('Select at least one render category.')
@@ -57,38 +74,54 @@ export default async function renderKnot(id: string, {categories = renderCategor
       const preview = await renderer.evaluateHandle((instance, entry) => instance.createPreview(entry), item)
       try {
         if (selected.has('snapshot')) {
-          console.info('Rendering angle stills...')
+          for (const name of angleNames) {
+            await removeImageVariants(staging, `angle_${name}`)
+          }
+          for (const name of distanceNames) {
+            await removeImageVariants(staging, `distance_${name}`)
+          }
           for (const [index, name] of angleNames.entries()) {
             const image = await preview.evaluate((instance, frame) => instance.renderFrame(frame), angleStillFrame(index))
-            await encodeStill(image, join(staging, `angle_${name}.jxl`))
+            const filename = await writeStill(image, staging, `angle_${name}`, jxl)
+            onFile?.(filename)
           }
-          console.info('Rendering camera-distance stills...')
           for (const [index, name] of distanceNames.entries()) {
             const image = await preview.evaluate((instance, frame) => instance.renderFrame(frame), distanceStillFrame(index))
-            await encodeStill(image, join(staging, `distance_${name}.jxl`))
+            const filename = await writeStill(image, staging, `distance_${name}`, jxl)
+            onFile?.(filename)
           }
         }
         if (selected.has('animation')) {
-          console.info('Rendering simple angle animation...')
+          await removeImageVariants(staging, 'angles.animated')
           const angleFrames = join(staging, '.angle-frames')
           await fs.ensureDir(angleFrames)
           for (let index = 0; index < animationFrames; index++) {
             const image = await preview.evaluate((instance, frame) => instance.renderFrame(frame), angleAnimationFrame(index))
             await fs.writeFile(join(angleFrames, animationFilename(index)), imageBytes(image))
           }
-          await fs.rename(await encodeAnimatedJxl(angleFrames, inspectionAnimatedJxlDistance), join(staging, 'angles.animated.jxl'))
+          const extension = jxl ? 'jxl' : 'png'
+          let encoded: string
+          if (jxl) {
+            encoded = await encodeAnimatedJxl(angleFrames, inspectionAnimatedJxlDistance)
+          } else {
+            encoded = await encodeApng(angleFrames, join(angleFrames, 'animation.png'))
+          }
+          const filename = `angles.animated.${extension}`
+          await fs.rename(encoded, join(staging, filename))
           await fs.remove(angleFrames)
+          onFile?.(filename)
         }
         if (selected.has('video')) {
-          console.info('Rendering combined inspection video...')
           const videoFrames = join(staging, '.animation-frames')
           await fs.ensureDir(videoFrames)
           for (let index = 0; index < inspectionAnimationFrames; index++) {
             const image = await preview.evaluate((instance, frame) => instance.renderFrame(frame), inspectionAnimationFrame(index))
             await fs.writeFile(join(videoFrames, animationFilename(index)), imageBytes(image))
           }
-          await fs.rename(await encodeWebm(videoFrames, {frameCount: inspectionAnimationFrames}), join(staging, 'animation.webm'))
+          const filename = 'animation.webm'
+          await fs.rename(await encodeWebm(videoFrames, {frameCount: inspectionAnimationFrames}), join(staging, filename))
           await fs.remove(videoFrames)
+          onFile?.(filename)
         }
       } finally {
         try {
@@ -117,17 +150,26 @@ export const renderKnotCli = async (args = Bun.argv.slice(2)) => {
         type: 'boolean',
         short: 'h',
       },
+      jxl: {type: 'boolean'},
     },
   })
   if (values.help) {
-    console.log(`Usage: bun scripts/renderKnot.ts <knot-id> [--category snapshot,animation,video]
-Categories can be snapshot, animation, video, or any comma-separated combination; default: snapshot,animation,video. Writes three 2048x2048 JXL angle stills (0°, 45°, 90°), two camera-distance JXL stills (near/far), one 120-frame 512x512 animated JXL angle loop, and one combined 16-second 1024x1024 AV1/WebM animation.webm to out/render/<knot-id>.`)
+    console.log(`Usage: bun scripts/renderKnot.ts <knot-id> [--category snapshot,animation,video] [--jxl]
+Categories can be snapshot, animation, video, or any comma-separated combination; default: snapshot,animation,video. PNG is the default image format; --jxl switches snapshots and the animated angle loop to JPEG XL. Video remains 1024x1024 AV1/WebM.`)
     return
   }
   if (positionals.length !== 1) {
     throw new Error('Specify exactly one canonical Knot ID. Use --help for usage.')
   }
-  console.log(await renderKnot(positionals[0], {categories: parseRenderCategories(values.category)}))
+  const id = positionals[0]
+  getKnot(id)
+  const categories = parseRenderCategories(values.category)
+  console.log(`Output: out/render/${id}`)
+  await renderKnot(id, {
+    categories,
+    jxl: values.jxl,
+    onFile: filename => console.log(filename),
+  })
 }
 
 if (import.meta.main) {

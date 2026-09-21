@@ -10,7 +10,7 @@ import loadKnotMaterial from '../../src/materials.ts'
 import StudioEnvironment from '../../src/StudioEnvironment.ts'
 import {animationFps, animationFrame, animationSize} from './animation.ts'
 import {visibleBounds} from './previewLayout.ts'
-import {inspectionAnimatedJxlSize, inspectionVideoSize, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from './renderSettings.ts'
+import {inspectionAnimationSize, inspectionVideoSize, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from './renderSettings.ts'
 
 export type PreviewCandidate = {
   id: string
@@ -41,7 +41,7 @@ const renderSize = (size: number) => Math.round(size * previewSupersampling)
 /** Detached scene, private frame clock, and explicit GPU readback. Never changes the live game. */
 export default class KnotPreviewRenderer {
   private active?: Mesh<typeof this.geometry, MeshPhysicalNodeMaterial>
-  private readonly animatedJxlTarget = new RenderTarget(renderSize(inspectionAnimatedJxlSize), renderSize(inspectionAnimatedJxlSize), {
+  private readonly animationTarget = new RenderTarget(renderSize(inspectionAnimationSize), renderSize(inspectionAnimationSize), {
     type: UnsignedByteType,
     samples: 4,
   })
@@ -69,7 +69,7 @@ export default class KnotPreviewRenderer {
   })
 
   constructor() {
-    this.animatedJxlTarget.texture.colorSpace = SRGBColorSpace
+    this.animationTarget.texture.colorSpace = SRGBColorSpace
     this.iconTarget.texture.colorSpace = SRGBColorSpace
     this.stillTarget.texture.colorSpace = SRGBColorSpace
     this.videoTarget.texture.colorSpace = SRGBColorSpace
@@ -117,8 +117,8 @@ export default class KnotPreviewRenderer {
       }
       mesh.rotation.y = 0
       this.positionCamera(baseDistance * frame.distanceScale, 0.18 + frame.angle, frame.distanceScale)
-      let target = this.animatedJxlTarget
-      let size = inspectionAnimatedJxlSize
+      let target = this.animationTarget
+      let size = inspectionAnimationSize
       if (frame.size === 'still') {
         target = this.stillTarget
         size = stillSize
@@ -144,7 +144,7 @@ export default class KnotPreviewRenderer {
     this.videoTarget.dispose()
     this.stillTarget.dispose()
     this.iconTarget.dispose()
-    this.animatedJxlTarget.dispose()
+    this.animationTarget.dispose()
     this.geometry.dispose()
     this.environment.dispose()
     await this.renderer.dispose()

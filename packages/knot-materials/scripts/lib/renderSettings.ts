@@ -8,7 +8,7 @@ export const distanceScales = [0.75, 1.8] as const
 export const inspectionAnimationSeconds = 16
 export const inspectionAnimationFrames = inspectionAnimationSeconds * animationFps
 export const inspectionAnimatedJxlDistance = 4
-export const inspectionAnimatedJxlSize = 512
+export const inspectionAnimationSize = 512
 export const inspectionVideoSize = 1024
 export const inspectionNearDistanceScale = 0.5
 export const inspectionAnimationOffsetSeconds = 13.5
@@ -20,7 +20,7 @@ export type RenderFrame = {
   angle: number
   distanceScale: number
   seconds: number
-  size: 'animatedJxl' | 'still' | 'video'
+  size: 'animation' | 'still' | 'video'
 }
 
 const assertFrameIndex = (index: number) => {
@@ -40,7 +40,7 @@ export const angleAnimationFrame = (index: number): RenderFrame => {
     angle: index / animationFrames * Math.PI * 2,
     distanceScale: 1,
     seconds: index / animationFps,
-    size: 'animatedJxl',
+    size: 'animation',
   }
 }
 
