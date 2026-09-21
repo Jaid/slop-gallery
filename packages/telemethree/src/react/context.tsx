@@ -1,16 +1,17 @@
 import type {PropsWithChildren} from 'react'
-import type VictoriaClient from 'victoria-browser-client'
+
+import type {TelemetryClient} from '../types.ts'
 
 import {createContext, use} from 'react'
 
-const Context = createContext<VictoriaClient | null>(null)
+const Context = createContext<TelemetryClient | null>(null)
 
-export function TelemetryProvider({telemetry, children}: PropsWithChildren<{telemetry: VictoriaClient}>) {
+export function TelemetryProvider({telemetry, children}: PropsWithChildren<{telemetry: TelemetryClient}>) {
   return <Context value={telemetry}>{children}</Context>
 }
 
 /** Use anywhere beneath TelemetryProvider, including outside Canvas, or pass an explicit client. */
-export function useTelemetry(telemetry?: VictoriaClient) {
+export function useTelemetry(telemetry?: TelemetryClient) {
   const context = use(Context)
   const client = telemetry ?? context
   if (!client) {

@@ -3,10 +3,12 @@ import type {PauseMenuSnapshot} from 'use-pause-menu/core'
 import type VictoriaClient from 'victoria-browser-client'
 import type {Attributes} from 'victoria-browser-client'
 
+export type TelemetryClient = Pick<VictoriaClient, 'log'>
+
 export type PauseMenuTelemetryOptions = {
   attributes?: Attributes
   menu: PauseMenu
-  telemetry: VictoriaClient
+  telemetry: TelemetryClient
 }
 
 /** Discrete menu transitions are logs, not per-frame samples or high-cardinality metric labels. */

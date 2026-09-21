@@ -173,13 +173,13 @@
       "name": "telemethree",
       "version": "0.1.0",
       "devDependencies": {
-        "victoria-browser-client": "0.2.0",
+        "victoria-browser-client": "0.3.0",
       },
       "peerDependencies": {
         "@react-three/fiber": "^10.0.0-alpha.5",
         "react": "^19.3.0",
         "three": "^0.186.0",
-        "victoria-browser-client": "^0.2.0",
+        "victoria-browser-client": "^0.3.0",
       },
       "optionalPeers": [
         "@react-three/fiber",
@@ -190,13 +190,13 @@
       "name": "telemethree-ego",
       "version": "0.1.0",
       "devDependencies": {
-        "victoria-browser-client": "0.2.0",
+        "victoria-browser-client": "0.3.0",
       },
       "peerDependencies": {
         "@react-three/fiber": "^10.0.0-alpha.5",
         "react": "^19.3.0",
         "three": "^0.186.0",
-        "victoria-browser-client": "^0.2.0",
+        "victoria-browser-client": "^0.3.0",
       },
       "optionalPeers": [
         "@react-three/fiber",
@@ -210,11 +210,11 @@
         "use-pause-menu": "workspace:*",
       },
       "devDependencies": {
-        "victoria-browser-client": "0.2.0",
+        "victoria-browser-client": "0.3.0",
       },
       "peerDependencies": {
         "react": "^19.3.0",
-        "victoria-browser-client": "^0.2.0",
+        "victoria-browser-client": "^0.3.0",
       },
       "optionalPeers": [
         "react",
@@ -1832,12 +1832,6 @@
     "react-dom/scheduler": ["scheduler@0.28.0", "", {}, "sha512-juorfCmIkIw8tT+p5BXSm6PJjQF/ycEYmKyzURCIt/RaZIhL+PulbQ9Yu2z1HdOJDdqDTlxA1+xKBmHXJsczAw=="],
 
     "svgo/commander": ["commander@11.1.0", "", {}, "sha512-yPVavfyCcRhmorC7rWlkHn15b4wDVgVmBA7kV4QVBsF7kv/9TKJAbAXVTxvTnwP8HHKjRCJDClKbciiYS7p0DQ=="],
-
-    "telemethree/victoria-browser-client": ["victoria-browser-client@0.2.0", "", {}, "sha512-viC4jp4z8oCpgt9iKyEdQX6SndBNphGJHRcpnmD0toD9SDXX9Uc3NwbFBOfOu2Vg/H1+GzBXmGKWQpQh9rIoFw=="],
-
-    "telemethree-ego/victoria-browser-client": ["victoria-browser-client@0.2.0", "", {}, "sha512-viC4jp4z8oCpgt9iKyEdQX6SndBNphGJHRcpnmD0toD9SDXX9Uc3NwbFBOfOu2Vg/H1+GzBXmGKWQpQh9rIoFw=="],
-
-    "telemethree-pause-menu/victoria-browser-client": ["victoria-browser-client@0.2.0", "", {}, "sha512-viC4jp4z8oCpgt9iKyEdQX6SndBNphGJHRcpnmD0toD9SDXX9Uc3NwbFBOfOu2Vg/H1+GzBXmGKWQpQh9rIoFw=="],
 
     "three-stdlib/fflate": ["fflate@0.6.11", "", {}, "sha512-3JyEFWGjFn7zHmoa9+zG1BmW7X2okcmAB+0Cnu9UFbVs/jCBnl2A8o065ZlXiw145K3eBM3uLuzrYXC0RK7eDg=="],
 

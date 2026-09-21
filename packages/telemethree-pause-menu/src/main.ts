@@ -1,2 +1,2 @@
 export {default} from './PauseMenuTelemetry.ts'
-export type {PauseMenuTelemetryOptions} from './PauseMenuTelemetry.ts'
+export type {PauseMenuTelemetryOptions, TelemetryClient} from './PauseMenuTelemetry.ts'

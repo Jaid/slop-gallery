@@ -1,6 +1,6 @@
 import type {ThreeStatisticsOptions} from '../ThreeStatistics.ts'
+import type {TelemetryClient} from '../types.ts'
 import type {Scene, WebGPURenderer} from 'three/webgpu'
-import type VictoriaClient from 'victoria-browser-client'
 
 import {useFrame} from '@react-three/fiber/webgpu'
 import {useEffect, useRef} from 'react'
@@ -8,7 +8,7 @@ import {useEffect, useRef} from 'react'
 import ThreeStatistics from '../ThreeStatistics.ts'
 import {useTelemetry} from './context.tsx'
 
-export type ThreeTelemetryOptions = ThreeStatisticsOptions & {telemetry?: VictoriaClient}
+export type ThreeTelemetryOptions = ThreeStatisticsOptions & {telemetry?: TelemetryClient}
 
 /** Collect from the WebGPU Canvas after all render passes. */
 export default function useThreeTelemetry(options: ThreeTelemetryOptions = {}) {

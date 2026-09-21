@@ -20,7 +20,7 @@
   "peerDependencies": {
     "react": "^19.3.0",
     "three": "^0.186.0",
-    "victoria-browser-client": "^0.2.0",
+    "victoria-browser-client": "^0.3.0",
     "@react-three/fiber": "^10.0.0-alpha.5"
   },
   "peerDependenciesMeta": {
@@ -32,7 +32,7 @@
     }
   },
   "devDependencies": {
-    "victoria-browser-client": "0.2.0"
+    "victoria-browser-client": "0.3.0"
   },
   "files": [
     "src",
