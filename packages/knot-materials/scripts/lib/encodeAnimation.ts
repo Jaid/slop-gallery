@@ -3,20 +3,17 @@ import {join} from 'node:path'
 import {animationFps, animationFrames} from './animation.ts'
 import {lossyJxlOptions} from './encodeJxl.ts'
 
-export function validateAnimationEffort(effort: number) {
-  if (!Number.isSafeInteger(effort) || effort < 1 || effort > 10) {
-    throw new RangeError('Animation encoder effort must be an integer from 1 to 10.')
-  }
-}
-
 const validateFrameCount = (frameCount: number) => {
   if (!Number.isSafeInteger(frameCount) || frameCount < 1) {
     throw new RangeError('Animation frame count must be a positive safe integer.')
   }
 }
 
+export const av1Crf = 20
+export const av1Preset = 5
+const av1LogicalProcessors = 4
+
 export type WebmAnimationOptions = {
-  effort?: number
   frameCount?: number
 }
 
@@ -43,18 +40,15 @@ export async function encodeAnimatedJxl(directory: string, distance: number) {
 }
 
 /** Encode numbered PNG frames directly to AV1/WebM at the shared 60 fps. */
-export async function encodeWebm(directory: string, {effort = 7, frameCount = animationFrames}: WebmAnimationOptions = {}) {
-  validateAnimationEffort(effort)
+export async function encodeWebm(directory: string, {frameCount = animationFrames}: WebmAnimationOptions = {}) {
   validateFrameCount(frameCount)
   const pattern = join(directory, '%03d.png')
   const output = join(directory, 'animation.webm')
-  // libaom's cpu-used is the inverse of the old libjxl effort knob.
-  const cpuUsed = Math.round(8 * (10 - effort) / 9)
-  await Bun.$`ffmpeg -hide_banner -loglevel error -y -framerate ${animationFps} -start_number 0 -i ${pattern} -frames:v ${frameCount} -an -c:v libaom-av1 -crf 18 -b:v 0 -cpu-used ${cpuUsed} -row-mt 1 -pix_fmt yuv444p -color_range pc -g ${frameCount} ${output}`.quiet()
+  await Bun.$`ffmpeg -hide_banner -loglevel error -y -framerate ${animationFps} -start_number 0 -i ${pattern} -frames:v ${frameCount} -an -c:v libsvtav1 -preset ${av1Preset} -crf ${av1Crf} -svtav1-params lp=${av1LogicalProcessors} -pix_fmt yuv420p -color_range pc -g ${frameCount} ${output}`.quiet()
   return output
 }
 
 /** Standalone two-second WebM encoder used by the animated-icon script. */
-export default async function encodeAnimation(directory: string, effort = 7) {
-  return encodeWebm(directory, {effort})
+export default async function encodeAnimation(directory: string) {
+  return encodeWebm(directory)
 }

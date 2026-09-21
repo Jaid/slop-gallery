@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url'
 import fs from 'fs-extra'
 
 import {animationFilename, animationFps, animationFrame, animationFrames, animationSeconds} from '../scripts/lib/animation.ts'
-import encodeAnimation, {encodeAnimatedJxl} from '../scripts/lib/encodeAnimation.ts'
+import encodeAnimation, {av1Crf, av1Preset, encodeAnimatedJxl} from '../scripts/lib/encodeAnimation.ts'
 import {lossyJxlOptions} from '../scripts/lib/encodeJxl.ts'
 import PromptSources from '../scripts/lib/PromptSources.ts'
 import makeAnimatedIcon from '../scripts/makeAnimatedIcon.ts'
@@ -76,13 +76,6 @@ describe('animated icons', () => {
       output: 'bad.gif',
       browserURL: 'invalid',
     })).rejects.toThrow('.webm')
-    for (const effort of [0, 11, 2.5, NaN]) {
-      await expect(makeAnimatedIcon({
-        id: 'opal_fire',
-        effort,
-        browserURL: 'invalid',
-      })).rejects.toThrow('effort')
-    }
     const child = Bun.spawn(['bun', resolve(root, 'scripts/makeAnimatedIcon.ts'), '--help'], {
       cwd: tmpdir(),
       stdout: 'pipe',
@@ -119,8 +112,9 @@ describe('animated icons', () => {
     try {
       const pattern = join(dir, '%03d.png')
       const filter = "format=rgba,geq=r='mod(N*2,255)':g='X*10':b=120:a='if(lt(X,8),0,255)'"
-      await Bun.$`ffmpeg -hide_banner -loglevel error -y -f lavfi -i nullsrc=size=16x16:rate=60:duration=2 -vf ${filter} -frames:v 120 ${pattern}`.quiet()
-      const output = await encodeAnimation(dir, 1)
+      await Bun.$`ffmpeg -hide_banner -loglevel error -y -f lavfi -i nullsrc=size=64x64:rate=60:duration=2 -vf ${filter} -frames:v 120 ${pattern}`.quiet()
+      expect([av1Preset, av1Crf]).toEqual([5, 20])
+      const output = await encodeAnimation(dir)
       expect(output).toEndWith('.webm')
       const info = JSON.parse(await Bun.$`ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=codec_name,color_range,pix_fmt,nb_read_frames,r_frame_rate -show_entries format=duration -of json ${output}`.text()) as {
         format: {duration: string}
@@ -135,7 +129,7 @@ describe('animated icons', () => {
       expect(info.streams).toEqual([{
         codec_name: 'av1',
         color_range: 'pc',
-        pix_fmt: 'yuv444p',
+        pix_fmt: 'yuv420p',
         nb_read_frames: '120',
         r_frame_rate: '60/1',
       }])
