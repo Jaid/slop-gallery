@@ -80,9 +80,9 @@ export default async function renderKnot(id: string) {
   }
 }
 
-if (import.meta.main) {
+export const renderKnotCli = async (args = Bun.argv.slice(2)) => {
   const {values, positionals} = parseArgs({
-    args: Bun.argv.slice(2),
+    args,
     allowPositionals: true,
     options: {
       help: {
@@ -93,10 +93,14 @@ if (import.meta.main) {
   })
   if (values.help) {
     console.log('Usage: bun scripts/renderKnot.ts <knot-id>\nWrites four 2048x2048 angle stills, an angle sheet, a 120-frame angle animation, four camera-distance stills, a distance sheet, and a 120-frame distance animation to out/render/<knot-id>.')
-  } else {
-    if (positionals.length !== 1) {
-      throw new Error('Specify exactly one canonical Knot ID. Use --help for usage.')
-    }
-    console.log(await renderKnot(positionals[0]))
+    return
   }
+  if (positionals.length !== 1) {
+    throw new Error('Specify exactly one canonical Knot ID. Use --help for usage.')
+  }
+  console.log(await renderKnot(positionals[0]))
+}
+
+if (import.meta.main) {
+  await renderKnotCli()
 }
