@@ -3,13 +3,18 @@ import type {KnotEntry, Vec3} from './types.ts'
 import parseCandidateOrder from './candidateOrder.ts'
 import KnotLayout from './KnotLayout.ts'
 import {knotCandidates} from './main.ts'
+import {unknown as unknownRarity} from './rarities.ts'
 import parseRarityFilter from './rarityFilter.ts'
 import parseRarityMode from './rarityMode.ts'
 
 export const knotFloatHeight = 1
 
 export function candidateScore(candidate: (typeof knotCandidates)[number]) {
-  return candidate.items.reduce((sum, item) => sum + item.rarity, 0) / candidate.items.length
+  const rated = candidate.items.filter(item => item.rarity !== unknownRarity)
+  if (!rated.length) {
+    return 1.1
+  }
+  return rated.reduce((sum, item) => sum + item.rarity, 0) / rated.length
 }
 
 export function selectKnotBays(search = '') {

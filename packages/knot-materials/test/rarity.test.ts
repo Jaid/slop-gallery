@@ -79,10 +79,13 @@ describe('candidate ordering', () => {
       expect(() => parseCandidateOrder(`?candidate_order=${value}`)).toThrow('candidate_order')
     }
   })
-  test('score is average knot rarity and the default selects the best eight candidates', () => {
+  test('score is average known knot rarity and the default selects the best eight candidates', () => {
     for (const candidate of knotCandidates) {
-      expect(candidateScore(candidate)).toBe(candidate.items.reduce((sum, item) => sum + item.rarity, 0) / candidate.items.length)
+      const rated = candidate.items.filter(item => item.rarity !== 0)
+      const expected = rated.length ? rated.reduce((sum, item) => sum + item.rarity, 0) / rated.length : 1.1
+      expect(candidateScore(candidate)).toBe(expected)
     }
+    expect(knotCandidates.filter(candidate => candidate.items.every(item => item.rarity === 0)).every(candidate => candidateScore(candidate) === 1.1)).toBe(true)
     const bays = selectKnotBays()
     const scores = bays.map(bay => candidateScore(bay.candidate))
     expect(bays).toHaveLength(8)
