@@ -4,13 +4,14 @@ import {resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
 
 import {animationFps, animationFrames} from '../scripts/lib/animation.ts'
-import {angleAnimationFrame, angleNames, angleStillFrame, distanceAnimationFrame, distanceNames, distanceScales, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrames, inspectionAnimationOffsetSeconds, inspectionAnimationSeconds, inspectionNearDistanceScale, previewBaseFov, previewFovForDistanceScale, stillSize} from '../scripts/lib/renderSettings.ts'
+import {angleAnimationFrame, angleNames, angleStillFrame, distanceAnimationFrame, distanceNames, distanceScales, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrames, inspectionAnimationOffsetSeconds, inspectionAnimationSeconds, inspectionNearDistanceScale, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from '../scripts/lib/renderSettings.ts'
 import renderKnot from '../scripts/renderKnot.ts'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 describe('knot inspection renders', () => {
   test('define stills, simple loops, and the combined 16-second inspection animation', () => {
     expect(stillSize).toBe(2048)
+    expect(previewSupersampling).toBe(1.5)
     expect(angleNames).toEqual(['000', '090', '180', '270'])
     expect(distanceNames).toEqual(['near', 'standard', 'far', 'very-far'])
     expect(distanceScales).toEqual([0.75, 1, 1.35, 1.8])

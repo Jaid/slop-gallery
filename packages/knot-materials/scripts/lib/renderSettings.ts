@@ -11,6 +11,7 @@ export const inspectionAnimatedJxlDistance = 4
 export const inspectionNearDistanceScale = 0.5
 export const inspectionAnimationOffsetSeconds = 13.5
 export const previewBaseFov = 50
+export const previewSupersampling = 1.5
 export const previewFovForDistanceScale = (distanceScale: number) => previewBaseFov * (1 + Math.abs(Math.log2(distanceScale)) * 0.08)
 
 export type RenderFrame = {

@@ -10,7 +10,7 @@ import loadKnotMaterial from '../../src/materials.ts'
 import StudioEnvironment from '../../src/StudioEnvironment.ts'
 import {animationFps, animationFrame, animationSize} from './animation.ts'
 import {visibleBounds} from './previewLayout.ts'
-import {previewBaseFov, previewFovForDistanceScale, stillSize} from './renderSettings.ts'
+import {previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from './renderSettings.ts'
 
 export type PreviewCandidate = {
   id: string
@@ -40,6 +40,7 @@ const canvas = (width: number, height = width) => Object.assign(document.createE
   height,
 })
 const png = (image: HTMLCanvasElement) => image.toDataURL('image/png').split(',')[1]
+const renderSize = (size: number) => Math.round(size * previewSupersampling)
 
 /** Detached scene, private frame clock, and explicit GPU readback. Never changes the live game. */
 export default class KnotPreviewRenderer {
@@ -48,7 +49,7 @@ export default class KnotPreviewRenderer {
   private readonly environment = new StudioEnvironment
   private readonly errors: Array<string> = []
   private readonly geometry = createKnotGeometry()
-  private readonly iconTarget = new RenderTarget(animationSize, animationSize, {
+  private readonly iconTarget = new RenderTarget(renderSize(animationSize), renderSize(animationSize), {
     type: UnsignedByteType,
     samples: 4,
   })
@@ -57,7 +58,7 @@ export default class KnotPreviewRenderer {
     alpha: true,
   })
   private readonly scene = new Scene
-  private readonly stillTarget = new RenderTarget(stillSize, stillSize, {
+  private readonly stillTarget = new RenderTarget(renderSize(stillSize), renderSize(stillSize), {
     type: UnsignedByteType,
     samples: 4,
   })
@@ -66,7 +67,7 @@ export default class KnotPreviewRenderer {
   constructor() {
     this.iconTarget.texture.colorSpace = SRGBColorSpace
     this.stillTarget.texture.colorSpace = SRGBColorSpace
-    this.renderer.setSize(animationSize, animationSize, false)
+    this.renderer.setSize(renderSize(animationSize), renderSize(animationSize), false)
     this.renderer.toneMapping = ACESFilmicToneMapping
     this.renderer.setClearColor(0, 0)
     const key = new DirectionalLight('#fff0d7', 2.3)
@@ -199,7 +200,8 @@ export default class KnotPreviewRenderer {
 
   private async capture(id: string, target = this.iconTarget, size = animationSize, seconds = 0) {
     this.setTime(seconds)
-    this.renderer.setSize(size, size, false)
+    const sourceSize = renderSize(size)
+    this.renderer.setSize(sourceSize, sourceSize, false)
     try {
       this.renderer.setRenderTarget(this.validationTarget)
       this.renderer.render(this.scene, this.camera)
@@ -210,26 +212,36 @@ export default class KnotPreviewRenderer {
       this.renderer.setOutputRenderTarget(target)
       this.renderer.setRenderTarget(target)
       this.renderer.render(this.scene, this.camera)
-      const pixels = await this.renderer.readRenderTargetPixelsAsync(target, 0, 0, size, size) as Uint8Array
+      const pixels = await this.renderer.readRenderTargetPixelsAsync(target, 0, 0, sourceSize, sourceSize) as Uint8Array
       await this.device.queue.onSubmittedWorkDone()
       if (this.errors.length) {
         throw new Error(`${id}: ${this.errors.join('\n')}`)
       }
       const output = new Uint8ClampedArray(pixels.length)
-      const stride = size * 4
-      for (let y = 0; y < size; y++) {
-        output.set(pixels.subarray(y * stride, (y + 1) * stride), (size - 1 - y) * stride)
+      const stride = sourceSize * 4
+      for (let y = 0; y < sourceSize; y++) {
+        output.set(pixels.subarray(y * stride, (y + 1) * stride), (sourceSize - 1 - y) * stride)
       }
-      const data = new ImageData(output, size, size)
-      const bounds = visibleBounds(data)
-      if (!bounds) {
+      const data = new ImageData(output, sourceSize, sourceSize)
+      const sourceBounds = visibleBounds(data)
+      if (!sourceBounds) {
         throw new Error(`${id} produced an empty preview.`)
       }
+      const source = canvas(sourceSize)
+      source.getContext('2d')!.putImageData(data, 0, 0)
       const image = canvas(size)
-      image.getContext('2d')!.putImageData(data, 0, 0)
+      const context = image.getContext('2d')!
+      context.imageSmoothingEnabled = true
+      context.imageSmoothingQuality = 'high'
+      context.drawImage(source, 0, 0, size, size)
+      const scale = size / sourceSize
+      const left = Math.floor(sourceBounds[0] * scale)
+      const top = Math.floor(sourceBounds[1] * scale)
+      const right = Math.ceil((sourceBounds[0] + sourceBounds[2]) * scale)
+      const bottom = Math.ceil((sourceBounds[1] + sourceBounds[3]) * scale)
       return {
         image,
-        bounds,
+        bounds: [left, top, right - left, bottom - top] as const,
       }
     } finally {
       this.renderer.setOutputRenderTarget(null)
