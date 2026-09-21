@@ -10,6 +10,7 @@ export default {
     model: {
       title: 'DeepSeek 4.1 Flash',
       slug: 'deepseek/deepseek-4.1-flash',
+      effortLevel: 'xhigh',
     },
   },
   flavorText: 'The break was never hidden – it was filled with gold, and the bowl became worth more than before.',

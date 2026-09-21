@@ -10,6 +10,7 @@ export default {
     model: {
       title: 'DeepSeek 4.1 Flash',
       slug: 'deepseek/deepseek-4.1-flash',
+      effortLevel: 'xhigh',
     },
   },
   flavorText: 'Nothing is so still as a mirror, and nothing so restless as the hand that holds it.',

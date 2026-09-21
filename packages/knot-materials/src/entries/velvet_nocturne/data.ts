@@ -10,6 +10,7 @@ export default {
     model: {
       title: 'DeepSeek 4.1 Flash',
       slug: 'deepseek/deepseek-4.1-flash',
+      effortLevel: 'xhigh',
     },
   },
   flavorText: 'Face it and the cloth is almost black; walk past and the whole garment catches fire.',

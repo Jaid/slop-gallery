@@ -235,7 +235,7 @@ describe('arbitrary Knot batches', () => {
     })
     const deepseekMage = knots.filter(entry => entry.candidate.id === 'deepseek' && entry.harness === 'Mage')
     expect(deepseekMage).toHaveLength(8)
-    expect(deepseekMage.every(entry => entry.author.model.title === 'DeepSeek 4.1 Flash' && entry.author.model.slug === 'deepseek/deepseek-4.1-flash' && entry.author.model.effortLevel === undefined)).toBe(true)
+    expect(deepseekMage.every(entry => entry.author.model.title === 'DeepSeek 4.1 Flash' && entry.author.model.slug === 'deepseek/deepseek-4.1-flash' && entry.author.model.effortLevel === 'xhigh')).toBe(true)
     const astraApi = api.filter(entry => entry.candidate.id === 'gpt_astra')
     const fableApi = api.filter(entry => entry.candidate.id === 'claude_fable')
     const solApi = api.filter(entry => entry.candidate.id === 'gpt_sol')

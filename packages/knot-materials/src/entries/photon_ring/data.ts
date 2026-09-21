@@ -10,6 +10,7 @@ export default {
     model: {
       title: 'DeepSeek 4.1 Flash',
       slug: 'deepseek/deepseek-4.1-flash',
+      effortLevel: 'xhigh',
     },
   },
   flavorText: 'The knot is a hole in the sky: everything behind it arrives bent, and the disk that feeds it blazes on the side sweeping toward you.',

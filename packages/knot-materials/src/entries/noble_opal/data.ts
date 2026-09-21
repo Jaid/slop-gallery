@@ -10,6 +10,7 @@ export default {
     model: {
       title: 'DeepSeek 4.1 Flash',
       slug: 'deepseek/deepseek-4.1-flash',
+      effortLevel: 'xhigh',
     },
   },
   flavorText: 'A million silica spheres hold their breath, and the light answers in colors that were never there.',
