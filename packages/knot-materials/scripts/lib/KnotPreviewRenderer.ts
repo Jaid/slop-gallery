@@ -24,10 +24,6 @@ export type AnimationPreview = {
 export type KnotPreview = {
   dispose: () => void
   renderFrame: (frame: RenderFrame) => Promise<string>
-  renderSet: (frames: ReadonlyArray<RenderFrame>) => Promise<{
-    images: Array<string>
-    sheet: string
-  }>
 }
 
 type OfflineRenderer = WebgpuRenderer & {
@@ -117,26 +113,6 @@ export default class KnotPreviewRenderer {
     }
     return {
       renderFrame: async frame => png(await render(frame)),
-      renderSet: async frames => {
-        if (!frames.length || frames.some(frame => frame.size !== 'still')) {
-          throw new Error('Preview sheets require at least one still frame.')
-        }
-        const images: Array<string> = []
-        const cellSize = stillSize / 2
-        const columns = Math.min(2, frames.length)
-        const rows = Math.ceil(frames.length / columns)
-        const sheet = canvas(columns * cellSize, rows * cellSize)
-        const context = sheet.getContext('2d')!
-        for (const [index, frame] of frames.entries()) {
-          const image = await render(frame)
-          images.push(png(image))
-          context.drawImage(image, index % columns * cellSize, Math.floor(index / columns) * cellSize, cellSize, cellSize)
-        }
-        return {
-          images,
-          sheet: png(sheet),
-        }
-      },
       dispose: () => {
         if (this.active === mesh) {
           this.releaseMaterial()
