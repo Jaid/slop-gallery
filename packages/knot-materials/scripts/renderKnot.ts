@@ -7,7 +7,7 @@ import {knotsById} from '../src/main.ts'
 import {animationFilename, animationFrames} from './lib/animation.ts'
 import {encodeAnimatedJxl, encodeWebm} from './lib/encodeAnimation.ts'
 import {encodeJxl} from './lib/encodeJxl.ts'
-import {angleAnimationFrame, angleNames, angleStillFrame, distanceAnimationFrame, distanceNames, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrames} from './lib/renderSettings.ts'
+import {angleAnimationFrame, angleNames, angleStillFrame, distanceNames, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrames} from './lib/renderSettings.ts'
 import withPreviewRenderer from './lib/withPreviewRenderer.ts'
 
 const renderRoot = resolve(import.meta.dir, '../out/render')
@@ -35,9 +35,9 @@ export default async function renderKnot(id: string) {
       const preview = await renderer.evaluateHandle((instance, entry) => instance.createPreview(entry), item)
       try {
         console.info('Rendering angle stills and sheet...')
-        const angleSet = await preview.evaluate((instance, frames) => instance.renderSet(frames), Array.from({length: 4}, (_, index) => angleStillFrame(index)))
+        const angleSet = await preview.evaluate((instance, frames) => instance.renderSet(frames), Array.from({length: angleNames.length}, (_, index) => angleStillFrame(index)))
         for (const [index, image] of angleSet.images.entries()) {
-          await encodeStill(image, join(staging, `angle-${angleNames[index]}.jxl`))
+          await encodeStill(image, join(staging, `angle_${angleNames[index]}.jxl`))
         }
         await encodeStill(angleSet.sheet, join(staging, 'angles.jxl'))
         console.info('Rendering simple angle animation...')
@@ -50,20 +50,11 @@ export default async function renderKnot(id: string) {
         await fs.rename(await encodeAnimatedJxl(angleFrames, inspectionAnimatedJxlDistance), join(staging, 'angles.animated.jxl'))
         await fs.remove(angleFrames)
         console.info('Rendering camera-distance stills and sheet...')
-        const distanceSet = await preview.evaluate((instance, frames) => instance.renderSet(frames), Array.from({length: 4}, (_, index) => distanceStillFrame(index)))
+        const distanceSet = await preview.evaluate((instance, frames) => instance.renderSet(frames), Array.from({length: distanceNames.length}, (_, index) => distanceStillFrame(index)))
         for (const [index, image] of distanceSet.images.entries()) {
-          await encodeStill(image, join(staging, `distance-${distanceNames[index]}.jxl`))
+          await encodeStill(image, join(staging, `distance_${distanceNames[index]}.jxl`))
         }
         await encodeStill(distanceSet.sheet, join(staging, 'distances.jxl'))
-        console.info('Rendering simple camera-distance animation...')
-        const distanceFrames = join(staging, '.distance-frames')
-        await fs.ensureDir(distanceFrames)
-        for (let index = 0; index < animationFrames; index++) {
-          const image = await preview.evaluate((instance, frame) => instance.renderFrame(frame), distanceAnimationFrame(index))
-          await fs.writeFile(join(distanceFrames, animationFilename(index)), imageBytes(image))
-        }
-        await fs.rename(await encodeAnimatedJxl(distanceFrames, inspectionAnimatedJxlDistance), join(staging, 'distances.animated.jxl'))
-        await fs.remove(distanceFrames)
         console.info('Rendering combined inspection video...')
         const videoFrames = join(staging, '.animation-frames')
         await fs.ensureDir(videoFrames)
@@ -102,7 +93,7 @@ export const renderKnotCli = async (args = Bun.argv.slice(2)) => {
     },
   })
   if (values.help) {
-    console.log('Usage: bun scripts/renderKnot.ts <knot-id>\nWrites four 2048x2048 JXL angle stills and a sheet, four camera-distance JXL stills and a sheet, two simple 120-frame animated JXL inspection loops, and one combined 16-second AV1/WebM animation.webm to out/render/<knot-id>.')
+    console.log('Usage: bun scripts/renderKnot.ts <knot-id>\nWrites three 2048x2048 JXL angle stills (0°, 45°, 90°) and a sheet, two camera-distance JXL stills (near/far) and a sheet, one 120-frame animated JXL angle loop, and one combined 16-second AV1/WebM animation.webm to out/render/<knot-id>.')
     return
   }
   if (positionals.length !== 1) {

@@ -4,30 +4,31 @@ import {resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
 
 import {animationFps, animationFrames} from '../scripts/lib/animation.ts'
-import {angleAnimationFrame, angleNames, angleStillFrame, distanceAnimationFrame, distanceNames, distanceScales, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrames, inspectionAnimationOffsetSeconds, inspectionAnimationSeconds, inspectionNearDistanceScale, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from '../scripts/lib/renderSettings.ts'
+import {angleAnimationFrame, angleNames, angleStillFrame, distanceNames, distanceScales, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrames, inspectionAnimationOffsetSeconds, inspectionAnimationSeconds, inspectionNearDistanceScale, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from '../scripts/lib/renderSettings.ts'
 import renderKnot from '../scripts/renderKnot.ts'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 describe('knot inspection renders', () => {
   test('define stills, simple loops, and the combined 16-second inspection animation', () => {
     expect(stillSize).toBe(2048)
-    expect(previewSupersampling).toBe(1.5)
-    expect(angleNames).toEqual(['000', '090', '180', '270'])
-    expect(distanceNames).toEqual(['near', 'standard', 'far', 'very-far'])
-    expect(distanceScales).toEqual([0.75, 1, 1.35, 1.8])
+    expect(previewSupersampling).toBe(2)
+    expect(angleNames).toEqual(['0', '45', '90'])
+    expect(distanceNames).toEqual(['near', 'far'])
+    expect(distanceScales).toEqual([0.75, 1.8])
     expect(inspectionAnimatedJxlDistance).toBe(4)
     expect([inspectionAnimationSeconds, inspectionAnimationFrames]).toEqual([16, 960])
     expect(previewFovForDistanceScale(1)).toBe(previewBaseFov)
     expect(previewFovForDistanceScale(inspectionNearDistanceScale)).toBeCloseTo(54)
     expect(previewFovForDistanceScale(distanceScales.at(-1)!)).toBeCloseTo(53.39, 2)
     expect(angleStillFrame(0).angle).toBe(0)
-    expect(angleStillFrame(3).angle).toBe(Math.PI * 3 / 2)
+    expect(angleStillFrame(1).angle).toBe(Math.PI / 4)
+    expect(angleStillFrame(2).angle).toBe(Math.PI / 2)
     expect(distanceStillFrame(0).distanceScale).toBe(0.75)
-    expect(distanceStillFrame(3).distanceScale).toBe(1.8)
+    expect(distanceStillFrame(1).distanceScale).toBe(1.8)
+    expect(previewFovForDistanceScale(distanceStillFrame(0).distanceScale)).toBeGreaterThan(previewBaseFov)
+    expect(previewFovForDistanceScale(distanceStillFrame(1).distanceScale)).toBeGreaterThan(previewBaseFov)
     expect(angleAnimationFrame(0).angle).toBe(0)
     expect(angleAnimationFrame(animationFrames - 1).angle).toBeLessThan(Math.PI * 2)
-    expect(distanceAnimationFrame(0).distanceScale).toBeCloseTo(0.75)
-    expect(distanceAnimationFrame(animationFrames / 2).distanceScale).toBeCloseTo(1.8)
     const frameAtSecond = (seconds: number) => inspectionAnimationFrame(seconds * animationFps)
     const firstFrame = frameAtSecond(0)
     expect(inspectionAnimationOffsetSeconds).toBe(13.5)
@@ -54,7 +55,6 @@ describe('knot inspection renders', () => {
     expect(thinStep).toBeGreaterThan(wideStep)
     for (const invalid of [-1, animationFrames, 0.5, NaN]) {
       expect(() => angleAnimationFrame(invalid)).toThrow(RangeError)
-      expect(() => distanceAnimationFrame(invalid)).toThrow(RangeError)
     }
     for (const invalid of [-1, inspectionAnimationFrames, 0.5, NaN]) {
       expect(() => inspectionAnimationFrame(invalid)).toThrow(RangeError)

@@ -118,17 +118,19 @@ export default class KnotPreviewRenderer {
     return {
       renderFrame: async frame => png(await render(frame)),
       renderSet: async frames => {
-        if (frames.length !== 4 || frames.some(frame => frame.size !== 'still')) {
-          throw new Error('Preview sheets require exactly four still frames.')
+        if (!frames.length || frames.some(frame => frame.size !== 'still')) {
+          throw new Error('Preview sheets require at least one still frame.')
         }
         const images: Array<string> = []
-        const sheet = canvas(stillSize)
-        const context = sheet.getContext('2d')!
         const cellSize = stillSize / 2
+        const columns = Math.min(2, frames.length)
+        const rows = Math.ceil(frames.length / columns)
+        const sheet = canvas(columns * cellSize, rows * cellSize)
+        const context = sheet.getContext('2d')!
         for (const [index, frame] of frames.entries()) {
           const image = await render(frame)
           images.push(png(image))
-          context.drawImage(image, index % 2 * cellSize, Math.floor(index / 2) * cellSize, cellSize, cellSize)
+          context.drawImage(image, index % columns * cellSize, Math.floor(index / columns) * cellSize, cellSize, cellSize)
         }
         return {
           images,

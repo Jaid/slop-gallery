@@ -1,17 +1,17 @@
 import {animationFps, animationFrames, animationSeconds} from './animation.ts'
 
 export const stillSize = 2048
-export const angleNames = ['000', '090', '180', '270'] as const
-export const angleRadians = [0, Math.PI / 2, Math.PI, Math.PI * 3 / 2] as const
-export const distanceNames = ['near', 'standard', 'far', 'very-far'] as const
-export const distanceScales = [0.75, 1, 1.35, 1.8] as const
+export const angleNames = ['0', '45', '90'] as const
+export const angleRadians = [0, Math.PI / 4, Math.PI / 2] as const
+export const distanceNames = ['near', 'far'] as const
+export const distanceScales = [0.75, 1.8] as const
 export const inspectionAnimationSeconds = 16
 export const inspectionAnimationFrames = inspectionAnimationSeconds * animationFps
 export const inspectionAnimatedJxlDistance = 4
 export const inspectionNearDistanceScale = 0.5
 export const inspectionAnimationOffsetSeconds = 13.5
 export const previewBaseFov = 50
-export const previewSupersampling = 1.5
+export const previewSupersampling = 2
 export const previewFovForDistanceScale = (distanceScale: number) => previewBaseFov * (1 + Math.abs(Math.log2(distanceScale)) * 0.08)
 
 export type RenderFrame = {
@@ -37,19 +37,6 @@ export const angleAnimationFrame = (index: number): RenderFrame => {
   return {
     angle: index / animationFrames * Math.PI * 2,
     distanceScale: 1,
-    seconds: index / animationFps,
-    size: 'animation',
-  }
-}
-
-export const distanceAnimationFrame = (index: number): RenderFrame => {
-  assertFrameIndex(index)
-  const minimum = distanceScales[0]
-  const maximum = distanceScales.at(-1)!
-  const phase = index / animationFrames * Math.PI * 2
-  return {
-    angle: 0,
-    distanceScale: (minimum + maximum) / 2 - Math.cos(phase) * (maximum - minimum) / 2,
     seconds: index / animationFps,
     size: 'animation',
   }
