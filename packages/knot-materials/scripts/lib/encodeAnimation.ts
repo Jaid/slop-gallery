@@ -11,7 +11,7 @@ const validateFrameCount = (frameCount: number) => {
 
 export const av1Crf = 20
 export const av1Preset = 5
-const av1LogicalProcessors = 4
+export const av1SvtParams = 'lp=4:enable-variance-boost=1:film-grain=0:tune=0:input-depth=8'
 
 export type WebmAnimationOptions = {
   frameCount?: number
@@ -44,7 +44,7 @@ export async function encodeWebm(directory: string, {frameCount = animationFrame
   validateFrameCount(frameCount)
   const pattern = join(directory, '%03d.png')
   const output = join(directory, 'animation.webm')
-  await Bun.$`ffmpeg -hide_banner -loglevel error -y -framerate ${animationFps} -start_number 0 -i ${pattern} -frames:v ${frameCount} -an -c:v libsvtav1 -preset ${av1Preset} -crf ${av1Crf} -svtav1-params lp=${av1LogicalProcessors} -pix_fmt yuv420p -color_range pc -g ${frameCount} ${output}`.quiet()
+  await Bun.$`ffmpeg -hide_banner -loglevel error -y -framerate ${animationFps} -start_number 0 -i ${pattern} -frames:v ${frameCount} -an -c:v libsvtav1 -preset ${av1Preset} -crf ${av1Crf} -svtav1-params ${av1SvtParams} -pix_fmt yuv420p -color_range pc -g ${frameCount} ${output}`.quiet()
   return output
 }
 

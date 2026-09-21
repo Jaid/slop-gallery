@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url'
 import fs from 'fs-extra'
 
 import {animationFilename, animationFps, animationFrame, animationFrames, animationSeconds} from '../scripts/lib/animation.ts'
-import encodeAnimation, {av1Crf, av1Preset, encodeAnimatedJxl} from '../scripts/lib/encodeAnimation.ts'
+import encodeAnimation, {av1Crf, av1Preset, av1SvtParams, encodeAnimatedJxl} from '../scripts/lib/encodeAnimation.ts'
 import {lossyJxlOptions} from '../scripts/lib/encodeJxl.ts'
 import PromptSources from '../scripts/lib/PromptSources.ts'
 import makeAnimatedIcon from '../scripts/makeAnimatedIcon.ts'
@@ -114,6 +114,7 @@ describe('animated icons', () => {
       const filter = "format=rgba,geq=r='mod(N*2,255)':g='X*10':b=120:a='if(lt(X,8),0,255)'"
       await Bun.$`ffmpeg -hide_banner -loglevel error -y -f lavfi -i nullsrc=size=64x64:rate=60:duration=2 -vf ${filter} -frames:v 120 ${pattern}`.quiet()
       expect([av1Preset, av1Crf]).toEqual([5, 20])
+      expect(av1SvtParams).toBe('lp=4:enable-variance-boost=1:film-grain=0:tune=0:input-depth=8')
       const output = await encodeAnimation(dir)
       expect(output).toEndWith('.webm')
       const info = JSON.parse(await Bun.$`ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=codec_name,color_range,pix_fmt,nb_read_frames,r_frame_rate -show_entries format=duration -of json ${output}`.text()) as {

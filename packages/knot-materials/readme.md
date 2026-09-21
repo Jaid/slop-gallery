@@ -168,7 +168,7 @@ The default output is `src/entries/<id>/icon.animated.webm`; the still `icon.jxl
 
 Capture uses explicit offscreen GPU readback, including HDR-finiteness checks. The script uses the same self-contained private renderer by default and accepts the same optional `--browser-url` and `--page-url` overrides as the still-image scripts.
 
-Encoding requires `ffmpeg` with `libsvtav1`. The numbered PNG frames are encoded directly to 8-bit full-range 4:2:0 AV1 in a WebM container using SVT-AV1 preset 5 at CRF 20; there is no APNG intermediate. AV1 does not preserve the source alpha channel in this pipeline, so the experimental WebM output is opaque. Looping is a playback concern (for example, HTML `<video loop>`) rather than embedded animation metadata. All temporary frames stay outside the repository and are removed on completion or failure. The destination is replaced atomically only after capture and encoding finish.
+Encoding requires `ffmpeg` with `libsvtav1`. The numbered PNG frames are encoded directly to 8-bit full-range 4:2:0 AV1 in a WebM container using SVT-AV1 preset 5 at CRF 20, variance boost enabled, film grain disabled, tune 0 (VQ), and explicit 8-bit input depth; there is no APNG intermediate. AV1 does not preserve the source alpha channel in this pipeline, so the experimental WebM output is opaque. Looping is a playback concern (for example, HTML `<video loop>`) rather than embedded animation metadata. All temporary frames stay outside the repository and are removed on completion or failure. The destination is replaced atomically only after capture and encoding finish.
 
 ## Narration assets
 
