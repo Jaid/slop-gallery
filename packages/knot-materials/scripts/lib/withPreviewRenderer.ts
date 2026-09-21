@@ -15,6 +15,7 @@ const repositoryRoot = resolve(import.meta.dir, '../../../..')
 const renderPath = '/packages/knot-materials/scripts/render.html'
 const rendererPath = '/packages/knot-materials/scripts/lib/KnotPreviewRenderer.ts'
 const protocolTimeout = 300_000
+let rendererSequence = 0
 const resolveChromeExecutable = async () => {
   const configured = Bun.env.BROWSER
   const candidates = [
@@ -37,25 +38,40 @@ const resolveChromeExecutable = async () => {
 }
 const createRenderer = async (page: Page, moduleURL: string) => {
   await page.waitForFunction(() => document.readyState === 'complete', {timeout: 30_000})
-  return page.evaluateHandle(async url => {
+  const key = `__knotPreviewRenderer_${process.pid}_${rendererSequence++}`
+  const handle = await page.evaluateHandle(async (url, rendererKey) => {
     const {default: Renderer} = await import(/* @vite-ignore */ `${url}?t=${Date.now()}`) as typeof import('./KnotPreviewRenderer.ts')
     const renderer = new Renderer
     try {
       await renderer.init()
+      ;(globalThis as unknown as Record<string, KnotPreviewRenderer | undefined>)[rendererKey] = renderer
       return renderer
     } catch (error) {
       await renderer.dispose()
       throw error
     }
-  }, moduleURL)
+  }, moduleURL, key)
+  return {
+    handle,
+    key,
+  }
 }
+const disposeRenderer = async (page: Page, key: string) => page.evaluate(async rendererKey => {
+  const registry = globalThis as unknown as Record<string, KnotPreviewRenderer | undefined>
+  const renderer = registry[rendererKey]
+  delete registry[rendererKey]
+  await renderer?.dispose()
+}, key)
 const runWithRenderer = async <Result>(page: Page, moduleURL: string, run: (renderer: JSHandle<KnotPreviewRenderer>) => Promise<Result>) => {
-  const handle = await createRenderer(page, moduleURL)
+  const {
+    handle,
+    key,
+  } = await createRenderer(page, moduleURL)
   try {
     return await run(handle)
   } finally {
     try {
-      await handle.evaluate(renderer => renderer.dispose())
+      await disposeRenderer(page, key)
     } finally {
       await handle.dispose()
     }
