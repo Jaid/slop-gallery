@@ -1,3 +1,4 @@
+export * from './atelier.ts'
 export * from './cellNoiseVec3.ts'
 export * from './cellularBoundary.ts'
 export * from './cellularPoints.ts'

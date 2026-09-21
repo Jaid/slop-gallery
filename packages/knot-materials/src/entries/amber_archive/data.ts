@@ -1,0 +1,21 @@
+import type {KnotData} from '../../types.ts'
+
+export default {
+  icon: new URL('icon.jxl', import.meta.url).href,
+  id: 'amber_archive',
+  candidateId: 'gpt_astra',
+  title: 'Amber Archive',
+  harness: 'Mage',
+  author: {
+    model: {
+      title: 'GPT-6 Astra',
+      slug: 'openai/gpt-6-astra',
+      effortLevel: 'high',
+    },
+  },
+  flavorText: 'A forest folded into a drop of honey, still dreaming of the wind that once moved its smallest leaves.',
+  placeholder: {
+    color: '#c27a1f',
+    shading: 'glass',
+  },
+} as const satisfies KnotData
