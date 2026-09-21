@@ -9,7 +9,7 @@ export const inspectionAnimationSeconds = 16
 export const inspectionAnimationFrames = inspectionAnimationSeconds * animationFps
 export const inspectionAnimatedJxlDistance = 4
 export const inspectionNearDistanceScale = 0.5
-export const inspectionTimeSeamSeconds = 13.5
+export const inspectionAnimationOffsetSeconds = 13.5
 export const previewBaseFov = 50
 export const previewFovForDistanceScale = (distanceScale: number) => previewBaseFov * (1 + Math.abs(Math.log2(distanceScale)) * 0.08)
 
@@ -93,13 +93,12 @@ const inspectionAngle = (seconds: number) => {
 
 export const inspectionAnimationFrame = (index: number): RenderFrame => {
   assertInspectionFrameIndex(index)
-  const timelineSeconds = index / animationFps
+  const previewSeconds = index / animationFps
+  const choreographySeconds = (previewSeconds + inspectionAnimationOffsetSeconds) % inspectionAnimationSeconds
   return {
-    angle: inspectionAngle(timelineSeconds),
-    distanceScale: inspectionDistanceScale(timelineSeconds),
-    // Keep the file boundary temporally continuous. Time-driven shader animation wraps
-    // during the far, side-on hold instead, where a discontinuity is least noticeable.
-    seconds: (timelineSeconds - inspectionTimeSeamSeconds + inspectionAnimationSeconds) % inspectionAnimationSeconds,
+    angle: inspectionAngle(choreographySeconds),
+    distanceScale: inspectionDistanceScale(choreographySeconds),
+    seconds: previewSeconds,
     size: 'animation',
   }
 }

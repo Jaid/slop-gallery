@@ -4,7 +4,7 @@ import {resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
 
 import {animationFps, animationFrames} from '../scripts/lib/animation.ts'
-import {angleAnimationFrame, angleNames, angleStillFrame, distanceAnimationFrame, distanceNames, distanceScales, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrames, inspectionAnimationSeconds, inspectionNearDistanceScale, inspectionTimeSeamSeconds, previewBaseFov, previewFovForDistanceScale, stillSize} from '../scripts/lib/renderSettings.ts'
+import {angleAnimationFrame, angleNames, angleStillFrame, distanceAnimationFrame, distanceNames, distanceScales, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrames, inspectionAnimationOffsetSeconds, inspectionAnimationSeconds, inspectionNearDistanceScale, previewBaseFov, previewFovForDistanceScale, stillSize} from '../scripts/lib/renderSettings.ts'
 import renderKnot from '../scripts/renderKnot.ts'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
@@ -28,31 +28,29 @@ describe('knot inspection renders', () => {
     expect(distanceAnimationFrame(0).distanceScale).toBeCloseTo(0.75)
     expect(distanceAnimationFrame(animationFrames / 2).distanceScale).toBeCloseTo(1.8)
     const frameAtSecond = (seconds: number) => inspectionAnimationFrame(seconds * animationFps)
-    expect(frameAtSecond(0).distanceScale).toBe(1)
-    expect(frameAtSecond(2).distanceScale).toBe(1)
-    expect(frameAtSecond(4).distanceScale).toBe(inspectionNearDistanceScale)
-    expect(frameAtSecond(6).distanceScale).toBe(inspectionNearDistanceScale)
-    expect(frameAtSecond(8).distanceScale).toBe(1)
-    expect(frameAtSecond(10).distanceScale).toBe(1)
-    expect(frameAtSecond(12).distanceScale).toBe(1.8)
-    expect(frameAtSecond(14).distanceScale).toBe(1.8)
-    expect(inspectionAnimationFrame(inspectionAnimationFrames - 1).distanceScale).toBeCloseTo(1, 5)
-    for (const second of [2, 4, 6, 8, 10, 12, 14]) {
-      expect(frameAtSecond(second).angle).toBeCloseTo(second / 2 * Math.PI * 2, 10)
+    const firstFrame = frameAtSecond(0)
+    expect(inspectionAnimationOffsetSeconds).toBe(13.5)
+    expect(firstFrame.seconds).toBe(0)
+    expect(firstFrame.distanceScale).toBe(1.8)
+    expect(firstFrame.angle % (Math.PI * 2)).toBeCloseTo(Math.PI * 3 / 2, 10)
+    expect(frameAtSecond(0.5).distanceScale).toBe(1.8)
+    expect(frameAtSecond(2.5).distanceScale).toBe(1)
+    expect(frameAtSecond(4.5).distanceScale).toBe(1)
+    expect(frameAtSecond(6.5).distanceScale).toBe(inspectionNearDistanceScale)
+    expect(frameAtSecond(8.5).distanceScale).toBe(inspectionNearDistanceScale)
+    expect(frameAtSecond(10.5).distanceScale).toBe(1)
+    expect(frameAtSecond(12.5).distanceScale).toBe(1)
+    expect(frameAtSecond(14.5).distanceScale).toBe(1.8)
+    const lastFrame = inspectionAnimationFrame(inspectionAnimationFrames - 1)
+    expect(lastFrame.distanceScale).toBe(1.8)
+    expect(lastFrame.seconds).toBeCloseTo(inspectionAnimationSeconds - 1 / animationFps)
+    for (const second of [0.5, 2.5, 4.5, 6.5, 8.5, 10.5, 12.5, 14.5]) {
+      expect(frameAtSecond(second).angle % (Math.PI * 2)).toBeCloseTo(0, 10)
     }
-    const wideStep = inspectionAnimationFrame(1).angle - inspectionAnimationFrame(0).angle
-    const thinIndex = Math.round(0.5 * animationFps)
-    const thinStep = inspectionAnimationFrame(thinIndex + 1).angle - inspectionAnimationFrame(thinIndex).angle
+    const thinStep = inspectionAnimationFrame(1).angle - inspectionAnimationFrame(0).angle
+    const wideIndex = Math.round(0.5 * animationFps)
+    const wideStep = inspectionAnimationFrame(wideIndex + 1).angle - inspectionAnimationFrame(wideIndex).angle
     expect(thinStep).toBeGreaterThan(wideStep)
-    const seamIndex = inspectionTimeSeamSeconds * animationFps
-    const beforeSeam = inspectionAnimationFrame(seamIndex - 1)
-    const seam = inspectionAnimationFrame(seamIndex)
-    expect(beforeSeam.seconds).toBeGreaterThan(15.9)
-    expect(seam.seconds).toBeCloseTo(0)
-    expect(seam.distanceScale).toBe(1.8)
-    expect(seam.angle % (Math.PI * 2)).toBeCloseTo(Math.PI * 3 / 2, 10)
-    expect(inspectionAnimationFrame(inspectionAnimationFrames - 1).seconds).toBeCloseTo(2.5 - 1 / animationFps)
-    expect(inspectionAnimationFrame(0).seconds).toBeCloseTo(2.5)
     for (const invalid of [-1, animationFrames, 0.5, NaN]) {
       expect(() => angleAnimationFrame(invalid)).toThrow(RangeError)
       expect(() => distanceAnimationFrame(invalid)).toThrow(RangeError)
