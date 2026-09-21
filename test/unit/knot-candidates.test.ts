@@ -127,10 +127,13 @@ describe('arbitrary Knot batches', () => {
       'glm',
       'glm_flash',
       'gpt_astra',
+      'gpt_luna',
       'gpt_sol',
+      'gpt_terra',
       'grok',
       'hy',
       'kimi',
+      'minimax',
       'muse_spark',
       'qwen_max',
     ]))
@@ -146,8 +149,11 @@ describe('arbitrary Knot batches', () => {
       'glm-5.3-flash',
       'grok-4.6',
       'kimi-k3',
+      'minimax-m3',
       'qwen-3.8-max',
+      'gpt-5.6-luna',
       'gpt-5.6-sol',
+      'gpt-5.6-terra',
       'claude-fable-5.1',
       'muse-spark-1.3',
       'muse-spark',
@@ -157,6 +163,7 @@ describe('arbitrary Knot batches', () => {
   test('uses candidate titles independently from author model titles', () => {
     expect(Object.fromEntries(knotCandidates.map(candidate => [candidate.data.id, candidate.data.title]))).toMatchObject({
       gpt_astra: 'GPT Astra',
+      gpt_luna: 'GPT Luna',
       claude_fable: 'Claude Fable',
       gemini_flash: 'Gemini Flash',
       glm: 'GLM',
@@ -164,9 +171,11 @@ describe('arbitrary Knot batches', () => {
       grok: 'Grok',
       hy: 'Hy',
       kimi: 'Kimi',
+      minimax: 'MiniMax M3',
       muse_spark: 'Muse Spark',
       qwen_max: 'Qwen Max',
       gpt_sol: 'GPT Sol',
+      gpt_terra: 'GPT Terra',
       claude_sonnet: 'Claude Sonnet',
       claude_opus: 'Claude Opus',
     })
@@ -227,15 +236,24 @@ describe('arbitrary Knot batches', () => {
     expect(codex.every(entry => entry.candidate.id === 'gpt_astra')).toBe(true)
     expect(legacy.every(entry => entry.harness === undefined)).toBe(true)
     const astraMage = knots.filter(entry => entry.candidate.id === 'gpt_astra' && entry.harness === 'Mage')
-    expect(astraMage).toHaveLength(12)
+    expect(astraMage).toHaveLength(20)
     expect(astraMage.every(entry => entry.author.model.title === 'GPT-6 Astra' && entry.author.model.slug === 'openai/gpt-6-astra')).toBe(true)
     expect(Object.fromEntries(Map.groupBy(astraMage, entry => entry.author.model.effortLevel).entries().map(([effort, grouped]) => [effort, grouped.length]))).toEqual({
-      high: 6,
+      high: 14,
       max: 6,
     })
     const deepseekMage = knots.filter(entry => entry.candidate.id === 'deepseek' && entry.harness === 'Mage')
     expect(deepseekMage).toHaveLength(8)
     expect(deepseekMage.every(entry => entry.author.model.title === 'DeepSeek 4.1 Flash' && entry.author.model.slug === 'deepseek/deepseek-4.1-flash' && entry.author.model.effortLevel === 'xhigh')).toBe(true)
+    const lunaMage = knots.filter(entry => entry.candidate.id === 'gpt_luna' && entry.harness === 'Mage')
+    expect(lunaMage).toHaveLength(8)
+    expect(lunaMage.every(entry => entry.author.model.title === 'GPT-5.6 Luna' && entry.author.model.slug === 'openai/gpt-5.6-luna' && entry.author.model.effortLevel === 'max')).toBe(true)
+    const terraMage = knots.filter(entry => entry.candidate.id === 'gpt_terra' && entry.harness === 'Mage')
+    expect(terraMage).toHaveLength(8)
+    expect(terraMage.every(entry => entry.author.model.title === 'GPT-5.6 Terra' && entry.author.model.slug === 'openai/gpt-5.6-terra' && entry.author.model.effortLevel === 'max')).toBe(true)
+    const minimaxMage = knots.filter(entry => entry.candidate.id === 'minimax' && entry.harness === 'Mage')
+    expect(minimaxMage).toHaveLength(8)
+    expect(minimaxMage.every(entry => entry.author.model.title === 'MiniMax M3' && entry.author.model.slug === 'minimax/minimax-m3' && entry.author.model.effortLevel === undefined)).toBe(true)
     const astraApi = api.filter(entry => entry.candidate.id === 'gpt_astra')
     const fableApi = api.filter(entry => entry.candidate.id === 'claude_fable')
     const solApi = api.filter(entry => entry.candidate.id === 'gpt_sol')

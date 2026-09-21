@@ -4,11 +4,12 @@ import {color, float, mix, mx_noise_float, normalLocal, positionGeometry, positi
 
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {opticalBands} from '../../lib/opticalBands.ts'
+import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class VelvetNocturneMaterial extends KnotMaterial {
+export default class MidnightVelvetMaterial extends KnotMaterial {
 constructor(environment: Texture) {
   super(environment, 1.05)
   this.name = knotData.id
@@ -44,6 +45,8 @@ constructor(environment: Texture) {
   this.clearcoatRoughness = 0.18
   this.anisotropy = 0.45
   this.transmission = 0
-  this.positionNode = p.add(normalLocal.mul(nap.mul(0.00055).add(fiber.mul(near).mul(0.00018))))
+  const relief = nap.mul(0.00055).add(fiber.mul(near).mul(0.00018))
+  this.positionNode = p.add(normalLocal.mul(relief))
+  this.normalNode = proceduralNormal(relief, 1)
   this.emissiveNode = color('#8731c5').mul(grazing.pow(1.75).mul(0.19).add(intimate.mul(0.022))).mul(near.mul(0.5).add(0.5)).add(color('#d97cff').mul(grazing.pow(5).mul(0.08)))
 }}
