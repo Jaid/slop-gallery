@@ -9,7 +9,7 @@ const validateFrameCount = (frameCount: number) => {
   }
 }
 
-export const av1Crf = 20
+export const av1Crf = 30
 export const av1Preset = 5
 export const av1SvtParams = 'lp=4:enable-variance-boost=1:film-grain=0:tune=0:input-depth=8'
 

@@ -113,7 +113,7 @@ describe('animated icons', () => {
       const pattern = join(dir, '%03d.png')
       const filter = "format=rgba,geq=r='mod(N*2,255)':g='X*10':b=120:a='if(lt(X,8),0,255)'"
       await Bun.$`ffmpeg -hide_banner -loglevel error -y -f lavfi -i nullsrc=size=64x64:rate=60:duration=2 -vf ${filter} -frames:v 120 ${pattern}`.quiet()
-      expect([av1Preset, av1Crf]).toEqual([5, 20])
+      expect([av1Preset, av1Crf]).toEqual([5, 30])
       expect(av1SvtParams).toBe('lp=4:enable-variance-boost=1:film-grain=0:tune=0:input-depth=8')
       const output = await encodeAnimation(dir)
       expect(output).toEndWith('.webm')
