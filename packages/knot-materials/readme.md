@@ -84,16 +84,7 @@ Knottingham displays up to four non-archived entries per candidate and up to eig
 
 Knottingham alone recognizes `?rarity=true|false|edit`. The default is `true`. With `false`, both selection under the shot limit and row ordering use canonical ID order, ignoring rarity. Stars remain visible for rated entries; unknown entries have no stars. With `edit`, the initial selection/order still uses rarity, but interacting with a knot's nameplate (the existing E action) cycles 0 (unknown) → 1 → 2 → 3 → 4 → 0 (unknown). The star strip updates immediately without rebuilding the atlas shader, relocating signs, or reselecting knots mid-edit. Changes remain local to the page session; they do not write source files.
 
-Each edit emits a `knot.rarity.changed` log and trace through the application's Victoria client and same-origin relay. Records include `knot.id`, `knot.candidate.id`, `rarity.baseline`, `rarity.previous`, `rarity.value`, and `edit.sequence`, with the telemetry session ID and timestamp. The UI says “telemetry queued,” not “saved”: `victoria-browser-client` owns the bounded retrying delivery queue. When telemetry is disabled, editing is rejected with a visible explanation instead of silently losing the decision. Enable telemetry and provide its relay before editing.
-
-Retrieve real choices from VictoriaLogs with:
-
-```text
-service.name:=knottingham event.name:=knot.rarity.changed _time:7d
-| sort by(_time desc)
-```
-
-For each `knot.id`, use its newest real edit's `rarity.value` when applying choices to `src/rarities.ts`; the baseline and previous values support review. Synthetic relay checks use the separate `knottingham-rarity-test` service and are excluded by that query.
+Rarity edits are intentionally session-local and emit no telemetry events. Native WebMCP exposes `dump_knots`, which returns every knot currently present in the world as an array of `{id, name, position, rarity}` records using the live edited rarity values. A curation workflow is therefore: enter `?rarity=edit` (optionally with `rarity_filter`), edit signs, call `dump_knots`, and use that dump to update `src/rarities.ts` explicitly.
 
 Plate numbers are assigned only after final filtering. Candidate billboard composites are built at runtime from the selected entries' individual icons and current labels, so selection and numbering changes require no asset regeneration.
 

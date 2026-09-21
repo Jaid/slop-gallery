@@ -11,6 +11,8 @@ import StudioEnvironment from 'knot-materials/StudioEnvironment.ts'
 import {cameraPosition, positionView} from 'three/tsl'
 import {EquirectangularReflectionMapping, FloatType} from 'three/webgpu'
 
+import {knotRarityEditor} from '../../src/levels/knottingham/rarity.ts'
+import dumpKnots from '../../src/levels/knottingham/webmcp.ts'
 import {insideKnotGallery, knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
 
 describe('multi-model Knot challenge', () => {
@@ -37,6 +39,29 @@ describe('multi-model Knot challenge', () => {
     }
     expect(knotsById.get('stained_requiem')?.title).toBe('Stained Requiem')
     expect(knotsById.get('event_horizon')?.modelTitle).toBe('Claude Fable 5.1')
+  })
+  test('dumps the current world selection and live session rarities', () => {
+    const before = dumpKnots()
+    expect(before).toHaveLength(knotExhibition.length)
+    for (const [index, exhibit] of knotExhibition.entries()) {
+      expect(before[index]).toEqual({
+        id: exhibit.id,
+        name: exhibit.title,
+        position: [exhibit.position[0], knotFloatHeight, exhibit.position[2]],
+        rarity: exhibit.rarity,
+      })
+    }
+    const exhibit = knotExhibition[0]
+    const baseline = exhibit.rarity
+    const edited = knotRarityEditor.cycle(exhibit.id)
+    try {
+      expect(dumpKnots().find(item => item.id === exhibit.id)?.rarity).toBe(edited)
+    } finally {
+      for (let count = 0; count < 4; count++) {
+        knotRarityEditor.cycle(exhibit.id)
+      }
+      expect(knotRarityEditor.getSnapshot().get(exhibit.id)).toBe(baseline)
+    }
   })
   test('keeps every floating Knot inside the expanded lobby with walking clearance', () => {
     for (const [index, exhibit] of knotExhibition.entries()) {

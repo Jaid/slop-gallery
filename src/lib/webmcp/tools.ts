@@ -1,8 +1,17 @@
 import type {AimSnapshot} from 'ego-player'
+import type {Rarity} from 'knot-materials/rarities.ts'
 import type VictoriaClient from 'victoria-browser-client'
+
+export type KnotDump = {
+  id: string
+  name: string
+  position: [number, number, number]
+  rarity: Rarity
+}
 
 export type WebmcpBridge = {
   getAim: () => AimSnapshot
+  getKnots: () => ReadonlyArray<KnotDump>
   getTelemetry: () => {
     collection: ReturnType<VictoriaClient['collectionStatus']>
     delivery: ReturnType<VictoriaClient['status']>
@@ -23,6 +32,12 @@ export default function createWebmcpTools(getBridge: () => WebmcpBridge): Array<
       title: 'Inspect telemetry delivery',
       description: 'Read the current session ID, collection limits and Victoria delivery status, or null when telemetry is disabled. Use the session ID to correlate VictoriaLogs, VictoriaMetrics, VictoriaTraces and X-key ego.dump records. Does not enable telemetry or send data.',
       read: () => getBridge().getTelemetry(),
+    },
+    {
+      name: 'dump_knots',
+      title: 'Dump current Knots',
+      description: 'Return every Knot currently present in the level with its canonical ID, display name, world position and current session rarity. In Knottingham rarity edit mode, this includes unsaved sign edits. Other levels return an empty array.',
+      read: () => getBridge().getKnots(),
     },
   ].map(({read, ...tool}) => ({
     ...tool,

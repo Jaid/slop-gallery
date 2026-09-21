@@ -1,5 +1,3 @@
-import type {RarityChange} from '../src/KnotRarityEditor.ts'
-
 import {describe, expect, test} from 'bun:test'
 
 import parseCandidateOrder from '../src/candidateOrder.ts'
@@ -115,8 +113,7 @@ describe('candidate ordering', () => {
 })
 describe('session rarity editor', () => {
   test.each([0, 1, 2, 3, 4] as const)('cycles all five rarities from %i without mutating source rarity or layout', initial => {
-    const changes: Array<RarityChange> = []
-    const editor = new KnotRarityEditor(knots, change => changes.push(change))
+    const editor = new KnotRarityEditor(knots)
     const item = knots.find(entry => entry.rarity === initial)!
     const original = editor.getSnapshot()
     const layout = selectKnotBays('?rarity=edit')
@@ -125,28 +122,17 @@ describe('session rarity editor', () => {
     const cycle = [0, 1, 2, 3, 4] as const
     const expected = [...cycle.slice(initial + 1), ...cycle.slice(0, initial + 1)]
     for (const value of expected) {
-      expect(editor.cycle(item.id).value).toBe(value)
+      expect(editor.cycle(item.id)).toBe(value)
       expect(editor.getSnapshot().get(item.id)).toBe(value)
       expect(item.rarity).toBe(initial)
     }
     expect(original.get(item.id)).toBe(initial)
     expect(editor.getSnapshot()).not.toBe(original)
-    expect(changes.map(change => change.sequence)).toEqual([1, 2, 3, 4, 5])
-    expect(changes.map(change => change.previous)).toEqual([initial, ...expected.slice(0, -1)])
-    expect(changes.every(change => change.baseline === initial && change.candidateId === item.candidateId)).toBe(true)
     expect(notifications).toBe(5)
     expect(selectKnotBays('?rarity=edit')).toEqual(layout)
     unsubscribe()
     editor.cycle(item.id)
     expect(notifications).toBe(5)
     expect(() => editor.cycle('not_a_knot')).toThrow('Unknown Knot ID')
-  })
-  test('does not show an accepted edit when recording fails', () => {
-    const editor = new KnotRarityEditor(knots, () => {
-      throw new Error('Recorder unavailable')
-    })
-    const initial = editor.getSnapshot()
-    expect(() => editor.cycle(knots[0].id)).toThrow('Recorder unavailable')
-    expect(editor.getSnapshot()).toBe(initial)
   })
 })
