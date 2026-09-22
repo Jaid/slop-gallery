@@ -19,9 +19,7 @@
   },
   "dependencies": {
     "fs-extra": "11.4.0",
-    "make-argv": "0.1.0",
-    "msgpackr": "2.1.0",
-    "tinyhand": "0.2.0",
+    "voice-sample-store": "workspace:*",
     "@babel/parser": "8.0.6"
   },
   "peerDependencies": {
@@ -29,5 +27,8 @@
   },
   "devDependencies": {
     "vite": "8.3.0"
-  }
+  },
+  "workspaces": [
+    "packages/*"
+  ]
 }

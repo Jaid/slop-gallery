@@ -1,27 +1,21 @@
-import type {App, VoiceSampleFormat, VoiceSampleLoadType, VoiceSamplePluginOptions, VoiceSampleRequest} from './types.ts'
+import type {VoiceSampleLoadType, VoiceSamplePluginOptions, VoiceSampleRequest} from './types.ts'
 import type {Plugin, ResolvedConfig} from 'vite'
+import type {VoiceSampleFormat} from 'voice-sample-store'
 
-import {isAbsolute, resolve} from 'node:path'
+import {createHash} from 'node:crypto'
 
 import {parse} from '@babel/parser'
 import fs from 'fs-extra'
-import tinyhand from 'tinyhand'
 import {loadEnv, normalizePath} from 'vite'
+import VoiceSampleStore, {defaultVoiceSampleTrimThreshold} from 'voice-sample-store'
 
 import {applyEdits, parseVoiceSampleImports, virtualVoiceSamplePrefix, voiceSourcePrefix} from './imports.ts'
-import {defaultVoiceSampleTrimThreshold} from './trim.ts'
-import VoiceSampleCache from './VoiceSampleCache.ts'
 
 export {voiceSourcePrefix} from './imports.ts'
 
-export {defaultVoiceSampleTrimThreshold, voiceSampleTrimMinimumSilenceSeconds, voiceSampleTrimPaddingSeconds} from './trim.ts'
+export type {VoiceSampleContents, VoiceSampleLoadType, VoiceSamplePluginOptions, VoiceSampleRequest, VoiceSampleValue} from './types.ts'
 
 const resolvedVirtualPrefix = `\0${virtualVoiceSamplePrefix}`
-const defaultApp: App = {
-  title: 'Slop Gallery',
-  url: 'https://slop.gallery',
-}
-
 type VirtualParts = {
   format: VoiceSampleFormat
   key: string
@@ -30,24 +24,7 @@ type VirtualParts = {
 
 const voiceSampleFormats = new Set<VoiceSampleFormat>(['opus', 'pcm', 'timings', 'wav'])
 const voiceSampleLoadTypes = new Set<VoiceSampleLoadType>(['contents', 'reference'])
-const resolveFromRoot = (root: string, path: string) => (isAbsolute(path) ? path : resolve(root, path))
-const normalizeApp = (input: App | string): App => tinyhand((value: App | string): App => {
-  if (typeof value === 'string') {
-    const parsed = new URL(value)
-    if (!parsed.hostname) {
-      throw new TypeError('Voice sample app URL must have a hostname.')
-    }
-    return {
-      title: parsed.hostname,
-      url: value,
-    }
-  }
-  if (!value.title) {
-    throw new TypeError('Voice sample app title must not be empty.')
-  }
-  new URL(value.url)
-  return value
-}, input)
+const requestKey = (request: VoiceSampleRequest) => createHash('sha256').update(JSON.stringify(request)).digest('hex')
 const virtualParts = (source: string): VirtualParts | undefined => {
   const normalized = source.startsWith('\0') ? source.slice(1) : source
   if (!normalized.startsWith(virtualVoiceSamplePrefix)) {
@@ -85,7 +62,7 @@ const binaryModule = (bytes: Uint8Array, nodeLike: boolean) => {
  */
 export default function importVoiceSample(options: VoiceSamplePluginOptions = {}): Plugin {
   let config: ResolvedConfig
-  let cache: VoiceSampleCache
+  let store: VoiceSampleStore
   const requests = new Map<string, VoiceSampleRequest>
   return {
     name: 'import-voice-sample',
@@ -93,19 +70,25 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
     configResolved(resolved) {
       config = resolved
       const env = loadEnv(config.mode, config.root, '')
-      const folder = resolveFromRoot(config.root, options.folder ?? 'temp/vite-plugin-import-voice-sample')
-      const cacheFolder = options.cacheFolder ? resolveFromRoot(config.root, options.cacheFolder) : resolve(folder, 'cache')
-      const storageFolder = options.storageFolder ? resolveFromRoot(config.root, options.storageFolder) : resolve(folder, 'store')
-      cache = new VoiceSampleCache({
+      store = new VoiceSampleStore({
+        rootFolder: config.root,
         apiKey: options.apiKey || env.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY,
-        app: normalizeApp(options.app ?? defaultApp),
+        app: options.app,
         bitrate: options.bitrate,
-        cacheFolder,
+        cacheFolder: options.cacheFolder,
+        defaults: {
+          format: options.defaults?.format ?? 'opus',
+          language: options.defaults?.language ?? 'en',
+          voice: options.defaults?.voice ?? 'iris',
+        },
         fetch: options.fetch,
         ffmpegPath: options.ffmpegPath,
+        folder: options.folder ?? 'temp/vite-plugin-import-voice-sample',
         model: options.model,
         sampleRate: options.sampleRate,
-        storageFolder,
+        storageFolder: options.storageFolder,
+        trim: options.trim,
+        trimThreshold: options.trimThreshold,
       })
     },
     transform(code, id) {
@@ -131,7 +114,7 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
         return
       }
       const edits = parsed.flatMap(item => {
-        const key = cache.virtualKey(item.request)
+        const key = requestKey(item.request)
         requests.set(key, item.request)
         const source = item.edits[0]
         return [
@@ -157,26 +140,15 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
         this.error(`Unknown voice virtual module "${source}".`)
       }
       if (parts.type === 'contents') {
-        return `${resolvedVirtualPrefix}${parts.format}/contents/${parts.key}`
+        return `${resolvedVirtualPrefix + parts.format}/contents/${parts.key}`
       }
-      if (parts.format === 'timings') {
-        const entry = await cache.getTimings(request)
-        this.addWatchFile(entry.rawPath)
-        this.addWatchFile(entry.metadataPath)
-        const assetId = `${normalizePath(entry.metadataPath)}?url`
-        const resolved = await this.resolve(assetId, importer, {skipSelf: true})
-        return resolved?.id ?? assetId
-      }
-      const entry = await cache.getAudio({
-        ...request,
-        format: parts.format,
-      })
+      const entry = await store.prepare(request)
       this.addWatchFile(entry.rawPath)
       this.addWatchFile(entry.metadataPath)
-      if (entry.audioPath !== entry.rawPath) {
-        this.addWatchFile(entry.audioPath)
+      if (entry.path !== entry.rawPath && entry.path !== entry.metadataPath) {
+        this.addWatchFile(entry.path)
       }
-      const assetId = `${normalizePath(entry.audioPath)}?url`
+      const assetId = `${normalizePath(entry.path)}?url`
       const resolved = await this.resolve(assetId, importer, {skipSelf: true})
       return resolved?.id ?? assetId
     },
@@ -189,27 +161,34 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
       if (!request) {
         this.error(`Unknown voice contents module "${id}".`)
       }
-      if (parts.format === 'timings') {
-        const entry = await cache.getTimings(request)
-        this.addWatchFile(entry.rawPath)
-        this.addWatchFile(entry.metadataPath)
-        return `export default ${JSON.stringify(entry.timings)}`
-      }
-      const entry = await cache.getAudio({
-        ...request,
-        format: parts.format,
-      })
+      const entry = await store.prepare(request)
       this.addWatchFile(entry.rawPath)
       this.addWatchFile(entry.metadataPath)
-      if (entry.audioPath !== entry.rawPath) {
-        this.addWatchFile(entry.audioPath)
+      if (entry.path !== entry.rawPath && entry.path !== entry.metadataPath) {
+        this.addWatchFile(entry.path)
       }
-      const bytes = new Uint8Array(await fs.readFile(entry.audioPath))
+      if (parts.format === 'timings') {
+        return `export default ${JSON.stringify(entry.metadata.timings)}`
+      }
+      const bytes = new Uint8Array(await fs.readFile(entry.path))
       const nodeLike = this.environment.config.consumer === 'server' && this.environment.config.resolve.builtins.includes('buffer')
       return binaryModule(bytes, nodeLike)
     },
   }
 }
 
-export type {App, VoiceSampleAudioFormat, VoiceSampleContents, VoiceSampleFormat, VoiceSampleLoadType, VoiceSampleMetadata, VoiceSamplePluginOptions, VoiceSampleRequest, VoiceSampleTiming, VoiceSampleTrimMetadata, VoiceSampleValue} from './types.ts'
-export {defaultVoiceSampleBitrate} from './VoiceSampleCache.ts'
+export {defaultVoiceSampleBitrate, defaultVoiceSampleTrimThreshold, styleVoiceSampleText, voiceSampleTrimMinimumSilenceSeconds, voiceSampleTrimPaddingSeconds} from 'voice-sample-store'
+export type {
+  App,
+  PreparedVoiceSample,
+  ResolvedVoiceSampleRequest,
+  VoiceSampleAudioFormat,
+  VoiceSampleFetch,
+  VoiceSampleFormat,
+  VoiceSampleMetadata,
+  VoiceSamplePrepareOptions,
+  VoiceSampleStoreDefaults,
+  VoiceSampleStoreOptions,
+  VoiceSampleTiming,
+  VoiceSampleTrimMetadata,
+} from 'voice-sample-store'

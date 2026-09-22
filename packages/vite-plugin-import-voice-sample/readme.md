@@ -2,6 +2,8 @@
 
 Generate and cache static voice samples and character timings from declarative imports.
 
+The Vite plugin is a thin import/runtime adapter over the nested `voice-sample-store` package. Provider requests, raw storage, trimming, timing alignment, and audio conversion live in that reusable store and are also available to standalone scripts through `new VoiceSampleStore({rootFolder, ...})` and `prepare({...})`.
+
 ```ts
 // Uses the default speaker, Iris, returns a URL, and trims quiet outer edges.
 import grokAudioUrl from 'voice:grok' with {

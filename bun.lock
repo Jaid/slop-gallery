@@ -18,7 +18,6 @@
         "ego-player": "workspace:*",
         "es-toolkit": "1.52.0",
         "flatten-string": "0.2.0",
-        "grok-speaker": "workspace:*",
         "knot-materials": "workspace:*",
         "mount-root": "0.5.0",
         "nuqs": "2.10.1",
@@ -39,6 +38,7 @@
         "use-pause-menu": "workspace:*",
         "victoria-browser-client": "0.3.0",
         "vite-plugin-import-voice-sample": "workspace:*",
+        "voice-sample-store": "workspace:*",
         "webgpu-capture-bridge": "workspace:*",
         "zustand": "5.0.15",
       },
@@ -141,13 +141,6 @@
       },
       "peerDependencies": {
         "eslint": "^9.39.0 || ^10.0.0",
-      },
-    },
-    "packages/grok-speaker": {
-      "name": "grok-speaker",
-      "version": "0.1.0",
-      "dependencies": {
-        "optis": "^0.1.0",
       },
     },
     "packages/knot-materials": {
@@ -434,15 +427,23 @@
       "dependencies": {
         "@babel/parser": "8.0.6",
         "fs-extra": "11.4.0",
-        "make-argv": "0.1.0",
-        "msgpackr": "2.1.0",
-        "tinyhand": "0.2.0",
+        "voice-sample-store": "workspace:*",
       },
       "devDependencies": {
         "vite": "8.3.0",
       },
       "peerDependencies": {
         "vite": "^8.3.0",
+      },
+    },
+    "packages/vite-plugin-import-voice-sample/packages/voice-sample-store": {
+      "name": "voice-sample-store",
+      "version": "0.1.0",
+      "dependencies": {
+        "fs-extra": "11.4.0",
+        "make-argv": "0.1.0",
+        "msgpackr": "2.1.0",
+        "tinyhand": "0.2.0",
       },
     },
     "packages/vite-plugin-thematic-chunks": {
@@ -1163,8 +1164,6 @@
 
     "graceful-fs": ["graceful-fs@4.2.11", "", {}, "sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ=="],
 
-    "grok-speaker": ["grok-speaker@workspace:packages/grok-speaker"],
-
     "has-flag": ["has-flag@4.0.0", "", {}, "sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ=="],
 
     "hashery": ["hashery@1.5.1", "", { "dependencies": { "hookified": "^1.15.0" } }, "sha512-iZyKG96/JwPz1N55vj2Ie2vXbhu440zfUfJvSwEqEbeLluk7NnapfGqa7LH0mOsnDxTF85Mx8/dyR6HfqcbmbQ=="],
@@ -1766,6 +1765,8 @@
     "vite-plugin-thematic-chunks": ["vite-plugin-thematic-chunks@workspace:packages/vite-plugin-thematic-chunks"],
 
     "vite-plugin-title": ["vite-plugin-title@0.6.0", "", { "dependencies": { "fs-extra": "^11.3.5" }, "peerDependencies": { "vite": "^8" } }, "sha512-GNS8GAizPccHDFXhao6RTuT0+kg8AjL4yPQfJvL9qi0vsUJNEcgyIT3w7uJmK33ymALQlxXvWb7hiCpDIlx4cQ=="],
+
+    "voice-sample-store": ["voice-sample-store@workspace:packages/vite-plugin-import-voice-sample/packages/voice-sample-store"],
 
     "webdriver-bidi-protocol": ["webdriver-bidi-protocol@0.4.3", "", {}, "sha512-uuN0goWfxP22B7J/uAgBpOYNPttC+XVseYE+rSY5+rQ+YBeVz/VORw8WbmLVcqW78zNg5A4qnjNXYUWR3il2ig=="],
 

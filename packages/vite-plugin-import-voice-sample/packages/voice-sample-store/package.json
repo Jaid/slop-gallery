@@ -1,13 +1,14 @@
 {
-  "name": "grok-speaker",
+  "name": "voice-sample-store",
   "version": "0.1.0",
   "type": "module",
-  "description": "Quality-mode Grok TTS with warm PCM streaming, WAV generation and typed speech tags",
+  "description": "Cached OpenRouter voice synthesis, trimming, timings and audio conversion.",
   "funding": "https://github.com/sponsors/Jaid",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Jaid/slop-gallery.git"
+    "url": "git+https://github.com/Jaid/slop-gallery.git",
+    "directory": "packages/vite-plugin-import-voice-sample/packages/voice-sample-store"
   },
   "main": "src/main.ts",
   "exports": {
@@ -17,12 +18,14 @@
     "test": "bun test --max-concurrency 1 ./test"
   },
   "dependencies": {
-    "optis": "^0.1.0"
+    "fs-extra": "11.4.0",
+    "make-argv": "0.1.0",
+    "msgpackr": "2.1.0",
+    "tinyhand": "0.2.0"
   },
   "files": [
     "src",
-    "readme.md",
-    "license.txt"
+    "readme.md"
   ],
   "sideEffects": false,
   "types": "./src/main.ts"

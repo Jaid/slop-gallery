@@ -54,7 +54,6 @@
     "ego-player": "workspace:*",
     "es-toolkit": "1.52.0",
     "flatten-string": "0.2.0",
-    "grok-speaker": "workspace:*",
     "knot-materials": "workspace:*",
     "mount-root": "0.5.0",
     "nuqs": "2.10.1",
@@ -74,14 +73,15 @@
     "use-narrator": "workspace:*",
     "use-pause-menu": "workspace:*",
     "victoria-browser-client": "0.3.0",
+    "vite-plugin-import-voice-sample": "workspace:*",
+    "voice-sample-store": "workspace:*",
     "webgpu-capture-bridge": "workspace:*",
     "zustand": "5.0.15",
     "@dimforge/rapier3d-compat": "0.20.0",
     "@openrouter/ai-sdk-provider": "3.1.0",
     "@react-three/drei": "11.0.0-alpha.7",
     "@react-three/fiber": "10.0.0-alpha.5",
-    "@react-three/rapier": "2.2.0",
-    "vite-plugin-import-voice-sample": "workspace:*"
+    "@react-three/rapier": "2.2.0"
   },
   "devDependencies": {
     "autoprefixer": "10.6.1",
@@ -129,6 +129,7 @@
     "packages/use-narrator/packages/*",
     "packages/vite-plugin-bake-branch-component/packages/*",
     "packages/vite-plugin-bake-three/packages/*",
-    "packages/vite-plugin-hoist-popular-constants/packages/*"
+    "packages/vite-plugin-hoist-popular-constants/packages/*",
+    "packages/vite-plugin-import-voice-sample/packages/*"
   ]
 }

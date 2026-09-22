@@ -1,4 +1,4 @@
-import type {App, VoiceSampleAudioFormat, VoiceSampleFetch, VoiceSampleMetadata, VoiceSampleRequest, VoiceSampleTiming} from './types.ts'
+import type {App, ResolvedVoiceSampleRequest, VoiceSampleAudioFormat, VoiceSampleFetch, VoiceSampleMetadata, VoiceSampleTiming} from './types.ts'
 
 import {execFile} from 'node:child_process'
 import {createHash, randomUUID} from 'node:crypto'
@@ -24,6 +24,7 @@ export const defaultVoiceSampleBitrate = (sampleRate: number) => Math.round(0.68
 
 export type VoiceSampleCacheEntry = {
   audioPath: string
+  metadata: VoiceSampleMetadata
   metadataPath: string
   rawPath: string
   timings: ReadonlyArray<VoiceSampleTiming>
@@ -277,31 +278,33 @@ export default class VoiceSampleCache {
     })).digest('hex')
   }
 
-  async getAudio(request: VoiceSampleRequest & {format: VoiceSampleAudioFormat}): Promise<VoiceSampleCacheEntry> {
+  async getAudio(request: ResolvedVoiceSampleRequest & {format: VoiceSampleAudioFormat}): Promise<VoiceSampleCacheEntry> {
     const key = this.key(request)
     const stored = await this.#getStored(request, key)
     const prepared = await this.#prepare(request, key, stored)
     const audioPath = await this.#getAudio(request.format, prepared.sourceKey, prepared.wavPath)
     return {
       audioPath,
+      metadata: prepared.metadata,
       metadataPath: prepared.metadataPath,
       rawPath: stored.rawPath,
       timings: prepared.metadata.timings,
     }
   }
 
-  async getTimings(request: VoiceSampleRequest) {
+  async getTimings(request: ResolvedVoiceSampleRequest) {
     const key = this.key(request)
     const stored = await this.#getStored(request, key)
     const prepared = await this.#prepare(request, key, stored)
     return {
+      metadata: prepared.metadata,
       metadataPath: prepared.metadataPath,
       rawPath: stored.rawPath,
       timings: prepared.metadata.timings,
     }
   }
 
-  key(request: VoiceSampleRequest) {
+  key(request: ResolvedVoiceSampleRequest) {
     const synthesis = {
       language: request.language,
       text: request.text,
@@ -331,16 +334,6 @@ export default class VoiceSampleCache {
       paddingSeconds: voiceSampleTrimPaddingSeconds,
       source: key,
       trimThreshold,
-    })).digest('hex')
-  }
-
-  virtualKey(request: VoiceSampleRequest) {
-    return createHash('sha256').update(JSON.stringify({
-      format: request.format,
-      source: this.key(request),
-      trim: request.trim,
-      ...request.trim ? {trimThreshold: request.trimThreshold} : {},
-      type: request.type,
     })).digest('hex')
   }
 
@@ -398,7 +391,7 @@ export default class VoiceSampleCache {
     }
   }
 
-  async #generateStored(request: VoiceSampleRequest, key: string): Promise<StoredVoiceSample> {
+  async #generateStored(request: ResolvedVoiceSampleRequest, key: string): Promise<StoredVoiceSample> {
     if (!this.#apiKey) {
       throw new Error('OPENROUTER_API_KEY is required to generate an uncached voice sample.')
     }
@@ -488,7 +481,7 @@ export default class VoiceSampleCache {
     }
   }
 
-  async #getStored(request: VoiceSampleRequest, key: string) {
+  async #getStored(request: ResolvedVoiceSampleRequest, key: string) {
     const cached = await this.#readStored(key)
     if (cached) {
       return cached
@@ -506,7 +499,7 @@ export default class VoiceSampleCache {
     }
   }
 
-  async #prepare(request: VoiceSampleRequest, key: string, stored: StoredVoiceSample): Promise<PreparedVoiceSample> {
+  async #prepare(request: ResolvedVoiceSampleRequest, key: string, stored: StoredVoiceSample): Promise<PreparedVoiceSample> {
     if (!request.trim) {
       return {
         ...stored,

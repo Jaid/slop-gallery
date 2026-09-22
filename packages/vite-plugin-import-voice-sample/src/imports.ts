@@ -1,4 +1,5 @@
-import type {VoiceSampleFormat, VoiceSampleLoadType, VoiceSampleRequest} from './types.ts'
+import type {VoiceSampleLoadType, VoiceSampleRequest} from './types.ts'
+import type {VoiceSampleFormat} from 'voice-sample-store'
 
 export type VoiceSampleDefaults = Pick<VoiceSampleRequest, 'format' | 'language' | 'trim' | 'trimThreshold' | 'voice'> & Partial<Pick<VoiceSampleRequest, 'type'>>
 

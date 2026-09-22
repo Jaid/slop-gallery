@@ -1,17 +1,14 @@
-import type {VoiceSampleFetch, VoiceSampleMetadata} from '../src/types.ts'
 import type {InlineConfig, Rollup} from 'vite'
+import type {VoiceSampleFetch} from 'voice-sample-store'
 
 import {afterEach, describe, expect, test} from 'bun:test'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 
 import fs from 'fs-extra'
-import {unpack} from 'msgpackr'
 import {build} from 'vite'
 
-import {styleVoiceSampleText} from '../src/emotion.ts'
-import importVoiceSample from '../src/main.ts'
-import VoiceSampleCache, {defaultVoiceSampleBitrate} from '../src/VoiceSampleCache.ts'
+import importVoiceSample, {defaultVoiceSampleBitrate, styleVoiceSampleText} from '../src/main.ts'
 
 const directories: Array<string> = []
 const temporaryDirectory = async () => {
@@ -300,23 +297,6 @@ describe('vite-plugin-import-voice-sample', () => {
     expect(metadataName).toBeDefined()
     const rawWav = await fs.readFile(join(store, wavName!))
     expect(rawWav.subarray(0, 4).toString()).toBe('RIFF')
-    expect(unpack(await fs.readFile(join(store, metadataName!)))).toEqual({
-      duration: 0.1,
-      sampleRate: 24_000,
-      timings: [
-        {
-          char: 'H',
-          start: 0,
-          end: 0.04,
-        },
-        {
-          char: 'i',
-          start: 0.04,
-          end: 0.1,
-        },
-      ],
-      traceId: 'trace-id',
-    })
     expect(await fs.pathExists(join(directory, 'cache'))).toBe(false)
     const code = outputCode(result)
     expect(code).toMatch(/char:\s*"H"/u)
@@ -361,111 +341,6 @@ describe('vite-plugin-import-voice-sample', () => {
     expect(defaultVoiceSampleBitrate(24_000)).toBe(Math.round(0.68266 * 24_000))
     expect(defaultVoiceSampleBitrate(24_000)).toBe(16_384)
     expect(defaultVoiceSampleBitrate(48_000)).toBe(32_768)
-    const storeEntries = await fs.readdir(join(root, 'temp/vite-plugin-import-voice-sample/store'))
-    const metadataName = storeEntries.find(file => file.endsWith('.msgpack'))
-    expect(metadataName).toBeDefined()
-    expect(unpack(await fs.readFile(join(root, 'temp/vite-plugin-import-voice-sample/store', metadataName!)))).toMatchObject({sampleRate: 48_000})
-  })
-  test('trim derivatives shift timings onto the retained audio timeline', async () => {
-    const root = await temporaryDirectory()
-    let calls = 0
-    const cache = new VoiceSampleCache({
-      apiKey: 'test-key',
-      app: {
-        title: 'Slop Gallery',
-        url: 'https://slop.gallery',
-      },
-      cacheFolder: join(root, 'cache'),
-      fetch: async () => {
-        calls++
-        return trimResponse()
-      },
-      storageFolder: join(root, 'store'),
-    })
-    const base = {
-      language: 'en',
-      text: 'Trim me',
-      trimThreshold: -50,
-      type: 'reference' as const,
-      voice: 'iris',
-    }
-    const trimmedRequest = {
-      ...base,
-      format: 'wav' as const,
-      trim: true,
-    }
-    const timingsRequest = {
-      ...base,
-      format: 'timings' as const,
-      trim: true,
-    }
-    const untrimmedRequest = {
-      ...base,
-      format: 'wav' as const,
-      trim: false,
-    }
-    const strictRequest = {
-      ...base,
-      format: 'wav' as const,
-      trim: true,
-      trimThreshold: -60,
-    }
-    expect(cache.key(trimmedRequest)).toBe(cache.key(untrimmedRequest))
-    expect(cache.key(trimmedRequest)).toBe(cache.key(strictRequest))
-    const trimmed = await cache.getAudio(trimmedRequest)
-    const timings = await cache.getTimings(timingsRequest)
-    const untrimmed = await cache.getAudio(untrimmedRequest)
-    const strict = await cache.getAudio(strictRequest)
-    expect(calls).toBe(1)
-    expect(trimmed.rawPath).toBe(untrimmed.rawPath)
-    expect(trimmed.audioPath).not.toBe(trimmed.rawPath)
-    expect(untrimmed.audioPath).toBe(untrimmed.rawPath)
-    expect(strict.audioPath).not.toBe(strict.rawPath)
-    expect(timings.metadataPath).toBe(trimmed.metadataPath)
-    const trimmedMetadata = unpack(await fs.readFile(trimmed.metadataPath)) as VoiceSampleMetadata
-    expect(trimmedMetadata).toMatchObject({
-      duration: 0.12,
-      sampleRate: 24_000,
-      traceId: 'trim-trace',
-      trim: {
-        changed: true,
-        minimumSilenceSeconds: 0.02,
-        paddingSeconds: 0.01,
-        removedEndSeconds: 0.04,
-        removedStartSeconds: 0.02,
-        sourceDuration: 0.18,
-        thresholdDb: -50,
-      },
-    })
-    expect(trimmedMetadata.timings).toHaveLength(4)
-    expect(trimmedMetadata.timings[0]).toEqual({
-      char: '<',
-      start: 0,
-      end: 0,
-    })
-    expect(trimmedMetadata.timings[1].start).toBeCloseTo(0.01)
-    expect(trimmedMetadata.timings[1].end).toBeCloseTo(0.07)
-    expect(trimmedMetadata.timings[2].start).toBeCloseTo(0.07)
-    expect(trimmedMetadata.timings[2].end).toBeCloseTo(0.12)
-    expect(trimmedMetadata.timings[3]).toEqual({
-      char: '>',
-      start: 0.12,
-      end: 0.12,
-    })
-    expect(timings.timings).toEqual(trimmedMetadata.timings)
-    const trimmedWav = await fs.readFile(trimmed.audioPath)
-    expect((trimmedWav.byteLength - 44) / 2 / 24_000).toBeCloseTo(0.12)
-    const strictMetadata = unpack(await fs.readFile(strict.metadataPath)) as VoiceSampleMetadata
-    expect(strictMetadata).toMatchObject({
-      duration: 0.18,
-      trim: {
-        changed: false,
-        removedEndSeconds: 0,
-        removedStartSeconds: 0,
-        thresholdDb: -60,
-      },
-    })
-    expect(strict.metadataPath).not.toBe(trimmed.metadataPath)
   })
   test('plugin trim defaults can be overridden by import attributes without resynthesizing', async () => {
     const root = await temporaryDirectory()
@@ -497,99 +372,6 @@ describe('vite-plugin-import-voice-sample', () => {
     const cacheFiles = await fs.readdir(join(folder, 'cache'))
     expect(cacheFiles.filter(file => file.endsWith('.wav'))).toHaveLength(2)
     expect(cacheFiles.filter(file => file.endsWith('.msgpack'))).toHaveLength(2)
-    const metadata = await Promise.all(cacheFiles.filter(file => file.endsWith('.msgpack')).map(async file => unpack(await fs.readFile(join(folder, 'cache', file))) as VoiceSampleMetadata))
-    expect(metadata.map(item => item.trim!.thresholdDb).toSorted((a, b) => a - b)).toEqual([-60, -50])
-    expect(metadata.map(item => item.trim!.changed).toSorted((a, b) => Number(a) - Number(b))).toEqual([false, true])
-  })
-  test('shares raw storage across audio formats and caches only requested Opus and PCM conversions', async () => {
-    const root = await temporaryDirectory()
-    let calls = 0
-    const cache = new VoiceSampleCache({
-      apiKey: 'test-key',
-      app: {
-        title: 'Slop Gallery',
-        url: 'https://slop.gallery',
-      },
-      cacheFolder: join(root, 'cache'),
-      fetch: async () => {
-        calls++
-        return response()
-      },
-      storageFolder: join(root, 'store'),
-    })
-    const base = {
-      language: 'en',
-      text: 'Shared sample',
-      trim: false,
-      trimThreshold: -50,
-      type: 'reference' as const,
-      voice: 'iris',
-    }
-    const opusRequest = {
-      ...base,
-      format: 'opus' as const,
-    }
-    const pcmRequest = {
-      ...base,
-      format: 'pcm' as const,
-    }
-    const wavRequest = {
-      ...base,
-      format: 'wav' as const,
-    }
-    const contentsRequest = {
-      ...opusRequest,
-      type: 'contents' as const,
-    }
-    expect(cache.key(opusRequest)).toBe(cache.key(pcmRequest))
-    expect(cache.key(opusRequest)).toBe(cache.key(wavRequest))
-    expect(cache.key(opusRequest)).toBe(cache.key(contentsRequest))
-    const opusEntry = await cache.getAudio(opusRequest)
-    const pcmEntry = await cache.getAudio(pcmRequest)
-    const wavEntry = await cache.getAudio(wavRequest)
-    expect(calls).toBe(1)
-    expect(opusEntry.rawPath).toBe(pcmEntry.rawPath)
-    expect(opusEntry.rawPath).toBe(wavEntry.rawPath)
-    expect(wavEntry.audioPath).toBe(wavEntry.rawPath)
-    expect(opusEntry.audioPath).toEndWith('.opus')
-    expect(pcmEntry.audioPath).toEndWith('.pcm')
-    const opus = await fs.readFile(opusEntry.audioPath)
-    expect(opus.subarray(0, 4).toString()).toBe('OggS')
-    expect(await fs.readFile(pcmEntry.audioPath)).toEqual(pcm())
-    const storeFiles = await fs.readdir(join(root, 'store'))
-    expect(storeFiles.toSorted()).toEqual([
-      `${cache.key(opusRequest)}.msgpack`,
-      `${cache.key(opusRequest)}.wav`,
-    ])
-    const rawKey = cache.key(opusRequest)
-    const opusKey = cache.cacheKey(rawKey, 'opus')
-    const cacheFiles = await fs.readdir(join(root, 'cache'))
-    expect(cacheFiles.toSorted()).toEqual([
-      `${opusKey}.opus`,
-      `${rawKey}.pcm`,
-    ].toSorted())
-    expect(storeFiles.some(file => file.endsWith('.pcm'))).toBe(false)
-    const otherBitrate = new VoiceSampleCache({
-      app: {
-        title: 'Slop Gallery',
-        url: 'https://slop.gallery',
-      },
-      bitrate: 96_000,
-      cacheFolder: join(root, 'cache'),
-      fetch: async () => {
-        throw new Error('raw store should be reused')
-      },
-      storageFolder: join(root, 'store'),
-    })
-    expect(otherBitrate.key(opusRequest)).toBe(rawKey)
-    expect(otherBitrate.cacheKey(rawKey, 'opus')).not.toBe(opusKey)
-    const otherOpus = await otherBitrate.getAudio(opusRequest)
-    expect(otherOpus.rawPath).toBe(opusEntry.rawPath)
-    expect(otherOpus.audioPath).not.toBe(opusEntry.audioPath)
-    const reusedStoreFiles = await fs.readdir(join(root, 'store'))
-    const finalCacheFiles = await fs.readdir(join(root, 'cache'))
-    expect(reusedStoreFiles.toSorted()).toEqual(storeFiles.toSorted())
-    expect(finalCacheFiles.filter(file => file.endsWith('.opus'))).toHaveLength(2)
   })
   test('rejects removed or invalid import attributes', async () => {
     const root = await temporaryDirectory()
