@@ -222,7 +222,7 @@ export default class VoiceSampleCache {
   }
 
   key(request: VoiceSampleRequest) {
-    const {format: _format, ...synthesis} = request
+    const {format: _format, type: _type, ...synthesis} = request
     return createHash('sha256').update(JSON.stringify({
       model: this.#model,
       storageSchema,

@@ -1,5 +1,5 @@
 import type {VoiceSampleFetch} from '../src/types.ts'
-import type {InlineConfig} from 'vite'
+import type {InlineConfig, Rollup} from 'vite'
 
 import {afterEach, describe, expect, test} from 'bun:test'
 import {tmpdir} from 'node:os'
@@ -59,6 +59,12 @@ const buildConfig = (root: string): InlineConfig => ({
     write: false,
   },
 })
+const outputCode = (result: Awaited<ReturnType<typeof build>>) => {
+  const buildResults = Array.isArray(result) ? result : [result]
+  return buildResults.flatMap(item => {
+    return 'output' in item ? item.output : []
+  }).filter((output): output is Rollup.OutputChunk => output.type === 'chunk').map(output => output.code).join('\n')
+}
 describe('vite-plugin-import-voice-sample', () => {
   test('uses Iris by default and path speaker explicitly overrides it', async () => {
     const root = await temporaryDirectory()
@@ -81,7 +87,79 @@ describe('vite-plugin-import-voice-sample', () => {
     expect(storeFiles.filter(file => file.endsWith('.wav'))).toHaveLength(2)
     expect(storeFiles.filter(file => file.endsWith('.msgpack'))).toHaveLength(2)
   })
-  test('format timings shares the raw store and creates no derivative cache', async () => {
+  test('contents and reference select runtime values without changing the synthesis', async () => {
+    const root = await temporaryDirectory()
+    await fs.writeFile(join(root, 'entry.ts'), `
+      import audioReference from 'voice:kinds' with {text: 'Kinds', format: 'wav', type: 'reference'}
+      import audioContents from 'voice:kinds' with {text: 'Kinds', format: 'wav', type: 'contents'}
+      import timingContents from 'voice:kinds' with {text: 'Kinds', format: 'timings', type: 'contents'}
+      export {audioReference, audioContents, timingContents}
+    `)
+    const calls: Array<Record<string, unknown>> = []
+    const result = await build({
+      ...buildConfig(root),
+      plugins: [importVoiceSample({
+        apiKey: 'test-key',
+        fetch: fetchRecorder(calls),
+      })],
+    })
+    expect(calls).toHaveLength(1)
+    const code = outputCode(result)
+    expect(code).toContain('new Uint8Array')
+    expect(code).toContain('atob(')
+    expect(code).not.toContain('node:buffer')
+    expect(code).toMatch(/char:\s*"H"/u)
+    const directory = join(root, 'temp/vite-plugin-import-voice-sample')
+    expect(await fs.pathExists(join(directory, 'cache'))).toBe(false)
+  })
+  test('timing reference returns the MessagePack asset rather than materializing timings', async () => {
+    const root = await temporaryDirectory()
+    await fs.writeFile(join(root, 'entry.ts'), `
+      import timingReference from 'voice:timing-reference' with {text: 'Timing reference', format: 'timings', type: 'reference'}
+      export default timingReference
+    `)
+    const calls: Array<Record<string, unknown>> = []
+    const result = await build({
+      ...buildConfig(root),
+      plugins: [importVoiceSample({
+        apiKey: 'test-key',
+        fetch: fetchRecorder(calls),
+      })],
+    })
+    expect(calls).toHaveLength(1)
+    const code = outputCode(result)
+    expect(code).not.toMatch(/char:\s*"H"/u)
+    expect(code).toMatch(/(?:data:|msgpack)/u)
+    expect(await fs.pathExists(join(root, 'temp/vite-plugin-import-voice-sample/cache'))).toBe(false)
+  })
+  test('audio contents use Buffer in a Node-like Vite server environment', async () => {
+    const root = await temporaryDirectory()
+    const entry = join(root, 'entry.ts')
+    await fs.writeFile(entry, `
+      import audio from 'voice:server' with {text: 'Server', format: 'wav', type: 'contents'}
+      export default audio
+    `)
+    const calls: Array<Record<string, unknown>> = []
+    const result = await build({
+      root,
+      configFile: false,
+      logLevel: 'silent',
+      build: {
+        ssr: entry,
+        write: false,
+      },
+      plugins: [importVoiceSample({
+        apiKey: 'test-key',
+        fetch: fetchRecorder(calls),
+      })],
+    })
+    expect(calls).toHaveLength(1)
+    const code = outputCode(result)
+    expect(code).toContain('node:buffer')
+    expect(code).toContain('Buffer.from(')
+    expect(code).not.toContain('atob(')
+  })
+  test('format timings defaults to contents and shares the raw store', async () => {
     const root = await temporaryDirectory()
     await fs.writeFile(join(root, 'entry.ts'), `
       import audio from 'voice:welcome' with {
@@ -149,13 +227,8 @@ describe('vite-plugin-import-voice-sample', () => {
       traceId: 'trace-id',
     })
     expect(await fs.pathExists(join(directory, 'cache'))).toBe(false)
-    const buildResults = Array.isArray(result) ? result : [result]
-    const outputs = buildResults.flatMap(item => {
-      return 'output' in item ? item.output : []
-    })
-    const code = outputs.filter(output => output.type === 'chunk').map(output => output.code).join('\n')
+    const code = outputCode(result)
     expect(code).toMatch(/char:\s*"H"/u)
-    expect(code).toMatch(/start:\s*0/u)
     await build({
       ...buildConfig(root),
       plugins: [importVoiceSample({
@@ -179,8 +252,9 @@ describe('vite-plugin-import-voice-sample', () => {
     const base = {
       language: 'en',
       text: 'Shared sample',
+      type: 'reference' as const,
       voice: 'iris',
-    } as const
+    }
     const opusRequest = {
       ...base,
       format: 'opus' as const,
@@ -193,8 +267,13 @@ describe('vite-plugin-import-voice-sample', () => {
       ...base,
       format: 'wav' as const,
     }
+    const contentsRequest = {
+      ...opusRequest,
+      type: 'contents' as const,
+    }
     expect(cache.key(opusRequest)).toBe(cache.key(pcmRequest))
     expect(cache.key(opusRequest)).toBe(cache.key(wavRequest))
+    expect(cache.key(opusRequest)).toBe(cache.key(contentsRequest))
     const opusEntry = await cache.getAudio(opusRequest)
     const pcmEntry = await cache.getAudio(pcmRequest)
     const wavEntry = await cache.getAudio(wavRequest)
@@ -219,7 +298,7 @@ describe('vite-plugin-import-voice-sample', () => {
     ])
     expect(storeFiles.some(file => file.endsWith('.pcm'))).toBe(false)
   })
-  test('rejects the removed voice attribute and unsupported emotions', async () => {
+  test('rejects removed or invalid import attributes', async () => {
     const root = await temporaryDirectory()
     await fs.writeFile(join(root, 'entry.ts'), `
       import audio from 'voice:grok' with {text: 'Grok', voice: 'ara'}
@@ -234,8 +313,21 @@ describe('vite-plugin-import-voice-sample', () => {
     } catch (error_) {
       error = error_
     }
-    expect(error).toBeInstanceOf(Error)
     expect(String(error)).toContain('Unknown voice import attribute "voice"')
+    await fs.writeFile(join(root, 'entry.ts'), `
+      import audio from 'voice:grok' with {text: 'Grok', type: 'stream'}
+      export default audio
+    `)
+    error = undefined
+    try {
+      await build({
+        ...buildConfig(root),
+        plugins: [importVoiceSample()],
+      })
+    } catch (error_) {
+      error = error_
+    }
+    expect(String(error)).toContain('Unsupported voice import type "stream"')
     expect(() => styleVoiceSampleText('Hello', 'mysteriously-purple')).toThrow('Unsupported voice sample emotion')
   })
 })

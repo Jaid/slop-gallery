@@ -3,26 +3,40 @@
 Generate and cache static voice samples and character timings from declarative imports.
 
 ```ts
-// Uses the default speaker, Iris.
-import grokAudio from 'voice:grok' with {
+// Uses the default speaker, Iris, and returns a URL by default.
+import grokAudioUrl from 'voice:grok' with {
   text: 'Grok',
   format: 'opus',
 }
 
 // The optional second path component overrides the speaker.
-import grokAraAudio from 'voice:grok/ara' with {
+import grokAraAudioUrl from 'voice:grok/ara' with {
   text: 'Grok',
   format: 'opus',
 }
 
-// Timings are another format of the same synthesis.
+// Load bytes into the runtime instead of returning a URL.
+import grokAudioBytes from 'voice:grok' with {
+  text: 'Grok',
+  format: 'opus',
+  type: 'contents',
+}
+
+// Timings default to contents.
 import grokTimings from 'voice:grok' with {
   text: 'Grok',
   format: 'timings',
 }
+
+// Or reference the stored MessagePack metadata by URL.
+import grokMetadataUrl from 'voice:grok' with {
+  text: 'Grok',
+  format: 'timings',
+  type: 'reference',
+}
 ```
 
-Import sources are `voice:<id>` or `voice:<id>/<speaker>`. The ID only identifies the import site; it is not part of the synthesis hash. The optional speaker path component overrides the configured default speaker, which is `iris`.
+Import sources are `voice:<id>` or `voice:<id>/<speaker>`. The ID identifies the import site but is not part of the synthesis hash. The optional speaker path component overrides the configured default speaker, which is `iris`.
 
 The accepted import attributes are:
 
@@ -30,20 +44,36 @@ The accepted import attributes are:
 - `emotion: string` — optional
 - `language: string` — defaults to `en`
 - `format: 'opus' | 'pcm' | 'wav' | 'timings'` — defaults to `opus`
+- `type: 'contents' | 'reference'`
+  - audio formats default to `reference`
+  - `timings` defaults to `contents`
 
-`format: 'timings'` returns the character timing array directly:
+## Runtime values
+
+`type: 'reference'` always returns a URL. For audio formats it points at the selected audio asset; for `timings` it points at the stored `.msgpack` metadata.
+
+`type: 'contents'` materializes data into the target runtime:
+
+- `format: 'timings'` returns `ReadonlyArray<{char, start, end}>`
+- audio formats return a binary object chosen from the current Vite environment:
+  - Node-like server environments: `Buffer`
+  - browser/worker environments: `Uint8Array`
+
+The plugin uses Vite's per-environment `consumer` and resolved Node builtins to distinguish a Node-like server from browser/worker targets, so worker-style server environments do not receive a Node-only `Buffer`.
+
+TypeScript does not currently specialize an ambient module's default-export type from custom import attributes. The app therefore keeps `voice:*` declared as the default/reference `string` type. The package exports helper types for explicit contents typing:
 
 ```ts
-ReadonlyArray<{
-  char: string
-  start: number
-  end: number
-}>
+import type {VoiceSampleContents, VoiceSampleValue} from 'vite-plugin-import-voice-sample'
+
+type AudioContents = VoiceSampleContents<'opus'> // Uint8Array; Buffer is a compatible subtype
+type TimingsContents = VoiceSampleContents<'timings'>
+type AudioReference = VoiceSampleValue<'opus', 'reference'> // string
 ```
 
 ## Storage
 
-The hash identifies the synthesis itself and deliberately excludes both the requested output format and the import ID. WAV, Opus, PCM, and timing imports with otherwise identical synthesis inputs therefore share one OpenRouter generation.
+The hash identifies the synthesis itself and deliberately excludes the requested output format, load type, and import ID. WAV, Opus, PCM, timing contents, and references with otherwise identical synthesis inputs therefore share one OpenRouter generation.
 
 Every generated synthesis is stored canonically as:
 
@@ -65,7 +95,7 @@ temp/vite-plugin-import-voice-sample/
     <hash>.pcm
 ```
 
-An Opus file exists only when a dependent imports `format: 'opus'`. PCM is never part of the raw store; an explicit `format: 'pcm'` import extracts PCM from the stored WAV and caches it. A `format: 'wav'` import directly serves `store/<hash>.wav`. A `format: 'timings'` import reads MessagePack metadata and creates no audio conversion.
+An Opus file exists only when a dependent needs Opus. PCM is never part of the raw store; an explicit PCM import extracts PCM from the stored WAV and caches it. WAV imports use `store/<hash>.wav` directly. Timing imports read or reference the MessagePack metadata and create no audio conversion.
 
 Store/cache hits never contact OpenRouter. Cache misses use `OPENROUTER_API_KEY`. OpenRouter's timestamp-enabled response carries PCM in a timed envelope; the plugin derives the actual sample rate from PCM length and provider duration and immediately wraps it into the canonical stored WAV.
 

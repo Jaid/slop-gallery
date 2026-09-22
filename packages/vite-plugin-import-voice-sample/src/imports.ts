@@ -1,6 +1,6 @@
-import type {VoiceSampleFormat, VoiceSampleRequest} from './types.ts'
+import type {VoiceSampleFormat, VoiceSampleLoadType, VoiceSampleRequest} from './types.ts'
 
-export type VoiceSampleDefaults = Pick<VoiceSampleRequest, 'format' | 'language' | 'voice'>
+export type VoiceSampleDefaults = Pick<VoiceSampleRequest, 'format' | 'language' | 'voice'> & Partial<Pick<VoiceSampleRequest, 'type'>>
 
 export type VoiceSampleEdit = {
   end: number
@@ -44,10 +44,11 @@ type Program = {
   body?: Array<ImportDeclaration>
 }
 
-type AttributeName = 'emotion' | 'format' | 'language' | 'text'
+type AttributeName = 'emotion' | 'format' | 'language' | 'text' | 'type'
 
 const formats = new Set<VoiceSampleFormat>(['opus', 'pcm', 'timings', 'wav'])
-const allowedAttributes = new Set<string>(['emotion', 'format', 'language', 'text'])
+const loadTypes = new Set<VoiceSampleLoadType>(['contents', 'reference'])
+const allowedAttributes = new Set<string>(['emotion', 'format', 'language', 'text', 'type'])
 const stringValue = (value: AstValue | undefined) => {
   return typeof value?.value === 'string' ? value.value : undefined
 }
@@ -55,6 +56,7 @@ const keyValue = (value: AstValue | undefined) => {
   return typeof value?.name === 'string' ? value.name : stringValue(value)
 }
 const isVoiceSampleFormat = (value: string): value is VoiceSampleFormat => formats.has(value as VoiceSampleFormat)
+const isVoiceSampleLoadType = (value: string): value is VoiceSampleLoadType => loadTypes.has(value as VoiceSampleLoadType)
 const parseVoiceSource = (source: string): {
   id: string
   voice?: string
@@ -135,6 +137,11 @@ export const parseVoiceSampleImports = (code: string, ast: unknown, defaults: Vo
     if (!isVoiceSampleFormat(format)) {
       throw new Error(`Unsupported voice format "${format}". Expected opus, pcm, timings, or wav.`)
     }
+    const defaultType = format === 'timings' ? 'contents' : 'reference'
+    const type = attributes.type ?? defaults.type ?? defaultType
+    if (!isVoiceSampleLoadType(type)) {
+      throw new Error(`Unsupported voice import type "${type}". Expected contents or reference.`)
+    }
     const voice = parsedSource.voice ?? defaults.voice
     if (!voice) {
       throw new Error('Voice imports require a speaker path component or plugin default.')
@@ -151,6 +158,7 @@ export const parseVoiceSampleImports = (code: string, ast: unknown, defaults: Vo
       format,
       language,
       text,
+      type,
       voice,
       ...attributes.emotion ? {emotion: attributes.emotion} : {},
     }
