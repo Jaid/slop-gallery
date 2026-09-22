@@ -1,4 +1,4 @@
-import type {VoiceSampleFetch} from '../src/types.ts'
+import type {VoiceSampleFetch, VoiceSampleMetadata} from '../src/types.ts'
 import type {InlineConfig, Rollup} from 'vite'
 
 import {afterEach, describe, expect, test} from 'bun:test'
@@ -22,7 +22,7 @@ const temporaryDirectory = async () => {
 afterEach(async () => {
   await Promise.all(directories.splice(0).map(directory => fs.remove(directory)))
 })
-const pcm = (sampleRate = 24_000) => Buffer.alloc(Math.round(sampleRate * 0.1) * 2)
+const pcm = (sampleRate = 24_000) => Buffer.alloc(Math.round(sampleRate * 0.1) * 2, 1)
 const envelope = (sampleRate = 24_000) => ({
   audio: pcm(sampleRate).toBase64(),
   duration: 0.1,
@@ -35,6 +35,29 @@ const envelope = (sampleRate = 24_000) => ({
 const response = (sampleRate = 24_000) => Response.json(envelope(sampleRate), {
   headers: {'x-generation-id': 'trace-id'},
 })
+const trimPcm = () => {
+  const sampleRate = 24_000
+  const parts = [[30, 80], [100, 5000], [50, 80]] as const
+  const result = Buffer.alloc(parts.reduce((sum, [milliseconds]) => sum + Math.round(sampleRate * milliseconds / 1000), 0) * 2)
+  let offset = 0
+  for (const [milliseconds, value] of parts) {
+    const samples = Math.round(sampleRate * milliseconds / 1000)
+    for (let index = 0; index < samples; index++) {
+      result.writeInt16LE(value, offset)
+      offset += 2
+    }
+  }
+  return result
+}
+const trimResponse = () => Response.json({
+  audio: trimPcm().toBase64(),
+  duration: 0.18,
+  content_type: 'audio/pcm',
+  audio_timestamps: {
+    graph_chars: ['<', 'H', 'i', '>'],
+    graph_times: [[0, 0.015], [0.03, 0.09], [0.09, 0.14], [0.16, 0.18]],
+  },
+}, {headers: {'x-generation-id': 'trim-trace'}})
 const fetchRecorder = (calls: Array<Record<string, unknown>>, sampleRate = 24_000, headerCalls?: Array<Headers>): VoiceSampleFetch => async (_input, init) => {
   if (typeof init?.body !== 'string') {
     throw new TypeError('Expected a JSON request body.')
@@ -162,6 +185,7 @@ describe('vite-plugin-import-voice-sample', () => {
       plugins: [importVoiceSample({
         apiKey: 'test-key',
         fetch: fetchRecorder(calls),
+        trim: false,
       })],
     })
     expect(calls).toHaveLength(1)
@@ -185,6 +209,7 @@ describe('vite-plugin-import-voice-sample', () => {
       plugins: [importVoiceSample({
         apiKey: 'test-key',
         fetch: fetchRecorder(calls),
+        trim: false,
       })],
     })
     expect(calls).toHaveLength(1)
@@ -243,6 +268,7 @@ describe('vite-plugin-import-voice-sample', () => {
       plugins: [importVoiceSample({
         apiKey: 'test-key',
         fetch: fetchRecorder(calls),
+        trim: false,
       })],
     })
     expect(calls).toHaveLength(1)
@@ -300,6 +326,7 @@ describe('vite-plugin-import-voice-sample', () => {
         fetch: async () => {
           throw new Error('cache miss')
         },
+        trim: false,
       })],
     })
   })
@@ -339,6 +366,141 @@ describe('vite-plugin-import-voice-sample', () => {
     expect(metadataName).toBeDefined()
     expect(unpack(await fs.readFile(join(root, 'temp/vite-plugin-import-voice-sample/store', metadataName!)))).toMatchObject({sampleRate: 48_000})
   })
+  test('trim derivatives shift timings onto the retained audio timeline', async () => {
+    const root = await temporaryDirectory()
+    let calls = 0
+    const cache = new VoiceSampleCache({
+      apiKey: 'test-key',
+      app: {
+        title: 'Slop Gallery',
+        url: 'https://slop.gallery',
+      },
+      cacheFolder: join(root, 'cache'),
+      fetch: async () => {
+        calls++
+        return trimResponse()
+      },
+      storageFolder: join(root, 'store'),
+    })
+    const base = {
+      language: 'en',
+      text: 'Trim me',
+      trimThreshold: -50,
+      type: 'reference' as const,
+      voice: 'iris',
+    }
+    const trimmedRequest = {
+      ...base,
+      format: 'wav' as const,
+      trim: true,
+    }
+    const timingsRequest = {
+      ...base,
+      format: 'timings' as const,
+      trim: true,
+    }
+    const untrimmedRequest = {
+      ...base,
+      format: 'wav' as const,
+      trim: false,
+    }
+    const strictRequest = {
+      ...base,
+      format: 'wav' as const,
+      trim: true,
+      trimThreshold: -60,
+    }
+    expect(cache.key(trimmedRequest)).toBe(cache.key(untrimmedRequest))
+    expect(cache.key(trimmedRequest)).toBe(cache.key(strictRequest))
+    const trimmed = await cache.getAudio(trimmedRequest)
+    const timings = await cache.getTimings(timingsRequest)
+    const untrimmed = await cache.getAudio(untrimmedRequest)
+    const strict = await cache.getAudio(strictRequest)
+    expect(calls).toBe(1)
+    expect(trimmed.rawPath).toBe(untrimmed.rawPath)
+    expect(trimmed.audioPath).not.toBe(trimmed.rawPath)
+    expect(untrimmed.audioPath).toBe(untrimmed.rawPath)
+    expect(strict.audioPath).not.toBe(strict.rawPath)
+    expect(timings.metadataPath).toBe(trimmed.metadataPath)
+    const trimmedMetadata = unpack(await fs.readFile(trimmed.metadataPath)) as VoiceSampleMetadata
+    expect(trimmedMetadata).toMatchObject({
+      duration: 0.12,
+      sampleRate: 24_000,
+      traceId: 'trim-trace',
+      trim: {
+        changed: true,
+        minimumSilenceSeconds: 0.02,
+        paddingSeconds: 0.01,
+        removedEndSeconds: 0.04,
+        removedStartSeconds: 0.02,
+        sourceDuration: 0.18,
+        thresholdDb: -50,
+      },
+    })
+    expect(trimmedMetadata.timings).toHaveLength(4)
+    expect(trimmedMetadata.timings[0]).toEqual({
+      char: '<',
+      start: 0,
+      end: 0,
+    })
+    expect(trimmedMetadata.timings[1].start).toBeCloseTo(0.01)
+    expect(trimmedMetadata.timings[1].end).toBeCloseTo(0.07)
+    expect(trimmedMetadata.timings[2].start).toBeCloseTo(0.07)
+    expect(trimmedMetadata.timings[2].end).toBeCloseTo(0.12)
+    expect(trimmedMetadata.timings[3]).toEqual({
+      char: '>',
+      start: 0.12,
+      end: 0.12,
+    })
+    expect(timings.timings).toEqual(trimmedMetadata.timings)
+    const trimmedWav = await fs.readFile(trimmed.audioPath)
+    expect((trimmedWav.byteLength - 44) / 2 / 24_000).toBeCloseTo(0.12)
+    const strictMetadata = unpack(await fs.readFile(strict.metadataPath)) as VoiceSampleMetadata
+    expect(strictMetadata).toMatchObject({
+      duration: 0.18,
+      trim: {
+        changed: false,
+        removedEndSeconds: 0,
+        removedStartSeconds: 0,
+        thresholdDb: -60,
+      },
+    })
+    expect(strict.metadataPath).not.toBe(trimmed.metadataPath)
+  })
+  test('plugin trim defaults can be overridden by import attributes without resynthesizing', async () => {
+    const root = await temporaryDirectory()
+    await fs.writeFile(join(root, 'entry.ts'), `
+      import raw from 'voice:trim-default' with {text: 'Trim me', format: 'wav'}
+      import inheritedThreshold from 'voice:trim-inherited' with {text: 'Trim me', format: 'wav', trim: 'true'}
+      import overriddenThreshold from 'voice:trim-overridden' with {text: 'Trim me', format: 'timings', trim: 'true', trimThreshold: '-50'}
+      export {raw, inheritedThreshold, overriddenThreshold}
+    `)
+    const calls: Array<Record<string, unknown>> = []
+    await build({
+      ...buildConfig(root),
+      plugins: [importVoiceSample({
+        apiKey: 'test-key',
+        fetch: async (_input, init) => {
+          if (typeof init?.body !== 'string') {
+            throw new TypeError('Expected a JSON request body.')
+          }
+          calls.push(JSON.parse(init.body) as Record<string, unknown>)
+          return trimResponse()
+        },
+        trim: false,
+        trimThreshold: -60,
+      })],
+    })
+    expect(calls).toHaveLength(1)
+    const folder = join(root, 'temp/vite-plugin-import-voice-sample')
+    expect(await fs.readdir(join(folder, 'store'))).toHaveLength(2)
+    const cacheFiles = await fs.readdir(join(folder, 'cache'))
+    expect(cacheFiles.filter(file => file.endsWith('.wav'))).toHaveLength(2)
+    expect(cacheFiles.filter(file => file.endsWith('.msgpack'))).toHaveLength(2)
+    const metadata = await Promise.all(cacheFiles.filter(file => file.endsWith('.msgpack')).map(async file => unpack(await fs.readFile(join(folder, 'cache', file))) as VoiceSampleMetadata))
+    expect(metadata.map(item => item.trim!.thresholdDb).toSorted((a, b) => a - b)).toEqual([-60, -50])
+    expect(metadata.map(item => item.trim!.changed).toSorted((a, b) => Number(a) - Number(b))).toEqual([false, true])
+  })
   test('shares raw storage across audio formats and caches only requested Opus and PCM conversions', async () => {
     const root = await temporaryDirectory()
     let calls = 0
@@ -358,6 +520,8 @@ describe('vite-plugin-import-voice-sample', () => {
     const base = {
       language: 'en',
       text: 'Shared sample',
+      trim: false,
+      trimThreshold: -50,
       type: 'reference' as const,
       voice: 'iris',
     }

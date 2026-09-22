@@ -1,6 +1,6 @@
 import type {VoiceSampleFormat, VoiceSampleLoadType, VoiceSampleRequest} from './types.ts'
 
-export type VoiceSampleDefaults = Pick<VoiceSampleRequest, 'format' | 'language' | 'voice'> & Partial<Pick<VoiceSampleRequest, 'type'>>
+export type VoiceSampleDefaults = Pick<VoiceSampleRequest, 'format' | 'language' | 'trim' | 'trimThreshold' | 'voice'> & Partial<Pick<VoiceSampleRequest, 'type'>>
 
 export type VoiceSampleEdit = {
   end: number
@@ -44,11 +44,11 @@ type Program = {
   body?: Array<ImportDeclaration>
 }
 
-type AttributeName = 'emotion' | 'format' | 'language' | 'text' | 'type'
+type AttributeName = 'emotion' | 'format' | 'language' | 'text' | 'trim' | 'trimThreshold' | 'type'
 
 const formats = new Set<VoiceSampleFormat>(['opus', 'pcm', 'timings', 'wav'])
 const loadTypes = new Set<VoiceSampleLoadType>(['contents', 'reference'])
-const allowedAttributes = new Set<string>(['emotion', 'format', 'language', 'text', 'type'])
+const allowedAttributes = new Set<string>(['emotion', 'format', 'language', 'text', 'trim', 'trimThreshold', 'type'])
 const stringValue = (value: AstValue | undefined) => {
   return typeof value?.value === 'string' ? value.value : undefined
 }
@@ -57,6 +57,25 @@ const keyValue = (value: AstValue | undefined) => {
 }
 const isVoiceSampleFormat = (value: string): value is VoiceSampleFormat => formats.has(value as VoiceSampleFormat)
 const isVoiceSampleLoadType = (value: string): value is VoiceSampleLoadType => loadTypes.has(value as VoiceSampleLoadType)
+const parseBoolean = (value: string | undefined, fallback: boolean, name: string) => {
+  if (value === undefined) {
+    return fallback
+  }
+  if (value === 'true') {
+    return true
+  }
+  if (value === 'false') {
+    return false
+  }
+  throw new Error(`Voice import attribute "${name}" must be "true" or "false".`)
+}
+const parseThreshold = (value: string | undefined, fallback: number) => {
+  const parsed = value === undefined ? fallback : Number(value)
+  if (!Number.isFinite(parsed) || parsed > 0) {
+    throw new Error('Voice import attribute "trimThreshold" must be a finite dBFS value at or below 0.')
+  }
+  return parsed
+}
 const parseVoiceSource = (source: string): {
   id: string
   voice?: string
@@ -150,6 +169,8 @@ export const parseVoiceSampleImports = (code: string, ast: unknown, defaults: Vo
     if (!language) {
       throw new Error('Voice imports require a language attribute or plugin default.')
     }
+    const trim = parseBoolean(attributes.trim, defaults.trim, 'trim')
+    const trimThreshold = parseThreshold(attributes.trimThreshold, defaults.trimThreshold)
     const clause = attributeClauseRange(code, node)
     if (!clause) {
       throw new Error('Voice imports require an import attribute clause containing text.')
@@ -158,6 +179,8 @@ export const parseVoiceSampleImports = (code: string, ast: unknown, defaults: Vo
       format,
       language,
       text,
+      trim,
+      trimThreshold,
       type,
       voice,
       ...attributes.emotion ? {emotion: attributes.emotion} : {},

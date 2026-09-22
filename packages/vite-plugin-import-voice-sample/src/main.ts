@@ -9,11 +9,12 @@ import tinyhand from 'tinyhand'
 import {loadEnv, normalizePath} from 'vite'
 
 import {applyEdits, parseVoiceSampleImports, virtualVoiceSamplePrefix, voiceSourcePrefix} from './imports.ts'
+import {defaultVoiceSampleTrimThreshold} from './trim.ts'
 import VoiceSampleCache from './VoiceSampleCache.ts'
 
 export {voiceSourcePrefix} from './imports.ts'
 
-export type {App, VoiceSampleAudioFormat, VoiceSampleContents, VoiceSampleFormat, VoiceSampleLoadType, VoiceSampleMetadata, VoiceSamplePluginOptions, VoiceSampleRequest, VoiceSampleTiming, VoiceSampleValue} from './types.ts'
+export {defaultVoiceSampleTrimThreshold, voiceSampleTrimMinimumSilenceSeconds, voiceSampleTrimPaddingSeconds} from './trim.ts'
 
 const resolvedVirtualPrefix = `\0${virtualVoiceSamplePrefix}`
 const defaultApp: App = {
@@ -121,6 +122,8 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
       const parsed = parseVoiceSampleImports(code, ast.program, {
         format: options.defaults?.format ?? 'opus',
         language: options.defaults?.language ?? 'en',
+        trim: options.trim ?? true,
+        trimThreshold: options.trimThreshold ?? defaultVoiceSampleTrimThreshold,
         type: options.defaults?.type,
         voice: options.defaults?.voice ?? 'iris',
       })
@@ -128,7 +131,7 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
         return
       }
       const edits = parsed.flatMap(item => {
-        const key = cache.key(item.request)
+        const key = cache.virtualKey(item.request)
         requests.set(key, item.request)
         const source = item.edits[0]
         return [
@@ -208,4 +211,5 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
   }
 }
 
+export type {App, VoiceSampleAudioFormat, VoiceSampleContents, VoiceSampleFormat, VoiceSampleLoadType, VoiceSampleMetadata, VoiceSamplePluginOptions, VoiceSampleRequest, VoiceSampleTiming, VoiceSampleTrimMetadata, VoiceSampleValue} from './types.ts'
 export {defaultVoiceSampleBitrate} from './VoiceSampleCache.ts'

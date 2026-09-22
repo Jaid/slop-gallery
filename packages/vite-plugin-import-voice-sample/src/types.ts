@@ -14,6 +14,16 @@ export type VoiceSampleTiming = {
   start: number
 }
 
+export type VoiceSampleTrimMetadata = {
+  changed: boolean
+  minimumSilenceSeconds: number
+  paddingSeconds: number
+  removedEndSeconds: number
+  removedStartSeconds: number
+  sourceDuration: number
+  thresholdDb: number
+}
+
 export type VoiceSampleContents<Format extends VoiceSampleFormat> = Format extends 'timings' ? ReadonlyArray<VoiceSampleTiming> : Uint8Array
 export type VoiceSampleValue<Format extends VoiceSampleFormat, Type extends VoiceSampleLoadType> = Type extends 'reference' ? string : VoiceSampleContents<Format>
 
@@ -22,6 +32,7 @@ export type VoiceSampleMetadata = {
   sampleRate: number
   timings: ReadonlyArray<VoiceSampleTiming>
   traceId?: string
+  trim?: VoiceSampleTrimMetadata
 }
 
 export type VoiceSampleRequest = {
@@ -29,6 +40,8 @@ export type VoiceSampleRequest = {
   format: VoiceSampleFormat
   language: string
   text: string
+  trim: boolean
+  trimThreshold: number
   type: VoiceSampleLoadType
   voice: string
 }
@@ -56,4 +69,8 @@ export type VoiceSamplePluginOptions = {
   sampleRate?: number
   /** Raw WAV + MessagePack folder. Defaults to <folder>/store. */
   storageFolder?: string
+  /** Whether quiet outer edges are trimmed. Defaults to true. */
+  trim?: boolean
+  /** Trim threshold in dBFS. Defaults to -50. */
+  trimThreshold?: number
 }

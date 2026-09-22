@@ -10,11 +10,13 @@ import makeArgv from 'make-argv'
 import {pack, unpack} from 'msgpackr'
 
 import {styleVoiceSampleText} from './emotion.ts'
+import {trimVoiceSample, voiceSampleTrimMinimumSilenceSeconds, voiceSampleTrimPaddingSeconds} from './trim.ts'
 
 const execFileAsync = promisify(execFile)
 const modelDefault = 'x-ai/grok-voice-tts-1.0'
 const storageSchema = 3
 const conversionSchema = 1
+const trimSchema = 1
 const defaultSampleRate = 24_000
 const commonSampleRates = [8000, 16_000, 22_050, 24_000, 32_000, 44_100, 48_000]
 
@@ -31,6 +33,11 @@ type StoredVoiceSample = {
   metadata: VoiceSampleMetadata
   metadataPath: string
   rawPath: string
+}
+
+type PreparedVoiceSample = StoredVoiceSample & {
+  sourceKey: string
+  wavPath: string
 }
 
 const hasFile = async (file: string) => {
@@ -109,11 +116,47 @@ const decodeMetadata = (value: unknown): VoiceSampleMetadata => {
   if (traceId !== undefined && typeof traceId !== 'string') {
     throw new TypeError('Stored voice sample trace ID is invalid.')
   }
+  const trim = 'trim' in rest ? rest.trim : undefined
+  if (trim !== undefined) {
+    if (
+      !trim
+      || typeof trim !== 'object'
+      || !('changed' in trim)
+      || !('minimumSilenceSeconds' in trim)
+      || !('paddingSeconds' in trim)
+      || !('removedEndSeconds' in trim)
+      || !('removedStartSeconds' in trim)
+      || !('sourceDuration' in trim)
+      || !('thresholdDb' in trim)
+      || typeof trim.changed !== 'boolean'
+      || typeof trim.minimumSilenceSeconds !== 'number'
+      || typeof trim.paddingSeconds !== 'number'
+      || typeof trim.removedEndSeconds !== 'number'
+      || typeof trim.removedStartSeconds !== 'number'
+      || typeof trim.sourceDuration !== 'number'
+      || typeof trim.thresholdDb !== 'number'
+      || !Number.isFinite(trim.minimumSilenceSeconds)
+      || !Number.isFinite(trim.paddingSeconds)
+      || !Number.isFinite(trim.removedEndSeconds)
+      || !Number.isFinite(trim.removedStartSeconds)
+      || !Number.isFinite(trim.sourceDuration)
+      || !Number.isFinite(trim.thresholdDb)
+      || trim.minimumSilenceSeconds < 0
+      || trim.paddingSeconds < 0
+      || trim.removedEndSeconds < 0
+      || trim.removedStartSeconds < 0
+      || trim.sourceDuration < duration
+      || trim.thresholdDb > 0
+    ) {
+      throw new TypeError('Stored voice sample trim metadata is invalid.')
+    }
+  }
   return {
     duration,
     sampleRate,
     timings: decodedTimings,
     ...traceId ? {traceId} : {},
+    ...trim ? {trim: trim as VoiceSampleMetadata['trim']} : {},
   }
 }
 const decodeEnvelope = (value: unknown, requestedSampleRate: number, traceId?: string) => {
@@ -200,6 +243,7 @@ export default class VoiceSampleCache {
   readonly #model: string
   readonly #pendingConversions = new Map<string, Promise<string>>
   readonly #pendingStores = new Map<string, Promise<StoredVoiceSample>>
+  readonly #pendingTrims = new Map<string, Promise<PreparedVoiceSample>>
   readonly #sampleRate: number
   readonly #storageFolder: string
 
@@ -236,26 +280,34 @@ export default class VoiceSampleCache {
   async getAudio(request: VoiceSampleRequest & {format: VoiceSampleAudioFormat}): Promise<VoiceSampleCacheEntry> {
     const key = this.key(request)
     const stored = await this.#getStored(request, key)
-    const audioPath = await this.#getAudio(request.format, key, stored.rawPath)
+    const prepared = await this.#prepare(request, key, stored)
+    const audioPath = await this.#getAudio(request.format, prepared.sourceKey, prepared.wavPath)
     return {
       audioPath,
-      metadataPath: stored.metadataPath,
+      metadataPath: prepared.metadataPath,
       rawPath: stored.rawPath,
-      timings: stored.metadata.timings,
+      timings: prepared.metadata.timings,
     }
   }
 
   async getTimings(request: VoiceSampleRequest) {
-    const stored = await this.#getStored(request, this.key(request))
+    const key = this.key(request)
+    const stored = await this.#getStored(request, key)
+    const prepared = await this.#prepare(request, key, stored)
     return {
-      metadataPath: stored.metadataPath,
+      metadataPath: prepared.metadataPath,
       rawPath: stored.rawPath,
-      timings: stored.metadata.timings,
+      timings: prepared.metadata.timings,
     }
   }
 
   key(request: VoiceSampleRequest) {
-    const {format: _format, type: _type, ...synthesis} = request
+    const synthesis = {
+      language: request.language,
+      text: request.text,
+      voice: request.voice,
+      ...request.emotion ? {emotion: request.emotion} : {},
+    }
     return createHash('sha256').update(JSON.stringify({
       model: this.#model,
       sampleRate: this.#sampleRate,
@@ -270,6 +322,26 @@ export default class VoiceSampleCache {
 
   rawPath(key: string) {
     return resolve(this.#storageFolder, `${key}.wav`)
+  }
+
+  trimKey(key: string, trimThreshold: number) {
+    return createHash('sha256').update(JSON.stringify({
+      minimumSilenceSeconds: voiceSampleTrimMinimumSilenceSeconds,
+      trimSchema,
+      paddingSeconds: voiceSampleTrimPaddingSeconds,
+      source: key,
+      trimThreshold,
+    })).digest('hex')
+  }
+
+  virtualKey(request: VoiceSampleRequest) {
+    return createHash('sha256').update(JSON.stringify({
+      format: request.format,
+      source: this.key(request),
+      trim: request.trim,
+      ...request.trim ? {trimThreshold: request.trimThreshold} : {},
+      type: request.type,
+    })).digest('hex')
   }
 
   #cachePath(key: string, format: Exclude<VoiceSampleAudioFormat, 'wav'>) {
@@ -398,7 +470,6 @@ export default class VoiceSampleCache {
       await fs.remove(temporaryMetadata)
     }
   }
-
   async #getAudio(format: VoiceSampleAudioFormat, key: string, rawPath: string) {
     if (format === 'wav') {
       return rawPath
@@ -435,6 +506,47 @@ export default class VoiceSampleCache {
     }
   }
 
+  async #prepare(request: VoiceSampleRequest, key: string, stored: StoredVoiceSample): Promise<PreparedVoiceSample> {
+    if (!request.trim) {
+      return {
+        ...stored,
+        sourceKey: key,
+        wavPath: stored.rawPath,
+      }
+    }
+    const sourceKey = this.trimKey(key, request.trimThreshold)
+    const cached = await this.#readPrepared(sourceKey, stored.rawPath)
+    if (cached) {
+      return cached
+    }
+    const existing = this.#pendingTrims.get(sourceKey)
+    if (existing) {
+      return existing
+    }
+    const pending = this.#trimStored(stored, sourceKey, request.trimThreshold)
+    this.#pendingTrims.set(sourceKey, pending)
+    try {
+      return await pending
+    } finally {
+      this.#pendingTrims.delete(sourceKey)
+    }
+  }
+
+  async #readPrepared(sourceKey: string, rawPath: string): Promise<PreparedVoiceSample | undefined> {
+    const wavPath = resolve(this.#cacheFolder, `${sourceKey}.wav`)
+    const metadataPath = resolve(this.#cacheFolder, `${sourceKey}.msgpack`)
+    if (!await hasFile(wavPath) || !await hasFile(metadataPath)) {
+      return
+    }
+    return {
+      metadata: decodeMetadata(unpack(await fs.readFile(metadataPath)) as unknown),
+      metadataPath,
+      rawPath,
+      sourceKey,
+      wavPath,
+    }
+  }
+
   async #readStored(key: string): Promise<StoredVoiceSample | undefined> {
     const rawPath = this.rawPath(key)
     const metadataPath = this.metadataPath(key)
@@ -446,6 +558,41 @@ export default class VoiceSampleCache {
       metadata,
       metadataPath,
       rawPath,
+    }
+  }
+
+  async #trimStored(stored: StoredVoiceSample, sourceKey: string, trimThreshold: number): Promise<PreparedVoiceSample> {
+    await fs.ensureDir(this.#cacheFolder)
+    const wavPath = resolve(this.#cacheFolder, `${sourceKey}.wav`)
+    const metadataPath = resolve(this.#cacheFolder, `${sourceKey}.msgpack`)
+    const token = `${process.pid}-${randomUUID()}`
+    const temporaryWav = `${wavPath}.${token}.tmp`
+    const temporaryMetadata = `${metadataPath}.${token}.tmp`
+    try {
+      const trimmed = trimVoiceSample(new Uint8Array(await fs.readFile(stored.rawPath)), stored.metadata, trimThreshold)
+      await fs.writeFile(temporaryWav, trimmed.wav)
+      await fs.writeFile(temporaryMetadata, pack(trimmed.metadata))
+      if (!await hasFile(temporaryWav) || !await hasFile(temporaryMetadata)) {
+        throw new Error('Voice sample trimming did not produce a valid cached derivative.')
+      }
+      const raced = await this.#readPrepared(sourceKey, stored.rawPath)
+      if (raced) {
+        return raced
+      }
+      await fs.remove(wavPath)
+      await fs.remove(metadataPath)
+      await fs.rename(temporaryWav, wavPath)
+      await fs.rename(temporaryMetadata, metadataPath)
+      return {
+        metadata: trimmed.metadata,
+        metadataPath,
+        rawPath: stored.rawPath,
+        sourceKey,
+        wavPath,
+      }
+    } finally {
+      await fs.remove(temporaryWav)
+      await fs.remove(temporaryMetadata)
     }
   }
 }
