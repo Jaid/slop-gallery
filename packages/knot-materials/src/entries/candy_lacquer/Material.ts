@@ -23,13 +23,16 @@ export default class extends KnotMaterial {
     const outerLocal = outerCoordinate.fract().sub(0.5)
     const outerEdge = outerLocal.x.abs().max(outerLocal.y.abs()).max(outerLocal.z.abs())
     const outerPaneRaw = outerEdge.smoothstep(0.33, 0.39).oneMinus()
-    const outerPane = outerEdge.smoothstep(0.33, outerEdge.fwidth().mul(1.25).add(0.33)).oneMinus()
+    // Differentiate unwrapped coordinates and keep filtering inside the owning cell.
+    const outerFilter = outerCoordinate.fwidth().length().mul(1.25)
+    const outerPane = outerEdge.smoothstep(0.33, outerFilter.add(0.39).min(0.49)).oneMinus()
     const innerCoordinate = p.sub(view.mul(0.095)).mul(4.65).add(vec3(9.3, 4.1, 13.7))
     const innerCell = innerCoordinate.floor()
     const innerIdentity = cellNoiseVec3(innerCell)
     const innerLocal = innerCoordinate.fract().sub(0.5)
     const innerEdge = innerLocal.x.abs().max(innerLocal.y.abs()).max(innerLocal.z.abs())
-    const innerPane = innerEdge.smoothstep(0.4, innerEdge.fwidth().mul(1.25).add(0.4)).oneMinus().mul(near.mul(0.74).add(0.26))
+    const innerFilter = innerCoordinate.fwidth().length().mul(1.25)
+    const innerPane = innerEdge.smoothstep(0.4, innerFilter.add(0.45).min(0.49)).oneMinus().mul(near.mul(0.74).add(0.26))
     const outerBlue = mix(color('#053f9b'), color('#00b8d4'), outerIdentity.x)
     const outerRose = mix(color('#8b0a58'), color('#ed306c'), outerIdentity.y)
     const outerGold = mix(color('#9b3c05'), color('#ffc950'), outerIdentity.z)
@@ -56,6 +59,8 @@ export default class extends KnotMaterial {
     this.normalNode = glassNormal
     this.clearcoatNormalNode = glassNormal
     const gleam = glints(glassNormal, 112).mul(outerPane.add(lead.mul(0.25))).mul(near)
-    this.emissiveNode = paneColor.mul(outerPane.mul(0.82).add(innerPane.mul(0.18))).mul(near.mul(0.72).add(0.26)).add(color('#f7efff').mul(gleam).mul(intimate.mul(0.08).add(0.012)))
+    // Each tint is supported only by its own pane, including in the emissive layer.
+    const paneGlow = paneColor.mul(outerPane.mul(0.82)).add(innerTint.mul(innerPane.mul(0.18)))
+    this.emissiveNode = paneGlow.mul(near.mul(0.72).add(0.26)).add(color('#f7efff').mul(gleam).mul(intimate.mul(0.08).add(0.012)))
   }
 }
