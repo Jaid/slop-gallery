@@ -1,28 +1,22 @@
 import type {Texture} from 'three/webgpu'
 
-import {cameraPosition, color, float, mix, modelWorldMatrixInverse, mx_fractal_noise_float, mx_noise_float, positionGeometry, positionView, positionViewDirection, time, vec2, vec4} from 'three/tsl'
+import {color, float, mix, mx_fractal_noise_float, mx_noise_float, time, vec3} from 'three/tsl'
 
 import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
+import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
 /**
- * A Mexican-fire opal the size of a knotted ring: a deep indigo matrix with a dozen overlapping play-of-colour fields, each anchored to a different slow rotation so the fire flickers through every hue in turn. Black dendrite inclusions are etched across the surface as if some ancient fossil were caught in the silica, and from intimate range the glow inside brightens until the opal looks lit from within.
+ * A Mexican-fire opal the size of a knotted ring: a deep indigo matrix with overlapping play-of-colour fields with a slowly advancing phase so the fire flickers through every hue in turn. Black dendrite inclusions are etched across the surface as if some ancient fossil were caught in the silica, and from intimate range the glow inside brightens until the opal looks lit from within.
  */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.55)
     this.name = knotData.id
     this.envMapIntensity = 0.55
-    const p = positionGeometry
-    const cameraLocal = modelWorldMatrixInverse.mul(vec4(cameraPosition, 1)).xyz
-    const viewDir = cameraLocal.sub(p).normalize()
-    const facing = positionView.dot(positionViewDirection).abs().clamp()
-    const grazing = facing.oneMinus()
+    const {p, view: viewDir, facing, grazing, near, intimate} = viewerFrame()
     const rim = grazing.pow(1.8)
-    const distance = positionView.length()
-    const near = distance.smoothstep(1.25, 5.5).oneMinus()
-    const intimate = distance.smoothstep(0.8, 2.7).oneMinus()
     // ---- host matrix ----
     // A black opal host with subtle milky veining. The base is a deep
     // cobalt-indigo; the veining is brighter silica.
@@ -33,32 +27,26 @@ export default class extends BaseKnotMaterial {
     // ---- dendrite inclusions ----
     // Black MnO2 dendrites: a fractal noise thresholded at the high end
     // gives a feathery branching pattern.
-    const dendrite = mx_fractal_noise_float(p.mul(3.6).add(vec2(2.3, 5.1)), 4, 2.1, 0.55)
+    const dendrite = mx_fractal_noise_float(p.mul(3.6).add(vec3(2.3, 5.1, 0)), 4, 2.1, 0.55)
       .smoothstep(0.42, 0.52)
-      .oneMinus()
       .mul(intimate)
     // ---- play-of-colour fields ----
-    // Twelve overlapping patches, each a cosine palette over its own
-    // slow phase. The patches are gated by cell noise so each lives in
-    // its own region of the surface.
-    const patchSum = p.x.add(p.y).add(p.z).mul(0.33)
-    const patchRnd = mx_noise_float(patchSum.add(0.1)).mul(0.5).add(0.5)
-    const patchCentre = patchRnd.fract()
-    const localPatch = p.mul(3).fract().sub(patchCentre).add(0.5)
-    const patchMask = localPatch.length().smoothstep(0.7, 0.1).oneMinus().clamp()
-    const patchSeed = patchRnd.fract().mul(12)
+    // Continuous 3D fields let the fire cross grid boundaries without clipped circles.
+    const patchRnd = mx_fractal_noise_float(p.mul(3), 3, 2, 0.5).mul(0.5).add(0.5).clamp()
+    const patchMask = patchRnd.smoothstep(0.35, 0.65)
+    const patchSeed = patchRnd.mul(12)
     // The fire phase is a dot product against the view direction plus
     // time and per-patch offset, producing true angular colour shift.
-    const firePhase = viewDir.dot(p.sub(vec2(0.5))).mul(8).add(time.mul(0.4)).add(patchSeed)
+    const firePhase = viewDir.dot(p.sub(vec3(0.5))).mul(8).add(time.mul(0.4)).add(patchSeed)
     const rWave = firePhase.add(0).cos().mul(0.5).add(0.5)
     const gWave = firePhase.add(2.094).cos().mul(0.5).add(0.5)
     const bWave = firePhase.add(4.189).cos().mul(0.5).add(0.5)
     // Per-region iridescence thickness: thin films of different
     // thicknesses in different patches produce different play-of-colour.
-    const patchThickness = mix(280, 720, patchRnd.fract())
+    const patchThickness = mix(280, 720, patchRnd)
     const thickness = patchThickness.add(grazing.mul(180)).add(rim.mul(120))
     // ---- assembly ----
-    this.colorNode = hostWithVeins
+    this.colorNode = mix(hostWithVeins, color('#020210'), dendrite)
     this.metalness = 0.05
     this.roughnessNode = float(0.14).add(milkyVein.mul(0.18))
     this.sheen = 0.35
@@ -85,17 +73,10 @@ export default class extends BaseKnotMaterial {
       .mul(patchMask.mul(0.85).add(0.15))
       .mul(near.mul(0.6).add(0.4))
       .mul(intimate.mul(2).add(0.6))
-    const dendriteDarkness = float(1).sub(dendrite)
     const haloGlow = mix(color('#b9a8ff'), color('#f5d8a8'), facing)
       .mul(rim)
       .mul(near.mul(0.4).add(0.3))
       .mul(0.25)
-    this.emissiveNode = innerGlow.add(haloGlow)
-    this.colorNode = (mix as unknown as (a: any, b: any, t: any) => typeof hostWithVeins)(
-      this.colorNode,
-      color('#020210'),
-      dendriteDarkness,
-    )
-    bWave
+    this.emissiveNode = innerGlow.add(haloGlow).mul(dendrite.oneMinus())
   }
 }
