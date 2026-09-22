@@ -9,7 +9,9 @@ import {spectralColor} from '../../lib/spectralColor.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/** Sum whole subsurface inclusions instead of clipping their colors at cell walls. */
+/**
+ * Sum whole subsurface inclusions instead of clipping their colors at cell walls.
+ */
 const harlequinField = fn(([cellCoord, view]: [Node<'vec3'>, Node<'vec3'>]) => {
   const cell = cellCoord.floor()
   const local = cellCoord.fract()

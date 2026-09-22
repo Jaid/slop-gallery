@@ -150,8 +150,10 @@ describe('arbitrary Knot batches', () => {
       'glm-5.3',
       'glm-5.3-flash',
       'grok-4.6',
+      'grok-4.7',
       'kimi-k3',
       'mimo-v2.5-pro',
+      'mimo-v2.6-pro',
       'minimax-m3',
       'qwen-3.8-max',
       'gpt-5.6-luna',
@@ -241,11 +243,12 @@ describe('arbitrary Knot batches', () => {
     expect(codex.every(entry => entry.candidate.id === 'gpt_astra')).toBe(true)
     expect(legacy.every(entry => entry.harness === undefined)).toBe(true)
     const astraMage = knots.filter(entry => entry.candidate.id === 'gpt_astra' && entry.harness === 'Mage')
-    expect(astraMage).toHaveLength(28)
+    expect(astraMage).toHaveLength(44)
     expect(astraMage.every(entry => entry.author.model.title === 'GPT-6 Astra' && entry.author.model.slug === 'openai/gpt-6-astra')).toBe(true)
     expect(Object.fromEntries(Map.groupBy(astraMage, entry => entry.author.model.effortLevel).entries().map(([effort, grouped]) => [effort, grouped.length]))).toEqual({
       high: 22,
-      max: 6,
+      max: 14,
+      xhigh: 8,
     })
     const deepseekMage = knots.filter(entry => entry.candidate.id === 'deepseek' && entry.harness === 'Mage')
     expect(deepseekMage).toHaveLength(32)
@@ -254,14 +257,18 @@ describe('arbitrary Knot batches', () => {
     expect(lunaMage).toHaveLength(8)
     expect(lunaMage.every(entry => entry.author.model.title === 'GPT-5.6 Luna' && entry.author.model.slug === 'openai/gpt-5.6-luna' && entry.author.model.effortLevel === 'max')).toBe(true)
     const terraMage = knots.filter(entry => entry.candidate.id === 'gpt_terra' && entry.harness === 'Mage')
-    expect(terraMage).toHaveLength(8)
+    expect(terraMage).toHaveLength(16)
     expect(terraMage.every(entry => entry.author.model.title === 'GPT-5.6 Terra' && entry.author.model.slug === 'openai/gpt-5.6-terra' && entry.author.model.effortLevel === 'max')).toBe(true)
     const minimaxMage = knots.filter(entry => entry.candidate.id === 'minimax' && entry.harness === 'Mage')
     expect(minimaxMage).toHaveLength(8)
     expect(minimaxMage.every(entry => entry.author.model.title === 'MiniMax M3' && entry.author.model.slug === 'minimax/minimax-m3' && entry.author.model.effortLevel === undefined)).toBe(true)
     const mimoMage = knots.filter(entry => entry.candidate.id === 'mimo' && entry.harness === 'Mage')
-    expect(mimoMage).toHaveLength(8)
-    expect(mimoMage.every(entry => entry.author.model.title === 'MiMo V2.5 Pro' && entry.author.model.slug === 'xiaomi/mimo-v2.5-pro' && entry.author.model.effortLevel === 'xhigh')).toBe(true)
+    expect(mimoMage).toHaveLength(16)
+    for (const version of ['2.5', '2.6']) {
+      const versionEntries = mimoMage.filter(entry => entry.author.model.slug === `xiaomi/mimo-v${version}-pro`)
+      expect(versionEntries).toHaveLength(8)
+      expect(versionEntries.every(entry => entry.author.model.title === `MiMo V${version} Pro` && entry.author.model.effortLevel === 'xhigh')).toBe(true)
+    }
     const astraApi = api.filter(entry => entry.candidate.id === 'gpt_astra')
     const fableApi = api.filter(entry => entry.candidate.id === 'claude_fable')
     const solApi = api.filter(entry => entry.candidate.id === 'gpt_sol')

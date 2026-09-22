@@ -1,2 +1,5 @@
 export * from './dendriticField.ts'
+export * from './fractalNoise.ts'
 export * from './heartbeat.ts'
+export * from './palette.ts'
+export * from './screenRibbon.ts'

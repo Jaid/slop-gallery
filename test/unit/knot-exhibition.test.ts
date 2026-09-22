@@ -17,8 +17,8 @@ import {insideKnotGallery, knotGalleryBounds} from '../../src/lib/gallery/knotGa
 
 describe('multi-model Knot challenge', () => {
   test('enumerates displayed Knots at initialization while keeping stable identities', () => {
-    expect(knots).toHaveLength(390)
-    expect(knotsById.size).toBe(390)
+    expect(knots).toHaveLength(438)
+    expect(knotsById.size).toBe(438)
     const displayedKnots = knots.filter(item => !item.archived)
     const displayedByCandidate = Map.groupBy(displayedKnots, item => item.candidate.id)
     expect(knotBays).toHaveLength(8)
@@ -155,7 +155,8 @@ describe('multi-model Knot challenge', () => {
               dependencies.add(child)
             }
           }
-          expect(dependencies.has(positionView), exhibit.id).toBe(true)
+          // Detail may use surface-relative distance or object-wide camera proximity.
+          expect(dependencies.has(positionView) || dependencies.has(cameraPosition), exhibit.id).toBe(true)
           // Some submissions express the angular response only through physical Fresnel
           // or view normals, so do not demand object-local cameraPosition from all models.
           if (exhibit.id === 'lenticular_mirage') {

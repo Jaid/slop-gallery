@@ -36,7 +36,9 @@ function crackField(position: Node<'vec3'>, scale: number) {
   }
   return second.sub(first)
 }
-/** Pixel-filtered seam coverage; attenuation keeps subpixel cracks from thickening. */
+/**
+ * Pixel-filtered seam coverage; attenuation keeps subpixel cracks from thickening.
+ */
 function seamCoverage(field: Node<'float'>, width: number) {
   const filteredWidth = field.fwidth().add(width)
   return field.abs().smoothstep(0, filteredWidth).oneMinus().mul(float(width).div(filteredWidth))

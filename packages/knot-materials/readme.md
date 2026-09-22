@@ -14,7 +14,6 @@ src/
     ferrothorn/
       data.ts
       Material.ts
-      util.ts
       icon.jxl
     index.ts
   candidates/
@@ -39,7 +38,7 @@ scripts/
   lib/
 ```
 
-Every knot lives directly in `src/entries/<id>`. Candidate folders contain attribution, shared candidate-specific utilities, and candidate/model assets—not nested knot entries. Shared shader functions live in `src/lib`; a helper used only by one candidate lives in that candidate's `lib`; a helper used only by one knot lives beside its material in `util.ts`. Materials import the narrow helper files they need. `src/lib/index.ts` also provides a barrel.
+Every knot lives directly in `src/entries/<id>`. Candidate folders contain attribution, shared candidate-specific utilities, and candidate/model assets—not nested knot entries. Shared shader functions live in `src/lib`; a helper used only by one candidate lives in that candidate's `lib`; a helper used only by one knot lives directly in its `Material.ts`. Materials import the narrow helper files they need. `src/lib/index.ts` also provides a barrel.
 
 `main.ts` and the metadata barrels never import shaders. The application can inspect the catalogue without evaluating any material constructors. `materials.ts` is the Vite-specific lazy loader; the application's exhibition plugin separately collects the non-archived constructors for its production scene.
 
@@ -86,7 +85,7 @@ Plate numbers are assigned only after final filtering. Candidate billboard compo
 
 ## Material and placeholder contract
 
-Each `Material.ts` default-exports a class extending `KnotMaterial` from `../../lib/KnotMaterial.ts`. Its synchronous constructor accepts the caller-owned environment `Texture`, calls `super(environment[, intensity])`, and sets `this.name = knotData.id`. Never dispose the supplied environment in an individual material.
+Each `Material.ts` default-exports an anonymous class extending `KnotMaterial` from `../../lib/KnotMaterial.ts`. Its synchronous constructor accepts the caller-owned environment `Texture`, calls `super(environment[, intensity])`, and sets `this.name = knotData.id`. Never dispose the supplied environment in an individual material.
 
 For vertex displacement, metadata must declare a conservative maximum distance in meters as `displacement`. Culling and collision geometry expand accordingly, and entries with equal bounds share geometry. The global `knotCurve` and `knotFrame` helpers match the exhibition's torus-knot centerline and tube frame.
 
@@ -104,7 +103,7 @@ bun packages/knot-materials/scripts/makePrompt.ts --examples 4 --seed another-ba
 bun packages/knot-materials/scripts/makePrompt.ts --example-ids ferrothorn,washi_lantern,coralline_crown --output temp/knot-prompt.md
 ```
 
-The script outputs Markdown to stdout unless `--output` is supplied. It reads the current catalogue, reserves every existing ID, follows the explicit authoring API in `src/lib/index.ts` plus the selected candidate’s `src/candidates/<id>/lib/index.ts`, and includes the complete contents of every statically imported or re-exported local dependency. This includes candidate helpers that none of the examples happen to use. Unexported files, icon-generation utilities, unrelated candidate APIs, and application infrastructure are not included merely because they live in a library folder. Third-party implementation sources and catalogue-derived type-only ID registries are not expanded. Actual `data.ts`/`Material.ts` examples include their own transitive dependencies in a separate example-only section; another candidate’s helper or another knot’s `util.ts` is not an allowed import for a new entry. Default sampling is deterministic for a given seed and favors different candidates and placeholder families. Explicit examples can include archived entries. Paths are resolved from the script, so it also works from another working directory.
+The script outputs Markdown to stdout unless `--output` is supplied. It reads the current catalogue, reserves every existing ID, follows the explicit authoring API in `src/lib/index.ts` plus the selected candidate’s `src/candidates/<id>/lib/index.ts`, and includes the complete contents of every statically imported or re-exported local dependency. This includes candidate helpers that none of the examples happen to use. Unexported files, icon-generation utilities, unrelated candidate APIs, and application infrastructure are not included merely because they live in a library folder. Third-party implementation sources and catalogue-derived type-only ID registries are not expanded. Actual `data.ts`/`Material.ts` examples include their own transitive dependencies in a separate example-only section; another candidate’s helper or another knot’s material-local helpers is not an allowed import for a new entry. Default sampling is deterministic for a given seed and favors different candidates and placeholder families. Explicit examples can include archived entries. Paths are resolved from the script, so it also works from another working directory.
 
 The generated prompt asks for individual entry files, accurate provenance, placeholder metadata, flavor text, displacement bounds, metadata exports, and `unknown` rarity additions pending curation. It does not call an inference provider, incur inference charges, or write new knot entries itself.
 

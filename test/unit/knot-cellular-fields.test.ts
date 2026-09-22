@@ -158,7 +158,7 @@ describe('Knot cellular fields', () => {
     expect(text).toContain('interferenceLattice(p.mul(9.5))')
     expect(text).not.toContain('latticeQ.fract()')
     expect(text).toContain('mx_cell_noise_float(vec3(tick, 6.6, 2.2))')
-    const lattice = await knotSource('entries/interference_shrine/util.ts')
+    const lattice = text
     expect(lattice).toContain('Loop(27, ({i}) =>')
     expect(lattice).toContain('vec3(i.mod(3), i.div(3).mod(3), i.div(9)).sub(1)')
     expect(lattice).toContain('cellNoiseVec3(cell.add(offset))')
@@ -252,10 +252,11 @@ describe('Knot cellular fields', () => {
   })
   test('preserves Abyssal Chromatophore feature identities and full cross-cell support', async () => {
     const text = await source('abyssal_chromatophore')
-    const fields = await knotSource('entries/abyssal_chromatophore/util.ts')
+    const fields = text
+    const material = text.slice(text.indexOf('export default class extends'))
     expect(text).toContain('pigmentCells(cq, phase, arousal)')
     expect(text).toContain('photophoreCells(pq, sweep, intimate)')
-    expect(text).not.toContain('cellNoiseVec3(')
+    expect(material).not.toContain('cellNoiseVec3(')
     expect(fields.match(/Loop\(27,/g)).toHaveLength(2)
     expect(fields.match(/const identity = cell.add\(offset\).toVar\(\)/g)).toHaveLength(2)
     expect(fields).toContain('cellNoiseVec3(identity.add(vec3(17.3, 5.9, 41.2)))')
@@ -279,7 +280,7 @@ describe('Knot cellular fields', () => {
   })
   test('keeps Maki-e flakes whole and tilted independently without stamping cell tints onto threads', async () => {
     const text = await source('makie_lacquer')
-    const fields = await knotSource('entries/makie_lacquer/util.ts')
+    const fields = text
     expect(text).not.toContain('mx_cell_noise_vec3')
     expect(text).toContain('const inner = p.sub(view.mul(0.012))')
     expect(text).toContain('const q = inner.mul(85)')

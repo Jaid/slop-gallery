@@ -7,7 +7,9 @@ import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import knotData from './data.ts'
 
-/** Neighbor traversal keeps stars and connecting segments whole across grid boundaries. */
+/**
+ * Neighbor traversal keeps stars and connecting segments whole across grid boundaries.
+ */
 const constellation = fn(([q]: [Node<'vec3'>]) => {
   const cell = q.floor()
   const local = q.fract()
