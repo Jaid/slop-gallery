@@ -1,4 +1,4 @@
-import type {VoiceSampleAudioFormat, VoiceSampleFetch, VoiceSampleMetadata, VoiceSampleRequest, VoiceSampleTiming} from './types.ts'
+import type {App, VoiceSampleAudioFormat, VoiceSampleFetch, VoiceSampleMetadata, VoiceSampleRequest, VoiceSampleTiming} from './types.ts'
 
 import {execFile} from 'node:child_process'
 import {createHash, randomUUID} from 'node:crypto'
@@ -180,28 +180,32 @@ const pcmFromWav = (wav: Uint8Array) => {
 
 export type VoiceSampleCacheOptions = {
   apiKey?: string
+  app: App
   bitrate?: number
-  directory: string
+  cacheFolder: string
   fetch?: VoiceSampleFetch
   ffmpegPath?: string
   model?: string
   sampleRate?: number
+  storageFolder: string
 }
 
 export default class VoiceSampleCache {
   readonly #apiKey?: string
+  readonly #app: App
   readonly #bitrate: number
-  readonly #cacheDirectory: string
+  readonly #cacheFolder: string
   readonly #fetch: VoiceSampleFetch
   readonly #ffmpegPath: string
   readonly #model: string
   readonly #pendingConversions = new Map<string, Promise<string>>
   readonly #pendingStores = new Map<string, Promise<StoredVoiceSample>>
   readonly #sampleRate: number
-  readonly #storeDirectory: string
+  readonly #storageFolder: string
 
   constructor(options: VoiceSampleCacheOptions) {
     this.#apiKey = options.apiKey
+    this.#app = options.app
     this.#sampleRate = options.sampleRate ?? defaultSampleRate
     if (!Number.isSafeInteger(this.#sampleRate) || this.#sampleRate <= 0) {
       throw new TypeError('Voice sample sampleRate must be a positive integer.')
@@ -210,8 +214,8 @@ export default class VoiceSampleCache {
     if (!Number.isSafeInteger(this.#bitrate) || this.#bitrate <= 0) {
       throw new TypeError('Voice sample bitrate must be a positive integer.')
     }
-    this.#storeDirectory = resolve(options.directory, 'store')
-    this.#cacheDirectory = resolve(options.directory, 'cache')
+    this.#storageFolder = options.storageFolder
+    this.#cacheFolder = options.cacheFolder
     this.#fetch = options.fetch ?? globalThis.fetch.bind(globalThis)
     this.#ffmpegPath = options.ffmpegPath ?? 'ffmpeg'
     this.#model = options.model ?? modelDefault
@@ -261,15 +265,15 @@ export default class VoiceSampleCache {
   }
 
   metadataPath(key: string) {
-    return resolve(this.#storeDirectory, `${key}.msgpack`)
+    return resolve(this.#storageFolder, `${key}.msgpack`)
   }
 
   rawPath(key: string) {
-    return resolve(this.#storeDirectory, `${key}.wav`)
+    return resolve(this.#storageFolder, `${key}.wav`)
   }
 
   #cachePath(key: string, format: Exclude<VoiceSampleAudioFormat, 'wav'>) {
-    return resolve(this.#cacheDirectory, `${this.cacheKey(key, format)}.${format}`)
+    return resolve(this.#cacheFolder, `${this.cacheKey(key, format)}.${format}`)
   }
 
   async #convert(format: Exclude<VoiceSampleAudioFormat, 'wav'>, key: string, rawPath: string) {
@@ -277,7 +281,7 @@ export default class VoiceSampleCache {
     if (await hasFile(output)) {
       return output
     }
-    await fs.ensureDir(this.#cacheDirectory)
+    await fs.ensureDir(this.#cacheFolder)
     const token = `${process.pid}-${randomUUID()}`
     const temporary = `${output}.${token}.tmp`
     try {
@@ -326,15 +330,15 @@ export default class VoiceSampleCache {
     if (!this.#apiKey) {
       throw new Error('OPENROUTER_API_KEY is required to generate an uncached voice sample.')
     }
-    await fs.ensureDir(this.#storeDirectory)
+    await fs.ensureDir(this.#storageFolder)
     const response = await this.#fetch('https://openrouter.ai/api/v1/audio/speech', {
       method: 'POST',
       redirect: 'error',
       headers: {
         Authorization: `Bearer ${this.#apiKey}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://slop.gallery',
-        'X-OpenRouter-Title': 'Slop Gallery',
+        'HTTP-Referer': this.#app.url,
+        'X-OpenRouter-Title': this.#app.title,
         'X-OpenRouter-Cache': 'true',
         'X-OpenRouter-Cache-TTL': '86400',
       },

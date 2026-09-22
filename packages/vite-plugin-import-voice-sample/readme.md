@@ -27,13 +27,6 @@ import grokTimings from 'voice:grok' with {
   text: 'Grok',
   format: 'timings',
 }
-
-// Or reference the stored MessagePack metadata by URL.
-import grokMetadataUrl from 'voice:grok' with {
-  text: 'Grok',
-  format: 'timings',
-  type: 'reference',
-}
 ```
 
 Import sources are `voice:<id>` or `voice:<id>/<speaker>`. The ID identifies the import site but is not part of the synthesis hash. The optional speaker path component overrides the configured default speaker, which is `iris`.
@@ -55,62 +48,90 @@ The accepted import attributes are:
 `type: 'contents'` materializes data into the target runtime:
 
 - `format: 'timings'` returns `ReadonlyArray<{char, start, end}>`
-- audio formats return a binary object chosen from the current Vite environment:
-  - Node-like server environments: `Buffer`
-  - browser/worker environments: `Uint8Array`
+- audio formats return:
+  - `Buffer` in Node-like Vite server environments
+  - `Uint8Array` in browser/worker environments
 
-The plugin uses Vite's per-environment `consumer` and resolved Node builtins to distinguish a Node-like server from browser/worker targets, so worker-style server environments do not receive a Node-only `Buffer`.
+The plugin uses Vite's per-environment consumer and resolved Node builtins to avoid emitting Node-only `Buffer` code for worker-style server targets.
 
-TypeScript does not currently specialize an ambient module's default-export type from custom import attributes. The app therefore keeps `voice:*` declared as the default/reference `string` type. The package exports helper types for explicit contents typing:
+TypeScript does not currently specialize an ambient module's default-export type from custom import attributes. The app therefore keeps `voice:*` declared as the default/reference `string` type. The package exports helper types for explicit contents typing.
 
-```ts
-import type {VoiceSampleContents, VoiceSampleValue} from 'vite-plugin-import-voice-sample'
+## Folders
 
-type AudioContents = VoiceSampleContents<'opus'> // Uint8Array; Buffer is a compatible subtype
-type TimingsContents = VoiceSampleContents<'timings'>
-type AudioReference = VoiceSampleValue<'opus', 'reference'> // string
-```
-
-## Storage
-
-The hash identifies the synthesis itself and deliberately excludes the requested output format, load type, and import ID. WAV, Opus, PCM, timing contents, and references with otherwise identical synthesis inputs therefore share one OpenRouter generation.
-
-Every generated synthesis is stored canonically as:
+The default base folder is:
 
 ```text
-temp/vite-plugin-import-voice-sample/
-  store/
-    <hash>.wav
-    <hash>.msgpack
+<Vite root>/temp/vite-plugin-import-voice-sample
 ```
 
-The WAV is the lossless raw source. The MessagePack metadata contains character timings plus generation metadata such as duration, sample rate, and OpenRouter trace ID.
+Options:
 
-Requested conversions are derived from that stored WAV and cached separately:
+- `folder?: string` — base folder; relative paths resolve from the Vite root.
+- `cacheFolder?: string` — conversion cache override; defaults to `<folder>/cache`.
+- `storageFolder?: string` — raw storage override; defaults to `<folder>/store`.
+
+Explicit `cacheFolder` and `storageFolder` paths also resolve from the Vite root when relative.
+
+The canonical raw store is:
 
 ```text
-temp/vite-plugin-import-voice-sample/
-  cache/
-    <hash>.opus
-    <hash>.pcm
+<storageFolder>/
+  <hash>.wav
+  <hash>.msgpack
 ```
 
-An Opus file exists only when a dependent needs Opus. PCM is never part of the raw store; an explicit PCM import extracts PCM from the stored WAV and caches it. WAV imports use `store/<hash>.wav` directly. Timing imports read or reference the MessagePack metadata and create no audio conversion.
+Requested conversions are cached separately:
 
-Store/cache hits never contact OpenRouter. Cache misses use `OPENROUTER_API_KEY`. OpenRouter's timestamp-enabled response carries PCM in a timed envelope; the plugin derives the actual sample rate from PCM length and provider duration and immediately wraps it into the canonical stored WAV.
+```text
+<cacheFolder>/
+  <conversion-hash>.opus
+  <hash>.pcm
+```
 
-`emotion` maps semantic names such as `cheerful`, `calm`, `excited`, and `dramatic` onto xAI wrapping speech tags. Native wrapping tags such as `soft`, `whisper`, `loud`, and `emphasis` can also be used directly.
+PCM is never stored as raw data. WAV imports use the stored WAV directly. Timing imports read or reference the MessagePack metadata and create no audio conversion.
+
+## OpenRouter app attribution
+
+The `app` option controls OpenRouter's attribution headers:
 
 ```ts
-// vite.config.ts
-import importVoiceSample from 'vite-plugin-import-voice-sample'
-
-export default {
-  plugins: [
-    importVoiceSample(),
-  ],
+type App = {
+  title: string
+  url: string
 }
 ```
+
+It accepts either a full `App` object or a URL shorthand:
+
+```ts
+importVoiceSample({
+  app: 'https://example.com/my-app',
+})
+```
+
+The shorthand is normalized with `tinyhand`; its URL is used unchanged and its title becomes the URL hostname (`example.com` in the example).
+
+An expanded object is used exactly:
+
+```ts
+importVoiceSample({
+  app: {
+    title: 'My App',
+    url: 'https://example.com/my-app',
+  },
+})
+```
+
+When omitted, the default remains:
+
+```ts
+{
+  title: 'Slop Gallery',
+  url: 'https://slop.gallery',
+}
+```
+
+These become `X-OpenRouter-Title` and `HTTP-Referer` respectively.
 
 ## Synthesis and Opus options
 
@@ -119,7 +140,7 @@ The plugin accepts:
 - `sampleRate?: number` — requested xAI PCM sample rate in Hz; defaults to `48000`.
 - `bitrate?: number` — Opus encoder bitrate in bits/s; used only for Opus conversion.
 
-When `bitrate` is omitted it is derived from the configured sample rate:
+When `bitrate` is omitted:
 
 ```ts
 Math.round(0.68266 * sampleRate)
@@ -127,6 +148,18 @@ Math.round(0.68266 * sampleRate)
 
 For the default 48 kHz sample rate this is 32,768 bit/s; at 24 kHz it is 16,384 bit/s.
 
-`sampleRate` is part of the raw synthesis identity because it changes the OpenRouter request. `bitrate` is not: changing bitrate reuses the same canonical WAV + MessagePack store and creates a separately keyed Opus derivative, preventing stale encoder-cache reuse without duplicating synthesis.
+`sampleRate` is part of the raw synthesis identity. `bitrate` is not: changing bitrate reuses the canonical WAV + MessagePack store and creates a separately keyed Opus derivative.
 
-Options can also override the storage directory, model, defaults, API key, or ffmpeg executable. The API key is only used inside Vite and is never emitted into client code.
+Store/cache hits never contact OpenRouter. Cache misses use `OPENROUTER_API_KEY`. The API key is only used inside Vite and is never emitted into client code.
+
+## Vite setup
+
+```ts
+import importVoiceSample from 'vite-plugin-import-voice-sample'
+
+export default {
+  plugins: [
+    importVoiceSample(),
+  ],
+}
+```

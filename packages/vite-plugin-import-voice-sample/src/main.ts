@@ -1,10 +1,11 @@
-import type {VoiceSampleFormat, VoiceSampleLoadType, VoiceSamplePluginOptions, VoiceSampleRequest} from './types.ts'
+import type {App, VoiceSampleFormat, VoiceSampleLoadType, VoiceSamplePluginOptions, VoiceSampleRequest} from './types.ts'
 import type {Plugin, ResolvedConfig} from 'vite'
 
 import {isAbsolute, resolve} from 'node:path'
 
 import {parse} from '@babel/parser'
 import fs from 'fs-extra'
+import tinyhand from 'tinyhand'
 import {loadEnv, normalizePath} from 'vite'
 
 import {applyEdits, parseVoiceSampleImports, virtualVoiceSamplePrefix, voiceSourcePrefix} from './imports.ts'
@@ -12,9 +13,13 @@ import VoiceSampleCache from './VoiceSampleCache.ts'
 
 export {voiceSourcePrefix} from './imports.ts'
 
-export type {VoiceSampleAudioFormat, VoiceSampleContents, VoiceSampleFormat, VoiceSampleLoadType, VoiceSampleMetadata, VoiceSamplePluginOptions, VoiceSampleRequest, VoiceSampleTiming, VoiceSampleValue} from './types.ts'
+export type {App, VoiceSampleAudioFormat, VoiceSampleContents, VoiceSampleFormat, VoiceSampleLoadType, VoiceSampleMetadata, VoiceSamplePluginOptions, VoiceSampleRequest, VoiceSampleTiming, VoiceSampleValue} from './types.ts'
 
 const resolvedVirtualPrefix = `\0${virtualVoiceSamplePrefix}`
+const defaultApp: App = {
+  title: 'Slop Gallery',
+  url: 'https://slop.gallery',
+}
 
 type VirtualParts = {
   format: VoiceSampleFormat
@@ -24,6 +29,24 @@ type VirtualParts = {
 
 const voiceSampleFormats = new Set<VoiceSampleFormat>(['opus', 'pcm', 'timings', 'wav'])
 const voiceSampleLoadTypes = new Set<VoiceSampleLoadType>(['contents', 'reference'])
+const resolveFromRoot = (root: string, path: string) => (isAbsolute(path) ? path : resolve(root, path))
+const normalizeApp = (input: App | string): App => tinyhand((value: App | string): App => {
+  if (typeof value === 'string') {
+    const parsed = new URL(value)
+    if (!parsed.hostname) {
+      throw new TypeError('Voice sample app URL must have a hostname.')
+    }
+    return {
+      title: parsed.hostname,
+      url: value,
+    }
+  }
+  if (!value.title) {
+    throw new TypeError('Voice sample app title must not be empty.')
+  }
+  new URL(value.url)
+  return value
+}, input)
 const virtualParts = (source: string): VirtualParts | undefined => {
   const normalized = source.startsWith('\0') ? source.slice(1) : source
   if (!normalized.startsWith(virtualVoiceSamplePrefix)) {
@@ -69,16 +92,19 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
     configResolved(resolved) {
       config = resolved
       const env = loadEnv(config.mode, config.root, '')
-      const directoryOption = options.directory ?? 'temp/vite-plugin-import-voice-sample'
-      const directory = isAbsolute(directoryOption) ? directoryOption : resolve(config.root, directoryOption)
+      const folder = resolveFromRoot(config.root, options.folder ?? 'temp/vite-plugin-import-voice-sample')
+      const cacheFolder = options.cacheFolder ? resolveFromRoot(config.root, options.cacheFolder) : resolve(folder, 'cache')
+      const storageFolder = options.storageFolder ? resolveFromRoot(config.root, options.storageFolder) : resolve(folder, 'store')
       cache = new VoiceSampleCache({
         apiKey: options.apiKey || env.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY,
+        app: normalizeApp(options.app ?? defaultApp),
         bitrate: options.bitrate,
-        directory,
+        cacheFolder,
         fetch: options.fetch,
         ffmpegPath: options.ffmpegPath,
         model: options.model,
         sampleRate: options.sampleRate,
+        storageFolder,
       })
     },
     transform(code, id) {

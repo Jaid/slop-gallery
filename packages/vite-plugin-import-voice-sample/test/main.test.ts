@@ -35,7 +35,7 @@ const envelope = (sampleRate = 48_000) => ({
 const response = (sampleRate = 48_000) => Response.json(envelope(sampleRate), {
   headers: {'x-generation-id': 'trace-id'},
 })
-const fetchRecorder = (calls: Array<Record<string, unknown>>, sampleRate = 48_000): VoiceSampleFetch => async (_input, init) => {
+const fetchRecorder = (calls: Array<Record<string, unknown>>, sampleRate = 48_000, headerCalls?: Array<Headers>): VoiceSampleFetch => async (_input, init) => {
   if (typeof init?.body !== 'string') {
     throw new TypeError('Expected a JSON request body.')
   }
@@ -44,6 +44,7 @@ const fetchRecorder = (calls: Array<Record<string, unknown>>, sampleRate = 48_00
     throw new TypeError('Expected an object request body.')
   }
   calls.push(body as Record<string, unknown>)
+  headerCalls?.push(new Headers(init.headers))
   return response(sampleRate)
 }
 const buildConfig = (root: string): InlineConfig => ({
@@ -74,18 +75,78 @@ describe('vite-plugin-import-voice-sample', () => {
       export {iris, ara}
     `)
     const calls: Array<Record<string, unknown>> = []
+    const headerCalls: Array<Headers> = []
     await build({
       ...buildConfig(root),
       plugins: [importVoiceSample({
         apiKey: 'test-key',
-        fetch: fetchRecorder(calls),
+        fetch: fetchRecorder(calls, 48_000, headerCalls),
       })],
     })
     expect(calls).toHaveLength(2)
+    expect(headerCalls.every(headers => headers.get('HTTP-Referer') === 'https://slop.gallery')).toBe(true)
+    expect(headerCalls.every(headers => headers.get('X-OpenRouter-Title') === 'Slop Gallery')).toBe(true)
     expect(calls.map(call => call.voice).toSorted((a, b) => String(a).localeCompare(String(b)))).toEqual(['ara', 'iris'])
     const storeFiles = await fs.readdir(join(root, 'temp/vite-plugin-import-voice-sample/store'))
     expect(storeFiles.filter(file => file.endsWith('.wav'))).toHaveLength(2)
     expect(storeFiles.filter(file => file.endsWith('.msgpack'))).toHaveLength(2)
+  })
+  test('folder controls default cache/store subfolders and string app uses URL hostname title', async () => {
+    const root = await temporaryDirectory()
+    await fs.writeFile(join(root, 'entry.ts'), `
+      import audio from 'voice:folders' with {text: 'Folders', format: 'opus'}
+      export default audio
+    `)
+    let headers: Headers | undefined
+    await build({
+      ...buildConfig(root),
+      plugins: [importVoiceSample({
+        apiKey: 'test-key',
+        app: 'https://voice.example.test/path',
+        fetch: async (_input, init) => {
+          headers = new Headers(init?.headers)
+          return response()
+        },
+        folder: 'temp/custom-voice',
+      })],
+    })
+    expect(headers?.get('HTTP-Referer')).toBe('https://voice.example.test/path')
+    expect(headers?.get('X-OpenRouter-Title')).toBe('voice.example.test')
+    expect(await fs.readdir(join(root, 'temp/custom-voice/store'))).toHaveLength(2)
+    const customCacheFiles = await fs.readdir(join(root, 'temp/custom-voice/cache'))
+    expect(customCacheFiles.some(file => file.endsWith('.opus'))).toBe(true)
+  })
+  test('cacheFolder and storageFolder override folder and App object headers stay exact', async () => {
+    const root = await temporaryDirectory()
+    await fs.writeFile(join(root, 'entry.ts'), `
+      import audio from 'voice:overrides' with {text: 'Overrides', format: 'opus'}
+      export default audio
+    `)
+    let headers: Headers | undefined
+    await build({
+      ...buildConfig(root),
+      plugins: [importVoiceSample({
+        apiKey: 'test-key',
+        app: {
+          title: 'Voice Lab',
+          url: 'https://voice.example.test/app',
+        },
+        cacheFolder: 'temp/derivatives',
+        fetch: async (_input, init) => {
+          headers = new Headers(init?.headers)
+          return response()
+        },
+        folder: 'temp/unused-base',
+        storageFolder: 'temp/raw-voice',
+      })],
+    })
+    expect(headers?.get('HTTP-Referer')).toBe('https://voice.example.test/app')
+    expect(headers?.get('X-OpenRouter-Title')).toBe('Voice Lab')
+    expect(await fs.readdir(join(root, 'temp/raw-voice'))).toHaveLength(2)
+    const derivativeFiles = await fs.readdir(join(root, 'temp/derivatives'))
+    expect(derivativeFiles.some(file => file.endsWith('.opus'))).toBe(true)
+    expect(await fs.pathExists(join(root, 'temp/unused-base/store'))).toBe(false)
+    expect(await fs.pathExists(join(root, 'temp/unused-base/cache'))).toBe(false)
   })
   test('contents and reference select runtime values without changing the synthesis', async () => {
     const root = await temporaryDirectory()
@@ -279,11 +340,16 @@ describe('vite-plugin-import-voice-sample', () => {
     let calls = 0
     const cache = new VoiceSampleCache({
       apiKey: 'test-key',
-      directory: root,
+      app: {
+        title: 'Slop Gallery',
+        url: 'https://slop.gallery',
+      },
+      cacheFolder: join(root, 'cache'),
       fetch: async () => {
         calls++
         return response()
       },
+      storageFolder: join(root, 'store'),
     })
     const base = {
       language: 'en',
@@ -336,11 +402,16 @@ describe('vite-plugin-import-voice-sample', () => {
     ].toSorted())
     expect(storeFiles.some(file => file.endsWith('.pcm'))).toBe(false)
     const otherBitrate = new VoiceSampleCache({
+      app: {
+        title: 'Slop Gallery',
+        url: 'https://slop.gallery',
+      },
       bitrate: 96_000,
-      directory: root,
+      cacheFolder: join(root, 'cache'),
       fetch: async () => {
         throw new Error('raw store should be reused')
       },
+      storageFolder: join(root, 'store'),
     })
     expect(otherBitrate.key(opusRequest)).toBe(rawKey)
     expect(otherBitrate.cacheKey(rawKey, 'opus')).not.toBe(opusKey)
