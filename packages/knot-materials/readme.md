@@ -11,13 +11,11 @@ src/
       data.ts
       Material.ts
       icon.jxl
-      announce.opus
     ferrothorn/
       data.ts
       Material.ts
       util.ts
       icon.jxl
-      announce.opus
     index.ts
   candidates/
     gpt_astra/
@@ -25,8 +23,6 @@ src/
       icon.jxl
       symbol.svg
       lib/
-      candidate/announce.opus
-      slug/<model-slug>/announce.opus
     index.ts
   lib/                    # Shared shader primitives and the material base class
   main.ts                 # Metadata-only catalogue
@@ -166,17 +162,13 @@ Capture uses explicit offscreen GPU readback, including HDR-finiteness checks. T
 
 Encoding requires `ffmpeg` with `libsvtav1`. The numbered PNG frames are encoded directly to 8-bit full-range 4:2:0 AV1 in a WebM container using SVT-AV1 preset 5 at CRF 20, variance boost enabled, film grain disabled, tune 0 (VQ), and explicit 8-bit input depth; there is no APNG intermediate. AV1 does not preserve the source alpha channel in this pipeline, so the experimental WebM output is opaque. Looping is a playback concern (for example, HTML `<video loop>`) rather than embedded animation metadata. All temporary frames stay outside the repository and are removed on completion or failure. The destination is replaced atomically only after capture and encoding finish.
 
-## Narration assets
+## Narration
 
-Paths are relative to this package's `src` directory:
+Knottingham announcements are generated through `vite-plugin-import-voice-sample` virtual imports rather than checked-in audio files.
 
-```text
-candidates/<candidate>/candidate/announce.opus
-candidates/<candidate>/slug/<model-slug>/announce.opus
-entries/<id>/announce.opus
-```
+`src/announcementAssets.ts` contains one static Iris import for every candidate, model, and knot title in `knotAnnouncements(knotCandidates)`. Each import uses loud delivery and Opus output, while the existing announcement path IDs remain unchanged for `KnotNarration`.
 
-Candidate introductions may replay on interaction. Model introductions and individual titles are remembered once per session unless explicitly replayed. Missing recordings remain silent; runtime playback never initiates paid generation. The application's `announceKnots.ts` and `prerenderAllVoices.ts` scripts write to the new package paths.
+There are no per-knot announcement audio assets in this package. Adding catalogue entries therefore only requires keeping the announcement import inventory in sync; runtime playback never initiates speech generation.
 
 ## Validation
 

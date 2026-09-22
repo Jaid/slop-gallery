@@ -1,16 +1,15 @@
 import {expect, test} from 'bun:test'
 
-import {knotCandidates} from 'knot-materials'
-import {knotAnnouncements} from 'knot-materials/announcements.ts'
-
 import {prerenderInventory} from '../../scripts/prerenderAllVoices.ts'
 import portraits from '../../src/levels/gallery/collection.ts'
 
-test('the replacement inventory covers every knot, model and bundled portrait exactly once', () => {
+test('the remaining prerender inventory covers every bundled portrait exactly once', () => {
   const inventory = prerenderInventory()
-  expect(inventory).toHaveLength(knotAnnouncements(knotCandidates).length + portraits.length)
-  expect(new Set(inventory.map(item => item.output)).size).toBe(inventory.length)
-  expect(new Set(inventory.map(item => item.id)).size).toBe(inventory.length)
+  const outputs = new Set(inventory.map(item => item.output))
+  const ids = new Set(inventory.map(item => item.id))
+  expect(inventory).toHaveLength(portraits.length)
+  expect(outputs.size).toBe(inventory.length)
+  expect(ids.size).toBe(inventory.length)
   for (const item of inventory) {
     expect(item.output).toEndWith('.opus')
     expect(item.output).not.toContain('\\')

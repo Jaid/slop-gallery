@@ -1,43 +1,31 @@
 import {parseArgs} from 'node:util'
 
 import * as path from 'forward-slash-path'
-import {knotCandidates} from 'knot-materials'
-import {knotAnnouncements} from 'knot-materials/announcements.ts'
 
 import portraits from '../src/levels/gallery/collection.ts'
-import {announcementDurationLimit, announcementInput} from './announceKnots.ts'
 import VoicePrerenderBatch from './lib/voice/VoicePrerenderBatch.ts'
 
 const root = path.resolve(import.meta.dir, '..')
+const announcementInput = (text: string) => text.trim().replace(/[!.?]+$/u, '')
 
 export function prerenderInventory() {
-  return [
-    ...knotAnnouncements(knotCandidates).map(item => ({
-      id: `knots/${item.id}`,
-      input: announcementInput(item),
-      maximumDuration: announcementDurationLimit(item),
-      output: path.resolve(root, 'packages/knot-materials/src', item.id, 'announce.opus'),
-    })),
-    ...portraits.map(portrait => ({
-      id: `gallery/${portrait.id}`,
-      // Keep internal sentence boundaries, but do not append punctuation to the utterance.
-      input: `${announcementInput({
-        id: portrait.id,
-        text: portrait.title,
-      })}. ${portrait.description.trim()}`.replace(/[!.?]+$/u, ''),
-      maximumDuration: 60,
-      output: path.resolve(root, `public${portrait.narration}`),
-    })),
-  ]
+  return portraits.map(portrait => ({
+    id: `gallery/${portrait.id}`,
+    // Keep internal sentence boundaries, but do not append punctuation to the utterance.
+    input: `${announcementInput(portrait.title)}. ${portrait.description.trim()}`.replace(/[!.?]+$/u, ''),
+    maximumDuration: 60,
+    output: path.resolve(root, `public${portrait.narration}`),
+  }))
 }
 
-/** Explicit full replacement: no production assets change until every render has passed validation. */
+/** Explicit full replacement for the remaining prerecorded gallery narration. */
 export default async function prerenderAllVoices({retryFailed = false}: {retryFailed?: boolean} = {}) {
-  return new VoicePrerenderBatch({
+  const batch = new VoicePrerenderBatch({
     cacheRoot: path.resolve(root, 'private/production-voices'),
     force: true,
     retryFailed,
-  }).generate(prerenderInventory())
+  })
+  return batch.generate(prerenderInventory())
 }
 
 if (import.meta.main) {
