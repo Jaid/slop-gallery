@@ -37,7 +37,7 @@ type HoistedCandidate = {
 
 const firstIdentifierCharacters = '_$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 const identifierCharacters = `${firstIdentifierCharacters}0123456789`
-const joinCandidates = " _-\"\\'.!:;#$%&'()*+,/0123456789<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^`abcdefghijklmnopqrstuvwxyz{}~"
+const joinCandidates = " _-\"',.`|:;!#$%&([{)]}/\\*+<=>?@^~abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\t\n\r"
 const stableBuiltinConstants = new Map([
   ['Math', new Set([
     'E',
