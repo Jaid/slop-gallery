@@ -16,7 +16,8 @@
     "test": "bun test --max-concurrency 1 ./test"
   },
   "dependencies": {
-    "@babel/helper-plugin-utils": "8.0.1"
+    "@babel/helper-plugin-utils": "8.0.1",
+    "sort-shortest-levenshtein": "workspace:*"
   },
   "peerDependencies": {
     "@babel/core": "^8.0.6"

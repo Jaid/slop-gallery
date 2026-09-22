@@ -38,13 +38,42 @@ describe('popular constant hoisting', () => {
     expect(code).toStartWith('var[')
   })
   test('sorts joined strings by UTF-8 byte length', () => {
-    const values = ['eeeeeeee', 'éé', 'ddddddd', 'x', 'cccccc', 'aaa', 'bbbbb', 'yy']
+    const values = ['eeeeeeeee', 'éé', 'dddddddd', 'xx', 'ccccccc', 'aaa', 'bbbbbb', 'fffff']
     const source = `sink(${values.flatMap(value => Array.from({length: 3}, () => JSON.stringify(value))).join(',')})`
     const code = compile(source, {
       minimumSavingsBytes: -100,
       stableBuiltins: true,
     })
-    expect(code).toContain('"x yy aaa éé bbbbb cccccc ddddddd eeeeeeee".split(" ")')
+    expect(code).toContain('"xx aaa éé fffff bbbbbb ccccccc dddddddd eeeeeeeee".split(" ")')
+  })
+  test('chains equal-byte joined strings by Levenshtein distance', () => {
+    const values = ['zzz', 'abc', 'axx', 'aa', 'bbbb', 'cccc', 'dddd', 'eeee']
+    const source = `sink(${values.flatMap(value => Array.from({length: 3}, () => JSON.stringify(value))).join(',')})`
+    const code = compile(source, {
+      minimumSavingsBytes: -100,
+      stableBuiltins: true,
+    })
+    expect(code).toContain('"aa abc axx zzz bbbb cccc dddd eeee".split(" ")')
+  })
+  test('packs one-code-point strings through direct string iteration when shorter', () => {
+    const values = ['a', 'b', 'é', '😀']
+    const source = `sink(${values.flatMap(value => Array.from({length: 3}, () => JSON.stringify(value))).join(',')})`
+    const code = compile(source, {
+      minimumSavingsBytes: -100,
+      stableBuiltins: true,
+    })
+    expect(code).toContain('="abé😀";')
+    expect(code).not.toContain('.split(')
+  })
+  test('keeps single characters in the split pool when extracting them would be longer', () => {
+    const values = ['a', 'b', 'marcus', 'jack', 'thomas', 'friedrich', 'sandra', 'paula']
+    const source = `sink(${values.flatMap(value => Array.from({length: 3}, () => JSON.stringify(value))).join(',')})`
+    const code = compile(source, {
+      minimumSavingsBytes: -100,
+      stableBuiltins: true,
+    })
+    expect(code).toContain('.split(" ")')
+    expect(code).not.toContain('="ab";')
   })
   test('does not join seven pooled strings when destructuring would not save bytes', () => {
     const values = ['marcus', 'jack', 'thomas', 'linda', 'paula', 'bernd', 'friedrich']
@@ -67,10 +96,21 @@ describe('popular constant hoisting', () => {
       stableBuiltins: false,
     })).not.toContain('.split(')
   })
-  test('uses the first available one-byte join separator', () => {
+  test('uses the first available escape-free join separator', () => {
     const values = ['marcus smith', 'jack black', 'thomas brown', 'linda white', 'paula green', 'bernd gray', 'friedrich gold', 'sandra blue']
     const source = `sink(${values.flatMap(value => Array.from({length: 3}, () => JSON.stringify(value))).join(',')})`
     expect(compile(source, {stableBuiltins: true})).toContain('.split("_")')
+  })
+  test('skips a higher-priority quote separator when it would require escaping', () => {
+    const values = [' _-marcus', ' _-jackson', ' _-thomas', ' _-lindsey', ' _-paulina', ' _-bernhard', ' _-friedrich', ' _-sandra']
+    const source = `sink(${values.flatMap(value => Array.from({length: 3}, () => JSON.stringify(value))).join(',')})`
+    expect(compile(source, {stableBuiltins: true})).toContain('.split("\'")')
+  })
+  test('skips backslash as a separator because it would require escaping', () => {
+    const blocked = " _-\"',.`|:;!#$%&([{)]}/"
+    const values = ['marcus', 'jackson', 'thomas', 'lindsey', 'paulina', 'bernhard', 'friedrich', 'sandra'].map(value => blocked + value)
+    const source = `sink(${values.flatMap(value => Array.from({length: 3}, () => JSON.stringify(value))).join(',')})`
+    expect(compile(source, {stableBuiltins: true})).toContain('.split("*")')
   })
   test('falls back when every join separator occurs in the pooled strings', () => {
     const printableAscii = Array.from({length: 95}, (_, index) => String.fromCodePoint(32 + index)).join('')
@@ -88,15 +128,33 @@ describe('popular constant hoisting', () => {
     const code = compile('sink({},{},[],[],/x/,/x/)')
     expect(code).not.toContain('var ')
   })
-  test('leaves module specifiers and non-computed property keys literal', () => {
+  test('leaves module specifiers literal while hoisting profitable object keys', () => {
     const code = compile(`
       import x from "popular-long-string"
       export {x} from "popular-long-string"
       const one = {"popular-long-string": 1}
       const two = {"popular-long-string": 2}
     `)
+    expect(code).toStartWith('var _="popular-long-string";')
+    expect(code).toContain('const one={[_]:1}')
+    expect(code).toContain('const two={[_]:2}')
+    expect(code.match(/popular-long-string/gu)).toHaveLength(3)
+  })
+  test('accounts for computed-key brackets when deciding whether to hoist', () => {
+    const code = compile('sink({"abc":1},{"abc":2})')
     expect(code).not.toContain('var ')
-    expect(code.match(/popular-long-string/gu)).toHaveLength(4)
+    expect(code.match(/"abc"/gu)).toHaveLength(2)
+  })
+  test('hoists repeated object method keys as computed keys', () => {
+    const code = compile('sink({"popular-long-method"(){return 1}},{"popular-long-method"(){return 2}})')
+    expect(code).toStartWith('var _="popular-long-method";')
+    expect(code.match(/\[_\]\(\)/gu)).toHaveLength(2)
+  })
+  test('does not compute __proto__ object literal keys', () => {
+    const code = compile('sink({"__proto__":null},{"__proto__":null})', {
+      minimumSavingsBytes: -100,
+    })
+    expect(code.match(/"__proto__"/gu)).toHaveLength(2)
   })
   test('skips programs with direct eval because added bindings are observable', () => {
     const code = compile('eval("typeof _");sink("popular-long-string","popular-long-string")')

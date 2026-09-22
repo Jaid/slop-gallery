@@ -4,9 +4,10 @@ import {Buffer} from 'node:buffer'
 
 import {types as t} from '@babel/core'
 import {declare} from '@babel/helper-plugin-utils'
+import sortShortestLevenshtein from 'sort-shortest-levenshtein'
 
 export type HoistPopularConstantsOptions = {
-  /** Join pooled strings into one split-backed destructuring initializer when smaller. Defaults to true and requires stableBuiltins. */
+  /** Pack pooled strings into compact destructuring initializers when smaller. Defaults to true and requires stableBuiltins. */
   join?: boolean
   minimumOccurrences?: number
   minimumSavingsBytes?: number
@@ -18,12 +19,17 @@ type PopularLiteral = t.BigIntLiteral | t.BooleanLiteral | t.NullLiteral | t.Num
 type PopularLiteralPath = NodePath<t.BigIntLiteral> | NodePath<t.BooleanLiteral> | NodePath<t.NullLiteral> | NodePath<t.NumericLiteral> | NodePath<t.StringLiteral>
 type CandidateExpression = PopularLiteral | t.MemberExpression
 type CandidatePath = NodePath<t.MemberExpression> | PopularLiteralPath
+type CandidateOccurrence = {
+  computedObjectKey: boolean
+  path: CandidatePath
+}
 type Candidate = {
   expression: CandidateExpression
   expressionBytes: number
   occurrences: number
-  paths: Array<CandidatePath>
+  paths: Array<CandidateOccurrence>
   rawBytes: number
+  replacementOverheadBytes: number
 }
 type HoistState = {
   candidates?: Map<string, Candidate>
@@ -112,7 +118,17 @@ const isModuleSpecifier = (path: PopularLiteralPath) => {
   }
   return parent.isImportAttribute()
 }
+const isObjectLiteralKey = (path: PopularLiteralPath) => {
+  const parent = path.parentPath
+  if (!(parent.isObjectProperty() || parent.isObjectMethod()) || path.key !== 'key' || parent.node.computed || !parent.parentPath.isObjectExpression()) {
+    return false
+  }
+  return !t.isStringLiteral(path.node, {value: '__proto__'})
+}
 const isHoistable = (path: PopularLiteralPath) => {
+  if (isObjectLiteralKey(path)) {
+    return true
+  }
   if (!path.isReferenced() || isModuleSpecifier(path)) {
     return false
   }
@@ -134,14 +150,19 @@ const isStableBuiltinRead = (path: NodePath<t.MemberExpression>) => {
     || ancestor.isObjectPattern()
     || ancestor.isRestElement())
 }
-const addCandidate = (path: CandidatePath, state: HoistPluginState, key: string, raw: string) => {
+const addCandidate = (path: CandidatePath, state: HoistPluginState, key: string, raw: string, computedObjectKey = false) => {
   const candidates = state.candidates!
   const bytes = Buffer.byteLength(raw)
+  const replacementOverheadBytes = computedObjectKey ? 2 : 0
   const candidate = candidates.get(key)
   if (candidate) {
     candidate.occurrences++
-    candidate.paths.push(path)
+    candidate.paths.push({
+      computedObjectKey,
+      path,
+    })
     candidate.rawBytes += bytes
+    candidate.replacementOverheadBytes += replacementOverheadBytes
     if (bytes < candidate.expressionBytes) {
       candidate.expression = t.cloneNode(path.node)
       candidate.expressionBytes = bytes
@@ -152,15 +173,19 @@ const addCandidate = (path: CandidatePath, state: HoistPluginState, key: string,
     expression: t.cloneNode(path.node),
     expressionBytes: bytes,
     occurrences: 1,
-    paths: [path],
+    paths: [{
+      computedObjectKey,
+      path,
+    }],
     rawBytes: bytes,
+    replacementOverheadBytes,
   })
 }
 const addLiteralCandidate = (path: PopularLiteralPath, state: HoistPluginState) => {
   if (!isHoistable(path)) {
     return
   }
-  addCandidate(path, state, literalKey(path.node), literalRaw(path.node))
+  addCandidate(path, state, literalKey(path.node), literalRaw(path.node), isObjectLiteralKey(path))
 }
 const addStableBuiltinCandidate = (path: NodePath<t.MemberExpression>, state: HoistPluginState, options: HoistPopularConstantsOptions) => {
   if (!options.stableBuiltins || path.node.computed || !isStableBuiltinRead(path)) {
@@ -196,73 +221,148 @@ const nextIdentifier = (path: NodePath<t.Program>, chosen: ReadonlySet<string>, 
 }
 const estimatedSavings = (candidate: Candidate, identifierLength: number, first: boolean) => {
   const declarationOverhead = first ? 6 : 2
-  return candidate.rawBytes - ((candidate.occurrences + 1) * identifierLength + candidate.expressionBytes + declarationOverhead)
+  return candidate.rawBytes - ((candidate.occurrences + 1) * identifierLength + candidate.expressionBytes + candidate.replacementOverheadBytes + declarationOverhead)
 }
+type StringEntry = HoistedCandidate & {
+  value: string
+}
+type DeclaratorPlan = {
+  declarators: Array<t.VariableDeclarator>
+  sizes: Array<number>
+}
+type StringDeclarationPlan = {
+  extraStatements: Array<t.VariableDeclaration>
+  mainDeclarators: Array<t.VariableDeclarator>
+}
+
 const generatedStringBytes = (value: string) => Buffer.byteLength(JSON.stringify(value))
+const generatedStringHasEscape = (value: string) => generatedStringBytes(value) > Buffer.byteLength(value) + 2
 const findJoinSeparator = (values: Array<string>) => {
   for (const candidate of joinCandidates) {
-    if (Buffer.byteLength(candidate) === 1 && values.every(value => !value.includes(candidate))) {
+    if (!generatedStringHasEscape(candidate) && values.every(value => !value.includes(candidate))) {
       return candidate
     }
   }
 }
-const joinedStringDeclaration = (strings: Array<HoistedCandidate>) => {
-  if (strings.length < 2) {
+const stringEntries = (strings: Array<HoistedCandidate>) => strings.map(item => {
+  if (!t.isStringLiteral(item.candidate.expression)) {
+    throw new TypeError('Expected a string literal candidate.')
+  }
+  return {
+    ...item,
+    value: item.candidate.expression.value,
+  }
+})
+const sortStringEntries = (entries: Array<StringEntry>) => sortShortestLevenshtein(entries, entry => entry.value)
+const patternBytes = (entries: Array<StringEntry>) => 2
+  + entries.reduce((bytes, {identifier}) => bytes + Buffer.byteLength(identifier.name), 0)
+  + Math.max(0, entries.length - 1)
+const ordinaryStringPlan = (entries: Array<StringEntry>): DeclaratorPlan => ({
+  declarators: entries.map(({identifier, value}) => t.variableDeclarator(t.cloneNode(identifier), t.stringLiteral(value))),
+  sizes: entries.map(({identifier, value}) => Buffer.byteLength(identifier.name) + 1 + generatedStringBytes(value)),
+})
+const declaratorListBytes = (sizes: Array<number>) => sizes.reduce((total, bytes) => total + bytes, 0) + Math.max(0, sizes.length - 1)
+const incrementalMainBytes = (sizes: Array<number>, hasOtherDeclarators: boolean) => {
+  if (!sizes.length) {
+    return 0
+  }
+  return declaratorListBytes(sizes) + (hasOtherDeclarators ? 1 : 4)
+}
+const splitStringPlan = (inputEntries: Array<StringEntry>) => {
+  if (inputEntries.length < 2) {
     return
   }
-  const entries = strings.map(item => {
-    if (!t.isStringLiteral(item.candidate.expression)) {
-      throw new TypeError('Expected a string literal candidate.')
-    }
-    return {
-      ...item,
-      value: item.candidate.expression.value,
-    }
-  })
-  entries.sort((left, right) => Buffer.byteLength(left.value) - Buffer.byteLength(right.value))
+  const entries = sortStringEntries(inputEntries)
   const values = entries.map(({value}) => value)
   const separator = findJoinSeparator(values)
   if (separator === undefined) {
     return
   }
-  const identifiersBytes = entries.reduce((bytes, {identifier}) => bytes + Buffer.byteLength(identifier.name), 0)
-  const ordinaryBytes = identifiersBytes
-    + entries.reduce((bytes, {value}) => bytes + 1 + generatedStringBytes(value), 0)
-    + entries.length - 1
   const joinedValue = values.join(separator)
-  const joinedBytes = 2 + identifiersBytes + entries.length - 1
-    + 1 + generatedStringBytes(joinedValue)
-    + 7 + generatedStringBytes(separator) + 1
-  if (ordinaryBytes - joinedBytes < 1) {
-    return
-  }
   const split = t.callExpression(
     t.memberExpression(t.stringLiteral(joinedValue), t.identifier('split')),
     [t.stringLiteral(separator)],
   )
-  return t.variableDeclarator(t.arrayPattern(entries.map(({identifier}) => t.cloneNode(identifier))), split)
+  const declarator = t.variableDeclarator(t.arrayPattern(entries.map(({identifier}) => t.cloneNode(identifier))), split)
+  const bytes = patternBytes(entries)
+    + 1 + generatedStringBytes(joinedValue)
+    + 7 + generatedStringBytes(separator) + 1
+  return {
+    declarators: [declarator],
+    sizes: [bytes],
+  } satisfies DeclaratorPlan
 }
-const declarationsFor = (hoisted: Array<HoistedCandidate>, options: HoistPopularConstantsOptions) => {
-  let joinedStrings: t.VariableDeclarator | undefined
-  if (options.stableBuiltins && (options.join ?? true)) {
-    joinedStrings = joinedStringDeclaration(hoisted.filter(({candidate}) => t.isStringLiteral(candidate.expression)))
+const bestMainStringPlan = (entries: Array<StringEntry>): DeclaratorPlan => {
+  const ordinary = ordinaryStringPlan(entries)
+  const split = splitStringPlan(entries)
+  if (!split || declaratorListBytes(ordinary.sizes) - declaratorListBytes(split.sizes) < 1) {
+    return ordinary
   }
-  if (!joinedStrings) {
-    return hoisted.map(({candidate, identifier}) => t.variableDeclarator(identifier, t.cloneNode(candidate.expression)))
+  return split
+}
+const isSingleCodePoint = (value: string) => {
+  const iterator = value[Symbol.iterator]()
+  if (iterator.next().done) {
+    return false
   }
-  const declarations: Array<t.VariableDeclarator> = []
-  let emittedJoinedStrings = false
-  for (const item of hoisted) {
-    if (t.isStringLiteral(item.candidate.expression)) {
-      if (!emittedJoinedStrings) {
-        declarations.push(joinedStrings)
-        emittedJoinedStrings = true
-      }
-      continue
+  return Boolean(iterator.next().done)
+}
+const directCharacterPlan = (inputEntries: Array<StringEntry>) => {
+  if (!inputEntries.length) {
+    return
+  }
+  const entries = sortStringEntries(inputEntries)
+  const joinedValue = entries.map(({value}) => value).join('')
+  const declarator = t.variableDeclarator(
+    t.arrayPattern(entries.map(({identifier}) => t.cloneNode(identifier))),
+    t.stringLiteral(joinedValue),
+  )
+  return {
+    declarator,
+    bytes: patternBytes(entries) + 1 + generatedStringBytes(joinedValue),
+  }
+}
+const optimizeStringDeclarations = (strings: Array<HoistedCandidate>, hasOtherDeclarators: boolean): StringDeclarationPlan => {
+  const entries = stringEntries(strings)
+  const baseline = bestMainStringPlan(entries)
+  const characters = entries.filter(({value}) => isSingleCodePoint(value))
+  const nonCharacters = entries.filter(({value}) => !isSingleCodePoint(value))
+  const directCharacters = directCharacterPlan(characters)
+  if (!directCharacters) {
+    return {
+      extraStatements: [],
+      mainDeclarators: baseline.declarators,
     }
-    declarations.push(t.variableDeclarator(item.identifier, t.cloneNode(item.candidate.expression)))
   }
-  return declarations
+  const remaining = bestMainStringPlan(nonCharacters)
+  const baselineBytes = incrementalMainBytes(baseline.sizes, hasOtherDeclarators)
+  const extractedBytes = incrementalMainBytes(remaining.sizes, hasOtherDeclarators) + directCharacters.bytes + 4
+  if (extractedBytes > baselineBytes) {
+    return {
+      extraStatements: [],
+      mainDeclarators: baseline.declarators,
+    }
+  }
+  return {
+    extraStatements: [t.variableDeclaration('var', [directCharacters.declarator])],
+    mainDeclarators: remaining.declarators,
+  }
+}
+const declarationsFor = (hoisted: Array<HoistedCandidate>, options: HoistPopularConstantsOptions): StringDeclarationPlan => {
+  const strings = hoisted.filter(({candidate}) => t.isStringLiteral(candidate.expression))
+  const nonStrings = hoisted.filter(({candidate}) => !t.isStringLiteral(candidate.expression))
+  const nonStringDeclarators = nonStrings.map(({candidate, identifier}) => t.variableDeclarator(identifier, t.cloneNode(candidate.expression)))
+  if (!options.stableBuiltins || !(options.join ?? true) || !strings.length) {
+    return {
+      extraStatements: [],
+      mainDeclarators: hoisted.map(({candidate, identifier}) => t.variableDeclarator(identifier, t.cloneNode(candidate.expression))),
+    }
+  }
+  const stringPlan = optimizeStringDeclarations(strings, Boolean(nonStringDeclarators.length))
+  return {
+    extraStatements: stringPlan.extraStatements,
+    mainDeclarators: [...nonStringDeclarators, ...stringPlan.mainDeclarators],
+  }
 }
 const hoistCandidates = (path: NodePath<t.Program>, state: HoistPluginState, options: HoistPopularConstantsOptions) => {
   if (state.hasDirectEval) {
@@ -303,8 +403,12 @@ const hoistCandidates = (path: NodePath<t.Program>, state: HoistPluginState, opt
     chosen.add(next.name)
     const candidate = remaining.splice(bestIndex, 1)[0]
     const identifier = t.identifier(next.name)
-    for (const candidatePath of candidate.paths) {
-      candidatePath.replaceWith(t.cloneNode(identifier))
+    for (const occurrence of candidate.paths) {
+      const parent = occurrence.path.parentPath
+      occurrence.path.replaceWith(t.cloneNode(identifier))
+      if (occurrence.computedObjectKey && (parent.isObjectProperty() || parent.isObjectMethod())) {
+        parent.node.computed = true
+      }
     }
     hoisted.push({
       candidate,
@@ -314,7 +418,12 @@ const hoistCandidates = (path: NodePath<t.Program>, state: HoistPluginState, opt
   if (!hoisted.length) {
     return false
   }
-  path.unshiftContainer('body', t.variableDeclaration('var', declarationsFor(hoisted, options)))
+  const declarationPlan = declarationsFor(hoisted, options)
+  const statements: Array<t.Statement> = [...declarationPlan.extraStatements]
+  if (declarationPlan.mainDeclarators.length) {
+    statements.push(t.variableDeclaration('var', declarationPlan.mainDeclarators))
+  }
+  path.unshiftContainer('body', statements)
   return true
 }
 
