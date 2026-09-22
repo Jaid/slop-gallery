@@ -1,8 +1,9 @@
 import type {Node, Texture} from 'three/webgpu'
 
-import {color, float, mix, mx_cell_noise_float, mx_noise_vec3, normalViewGeometry, refract, vec3} from 'three/tsl'
+import {color, float, mix, mx_cell_noise_float, mx_noise_vec3, mx_worley_noise_float, normalLocal, normalViewGeometry, refract, vec3} from 'three/tsl'
 
 import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
+import {cellularBoundary} from '../../lib/cellularBoundary.ts'
 import {cellularPoints} from '../../lib/cellularPoints.ts'
 import {glints} from '../../lib/glints.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
@@ -44,7 +45,6 @@ function wavelengthToRGB(wavelengthNm: Node<'float'>) {
     t.smoothstep(0, 0.16),
   )
 }
-
 /**
  * Evaluates a volumetric Bragg diffraction stratum of precious black opal.
  */
@@ -56,10 +56,14 @@ function opalDiffractionStratum(
   scale: number,
   depthAbsorption: number,
 ) {
-  // Domain-warp coordinates with FBM to break any Cartesian grid alignment
+  // Warp a Voronoi grain field rather than coloring whole Cartesian cells.
   const warp = mx_noise_vec3(pInternal.mul(scale * 0.4)).mul(0.35)
   const coord = pInternal.mul(scale).add(warp)
-  const cell = coord.floor()
+  const feature = mx_worley_noise_float(coord, 1, 1)
+  const cell = vec3(feature.mul(65_536), 7, 19)
+  // Extinguish each grain at its boundary before its orientation and color switch.
+  const footprint = coord.fwidth().length()
+  const grainMask = cellularBoundary(coord).smoothstep(0.03, footprint.add(0.16))
   // Random 3D orientation vector for the silica sphere stack in this grain
   const latticeNormal = cellNoiseVec3(cell).mul(2).sub(1).normalize()
   const cellNoise = mx_cell_noise_float(cell.add(vec3(31.7, 12.4, 85.1)))
@@ -75,7 +79,7 @@ function opalDiffractionStratum(
   const lambda = sphereSpacing.mul(2 * 1.45).mul(maxAlign)
   const spectralColor = wavelengthToRGB(lambda)
   // Beer-Lambert volume absorption through smoky potch
-  return spectralColor.mul(flashLobe).mul(float(depthAbsorption))
+  return spectralColor.mul(flashLobe).mul(grainMask).mul(float(depthAbsorption))
 }
 
 export default class extends KnotMaterial {
@@ -84,16 +88,16 @@ export default class extends KnotMaterial {
     this.name = knotData.id
     const {p, view, grazing, near, intimate} = viewerFrame()
     // 1. Snell's Law Refraction into the silica cabochon (n = 1.45)
-    const normal = normalViewGeometry
+    const normal = normalLocal.normalize()
     const refractedRay = refract(view.negate(), normal, float(1 / 1.45)).normalize()
     // 2. Three representative studio illumination directions
     const lampA = vec3(0.35, 0.78, 0.52).normalize()
     const lampB = vec3(-0.62, 0.28, 0.73).normalize()
     const lampC = vec3(0.1, -0.35, 0.93).normalize()
-    // Half-vectors between refracted view ray and lamps
-    const halfA = lampA.add(view).normalize()
-    const halfB = lampB.add(view).normalize()
-    const halfC = lampC.add(view).normalize()
+    // Keep refraction, lamp directions and half-vectors in object-local space.
+    const halfA = lampA.sub(refractedRay).normalize()
+    const halfB = lampB.sub(refractedRay).normalize()
+    const halfC = lampC.sub(refractedRay).normalize()
     // 3. Multi-Strata 3D Volumetric Bragg Diffraction
     // Stratum 1: Shallow Harlequin flagstone layer (depth = 0.014)
     const pStratum1 = p.add(refractedRay.mul(0.014))
