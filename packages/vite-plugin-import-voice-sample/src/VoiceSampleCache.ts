@@ -1,4 +1,4 @@
-import type {VoiceSampleFetch, VoiceSampleRequest, VoiceSampleTiming} from './types.ts'
+import type {VoiceSampleFetch, VoiceSampleFormat, VoiceSampleMetadata, VoiceSampleRequest, VoiceSampleTiming} from './types.ts'
 
 import {execFile} from 'node:child_process'
 import {createHash, randomUUID} from 'node:crypto'
@@ -7,18 +7,26 @@ import {promisify} from 'node:util'
 
 import fs from 'fs-extra'
 import makeArgv from 'make-argv'
+import {pack, unpack} from 'msgpackr'
 
 import {styleVoiceSampleText} from './emotion.ts'
 
 const execFileAsync = promisify(execFile)
 const modelDefault = 'x-ai/grok-voice-tts-1.0'
-const cacheSchema = 2
+const storageSchema = 3
 const supportedSampleRates = [8000, 16_000, 22_050, 24_000, 44_100, 48_000]
 
 export type VoiceSampleCacheEntry = {
   audioPath: string
+  metadataPath: string
+  rawPath: string
   timings: ReadonlyArray<VoiceSampleTiming>
-  timingsPath: string
+}
+
+type StoredVoiceSample = {
+  metadata: VoiceSampleMetadata
+  metadataPath: string
+  rawPath: string
 }
 
 const hasFile = async (file: string) => {
@@ -29,7 +37,6 @@ const hasFile = async (file: string) => {
     return false
   }
 }
-const extensionFor = (request: VoiceSampleRequest) => request.format
 const decodeBase64 = (value: unknown) => {
   if (typeof value !== 'string' || value.length % 4 || !/^(?:[\d+/A-Za-z]{4})*(?:[\d+/A-Za-z]{2}==|[\d+/A-Za-z]{3}=)?$/u.test(value)) {
     throw new Error('OpenRouter voice synthesis returned invalid base64 audio.')
@@ -68,18 +75,25 @@ const decodeTimings = (value: unknown): Array<VoiceSampleTiming> => {
     }
   })
 }
-const decodeCachedTimings = (value: unknown): Array<VoiceSampleTiming> => {
-  if (!Array.isArray(value)) {
-    throw new TypeError('Cached voice sample timings are invalid.')
+const decodeMetadata = (value: unknown): VoiceSampleMetadata => {
+  if (!value || typeof value !== 'object' || !('duration' in value) || !('sampleRate' in value) || !('timings' in value)) {
+    throw new TypeError('Stored voice sample metadata is invalid.')
   }
-  const items = value as Array<unknown>
-  return items.map(item => {
+  const {duration, sampleRate, timings, ...rest} = value
+  if (typeof duration !== 'number' || !Number.isFinite(duration) || duration <= 0 || typeof sampleRate !== 'number' || !supportedSampleRates.includes(sampleRate)) {
+    throw new TypeError('Stored voice sample metadata is invalid.')
+  }
+  if (!Array.isArray(timings)) {
+    throw new TypeError('Stored voice sample timings are invalid.')
+  }
+  const timingItems = timings as Array<unknown>
+  const decodedTimings = timingItems.map(item => {
     if (!item || typeof item !== 'object' || !('char' in item) || !('start' in item) || !('end' in item)) {
-      throw new TypeError('Cached voice sample timings are invalid.')
+      throw new TypeError('Stored voice sample timings are invalid.')
     }
     const {char, start, end} = item
-    if (typeof char !== 'string' || typeof start !== 'number' || typeof end !== 'number' || !Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end < start) {
-      throw new TypeError('Cached voice sample timings are invalid.')
+    if (typeof char !== 'string' || typeof start !== 'number' || typeof end !== 'number' || !Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end < start || end > duration + 0.02) {
+      throw new TypeError('Stored voice sample timings are invalid.')
     }
     return {
       char,
@@ -87,8 +101,18 @@ const decodeCachedTimings = (value: unknown): Array<VoiceSampleTiming> => {
       start,
     }
   })
+  const traceId = 'traceId' in rest ? rest.traceId : undefined
+  if (traceId !== undefined && typeof traceId !== 'string') {
+    throw new TypeError('Stored voice sample trace ID is invalid.')
+  }
+  return {
+    duration,
+    sampleRate,
+    timings: decodedTimings,
+    ...traceId ? {traceId} : {},
+  }
 }
-const decodeEnvelope = (value: unknown) => {
+const decodeEnvelope = (value: unknown, traceId?: string) => {
   if (!value || typeof value !== 'object' || !('audio' in value) || !('duration' in value) || !('content_type' in value) || !('audio_timestamps' in value) || typeof value.content_type !== 'string' || !/^audio\/pcm(?:;|$)/iu.test(value.content_type) || typeof value.duration !== 'number' || !Number.isFinite(value.duration) || value.duration <= 0) {
     throw new Error('OpenRouter voice synthesis returned an invalid timed PCM envelope.')
   }
@@ -103,10 +127,15 @@ const decodeEnvelope = (value: unknown) => {
   if (timings.some(timing => timing.end > duration + 0.02)) {
     throw new Error('OpenRouter character timing exceeds the audio duration.')
   }
-  return {
-    pcm,
+  const metadata: VoiceSampleMetadata = {
+    duration,
     sampleRate,
     timings,
+    ...traceId ? {traceId} : {},
+  }
+  return {
+    metadata,
+    pcm,
   }
 }
 const wavFromPcm = (pcm: Uint8Array, sampleRate: number) => {
@@ -129,10 +158,24 @@ const wavFromPcm = (pcm: Uint8Array, sampleRate: number) => {
   wav.set(pcm, 44)
   return wav
 }
+const pcmFromWav = (wav: Uint8Array) => {
+  if (wav.byteLength < 44) {
+    throw new Error('Stored WAV is truncated.')
+  }
+  const view = Buffer.from(wav.buffer, wav.byteOffset, wav.byteLength)
+  if (view.toString('ascii', 0, 4) !== 'RIFF' || view.toString('ascii', 8, 12) !== 'WAVE' || view.toString('ascii', 12, 16) !== 'fmt ' || view.readUInt32LE(16) !== 16 || view.readUInt16LE(20) !== 1 || view.readUInt16LE(22) !== 1 || view.readUInt16LE(34) !== 16 || view.toString('ascii', 36, 40) !== 'data') {
+    throw new Error('Stored WAV is not canonical mono 16-bit PCM.')
+  }
+  const dataSize = view.readUInt32LE(40)
+  if (dataSize === 0 || 44 + dataSize !== view.byteLength || dataSize % 2) {
+    throw new Error('Stored WAV has invalid PCM data.')
+  }
+  return Uint8Array.from(view.subarray(44))
+}
 
 export type VoiceSampleCacheOptions = {
   apiKey?: string
-  cacheDir: string
+  directory: string
   fetch?: VoiceSampleFetch
   ffmpegPath?: string
   model?: string
@@ -140,62 +183,120 @@ export type VoiceSampleCacheOptions = {
 
 export default class VoiceSampleCache {
   readonly #apiKey?: string
-  readonly #cacheDir: string
+  readonly #cacheDirectory: string
   readonly #fetch: VoiceSampleFetch
   readonly #ffmpegPath: string
   readonly #model: string
-  readonly #pending = new Map<string, Promise<VoiceSampleCacheEntry>>
+  readonly #pendingConversions = new Map<string, Promise<string>>
+  readonly #pendingStores = new Map<string, Promise<StoredVoiceSample>>
+  readonly #storeDirectory: string
 
   constructor(options: VoiceSampleCacheOptions) {
     this.#apiKey = options.apiKey
-    this.#cacheDir = options.cacheDir
+    this.#storeDirectory = resolve(options.directory, 'store')
+    this.#cacheDirectory = resolve(options.directory, 'cache')
     this.#fetch = options.fetch ?? globalThis.fetch.bind(globalThis)
     this.#ffmpegPath = options.ffmpegPath ?? 'ffmpeg'
     this.#model = options.model ?? modelDefault
   }
 
-  async get(request: VoiceSampleRequest) {
+  async getAudio(request: VoiceSampleRequest): Promise<VoiceSampleCacheEntry> {
     const key = this.key(request)
-    const audioPath = this.path(request, key)
-    const timingsPath = this.timingsPath(request, key)
-    const cached = await this.#read(audioPath, timingsPath)
-    if (cached) {
-      return cached
+    const stored = await this.#getStored(request, key)
+    const audioPath = await this.#getAudio(request.format, key, stored.rawPath)
+    return {
+      audioPath,
+      metadataPath: stored.metadataPath,
+      rawPath: stored.rawPath,
+      timings: stored.metadata.timings,
     }
-    const existing = this.#pending.get(key)
-    if (existing) {
-      return existing
-    }
-    const pending = this.#generate(request, audioPath, timingsPath)
-    this.#pending.set(key, pending)
-    try {
-      return await pending
-    } finally {
-      this.#pending.delete(key)
+  }
+
+  async getTimings(request: VoiceSampleRequest) {
+    const stored = await this.#getStored(request, this.key(request))
+    return {
+      metadataPath: stored.metadataPath,
+      rawPath: stored.rawPath,
+      timings: stored.metadata.timings,
     }
   }
 
   key(request: VoiceSampleRequest) {
+    const {format: _format, ...synthesis} = request
     return createHash('sha256').update(JSON.stringify({
-      cacheSchema,
       model: this.#model,
-      request,
+      storageSchema,
+      synthesis,
     })).digest('hex')
   }
 
-  path(request: VoiceSampleRequest, key = this.key(request)) {
-    return resolve(this.#cacheDir, `${key}.${extensionFor(request)}`)
+  metadataPath(key: string) {
+    return resolve(this.#storeDirectory, `${key}.msgpack`)
   }
 
-  timingsPath(request: VoiceSampleRequest, key = this.key(request)) {
-    return resolve(this.#cacheDir, `${key}.timings.json`)
+  rawPath(key: string) {
+    return resolve(this.#storeDirectory, `${key}.wav`)
   }
 
-  async #generate(request: VoiceSampleRequest, audioPath: string, timingsPath: string): Promise<VoiceSampleCacheEntry> {
+  #cachePath(key: string, format: Exclude<VoiceSampleFormat, 'wav'>) {
+    return resolve(this.#cacheDirectory, `${key}.${format}`)
+  }
+
+  async #convert(format: Exclude<VoiceSampleFormat, 'wav'>, key: string, rawPath: string) {
+    const output = this.#cachePath(key, format)
+    if (await hasFile(output)) {
+      return output
+    }
+    await fs.ensureDir(this.#cacheDirectory)
+    const token = `${process.pid}-${randomUUID()}`
+    const temporary = `${output}.${token}.tmp`
+    try {
+      if (format === 'opus') {
+        const argv = makeArgv({
+          hide_banner: true,
+          loglevel: 'error',
+          i: rawPath,
+          map: '0:a:0',
+          'c:a': 'libopus',
+          'b:a': 80_000,
+          vbr: 'on',
+          compression_level: 10,
+          application: 'audio',
+          f: 'opus',
+          y: true,
+        }, {
+          prefix: '-',
+          keyStyle: false,
+        })
+        await execFileAsync(this.#ffmpegPath, [...argv, temporary])
+      } else {
+        const wav = new Uint8Array(await fs.readFile(rawPath))
+        await fs.writeFile(temporary, pcmFromWav(wav))
+      }
+      if (!await hasFile(temporary)) {
+        throw new Error(`Voice sample conversion did not produce a valid .${format} file.`)
+      }
+      if (await hasFile(output)) {
+        return output
+      }
+      try {
+        await fs.rename(temporary, output)
+      } catch (error) {
+        if (!await hasFile(output)) {
+          throw error
+        }
+      }
+      return output
+    } finally {
+      await fs.remove(temporary)
+    }
+  }
+
+  async #generateStored(request: VoiceSampleRequest, key: string): Promise<StoredVoiceSample> {
     if (!this.#apiKey) {
       throw new Error('OPENROUTER_API_KEY is required to generate an uncached voice sample.')
     }
-    await fs.ensureDir(this.#cacheDir)
+    await fs.ensureDir(this.#storeDirectory)
     const response = await this.#fetch('https://openrouter.ai/api/v1/audio/speech', {
       method: 'POST',
       redirect: 'error',
@@ -232,70 +333,85 @@ export default class VoiceSampleCache {
       const detail = responseText.slice(0, 1000)
       throw new Error(`OpenRouter voice synthesis failed (HTTP ${response.status})${detail ? `: ${detail}` : ''}.`)
     }
-    const {pcm, sampleRate, timings} = decodeEnvelope(await response.json())
-    const wav = request.format === 'pcm' ? undefined : wavFromPcm(pcm, sampleRate)
+    const {metadata, pcm} = decodeEnvelope(await response.json(), response.headers.get('x-generation-id') ?? undefined)
+    const wav = wavFromPcm(pcm, metadata.sampleRate)
+    const rawPath = this.rawPath(key)
+    const metadataPath = this.metadataPath(key)
     const token = `${process.pid}-${randomUUID()}`
-    const temporaryAudio = `${audioPath}.${token}.tmp`
-    const temporaryTimings = `${timingsPath}.${token}.tmp`
+    const temporaryRaw = `${rawPath}.${token}.tmp`
+    const temporaryMetadata = `${metadataPath}.${token}.tmp`
     try {
-      await fs.writeJson(temporaryTimings, timings)
-      if (request.format === 'opus') {
-        const source = `${audioPath}.${token}.source.wav`
-        try {
-          await fs.writeFile(source, wav!)
-          const argv = makeArgv({
-            hide_banner: true,
-            loglevel: 'error',
-            i: source,
-            map: '0:a:0',
-            'c:a': 'libopus',
-            'b:a': 80_000,
-            vbr: 'on',
-            compression_level: 10,
-            application: 'audio',
-            f: 'opus',
-            y: true,
-          }, {
-            prefix: '-',
-            keyStyle: false,
-          })
-          await execFileAsync(this.#ffmpegPath, [...argv, temporaryAudio])
-        } finally {
-          await fs.remove(source)
-        }
-      } else {
-        await fs.writeFile(temporaryAudio, request.format === 'wav' ? wav! : pcm)
+      await fs.writeFile(temporaryRaw, wav)
+      await fs.writeFile(temporaryMetadata, pack(metadata))
+      if (!await hasFile(temporaryRaw) || !await hasFile(temporaryMetadata)) {
+        throw new Error('Voice sample generation did not produce a valid raw store entry.')
       }
-      if (!await hasFile(temporaryAudio) || !await hasFile(temporaryTimings)) {
-        throw new Error(`Voice sample generation did not produce a valid .${request.format} file and timing map.`)
-      }
-      const raced = await this.#read(audioPath, timingsPath)
+      const raced = await this.#readStored(key)
       if (raced) {
         return raced
       }
-      await fs.remove(audioPath)
-      await fs.remove(timingsPath)
-      await fs.rename(temporaryAudio, audioPath)
-      await fs.rename(temporaryTimings, timingsPath)
+      await fs.remove(rawPath)
+      await fs.remove(metadataPath)
+      await fs.rename(temporaryRaw, rawPath)
+      await fs.rename(temporaryMetadata, metadataPath)
       return {
-        audioPath,
-        timings,
-        timingsPath,
+        metadata,
+        metadataPath,
+        rawPath,
       }
     } finally {
-      await fs.remove(temporaryAudio)
-      await fs.remove(temporaryTimings)
+      await fs.remove(temporaryRaw)
+      await fs.remove(temporaryMetadata)
     }
   }
-  async #read(audioPath: string, timingsPath: string): Promise<VoiceSampleCacheEntry | undefined> {
-    if (!await hasFile(audioPath) || !await hasFile(timingsPath)) {
+
+  async #getAudio(format: VoiceSampleFormat, key: string, rawPath: string) {
+    if (format === 'wav') {
+      return rawPath
+    }
+    const pendingKey = `${key}:${format}`
+    const existing = this.#pendingConversions.get(pendingKey)
+    if (existing) {
+      return existing
+    }
+    const pending = this.#convert(format, key, rawPath)
+    this.#pendingConversions.set(pendingKey, pending)
+    try {
+      return await pending
+    } finally {
+      this.#pendingConversions.delete(pendingKey)
+    }
+  }
+
+  async #getStored(request: VoiceSampleRequest, key: string) {
+    const cached = await this.#readStored(key)
+    if (cached) {
+      return cached
+    }
+    const existing = this.#pendingStores.get(key)
+    if (existing) {
+      return existing
+    }
+    const pending = this.#generateStored(request, key)
+    this.#pendingStores.set(key, pending)
+    try {
+      return await pending
+    } finally {
+      this.#pendingStores.delete(key)
+    }
+  }
+
+  async #readStored(key: string): Promise<StoredVoiceSample | undefined> {
+    const rawPath = this.rawPath(key)
+    const metadataPath = this.metadataPath(key)
+    if (!await hasFile(rawPath) || !await hasFile(metadataPath)) {
       return
     }
-    const timings = decodeCachedTimings(await fs.readJson(timingsPath) as unknown)
+    const metadata = decodeMetadata(unpack(await fs.readFile(metadataPath)) as unknown)
     return {
-      audioPath,
-      timings,
-      timingsPath,
+      metadata,
+      metadataPath,
+      rawPath,
     }
   }
 }

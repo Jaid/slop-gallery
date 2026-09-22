@@ -20,6 +20,7 @@
   "dependencies": {
     "fs-extra": "11.4.0",
     "make-argv": "0.1.0",
+    "msgpackr": "2.1.0",
     "@babel/parser": "8.0.6"
   },
   "peerDependencies": {

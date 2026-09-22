@@ -6,6 +6,7 @@ import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 
 import fs from 'fs-extra'
+import {unpack} from 'msgpackr'
 import {build} from 'vite'
 
 import {styleVoiceSampleText} from '../src/emotion.ts'
@@ -31,8 +32,11 @@ const envelope = () => ({
     graph_times: [[0, 0.04], [0.04, 0.1]],
   },
 })
+const response = () => Response.json(envelope(), {
+  headers: {'x-generation-id': 'trace-id'},
+})
 describe('vite-plugin-import-voice-sample', () => {
-  test('generates audio and timings once, sends attribution, and reuses the cache', async () => {
+  test('always stores raw WAV and msgpack while timings avoid derivative caches', async () => {
     const root = await temporaryDirectory()
     await fs.writeFile(join(root, 'entry.ts'), `
       import audio from 'voice-sample:welcome' with {
@@ -47,7 +51,7 @@ describe('vite-plugin-import-voice-sample', () => {
         text: 'Hello, I am Iris!',
         emotion: 'cheerful',
         language: 'en',
-        format: 'wav',
+        format: 'opus',
       }
       export {audio, timings}
     `)
@@ -67,7 +71,7 @@ describe('vite-plugin-import-voice-sample', () => {
         body: body as Record<string, unknown>,
         headers: new Headers(init.headers),
       })
-      return Response.json(envelope())
+      return response()
     }
     const config: InlineConfig = {
       root,
@@ -106,27 +110,34 @@ describe('vite-plugin-import-voice-sample', () => {
         },
       },
     })
-    const cacheDirectory = join(root, 'temp/vite-plugin-import-voice-sample/cache')
-    const cacheFiles = await fs.readdir(cacheDirectory)
-    expect(cacheFiles).toHaveLength(2)
-    const wavName = cacheFiles.find(file => file.endsWith('.wav'))
-    const timingsName = cacheFiles.find(file => file.endsWith('.timings.json'))
+    const directory = join(root, 'temp/vite-plugin-import-voice-sample')
+    const store = join(directory, 'store')
+    const storeFiles = await fs.readdir(store)
+    expect(storeFiles).toHaveLength(2)
+    const wavName = storeFiles.find(file => file.endsWith('.wav'))
+    const metadataName = storeFiles.find(file => file.endsWith('.msgpack'))
     expect(wavName).toBeDefined()
-    expect(timingsName).toBeDefined()
-    const cachedWav = await fs.readFile(join(cacheDirectory, wavName!))
-    expect(cachedWav.subarray(0, 4).toString()).toBe('RIFF')
-    expect(await fs.readJson(join(cacheDirectory, timingsName!))).toEqual([
-      {
-        char: 'H',
-        start: 0,
-        end: 0.04,
-      },
-      {
-        char: 'i',
-        start: 0.04,
-        end: 0.1,
-      },
-    ])
+    expect(metadataName).toBeDefined()
+    const rawWav = await fs.readFile(join(store, wavName!))
+    expect(rawWav.subarray(0, 4).toString()).toBe('RIFF')
+    expect(unpack(await fs.readFile(join(store, metadataName!)))).toEqual({
+      duration: 0.1,
+      sampleRate: 48_000,
+      timings: [
+        {
+          char: 'H',
+          start: 0,
+          end: 0.04,
+        },
+        {
+          char: 'i',
+          start: 0.04,
+          end: 0.1,
+        },
+      ],
+      traceId: 'trace-id',
+    })
+    expect(await fs.pathExists(join(directory, 'cache'))).toBe(false)
     const buildResults = Array.isArray(result) ? result : [result]
     const outputs = buildResults.flatMap(item => {
       return 'output' in item ? item.output : []
@@ -143,35 +154,59 @@ describe('vite-plugin-import-voice-sample', () => {
       })],
     })
   })
-  test('transcodes opus requests before caching and retains timings', async () => {
+  test('shares raw storage across formats and caches only requested Opus and PCM conversions', async () => {
     const root = await temporaryDirectory()
+    let calls = 0
     const cache = new VoiceSampleCache({
       apiKey: 'test-key',
-      cacheDir: root,
-      fetch: async () => Response.json(envelope()),
+      directory: root,
+      fetch: async () => {
+        calls++
+        return response()
+      },
     })
-    const entry = await cache.get({
-      format: 'opus',
+    const base = {
       language: 'en',
-      text: 'Opus sample',
+      text: 'Shared sample',
       voice: 'iris',
-    })
-    expect(entry.audioPath).toEndWith('.opus')
-    const bytes = await fs.readFile(entry.audioPath)
-    expect(bytes.subarray(0, 4).toString()).toBe('OggS')
-    expect(entry.timings).toEqual([
-      {
-        char: 'H',
-        start: 0,
-        end: 0.04,
-      },
-      {
-        char: 'i',
-        start: 0.04,
-        end: 0.1,
-      },
+    } as const
+    const opusRequest = {
+      ...base,
+      format: 'opus' as const,
+    }
+    const pcmRequest = {
+      ...base,
+      format: 'pcm' as const,
+    }
+    const wavRequest = {
+      ...base,
+      format: 'wav' as const,
+    }
+    expect(cache.key(opusRequest)).toBe(cache.key(pcmRequest))
+    expect(cache.key(opusRequest)).toBe(cache.key(wavRequest))
+    const opusEntry = await cache.getAudio(opusRequest)
+    const pcmEntry = await cache.getAudio(pcmRequest)
+    const wavEntry = await cache.getAudio(wavRequest)
+    expect(calls).toBe(1)
+    expect(opusEntry.rawPath).toBe(pcmEntry.rawPath)
+    expect(opusEntry.rawPath).toBe(wavEntry.rawPath)
+    expect(wavEntry.audioPath).toBe(wavEntry.rawPath)
+    expect(opusEntry.audioPath).toEndWith('.opus')
+    expect(pcmEntry.audioPath).toEndWith('.pcm')
+    const opus = await fs.readFile(opusEntry.audioPath)
+    expect(opus.subarray(0, 4).toString()).toBe('OggS')
+    expect(await fs.readFile(pcmEntry.audioPath)).toEqual(pcm())
+    const storeFiles = await fs.readdir(join(root, 'store'))
+    expect(storeFiles.toSorted()).toEqual([
+      `${cache.key(opusRequest)}.msgpack`,
+      `${cache.key(opusRequest)}.wav`,
     ])
-    expect(await fs.pathExists(entry.timingsPath)).toBe(true)
+    const cacheFiles = await fs.readdir(join(root, 'cache'))
+    expect(cacheFiles.toSorted()).toEqual([
+      `${cache.key(opusRequest)}.opus`,
+      `${cache.key(opusRequest)}.pcm`,
+    ])
+    expect(storeFiles.some(file => file.endsWith('.pcm'))).toBe(false)
   })
   test('rejects unsupported emotions instead of silently ignoring them', () => {
     expect(() => styleVoiceSampleText('Hello', 'mysteriously-purple')).toThrow('Unsupported voice sample emotion')

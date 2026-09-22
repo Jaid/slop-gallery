@@ -30,13 +30,35 @@ ReadonlyArray<{
 }>
 ```
 
-Both imports share one OpenRouter synthesis and one cache entry when their attributes match. Timings are fetched for every generated sample and cached beside the audio as `<hash>.timings.json`.
+## Storage
+
+The hash identifies the synthesis itself and deliberately excludes the requested output format. WAV, Opus, PCM, and `/timings` imports with otherwise identical attributes therefore share one OpenRouter generation.
+
+Every generated synthesis is stored canonically as:
+
+```text
+temp/vite-plugin-import-voice-sample/
+  store/
+    <hash>.wav
+    <hash>.msgpack
+```
+
+The WAV is the lossless raw source. The MessagePack metadata contains the character timings plus generation metadata such as duration, sample rate, and OpenRouter trace ID.
+
+Requested conversions are derived from that stored WAV and cached separately:
+
+```text
+temp/vite-plugin-import-voice-sample/
+  cache/
+    <hash>.opus
+    <hash>.pcm
+```
+
+An Opus file exists only when a dependent imports `format: 'opus'`. PCM is never part of the raw store; an explicit `format: 'pcm'` import unpacks the stored WAV and caches the extracted PCM. A `format: 'wav'` import directly serves `store/<hash>.wav`. A `/timings` import reads the MessagePack metadata and does not create an audio conversion.
 
 The source may be `voice-sample` or a named alias such as `voice-sample:welcome`; aliases are useful when a file imports several samples. The default attributes are `voice: 'iris'`, `language: 'en'`, and `format: 'opus'`; `text` is required. `format` can be `pcm`, `wav`, or `opus`.
 
-A sample is keyed by its complete synthesis request and the configured model. Cache hits never contact OpenRouter. Cache misses use `OPENROUTER_API_KEY` and are written to `temp/vite-plugin-import-voice-sample/cache` by default.
-
-OpenRouter's timestamp-enabled speech response carries PCM in a timed envelope. The plugin derives the actual sample rate from PCM length and provider duration instead of trusting the HTTP content type. PCM is cached directly, WAV is wrapped locally without re-encoding, and Opus is transcoded from that PCM with `ffmpeg`/libopus before caching.
+Cache/store hits never contact OpenRouter. Cache misses use `OPENROUTER_API_KEY`. OpenRouter's timestamp-enabled speech response carries PCM in a timed envelope; the plugin derives the actual sample rate from PCM length and provider duration and immediately wraps it into the canonical stored WAV.
 
 `emotion` maps semantic names such as `cheerful`, `calm`, `excited`, and `dramatic` onto xAI wrapping speech tags. Native wrapping tags such as `soft`, `whisper`, `loud`, and `emphasis` can also be used directly.
 
@@ -51,4 +73,4 @@ export default {
 }
 ```
 
-Options can override the cache directory, model, defaults, API key, or ffmpeg executable. The API key is only used inside Vite and is never emitted into client code.
+Options can override the storage directory, model, defaults, API key, or ffmpeg executable. The API key is only used inside Vite and is never emitted into client code.
