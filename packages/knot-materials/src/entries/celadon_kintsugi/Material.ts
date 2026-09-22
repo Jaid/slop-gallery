@@ -27,7 +27,7 @@ function crackField(position: Node<'vec3'>, scale: number) {
     for (let y = -1;y <= 1;y++) {
       for (let z = -1;z <= 1;z++) {
         const feature = hash3(cell.add(vec3(x, y, z))).mul(0.7).add(0.15)
-        const distance = local.add(vec3(x, y, z)).sub(feature).length()
+        const distance = vec3(x, y, z).add(feature).sub(local).length()
         const nextFirst = first.min(distance)
         second = second.min(distance.max(first))
         first = nextFirst
@@ -35,6 +35,11 @@ function crackField(position: Node<'vec3'>, scale: number) {
     }
   }
   return second.sub(first)
+}
+/** Pixel-filtered seam coverage; attenuation keeps subpixel cracks from thickening. */
+function seamCoverage(field: Node<'float'>, width: number) {
+  const filteredWidth = field.fwidth().add(width)
+  return field.abs().smoothstep(0, filteredWidth).oneMinus().mul(float(width).div(filteredWidth))
 }
 
 /**
@@ -51,19 +56,23 @@ export default class extends KnotMaterial {
 // Warping the lookup once, from the surface point, keeps every march sample on the same shard.
     const base = p.add(mx_noise_vec3(p.mul(3.5)).mul(0.06))
     const surface = crackField(base, scale)
-    const crack = surface.smoothstep(0, width).oneMinus()
+    const displacementCrack = surface.smoothstep(0, width).oneMinus()
+    const crack = seamCoverage(surface, width)
 // March a short way along the line of sight; gold survives only where the ray stays inside the seam.
-    let gold: Node<'float'> = float(1)
+    let gold: Node<'float'> = crack
     const steps = 2
     for (let i = 0;i < steps;i++) {
       const t = (i + 0.5) / steps * depth
-      gold = gold.mul(crackField(base.sub(view.mul(t / scale)), scale).smoothstep(0, width).oneMinus())
+      gold = gold.mul(seamCoverage(crackField(base.sub(view.mul(t / scale)), scale), width))
     }
 // A cheap zero crossing of a fine noise field gives the glaze its web of crazing up close.
     const crazing = mx_noise_float(p.mul(scale * 3.2).add(vec3(3.1, 7.7, 1.3)))
-    const hairline = crazing.abs().smoothstep(0, 0.05).oneMinus().mul(near)
-    const relief = crack.mul(0.006).add(hairline.mul(0.0006))
-    this.positionNode = p.sub(normalLocal.mul(relief))
+    const displacementHairline = crazing.abs().smoothstep(0, 0.05).oneMinus().mul(near)
+    const displacement = displacementCrack.mul(0.006).add(displacementHairline.mul(0.0006))
+    // Screen-space derivatives belong only in fragment shading, never displacement.
+    this.positionNode = p.sub(normalLocal.mul(displacement))
+    const hairline = seamCoverage(crazing, 0.05).mul(near)
+    const relief = crack.mul(0.006).add(hairline.mul(0.0006)).negate()
     const porcelainNoise = mx_noise_float(p.mul(5.5)).mul(0.5).add(0.5)
     const porcelain = mix(color('#a8c4b0'), color('#5f8a72'), porcelainNoise.mul(0.9))
     const goldColor = mix(color('#d99a1e'), color('#ffe680'), gold.mul(0.4).add(0.4))
