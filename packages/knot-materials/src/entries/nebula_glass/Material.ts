@@ -5,7 +5,7 @@ import {cameraPosition, color, mix, modelWorldMatrixInverse, mx_noise_float, mx_
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import knotData from './data.ts'
 
-export default class NebulaGlassMaterial extends KnotMaterial {
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)
     this.name = knotData.id

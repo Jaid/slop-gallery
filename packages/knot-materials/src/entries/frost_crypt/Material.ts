@@ -8,7 +8,7 @@ import {opticalLine} from '../../lib/opticalLine.ts'
 import {spectralColor} from '../../lib/spectralColor.ts'
 import knotData from './data.ts'
 
-export default class FrostCryptMaterial extends KnotMaterial {
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.8)
     this.name = knotData.id

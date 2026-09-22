@@ -8,8 +8,10 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/** Bookmatched burl marquetry with engraved annual rings, sapwood and turquoise stringing. */
-export default class HeartwoodHymn extends KnotMaterial {
+/**
+ * Bookmatched burl marquetry with engraved annual rings, sapwood and turquoise stringing.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.7)
     this.name = knotData.id

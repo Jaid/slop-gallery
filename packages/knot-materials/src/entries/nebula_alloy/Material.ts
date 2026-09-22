@@ -7,7 +7,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {spectralColor} from '../../lib/spectralColor.ts'
 import knotData from './data.ts'
 
-export default class NebulaAlloyMaterial extends KnotMaterial {
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.2)
     this.name = knotData.id

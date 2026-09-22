@@ -8,12 +8,13 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class VelvetEclipseMaterial extends KnotMaterial {
+/**
+ * A velvet pile traps nearly all head-on light. The long fibers only return a bruised color when their combed direction happens to turn into the eye, and a tiny normal tilt prevents a rubbery read.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.42)
     this.name = knotData.id
-// A velvet pile traps nearly all head-on light. The long fibers only return a bruised color when
-// their combed direction happens to turn into the eye, and a tiny normal tilt prevents a rubbery read.
     const {p, view, facing, grazing, near, intimate} = viewerFrame()
     const tube = uv()
     const napNoise = mx_noise_float(p.mul(4.1).add(vec3(time.mul(0.012), 0, 0))).mul(0.5).add(0.5)

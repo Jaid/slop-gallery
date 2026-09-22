@@ -6,7 +6,7 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {liquidNormal} from '../../lib/liquidNormal.ts'
 import knotData from './data.ts'
 
-export default class QuicksilverMaterial extends KnotMaterial {
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)
     this.name = knotData.id

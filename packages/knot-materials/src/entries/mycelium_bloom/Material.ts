@@ -10,17 +10,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * 7. MYCELIUM BLOOM A damp, dark forest floor woven into a knot. Branching hyphae thread the substrate; every few seconds a wave of bioluminescence races the length of the tendril, setting clustered fungal nodes alight like tiny lanterns.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // ============================================================
-    //  7.  MYCELIUM BLOOM
-    //      A damp, dark forest floor woven into a knot. Branching
-    //      hyphae thread the substrate; every few seconds a wave
-    //      of bioluminescence races the length of the tendril,
-    //      setting clustered fungal nodes alight like tiny lanterns.
-    // ============================================================
     const {p, grazing, rim, intimate} = viewerFrame()
     const tube = uv()
     // Substrate — moss, humus, damp earth.

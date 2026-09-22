@@ -7,7 +7,7 @@ import {proceduralNormal, TAU, viewerFrame} from '../../lib/index.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import data from './data.ts'
 
-export default class PrismOrchard extends KnotMaterial {
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.15)
     this.name = data.id

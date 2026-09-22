@@ -9,8 +9,10 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/** Sixfold hoarfrost crystals suspended beneath blue ice, with slow deposition at their tips. */
-export default class WinterOrchard extends KnotMaterial {
+/**
+ * Sixfold hoarfrost crystals suspended beneath blue ice, with slow deposition at their tips.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.8)
     this.name = knotData.id

@@ -1,6 +1,6 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
-import {color, float, mix, negateOnBackSide, normalViewGeometry, uv, vec2, vec3} from 'three/tsl'
+import {color, float, mix, negateOnBackSide, normalViewGeometry, time, uv, vec2, vec3} from 'three/tsl'
 
 import {bumpNormal} from '../../candidates/gpt_astra/lib/bumpNormal.ts'
 import {viewerFrame} from '../../candidates/gpt_astra/lib/viewerFrame.ts'
@@ -10,17 +10,23 @@ import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
 import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {TAU} from '../../lib/TAU.ts'
 import knotData from './data.ts'
-import {chladniField} from './util.ts'
 
-export default class Material extends BaseKnotMaterial {
+function chladniField(tube: Node<'vec2'>) {
+  const U = tube.x.mul(TAU)
+  const V = tube.y.mul(TAU)
+  const balance = time.mul(0.09).sin().mul(0.12).add(0.8)
+  return U.mul(18).sin().mul(V.mul(2).sin())
+    .sub(U.mul(12).cos().mul(V.mul(3).sin()).mul(balance))
+    .add(U.mul(6).sin().mul(V.cos()).mul(0.2))
+}
+
+/**
+ * Pale mineral sand resting on a blue resonating membrane. Slowly changing standing waves reorganize the powder. Oblique views reveal piled dunes; close views resolve individual grains.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)
     this.name = knotData.id
-    // ---------------------------------------------------------------
-    // Pale mineral sand resting on a blue resonating membrane.
-    // Slowly changing standing waves reorganize the powder. Oblique
-    // views reveal piled dunes; close views resolve individual grains.
-    // ---------------------------------------------------------------
     const tube = uv()
     const {N, T, B, near, uvSlope} = viewerFrame()
     const originalField = chladniField(tube)

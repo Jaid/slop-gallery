@@ -10,11 +10,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * matte silicon etched with gold; data pulses race the buses, fine logic fades in up close
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // matte silicon etched with gold; data pulses race the buses, fine logic fades in up close
     this.envMapIntensity = 1.1
     const {p, rim, near, intimate} = viewerFrame()
     const tube = uv()

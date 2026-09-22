@@ -9,11 +9,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * Song-dynasty celadon; golden threads always present, iron-wire crackle revealed up close
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // Song-dynasty celadon; golden threads always present, iron-wire crackle revealed up close
     this.envMapIntensity = 1
     const {p, grazing, rim, near, intimate} = viewerFrame()
     const mottle = mx_fractal_noise_float(p.mul(3.2), 3, 2, 0.5).mul(0.5).add(0.5)

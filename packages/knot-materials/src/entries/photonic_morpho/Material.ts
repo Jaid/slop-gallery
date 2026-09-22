@@ -8,13 +8,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * 7. PHOTONIC MORPHO: Biomimetic Scale Nanocages & Coherent Bragg Diffraction
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)
     this.name = knotData.id
-    // ----------------------------------------------------------------
-    // 7. PHOTONIC MORPHO: Biomimetic Scale Nanocages & Coherent Bragg Diffraction
-    // ----------------------------------------------------------------
     const {p, facing, near, intimate} = viewerFrame()
     const tube = uv()
     // Longitudinal nanoscale cuticle micro-ribs

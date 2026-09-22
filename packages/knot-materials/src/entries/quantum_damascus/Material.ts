@@ -8,16 +8,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * 6. QUANTUM DAMASCUS Legendary folded Wootz steel etched with acid to reveal organic damascus grain. Integrated with room-temperature superconducting Meissner ribbons that channel relativistic Cherenkov cyan and quantum violet magnetic flux pulses along seamless tangents.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)
     this.name = knotData.id
-/**
-             * 6. QUANTUM DAMASCUS
-             * Legendary folded Wootz steel etched with acid to reveal organic damascus grain.
-             * Integrated with room-temperature superconducting Meissner ribbons that channel
-             * relativistic Cherenkov cyan and quantum violet magnetic flux pulses along seamless tangents.
-             */
     const {p, rim, near, intimate} = viewerFrame()
     const tube = uv()
     // Acid-etched folded rose & ladder pattern

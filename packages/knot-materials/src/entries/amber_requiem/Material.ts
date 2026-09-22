@@ -11,17 +11,13 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends KnotMaterial {
+/**
+ * Amber Requiem. Fossil resin, forty million years old, polished to a waxen shine. It is warm and translucent, so the light that gets in wanders a long way before it comes back out, and everything the resin swallowed on the day it was still sticky is still in there: bubbles, plant dust, and the occasional small insect, legs and all.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)
     this.name = knotData.id
-// ---------------------------------------------------------------------
-// Amber Requiem. Fossil resin, forty million years old, polished to a
-// waxen shine. It is warm and translucent, so the light that gets in
-// wanders a long way before it comes back out, and everything the resin
-// swallowed on the day it was still sticky is still in there: bubbles,
-// plant dust, and the occasional small insect, legs and all.
-// ---------------------------------------------------------------------
     const {p, view, grazing, near} = viewerFrame()
 // Resin flowed before it set, and the flow lines are still visible.
     const flow = mx_fractal_noise_float(p.mul(3.6).add(vec3(0, p.y.mul(1.5), 0)), 3, 2, 0.5)

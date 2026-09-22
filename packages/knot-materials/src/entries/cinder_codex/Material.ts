@@ -7,11 +7,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * Obsidian with molten gold kintsugi - cracks breathe heat
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // Obsidian with molten gold kintsugi - cracks breathe heat
     const {p, facing, rim, near} = viewerFrame()
     const heatPulse = time.mul(1.1).sin().mul(0.3).add(0.7)
     const baseNoise = mx_noise_float(p.mul(2.2))

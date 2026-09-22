@@ -1,6 +1,6 @@
 import type {Texture} from 'three/webgpu'
 
-import {color, mix, mx_fractal_noise_float, mx_noise_float, mx_worley_noise_float, time, vec3} from 'three/tsl'
+import {color, mix, mx_fractal_noise_float, mx_noise_float, mx_worley_noise_float, positionView, time, vec3} from 'three/tsl'
 
 import {cellularPoints} from '../../lib/cellularPoints.ts'
 import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
@@ -8,9 +8,18 @@ import {opticalLine} from '../../lib/opticalLine.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
-import {choirPulse} from './util.ts'
 
-export default class Material extends BaseKnotMaterial {
+function choirPulse() {
+  return time
+    .mul(0.92)
+    .add(positionView.length().mul(2.15))
+    .sin()
+    .mul(0.5)
+    .add(0.5)
+    .pow(5)
+}
+
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id

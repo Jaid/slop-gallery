@@ -16,7 +16,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class PhotonicLatticeMaterial extends KnotMaterial {
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.2) // Mirror reflections on polished silicon dioxide
     this.name = knotData.id

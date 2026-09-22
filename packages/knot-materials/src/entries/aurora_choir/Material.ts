@@ -8,7 +8,7 @@ import {opticalBands} from '../../lib/opticalBands.ts'
 import {opticalLine} from '../../lib/opticalLine.ts'
 import knotData from './data.ts'
 
-export default class AuroraChoirMaterial extends KnotMaterial {
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)
     this.name = knotData.id

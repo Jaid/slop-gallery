@@ -1,21 +1,37 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
-import {color, float, mix, mx_noise_float, normalLocal, time, vec3} from 'three/tsl'
+import {color, float, mix, mx_fractal_noise_float, mx_noise_float, normalLocal, time, vec3} from 'three/tsl'
 
 import {glints} from '../../lib/glints.ts'
 import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
-import {curtain} from './lib/curtain.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * One aurora curtain: noise combed into vertical filaments, folded by slow drift, with a soft lower hem.
+ */
+function curtain(point: Node<'vec3'>, seed: Node<'float'> | number) {
+  const s = typeof seed === 'number' ? float(seed) : seed
+  const s3 = vec3(s, s.mul(1.7), s.mul(0.4))
+  const drift = mx_fractal_noise_float(vec3(point.x.mul(2.5), point.z.mul(2.5), point.y.mul(0.4)).add(s3), 3, 2, 0.5).mul(0.22)
+  const combed = mx_fractal_noise_float(vec3(point.x.add(drift).mul(48), point.y.mul(1.1), point.z.add(drift).mul(48)).add(s3), 4, 2, 0.55)
+  const ray = combed.mul(0.5).add(0.5).pow(3)
+  const hem = point.y.smoothstep(-0.62, -0.05).mul(point.y.smoothstep(0.2, 0.62).oneMinus())
+  const shimmer = mx_noise_float(vec3(point.x.mul(8), point.z.mul(8), point.y.mul(0.5)).add(s3)).mul(0.3).add(0.7)
+  return {
+    fade: hem.mul(shimmer),
+    ray,
+  }
+}
+
+/**
+ * Sheets of aurora hang along the knot like combed light. Three veils drift at different depths, so walking slides them against one another exactly as the real sky does; the rays answer your distance — far away they are broad silk, close up they comb into individual filaments that breathe emerald into violet.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.1)
     this.name = knotData.id
-// Sheets of aurora hang along the knot like combed light. Three veils drift at different depths, so walking
-// slides them against one another exactly as the real sky does; the rays answer your distance — far away they
-// are broad silk, close up they comb into individual filaments that breathe emerald into violet.
     const {p, grazing, near, intimate} = viewerFrame()
     const t = time.mul(0.05)
     const wander = p.add(vec3(t.mul(0.4), t.mul(0.2), float(0)))

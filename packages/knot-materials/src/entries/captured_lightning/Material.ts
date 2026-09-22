@@ -8,17 +8,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends KnotMaterial {
+/**
+ * Captured Lightning. A block of clear resin was struck by a sudden discharge, and the charge froze inside it as a Lichtenberg figure: a trunk that splits into branches, and branches that split again, all of it a fraction of a millimetre wide. The resin is otherwise empty, so the figure only appears where the light catches it.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-// ---------------------------------------------------------------------
-// Captured Lightning. A block of clear resin was struck by a sudden
-// discharge, and the charge froze inside it as a Lichtenberg figure: a
-// trunk that splits into branches, and branches that split again, all
-// of it a fraction of a millimetre wide. The resin is otherwise empty,
-// so the figure only appears where the light catches it.
-// ---------------------------------------------------------------------
     const {p, view, grazing, near} = viewerFrame()
 // The discharge lives inside the resin, so it is sampled a little behind the surface.
     const warp = mx_noise_vec3(p.mul(2)).mul(0.7)

@@ -8,16 +8,10 @@ import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import knotData from './data.ts'
 
-// ---------------------------------------------------------------
-// A celadon-glazed porcelain bowl shattered and mended with lacquered gold.
-// The cracks come from a Voronoi cell boundary field; the gold that
-// fills them has its own anisotropic sheen, so a slow orbit makes every
-// seam brighten and dim in turn. The porcelain itself is a translucent
-// ivory with the gentlest celadon tint; from within, a warm glow answers
-// the studio light, brightest at the cracks where the gold lets it
-// through.
-// ---------------------------------------------------------------
-export default class Material extends BaseKnotMaterial {
+/**
+ * A celadon-glazed porcelain bowl shattered and mended with lacquered gold. The cracks come from a Voronoi cell boundary field; the gold that fills them has its own anisotropic sheen, so a slow orbit makes every seam brighten and dim in turn. The porcelain itself is a translucent ivory with the gentlest celadon tint; from within, a warm glow answers the studio light, brightest at the cracks where the gold lets it through.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.05)
     this.name = knotData.id

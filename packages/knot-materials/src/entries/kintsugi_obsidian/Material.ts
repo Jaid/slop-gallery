@@ -8,12 +8,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * Shattered volcanic glass mended with gold. Molten light travels the seams; at grazing angles the conchoidal fracture planes inside the black glass surface like smoke.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // Shattered volcanic glass mended with gold. Molten light travels the seams; at grazing angles
-    // the conchoidal fracture planes inside the black glass surface like smoke.
     const {p, view, grazing, rim, near} = viewerFrame()
     const shards = p.mul(5.5).add(mx_noise_float(p.mul(2)).mul(0.25))
     const worley = mx_worley_noise_vec2(shards, 1)

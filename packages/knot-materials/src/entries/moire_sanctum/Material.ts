@@ -8,13 +8,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class MoireSanctumMaterial extends KnotMaterial {
+/**
+ * Bone porcelain drawn with ink stripes on the glaze and an identical set just beneath it. Parallax between the layers creates moiré: from far away the whole sculpture flickers between lined and blank as you turn, up close the fringes multiply across the surface. Where the stripes cancel, gold leaf shines through.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)
     this.name = knotData.id
-    // Bone porcelain drawn with ink stripes on the glaze and an identical set just beneath it. Parallax between
-    // the layers creates moiré: from far away the whole sculpture flickers between lined and blank as you turn,
-    // up close the fringes multiply across the surface. Where the stripes cancel, gold leaf shines through.
     const {p, view, facing, grazing, intimate} = viewerFrame()
     const depth = 0.055
     const inner = p.sub(view.mul(depth))

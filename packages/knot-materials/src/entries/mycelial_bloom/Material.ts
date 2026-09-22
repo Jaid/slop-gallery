@@ -9,17 +9,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends KnotMaterial {
+/**
+ * Mycelium. A knot of damp bark has been colonised: pale hyphae run along every fissure, fuse where they meet, and carry a slow chemical signal that glows cold green in the dark. The light does not sit still – it travels outward from a handful of sources, so the whole colony breathes. Come close and the finest threads resolve out of the mat.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.55)
     this.name = knotData.id
-// ---------------------------------------------------------------------------
-// Mycelium. A knot of damp bark has been colonised: pale hyphae run along
-// every fissure, fuse where they meet, and carry a slow chemical signal that
-// glows cold green in the dark. The light does not sit still – it travels
-// outward from a handful of sources, so the whole colony breathes. Come close
-// and the finest threads resolve out of the mat.
-// ---------------------------------------------------------------------------
     const {p, grazing, near, intimate} = viewerFrame()
     const warp = mx_noise_vec3(p.mul(5.5)).mul(0.42)
     const q = p.add(warp)

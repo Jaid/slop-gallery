@@ -10,16 +10,13 @@ import {spectralColor} from '../../lib/spectralColor.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * 1. CELESTIAL ASTROLABE Master-crafted Renaissance astronomical clockwork forged of gilded ormolu brass. Crevices harbor turquoise verdigris patina. Anisotropic radial brushing glides with the view. Close proximity unlocks microscopic graduation ticks, astrolabe reticles, and internal stellar fire.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)
     this.name = knotData.id
-/**
-             * 1. CELESTIAL ASTROLABE
-             * Master-crafted Renaissance astronomical clockwork forged of gilded ormolu brass.
-             * Crevices harbor turquoise verdigris patina. Anisotropic radial brushing glides with the view.
-             * Close proximity unlocks microscopic graduation ticks, astrolabe reticles, and internal stellar fire.
-             */
     const {p, facing, grazing, rim, near, intimate} = viewerFrame()
     const tube = uv()
     // Astrolabe graduations and celestial coordinate engravings

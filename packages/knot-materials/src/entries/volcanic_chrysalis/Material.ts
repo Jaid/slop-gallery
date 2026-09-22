@@ -7,16 +7,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * 4. MAGMA CHRYSALIS Tectonic planetary knot where cooling vesicular basalt crust plates split apart. The basalt plates undergo geometric vertex displacement, sinking down into fiery rift canyons where turbulent incandescent convection magma pulses from 1800K to 6000K white-heat.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)
     this.name = knotData.id
-/**
-             * 4. MAGMA CHRYSALIS
-             * Tectonic planetary knot where cooling vesicular basalt crust plates split apart.
-             * The basalt plates undergo geometric vertex displacement, sinking down into fiery rift canyons
-             * where turbulent incandescent convection magma pulses from 1800K to 6000K white-heat.
-             */
     const {p, near} = viewerFrame()
     // Irregular Voronoi tectonic plates: F2 - F1 approaches zero at cell boundaries.
     // A low-frequency vector warp breaks the remaining cellular regularity without moving the cracks over time.

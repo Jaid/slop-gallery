@@ -8,15 +8,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends KnotMaterial {
+/**
+ * A dark amber-bark surface embedded with thousands of tiny firefly points. At distance they flash chaotically. As the viewer approaches, the fireflies synchronize into traveling waves — the Kuramoto model made visible. Glancing angles reveal micro-glints from each light organ.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.5)
     this.name = knotData.id
-
-    // A dark amber-bark surface embedded with thousands of tiny firefly points.
-    // At distance they flash chaotically. As the viewer approaches, the fireflies
-    // synchronize into traveling waves — the Kuramoto model made visible.
-    // Glancing angles reveal micro-glints from each light organ.
 
     const {p, grazing, near, intimate, objectDistance} = viewerFrame()
     // Bark substrate — rough wood/amber surface

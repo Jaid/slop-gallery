@@ -8,8 +8,10 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/** Large acanthus damask, raised silk threads and a dark, directionally brushed velvet pile. */
-export default class VelvetVespers extends KnotMaterial {
+/**
+ * Large acanthus damask, raised silk threads and a dark, directionally brushed velvet pile.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.45)
     this.name = knotData.id

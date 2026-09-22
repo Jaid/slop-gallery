@@ -8,7 +8,9 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/** Six cathedral glasses, selected per pane so neighbours never repeat a hue. */
+/**
+ * Six cathedral glasses, selected per pane so neighbours never repeat a hue.
+ */
 const jewel = (t: Node<'float'>) => {
   const sapphire = color('#0a2a6b')
   const ruby = color('#7d0f22')
@@ -18,16 +20,13 @@ const jewel = (t: Node<'float'>) => {
   const teal = color('#0b5a63')
   return mix(mix(mix(mix(mix(sapphire, ruby, t.step(0.17)), emerald, t.step(0.33)), amber, t.step(0.5)), amethyst, t.step(0.67)), teal, t.step(0.83))
 }
-export default class Material extends KnotMaterial {
+/**
+ * Leaded glass wound into a knot. Each pane is a different glass, the came between them is soft metal, and a fixed cathedral sun outside the room decides which panes burn and which stay dark. Walking around the piece turns the same window into a different window.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)
     this.name = knotData.id
-// ------------------------------------------------------------------
-// Leaded glass wound into a knot. Each pane is a different glass, the
-// came between them is soft metal, and a fixed cathedral sun outside
-// the room decides which panes burn and which stay dark. Walking
-// around the piece turns the same window into a different window.
-// ------------------------------------------------------------------
     const {p, facing, grazing, near, intimate} = viewerFrame()
     const scale = 6.5
     const q = p.mul(scale)

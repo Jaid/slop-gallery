@@ -8,18 +8,16 @@ import {visibility} from '../../candidates/gpt_astra/lib/visibility.ts'
 import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {TAU} from '../../lib/TAU.ts'
 import knotData from './data.ts'
-import {SQRT3} from './util.ts'
 
-export default class Material extends BaseKnotMaterial {
+const SQRT3 = Math.sqrt(3)
+
+/**
+ * Deep-red corner-cube retroreflectors sealed beneath clear resin. Each cell contains three mutually perpendicular optical faces. Moving past the light produces abrupt, coherent return flashes; close inspection exposes fine machining on the individual faces.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)
     this.name = knotData.id
-    // ---------------------------------------------------------------
-    // Deep-red corner-cube retroreflectors sealed beneath clear resin.
-    // Each cell contains three mutually perpendicular optical faces.
-    // Moving past the light produces abrupt, coherent return flashes;
-    // close inspection exposes fine machining on the individual faces.
-    // ---------------------------------------------------------------
     const tube = uv()
     const {N, T, B, facing, near} = viewerFrame()
     const q = tube.mul(vec2(84, SQRT3 * 6))

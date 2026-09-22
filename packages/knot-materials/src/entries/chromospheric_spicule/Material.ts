@@ -7,13 +7,13 @@ import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * 4. CHROMOSPHERIC SPICULE: Solar Coronagraph & Relativistic Alfvén Flux
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)
     this.name = knotData.id
-    // ----------------------------------------------------------------
-    // 4. CHROMOSPHERIC SPICULE: Solar Coronagraph & Relativistic Alfvén Flux
-    // ----------------------------------------------------------------
     this.envMapIntensity = 0.15
     const {p, grazing, near, intimate} = viewerFrame()
     const tube = uv()

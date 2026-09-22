@@ -7,7 +7,7 @@ import {opticalLine} from '../../lib/opticalLine.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import knotData from './data.ts'
 
-export default class CrimsonOracleMaterial extends KnotMaterial {
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)
     this.name = knotData.id

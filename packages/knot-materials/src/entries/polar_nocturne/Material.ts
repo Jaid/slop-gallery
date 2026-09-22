@@ -7,11 +7,13 @@ import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * Aurora curtains in silk; like the true night sky, they burn brightest seen edge-on.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // Aurora curtains in silk; like the true night sky, they burn brightest seen edge-on.
     const {p, view, grazing, near, intimate} = viewerFrame()
     const fold = vec3(0.94, 0, 0.34)
     const edgeOn = view.dot(fold).abs().oneMinus().clamp().pow(1.5)

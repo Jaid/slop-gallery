@@ -9,11 +9,13 @@ import {opticalLine} from '../../lib/opticalLine.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * hadal creature; light organs pulse along the body, alarm-quickening when you come close
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // hadal creature; light organs pulse along the body, alarm-quickening when you come close
     this.envMapIntensity = 0.7
     this.transmission = 0.85
     this.thickness = 0.5

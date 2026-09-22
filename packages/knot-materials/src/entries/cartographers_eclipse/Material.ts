@@ -6,16 +6,10 @@ import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import knotData from './data.ts'
 
-// ---------------------------------------------------------------
-// A pocket astrolabe. The knot is engraved with the constellations of a
-// single imagined sky: gunmetal blue-black, fine gold filaments for the
-// star lines, and emissive pin-points for the stars themselves. The
-// star points live in the original (parallax-stable) surface so they do
-// not drift as you orbit; only the nebular gas behind them shifts. Each
-// star twinkles on its own clock; nearby stars share a slow drift so
-// the constellations seem to gently breathe.
-// ---------------------------------------------------------------
-export default class Material extends BaseKnotMaterial {
+/**
+ * A pocket astrolabe. The knot is engraved with the constellations of a single imagined sky: gunmetal blue-black, fine gold filaments for the star lines, and emissive pin-points for the stars themselves. The star points live in the original (parallax-stable) surface so they do not drift as you orbit; only the nebular gas behind them shifts. Each star twinkles on its own clock; nearby stars share a slow drift so the constellations seem to gently breathe.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.45)
     this.name = knotData.id

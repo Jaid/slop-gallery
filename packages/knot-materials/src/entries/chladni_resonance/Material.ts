@@ -9,12 +9,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * A vibrating indigo enamel plate. Fine sand gathers on the nodal lines of a Chladni mode; step closer and the plate rises through higher modes, the sand re-drawing itself into denser figures.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // A vibrating indigo enamel plate. Fine sand gathers on the nodal lines of a Chladni mode; step
-    // closer and the plate rises through higher modes, the sand re-drawing itself into denser figures.
     const {p, near, intimate, objectDistance} = viewerFrame()
     const tube = uv()
     const X = tube.x.mul(16)

@@ -7,7 +7,7 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import knotData from './data.ts'
 
-export default class ObsidianBioluminescenceMaterial extends KnotMaterial {
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)
     this.name = knotData.id

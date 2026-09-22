@@ -1,20 +1,50 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
-import {color, negateOnBackSide, normalViewGeometry, time, transformNormalToView, uv, varying, vec2} from 'three/tsl'
+import {color, Fn, mx_noise_float, negateOnBackSide, normalViewGeometry, positionGeometry, time, transformNormalToView, uv, varying, vec2} from 'three/tsl'
 
 import {glints} from '../../lib/glints.ts'
 import {hairline as opticalLine} from '../../lib/hairline.ts'
+import {knotFrame} from '../../lib/knotFrame.ts'
 import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {spectralColor} from '../../lib/spectralColor.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
-import {hopperFields, hopperPosition} from './util.ts'
 
-export default class Material extends BaseKnotMaterial {
+function hopperFields(tube: Node<'vec2'>) {
+  const levels = 7
+  const wobble = tube.x.mul(Math.PI * 2 * 3).sin().mul(1.5)
+  const ring = tube.y.mul(Math.PI * 2 * 3).add(wobble).sin().mul(0.5).add(0.5)
+  const stepped = ring.mul(levels)
+  const terrace = stepped.floor()
+  const inTerrace = stepped.fract()
+  const riser = inTerrace.smoothstep(0.78, 1)
+  const staircase = terrace.add(riser).div(levels)
+  return {
+    staircase,
+    terrace,
+    riser,
+    inTerrace,
+  }
+}
+
+const hopperPosition = Fn(([
+  tube,
+]: [
+  Node<'vec2'>,
+]) => {
+  const {center, normal: radial} = knotFrame(tube)
+  const {staircase} = hopperFields(tube)
+  const lift = staircase.sub(0.5).mul(0.07).add(mx_noise_float(positionGeometry.mul(5)).mul(0.006)).add(0.13)
+  return center.add(radial.mul(lift))
+})
+
+/**
+ * Hopper-grown crystal terraces; the oxide rainbow re-tunes as the eye circles it.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // Hopper-grown crystal terraces; the oxide rainbow re-tunes as the eye circles it.
     const tube = uv()
     this.positionNode = hopperPosition(tube)
     const epsilon = 0.0002

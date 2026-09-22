@@ -9,11 +9,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * Black opal with true parallax fire - pockets swim opposite to view
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // Black opal with true parallax fire - pockets swim opposite to view
     const {p, view, facing, rim, near} = viewerFrame()
     const inner = p.sub(view.mul(0.21))
     const deep = p.sub(view.mul(0.44))

@@ -8,13 +8,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * 8. TEMPORAL JACQUARD: Woven Photonic Brocade & Dynamic Moiré Loom
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)
     this.name = knotData.id
-    // ----------------------------------------------------------------
-    // 8. TEMPORAL JACQUARD: Woven Photonic Brocade & Dynamic Moiré Loom
-    // ----------------------------------------------------------------
     const {facing, grazing, near, intimate} = viewerFrame()
     const tube = uv()
     // Warp (longitudinal gold) and Weft (transverse silver) thread coordinates

@@ -1,25 +1,45 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
-import {color, float, mix, mx_noise_float, negateOnBackSide, transformNormalToView, uv, varying, vec2, vec3} from 'three/tsl'
+import {color, float, Fn as fn, mix, mx_noise_float, negateOnBackSide, transformNormalToView, uv, varying, vec2, vec3} from 'three/tsl'
 
 import {bumpNormal} from '../../candidates/gpt_astra/lib/bumpNormal.ts'
+import {knotShell} from '../../candidates/gpt_astra/lib/knotShell.ts'
 import {line} from '../../candidates/gpt_astra/lib/line.ts'
 import {viewerFrame} from '../../candidates/gpt_astra/lib/viewerFrame.ts'
 import {visibility} from '../../candidates/gpt_astra/lib/visibility.ts'
 import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
+import {TAU} from '../../lib/TAU.ts'
 import knotData from './data.ts'
-import {foldedPosition, foldFields} from './util.ts'
 
-export default class Material extends BaseKnotMaterial {
+function roundedTriangle(phase: Node<'float'>) {
+  return phase.sin().mul(0.975).asin().div(Math.asin(0.975))
+}
+
+function foldFields(tube: Node<'vec2'>) {
+  const V = tube.y.mul(TAU * 4)
+  const zigzag = roundedTriangle(V)
+  const U = tube.x.mul(TAU * 24).add(zigzag.mul(1.2))
+  const pleat = roundedTriangle(U)
+  return {
+    U,
+    V,
+    pleat,
+    zigzag,
+    inset: pleat.mul(0.017).add(zigzag.mul(0.006)).sub(0.025),
+  }
+}
+
+const foldedPosition = fn(([tube]: [Node<'vec2'>]) => {
+  return knotShell(tube, foldFields(tube).inset)
+})
+
+/**
+ * A continuous sheet of folded, vermilion-printed rag paper. The silhouette really pleats. Different slopes carry different pigments, so circling the piece alternately conceals and reveals the red facets without an artificial view-dependent hue shift.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)
     this.name = knotData.id
-    // ---------------------------------------------------------------
-    // A continuous sheet of folded, vermilion-printed rag paper.
-    // The silhouette really pleats. Different slopes carry different
-    // pigments, so circling the piece alternately conceals and reveals
-    // the red facets without an artificial view-dependent hue shift.
-    // ---------------------------------------------------------------
     const tube = uv()
     const {U, V, pleat} = foldFields(tube)
     this.positionNode = foldedPosition(tube)

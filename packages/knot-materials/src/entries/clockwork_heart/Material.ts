@@ -1,20 +1,37 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
-import {color, mix, normalViewGeometry, time, uv} from 'three/tsl'
+import {color, mix, mx_atan2, normalViewGeometry, time, uv, vec2} from 'three/tsl'
 
 import {glints} from '../../lib/glints.ts'
 import {hairline as opticalLine} from '../../lib/hairline.ts'
 import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
-import {brassGear} from './util.ts'
 
-export default class Material extends BaseKnotMaterial {
+function brassGear(q: Node<'vec3'>, offsetY: number, outer: number, teeth: number, rotation: Node<'float'>) {
+  const theta = mx_atan2(q.z, q.x) as Node<'float'>
+  const radius = vec2(q.x, q.z).length()
+  const dY = q.y.sub(offsetY)
+  const plate = dY.mul(dY).mul(-2600).exp()
+  const dR = radius.sub(outer)
+  const rim = dR.mul(dR).mul(-320).exp()
+  const toothRing = opticalLine(theta.mul(teeth).add(rotation).sin(), 0.3)
+  const toothed = rim.mul(toothRing.mul(0.85).add(0.15))
+  const spokes = opticalLine(theta.mul(5).add(rotation).sin(), 0.22)
+    .mul(radius.smoothstep(outer * 0.12, outer * 0.4))
+    .mul(radius.smoothstep(outer, outer * 1.15).oneMinus())
+  const dH = radius.sub(outer * 0.16)
+  const hub = dH.mul(dH).mul(-2400).exp()
+  return plate.mul(toothed.add(spokes.mul(0.9)).add(hub.mul(1.6))).clamp()
+}
+
+/**
+ * A heart of brass behind smoked glass: counter-turning wheels on two parallax planes, a gold mainspring coiled around the shell, an escapement that ticks.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // A heart of brass behind smoked glass: counter-turning wheels on two parallax
-    // planes, a gold mainspring coiled around the shell, an escapement that ticks.
     const {p, view, facing, near} = viewerFrame()
     const tube = uv()
     const qNear = p.sub(view.mul(0.05))

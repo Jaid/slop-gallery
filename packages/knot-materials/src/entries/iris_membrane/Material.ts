@@ -7,7 +7,7 @@ import {liquidNormal} from '../../lib/liquidNormal.ts'
 import {spectralColor} from '../../lib/spectralColor.ts'
 import knotData from './data.ts'
 
-export default class IrisMembraneMaterial extends KnotMaterial {
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.2)
     this.name = knotData.id

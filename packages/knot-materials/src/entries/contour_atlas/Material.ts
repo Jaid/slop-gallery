@@ -1,15 +1,30 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
-import {color, float, mix, mx_noise_float, normalLocal, positionGeometry} from 'three/tsl'
+import {color, float, mix, mx_noise_float, normalLocal, positionGeometry, vec3} from 'three/tsl'
 
 import {hairline} from '../../lib/hairline.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {TAU} from '../../lib/TAU.ts'
 import knotData from './data.ts'
-import {atlasElevation, atlasRelief} from './util.ts'
 
-export default class ContourAtlasMaterial extends KnotMaterial {
+/**
+ * A continuous object-space map: no UV seam and no time-dependent geography.
+ */
+function atlasElevation(position: Node<'vec3'>) {
+  const broad = mx_noise_float(position.mul(3.8).add(vec3(8, 2, 5)))
+  const tributaries = mx_noise_float(position.mul(10).add(vec3(3, 9, 1)))
+  return broad.mul(0.76).add(tributaries.mul(0.24)).mul(0.5).add(0.5).clamp()
+}
+
+/**
+ * The signed relief stays within the metadata bound even at noise extrema.
+ */
+function atlasRelief(elevation: Node<'float'>) {
+  return elevation.sub(0.5).mul(0.016)
+}
+
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.65)
     this.name = knotData.id

@@ -1,4 +1,4 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
 import {color, float, mix, mx_cell_noise_float, mx_fractal_noise_float, mx_noise_float, positionWorld, time, vec3} from 'three/tsl'
 
@@ -9,9 +9,17 @@ import {viewerFrame} from '../../candidates/gpt_sol/lib/viewerFrame.ts'
 import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import knotData from './data.ts'
-import {pulse01} from './util.ts'
 
-export default class Material extends BaseKnotMaterial {
+function pulse01(value: Node<'float'>, centre: number, width: number) {
+  const footprint = value.fwidth().max(0.0001)
+  return value
+    .sub(centre)
+    .abs()
+    .smoothstep(width, footprint.mul(1.25).add(width))
+    .oneMinus()
+}
+
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id

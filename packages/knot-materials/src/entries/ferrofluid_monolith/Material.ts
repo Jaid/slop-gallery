@@ -7,13 +7,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * 6. FERROFLUID MONOLITH: Hexagonal Rosensweig Spikes & Hydrocarbon Thin-Film
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)
     this.name = knotData.id
-    // ----------------------------------------------------------------
-    // 6. FERROFLUID MONOLITH: Hexagonal Rosensweig Spikes & Hydrocarbon Thin-Film
-    // ----------------------------------------------------------------
     const {rim, intimate} = viewerFrame()
     const tube = uv()
     // Hexagonal standing-wave lattice for Rosensweig spike cones

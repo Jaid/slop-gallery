@@ -11,12 +11,13 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class MurmurationMaterial extends KnotMaterial {
+/**
+ * Broad, overlapping coverts are large enough to read as feathers from across the room. Each vane has a raised rachis and diagonal barb grooves; a separate tangent-aligned lobe turns their melanin black into cobalt and bottle green.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.58)
     this.name = knotData.id
-// Broad, overlapping coverts are large enough to read as feathers from across the room. Each vane has
-// a raised rachis and diagonal barb grooves; a separate tangent-aligned lobe turns their melanin black into cobalt and bottle green.
     const {p, view, facing, grazing, near, intimate} = viewerFrame()
     const tube = uv()
     const rows = tube.y.mul(7).floor()

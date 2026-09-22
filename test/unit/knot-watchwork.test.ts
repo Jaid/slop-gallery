@@ -1,22 +1,22 @@
 import {describe, expect, test} from 'bun:test'
 
-import {annulus, disk, watchGear, watchLine, watchWave} from 'knot-materials/entries/horologists_paradox/util.ts'
-import {float, vec2} from 'three/tsl'
-
 const source = (name: string) => Bun.file(new URL(`../../packages/knot-materials/src/entries/horologists_paradox/${name}`, import.meta.url)).text()
 describe('Horologist watchwork filtering', () => {
-  test('constructs every shape with an explicit continuous footprint', () => {
-    const footprint = float(0.001)
-    expect(disk(float(0.2), 0.437, footprint).isNode).toBe(true)
-    expect(annulus(float(0.2), 0.416, 0.472, footprint).isNode).toBe(true)
-    expect(watchLine(float(0.2), 0.026, footprint).isNode).toBe(true)
-    expect(watchWave(float(0.2), footprint).isNode).toBe(true)
-    expect(watchGear(vec2(0.1), 0.265, 18, float(0), footprint).mask.isNode).toBe(true)
+  test('keeps every shape helper local and footprint-driven', async () => {
+    const material = await source('Material.ts')
+    for (const signature of [
+      "function disk(radius: Node<'float'>, size: number, footprint: Node<'float'>)",
+      "function annulus(radius: Node<'float'>, inner: number, outer: number, footprint: Node<'float'>)",
+      "function watchLine(field: Node<'float'>, width: number, footprint: Node<'float'>)",
+      "function watchGear(point: Node<'vec2'>, radius: number, teeth: number, rotation: Node<'float'>, footprint: Node<'float'>)",
+      "function watchWave(phase: Node<'float'>, footprint: Node<'float'>)",
+    ]) {
+      expect(material).toContain(signature)
+    }
+    expect(material).not.toContain("from './util.ts'")
   })
   test('never differentiates wrapped shapes or discontinuous angular phases', async () => {
     const material = await source('Material.ts')
-    const helpers = await source('util.ts')
-    expect(helpers).not.toContain('.fwidth()')
     expect(material).toContain('const surfaceFootprint = q.fwidth().length().max(0.00001)')
     for (const depth of ['0.032', '0.017', '0.009']) {
       expect(material).toContain(`q.sub(ray.mul(${depth})).fwidth().length().max(0.00001)`)

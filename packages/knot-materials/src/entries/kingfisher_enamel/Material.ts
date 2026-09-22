@@ -8,8 +8,10 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/** Peacock-eye cloisonné: domed vitreous enamel separated by raised, warm brass wire. */
-export default class KingfisherEnamel extends KnotMaterial {
+/**
+ * Peacock-eye cloisonné: domed vitreous enamel separated by raised, warm brass wire.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id

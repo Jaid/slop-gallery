@@ -9,17 +9,13 @@ import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
 const filmIndex = 1.34
-export default class Material extends KnotMaterial {
+/**
+ * Ephemera. A soap film stretched over the knot: a water skin a few hundred nanometres thick. Light reflecting off the front and back of that skin interferes with itself, and because the film drains and swirls the interference order sweeps through the whole spectrum, so the surface is never the same color twice.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)
     this.name = knotData.id
-// ---------------------------------------------------------------------
-// Ephemera. A soap film stretched over the knot: a water skin a few
-// hundred nanometres thick. Light reflecting off the front and back of
-// that skin interferes with itself, and because the film drains and
-// swirls the interference order sweeps through the whole spectrum, so
-// the surface is never the same color twice.
-// ---------------------------------------------------------------------
     const {p, facing, grazing, near} = viewerFrame()
 // The film drains under gravity and is stirred by Marangoni convection.
     const drain = p.y.mul(-330)

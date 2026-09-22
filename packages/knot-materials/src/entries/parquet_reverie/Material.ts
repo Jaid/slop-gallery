@@ -7,12 +7,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {TAU} from '../../lib/TAU.ts'
 import knotData from './data.ts'
 
-export default class ParquetReverieMaterial extends KnotMaterial {
+/**
+ * Alternating triangles of maple, rosewood and walnut, not a noise-colored timber surface. Integer repeats and wrapped cell identities close both seams of the knot's UV torus.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)
     this.name = knotData.id
-    // Alternating triangles of maple, rosewood and walnut, not a noise-colored timber surface.
-    // Integer repeats and wrapped cell identities close both seams of the knot's UV torus.
     const q = uv().mul(vec2(24, 6))
     const cell = q.floor().mod(vec2(24, 6))
     const local = q.fract()

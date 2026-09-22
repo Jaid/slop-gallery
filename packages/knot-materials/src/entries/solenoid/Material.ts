@@ -7,17 +7,13 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends KnotMaterial {
+/**
+ * A coil wound onto the knot itself. The wire is a real helix in the tube's parameter space: its metric distance to the winding axis sets the cylindrical profile and the true surface normal of the round copper, so the highlights run along the winding instead of across it. Current crawls through the turns and the gaps between them flash.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)
     this.name = knotData.id
-// ------------------------------------------------------------------
-// A coil wound onto the knot itself. The wire is a real helix in the
-// tube's parameter space: its metric distance to the winding axis sets
-// the cylindrical profile and the true surface normal of the round
-// copper, so the highlights run along the winding instead of across it.
-// Current crawls through the turns and the gaps between them flash.
-// ------------------------------------------------------------------
     const {p, facing, grazing, near, intimate} = viewerFrame()
     const tube = uv()
 // Metric of the knot's own UV: about 4.5 units along the tube, 0.82 around it.

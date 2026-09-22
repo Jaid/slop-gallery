@@ -7,7 +7,7 @@ import {opticalLine} from '../../lib/opticalLine.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import knotData from './data.ts'
 
-export default class MalachiteCoreMaterial extends KnotMaterial {
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.05)
     this.name = knotData.id

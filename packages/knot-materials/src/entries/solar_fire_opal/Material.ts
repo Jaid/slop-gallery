@@ -9,7 +9,7 @@ import {spectralColor} from '../../lib/spectralColor.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class SolarFireOpalMaterial extends KnotMaterial {
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.25)
     this.name = knotData.id

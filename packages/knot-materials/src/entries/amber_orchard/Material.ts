@@ -8,8 +8,10 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/** Three independently occluded botanical inclusions, trapped at different optical depths. */
-export default class AmberArchive extends KnotMaterial {
+/**
+ * Three independently occluded botanical inclusions, trapped at different optical depths.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.7)
     this.name = knotData.id

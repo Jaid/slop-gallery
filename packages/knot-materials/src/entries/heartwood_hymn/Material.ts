@@ -6,7 +6,7 @@ import {opticalBands, proceduralNormal, viewerFrame} from '../../lib/index.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import data from './data.ts'
 
-export default class HeartwoodHymn extends KnotMaterial {
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)
     this.name = data.id

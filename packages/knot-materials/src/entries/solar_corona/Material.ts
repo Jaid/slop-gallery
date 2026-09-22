@@ -9,17 +9,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends KnotMaterial {
+/**
+ * The photosphere. Granulation cells rise and sink in slow convection, dark sunspots drift across them ringed by bright faculae, and magnetic loops arc off the surface in glowing filaments. At the limb the whole thing frays into prominences, so the silhouette is never a clean edge. Almost all of the energy lives in the emissive channel: a star is light, not paint.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.3)
     this.name = knotData.id
-// ---------------------------------------------------------------------------
-// The photosphere. Granulation cells rise and sink in slow convection, dark
-// sunspots drift across them ringed by bright faculae, and magnetic loops arc
-// off the surface in glowing filaments. At the limb the whole thing frays into
-// prominences, so the silhouette is never a clean edge. Almost all of the
-// energy lives in the emissive channel: a star is light, not paint.
-// ---------------------------------------------------------------------------
     const {p, facing, grazing} = viewerFrame()
 // Convection: hot plasma wells up in the middle of every cell and sinks at the walls.
     const boil = mx_noise_vec3(p.mul(1.6).add(vec3(time.mul(0.02), time.mul(-0.015), time.mul(0.01)))).mul(0.05)

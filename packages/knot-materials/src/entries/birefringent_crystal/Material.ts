@@ -9,16 +9,13 @@ import {spectralColor} from '../../lib/spectralColor.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * 5. BIREFRINGENT CRYSTAL Optical Iceland spar calcite monolith with intense extraordinary double refraction. Chromatic dispersion splits incoming environment light, while rhombohedral cleavage planes exhibit internal Newton thin-film rainbow interference fringes in microscopic fractures.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)
     this.name = knotData.id
-/**
-             * 5. BIREFRINGENT CRYSTAL
-             * Optical Iceland spar calcite monolith with intense extraordinary double refraction.
-             * Chromatic dispersion splits incoming environment light, while rhombohedral cleavage planes
-             * exhibit internal Newton thin-film rainbow interference fringes in microscopic fractures.
-             */
     const {p, view, rim, near} = viewerFrame()
     this.transmission = 0.97
     this.thickness = 0.68

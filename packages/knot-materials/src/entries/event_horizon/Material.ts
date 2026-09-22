@@ -7,13 +7,13 @@ import {starfield} from '../../lib/starfield.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class EventHorizonMaterial extends KnotMaterial {
+/**
+ * A void that swallows the room. Stars from the reflection direction are dragged into a lensing halo around the silhouette, a photon ring tightens as you approach, and the ring is Doppler-shifted: the side orbiting toward you burns blue-white, the side receding smoulders red.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)
     this.name = knotData.id
-    // A void that swallows the room. Stars from the reflection direction are dragged into a lensing halo
-    // around the silhouette, a photon ring tightens as you approach, and the ring is Doppler-shifted:
-    // the side orbiting toward you burns blue-white, the side receding smoulders red.
     this.envMapIntensity = 0.2
     const {p, view, facing, grazing, near, intimate} = viewerFrame()
     const lensed = reflectVector.add(normalWorld.mul(grazing.pow(3).mul(0.8))).normalize()

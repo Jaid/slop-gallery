@@ -7,7 +7,7 @@ import {liquidNormal} from '../../lib/liquidNormal.ts'
 import {opticalLine} from '../../lib/opticalLine.ts'
 import knotData from './data.ts'
 
-export default class WraithGlassMaterial extends KnotMaterial {
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)
     this.name = knotData.id

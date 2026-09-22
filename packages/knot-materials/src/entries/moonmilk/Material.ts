@@ -1,24 +1,51 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
 import {color, float, mix, mx_noise_float, normalViewGeometry, time, uv, vec2, vec3} from 'three/tsl'
 
 import {tubeRay} from '../../lib/atelier.ts'
+import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
 import {glints} from '../../lib/glints.ts'
 import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {spectralColor} from '../../lib/spectralColor.ts'
 import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
+import {wrapCell} from '../../lib/wrapCell.ts'
 import knotData from './data.ts'
-import {tablets} from './lib/tablets.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * Brick-bond aragonite tablets: near-flat plates with hairline mortar, per-tablet jitter and flow striations.
+ */
+function tablets(tile: Node<'vec2'>, tiles: Node<'vec2'>, seed: Node<'float'> | number) {
+  const s = typeof seed === 'number' ? float(seed) : seed
+  const q = tile.mul(tiles)
+  const row = q.y.floor()
+  const shifted = vec2(q.x.add(row.mod(2).mul(0.5)), q.y)
+  const id = wrapCell(shifted.floor(), tiles)
+  const local = shifted.fract().sub(0.5)
+  const random = cellNoiseVec3(vec3(id, s))
+  const footprint = shifted.fwidth().length().max(0.00001)
+  const aa = footprint.mul(1.5).add(0.003)
+  const wobble = vec2(mx_noise_float(vec3(id, s.add(9.1))), mx_noise_float(vec3(id, s.add(17.3)))).sub(0.5).mul(0.08)
+  const shape = local.add(wobble).abs().div(vec2(0.49, 0.47))
+  const edge = shape.x.max(shape.y)
+  const face = edge.smoothstep(float(0.97).sub(aa), float(1).add(aa)).oneMinus()
+  const striation = local.y.mul(7).add(random.y.mul(TAU)).sin().mul(0.5).add(0.5).pow(2)
+  return {
+    face,
+    local,
+    random,
+    striation,
+  }
+}
+
+/**
+ * The inner shell of a giant pearl oyster: aragonite tablets mortared in conchiolin, each tablet a thin-film lens. Circling the knot sweeps the interference tide across every plate in turn; stepping closer reveals the growth striations on the tablets and the older, deeper plates beneath the mortar.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.8)
     this.name = knotData.id
-// The inner shell of a giant pearl oyster: aragonite tablets mortared in conchiolin, each tablet a thin-film
-// lens. Circling the knot sweeps the interference tide across every plate in turn; stepping closer reveals
-// the growth striations on the tablets and the older, deeper plates beneath the mortar.
     const {p, facing, grazing, near, intimate} = viewerFrame()
     const tube = uv()
     const slope = tubeRay()

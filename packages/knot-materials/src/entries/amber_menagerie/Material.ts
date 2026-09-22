@@ -8,14 +8,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends KnotMaterial {
+/**
+ * Warm translucent amber encloses pollen, bubbles, ancient seeds, and tiny imagined organisms at different depths. Parallax reveals hidden specimens as you orbit. Some appear to awaken when observed closely — legs twitch, wings catch light.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-
-    // Warm translucent amber encloses pollen, bubbles, ancient seeds, and tiny imagined organisms
-    // at different depths. Parallax reveals hidden specimens as you orbit. Some appear to awaken
-    // when observed closely — legs twitch, wings catch light.
 
     const {p, view, facing, grazing, near, intimate} = viewerFrame()
     // Amber body — warm translucent resin with internal color variations

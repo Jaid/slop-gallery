@@ -1,4 +1,4 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
 import {color, float, mix, mx_fractal_noise_float, mx_noise_float, time, uv, vec3} from 'three/tsl'
 
@@ -8,15 +8,16 @@ import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
-import {wrap} from './util.ts'
 
-export default class Material extends BaseKnotMaterial {
+const wrap = (x: Node<'float'>) => x.sub(x.add(0.5).floor())
+
+/**
+ * A knot of hand-made paper lit from within by six guttering candles. Ink-painted plum branches and blossoms on the inner skin show as silhouettes that slide with parallax, and when you come close a moth's shadow flutters along the inside of the lantern.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // A knot of hand-made paper lit from within by six guttering candles. Ink-painted plum branches
-    // and blossoms on the inner skin show as silhouettes that slide with parallax, and when you come
-    // close a moth's shadow flutters along the inside of the lantern.
     const {p, view, facing, grazing, near, intimate} = viewerFrame()
     const tube = uv()
     const fibres = mx_fractal_noise_float(vec3(tube.x.mul(520), tube.y.mul(14), 2.5), 3, 2.3, 0.55).mul(0.5).add(0.5)

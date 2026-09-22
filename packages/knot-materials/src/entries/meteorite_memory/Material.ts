@@ -1,4 +1,4 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
 import {color, mix, mx_noise_float, positionGeometry, vec2, vec3} from 'three/tsl'
 
@@ -10,9 +10,12 @@ import {premiumView} from '../../candidates/gpt_astra/lib/premiumView.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal as premiumNormal} from '../../lib/proceduralNormal.ts'
 import knotData from './data.ts'
-import {premiumHash} from './util.ts'
 
-export default class MeteoriteMemoryMaterial extends KnotMaterial {
+function premiumHash(seed: Node<'float'>) {
+  return seed.mul(127.1).add(311.7).sin().mul(43_758.5453).fract()
+}
+
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)
     this.name = knotData.id

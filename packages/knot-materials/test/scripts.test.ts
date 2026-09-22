@@ -24,7 +24,7 @@ describe('inference prompts', () => {
     expect(selectExamples({examples: knots.length})).toHaveLength(knots.length)
     expect(selectExamples({exampleIds: ['ferrothorn', 'washi_lantern']}).map(entry => entry.id)).toEqual(['ferrothorn', 'washi_lantern'])
   })
-  test('includes every global library file verbatim, real materials, metadata and transitive private helpers', async () => {
+  test('includes every global library file verbatim plus self-contained material examples', async () => {
     const options = {
       candidate: 'claude_opus',
       count: 5,
@@ -39,12 +39,16 @@ describe('inference prompts', () => {
       expect(prompt).toContain((await readSource(`src/lib/${file}`)).trimEnd())
     }
     for (const id of options.exampleIds) {
-      for (const file of ['data.ts', 'Material.ts', 'util.ts']) {
+      for (const file of ['data.ts', 'Material.ts']) {
         expect(prompt).toContain((await readSource(`src/entries/${id}/${file}`)).trimEnd())
       }
     }
     expect(prompt).toContain((await readSource('src/candidates/gpt_astra/lib/viewerFrame.ts')).trimEnd())
     expect(prompt).toContain((await readSource('src/candidates/gpt_astra/lib/knotShell.ts')).trimEnd())
+    expect(prompt).toContain('exports an anonymous default class')
+    expect(prompt).toContain('three-line JSDoc immediately above that class')
+    expect(prompt).toContain('do not create knot-scoped helper or library files')
+    expect(prompt).toContain('knot-only helpers stay inside the corresponding Material.ts')
     for (const entry of knots) {
       expect(prompt).toContain(entry.id)
     }

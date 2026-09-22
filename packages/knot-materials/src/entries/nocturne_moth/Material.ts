@@ -11,7 +11,7 @@ import {proceduralNormal as premiumNormal} from '../../lib/proceduralNormal.ts'
 import {TAU} from '../../lib/TAU.ts'
 import knotData from './data.ts'
 
-export default class NocturneMothMaterial extends KnotMaterial {
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)
     this.name = knotData.id

@@ -10,7 +10,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class MurmurationSilkMaterial extends KnotMaterial {
+export default class extends KnotMaterial {
 constructor(environment: Texture) {
   super(environment, 1.08)
   this.name = knotData.id

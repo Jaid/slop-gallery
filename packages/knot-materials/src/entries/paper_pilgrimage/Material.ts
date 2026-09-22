@@ -7,7 +7,7 @@ import {proceduralNormal, viewerFrame} from '../../lib/index.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import data from './data.ts'
 
-export default class PaperPilgrimage extends KnotMaterial {
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.6)
     this.name = data.id

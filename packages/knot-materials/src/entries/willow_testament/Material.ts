@@ -7,7 +7,7 @@ import {opticalBands, proceduralNormal, TAU, viewerFrame} from '../../lib/index.
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import data from './data.ts'
 
-export default class WillowTestament extends KnotMaterial {
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)
     this.name = data.id

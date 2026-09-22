@@ -9,12 +9,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class KintsugiNocturneMaterial extends KnotMaterial {
+/**
+ * Three deliberate faults cut through the fired body. Their broad, rounded vertex relief is computed without screen derivatives, while a fine powder variation is confined inside the raised urushi-gold seams.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.32)
     this.name = knotData.id
-// Three deliberate faults cut through the fired body. Their broad, rounded vertex relief is computed
-// without screen derivatives, while a fine powder variation is confined inside the raised urushi-gold seams.
     const {p, grazing, near, intimate} = viewerFrame()
     const clay = mx_noise_float(p.mul(3.1)).mul(0.5).add(0.5)
     const firing = mx_noise_float(p.mul(20)).mul(0.5).add(0.5)

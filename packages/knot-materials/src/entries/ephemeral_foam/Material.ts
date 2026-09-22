@@ -1,23 +1,54 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
-import {color, float, mix, mx_noise_float, negateOnBackSide, positionWorld, time, uv, vec2, vec3} from 'three/tsl'
+import {color, float, Fn as fn, mix, mx_noise_float, negateOnBackSide, positionWorld, select, time, uv, vec2, vec3, vec4} from 'three/tsl'
 
 import {viewerFrame} from '../../candidates/gpt_astra/lib/viewerFrame.ts'
 import {visibility} from '../../candidates/gpt_astra/lib/visibility.ts'
+import {wrapCell} from '../../candidates/gpt_astra/lib/wrapCell.ts'
+import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
 import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {TAU} from '../../lib/TAU.ts'
 import knotData from './data.ts'
-import {packedCells} from './util.ts'
 
-export default class Material extends BaseKnotMaterial {
+const packedCells = fn(([
+  q,
+  period,
+]: [
+  Node<'vec2'>,
+  Node<'vec2'>,
+]) => {
+  const base = q.floor().toVar()
+  const fraction = q.fract().toVar()
+  const first = float(1e6).toVar()
+  const second = float(1e6).toVar()
+  const nearest = vec2(0).toVar()
+  const identity = float(0).toVar()
+  for (let y = -1; y <= 1; y++) {
+    for (let x = -1; x <= 1; x++) {
+      const offset = vec2(x, y)
+      const id = wrapCell(base.add(offset), period)
+      const random = cellNoiseVec3(vec3(id, 7.19))
+      const delta = offset
+        .add(random.xy.mul(0.7).add(0.15))
+        .sub(fraction)
+      const distanceSquared = delta.dot(delta).toVar()
+      const nearer = distanceSquared.lessThan(first).toVar()
+      second.assign(select(nearer, first, second.min(distanceSquared)))
+      nearest.assign(select(nearer, delta, nearest))
+      identity.assign(select(nearer, random.z, identity))
+      first.assign(first.min(distanceSquared))
+    }
+  }
+  return vec4(nearest, identity, second.sqrt().sub(first.sqrt()).max(0))
+})
+
+/**
+ * A packed assembly of soap films and liquid Plateau borders. Two membrane depths separate under parallax. Thin-film colour comes from the physical iridescence model, not a rainbow ramp.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)
     this.name = knotData.id
-    // ---------------------------------------------------------------
-    // A packed assembly of soap films and liquid Plateau borders.
-    // Two membrane depths separate under parallax. Thin-film colour
-    // comes from the physical iridescence model, not a rainbow ramp.
-    // ---------------------------------------------------------------
     const tube = uv()
     const {p, N, T, B, near, uvSlope} = viewerFrame()
     const period = vec2(72, 8)

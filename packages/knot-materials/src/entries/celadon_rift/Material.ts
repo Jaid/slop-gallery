@@ -8,17 +8,13 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends KnotMaterial {
+/**
+ * A celadon vessel that was smashed and put back together with gold. The lattice is heavily warped so the breaks are long, jagged and unequal — a pot shatters into a dozen pieces, not a thousand tiles — and every seam is a river of lacquer and gold leaf standing proud of the glaze, thicker where the break ran deep.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)
     this.name = knotData.id
-// ------------------------------------------------------------------
-// A celadon vessel that was smashed and put back together with gold.
-// The lattice is heavily warped so the breaks are long, jagged and
-// unequal — a pot shatters into a dozen pieces, not a thousand tiles —
-// and every seam is a river of lacquer and gold leaf standing proud of
-// the glaze, thicker where the break ran deep.
-// ------------------------------------------------------------------
     const {p, facing, grazing, near, intimate} = viewerFrame()
     const scale = 4.2
 // Warping hard is what turns a Voronoi diagram into a fracture.

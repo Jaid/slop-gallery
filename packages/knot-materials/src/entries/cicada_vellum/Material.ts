@@ -12,12 +12,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class CicadaVellumMaterial extends KnotMaterial {
+/**
+ * A dry chitin membrane is deliberately satin rather than wet. Copper-colored ribs rise above shallowly sagging cells, and their network is sampled beneath the face to create movement with parallax.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.42)
     this.name = knotData.id
-// A dry chitin membrane is deliberately satin rather than wet. Copper-colored ribs rise above
-// shallowly sagging cells, and their network is sampled beneath the face to create movement with parallax.
     const {p, view, facing, grazing, near, intimate} = viewerFrame()
     const membraneNoise = mx_noise_float(p.mul(4.8)).mul(0.5).add(0.5)
     const underSkin = p.sub(view.mul(0.047))

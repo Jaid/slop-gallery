@@ -8,13 +8,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * A lightning strike frozen inside a block of amber acrylic. Four parallax strata of branching discharge lie at different depths, so the tree shifts as you circle it; the closer you stand, the more often a surge runs the branches again.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // A lightning strike frozen inside a block of amber acrylic. Four parallax strata of branching
-    // discharge lie at different depths, so the tree shifts as you circle it; the closer you stand,
-    // the more often a surge runs the branches again.
     const {p, view, grazing, near} = viewerFrame()
     const bolt = (q: Node<'vec3'>, seed: number) => {
       const warp = mx_noise_float(q.mul(1.7).add(seed)).mul(0.35)

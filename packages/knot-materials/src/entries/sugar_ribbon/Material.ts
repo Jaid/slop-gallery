@@ -1,15 +1,46 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
-import {color, float, mix, mx_noise_float, negateOnBackSide, transformNormalToView, uv, varying} from 'three/tsl'
+import {color, float, Fn as fn, mix, mx_noise_float, negateOnBackSide, transformNormalToView, uv, varying, vec2} from 'three/tsl'
 
 import {cellularPoints} from '../../lib/cellularPoints.ts'
+import {knotFrame} from '../../lib/knotFrame.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
+import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
-import {sugarPhase, sugarPosition, sugarSurfaceNormal} from './util.ts'
 
-/** Pulled raspberry candy with a mint pinstripe and a finely sugared, fluted glaze. */
-export default class SugarRibbonMaterial extends KnotMaterial {
+const sugarRelief = 0.009
+
+/**
+ * Three ribbons make twelve turns along the tube; all fields close at both UV seams.
+ */
+function sugarPhase(tube: Node<'vec2'>) {
+  return tube.x.mul(12).add(tube.y.mul(3)).mul(TAU)
+}
+
+function sugarHeight(tube: Node<'vec2'>) {
+  return sugarPhase(tube).mul(2).cos().mul(0.5).add(0.5).pow(2).mul(sugarRelief)
+}
+
+const sugarPosition = fn(([tube]: [Node<'vec2'>]) => {
+  const frame = knotFrame(tube)
+  return frame.position.add(frame.normal.mul(sugarHeight(tube)))
+})
+
+/**
+ * Central differences shade the actual fluted surface rather than the undeformed tube.
+ */
+const sugarSurfaceNormal = fn(([tube]: [Node<'vec2'>]) => {
+  const epsilon = 0.0001
+  const du = sugarPosition(tube.add(vec2(epsilon, 0))).sub(sugarPosition(tube.sub(vec2(epsilon, 0))))
+  const dv = sugarPosition(tube.add(vec2(0, epsilon))).sub(sugarPosition(tube.sub(vec2(0, epsilon))))
+  return du.cross(dv).normalize()
+})
+
+/**
+ * Pulled raspberry candy with a mint pinstripe and a finely sugared, fluted glaze.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.8)
     this.name = knotData.id

@@ -8,13 +8,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class DamascusTideMaterial extends KnotMaterial {
+/**
+ * Folded, acid-etched steel with real anisotropic brushing following the layer flow. The watered pattern sits a hair under the polish, so it slides against the highlights as you circle; temper colours bloom at grazing angles, and only up close do the micro brush strokes and a faint forge memory in the seams resolve.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)
     this.name = knotData.id
-    // Folded, acid-etched steel with real anisotropic brushing following the layer flow. The watered pattern sits
-    // a hair under the polish, so it slides against the highlights as you circle; temper colours bloom at grazing
-    // angles, and only up close do the micro brush strokes and a faint forge memory in the seams resolve.
     const {p, view, grazing, intimate} = viewerFrame()
     const tube = uv()
     const warp = mx_fractal_noise_float(p.mul(3.8).add(vec3(0, time.mul(0.04), 0)), 3, 2.2, 0.55)

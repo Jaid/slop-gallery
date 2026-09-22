@@ -12,12 +12,13 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class MarquetryAuroraMaterial extends KnotMaterial {
+/**
+ * Walnut grain runs with the tube while alternating maple leaves turn across it. A dark knife joint separates them from proud brass stringing, allowing the surface to read as fitted veneer rather than a printed pattern.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.84)
     this.name = knotData.id
-// Walnut grain runs with the tube while alternating maple leaves turn across it. A dark knife joint
-// separates them from proud brass stringing, allowing the surface to read as fitted veneer rather than a printed pattern.
     const {p, view, grazing, near, intimate} = viewerFrame()
     const tube = uv()
     const burl = mx_noise_float(p.mul(4.5)).mul(0.5).add(0.5)

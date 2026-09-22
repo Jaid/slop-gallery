@@ -9,11 +9,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * obsidian crust over a molten core; veins beat like a heart, hotter as you approach
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // obsidian crust over a molten core; veins beat like a heart, hotter as you approach
     this.envMapIntensity = 0.5
     const {p, view, rim, near, intimate} = viewerFrame()
     const shallow = p.sub(view.mul(0.05))

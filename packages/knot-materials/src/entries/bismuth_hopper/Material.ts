@@ -9,17 +9,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * 4. BISMUTH HOPPER A synthetic metal crystal grown in a lab, its surface a stair-step spiral of right-angled terraces. Each tread oxidised into a different interference colour; edges clean, chrome-bright, infinitely sharp.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // ============================================================
-    //  4.  BISMUTH HOPPER
-    //      A synthetic metal crystal grown in a lab, its surface a
-    //      stair-step spiral of right-angled terraces. Each tread
-    //      oxidised into a different interference colour; edges
-    //      clean, chrome-bright, infinitely sharp.
-    // ============================================================
     const {p, facing, rim, near} = viewerFrame()
     const tube = uv()
     // Stair-step geometry: two orthogonal pitches make the spiral.

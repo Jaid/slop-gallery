@@ -11,7 +11,7 @@ import {spectralColor} from '../../lib/spectralColor.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends KnotMaterial {
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     // 95% water: ultra-translucent, gelatinous, and ghostly
     super(environment, 0.95)

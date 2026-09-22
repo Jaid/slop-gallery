@@ -1,4 +1,4 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
 import {color, float, mix, mx_fractal_noise_float, mx_noise_float, time, uv, vec2, vec3} from 'three/tsl'
 
@@ -7,14 +7,20 @@ import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
-import {ember} from './util.ts'
 
-export default class Material extends BaseKnotMaterial {
+function ember(t: Node<'float'>) {
+  const c = t.clamp()
+  const low = mix(color('#1a0300'), color('#ff4a00'), c.mul(2).clamp())
+  return mix(low, color('#fff0b8'), c.sub(0.5).mul(2).clamp().pow(1.4))
+}
+
+/**
+ * Folded, brushed damascus steel, still cooling from the forge. Temper colours bloom around fissures; embers deep in the cracks breathe faster and brighter the closer you come.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // Folded, brushed damascus steel, still cooling from the forge. Temper colours bloom around
-    // fissures; embers deep in the cracks breathe faster and brighter the closer you come.
     const {p, view, grazing, near, intimate} = viewerFrame()
     const tube = uv()
     const fold = mx_noise_float(p.mul(2.6)).mul(5).add(mx_noise_float(p.mul(7.5).add(vec3(3.1, 7.7, 1.3))).mul(1.6))

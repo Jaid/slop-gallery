@@ -1,6 +1,6 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
-import {color, float, mx_noise_float, normalLocal, normalViewGeometry, positionGeometry, time, vec3} from 'three/tsl'
+import {color, float, mx_noise_float, normalLocal, normalViewGeometry, positionGeometry, time, vec2, vec3} from 'three/tsl'
 
 import {beads} from '../../lib/beads.ts'
 import {glints} from '../../lib/glints.ts'
@@ -8,15 +8,27 @@ import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
-import {waves} from './lib/waves.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * Slow surface-tension swell as a height field; its slope is recovered by proceduralNormal downstream.
+ */
+function waves(point: Node<'vec3'>) {
+  const a = vec2(1, 0.6).normalize()
+  const b = vec2(-0.35, 1).normalize()
+  const p = vec2(point.x.add(point.z.mul(0.7)), point.y)
+  const phaseA = p.dot(a).mul(5.2)
+  const phaseB = p.dot(b).mul(8.7)
+  const height = phaseA.sin().mul(0.55).add(phaseB.sin().mul(0.3)).add(p.dot(a).mul(2.3).sin().mul(0.35))
+  return height
+}
+
+/**
+ * A knot cast in living mercury. Surface tension combs slow swells over the mirror; satellite droplets bead and tremble at the crests. Every step slides the whole room across its skin, and at the very rim a thin breath of oxide turns the reflection to oil-slick rainbows.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.05)
     this.name = knotData.id
-// A knot cast in living mercury. Surface tension combs slow swells over the mirror; satellite droplets bead
-// and tremble at the crests. Every step slides the whole room across its skin, and at the very rim a thin
-// breath of oxide turns the reflection to oil-slick rainbows.
     const {p, facing, grazing, near, intimate} = viewerFrame()
     const t = time.mul(0.22)
     const swell = waves(p.add(vec3(t.mul(0.05), t.mul(0.04), float(0))))

@@ -7,13 +7,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends KnotMaterial {
+/**
+ * Ultra-black velvet whose microscopic nap flows across the surface like windblown grass. Most of it consumes light, while grazing angles ignite moving silver or deep crimson halos.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.3)
     this.name = knotData.id
-
-    // Ultra-black velvet whose microscopic nap flows across the surface like windblown grass.
-    // Most of it consumes light, while grazing angles ignite moving silver or deep crimson halos.
 
     const {p, facing, grazing, near, intimate} = viewerFrame()
     // Nap flow field — drifting noise that creates the sense of wind over fabric

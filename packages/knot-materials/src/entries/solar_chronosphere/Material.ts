@@ -6,7 +6,7 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends KnotMaterial {
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     // Pure emissive blackbody radiator
     super(environment, 0)

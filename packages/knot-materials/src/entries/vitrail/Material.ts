@@ -1,22 +1,50 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
-import {color, float, mix, mx_noise_float, normalLocal, positionGeometry, time, uv, vec2, vec3} from 'three/tsl'
+import {color, float, mix, mx_noise_float, mx_worley_noise_vec3, normalLocal, positionGeometry, time, uv, vec2, vec3} from 'three/tsl'
 
 import {beads} from '../../lib/beads.ts'
+import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
 import {glints} from '../../lib/glints.ts'
 import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
+import {wrapCell} from '../../lib/wrapCell.ts'
 import knotData from './data.ts'
-import {panes} from './lib/panes.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * Leaded glass: hand-cut worley quarries with soldered came borders, each pane its own glass recipe.
+ */
+function panes(tile: Node<'vec2'>, cols: Node<'float'> | number, rows: Node<'float'> | number) {
+  const size = vec2(cols, rows)
+  const q = tile.mul(size)
+  const cell = q.floor()
+  const id = wrapCell(cell, size)
+  const local = q.fract().sub(0.5)
+  const random = cellNoiseVec3(vec3(id.x, id.y, 0))
+  const bend = mx_noise_float(vec3(tile.x.mul(3), tile.y.mul(3), 0)).mul(0.12)
+  const seam = mx_worley_noise_vec3(tile.add(vec2(bend, bend.mul(-0.6))).add(0.5), 1, 0)
+  const gap = seam.y.sub(seam.x)
+  const footprint = gap.fwidth().max(0.0004)
+  const cameWidth = footprint.mul(1.4).add(0.06)
+  const cameCore = gap.smoothstep(0.02, 0.06).oneMinus()
+  const came = gap.smoothstep(cameWidth.mul(0.35), cameWidth).oneMinus()
+  return {
+    came: came.clamp(0, 1),
+    cameCore: cameCore.clamp(0, 1),
+    glass: came.oneMinus().clamp(0, 1),
+    glassCore: cameCore.oneMinus().clamp(0, 1),
+    local,
+    random,
+  }
+}
+
+/**
+ * A rose window poured into a knot: quarries of pot-metal glass, each pane a different century's idea of blue, soldered together with dark came. The sun has already set behind it, so the glass keeps its own inner fire — and as you pass, the came throws its leaden lattice across every color in turn.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.55)
     this.name = knotData.id
-// A rose window poured into a knot: quarries of pot-metal glass, each pane a different century's idea of
-// blue, soldered together with dark came. The sun has already set behind it, so the glass keeps its own
-// inner fire — and as you pass, the came throws its leaden lattice across every color in turn.
     const {p, view, grazing, near, intimate} = viewerFrame()
     const tile = uv().mul(vec2(2, 1))
     const panesField = panes(tile, 26, 6)

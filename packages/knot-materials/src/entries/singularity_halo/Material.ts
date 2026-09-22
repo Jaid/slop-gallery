@@ -8,14 +8,13 @@ import {starfield} from '../../lib/starfield.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends KnotMaterial {
+/**
+ * A black hole shadow wrapped in a razor-thin glowing photon ring. Background stars smear through gravitational lensing. One side Doppler-shifts blue-white, the other red-orange. The ring moves with viewing angle.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.2)
     this.name = knotData.id
-
-    // A black hole shadow wrapped in a razor-thin glowing photon ring.
-    // Background stars smear through gravitational lensing. One side Doppler-shifts
-    // blue-white, the other red-orange. The ring moves with viewing angle.
 
     const {p, view, facing, grazing, near, intimate} = viewerFrame()
     // The photon ring is a thin bright band at a specific viewing angle

@@ -9,15 +9,13 @@ import {visibility} from '../../candidates/gpt_astra/lib/visibility.ts'
 import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * Carved, figured timber with directional fibre reflection. The curl reverses from luminous to dark as the viewer moves; end grain, vessels and medullary rays emerge at close range.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)
     this.name = knotData.id
-    // ---------------------------------------------------------------
-    // Carved, figured timber with directional fibre reflection.
-    // The curl reverses from luminous to dark as the viewer moves;
-    // end grain, vessels and medullary rays emerge at close range.
-    // ---------------------------------------------------------------
     const {p, view, V, T, B, near, grazing} = viewerFrame()
     const coarse = mx_noise_float(p.mul(vec3(3.4, 1.8, 3.4)))
     const curlPhase = p.y.mul(24)

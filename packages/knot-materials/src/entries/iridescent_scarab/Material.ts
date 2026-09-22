@@ -10,17 +10,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * 2. IRIDESCENT SCARAB Jewel-beetle carapace. Ridged chitin with structural colour that slides across the surface as you orbit; every edge gilded, every ridge burnished, every pore a soft amber pit.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // ============================================================
-    //  2.  IRIDESCENT SCARAB
-    //      Jewel-beetle carapace. Ridged chitin with structural
-    //      colour that slides across the surface as you orbit;
-    //      every edge gilded, every ridge burnished, every pore
-    //      a soft amber pit.
-    // ============================================================
     const {p, facing, grazing, rim, near, intimate} = viewerFrame()
     const tube = uv()
     // Longitudinal carapace ridges running with the knot.

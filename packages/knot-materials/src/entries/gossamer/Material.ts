@@ -1,4 +1,4 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
 import {color, float, mix, mx_noise_float, normalLocal, normalViewGeometry, positionGeometry, time, uv, vec2, vec3} from 'three/tsl'
 
@@ -9,15 +9,33 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {spectralColor} from '../../lib/spectralColor.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
-import {silk} from './lib/silk.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * Spun silk: near-parallel strands wandering across the tube. `cord` is derivative-free for vertex use.
+ */
+function silk(tile: Node<'vec2'>) {
+  const sway = mx_noise_float(vec2(tile.x.mul(2.2), tile.x.mul(0.4)).add(0.5)).mul(0.16)
+  const threads = tile.y.add(sway).mul(34)
+  const strand = threads.fract().sub(0.5).abs().div(0.5)
+  const twist = threads.sin().mul(0.5).add(0.5)
+  const cord = strand.pow(2).oneMinus().clamp(0, 1)
+  const footprint = threads.fwidth().abs().max(0.0001)
+  const fine = footprint.mul(3).smoothstep(0.5, 1.4).oneMinus().mul(0.75).add(0.25)
+  return {
+    cord,
+    mask: cord.mul(fine),
+    sheen: twist,
+    warp: sway,
+  }
+}
+
+/**
+ * A knot of spider silk strung out at dawn and jeweled with dew. The strands are almost nothing — they show as a pale ghost against the dark — but every droplet is a lens, and as you circle the knot each one takes its turn flashing an inverted morning back at you. Come closer and the plied twist of the silk resolves.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.5)
     this.name = knotData.id
-// A knot of spider silk strung out at dawn and jeweled with dew. The strands are almost nothing — they show
-// as a pale ghost against the dark — but every droplet is a lens, and as you circle the knot each one takes
-// its turn flashing an inverted morning back at you. Come closer and the plied twist of the silk resolves.
     const {p, facing, grazing, near, intimate} = viewerFrame()
     const tube = uv()
     const thread = silk(tube.mul(vec2(3, 1)))

@@ -28,6 +28,12 @@ describe('flat knot catalogue', () => {
       expect(id).toMatch(/^[a-z][0-9_a-z]*$/u)
       expect(await Bun.file(resolve(root, 'entries', id, 'Material.ts')).exists()).toBe(true)
       expect(await Bun.file(resolve(root, 'entries', id, 'data.ts')).exists()).toBe(true)
+      expect((await Array.fromAsync(new Bun.Glob('**/*.ts').scan(resolve(root, 'entries', id)))).toSorted()).toEqual(['Material.ts', 'data.ts'])
+      const materialSource = await source(`entries/${id}/Material.ts`)
+      expect(materialSource).toContain('export default class extends')
+      for (const jsdoc of materialSource.matchAll(/\/\*\*[\s\S]*?\*\//gu)) {
+        expect(jsdoc[0].split(/\r?\n/u)).toHaveLength(3)
+      }
       expect(knotsById.get(id)!.id).toBe(id)
     }
   })
@@ -120,10 +126,6 @@ describe('flat knot catalogue', () => {
           const helperCandidate = /\/candidates\/([^/]+)\/lib\//u.exec(dependency.replaceAll('\\', '/'))?.[1]
           if (helperCandidate) {
             expect(helperCandidate).toBe(knotsById.get(entryId)!.candidateId)
-          }
-          const helperEntry = /\/entries\/([^/]+)\/util\.ts$/u.exec(dependency.replaceAll('\\', '/'))?.[1]
-          if (helperEntry) {
-            expect(helperEntry).toBe(entryId)
           }
         }
       }

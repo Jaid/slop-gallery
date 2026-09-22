@@ -9,9 +9,13 @@ import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {TAU} from '../../lib/TAU.ts'
 import knotData from './data.ts'
-import {resolvedCosine} from './util.ts'
 
-export default class Material extends BaseKnotMaterial {
+function resolvedCosine(phase: Node<'float'>) {
+  const visibility = phase.fwidth().smoothstep(0.65, 2.8).oneMinus()
+  return phase.cos().mul(visibility)
+}
+
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id

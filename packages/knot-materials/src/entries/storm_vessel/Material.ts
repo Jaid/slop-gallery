@@ -8,12 +8,13 @@ import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * Lightning in a bottle: branching arcs re-strike toward whoever stands closest, the storm barely smouldering from across the room and raging at arm's length.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // Lightning in a bottle: branching arcs re-strike toward whoever stands closest,
-    // the storm barely smouldering from across the room and raging at arm's length.
     const {p, view, facing, grazing, near, intimate} = viewerFrame()
     const tick = time.mul(3).floor()
     const seed = mx_cell_noise_float(vec3(tick, 3.1, 7.7))

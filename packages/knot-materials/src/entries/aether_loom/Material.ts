@@ -9,11 +9,13 @@ import {spectralColor} from '../../lib/spectralColor.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * Woven light - black velvet that only reveals luminous warp/weft at grazing and up close
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // Woven light - black velvet that only reveals luminous warp/weft at grazing and up close
     const {p, facing, rim, near} = viewerFrame()
     const tube = uv()
     const jitterA = mx_noise_float(p.mul(1.8)).mul(0.4)

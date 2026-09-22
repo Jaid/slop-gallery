@@ -8,13 +8,13 @@ import {opticalLine} from '../../lib/opticalLine.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * 5. OPALINE AEROGEL: "Frozen Smoke" with Rayleigh-Mie Forward Scatter
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)
     this.name = knotData.id
-    // ----------------------------------------------------------------
-    // 5. OPALINE AEROGEL: "Frozen Smoke" with Rayleigh-Mie Forward Scatter
-    // ----------------------------------------------------------------
     const {p, view, facing, grazing, near, intimate} = viewerFrame()
     // True Rayleigh scattering phase: smoky-cyan backscatter vs fiery sunset-amber forward transmission
     const forwardPhase = facing.pow(3.5)

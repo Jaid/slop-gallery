@@ -9,11 +9,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * Living pupa - translucent skin, vein network, slow pulse + heartbeat
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // Living pupa - translucent skin, vein network, slow pulse + heartbeat
     const {p, grazing, rim, near} = viewerFrame()
     const pulse = time.mul(0.9).sin().mul(0.5).add(0.5)
     const heartbeat = time.mul(1.7).sin().mul(0.5).add(0.5).pow(6)

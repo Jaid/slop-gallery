@@ -10,11 +10,13 @@ import {spectralColor} from '../../lib/spectralColor.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * precious opal; fire patches glide with parallax and ignite as the viewing angle aligns
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // precious opal; fire patches glide with parallax and ignite as the viewing angle aligns
     this.envMapIntensity = 0.7
     this.transmission = 0.25
     this.thickness = 0.5

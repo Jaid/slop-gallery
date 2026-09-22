@@ -1,7 +1,8 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
-import {color, mix, modelWorldMatrixInverse, mx_cell_noise_float, normalViewGeometry, reflectVector, time, uv, vec3, vec4} from 'three/tsl'
+import {color, Fn, Loop, mix, modelWorldMatrixInverse, mx_cell_noise_float, normalViewGeometry, reflectVector, time, uv, vec3, vec4} from 'three/tsl'
 
+import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
 import {glints} from '../../lib/glints.ts'
 import {hairline as opticalLine} from '../../lib/hairline.ts'
 import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
@@ -9,14 +10,30 @@ import {opticalBands} from '../../lib/opticalBands.ts'
 import {spectralColor} from '../../lib/spectralColor.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
-import {interferenceLattice} from './util.ts'
 
-export default class Material extends BaseKnotMaterial {
+const interferenceLattice = Fn(([position]: [Node<'vec3'>]) => {
+  const cell = position.floor().toVar()
+  const local = position.fract().toVar()
+  const glow = vec3(0).toVar()
+  Loop(27, ({i}) => {
+    const offset = vec3(i.mod(3), i.div(3).mod(3), i.div(9)).sub(1)
+    const random = cellNoiseVec3(cell.add(offset)).toVar()
+    const center = offset.add(random.mul(0.5).add(0.25))
+    const dot = local.sub(center).length().smoothstep(0.08, 0.45).oneMinus()
+    const shimmer = time.mul(2.5).add(random.x.mul(19)).sin().mul(0.5).add(0.5)
+    const tint = mix(color('#9fe8ff'), color('#eaffff'), random.y)
+    glow.addAssign(tint.mul(dot).mul(shimmer))
+  })
+  return glow
+})
+
+/**
+ * A diffraction shrine: every orbit sweeps a new rainbow across its face, and the inner lattice collapses into rings whenever it is "measured".
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // A diffraction shrine: every orbit sweeps a new rainbow across its face,
-    // and the inner lattice collapses into rings whenever it is "measured".
     const {p, view, facing, grazing, near, intimate} = viewerFrame()
     const tube = uv()
     const reflLocal = modelWorldMatrixInverse.mul(vec4(reflectVector, 0)).xyz

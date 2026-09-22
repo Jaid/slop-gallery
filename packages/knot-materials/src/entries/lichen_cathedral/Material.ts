@@ -8,11 +8,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * Ancient granite breathing with bioluminescent lichen - hyper detail up close
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // Ancient granite breathing with bioluminescent lichen - hyper detail up close
     const {p, rim, near} = viewerFrame()
     const stoneNoise = mx_fractal_noise_float(p.mul(1.8), 3, 2, 0.55)
     const stoneColor = mix(color('#2a2e2d'), color('#3d4440'), stoneNoise.mul(0.5).add(0.5))

@@ -8,12 +8,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class AbyssalPearlMaterial extends KnotMaterial {
+/**
+ * Tahitian nacre is nearly black until broad subsurface terraces meet the eye at a favorable angle. Its low-frequency layers have no crackle geometry: the hard outer luster floats over a soft inner sea-glass glow.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.62)
     this.name = knotData.id
-// Tahitian nacre is nearly black until broad subsurface terraces meet the eye at a favorable angle.
-// Its low-frequency layers have no crackle geometry: the hard outer luster floats over a soft inner sea-glass glow.
     const {p, view, facing, grazing, near} = viewerFrame()
     const inner = p.sub(view.mul(0.072))
     const drift = vec3(time.mul(0.006), time.mul(-0.004), 0)

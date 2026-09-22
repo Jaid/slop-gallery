@@ -6,18 +6,10 @@ import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import knotData from './data.ts'
 
-// ---------------------------------------------------------------
-// Crystallised bismuth grown into stepped spiral pyramids. The knot is
-// sheathed in a host of microscopic terraces, each one a different
-// height and so a different oxide-film thickness: a long rainbow
-// staircase in which the lowest terraces catch warm gold and magenta,
-// and the upper terraces burn to cyan and violet. Each terrace has a
-// slow rotation of its own iridescence, so the colours breathe as the
-// viewer moves around. The terraces themselves are built from
-// quantized concentric rings so they actually appear as steps rather
-// than as smooth gradient noise.
-// ---------------------------------------------------------------
-export default class Material extends BaseKnotMaterial {
+/**
+ * Crystallised bismuth grown into stepped spiral pyramids. The knot is sheathed in a host of microscopic terraces, each one a different height and so a different oxide-film thickness: a long rainbow staircase in which the lowest terraces catch warm gold and magenta, and the upper terraces burn to cyan and violet. Each terrace has a slow rotation of its own iridescence, so the colours breathe as the viewer moves around. The terraces themselves are built from quantized concentric rings so they actually appear as steps rather than as smooth gradient noise.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)
     this.name = knotData.id

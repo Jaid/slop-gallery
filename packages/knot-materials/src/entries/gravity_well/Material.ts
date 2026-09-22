@@ -6,7 +6,7 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {opticalLine} from '../../lib/opticalLine.ts'
 import knotData from './data.ts'
 
-export default class GravityWellMaterial extends KnotMaterial {
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)
     this.name = knotData.id

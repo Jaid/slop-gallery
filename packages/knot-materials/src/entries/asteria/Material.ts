@@ -1,6 +1,6 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
-import {cameraPosition, color, float, mix, mx_noise_float, normalLocal, normalWorld, positionGeometry, positionWorld, vec3} from 'three/tsl'
+import {cameraPosition, color, float, mix, mx_atan2, mx_noise_float, normalLocal, normalWorld, positionGeometry, positionWorld, vec3} from 'three/tsl'
 
 import {beads} from '../../lib/beads.ts'
 import {glints} from '../../lib/glints.ts'
@@ -8,16 +8,59 @@ import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
-import {asterism} from './lib/asterism.ts'
-import {needles} from './lib/needles.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * Six-rayed asterism centred where the half-vector meets the surface, so it glides as the viewer walks.
+ */
+function asterism(normal: Node<'vec3'>, view: Node<'vec3'>) {
+  const N = normal.normalize()
+  const L = vec3(-3, 9, -16).normalize()
+  const H = view.add(L).normalize()
+  const lift = H.sub(N.mul(H.dot(N)))
+  const r = lift.length().max(0.0001)
+  const axis = vec3(0.44, 0.77, 0.46).normalize()
+  const across = N.cross(axis)
+  const T = across.div(across.length().max(1e-6))
+  const B = N.cross(T)
+  const theta = mx_atan2(lift.dot(B), lift.dot(T)) as unknown as Node<'float'>
+  const rays = theta.mul(3).cos().abs().pow(24)
+  const halo = r.div(0.34).pow2().negate().exp()
+  const core = halo.pow(4)
+  const gate = N.dot(H).clamp().smoothstep(0.3, 0.7)
+  return {
+    core: core.mul(gate),
+    rays: rays.mul(halo).add(core.mul(2.5)).mul(gate),
+    spot: halo.mul(gate),
+  }
+}
+
+/**
+ * Rutile needles along three lattice directions; `raw` stays derivative-free for vertex displacement.
+ */
+function needles(point: Node<'vec3'>) {
+  const axes = [vec3(0.58, 0.58, 0.58).normalize(), vec3(-0.82, 0.36, 0.44).normalize(), vec3(0.2, -0.85, 0.5).normalize()]
+  let band: Node<'float'> = float(0)
+  let raw: Node<'float'> = float(0)
+  for (const axis of axes) {
+    const phase = point.dot(axis).mul(150)
+    const cosine = phase.cos().mul(0.5).add(0.5)
+    const visibility = phase.fwidth().smoothstep(0.6, 3).oneMinus()
+    band = band.add(cosine.mul(visibility))
+    raw = raw.add(cosine)
+  }
+  return {
+    band: band.div(3),
+    raw: raw.div(3),
+  }
+}
+
+/**
+ * A star sapphire cut en cabochon: a deep blue stone shot through with rutile needles. Their three lattices braid into a six-rayed star that sits exactly where the light returns to your eye — so the star walks the stone as you walk the gallery, never quite still. Up close, the silk of the needles stands ready to flash.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)
     this.name = knotData.id
-// A star sapphire cut en cabochon: a deep blue stone shot through with rutile needles. Their three lattices
-// braid into a six-rayed star that sits exactly where the light returns to your eye — so the star walks the
-// stone as you walk the gallery, never quite still. Up close, the silk of the needles stands ready to flash.
     const {p, grazing, near, intimate} = viewerFrame()
     const view = cameraPosition.sub(positionWorld).normalize()
     const star = asterism(normalWorld, view)

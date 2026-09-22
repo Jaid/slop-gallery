@@ -96,7 +96,7 @@ Design exactly ${count} original, gallery-worthy procedural Three.js/WebGPU/TSL 
 
 ## Deliverables
 
-Return complete, path-labeled TypeScript code blocks for each new \`src/entries/<id>/data.ts\` and \`src/entries/<id>/Material.ts\`. Add a sibling \`util.ts\` only when the knot needs reusable local functions. Do not return a batch switch, a wrapper around another entry, or repeated copies of the supplied library.
+Return complete, path-labeled TypeScript code blocks for each new \`src/entries/<id>/data.ts\` and \`src/entries/<id>/Material.ts\`. Keep all knot-specific helper functions in the entry's Material.ts; do not create knot-scoped helper or library files. Do not return a batch switch, a wrapper around another entry, or repeated copies of the supplied library.
 
 Each metadata module must be a default object with \`as const satisfies KnotData\` imported from \`../../types.ts\`. Include:
 
@@ -113,9 +113,9 @@ Explore genuinely different physical ideas, not recolors of one noise graph. Fav
 
 ## Implementation contract
 
-Every \`Material.ts\` exports a default class extending \`KnotMaterial\` from \`../../lib/KnotMaterial.ts\`. Its constructor accepts \`environment: Texture\` from \`three/webgpu\`, calls \`super(environment[, intensity])\`, imports \`knotData\` from \`./data.ts\`, and sets \`this.name = knotData.id\`.
+Every \`Material.ts\` exports an anonymous default class extending \`KnotMaterial\` from \`../../lib/KnotMaterial.ts\`. Put the material description in a three-line JSDoc immediately above that class, with opening and closing lines around a single description line, not as an inline constructor comment. Its constructor accepts \`environment: Texture\` from \`three/webgpu\`, calls \`super(environment[, intensity])\`, imports \`knotData\` from \`./data.ts\`, and sets \`this.name = knotData.id\`.
 
-Use the installed Three.js TSL APIs demonstrated below, \`three/tsl\`, \`three/webgpu\`, and the supplied library. Prefer direct imports from \`../../lib/<file>.ts\`; \`../../lib/index.ts\` is also available. Shared helpers belong in \`src/lib\`, candidate-only helpers in \`src/candidates/<candidateId>/lib\`, and knot-only helpers beside their material. Never import the parent application, another knot's material, or an invented package.
+Use the installed Three.js TSL APIs demonstrated below, \`three/tsl\`, \`three/webgpu\`, and the supplied library. Prefer direct imports from \`../../lib/<file>.ts\`; \`../../lib/index.ts\` is also available. Shared helpers belong in \`src/lib\`, candidate-only helpers in \`src/candidates/<candidateId>/lib\`, and knot-only helpers stay inside the corresponding Material.ts. Never import the parent application, another knot's material, or an invented package.
 
 The mesh is a torus knot with geometry arguments [0.45, 0.13, 256, 64, 2, 3], including smooth tangents and a caller-owned studio environment. Do not dispose the supplied texture. No downloaded textures, DOM/canvas access, asynchronous constructors, GLSL strings, or external assets are allowed in a material. Keep derivatives in fragment shading; vertex displacement must not use screen-space derivatives. Filter narrow details before thresholding and fade unresolved frequencies. Avoid unnecessary transparent rendering; use physical transmission for glass. Ensure all shader outputs remain finite.
 
@@ -137,7 +137,7 @@ ${library}
 
 ## Current material examples
 
-The following ${examples.length} examples are sampled from the catalogue. Their local and candidate-scoped dependencies are included in full. Treat them as implementation references, not concepts to copy. Helpers belonging to another candidate or an existing knot are example-only; do not import those into a new entry. Use the authoring API above or create an appropriately scoped helper.
+The following ${examples.length} examples are sampled from the catalogue. Their candidate-scoped dependencies are included in full; knot-specific helpers are already part of each Material.ts. Treat them as implementation references, not concepts to copy. Helpers belonging to another candidate are example-only; do not import those into a new entry. Use the authoring API above or keep knot-specific logic local to the material.
 
 ${exampleSource}
 `

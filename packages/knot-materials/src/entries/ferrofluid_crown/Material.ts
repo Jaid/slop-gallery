@@ -9,11 +9,13 @@ import {spectralColor} from '../../lib/spectralColor.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * magnetic liquid that senses you: spikes rise toward the camera, ripples chase your steps
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // magnetic liquid that senses you: spikes rise toward the camera, ripples chase your steps
     this.envMapIntensity = 1.4
     const {p, view, cameraLocal, rim, intimate} = viewerFrame()
     const dist = cameraLocal.sub(p).length()

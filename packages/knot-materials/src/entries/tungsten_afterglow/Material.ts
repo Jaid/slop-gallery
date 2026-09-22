@@ -1,4 +1,4 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
 import {color, mix, mx_noise_float, time, uv} from 'three/tsl'
 
@@ -7,9 +7,14 @@ import {opticalBands} from '../../lib/opticalBands.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
-import {blackbody} from './util.ts'
 
-export default class Material extends BaseKnotMaterial {
+function blackbody(t: Node<'float'>) {
+  const coal = mix(color('#140805'), color('#c21400'), t.pow(0.85))
+  const flame = mix(color('#ff6a12'), color('#fff3d6'), t)
+  return mix(coal, flame, t)
+}
+
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id

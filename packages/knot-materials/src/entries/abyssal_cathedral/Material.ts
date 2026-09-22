@@ -10,17 +10,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * 1. ABYSSAL CATHEDRAL A sunken stone nave, drowned for centuries. Caustic light from far above, god-rays threading through cold water, encrusted barnacles and drifting bioluminescent motes that bloom as the viewer swims closer.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // ============================================================
-    //  1.  ABYSSAL CATHEDRAL
-    //      A sunken stone nave, drowned for centuries. Caustic
-    //      light from far above, god-rays threading through cold
-    //      water, encrusted barnacles and drifting bioluminescent
-    //      motes that bloom as the viewer swims closer.
-    // ============================================================
     const {p, facing, grazing, rim, intimate} = viewerFrame()
     // Caustic lattice — two crossed wave-fields projected up the Y axis.
     const causticOrigin = vec3(p.x.mul(3.2), time.mul(0.28), p.z.mul(3.2))

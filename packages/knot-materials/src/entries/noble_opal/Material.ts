@@ -9,19 +9,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends KnotMaterial {
+/**
+ * Noble opal: a milky silica stone whose ordered domains diffract white light into pure spectral color. Each domain has its own lattice axis, and a domain only lights up when the line of sight grazes that axis, so the fire ignites and dies in discrete flashes instead of washing the whole stone in a rainbow. The domains are sampled below the surface, which puts the color genuinely inside the stone.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.8)
     this.name = knotData.id
-// ---------------------------------------------------------------
-// Noble opal: a milky silica stone whose ordered domains diffract
-// white light into pure spectral color. Each domain has its own
-// lattice axis, and a domain only lights up when the line of sight
-// grazes that axis, so the fire ignites and dies in discrete flashes
-// instead of washing the whole stone in a rainbow. The domains are
-// sampled below the surface, which puts the color genuinely inside
-// the stone.
-// ---------------------------------------------------------------
     const {p, view, grazing, near, intimate} = viewerFrame()
     const depth = 0.09
     const q = p.sub(view.mul(depth))

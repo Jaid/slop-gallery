@@ -8,21 +8,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends KnotMaterial {
+/**
+ * A bismuth hopper crystal: the melt grew in concentric terraces, and the oxide film that formed on each one is a slightly different thickness, so a single white light leaves as a staircase of color. The terraces are quantized from the tube parameter, which keeps the steps exactly one ring wide all the way around the knot, and the ring index wraps so the staircase closes on itself without a seam. The silhouette only carries a shallow version of the staircase, because the mesh cannot resolve a sharp riser; the shading carries the full one, so the highlights still snap at every edge.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)
     this.name = knotData.id
-// ---------------------------------------------------------------
-// A bismuth hopper crystal: the melt grew in concentric terraces, and
-// the oxide film that formed on each one is a slightly different
-// thickness, so a single white light leaves as a staircase of color.
-// The terraces are quantized from the tube parameter, which keeps the
-// steps exactly one ring wide all the way around the knot, and the
-// ring index wraps so the staircase closes on itself without a seam.
-// The silhouette only carries a shallow version of the staircase,
-// because the mesh cannot resolve a sharp riser; the shading carries
-// the full one, so the highlights still snap at every edge.
-// ---------------------------------------------------------------
     const {p, view, near} = viewerFrame()
     const tube = uv()
     const warp = mx_fractal_noise_float(p.mul(3.2), 2, 2, 0.5).mul(0.25)

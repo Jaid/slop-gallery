@@ -1,4 +1,4 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
 import {color, float, mix, mx_fractal_noise_float, negateOnBackSide, normalLocal, transformNormalToView, vec3} from 'three/tsl'
 
@@ -7,19 +7,32 @@ import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
-import {wavelengthToLinearColor} from './lib/spectrum.ts'
 
-export default class Material extends KnotMaterial {
+/**
+ * Linear ramp that is 0 below `a` and 1 above `b`.
+ */
+const ramp = (x: Node<'float'>, a: number, b: number) => x.sub(a).div(b - a).clamp()
+/**
+ * Approximation of the visible spectrum in linear light: the classic piecewise-linear fit of the RGB primaries plus the luminosity roll-off at both ends of the band, so the Bragg wavelength of an opal turns into the familiar violet → blue → green → yellow → red march.
+ */
+function wavelengthToLinearColor(wavelength: Node<'float'>) {
+  const w = wavelength
+  const r = ramp(w, 505, 580).mul(ramp(w, 640, 700).oneMinus())
+  const g = ramp(w, 430, 490).mul(ramp(w, 510, 590).oneMinus())
+  const b = ramp(w, 380, 440).mul(ramp(w, 470, 520).oneMinus())
+  const shoulder = ramp(w, 380, 425).mul(0.35).add(0.65)
+  const tail = ramp(w, 640, 690).mul(0.5).add(0.5)
+  const rolloff = shoulder.mul(tail).mul(ramp(w, 690, 780).oneMinus())
+  return vec3(r, g, b).mul(rolloff)
+}
+
+/**
+ * Precious opal: a sediment of silica microspheres whose regular lattice diffracts white light into a single wavelength per domain. Each domain has its own sphere diameter and its own grating orientation, so the fire slides across the stone as you walk past — exactly the way the real mineral behaves.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-// ------------------------------------------------------------------
-// Precious opal: a sediment of silica microspheres whose regular
-// lattice diffracts white light into a single wavelength per domain.
-// Each domain has its own sphere diameter and its own grating
-// orientation, so the fire slides across the stone as you walk past —
-// exactly the way the real mineral behaves.
-// ------------------------------------------------------------------
     const {p, view, facing, grazing, near, intimate} = viewerFrame()
     const scale = 9
     const q = p.mul(scale).add(mx_fractal_noise_float(p.mul(3.4)).mul(0.35))

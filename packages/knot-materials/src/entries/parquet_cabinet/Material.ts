@@ -8,8 +8,10 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/** Fitted triangular veneers, pale stringing and alternating end-grain direction. */
-export default class ParquetCabinetMaterial extends KnotMaterial {
+/**
+ * Fitted triangular veneers, pale stringing and alternating end-grain direction.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)
     this.name = knotData.id

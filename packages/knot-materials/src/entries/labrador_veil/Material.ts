@@ -1,27 +1,44 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
 import {color, float, mix, mx_noise_float, mx_noise_vec3, normalLocal, positionGeometry, time} from 'three/tsl'
 
 import {colorRamp} from '../../candidates/deepseek/lib/colorRamp.ts'
+import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
-import {mineralGrains} from './lib/domains.ts'
 
-export default class Material extends KnotMaterial {
+/**
+ * Irregular mineral grains. A noise-warped cubic lattice keeps every grain's identity stable in object space, so a grain keeps flashing the same color no matter where the viewer stands. The warp runs at roughly the grain frequency, which bends the cell walls into organic shapes instead of leaving a visible grid.
+ */
+function mineralGrains(position: Node<'vec3'>, scale: number, warp: number, seed: number) {
+  const q = position.mul(scale).add(mx_noise_vec3(position.mul(scale * 0.9).add(seed)).mul(warp))
+  const cell = q.floor()
+  const local = q.fract().sub(0.5)
+  const identity = cellNoiseVec3(cell.add(seed))
+  const secondary = cellNoiseVec3(cell.add(seed + 41.7))
+// Unit lamella normal: the direction the grain's internal planes face.
+  const lamella = identity.mul(2).sub(1).normalize()
+// Distance to the nearest grain wall, normalized so 1 sits on the wall.
+  const wall = local.abs().x.max(local.abs().y).max(local.abs().z).mul(2).clamp(0, 1)
+  return {
+    q,
+    local,
+    identity,
+    secondary,
+    lamella,
+    wall,
+  }
+}
+
+/**
+ * Labradorite: a dark feldspar whose internal twinning planes interfere with the light. Each grain owns one lamella orientation, so the whole grain ignites in a single saturated hue only while the viewer stands inside a narrow cone of directions – walk around the knot and the stone rearranges itself into a different constellation of blue, cyan, green and gold. The grains are sampled a little way beneath the surface, so the flashes slide across the stone as the viewer moves, exactly like a real inclusion.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.55)
     this.name = knotData.id
-// ---------------------------------------------------------------------------
-// Labradorite: a dark feldspar whose internal twinning planes interfere with
-// the light. Each grain owns one lamella orientation, so the whole grain
-// ignites in a single saturated hue only while the viewer stands inside a
-// narrow cone of directions – walk around the knot and the stone rearranges
-// itself into a different constellation of blue, cyan, green and gold.
-// The grains are sampled a little way beneath the surface, so the flashes
-// slide across the stone as the viewer moves, exactly like a real inclusion.
-// ---------------------------------------------------------------------------
     const {p, view, grazing, intimate} = viewerFrame()
     const coarse = mineralGrains(p.add(view.mul(0.05)), 5.5, 0.62, 0)
     const fine = mineralGrains(p.add(view.mul(0.02)), 17, 0.5, 13.3)

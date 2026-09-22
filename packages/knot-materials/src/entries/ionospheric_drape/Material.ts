@@ -9,11 +9,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * polar night glass; aurora curtains hang inside, hue follows your orbit
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // polar night glass; aurora curtains hang inside, hue follows your orbit
     this.envMapIntensity = 0.8
     this.transmission = 0.88
     this.thickness = 0.55

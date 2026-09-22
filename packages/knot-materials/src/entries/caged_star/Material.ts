@@ -7,11 +7,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * A stowaway star: boiling granulation, drifting sunspots, and rim-fire at the limb.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // A stowaway star: boiling granulation, drifting sunspots, and rim-fire at the limb.
     this.envMapIntensity = 0.25
     const {p, facing, grazing, near, intimate} = viewerFrame()
     const qA = p.mul(17).add(vec3(0, time.mul(0.22), time.mul(-0.09)))

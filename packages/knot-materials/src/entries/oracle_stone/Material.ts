@@ -10,12 +10,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class OracleStoneMaterial extends KnotMaterial {
+/**
+ * Four narrow object-space cleavage families take turns as the eye circles the stone. Each carries long parallel lamellae instead of colored spots, and the charcoal body remains deliberately rough enough to stay dark between flashes.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.72)
     this.name = knotData.id
-// Four narrow object-space cleavage families take turns as the eye circles the stone. Each carries
-// long parallel lamellae instead of colored spots, and the charcoal body remains deliberately rough enough to stay dark between flashes.
     const {p, view, near, intimate} = viewerFrame()
     const inner = p.sub(view.mul(0.075))
     const bodyVariation = mx_noise_float(p.mul(3.2)).mul(0.5).add(0.5)

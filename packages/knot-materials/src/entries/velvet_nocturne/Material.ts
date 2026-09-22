@@ -6,25 +6,48 @@ import {filteredRibbon} from '../../lib/filteredRibbon.ts'
 import {glints} from '../../lib/glints.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
+import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
-import {drapeHarmonics, pileHarmonics, weave, wrinkleHarmonics} from './util.ts'
+
+// One draped harmonic: `ku` cycles along the knot, `kv` around the tube, a phase, an amplitude and
+// a drift rate. Integer cycle counts keep the cloth seamless across both UV wraps.
+type Harmonic = readonly [ku: number, kv: number, phase: number, amplitude: number, rate: number]
+const drapeHarmonics: ReadonlyArray<Harmonic> = [[2, 1, 5.6, 0.34, 0.031], [3, 1, 0.4, 0.5, -0.019], [5, 2, 2.1, 0.28, 0.013], [7, 3, 4.2, 0.15, -0.008]]
+const wrinkleHarmonics: ReadonlyArray<Harmonic> = [[13, 4, 1.1, 0.42, 0.024], [19, 6, 3.3, 0.3, -0.015], [23, 7, 5.5, 0.2, 0.009], [29, 8, 0.9, 0.14, -0.006]]
+/**
+ * The nap runs around the tube, so its harmonics climb far faster along the knot than around it.
+ */
+const pileHarmonics: ReadonlyArray<Harmonic> = [[200, 8, 0.7, 0.5, 0.05], [264, 12, 2.9, 0.3, -0.03], [332, 16, 4.1, 0.2, 0.02]]
+function weave(u: Node<'float'>, v: Node<'float'>, clock: Node<'float'>, harmonics: ReadonlyArray<Harmonic>) {
+  let value: Node<'float'> = float(0)
+  let slopeU: Node<'float'> = float(0)
+  let slopeV: Node<'float'> = float(0)
+  let norm = 0
+  for (const [ku, kv, phase, amplitude, rate] of harmonics) {
+    const angle = u.mul(TAU * ku).add(v.mul(TAU * kv)).add(phase).add(clock.mul(rate))
+    value = value.add(angle.sin().mul(amplitude))
+    slopeU = slopeU.add(angle.cos().mul(amplitude * TAU * ku))
+    slopeV = slopeV.add(angle.cos().mul(amplitude * TAU * kv))
+    norm += Math.abs(amplitude)
+  }
+  return {
+    slopeU: slopeU.div(norm),
+    slopeV: slopeV.div(norm),
+    value: value.div(norm),
+  }
+}
 
 // The exhibition key light, in world space. The pile sheen is tied to it, not to the screen, so it
 // sweeps across the folds as the viewer circles instead of sticking to the camera.
 const keyLight = vec3(-3, 9, -16).normalize()
-export default class VelvetNocturneMaterial extends KnotMaterial {
+/**
+ * Velvet. A silk pile standing on end: head on, almost every ray is swallowed by the fibres and the cloth reads as near black. At a grazing glance the pile tips light up along their length and the whole surface blooms into oxblood. The folds are real geometry, so the silhouette scallops, and the sheen slides across them as you walk. Gold thread is sewn along the highest crests only.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)
     this.name = knotData.id
-// ---------------------------------------------------------------
-// Velvet. A silk pile standing on end: head on, almost every ray is
-// swallowed by the fibres and the cloth reads as near black. At a
-// grazing glance the pile tips light up along their length and the
-// whole surface blooms into oxblood. The folds are real geometry, so
-// the silhouette scallops, and the sheen slides across them as you
-// walk. Gold thread is sewn along the highest crests only.
-// ---------------------------------------------------------------
     const tube = uv()
     const u = tube.x
     const v = tube.y

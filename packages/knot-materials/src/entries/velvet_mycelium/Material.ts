@@ -9,16 +9,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * 7. VELVET MYCELIUM Fruiting alien body weaving silken mulberry fungal velvet with a bio-digital mycorrhizal network. Grazing angles bloom in peach-velvet retroreflective sheen. Approaching triggers nervous action spikes that illuminate branching mycelial hyphae and nestled golden bioluminescent spore synapses.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)
     this.name = knotData.id
-/**
-             * 7. VELVET MYCELIUM
-             * Fruiting alien body weaving silken mulberry fungal velvet with a bio-digital mycorrhizal network.
-             * Grazing angles bloom in peach-velvet retroreflective sheen. Approaching triggers nervous action spikes
-             * that illuminate branching mycelial hyphae and nestled golden bioluminescent spore synapses.
-             */
     const {p, facing, grazing, near, intimate} = viewerFrame()
     const tube = uv()
     this.colorNode = mix(color('#150319'), color('#2b0733'), grazing.mul(0.6))

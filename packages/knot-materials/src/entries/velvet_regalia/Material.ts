@@ -1,21 +1,41 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
-import {color, float, mix, mx_fractal_noise_float, mx_noise_float, normalLocal, positionGeometry, uv, vec3} from 'three/tsl'
+import {color, float, mix, mx_atan2, mx_fractal_noise_float, mx_noise_float, normalLocal, positionGeometry, uv, vec2, vec3} from 'three/tsl'
 
 import {glints} from '../../lib/glints.ts'
 import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
-import {thread} from './lib/thread.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * A couched gold cord winding across the nap: signed distance to its path plus the couching stitches.
+ */
+function thread(tile: Node<'vec2'>) {
+  const wander = tile.x.mul(2.3).sin().mul(0.34).add(tile.x.mul(0.7).cos().mul(0.14))
+  const slope = tile.x.mul(2.3).cos().mul(0.78).sub(tile.x.mul(0.7).sin().mul(0.098))
+  const cord = tile.y.sub(0.5).add(wander)
+  const across = cord.abs().div(0.17)
+  const body = across.smoothstep(0.7, 1.05).oneMinus()
+  const ply = cord.mul(24).add(tile.x.mul(70)).sin().mul(0.5).add(0.5)
+  const twist = mx_atan2(cord.mul(11), tile.x.mul(24).sin().add(0.000001)) as unknown as Node<'float'>
+  const stitch = tile.x.mul(20).fract().sub(0.5).abs().div(0.22).smoothstep(0.5, 1).oneMinus()
+  return {
+    along: vec2(1, slope.mul(0.6)).normalize(),
+    body,
+    couch: stitch.mul(body),
+    dent: stitch.mul(body),
+    luster: twist.cos().mul(0.5).add(0.5).mul(0.45).add(ply.mul(0.55)),
+  }
+}
+
+/**
+ * Wine-dark silk velvet with a single gold cord couched across the nap. The pile swallows front light and lets it out only at the folds, so walking around the knot reads the drape in slow crimson blooms; the gold, held down by tiny silk stitches, keeps its own private sunset however you turn.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.55)
     this.name = knotData.id
-// Wine-dark silk velvet with a single gold cord couched across the nap. The pile swallows front light and
-// lets it out only at the folds, so walking around the knot reads the drape in slow crimson blooms; the gold,
-// held down by tiny silk stitches, keeps its own private sunset however you turn.
     const {p, grazing, near, intimate} = viewerFrame()
     const tube = uv()
     const pile = mx_fractal_noise_float(p.mul(48), 2, 2, 0.5)

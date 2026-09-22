@@ -8,11 +8,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * Volcanic glass over a live magma web; the rifts breathe harder when you lean in.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // Volcanic glass over a live magma web; the rifts breathe harder when you lean in.
     const {p, view, facing, grazing, near, intimate} = viewerFrame()
     const deep = p.sub(view.mul(0.07))
     const drift = vec3(time.mul(0.055), time.mul(-0.04), time.mul(0.03))

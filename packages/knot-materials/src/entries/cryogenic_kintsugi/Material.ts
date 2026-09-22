@@ -9,13 +9,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * 1. CRYOGENIC KINTSUGI: Fractured Glacial Ice & Superconducting Gold
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)
     this.name = knotData.id
-    // ----------------------------------------------------------------
-    // 1. CRYOGENIC KINTSUGI: Fractured Glacial Ice & Superconducting Gold
-    // ----------------------------------------------------------------
     const {p, view, rim, near, intimate} = viewerFrame()
     // Multi-depth voronoi fracture networks
     const shallow = p.sub(view.mul(0.06))

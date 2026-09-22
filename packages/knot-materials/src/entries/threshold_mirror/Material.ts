@@ -1,19 +1,24 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
 import {cameraPosition, color, float, mix, mx_fractal_noise_float, mx_noise_vec3, normalWorld, pmremTexture, positionWorld, time, vec3} from 'three/tsl'
 
 import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
-import {rotateY} from './util.ts'
 
-export default class Material extends BaseKnotMaterial {
+function rotateY(v: Node<'vec3'>, angle: Node<'float'>) {
+  const c = angle.cos()
+  const s = angle.sin()
+  return vec3(v.x.mul(c).sub(v.z.mul(s)), v.y, v.x.mul(s).add(v.z.mul(c)))
+}
+
+/**
+ * A chrome knot whose reflection is slightly wrong: the mirrored world drifts. Face it squarely and step closer, and the surface opens like a portal, showing the world *behind* the knot, split into faint spectral fringes, with a luminous threshold line crawling around the opening.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // A chrome knot whose reflection is slightly wrong: the mirrored world drifts. Face it squarely
-    // and step closer, and the surface opens like a portal, showing the world *behind* the knot,
-    // split into faint spectral fringes, with a luminous threshold line crawling around the opening.
     this.envMapIntensity = 0
     const {p, facing, near, intimate} = viewerFrame()
     const toSurface = positionWorld.sub(cameraPosition).normalize()

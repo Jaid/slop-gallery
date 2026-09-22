@@ -1,4 +1,4 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
 import {cameraPosition, color, mix, modelWorldMatrixInverse, mx_noise_float, normalViewGeometry, positionGeometry, positionView, positionViewDirection, time, vec3, vec4} from 'three/tsl'
 
@@ -8,9 +8,14 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {opticalLine} from '../../lib/opticalLine.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import knotData from './data.ts'
-import {heartbeat} from './util.ts'
 
-export default class EmberheartMaterial extends KnotMaterial {
+function heartbeat(rate: number): Node<'float'> {
+  const phase = time.mul(rate).fract()
+  const spike = (at: number, sharpness: number) => phase.sub(at).abs().mul(sharpness).oneMinus().clamp().pow(3)
+  return spike(0.06, 9).add(spike(0.32, 12).mul(0.6)).clamp()
+}
+
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)
     this.name = knotData.id

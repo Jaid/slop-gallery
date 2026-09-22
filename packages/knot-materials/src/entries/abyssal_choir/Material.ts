@@ -1,4 +1,4 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
 import {color, mix, mx_noise_float, time, uv} from 'three/tsl'
 
@@ -8,14 +8,18 @@ import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
-import {wrap01} from './util.ts'
 
-export default class Material extends BaseKnotMaterial {
+function wrap01(x: Node<'float'>) {
+  return x.fract().sub(0.5).abs().oneMinus()
+}
+
+/**
+ * A deep-sea choir: rows of photophores ignite in a travelling cascade when something draws near, and a lone lure wanders the skin forever.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // A deep-sea choir: rows of photophores ignite in a travelling cascade
-    // when something draws near, and a lone lure wanders the skin forever.
     const {p, grazing, near, intimate} = viewerFrame()
     const tube = uv()
     const ribs = tube.x.mul(Math.PI * 2 * 34).sin().mul(0.5).add(0.5)

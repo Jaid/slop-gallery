@@ -9,11 +9,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * Clear quartz trapping a storm that seeks the viewer - random strikes with exponential decay
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // Clear quartz trapping a storm that seeks the viewer - random strikes with exponential decay
     const {p, view, rim, near} = viewerFrame()
     const tick = time.mul(6.5).floor()
     const tickFract = time.mul(6.5).fract()

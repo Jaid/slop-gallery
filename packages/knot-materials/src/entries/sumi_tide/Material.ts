@@ -7,13 +7,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends KnotMaterial {
+/**
+ * A rice-paper surface wrapped around the knot. Black ink blooms and retreats through the fibers in slow waves. Capillary tendrils dissolve into wet paper fibers up close.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.65)
     this.name = knotData.id
-
-    // A rice-paper surface wrapped around the knot. Black ink blooms and retreats through
-    // the fibers in slow waves. Capillary tendrils dissolve into wet paper fibers up close.
 
     const {p, view, facing, grazing, near, intimate} = viewerFrame()
     // Paper fiber texture

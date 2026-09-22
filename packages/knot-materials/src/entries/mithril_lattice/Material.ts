@@ -7,17 +7,10 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {TAU} from '../../lib/TAU.ts'
 import knotData from './data.ts'
 
-// ---------------------------------------------------------------
-// The knot is sheathed in a mail of fine silvery rings. Each ring sits
-// on a hex lattice, has its own slow rotation, and lights up with a
-// sharp anisotropic streak when the camera catches it edge-on. The
-// rings interlock: where one ring crosses another, the surface darkens,
-// and where four rings meet at a seam, a tiny dark gap appears as if
-// real wire. Walking around the knot, every ring brightens and dims in
-// turn, so the whole surface seems to ripple. From intimate range you
-// can see the weave pattern, each link catching its neighbour's glow.
-// ---------------------------------------------------------------
-export default class Material extends BaseKnotMaterial {
+/**
+ * The knot is sheathed in a mail of fine silvery rings. Each ring sits on a hex lattice, has its own slow rotation, and lights up with a sharp anisotropic streak when the camera catches it edge-on. The rings interlock: where one ring crosses another, the surface darkens, and where four rings meet at a seam, a tiny dark gap appears as if real wire. Walking around the knot, every ring brightens and dims in turn, so the whole surface seems to ripple. From intimate range you can see the weave pattern, each link catching its neighbour's glow.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.1)
     this.name = knotData.id

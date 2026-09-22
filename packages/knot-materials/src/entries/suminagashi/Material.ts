@@ -8,17 +8,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends KnotMaterial {
+/**
+ * Suminagashi: ink floated on still water, combed into rings, then lifted onto paper in a single breath. Two figures are superimposed — a dense black strike and a wider indigo wash — so the marbling shifts against itself as you walk past, and a scattering of gold leaf has settled into the troughs of the pattern.
+ */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)
     this.name = knotData.id
-// ------------------------------------------------------------------
-// Suminagashi: ink floated on still water, combed into rings, then
-// lifted onto paper in a single breath. Two figures are superimposed —
-// a dense black strike and a wider indigo wash — so the marbling
-// shifts against itself as you walk past, and a scattering of gold
-// leaf has settled into the troughs of the pattern.
-// ------------------------------------------------------------------
     const {p, facing, grazing, near, intimate} = viewerFrame()
 // A slow warp turns concentric drops into the wandering rings a real bath produces.
     const drift = mx_fractal_noise_float(p.mul(1.7), 4, 2.1, 0.55)

@@ -1,6 +1,6 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
-import {color, mix, mx_noise_float, normalViewGeometry, positionGeometry, positionViewDirection, vec3} from 'three/tsl'
+import {color, mix, mx_noise_float, mx_noise_vec3, normalViewGeometry, positionGeometry, positionViewDirection, vec3} from 'three/tsl'
 
 import {premiumDetail} from '../../candidates/gpt_astra/lib/premiumDetail.ts'
 import {premiumIntimate} from '../../candidates/gpt_astra/lib/premiumIntimate.ts'
@@ -9,9 +9,20 @@ import {premiumView} from '../../candidates/gpt_astra/lib/premiumView.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal as premiumNormal} from '../../lib/proceduralNormal.ts'
 import knotData from './data.ts'
-import {glacierField} from './util.ts'
 
-export default class GlacialMemoryMaterial extends KnotMaterial {
+export /**
+ * A signed, warped network of intersecting mineral fracture planes.
+ */
+function glacierField(q: Node<'vec3'>) {
+  const warp = mx_noise_vec3(q.mul(4.3)).mul(0.045)
+  const s = q.add(warp)
+  const a = s.dot(vec3(17, 9, -5)).add(0.4).sin().abs()
+  const b = s.dot(vec3(-8, 21, 13)).add(1.7).sin().abs()
+  const c = s.dot(vec3(11, -7, 24)).sub(0.8).sin().abs()
+  return a.min(b).min(c)
+}
+
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)
     this.name = knotData.id

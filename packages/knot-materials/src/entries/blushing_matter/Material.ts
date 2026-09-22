@@ -9,16 +9,13 @@ import {visibility} from '../../candidates/gpt_astra/lib/visibility.ts'
 import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * Thermochromic elastomer that appears to become self-conscious. An approaching observer warms the facing surface from cool smoke to rose; intimate viewing raises almost imperceptible gooseflesh and reveals a shallow pigment-capillary network.
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)
     this.name = knotData.id
-    // ---------------------------------------------------------------
-    // Thermochromic elastomer that appears to become self-conscious.
-    // An approaching observer warms the facing surface from cool
-    // smoke to rose; intimate viewing raises almost imperceptible
-    // gooseflesh and reveals a shallow pigment-capillary network.
-    // ---------------------------------------------------------------
     const {p, view, facing, grazing, near, intimate} = viewerFrame()
     const mottling = mx_noise_float(p.mul(4.2))
     const pulse = time.mul(0.72)

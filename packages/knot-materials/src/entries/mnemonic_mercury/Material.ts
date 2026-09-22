@@ -10,11 +10,13 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class Material extends BaseKnotMaterial {
+/**
+ * Liquid mirror that remembers - perfect chrome with memory droplets and fingerprint whorls when intimate
+ */
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-    // Liquid mirror that remembers - perfect chrome with memory droplets and fingerprint whorls when intimate
     const {p, grazing, rim, near, intimate} = viewerFrame()
     const baseSilver = color('#e8eef2')
     const flow = mx_fractal_noise_float(p.mul(1.15).add(vec3(time.mul(0.07), float(0), time.mul(0.04))), 3, 2, 0.55).mul(0.5).add(0.5)
