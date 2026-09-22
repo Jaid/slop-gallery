@@ -210,22 +210,27 @@ const joinedStringDeclaration = (strings: Array<HoistedCandidate>) => {
   if (strings.length < 2) {
     return
   }
-  const values = strings.map(({candidate}) => {
-    if (!t.isStringLiteral(candidate.expression)) {
+  const entries = strings.map(item => {
+    if (!t.isStringLiteral(item.candidate.expression)) {
       throw new TypeError('Expected a string literal candidate.')
     }
-    return candidate.expression.value
+    return {
+      ...item,
+      value: item.candidate.expression.value,
+    }
   })
+  entries.sort((left, right) => Buffer.byteLength(left.value) - Buffer.byteLength(right.value))
+  const values = entries.map(({value}) => value)
   const separator = findJoinSeparator(values)
   if (separator === undefined) {
     return
   }
-  const identifiersBytes = strings.reduce((bytes, {identifier}) => bytes + Buffer.byteLength(identifier.name), 0)
+  const identifiersBytes = entries.reduce((bytes, {identifier}) => bytes + Buffer.byteLength(identifier.name), 0)
   const ordinaryBytes = identifiersBytes
-    + strings.reduce((bytes, {candidate}) => bytes + 1 + generatedStringBytes((candidate.expression as t.StringLiteral).value), 0)
-    + strings.length - 1
+    + entries.reduce((bytes, {value}) => bytes + 1 + generatedStringBytes(value), 0)
+    + entries.length - 1
   const joinedValue = values.join(separator)
-  const joinedBytes = 2 + identifiersBytes + strings.length - 1
+  const joinedBytes = 2 + identifiersBytes + entries.length - 1
     + 1 + generatedStringBytes(joinedValue)
     + 7 + generatedStringBytes(separator) + 1
   if (ordinaryBytes - joinedBytes < 1) {
@@ -235,7 +240,7 @@ const joinedStringDeclaration = (strings: Array<HoistedCandidate>) => {
     t.memberExpression(t.stringLiteral(joinedValue), t.identifier('split')),
     [t.stringLiteral(separator)],
   )
-  return t.variableDeclarator(t.arrayPattern(strings.map(({identifier}) => t.cloneNode(identifier))), split)
+  return t.variableDeclarator(t.arrayPattern(entries.map(({identifier}) => t.cloneNode(identifier))), split)
 }
 const declarationsFor = (hoisted: Array<HoistedCandidate>, options: HoistPopularConstantsOptions) => {
   let joinedStrings: t.VariableDeclarator | undefined

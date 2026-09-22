@@ -37,6 +37,15 @@ describe('popular constant hoisting', () => {
     expect(code).toContain('.split(" ")')
     expect(code).toStartWith('var[')
   })
+  test('sorts joined strings by UTF-8 byte length', () => {
+    const values = ['eeeeeeee', 'éé', 'ddddddd', 'x', 'cccccc', 'aaa', 'bbbbb', 'yy']
+    const source = `sink(${values.flatMap(value => Array.from({length: 3}, () => JSON.stringify(value))).join(',')})`
+    const code = compile(source, {
+      minimumSavingsBytes: -100,
+      stableBuiltins: true,
+    })
+    expect(code).toContain('"x yy aaa éé bbbbb cccccc ddddddd eeeeeeee".split(" ")')
+  })
   test('does not join seven pooled strings when destructuring would not save bytes', () => {
     const values = ['marcus', 'jack', 'thomas', 'linda', 'paula', 'bernd', 'friedrich']
     const source = `sink(${values.flatMap(value => Array.from({length: 3}, () => JSON.stringify(value))).join(',')})`
