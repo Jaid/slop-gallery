@@ -15,7 +15,7 @@ const execFileAsync = promisify(execFile)
 const modelDefault = 'x-ai/grok-voice-tts-1.0'
 const storageSchema = 3
 const conversionSchema = 1
-const defaultSampleRate = 48_000
+const defaultSampleRate = 24_000
 const commonSampleRates = [8000, 16_000, 22_050, 24_000, 32_000, 44_100, 48_000]
 
 export const defaultVoiceSampleBitrate = (sampleRate: number) => Math.round(0.68266 * sampleRate)
@@ -258,7 +258,7 @@ export default class VoiceSampleCache {
     const {format: _format, type: _type, ...synthesis} = request
     return createHash('sha256').update(JSON.stringify({
       model: this.#model,
-      ...this.#sampleRate === defaultSampleRate ? {} : {sampleRate: this.#sampleRate},
+      sampleRate: this.#sampleRate,
       storageSchema,
       synthesis,
     })).digest('hex')

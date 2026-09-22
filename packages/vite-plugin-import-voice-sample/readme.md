@@ -137,7 +137,7 @@ These become `X-OpenRouter-Title` and `HTTP-Referer` respectively.
 
 The plugin accepts:
 
-- `sampleRate?: number` — requested xAI PCM sample rate in Hz; defaults to `48000`.
+- `sampleRate?: number` — requested xAI PCM sample rate in Hz; defaults to `24000`.
 - `bitrate?: number` — Opus encoder bitrate in bits/s; used only for Opus conversion.
 
 When `bitrate` is omitted:
@@ -146,7 +146,7 @@ When `bitrate` is omitted:
 Math.round(0.68266 * sampleRate)
 ```
 
-For the default 48 kHz sample rate this is 32,768 bit/s; at 24 kHz it is 16,384 bit/s.
+For the default 24 kHz sample rate this is 16,384 bit/s; at 48 kHz it is 32,768 bit/s.
 
 `sampleRate` is part of the raw synthesis identity. `bitrate` is not: changing bitrate reuses the canonical WAV + MessagePack store and creates a separately keyed Opus derivative.
 

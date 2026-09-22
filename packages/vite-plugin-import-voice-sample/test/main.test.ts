@@ -22,8 +22,8 @@ const temporaryDirectory = async () => {
 afterEach(async () => {
   await Promise.all(directories.splice(0).map(directory => fs.remove(directory)))
 })
-const pcm = (sampleRate = 48_000) => Buffer.alloc(Math.round(sampleRate * 0.1) * 2)
-const envelope = (sampleRate = 48_000) => ({
+const pcm = (sampleRate = 24_000) => Buffer.alloc(Math.round(sampleRate * 0.1) * 2)
+const envelope = (sampleRate = 24_000) => ({
   audio: pcm(sampleRate).toBase64(),
   duration: 0.1,
   content_type: 'audio/pcm',
@@ -32,10 +32,10 @@ const envelope = (sampleRate = 48_000) => ({
     graph_times: [[0, 0.04], [0.04, 0.1]],
   },
 })
-const response = (sampleRate = 48_000) => Response.json(envelope(sampleRate), {
+const response = (sampleRate = 24_000) => Response.json(envelope(sampleRate), {
   headers: {'x-generation-id': 'trace-id'},
 })
-const fetchRecorder = (calls: Array<Record<string, unknown>>, sampleRate = 48_000, headerCalls?: Array<Headers>): VoiceSampleFetch => async (_input, init) => {
+const fetchRecorder = (calls: Array<Record<string, unknown>>, sampleRate = 24_000, headerCalls?: Array<Headers>): VoiceSampleFetch => async (_input, init) => {
   if (typeof init?.body !== 'string') {
     throw new TypeError('Expected a JSON request body.')
   }
@@ -80,7 +80,7 @@ describe('vite-plugin-import-voice-sample', () => {
       ...buildConfig(root),
       plugins: [importVoiceSample({
         apiKey: 'test-key',
-        fetch: fetchRecorder(calls, 48_000, headerCalls),
+        fetch: fetchRecorder(calls, 24_000, headerCalls),
       })],
     })
     expect(calls).toHaveLength(2)
@@ -255,6 +255,10 @@ describe('vite-plugin-import-voice-sample', () => {
         options: {
           xai: {
             language: 'en',
+            output_format: {
+              codec: 'pcm',
+              sample_rate: 24_000,
+            },
             with_timestamps: true,
           },
         },
@@ -272,7 +276,7 @@ describe('vite-plugin-import-voice-sample', () => {
     expect(rawWav.subarray(0, 4).toString()).toBe('RIFF')
     expect(unpack(await fs.readFile(join(store, metadataName!)))).toEqual({
       duration: 0.1,
-      sampleRate: 48_000,
+      sampleRate: 24_000,
       timings: [
         {
           char: 'H',
@@ -299,7 +303,7 @@ describe('vite-plugin-import-voice-sample', () => {
       })],
     })
   })
-  test('configures sample rate and derives the default Opus bitrate', async () => {
+  test('defaults to 24 kHz and supports a sample-rate override', async () => {
     const root = await temporaryDirectory()
     await fs.writeFile(join(root, 'entry.ts'), `
       import audio from 'voice:rate' with {text: 'Rate', format: 'wav'}
@@ -310,8 +314,8 @@ describe('vite-plugin-import-voice-sample', () => {
       ...buildConfig(root),
       plugins: [importVoiceSample({
         apiKey: 'test-key',
-        fetch: fetchRecorder(calls, 24_000),
-        sampleRate: 24_000,
+        fetch: fetchRecorder(calls, 48_000),
+        sampleRate: 48_000,
       })],
     })
     expect(calls).toHaveLength(1)
@@ -321,7 +325,7 @@ describe('vite-plugin-import-voice-sample', () => {
           xai: {
             output_format: {
               codec: 'pcm',
-              sample_rate: 24_000,
+              sample_rate: 48_000,
             },
           },
         },
@@ -333,7 +337,7 @@ describe('vite-plugin-import-voice-sample', () => {
     const storeEntries = await fs.readdir(join(root, 'temp/vite-plugin-import-voice-sample/store'))
     const metadataName = storeEntries.find(file => file.endsWith('.msgpack'))
     expect(metadataName).toBeDefined()
-    expect(unpack(await fs.readFile(join(root, 'temp/vite-plugin-import-voice-sample/store', metadataName!)))).toMatchObject({sampleRate: 24_000})
+    expect(unpack(await fs.readFile(join(root, 'temp/vite-plugin-import-voice-sample/store', metadataName!)))).toMatchObject({sampleRate: 48_000})
   })
   test('shares raw storage across audio formats and caches only requested Opus and PCM conversions', async () => {
     const root = await temporaryDirectory()

@@ -52,7 +52,7 @@ export type VoiceSamplePluginOptions = {
   folder?: string
   /** OpenRouter TTS model. */
   model?: string
-  /** Requested synthesis sample rate in Hz. Defaults to 48000. */
+  /** Requested synthesis sample rate in Hz. Defaults to 24000. */
   sampleRate?: number
   /** Raw WAV + MessagePack folder. Defaults to <folder>/store. */
   storageFolder?: string
