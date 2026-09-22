@@ -72,6 +72,7 @@ describe('VoiceSampleStore', () => {
       trim: false,
     })
     const base = {
+      emotion: 'loud',
       text: 'Hello',
       language: 'en',
       voice: 'iris',
@@ -97,6 +98,7 @@ describe('VoiceSampleStore', () => {
     expect(headers[0].get('HTTP-Referer')).toBe('https://voice.example.test/path')
     expect(headers[0].get('X-OpenRouter-Title')).toBe('voice.example.test')
     expect(calls[0]).toMatchObject({
+      input: '<loud>Hello</loud>',
       voice: 'iris',
       provider: {
         options: {
@@ -117,7 +119,16 @@ describe('VoiceSampleStore', () => {
     const opusBytes = await fs.readFile(opus.path)
     expect(opusBytes.subarray(0, 4).toString()).toBe('OggS')
     expect(await fs.readFile(pcmEntry.path)).toEqual(pcm())
+    expect(wav.metadata).toMatchObject({
+      input: '<loud>Hello</loud>',
+      voice: 'iris',
+    })
     expect(wav.metadata.timings).toEqual(timings.metadata.timings)
+    const rawMetadata = unpack(await fs.readFile(wav.metadataPath)) as VoiceSampleMetadata
+    expect(rawMetadata).toMatchObject({
+      input: '<loud>Hello</loud>',
+      voice: 'iris',
+    })
     expect(defaultVoiceSampleBitrate(24_000)).toBe(16_384)
     const storeFiles = await fs.readdir(join(root, 'temp/voice-sample-store/store'))
     expect(storeFiles.filter(file => file.endsWith('.wav'))).toHaveLength(1)
@@ -163,6 +174,7 @@ describe('VoiceSampleStore', () => {
     expect(timings.metadataPath).toBe(trimmed.metadataPath)
     expect(trimmed.metadata).toMatchObject({
       duration: 0.12,
+      input: 'Trim me',
       sampleRate: 24_000,
       trim: {
         changed: true,
@@ -171,6 +183,7 @@ describe('VoiceSampleStore', () => {
         sourceDuration: 0.18,
         thresholdDb: -50,
       },
+      voice: 'iris',
     })
     expect(trimmed.metadata.timings[0]).toEqual({
       char: '<',
@@ -192,6 +205,10 @@ describe('VoiceSampleStore', () => {
     })
     expect(strict.metadataPath).not.toBe(trimmed.metadataPath)
     const decoded = unpack(await fs.readFile(trimmed.metadataPath)) as VoiceSampleMetadata
+    expect(decoded).toMatchObject({
+      input: 'Trim me',
+      voice: 'iris',
+    })
     expect(decoded.timings).toEqual(trimmed.metadata.timings)
   })
   test('validates preparation options before synthesis', async () => {

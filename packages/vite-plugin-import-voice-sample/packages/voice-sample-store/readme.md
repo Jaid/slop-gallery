@@ -26,6 +26,6 @@ const sample = await voiceSampleStore.prepare({
 
 `prepare()` accepts the same synthesis/delivery properties as voice import attributes except Vite's `type`: `text`, `voice`, `language`, `emotion`, `format`, `trim`, and `trimThreshold`.
 
-It returns the selected artifact `path`, canonical `rawPath`, selected `metadataPath`, decoded `metadata`, and the resolved `format`. For `format: 'timings'`, `path` is the MessagePack metadata path.
+It returns the selected artifact `path`, canonical `rawPath`, selected `metadataPath`, decoded `metadata`, and the resolved `format`. For `format: 'timings'`, `path` is the MessagePack metadata path. Every MessagePack metadata object includes `voice` and `input`; `input` is the exact styled text sent to OpenRouter (for example `<loud>Hello</loud>`), not merely the unstyled `text` passed to `prepare()`.
 
 The store owns OpenRouter requests, canonical raw WAV/MessagePack storage, sample-rate inference, trimming and aligned timing transforms, PCM extraction, and Opus conversion. Raw synthesis identity excludes format and trim settings so derivatives share one paid synthesis.

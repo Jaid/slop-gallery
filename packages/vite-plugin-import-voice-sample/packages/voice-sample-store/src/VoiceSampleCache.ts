@@ -14,7 +14,7 @@ import {trimVoiceSample, voiceSampleTrimMinimumSilenceSeconds, voiceSampleTrimPa
 
 const execFileAsync = promisify(execFile)
 const modelDefault = 'x-ai/grok-voice-tts-1.0'
-const storageSchema = 3
+const storageSchema = 4
 const conversionSchema = 1
 const trimSchema = 1
 const defaultSampleRate = 24_000
@@ -88,11 +88,11 @@ const decodeTimings = (value: unknown): Array<VoiceSampleTiming> => {
   })
 }
 const decodeMetadata = (value: unknown): VoiceSampleMetadata => {
-  if (!value || typeof value !== 'object' || !('duration' in value) || !('sampleRate' in value) || !('timings' in value)) {
+  if (!value || typeof value !== 'object' || !('duration' in value) || !('input' in value) || !('sampleRate' in value) || !('timings' in value) || !('voice' in value)) {
     throw new TypeError('Stored voice sample metadata is invalid.')
   }
-  const {duration, sampleRate, timings, ...rest} = value
-  if (typeof duration !== 'number' || !Number.isFinite(duration) || duration <= 0 || typeof sampleRate !== 'number' || !Number.isSafeInteger(sampleRate) || sampleRate <= 0) {
+  const {duration, input, sampleRate, timings, voice, ...rest} = value
+  if (typeof duration !== 'number' || !Number.isFinite(duration) || duration <= 0 || typeof input !== 'string' || !input || typeof sampleRate !== 'number' || !Number.isSafeInteger(sampleRate) || sampleRate <= 0 || typeof voice !== 'string' || !voice) {
     throw new TypeError('Stored voice sample metadata is invalid.')
   }
   if (!Array.isArray(timings)) {
@@ -154,13 +154,15 @@ const decodeMetadata = (value: unknown): VoiceSampleMetadata => {
   }
   return {
     duration,
+    input,
     sampleRate,
     timings: decodedTimings,
+    voice,
     ...traceId ? {traceId} : {},
     ...trim ? {trim: trim as VoiceSampleMetadata['trim']} : {},
   }
 }
-const decodeEnvelope = (value: unknown, requestedSampleRate: number, traceId?: string) => {
+const decodeEnvelope = (value: unknown, requestedSampleRate: number, input: string, voice: string, traceId?: string) => {
   if (!value || typeof value !== 'object' || !('audio' in value) || !('duration' in value) || !('content_type' in value) || !('audio_timestamps' in value) || typeof value.content_type !== 'string' || !/^audio\/pcm(?:;|$)/iu.test(value.content_type) || typeof value.duration !== 'number' || !Number.isFinite(value.duration) || value.duration <= 0) {
     throw new Error('OpenRouter voice synthesis returned an invalid timed PCM envelope.')
   }
@@ -178,8 +180,10 @@ const decodeEnvelope = (value: unknown, requestedSampleRate: number, traceId?: s
   }
   const metadata: VoiceSampleMetadata = {
     duration,
+    input,
     sampleRate,
     timings,
+    voice,
     ...traceId ? {traceId} : {},
   }
   return {
@@ -396,6 +400,7 @@ export default class VoiceSampleCache {
       throw new Error('OPENROUTER_API_KEY is required to generate an uncached voice sample.')
     }
     await fs.ensureDir(this.#storageFolder)
+    const input = styleVoiceSampleText(request.text, request.emotion)
     const response = await this.#fetch('https://openrouter.ai/api/v1/audio/speech', {
       method: 'POST',
       redirect: 'error',
@@ -409,7 +414,7 @@ export default class VoiceSampleCache {
       },
       body: JSON.stringify({
         model: this.#model,
-        input: styleVoiceSampleText(request.text, request.emotion),
+        input,
         voice: request.voice,
         response_format: 'pcm',
         provider: {
@@ -432,7 +437,7 @@ export default class VoiceSampleCache {
       const detail = responseText.slice(0, 1000)
       throw new Error(`OpenRouter voice synthesis failed (HTTP ${response.status})${detail ? `: ${detail}` : ''}.`)
     }
-    const {metadata, pcm} = decodeEnvelope(await response.json(), this.#sampleRate, response.headers.get('x-generation-id') ?? undefined)
+    const {metadata, pcm} = decodeEnvelope(await response.json(), this.#sampleRate, input, request.voice, response.headers.get('x-generation-id') ?? undefined)
     const wav = wavFromPcm(pcm, metadata.sampleRate)
     const rawPath = this.rawPath(key)
     const metadataPath = this.metadataPath(key)

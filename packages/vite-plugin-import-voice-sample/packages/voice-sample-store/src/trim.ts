@@ -86,6 +86,7 @@ export const trimVoiceSample = (wav: Uint8Array, metadata: VoiceSampleMetadata, 
   }
   const trimmedMetadata: VoiceSampleMetadata = {
     duration,
+    input: metadata.input,
     sampleRate: metadata.sampleRate,
     timings: metadata.timings.map(timing => ({
       char: timing.char,
@@ -93,6 +94,7 @@ export const trimVoiceSample = (wav: Uint8Array, metadata: VoiceSampleMetadata, 
       start: shift(timing.start),
     })),
     trim,
+    voice: metadata.voice,
     ...metadata.traceId ? {traceId: metadata.traceId} : {},
   }
   const trimmedWav = changed ? wavFromPcm(Uint8Array.from(view.subarray(44 + startSample * 2, 44 + endSample * 2)), metadata.sampleRate) : Uint8Array.from(wav)

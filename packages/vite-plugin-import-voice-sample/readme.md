@@ -71,7 +71,7 @@ importVoiceSample({
 
 The threshold is dBFS. Trimming only considers the outer edges; internal pauses are never removed. An edge needs at least 20 ms below the threshold before it is trimmed, and 10 ms of padding is retained around detected speech.
 
-Raw synthesis remains immutable in `storageFolder`. Trimming creates a shared derivative WAV and MessagePack metadata in `cacheFolder`, and WAV/PCM/Opus/timing imports with the same trim settings all reuse that derivative.
+Raw synthesis remains immutable in `storageFolder`. Its MessagePack metadata records the selected `voice` and exact styled provider `input`. Trimming creates a shared derivative WAV and MessagePack metadata in `cacheFolder`; derived metadata preserves those provenance fields, and WAV/PCM/Opus/timing imports with the same trim settings all reuse that derivative.
 
 Timing data is transformed onto exactly the same retained audio timeline:
 

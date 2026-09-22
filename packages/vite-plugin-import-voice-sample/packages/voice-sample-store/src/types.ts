@@ -25,10 +25,12 @@ export type VoiceSampleTrimMetadata = {
 
 export type VoiceSampleMetadata = {
   duration: number
+  input: string
   sampleRate: number
   timings: ReadonlyArray<VoiceSampleTiming>
   traceId?: string
   trim?: VoiceSampleTrimMetadata
+  voice: string
 }
 
 export type VoiceSamplePrepareOptions = {
