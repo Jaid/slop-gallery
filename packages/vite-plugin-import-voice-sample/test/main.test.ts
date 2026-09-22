@@ -22,8 +22,17 @@ afterEach(async () => {
   await Promise.all(directories.splice(0).map(directory => fs.remove(directory)))
 })
 const pcm = () => Buffer.alloc(4800 * 2)
+const envelope = () => ({
+  audio: pcm().toBase64(),
+  duration: 0.1,
+  content_type: 'audio/pcm',
+  audio_timestamps: {
+    graph_chars: ['H', 'i'],
+    graph_times: [[0, 0.04], [0.04, 0.1]],
+  },
+})
 describe('vite-plugin-import-voice-sample', () => {
-  test('generates once, sends Slop Gallery attribution, and reuses the cache', async () => {
+  test('generates audio and timings once, sends attribution, and reuses the cache', async () => {
     const root = await temporaryDirectory()
     await fs.writeFile(join(root, 'entry.ts'), `
       import audio from 'voice-sample:welcome' with {
@@ -33,7 +42,14 @@ describe('vite-plugin-import-voice-sample', () => {
         language: 'en',
         format: 'wav',
       }
-      export default audio
+      import timings from 'voice-sample:welcome/timings' with {
+        voice: 'iris',
+        text: 'Hello, I am Iris!',
+        emotion: 'cheerful',
+        language: 'en',
+        format: 'wav',
+      }
+      export {audio, timings}
     `)
     const calls: Array<{
       body: Record<string, unknown>
@@ -51,10 +67,7 @@ describe('vite-plugin-import-voice-sample', () => {
         body: body as Record<string, unknown>,
         headers: new Headers(init.headers),
       })
-      return new Response(pcm(), {
-        status: 200,
-        headers: {'Content-Type': 'audio/pcm; rate=48000; channels=1'},
-      })
+      return Response.json(envelope())
     }
     const config: InlineConfig = {
       root,
@@ -69,7 +82,7 @@ describe('vite-plugin-import-voice-sample', () => {
         write: false,
       },
     }
-    await build({
+    const result = await build({
       ...config,
       plugins: [importVoiceSample({
         apiKey: 'test-key',
@@ -88,15 +101,39 @@ describe('vite-plugin-import-voice-sample', () => {
         options: {
           xai: {
             language: 'en',
+            with_timestamps: true,
           },
         },
       },
     })
-    const cacheFiles = await fs.readdir(join(root, 'temp/vite-plugin-import-voice-sample/cache'))
-    expect(cacheFiles).toHaveLength(1)
-    expect(cacheFiles[0]).toEndWith('.wav')
-    const cachedWav = await fs.readFile(join(root, 'temp/vite-plugin-import-voice-sample/cache', cacheFiles[0]))
+    const cacheDirectory = join(root, 'temp/vite-plugin-import-voice-sample/cache')
+    const cacheFiles = await fs.readdir(cacheDirectory)
+    expect(cacheFiles).toHaveLength(2)
+    const wavName = cacheFiles.find(file => file.endsWith('.wav'))
+    const timingsName = cacheFiles.find(file => file.endsWith('.timings.json'))
+    expect(wavName).toBeDefined()
+    expect(timingsName).toBeDefined()
+    const cachedWav = await fs.readFile(join(cacheDirectory, wavName!))
     expect(cachedWav.subarray(0, 4).toString()).toBe('RIFF')
+    expect(await fs.readJson(join(cacheDirectory, timingsName!))).toEqual([
+      {
+        char: 'H',
+        start: 0,
+        end: 0.04,
+      },
+      {
+        char: 'i',
+        start: 0.04,
+        end: 0.1,
+      },
+    ])
+    const buildResults = Array.isArray(result) ? result : [result]
+    const outputs = buildResults.flatMap(item => {
+      return 'output' in item ? item.output : []
+    })
+    const code = outputs.filter(output => output.type === 'chunk').map(output => output.code).join('\n')
+    expect(code).toMatch(/char:\s*"H"/u)
+    expect(code).toMatch(/start:\s*0/u)
     await build({
       ...config,
       plugins: [importVoiceSample({
@@ -106,25 +143,35 @@ describe('vite-plugin-import-voice-sample', () => {
       })],
     })
   })
-  test('transcodes opus requests before caching', async () => {
+  test('transcodes opus requests before caching and retains timings', async () => {
     const root = await temporaryDirectory()
     const cache = new VoiceSampleCache({
       apiKey: 'test-key',
       cacheDir: root,
-      fetch: async () => new Response(pcm(), {
-        status: 200,
-        headers: {'Content-Type': 'audio/pcm; rate=48000; channels=1'},
-      }),
+      fetch: async () => Response.json(envelope()),
     })
-    const output = await cache.get({
+    const entry = await cache.get({
       format: 'opus',
       language: 'en',
       text: 'Opus sample',
       voice: 'iris',
     })
-    expect(output).toEndWith('.opus')
-    const bytes = await fs.readFile(output)
+    expect(entry.audioPath).toEndWith('.opus')
+    const bytes = await fs.readFile(entry.audioPath)
     expect(bytes.subarray(0, 4).toString()).toBe('OggS')
+    expect(entry.timings).toEqual([
+      {
+        char: 'H',
+        start: 0,
+        end: 0.04,
+      },
+      {
+        char: 'i',
+        start: 0.04,
+        end: 0.1,
+      },
+    ])
+    expect(await fs.pathExists(entry.timingsPath)).toBe(true)
   })
   test('rejects unsupported emotions instead of silently ignoring them', () => {
     expect(() => styleVoiceSampleText('Hello', 'mysteriously-purple')).toThrow('Unsupported voice sample emotion')

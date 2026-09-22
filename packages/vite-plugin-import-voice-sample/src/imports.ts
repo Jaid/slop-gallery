@@ -8,13 +8,17 @@ export type VoiceSampleEdit = {
   text: string
 }
 
+export type VoiceSampleImportKind = 'audio' | 'timings'
+
 export type ParsedVoiceSampleImport = {
   edits: Array<VoiceSampleEdit>
+  kind: VoiceSampleImportKind
   request: VoiceSampleRequest
 }
 
 export const voiceSampleSource = 'voice-sample'
 export const voiceSampleSourcePrefix = `${voiceSampleSource}:`
+export const voiceSampleTimingsSuffix = '/timings'
 export const virtualVoiceSamplePrefix = 'virtual:voice-sample/'
 
 type Position = {
@@ -101,7 +105,9 @@ export const parseVoiceSampleImports = (code: string, ast: unknown, defaults: Vo
   const imports: Array<ParsedVoiceSampleImport> = []
   for (const node of body) {
     const source = stringValue(node.source)
-    const matchesSource = source === voiceSampleSource || source?.startsWith(voiceSampleSourcePrefix)
+    const kind: VoiceSampleImportKind = source?.endsWith(voiceSampleTimingsSuffix) ? 'timings' : 'audio'
+    const baseSource = kind === 'timings' ? source?.slice(0, -voiceSampleTimingsSuffix.length) : source
+    const matchesSource = baseSource === voiceSampleSource || baseSource?.startsWith(voiceSampleSourcePrefix)
     if (node.type !== 'ImportDeclaration' || !matchesSource || !node.source) {
       continue
     }
@@ -139,6 +145,7 @@ export const parseVoiceSampleImports = (code: string, ast: unknown, defaults: Vo
       ...attributes.emotion ? {emotion: attributes.emotion} : {},
     }
     imports.push({
+      kind,
       request,
       edits: [
         {

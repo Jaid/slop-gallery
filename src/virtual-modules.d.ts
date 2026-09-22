@@ -8,6 +8,22 @@ declare module 'voice-sample' {
   const url: string
   export default url
 }
+declare module 'voice-sample/timings' {
+  const timings: ReadonlyArray<{
+    char: string
+    end: number
+    start: number
+  }>
+  export default timings
+}
+declare module 'voice-sample:*/timings' {
+  const timings: ReadonlyArray<{
+    char: string
+    end: number
+    start: number
+  }>
+  export default timings
+}
 declare module 'voice-sample:*' {
   const url: string
   export default url

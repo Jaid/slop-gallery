@@ -1,6 +1,12 @@
 export type VoiceSampleFetch = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
 export type VoiceSampleFormat = 'opus' | 'pcm' | 'wav'
 
+export type VoiceSampleTiming = {
+  char: string
+  end: number
+  start: number
+}
+
 export type VoiceSampleRequest = {
   emotion?: string
   format: VoiceSampleFormat

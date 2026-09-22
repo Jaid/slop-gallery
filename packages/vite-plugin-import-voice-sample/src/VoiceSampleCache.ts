@@ -1,4 +1,4 @@
-import type {VoiceSampleFetch, VoiceSampleRequest} from './types.ts'
+import type {VoiceSampleFetch, VoiceSampleRequest, VoiceSampleTiming} from './types.ts'
 
 import {execFile} from 'node:child_process'
 import {createHash, randomUUID} from 'node:crypto'
@@ -12,7 +12,15 @@ import {styleVoiceSampleText} from './emotion.ts'
 
 const execFileAsync = promisify(execFile)
 const modelDefault = 'x-ai/grok-voice-tts-1.0'
-const cacheSchema = 1
+const cacheSchema = 2
+const supportedSampleRates = [8000, 16_000, 22_050, 24_000, 44_100, 48_000]
+
+export type VoiceSampleCacheEntry = {
+  audioPath: string
+  timings: ReadonlyArray<VoiceSampleTiming>
+  timingsPath: string
+}
+
 const hasFile = async (file: string) => {
   try {
     const information = await fs.stat(file)
@@ -22,18 +30,84 @@ const hasFile = async (file: string) => {
   }
 }
 const extensionFor = (request: VoiceSampleRequest) => request.format
-const supportedSampleRates = new Set([8000, 16_000, 22_050, 24_000, 44_100, 48_000])
-const pcmRate = (contentType: string | null) => {
-  if (!contentType || !/^audio\/pcm(?:;|$)/iu.test(contentType)) {
-    throw new Error('OpenRouter voice synthesis did not return raw PCM audio.')
+const decodeBase64 = (value: unknown) => {
+  if (typeof value !== 'string' || value.length % 4 || !/^(?:[\d+/A-Za-z]{4})*(?:[\d+/A-Za-z]{2}==|[\d+/A-Za-z]{3}=)?$/u.test(value)) {
+    throw new Error('OpenRouter voice synthesis returned invalid base64 audio.')
   }
-  const channels = /;\s*channels=(\d+)/iu.exec(contentType)?.[1]
-  const rate = /;\s*rate=(\d+)/iu.exec(contentType)?.[1]
-  const sampleRate = rate ? Number(rate) : undefined
-  if (channels && channels !== '1' || !sampleRate || !supportedSampleRates.has(sampleRate)) {
-    throw new Error('OpenRouter voice synthesis returned PCM without a supported mono sample rate.')
+  return Uint8Array.fromBase64(value)
+}
+const decodeTimings = (value: unknown): Array<VoiceSampleTiming> => {
+  if (!value || typeof value !== 'object' || !('graph_chars' in value) || !('graph_times' in value)) {
+    throw new Error('OpenRouter voice synthesis returned invalid character timings.')
   }
-  return sampleRate
+  const {graph_chars: characters, graph_times: times} = value
+  if (!Array.isArray(characters) || !Array.isArray(times) || characters.length !== times.length) {
+    throw new Error('OpenRouter voice synthesis returned mismatched character timings.')
+  }
+  return characters.map((char, index) => {
+    const pair: unknown = times[index]
+    if (!pair || typeof pair !== 'object') {
+      throw new Error('OpenRouter voice synthesis returned an invalid timestamp pair.')
+    }
+    let start: unknown
+    let end: unknown
+    if (Array.isArray(pair)) {
+      start = pair[0]
+      end = pair[1]
+    } else if ('start' in pair && 'end' in pair) {
+      start = pair.start
+      end = pair.end
+    }
+    if (typeof char !== 'string' || typeof start !== 'number' || typeof end !== 'number' || !Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end < start) {
+      throw new Error('OpenRouter voice synthesis returned invalid character timings.')
+    }
+    return {
+      char,
+      end,
+      start,
+    }
+  })
+}
+const decodeCachedTimings = (value: unknown): Array<VoiceSampleTiming> => {
+  if (!Array.isArray(value)) {
+    throw new TypeError('Cached voice sample timings are invalid.')
+  }
+  const items = value as Array<unknown>
+  return items.map(item => {
+    if (!item || typeof item !== 'object' || !('char' in item) || !('start' in item) || !('end' in item)) {
+      throw new TypeError('Cached voice sample timings are invalid.')
+    }
+    const {char, start, end} = item
+    if (typeof char !== 'string' || typeof start !== 'number' || typeof end !== 'number' || !Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end < start) {
+      throw new TypeError('Cached voice sample timings are invalid.')
+    }
+    return {
+      char,
+      end,
+      start,
+    }
+  })
+}
+const decodeEnvelope = (value: unknown) => {
+  if (!value || typeof value !== 'object' || !('audio' in value) || !('duration' in value) || !('content_type' in value) || !('audio_timestamps' in value) || typeof value.content_type !== 'string' || !/^audio\/pcm(?:;|$)/iu.test(value.content_type) || typeof value.duration !== 'number' || !Number.isFinite(value.duration) || value.duration <= 0) {
+    throw new Error('OpenRouter voice synthesis returned an invalid timed PCM envelope.')
+  }
+  const pcm = decodeBase64(value.audio)
+  const duration = value.duration
+  const inferredRate = pcm.byteLength / 2 / duration
+  const sampleRate = supportedSampleRates.toSorted((a, b) => Math.abs(a - inferredRate) - Math.abs(b - inferredRate))[0]
+  if (Math.abs(pcm.byteLength / 2 / sampleRate - duration) > 0.015) {
+    throw new Error('OpenRouter PCM length and duration do not establish a supported sample rate.')
+  }
+  const timings = decodeTimings(value.audio_timestamps)
+  if (timings.some(timing => timing.end > duration + 0.02)) {
+    throw new Error('OpenRouter character timing exceeds the audio duration.')
+  }
+  return {
+    pcm,
+    sampleRate,
+    timings,
+  }
 }
 const wavFromPcm = (pcm: Uint8Array, sampleRate: number) => {
   if (!pcm.byteLength || pcm.byteLength % 2 || pcm.byteLength > 0xFF_FF_FF_FF - 36) {
@@ -70,7 +144,7 @@ export default class VoiceSampleCache {
   readonly #fetch: VoiceSampleFetch
   readonly #ffmpegPath: string
   readonly #model: string
-  readonly #pending = new Map<string, Promise<string>>
+  readonly #pending = new Map<string, Promise<VoiceSampleCacheEntry>>
 
   constructor(options: VoiceSampleCacheOptions) {
     this.#apiKey = options.apiKey
@@ -82,15 +156,17 @@ export default class VoiceSampleCache {
 
   async get(request: VoiceSampleRequest) {
     const key = this.key(request)
-    const output = this.path(request, key)
-    if (await hasFile(output)) {
-      return output
+    const audioPath = this.path(request, key)
+    const timingsPath = this.timingsPath(request, key)
+    const cached = await this.#read(audioPath, timingsPath)
+    if (cached) {
+      return cached
     }
     const existing = this.#pending.get(key)
     if (existing) {
       return existing
     }
-    const pending = this.#generate(request, output)
+    const pending = this.#generate(request, audioPath, timingsPath)
     this.#pending.set(key, pending)
     try {
       return await pending
@@ -111,7 +187,11 @@ export default class VoiceSampleCache {
     return resolve(this.#cacheDir, `${key}.${extensionFor(request)}`)
   }
 
-  async #generate(request: VoiceSampleRequest, output: string) {
+  timingsPath(request: VoiceSampleRequest, key = this.key(request)) {
+    return resolve(this.#cacheDir, `${key}.timings.json`)
+  }
+
+  async #generate(request: VoiceSampleRequest, audioPath: string, timingsPath: string): Promise<VoiceSampleCacheEntry> {
     if (!this.#apiKey) {
       throw new Error('OPENROUTER_API_KEY is required to generate an uncached voice sample.')
     }
@@ -141,6 +221,7 @@ export default class VoiceSampleCache {
                 codec: 'pcm',
                 sample_rate: 48_000,
               },
+              with_timestamps: true,
             },
           },
         },
@@ -151,17 +232,15 @@ export default class VoiceSampleCache {
       const detail = responseText.slice(0, 1000)
       throw new Error(`OpenRouter voice synthesis failed (HTTP ${response.status})${detail ? `: ${detail}` : ''}.`)
     }
-    const bytes = new Uint8Array(await response.arrayBuffer())
-    if (!bytes.byteLength) {
-      throw new Error('OpenRouter voice synthesis returned an empty response.')
-    }
-    const sampleRate = pcmRate(response.headers.get('content-type'))
-    const wav = request.format === 'pcm' ? undefined : wavFromPcm(bytes, sampleRate)
+    const {pcm, sampleRate, timings} = decodeEnvelope(await response.json())
+    const wav = request.format === 'pcm' ? undefined : wavFromPcm(pcm, sampleRate)
     const token = `${process.pid}-${randomUUID()}`
-    const temporary = `${output}.${token}.tmp`
+    const temporaryAudio = `${audioPath}.${token}.tmp`
+    const temporaryTimings = `${timingsPath}.${token}.tmp`
     try {
+      await fs.writeJson(temporaryTimings, timings)
       if (request.format === 'opus') {
-        const source = `${output}.${token}.source.wav`
+        const source = `${audioPath}.${token}.source.wav`
         try {
           await fs.writeFile(source, wav!)
           const argv = makeArgv({
@@ -180,29 +259,43 @@ export default class VoiceSampleCache {
             prefix: '-',
             keyStyle: false,
           })
-          await execFileAsync(this.#ffmpegPath, [...argv, temporary])
+          await execFileAsync(this.#ffmpegPath, [...argv, temporaryAudio])
         } finally {
           await fs.remove(source)
         }
       } else {
-        await fs.writeFile(temporary, request.format === 'wav' ? wav! : bytes)
+        await fs.writeFile(temporaryAudio, request.format === 'wav' ? wav! : pcm)
       }
-      if (!await hasFile(temporary)) {
-        throw new Error(`Voice sample generation did not produce a valid .${request.format} file.`)
+      if (!await hasFile(temporaryAudio) || !await hasFile(temporaryTimings)) {
+        throw new Error(`Voice sample generation did not produce a valid .${request.format} file and timing map.`)
       }
-      if (await hasFile(output)) {
-        return output
+      const raced = await this.#read(audioPath, timingsPath)
+      if (raced) {
+        return raced
       }
-      try {
-        await fs.rename(temporary, output)
-      } catch (error) {
-        if (!await hasFile(output)) {
-          throw error
-        }
+      await fs.remove(audioPath)
+      await fs.remove(timingsPath)
+      await fs.rename(temporaryAudio, audioPath)
+      await fs.rename(temporaryTimings, timingsPath)
+      return {
+        audioPath,
+        timings,
+        timingsPath,
       }
-      return output
     } finally {
-      await fs.remove(temporary)
+      await fs.remove(temporaryAudio)
+      await fs.remove(temporaryTimings)
+    }
+  }
+  async #read(audioPath: string, timingsPath: string): Promise<VoiceSampleCacheEntry | undefined> {
+    if (!await hasFile(audioPath) || !await hasFile(timingsPath)) {
+      return
+    }
+    const timings = decodeCachedTimings(await fs.readJson(timingsPath) as unknown)
+    return {
+      audioPath,
+      timings,
+      timingsPath,
     }
   }
 }

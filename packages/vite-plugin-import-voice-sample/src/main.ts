@@ -1,3 +1,4 @@
+import type {VoiceSampleImportKind} from './imports.ts'
 import type {VoiceSamplePluginOptions, VoiceSampleRequest} from './types.ts'
 import type {Plugin, ResolvedConfig} from 'vite'
 
@@ -10,15 +11,33 @@ import {applyEdits, parseVoiceSampleImports, virtualVoiceSamplePrefix, voiceSamp
 import VoiceSampleCache from './VoiceSampleCache.ts'
 
 export {voiceSampleSource} from './imports.ts'
-export type {VoiceSampleFormat, VoiceSamplePluginOptions, VoiceSampleRequest} from './types.ts'
+export type {VoiceSampleFormat, VoiceSamplePluginOptions, VoiceSampleRequest, VoiceSampleTiming} from './types.ts'
 
 const resolvedVirtualPrefix = `\0${virtualVoiceSamplePrefix}`
+const virtualParts = (source: string): {
+  key: string
+  kind: VoiceSampleImportKind
+} | undefined => {
+  const normalized = source.startsWith('\0') ? source.slice(1) : source
+  if (!normalized.startsWith(virtualVoiceSamplePrefix)) {
+    return
+  }
+  const [kind, key, ...rest] = normalized.slice(virtualVoiceSamplePrefix.length).split('/')
+  if (rest.length || !key || kind !== 'audio' && kind !== 'timings') {
+    return
+  }
+  return {
+    key,
+    kind,
+  }
+}
 
 /**
- * Turns declarative voice-sample imports into cached audio assets generated through OpenRouter.
+ * Turns declarative voice-sample imports into cached audio assets and timing maps generated through OpenRouter.
  *
  * Example:
  * import audio from 'voice-sample:greeting' with {text: 'Hello', voice: 'iris', format: 'opus'}
+ * import timings from 'voice-sample:greeting/timings' with {text: 'Hello', voice: 'iris', format: 'opus'}
  */
 export default function importVoiceSample(options: VoiceSamplePluginOptions = {}): Plugin {
   let config: ResolvedConfig
@@ -66,7 +85,7 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
         return [
           {
             ...source,
-            text: JSON.stringify(`${virtualVoiceSamplePrefix}${key}`),
+            text: JSON.stringify(`${virtualVoiceSamplePrefix}${item.kind}/${key}`),
           },
           item.edits[1],
         ]
@@ -77,19 +96,37 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
       }
     },
     async resolveId(source, importer) {
-      if (!source.startsWith(virtualVoiceSamplePrefix) && !source.startsWith(resolvedVirtualPrefix)) {
+      const parts = virtualParts(source)
+      if (!parts) {
         return
       }
-      const key = source.slice(source.startsWith(resolvedVirtualPrefix) ? resolvedVirtualPrefix.length : virtualVoiceSamplePrefix.length)
-      const request = requests.get(key)
+      const request = requests.get(parts.key)
       if (!request) {
         this.error(`Unknown voice sample virtual module "${source}".`)
       }
-      const file = await cache.get(request)
-      this.addWatchFile(file)
-      const assetId = `${normalizePath(file)}?url`
+      if (parts.kind === 'timings') {
+        return `${resolvedVirtualPrefix}timings/${parts.key}`
+      }
+      const entry = await cache.get(request)
+      this.addWatchFile(entry.audioPath)
+      this.addWatchFile(entry.timingsPath)
+      const assetId = `${normalizePath(entry.audioPath)}?url`
       const resolved = await this.resolve(assetId, importer, {skipSelf: true})
       return resolved?.id ?? assetId
+    },
+    async load(id) {
+      const parts = virtualParts(id)
+      if (parts?.kind !== 'timings') {
+        return
+      }
+      const request = requests.get(parts.key)
+      if (!request) {
+        this.error(`Unknown voice sample timing module "${id}".`)
+      }
+      const entry = await cache.get(request)
+      this.addWatchFile(entry.audioPath)
+      this.addWatchFile(entry.timingsPath)
+      return `export default ${JSON.stringify(entry.timings)}`
     },
   }
 }
