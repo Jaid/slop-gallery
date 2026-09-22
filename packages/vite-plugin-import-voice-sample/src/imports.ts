@@ -8,17 +8,12 @@ export type VoiceSampleEdit = {
   text: string
 }
 
-export type VoiceSampleImportKind = 'audio' | 'timings'
-
 export type ParsedVoiceSampleImport = {
   edits: Array<VoiceSampleEdit>
-  kind: VoiceSampleImportKind
   request: VoiceSampleRequest
 }
 
-export const voiceSampleSource = 'voice-sample'
-export const voiceSampleSourcePrefix = `${voiceSampleSource}:`
-export const voiceSampleTimingsSuffix = '/timings'
+export const voiceSourcePrefix = 'voice:'
 export const virtualVoiceSamplePrefix = 'virtual:voice-sample/'
 
 type Position = {
@@ -49,10 +44,10 @@ type Program = {
   body?: Array<ImportDeclaration>
 }
 
-type AttributeName = 'emotion' | 'format' | 'language' | 'text' | 'voice'
+type AttributeName = 'emotion' | 'format' | 'language' | 'text'
 
-const formats = new Set<VoiceSampleFormat>(['opus', 'pcm', 'wav'])
-const allowedAttributes = new Set<string>(['emotion', 'format', 'language', 'text', 'voice'])
+const formats = new Set<VoiceSampleFormat>(['opus', 'pcm', 'timings', 'wav'])
+const allowedAttributes = new Set<string>(['emotion', 'format', 'language', 'text'])
 const stringValue = (value: AstValue | undefined) => {
   return typeof value?.value === 'string' ? value.value : undefined
 }
@@ -60,19 +55,36 @@ const keyValue = (value: AstValue | undefined) => {
   return typeof value?.name === 'string' ? value.name : stringValue(value)
 }
 const isVoiceSampleFormat = (value: string): value is VoiceSampleFormat => formats.has(value as VoiceSampleFormat)
+const parseVoiceSource = (source: string): {
+  id: string
+  voice?: string
+} | undefined => {
+  if (!source.startsWith(voiceSourcePrefix)) {
+    return
+  }
+  const path = source.slice(voiceSourcePrefix.length)
+  const [id, voice, ...rest] = path.split('/')
+  if (!id || rest.length || voice === '') {
+    throw new Error(`Invalid voice import source "${source}". Expected voice:<id> or voice:<id>/<speaker>.`)
+  }
+  return {
+    id,
+    voice,
+  }
+}
 const attributesRecord = (node: ImportDeclaration) => {
   const result: Partial<Record<AttributeName, string>> = {}
   for (const attribute of node.attributes ?? []) {
     const key = keyValue(attribute.key)
     const value = stringValue(attribute.value)
     if (!key || value === undefined) {
-      throw new Error('Voice sample import attributes must use string literal values.')
+      throw new Error('Voice import attributes must use string literal values.')
     }
     if (!allowedAttributes.has(key)) {
-      throw new Error(`Unknown voice sample import attribute "${key}".`)
+      throw new Error(`Unknown voice import attribute "${key}".`)
     }
     if (key in result) {
-      throw new Error(`Duplicate voice sample import attribute "${key}".`)
+      throw new Error(`Duplicate voice import attribute "${key}".`)
     }
     result[key as AttributeName] = value
   }
@@ -88,11 +100,11 @@ const attributeClauseRange = (code: string, node: ImportDeclaration) => {
   const before = code.slice(node.source.end, first.start)
   const withMatch = /\bwith\s*\{\s*$/u.exec(before)
   if (!withMatch) {
-    throw new Error('Could not locate the voice sample import attribute clause.')
+    throw new Error('Could not locate the voice import attribute clause.')
   }
   const close = code.indexOf('}', last.end)
   if (close === -1 || close >= node.end) {
-    throw new Error('Could not locate the end of the voice sample import attribute clause.')
+    throw new Error('Could not locate the end of the voice import attribute clause.')
   }
   return {
     end: close + 1,
@@ -105,37 +117,35 @@ export const parseVoiceSampleImports = (code: string, ast: unknown, defaults: Vo
   const imports: Array<ParsedVoiceSampleImport> = []
   for (const node of body) {
     const source = stringValue(node.source)
-    const kind: VoiceSampleImportKind = source?.endsWith(voiceSampleTimingsSuffix) ? 'timings' : 'audio'
-    const baseSource = kind === 'timings' ? source?.slice(0, -voiceSampleTimingsSuffix.length) : source
-    const matchesSource = baseSource === voiceSampleSource || baseSource?.startsWith(voiceSampleSourcePrefix)
-    if (node.type !== 'ImportDeclaration' || !matchesSource || !node.source) {
+    if (node.type !== 'ImportDeclaration' || !source?.startsWith(voiceSourcePrefix) || !node.source) {
       continue
     }
+    const parsedSource = parseVoiceSource(source)!
     const specifiers = node.specifiers ?? []
     const defaultImports = specifiers.filter(specifier => specifier.type === 'ImportDefaultSpecifier')
     if (defaultImports.length !== 1 || specifiers.length !== 1) {
-      throw new Error("Voice samples must use exactly one default import from 'voice-sample' or a 'voice-sample:<name>' alias.")
+      throw new Error("Voice samples must use exactly one default import from 'voice:<id>' or 'voice:<id>/<speaker>'.")
     }
     const attributes = attributesRecord(node)
     const text = attributes.text
     if (!text) {
-      throw new Error('Voice sample imports require a non-empty text attribute.')
+      throw new Error('Voice imports require a non-empty text attribute.')
     }
     const format = attributes.format ?? defaults.format
     if (!isVoiceSampleFormat(format)) {
-      throw new Error(`Unsupported voice sample format "${format}". Expected pcm, wav, or opus.`)
+      throw new Error(`Unsupported voice format "${format}". Expected opus, pcm, timings, or wav.`)
     }
-    const voice = attributes.voice ?? defaults.voice
+    const voice = parsedSource.voice ?? defaults.voice
     if (!voice) {
-      throw new Error('Voice sample imports require a voice attribute or plugin default.')
+      throw new Error('Voice imports require a speaker path component or plugin default.')
     }
     const language = attributes.language ?? defaults.language
     if (!language) {
-      throw new Error('Voice sample imports require a language attribute or plugin default.')
+      throw new Error('Voice imports require a language attribute or plugin default.')
     }
     const clause = attributeClauseRange(code, node)
     if (!clause) {
-      throw new Error('Voice sample imports require an import attribute clause containing text.')
+      throw new Error('Voice imports require an import attribute clause containing text.')
     }
     const request: VoiceSampleRequest = {
       format,
@@ -145,7 +155,6 @@ export const parseVoiceSampleImports = (code: string, ast: unknown, defaults: Vo
       ...attributes.emotion ? {emotion: attributes.emotion} : {},
     }
     imports.push({
-      kind,
       request,
       edits: [
         {

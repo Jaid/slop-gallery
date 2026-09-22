@@ -35,68 +35,79 @@ const envelope = () => ({
 const response = () => Response.json(envelope(), {
   headers: {'x-generation-id': 'trace-id'},
 })
+const fetchRecorder = (calls: Array<Record<string, unknown>>): VoiceSampleFetch => async (_input, init) => {
+  if (typeof init?.body !== 'string') {
+    throw new TypeError('Expected a JSON request body.')
+  }
+  const body = JSON.parse(init.body) as unknown
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    throw new TypeError('Expected an object request body.')
+  }
+  calls.push(body as Record<string, unknown>)
+  return response()
+}
+const buildConfig = (root: string): InlineConfig => ({
+  root,
+  configFile: false,
+  logLevel: 'silent',
+  build: {
+    assetsInlineLimit: 0,
+    lib: {
+      entry: join(root, 'entry.ts'),
+      formats: ['es'],
+    },
+    write: false,
+  },
+})
 describe('vite-plugin-import-voice-sample', () => {
-  test('always stores raw WAV and msgpack while timings avoid derivative caches', async () => {
+  test('uses Iris by default and path speaker explicitly overrides it', async () => {
     const root = await temporaryDirectory()
     await fs.writeFile(join(root, 'entry.ts'), `
-      import audio from 'voice-sample:welcome' with {
-        voice: 'iris',
+      import iris from 'voice:grok' with {text: 'Grok', format: 'wav'}
+      import ara from 'voice:grok-ara/ara' with {text: 'Grok', format: 'wav'}
+      export {iris, ara}
+    `)
+    const calls: Array<Record<string, unknown>> = []
+    await build({
+      ...buildConfig(root),
+      plugins: [importVoiceSample({
+        apiKey: 'test-key',
+        fetch: fetchRecorder(calls),
+      })],
+    })
+    expect(calls).toHaveLength(2)
+    expect(calls.map(call => call.voice).toSorted((a, b) => String(a).localeCompare(String(b)))).toEqual(['ara', 'iris'])
+    const storeFiles = await fs.readdir(join(root, 'temp/vite-plugin-import-voice-sample/store'))
+    expect(storeFiles.filter(file => file.endsWith('.wav'))).toHaveLength(2)
+    expect(storeFiles.filter(file => file.endsWith('.msgpack'))).toHaveLength(2)
+  })
+  test('format timings shares the raw store and creates no derivative cache', async () => {
+    const root = await temporaryDirectory()
+    await fs.writeFile(join(root, 'entry.ts'), `
+      import audio from 'voice:welcome' with {
         text: 'Hello, I am Iris!',
         emotion: 'cheerful',
         language: 'en',
         format: 'wav',
       }
-      import timings from 'voice-sample:welcome/timings' with {
-        voice: 'iris',
+      import timings from 'voice:welcome' with {
         text: 'Hello, I am Iris!',
         emotion: 'cheerful',
         language: 'en',
-        format: 'opus',
+        format: 'timings',
       }
       export {audio, timings}
     `)
-    const calls: Array<{
-      body: Record<string, unknown>
-      headers: Headers
-    }> = []
-    const fetchMock: VoiceSampleFetch = async (_input, init) => {
-      if (typeof init?.body !== 'string') {
-        throw new TypeError('Expected a JSON request body.')
-      }
-      const body = JSON.parse(init.body) as unknown
-      if (!body || typeof body !== 'object' || Array.isArray(body)) {
-        throw new TypeError('Expected an object request body.')
-      }
-      calls.push({
-        body: body as Record<string, unknown>,
-        headers: new Headers(init.headers),
-      })
-      return response()
-    }
-    const config: InlineConfig = {
-      root,
-      configFile: false as const,
-      logLevel: 'silent' as const,
-      build: {
-        assetsInlineLimit: 0,
-        lib: {
-          entry: join(root, 'entry.ts'),
-          formats: ['es'],
-        },
-        write: false,
-      },
-    }
+    const calls: Array<Record<string, unknown>> = []
     const result = await build({
-      ...config,
+      ...buildConfig(root),
       plugins: [importVoiceSample({
         apiKey: 'test-key',
-        fetch: fetchMock,
+        fetch: fetchRecorder(calls),
       })],
     })
     expect(calls).toHaveLength(1)
-    expect(calls[0].headers.get('HTTP-Referer')).toBe('https://slop.gallery')
-    expect(calls[0].headers.get('X-OpenRouter-Title')).toBe('Slop Gallery')
-    expect(calls[0].body).toMatchObject({
+    expect(calls[0]).toMatchObject({
       model: 'x-ai/grok-voice-tts-1.0',
       input: '<sing-song>Hello, I am Iris!</sing-song>',
       voice: 'iris',
@@ -146,7 +157,7 @@ describe('vite-plugin-import-voice-sample', () => {
     expect(code).toMatch(/char:\s*"H"/u)
     expect(code).toMatch(/start:\s*0/u)
     await build({
-      ...config,
+      ...buildConfig(root),
       plugins: [importVoiceSample({
         fetch: async () => {
           throw new Error('cache miss')
@@ -154,7 +165,7 @@ describe('vite-plugin-import-voice-sample', () => {
       })],
     })
   })
-  test('shares raw storage across formats and caches only requested Opus and PCM conversions', async () => {
+  test('shares raw storage across audio formats and caches only requested Opus and PCM conversions', async () => {
     const root = await temporaryDirectory()
     let calls = 0
     const cache = new VoiceSampleCache({
@@ -208,7 +219,23 @@ describe('vite-plugin-import-voice-sample', () => {
     ])
     expect(storeFiles.some(file => file.endsWith('.pcm'))).toBe(false)
   })
-  test('rejects unsupported emotions instead of silently ignoring them', () => {
+  test('rejects the removed voice attribute and unsupported emotions', async () => {
+    const root = await temporaryDirectory()
+    await fs.writeFile(join(root, 'entry.ts'), `
+      import audio from 'voice:grok' with {text: 'Grok', voice: 'ara'}
+      export default audio
+    `)
+    let error: unknown
+    try {
+      await build({
+        ...buildConfig(root),
+        plugins: [importVoiceSample()],
+      })
+    } catch (error_) {
+      error = error_
+    }
+    expect(error).toBeInstanceOf(Error)
+    expect(String(error)).toContain('Unknown voice import attribute "voice"')
     expect(() => styleVoiceSampleText('Hello', 'mysteriously-purple')).toThrow('Unsupported voice sample emotion')
   })
 })

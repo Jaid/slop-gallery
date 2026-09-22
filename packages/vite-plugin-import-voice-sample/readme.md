@@ -1,26 +1,37 @@
 # vite-plugin-import-voice-sample
 
-Generate and cache static voice samples and character timings from declarative import attributes.
+Generate and cache static voice samples and character timings from declarative imports.
 
 ```ts
-import welcomeAudio from 'voice-sample:welcome' with {
-  voice: 'iris',
-  text: 'Hello, I am Iris!',
-  emotion: 'cheerful',
-  language: 'en',
+// Uses the default speaker, Iris.
+import grokAudio from 'voice:grok' with {
+  text: 'Grok',
   format: 'opus',
 }
 
-import welcomeTimings from 'voice-sample:welcome/timings' with {
-  voice: 'iris',
-  text: 'Hello, I am Iris!',
-  emotion: 'cheerful',
-  language: 'en',
+// The optional second path component overrides the speaker.
+import grokAraAudio from 'voice:grok/ara' with {
+  text: 'Grok',
   format: 'opus',
+}
+
+// Timings are another format of the same synthesis.
+import grokTimings from 'voice:grok' with {
+  text: 'Grok',
+  format: 'timings',
 }
 ```
 
-The audio import returns its emitted asset URL. Adding `/timings` to the same import source returns a typed array of character timings:
+Import sources are `voice:<id>` or `voice:<id>/<speaker>`. The ID only identifies the import site; it is not part of the synthesis hash. The optional speaker path component overrides the configured default speaker, which is `iris`.
+
+The accepted import attributes are:
+
+- `text: string` — required
+- `emotion: string` — optional
+- `language: string` — defaults to `en`
+- `format: 'opus' | 'pcm' | 'wav' | 'timings'` — defaults to `opus`
+
+`format: 'timings'` returns the character timing array directly:
 
 ```ts
 ReadonlyArray<{
@@ -32,7 +43,7 @@ ReadonlyArray<{
 
 ## Storage
 
-The hash identifies the synthesis itself and deliberately excludes the requested output format. WAV, Opus, PCM, and `/timings` imports with otherwise identical attributes therefore share one OpenRouter generation.
+The hash identifies the synthesis itself and deliberately excludes both the requested output format and the import ID. WAV, Opus, PCM, and timing imports with otherwise identical synthesis inputs therefore share one OpenRouter generation.
 
 Every generated synthesis is stored canonically as:
 
@@ -43,7 +54,7 @@ temp/vite-plugin-import-voice-sample/
     <hash>.msgpack
 ```
 
-The WAV is the lossless raw source. The MessagePack metadata contains the character timings plus generation metadata such as duration, sample rate, and OpenRouter trace ID.
+The WAV is the lossless raw source. The MessagePack metadata contains character timings plus generation metadata such as duration, sample rate, and OpenRouter trace ID.
 
 Requested conversions are derived from that stored WAV and cached separately:
 
@@ -54,11 +65,9 @@ temp/vite-plugin-import-voice-sample/
     <hash>.pcm
 ```
 
-An Opus file exists only when a dependent imports `format: 'opus'`. PCM is never part of the raw store; an explicit `format: 'pcm'` import unpacks the stored WAV and caches the extracted PCM. A `format: 'wav'` import directly serves `store/<hash>.wav`. A `/timings` import reads the MessagePack metadata and does not create an audio conversion.
+An Opus file exists only when a dependent imports `format: 'opus'`. PCM is never part of the raw store; an explicit `format: 'pcm'` import extracts PCM from the stored WAV and caches it. A `format: 'wav'` import directly serves `store/<hash>.wav`. A `format: 'timings'` import reads MessagePack metadata and creates no audio conversion.
 
-The source may be `voice-sample` or a named alias such as `voice-sample:welcome`; aliases are useful when a file imports several samples. The default attributes are `voice: 'iris'`, `language: 'en'`, and `format: 'opus'`; `text` is required. `format` can be `pcm`, `wav`, or `opus`.
-
-Cache/store hits never contact OpenRouter. Cache misses use `OPENROUTER_API_KEY`. OpenRouter's timestamp-enabled speech response carries PCM in a timed envelope; the plugin derives the actual sample rate from PCM length and provider duration and immediately wraps it into the canonical stored WAV.
+Store/cache hits never contact OpenRouter. Cache misses use `OPENROUTER_API_KEY`. OpenRouter's timestamp-enabled response carries PCM in a timed envelope; the plugin derives the actual sample rate from PCM length and provider duration and immediately wraps it into the canonical stored WAV.
 
 `emotion` maps semantic names such as `cheerful`, `calm`, `excited`, and `dramatic` onto xAI wrapping speech tags. Native wrapping tags such as `soft`, `whisper`, `loud`, and `emphasis` can also be used directly.
 

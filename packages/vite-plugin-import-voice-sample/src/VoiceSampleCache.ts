@@ -1,4 +1,4 @@
-import type {VoiceSampleFetch, VoiceSampleFormat, VoiceSampleMetadata, VoiceSampleRequest, VoiceSampleTiming} from './types.ts'
+import type {VoiceSampleAudioFormat, VoiceSampleFetch, VoiceSampleMetadata, VoiceSampleRequest, VoiceSampleTiming} from './types.ts'
 
 import {execFile} from 'node:child_process'
 import {createHash, randomUUID} from 'node:crypto'
@@ -200,7 +200,7 @@ export default class VoiceSampleCache {
     this.#model = options.model ?? modelDefault
   }
 
-  async getAudio(request: VoiceSampleRequest): Promise<VoiceSampleCacheEntry> {
+  async getAudio(request: VoiceSampleRequest & {format: VoiceSampleAudioFormat}): Promise<VoiceSampleCacheEntry> {
     const key = this.key(request)
     const stored = await this.#getStored(request, key)
     const audioPath = await this.#getAudio(request.format, key, stored.rawPath)
@@ -238,11 +238,11 @@ export default class VoiceSampleCache {
     return resolve(this.#storeDirectory, `${key}.wav`)
   }
 
-  #cachePath(key: string, format: Exclude<VoiceSampleFormat, 'wav'>) {
+  #cachePath(key: string, format: Exclude<VoiceSampleAudioFormat, 'wav'>) {
     return resolve(this.#cacheDirectory, `${key}.${format}`)
   }
 
-  async #convert(format: Exclude<VoiceSampleFormat, 'wav'>, key: string, rawPath: string) {
+  async #convert(format: Exclude<VoiceSampleAudioFormat, 'wav'>, key: string, rawPath: string) {
     const output = this.#cachePath(key, format)
     if (await hasFile(output)) {
       return output
@@ -365,7 +365,7 @@ export default class VoiceSampleCache {
     }
   }
 
-  async #getAudio(format: VoiceSampleFormat, key: string, rawPath: string) {
+  async #getAudio(format: VoiceSampleAudioFormat, key: string, rawPath: string) {
     if (format === 'wav') {
       return rawPath
     }

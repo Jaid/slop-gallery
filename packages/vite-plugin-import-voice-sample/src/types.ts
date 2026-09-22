@@ -1,5 +1,6 @@
 export type VoiceSampleFetch = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
-export type VoiceSampleFormat = 'opus' | 'pcm' | 'wav'
+export type VoiceSampleAudioFormat = 'opus' | 'pcm' | 'wav'
+export type VoiceSampleFormat = VoiceSampleAudioFormat | 'timings'
 
 export type VoiceSampleTiming = {
   char: string
@@ -25,7 +26,7 @@ export type VoiceSampleRequest = {
 export type VoiceSamplePluginOptions = {
   /** OpenRouter API key. Falls back to OPENROUTER_API_KEY from Vite env or process.env. */
   apiKey?: string
-  /** Defaults used when the matching import attribute is omitted. */
+  /** Defaults used when the matching import attribute/path component is omitted. */
   defaults?: Partial<Pick<VoiceSampleRequest, 'format' | 'language' | 'voice'>>
   /** Storage directory relative to the Vite root. */
   directory?: string

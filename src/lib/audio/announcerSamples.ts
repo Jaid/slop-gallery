@@ -1,11 +1,11 @@
-import claudeFableAudio from 'voice-sample:claude-fable' with {format: 'opus', language: 'en', text: 'Claude Fable', voice: 'iris'}
-import claudeOpusAudio from 'voice-sample:claude-opus' with {format: 'opus', language: 'en', text: 'Claude Opus', voice: 'iris'}
-import claudeSonnetAudio from 'voice-sample:claude-sonnet' with {format: 'opus', language: 'en', text: 'Claude Sonnet', voice: 'iris'}
-import deepseekFlashAudio from 'voice-sample:deepseek-flash' with {format: 'opus', language: 'en', text: 'DeepSeek Flash', voice: 'iris'}
-import geminiFlashAudio from 'voice-sample:gemini-flash' with {format: 'opus', language: 'en', text: 'Gemini Flash', voice: 'iris'}
-import glmAudio from 'voice-sample:glm' with {format: 'opus', language: 'en', text: 'GLM', voice: 'iris'}
-import gptAstraAudio from 'voice-sample:gpt-astra' with {format: 'opus', language: 'en', text: 'GPT Astra', voice: 'iris'}
-import grokAudio from 'voice-sample:grok' with {format: 'opus', language: 'en', text: 'Grok', voice: 'iris'}
+import claudeFableAudio from 'voice:claude-fable' with {format: 'opus', language: 'en', text: 'Claude Fable'}
+import claudeOpusAudio from 'voice:claude-opus' with {format: 'opus', language: 'en', text: 'Claude Opus'}
+import claudeSonnetAudio from 'voice:claude-sonnet' with {format: 'opus', language: 'en', text: 'Claude Sonnet'}
+import deepseekFlashAudio from 'voice:deepseek-flash' with {format: 'opus', language: 'en', text: 'DeepSeek Flash'}
+import geminiFlashAudio from 'voice:gemini-flash' with {format: 'opus', language: 'en', text: 'Gemini Flash'}
+import glmAudio from 'voice:glm' with {format: 'opus', language: 'en', text: 'GLM'}
+import gptAstraAudio from 'voice:gpt-astra' with {format: 'opus', language: 'en', text: 'GPT Astra'}
+import grokAudio from 'voice:grok' with {format: 'opus', language: 'en', text: 'Grok'}
 
 export const announcerSamples = [
   {
