@@ -24,6 +24,17 @@ describe('Knot cellular fields', () => {
     expect(text).toContain('distance.smoothstep(inner, outer).oneMinus()')
     expect(text).toContain('distances.y.sub(distances.x)')
   })
+  test('keeps Solenoid oxidation continuous and favors the winding crevices', async () => {
+    const text = await source('solenoid')
+    expect(text).not.toContain('cellNoiseVec3')
+    expect(text).not.toContain('.floor()')
+    expect(text).toContain('const oxidation = mx_fractal_noise_float(p.mul(30), 3, 2, 0.5).mul(0.5).add(0.5)')
+    expect(text).toContain('oxidation.smoothstep(0.55, 0.75).mul(profile.oneMinus().mul(0.65).add(0.35))')
+    expect(text).toContain('mix(copper, patina, patinaMask.mul(0.7))')
+    expect(text).toContain('const turns = 62')
+    expect(text).toContain('positionGeometry.add(normalLocal.mul(profile.mul(wireRadius).mul(0.3)))')
+    expect(text).toContain('const travel = tube.x.mul(turns).sub(time.mul(9))')
+  })
   test('uses localized inclusions instead of whole-cell point masks', async () => {
     const cases: Array<string> = [
       'celestial_astrolabe',

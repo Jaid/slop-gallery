@@ -2,7 +2,6 @@ import type {Texture} from 'three/webgpu'
 
 import {bitangentView, color, float, mix, mx_fractal_noise_float, negateOnBackSide, normalLocal, positionGeometry, tangentView, time, transformNormalToView, uv, vec2, vec3} from 'three/tsl'
 
-import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
@@ -43,11 +42,13 @@ export default class extends KnotMaterial {
 // Copper, aged unevenly, with the patina pooling in the gaps.
 // ------------------------------------------------------------------
     const grain = mx_fractal_noise_float(p.mul(46), 3, 2.2, 0.5).mul(0.5).add(0.5)
-    const identity = cellNoiseVec3(p.mul(30).floor())
+    // Continuous oxidation avoids stamping grid-cell faces onto the copper.
+    const oxidation = mx_fractal_noise_float(p.mul(30), 3, 2, 0.5).mul(0.5).add(0.5)
+    const patinaMask = oxidation.smoothstep(0.55, 0.75).mul(profile.oneMinus().mul(0.65).add(0.35))
     const copper = mix(color('#7a2c06'), color('#ffa848'), grain.mul(0.75).add(0.25))
     const patina = mix(color('#1d4a3f'), color('#3f8f74'), grain)
     const core = mix(color('#05080c'), color('#101a22'), grain.mul(0.6).add(0.2))
-    const wireColor = mix(copper, patina, identity.y.smoothstep(0.72, 0.95).mul(0.7))
+    const wireColor = mix(copper, patina, patinaMask.mul(0.7))
     this.colorNode = mix(core, wireColor, inside.smoothstep(0, 0.03))
     this.metalnessNode = inside.smoothstep(0, 0.03).mul(0.4).add(0.6)
     this.roughnessNode = mix(float(0.55), mix(float(0.22), float(0.07), grain), inside.smoothstep(0, 0.05))
