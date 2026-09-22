@@ -1,6 +1,6 @@
 import type {Node, Texture} from 'three/webgpu'
 
-import {color, mix, mx_noise_float, positionViewDirection, vec3} from 'three/tsl'
+import {color, mix, mx_noise_float, mx_worley_noise_float, vec3} from 'three/tsl'
 
 import {braggDiffraction} from '../../candidates/gemini_flash/lib/braggDiffraction.ts'
 import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
@@ -21,12 +21,15 @@ export default class extends KnotMaterial {
     this.attenuationColor.set('#0a1d26')
     this.attenuationDistance = 1.2
     this.name = knotData.id
-    const {p, grazing, rim, near, intimate} = viewerFrame()
+    const {p, view, grazing, rim, near, intimate} = viewerFrame()
     // 3D mosaic harlequin domain partitioning
     const domainCoord = p.mul(18)
-    const domainRnd = cellNoiseVec3(domainCoord.floor())
+    // Match crystal identity to the same Voronoi sites that define its borders.
+    const domainId = mx_worley_noise_float(domainCoord, 1, 1)
+    const domainRnd = cellNoiseVec3(vec3(domainId.mul(65_536), 7, 19))
     const boundary = cellularBoundary(domainCoord)
-    const tileEdge = boundary.smoothstep(0.02, 0.08).oneMinus()
+    const footprint = domainCoord.fwidth().length()
+    const tileEdge = boundary.smoothstep(0.02, footprint.add(0.08)).oneMinus()
     // Randomized internal crystal lattice normal for each domain
     const latticeNormal = domainRnd.sub(0.5).mul(2).normalize()
     // Three studio light directions to test the Bragg diffraction condition
@@ -40,12 +43,15 @@ export default class extends KnotMaterial {
     // Sum Bragg diffraction flashes across studio lighting vectors
     let braggFlash: Node<'vec3'> = vec3(0)
     for (const lamp of lamps) {
-      const halfVector = lamp.add(positionViewDirection).normalize()
+      const halfVector = lamp.add(view).normalize()
       const flash = braggDiffraction(latticeNormal, halfVector, dSpacing, 45)
       braggFlash = braggFlash.add(flash)
     }
     // Pinfire micro-sparkles inside the domains, awakened on close approach
-    const pinfire = cellularPoints(p.mul(65), 0.03, 0.18, 0.6).mul(near)
+    const pinCoord = p.mul(65)
+    const pinfire = cellularPoints(pinCoord, 0.03, 0.18, 0.6).mul(near)
+    // A contained pinfire point keeps its own tint across crystal boundaries.
+    const pinIdentity = cellNoiseVec3(pinCoord.floor())
     // Dark ironstone matrix host beneath milky translucent silica cap
     const matrixColor = mix(color('#05070a'), color('#141c22'), mx_noise_float(p.mul(8)).mul(0.5).add(0.5))
     const opalescentHaze = color('#80c8e8')
@@ -63,7 +69,7 @@ export default class extends KnotMaterial {
       .mul(near.mul(0.5).add(0.7))
       .mul(2.5)
     // 2. Micro-pinfire sparkles: vibrant points of colored light
-    const pinfireColor = mix(color('#ff2060'), color('#00f0a0'), domainRnd.y)
+    const pinfireColor = mix(color('#ff2060'), color('#00f0a0'), pinIdentity.y)
     const pinfireGlow = pinfireColor.mul(pinfire).mul(intimate).mul(3)
     // 3. Rayleigh scattering rim opalescence
     const rayleighRim = color('#7ec8f0').mul(rim.pow(2.2)).mul(0.3)
