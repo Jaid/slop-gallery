@@ -40,6 +40,12 @@ describe('Vite adapter', () => {
     expect(code.match(/Math\.PI/gu)).toHaveLength(1)
     expect(await render(source, {stableBuiltins: false})).toBe(source)
   })
+  test('joins strings by default unless stable built-ins are disabled', async () => {
+    const values = ['marcus', 'jack', 'thomas', 'linda', 'paula', 'bernd', 'friedrich', 'sandra']
+    const source = `sink(${values.flatMap(value => Array.from({length: 3}, () => JSON.stringify(value))).join(',')})`
+    expect(await render(source)).toContain('.split(" ")')
+    expect(await render(source, {stableBuiltins: false})).not.toContain('.split(')
+  })
   test('runs as a post-build post-renderChunk plugin', () => {
     const plugin = vitePluginHoistPopularConstants()
     expect(plugin.name).toBe('hoist-popular-constants')

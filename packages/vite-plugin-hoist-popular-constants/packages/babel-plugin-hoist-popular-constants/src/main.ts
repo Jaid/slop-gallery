@@ -6,6 +6,8 @@ import {types as t} from '@babel/core'
 import {declare} from '@babel/helper-plugin-utils'
 
 export type HoistPopularConstantsOptions = {
+  /** Join pooled strings into one split-backed destructuring initializer when smaller. Defaults to true and requires stableBuiltins. */
+  join?: boolean
   minimumOccurrences?: number
   minimumSavingsBytes?: number
   /** Assume unbound built-in objects are stable, enabling constant properties such as Math.PI and Number.NaN to be pooled. */
@@ -28,9 +30,14 @@ type HoistState = {
   hasDirectEval?: boolean
 }
 type HoistPluginState = HoistState & PluginPass
+type HoistedCandidate = {
+  candidate: Candidate
+  identifier: t.Identifier
+}
 
 const firstIdentifierCharacters = '_$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 const identifierCharacters = `${firstIdentifierCharacters}0123456789`
+const joinCandidates = " _-\"\\'.!:;#$%&'()*+,/0123456789<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^`abcdefghijklmnopqrstuvwxyz{}~"
 const stableBuiltinConstants = new Map([
   ['Math', new Set([
     'E',
@@ -191,23 +198,89 @@ const estimatedSavings = (candidate: Candidate, identifierLength: number, first:
   const declarationOverhead = first ? 6 : 2
   return candidate.rawBytes - ((candidate.occurrences + 1) * identifierLength + candidate.expressionBytes + declarationOverhead)
 }
+const generatedStringBytes = (value: string) => Buffer.byteLength(JSON.stringify(value))
+const findJoinSeparator = (values: Array<string>) => {
+  for (const candidate of joinCandidates) {
+    if (Buffer.byteLength(candidate) === 1 && values.every(value => !value.includes(candidate))) {
+      return candidate
+    }
+  }
+}
+const joinedStringDeclaration = (strings: Array<HoistedCandidate>) => {
+  if (strings.length < 2) {
+    return
+  }
+  const values = strings.map(({candidate}) => {
+    if (!t.isStringLiteral(candidate.expression)) {
+      throw new TypeError('Expected a string literal candidate.')
+    }
+    return candidate.expression.value
+  })
+  const separator = findJoinSeparator(values)
+  if (separator === undefined) {
+    return
+  }
+  const identifiersBytes = strings.reduce((bytes, {identifier}) => bytes + Buffer.byteLength(identifier.name), 0)
+  const ordinaryBytes = identifiersBytes
+    + strings.reduce((bytes, {candidate}) => bytes + 1 + generatedStringBytes((candidate.expression as t.StringLiteral).value), 0)
+    + strings.length - 1
+  const joinedValue = values.join(separator)
+  const joinedBytes = 2 + identifiersBytes + strings.length - 1
+    + 1 + generatedStringBytes(joinedValue)
+    + 7 + generatedStringBytes(separator) + 1
+  if (ordinaryBytes - joinedBytes < 1) {
+    return
+  }
+  const split = t.callExpression(
+    t.memberExpression(t.stringLiteral(joinedValue), t.identifier('split')),
+    [t.stringLiteral(separator)],
+  )
+  return t.variableDeclarator(t.arrayPattern(strings.map(({identifier}) => t.cloneNode(identifier))), split)
+}
+const declarationsFor = (hoisted: Array<HoistedCandidate>, options: HoistPopularConstantsOptions) => {
+  let joinedStrings: t.VariableDeclarator | undefined
+  if (options.stableBuiltins && (options.join ?? true)) {
+    joinedStrings = joinedStringDeclaration(hoisted.filter(({candidate}) => t.isStringLiteral(candidate.expression)))
+  }
+  if (!joinedStrings) {
+    return hoisted.map(({candidate, identifier}) => t.variableDeclarator(identifier, t.cloneNode(candidate.expression)))
+  }
+  const declarations: Array<t.VariableDeclarator> = []
+  let emittedJoinedStrings = false
+  for (const item of hoisted) {
+    if (t.isStringLiteral(item.candidate.expression)) {
+      if (!emittedJoinedStrings) {
+        declarations.push(joinedStrings)
+        emittedJoinedStrings = true
+      }
+      continue
+    }
+    declarations.push(t.variableDeclarator(item.identifier, t.cloneNode(item.candidate.expression)))
+  }
+  return declarations
+}
 const hoistCandidates = (path: NodePath<t.Program>, state: HoistPluginState, options: HoistPopularConstantsOptions) => {
   if (state.hasDirectEval) {
     return false
   }
   const minimumOccurrences = options.minimumOccurrences ?? 2
   const minimumSavingsBytes = options.minimumSavingsBytes ?? 1
-  const remaining = [...state.candidates!.values()].filter(candidate => candidate.occurrences >= minimumOccurrences)
+  const remaining: Array<Candidate> = []
+  for (const candidate of state.candidates!.values()) {
+    if (candidate.occurrences >= minimumOccurrences) {
+      remaining.push(candidate)
+    }
+  }
   if (!remaining.length) {
     return false
   }
   path.scope.crawl()
   const chosen = new Set<string>
-  const declarations: Array<t.VariableDeclarator> = []
+  const hoisted: Array<HoistedCandidate> = []
   let identifierIndex = 0
   while (remaining.length) {
     const next = nextIdentifier(path, chosen, identifierIndex)
-    const first = declarations.length === 0
+    const first = hoisted.length === 0
     let bestIndex = -1
     let bestSavings = Number.NEGATIVE_INFINITY
     for (const [index, candidate] of remaining.entries()) {
@@ -228,12 +301,15 @@ const hoistCandidates = (path: NodePath<t.Program>, state: HoistPluginState, opt
     for (const candidatePath of candidate.paths) {
       candidatePath.replaceWith(t.cloneNode(identifier))
     }
-    declarations.push(t.variableDeclarator(identifier, t.cloneNode(candidate.expression)))
+    hoisted.push({
+      candidate,
+      identifier,
+    })
   }
-  if (!declarations.length) {
+  if (!hoisted.length) {
     return false
   }
-  path.unshiftContainer('body', t.variableDeclaration('var', declarations))
+  path.unshiftContainer('body', t.variableDeclaration('var', declarationsFor(hoisted, options)))
   return true
 }
 

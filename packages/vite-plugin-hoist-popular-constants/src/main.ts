@@ -8,10 +8,12 @@ export type VitePluginHoistPopularConstantsOptions = HoistPopularConstantsOption
 
 /** Pools profitable primitive constants after chunk rendering, before final minification. */
 export default function vitePluginHoistPopularConstants(options: VitePluginHoistPopularConstantsOptions = {}): Plugin {
+  const stableBuiltins = options.stableBuiltins ?? true
   const babelOptions: HoistPopularConstantsOptions = {
-    minimumSavingsBytes: 0,
-    stableBuiltins: true,
     ...options,
+    join: stableBuiltins && (options.join ?? true),
+    minimumSavingsBytes: options.minimumSavingsBytes ?? 0,
+    stableBuiltins,
   }
   return {
     name: 'hoist-popular-constants',

@@ -30,6 +30,45 @@ describe('popular constant hoisting', () => {
     expect(code.match(/4294967295/gu)).toHaveLength(1)
     expect(code.match(/\bvar\b/gu)).toHaveLength(1)
   })
+  test('joins eight pooled strings when split-backed destructuring saves a byte', () => {
+    const values = ['marcus', 'jack', 'thomas', 'linda', 'paula', 'bernd', 'friedrich', 'sandra']
+    const source = `sink(${values.flatMap(value => Array.from({length: 3}, () => JSON.stringify(value))).join(',')})`
+    const code = compile(source, {stableBuiltins: true})
+    expect(code).toContain('.split(" ")')
+    expect(code).toStartWith('var[')
+  })
+  test('does not join seven pooled strings when destructuring would not save bytes', () => {
+    const values = ['marcus', 'jack', 'thomas', 'linda', 'paula', 'bernd', 'friedrich']
+    const source = `sink(${values.flatMap(value => Array.from({length: 3}, () => JSON.stringify(value))).join(',')})`
+    expect(compile(source, {stableBuiltins: true})).not.toContain('.split(')
+  })
+  test('can disable joined string pooling explicitly', () => {
+    const values = ['marcus', 'jack', 'thomas', 'linda', 'paula', 'bernd', 'friedrich', 'sandra']
+    const source = `sink(${values.flatMap(value => Array.from({length: 3}, () => JSON.stringify(value))).join(',')})`
+    expect(compile(source, {
+      join: false,
+      stableBuiltins: true,
+    })).not.toContain('.split(')
+  })
+  test('disables joined string pooling when stable built-ins are disabled', () => {
+    const values = ['marcus', 'jack', 'thomas', 'linda', 'paula', 'bernd', 'friedrich', 'sandra']
+    const source = `sink(${values.flatMap(value => Array.from({length: 3}, () => JSON.stringify(value))).join(',')})`
+    expect(compile(source, {
+      join: true,
+      stableBuiltins: false,
+    })).not.toContain('.split(')
+  })
+  test('uses the first available one-byte join separator', () => {
+    const values = ['marcus smith', 'jack black', 'thomas brown', 'linda white', 'paula green', 'bernd gray', 'friedrich gold', 'sandra blue']
+    const source = `sink(${values.flatMap(value => Array.from({length: 3}, () => JSON.stringify(value))).join(',')})`
+    expect(compile(source, {stableBuiltins: true})).toContain('.split("_")')
+  })
+  test('falls back when every join separator occurs in the pooled strings', () => {
+    const printableAscii = Array.from({length: 95}, (_, index) => String.fromCodePoint(32 + index)).join('')
+    const values = [printableAscii, 'marcus', 'jackson', 'thomas', 'lindsey', 'paulina', 'bernhard', 'friedrich']
+    const source = `sink(${values.flatMap(value => Array.from({length: 3}, () => JSON.stringify(value))).join(',')})`
+    expect(compile(source, {stableBuiltins: true})).not.toContain('.split(')
+  })
   test('hoists other primitive literals without identity', () => {
     const code = compile('sink(null,null,null,null,null,true,true,true,true,true,12345678901234567890n,12345678901234567890n)')
     expect(code.match(/null/gu)).toHaveLength(1)
