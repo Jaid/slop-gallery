@@ -2,9 +2,9 @@ import type {KnotData} from '../../types.ts'
 
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
-  id: 'quicksilver',
+  id: 'boreal_veil',
   candidateId: 'mimo',
-  title: 'Quicksilver',
+  title: 'Boreal Veil',
   harness: 'Mage',
   author: {
     model: {
@@ -13,10 +13,9 @@ export default {
       effortLevel: 'xhigh',
     },
   },
-  flavorText: 'A metal that never set. It trembles at your breath and keeps a perfect, upside-down portrait of the room.',
-  displacement: 0.12,
+  flavorText: 'Curtains of polar light drift through the knot, as if the night itself were combed into silk.',
   placeholder: {
-    color: '#b8bec4',
-    shading: 'liquid',
+    color: '#1c8f78',
+    shading: 'ghost',
   },
 } as const satisfies KnotData

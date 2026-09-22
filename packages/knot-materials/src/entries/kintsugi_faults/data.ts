@@ -2,9 +2,9 @@ import type {KnotData} from '../../types.ts'
 
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
-  id: 'quicksilver',
+  id: 'kintsugi_faults',
   candidateId: 'mimo',
-  title: 'Quicksilver',
+  title: 'Kintsugi Faults',
   harness: 'Mage',
   author: {
     model: {
@@ -13,10 +13,10 @@ export default {
       effortLevel: 'xhigh',
     },
   },
-  flavorText: 'A metal that never set. It trembles at your breath and keeps a perfect, upside-down portrait of the room.',
-  displacement: 0.12,
+  flavorText: 'Where the vessel broke, gold remembers the shape of the wound and makes it the brightest seam.',
+  displacement: 0.006,
   placeholder: {
-    color: '#b8bec4',
-    shading: 'liquid',
+    color: '#a8b8a1',
+    shading: 'smooth',
   },
 } as const satisfies KnotData

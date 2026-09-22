@@ -133,6 +133,7 @@ describe('arbitrary Knot batches', () => {
       'grok',
       'hy',
       'kimi',
+      'mimo',
       'minimax',
       'muse_spark',
       'qwen_max',
@@ -150,6 +151,7 @@ describe('arbitrary Knot batches', () => {
       'glm-5.3-flash',
       'grok-4.6',
       'kimi-k3',
+      'mimo-v2.5-pro',
       'minimax-m3',
       'qwen-3.8-max',
       'gpt-5.6-luna',
@@ -172,6 +174,7 @@ describe('arbitrary Knot batches', () => {
       grok: 'Grok',
       hy: 'Hy',
       kimi: 'Kimi',
+      mimo: 'MiMo',
       minimax: 'MiniMax M3',
       muse_spark: 'Muse Spark',
       qwen_max: 'Qwen Max',
@@ -256,6 +259,9 @@ describe('arbitrary Knot batches', () => {
     const minimaxMage = knots.filter(entry => entry.candidate.id === 'minimax' && entry.harness === 'Mage')
     expect(minimaxMage).toHaveLength(8)
     expect(minimaxMage.every(entry => entry.author.model.title === 'MiniMax M3' && entry.author.model.slug === 'minimax/minimax-m3' && entry.author.model.effortLevel === undefined)).toBe(true)
+    const mimoMage = knots.filter(entry => entry.candidate.id === 'mimo' && entry.harness === 'Mage')
+    expect(mimoMage).toHaveLength(8)
+    expect(mimoMage.every(entry => entry.author.model.title === 'MiMo V2.5 Pro' && entry.author.model.slug === 'xiaomi/mimo-v2.5-pro' && entry.author.model.effortLevel === 'xhigh')).toBe(true)
     const astraApi = api.filter(entry => entry.candidate.id === 'gpt_astra')
     const fableApi = api.filter(entry => entry.candidate.id === 'claude_fable')
     const solApi = api.filter(entry => entry.candidate.id === 'gpt_sol')

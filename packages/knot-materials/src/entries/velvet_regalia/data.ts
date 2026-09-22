@@ -2,9 +2,9 @@ import type {KnotData} from '../../types.ts'
 
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
-  id: 'quicksilver',
+  id: 'velvet_regalia',
   candidateId: 'mimo',
-  title: 'Quicksilver',
+  title: 'Velvet Regalia',
   harness: 'Mage',
   author: {
     model: {
@@ -13,10 +13,10 @@ export default {
       effortLevel: 'xhigh',
     },
   },
-  flavorText: 'A metal that never set. It trembles at your breath and keeps a perfect, upside-down portrait of the room.',
-  displacement: 0.12,
+  flavorText: 'Wine-dark pile drinks the light whole, then breathes it back as gold thread and a regal hush.',
+  displacement: 0.005,
   placeholder: {
-    color: '#b8bec4',
-    shading: 'liquid',
+    color: '#4d0b1b',
+    shading: 'fabric',
   },
 } as const satisfies KnotData
