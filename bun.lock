@@ -17,7 +17,7 @@
         "disposable-lifetime": "workspace:*",
         "ego-player": "workspace:*",
         "es-toolkit": "1.52.0",
-        "flatten-string": "^0.2.0",
+        "flatten-string": "0.2.0",
         "grok-speaker": "workspace:*",
         "knot-materials": "workspace:*",
         "mount-root": "0.5.0",
@@ -38,6 +38,7 @@
         "use-narrator": "workspace:*",
         "use-pause-menu": "workspace:*",
         "victoria-browser-client": "0.3.0",
+        "vite-plugin-import-voice-sample": "workspace:*",
         "webgpu-capture-bridge": "workspace:*",
         "zustand": "5.0.15",
       },
@@ -425,6 +426,20 @@
       },
       "peerDependencies": {
         "@babel/core": "^8.0.6",
+      },
+    },
+    "packages/vite-plugin-import-voice-sample": {
+      "name": "vite-plugin-import-voice-sample",
+      "version": "0.1.0",
+      "dependencies": {
+        "@babel/parser": "8.0.6",
+        "fs-extra": "11.4.0",
+      },
+      "devDependencies": {
+        "vite": "8.3.0",
+      },
+      "peerDependencies": {
+        "vite": "^8.3.0",
       },
     },
     "packages/vite-plugin-thematic-chunks": {
@@ -1732,6 +1747,8 @@
     "vite-plugin-game-level": ["vite-plugin-game-level@workspace:packages/vite-plugin-game-level"],
 
     "vite-plugin-hoist-popular-constants": ["vite-plugin-hoist-popular-constants@workspace:packages/vite-plugin-hoist-popular-constants"],
+
+    "vite-plugin-import-voice-sample": ["vite-plugin-import-voice-sample@workspace:packages/vite-plugin-import-voice-sample"],
 
     "vite-plugin-media-mixins": ["vite-plugin-media-mixins@0.10.0", "", { "peerDependencies": { "vite": "^8.0.16" } }, "sha512-CFctDKYijEKj/lOHFoj+x/V1kllgZHz0FTazUTpAo7ATFwQ2HXSmI7dRrzFQdmDE8RJeWp3CmOy31zHWK+6+xQ=="],
 

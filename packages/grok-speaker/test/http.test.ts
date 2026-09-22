@@ -20,7 +20,10 @@ test('warms OpenRouter HTTP without a synthesis request or returning account dat
   const [url, request] = fetchMock.mock.calls[0]
   expect(url).toBe('https://openrouter.ai/api/v1/key')
   expect(request?.body).toBeUndefined()
-  expect(new Headers(request?.headers).get('Authorization')).toBe('Bearer sk-or-test')
+  const headers = new Headers(request?.headers)
+  expect(headers.get('Authorization')).toBe('Bearer sk-or-test')
+  expect(headers.get('HTTP-Referer')).toBe('https://slop.gallery')
+  expect(headers.get('X-OpenRouter-Title')).toBe('Slop Gallery')
   expect(request?.redirect).toBe('error')
   expect(response.bodyUsed).toBe(true)
 })
@@ -80,7 +83,12 @@ test.each([['xai-test', 'https://api.x.ai/v1/tts', 48_000], ['sk-or-test', 'http
   const [endpoint, request] = fetchMock.mock.calls[0]
   expect(endpoint).toBe(url)
   expect(request?.redirect).toBe('error')
-  expect(new Headers(request?.headers).get('Authorization')).toBe(`Bearer ${key}`)
+  const headers = new Headers(request?.headers)
+  expect(headers.get('Authorization')).toBe(`Bearer ${key}`)
+  if (speaker.provider === 'openrouter') {
+    expect(headers.get('HTTP-Referer')).toBe('https://slop.gallery')
+    expect(headers.get('X-OpenRouter-Title')).toBe('Slop Gallery')
+  }
   const body = readBody(request)
   const options = speaker.provider === 'xai' ? body : body.provider.options.xai
   expect(options.output_format).toEqual({

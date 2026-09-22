@@ -1,23 +1,32 @@
+import claudeFableAudio from 'voice-sample:claude-fable' with {format: 'opus', language: 'en', text: 'Claude Fable', voice: 'iris'}
+import claudeOpusAudio from 'voice-sample:claude-opus' with {format: 'opus', language: 'en', text: 'Claude Opus', voice: 'iris'}
+import claudeSonnetAudio from 'voice-sample:claude-sonnet' with {format: 'opus', language: 'en', text: 'Claude Sonnet', voice: 'iris'}
+import deepseekFlashAudio from 'voice-sample:deepseek-flash' with {format: 'opus', language: 'en', text: 'DeepSeek Flash', voice: 'iris'}
+import geminiFlashAudio from 'voice-sample:gemini-flash' with {format: 'opus', language: 'en', text: 'Gemini Flash', voice: 'iris'}
+import glmAudio from 'voice-sample:glm' with {format: 'opus', language: 'en', text: 'GLM', voice: 'iris'}
+import gptAstraAudio from 'voice-sample:gpt-astra' with {format: 'opus', language: 'en', text: 'GPT Astra', voice: 'iris'}
+import grokAudio from 'voice-sample:grok' with {format: 'opus', language: 'en', text: 'Grok', voice: 'iris'}
+
 export const announcerSamples = [
   {
     id: 'claude-fable',
     label: 'Claude Fable',
-    audio: String(new URL('announcerSamples/claude-fable.opus', import.meta.url)),
+    audio: claudeFableAudio,
   },
   {
     id: 'claude-opus',
     label: 'Claude Opus',
-    audio: String(new URL('announcerSamples/claude-opus.opus', import.meta.url)),
+    audio: claudeOpusAudio,
   },
   {
     id: 'claude-sonnet',
     label: 'Claude Sonnet',
-    audio: String(new URL('announcerSamples/claude-sonnet.opus', import.meta.url)),
+    audio: claudeSonnetAudio,
   },
   {
     id: 'deepseek-flash',
     label: 'DeepSeek Flash',
-    audio: String(new URL('announcerSamples/deepseek-flash.opus', import.meta.url)),
+    audio: deepseekFlashAudio,
   },
 ] as const
 
@@ -28,22 +37,22 @@ export const announcerPrioritySamples = [
   {
     id: 'gemini-flash',
     label: 'Gemini Flash',
-    audio: String(new URL('announcerSamples/gemini-flash.opus', import.meta.url)),
+    audio: geminiFlashAudio,
   },
   {
     id: 'glm',
     label: 'GLM',
-    audio: String(new URL('announcerSamples/glm.opus', import.meta.url)),
+    audio: glmAudio,
   },
   {
     id: 'gpt-astra',
     label: 'GPT Astra',
-    audio: String(new URL('announcerSamples/gpt-astra.opus', import.meta.url)),
+    audio: gptAstraAudio,
   },
   {
     id: 'grok',
     label: 'Grok',
-    audio: String(new URL('announcerSamples/grok.opus', import.meta.url)),
+    audio: grokAudio,
   },
 ] as const
 export const announcerPriorityDemos = announcerPriorityModes.map((priority, index) => {

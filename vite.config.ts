@@ -12,6 +12,7 @@ import bakeBranchComponentPlugin from 'vite-plugin-bake-branch-component'
 import bakeThreePlugin from 'vite-plugin-bake-three'
 import gameLevelPlugin, {selectGameLevel} from 'vite-plugin-game-level'
 import hoistPopularConstantsPlugin from 'vite-plugin-hoist-popular-constants'
+import importVoiceSamplePlugin from 'vite-plugin-import-voice-sample'
 import mediaMixinsPlugin from 'vite-plugin-media-mixins'
 import thematicChunksPlugin from 'vite-plugin-thematic-chunks'
 import titlePlugin from 'vite-plugin-title'
@@ -46,6 +47,7 @@ const getCommonConfig = (context: ConfigEnv) => {
       chunkSizeWarningLimit: 10_000,
     },
     plugins: [
+      importVoiceSamplePlugin(),
       knotMaterialsPlugin(),
       titlePlugin(levels[level].title),
       gameLevelPlugin({

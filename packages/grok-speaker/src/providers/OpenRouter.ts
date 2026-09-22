@@ -7,6 +7,14 @@ export default class OpenRouter extends Provider {
   protected readonly endpoint = 'https://openrouter.ai/api/v1/audio/speech'
   readonly id = 'openrouter'
 
+  protected override get headers() {
+    return {
+      ...super.headers,
+      'HTTP-Referer': 'https://slop.gallery',
+      'X-OpenRouter-Title': 'Slop Gallery',
+    }
+  }
+
   protected body(text: string, timestamps: boolean) {
     return {
       model: 'x-ai/grok-voice-tts-1.0',
