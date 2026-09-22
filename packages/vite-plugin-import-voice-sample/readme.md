@@ -112,4 +112,21 @@ export default {
 }
 ```
 
-Options can override the storage directory, model, defaults, API key, or ffmpeg executable. The API key is only used inside Vite and is never emitted into client code.
+## Synthesis and Opus options
+
+The plugin accepts:
+
+- `sampleRate?: number` — requested xAI PCM sample rate in Hz; defaults to `48000`.
+- `bitrate?: number` — Opus encoder bitrate in bits/s; used only for Opus conversion.
+
+When `bitrate` is omitted it is derived from the configured sample rate:
+
+```ts
+Math.round(0.68266 * sampleRate)
+```
+
+For the default 48 kHz sample rate this is 32,768 bit/s; at 24 kHz it is 16,384 bit/s.
+
+`sampleRate` is part of the raw synthesis identity because it changes the OpenRouter request. `bitrate` is not: changing bitrate reuses the same canonical WAV + MessagePack store and creates a separately keyed Opus derivative, preventing stale encoder-cache reuse without duplicating synthesis.
+
+Options can also override the storage directory, model, defaults, API key, or ffmpeg executable. The API key is only used inside Vite and is never emitted into client code.

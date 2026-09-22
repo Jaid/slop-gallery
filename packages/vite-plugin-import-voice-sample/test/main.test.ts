@@ -11,7 +11,7 @@ import {build} from 'vite'
 
 import {styleVoiceSampleText} from '../src/emotion.ts'
 import importVoiceSample from '../src/main.ts'
-import VoiceSampleCache from '../src/VoiceSampleCache.ts'
+import VoiceSampleCache, {defaultVoiceSampleBitrate} from '../src/VoiceSampleCache.ts'
 
 const directories: Array<string> = []
 const temporaryDirectory = async () => {
@@ -22,9 +22,9 @@ const temporaryDirectory = async () => {
 afterEach(async () => {
   await Promise.all(directories.splice(0).map(directory => fs.remove(directory)))
 })
-const pcm = () => Buffer.alloc(4800 * 2)
-const envelope = () => ({
-  audio: pcm().toBase64(),
+const pcm = (sampleRate = 48_000) => Buffer.alloc(Math.round(sampleRate * 0.1) * 2)
+const envelope = (sampleRate = 48_000) => ({
+  audio: pcm(sampleRate).toBase64(),
   duration: 0.1,
   content_type: 'audio/pcm',
   audio_timestamps: {
@@ -32,10 +32,10 @@ const envelope = () => ({
     graph_times: [[0, 0.04], [0.04, 0.1]],
   },
 })
-const response = () => Response.json(envelope(), {
+const response = (sampleRate = 48_000) => Response.json(envelope(sampleRate), {
   headers: {'x-generation-id': 'trace-id'},
 })
-const fetchRecorder = (calls: Array<Record<string, unknown>>): VoiceSampleFetch => async (_input, init) => {
+const fetchRecorder = (calls: Array<Record<string, unknown>>, sampleRate = 48_000): VoiceSampleFetch => async (_input, init) => {
   if (typeof init?.body !== 'string') {
     throw new TypeError('Expected a JSON request body.')
   }
@@ -44,7 +44,7 @@ const fetchRecorder = (calls: Array<Record<string, unknown>>): VoiceSampleFetch 
     throw new TypeError('Expected an object request body.')
   }
   calls.push(body as Record<string, unknown>)
-  return response()
+  return response(sampleRate)
 }
 const buildConfig = (root: string): InlineConfig => ({
   root,
@@ -238,6 +238,42 @@ describe('vite-plugin-import-voice-sample', () => {
       })],
     })
   })
+  test('configures sample rate and derives the default Opus bitrate', async () => {
+    const root = await temporaryDirectory()
+    await fs.writeFile(join(root, 'entry.ts'), `
+      import audio from 'voice:rate' with {text: 'Rate', format: 'wav'}
+      export default audio
+    `)
+    const calls: Array<Record<string, unknown>> = []
+    await build({
+      ...buildConfig(root),
+      plugins: [importVoiceSample({
+        apiKey: 'test-key',
+        fetch: fetchRecorder(calls, 24_000),
+        sampleRate: 24_000,
+      })],
+    })
+    expect(calls).toHaveLength(1)
+    expect(calls[0]).toMatchObject({
+      provider: {
+        options: {
+          xai: {
+            output_format: {
+              codec: 'pcm',
+              sample_rate: 24_000,
+            },
+          },
+        },
+      },
+    })
+    expect(defaultVoiceSampleBitrate(24_000)).toBe(Math.round(0.68266 * 24_000))
+    expect(defaultVoiceSampleBitrate(24_000)).toBe(16_384)
+    expect(defaultVoiceSampleBitrate(48_000)).toBe(32_768)
+    const storeEntries = await fs.readdir(join(root, 'temp/vite-plugin-import-voice-sample/store'))
+    const metadataName = storeEntries.find(file => file.endsWith('.msgpack'))
+    expect(metadataName).toBeDefined()
+    expect(unpack(await fs.readFile(join(root, 'temp/vite-plugin-import-voice-sample/store', metadataName!)))).toMatchObject({sampleRate: 24_000})
+  })
   test('shares raw storage across audio formats and caches only requested Opus and PCM conversions', async () => {
     const root = await temporaryDirectory()
     let calls = 0
@@ -291,12 +327,30 @@ describe('vite-plugin-import-voice-sample', () => {
       `${cache.key(opusRequest)}.msgpack`,
       `${cache.key(opusRequest)}.wav`,
     ])
+    const rawKey = cache.key(opusRequest)
+    const opusKey = cache.cacheKey(rawKey, 'opus')
     const cacheFiles = await fs.readdir(join(root, 'cache'))
     expect(cacheFiles.toSorted()).toEqual([
-      `${cache.key(opusRequest)}.opus`,
-      `${cache.key(opusRequest)}.pcm`,
-    ])
+      `${opusKey}.opus`,
+      `${rawKey}.pcm`,
+    ].toSorted())
     expect(storeFiles.some(file => file.endsWith('.pcm'))).toBe(false)
+    const otherBitrate = new VoiceSampleCache({
+      bitrate: 96_000,
+      directory: root,
+      fetch: async () => {
+        throw new Error('raw store should be reused')
+      },
+    })
+    expect(otherBitrate.key(opusRequest)).toBe(rawKey)
+    expect(otherBitrate.cacheKey(rawKey, 'opus')).not.toBe(opusKey)
+    const otherOpus = await otherBitrate.getAudio(opusRequest)
+    expect(otherOpus.rawPath).toBe(opusEntry.rawPath)
+    expect(otherOpus.audioPath).not.toBe(opusEntry.audioPath)
+    const reusedStoreFiles = await fs.readdir(join(root, 'store'))
+    const finalCacheFiles = await fs.readdir(join(root, 'cache'))
+    expect(reusedStoreFiles.toSorted()).toEqual(storeFiles.toSorted())
+    expect(finalCacheFiles.filter(file => file.endsWith('.opus'))).toHaveLength(2)
   })
   test('rejects removed or invalid import attributes', async () => {
     const root = await temporaryDirectory()

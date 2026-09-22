@@ -31,6 +31,8 @@ export type VoiceSampleRequest = {
 export type VoiceSamplePluginOptions = {
   /** OpenRouter API key. Falls back to OPENROUTER_API_KEY from Vite env or process.env. */
   apiKey?: string
+  /** Opus bitrate in bits/s. Defaults to Math.round(0.68266 * sampleRate). */
+  bitrate?: number
   /** Defaults used when the matching import attribute/path component is omitted. */
   defaults?: Partial<Pick<VoiceSampleRequest, 'format' | 'language' | 'type' | 'voice'>>
   /** Storage directory relative to the Vite root. */
@@ -41,4 +43,6 @@ export type VoiceSamplePluginOptions = {
   ffmpegPath?: string
   /** OpenRouter TTS model. */
   model?: string
+  /** Requested synthesis sample rate in Hz. Defaults to 48000. */
+  sampleRate?: number
 }

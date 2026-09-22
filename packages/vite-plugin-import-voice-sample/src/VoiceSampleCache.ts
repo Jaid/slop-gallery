@@ -14,7 +14,11 @@ import {styleVoiceSampleText} from './emotion.ts'
 const execFileAsync = promisify(execFile)
 const modelDefault = 'x-ai/grok-voice-tts-1.0'
 const storageSchema = 3
-const supportedSampleRates = [8000, 16_000, 22_050, 24_000, 44_100, 48_000]
+const conversionSchema = 1
+const defaultSampleRate = 48_000
+const commonSampleRates = [8000, 16_000, 22_050, 24_000, 32_000, 44_100, 48_000]
+
+export const defaultVoiceSampleBitrate = (sampleRate: number) => Math.round(0.68266 * sampleRate)
 
 export type VoiceSampleCacheEntry = {
   audioPath: string
@@ -80,7 +84,7 @@ const decodeMetadata = (value: unknown): VoiceSampleMetadata => {
     throw new TypeError('Stored voice sample metadata is invalid.')
   }
   const {duration, sampleRate, timings, ...rest} = value
-  if (typeof duration !== 'number' || !Number.isFinite(duration) || duration <= 0 || typeof sampleRate !== 'number' || !supportedSampleRates.includes(sampleRate)) {
+  if (typeof duration !== 'number' || !Number.isFinite(duration) || duration <= 0 || typeof sampleRate !== 'number' || !Number.isSafeInteger(sampleRate) || sampleRate <= 0) {
     throw new TypeError('Stored voice sample metadata is invalid.')
   }
   if (!Array.isArray(timings)) {
@@ -112,14 +116,15 @@ const decodeMetadata = (value: unknown): VoiceSampleMetadata => {
     ...traceId ? {traceId} : {},
   }
 }
-const decodeEnvelope = (value: unknown, traceId?: string) => {
+const decodeEnvelope = (value: unknown, requestedSampleRate: number, traceId?: string) => {
   if (!value || typeof value !== 'object' || !('audio' in value) || !('duration' in value) || !('content_type' in value) || !('audio_timestamps' in value) || typeof value.content_type !== 'string' || !/^audio\/pcm(?:;|$)/iu.test(value.content_type) || typeof value.duration !== 'number' || !Number.isFinite(value.duration) || value.duration <= 0) {
     throw new Error('OpenRouter voice synthesis returned an invalid timed PCM envelope.')
   }
   const pcm = decodeBase64(value.audio)
   const duration = value.duration
   const inferredRate = pcm.byteLength / 2 / duration
-  const sampleRate = supportedSampleRates.toSorted((a, b) => Math.abs(a - inferredRate) - Math.abs(b - inferredRate))[0]
+  const sampleRates = [...new Set([...commonSampleRates, requestedSampleRate])]
+  const sampleRate = sampleRates.toSorted((a, b) => Math.abs(a - inferredRate) - Math.abs(b - inferredRate))[0]
   if (Math.abs(pcm.byteLength / 2 / sampleRate - duration) > 0.015) {
     throw new Error('OpenRouter PCM length and duration do not establish a supported sample rate.')
   }
@@ -175,29 +180,53 @@ const pcmFromWav = (wav: Uint8Array) => {
 
 export type VoiceSampleCacheOptions = {
   apiKey?: string
+  bitrate?: number
   directory: string
   fetch?: VoiceSampleFetch
   ffmpegPath?: string
   model?: string
+  sampleRate?: number
 }
 
 export default class VoiceSampleCache {
   readonly #apiKey?: string
+  readonly #bitrate: number
   readonly #cacheDirectory: string
   readonly #fetch: VoiceSampleFetch
   readonly #ffmpegPath: string
   readonly #model: string
   readonly #pendingConversions = new Map<string, Promise<string>>
   readonly #pendingStores = new Map<string, Promise<StoredVoiceSample>>
+  readonly #sampleRate: number
   readonly #storeDirectory: string
 
   constructor(options: VoiceSampleCacheOptions) {
     this.#apiKey = options.apiKey
+    this.#sampleRate = options.sampleRate ?? defaultSampleRate
+    if (!Number.isSafeInteger(this.#sampleRate) || this.#sampleRate <= 0) {
+      throw new TypeError('Voice sample sampleRate must be a positive integer.')
+    }
+    this.#bitrate = options.bitrate ?? defaultVoiceSampleBitrate(this.#sampleRate)
+    if (!Number.isSafeInteger(this.#bitrate) || this.#bitrate <= 0) {
+      throw new TypeError('Voice sample bitrate must be a positive integer.')
+    }
     this.#storeDirectory = resolve(options.directory, 'store')
     this.#cacheDirectory = resolve(options.directory, 'cache')
     this.#fetch = options.fetch ?? globalThis.fetch.bind(globalThis)
     this.#ffmpegPath = options.ffmpegPath ?? 'ffmpeg'
     this.#model = options.model ?? modelDefault
+  }
+
+  cacheKey(key: string, format: Exclude<VoiceSampleAudioFormat, 'wav'>) {
+    if (format === 'pcm') {
+      return key
+    }
+    return createHash('sha256').update(JSON.stringify({
+      bitrate: this.#bitrate,
+      conversionSchema,
+      format,
+      source: key,
+    })).digest('hex')
   }
 
   async getAudio(request: VoiceSampleRequest & {format: VoiceSampleAudioFormat}): Promise<VoiceSampleCacheEntry> {
@@ -225,6 +254,7 @@ export default class VoiceSampleCache {
     const {format: _format, type: _type, ...synthesis} = request
     return createHash('sha256').update(JSON.stringify({
       model: this.#model,
+      ...this.#sampleRate === defaultSampleRate ? {} : {sampleRate: this.#sampleRate},
       storageSchema,
       synthesis,
     })).digest('hex')
@@ -239,7 +269,7 @@ export default class VoiceSampleCache {
   }
 
   #cachePath(key: string, format: Exclude<VoiceSampleAudioFormat, 'wav'>) {
-    return resolve(this.#cacheDirectory, `${key}.${format}`)
+    return resolve(this.#cacheDirectory, `${this.cacheKey(key, format)}.${format}`)
   }
 
   async #convert(format: Exclude<VoiceSampleAudioFormat, 'wav'>, key: string, rawPath: string) {
@@ -258,7 +288,7 @@ export default class VoiceSampleCache {
           i: rawPath,
           map: '0:a:0',
           'c:a': 'libopus',
-          'b:a': 80_000,
+          'b:a': this.#bitrate,
           vbr: 'on',
           compression_level: 10,
           application: 'audio',
@@ -320,7 +350,7 @@ export default class VoiceSampleCache {
               optimize_streaming_latency: 0,
               output_format: {
                 codec: 'pcm',
-                sample_rate: 48_000,
+                sample_rate: this.#sampleRate,
               },
               with_timestamps: true,
             },
@@ -333,7 +363,7 @@ export default class VoiceSampleCache {
       const detail = responseText.slice(0, 1000)
       throw new Error(`OpenRouter voice synthesis failed (HTTP ${response.status})${detail ? `: ${detail}` : ''}.`)
     }
-    const {metadata, pcm} = decodeEnvelope(await response.json(), response.headers.get('x-generation-id') ?? undefined)
+    const {metadata, pcm} = decodeEnvelope(await response.json(), this.#sampleRate, response.headers.get('x-generation-id') ?? undefined)
     const wav = wavFromPcm(pcm, metadata.sampleRate)
     const rawPath = this.rawPath(key)
     const metadataPath = this.metadataPath(key)

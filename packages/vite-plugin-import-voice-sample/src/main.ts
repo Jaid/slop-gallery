@@ -11,6 +11,7 @@ import {applyEdits, parseVoiceSampleImports, virtualVoiceSamplePrefix, voiceSour
 import VoiceSampleCache from './VoiceSampleCache.ts'
 
 export {voiceSourcePrefix} from './imports.ts'
+
 export type {VoiceSampleAudioFormat, VoiceSampleContents, VoiceSampleFormat, VoiceSampleLoadType, VoiceSampleMetadata, VoiceSamplePluginOptions, VoiceSampleRequest, VoiceSampleTiming, VoiceSampleValue} from './types.ts'
 
 const resolvedVirtualPrefix = `\0${virtualVoiceSamplePrefix}`
@@ -72,10 +73,12 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
       const directory = isAbsolute(directoryOption) ? directoryOption : resolve(config.root, directoryOption)
       cache = new VoiceSampleCache({
         apiKey: options.apiKey || env.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY,
+        bitrate: options.bitrate,
         directory,
         fetch: options.fetch,
         ffmpegPath: options.ffmpegPath,
         model: options.model,
+        sampleRate: options.sampleRate,
       })
     },
     transform(code, id) {
@@ -178,3 +181,5 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
     },
   }
 }
+
+export {defaultVoiceSampleBitrate} from './VoiceSampleCache.ts'
