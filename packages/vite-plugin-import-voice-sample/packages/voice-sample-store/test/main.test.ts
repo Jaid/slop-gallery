@@ -7,7 +7,7 @@ import {join} from 'node:path'
 import fs from 'fs-extra'
 import {unpack} from 'msgpackr'
 
-import VoiceSampleStore, {defaultVoiceSampleBitrate, styleVoiceSampleText} from '../src/main.ts'
+import VoiceSampleStore, {defaultVoiceSampleBitrate, defaultVoiceSampleCooldown, styleVoiceSampleText} from '../src/main.ts'
 
 const directories: Array<string> = []
 const temporaryDirectory = async () => {
@@ -211,9 +211,54 @@ describe('VoiceSampleStore', () => {
     })
     expect(decoded.timings).toEqual(trimmed.metadata.timings)
   })
+  test('stretches concurrent provider request starts by the configured cooldown', async () => {
+    const root = await temporaryDirectory()
+    const starts: Array<number> = []
+    const cooldown = 30
+    const store = new VoiceSampleStore({
+      rootFolder: root,
+      apiKey: 'test-key',
+      cooldown,
+      fetch: async () => {
+        starts.push(performance.now())
+        return response()
+      },
+      trim: false,
+    })
+    await Promise.all([
+      store.prepare({
+        text: 'First',
+        format: 'wav',
+      }),
+      store.prepare({
+        text: 'Second',
+        format: 'wav',
+      }),
+      store.prepare({
+        text: 'Third',
+        format: 'wav',
+      }),
+    ])
+    expect(defaultVoiceSampleCooldown).toBe(1000)
+    expect(starts).toHaveLength(3)
+    expect(starts[1] - starts[0]).toBeGreaterThanOrEqual(cooldown - 2)
+    expect(starts[2] - starts[1]).toBeGreaterThanOrEqual(cooldown - 2)
+  })
   test('validates preparation options before synthesis', async () => {
     const root = await temporaryDirectory()
     let calls = 0
+    expect(() => new VoiceSampleStore({
+      rootFolder: root,
+      cooldown: 0,
+    })).not.toThrow()
+    expect(() => new VoiceSampleStore({
+      rootFolder: root,
+      cooldown: -1,
+    })).toThrow('cooldown')
+    expect(() => new VoiceSampleStore({
+      rootFolder: root,
+      cooldown: 1.5,
+    })).toThrow('cooldown')
     const store = new VoiceSampleStore({
       rootFolder: root,
       fetch: async () => {

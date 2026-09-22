@@ -8,6 +8,7 @@ import VoiceSampleStore from 'voice-sample-store'
 const voiceSampleStore = new VoiceSampleStore({
   rootFolder: import.meta.dir,
   app: 'https://example.com',
+  cooldown: 1000,
   sampleRate: 24_000,
   trim: true,
   trimThreshold: -50,
@@ -22,7 +23,7 @@ const sample = await voiceSampleStore.prepare({
 })
 ```
 
-`rootFolder` is required because the store has no Vite context. Relative `folder`, `cacheFolder`, and `storageFolder` options resolve from it. The default base folder is `<rootFolder>/temp/voice-sample-store`.
+`rootFolder` is required because the store has no Vite context. Relative `folder`, `cacheFolder`, and `storageFolder` options resolve from it. The default base folder is `<rootFolder>/temp/voice-sample-store`. `cooldown` defaults to 1000 ms and spaces actual provider request starts by at least that amount; cache hits and deduplicated in-flight syntheses do not consume cooldown slots. Set it to `0` to disable throttling.
 
 `prepare()` accepts the same synthesis/delivery properties as voice import attributes except Vite's `type`: `text`, `voice`, `language`, `emotion`, `format`, `trim`, and `trimThreshold`.
 

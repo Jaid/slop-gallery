@@ -13,7 +13,7 @@ import tinyhand from 'tinyhand'
 
 import {styleVoiceSampleText} from './emotion.ts'
 import {defaultVoiceSampleTrimThreshold} from './trim.ts'
-import VoiceSampleCache from './VoiceSampleCache.ts'
+import VoiceSampleCache, {defaultVoiceSampleCooldown} from './VoiceSampleCache.ts'
 
 const defaultApp: App = {
   title: 'Slop Gallery',
@@ -56,6 +56,10 @@ export default class VoiceSampleStore {
     const rootFolder = resolve(options.rootFolder)
     const folder = resolveFromRoot(rootFolder, options.folder ?? 'temp/voice-sample-store')
     const cacheFolder = options.cacheFolder ? resolveFromRoot(rootFolder, options.cacheFolder) : resolve(folder, 'cache')
+    const cooldown = options.cooldown ?? defaultVoiceSampleCooldown
+    if (!Number.isSafeInteger(cooldown) || cooldown < 0) {
+      throw new TypeError('Voice sample cooldown must be a non-negative integer number of milliseconds.')
+    }
     const storageFolder = options.storageFolder ? resolveFromRoot(rootFolder, options.storageFolder) : resolve(folder, 'store')
     const trimThreshold = options.trimThreshold ?? defaultVoiceSampleTrimThreshold
     if (!Number.isFinite(trimThreshold) || trimThreshold > 0) {
@@ -82,6 +86,7 @@ export default class VoiceSampleStore {
       app: normalizeApp(options.app ?? defaultApp),
       bitrate: options.bitrate,
       cacheFolder,
+      cooldown,
       fetch: options.fetch,
       ffmpegPath: options.ffmpegPath,
       model: options.model,

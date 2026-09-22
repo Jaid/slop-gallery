@@ -64,6 +64,8 @@ export type VoiceSampleStoreOptions = {
   bitrate?: number
   /** Conversion/trim cache folder. Defaults to <folder>/cache. */
   cacheFolder?: string
+  /** Minimum milliseconds between provider request starts. Defaults to 1000; 0 disables throttling. */
+  cooldown?: number
   /** Defaults used when prepare() omits the matching property. */
   defaults?: VoiceSampleStoreDefaults
   /** Primarily a test seam; defaults to globalThis.fetch. */

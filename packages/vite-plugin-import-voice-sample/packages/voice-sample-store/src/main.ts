@@ -14,5 +14,5 @@ export type {
   VoiceSampleTiming,
   VoiceSampleTrimMetadata,
 } from './types.ts'
-export {defaultVoiceSampleBitrate} from './VoiceSampleCache.ts'
+export {defaultVoiceSampleBitrate, defaultVoiceSampleCooldown} from './VoiceSampleCache.ts'
 export {default} from './VoiceSampleStore.ts'

@@ -76,6 +76,7 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
         app: options.app,
         bitrate: options.bitrate,
         cacheFolder: options.cacheFolder,
+        cooldown: options.cooldown,
         defaults: {
           format: options.defaults?.format ?? 'opus',
           language: options.defaults?.language ?? 'en',
@@ -177,7 +178,7 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
   }
 }
 
-export {defaultVoiceSampleBitrate, defaultVoiceSampleTrimThreshold, styleVoiceSampleText, voiceSampleTrimMinimumSilenceSeconds, voiceSampleTrimPaddingSeconds} from 'voice-sample-store'
+export {defaultVoiceSampleBitrate, defaultVoiceSampleCooldown, defaultVoiceSampleTrimThreshold, styleVoiceSampleText, voiceSampleTrimMinimumSilenceSeconds, voiceSampleTrimPaddingSeconds} from 'voice-sample-store'
 export type {
   App,
   PreparedVoiceSample,

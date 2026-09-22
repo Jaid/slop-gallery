@@ -3,6 +3,7 @@ import type {App, ResolvedVoiceSampleRequest, VoiceSampleAudioFormat, VoiceSampl
 import {execFile} from 'node:child_process'
 import {createHash, randomUUID} from 'node:crypto'
 import {resolve} from 'node:path'
+import {setTimeout as sleep} from 'node:timers/promises'
 import {promisify} from 'node:util'
 
 import fs from 'fs-extra'
@@ -18,6 +19,7 @@ const storageSchema = 4
 const conversionSchema = 1
 const trimSchema = 1
 const defaultSampleRate = 24_000
+export const defaultVoiceSampleCooldown = 1000
 const commonSampleRates = [8000, 16_000, 22_050, 24_000, 32_000, 44_100, 48_000]
 
 export const defaultVoiceSampleBitrate = (sampleRate: number) => Math.round(0.68266 * sampleRate)
@@ -231,6 +233,7 @@ export type VoiceSampleCacheOptions = {
   app: App
   bitrate?: number
   cacheFolder: string
+  cooldown: number
   fetch?: VoiceSampleFetch
   ffmpegPath?: string
   model?: string
@@ -243,12 +246,15 @@ export default class VoiceSampleCache {
   readonly #app: App
   readonly #bitrate: number
   readonly #cacheFolder: string
+  readonly #cooldown: number
   readonly #fetch: VoiceSampleFetch
   readonly #ffmpegPath: string
+  #lastRequestStartedAt = 0
   readonly #model: string
   readonly #pendingConversions = new Map<string, Promise<string>>
   readonly #pendingStores = new Map<string, Promise<StoredVoiceSample>>
   readonly #pendingTrims = new Map<string, Promise<PreparedVoiceSample>>
+  #requestQueue: Promise<void> = Promise.resolve()
   readonly #sampleRate: number
   readonly #storageFolder: string
 
@@ -265,6 +271,7 @@ export default class VoiceSampleCache {
     }
     this.#storageFolder = options.storageFolder
     this.#cacheFolder = options.cacheFolder
+    this.#cooldown = options.cooldown
     this.#fetch = options.fetch ?? globalThis.fetch.bind(globalThis)
     this.#ffmpegPath = options.ffmpegPath ?? 'ffmpeg'
     this.#model = options.model ?? modelDefault
@@ -401,6 +408,7 @@ export default class VoiceSampleCache {
     }
     await fs.ensureDir(this.#storageFolder)
     const input = styleVoiceSampleText(request.text, request.emotion)
+    await this.#waitForRequestSlot()
     const response = await this.#fetch('https://openrouter.ai/api/v1/audio/speech', {
       method: 'POST',
       redirect: 'error',
@@ -485,7 +493,6 @@ export default class VoiceSampleCache {
       this.#pendingConversions.delete(pendingKey)
     }
   }
-
   async #getStored(request: ResolvedVoiceSampleRequest, key: string) {
     const cached = await this.#readStored(key)
     if (cached) {
@@ -591,6 +598,22 @@ export default class VoiceSampleCache {
     } finally {
       await fs.remove(temporaryWav)
       await fs.remove(temporaryMetadata)
+    }
+  }
+
+  async #waitForRequestSlot() {
+    const previous = this.#requestQueue
+    const {promise, resolve: release} = Promise.withResolvers<void>()
+    this.#requestQueue = promise
+    await previous
+    try {
+      const delay = this.#lastRequestStartedAt + this.#cooldown - Date.now()
+      if (delay > 0) {
+        await sleep(delay)
+      }
+      this.#lastRequestStartedAt = Date.now()
+    } finally {
+      release()
     }
   }
 }

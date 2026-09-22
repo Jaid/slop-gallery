@@ -202,6 +202,7 @@ These become `X-OpenRouter-Title` and `HTTP-Referer` respectively.
 
 The plugin accepts:
 
+- `cooldown?: number` — minimum milliseconds between OpenRouter request starts; defaults to `1000`. Set to `0` to disable throttling.
 - `sampleRate?: number` — requested xAI PCM sample rate in Hz; defaults to `24000`.
 - `bitrate?: number` — Opus encoder bitrate in bits/s; used only for Opus conversion.
 - `trim?: boolean` — defaults to `true`.
