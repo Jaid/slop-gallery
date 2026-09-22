@@ -6,6 +6,7 @@ import {resolve} from 'node:path'
 import {promisify} from 'node:util'
 
 import fs from 'fs-extra'
+import makeArgv from 'make-argv'
 
 import {styleVoiceSampleText} from './emotion.ts'
 
@@ -163,29 +164,23 @@ export default class VoiceSampleCache {
         const source = `${output}.${token}.source.wav`
         try {
           await fs.writeFile(source, wav!)
-          await execFileAsync(this.#ffmpegPath, [
-            '-hide_banner',
-            '-loglevel',
-            'error',
-            '-i',
-            source,
-            '-map',
-            '0:a:0',
-            '-c:a',
-            'libopus',
-            '-b:a',
-            '80000',
-            '-vbr',
-            'on',
-            '-compression_level',
-            '10',
-            '-application',
-            'audio',
-            '-f',
-            'opus',
-            '-y',
-            temporary,
-          ])
+          const argv = makeArgv({
+            hide_banner: true,
+            loglevel: 'error',
+            i: source,
+            map: '0:a:0',
+            'c:a': 'libopus',
+            'b:a': 80_000,
+            vbr: 'on',
+            compression_level: 10,
+            application: 'audio',
+            f: 'opus',
+            y: true,
+          }, {
+            prefix: '-',
+            keyStyle: false,
+          })
+          await execFileAsync(this.#ffmpegPath, [...argv, temporary])
         } finally {
           await fs.remove(source)
         }
