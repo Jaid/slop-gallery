@@ -14,18 +14,19 @@ import knotData from './data.ts'
  * Spun silk: near-parallel strands wandering across the tube. `cord` is derivative-free for vertex use.
  */
 function silk(tile: Node<'vec2'>) {
-  const sway = mx_noise_float(vec2(tile.x.mul(2.2), tile.x.mul(0.4)).add(0.5)).mul(0.16)
+  const along = tile.x.mul(Math.PI * 2)
+  const sway = mx_noise_float(vec2(along.cos(), along.sin()).mul(2.2).add(0.5)).mul(0.16)
   const threads = tile.y.add(sway).mul(34)
   const strand = threads.fract().sub(0.5).abs().div(0.5)
-  const twist = threads.sin().mul(0.5).add(0.5)
+  const twist = threads.mul(Math.PI * 2).sin().mul(0.5).add(0.5)
   const cord = strand.pow(2).oneMinus().clamp(0, 1)
   const footprint = threads.fwidth().abs().max(0.0001)
-  const fine = footprint.mul(3).smoothstep(0.5, 1.4).oneMinus().mul(0.75).add(0.25)
+  const fine = footprint.smoothstep(0.15, 0.5).oneMinus()
   return {
     cord,
-    mask: cord.mul(fine),
-    sheen: twist,
-    warp: sway,
+    mask: mix(float(2 / 3), cord, fine),
+    sheen: mix(float(0.5), twist, fine),
+    rawSheen: twist,
   }
 }
 
@@ -43,26 +44,29 @@ export default class extends BaseKnotMaterial {
     const heavy = beads(p.mul(9).add(3.5), 21.7)
     const dropMask = mist.mask.mul(0.45).add(heavy.mask)
     const dropCap = mist.cap.mul(mist.core).mul(0.3).add(heavy.cap.mul(heavy.core))
-    const wobble = time.mul(1.7).add(heavy.random.z.mul(20)).sin().mul(intimate).mul(0.35)
-    const height = thread.cord.mul(0.12).add(dropCap.mul(3)).add(thread.sheen.mul(thread.cord).mul(intimate).mul(0.2))
+    const wobble = time.mul(1.7).add(heavy.random.z.mul(20)).sin().mul(intimate).mul(heavy.core).mul(0.35)
+    const height = thread.cord.mul(0.12).add(dropCap.mul(3)).add(thread.rawSheen.mul(thread.cord).mul(intimate).mul(0.2))
     this.positionNode = positionGeometry.add(normalLocal.mul(height.mul(0.004).add(wobble.mul(0.0002))))
-    this.normalNode = proceduralNormal(height, 0.45).add(dropCap.sub(0.5).mul(dropMask).mul(0.6)).add(normalLocal.mul(wobble.mul(0.02))).normalize()
-    const silkColor = mix(color('#8a857c'), color('#d8d2c4'), thread.sheen).mul(thread.cord.mul(0.5).add(0.08))
-    const film = spectralColor(facing.mul(6).add(p.x.mul(3)).add(p.y.mul(2)).add(heavy.random.x.mul(2)))
+    const filteredCap = mist.cap.mul(mist.core).mul(mist.mask).mul(0.3).add(heavy.cap.mul(heavy.core).mul(heavy.mask))
+    const filteredHeight = thread.mask.mul(0.12).add(filteredCap.mul(3)).add(thread.sheen.mul(thread.mask).mul(intimate).mul(0.2))
+    const filteredWobble = time.mul(1.7).add(heavy.random.z.mul(20)).sin().mul(intimate).mul(heavy.mask).mul(0.35)
+    this.normalNode = proceduralNormal(filteredHeight.mul(0.004).add(filteredWobble.mul(0.0002)), 1)
+    const silkColor = mix(color('#8a857c'), color('#d8d2c4'), thread.sheen).mul(thread.mask.mul(0.5).add(0.08))
+    const film = spectralColor(facing.mul(6).add(p.x.mul(3)).add(p.y.mul(2)).add(mx_noise_float(p.mul(9)).mul(2)))
     const dropColor = mix(color('#f2f6ff'), film, 0.65)
     this.colorNode = mix(silkColor, dropColor, dropMask.clamp(0, 1))
     this.metalness = 0
-    this.roughnessNode = float(0.3).add(thread.cord.mul(0.2)).sub(dropMask.mul(0.24)).clamp(0.03, 1)
+    this.roughnessNode = float(0.3).add(thread.mask.mul(0.2)).sub(dropMask.mul(0.24)).clamp(0.03, 1)
     this.iridescenceNode = dropMask.clamp(0, 1).mul(0.85)
     this.iridescenceIOR = 1.33
-    this.iridescenceThicknessNode = float(220).add(heavy.random.y.mul(240)).add(facing.mul(140))
+    this.iridescenceThicknessNode = float(220).add(mx_noise_float(p.mul(9).add(13)).mul(0.5).add(0.5).mul(240)).add(facing.mul(140))
     this.clearcoatNode = dropMask.clamp(0, 1)
     this.clearcoatRoughness = 0.02
-    this.aoNode = thread.cord.mul(0.15).oneMinus()
+    this.aoNode = thread.mask.mul(0.15).oneMinus()
     this.envMapIntensity = 0.5
     const jitter = vec3(mx_noise_float(p.mul(120)), mx_noise_float(p.mul(120).add(9)), mx_noise_float(p.mul(120).add(17))).sub(0.5)
-    const dropGlint = glints(normalViewGeometry.add(jitter.mul(0.3)), 140).mul(dropMask).mul(near.mul(0.5).add(0.5))
-    const threadGlint = glints(normalLocal, 60).mul(thread.cord).mul(intimate).mul(0.25)
-    this.emissiveNode = film.mul(dropGlint.mul(1.2)).add(color('#fff6e8').mul(grazing.pow(3).mul(thread.cord).mul(0.15))).add(color('#ffffff').mul(threadGlint))
+    const dropGlint = glints(normalViewGeometry.add(jitter.mul(0.3)).normalize(), 140).mul(dropMask).mul(near.mul(0.5).add(0.5))
+    const threadGlint = glints(normalViewGeometry, 60).mul(thread.mask).mul(intimate).mul(0.25)
+    this.emissiveNode = film.mul(dropGlint.mul(1.2)).add(color('#fff6e8').mul(grazing.pow(3).mul(thread.mask).mul(0.15))).add(color('#ffffff').mul(threadGlint))
   }
 }

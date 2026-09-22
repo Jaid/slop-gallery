@@ -12,7 +12,11 @@ export function beads(position: Node<'vec3'>, seed: Node<'float'> | number = 0) 
   const radius = random.z.mul(0.11).add(0.09)
   const core = dist.div(radius).smoothstep(0.85, 1).oneMinus()
   const gate = random.y.smoothstep(0.3, 0.42)
-  const mask = dist.smoothstep(radius.add(footprint.mul(1.2)), radius.sub(footprint.mul(1.2)).max(0)).oneMinus().mul(gate)
+  // Ordered edges keep the droplet interior opaque; capped support never reaches a cell wall.
+  const inner = radius.sub(footprint.mul(1.2)).max(0)
+  const outer = radius.add(footprint.mul(1.2)).min(0.24)
+  const visibility = footprint.smoothstep(0.25, 1).oneMinus()
+  const mask = dist.smoothstep(inner, outer).oneMinus().mul(gate).mul(radius.div(outer).pow2()).mul(visibility)
   const cap = dist.div(radius).pow2().oneMinus().max(0).sqrt()
   return {
     cap,
