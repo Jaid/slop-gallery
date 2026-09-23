@@ -69,12 +69,34 @@ export default class extends BaseKnotMaterial {
         .cos()
         .abs()
         .pow(7))
+    // These narrow periodic lobes carry harmonics far above their base frequency.
+    // Fade toward their analytical-ish cycle mean as the phase footprint grows,
+    // preventing sub-pixel needles from strobing before TRAA sees them.
+    const combAResolved = phaseA.fwidth()
+      .max(phaseB.fwidth())
+      .smoothstep(0.45, 1.8)
+      .oneMinus()
+    const combBResolved = phaseC.fwidth()
+      .max(phaseA.fwidth().mul(23 / 36))
+      .smoothstep(0.45, 1.8)
+      .oneMinus()
+    const filteredCombA = mix(float(0.062), combA, combAResolved)
+    const filteredCombB = mix(float(0.072), combB, combBResolved)
     const domain = mx_noise_float(p.mul(7).add(vec3(time.mul(0.018), time.mul(-0.011), time.mul(0.009))))
     const needles = combA
       .mul(domain.mul(0.35).add(0.82))
       .add(combB.mul(0.58))
       .clamp()
+    const filteredNeedles = filteredCombA
+      .mul(domain.mul(0.35).add(0.82))
+      .add(filteredCombB.mul(0.58))
+      .clamp()
     const height = needles
+      .pow(0.72)
+      .mul(proximity.mul(0.5).add(0.55))
+      .mul(0.041)
+      .add(domain.mul(0.0025))
+    const filteredHeight = filteredNeedles
       .pow(0.72)
       .mul(proximity.mul(0.5).add(0.55))
       .mul(0.041)
@@ -90,7 +112,7 @@ export default class extends BaseKnotMaterial {
       .mul(domainWall.oneMinus())
     const needleLight = facing
       .mul(0.16)
-      .add(needles.mul(0.58))
+      .add(filteredNeedles.mul(0.58))
       .clamp()
     const iron = mix(color('#020405'), color('#718087'), needleLight)
     const temper = mix(color('#352219'), color('#17383e'), observer.mul(0.5).add(0.5))
@@ -100,7 +122,7 @@ export default class extends BaseKnotMaterial {
       .clamp())
     this.metalness = 0.98
     this.roughnessNode = float(0.23)
-      .sub(needles.mul(0.13))
+      .sub(filteredNeedles.mul(0.13))
       .add(oxide.mul(0.16))
       .add(grazing.mul(0.025))
       .clamp(0.055, 0.42)
@@ -108,17 +130,19 @@ export default class extends BaseKnotMaterial {
     this.clearcoatRoughness = 0.16
     this.anisotropy = 0.88
     this.anisotropyRotation = Math.PI * 0.5
-    const magneticNormal = proceduralNormal(height, 0.9)
+    const magneticNormal = proceduralNormal(filteredHeight, 0.9)
     this.normalNode = magneticNormal
     const glint = multiGlint(magneticNormal, 120)
-    const barkhausen = time
+    const barkhausenPhase = time
       .mul(3.4)
       .add(domain.mul(19))
       .add(tube.x.mul(TAU * 11))
+    const barkhausen = barkhausenPhase
       .sin()
       .mul(0.5)
       .add(0.5)
       .pow(24)
+      .mul(barkhausenPhase.fwidth().smoothstep(0.55, 1.8).oneMinus())
     this.emissiveNode = color('#8ee7ff')
       .mul(domainWall)
       .mul(barkhausen)
@@ -126,7 +150,7 @@ export default class extends BaseKnotMaterial {
       .mul(0.75)
       .add(color('#e9ffff')
         .mul(glint)
-        .mul(needles)
+        .mul(filteredNeedles)
         .mul(near.mul(0.16).add(0.035)))
   }
 }

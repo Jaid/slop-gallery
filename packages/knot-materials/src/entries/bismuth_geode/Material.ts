@@ -30,12 +30,21 @@ export default class extends KnotMaterial {
     // Chebyshev (L-infinity) metric produces square hopper steps
     const boxDist = local.x.abs().max(local.y.abs())
     const terraceCount = 9
-    const stepIndex = boxDist.mul(terraceCount).floor()
-    const stepFraction = stepIndex.div(terraceCount).clamp(0, 1)
-    // Sharp terrace edges and ridges
-    const stepFootprint = boxDist.fwidth().max(0.0001)
-    const edgeLip = boxDist.mul(terraceCount).fract()
-      .smoothstep(stepFootprint.mul(terraceCount).mul(1.2).add(0.08), 0.02)
+    const stepPhase = boxDist.mul(terraceCount)
+    const stepIndex = stepPhase.floor()
+    const stepCycle = stepPhase.fract()
+    const stepFootprint = stepPhase.fwidth().max(0.0001)
+    const stepResolved = stepFootprint.smoothstep(0.65, 1.35).oneMinus()
+    const stepBlendWidth = stepFootprint.mul(0.75).max(0.015).min(0.48)
+    const stepBlend = stepCycle.smoothstep(stepBlendWidth.oneMinus(), 1)
+    const quantizedStep = stepIndex.add(stepBlend).div(terraceCount)
+    const stepFraction = mix(boxDist, quantizedStep, stepResolved).clamp(0, 1)
+    // Sharp terrace edges and ridges are widened by the pixel footprint, then retired
+    // when several terraces collapse into one pixel.
+    const edgeLipWidth = stepFootprint.mul(1.2).add(0.08).min(0.48)
+    const edgeLip = stepCycle
+      .smoothstep(0.02, edgeLipWidth).oneMinus()
+      .mul(stepResolved)
     // Stepped relief for the surface normal
     const terraceHeight = stepFraction.mul(0.0045).add(edgeLip.mul(0.0006))
     this.normalNode = proceduralNormal(terraceHeight, 0.92)
