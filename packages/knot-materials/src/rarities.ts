@@ -355,7 +355,7 @@ const rarities: Record<KnotId, Rarity> = {
   phase_ghost: prime,
   phoenix_ember: common,
   photinus_synchrony: unknown,
-  photon_ring: prime,
+  photon_ring: ethereal,
   photon_weave: rare,
   photonic_lattice: prime,
   photonic_morpho: rare,
