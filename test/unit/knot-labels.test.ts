@@ -5,6 +5,7 @@ import {knotBays, knotExhibition} from 'knot-materials/exhibition.ts'
 import {knotSign} from 'knot-materials/signs.ts'
 
 import drawLabel, {drawRarity, knotDetailLine, labelAtlasColumns, labelBackground, labelFonts, labelHeight, labelWidth, modelLineLayout, updateRarityAtlas} from '../../src/components/levels/knottingham/KnotLabels/drawLabel.ts'
+import signAccentColor from '../../src/components/levels/knottingham/signAccentColor.ts'
 
 const iconHash = async (id: string) => Bun.hash(await Bun.file(new URL(knotsById.get(id)!.candidate.icon)).arrayBuffer())
 describe('Knot nameplates', () => {
@@ -86,7 +87,7 @@ describe('Knot nameplates', () => {
         },
         {
           args: [x + 38, y + 41, 644, 8],
-          color: exhibit.placeholder.color,
+          color: signAccentColor(exhibit.placeholder.color),
         },
         {
           args: [x + 200, y + 264, 320, 52],

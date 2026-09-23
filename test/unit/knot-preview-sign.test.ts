@@ -4,6 +4,7 @@ import {knotBays, knotNumberLabel} from 'knot-materials/exhibition.ts'
 import {knotPreviewGrid, knotPreviewMaximumHeight, knotPreviewMaximumWidth, knotPreviewTextureCellSize, knotPreviewTextureLayout} from 'knot-materials/KnotPreviewLayout.ts'
 
 import drawPreview, {knotPreviewBackground} from '../../src/components/levels/knottingham/KnotPreviewSigns/drawPreview.ts'
+import signAccentColor from '../../src/components/levels/knottingham/signAccentColor.ts'
 
 test('runtime billboard layout chooses compact formats and matches its raster aspect', () => {
   const formats = new Map<number, [number, number]>([
@@ -118,6 +119,6 @@ test('candidate atlas draws dynamic numbers, titles, accents and image fallbacks
   expect(texts).toHaveLength(bay.finishes.length)
   for (const [index, finish] of bay.finishes.entries()) {
     expect(texts[index].args[0]).toBe(`${knotNumberLabel(finish.number)} · ${finish.title}`)
-    expect(texts[index].style).toBe(finish.placeholder.color)
+    expect(texts[index].style).toBe(signAccentColor(finish.placeholder.color))
   }
 })

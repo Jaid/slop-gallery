@@ -3,6 +3,8 @@ import type {KnotBay} from 'knot-materials/exhibition.ts'
 import {knotNumberLabel} from 'knot-materials/exhibition.ts'
 import {knotPreviewTextureCellSize, knotPreviewTextureLayout} from 'knot-materials/KnotPreviewLayout.ts'
 
+import signAccentColor from '../signAccentColor.ts'
+
 export const knotPreviewBackground = '#17202b'
 export const knotPreviewCaptionFontFamily = 'main'
 export const knotPreviewCaptionFontWeight = 600
@@ -49,7 +51,7 @@ export default function drawPreview(context: CanvasRenderingContext2D, bay: Knot
     const targetWidth = boxWidth * captionMaximumWidth
     const fittedPx = Math.max(10, Math.floor(requestedPx * Math.min(1, targetWidth / measured)))
     context.font = `${knotPreviewCaptionFontWeight} ${fittedPx}px "${knotPreviewCaptionFontFamily}"`
-    context.fillStyle = finish.placeholder.color
+    context.fillStyle = signAccentColor(finish.placeholder.color)
     context.textAlign = 'center'
     context.textBaseline = 'middle'
     context.fillText(text, centerX, centerY + layout.rowHeight * captionCenterOffset)

@@ -5,6 +5,8 @@ import type {Texture} from 'three/webgpu'
 import flattenString from 'flatten-string'
 import {unknown} from 'knot-materials/rarities.ts'
 
+import signAccentColor from '../signAccentColor.ts'
+
 export const labelAtlasColumns = 10
 // 847 texels/m exceeds the previous title (800) and creator (686) densities.
 // The complete 167-label atlas fits within 8192 in both dimensions.
@@ -53,14 +55,15 @@ export function drawRarity(context: CanvasRenderingContext2D, rarity: Rarity, x:
 export default function drawLabel(context: CanvasRenderingContext2D, exhibit: KnotExhibit, x: number, y: number, icon?: HTMLImageElement) {
   context.fillStyle = labelBackground
   context.fillRect(x, y, labelWidth, labelHeight)
-  context.fillStyle = exhibit.placeholder.color
+  const accent = signAccentColor(exhibit.placeholder.color)
+  context.fillStyle = accent
   context.fillRect(x + 38, y + 41, 644, 8)
   context.textAlign = 'center'
   context.textBaseline = 'middle'
   context.fillStyle = '#fff3d9'
   context.font = labelFonts.number
   context.fillText(exhibit.label, x + labelWidth / 2, y + 132, 644)
-  context.fillStyle = exhibit.placeholder.color
+  context.fillStyle = accent
   context.font = labelFonts.title
   context.fillText(exhibit.title, x + labelWidth / 2, y + 225, 644)
   drawRarity(context, exhibit.rarity, x, y)
