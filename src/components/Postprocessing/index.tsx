@@ -54,6 +54,9 @@ const Postprocessing = ({contactDarkening = false, knotFocus = false, quality = 
       ambientOcclusion.samples.value = 16
       base = color.mul(vec4(vec3(ambientOcclusion.getTextureNode().r), 1))
     }
+    // Preserve a spatial-only source for V-mode background defocus. TRAA may contain
+    // reprojected foreground history at disocclusion edges, which must never feed bokeh.
+    const bokehSource = base
     let temporalAntialias: ReturnType<typeof traa> | undefined
     if (quality) {
       temporalAntialias = traa(base, depth, motion, camera)
@@ -72,9 +75,10 @@ const Postprocessing = ({contactDarkening = false, knotFocus = false, quality = 
     let focused = shifted
     if (knotFocus && camera instanceof PerspectiveCamera) {
       const bokehRadius = knotProximity.mul(knotProximity).mul(knotProximity).mul(26).add(8)
-      bokehPass = knotBokeh(base, depth, knotDistance, knotAmount, bokehRadius, camera.near, camera.far, () => getKnotFocus() > 0.001)
-      // KnotSpectation supplies the far edge of the Knot's bounding sphere, so only geometry behind it is defocused.
-      background = smoothstep(knotDistance.add(0.2), knotDistance.add(1.35), viewZ.negate()).mul(knotAmount)
+      bokehPass = knotBokeh(bokehSource, depth, knotDistance, knotAmount, bokehRadius, camera.near, camera.far, () => getKnotFocus() > 0.001)
+      // Switch away from TRAA immediately behind the Knot. The bokeh pass itself controls
+      // how much defocus to apply with depth, so a wide composite ramp only preserves ghosts.
+      background = smoothstep(knotDistance.add(0.12), knotDistance.add(0.32), viewZ.negate()).mul(knotAmount)
       focused = mix(shifted, bokehPass, background)
     }
     let bloomPass: ReturnType<typeof bloom> | undefined
