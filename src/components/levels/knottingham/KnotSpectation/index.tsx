@@ -11,6 +11,7 @@ import {MathUtils, PerspectiveCamera, Vector3} from 'three/webgpu'
 import {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
 import KnotNarration from '#src/lib/audio/KnotNarration.ts'
 import {narrator} from '#src/lib/audio/narration.ts'
+import inspectionPointerSensitivity from '#src/lib/camera/inspectionPointerSensitivity.ts'
 import OrbitInspection from '#src/lib/camera/OrbitInspection.ts'
 import {cameraPose, galleryEvents, isTextInput, markControlled, setCameraFocused, useGallery} from '#src/lib/gallery.ts'
 import {setKnotFocus} from '#src/lib/rendering/playerView.ts'
@@ -40,6 +41,7 @@ export default function KnotSpectation() {
   const session = useRef<Session | null>(null)
   const distanceKeys = useRef(new Set<'KeyS' | 'KeyW'>)
   const orbitKeys = useRef(new Set<'KeyA' | 'KeyD'>)
+  const precisionPointer = useRef(false)
   const focusAmount = useRef(0)
   const focusPipelineActive = useRef(false)
   const center = useRef(new Vector3)
@@ -101,6 +103,9 @@ export default function KnotSpectation() {
     const down = (event: KeyboardEvent) => {
       if (event.ctrlKey || event.metaKey || event.altKey || isTextInput(event.target)) {
         return
+      }
+      if (event.code === 'KeyC') {
+        precisionPointer.current = true
       }
       if (session.current && !session.current.orbit.returning) {
         if (event.code === 'KeyW' || event.code === 'KeyS') {
@@ -164,6 +169,9 @@ export default function KnotSpectation() {
       announce(state.active)
     }
     const up = (event: KeyboardEvent) => {
+      if (event.code === 'KeyC') {
+        precisionPointer.current = false
+      }
       if (event.code === 'KeyW' || event.code === 'KeyS') {
         distanceKeys.current.delete(event.code)
       } else if (event.code === 'KeyA' || event.code === 'KeyD') {
@@ -176,7 +184,12 @@ export default function KnotSpectation() {
       if (!controls.isLocked || document.pointerLockElement !== renderer.domElement) {
         return
       }
-      session.current?.orbit.addInput(event.movementX * 0.0015 * controls.pointerSpeed, -event.movementY * 0.0015 * controls.pointerSpeed)
+      const sensitivity = inspectionPointerSensitivity(0.0015 * controls.pointerSpeed, precisionPointer.current, event.shiftKey)
+      session.current?.orbit.addInput(event.movementX * sensitivity, -event.movementY * sensitivity)
+    }
+    const blur = () => {
+      precisionPointer.current = false
+      release()
     }
     const teleport = () => {
       finish(false)
@@ -199,7 +212,7 @@ export default function KnotSpectation() {
     })
     globalThis.addEventListener('keydown', down)
     globalThis.addEventListener('keyup', up)
-    window.addEventListener('blur', release)
+    window.addEventListener('blur', blur)
     document.addEventListener('mousemove', move)
     galleryEvents.addEventListener('cancel-view', release)
     galleryEvents.addEventListener('teleport', teleport)
@@ -209,7 +222,7 @@ export default function KnotSpectation() {
       unsubscribe()
       globalThis.removeEventListener('keydown', down)
       globalThis.removeEventListener('keyup', up)
-      window.removeEventListener('blur', release)
+      window.removeEventListener('blur', blur)
       document.removeEventListener('mousemove', move)
       galleryEvents.removeEventListener('cancel-view', release)
       galleryEvents.removeEventListener('teleport', teleport)

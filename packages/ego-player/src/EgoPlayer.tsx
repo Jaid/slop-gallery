@@ -4,6 +4,7 @@ import type {EgoOptions} from './options.ts'
 import type {EgoInputReader, EgoPlayerHandle, EgoPosition, EgoRotation, EgoState, EgoToggle} from './types.ts'
 import type {RapierCollider, RapierRigidBody, RigidBodyProps} from '@react-three/rapier'
 import type {ComponentProps, ReactNode, Ref} from 'react'
+import type {PointerLockControls as PointerLockControlsImpl} from 'three/addons/controls/PointerLockControls.js'
 
 import {PointerLockControls} from '@react-three/drei/webgpu'
 import {useFrame, useThree} from '@react-three/fiber/webgpu'
@@ -13,6 +14,7 @@ import {useEffect, useImperativeHandle, useLayoutEffect, useRef, useState} from 
 
 import EgoDiagnostics from './EgoDiagnostics.ts'
 import EgoMotor from './EgoMotor.ts'
+import getEgoPointerSpeed from './EgoPointerSpeed.ts'
 import EgoView from './EgoView.ts'
 import EgoZoom from './EgoZoom.ts'
 import {getCapsuleHalfHeight} from './math.ts'
@@ -98,6 +100,8 @@ export default function EgoPlayer({cameraEnabled = true, casualZoomFactor = 2, c
   })
   const [zoom] = useState(() => new EgoZoom)
   const zoomAmount = useRef(0)
+  const pointerControls = useRef<PointerLockControlsImpl>(null)
+  const basePointerSpeed = typeof pointerLock === 'object' ? pointerLock.pointerSpeed ?? 1 : 1
   const onZoomChangeRef = useRef(onZoomChange)
   useLayoutEffect(() => {
     onZoomChangeRef.current = onZoomChange
@@ -111,6 +115,9 @@ export default function EgoPlayer({cameraEnabled = true, casualZoomFactor = 2, c
   }
   const resetZoom = () => {
     zoom.reset()
+    if (pointerControls.current) {
+      pointerControls.current.pointerSpeed = basePointerSpeed
+    }
     reportZoom(0)
   }
   const bodyRef = useRef<RapierRigidBody>(null)
@@ -280,6 +287,9 @@ export default function EgoPlayer({cameraEnabled = true, casualZoomFactor = 2, c
     }
     zoomKeys.current.zoom = zoomHeld
     zoomKeys.current.sprint = sprintHeld
+    if (pointerControls.current) {
+      pointerControls.current.pointerSpeed = getEgoPointerSpeed(basePointerSpeed, zoomMode)
+    }
     reportZoom(zoom.update(camera, zoomMode, zoomOptions, delta, onZoomTransition))
     if (active && keys.interact && !actionKeys.current.interact) {
       onInteract?.()
@@ -293,7 +303,7 @@ export default function EgoPlayer({cameraEnabled = true, casualZoomFactor = 2, c
     }
   })
   return <>
-    <Branch if={pointerLock !== false}><PointerLockControls makeDefault {...typeof pointerLock === 'object' ? pointerLock : {}} domElement={renderer.domElement} /></Branch>
+    <Branch if={pointerLock !== false}><PointerLockControls makeDefault {...typeof pointerLock === 'object' ? pointerLock : {}} domElement={renderer.domElement} ref={pointerControls} /></Branch>
     <RigidBody canSleep={false} colliders={false} position={initial.position} type='kinematicPosition' userData={userData === undefined ? defaultUserData : userData} ref={bodyRef}>
       <CapsuleCollider args={[getCapsuleHalfHeight(initial.height, initial.radius), initial.radius]} friction={0} position={[0, initial.height / 2, 0]} restitution={0} ref={colliderRef} />
       {children}
