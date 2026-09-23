@@ -1,6 +1,6 @@
 import type {Node, Texture} from 'three/webgpu'
 
-import {color, float, Fn, If, Loop, mix, mx_noise_float, normalViewGeometry, positionViewDirection, time, transformNormalToView, uv, varying, vec2, vec3} from 'three/tsl'
+import {color, float, Fn as fn, mix, mx_noise_float, mx_worley_noise_float, mx_worley_noise_vec3, normalViewGeometry, positionViewDirection, time, transformNormalToView, uv, varying, vec2, vec3} from 'three/tsl'
 
 import {detailNormal} from '../../candidates/deepseek/lib/detailNormal.ts'
 import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
@@ -10,30 +10,16 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {TAU} from '../../lib/TAU.ts'
 import knotData from './data.ts'
 
-/**
- * The two nearest jittered lattice sites around a point, found among the eight cells that share a corner instead of the usual twenty-seven. Enough for foam, where every bubble keeps its site near home, and twice as cheap as the general Voronoi search.
- */
+/** Neighboring Voronoi sites keep bubble identities independent of lattice boundaries. */
 function foamCells(position: Node<'vec3'>, jitter = 0.62) {
-  const base = position.floor()
-  const local = position.fract()
-  const first = float(1e6).toVar('foamFirst')
-  const second = float(1e6).toVar('foamSecond')
-  const nearest = vec3(0).toVar('foamNearest')
-  Loop(8, ({i}) => {
-    const offset = vec3(float(i.mod(2)), float(i.div(2).mod(2)), float(i.div(4)))
-    const site = cellNoiseVec3(base.add(offset)).mul(jitter).add(0.5)
-    const distance = offset.add(site).sub(local).length()
-    If(distance.lessThan(first), () => {
-      second.assign(first)
-      first.assign(distance)
-      nearest.assign(offset)
-    }).ElseIf(distance.lessThan(second), () => {
-      second.assign(distance)
-    })
-  })
-  return {first, second, identity: cellNoiseVec3(base.add(nearest)),
-// Distance to the shared film between two bubbles: zero on the wall, largest at the dome.
-    wall: second.sub(first)}
+  const distances = mx_worley_noise_vec3(position, jitter, 0)
+  const domain = mx_worley_noise_float(position, jitter, 1)
+  return {
+    first: distances.x,
+    identity: cellNoiseVec3(vec3(domain.mul(65_536), 7, 19)),
+    // F2 - F1 vanishes on the shared wall between bubbles.
+    wall: distances.y.sub(distances.x),
+  }
 }
 const foamScale = 6.5
 const reliefAmplitude = 0.015
@@ -56,30 +42,32 @@ export default class extends KnotMaterial {
 /**
  * Dome height of the foam above the tube surface, in object units.
  */
-    const relief = Fn(([coordinate]: [Node<'vec2'>]) => {
+    const relief = fn(([coordinate]: [Node<'vec2'>]) => {
       const {position, normal} = knotFrame(coordinate)
-      const {first, identity} = foamCells(toFoamSpace(coordinate))
+      const {first, identity, wall} = foamCells(toFoamSpace(coordinate))
       const radius = identity.z.mul(0.14).add(0.44)
       const dome = radius.mul(radius).sub(first.mul(first)).max(0).sqrt().div(radius)
       const breath = time.mul(0.22).add(identity.y.mul(24)).sin().mul(0.16).add(0.94)
-      return position.add(normal.mul(dome.mul(reliefAmplitude).mul(breath)))
+      return position.add(normal.mul(dome.mul(wall.smoothstep(0, 0.12)).mul(reliefAmplitude).mul(breath)))
     })
     this.positionNode = relief(tube)
     const epsilon = 0.0004
     const du = relief(tube.add(vec2(epsilon, 0))).sub(relief(tube.sub(vec2(epsilon, 0))))
     const dv = relief(tube.add(vec2(0, epsilon))).sub(relief(tube.sub(vec2(0, epsilon))))
     const reliefNormal = varying(transformNormalToView(du.cross(dv).normalize())).normalize()
-    const {first, identity, wall} = foamCells(toFoamSpace(tube))
+    const foamPosition = toFoamSpace(tube)
+    const {first, identity, wall} = foamCells(foamPosition)
     const facing = normalViewGeometry.dot(positionViewDirection).abs().clamp()
-    const footprint = first.fwidth()
+    const footprint = foamPosition.fwidth().length()
     const resolved = footprint.smoothstep(0.25, 0.9).oneMinus()
 // Plateau borders: where two films meet, the soap gathers into a thick bright crease.
-    const crease = wall.mul(foamScale).smoothstep(0.34, 0.02)
+    const crease = wall.mul(foamScale).smoothstep(0.02, footprint.mul(foamScale).add(0.34)).oneMinus()
+    const interior = wall.smoothstep(0, footprint.add(0.12))
 // Stretched thin over the crown of a dome, and drained of soap, a film goes matte and almost black.
-    const crown = first.div(identity.z.mul(0.14).add(0.44)).min(1)
+    const crown = mix(float(1), first.div(identity.z.mul(0.14).add(0.44)).min(1), interior)
 // A stretched dome is thinnest at its crown and keeps thinning until the film has drained away.
     const drain = time.mul(0.13).add(identity.x.mul(3.7)).fract()
-    const thickness = float(0.78).sub(drain.mul(0.62)).mul(crease.mul(0.82).add(0.18))
+    const thickness = mix(float(0.78), float(0.78).sub(drain.mul(0.62)).mul(crease.mul(0.82).add(0.18)), interior)
 // Interference of light that crossed a film of n = 1.33 twice, in nanometres.
     const path = thickness.mul(2.66).mul(facing.pow(0.3)).mul(540)
     const fringe = path.mul(vec3(1 / 680, 1 / 550, 1 / 450)).mul(TAU).cos().mul(0.5).add(0.5)
