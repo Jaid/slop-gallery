@@ -48,7 +48,7 @@ const rarities: Record<KnotId, Rarity> = {
   aurora_canopy: common,
   aurora_choir: rare,
   aurora_cocoon: common,
-  aurora_ice: prime,
+  aurora_ice: rare,
   aurora_loom: common,
   aurora_ribbon: rare,
   aurora_satin: common,
