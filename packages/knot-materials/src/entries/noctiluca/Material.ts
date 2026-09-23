@@ -5,6 +5,7 @@ import {color, float, mix, mx_noise_float, negateOnBackSide, normalLocal, transf
 import {glitter} from '../../candidates/deepseek/lib/glitter.ts'
 import {loopDrift, loopPhase} from '../../candidates/deepseek/lib/loopClock.ts'
 import {waterWaves} from '../../candidates/deepseek/lib/waterWaves.ts'
+import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
 import {filament} from '../../lib/filament.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
@@ -65,6 +66,11 @@ export default class extends KnotMaterial {
     const rings = distance.mul(9.5).sub(loopPhase.mul(2)).sin().mul(0.5).add(0.5).pow(3)
     const cloud = mx_noise_float(loopDrift(p.mul(2.6), 0.5, 1)).mul(0.5).add(0.5)
     const mote = glitter(p, 0.019, 80, 0.6)
+    // Keep each plankton highlight inside its cell, rather than lighting the entire box.
+    const moteCoord = p.div(0.019)
+    const moteCenter = cellNoiseVec3(moteCoord.floor()).mul(0.5).add(0.25)
+    const moteRadius = moteCoord.fwidth().length().add(0.18).min(0.24)
+    const moteMask = moteCoord.fract().sub(moteCenter).length().smoothstep(0.06, moteRadius).oneMinus()
     const body = mix(color('#02090e'), color('#061a24'), mx_noise_float(p.mul(5.5)).mul(0.5).add(0.5))
     this.colorNode = mix(body, color('#0a2a38'), facing.mul(0.4))
     this.roughnessNode = float(0.045).add(grazing.mul(0.035)).sub(intimate.mul(0.012)).clamp(0.025, 0.12)
@@ -85,7 +91,7 @@ export default class extends KnotMaterial {
       .add(mix(aqua, green, patchGreen).mul(crest.mul(plankton).mul(wake).mul(0.44)))
       .add(aqua.mul(halo.mul(plankton).mul(contact.mul(0.4).add(0.12)).mul(0.17)))
       .add(electric.mul(rings.mul(contact.pow(2)).mul(plankton.mul(0.6).add(0.2)).mul(0.55)))
-      .add(color('#cdf3ff').mul(mote.sparkle).mul(intimate).mul(0.5))
+      .add(color('#cdf3ff').mul(mote.sparkle).mul(moteMask).mul(intimate).mul(0.5))
       .add(deep.mul(cloud.mul(cloud).mul(0.09)))
       .add(aqua.mul(grazing.pow(6)).mul(0.05))
   }
