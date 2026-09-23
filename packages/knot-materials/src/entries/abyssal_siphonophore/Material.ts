@@ -7,6 +7,7 @@ import {glints} from '../../lib/glints.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {spectralColor} from '../../lib/spectralColor.ts'
+import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
@@ -20,12 +21,14 @@ export default class extends KnotMaterial {
     const combY = tube.y.mul(8)
     const combDist = combY.fract().sub(0.5).abs()
     const combFootprint = combY.fwidth().max(0.0001)
-    const inRow = combDist.smoothstep(combFootprint.mul(1.2).add(0.06), 0.02)
+    const inRow = combDist.smoothstep(0.02, combFootprint.mul(1.2).add(0.06)).oneMinus()
     // Rapid rhythmic micro-cilia beating waves traveling down the comb lines
-    const ciliaPhase = tube.x.mul(96).sub(time.mul(4.2)).add(combY.floor().mul(1.57))
+    const ciliaPhase = tube.x.mul(TAU * 15).sub(time.mul(4.2)).add(combY.floor().mul(TAU / 4))
     const beating = ciliaPhase.sin().smoothstep(0.1, 0.85)
     // Diffraction grating: angle of incidence along the comb line produces iridescent rainbow colors
-    const combAngle = view.dot(normalLocal.normalize()).abs().mul(6).add(ciliaPhase.mul(0.06)).add(time.mul(0.15))
+    // Give the slow rainbow its own whole cycle; scaling the cilia phase breaks the UV wrap.
+    const rainbowPhase = tube.x.mul(TAU).add(combY.floor().mul(TAU * 0.015)).sub(time.mul(0.102))
+    const combAngle = view.dot(normalLocal.normalize()).abs().mul(6).add(rainbowPhase)
     const diffraction = spectralColor(combAngle)
     // Internal volumetric photophore organs: sampled at successive chord depths
     const dir = view.negate()
@@ -47,9 +50,9 @@ export default class extends KnotMaterial {
     // Deep bioluminescent vesicle inclusions that awaken when the viewer draws close
     const vesicles = cellularPoints(p.sub(view.mul(0.1)).mul(48), 0.02, 0.18, 0.65).mul(intimate)
     // Defensive bioluminescent waves rushing along the knot on close encounter
-    const defensePhase = tube.x.mul(16).sub(time.mul(2.2)).sin()
+    const defensePhase = tube.x.mul(TAU * 3).sub(time.mul(2.2)).sin()
     const defenseWave = defensePhase.smoothstep(0.72, 0.98)
-    const defenseTint = mix(color('#00ffbb'), color('#9b51e0'), tube.x.mul(4).sin().mul(0.5).add(0.5))
+    const defenseTint = mix(color('#00ffbb'), color('#9b51e0'), tube.x.mul(TAU).sin().mul(0.5).add(0.5))
     // Cilia glints and micro-shimmer
     const ciliaNormal = normalViewGeometry.add(diffraction.sub(0.5).mul(0.4)).normalize()
     const ciliaSparkle = glints(ciliaNormal, 90).mul(inRow).mul(beating).mul(near.mul(0.7).add(0.3))
