@@ -53,8 +53,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       ambientOcclusion.samples.value = 16
       current = current.mul(vec4(vec3(ambientOcclusion.getTextureNode().r), 1))
     }
-    // Native pixel color + native depth -> isolated background -> aperture gather -> composite.
-    // No temporal color or post-TRAA depth mask may enter this branch.
+    // Native pixel color + native depth -> isolated background -> aperture gather -> composite. No temporal color or post-TRAA depth mask may enter this branch.
     let background: Node<'float'> = float(0)
     if (focus && camera instanceof PerspectiveCamera) {
       const amount = uniform(0).onRenderUpdate(focus.amount)
@@ -70,8 +69,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       background = bokeh.backgroundNode
     }
     if (quality) {
-      // Preserve the existing inspection bloom treatment, but apply its depth mask BEFORE
-      // temporal reconstruction, not as a jagged stencil over an already antialiased image.
+      // Preserve the existing inspection bloom treatment, but apply its depth mask BEFORE temporal reconstruction, not as a jagged stencil over an already antialiased image.
       const glow = own(bloom(current, 0.18, 0.25, 1))
       current = vec4(current.rgb.add(glow.rgb.mul(float(1).sub(background))), current.a)
       // Own the materialized input explicitly; Three's TRAANode does not dispose an implicit RTT.
