@@ -58,7 +58,12 @@ export default class extends KnotMaterial {
     const fibers = mx_noise_float(vec3(across.mul(24), down.mul(3), t.mul(0.06))).mul(0.5).add(0.5)
     const fibreDetail = fibers.mul(intimate.mul(0.8).add(0.2)).mul(woven)
     const fuzz = glitter(positionGeometry, 0.0021, 40, 0.9)
-    const fuzzMask = fuzz.sparkle.mul(intimate)
+    // Fuzz is made of isolated fibres, not reflective boxes covering whole lattice cells.
+    const fuzzCoord = positionGeometry.div(0.0021)
+    const fuzzCenter = cellNoiseVec3(fuzzCoord.floor()).mul(0.5).add(0.25)
+    const fuzzRadius = fuzzCoord.fwidth().length().add(0.18).min(0.24)
+    const fuzzCoverage = fuzzCoord.fract().sub(fuzzCenter).length().smoothstep(0.06, fuzzRadius).oneMinus()
+    const fuzzMask = fuzz.sparkle.mul(fuzzCoverage).mul(intimate)
     const cloth = mx_noise_float(vec3(fabric.x.mul(34), fabric.y.mul(9), 0)).mul(0.5).add(0.5)
     const silkGround = mix(color('#0f0a20'), color('#241a45'), cloth.mul(0.6).add(0.2))
     const silkWeave = mix(silkGround, silkGround.mul(1.6), weftOnTop.mul(woven))
@@ -75,7 +80,7 @@ export default class extends KnotMaterial {
     this.iridescence = 0.22
     this.iridescenceThicknessNode = cellRnd.x.mul(300).add(280)
     const reliefHeight = mix(threadRelief, brocade.mul(0.6).add(0.1), 0.45).add(fibreDetail.mul(0.12))
-    this.normalNode = proceduralNormal(reliefHeight, 0.0009).add(fuzz.lean.mul(0.08)).normalize()
+    this.normalNode = proceduralNormal(reliefHeight, 0.0009).add(fuzz.lean.mul(fuzzCoverage).mul(0.08)).normalize()
     const shuttle = loopTurn
     const wovenTail = shuttle.sub(fabric.x).fract()
     const approaching = fabric.x.sub(shuttle).fract()
