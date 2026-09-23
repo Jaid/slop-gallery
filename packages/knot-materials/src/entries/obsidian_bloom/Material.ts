@@ -1,43 +1,83 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
-import {cameraPosition, color, mix, modelWorldMatrixInverse, mx_noise_float, mx_noise_vec3, normalViewGeometry, positionGeometry, positionView, positionViewDirection, time, vec4} from 'three/tsl'
+import {color, float, Fn, mix, mx_fractal_noise_float, mx_noise_float, negateOnBackSide, positionViewDirection, time, transformNormalToView, uv, varying, vec2, vec3} from 'three/tsl'
 
-import {filament} from '../../lib/filament.ts'
+import {crackNetwork} from '../../candidates/deepseek/lib/crackNetwork.ts'
+import {detailNormal} from '../../candidates/deepseek/lib/detailNormal.ts'
+import {pixelFootprint} from '../../candidates/deepseek/lib/pixelFootprint.ts'
+import {surfaceLine} from '../../candidates/deepseek/lib/surfaceLine.ts'
+import {knotFrame} from '../../lib/knotFrame.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
-import {proceduralNormal} from '../../lib/proceduralNormal.ts'
+import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
+/**
+ * A crust of blown volcanic glass: the silhouette swells where the melt pushes from below.
+ */
+const crustSurface = Fn(([tube]: [Node<'vec2'>]) => {
+  const {position: p, normal} = knotFrame(tube)
+  return p.add(normal.mul(mx_noise_float(p.mul(2.3).add(vec3(0.4, -1.1, 2.2))).mul(0.013)))
+})
+/**
+ * Volcanic glass over a magma chamber. Far away the knot is a black mirror – the crust has closed and only a dull rust haze hints at what moves below. Walking closer opens the fissures: the shells of the crust tilt apart, rivers with chilled scum and white-hot hearts become legible, the glass around every crack turns amber as heat climbs through it, and fine crazing spreads across the hottest plates.
+ */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
-    super(environment)
+    super(environment, 0.45)
     this.name = knotData.id
-    const p = positionGeometry
-    const noise = mx_noise_float(p.mul(5)).mul(0.5).add(0.5)
-    const facing = normalViewGeometry.dot(positionViewDirection).abs().clamp()
-    const grazing = facing.oneMinus()
-    const rim = grazing.pow(2)
-    // Object-space direction from the surface point to the camera. Drives every
-    // angular reaction in this file (parallax, hue shift, fresnel tinting).
-    const view = modelWorldMatrixInverse.mul(vec4(cameraPosition, 1)).xyz.sub(p).normalize()
-    // World-unit camera distance — fine/deep layers fade in continuously on approach,
-    // their positions stay fixed.
-    const near = positionView.length().smoothstep(1.25, 5.5).oneMinus()
-    const inner = p.sub(view.mul(0.17))
-    // Black volcanic glass with a lattice of molten seams. Fissure heat is
-    // amplified at grazing angles so peering around the silhouette reveals
-    // the deepest embers — a real reward for walking off-axis.
-    const cracks = mx_noise_float(p.mul(3.2).add(mx_noise_vec3(p.mul(7)).mul(0.45)))
-    const seam = filament(cracks, 0.013)
-    const fork = filament(mx_noise_float(p.mul(9).add(3)), 0.018)
-    const ember = mx_noise_float(inner.mul(8).add(time.mul(0.06))).mul(0.5).add(0.5)
-    const heat = seam.add(fork.mul(0.6)).mul(near.mul(0.55).add(0.45)).mul(ember.pow(2))
-    const molten = mix(color('#ff5a1f'), color('#ffe08a'), ember)
-    this.colorNode = mix(color('#06040a'), color('#1c0a04'), noise.mul(0.6))
-    this.metalnessNode = seam.oneMinus().mul(0.15).add(0.15)
-    this.roughnessNode = seam.mul(-0.4).add(0.55)
-    this.normalNode = proceduralNormal(mx_noise_float(p.mul(18)), 0.0018)
-    this.clearcoat = 1
-    this.clearcoatRoughness = 0.03
-    this.emissiveNode = molten.mul(heat).mul(grazing.mul(0.45).add(0.6)).add(molten.mul(rim).mul(0.35))
+    const p = viewerFrame().p
+    const {grazing, near, intimate} = viewerFrame()
+    const tube = uv()
+    const t = time
+// Slow tide of heat: a drifting field decides how molten each region currently is.
+    const heat = mx_noise_float(p.mul(2.4).add(vec3(t.mul(0.05), t.mul(0.035), t.mul(-0.04)))).mul(0.5).add(0.5).mul(near.mul(0.6).add(0.55)).clamp()
+    const pulse = t.mul(Math.PI).sin().mul(0.28).add(0.86)
+    const pixel = pixelFootprint()
+    const plates = crackNetwork(p, 13, 4)
+    const fissure = surfaceLine(plates.edge, float(0.013).mix(0.024, near), pixel.mul(13))
+// Conchoidal shells: every plate bows outward, so the studio breaks across the crust in facets.
+    const dome = plates.heart.pow(2).mul(-1)
+    const crazing = surfaceLine(crackNetwork(p, 46, 14, 0.4).edge, float(0.055), pixel.mul(46))
+    const crazingMask = heat.smoothstep(0.68, 1.02).mul(near.mul(0.6).add(0.4))
+// Melt sampled in its own drifting frame, so it slides under the crust instead of blinking.
+    const meltPosition = p.add(vec3(t.mul(0.012).sin().mul(0.01), t.mul(0.02), t.mul(0.014).cos().mul(0.01)))
+    const melt = mx_fractal_noise_float(meltPosition.mul(34), 3, 2.15, 0.5).mul(0.5).add(0.5)
+    const scum = mx_noise_float(meltPosition.mul(96).add(vec3(0, t.mul(0.05), 0))).mul(0.5).add(0.5)
+    const molten = melt.mul(0.62).add(scum.mul(0.18)).add(0.3)
+    const vein = fissure.coverage.mul(fissure.energy.pow(0.7)).mul(heat).mul(pulse)
+    const veinTemperature = vein.mul(molten).clamp()
+    const veinColor = mix(color('#d02a00'), color('#ffbe63'), veinTemperature.mul(0.85))
+// Amber bleed: heat climbing through the glass, tight against the fissures and richer at grazing.
+    const bleed = plates.edge.negate().div(0.06).exp().pow(1.6).mul(heat).mul(pulse).mul(mx_noise_float(p.mul(5.5)).mul(0.45).add(0.75)).clamp()
+    const halo = plates.edge.negate().div(0.22).exp().mul(heat).mul(pulse).clamp()
+    const crust = mix(color('#03050a'), color('#0c111c'), mx_fractal_noise_float(p.mul(9), 3, 2, 0.5).mul(0.5).add(0.5))
+    const crustMix = mix(crust, mix(color('#1c0802'), color('#8c3d0b'), bleed.mul(0.6).add(halo.mul(0.25))), bleed.mul(0.35).add(halo.mul(0.2)).clamp())
+    this.colorNode = mix(crustMix, mix(color('#2b0c03'), veinColor, molten), fissure.coverage.mul(heat).clamp())
+    const striae = mx_noise_float(p.mul(58).add(vec3(0, t.mul(0.03), 0))).abs()
+    const relief = dome.mul(0.55)
+      .add(fissure.coverage.mul(heat.mul(0.45).add(0.55)).mul(-1.15))
+      .add(crazing.coverage.mul(crazingMask).mul(-0.22))
+      .add(fissure.coverage.mul(striae).mul(-0.16))
+      .add(mx_fractal_noise_float(p.mul(3.4), 3, 2, 0.5).mul(0.3))
+    const crustNormal = varying(transformNormalToView(crustSurface(tube.add(vec2(0.0001, 0))).sub(crustSurface(tube.sub(vec2(0.0001, 0)))).cross(crustSurface(tube.add(vec2(0, 0.0001))).sub(crustSurface(tube.sub(vec2(0, 0.0001))))).normalize())).normalize()
+    this.positionNode = crustSurface(tube)
+    this.normalNode = detailNormal(negateOnBackSide(crustNormal), relief, float(0.005).mul(fissure.relief.mul(0.75).add(0.25)))
+    this.metalnessNode = fissure.coverage.mul(heat).mul(-0.08).add(0.08)
+    this.roughnessNode = mix(float(0.09), float(0.7), fissure.coverage.mul(heat).max(crazing.coverage.mul(crazingMask).mul(0.6))).add(mx_noise_float(p.mul(7)).mul(0.04))
+    this.aoNode = fissure.coverage.mul(heat).mul(-0.72).add(1)
+    this.clearcoat = 0.35
+    this.specularColorNode = mix(color('#3a2c22'), color('#ffffff'), grazing.mul(0.6))
+    this.specularIntensityNode = mix(float(0.65), float(1), grazing.mul(0.8))
+    this.clearcoatRoughness = 0.05
+    const whiteHot = veinTemperature.pow(2.4).mul(4.5)
+    const crazingGlow = crazing.coverage.mul(crazing.energy).mul(crazingMask).mul(0.45)
+    const warmProfile = crustNormal.dot(positionViewDirection).abs().clamp().pow(3).oneMinus()
+    this.emissiveNode = veinColor.mul(vein).mul(3.4)
+      .add(color('#fff2d4').mul(whiteHot))
+      .add(color('#ff4a08').mul(crazingGlow))
+      .add(color('#ff6a1c').mul(bleed.pow(2.2)).mul(0.7))
+      .add(color('#ff5a10').mul(halo.pow(1.8)).mul(0.3))
+      .add(color('#ff9040').mul(fissure.coverage.mul(heat)).mul(0.2))
+      .add(color('#ff8a3a').mul(warmProfile).mul(heat).mul(intimate).mul(0.05))
   }
 }

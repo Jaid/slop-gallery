@@ -2,7 +2,7 @@ import {describe, expect, test} from 'bun:test'
 
 import {knotsById} from '../src/main.ts'
 
-// Successful Mage sessions only; mixed and unfinished sessions are not gallery submissions.
+// Accepted Mage sessions. Three recovered DeepSeek batches have complete eight-entry outputs despite stale absent run summaries.
 const batches = [
   {
     run: 'run-2026-09-22_04-33-27/preset-mimo_knot-material-shaders',
@@ -137,12 +137,69 @@ const batches = [
       'porifera',
     ],
   },
+  {
+    run: 'run-2026-09-22_23-02-42/deepseek-flash_knot-material-shaders',
+    candidateId: 'deepseek',
+    model: {
+      title: 'DeepSeek 4.1 Flash',
+      slug: 'deepseek/deepseek-4.1-flash',
+      effortLevel: 'xhigh',
+    },
+    ids: [
+      'abyssal_veil',
+      'gilded_fracture',
+      'heartwood_knot',
+      'hoarfrost_hymn',
+      'loom_of_hours',
+      'morpho_chrysalis',
+      'obsidian_bloom',
+      'quicksilver',
+    ],
+  },
+  {
+    run: 'run-2026-09-22_23-02-51/deepseek-flash_knot-material-shaders',
+    candidateId: 'deepseek',
+    model: {
+      title: 'DeepSeek 4.1 Flash',
+      slug: 'deepseek/deepseek-4.1-flash',
+      effortLevel: 'xhigh',
+    },
+    ids: [
+      'abyssal_lumen',
+      'ruby_asterism',
+      'foam_vespers',
+      'island_chain',
+      'nocturne_glass',
+      'opaline_canticle',
+      'orrery_of_hours',
+      'thousand_cranes',
+    ],
+  },
+  {
+    run: 'run-2026-09-22_23-02-54/deepseek-flash_knot-material-shaders',
+    candidateId: 'deepseek',
+    model: {
+      title: 'DeepSeek 4.1 Flash',
+      slug: 'deepseek/deepseek-4.1-flash',
+      effortLevel: 'xhigh',
+    },
+    ids: [
+      'emberwake',
+      'hoarfrost',
+      'marginalia',
+      'noble_fire',
+      'noctiluca',
+      'sandfall',
+      'shatterlight',
+      'woven_nocturne',
+    ],
+  },
 ] as const
 describe('September 22 Mage arrivals', () => {
-  test('keeps all 56 submissions and their actual inference provenance', () => {
+  test('keeps all 80 submissions and their actual inference provenance', () => {
     const ids = batches.flatMap(batch => [...batch.ids])
-    expect(batches).toHaveLength(7)
-    expect(ids).toHaveLength(56)
+    expect(batches).toHaveLength(10)
+    expect(ids).toHaveLength(80)
     expect(new Set(ids).size).toBe(ids.length)
     for (const batch of batches) {
       expect(batch.ids).toHaveLength(8)
@@ -158,6 +215,26 @@ describe('September 22 Mage arrivals', () => {
   test('renames colliding submissions instead of replacing existing exhibits', () => {
     const collisions = [
       [
+        'obsidian_emberflower',
+        'obsidian_bloom',
+      ],
+      [
+        'mercury_tremor',
+        'quicksilver',
+      ],
+      [
+        'abyssal_syllable',
+        'abyssal_lumen',
+      ],
+      [
+        'asteria',
+        'ruby_asterism',
+      ],
+      [
+        'noctiluca_bloom',
+        'noctiluca',
+      ],
+      [
         'amber_herbarium',
         'amber_archive',
       ],
@@ -170,7 +247,7 @@ describe('September 22 Mage arrivals', () => {
         'glacier_veil',
       ],
       [
-        'quicksilver',
+        'mercury_tremor',
         'gilded_mercury',
       ],
       [

@@ -5,14 +5,18 @@ export default {
   id: 'obsidian_bloom',
   candidateId: 'deepseek',
   title: 'Obsidian Bloom',
+  harness: 'Mage',
   author: {
     model: {
       title: 'DeepSeek 4.1 Flash',
+      slug: 'deepseek/deepseek-4.1-flash',
+      effortLevel: 'xhigh',
     },
   },
-  flavorText: 'A black flower opens along fractures left by an ancient fire.',
+  displacement: 0.013,
+  flavorText: 'A mirror of cooled night, split by the bloom of the fire still living underneath it.',
   placeholder: {
-    color: '#ff7a3c',
-    shading: 'fabric',
+    color: '#1c0802',
+    shading: 'glass',
   },
 } as const satisfies KnotData

@@ -2,7 +2,7 @@ import {describe, expect, test} from 'bun:test'
 
 import Asteria from 'knot-materials/entries/asteria/Material.ts'
 import Gossamer from 'knot-materials/entries/gossamer/Material.ts'
-import Quicksilver from 'knot-materials/entries/quicksilver/Material.ts'
+import Quicksilver from 'knot-materials/entries/mercury_tremor/Material.ts'
 import Vitrail from 'knot-materials/entries/vitrail/Material.ts'
 import {Texture} from 'three/webgpu'
 

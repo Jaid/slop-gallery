@@ -251,7 +251,7 @@ describe('arbitrary Knot batches', () => {
       xhigh: 16,
     })
     const deepseekMage = knots.filter(entry => entry.candidate.id === 'deepseek' && entry.harness === 'Mage')
-    expect(deepseekMage).toHaveLength(32)
+    expect(deepseekMage).toHaveLength(56)
     expect(deepseekMage.every(entry => entry.author.model.title === 'DeepSeek 4.1 Flash' && entry.author.model.slug === 'deepseek/deepseek-4.1-flash' && entry.author.model.effortLevel === 'xhigh')).toBe(true)
     const lunaMage = knots.filter(entry => entry.candidate.id === 'gpt_luna' && entry.harness === 'Mage')
     expect(lunaMage).toHaveLength(8)

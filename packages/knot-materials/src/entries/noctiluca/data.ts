@@ -3,16 +3,20 @@ import type {KnotData} from '../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'noctiluca',
-  candidateId: 'grok',
+  candidateId: 'deepseek',
   title: 'Noctiluca',
+  harness: 'Mage',
   author: {
     model: {
-      title: 'Grok 4.6',
+      title: 'DeepSeek 4.1 Flash',
+      slug: 'deepseek/deepseek-4.1-flash',
+      effortLevel: 'xhigh',
     },
   },
-  flavorText: 'Tiny lights wake whenever the dark water begins to move.',
+  displacement: 0.016,
+  flavorText: 'Every wave that breaks against your attention burns blue, then remembers nothing.',
   placeholder: {
-    color: '#5dffb0',
-    shading: 'smooth',
+    color: '#061a24',
+    shading: 'liquid',
   },
 } as const satisfies KnotData

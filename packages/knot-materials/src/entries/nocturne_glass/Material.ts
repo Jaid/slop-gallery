@@ -1,0 +1,95 @@
+import type {Node, Texture} from 'three/webgpu'
+
+import {color, float, mix, mx_noise_float, normalViewGeometry, time, vec3} from 'three/tsl'
+
+import {detailNormal} from '../../candidates/deepseek/lib/detailNormal.ts'
+import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
+import {filament} from '../../lib/filament.ts'
+import KnotMaterial from '../../lib/KnotMaterial.ts'
+import {viewerFrame} from '../../lib/viewerFrame.ts'
+import knotData from './data.ts'
+
+/**
+ * Defocused lights behind the glass: loose discs with the bright rim of a real lens, coloured like a city at night. Returns the disc coverage and its warm or cold tint.
+ */
+function bokeh(position: Node<'vec3'>, scale: number, seed: number) {
+  const q = position.mul(scale).add(seed)
+  const cell = q.floor()
+  const identity = cellNoiseVec3(cell)
+  const centre = identity.mul(0.55).add(0.22)
+  const offset = q.fract().sub(centre)
+  const distance = offset.length().div(identity.z.mul(0.22).add(0.16))
+  const rim = distance.smoothstep(1.02, 0.86)
+  const heart = distance.mul(distance).mul(0.5).add(0.55)
+  const gate = cellNoiseVec3(cell.add(31.7)).x.smoothstep(0.16, 0.34)
+  const tint = cellNoiseVec3(cell.add(11.3))
+  const warm = tint.x.smoothstep(0.45, 0.9)
+  return {
+    disc: rim.mul(heart).mul(gate),
+    cold: tint.z,
+    warm,
+  }
+}
+
+/**
+ * A pane of black glass in a rainstorm. The city behind it is a field of out-of-focus lights that slide past as you walk, each bead of rain gathering them into its own small, upside-down lamps, and every rivulet dragging a bright thread of the night down the glass.
+ */
+export default class extends KnotMaterial {
+  constructor(environment: Texture) {
+    super(environment, 0.32)
+    this.name = knotData.id
+    const {p, view, facing, grazing, near, intimate} = viewerFrame()
+// Beads of rain: one coarse set that swells and slides, one fine set of drizzle.
+    const coarseCells = p.mul(9.5)
+    const coarseIdentity = cellNoiseVec3(coarseCells.floor())
+    const coarseOffset = coarseCells.fract().sub(coarseIdentity.mul(0.5).add(0.25))
+    const coarseDistance = coarseOffset.length()
+    const coarseRadius = coarseIdentity.z.mul(0.1).add(0.11)
+    const coarseHeight = coarseRadius.mul(coarseRadius).sub(coarseDistance.mul(coarseDistance)).max(0).sqrt()
+    const coarseMask = coarseDistance.div(coarseRadius).smoothstep(0.94, 1).oneMinus()
+    const fineCells = p.mul(31).add(4.4)
+    const fineIdentity = cellNoiseVec3(fineCells.floor())
+    const fineDistance = fineCells.fract().sub(fineIdentity.mul(0.5).add(0.25)).length()
+    const fineMask = fineDistance.div(fineIdentity.z.mul(0.07).add(0.07)).smoothstep(0.92, 1).oneMinus().mul(near)
+// A drop is a lens: it pulls the lights behind it toward its own centre.
+    const lens = coarseOffset.div(coarseDistance.max(0.0005)).mul(coarseDistance.div(coarseRadius).pow(2)).mul(coarseMask).mul(0.055)
+// Rivulets: threads of water that wander down the glass and drag the light with them.
+    const thread = filament(mx_noise_float(p.mul(vec3(2.2, 0.5, 2.2)).add(vec3(0, time.mul(0.05), 0))).mul(1.4).add(p.x.mul(1.1)), 0.05)
+    const threadFlow = mx_noise_float(vec3(p.x.mul(14), p.y.mul(2.4).sub(time.mul(0.55)), p.z.mul(14)))
+    const rivulet = thread.mul(threadFlow.mul(0.5).add(0.5)).mul(near.mul(0.7).add(0.3))
+// The night behind the glass, sampled a hand’s width deeper at every glance.
+    const behind = p.sub(view.mul(0.34)).add(lens).add(vec3(0, threadFlow.sub(0.5).mul(0.02), 0))
+// Squash the light field along the line of sight, so the city reads as a sheet of lamps behind the
+// glass instead of a lattice the eye cuts through edge-on.
+    const along = behind.dot(view)
+    const sheet = behind.sub(view.mul(along)).add(view.mul(along.mul(0.34)))
+    const far = bokeh(sheet, 5.6, 0)
+    const nearer = bokeh(sheet.add(vec3(0.13, 0.07, 0.11)), 15, 3.3)
+    const haze = mx_noise_float(sheet.mul(1.7)).mul(0.5).add(0.5)
+    const lamps = mix(color('#ff8f26'), color('#5cc4ff'), far.cold)
+    const nearLamps = mix(color('#ffd9a0'), color('#ff5fa8'), nearer.warm)
+// Drizzle speckle and dust on the dry parts, only visible close up.
+    const drizzle = filament(mx_noise_float(p.mul(120)).mul(2), 0.08).mul(near)
+    const dust = mx_noise_float(p.mul(46)).mul(0.5).add(0.5).mul(near)
+    const wet = coarseMask.add(fineMask).add(rivulet).clamp(0, 1)
+    const glow = far.disc.mul(0.5).add(nearer.disc.mul(0.24))
+    this.colorNode = mix(color('#02040a'), color('#0a1220'), facing.oneMinus().mul(0.5))
+      .add(lamps.mul(glow).mul(0.22))
+      .add(nearLamps.mul(glow).mul(fineMask).mul(0.08))
+    this.metalness = 0
+    this.roughnessNode = float(0.02).add(drizzle.mul(0.25)).add(dust.mul(0.1)).clamp(0.015, 1)
+    this.clearcoatNode = float(0.45).add(wet.mul(0.22)).clamp(0, 0.7)
+    this.clearcoatRoughnessNode = float(0.03).add(fineMask.mul(0.12)).add(drizzle.mul(0.2))
+    this.ior = 1.5
+    this.normalNode = detailNormal(normalViewGeometry, coarseHeight.mul(0.02).add(drizzle.mul(0.0008)).add(rivulet.mul(0.0012)), 0.6)
+    this.emissiveNode = lamps.mul(glow).mul(1)
+      .add(color('#ff9b3d').mul(haze).mul(0.05))
+      .add(nearLamps.mul(nearer.disc).mul(0.7).mul(near.mul(0.6).add(0.4)))
+      .add(lamps.mul(glow).mul(fineMask).mul(0.35))
+      .add(color('#cfe4ff').mul(rivulet).mul(glow.mul(0.6).add(0.1)).mul(0.35))
+      .add(color('#eaf2ff').mul(wet).mul(grazing.pow(2)).mul(0.05))
+      .add(color('#9fd0ff').mul(intimate).mul(mx_noise_float(p.mul(6).add(vec3(time.mul(0.1), 0, 0))).mul(0.5).add(0.5)).mul(0.04))
+// Drizzle keeps the colour of the lamps it is standing in front of, instead of whitening them.
+      .add(mix(lamps, color('#eaf2ff'), 0.3).mul(drizzle).mul(glow).mul(0.35))
+  }
+}

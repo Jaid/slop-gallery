@@ -3,20 +3,20 @@ import type {KnotData} from '../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'quicksilver',
-  candidateId: 'mimo',
+  candidateId: 'deepseek',
   title: 'Quicksilver',
   harness: 'Mage',
   author: {
     model: {
-      title: 'MiMo V2.5 Pro',
-      slug: 'xiaomi/mimo-v2.5-pro',
+      title: 'DeepSeek 4.1 Flash',
+      slug: 'deepseek/deepseek-4.1-flash',
       effortLevel: 'xhigh',
     },
   },
-  flavorText: 'A metal that never set. It trembles at your breath and keeps a perfect, upside-down portrait of the room.',
-  displacement: 0.12,
+  displacement: 0.011,
+  flavorText: 'It has no color of its own, so it borrows the room and gives it back.',
   placeholder: {
-    color: '#b8bec4',
+    color: '#7d8894',
     shading: 'liquid',
   },
 } as const satisfies KnotData

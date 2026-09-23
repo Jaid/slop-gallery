@@ -40,7 +40,7 @@ describe('Knot cellular fields', () => {
       'celestial_astrolabe',
       'abyssal_bioluminescence',
       'abyssal_bloom',
-      'abyssal_lumen',
+      'abyssal_syllable',
       'zero_point_lather',
       'elytra_iridescence',
       'photonic_morpho',
@@ -65,8 +65,8 @@ describe('Knot cellular fields', () => {
       expect(text, id).not.toContain('mx_cell_noise_float(')
     }
   })
-  test('rounds Abyssal Lumen spots without changing their drift, pulse or proximity response', async () => {
-    const text = await source('abyssal_lumen')
+  test('rounds Abyssal Syllable spots without changing their drift, pulse or proximity response', async () => {
+    const text = await source('abyssal_syllable')
     expect(text).toContain('cellularPoints(p.mul(30).add(time.mul(0.03)), 0.06, 0.24, 0.86)')
     expect(text).toContain('const pulse = time.mul(0.8).add(bodyNoise.mul(4)).sin().mul(0.5).add(0.5)')
     expect(text).toContain("color('#ff4fd8').mul(spots).mul(pulse).mul(intimate.mul(0.8).add(0.3))")

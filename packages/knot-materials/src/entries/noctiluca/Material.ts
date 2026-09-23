@@ -1,45 +1,92 @@
 import type {Texture} from 'three/webgpu'
 
-import {cameraPosition, color, mix, modelWorldMatrixInverse, mx_noise_float, normalViewGeometry, positionGeometry, positionView, positionViewDirection, time, vec3, vec4} from 'three/tsl'
+import {color, float, mix, mx_noise_float, negateOnBackSide, normalLocal, transformNormalToView} from 'three/tsl'
 
+import {glitter} from '../../candidates/deepseek/lib/glitter.ts'
+import {loopDrift, loopPhase} from '../../candidates/deepseek/lib/loopClock.ts'
+import {waterWaves} from '../../candidates/deepseek/lib/waterWaves.ts'
+import {filament} from '../../lib/filament.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
-import {liquidNormal} from '../../lib/liquidNormal.ts'
-import {opticalLine} from '../../lib/opticalLine.ts'
+import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
+/**
+ * A sea of dinoflagellates wrapped around the knot. Long swells displace the tube itself, chop and capillary ripples carry the specular streaks, and every crest near the visitor ignites in blue light that races away in rings. Plankton patches drift with the water, so the glow keeps changing while the wave field stays periodic and closes exactly at the end of the two-second angle loop, which is why every train travels a whole number of wavelengths per loop.
+ */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
-    super(environment)
+    super(environment, 0.42)
     this.name = knotData.id
-    const p = positionGeometry
-    const facing = normalViewGeometry.dot(positionViewDirection).abs().clamp()
-    const grazing = facing.oneMinus()
-    const rim = grazing.pow(2)
-    const view = modelWorldMatrixInverse.mul(vec4(cameraPosition, 1)).xyz.sub(p).normalize()
-    // World-unit camera distance, not screen UVs or changing texture scale.
-    // Fine/deep layers fade in continuously on approach; their positions stay fixed.
-    const near = positionView.length().smoothstep(1.25, 5.5).oneMinus()
-    const intimate = positionView.length().smoothstep(0.7, 2.4).oneMinus()
-    const inner = p.sub(view.mul(0.17))
-    const deep = p.sub(view.mul(0.28))
-    const glance = grazing.pow(2.4)
-    const drift = vec3(time.mul(0.035), time.mul(-0.055), time.mul(0.018))
-    const bloomField = mx_noise_float(inner.mul(10).add(drift))
-    const cells = opticalLine(bloomField, 0.032)
-    const colony = opticalLine(mx_noise_float(deep.mul(18).sub(drift.mul(0.6))), 0.024)
-    const breath = inner.y.mul(8).sub(time.mul(0.72)).sin().mul(0.2).add(0.8)
-    const gather = bloomField.abs().smoothstep(0.05, 0.42)
-    const wake = glance.mul(near)
-    this.colorNode = mix(color('#020814'), color('#04353d'), gather)
-    this.transmission = 0.46
-    this.thickness = 0.4
-    this.ior = 1.48
-    this.attenuationColor.set('#046b6a')
-    this.attenuationDistance = 0.58
-    this.roughness = 0.08
-    this.clearcoat = 0.88
-    this.clearcoatRoughness = 0.04
-    this.normalNode = liquidNormal(near.mul(0.8).add(0.15), 0.14)
-    this.emissiveNode = mix(color('#00c2a8'), color('#b8ff7a'), gather).mul(cells).mul(breath).mul(near.mul(0.75).add(0.5)).add(color('#3dffd2').mul(colony).mul(intimate.mul(0.8).add(near.mul(0.35)))).add(color('#7affc8').mul(wake).mul(0.18)).add(color('#1458ff').mul(rim).mul(0.1))
+    const {p, facing, grazing, distance, intimate} = viewerFrame()
+    const clock = loopPhase
+    const capillary = intimate.mul(0.75).add(0.25)
+    const swell = waterWaves(p, clock, [{
+      amplitude: 0.012,
+      direction: [0.86, 0.3, -0.41],
+      speed: 1,
+      wavelength: 0.62,
+    }, {
+      amplitude: 0.0035,
+      direction: [0.52, -0.44, -0.73],
+      speed: 1,
+      wavelength: 0.34,
+    }])
+    const chop = waterWaves(p, clock, [{
+      amplitude: 0.0026,
+      direction: [-0.35, 0.72, 0.6],
+      speed: 3,
+      wavelength: 0.21,
+    }, {
+      amplitude: 0.0016,
+      direction: [0.25, -0.62, 0.74],
+      speed: 4,
+      wavelength: 0.12,
+    }, {
+      amplitude: capillary.mul(0.0009),
+      direction: [-0.72, 0.17, 0.67],
+      speed: 9,
+      wavelength: 0.062,
+    }])
+    this.positionNode = p.add(normalLocal.mul(swell.height))
+    const slope = swell.slope.add(chop.slope)
+    const objectNormal = normalLocal.normalize()
+    const steep = slope.sub(objectNormal.mul(slope.dot(objectNormal)))
+    this.normalNode = negateOnBackSide(transformNormalToView(objectNormal.sub(steep.mul(0.62)).normalize()).normalize())
+    const height = swell.height.mul(0.55).add(chop.height).add(1)
+    const crestField = height.div(capillary.mul(0.35).add(1)).sub(0.34)
+    const crest = crestField.smoothstep(0.56, 1.16)
+    const crestLine = filament(crestField.sub(0.7), 0.026).mul(crestField.fwidth().smoothstep(0.035, 0.12).oneMinus())
+    const halo = filament(crestField.sub(0.5), 0.26)
+    const envelope = mx_noise_float(loopDrift(p.mul(1.05), 0.4)).mul(0.5).add(0.5)
+    const plankton = envelope.smoothstep(0.42, 0.74)
+    const patchGreen = mx_noise_float(p.mul(3.4).add(40)).mul(0.5).add(0.5)
+    const contact = distance.smoothstep(0.85, 3.3).oneMinus()
+    const wake = contact.pow(1.2).mul(0.7).add(0.26)
+    const rings = distance.mul(9.5).sub(loopPhase.mul(2)).sin().mul(0.5).add(0.5).pow(3)
+    const cloud = mx_noise_float(loopDrift(p.mul(2.6), 0.5, 1)).mul(0.5).add(0.5)
+    const mote = glitter(p, 0.019, 80, 0.6)
+    const body = mix(color('#02090e'), color('#061a24'), mx_noise_float(p.mul(5.5)).mul(0.5).add(0.5))
+    this.colorNode = mix(body, color('#0a2a38'), facing.mul(0.4))
+    this.roughnessNode = float(0.045).add(grazing.mul(0.035)).sub(intimate.mul(0.012)).clamp(0.025, 0.12)
+    this.metalness = 0
+    this.ior = 1.33
+    this.clearcoat = 0.8
+    this.clearcoatRoughness = 0.025
+    this.clearcoatNormalNode = this.normalNode
+    this.sheen = 0.07
+    this.sheenColor.set('#9fe6ff')
+    this.sheenRoughness = 0.32
+    const bloomCore = color('#f4ffff')
+    const aqua = color('#4ef0dc')
+    const electric = color('#2a86ff')
+    const deep = color('#0d3f7d')
+    const green = color('#8dffb0')
+    this.emissiveNode = bloomCore.mul(crestLine.mul(plankton).mul(wake).mul(1.8))
+      .add(mix(aqua, green, patchGreen).mul(crest.mul(plankton).mul(wake).mul(0.44)))
+      .add(aqua.mul(halo.mul(plankton).mul(contact.mul(0.4).add(0.12)).mul(0.17)))
+      .add(electric.mul(rings.mul(contact.pow(2)).mul(plankton.mul(0.6).add(0.2)).mul(0.55)))
+      .add(color('#cdf3ff').mul(mote.sparkle).mul(intimate).mul(0.5))
+      .add(deep.mul(cloud.mul(cloud).mul(0.09)))
+      .add(aqua.mul(grazing.pow(6)).mul(0.05))
   }
 }
