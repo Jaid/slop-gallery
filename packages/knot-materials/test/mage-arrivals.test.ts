@@ -2,7 +2,7 @@ import {describe, expect, test} from 'bun:test'
 
 import {knotsById} from '../src/main.ts'
 
-// Accepted Mage sessions. Three recovered DeepSeek batches have complete eight-entry outputs despite stale absent run summaries.
+// Accepted Mage sessions, including all knot-material runs whose root telemetry was repaired.
 const batches = [
   {
     run: 'run-2026-09-22_04-33-27/preset-mimo_knot-material-shaders',
@@ -70,7 +70,7 @@ const batches = [
       effortLevel: 'xhigh',
     },
     ids: [
-      'blue_hour',
+      'cerulean_hour',
       'glacier_script',
       'heartwood_atlas',
       'magnetic_tide',
@@ -138,6 +138,44 @@ const batches = [
     ],
   },
   {
+    run: 'run-2026-09-22_21-27-34/grok-4-7_knot-material-shaders',
+    candidateId: 'grok',
+    model: {
+      title: 'Grok 4.7',
+      slug: 'x-ai/grok-4.7',
+      effortLevel: 'xhigh',
+    },
+    ids: [
+      'boreal_glass',
+      'caustic_chapel',
+      'cloisonne',
+      'damascus_river',
+      'gilded_seam',
+      'opal_vespers',
+      'quiet_sun',
+      'velvet_requiem',
+    ],
+  },
+  {
+    run: 'run-2026-09-22_21-33-54/preset-mimo_knot-material-shaders',
+    candidateId: 'mimo',
+    model: {
+      title: 'MiMo V2.6 Pro',
+      slug: 'xiaomi/mimo-v2.6-pro',
+      effortLevel: 'xhigh',
+    },
+    ids: [
+      'abyssal_bloom',
+      'blue_hour',
+      'deep_field',
+      'frozen_fire',
+      'kintsugi',
+      'moonspun_silk',
+      'tiger_eye',
+      'velvet_rose',
+    ],
+  },
+  {
     run: 'run-2026-09-22_23-02-42/deepseek-flash_knot-material-shaders',
     candidateId: 'deepseek',
     model: {
@@ -196,10 +234,10 @@ const batches = [
   },
 ] as const
 describe('September 22 Mage arrivals', () => {
-  test('keeps all 80 submissions and their actual inference provenance', () => {
+  test('keeps all 96 submissions and their actual inference provenance', () => {
     const ids = batches.flatMap(batch => [...batch.ids])
-    expect(batches).toHaveLength(10)
-    expect(ids).toHaveLength(80)
+    expect(batches).toHaveLength(12)
+    expect(ids).toHaveLength(96)
     expect(new Set(ids).size).toBe(ids.length)
     for (const batch of batches) {
       expect(batch.ids).toHaveLength(8)
@@ -214,6 +252,18 @@ describe('September 22 Mage arrivals', () => {
   })
   test('renames colliding submissions instead of replacing existing exhibits', () => {
     const collisions = [
+      [
+        'abyssal_flower',
+        'abyssal_bloom',
+      ],
+      [
+        'cerulean_hour',
+        'blue_hour',
+      ],
+      [
+        'auric_joinery',
+        'kintsugi',
+      ],
       [
         'obsidian_emberflower',
         'obsidian_bloom',
@@ -239,7 +289,7 @@ describe('September 22 Mage arrivals', () => {
         'amber_archive',
       ],
       [
-        'abyssal_bloom',
+        'abyssal_flower',
         'hadal_garden',
       ],
       [

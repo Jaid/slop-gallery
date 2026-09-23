@@ -1,54 +1,51 @@
 import type {Texture} from 'three/webgpu'
 
-import {color, float, mix, mx_noise_float, time, uv, vec2} from 'three/tsl'
+import {color, float, mix, mx_fractal_noise_float, mx_noise_float, time, vec3} from 'three/tsl'
 
-import {approach, disk, wave} from '../../candidates/gpt_astra/lib/exhibition/optics.ts'
-import {inkLine as stroke} from '../../lib/atelier.ts'
 import {cellularBoundary} from '../../lib/cellularBoundary.ts'
-import KnotMaterial from '../../lib/KnotMaterial.ts'
+import {filteredRibbon} from '../../lib/filteredRibbon.ts'
+import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
+import {opticalBands} from '../../lib/opticalBands.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Cobalt wave fans and gold crests lie beneath a crazed porcelain glaze, with granulation revealed on approach.
- */
-export default class extends KnotMaterial {
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
-    super(environment, 0.95)
+    super(environment, 0.5)
     this.name = knotData.id
-    const {p, facing, grazing, objectDistance} = viewerFrame()
-    const near = approach(objectDistance)
-    const tube = uv()
-    const q = tube.mul(vec2(28, 6))
-    const local = q.add(vec2(q.y.floor().mod(2).mul(0.5), 0)).fract()
-    const fanPoint = vec2(local.x.sub(0.5), local.y.mul(0.74).add(0.08))
-    const radius = fanPoint.length()
-    const aa = q.fwidth().length().max(0.0001)
-    const fan = disk(radius, 0.72, aa)
-    const granulation = mx_noise_float(p.mul(160)).mul(0.5).add(0.5)
-    const wash = mx_noise_float(p.mul(28)).mul(0.5).add(0.5)
-    const brush = wave(radius.mul(TAU * 8.5).add(wash.mul(0.35))).smoothstep(-0.18, 0.5).mul(fan)
-    const crest = stroke(radius.sub(0.718), 0.009, aa)
-    const innerGold = stroke(radius.sub(0.48), 0.003, aa).mul(fan)
-    const gold = crest.max(innerGold.mul(0.75))
-    const porcelain = mix(color('#d9e4de'), color('#fff2d8'), wash.mul(0.6).add(0.3))
-    const cobalt = mix(color('#031338'), color('#134574'), wash.mul(0.6).add(granulation.mul(0.3)))
-    const cracks = cellularBoundary(p.mul(115))
-    const craze = cracks.smoothstep(0.007, 0.028).oneMinus().mul(near).mul(p.mul(115).fwidth().length().smoothstep(0.2, 1).oneMinus())
-    const glaze = mix(porcelain, cobalt, brush.mul(granulation.mul(0.065).add(0.935)))
-    this.colorNode = mix(glaze.mul(craze.mul(-0.12).add(1)), color('#c69543'), gold)
-    this.metalnessNode = gold.mul(0.82)
-    this.roughnessNode = mix(float(0.19), float(0.25), brush).sub(gold.mul(0.08)).add(granulation.mul(0.035))
+    const {p, view, grazing, near, intimate} = viewerFrame()
+// The cobalt painting sits below the glaze and drifts against its highlights as you walk.
+    const q = p.sub(view.mul(0.05))
+    const washField = mx_fractal_noise_float(q.mul(1.7).add(vec3(0.3, 0, 0)), 4, 2.1, 0.5).mul(0.5).add(0.5)
+    const mountain = washField.smoothstep(0.28, 0.52)
+    const wash = washField.smoothstep(0.16, 0.45).mul(0.6)
+    const dryBrush = mx_noise_float(q.mul(10)).mul(0.5).add(0.5).smoothstep(0.45, 0.8).mul(0.45)
+    const tide = opticalBands(q.y.mul(TAU * 2.5).add(mx_noise_float(q.mul(2)).mul(1.4))).mul(0.35)
+    const painting = mountain.mul(0.95).add(wash).add(dryBrush).add(tide).clamp()
+    const ink = painting.smoothstep(0.3, 0.85)
+    const cobalt = mix(color('#2040a0'), color('#050c30'), painting)
+    const porcelain = mix(color('#9a9078'), color('#7a7058'), mx_noise_float(p.mul(5)).mul(0.5).add(0.5))
+    const crazeQ = p.sub(view.mul(0.02))
+    const craze = filteredRibbon(cellularBoundary(crazeQ.mul(7)), 0.005).add(filteredRibbon(cellularBoundary(crazeQ.mul(17)), 0.003).mul(near)).clamp()
+    const height = painting.mul(0.0028).sub(craze.mul(0.003)).add(mx_noise_float(p.mul(30)).mul(0.0008))
+    this.normalNode = proceduralNormal(height, 0.7)
+    this.colorNode = mix(mix(porcelain, cobalt, ink), color('#4a4234'), craze.mul(0.45))
+    this.metalness = 0
+    this.roughnessNode = mix(float(0.06), float(0.14), ink.mul(0.4)).add(craze.mul(0.1))
+    this.aoNode = float(1).sub(craze.mul(0.3))
     this.clearcoat = 1
-    this.clearcoatRoughness = 0.07
+    this.clearcoatRoughness = 0.03
+    this.transmission = 0.22
+    this.thickness = 0.35
     this.ior = 1.5
-    const relief = brush.mul(0.00014).add(gold.mul(0.00055)).add(wash.mul(0.0007)).sub(craze.mul(0.00012))
-    this.normalNode = proceduralNormal(relief, 0.6)
-    this.clearcoatNormalNode = proceduralNormal(wash.mul(0.00065), 0.6)
-    // A very faint, traveling reflection under the glaze; the hand-painted wave pattern stays still.
-    const shimmer = tube.x.mul(TAU * 5).add(facing.mul(13)).sub(time.mul(0.35)).cos().smoothstep(0.8, 1)
-    this.emissiveNode = color('#2693cd').mul(shimmer).mul(brush).mul(grazing.mul(0.65).add(0.2)).mul(near).mul(0.22)
+    this.dispersion = 0.08
+    this.attenuationColor.set('#d8c090')
+    this.attenuationDistance = 1
+    this.envMapIntensity = 0.5
+// A cloud of afternoon light wanders the glaze, the only thing in the room still moving.
+    const dayLight = mx_fractal_noise_float(p.mul(0.9).add(vec3(time.mul(0.03), time.mul(0.012), 0)), 2, 2, 0.5).mul(0.5).add(0.5)
+    this.emissiveNode = color('#ffd28a').mul(intimate).mul(dayLight).mul(0.1).add(color('#b8c8ff').mul(grazing.pow(3)).mul(0.1))
   }
 }

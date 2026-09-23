@@ -39,7 +39,7 @@ describe('Knot cellular fields', () => {
     const cases: Array<string> = [
       'celestial_astrolabe',
       'abyssal_bioluminescence',
-      'abyssal_bloom',
+      'abyssal_flower',
       'abyssal_syllable',
       'zero_point_lather',
       'elytra_iridescence',
@@ -318,7 +318,7 @@ describe('Knot cellular fields', () => {
     expect(text).toContain('this.envMapIntensity = 0.4')
   })
   test('rounds Hy Abyssal Bloom dots while preserving the moving rings, pulse and liquid glass', async () => {
-    const text = await source('abyssal_bloom')
+    const text = await source('abyssal_flower')
     expect(text).toContain('cellularPoints(p.mul(28), 0.06, 0.24, 0.93).mul(pulse)')
     expect(text).not.toContain('mx_cell_noise_float')
     expect(text).toContain('time.mul(1.1).add(mx_noise_float(p.mul(1.8)).mul(2)).sin().mul(0.5).add(0.5)')

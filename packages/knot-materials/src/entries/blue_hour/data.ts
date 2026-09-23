@@ -3,19 +3,19 @@ import type {KnotData} from '../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'blue_hour',
-  candidateId: 'gpt_astra',
+  candidateId: 'mimo',
   title: 'Blue Hour',
   harness: 'Mage',
   author: {
     model: {
-      title: 'GPT-6 Astra',
-      slug: 'openai/gpt-6-astra',
+      title: 'MiMo V2.6 Pro',
+      slug: 'xiaomi/mimo-v2.6-pro',
       effortLevel: 'xhigh',
     },
   },
-  flavorText: 'An ocean painted before dawn waits beneath the glaze. Gold gathers on its crests whenever someone stops to listen.',
+  flavorText: 'Porcelain painted with the last blue of evening and sealed under a glaze of quiet glass.',
   placeholder: {
-    color: '#31557a',
-    shading: 'smooth',
+    color: '#2040a0',
+    shading: 'stone',
   },
 } as const satisfies KnotData

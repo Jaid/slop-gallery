@@ -3,19 +3,20 @@ import type {KnotData} from '../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'abyssal_bloom',
-  candidateId: 'hy',
+  candidateId: 'mimo',
   title: 'Abyssal Bloom',
-  harness: 'none',
+  harness: 'Mage',
   author: {
     model: {
-      title: 'Hy4 Preview',
-      slug: 'tencent/hy4-preview',
-      effortLevel: 'high',
+      title: 'MiMo V2.6 Pro',
+      slug: 'xiaomi/mimo-v2.6-pro',
+      effortLevel: 'xhigh',
     },
   },
-  flavorText: 'Something patient flowers beneath the reach of every lighthouse.',
+  displacement: 0.01,
+  flavorText: 'Something ancient blooms in the dark, its nerves lit with cold fire, feeling its way along the endless knot.',
   placeholder: {
-    color: '#00ffcc',
-    shading: 'fabric',
+    color: '#0a1c2c',
+    shading: 'glass',
   },
 } as const satisfies KnotData

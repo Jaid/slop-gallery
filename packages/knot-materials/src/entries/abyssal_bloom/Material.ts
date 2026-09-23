@@ -1,34 +1,67 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
-import {color, mix, mx_noise_float, mx_worley_noise_float, time, vec3} from 'three/tsl'
+import {color, float, mix, mx_noise_float, normalLocal, positionGeometry, time, uv} from 'three/tsl'
 
-import {cellularPoints} from '../../lib/cellularPoints.ts'
-import KnotMaterial from '../../lib/KnotMaterial.ts'
+import {beads} from '../../lib/beads.ts'
+import {cosinePalette} from '../../lib/cosinePalette.ts'
+import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {liquidNormal} from '../../lib/liquidNormal.ts'
-import {opticalLine} from '../../lib/opticalLine.ts'
+import {proceduralNormal} from '../../lib/proceduralNormal.ts'
+import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-export default class extends KnotMaterial {
+/**
+ * Scattered lure organs, each blinking on its own slow clock with a slightly different hue.
+ */
+function photophores(position: Node<'vec3'>, clock: Node<'float'>, scale: number, seed: number) {
+  const lamp = beads(position.mul(scale), seed)
+  const blink = clock.mul(lamp.random.y.mul(2.4).add(0.6)).add(lamp.random.z.mul(TAU)).sin().mul(0.5).add(0.5).pow(7)
+  return {
+    blink,
+    core: lamp.core,
+    dome: lamp.cap.mul(lamp.radius),
+    hue: lamp.random.x,
+    mask: lamp.mask,
+  }
+}
+
+export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
-    super(environment, 0.9)
+    super(environment, 0.4)
     this.name = knotData.id
-    const {p, rim, near} = viewerFrame()
-    const pulse = time.mul(1.1).add(mx_noise_float(p.mul(1.8)).mul(2)).sin().mul(0.5).add(0.5)
-    const veins = opticalLine(mx_worley_noise_float(p.mul(3.5).add(vec3(0, time.mul(0.12), 0))).sub(0.3), 0.012)
-    const dots = cellularPoints(p.mul(28), 0.06, 0.24, 0.93).mul(pulse)
-    const glowColor = mix(color('#00ffcc'), color('#ff007f'), mx_noise_float(p.mul(1.2)).mul(0.5).add(0.5))
-    this.colorNode = color('#04121f')
-    this.transmission = 0.88
-    this.thickness = 1.4
-    this.ior = 1.34
-    this.attenuationColor.set('#005f73')
-    this.attenuationDistance = 0.7
-    this.roughness = 0.18
+    const {p, view, grazing, near, intimate} = viewerFrame()
+    const tube = uv()
+// Three nerve packets circulating the body, each a slow peristaltic swell.
+    const travel = tube.x.mul(TAU * 3).sub(time.mul(1.35))
+    const packet = travel.cos().mul(0.5).add(0.5)
+    const pulse = packet.pow(18)
+    const swell = packet.pow(3)
+    const organ = photophores(p, time, 13, 4.4)
+    const deepOrgan = photophores(p.sub(view.mul(0.4)), time.mul(0.7), 5, 2.1)
+// The organ domes are bead-space heights; scaling to world units keeps their slopes sane.
+    const height = swell.mul(0.012).add(organ.dome.mul(0.012))
+    this.positionNode = positionGeometry.add(normalLocal.mul(swell.mul(0.01)))
+    this.normalNode = liquidNormal(float(1), 0.55).add(proceduralNormal(height, 1)).normalize()
+    const skin = mix(color('#02060c'), color('#0a1c2c'), mx_noise_float(p.mul(8)).mul(0.5).add(0.5))
+    const nerveColor = mix(color('#2ae4ff'), color('#ff3ec8'), swell.pow(2))
+    const organColor = cosinePalette(organ.hue, [0.15, 0.45, 0.55], [0.2, 0.45, 0.4], [1, 1, 1], [0, 0.25, 0.55])
+    const deepColor = color('#ff7a4a')
+    this.colorNode = skin
     this.metalness = 0
-    this.clearcoat = 1
+    this.roughnessNode = mx_noise_float(p.mul(9)).mul(0.06).add(0.12)
+    this.clearcoat = 0.7
     this.clearcoatRoughness = 0.06
-    this.normalNode = liquidNormal(near, 0.28)
-    this.emissiveNode = glowColor.mul(veins.mul(1.4).add(dots.mul(2.2))).mul(near.mul(0.9).add(0.35)).add(color('#66ffff').mul(rim).mul(0.45))
+    this.transmission = 0.45
+    this.thickness = 0.7
+    this.ior = 1.34
+    this.dispersion = 0.22
+    this.attenuationColor.set('#06303e')
+    this.attenuationDistance = 0.8
+    this.iridescence = 0.35
+    this.iridescenceIOR = 1.3
+    this.iridescenceThicknessNode = mx_noise_float(p.mul(6)).mul(180).add(260)
+    this.envMapIntensity = 0.45
+    this.emissiveNode = nerveColor.mul(pulse).mul(intimate.mul(0.5).add(0.8)).mul(2.4).add(organColor.mul(organ.core).mul(organ.blink).mul(near.mul(0.7).add(0.45)).mul(2)).add(deepColor.mul(deepOrgan.core.mul(0.5).add(deepOrgan.mask.mul(0.12))).mul(intimate.mul(0.8).add(0.3)).mul(0.55)).add(color('#4ae8ff').mul(grazing.pow(2.6)).mul(0.8))
   }
 }

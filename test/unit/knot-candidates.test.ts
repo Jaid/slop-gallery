@@ -263,10 +263,10 @@ describe('arbitrary Knot batches', () => {
     expect(minimaxMage).toHaveLength(8)
     expect(minimaxMage.every(entry => entry.author.model.title === 'MiniMax M3' && entry.author.model.slug === 'minimax/minimax-m3' && entry.author.model.effortLevel === undefined)).toBe(true)
     const mimoMage = knots.filter(entry => entry.candidate.id === 'mimo' && entry.harness === 'Mage')
-    expect(mimoMage).toHaveLength(16)
+    expect(mimoMage).toHaveLength(24)
     for (const version of ['2.5', '2.6']) {
       const versionEntries = mimoMage.filter(entry => entry.author.model.slug === `xiaomi/mimo-v${version}-pro`)
-      expect(versionEntries).toHaveLength(8)
+      expect(versionEntries).toHaveLength(version === '2.6' ? 16 : 8)
       expect(versionEntries.every(entry => entry.author.model.title === `MiMo V${version} Pro` && entry.author.model.effortLevel === 'xhigh')).toBe(true)
     }
     const astraApi = api.filter(entry => entry.candidate.id === 'gpt_astra')

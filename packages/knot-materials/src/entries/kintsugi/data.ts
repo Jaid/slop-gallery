@@ -3,19 +3,19 @@ import type {KnotData} from '../../types.ts'
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
   id: 'kintsugi',
-  candidateId: 'deepseek',
+  candidateId: 'mimo',
   title: 'Kintsugi',
   harness: 'Mage',
   author: {
     model: {
-      title: 'DeepSeek 4.1 Flash',
-      slug: 'deepseek/deepseek-4.1-flash',
+      title: 'MiMo V2.6 Pro',
+      slug: 'xiaomi/mimo-v2.6-pro',
       effortLevel: 'xhigh',
     },
   },
-  flavorText: 'The break was never hidden – it was filled with gold, and the bowl became worth more than before.',
+  flavorText: 'Shattered on purpose, mended with gold. The seam is not a scar but a river of light through the dark clay.',
   placeholder: {
-    color: '#6f6046',
+    color: '#1c1610',
     shading: 'stone',
   },
 } as const satisfies KnotData
