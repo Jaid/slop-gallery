@@ -19,16 +19,17 @@ const wrinkleHarmonics: ReadonlyArray<Harmonic> = [[13, 4, 1.1, 0.42, 0.024], [1
  * The nap runs around the tube, so its harmonics climb far faster along the knot than around it.
  */
 const pileHarmonics: ReadonlyArray<Harmonic> = [[200, 8, 0.7, 0.5, 0.05], [264, 12, 2.9, 0.3, -0.03], [332, 16, 4.1, 0.2, 0.02]]
-function weave(u: Node<'float'>, v: Node<'float'>, clock: Node<'float'>, harmonics: ReadonlyArray<Harmonic>) {
+function weave(u: Node<'float'>, v: Node<'float'>, clock: Node<'float'>, harmonics: ReadonlyArray<Harmonic>, filtered = false) {
   let value: Node<'float'> = float(0)
   let slopeU: Node<'float'> = float(0)
   let slopeV: Node<'float'> = float(0)
   let norm = 0
   for (const [ku, kv, phase, amplitude, rate] of harmonics) {
     const angle = u.mul(TAU * ku).add(v.mul(TAU * kv)).add(phase).add(clock.mul(rate))
-    value = value.add(angle.sin().mul(amplitude))
-    slopeU = slopeU.add(angle.cos().mul(amplitude * TAU * ku))
-    slopeV = slopeV.add(angle.cos().mul(amplitude * TAU * kv))
+    const weight = filtered ? angle.fwidth().smoothstep(0.6, 3).oneMinus().mul(amplitude) : float(amplitude)
+    value = value.add(angle.sin().mul(weight))
+    slopeU = slopeU.add(angle.cos().mul(weight).mul(TAU * ku))
+    slopeV = slopeV.add(angle.cos().mul(weight).mul(TAU * kv))
     norm += Math.abs(amplitude)
   }
   return {
@@ -37,7 +38,12 @@ function weave(u: Node<'float'>, v: Node<'float'>, clock: Node<'float'>, harmoni
     value: value.div(norm),
   }
 }
-
+/** Circular coordinates make the textile noise agree at both UV wraps. */
+function clothCoordinate(u: Node<'float'>, v: Node<'float'>, along: number, around: number) {
+  const a = u.mul(TAU)
+  const b = v.mul(TAU)
+  return vec3(a.cos().mul(along), a.sin().mul(along).add(b.cos().mul(around)), b.sin().mul(around)).div(TAU)
+}
 // The exhibition key light, in world space. The pile sheen is tied to it, not to the screen, so it
 // sweeps across the folds as the viewer circles instead of sticking to the camera.
 const keyLight = vec3(-3, 9, -16).normalize()
@@ -54,7 +60,7 @@ export default class extends KnotMaterial {
     const {grazing, rim, near, intimate} = viewerFrame()
     const drape = weave(u, v, time, drapeHarmonics)
     const wrinkle = weave(u, v, time, wrinkleHarmonics)
-    const pile = weave(u, v, time, pileHarmonics)
+    const pile = weave(u, v, time, pileHarmonics, true)
 // Real folds: geometry moves, and the shading normal is the first
 // order normal of exactly that displaced surface.
     const foldHeight: Node<'float'> = drape.value.mul(0.023).add(wrinkle.value.mul(0.0072))
@@ -62,8 +68,8 @@ export default class extends KnotMaterial {
     this.positionNode = positionGeometry.add(normalLocal.mul(foldHeight))
     this.normalNode = proceduralNormal(foldHeight.add(pileHeight), 1)
     const crest = drape.value.smoothstep(0.3, 0.95)
-    const patina = mx_noise_float(u.mul(17).add(v.mul(5))).mul(0.5).add(0.5)
-    const worn = mx_noise_float(u.mul(3.4).add(v.mul(2.1)).add(9.3)).mul(0.5).add(0.5)
+    const patina = mx_noise_float(clothCoordinate(u, v, 17, 5)).mul(0.5).add(0.5)
+    const worn = mx_noise_float(clothCoordinate(u, v, 3.4, 2.1).add(9.3)).mul(0.5).add(0.5)
 // Head on the cloth is a tomb; the color only arrives as the pile tips
 // turn edge-on and scatter the light back out again.
     const dye = mix(color('#240410'), color('#4a0a18'), worn.mul(0.6).add(0.1))
@@ -72,9 +78,9 @@ export default class extends KnotMaterial {
 // Gold thread follows the crest of the drape and only where the cloth
 // was embroidered at all, so the pattern reads as needlework.
     const ridgeField = filteredRibbon(drape.slopeU, 0.05)
-    const threadGate = crest.pow(2).mul(mx_noise_float(u.mul(7).add(v.mul(3)).add(21.7)).mul(0.5).add(0.5).smoothstep(0.45, 0.8))
+    const threadGate = crest.pow(2).mul(mx_noise_float(clothCoordinate(u, v, 7, 3).add(21.7)).mul(0.5).add(0.5).smoothstep(0.45, 0.8))
     const thread = ridgeField.mul(threadGate)
-    const threadTwist = mx_noise_float(u.mul(220).add(v.mul(20))).mul(0.5).add(0.5)
+    const threadTwist = mx_noise_float(clothCoordinate(u, v, 220, 20)).mul(0.5).add(0.5)
     this.colorNode = mix(clothColor, mix(color('#b07a1e'), color('#fff2c4'), threadTwist), thread)
     this.metalnessNode = thread.mul(0.95)
     this.roughnessNode = mix(float(0.5).add(patina.mul(0.14)).sub(crest.mul(0.06)), float(0.32).add(threadTwist.mul(0.2)), thread)
@@ -96,8 +102,10 @@ export default class extends KnotMaterial {
     const sheenTint = mix(color('#ff2440'), color('#fff2ee'), grazing.pow(2.2))
     const sheen = sheenTint.mul(sheenLobe).mul(2.3)
 // Lint and dust caught in the pile, visible only once the fibres resolve.
-    const lintNormal = normalViewGeometry.add(mx_noise_vec3(u.mul(900).add(v.mul(60))).mul(0.8)).normalize()
-    const lint = glints(lintNormal, 120).mul(near).mul(0.5)
+    const lintCoordinate = clothCoordinate(u, v, 900, 60)
+    const lintVisibility = lintCoordinate.fwidth().length().smoothstep(0.25, 1).oneMinus()
+    const lintNormal = normalViewGeometry.add(mx_noise_vec3(lintCoordinate).mul(0.8)).normalize()
+    const lint = glints(lintNormal, 120).mul(lintVisibility).mul(near).mul(0.5)
     const glow: Node<'vec3'> = sheen
       .add(color('#ffd7c2').mul(lint).mul(0.7))
       .add(color('#e0182e').mul(bloom.pow(2)).mul(rim).mul(0.16))
