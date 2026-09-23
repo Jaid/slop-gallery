@@ -14,7 +14,10 @@ export function candidateScore(candidate: (typeof knotCandidates)[number]) {
   if (!rated.length) {
     return 1.1
   }
-  return rated.reduce((sum, item) => sum + item.rarity, 0) / rated.length
+  const average = rated.reduce((sum, item) => sum + item.rarity, 0) / rated.length
+  const best = rated.toSorted((a, b) => b.rarity - a.rarity).slice(0, 6)
+  const bestAverage = best.reduce((sum, item) => sum + item.rarity, 0) / best.length
+  return (bestAverage + average) / 2
 }
 
 export function selectKnotBays(search = '') {

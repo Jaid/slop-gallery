@@ -35,10 +35,10 @@ describe('rarity selection policy', () => {
     const mixed = selectKnotBays('?rarity_filter=unknown,rare&candidate_limit=3&shots=2')
     expect(mixed).toHaveLength(3)
     expect(mixed.every(bay => bay.finishes.length <= 2 && bay.finishes.every(item => item.rarity === 0 || item.rarity === 2))).toBe(true)
-    const unknownItem = knots.find(item => item.rarity === 0 && !item.archived)!
-    const ratedItem = knots.find(item => item.rarity === 4 && !item.archived)!
-    const exact = selectKnotBays(`?knot_id=${unknownItem.id},${ratedItem.id}&rarity_filter=unknown`)
-    expect(exact.flatMap(bay => bay.finishes).map(item => item.id)).toEqual([unknownItem.id])
+    const rareItem = knots.find(item => item.rarity === 2 && !item.archived)!
+    const otherItem = knots.find(item => item.rarity !== 2 && !item.archived)!
+    const exact = selectKnotBays(`?knot_id=${rareItem.id},${otherItem.id}&rarity_filter=rare`)
+    expect(exact.flatMap(bay => bay.finishes).map(item => item.id)).toEqual([rareItem.id])
   })
   test('omits lower rarities first for every shot cap and places rarer knots away from the billboard', () => {
     for (const candidate of knotCandidates) {
@@ -79,11 +79,17 @@ describe('candidate ordering', () => {
       expect(() => parseCandidateOrder(`?candidate_order=${value}`)).toThrow('candidate_order')
     }
   })
-  test('score is average known knot rarity and the default selects the best eight candidates', () => {
+  test('score equally blends the best-six and overall known rarity averages and the default selects the best eight candidates', () => {
     for (const candidate of knotCandidates) {
       const rated = candidate.items.filter(item => item.rarity !== 0)
-      const expected = rated.length ? rated.reduce((sum, item) => sum + item.rarity, 0) / rated.length : 1.1
-      expect(candidateScore(candidate)).toBe(expected)
+      if (!rated.length) {
+        expect(candidateScore(candidate)).toBe(1.1)
+        continue
+      }
+      const average = rated.reduce((sum, item) => sum + item.rarity, 0) / rated.length
+      const best = rated.toSorted((a, b) => b.rarity - a.rarity).slice(0, 6)
+      const bestAverage = best.reduce((sum, item) => sum + item.rarity, 0) / best.length
+      expect(candidateScore(candidate)).toBe((bestAverage + average) / 2)
     }
     expect(knotCandidates.filter(candidate => candidate.items.every(item => item.rarity === 0)).every(candidate => candidateScore(candidate) === 1.1)).toBe(true)
     const bays = selectKnotBays()
@@ -116,8 +122,13 @@ describe('candidate ordering', () => {
 })
 describe('session rarity editor', () => {
   test.each([0, 1, 2, 3, 4] as const)('cycles all five rarities from %i without mutating source rarity or layout', initial => {
-    const editor = new KnotRarityEditor(knots)
-    const item = knots.find(entry => entry.rarity === initial)!
+    const fallback = {
+      ...knots[0],
+      id: `test_rarity_${initial}`,
+      rarity: initial,
+    }
+    const item = knots.find(entry => entry.rarity === initial) ?? fallback
+    const editor = new KnotRarityEditor([item])
     const original = editor.getSnapshot()
     const layout = selectKnotBays('?rarity=edit')
     let notifications = 0
