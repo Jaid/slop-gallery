@@ -1,19 +1,20 @@
 import type {Portrait} from './gallery.ts'
+import type {AiSettings} from './ai/settings.ts'
 
-import {useQueryStates} from 'nuqs'
-import {useEffect} from 'react'
+import {useEffect, useState} from 'react'
 
 import GalleryDirector from './ai/GalleryDirector.ts'
-import parameterParsers from './ai/settings.ts'
+import {readAiSettings} from './ai/settings.ts'
 import {attachNarration} from './audio/narration.ts'
 import SoundEngine from './audio/SoundEngine.ts'
 import {galleryEvents, notify, useGallery} from './gallery.ts'
 
-export {default as parameterParsers} from './ai/settings.ts'
+export {aiSettingsSchema, readAiSettings} from './ai/settings.ts'
 
 export default function useGalleryAI() {
   useEffect(attachNarration, [])
-  const [params, setParams] = useQueryStates(parameterParsers)
+  const [params, setParamsState] = useState<AiSettings>(() => readAiSettings())
+  const setParams = (patch: Partial<AiSettings>) => setParamsState(current => ({...current, ...patch}))
   const key = useGallery(s => s.apiKey)
   useEffect(() => {
     useGallery.setState({ai: params.ai})

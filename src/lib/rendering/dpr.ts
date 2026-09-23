@@ -1,12 +1,22 @@
-import {createParser} from 'nuqs'
+import optis from 'optis'
+import readPermalink, {parseNumber} from 'read-permalink'
 
-export const dprParser = createParser({
-  parse(value) {
-    const dpr = Number(value)
-    return Number.isFinite(dpr) && dpr > 0 ? dpr : null
+const dprSchema = optis({
+  normalizations: {
+    dpr(value: unknown) {
+      try {
+        const dpr = parseNumber(value)
+        return dpr > 0 ? dpr : undefined
+      } catch {
+        return undefined
+      }
+    },
   },
-  serialize: String,
 })
+
+export function readDpr(input: string | URL = typeof location === 'undefined' ? '' : location.href) {
+  return readPermalink(input, {schema: dprSchema}).dpr
+}
 
 /** Performance stays at 1×; quality follows the display with a 1.5× floor. */
 export function getDefaultDpr(isQuality: boolean) {

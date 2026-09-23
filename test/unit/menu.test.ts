@@ -9,7 +9,7 @@ import {GraphicsQualityProvider} from 'use-graphics-quality'
 
 import Menu from '#component/Menu'
 
-import parameterParsers from '../../src/lib/ai/settings.ts'
+import {readAiSettings} from '../../src/lib/ai/settings.ts'
 import SoundEngine from '../../src/lib/audio/SoundEngine.ts'
 import {galleryEvents, resetGallery, startNewGame} from '../../src/lib/gallery/actions.ts'
 import {playerSession, playerSpawn} from '../../src/lib/gallery/PlayerSession.ts'
@@ -50,13 +50,13 @@ describe('minimal menu', () => {
   test('starts unlocked, with no reset and an expanded OpenRouter section', () => {
     expect(useGallery.getState().locked).toBe(false)
     expect(useGallery.getState().hasControlled).toBe(false)
-    const params = Object.fromEntries(Object.entries(parameterParsers).map(([key, parser]) => [key, parser.defaultValue])) as AiSettings
+    const params: AiSettings = readAiSettings()
     const html = renderToStaticMarkup(createElement(GraphicsQualityProvider, {
       isQuality: true,
       onChange: () => {},
       children: createElement(Menu, {
         params,
-        setParams: async () => new URLSearchParams,
+        setParams: () => {},
       }),
     }))
     expect(html).toContain('aria-labelledby="menu-title"')
@@ -149,13 +149,13 @@ test.each(['first', 'reset', 'return', 'pause', 'unfocus'] as const)('renders th
     hasControlled: true,
   })
   try {
-    const params = Object.fromEntries(Object.entries(parameterParsers).map(([key, parser]) => [key, parser.defaultValue])) as AiSettings
+    const params: AiSettings = readAiSettings()
     const html = renderToStaticMarkup(createElement(GraphicsQualityProvider, {
       isQuality: true,
       onChange: () => {},
       children: createElement(Menu, {
         params,
-        setParams: async () => new URLSearchParams,
+        setParams: () => {},
       }),
     }))
     expect(html).toContain(`data-stage="${stage}"`)
@@ -219,13 +219,13 @@ test.each(['lobby', 'oculus'] as const)('pause heading identifies the %s room an
   })
   Object.assign(useGallery.getInitialState(), {room})
   try {
-    const params = Object.fromEntries(Object.entries(parameterParsers).map(([key, parser]) => [key, parser.defaultValue])) as AiSettings
+    const params: AiSettings = readAiSettings()
     const html = renderToStaticMarkup(createElement(GraphicsQualityProvider, {
       isQuality: true,
       onChange: () => {},
       children: createElement(Menu, {
         params,
-        setParams: async () => new URLSearchParams,
+        setParams: () => {},
       }),
     }))
     expect(html).toContain(room === 'lobby' ? '>Lobby</h1>' : '>Oculus</h1>')

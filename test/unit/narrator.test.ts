@@ -5,12 +5,12 @@ import {afterEach, beforeEach, expect, spyOn, test} from 'bun:test'
 import {narrationState, Narrator} from 'use-narrator/core'
 
 import {FakePlayback, flush} from '../../packages/use-narrator/packages/use-audio-queue/test/helpers.ts'
-import parameterParsers from '../../src/lib/ai/settings.ts'
+import {readAiSettings} from '../../src/lib/ai/settings.ts'
 import PortraitNarration from '../../src/lib/audio/PortraitNarration.ts'
 import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {useGallery} from '../../src/lib/gallery/store.ts'
 
-const settings = Object.fromEntries(Object.entries(parameterParsers).map(([key, parser]) => [key, parser.defaultValue])) as AiSettings
+const settings: AiSettings = readAiSettings()
 let producer: PortraitNarration
 let narrator: Narrator
 let players: Array<FakePlayback>

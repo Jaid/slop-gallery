@@ -20,7 +20,7 @@ export default function OpenRouterConnection({params, setParams}: ReturnType<typ
           return
         }
         setApiKey(key.trim())
-        void setParams({ai: true}).catch(() => notify('AI preferences could not be saved.'))
+        setParams({ai: true})
         notify('OpenRouter key saved for this tab. AI is enabled.')
       }}
     >
@@ -29,12 +29,12 @@ export default function OpenRouterConnection({params, setParams}: ReturnType<typ
     </form>
     <p className={css.note}>Your key stays in this tab and is never included in backups. Saving a key does not verify it or make a paid request.</p>
     <Branch if={apiKey}><div>
-      <label className={css.toggleRow}>Enable AI<input checked={params.ai} type='checkbox' onChange={event => void setParams({ai: event.target.checked}).catch(() => notify('AI preferences could not be saved.'))} /></label>
+      <label className={css.toggleRow}>Enable AI<input checked={params.ai} type='checkbox' onChange={event => setParams({ai: event.target.checked})} /></label>
       <button
         className={css.textButton} onClick={() => {
           setApiKey('')
           setKey('')
-          void setParams({ai: false}).catch(() => notify('AI preferences could not be saved.'))
+          setParams({ai: false})
           notify('Key removed. AI is off.')
         }}
       >Disconnect & forget key</button>

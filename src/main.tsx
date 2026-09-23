@@ -1,7 +1,6 @@
 import './style.sass'
 
 import mountRoot from 'mount-root'
-import {NuqsAdapter} from 'nuqs/adapters/react'
 
 import App from '#component/App'
 
@@ -17,6 +16,5 @@ if (import.meta.hot) {
 }
 mountRoot(App, {
   id: css.container,
-  wrapper: NuqsAdapter,
   strict: import.meta.env.DEV,
 })

@@ -1,19 +1,29 @@
-import {createParser} from 'nuqs'
+import optis from 'optis'
+import readPermalink from 'read-permalink'
 import useGraphicsQuality from 'use-graphics-quality'
 
-/** Keep names at the URL boundary; all application state is boolean. */
-export const graphicsQualityParser = createParser({
-  parse(value) {
-    if (value === useGraphicsQuality.getName(true)) {
-      return true
-    }
-    if (value === useGraphicsQuality.getName(false)) {
-      return false
-    }
-    return null
+const normalizeGraphicsQuality = (value: unknown) => {
+  if (value === true || value === useGraphicsQuality.getName(true)) {
+    return true
+  }
+  if (value === false || value === useGraphicsQuality.getName(false)) {
+    return false
+  }
+  return false
+}
+
+const graphicsQualitySchema = optis({
+  defaults: {
+    graphics: false,
   },
-  serialize: useGraphicsQuality.getName,
-}).withDefault(false)
+  normalizations: {
+    graphics: normalizeGraphicsQuality,
+  },
+})
+
+export function readGraphicsQuality(input: string | URL = typeof location === 'undefined' ? '' : location.href) {
+  return readPermalink(input, {schema: graphicsQualitySchema}).graphics
+}
 
 type GraphicsProfile = {
   floorReflections: boolean

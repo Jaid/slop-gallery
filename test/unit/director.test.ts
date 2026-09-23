@@ -4,11 +4,11 @@ import type {Portrait} from '../../src/lib/gallery/types.ts'
 import {beforeEach, expect, test} from 'bun:test'
 
 import GalleryDirector from '../../src/lib/ai/GalleryDirector.ts'
-import parameterParsers from '../../src/lib/ai/settings.ts'
+import {readAiSettings} from '../../src/lib/ai/settings.ts'
 import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {createDocument, restoreDocument, undo, useGallery} from '../../src/lib/gallery/store.ts'
 
-const defaults = Object.fromEntries(Object.entries(parameterParsers).map(([key, parser]) => [key, parser.defaultValue])) as AiSettings
+const defaults: AiSettings = readAiSettings()
 const original = {
   ...createDocument(),
   portraits: initialPortraits.map(p => ({...p})),
