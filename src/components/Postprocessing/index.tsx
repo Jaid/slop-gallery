@@ -6,10 +6,11 @@ import {bloom} from 'three/addons/tsl/display/BloomNode.js'
 import {gaussianBlur} from 'three/addons/tsl/display/GaussianBlurNode.js'
 import {ao} from 'three/addons/tsl/display/GTAONode.js'
 import {traa} from 'three/addons/tsl/display/TRAANode.js'
-import {float, length, max, mix, mrt, normalView, output, pass, screenUV, smoothstep, uniform, vec3, vec4, velocity} from 'three/tsl'
-import {RenderPipeline} from 'three/webgpu'
+import {float, length, mix, mrt, normalView, output, pass, screenUV, smoothstep, uniform, vec3, vec4, velocity} from 'three/tsl'
+import {PerspectiveCamera, RenderPipeline} from 'three/webgpu'
 
 import {galleryEvents} from '#src/lib/gallery/actions.ts'
+import knotBokeh from '#src/lib/rendering/knotBokeh.ts'
 import {getKnotFocus, getKnotFocusDistance, getKnotFocusProximity, getPlayerZoom} from '#src/lib/rendering/playerView.ts'
 import tiltShift from '#src/lib/rendering/tiltShift.ts'
 
@@ -58,22 +59,33 @@ const Postprocessing = ({contactDarkening = false, knotFocus = false, quality = 
       temporalAntialias = traa(base, depth, motion, camera)
       base = temporalAntialias
     }
-    // One half-resolution separable Gaussian serves both Z zoom tilt-shift and Knot background focus.
-    // Keep the default inspection distance near the old strength while making close views substantially blurrier.
-    const knotBlurStrength = knotProximity.mul(knotProximity).mul(knotProximity).mul(3).add(0.75).mul(knotAmount)
-    const blurStrength = max(zoomAmount.mul(1.5), knotBlurStrength)
-    const blurSigma = 8
-    const blurPass = gaussianBlur(base, blurStrength.div(2), blurSigma, {resolutionScale: 1})
-    const shifted = quality ? tiltShift(base, blurPass, zoomAmount) : base
-    // KnotSpectation supplies the far edge of the Knot's bounding sphere, so only geometry behind it is blurred.
-    const background = smoothstep(knotDistance.add(0.2), knotDistance.add(1.35), viewZ.negate()).mul(knotAmount)
-    const focused = mix(shifted, blurPass, background)
+    // Z zoom keeps the smooth tilt-shift treatment. Knot inspection uses a separate,
+    // depth-aware aperture blur so bright focused pixels cannot leak into the background.
+    let zoomBlurPass: ReturnType<typeof gaussianBlur> | undefined
+    let shifted = base
+    if (quality) {
+      zoomBlurPass = gaussianBlur(base, zoomAmount.mul(0.75), 8, {resolutionScale: 1})
+      shifted = tiltShift(base, zoomBlurPass, zoomAmount)
+    }
+    let background: Node<'float'> = float(0)
+    let bokehPass: ReturnType<typeof knotBokeh> | undefined
+    let focused = shifted
+    if (knotFocus && camera instanceof PerspectiveCamera) {
+      const bokehRadius = knotProximity.mul(knotProximity).mul(knotProximity).mul(26).add(8)
+      bokehPass = knotBokeh(base, depth, knotDistance, knotAmount, bokehRadius, camera.near, camera.far, () => getKnotFocus() > 0.001)
+      // KnotSpectation supplies the far edge of the Knot's bounding sphere, so only geometry behind it is defocused.
+      background = smoothstep(knotDistance.add(0.2), knotDistance.add(1.35), viewZ.negate()).mul(knotAmount)
+      focused = mix(shifted, bokehPass, background)
+    }
     let bloomPass: ReturnType<typeof bloom> | undefined
     if (quality) {
       bloomPass = bloom(focused, 0.18, 0.25, 1)
       const edge = smoothstep(float(0.26), float(0.78), length(screenUV.sub(0.5)))
       const vignette = float(1).sub(edge.mul(0.2))
-      pipeline.outputNode = focused.add(bloomPass).mul(vec4(vec3(vignette), 1))
+      // During Knot inspection the aperture pass already carries defocused highlights.
+      // Suppressing bloom on background pixels prevents a second, depth-unaware halo from the sharp Knot.
+      const bloomMask = float(1).sub(background)
+      pipeline.outputNode = focused.add(bloomPass.mul(bloomMask)).mul(vec4(vec3(vignette), 1))
     } else {
       pipeline.outputNode = focused
     }
@@ -96,7 +108,8 @@ const Postprocessing = ({contactDarkening = false, knotFocus = false, quality = 
       }
       deactivate()
       temporalAntialias?.dispose()
-      blurPass.dispose()
+      zoomBlurPass?.dispose()
+      bokehPass?.dispose()
       ambientOcclusion?.dispose()
       bloomPass?.dispose()
       scenePass.dispose()
