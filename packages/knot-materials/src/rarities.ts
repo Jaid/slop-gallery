@@ -491,7 +491,7 @@ const rarities: Record<KnotId, Rarity> = {
   weeping_basalt: rare,
   willow_testament: common,
   winter_orchard: common,
-  woven_nocturne: unknown,
+  woven_nocturne: rare,
   wraith_glass: rare,
   wraithlight: common,
   wrought_nebula: rare,
