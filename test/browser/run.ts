@@ -2,13 +2,18 @@ import {fileURLToPath} from 'node:url'
 
 import puppeteer, {TargetType} from 'puppeteer-core'
 
-const origin = 'https://vite.tower.lan'
-// Resolve the running Vite optimizer generation without loading the fixture through Vite HMR.
-const response = await fetch('http://127.0.0.1:5173/packages/canvas-textures/src/three/textureFromImage.ts')
-const transformed = await response.text()
-const version = /three_webgpu\.js\?v=([^"']+)/u.exec(transformed)?.[1]
-if (!version) {
-  throw new Error('Could not resolve the running Vite dependency generation.')
+const standalone = process.argv.includes('--standalone')
+const origin = process.env.BROWSER_TEST_ORIGIN ?? (standalone ? 'https://knot.slop.gallery' : 'https://vite.tower.lan')
+// Standalone fixtures own all their renderers/resources and can use an existing production
+// page without Vite, HMR, navigation or input. Live integration fixtures still share Vite imports.
+let version: string | undefined
+if (!standalone) {
+  const response = await fetch('http://127.0.0.1:5173/packages/canvas-textures/src/three/textureFromImage.ts')
+  const transformed = await response.text()
+  version = /three_webgpu\.js\?v=([^"']+)/u.exec(transformed)?.[1]
+  if (!version) {
+    throw new Error('Could not resolve the running Vite dependency generation.')
+  }
 }
 const paths: Record<string, string> = {
   '@react-three/fiber/webgpu': '/node_modules/.vite/deps/@react-three_fiber_webgpu.js',
@@ -24,9 +29,9 @@ const paths: Record<string, string> = {
   'canvas-textures/three': '/packages/canvas-textures/src/three/main.ts',
 }
 const build = await Bun.build({
-  entrypoints: [fileURLToPath(new URL(process.argv[2] ?? 'canvasTextures.tsx', import.meta.url))],
+  entrypoints: [fileURLToPath(new URL(process.argv.slice(2).find(argument => !argument.startsWith('--')) ?? 'canvasTextures.tsx', import.meta.url))],
   target: 'browser',
-  plugins: [
+  plugins: standalone ? [] : [
     {
       name: 'live-vite-imports',
       setup(builder) {
@@ -74,7 +79,8 @@ const build = await Bun.build({
 if (!build.success) {
   throw new AggregateError(build.logs, 'Browser fixture build failed.')
 }
-const source = `data:text/javascript;base64,${Buffer.from(await build.outputs[0].text()).toString('base64')}`
+const bytes = new Uint8Array(await build.outputs[0].arrayBuffer())
+const source = `data:text/javascript;base64,${bytes.toBase64()}`
 const browser = await puppeteer.connect({
   browserURL: 'http://127.0.0.1:9222',
   defaultViewport: null,
