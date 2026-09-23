@@ -1,4 +1,4 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
 import {color, float, mix, mx_noise_float, uv, vec3} from 'three/tsl'
 
@@ -9,6 +9,22 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
+
+/** Localized grains keep random facet normals and mineral tints off the cell background. */
+function sandGrains(position: Node<'vec3'>, cellSize: number, sharpness: number, tilt: number) {
+  const facets = glitter(position, cellSize, sharpness, tilt)
+  const q = position.div(cellSize)
+  const random = cellNoiseVec3(q.floor())
+  const center = random.mul(0.5).add(0.25)
+  const outer = q.fwidth().length().add(0.18).min(0.24)
+  const mask = q.fract().sub(center).length().smoothstep(0.06, outer).oneMinus()
+  return {
+    random,
+    coverage: mask.mul(facets.resolved),
+    lean: facets.lean.mul(mask),
+    sparkle: facets.sparkle.mul(mask),
+  }
+}
 
 /**
  * Wind worked sand, one ripple train at a time. Ripples migrate across the surface on a slow loop, a scouring front travels the length of the knot and briefly flattens them, and the grains themselves are a faceted lattice: each one either catches the key light or stays dull, which is what makes the dune glitter differently from every angle. Loose dust drifts above the surface and only resolves for a visitor who comes close.
@@ -25,21 +41,25 @@ export default class extends KnotMaterial {
     const phase = p.dot(wind).div(wavelength).sub(loopTurn.mul(2)).add(windSeed.mul(2.4))
 // Phase is measured in cycles: `loopTurn` counts laps, so whole numbers keep the wrap seamless.
     const ripple = phase.fract()
-    const sloped = ripple.div(0.74).min(ripple.oneMinus().div(0.26))
+    const rippleVisibility = phase.fwidth().smoothstep(0.15, 0.65).oneMinus()
+    const sloped = mix(float(0.5), ripple.div(0.74).min(ripple.oneMinus().div(0.26)), rippleVisibility)
     const fineWavelength = wavelength.mul(0.34)
     const finePhase = p.dot(wind.mul(-0.6).add(vec3(0.5, 0.1, 0.85)).normalize()).div(fineWavelength).add(loopTurn.mul(5)).add(windSeed.mul(5.1))
-    const fineRipple = finePhase.fract().div(0.5).min(finePhase.fract().oneMinus().div(0.5))
+    const fineVisibility = finePhase.fwidth().smoothstep(0.15, 0.65).oneMinus()
+    const fineRipple = mix(float(0.5), finePhase.fract().div(0.5).min(finePhase.fract().oneMinus().div(0.5)), fineVisibility)
     const slip = uv().x.sub(loopTurn).fract()
 // The gust has to fade at both ends of its lap, or the loop wraps on a hard step.
     const gust = slip.smoothstep(0, 0.12).min(slip.oneMinus().smoothstep(0, 0.12))
     const scouring = slip.mul(slip).mul(-18).exp().mul(gust)
     const crest = sloped.mul(0.75).add(fineRipple.mul(0.25))
-    const relief = crest.mul(0.34).add(fineRipple.mul(0.08)).add(mx_noise_float(p.mul(90)).mul(0.02)).mul(scouring.mul(-0.45).add(1))
-    const grain = glitter(p, 0.0072, 55, 0.55)
-    const grit = glitter(p, 0.0034, 44, 0.4)
-    const dust = glitter(loopDrift(p, 0.035, 1), 0.0055, 45, 0.9)
-    const garnet = cellNoiseVec3(p.div(0.0072).floor().mul(0.07))
-    const grainMask = grain.resolved
+    const microCoord = p.mul(90)
+    const micro = mx_noise_float(microCoord).mul(microCoord.fwidth().length().smoothstep(0.25, 1).oneMinus())
+    const relief = crest.mul(0.34).add(fineRipple.mul(0.08)).add(micro.mul(0.02)).mul(scouring.mul(-0.45).add(1))
+    const grain = sandGrains(p, 0.0072, 55, 0.55)
+    const grit = sandGrains(p, 0.0034, 44, 0.4)
+    const dust = sandGrains(loopDrift(p, 0.035, 1), 0.0055, 45, 0.9)
+    const garnet = grain.random
+    const grainMask = grain.coverage
     const pale = mix(color('#9c8253'), color('#c6ae7e'), crest)
     const shadowed = mix(color('#302616'), color('#5c4a2b'), sloped)
     const base = mix(shadowed, pale, sloped.mul(0.55).add(0.3))
