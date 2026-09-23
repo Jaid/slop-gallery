@@ -4,7 +4,7 @@ import type {KnotBay} from 'knot-materials/exhibition.ts'
 import {loadCanvasFonts} from 'canvas-textures'
 import useCanvasTexture from 'canvas-textures/react'
 import {knotNumberLabel, knotPreviewX} from 'knot-materials/exhibition.ts'
-import {knotPreviewGrid, knotPreviewTextureLayout} from 'knot-materials/KnotPreviewLayout.ts'
+import {knotPreviewHeight, knotPreviewTextureLayout, knotPreviewWidth} from 'knot-materials/KnotPreviewLayout.ts'
 import {useMemo} from 'react'
 
 import InteractiveObject from '#component/InteractiveObject'
@@ -19,7 +19,6 @@ export default function KnotPreviewSign({bay, renderer}: {
   bay: KnotBay
   renderer: RuntimeKnotIconRenderer
 }) {
-  const grid = knotPreviewGrid(bay.finishes.length)
   const layout = knotPreviewTextureLayout(bay.finishes.length)
   const texture = useCanvasTexture(useMemo(() => ({
     width: layout.width,
@@ -43,8 +42,8 @@ export default function KnotPreviewSign({bay, renderer}: {
   }), [bay, layout.height, layout.width, renderer]))
   return <InteractiveObject id={`preview-${bay.candidate.id}`} name={`preview-${bay.candidate.id}`} position={[knotPreviewX, 1.5, 0]} rotation={[0, Math.PI / 2, 0]} onActivate={() => narrate(`preview-${bay.candidate.id}`)}>
     <mesh name={`preview-surface-${bay.candidate.id}`} position={[0, 0, 0.003]}>
-      <planeGeometry args={[grid.width, grid.height]} /><meshBasicNodeMaterial key={texture?.uuid ?? 'pending'} color={texture ? '#ffffff' : knotPreviewBackground} map={texture} toneMapped={false} />
+      <planeGeometry args={[knotPreviewWidth, knotPreviewHeight]} /><meshBasicNodeMaterial key={texture?.uuid ?? 'pending'} color={texture ? '#ffffff' : knotPreviewBackground} map={texture} toneMapped={false} />
     </mesh>
-    <Support height={grid.height} width={grid.width} />
+    <Support />
   </InteractiveObject>
 }

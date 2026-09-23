@@ -2,18 +2,17 @@ import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import Branch from 'branch-component'
 import useDisposable from 'disposable-lifetime/react'
 import BillboardPanelGeometry from 'knot-materials/BillboardPanelGeometry.ts'
+import {knotPreviewHeight, knotPreviewWidth} from 'knot-materials/KnotPreviewLayout.ts'
 import {billboardParts} from 'knot-materials/signs.ts'
 import {useMemo} from 'react'
 
 import Box from '#src/components/Scene/primitives.tsx'
 import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
 
-export default function Support({width, height}: {
-  height: number
-  width: number
-}) {
-  const parts = useMemo(() => billboardParts(width, height), [height, width])
-  const panel = useDisposable(useMemo(() => new BillboardPanelGeometry(...parts[0].size), [parts]))
+const parts = billboardParts(knotPreviewWidth, knotPreviewHeight)
+
+export default function Support() {
+  const panel = useDisposable(useMemo(() => new BillboardPanelGeometry(...parts[0].size), []))
   const material = useDisposable(useMemo(() => new LodgeWoodMaterial, []))
   return <RigidBody colliders={false} name='billboard-support' type='fixed'>
     {parts.map(({position, rotation, size}, index) => <group key={index} position={position} rotation={rotation}>

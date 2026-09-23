@@ -1,35 +1,73 @@
-export const knotPreviewMaximumColumns = 4
-export const knotPreviewMaximumWidth = 4.8
-export const knotPreviewMaximumHeight = 2.75
+export const knotPreviewWidth = 4.8
+export const knotPreviewHeight = 3.2
 export const knotPreviewTextureCellSize = 715
+export const knotPreviewTextureWidth = knotPreviewTextureCellSize * 3
+export const knotPreviewTextureHeight = knotPreviewTextureCellSize * 2
+export const knotPreviewIconMaximumWidth = 0.925
+export const knotPreviewIconMaximumHeight = 0.81
 
 export function knotPreviewTextureLayout(count: number) {
   if (!Number.isSafeInteger(count) || count < 0) {
     throw new RangeError('Knot preview count must be a non-negative integer.')
   }
-  const columns = Math.min(knotPreviewMaximumColumns, Math.max(1, Math.ceil(Math.sqrt(count))))
-  const rows = Math.max(1, Math.ceil(count / columns))
+  if (count === 0) {
+    return {
+      columns: 1,
+      height: knotPreviewTextureHeight,
+      rowCounts: [0],
+      rowHeight: knotPreviewTextureHeight,
+      rows: 1,
+      tileWidth: knotPreviewTextureWidth,
+      width: knotPreviewTextureWidth,
+    }
+  }
+  let rows = 1
+  let columns = count
+  let score = Math.min(
+    knotPreviewTextureWidth / columns * knotPreviewIconMaximumWidth,
+    knotPreviewTextureHeight / rows * knotPreviewIconMaximumHeight,
+  )
+  let empty = 0
+  for (let candidateRows = 2; candidateRows <= count; candidateRows++) {
+    const candidateColumns = Math.ceil(count / candidateRows)
+    const candidateScore = Math.min(
+      knotPreviewTextureWidth / candidateColumns * knotPreviewIconMaximumWidth,
+      knotPreviewTextureHeight / candidateRows * knotPreviewIconMaximumHeight,
+    )
+    const candidateEmpty = candidateRows * candidateColumns - count
+    if (!(candidateScore > score || candidateScore === score && candidateEmpty < empty)) {
+      continue
+    }
+    rows = candidateRows
+    columns = candidateColumns
+    score = candidateScore
+    empty = candidateEmpty
+  }
+  const rowCounts = Array.from({length: rows}, () => columns)
+  let missing = rows * columns - count
+  while (missing > 0) {
+    let band = Math.min(rows, missing)
+    if (band % 2 !== rows % 2) {
+      band--
+    }
+    if (band === 0) {
+      rowCounts[Math.floor((rows - 1) / 2)]--
+      missing--
+      continue
+    }
+    const start = (rows - band) / 2
+    for (let index = start; index < start + band; index++) {
+      rowCounts[index]--
+    }
+    missing -= band
+  }
   return {
     columns,
-    height: rows * knotPreviewTextureCellSize,
-    rowHeight: knotPreviewTextureCellSize,
+    height: knotPreviewTextureHeight,
+    rowCounts,
+    rowHeight: knotPreviewTextureHeight / rows,
     rows,
-    tileWidth: knotPreviewTextureCellSize,
-    width: columns * knotPreviewTextureCellSize,
-  }
-}
-
-export function knotPreviewGrid(count: number) {
-  const texture = knotPreviewTextureLayout(count)
-  const aspect = texture.width / texture.height
-  const width = Math.min(knotPreviewMaximumWidth, knotPreviewMaximumHeight * aspect)
-  const height = width / aspect
-  return {
-    columns: texture.columns,
-    height,
-    rowHeight: height / texture.rows,
-    rows: texture.rows,
-    tileWidth: width / texture.columns,
-    width,
+    tileWidth: knotPreviewTextureWidth / columns,
+    width: knotPreviewTextureWidth,
   }
 }

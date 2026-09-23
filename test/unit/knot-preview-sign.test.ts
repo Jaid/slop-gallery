@@ -1,47 +1,52 @@
 import {expect, test} from 'bun:test'
 
 import {knotBays, knotNumberLabel} from 'knot-materials/exhibition.ts'
-import {knotPreviewGrid, knotPreviewMaximumHeight, knotPreviewMaximumWidth, knotPreviewTextureCellSize, knotPreviewTextureLayout} from 'knot-materials/KnotPreviewLayout.ts'
+import {knotPreviewHeight, knotPreviewTextureHeight, knotPreviewTextureLayout, knotPreviewTextureWidth, knotPreviewWidth} from 'knot-materials/KnotPreviewLayout.ts'
 
 import drawPreview, {knotPreviewBackground} from '../../src/components/levels/knottingham/KnotPreviewSigns/drawPreview.ts'
 import signAccentColor from '../../src/components/levels/knottingham/signAccentColor.ts'
 
-test('runtime billboard layout chooses compact formats and matches its raster aspect', () => {
+test('runtime billboards keep one 3:2 mesh and pack stickers to fit the fixed raster', () => {
+  expect(knotPreviewWidth / knotPreviewHeight).toBeCloseTo(3 / 2)
+  expect(knotPreviewTextureWidth / knotPreviewTextureHeight).toBeCloseTo(3 / 2)
   const formats = new Map<number, [number, number]>([
     [1, [1, 1]],
     [2, [2, 1]],
-    [3, [2, 2]],
+    [3, [3, 1]],
     [4, [2, 2]],
     [5, [3, 2]],
     [6, [3, 2]],
-    [7, [3, 3]],
-    [8, [3, 3]],
-    [9, [3, 3]],
-    [10, [4, 3]],
-    [16, [4, 4]],
-    [17, [4, 5]],
-    [22, [4, 6]],
+    [7, [4, 2]],
+    [8, [4, 2]],
+    [9, [5, 2]],
+    [10, [5, 2]],
+    [11, [4, 3]],
+    [16, [6, 3]],
+    [22, [6, 4]],
+    [36, [8, 5]],
   ])
   for (const [count, [columns, rows]] of formats) {
-    const grid = knotPreviewGrid(count)
-    const raster = knotPreviewTextureLayout(count)
-    expect(grid.width).toBeLessThanOrEqual(knotPreviewMaximumWidth)
-    expect(grid.height).toBeLessThanOrEqual(knotPreviewMaximumHeight)
-    expect([grid.columns, grid.rows]).toEqual([columns, rows])
-    expect(grid.width / grid.height).toBeCloseTo(raster.width / raster.height)
-    expect(raster.width).toBe(columns * knotPreviewTextureCellSize)
-    expect(raster.height).toBe(rows * knotPreviewTextureCellSize)
+    const layout = knotPreviewTextureLayout(count)
+    expect([layout.columns, layout.rows]).toEqual([columns, rows])
+    expect(layout.width).toBe(knotPreviewTextureWidth)
+    expect(layout.height).toBe(knotPreviewTextureHeight)
+    expect(layout.rowCounts.reduce((sum, rowCount) => sum + rowCount, 0)).toBe(count)
+    expect(Math.max(...layout.rowCounts)).toBe(columns)
   }
-  expect(knotPreviewGrid(4).width).toBe(knotPreviewGrid(4).height)
-  expect(knotPreviewTextureLayout(4).width).toBe(knotPreviewTextureLayout(4).height)
 })
-test('incomplete final rows are centered within their billboard format', () => {
-  const source = knotBays.find(bay => bay.finishes.length >= 3)!
+test('shorter rows are kept in the middle and centered within the billboard', () => {
+  expect(knotPreviewTextureLayout(11).rowCounts).toEqual([4, 3, 4])
+  expect(knotPreviewTextureLayout(13).rowCounts).toEqual([5, 3, 5])
+  expect(knotPreviewTextureLayout(36).rowCounts).toEqual([8, 7, 6, 7, 8])
+  const source = knotBays.find(bay => bay.finishes.length === 4)!
   const bay = {
     ...source,
-    finishes: source.finishes.slice(0, 3),
+    finishes: [...source.finishes, {
+      ...source.finishes[0],
+      number: source.finishes.at(-1)!.number + 1,
+    }],
   }
-  const layout = knotPreviewTextureLayout(3)
+  const layout = knotPreviewTextureLayout(bay.finishes.length)
   const texts: Array<Array<unknown>> = []
   const context = {
     canvas: {
@@ -54,8 +59,9 @@ test('incomplete final rows are centered within their billboard format', () => {
     fillText: (...args: Array<unknown>) => texts.push(args),
   } as unknown as CanvasRenderingContext2D
   drawPreview(context, bay, new Map)
-  expect(texts).toHaveLength(3)
-  expect(texts[2][1]).toBe(layout.width / 2)
+  expect(layout.rowCounts).toEqual([2, 3])
+  expect(texts).toHaveLength(5)
+  expect((texts[0][1] as number) + (texts[1][1] as number)).toBe(layout.width)
 })
 test('runtime billboard textures keep the default preview population below 192 MiB', () => {
   const bytes = knotBays.reduce((total, bay) => {
