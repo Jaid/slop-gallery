@@ -8,6 +8,7 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {opticalBands} from '../../lib/opticalBands.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {spectralColor} from '../../lib/spectralColor.ts'
+import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
@@ -25,15 +26,16 @@ export default class extends KnotMaterial {
     const middle = tube.sub(ray.mul(0.086))
     const deep = tube.sub(ray.mul(0.155))
     const mineral = mx_noise_float(p.mul(3.2)).mul(0.5).add(0.5)
-    const broadPhase = front.y.mul(31).add(front.x.mul(8.5)).add(mineral.mul(5.5))
-    const middlePhase = middle.y.mul(46).sub(middle.x.mul(12)).add(mineral.mul(8))
-    const deepPhase = deep.y.mul(22).add(deep.x.mul(19)).add(time.mul(0.035))
+    const broadPhase = front.y.mul(TAU * 5).add(front.x.mul(TAU)).add(mineral.mul(5.5))
+    const middlePhase = middle.y.mul(TAU * 7).sub(middle.x.mul(TAU * 2)).add(mineral.mul(8))
+    const deepPhase = deep.y.mul(TAU * 4).add(deep.x.mul(TAU * 3)).add(time.mul(0.035))
     const broadLayers = opticalBands(broadPhase)
     const middleLayers = opticalBands(middlePhase)
     const deepLayers = opticalBands(deepPhase)
     const closeGrain = cellularPoints(p.mul(39), 0.028, 0.11, 0.84).mul(intimate)
     const lamella = broadLayers.mul(0.5).add(middleLayers.mul(0.32)).add(deepLayers.mul(0.18))
-    const interferencePhase = broadPhase.mul(0.43).add(middlePhase.mul(0.18)).add(rim.mul(2.4))
+    // Fractional multiples of the lamella phases would reintroduce a UV seam.
+    const interferencePhase = front.y.mul(TAU * 2).add(middle.y.mul(TAU)).add(front.x.mul(TAU).sin().mul(0.6)).add(mineral.mul(3.805)).add(rim.mul(2.4))
     const interference = spectralColor(interferencePhase)
     const ivory = mix(color('#817d84'), color('#e4ddd0'), lamella.mul(0.72).add(mineral.mul(0.14)))
     const coolPearl = mix(color('#71b1c4'), color('#e9a2a9'), middleLayers)
