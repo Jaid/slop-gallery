@@ -1,6 +1,6 @@
 import type {Node, Texture} from 'three/webgpu'
 
-import {color, float, Fn, hash, mix, mx_cell_noise_float, mx_noise_float, negateOnBackSide, time, transformNormalToView, uv, varying, vec2, vec3} from 'three/tsl'
+import {color, float, Fn as fn, hash, mix, mx_cell_noise_float, mx_noise_float, negateOnBackSide, time, transformNormalToView, uv, varying, vec2, vec3} from 'three/tsl'
 
 import {spectralRamp} from '../../candidates/deepseek/lib/spectralRamp.ts'
 import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
@@ -20,7 +20,7 @@ export default class extends KnotMaterial {
     this.name = knotData.id
     const tube = uv()
 // A creature that swims in place: a slow travelling undulation along the bell.
-    const body = Fn(([coordinate]: [Node<'vec2'>]) => {
+    const body = fn(([coordinate]: [Node<'vec2'>]) => {
       const {position, normal} = knotFrame(coordinate)
       const wave = coordinate.x.mul(TAU * 3).sub(time.mul(0.45)).sin().mul(0.6).add(coordinate.y.mul(TAU * 2).add(time.mul(0.31)).sin().mul(0.4))
       const breath = time.mul(0.9).sin().mul(0.35).add(0.65)
@@ -39,8 +39,9 @@ export default class extends KnotMaterial {
     const halo = filament(tube.y.mul(TAU * 4).sin(), 0.6)
     const stroke = tube.x.mul(TAU * 5).sub(time.mul(1.15)).add(tube.y.mul(TAU * 4).sin().mul(0.4))
     const ripple = stroke.sin().mul(0.5).add(0.5)
-    const rainbow = spectralRamp(stroke.fract(), 1.25)
-    const wash = spectralRamp(stroke.fract(), 1.8)
+    // The spectrum is not cyclic: sweep it smoothly with the periodic wave, never a sawtooth.
+    const rainbow = spectralRamp(ripple, 1.25)
+    const wash = spectralRamp(ripple, 1.8)
 // The travelling wave throws a bright crest ahead of a trailing wash of scattered light.
     const crest = ripple.pow(3).mul(0.75).add(ripple.mul(0.25))
     const pulse = time.mul(0.34).sin().mul(0.16).add(0.86)
