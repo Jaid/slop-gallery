@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "disposable-lifetime": "workspace:*",
-    "magic-string": "^1.4.1",
+    "magic-string": "^1.4.2",
     "vite-plugin-bake-core": "workspace:*",
     "@babel/traverse": "^8.0.6",
     "@babel/types": "^8.0.6"
