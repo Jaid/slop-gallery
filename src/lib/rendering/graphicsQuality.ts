@@ -26,6 +26,7 @@ export function readGraphicsQuality(input: string | URL = typeof location === 'u
 }
 
 type GraphicsProfile = {
+  dpr: number
   floorReflections: boolean
   noiseTextures: boolean
   postprocessing: boolean
@@ -33,12 +34,17 @@ type GraphicsProfile = {
 }
 
 const performanceProfile: GraphicsProfile = {
+  dpr: 1,
   noiseTextures: false,
   floorReflections: false,
   shadows: false,
   postprocessing: false,
 }
 const qualityProfile: GraphicsProfile = {
+  get dpr() {
+    const deviceDpr: unknown = Reflect.get(globalThis, 'devicePixelRatio')
+    return typeof deviceDpr === 'number' ? deviceDpr : 1
+  },
   noiseTextures: true,
   floorReflections: true,
   shadows: true,

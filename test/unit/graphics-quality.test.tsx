@@ -28,12 +28,14 @@ test('the provider exposes the default scene budget during SSR', () => {
   expect(html).toStartWith('<span>false:')
   expect(html).toContain('postprocessing&quot;:false')
   expect(getGraphicsProfile(false)).toEqual({
+    dpr: 1,
     noiseTextures: false,
     floorReflections: false,
     shadows: false,
     postprocessing: false,
   })
   expect(getGraphicsProfile(true)).toEqual({
+    dpr: 1,
     noiseTextures: true,
     floorReflections: true,
     shadows: true,
@@ -41,4 +43,22 @@ test('the provider exposes the default scene budget during SSR', () => {
   })
   expect(getGraphicsProfile(true)).toBe(getGraphicsProfile(true))
   expect(getGraphicsProfile(false)).toBe(getGraphicsProfile(false))
+})
+
+test('DPR is fixed at 1 for performance and follows the device in quality', () => {
+  const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'devicePixelRatio')
+  try {
+    Object.defineProperty(globalThis, 'devicePixelRatio', {
+      configurable: true,
+      value: 1.75,
+    })
+    expect(getGraphicsProfile(false).dpr).toBe(1)
+    expect(getGraphicsProfile(true).dpr).toBe(1.75)
+  } finally {
+    if (descriptor) {
+      Object.defineProperty(globalThis, 'devicePixelRatio', descriptor)
+    } else {
+      Reflect.deleteProperty(globalThis, 'devicePixelRatio')
+    }
+  }
 })
