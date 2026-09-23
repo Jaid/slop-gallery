@@ -16,7 +16,6 @@ export const graphicsQualityParser = createParser({
 }).withDefault(false)
 
 type GraphicsProfile = {
-  dpr: [number, number] | number
   floorReflections: boolean
   noiseTextures: boolean
   postprocessing: boolean
@@ -24,14 +23,12 @@ type GraphicsProfile = {
 }
 
 const performanceProfile: GraphicsProfile = {
-  dpr: 1,
   noiseTextures: false,
   floorReflections: false,
   shadows: false,
   postprocessing: false,
 }
 const qualityProfile: GraphicsProfile = {
-  dpr: [1, 2],
   noiseTextures: true,
   floorReflections: true,
   shadows: true,
