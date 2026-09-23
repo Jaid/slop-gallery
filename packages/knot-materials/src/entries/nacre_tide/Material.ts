@@ -4,10 +4,12 @@ import {bitangentView, color, float, mix, mx_noise_float, normalViewGeometry, po
 
 import {palette} from '../../candidates/grok/lib/palette.ts'
 import {screenRibbon} from '../../candidates/grok/lib/screenRibbon.ts'
+import {knotFrame} from '../../lib/knotFrame.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {liquidNormal} from '../../lib/liquidNormal.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {spectralColor} from '../../lib/spectralColor.ts'
+import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
@@ -31,19 +33,20 @@ export default class extends KnotMaterial {
     const {p, view, facing, grazing, near, intimate} = viewerFrame()
     const tube = uv()
     const slope = tubeSlope(1)
-    const growth = screenRibbon(tube.y.mul(48).add(mx_noise_float(p.mul(5)).mul(0.8)).sin(), 0.28)
+    const growth = screenRibbon(tube.y.mul(TAU * 8).add(mx_noise_float(p.mul(5)).mul(0.8)).sin(), 0.28)
     const layers = 6
     let film: Node<'vec3'> = vec3(0)
     let cover: Node<'float'> = float(0)
     for (let index = 0;index < layers;index++) {
       const depth = 0.006 + index * 0.014
       const shifted = tube.sub(slope.mul(depth * 9))
-      const along = shifted.x.mul(11 + index).add(shifted.y.mul(2.2)).add(index * 0.41)
-      const ripple = mx_noise_float(vec3(shifted.mul(4.5), index * 1.7)).mul(1.3)
+      // Whole cycles and object-space noise agree across both UV wraps, even after parallax.
+      const along = shifted.x.mul(TAU * (2 + Math.floor(index / 3))).add(shifted.y.mul(TAU)).add(index * 0.41)
+      const ripple = mx_noise_float(knotFrame(shifted).position.mul(4.5).add(index * 1.7)).mul(1.3)
       const phase = along.add(ripple).add(time.mul(0.06 + index * 0.012)).add(view.dot(vec3(0.55, 0.25, 0.8)).mul(1.8))
       const sheet = phase.sin().smoothstep(-0.2, 0.85)
       const weight = sheet.pow(1.6).mul(1 - index * 0.1)
-      const hue = spectralColor(phase.mul(0.7).add(index * 0.85).add(grazing.mul(2.2)))
+      const hue = spectralColor(phase.add(index * 0.85).add(grazing.mul(2.2)))
       film = film.add(hue.mul(weight))
       cover = cover.add(weight)
     }
@@ -58,12 +61,12 @@ export default class extends KnotMaterial {
       at: 1,
       hex: '#8d7384',
     }])
-    const lip = mix(color('#fffaf3'), color('#f0c8ba'), tube.y.mul(3).fract())
+    const lip = mix(color('#fffaf3'), color('#f0c8ba'), tube.y.mul(TAU * 3).sin().mul(0.5).add(0.5))
     const colorBody = mix(pearl, film, float(0.72).add(grazing.mul(0.25)))
     const lined = mix(colorBody, lip, growth.mul(intimate.mul(0.55).add(0.18)))
     const organic = mx_noise_float(p.mul(16)).mul(0.5).add(0.5)
     this.colorNode = lined.mul(organic.mul(0.06).add(0.95))
-    const relief = mx_noise_float(p.mul(4.2)).mul(0.012).add(tube.y.mul(40).sin().mul(0.003)).add(growth.mul(0.002))
+    const relief = mx_noise_float(p.mul(4.2)).mul(0.012).add(tube.y.mul(TAU * 6).sin().mul(0.003)).add(growth.mul(0.002))
     this.normalNode = proceduralNormal(relief, 1.05)
     this.clearcoatNormalNode = liquidNormal(intimate.mul(0.4).add(0.2), 0.45)
     this.metalnessNode = float(0.12).add(grazing.mul(0.18))
@@ -72,7 +75,7 @@ export default class extends KnotMaterial {
     this.clearcoatRoughnessNode = float(0.035).add(growth.mul(0.03))
     this.iridescence = 1
     this.iridescenceIORNode = float(1.18).add(grazing.mul(0.28))
-    this.iridescenceThicknessNode = tube.x.mul(680).add(tube.y.mul(340)).add(view.y.mul(120)).add(180).abs()
+    this.iridescenceThicknessNode = tube.x.mul(TAU * 2).add(tube.y.mul(TAU)).add(view.y.mul(0.7)).sin().mul(510).add(690)
     this.sheenNode = color('#fff6ee').mul(grazing.pow(1.7).mul(0.4))
     this.sheenRoughness = 0.36
     this.ior = 1.56
