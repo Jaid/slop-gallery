@@ -6,6 +6,7 @@ import {tubeRay} from '../../lib/atelier.ts'
 import {beads} from '../../lib/beads.ts'
 import {glints} from '../../lib/glints.ts'
 import {hairline} from '../../lib/hairline.ts'
+import {knotFrame} from '../../lib/knotFrame.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {opticalBands} from '../../lib/opticalBands.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
@@ -27,7 +28,9 @@ export default class extends KnotMaterial {
 // Each curtain samples the surface UV at its own depth, so the folds parallax apart while walking.
     const curtain = (depth: number, folds: number, bands: number, seed: number, tint: Node<'color'>, speed: number) => {
       const q = tube.sub(ray.mul(depth))
-      const warp = mx_noise_float(vec3(q.x.mul(3.5), q.y.mul(2.5), seed)).add(mx_noise_float(vec3(q.x.mul(9), q.y.mul(6), seed + 5)).mul(0.5)).mul(1.7)
+      // Evaluate distortion on the closed tube, so neither UV wrap cuts the aurora.
+      const noisePosition = knotFrame(q).position
+      const warp = mx_noise_float(noisePosition.mul(vec3(3.5, 2.5, 3.5)).add(seed)).add(mx_noise_float(noisePosition.mul(vec3(9, 6, 9)).add(seed + 5)).mul(0.5)).mul(1.7)
       const phase = q.x.mul(TAU * folds).add(warp).add(time.mul(Math.PI * speed))
       const fold = phase.sin().mul(0.5).add(0.5).pow(2.4)
       const striation = opticalBands(q.x.mul(TAU * folds * 4).add(warp.mul(1.3))).mul(0.65).add(0.35)
