@@ -1,6 +1,6 @@
 import type {Node, Texture} from 'three/webgpu'
 
-import {color, float, mix, mx_noise_float, normalViewGeometry, time, vec3} from 'three/tsl'
+import {color, float, Fn as fn, Loop as loop, mix, mx_noise_float, normalViewGeometry, time, vec3} from 'three/tsl'
 
 import {detailNormal} from '../../candidates/deepseek/lib/detailNormal.ts'
 import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
@@ -9,25 +9,36 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Defocused lights behind the glass: loose discs with the bright rim of a real lens, coloured like a city at night. Returns the disc coverage and its warm or cold tint.
- */
-function bokeh(position: Node<'vec3'>, scale: number, seed: number) {
-  const q = position.mul(scale).add(seed)
+/** Complete bokeh lights, including discs whose centers lie in neighboring cells. */
+const bokehField = fn(([q]: [Node<'vec3'>]) => {
   const cell = q.floor()
-  const identity = cellNoiseVec3(cell)
-  const centre = identity.mul(0.55).add(0.22)
-  const offset = q.fract().sub(centre)
-  const distance = offset.length().div(identity.z.mul(0.22).add(0.16))
-  const rim = distance.smoothstep(1.02, 0.86)
-  const heart = distance.mul(distance).mul(0.5).add(0.55)
-  const gate = cellNoiseVec3(cell.add(31.7)).x.smoothstep(0.16, 0.34)
-  const tint = cellNoiseVec3(cell.add(11.3))
-  const warm = tint.x.smoothstep(0.45, 0.9)
+  const local = q.fract()
+  const footprint = q.fwidth().length()
+  const coverage = vec3(0).toVar()
+  loop(27, ({i}) => {
+    const neighbor = vec3(i.mod(3), i.div(3).mod(3), i.div(9)).sub(1)
+    const site = cell.add(neighbor)
+    const identity = cellNoiseVec3(site)
+    const centre = identity.mul(0.55).add(0.22)
+    const radius = identity.z.mul(0.22).add(0.16)
+    const distance = local.sub(neighbor.add(centre)).length().div(radius)
+    // Cap the filter support so no omitted site can contribute.
+    const aa = footprint.div(radius).min(0.2)
+    const rim = distance.smoothstep(float(0.86).sub(aa), float(1.02).add(aa)).oneMinus()
+    const heart = distance.min(1.02).pow(2).mul(0.5).add(0.55)
+    const gate = cellNoiseVec3(site.add(31.7)).x.smoothstep(0.16, 0.34)
+    const tint = cellNoiseVec3(site.add(11.3))
+    const disc = rim.mul(heart).mul(gate)
+    coverage.addAssign(vec3(disc, disc.mul(tint.z), disc.mul(tint.x.smoothstep(0.45, 0.9))))
+  })
+  return coverage
+})
+function bokeh(position: Node<'vec3'>, scale: number, seed: number) {
+  const coverage = bokehField(position.mul(scale).add(seed))
   return {
-    disc: rim.mul(heart).mul(gate),
-    cold: tint.z,
-    warm,
+    disc: coverage.x,
+    cold: coverage.y.div(coverage.x.max(0.000001)),
+    warm: coverage.z.div(coverage.x.max(0.000001)),
   }
 }
 
@@ -73,23 +84,25 @@ export default class extends KnotMaterial {
     const dust = mx_noise_float(p.mul(46)).mul(0.5).add(0.5).mul(near)
     const wet = coarseMask.add(fineMask).add(rivulet).clamp(0, 1)
     const glow = far.disc.mul(0.5).add(nearer.disc.mul(0.24))
+    // Each layer carries only its own coverage-weighted tint.
+    const glowColor = lamps.mul(far.disc).mul(0.5).add(nearLamps.mul(nearer.disc).mul(0.24))
     this.colorNode = mix(color('#02040a'), color('#0a1220'), facing.oneMinus().mul(0.5))
-      .add(lamps.mul(glow).mul(0.22))
-      .add(nearLamps.mul(glow).mul(fineMask).mul(0.08))
+      .add(glowColor.mul(0.22))
+      .add(glowColor.mul(fineMask).mul(0.08))
     this.metalness = 0
     this.roughnessNode = float(0.02).add(drizzle.mul(0.25)).add(dust.mul(0.1)).clamp(0.015, 1)
     this.clearcoatNode = float(0.45).add(wet.mul(0.22)).clamp(0, 0.7)
     this.clearcoatRoughnessNode = float(0.03).add(fineMask.mul(0.12)).add(drizzle.mul(0.2))
     this.ior = 1.5
     this.normalNode = detailNormal(normalViewGeometry, coarseHeight.mul(0.02).add(drizzle.mul(0.0008)).add(rivulet.mul(0.0012)), 0.6)
-    this.emissiveNode = lamps.mul(glow).mul(1)
+    this.emissiveNode = glowColor.mul(1)
       .add(color('#ff9b3d').mul(haze).mul(0.05))
       .add(nearLamps.mul(nearer.disc).mul(0.7).mul(near.mul(0.6).add(0.4)))
-      .add(lamps.mul(glow).mul(fineMask).mul(0.35))
+      .add(glowColor.mul(fineMask).mul(0.35))
       .add(color('#cfe4ff').mul(rivulet).mul(glow.mul(0.6).add(0.1)).mul(0.35))
       .add(color('#eaf2ff').mul(wet).mul(grazing.pow(2)).mul(0.05))
       .add(color('#9fd0ff').mul(intimate).mul(mx_noise_float(p.mul(6).add(vec3(time.mul(0.1), 0, 0))).mul(0.5).add(0.5)).mul(0.04))
 // Drizzle keeps the colour of the lamps it is standing in front of, instead of whitening them.
-      .add(mix(lamps, color('#eaf2ff'), 0.3).mul(drizzle).mul(glow).mul(0.35))
+      .add(mix(glowColor, color('#eaf2ff').mul(glow), 0.3).mul(drizzle).mul(0.35))
   }
 }
