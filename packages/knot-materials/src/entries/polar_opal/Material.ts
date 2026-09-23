@@ -1,7 +1,8 @@
 import type {Texture} from 'three/webgpu'
 
-import {color, float, mix, mx_cell_noise_float, mx_fractal_noise_float, mx_noise_float, normalViewGeometry, vec3} from 'three/tsl'
+import {color, float, mix, mx_cell_noise_float, mx_fractal_noise_float, mx_noise_float, mx_worley_noise_float, normalViewGeometry, vec3} from 'three/tsl'
 
+import {cellularBoundary} from '../../lib/cellularBoundary.ts'
 import {cosinePalette} from '../../lib/cosinePalette.ts'
 import {glints} from '../../lib/glints.ts'
 import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
@@ -21,13 +22,18 @@ export default class extends BaseKnotMaterial {
     const fireMask = potch.smoothstep(0.02, 0.42)
     const sheet = mx_noise_float(p.mul(6.5).add(view.mul(1.8)))
     const flash = mx_noise_float(p.mul(13).add(vec3(roll.mul(2), view.x.mul(3), view.y.mul(-2))))
-    const harlequin = mx_cell_noise_float(p.mul(7).add(view.mul(0.25))).smoothstep(0.35, 0.85)
+    const crystalPosition = p.mul(7).add(view.mul(0.25))
+    const crystalIdentity = mx_worley_noise_float(crystalPosition, 1, 1)
+    const crystalRandom = mx_cell_noise_float(vec3(crystalIdentity.mul(65_536), 7, 19)).smoothstep(0.35, 0.85)
+    // Fade crystal identity to a shared value before crossing a domain wall.
+    const crystalInterior = cellularBoundary(crystalPosition).smoothstep(0, crystalPosition.fwidth().length().add(0.18))
+    const harlequin = mix(float(0.5), crystalRandom, crystalInterior)
     const hueA = potch.mul(4.2).add(roll.mul(3.4)).add(sheet.mul(1.8))
     const hueB = flash.mul(5).add(roll.mul(-2.2)).add(2.1)
     const hueC = harlequin.mul(3.5).add(view.z.mul(2)).add(potch.mul(2))
     const playA = spectralColor(hueA)
     const playB = cosinePalette(hueB, [0.55, 0.42, 0.5], [0.45, 0.38, 0.42], [1, 1.1, 0.9], [0, 0.33, 0.67])
-    const playC = mix(color('#7cffd4'), color('#ff6ad4'), hueC.fract())
+    const playC = mix(color('#7cffd4'), color('#ff6ad4'), hueC.sin().mul(0.5).add(0.5))
     const fire = playA.mul(0.55).add(playB.mul(0.35)).add(playC.mul(0.25)).mul(fireMask)
     const contra = fireMask.oneMinus().mul(grazing.pow(1.4))
     const pinfire = flash.smoothstep(0.55, 0.8).mul(intimate).mul(fireMask)
