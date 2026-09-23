@@ -5,8 +5,8 @@ import {useEffect} from 'react'
 import {bloom} from 'three/addons/tsl/display/BloomNode.js'
 import {gaussianBlur} from 'three/addons/tsl/display/GaussianBlurNode.js'
 import {ao} from 'three/addons/tsl/display/GTAONode.js'
-import {smaa} from 'three/addons/tsl/display/SMAANode.js'
-import {float, length, max, mix, mrt, normalView, output, pass, screenUV, smoothstep, uniform, vec3, vec4} from 'three/tsl'
+import {traa} from 'three/addons/tsl/display/TRAANode.js'
+import {float, length, max, mix, mrt, normalView, output, pass, screenUV, smoothstep, uniform, vec3, vec4, velocity} from 'three/tsl'
 import {RenderPipeline} from 'three/webgpu'
 
 import {galleryEvents} from '#src/lib/gallery/actions.ts'
@@ -31,8 +31,11 @@ const Postprocessing = ({contactDarkening = false, knotFocus = false, quality = 
     scenePass.setMRT(mrt({
       output,
       normal: normalView,
+      velocity,
     }))
     const color = scenePass.getTextureNode('output')
+    const depth = scenePass.getTextureNode('depth')
+    const motion = scenePass.getTextureNode('velocity')
     const viewZ = scenePass.getViewZNode()
     const knotAmount = uniform(0).onRenderUpdate(knotFocus ? getKnotFocus : () => 0)
     const knotDistance = uniform(1).onRenderUpdate(knotFocus ? getKnotFocusDistance : () => 1)
@@ -42,13 +45,18 @@ const Postprocessing = ({contactDarkening = false, knotFocus = false, quality = 
     let ambientOcclusion: ReturnType<typeof ao> | undefined
     if (quality) {
       const normal = scenePass.getTextureNode('normal')
-      ambientOcclusion = ao(scenePass.getTextureNode('depth'), normal, camera)
+      ambientOcclusion = ao(depth, normal, camera)
       ambientOcclusion.resolutionScale = 0.75
       ambientOcclusion.radius.value = contactDarkening ? 0.18 : 0.3
       ambientOcclusion.thickness.value = contactDarkening ? 0.6 : 1
       ambientOcclusion.scale.value = contactDarkening ? 1.18 : 0.85
       ambientOcclusion.samples.value = 16
       base = color.mul(vec4(vec3(ambientOcclusion.getTextureNode().r), 1))
+    }
+    let temporalAntialias: ReturnType<typeof traa> | undefined
+    if (quality) {
+      temporalAntialias = traa(base, depth, motion, camera)
+      base = temporalAntialias
     }
     // One half-resolution separable Gaussian serves both Z zoom tilt-shift and Knot background focus.
     // Keep the default inspection distance near the old strength while making close views substantially blurrier.
@@ -60,14 +68,12 @@ const Postprocessing = ({contactDarkening = false, knotFocus = false, quality = 
     // KnotSpectation supplies the far edge of the Knot's bounding sphere, so only geometry behind it is blurred.
     const background = smoothstep(knotDistance.add(0.2), knotDistance.add(1.35), viewZ.negate()).mul(knotAmount)
     const focused = mix(shifted, blurPass, background)
-    let antialias: ReturnType<typeof smaa> | undefined
     let bloomPass: ReturnType<typeof bloom> | undefined
     if (quality) {
       bloomPass = bloom(focused, 0.18, 0.25, 1)
       const edge = smoothstep(float(0.26), float(0.78), length(screenUV.sub(0.5)))
       const vignette = float(1).sub(edge.mul(0.2))
-      antialias = smaa(focused.add(bloomPass).mul(vec4(vec3(vignette), 1)))
-      pipeline.outputNode = antialias
+      pipeline.outputNode = focused.add(bloomPass).mul(vec4(vec3(vignette), 1))
     } else {
       pipeline.outputNode = focused
     }
@@ -89,7 +95,7 @@ const Postprocessing = ({contactDarkening = false, knotFocus = false, quality = 
         galleryEvents.removeEventListener('knot-focus-end', deactivate)
       }
       deactivate()
-      antialias?.dispose()
+      temporalAntialias?.dispose()
       blurPass.dispose()
       ambientOcclusion?.dispose()
       bloomPass?.dispose()
