@@ -483,7 +483,7 @@ const rarities: Record<KnotId, Rarity> = {
   vesuvian_glass: common,
   vitrail: common,
   void_damask: common,
-  void_echo: prime,
+  void_echo: rare,
   void_velvet: common,
   volcanic_chrysalis: prime,
   voltaic_lattice: rare,
