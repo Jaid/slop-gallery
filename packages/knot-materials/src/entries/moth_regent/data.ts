@@ -2,9 +2,9 @@ import type {KnotData} from '../../types.ts'
 
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
-  id: 'amber_archive',
+  id: 'moth_regent',
   candidateId: 'gpt_astra',
-  title: 'Amber Archive',
+  title: 'Moth Regent',
   harness: 'Mage',
   author: {
     model: {
@@ -13,9 +13,9 @@ export default {
       effortLevel: 'xhigh',
     },
   },
-  flavorText: 'A forest folded into a drop of honey. Its last fern still moves, although the wind that touched it has been extinct for ages.',
+  flavorText: 'A sovereign with no throne wears a thousand tiny mirrors. Move softly; its velvet eyes are learning the shape of your light.',
   placeholder: {
-    color: '#b96f24',
-    shading: 'glass',
+    color: '#264a43',
+    shading: 'fabric',
   },
 } as const satisfies KnotData

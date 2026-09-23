@@ -2,9 +2,9 @@ import type {KnotData} from '../../types.ts'
 
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
-  id: 'amber_archive',
+  id: 'verdant_oath',
   candidateId: 'gpt_astra',
-  title: 'Amber Archive',
+  title: 'Verdant Oath',
   harness: 'Mage',
   author: {
     model: {
@@ -13,9 +13,9 @@ export default {
       effortLevel: 'xhigh',
     },
   },
-  flavorText: 'A forest folded into a drop of honey. Its last fern still moves, although the wind that touched it has been extinct for ages.',
+  flavorText: 'On a lacquer night, golden ginkgo leaves promise to remember the sun. Their veins brighten when a witness passes.',
   placeholder: {
-    color: '#b96f24',
-    shading: 'glass',
+    color: '#365d49',
+    shading: 'smooth',
   },
 } as const satisfies KnotData

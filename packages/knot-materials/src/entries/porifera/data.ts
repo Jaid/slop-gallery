@@ -2,9 +2,9 @@ import type {KnotData} from '../../types.ts'
 
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
-  id: 'amber_archive',
+  id: 'porifera',
   candidateId: 'gpt_astra',
-  title: 'Amber Archive',
+  title: 'Porifera',
   harness: 'Mage',
   author: {
     model: {
@@ -13,9 +13,9 @@ export default {
       effortLevel: 'xhigh',
     },
   },
-  flavorText: 'A forest folded into a drop of honey. Its last fern still moves, although the wind that touched it has been extinct for ages.',
+  flavorText: 'A porcelain organism dreams in chambers. The pale skin opens onto a cool green labyrinth that breathes without a single lung.',
   placeholder: {
-    color: '#b96f24',
-    shading: 'glass',
+    color: '#d5cfbf',
+    shading: 'stone',
   },
 } as const satisfies KnotData

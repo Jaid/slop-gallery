@@ -2,9 +2,9 @@ import type {KnotData} from '../../types.ts'
 
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
-  id: 'amber_archive',
+  id: 'chromatic_fugue',
   candidateId: 'gpt_astra',
-  title: 'Amber Archive',
+  title: 'Chromatic Fugue',
   harness: 'Mage',
   author: {
     model: {
@@ -13,9 +13,9 @@ export default {
       effortLevel: 'xhigh',
     },
   },
-  flavorText: 'A forest folded into a drop of honey. Its last fern still moves, although the wind that touched it has been extinct for ages.',
+  flavorText: 'Three paintings share one impossible surface. Walk around it and the lenses conduct an argument between vermilion, jade and midnight.',
   placeholder: {
-    color: '#b96f24',
+    color: '#8b3e5a',
     shading: 'glass',
   },
 } as const satisfies KnotData

@@ -2,20 +2,20 @@ import type {KnotData} from '../../types.ts'
 
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
-  id: 'amber_archive',
+  id: 'amber_herbarium',
   candidateId: 'gpt_astra',
-  title: 'Amber Archive',
+  title: 'Amber Herbarium',
   harness: 'Mage',
   author: {
     model: {
       title: 'GPT-6 Astra',
       slug: 'openai/gpt-6-astra',
-      effortLevel: 'xhigh',
+      effortLevel: 'high',
     },
   },
-  flavorText: 'A forest folded into a drop of honey. Its last fern still moves, although the wind that touched it has been extinct for ages.',
+  flavorText: 'A forest folded into a drop of honey, still dreaming of the wind that once moved its smallest leaves.',
   placeholder: {
-    color: '#b96f24',
+    color: '#c27a1f',
     shading: 'glass',
   },
 } as const satisfies KnotData

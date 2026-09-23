@@ -1,6 +1,7 @@
 export * from './bumpNormal.ts'
 export * from './exhibition/fields.ts'
 export {approach as exhibitionApproach, disk as exhibitionDisk, wave as exhibitionWave} from './exhibition/optics.ts'
+export {detail as patternDetail, fill as patternFill, pulse as patternPulse, rotatePoint as patternRotatePoint, stroke as patternStroke, wave as patternWave} from './exhibition/pattern.ts'
 export * from './filteredWave.ts'
 export * from './knotShell.ts'
 export * from './line.ts'

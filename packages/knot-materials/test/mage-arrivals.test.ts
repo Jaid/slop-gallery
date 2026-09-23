@@ -118,12 +118,31 @@ const batches = [
       'soap_cathedral',
     ],
   },
+  {
+    run: 'run-2026-09-22_13-24-56/gpt-6-astra_knot-material-shaders',
+    candidateId: 'gpt_astra',
+    model: {
+      title: 'GPT-6 Astra',
+      slug: 'openai/gpt-6-astra',
+      effortLevel: 'xhigh',
+    },
+    ids: [
+      'nacre_nocturne',
+      'moth_regent',
+      'amber_archive',
+      'crimson_loom',
+      'petal_testament',
+      'verdant_oath',
+      'chromatic_fugue',
+      'porifera',
+    ],
+  },
 ] as const
 describe('September 22 Mage arrivals', () => {
-  test('keeps all 48 submissions and their actual inference provenance', () => {
+  test('keeps all 56 submissions and their actual inference provenance', () => {
     const ids = batches.flatMap(batch => [...batch.ids])
-    expect(batches).toHaveLength(6)
-    expect(ids).toHaveLength(48)
+    expect(batches).toHaveLength(7)
+    expect(ids).toHaveLength(56)
     expect(new Set(ids).size).toBe(ids.length)
     for (const batch of batches) {
       expect(batch.ids).toHaveLength(8)
@@ -138,6 +157,10 @@ describe('September 22 Mage arrivals', () => {
   })
   test('renames colliding submissions instead of replacing existing exhibits', () => {
     const collisions = [
+      [
+        'amber_herbarium',
+        'amber_archive',
+      ],
       [
         'abyssal_bloom',
         'hadal_garden',

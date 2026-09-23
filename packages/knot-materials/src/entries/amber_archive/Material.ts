@@ -1,61 +1,80 @@
 import type {Node, Texture} from 'three/webgpu'
 
-import {color, float, mix, mx_cell_noise_vec3, mx_noise_float, normalLocal, refract, time, vec3} from 'three/tsl'
+import {color, float, mix, mx_noise_float, normalViewGeometry, time, uv, vec2, vec3} from 'three/tsl'
 
-import {proceduralNormal, viewerFrame} from '../../lib/index.ts'
+import {fill, stroke} from '../../candidates/gpt_astra/lib/exhibition/pattern.ts'
+import {tubeRay} from '../../lib/atelier.ts'
+import {beads} from '../../lib/beads.ts'
+import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
-import data from './data.ts'
+import {proceduralNormal} from '../../lib/proceduralNormal.ts'
+import {viewerFrame} from '../../lib/viewerFrame.ts'
+import {wrapCell} from '../../lib/wrapCell.ts'
+import knotData from './data.ts'
 
+/**
+ * A pressed frond, supported strictly inside its cell so the repeated domain has no cut leaves.
+ */
+function fern(point: Node<'vec2'>, footprint: Node<'float'>, sway: Node<'float'>) {
+  const y = point.y
+  const x = point.x.sub(y.add(0.42).pow2().mul(sway))
+  const height = fill(y.abs().sub(0.405), footprint)
+  const stem = stroke(x, 0.006, footprint).mul(height)
+  const extent = y.add(0.44).mul(1.1).clamp().pow(0.6).mul(y.negate().add(0.43)).mul(0.95)
+  const ribs = y.sub(x.abs().mul(0.74)).mul(15)
+  const ribDistance = ribs.fract().sub(0.5).abs().div(15)
+  const blade = stroke(ribDistance, 0.009, footprint)
+    .mul(fill(x.abs().sub(extent), footprint)).mul(height)
+  const centralVein = stroke(ribDistance, 0.002, footprint).mul(blade)
+  return {
+    mask: stem.max(blade),
+    vein: centralVein.max(stem),
+  }
+}
+
+/**
+ * Four occluding botanical strata under a continuous polished resin skin; no scene-color dependency.
+ */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
-    super(environment, 0.65)
-    this.name = data.id
-    const {p, view, facing, near, grazing} = viewerFrame()
-    const ray = refract(view.negate(), normalLocal.normalize(), 1 / 1.54)
-    const chord = facing.mul(0.17).add(0.08)
-    let visibility: Node<'float'> = float(1)
-    let volume: Node<'vec3'> = vec3(0)
-    // A solid botanical volume in object space. Refracted rays cross independently oriented
-    // fern sheets; their support has finite thickness, not a decal attached to the tube UVs.
-    const steps = 16
-    for (let i = 0;i < steps;i++) {
-      const depth = (i + 0.5) / steps
-      const sample = p.add(ray.mul(chord).mul(depth))
-      const q = sample.mul(6.5).add(vec3(0.1, 0.3, 0.2))
-      const seed = mx_cell_noise_vec3(q.floor())
-      const c = q.fract().sub(0.5)
-      const angle = seed.x.mul(6.283185)
-      const x = c.x.mul(angle.cos()).add(c.z.mul(angle.sin()))
-      const z = c.z.mul(angle.cos()).sub(c.x.mul(angle.sin()))
-      const bend = c.y.mul(6).sin().mul(0.06)
-      const stemX = x.sub(bend)
-      const extent = c.y.abs().smoothstep(0.31, 0.4).oneMinus()
-      const taper = c.y.add(0.42).div(0.84).clamp().oneMinus().mul(0.21).add(0.025)
-      const row = c.y.mul(7).add(stemX.abs().mul(2.5)).fract().sub(0.5)
-      const pinna = row.abs().div(0.27).add(stemX.abs().div(taper)).smoothstep(0.65, 1).oneMinus()
-      const stem = stemX.abs().smoothstep(0.013, 0.03).oneMinus()
-      const plane = z.mul(z).mul(-110).exp()
-      const fern = pinna.max(stem).mul(extent).mul(plane).mul(seed.z.smoothstep(0.25, 0.5))
-      // Front-to-back compositing supplies real occlusion, not additive overlapping leaves.
-      const opacity = fern.mul(0.84)
-      const fossil = mix(color('#1d0902'), color('#67300c'), float(depth)).mul(0.3)
-      volume = volume.add(fossil.mul(opacity).mul(visibility))
-      visibility = visibility.mul(opacity.oneMinus())
-      const bubble = c.sub(seed.sub(0.5).mul(0.4)).length().sub(0.135).abs().smoothstep(0.009, 0.035).oneMinus().mul(seed.y.smoothstep(0.7, 0.9))
-      volume = volume.add(color('#ffc45a').mul(bubble).mul(visibility).mul(0.035))
+    super(environment, 0.8)
+    this.name = knotData.id
+    const {p, view, facing, grazing, intimate} = viewerFrame()
+    const tube = uv()
+    const ray = tubeRay()
+    const honey = mx_noise_float(p.mul(5)).mul(0.5).add(0.5)
+    let interior: Node<'vec3'> = mix(color('#50220a'), color('#cb681c'), honey.mul(0.65).add(facing.mul(0.25)))
+    let relief: Node<'float'> = float(0)
+    // Back-to-front compositing gives leaves real occlusion rather than additive ghosting.
+    for (let layer = 3;layer >= 0;layer--) {
+      const depth = 0.018 + layer * 0.028
+      const period = vec2(16, 2)
+      const q = tube.sub(ray.mul(depth)).mul(period).add(vec2(layer * 0.317, layer * 0.271))
+      const rnd = cellNoiseVec3(vec3(wrapCell(q.floor(), period), 5 + layer * 7))
+      const point = q.fract().sub(0.5)
+      const sway = time.mul(0.31).add(rnd.y.mul(6.28)).sin().mul(0.045).add(rnd.x.sub(0.5).mul(0.25))
+      const frond = fern(point, q.fwidth().length().max(0.0001), sway)
+      const gate = rnd.z.smoothstep(0.23, 0.35)
+      const mask = frond.mask.mul(gate).mul(0.83 - layer * 0.08)
+      const leafColor = mix(color('#36180b'), color('#9a4a11'), float(layer / 4)).add(color('#eeb34c').mul(frond.vein).mul(0.3))
+      interior = mix(interior, leafColor, mask)
+      relief = relief.max(mask.mul(1 - layer * 0.2))
     }
-    const inner = p.add(ray.mul(chord.mul(0.7)))
-    const flow = mx_noise_float(inner.mul(8).add(vec3(0, time.mul(0.035), 0))).mul(0.5).add(0.5)
-    const light = mix(color('#8e2602'), color('#ffb32b'), flow.mul(0.5).add(facing.mul(0.4)))
-    const caustic = inner.y.mul(32).add(inner.x.mul(19)).add(flow.mul(9)).sin().smoothstep(0.8, 1)
-    const backlight = light.mul(facing.mul(0.8).add(0.45)).add(color('#ffe2a0').mul(caustic).mul(0.2))
-    volume = volume.add(backlight.mul(visibility))
-    this.colorNode = color('#2a0d02')
-    this.roughness = 0.14
+    const inclusions = beads(p.sub(view.mul(0.055)).mul(72), 9)
+    const bubbleRing = inclusions.cap.sub(0.45).abs().smoothstep(0.12, 0.25).oneMinus().mul(inclusions.mask)
+    interior = mix(interior, color('#4b260f'), inclusions.mask.mul(0.3).mul(intimate))
+    interior = interior.add(color('#ffd581').mul(bubbleRing).mul(intimate).mul(0.6))
+    const flow = mx_noise_float(p.mul(18).add(vec3(0, time.mul(0.015), 0)))
+    this.colorNode = interior.mul(mix(float(0.58), float(1), facing))
+    this.metalness = 0.04
+    this.roughness = 0.16
     this.ior = 1.54
-    this.clearcoat = 0.8
-    this.clearcoatRoughness = 0.09
-    this.normalNode = proceduralNormal(mx_noise_float(p.mul(22)).mul(0.0001), 1)
-    this.emissiveNode = volume.mul(near.mul(0.2).add(0.8)).add(color('#dd750b').mul(grazing.pow(4)).mul(0.08))
+    this.clearcoat = 1
+    this.clearcoatRoughness = 0.055
+    this.clearcoatNormalNode = normalViewGeometry
+    this.normalNode = proceduralNormal(flow, 0.00032)
+    this.specularColorNode = color('#fff0d5')
+    this.emissiveNode = interior.mul(facing.mul(0.23).add(0.035)).add(color('#ed8c26').mul(grazing.pow(4)).mul(0.065))
+    this.aoNode = relief.mul(-0.12).add(1)
   }
 }

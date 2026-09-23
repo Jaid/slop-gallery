@@ -2,9 +2,9 @@ import type {KnotData} from '../../types.ts'
 
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
-  id: 'amber_archive',
+  id: 'petal_testament',
   candidateId: 'gpt_astra',
-  title: 'Amber Archive',
+  title: 'Petal Testament',
   harness: 'Mage',
   author: {
     model: {
@@ -13,9 +13,10 @@ export default {
       effortLevel: 'xhigh',
     },
   },
-  flavorText: 'A forest folded into a drop of honey. Its last fern still moves, although the wind that touched it has been extinct for ages.',
+  displacement: 0.0018,
+  flavorText: 'Unsent letters have taught themselves to blossom. Every paper petal holds a crease where a voice almost became a word.',
   placeholder: {
-    color: '#b96f24',
-    shading: 'glass',
+    color: '#cfa8ad',
+    shading: 'smooth',
   },
 } as const satisfies KnotData

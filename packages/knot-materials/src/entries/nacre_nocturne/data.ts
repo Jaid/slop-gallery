@@ -2,9 +2,9 @@ import type {KnotData} from '../../types.ts'
 
 export default {
   icon: new URL('icon.jxl', import.meta.url).href,
-  id: 'amber_archive',
+  id: 'nacre_nocturne',
   candidateId: 'gpt_astra',
-  title: 'Amber Archive',
+  title: 'Nacre Nocturne',
   harness: 'Mage',
   author: {
     model: {
@@ -13,9 +13,9 @@ export default {
       effortLevel: 'xhigh',
     },
   },
-  flavorText: 'A forest folded into a drop of honey. Its last fern still moves, although the wind that touched it has been extinct for ages.',
+  flavorText: 'The moon left its sheet music inside a shell. Each hand-cut fragment remembers a different color of the tide.',
   placeholder: {
-    color: '#b96f24',
+    color: '#8a7ea8',
     shading: 'glass',
   },
 } as const satisfies KnotData
