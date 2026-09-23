@@ -35,7 +35,6 @@
     "test:baking": "bun run --cwd packages/vite-plugin-bake-three test",
     "test:live": "GAME_LEVEL=gallery bun run build && LIVE_TEST=true bun test ./test/live.test.ts",
     "typecheck": "tsc --noEmit --noUnusedLocals --noUnusedParameters --pretty false",
-    "update:knots": "bun scripts/updateKnots.ts",
     "vite": "bun --bun node_modules/vite/dist/node/cli.js --configLoader native"
   },
   "overrides": {

@@ -1,7 +1,6 @@
 import type {KnotData} from '../../types.ts'
 
 export default {
-  icon: new URL('icon.jxl', import.meta.url).href,
   id: 'loom_of_hours',
   candidateId: 'deepseek',
   title: 'Loom of Hours',

@@ -1,7 +1,6 @@
 import type {KnotData} from '../../types.ts'
 
 export default {
-  icon: new URL('icon.jxl', import.meta.url).href,
   id: 'vesper_rose',
   candidateId: 'mimo',
   title: 'Vesper Rose',

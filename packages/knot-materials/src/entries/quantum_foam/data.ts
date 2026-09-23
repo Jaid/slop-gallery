@@ -1,7 +1,6 @@
 import type {KnotData} from '../../types.ts'
 
 export default {
-  icon: new URL('icon.jxl', import.meta.url).href,
   id: 'quantum_foam',
   candidateId: 'deepseek',
   title: 'Quantum Foam',

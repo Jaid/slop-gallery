@@ -6,6 +6,7 @@ import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 import {color, mix, texture} from 'three/tsl'
 import {MeshStandardNodeMaterial, Vector2} from 'three/webgpu'
 import useGraphicsQuality from 'use-graphics-quality'
+import constructors from 'virtual:knot-exhibition-materials'
 
 import KnotCandidateSign from '#component/levels/knottingham/KnotCandidateSign'
 import KnotLights from '#component/levels/knottingham/KnotLights'
@@ -16,9 +17,12 @@ import WallSurface from '#src/components/Scene/WallSurface.tsx'
 import {knotGalleryBounds, knotGalleryCenter, knotGallerySize, knotGalleryWalls} from '#src/lib/gallery/knotGallery.ts'
 import {createKnotWallCarpetTextures, disposeKnotWallCarpetTextures} from '#src/lib/materials/KnotWallCarpetTextures.ts'
 
+import RuntimeKnotIconRenderer from '../KnotPreviewSigns/RuntimeKnotIconRenderer.ts'
+
 /** The Knot level’s shell and lighting, without museum rooms or their physics. */
 export default function KnotLobby() {
   const quality = useGraphicsQuality()
+  const runtimeIcons = useDisposable(useMemo(() => new RuntimeKnotIconRenderer(constructors, quality), [quality]))
   const plaster = useMemo(() => surfaceTexture('plaster'), [])
   const wood = useMemo(() => surfaceTexture('wood'), [])
   const shell = useMemo(() => ({
@@ -96,7 +100,7 @@ export default function KnotLobby() {
       <mesh castShadow geometry={shell.ceiling} material={ceilingMaterial} name='knottingham-ceiling' position={[knotGalleryCenter[0], knotGalleryBounds.height, knotGalleryCenter[2]]} receiveShadow />
       <KnotLights />
       {knotBays.map(bay => <group key={bay.candidate.id} position={bay.center}>
-        <KnotPreviewSign bay={bay} />
+        <KnotPreviewSign bay={bay} renderer={runtimeIcons} />
         <KnotCandidateSign bay={bay} />
       </group>)}
     </group>

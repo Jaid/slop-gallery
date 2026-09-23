@@ -10,16 +10,13 @@ src/
     abyssal_lantern/
       data.ts
       Material.ts
-      icon.jxl
     ferrothorn/
       data.ts
       Material.ts
-      icon.jxl
     index.ts
   candidates/
     gpt_astra/
       data.ts
-      icon.jxl
       symbol.svg
       lib/
     index.ts
@@ -33,8 +30,6 @@ src/
   StudioEnvironment.ts
 scripts/
   makePrompt.ts
-  makeIcon.ts
-  updateIcons.ts
   lib/
 ```
 
@@ -56,7 +51,6 @@ export default {
     color: '#4de3ff',
     shading: 'glass',
   },
-  icon: new URL('icon.jxl', import.meta.url).href,
   author: {
     model: {
       title: 'The actual inference model title',
@@ -109,25 +103,13 @@ The generated prompt asks for individual entry files, accurate provenance, place
 
 Expose new reusable shader helpers through the appropriate shared or candidate `lib/index.ts` so they are automatically available to future inference prompts.
 
-After accepting a submission, add its metadata export to `src/entries/index.ts` and an initial `unknown` rating to `src/rarities.ts`. Add a candidate metadata module and barrel export only when introducing a genuinely new candidate; register its row in `main.ts` as well. Then typecheck, test, generate its icon, and use the application's voice tooling for its title recording.
+After accepting a submission, add its metadata export to `src/entries/index.ts` and an initial `unknown` rating to `src/rarities.ts`. Add a candidate metadata module and barrel export only when introducing a genuinely new candidate; register its row in `main.ts` as well. Then typecheck, test, and use the application's voice tooling for its title recording.
 
-## Generate icons
+## Runtime billboard previews
 
-Open the Vite application in the debug browser first. From the repository root:
+Knot billboard thumbnails are not persisted as image assets. Knottingham renders the currently selected entries at runtime with one shared detached WebGPU renderer, reads the offscreen render target back into tightly cropped canvases, and composes those canvases into each billboard texture. Quality mode uses the real knot materials; performance mode screenshots the same cheap placeholder materials shown by the exhibition, so preview generation does not defeat the performance-mode shader policy.
 
-```sh
-bun packages/knot-materials/scripts/makeIcon.ts abyssal_lantern
-bun packages/knot-materials/scripts/makeIcon.ts ferrothorn --output temp/ferrothorn.jxl
-bun packages/knot-materials/scripts/updateIcons.ts gemini_flash claude_fable
-```
-
-`makeIcon.ts` renders one canonical ID, including archived entries. Its default destination is that entry's `icon.jxl`; `--output` permits a separate JXL destination. `updateIcons.ts` updates all entries and the candidate symbol for the requested candidates, or all candidates when none are specified. The root `bun scripts/updateKnots.ts` command remains a forwarding entry point.
-
-By default the icon scripts start their own private Vite server and Chrome instance, so no browser or dev server needs to be prepared first. Passing `--browser-url` (and optionally `--page-url`) instead attaches to an existing debug browser. Rendering uses a detached WebGPU scene and validates finite HDR pixels before publishing images.
-
-Knot icons are rendered at 640 × 640 and cropped to visible alpha bounds. Candidate symbols are rendered at 256 × 256 from `src/candidates/<id>/symbol.svg`. PNG is an intermediate only. Encoding requires `cjxl`; ImageMagick is also required when converting an unsupported encoder input format. Lossy JXL encoding follows the project standard: effort 10, Brotli effort 11, and distance 1.
-
-All requested outputs render and encode in temporary storage before publishing. Each destination is replaced through a same-volume atomic rename; temporary files are cleaned up through async disposal. Changing titles, rarity, archive state, selection, or plate numbers does not require icon regeneration. Changing the actual material or candidate symbol does. The application still converts JXL assets for production through its Vite image pipeline.
+Candidate signs and labels use each candidate's `symbol.svg` directly. There are therefore no checked-in `icon.jxl` files and no icon-regeneration step when materials, symbols, titles, rarity, selection, or numbering change.
 
 ## Render a knot inspection set
 
@@ -155,9 +137,9 @@ bun packages/knot-materials/scripts/makeAnimatedIcon.ts opal_fire
 bun packages/knot-materials/scripts/makeAnimatedIcon.ts ferrothorn --output temp/ferrothorn.animated.webm
 ```
 
-The default output is `src/entries/<id>/icon.animated.webm`; the still `icon.jxl` is not replaced. It renders exactly 120 640 × 640 source frames over two seconds, making one full Y-axis rotation. It samples 0° through 357° in 3° increments, without duplicating 360° at the loop seam. A private renderer clock advances material animation at the corresponding 60 Hz sample times. The camera and image bounds remain fixed for the entire animation, with displacement-aware framing; individual frames are never cropped independently.
+The default output is `src/entries/<id>/icon.animated.webm`; runtime billboard previews are unaffected. It renders exactly 120 640 × 640 source frames over two seconds, making one full Y-axis rotation. It samples 0° through 357° in 3° increments, without duplicating 360° at the loop seam. A private renderer clock advances material animation at the corresponding 60 Hz sample times. The camera and image bounds remain fixed for the entire animation, with displacement-aware framing; individual frames are never cropped independently.
 
-Capture uses explicit offscreen GPU readback, including HDR-finiteness checks. The script uses the same self-contained private renderer by default and accepts the same optional `--browser-url` and `--page-url` overrides as the still-image scripts.
+Capture uses explicit offscreen GPU readback, including HDR-finiteness checks. The script uses the same self-contained private renderer by default and accepts optional `--browser-url` and `--page-url` overrides.
 
 Encoding requires `ffmpeg` with `libsvtav1`. The numbered PNG frames are encoded directly to 8-bit full-range 4:2:0 AV1 in a WebM container using SVT-AV1 preset 5 at CRF 20, variance boost enabled, film grain disabled, tune 0 (VQ), and explicit 8-bit input depth; there is no APNG intermediate. AV1 does not preserve the source alpha channel in this pipeline, so the experimental WebM output is opaque. Looping is a playback concern (for example, HTML `<video loop>`) rather than embedded animation metadata. All temporary frames stay outside the repository and are removed on completion or failure. The destination is replaced atomically only after capture and encoding finish.
 
@@ -177,4 +159,4 @@ bun run typecheck
 bun test --max-concurrency 1 test/unit/knot-candidates.test.ts test/unit/knot-exhibition.test.ts test/unit/knot-cellular-fields.test.ts test/unit/progressive-knot-materials.test.ts
 ```
 
-Package tests cover metadata and folder parity, unique IDs and flavor text, exhaustive rarities, helper ownership, independent material construction, metadata-only bundling, all placeholder presets, complete prompt source inclusion, deterministic sampling, CLI output from another working directory, and icon argument validation without a browser connection.
+Package tests cover metadata and folder parity, unique IDs and flavor text, exhaustive rarities, helper ownership, independent material construction, metadata-only bundling, all placeholder presets, complete prompt source inclusion, deterministic sampling, CLI output from another working directory, and the absence of persisted billboard rasters.

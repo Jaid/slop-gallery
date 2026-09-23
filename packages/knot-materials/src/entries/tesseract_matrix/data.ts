@@ -1,7 +1,6 @@
 import type {KnotData} from '../../types.ts'
 
 export default {
-  icon: new URL('icon.jxl', import.meta.url).href,
   id: 'tesseract_matrix',
   candidateId: 'gemini_flash',
   title: 'Tesseract Matrix',

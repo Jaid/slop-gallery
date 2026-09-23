@@ -3,45 +3,17 @@ import {fileURLToPath} from 'node:url'
 
 import {knotCandidates} from 'knot-materials'
 
-import {visibleBounds} from '../../scripts/lib/knots/previewLayout.ts'
-import updateKnots from '../../scripts/updateKnots.ts'
-
-async function dimensions(url: string) {
-  const file = fileURLToPath(url)
-  const signature = new Uint8Array(await Bun.file(file).arrayBuffer()).subarray(0, 2)
-  expect([...signature]).toEqual([255, 10])
-  const size = await Bun.$`magick identify -format '%w %h' ${file}`.text()
-  return size.trim().split(' ').map(Number)
-}
-test('candidate and item icons are generated JXLs while billboards remain runtime-only', async () => {
-  const overviewFiles = await Array.fromAsync(new Bun.Glob('packages/knot-materials/src/candidates/*/overview.jxl').scan('.'))
-  expect(overviewFiles).toEqual([])
+test('candidate symbols remain source assets while knot preview rasters are runtime-only', async () => {
+  const persistedGlob = new Bun.Glob('packages/knot-materials/src/{candidates,entries}/*/icon.jxl')
+  const persistedIcons = await Array.fromAsync(persistedGlob.scan('.'))
+  expect(persistedIcons).toEqual([])
   for (const candidate of knotCandidates) {
-    expect(candidate.data.icon).toEndWith(`/${candidate.data.id}/icon.jxl`)
-    expect('overview' in candidate.data).toBe(false)
-    expect(await dimensions(candidate.data.icon)).toEqual([256, 256])
+    expect(candidate.data.icon).toEndWith(`/${candidate.data.id}/symbol.svg`)
+    const symbol = Bun.file(fileURLToPath(candidate.data.icon))
+    expect(await symbol.exists()).toBe(true)
+    expect(await symbol.text()).toContain('<svg')
     for (const item of candidate.items) {
-      expect(item.icon).toEndWith(`/entries/${item.id}/icon.jxl`)
-      const [width, height] = await dimensions(item.icon)
-      expect(width).toBeGreaterThan(0)
-      expect(height).toBeGreaterThan(0)
-      expect(width).toBeLessThanOrEqual(640)
-      expect(height).toBeLessThanOrEqual(640)
-      expect(Math.min(width, height)).toBeLessThan(640)
-      const pixels = await Bun.$`magick ${fileURLToPath(item.icon)} -depth 8 RGBA:-`.arrayBuffer()
-      const data = new Uint8ClampedArray(pixels)
-      expect(data.some((value, index) => index % 4 === 3 && value === 0)).toBe(true)
-      expect(visibleBounds({
-        data,
-        width,
-        height,
-      })).toEqual([0, 0, width, height])
+      expect('icon' in item).toBe(false)
     }
   }
-}, 60_000)
-test('generation rejects unknown candidates before connecting to the browser', async () => {
-  await expect(updateKnots({
-    candidates: ['../wrong'],
-    browserURL: 'invalid',
-  })).rejects.toThrow('Unknown Knot candidate')
 })

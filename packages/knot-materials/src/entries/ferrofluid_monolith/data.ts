@@ -1,7 +1,6 @@
 import type {KnotData} from '../../types.ts'
 
 export default {
-  icon: new URL('icon.jxl', import.meta.url).href,
   id: 'ferrofluid_monolith',
   candidateId: 'gemini_flash',
   title: 'Ferrofluid Monolith',

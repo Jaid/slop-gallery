@@ -27,7 +27,6 @@ export type KnotData = {
   displacement?: number
   flavorText: string
   harness?: string
-  icon: string
   id: string
   placeholder: KnotPlaceholder
   title: string

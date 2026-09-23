@@ -19,7 +19,10 @@ const captionCenterOffset = 0.43
 const captionMaximumWidth = 0.9
 
 /** Compose one complete candidate billboard from its individual runtime assets. */
-export default function drawPreview(context: CanvasRenderingContext2D, bay: KnotBay, images: ReadonlyMap<string, ImageBitmap>) {
+export default function drawPreview(context: CanvasRenderingContext2D, bay: KnotBay, images: ReadonlyMap<string, CanvasImageSource & {
+  height: number
+  width: number
+}>) {
   const layout = knotPreviewTextureLayout(bay.finishes.length)
   context.fillStyle = knotPreviewBackground
   context.fillRect(0, 0, layout.width, layout.height)
@@ -33,7 +36,7 @@ export default function drawPreview(context: CanvasRenderingContext2D, bay: Knot
     const centerY = layout.rowHeight * (row + 0.5)
     const iconCenterY = centerY - layout.rowHeight * iconCenterOffset
     const maxIcon = Math.min(layout.tileWidth * iconMaximumWidth, layout.rowHeight * iconMaximumHeight)
-    const image = images.get(finish.icon)
+    const image = images.get(finish.id)
     if (image) {
       const aspect = image.width / image.height
       const width = aspect >= 1 ? maxIcon : maxIcon * aspect

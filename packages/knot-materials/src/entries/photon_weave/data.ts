@@ -1,7 +1,6 @@
 import type {KnotData} from '../../types.ts'
 
 export default {
-  icon: new URL('icon.jxl', import.meta.url).href,
   id: 'photon_weave',
   candidateId: 'glm_flash',
   title: 'Photon Weave',

@@ -10,7 +10,7 @@ import KnotCandidate, {indexKnots} from 'knot-materials/KnotCandidate.ts'
 const candidateData: KnotCandidateData = {
   id: 'claude_fable',
   title: 'Claude Fable',
-  icon: 'icon.jxl',
+  icon: 'symbol.svg',
 }
 const item = (id: string): KnotData => ({
   id,
@@ -21,7 +21,6 @@ const item = (id: string): KnotData => ({
     shading: 'smooth',
   },
   flavorText: 'A quiet relic of an impossible place.',
-  icon: 'icon.jxl',
   author: {model: {title: 'Claude Fable 5.1'}},
 })
 const ids = (candidate: KnotCandidate) => candidate.select().map(entry => entry.id)

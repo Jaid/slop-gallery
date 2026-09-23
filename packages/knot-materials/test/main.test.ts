@@ -50,8 +50,7 @@ describe('flat knot catalogue', () => {
       expect(entry.placeholder.color).toMatch(/^#[\da-f]{6}$/iu)
       expect(Object.hasOwn(placeholderPresets, entry.placeholder.shading)).toBe(true)
       expect(entry.author.model.title.trim().length).toBeGreaterThan(0)
-      expect(entry.icon).toEndWith(`/entries/${entry.id}/icon.jxl`)
-      for (const field of ['accent', 'highlighted', 'sourceId', 'rarity', 'number']) {
+      for (const field of ['accent', 'highlighted', 'icon', 'sourceId', 'rarity', 'number']) {
         expect(field in data, `${entry.id}.${field}`).toBe(false)
       }
     }

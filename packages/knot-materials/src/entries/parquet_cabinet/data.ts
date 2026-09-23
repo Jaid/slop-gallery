@@ -13,7 +13,6 @@ export default {
   },
   title: 'Parquet Cabinet',
   flavorText: 'Maple and rosewood trade places at every joint, guarding a room too small to enter.',
-  icon: new URL('icon.jxl', import.meta.url).href,
   placeholder: {
     color: '#b97942',
     shading: 'smooth',

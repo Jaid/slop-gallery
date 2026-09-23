@@ -107,7 +107,7 @@ test('candidate atlas draws dynamic numbers, titles, accents and image fallbacks
     width: 200,
     height: 100,
   } as ImageBitmap
-  const bitmaps = new Map([[bay.finishes[0].icon, bitmap]])
+  const bitmaps = new Map([[bay.finishes[0].id, bitmap]])
   drawPreview(context, bay, bitmaps)
   expect(fills[0]).toEqual({
     args: [0, 0, layout.width, layout.height],

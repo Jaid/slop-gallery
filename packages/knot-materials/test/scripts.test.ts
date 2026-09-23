@@ -4,9 +4,7 @@ import {tmpdir} from 'node:os'
 import {join, resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
 
-import makeIcon from '../scripts/makeIcon.ts'
 import makePrompt, {selectExamples} from '../scripts/makePrompt.ts'
-import updateIcons from '../scripts/updateIcons.ts'
 import {knots} from '../src/main.ts'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
@@ -53,6 +51,7 @@ describe('inference prompts', () => {
       expect(prompt).toContain(entry.id)
     }
     expect(prompt).toContain('flavorText')
+    expect(prompt).not.toContain('icon.jxl')
     expect(prompt).toContain('src/rarities.ts')
     expect(prompt).toContain('using `unknown` for new entries')
     expect(prompt).toContain('unknown=0 (no stars)')
@@ -91,35 +90,6 @@ describe('inference prompts', () => {
         recursive: true,
         force: true,
       })
-    }
-  })
-})
-describe('icon generation entry points', () => {
-  test('invalid identities and formats fail before any browser connection or project writes', async () => {
-    await expect(makeIcon({
-      id: '../outside',
-      browserURL: 'invalid',
-    })).rejects.toThrow('Unknown Knot ID')
-    await expect(makeIcon({
-      id: 'ferrothorn',
-      output: 'wrong.png',
-      browserURL: 'invalid',
-    })).rejects.toThrow('.jxl')
-    await expect(updateIcons({
-      candidates: ['../outside'],
-      browserURL: 'invalid',
-    })).rejects.toThrow('Unknown Knot candidate')
-  })
-  test('both icon CLIs expose help without requiring a running browser', async () => {
-    for (const name of ['makeIcon', 'updateIcons']) {
-      const process = Bun.spawn(['bun', resolve(root, `scripts/${name}.ts`), '--help'], {
-        cwd: tmpdir(),
-        stdout: 'pipe',
-        stderr: 'pipe',
-      })
-      const [exitCode, stdout, stderr] = await Promise.all([process.exited, new Response(process.stdout).text(), new Response(process.stderr).text()])
-      expect(exitCode, stderr).toBe(0)
-      expect(stdout).toContain('Usage:')
     }
   })
 })

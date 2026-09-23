@@ -13,7 +13,6 @@ export default {
   },
   title: 'Sugar Ribbon',
   flavorText: 'A confectioner pulled one last ribbon of raspberry and mint, then forgot where its ends should meet.',
-  icon: new URL('icon.jxl', import.meta.url).href,
   placeholder: {
     color: '#ef7591',
     shading: 'liquid',

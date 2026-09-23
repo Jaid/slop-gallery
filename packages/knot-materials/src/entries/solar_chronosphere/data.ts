@@ -1,7 +1,6 @@
 import type {KnotData} from '../../types.ts'
 
 export default {
-  icon: new URL('icon.jxl', import.meta.url).href,
   id: 'solar_chronosphere',
   candidateId: 'gemini_flash',
   title: 'Solar Chronosphere',

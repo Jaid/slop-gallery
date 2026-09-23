@@ -17,5 +17,4 @@ export default {
     color: '#cf4936',
     shading: 'smooth',
   },
-  icon: new URL('icon.jxl', import.meta.url).href,
 } as const satisfies KnotData

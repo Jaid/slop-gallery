@@ -1,7 +1,6 @@
 import type {KnotData} from '../../types.ts'
 
 export default {
-  icon: new URL('icon.jxl', import.meta.url).href,
   id: 'oracle_palimpsest',
   candidateId: 'gpt_sol',
   title: 'Oracle Palimpsest',

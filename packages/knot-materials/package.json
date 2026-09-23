@@ -18,12 +18,10 @@
   },
   "scripts": {
     "make:animated-icon": "bun scripts/makeAnimatedIcon.ts",
-    "make:icon": "bun scripts/makeIcon.ts",
     "make:prompt": "bun scripts/makePrompt.ts",
     "render:knot": "bun scripts/renderKnot.ts",
     "test": "bun test --max-concurrency 1 ./test",
-    "update:announcements": "bun scripts/updateAnnouncements.ts",
-    "update:icons": "bun scripts/updateIcons.ts"
+    "update:announcements": "bun scripts/updateAnnouncements.ts"
   },
   "dependencies": {
     "three-async-materials": "workspace:*",

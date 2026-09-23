@@ -13,7 +13,6 @@ export default {
   },
   title: 'Tidal Register',
   flavorText: 'Small enamel shutters turn in patient succession, recording a tide that never reaches the shore.',
-  icon: new URL('icon.jxl', import.meta.url).href,
   placeholder: {
     color: '#72baad',
     shading: 'metal',

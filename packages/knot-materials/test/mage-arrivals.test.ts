@@ -330,14 +330,4 @@ describe('September 22 Mage arrivals', () => {
       expect(arrival.flavorText).not.toBe(original.flavorText)
     }
   })
-  test('ships a JPEG XL icon for every submission', async () => {
-    for (const id of batches.flatMap(batch => [...batch.ids])) {
-      const file = Bun.file(new URL(`../src/entries/${id}/icon.jxl`, import.meta.url))
-      expect(await file.exists(), id).toBe(true)
-      const bytes = new Uint8Array(await file.slice(0, 12).arrayBuffer())
-      const codestream = bytes[0] === 0xFF && bytes[1] === 0x0A
-      const container = bytes.length === 12 && [0, 0, 0, 12, 0x4A, 0x58, 0x4C, 0x20, 13, 10, 0x87, 10].every((value, index) => bytes[index] === value)
-      expect(codestream || container, id).toBe(true)
-    }
-  })
 })

@@ -12,11 +12,6 @@ import {animationFps, animationFrame, animationSize} from './animation.ts'
 import {visibleBounds} from './previewLayout.ts'
 import {inspectionAnimationSize, inspectionVideoSize, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from './renderSettings.ts'
 
-export type PreviewCandidate = {
-  id: string
-  items: ReadonlyArray<KnotEntry>
-  symbol: string
-}
 export type AnimationPreview = {
   dispose: () => void
   renderFrame: (index: number) => Promise<string>
@@ -156,43 +151,6 @@ export default class KnotPreviewRenderer {
     // These internals are isolated to this owned renderer; never replace global TSL time nodes.
     ;(this.renderer as OfflineRenderer)._animation.stop()
     this.device.addEventListener('uncapturederror', event => this.errors.push(event.error.message))
-  }
-
-  async renderCandidate(candidate: PreviewCandidate) {
-    const items: Array<{
-      id: string
-      image: string
-    }> = []
-    for (const item of candidate.items) {
-      items.push({
-        id: item.id,
-        image: await this.renderIcon(item),
-      })
-    }
-    const symbol = new Image
-    symbol.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(candidate.symbol)}`
-    await symbol.decode()
-    const icon = canvas(256)
-    const scale = Math.min(icon.width / symbol.naturalWidth, icon.height / symbol.naturalHeight)
-    const width = symbol.naturalWidth * scale
-    const height = symbol.naturalHeight * scale
-    icon.getContext('2d')!.drawImage(symbol, (icon.width - width) / 2, (icon.height - height) / 2, width, height)
-    return {
-      items,
-      icon: png(icon),
-    }
-  }
-
-  async renderIcon(item: KnotEntry) {
-    await this.prepare(item)
-    try {
-      const {image, bounds} = await this.capture(item.id)
-      const cropped = canvas(bounds[2], bounds[3])
-      cropped.getContext('2d')!.drawImage(image, ...bounds, 0, 0, cropped.width, cropped.height)
-      return png(cropped)
-    } finally {
-      this.releaseMaterial()
-    }
   }
 
   private async capture(id: string, target = this.iconTarget, size = animationSize, seconds = 0) {
