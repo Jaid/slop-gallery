@@ -1,9 +1,10 @@
 import type {Node, Texture} from 'three/webgpu'
 
-import {color, float, mix, mx_noise_float, time, vec3} from 'three/tsl'
+import {color, float, mix, mx_noise_float, mx_worley_noise_float, time, vec3} from 'three/tsl'
 
 import {spectralRamp} from '../../candidates/deepseek/lib/spectralRamp.ts'
 import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
+import {cellularBoundary} from '../../lib/cellularBoundary.ts'
 import {filament} from '../../lib/filament.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
@@ -24,17 +25,20 @@ export default class extends KnotMaterial {
  */
     const playOfColor = (depth: number, scale: number, gain: Node<'float'> | number) => {
       const q = p.sub(view.mul(depth)).mul(scale)
-      const identity = cellNoiseVec3(q.floor())
+      // Match optical identity to irregular crystal domains instead of cubic grid cells.
+      const domain = mx_worley_noise_float(q, 1, 1)
+      const identity = cellNoiseVec3(vec3(domain.mul(65_536), 7, 19))
       const lattice = identity.sub(0.5).mul(2).add(vec3(0.013, 0.017, 0.011)).normalize()
       const diameter = identity.z.mul(0.46).add(0.44).mul(time.mul(0.13).add(identity.x.mul(41)).sin().mul(0.05).add(1))
 // A slow shiver keeps the fire from ever being perfectly still.
       const shimmer = time.mul(0.21).add(identity.x.mul(24)).sin().mul(0.022)
-      const band = lattice.dot(view).abs().add(shimmer).mul(diameter).sub(0.03).mul(1.6).fract()
+      const band = lattice.dot(view).abs().add(shimmer).mul(diameter).sub(0.03).mul(1.6)
       const footprint = q.fwidth().length().max(0.0001)
       const resolved = footprint.smoothstep(0.3, 1.3).oneMinus()
+      const domainMask = cellularBoundary(q).smoothstep(0.025, footprint.add(0.14))
       const grit = mx_noise_float(q.mul(2.3)).mul(0.5).add(0.5)
       const brilliance = identity.y.smoothstep(0.3, 0.82).mul(0.86).add(0.14)
-      return spectralRamp(band).mul(brilliance).mul(grit.smoothstep(0.18, 0.86).mul(0.55).add(0.45)).mul(resolved.mul(0.78).add(0.22)).mul(gain)
+      return spectralRamp(band).mul(brilliance).mul(grit.smoothstep(0.18, 0.86).mul(0.55).add(0.45)).mul(domainMask).mul(resolved).mul(gain)
     }
     const patch = mx_noise_float(p.mul(2.1)).mul(0.5).add(0.5)
     const play = playOfColor(0.09, 2.7, 0.95).add(playOfColor(0.21, 4.3, 0.26)).add(playOfColor(0.03, 9.5, near.mul(0.45)))
