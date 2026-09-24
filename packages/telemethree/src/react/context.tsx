@@ -1,6 +1,5 @@
-import type {PropsWithChildren} from 'react'
-
 import type {TelemetryClient} from '../types.ts'
+import type {PropsWithChildren} from 'react'
 
 import {createContext, use} from 'react'
 
