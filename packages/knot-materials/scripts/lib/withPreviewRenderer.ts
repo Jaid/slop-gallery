@@ -1,7 +1,7 @@
 import type KnotPreviewRenderer from './KnotPreviewRenderer.ts'
 import type {JSHandle, Page} from 'puppeteer-core'
 
-import {join, resolve} from 'node:path'
+import {resolve} from 'node:path'
 
 import puppeteer, {TargetType} from 'puppeteer-core'
 import {createServer} from 'vite'
@@ -16,26 +16,6 @@ const renderPath = '/packages/knot-materials/scripts/render.html'
 const rendererPath = '/packages/knot-materials/scripts/lib/KnotPreviewRenderer.ts'
 const protocolTimeout = 300_000
 let rendererSequence = 0
-const resolveChromeExecutable = async () => {
-  const configured = Bun.env.BROWSER
-  const candidates = [
-    configured && (Bun.which(configured) ?? configured),
-    Bun.which('chrome'),
-    Bun.which('google-chrome'),
-    Bun.which('google-chrome-stable'),
-    Bun.which('chromium'),
-    Bun.which('chromium-browser'),
-    Bun.which('chrome.exe'),
-    Bun.env.PROGRAMFILES && join(Bun.env.PROGRAMFILES, 'Google', 'Chrome', 'Application', 'chrome.exe'),
-    Bun.env['PROGRAMFILES(X86)'] && join(Bun.env['PROGRAMFILES(X86)'], 'Google', 'Chrome', 'Application', 'chrome.exe'),
-  ].filter((candidate): candidate is string => Boolean(candidate))
-  for (const candidate of candidates) {
-    if (await Bun.file(candidate).exists()) {
-      return candidate
-    }
-  }
-  throw new Error('Chrome was not found. Set BROWSER to its executable path.')
-}
 const createRenderer = async (page: Page, moduleURL: string) => {
   await page.waitForFunction(() => document.readyState === 'complete', {timeout: 30_000})
   const key = `__knotPreviewRenderer_${process.pid}_${rendererSequence++}`
@@ -130,7 +110,7 @@ export default async function withPreviewRenderer<Result>(run: (renderer: JSHand
     }
     const origin = `http://127.0.0.1:${address.port}`
     browser = await puppeteer.launch({
-      executablePath: await resolveChromeExecutable(),
+      executablePath: Bun.env.BROWSER,
       headless: true,
       protocolTimeout,
     })
