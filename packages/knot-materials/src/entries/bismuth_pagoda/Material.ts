@@ -26,7 +26,6 @@ function hopperFields(tube: Node<'vec2'>) {
     inTerrace,
   }
 }
-
 const hopperPosition = Fn(([
   tube,
 ]: [

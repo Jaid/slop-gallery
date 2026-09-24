@@ -15,7 +15,6 @@ export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
     this.name = knotData.id
-
     const {p, view, facing, grazing, near, intimate} = viewerFrame()
     // Amber body — warm translucent resin with internal color variations
     const amberNoise = mx_noise_float(p.mul(4)).mul(0.5).add(0.5)
@@ -69,7 +68,7 @@ export default class extends KnotMaterial {
         .mul(intimate)
         .mul(shapeType.smoothstep(0.4, 0.65)) // only insect-like shapes move
       const layerDepthFade = float(1 - layerIdx * 0.2) // deeper layers slightly dimmer
-      const layerNear = layerIdx === 0 ? near.mul(0.4).add(0.6) : layerIdx === 1 ? near.mul(0.6).add(0.4) : near
+      const layerNear = layerIdx === 0 ? near.mul(0.4).add(0.6) : (layerIdx === 1 ? near.mul(0.6).add(0.4) : near)
 
       inclusionMask = inclusionMask.add(maskedInclusion.mul(layerDepthFade).mul(layerNear))
       inclusionEmission = inclusionEmission.add(

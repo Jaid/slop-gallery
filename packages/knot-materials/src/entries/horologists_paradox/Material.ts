@@ -18,15 +18,12 @@ function disk(radius: Node<'float'>, size: number, footprint: Node<'float'>) {
     .smoothstep(footprint.negate().add(size), footprint.add(size))
     .oneMinus()
 }
-
 function annulus(radius: Node<'float'>, inner: number, outer: number, footprint: Node<'float'>) {
   return disk(radius, outer, footprint).mul(disk(radius, inner, footprint).oneMinus())
 }
-
 function watchLine(field: Node<'float'>, width: number, footprint: Node<'float'>) {
   return field.abs().smoothstep(width, footprint.add(width)).oneMinus()
 }
-
 function watchGear(point: Node<'vec2'>, radius: number, teeth: number, rotation: Node<'float'>, footprint: Node<'float'>) {
   const r = point.length()
   const theta = (mx_atan2(point.y, point.x.add(0.000001)) as unknown as Node<'float'>).sub(rotation)
@@ -49,7 +46,6 @@ function watchGear(point: Node<'vec2'>, radius: number, teeth: number, rotation:
     engraving: watchLine(r.sub(radius * 0.84), radius * 0.018, footprint),
   }
 }
-
 function watchWave(phase: Node<'float'>, footprint: Node<'float'>) {
   return phase.cos().mul(visibility(footprint, 0.6, 3.2))
 }

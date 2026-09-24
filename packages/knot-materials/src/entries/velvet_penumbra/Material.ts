@@ -14,7 +14,6 @@ export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.3)
     this.name = knotData.id
-
     const {p, facing, grazing, near, intimate} = viewerFrame()
     // Nap flow field — drifting noise that creates the sense of wind over fabric
     const flowDrift = vec3(time.mul(0.02), time.mul(-0.015), time.mul(0.01))

@@ -67,7 +67,6 @@ function voronoiDomain(position: Node<'vec3'>) {
     id: packed.yzw,
   }
 }
-
 /**
  * Narrow-band spectral response: t = 0 is deep red, t = 1 is violet.
  */

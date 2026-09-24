@@ -37,7 +37,6 @@ function terraceFields(tube: Node<'vec2'>) {
     height,
   }
 }
-
 const terracePosition = Fn(([
   tube,
 ]: [

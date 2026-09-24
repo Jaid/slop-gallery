@@ -33,7 +33,6 @@ function asterism(normal: Node<'vec3'>, view: Node<'vec3'>) {
     spot: halo.mul(gate),
   }
 }
-
 /**
  * Rutile needles along three lattice directions; `raw` stays derivative-free for vertex displacement.
  */

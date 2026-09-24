@@ -16,7 +16,6 @@ function crownFields(tube: Node<'vec2'>) {
     breath: time.mul(0.55).add(u.mul(0.25)).sin().mul(0.075).add(0.925),
   }
 }
-
 const reliefPosition = Fn(([
   tube,
 ]: [

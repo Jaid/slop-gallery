@@ -34,7 +34,6 @@ function ferroFields(tube: Node<'vec2'>) {
     inset: tip.oneMinus().mul(-0.048).mul(pulse),
   }
 }
-
 const ferroPosition = fn(([tube]: [Node<'vec2'>]) => {
   return knotShell(tube, ferroFields(tube).inset)
 })

@@ -14,7 +14,6 @@ export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.65)
     this.name = knotData.id
-
     const {p, view, facing, grazing, near, intimate} = viewerFrame()
     // Paper fiber texture
     const fiberCoarse = mx_noise_float(p.mul(12)).mul(0.5).add(0.5)

@@ -14,7 +14,6 @@ import knotData from './data.ts'
 function roundedTriangle(phase: Node<'float'>) {
   return phase.sin().mul(0.975).asin().div(Math.asin(0.975))
 }
-
 function foldFields(tube: Node<'vec2'>) {
   const V = tube.y.mul(TAU * 4)
   const zigzag = roundedTriangle(V)
@@ -28,7 +27,6 @@ function foldFields(tube: Node<'vec2'>) {
     inset: pleat.mul(0.017).add(zigzag.mul(0.006)).sub(0.025),
   }
 }
-
 const foldedPosition = fn(([tube]: [Node<'vec2'>]) => {
   return knotShell(tube, foldFields(tube).inset)
 })

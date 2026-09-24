@@ -10,23 +10,19 @@ import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
 const sugarRelief = 0.009
-
 /**
  * Three ribbons make twelve turns along the tube; all fields close at both UV seams.
  */
 function sugarPhase(tube: Node<'vec2'>) {
   return tube.x.mul(12).add(tube.y.mul(3)).mul(TAU)
 }
-
 function sugarHeight(tube: Node<'vec2'>) {
   return sugarPhase(tube).mul(2).cos().mul(0.5).add(0.5).pow(2).mul(sugarRelief)
 }
-
 const sugarPosition = fn(([tube]: [Node<'vec2'>]) => {
   const frame = knotFrame(tube)
   return frame.position.add(frame.normal.mul(sugarHeight(tube)))
 })
-
 /**
  * Central differences shade the actual fluted surface rather than the undeformed tube.
  */

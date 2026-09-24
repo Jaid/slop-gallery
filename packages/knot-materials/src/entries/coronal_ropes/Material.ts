@@ -18,7 +18,6 @@ const solarEnvelopeDisplacement = Fn(([tube]: [Node<'vec2'>]) => {
     .mul(0.008)
   return p.add(normal.mul(acousticWaves))
 })
-
 /**
  * Analytical Planckian blackbody radiation calibrated for ACES filmic tonemapping. Preserves chromatic solar hues (deep umbra, fiery orange lanes, rich gold granules).
  */

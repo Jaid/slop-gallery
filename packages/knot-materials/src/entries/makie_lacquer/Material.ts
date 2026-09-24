@@ -47,7 +47,6 @@ const evaluateFlakes = Fn(([position, threshold]: [Node<'vec3'>, Node<'float'>])
   })
   return flakeField(tintSum.div(coverage.max(0.000001)), sparkle, coverage.clamp())
 })
-
 function goldFlakes(position: Node<'vec3'>, threshold: Node<'float'>) {
   // Three's struct declarations do not yet expose TSL extensions or member types.
   const field = (evaluateFlakes(position, threshold) as unknown as Node<'struct'>).toVar()

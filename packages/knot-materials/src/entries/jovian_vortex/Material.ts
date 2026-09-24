@@ -14,7 +14,6 @@ export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.5)
     this.name = knotData.id
-
     const {grazing, near, intimate} = viewerFrame()
     const tube = uv()
     // Use tube.y as "latitude" and tube.x as "longitude"

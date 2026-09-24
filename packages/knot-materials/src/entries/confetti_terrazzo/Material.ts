@@ -8,7 +8,6 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import knotData from './data.ts'
 
 const aggregatePeriods = [84, 18] as const
-
 // Periodic jittered Voronoi: return squared-distance gap and nearest chip identity.
 // Integer seed wrapping closes both UV seams without repeating a visible square stamp.
 //

@@ -15,7 +15,6 @@ export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.2)
     this.name = knotData.id
-
     const {p, view, facing, grazing, near, intimate} = viewerFrame()
     // The photon ring is a thin bright band at a specific viewing angle
     // It shifts position as you orbit, always near the edge

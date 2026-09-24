@@ -15,7 +15,6 @@ export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.8)
     this.name = knotData.id
-
     const {grazing, intimate} = viewerFrame()
     const tube = uv()
     // Weave structure — warp (along tube length) and weft (around tube)

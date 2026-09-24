@@ -38,7 +38,6 @@ const pigmentCells = Fn(([position, phase, arousal]: [Node<'vec3'>, Node<'float'
   // Blend overlapping cells without letting coverage exceed physical material ranges.
   return vec4(pigment.div(coverage.max(0.000001)), coverage.clamp())
 })
-
 /**
  * RGB contains colored core/halo emission; alpha contains the photophore surface mask.
  */

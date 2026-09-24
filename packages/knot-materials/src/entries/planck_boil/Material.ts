@@ -16,7 +16,6 @@ export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.6)
     this.name = knotData.id
-
     const {p, view, facing, grazing, near, intimate} = viewerFrame()
     // Foam scale changes with distance — closer = finer bubbles (zooming into Planck scale)
     const baseScale = 9

@@ -15,7 +15,6 @@ export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.5)
     this.name = knotData.id
-
     const {p, grazing, near, intimate, objectDistance} = viewerFrame()
     // Bark substrate — rough wood/amber surface
     const barkCoarse = mx_noise_float(p.mul(5)).mul(0.5).add(0.5)
