@@ -77,6 +77,8 @@ Rarity edits are intentionally session-local and emit no telemetry events. Nativ
 
 Plate numbers are assigned only after final filtering. Candidate billboard composites are built at runtime from the selected entries' individual icons and current labels, so selection and numbering changes require no asset regeneration.
 
+Displayed knots begin in showcase mode: their rigid bodies are fixed in mid-air and rotate slowly. The first Rapier contact-force event permanently releases that knot into normal dynamic physics. Showcase knots cannot be grabbed; after release they can be picked up, dropped and thrown normally, and temporary fixed-body states while carrying them never restore showcase rotation.
+
 ## Material and placeholder contract
 
 Each `Material.ts` default-exports an anonymous class extending `KnotMaterial` from `../../lib/KnotMaterial.ts`. Its synchronous constructor accepts the caller-owned environment `Texture`, calls `super(environment[, intensity])`, and sets `this.name = knotData.id`. Never dispose the supplied environment in an individual material.

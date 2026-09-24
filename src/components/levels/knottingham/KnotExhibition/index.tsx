@@ -32,9 +32,25 @@ export default function KnotExhibition() {
     <KnotLabels />
     {knotExhibition.map((finish, index) => {
       const {geometry, colliderArgs, colliderPosition} = resources.items[index]
-      return <GrabbableProp key={finish.id} id={`prop-knot-${finish.id}`} colliders={false} position={[finish.position[0], knotFloatHeight, finish.position[2]]} rotation={[0, finish.rotation, 0]} title={`${finish.label} · ${finish.title} · ${finish.modelTitle}`} type='fixed'>
-        <CuboidCollider args={colliderArgs} position={colliderPosition} />
-        <InteractiveObject id={`prop-knot-${finish.id}`} onActivate={() => narrateModel(`prop-knot-${finish.id}`)}>
+      const id = `prop-knot-${finish.id}`
+      const body = () => propObjects.get(id)?.body
+      return <GrabbableProp
+        key={finish.id} id={id} blockedMessage={() => 'Knock this Knot out of its showcase first.'} canGrab={() => {
+          const current = body()
+          return current ? !rotation.isShowcased(current) : false
+        }} colliders={false} position={[finish.position[0], knotFloatHeight, finish.position[2]]} recoverAsDynamic={() => {
+          const current = body()
+          return current ? !rotation.isShowcased(current) : false
+        }} rotation={[0, finish.rotation, 0]} title={`${finish.label} · ${finish.title} · ${finish.modelTitle}`} type='fixed'
+      >
+        <CuboidCollider
+          args={colliderArgs} position={colliderPosition} onContactForce={({target}) => {
+            if (target.rigidBody) {
+              rotation.release(target.rigidBody)
+            }
+          }}
+        />
+        <InteractiveObject id={id} onActivate={() => narrateModel(id)}>
           <mesh castShadow material={materials.placeholderMaterials[index]} name={`knot-${finish.id}`} raycast={resources.raycast} receiveShadow ref={materials.refs[index]} onBeforeRender={materials.observers[index]}>
             <primitive attach='geometry' object={geometry} />
           </mesh>
