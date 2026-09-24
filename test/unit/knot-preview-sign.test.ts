@@ -1,7 +1,8 @@
 import {expect, test} from 'bun:test'
 
 import {knotBays, knotNumberLabel} from 'knot-materials/exhibition.ts'
-import {knotPreviewHeight, knotPreviewTextureHeight, knotPreviewTextureLayout, knotPreviewTextureWidth, knotPreviewWidth} from 'knot-materials/KnotPreviewLayout.ts'
+import {knotPreviewBottomClearance, knotPreviewHeight, knotPreviewMountY, knotPreviewPanelOffsetY, knotPreviewTextureHeight, knotPreviewTextureLayout, knotPreviewTextureWidth, knotPreviewWidth} from 'knot-materials/KnotPreviewLayout.ts'
+import {billboardParts} from 'knot-materials/signs.ts'
 
 import drawPreview, {knotPreviewBackground} from '../../src/components/levels/knottingham/KnotPreviewSigns/drawPreview.ts'
 import signAccentColor from '../../src/components/levels/knottingham/signAccentColor.ts'
@@ -9,6 +10,9 @@ import signAccentColor from '../../src/components/levels/knottingham/signAccentC
 test('runtime billboards keep one 3:2 mesh and pack stickers to fit the fixed raster', () => {
   expect(knotPreviewWidth / knotPreviewHeight).toBeCloseTo(3 / 2)
   expect(knotPreviewTextureWidth / knotPreviewTextureHeight).toBeCloseTo(3 / 2)
+  const parts = billboardParts(knotPreviewWidth, knotPreviewHeight, knotPreviewPanelOffsetY)
+  expect(knotPreviewMountY + parts[0].position[1] - parts[0].size[1] / 2).toBeCloseTo(knotPreviewBottomClearance)
+  expect(Math.min(...parts.filter(part => !part.rotation).map(part => knotPreviewMountY + part.position[1] - part.size[1] / 2))).toBeCloseTo(0)
   const formats = new Map<number, [number, number]>([
     [1, [1, 1]],
     [2, [2, 1]],

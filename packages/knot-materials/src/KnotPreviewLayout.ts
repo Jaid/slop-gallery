@@ -5,6 +5,9 @@ export const knotPreviewTextureWidth = knotPreviewTextureCellSize * 3
 export const knotPreviewTextureHeight = knotPreviewTextureCellSize * 2
 export const knotPreviewIconMaximumWidth = 0.925
 export const knotPreviewIconMaximumHeight = 0.81
+export const knotPreviewMountY = 1.5
+export const knotPreviewBottomClearance = 0.125
+export const knotPreviewPanelOffsetY = knotPreviewBottomClearance + knotPreviewHeight / 2 - knotPreviewMountY
 
 export function knotPreviewTextureLayout(count: number) {
   if (!Number.isSafeInteger(count) || count < 0) {

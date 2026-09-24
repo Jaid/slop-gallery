@@ -73,15 +73,15 @@ export function knotSignPosition(exhibit: Pick<KnotExhibit, 'position' | 'rotati
   return [exhibit.position[0] + cosine * knotSign.sideOffset + sine * knotSign.frontOffset, knotSign.elevation, exhibit.position[2] - sine * knotSign.sideOffset + cosine * knotSign.frontOffset]
 }
 
-export function billboardParts(width: number, height: number): Array<SignPart> {
+export function billboardParts(width: number, height: number, panelCenterY = 0): Array<SignPart> {
   const legX = width * 0.34
-  const top = height / 2
+  const top = panelCenterY + height / 2
   const legHeight = 1.5 + top
   const braceHeight = Math.min(height * 0.65, 1.2)
   const braceWidth = legX * 2
   return [
     {
-      position: [0, 0, -0.025],
+      position: [0, panelCenterY, -0.025],
       size: [width, height, 0.05],
     },
     ...[-legX, legX].flatMap(x => [
@@ -95,7 +95,7 @@ export function billboardParts(width: number, height: number): Array<SignPart> {
       },
     ]),
     ...[-1, 1].map(direction => ({
-      position: [0, 0, -0.25] as Vec3,
+      position: [0, panelCenterY, -0.25] as Vec3,
       rotation: [0, 0, direction * Math.atan2(braceHeight, braceWidth)] as Vec3,
       size: [Math.hypot(braceWidth, braceHeight), 0.09, 0.08] as Vec3,
     })),

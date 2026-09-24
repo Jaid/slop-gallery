@@ -4,7 +4,7 @@ import type {KnotBay} from 'knot-materials/exhibition.ts'
 import {loadCanvasFonts} from 'canvas-textures'
 import useCanvasTexture from 'canvas-textures/react'
 import {knotNumberLabel, knotPreviewX} from 'knot-materials/exhibition.ts'
-import {knotPreviewHeight, knotPreviewTextureLayout, knotPreviewWidth} from 'knot-materials/KnotPreviewLayout.ts'
+import {knotPreviewHeight, knotPreviewMountY, knotPreviewPanelOffsetY, knotPreviewTextureLayout, knotPreviewWidth} from 'knot-materials/KnotPreviewLayout.ts'
 import {useMemo} from 'react'
 
 import InteractiveObject from '#component/InteractiveObject'
@@ -40,8 +40,8 @@ export default function KnotPreviewSign({bay, renderer}: {
     disposeInputs: releaseCanvases,
     draw: (context: CanvasRenderingContext2D, images: ReadonlyMap<string, HTMLCanvasElement>) => drawPreview(context, bay, images),
   }), [bay, layout.height, layout.width, renderer]))
-  return <InteractiveObject id={`preview-${bay.candidate.id}`} name={`preview-${bay.candidate.id}`} position={[knotPreviewX, 1.5, 0]} rotation={[0, Math.PI / 2, 0]} onActivate={() => narrate(`preview-${bay.candidate.id}`)}>
-    <mesh name={`preview-surface-${bay.candidate.id}`} position={[0, 0, 0.003]}>
+  return <InteractiveObject id={`preview-${bay.candidate.id}`} name={`preview-${bay.candidate.id}`} position={[knotPreviewX, knotPreviewMountY, 0]} rotation={[0, Math.PI / 2, 0]} onActivate={() => narrate(`preview-${bay.candidate.id}`)}>
+    <mesh name={`preview-surface-${bay.candidate.id}`} position={[0, knotPreviewPanelOffsetY, 0.003]}>
       <planeGeometry args={[knotPreviewWidth, knotPreviewHeight]} /><meshBasicNodeMaterial key={texture?.uuid ?? 'pending'} color={texture ? '#ffffff' : knotPreviewBackground} map={texture} toneMapped={false} />
     </mesh>
     <Support />

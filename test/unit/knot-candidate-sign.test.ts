@@ -3,7 +3,7 @@ import {expect, test} from 'bun:test'
 import RAPIER from '@dimforge/rapier3d-compat'
 import {candidateSignSuspensionCenter, candidateSignSuspensionHeight, knotCandidateSign} from 'knot-materials/knotCandidateSign.ts'
 import KnotCandidateSignGeometry from 'knot-materials/KnotCandidateSignGeometry.ts'
-import {knotPreviewHeight} from 'knot-materials/KnotPreviewLayout.ts'
+import {knotPreviewHeight, knotPreviewMountY, knotPreviewPanelOffsetY} from 'knot-materials/KnotPreviewLayout.ts'
 import {Quaternion, Vector3} from 'three/webgpu'
 
 import drawFace, {candidateSignFontSize, candidateSignTextureSize} from '../../src/components/levels/knottingham/KnotCandidateSign/drawFace.ts'
@@ -77,7 +77,7 @@ test('large physical signs have two ceiling mounts, bounded chain geometry and r
   const geometry = new KnotCandidateSignGeometry
   try {
     const bottom = knotGalleryBounds.height - knotCandidateSign.ceilingInset - knotCandidateSign.anchor[1] - knotCandidateSign.size[1] / 2
-    expect(bottom).toBeGreaterThan(1.5 + knotPreviewHeight / 2 + 0.5)
+    expect(bottom).toBeGreaterThan(knotPreviewMountY + knotPreviewPanelOffsetY + knotPreviewHeight / 2 + 0.25)
     expect(knotCandidateSign.suspensionX).toHaveLength(2)
     expect(geometry.panel.groups).toHaveLength(6)
     expect(triangleCount(geometry.chains)).toBeLessThan(6000)
