@@ -130,6 +130,7 @@
     "packages/vite-plugin-bake-branch-component/packages/*",
     "packages/vite-plugin-bake-three/packages/*",
     "packages/vite-plugin-hoist-popular-constants/packages/*",
+    "packages/vite-plugin-hoist-popular-constants/packages/babel-plugin-hoist-popular-constants/packages/*",
     "packages/vite-plugin-import-voice-sample/packages/*"
   ]
 }

@@ -23,7 +23,7 @@
     "@babel/core": "^8.0.6"
   },
   "workspaces": [
-    "../sort-shortest-levenshtein",
-    "packages/*"
+    "packages/*",
+    "packages/babel-plugin-hoist-popular-constants/packages/*"
   ]
 }

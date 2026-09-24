@@ -164,10 +164,6 @@
         "three": "^0.186.0",
       },
     },
-    "packages/sort-shortest-levenshtein": {
-      "name": "sort-shortest-levenshtein",
-      "version": "0.1.0",
-    },
     "packages/telemethree": {
       "name": "telemethree",
       "version": "0.1.0",
@@ -426,6 +422,10 @@
       "peerDependencies": {
         "@babel/core": "^8.0.6",
       },
+    },
+    "packages/vite-plugin-hoist-popular-constants/packages/babel-plugin-hoist-popular-constants/packages/sort-shortest-levenshtein": {
+      "name": "sort-shortest-levenshtein",
+      "version": "0.1.0",
     },
     "packages/vite-plugin-import-voice-sample": {
       "name": "vite-plugin-import-voice-sample",
@@ -1608,7 +1608,7 @@
 
     "sort-package-json": ["sort-package-json@4.0.0", "", { "dependencies": { "detect-indent": "^7.0.2", "detect-newline": "^4.0.1", "git-hooks-list": "^4.1.1", "is-plain-obj": "^4.1.0", "semver": "^7.7.3", "sort-object-keys": "^2.0.1", "tinyglobby": "^0.2.15" }, "bin": { "sort-package-json": "cli.js" } }, "sha512-6aYOlYI9AWioZ+rzu+4zKLmoFqJP0/fHDxrd7X04yqEibikY+5YVF0EYlyGn4v6X2PJY7yAUWV7oeP+i5rOm/g=="],
 
-    "sort-shortest-levenshtein": ["sort-shortest-levenshtein@workspace:packages/sort-shortest-levenshtein"],
+    "sort-shortest-levenshtein": ["sort-shortest-levenshtein@workspace:packages/vite-plugin-hoist-popular-constants/packages/babel-plugin-hoist-popular-constants/packages/sort-shortest-levenshtein"],
 
     "source-map": ["source-map@0.6.1", "", {}, "sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g=="],
 
