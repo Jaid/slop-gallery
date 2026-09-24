@@ -5,7 +5,7 @@ import fs from 'fs-extra'
 
 import {knotsById} from '../src/main.ts'
 import {animationFilename, animationFrames} from './lib/animation.ts'
-import {encodeAnimatedJxl, encodeApng, encodeWebm} from './lib/encodeAnimation.ts'
+import {encodeAnimatedJxl, encodeWebm} from './lib/encodeAnimation.ts'
 import {encodeJxl} from './lib/encodeJxl.ts'
 import {angleAnimationFrame, angleNames, angleStillFrame, closeupStillFrame, distanceNames, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrames} from './lib/renderSettings.ts'
 import withPreviewRenderer from './lib/withPreviewRenderer.ts'
@@ -14,11 +14,9 @@ export const renderCategories = ['snapshot', 'animation', 'video'] as const
 export type RenderCategory = typeof renderCategories[number]
 export type RenderKnotOptions = {
   categories?: ReadonlyArray<RenderCategory>
-  jxl?: boolean
   onFile?: (filename: string) => void
 }
 
-const imageExtensions = ['png', 'jxl'] as const
 const renderCategorySet = new Set<string>(renderCategories)
 const renderRoot = resolve(import.meta.dir, '../out/render')
 const imageBytes = (image: string) => Uint8Array.fromBase64(image)
@@ -29,16 +27,10 @@ const getKnot = (id: string) => {
   }
   return item
 }
-const removeImageVariants = async (directory: string, stem: string) => {
-  await Promise.all(imageExtensions.map(extension => fs.remove(join(directory, `${stem}.${extension}`))))
-}
-const writeStill = async (image: string, directory: string, stem: string, jxl: boolean) => {
-  const filename = `${stem}.${jxl ? 'jxl' : 'png'}`
+const removeRenderedImage = async (directory: string, stem: string) => fs.remove(join(directory, `${stem}.jxl`))
+const writeStill = async (image: string, directory: string, stem: string) => {
+  const filename = `${stem}.jxl`
   const output = join(directory, filename)
-  if (!jxl) {
-    await fs.writeFile(output, imageBytes(image))
-    return filename
-  }
   const input = `${output}.png`
   await fs.writeFile(input, imageBytes(image))
   try {
@@ -57,7 +49,7 @@ export const parseRenderCategories = (value = renderCategories.join(',')): Array
   return [...new Set(requested)] as Array<RenderCategory>
 }
 
-export default async function renderKnot(id: string, {categories = renderCategories, jxl = false, onFile}: RenderKnotOptions = {}) {
+export default async function renderKnot(id: string, {categories = renderCategories, onFile}: RenderKnotOptions = {}) {
   const item = getKnot(id)
   const selected = new Set(categories)
   if (selected.size === 0) {
@@ -75,42 +67,36 @@ export default async function renderKnot(id: string, {categories = renderCategor
       try {
         if (selected.has('snapshot')) {
           for (const name of angleNames) {
-            await removeImageVariants(staging, `angle_${name}`)
+            await removeRenderedImage(staging, `angle_${name}`)
           }
           for (const name of distanceNames) {
-            await removeImageVariants(staging, `distance_${name}`)
+            await removeRenderedImage(staging, `distance_${name}`)
           }
-          await removeImageVariants(staging, 'closeup')
+          await removeRenderedImage(staging, 'closeup')
           for (const [index, name] of angleNames.entries()) {
             const image = await preview.evaluate((instance, frame) => instance.renderFrame(frame), angleStillFrame(index))
-            const filename = await writeStill(image, staging, `angle_${name}`, jxl)
+            const filename = await writeStill(image, staging, `angle_${name}`)
             onFile?.(filename)
           }
           for (const [index, name] of distanceNames.entries()) {
             const image = await preview.evaluate((instance, frame) => instance.renderFrame(frame), distanceStillFrame(index))
-            const filename = await writeStill(image, staging, `distance_${name}`, jxl)
+            const filename = await writeStill(image, staging, `distance_${name}`)
             onFile?.(filename)
           }
           const closeup = await preview.evaluate((instance, frame) => instance.renderFrame(frame), closeupStillFrame())
-          const closeupFilename = await writeStill(closeup, staging, 'closeup', jxl)
+          const closeupFilename = await writeStill(closeup, staging, 'closeup')
           onFile?.(closeupFilename)
         }
         if (selected.has('animation')) {
-          await removeImageVariants(staging, 'angles.animated')
+          await removeRenderedImage(staging, 'angles.animated')
           const angleFrames = join(staging, '.angle-frames')
           await fs.ensureDir(angleFrames)
           for (let index = 0; index < animationFrames; index++) {
             const image = await preview.evaluate((instance, frame) => instance.renderFrame(frame), angleAnimationFrame(index))
             await fs.writeFile(join(angleFrames, animationFilename(index)), imageBytes(image))
           }
-          const extension = jxl ? 'jxl' : 'png'
-          let encoded: string
-          if (jxl) {
-            encoded = await encodeAnimatedJxl(angleFrames, inspectionAnimatedJxlDistance)
-          } else {
-            encoded = await encodeApng(angleFrames, join(angleFrames, 'animation.png'))
-          }
-          const filename = `angles.animated.${extension}`
+          const filename = 'angles.animated.jxl'
+          const encoded = await encodeAnimatedJxl(angleFrames, inspectionAnimatedJxlDistance)
           await fs.rename(encoded, join(staging, filename))
           await fs.remove(angleFrames)
           onFile?.(filename)
@@ -154,12 +140,11 @@ export const renderKnotCli = async (args = Bun.argv.slice(2)) => {
         type: 'boolean',
         short: 'h',
       },
-      jxl: {type: 'boolean'},
     },
   })
   if (values.help) {
-    console.log(`Usage: bun scripts/renderKnot.ts <knot-id> [--category snapshot,animation,video] [--jxl]
-Categories can be snapshot, animation, video, or any comma-separated combination; default: snapshot,animation,video. PNG is the default image format; --jxl switches snapshots and the animated angle loop to JPEG XL. Video remains 1024x1024 AV1/WebM.`)
+    console.log(`Usage: bun scripts/renderKnot.ts <knot-id> [--category snapshot,animation,video]
+Categories can be snapshot, animation, video, or any comma-separated combination; default: snapshot,animation,video. Snapshots and the animated angle loop use JPEG XL. Video remains 1024x1024 AV1/WebM.`)
     return
   }
   if (positionals.length !== 1) {
@@ -171,7 +156,6 @@ Categories can be snapshot, animation, video, or any comma-separated combination
   console.log(`Output: out/render/${id}`)
   await renderKnot(id, {
     categories,
-    jxl: values.jxl,
     onFile: filename => console.log(filename),
   })
 }
