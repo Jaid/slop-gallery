@@ -55,7 +55,7 @@
         "autoprefixer": "10.6.1",
         "babel-plugin-react-compiler": "1.0.0",
         "browserslist": "4.29.0",
-        "caniuse-lite": "1.0.30001810",
+        "caniuse-lite": "1.0.30001812",
         "cssnano-preset-advanced": "9.0.5",
         "eslint": "10.11.0",
         "eslint-config-jaid": "34.0.0",
@@ -432,7 +432,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@babel/parser": "8.0.6",
-        "fs-extra": "11.4.0",
+        "fs-extra": "11.4.1",
         "voice-sample-store": "workspace:*",
       },
       "devDependencies": {
@@ -446,7 +446,7 @@
       "name": "voice-sample-store",
       "version": "0.1.0",
       "dependencies": {
-        "fs-extra": "11.4.0",
+        "fs-extra": "11.4.1",
         "make-argv": "0.1.0",
         "msgpackr": "2.1.0",
         "tinyhand": "0.2.0",
@@ -456,7 +456,7 @@
       "name": "vite-plugin-thematic-chunks",
       "version": "0.1.0",
       "devDependencies": {
-        "fs-extra": "11.4.0",
+        "fs-extra": "11.4.1",
       },
       "peerDependencies": {
         "vite": "^8.3.0",
@@ -926,7 +926,7 @@
 
     "caniuse-api": ["caniuse-api@4.0.0", "", { "dependencies": { "browserslist": "^4.0.0", "caniuse-lite": "^1.0.0" } }, "sha512-B0hQ1OLyJuHTQSOWXvwibWqM6DCoqJdvBA6X1S/53bd4XU7LJ1yurIPlrsouol3mw1jh9pGI4ivubSpmJeIqCA=="],
 
-    "caniuse-lite": ["caniuse-lite@1.0.30001810", "", {}, "sha512-TITQPUkaz+aVk5GL6NhOdwk1aEaNTSDPsGFWrTuhKGtjTF70jL/Oht2W4c6rXUe5fu7Ie19VIahAXHIIiWWNeg=="],
+    "caniuse-lite": ["caniuse-lite@1.0.30001812", "", {}, "sha512-qN+QNNBr93TCmFrmte0bBCjSDMuRvt78VlHT99qIGPszm4QsqCX8lnyWUFkHi8B7ZBAPq8SH+UqyXNy/odMdng=="],
 
     "canvas-textures": ["canvas-textures@workspace:packages/canvas-textures"],
 
@@ -1879,12 +1879,6 @@
     "tinyhand/type-fest": ["type-fest@5.9.0", "", { "dependencies": { "tagged-tag": "^1.0.0" } }, "sha512-yANm3Jr3GiJ1qgJlxGAVxTOIcEOk1rhQHamlXtnrCK7EHP4HeM9OGxtMg/W7HFdrVzw/ZWJKGVIJusVH85sLtw=="],
 
     "tunnel-rat/zustand": ["zustand@4.5.7", "", { "dependencies": { "use-sync-external-store": "^1.2.2" }, "peerDependencies": { "@types/react": ">=16.8", "immer": ">=9.0.6", "react": ">=16.8" }, "optionalPeers": ["@types/react", "immer", "react"] }, "sha512-CHOUy7mu3lbD6o6LJLfllpjkzhHXSBlX8B9+qPddUsIfeF5S/UZ5q0kmCsnRqT1UHFQZchNFDDzMbQsuesHWlw=="],
-
-    "vite-plugin-import-voice-sample/fs-extra": ["fs-extra@11.4.0", "", { "dependencies": { "graceful-fs": "^4.2.0", "jsonfile": "^6.0.1", "universalify": "^2.0.0" } }, "sha512-EQsFzMUJkCKGr1ePqlYADkIUmHW1s3ZXr5Yqy6wbGrfUCphpl2maM/kyOIRA2HpP3AaFQTZXD4ldjek+nccddA=="],
-
-    "vite-plugin-thematic-chunks/fs-extra": ["fs-extra@11.4.0", "", { "dependencies": { "graceful-fs": "^4.2.0", "jsonfile": "^6.0.1", "universalify": "^2.0.0" } }, "sha512-EQsFzMUJkCKGr1ePqlYADkIUmHW1s3ZXr5Yqy6wbGrfUCphpl2maM/kyOIRA2HpP3AaFQTZXD4ldjek+nccddA=="],
-
-    "voice-sample-store/fs-extra": ["fs-extra@11.4.0", "", { "dependencies": { "graceful-fs": "^4.2.0", "jsonfile": "^6.0.1", "universalify": "^2.0.0" } }, "sha512-EQsFzMUJkCKGr1ePqlYADkIUmHW1s3ZXr5Yqy6wbGrfUCphpl2maM/kyOIRA2HpP3AaFQTZXD4ldjek+nccddA=="],
 
     "wrap-ansi/string-width": ["string-width@7.2.0", "", { "dependencies": { "emoji-regex": "^10.3.0", "get-east-asian-width": "^1.0.0", "strip-ansi": "^7.1.0" } }, "sha512-tsaTIkKW9b4N+AEj+SVA+WhJzV7/zMhcSu78mLKWSk7cXMOSHsBKFWUs0fWwq8QyK3MgJBQRX6Gbi4kYbdvGkQ=="],
 

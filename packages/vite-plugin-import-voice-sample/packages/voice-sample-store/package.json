@@ -18,7 +18,7 @@
     "test": "bun test --max-concurrency 1 ./test"
   },
   "dependencies": {
-    "fs-extra": "11.4.0",
+    "fs-extra": "11.4.1",
     "make-argv": "0.1.0",
     "msgpackr": "2.1.0",
     "tinyhand": "0.2.0"
