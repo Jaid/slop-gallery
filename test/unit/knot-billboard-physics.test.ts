@@ -30,8 +30,11 @@ function billboardWorld() {
     .setAdditionalSolverIterations(knotBillboardPhysics.solverIterations))
   const [panel, ...standParts] = billboardParts(knotPreviewWidth, knotPreviewHeight, knotPreviewPanelOffsetY)
   for (const part of standParts) {
+    const rotation = new Quaternion
+    rotation.setFromEuler(new Euler(...part.rotation ?? [0, 0, 0]))
     world.createCollider(RAPIER.ColliderDesc.cuboid(part.size[0] / 2, part.size[1] / 2, part.size[2] / 2)
       .setTranslation(...part.position)
+      .setRotation(rotation)
       .setMass(knotBillboardPhysics.stand.colliderMass)
       .setFriction(knotBillboardPhysics.stand.friction)
       .setRestitution(knotBillboardPhysics.stand.restitution), stand)
@@ -71,6 +74,8 @@ test('billboard sign simply rests on the stand and can be knocked flat from behi
       world.step()
     }
     const feet = standParts.filter(part => part.size[2] > 0.5)
+    const cross = standParts.filter(part => part.rotation)
+    expect(cross).toHaveLength(2)
     const feetTop = knotPreviewMountY + Math.max(...feet.map(part => part.position[1] + part.size[1] / 2))
     expect(sign.translation().y).toBeCloseTo(feetTop + panel.size[1] / 2, 2)
     expect(tilt(sign)).toBeLessThan(0.01)

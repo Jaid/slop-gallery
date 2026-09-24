@@ -2,7 +2,7 @@ export const knotBillboardPhysics = {
   solverIterations: 12,
   stand: {
     angularDamping: 0.7,
-    colliderMass: 12,
+    colliderMass: 10,
     friction: 0.95,
     linearDamping: 0.5,
     restitution: 0.05,

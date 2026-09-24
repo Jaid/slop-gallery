@@ -14,15 +14,18 @@ import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
 const [panelPart, ...standParts] = billboardParts(knotPreviewWidth, knotPreviewHeight, knotPreviewPanelOffsetY)
 
 export default function Stand() {
-  const geometry = useDisposable(useMemo(() => mergeParts(standParts.map(({position, size}) => {
+  const geometry = useDisposable(useMemo(() => mergeParts(standParts.map(({position, rotation = [0, 0, 0], size}) => {
     const partGeometry = new BoxGeometry(...size)
+    partGeometry.rotateX(rotation[0])
+    partGeometry.rotateY(rotation[1])
+    partGeometry.rotateZ(rotation[2])
     partGeometry.translate(...position)
     return partGeometry
   })), []))
   const material = useDisposable(useMemo(() => new LodgeWoodMaterial, []))
   return <>
     <mesh castShadow geometry={geometry} material={material} name='billboard-stand-mesh' receiveShadow />
-    {standParts.map(({position, size}, index) => <CuboidCollider key={index} args={[size[0] / 2, size[1] / 2, size[2] / 2]} friction={knotBillboardPhysics.stand.friction} mass={knotBillboardPhysics.stand.colliderMass} position={position} restitution={knotBillboardPhysics.stand.restitution} />)}
+    {standParts.map(({position, rotation, size}, index) => <CuboidCollider key={index} args={[size[0] / 2, size[1] / 2, size[2] / 2]} friction={knotBillboardPhysics.stand.friction} mass={knotBillboardPhysics.stand.colliderMass} position={position} restitution={knotBillboardPhysics.stand.restitution} rotation={rotation} />)}
   </>
 }
 
