@@ -131,19 +131,6 @@ The combined 16-second video is phase-shifted so frame 0 is the least noticeable
 
 The command owns its Vite server, browser, offscreen renderer, temporary PNG frames and image/video encoding. Candidates only need the single command above.
 
-## Generate an animated icon
-
-```sh
-bun packages/knot-materials/scripts/makeAnimatedIcon.ts opal_fire
-bun packages/knot-materials/scripts/makeAnimatedIcon.ts ferrothorn --output temp/ferrothorn.animated.webm
-```
-
-The default output is `src/entries/<id>/icon.animated.webm`; runtime billboard previews are unaffected. It renders exactly 120 640 × 640 source frames over two seconds, making one full Y-axis rotation. It samples 0° through 357° in 3° increments, without duplicating 360° at the loop seam. A private renderer clock advances material animation at the corresponding 60 Hz sample times. The camera and image bounds remain fixed for the entire animation, with displacement-aware framing; individual frames are never cropped independently.
-
-Capture uses explicit offscreen GPU readback, including HDR-finiteness checks. The script uses the same self-contained private renderer by default and accepts optional `--browser-url` and `--page-url` overrides.
-
-Encoding requires `ffmpeg` with `libsvtav1`. The numbered PNG frames are encoded directly to 8-bit full-range 4:2:0 AV1 in a WebM container using SVT-AV1 preset 5 at CRF 20, variance boost enabled, film grain disabled, tune 0 (VQ), and explicit 8-bit input depth; there is no APNG intermediate. AV1 does not preserve the source alpha channel in this pipeline, so the experimental WebM output is opaque. Looping is a playback concern (for example, HTML `<video loop>`) rather than embedded animation metadata. All temporary frames stay outside the repository and are removed on completion or failure. The destination is replaced atomically only after capture and encoding finish.
-
 ## Narration
 
 Knottingham announcements are generated through `vite-plugin-import-voice-sample` virtual imports rather than checked-in audio files.

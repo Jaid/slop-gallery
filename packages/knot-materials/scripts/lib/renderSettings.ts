@@ -1,4 +1,7 @@
-import {animationFps, animationFrames, animationSeconds} from './animation.ts'
+export const animationFrames = 120
+const animationSeconds = 2
+export const animationFps = animationFrames / animationSeconds
+export const animationFilename = (index: number) => `${String(index).padStart(3, '0')}.png`
 
 export const stillSize = 2048
 export const closeupSize = [3840, 2160] as const
@@ -118,5 +121,3 @@ export const closeupStillFrame = (): RenderFrame => ({
   size: 'closeup',
   fov: closeupFov,
 })
-
-export {animationFps, animationFrames, animationSize} from './animation.ts'

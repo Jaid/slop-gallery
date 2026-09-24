@@ -5,11 +5,10 @@ import {fileURLToPath} from 'node:url'
 
 import fs from 'fs-extra'
 
-import {animationFilename, animationFps, animationFrame, animationFrames, animationSeconds} from '../scripts/lib/animation.ts'
-import encodeAnimation, {av1Crf, av1Preset, av1SvtParams, encodeAnimatedJxl} from '../scripts/lib/encodeAnimation.ts'
+import {av1Crf, av1Preset, av1SvtParams, encodeAnimatedJxl, encodeWebm} from '../scripts/lib/encodeAnimation.ts'
 import {lossyJxlOptions} from '../scripts/lib/encodeJxl.ts'
 import PromptSources from '../scripts/lib/PromptSources.ts'
-import makeAnimatedIcon from '../scripts/makeAnimatedIcon.ts'
+import {animationFilename, animationFps, animationFrames} from '../scripts/lib/renderSettings.ts'
 import makePrompt from '../scripts/makePrompt.ts'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
@@ -49,41 +48,11 @@ describe('authoring context', () => {
     }
   })
 })
-describe('animated icons', () => {
-  test('samples exactly one turn without a repeated endpoint and a two-second 60-fps timeline', () => {
-    expect([animationFrames, animationSeconds, animationFps]).toEqual([120, 2, 60])
-    const frames = Array.from({length: animationFrames}, (_, index) => animationFrame(index))
-    expect(frames[0]).toEqual({
-      time: 0,
-      rotation: 0,
-    })
-    expect(frames[60].rotation).toBe(Math.PI)
-    expect(frames[119].rotation).toBeLessThan(Math.PI * 2)
-    expect(frames[119].time + 1 / animationFps).toBe(2)
+describe('animation encoding', () => {
+  test('uses a two-second 60-fps source sequence', () => {
+    expect([animationFrames, animationFps, animationFrames / animationFps]).toEqual([120, 60, 2])
     expect(animationFilename(0)).toBe('000.png')
     expect(animationFilename(119)).toBe('119.png')
-    for (const invalid of [-1, 120, 0.5, NaN]) {
-      expect(() => animationFrame(invalid)).toThrow(RangeError)
-    }
-  })
-  test('invalid arguments fail before opening the browser; help works independently', async () => {
-    await expect(makeAnimatedIcon({
-      id: '../outside',
-      browserURL: 'invalid',
-    })).rejects.toThrow('Unknown Knot ID')
-    await expect(makeAnimatedIcon({
-      id: 'opal_fire',
-      output: 'bad.gif',
-      browserURL: 'invalid',
-    })).rejects.toThrow('.webm')
-    const child = Bun.spawn(['bun', resolve(root, 'scripts/makeAnimatedIcon.ts'), '--help'], {
-      cwd: tmpdir(),
-      stdout: 'pipe',
-      stderr: 'pipe',
-    })
-    const [exit, out, err] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()])
-    expect(exit, err).toBe(0)
-    expect(out).toContain('120 frames, 2 seconds')
   })
   test.skipIf(!Bun.which('ffmpeg') || !Bun.which('cjxl') || !Bun.which('jxlinfo'))('native animated JXL encoding retains 120 frames, alpha and exactly 2000 milliseconds', async () => {
     const dir = await fs.mkdtemp(join(tmpdir(), 'knot-animation-jxl-test-'))
@@ -115,7 +84,7 @@ describe('animated icons', () => {
       await Bun.$`ffmpeg -hide_banner -loglevel error -y -f lavfi -i nullsrc=size=64x64:rate=60:duration=2 -vf ${filter} -frames:v 120 ${pattern}`.quiet()
       expect([av1Preset, av1Crf]).toEqual([5, 30])
       expect(av1SvtParams).toBe('lp=4:enable-variance-boost=1:film-grain=0:tune=0:input-depth=8')
-      const output = await encodeAnimation(dir)
+      const output = await encodeWebm(dir)
       expect(output).toEndWith('.webm')
       const info = JSON.parse(await Bun.$`ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=codec_name,color_range,pix_fmt,nb_read_frames,r_frame_rate -show_entries format=duration -of json ${output}`.text()) as {
         format: {duration: string}

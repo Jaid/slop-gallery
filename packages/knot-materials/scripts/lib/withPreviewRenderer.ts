@@ -3,13 +3,8 @@ import type {JSHandle, Page} from 'puppeteer-core'
 
 import {resolve} from 'node:path'
 
-import puppeteer, {TargetType} from 'puppeteer-core'
+import puppeteer from 'puppeteer-core'
 import {createServer} from 'vite'
-
-export type PreviewOptions = {
-  browserURL?: string
-  pageURL?: string
-}
 
 const repositoryRoot = resolve(import.meta.dir, '../../../..')
 const renderPath = '/packages/knot-materials/scripts/render.html'
@@ -17,7 +12,6 @@ const rendererPath = '/packages/knot-materials/scripts/lib/KnotPreviewRenderer.t
 const protocolTimeout = 300_000
 let rendererSequence = 0
 const createRenderer = async (page: Page, moduleURL: string) => {
-  await page.waitForFunction(() => document.readyState === 'complete', {timeout: 30_000})
   const key = `__knotPreviewRenderer_${process.pid}_${rendererSequence++}`
   const handle = await page.evaluateHandle(async (url, rendererKey) => {
     const {default: Renderer} = await import(/* @vite-ignore */ `${url}?t=${Date.now()}`) as typeof import('./KnotPreviewRenderer.ts')
@@ -57,39 +51,9 @@ const runWithRenderer = async <Result>(page: Page, moduleURL: string, run: (rend
     }
   }
 }
-const withExistingBrowser = async <Result>(run: (renderer: JSHandle<KnotPreviewRenderer>) => Promise<Result>, browserURL: string, pageURL = 'https://vite.tower.lan') => {
-  const origin = new URL(pageURL).origin
-  const browser = await puppeteer.connect({
-    browserURL,
-    defaultViewport: null,
-    protocolTimeout,
-  })
-  try {
-    const target = browser.targets().find(candidate => {
-      if (candidate.type() !== TargetType.PAGE) {
-        return false
-      }
-      try {
-        return new URL(candidate.url()).origin === origin
-      } catch {
-        return false
-      }
-    })
-    const page = await target?.page()
-    if (!page) {
-      throw new Error(`Open the Vite page at ${origin} in the debug browser first.`)
-    }
-    return await runWithRenderer(page, `${origin}${rendererPath}`, run)
-  } finally {
-    await browser.disconnect()
-  }
-}
 
-/** Own a private Vite page and Chrome instance unless an existing debug browser is explicitly requested. */
-export default async function withPreviewRenderer<Result>(run: (renderer: JSHandle<KnotPreviewRenderer>) => Promise<Result>, {browserURL, pageURL}: PreviewOptions = {}) {
-  if (browserURL) {
-    return withExistingBrowser(run, browserURL, pageURL)
-  }
+/** Run a detached WebGPU renderer in a private Vite page and private Chrome instance. */
+export default async function withPreviewRenderer<Result>(run: (renderer: JSHandle<KnotPreviewRenderer>) => Promise<Result>) {
   const server = await createServer({
     configFile: false,
     logLevel: 'error',

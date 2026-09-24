@@ -17,7 +17,6 @@
     "./*": "./src/*"
   },
   "scripts": {
-    "make:animated-icon": "bun scripts/makeAnimatedIcon.ts",
     "make:prompt": "bun scripts/makePrompt.ts",
     "render:knot": "bun scripts/renderKnot.ts",
     "test": "bun test --max-concurrency 1 ./test",

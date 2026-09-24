@@ -4,10 +4,9 @@ import {parseArgs} from 'node:util'
 import fs from 'fs-extra'
 
 import {knotsById} from '../src/main.ts'
-import {animationFilename, animationFrames} from './lib/animation.ts'
 import {encodeAnimatedJxl, encodeWebm} from './lib/encodeAnimation.ts'
 import {encodeJxl} from './lib/encodeJxl.ts'
-import {angleAnimationFrame, angleNames, angleStillFrame, closeupStillFrame, distanceNames, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrames} from './lib/renderSettings.ts'
+import {angleAnimationFrame, angleNames, angleStillFrame, animationFilename, animationFrames, closeupStillFrame, distanceNames, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrames} from './lib/renderSettings.ts'
 import withPreviewRenderer from './lib/withPreviewRenderer.ts'
 
 export const renderCategories = ['snapshot', 'animation', 'video'] as const

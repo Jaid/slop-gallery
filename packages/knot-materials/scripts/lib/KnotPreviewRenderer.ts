@@ -8,14 +8,8 @@ import {ACESFilmicToneMapping, AmbientLight, DirectionalLight, HalfFloatType, He
 import {createKnotGeometry} from '../../src/geometry.ts'
 import loadKnotMaterial from '../../src/materials.ts'
 import StudioEnvironment from '../../src/StudioEnvironment.ts'
-import {animationFps, animationFrame, animationSize} from './animation.ts'
-import {visibleBounds} from './previewLayout.ts'
-import {closeupSize, inspectionAnimationSize, inspectionVideoSize, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from './renderSettings.ts'
+import {animationFps, closeupSize, inspectionAnimationSize, inspectionVideoSize, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from './renderSettings.ts'
 
-export type AnimationPreview = {
-  dispose: () => void
-  renderFrame: (index: number) => Promise<string>
-}
 export type KnotPreview = {
   dispose: () => void
   renderFrame: (frame: RenderFrame) => Promise<string>
@@ -49,10 +43,6 @@ export default class KnotPreviewRenderer {
   private readonly environment = new StudioEnvironment
   private readonly errors: Array<string> = []
   private readonly geometry = createKnotGeometry()
-  private readonly iconTarget = new RenderTarget(renderSize(animationSize), renderSize(animationSize), {
-    type: UnsignedByteType,
-    samples: 4,
-  })
   private readonly renderer = new WebgpuRenderer({
     antialias: true,
     alpha: true,
@@ -71,10 +61,8 @@ export default class KnotPreviewRenderer {
   constructor() {
     this.animationTarget.texture.colorSpace = SRGBColorSpace
     this.closeupTarget.texture.colorSpace = SRGBColorSpace
-    this.iconTarget.texture.colorSpace = SRGBColorSpace
     this.stillTarget.texture.colorSpace = SRGBColorSpace
     this.videoTarget.texture.colorSpace = SRGBColorSpace
-    this.renderer.setSize(renderSize(animationSize), renderSize(animationSize), false)
     this.renderer.toneMapping = ACESFilmicToneMapping
     this.renderer.setClearColor(0, 0)
     const key = new DirectionalLight('#fff0d7', 2.3)
@@ -87,29 +75,8 @@ export default class KnotPreviewRenderer {
     return (this.renderer.backend as typeof this.renderer.backend & {device: GPUDevice}).device
   }
 
-  async createAnimation(item: KnotEntry): Promise<AnimationPreview> {
-    await this.prepare(item, true)
-    const mesh = this.active!
-    return {
-      renderFrame: async index => {
-        if (this.active !== mesh) {
-          throw new Error('The animation preview has been disposed.')
-        }
-        const frame = animationFrame(index)
-        mesh.rotation.y = frame.rotation
-        // Keep one fixed canvas and camera for the whole turn: per-frame cropping would wobble.
-        return png((await this.capture(item.id, this.iconTarget, squareSize(animationSize), frame.time)).image)
-      },
-      dispose: () => {
-        if (this.active === mesh) {
-          this.releaseMaterial()
-        }
-      },
-    }
-  }
-
   async createPreview(item: KnotEntry): Promise<KnotPreview> {
-    await this.prepare(item, true, this.stillTarget)
+    await this.prepare(item)
     const mesh = this.active!
     const baseDistance = this.camera.position.length()
     const render = async (frame: RenderFrame) => {
@@ -131,7 +98,7 @@ export default class KnotPreviewRenderer {
       }
       this.camera.aspect = size[0] / size[1]
       this.positionCamera(baseDistance * frame.distanceScale, 0.18 + frame.angle, frame.distanceScale, frame.fov)
-      return (await this.capture(item.id, target, size, frame.seconds)).image
+      return this.capture(item.id, target, size, frame.seconds)
     }
     return {
       renderFrame: async frame => png(await render(frame)),
@@ -148,7 +115,6 @@ export default class KnotPreviewRenderer {
     this.validationTarget.dispose()
     this.videoTarget.dispose()
     this.stillTarget.dispose()
-    this.iconTarget.dispose()
     this.closeupTarget.dispose()
     this.animationTarget.dispose()
     this.geometry.dispose()
@@ -164,7 +130,7 @@ export default class KnotPreviewRenderer {
     this.device.addEventListener('uncapturederror', event => this.errors.push(event.error.message))
   }
 
-  private async capture(id: string, target = this.iconTarget, size: readonly [number, number] = squareSize(animationSize), seconds = 0) {
+  private async capture(id: string, target: RenderTarget, size: readonly [number, number], seconds = 0) {
     this.setTime(seconds)
     const [width, height] = size
     const sourceWidth = target.width
@@ -190,28 +156,24 @@ export default class KnotPreviewRenderer {
       for (let y = 0; y < sourceHeight; y++) {
         output.set(pixels.subarray(y * stride, (y + 1) * stride), (sourceHeight - 1 - y) * stride)
       }
-      const data = new ImageData(output, sourceWidth, sourceHeight)
-      const sourceBounds = visibleBounds(data)
-      if (!sourceBounds) {
+      let visible = false
+      for (let index = 3; index < output.length; index += 4) {
+        if (output[index] !== 0) {
+          visible = true
+          break
+        }
+      }
+      if (!visible) {
         throw new Error(`${id} produced an empty preview.`)
       }
       const source = canvas(sourceWidth, sourceHeight)
-      source.getContext('2d')!.putImageData(data, 0, 0)
+      source.getContext('2d')!.putImageData(new ImageData(output, sourceWidth, sourceHeight), 0, 0)
       const image = canvas(width, height)
       const context = image.getContext('2d')!
       context.imageSmoothingEnabled = true
       context.imageSmoothingQuality = 'high'
       context.drawImage(source, 0, 0, width, height)
-      const scaleX = width / sourceWidth
-      const scaleY = height / sourceHeight
-      const left = Math.floor(sourceBounds[0] * scaleX)
-      const top = Math.floor(sourceBounds[1] * scaleY)
-      const right = Math.ceil((sourceBounds[0] + sourceBounds[2]) * scaleX)
-      const bottom = Math.ceil((sourceBounds[1] + sourceBounds[3]) * scaleY)
-      return {
-        image,
-        bounds: [left, top, right - left, bottom - top] as const,
-      }
+      return image
     } finally {
       this.renderer.setOutputRenderTarget(null)
       this.renderer.setRenderTarget(null)
@@ -225,7 +187,7 @@ export default class KnotPreviewRenderer {
     this.camera.lookAt(0, 0, 0)
   }
 
-  private async prepare(item: KnotEntry, rotating = false, target = this.iconTarget) {
+  private async prepare(item: KnotEntry) {
     if (this.active) {
       throw new Error('A preview material is already active.')
     }
@@ -237,11 +199,11 @@ export default class KnotPreviewRenderer {
     this.geometry.computeBoundingSphere()
     const sphere = this.geometry.boundingSphere!
     const radius = sphere.radius + sphere.center.length() + (item.displacement ?? 0)
-    this.positionCamera(rotating ? Math.max(2.1, radius / Math.sin(this.camera.fov * Math.PI / 360) * 1.08) : 2.1)
+    this.positionCamera(Math.max(2.1, radius / Math.sin(this.camera.fov * Math.PI / 360) * 1.08))
     try {
       // Compile both real offscreen contexts, rather than compiling against an unused canvas.
-      this.renderer.setOutputRenderTarget(target)
-      this.renderer.setRenderTarget(target)
+      this.renderer.setOutputRenderTarget(this.stillTarget)
+      this.renderer.setRenderTarget(this.stillTarget)
       await this.renderer.compileAsync(this.scene, this.camera)
       this.renderer.setOutputRenderTarget(null)
       this.renderer.setRenderTarget(this.validationTarget)
