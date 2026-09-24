@@ -1,6 +1,9 @@
 import {animationFps, animationFrames, animationSeconds} from './animation.ts'
 
 export const stillSize = 2048
+export const closeupSize = [3840, 2160] as const
+export const closeupDistanceScale = 0.5
+export const closeupFov = 25
 export const angleNames = ['0', '45', '90'] as const
 export const angleRadians = [0, Math.PI / 4, Math.PI / 2] as const
 export const distanceNames = ['near', 'far'] as const
@@ -19,8 +22,9 @@ export const previewFovForDistanceScale = (distanceScale: number) => previewBase
 export type RenderFrame = {
   angle: number
   distanceScale: number
+  fov?: number
   seconds: number
-  size: 'animation' | 'still' | 'video'
+  size: 'animation' | 'closeup' | 'still' | 'video'
 }
 
 const assertFrameIndex = (index: number) => {
@@ -105,6 +109,14 @@ export const distanceStillFrame = (index: number): RenderFrame => ({
   distanceScale: distanceScales[index],
   seconds: 0,
   size: 'still',
+})
+
+export const closeupStillFrame = (): RenderFrame => ({
+  angle: Math.PI / 4,
+  distanceScale: closeupDistanceScale,
+  seconds: 0,
+  size: 'closeup',
+  fov: closeupFov,
 })
 
 export {animationFps, animationFrames, animationSize} from './animation.ts'

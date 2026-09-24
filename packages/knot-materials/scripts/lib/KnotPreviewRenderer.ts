@@ -10,7 +10,7 @@ import loadKnotMaterial from '../../src/materials.ts'
 import StudioEnvironment from '../../src/StudioEnvironment.ts'
 import {animationFps, animationFrame, animationSize} from './animation.ts'
 import {visibleBounds} from './previewLayout.ts'
-import {inspectionAnimationSize, inspectionVideoSize, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from './renderSettings.ts'
+import {closeupSize, inspectionAnimationSize, inspectionVideoSize, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from './renderSettings.ts'
 
 export type AnimationPreview = {
   dispose: () => void
@@ -32,6 +32,7 @@ const canvas = (width: number, height = width) => Object.assign(document.createE
 })
 const png = (image: HTMLCanvasElement) => image.toDataURL('image/png').split(',')[1]
 const renderSize = (size: number) => Math.round(size * previewSupersampling)
+const squareSize = (size: number) => [size, size] as const
 
 /** Detached scene, private frame clock, and explicit GPU readback. Never changes the live game. */
 export default class KnotPreviewRenderer {
@@ -41,6 +42,10 @@ export default class KnotPreviewRenderer {
     samples: 4,
   })
   private readonly camera = new PerspectiveCamera(previewBaseFov, 1, 0.05, 100)
+  private readonly closeupTarget = new RenderTarget(closeupSize[0], closeupSize[1], {
+    type: UnsignedByteType,
+    samples: 4,
+  })
   private readonly environment = new StudioEnvironment
   private readonly errors: Array<string> = []
   private readonly geometry = createKnotGeometry()
@@ -65,6 +70,7 @@ export default class KnotPreviewRenderer {
 
   constructor() {
     this.animationTarget.texture.colorSpace = SRGBColorSpace
+    this.closeupTarget.texture.colorSpace = SRGBColorSpace
     this.iconTarget.texture.colorSpace = SRGBColorSpace
     this.stillTarget.texture.colorSpace = SRGBColorSpace
     this.videoTarget.texture.colorSpace = SRGBColorSpace
@@ -92,7 +98,7 @@ export default class KnotPreviewRenderer {
         const frame = animationFrame(index)
         mesh.rotation.y = frame.rotation
         // Keep one fixed canvas and camera for the whole turn: per-frame cropping would wobble.
-        return png((await this.capture(item.id, this.iconTarget, animationSize, frame.time)).image)
+        return png((await this.capture(item.id, this.iconTarget, squareSize(animationSize), frame.time)).image)
       },
       dispose: () => {
         if (this.active === mesh) {
@@ -111,16 +117,20 @@ export default class KnotPreviewRenderer {
         throw new Error('The knot preview has been disposed.')
       }
       mesh.rotation.y = 0
-      this.positionCamera(baseDistance * frame.distanceScale, 0.18 + frame.angle, frame.distanceScale)
       let target = this.animationTarget
-      let size = inspectionAnimationSize
-      if (frame.size === 'still') {
+      let size: readonly [number, number] = squareSize(inspectionAnimationSize)
+      if (frame.size === 'closeup') {
+        target = this.closeupTarget
+        size = closeupSize
+      } else if (frame.size === 'still') {
         target = this.stillTarget
-        size = stillSize
+        size = squareSize(stillSize)
       } else if (frame.size === 'video') {
         target = this.videoTarget
-        size = inspectionVideoSize
+        size = squareSize(inspectionVideoSize)
       }
+      this.camera.aspect = size[0] / size[1]
+      this.positionCamera(baseDistance * frame.distanceScale, 0.18 + frame.angle, frame.distanceScale, frame.fov)
       return (await this.capture(item.id, target, size, frame.seconds)).image
     }
     return {
@@ -139,6 +149,7 @@ export default class KnotPreviewRenderer {
     this.videoTarget.dispose()
     this.stillTarget.dispose()
     this.iconTarget.dispose()
+    this.closeupTarget.dispose()
     this.animationTarget.dispose()
     this.geometry.dispose()
     this.environment.dispose()
@@ -153,10 +164,12 @@ export default class KnotPreviewRenderer {
     this.device.addEventListener('uncapturederror', event => this.errors.push(event.error.message))
   }
 
-  private async capture(id: string, target = this.iconTarget, size = animationSize, seconds = 0) {
+  private async capture(id: string, target = this.iconTarget, size: readonly [number, number] = squareSize(animationSize), seconds = 0) {
     this.setTime(seconds)
-    const sourceSize = renderSize(size)
-    this.renderer.setSize(sourceSize, sourceSize, false)
+    const [width, height] = size
+    const sourceWidth = target.width
+    const sourceHeight = target.height
+    this.renderer.setSize(sourceWidth, sourceHeight, false)
     try {
       this.renderer.setRenderTarget(this.validationTarget)
       this.renderer.render(this.scene, this.camera)
@@ -167,33 +180,34 @@ export default class KnotPreviewRenderer {
       this.renderer.setOutputRenderTarget(target)
       this.renderer.setRenderTarget(target)
       this.renderer.render(this.scene, this.camera)
-      const pixels = await this.renderer.readRenderTargetPixelsAsync(target, 0, 0, sourceSize, sourceSize) as Uint8Array
+      const pixels = await this.renderer.readRenderTargetPixelsAsync(target, 0, 0, sourceWidth, sourceHeight) as Uint8Array
       await this.device.queue.onSubmittedWorkDone()
       if (this.errors.length) {
         throw new Error(`${id}: ${this.errors.join('\n')}`)
       }
       const output = new Uint8ClampedArray(pixels.length)
-      const stride = sourceSize * 4
-      for (let y = 0; y < sourceSize; y++) {
-        output.set(pixels.subarray(y * stride, (y + 1) * stride), (sourceSize - 1 - y) * stride)
+      const stride = sourceWidth * 4
+      for (let y = 0; y < sourceHeight; y++) {
+        output.set(pixels.subarray(y * stride, (y + 1) * stride), (sourceHeight - 1 - y) * stride)
       }
-      const data = new ImageData(output, sourceSize, sourceSize)
+      const data = new ImageData(output, sourceWidth, sourceHeight)
       const sourceBounds = visibleBounds(data)
       if (!sourceBounds) {
         throw new Error(`${id} produced an empty preview.`)
       }
-      const source = canvas(sourceSize)
+      const source = canvas(sourceWidth, sourceHeight)
       source.getContext('2d')!.putImageData(data, 0, 0)
-      const image = canvas(size)
+      const image = canvas(width, height)
       const context = image.getContext('2d')!
       context.imageSmoothingEnabled = true
       context.imageSmoothingQuality = 'high'
-      context.drawImage(source, 0, 0, size, size)
-      const scale = size / sourceSize
-      const left = Math.floor(sourceBounds[0] * scale)
-      const top = Math.floor(sourceBounds[1] * scale)
-      const right = Math.ceil((sourceBounds[0] + sourceBounds[2]) * scale)
-      const bottom = Math.ceil((sourceBounds[1] + sourceBounds[3]) * scale)
+      context.drawImage(source, 0, 0, width, height)
+      const scaleX = width / sourceWidth
+      const scaleY = height / sourceHeight
+      const left = Math.floor(sourceBounds[0] * scaleX)
+      const top = Math.floor(sourceBounds[1] * scaleY)
+      const right = Math.ceil((sourceBounds[0] + sourceBounds[2]) * scaleX)
+      const bottom = Math.ceil((sourceBounds[1] + sourceBounds[3]) * scaleY)
       return {
         image,
         bounds: [left, top, right - left, bottom - top] as const,
@@ -204,8 +218,8 @@ export default class KnotPreviewRenderer {
     }
   }
 
-  private positionCamera(distance: number, angle = 0.18, distanceScale = 1) {
-    this.camera.fov = previewFovForDistanceScale(distanceScale)
+  private positionCamera(distance: number, angle = 0.18, distanceScale = 1, fov = previewFovForDistanceScale(distanceScale)) {
+    this.camera.fov = fov
     this.camera.updateProjectionMatrix()
     this.camera.position.set(Math.sin(angle) * distance, 0, Math.cos(angle) * distance)
     this.camera.lookAt(0, 0, 0)

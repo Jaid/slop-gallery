@@ -4,13 +4,16 @@ import {resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
 
 import {animationFps, animationFrames} from '../scripts/lib/animation.ts'
-import {angleAnimationFrame, angleNames, angleStillFrame, distanceNames, distanceScales, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrames, inspectionAnimationOffsetSeconds, inspectionAnimationSeconds, inspectionAnimationSize, inspectionNearDistanceScale, inspectionVideoSize, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from '../scripts/lib/renderSettings.ts'
+import {angleAnimationFrame, angleNames, angleStillFrame, closeupDistanceScale, closeupFov, closeupSize, closeupStillFrame, distanceNames, distanceScales, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrames, inspectionAnimationOffsetSeconds, inspectionAnimationSeconds, inspectionAnimationSize, inspectionNearDistanceScale, inspectionVideoSize, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from '../scripts/lib/renderSettings.ts'
 import renderKnot, {parseRenderCategories, renderCategories} from '../scripts/renderKnot.ts'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 describe('knot inspection renders', () => {
   test('define stills, simple loops, and the combined 16-second inspection animation', () => {
     expect(stillSize).toBe(2048)
+    expect(closeupSize).toEqual([3840, 2160])
+    expect(closeupDistanceScale).toBe(0.5)
+    expect(closeupFov).toBe(25)
     expect(previewSupersampling).toBe(2)
     expect(angleNames).toEqual(['0', '45', '90'])
     expect(distanceNames).toEqual(['near', 'far'])
@@ -27,6 +30,13 @@ describe('knot inspection renders', () => {
     expect(angleStillFrame(2).angle).toBe(Math.PI / 2)
     expect(distanceStillFrame(0).distanceScale).toBe(0.75)
     expect(distanceStillFrame(1).distanceScale).toBe(1.8)
+    expect(closeupStillFrame()).toEqual({
+      angle: Math.PI / 4,
+      distanceScale: closeupDistanceScale,
+      seconds: 0,
+      size: 'closeup',
+      fov: closeupFov,
+    })
     expect(previewFovForDistanceScale(distanceStillFrame(0).distanceScale)).toBeGreaterThan(previewBaseFov)
     expect(previewFovForDistanceScale(distanceStillFrame(1).distanceScale)).toBeGreaterThan(previewBaseFov)
     expect(angleAnimationFrame(0).angle).toBe(0)

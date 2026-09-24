@@ -7,7 +7,7 @@ import {knotsById} from '../src/main.ts'
 import {animationFilename, animationFrames} from './lib/animation.ts'
 import {encodeAnimatedJxl, encodeApng, encodeWebm} from './lib/encodeAnimation.ts'
 import {encodeJxl} from './lib/encodeJxl.ts'
-import {angleAnimationFrame, angleNames, angleStillFrame, distanceNames, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrames} from './lib/renderSettings.ts'
+import {angleAnimationFrame, angleNames, angleStillFrame, closeupStillFrame, distanceNames, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrames} from './lib/renderSettings.ts'
 import withPreviewRenderer from './lib/withPreviewRenderer.ts'
 
 export const renderCategories = ['snapshot', 'animation', 'video'] as const
@@ -80,6 +80,7 @@ export default async function renderKnot(id: string, {categories = renderCategor
           for (const name of distanceNames) {
             await removeImageVariants(staging, `distance_${name}`)
           }
+          await removeImageVariants(staging, 'closeup')
           for (const [index, name] of angleNames.entries()) {
             const image = await preview.evaluate((instance, frame) => instance.renderFrame(frame), angleStillFrame(index))
             const filename = await writeStill(image, staging, `angle_${name}`, jxl)
@@ -90,6 +91,9 @@ export default async function renderKnot(id: string, {categories = renderCategor
             const filename = await writeStill(image, staging, `distance_${name}`, jxl)
             onFile?.(filename)
           }
+          const closeup = await preview.evaluate((instance, frame) => instance.renderFrame(frame), closeupStillFrame())
+          const closeupFilename = await writeStill(closeup, staging, 'closeup', jxl)
+          onFile?.(closeupFilename)
         }
         if (selected.has('animation')) {
           await removeImageVariants(staging, 'angles.animated')
