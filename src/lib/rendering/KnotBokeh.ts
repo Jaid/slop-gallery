@@ -91,7 +91,7 @@ class KnotBokeh {
       // here would turn empty foreground pixels into black outlines when upsampled.
       return vec4(color.mul(weight), weight)
     })
-    this.blurTexture = new FocusTexture(blur(), enabled, 0.5)
+    this.blurTexture = new FocusTexture(blur(), enabled, 1)
     this.blurTexture.name = 'knotApertureGather'
     const filtered = this.blurTexture
     const valid = step(minimumWeight, filtered.a)
