@@ -11,7 +11,6 @@ const normalizeGraphicsQuality = (value: unknown) => {
   }
   return false
 }
-
 const graphicsQualitySchema = optis({
   defaults: {
     graphics: false,
@@ -21,16 +20,16 @@ const graphicsQualitySchema = optis({
   },
 })
 
-export function readGraphicsQuality(input: string | URL = typeof location === 'undefined' ? '' : location.href) {
-  return readPermalink(input, {schema: graphicsQualitySchema}).graphics
-}
-
 type GraphicsProfile = {
   dpr: number
   floorReflections: boolean
   noiseTextures: boolean
   postprocessing: boolean
   shadows: boolean
+}
+
+export function readGraphicsQuality(input: URL | string = typeof location === 'undefined' ? '' : location.href) {
+  return readPermalink(input, {schema: graphicsQualitySchema}).graphics
 }
 
 const performanceProfile: GraphicsProfile = {

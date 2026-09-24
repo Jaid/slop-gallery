@@ -11,7 +11,6 @@ const defaults = {
   narrator_character: 'art gallery narrator – witty, wise, sarcastic, calm',
   eager_audio: false,
 }
-
 const normalizeBoolean = (fallback: boolean) => (value: unknown) => {
   try {
     return parseBoolean(value)
@@ -19,7 +18,7 @@ const normalizeBoolean = (fallback: boolean) => (value: unknown) => {
     return fallback
   }
 }
-const normalizeString = (fallback: string) => (value: unknown) => typeof value === 'string' ? value : fallback
+const normalizeString = (fallback: string) => (value: unknown) => (typeof value === 'string' ? value : fallback)
 
 export const aiSettingsSchema = optis({
   defaults,
@@ -35,8 +34,8 @@ export const aiSettingsSchema = optis({
   },
 })
 
-export function readAiSettings(input: string | URL = typeof location === 'undefined' ? '' : location.href) {
+export type AiSettings = ReturnType<typeof readAiSettings>
+
+export function readAiSettings(input: URL | string = typeof location === 'undefined' ? '' : location.href) {
   return readPermalink(input, {schema: aiSettingsSchema})
 }
-
-export type AiSettings = ReturnType<typeof readAiSettings>
