@@ -17,25 +17,18 @@ export type WebmAnimationOptions = {
   frameCount?: number
 }
 
-/** Encode numbered PNG frames into an infinitely looping, alpha-preserving APNG. */
-export async function encodeApng(directory: string, output = join(directory, 'animation.apng')) {
-  // APNG/libjxl use a millisecond clock here. Quantize cumulative timestamps,
-  // not each 1/60-second duration, to keep the total exactly 2000 ms.
-  const timing = `settb=1/1000,setpts=round(N*1000/${animationFps})`
-  const finalDelay = (Math.round(animationFrames * 1000 / animationFps) - Math.round((animationFrames - 1) * 1000 / animationFps)) / 1000
-  const pattern = join(directory, '%03d.png')
-  await Bun.$`ffmpeg -hide_banner -loglevel error -y -framerate ${animationFps} -start_number 0 -i ${pattern} -frames:v ${animationFrames} -vf ${timing} -enc_time_base 1:1000 -fps_mode passthrough -c:v apng -pix_fmt rgba -plays 0 -final_delay ${finalDelay} -f apng ${output}`.quiet()
-  return output
-}
-
 /** Encode the simple 120-frame inspection loops as animated JPEG XL. */
 export async function encodeAnimatedJxl(directory: string, distance: number) {
   if (!Number.isFinite(distance) || distance < 0) {
     throw new RangeError('JPEG XL distance must be a finite non-negative number.')
   }
-  const apng = await encodeApng(directory)
+  // libjxl needs millisecond frame timestamps. Quantize cumulative timestamps
+  // so 60 fps alternates 16/17 ms frames and totals exactly two seconds.
+  const timing = `settb=1/1000,setpts=round(N*1000/${animationFps})`
+  const finalDelay = (Math.round(animationFrames * 1000 / animationFps) - Math.round((animationFrames - 1) * 1000 / animationFps)) / 1000
+  const pattern = join(directory, '%03d.png')
   const output = join(directory, 'animation.jxl')
-  await Bun.$`cjxl ${apng} ${lossyJxlOptions(distance)} ${output}`.quiet()
+  await Bun.$`ffmpeg -hide_banner -loglevel error -framerate ${animationFps} -start_number 0 -i ${pattern} -frames:v ${animationFrames} -vf ${timing} -enc_time_base 1:1000 -fps_mode passthrough -c:v apng -pix_fmt rgba -plays 0 -final_delay ${finalDelay} -f apng - | cjxl - ${lossyJxlOptions(distance)} ${output}`.quiet()
   return output
 }
 
