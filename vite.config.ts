@@ -44,7 +44,8 @@ const getCommonConfig = (context: ConfigEnv) => {
     },
     build: {
       target: 'chrome153',
-      chunkSizeWarningLimit: 10_000,
+      chunkSizeWarningLimit: 5000,
+      assetsInlineLimit: 128,
     },
     plugins: [
       importVoiceSamplePlugin(),

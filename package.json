@@ -45,7 +45,7 @@
     "three-bvh-csg@0.0.18": "patches/three-bvh-csg@0.0.18.patch"
   },
   "dependencies": {
-    "ai": "7.0.112",
+    "ai": "7.0.113",
     "branch-component": "0.4.0",
     "canvas-textures": "workspace:*",
     "clsx": "2.1.1",
@@ -56,10 +56,10 @@
     "knot-materials": "workspace:*",
     "mount-root": "0.5.0",
     "optis": "0.3.0",
-    "read-permalink": "0.3.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-dropzone": "20.1.2",
+    "read-permalink": "0.3.0",
     "telemethree": "workspace:*",
     "telemethree-ego": "workspace:*",
     "telemethree-pause-menu": "workspace:*",
