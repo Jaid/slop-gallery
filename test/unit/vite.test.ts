@@ -2,6 +2,7 @@ import {expect, test} from 'bun:test'
 
 import postcss from 'postcss'
 import {resolveConfig} from 'vite'
+import browserslistTargetPlugin from 'vite-plugin-browserslist-target'
 
 test.each(['development', 'staging', 'production'])('Vite %s keeps the shared pipeline and mode-specific output', async mode => {
   const config = await resolveConfig({
@@ -9,7 +10,14 @@ test.each(['development', 'staging', 'production'])('Vite %s keeps the shared pi
     configLoader: 'native',
   }, 'build')
   expect(config.build.outDir).toBe(mode === 'production' ? 'dist' : `out/build/${mode}`)
-  expect(config.build.target).toBe('chrome153')
+  const inferredConfig = await resolveConfig({
+    mode,
+    configFile: false,
+    plugins: [browserslistTargetPlugin()],
+  }, 'build')
+  expect(config.build.target).toEqual(inferredConfig.build.target)
+  expect(config.build.cssTarget).toEqual(config.build.target)
+  expect(config.plugins.some(plugin => plugin.name === 'browserslist-target')).toBe(true)
   const fiberAlias = config.resolve.alias.find(alias => alias.find instanceof RegExp && alias.find.test('@react-three/fiber'))
   expect(fiberAlias?.replacement).toBe('@react-three/fiber/webgpu')
   if (fiberAlias?.find instanceof RegExp) {

@@ -77,6 +77,7 @@
         "vite-plugin-avif-only": "workspace:*",
         "vite-plugin-bake-branch-component": "workspace:*",
         "vite-plugin-bake-three": "workspace:*",
+        "vite-plugin-browserslist-target": "workspace:*",
         "vite-plugin-game-level": "workspace:*",
         "vite-plugin-hoist-popular-constants": "workspace:*",
         "vite-plugin-media-mixins": "0.10.0",
@@ -388,6 +389,21 @@
         "@react-three/fiber": "^10.0.0-canary.fd3335d",
         "react": "^19.3.0",
         "three": "^0.186.0",
+        "vite": "^8.3.0",
+      },
+    },
+    "packages/vite-plugin-browserslist-target": {
+      "name": "vite-plugin-browserslist-target",
+      "version": "0.1.0",
+      "dependencies": {
+        "browserslist": "4.29.0",
+        "browserslist-to-esbuild": "2.1.1",
+      },
+      "devDependencies": {
+        "fs-extra": "11.4.1",
+        "vite": "8.3.0",
+      },
+      "peerDependencies": {
         "vite": "^8.3.0",
       },
     },
@@ -914,6 +930,8 @@
 
     "browserslist-config-jaid-node": ["browserslist-config-jaid-node@3.0.0", "", {}, "sha512-ANDf+Z4gpnAKxV758jzI9V3BuLMcw9P66hqjn9CWlE41tLFMeERlffpVp+CJMwicVt1VtkJxWQIvoN2rhb8H5w=="],
 
+    "browserslist-to-esbuild": ["browserslist-to-esbuild@2.1.1", "", { "dependencies": { "meow": "^13.0.0" }, "peerDependencies": { "browserslist": "*" }, "bin": { "browserslist-to-esbuild": "cli/index.js" } }, "sha512-KN+mty6C3e9AN8Z5dI1xeN15ExcRNeISoC3g7V0Kax/MMF9MSoYA2G7lkTTcVUFntiEjkpI0HNgqJC1NjdyNUw=="],
+
     "buffer-from": ["buffer-from@1.1.2", "", {}, "sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ=="],
 
     "builtin-modules": ["builtin-modules@5.4.0", "", {}, "sha512-JCWSCdun+4Ovd9BhM/Vtlmwb7oD6Wl4YiPRXXwhAuwlPhW1un/MKgXn7GZoFm53ginnoNzus69V8JWx0K393jg=="],
@@ -1315,6 +1333,8 @@
     "mdast-util-to-string": ["mdast-util-to-string@4.0.0", "", { "dependencies": { "@types/mdast": "^4.0.0" } }, "sha512-0H44vDimn51F0YwvxSJSm0eCDOJTRlmN0R1yBh4HLj9wiV1Dn0QoXGbvFAWj2hSItVTlCmBF1hqKlIyUBVFLPg=="],
 
     "mdn-data": ["mdn-data@2.35.0", "", {}, "sha512-k+1+dEIm2z/BEfdvYzT/fIyAGeDBo/1AJNJI4ilFXJRYoxP/3Ds+GP8shAOIq8jYXY9N5nGB3Ag104NsagmLAA=="],
+
+    "meow": ["meow@13.2.0", "", {}, "sha512-pxQJQzB6djGPXh08dacEloMFopsOqGVRKFPYvPOt9XDZ1HasbgDZA74CJGreSU4G3Ak7EFJGoiH2auq+yXISgA=="],
 
     "meshoptimizer": ["meshoptimizer@1.1.1", "", {}, "sha512-oRFNWJRDA/WTrVj7NWvqa5HqE1t9MYDj2VaWirQCzCCrAd2GHrqR/sQezCxiWATPNlKTcRaPRHPJwIRoPBAp5g=="],
 
@@ -1763,6 +1783,8 @@
     "vite-plugin-bake-three": ["vite-plugin-bake-three@workspace:packages/vite-plugin-bake-three"],
 
     "vite-plugin-bake-three-geometry": ["vite-plugin-bake-three-geometry@workspace:packages/vite-plugin-bake-three/packages/vite-plugin-bake-three-geometry"],
+
+    "vite-plugin-browserslist-target": ["vite-plugin-browserslist-target@workspace:packages/vite-plugin-browserslist-target"],
 
     "vite-plugin-game-level": ["vite-plugin-game-level@workspace:packages/vite-plugin-game-level"],
 

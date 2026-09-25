@@ -10,6 +10,7 @@ import {loadEnv, mergeConfig} from 'vite'
 import avifOnlyPlugin from 'vite-plugin-avif-only'
 import bakeBranchComponentPlugin from 'vite-plugin-bake-branch-component'
 import bakeThreePlugin from 'vite-plugin-bake-three'
+import browserslistTargetPlugin from 'vite-plugin-browserslist-target'
 import gameLevelPlugin, {selectGameLevel} from 'vite-plugin-game-level'
 import hoistPopularConstantsPlugin from 'vite-plugin-hoist-popular-constants'
 import importVoiceSamplePlugin from 'vite-plugin-import-voice-sample'
@@ -43,11 +44,11 @@ const getCommonConfig = (context: ConfigEnv) => {
       'import.meta.env.TELEMETRY_INGESTION_RELAY_ENDPOINT': JSON.stringify(env.TELEMETRY_INGESTION_RELAY_ENDPOINT ?? ''),
     },
     build: {
-      target: 'chrome153',
       chunkSizeWarningLimit: 5000,
       assetsInlineLimit: 128,
     },
     plugins: [
+      browserslistTargetPlugin(),
       importVoiceSamplePlugin(),
       knotMaterialsPlugin(),
       titlePlugin(levels[level].title),

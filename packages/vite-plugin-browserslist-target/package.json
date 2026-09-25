@@ -1,0 +1,31 @@
+{
+  "name": "vite-plugin-browserslist-target",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Infer Vite build targets from the project’s Browserslist configuration.",
+  "funding": "https://github.com/sponsors/Jaid",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jaid/slop-gallery.git",
+    "directory": "packages/vite-plugin-browserslist-target"
+  },
+  "main": "src/main.ts",
+  "exports": {
+    ".": "./src/main.ts"
+  },
+  "scripts": {
+    "test": "bun test --max-concurrency 1 ./test"
+  },
+  "dependencies": {
+    "browserslist": "4.29.0",
+    "browserslist-to-esbuild": "2.1.1"
+  },
+  "peerDependencies": {
+    "vite": "^8.3.0"
+  },
+  "devDependencies": {
+    "fs-extra": "11.4.1",
+    "vite": "8.3.0"
+  }
+}

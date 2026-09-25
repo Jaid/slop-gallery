@@ -109,6 +109,7 @@
     "vite-plugin-avif-only": "workspace:*",
     "vite-plugin-bake-branch-component": "workspace:*",
     "vite-plugin-bake-three": "workspace:*",
+    "vite-plugin-browserslist-target": "workspace:*",
     "vite-plugin-game-level": "workspace:*",
     "vite-plugin-hoist-popular-constants": "workspace:*",
     "vite-plugin-media-mixins": "0.10.0",
