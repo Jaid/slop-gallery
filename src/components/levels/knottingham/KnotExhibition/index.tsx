@@ -1,5 +1,5 @@
 import {useThree} from '@react-three/fiber/webgpu'
-import {CuboidCollider, useBeforePhysicsStep} from '@react-three/rapier'
+import {ConvexHullCollider, useBeforePhysicsStep} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {knotExhibition, knotFloatHeight} from 'knot-materials/exhibition.ts'
 import ProgressiveKnotMaterials from 'knot-materials/ProgressiveKnotMaterials.ts'
@@ -31,7 +31,7 @@ export default function KnotExhibition() {
   return <group name='lobby-knot-exhibition'>
     <KnotLabels />
     {knotExhibition.map((finish, index) => {
-      const {geometry, colliderArgs, colliderPosition} = resources.items[index]
+      const {geometry, colliderVertices} = resources.items[index]
       const id = `prop-knot-${finish.id}`
       const body = () => propObjects.get(id)?.body
       return <GrabbableProp
@@ -43,8 +43,8 @@ export default function KnotExhibition() {
           return current ? !rotation.isShowcased(current) : false
         }} rotation={[0, finish.rotation, 0]} title={`${finish.label} · ${finish.title} · ${finish.modelTitle}`} type='fixed'
       >
-        <CuboidCollider
-          args={colliderArgs} position={colliderPosition} onContactForce={({target}) => {
+        <ConvexHullCollider
+          args={[colliderVertices]} contactSkin={finish.displacement ?? 0} onContactForce={({target}) => {
             if (target.rigidBody) {
               rotation.release(target.rigidBody)
             }

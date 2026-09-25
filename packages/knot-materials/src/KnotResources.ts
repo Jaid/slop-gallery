@@ -2,7 +2,6 @@ import type {KnotEntry} from './types.ts'
 import type {BufferGeometry, Mesh} from 'three/webgpu'
 
 import {MeshBVH} from 'three-mesh-bvh'
-import {Vector3} from 'three/webgpu'
 
 import {createKnotGeometry} from './geometry.ts'
 
@@ -10,8 +9,7 @@ export type KnotResourceEntry = Pick<KnotEntry, 'displacement' | 'id'>
 
 export default class KnotResources {
   readonly items: Array<{
-    colliderArgs: [number, number, number]
-    colliderPosition: [number, number, number]
+    colliderVertices: Float32Array
     geometry: BufferGeometry
   }>
   readonly raycast: Mesh['raycast']
@@ -22,7 +20,7 @@ export default class KnotResources {
       base.computeBoundingSphere()
       this.geometries.set(0, base)
       // All displacement variants have identical CPU triangles. One indirect tree
-      // preserves index/face identities and the expanded culling/collider bounds.
+      // preserves index/face identities and the expanded culling bounds.
       const bounds = new MeshBVH(base, {
         indirect: true,
         setBoundingBox: false,
@@ -30,6 +28,10 @@ export default class KnotResources {
       this.raycast = function (this: Mesh, raycaster, intersects) {
         bounds.raycastObject3D(this, raycaster, intersects)
       }
+      // Rapier builds a convex hull from the undisplaced surface. Shader displacement
+      // is represented separately as contact skin, preserving its conservative bound
+      // without turning the whole bounding box into solid collision geometry.
+      const colliderVertices = new Float32Array(base.getAttribute('position').array)
       this.items = entries.map(entry => {
         const displacement = entry.displacement ?? 0
         let geometry = this.geometries.get(displacement)
@@ -42,8 +44,7 @@ export default class KnotResources {
         }
         return {
           geometry,
-          colliderArgs: geometry.boundingBox!.getSize(new Vector3).multiplyScalar(0.5).toArray(),
-          colliderPosition: geometry.boundingBox!.getCenter(new Vector3).toArray(),
+          colliderVertices,
         }
       })
     } catch (error) {
