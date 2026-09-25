@@ -187,6 +187,13 @@ test.each([
   expect(result.code).toBe(code)
   expect(result.diagnostics.length).toBeGreaterThan(0)
 })
+test('can freeze random static transforms when explicitly enabled', async () => {
+  const code = scene(`{${map(mesh('key={x} position={[Math.random(),0,0]}'))}}`)
+  const result = await compile(code, {allowFreezingRandomness: true})
+  expect(result.plans).toHaveLength(1)
+  expect(result.plans[0].plan.instances).toBe(4)
+  expect(result.code).not.toBe(code)
+})
 test('preserves directives and generates source maps', async () => {
   const result = await compile(`'use client';\n${scene(`{${map()}}`)}`)
   expect(result.code.startsWith("'use client';")).toBe(true)

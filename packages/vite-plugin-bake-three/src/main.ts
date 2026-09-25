@@ -8,6 +8,8 @@ import bakeThreeGeometry from 'vite-plugin-bake-three-geometry'
 import r3fStaticRendering from 'vite-plugin-r3f-static-rendering'
 
 export type BakeThreeOptions = {
+  /** Default randomness-freezing policy for all enabled passes. Per-pass options override it. */
+  allowFreezingRandomness?: boolean
   geometry?: BakeThreeGeometryOptions | false
   staticRendering?: R3fStaticRenderingOptions | false
   staticTextures?: BakeStaticTexturesOptions | false
@@ -16,14 +18,22 @@ export type BakeThreeOptions = {
 /** Compose the Three-specific AOT passes in dependency order. */
 export default function bakeThree(options: BakeThreeOptions = {}): Array<PluginOption> {
   const plugins: Array<PluginOption> = []
+  const randomness = options.allowFreezingRandomness === undefined ? {} : {allowFreezingRandomness: options.allowFreezingRandomness}
   if (options.geometry !== false) {
-    plugins.push(bakeThreeGeometry(options.geometry))
+    plugins.push(bakeThreeGeometry({
+      ...randomness,
+      ...options.geometry,
+    }))
   }
   if (options.staticTextures !== false) {
-    plugins.push(bakeStaticTextures(options.staticTextures))
+    plugins.push(bakeStaticTextures({
+      ...randomness,
+      ...options.staticTextures,
+    }))
   }
   if (options.staticRendering !== false) {
     plugins.push(r3fStaticRendering({
+      ...randomness,
       ...options.staticRendering,
       runtimeModule: 'vite-plugin-bake-three/r3f-static-rendering/runtime',
     }))

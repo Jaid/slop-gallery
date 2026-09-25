@@ -319,6 +319,10 @@
         "vite-plugin-bake-three-geometry": "workspace:*",
         "vite-plugin-r3f-static-rendering": "workspace:*",
       },
+      "devDependencies": {
+        "@types/fs-extra": "11.0.4",
+        "fs-extra": "11.4.1",
+      },
       "peerDependencies": {
         "@react-three/fiber": "^10.0.0-alpha.5",
         "react": "^19.3.0",
@@ -337,6 +341,7 @@
         "@babel/traverse": "^8.0.6",
         "@babel/types": "^8.0.6",
         "magic-string": "^1.4.2",
+        "math": "0.0.0-canary-20260925-d23173e5",
       },
       "peerDependencies": {
         "three": "^0.186.0",

@@ -96,3 +96,51 @@ test('Vite removes the pixel generator while retaining dynamic sampling and fres
     })
   }
 })
+test('Vite freezes free randomness only when explicitly allowed', async () => {
+  const directory = await mkdtemp(join(import.meta.dirname, 'random-build-'))
+  try {
+    await writeFile(join(directory, 'entry.ts'), `
+      import {DataTexture} from 'three/webgpu'
+      export function randomTexture() {
+        const data = new Uint8Array([Math.floor(Math.random() * 256), 0, 0, 255])
+        return new DataTexture(data, 1, 1)
+      }
+    `)
+    const run = async (allowFreezingRandomness: boolean) => {
+      const result = await build({
+        configFile: false,
+        root: directory,
+        logLevel: 'silent',
+        plugins: [bakeTextures({
+          minimumBytes: 0,
+          allowFreezingRandomness,
+        })],
+        build: {
+          write: false,
+          minify: false,
+          target: 'esnext',
+          rolldownOptions: {
+            preserveEntrySignatures: 'strict',
+            input: join(directory, 'entry.ts'),
+            external: ['three/webgpu'],
+          },
+        },
+      })
+      if (Array.isArray(result) || !('output' in result)) {
+        throw new Error('Unexpected Vite output')
+      }
+      return result.output
+    }
+    const strict = await run(false)
+    expect(strict.filter(item => item.type === 'asset' && item.fileName.endsWith('.bin'))).toHaveLength(0)
+    const frozen = await run(true)
+    expect(frozen.filter(item => item.type === 'asset' && item.fileName.endsWith('.bin'))).toHaveLength(1)
+    const chunk = frozen.find(item => item.type === 'chunk')
+    expect(chunk?.type === 'chunk' ? chunk.code : '').not.toContain('Math.random')
+  } finally {
+    await rm(directory, {
+      recursive: true,
+      force: true,
+    })
+  }
+})

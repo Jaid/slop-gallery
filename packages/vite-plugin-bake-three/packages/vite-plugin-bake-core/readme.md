@@ -10,7 +10,7 @@ Shared infrastructure for annotation-free Vite resource compilers. The primary u
 - The Vite plugin discovers definition/call boundaries, performs replacements, emits content-addressed assets, supplies source maps, tracks watch dependencies and removes unused assets.
 - The dependency-free browser runtime fetches/decompresses each retained snapshot once and returns synchronous factories that reconstruct fresh resource graphs.
 
-`./three` contains the reusable Three capability/type adapter. Optional CSG support is imported lazily. `./runtime` contains no Vite, Babel, Node, Three or canvas implementation imports.
+`math` plus its exported subpaths (`math/noise`, `math/random`, `math/time`, `math/shapes`, `math/geometry`, `math/color`, `math/ik`) are built-in trusted capabilities for every adapter. Seeded PRNG/noise operations are available under the default strict policy. `./three` contains the reusable Three capability/type adapter. Optional CSG support is imported lazily. `./runtime` contains no Vite, Babel, Node, Three, math or canvas implementation imports.
 
 ## Adapter API
 
@@ -39,9 +39,11 @@ Each native type names its runtime import and prototype. `allocate` can name a r
 
 Adapters are a **trust boundary**: approving a module/function permits its native implementation to run. They must not advertise nondeterministic or externally side-effecting APIs as deterministic capabilities. The VM is a bounded evaluation tool, not a security sandbox for untrusted repository code.
 
+Free randomness is rejected by default. Set `allowFreezingRandomness: true` on a bake plugin when build-to-build variation is acceptable: `Math.random()`, `math/random`'s `isaac32.seed()`, `isaac64.seed()` and `mulberry32.seed()`, and Three's default-random `SimplexNoise` constructor may then execute once during evaluation. Their resulting resource/data state is serialized normally, so runtime mounts still receive the frozen build result rather than fresh randomness.
+
 ## Conservative behavior
 
-The compiler supports ordinary constants, local algorithms, helpers and approved library operations. Mutable bindings, observed captured-state writes, stateful captured closures, captured resource aliases, clocks, unseeded randomness, unknown globals/imports, async execution, accessors, private class fields and unsupported serialized values cause a candidate to remain unchanged.
+The compiler supports ordinary constants, local algorithms, helpers and approved library operations. Mutable bindings, observed captured-state writes, stateful captured closures, captured resource aliases, clocks, free randomness unless explicitly enabled, unknown globals/imports, async execution, accessors, private class fields and unsupported serialized values cause a candidate to remain unchanged.
 
 This is not whole-program alias analysis or a proof that arbitrary user code is pure. It assumes unmodified platform/library intrinsics and normal resource ownership. Cross-module mutation through unrelated escape paths is outside the supported model. Call sites with genuinely open inputs remain runtime work; the compiler does not execute React components to guess their inputs.
 

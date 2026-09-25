@@ -23,6 +23,10 @@
     "vite-plugin-bake-three-geometry": "workspace:*",
     "vite-plugin-r3f-static-rendering": "workspace:*"
   },
+  "devDependencies": {
+    "fs-extra": "11.4.1",
+    "@types/fs-extra": "11.0.4"
+  },
   "peerDependencies": {
     "react": "^19.3.0",
     "three": "^0.186.0",

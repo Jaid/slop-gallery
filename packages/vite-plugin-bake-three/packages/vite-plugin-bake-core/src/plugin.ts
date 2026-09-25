@@ -155,7 +155,7 @@ export default function createBakePlugin(adapter: BakeAdapter, options: BakeOpti
         if ((candidate.start ?? path.node.start!) < replacedUntil) {
           continue
         }
-        const recipe = new Recipe(graph, adapter)
+        const recipe = new Recipe(graph, adapter, options.allowFreezingRandomness ?? false)
         const entry: BakeDiagnostic = {
           file: normalize(relative(config.root, id)),
           line: path.node.loc?.start.line ?? 0,

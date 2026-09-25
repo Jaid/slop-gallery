@@ -11,12 +11,13 @@ import traverse from '@babel/traverse'
 import * as t from '@babel/types'
 
 import {guardIdentities, identityAccess} from './identity.ts'
+import mathModule from './math.ts'
 import ReadOnlyGraph, {protectNative} from './ReadOnlyGraph.ts'
 import {assertConstant, importInfo} from './SourceGraph.ts'
 import {NotBakeableError} from './types.ts'
 
 const globals = new Set(['undefined', 'NaN', 'Infinity', 'Math', 'Number', 'String', 'Boolean', 'Array', 'Object', 'JSON', 'Map', 'Set', 'ArrayBuffer', 'DataView', 'Int8Array', 'Uint8Array', 'Uint8ClampedArray', 'Int16Array', 'Uint16Array', 'Int32Array', 'Uint32Array', 'Float32Array', 'Float64Array', 'BigInt64Array', 'BigUint64Array', 'Error', 'TypeError', 'RangeError', 'parseInt', 'parseFloat', 'isFinite', 'isNaN'])
-const forbiddenProperties = new Set(['constructor', '__proto__', 'prototype', 'caller', 'callee', 'random', 'now', 'getPrototypeOf', 'setPrototypeOf', 'defineProperty', 'defineProperties', 'getOwnPropertyDescriptor', 'getOwnPropertyDescriptors', 'addEventListener', 'dispatchEvent'])
+const forbiddenProperties = new Set(['constructor', '__proto__', 'prototype', 'caller', 'callee', 'now', 'getPrototypeOf', 'setPrototypeOf', 'defineProperty', 'defineProperties', 'getOwnPropertyDescriptor', 'getOwnPropertyDescriptors', 'addEventListener', 'dispatchEvent'])
 export type EvaluatedRecipe = {
   code: string
   dependencies: ReadonlySet<string>
@@ -41,7 +42,7 @@ function isType(path: NodePath) {
   return Boolean(path.findParent(parent => parent.isTSType() || parent.isTSTypeAnnotation() || parent.isTSInterfaceDeclaration()))
 }
 /** Reject capabilities that cannot be made invariant. This is an optimizer, not an untrusted-code sandbox. */
-function validate(path: NodePath) {
+function validate(path: NodePath, allowFreezingRandomness: boolean) {
   if (isType(path)) {
     return
   }
@@ -67,6 +68,9 @@ function validate(path: NodePath) {
   if (path.isMemberExpression() || path.isOptionalMemberExpression()) {
     const property = path.node.property
     const name = path.node.computed ? (t.isStringLiteral(property) ? property.value : undefined) : (t.isIdentifier(property) ? property.name : undefined)
+    if (name === 'random' && t.isIdentifier(path.node.object, {name: 'Math'}) && !allowFreezingRandomness) {
+      throw new NotBakeableError('Unseeded randomness.')
+    }
     if (name && forbiddenProperties.has(name)) {
       throw new NotBakeableError(`Nondeterministic or reflective property: ${name}.`)
     }
@@ -78,11 +82,14 @@ export default class Recipe {
   readonly dependencies = new Set<string>
   usesResource = false
   private readonly declarations: Array<t.Statement> = []
-  private readonly nativeValues: Array<unknown> = []
+  private readonly nativeValues: Array<{
+    allowRandomProperty: boolean
+    value: unknown
+  }> = []
   private sequence = 0
   private readonly slots = new Map<t.Node, Slot>
 
-  constructor(private readonly graph: SourceGraph, private readonly adapter: BakeAdapter) {}
+  constructor(private readonly graph: SourceGraph, private readonly adapter: BakeAdapter, private readonly allowFreezingRandomness = false) {}
 
   async evaluate(path: NodePath, timeoutMs: number, input: t.CallExpression | t.NewExpression = path.node as t.CallExpression | t.NewExpression): Promise<EvaluatedRecipe> {
     return this.evaluateValue(path, timeoutMs, input, true)
@@ -114,8 +121,9 @@ export default class Recipe {
     const code = transformed.code!
     const readonly = new ReadOnlyGraph
     const start = performance.now()
-    const result = new Script(`'use strict'; Object.defineProperty(Math, 'random', {value() {throw new Error('Unseeded randomness.')}}); Object.freeze(Math);\n${code}`).runInNewContext({
-      __bakeNative: this.nativeValues.map(protectNative),
+    const randomGuard = this.allowFreezingRandomness ? '' : "Object.defineProperty(Math, 'random', {value() {throw new Error('Unseeded randomness.')}});"
+    const result = new Script(`'use strict'; ${randomGuard} Object.freeze(Math);\n${code}`).runInNewContext({
+      __bakeNative: this.nativeValues.map(({allowRandomProperty, value}) => protectNative(value, allowRandomProperty)),
       __bakeReadonly: readonly.capture,
       __bakeIdentityAccess: identityAccess(this.adapter.types),
     }, {
@@ -165,7 +173,7 @@ export default class Recipe {
     let expression: t.Expression
     let capture = false
     if (imported) {
-      const native = this.adapter.modules.get(imported.source) ?? await this.adapter.loadModule?.(imported.source)
+      const native = this.adapter.modules.get(imported.source) ?? mathModule(imported.source, this.allowFreezingRandomness) ?? await this.adapter.loadModule?.(imported.source, {allowFreezingRandomness: this.allowFreezingRandomness})
       if (native) {
         const value = imported.imported === '*' ? native : native[imported.imported]
         if (value === undefined) {
@@ -174,7 +182,8 @@ export default class Recipe {
         if (this.adapter.roots.has(value) || imported.imported === '*' && Object.values(native).some(item => this.adapter.roots.has(item))) {
           this.usesResource = true
         }
-        expression = t.memberExpression(t.identifier('__bakeNative'), t.numericLiteral(this.nativeValues.push(value) - 1), true)
+        const allowRandomProperty = this.allowFreezingRandomness || imported.source === 'math/random' && imported.imported === '*'
+        expression = t.memberExpression(t.identifier('__bakeNative'), t.numericLiteral(this.nativeValues.push({allowRandomProperty, value}) - 1), true)
       } else {
         if (!imported.source.startsWith('.') && !imported.source.startsWith('#') && !imported.source.startsWith('/') && !/^[A-Za-z]:[/\\]/u.test(imported.source)) {
           throw new NotBakeableError(`Unapproved module: ${imported.source}.`)
@@ -237,7 +246,7 @@ export default class Recipe {
     const ast = t.file(t.program([t.expressionStatement(node)]))
     const references: Array<NodePath<t.Identifier>> = []
     traverse(ast, {
-      enter: validate,
+      enter: path => validate(path, this.allowFreezingRandomness),
       ReferencedIdentifier(path) {
         if (!path.isIdentifier() || isType(path) || path.scope.getBinding(path.node.name)) {
           return

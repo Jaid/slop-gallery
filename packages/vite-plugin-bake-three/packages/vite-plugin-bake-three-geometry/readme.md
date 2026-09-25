@@ -73,7 +73,7 @@ The package still does **not** serialize Rapier worlds, generate navigation mesh
 
 ## Limits
 
-Automatic does not mean arbitrary JavaScript can be proven constant. Open parameters, state/props, clocks, unseeded randomness, unknown external APIs, browser globals, async work, accessors, reflective operations and observed captured-state mutations prevent baking. The original code remains in place, and recognized skipped recipes appear in the report.
+Automatic does not mean arbitrary JavaScript can be proven constant. Open parameters, state/props, clocks, free randomness unless explicitly enabled, unknown external APIs, browser globals, async work, accessors, reflective operations and observed captured-state mutations prevent baking. The original code remains in place, and recognized skipped recipes appear in the report.
 
 There is no whole-program React prop-domain inference: `walls.map(wall => <WallSurface wall={wall} />)` is **not** expanded into every possible call inside `WallSurface`. JSX intrinsic geometry tags are not rewritten. Finite-domain specialization and automatic scene instancing are outside this plugin.
 
@@ -92,6 +92,7 @@ Generated assets for tree-shaken recipes are removed. High-resolution source map
 ```ts
 bakeThreeGeometry({
   meshBvh: true,
+  allowFreezingRandomness: false,
   include: /\/src\//u,
   exclude: /\/experimental\//u,
   minimumBytes: 32 * 1024,
@@ -105,6 +106,8 @@ bakeThreeGeometry({
   },
 })
 ```
+
+`math` and its subpaths are approved build-time dependencies. Seeded `math/random` and `math/noise` algorithms are bakeable by default; `allowFreezingRandomness: true` additionally permits free random values to be sampled once during the build and serialized with the geometry.
 
 `include` and `exclude` also accept predicates receiving normalized absolute filenames. The default inclusion is project-root source outside `node_modules`. Dependencies may be followed outside the transform inclusion filter.
 

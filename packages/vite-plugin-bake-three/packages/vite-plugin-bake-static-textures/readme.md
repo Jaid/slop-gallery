@@ -61,7 +61,7 @@ Resources and source objects get fresh native IDs/UUIDs. Aliases within one resu
 
 ## Deliberate exclusions
 
-Font-dependent drawing (`fillText`, `strokeText`, `measureText`) and external image composition (`drawImage`) remain runtime work. So do asynchronous `prepare` recipes, React texture hooks, runtime input/state, unseeded randomness, arbitrary network activity, unknown imports and observed captured-state mutations. In particular, installing this plugin does **not** automatically bake the asynchronous Knottingham label/preview atlases.
+Font-dependent drawing (`fillText`, `strokeText`, `measureText`) and external image composition (`drawImage`) remain runtime work. So do asynchronous `prepare` recipes, React texture hooks, runtime input/state, free randomness unless explicitly enabled, arbitrary network activity, unknown imports and observed captured-state mutations. In particular, installing this plugin does **not** automatically bake the asynchronous Knottingham label/preview atlases.
 
 The compiler follows a conservative supported subset, not arbitrary whole-program JavaScript. Approved libraries and normal unmodified intrinsics are trusted. This is not an untrusted-code sandbox; cross-module aliases manipulated by unrelated application code are outside its proof model.
 
@@ -74,6 +74,7 @@ Retained snapshots are emitted as content-addressed gzip-compressed `.bin` asset
 ```ts
 bakeStaticTextures({
   include: /\/src\//u,
+  allowFreezingRandomness: false,
   minimumBytes: 4097,
   maxBytes: 64 * 1024 * 1024,
   timeoutMs: 10_000,
@@ -81,6 +82,8 @@ bakeStaticTextures({
   report: true,
 })
 ```
+
+`math` and its subpaths are approved build-time dependencies, so seeded `math/random` and `math/noise` texture generators bake under the default strict policy. Set `allowFreezingRandomness: true` only when it is acceptable for free random values to vary between builds and then be frozen into the emitted texture.
 
 The shared options also include `exclude` and `onDiagnostic`. Filters accept normalized absolute-path predicates. Uncompressed snapshots below 8 KiB are skipped by default. Build-time canvases are additionally limited to 16,777,216 pixels.
 

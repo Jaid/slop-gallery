@@ -61,6 +61,15 @@ const nativeTypes: Array<NativeType> = [
     omit: identity,
   },
 ].filter(type => type.prototype) as Array<NativeType>
+const SeededSimplexNoise = class extends SimplexNoise {
+  constructor(random?: {random: () => number}) {
+    if (!random || typeof random.random !== 'function') {
+      throw new NotBakeableError('SimplexNoise needs an explicit deterministic random source.')
+    }
+    super(random)
+  }
+}
+
 export function threeAdapter(options: {
   kind: 'geometry' | 'texture'
   modules?: ReadonlyMap<string, Readonly<Record<string, unknown>>>
@@ -82,7 +91,10 @@ export function threeAdapter(options: {
     accepts: resources => resources.has(options.kind) && (options.kind === 'texture' || !resources.has('texture')),
     readCanvas: options.readCanvas,
     ownsCanvas: options.ownsCanvas,
-    async loadModule(source) {
+    async loadModule(source, {allowFreezingRandomness = false} = {}) {
+      if (source === 'three/addons/math/SimplexNoise.js') {
+        return {SimplexNoise: allowFreezingRandomness ? SimplexNoise : SeededSimplexNoise}
+      }
       if (source === 'three-bvh-csg') {
         const {ADDITION, Brush, Evaluator, SUBTRACTION} = await import('three-bvh-csg')
         return {
@@ -96,21 +108,11 @@ export function threeAdapter(options: {
     modules: new Map([
       ['three', native],
       ['three/webgpu', native],
-      ['three/addons/math/SimplexNoise.js', {SimplexNoise: SeededSimplexNoise}],
       ['three/addons/utils/BufferGeometryUtils.js', {
         mergeVertices,
         mergeGeometries,
       }],
       ...options.modules ?? [],
     ]),
-  }
-}
-
-class SeededSimplexNoise extends SimplexNoise {
-  constructor(random?: {random: () => number}) {
-    if (!random || typeof random.random !== 'function') {
-      throw new NotBakeableError('SimplexNoise needs an explicit deterministic random source.')
-    }
-    super(random)
   }
 }

@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "magic-string": "^1.4.2",
+    "math": "0.0.0-canary-20260925-d23173e5",
     "@babel/core": "8.0.6",
     "@babel/generator": "^8.0.6",
     "@babel/parser": "^8.0.6",

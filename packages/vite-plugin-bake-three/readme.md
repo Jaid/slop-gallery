@@ -30,6 +30,7 @@ Its implementation packages are nested workspaces of this package. They remain i
 ## Features
 
 - Deterministic `BufferGeometry` recipes are evaluated at build time and restored from owned binary snapshots.
+- `math` and its subpath APIs are available to every bake pass as trusted build-time math capabilities.
 - `MeshBVH` construction can be serialized together with the exact geometry it indexes.
 - Deterministic `DataTexture` and synchronous Canvas2D recipes are rasterized at build time.
 - Closed R3F render regions can be lowered into precomputed `InstancedMesh` batches and WebGPU `BundleGroup`s.
@@ -41,6 +42,9 @@ Every pass is enabled by default. Pass `false` to disable one or pass its native
 
 ```ts
 bakeThree({
+  // Off by default: when enabled, random values are sampled once during the build
+  // and the sampled result is frozen into the emitted artifact/plan.
+  allowFreezingRandomness: false,
   geometry: {
     meshBvh: true,
     minimumBytes: 64 * 1024,
@@ -60,6 +64,8 @@ bakeThree({
   staticRendering: false,
 })
 ```
+
+`allowFreezingRandomness` defaults to `false` and applies to all enabled passes. A pass can override it in its own options. Seeded `math/random` and `math/noise` recipes remain bakeable in strict mode; opting in additionally permits `Math.random()`, the `math/random` seed helpers and Three's default-random `SimplexNoise` constructor.
 
 The individual factories are also re-exported:
 

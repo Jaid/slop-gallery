@@ -81,7 +81,7 @@ export type BakeAdapter = {
   candidates?: (source: SourceModule) => Promise<ReadonlyArray<Candidate>>
   codecs?: ReadonlyArray<SnapshotCodec>
   /** Lazily resolve optional, explicitly approved native modules. */
-  loadModule?: (source: string) => Promise<Readonly<Record<string, unknown>> | undefined>
+  loadModule?: (source: string, options?: {allowFreezingRandomness?: boolean}) => Promise<Readonly<Record<string, unknown>> | undefined>
   /** These modules are trusted capabilities, not arbitrary application imports. */
   modules: ReadonlyMap<string, Readonly<Record<string, unknown>>>
   name: string
@@ -102,6 +102,8 @@ export type BakeDiagnostic = {
   status: 'baked' | 'skipped'
 }
 export type BakeOptions = {
+  /** Permit nondeterministic random sources to run once at build time and freeze their result into the artifact. */
+  allowFreezingRandomness?: boolean
   /** Gzip is decoded once at module load, never in a resource constructor. */
   compress?: boolean
   exclude?: ((id: string) => boolean) | RegExp

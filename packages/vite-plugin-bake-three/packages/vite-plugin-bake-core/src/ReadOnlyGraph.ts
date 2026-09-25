@@ -73,14 +73,15 @@ export default class ReadOnlyGraph {
   }
 }
 
-const nativeProxies = new WeakMap<object, object>
+const nativeProxies = [new WeakMap<object, object>, new WeakMap<object, object>] as const
 
 /** Native constructors are capabilities, but their static/prototype state is not writable. */
-export function protectNative(value: unknown): unknown {
+export function protectNative(value: unknown, allowRandomProperty = false): unknown {
   if (value === null || typeof value !== 'function' && typeof value !== 'object') {
     return value
   }
-  const previous = nativeProxies.get(value)
+  const proxies = nativeProxies[Number(allowRandomProperty)]
+  const previous = proxies.get(value)
   if (previous) {
     return previous
   }
@@ -98,13 +99,13 @@ export function protectNative(value: unknown): unknown {
       throw new NotBakeableError('Cannot mutate a native capability.')
     },
     get(target, key): unknown {
-      if (typeof key === 'string' && (reflection.has(key) || key === 'random')) {
+      if (typeof key === 'string' && (reflection.has(key) || key === 'random' && !allowRandomProperty)) {
         throw new NotBakeableError('Nondeterministic or reflective native access.')
       }
       // Class heritage needs the real prototype. Explicit source access is rejected by the AST pass.
-      return key === 'prototype' ? Reflect.get(target, key) : protectNative(Reflect.get(target, key))
+      return key === 'prototype' ? Reflect.get(target, key) : protectNative(Reflect.get(target, key), allowRandomProperty)
     },
   })
-  nativeProxies.set(value, proxy)
+  proxies.set(value, proxy)
   return proxy
 }

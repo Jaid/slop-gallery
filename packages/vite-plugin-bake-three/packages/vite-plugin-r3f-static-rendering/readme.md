@@ -88,6 +88,7 @@ The lightweight runtime imports only React, Fiber, Three and the lifetime helper
 
 ```ts
 r3fStaticRendering({
+  allowFreezingRandomness: false,
   staticInstancing: {minimumCount: 3},
   renderBundles: {minimumObjects: 4},
   include: /\/src\//u,
@@ -102,6 +103,8 @@ r3fStaticRendering({
   },
 })
 ```
+
+`allowFreezingRandomness` defaults to `false`. When enabled, random values in otherwise closed static render data are evaluated once during the build and the resulting transforms/properties are frozen into the compiled plan. `math` and its subpaths are approved in either mode; seeded PRNG/noise use does not require the opt-in.
 
 Either feature can be set to `false` or `{enabled: false}`. Minimum thresholds must be integers of at least two. Include/exclude also accept predicates receiving normalized absolute filenames. The default transforms project-root `.tsx`/`.jsx` files outside `node_modules`.
 

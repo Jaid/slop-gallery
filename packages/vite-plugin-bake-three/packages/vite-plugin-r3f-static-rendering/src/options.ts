@@ -6,6 +6,8 @@ import {defaultRenderBundlesOptions} from './features/renderBundles.ts'
 import {defaultStaticInstancingOptions} from './features/staticInstancing.ts'
 
 export type R3fStaticRenderingOptions = {
+  /** Permit nondeterministic random sources to run once at build time and freeze their result into the compiled plan. */
+  allowFreezingRandomness?: boolean
   exclude?: ((id: string) => boolean) | RegExp
   include?: ((id: string) => boolean) | RegExp
   maxNodes?: number

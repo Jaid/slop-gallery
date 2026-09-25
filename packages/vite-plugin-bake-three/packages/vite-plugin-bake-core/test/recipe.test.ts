@@ -17,7 +17,10 @@ class Resource<Value = unknown> {
 }
 const adapter: BakeAdapter = {
   name: 'test',
-  modules: new Map([['test:resources', {Resource}]]),
+  modules: new Map([
+    ['test:resources', {Resource}],
+    ['test:random', {random: () => Math.random()}],
+  ]),
   roots: new Set([Resource]),
   types: [{
     name: 'Resource',
@@ -33,10 +36,10 @@ afterAll(() => rm(directory, {
   force: true,
 }))
 const graph = new SourceGraph(async (source, importer) => resolve(importer, '..', source))
-async function evaluate(code: string, timeout = 1000) {
+async function evaluate(code: string, timeout = 1000, allowFreezingRandomness = false) {
   const source = await graph.input(join(directory, 'input.ts'), `import {Resource} from 'test:resources';\n${code}`)
   const path = source.path.scope.getBinding('result')!.path.get('init') as NodePath<CallExpression | NewExpression>
-  return new Recipe(graph, adapter).evaluate(path, timeout)
+  return new Recipe(graph, adapter, allowFreezingRandomness).evaluate(path, timeout)
 }
 function roundTrip(result: Awaited<ReturnType<typeof evaluate>>) {
   const writer = new SnapshotWriter(adapter, 1024 * 1024, result.isShared, result.rootPrototype)
@@ -70,6 +73,44 @@ test('supports static destructuring and helper functions', async () => {
   const result = await evaluate('const {x, y} = {x: 3, y: 7}; const result = new Resource(x * y)')
   expect((roundTrip(result)() as Resource).data).toBe(21)
 })
+test('provides deterministic math modules to every adapter', async () => {
+  const code = `
+    import {clamp} from 'math'
+    import {simplex2d} from 'math/noise'
+    import * as mathRandom from 'math/random'
+    const result = (() => {
+      const state = mathRandom.mulberry32.create(7)
+      const noise = simplex2d.create(31)
+      return new Resource([
+        clamp(4, 0, 2),
+        mathRandom.mulberry32.sample(state),
+        simplex2d.sample(noise, 0.25, -0.75),
+        mathRandom.random.int(() => 0.5, 1, 5),
+      ])
+    })()
+  `
+  const first = (roundTrip(await evaluate(code))() as Resource<Array<number>>).data
+  const second = (roundTrip(await evaluate(code))() as Resource<Array<number>>).data
+  expect(first).toEqual(second)
+  expect(first[0]).toBe(2)
+  expect(first[3]).toBe(3)
+})
+test('requires opt-in before freezing free randomness', async () => {
+  await expect(evaluate(`
+    import {mulberry32} from 'math/random'
+    const result = new Resource(mulberry32.seed())
+  `)).rejects.toThrow('allowFreezingRandomness')
+  const direct = (roundTrip(await evaluate('const result = new Resource(Math.random())', 1000, true))() as Resource<number>).data
+  expect(direct).toBeGreaterThanOrEqual(0)
+  expect(direct).toBeLessThan(1)
+  const seeded = (roundTrip(await evaluate(`
+    import {mulberry32} from 'math/random'
+    const result = new Resource(mulberry32.seed())
+  `, 1000, true))() as Resource<number>).data
+  expect(seeded).toBeInteger()
+  expect(seeded).toBeGreaterThanOrEqual(0)
+  expect(seeded).toBeLessThanOrEqual(0xFF_FF_FF_FF)
+})
 test.each([
   ['clock', 'const result = new Resource(Date.now())'],
   ['random', 'const result = new Resource(Math.random())'],
@@ -97,6 +138,16 @@ test.each([
     return
   }
   await expect((async () => roundTrip(await evaluate(code)))()).rejects.toThrow()
+})
+test('keeps approved native random methods behind the same opt-in', async () => {
+  const code = `
+    import * as native from 'test:random'
+    const result = new Resource(native.random())
+  `
+  await expect(evaluate(code)).rejects.toThrow('Nondeterministic or reflective native access')
+  const value = (roundTrip(await evaluate(code, 1000, true))() as Resource<number>).data
+  expect(value).toBeGreaterThanOrEqual(0)
+  expect(value).toBeLessThan(1)
 })
 test('does not confuse a shadowed constructor with an imported resource', async () => {
   await expect(evaluate('const result = (() => { const Resource = (x) => x; return Resource(1) })()')).rejects.toThrow('Not a recognized resource')
