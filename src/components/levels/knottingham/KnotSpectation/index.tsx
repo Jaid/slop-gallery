@@ -4,9 +4,10 @@ import {useFrame, useThree} from '@react-three/fiber/webgpu'
 import knotAnnouncementUrl from 'knot-materials/announcementAssets.ts'
 import {knotBays, knotExhibition} from 'knot-materials/exhibition.ts'
 import {createKnotGeometry} from 'knot-materials/geometry.ts'
+import {lerp} from 'math'
 import {useEffect, useRef} from 'react'
 import {PointerLockControls} from 'three/addons/controls/PointerLockControls.js'
-import {MathUtils, PerspectiveCamera, Vector3} from 'three/webgpu'
+import {PerspectiveCamera, Vector3} from 'three/webgpu'
 
 import {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
 import KnotNarration from '#src/lib/audio/KnotNarration.ts'
@@ -235,7 +236,7 @@ export default function KnotSpectation() {
   useFrame((_, delta) => {
     const current = session.current
     const focusTarget = current && !current.orbit.returning ? 1 : 0
-    focusAmount.current = MathUtils.lerp(focusAmount.current, focusTarget, 1 - Math.exp(-Math.min(delta, 0.06) * inspectionFocusSpeed))
+    focusAmount.current = lerp(focusAmount.current, focusTarget, 1 - Math.exp(-Math.min(delta, 0.06) * inspectionFocusSpeed))
     if (!focusTarget && focusAmount.current < 0.002) {
       focusAmount.current = 0
     }

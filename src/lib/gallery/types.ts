@@ -1,5 +1,6 @@
-export type Vec3 = [number, number, number]
-export type Quat = [number, number, number, number]
+import type {Quat as MathQuat, Vec3 as MathVec3} from 'math'
+
+export type {Quat, Vec3} from 'math'
 export type RoomId = 'antechamber' | 'corridor' | 'dine' | 'lobby' | 'lodge' | 'moonfall' | 'oculus' | 'sienna' | 'vesper'
 export type Portrait = {
   creator: string
@@ -12,21 +13,21 @@ export type Portrait = {
   mergeJob?: symbol
   merging?: boolean
   narration?: string
-  orientation?: Quat
+  orientation?: MathQuat
   pending?: boolean
-  position: Vec3
+  position: MathVec3
   reserved?: boolean
   rotation: number
   source: Blob | string
   title: string
-  velocity?: Vec3
+  velocity?: MathVec3
   wallId?: string
   width: number
   year?: number
 }
 export type Placement = {
   inReach: boolean
-  position: Vec3
+  position: MathVec3
   reason: string
   rotation: number
   valid: boolean
@@ -49,6 +50,6 @@ export type GalleryDocument = GallerySnapshot & {
 export type PlayerPose = {
   pitch: number
   /** World-space feet position, independent of head bob and inspection cameras. */
-  position: Vec3
+  position: MathVec3
   yaw: number
 }

@@ -1,5 +1,7 @@
 import type {PlayerPose} from './types.ts'
 
+import {wrapAngle} from 'math'
+
 import {insideLevel, playerSpawn} from '#level/navigation.ts'
 
 import {galleryStorageKey} from '../level.ts'
@@ -23,7 +25,7 @@ export function validatePlayerPose(value: unknown): PlayerPose | null {
   }
   const pose: PlayerPose = {
     position: [...position as PlayerPose['position']],
-    yaw: Math.atan2(Math.sin(yaw), Math.cos(yaw)),
+    yaw: wrapAngle(yaw),
     pitch,
   }
   return insideLevel(pose.position) ? pose : null

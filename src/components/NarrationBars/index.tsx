@@ -1,5 +1,6 @@
 import type {NarrationState} from 'use-narrator/core'
 
+import {clamp} from 'math'
 import {useEffect, useRef} from 'react'
 
 import {narrationBands, narrationMeter} from '#src/lib/audio/NarrationMeter.ts'
@@ -11,7 +12,7 @@ const idleBarStyle = {transform: 'scaleY(0.03)'}
 type Props = Pick<NarrationState, 'instanceId' | 'status' | 'statusEndsAt'>
 
 export function lingerBarScale(startScale: number, progress: number) {
-  const clamped = Math.max(0, Math.min(1, progress))
+  const clamped = clamp(progress, 0, 1)
   return startScale * (1 - clamped ** 3)
 }
 
@@ -64,7 +65,7 @@ export default function NarrationBars({instanceId, status, statusEndsAt}: Props)
         last = time
         const levels = narrationMeter.read(instanceId)
         for (const [i, bar] of bars.entries()) {
-          bar.style.transform = `scaleY(${Math.max(0.15, Math.min(1, levels[i] * 2.4))})`
+          bar.style.transform = `scaleY(${clamp(levels[i] * 2.4, 0.15, 1)})`
         }
       }
       frame = requestAnimationFrame(update)

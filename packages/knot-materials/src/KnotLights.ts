@@ -1,6 +1,8 @@
 import type KnotLayout from './KnotLayout.ts'
 import type {Vec3} from './types.ts'
 
+import {clamp} from 'math'
+
 export const knotLight = {
   size: [2.4, 0.08, 2.2] as const,
   ceilingInset: 0.16,
@@ -38,8 +40,6 @@ export function isKnotLightDamageImpact(mass: number, speed: number) {
 
 const fract = (value: number) => value - Math.floor(value)
 const noise = (seed: number, sample: number) => fract(Math.sin((seed + 1) * 12.9898 + (sample + 1) * 78.233) * 43_758.5453)
-const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
-
 export type KnotLightFracture = {
   deadTriangle: readonly [readonly [number, number], readonly [number, number], readonly [number, number]]
   liveFraction: number

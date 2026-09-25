@@ -1,5 +1,7 @@
 import type {SoundEffect, Voice} from './proceduralAudio.ts'
 
+import {clamp} from 'math'
+
 import {noise, osc} from './proceduralAudio.ts'
 
 export type FootstepSurface = 'fabric' | 'generic' | 'glass' | 'hollow'
@@ -65,10 +67,10 @@ const surfaceProfiles = {
 /** Speed is actual horizontal world units/second, not the requested movement or Shift state. */
 export function footstepVoices(surface: FootstepSurface, speed: number, {crouching = false, strength = 1, variation = 0}: FootstepOptions = {}): Array<Voice> {
   const profile = surfaceProfiles[surface]
-  const effort = Math.max(0, Math.min(1, speed / 9))
+  const effort = clamp(speed / 9, 0, 1)
   const pitch = (0.95 + effort * 0.08) * (1 + variation * 0.008)
   const brightness = (crouching ? 0.62 : 1) * (0.82 + effort * 0.12) * profile.brightness
-  const gain = (crouching ? 0.34 : 1) * Math.max(0, Math.min(12, strength)) * profile.gain
+  const gain = (crouching ? 0.34 : 1) * clamp(strength, 0, 12) * profile.gain
   const duration = (crouching ? 0.105 - effort * 0.01 : 0.085 - effort * 0.018) * profile.duration
   const attack = (crouching ? 0.016 : 0.006) * profile.attack
   const body = (base: number, growth: number) => (base + effort * growth) * gain
@@ -93,7 +95,7 @@ export function footstepVoices(surface: FootstepSurface, speed: number, {crouchi
 
 /** Landing strength follows impact energy (speed squared), then caps before clipping becomes a concern. */
 export function impactFootstepStrength(impactSpeed: number) {
-  const normalized = Math.max(0, Math.min(1, impactSpeed / 12))
+  const normalized = clamp(impactSpeed / 12, 0, 1)
   return 2.5 + normalized * normalized * 9.5
 }
 

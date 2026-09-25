@@ -1,4 +1,5 @@
-import {SimplexNoise} from 'three/addons/math/SimplexNoise.js'
+import {simplex2d} from 'math/noise'
+import {mulberry32} from 'math/random'
 import {DataTexture, LinearFilter, LinearMipmapLinearFilter, SRGBColorSpace} from 'three/webgpu'
 
 const size = 512
@@ -21,19 +22,16 @@ export default class SoilTextures {
   readonly map: DataTexture
 
   constructor() {
-    let seed = 541
-    const random = () => {
-      seed = seed * 1_664_525 + 1_013_904_223 >>> 0
-      return seed / 4_294_967_296
-    }
-    const noise = new SimplexNoise({random})
+    const randomState = mulberry32.create(541)
+    const random = () => mulberry32.sample(randomState)
+    const noise = simplex2d.create(541)
     const colors = new Uint8Array(size * size * 4)
     const bumps = new Uint8Array(colors.length)
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
         const i = (y * size + x) * 4
-        const crumb = noise.noise(x / 7, y / 7)
-        const grit = noise.noise(x / 1.8, y / 1.8)
+        const crumb = simplex2d.sample(noise, x / 7, y / 7)
+        const grit = simplex2d.sample(noise, x / 1.8, y / 1.8)
         const grain = random()
         const mineral = grain > 0.985 ? (grain - 0.985) / 0.015 : 0
         const tone = 1 + crumb * 0.3 + grit * 0.18 + (grain - 0.5) * 0.16

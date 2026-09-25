@@ -1,3 +1,5 @@
+import {clamp} from 'math'
+
 import lobby from './lobby.ts'
 import lowerGallery, {oculusPlatform} from './lowerGallery.ts'
 
@@ -38,7 +40,7 @@ const easedHeight = (t: number) => startY + t * t * (3 - 2 * t) * (endY - startY
 
 // Rendering, railings and navigation use the same gently eased longitudinal profile.
 export function towerRampHeight(fraction: number) {
-  const segment = Math.max(0, Math.min(1, fraction)) * towerRamp.segments
+  const segment = clamp(fraction, 0, 1) * towerRamp.segments
   const index = Math.floor(segment)
   const t = segment - index
   return easedHeight(index / towerRamp.segments) * (1 - t) + easedHeight(Math.min(index + 1, towerRamp.segments) / towerRamp.segments) * t
@@ -50,7 +52,7 @@ export function towerRampGradient(fraction: number) {
 // Quarter-circle fillets meet the base’s front face and the straight ramp sides tangentially.
 export function towerRampHalfWidth(z: number) {
   const radius = towerRamp.baseCornerRadius
-  const distance = Math.max(0, Math.min(radius, z - startZ))
+  const distance = clamp(z - startZ, 0, radius)
   return towerRamp.width / 2 + radius - Math.sqrt(Math.max(0, radius * radius - (radius - distance) ** 2))
 }
 

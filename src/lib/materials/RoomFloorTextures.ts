@@ -2,14 +2,13 @@ import type {DataTexture} from 'three/webgpu'
 
 import ReadbackCanvas from 'canvas-textures'
 import {textureFromPixels} from 'canvas-textures/three'
-import {SimplexNoise} from 'three/addons/math/SimplexNoise.js'
+import {simplex2d} from 'math/noise'
+import {mulberry32} from 'math/random'
 import {MirroredRepeatWrapping, RepeatWrapping} from 'three/webgpu'
 
-const random = (seed: number) => () => {
-  seed = seed + 0x6D_2B_79_F5 | 0
-  let value = Math.imul(seed ^ seed >>> 15, 1 | seed)
-  value = value + Math.imul(value ^ value >>> 7, 61 | value) ^ value
-  return ((value ^ value >>> 14) >>> 0) / 4_294_967_296
+const random = (seed: number) => {
+  const state = mulberry32.create(seed)
+  return () => mulberry32.sample(state)
 }
 function finish(source: ReadbackCanvas, color = true) {
   const texture = textureFromPixels(source.read(), {color})
@@ -25,7 +24,7 @@ function wood() {
     const context = color.context
     const bump = height.context
     const rng = random(777)
-    const noise = new SimplexNoise({random: random(31)})
+    const noise = simplex2d.create(31)
     context.fillStyle = '#6d4a2c'
     context.fillRect(0, 0, size, size)
     bump.fillStyle = '#909090'
@@ -57,7 +56,7 @@ function wood() {
         bump.beginPath()
         for (let x = 0; x <= size; x += 8) {
         // Blend the noise back to its origin at the tile edge for continuous grain.
-          const wave = (noise.noise(x / 90, gy / 40) * (1 - x / size) + noise.noise((x - size) / 90, gy / 40) * x / size) * 2.4
+          const wave = (simplex2d.sample(noise, x / 90, gy / 40) * (1 - x / size) + simplex2d.sample(noise, (x - size) / 90, gy / 40) * x / size) * 2.4
           for (const target of [context, bump]) {
             if (x === 0) {
               target.moveTo(x, gy + wave)

@@ -1,5 +1,7 @@
 import type {BufferGeometry} from 'three/webgpu'
 
+import {clamp} from 'math'
+import {mulberry32} from 'math/random'
 import {Color, ExtrudeGeometry, Float32BufferAttribute, BufferGeometry as Geometry, IcosahedronGeometry, Path, Shape} from 'three/webgpu'
 
 import {mergeParts} from '../../geometry.ts'
@@ -42,7 +44,7 @@ export default class CraterGeometry {
       positions.push(x, y, z)
       uv.push(x / 2, z / 2)
       const variation = craterTerrain.variation(x, z)
-      color.copy(dark).lerp(light, Math.max(0, Math.min(1, 0.52 + variation * 0.23 + y * 0.035)))
+      color.copy(dark).lerp(light, clamp(0.52 + variation * 0.23 + y * 0.035, 0, 1))
       colors.push(color.r, color.g, color.b)
     }
     vertex(0, 0)
@@ -74,11 +76,8 @@ export default class CraterGeometry {
     this.terrain.computeBoundingBox()
     this.terrain.computeBoundingSphere()
     const rocks: Array<BufferGeometry> = []
-    let seed = 907
-    const random = () => {
-      seed = Math.imul(seed, 1_664_525) + 1_013_904_223 >>> 0
-      return seed / 4_294_967_296
-    }
+    const randomState = mulberry32.create(907)
+    const random = () => mulberry32.sample(randomState)
     for (let i = 0; i < 210; i++) {
       const angle = random() * Math.PI * 2
       const r = Math.sqrt(random()) * (radius - 0.45)

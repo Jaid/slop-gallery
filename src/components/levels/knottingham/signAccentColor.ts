@@ -1,4 +1,5 @@
-import {Color, MathUtils, SRGBColorSpace} from 'three/webgpu'
+import {clamp} from 'math'
+import {Color, SRGBColorSpace} from 'three/webgpu'
 
 const saturationMaximum = 0.75
 const lightnessMinimum = 0.7
@@ -13,6 +14,6 @@ export default function signAccentColor(value: string) {
   }
   const color = new Color(value)
   color.getHSL(hsl, SRGBColorSpace)
-  color.setHSL(hsl.h, Math.min(hsl.s, saturationMaximum), MathUtils.clamp(hsl.l, lightnessMinimum, lightnessMaximum), SRGBColorSpace)
+  color.setHSL(hsl.h, Math.min(hsl.s, saturationMaximum), clamp(hsl.l, lightnessMinimum, lightnessMaximum), SRGBColorSpace)
   return color.getStyle(SRGBColorSpace)
 }

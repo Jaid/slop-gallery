@@ -1,8 +1,8 @@
 import type {Quaternion} from 'three/webgpu'
 
+import {clamp, wrapAngle} from 'math'
 import {Euler, Vector2} from 'three/webgpu'
 
-const wrapAngle = (angle: number) => Math.atan2(Math.sin(angle), Math.cos(angle))
 class InspectionSpring {
   value = 0
   velocity = 0
@@ -71,7 +71,7 @@ export default class InspectionLook {
       const yawError = wrapAngle(this.angles.y - this.targetAngles.y)
       this.angles.x = this.targetAngles.x + this.pitch.update(pitchError, this.pending.x, step)
       this.angles.y = wrapAngle(this.targetAngles.y + this.yaw.update(yawError, this.pending.y, step))
-      const pitch = Math.max(-Math.PI / 2 + 0.0001, Math.min(Math.PI / 2 - 0.0001, this.angles.x))
+      const pitch = clamp(this.angles.x, -Math.PI / 2 + 0.0001, Math.PI / 2 - 0.0001)
       if (!(pitch !== this.angles.x)) {
         continue
       }

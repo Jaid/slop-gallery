@@ -1,6 +1,8 @@
 import type {Vec3} from '../types.ts'
 import type {RailingAnchor} from './RailingPath.ts'
 
+import {clamp} from 'math'
+
 import {oculusRamps} from '../lowerGallery.ts'
 import tower, {towerRamp as ramp, towerPlatformOutline, towerRampHeight} from '../oculusTower.ts'
 import RailingPath from './RailingPath.ts'
@@ -38,7 +40,7 @@ export default class OculusRailing extends RailingPath {
     const straightStart = ramp.startZ + ramp.baseCornerRadius
     for (let i = 1; i <= 64; i++) {
       const z = straightStart + (ramp.endZ - straightStart) * i / 64
-      const transition = Math.max(0, Math.min(1, (z - (ramp.endZ - 0.65)) / 0.65))
+      const transition = clamp((z - (ramp.endZ - 0.65)) / 0.65, 0, 1)
       const height = ramp.railHeight * (1 - 0.5 * transition * transition * (3 - 2 * transition))
       add([tower.x - ramp.width / 2 + inset, towerRampHeight((z - ramp.startZ) / (ramp.endZ - ramp.startZ)), z], height)
     }

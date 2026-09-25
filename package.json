@@ -45,6 +45,11 @@
     "three-bvh-csg@0.0.18": "patches/three-bvh-csg@0.0.18.patch"
   },
   "dependencies": {
+    "@dimforge/rapier3d-compat": "0.20.0",
+    "@openrouter/ai-sdk-provider": "3.1.0",
+    "@react-three/drei": "11.0.0-alpha.7",
+    "@react-three/fiber": "10.0.0-alpha.5",
+    "@react-three/rapier": "2.2.0",
     "ai": "7.0.113",
     "branch-component": "0.4.0",
     "canvas-textures": "workspace:*",
@@ -54,6 +59,7 @@
     "es-toolkit": "1.52.0",
     "flatten-string": "0.2.0",
     "knot-materials": "workspace:*",
+    "math": "0.0.0-canary-20260925-d23173e5",
     "mount-root": "0.5.0",
     "optis": "0.3.0",
     "react": "19.3.0",
@@ -76,12 +82,7 @@
     "vite-plugin-import-voice-sample": "workspace:*",
     "voice-sample-store": "workspace:*",
     "webgpu-capture-bridge": "workspace:*",
-    "zustand": "5.0.15",
-    "@dimforge/rapier3d-compat": "0.20.0",
-    "@openrouter/ai-sdk-provider": "3.1.0",
-    "@react-three/drei": "11.0.0-alpha.7",
-    "@react-three/fiber": "10.0.0-alpha.5",
-    "@react-three/rapier": "2.2.0"
+    "zustand": "5.0.15"
   },
   "devDependencies": {
     "autoprefixer": "10.6.1",

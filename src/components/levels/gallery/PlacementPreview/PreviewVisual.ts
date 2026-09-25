@@ -1,5 +1,6 @@
 import type {Texture} from 'three/webgpu'
 
+import {clamp} from 'math'
 import {float, Fn, fwidth, luminance, max, mix, sin, smoothstep, texture, uniform, uv, vec2} from 'three/tsl'
 import {BufferGeometry, Color, Float32BufferAttribute, MeshBasicNodeMaterial} from 'three/webgpu'
 
@@ -99,7 +100,7 @@ export default class PreviewVisual {
   update(valid: boolean, delta: number, inReach = true) {
     this.tint.value.set(valid ? previewColors.valid : previewColors.invalid)
     this.opacity.value = previewOpacity(inReach)
-    this.time.value = (this.time.value + Math.min(Math.max(delta, 0), 0.06)) % 1024
+    this.time.value = (this.time.value + clamp(delta, 0, 0.06)) % 1024
   }
 
   private createBorderMaterial(width: number, height: number) {

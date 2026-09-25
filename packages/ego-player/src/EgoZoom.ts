@@ -1,6 +1,7 @@
 import type {Camera} from 'three/webgpu'
 
-import {Easing, Tween} from '@tweenjs/tween.js'
+import {lerp} from 'math'
+import {easing} from 'math/time'
 import {PerspectiveCamera} from 'three/webgpu'
 
 export type EgoZoomMode = 'casual' | 'extended' | 'none'
@@ -22,9 +23,13 @@ export type EgoZoomOptions = {
   extendedZoomTransition: number
 }
 
-type ZoomTweenState = {
-  amount: number
-  fov: number
+type ZoomTransitionState = {
+  duration: number
+  elapsed: number
+  fromAmount: number
+  fromFov: number
+  toAmount: number
+  toFov: number
 }
 
 /** Owns only its own FOV writes; inspection cameras can take over without a stale restore. */
@@ -34,12 +39,10 @@ export default class EgoZoom {
   private mode: EgoZoomMode = 'none'
   private original?: number
   private target?: number
-  private time = 0
-  private tween?: Tween<ZoomTweenState>
+  private transition?: ZoomTransitionState
   private written?: number
 
   reset() {
-    this.tween?.stop()
     if (this.camera && this.original !== undefined && this.camera.fov === this.written) {
       this.camera.fov = this.original
       this.camera.updateProjectionMatrix()
@@ -82,10 +85,30 @@ export default class EgoZoom {
       this.retarget(target, held ? 1 : 0, transition)
     }
     if (Number.isFinite(delta) && delta > 0) {
-      this.time += delta * 1000
-      this.tween?.update(this.time)
+      this.advance(delta)
     }
     return this.amount
+  }
+
+  private advance(delta: number) {
+    const transition = this.transition
+    if (!transition) {
+      return
+    }
+    transition.elapsed = Math.min(transition.duration, transition.elapsed + delta)
+    const progress = transition.elapsed / transition.duration
+    const eased = easing.quintInOut(progress)
+    this.amount = lerp(transition.fromAmount, transition.toAmount, eased)
+    this.write(lerp(transition.fromFov, transition.toFov, eased))
+    if (progress < 1) {
+      return
+    }
+    this.transition = undefined
+    this.amount = transition.toAmount
+    this.write(transition.toFov)
+    if (transition.toFov === this.original) {
+      this.clear()
+    }
   }
 
   private clear() {
@@ -94,18 +117,17 @@ export default class EgoZoom {
     this.mode = 'none'
     this.original = undefined
     this.target = undefined
-    this.tween = undefined
+    this.transition = undefined
     this.written = undefined
   }
 
-  private retarget(target: number, targetAmount: number, transition: number) {
-    this.tween?.stop()
-    this.tween = undefined
+  private retarget(target: number, targetAmount: number, duration: number) {
+    this.transition = undefined
     this.target = target
     if (!this.camera || this.original === undefined) {
       return
     }
-    if (transition === 0 || this.camera.fov === target) {
+    if (duration <= 0 || this.camera.fov === target) {
       this.amount = targetAmount
       this.write(target)
       if (target === this.original) {
@@ -113,35 +135,14 @@ export default class EgoZoom {
       }
       return
     }
-    const state = {
-      amount: this.amount,
-      fov: this.camera.fov,
+    this.transition = {
+      duration,
+      elapsed: 0,
+      fromAmount: this.amount,
+      fromFov: this.camera.fov,
+      toAmount: targetAmount,
+      toFov: target,
     }
-    const tween = new Tween(state)
-      .to({
-        amount: targetAmount,
-        fov: target,
-      }, transition * 1000)
-      .easing(Easing.Quintic.InOut)
-      .onUpdate(({amount, fov}) => {
-        if (this.tween === tween) {
-          this.amount = amount
-          this.write(fov)
-        }
-      })
-      .onComplete(() => {
-        if (this.tween !== tween) {
-          return
-        }
-        this.tween = undefined
-        this.amount = targetAmount
-        this.write(target)
-        if (target === this.original) {
-          this.clear()
-        }
-      })
-    this.tween = tween
-    tween.start(this.time)
   }
 
   private write(fov: number) {

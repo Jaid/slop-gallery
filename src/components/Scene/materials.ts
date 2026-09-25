@@ -1,6 +1,12 @@
 import renderCanvasTexture from 'canvas-textures/three'
-import {SimplexNoise} from 'three/addons/math/SimplexNoise.js'
+import {simplex2d} from 'math/noise'
+import {mulberry32} from 'math/random'
 import {RepeatWrapping, SRGBColorSpace} from 'three/webgpu'
+
+const createMulberry32 = (seed: number) => {
+  const state = mulberry32.create(seed)
+  return () => mulberry32.sample(state)
+}
 
 export function surfaceTexture(kind: 'plaster' | 'stone' | 'wood') {
   const t = renderCanvasTexture({
@@ -9,11 +15,7 @@ export function surfaceTexture(kind: 'plaster' | 'stone' | 'wood') {
     draw(ctx) {
       ctx.fillStyle = kind === 'wood' ? '#735139' : (kind === 'stone' ? '#c9c3b1' : '#e5e0d2')
       ctx.fillRect(0, 0, 512, 512)
-      let seed = 91
-      const rand = () => {
-        seed = seed * 1_664_525 + 1_013_904_223 >>> 0
-        return seed / 4_294_967_296
-      }
+      const rand = createMulberry32(91)
       for (let i = 0; i < 28_000; i++) {
         const x = rand() * 512
         const y = rand() * 512
@@ -43,12 +45,8 @@ export function damaskTexture(width: number, height: number) {
     width: size,
     height: size,
     draw(context) {
-      let seed = 7
-      const random = () => {
-        seed = seed * 1_664_525 + 1_013_904_223 >>> 0
-        return seed / 4_294_967_296
-      }
-      const noise = new SimplexNoise({random})
+      const random = createMulberry32(7)
+      const noise = simplex2d.create(7)
       const pixels = context.createImageData(size, size)
       const base = [87, 18, 26]
       const shade = [42, 6, 11]
@@ -57,8 +55,8 @@ export function damaskTexture(width: number, height: number) {
           const u = x / size
           const v = y / size
       // Periodic mottling avoids rectangular seams between wallpaper repeats.
-          const top = noise.noise(u * 8, v * 8) * (1 - u) + noise.noise((u - 1) * 8, v * 8) * u
-          const bottom = noise.noise(u * 8, (v - 1) * 8) * (1 - u) + noise.noise((u - 1) * 8, (v - 1) * 8) * u
+          const top = simplex2d.sample(noise, u * 8, v * 8) * (1 - u) + simplex2d.sample(noise, (u - 1) * 8, v * 8) * u
+          const bottom = simplex2d.sample(noise, u * 8, (v - 1) * 8) * (1 - u) + simplex2d.sample(noise, (u - 1) * 8, (v - 1) * 8) * u
           const mix = ((top * (1 - v) + bottom * v) * 0.5 + 0.5) * 0.14
           const fiber = (random() - 0.5) * 5
           const offset = (y * size + x) * 4
@@ -104,14 +102,8 @@ export function checkerMarbleTexture(width: number, depth: number) {
     width: size,
     height: size,
     draw(context) {
-      let seed = 61
-      const random = () => {
-        seed = seed + 0x6D_2B_79_F5 | 0
-        let value = Math.imul(seed ^ seed >>> 15, 1 | seed)
-        value = value + Math.imul(value ^ value >>> 7, 61 | value) ^ value
-        return ((value ^ value >>> 14) >>> 0) / 4_294_967_296
-      }
-      const noise = new SimplexNoise({random})
+      const random = createMulberry32(61)
+      const noise = simplex2d.create(61)
       const cells = 4
       const cell = size / cells
       for (let row = 0; row < cells; row++) {
@@ -131,7 +123,7 @@ export function checkerMarbleTexture(width: number, depth: number) {
             let y = row * cell
             context.moveTo(x, y)
             while (y < (row + 1) * cell) {
-              x += noise.noise(x * 0.02, y * 0.02) * 14
+              x += simplex2d.sample(noise, x * 0.02, y * 0.02) * 14
               y += 10
               context.lineTo(x, y)
             }

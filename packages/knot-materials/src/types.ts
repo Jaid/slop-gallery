@@ -3,7 +3,7 @@ import type {MeshPhysicalNodeMaterial, Texture} from 'three/webgpu'
 
 export type KnotId = keyof typeof import('./entries/index.ts')
 export type KnotCandidateId = keyof typeof import('./candidates/index.ts')
-export type Vec3 = [number, number, number]
+export type {Vec3} from 'math'
 
 export type PlaceholderShading = 'fabric' | 'ghost' | 'glass' | 'liquid' | 'metal' | 'smooth' | 'stone'
 export type KnotPlaceholder = {

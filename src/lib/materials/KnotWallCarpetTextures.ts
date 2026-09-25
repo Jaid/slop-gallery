@@ -1,6 +1,7 @@
 import type {Texture} from 'three/webgpu'
 
 import renderCanvasTexture, {textureFromPixels} from 'canvas-textures/three'
+import {mulberry32} from 'math/random'
 import {RepeatWrapping} from 'three/webgpu'
 
 type CarpetTextures = {
@@ -13,12 +14,8 @@ const normalSize = 1024
 const repeatX = 3.2
 const repeatY = 2.2
 function createRandom(seed: number) {
-  return () => {
-    seed = seed + 0x6D_2B_79_F5 >>> 0
-    let value = Math.imul(seed ^ seed >>> 15, 1 | seed)
-    value ^= value + Math.imul(value ^ value >>> 7, 61 | value)
-    return ((value ^ value >>> 14) >>> 0) / 4_294_967_296
-  }
+  const state = mulberry32.create(seed)
+  return () => mulberry32.sample(state)
 }
 function repeatTexture(texture: Texture) {
   texture.wrapS = RepeatWrapping

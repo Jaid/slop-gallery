@@ -1,6 +1,8 @@
 import type {FootstepSurface} from './playerSoundEffects.ts'
 import type {ProceduralPlayback} from './proceduralAudio.ts'
 
+import {clamp} from 'math'
+
 import {footstepVoices, impactFootstepStrength, playerSoundEffects} from './playerSoundEffects.ts'
 import {osc, playVoices} from './proceduralAudio.ts'
 import {playSoundEffect} from './soundEffects.ts'
@@ -71,7 +73,7 @@ export default class SoundEngine {
 
   /** A single sustained bed follows the eased zoom amount, never one new sound per frame. */
   setZoom(amount: number) {
-    this.zoomAmount = this.muted ? 0 : Math.max(0, Math.min(1, amount))
+    this.zoomAmount = this.muted ? 0 : clamp(amount, 0, 1)
     if (this.zoomAmount === 0) {
       this.zoomBed?.stop(0.06)
       this.zoomBed = undefined

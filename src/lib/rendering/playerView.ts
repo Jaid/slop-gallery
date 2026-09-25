@@ -1,3 +1,5 @@
+import {clamp} from 'math'
+
 import aimDot from '#src/lib/aimDot.ts'
 
 let zoom = 0
@@ -10,7 +12,7 @@ export function getPlayerZoom() {
 }
 
 export function setPlayerZoom(amount: number) {
-  zoom = Math.max(0, Math.min(1, amount))
+  zoom = clamp(amount, 0, 1)
   aimDot.setBlocked('zoom', zoom > 0)
 }
 
@@ -27,8 +29,8 @@ export function getKnotFocusProximity() {
 }
 
 export function setKnotFocus(amount: number, distance: number, proximity: number) {
-  knotFocus = Math.max(0, Math.min(1, amount))
-  knotFocusProximity = Math.max(0, Math.min(1, proximity))
+  knotFocus = clamp(amount, 0, 1)
+  knotFocusProximity = clamp(proximity, 0, 1)
   if (Number.isFinite(distance) && distance > 0) {
     knotFocusDistance = distance
   }

@@ -1,3 +1,4 @@
+import {mulberry32} from 'math/random'
 import {DataTexture, LinearFilter, LinearMipmapLinearFilter, RepeatWrapping, SRGBColorSpace} from 'three/webgpu'
 
 const width = 1024
@@ -23,11 +24,8 @@ export default class TerracottaTextures {
   readonly roughnessMap: DataTexture
 
   constructor() {
-    let seed = 183
-    const random = () => {
-      seed = seed * 1_664_525 + 1_013_904_223 >>> 0
-      return seed / 4_294_967_296
-    }
+    const randomState = mulberry32.create(183)
+    const random = () => mulberry32.sample(randomState)
     const colors = new Uint8Array(width * height * 4)
     const bumps = new Uint8Array(colors.length)
     const roughness = new Uint8Array(colors.length)

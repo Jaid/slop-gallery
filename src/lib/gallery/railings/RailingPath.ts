@@ -1,5 +1,6 @@
 import type {Vec3} from '../types.ts'
 
+import {clamp} from 'math'
 import {Curve, Quaternion, Vector3} from 'three/webgpu'
 
 export type RailingAnchor = {
@@ -65,7 +66,7 @@ export default class RailingPath extends Curve<Vector3> {
   }
 
   sample(t: number): RailingAnchor {
-    const distance = Math.max(0, Math.min(1, t)) * this.length
+    const distance = clamp(t, 0, 1) * this.length
     let low = 0
     let high = this.distances.length - 1
     while (low + 1 < high) {

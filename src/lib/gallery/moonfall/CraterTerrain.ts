@@ -1,15 +1,16 @@
-import {SimplexNoise} from 'three/addons/math/SimplexNoise.js'
+import {clamp} from 'math'
+import {simplex2d} from 'math/noise'
 
 import {moonfallCrater} from './config.ts'
 
 const smooth = (from: number, to: number, value: number) => {
-  const t = Math.max(0, Math.min(1, (value - from) / (to - from)))
+  const t = clamp((value - from) / (to - from), 0, 1)
   return t * t * (3 - 2 * t)
 }
 
 /** The same deterministic height field drives visible relief, floor queries and collision. */
 export default class CraterTerrain {
-  private noise: SimplexNoise
+  private noise = simplex2d.create(0x61_73_74_65)
   private secondary = [
     [-3.3, -1.6, 1.1],
     [2.2, 0.8, 0.72],
@@ -20,13 +21,6 @@ export default class CraterTerrain {
   ] as const
 
   constructor(readonly radius: number = moonfallCrater.radius, readonly depth: number = moonfallCrater.depth) {
-    let seed = 0x61_73_74_65
-    this.noise = new SimplexNoise({
-      random: () => {
-        seed = Math.imul(seed, 1_664_525) + 1_013_904_223 >>> 0
-        return seed / 4_294_967_296
-      },
-    })
   }
 
   height(x: number, z: number) {
@@ -37,12 +31,12 @@ export default class CraterTerrain {
     }
     const theta = Math.atan2(z, x)
     const fade = 1 - smooth(0.91, 1, t)
-    const irregular = this.noise.noise(x * 0.47, z * 0.47)
+    const irregular = simplex2d.sample(this.noise, x * 0.47, z * 0.47)
     const warped = t + irregular * 0.021 * smooth(0.1, 0.5, t)
     const bowl = -this.depth * (1 - smooth(0.3, 0.83, warped))
     const rim = 0.3 * Math.exp(-(((warped - 0.835) / 0.066) ** 2))
     const ridges = (Math.sin(theta * 31 + irregular * 2.8) * 0.13 + Math.sin(theta * 57 - t * 14) * 0.055) * smooth(0.32, 0.65, t)
-    const rubble = this.noise.noise(x * 1.8, z * 1.8) * 0.14 + this.noise.noise(x * 5, z * 5) * 0.04
+    const rubble = simplex2d.sample(this.noise, x * 1.8, z * 1.8) * 0.14 + simplex2d.sample(this.noise, x * 5, z * 5) * 0.04
     const peak = 0.65 * Math.exp(-((x + 0.8) ** 2 + (z - 0.4) ** 2) / 1.8)
     let secondary = 0
     for (const [cx, cz, radius] of this.secondary) {
@@ -55,7 +49,7 @@ export default class CraterTerrain {
   }
 
   variation(x: number, z: number) {
-    return this.noise.noise(x * 0.8, z * 0.8) * 0.6 + this.noise.noise(x * 7, z * 7) * 0.4
+    return simplex2d.sample(this.noise, x * 0.8, z * 0.8) * 0.6 + simplex2d.sample(this.noise, x * 7, z * 7) * 0.4
   }
 }
 

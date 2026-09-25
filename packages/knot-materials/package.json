@@ -23,6 +23,7 @@
     "update:announcements": "bun scripts/updateAnnouncements.ts"
   },
   "dependencies": {
+    "math": "0.0.0-canary-20260925-d23173e5",
     "three-async-materials": "workspace:*",
     "three-mesh-bvh": "^0.9.15"
   },
