@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <g fill="#fff">
+    <ellipse cx="23" cy="20" rx="6" ry="17" transform="rotate(-12 23 20)"/>
+    <ellipse cx="41" cy="20" rx="6" ry="17" transform="rotate(12 41 20)"/>
+    <path fill-rule="evenodd" d="M32 28c-13 0-22 7-22 17s9 16 22 16 22-6 22-16-9-17-22-17Zm-8 11a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm16 0a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm-12 9h8l-4 5Z"/>
+  </g>
+</svg>

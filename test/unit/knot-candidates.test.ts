@@ -136,6 +136,7 @@ describe('arbitrary Knot batches', () => {
       'minimax',
       'muse_spark',
       'qwen_max',
+      'space_bunny',
     ]))
     const modelIds = new Set(knots.map(entry => knotAnnouncementPaths(entry).model.split('/slug/')[1]))
     expect(modelIds).toEqual(new Set([
@@ -157,6 +158,8 @@ describe('arbitrary Knot batches', () => {
       'qwen-3.8-max',
       'gpt-5.6-luna',
       'gpt-5.6-sol',
+      'gpt-6-sol',
+      'space-bunny-alpha',
       'gpt-5.6-terra',
       'claude-fable-5.1',
       'muse-spark-1.3',
@@ -196,12 +199,12 @@ describe('arbitrary Knot batches', () => {
   })
   test('keeps every Gemini item on current model provenance', () => {
     const gemini = knotCandidates.find(candidate => candidate.data.id === 'gemini_flash')!
-    expect(gemini.items).toHaveLength(48)
+    expect(gemini.items).toHaveLength(56)
     expect(gemini.items.every(entry => entry.author.model.title === 'Gemini 3.8 Flash'
       && entry.author.model.slug === 'google/gemini-3.8-flash'
       && entry.author.model.effortLevel === 'high')).toBe(true)
     expect(gemini.items.filter(entry => entry.harness === 'none')).toHaveLength(24)
-    expect(gemini.items.filter(entry => entry.harness === 'Mage')).toHaveLength(24)
+    expect(gemini.items.filter(entry => entry.harness === 'Mage')).toHaveLength(32)
   })
   test('keeps API model credits and displacement metadata by stable identity', () => {
     const expected = [

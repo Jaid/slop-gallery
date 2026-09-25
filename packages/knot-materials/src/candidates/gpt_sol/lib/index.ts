@@ -1,4 +1,6 @@
 export * from './cellGrain.ts'
 export * from './filament.ts'
+export * as galleryMarks from './galleryMarks.ts'
 export * from './multiGlint.ts'
+export * as ornament from './ornament.ts'
 export * from './viewerFrame.ts'
