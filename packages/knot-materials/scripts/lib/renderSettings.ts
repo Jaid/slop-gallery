@@ -20,7 +20,8 @@ export const inspectionAnimatedJxlDistance = 4
 export const inspectionAnimationSize = 512
 export const inspectionVideoSize = 1024
 export const inspectionNearDistanceScale = 0.5
-export const inspectionTiltRadians = Math.PI / 18
+export const inspectionNearTiltRadians = Math.PI / 18
+export const inspectionFarTiltRadians = Math.PI / 9
 export const inspectionAnimationOffsetSeconds = 13.5
 export const previewBaseFov = 50
 export const previewSupersampling = 2
@@ -60,9 +61,9 @@ const transition = (from: number, to: number, seconds: number, start: number) =>
   const progress = fade((seconds - start) / animationSeconds)
   return from + (to - from) * progress
 }
-const movementTilt = (seconds: number, start: number, direction: -1 | 1) => {
+const movementTilt = (seconds: number, start: number, direction: -1 | 1, strength: number) => {
   const progress = fade((seconds - start) / animationSeconds)
-  return direction * inspectionTiltRadians * Math.sin(progress * Math.PI)
+  return direction * strength * Math.sin(progress * Math.PI)
 }
 const inspectionDistanceScale = (seconds: number) => {
   const normal = 1
@@ -92,16 +93,16 @@ const inspectionDistanceScale = (seconds: number) => {
 }
 const inspectionElevation = (seconds: number) => {
   if (seconds >= 2 && seconds < 4) {
-    return movementTilt(seconds, 2, 1)
+    return movementTilt(seconds, 2, 1, inspectionNearTiltRadians)
   }
   if (seconds >= 6 && seconds < 8) {
-    return movementTilt(seconds, 6, -1)
+    return movementTilt(seconds, 6, -1, inspectionNearTiltRadians)
   }
   if (seconds >= 10 && seconds < 12) {
-    return movementTilt(seconds, 10, -1)
+    return movementTilt(seconds, 10, -1, inspectionFarTiltRadians)
   }
   if (seconds >= 14) {
-    return movementTilt(seconds, 14, 1)
+    return movementTilt(seconds, 14, 1, inspectionFarTiltRadians)
   }
   return 0
 }
