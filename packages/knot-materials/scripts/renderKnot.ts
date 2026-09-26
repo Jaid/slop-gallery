@@ -6,7 +6,7 @@ import fs from 'fs-extra'
 import {knotsById} from '../src/main.ts'
 import {encodeAnimatedJxl, encodeWebm} from './lib/encodeAnimation.ts'
 import {encodeJxl} from './lib/encodeJxl.ts'
-import {angleAnimationFrame, angleNames, angleStillFrame, animationFilename, animationFrames, closeupStillFrame, distanceNames, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrames} from './lib/renderSettings.ts'
+import {angleAnimationFrame, angleNames, angleStillFrame, animationFilename, animationFrames, closeupStillFrame, distanceNames, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrames, inspectionVideoSize} from './lib/renderSettings.ts'
 import withPreviewRenderer from './lib/withPreviewRenderer.ts'
 
 export const renderCategories = ['snapshot', 'animation', 'video'] as const
@@ -143,7 +143,7 @@ export const renderKnotCli = async (args = Bun.argv.slice(2)) => {
   })
   if (values.help) {
     console.log(`Usage: bun scripts/renderKnot.ts <knot-id> [--category snapshot,animation,video]
-Categories can be snapshot, animation, video, or any comma-separated combination; default: snapshot,animation,video. Snapshots and the animated angle loop use JPEG XL. Video remains 1024x1024 AV1/WebM.`)
+Categories can be snapshot, animation, video, or any comma-separated combination; default: snapshot,animation,video. Snapshots and the animated angle loop use JPEG XL. Video is ${inspectionVideoSize}x${inspectionVideoSize} AV1/WebM.`)
     return
   }
   if (positionals.length !== 1) {

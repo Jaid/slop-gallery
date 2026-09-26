@@ -3,7 +3,7 @@ import {tmpdir} from 'node:os'
 import {resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
 
-import {angleAnimationFrame, angleNames, angleStillFrame, animationFps, animationFrames, closeupDistanceScale, closeupFov, closeupSize, closeupStillFrame, distanceNames, distanceScales, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrameOffset, inspectionAnimationFrames, inspectionAnimationOffsetSeconds, inspectionAnimationSeconds, inspectionAnimationSize, inspectionFarTiltRadians, inspectionNearDistanceScale, inspectionNearTiltRadians, inspectionVideoSize, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from '../scripts/lib/renderSettings.ts'
+import {angleAnimationFrame, angleNames, angleStillFrame, animationFps, animationFrames, closeupDistanceScale, closeupFov, closeupSize, closeupStillFrame, distanceNames, distanceScales, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrameOffset, inspectionAnimationFrames, inspectionAnimationOffsetSeconds, inspectionAnimationSeconds, inspectionAnimationSize, inspectionFarTiltRadians, inspectionNearDistanceScale, inspectionNearTiltRadians, inspectionVideoRenderSize, inspectionVideoSize, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from '../scripts/lib/renderSettings.ts'
 import renderKnot, {parseRenderCategories, renderCategories} from '../scripts/renderKnot.ts'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
@@ -19,7 +19,7 @@ describe('knot inspection renders', () => {
     expect(distanceScales).toEqual([0.75, 1.8])
     expect(inspectionAnimatedJxlDistance).toBe(4)
     expect(inspectionAnimationSize).toBe(512)
-    expect(inspectionVideoSize).toBe(1024)
+    expect([inspectionVideoRenderSize, inspectionVideoSize]).toEqual([2048, 1080])
     expect([inspectionAnimationSeconds, inspectionAnimationFrames]).toEqual([16, 960])
     expect(previewFovForDistanceScale(1)).toBe(previewBaseFov)
     expect(previewFovForDistanceScale(inspectionNearDistanceScale)).toBeCloseTo(54)
@@ -123,6 +123,6 @@ describe('knot inspection renders', () => {
     expect(stdout).toContain('default: snapshot,animation,video')
     expect(stdout).not.toContain('--jxl')
     expect(stdout).toContain('animated angle loop use JPEG XL')
-    expect(stdout).toContain('1024x1024 AV1/WebM')
+    expect(stdout).toContain('1080x1080 AV1/WebM')
   })
 })

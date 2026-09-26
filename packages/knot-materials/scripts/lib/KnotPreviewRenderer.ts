@@ -8,7 +8,7 @@ import {ACESFilmicToneMapping, AmbientLight, DirectionalLight, HalfFloatType, He
 import {createKnotGeometry} from '../../src/geometry.ts'
 import loadKnotMaterial from '../../src/materials.ts'
 import StudioEnvironment from '../../src/StudioEnvironment.ts'
-import {animationFps, closeupSize, inspectionAnimationSize, inspectionVideoSize, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from './renderSettings.ts'
+import {animationFps, closeupSize, inspectionAnimationSize, inspectionVideoRenderSize, inspectionVideoSize, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from './renderSettings.ts'
 
 export type KnotPreview = {
   dispose: () => void
@@ -53,7 +53,7 @@ export default class KnotPreviewRenderer {
     samples: 4,
   })
   private readonly validationTarget = new RenderTarget(32, 32, {type: HalfFloatType})
-  private readonly videoTarget = new RenderTarget(renderSize(inspectionVideoSize), renderSize(inspectionVideoSize), {
+  private readonly videoTarget = new RenderTarget(inspectionVideoRenderSize, inspectionVideoRenderSize, {
     type: UnsignedByteType,
     samples: 4,
   })
