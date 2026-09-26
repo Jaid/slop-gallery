@@ -58,20 +58,21 @@ describe('knot inspection renders', () => {
     const lastFrame = inspectionAnimationFrame(inspectionAnimationFrames - 1)
     expect(lastFrame.distanceScale).toBe(1.8)
     expect(lastFrame.seconds).toBeCloseTo(inspectionAnimationSeconds - 1 / animationFps)
-    for (const second of [0, 2.5, 4, 6.5, 8, 10.5, 12, 14.5]) {
-      expect(frameAtSecond(second).angle % (Math.PI * 2)).toBeCloseTo(0, 10)
+    for (const second of [2.5, 3.7, 6.5, 7.7, 10.5, 11.7, 14.5, 15.7]) {
+      const wrappedAngle = frameAtSecond(second).angle % (Math.PI * 2)
+      expect(Math.min(wrappedAngle, Math.PI * 2 - wrappedAngle)).toBeCloseTo(0, 10)
     }
     const fastSpinStart = frameAtSecond(2.5)
-    const fastSpinEnd = frameAtSecond(4)
+    const fastSpinEnd = frameAtSecond(3.7)
     const slowSpinEnd = frameAtSecond(6.5)
     expect(fastSpinEnd.angle - fastSpinStart.angle).toBeCloseTo(Math.PI * 2, 10)
     expect(slowSpinEnd.angle - fastSpinEnd.angle).toBeCloseTo(Math.PI * 2, 10)
-    const joinIndex = Math.round(4 * animationFps)
+    const joinIndex = Math.round(3.7 * animationFps)
     const stepBeforeJoin = inspectionAnimationFrame(joinIndex).angle - inspectionAnimationFrame(joinIndex - 1).angle
     const stepAfterJoin = inspectionAnimationFrame(joinIndex + 1).angle - inspectionAnimationFrame(joinIndex).angle
     expect(stepBeforeJoin).toBeCloseTo(stepAfterJoin, 3)
-    const fastMiddleIndex = Math.round(3.25 * animationFps)
-    const slowMiddleIndex = Math.round(5.25 * animationFps)
+    const fastMiddleIndex = Math.round(3.1 * animationFps)
+    const slowMiddleIndex = Math.round(5.1 * animationFps)
     const fastMiddleStep = inspectionAnimationFrame(fastMiddleIndex + 1).angle - inspectionAnimationFrame(fastMiddleIndex).angle
     const slowMiddleStep = inspectionAnimationFrame(slowMiddleIndex + 1).angle - inspectionAnimationFrame(slowMiddleIndex).angle
     expect(fastMiddleStep).toBeGreaterThan(stepAfterJoin)

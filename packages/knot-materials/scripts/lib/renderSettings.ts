@@ -83,7 +83,7 @@ const inspectionDistanceScale = (seconds: number) => {
   }
   return transition(far, normal, seconds, 14)
 }
-const inspectionSpinSeconds = [1.5, 2.5] as const
+const inspectionSpinSeconds = [1.2, 2.8] as const
 const inspectionSpinCycleSeconds = inspectionSpinSeconds[0] + inspectionSpinSeconds[1]
 const inspectionSpinBoundarySpeed = 2 / inspectionSpinCycleSeconds
 const inspectionAngle = (seconds: number) => {
