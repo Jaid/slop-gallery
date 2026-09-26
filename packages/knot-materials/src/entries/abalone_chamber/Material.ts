@@ -16,15 +16,17 @@ export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.06)
     this.name = knotData.id
-    const {grazing, near, view} = viewerFrame()
+    const {p, grazing, near, view} = viewerFrame()
     const tube = uv()
     const lean = view.dot(vec3(1, 0.2, 0.4))
     const phase = tube.x.mul(TAU * 6).add(tube.y.mul(TAU * 18)).add(lean.mul(near.mul(2).add(0.6)))
     const groove = phase.sin().mul(0.5).add(0.5)
-    const resolved = phase.fwidth().smoothstep(1.8, 0.3)
+    const resolved = phase.fwidth().smoothstep(0.3, 1.8).oneMinus()
     const bands = mix(float(0.5), groove, resolved)
-    const nacre = spectralColor(phase.mul(0.35).add(grazing.mul(2)).add(lean))
-    const height = bands.mul(resolved).mul(0.5).add(mx_noise_float(tube.mul(vec3(8, 30, 0))).mul(0.08))
+    // The slower rainbow needs its own integer cycles, not a fractional groove phase.
+    const colorPhase = tube.x.mul(TAU * 2).add(tube.y.mul(TAU * 6)).add(lean.mul(near.mul(2).add(0.6)).mul(0.35))
+    const nacre = spectralColor(colorPhase.add(grazing.mul(2)).add(lean))
+    const height = bands.mul(resolved).mul(0.5).add(mx_noise_float(p.mul(vec3(8, 30, 8))).mul(0.08))
     this.colorNode = nacre.mul(bands.mul(0.6).add(0.35))
     this.roughness = 1
     this.metalness = 0.06
