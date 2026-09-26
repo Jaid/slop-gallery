@@ -153,7 +153,8 @@ export default class extends KnotMaterial {
     const glow = cat.halo.smoothstep(0.008, 0.075).oneMinus().pow(2).mul(visible)
     const glint = cat.rays.mul(visible).mul(footprint.smoothstep(0.035, 0.12).oneMinus())
     const glimmer = time.mul(1.1).add(phase).add(positionGeometry.y.mul(5)).sin().mul(0.22).add(0.78)
-    const chase = p.x.mul(17).add(p.y.mul(13)).sub(time.mul(1.4)).add(phase).sin().pow(8).mul(0.65).add(0.35)
+    // GPU pow requires a nonnegative base; abs preserves this even-powered pulse.
+    const chase = p.x.mul(17).add(p.y.mul(13)).sub(time.mul(1.4)).add(phase).sin().abs().pow(8).mul(0.65).add(0.35)
     // Fixed astrolabe engravings provide a frame of reference as the refracted constellations slide with the viewer.
     const staticCoords = fixedChart.fract().sub(vec2(0.5, 0.52))
     const radius = staticCoords.div(vec2(0.91, 1)).length()
