@@ -29,7 +29,8 @@ export default class extends KnotMaterial {
     const resolvedPolyps = polypFoot.smoothstep(0.18, 0.65).oneMinus()
     const light = polypLight.mul(resolvedPolyps).mul(0.62).add(polypLight.mul(intimate).mul(0.38))
     const pulse = time.mul(1.25).add(p.dot(vec3(1.7, 2.3, -1.1))).sin().mul(0.5).add(0.5).pow(5)
-    const chalk = coralField.mul(0.5).add(0.5).pow(1.45)
+    // Fractal octaves are summed, not normalized; keep fractional powers and color mixing in range.
+    const chalk = coralField.mul(0.5).add(0.5).clamp().pow(1.45)
     const shell = mix(color('#0b303b'), color('#66b9ad'), chalk)
     const body = mix(color('#03111c'), shell, branches.mul(0.76).add(0.12)).add(color('#0c202a').mul(rim.mul(0.5)))
     const height = branches.mul(0.16).add(pores.mul(-0.05)).add(rim.mul(0.09)).add(cup.mul(-0.035))
