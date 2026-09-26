@@ -7,21 +7,42 @@ import {declare} from '@babel/helper-plugin-utils'
 import sortShortestLevenshtein from 'sort-shortest-levenshtein'
 
 export type HoistPopularConstantsOptions = {
+  /** Estimate savings against the output of a following minifier (e.g. `true` as `!0`, `1000000` as `1e6`, `{"a":1}` as `{a:1}`) instead of the source as written. Defaults to false. */
+  estimateMinifiedSize?: boolean
   /** Pack pooled strings into compact destructuring initializers when smaller. Defaults to true and requires stableBuiltins. */
   join?: boolean
   minimumOccurrences?: number
   minimumSavingsBytes?: number
-  /** Assume unbound built-in objects are stable, enabling constant properties such as Math.PI and Number.NaN to be pooled. */
+  /** Pool non-computed property names (`a.foo` → `a[_]`, `{foo:1}` → `{[_]:1}`) together with equal string literals. Defaults to true. */
+  propertyNames?: boolean
+  /** Also transform scripts, where the hoisted top-level `var` becomes a property of the global object. Defaults to false, leaving scripts untouched. */
+  scriptGlobals?: boolean
+  /** Assume unbound built-in objects are stable, enabling constants such as Math.PI and `this`-free static functions such as Math.floor and Object.keys to be pooled. */
   stableBuiltins?: boolean
 }
 
 type PopularLiteral = t.BigIntLiteral | t.BooleanLiteral | t.NullLiteral | t.NumericLiteral | t.StringLiteral
 type PopularLiteralPath = NodePath<t.BigIntLiteral> | NodePath<t.BooleanLiteral> | NodePath<t.NullLiteral> | NodePath<t.NumericLiteral> | NodePath<t.StringLiteral>
 type CandidateExpression = PopularLiteral | t.MemberExpression
-type CandidatePath = NodePath<t.MemberExpression> | PopularLiteralPath
+type KeyOwner = t.ClassMethod | t.ClassProperty | t.ObjectMethod | t.ObjectProperty
 type CandidateOccurrence = {
-  computedObjectKey: boolean
-  path: CandidatePath
+  /** Replace the key of a property, method or class member and mark it computed. */
+  kind: 'key'
+  owner: KeyOwner
+} | {
+  /** Replace the property of a member expression and mark it computed. */
+  kind: 'property'
+  owner: t.MemberExpression | t.OptionalMemberExpression
+} | {
+  kind: 'value'
+  path: NodePath<t.MemberExpression> | PopularLiteralPath
+}
+type Occurrence = {
+  /** Bytes other than the identifier that the replacement adds. */
+  overheadBytes: number
+  /** Bytes the replacement removes. */
+  rawBytes: number
+  target: CandidateOccurrence
 }
 type Candidate = {
   expression: CandidateExpression
@@ -44,7 +65,17 @@ type HoistedCandidate = {
 const firstIdentifierCharacters = '_$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 const identifierCharacters = `${firstIdentifierCharacters}0123456789`
 const joinCandidates = " _-\"',.`|:;!#$%&([{)]}/\\*+<=>?@^~abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\t\n\r"
-const stableBuiltinConstants = new Map([
+/** Constants and static functions that do not depend on `this`, so they stay correct when read once and called unbound. Limited to ES2017 so polyfills installed after module evaluation are not missed. */
+const stableBuiltinMembers = new Map([
+  ['Array', new Set([
+    'from',
+    'isArray',
+    'of',
+  ])],
+  ['JSON', new Set([
+    'parse',
+    'stringify',
+  ])],
   ['Math', new Set([
     'E',
     'LN10',
@@ -54,6 +85,41 @@ const stableBuiltinConstants = new Map([
     'PI',
     'SQRT1_2',
     'SQRT2',
+    'abs',
+    'acos',
+    'acosh',
+    'asin',
+    'asinh',
+    'atan',
+    'atan2',
+    'atanh',
+    'cbrt',
+    'ceil',
+    'clz32',
+    'cos',
+    'cosh',
+    'exp',
+    'expm1',
+    'floor',
+    'fround',
+    'hypot',
+    'imul',
+    'log',
+    'log10',
+    'log1p',
+    'log2',
+    'max',
+    'min',
+    'pow',
+    'random',
+    'round',
+    'sign',
+    'sin',
+    'sinh',
+    'sqrt',
+    'tan',
+    'tanh',
+    'trunc',
   ])],
   ['Number', new Set([
     'EPSILON',
@@ -64,6 +130,70 @@ const stableBuiltinConstants = new Map([
     'NaN',
     'NEGATIVE_INFINITY',
     'POSITIVE_INFINITY',
+    'isFinite',
+    'isInteger',
+    'isNaN',
+    'isSafeInteger',
+    'parseFloat',
+    'parseInt',
+  ])],
+  ['Object', new Set([
+    'assign',
+    'create',
+    'defineProperties',
+    'defineProperty',
+    'entries',
+    'freeze',
+    'getOwnPropertyDescriptor',
+    'getOwnPropertyDescriptors',
+    'getOwnPropertyNames',
+    'getOwnPropertySymbols',
+    'getPrototypeOf',
+    'is',
+    'isExtensible',
+    'isFrozen',
+    'isSealed',
+    'keys',
+    'preventExtensions',
+    'seal',
+    'setPrototypeOf',
+    'values',
+  ])],
+  ['Reflect', new Set([
+    'apply',
+    'construct',
+    'defineProperty',
+    'deleteProperty',
+    'get',
+    'getOwnPropertyDescriptor',
+    'getPrototypeOf',
+    'has',
+    'isExtensible',
+    'ownKeys',
+    'preventExtensions',
+    'set',
+    'setPrototypeOf',
+  ])],
+  ['String', new Set([
+    'fromCharCode',
+    'fromCodePoint',
+    'raw',
+  ])],
+  ['Symbol', new Set([
+    'asyncIterator',
+    'for',
+    'hasInstance',
+    'isConcatSpreadable',
+    'iterator',
+    'keyFor',
+    'match',
+    'replace',
+    'search',
+    'species',
+    'split',
+    'toPrimitive',
+    'toStringTag',
+    'unscopables',
   ])],
 ])
 const identifierFromIndex = (index: number) => {
@@ -150,56 +280,182 @@ const isStableBuiltinRead = (path: NodePath<t.MemberExpression>) => {
     || ancestor.isObjectPattern()
     || ancestor.isRestElement())
 }
-const addCandidate = (path: CandidatePath, state: HoistPluginState, key: string, raw: string, computedObjectKey = false) => {
+/** Size with the quote style that needs fewer escapes, as chosen by minifiers. */
+const minifiedStringBytes = (value: string) => {
+  let doubleQuotes = 0
+  let singleQuotes = 0
+  for (const character of value) {
+    if (character === '"') {
+      doubleQuotes++
+    } else if (character === "'") {
+      singleQuotes++
+    }
+  }
+  return generatedStringBytes(value) - doubleQuotes + Math.min(doubleQuotes, singleQuotes)
+}
+const minifiedNumberBytes = (value: number) => {
+  if (!Number.isFinite(value)) {
+    return 3
+  }
+  const text = String(value).replace(/^0\./u, '.').replace('e+', 'e')
+  const representations = [text]
+  const trailingZeros = /^(\d+?)(0+)$/u.exec(text)
+  if (trailingZeros) {
+    representations.push(`${trailingZeros[1]}e${trailingZeros[2].length}`)
+  }
+  const fraction = /^\.(0*)(\d+)$/u.exec(text)
+  if (fraction) {
+    representations.push(`${fraction[2]}e-${fraction[1].length + fraction[2].length}`)
+  }
+  if (Number.isSafeInteger(value)) {
+    representations.push(`0x${value.toString(16)}`)
+  }
+  return Math.min(...representations.map(representation => representation.length))
+}
+const minifiedLiteralBytes = (node: PopularLiteral) => {
+  if (t.isStringLiteral(node)) {
+    return minifiedStringBytes(node.value)
+  }
+  if (t.isNumericLiteral(node)) {
+    return minifiedNumberBytes(node.value)
+  }
+  if (t.isBooleanLiteral(node)) {
+    return 2
+  }
+  return Buffer.byteLength(literalRaw(node))
+}
+const literalBytes = (node: PopularLiteral, options: HoistPopularConstantsOptions) => options.estimateMinifiedSize ? minifiedLiteralBytes(node) : Buffer.byteLength(literalRaw(node))
+/** Strings compared against `typeof` or other strings let minifiers loosen `===` to `==`, which a pooled identifier prevents. */
+const isLooseningComparison = (path: PopularLiteralPath) => {
+  const parent = path.parentPath
+  if (!parent.isBinaryExpression() || !['!==', '==='].includes(parent.node.operator)) {
+    return false
+  }
+  const other = path.key === 'left' ? parent.node.right : parent.node.left
+  return t.isUnaryExpression(other, {operator: 'typeof'}) || t.isStringLiteral(other)
+}
+const valueOccurrence = (path: PopularLiteralPath, rawBytes: number, overheadBytes = 0): Occurrence => ({
+  overheadBytes,
+  rawBytes,
+  target: {
+    kind: 'value',
+    path,
+  },
+})
+const literalOccurrence = (path: PopularLiteralPath, options: HoistPopularConstantsOptions): Occurrence => {
+  const {node} = path
+  const parent = path.parentPath
+  if (isObjectLiteralKey(path)) {
+    // Minifiers unquote `{"foo":1}` to `{foo:1}`.
+    const rawBytes = options.estimateMinifiedSize && t.isStringLiteral(node) && t.isValidIdentifier(node.value, false)
+      ? Buffer.byteLength(node.value)
+      : literalBytes(node, options)
+    return {
+      overheadBytes: 2,
+      rawBytes,
+      target: {
+        kind: 'key',
+        owner: parent.node as t.ObjectMethod | t.ObjectProperty,
+      },
+    }
+  }
+  if (!options.estimateMinifiedSize || !t.isStringLiteral(node)) {
+    return valueOccurrence(path, literalBytes(node, options))
+  }
+  // Minifiers rewrite `a["foo"]` to `a.foo`, so pooling really trades `.foo` for `[_]`.
+  if ((parent.isMemberExpression() || parent.isOptionalMemberExpression()) && path.key === 'property' && t.isValidIdentifier(node.value, false)) {
+    return valueOccurrence(path, Buffer.byteLength(node.value) + (parent.isMemberExpression() ? 1 : 0), 2)
+  }
+  return valueOccurrence(path, minifiedStringBytes(node.value), isLooseningComparison(path) ? 1 : 0)
+}
+const addCandidate = (state: HoistPluginState, key: string, occurrence: Occurrence, expression: CandidateExpression, expressionBytes: number) => {
   const candidates = state.candidates!
-  const bytes = Buffer.byteLength(raw)
-  const replacementOverheadBytes = computedObjectKey ? 2 : 0
   const candidate = candidates.get(key)
   if (candidate) {
     candidate.occurrences++
-    candidate.paths.push({
-      computedObjectKey,
-      path,
-    })
-    candidate.rawBytes += bytes
-    candidate.replacementOverheadBytes += replacementOverheadBytes
-    if (bytes < candidate.expressionBytes) {
-      candidate.expression = t.cloneNode(path.node)
-      candidate.expressionBytes = bytes
+    candidate.paths.push(occurrence.target)
+    candidate.rawBytes += occurrence.rawBytes
+    candidate.replacementOverheadBytes += occurrence.overheadBytes
+    if (expressionBytes < candidate.expressionBytes) {
+      candidate.expression = t.cloneNode(expression)
+      candidate.expressionBytes = expressionBytes
     }
     return
   }
   candidates.set(key, {
-    expression: t.cloneNode(path.node),
-    expressionBytes: bytes,
+    expression: t.cloneNode(expression),
+    expressionBytes,
     occurrences: 1,
-    paths: [{
-      computedObjectKey,
-      path,
-    }],
-    rawBytes: bytes,
-    replacementOverheadBytes,
+    paths: [occurrence.target],
+    rawBytes: occurrence.rawBytes,
+    replacementOverheadBytes: occurrence.overheadBytes,
   })
 }
-const addLiteralCandidate = (path: PopularLiteralPath, state: HoistPluginState) => {
+const addLiteralCandidate = (path: PopularLiteralPath, state: HoistPluginState, options: HoistPopularConstantsOptions) => {
   if (!isHoistable(path)) {
     return
   }
-  addCandidate(path, state, literalKey(path.node), literalRaw(path.node), isObjectLiteralKey(path))
+  addCandidate(state, literalKey(path.node), literalOccurrence(path, options), path.node, literalBytes(path.node, options))
+}
+const addPropertyNameCandidate = (state: HoistPluginState, name: string, occurrence: Occurrence, options: HoistPopularConstantsOptions) => {
+  const expression = t.stringLiteral(name)
+  addCandidate(state, `string:${name}`, occurrence, expression, literalBytes(expression, options))
 }
 const addStableBuiltinCandidate = (path: NodePath<t.MemberExpression>, state: HoistPluginState, options: HoistPopularConstantsOptions) => {
   if (!options.stableBuiltins || path.node.computed || !isStableBuiltinRead(path)) {
-    return
+    return false
   }
   if (!t.isIdentifier(path.node.object) || path.scope.getBinding(path.node.object.name)) {
-    return
+    return false
   }
-  const constants = stableBuiltinConstants.get(path.node.object.name)
-  if (!constants || !t.isIdentifier(path.node.property) || !constants.has(path.node.property.name)) {
-    return
+  const members = stableBuiltinMembers.get(path.node.object.name)
+  if (!members || !t.isIdentifier(path.node.property) || !members.has(path.node.property.name)) {
+    return false
   }
   const raw = `${path.node.object.name}.${path.node.property.name}`
-  addCandidate(path, state, `builtin:${raw}`, raw)
+  const bytes = Buffer.byteLength(raw)
+  addCandidate(state, `builtin:${raw}`, {
+    overheadBytes: 0,
+    rawBytes: bytes,
+    target: {
+      kind: 'value',
+      path,
+    },
+  }, path.node, bytes)
+  return true
+}
+const addMemberPropertyCandidate = (path: NodePath<t.MemberExpression | t.OptionalMemberExpression>, state: HoistPluginState, options: HoistPopularConstantsOptions) => {
+  const {node} = path
+  if (node.computed || !t.isIdentifier(node.property)) {
+    return
+  }
+  // `.foo` becomes `[_]` and `?.foo` becomes `?.[_]`.
+  addPropertyNameCandidate(state, node.property.name, {
+    overheadBytes: 2,
+    rawBytes: Buffer.byteLength(node.property.name) + (t.isMemberExpression(node) ? 1 : 0),
+    target: {
+      kind: 'property',
+      owner: node,
+    },
+  }, options)
+}
+const addKeyCandidate = (path: NodePath<KeyOwner>, state: HoistPluginState, options: HoistPopularConstantsOptions) => {
+  const {node} = path
+  if (node.computed || !t.isIdentifier(node.key) || node.key.name === '__proto__' || t.isObjectProperty(node) && node.shorthand) {
+    return
+  }
+  // A computed "constructor" key declares an ordinary method instead of the class constructor.
+  if ((t.isClassMethod(node) || t.isClassProperty(node)) && node.key.name === 'constructor') {
+    return
+  }
+  addPropertyNameCandidate(state, node.key.name, {
+    overheadBytes: 2,
+    rawBytes: Buffer.byteLength(node.key.name),
+    target: {
+      kind: 'key',
+      owner: node,
+    },
+  }, options)
 }
 const isIdentifierAvailable = (path: NodePath<t.Program>, chosen: ReadonlySet<string>, name: string) => t.isValidIdentifier(name, true)
   && !chosen.has(name)
@@ -365,7 +621,7 @@ const declarationsFor = (hoisted: Array<HoistedCandidate>, options: HoistPopular
   }
 }
 const hoistCandidates = (path: NodePath<t.Program>, state: HoistPluginState, options: HoistPopularConstantsOptions) => {
-  if (state.hasDirectEval) {
+  if (state.hasDirectEval || path.node.sourceType !== 'module' && !options.scriptGlobals) {
     return false
   }
   const minimumOccurrences = options.minimumOccurrences ?? 2
@@ -404,10 +660,14 @@ const hoistCandidates = (path: NodePath<t.Program>, state: HoistPluginState, opt
     const candidate = remaining.splice(bestIndex, 1)[0]
     const identifier = t.identifier(next.name)
     for (const occurrence of candidate.paths) {
-      const parent = occurrence.path.parentPath
-      occurrence.path.replaceWith(t.cloneNode(identifier))
-      if (occurrence.computedObjectKey && (parent.isObjectProperty() || parent.isObjectMethod())) {
-        parent.node.computed = true
+      if (occurrence.kind === 'key') {
+        occurrence.owner.key = t.cloneNode(identifier)
+        occurrence.owner.computed = true
+      } else if (occurrence.kind === 'property') {
+        occurrence.owner.property = t.cloneNode(identifier)
+        occurrence.owner.computed = true
+      } else {
+        occurrence.path.replaceWith(t.cloneNode(identifier))
       }
     }
     hoisted.push({
@@ -429,6 +689,7 @@ const hoistCandidates = (path: NodePath<t.Program>, state: HoistPluginState, opt
 
 export default declare<HoistState, HoistPopularConstantsOptions>((api, options) => {
   api.assertVersion('^8.0.0')
+  const propertyNames = options.propertyNames ?? true
   return {
     name: 'hoist-popular-constants',
     visitor: {
@@ -449,22 +710,34 @@ export default declare<HoistState, HoistPopularConstantsOptions>((api, options) 
         }
       },
       BigIntLiteral(path, state) {
-        addLiteralCandidate(path, state)
+        addLiteralCandidate(path, state, options)
       },
       BooleanLiteral(path, state) {
-        addLiteralCandidate(path, state)
+        addLiteralCandidate(path, state, options)
+      },
+      'ClassMethod|ClassProperty|ObjectMethod|ObjectProperty'(path, state) {
+        if (propertyNames) {
+          addKeyCandidate(path as NodePath<KeyOwner>, state, options)
+        }
       },
       MemberExpression(path, state) {
-        addStableBuiltinCandidate(path, state, options)
+        if (!addStableBuiltinCandidate(path, state, options) && propertyNames) {
+          addMemberPropertyCandidate(path, state, options)
+        }
       },
       NullLiteral(path, state) {
-        addLiteralCandidate(path, state)
+        addLiteralCandidate(path, state, options)
       },
       NumericLiteral(path, state) {
-        addLiteralCandidate(path, state)
+        addLiteralCandidate(path, state, options)
+      },
+      OptionalMemberExpression(path, state) {
+        if (propertyNames) {
+          addMemberPropertyCandidate(path, state, options)
+        }
       },
       StringLiteral(path, state) {
-        addLiteralCandidate(path, state)
+        addLiteralCandidate(path, state, options)
       },
     },
   }

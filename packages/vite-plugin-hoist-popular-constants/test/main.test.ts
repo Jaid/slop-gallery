@@ -46,6 +46,11 @@ describe('Vite adapter', () => {
     expect(await render(source)).toContain('.split(" ")')
     expect(await render(source, {stableBuiltins: false})).not.toContain('.split(')
   })
+  test('estimates savings against minified output by default', async () => {
+    const source = 'sink(true,true,true,true)'
+    expect(await render(source)).toBe(source)
+    expect(await render(source, {estimateMinifiedSize: false})).toStartWith('var _=true;')
+  })
   test('runs as a post-build post-renderChunk plugin', () => {
     const plugin = vitePluginHoistPopularConstants()
     expect(plugin.name).toBe('hoist-popular-constants')

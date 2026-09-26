@@ -11,6 +11,7 @@ export default function vitePluginHoistPopularConstants(options: VitePluginHoist
   const stableBuiltins = options.stableBuiltins ?? true
   const babelOptions: HoistPopularConstantsOptions = {
     ...options,
+    estimateMinifiedSize: options.estimateMinifiedSize ?? true,
     join: stableBuiltins && (options.join ?? true),
     minimumSavingsBytes: options.minimumSavingsBytes ?? 0,
     stableBuiltins,

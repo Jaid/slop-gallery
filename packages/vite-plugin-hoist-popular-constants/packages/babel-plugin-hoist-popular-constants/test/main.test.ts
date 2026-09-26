@@ -200,8 +200,79 @@ describe('popular constant hoisting', () => {
     expect(compile(source, {
       minimumOccurrences: 1,
       minimumSavingsBytes: -100,
+      propertyNames: false,
       stableBuiltins: true,
     })).not.toContain('var ')
+  })
+  test('pools stable built-in functions when enabled', () => {
+    const code = compile('Math.floor(a);Math.floor(b);Math.floor(c);Object.keys(a);Object.keys(b);Object.keys(c)', {stableBuiltins: true})
+    expect(code.match(/Math\.floor/gu)).toHaveLength(1)
+    expect(code.match(/Object\.keys/gu)).toHaveLength(1)
+  })
+  test('does not pool built-in functions that depend on their receiver', () => {
+    const code = compile('Promise.resolve(a);Promise.resolve(b);Promise.resolve(c)', {
+      propertyNames: false,
+      stableBuiltins: true,
+    })
+    expect(code).not.toContain('var ')
+  })
+  test('pools member property names together with equal string literals', () => {
+    const code = compile('a.addEventListener(1);b.addEventListener(2);c?.addEventListener(3);sink("addEventListener")')
+    expect(code).toStartWith('var _="addEventListener";')
+    expect(code).toContain('a[_](1);b[_](2);c?.[_](3);sink(_)')
+  })
+  test('pools identifier keys of objects, patterns and class members as computed keys', () => {
+    const code = compile('sink({popularKey:1},{popularKey(){}},{popularKey:a}={});class A{constructor(){}popularKey(){}static popularKey=1}')
+    expect(code).toStartWith('var _="popularKey";')
+    expect(code).toContain('sink({[_]:1},{[_](){}},{[_]:a}={})')
+    expect(code).toContain('class A{constructor(){}[_](){}static[_]=1}')
+  })
+  test('never computes class constructors, shorthand properties or __proto__ keys', () => {
+    const code = compile('class A{constructor(){}}class B{constructor(){}}class C{constructor(){}};sink({popularKey},{popularKey},{__proto__:a},{__proto__:b})', {
+      minimumSavingsBytes: -100,
+    })
+    expect(code.match(/constructor\(\)/gu)).toHaveLength(3)
+    expect(code.match(/\{popularKey\}/gu)).toHaveLength(2)
+    expect(code.match(/__proto__:/gu)).toHaveLength(2)
+  })
+  test('can disable property name pooling', () => {
+    const code = compile('a.addEventListener(1);b.addEventListener(2);c.addEventListener(3)', {propertyNames: false})
+    expect(code).not.toContain('var ')
+  })
+  test('estimates booleans and numbers at their minified size when enabled', () => {
+    expect(compile('sink(true,true,true,true)')).toStartWith('var _=true;')
+    expect(compile('sink(true,true,true,true)', {estimateMinifiedSize: true})).not.toContain('var ')
+    expect(compile('sink(1000000,1000000,1000000)')).toStartWith('var _=1000000;')
+    expect(compile('sink(1000000,1000000,1000000)', {estimateMinifiedSize: true})).not.toContain('var ')
+  })
+  test('estimates quoted keys and computed members at their unquoted minified size', () => {
+    const source = 'sink({"abcd":1},{"abcd":2},{"abcd":3},a["abcd"],b["abcd"])'
+    expect(compile(source, {minimumSavingsBytes: 3})).toStartWith('var _="abcd";')
+    expect(compile(source, {
+      estimateMinifiedSize: true,
+      minimumSavingsBytes: 3,
+    })).not.toContain('var ')
+  })
+  test('charges a byte for strict typeof comparisons a minifier would loosen', () => {
+    const source = 'typeof a==="abcd";typeof b==="abcd";typeof c==="abcd";typeof d==="abcd"'
+    expect(compile(source, {minimumSavingsBytes: 6})).toStartWith('var _="abcd";')
+    expect(compile(source, {
+      estimateMinifiedSize: true,
+      minimumSavingsBytes: 6,
+    })).not.toContain('var ')
+  })
+  test('leaves scripts untouched unless script globals are allowed', () => {
+    const source = 'sink("popular-long-string","popular-long-string")'
+    const compileScript = (options: HoistPopularConstantsOptions) => transformSync(source, {
+      babelrc: false,
+      compact: true,
+      configFile: false,
+      minified: true,
+      parserOpts: {sourceType: 'script'},
+      plugins: [[hoistPopularConstants, options]],
+    })?.code ?? ''
+    expect(compileScript({})).toBe(`${source};`)
+    expect(compileScript({scriptGlobals: true})).toStartWith('var _="popular-long-string";')
   })
   test('respects an explicit savings threshold', () => {
     const source = 'sink("popular-long-string","popular-long-string")'
