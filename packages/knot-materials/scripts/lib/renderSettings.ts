@@ -1,3 +1,5 @@
+import {fade} from 'math'
+
 export const animationFrames = 120
 const animationSeconds = 2
 export const animationFps = animationFrames / animationSeconds
@@ -51,9 +53,8 @@ export const angleAnimationFrame = (index: number): RenderFrame => {
   }
 }
 
-const smootherstep = (value: number) => value * value * value * (value * (value * 6 - 15) + 10)
 const transition = (from: number, to: number, seconds: number, start: number) => {
-  const progress = smootherstep((seconds - start) / animationSeconds)
+  const progress = fade((seconds - start) / animationSeconds)
   return from + (to - from) * progress
 }
 const inspectionDistanceScale = (seconds: number) => {
