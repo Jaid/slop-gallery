@@ -10,9 +10,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Cooling basalt plates breathe around a narrow, stubborn river of fire.
- */
+/** Cooling basalt plates breathe around a narrow, stubborn river of fire. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.46)

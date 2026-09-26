@@ -11,16 +11,12 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Distance from the center to the edge of a regular polygon, so stars can be intersected from it.
- */
+/** Distance from the center to the edge of a regular polygon, so stars can be intersected from it. */
 const polygonRadius = (angle: Node<'float'>, sides: number, radius: Node<'float'>) => {
   const step = TAU / sides
   return angle.sub(Math.PI / sides).mod(step).sub(step / 2).cos().reciprocal().mul(radius).mul(Math.cos(Math.PI / sides))
 }
-/**
- * An indigo silk brocade wound around the knot: neps of a 2/2 twill in the ground, gold thread forming eight pointed stars, ribbons and beaded borders, and a shuttle that keeps travelling the length of the cloth, leaving the gold glowing behind it and a bright line just ahead. Thread relief, silk sheen and anisotropy all live in the fabric's own coordinates, so the cloth reads as woven rather than painted, and the weave softly dissolves into flat color once the threads fall below a pixel.
- */
+/** An indigo silk brocade wound around the knot: neps of a 2/2 twill in the ground, gold thread forming eight pointed stars, ribbons and beaded borders, and a shuttle that keeps travelling the length of the cloth, leaving the gold glowing behind it and a bright line just ahead. Thread relief, silk sheen and anisotropy all live in the fabric's own coordinates, so the cloth reads as woven rather than painted, and the weave softly dissolves into flat color once the threads fall below a pixel. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.62)

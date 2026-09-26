@@ -7,9 +7,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Distance between the two nearest Voronoi features: zero exactly on a cell wall. Branchless, unlike the MaterialX worley, which matters because the seam shader evaluates this field several times per pixel.
- */
+/** Distance between the two nearest Voronoi features: zero exactly on a cell wall. Branchless, unlike the MaterialX worley, which matters because the seam shader evaluates this field several times per pixel. */
 function crackField(position: Node<'vec3'>, scale: number) {
   // A cheap sine-free 3D hash, so the cell lookup stays affordable at 27 samples.
   const hash3 = (cell: Node<'vec3'>) => {
@@ -36,17 +34,13 @@ function crackField(position: Node<'vec3'>, scale: number) {
   }
   return second.sub(first)
 }
-/**
- * Pixel-filtered seam coverage; attenuation keeps subpixel cracks from thickening.
- */
+/** Pixel-filtered seam coverage; attenuation keeps subpixel cracks from thickening. */
 function seamCoverage(field: Node<'float'>, width: number) {
   const filteredWidth = field.fwidth().add(width)
   return field.abs().smoothstep(0, filteredWidth).oneMinus().mul(float(width).div(filteredWidth))
 }
 
-/**
- * Kintsugi: a celadon-glazed porcelain knot, broken and rejoined with molten gold. The fracture network is a real three-dimensional Voronoi wall set, warped by noise so the shards are irregular, and the seams keep their depth as you walk around: look straight into a seam and the gold is there, glance across it and you only see the porcelain lip. Two march samples are enough to read the depth, and they keep the shader affordable.
- */
+/** Kintsugi: a celadon-glazed porcelain knot, broken and rejoined with molten gold. The fracture network is a real three-dimensional Voronoi wall set, warped by noise so the shards are irregular, and the seams keep their depth as you walk around: look straight into a seam and the gold is there, glance across it and you only see the porcelain lip. Two march samples are enough to read the depth, and they keep the shader affordable. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.7)

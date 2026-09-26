@@ -10,9 +10,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * 3. ELYTRA IRIDESCENCE Biomimetic jewel scarab carapace (*Chrysina limbata*). Ultra-vivid constructive thin-film interference shifting through emerald, sapphire, royal amethyst, and bronze. Longitudinally brushed diffraction grating normals and embedded crystalline platelets that sparkle fiercely.
- */
+/** 3. ELYTRA IRIDESCENCE Biomimetic jewel scarab carapace (*Chrysina limbata*). Ultra-vivid constructive thin-film interference shifting through emerald, sapphire, royal amethyst, and bronze. Longitudinally brushed diffraction grating normals and embedded crystalline platelets that sparkle fiercely. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

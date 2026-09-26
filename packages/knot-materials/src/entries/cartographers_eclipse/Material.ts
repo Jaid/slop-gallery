@@ -7,9 +7,7 @@ import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import knotData from './data.ts'
 
-/**
- * Neighbor traversal keeps stars and connecting segments whole across grid boundaries.
- */
+/** Neighbor traversal keeps stars and connecting segments whole across grid boundaries. */
 const constellation = fn(([q]: [Node<'vec3'>]) => {
   const cell = q.floor()
   const local = q.fract()
@@ -43,9 +41,7 @@ const constellation = fn(([q]: [Node<'vec3'>]) => {
   return vec2(stars, links).mul(visibility)
 })
 
-/**
- * A pocket astrolabe. The knot is engraved with the constellations of a single imagined sky: gunmetal blue-black, fine gold filaments for the star lines, and emissive pin-points for the stars themselves. The star points live in the original (parallax-stable) surface so they do not drift as you orbit; only the nebular gas behind them shifts. Each star twinkles on its own clock while the constellation connections stay anchored.
- */
+/** A pocket astrolabe. The knot is engraved with the constellations of a single imagined sky: gunmetal blue-black, fine gold filaments for the star lines, and emissive pin-points for the stars themselves. The star points live in the original (parallax-stable) surface so they do not drift as you orbit; only the nebular gas behind them shifts. Each star twinkles on its own clock while the constellation connections stay anchored. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.45)

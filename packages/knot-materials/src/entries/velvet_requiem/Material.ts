@@ -10,9 +10,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Silk velvet with a buried brocade. The pile flips from void to blood as the nap turns toward the eye, and the gold thread only speaks at a grazing angle.
- */
+/** Silk velvet with a buried brocade. The pile flips from void to blood as the nap turns toward the eye, and the gold thread only speaks at a grazing angle. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.34)

@@ -25,9 +25,7 @@ function brassGear(q: Node<'vec3'>, offsetY: number, outer: number, teeth: numbe
   return plate.mul(toothed.add(spokes.mul(0.9)).add(hub.mul(1.6))).clamp()
 }
 
-/**
- * A heart of brass behind smoked glass: counter-turning wheels on two parallax planes, a gold mainspring coiled around the shell, an escapement that ticks.
- */
+/** A heart of brass behind smoked glass: counter-turning wheels on two parallax planes, a gold mainspring coiled around the shell, an escapement that ticks. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

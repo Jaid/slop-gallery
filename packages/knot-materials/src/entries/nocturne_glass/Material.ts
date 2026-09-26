@@ -9,9 +9,7 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Complete bokeh lights, including discs whose centers lie in neighboring cells.
- */
+/** Complete bokeh lights, including discs whose centers lie in neighboring cells. */
 const bokehField = fn(([q]: [Node<'vec3'>]) => {
   const cell = q.floor()
   const local = q.fract()
@@ -44,9 +42,7 @@ function bokeh(position: Node<'vec3'>, scale: number, seed: number) {
   }
 }
 
-/**
- * A pane of black glass in a rainstorm. The city behind it is a field of out-of-focus lights that slide past as you walk, each bead of rain gathering them into its own small, upside-down lamps, and every rivulet dragging a bright thread of the night down the glass.
- */
+/** A pane of black glass in a rainstorm. The city behind it is a field of out-of-focus lights that slide past as you walk, each bead of rain gathering them into its own small, upside-down lamps, and every rivulet dragging a bright thread of the night down the glass. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.32)

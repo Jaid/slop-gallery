@@ -15,9 +15,7 @@ const gradient = Fn(([q]: [Node<'vec3'>]) => vec3(
   q.z.cos().mul(q.x.cos()).sub(q.y.sin().mul(q.z.sin())),
 ))
 
-/**
- * An ivory skin cut through a living gyroid. Bounded local ray traversal exposes glazed inner walls.
- */
+/** An ivory skin cut through a living gyroid. Bounded local ray traversal exposes glazed inner walls. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)

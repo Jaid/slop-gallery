@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * 4. BISMUTH HOPPER A synthetic metal crystal grown in a lab, its surface a stair-step spiral of right-angled terraces. Each tread oxidised into a different interference colour; edges clean, chrome-bright, infinitely sharp.
- */
+/** 4. BISMUTH HOPPER A synthetic metal crystal grown in a lab, its surface a stair-step spiral of right-angled terraces. Each tread oxidised into a different interference colour; edges clean, chrome-bright, infinitely sharp. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * 1. CRYOGENIC KINTSUGI: Fractured Glacial Ice & Superconducting Gold
- */
+/** 1. CRYOGENIC KINTSUGI: Fractured Glacial Ice & Superconducting Gold */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

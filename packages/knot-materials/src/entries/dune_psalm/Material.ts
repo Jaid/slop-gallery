@@ -11,9 +11,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {TAU} from '../../lib/TAU.ts'
 import knotData from './data.ts'
 
-/**
- * Small, continuous relief with a vertex-stage normal reconstructed from the same displaced surface.
- */
+/** Small, continuous relief with a vertex-stage normal reconstructed from the same displaced surface. */
 function tubeRelief(heightAt: (tube: Node<'vec2'>) => Node<'float'>) {
   const surface = Fn(([tube]: [Node<'vec2'>]) => {
     const frame = knotFrame(tube)
@@ -34,9 +32,7 @@ function dunes(tube: Node<'vec2'>) {
   const wind = time.mul(0.11).sin().mul(0.12)
   return phase.add(wind).sin().mul(0.007).add(phase.mul(2).sub(0.7).sin().mul(0.002))
 }
-/**
- * Dry mineral strata, rounded wind-carved relief and sparse, directional quartz grains.
- */
+/** Dry mineral strata, rounded wind-carved relief and sparse, directional quartz grains. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.58)

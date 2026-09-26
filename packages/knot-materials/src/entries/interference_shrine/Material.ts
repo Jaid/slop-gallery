@@ -27,9 +27,7 @@ const interferenceLattice = Fn(([position]: [Node<'vec3'>]) => {
   return glow
 })
 
-/**
- * A diffraction shrine: every orbit sweeps a new rainbow across its face, and the inner lattice collapses into rings whenever it is "measured".
- */
+/** A diffraction shrine: every orbit sweeps a new rainbow across its face, and the inner lattice collapses into rings whenever it is "measured". */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

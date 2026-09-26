@@ -9,9 +9,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Pattern-welded steel with folded strata, etched valleys and satin nickel.
- */
+/** Pattern-welded steel with folded strata, etched valleys and satin nickel. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.24)

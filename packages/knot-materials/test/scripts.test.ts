@@ -44,7 +44,7 @@ describe('inference prompts', () => {
     expect(prompt).toContain((await readSource('src/candidates/gpt_astra/lib/viewerFrame.ts')).trimEnd())
     expect(prompt).toContain((await readSource('src/candidates/gpt_astra/lib/knotShell.ts')).trimEnd())
     expect(prompt).toContain('exports an anonymous default class')
-    expect(prompt).toContain('three-line JSDoc immediately above that class')
+    expect(prompt).toContain('compact one-line JSDoc immediately above that class')
     expect(prompt).toContain('do not create knot-scoped helper or library files')
     expect(prompt).toContain('knot-only helpers stay inside the corresponding Material.ts')
     for (const entry of knots) {

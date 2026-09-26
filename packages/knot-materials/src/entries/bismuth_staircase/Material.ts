@@ -9,9 +9,7 @@ import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
 const oxideIndex = 2.1
-/**
- * Bismuth Staircase. Bismuth refuses to freeze smoothly: it grows as a hopper crystal, a stack of flat terraces that spiral inward. Each terrace is a fresh metal surface, and each grew its own oxide film of a slightly different thickness – so every step of the staircase is a different color, and the whole thing shifts as you walk past it.
- */
+/** Bismuth Staircase. Bismuth refuses to freeze smoothly: it grows as a hopper crystal, a stack of flat terraces that spiral inward. Each terrace is a fresh metal surface, and each grew its own oxide film of a slightly different thickness – so every step of the staircase is a different color, and the whole thing shifts as you walk past it. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.1)

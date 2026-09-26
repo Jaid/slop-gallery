@@ -10,9 +10,7 @@ import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
 const sugarRelief = 0.009
-/**
- * Three ribbons make twelve turns along the tube; all fields close at both UV seams.
- */
+/** Three ribbons make twelve turns along the tube; all fields close at both UV seams. */
 function sugarPhase(tube: Node<'vec2'>) {
   return tube.x.mul(12).add(tube.y.mul(3)).mul(TAU)
 }
@@ -23,9 +21,7 @@ const sugarPosition = fn(([tube]: [Node<'vec2'>]) => {
   const frame = knotFrame(tube)
   return frame.position.add(frame.normal.mul(sugarHeight(tube)))
 })
-/**
- * Central differences shade the actual fluted surface rather than the undeformed tube.
- */
+/** Central differences shade the actual fluted surface rather than the undeformed tube. */
 const sugarSurfaceNormal = fn(([tube]: [Node<'vec2'>]) => {
   const epsilon = 0.0001
   const du = sugarPosition(tube.add(vec2(epsilon, 0))).sub(sugarPosition(tube.sub(vec2(epsilon, 0))))
@@ -33,9 +29,7 @@ const sugarSurfaceNormal = fn(([tube]: [Node<'vec2'>]) => {
   return du.cross(dv).normalize()
 })
 
-/**
- * Pulled raspberry candy with a mint pinstripe and a finely sugared, fluted glaze.
- */
+/** Pulled raspberry candy with a mint pinstripe and a finely sugared, fluted glaze. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.8)

@@ -6,9 +6,7 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Quicksilver. A knot of liquid mercury, dense enough that its surface moves in slow, heavy swells rather than ripples. The swells bend the studio reflections into long silver ribbons; lean in and a second family of capillary waves appears, so the metal never settles. A whisper of oxide film tints the crests, the way gallium does when it has been handled.
- */
+/** Quicksilver. A knot of liquid mercury, dense enough that its surface moves in slow, heavy swells rather than ripples. The swells bend the studio reflections into long silver ribbons; lean in and a second family of capillary waves appears, so the metal never settles. A whisper of oxide film tints the crests, the way gallium does when it has been handled. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)

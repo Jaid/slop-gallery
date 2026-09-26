@@ -20,9 +20,7 @@ type LoopNodeInput = Node<'int'>
 // Three.js ships loop types that only cover two levels and omit the variable name, so the
 // runtime signature is reached through a narrow cast instead of duplicating the loop by hand.
 const loop = Loop as unknown as (params: LoopParams, body: LoopBody) => void
-/**
- * Jittered 3D Voronoi, packed as `(distance, cellIdentity)`. Returns the distance to the nearest feature point together with the identity of the owning cell, so every organic domain can carry its own random properties. Unlike the raw cell-noise lattice this produces irregular blobs instead of axis-aligned cubes. The loop must live inside an `Fn` so its statements reach a stack.
- */
+/** Jittered 3D Voronoi, packed as `(distance, cellIdentity)`. Returns the distance to the nearest feature point together with the identity of the owning cell, so every organic domain can carry its own random properties. Unlike the raw cell-noise lattice this produces irregular blobs instead of axis-aligned cubes. The loop must live inside an `Fn` so its statements reach a stack. */
 const voronoiDomainPacked = Fn(([position]: [Node<'vec3'>]) => {
   const p = vec3(position).toVar()
   const base = p.floor()
@@ -67,17 +65,11 @@ function voronoiDomain(position: Node<'vec3'>) {
     id: packed.yzw,
   }
 }
-/**
- * Narrow-band spectral response: t = 0 is deep red, t = 1 is violet.
- */
+/** Narrow-band spectral response: t = 0 is deep red, t = 1 is violet. */
 const spectral = (t: Node<'float'>) => vec3(t.sub(0.05).div(0.2).pow(2).negate().exp(), t.sub(0.42).div(0.17).pow(2).negate().exp(), t.sub(0.82).div(0.22).pow(2).negate().exp())
-/**
- * The studio's two brightest sources, in object space.
- */
+/** The studio's two brightest sources, in object space. */
 const lamps = [vec3(-0.16, 0.48, -0.86).normalize(), vec3(0.34, 0.52, 0.78).normalize()]
-/**
- * Precious opal. Amorphous silica is secretly ordered: microscopic spheres stack into irregular domains, and each domain diffracts one wavelength toward the eye. Grating orientation and sphere spacing are random per domain, so neighbouring patches ignite in unrelated colors and the whole stone re-lights itself as you walk around it. Fire only survives inside a few pockets of ordered silica; the rest is potch.
- */
+/** Precious opal. Amorphous silica is secretly ordered: microscopic spheres stack into irregular domains, and each domain diffracts one wavelength toward the eye. Grating orientation and sphere spacing are random per domain, so neighbouring patches ignite in unrelated colors and the whole stone re-lights itself as you walk around it. Fire only survives inside a few pockets of ordered silica; the rest is potch. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.45)

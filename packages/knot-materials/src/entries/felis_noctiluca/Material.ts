@@ -17,9 +17,7 @@ type Constellation = {
   stars: ReadonlyArray<Star>
 }
 
-/**
- * Articulation: 0 = body, 1 = eye, 2…3 = tail root…tip. Positions are hand-drawn, not a random triangulation.
- */
+/** Articulation: 0 = body, 1 = eye, 2…3 = tail root…tip. Positions are hand-drawn, not a random triangulation. */
 const sittingCat: Constellation = {
   stars: [
     [-0.05, 0.265, 0.007, 0],
@@ -98,9 +96,7 @@ const sittingCat: Constellation = {
     [27, 28, 0.9],
   ],
 }
-/**
- * An alert cat in profile: long back, separate forelegs and an upturned question-mark tail.
- */
+/** An alert cat in profile: long back, separate forelegs and an upturned question-mark tail. */
 const prowlingCat: Constellation = {
   stars: [
     [-0.47, 0.17, 0.008, 0],
@@ -178,9 +174,7 @@ const prowlingCat: Constellation = {
 const constellationPeriod = [12, 3] as const
 const catBounds = 0.66
 const scalar = (value: number) => value.toFixed(6)
-/**
- * Constant-index code keeps the tiny graph in registers rather than per-fragment dynamic arrays.
- */
+/** Constant-index code keeps the tiny graph in registers rather than per-fragment dynamic arrays. */
 function graphFunction(name: string, cat: Constellation) {
   const points = cat.stars.map((star, i) => `let p${i} = noctilucaPoint(vec4<f32>(${star.map(scalar).join(', ')}), phase);`).join('\n')
   const stars = cat.stars.map((star, i) => `stars += noctilucaStar(p, p${i}, ${scalar(star[2])}, ${scalar(star[3])}, ${scalar(i)}, aa, phase, clock, identity, intimacy);`).join('\n')
@@ -195,9 +189,7 @@ function graphFunction(name: string, cat: Constellation) {
     return vec4<f32>(threads, stars.x, stars.y + halo, stars.z);
   }`
 }
-/**
- * Four radiance channels: silver threads, star cores, local aureoles and amber eyes.
- */
+/** Four radiance channels: silver threads, star cores, local aureoles and amber eyes. */
 const catWgsl = `
 fn noctilucaCat(p: vec2<f32>, footprint: f32, clock: f32, identity: f32, intimacy: f32) -> vec4<f32> {
   // Derivatives are supplied by the caller before wrapping and before divergent control flow.
@@ -260,9 +252,7 @@ ${graphFunction('noctilucaSit', sittingCat)}
 ${graphFunction('noctilucaProwl', prowlingCat)}
 `
 const catField = wgslFn(catWgsl)
-/**
- * Sparse, periodic pinpricks behind the articulated constellations.
- */
+/** Sparse, periodic pinpricks behind the articulated constellations. */
 function dust(coordinate: Node<'vec2'>, period: Node<'vec2'>, seed: number) {
   const q = coordinate.mul(period)
   const aa = q.fwidth().length().max(0.0001)
@@ -276,9 +266,7 @@ function dust(coordinate: Node<'vec2'>, period: Node<'vec2'>, seed: number) {
   return point.mul(random.z.smoothstep(0.65, 0.85)).mul(pulse)
 }
 
-/**
- * A nocturnal star atlas: articulated feline graphs float over a recessed, slower-moving sky.
- */
+/** A nocturnal star atlas: articulated feline graphs float over a recessed, slower-moving sky. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.25)

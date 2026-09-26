@@ -10,9 +10,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Ice that grows as you look - feathered dendrites resolve only when intimate
- */
+/** Ice that grows as you look - feathered dendrites resolve only when intimate */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

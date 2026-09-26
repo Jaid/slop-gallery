@@ -7,9 +7,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Rosewood, cut from the heart of a tree that spent its life leaning. Fibers inside the block do not run straight: they swirl, and wherever one of those swirls turns to face you the wood lights up in a band of silk – the cat's eye that slides across the surface as you walk. Fine grain streaks film over everything, and as you come close the open pores and tiny calcium flecks of a tropical hardwood come out of the polish.
- */
+/** Rosewood, cut from the heart of a tree that spent its life leaning. Fibers inside the block do not run straight: they swirl, and wherever one of those swirls turns to face you the wood lights up in a band of silk – the cat's eye that slides across the surface as you walk. Fine grain streaks film over everything, and as you come close the open pores and tiny calcium flecks of a tropical hardwood come out of the polish. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)

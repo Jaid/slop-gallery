@@ -7,9 +7,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * 6. FERROFLUID MONOLITH: Hexagonal Rosensweig Spikes & Hydrocarbon Thin-Film
- */
+/** 6. FERROFLUID MONOLITH: Hexagonal Rosensweig Spikes & Hydrocarbon Thin-Film */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

@@ -15,9 +15,7 @@ function line(field: Node<'float'>, width: number) {
   const footprint = field.fwidth().max(0.0001)
   return field.abs().smoothstep(width, footprint.mul(1.15).add(width)).oneMinus()
 }
-/**
- * Black cherry velvet embroidered with a procession of eclipsed, many-rayed suns.
- */
+/** Black cherry velvet embroidered with a procession of eclipsed, many-rayed suns. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.78)

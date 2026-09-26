@@ -8,9 +8,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Cobalt underglaze, gold overglaze and a translucent-looking ivory ceramic body.
- */
+/** Cobalt underglaze, gold overglaze and a translucent-looking ivory ceramic body. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.8)

@@ -10,9 +10,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * 1. ABYSSAL CATHEDRAL A sunken stone nave, drowned for centuries. Caustic light from far above, god-rays threading through cold water, encrusted barnacles and drifting bioluminescent motes that bloom as the viewer swims closer.
- */
+/** 1. ABYSSAL CATHEDRAL A sunken stone nave, drowned for centuries. Caustic light from far above, god-rays threading through cold water, encrusted barnacles and drifting bioluminescent motes that bloom as the viewer swims closer. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

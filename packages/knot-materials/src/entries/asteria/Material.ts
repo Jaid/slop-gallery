@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Six-rayed asterism centred where the half-vector meets the surface, so it glides as the viewer walks.
- */
+/** Six-rayed asterism centred where the half-vector meets the surface, so it glides as the viewer walks. */
 function asterism(normal: Node<'vec3'>, view: Node<'vec3'>) {
   const N = normal.normalize()
   const L = vec3(-3, 9, -16).normalize()
@@ -33,9 +31,7 @@ function asterism(normal: Node<'vec3'>, view: Node<'vec3'>) {
     spot: halo.mul(gate),
   }
 }
-/**
- * Rutile needles along three lattice directions; `raw` stays derivative-free for vertex displacement.
- */
+/** Rutile needles along three lattice directions; `raw` stays derivative-free for vertex displacement. */
 function needles(point: Node<'vec3'>) {
   const axes = [vec3(0.58, 0.58, 0.58).normalize(), vec3(-0.82, 0.36, 0.44).normalize(), vec3(0.2, -0.85, 0.5).normalize()]
   let band: Node<'float'> = float(0)
@@ -53,9 +49,7 @@ function needles(point: Node<'vec3'>) {
   }
 }
 
-/**
- * A star sapphire cut en cabochon: a deep blue stone shot through with rutile needles. Their three lattices braid into a six-rayed star that sits exactly where the light returns to your eye — so the star walks the stone as you walk the gallery, never quite still. Up close, the silk of the needles stands ready to flash.
- */
+/** A star sapphire cut en cabochon: a deep blue stone shot through with rutile needles. Their three lattices braid into a six-rayed star that sits exactly where the light returns to your eye — so the star walks the stone as you walk the gallery, never quite still. Up close, the silk of the needles stands ready to flash. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

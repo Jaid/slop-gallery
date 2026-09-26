@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Drowned tesserae under a skin of water. Caustics stay soft at a distance, draw themselves sharp up close, and slide when the eye changes angle.
- */
+/** Drowned tesserae under a skin of water. Caustics stay soft at a distance, draw themselves sharp up close, and slide when the eye changes angle. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.55)

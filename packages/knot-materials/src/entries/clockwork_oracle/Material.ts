@@ -8,9 +8,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * 6. CLOCKWORK ORACLE An astrolabe turned inside-out. Gear teeth gnash along the tube, engraved rings march around the cross-section, patina pools in the crevices, and a spectral clock-hand sweeps the surface — brightest when you come close, as if time itself were dilated by your presence.
- */
+/** 6. CLOCKWORK ORACLE An astrolabe turned inside-out. Gear teeth gnash along the tube, engraved rings march around the cross-section, patina pools in the crevices, and a spectral clock-hand sweeps the surface — brightest when you come close, as if time itself were dilated by your presence. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

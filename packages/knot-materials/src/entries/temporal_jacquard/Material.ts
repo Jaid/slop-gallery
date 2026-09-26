@@ -8,9 +8,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * 8. TEMPORAL JACQUARD: Woven Photonic Brocade & Dynamic Moiré Loom
- */
+/** 8. TEMPORAL JACQUARD: Woven Photonic Brocade & Dynamic Moiré Loom */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

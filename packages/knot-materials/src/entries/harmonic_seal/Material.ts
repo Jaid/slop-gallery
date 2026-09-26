@@ -10,9 +10,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Security-foil engraving with a directional, wavelength-selective diffraction response.
- */
+/** Security-foil engraving with a directional, wavelength-selective diffraction response. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)

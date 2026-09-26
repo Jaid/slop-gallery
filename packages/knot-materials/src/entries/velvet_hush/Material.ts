@@ -11,9 +11,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Wine-dark pile that swallows the light head-on and burns at the edges when the viewer passes. A damask is woven into the nap itself and answers only to the grazing eye, while two twisted cords of gold bullion wind around the form and strike sparks from the studio. Up close the pile resolves into fibers, crush marks and the thread's own twist.
- */
+/** Wine-dark pile that swallows the light head-on and burns at the edges when the viewer passes. A damask is woven into the nap itself and answers only to the grazing eye, while two twisted cords of gold bullion wind around the form and strike sparks from the studio. Up close the pile resolves into fibers, crush marks and the thread's own twist. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.5)

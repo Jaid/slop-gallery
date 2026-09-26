@@ -31,9 +31,7 @@ const foldedPosition = fn(([tube]: [Node<'vec2'>]) => {
   return knotShell(tube, foldFields(tube).inset)
 })
 
-/**
- * A continuous sheet of folded, vermilion-printed rag paper. The silhouette really pleats. Different slopes carry different pigments, so circling the piece alternately conceals and reveals the red facets without an artificial view-dependent hue shift.
- */
+/** A continuous sheet of folded, vermilion-printed rag paper. The silhouette really pleats. Different slopes carry different pigments, so circling the piece alternately conceals and reveals the red facets without an artificial view-dependent hue shift. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)

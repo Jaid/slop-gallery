@@ -15,9 +15,7 @@ const flakeField = struct({
   sparkle: 'vec3',
   coverage: 'float',
 })
-/**
- * Complete gold flakes with stable centers, tints and tilts, including neighboring-cell overlap.
- */
+/** Complete gold flakes with stable centers, tints and tilts, including neighboring-cell overlap. */
 const evaluateFlakes = Fn(([position, threshold]: [Node<'vec3'>, Node<'float'>]) => {
   const cell = position.floor().toVar()
   const local = position.fract().toVar()
@@ -57,9 +55,7 @@ function goldFlakes(position: Node<'vec3'>, threshold: Node<'float'>) {
   }
 }
 
-/**
- * Urushi lacquer, black when faced and blood-red at the edges, with sprinkled gold flakes under the coat. Every flake has its own tilt so glints ignite and die with each step; the flakes gather in drifts like real maki-e, and a second gold thread wound around the knot only reveals itself at arm's length.
- */
+/** Urushi lacquer, black when faced and blood-red at the edges, with sprinkled gold flakes under the coat. Every flake has its own tilt so glints ignite and die with each step; the flakes gather in drifts like real maki-e, and a second gold thread wound around the knot only reveals itself at arm's length. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)

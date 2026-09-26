@@ -11,9 +11,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Celadon porcelain that remembers every fracture. Rivers of gold run through the mended breaks, burnished along the form so they flare as the viewer passes, while a candle deep in the porcelain leaks a warm halo through the seams. Come closer and a crazing of finer scars resolves in the glaze, each hairline dusted with stray gold.
- */
+/** Celadon porcelain that remembers every fracture. Rivers of gold run through the mended breaks, burnished along the form so they flare as the viewer passes, while a candle deep in the porcelain leaks a warm halo through the seams. Come closer and a crazing of finer scars resolves in the glaze, each hairline dusted with stray gold. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)

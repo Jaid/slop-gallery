@@ -9,9 +9,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Nacre combed along the tube. The comb’s angle follows the viewer, so the color runs as you circle, and the grooves deepen into shadow when you come close.
- */
+/** Nacre combed along the tube. The comb’s angle follows the viewer, so the color runs as you circle, and the grooves deepen into shadow when you come close. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.06)

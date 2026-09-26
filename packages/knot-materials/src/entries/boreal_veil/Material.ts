@@ -8,9 +8,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * One aurora curtain: noise combed into vertical filaments, folded by slow drift, with a soft lower hem.
- */
+/** One aurora curtain: noise combed into vertical filaments, folded by slow drift, with a soft lower hem. */
 function curtain(point: Node<'vec3'>, seed: Node<'float'> | number) {
   const s = typeof seed === 'number' ? float(seed) : seed
   const s3 = vec3(s, s.mul(1.7), s.mul(0.4))
@@ -25,9 +23,7 @@ function curtain(point: Node<'vec3'>, seed: Node<'float'> | number) {
   }
 }
 
-/**
- * Sheets of aurora hang along the knot like combed light. Three veils drift at different depths, so walking slides them against one another exactly as the real sky does; the rays answer your distance — far away they are broad silk, close up they comb into individual filaments that breathe emerald into violet.
- */
+/** Sheets of aurora hang along the knot like combed light. Three veils drift at different depths, so walking slides them against one another exactly as the real sky does; the rays answer your distance — far away they are broad silk, close up they comb into individual filaments that breathe emerald into violet. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.1)

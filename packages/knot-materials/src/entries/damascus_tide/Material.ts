@@ -8,9 +8,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Folded, acid-etched steel with real anisotropic brushing following the layer flow. The watered pattern sits a hair under the polish, so it slides against the highlights as you circle; temper colours bloom at grazing angles, and only up close do the micro brush strokes and a faint forge memory in the seams resolve.
- */
+/** Folded, acid-etched steel with real anisotropic brushing following the layer flow. The watered pattern sits a hair under the polish, so it slides against the highlights as you circle; temper colours bloom at grazing angles, and only up close do the micro brush strokes and a faint forge memory in the seams resolve. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)

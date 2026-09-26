@@ -15,9 +15,7 @@ function iceLine(field: Node<'float'>, width: number) {
   const footprint = field.fwidth().max(0.0001)
   return field.abs().smoothstep(width, footprint.mul(1.3).add(width)).oneMinus()
 }
-/**
- * Clear glacial crystal containing animated volumetric aurora curtains and ancient air bubbles.
- */
+/** Clear glacial crystal containing animated volumetric aurora curtains and ancient air bubbles. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.82)

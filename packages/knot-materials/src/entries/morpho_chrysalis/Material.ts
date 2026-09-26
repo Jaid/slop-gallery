@@ -14,9 +14,7 @@ import knotData from './data.ts'
 
 const columns = 112
 const rows = 26
-/**
- * A folded morpho wing, taught to breathe. Every scale is its own mirror: each carries a private tilt, so the blue arrives as a mosaic that re-forms whenever the eye moves, flares into a flash when you face it and slides toward violet as you turn away. A slow flutter runs the length of the wing, the black margin keeps its scalloped edge and white beads, and the velvet body stays dark.
- */
+/** A folded morpho wing, taught to breathe. Every scale is its own mirror: each carries a private tilt, so the blue arrives as a mosaic that re-forms whenever the eye moves, flares into a flash when you face it and slides toward violet as you turn away. A slow flutter runs the length of the wing, the black margin keeps its scalloped edge and white beads, and the velvet body stays dark. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)

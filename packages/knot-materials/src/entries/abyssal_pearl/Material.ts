@@ -8,9 +8,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Tahitian nacre is nearly black until broad subsurface terraces meet the eye at a favorable angle. Its low-frequency layers have no crackle geometry: the hard outer luster floats over a soft inner sea-glass glow.
- */
+/** Tahitian nacre is nearly black until broad subsurface terraces meet the eye at a favorable angle. Its low-frequency layers have no crackle geometry: the hard outer luster floats over a soft inner sea-glass glow. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.62)

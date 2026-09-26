@@ -9,9 +9,7 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import knotData from './data.ts'
 
-/**
- * Cobalt bathymetry floats just below a warm, crazed porcelain glaze.
- */
+/** Cobalt bathymetry floats just below a warm, crazed porcelain glaze. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)

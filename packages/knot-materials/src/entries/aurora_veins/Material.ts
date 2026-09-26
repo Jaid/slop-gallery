@@ -7,9 +7,7 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Three curtains of polar light, hung at different depths inside black glass. Circling slides you between the sheets. Coming close lifts the violet curtain and makes the green one flutter.
- */
+/** Three curtains of polar light, hung at different depths inside black glass. Circling slides you between the sheets. Coming close lifts the violet curtain and makes the green one flutter. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.05)

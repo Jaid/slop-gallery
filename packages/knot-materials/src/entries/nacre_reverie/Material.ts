@@ -22,9 +22,7 @@ function lamella(tube: Node<'vec2'>) {
     aa: grid.fwidth().length(),
   }
 }
-/**
- * Overlapping shell platelets and two buried interference sheets beneath an unbroken pearl varnish.
- */
+/** Overlapping shell platelets and two buried interference sheets beneath an unbroken pearl varnish. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.82)

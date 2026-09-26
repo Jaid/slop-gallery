@@ -50,9 +50,7 @@ function watchWave(phase: Node<'float'>, footprint: Node<'float'>) {
   return phase.cos().mul(visibility(footprint, 0.6, 3.2))
 }
 
-/**
- * Recessed mechanical watchwork beneath smooth sapphire-like lids. Three depths produce genuine occlusion/parallax at the apertures: a balance spring, a brass wheel, and a counter-rotating idler. All illumination is ordinary PBR; the mechanism does not glow.
- */
+/** Recessed mechanical watchwork beneath smooth sapphire-like lids. Three depths produce genuine occlusion/parallax at the apertures: a balance spring, a brass wheel, and a counter-rotating idler. All illumination is ordinary PBR; the mechanism does not glow. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)

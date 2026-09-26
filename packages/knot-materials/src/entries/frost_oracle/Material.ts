@@ -11,9 +11,7 @@ import {spectralColor} from '../../lib/spectralColor.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A solid piece of blue ice where frost lives on the skin and slow, prismatic weather remains suspended underneath. The warm inclusions only resolve when the visitor comes close.
- */
+/** A solid piece of blue ice where frost lives on the skin and slow, prismatic weather remains suspended underneath. The warm inclusions only resolve when the visitor comes close. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.76)

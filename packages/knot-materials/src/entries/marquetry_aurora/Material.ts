@@ -12,9 +12,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Walnut grain runs with the tube while alternating maple leaves turn across it. A dark knife joint separates them from proud brass stringing, allowing the surface to read as fitted veneer rather than a printed pattern.
- */
+/** Walnut grain runs with the tube while alternating maple leaves turn across it. A dark knife joint separates them from proud brass stringing, allowing the surface to read as fitted veneer rather than a printed pattern. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.84)

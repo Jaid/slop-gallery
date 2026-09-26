@@ -10,9 +10,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Jacquard feathers are woven into the cloth, not printed on a glossy substrate.
- */
+/** Jacquard feathers are woven into the cloth, not printed on a glossy substrate. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

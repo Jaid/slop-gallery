@@ -7,9 +7,7 @@ import {opticalLine} from '../../lib/opticalLine.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * 8. TESSERACT MATRIX 4D non-Euclidean manifold disguised as an obsidian mirror knot. High grazing angles form a sleek liquid chromium reflection, but looking inward unveils an infinite abyss populated by 4 recursive hypercube neon lattice planes rotating in 4D space.
- */
+/** 8. TESSERACT MATRIX 4D non-Euclidean manifold disguised as an obsidian mirror knot. High grazing angles form a sleek liquid chromium reflection, but looking inward unveils an infinite abyss populated by 4 recursive hypercube neon lattice planes rotating in 4D space. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

@@ -13,9 +13,7 @@ import {viewerFrame} from '../../lib/viewerFrame.ts'
 import {wrapCell} from '../../lib/wrapCell.ts'
 import knotData from './data.ts'
 
-/**
- * Five-harness satin: the warp floats over four of five crossings, which is what gives the cloth its long lustrous floats. Counts stay multiples of five so the weave survives the UV wrap.
- */
+/** Five-harness satin: the warp floats over four of five crossings, which is what gives the cloth its long lustrous floats. Counts stay multiples of five so the weave survives the UV wrap. */
 function satinWeave(u: Node<'float'>, v: Node<'float'>, along: number, around: number) {
   const i = u.mul(along)
   const j = v.mul(around)

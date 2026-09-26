@@ -6,9 +6,7 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Four cat poses in a unit square, origin at the center. Each pose keeps the ears as a separated pair so the head reads before the body.
- */
+/** Four cat poses in a unit square, origin at the center. Each pose keeps the ears as a separated pair so the head reads before the body. */
 type Pose = {
   links: ReadonlyArray<readonly [number, number]>
   stars: ReadonlyArray<readonly [number, number]>
@@ -19,9 +17,7 @@ const pose = (stars: ReadonlyArray<readonly [number, number]>, links: ReadonlyAr
 })
 const catPoses = [pose([[-0.1, 0.34], [0.1, 0.34], [-0.06, 0.2], [0.06, 0.2], [0, 0.08], [-0.12, -0.02], [0.12, -0.02], [0, -0.12], [-0.14, -0.24], [0.14, -0.24], [-0.1, -0.34], [0.1, -0.34], [-0.2, -0.4], [0.2, -0.4], [-0.22, 0], [0.22, 0]], [[0, 2], [1, 3], [2, 4], [3, 4], [2, 3], [4, 5], [4, 6], [5, 7], [6, 7], [7, 8], [7, 9], [8, 10], [9, 11], [10, 12], [11, 13], [5, 14], [6, 15]]), pose([[-0.28, 0.1], [-0.16, 0.22], [-0.04, 0.12], [0.1, 0.08], [0.22, 0], [0.3, -0.1], [0.18, -0.2], [0.02, -0.24], [-0.14, -0.18], [-0.26, -0.06], [-0.16, 0], [0.02, -0.04], [0.14, -0.12], [-0.32, -0.16]], [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 0], [9, 10], [10, 11], [11, 4], [6, 12], [8, 13]]), pose([[-0.34, 0.08], [-0.22, 0.18], [-0.1, 0.08], [0.02, 0.1], [0.14, 0.08], [0.26, 0.12], [0.34, 0.02], [0.22, -0.04], [0.08, -0.06], [-0.06, -0.06], [-0.2, -0.04], [-0.32, -0.02], [-0.34, -0.14], [-0.16, -0.18], [0.02, -0.16], [0.2, -0.16], [0.34, -0.2], [0.28, 0.24]], [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [4, 7], [3, 8], [2, 9], [1, 10], [0, 11], [11, 12], [10, 13], [9, 14], [8, 15], [7, 16], [5, 17]]), pose([[-0.06, 0.34], [0.06, 0.34], [-0.02, 0.2], [0.04, 0.2], [0, 0.08], [-0.12, -0.02], [0.14, -0.04], [0, -0.14], [-0.16, -0.24], [0.12, -0.26], [-0.12, -0.36], [0.14, -0.38], [-0.04, -0.32], [0.04, -0.32], [0.22, 0.08], [0.28, 0.2], [-0.2, 0.04]], [[0, 2], [1, 3], [2, 4], [3, 4], [2, 3], [4, 5], [4, 6], [5, 7], [6, 7], [7, 8], [7, 9], [8, 10], [9, 11], [7, 12], [7, 13], [6, 14], [14, 15], [5, 16]])] as const
 const catPoseCount = catPoses.length
-/**
- * Distance to the stars of one pose and to the short meridians that join them.
- */
+/** Distance to the stars of one pose and to the short meridians that join them. */
 function constellation(local: Node<'vec2'>, variant: number) {
   const chart = catPoses[variant]
   let nearest: Node<'float'> = float(2)
@@ -43,9 +39,7 @@ function constellation(local: Node<'vec2'>, variant: number) {
   }
 }
 
-/**
- * A night chart wrapped once around the tube. Four cat poses share it, each a constellation of dots joined by short meridians. The chart is flat in UV so a pose stays a pose. Leaning in wakes the twinkle. Circling warms the ear turned toward you.
- */
+/** A night chart wrapped once around the tube. Four cat poses share it, each a constellation of dots joined by short meridians. The chart is flat in UV so a pose stays a pose. Leaning in wakes the twinkle. Circling warms the ear turned toward you. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.15)

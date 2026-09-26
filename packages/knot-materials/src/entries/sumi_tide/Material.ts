@@ -7,9 +7,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A rice-paper surface wrapped around the knot. Black ink blooms and retreats through the fibers in slow waves. Capillary tendrils dissolve into wet paper fibers up close.
- */
+/** A rice-paper surface wrapped around the knot. Black ink blooms and retreats through the fibers in slow waves. Capillary tendrils dissolve into wet paper fibers up close. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.65)

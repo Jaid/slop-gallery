@@ -13,9 +13,7 @@ import {viewerFrame} from '../../lib/viewerFrame.ts'
 import {wrapCell} from '../../lib/wrapCell.ts'
 import knotData from './data.ts'
 
-/**
- * Brick-bond aragonite tablets: near-flat plates with hairline mortar, per-tablet jitter and flow striations.
- */
+/** Brick-bond aragonite tablets: near-flat plates with hairline mortar, per-tablet jitter and flow striations. */
 function tablets(tile: Node<'vec2'>, tiles: Node<'vec2'>, seed: Node<'float'> | number) {
   const s = typeof seed === 'number' ? float(seed) : seed
   const q = tile.mul(tiles)
@@ -39,9 +37,7 @@ function tablets(tile: Node<'vec2'>, tiles: Node<'vec2'>, seed: Node<'float'> | 
   }
 }
 
-/**
- * The inner shell of a giant pearl oyster: aragonite tablets mortared in conchiolin, each tablet a thin-film lens. Circling the knot sweeps the interference tide across every plate in turn; stepping closer reveals the growth striations on the tablets and the older, deeper plates beneath the mortar.
- */
+/** The inner shell of a giant pearl oyster: aragonite tablets mortared in conchiolin, each tablet a thin-film lens. Circling the knot sweeps the interference tide across every plate in turn; stepping closer reveals the growth striations on the tablets and the older, deeper plates beneath the mortar. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.8)

@@ -11,9 +11,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A membrane dredged from the lightless deep, still alive. A nerve net ripples with traveling cold fire and photophores breathe in private rhythms, each one blazing when the viewer meets it face to face. Along the silhouette the flesh glows like backlit jelly; close up the hide resolves into papillae and a finer vein lattice.
- */
+/** A membrane dredged from the lightless deep, still alive. A nerve net ripples with traveling cold fire and photophores breathe in private rhythms, each one blazing when the viewer meets it face to face. Along the silhouette the flesh glows like backlit jelly; close up the hide resolves into papillae and a finer vein lattice. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.6)

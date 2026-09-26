@@ -10,9 +10,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A cooled basalt lid over something that has not finished erupting. Voronoi plates rise between their seams, and each plate opens on its own phase of the two-second loop, so the crust breathes unevenly. The seams are the only place the interior can be seen: a white-hot line where the cell boundary runs, a molten flow that slides along it, and a warm halo soaking into the surrounding rock. Both the magma and the halo are widened by the screen footprint of the seam field, so a narrowing channel dims and spreads instead of sparkling, and standing close opens the cracks further while the air above them starts to shiver.
- */
+/** A cooled basalt lid over something that has not finished erupting. Voronoi plates rise between their seams, and each plate opens on its own phase of the two-second loop, so the crust breathes unevenly. The seams are the only place the interior can be seen: a white-hot line where the cell boundary runs, a molten flow that slides along it, and a warm halo soaking into the surrounding rock. Both the magma and the halo are widened by the screen footprint of the seam field, so a narrowing channel dims and spreads instead of sparkling, and standing close opens the cracks further while the air above them starts to shiver. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.6)

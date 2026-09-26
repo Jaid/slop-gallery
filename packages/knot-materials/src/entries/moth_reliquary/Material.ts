@@ -11,9 +11,7 @@ import {viewerFrame} from '../../lib/viewerFrame.ts'
 import {wrapCell} from '../../lib/wrapCell.ts'
 import knotData from './data.ts'
 
-/**
- * Overlapping wing scales. Each scale is a curved tile with its own structural color, and the eyespots bloom only inside the near camera distance.
- */
+/** Overlapping wing scales. Each scale is a curved tile with its own structural color, and the eyespots bloom only inside the near camera distance. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.55)

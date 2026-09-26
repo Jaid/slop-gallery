@@ -7,9 +7,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * 4. MAGMA CHRYSALIS Tectonic planetary knot where cooling vesicular basalt crust plates split apart. The basalt plates undergo geometric vertex displacement, sinking down into fiery rift canyons where turbulent incandescent convection magma pulses from 1800K to 6000K white-heat.
- */
+/** 4. MAGMA CHRYSALIS Tectonic planetary knot where cooling vesicular basalt crust plates split apart. The basalt plates undergo geometric vertex displacement, sinking down into fiery rift canyons where turbulent incandescent convection magma pulses from 1800K to 6000K white-heat. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

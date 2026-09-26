@@ -10,9 +10,7 @@ import knotData from './data.ts'
 const warpThreads = 48
 // A multiple of the weave period keeps the twill unbroken where the UV seam closes.
 const weftThreads = 210
-/**
- * Crimson silk shot with gold, woven into a knot. Warp and weft are dyed differently, so the cloth changes its mind as you walk past it: one step shows the crimson ground, the next the gold figuring, and the sheen of every thread runs along its own length like a filament. A damask figure appears in the satin floats, thread by thread, while a slow breath in the fabric keeps the light travelling across it.
- */
+/** Crimson silk shot with gold, woven into a knot. Warp and weft are dyed differently, so the cloth changes its mind as you walk past it: one step shows the crimson ground, the next the gold figuring, and the sheen of every thread runs along its own length like a filament. A damask figure appears in the satin floats, thread by thread, while a slow breath in the fabric keeps the light travelling across it. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

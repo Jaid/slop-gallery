@@ -10,9 +10,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * 2. ABYSSAL BIOLUMINESCENCE Cryo-glacial hadal glass holding living siphonophore colonies. Dual travelling neuro-electrical action-potential spikes surge across the knot loops in real-time, refracting through deep oceanic indigo-blue dispersion and multi-depth organ clusters.
- */
+/** 2. ABYSSAL BIOLUMINESCENCE Cryo-glacial hadal glass holding living siphonophore colonies. Dual travelling neuro-electrical action-potential spikes surge across the knot loops in real-time, refracting through deep oceanic indigo-blue dispersion and multi-depth organ clusters. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

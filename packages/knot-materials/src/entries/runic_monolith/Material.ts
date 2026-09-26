@@ -11,9 +11,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * carved dark stone; a teal ignition wave sweeps the glyphs, gold leaf glints inside the grooves
- */
+/** carved dark stone; a teal ignition wave sweeps the glyphs, gold leaf glints inside the grooves */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

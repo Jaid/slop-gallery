@@ -41,9 +41,7 @@ function accretionDisk(origin: Node<'vec3'>, ray: Node<'vec3'>, toEye: Node<'vec
   }
 }
 
-/**
- * A knot of curved spacetime. The surface is a black mirror, but the sky it shows is bent: rays that pass close to the center are dragged sideways, so the background wraps into a ring and the accretion disk is smeared into an arc that no straight line of sight could produce. The disk is intersected analytically, spins at Keplerian speed, and blazes on the side sweeping toward you.
- */
+/** A knot of curved spacetime. The surface is a black mirror, but the sky it shows is bent: rays that pass close to the center are dragged sideways, so the background wraps into a ring and the accretion disk is smeared into an arc that no straight line of sight could produce. The disk is intersected analytically, spins at Keplerian speed, and blazes on the side sweeping toward you. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.1)

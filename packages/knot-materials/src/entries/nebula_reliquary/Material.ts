@@ -8,9 +8,7 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Black glass sealing a genuine volume of gas: the interior is ray-marched along your line of sight, so the filaments have true depth and drift past one another as you circle. Deeper samples shift hue, the tube core glows brightest, and tiny embers ignite in the depths only when you lean in.
- */
+/** Black glass sealing a genuine volume of gas: the interior is ray-marched along your line of sight, so the filaments have true depth and drift past one another as you circle. Deeper samples shift hue, the tube core glows brightest, and tiny embers ignite in the depths only when you lean in. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)

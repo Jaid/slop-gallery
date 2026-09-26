@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A sugar-black lacquer field carries saturated candy blocks at two shallow depths. The second layer is sampled along the eye vector, so its color slips beneath the polish while the viewer orbits.
- */
+/** A sugar-black lacquer field carries saturated candy blocks at two shallow depths. The second layer is sampled along the eye vector, so its color slips beneath the polish while the viewer orbits. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.68)

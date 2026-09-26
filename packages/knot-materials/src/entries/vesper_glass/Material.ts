@@ -11,15 +11,11 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Four deliberate pigments rather than a generic RGB rainbow.
- */
+/** Four deliberate pigments rather than a generic RGB rainbow. */
 function pigments(t: Node<'float'>, a: Node<'color'>, b: Node<'color'>, c: Node<'color'>, d: Node<'color'>) {
   return mix(mix(a, b, t.smoothstep(0.05, 0.35)), mix(c, d, t.smoothstep(0.68, 0.95)), t.smoothstep(0.38, 0.64))
 }
-/**
- * Garnet and blue cathedral panes surround fixed leadwork, while back-painted enamel shifts beneath the glass as the viewer moves.
- */
+/** Garnet and blue cathedral panes surround fixed leadwork, while back-painted enamel shifts beneath the glass as the viewer moves. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.7)

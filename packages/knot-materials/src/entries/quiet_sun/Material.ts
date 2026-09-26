@@ -9,9 +9,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A pocket photosphere. Granules are white-hot, the lanes stay ember-dark, and the limb reddens wherever the surface turns away.
- */
+/** A pocket photosphere. Granules are white-hot, the lanes stay ember-dark, and the limb reddens wherever the surface turns away. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.18)

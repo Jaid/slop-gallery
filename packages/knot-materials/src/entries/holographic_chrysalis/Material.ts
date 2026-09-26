@@ -9,9 +9,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A folded Morpho butterfly wing wrapped around the knot. The scales are arranged on a true hex lattice (each row offset by half a cell), and each scale is a tilted multi-layer film. The iridescence IOR and thickness depend on the grazing angle and on a slow ripple, so two adjacent scales never agree on the same colour: a deep cobalt that brightens to teal along the rim, then burns to magenta at the most oblique angles. Scale veins darken and faintly glow at intimate range, revealing a hex lattice that was always there.
- */
+/** A folded Morpho butterfly wing wrapped around the knot. The scales are arranged on a true hex lattice (each row offset by half a cell), and each scale is a tilted multi-layer film. The iridescence IOR and thickness depend on the grazing angle and on a slow ripple, so two adjacent scales never agree on the same colour: a deep cobalt that brightens to teal along the rim, then burns to magenta at the most oblique angles. Scale veins darken and faintly glow at intimate range, revealing a hex lattice that was always there. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)

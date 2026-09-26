@@ -10,9 +10,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Liquid mirror that remembers - perfect chrome with memory droplets and fingerprint whorls when intimate
- */
+/** Liquid mirror that remembers - perfect chrome with memory droplets and fingerprint whorls when intimate */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

@@ -7,9 +7,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A flawless mercury mirror from a distance. Walk up and it senses you: concentric ripples spread from the point of the surface nearest to your eyes and follow you as you move, while a soft white presence glows exactly where the surface faces you, as if the sculpture were reflecting your gaze.
- */
+/** A flawless mercury mirror from a distance. Walk up and it senses you: concentric ripples spread from the point of the surface nearest to your eyes and follow you as you move, while a soft white presence glows exactly where the surface faces you, as if the sculpture were reflecting your gaze. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)

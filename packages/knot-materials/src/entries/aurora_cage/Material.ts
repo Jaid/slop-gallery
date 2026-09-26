@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * 5. AURORA CAGE A magnetic bottle caught mid-storm. Helical field lines incised into the surface, charged particles streaking along them, and vertical auroral curtains that shimmer green at the equator and burn violet near the poles.
- */
+/** 5. AURORA CAGE A magnetic bottle caught mid-storm. Helical field lines incised into the surface, charged particles streaking along them, and vertical auroral curtains that shimmer green at the equator and burn violet near the poles. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

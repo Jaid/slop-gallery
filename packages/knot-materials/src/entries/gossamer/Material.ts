@@ -10,9 +10,7 @@ import {spectralColor} from '../../lib/spectralColor.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Spun silk: near-parallel strands wandering across the tube. `cord` is derivative-free for vertex use.
- */
+/** Spun silk: near-parallel strands wandering across the tube. `cord` is derivative-free for vertex use. */
 function silk(tile: Node<'vec2'>) {
   const along = tile.x.mul(Math.PI * 2)
   const sway = mx_noise_float(vec2(along.cos(), along.sin()).mul(2.2).add(0.5)).mul(0.16)
@@ -30,9 +28,7 @@ function silk(tile: Node<'vec2'>) {
   }
 }
 
-/**
- * A knot of spider silk strung out at dawn and jeweled with dew. The strands are almost nothing — they show as a pale ghost against the dark — but every droplet is a lens, and as you circle the knot each one takes its turn flashing an inverted morning back at you. Come closer and the plied twist of the silk resolves.
- */
+/** A knot of spider silk strung out at dawn and jeweled with dew. The strands are almost nothing — they show as a pale ghost against the dark — but every droplet is a lens, and as you circle the knot each one takes its turn flashing an inverted morning back at you. Come closer and the plied twist of the silk resolves. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.5)

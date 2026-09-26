@@ -19,9 +19,7 @@ function plumeLine(field: Node<'float'>, width: number) {
 function ellipse(point: Node<'vec2'>, radii: [number, number]) {
   return vec2(point.x.div(radii[0]), point.y.div(radii[1])).length()
 }
-/**
- * Layered firebird feathers with microscopic barbs, metallic eyes and a traveling ignition.
- */
+/** Layered firebird feathers with microscopic barbs, metallic eyes and a traveling ignition. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.88)

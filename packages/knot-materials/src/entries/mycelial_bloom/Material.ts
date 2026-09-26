@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Mycelium. A knot of damp bark has been colonised: pale hyphae run along every fissure, fuse where they meet, and carry a slow chemical signal that glows cold green in the dark. The light does not sit still – it travels outward from a handful of sources, so the whole colony breathes. Come close and the finest threads resolve out of the mat.
- */
+/** Mycelium. A knot of damp bark has been colonised: pale hyphae run along every fissure, fuse where they meet, and carry a slow chemical signal that glows cold green in the dark. The light does not sit still – it travels outward from a handful of sources, so the whole colony breathes. Come close and the finest threads resolve out of the mat. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.55)

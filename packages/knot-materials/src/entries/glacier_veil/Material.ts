@@ -15,9 +15,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A knot carved from millennial glacier ice, with the aurora itself folded into its depth. Three curtain layers hang under the surface and slide over one another as the viewer circles the plinth. Up close the ice resolves into frost blooms, trapped dust and micro-fractures, while a prism rainbow wakes along the silhouette.
- */
+/** A knot carved from millennial glacier ice, with the aurora itself folded into its depth. Three curtain layers hang under the surface and slide over one another as the viewer circles the plinth. Up close the ice resolves into frost blooms, trapped dust and micro-fractures, while a prism rainbow wakes along the silhouette. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.5)

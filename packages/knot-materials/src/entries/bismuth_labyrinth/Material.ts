@@ -8,9 +8,7 @@ import {spectralColor} from '../../lib/spectralColor.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Bismuth crystal: sharp stepped terraces with rainbow oxide film. The terraces form a maze-like pattern that shifts with viewing angle.
- */
+/** Bismuth crystal: sharp stepped terraces with rainbow oxide film. The terraces form a maze-like pattern that shifts with viewing angle. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.2)

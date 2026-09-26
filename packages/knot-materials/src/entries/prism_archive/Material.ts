@@ -11,16 +11,12 @@ import {TAU} from '../../lib/TAU.ts'
 import {wrapCell} from '../../lib/wrapCell.ts'
 import knotData from './data.ts'
 
-/**
- * Tangent-frame perturbation for deliberately planar, optically distinct microfacets.
- */
+/** Tangent-frame perturbation for deliberately planar, optically distinct microfacets. */
 function facetNormal(x: Node<'float'>, y: Node<'float'>) {
   const {tangent, bitangent, normal} = exhibitionFrame()
   return normal.add(tangent.mul(x)).add(bitangent.mul(y)).normalize()
 }
-/**
- * An embossed diffraction foil: paired triangular blaze angles and an angularly multiplexed engraving.
- */
+/** An embossed diffraction foil: paired triangular blaze angles and an angularly multiplexed engraving. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.05)

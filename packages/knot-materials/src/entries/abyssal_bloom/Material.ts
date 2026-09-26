@@ -11,9 +11,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Scattered lure organs, each blinking on its own slow clock with a slightly different hue.
- */
+/** Scattered lure organs, each blinking on its own slow clock with a slightly different hue. */
 function photophores(position: Node<'vec3'>, clock: Node<'float'>, scale: number, seed: number) {
   const lamp = beads(position.mul(scale), seed)
   const blink = clock.mul(lamp.random.y.mul(2.4).add(0.6)).add(lamp.random.z.mul(TAU)).sin().mul(0.5).add(0.5).pow(7)

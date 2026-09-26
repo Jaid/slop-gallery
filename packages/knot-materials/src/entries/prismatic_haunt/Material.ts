@@ -10,9 +10,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * 8. PRISMATIC HAUNT A cold, faceted crystal knot half-here and half-not. Each facet refuses to admit its colour until you move, then splits the incoming light into a rippling spectrum that migrates across the surface with every step you take.
- */
+/** 8. PRISMATIC HAUNT A cold, faceted crystal knot half-here and half-not. Each facet refuses to admit its colour until you move, then splits the incoming light into a rippling spectrum that migrates across the surface with every step you take. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

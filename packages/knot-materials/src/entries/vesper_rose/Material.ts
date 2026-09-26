@@ -15,9 +15,7 @@ import knotData from './data.ts'
 
 const leadColor = color('#2c3036')
 const giltColor = color('#c8a038')
-/**
- * A cathedral window bent into a closed curve. Diamond quarries of pale antique glass run between dark cames, a jeweled belt of rose medallions winds along the form, and a low sun sweeps through as the viewer walks: cobalt, ruby and gold fire through the panes while the lead stays black. Up close, grisaille vines, seed bubbles and hand-cut wavering resolve in the glass.
- */
+/** A cathedral window bent into a closed curve. Diamond quarries of pale antique glass run between dark cames, a jeweled belt of rose medallions winds along the form, and a low sun sweeps through as the viewer walks: cobalt, ruby and gold fire through the panes while the lead stays black. Up close, grisaille vines, seed bubbles and hand-cut wavering resolve in the glass. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.75)

@@ -8,9 +8,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * 2. RESONANT CYMATICS: Chladni Nodal Acoustics on Polished Obsidian
- */
+/** 2. RESONANT CYMATICS: Chladni Nodal Acoustics on Polished Obsidian */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

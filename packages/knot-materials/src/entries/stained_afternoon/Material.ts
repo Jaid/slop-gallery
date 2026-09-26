@@ -10,9 +10,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Leaded stained glass. Every pane was cut by hand, so no two are the same size, and each one holds a different metal oxide: cobalt, gold, copper, manganese. The lead came between them is dark and matte, and the panes themselves are lit from behind, so the knot reads as a window rather than a solid. Walk around it and the light travels from pane to pane.
- */
+/** Leaded stained glass. Every pane was cut by hand, so no two are the same size, and each one holds a different metal oxide: cobalt, gold, copper, manganese. The lead came between them is dark and matte, and the panes themselves are lit from behind, so the knot reads as a window rather than a solid. Walk around it and the light travels from pane to pane. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.7)

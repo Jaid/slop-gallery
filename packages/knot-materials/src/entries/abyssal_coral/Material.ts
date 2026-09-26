@@ -8,9 +8,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A deep-water mineral garden: chalky coral, ink-blue hollows and living cyan polyps.
- */
+/** A deep-water mineral garden: chalky coral, ink-blue hollows and living cyan polyps. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.42)

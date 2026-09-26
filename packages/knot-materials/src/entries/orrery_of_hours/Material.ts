@@ -11,13 +11,9 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Wheels around the (2,3) knot; long enough that the coarse mesh resolves every tooth.
- */
+/** Wheels around the (2,3) knot; long enough that the coarse mesh resolves every tooth. */
 const movementSections = 12
-/**
- * The machined relief of the movement, in object units along the tube normal, plus the section masks that the fragment stage reuses for engraving. All periodic patterns use integer revolutions so the tube seam stays invisible.
- */
+/** The machined relief of the movement, in object units along the tube normal, plus the section masks that the fragment stage reuses for engraving. All periodic patterns use integer revolutions so the tube seam stays invisible. */
 function movement(tube: Node<'vec2'>, steps: number) {
   const along = tube.x.mul(movementSections)
   const index = along.floor()
@@ -59,13 +55,9 @@ function movement(tube: Node<'vec2'>, steps: number) {
     window,
   }
 }
-/**
- * Escapement steps per wheel revolution.
- */
+/** Escapement steps per wheel revolution. */
 const escapementSteps = 8
-/**
- * A horological movement wound around the knot: cog wheels that snap forward in eight steps per revolution, collars of engine-turned brass, sapphire jewel bearings and dials painted with luminous enamel that keeps giving back the light of the room. Step closer and a century of lathe marks, dust and verdigris rises out of the metal.
- */
+/** A horological movement wound around the knot: cog wheels that snap forward in eight steps per revolution, collars of engine-turned brass, sapphire jewel bearings and dials painted with luminous enamel that keeps giving back the light of the room. Step closer and a century of lathe marks, dust and verdigris rises out of the metal. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)

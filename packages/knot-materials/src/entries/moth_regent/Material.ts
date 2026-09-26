@@ -12,9 +12,7 @@ import {viewerFrame} from '../../lib/viewerFrame.ts'
 import {wrapCell} from '../../lib/wrapCell.ts'
 import knotData from './data.ts'
 
-/**
- * Velvet wing scales with nested ocelli and directional, ribbed structural color.
- */
+/** Velvet wing scales with nested ocelli and directional, ribbed structural color. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

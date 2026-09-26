@@ -8,9 +8,7 @@ import {opticalLine} from '../../lib/opticalLine.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * 5. OPALINE AEROGEL: "Frozen Smoke" with Rayleigh-Mie Forward Scatter
- */
+/** 5. OPALINE AEROGEL: "Frozen Smoke" with Rayleigh-Mie Forward Scatter */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

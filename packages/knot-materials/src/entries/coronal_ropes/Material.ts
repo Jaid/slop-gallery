@@ -8,9 +8,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Subtle convective bubbling of the solar envelope. Keeps the stellar limb smooth while simulating boiling acoustic waves.
- */
+/** Subtle convective bubbling of the solar envelope. Keeps the stellar limb smooth while simulating boiling acoustic waves. */
 const solarEnvelopeDisplacement = Fn(([tube]: [Node<'vec2'>]) => {
   const {position: p, normal} = knotFrame(tube)
   const t = time.mul(0.12)
@@ -18,9 +16,7 @@ const solarEnvelopeDisplacement = Fn(([tube]: [Node<'vec2'>]) => {
     .mul(0.008)
   return p.add(normal.mul(acousticWaves))
 })
-/**
- * Analytical Planckian blackbody radiation calibrated for ACES filmic tonemapping. Preserves chromatic solar hues (deep umbra, fiery orange lanes, rich gold granules).
- */
+/** Analytical Planckian blackbody radiation calibrated for ACES filmic tonemapping. Preserves chromatic solar hues (deep umbra, fiery orange lanes, rich gold granules). */
 function solarBlackbody(temperatureK: Node<'float'>) {
   const t = temperatureK.sub(3000).div(5000).clamp()
   const coolUmbra = vec3(0.08, 0.01, 0.003) // 3000 K deep dark umbra

@@ -26,9 +26,7 @@ function flowingHand(tube: Node<'vec2'>) {
   const descender = inkLine(descenderField, 0.021).mul(tube.x.mul(TAU * 14).add(row).cos().smoothstep(0.55, 0.88))
   return baseline.max(ascender).max(descender)
 }
-/**
- * Warm fibrous vellum carrying parallax ghosts, invented calligraphy and raised gold leaf.
- */
+/** Warm fibrous vellum carrying parallax ghosts, invented calligraphy and raised gold leaf. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.86)

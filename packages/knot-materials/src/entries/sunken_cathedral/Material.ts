@@ -10,9 +10,7 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal as premiumNormal} from '../../lib/proceduralNormal.ts'
 import knotData from './data.ts'
 
-export /**
- * Repeating arched architecture, evaluated at arbitrary interior positions.
- */
+export /** Repeating arched architecture, evaluated at arbitrary interior positions. */
 function cathedralTracery(q: Node<'vec3'>) {
   const x = q.x.mul(9).fract().sub(0.5)
   const y = q.y.mul(7).fract()

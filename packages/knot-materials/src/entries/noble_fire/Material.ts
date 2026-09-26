@@ -14,13 +14,9 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 const floorBounce = vec3(0.11, -0.74, -0.66).normalize()
-/**
- * Every bright source the stone can see: the four studio lights and the bright flooring bounce.
- */
+/** Every bright source the stone can see: the four studio lights and the bright flooring bounce. */
 const fireLamps = [keyLightView, warmSoftboxView, coolStripView, fillPanelView, floorBounce]
-/**
- * Bragg reflection of an ordered silica domain. The planes of the lattice are nearly parallel to the surface, so the momentum difference between the viewer and a lamp has to line up with the grating vector: `(V - L) = m λ / d · G`. Its lateral remainder is the mismatch that extinguishes a flash, and its length gives the wavelength the domain diffracts into the eye. Turning the knot therefore walks every patch through the spectrum, exactly like a real black opal.
- */
+/** Bragg reflection of an ordered silica domain. The planes of the lattice are nearly parallel to the surface, so the momentum difference between the viewer and a lamp has to line up with the grating vector: `(V - L) = m λ / d · G`. Its lateral remainder is the mismatch that extinguishes a flash, and its length gives the wavelength the domain diffracts into the eye. Turning the knot therefore walks every patch through the spectrum, exactly like a real black opal. */
 const diffraction = (view: Node<'vec3'>, grating: Node<'vec3'>, spacing: Node<'float'>, tolerance: Node<'float'>) => {
   let weight: Node<'float'> = float(0)
   let wavelength: Node<'float'> = float(0)

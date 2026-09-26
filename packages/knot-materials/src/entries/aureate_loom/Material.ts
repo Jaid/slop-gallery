@@ -10,9 +10,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {TAU} from '../../lib/TAU.ts'
 import knotData from './data.ts'
 
-/**
- * Cut-pile damask over a real interlaced height field, not a metallic noise recolor.
- */
+/** Cut-pile damask over a real interlaced height field, not a metallic noise recolor. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)

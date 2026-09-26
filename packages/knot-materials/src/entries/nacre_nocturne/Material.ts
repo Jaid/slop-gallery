@@ -11,9 +11,7 @@ import {viewerFrame} from '../../lib/viewerFrame.ts'
 import {wrapCell} from '../../lib/wrapCell.ts'
 import knotData from './data.ts'
 
-/**
- * Diamond-cut shell marquetry: independent optical axes, growth lamellae and recessed bronze joints.
- */
+/** Diamond-cut shell marquetry: independent optical axes, growth lamellae and recessed bronze joints. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.1)

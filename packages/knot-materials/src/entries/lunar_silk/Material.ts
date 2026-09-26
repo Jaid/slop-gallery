@@ -7,9 +7,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Lunar Silk. A plain weave of two very different yarns: a pale silver warp and a deep indigo weft. Because the two yarns run at right angles their anisotropic highlights never fire together, so the cloth reads silver from one side of the gallery and midnight blue from the other.
- */
+/** Lunar Silk. A plain weave of two very different yarns: a pale silver warp and a deep indigo weft. Because the two yarns run at right angles their anisotropic highlights never fire together, so the cloth reads silver from one side of the gallery and midnight blue from the other. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.7)

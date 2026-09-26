@@ -9,9 +9,7 @@ import {spectralColor} from '../../lib/spectralColor.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Nacre is built from quiet growth layers; angle turns the quiet into color.
- */
+/** Nacre is built from quiet growth layers; angle turns the quiet into color. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.42)

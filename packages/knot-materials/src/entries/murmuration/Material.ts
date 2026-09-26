@@ -11,9 +11,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Broad, overlapping coverts are large enough to read as feathers from across the room. Each vane has a raised rachis and diagonal barb grooves; a separate tangent-aligned lobe turns their melanin black into cobalt and bottle green.
- */
+/** Broad, overlapping coverts are large enough to read as feathers from across the room. Each vane has a raised rachis and diagonal barb grooves; a separate tangent-aligned lobe turns their melanin black into cobalt and bottle green. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.58)

@@ -7,9 +7,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Swirling gas giant atmospheric bands wrapped around the knot. Zonal jets create latitude-dependent flow with shear vortices spawning at band boundaries. Closer approach speeds up the visible flow and reveals finer turbulent detail.
- */
+/** Swirling gas giant atmospheric bands wrapped around the knot. Zonal jets create latitude-dependent flow with shear vortices spawning at band boundaries. Closer approach speeds up the visible flow and reveals finer turbulent detail. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.5)

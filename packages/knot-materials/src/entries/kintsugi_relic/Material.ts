@@ -10,9 +10,7 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Physical Kintsugi relief displacement: Bulges the hand-laid urushi lacquer seams proud of the porcelain surface.
- */
+/** Physical Kintsugi relief displacement: Bulges the hand-laid urushi lacquer seams proud of the porcelain surface. */
 const kintsugiDisplacement = Fn(([tube]: [Node<'vec2'>]) => {
   const {position: p, normal} = knotFrame(tube)
   // Domain-warped fracture cleavage

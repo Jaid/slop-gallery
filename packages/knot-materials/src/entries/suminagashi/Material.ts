@@ -8,9 +8,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Suminagashi: ink floated on still water, combed into rings, then lifted onto paper in a single breath. Two figures are superimposed — a dense black strike and a wider indigo wash — so the marbling shifts against itself as you walk past, and a scattering of gold leaf has settled into the troughs of the pattern.
- */
+/** Suminagashi: ink floated on still water, combed into rings, then lifted onto paper in a single breath. Two figures are superimposed — a dense black strike and a wider indigo wash — so the marbling shifts against itself as you walk past, and a scattering of gold leaf has settled into the troughs of the pattern. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)

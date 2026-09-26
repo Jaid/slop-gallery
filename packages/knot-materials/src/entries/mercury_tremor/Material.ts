@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Slow surface-tension swell as a height field; its slope is recovered by proceduralNormal downstream.
- */
+/** Slow surface-tension swell as a height field; its slope is recovered by proceduralNormal downstream. */
 function waves(point: Node<'vec3'>) {
   const a = vec2(1, 0.6).normalize()
   const b = vec2(-0.35, 1).normalize()
@@ -22,9 +20,7 @@ function waves(point: Node<'vec3'>) {
   return height
 }
 
-/**
- * A knot cast in living mercury. Surface tension combs slow swells over the mirror; satellite droplets bead and tremble at the crests. Every step slides the whole room across its skin, and at the very rim a thin breath of oxide turns the reflection to oil-slick rainbows.
- */
+/** A knot cast in living mercury. Surface tension combs slow swells over the mirror; satellite droplets bead and tremble at the crests. Every step slides the whole room across its skin, and at the very rim a thin breath of oxide turns the reflection to oil-slick rainbows. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.05)

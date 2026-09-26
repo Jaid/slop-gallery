@@ -7,9 +7,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {TAU} from '../../lib/TAU.ts'
 import knotData from './data.ts'
 
-/**
- * A slow traveling wave turns two-sided enamel discs inside machined bronze sockets.
- */
+/** A slow traveling wave turns two-sided enamel discs inside machined bronze sockets. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.75)

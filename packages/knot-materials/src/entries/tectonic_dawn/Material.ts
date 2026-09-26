@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A tectonic plate boundary seen through polished volcanic glass.
- */
+/** A tectonic plate boundary seen through polished volcanic glass. */
 function faultField(point: Node<'vec3'>, view: Node<'vec3'>, scale: number, seed: number, parallax: number) {
   const domain = point.mul(scale).add(vec3(seed, seed * 0.41, seed * -0.27)).add(view.mul(parallax))
   const warp = mx_fractal_noise_float(domain.mul(0.24).add(seed), 3, 2.08, 0.53)

@@ -11,9 +11,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A woven field of almost impossibly fine filament. The physical anisotropic highlight travels along the knot while several view-shifted thread layers make the cloth feel deep enough to enter.
- */
+/** A woven field of almost impossibly fine filament. The physical anisotropic highlight travels along the knot while several view-shifted thread layers make the cloth feel deep enough to enter. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.96)

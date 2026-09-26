@@ -12,9 +12,7 @@ import {viewerFrame} from '../../lib/viewerFrame.ts'
 import {wrapCell} from '../../lib/wrapCell.ts'
 import knotData from './data.ts'
 
-/**
- * Maki-e ginkgo fans: mineral green inlay, leaf-gold veins and scattered gold powder on oxblood lacquer.
- */
+/** Maki-e ginkgo fans: mineral green inlay, leaf-gold veins and scattered gold powder on oxblood lacquer. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

@@ -12,9 +12,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Kintsugi. Dark urushi lacquer over stoneware, crazed into a fracture network and repaired in gold. The gold is not paint: it is metal sitting in a crevice, so it turns bright and cold when you look along the surface and goes almost black when you face it head on. Lean in and the repair keeps branching, down to dust.
- */
+/** Kintsugi. Dark urushi lacquer over stoneware, crazed into a fracture network and repaired in gold. The gold is not paint: it is metal sitting in a crevice, so it turns bright and cold when you look along the surface and goes almost black when you face it head on. Lean in and the repair keeps branching, down to dust. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.5)

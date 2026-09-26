@@ -12,9 +12,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Calcium-carbonate lamellae are read as a stack of shallow, view-shifted pages rather than a metallic rainbow. Their soft color remains milky at rest and flashes only along a moving rim.
- */
+/** Calcium-carbonate lamellae are read as a stack of shallow, view-shifted pages rather than a metallic rainbow. Their soft color remains milky at rest and flashes only along a moving rim. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.82)

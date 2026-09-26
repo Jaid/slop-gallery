@@ -5,9 +5,7 @@ import {color, float, mix, mx_fractal_noise_float, mx_noise_float, normalViewGeo
 import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import knotData from './data.ts'
 
-/**
- * A slab of cold acrylic holding a Lichtenberg figure in suspension. The bolt is the iso-line through a high-octave fractal noise field, sampled at the surface so the figure stays stable as you orbit; the drama lives in the trapped charge glowing faint electric blue at the centre of every branch and fading into deeper indigo at the tips.
- */
+/** A slab of cold acrylic holding a Lichtenberg figure in suspension. The bolt is the iso-line through a high-octave fractal noise field, sampled at the surface so the figure stays stable as you orbit; the drama lives in the trapped charge glowing faint electric blue at the centre of every branch and fading into deeper indigo at the tips. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.5)

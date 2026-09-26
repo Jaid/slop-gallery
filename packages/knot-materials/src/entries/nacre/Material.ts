@@ -13,9 +13,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Abalone nacre: aragonite platelets mortared into terraces, each one a thin film that re-tints the studio as the viewer moves. Growth ridges march along the form in stepped plateaus; the interference color pools in the low ground and flares along the risers. Close up, the brick-and-mortar platelets scintillate like a city seen from far above.
- */
+/** Abalone nacre: aragonite platelets mortared into terraces, each one a thin film that re-tints the studio as the viewer moves. Growth ridges march along the form in stepped plateaus; the interference color pools in the low ground and flares along the risers. Close up, the brick-and-mortar platelets scintillate like a city seen from far above. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

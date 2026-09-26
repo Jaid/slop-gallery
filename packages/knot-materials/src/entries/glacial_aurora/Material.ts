@@ -10,9 +10,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Glacier ice with an aurora trapped inside. Frost ferns cover it from afar; your approach melts them back to a glistening water line, revealing clear ice, frozen bubbles, and four depth layers of curtains that drift as you walk around.
- */
+/** Glacier ice with an aurora trapped inside. Frost ferns cover it from afar; your approach melts them back to a glistening water line, revealing clear ice, frozen bubbles, and four depth layers of curtains that drift as you walk around. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

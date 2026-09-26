@@ -13,9 +13,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A nocturnal lichen crust: fungal caps rise from peat-black terrain while the connected mycelium pulses in private rhythms. It reads as a landscape at close range and a constellation at a distance.
- */
+/** A nocturnal lichen crust: fungal caps rise from peat-black terrain while the connected mycelium pulses in private rhythms. It reads as a landscape at close range and a constellation at a distance. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.52)

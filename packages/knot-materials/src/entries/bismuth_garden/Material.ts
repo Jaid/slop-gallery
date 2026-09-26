@@ -13,9 +13,7 @@ import {viewerFrame} from '../../lib/viewerFrame.ts'
 import {wrapCell} from '../../lib/wrapCell.ts'
 import knotData from './data.ts'
 
-/**
- * Hopper-crystal terraces are built in the knot's seamless tube coordinates. A separate crystal identity per tile keeps the rainbow architectural rather than oil-slick smooth.
- */
+/** Hopper-crystal terraces are built in the knot's seamless tube coordinates. A separate crystal identity per tile keeps the rainbow architectural rather than oil-slick smooth. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.18)

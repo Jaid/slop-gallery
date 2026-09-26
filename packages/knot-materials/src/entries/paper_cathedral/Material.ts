@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Nested pierced pages. All apertures are ray-shifted before depth compositing.
- */
+/** Nested pierced pages. All apertures are ray-shifted before depth compositing. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.6)

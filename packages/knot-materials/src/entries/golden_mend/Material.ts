@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Kintsugi. A knot of pale porcelain was dropped, and every fracture was filled with lacquer and dusted with gold. The shards no longer sit flush: each one keeps its own height and tilt, and the gilded seams bridge the steps between them. The seams stand proud of the glaze, so they catch the studio lights as hard, warm slivers while the porcelain stays cool and quiet. Lean in and the glaze reveals its own hairline crazing.
- */
+/** Kintsugi. A knot of pale porcelain was dropped, and every fracture was filled with lacquer and dusted with gold. The shards no longer sit flush: each one keeps its own height and tilt, and the gilded seams bridge the steps between them. The seams stand proud of the glaze, so they catch the studio lights as hard, warm slivers while the porcelain stays cool and quiet. Lean in and the glaze reveals its own hairline crazing. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

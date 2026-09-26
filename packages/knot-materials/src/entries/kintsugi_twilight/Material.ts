@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Black urushi ceramic, split by a living net of liquid gold.
- */
+/** Black urushi ceramic, split by a living net of liquid gold. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.8)

@@ -9,9 +9,7 @@ import {spectralColor} from '../../lib/spectralColor.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Woven light - black velvet that only reveals luminous warp/weft at grazing and up close
- */
+/** Woven light - black velvet that only reveals luminous warp/weft at grazing and up close */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

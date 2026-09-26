@@ -11,16 +11,12 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A crust of blown volcanic glass: the silhouette swells where the melt pushes from below.
- */
+/** A crust of blown volcanic glass: the silhouette swells where the melt pushes from below. */
 const crustSurface = Fn(([tube]: [Node<'vec2'>]) => {
   const {position: p, normal} = knotFrame(tube)
   return p.add(normal.mul(mx_noise_float(p.mul(2.3).add(vec3(0.4, -1.1, 2.2))).mul(0.013)))
 })
-/**
- * Volcanic glass over a magma chamber. Far away the knot is a black mirror – the crust has closed and only a dull rust haze hints at what moves below. Walking closer opens the fissures: the shells of the crust tilt apart, rivers with chilled scum and white-hot hearts become legible, the glass around every crack turns amber as heat climbs through it, and fine crazing spreads across the hottest plates.
- */
+/** Volcanic glass over a magma chamber. Far away the knot is a black mirror – the crust has closed and only a dull rust haze hints at what moves below. Walking closer opens the fissures: the shells of the crust tilt apart, rivers with chilled scum and white-hot hearts become legible, the glass around every crack turns amber as heat climbs through it, and fine crazing spreads across the hottest plates. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.45)

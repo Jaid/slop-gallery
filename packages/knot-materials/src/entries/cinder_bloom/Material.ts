@@ -11,9 +11,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A glazed volcanic skin. Its broad plates cool to near black while nested microfractures retain enough heat to bloom from ember red into gold as the knot turns.
- */
+/** A glazed volcanic skin. Its broad plates cool to near black while nested microfractures retain enough heat to bloom from ember red into gold as the knot turns. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.72)

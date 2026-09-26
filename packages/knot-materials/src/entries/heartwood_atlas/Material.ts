@@ -8,9 +8,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A single carved block of figured wood, with growth rings continuous across the entire knot.
- */
+/** A single carved block of figured wood, with growth rings continuous across the entire knot. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)

@@ -8,9 +8,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Black lacquer inlaid with mercury. The inscription is pseudo-calligraphy laid on the tube in object space, so the hand wraps the knot without a UV seam. Parallax lifts the metal a fraction out of the groove.
- */
+/** Black lacquer inlaid with mercury. The inscription is pseudo-calligraphy laid on the tube in object space, so the hand wraps the knot without a UV seam. Parallax lifts the metal a fraction out of the groove. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.4)

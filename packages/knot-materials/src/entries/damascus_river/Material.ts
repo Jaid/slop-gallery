@@ -11,9 +11,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Etched watered steel. Dark rivers stay matte, silver ridges take the light, and a pale hamon moves its color as the blade turns.
- */
+/** Etched watered steel. Dark rivers stay matte, silver ridges take the light, and a pale hamon moves its color as the blade turns. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.62)

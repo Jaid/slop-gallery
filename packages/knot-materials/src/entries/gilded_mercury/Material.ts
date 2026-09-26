@@ -10,9 +10,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Mercury that refuses to hold still. Heavy swells crawl along the knot while capillary ripples shiver over them, and droplets bead across the mirror and drag their own reflections along. A whisper of phosphorescent vapour pools in the troughs and burns along the silhouette – the metal swallowed something gilded and remembers it as light.
- */
+/** Mercury that refuses to hold still. Heavy swells crawl along the knot while capillary ripples shiver over them, and droplets bead across the mirror and drag their own reflections along. A whisper of phosphorescent vapour pools in the troughs and burns along the silhouette – the metal swallowed something gilded and remembers it as light. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.45)

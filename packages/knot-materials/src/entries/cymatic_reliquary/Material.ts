@@ -10,9 +10,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Shared integer-cycle harmonics for both the porcelain form and its painted nodes.
- */
+/** Shared integer-cycle harmonics for both the porcelain form and its painted nodes. */
 const standingWave = (q: Node<'vec2'>, warp: Node<'float'>, slow: Node<'float'>) => {
   const a = q.x.mul(TAU * 16).add(q.y.mul(TAU)).add(warp.mul(1.4)).add(slow.mul(0.11)).sin()
   const b = q.x.mul(TAU * 26).sub(q.y.mul(TAU)).add(warp.mul(-0.9)).sub(slow.mul(0.083)).sin()

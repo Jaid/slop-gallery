@@ -8,9 +8,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A pelagic organism. Its body is nearly water — a clear gel with a faint blue attenuation — and everything you actually see lives inside it: a gut that glows, a net of photophores, and slow waves of bioluminescence that travel the length of the animal. Bring a light close and it answers with a brighter, faster pulse.
- */
+/** A pelagic organism. Its body is nearly water — a clear gel with a faint blue attenuation — and everything you actually see lives inside it: a gut that glows, a net of photophores, and slow waves of bioluminescence that travel the length of the animal. Bring a light close and it answers with a brighter, faster pulse. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.4)

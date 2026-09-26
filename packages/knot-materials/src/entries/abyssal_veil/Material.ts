@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A deep-sea creature, still swimming. The body is gel: you can see into it, and what you see is moving. Nine radial canals run down the length of it, a ring of lappets fringes the bell, and a slow contraction travels along the whole animal, tightening the skin and firing the rows of light organs in step with the wave. The membranes carry a thin-film sheen, so the edges of the gel flare violet and green as you circle, and the deeper organs only become legible when you look through the skin at a grazing angle.
- */
+/** A deep-sea creature, still swimming. The body is gel: you can see into it, and what you see is moving. Nine radial canals run down the length of it, a ring of lappets fringes the bell, and a slow contraction travels along the whole animal, tightening the skin and firing the rows of light organs in step with the wave. The membranes carry a thin-film sheen, so the edges of the gel flare violet and green as you circle, and the deeper organs only become legible when you look through the skin at a grazing angle. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)

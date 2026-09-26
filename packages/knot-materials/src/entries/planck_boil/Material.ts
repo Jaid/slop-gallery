@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Spacetime at the Planck scale: tiny bubbles and wormhole-like voids flicker in and out, edged with neon wireframe loops. Bubble scale changes with camera distance. Nested topological layers are revealed at different viewing angles.
- */
+/** Spacetime at the Planck scale: tiny bubbles and wormhole-like voids flicker in and out, edged with neon wireframe loops. Bubble scale changes with camera distance. Nested topological layers are revealed at different viewing angles. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.6)

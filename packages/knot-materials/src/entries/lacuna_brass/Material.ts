@@ -7,9 +7,7 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import knotData from './data.ts'
 
-/**
- * A rounded rectangular punch in a seamless 32 × 8 mechanical music-roll grid.
- */
+/** A rounded rectangular punch in a seamless 32 × 8 mechanical music-roll grid. */
 function brassPunch(tube: Node<'vec2'>) {
   const q = tube.mul(vec2(32, 8))
   const cell = q.floor().mod(vec2(32, 8))

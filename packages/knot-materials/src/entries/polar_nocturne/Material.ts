@@ -7,9 +7,7 @@ import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Aurora curtains in silk; like the true night sky, they burn brightest seen edge-on.
- */
+/** Aurora curtains in silk; like the true night sky, they burn brightest seen edge-on. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

@@ -11,9 +11,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Cobalt wave fans and gold crests lie beneath a crazed porcelain glaze, with granulation revealed on approach.
- */
+/** Cobalt wave fans and gold crests lie beneath a crazed porcelain glaze, with granulation revealed on approach. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)

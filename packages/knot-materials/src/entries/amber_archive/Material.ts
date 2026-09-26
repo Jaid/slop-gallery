@@ -12,9 +12,7 @@ import {viewerFrame} from '../../lib/viewerFrame.ts'
 import {wrapCell} from '../../lib/wrapCell.ts'
 import knotData from './data.ts'
 
-/**
- * A pressed frond, supported strictly inside its cell so the repeated domain has no cut leaves.
- */
+/** A pressed frond, supported strictly inside its cell so the repeated domain has no cut leaves. */
 function fern(point: Node<'vec2'>, footprint: Node<'float'>, sway: Node<'float'>) {
   const y = point.y
   const x = point.x.sub(y.add(0.42).pow2().mul(sway))
@@ -32,9 +30,7 @@ function fern(point: Node<'vec2'>, footprint: Node<'float'>, sway: Node<'float'>
   }
 }
 
-/**
- * Four occluding botanical strata under a continuous polished resin skin; no scene-color dependency.
- */
+/** Four occluding botanical strata under a continuous polished resin skin; no scene-color dependency. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.8)

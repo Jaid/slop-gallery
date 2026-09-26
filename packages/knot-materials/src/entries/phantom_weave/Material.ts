@@ -9,9 +9,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A satin smart-weave whose silver warp catches a restrained aurora at grazing angles.
- */
+/** A satin smart-weave whose silver warp catches a restrained aurora at grazing angles. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.92)

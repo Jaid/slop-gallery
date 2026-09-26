@@ -8,23 +8,17 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Subpixel paper fibers settle to their mean rather than sparkling.
- */
+/** Subpixel paper fibers settle to their mean rather than sparkling. */
 function paperGrain(point: Node<'vec3'>) {
   const visibility = point.fwidth().length().smoothstep(0.25, 1).oneMinus()
   return mix(float(0.5), mx_noise_float(point).mul(0.5).add(0.5), visibility)
 }
-/**
- * Distance from a point to a line segment in the glyph's own square.
- */
+/** Distance from a point to a line segment in the glyph's own square. */
 const segmentDistance = (point: Node<'vec2'>, start: Node<'vec2'>, end: Node<'vec2'>) => {
   const span = end.sub(start)
   return point.sub(start).sub(span.mul(point.sub(start).dot(span).div(span.dot(span).max(1e-5)).clamp())).length()
 }
-/**
- * A codex page wound around the knot. Lines of runic script are ruled onto the parchment, with rule lines, initials and marginal borders in gold leaf. A nib of light travels the page forever: it writes the words just ahead of itself and lets them fade into the margin before it returns. The parchment lifts wherever a visitor stands close, so the text you can actually read is the text near you, and the ink quietly thins out once a stroke falls below a pixel.
- */
+/** A codex page wound around the knot. Lines of runic script are ruled onto the parchment, with rule lines, initials and marginal borders in gold leaf. A nib of light travels the page forever: it writes the words just ahead of itself and lets them fade into the margin before it returns. The parchment lifts wherever a visitor stands close, so the text you can actually read is the text near you, and the ink quietly thins out once a stroke falls below a pixel. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.55)

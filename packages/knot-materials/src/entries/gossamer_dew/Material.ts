@@ -12,9 +12,7 @@ import {spectralColor} from '../../lib/spectralColor.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Keep the source concept while avoiding Chromium/Tint failures from its transparent vector-noise path: woven silk, beaded dew and thin-film fire.
- */
+/** Keep the source concept while avoiding Chromium/Tint failures from its transparent vector-noise path: woven silk, beaded dew and thin-film fire. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

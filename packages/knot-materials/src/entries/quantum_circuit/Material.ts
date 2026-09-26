@@ -10,9 +10,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * matte silicon etched with gold; data pulses race the buses, fine logic fades in up close
- */
+/** matte silicon etched with gold; data pulses race the buses, fine logic fades in up close */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

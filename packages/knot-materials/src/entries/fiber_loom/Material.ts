@@ -8,9 +8,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A woven fabric of glass fiber optic threads. Warp and weft interlace in an over-under pattern. Pulses of colored light race along the threads, creating a living tapestry of data. The weave becomes visible up close; from afar it shimmers.
- */
+/** A woven fabric of glass fiber optic threads. Warp and weft interlace in an over-under pattern. Pulses of colored light race along the threads, creating a living tapestry of data. The weave becomes visible up close; from afar it shimmers. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.8)

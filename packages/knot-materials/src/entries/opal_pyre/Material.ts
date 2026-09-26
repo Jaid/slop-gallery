@@ -7,9 +7,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A Mexican-fire opal the size of a knotted ring: a deep indigo matrix with overlapping play-of-colour fields with a slowly advancing phase so the fire flickers through every hue in turn. Black dendrite inclusions are etched across the surface as if some ancient fossil were caught in the silica, and from intimate range the glow inside brightens until the opal looks lit from within.
- */
+/** A Mexican-fire opal the size of a knotted ring: a deep indigo matrix with overlapping play-of-colour fields with a slowly advancing phase so the fire flickers through every hue in turn. Black dendrite inclusions are etched across the surface as if some ancient fossil were caught in the silica, and from intimate range the glow inside brightens until the opal looks lit from within. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.55)

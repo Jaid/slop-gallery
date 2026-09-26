@@ -7,9 +7,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {TAU} from '../../lib/TAU.ts'
 import knotData from './data.ts'
 
-/**
- * A gossamer curtain of woven silk wrapped around the knot, lit from behind by an aurora borealis that drifts and shivers as you walk. The fabric has a fine vertical weave that catches a sharp anisotropic sheen along its grain; the aurora colours are layered through several slow scrolling curtains that cross-fade through green, teal, magenta and violet. From intimate range you can read the weave, and the backlight grows so strong the silk looks lit through a stained-glass window.
- */
+/** A gossamer curtain of woven silk wrapped around the knot, lit from behind by an aurora borealis that drifts and shivers as you walk. The fabric has a fine vertical weave that catches a sharp anisotropic sheen along its grain; the aurora colours are layered through several slow scrolling curtains that cross-fade through green, teal, magenta and violet. From intimate range you can read the weave, and the backlight grows so strong the silk looks lit through a stained-glass window. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.35)

@@ -9,9 +9,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Deep cinnabar lacquer carved in a slow spiral. Where the viewing angle cuts the coats, gold leaf shows through and glints only while you face it.
- */
+/** Deep cinnabar lacquer carved in a slow spiral. Where the viewing angle cuts the coats, gold leaf shows through and glints only while you face it. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.08)

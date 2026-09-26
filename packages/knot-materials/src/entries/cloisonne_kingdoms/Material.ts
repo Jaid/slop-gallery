@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Jewel-like enamel compartments separated by hand-finished gold wire.
- */
+/** Jewel-like enamel compartments separated by hand-finished gold wire. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.05)

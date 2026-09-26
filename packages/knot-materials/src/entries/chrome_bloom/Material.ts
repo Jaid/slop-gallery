@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A smooth, slow metal flow with a razor-thin oxide skin.
- */
+/** A smooth, slow metal flow with a razor-thin oxide skin. */
 function chromeField(point: Node<'vec3'>) {
   const slow = mx_fractal_noise_float(point.mul(2.15).add(vec3(0, time.mul(0.026), 0)), 3, 2.1, 0.52)
   const folds = mx_fractal_noise_float(point.mul(4.4).add(vec3(time.mul(0.018), 0, time.mul(-0.014))), 2, 2.25, 0.48)

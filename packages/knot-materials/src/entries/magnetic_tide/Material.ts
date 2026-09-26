@@ -9,9 +9,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Vertex-only finite differences preserve highlights on smooth, displaced tube surfaces.
- */
+/** Vertex-only finite differences preserve highlights on smooth, displaced tube surfaces. */
 function sculptedTube(tube: Node<'vec2'>, height: (tube: Node<'vec2'>) => Node<'float'>) {
   const surface = Fn(([q]: [Node<'vec2'>]) => {
     const {position, normal} = knotFrame(q)
@@ -34,9 +32,7 @@ function field(q: Node<'vec2'>) {
     modulation,
   }
 }
-/**
- * A polished magnetic sea rises in seamless traveling ridges, with surface normals reconstructed from the displaced tube.
- */
+/** A polished magnetic sea rises in seamless traveling ridges, with surface normals reconstructed from the displaced tube. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.3)

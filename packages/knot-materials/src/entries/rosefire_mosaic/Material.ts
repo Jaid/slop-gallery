@@ -17,9 +17,7 @@ function solderLine(field: Node<'float'>, width: number) {
   const footprint = field.fwidth().max(0.0001)
   return field.abs().smoothstep(width, footprint.mul(1.25).add(width)).oneMinus()
 }
-/**
- * Repeating rose windows made from saturated antique glass, raised lead and a parallax flame.
- */
+/** Repeating rose windows made from saturated antique glass, raised lead and a parallax flame. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.78)

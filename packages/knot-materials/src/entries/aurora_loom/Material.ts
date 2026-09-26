@@ -10,9 +10,7 @@ import {starfield} from '../../lib/starfield.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A night loom. Fine anisotropic silk carries curtains of aurora that parallax through the tube, while a sparse starfield only appears in the grazing dark.
- */
+/** A night loom. Fine anisotropic silk carries curtains of aurora that parallax through the tube, while a sparse starfield only appears in the grazing dark. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.45)

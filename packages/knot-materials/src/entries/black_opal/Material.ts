@@ -10,9 +10,7 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Analytical spectral color mapping for diffracted wavelengths (400 nm to 700 nm). Produces pure, laser-saturated monochromatic interference colors.
- */
+/** Analytical spectral color mapping for diffracted wavelengths (400 nm to 700 nm). Produces pure, laser-saturated monochromatic interference colors. */
 function wavelengthToRGB(wavelengthNm: Node<'float'>) {
   // Normalized visible spectrum parameter [0, 1]
   const t = wavelengthNm.sub(400).div(300).clamp()
@@ -45,9 +43,7 @@ function wavelengthToRGB(wavelengthNm: Node<'float'>) {
     t.smoothstep(0, 0.16),
   )
 }
-/**
- * Evaluates a volumetric Bragg diffraction stratum of precious black opal.
- */
+/** Evaluates a volumetric Bragg diffraction stratum of precious black opal. */
 function opalDiffractionStratum(
   pInternal: Node<'vec3'>,
   halfA: Node<'vec3'>,

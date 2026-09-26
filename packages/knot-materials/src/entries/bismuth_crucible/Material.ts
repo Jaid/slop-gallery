@@ -8,9 +8,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Geometric hopper crystal displacement: Aggressively sculpts the knot tube into orthogonal square hopper staircases with planar cleavage cuts into the core.
- */
+/** Geometric hopper crystal displacement: Aggressively sculpts the knot tube into orthogonal square hopper staircases with planar cleavage cuts into the core. */
 const bismuthHopperShape = Fn(([tube]: [Node<'vec2'>]) => {
   const {position: p, normal} = knotFrame(tube)
   // 4-fold square prism cross-section: strictly planar facets

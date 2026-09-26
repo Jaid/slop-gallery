@@ -31,9 +31,7 @@ function feathers(tube: Node<'vec2'>) {
     aa: grid.fwidth().length(),
   }
 }
-/**
- * Cloisonné fans, with the enamel eye moving beneath its fixed metal ribs.
- */
+/** Cloisonné fans, with the enamel eye moving beneath its fixed metal ribs. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.88)

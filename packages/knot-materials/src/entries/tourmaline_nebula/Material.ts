@@ -24,9 +24,7 @@ function crystalField(tube: Node<'vec2'>) {
   }
 }
 
-/**
- * A living stellar bestiary drawn from connected pinpricks of light.
- */
+/** A living stellar bestiary drawn from connected pinpricks of light. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.05)

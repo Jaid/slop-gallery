@@ -7,9 +7,7 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Quicksilver: a bead of liquid mercury. Surface tension keeps the silhouette taut, so the waves live almost entirely in the normal; they are summed analytically, which keeps the mirror smooth at any distance instead of faceting. A nanometric oxide skin tints the crests with thin-film color.
- */
+/** Quicksilver: a bead of liquid mercury. Surface tension keeps the silhouette taut, so the waves live almost entirely in the normal; they are summed analytically, which keeps the mirror smooth at any distance instead of faceting. A nanometric oxide skin tints the crests with thin-film color. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)

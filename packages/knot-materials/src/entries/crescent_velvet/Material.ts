@@ -10,9 +10,7 @@ import {starfield} from '../../lib/starfield.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Dense velvet is deliberately almost lightless head-on. At a glancing angle its individual nap becomes a field of colored crescents, as though a small eclipse is embedded in every fold.
- */
+/** Dense velvet is deliberately almost lightless head-on. At a glancing angle its individual nap becomes a field of colored crescents, as though a small eclipse is embedded in every fold. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.45)

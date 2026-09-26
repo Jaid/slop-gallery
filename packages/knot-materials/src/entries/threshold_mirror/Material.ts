@@ -12,9 +12,7 @@ function rotateY(v: Node<'vec3'>, angle: Node<'float'>) {
   return vec3(v.x.mul(c).sub(v.z.mul(s)), v.y, v.x.mul(s).add(v.z.mul(c)))
 }
 
-/**
- * A chrome knot whose reflection is slightly wrong: the mirrored world drifts. Face it squarely and step closer, and the surface opens like a portal, showing the world *behind* the knot, split into faint spectral fringes, with a luminous threshold line crawling around the opening.
- */
+/** A chrome knot whose reflection is slightly wrong: the mirrored world drifts. Face it squarely and step closer, and the surface opens like a portal, showing the world *behind* the knot, split into faint spectral fringes, with a luminous threshold line crawling around the opening. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

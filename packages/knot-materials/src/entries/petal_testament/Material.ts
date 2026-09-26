@@ -11,9 +11,7 @@ import {viewerFrame} from '../../lib/viewerFrame.ts'
 import {wrapCell} from '../../lib/wrapCell.ts'
 import knotData from './data.ts'
 
-/**
- * Nested, six-lobed paper cuts. The dark undersides are narrow shadows, never emissive contour lines.
- */
+/** Nested, six-lobed paper cuts. The dark undersides are narrow shadows, never emissive contour lines. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.65)

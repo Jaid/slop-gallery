@@ -8,9 +8,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A couched gold cord winding across the nap: signed distance to its path plus the couching stitches.
- */
+/** A couched gold cord winding across the nap: signed distance to its path plus the couching stitches. */
 function thread(tile: Node<'vec2'>) {
   const alongPhase = tile.x.mul(Math.PI * 2)
   const wander = alongPhase.sin().mul(0.34).add(alongPhase.mul(2).cos().mul(0.14))
@@ -36,9 +34,7 @@ function thread(tile: Node<'vec2'>) {
   }
 }
 
-/**
- * Wine-dark silk velvet with a single gold cord couched across the nap. The pile swallows front light and lets it out only at the folds, so walking around the knot reads the drape in slow crimson blooms; the gold, held down by tiny silk stitches, keeps its own private sunset however you turn.
- */
+/** Wine-dark silk velvet with a single gold cord couched across the nap. The pile swallows front light and lets it out only at the folds, so walking around the knot reads the drape in slow crimson blooms; the gold, held down by tiny silk stitches, keeps its own private sunset however you turn. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.55)

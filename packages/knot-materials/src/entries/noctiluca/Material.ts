@@ -11,9 +11,7 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A sea of dinoflagellates wrapped around the knot. Long swells displace the tube itself, chop and capillary ripples carry the specular streaks, and every crest near the visitor ignites in blue light that races away in rings. Plankton patches drift with the water, so the glow keeps changing while the wave field stays periodic and closes exactly at the end of the two-second angle loop, which is why every train travels a whole number of wavelengths per loop.
- */
+/** A sea of dinoflagellates wrapped around the knot. Long swells displace the tube itself, chop and capillary ripples carry the specular streaks, and every crest near the visitor ignites in blue light that races away in rings. Plankton patches drift with the water, so the glow keeps changing while the wave field stays periodic and closes exactly at the end of the two-second angle loop, which is why every train travels a whole number of wavelengths per loop. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.42)

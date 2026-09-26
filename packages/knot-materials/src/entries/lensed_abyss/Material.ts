@@ -7,9 +7,7 @@ import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
 const TAU = Math.PI * 2
-/**
- * The knot is a collapsing mass. Its skin is a mirror so black that almost nothing survives the round trip, and the spacetime around it drags every reflection inward. What you actually see is the accretion flow: plasma torn along the tube, beamed toward you on the approaching side and reddened on the receding one, capped by the razor-thin photon ring at the silhouette.
- */
+/** The knot is a collapsing mass. Its skin is a mirror so black that almost nothing survives the round trip, and the spacetime around it drags every reflection inward. What you actually see is the accretion flow: plasma torn along the tube, beamed toward you on the approaching side and reddened on the receding one, capped by the razor-thin photon ring at the silhouette. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.3)

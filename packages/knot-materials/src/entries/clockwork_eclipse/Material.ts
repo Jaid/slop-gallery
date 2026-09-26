@@ -9,9 +9,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A few broad brass teeth under a moving eclipse. The lit limb is a thin ring that follows you; nearness uncovers a second, finer gear inside the shadow.
- */
+/** A few broad brass teeth under a moving eclipse. The lit limb is a thin ring that follows you; nearness uncovers a second, finer gear inside the shadow. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.08)

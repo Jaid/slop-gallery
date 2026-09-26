@@ -37,9 +37,7 @@ const hopperPosition = Fn(([
   return center.add(radial.mul(lift))
 })
 
-/**
- * Hopper-grown crystal terraces; the oxide rainbow re-tunes as the eye circles it.
- */
+/** Hopper-grown crystal terraces; the oxide rainbow re-tunes as the eye circles it. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

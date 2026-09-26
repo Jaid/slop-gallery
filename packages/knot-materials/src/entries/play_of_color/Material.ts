@@ -10,16 +10,12 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A full-saturation hue wheel in linear light: the color of a diffraction grating, not a pigment.
- */
+/** A full-saturation hue wheel in linear light: the color of a diffraction grating, not a pigment. */
 function diffractionSpectrum(phase: Node<'float'>) {
   return vec3(phase, phase.add(2.0944), phase.add(4.1888)).cos().mul(0.5).add(0.5)
 }
 
-/**
- * Black opal. A sediment of ordered silica microspheres: each neighbourhood has its own lattice spacing, and the spacing plus the angle of your gaze decide which wavelength survives. The color is interference, so it migrates across the surface as you walk; the body stays nearly black so the diffraction can shout.
- */
+/** Black opal. A sediment of ordered silica microspheres: each neighbourhood has its own lattice spacing, and the spacing plus the angle of your gaze decide which wavelength survives. The color is interference, so it migrates across the surface as you walk; the body stays nearly black so the diffraction can shout. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)

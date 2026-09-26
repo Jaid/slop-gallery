@@ -10,9 +10,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Celadon porcelain, broken once and sewn with gold. The glaze is an even celadon with its own fine crazing, thin enough to let daylight through at grazing angles; under it the shards stay visibly separate. Every seam is filled: the metal sits a fraction of a millimeter below the glaze, keeps a chipped lip of ceramic along its edges, takes its color from the light – dull ochre in the shade, molten honey where the studio catches it – and a slow warm pulse keeps travelling the length of the veins, as if the gold were still settling.
- */
+/** Celadon porcelain, broken once and sewn with gold. The glaze is an even celadon with its own fine crazing, thin enough to let daylight through at grazing angles; under it the shards stay visibly separate. Every seam is filled: the metal sits a fraction of a millimeter below the glaze, keeps a chipped lip of ceramic along its edges, takes its color from the light – dull ochre in the shade, molten honey where the studio catches it – and a slow warm pulse keeps travelling the length of the veins, as if the gold were still settling. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

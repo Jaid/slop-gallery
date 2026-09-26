@@ -9,16 +9,12 @@ import {spectralColor} from '../../lib/spectralColor.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Saturates a spectral sample into the narrow, electric band a dichroic coating produces.
- */
+/** Saturates a spectral sample into the narrow, electric band a dichroic coating produces. */
 const vivid = (tint: ReturnType<typeof spectralColor>) => {
   const gray = tint.dot(vec3(0.2126, 0.7152, 0.0722))
   return gray.add(tint.sub(gray).mul(2.6)).clamp()
 }
-/**
- * A mosaic of mirror shards, each cut at its own angle. Most of the knot is smoked obsidian, so the polished minority reads as a constellation that re-arranges itself as the viewer walks around.
- */
+/** A mosaic of mirror shards, each cut at its own angle. Most of the knot is smoked obsidian, so the polished minority reads as a constellation that re-arranges itself as the viewer walks around. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.05)

@@ -11,9 +11,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A comb jelly from the midnight zone. Eight rows of combs row the darkness with light: a wave of diffraction runs along every row and breaks the body into running rainbows. Under the glass skin a slow heart of organs smoulders, and scattered photophores fire on their own asynchronous schedule.
- */
+/** A comb jelly from the midnight zone. Eight rows of combs row the darkness with light: a wave of diffraction runs along every row and breaks the body into running rainbows. Under the glass skin a slow heart of organs smoulders, and scattered photophores fire on their own asynchronous schedule. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.5)

@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * obsidian crust over a molten core; veins beat like a heart, hotter as you approach
- */
+/** obsidian crust over a molten core; veins beat like a heart, hotter as you approach */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

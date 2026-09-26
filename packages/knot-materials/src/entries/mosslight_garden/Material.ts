@@ -15,9 +15,7 @@ function rootLine(boundary: Node<'float'>, width: number) {
   const footprint = boundary.fwidth().max(0.0001)
   return boundary.smoothstep(width, footprint.mul(1.35).add(width)).oneMinus()
 }
-/**
- * A miniature moss biome with wet leaves, dewdrops, submerged mycelium and wandering spores.
- */
+/** A miniature moss biome with wet leaves, dewdrops, submerged mycelium and wandering spores. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.7)

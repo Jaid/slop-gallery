@@ -10,13 +10,9 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A triangle wave with genuinely sharp creases, which is what folded paper is made of.
- */
+/** A triangle wave with genuinely sharp creases, which is what folded paper is made of. */
 const tent = (phase: Node<'float'>) => phase.sin().asin().mul(2 / Math.PI)
-/**
- * A knot folded out of washi. Pleats of two families cross into diamonds, the creases standing up as you come closer, and the print runs along the paper in broad indigo brush strokes with vermilion seals where the calligrapher signed. Hold it against the light and the whole sheet fills with a warm haze, because paper has always been more air than fibre.
- */
+/** A knot folded out of washi. Pleats of two families cross into diamonds, the creases standing up as you come closer, and the print runs along the paper in broad indigo brush strokes with vermilion seals where the calligrapher signed. Hold it against the light and the whole sheet fills with a warm haze, because paper has always been more air than fibre. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)

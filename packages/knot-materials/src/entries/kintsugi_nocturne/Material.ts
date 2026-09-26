@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Three deliberate faults cut through the fired body. Their broad, rounded vertex relief is computed without screen derivatives, while a fine powder variation is confined inside the raised urushi-gold seams.
- */
+/** Three deliberate faults cut through the fired body. Their broad, rounded vertex relief is computed without screen derivatives, while a fine powder variation is confined inside the raised urushi-gold seams. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.32)

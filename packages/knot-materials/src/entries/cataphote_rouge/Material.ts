@@ -11,9 +11,7 @@ import knotData from './data.ts'
 
 const SQRT3 = Math.sqrt(3)
 
-/**
- * Deep-red corner-cube retroreflectors sealed beneath clear resin. Each cell contains three mutually perpendicular optical faces. Moving past the light produces abrupt, coherent return flashes; close inspection exposes fine machining on the individual faces.
- */
+/** Deep-red corner-cube retroreflectors sealed beneath clear resin. Each cell contains three mutually perpendicular optical faces. Moving past the light produces abrupt, coherent return flashes; close inspection exposes fine machining on the individual faces. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)

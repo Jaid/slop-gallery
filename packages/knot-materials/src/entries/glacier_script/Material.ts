@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Refracted layers of trapped air, cleavage flakes and blue faults remain suspended under a continuous skin of glacier ice.
- */
+/** Refracted layers of trapped air, cleavage flakes and blue faults remain suspended under a continuous skin of glacier ice. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)

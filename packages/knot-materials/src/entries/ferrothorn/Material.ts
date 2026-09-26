@@ -38,9 +38,7 @@ const ferroPosition = fn(([tube]: [Node<'vec2'>]) => {
   return knotShell(tube, ferroFields(tube).inset)
 })
 
-/**
- * Opaque magnetic fluid. Real moving peaks, not painted spikes. Near inspection exposes capillary striations between the peaks.
- */
+/** Opaque magnetic fluid. Real moving peaks, not painted spikes. Near inspection exposes capillary striations between the peaks. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)

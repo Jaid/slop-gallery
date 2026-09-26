@@ -12,9 +12,7 @@ import knotData from './data.ts'
 
 const beadsAcross = 30
 const beadsAround = 8
-/**
- * Mercury pretending to be a knot. The surface never settles: a slow tide rolls through the metal, hundreds of beads ride it, and the whole mass shivers along its length. Gravity pulls the drops underneath into hanging eggs while the ones on top stay round, the way real quicksilver bruises a little where it rests. Patches of dull tarnish drift across it with the same tide – until you come close, where the film turns out to be crystalline and the mirror below it is flawless.
- */
+/** Mercury pretending to be a knot. The surface never settles: a slow tide rolls through the metal, hundreds of beads ride it, and the whole mass shivers along its length. Gravity pulls the drops underneath into hanging eggs while the ones on top stay round, the way real quicksilver bruises a little where it rests. Patches of dull tarnish drift across it with the same tide – until you come close, where the film turns out to be crystalline and the mirror below it is flawless. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.15)

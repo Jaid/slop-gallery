@@ -12,9 +12,7 @@ function fissure(boundary: Node<'float'>, width: number, softness = 1.2) {
   const footprint = boundary.fwidth().max(0.0001)
   return boundary.smoothstep(width, footprint.mul(1.15).add(width * (1 + softness))).oneMinus()
 }
-/**
- * Glazed midnight porcelain with a genuinely recessed, parallax-shifted gold repair. Large seams remain legible across the gallery while a second hairline crazing network and oracle sparks only resolve at conversational distance.
- */
+/** Glazed midnight porcelain with a genuinely recessed, parallax-shifted gold repair. Large seams remain legible across the gallery while a second hairline crazing network and oracle sparks only resolve at conversational distance. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

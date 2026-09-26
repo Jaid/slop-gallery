@@ -11,9 +11,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * An ornamental repeat of petals, vines and moons drawn as a single metallic thread.
- */
+/** An ornamental repeat of petals, vines and moons drawn as a single metallic thread. */
 function brocadePattern(grid: Node<'vec2'>, seed: number) {
   const cell = grid.floor()
   const random = cellNoiseVec3(vec3(cell.x.add(0.5), cell.y.add(0.5), seed))

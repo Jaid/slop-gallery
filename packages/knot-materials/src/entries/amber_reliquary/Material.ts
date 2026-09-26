@@ -11,9 +11,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A drop of the Oligocene, forty million years thick. Honey and cognac resin hold ferns, winged specks, air breaths and dust at three suspended depths, and the inclusions swim as the viewer circles. Internal fractures flare like captured lightning at grazing angles, and when the low sun finds the stone from behind it burns like a struck coal.
- */
+/** A drop of the Oligocene, forty million years thick. Honey and cognac resin hold ferns, winged specks, air breaths and dust at three suspended depths, and the inclusions swim as the viewer circles. Internal fractures flare like captured lightning at grazing angles, and when the low sun finds the stone from behind it burns like a struck coal. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.7)

@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Velvet deep-sea skin studded with photophores. From across the room they drift in a slow sleepy pulse step closer and the creature notices you: waves of light race outward from the point nearest to you, the organs brighten, and some blush from cyan to gold. Photophores are lensed, brightest when faced.
- */
+/** Velvet deep-sea skin studded with photophores. From across the room they drift in a slow sleepy pulse step closer and the creature notices you: waves of light race outward from the point nearest to you, the organs brighten, and some blush from cyan to gold. Photophores are lensed, brightest when faced. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)

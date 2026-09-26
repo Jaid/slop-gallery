@@ -11,9 +11,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Celadon kept dim enough for the room to model it. Gold seams kindle as the camera approaches and flare when the light skims them.
- */
+/** Celadon kept dim enough for the room to model it. Gold seams kindle as the camera approaches and flare when the light skims them. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.42)

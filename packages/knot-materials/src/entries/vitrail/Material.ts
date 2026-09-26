@@ -11,9 +11,7 @@ import {viewerFrame} from '../../lib/viewerFrame.ts'
 import {wrapCell} from '../../lib/wrapCell.ts'
 import knotData from './data.ts'
 
-/**
- * Leaded glass: hand-cut worley quarries with soldered came borders, each pane its own glass recipe.
- */
+/** Leaded glass: hand-cut worley quarries with soldered came borders, each pane its own glass recipe. */
 function panes(tile: Node<'vec2'>, cols: Node<'float'> | number, rows: Node<'float'> | number) {
   const size = vec2(cols, rows)
   const q = tile.mul(size)
@@ -38,9 +36,7 @@ function panes(tile: Node<'vec2'>, cols: Node<'float'> | number, rows: Node<'flo
   }
 }
 
-/**
- * A rose window poured into a knot: quarries of pot-metal glass, each pane a different century's idea of blue, soldered together with dark came. The sun has already set behind it, so the glass keeps its own inner fire — and as you pass, the came throws its leaden lattice across every color in turn.
- */
+/** A rose window poured into a knot: quarries of pot-metal glass, each pane a different century's idea of blue, soldered together with dark came. The sun has already set behind it, so the glass keeps its own inner fire — and as you pass, the came throws its leaden lattice across every color in turn. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.55)

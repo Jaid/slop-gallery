@@ -8,9 +8,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * a few warped structural faults for the gold, plus an independent fine craquelure web
- */
+/** a few warped structural faults for the gold, plus an independent fine craquelure web */
 const craquelure = (point: Node<'vec3'>) => {
   const bend = mx_noise_float(point.mul(1.6)).mul(0.55)
   const bend2 = mx_noise_float(point.mul(3.1).add(8)).mul(0.2)
@@ -35,9 +33,7 @@ const craquelure = (point: Node<'vec3'>) => {
   }
 }
 
-/**
- * A pale celadon bowl that once broke and was mended in gold. The glaze still carries its hairline craquelure, but the true fractures run wide and proud with metal, and they catch every light in the room while the porcelain stays quiet — closer still and the gold shows its leaf, flake by flake.
- */
+/** A pale celadon bowl that once broke and was mended in gold. The glaze still carries its hairline craquelure, but the true fractures run wide and proud with metal, and they catch every light in the room while the porcelain stays quiet — closer still and the gold shows its leaf, flake by flake. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

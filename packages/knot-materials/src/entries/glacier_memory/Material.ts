@@ -10,9 +10,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Pressed glacier ice. Annual strata are object-space sheets, so walking around reveals new seasons through the tube. Hairline fractures catch the studio like cut crystal, and trapped air only resolves when the camera comes close.
- */
+/** Pressed glacier ice. Annual strata are object-space sheets, so walking around reveals new seasons through the tube. Hairline fractures catch the studio like cut crystal, and trapped air only resolves when the camera comes close. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.15)

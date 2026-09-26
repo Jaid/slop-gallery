@@ -9,9 +9,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A stagnation of the field: a rational surface where the lines close on themselves three times for every two turns. Hot gas is braided along those closed lines, a wave of current runs through every strand, and the whole chain flares every few seconds, lighting the bronze chamber from inside.
- */
+/** A stagnation of the field: a rational surface where the lines close on themselves three times for every two turns. Hot gas is braided along those closed lines, a wave of current runs through every strand, and the whole chain flares every few seconds, lighting the bronze chamber from inside. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.8)
@@ -19,9 +17,7 @@ export default class extends KnotMaterial {
     const tube = uv()
     const {p, grazing, near, intimate} = viewerFrame()
     const facing = normalViewGeometry.dot(positionViewDirection).abs().clamp()
-/**
- * One family of closed field lines at a rational slope, with a current wave running along it.
- */
+/** One family of closed field lines at a rational slope, with a current wave running along it. */
     const braid = (slopeU: number, slopeV: number, count: number, pulseSpeed: number, seed: number) => {
       const stream = tube.x.mul(slopeU).add(tube.y.mul(slopeV)).mul(count).add(seed)
       const wander = mx_noise_float(p.mul(3.4).add(vec3(seed, seed * 2.3, 0))).mul(0.12)

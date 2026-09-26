@@ -8,9 +8,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Moving engraved epicycles that appear to turn below a midnight enamel dial.
- */
+/** Moving engraved epicycles that appear to turn below a midnight enamel dial. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.15)

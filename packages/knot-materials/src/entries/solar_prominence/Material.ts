@@ -8,9 +8,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * 3. SOLAR PROMINENCE A living star-surface. Granulated convection, magnetic sunspots, incandescent prominences arcing off the rim as you circle, and a limb-darkened plasma that breathes with the noise field.
- */
+/** 3. SOLAR PROMINENCE A living star-surface. Granulated convection, magnetic sunspots, incandescent prominences arcing off the rim as you circle, and a limb-darkened plasma that breathes with the noise field. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

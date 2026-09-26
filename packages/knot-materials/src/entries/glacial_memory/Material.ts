@@ -10,9 +10,7 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal as premiumNormal} from '../../lib/proceduralNormal.ts'
 import knotData from './data.ts'
 
-export /**
- * A signed, warped network of intersecting mineral fracture planes.
- */
+export /** A signed, warped network of intersecting mineral fracture planes. */
 function glacierField(q: Node<'vec3'>) {
   const warp = mx_noise_vec3(q.mul(4.3)).mul(0.045)
   const s = q.add(warp)

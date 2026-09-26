@@ -11,18 +11,14 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Precious opal: a lattice of silica spheres that diffracts white light back to the eye. Every domain carries its own sphere diameter and lattice orientation, so the stone answers each viewing angle with a different band of the spectrum. The fire lives a little way inside the stone, drifts as you walk around it, and is ground by the fine domain grit into the splintered flashes of play-of-color.
- */
+/** Precious opal: a lattice of silica spheres that diffracts white light back to the eye. Every domain carries its own sphere diameter and lattice orientation, so the stone answers each viewing angle with a different band of the spectrum. The fire lives a little way inside the stone, drifts as you walk around it, and is ground by the fine domain grit into the splintered flashes of play-of-color. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)
     this.name = knotData.id
     this.envMapIntensity = 0.9
     const {p, view, facing, grazing, near} = viewerFrame()
-/**
- * One diffracting layer: light gathered from `depth` behind the surface, split by the local lattice.
- */
+/** One diffracting layer: light gathered from `depth` behind the surface, split by the local lattice. */
     const playOfColor = (depth: number, scale: number, gain: Node<'float'> | number) => {
       const q = p.sub(view.mul(depth)).mul(scale)
       // Match optical identity to irregular crystal domains instead of cubic grid cells.

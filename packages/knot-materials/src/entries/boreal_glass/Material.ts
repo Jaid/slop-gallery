@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Black ice, with two crossing auroras. A curtain flares only while the eye looks along it, and the other family waits in the dark.
- */
+/** Black ice, with two crossing auroras. A curtain flares only while the eye looks along it, and the other family waits in the dark. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)

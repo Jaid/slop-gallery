@@ -32,7 +32,9 @@ describe('flat knot catalogue', () => {
       const materialSource = await source(`entries/${id}/Material.ts`)
       expect(materialSource).toContain('export default class extends')
       for (const jsdoc of materialSource.matchAll(/\/\*\*[\s\S]*?\*\//gu)) {
-        expect(jsdoc[0].split(/\r?\n/u)).toHaveLength(3)
+        if (!/(?:^|\n)\s*\*?\s*@\w+/u.test(jsdoc[0])) {
+          expect(jsdoc[0]).not.toContain('\n')
+        }
       }
       expect(knotsById.get(id)!.id).toBe(id)
     }

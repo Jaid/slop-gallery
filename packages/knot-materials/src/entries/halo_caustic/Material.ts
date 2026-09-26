@@ -7,9 +7,7 @@ import {liquidNormal} from '../../lib/liquidNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Smoked crystal. Caustic loops are drawn by the refracted view, so they swim when you circle and collapse into a hot core when you lean in. The glass itself stays dark enough for the light to read.
- */
+/** Smoked crystal. Caustic loops are drawn by the refracted view, so they swim when you circle and collapse into a hot core when you lean in. The glass itself stays dark enough for the light to read. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.04)

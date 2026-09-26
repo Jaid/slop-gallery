@@ -11,9 +11,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Amber Requiem. Fossil resin, forty million years old, polished to a waxen shine. It is warm and translucent, so the light that gets in wanders a long way before it comes back out, and everything the resin swallowed on the day it was still sticky is still in there: bubbles, plant dust, and the occasional small insect, legs and all.
- */
+/** Amber Requiem. Fossil resin, forty million years old, polished to a waxen shine. It is warm and translucent, so the light that gets in wanders a long way before it comes back out, and everything the resin swallowed on the day it was still sticky is still in there: bubbles, plant dust, and the occasional small insect, legs and all. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

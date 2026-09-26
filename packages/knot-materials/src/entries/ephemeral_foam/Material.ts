@@ -42,9 +42,7 @@ const packedCells = fn(([
   return vec4(nearest, identity, second.sqrt().sub(first.sqrt()).max(0))
 })
 
-/**
- * A packed assembly of soap films and liquid Plateau borders. Two membrane depths separate under parallax. Thin-film colour comes from the physical iridescence model, not a rainbow ramp.
- */
+/** A packed assembly of soap films and liquid Plateau borders. Two membrane depths separate under parallax. Thin-film colour comes from the physical iridescence model, not a rainbow ramp. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)

@@ -113,7 +113,7 @@ Explore genuinely different physical ideas, not recolors of one noise graph. Fav
 
 ## Implementation contract
 
-Every \`Material.ts\` exports an anonymous default class extending \`KnotMaterial\` from \`../../lib/KnotMaterial.ts\`. Put the material description in a three-line JSDoc immediately above that class, with opening and closing lines around a single description line, not as an inline constructor comment. Its constructor accepts \`environment: Texture\` from \`three/webgpu\`, calls \`super(environment[, intensity])\`, imports \`knotData\` from \`./data.ts\`, and sets \`this.name = knotData.id\`.
+Every \`Material.ts\` exports an anonymous default class extending \`KnotMaterial\` from \`../../lib/KnotMaterial.ts\`. Put the material description in a compact one-line JSDoc immediately above that class, like \`/** my description */\`, not as an inline constructor comment. Its constructor accepts \`environment: Texture\` from \`three/webgpu\`, calls \`super(environment[, intensity])\`, imports \`knotData\` from \`./data.ts\`, and sets \`this.name = knotData.id\`.
 
 Use the installed Three.js TSL APIs demonstrated below, \`three/tsl\`, \`three/webgpu\`, and the supplied library. Prefer direct imports from \`../../lib/<file>.ts\`; \`../../lib/index.ts\` is also available. Shared helpers belong in \`src/lib\`, candidate-only helpers in \`src/candidates/<candidateId>/lib\`, and knot-only helpers stay inside the corresponding Material.ts. Never import the parent application, another knot's material, or an invented package.
 

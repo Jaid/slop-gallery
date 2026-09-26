@@ -9,9 +9,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Cut velvet and raised silk damask. The warp and weft exchange both height and anisotropic direction.
- */
+/** Cut velvet and raised silk damask. The warp and weft exchange both height and anisotropic direction. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)

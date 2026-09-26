@@ -13,9 +13,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {wrapCell} from '../../lib/wrapCell.ts'
 import knotData from './data.ts'
 
-/**
- * Rounded teeth, six open spokes and a raised axle; the holes expose the next stratum.
- */
+/** Rounded teeth, six open spokes and a raised axle; the holes expose the next stratum. */
 function gear(q: Node<'vec2'>, radius: number, teeth: number, rotation: Node<'float'>, aa: Node<'float'>) {
   const r = q.length().max(0.00001)
   const angle = polarAngle(q).add(rotation)
@@ -26,9 +24,7 @@ function gear(q: Node<'vec2'>, radius: number, teeth: number, rotation: Node<'fl
   const hub = fill(r.sub(0.031), aa)
   return ring.add(spokes).add(hub).clamp()
 }
-/**
- * Gilded orreries turn beneath enamel dials and watchmaker glass, revealing independently moving mechanisms at different depths.
- */
+/** Gilded orreries turn beneath enamel dials and watchmaker glass, revealing independently moving mechanisms at different depths. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.92)

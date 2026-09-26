@@ -13,9 +13,7 @@ function wrap01(x: Node<'float'>) {
   return x.fract().sub(0.5).abs().oneMinus()
 }
 
-/**
- * A deep-sea choir: rows of photophores ignite in a travelling cascade when something draws near, and a lone lure wanders the skin forever.
- */
+/** A deep-sea choir: rows of photophores ignite in a travelling cascade when something draws near, and a lone lure wanders the skin forever. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

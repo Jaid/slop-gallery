@@ -9,9 +9,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A ring of spacetime. The surface is a dark membrane that carries a lensed sky: stars are dragged into arcs around the tube and the whole field slides as the viewer moves. A band of infalling plasma wraps the ring, white-hot on the approaching side and dimmed on the receding one, and the silhouette is drawn by a thin photon ring that never quite resolves.
- */
+/** A ring of spacetime. The surface is a dark membrane that carries a lensed sky: stars are dragged into arcs around the tube and the whole field slides as the viewer moves. A band of infalling plasma wraps the ring, white-hot on the approaching side and dimmed on the receding one, and the silhouette is drawn by a thin photon ring that never quite resolves. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.5)

@@ -8,9 +8,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A bismuth hopper crystal: the melt grew in concentric terraces, and the oxide film that formed on each one is a slightly different thickness, so a single white light leaves as a staircase of color. The terraces are quantized from the tube parameter, which keeps the steps exactly one ring wide all the way around the knot, and the ring index wraps so the staircase closes on itself without a seam. The silhouette only carries a shallow version of the staircase, because the mesh cannot resolve a sharp riser; the shading carries the full one, so the highlights still snap at every edge.
- */
+/** A bismuth hopper crystal: the melt grew in concentric terraces, and the oxide film that formed on each one is a slightly different thickness, so a single white light leaves as a staircase of color. The terraces are quantized from the tube parameter, which keeps the steps exactly one ring wide all the way around the knot, and the ring index wraps so the staircase closes on itself without a seam. The silhouette only carries a shallow version of the staircase, because the mesh cannot resolve a sharp riser; the shading carries the full one, so the highlights still snap at every edge. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)

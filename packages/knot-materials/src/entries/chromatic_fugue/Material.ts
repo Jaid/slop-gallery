@@ -10,9 +10,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Three screen-printed compositions behind optical riblets; tangent-space viewing angle selects the print.
- */
+/** Three screen-printed compositions behind optical riblets; tangent-space viewing angle selects the print. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.8)

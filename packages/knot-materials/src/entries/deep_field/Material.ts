@@ -8,9 +8,7 @@ import {starfield} from '../../lib/starfield.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A rare meteor crossing the volume, brilliant at the head and thinning along its trail.
- */
+/** A rare meteor crossing the volume, brilliant at the head and thinning along its trail. */
 function meteorStreak(position: Node<'vec3'>, clock: Node<'float'>) {
   const phase = clock.mul(0.075).add(0.12).fract()
   const motion = vec3(1.6, -1.15, -0.45)

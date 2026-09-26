@@ -8,9 +8,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * An ammonite suspended behind the transparent, honey-colored skin of a much older sea.
- */
+/** An ammonite suspended behind the transparent, honey-colored skin of a much older sea. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.1)

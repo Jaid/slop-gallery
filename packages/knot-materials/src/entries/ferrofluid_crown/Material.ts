@@ -9,9 +9,7 @@ import {spectralColor} from '../../lib/spectralColor.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * magnetic liquid that senses you: spikes rise toward the camera, ripples chase your steps
- */
+/** magnetic liquid that senses you: spikes rise toward the camera, ripples chase your steps */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

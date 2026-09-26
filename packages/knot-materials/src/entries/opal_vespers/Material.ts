@@ -11,9 +11,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Black opal. Large grains keep a single spectrum banked until the view aligns, then open it across the whole patch.
- */
+/** Black opal. Large grains keep a single spectrum banked until the view aligns, then open it across the whole patch. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.32)

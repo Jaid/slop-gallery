@@ -13,9 +13,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Mirror shards bound in gold. Every Voronoi cell is a flat facet with its own tilt, so each shard reflects a different part of the gallery and the knot keeps rearranging the room as you walk. The facets sway on their own phase, the seams are polished gold with a dark gap at their core, and up close each shard resolves into a second generation of crushed facets. Pinpoint flashes come from the real studio lamps, not from an invented light rig.
- */
+/** Mirror shards bound in gold. Every Voronoi cell is a flat facet with its own tilt, so each shard reflects a different part of the gallery and the knot keeps rearranging the room as you walk. The facets sway on their own phase, the seams are polished gold with a dark gap at their core, and up close each shard resolves into a second generation of crushed facets. Pinpoint flashes come from the real studio lamps, not from an invented light rig. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.72)

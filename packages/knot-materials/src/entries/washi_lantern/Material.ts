@@ -11,9 +11,7 @@ import knotData from './data.ts'
 
 const wrap = (x: Node<'float'>) => x.sub(x.add(0.5).floor())
 
-/**
- * A knot of hand-made paper lit from within by six guttering candles. Ink-painted plum branches and blossoms on the inner skin show as silhouettes that slide with parallax, and when you come close a moth's shadow flutters along the inside of the lantern.
- */
+/** A knot of hand-made paper lit from within by six guttering candles. Ink-painted plum branches and blossoms on the inner skin show as silhouettes that slide with parallax, and when you come close a moth's shadow flutters along the inside of the lantern. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

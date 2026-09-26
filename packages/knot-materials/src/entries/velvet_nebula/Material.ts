@@ -8,9 +8,7 @@ import {starfield} from '../../lib/starfield.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Black velvet. The nap only colors where the view skims it, and that skim reveals a slow nebula plus a few stars. Face-on, the cloth stays nearly lightless.
- */
+/** Black velvet. The nap only colors where the view skims it, and that skim reveals a slow nebula plus a few stars. Face-on, the cloth stays nearly lightless. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.04)

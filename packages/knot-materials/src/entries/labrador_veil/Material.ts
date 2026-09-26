@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Irregular mineral grains. A noise-warped cubic lattice keeps every grain's identity stable in object space, so a grain keeps flashing the same color no matter where the viewer stands. The warp runs at roughly the grain frequency, which bends the cell walls into organic shapes instead of leaving a visible grid.
- */
+/** Irregular mineral grains. A noise-warped cubic lattice keeps every grain's identity stable in object space, so a grain keeps flashing the same color no matter where the viewer stands. The warp runs at roughly the grain frequency, which bends the cell walls into organic shapes instead of leaving a visible grid. */
 function mineralGrains(position: Node<'vec3'>, scale: number, warp: number, seed: number) {
   const q = position.mul(scale).add(mx_noise_vec3(position.mul(scale * 0.9).add(seed)).mul(warp))
   const cell = q.floor()
@@ -32,9 +30,7 @@ function mineralGrains(position: Node<'vec3'>, scale: number, warp: number, seed
   }
 }
 
-/**
- * Labradorite: a dark feldspar whose internal twinning planes interfere with the light. Each grain owns one lamella orientation, so the whole grain ignites in a single saturated hue only while the viewer stands inside a narrow cone of directions – walk around the knot and the stone rearranges itself into a different constellation of blue, cyan, green and gold. The grains are sampled a little way beneath the surface, so the flashes slide across the stone as the viewer moves, exactly like a real inclusion.
- */
+/** Labradorite: a dark feldspar whose internal twinning planes interfere with the light. Each grain owns one lamella orientation, so the whole grain ignites in a single saturated hue only while the viewer stands inside a narrow cone of directions – walk around the knot and the stone rearranges itself into a different constellation of blue, cyan, green and gold. The grains are sampled a little way beneath the surface, so the flashes slide across the stone as the viewer moves, exactly like a real inclusion. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.55)

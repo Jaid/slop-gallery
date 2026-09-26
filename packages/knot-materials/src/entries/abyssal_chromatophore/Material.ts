@@ -8,9 +8,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Accumulate complete pigment cells, including the portions crossing into neighboring cells.
- */
+/** Accumulate complete pigment cells, including the portions crossing into neighboring cells. */
 const pigmentCells = Fn(([position, phase, arousal]: [Node<'vec3'>, Node<'float'>, Node<'float'>]) => {
   const cell = position.floor().toVar()
   const local = position.fract().toVar()
@@ -38,9 +36,7 @@ const pigmentCells = Fn(([position, phase, arousal]: [Node<'vec3'>, Node<'float'
   // Blend overlapping cells without letting coverage exceed physical material ranges.
   return vec4(pigment.div(coverage.max(0.000001)), coverage.clamp())
 })
-/**
- * RGB contains colored core/halo emission; alpha contains the photophore surface mask.
- */
+/** RGB contains colored core/halo emission; alpha contains the photophore surface mask. */
 const photophoreCells = Fn(([position, sweep, intimate]: [Node<'vec3'>, Node<'float'>, Node<'float'>]) => {
   const cell = position.floor().toVar()
   const local = position.fract().toVar()
@@ -67,9 +63,7 @@ const photophoreCells = Fn(([position, sweep, intimate]: [Node<'vec3'>, Node<'fl
   return vec4(emission, coverage.clamp())
 })
 
-/**
- * Deep-sea skin. Velvet-black with pigment cells that dilate toward whoever is looking and blush in waves along the body; photophores flash in a travelling sweep, and when you stare straight at it, the photophores stare back.
- */
+/** Deep-sea skin. Velvet-black with pigment cells that dilate toward whoever is looking and blush in waves along the body; photophores flash in a travelling sweep, and when you stare straight at it, the photophores stare back. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

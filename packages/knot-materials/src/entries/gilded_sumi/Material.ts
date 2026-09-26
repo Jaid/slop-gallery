@@ -11,9 +11,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Several parallax layers of lacquered ink make one slow calligraphic current. Gold is not a crack in the surface: it is leaf caught at the river's most deliberate turns.
- */
+/** Several parallax layers of lacquered ink make one slow calligraphic current. Gold is not a crack in the surface: it is leaf caught at the river's most deliberate turns. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.82)

@@ -12,9 +12,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Rime on night-dark stone. Every grain of the lattice freezes on its own schedule: some are already buried under feathery rosettes, others still show wet stone with the amber heart of the piece glowing through. Branching growth wanders across the whole surface, seeds shine at the center of each grain, needles catch the studio as sharp points of light, and all of it thickens as you come nearer, as if your breath were feeding the ice.
- */
+/** Rime on night-dark stone. Every grain of the lattice freezes on its own schedule: some are already buried under feathery rosettes, others still show wet stone with the amber heart of the piece glowing through. Branching growth wanders across the whole surface, seeds shine at the center of each grain, needles catch the studio as sharp points of light, and all of it thickens as you come nearer, as if your breath were feeding the ice. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.05)

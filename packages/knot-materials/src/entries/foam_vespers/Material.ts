@@ -10,9 +10,7 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {TAU} from '../../lib/TAU.ts'
 import knotData from './data.ts'
 
-/**
- * Neighboring Voronoi sites keep bubble identities independent of lattice boundaries.
- */
+/** Neighboring Voronoi sites keep bubble identities independent of lattice boundaries. */
 function foamCells(position: Node<'vec3'>, jitter = 0.62) {
   const distances = mx_worley_noise_vec3(position, jitter, 0)
   const domain = mx_worley_noise_float(position, jitter, 1)
@@ -25,25 +23,17 @@ function foamCells(position: Node<'vec3'>, jitter = 0.62) {
 }
 const foamScale = 6.5
 const reliefAmplitude = 0.015
-/**
- * The foam lattice lives in stretched tube space, so the outer surface can be evaluated from a uv pair.
- */
+/** The foam lattice lives in stretched tube space, so the outer surface can be evaluated from a uv pair. */
 const toFoamSpace = (coordinate: Node<'vec2'>) => knotFrame(coordinate).position.mul(foamScale)
-/**
- * Trim a field’s extremes so shimmering detail never saturates into a flat mask.
- */
+/** Trim a field’s extremes so shimmering detail never saturates into a flat mask. */
 const contrast = (value: Node<'float'>) => value.sub(0.5).abs().mul(2)
-/**
- * A froth of soap films growing on the knot. Every bubble carries its own film thickness and its own slow drain, so the interference colours walk down each dome and run to black just before the film rears up again. Where two bubbles meet, the soap gathers into a crease, and the crest of the film carries a rainbow that the eye can follow around the whole knot.
- */
+/** A froth of soap films growing on the knot. Every bubble carries its own film thickness and its own slow drain, so the interference colours walk down each dome and run to black just before the film rears up again. Where two bubbles meet, the soap gathers into a crease, and the crest of the film carries a rainbow that the eye can follow around the whole knot. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.55)
     this.name = knotData.id
     const tube = uv()
-/**
- * Dome height of the foam above the tube surface, in object units.
- */
+/** Dome height of the foam above the tube surface, in object units. */
     const relief = fn(([coordinate]: [Node<'vec2'>]) => {
       const {position, normal} = knotFrame(coordinate)
       const {first, identity, wall} = foamCells(toFoamSpace(coordinate))

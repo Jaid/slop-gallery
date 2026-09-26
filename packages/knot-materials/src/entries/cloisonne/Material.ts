@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Imperial enamel in a gold cloison. Each cell hoards its own window of light, so the knot’s jewels take turns as the viewpoint moves.
- */
+/** Imperial enamel in a gold cloison. Each cell hoards its own window of light, so the knot’s jewels take turns as the viewpoint moves. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.62)

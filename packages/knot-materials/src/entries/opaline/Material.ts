@@ -8,13 +8,9 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Linear ramp that is 0 below `a` and 1 above `b`.
- */
+/** Linear ramp that is 0 below `a` and 1 above `b`. */
 const ramp = (x: Node<'float'>, a: number, b: number) => x.sub(a).div(b - a).clamp()
-/**
- * Approximation of the visible spectrum in linear light: the classic piecewise-linear fit of the RGB primaries plus the luminosity roll-off at both ends of the band, so the Bragg wavelength of an opal turns into the familiar violet → blue → green → yellow → red march.
- */
+/** Approximation of the visible spectrum in linear light: the classic piecewise-linear fit of the RGB primaries plus the luminosity roll-off at both ends of the band, so the Bragg wavelength of an opal turns into the familiar violet → blue → green → yellow → red march. */
 function wavelengthToLinearColor(wavelength: Node<'float'>) {
   const w = wavelength
   const r = ramp(w, 505, 580).mul(ramp(w, 640, 700).oneMinus())
@@ -26,9 +22,7 @@ function wavelengthToLinearColor(wavelength: Node<'float'>) {
   return vec3(r, g, b).mul(rolloff)
 }
 
-/**
- * Precious opal: a sediment of silica microspheres whose regular lattice diffracts white light into a single wavelength per domain. Each domain has its own sphere diameter and its own grating orientation, so the fire slides across the stone as you walk past — exactly the way the real mineral behaves.
- */
+/** Precious opal: a sediment of silica microspheres whose regular lattice diffracts white light into a single wavelength per domain. Each domain has its own sphere diameter and its own grating orientation, so the fire slides across the stone as you walk past — exactly the way the real mineral behaves. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

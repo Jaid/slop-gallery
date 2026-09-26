@@ -9,9 +9,7 @@ import {spectralColor} from '../../lib/spectralColor.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A soap film stretched over the knot. Thickness is a slow draining landscape, so interference runs from near-black through spectral bands into gold as you orbit.
- */
+/** A soap film stretched over the knot. Thickness is a slow draining landscape, so interference runs from near-black through spectral bands into gold as you orbit. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.45)

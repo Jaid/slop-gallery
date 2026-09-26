@@ -10,9 +10,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Localized grains keep random facet normals and mineral tints off the cell background.
- */
+/** Localized grains keep random facet normals and mineral tints off the cell background. */
 function sandGrains(position: Node<'vec3'>, cellSize: number, sharpness: number, tilt: number) {
   const facets = glitter(position, cellSize, sharpness, tilt)
   const q = position.div(cellSize)
@@ -28,9 +26,7 @@ function sandGrains(position: Node<'vec3'>, cellSize: number, sharpness: number,
   }
 }
 
-/**
- * Wind worked sand, one ripple train at a time. Ripples migrate across the surface on a slow loop, a scouring front travels the length of the knot and briefly flattens them, and the grains themselves are a faceted lattice: each one either catches the key light or stays dull, which is what makes the dune glitter differently from every angle. Loose dust drifts above the surface and only resolves for a visitor who comes close.
- */
+/** Wind worked sand, one ripple train at a time. Ripples migrate across the surface on a slow loop, a scouring front travels the length of the knot and briefly flattens them, and the grains themselves are a faceted lattice: each one either catches the key light or stays dull, which is what makes the dune glitter differently from every angle. Loose dust drifts above the surface and only resolves for a visitor who comes close. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.55)

@@ -14,9 +14,7 @@ function ember(t: Node<'float'>) {
   return mix(low, color('#fff0b8'), c.sub(0.5).mul(2).clamp().pow(1.4))
 }
 
-/**
- * Folded, brushed damascus steel, still cooling from the forge. Temper colours bloom around fissures; embers deep in the cracks breathe faster and brighter the closer you come.
- */
+/** Folded, brushed damascus steel, still cooling from the forge. Temper colours bloom around fissures; embers deep in the cracks breathe faster and brighter the closer you come. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

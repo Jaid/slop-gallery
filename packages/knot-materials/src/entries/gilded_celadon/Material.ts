@@ -8,9 +8,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Kintsugi. A celadon vessel was dropped, and every fracture was filled with molten gold rather than hidden. The seams stand proud of the glaze, catch the studio lights as hard metal, and the ceramic around them is chipped, crazed and slightly darker where the break ran.
- */
+/** Kintsugi. A celadon vessel was dropped, and every fracture was filled with molten gold rather than hidden. The seams stand proud of the glaze, catch the studio lights as hard metal, and the ceramic around them is chipped, crazed and slightly darker where the break ran. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)

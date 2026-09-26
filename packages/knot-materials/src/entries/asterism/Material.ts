@@ -7,18 +7,12 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * The studio's key light, in object space.
- */
+/** The studio's key light, in object space. */
 const keyLight = vec3(-0.16, 0.48, -0.86).normalize()
-/**
- * Three rutile needle families, 60° apart in the corundum basal plane.
- */
+/** Three rutile needle families, 60° apart in the corundum basal plane. */
 const needleAxes = [vec3(1, 0, 0), vec3(0.5, 0.866, 0), vec3(-0.5, 0.866, 0)]
 const corundum = 1.77
-/**
- * Asterism. A star sapphire is corundum shot through with rutile needles that grew along three crystallographic axes. Light bends as it enters the stone, and a ray only comes back to the eye if the needle it struck lies across the offset between the refracted view ray and the refracted light ray. That condition is met along three lines crossing at the highlight, so a six-rayed star hangs inside the stone and swings across its face as you walk around it.
- */
+/** Asterism. A star sapphire is corundum shot through with rutile needles that grew along three crystallographic axes. Light bends as it enters the stone, and a ray only comes back to the eye if the needle it struck lies across the offset between the refracted view ray and the refracted light ray. That condition is met along three lines crossing at the highlight, so a six-rayed star hangs inside the stone and swings across its face as you walk around it. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

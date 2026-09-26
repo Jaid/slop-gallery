@@ -9,9 +9,7 @@ import {opticalLine} from '../../lib/opticalLine.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A projection that is not quite there. Nearly invisible when faced, it solidifies at grazing angles and as you approach: coarse wireframe first, then a four-times finer lattice and blinking data blocks that live inside the volume. Screen-space scanlines, a scanning plane and world-space glitch bands remind you it is light.
- */
+/** A projection that is not quite there. Nearly invisible when faced, it solidifies at grazing angles and as you approach: coarse wireframe first, then a four-times finer lattice and blinking data blocks that live inside the volume. Screen-space scanlines, a scanning plane and world-space glitch bands remind you it is light. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)

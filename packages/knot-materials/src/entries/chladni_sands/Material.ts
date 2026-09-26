@@ -20,9 +20,7 @@ function chladniField(tube: Node<'vec2'>) {
     .add(U.mul(6).sin().mul(V.cos()).mul(0.2))
 }
 
-/**
- * Pale mineral sand resting on a blue resonating membrane. Slowly changing standing waves reorganize the powder. Oblique views reveal piled dunes; close views resolve individual grains.
- */
+/** Pale mineral sand resting on a blue resonating membrane. Slowly changing standing waves reorganize the powder. Oblique views reveal piled dunes; close views resolve individual grains. */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)

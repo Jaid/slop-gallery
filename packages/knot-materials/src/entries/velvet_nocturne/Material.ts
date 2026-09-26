@@ -15,9 +15,7 @@ import knotData from './data.ts'
 type Harmonic = readonly [ku: number, kv: number, phase: number, amplitude: number, rate: number]
 const drapeHarmonics: ReadonlyArray<Harmonic> = [[2, 1, 5.6, 0.34, 0.031], [3, 1, 0.4, 0.5, -0.019], [5, 2, 2.1, 0.28, 0.013], [7, 3, 4.2, 0.15, -0.008]]
 const wrinkleHarmonics: ReadonlyArray<Harmonic> = [[13, 4, 1.1, 0.42, 0.024], [19, 6, 3.3, 0.3, -0.015], [23, 7, 5.5, 0.2, 0.009], [29, 8, 0.9, 0.14, -0.006]]
-/**
- * The nap runs around the tube, so its harmonics climb far faster along the knot than around it.
- */
+/** The nap runs around the tube, so its harmonics climb far faster along the knot than around it. */
 const pileHarmonics: ReadonlyArray<Harmonic> = [[200, 8, 0.7, 0.5, 0.05], [264, 12, 2.9, 0.3, -0.03], [332, 16, 4.1, 0.2, 0.02]]
 function weave(u: Node<'float'>, v: Node<'float'>, clock: Node<'float'>, harmonics: ReadonlyArray<Harmonic>, filtered = false) {
   let value: Node<'float'> = float(0)
@@ -38,9 +36,7 @@ function weave(u: Node<'float'>, v: Node<'float'>, clock: Node<'float'>, harmoni
     value: value.div(norm),
   }
 }
-/**
- * Circular coordinates make the textile noise agree at both UV wraps.
- */
+/** Circular coordinates make the textile noise agree at both UV wraps. */
 function clothCoordinate(u: Node<'float'>, v: Node<'float'>, along: number, around: number) {
   const a = u.mul(TAU)
   const b = v.mul(TAU)
@@ -49,9 +45,7 @@ function clothCoordinate(u: Node<'float'>, v: Node<'float'>, along: number, arou
 // The exhibition key light, in world space. The pile sheen is tied to it, not to the screen, so it
 // sweeps across the folds as the viewer circles instead of sticking to the camera.
 const keyLight = vec3(-3, 9, -16).normalize()
-/**
- * Velvet. A silk pile standing on end: head on, almost every ray is swallowed by the fibres and the cloth reads as near black. At a grazing glance the pile tips light up along their length and the whole surface blooms into oxblood. The folds are real geometry, so the silhouette scallops, and the sheen slides across them as you walk. Gold thread is sewn along the highest crests only.
- */
+/** Velvet. A silk pile standing on end: head on, almost every ray is swallowed by the fibres and the cloth reads as near black. At a grazing glance the pile tips light up along their length and the whole surface blooms into oxblood. The folds are real geometry, so the silhouette scallops, and the sheen slides across them as you walk. Gold thread is sewn along the highest crests only. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

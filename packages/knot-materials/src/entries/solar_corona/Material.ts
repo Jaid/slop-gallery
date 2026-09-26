@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * The photosphere. Granulation cells rise and sink in slow convection, dark sunspots drift across them ringed by bright faculae, and magnetic loops arc off the surface in glowing filaments. At the limb the whole thing frays into prominences, so the silhouette is never a clean edge. Almost all of the energy lives in the emissive channel: a star is light, not paint.
- */
+/** The photosphere. Granulation cells rise and sink in slow convection, dark sunspots drift across them ringed by bright faculae, and magnetic loops arc off the surface in glowing filaments. At the limb the whole thing frays into prominences, so the silhouette is never a clean edge. Almost all of the energy lives in the emissive channel: a star is light, not paint. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.3)

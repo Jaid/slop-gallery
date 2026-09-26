@@ -13,9 +13,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Bounded tangent-space view slope in UV units. The knot’s unwrapped tube is about 7.2 long and 0.82 around; the facing floor stops grazing rays from leaping across tiles.
- */
+/** Bounded tangent-space view slope in UV units. The knot’s unwrapped tube is about 7.2 long and 0.82 around; the facing floor stops grazing rays from leaping across tiles. */
 function tubeSlope(depth = 1) {
   const view = positionViewDirection
   const facing = normalViewGeometry.dot(view).abs().max(0.22)
@@ -23,9 +21,7 @@ function tubeSlope(depth = 1) {
   const bitangent = vec3(bitangentView as unknown as Node<'vec3'>).normalize()
   return vec2(view.dot(tangent), view.dot(bitangent)).div(vec2(7.2, Math.PI * 0.26)).div(facing).mul(depth)
 }
-/**
- * Layered nacre. Each aragonite sheet sits at its own parallax depth, so the rainbow slides across the knot as the camera orbits. Growth lines stay put; only the interference and a slow tide move.
- */
+/** Layered nacre. Each aragonite sheet sits at its own parallax depth, so the rainbow slides across the knot as the camera orbits. Growth lines stay put; only the interference and a slow tide move. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.2)

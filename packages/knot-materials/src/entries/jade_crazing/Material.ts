@@ -9,9 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Song-dynasty celadon; golden threads always present, iron-wire crackle revealed up close
- */
+/** Song-dynasty celadon; golden threads always present, iron-wire crackle revealed up close */
 export default class extends BaseKnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

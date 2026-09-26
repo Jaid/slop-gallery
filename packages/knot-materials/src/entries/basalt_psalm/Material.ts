@@ -11,9 +11,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Columnar basalt with a cooling psalm still moving in the joints. The columns are Voronoi prisms; olivine crystals glint only at a steep angle, and the fissures breathe red when you come near.
- */
+/** Columnar basalt with a cooling psalm still moving in the joints. The columns are Voronoi prisms; olivine crystals glint only at a steep angle, and the fissures breathe red when you come near. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.28)

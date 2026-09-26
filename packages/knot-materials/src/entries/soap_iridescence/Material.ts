@@ -7,9 +7,7 @@ import {liquidNormal} from '../../lib/liquidNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A dark soap film. Thickness is a slow landscape, so interference color slides as you circle, and the grazing rim goes almost white. The membrane stays transmissive rather than metallic.
- */
+/** A dark soap film. Thickness is a slow landscape, so interference color slides as you circle, and the grazing rim goes almost white. The membrane stays transmissive rather than metallic. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.05)

@@ -14,9 +14,7 @@ function atlasLine(field: Node<'float'>, width: number) {
   const footprint = field.fwidth().max(0.0001)
   return field.abs().smoothstep(width, footprint.mul(1.2).add(width)).oneMinus()
 }
-/**
- * A seamless relief map with oceans, contour ink, rivers, weather and inhabited points of light.
- */
+/** A seamless relief map with oceans, contour ink, rivers, weather and inhabited points of light. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
