@@ -48,8 +48,8 @@ describe('knot inspection renders', () => {
     }
     const firstFrame = inspectionAnimationFrame(0)
     expect(inspectionAnimationOffsetSeconds).toBe(13.5)
-    expect(inspectionAnimationFrameOffset).toBe(16)
-    expect(firstFrame.seconds).toBeCloseTo(16 / animationFps)
+    expect(inspectionAnimationFrameOffset).toBe(26)
+    expect(firstFrame.seconds).toBeCloseTo(26 / animationFps)
     expect(firstFrame.size).toBe('video')
     expect(firstFrame.distanceScale).toBe(1.8)
     expect(frameAtSourceSecond(0.5).distanceScale).toBe(1.8)
