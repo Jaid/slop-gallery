@@ -20,6 +20,7 @@ export const inspectionAnimatedJxlDistance = 4
 export const inspectionAnimationSize = 512
 export const inspectionVideoSize = 1024
 export const inspectionNearDistanceScale = 0.5
+export const inspectionTiltRadians = Math.PI / 18
 export const inspectionAnimationOffsetSeconds = 13.5
 export const previewBaseFov = 50
 export const previewSupersampling = 2
@@ -28,6 +29,7 @@ export const previewFovForDistanceScale = (distanceScale: number) => previewBase
 export type RenderFrame = {
   angle: number
   distanceScale: number
+  elevation?: number
   fov?: number
   seconds: number
   size: 'animation' | 'closeup' | 'still' | 'video'
@@ -58,6 +60,10 @@ const transition = (from: number, to: number, seconds: number, start: number) =>
   const progress = fade((seconds - start) / animationSeconds)
   return from + (to - from) * progress
 }
+const movementTilt = (seconds: number, start: number, direction: -1 | 1) => {
+  const progress = fade((seconds - start) / animationSeconds)
+  return direction * inspectionTiltRadians * Math.sin(progress * Math.PI)
+}
 const inspectionDistanceScale = (seconds: number) => {
   const normal = 1
   if (seconds < 2) {
@@ -84,6 +90,21 @@ const inspectionDistanceScale = (seconds: number) => {
   }
   return transition(far, normal, seconds, 14)
 }
+const inspectionElevation = (seconds: number) => {
+  if (seconds >= 2 && seconds < 4) {
+    return movementTilt(seconds, 2, 1)
+  }
+  if (seconds >= 6 && seconds < 8) {
+    return movementTilt(seconds, 6, -1)
+  }
+  if (seconds >= 10 && seconds < 12) {
+    return movementTilt(seconds, 10, -1)
+  }
+  if (seconds >= 14) {
+    return movementTilt(seconds, 14, 1)
+  }
+  return 0
+}
 const inspectionSpinSeconds = [1.2, 2.8] as const
 const inspectionSpinCycleSeconds = inspectionSpinSeconds[0] + inspectionSpinSeconds[1]
 const inspectionSpinBoundarySpeed = 2 / inspectionSpinCycleSeconds
@@ -109,6 +130,7 @@ export const inspectionAnimationFrame = (index: number): RenderFrame => {
   return {
     angle: inspectionAngle(choreographySeconds),
     distanceScale: inspectionDistanceScale(choreographySeconds),
+    elevation: inspectionElevation(choreographySeconds),
     seconds: previewSeconds,
     size: 'video',
   }

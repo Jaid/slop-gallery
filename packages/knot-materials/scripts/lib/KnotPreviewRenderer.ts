@@ -97,7 +97,7 @@ export default class KnotPreviewRenderer {
         size = squareSize(inspectionVideoSize)
       }
       this.camera.aspect = size[0] / size[1]
-      this.positionCamera(baseDistance * frame.distanceScale, 0.18 + frame.angle, frame.distanceScale, frame.fov)
+      this.positionCamera(baseDistance * frame.distanceScale, 0.18 + frame.angle, frame.distanceScale, frame.fov, frame.elevation)
       return this.capture(item.id, target, size, frame.seconds)
     }
     return {
@@ -180,10 +180,11 @@ export default class KnotPreviewRenderer {
     }
   }
 
-  private positionCamera(distance: number, angle = 0.18, distanceScale = 1, fov = previewFovForDistanceScale(distanceScale)) {
+  private positionCamera(distance: number, angle = 0.18, distanceScale = 1, fov = previewFovForDistanceScale(distanceScale), elevation = 0) {
     this.camera.fov = fov
     this.camera.updateProjectionMatrix()
-    this.camera.position.set(Math.sin(angle) * distance, 0, Math.cos(angle) * distance)
+    const horizontalDistance = Math.cos(elevation) * distance
+    this.camera.position.set(Math.sin(angle) * horizontalDistance, Math.sin(elevation) * distance, Math.cos(angle) * horizontalDistance)
     this.camera.lookAt(0, 0, 0)
   }
 

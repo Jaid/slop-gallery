@@ -3,7 +3,7 @@ import {tmpdir} from 'node:os'
 import {resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
 
-import {angleAnimationFrame, angleNames, angleStillFrame, animationFps, animationFrames, closeupDistanceScale, closeupFov, closeupSize, closeupStillFrame, distanceNames, distanceScales, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrameOffset, inspectionAnimationFrames, inspectionAnimationOffsetSeconds, inspectionAnimationSeconds, inspectionAnimationSize, inspectionNearDistanceScale, inspectionVideoSize, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from '../scripts/lib/renderSettings.ts'
+import {angleAnimationFrame, angleNames, angleStillFrame, animationFps, animationFrames, closeupDistanceScale, closeupFov, closeupSize, closeupStillFrame, distanceNames, distanceScales, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrameOffset, inspectionAnimationFrames, inspectionAnimationOffsetSeconds, inspectionAnimationSeconds, inspectionAnimationSize, inspectionNearDistanceScale, inspectionTiltRadians, inspectionVideoSize, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from '../scripts/lib/renderSettings.ts'
 import renderKnot, {parseRenderCategories, renderCategories} from '../scripts/renderKnot.ts'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
@@ -60,6 +60,13 @@ describe('knot inspection renders', () => {
     expect(frameAtSourceSecond(10.5).distanceScale).toBe(1)
     expect(frameAtSourceSecond(12.5).distanceScale).toBe(1)
     expect(frameAtSourceSecond(14.5).distanceScale).toBe(1.8)
+    expect(frameAtSourceSecond(1.5).elevation).toBeCloseTo(inspectionTiltRadians)
+    expect(frameAtSourceSecond(5.5).elevation).toBeCloseTo(inspectionTiltRadians)
+    expect(frameAtSourceSecond(9.5).elevation).toBeCloseTo(-inspectionTiltRadians)
+    expect(frameAtSourceSecond(13.5).elevation).toBeCloseTo(-inspectionTiltRadians)
+    for (const second of [0, 2.5, 3.5, 4.5, 6.5, 7.5, 8.5, 10.5, 11.5, 12.5, 14.5, 15.5]) {
+      expect(frameAtSourceSecond(second).elevation).toBeCloseTo(0, 10)
+    }
     const lastFrame = inspectionAnimationFrame(inspectionAnimationFrames - 1)
     expect(lastFrame.distanceScale).toBe(1.8)
     expect(lastFrame.seconds).toBeCloseTo((inspectionAnimationFrameOffset - 1) / animationFps)
