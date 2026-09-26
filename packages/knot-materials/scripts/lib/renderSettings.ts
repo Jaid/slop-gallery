@@ -83,10 +83,19 @@ const inspectionDistanceScale = (seconds: number) => {
   }
   return transition(far, normal, seconds, 14)
 }
+const inspectionSpinSeconds = [0.75, 1.25] as const
+const inspectionSpinCycleSeconds = inspectionSpinSeconds[0] + inspectionSpinSeconds[1]
 const inspectionAngle = (seconds: number) => {
-  const linear = seconds / animationSeconds * Math.PI * 2
-  // Preserve every cardinal orientation while lingering near the broad front/back views.
-  return linear - 0.2 * Math.sin(linear * 2)
+  const cycle = Math.floor(seconds / inspectionSpinCycleSeconds)
+  const cycleSeconds = seconds - cycle * inspectionSpinCycleSeconds
+  const isFastSpin = cycleSeconds < inspectionSpinSeconds[0]
+  const spinSeconds = inspectionSpinSeconds[isFastSpin ? 0 : 1]
+  const spinStart = isFastSpin ? 0 : inspectionSpinSeconds[0]
+  const completedSpins = cycle * 2 + (isFastSpin ? 0 : 1)
+  const progress = (cycleSeconds - spinStart) / spinSeconds
+  // Keep one revolution/second of boundary momentum while easing within each spin.
+  const easedProgress = spinSeconds * progress + (1 - spinSeconds) * fade(progress)
+  return (completedSpins + easedProgress) * Math.PI * 2
 }
 
 export const inspectionAnimationFrame = (index: number): RenderFrame => {

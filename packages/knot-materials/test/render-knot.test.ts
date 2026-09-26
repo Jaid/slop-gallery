@@ -47,7 +47,6 @@ describe('knot inspection renders', () => {
     expect(firstFrame.seconds).toBe(0)
     expect(firstFrame.size).toBe('video')
     expect(firstFrame.distanceScale).toBe(1.8)
-    expect(firstFrame.angle % (Math.PI * 2)).toBeCloseTo(Math.PI * 3 / 2, 10)
     expect(frameAtSecond(0.5).distanceScale).toBe(1.8)
     expect(frameAtSecond(2.5).distanceScale).toBe(1)
     expect(frameAtSecond(4.5).distanceScale).toBe(1)
@@ -62,10 +61,21 @@ describe('knot inspection renders', () => {
     for (const second of [0.5, 2.5, 4.5, 6.5, 8.5, 10.5, 12.5, 14.5]) {
       expect(frameAtSecond(second).angle % (Math.PI * 2)).toBeCloseTo(0, 10)
     }
-    const thinStep = inspectionAnimationFrame(1).angle - inspectionAnimationFrame(0).angle
-    const wideIndex = Math.round(0.5 * animationFps)
-    const wideStep = inspectionAnimationFrame(wideIndex + 1).angle - inspectionAnimationFrame(wideIndex).angle
-    expect(thinStep).toBeGreaterThan(wideStep)
+    const fastSpinStart = frameAtSecond(12.5)
+    const fastSpinEnd = frameAtSecond(13.25)
+    const slowSpinEnd = frameAtSecond(14.5)
+    expect(fastSpinEnd.angle - fastSpinStart.angle).toBeCloseTo(Math.PI * 2, 10)
+    expect(slowSpinEnd.angle - fastSpinEnd.angle).toBeCloseTo(Math.PI * 2, 10)
+    const joinIndex = Math.round(13.25 * animationFps)
+    const stepBeforeJoin = inspectionAnimationFrame(joinIndex).angle - inspectionAnimationFrame(joinIndex - 1).angle
+    const stepAfterJoin = inspectionAnimationFrame(joinIndex + 1).angle - inspectionAnimationFrame(joinIndex).angle
+    expect(stepBeforeJoin).toBeCloseTo(stepAfterJoin, 3)
+    const fastMiddleIndex = Math.round(12.875 * animationFps)
+    const slowMiddleIndex = Math.round(13.875 * animationFps)
+    const fastMiddleStep = inspectionAnimationFrame(fastMiddleIndex + 1).angle - inspectionAnimationFrame(fastMiddleIndex).angle
+    const slowMiddleStep = inspectionAnimationFrame(slowMiddleIndex + 1).angle - inspectionAnimationFrame(slowMiddleIndex).angle
+    expect(fastMiddleStep).toBeGreaterThan(stepAfterJoin)
+    expect(slowMiddleStep).toBeLessThan(stepAfterJoin)
     for (const invalid of [-1, animationFrames, 0.5, NaN]) {
       expect(() => angleAnimationFrame(invalid)).toThrow(RangeError)
     }
