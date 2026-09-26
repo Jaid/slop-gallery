@@ -5,18 +5,23 @@ import {color, float, mix, normalLocal, time, uv, vec2, vec3} from 'three/tsl'
 import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
+import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
 function rootField(tube: Node<'vec2'>) {
   const q = tube.mul(vec2(22, 9))
-  const warp = q.x.add(q.y.mul(3.1).sin().mul(0.6)).add(q.y.mul(1.7).cos().mul(0.25))
+  const warp = tube.x.mul(TAU * 4).add(tube.y.mul(TAU * 4).sin().mul(0.6)).add(tube.y.mul(TAU * 2).cos().mul(0.25))
   const broad = warp.sin().mul(0.5).add(0.5)
-  const rootField = q.x.mul(3.2).add(q.y.mul(0.7).sin().mul(0.35))
-  const roots = rootField.sin().abs().smoothstep(0.06, 0.2).oneMinus()
-  const fine = q.x.mul(7.4).add(q.y.mul(2.2).sin()).sin().abs().smoothstep(0.025, 0.12).oneMinus()
-  const knots = cellNoiseVec3(vec3(q.x.floor(), q.y.floor(), 3.7))
-  const spore = knots.x.smoothstep(0.69, 0.88).mul(fine.mul(0.6).add(0.4))
+  const rootPhase = tube.x.mul(TAU * 11).add(tube.y.mul(TAU).sin().mul(0.35))
+  const roots = rootPhase.sin().abs().smoothstep(0.06, 0.2).oneMinus()
+  const fine = tube.x.mul(TAU * 26).add(tube.y.mul(TAU * 3).sin()).sin().abs().smoothstep(0.025, 0.12).oneMinus()
+  // Wrap identities and confine their effects to spots clear of the cell boundaries.
+  const cell = q.floor().mod(vec2(22, 9))
+  const knots = cellNoiseVec3(vec3(cell, 3.7))
+  const center = knots.xy.mul(0.5).add(0.25)
+  const sporeMask = q.fract().sub(center).length().smoothstep(0.04, 0.18).oneMinus()
+  const spore = knots.x.smoothstep(0.69, 0.88).mul(fine.mul(0.6).add(0.4)).mul(sporeMask)
   return {
     q,
     broad,
@@ -37,7 +42,7 @@ export default class extends KnotMaterial {
     const tube = uv()
     const {p, view, grazing, near, intimate} = viewerFrame()
     const field = rootField(tube)
-    const pulse = time.mul(1.8).add(tube.x.mul(9.3).sin()).sin().mul(0.5).add(0.5)
+    const pulse = time.mul(1.8).add(tube.x.mul(TAU).sin()).sin().mul(0.5).add(0.5)
     const direction = view.dot(vec3(0.5, -0.1, 0.85).normalize()).mul(0.5).add(0.5)
     const rootColor = mix(color('#63e89a'), color('#b9ffcf'), direction).mul(field.spore.mul(0.8).add(0.25))
     const membrane = mix(color('#061b18'), color('#0d4c4c'), field.broad.mul(0.36).add(0.2))
