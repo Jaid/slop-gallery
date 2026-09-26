@@ -9,7 +9,9 @@ import {spectralColor} from '../../lib/spectralColor.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/** A polished pearlescent shell over three slowly counterflowing internal wavefronts. */
+/**
+ * A polished pearlescent shell over three slowly counterflowing internal wavefronts.
+ */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.15)

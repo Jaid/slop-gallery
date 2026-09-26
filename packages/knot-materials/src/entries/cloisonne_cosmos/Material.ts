@@ -10,7 +10,9 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/** Each cell is a separate pool of vitreous color, divided by a hand-finished gold seam. */
+/**
+ * Each cell is a separate pool of vitreous color, divided by a hand-finished gold seam.
+ */
 function cloisonne(point: Node<'vec3'>, view: Node<'vec3'>, facing: Node<'float'>, near: Node<'float'>) {
   const domain = point.mul(3.25)
   const warped = domain.add(vec3(mx_noise_float(domain.mul(0.33)), mx_noise_float(domain.mul(0.33).add(11.4)), mx_noise_float(domain.mul(0.33).add(-8.2))).mul(0.24))

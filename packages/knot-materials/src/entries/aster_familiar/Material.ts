@@ -72,7 +72,9 @@ const outline: ReadonlyArray<readonly [number, number]> = [
   [7, 27],
   [11, 8],
 ]
-/** Anti-aliased distance to a finite line, plus its arc coordinate. */
+/**
+ * Anti-aliased distance to a finite line, plus its arc coordinate.
+ */
 function stitch(p: Node<'vec2'>, a: Node<'vec2'>, b: Node<'vec2'>, footprint: Node<'float'>) {
   const delta = b.sub(a)
   const along = p.sub(a).dot(delta).div(delta.dot(delta).max(0.00001)).clamp()

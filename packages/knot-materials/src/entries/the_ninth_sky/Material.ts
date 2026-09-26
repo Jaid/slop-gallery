@@ -10,7 +10,9 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/** Hand-drawn star graphs, not silhouettes filled with random particles. Coordinates are tile-local. */
+/**
+ * Hand-drawn star graphs, not silhouettes filled with random particles. Coordinates are tile-local.
+ */
 type Star = {
   eye: boolean
   phase: number
@@ -203,7 +205,9 @@ const familiar = new StarChart('The familiar')
   .path('rootR whiskerRD', 0.6)
   .build()
 const constellations: ReadonlyArray<Constellation> = [familiar, sentinel, dreamer]
-/** Distance and arrival-time fields allow animated graphs with one texture read, not dozens of segment tests per fragment. */
+/**
+ * Distance and arrival-time fields allow animated graphs with one texture read, not dozens of segment tests per fragment.
+ */
 function sampleChart(chart: Constellation, x: number, y: number): [number, number, number, number] {
   let lineDistanceSquared = 4
   let arrival = 0
@@ -236,7 +240,9 @@ function sampleChart(chart: Constellation, x: number, y: number): [number, numbe
   }
   return [Math.sqrt(lineDistanceSquared), starDistance, arrival, identity]
 }
-/** Linear half-float data, not color. Every material owns and releases its atlas. */
+/**
+ * Linear half-float data, not color. Every material owns and releases its atlas.
+ */
 class StarAtlas extends DataTexture {
   constructor(size = 512) {
     if (!Number.isSafeInteger(size) || size < 16 || size > 2048) {

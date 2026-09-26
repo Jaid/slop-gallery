@@ -11,7 +11,9 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/** Whole growing crystals, including those centered in adjacent lattice cells. */
+/**
+ * Whole growing crystals, including those centered in adjacent lattice cells.
+ */
 const frostField = fn(([q, p, breath, near]: [Node<'vec3'>, Node<'vec3'>, Node<'float'>, Node<'float'>]) => {
   const cell = q.floor()
   const local = q.fract()
@@ -41,7 +43,9 @@ const frostField = fn(([q, p, breath, near]: [Node<'vec3'>, Node<'vec3'>, Node<'
   })
   return coverage.mul(visibility)
 })
-/** Localized facets, rather than random normals covering entire grid cells. */
+/**
+ * Localized facets, rather than random normals covering entire grid cells.
+ */
 function frostGlitter(position: Node<'vec3'>, cellSize: number, sharpness: number, tilt: number) {
   const facets = glitter(position, cellSize, sharpness, tilt)
   const q = position.div(cellSize)

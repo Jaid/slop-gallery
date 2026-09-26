@@ -10,7 +10,9 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/** Localized grains keep random facet normals and mineral tints off the cell background. */
+/**
+ * Localized grains keep random facet normals and mineral tints off the cell background.
+ */
 function sandGrains(position: Node<'vec3'>, cellSize: number, sharpness: number, tilt: number) {
   const facets = glitter(position, cellSize, sharpness, tilt)
   const q = position.div(cellSize)

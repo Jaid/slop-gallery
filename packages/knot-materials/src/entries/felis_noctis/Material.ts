@@ -6,7 +6,9 @@ import {cellularPoints} from '../../lib/cellularPoints.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import data from './data.ts'
 
-/** A hand-placed, connected star drawing; the drawing is constructed on the GPU, not baked into a texture. */
+/**
+ * A hand-placed, connected star drawing; the drawing is constructed on the GPU, not baked into a texture.
+ */
 const stars = [
   [0.29, 0.91],
   [0.27, 0.76],
@@ -77,7 +79,9 @@ function pointSegmentDistance(p: Node<'vec2'>, a: Node<'vec2'>, b: Node<'vec2'>)
   const v = b.sub(a)
   return p.sub(a).sub(v.mul(p.sub(a).dot(v).div(v.dot(v).max(0.00001)).clamp())).length()
 }
-/** Signed star discs, slender drawn connections and a few diffracting anchor stars. */
+/**
+ * Signed star discs, slender drawn connections and a few diffracting anchor stars.
+ */
 function constellation(p: Node<'vec2'>, phase: Node<'float'>) {
   const breath = time.mul(0.55).add(phase).sin().mul(0.005)
   const tail = time.mul(0.83).add(phase.mul(1.6)).sin().mul(0.023)

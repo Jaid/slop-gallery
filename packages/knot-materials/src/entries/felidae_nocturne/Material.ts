@@ -42,7 +42,9 @@ const width = 1024
 const height = 512
 const tile = 512
 const channels = 4
-/** A tiny additive vector rasterizer: R = silver thread, G = star cores, B = halos, A = etched cartography. */
+/**
+ * A tiny additive vector rasterizer: R = silver thread, G = star cores, B = halos, A = etched cartography.
+ */
 function createConstellationAtlas() {
   const pixels = new Float32Array(width * height * channels)
   const stamp = (variant: number, x: number, y: number, radius: number, channel: number, energy: number) => {

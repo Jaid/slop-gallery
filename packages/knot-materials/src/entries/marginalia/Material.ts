@@ -8,7 +8,9 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/** Subpixel paper fibers settle to their mean rather than sparkling. */
+/**
+ * Subpixel paper fibers settle to their mean rather than sparkling.
+ */
 function paperGrain(point: Node<'vec3'>) {
   const visibility = point.fwidth().length().smoothstep(0.25, 1).oneMinus()
   return mix(float(0.5), mx_noise_float(point).mul(0.5).add(0.5), visibility)

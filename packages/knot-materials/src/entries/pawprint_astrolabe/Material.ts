@@ -16,7 +16,9 @@ const segmentDistance = Fn(([point, start, end]: [Node<'vec2'>, Node<'vec2'>, No
   const along = fromStart.dot(segment).div(segment.dot(segment).max(0.00001)).clamp()
   return fromStart.sub(segment.mul(along)).length()
 })
-/** A cat assembled entirely from beads and constellation-like connecting filaments. */
+/**
+ * A cat assembled entirely from beads and constellation-like connecting filaments.
+ */
 function catGlyph(grid: Node<'vec2'>) {
   const cell = grid.floor()
   const random = cellNoiseVec3(vec3(cell.x.add(0.5), cell.y.add(0.5), 7.31))

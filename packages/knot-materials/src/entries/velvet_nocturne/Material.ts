@@ -38,7 +38,9 @@ function weave(u: Node<'float'>, v: Node<'float'>, clock: Node<'float'>, harmoni
     value: value.div(norm),
   }
 }
-/** Circular coordinates make the textile noise agree at both UV wraps. */
+/**
+ * Circular coordinates make the textile noise agree at both UV wraps.
+ */
 function clothCoordinate(u: Node<'float'>, v: Node<'float'>, along: number, around: number) {
   const a = u.mul(TAU)
   const b = v.mul(TAU)

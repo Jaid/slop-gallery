@@ -9,7 +9,9 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/** Complete bokeh lights, including discs whose centers lie in neighboring cells. */
+/**
+ * Complete bokeh lights, including discs whose centers lie in neighboring cells.
+ */
 const bokehField = fn(([q]: [Node<'vec3'>]) => {
   const cell = q.floor()
   const local = q.fract()

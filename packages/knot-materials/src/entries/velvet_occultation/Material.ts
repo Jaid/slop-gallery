@@ -8,13 +8,17 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/** Screen-space-safe distance to a finite 2D line segment. */
+/**
+ * Screen-space-safe distance to a finite 2D line segment.
+ */
 function segmentDistance(point: Node<'vec2'>, start: Node<'vec2'>, end: Node<'vec2'>) {
   const delta = end.sub(start)
   const along = point.sub(start).dot(delta).div(delta.dot(delta).max(1e-8)).clamp(0, 1)
   return point.sub(start.add(delta.mul(along))).length()
 }
-/** A derivative-aware luminous filament with a restrained bright core. */
+/**
+ * A derivative-aware luminous filament with a restrained bright core.
+ */
 function luminousSegment(point: Node<'vec2'>, start: Node<'vec2'>, end: Node<'vec2'>, width: Node<'float'> | number, opacity: Node<'float'> | number = 1) {
   const halfWidth = typeof width === 'number' ? float(width) : width
   const strength = typeof opacity === 'number' ? float(opacity) : opacity
@@ -23,7 +27,9 @@ function luminousSegment(point: Node<'vec2'>, start: Node<'vec2'>, end: Node<'ve
   const core = distance.smoothstep(halfWidth, footprint.mul(0.8).add(halfWidth)).oneMinus()
   return core.mul(strength)
 }
-/** A hand-drawn occult cat: ears, almond eyes, whiskers, arched back and a curling tail. */
+/**
+ * A hand-drawn occult cat: ears, almond eyes, whiskers, arched back and a curling tail.
+ */
 function catConstellation(point: Node<'vec2'>, footprint: Node<'float'>) {
   const head = vec2(0.025, 0.13)
   const earLeft = vec2(-0.16, 0.19)

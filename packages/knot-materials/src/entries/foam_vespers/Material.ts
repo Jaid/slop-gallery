@@ -10,7 +10,9 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {TAU} from '../../lib/TAU.ts'
 import knotData from './data.ts'
 
-/** Neighboring Voronoi sites keep bubble identities independent of lattice boundaries. */
+/**
+ * Neighboring Voronoi sites keep bubble identities independent of lattice boundaries.
+ */
 function foamCells(position: Node<'vec3'>, jitter = 0.62) {
   const distances = mx_worley_noise_vec3(position, jitter, 0)
   const domain = mx_worley_noise_float(position, jitter, 1)

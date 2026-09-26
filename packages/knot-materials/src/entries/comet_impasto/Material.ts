@@ -10,7 +10,9 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/** Thousands of rounded palette-knife marks, each with its own pigment and direction. */
+/**
+ * Thousands of rounded palette-knife marks, each with its own pigment and direction.
+ */
 function brushwork(grid: Node<'vec2'>, seed: number) {
   const cell = grid.floor()
   const local = grid.fract().sub(0.5)

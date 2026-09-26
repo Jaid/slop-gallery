@@ -8,7 +8,9 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/** Giant mirrored silk-moth wings, with false eyes that seem to watch an approaching viewer. */
+/**
+ * Giant mirrored silk-moth wings, with false eyes that seem to watch an approaching viewer.
+ */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.42)

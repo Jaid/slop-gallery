@@ -10,7 +10,9 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/** Smooth periodic noise coordinates with independent along/across scales. */
+/**
+ * Smooth periodic noise coordinates with independent along/across scales.
+ */
 const textileCoordinate = (tube: Node<'vec2'>, along: number, around: number) => {
   const u = tube.x.mul(TAU)
   const v = tube.y.mul(TAU)

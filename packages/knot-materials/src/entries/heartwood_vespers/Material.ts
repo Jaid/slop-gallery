@@ -8,7 +8,9 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/** Fade unresolved grain to its period average, consistently across all material channels. */
+/**
+ * Fade unresolved grain to its period average, consistently across all material channels.
+ */
 function filteredGrain(phase: Node<'float'>, inner: number, outer: number, average: number) {
   const visibility = phase.fwidth().smoothstep(0.3, 1.5).oneMinus()
   const grain = phase.sin().abs().smoothstep(inner, outer).oneMinus()

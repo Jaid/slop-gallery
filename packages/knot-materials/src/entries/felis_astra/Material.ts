@@ -21,7 +21,9 @@ type Constellation = {
   stars: ReadonlyArray<Star>
 }
 
-/** Hand-drawn stellar skeletons, not font glyphs or repeated cat-head icons. Coordinates are in a unit square centered at the origin. */
+/**
+ * Hand-drawn stellar skeletons, not font glyphs or repeated cat-head icons. Coordinates are in a unit square centered at the origin.
+ */
 const constellations: ReadonlyArray<Constellation> = [
   {
     name: 'The Watcher',
@@ -184,13 +186,17 @@ function segmentDistance(x: number, y: number, [a, b]: Segment): number {
   const t = lengthSquared === 0 ? 0 : Math.max(0, Math.min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / lengthSquared))
   return Math.hypot(x - a[0] - dx * t, y - a[1] - dy * t)
 }
-/** Exact signed distance to a diamond in the positive quadrant, so its halo does not stretch across the atlas gutter. */
+/**
+ * Exact signed distance to a diamond in the positive quadrant, so its halo does not stretch across the atlas gutter.
+ */
 function diffractionDistance(x: number, y: number, extent: number) {
   const halfWidth = 0.0025
   const t = Math.max(0, Math.min(1, ((extent - x) * extent + y * halfWidth) / (extent * extent + halfWidth * halfWidth)))
   return Math.hypot(x - extent + extent * t, y - halfWidth * t) * Math.sign(x / extent + y / halfWidth - 1)
 }
-/** RGBA = primary-link distance, secondary-link distance, signed stellar distance, eye distance. */
+/**
+ * RGBA = primary-link distance, secondary-link distance, signed stellar distance, eye distance.
+ */
 function sampleConstellation(cat: Constellation, x: number, y: number, outline = graphSegments(cat, cat.outline), facets = graphSegments(cat, cat.facets), eyes = segments(cat.eyes)): [number, number, number, number] {
   let primary = 1
   let secondary = 1
@@ -220,7 +226,9 @@ const atlasCellSize = 512
 const atlasWidth = atlasCellSize * constellations.length
 const atlasHeight = atlasCellSize
 let atlasPixels: Uint16Array | undefined
-/** Cached CPU pixels; each material owns its own GPU texture and can be disposed independently. */
+/**
+ * Cached CPU pixels; each material owns its own GPU texture and can be disposed independently.
+ */
 function createAtlasPixels(): Uint16Array {
   if (atlasPixels) {
     return atlasPixels
@@ -243,12 +251,16 @@ function createAtlasPixels(): Uint16Array {
   atlasPixels = data
   return data
 }
-/** Analytic coverage in cell units, including energy conservation once a link is thinner than a pixel. */
+/**
+ * Analytic coverage in cell units, including energy conservation once a link is thinner than a pixel.
+ */
 function thread(distance: Node<'float'>, width: number, footprint: Node<'float'>) {
   const aa = footprint.mul(0.65).max(0.0005)
   return distance.smoothstep(float(width).sub(aa), aa.add(width)).oneMinus().mul(float(width * 2).div(aa).min(1))
 }
-/** A sparse, periodic background layer. Its coordinates and identities agree on both torus seams. */
+/**
+ * A sparse, periodic background layer. Its coordinates and identities agree on both torus seams.
+ */
 function dust(coordinate: Node<'vec2'>, period: Node<'vec2'>, seed: number) {
   const q = coordinate.mul(period)
   const random = cellNoiseVec3(vec3(wrapCell(q.floor(), period), seed))
@@ -265,7 +277,9 @@ function dust(coordinate: Node<'vec2'>, period: Node<'vec2'>, seed: number) {
   return mix(color('#718ddd'), color('#ffce98'), random.y)
     .mul(core.add(halo)).mul(gate).mul(twinkle).mul(footprint.smoothstep(0.6, 1.6).oneMinus())
 }
-/** Linear half-float distance fields preserve subpixel links without storing a large color illustration. */
+/**
+ * Linear half-float distance fields preserve subpixel links without storing a large color illustration.
+ */
 class StellarAtlas extends DataTexture {
   constructor() {
     super(createAtlasPixels(), atlasWidth, atlasHeight, RGBAFormat, HalfFloatType)
