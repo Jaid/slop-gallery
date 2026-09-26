@@ -11,9 +11,9 @@ import knotData from './data.ts'
 
 function nacreField(p: Node<'vec3'>, tube: Node<'vec2'>) {
   // Object-space domain warping keeps the shell layers continuous around the
-  // torus and through the seam; UV is only a gentle directional accent.
+  // torus and through the seam; the UV accent must also complete whole cycles.
   const slow = mx_fractal_noise_float(p.mul(2.1).add(vec3(0, time.mul(0.018), 0)), 3, 2.05, 0.56)
-  const warp = p.dot(vec3(4.2, 2.7, -3.6)).add(slow.mul(4.4)).add(tube.x.mul(TAU * 1.5))
+  const warp = p.dot(vec3(4.2, 2.7, -3.6)).add(slow.mul(4.4)).add(tube.x.mul(TAU * 2))
   const plateNoise = mx_noise_float(p.mul(6.8).add(vec3(slow.mul(1.7), slow.mul(-1.1), slow.mul(0.8))))
   const growthLine = warp.sin().abs().smoothstep(0.035, 0.17).oneMinus()
   const layer = warp.sin().mul(0.5).add(0.5)
