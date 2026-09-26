@@ -83,8 +83,9 @@ const inspectionDistanceScale = (seconds: number) => {
   }
   return transition(far, normal, seconds, 14)
 }
-const inspectionSpinSeconds = [0.75, 1.25] as const
+const inspectionSpinSeconds = [1.5, 2.5] as const
 const inspectionSpinCycleSeconds = inspectionSpinSeconds[0] + inspectionSpinSeconds[1]
+const inspectionSpinBoundarySpeed = 2 / inspectionSpinCycleSeconds
 const inspectionAngle = (seconds: number) => {
   const cycle = Math.floor(seconds / inspectionSpinCycleSeconds)
   const cycleSeconds = seconds - cycle * inspectionSpinCycleSeconds
@@ -93,8 +94,9 @@ const inspectionAngle = (seconds: number) => {
   const spinStart = isFastSpin ? 0 : inspectionSpinSeconds[0]
   const completedSpins = cycle * 2 + (isFastSpin ? 0 : 1)
   const progress = (cycleSeconds - spinStart) / spinSeconds
-  // Keep one revolution/second of boundary momentum while easing within each spin.
-  const easedProgress = spinSeconds * progress + (1 - spinSeconds) * fade(progress)
+  // Keep cycle-average boundary momentum while easing within each spin.
+  const boundaryProgress = inspectionSpinBoundarySpeed * spinSeconds * progress
+  const easedProgress = boundaryProgress + (1 - inspectionSpinBoundarySpeed * spinSeconds) * fade(progress)
   return (completedSpins + easedProgress) * Math.PI * 2
 }
 
