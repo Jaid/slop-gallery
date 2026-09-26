@@ -3,7 +3,7 @@ import {tmpdir} from 'node:os'
 import {resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
 
-import {angleAnimationFrame, angleNames, angleStillFrame, animationFps, animationFrames, closeupDistanceScale, closeupFov, closeupSize, closeupStillFrame, distanceNames, distanceScales, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrames, inspectionAnimationOffsetSeconds, inspectionAnimationSeconds, inspectionAnimationSize, inspectionNearDistanceScale, inspectionVideoSize, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from '../scripts/lib/renderSettings.ts'
+import {angleAnimationFrame, angleNames, angleStillFrame, animationFps, animationFrames, closeupDistanceScale, closeupFov, closeupSize, closeupStillFrame, distanceNames, distanceScales, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrameOffset, inspectionAnimationFrames, inspectionAnimationOffsetSeconds, inspectionAnimationSeconds, inspectionAnimationSize, inspectionNearDistanceScale, inspectionVideoSize, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from '../scripts/lib/renderSettings.ts'
 import renderKnot, {parseRenderCategories, renderCategories} from '../scripts/renderKnot.ts'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
@@ -41,38 +41,44 @@ describe('knot inspection renders', () => {
     expect(angleAnimationFrame(0).angle).toBe(0)
     expect(angleAnimationFrame(0).size).toBe('animation')
     expect(angleAnimationFrame(animationFrames - 1).angle).toBeLessThan(Math.PI * 2)
-    const frameAtSecond = (seconds: number) => inspectionAnimationFrame(seconds * animationFps)
-    const firstFrame = frameAtSecond(0)
+    const frameAtSourceSecond = (seconds: number) => {
+      const sourceIndex = Math.round(seconds * animationFps)
+      const outputIndex = (sourceIndex - inspectionAnimationFrameOffset + inspectionAnimationFrames) % inspectionAnimationFrames
+      return inspectionAnimationFrame(outputIndex)
+    }
+    const firstFrame = inspectionAnimationFrame(0)
     expect(inspectionAnimationOffsetSeconds).toBe(13.5)
-    expect(firstFrame.seconds).toBe(0)
+    expect(inspectionAnimationFrameOffset).toBe(10)
+    expect(firstFrame.seconds).toBeCloseTo(10 / animationFps)
     expect(firstFrame.size).toBe('video')
     expect(firstFrame.distanceScale).toBe(1.8)
-    expect(frameAtSecond(0.5).distanceScale).toBe(1.8)
-    expect(frameAtSecond(2.5).distanceScale).toBe(1)
-    expect(frameAtSecond(4.5).distanceScale).toBe(1)
-    expect(frameAtSecond(6.5).distanceScale).toBe(inspectionNearDistanceScale)
-    expect(frameAtSecond(8.5).distanceScale).toBe(inspectionNearDistanceScale)
-    expect(frameAtSecond(10.5).distanceScale).toBe(1)
-    expect(frameAtSecond(12.5).distanceScale).toBe(1)
-    expect(frameAtSecond(14.5).distanceScale).toBe(1.8)
+    expect(frameAtSourceSecond(0.5).distanceScale).toBe(1.8)
+    expect(frameAtSourceSecond(2.5).distanceScale).toBe(1)
+    expect(frameAtSourceSecond(4.5).distanceScale).toBe(1)
+    expect(frameAtSourceSecond(6.5).distanceScale).toBe(inspectionNearDistanceScale)
+    expect(frameAtSourceSecond(8.5).distanceScale).toBe(inspectionNearDistanceScale)
+    expect(frameAtSourceSecond(10.5).distanceScale).toBe(1)
+    expect(frameAtSourceSecond(12.5).distanceScale).toBe(1)
+    expect(frameAtSourceSecond(14.5).distanceScale).toBe(1.8)
     const lastFrame = inspectionAnimationFrame(inspectionAnimationFrames - 1)
     expect(lastFrame.distanceScale).toBe(1.8)
-    expect(lastFrame.seconds).toBeCloseTo(inspectionAnimationSeconds - 1 / animationFps)
+    expect(lastFrame.seconds).toBeCloseTo((inspectionAnimationFrameOffset - 1) / animationFps)
     for (const second of [2.5, 3.7, 6.5, 7.7, 10.5, 11.7, 14.5, 15.7]) {
-      const wrappedAngle = frameAtSecond(second).angle % (Math.PI * 2)
+      const wrappedAngle = frameAtSourceSecond(second).angle % (Math.PI * 2)
       expect(Math.min(wrappedAngle, Math.PI * 2 - wrappedAngle)).toBeCloseTo(0, 10)
     }
-    const fastSpinStart = frameAtSecond(2.5)
-    const fastSpinEnd = frameAtSecond(3.7)
-    const slowSpinEnd = frameAtSecond(6.5)
+    const fastSpinStart = frameAtSourceSecond(2.5)
+    const fastSpinEnd = frameAtSourceSecond(3.7)
+    const slowSpinEnd = frameAtSourceSecond(6.5)
     expect(fastSpinEnd.angle - fastSpinStart.angle).toBeCloseTo(Math.PI * 2, 10)
     expect(slowSpinEnd.angle - fastSpinEnd.angle).toBeCloseTo(Math.PI * 2, 10)
-    const joinIndex = Math.round(3.7 * animationFps)
+    const joinSourceIndex = Math.round(3.7 * animationFps)
+    const joinIndex = (joinSourceIndex - inspectionAnimationFrameOffset + inspectionAnimationFrames) % inspectionAnimationFrames
     const stepBeforeJoin = inspectionAnimationFrame(joinIndex).angle - inspectionAnimationFrame(joinIndex - 1).angle
     const stepAfterJoin = inspectionAnimationFrame(joinIndex + 1).angle - inspectionAnimationFrame(joinIndex).angle
     expect(stepBeforeJoin).toBeCloseTo(stepAfterJoin, 3)
-    const fastMiddleIndex = Math.round(3.1 * animationFps)
-    const slowMiddleIndex = Math.round(5.1 * animationFps)
+    const fastMiddleIndex = Math.round(3.1 * animationFps) - inspectionAnimationFrameOffset
+    const slowMiddleIndex = Math.round(5.1 * animationFps) - inspectionAnimationFrameOffset
     const fastMiddleStep = inspectionAnimationFrame(fastMiddleIndex + 1).angle - inspectionAnimationFrame(fastMiddleIndex).angle
     const slowMiddleStep = inspectionAnimationFrame(slowMiddleIndex + 1).angle - inspectionAnimationFrame(slowMiddleIndex).angle
     expect(fastMiddleStep).toBeGreaterThan(stepAfterJoin)

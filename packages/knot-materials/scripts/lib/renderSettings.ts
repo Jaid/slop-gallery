@@ -15,6 +15,7 @@ export const distanceNames = ['near', 'far'] as const
 export const distanceScales = [0.75, 1.8] as const
 export const inspectionAnimationSeconds = 16
 export const inspectionAnimationFrames = inspectionAnimationSeconds * animationFps
+export const inspectionAnimationFrameOffset = 10
 export const inspectionAnimatedJxlDistance = 4
 export const inspectionAnimationSize = 512
 export const inspectionVideoSize = 1024
@@ -102,7 +103,8 @@ const inspectionAngle = (seconds: number) => {
 
 export const inspectionAnimationFrame = (index: number): RenderFrame => {
   assertInspectionFrameIndex(index)
-  const previewSeconds = index / animationFps
+  const sourceIndex = (index + inspectionAnimationFrameOffset) % inspectionAnimationFrames
+  const previewSeconds = sourceIndex / animationFps
   const choreographySeconds = (previewSeconds + inspectionAnimationOffsetSeconds) % inspectionAnimationSeconds
   return {
     angle: inspectionAngle(choreographySeconds),
