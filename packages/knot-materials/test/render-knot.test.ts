@@ -71,9 +71,10 @@ describe('knot inspection renders', () => {
     expect(lastFrame.distanceScale).toBe(1.8)
     expect(lastFrame.seconds).toBeCloseTo((inspectionAnimationFrameOffset - 1) / animationFps)
     for (const second of [2.5, 4.5, 6.5, 8.5, 10.5, 12.5, 14.5]) {
-      const wrappedAngle = frameAtSourceSecond(second).angle % (Math.PI * 2)
-      expect(Math.min(wrappedAngle, Math.PI * 2 - wrappedAngle)).toBeCloseTo(0, 10)
+      expect(frameAtSourceSecond(second).angle % (Math.PI * 2)).toBeCloseTo(Math.PI / 2, 10)
     }
+    const slowestAngle = frameAtSourceSecond(3.8).angle % (Math.PI * 2)
+    expect(Math.min(slowestAngle, Math.PI * 2 - slowestAngle)).toBeCloseTo(0, 10)
     const turnStart = frameAtSourceSecond(2.5)
     const fastHalfEnd = frameAtSourceSecond(3.1)
     const turnEnd = frameAtSourceSecond(4.5)

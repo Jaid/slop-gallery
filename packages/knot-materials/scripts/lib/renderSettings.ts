@@ -110,6 +110,7 @@ const inspectionElevation = (seconds: number) => {
 const inspectionSpinHalfSeconds = [0.6, 1.4] as const
 const inspectionSpinSeconds = inspectionSpinHalfSeconds[0] + inspectionSpinHalfSeconds[1]
 const inspectionSpinBoundarySpeed = 1 / inspectionSpinSeconds
+const inspectionSpinAngleOffset = Math.PI / 2
 const inspectionAngle = (seconds: number) => {
   const turn = Math.floor(seconds / inspectionSpinSeconds)
   const turnSeconds = seconds - turn * inspectionSpinSeconds
@@ -121,7 +122,7 @@ const inspectionAngle = (seconds: number) => {
   // Keep turn-average boundary momentum while easing the fast and slow half-turns.
   const boundaryProgress = inspectionSpinBoundarySpeed * halfSeconds * progress
   const easedProgress = boundaryProgress + (0.5 - inspectionSpinBoundarySpeed * halfSeconds) * fade(progress)
-  return (completedTurns + easedProgress) * Math.PI * 2
+  return (completedTurns + easedProgress) * Math.PI * 2 + inspectionSpinAngleOffset
 }
 
 export const inspectionAnimationFrame = (index: number): RenderFrame => {
