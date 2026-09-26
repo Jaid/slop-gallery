@@ -70,26 +70,32 @@ describe('knot inspection renders', () => {
     const lastFrame = inspectionAnimationFrame(inspectionAnimationFrames - 1)
     expect(lastFrame.distanceScale).toBe(1.8)
     expect(lastFrame.seconds).toBeCloseTo((inspectionAnimationFrameOffset - 1) / animationFps)
-    for (const second of [2.5, 3.7, 6.5, 7.7, 10.5, 11.7, 14.5, 15.7]) {
+    for (const second of [2.5, 4.5, 6.5, 8.5, 10.5, 12.5, 14.5]) {
       const wrappedAngle = frameAtSourceSecond(second).angle % (Math.PI * 2)
       expect(Math.min(wrappedAngle, Math.PI * 2 - wrappedAngle)).toBeCloseTo(0, 10)
     }
-    const fastSpinStart = frameAtSourceSecond(2.5)
-    const fastSpinEnd = frameAtSourceSecond(3.7)
-    const slowSpinEnd = frameAtSourceSecond(6.5)
-    expect(fastSpinEnd.angle - fastSpinStart.angle).toBeCloseTo(Math.PI * 2, 10)
-    expect(slowSpinEnd.angle - fastSpinEnd.angle).toBeCloseTo(Math.PI * 2, 10)
-    const joinSourceIndex = Math.round(3.7 * animationFps)
-    const joinIndex = (joinSourceIndex - inspectionAnimationFrameOffset + inspectionAnimationFrames) % inspectionAnimationFrames
-    const stepBeforeJoin = inspectionAnimationFrame(joinIndex).angle - inspectionAnimationFrame(joinIndex - 1).angle
-    const stepAfterJoin = inspectionAnimationFrame(joinIndex + 1).angle - inspectionAnimationFrame(joinIndex).angle
-    expect(stepBeforeJoin).toBeCloseTo(stepAfterJoin, 3)
-    const fastMiddleIndex = Math.round(3.1 * animationFps) - inspectionAnimationFrameOffset
-    const slowMiddleIndex = Math.round(5.1 * animationFps) - inspectionAnimationFrameOffset
+    const turnStart = frameAtSourceSecond(2.5)
+    const fastHalfEnd = frameAtSourceSecond(3.1)
+    const turnEnd = frameAtSourceSecond(4.5)
+    expect(fastHalfEnd.angle - turnStart.angle).toBeCloseTo(Math.PI, 10)
+    expect(turnEnd.angle - fastHalfEnd.angle).toBeCloseTo(Math.PI, 10)
+    expect(turnEnd.angle - turnStart.angle).toBeCloseTo(Math.PI * 2, 10)
+    const halfJoinSourceIndex = Math.round(3.1 * animationFps)
+    const halfJoinIndex = (halfJoinSourceIndex - inspectionAnimationFrameOffset + inspectionAnimationFrames) % inspectionAnimationFrames
+    const stepBeforeHalfJoin = inspectionAnimationFrame(halfJoinIndex).angle - inspectionAnimationFrame(halfJoinIndex - 1).angle
+    const stepAfterHalfJoin = inspectionAnimationFrame(halfJoinIndex + 1).angle - inspectionAnimationFrame(halfJoinIndex).angle
+    expect(stepBeforeHalfJoin).toBeCloseTo(stepAfterHalfJoin, 3)
+    const turnJoinSourceIndex = Math.round(4.5 * animationFps)
+    const turnJoinIndex = (turnJoinSourceIndex - inspectionAnimationFrameOffset + inspectionAnimationFrames) % inspectionAnimationFrames
+    const stepBeforeTurnJoin = inspectionAnimationFrame(turnJoinIndex).angle - inspectionAnimationFrame(turnJoinIndex - 1).angle
+    const stepAfterTurnJoin = inspectionAnimationFrame(turnJoinIndex + 1).angle - inspectionAnimationFrame(turnJoinIndex).angle
+    expect(stepBeforeTurnJoin).toBeCloseTo(stepAfterTurnJoin, 3)
+    const fastMiddleIndex = Math.round(2.8 * animationFps) - inspectionAnimationFrameOffset
+    const slowMiddleIndex = Math.round(3.8 * animationFps) - inspectionAnimationFrameOffset
     const fastMiddleStep = inspectionAnimationFrame(fastMiddleIndex + 1).angle - inspectionAnimationFrame(fastMiddleIndex).angle
     const slowMiddleStep = inspectionAnimationFrame(slowMiddleIndex + 1).angle - inspectionAnimationFrame(slowMiddleIndex).angle
-    expect(fastMiddleStep).toBeGreaterThan(stepAfterJoin)
-    expect(slowMiddleStep).toBeLessThan(stepAfterJoin)
+    expect(fastMiddleStep).toBeGreaterThan(stepAfterHalfJoin)
+    expect(slowMiddleStep).toBeLessThan(stepAfterHalfJoin)
     for (const invalid of [-1, animationFrames, 0.5, NaN]) {
       expect(() => angleAnimationFrame(invalid)).toThrow(RangeError)
     }

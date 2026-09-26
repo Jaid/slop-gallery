@@ -106,21 +106,21 @@ const inspectionElevation = (seconds: number) => {
   }
   return 0
 }
-const inspectionSpinSeconds = [1.2, 2.8] as const
-const inspectionSpinCycleSeconds = inspectionSpinSeconds[0] + inspectionSpinSeconds[1]
-const inspectionSpinBoundarySpeed = 2 / inspectionSpinCycleSeconds
+const inspectionSpinHalfSeconds = [0.6, 1.4] as const
+const inspectionSpinSeconds = inspectionSpinHalfSeconds[0] + inspectionSpinHalfSeconds[1]
+const inspectionSpinBoundarySpeed = 1 / inspectionSpinSeconds
 const inspectionAngle = (seconds: number) => {
-  const cycle = Math.floor(seconds / inspectionSpinCycleSeconds)
-  const cycleSeconds = seconds - cycle * inspectionSpinCycleSeconds
-  const isFastSpin = cycleSeconds < inspectionSpinSeconds[0]
-  const spinSeconds = inspectionSpinSeconds[isFastSpin ? 0 : 1]
-  const spinStart = isFastSpin ? 0 : inspectionSpinSeconds[0]
-  const completedSpins = cycle * 2 + (isFastSpin ? 0 : 1)
-  const progress = (cycleSeconds - spinStart) / spinSeconds
-  // Keep cycle-average boundary momentum while easing within each spin.
-  const boundaryProgress = inspectionSpinBoundarySpeed * spinSeconds * progress
-  const easedProgress = boundaryProgress + (1 - inspectionSpinBoundarySpeed * spinSeconds) * fade(progress)
-  return (completedSpins + easedProgress) * Math.PI * 2
+  const turn = Math.floor(seconds / inspectionSpinSeconds)
+  const turnSeconds = seconds - turn * inspectionSpinSeconds
+  const isFastHalf = turnSeconds < inspectionSpinHalfSeconds[0]
+  const halfSeconds = inspectionSpinHalfSeconds[isFastHalf ? 0 : 1]
+  const halfStart = isFastHalf ? 0 : inspectionSpinHalfSeconds[0]
+  const completedTurns = turn + (isFastHalf ? 0 : 0.5)
+  const progress = (turnSeconds - halfStart) / halfSeconds
+  // Keep turn-average boundary momentum while easing the fast and slow half-turns.
+  const boundaryProgress = inspectionSpinBoundarySpeed * halfSeconds * progress
+  const easedProgress = boundaryProgress + (0.5 - inspectionSpinBoundarySpeed * halfSeconds) * fade(progress)
+  return (completedTurns + easedProgress) * Math.PI * 2
 }
 
 export const inspectionAnimationFrame = (index: number): RenderFrame => {
