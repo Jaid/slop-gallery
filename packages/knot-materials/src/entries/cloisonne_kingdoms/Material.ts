@@ -28,8 +28,16 @@ export default class extends KnotMaterial {
     const jewel = mix(color('#071b46'), color('#087f83'), enamelField.smoothstep(0.18, 0.46))
     const jewel2 = mix(jewel, color('#9e285d'), enamelField.smoothstep(0.52, 0.76))
     const enamel = mix(jewel2, color('#d98b27'), enamelField.smoothstep(0.78, 0.96))
-    const fleck = cellNoiseVec3(p.mul(24).floor()).z
-    const fired = fleck.smoothstep(0.8, 0.95).mul(wireMask.oneMinus()).mul(near)
+    const fleckPosition = p.mul(24)
+    const fleckRandom = cellNoiseVec3(fleckPosition.floor())
+    const fleckCenter = fleckRandom.mul(0.5).add(0.25)
+    const fleckFootprint = fleckPosition.fwidth().length()
+    const fleckRadius = fleckFootprint.add(0.18).min(0.24)
+    // Keep random tint, relief and roughness inside isolated inclusions, not whole cells.
+    const fleckMask = fleckPosition.fract().sub(fleckCenter).length().smoothstep(0.06, fleckRadius).oneMinus()
+      .mul(fleckFootprint.smoothstep(0.25, 1).oneMinus())
+    const fleck = fleckRandom.z.mul(fleckMask)
+    const fired = fleckRandom.z.smoothstep(0.8, 0.95).mul(fleckMask).mul(wireMask.oneMinus()).mul(near)
     const height = wireMask.mul(0.26).add(fleck.mul(near).mul(0.014))
     const enamelNormal = proceduralNormal(height, 0.0038)
     const glass = glints(enamelNormal, 92).mul(near).mul(0.24)
