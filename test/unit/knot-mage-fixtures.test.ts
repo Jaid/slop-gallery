@@ -16,10 +16,7 @@ const runs = [
   ['AywadB8L9RF1tw9', 'gpt_sol', 'knot-material-br11k', 'felis_noctis'],
   ['DyugOIRGq3AJL3h', 'gpt_sol', 'knot-material-br11k', 'felidae_nocturne'],
   ['29lWdAQmWzVXPwF', 'gpt_sol', 'knot-material-br11k', 'aster_familiar'],
-  ['OHrguQnRmnE9qcL', 'gpt_astra', 'knot-material-br11k', 'aster_purr'],
   ['8pqCoRj0a4a532V', 'gpt_astra', 'knot-material-br11k', 'asterlynx'],
-  ['LLppyomyYFyJXNM', 'gpt_astra', 'knot-material-br11k', 'purrallax'],
-  ['DwSASUlaGpPBz8y', 'gpt_astra', 'knot-material-br11k', 'aster_gaze'],
 ] as const
 const authors = {
   space_bunny: {
@@ -47,11 +44,11 @@ const imported = runs.flatMap(([runId, candidateId, fixture, ids]) => ids.split(
 const textured = new Set(['the_ninth_sky', 'felis_astra', 'felidae_nocturne'])
 describe('Mage shader and br11k fixture imports', () => {
   test('registers every requested entry with actual run and model provenance', async () => {
-    expect(imported).toHaveLength(26)
+    expect(imported).toHaveLength(23)
     const identities = new Set(imported.map(entry => entry.id))
     expect(identities.size).toBe(imported.length)
     expect(runs.filter(([, , fixture]) => fixture === 'knot-material-shaders')).toHaveLength(2)
-    expect(runs.filter(([, , fixture]) => fixture === 'knot-material-br11k')).toHaveLength(10)
+    expect(runs.filter(([, , fixture]) => fixture === 'knot-material-br11k')).toHaveLength(7)
     for (const {id, runId, candidateId, fixture} of imported) {
       const entry = knotsById.get(id)!
       expect(entry).toBeDefined()
@@ -125,10 +122,5 @@ describe('Mage shader and br11k fixture imports', () => {
     }
     expect(knotsById.get('nacre_shell')!.title).toBe('Nacre Shell')
     expect(knotsById.get('nacre_dream')!.title).toBe('Nacre Dream')
-  })
-  test('keeps both independently generated Aster Purr implementations', () => {
-    expect(knotsById.get('aster_purr')!.title).toBe('Aster Purr')
-    expect(knotsById.get('aster_gaze')!.title).toBe('Aster Gaze')
-    expect(knotsById.get('aster_purr')!.flavorText).not.toBe(knotsById.get('aster_gaze')!.flavorText)
   })
 })
