@@ -245,10 +245,10 @@ describe('arbitrary Knot batches', () => {
     expect(codex.every(entry => entry.candidate.id === 'gpt_astra')).toBe(true)
     expect(legacy.every(entry => entry.harness === undefined)).toBe(true)
     const astraMage = knots.filter(entry => entry.candidate.id === 'gpt_astra' && entry.harness === 'Mage')
-    expect(astraMage).toHaveLength(55)
+    expect(astraMage).toHaveLength(59)
     expect(astraMage.every(entry => entry.author.model.title === 'GPT-6 Astra' && entry.author.model.slug === 'openai/gpt-6-astra')).toBe(true)
     expect(Object.fromEntries(Map.groupBy(astraMage, entry => entry.author.model.effortLevel).entries().map(([effort, grouped]) => [effort, grouped.length]))).toEqual({
-      high: 25,
+      high: 29,
       max: 14,
       xhigh: 16,
     })
