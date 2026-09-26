@@ -18,7 +18,7 @@ export default class extends KnotMaterial {
     this.name = knotData.id
     const {p, view, facing, near, intimate} = viewerFrame()
     const resin = mx_fractal_noise_float(p.mul(1.8).add(vec3(time.mul(0.006), time.mul(-0.004), 0)), 4, 2.05, 0.54).mul(0.5).add(0.5)
-    const amber = mix(color('#4a1605'), color('#e18a20'), resin.pow(1.2))
+    const amber = mix(color('#4a1605'), color('#e18a20'), resin.clamp().pow(1.2))
     const inner = p.add(view.negate().mul(facing.mul(0.1).add(0.018)))
     const flow = mx_fractal_noise_float(inner.mul(4.6).add(vec3(time.mul(0.009), time.mul(-0.007), time.mul(0.004))), 4, 2.15, 0.55)
     const veins = flow.abs().mul(2.5).oneMinus().clamp().pow(4)
@@ -27,8 +27,10 @@ export default class extends KnotMaterial {
     const bubbleCell = cellNoiseVec3(bubbleField.floor())
     const bubbleDistance = bubbleField.fract().sub(bubbleCell.mul(0.5).add(0.25)).length()
     const bubbleRadius = bubbleCell.z.mul(0.075).add(0.03)
-    const bubble = bubbleDistance.smoothstep(bubbleRadius, bubbleRadius.mul(0.2)).oneMinus().mul(bubbleCell.x.smoothstep(0.76, 0.94))
     const bubbleAA = bubbleField.fwidth().length().max(0.001)
+    // Light the bubble interior, with filter support contained inside its cell.
+    const bubbleOuter = bubbleRadius.add(bubbleAA).min(0.24)
+    const bubble = bubbleDistance.smoothstep(bubbleRadius.mul(0.2), bubbleOuter).oneMinus().mul(bubbleCell.x.smoothstep(0.76, 0.94))
     const bubbleMask = bubble.mul(bubbleAA.smoothstep(0.08, 0.32).oneMinus())
     const angle = view.dot(vec3(0.71, 0.24, -0.66)).mul(0.5).add(0.5)
     const transmissionTint = mix(color('#681603'), color('#ffc45c'), angle)
