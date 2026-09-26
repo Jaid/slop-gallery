@@ -1,10 +1,11 @@
 import {expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
+import EgoMotor from 'ego-player/motor'
 import {knotBillboardPhysics} from 'knot-materials/knotBillboardPhysics.ts'
 import {knotPreviewHeight, knotPreviewMountY, knotPreviewPanelOffsetY, knotPreviewWidth} from 'knot-materials/KnotPreviewLayout.ts'
 import {billboardParts} from 'knot-materials/signs.ts'
-import {Euler, Quaternion} from 'three/webgpu'
+import {Euler, Quaternion, Vector3} from 'three/webgpu'
 
 await RAPIER.init()
 function billboardWorld() {
@@ -111,6 +112,44 @@ test('billboard stand is an independent dynamic body that shifts under a normal 
     expect(peakDisplacement).toBeGreaterThan(0.01)
     expect(peakDisplacement).toBeLessThan(0.1)
   } finally {
+    world.free()
+  }
+})
+test.each([0, 0.3, 0.6, 0.9, 1.2])('sprinting player at x=%p cannot ram the sign through its stand into a wall', x => {
+  const {sign, stand, world} = billboardWorld()
+  const wall = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, 2, -1.2))
+  world.createCollider(RAPIER.ColliderDesc.cuboid(20, 4, 0.2), wall)
+  world.timestep = 1 / 60
+  const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(x, 0.04, 1.5))
+  const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
+  const motor = new EgoMotor(RAPIER, world, body, collider)
+  const camera = new Quaternion
+  const standRotation = new Quaternion
+  const offset = new Vector3
+  try {
+    for (let index = 0; index < 240; index++) {
+      world.step()
+    }
+    let deepest = Infinity
+    for (let index = 0; index < 600; index++) {
+      const ramming = index % 90 < 60
+      motor.step(world.timestep, {
+        backward: !ramming,
+        forward: ramming,
+        sprint: true,
+      }, camera)
+      world.step()
+      const {w, x: rotationX, y: rotationY, z: rotationZ} = stand.rotation()
+      standRotation.set(rotationX, rotationY, rotationZ, w).invert()
+      offset.copy(sign.translation()).sub(stand.translation()).applyQuaternion(standRotation)
+      // Only while the panel still spans both legs; sliding off the feet sideways is legitimate.
+      if (Math.abs(offset.x) < 0.7) {
+        deepest = Math.min(deepest, offset.z)
+      }
+    }
+    expect(deepest).toBeGreaterThan(-0.05)
+  } finally {
+    motor.dispose()
     world.free()
   }
 })

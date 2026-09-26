@@ -147,7 +147,7 @@ Distances use world units, speeds use world units per second, acceleration/gravi
 | `groundStickSpeed` | 0.18 |
 | `stepHeight`, `stepMinWidth` | 0.3, 0.2 |
 | `maxSlopeAngle`, `slideAngle` | 50, 55 |
-| `pushDynamicBodies`, `characterMass` | true, 80 |
+| `pushDynamicBodies`, `characterMass`, `maxPushForce` | true, 80, 800 |
 | `cameraSpeed`, `bobStrength`, `bobFrequency` | 18, 0.018, 1.8 |
 | `maxDelta` | 0.05 |
 | `collisionGroups` | all groups |
@@ -162,7 +162,7 @@ Crouching suppresses both boosts. Without directional input, Shift + jump retain
 
 Requested horizontal momentum is separate from collision-resolved velocity. Autostep can briefly trade horizontal displacement for vertical lift without resetting acceleration at every riser. Input release and direction changes still decelerate normally; snapshots, footsteps and telemetry report actual motion, including zero speed against a wall.
 
-A nonpositive `stepHeight` or `stepMinWidth` disables autostep; nonpositive `snapToGround` disables snapping. Autostep does not climb dynamic bodies. Actual traversability also depends on capsule shape, contact offset, approach and slope settings; the step-height setting is not a guarantee that every ledge below it is traversable. `characterMass={null}` lets Rapier derive character mass from the body. Collision groups filter both movement and stand-up clearance; sensors and disabled colliders are ignored.
+A nonpositive `stepHeight` or `stepMinWidth` disables autostep; nonpositive `snapToGround` disables snapping. Autostep does not climb dynamic bodies. Actual traversability also depends on capsule shape, contact offset, approach and slope settings; the step-height setting is not a guarantee that every ledge below it is traversable. `characterMass={null}` derives character mass from the body. Pushing transfers momentum like an inelastic hit from `characterMass`, but never more than `maxPushForce` (newtons) per body per step; Rapier's built-in pushing would re-hit a blocked body at full requested speed every step and crush light bodies through their supports. Collision groups filter both movement and stand-up clearance; sensors and disabled colliders are ignored.
 
 `maxDelta` caps simulation catch-up per physics step, with a minimum cap of 1/240. It never enlarges an actual smaller timestep. Reported physical velocity still uses the actual physics interval. Render smoothing independently caps catch-up at 0.1 seconds. `bobFrequency` is the base stride frequency; speed adjusts it. Zero head bob removes visual bobbing without muting stride callbacks.
 

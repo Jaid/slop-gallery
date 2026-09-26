@@ -37,6 +37,7 @@ export default class EgoMotor {
   private readonly movement = new Vector3
   private options = resolveEgoOptions()
   private readonly physicalVelocity = new Vector3
+  private readonly push = new Vector3
   private readonly right = new Vector3
   private shapeHeight = 0
   private shapeRadius = 0
@@ -85,7 +86,8 @@ export default class EgoMotor {
     const o = this.options
     this.controller.setOffset(Math.max(o.contactOffset, 0.001))
     this.controller.setSlideEnabled(true)
-    this.controller.setApplyImpulsesToDynamicBodies(o.pushDynamicBodies)
+    // Rapier's own impulses re-hit a blocked body at full requested speed every step, an unbounded force that crushes light bodies through whatever supports them.
+    this.controller.setApplyImpulsesToDynamicBodies(false)
     this.controller.setCharacterMass(o.characterMass)
     this.controller.setMaxSlopeClimbAngle(clamp(o.maxSlopeAngle, 0, 89.9) * Math.PI / 180)
     this.controller.setMinSlopeSlideAngle(clamp(o.slideAngle, 0, 89.9) * Math.PI / 180)
@@ -215,6 +217,9 @@ export default class EgoMotor {
     }
     this.movement.set(this.velocity.x * dt, this.verticalVelocity * dt, this.velocity.z * dt)
     this.controller.computeColliderMovement(this.collider, this.movement, this.rapier.QueryFilterFlags.EXCLUDE_SENSORS, o.collisionGroups)
+    if (o.pushDynamicBodies) {
+      this.pushDynamicBodies(dt)
+    }
     const movement = this.controller.computedMovement()
     // Measure against the actual physics interval, even when integration catch-up is capped.
     this.physicalVelocity.set(movement.x / delta, movement.y / delta, movement.z / delta)
@@ -332,6 +337,38 @@ export default class EgoMotor {
       }
     })
     return clear
+  }
+
+  private pushDynamicBodies(dt: number) {
+    const o = this.options
+    const characterMass = o.characterMass ?? this.body.mass()
+    const maxImpulse = Math.max(o.maxPushForce, 0) * dt
+    if (characterMass <= 0 || maxImpulse <= 0) {
+      return
+    }
+    const pushed = new Set<number>
+    for (let index = 0; index < this.controller.numComputedCollisions(); index++) {
+      const collision = this.controller.computedCollision(index)
+      const body = collision?.collider?.parent()
+      if (!collision || !body?.isDynamic() || pushed.has(body.handle)) {
+        continue
+      }
+      pushed.add(body.handle)
+      const bodyMass = body.mass()
+      // normal1 points out of the obstacle, towards the character.
+      this.push.set(-collision.normal1.x, -collision.normal1.y, -collision.normal1.z)
+      const velocity = body.velocityAtPoint(collision.witness1)
+      const closingSpeed = this.movement.dot(this.push) / dt - this.push.x * velocity.x - this.push.y * velocity.y - this.push.z * velocity.z
+      if (bodyMass <= 0 || closingSpeed <= 0) {
+        continue
+      }
+      const impulse = Math.min(closingSpeed * characterMass * bodyMass / (characterMass + bodyMass), maxImpulse)
+      body.applyImpulseAtPoint({
+        x: this.push.x * impulse,
+        y: this.push.y * impulse,
+        z: this.push.z * impulse,
+      }, collision.witness1, true)
+    }
   }
 
   private updateShape() {

@@ -28,6 +28,8 @@ export type EgoOptions = {
   jumpHeight?: number
   jumpReleaseFactor?: number
   maxDelta?: number
+  /** Largest force the character applies to a dynamic body it walks into, in newtons (mass units × world units per second squared). */
+  maxPushForce?: number
   maxSlopeAngle?: number
   maxSpeedDown?: number
   pushDynamicBodies?: boolean
@@ -68,6 +70,7 @@ export const defaultEgoOptions = Object.freeze({
   jumpHeight: 1.5,
   jumpReleaseFactor: 0.55,
   maxDelta: 0.05,
+  maxPushForce: 800,
   maxSlopeAngle: 50,
   maxSpeedDown: 30,
   pushDynamicBodies: true,
