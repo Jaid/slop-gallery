@@ -1,22 +1,22 @@
 import type {Node, Texture} from 'three/webgpu'
 
-import {color, float, mix, mx_fractal_noise_float, normalLocal, normalViewGeometry, time, uv, vec2, vec3} from 'three/tsl'
+import {color, float, mix, mx_fractal_noise_float, normalLocal, normalViewGeometry, time, uv, vec3} from 'three/tsl'
 
 import {glints} from '../../lib/glints.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {starfield} from '../../lib/starfield.ts'
+import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
 function crystalField(tube: Node<'vec2'>) {
-  const q = tube.mul(vec2(18, 8))
-  const facet = q.x.mul(0.95).add(q.y.mul(0.32).sin().mul(0.4))
+  // Whole cycles close the shared crystal field in both vertex and fragment stages.
+  const facet = tube.x.mul(TAU * 3).add(tube.y.mul(TAU).sin().mul(0.4))
   const ridge = facet.sin().mul(0.5).add(0.5)
   const seam = facet.sin().abs().smoothstep(0.04, 0.18).oneMinus()
-  const chatter = q.x.mul(7.7).add(q.y.mul(2.3).sin()).sin().mul(0.5).add(0.5)
+  const chatter = tube.x.mul(TAU * 22).add(tube.y.mul(TAU * 3).sin()).sin().mul(0.5).add(0.5)
   return {
-    q,
     facet,
     ridge,
     seam,
