@@ -143,6 +143,7 @@ describe('arbitrary Knot batches', () => {
       'gpt-6-astra',
       'claude-sonnet-5',
       'claude-opus-5',
+      'claude-opus-5.5',
       'claude-opus-4-6-thinking',
       'deepseek',
       'deepseek-4.1-flash',
