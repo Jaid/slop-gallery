@@ -60,8 +60,8 @@ describe('animation encoding', () => {
       const pattern = join(dir, '%03d.png')
       const filter = "format=rgba,geq=r='mod(N*2,255)':g='X*10':b=120:a='if(lt(X,8),0,255)'"
       await Bun.$`ffmpeg -hide_banner -loglevel error -y -f lavfi -i nullsrc=size=16x16:rate=60:duration=2 -vf ${filter} -frames:v 120 ${pattern}`.quiet()
-      expect(lossyJxlOptions()).toEqual(['--effort', '10', '--brotli_effort', '11', '--distance', '1'])
-      expect(lossyJxlOptions(4)).toEqual(['--effort', '10', '--brotli_effort', '11', '--distance', '4'])
+      expect(lossyJxlOptions()).toEqual(['--effort', '10', '--brotli_effort', '11', '--distance', '1', '--keep_invisible', '0'])
+      expect(lossyJxlOptions(4)).toEqual(['--effort', '10', '--brotli_effort', '11', '--distance', '4', '--keep_invisible', '0'])
       const output = await encodeAnimatedJxl(dir, 4)
       const info = await Bun.$`jxlinfo -v ${output}`.text()
       expect(output).toEndWith('.jxl')
