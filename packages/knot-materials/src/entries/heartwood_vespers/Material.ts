@@ -1,11 +1,19 @@
-import type {Texture} from 'three/webgpu'
+import type {Node, Texture} from 'three/webgpu'
 
 import {color, float, mix, mx_fractal_noise_float, mx_noise_float, positionGeometry, time, uv, vec2, vec3} from 'three/tsl'
 
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
+import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
+
+/** Fade unresolved grain to its period average, consistently across all material channels. */
+function filteredGrain(phase: Node<'float'>, inner: number, outer: number, average: number) {
+  const visibility = phase.fwidth().smoothstep(0.3, 1.5).oneMinus()
+  const grain = phase.sin().abs().smoothstep(inner, outer).oneMinus()
+  return mix(float(average), grain, visibility)
+}
 
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
@@ -15,16 +23,14 @@ export default class extends KnotMaterial {
     const p = positionGeometry
     const {view, grazing, near, intimate} = viewerFrame()
     const tube = uv()
-    const grainWarp = mx_fractal_noise_float(vec3(p.x.mul(2.1), p.y.mul(2.1), p.z.mul(2.1)).add(vec3(tube.x.mul(0.7), tube.y.mul(0.3), 0)), 3, 2.06, 0.5)
+    const grainWarp = mx_fractal_noise_float(vec3(p.x.mul(2.1), p.y.mul(2.1), p.z.mul(2.1)).add(vec3(tube.x.mul(TAU).sin().mul(0.35).add(0.35), tube.y.mul(TAU).sin().mul(0.15).add(0.15), 0)), 3, 2.06, 0.5)
     const annual = p.x.mul(15.7).add(p.y.mul(7.4)).sub(p.z.mul(5.1)).add(grainWarp.mul(2.7))
     const ringPhase = annual.mul(18.5).add(grainWarp.mul(0.8))
-    const ringFine = ringPhase.sin().abs()
-    const ring = float(1).sub(ringFine.smoothstep(0.08, 0.46))
-    const lateWood = float(1).sub(ringFine.smoothstep(0.03, 0.28))
+    // Period averages of the smooth zero-crossing profiles, not their peak values.
+    const ring = filteredGrain(ringPhase, 0.08, 0.46, 0.174752597)
+    const lateWood = filteredGrain(ringPhase, 0.03, 0.28, 0.099236287)
     const fiberPhase = p.x.mul(210).add(p.y.mul(31)).sub(p.z.mul(18)).add(grainWarp.mul(7))
-    const fiber = float(1).sub(fiberPhase.sin().abs().smoothstep(0.08, 0.48))
-    const fiberFootprint = fiberPhase.fwidth().max(0.08)
-    const fiberResolved = fiberFootprint.smoothstep(0.5, 2.2).oneMinus()
+    const fiber = filteredGrain(fiberPhase, 0.08, 0.48, 0.181488018)
     const poreNoise = mx_noise_float(p.mul(96).add(2.7)).abs()
     const pore = poreNoise.smoothstep(0.025, 0.16).oneMinus().mul(intimate)
     const chatAxis = vec3(0.72, 0.18, 0.67).normalize()
@@ -44,7 +50,7 @@ export default class extends KnotMaterial {
     this.sheenRoughness = 0.3
     this.iridescenceNode = chatoyance.mul(0.12)
     this.iridescenceThicknessNode = view.dot(chatAxis).mul(100).add(230)
-    const relief = ring.mul(0.0018).add(lateWood.mul(0.0011)).add(fiber.mul(0.00035).mul(fiberResolved)).add(pore.mul(-0.00025))
+    const relief = ring.mul(0.0018).add(lateWood.mul(0.0011)).add(fiber.mul(0.00035)).add(pore.mul(-0.00025))
     this.normalNode = proceduralNormal(relief.mul(2.2), 0.8)
     this.clearcoatNormalNode = this.normalNode
     this.aoNode = float(1).sub(pore.mul(0.22)).sub(ring.mul(0.05))
