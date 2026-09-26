@@ -20,7 +20,9 @@ export default class extends KnotMaterial {
     const tube = uv()
     const flow = p.mul(2.35).add(vec3(time.mul(0.008), time.mul(-0.006), time.mul(0.005)))
     const warp = mx_fractal_noise_float(flow, 4, 2.05, 0.54)
-    const phase = p.dot(vec3(4.1, 2.7, 5.6)).add(warp.mul(5.4)).add(tube.x.mul(TAU * 0.25))
+    // Close the slow drift itself: fractional overtones must also match across the UV wrap.
+    const drift = tube.x.mul(TAU).sin().mul(0.5).add(0.5).mul(TAU * 0.25)
+    const phase = p.dot(vec3(4.1, 2.7, 5.6)).add(warp.mul(5.4)).add(drift)
     const broad = phase.sin().mul(0.5).add(0.5)
     const secondary = phase.mul(2.65).add(mx_noise_float(p.mul(3.4)).mul(1.4)).sin().mul(0.5).add(0.5)
     const fine = phase.mul(9.5).sin().abs().pow(0.42)
