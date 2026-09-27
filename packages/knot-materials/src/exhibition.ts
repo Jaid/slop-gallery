@@ -1,5 +1,6 @@
 import type {KnotEntry, Vec3} from './types.ts'
 
+import {knotModelSlug} from './announcements.ts'
 import parseCandidateOrder from './candidateOrder.ts'
 import KnotLayout from './KnotLayout.ts'
 import {knotCandidates} from './main.ts'
@@ -43,6 +44,12 @@ export function selectKnotBays(search = '') {
     throw new Error(`Unknown Knot candidate URL selection: ${unknown.join(', ')}`)
   }
   const requestedKnotIds = [...new Set(params.getAll('knot_id').flatMap(value => value.split(',')).map(value => value.trim()).filter(Boolean))]
+  const requestedModel = params.get('model')?.trim() || undefined
+  const knownModels = new Set(knotCandidates.flatMap(candidate => candidate.items.map(knotModelSlug)))
+  if (requestedModel && !knownModels.has(requestedModel)) {
+    throw new Error(`Unknown Knot model URL selection: ${requestedModel}`)
+  }
+  const modelFilter = requestedModel ? (item: KnotEntry) => knotModelSlug(item) === requestedModel : undefined
   const knownKnotIds = new Set(knotCandidates.flatMap(candidate => candidate.items.map(item => item.id)))
   const unknownKnotIds = requestedKnotIds.filter(id => !knownKnotIds.has(id))
   if (unknownKnotIds.length) {
@@ -55,8 +62,13 @@ export function selectKnotBays(search = '') {
   let selected = knotCandidates
   if (exactKnotSelection) {
     selected = knotCandidates.filter(candidate => candidate.items.some(item => requestedKnotIdSet.has(item.id)))
-  } else if (requested.length) {
-    selected = knotCandidates.filter(candidate => requested.includes(candidate.data.id))
+  } else {
+    if (requested.length) {
+      selected = selected.filter(candidate => requested.includes(candidate.data.id))
+    }
+    if (modelFilter) {
+      selected = selected.filter(candidate => candidate.items.some(modelFilter))
+    }
   }
   if (rarityFilter) {
     selected = selected.filter(candidate => candidate.items.some(item => !item.archived && rarityFilter.has(item.rarity)))
@@ -66,7 +78,7 @@ export function selectKnotBays(search = '') {
   const ordered = selected.toSorted(candidateOrder === 'score' ? byScore : byName)
   const candidates = exactKnotSelection ? ordered : ordered.slice(0, candidateLimit)
   return candidates.map(candidate => {
-    let finishes = candidate.select(exactKnotSelection ? undefined : shots, rarityMode !== 'false', rarityFilter)
+    let finishes = candidate.select(exactKnotSelection ? undefined : shots, rarityMode !== 'false', rarityFilter, modelFilter)
     if (exactKnotSelection) {
       finishes = finishes.filter(item => requestedKnotIdSet.has(item.id))
     }

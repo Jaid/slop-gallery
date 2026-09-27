@@ -59,11 +59,11 @@ export default class KnotCandidate {
     }).toSorted(byId)
   }
 
-  select(limit?: number, useRarity = true, rarityFilter?: ReadonlySet<Rarity>) {
+  select(limit?: number, useRarity = true, rarityFilter?: ReadonlySet<Rarity>, filter?: (item: KnotEntry) => boolean) {
     if (limit !== undefined && (!Number.isSafeInteger(limit) || limit < 1)) {
       throw new Error('Knot shot limit must be a positive integer.')
     }
-    const available = this.items.filter(item => !item.archived && (!rarityFilter || rarityFilter.has(item.rarity)))
+    const available = this.items.filter(item => !item.archived && (!rarityFilter || rarityFilter.has(item.rarity)) && (!filter || filter(item)))
     if (!useRarity) {
       return limit === undefined ? available : available.slice(0, limit)
     }

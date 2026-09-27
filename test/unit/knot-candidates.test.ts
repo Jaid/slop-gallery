@@ -3,7 +3,7 @@ import type {KnotCandidateData, KnotData, KnotId} from 'knot-materials/types.ts'
 import {describe, expect, test} from 'bun:test'
 
 import {entries, knotCandidates, knots, knotsById} from 'knot-materials'
-import {knotAnnouncementPaths} from 'knot-materials/announcements.ts'
+import {knotAnnouncementPaths, knotModelSlug} from 'knot-materials/announcements.ts'
 import {enumerateKnotBays, formatKnotLabels, selectKnotBays} from 'knot-materials/exhibition.ts'
 import KnotCandidate, {indexKnots} from 'knot-materials/KnotCandidate.ts'
 
@@ -318,6 +318,25 @@ describe('arbitrary Knot batches', () => {
     expect(() => selectKnotBays('?shots=0')).toThrow('shots')
     expect(() => selectKnotBays('?candidate_limit=0')).toThrow('candidate_limit')
     expect(() => selectKnotBays('?candidates=missing')).toThrow('candidate')
+  })
+  test('model filters a mixed candidate before the shot cap', () => {
+    const candidate = knotCandidates.find(entryCandidate => {
+      const models = new Set(entryCandidate.items.map(knotModelSlug))
+      return models.size > 1
+    })!
+    const model = knotModelSlug(candidate.items[0])
+    const bays = selectKnotBays(`?model=${model}&shots=3`)
+    expect(bays).toHaveLength(1)
+    expect(bays[0].candidate.data.id).toBe(candidate.data.id)
+    expect(bays[0].finishes).toHaveLength(3)
+    expect(bays[0].finishes.every(entry => knotModelSlug(entry) === model)).toBe(true)
+    const available = candidate.items.filter(entry => !entry.archived && knotModelSlug(entry) === model)
+    const selected = new Set(bays[0].finishes.map(entry => entry.id))
+    const omitted = available.filter(entry => !selected.has(entry.id))
+    if (omitted.length) {
+      expect(Math.min(...bays[0].finishes.map(entry => entry.rarity))).toBeGreaterThanOrEqual(Math.max(...omitted.map(entry => entry.rarity)))
+    }
+    expect(() => selectKnotBays('?model=missing-model')).toThrow('Knot model')
   })
   test('knot_id is an exact comma-separated exhibition whitelist', () => {
     const requested = knotCandidates.slice(0, 9).map(entryCandidate => entryCandidate.items.find(knot => !knot.archived)!.id)
