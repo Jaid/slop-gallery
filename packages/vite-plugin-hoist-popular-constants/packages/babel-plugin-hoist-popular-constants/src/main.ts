@@ -324,7 +324,7 @@ const minifiedLiteralBytes = (node: PopularLiteral) => {
   }
   return Buffer.byteLength(literalRaw(node))
 }
-const literalBytes = (node: PopularLiteral, options: HoistPopularConstantsOptions) => options.estimateMinifiedSize ? minifiedLiteralBytes(node) : Buffer.byteLength(literalRaw(node))
+const literalBytes = (node: PopularLiteral, options: HoistPopularConstantsOptions) => (options.estimateMinifiedSize ? minifiedLiteralBytes(node) : Buffer.byteLength(literalRaw(node)))
 /** Strings compared against `typeof` or other strings let minifiers loosen `===` to `==`, which a pooled identifier prevents. */
 const isLooseningComparison = (path: PopularLiteralPath) => {
   const parent = path.parentPath
@@ -347,9 +347,7 @@ const literalOccurrence = (path: PopularLiteralPath, options: HoistPopularConsta
   const parent = path.parentPath
   if (isObjectLiteralKey(path)) {
     // Minifiers unquote `{"foo":1}` to `{foo:1}`.
-    const rawBytes = options.estimateMinifiedSize && t.isStringLiteral(node) && t.isValidIdentifier(node.value, false)
-      ? Buffer.byteLength(node.value)
-      : literalBytes(node, options)
+    const rawBytes = options.estimateMinifiedSize && t.isStringLiteral(node) && t.isValidIdentifier(node.value, false) ? Buffer.byteLength(node.value) : literalBytes(node, options)
     return {
       overheadBytes: 2,
       rawBytes,
