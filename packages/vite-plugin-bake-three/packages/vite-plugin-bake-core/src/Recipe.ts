@@ -67,7 +67,7 @@ function validate(path: NodePath, allowFreezingRandomness: boolean) {
   }
   if (path.isMemberExpression() || path.isOptionalMemberExpression()) {
     const property = path.node.property
-    const name = path.node.computed ? (t.isStringLiteral(property) ? property.value : undefined) : (t.isIdentifier(property) ? property.name : undefined)
+    const name = path.node.computed ? t.isStringLiteral(property) ? property.value : undefined : t.isIdentifier(property) ? property.name : undefined
     if (name === 'random' && t.isIdentifier(path.node.object, {name: 'Math'}) && !allowFreezingRandomness) {
       throw new NotBakeableError('Unseeded randomness.')
     }
@@ -183,7 +183,10 @@ export default class Recipe {
           this.usesResource = true
         }
         const allowRandomProperty = this.allowFreezingRandomness || imported.source === 'math/random' && imported.imported === '*'
-        expression = t.memberExpression(t.identifier('__bakeNative'), t.numericLiteral(this.nativeValues.push({allowRandomProperty, value}) - 1), true)
+        expression = t.memberExpression(t.identifier('__bakeNative'), t.numericLiteral(this.nativeValues.push({
+          allowRandomProperty,
+          value,
+        }) - 1), true)
       } else {
         if (!imported.source.startsWith('.') && !imported.source.startsWith('#') && !imported.source.startsWith('/') && !/^[A-Za-z]:[/\\]/u.test(imported.source)) {
           throw new NotBakeableError(`Unapproved module: ${imported.source}.`)
