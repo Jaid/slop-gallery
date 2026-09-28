@@ -5,6 +5,7 @@ import {color, float, mix, mx_fractal_noise_float, mx_noise_float, time, uv, vec
 import {cosinePalette} from '../../lib/cosinePalette.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
+import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
@@ -16,9 +17,10 @@ function silkField(point: Node<'vec3'>, tube: Node<'vec2'>) {
   const ribbonPhase = flow.x.mul(2.2).add(flow.y.mul(1.35)).add(flow.z.mul(-0.8)).add(counter.mul(2.6))
   const ribbon = ribbonPhase.sin().mul(0.5).add(0.5)
   const secondary = flow.y.mul(3.1).add(flow.z.mul(1.9)).sub(broad.mul(1.7)).sin().mul(0.5).add(0.5)
-  const threadPhase = tube.x.mul(620).add(tube.y.mul(37)).add(broad.mul(9)).sin()
-  const threadPhaseTwo = tube.x.mul(930).sub(tube.y.mul(61)).add(counter.mul(12)).sin()
-  const thread = threadPhase.mul(threadPhase.fwidth().smoothstep(2, 7).oneMinus()).mul(0.5).add(threadPhaseTwo.mul(threadPhaseTwo.fwidth().smoothstep(2, 7).oneMinus()).mul(0.28))
+  // Whole cycles close both UV wraps; filter the unwrapped phase before taking its sine.
+  const threadPhase = tube.x.mul(TAU * 99).add(tube.y.mul(TAU * 6)).add(broad.mul(9))
+  const threadPhaseTwo = tube.x.mul(TAU * 148).sub(tube.y.mul(TAU * 10)).add(counter.mul(12))
+  const thread = threadPhase.sin().mul(threadPhase.fwidth().smoothstep(0.6, 3).oneMinus()).mul(0.5).add(threadPhaseTwo.sin().mul(threadPhaseTwo.fwidth().smoothstep(0.6, 3).oneMinus()).mul(0.28))
   const fleck = mx_noise_float(point.mul(38).add(drift.mul(4))).mul(0.5).add(0.5)
   return {
     broad,
