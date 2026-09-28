@@ -4,9 +4,9 @@ import {color, float, mix, mx_noise_float, time, uv, vec2, vec3} from 'three/tsl
 
 import {pixelFootprint} from '../../candidates/claude_opus/lib/footprint.ts'
 import {knotArc, knotCircumference, knotLength} from '../../candidates/claude_opus/lib/knotArc.ts'
+import {knotFrame} from '../../candidates/claude_opus/lib/knotFrameOpus55.ts'
 import {tubeRelief} from '../../candidates/claude_opus/lib/tubeRelief.ts'
 import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
-import {knotFrame} from '../../candidates/claude_opus/lib/knotFrameOpus55.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {spectralColor} from '../../lib/spectralColor.ts'
 import {TAU} from '../../lib/TAU.ts'

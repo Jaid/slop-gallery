@@ -2,8 +2,8 @@ import type {Node} from 'three/webgpu'
 
 import {atan, cameraPosition, modelWorldMatrixInverse, uv, vec2, vec3, vec4} from 'three/tsl'
 
-import {knotFrame, knotTubeRadius} from './knotFrameOpus55.ts'
 import {TAU} from '../../../lib/TAU.ts'
+import {knotFrame, knotTubeRadius} from './knotFrameOpus55.ts'
 
 /**
  * A refracted viewing ray through the solid knot tube, for volumetric interiors.

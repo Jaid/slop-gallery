@@ -4,12 +4,12 @@ import {color, float, mix, mx_fractal_noise_float, mx_noise_float, mx_noise_vec3
 
 import {environmentRadiance} from '../../candidates/claude_opus/lib/environmentRadiance.ts'
 import {coverage, pixelFootprint} from '../../candidates/claude_opus/lib/footprint.ts'
+import {knotFrame} from '../../candidates/claude_opus/lib/knotFrameOpus55.ts'
 import {tubeInterior} from '../../candidates/claude_opus/lib/tubeInterior.ts'
 import {tubeRelief} from '../../candidates/claude_opus/lib/tubeRelief.ts'
 import {voronoi3d} from '../../candidates/claude_opus/lib/voronoi3d.ts'
 import {cellularPoints} from '../../lib/cellularPoints.ts'
 import {knotCurve} from '../../lib/knotCurve.ts'
-import {knotFrame} from '../../candidates/claude_opus/lib/knotFrameOpus55.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'

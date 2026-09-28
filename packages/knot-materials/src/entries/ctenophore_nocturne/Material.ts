@@ -4,11 +4,11 @@ import {color, float, luminance, mix, mx_noise_float, time, uv, vec3} from 'thre
 
 import {environmentRadiance} from '../../candidates/claude_opus/lib/environmentRadiance.ts'
 import {pixelFootprint} from '../../candidates/claude_opus/lib/footprint.ts'
+import {knotFrame} from '../../candidates/claude_opus/lib/knotFrameOpus55.ts'
 import {tubeInterior} from '../../candidates/claude_opus/lib/tubeInterior.ts'
 import {tubeRelief} from '../../candidates/claude_opus/lib/tubeRelief.ts'
 import {wavelengthColor} from '../../candidates/claude_opus/lib/wavelengthColorZucconi.ts'
 import {cellularPoints} from '../../lib/cellularPoints.ts'
-import {knotFrame} from '../../candidates/claude_opus/lib/knotFrameOpus55.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
