@@ -359,10 +359,11 @@ describe('arbitrary Knot batches', () => {
   })
   test('keeps the second Fable batch and new GLM batch identifiable without plate numbers', () => {
     const fable = knotCandidates.find(candidate => candidate.data.id === 'claude_fable')!
-    expect(fable.items).toHaveLength(16)
+    expect(fable.items).toHaveLength(24)
     const fableOpenRouter = fable.items.filter(entry => entry.author.model.slug === 'anthropic/claude-fable-5.1')
-    expect(fableOpenRouter).toHaveLength(16)
-    expect(fableOpenRouter.every(entry => entry.harness === 'none')).toBe(true)
+    expect(fableOpenRouter).toHaveLength(24)
+    expect(fableOpenRouter.filter(entry => entry.harness === 'none')).toHaveLength(16)
+    expect(fableOpenRouter.filter(entry => entry.harness === 'Mage')).toHaveLength(8)
     expect(byId('chladni_resonance').displacement).toBe(0.006)
     const glm = knotCandidates.find(candidate => candidate.data.id === 'glm')!
     const glmFlash = knotCandidates.find(candidate => candidate.data.id === 'glm_flash')!

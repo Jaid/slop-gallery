@@ -17,8 +17,8 @@ import {insideKnotGallery, knotGalleryBounds} from '../../src/lib/gallery/knotGa
 
 describe('multi-model Knot challenge', () => {
   test('enumerates displayed Knots at initialization while keeping stable identities', () => {
-    expect(knots).toHaveLength(599)
-    expect(knotsById.size).toBe(599)
+    expect(knots).toHaveLength(607)
+    expect(knotsById.size).toBe(607)
     const displayedKnots = knots.filter(item => !item.archived)
     const displayedByCandidate = Map.groupBy(displayedKnots, item => item.candidate.id)
     expect(knotBays).toHaveLength(8)
