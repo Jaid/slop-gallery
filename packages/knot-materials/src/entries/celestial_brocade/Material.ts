@@ -25,7 +25,7 @@ const links = [[1, 0], [0, 1], [1, 1], [1, -1], [-1, 1], [2, 1], [1, 2]] as cons
 /** Distance from a point to a segment, plus the position along it in physical units. */
 function segment(point: Node<'vec2'>, from: Node<'vec2'>, to: Node<'vec2'>) {
   const edge = to.sub(from)
-  const along = point.sub(from).dot(edge).div(edge.dot(edge)).clamp()
+  const along = point.sub(from).dot(edge).div(edge.dot(edge).max(1e-12)).clamp()
   const nearest = from.add(edge.mul(along))
   return {
     distance: point.sub(nearest).length(),
@@ -81,8 +81,9 @@ export default class extends KnotMaterial {
     let starTint: Node<'float'> = float(0)
     let starRandom: Node<'vec3'> = vec3(0)
     let sequinDistance: Node<'float'> = float(9)
-    for (let i = -1;i <= 1;i++) {
-      for (let j = -1;j <= 1;j++) {
+    // Two-cell links can begin outside the nearest-star neighborhood; include their origins or the stitches get cut off.
+    for (let i = -2;i <= 2;i++) {
+      for (let j = -2;j <= 2;j++) {
         const cell = baseCell.add(vec2(i, j))
         const wrapped = vec3(cell.x.mod(starAlong), cell.y.mod(starAround), 0)
         const random = cellNoiseVec3(wrapped)

@@ -1,6 +1,6 @@
 import type {Node, Texture} from 'three/webgpu'
 
-import {color, float, mix, mx_fractal_noise_float, mx_noise_float, normalView, normalWorld, positionGeometry, positionWorldDirection, reflect, refract, time, vec3} from 'three/tsl'
+import {cameraPosition, color, float, mix, mx_fractal_noise_float, mx_noise_float, normalView, normalWorld, positionGeometry, positionWorld, reflect, refract, time, vec3} from 'three/tsl'
 
 import {airBubbles} from '../../candidates/space_bunny/lib/airBubbles.ts'
 import {backlight} from '../../candidates/space_bunny/lib/backlight.ts'
@@ -21,12 +21,12 @@ function resinCloud(view: Node<'vec3'>, depth: number, scale: number, stretch: n
 }
 /** One colour channel bending into the stone. Total internal reflection kills the ray, so mirror instead. */
 function refractedRay(ior: number) {
-  const incident = positionWorldDirection.negate()
+  const incident = positionWorld.sub(cameraPosition).normalize()
   const bent = refract(incident, normalWorld, float(1).div(ior))
-  const dead = float(1).sub(bent.dot(bent).lessThan(0.25).select(float(0), float(1)))
+  const alive = bent.dot(bent).greaterThan(0.25).select(float(1), float(0))
   return {
-    alive: dead,
-    ray: mix(reflect(incident, normalWorld), bent, dead),
+    alive,
+    ray: mix(reflect(incident, normalWorld), bent, alive),
   }
 }
 
@@ -62,7 +62,6 @@ export default class extends KnotMaterial {
     const green = refractedRay(1.55)
     const blue = refractedRay(1.568)
     const spectrum = vec3(studioRadiance(red.ray).r, studioRadiance(green.ray).g, studioRadiance(blue.ray).b)
-    const alive = red.alive.mul(green.alive).mul(blue.alive)
 // Light that entered from behind and left toward you, reddened by the resin and clouded by the breath.
     const breath = time.mul(0.38).add(p.x.mul(1.1)).add(p.z.mul(0.7)).sin().mul(0.5).add(0.5)
     const through = backlight(normalView, 5, 0.32).mul(breath.mul(0.16).add(0.92))
@@ -73,7 +72,7 @@ export default class extends KnotMaterial {
     this.ior = 1.55
     this.clearcoat = 0.42
     this.clearcoatRoughnessNode = float(0.015).add(scratches.mul(0.08))
-    this.emissiveNode = spectrum.mul(alive).mul(body).mul(cloudGlow).mul(4.2)
+    this.emissiveNode = spectrum.mul(body).mul(cloudGlow).mul(4.2)
       .add(color('#ff7a12').mul(through).mul(body).mul(1.6))
       .add(color('#ffd9a8').mul(bubbleRing).mul(0.09))
       .add(color('#fff0d6').mul(bubbleGlint).mul(0.05))

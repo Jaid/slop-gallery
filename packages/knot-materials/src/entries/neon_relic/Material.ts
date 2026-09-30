@@ -4,6 +4,7 @@ import {color, float, mix, mx_noise_float, normalView, smoothstep, time, uv, vec
 
 import {glints} from '../../lib/glints.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
+import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
@@ -19,6 +20,11 @@ export default class extends KnotMaterial {
     super(environment, 0.32)
     this.name = knotData.id
     const tube = uv()
+    // Embed both UV wraps in a torus so the glass grain and discharge meet at every seam.
+    const along = tube.x.mul(TAU)
+    const around = tube.y.mul(TAU)
+    const grainRadius = around.cos().mul(3 / TAU).add(26 / TAU)
+    const grain = vec3(along.cos().mul(grainRadius), along.sin().mul(grainRadius), around.sin().mul(3 / TAU))
     const {facing, grazing, near, intimate} = viewerFrame()
 // The column: how much glowing gas the eye looks through, and the hot filament down its axis.
     const column = facing.pow(4)
@@ -27,16 +33,17 @@ export default class extends KnotMaterial {
     const cathode = tube.x.sub(0.06).abs().smoothstep(0.05, 0)
     const anode = tube.x.sub(0.58).abs().smoothstep(0.04, 0)
 // Striations: mercury drops leave a fine unsteady grain along the column.
-    const striation = mx_noise_float(vec3(tube.x.mul(26), tube.y.mul(3), time.mul(0.4))).mul(0.35).add(0.82)
+    const striation = mx_noise_float(grain.add(vec3(0, 0, time.mul(0.4)))).mul(0.35).add(0.82)
     const buzz = time.mul(9.3).sin().mul(0.05).add(time.mul(2.1).sin().mul(0.07)).add(1).mul(striation)
 // Two rare gases, mixed along the tube, and a seam of old sodium where the tube was repaired.
     const gas = mix(color('#ff1f6b'), color('#25d8ff'), smoothstep(0.3, 0.76, tube.x))
-    const sodium = smoothstep(0.9, 1.02, tube.x).add(smoothstep(0.09, 0, tube.x).mul(0.6))
+    const seamDistance = tube.x.min(tube.x.oneMinus())
+    const sodium = seamDistance.smoothstep(0, 0.09).oneMinus()
     const light = mix(gas, color('#ffa32a'), sodium.clamp(0, 1))
 // The wall: polished by fire, black to a millimetre, with a cold edge where the light leaves it.
     this.colorNode = color('#050508')
     this.metalness = 0
-    this.roughnessNode = float(0.03).add(grazing.mul(0.05)).add(mx_noise_float(vec3(tube.x.mul(40), tube.y.mul(2), 3.1)).abs().mul(0.02))
+    this.roughnessNode = float(0.03).add(grazing.mul(0.05)).add(mx_noise_float(grain.mul(1.5).add(3.1)).abs().mul(0.02))
     this.ior = 1.52
     this.clearcoat = 0.4
     this.clearcoatRoughness = 0.02

@@ -27,5 +27,6 @@ export function studioRadiance(direction: Node<'vec3'> = positionWorldDirection)
 function softBox(uv: Node<'vec2'>, center: Node<'vec2'>, halfSize: Node<'vec2'>) {
   const delta = uv.sub(center)
   const u = delta.x.abs().min(delta.x.abs().oneMinus()).div(halfSize.x)
-  return u.pow(4).add(delta.y.div(halfSize.y).pow(4)).negate().exp()
+  // GPU pow is undefined for negative bases, even with an even integer exponent.
+  return u.pow2().pow2().add(delta.y.div(halfSize.y).pow2().pow2()).negate().exp()
 }

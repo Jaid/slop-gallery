@@ -39,3 +39,11 @@ bun test/browser/run.ts knotLabels.ts
 ```
 
 This fixture uploads a 7200 × 8160 canvas atlas and checks the accent and background pixels of its first, row-boundary and final populated tiles. It does not interact with the live gallery.
+
+For the reviewed Mage materials' black-sector regressions:
+
+```sh
+bun test/browser/run.ts knotMaterialRepairs.ts
+```
+
+This detached HDR fixture checks the analytic studio and Amber Vigil, Rime Cathedral, and Moiré Vespers from four angles at three distances. It rejects non-finite channels and unintended black pixels without touching the live scene.

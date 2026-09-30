@@ -1,6 +1,6 @@
 import type {Texture} from 'three/webgpu'
 
-import {color, float, mix, mx_fractal_noise_float, mx_noise_float, normalView, normalWorld, positionGeometry, positionWorldDirection, reflect, refract, vec3} from 'three/tsl'
+import {cameraPosition, color, float, mix, mx_fractal_noise_float, mx_noise_float, normalView, normalWorld, normalWorldGeometry, positionGeometry, positionWorld, reflect, refract, vec3} from 'three/tsl'
 
 import {airBubbles} from '../../candidates/space_bunny/lib/airBubbles.ts'
 import {backlight} from '../../candidates/space_bunny/lib/backlight.ts'
@@ -14,12 +14,12 @@ import knotData from './data.ts'
 
 /** A ray bending into the ice; total internal reflection mirrors it instead. */
 function iceRay(ior: number) {
-  const incident = positionWorldDirection.negate()
+  const incident = positionWorld.sub(cameraPosition).normalize()
   const bent = refract(incident, normalWorld, float(1).div(ior))
-  const dead = float(1).sub(bent.dot(bent).lessThan(0.25).select(float(0), float(1)))
+  const alive = bent.dot(bent).greaterThan(0.25).select(float(1), float(0))
   return {
-    alive: dead,
-    ray: mix(reflect(incident, normalWorld), bent, dead),
+    alive,
+    ray: mix(reflect(incident, normalWorld), bent, alive),
   }
 }
 
@@ -35,7 +35,7 @@ export default class extends KnotMaterial {
     super(environment, 0.45)
     this.name = knotData.id
     const {p, view, facing, grazing, near, intimate} = viewerFrame()
-    const up = normalView.y.mul(0.5).add(0.5)
+    const up = normalWorldGeometry.y.mul(0.5).add(0.5)
 // The chord through the block: long down the belly of every curve, short at the silhouette.
     const chord = facing.mul(3.2).add(0.05)
     const depth = vec3(0.5, 0.2, 0.1).mul(chord).negate().exp()
@@ -59,7 +59,7 @@ export default class extends KnotMaterial {
     this.normalNode = proceduralNormal(rime.mul(0.0016).add(needles.mul(rime).mul(0.0004)).add(fracture.mul(0.0008)), 0.5)
     const sparkle = glints(normalView, 150).mul(rime).mul(near.mul(0.5).add(0.5))
     this.emissiveNode = color('#e8f7ff').mul(scatter).mul(mix(float(0.45), float(1.1), grazing)).mul(1.5)
-      .add(studioRadiance(bent.ray).mul(bent.alive).mul(depth).mul(color('#c6e6ff')).mul(0.8))
+      .add(studioRadiance(bent.ray).mul(depth).mul(color('#c6e6ff')).mul(0.8))
       .add(color('#9fd6f5').mul(air.rim.mul(0.5).add(deepAir.rim.mul(0.8))).mul(0.2))
       .add(color('#ffffff').mul(fracture).mul(grazing.mul(0.5).add(0.5)).mul(0.35))
       .add(color('#ffffff').mul(sparkle).mul(0.4))

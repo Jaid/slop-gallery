@@ -33,7 +33,7 @@ function sealLattice(tube: Node<'vec2'>, {columns, rows, seed}: {
   const first = q.sub(vec2(0.5, 0.25)).mod(vec2(1, 0.5)).sub(vec2(0.5, 0.25))
   const second = q.sub(vec2(0.5, 0.25)).sub(vec2(0.5, 0.25)).mod(vec2(1, 0.5)).sub(vec2(0.5, 0.25))
   const nearer = select(first.dot(first).lessThan(second.dot(second)), first, second)
-  const site = q.sub(nearer)
+  const site = q.sub(nearer).mod(vec2(columns, rows))
   // Seals are round in world units even though the tube is a long strip.
   const squash = knotLapLength * rows / (knotCircumference * columns)
   const world = vec2(nearer.x.mul(squash), nearer.y)
@@ -61,7 +61,7 @@ export default class extends KnotMaterial {
       seed: 7.3,
     })
     const rings = cos(seal.distance.mul(TAU * 3.2).add(seal.random.x.mul(TAU)))
-    const rays = cos(seal.angle.mul(6).add(seal.random.y.mul(TAU))).pow(6)
+    const rays = cos(seal.angle.mul(6).add(seal.random.y.mul(TAU))).pow2().pow(3)
     const bloom = cos(seal.distance.mul(TAU * 0.9).add(seal.random.z.mul(TAU)))
     const wax = rings.mul(0.5).add(rays.mul(0.35)).add(bloom.mul(0.25))
 // The object wave: the reference grating, bent by the wax and by the angle of the eye.
@@ -85,7 +85,8 @@ export default class extends KnotMaterial {
     this.roughnessNode = picture.mul(0.19).add(scratches.mul(0.06)).add(mx_noise_float(p.mul(48)).mul(0.5).add(0.5).mul(0.02)).add(0.05).clamp(0.04, 0.34)
     this.anisotropy = 0.85
     this.anisotropyNode = vec2(1, 0)
-    this.normalNode = proceduralNormal(engrave.mul(0.5).add(scratches.mul(0.5)), 0.14)
+    // Relief is measured in object units: a holographic engraving is microscopic, not half a tube deep.
+    this.normalNode = proceduralNormal(engrave.mul(0.001).add(scratches.mul(0.00025)), 0.14)
     const rainbow = vec3(spectrum).mul(vec3(1.15, 0.75, 1.35)).add(vec3(0.05, 0.18, 0.28))
     this.emissiveNode = rainbow.mul(picture.pow(2.5)).mul(resolved.mul(0.3).add(0.7)).mul(seat.mul(0.55).add(0.3)).mul(1.7)
       .add(vec3(0.72, 0.86, 1).mul(scratches).mul(intimate).mul(0.08))

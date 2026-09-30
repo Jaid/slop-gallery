@@ -62,8 +62,15 @@ export default class extends KnotMaterial {
         const density = layer.mul(0.6).add(0.62)
         const big = bubbles(q, 0.085, 0, 0.7)
         const tiny = bubbles(q.add(3.7), 0.034, 41, 0.78).mul(detail)
-        const dust = cellNoiseVec3(q.div(0.014).floor().add(13))
-        const speck = dust.x.smoothstep(0.985, 1).mul(dust.y.add(loopPhase.add(dust.z.mul(TAU)).sin().mul(0.5).add(0.5)).mul(0.5))
+        const dustCoordinate = q.div(0.014)
+        const dust = cellNoiseVec3(dustCoordinate.floor().add(13))
+        const dustCenter = cellNoiseVec3(dustCoordinate.floor().add(37)).mul(0.5).add(0.25)
+        const dustDistance = dustCoordinate.fract().sub(dustCenter).length()
+        const dustFootprint = dustCoordinate.fwidth().length().max(0.001)
+        // Dust is a small grain, not an illuminated voxel. Keep its filtered support inside its owning cell.
+        const dustGrain = dustDistance.smoothstep(0.1, dustFootprint.add(0.14).min(0.24)).oneMinus()
+          .mul(dustFootprint.smoothstep(0.15, 0.6).oneMinus())
+        const speck = dustGrain.mul(dust.x.smoothstep(0.985, 1)).mul(dust.y.add(loopPhase.add(dust.z.mul(TAU)).sin().mul(0.5).add(0.5)).mul(0.5))
 // A slow shaft of light that sweeps through the resin, once per loop.
         const beam = q.dot(sun).mul(TAU * 1.6).sub(loopTurn.mul(TAU)).cos().mul(0.5).add(0.5).pow(6)
         const scatter = rgb('#ff9b2e').mul(density.mul(0.5).add(beam.mul(1.9))).add(rgb('#ffd8a0').mul(cloud).mul(1.3))
