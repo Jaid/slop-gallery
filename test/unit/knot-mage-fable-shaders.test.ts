@@ -40,7 +40,7 @@ describe('Claude Fable 5.1 Mage shader imports', () => {
       expect(source).toContain('fixture: knot-material-shaders')
     }
   })
-  test.each(ids)('constructs %s with caller-owned environment', async id => {
+  test.each([...ids])('constructs %s with caller-owned environment', async id => {
     const url = new URL(`../../packages/knot-materials/src/entries/${id}/Material.ts`, import.meta.url)
     const {default: Material} = await import(url.href) as {default: KnotMaterialConstructor}
     const environment = new Texture

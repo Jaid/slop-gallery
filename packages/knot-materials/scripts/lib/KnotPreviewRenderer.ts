@@ -3,11 +3,12 @@ import type {RenderFrame} from './renderSettings.ts'
 import type {MeshPhysicalNodeMaterial, NodeFrame} from 'three/webgpu'
 
 import {WebgpuRenderer} from 'three-fiber-game'
-import {ACESFilmicToneMapping, AmbientLight, DirectionalLight, HalfFloatType, HemisphereLight, Mesh, PerspectiveCamera, RenderTarget, Scene, SRGBColorSpace, UnsignedByteType} from 'three/webgpu'
+import {ACESFilmicToneMapping, AmbientLight, DirectionalLight, HalfFloatType, HemisphereLight, Mesh, PerspectiveCamera, RenderTarget, Scene} from 'three/webgpu'
 
 import {createKnotGeometry} from '../../src/geometry.ts'
 import loadKnotMaterial from '../../src/materials.ts'
 import StudioEnvironment from '../../src/StudioEnvironment.ts'
+import {createOutputTarget} from './createOutputTarget.ts'
 import {animationFps, closeupSize, inspectionAnimationSize, inspectionVideoRenderSize, inspectionVideoSize, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from './renderSettings.ts'
 
 export type KnotPreview = {
@@ -31,15 +32,9 @@ const squareSize = (size: number) => [size, size] as const
 /** Detached scene, private frame clock, and explicit GPU readback. Never changes the live game. */
 export default class KnotPreviewRenderer {
   private active?: Mesh<typeof this.geometry, MeshPhysicalNodeMaterial>
-  private readonly animationTarget = new RenderTarget(renderSize(inspectionAnimationSize), renderSize(inspectionAnimationSize), {
-    type: UnsignedByteType,
-    samples: 4,
-  })
+  private readonly animationTarget = createOutputTarget(renderSize(inspectionAnimationSize), renderSize(inspectionAnimationSize))
   private readonly camera = new PerspectiveCamera(previewBaseFov, 1, 0.05, 100)
-  private readonly closeupTarget = new RenderTarget(closeupSize[0], closeupSize[1], {
-    type: UnsignedByteType,
-    samples: 4,
-  })
+  private readonly closeupTarget = createOutputTarget(closeupSize[0], closeupSize[1])
   private readonly environment = new StudioEnvironment
   private readonly errors: Array<string> = []
   private readonly geometry = createKnotGeometry()
@@ -48,21 +43,11 @@ export default class KnotPreviewRenderer {
     alpha: true,
   })
   private readonly scene = new Scene
-  private readonly stillTarget = new RenderTarget(renderSize(stillSize), renderSize(stillSize), {
-    type: UnsignedByteType,
-    samples: 4,
-  })
+  private readonly stillTarget = createOutputTarget(renderSize(stillSize), renderSize(stillSize))
   private readonly validationTarget = new RenderTarget(32, 32, {type: HalfFloatType})
-  private readonly videoTarget = new RenderTarget(inspectionVideoRenderSize, inspectionVideoRenderSize, {
-    type: UnsignedByteType,
-    samples: 4,
-  })
+  private readonly videoTarget = createOutputTarget(inspectionVideoRenderSize, inspectionVideoRenderSize)
 
   constructor() {
-    this.animationTarget.texture.colorSpace = SRGBColorSpace
-    this.closeupTarget.texture.colorSpace = SRGBColorSpace
-    this.stillTarget.texture.colorSpace = SRGBColorSpace
-    this.videoTarget.texture.colorSpace = SRGBColorSpace
     this.renderer.toneMapping = ACESFilmicToneMapping
     this.renderer.setClearColor(0, 0)
     const key = new DirectionalLight('#fff0d7', 2.3)
