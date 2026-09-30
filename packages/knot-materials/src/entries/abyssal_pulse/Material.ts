@@ -11,7 +11,7 @@ import {proceduralNormal} from '../../candidates/claude_fable/lib/proceduralNorm
 import {rgb} from '../../candidates/claude_fable/lib/rgb.ts'
 import {tubeLattice} from '../../candidates/claude_fable/lib/tubeCoordinates.ts'
 import {viewerFrame} from '../../candidates/claude_fable/lib/viewerFrame.ts'
-import {voronoi2d} from '../../candidates/claude_fable/lib/voronoi.ts'
+import {wrapCell} from '../../candidates/claude_fable/lib/wrapCell.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import knotData from './data.ts'
 
@@ -54,31 +54,49 @@ export default class extends KnotMaterial {
     const nearestDistance = objectDistance.sub(0.62).max(0.05)
     const reach = viewerDistance.sub(nearestDistance)
     const proximity = objectDistance.smoothstep(1.2, 4).oneMinus()
-// Photophores: one organ per lattice cell, each with a size, a phase and a color temperature of its own.
-    const {lattice, period} = tubeLattice(9)
-    const organs = voronoi2d(lattice, period, 4)
-    const organ = cellNoiseVec3(vec3(organs.cell, 3))
-    const organRadius = organ.x.mul(0.14).add(0.16)
-    const organFootprint = organs.nearest.fwidth().max(0.001)
-    const organDisc = organs.nearest.smoothstep(organRadius.add(organFootprint), organRadius.sub(organFootprint))
-    const organDome = organs.nearest.div(organRadius).clamp().pow2().oneMinus().sqrt()
-    const organGate = organ.y.smoothstep(0.25, 0.35)
 // Rings run away from the viewer; their speed and count grow as the viewer approaches. A slow idle ripple stays on.
     const rings = reach.mul(9).sub(t.mul(2.6)).sin().mul(0.5).add(0.5).pow(3).mul(reach.mul(-0.5).exp())
-    const idle = tube.x.mul(Math.PI * 2 * 3).sub(t.mul(0.7)).sin().mul(0.5).add(0.5).pow(4).mul(0.5).add(organ.y.mul(0.15))
-    const flicker = t.mul(organ.z.mul(3).add(2)).add(organ.z.mul(40)).sin().mul(0.15).add(0.85)
-    const firing = rings.mul(proximity.mul(1.4).add(0.3)).add(idle).mul(flicker).clamp()
-    const organColor = mix(rgb('#38f0ff'), rgb('#a0ffd8'), organ.z)
-// Light spills from each organ into the surrounding gel as a soft halo.
-    const halo = organs.nearest.div(organRadius).mul(-2.2).exp().mul(0.5)
-    const photophores = organColor.mul(organDisc.mul(organDome.mul(0.6).add(0.4)).add(halo)).mul(organGate).mul(firing)
+    const idleWave = tube.x.mul(Math.PI * 2 * 3).sub(t.mul(0.7)).sin().mul(0.5).add(0.5).pow(4).mul(0.5)
+// Evaluate every nearby organ independently: nearest-site ownership cuts larger circles off at Voronoi borders.
+    const {lattice, period} = tubeLattice(9)
+    const base = lattice.floor()
+    const local = lattice.fract()
+    const footprint = lattice.fwidth().length().max(0.001)
+    const resolved = footprint.smoothstep(0.3, 1).oneMinus()
+    let photophores: Node<'vec3'> = vec3(0)
+    let organDisc: Node<'float'> = float(0)
+    let goosebumps: Node<'float'> = float(0)
+    let firing: Node<'float'> = float(0)
+    for (let i = -1;i <= 1;i++) {
+      for (let j = -1;j <= 1;j++) {
+        const offset = vec2(i, j)
+        const cell = wrapCell(base.add(offset), period)
+        const feature = offset.add(cellNoiseVec3(vec3(cell, 4)).xy)
+        const distance = feature.sub(local).length()
+        const organ = cellNoiseVec3(vec3(cell, 3))
+        const radius = organ.x.mul(0.14).add(0.16)
+        // Bounded support keeps the 3×3 search complete, including across both UV wraps.
+        const disc = distance.smoothstep(radius.sub(footprint).max(0), radius.add(footprint).min(0.45)).oneMinus().mul(resolved)
+        const dome = distance.div(radius).clamp().pow2().oneMinus().max(0).sqrt()
+        const gate = organ.y.smoothstep(0.25, 0.35)
+        const idle = idleWave.add(organ.y.mul(0.15))
+        const flicker = t.mul(organ.z.mul(3).add(2)).add(organ.z.mul(40)).sin().mul(0.15).add(0.85)
+        const organFiring = rings.mul(proximity.mul(1.4).add(0.3)).add(idle).mul(flicker).clamp()
+        const organColor = mix(rgb('#38f0ff'), rgb('#a0ffd8'), organ.z)
+        const halo = distance.div(radius).mul(-2.2).exp().mul(0.5)
+          .mul(distance.smoothstep(0.6, 0.9).oneMinus()).mul(resolved)
+        photophores = photophores.add(organColor.mul(disc.mul(dome.mul(0.6).add(0.4)).add(halo)).mul(gate).mul(organFiring))
+        firing = firing.max(organFiring.mul(disc).mul(gate))
+        organDisc = organDisc.max(disc.mul(gate))
+        goosebumps = goosebumps.max(dome.mul(disc).mul(gate).mul(0.0025))
+      }
+    }
 // Chromatophores: pigment cells that expand as the viewer comes close, turning the skin from violet to crimson.
     const cells = mx_fractal_noise_float(p.mul(14).add(vec3(0, t.mul(0.05), 0)), 3, 2.1, 0.5).mul(0.5).add(0.5)
     const expansion = proximity.mul(0.5).add(0.2).add(t.mul(0.9).sin().mul(0.05))
     const chromatophore = cells.smoothstep(expansion.oneMinus().mul(0.7), expansion.oneMinus().mul(0.7).add(0.25))
     const skinColor = mix(rgb('#160b2a'), mix(rgb('#5a1a6e'), rgb('#c81e46'), proximity), chromatophore)
 // Wet gel: slippery highlights, a translucent limb, and fine surface texture from the organs and skin cells.
-    const goosebumps = organDome.mul(organDisc).mul(organGate).mul(0.0025)
     const skinGrain = mx_noise_float(p.mul(90)).mul(0.0003)
     const surfaceNormal = proceduralNormal(goosebumps.add(skinGrain).add(chromatophore.mul(0.0004)), 1, displacedNormal)
     this.normalNode = surfaceNormal

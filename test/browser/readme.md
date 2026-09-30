@@ -47,3 +47,11 @@ bun test/browser/run.ts knotMaterialRepairs.ts
 ```
 
 This detached HDR fixture checks the analytic studio and Amber Vigil, Rime Cathedral, and Moiré Vespers from four angles at three distances. It rejects non-finite channels and unintended black pixels without touching the live scene.
+
+For complete Abyssal Pulse photophores:
+
+```sh
+bun test/browser/run.ts abyssalPulse.ts
+```
+
+This detached fixture reads the actual GPU feature seeds and checks thousands of organ-core samples, including cross-cell support, against the isolated photophore mask. Nearby features must not cut off an active organ.
