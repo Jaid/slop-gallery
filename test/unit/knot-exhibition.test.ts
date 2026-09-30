@@ -8,7 +8,7 @@ import {knots, knotsById} from 'knot-materials'
 import {knotBays, knotExhibition, knotFloatHeight, knotPreviewX, knotRowHalfWidth, knotSpacing} from 'knot-materials/exhibition.ts'
 import {createKnotGeometry, knotGeometryArgs} from 'knot-materials/geometry.ts'
 import StudioEnvironment from 'knot-materials/StudioEnvironment.ts'
-import {cameraPosition, positionView} from 'three/tsl'
+import {cameraPosition, positionView, positionViewDirection} from 'three/tsl'
 import {EquirectangularReflectionMapping, FloatType} from 'three/webgpu'
 
 import {knotRarityEditor} from '../../src/levels/knottingham/rarity.ts'
@@ -17,8 +17,8 @@ import {insideKnotGallery, knotGalleryBounds} from '../../src/lib/gallery/knotGa
 
 describe('multi-model Knot challenge', () => {
   test('enumerates displayed Knots at initialization while keeping stable identities', () => {
-    expect(knots).toHaveLength(607)
-    expect(knotsById.size).toBe(607)
+    expect(knots).toHaveLength(647)
+    expect(knotsById.size).toBe(647)
     const displayedKnots = knots.filter(item => !item.archived)
     const displayedByCandidate = Map.groupBy(displayedKnots, item => item.candidate.id)
     expect(knotBays).toHaveLength(8)
@@ -155,8 +155,8 @@ describe('multi-model Knot challenge', () => {
               dependencies.add(child)
             }
           }
-          // Detail may use surface-relative distance or object-wide camera proximity.
-          expect(dependencies.has(positionView) || dependencies.has(cameraPosition), exhibit.id).toBe(true)
+          // Camera response may use proximity or the built-in, lazily evaluated view direction.
+          expect(dependencies.has(positionView) || dependencies.has(cameraPosition) || dependencies.has(positionViewDirection), exhibit.id).toBe(true)
           // Some submissions express the angular response only through physical Fresnel
           // or view normals, so do not demand object-local cameraPosition from all models.
           if (exhibit.id === 'lenticular_mirage') {
