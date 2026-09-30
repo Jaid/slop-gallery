@@ -1,5 +1,3 @@
-import type {previewOutputProbe} from './lib/previewOutputProbe.ts'
-
 import {expect, test} from 'bun:test'
 
 import {NoColorSpace, UnsignedByteType} from 'three/webgpu'
