@@ -7,59 +7,50 @@ import glmAudio from 'voice:glm' with {format: 'opus', language: 'en', text: 'GL
 import gptAstraAudio from 'voice:gpt-astra' with {format: 'opus', language: 'en', text: 'GPT Astra'}
 import grokAudio from 'voice:grok' with {format: 'opus', language: 'en', text: 'Grok'}
 
+import {announcerPriorityDemoDefinitions, announcerPrioritySampleDefinitions, announcerSampleDefinitions} from './announcerCatalog.ts'
+
 export const announcerSamples = [
   {
-    id: 'claude-fable',
-    label: 'Claude Fable',
+    ...announcerSampleDefinitions[0],
     audio: claudeFableAudio,
   },
   {
-    id: 'claude-opus',
-    label: 'Claude Opus',
+    ...announcerSampleDefinitions[1],
     audio: claudeOpusAudio,
   },
   {
-    id: 'claude-sonnet',
-    label: 'Claude Sonnet',
+    ...announcerSampleDefinitions[2],
     audio: claudeSonnetAudio,
   },
   {
-    id: 'deepseek-flash',
-    label: 'DeepSeek Flash',
+    ...announcerSampleDefinitions[3],
     audio: deepseekFlashAudio,
   },
 ] as const
 
-export const announcerSamplePriority = 'normal' as const
-export const announcerPriorityModes = ['volatile', 'high', 'inject', 'async'] as const
-
 export const announcerPrioritySamples = [
   {
-    id: 'gemini-flash',
-    label: 'Gemini Flash',
+    ...announcerPrioritySampleDefinitions[0],
     audio: geminiFlashAudio,
   },
   {
-    id: 'glm',
-    label: 'GLM',
+    ...announcerPrioritySampleDefinitions[1],
     audio: glmAudio,
   },
   {
-    id: 'gpt-astra',
-    label: 'GPT Astra',
+    ...announcerPrioritySampleDefinitions[2],
     audio: gptAstraAudio,
   },
   {
-    id: 'grok',
-    label: 'Grok',
+    ...announcerPrioritySampleDefinitions[3],
     audio: grokAudio,
   },
 ] as const
-export const announcerPriorityDemos = announcerPriorityModes.map((priority, index) => {
-  const sample = announcerPrioritySamples[index]
-  return {
-    priority,
-    sample,
-    title: `${priority.toUpperCase()} · ${sample.label}`,
-  }
-})
+
+export const announcerPriorityDemos = announcerPriorityDemoDefinitions.map(({priority, title}, index) => ({
+  priority,
+  sample: announcerPrioritySamples[index],
+  title,
+}))
+
+export {announcerPriorityModes, announcerSamplePriority} from './announcerCatalog.ts'

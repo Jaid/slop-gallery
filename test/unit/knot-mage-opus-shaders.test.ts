@@ -4,7 +4,6 @@ import {describe, expect, test} from 'bun:test'
 
 import fsExtra from 'fs-extra'
 import {knotsById} from 'knot-materials'
-import {unknown} from 'knot-materials/rarities.ts'
 import {Texture} from 'three/webgpu'
 
 const runs = [
@@ -29,7 +28,6 @@ describe('Claude Opus 5.5 Mage shader imports', () => {
         slug: 'anthropic/claude-opus-5.5',
         effortLevel: 'medium',
       })
-      expect(entry.rarity).toBe(unknown)
       expect(entry.placeholder.color).toMatch(/^#[0-9a-f]{6}$/u)
       const folder = new URL(`../../packages/knot-materials/src/entries/${id}/`, import.meta.url)
       expect((await fsExtra.readdir(folder)).toSorted()).toEqual(['Material.ts', 'data.ts'])

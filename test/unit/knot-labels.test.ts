@@ -17,12 +17,13 @@ describe('Knot nameplates', () => {
     expect(labelAtlasColumns * labelWidth).toBeLessThanOrEqual(8192)
     expect(Math.ceil(knotExhibition.length / labelAtlasColumns) * labelHeight).toBeLessThanOrEqual(8192)
   })
-  test('ships a local icon for every exhibited model and reuses family marks', async () => {
+  test('ships a local SVG candidate mark for every exhibited model and reuses family marks', async () => {
     const urls = new Set<string>
     for (const bay of knotBays) {
       const url = bay.candidate.icon
       expect(url).toBeDefined()
-      expect(new Uint8Array(await Bun.file(new URL(url)).arrayBuffer())[0]).toBe(255)
+      expect(new URL(url).pathname.endsWith('/symbol.svg')).toBe(true)
+      expect(await Bun.file(new URL(url)).text()).toContain('<svg')
       urls.add(Bun.hash(await Bun.file(new URL(url)).arrayBuffer()).toString())
     }
     expect(urls.size).toBeGreaterThan(0)

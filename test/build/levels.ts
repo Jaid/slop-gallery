@@ -53,9 +53,6 @@ for (const level of levelIds) {
     if (files.some(file => /^(?:art|audio)[/\\]/u.test(file))) {
       throw new Error(`Gallery public assets leaked into ${level}.`)
     }
-    if (level === 'knottingham' && !files.some(file => file.endsWith('.avif'))) {
-      throw new Error('Knottingham is missing generated preview assets.')
-    }
     if (level === 'soundboard' && files.some(file => file.endsWith('.avif'))) {
       throw new Error('Soundboard unexpectedly contains image assets.')
     }

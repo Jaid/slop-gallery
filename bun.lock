@@ -500,6 +500,7 @@
     },
   },
   "patchedDependencies": {
+    "three@0.186.1": "patches/three@0.186.1.patch",
     "three-bvh-csg@0.0.18": "patches/three-bvh-csg@0.0.18.patch",
   },
   "overrides": {
