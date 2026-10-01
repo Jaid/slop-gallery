@@ -38,7 +38,7 @@
     "vite": "bun --bun node_modules/vite/dist/node/cli.js --configLoader native"
   },
   "overrides": {
-    "@dimforge/rapier3d-compat": "0.20.0"
+    "@dimforge/rapier3d-compat": "0.21.0"
   },
   "patchedDependencies": {
     "three@0.186.1": "patches/three@0.186.1.patch",
@@ -78,7 +78,7 @@
     "voice-sample-store": "workspace:*",
     "webgpu-capture-bridge": "workspace:*",
     "zustand": "5.0.15",
-    "@dimforge/rapier3d-compat": "0.20.0",
+    "@dimforge/rapier3d-compat": "0.21.0",
     "@openrouter/ai-sdk-provider": "3.1.0",
     "@react-three/drei": "11.0.0-alpha.7",
     "@react-three/fiber": "10.0.0-alpha.5",

@@ -31,7 +31,7 @@
     "@react-three/rapier": "^2.2.0"
   },
   "devDependencies": {
-    "@dimforge/rapier3d-compat": "0.20.0"
+    "@dimforge/rapier3d-compat": "0.21.0"
   },
   "files": [
     "src",
