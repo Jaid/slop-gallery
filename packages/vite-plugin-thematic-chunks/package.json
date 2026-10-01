@@ -17,7 +17,7 @@
     "test": "bun test --max-concurrency 1 ./test"
   },
   "peerDependencies": {
-    "vite": "^8.3.1"
+    "vite": "^8.3.2"
   },
   "devDependencies": {
     "fs-extra": "11.4.1"
