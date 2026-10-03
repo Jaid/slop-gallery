@@ -60,6 +60,9 @@ export default async function withPreviewRenderer<Result>(run: (renderer: JSHand
     optimizeDeps: {include: ['three', 'three/tsl', 'three/webgpu']},
     root: repositoryRoot,
     server: {
+      // This session owns long-lived browser handles. Source edits must not
+      // reload its page or hot-swap modules while an offline render is running.
+      hmr: false,
       host: '127.0.0.1',
       port: 0,
       strictPort: true,
