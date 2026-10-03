@@ -6,16 +6,16 @@ import reactPlugin, {reactCompilerPreset} from '@vitejs/plugin-react'
 import postcssAutoprefixer from 'autoprefixer'
 import cssnano from 'cssnano-preset-advanced'
 import postcssNormalize from 'postcss-normalize'
+import bakeBranchComponentPlugin from 'rolldown-plugin-bake-branch-component'
+import hoistPopularConstantsPlugin from 'rolldown-plugin-hoist-popular-constants'
+import thematicChunksPlugin from 'rolldown-plugin-thematic-chunks'
 import {loadEnv, mergeConfig} from 'vite'
 import avifOnlyPlugin from 'vite-plugin-avif-only'
-import bakeBranchComponentPlugin from 'vite-plugin-bake-branch-component'
 import bakeThreePlugin from 'vite-plugin-bake-three'
 import browserslistTargetPlugin from 'vite-plugin-browserslist-target'
 import gameLevelPlugin, {selectGameLevel} from 'vite-plugin-game-level'
-import hoistPopularConstantsPlugin from 'vite-plugin-hoist-popular-constants'
 import importVoiceSamplePlugin from 'vite-plugin-import-voice-sample'
 import mediaMixinsPlugin from 'vite-plugin-media-mixins'
-import thematicChunksPlugin from 'vite-plugin-thematic-chunks'
 import titlePlugin from 'vite-plugin-title'
 
 import levels, {defaultLevel, levelIds} from '#src/data/levels.ts'
@@ -111,7 +111,11 @@ const getProductionConfig = () => {
       avifOnlyPlugin(),
       bakeThreePlugin(),
       bakeBranchComponentPlugin(),
-      hoistPopularConstantsPlugin(),
+      {
+        ...hoistPopularConstantsPlugin(),
+        apply: 'build',
+        enforce: 'post',
+      },
       thematicChunksPlugin(),
     ],
     build: {

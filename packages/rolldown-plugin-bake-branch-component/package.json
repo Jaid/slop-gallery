@@ -1,12 +1,13 @@
 {
-  "name": "vite-plugin-bake-branch-component",
+  "name": "rolldown-plugin-bake-branch-component",
   "version": "0.1.0",
   "type": "module",
   "funding": "https://github.com/sponsors/Jaid",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Jaid/slop-gallery.git"
+    "url": "git+https://github.com/Jaid/slop-gallery.git",
+    "directory": "packages/rolldown-plugin-bake-branch-component"
   },
   "main": "src/main.ts",
   "exports": {
@@ -19,9 +20,14 @@
     "babel-plugin-bake-branch-component": "workspace:*"
   },
   "peerDependencies": {
-    "@rolldown/plugin-babel": "^0.2.4"
+    "@rolldown/plugin-babel": "^0.2.4",
+    "rolldown": "^1.2.12"
   },
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "devDependencies": {
+    "fs-extra": "11.4.1",
+    "vite": "8.3.2"
+  }
 }

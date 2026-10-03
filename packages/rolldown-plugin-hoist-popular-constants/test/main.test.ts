@@ -1,10 +1,10 @@
 import {describe, expect, test} from 'bun:test'
 
-import vitePluginHoistPopularConstants from '../src/main.ts'
+import rolldownPluginHoistPopularConstants from '../src/main.ts'
 
-type VitePluginHoistPopularConstantsOptions = Parameters<typeof vitePluginHoistPopularConstants>[0]
-const render = async (source: string, options: VitePluginHoistPopularConstantsOptions = {}) => {
-  const plugin = vitePluginHoistPopularConstants(options)
+type RolldownPluginHoistPopularConstantsOptions = Parameters<typeof rolldownPluginHoistPopularConstants>[0]
+const render = async (source: string, options: RolldownPluginHoistPopularConstantsOptions = {}) => {
+  const plugin = rolldownPluginHoistPopularConstants(options)
   if (typeof plugin.renderChunk !== 'object') {
     throw new TypeError('Expected a renderChunk hook.')
   }
@@ -27,7 +27,7 @@ const render = async (source: string, options: VitePluginHoistPopularConstantsOp
   }
   return result.toString()
 }
-describe('Vite adapter', () => {
+describe('Rolldown adapter', () => {
   test('defaults to allowing byte-neutral pools for the following minifier', async () => {
     const source = 'sink("1234567","1234567")'
     expect(await render(source)).toStartWith('var _="1234567";')
@@ -51,14 +51,14 @@ describe('Vite adapter', () => {
     expect(await render(source)).toBe(source)
     expect(await render(source, {estimateMinifiedSize: false})).toStartWith('var _=true;')
   })
-  test('runs as a post-build post-renderChunk plugin', () => {
-    const plugin = vitePluginHoistPopularConstants()
+  test('uses native renderChunk ordering without Vite-specific properties', () => {
+    const plugin = rolldownPluginHoistPopularConstants()
     expect(plugin.name).toBe('hoist-popular-constants')
-    expect(plugin.apply).toBe('build')
-    expect(plugin.enforce).toBe('post')
+    expect(plugin).not.toHaveProperty('apply')
+    expect(plugin).not.toHaveProperty('enforce')
     expect(typeof plugin.renderChunk).toBe('object')
     if (typeof plugin.renderChunk === 'object') {
-      expect(plugin.renderChunk.order).toBe('post')
+      expect(plugin.renderChunk.order).toBeUndefined()
     }
   })
 })

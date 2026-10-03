@@ -1,13 +1,13 @@
 import type {HoistPopularConstantsOptions} from 'babel-plugin-hoist-popular-constants'
-import type {Plugin} from 'vite'
+import type {Plugin} from 'rolldown'
 
 import {transformAsync} from '@babel/core'
 import hoistPopularConstants from 'babel-plugin-hoist-popular-constants'
 
-export type VitePluginHoistPopularConstantsOptions = HoistPopularConstantsOptions
+export type RolldownPluginHoistPopularConstantsOptions = HoistPopularConstantsOptions
 
 /** Pools profitable primitive constants after chunk rendering, before final minification. */
-export default function vitePluginHoistPopularConstants(options: VitePluginHoistPopularConstantsOptions = {}): Plugin {
+export default function rolldownPluginHoistPopularConstants(options: RolldownPluginHoistPopularConstantsOptions = {}): Plugin {
   const stableBuiltins = options.stableBuiltins ?? true
   const babelOptions: HoistPopularConstantsOptions = {
     ...options,
@@ -18,10 +18,7 @@ export default function vitePluginHoistPopularConstants(options: VitePluginHoist
   }
   return {
     name: 'hoist-popular-constants',
-    apply: 'build',
-    enforce: 'post',
     renderChunk: {
-      order: 'post',
       async handler(code, chunk, outputOptions) {
         if (outputOptions.format !== 'es') {
           return null

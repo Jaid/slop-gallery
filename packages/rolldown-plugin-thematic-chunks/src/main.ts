@@ -1,4 +1,4 @@
-import type {Plugin} from 'vite'
+import type {Plugin} from 'rolldown'
 
 export const thematicChunkPresets = {
   monaco: {
@@ -39,39 +39,29 @@ export const thematicChunkPresets = {
 
 export const thematicChunkGroups = Object.values(thematicChunkPresets)
 
-/** Applies the shared thematic chunking strategy to Vite's Rolldown build. */
+/** Applies the shared thematic chunking strategy without changing unrelated output options. */
 export default function thematicChunks(): Plugin {
   return {
     name: 'thematic-chunks',
-    apply: 'build',
-    config() {
-      return {
-        build: {
-          rolldownOptions: {
-            output: {
-              codeSplitting: {
-                groups: [...thematicChunkGroups],
-              },
-            },
-          },
-        },
-      }
-    },
     outputOptions(options) {
+      const codeSplitting = typeof options.codeSplitting === 'object' ? options.codeSplitting : {}
       const chunkFileNames = options.chunkFileNames
-      if (chunkFileNames === undefined) {
-        return options
-      }
       return {
         ...options,
-        chunkFileNames: chunkInfo => {
-          if (chunkInfo.name === 'rapier' && chunkInfo.isDynamicEntry) {
-            return 'rapier-entry.js'
-          }
-          if (typeof chunkFileNames === 'function') {
-            return chunkFileNames(chunkInfo)
-          }
-          return chunkFileNames
+        codeSplitting: options.codeSplitting !== false && {
+          ...codeSplitting,
+          groups: [...codeSplitting.groups ?? [], ...thematicChunkGroups.map(group => ({...group}))],
+        },
+        ...chunkFileNames === undefined ? {} : {
+          chunkFileNames: chunkInfo => {
+            if (chunkInfo.name === 'rapier' && chunkInfo.isDynamicEntry) {
+              return 'rapier-entry.js'
+            }
+            if (typeof chunkFileNames === 'function') {
+              return chunkFileNames(chunkInfo)
+            }
+            return chunkFileNames
+          },
         },
       }
     },

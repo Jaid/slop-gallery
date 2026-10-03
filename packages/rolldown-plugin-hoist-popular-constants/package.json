@@ -1,12 +1,13 @@
 {
-  "name": "vite-plugin-hoist-popular-constants",
+  "name": "rolldown-plugin-hoist-popular-constants",
   "version": "0.1.0",
   "type": "module",
   "funding": "https://github.com/sponsors/Jaid",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Jaid/slop-gallery.git"
+    "url": "git+https://github.com/Jaid/slop-gallery.git",
+    "directory": "packages/rolldown-plugin-hoist-popular-constants"
   },
   "main": "src/main.ts",
   "exports": {
@@ -19,11 +20,16 @@
     "babel-plugin-hoist-popular-constants": "workspace:*"
   },
   "peerDependencies": {
-    "vite": "^8.3.2",
-    "@babel/core": "^8.0.6"
+    "@babel/core": "^8.0.6",
+    "rolldown": "^1.2.12"
   },
   "workspaces": [
     "packages/*",
     "packages/babel-plugin-hoist-popular-constants/packages/*"
-  ]
+  ],
+  "devDependencies": {
+    "fs-extra": "11.4.1",
+    "terser": "5.51.2",
+    "vite": "8.3.2"
+  }
 }
