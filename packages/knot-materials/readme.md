@@ -131,6 +131,14 @@ The combined 16-second video is phase-shifted so frame 0 is the least noticeable
 
 The command owns its Vite server, browser, offscreen renderer, temporary PNG frames and image/video encoding. Candidates only need the single command above.
 
+The private offline server disables HMR so source edits cannot reload its page and invalidate held renderer handles. The interactive development server is unchanged. Already-loaded modules stay stable for that session; this is not a filesystem snapshot, so finish edits before starting a render when reproducibility across newly imported materials matters. A new render session loads the latest source.
+
+WebM encoding explicitly converts display-encoded sRGB PNG bytes to full-range, 8-bit BT.709-matrix YUV 4:2:0. Both filtered frames and the output carry matching full-range, BT.709 primaries/matrix and sRGB transfer metadata. No second gamma transfer is applied. AV1 CRF, preset, frame rate and frame counts are unchanged. Full range is intentional: it passed the browser-decoded color regression more accurately than limited range on the tested Chrome path. JPEG XL encoding is unaffected.
+
+Regenerate affected WebM files from source rather than treating metadata-only retagging as a validated repair. Re-encode retained original PNG frames with `encodeWebm`, or run `bun scripts/renderKnot.ts <knot-id> --category video` from this package to regenerate only the video while preserving the other categories. Preserve historical audit-run artifacts as evidence; regenerate consumer-facing copies rather than silently replacing an audited export.
+
+The browser regressions are opt-in and require `BROWSER` to point to a Chrome executable. From this package, run `KNOT_TEST_BROWSER=1 bun test ./test/webm-color.test.ts` for the PNG-to-WebM browser round trip, and `KNOT_TEST_GPU=1 bun test ./test/preview-isolation.test.ts ./test/preview-output.test.ts` for private-renderer source-edit isolation and GPU readback. The ordinary encoder tests additionally verify stream and decoded-frame color metadata with FFprobe. The source-edit test touches only temporary probe modules, reuses the original renderer handle, and checks that a fresh session sees the edit.
+
 ## Narration
 
 Knottingham announcements are generated through `vite-plugin-import-voice-sample` virtual imports rather than checked-in audio files.

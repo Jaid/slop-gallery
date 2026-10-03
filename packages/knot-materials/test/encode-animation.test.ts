@@ -50,11 +50,14 @@ describe('animation encoding', () => {
       await Bun.$`ffmpeg -hide_banner -loglevel error -y -f lavfi -i nullsrc=size=64x64:rate=60:duration=2 -vf ${filter} -frames:v 120 ${pattern}`.quiet()
       const output = await encodeWebm(dir)
       expect(output).toEndWith('.webm')
-      const info = JSON.parse(await Bun.$`ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=codec_name,color_range,pix_fmt,nb_read_frames,r_frame_rate -show_entries format=duration -of json ${output}`.text()) as {
+      const info = JSON.parse(await Bun.$`ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=codec_name,color_range,color_space,color_primaries,color_transfer,pix_fmt,nb_read_frames,r_frame_rate -show_entries format=duration -of json ${output}`.text()) as {
         format: {duration: string}
         streams: Array<{
           codec_name: string
+          color_primaries: string
           color_range: string
+          color_space: string
+          color_transfer: string
           nb_read_frames: string
           pix_fmt: string
           r_frame_rate: string
@@ -63,11 +66,22 @@ describe('animation encoding', () => {
       expect(info.streams).toEqual([{
         codec_name: 'av1',
         color_range: 'pc',
+        color_space: 'bt709',
+        color_primaries: 'bt709',
+        color_transfer: 'iec61966-2-1',
         pix_fmt: 'yuv420p',
         nb_read_frames: '120',
         r_frame_rate: '60/1',
       }])
       expect(Number(info.format.duration)).toBe(2)
+      // Container-only tags can hide different metadata in the AV1 bitstream.
+      const frames = JSON.parse(await Bun.$`ffprobe -v error -select_streams v:0 -read_intervals %+#1 -show_entries frame=color_range,color_space,color_primaries,color_transfer -of json ${output}`.text()) as {frames: Array<Record<string, string>>}
+      expect(frames.frames).toEqual([{
+        color_range: 'pc',
+        color_space: 'bt709',
+        color_primaries: 'bt709',
+        color_transfer: 'iec61966-2-1',
+      }])
     } finally {
       await fs.remove(dir)
     }
