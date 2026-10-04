@@ -4,7 +4,7 @@ import {texture} from 'three/tsl'
 
 import FloorMaterial from './FloorMaterial.ts'
 
-/** Polished, reflective marble in quality; honed stone in performance. */
+/** Polished, reflective marble in heavy mode; honed stone in fast mode. */
 export default class MarbleFloorMaterial extends FloorMaterial {
   constructor(map: Texture, reflections = true) {
     super(map, {

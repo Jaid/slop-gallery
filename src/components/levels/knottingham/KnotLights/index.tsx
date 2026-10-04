@@ -9,7 +9,7 @@ import KnotLightDamage, {knotLight, knotLightFracture, knotLightSlots} from 'kno
 import {useMemo, useRef, useState} from 'react'
 import {RectAreaLightTexturesLib} from 'three/addons/lights/RectAreaLightTexturesLib.js'
 import {RectAreaLight, RectAreaLightNode} from 'three/webgpu'
-import useGraphicsQuality from 'use-graphics-quality'
+import useGraphicsMode from 'use-graphics-mode'
 
 import {useGallery} from '#src/lib/gallery.ts'
 import {knotGalleryBounds} from '#src/lib/gallery/knotGallery.ts'
@@ -24,7 +24,7 @@ export default function KnotLights() {
 }
 
 function KnotLightSystem() {
-  const quality = useGraphicsQuality()
+  const heavy = useGraphicsMode()
   const slots = useMemo(() => knotLightSlots(knotLayout, knotBays.length, knotGalleryBounds.height), [])
   const damage = useMemo(() => new KnotLightDamage(slots.length), [slots.length])
   const panels = useDisposable(useMemo(() => new KnotLightPanels(slots), [slots]))
@@ -76,7 +76,7 @@ function KnotLightSystem() {
   return <group name='knot-slot-lights'>
     <primitive object={panels.housings} />
     <primitive object={panels.diffusers} />
-    {quality && emitters.map(light => <primitive key={light.name} object={light} />)}
+    {heavy && emitters.map(light => <primitive key={light.name} object={light} />)}
     <RigidBody colliders={false} type='fixed'>
       {slots.map((slot, index) => <group key={slot.id} position={slot.position}>
         <CuboidCollider args={[knotLightHousingSize[0] / 2, knotLightHousingSize[1] / 2, knotLightHousingSize[2] / 2]} friction={0.6} position={[0, knotLightHousingY, 0]} restitution={0.08} ref={collider => impacts.register(collider, index)} />

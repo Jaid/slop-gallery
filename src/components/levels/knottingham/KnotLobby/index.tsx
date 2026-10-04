@@ -5,7 +5,7 @@ import {useMemo} from 'react'
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 import {color, mix, texture} from 'three/tsl'
 import {MeshStandardNodeMaterial, Vector2} from 'three/webgpu'
-import useGraphicsQuality from 'use-graphics-quality'
+import useGraphicsMode from 'use-graphics-mode'
 import constructors from 'virtual:knot-exhibition-materials'
 
 import KnotCandidateSign from '#component/levels/knottingham/KnotCandidateSign'
@@ -21,8 +21,8 @@ import RuntimeKnotIconRenderer from '../KnotPreviewSigns/RuntimeKnotIconRenderer
 
 /** The Knot level’s shell and lighting, without museum rooms or their physics. */
 export default function KnotLobby() {
-  const quality = useGraphicsQuality()
-  const runtimeIcons = useDisposable(useMemo(() => new RuntimeKnotIconRenderer(constructors, quality), [quality]))
+  const heavy = useGraphicsMode()
+  const runtimeIcons = useDisposable(useMemo(() => new RuntimeKnotIconRenderer(constructors, heavy), [heavy]))
   const plaster = useMemo(() => surfaceTexture('plaster'), [])
   const wood = useMemo(() => surfaceTexture('wood'), [])
   const shell = useMemo(() => ({
@@ -30,7 +30,7 @@ export default function KnotLobby() {
     ceiling: new RoundedBoxGeometry(knotGallerySize[0], 0.18, knotGallerySize[2], 2, 0.045),
   }), [])
   const carpetTextureResource = useDisposable(useMemo(() => {
-    const textures = quality ? createKnotWallCarpetTextures() : null
+    const textures = heavy ? createKnotWallCarpetTextures() : null
     return {
       textures,
       dispose() {
@@ -39,9 +39,9 @@ export default function KnotLobby() {
         }
       },
     }
-  }, [quality]))
+  }, [heavy]))
   const wallMaterial = useMemo(() => {
-    if (!quality) {
+    if (!heavy) {
       return new MeshStandardNodeMaterial({
         color: '#7a1c27',
         envMapIntensity: 0.04,
@@ -59,7 +59,7 @@ export default function KnotLobby() {
       normalScale: new Vector2(0.42, 0.42),
       roughness: 0.97,
     })
-  }, [carpetTextureResource, quality])
+  }, [carpetTextureResource, heavy])
   const trimMaterial = useMemo(() => new MeshStandardNodeMaterial({
     color: '#6d4a35',
     map: wood,

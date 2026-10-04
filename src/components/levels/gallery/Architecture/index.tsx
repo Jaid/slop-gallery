@@ -6,7 +6,7 @@ import renderCanvasTexture from 'canvas-textures/three'
 import useDisposable from 'disposable-lifetime/react'
 import {useEffect, useMemo} from 'react'
 import {EquirectangularReflectionMapping, MeshStandardNodeMaterial, SRGBColorSpace} from 'three/webgpu'
-import useGraphicsQuality from 'use-graphics-quality'
+import useGraphicsMode from 'use-graphics-mode'
 
 import Fountain from '#component/levels/gallery/Fountain'
 import FountainBenches from '#component/levels/gallery/FountainBenches'
@@ -35,14 +35,14 @@ const pointLightPositions: Partial<Record<Wall['room'], Array<number>>> = {
 }
 
 export default function Architecture() {
-  const isQuality = useGraphicsQuality()
+  const isHeavy = useGraphicsMode()
   const glass = useDisposable(useMemo(() => {
-    const materials = createArchitecturalGlassMaterials(isQuality)
+    const materials = createArchitecturalGlassMaterials(isHeavy)
     return {
       ...materials,
       dispose: () => disposeArchitecturalGlassMaterials(materials),
     }
-  }, [isQuality]))
+  }, [isHeavy]))
   const castleStone = useDisposable(useMemo(() => new CastleStoneMaterial, []))
   const lodgeWood = useDisposable(useMemo(() => new LodgeWoodMaterial, []))
   const stone = useDisposable(useMemo(() => surfaceTexture('stone'), []))

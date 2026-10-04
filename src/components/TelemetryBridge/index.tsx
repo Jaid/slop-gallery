@@ -6,11 +6,11 @@ import {AimInspector} from 'ego-player'
 import useEgoTelemetry from 'telemethree-ego/react'
 import usePauseMenuTelemetry from 'telemethree-pause-menu/react'
 import useThreeTelemetry from 'telemethree/react'
-import useGraphicsQuality from 'use-graphics-quality'
+import useGraphicsMode from 'use-graphics-mode'
 
 import {useGallery} from '#src/lib/gallery.ts'
 import pauseMenu from '#src/lib/pauseMenu.ts'
-import {getGraphicsProfile} from '#src/lib/rendering/graphicsQuality.ts'
+import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 import {playerTelemetry, telemetry} from '#src/lib/telemetry/index.ts'
 
 function Collectors() {
@@ -21,8 +21,8 @@ function Collectors() {
   const scene = useThree(state => state.scene)
   const camera = useThree(state => state.camera)
   const inspector = new AimInspector(scene, camera)
-  const isQuality = useGraphicsQuality()
-  const profile = getGraphicsProfile(isQuality)
+  const isHeavy = useGraphicsMode()
+  const profile = getGraphicsProfile(isHeavy)
   useThreeTelemetry({
     telemetry: telemetry!,
     getAttributes: () => {
@@ -30,7 +30,7 @@ function Collectors() {
       return {
         room,
         locked,
-        'graphics.profile': useGraphicsQuality.getName(isQuality),
+        'graphics.profile': useGraphicsMode.getName(isHeavy),
         'graphics.shadows': profile.shadows,
         'graphics.postprocessing': profile.postprocessing,
         'graphics.floor_reflections': profile.floorReflections,

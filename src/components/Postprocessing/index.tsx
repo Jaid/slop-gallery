@@ -7,11 +7,11 @@ import {getKnotFocus, getKnotFocusDistance, getKnotFocusProximity, getPlayerZoom
 
 type PostprocessingProps = {
   contactDarkening?: boolean
+  heavy?: boolean
   knotFocus?: boolean
-  quality?: boolean
 }
 
-const Postprocessing = ({contactDarkening = false, knotFocus = false, quality = true}: PostprocessingProps) => {
+const Postprocessing = ({contactDarkening = false, knotFocus = false, heavy = true}: PostprocessingProps) => {
   const renderer = useThree(state => state.renderer)
   const scene = useThree(state => state.scene)
   const camera = useThree(state => state.camera)
@@ -19,7 +19,7 @@ const Postprocessing = ({contactDarkening = false, knotFocus = false, quality = 
   useEffect(() => {
     const pipeline = new GalleryRenderPipeline(renderer, scene, camera, {
       contactDarkening,
-      quality,
+      heavy,
       zoom: getPlayerZoom,
       focus: knotFocus ? {
         amount: getKnotFocus,
@@ -31,22 +31,22 @@ const Postprocessing = ({contactDarkening = false, knotFocus = false, quality = 
     const deactivate = () => {
       set(state => (state.renderPipeline === pipeline ? {renderPipeline: null} : {}))
     }
-    if (quality || knotFocus && getKnotFocus() > 0) {
+    if (heavy || knotFocus && getKnotFocus() > 0) {
       activate()
     }
-    if (!quality && knotFocus) {
+    if (!heavy && knotFocus) {
       galleryEvents.addEventListener('knot-focus-start', activate)
       galleryEvents.addEventListener('knot-focus-end', deactivate)
     }
     return () => {
-      if (!quality && knotFocus) {
+      if (!heavy && knotFocus) {
         galleryEvents.removeEventListener('knot-focus-start', activate)
         galleryEvents.removeEventListener('knot-focus-end', deactivate)
       }
       deactivate()
       pipeline.dispose()
     }
-  }, [camera, contactDarkening, knotFocus, quality, renderer, scene, set])
+  }, [camera, contactDarkening, knotFocus, heavy, renderer, scene, set])
   return null
 }
 export default Postprocessing

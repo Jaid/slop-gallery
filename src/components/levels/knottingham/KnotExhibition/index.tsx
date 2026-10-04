@@ -4,7 +4,7 @@ import useDisposable from 'disposable-lifetime/react'
 import {knotExhibition, knotFloatHeight} from 'knot-materials/exhibition.ts'
 import ProgressiveKnotMaterials from 'knot-materials/ProgressiveKnotMaterials.ts'
 import {useMemo} from 'react'
-import useGraphicsQuality from 'use-graphics-quality'
+import useGraphicsMode from 'use-graphics-mode'
 import constructors from 'virtual:knot-exhibition-materials'
 
 import InteractiveObject from '#component/InteractiveObject'
@@ -16,7 +16,7 @@ import KnotRotation from '#src/lib/physics/KnotRotation.ts'
 export default function KnotExhibition() {
   const camera = useThree(state => state.camera)
   const renderer = useThree(state => state.renderer)
-  const isQuality = useGraphicsQuality()
+  const isHeavy = useGraphicsMode()
   const rotation = useMemo(() => new KnotRotation, [])
   useBeforePhysicsStep(world => {
     for (const exhibit of knotExhibition) {
@@ -26,7 +26,7 @@ export default function KnotExhibition() {
       }
     }
   })
-  const materials = useDisposable(useMemo(() => new ProgressiveKnotMaterials(renderer, camera, knotExhibition, constructors, isQuality), [camera, isQuality, renderer]))
+  const materials = useDisposable(useMemo(() => new ProgressiveKnotMaterials(renderer, camera, knotExhibition, constructors, isHeavy), [camera, isHeavy, renderer]))
   const {resources} = materials
   return <group name='lobby-knot-exhibition'>
     <KnotLabels />

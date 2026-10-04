@@ -7,7 +7,7 @@ ruleTester.run('prefer-branch-component', rule, {
     'const view = <div className={ok ? "active" : "idle"} />',
     "const view = <h3>{level.lower ? 'Lower level' : 'Upper level'}</h3>",
     "const view = <button>{apiKey ? 'Update' : 'Connect'}</button>",
-    "const view = <button><small>{s.sound ? 'On' : 'Muted'}</small><small>{isQuality ? 'Quality' : 'Performance'}</small></button>",
+    "const view = <button><small>{s.sound ? 'On' : 'Muted'}</small><small>{isHeavy ? 'Heavy' : 'Fast'}</small></button>",
     "const view = <small>{status === 'preparing' ? 'Preparing narration…' : playing}</small>",
     'const view = <>{ok ? 1 : 0}</>',
     'const view = <div>{count && <Content />}</div>',

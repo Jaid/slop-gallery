@@ -71,9 +71,9 @@ export default class RuntimeKnotIconRenderer {
 
   constructor(
     private readonly constructors: ReadonlyMap<string, KnotMaterialConstructor>,
-    private readonly quality: boolean,
+    private readonly heavy: boolean,
   ) {
-    this.environment = quality ? new StudioEnvironment : undefined
+    this.environment = heavy ? new StudioEnvironment : undefined
     this.target.texture.colorSpace = SRGBColorSpace
     this.renderer.setSize(renderSize, renderSize, false)
     this.renderer.toneMapping = ACESFilmicToneMapping
@@ -185,7 +185,7 @@ export default class RuntimeKnotIconRenderer {
       throw new Error('A runtime knot icon material is already active.')
     }
     let material
-    if (this.quality) {
+    if (this.heavy) {
       const Material = this.constructors.get(item.id)
       if (!Material) {
         throw new Error(`Missing material constructor for ${item.id}.`)

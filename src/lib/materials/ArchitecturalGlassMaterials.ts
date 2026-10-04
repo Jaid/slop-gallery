@@ -10,8 +10,8 @@ export type ArchitecturalGlassMaterials = {
   lobby: Material
 }
 
-export function createArchitecturalGlassMaterials(isQuality: boolean): ArchitecturalGlassMaterials {
-  if (!isQuality) {
+export function createArchitecturalGlassMaterials(isHeavy: boolean): ArchitecturalGlassMaterials {
+  if (!isHeavy) {
     const material = new MeshStandardNodeMaterial({
       color: '#afd0d4',
       roughness: 0.24,
@@ -21,7 +21,7 @@ export function createArchitecturalGlassMaterials(isQuality: boolean): Architect
       depthWrite: false,
       envMapIntensity: 0,
     })
-    material.name = 'architectural-glass-performance'
+    material.name = 'architectural-glass-fast'
     return {
       cabin: material,
       lobby: material,
@@ -40,7 +40,7 @@ export function createArchitecturalGlassMaterials(isQuality: boolean): Architect
     clearcoatRoughness: 0.1,
     envMapIntensity: 0.9,
   })
-  cabin.name = 'cabin-glass-quality'
+  cabin.name = 'cabin-glass-heavy'
   const lobby = new MeshPhysicalNodeMaterial({
     color: '#f0fcff',
     roughness: 0.035,
@@ -54,7 +54,7 @@ export function createArchitecturalGlassMaterials(isQuality: boolean): Architect
     clearcoatRoughness: 0.02,
     envMapIntensity: 1.3,
   })
-  lobby.name = 'lobby-glass-quality'
+  lobby.name = 'lobby-glass-heavy'
   return {
     cabin,
     lobby,

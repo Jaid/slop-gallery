@@ -11,7 +11,7 @@ import KnotCandidateSignGeometry from 'knot-materials/KnotCandidateSignGeometry.
 import loadCandidateIcons from 'knot-materials/loadCandidateIcons.ts'
 import {useMemo, useRef} from 'react'
 import {MeshBasicNodeMaterial, MeshStandardNodeMaterial} from 'three/webgpu'
-import useGraphicsQuality from 'use-graphics-quality'
+import useGraphicsMode from 'use-graphics-mode'
 
 import InteractiveObject from '#component/InteractiveObject'
 import {narrate} from '#src/lib/gallery/actions.ts'
@@ -23,12 +23,12 @@ export default function KnotCandidateSign({bay}: {bay: KnotBay}) {
   const anchor = useRef<RapierRigidBody>(null!)
   const sign = useRef<RapierRigidBody>(null!)
   useRevoluteJoint(anchor, sign, [[0, 0, 0], knotCandidateSign.anchor, knotCandidateSign.axis, knotCandidateSign.limits])
-  const isQuality = useGraphicsQuality()
-  const metal = useDisposable(useMemo(() => (isQuality ? new MeshStandardNodeMaterial({
+  const isHeavy = useGraphicsMode()
+  const metal = useDisposable(useMemo(() => (isHeavy ? new MeshStandardNodeMaterial({
     color: '#ac9270',
     metalness: 0.85,
     roughness: 0.3,
-  }) : new MeshBasicNodeMaterial({color: '#ac9270'})), [isQuality]))
+  }) : new MeshBasicNodeMaterial({color: '#ac9270'})), [isHeavy]))
   const geometry = useDisposable(useMemo(() => new KnotCandidateSignGeometry, []))
   const {candidate} = bay
   const texture = useCanvasTexture({

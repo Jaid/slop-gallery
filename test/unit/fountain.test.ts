@@ -74,15 +74,15 @@ describe('Lobby fountain', () => {
       geometry.dispose()
     }
   })
-  test('water and spray are real animated node graphs, with transmission omitted in performance', () => {
+  test('water and spray are real animated node graphs, with transmission omitted in fast mode', () => {
     for (const stream of [false, true]) {
-      for (const quality of [false, true]) {
-        const material = new FountainWaterMaterial(stream, quality)
+      for (const heavy of [false, true]) {
+        const material = new FountainWaterMaterial(stream, heavy)
         expect(material.isMeshPhysicalNodeMaterial).toBe(true)
         expect(material.positionNode).not.toBeNull()
         expect(material.normalNode).not.toBeNull()
         expect(material.ior).toBeCloseTo(1.333)
-        expect(material.transmission > 0).toBe(quality)
+        expect(material.transmission > 0).toBe(heavy)
         material.dispose()
       }
     }

@@ -1,11 +1,11 @@
 import Branch from 'branch-component'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
-import {useGraphicsQualityValue} from 'use-graphics-quality'
+import {useGraphicsModeValue} from 'use-graphics-mode'
 
 import DetailedMarbleFloorMaterial from '#src/lib/materials/DetailedMarbleFloorMaterial.ts'
 import MarbleFloorMaterial from '#src/lib/materials/MarbleFloorMaterial.ts'
-import {getGraphicsProfile} from '#src/lib/rendering/graphicsQuality.ts'
+import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
 import {checkerMarbleTexture} from './materials.ts'
 
@@ -16,7 +16,7 @@ export default function CheckerMarbleFloor({width, depth, reflections, detailed 
   width: number
 }) {
   const texture = useDisposable(useMemo(() => checkerMarbleTexture(width, depth), [width, depth]))
-  const {floorReflections} = useGraphicsQualityValue(getGraphicsProfile)
+  const {floorReflections} = useGraphicsModeValue(getGraphicsProfile)
   const reflective = reflections ?? floorReflections
   const material = useDisposable(useMemo(() => (detailed ? new DetailedMarbleFloorMaterial(texture, reflective) : new MarbleFloorMaterial(texture, reflective)), [detailed, reflective, texture]))
   const reflection = material.reflection?.target

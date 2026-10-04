@@ -12,7 +12,7 @@ import {useEffect, useMemo, useSyncExternalStore} from 'react'
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js'
 import {attribute, texture, uv, vec2} from 'three/tsl'
 import {BoxGeometry, CylinderGeometry, Euler, InstancedBufferAttribute, InstancedMesh, Matrix4, MeshBasicNodeMaterial, PlaneGeometry} from 'three/webgpu'
-import useGraphicsQuality from 'use-graphics-quality'
+import useGraphicsMode from 'use-graphics-mode'
 
 import InteractiveObject from '#component/InteractiveObject'
 import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
@@ -25,9 +25,9 @@ import drawLabel, {labelAtlasColumns, labelBackground, labelFonts, labelHeight, 
 const atlasRows = Math.ceil(knotExhibition.length / labelAtlasColumns)
 /** One complete face atlas and two instanced batches: faces and physical supports. */
 export default function KnotLabels() {
-  const isQuality = useGraphicsQuality()
+  const isHeavy = useGraphicsMode()
   const ratings = useSyncExternalStore(knotRarityEditor.subscribe, knotRarityEditor.getSnapshot, knotRarityEditor.getSnapshot)
-  const supportMaterial = useDisposable(useMemo(() => signSupportMaterial(isQuality), [isQuality]))
+  const supportMaterial = useDisposable(useMemo(() => signSupportMaterial(isHeavy), [isHeavy]))
   const resources = useDisposable(useMemo(() => {
     const offsets = new Float32Array(knotExhibition.length * 2)
     for (let index = 0; index < knotExhibition.length; index++) {

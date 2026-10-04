@@ -3,14 +3,14 @@ import type {Material, Texture} from 'three/webgpu'
 
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import Branch from 'branch-component'
-import {useGraphicsQualityValue} from 'use-graphics-quality'
+import {useGraphicsModeValue} from 'use-graphics-mode'
 
 import FloorGlass from '#component/levels/gallery/FloorGlass'
 import WoodFloor from '#component/levels/gallery/WoodFloor'
 import CheckerMarbleFloor from '#src/components/Scene/CheckerMarbleFloor.tsx'
 import Box from '#src/components/Scene/primitives.tsx'
 import {floorThickness, roomFloorPlan} from '#src/lib/gallery/floors.ts'
-import {getGraphicsProfile} from '#src/lib/rendering/graphicsQuality.ts'
+import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
 export default function RoomFloor({glass, room, stone, wood}: {
   glass: Material
@@ -18,7 +18,7 @@ export default function RoomFloor({glass, room, stone, wood}: {
   stone: Texture
   wood: Texture
 }) {
-  const {floorReflections} = useGraphicsQualityValue(getGraphicsProfile)
+  const {floorReflections} = useGraphicsModeValue(getGraphicsProfile)
   const plan = roomFloorPlan(room)
   const envMapIntensity = floorReflections ? 1 : 0
   const surfaces: Partial<Record<FloorRoom['id'], {

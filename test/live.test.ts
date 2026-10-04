@@ -346,10 +346,10 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     const canceledBook = (await snapshot(page)).props.find(prop => prop.id === 'prop-book')!
     expect(canceledBook.bodyType).toBe(0)
     expect(canceledBook.collidersEnabled.every(Boolean)).toBe(true)
-    const graphicsLabel = await page.$eval('[aria-label="Performance graphics"] small', element => element.textContent)
-    await page.click('[aria-label="Performance graphics"]')
-    await page.waitForFunction(before => document.querySelector('[aria-label="Performance graphics"] small')?.textContent !== before, {}, graphicsLabel)
-    await page.screenshot({path: 'private/agent/reports/production-quality.png'})
+    const graphicsLabel = await page.$eval('[aria-label="Heavy graphics"] small', element => element.textContent)
+    await page.click('[aria-label="Heavy graphics"]')
+    await page.waitForFunction(before => document.querySelector('[aria-label="Heavy graphics"] small')?.textContent !== before, {}, graphicsLabel)
+    await page.screenshot({path: 'private/agent/reports/production-heavy.png'})
     const captures = await page.evaluate(async () => {
       const [a, b] = await Promise.all([globalThis.__gallery!.captureFrame!(), globalThis.__gallery!.captureFrame!()])
       return [a.width, b.width, a.nonBlackFraction]

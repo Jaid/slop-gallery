@@ -44,7 +44,7 @@ Keep JSX-child ternaries when both branches are syntactically primitive values. 
 ```tsx
 <h3>{level.lower ? 'Lower level' : 'Upper level'}</h3>
 <button>{apiKey ? 'Update' : 'Connect'}</button>
-<small>{isQuality ? 'Quality' : 'Performance'}</small>
+<small>{isHeavy ? 'Heavy' : 'Fast'}</small>
 <small>{status === 'preparing' ? 'Preparing narration…' : playing}</small>
 ```
 

@@ -5,7 +5,7 @@ import {afterEach, beforeEach, describe, expect, spyOn, test} from 'bun:test'
 
 import {createElement} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
-import {GraphicsQualityProvider} from 'use-graphics-quality'
+import {GraphicsModeProvider} from 'use-graphics-mode'
 
 import Menu from '#component/Menu'
 
@@ -51,8 +51,8 @@ describe('minimal menu', () => {
     expect(useGallery.getState().locked).toBe(false)
     expect(useGallery.getState().hasControlled).toBe(false)
     const params: AiSettings = readAiSettings()
-    const html = renderToStaticMarkup(createElement(GraphicsQualityProvider, {
-      isQuality: true,
+    const html = renderToStaticMarkup(createElement(GraphicsModeProvider, {
+      isHeavy: true,
       onChange: () => {},
       children: createElement(Menu, {
         params,
@@ -61,8 +61,8 @@ describe('minimal menu', () => {
     }))
     expect(html).toContain('aria-labelledby="menu-title"')
     expect(html).toContain('Mute audio')
-    expect(html).toContain('Performance graphics')
-    expect(html).toContain('<small>Quality</small>')
+    expect(html).toContain('Heavy graphics')
+    expect(html).toContain('<small>Heavy</small>')
     expect(html).toContain('OpenRouter')
     expect(html).toContain('aria-labelledby="openrouter-title"')
     expect(html).not.toContain('<summary>OpenRouter')
@@ -150,8 +150,8 @@ test.each(['first', 'reset', 'return', 'pause', 'unfocus'] as const)('renders th
   })
   try {
     const params: AiSettings = readAiSettings()
-    const html = renderToStaticMarkup(createElement(GraphicsQualityProvider, {
-      isQuality: true,
+    const html = renderToStaticMarkup(createElement(GraphicsModeProvider, {
+      isHeavy: true,
       onChange: () => {},
       children: createElement(Menu, {
         params,
@@ -220,8 +220,8 @@ test.each(['lobby', 'oculus'] as const)('pause heading identifies the %s room an
   Object.assign(useGallery.getInitialState(), {room})
   try {
     const params: AiSettings = readAiSettings()
-    const html = renderToStaticMarkup(createElement(GraphicsQualityProvider, {
-      isQuality: true,
+    const html = renderToStaticMarkup(createElement(GraphicsModeProvider, {
+      isHeavy: true,
       onChange: () => {},
       children: createElement(Menu, {
         params,

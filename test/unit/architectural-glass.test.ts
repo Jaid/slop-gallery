@@ -6,7 +6,7 @@ import {floorGlassThickness} from '../../src/lib/gallery/floors.ts'
 import {lodgeWindow} from '../../src/lib/gallery/lodge.ts'
 import {createArchitecturalGlassMaterials, disposeArchitecturalGlassMaterials} from '../../src/lib/materials/ArchitecturalGlassMaterials.ts'
 
-test('performance glass is one shared plain material for lobby and cabin', () => {
+test('fast glass is one shared plain material for lobby and cabin', () => {
   const materials = createArchitecturalGlassMaterials(false)
   expect(materials.lobby).toBe(materials.cabin)
   expect(materials.lobby).toBeInstanceOf(MeshStandardNodeMaterial)
@@ -18,7 +18,7 @@ test('performance glass is one shared plain material for lobby and cabin', () =>
   disposeArchitecturalGlassMaterials(materials)
   expect(dispose).toHaveBeenCalledTimes(1)
 })
-test('quality glass gives lobby and cabin distinct physical treatments', () => {
+test('heavy glass gives lobby and cabin distinct physical treatments', () => {
   const materials = createArchitecturalGlassMaterials(true)
   expect(materials.lobby).not.toBe(materials.cabin)
   expect(materials.lobby).toBeInstanceOf(MeshPhysicalNodeMaterial)

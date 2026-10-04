@@ -2,10 +2,10 @@ import type {PotKind} from '#src/lib/gallery/plantDecorations/catalog.ts'
 
 import {ConvexHullCollider, CylinderCollider, RigidBody} from '@react-three/rapier'
 import Branch from 'branch-component'
-import {useGraphicsQualityValue} from 'use-graphics-quality'
+import {useGraphicsModeValue} from 'use-graphics-mode'
 
 import decorationResources from '#src/lib/gallery/plantDecorations/DecorationResources.ts'
-import {getGraphicsProfile} from '#src/lib/rendering/graphicsQuality.ts'
+import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
 export type PotProps = {
   kind: PotKind
@@ -13,7 +13,7 @@ export type PotProps = {
 }
 
 export default function DecorativePot({kind, solid}: PotProps) {
-  const {noiseTextures} = useGraphicsQualityValue(getGraphicsProfile)
+  const {noiseTextures} = useGraphicsModeValue(getGraphicsProfile)
   const resources = decorationResources()
   const materials = resources.potMaterials(noiseTextures)
   const geometry = resources.pot(kind)

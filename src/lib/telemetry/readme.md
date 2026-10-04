@@ -76,10 +76,10 @@ The Victoria client schedules delivery every second while statistics still repor
 
 ### Manual comparison
 
-1. Reload with `?development=true&telemetry=true&graphics=quality`.
+1. Reload with `?development=true&telemetry=true&graphics=heavy`.
 2. Enter and walk a repeatable route through the problematic rooms, including turns toward shadow-heavy interiors. Pause briefly in each room.
 3. Note any long freeze and its approximate time.
-4. Repeat with `graphics=performance`. Do not compare different rooms, pointer-lock states or output sizes as if only the profile changed.
+4. Repeat with `graphics=fast`. Do not compare different rooms, pointer-lock states or output sizes as if only the profile changed.
 5. Compare aligned workload distributions, sampled GPU/wall timing and hitch details. A second run with `telemetry=false` can assess observer overhead, but exports are intentionally absent there.
 
 Example MetricsQL for the proportion of locked frames slower than 33.33 milliseconds, grouped by room/profile:

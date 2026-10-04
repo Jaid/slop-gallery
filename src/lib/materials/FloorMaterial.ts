@@ -11,7 +11,7 @@ type FloorReflection = {
   strength: number
 }
 
-/** Optional planar reflection ownership; performance materials allocate no reflection targets. */
+/** Optional planar reflection ownership; fast-mode materials allocate no reflection targets. */
 export default class FloorMaterial extends MeshStandardNodeMaterial {
   readonly reflection: ReturnType<typeof reflector> | null
 

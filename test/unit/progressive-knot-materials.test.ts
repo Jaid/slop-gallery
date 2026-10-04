@@ -100,7 +100,7 @@ async function flush() {
     await Promise.resolve()
   }
 }
-test('quality placeholders use transparent ghost materials until full materials are ready', () => {
+test('heavy placeholders use transparent ghost materials until full materials are ready', () => {
   const f = fixture()
   try {
     const placeholder = f.materials.placeholderMaterials[0]
@@ -168,7 +168,7 @@ test('moving the player reprioritizes queued meshes without needing another visi
     f.dispose()
   }
 })
-test('performance mode keeps only lit placeholder materials and never constructs full knot materials', async () => {
+test('fast mode keeps only lit placeholder materials and never constructs full knot materials', async () => {
   const entry = knotsById.get('lenticular_mirage')!
   let constructions = 0
   class TrackedMaterial extends KnotMaterial {

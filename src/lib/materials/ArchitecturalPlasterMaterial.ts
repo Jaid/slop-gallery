@@ -3,22 +3,22 @@ import type {Texture} from 'three/webgpu'
 import {bumpMap, color, float, mx_noise_float, positionWorld, texture, vec3} from 'three/tsl'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
-/** Restrained architectural plaster: large mottling plus fine surface grain in quality mode. */
+/** Restrained architectural plaster: large mottling plus fine surface grain in heavy mode. */
 export default class ArchitecturalPlasterMaterial extends MeshStandardNodeMaterial {
-  constructor({baseColor, map, quality, roughness}: {
+  constructor({baseColor, heavy, map, roughness}: {
     baseColor: string
+    heavy: boolean
     map?: Texture
-    quality: boolean
     roughness: number
   }) {
     super({
       color: baseColor,
-      map: quality ? null : map,
+      map: heavy ? null : map,
       roughness,
       metalness: 0,
       envMapIntensity: 1,
     })
-    if (!quality) {
+    if (!heavy) {
       return
     }
     const broad = mx_noise_float(positionWorld.mul(vec3(0.34, 0.22, 0.34)))

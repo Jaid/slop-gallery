@@ -196,7 +196,7 @@ async function verifyTemporal(renderer: WebGPURenderer) {
       distance: () => 7.6,
       proximity: () => 1,
     },
-    quality: true,
+    heavy: true,
   })
   pipeline.outputColorTransform = false
   const target = new RenderTarget(width, height, {

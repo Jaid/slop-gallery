@@ -1,18 +1,18 @@
 import {useState} from 'react'
 import Game from 'three-fiber-game'
-import {useGraphicsQualityValue} from 'use-graphics-quality'
+import {useGraphicsModeValue} from 'use-graphics-mode'
 
 import Scene from '#component/Scene'
 import {playerSession} from '#src/lib/gallery/PlayerSession.ts'
 import {createGalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
-import {getGraphicsProfile} from '#src/lib/rendering/graphicsQuality.ts'
+import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 import {readScale} from '#src/lib/rendering/scale.ts'
 
 import controls from './controls.ts'
 import GameScene from './GameScene.tsx'
 
 export default function World() {
-  const profile = useGraphicsQualityValue(getGraphicsProfile)
+  const profile = useGraphicsModeValue(getGraphicsProfile)
   const [scaleOverride] = useState(() => readScale())
   const [initial] = useState(() => playerSession.snapshot())
   return <Game

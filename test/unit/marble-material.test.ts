@@ -6,29 +6,29 @@ import ArchitecturalPlasterMaterial from '../../src/lib/materials/ArchitecturalP
 import DetailedMarbleFloorMaterial from '../../src/lib/materials/DetailedMarbleFloorMaterial.ts'
 import MarbleFloorMaterial from '../../src/lib/materials/MarbleFloorMaterial.ts'
 import WoodFloorMaterial from '../../src/lib/materials/WoodFloorMaterial.ts'
-import {getGraphicsProfile} from '../../src/lib/rendering/graphicsQuality.ts'
+import {getGraphicsProfile} from '../../src/lib/rendering/graphicsMode.ts'
 
 for (const Material of [MarbleFloorMaterial, WoodFloorMaterial]) {
-  test(`${Material.name} allocates filtered, nonrecursive reflections only in quality`, () => {
+  test(`${Material.name} allocates filtered, nonrecursive reflections only in heavy`, () => {
     const texture = new Texture
-    const quality = new Material(texture, getGraphicsProfile(true).floorReflections)
-    const performance = new Material(texture, getGraphicsProfile(false).floorReflections)
+    const heavy = new Material(texture, getGraphicsProfile(true).floorReflections)
+    const fast = new Material(texture, getGraphicsProfile(false).floorReflections)
     try {
-      expect(quality.map).toBe(texture)
-      expect(quality.envMapIntensity).toBe(1)
-      expect(quality.outputNode).not.toBeNull()
-      expect(quality.reflection!.reflector.resolutionScale).toBe(1.5)
-      expect(quality.reflection!.reflector.generateMipmaps).toBe(true)
-      expect(quality.reflection!.reflector.bounces).toBe(false)
-      expect(performance.map).toBe(texture)
-      expect(performance.envMapIntensity).toBe(0)
-      expect(performance.reflection).toBeNull()
-      expect(performance.outputNode).toBeNull()
-      expect(performance.roughness).toBeGreaterThanOrEqual(0.7)
-      expect(performance.metalness).toBe(0)
+      expect(heavy.map).toBe(texture)
+      expect(heavy.envMapIntensity).toBe(1)
+      expect(heavy.outputNode).not.toBeNull()
+      expect(heavy.reflection!.reflector.resolutionScale).toBe(1.5)
+      expect(heavy.reflection!.reflector.generateMipmaps).toBe(true)
+      expect(heavy.reflection!.reflector.bounces).toBe(false)
+      expect(fast.map).toBe(texture)
+      expect(fast.envMapIntensity).toBe(0)
+      expect(fast.reflection).toBeNull()
+      expect(fast.outputNode).toBeNull()
+      expect(fast.roughness).toBeGreaterThanOrEqual(0.7)
+      expect(fast.metalness).toBe(0)
     } finally {
-      quality.dispose()
-      performance.dispose()
+      heavy.dispose()
+      fast.dispose()
       texture.dispose()
     }
   })
@@ -50,9 +50,9 @@ for (const Material of [MarbleFloorMaterial, WoodFloorMaterial]) {
     const first = new Material(texture, true)
     const reflection = first.reflection
     first.dispose()
-    const performance = new Material(texture, false)
-    expect(performance.reflection).toBeNull()
-    performance.dispose()
+    const fast = new Material(texture, false)
+    expect(fast.reflection).toBeNull()
+    fast.dispose()
     const next = new Material(texture, true)
     expect(next.reflection).not.toBe(reflection)
     expect(next.map).toBe(texture)
@@ -60,7 +60,7 @@ for (const Material of [MarbleFloorMaterial, WoodFloorMaterial]) {
     texture.dispose()
   })
 }
-test('quality restores the original polished marble and softer wood varnish', () => {
+test('heavy restores the original polished marble and softer wood varnish', () => {
   const texture = new Texture
   const wood = new WoodFloorMaterial(texture)
   const marble = new MarbleFloorMaterial(texture)
@@ -78,47 +78,47 @@ test('quality restores the original polished marble and softer wood varnish', ()
 })
 test('detailed marble varies polish and reflection blur only when reflections are active', () => {
   const texture = new Texture
-  const quality = new DetailedMarbleFloorMaterial(texture, true)
-  const performance = new DetailedMarbleFloorMaterial(texture, false)
+  const heavy = new DetailedMarbleFloorMaterial(texture, true)
+  const fast = new DetailedMarbleFloorMaterial(texture, false)
   try {
-    expect(quality.reflection).not.toBeNull()
-    expect(quality.roughnessNode).not.toBeNull()
-    expect(quality.outputNode).not.toBeNull()
-    expect(performance.reflection).toBeNull()
-    expect(performance.roughnessNode).toBeNull()
-    expect(performance.roughness).toBe(0.8)
+    expect(heavy.reflection).not.toBeNull()
+    expect(heavy.roughnessNode).not.toBeNull()
+    expect(heavy.outputNode).not.toBeNull()
+    expect(fast.reflection).toBeNull()
+    expect(fast.roughnessNode).toBeNull()
+    expect(fast.roughness).toBe(0.8)
   } finally {
-    quality.dispose()
-    performance.dispose()
+    heavy.dispose()
+    fast.dispose()
     texture.dispose()
   }
 })
-test('architectural plaster adds procedural color, roughness and relief only in quality', () => {
+test('architectural plaster adds procedural color, roughness and relief only in heavy', () => {
   const texture = new Texture
-  const quality = new ArchitecturalPlasterMaterial({
+  const heavy = new ArchitecturalPlasterMaterial({
     baseColor: '#658578',
     map: texture,
-    quality: true,
+    heavy: true,
     roughness: 0.9,
   })
-  const performance = new ArchitecturalPlasterMaterial({
+  const fast = new ArchitecturalPlasterMaterial({
     baseColor: '#658578',
     map: texture,
-    quality: false,
+    heavy: false,
     roughness: 0.9,
   })
   try {
-    expect(quality.map).toBeNull()
-    expect(quality.colorNode).not.toBeNull()
-    expect(quality.roughnessNode).not.toBeNull()
-    expect(quality.normalNode).not.toBeNull()
-    expect(performance.map).toBe(texture)
-    expect(performance.colorNode).toBeNull()
-    expect(performance.roughnessNode).toBeNull()
-    expect(performance.normalNode).toBeNull()
+    expect(heavy.map).toBeNull()
+    expect(heavy.colorNode).not.toBeNull()
+    expect(heavy.roughnessNode).not.toBeNull()
+    expect(heavy.normalNode).not.toBeNull()
+    expect(fast.map).toBe(texture)
+    expect(fast.colorNode).toBeNull()
+    expect(fast.roughnessNode).toBeNull()
+    expect(fast.normalNode).toBeNull()
   } finally {
-    quality.dispose()
-    performance.dispose()
+    heavy.dispose()
+    fast.dispose()
     texture.dispose()
   }
 })

@@ -16,7 +16,7 @@ import useSlopGalleryTelemetry from '#src/lib/telemetry/useSlopGalleryTelemetry.
 import useGalleryAI from '#src/lib/useGalleryAI.ts'
 import useGalleryCommands from '#src/lib/useGalleryCommands.ts'
 
-import GraphicsQuality from './GraphicsQuality.tsx'
+import GraphicsMode from './GraphicsMode.tsx'
 import World from './World.tsx'
 
 import css from './style.module.sass'
@@ -31,7 +31,7 @@ export default function App() {
   if (!gpu) {
     return <RenderError><h2>WebGPU is unavailable.</h2><p>{galleryTitle} requires native WebGPU. Open it in current Chrome or Edge with hardware acceleration enabled, using HTTPS or localhost.</p></RenderError>
   }
-  return <GraphicsQuality><Dropzone>
+  return <GraphicsMode><Dropzone>
     <main className={css.viewport} aria-label='Interactive 3D gallery'>
       <RenderBoundary onFailure={() => setRenderFailed(true)}><World /></RenderBoundary>
     </main>
@@ -39,5 +39,5 @@ export default function App() {
     <Hud />
     <Branch if={s.notice} not={s.panel}><Toast>{s.notice}</Toast></Branch>
     <Branch if={s.panel === 'map'}><Panel title='Floor plan'><Map /></Panel></Branch>
-  </Dropzone></GraphicsQuality>
+  </Dropzone></GraphicsMode>
 }

@@ -1,22 +1,22 @@
 import optis from 'optis'
 import readPermalink from 'read-permalink'
-import useGraphicsQuality from 'use-graphics-quality'
+import useGraphicsMode from 'use-graphics-mode'
 
-const normalizeGraphicsQuality = (value: unknown) => {
-  if (value === true || value === useGraphicsQuality.getName(true)) {
+const normalizeGraphicsMode = (value: unknown) => {
+  if (value === true || value === useGraphicsMode.getName(true)) {
     return true
   }
-  if (value === false || value === useGraphicsQuality.getName(false)) {
+  if (value === false || value === useGraphicsMode.getName(false)) {
     return false
   }
   return false
 }
-const graphicsQualitySchema = optis({
+const graphicsModeSchema = optis({
   defaults: {
     graphics: false,
   },
   normalizations: {
-    graphics: normalizeGraphicsQuality,
+    graphics: normalizeGraphicsMode,
   },
 })
 
@@ -28,18 +28,18 @@ type GraphicsProfile = {
   shadows: boolean
 }
 
-export function readGraphicsQuality(input: URL | string = typeof location === 'undefined' ? '' : location.href) {
-  return readPermalink(input, {schema: graphicsQualitySchema}).graphics
+export function readGraphicsMode(input: URL | string = typeof location === 'undefined' ? '' : location.href) {
+  return readPermalink(input, {schema: graphicsModeSchema}).graphics
 }
 
-const performanceProfile: GraphicsProfile = {
+const fastProfile: GraphicsProfile = {
   dpr: 1,
   noiseTextures: false,
   floorReflections: false,
   shadows: false,
   postprocessing: false,
 }
-const qualityProfile: GraphicsProfile = {
+const heavyProfile: GraphicsProfile = {
   get dpr() {
     const deviceDpr: unknown = Reflect.get(globalThis, 'devicePixelRatio')
     return typeof deviceDpr === 'number' ? deviceDpr : 1
@@ -51,6 +51,6 @@ const qualityProfile: GraphicsProfile = {
 }
 
 /** Select a stable gallery-specific budget without exposing enum keys to consumers. */
-export function getGraphicsProfile(isQuality: boolean) {
-  return isQuality ? qualityProfile : performanceProfile
+export function getGraphicsProfile(isHeavy: boolean) {
+  return isHeavy ? heavyProfile : fastProfile
 }

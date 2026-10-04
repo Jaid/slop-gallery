@@ -141,16 +141,16 @@ describe('placeholder presets', () => {
     const environment = new Texture
     try {
       for (const shading of Object.keys(placeholderPresets) as Array<keyof typeof placeholderPresets>) {
-        for (const quality of [false, true]) {
+        for (const heavy of [false, true]) {
           const material = createPlaceholderMaterial({
             color: '#d45e91',
             shading,
-          }, quality, quality ? environment : undefined)
+          }, heavy, heavy ? environment : undefined)
           try {
             expect(material.color.getHexString()).toBe(new Color('#d45e91').getHexString())
             expect(material.isMeshStandardNodeMaterial).toBe(true)
-            expect(material instanceof MeshPhysicalNodeMaterial).toBe(quality)
-            expect(material.envMap).toBe(quality ? environment : null)
+            expect(material instanceof MeshPhysicalNodeMaterial).toBe(heavy)
+            expect(material.envMap).toBe(heavy ? environment : null)
             if (shading === 'ghost') {
               expect(material.transparent).toBe(true)
               expect(material.opacity).toBe(0.34)

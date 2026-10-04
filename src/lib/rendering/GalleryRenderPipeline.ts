@@ -17,7 +17,7 @@ export type GalleryRenderPipelineOptions = {
     distance: () => number
     proximity: () => number
   }
-  quality?: boolean
+  heavy?: boolean
   zoom?: () => number
 }
 
@@ -26,7 +26,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
   readonly scenePass: ReturnType<typeof pass>
   private readonly effects: Array<{dispose: () => void}> = []
 
-  constructor(renderer: Renderer, scene: Object3D, camera: Camera, {contactDarkening = false, focus, quality = true, zoom = () => 0}: GalleryRenderPipelineOptions = {}) {
+  constructor(renderer: Renderer, scene: Object3D, camera: Camera, {contactDarkening = false, focus, heavy = true, zoom = () => 0}: GalleryRenderPipelineOptions = {}) {
     super(renderer)
     const own = <T extends {dispose: () => void}>(effect: T) => {
       this.effects.push(effect)
@@ -35,7 +35,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
     // GTAO and TRAA require single-sampled scene depth.
     const scenePass = own(pass(scene, camera, {samples: 0}))
     this.scenePass = scenePass
-    if (quality) {
+    if (heavy) {
       scenePass.setMRT(mrt({
         output,
         normal: normalView,
@@ -44,7 +44,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
     }
     const depth = scenePass.getTextureNode('depth')
     let current: Node<'vec4'> = scenePass.getTextureNode('output')
-    if (quality) {
+    if (heavy) {
       const ambientOcclusion = own(ao(depth, scenePass.getTextureNode('normal'), camera))
       ambientOcclusion.resolutionScale = 0.75
       ambientOcclusion.radius.value = contactDarkening ? 0.18 : 0.3
@@ -68,7 +68,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       current = bokeh.outputNode
       background = bokeh.backgroundNode
     }
-    if (quality) {
+    if (heavy) {
       // Preserve the existing inspection bloom treatment, but apply its depth mask BEFORE temporal reconstruction, not as a jagged stencil over an already antialiased image.
       const glow = own(bloom(current, 0.18, 0.25, 1))
       current = vec4(current.rgb.add(glow.rgb.mul(float(1).sub(background))), current.a)

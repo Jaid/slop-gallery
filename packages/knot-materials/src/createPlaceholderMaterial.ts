@@ -3,7 +3,7 @@ import type {MeshStandardNodeMaterialParameters, Texture} from 'three/webgpu'
 
 import {DoubleSide, MeshPhysicalNodeMaterial, MeshStandardNodeMaterial} from 'three/webgpu'
 
-/** Cheap lit surfaces also used permanently by performance graphics. */
+/** Cheap lit surfaces also used permanently by fast graphics. */
 export const placeholderPresets = {
   smooth: {
     metalness: 0,
@@ -42,13 +42,13 @@ export const placeholderPresets = {
 } satisfies Record<PlaceholderShading, MeshStandardNodeMaterialParameters>
 
 /** Physical detail is optional; no entry shader is evaluated for a placeholder. */
-export default function createPlaceholderMaterial(placeholder: KnotPlaceholder, quality = false, environment?: Texture) {
+export default function createPlaceholderMaterial(placeholder: KnotPlaceholder, heavy = false, environment?: Texture) {
   const options = {
     ...placeholderPresets[placeholder.shading],
     color: placeholder.color,
     envMap: environment ?? null,
   }
-  if (!quality) {
+  if (!heavy) {
     return new MeshStandardNodeMaterial(options)
   }
   const material = new MeshPhysicalNodeMaterial(options)

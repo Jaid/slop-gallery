@@ -2,7 +2,7 @@ import type {Texture} from 'three/webgpu'
 
 import FloorMaterial from './FloorMaterial.ts'
 
-/** Satin-varnished wood in quality; matte wood in performance. */
+/** Satin-varnished wood in heavy mode; matte wood in fast mode. */
 export default class WoodFloorMaterial extends FloorMaterial {
   constructor(map: Texture, reflections = true) {
     super(map, {

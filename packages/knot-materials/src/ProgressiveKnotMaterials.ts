@@ -28,15 +28,15 @@ export default class ProgressiveKnotMaterials {
   private readonly environment?: StudioEnvironment
   private readonly queue?: AsyncMaterials
 
-  constructor(renderer: WebGPURenderer, camera: Camera, entries: ReadonlyArray<KnotMaterialEntry>, constructors: ReadonlyMap<string, KnotMaterialConstructor>, quality: boolean) {
+  constructor(renderer: WebGPURenderer, camera: Camera, entries: ReadonlyArray<KnotMaterialEntry>, constructors: ReadonlyMap<string, KnotMaterialConstructor>, heavy: boolean) {
     this.resources = new KnotResources(entries)
-    const environment = quality ? new StudioEnvironment : undefined
+    const environment = heavy ? new StudioEnvironment : undefined
     this.placeholderMaterials = entries.map(entry => {
-      const material = createPlaceholderMaterial(entry.placeholder, quality, environment)
+      const material = createPlaceholderMaterial(entry.placeholder, heavy, environment)
       material.name = `${entry.id} ${entry.placeholder.shading} placeholder`
       return material
     })
-    if (!quality) {
+    if (!heavy) {
       this.fullMaterials = []
       this.refs = repeat(noopRef, entries.length)
       this.observers = repeat(noopRender, entries.length)

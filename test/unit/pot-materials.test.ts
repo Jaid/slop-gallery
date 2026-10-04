@@ -2,9 +2,9 @@ import {expect, test} from 'bun:test'
 
 import decorationResources from '../../src/lib/gallery/plantDecorations/DecorationResources.ts'
 import PotMaterials from '../../src/lib/materials/PotMaterials.ts'
-import {getGraphicsProfile} from '../../src/lib/rendering/graphicsQuality.ts'
+import {getGraphicsProfile} from '../../src/lib/rendering/graphicsMode.ts'
 
-test('performance pots and soil have warm, matte colors without noise maps', () => {
+test('fast pots and soil have warm, matte colors without noise maps', () => {
   const materials = new PotMaterials(getGraphicsProfile(false).noiseTextures)
   try {
     expect(materials.shells.atelier.color.getHexString()).toBe('b47249')
@@ -21,7 +21,7 @@ test('performance pots and soil have warm, matte colors without noise maps', () 
     materials.dispose()
   }
 })
-test('quality pots restore clay color, relief and roughness maps and detailed soil', () => {
+test('heavy pots restore clay color, relief and roughness maps and detailed soil', () => {
   const materials = new PotMaterials(getGraphicsProfile(true).noiseTextures)
   try {
     const clay = materials.shells.atelier
@@ -32,7 +32,7 @@ test('quality pots restore clay color, relief and roughness maps and detailed so
     expect(materials.soil.map).not.toBeNull()
     expect(materials.soil.bumpMap).not.toBeNull()
     expect(materials.soil.bumpScale).toBe(0.022)
-    // Textured colors are not tinted a second time by the performance base color.
+    // Textured colors are not tinted a second time by the fast base color.
     expect(clay.color.getHexString()).toBe('ffffff')
     expect(materials.soil.color.getHexString()).toBe('ffffff')
   } finally {
@@ -42,14 +42,14 @@ test('quality pots restore clay color, relief and roughness maps and detailed so
 test('switching finishes reuses shared geometry and caches independent material variants', () => {
   const resources = decorationResources()
   const pot = resources.pot('atelier')
-  const performance = resources.potMaterials(false)
-  const quality = resources.potMaterials(true)
-  expect(performance).not.toBe(quality)
-  expect(resources.potMaterials(false)).toBe(performance)
-  expect(resources.potMaterials(true)).toBe(quality)
+  const fast = resources.potMaterials(false)
+  const heavy = resources.potMaterials(true)
+  expect(fast).not.toBe(heavy)
+  expect(resources.potMaterials(false)).toBe(fast)
+  expect(resources.potMaterials(true)).toBe(heavy)
   expect(resources.pot('atelier')).toBe(pot)
-  expect(performance.soil.map).toBeNull()
-  expect(quality.soil.map).not.toBeNull()
+  expect(fast.soil.map).toBeNull()
+  expect(heavy.soil.map).not.toBeNull()
 })
 test('each finish set releases exactly its own materials and textures', () => {
   for (const noiseTextures of [false, true]) {

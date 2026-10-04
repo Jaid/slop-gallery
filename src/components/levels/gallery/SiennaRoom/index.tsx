@@ -3,20 +3,20 @@ import type {Texture} from 'three/webgpu'
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
-import {useGraphicsQualityValue} from 'use-graphics-quality'
+import {useGraphicsModeValue} from 'use-graphics-mode'
 
 import Chandelier from '#component/levels/gallery/Chandelier'
 import Box from '#src/components/Scene/primitives.tsx'
 import {rooms, useGallery, walls} from '#src/lib/gallery.ts'
 import {siennaRugSize} from '#src/lib/gallery/sienna.ts'
 import RoomFloorTextures from '#src/lib/materials/RoomFloorTextures.ts'
-import {getGraphicsProfile} from '#src/lib/rendering/graphicsQuality.ts'
+import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
 const room = rooms.find(candidate => candidate.id === 'sienna')!
 
 export default function SiennaRoom({wood}: {wood: Texture}) {
   const resetEpoch = useGallery(s => s.resetEpoch)
-  const {floorReflections} = useGraphicsQualityValue(getGraphicsProfile)
+  const {floorReflections} = useGraphicsModeValue(getGraphicsProfile)
   const floor = useDisposable(useMemo(() => new RoomFloorTextures(...room.size, ...siennaRugSize), []))
   return <>
     <group position={[room.center[0], 0, room.center[1]]}>

@@ -3,14 +3,14 @@ import {DoubleSide, MeshPhysicalNodeMaterial} from 'three/webgpu'
 
 /** Dielectric water with animated ripples, moving flow streaks and aerated edges. */
 export default class FountainWaterMaterial extends MeshPhysicalNodeMaterial {
-  constructor(stream = false, quality = true) {
+  constructor(stream = false, heavy = true) {
     const transmission = stream ? 0.8 : 0.55
     super({
       color: '#76b8ac',
       metalness: 0,
       roughness: stream ? 0.045 : 0.075,
       ior: 1.333,
-      transmission: quality ? transmission : 0,
+      transmission: heavy ? transmission : 0,
       thickness: stream ? 0.045 : 0.2,
       attenuationColor: '#47998e',
       attenuationDistance: 1.5,
@@ -18,7 +18,7 @@ export default class FountainWaterMaterial extends MeshPhysicalNodeMaterial {
       opacity: stream ? 0.7 : 1,
       depthWrite: !stream,
       side: DoubleSide,
-      envMapIntensity: quality ? 1.3 : 0.6,
+      envMapIntensity: heavy ? 1.3 : 0.6,
       clearcoat: 0.5,
       clearcoatRoughness: 0.07,
     })

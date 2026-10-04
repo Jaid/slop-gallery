@@ -35,7 +35,7 @@
         "three-fiber-game": "workspace:*",
         "three-mesh-bvh": "0.9.15",
         "use-audio-queue": "workspace:*",
-        "use-graphics-quality": "workspace:*",
+        "use-graphics-mode": "workspace:*",
         "use-narrator": "workspace:*",
         "use-pause-menu": "workspace:*",
         "victoria-browser-client": "0.3.0",
@@ -307,8 +307,8 @@
         "three": "^0.186.1",
       },
     },
-    "packages/use-graphics-quality": {
-      "name": "use-graphics-quality",
+    "packages/use-graphics-mode": {
+      "name": "use-graphics-mode",
       "version": "0.1.0",
       "peerDependencies": {
         "react": "^19.3.0",
@@ -1779,7 +1779,7 @@
 
     "use-audio-queue": ["use-audio-queue@workspace:packages/use-narrator/packages/use-audio-queue"],
 
-    "use-graphics-quality": ["use-graphics-quality@workspace:packages/use-graphics-quality"],
+    "use-graphics-mode": ["use-graphics-mode@workspace:packages/use-graphics-mode"],
 
     "use-narrator": ["use-narrator@workspace:packages/use-narrator"],
 

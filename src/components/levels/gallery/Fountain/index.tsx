@@ -2,7 +2,7 @@ import {RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
-import useGraphicsQuality from 'use-graphics-quality'
+import useGraphicsMode from 'use-graphics-mode'
 
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
@@ -13,7 +13,7 @@ import FountainWaterMaterial from '#src/lib/materials/FountainWaterMaterial.ts'
 import LimestoneMaterial from '#src/lib/materials/LimestoneMaterial.ts'
 
 export default function Fountain() {
-  const isQuality = useGraphicsQuality()
+  const isHeavy = useGraphicsMode()
   const geometry = useDisposable(useMemo(() => new FountainGeometry, []))
   const collision = colliderGeometry(geometry.stone)
   const stone = useDisposable(useMemo(() => new LimestoneMaterial, []))
@@ -23,8 +23,8 @@ export default function Fountain() {
     metalness: 0.85,
   }), []))
   const spray = useDisposable(useMemo(() => new FountainSpray, []))
-  const pool = useDisposable(useMemo(() => new FountainWaterMaterial(false, isQuality), [isQuality]))
-  const stream = useDisposable(useMemo(() => new FountainWaterMaterial(true, isQuality), [isQuality]))
+  const pool = useDisposable(useMemo(() => new FountainWaterMaterial(false, isHeavy), [isHeavy]))
+  const stream = useDisposable(useMemo(() => new FountainWaterMaterial(true, isHeavy), [isHeavy]))
   return <group name='lobby-fountain' position={fountain.position}>
     <RigidBody colliders={false} type='fixed'>
       <MeshSurfaceCollider args={collision} />
