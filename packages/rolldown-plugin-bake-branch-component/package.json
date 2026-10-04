@@ -20,14 +20,14 @@
     "babel-plugin-bake-branch-component": "workspace:*"
   },
   "peerDependencies": {
-    "@rolldown/plugin-babel": "^0.2.4",
-    "rolldown": "^1.2.12"
+    "rolldown": "^1.2.12",
+    "@rolldown/plugin-babel": "^0.2.4"
   },
-  "workspaces": [
-    "packages/*"
-  ],
   "devDependencies": {
     "fs-extra": "11.4.1",
     "vite": "8.3.2"
-  }
+  },
+  "workspaces": [
+    "packages/*"
+  ]
 }
