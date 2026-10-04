@@ -20,16 +20,16 @@
     "babel-plugin-hoist-popular-constants": "workspace:*"
   },
   "peerDependencies": {
-    "@babel/core": "^8.0.6",
-    "rolldown": "^1.2.12"
+    "rolldown": "^1.2.12",
+    "@babel/core": "^8.0.6"
   },
-  "workspaces": [
-    "packages/*",
-    "packages/babel-plugin-hoist-popular-constants/packages/*"
-  ],
   "devDependencies": {
     "fs-extra": "11.4.1",
     "terser": "5.51.2",
     "vite": "8.3.2"
-  }
+  },
+  "workspaces": [
+    "packages/*",
+    "packages/babel-plugin-hoist-popular-constants/packages/*"
+  ]
 }
