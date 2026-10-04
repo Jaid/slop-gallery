@@ -90,7 +90,7 @@
     "babel-plugin-react-compiler": "1.0.0",
     "browserslist": "4.29.3",
     "caniuse-lite": "1.0.30001814",
-    "cssnano-preset-advanced": "9.1.3",
+    "cssnano-preset-advanced": "9.1.4",
     "eslint": "10.12.0",
     "eslint-config-jaid": "34.0.0",
     "eslint-plugin-branch-component": "workspace:*",
