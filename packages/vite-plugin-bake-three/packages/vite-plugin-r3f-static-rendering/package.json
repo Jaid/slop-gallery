@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "disposable-lifetime": "workspace:*",
-    "magic-string": "^1.4.2",
+    "magic-string": "^1.4.3",
     "vite-plugin-bake-core": "workspace:*",
     "@babel/traverse": "^8.0.6",
     "@babel/types": "^8.0.6"
@@ -30,7 +30,7 @@
   "peerDependencies": {
     "react": "^19.3.0",
     "three": "^0.186.1",
-    "vite": "^8.3.2",
+    "vite": "^8.3.3",
     "@react-three/fiber": "^10.0.0-canary.fd3335d"
   },
   "files": [

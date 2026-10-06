@@ -21,6 +21,6 @@
   },
   "devDependencies": {
     "fs-extra": "11.4.1",
-    "vite": "8.3.2"
+    "vite": "8.3.3"
   }
 }
