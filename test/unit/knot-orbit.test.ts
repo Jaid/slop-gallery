@@ -19,6 +19,9 @@ function settle(orbit: OrbitInspection) {
     orbit.update(center, 1 / 60)
   }
 }
+function aimError(camera: PerspectiveCamera, target: Vector3) {
+  return camera.getWorldDirection(new Vector3).angleTo(target.clone().sub(camera.position).normalize())
+}
 describe('hold-to-orbit camera', () => {
   test('approaches smoothly, narrows FOV and stays aimed at the Knot', () => {
     const {camera, orbit} = setup()
@@ -84,6 +87,60 @@ describe('hold-to-orbit camera', () => {
     orbit.addInput(10, 10)
     settle(orbit)
     expect(camera.fov).toBe(75)
+  })
+  test('keeps the Knot centered and at a steady distance during fast orbits', () => {
+    const {camera, orbit} = setup()
+    settle(orbit)
+    const distance = camera.position.distanceTo(center)
+    for (let i = 0; i < 120; i++) {
+      // Flick-speed input: 20 rad/s yaw with alternating pitch.
+      orbit.addInput(20 / 60, (i < 60 ? 6 : -6) / 60)
+      orbit.update(center, 1 / 60)
+      expect(aimError(camera, center)).toBeLessThan(1e-6)
+      expect(camera.position.distanceTo(center)).toBeCloseTo(distance, 5)
+    }
+  })
+  test('follows a moving Knot without letting it drift off-center', () => {
+    const {camera, orbit} = setup()
+    settle(orbit)
+    const moving = center.clone()
+    for (let i = 0; i < 60; i++) {
+      moving.x += 0.05
+      orbit.addInput(0.1, 0)
+      orbit.update(moving, 1 / 60)
+      expect(aimError(camera, moving)).toBeLessThan(1e-6)
+    }
+  })
+  test('eases an initial aim offset out monotonically, independent of orbit input', () => {
+    const {camera, orbit} = setup()
+    camera.rotateY(0.4)
+    let previous = aimError(camera, center)
+    for (let i = 0; i < 120; i++) {
+      orbit.addInput(0.2, 0)
+      orbit.update(center, 1 / 60)
+      const error = aimError(camera, center)
+      expect(error).toBeLessThan(previous + 1e-6)
+      previous = error
+    }
+    expect(previous).toBeLessThan(1e-4)
+  })
+  test('resumes orbiting from the current pose after an interrupted return', () => {
+    const {camera, orbit} = setup()
+    orbit.addInput(Math.PI / 2, 0)
+    settle(orbit)
+    orbit.release()
+    for (let i = 0; i < 10; i++) {
+      orbit.update(center, 1 / 60)
+    }
+    const before = camera.position.clone()
+    orbit.returning = false
+    orbit.update(center, 1 / 60)
+    const step = camera.position.distanceTo(before)
+    settle(orbit)
+    // A smooth resume covers only a blend fraction of the way, never snapping to the orbit pose.
+    expect(step).toBeGreaterThan(0)
+    expect(step).toBeLessThan(camera.position.distanceTo(before) * 0.25)
+    expect(aimError(camera, center)).toBeLessThan(1e-6)
   })
   test('keeps the same approach at different frame rates and supports portrait aspect ratios', () => {
     const a = setup()

@@ -60,10 +60,10 @@ describe('knot inspection renders', () => {
     expect(frameAtSourceSecond(10.5).distanceScale).toBe(1)
     expect(frameAtSourceSecond(12.5).distanceScale).toBe(1)
     expect(frameAtSourceSecond(14.5).distanceScale).toBe(1.8)
-    expect(frameAtSourceSecond(1.5).elevation).toBeCloseTo(inspectionFarTiltRadians)
-    expect(frameAtSourceSecond(5.5).elevation).toBeCloseTo(inspectionNearTiltRadians)
-    expect(frameAtSourceSecond(9.5).elevation).toBeCloseTo(-inspectionNearTiltRadians)
-    expect(frameAtSourceSecond(13.5).elevation).toBeCloseTo(-inspectionFarTiltRadians)
+    expect(frameAtSourceSecond(1.5).elevation).toBeCloseTo(-inspectionFarTiltRadians)
+    expect(frameAtSourceSecond(5.5).elevation).toBeCloseTo(-inspectionNearTiltRadians)
+    expect(frameAtSourceSecond(9.5).elevation).toBeCloseTo(inspectionNearTiltRadians)
+    expect(frameAtSourceSecond(13.5).elevation).toBeCloseTo(inspectionFarTiltRadians)
     for (const second of [0, 2.5, 3.5, 4.5, 6.5, 7.5, 8.5, 10.5, 11.5, 12.5, 14.5, 15.5]) {
       expect(frameAtSourceSecond(second).elevation).toBeCloseTo(0, 10)
     }

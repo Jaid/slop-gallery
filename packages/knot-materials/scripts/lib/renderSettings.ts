@@ -21,8 +21,8 @@ export const inspectionAnimationSize = 512
 export const inspectionVideoSize = 1080
 export const inspectionVideoRenderSize = 2048
 export const inspectionNearDistanceScale = 0.5
-export const inspectionNearTiltRadians = Math.PI / 18
-export const inspectionFarTiltRadians = Math.PI / 9
+export const inspectionNearTiltRadians = Math.PI / 12
+export const inspectionFarTiltRadians = Math.PI / 6
 export const inspectionAnimationOffsetSeconds = 13.5
 export const previewBaseFov = 50
 export const previewSupersampling = 2
@@ -94,16 +94,16 @@ const inspectionDistanceScale = (seconds: number) => {
 }
 const inspectionElevation = (seconds: number) => {
   if (seconds >= 2 && seconds < 4) {
-    return movementTilt(seconds, 2, 1, inspectionNearTiltRadians)
+    return movementTilt(seconds, 2, -1, inspectionNearTiltRadians)
   }
   if (seconds >= 6 && seconds < 8) {
-    return movementTilt(seconds, 6, -1, inspectionNearTiltRadians)
+    return movementTilt(seconds, 6, 1, inspectionNearTiltRadians)
   }
   if (seconds >= 10 && seconds < 12) {
-    return movementTilt(seconds, 10, -1, inspectionFarTiltRadians)
+    return movementTilt(seconds, 10, 1, inspectionFarTiltRadians)
   }
   if (seconds >= 14) {
-    return movementTilt(seconds, 14, 1, inspectionFarTiltRadians)
+    return movementTilt(seconds, 14, -1, inspectionFarTiltRadians)
   }
   return 0
 }
