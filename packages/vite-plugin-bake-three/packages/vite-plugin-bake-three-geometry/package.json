@@ -18,13 +18,13 @@
   },
   "dependencies": {
     "vite-plugin-bake-core": "workspace:*",
-    "@babel/traverse": "^8.0.6",
+    "@babel/traverse": "^8.0.7",
     "@babel/types": "^8.0.6"
   },
   "peerDependencies": {
     "three": "^0.186.1",
     "three-mesh-bvh": "latest",
-    "vite": "^8.3.3"
+    "vite": "^8.3.4"
   },
   "peerDependenciesMeta": {
     "three-mesh-bvh": {

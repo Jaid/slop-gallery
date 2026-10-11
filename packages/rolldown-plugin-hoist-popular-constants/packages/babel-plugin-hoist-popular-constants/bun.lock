@@ -9,7 +9,7 @@
         "sort-shortest-levenshtein": "workspace:*",
       },
       "peerDependencies": {
-        "@babel/core": "^8.0.6",
+        "@babel/core": "^8.0.7",
       },
     },
     "packages/sort-shortest-levenshtein": {

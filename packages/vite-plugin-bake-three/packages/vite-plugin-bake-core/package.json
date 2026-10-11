@@ -21,17 +21,17 @@
   "dependencies": {
     "magic-string": "^1.4.3",
     "math": "0.1.0",
-    "@babel/core": "8.0.6",
+    "@babel/core": "8.0.7",
     "@babel/generator": "^8.0.6",
-    "@babel/parser": "^8.0.6",
+    "@babel/parser": "^8.0.7",
     "@babel/plugin-transform-typescript": "^8.0.6",
-    "@babel/traverse": "^8.0.6",
+    "@babel/traverse": "^8.0.7",
     "@babel/types": "^8.0.6"
   },
   "peerDependencies": {
     "three": "^0.186.1",
     "three-bvh-csg": "latest",
-    "vite": "^8.3.3"
+    "vite": "^8.3.4"
   },
   "peerDependenciesMeta": {
     "three": {
