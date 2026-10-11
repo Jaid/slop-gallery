@@ -168,7 +168,7 @@ test('moving the player reprioritizes queued meshes without needing another visi
     f.dispose()
   }
 })
-test('fast mode keeps only lit placeholder materials and never constructs full knot materials', async () => {
+test('fast mode keeps cheap lit placeholders but still constructs full knot materials', async () => {
   const entry = knotsById.get('lenticular_mirage')!
   let constructions = 0
   class TrackedMaterial extends KnotMaterial {
@@ -179,11 +179,13 @@ test('fast mode keeps only lit placeholder materials and never constructs full k
   }
   const materials = new ProgressiveKnotMaterials({} as WebGPURenderer, new PerspectiveCamera, [entry], new Map([[entry.id, TrackedMaterial]]), false)
   try {
-    expect(constructions).toBe(0)
-    expect(materials.fullMaterials).toHaveLength(0)
+    expect(constructions).toBe(1)
+    expect(materials.fullMaterials).toHaveLength(1)
     expect(materials.placeholderMaterials).toHaveLength(1)
     const surface = materials.placeholderMaterials[0]
     expect(surface.isMeshStandardNodeMaterial).toBe(true)
+    expect(surface).not.toHaveProperty('isMeshPhysicalNodeMaterial')
+    expect(surface.envMap).toBeNull()
     expect(surface.color.getHexString()).toBe(new Color(entry.placeholder.color).getHexString())
     expect(surface.metalness).toBe(0)
     expect(surface.roughness).toBe(0.45)

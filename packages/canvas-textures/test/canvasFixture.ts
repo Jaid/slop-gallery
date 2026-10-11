@@ -28,6 +28,7 @@ export function canvasFixture() {
     const context = {
       canvas,
       fillRect: mock(() => {}),
+      scale: mock(() => {}),
       getImageData: mock(() => {
         const size = canvas.width * canvas.height * 4
         lastPixels = new Uint8ClampedArray(new ArrayBuffer(size + 16), 8, size)

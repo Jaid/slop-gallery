@@ -24,6 +24,8 @@ const texture = renderCanvasTexture({
 // texture.dispose() when that material no longer needs it.
 ```
 
+`resolution` (default 1) scales the backing canvas, for example 0.5 for a quarter of the pixels, while `draw` keeps using the logical `width`/`height` coordinates through a pre-scaled context. The transform stays on the texture’s context, so later partial redraws of `texture.image` also use logical coordinates.
+
 GPU rasters use an sRGB canvas without readback optimization. Drawing is synchronous. The returned ordinary Three texture owns that canvas until disposal. No `getImageData()`, CPU pixel buffer, or `createImageBitmap(canvas)` snapshot is involved. Snapshotting a GPU-backed canvas can synchronously block on GPU work even though the API returns a promise.
 
 Three's WebGPU backend uploads the canvas through `copyExternalImageToTexture()`, not the `DataTexture` / `writeTexture()` path. This is not a guarantee of zero-copy transport. `texture.dispose()` releases canvas storage exactly once. Do not reuse a disposed texture.
@@ -111,6 +113,6 @@ CPU algorithms remain independent: `ReadbackCanvas` requests `willReadFrequently
 | `color` | `true` | sRGB color pixels; false leaves bump/height data in NoColorSpace. |
 | `name` | empty | Three texture label for diagnostics. |
 
-Orientation remains top-to-bottom canvas images with `flipY = true` for Three UVs; alpha remains unpremultiplied and preserved. Removing mipmaps reduces storage/generation work, but can cause distance/angle shimmering. The package does not lower resolution, cache final textures, schedule GPU uploads, move work to workers, or invent asset fallback policy. It currently uses HTMLCanvasElement and requires a browser document at raster time, not import time.
+Orientation remains top-to-bottom canvas images with `flipY = true` for Three UVs; alpha remains unpremultiplied and preserved. Removing mipmaps reduces storage/generation work, but can cause distance/angle shimmering. The package does not choose a resolution on its own, cache final textures, schedule GPU uploads, move work to workers, or invent asset fallback policy. It currently uses HTMLCanvasElement and requires a browser document at raster time, not import time.
 
 Run `bun test ./packages/canvas-textures/test` from the workspace root.

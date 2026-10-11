@@ -16,6 +16,7 @@ import useGraphicsMode from 'use-graphics-mode'
 import InteractiveObject from '#component/InteractiveObject'
 import {narrate} from '#src/lib/gallery/actions.ts'
 import {knotGalleryBounds} from '#src/lib/gallery/knotGallery.ts'
+import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
 import drawFace, {candidateSignBackground, candidateSignFontSize, candidateSignTextureSize} from './drawFace.ts'
 
@@ -34,6 +35,7 @@ export default function KnotCandidateSign({bay}: {bay: KnotBay}) {
   const texture = useCanvasTexture({
     width: candidateSignTextureSize[0],
     height: candidateSignTextureSize[1],
+    resolution: getGraphicsProfile(isHeavy).canvasTextureResolution,
     name: `Candidate sign: ${candidate.title}`,
     mipmaps: false,
     prepare: async () => {

@@ -19,6 +19,7 @@ import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.ts
 import {activateKnotSign, knotRarityEditor} from '#src/levels/knottingham/rarity.ts'
 import {signSupportMaterial} from '#src/lib/materials/SignMetalMaterial.ts'
 import InstancedPropVisuals from '#src/lib/physics/InstancedPropVisuals.ts'
+import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
 import drawLabel, {labelAtlasColumns, labelBackground, labelFonts, labelHeight, labelWidth, updateRarityAtlas} from './drawLabel.ts'
 
@@ -26,6 +27,7 @@ const atlasRows = Math.ceil(knotExhibition.length / labelAtlasColumns)
 /** One complete face atlas and two instanced batches: faces and physical supports. */
 export default function KnotLabels() {
   const isHeavy = useGraphicsMode()
+  const resolution = getGraphicsProfile(isHeavy).canvasTextureResolution
   const ratings = useSyncExternalStore(knotRarityEditor.subscribe, knotRarityEditor.getSnapshot, knotRarityEditor.getSnapshot)
   const supportMaterial = useDisposable(useMemo(() => signSupportMaterial(isHeavy), [isHeavy]))
   const resources = useDisposable(useMemo(() => {
@@ -93,6 +95,7 @@ export default function KnotLabels() {
   const atlas = useCanvasTexture(useMemo(() => ({
     width: labelAtlasColumns * labelWidth,
     height: atlasRows * labelHeight,
+    resolution,
     name: 'Knot nameplate atlas',
     mipmaps: false,
     prepare: async () => {
@@ -125,7 +128,7 @@ export default function KnotLabels() {
         drawLabel(context, exhibit, index % labelAtlasColumns * labelWidth, Math.floor(index / labelAtlasColumns) * labelHeight, icons.get(exhibit.candidate.icon))
       }
     },
-  }), []))
+  }), [resolution]))
   useEffect(() => {
     resources.setAtlas(atlas)
   }, [resources, atlas])

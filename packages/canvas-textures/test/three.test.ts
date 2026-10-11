@@ -47,6 +47,36 @@ test('signage explicitly disables mip generation with consistent linear filterin
   expect(texture.version).toBe(1)
   texture.dispose()
 })
+test('lower resolutions shrink the backing canvas while drawing keeps logical coordinates', () => {
+  const draw = mock(() => {})
+  const texture = renderCanvasTexture({
+    width: 1024,
+    height: 246,
+    resolution: 0.5,
+    mipmaps: false,
+    draw,
+  })
+  expect(texture.image.width).toBe(512)
+  expect(texture.image.height).toBe(123)
+  expect(fixture.surfaces[0].context.scale).toHaveBeenCalledWith(0.5, 0.5)
+  expect(draw).toHaveBeenCalledTimes(1)
+  texture.dispose()
+  expect(() => renderCanvasTexture({
+    width: 4,
+    height: 2,
+    resolution: 0,
+    draw() {},
+  })).toThrow(RangeError)
+})
+test('full resolution leaves the context transform untouched', () => {
+  const texture = renderCanvasTexture({
+    width: 4,
+    height: 2,
+    draw() {},
+  })
+  expect(fixture.surfaces[0].context.scale).not.toHaveBeenCalled()
+  texture.dispose()
+})
 test('raw bump maps retain non-color interpretation and caller-owned buffers without copying', () => {
   const data = new Uint8Array(32)
   const texture = textureFromPixels({

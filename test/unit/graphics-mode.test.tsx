@@ -26,6 +26,7 @@ test('the provider exposes the default scene budget during SSR', () => {
   expect(html).toStartWith('<span>false:')
   expect(html).toContain('postprocessing&quot;:false')
   expect(getGraphicsProfile(false)).toEqual({
+    canvasTextureResolution: 0.5,
     dpr: 1,
     noiseTextures: false,
     floorReflections: false,
@@ -33,6 +34,7 @@ test('the provider exposes the default scene budget during SSR', () => {
     postprocessing: false,
   })
   expect(getGraphicsProfile(true)).toEqual({
+    canvasTextureResolution: 1,
     dpr: 1,
     noiseTextures: true,
     floorReflections: true,

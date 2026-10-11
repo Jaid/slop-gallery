@@ -1,4 +1,4 @@
-import type {CanvasDraw, CanvasSize} from '../types.ts'
+import type {CanvasRaster, CanvasSize} from '../types.ts'
 
 export type CanvasTextureOptions = {
   anisotropy?: number
@@ -8,8 +8,8 @@ export type CanvasTextureOptions = {
   mipmaps?: boolean
   name?: string
 }
-export type CanvasTextureRaster = CanvasSize & CanvasTextureOptions & {draw: CanvasDraw}
-export type CanvasTextureRecipe<T> = CanvasSize & CanvasTextureOptions & {
+export type CanvasTextureRaster = CanvasRaster & CanvasTextureOptions
+export type CanvasTextureRecipe<T> = CanvasSize & CanvasTextureOptions & Pick<CanvasRaster, 'resolution'> & {
   /** Release decoded images or other preparation resources after drawing or cancellation. */
   disposeInputs?: (inputs: T) => void
   draw: (context: CanvasRenderingContext2D, inputs: T) => void

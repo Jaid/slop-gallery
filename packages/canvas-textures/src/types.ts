@@ -8,7 +8,11 @@ export type CanvasPixels = CanvasSize & {data: Uint8Array}
 
 /** Draw synchronously; resolve fonts, images and other dependencies before calling. */
 export type CanvasDraw = (context: CanvasRenderingContext2D) => void
-export type CanvasRaster = CanvasSize & {draw: CanvasDraw}
+export type CanvasRaster = CanvasSize & {
+  draw: CanvasDraw
+  /** backing pixels per logical unit; drawing keeps logical coordinates through a pre-scaled context */
+  resolution?: number
+}
 export type CanvasFont = {
   font: string
   text?: string

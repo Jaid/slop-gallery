@@ -10,10 +10,12 @@ import {knotBillboardPhysics} from 'knot-materials/knotBillboardPhysics.ts'
 import {knotPreviewMountY, knotPreviewPanelOffsetY, knotPreviewTextureLayout} from 'knot-materials/KnotPreviewLayout.ts'
 import {useMemo} from 'react'
 import {MeshBasicNodeMaterial} from 'three/webgpu'
+import useGraphicsMode from 'use-graphics-mode'
 
 import InteractiveObject from '#component/InteractiveObject'
 import Stand, {Sign} from '#component/levels/knottingham/KnotBillboardSupport'
 import {narrate} from '#src/lib/gallery/actions.ts'
+import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
 import drawPreview, {knotPreviewBackground, knotPreviewCaptionFontFamily, knotPreviewCaptionFontSize, knotPreviewCaptionFontWeight} from './drawPreview.ts'
 import {releaseCanvases} from './RuntimeKnotIconRenderer.ts'
@@ -24,9 +26,11 @@ export default function KnotPreviewSign({bay, renderer}: {
   renderer: RuntimeKnotIconRenderer
 }) {
   const layout = knotPreviewTextureLayout(bay.finishes.length)
+  const resolution = getGraphicsProfile(useGraphicsMode()).canvasTextureResolution
   const texture = useCanvasTexture(useMemo(() => ({
     width: layout.width,
     height: layout.height,
+    resolution,
     name: `Knot preview: ${bay.candidate.title}`,
     mipmaps: false,
     prepare: async (signal: AbortSignal) => {
@@ -43,7 +47,7 @@ export default function KnotPreviewSign({bay, renderer}: {
     },
     disposeInputs: releaseCanvases,
     draw: (context: CanvasRenderingContext2D, images: ReadonlyMap<string, HTMLCanvasElement>) => drawPreview(context, bay, images),
-  }), [bay, layout.height, layout.width, renderer]))
+  }), [bay, layout.height, layout.width, renderer, resolution]))
   const face = useDisposable(useMemo(() => new MeshBasicNodeMaterial({
     color: texture ? '#ffffff' : knotPreviewBackground,
     map: texture,

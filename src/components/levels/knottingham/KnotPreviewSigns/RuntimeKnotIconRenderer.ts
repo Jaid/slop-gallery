@@ -1,7 +1,6 @@
 import type {KnotEntry, KnotMaterialConstructor} from 'knot-materials/types.ts'
 import type {NodeFrame} from 'three/webgpu'
 
-import createPlaceholderMaterial from 'knot-materials/createPlaceholderMaterial.ts'
 import {createKnotGeometry} from 'knot-materials/geometry.ts'
 import StudioEnvironment from 'knot-materials/StudioEnvironment.ts'
 import {WebgpuRenderer} from 'three-fiber-game'
@@ -12,9 +11,14 @@ type OfflineRenderer = WebgpuRenderer & {
   _nodes: {nodeFrame: NodeFrame}
 }
 
-const iconSize = 640
-const supersampling = 2
-const renderSize = iconSize * supersampling
+const heavyIcon = {
+  size: 640,
+  supersampling: 2,
+}
+const fastIcon = {
+  size: 320,
+  supersampling: 1,
+}
 const previewFov = 50
 const animationKey = '_animation' as const
 const nodesKey = '_nodes' as const
@@ -47,35 +51,40 @@ function releaseCanvases(images: ReadonlyMap<string, HTMLCanvasElement>) {
   }
 }
 
-/** One detached WebGPU renderer serializes runtime knot screenshots for every billboard. */
+/** One detached WebGPU renderer serializes runtime knot screenshots for every billboard; fast graphics renders the same shaders at a lower resolution. */
 export default class RuntimeKnotIconRenderer {
   private active?: Mesh
   private readonly camera = new PerspectiveCamera(previewFov, 1, 0.05, 100)
   private disposal?: Promise<void>
   private disposed = false
-  private readonly environment?: StudioEnvironment
+  private readonly environment = new StudioEnvironment
   private readonly errors: Array<string> = []
   private readonly geometry = createKnotGeometry()
+  private readonly iconSize: number
   private initialization?: Promise<void>
   private readonly renderer = new WebgpuRenderer({
     antialias: true,
     alpha: true,
   })
+  private readonly renderSize: number
   private readonly scene = new Scene
   private tail: Promise<void> = Promise.resolve()
-  private readonly target = new RenderTarget(renderSize, renderSize, {
-    type: UnsignedByteType,
-    samples: 4,
-  })
+  private readonly target: RenderTarget
   private readonly validationTarget = new RenderTarget(32, 32, {type: HalfFloatType})
 
   constructor(
     private readonly constructors: ReadonlyMap<string, KnotMaterialConstructor>,
-    private readonly heavy: boolean,
+    heavy: boolean,
   ) {
-    this.environment = heavy ? new StudioEnvironment : undefined
+    const icon = heavy ? heavyIcon : fastIcon
+    this.iconSize = icon.size
+    this.renderSize = icon.size * icon.supersampling
+    this.target = new RenderTarget(this.renderSize, this.renderSize, {
+      type: UnsignedByteType,
+      samples: 4,
+    })
     this.target.texture.colorSpace = SRGBColorSpace
-    this.renderer.setSize(renderSize, renderSize, false)
+    this.renderer.setSize(this.renderSize, this.renderSize, false)
     this.renderer.toneMapping = ACESFilmicToneMapping
     this.renderer.setClearColor(0, 0)
     const key = new DirectionalLight('#fff0d7', 2.3)
@@ -128,6 +137,7 @@ export default class RuntimeKnotIconRenderer {
       this.renderer.setOutputRenderTarget(this.target)
       this.renderer.setRenderTarget(this.target)
       this.renderer.render(this.scene, this.camera)
+      const {iconSize, renderSize} = this
       const pixels = await this.renderer.readRenderTargetPixelsAsync(this.target, 0, 0, renderSize, renderSize) as Uint8Array
       await this.device.queue.onSubmittedWorkDone()
       if (this.errors.length) {
@@ -184,17 +194,11 @@ export default class RuntimeKnotIconRenderer {
     if (this.active) {
       throw new Error('A runtime knot icon material is already active.')
     }
-    let material
-    if (this.heavy) {
-      const Material = this.constructors.get(item.id)
-      if (!Material) {
-        throw new Error(`Missing material constructor for ${item.id}.`)
-      }
-      material = new Material(this.environment!)
-    } else {
-      material = createPlaceholderMaterial(item.placeholder, false)
+    const Material = this.constructors.get(item.id)
+    if (!Material) {
+      throw new Error(`Missing material constructor for ${item.id}.`)
     }
-    this.active = new Mesh(this.geometry, material)
+    this.active = new Mesh(this.geometry, new Material(this.environment))
     this.active.frustumCulled = false
     this.scene.add(this.active)
     this.errors.length = 0
@@ -221,7 +225,7 @@ export default class RuntimeKnotIconRenderer {
       this.validationTarget.dispose()
       this.target.dispose()
       this.geometry.dispose()
-      this.environment?.dispose()
+      this.environment.dispose()
       await this.renderer.dispose()
     } catch (error) {
       console.error('Runtime knot icon renderer disposal failed.', error)

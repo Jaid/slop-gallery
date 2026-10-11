@@ -11,13 +11,7 @@ import StudioEnvironment from './StudioEnvironment.ts'
 
 type KnotMaterialEntry = KnotResourceEntry & Pick<KnotEntry, 'placeholder'>
 
-function noopRef(_mesh: Mesh | null) {}
-function noopRender(this: Mesh) {}
-function repeat<Value>(value: Value, count: number) {
-  return Array.from({length: count}, () => value)
-}
-
-/** Gallery ownership, per-entry placeholders and nearest-first material warmup. */
+/** Gallery ownership, per-entry placeholders and nearest-first material warmup. Full entry shaders load in every graphics mode; `heavy` only upgrades the placeholders. */
 export default class ProgressiveKnotMaterials {
   readonly fullMaterials: Array<MeshPhysicalNodeMaterial>
   readonly observers: Array<Mesh['onBeforeRender']>
@@ -25,23 +19,18 @@ export default class ProgressiveKnotMaterials {
   readonly refs: Array<(mesh: Mesh | null) => void>
   readonly resources: KnotResources
   private disposal?: Promise<void>
-  private readonly environment?: StudioEnvironment
-  private readonly queue?: AsyncMaterials
+  private readonly environment: StudioEnvironment
+  private readonly queue: AsyncMaterials
 
   constructor(renderer: WebGPURenderer, camera: Camera, entries: ReadonlyArray<KnotMaterialEntry>, constructors: ReadonlyMap<string, KnotMaterialConstructor>, heavy: boolean) {
     this.resources = new KnotResources(entries)
-    const environment = heavy ? new StudioEnvironment : undefined
+    // Knottingham exists to review entry shaders, so fast graphics only keeps its placeholders cheap.
+    const environment = new StudioEnvironment
     this.placeholderMaterials = entries.map(entry => {
-      const material = createPlaceholderMaterial(entry.placeholder, heavy, environment)
+      const material = createPlaceholderMaterial(entry.placeholder, heavy, heavy ? environment : undefined)
       material.name = `${entry.id} ${entry.placeholder.shading} placeholder`
       return material
     })
-    if (!heavy) {
-      this.fullMaterials = []
-      this.refs = repeat(noopRef, entries.length)
-      this.observers = repeat(noopRender, entries.length)
-      return
-    }
     const fullMaterials: Array<MeshPhysicalNodeMaterial> = []
     try {
       for (const entry of entries) {
@@ -49,7 +38,7 @@ export default class ProgressiveKnotMaterials {
         if (!Material) {
           throw new Error(`Missing material constructor for ${entry.id}.`)
         }
-        const material = new Material(environment!)
+        const material = new Material(environment)
         material.name = entry.id
         fullMaterials.push(material)
       }
@@ -57,7 +46,7 @@ export default class ProgressiveKnotMaterials {
       for (const material of fullMaterials) {
         material.dispose()
       }
-      environment!.dispose()
+      environment.dispose()
       for (const material of this.placeholderMaterials) {
         material.dispose()
       }
@@ -89,7 +78,7 @@ export default class ProgressiveKnotMaterials {
         })
       },
     })
-    const bindings = this.fullMaterials.map(material => this.queue!.add(material))
+    const bindings = this.fullMaterials.map(material => this.queue.add(material))
     this.refs = bindings.map(binding => binding.ref)
     this.observers = bindings.map(binding => binding.onBeforeRender)
   }
@@ -108,12 +97,12 @@ export default class ProgressiveKnotMaterials {
 
   private async release() {
     // The queue never owns these resources; keep full materials alive until compilation stops.
-    await this.queue?.disposeAsync()
+    await this.queue.disposeAsync()
     this.resources.dispose()
     for (const material of this.fullMaterials) {
       material.dispose()
     }
-    this.environment?.dispose()
+    this.environment.dispose()
     for (const material of this.placeholderMaterials) {
       material.dispose()
     }
