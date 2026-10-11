@@ -18,7 +18,6 @@ const imported = [
   ['heartwood', 'Heartwood'],
   ['lightning_ridge', 'Lightning Ridge'],
 ] as const
-
 describe('October 9 Claude Opus 5.5 Mage shader imports', () => {
   test('registers all eight with their provenance and unknown rarity', async () => {
     expect(imported).toHaveLength(8)
@@ -35,15 +34,14 @@ describe('October 9 Claude Opus 5.5 Mage shader imports', () => {
       })
       expect(knot.rarity).toBe(unknown)
       expect(knot.placeholder.color).toMatch(/^#[0-9a-f]{6}$/u)
-      const folder = new URL('../../packages/knot-materials/src/entries/' + id + '/', import.meta.url)
+      const folder = new URL(`../../packages/knot-materials/src/entries/${id}/`, import.meta.url)
       expect((await fs.readdir(folder)).toSorted()).toEqual(['Material.ts', 'data.ts'])
       expect(await Bun.file(new URL('data.ts', folder)).text()).toContain(runId)
     }
   })
-
   test('constructs all eight materials without disposing the environment', async () => {
     for (const [id] of imported) {
-      const file = new URL('../../packages/knot-materials/src/entries/' + id + '/Material.ts', import.meta.url)
+      const file = new URL(`../../packages/knot-materials/src/entries/${id}/Material.ts`, import.meta.url)
       const {default: Material} = await import(file.href) as {default: KnotMaterialConstructor}
       const environment = new Texture
       let disposals = 0
@@ -57,7 +55,6 @@ describe('October 9 Claude Opus 5.5 Mage shader imports', () => {
       environment.dispose()
     }
   }, 30_000)
-
   test('preserves Kintsugi and the older Stellar Nursery title', () => {
     expect(knotsById.get('kintsugi')!.title).toBe('Kintsugi')
     expect(knotsById.get('nebula_glass')!.title).toBe('Stellar Nursery')
