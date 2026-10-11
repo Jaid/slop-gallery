@@ -10,7 +10,7 @@ export type Rarity = typeof common | typeof ethereal | typeof prime | typeof rar
 
 /** Curatorial ranking, independent of authorship and archive status. New arrivals start unknown. */
 const rarities: Record<KnotId, Rarity> = {
-abalone_chamber: common,
+  abalone_chamber: common,
   abyssal_bioluminescence: prime,
   abyssal_bloom: prime,
   abyssal_cathedral: rare,
