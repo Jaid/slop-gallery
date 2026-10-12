@@ -1,8 +1,8 @@
 import {execFile} from 'node:child_process'
 import {once} from 'node:events'
 import {createReadStream, createWriteStream} from 'node:fs'
-import {mkdir, open, readFile, rename, rm, stat} from 'node:fs/promises'
-import {resolve} from 'node:path'
+import {chmod, mkdir, open, readFile, rename, rm, stat} from 'node:fs/promises'
+import {dirname, resolve} from 'node:path'
 import {createInterface} from 'node:readline'
 import type {Readable} from 'node:stream'
 import {pipeline} from 'node:stream/promises'
@@ -39,10 +39,41 @@ const categories = [
   'v8',
   'viz',
 ]
+const perfettoVersion = 'v58.2'
+const traceconvBuilds: Partial<Record<string, {
+  file: string
+  sha256: string
+}>> = {
+  'linux-amd64': {
+    file: 'traceconv',
+    sha256: 'aede4607ec9ca997aad8a558fa5443b593dcd58673f792308e96702f9fe3548c',
+  },
+  'linux-arm64': {
+    file: 'traceconv',
+    sha256: '9d8d262e98b3a6db8e7c4924514cff6c73449885c6fd30fd9f939d89bee2142f',
+  },
+  'mac-amd64': {
+    file: 'traceconv',
+    sha256: '5c749815665e2ac11ec46855e73212dc78d2230de155a035b0b729b856285d4c',
+  },
+  'mac-arm64': {
+    file: 'traceconv',
+    sha256: '7d10aaa173ccdf286a3eef050a50e0a6722c38f92fa177479b77155e96058f5b',
+  },
+  'windows-amd64': {
+    file: 'traceconv.exe',
+    sha256: '252ff7c9c9051081a09d0525fdae04571de527b62420c7fac34d432ba2686e71',
+  },
+}
 const help = `Usage: bun scripts/recordBrowserTrace.ts [options]
 
 Records a Chromium/Brave performance trace through the browser CDP endpoint.
 Press Enter or Ctrl+C to stop and save the trace.
+
+The browser streams the trace as Perfetto protobuf, which Perfetto’s traceconv
+then converts to Chrome JSON trace events. Brave’s own JSON export silently
+returns an empty trace once it would exceed roughly 1 GB. traceconv ${perfettoVersion} is
+downloaded once into ../temp/perfetto relative to this script.
 
 Options:
   --port <number>       CDP port. Default: 9222
@@ -137,6 +168,58 @@ const findJsonValueEnd = (json: string) => {
   }
   return -1
 }
+const getPerfettoPlatform = () => {
+  const system = ({
+    darwin: 'mac',
+    linux: 'linux',
+    win32: 'windows',
+  } as Record<string, string | undefined>)[process.platform]
+  const architecture = ({
+    arm64: 'arm64',
+    x64: 'amd64',
+  } as Record<string, string | undefined>)[process.arch]
+  return `${system}-${architecture}`
+}
+export const ensureTraceconv = async (cacheRoot: string) => {
+  const platform = getPerfettoPlatform()
+  const build = traceconvBuilds[platform]
+  if (!build) {
+    throw new Error(`No pinned traceconv build for ${platform}.`)
+  }
+  const executable = resolve(cacheRoot, perfettoVersion, platform, build.file)
+  if (await Bun.file(executable).exists()) {
+    return executable
+  }
+  const url = `https://commondatastorage.googleapis.com/perfetto-luci-artifacts/${perfettoVersion}/${platform}/${build.file}`
+  console.error(`Downloading traceconv ${perfettoVersion} from ${url}`)
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error(`traceconv download returned HTTP ${response.status}.`)
+  }
+  const data = new Uint8Array(await response.arrayBuffer())
+  const sha256 = Bun.CryptoHasher.hash('sha256', data, 'hex')
+  if (sha256 !== build.sha256) {
+    throw new Error(`traceconv checksum mismatch: expected ${build.sha256}, got ${sha256}.`)
+  }
+  await mkdir(dirname(executable), {recursive: true})
+  const temporary = `${executable}.partial`
+  await Bun.write(temporary, data)
+  await chmod(temporary, 0o755)
+  await rename(temporary, executable)
+  return executable
+}
+const convertProtoTraceToJson = async (traceconv: string, input: string, output: string) => {
+  const subprocess = Bun.spawn([traceconv, 'json', input, output], {
+    stdout: 'ignore',
+    stderr: 'pipe',
+    windowsHide: true,
+  })
+  const stderr = new Response(subprocess.stderr)
+  const [exitCode, stderrText] = await Promise.all([subprocess.exited, stderr.text()])
+  if (exitCode !== 0) {
+    throw new Error(`traceconv exited with code ${exitCode}: ${stderrText.trim()}`)
+  }
+}
 const getWindowsProcessCommandLine = async (processId: number) => {
   if (!Number.isSafeInteger(processId) || processId < 1) {
     throw new TypeError('processId must be a positive integer.')
@@ -175,6 +258,7 @@ export default async function recordBrowserTrace({port = 9222,
   await mkdir(outputRoot, {recursive: true})
   const outputName = await getFree('trace', candidate => Bun.file(resolve(outputRoot, `${candidate}.msgpack.br`)).exists())
   const output = resolve(outputRoot, `${outputName}.msgpack.br`)
+  const traceconv = await ensureTraceconv(resolve(outputRoot, 'perfetto'))
   const versionResponse = await fetch(`http://127.0.0.1:${port}/json/version`)
   if (!versionResponse.ok) {
     throw new Error(`CDP /json/version returned HTTP ${versionResponse.status}.`)
@@ -278,7 +362,9 @@ export default async function recordBrowserTrace({port = 9222,
       } else if (data.method === 'Tracing.tracingComplete') {
         captureConsoleEvents = false
         const stream = data.params?.stream
-        if (stream) {
+        if (data.params?.traceFormat !== 'proto') {
+          tracingCompleteReject(new Error(`Tracing completed with stream format ${String(data.params?.traceFormat)} instead of proto.`))
+        } else if (stream) {
           tracingCompleteResolve(stream)
         } else {
           tracingCompleteReject(new Error('Tracing completed without an IO stream handle.'))
@@ -346,6 +432,7 @@ export default async function recordBrowserTrace({port = 9222,
   ])
   await call('Tracing.start', {
     transferMode: 'ReturnAsStream',
+    streamFormat: 'proto',
     streamCompression: 'gzip',
     bufferUsageReportingInterval: 5000,
     traceConfig: {
@@ -374,18 +461,15 @@ export default async function recordBrowserTrace({port = 9222,
   })
   const stream = await tracingComplete
   process.stdin.pause()
+  const protoTemporary = `${output}.pftrace.partial`
+  const jsonTemporary = `${output}.json.partial`
   const messagePackTemporary = `${output}.msgpack.partial`
   const compressedTemporary = `${output}.partial`
-  await rm(messagePackTemporary, {force: true})
-  await rm(compressedTemporary, {force: true})
+  const temporaries = [protoTemporary, jsonTemporary, messagePackTemporary, compressedTemporary]
+  await Promise.all(temporaries.map(temporary => rm(temporary, {force: true})))
   const gunzip = createGunzip()
   let compressedTraceBytes = 0
-  const encoding = encodeTraceJsonAsMessagePack(gunzip, messagePackTemporary, consoleEvents, {
-    Browser: version.Browser,
-    BraveFlags: browserFlags,
-    CommandLine: browserCommandLine,
-    'V8-Version': version['V8-Version'],
-  }, {allowMissingFooter: true})
+  const writingProto = pipeline(gunzip, createWriteStream(protoTemporary))
   const drainTraceStream = async () => {
     while (true) {
       const chunk = await call('IO.read', {
@@ -409,10 +493,8 @@ export default async function recordBrowserTrace({port = 9222,
       }
     }
   }
-  let eventCount = 0
   try {
-    const [, encodedEventCount] = await Promise.all([drainTraceStream(), encoding])
-    eventCount = encodedEventCount
+    await Promise.all([drainTraceStream(), writingProto])
   } catch (error) {
     gunzip.destroy(Error.isError(error) ? error : new Error(String(error)))
     throw error
@@ -426,14 +508,32 @@ export default async function recordBrowserTrace({port = 9222,
     socket.close()
   }
   try {
+    const {size: protoBytes} = await stat(protoTemporary)
+    if (!protoBytes) {
+      throw new Error('The browser returned an empty trace stream.')
+    }
+    console.error(`Converting ${(protoBytes / 1024 / 1024).toFixed(1)} MiB Perfetto trace to JSON…`)
+    await convertProtoTraceToJson(traceconv, protoTemporary, jsonTemporary)
+    await rm(protoTemporary, {force: true})
+    const eventCount = await encodeTraceJsonAsMessagePack(jsonTemporary, messagePackTemporary, consoleEvents, {
+      Browser: version.Browser,
+      BraveFlags: browserFlags,
+      CommandLine: browserCommandLine,
+      TraceStreamFormat: 'proto',
+      Traceconv: perfettoVersion,
+      'V8-Version': version['V8-Version'],
+    })
+    if (!eventCount) {
+      throw new Error('traceconv produced no trace events.')
+    }
+    await rm(jsonTemporary, {force: true})
     await brotliCompressFile(messagePackTemporary, compressedTemporary)
     await rm(output, {force: true})
     await rename(compressedTemporary, output)
     const {size} = await stat(output)
-    console.error(`Saved ${output} (${(size / 1024 / 1024).toFixed(1)} MiB, ${eventCount.toLocaleString()} trace events, ${consoleEvents.length.toLocaleString()} console events; CDP gzip ${(compressedTraceBytes / 1024 / 1024).toFixed(1)} MiB)`)
+    console.error(`Saved ${output} (${(size / 1024 / 1024).toFixed(1)} MiB, ${eventCount.toLocaleString()} trace events, ${consoleEvents.length.toLocaleString()} console events; CDP gzip ${(compressedTraceBytes / 1024 / 1024).toFixed(1)} MiB, proto ${(protoBytes / 1024 / 1024).toFixed(1)} MiB)`)
   } finally {
-    await rm(messagePackTemporary, {force: true})
-    await rm(compressedTemporary, {force: true})
+    await Promise.all(temporaries.map(temporary => rm(temporary, {force: true})))
   }
   return output
 }

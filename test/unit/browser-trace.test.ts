@@ -109,6 +109,43 @@ test('accepts Chromium footers without metadata and preserves extra top-level fi
     await fs.remove(root)
   }
 })
+test('encodes traceconv JSON with a metadata footer after the last event line', async () => {
+  const root = await fs.mkdtemp(resolve(import.meta.dir, '../../private/agent/browser-trace-traceconv-test-'))
+  const input = resolve(root, 'trace.json')
+  const output = resolve(root, 'trace.msgpack')
+  try {
+    await fs.writeFile(input, '{"traceEvents":[\n{"args":{"name":"CrBrowserMain"},"cat":"__metadata","name":"thread_name","ph":"M","pid":1,"tid":2,"ts":0},\n{"ph":"e","pid":1,"tid":2,"ts":3}],"metadata":\n{"clock-domain":"WIN_QPC"},\n"androidProcessDump": "PROCESS DUMP\\nroot 1",\n  "controllerTraceDataKey": "systraceController"\n}')
+    expect(await encodeTraceJsonAsMessagePack(input, output, [], {TraceStreamFormat: 'proto'})).toBe(2)
+    expect(unpack(await fs.readFile(output))).toEqual({
+      traceEvents: [
+        {
+          args: {name: 'CrBrowserMain'},
+          cat: '__metadata',
+          name: 'thread_name',
+          ph: 'M',
+          pid: 1,
+          tid: 2,
+          ts: 0,
+        },
+        {
+          ph: 'e',
+          pid: 1,
+          tid: 2,
+          ts: 3,
+        },
+      ],
+      metadata: {
+        'clock-domain': 'WIN_QPC',
+        TraceStreamFormat: 'proto',
+      },
+      androidProcessDump: 'PROCESS DUMP\nroot 1',
+      controllerTraceDataKey: 'systraceController',
+      consoleEvents: [],
+    })
+  } finally {
+    await fs.remove(root)
+  }
+})
 test('encodes a gzip Chromium trace stream across chunk boundaries', async () => {
   const root = await fs.mkdtemp(resolve(import.meta.dir, '../../private/agent/browser-trace-gzip-test-'))
   const output = resolve(root, 'trace.msgpack')
