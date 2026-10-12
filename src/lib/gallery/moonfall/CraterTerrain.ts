@@ -48,8 +48,10 @@ export default class CraterTerrain {
     return (bowl + rim + ridges + rubble + peak + secondary) * fade
   }
 
-  variation(x: number, z: number) {
-    return simplex2d.sample(this.noise, x * 0.8, z * 0.8) * 0.6 + simplex2d.sample(this.noise, x * 7, z * 7) * 0.4
+  /** tonal variation; the fine octave is finer than terrain vertices, so materials may add it per pixel instead */
+  variation(x: number, z: number, fine = true) {
+    const broad = simplex2d.sample(this.noise, x * 0.8, z * 0.8) * 0.6
+    return fine ? broad + simplex2d.sample(this.noise, x * 7, z * 7) * 0.4 : broad
   }
 }
 

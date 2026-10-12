@@ -26,6 +26,7 @@ const room = rooms.find(value => value.id === 'moonfall')!
 const geometry = new CraterGeometry
 const fence = new StanchionRingGeometry(moonfallCrater.fenceRadius, moonfallCrater.fencePosts)
 const surfaceCollisions = [geometry.floor, geometry.terrain, geometry.rocks, fence.posts, fence.rope].map(colliderGeometry)
+const planarKey = (x: number, z: number) => `${x.toFixed(4)},${z.toFixed(4)}`
 afterAll(() => {
   geometry.dispose()
   fence.dispose()
@@ -70,7 +71,8 @@ describe('Moonfall impact hall', () => {
           expect([...attribute.array].every(Number.isFinite)).toBe(true)
         }
       }
-      expect(triangleCount(geometry.terrain) + triangleCount(geometry.rocks)).toBeLessThan(60_000)
+      expect(triangleCount(geometry.terrain)).toBeLessThan(12_000)
+      expect(triangleCount(geometry.terrain) + triangleCount(geometry.rocks)).toBeLessThan(16_000)
       for (const [x, z] of [[0, 0], [2, 1], [-4, -3], [7.1, 0], [0, 8.99]]) {
         const ray = new Raycaster(new Vector3(x, 3, z), new Vector3(0, -1, 0))
         expect(ray.intersectObject(floor)).toHaveLength(0)
@@ -91,6 +93,63 @@ describe('Moonfall impact hall', () => {
     } finally {
       material.dispose()
     }
+  })
+  test('the low-poly terrain follows its height field and closes seamlessly against the floor', () => {
+    const material = new MeshBasicMaterial
+    const terrain = new Mesh(geometry.terrain, material)
+    const ray = new Raycaster
+    const down = new Vector3(0, -1, 0)
+    try {
+      let squared = 0
+      let count = 0
+      for (let ring = 0; ring < 30; ring++) {
+        for (let i = 0; i < 48; i++) {
+          const r = (ring + 0.5) / 30 * (moonfallCrater.radius - 0.05)
+          const angle = (i + ring * 0.37) / 48 * Math.PI * 2
+          const x = Math.cos(angle) * r
+          const z = Math.sin(angle) * r
+          ray.set(new Vector3(x, 3, z), down)
+          const error = ray.intersectObject(terrain)[0].point.y - craterTerrain.height(x, z)
+          expect(Math.abs(error)).toBeLessThan(0.16)
+          squared += error ** 2
+          count++
+        }
+      }
+      expect(Math.sqrt(squared / count)).toBeLessThan(0.04)
+    } finally {
+      material.dispose()
+    }
+    const rim = new Set<string>
+    const terrainPositions = geometry.terrain.getAttribute('position')
+    for (let i = 0; i < terrainPositions.count; i++) {
+      if (!(Math.abs(Math.hypot(terrainPositions.getX(i), terrainPositions.getZ(i)) - moonfallCrater.radius) < 1e-5)) {
+        continue
+      }
+      expect(terrainPositions.getY(i)).toBeCloseTo(0, 8)
+      rim.add(planarKey(terrainPositions.getX(i), terrainPositions.getZ(i)))
+    }
+    expect(rim.size).toBe(moonfallCrater.rimSegments)
+    const floorPositions = geometry.floor.getAttribute('position')
+    const hole = new Set<string>
+    for (let i = 0; i < floorPositions.count; i++) {
+      if (Math.abs(floorPositions.getY(i)) < 1e-6 && Math.abs(Math.hypot(floorPositions.getX(i), floorPositions.getZ(i)) - moonfallCrater.radius) < 1e-4) {
+        hole.add(planarKey(floorPositions.getX(i), floorPositions.getZ(i)))
+      }
+    }
+    expect(hole).toEqual(rim)
+    const index = geometry.terrain.index!
+    const edges = new Map<string, number>
+    for (let i = 0; i < index.count; i += 3) {
+      const corners = [index.getX(i), index.getX(i + 1), index.getX(i + 2)]
+      const [a, b, c] = corners.map(corner => (new Vector3).fromBufferAttribute(terrainPositions, corner))
+      expect(b.sub(a).cross(c.sub(a)).y).toBeGreaterThan(0)
+      for (let k = 0; k < 3; k++) {
+        const edge = [corners[k], corners[(k + 1) % 3]].toSorted((first, second) => first - second).join()
+        edges.set(edge, (edges.get(edge) ?? 0) + 1)
+      }
+    }
+    expect(edges.values().filter(uses => uses === 1).toArray()).toHaveLength(moonfallCrater.rimSegments)
+    expect(edges.values().every(uses => uses <= 2)).toBe(true)
   })
   test('the crater floor participates in prop recovery, room lookup and saved player poses', () => {
     for (const [x, z] of [[0, 0], [2.5, -1], [-4, 2]]) {
