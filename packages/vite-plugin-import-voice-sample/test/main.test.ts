@@ -6,7 +6,7 @@ import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 
 import fs from 'fs-extra'
-import {build} from 'vite'
+import {build, createLogger} from 'vite'
 
 import importVoiceSample, {defaultVoiceSampleBitrate, styleVoiceSampleText} from '../src/main.ts'
 
@@ -372,6 +372,127 @@ describe('vite-plugin-import-voice-sample', () => {
     const cacheFiles = await fs.readdir(join(folder, 'cache'))
     expect(cacheFiles.filter(file => file.endsWith('.wav'))).toHaveLength(2)
     expect(cacheFiles.filter(file => file.endsWith('.msgpack'))).toHaveLength(2)
+  })
+  test('optional replaces unfetchable samples with one second of shared silence', async () => {
+    const root = await temporaryDirectory()
+    await fs.writeFile(join(root, 'entry.ts'), `
+      import wav from 'voice:silent-wav' with {text: 'Silent', format: 'wav', type: 'contents'}
+      import pcm from 'voice:silent-pcm' with {text: 'Also silent', format: 'pcm', type: 'contents'}
+      import opus from 'voice:silent-opus' with {text: 'Silent', format: 'opus'}
+      import timings from 'voice:silent-timings' with {text: 'Silent', format: 'timings'}
+      import timingReference from 'voice:silent-timing-reference' with {text: 'Silent', format: 'timings', type: 'reference'}
+      export {wav, pcm, opus, timings, timingReference}
+    `)
+    const warnings: Array<string> = []
+    const result = await build({
+      ...buildConfig(root),
+      logLevel: 'warn',
+      customLogger: {
+        ...createLogger('silent'),
+        warn: message => {
+          warnings.push(message)
+        },
+      },
+      plugins: [importVoiceSample({
+        apiKey: 'test-key',
+        cooldown: 0,
+        fetch: async () => new Response('no credits', {status: 402}),
+        optional: true,
+      })],
+    })
+    expect(warnings.filter(message => message.includes('1 s of silence') && message.includes('HTTP 402'))).toHaveLength(1)
+    expect(warnings.some(message => message.includes('5 voice samples were replaced by silence.'))).toBe(true)
+    const code = outputCode(result)
+    const folder = join(root, 'temp/vite-plugin-import-voice-sample')
+    expect(await fs.readdir(join(folder, 'store'))).toHaveLength(0)
+    const cacheFiles = await fs.readdir(join(folder, 'cache'))
+    const silenceWav = cacheFiles.find(file => file.endsWith('.wav'))
+    expect(silenceWav).toBeDefined()
+    const wav = await fs.readFile(join(folder, 'cache', silenceWav!))
+    expect(wav.subarray(0, 4).toString()).toBe('RIFF')
+    expect(wav.readUInt32LE(24)).toBe(24_000)
+    expect(wav.byteLength).toBe(44 + 24_000 * 2)
+    expect(wav.subarray(44).every(byte => byte === 0)).toBe(true)
+    expect(cacheFiles.filter(file => file.endsWith('.wav'))).toHaveLength(1)
+    expect(cacheFiles.filter(file => file.endsWith('.pcm'))).toHaveLength(1)
+    expect(cacheFiles.filter(file => file.endsWith('.opus'))).toHaveLength(1)
+    expect(cacheFiles.filter(file => file.endsWith('.msgpack'))).toHaveLength(1)
+    expect(code).toMatch(/=\s*\[\]/u)
+  })
+  test('optional fallback applies without an API key and leaves real generation for later', async () => {
+    const root = await temporaryDirectory()
+    await fs.writeFile(join(root, 'entry.ts'), `
+      import audio from 'voice:later' with {text: 'Later', format: 'wav'}
+      export default audio
+    `)
+    const previousKey = process.env.OPENROUTER_API_KEY
+    delete process.env.OPENROUTER_API_KEY
+    try {
+      await build({
+        ...buildConfig(root),
+        plugins: [importVoiceSample({
+          fetch: async () => {
+            throw new Error('must not fetch without a key')
+          },
+          optional: true,
+        })],
+      })
+    } finally {
+      if (previousKey !== undefined) {
+        process.env.OPENROUTER_API_KEY = previousKey
+      }
+    }
+    const calls: Array<Record<string, unknown>> = []
+    await build({
+      ...buildConfig(root),
+      plugins: [importVoiceSample({
+        apiKey: 'test-key',
+        fetch: fetchRecorder(calls),
+        optional: true,
+      })],
+    })
+    expect(calls).toHaveLength(1)
+  })
+  test('unfetchable samples fail the build unless optional', async () => {
+    const root = await temporaryDirectory()
+    await fs.writeFile(join(root, 'entry.ts'), `
+      import audio from 'voice:required' with {text: 'Required', format: 'wav'}
+      export default audio
+    `)
+    let error: unknown
+    try {
+      await build({
+        ...buildConfig(root),
+        plugins: [importVoiceSample({
+          apiKey: 'test-key',
+          fetch: async () => new Response('no credits', {status: 402}),
+        })],
+      })
+    } catch (error_) {
+      error = error_
+    }
+    expect(String(error)).toContain('HTTP 402')
+  })
+  test('optional does not hide invalid import attributes', async () => {
+    const root = await temporaryDirectory()
+    await fs.writeFile(join(root, 'entry.ts'), `
+      import audio from 'voice:invalid' with {text: 'Invalid', format: 'wav', emotion: 'mysteriously-purple'}
+      export default audio
+    `)
+    let error: unknown
+    try {
+      await build({
+        ...buildConfig(root),
+        plugins: [importVoiceSample({
+          apiKey: 'test-key',
+          fetch: async () => new Response('no credits', {status: 402}),
+          optional: true,
+        })],
+      })
+    } catch (error_) {
+      error = error_
+    }
+    expect(String(error)).toContain('Unsupported voice sample emotion')
   })
   test('rejects removed or invalid import attributes', async () => {
     const root = await temporaryDirectory()

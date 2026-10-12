@@ -18,8 +18,10 @@ const modelDefault = 'x-ai/grok-voice-tts-1.0'
 const storageSchema = 4
 const conversionSchema = 1
 const trimSchema = 1
+const silenceSchema = 1
 const defaultSampleRate = 24_000
 export const defaultVoiceSampleCooldown = 1000
+export const voiceSampleSilenceSeconds = 1
 const commonSampleRates = [8000, 16_000, 22_050, 24_000, 32_000, 44_100, 48_000]
 
 export const defaultVoiceSampleBitrate = (sampleRate: number) => Math.round(0.68266 * sampleRate)
@@ -39,6 +41,13 @@ type StoredVoiceSample = {
 }
 
 type PreparedVoiceSample = StoredVoiceSample & {
+  sourceKey: string
+  wavPath: string
+}
+
+type Silence = {
+  metadata: VoiceSampleMetadata
+  metadataPath: string
   sourceKey: string
   wavPath: string
 }
@@ -252,6 +261,7 @@ export default class VoiceSampleCache {
   #lastRequestStartedAt = 0
   readonly #model: string
   readonly #pendingConversions = new Map<string, Promise<string>>
+  #pendingSilence?: Promise<Silence>
   readonly #pendingStores = new Map<string, Promise<StoredVoiceSample>>
   readonly #pendingTrims = new Map<string, Promise<PreparedVoiceSample>>
   #requestQueue: Promise<void> = Promise.resolve()
@@ -300,6 +310,26 @@ export default class VoiceSampleCache {
       metadataPath: prepared.metadataPath,
       rawPath: stored.rawPath,
       timings: prepared.metadata.timings,
+    }
+  }
+
+  /** Shared silent sample that stands in for a voice sample that could not be generated. */
+  async getSilence(format: VoiceSampleAudioFormat): Promise<VoiceSampleCacheEntry> {
+    this.#pendingSilence ??= this.#writeSilence()
+    let silence: Silence
+    try {
+      silence = await this.#pendingSilence
+    } catch (error) {
+      this.#pendingSilence = undefined
+      throw error
+    }
+    const {metadata, metadataPath, sourceKey, wavPath} = silence
+    return {
+      audioPath: await this.#getAudio(format, sourceKey, wavPath),
+      metadata,
+      metadataPath,
+      rawPath: wavPath,
+      timings: metadata.timings,
     }
   }
 
@@ -614,6 +644,52 @@ export default class VoiceSampleCache {
       this.#lastRequestStartedAt = Date.now()
     } finally {
       release()
+    }
+  }
+
+  async #writeSilence(): Promise<Silence> {
+    const sourceKey = createHash('sha256').update(JSON.stringify({
+      sampleRate: this.#sampleRate,
+      seconds: voiceSampleSilenceSeconds,
+      silenceSchema,
+    })).digest('hex')
+    const wavPath = resolve(this.#cacheFolder, `${sourceKey}.wav`)
+    const metadataPath = resolve(this.#cacheFolder, `${sourceKey}.msgpack`)
+    const metadata: VoiceSampleMetadata = {
+      duration: voiceSampleSilenceSeconds,
+      input: '',
+      sampleRate: this.#sampleRate,
+      timings: [],
+      voice: '',
+    }
+    if (!await hasFile(wavPath) || !await hasFile(metadataPath)) {
+      await fs.ensureDir(this.#cacheFolder)
+      const token = `${process.pid}-${randomUUID()}`
+      const temporaryWav = `${wavPath}.${token}.tmp`
+      const temporaryMetadata = `${metadataPath}.${token}.tmp`
+      try {
+        await fs.writeFile(temporaryWav, wavFromPcm(new Uint8Array(Math.round(this.#sampleRate * voiceSampleSilenceSeconds) * 2), this.#sampleRate))
+        await fs.writeFile(temporaryMetadata, pack(metadata))
+        for (const [temporary, output] of [[temporaryWav, wavPath], [temporaryMetadata, metadataPath]] as const) {
+          try {
+            await fs.rename(temporary, output)
+          } catch (error) {
+            // Another process may have written the identical file first.
+            if (!await hasFile(output)) {
+              throw error
+            }
+          }
+        }
+      } finally {
+        await fs.remove(temporaryWav)
+        await fs.remove(temporaryMetadata)
+      }
+    }
+    return {
+      metadata,
+      metadataPath,
+      sourceKey,
+      wavPath,
     }
   }
 }

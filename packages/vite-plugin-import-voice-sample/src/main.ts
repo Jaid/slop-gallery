@@ -7,7 +7,7 @@ import {createHash} from 'node:crypto'
 import {parse} from '@babel/parser'
 import fs from 'fs-extra'
 import {loadEnv, normalizePath} from 'vite'
-import VoiceSampleStore, {defaultVoiceSampleTrimThreshold} from 'voice-sample-store'
+import VoiceSampleStore, {defaultVoiceSampleTrimThreshold, voiceSampleSilenceSeconds} from 'voice-sample-store'
 
 import {applyEdits, parseVoiceSampleImports, virtualVoiceSamplePrefix, voiceSourcePrefix} from './imports.ts'
 
@@ -64,6 +64,25 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
   let config: ResolvedConfig
   let store: VoiceSampleStore
   const requests = new Map<string, VoiceSampleRequest>
+  const silencedKeys = new Set<string>
+  const silenceReasons = new Set<string>
+  const prepare = async (context: {warn: (message: string) => void}, key: string, request: VoiceSampleRequest) => {
+    try {
+      return await store.prepare(request)
+    } catch (error) {
+      if (!options.optional) {
+        throw error
+      }
+      const reason = Error.isError(error) ? error.message : String(error)
+      // Uncached samples usually all fail for the same reason, so each reason is only reported once.
+      if (!silenceReasons.has(reason)) {
+        silenceReasons.add(reason)
+        context.warn(`Using ${voiceSampleSilenceSeconds} s of silence for voice samples that cannot be fetched, starting with ${JSON.stringify(request.text)}: ${reason}`)
+      }
+      silencedKeys.add(key)
+      return store.prepareSilence(request)
+    }
+  }
   return {
     name: 'import-voice-sample',
     enforce: 'pre',
@@ -143,7 +162,7 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
       if (parts.type === 'contents') {
         return `${resolvedVirtualPrefix + parts.format}/contents/${parts.key}`
       }
-      const entry = await store.prepare(request)
+      const entry = await prepare(this, parts.key, request)
       this.addWatchFile(entry.rawPath)
       this.addWatchFile(entry.metadataPath)
       if (entry.path !== entry.rawPath && entry.path !== entry.metadataPath) {
@@ -152,6 +171,11 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
       const assetId = `${normalizePath(entry.path)}?url`
       const resolved = await this.resolve(assetId, importer, {skipSelf: true})
       return resolved?.id ?? assetId
+    },
+    buildEnd() {
+      if (silencedKeys.size) {
+        this.warn(`${silencedKeys.size} voice ${silencedKeys.size === 1 ? 'sample was' : 'samples were'} replaced by silence.`)
+      }
     },
     async load(id) {
       const parts = virtualParts(id)
@@ -162,7 +186,7 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
       if (!request) {
         this.error(`Unknown voice contents module "${id}".`)
       }
-      const entry = await store.prepare(request)
+      const entry = await prepare(this, parts.key, request)
       this.addWatchFile(entry.rawPath)
       this.addWatchFile(entry.metadataPath)
       if (entry.path !== entry.rawPath && entry.path !== entry.metadataPath) {
@@ -178,7 +202,7 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
   }
 }
 
-export {defaultVoiceSampleBitrate, defaultVoiceSampleCooldown, defaultVoiceSampleTrimThreshold, styleVoiceSampleText, voiceSampleTrimMinimumSilenceSeconds, voiceSampleTrimPaddingSeconds} from 'voice-sample-store'
+export {defaultVoiceSampleBitrate, defaultVoiceSampleCooldown, defaultVoiceSampleTrimThreshold, styleVoiceSampleText, voiceSampleSilenceSeconds, voiceSampleTrimMinimumSilenceSeconds, voiceSampleTrimPaddingSeconds} from 'voice-sample-store'
 export type {
   App,
   PreparedVoiceSample,

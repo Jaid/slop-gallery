@@ -16,4 +16,6 @@ export type VoiceSampleRequest = ResolvedVoiceSampleRequest & {
 export type VoiceSamplePluginOptions = Omit<VoiceSampleStoreOptions, 'defaults' | 'rootFolder'> & {
   /** Defaults used when the matching import attribute/path component is omitted. */
   defaults?: Partial<Pick<VoiceSampleRequest, 'format' | 'language' | 'type' | 'voice'>>
+  /** If true, a voice sample that cannot be fetched is replaced by one second of silence (with empty timings) and a warning instead of failing the build. Defaults to false. */
+  optional?: boolean
 }
