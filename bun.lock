@@ -8,8 +8,9 @@
         "@dimforge/rapier3d-compat": "0.21.0",
         "@openrouter/ai-sdk-provider": "3.1.0",
         "@react-three/drei": "11.0.0-alpha.7",
-        "@react-three/fiber": "10.0.0-alpha.5",
+        "@react-three/fiber": "10.0.0-canary.fbc659b",
         "@react-three/rapier": "2.2.0",
+        "@react-three/tsl": "10.0.0-canary.fbc659b",
         "ai": "7.0.138",
         "branch-component": "0.4.0",
         "canvas-textures": "workspace:*",
@@ -122,7 +123,7 @@
       },
       "peerDependencies": {
         "@react-three/drei": "^11.0.0-alpha.7",
-        "@react-three/fiber": "^10.0.0-alpha.5",
+        "@react-three/fiber": "^10.0.0-alpha.6",
         "@react-three/rapier": "^2.2.0",
         "react": "^19.3.0",
         "react-dom": "^19.3.0",
@@ -244,7 +245,7 @@
         "victoria-browser-client": "0.3.0",
       },
       "peerDependencies": {
-        "@react-three/fiber": "^10.0.0-alpha.5",
+        "@react-three/fiber": "^10.0.0-alpha.6",
         "react": "^19.3.0",
         "three": "^0.186.1",
         "victoria-browser-client": "^0.3.0",
@@ -261,7 +262,7 @@
         "victoria-browser-client": "0.3.0",
       },
       "peerDependencies": {
-        "@react-three/fiber": "^10.0.0-alpha.5",
+        "@react-three/fiber": "^10.0.0-alpha.6",
         "react": "^19.3.0",
         "three": "^0.186.1",
         "victoria-browser-client": "^0.3.0",
@@ -300,7 +301,7 @@
       "version": "0.1.0",
       "peerDependencies": {
         "@react-three/drei": "^11.0.0-alpha.7",
-        "@react-three/fiber": "^10.0.0-alpha.5",
+        "@react-three/fiber": "^10.0.0-alpha.6",
         "@react-three/rapier": "^2.2.0",
         "react": "^19.3.0",
         "react-dom": "^19.3.0",
@@ -372,7 +373,7 @@
         "fs-extra": "11.4.1",
       },
       "peerDependencies": {
-        "@react-three/fiber": "^10.0.0-alpha.5",
+        "@react-three/fiber": "^10.0.0-alpha.6",
         "react": "^19.3.0",
         "three": "^0.186.1",
         "vite": "^8.3.4",
@@ -441,7 +442,7 @@
         "vite-plugin-bake-core": "workspace:*",
       },
       "peerDependencies": {
-        "@react-three/fiber": "^10.0.0-alpha.5",
+        "@react-three/fiber": "^10.0.0-alpha.6",
         "react": "^19.3.0",
         "three": "^0.186.1",
         "vite": "^8.3.4",
@@ -501,12 +502,14 @@
       "name": "webgpu-capture-bridge",
       "version": "0.1.0",
       "peerDependencies": {
-        "@react-three/fiber": "^10.0.0-alpha.5",
+        "@react-three/fiber": "^10.0.0-alpha.6",
+        "@react-three/tsl": "^10.0.0-alpha.6",
         "react": "^19.3.0",
         "three": "^0.186.1",
       },
       "optionalPeers": [
         "@react-three/fiber",
+        "@react-three/tsl",
         "react",
       ],
     },
@@ -735,15 +738,17 @@
 
     "@pkgr/core": ["@pkgr/core@0.3.6", "", {}, "sha512-SEeaJLb3qBNF/OaXnaR1NmmBbFYk1zC0ZH/52fATcRPLFg/p791YrcyFFy44Bo9sLaGuSuLp5Q6axbb/O+v/RA=="],
 
-    "@pmndrs/scheduler": ["@pmndrs/scheduler@0.2.0", "", { "peerDependencies": { "react": ">=18", "react-dom": ">=18" }, "optionalPeers": ["react", "react-dom"] }, "sha512-Lv+4ZQjxw2BMcPDWHgcP2tULiEKZL+x5+mFW2YXWZUrDhT4h5PKpRv/U5ApweL+R319sdY63C688zd4QVamHvA=="],
+    "@pmndrs/scheduler": ["@pmndrs/scheduler@0.3.0", "", { "peerDependencies": { "react": ">=18", "react-dom": ">=18" }, "optionalPeers": ["react", "react-dom"] }, "sha512-zz1//QQphScVT8Hk/s9IIJBII8l0SIdN8DOKHChgE7BZfnJZiaZgXtpnhmRBVKsZeJBvMNvbGA/ALeqlIK3TbA=="],
 
     "@puppeteer/browsers": ["@puppeteer/browsers@3.2.4", "", { "dependencies": { "modern-tar": "^0.8.5", "yargs": "^18.0.0" }, "peerDependencies": { "proxy-agent": ">=8.0.1", "yauzl": "^2.10.0 || ^3.4.0" }, "optionalPeers": ["proxy-agent", "yauzl"], "bin": { "browsers": "lib/main-cli.js" } }, "sha512-okJ6yQMc0SBexOKxMi966omwAV1uAPwgF/YMZdb04gZQPXVjWHl9bmXjZYtIcsN1+PN3Bz4iFfGK3g+c6lZJ0Q=="],
 
     "@react-three/drei": ["@react-three/drei@11.0.0-alpha.7", "", { "dependencies": { "@babel/runtime": "^7.26.0", "@mediapipe/tasks-vision": "0.10.17", "@monogrid/gainmap-js": "^3.0.6", "@use-gesture/react": "^10.3.1", "camera-controls": "^3.1.0", "cross-env": "^7.0.3", "detect-gpu": "^5.0.56", "glsl-noise": "^0.0.0", "hls.js": "^1.5.17", "maath": "^0.10.8", "stats-gl": "^4.2.3", "stats.js": "^0.17.0", "suspend-react": "^0.1.3", "three-mesh-bvh": "^0.9.14", "troika-three-text": "^0.52.5", "tunnel-rat": "^0.1.2", "use-sync-external-store": "^1.4.0", "utility-types": "^3.11.0", "zustand": "^5.0.1" }, "peerDependencies": { "@react-three/fiber": ">=10.0.0-0", "react": ">=19.0 <19.3", "react-dom": ">=19.0 <19.3", "three": ">=0.185" }, "optionalPeers": ["react-dom"] }, "sha512-UFpNR+unTCLFL2+q1ahmZM5XmKR+ZwJyHHgG3CUKZSEdCxF62wpjnvQqZEZJ26SMtvvCnGsrABJFuIVa0TYJ0g=="],
 
-    "@react-three/fiber": ["@react-three/fiber@10.0.0-alpha.5", "", { "dependencies": { "@babel/runtime": "^7.28.6", "@monogrid/gainmap-js": "^3.4.0", "@pmndrs/scheduler": "^0.2.0", "dequal": "^2.0.3", "its-fine": "^2.0.0", "react-use-measure": "^2.1.7", "scheduler": "^0.27.0", "suspend-react": "^0.1.3", "use-sync-external-store": "^1.6.0", "zustand": "^5.0.10" }, "peerDependencies": { "react": ">=19.0 <19.3", "react-dom": ">=19.0 <19.3", "three": ">=0.185.0" }, "optionalPeers": ["react-dom"] }, "sha512-NDnHUmaKkHh2IPXl0aUjXgiWhfgvUMbe045IRpXYP0f39FmdWAA+7iG0Kxt4bnb5dbTXTg9fvm+tMfPslM8Lmg=="],
+    "@react-three/fiber": ["@react-three/fiber@10.0.0-canary.fbc659b", "", { "dependencies": { "@babel/runtime": "^7.28.6", "@pmndrs/scheduler": "^0.3.0", "dequal": "^2.0.3", "its-fine": "^2.1.1", "react-use-measure": "^2.1.7", "scheduler": "^0.28.0", "suspend-react": "^0.1.3", "use-sync-external-store": "^1.6.0", "zustand": "^5.0.10" }, "peerDependencies": { "react": ">=19.0 <19.4", "react-dom": ">=19.0 <19.4", "three": ">=0.185.0" }, "optionalPeers": ["react-dom"] }, "sha512-7TWJK8rf6TS/4JVGuOy+kW4UFkG4BZXYad6h4YVa0kNYbmMGP3gdrRc93Uk/njFTq26JMbzpshKP1aLoydt70Q=="],
 
     "@react-three/rapier": ["@react-three/rapier@2.2.0", "", { "dependencies": { "@dimforge/rapier3d-compat": "0.19.2", "suspend-react": "^0.1.3", "three-stdlib": "^2.35.12" }, "peerDependencies": { "@react-three/fiber": "^9.0.4", "react": "^19", "three": ">=0.159.0" } }, "sha512-mVsqbKXlGZoN+XrqdhzFZUQmy8pibEOVzl4k7LC+LHe84bQnYBSagy1Hvbda6bL1PJDdTFyiDiBk5buKFinNIQ=="],
+
+    "@react-three/tsl": ["@react-three/tsl@10.0.0-canary.fbc659b", "", { "dependencies": { "dequal": "^2.0.3", "zustand": "^5.0.10" }, "peerDependencies": { "@react-three/fiber": "^10.0.0-alpha.6", "react": ">=19.0 <19.4", "three": ">=0.185.0" } }, "sha512-ZdD8o84eRZRd/lMUBYVUdPqhKaddduOlTFzX0VkVktGgrSnc+4a+YTXOS4fua9VLWWIxcGX3WU9/EksrsI1Mwg=="],
 
     "@rolldown/binding-android-arm-eabi": ["@rolldown/binding-android-arm-eabi@1.2.13", "", { "os": "android", "cpu": "arm" }, "sha512-Vu/NICrgdRvUOeaJZIyB2FP63s6fO/4ud5l8dXmxDx9yDyn+mN0y+gsvsVviSli+T361Aqo0h46EuMoobrwawA=="],
 
@@ -1619,7 +1624,7 @@
 
     "sass-embedded-win32-x64": ["sass-embedded-win32-x64@1.105.1", "", { "os": "win32", "cpu": "x64" }, "sha512-DM8EkMDzEsxnYoy11nyA5I4jr8lOV1TVQ/drNYvFQA9undiMzZD+7SkRA0OnCrgD1uCT+uRArCHSpNiiYVks+g=="],
 
-    "scheduler": ["scheduler@0.27.0", "", {}, "sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q=="],
+    "scheduler": ["scheduler@0.28.0", "", {}, "sha512-juorfCmIkIw8tT+p5BXSm6PJjQF/ycEYmKyzURCIt/RaZIhL+PulbQ9Yu2z1HdOJDdqDTlxA1+xKBmHXJsczAw=="],
 
     "scslre": ["scslre@0.3.0", "", { "dependencies": { "@eslint-community/regexpp": "^4.8.0", "refa": "^0.12.0", "regexp-ast-analysis": "^0.7.0" } }, "sha512-3A6sD0WYP7+QrjbfNA2FN3FsOaGGFoekCVgTyypy53gPxhbkCIjtO6YWgdrfM+n/8sI8JeXZOIxsHjMTNxQ4nQ=="],
 
@@ -1928,8 +1933,6 @@
     "mdast-util-frontmatter/escape-string-regexp": ["escape-string-regexp@5.0.0", "", {}, "sha512-/veY75JbMK4j1yjvuUxuVsiS/hr/4iHs9FTT6cgTexxdE0Ly/glccBAkloH/DofkjRbZU3bnoj38mOmhkZ0lHw=="],
 
     "qified/hookified": ["hookified@2.2.0", "", {}, "sha512-p/LgFzRN5FeoD3DLS6bkUapeye6E4SI6yJs6KetENd18S+FBthqYq2amJUWpt5z0EQwwHemidjY5OqJGEKm5uA=="],
-
-    "react-dom/scheduler": ["scheduler@0.28.0", "", {}, "sha512-juorfCmIkIw8tT+p5BXSm6PJjQF/ycEYmKyzURCIt/RaZIhL+PulbQ9Yu2z1HdOJDdqDTlxA1+xKBmHXJsczAw=="],
 
     "three-stdlib/fflate": ["fflate@0.6.11", "", {}, "sha512-3JyEFWGjFn7zHmoa9+zG1BmW7X2okcmAB+0Cnu9UFbVs/jCBnl2A8o065ZlXiw145K3eBM3uLuzrYXC0RK7eDg=="],
 

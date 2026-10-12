@@ -1,6 +1,6 @@
 import type {Group} from 'three/webgpu'
 
-import {useFrame} from '@react-three/fiber/webgpu'
+import {useFrame} from '@react-three/fiber'
 import {useRef} from 'react'
 
 export default function MoonfallOrbit() {

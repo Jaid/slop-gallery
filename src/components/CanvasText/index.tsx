@@ -1,4 +1,4 @@
-import type {ThreeElements} from '@react-three/fiber/webgpu'
+import type {ThreeElements} from '@react-three/fiber'
 
 import {loadCanvasFonts} from 'canvas-textures'
 import useCanvasTexture from 'canvas-textures/react'

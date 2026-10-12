@@ -1,6 +1,6 @@
 import type {Placement, Vec3} from '#src/lib/gallery.ts'
 import type {MutableRef} from './types.ts'
-import type {RootState} from '@react-three/fiber/webgpu'
+import type {RootState} from '@react-three/fiber'
 
 import {useEffect} from 'react'
 import {Euler, PerspectiveCamera, Vector3} from 'three/webgpu'

@@ -4,7 +4,7 @@ import type {RapierRigidBody, RigidBodyProps} from '@react-three/rapier'
 import type {ReactNode} from 'react'
 import type {Group} from 'three/webgpu'
 
-import {useFrame} from '@react-three/fiber/webgpu'
+import {useFrame} from '@react-three/fiber'
 import {RigidBody, useRapier} from '@react-three/rapier'
 import {useEffect, useRef} from 'react'
 

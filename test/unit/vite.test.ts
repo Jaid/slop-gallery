@@ -18,11 +18,6 @@ test.each(['development', 'staging', 'production'])('Vite %s keeps the shared pi
   expect(config.build.target).toEqual(inferredConfig.build.target)
   expect(config.build.cssTarget).toEqual(config.build.target)
   expect(config.plugins.some(plugin => plugin.name === 'browserslist-target')).toBe(true)
-  const fiberAlias = config.resolve.alias.find(alias => alias.find instanceof RegExp && alias.find.test('@react-three/fiber'))
-  expect(fiberAlias?.replacement).toBe('@react-three/fiber/webgpu')
-  if (fiberAlias?.find instanceof RegExp) {
-    expect(fiberAlias.find.test('@react-three/fiber/webgpu')).toBe(false)
-  }
   expect(config.plugins.some(plugin => plugin.name === 'title')).toBe(true)
   expect(config.plugins.some(plugin => plugin.name.includes('babel'))).toBe(true)
   if (mode === 'production') {

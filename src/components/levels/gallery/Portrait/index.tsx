@@ -2,7 +2,7 @@ import type {Portrait as PortraitData, Quat, Vec3} from '#src/lib/gallery.ts'
 import type {RapierRigidBody} from '@react-three/rapier'
 import type {Group, InstancedMesh} from 'three/webgpu'
 
-import {useFrame} from '@react-three/fiber/webgpu'
+import {useFrame} from '@react-three/fiber'
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import Branch from 'branch-component'
 import {useEffect, useRef} from 'react'

@@ -1,5 +1,5 @@
 import type {InspectionState, MutableRef} from './types.ts'
-import type {RootState} from '@react-three/fiber/webgpu'
+import type {RootState} from '@react-three/fiber'
 
 import {PointerLockControls} from 'three/addons/controls/PointerLockControls.js'
 import {Matrix4, PerspectiveCamera, Quaternion, Vector3} from 'three/webgpu'

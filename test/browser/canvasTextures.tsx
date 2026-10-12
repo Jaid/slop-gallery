@@ -1,6 +1,6 @@
 import type {Texture} from 'three/webgpu'
 
-import {createRoot as createFiberRoot, extend, unmountComponentAtNode} from '@react-three/fiber/webgpu'
+import {createRoot as createFiberRoot, extend, unmountComponentAtNode} from '@react-three/fiber'
 import renderCanvasTexture from 'canvas-textures/three'
 import useDisposable from 'disposable-lifetime/react'
 import {StrictMode, useEffect, useMemo} from 'react'

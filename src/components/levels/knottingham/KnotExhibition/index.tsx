@@ -1,4 +1,4 @@
-import {useThree} from '@react-three/fiber/webgpu'
+import {useThree} from '@react-three/fiber'
 import {ConvexHullCollider, useBeforePhysicsStep} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {knotExhibition, knotFloatHeight} from 'knot-materials/exhibition.ts'

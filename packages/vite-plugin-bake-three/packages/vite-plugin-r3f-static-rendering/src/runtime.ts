@@ -1,7 +1,7 @@
 import type {ResourcePlan, SceneNode, StaticPlan} from './plan.ts'
 import type {BufferGeometry, Material} from 'three/webgpu'
 
-import {applyProps, useFrame} from '@react-three/fiber/webgpu'
+import {applyProps, useFrame} from '@react-three/fiber'
 import useDisposable from 'disposable-lifetime/react'
 import {createElement, useMemo} from 'react'
 import {BundleGroup, Group, InstancedMesh, Mesh, Object3D} from 'three/webgpu'

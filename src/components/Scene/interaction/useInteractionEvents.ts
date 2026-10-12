@@ -1,6 +1,6 @@
 import type {Placement} from '#src/lib/gallery.ts'
 import type {FirstPose, InspectionState, MutableRef} from './types.ts'
-import type {RootState} from '@react-three/fiber/webgpu'
+import type {RootState} from '@react-three/fiber'
 
 import {useEffect} from 'react'
 import {Euler, Quaternion, Raycaster, Vector2} from 'three/webgpu'

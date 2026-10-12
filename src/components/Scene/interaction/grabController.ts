@@ -1,6 +1,6 @@
 import type {Placement} from '#src/lib/gallery.ts'
 import type {MutableRef} from './types.ts'
-import type {RootState} from '@react-three/fiber/webgpu'
+import type {RootState} from '@react-three/fiber'
 
 import {Vector3} from 'three/webgpu'
 

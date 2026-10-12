@@ -1,7 +1,8 @@
-import {useThree} from '@react-three/fiber/webgpu'
+import {useStore, useThree} from '@react-three/fiber'
 import {useEffect} from 'react'
 
 import {galleryEvents} from '#src/lib/gallery/actions.ts'
+import {activateRenderPipeline, releaseRenderPipeline} from '#src/lib/rendering/activeRenderPipeline.ts'
 import GalleryRenderPipeline from '#src/lib/rendering/GalleryRenderPipeline.ts'
 import {getKnotFocus, getKnotFocusDistance, getKnotFocusProximity, getPlayerZoom} from '#src/lib/rendering/playerView.ts'
 
@@ -15,7 +16,7 @@ const Postprocessing = ({contactDarkening = false, knotFocus = false, heavy = tr
   const renderer = useThree(state => state.renderer)
   const scene = useThree(state => state.scene)
   const camera = useThree(state => state.camera)
-  const set = useThree(state => state.set)
+  const store = useStore()
   useEffect(() => {
     const pipeline = new GalleryRenderPipeline(renderer, scene, camera, {
       contactDarkening,
@@ -27,9 +28,11 @@ const Postprocessing = ({contactDarkening = false, knotFocus = false, heavy = tr
         proximity: getKnotFocusProximity,
       } : undefined,
     })
-    const activate = () => set({renderPipeline: pipeline})
+    const activate = () => {
+      activateRenderPipeline(store, pipeline)
+    }
     const deactivate = () => {
-      set(state => (state.renderPipeline === pipeline ? {renderPipeline: null} : {}))
+      releaseRenderPipeline(store, pipeline)
     }
     if (heavy || knotFocus && getKnotFocus() > 0) {
       activate()
@@ -46,7 +49,7 @@ const Postprocessing = ({contactDarkening = false, knotFocus = false, heavy = tr
       deactivate()
       pipeline.dispose()
     }
-  }, [camera, contactDarkening, knotFocus, heavy, renderer, scene, set])
+  }, [camera, contactDarkening, knotFocus, heavy, renderer, scene, store])
   return null
 }
 export default Postprocessing

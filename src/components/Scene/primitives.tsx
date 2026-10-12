@@ -1,5 +1,5 @@
 import type {Vec3} from '#src/lib/gallery.ts'
-import type {ThreeElements} from '@react-three/fiber/webgpu'
+import type {ThreeElements} from '@react-three/fiber'
 import type {Texture} from 'three/webgpu'
 
 import Branch from 'branch-component'

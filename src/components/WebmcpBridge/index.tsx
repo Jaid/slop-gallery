@@ -1,4 +1,4 @@
-import {useThree} from '@react-three/fiber/webgpu'
+import {useThree} from '@react-three/fiber'
 import {AimInspector} from 'ego-player'
 import {useEffect} from 'react'
 

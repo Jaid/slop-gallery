@@ -1,4 +1,4 @@
-import {useFrame} from '@react-three/fiber/webgpu'
+import {useFrame} from '@react-three/fiber'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 

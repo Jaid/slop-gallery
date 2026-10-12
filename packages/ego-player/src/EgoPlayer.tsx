@@ -7,7 +7,7 @@ import type {ComponentProps, ReactNode, Ref} from 'react'
 import type {PointerLockControls as PointerLockControlsImpl} from 'three/addons/controls/PointerLockControls.js'
 
 import {PointerLockControls} from '@react-three/drei/webgpu'
-import {useFrame, useThree} from '@react-three/fiber/webgpu'
+import {useFrame, useThree} from '@react-three/fiber'
 import {CapsuleCollider, RigidBody, useAfterPhysicsStep, useBeforePhysicsStep, useRapier} from '@react-three/rapier'
 import Branch from 'branch-component'
 import {useEffect, useImperativeHandle, useLayoutEffect, useRef, useState} from 'react'

@@ -1,10 +1,10 @@
 import type {EgoDump, EgoInput, EgoPlayerHandle, EgoPlayerProps, EgoState} from '../src/main.ts'
-import type {RootState} from '@react-three/fiber/webgpu'
+import type {RootState} from '@react-three/fiber'
 import type {RapierContext} from '@react-three/rapier'
 
 import {expect, test} from 'bun:test'
 
-import {createRoot, extend, useThree} from '@react-three/fiber/webgpu'
+import {createRoot, extend, useThree} from '@react-three/fiber'
 import {CuboidCollider, Physics, RigidBody, useRapier} from '@react-three/rapier'
 import {act, createRef, StrictMode, Suspense} from 'react'
 import {Object3D, WebGPURenderer} from 'three/webgpu'
@@ -25,6 +25,8 @@ test('React lifecycle preserves the motor, camera ownership and ref contract wit
   } as unknown as HTMLCanvasElement
   const renderer = new WebGPURenderer({canvas})
   renderer.hasInitialized = () => true
+  // Fiber’s XR wiring clears the animation loop, which would otherwise initialize a real backend.
+  renderer.setAnimationLoop = () => Promise.resolve()
   renderer.render = () => {}
   const root = createRoot(canvas)
   const player = createRef<EgoPlayerHandle>()

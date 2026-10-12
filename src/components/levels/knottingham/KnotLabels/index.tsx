@@ -1,6 +1,6 @@
 import type {Texture} from 'three/webgpu'
 
-import {useFrame} from '@react-three/fiber/webgpu'
+import {useFrame} from '@react-three/fiber'
 import {CuboidCollider, CylinderCollider} from '@react-three/rapier'
 import {loadCanvasFonts} from 'canvas-textures'
 import useCanvasTexture from 'canvas-textures/react'

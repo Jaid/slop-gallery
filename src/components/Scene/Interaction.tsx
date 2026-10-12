@@ -2,7 +2,7 @@ import type {Placement} from '#src/lib/gallery.ts'
 import type {FirstPose, InspectionState} from './interaction/types.ts'
 import type {Group} from 'three/webgpu'
 
-import {useThree} from '@react-three/fiber/webgpu'
+import {useThree} from '@react-three/fiber'
 import Branch from 'branch-component'
 import {useRef} from 'react'
 import {Raycaster, Vector2, Vector3} from 'three/webgpu'

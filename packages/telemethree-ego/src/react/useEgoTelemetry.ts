@@ -1,6 +1,6 @@
 import type {EgoTelemetryOptions} from '../types.ts'
 
-import {useFrame} from '@react-three/fiber/webgpu'
+import {useFrame} from '@react-three/fiber'
 import {useEffect, useRef} from 'react'
 
 import EgoTelemetry from '../EgoTelemetry.ts'

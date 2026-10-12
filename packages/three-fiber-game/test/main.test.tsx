@@ -4,13 +4,14 @@ import type {ComponentProps, ReactElement, ReactNode} from 'react'
 import {expect, test} from 'bun:test'
 
 import {KeyboardControls} from '@react-three/drei/webgpu'
-import {Canvas} from '@react-three/fiber/webgpu'
+import {Canvas} from '@react-three/fiber'
 import {Physics} from '@react-three/rapier'
 import {createContext, createRef, isValidElement, useContext} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
 
 import DefaultGame, {normalizeControls, WebgpuRenderer} from '../src/main.ts'
 import createGame from '../src/main.ts'
+import RendererShadows from '../src/RendererShadows.tsx'
 
 function element<Props>(node: ReactNode): ReactElement<Props> {
   if (!isValidElement<Props>(node)) {
@@ -22,6 +23,15 @@ function canvas(props: GameProps = {}) {
   const result = element<ComponentProps<typeof Canvas>>(createGame(props))
   expect(result.type).toBe(Canvas)
   return result
+}
+/** The world inside Canvas, below the renderer settings Game always installs. */
+function sceneOf(props: GameProps = {}) {
+  return settings(canvas(props)).props.children
+}
+function settings(result: ReactElement<ComponentProps<typeof Canvas>>) {
+  const shadows = element<ComponentProps<typeof RendererShadows>>(result.props.children)
+  expect(shadows.type).toBe(RendererShadows)
+  return shadows
 }
 function Outer({children}: GameWrapperProps) {
   return <section>{children}</section>
@@ -96,12 +106,15 @@ test('Canvas receives children and native props without requiring any gallery pr
     frameloop: 'demand',
     id: 'game',
   })
-  expect(result.props.children).toBe(children)
+  expect(settings(result).props).toEqual({
+    children,
+    shadows: false,
+  })
   expect(result.props.camera).toBe(camera)
   expect(result.props.ref).toBe(ref)
   expect(result.props.onCreated).toBe(onCreated)
+  expect(result.props).not.toHaveProperty('shadows')
   expect(result.props).toMatchObject({
-    shadows: false,
     dpr: 1,
     frameloop: 'demand',
     id: 'game',
@@ -114,15 +127,15 @@ test('Canvas receives children and native props without requiring any gallery pr
 test('physics is opt-in and true uses Earth gravity', () => {
   const children = <group />
   for (const physics of [undefined, false]) {
-    expect(canvas({
+    expect(sceneOf({
       children,
       physics,
-    }).props.children).toBe(children)
+    })).toBe(children)
   }
-  const world = element<ComponentProps<typeof Physics>>(canvas({
+  const world = element<ComponentProps<typeof Physics>>(sceneOf({
     children,
     physics: true,
-  }).props.children)
+  }))
   expect(world.type).toBe(Physics)
   expect(world.props.gravity).toEqual([0, -9.81, 0])
   expect(world.props.children).toBe(children)
@@ -134,16 +147,16 @@ test('physics options pass through, including an empty options object', () => {
     paused: true,
     timeStep: 'vary' as const,
   }
-  const world = element<ComponentProps<typeof Physics>>(canvas({
+  const world = element<ComponentProps<typeof Physics>>(sceneOf({
     children,
     physics,
-  }).props.children)
+  }))
   expect(world.type).toBe(Physics)
   expect(world.props).toEqual({
     ...physics,
     children,
   })
-  expect(element(canvas({physics: {}}).props.children).type).toBe(Physics)
+  expect(element(sceneOf({physics: {}})).type).toBe(Physics)
 })
 test('keyboard controls surround outer wrappers so both render roots can access actions', () => {
   const result = element<ComponentProps<typeof KeyboardControls>>(createGame({
@@ -164,10 +177,10 @@ test('keyboard controls surround outer wrappers so both render roots can access 
 test('omitted and empty controls skip KeyboardControls without removing supplied wrappers', () => {
   const children = <group />
   for (const controls of [undefined, Object.freeze({}), Object.freeze([])]) {
-    expect(canvas({
+    expect(sceneOf({
       controls,
       children,
-    }).props.children).toBe(children)
+    })).toBe(children)
     const outer = element<GameWrapperProps>(createGame({
       controls,
       children,
@@ -178,9 +191,9 @@ test('omitted and empty controls skip KeyboardControls without removing supplied
     expect(outer.type).toBe(Outer)
     const wrappedCanvas = element<ComponentProps<typeof Canvas>>(outer.props.children)
     expect(wrappedCanvas.type).toBe(Canvas)
-    const scene = element<GameWrapperProps>(wrappedCanvas.props.children)
-    expect(scene.type).toBe(Inner)
-    const world = element<ComponentProps<typeof Physics>>(scene.props.children)
+    const inner = element<GameWrapperProps>(settings(wrappedCanvas).props.children)
+    expect(inner.type).toBe(Inner)
+    const world = element<ComponentProps<typeof Physics>>(inner.props.children)
     expect(world.type).toBe(Physics)
     expect(world.props.children).toBe(children)
   }
@@ -218,21 +231,21 @@ test('single wrappers and readonly lists nest first-to-last without mutating the
 })
 test('scene wrappers run inside Canvas but outside Physics', () => {
   const children = <group />
-  const outer = element<GameWrapperProps>(canvas({
+  const outer = element<GameWrapperProps>(sceneOf({
     children,
     physics: true,
     sceneWrapper: [Outer, Inner],
-  }).props.children)
+  }))
   expect(outer.type).toBe(Outer)
   const inner = element<GameWrapperProps>(outer.props.children)
   expect(inner.type).toBe(Inner)
   const world = element<ComponentProps<typeof Physics>>(inner.props.children)
   expect(world.type).toBe(Physics)
   expect(world.props.children).toBe(children)
-  expect(canvas({
+  expect(sceneOf({
     children,
     sceneWrapper: [],
-  }).props.children).toBe(children)
+  })).toBe(children)
 })
 const Dependency = createContext('missing')
 function Inject({children}: GameWrapperProps) {
@@ -242,10 +255,10 @@ function Consume() {
   return <span>{useContext(Dependency)}</span>
 }
 test('scene wrappers can inject dependencies and ordered sibling content', () => {
-  const scene = canvas({
+  const scene = sceneOf({
     sceneWrapper: [Inject, Inner],
     children: <Consume />,
-  }).props.children
+  })
   expect(renderToStaticMarkup(scene)).toBe('<span>before</span><article><span>injected</span></article><span>after</span>')
 })
 test('quality-like prop updates keep renderer and wrapper component identities stable', () => {
@@ -264,8 +277,8 @@ test('quality-like prop updates keep renderer and wrapper component identities s
   expect(first.type).toBe(second.type)
   expect(first.key).toBe(second.key)
   expect(first.props.renderer).toBe(second.props.renderer)
-  const firstWrapper = element<GameWrapperProps>(first.props.children)
-  const secondWrapper = element<GameWrapperProps>(second.props.children)
+  const firstWrapper = element<GameWrapperProps>(settings(first).props.children)
+  const secondWrapper = element<GameWrapperProps>(settings(second).props.children)
   expect(firstWrapper.type).toBe(secondWrapper.type)
   expect(firstWrapper.key).toBe(secondWrapper.key)
   expect(element(firstWrapper.props.children).type).toBe(element(secondWrapper.props.children).type)
@@ -279,7 +292,7 @@ test('renderer customization forwards the factory rather than constructing durin
       antialias: true,
     })
   }
-  expect(canvas({renderer}).props.renderer).toBe(renderer)
+  expect(canvas({renderer}).props.renderer).toBe(renderer as ComponentProps<typeof Canvas>['renderer'])
   expect(calls).toBe(0)
 })
 test('default renderer is opaque native WebGPU with stable non-multisampled targets', () => {

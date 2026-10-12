@@ -179,7 +179,7 @@ test.each([
   ['spread props', scene(`{${map(mesh('key={x} {...{castShadow:true}}'))}}`)],
   ['random transform', scene(`{${map(mesh('key={x} position={[Math.random(),0,0]}'))}}`)],
   ['user data identity', scene(`{${map(mesh('key={x} userData={{item:x}}'))}}`)],
-  ['frame loop', `import {useFrame as animate} from '@react-three/fiber/webgpu'; export function Scene(){animate(()=>{});return <group>{${map()}}</group>}`],
+  ['frame loop', `import {useFrame as animate} from '@react-three/fiber'; export function Scene(){animate(()=>{});return <group>{${map()}}</group>}`],
   ['mutable import binding', `const positions = [0,1,2,3]; positions.push(4); export function Scene(){return <group>{positions.map(x=>${mesh('key={x}')})}</group>}`],
 ])('declines %s without modifying source', async (_name, code) => {
   const result = await compile(code)

@@ -1,6 +1,6 @@
 import type {KnotLightImpact} from '#src/lib/physics/KnotLightImpacts.ts'
 
-import {useFrame} from '@react-three/fiber/webgpu'
+import {useFrame} from '@react-three/fiber'
 import {CuboidCollider, RigidBody, useAfterPhysicsStep, useBeforePhysicsStep} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {knotBays, knotLayout} from 'knot-materials/exhibition.ts'

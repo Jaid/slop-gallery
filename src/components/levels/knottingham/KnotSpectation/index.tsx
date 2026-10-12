@@ -1,6 +1,6 @@
 import type {KnotBay} from 'knot-materials/exhibition.ts'
 
-import {useFrame, useThree} from '@react-three/fiber/webgpu'
+import {useFrame, useThree} from '@react-three/fiber'
 import knotAnnouncementUrl from 'knot-materials/announcementAssets.ts'
 import {knotBays, knotExhibition} from 'knot-materials/exhibition.ts'
 import {createKnotGeometry} from 'knot-materials/geometry.ts'

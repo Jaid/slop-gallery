@@ -47,15 +47,6 @@ const getCommonConfig = (context: ConfigEnv) => {
       }),
       mediaMixinsPlugin(),
     ],
-    resolve: {
-      alias: [
-       // Rapier and other dependencies must share the app’s WebGPU-only Fiber implementation.
-        {
-          find: /^@react-three\/fiber$/u,
-          replacement: '@react-three/fiber/webgpu',
-        },
-      ],
-    },
     css: {
       postcss: {
         plugins: [

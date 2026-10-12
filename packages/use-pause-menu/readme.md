@@ -80,7 +80,7 @@ Attach to the actual canvas from within your scene without adding a Fiber depend
 
 ```tsx
 import {useEffect} from 'react'
-import {useThree} from '@react-three/fiber/webgpu'
+import {useThree} from '@react-three/fiber'
 
 import {menu} from './menu.ts'
 
@@ -91,7 +91,7 @@ export default function PauseMenuTarget() {
 }
 ```
 
-For regular Fiber’s WebGL entry use its `gl.domElement` instead. Keep the DOM menu outside Canvas and read the same controller with `usePauseMenu(menu)`. PointerLockControls may still own camera rotation; the controller observes locks requested externally too. Your game still owns movement cleanup, room names, minimaps, audio and what New game resets.
+Fiber’s `/legacy` WebGL entry exposes the same `renderer.domElement`. Keep the DOM menu outside Canvas and read the same controller with `usePauseMenu(menu)`. PointerLockControls may still own camera rotation; the controller observes locks requested externally too. Your game still owns movement cleanup, room names, minimaps, audio and what New game resets.
 
 ## Tests
 

@@ -1,10 +1,10 @@
 import type {EgoInput, EgoPlayerHandle, EgoPlayerProps, EgoZoomTransition} from '../src/main.ts'
-import type {RootState} from '@react-three/fiber/webgpu'
+import type {RootState} from '@react-three/fiber'
 import type {RapierContext} from '@react-three/rapier'
 
 import {expect, test} from 'bun:test'
 
-import {createRoot, useThree} from '@react-three/fiber/webgpu'
+import {createRoot, useThree} from '@react-three/fiber'
 import {CuboidCollider, Physics, RigidBody, useRapier} from '@react-three/rapier'
 import {act, createRef, StrictMode, Suspense} from 'react'
 import {PerspectiveCamera, WebGPURenderer} from 'three/webgpu'
@@ -24,6 +24,8 @@ test('extended zoom requires Shift after Z and rest, yields held Shift to moveme
   ownerDocument.pointerLockElement = canvas
   const renderer = new WebGPURenderer({canvas})
   renderer.hasInitialized = () => true
+  // Fiber’s XR wiring clears the animation loop, which would otherwise initialize a real backend.
+  renderer.setAnimationLoop = () => Promise.resolve()
   renderer.render = () => {}
   const root = createRoot(canvas)
   const player = createRef<EgoPlayerHandle>()

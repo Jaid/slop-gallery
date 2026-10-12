@@ -23,14 +23,14 @@ export default function App() {
 }
 ```
 
-The parent container must have a nonzero height. Canvas props such as `camera`, `dpr`, `shadows`, `frameloop`, `onCreated`, events, styles and the canvas `ref` pass through. DPR and shadow defaults come from Fiber, not a hidden quality preset. Physics and keyboard controls are absent unless requested.
+The parent container must have a nonzero height. Canvas props such as `camera`, `dpr`, `frameloop`, `onCreated`, events, styles and the canvas `ref` pass through. DPR defaults come from Fiber, not a hidden quality preset. Fiber only applies `shadows` to renderers it builds itself, so `Game` takes `shadows` (`true`, `'basic'`, `'percentage'`, `'variance'` or shadow map fields) and keeps the factory-built renderer’s shadow map in sync; omitting it leaves the shadow map untouched. Physics and keyboard controls are absent unless requested.
 
 ## Wrappers
 
 Like `mount-root`, each wrapper prop accepts a component or a readonly array of components. The first entry is outermost: `[A, B]` means `<A><B>{children}</B></A>`. Arrays are never mutated. Omitted wrappers and empty arrays are no-ops.
 
 - `wrapper`: wraps Canvas, inside keyboard controls. Use it for DOM-side providers, boundaries or overlays. It cannot call Fiber scene hooks itself.
-- `sceneWrapper`: wraps the world inside Canvas, outside Physics. Use it for scene providers, render effects, telemetry and capture bridges. Its components can call `useThree` and `useFrame` from `@react-three/fiber/webgpu`.
+- `sceneWrapper`: wraps the world inside Canvas, outside Physics. Use it for scene providers, render effects, telemetry and capture bridges. Its components can call `useThree` and `useFrame` from `@react-three/fiber`.
 
 ```tsx
 import type {GameWrapperProps} from 'three-fiber-game'
@@ -119,23 +119,15 @@ export default function App() {
 
 ## Peer dependencies and bundler setup
 
-Use the peer versions in `package.json`: React 19, Three r186, Fiber 10’s WebGPU entry, Drei 11’s WebGPU entry and Rapier 2.2. All are peer dependencies, including Rapier when physics is disabled, because the package statically imports its component.
+Use the peer versions in `package.json`: React 19, Three r186, Fiber 10 (whose root entry renders with WebGPU), Drei 11’s WebGPU entry and Rapier 2.2. All are peer dependencies, including Rapier when physics is disabled, because the package statically imports its component.
 
-Rapier 2.2 still declares Fiber 9 peers and imports bare `@react-three/fiber`. The host must resolve those imports to the same WebGPU Fiber module as Canvas. Slop Gallery uses this Vite alias:
-
-```ts
-resolve: {
-  alias: [{find: /^@react-three\/fiber$/u, replacement: '@react-three/fiber/webgpu'}],
-}
-```
-
-Do not install or bundle separate Fiber copies for Rapier. Use WebGPU entry points in application code too. This is an explicit integration requirement for the current prerelease engine combination, not an automatic compatibility layer hidden in the package.
+Rapier 2.2 still declares Fiber 9 peers and imports bare `@react-three/fiber`, which is the same WebGPU module as Canvas, so no alias is needed. Do not install or bundle separate Fiber copies for Rapier, and do not import the deprecated `@react-three/fiber/webgpu` entry.
 
 ## Exports and checks
 
 - `Game` (also the default export), `normalizeControls` and `WebgpuRenderer`.
 - Types: `GameProps`, `GamePhysicsProps`, `GameRenderer`, `Controls`, `ControlBinding`, `GameWrapperProps`, `GameWrapper`, `GameWrappers` and `WebgpuRendererOptions`.
 
-Run `bun test` in this package. Tests cover composition, wrapper ordering and context injection, readonly controls, physics options, renderer defaults and native initialization failure. These are structural/server-rendered tests, not a GPU playtest. The test preload matches Vite’s ESM preference for Rapier and aliases its bare Fiber import to the shared WebGPU entry. This avoids Bun’s CommonJS loading path attempting to require Three’s async module.
+Run `bun test` in this package. Tests cover composition, wrapper ordering and context injection, readonly controls, physics options, renderer defaults and native initialization failure. These are structural/server-rendered tests, not a GPU playtest. The test preload matches Vite’s ESM preference for Rapier and resolves its bare Fiber import to Fiber’s ESM entry. This avoids Bun’s CommonJS loading path attempting to require Three’s async module.
 
 The repository’s `bun run check:package` also packs the package and tests, typechecks and bundles it in an isolated consumer without workspace path aliases. That consumer uses the same explicit WebGPU dependency resolution as the app.

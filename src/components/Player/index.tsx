@@ -1,7 +1,7 @@
 import type {EgoAction, EgoPlayerHandle, EgoState} from 'ego-player'
 
 import {useKeyboardControls} from '@react-three/drei/webgpu'
-import {useThree} from '@react-three/fiber/webgpu'
+import {useThree} from '@react-three/fiber'
 import EgoPlayer from 'ego-player'
 import {useEffect, useRef, useState} from 'react'
 import {Euler, Quaternion} from 'three/webgpu'

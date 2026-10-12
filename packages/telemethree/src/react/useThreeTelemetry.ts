@@ -2,7 +2,7 @@ import type {ThreeStatisticsOptions} from '../ThreeStatistics.ts'
 import type {TelemetryClient} from '../types.ts'
 import type {Scene, WebGPURenderer} from 'three/webgpu'
 
-import {useFrame} from '@react-three/fiber/webgpu'
+import {useFrame} from '@react-three/fiber'
 import {useEffect, useRef} from 'react'
 
 import ThreeStatistics from '../ThreeStatistics.ts'

@@ -1,6 +1,6 @@
 import type {Attributes} from 'victoria-browser-client'
 
-import {useThree} from '@react-three/fiber/webgpu'
+import {useThree} from '@react-three/fiber'
 import Branch from 'branch-component'
 import {AimInspector} from 'ego-player'
 import useEgoTelemetry from 'telemethree-ego/react'

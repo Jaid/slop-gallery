@@ -16,7 +16,7 @@ if (!standalone) {
   }
 }
 const paths: Record<string, string> = {
-  '@react-three/fiber/webgpu': '/node_modules/.vite/deps/@react-three_fiber_webgpu.js',
+  '@react-three/fiber': '/node_modules/.vite/deps/@react-three_fiber.js',
   react: '/node_modules/.vite/deps/react.js',
   'react/jsx-dev-runtime': '/node_modules/.vite/deps/react_jsx-dev-runtime.js',
   'react/jsx-runtime': '/node_modules/.vite/deps/react_jsx-runtime.js',

@@ -1,6 +1,6 @@
-// Match Vite’s ESM preference and the host’s shared WebGPU Fiber alias.
+// Match Vite’s ESM preference for Fiber, whose root entry renders with WebGPU.
 // Rapier’s CommonJS main cannot require Three’s async WebGPU module in Bun.
-const fiber = Bun.resolveSync('@react-three/fiber/webgpu', import.meta.dir)
+const fiber = Bun.resolveSync('@react-three/fiber', import.meta.dir)
 const rapier = Bun.resolveSync('@react-three/rapier/dist/react-three-rapier.esm.js', import.meta.dir)
 export const webgpuResolution: Bun.BunPlugin = {
   name: 'webgpu-game-test-resolution',

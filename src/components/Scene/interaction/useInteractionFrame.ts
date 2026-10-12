@@ -1,7 +1,7 @@
 import type {InteractionFrameRefs} from './types.ts'
-import type {RootState} from '@react-three/fiber/webgpu'
+import type {RootState} from '@react-three/fiber'
 
-import {useFrame} from '@react-three/fiber/webgpu'
+import {useFrame} from '@react-three/fiber'
 import {Matrix4, PerspectiveCamera, Quaternion, Vector3} from 'three/webgpu'
 
 import {levelWallDistance} from '#level/navigation.ts'

@@ -33,7 +33,7 @@ Captures use an output render target, preserving Three.js screen tone mapping an
 
 ## React Three Fiber
 
-Use the WebGPU `Canvas` from Fiber 10. The hook returns a stable capture function and reconnects its capture service when the scene, camera, renderer or render pipeline changes.
+Use Fiber 10’s `Canvas`, which renders with WebGPU. When `state.renderPipeline` (the slot `@react-three/tsl` defines, also filled by its `useRenderPipeline`) holds a pipeline, captures render through it. The hook returns a stable capture function and reconnects its capture service when the scene, camera, renderer or render pipeline changes.
 
 ```tsx
 import {useEffect} from 'react'
@@ -57,7 +57,7 @@ For access outside the canvas, use the ref component:
 
 ```tsx
 import type {CaptureFrameApi} from 'webgpu-capture-bridge'
-import {Canvas} from '@react-three/fiber/webgpu'
+import {Canvas} from '@react-three/fiber'
 import {useRef} from 'react'
 import WebgpuCaptureBridge from 'webgpu-capture-bridge/react'
 
@@ -77,7 +77,7 @@ function Viewer() {
 }
 ```
 
-The core entry point never imports React or Fiber. Only consumers of `webgpu-capture-bridge/react` need those optional peers.
+The core entry point never imports React or Fiber. Only consumers of `webgpu-capture-bridge/react` need those optional peers; `@react-three/tsl` is needed for its types only.
 
 ## Result
 

@@ -1,4 +1,4 @@
-import type {ThreeElements} from '@react-three/fiber/webgpu'
+import type {ThreeElements} from '@react-three/fiber'
 
 import {registerInteractiveObject} from '#src/lib/gallery/interactiveObjects.ts'
 

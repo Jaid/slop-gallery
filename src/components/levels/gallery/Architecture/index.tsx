@@ -1,6 +1,6 @@
 import type {Wall} from '#src/lib/gallery.ts'
 
-import {useThree} from '@react-three/fiber/webgpu'
+import {useThree} from '@react-three/fiber'
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import renderCanvasTexture from 'canvas-textures/three'
 import useDisposable from 'disposable-lifetime/react'

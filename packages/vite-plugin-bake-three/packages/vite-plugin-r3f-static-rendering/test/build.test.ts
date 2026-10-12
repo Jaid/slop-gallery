@@ -12,7 +12,7 @@ import r3fStaticRendering from '../src/main.ts'
 import {StaticSceneResources} from '../src/runtime.ts'
 
 const code = 'export function Scene() { return <group>{[0,1,2,3].map(x => <mesh key={x} position={[x*3,0,0]}><boxGeometry args={[1,1,1]}/><meshStandardNodeMaterial color=\'#fff\'/></mesh>)}</group> }'
-const external = ['react', 'react/jsx-runtime', 'three/webgpu', '@react-three/fiber/webgpu', 'disposable-lifetime/react']
+const external = ['react', 'react/jsx-runtime', 'three/webgpu', '@react-three/fiber', 'disposable-lifetime/react']
 test('real Vite build links executable plans, uses fresh instances, and keeps build dependencies out of browser code', async () => {
   const directory = await mkdtemp(join(import.meta.dirname, 'vite-build-'))
   try {
@@ -75,7 +75,7 @@ test.each(['disabled', 'excluded', 'ssr'])('Vite leaves %s modules unoptimized',
     const options = mode === 'disabled' ? {
       staticInstancing: false as const,
       renderBundles: false as const,
-    } : mode === 'excluded' ? {exclude: /entry\.tsx$/u} : {}
+    } : (mode === 'excluded' ? {exclude: /entry\.tsx$/u} : {})
     const result = await build({
       configFile: false,
       root: directory,
