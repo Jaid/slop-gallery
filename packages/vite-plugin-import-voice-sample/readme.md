@@ -220,6 +220,21 @@ For the default 24 kHz sample rate this is 16,384 bit/s; at 48 kHz it is 32,768 
 
 Store/cache hits never contact OpenRouter. Cache misses use `OPENROUTER_API_KEY`. The API key is only used inside Vite and is never emitted into client code.
 
+## Optional samples
+
+By default, a voice sample that cannot be fetched (for example a cache miss without `OPENROUTER_API_KEY`, or a failed OpenRouter request) fails the build. With `optional: true`, the plugin logs a warning instead and substitutes one second of silence in the requested format:
+
+```ts
+importVoiceSample({
+  optional: true,
+})
+```
+
+- audio formats resolve to a silent mono WAV, PCM or Opus asset at the configured `sampleRate`
+- `timings` resolve to an empty array, or to the silence’s MessagePack metadata for `type: 'reference'`
+- the silence is shared by all fallbacks and cached in `cacheFolder`; it never enters the raw store, so the real sample is still generated once OpenRouter is reachable
+- invalid import attributes still fail the build
+
 ## Vite setup
 
 ```ts

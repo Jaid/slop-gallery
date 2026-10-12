@@ -30,7 +30,10 @@ const getCommonConfig = (context: ConfigEnv) => {
     },
     plugins: [
       browserslistTargetPlugin(),
-      importVoiceSamplePlugin(),
+      importVoiceSamplePlugin({
+        // Builds without OpenRouter access get silence for uncached samples instead of failing.
+        optional: true,
+      }),
       knotMaterialsPlugin(),
       titlePlugin(levels[level].title),
       gameLevelPlugin({
