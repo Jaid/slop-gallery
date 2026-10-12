@@ -3,11 +3,12 @@ import type {MutableRef} from './types.ts'
 import type {RootState} from '@react-three/fiber/webgpu'
 
 import {useEffect} from 'react'
-import {Vector3} from 'three/webgpu'
+import {Euler, PerspectiveCamera, Vector3} from 'three/webgpu'
 
-import {galleryEvents, useGallery} from '#src/lib/gallery.ts'
+import {galleryEvents, setCameraFocused, useGallery} from '#src/lib/gallery.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
 import pauseMenu from '#src/lib/pauseMenu.ts'
+import {pendingImages} from '#src/lib/useArtworkTexture.ts'
 
 import {propObjects} from '../GrabbableProp.tsx'
 
@@ -19,6 +20,7 @@ export default function useInteractionDiagnostics(camera: RootState['camera'], r
       camera: camera.position.toArray(),
       rotation: camera.rotation.toArray(),
       ready: useGallery.getState().ready,
+      pendingImages: pendingImages(),
       registered: portraitObjects.size,
       room: useGallery.getState().room,
       placement: placement.current,
@@ -59,11 +61,33 @@ export default function useInteractionDiagnostics(camera: RootState['camera'], r
         },
       }))
       api.merge = (first: string, second: string) => galleryEvents.dispatchEvent(new CustomEvent('merge', {detail: [first, second]}))
+      // Detaches the camera from the player until the next teleport, so a still photo can be framed exactly.
+      api.pose = ({position, rotation, fov} = {}) => {
+        setCameraFocused(true)
+        if (position) {
+          camera.position.set(...position)
+        }
+        if (rotation) {
+          camera.quaternion.setFromEuler(new Euler(...rotation, 'YXZ'))
+        }
+        if (fov !== undefined && camera instanceof PerspectiveCamera) {
+          camera.fov = fov
+          camera.updateProjectionMatrix()
+        }
+        const euler = new Euler
+        euler.setFromQuaternion(camera.quaternion, 'YXZ')
+        return {
+          position: camera.position.toArray(),
+          rotation: [euler.x, euler.y, euler.z],
+          fov: camera instanceof PerspectiveCamera ? camera.fov : null,
+        }
+      }
     }
     return () => {
       delete api.snapshot
       delete api.teleport
       delete api.merge
+      delete api.pose
     }
   }, [camera, placement, renderer])
 }
