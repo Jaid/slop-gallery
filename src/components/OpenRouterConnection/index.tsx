@@ -11,7 +11,7 @@ export default function OpenRouterConnection({params, setParams}: ReturnType<typ
   const apiKey = useGallery(s => s.apiKey)
   const [key, setKey] = useState(apiKey)
   return <section className={css.container} aria-labelledby='openrouter-title' data-testid='connection'>
-    <h2 id='openrouter-title'>OpenRouter <span>{apiKey ? params.ai ? 'Enabled' : 'Disabled' : 'Not connected'}</span></h2>
+    <h2 id='openrouter-title'>OpenRouter <span>{apiKey ? (params.ai ? 'Enabled' : 'Disabled') : 'Not connected'}</span></h2>
     <p>Optional AI for artwork titles, stories and fusions. Images and text are sent to OpenRouter and may incur charges. No key is needed to explore.</p>
     <form
       onSubmit={event => {
