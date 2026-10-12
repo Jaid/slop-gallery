@@ -2,6 +2,7 @@ import type {AudioOutput, SoundEffect} from './proceduralAudio.ts'
 
 import {playerSoundEffects} from './playerSoundEffects.ts'
 import {noise, osc, playVoices} from './proceduralAudio.ts'
+import {soundEffectCandidates} from './soundEffectCandidates.ts'
 
 export type {SoundEffect} from './proceduralAudio.ts'
 
@@ -777,6 +778,8 @@ export const soundEffects: Array<SoundEffect> = [
       }),
     ],
   },
+  // Menu, notification, subtle cue and collision candidates start archived for auditioning.
+  ...soundEffectCandidates,
 ]
 
 const byId = new Map(soundEffects.map(effect => [effect.id, effect]))
