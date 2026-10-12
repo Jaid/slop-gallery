@@ -42,7 +42,6 @@ export default function useCanvasTexture<T>(recipe: ReactCanvasTextureRecipe<T>)
       }
     }
     // Effects cannot await; also contain exceptions thrown by a supplied error handler.
-    // eslint-disable-next-line promise/prefer-await-to-then
     void render().catch(console.error)
     return () => {
       controller.abort()
