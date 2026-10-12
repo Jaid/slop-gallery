@@ -20,6 +20,10 @@ Zoom sweeps follow `ego-player`'s actual FOV transition direction and duration. 
 
 `onZoomChange` continues driving the app's visual effects independently of sound settings. It also controls the quiet held-zoom layer's gain; extended zoom makes that layer slightly stronger. There is one sustained playback per zoom session, not a source allocated every frame.
 
+## Candidate catalog
+
+`soundEffectCandidates.ts` holds 48 archived audition candidates (SFX-58–SFX-105), 12 each for menus, notifications, subtle cues and collisions. They use the same oscillator/noise voices; collisions approximate struck materials with inharmonic, faster-decaying upper modes. Every effect missing from `enabledSoundEffectIds` lands on the soundboard's archived wall automatically, which resizes the room to fit. To adopt a candidate, append its ID to `enabledSoundEffectIds`; never renumber existing IDs.
+
 ## Movement
 
 The player adapter resolves a ground modifier and passes collision-resolved horizontal speed and crouch state to `SoundEngine.step(surface, speed, crouching)`. All four modifiers retain the **Soft Weight** family—a short body impact, one filtered contact layer and a quiet delayed weight cue—while shifting its material character. `generic` is the default hard surface; `hollow` replaces the old wood boolean and covers the same wooden areas; `glass` applies to the walkable lobby floor window near spawn; `fabric` applies to the Sienna carpet and Moonfall crater terrain. Visible carpet bounds are shared with the Sienna renderer, and the crater uses the same configured radius as its terrain geometry. Actual speed continuously changes level, pitch, brightness and duration; per-stride pitch variation remains intentionally subtle to avoid listening fatigue. Crouching lowers level and brightness further. The stride callback controls cadence without a separate fixed footstep cooldown.
@@ -36,4 +40,4 @@ The reusable `ego-player` package emits `onLand` and `onZoomTransition` but cont
 
 Run `bun test ./test/unit/sound-engine.test.ts ./test/unit/sound-effects.test.ts ./test/unit/player-audio.test.ts ./test/unit/soundboard-layout.test.ts` and `bun run --cwd packages/ego-player test`.
 
-With the usual development server and existing debug browser running, `bun test/browser/run.ts playerAudio.ts` renders silent offline buffers. It checks all seven cues, speed/crouch/impact-dependent output, headroom, silent tails, held-zoom cancellation and mid-transition reversal. It does not play audio, simulate input, navigate, focus or resize the user's browser. This checks synthesis and lifecycle behavior, not subjective in-game loudness or timbre.
+With the usual development server and existing debug browser running, `bun test/browser/run.ts playerAudio.ts` renders silent offline buffers. It checks all seven cues, speed/crouch/impact-dependent output, headroom, silent tails, held-zoom cancellation and mid-transition reversal. It does not play audio, simulate input, navigate, focus or resize the user's browser. `soundEffectCatalog.ts` is a standalone fixture that renders all soundboard recipes the same way and checks for silence, headroom and silent tails. This checks synthesis and lifecycle behavior, not subjective in-game loudness or timbre.
