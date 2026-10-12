@@ -26,7 +26,7 @@ Options:
   --angle <yaw,pitch[,roll]>
                           camera angle in degrees. Yaw 0 looks toward −z, positive pitch looks up. Default: the player spawn
   --fov <degrees>         vertical field of view. Default: the game camera’s
-  --graphics <mode>       mirrors ?graphics (heavy or fast). Default: the app default
+  --graphics <mode>       mirrors ?graphics (heavy or fast). Default: heavy
   --vision-mode <mode>    mirrors ?vision_mode (wireframe). Default: none
   --viewport <WxH>        render size in pixels. Default: 3840x2160
   --jxl-distance <number> cjxl Butteraugli distance, 0 is lossless. Default: 1
@@ -93,7 +93,10 @@ const {values} = parseArgs({
   options: {
     angle: {type: 'string'},
     fov: {type: 'string'},
-    graphics: {type: 'string'},
+    graphics: {
+      type: 'string',
+      default: 'heavy',
+    },
     help: {
       type: 'boolean',
       short: 'h',
@@ -147,9 +150,7 @@ const search = new URLSearchParams({
   ai: 'false',
   test: 'true',
 })
-if (values.graphics !== undefined) {
-  search.set('graphics', values.graphics)
-}
+search.set('graphics', values.graphics)
 if (values['vision-mode'] !== undefined) {
   search.set('vision_mode', values['vision-mode'])
 }
