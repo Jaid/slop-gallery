@@ -159,6 +159,11 @@ try {
   })
   const page = await browser.newPage()
   page.on('pageerror', error => console.error(`Page error: ${String(error)}`))
+  // A crashed tab never resolves pending waits; closing the browser rejects them.
+  page.on('error', error => {
+    console.error(`Page crashed: ${String(error)}`)
+    void browser?.close()
+  })
   console.log(`Loading ${url}`)
   await page.goto(url, {
     waitUntil: 'domcontentloaded',
