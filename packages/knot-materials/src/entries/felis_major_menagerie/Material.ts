@@ -713,7 +713,7 @@ const maxEyeDistance = Math.max(...catMesh.vertices.map(eyeDistance))
 /** Normalized distance from the nearest eye: the order in which a reassembling cat lights up, eyes first. */
 const keyOf = (vertex: CatVertex) => eyeDistance(vertex) / maxEyeDistance
 const brightNames = new Set(['earTip', 'noseTip', 'chin', 'cheek', 'crown'])
-const magnitudeOf = (vertex: CatVertex) => (brightNames.has(vertex.name) ? 1 : eyeCorners.has(vertex.name) ? 0.5 : 0.45 + hash(vertex.index,1) * 0.35)
+const magnitudeOf = (vertex: CatVertex) => (brightNames.has(vertex.name) ? 1 : (eyeCorners.has(vertex.name) ? 0.5 : 0.45 + hash(vertex.index, 1) * 0.35))
 /** Vertices with their own little motions: eyelids, ear tips and ear middles. */
 const motionCodes: Partial<Record<CatVertex['name'], number>> = {
   eyeTop: 1,

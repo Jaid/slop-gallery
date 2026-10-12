@@ -537,7 +537,7 @@ for (const key of eyeRing) {
     }
     pending.delete(best)
     for (const thread of threads) {
-      const other = thread.a === best ? thread.b : thread.b === best ? thread.a : -1
+      const other = thread.a === best ? thread.b : (thread.b === best ? thread.a : -1)
       if (other < 0) {
         continue
       }

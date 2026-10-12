@@ -67,7 +67,6 @@ export default class extends KnotMaterial {
         .mul(shapeType.smoothstep(0.4, 0.65)) // only insect-like shapes move
       const layerDepthFade = float(1 - layerIdx * 0.2) // deeper layers slightly dimmer
       const layerNear = layerIdx === 0 ? near.mul(0.4).add(0.6) : (layerIdx === 1 ? near.mul(0.6).add(0.4) : near)
-
       inclusionMask = inclusionMask.add(maskedInclusion.mul(layerDepthFade).mul(layerNear))
       inclusionEmission = inclusionEmission.add(
         typeColor.mul(maskedInclusion).mul(layerDepthFade).mul(twitch.mul(0.5).add(0.5)),
