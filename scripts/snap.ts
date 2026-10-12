@@ -131,12 +131,14 @@ const server = await createServer({
   root: repositoryRoot,
   mode: 'development',
   logLevel: 'error',
+  // A running dev server may share the default cache; concurrent dependency optimization would invalidate each other’s chunks.
+  cacheDir: 'node_modules/.vite-snap',
   server: {
     host: '127.0.0.1',
     port: 0,
     strictPort: true,
-    // Source edits must not reload the page while a photo is being taken.
-    hmr: false,
+    // Source edits must not reload the page while a photo is being taken. HMR itself stays on: Vite needs it to reload the page after discovering and optimizing new dependencies.
+    watch: null,
   },
 })
 let browser: Awaited<ReturnType<typeof puppeteer.launch>> | undefined
