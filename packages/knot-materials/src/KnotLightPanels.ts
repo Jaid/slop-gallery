@@ -22,11 +22,12 @@ export default class KnotLightPanels {
     color: '#696a61',
     roughness: 0.85,
   })
-  readonly diffuserGeometry = new RoundedBoxGeometry(...knotLightDiffuserSize, 2, 0.01)
+  // Two smooth-shaded facets per rounded edge: within 0.8 mm (diffuser) and 1.9 mm (ceiling housing) of the true arc.
+  readonly diffuserGeometry = new RoundedBoxGeometry(...knotLightDiffuserSize, 1, 0.01)
   readonly diffuserMaterial = new MeshBasicNodeMaterial({toneMapped: false})
   readonly diffusers: InstancedMesh
   readonly fractures: InstancedBufferAttribute
-  readonly housingGeometry = new RoundedBoxGeometry(...knotLightHousingSize, 2, 0.025)
+  readonly housingGeometry = new RoundedBoxGeometry(...knotLightHousingSize, 1, 0.025)
   readonly housingMaterial = new MeshStandardNodeMaterial({
     color: '#262725',
     roughness: 0.6,

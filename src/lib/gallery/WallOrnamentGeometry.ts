@@ -1,7 +1,6 @@
 import type {Wall} from './walls.ts'
-import type {BufferGeometry} from 'three/webgpu'
 
-import {CatmullRomCurve3, ExtrudeGeometry, Line3, Path, Shape, SphereGeometry, TorusGeometry, TubeGeometry, Vector3} from 'three/webgpu'
+import {BufferAttribute, BufferGeometry, CatmullRomCurve3, ExtrudeGeometry, Line3, Path, Shape, SphereGeometry, TorusGeometry, TubeGeometry, Vector3} from 'three/webgpu'
 
 import {mergeParts} from '../geometry.ts'
 
@@ -44,6 +43,41 @@ function stem(path: Path, radius: number, z: number) {
   const segments = straight ? 1 : Math.max(4, Math.ceil(path.getLength() * 48))
   return new TubeGeometry(curve, segments, radius, 6, false).scale(1, 1, 0.65)
 }
+/**
+ * The back cap and rear bevel of a relief leaf face the plaster and are never seen.
+ * Drop them and run the straight side wall back to the same depth instead.
+ */
+function withoutBack(geometry: ExtrudeGeometry, bevel: number) {
+  const source = geometry.getAttribute('position')
+  const kept: Array<number> = []
+  for (let i = 0; i < source.count; i += 3) {
+    // The side wall starts at z = 0; everything entirely behind it belongs to the back.
+    if (Math.max(source.getZ(i), source.getZ(i + 1), source.getZ(i + 2)) > 1e-9) {
+      kept.push(i, i + 1, i + 2)
+    }
+  }
+  const result = new BufferGeometry
+  for (const name of ['position', 'uv'] as const) {
+    const attribute = geometry.getAttribute(name)
+    const values = new Float32Array(kept.length * attribute.itemSize)
+    for (const [i, vertex] of kept.entries()) {
+      for (let component = 0; component < attribute.itemSize; component++) {
+        values[i * attribute.itemSize + component] = attribute.getComponent(vertex, component)
+      }
+    }
+    result.setAttribute(name, new BufferAttribute(values, attribute.itemSize))
+  }
+  const positions = result.getAttribute('position')
+  for (let i = 0; i < positions.count; i++) {
+    if (Math.abs(positions.getZ(i)) < 1e-9) {
+      positions.setZ(i, -bevel)
+    }
+  }
+  // Extrusions are flat-shaded per face, as before.
+  result.computeVertexNormals()
+  geometry.dispose()
+  return result
+}
 function leaf(length: number, width: number) {
   const shape = new Shape
   shape.moveTo(0, 0)
@@ -52,15 +86,16 @@ function leaf(length: number, width: number) {
   shape.bezierCurveTo(width * 0.15, length * 0.84, width * 0.65, length * 0.78, width * 0.7, length * 0.57)
   shape.bezierCurveTo(width, length * 0.36, width * 0.3, length * 0.18, 0, 0)
   shape.closePath()
-  return new ExtrudeGeometry(shape, {
+  const bevel = 0.003
+  return withoutBack(new ExtrudeGeometry(shape, {
     depth: 0.006,
     steps: 1,
     curveSegments: 4,
     bevelEnabled: true,
-    bevelThickness: 0.003,
-    bevelSize: 0.003,
+    bevelThickness: bevel,
+    bevelSize: bevel,
     bevelSegments: 2,
-  }).translate(0, 0, 0.004)
+  }), bevel).translate(0, 0, 0.004)
 }
 
 /** Shallow carved foliage and gilded scrolls, shared by every wall instance. */

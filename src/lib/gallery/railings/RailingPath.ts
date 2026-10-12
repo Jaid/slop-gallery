@@ -21,6 +21,8 @@ type RailingSegment = {
 export default class RailingPath extends Curve<Vector3> {
   readonly distances = [0]
   readonly length: number
+  /** Rail centerline vertices; the capsule colliders and rendered tube both follow them exactly. */
+  readonly points: Array<Vector3>
   readonly postRadius = 0.035
   readonly posts: Array<RailingPost>
   readonly radius = 0.04
@@ -31,8 +33,9 @@ export default class RailingPath extends Curve<Vector3> {
     if (anchors.length < 2 || anchors.some(anchor => !anchor.ground.every(Number.isFinite) || !Number.isFinite(anchor.height) || anchor.height <= 0)) {
       throw new RangeError('A railing needs at least two finite anchors with positive heights.')
     }
+    this.points = anchors.map((_, i) => this.top(i))
     for (let i = 1; i < anchors.length; i++) {
-      const distance = this.top(i).distanceTo(this.top(i - 1))
+      const distance = this.points[i].distanceTo(this.points[i - 1])
       if (distance < 0.000001) {
         throw new RangeError('Consecutive railing anchors must be distinct.')
       }
@@ -40,8 +43,8 @@ export default class RailingPath extends Curve<Vector3> {
     }
     this.length = this.distances.at(-1)!
     this.segments = anchors.slice(1).map((_, i) => {
-      const a = this.top(i)
-      const b = this.top(i + 1)
+      const a = this.points[i].clone()
+      const b = this.points[i + 1]
       const direction = b.clone().sub(a)
       const rotation = (new Quaternion).setFromUnitVectors(new Vector3(0, 1, 0), direction.clone().normalize())
       return {

@@ -9,9 +9,8 @@ import {knotExhibition} from 'knot-materials/exhibition.ts'
 import loadCandidateIcons from 'knot-materials/loadCandidateIcons.ts'
 import {knotSign, knotSignId, knotSignParts, knotSignPosition, knotSignRoundParts} from 'knot-materials/signs.ts'
 import {useEffect, useMemo, useSyncExternalStore} from 'react'
-import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js'
 import {attribute, texture, uv, vec2} from 'three/tsl'
-import {BoxGeometry, CylinderGeometry, Euler, InstancedBufferAttribute, InstancedMesh, Matrix4, MeshBasicNodeMaterial, PlaneGeometry} from 'three/webgpu'
+import {InstancedBufferAttribute, InstancedMesh, Matrix4, MeshBasicNodeMaterial, PlaneGeometry} from 'three/webgpu'
 import useGraphicsMode from 'use-graphics-mode'
 
 import InteractiveObject from '#component/InteractiveObject'
@@ -22,6 +21,7 @@ import InstancedPropVisuals from '#src/lib/physics/InstancedPropVisuals.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
 import drawLabel, {labelAtlasColumns, labelBackground, labelFonts, labelHeight, labelWidth, updateRarityAtlas} from './drawLabel.ts'
+import createSupportGeometry from './supportGeometry.ts'
 
 const atlasRows = Math.ceil(knotExhibition.length / labelAtlasColumns)
 /** One complete face atlas and two instanced batches: faces and physical supports. */
@@ -49,15 +49,7 @@ export default function KnotLabels() {
     material.polygonOffsetUnits = -1
     const faces = new InstancedMesh(geometry, material, knotExhibition.length)
     faces.name = 'knot-nameplates'
-    const parts = [
-      ...knotSignParts.map(({position, rotation = [0, 0, 0], size}) => new BoxGeometry(...size).applyMatrix4((new Matrix4).makeRotationFromEuler(new Euler(...rotation))).translate(...position)),
-      ...knotSignRoundParts.map(({position, rotation = [0, 0, 0], radius, height: partHeight}) => new CylinderGeometry(radius, radius, partHeight, 48).applyMatrix4((new Matrix4).makeRotationFromEuler(new Euler(...rotation))).translate(...position)),
-    ]
-    const supportGeometry = mergeGeometries(parts)
-    for (const part of parts) {
-      part.dispose()
-    }
-    const supports = new InstancedMesh(supportGeometry, [], knotExhibition.length)
+    const supports = new InstancedMesh(createSupportGeometry(), [], knotExhibition.length)
     supports.name = 'knot-nameplate-supports'
     supports.castShadow = true
     supports.receiveShadow = true

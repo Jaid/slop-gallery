@@ -2,7 +2,10 @@ import {expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
 import {billboardParts, knotSign, knotSignParts, knotSignPosition, knotSignRoundParts} from 'knot-materials/signs.ts'
-import {BoxGeometry, CylinderGeometry, Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
+import {BoxGeometry, Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
+
+import createSupportGeometry from '../../src/components/levels/knottingham/KnotLabels/supportGeometry.ts'
+import {circleSegments, triangleCount} from '../../src/lib/geometry.ts'
 
 await RAPIER.init()
 for (const [title, parts, elevation] of [
@@ -29,12 +32,11 @@ for (const [title, parts, elevation] of [
         world.createCollider(RAPIER.ColliderDesc.cuboid(size[0] / 2, size[1] / 2, size[2] / 2).setTranslation(...position).setRotation((new Quaternion).setFromEuler(new Euler(...rotation))))
       }
       if (title === 'nameplate') {
+        // The rendered, instanced stand geometry, not a separately tessellated stand-in.
+        const stand = new Mesh(createSupportGeometry(), material)
+        stand.updateMatrixWorld()
+        meshes.push(stand)
         for (const {position, rotation = [0, 0, 0], radius, height} of knotSignRoundParts) {
-          const mesh = new Mesh(new CylinderGeometry(radius, radius, height, 48), material)
-          mesh.position.set(...position)
-          mesh.rotation.set(rotation[0], rotation[1], rotation[2])
-          mesh.updateMatrixWorld()
-          meshes.push(mesh)
           world.createCollider(RAPIER.ColliderDesc.cylinder(height / 2, radius).setTranslation(...position).setRotation((new Quaternion).setFromEuler(new Euler(...rotation))))
         }
         expect(Math.min(...knotSignRoundParts.map(part => part.position[1] - part.height / 2)) + elevation).toBeCloseTo(0, 6)
@@ -102,5 +104,32 @@ test('stand stays on the left with its back turned toward its knot', () => {
     const towardKnot = new Vector3(-position[0], 0, -position[2]).normalize()
     const back = new Vector3(0, 0, -1).applyAxisAngle(new Vector3(0, 1, 0), rotation + knotSign.inwardRotation)
     expect(back.dot(towardKnot)).toBeGreaterThan(0.8)
+  }
+})
+test('stand parts share one half-millimeter silhouette tolerance and drop only buried stem caps', () => {
+  expect(circleSegments(0.2)).toBe(48)
+  expect(circleSegments(0.018)).toBe(16)
+  expect(circleSegments(0.0001)).toBe(8)
+  expect(() => circleSegments(0)).toThrow(RangeError)
+  for (const {radius} of knotSignRoundParts) {
+    const segments = circleSegments(radius)
+    expect(segments % 4).toBe(0)
+    expect(radius * (1 - Math.cos(Math.PI / segments))).toBeLessThanOrEqual(0.0005)
+  }
+  const [stem, base, , boss] = knotSignRoundParts
+  expect(knotSignRoundParts.filter(part => part.openEnded)).toEqual([stem])
+  // The stem’s foot is flush with the base’s underside and its head sits inside the mounting boss.
+  expect(stem.position[1] - stem.height / 2).toBeCloseTo(base.position[1] - base.height / 2, 9)
+  const head = new Vector3(stem.position[0], stem.position[1] + stem.height / 2, stem.position[2]).sub(new Vector3(...boss.position))
+  const axis = new Vector3(0, 1, 0).applyEuler(new Euler(...boss.rotation!))
+  const along = head.dot(axis)
+  expect(Math.abs(along)).toBeLessThan(boss.height / 2)
+  expect(head.addScaledVector(axis, -along).length() + stem.radius).toBeLessThan(boss.radius)
+  const geometry = createSupportGeometry()
+  try {
+    expect(triangleCount(geometry)).toBe(12 + knotSignRoundParts.reduce((sum, part) => sum + circleSegments(part.radius) * (part.openEnded ? 2 : 4), 0))
+    expect(triangleCount(geometry)).toBeLessThan(500)
+  } finally {
+    geometry.dispose()
   }
 })

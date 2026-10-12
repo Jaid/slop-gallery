@@ -10,6 +10,8 @@ export type SignPart = {
 export type SignRoundPart = {
   height: number
   mass: number
+  /** both ends are buried in neighboring parts, so caps would never be visible */
+  openEnded?: boolean
   position: Vec3
   radius: number
   rotation?: Vec3
@@ -42,6 +44,7 @@ export const knotSignRoundParts: Array<SignRoundPart> = [
     radius: 0.018,
     mass: 0.2,
     height: knotSign.elevation,
+    openEnded: true,
   },
   {
     position: [0, -knotSign.elevation + 0.014, -0.03] as Vec3,

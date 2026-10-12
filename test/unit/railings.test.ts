@@ -1,12 +1,14 @@
 import {describe, expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
-import {BoxGeometry, Mesh, MeshBasicMaterial, Quaternion, Raycaster, TubeGeometry, Vector3} from 'three/webgpu'
+import {BoxGeometry, Line3, Mesh, MeshBasicMaterial, Quaternion, Raycaster, TubeGeometry, Vector3} from 'three/webgpu'
 
 import lowerGallery, {oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
 import OculusGroundGeometry from '../../src/lib/gallery/OculusGroundGeometry.ts'
 import tower, {towerRamp as ramp} from '../../src/lib/gallery/oculusTower.ts'
+import PolylineTubeGeometry from '../../src/lib/gallery/railings/PolylineTubeGeometry.ts'
 import RailingPath from '../../src/lib/gallery/railings/RailingPath.ts'
+import {triangleCount} from '../../src/lib/geometry.ts'
 import {addOculusRailings, oculusRailing as railing} from './helpers/oculusRailings.ts'
 
 await RAPIER.init()
@@ -26,7 +28,7 @@ describe('connected Oculus railings', () => {
       expect(point.y).toBeCloseTo(opposite.y, 5)
       expect(point.z).toBeCloseTo(opposite.z, 5)
     }
-    const tube = new TubeGeometry(railing, Math.ceil(railing.length / 0.04), railing.radius, 12, false)
+    const tube = new PolylineTubeGeometry(railing.points, railing.radius, 12)
     try {
       expect([...tube.getAttribute('position').array].every(Number.isFinite)).toBe(true)
       expect([...tube.getAttribute('normal').array].every(Number.isFinite)).toBe(true)
@@ -41,7 +43,7 @@ describe('connected Oculus railings', () => {
       const outgoing = points[i + 1].clone().sub(points[i])
       expect(incoming.angleTo(outgoing)).toBeLessThan(Math.PI / 6)
     }
-    const tube = new TubeGeometry(railing, Math.ceil(railing.length / 0.04), railing.radius, 12, false)
+    const tube = new PolylineTubeGeometry(railing.points, railing.radius, 12)
     try {
       const positions = tube.getAttribute('position')
       const normals = tube.getAttribute('normal')
@@ -55,6 +57,45 @@ describe('connected Oculus railings', () => {
       }
     } finally {
       tube.dispose()
+    }
+  })
+  test('the handrail has one mitered ring per rail vertex and wraps the capsule colliders exactly', () => {
+    const tube = new PolylineTubeGeometry(railing.points, railing.radius, 12)
+    const resampled = new TubeGeometry(railing, Math.ceil(railing.length / 0.04), railing.radius, 12, false)
+    try {
+      const rings = railing.points.length
+      expect(tube.getAttribute('position').count).toBe(rings * 13)
+      expect(triangleCount(tube)).toBe((rings - 1) * 24)
+      // The former 4 cm resampling used more than three times as many triangles.
+      expect(triangleCount(tube) * 3).toBeLessThan(triangleCount(resampled))
+      const positions = tube.getAttribute('position')
+      const segments = railing.points.slice(1).map((point, i) => new Line3(railing.points[i], point))
+      const vertex = new Vector3
+      const closest = new Vector3
+      const sharpest = Math.max(...segments.slice(1).map((segment, i) => segment.delta(new Vector3).angleTo(segments[i].delta(closest))))
+      for (let ring = 0; ring < rings; ring++) {
+        const center = new Vector3
+        for (let j = 0; j <= 12; j++) {
+          vertex.fromBufferAttribute(positions, ring * 13 + j)
+          if (j < 12) {
+            center.add(vertex)
+          }
+          const distance = Math.min(...segments.map(segment => segment.closestPointToPoint(vertex, true, closest).distanceTo(vertex)))
+          // Only outer miter corners stand proud of the capsules’ rounded joints, by under a millimeter.
+          expect(distance).toBeGreaterThan(railing.radius - 0.00001)
+          expect(distance).toBeLessThan(railing.radius / Math.cos(sharpest / 2) + 0.00001)
+        }
+        expect(center.divideScalar(12).distanceTo(railing.points[ring])).toBeLessThan(0.00001)
+      }
+      for (const [i, segment] of segments.entries()) {
+        // Neighboring miter rings never cross, even on the shortest, most sharply turned segments.
+        const direction = segment.delta(new Vector3).normalize()
+        const projections = (ring: number) => Array.from({length: 13}, (_, j) => vertex.fromBufferAttribute(positions, ring * 13 + j).sub(segment.start).dot(direction))
+        expect(Math.max(...projections(i))).toBeLessThan(Math.min(...projections(i + 1)))
+      }
+    } finally {
+      tube.dispose()
+      resampled.dispose()
     }
   })
   test('tower rails and posts are half-height while the lower ramp rails remain one meter tall', () => {

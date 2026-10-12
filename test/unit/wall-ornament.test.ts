@@ -37,8 +37,13 @@ describe('vesper wall ornaments', () => {
         expect(part.index).not.toBeNull()
         bytes += part.index!.array.byteLength + Object.values(part.attributes).reduce((sum, attribute) => sum + attribute.array.byteLength, 0)
       }
-      expect(triangles).toBeLessThan(10_000)
-      expect(bytes).toBeLessThan(700_000)
+      expect(triangles).toBeLessThan(7500)
+      expect(bytes).toBeLessThan(500_000)
+      // Relief leaves keep no back caps or rear bevels; those would only ever face the plaster.
+      const foliageNormals = geometry.foliage.getAttribute('normal')
+      for (let i = 0; i < foliageNormals.count; i++) {
+        expect(foliageNormals.getZ(i)).toBeGreaterThan(-0.000001)
+      }
     } finally {
       geometry.dispose()
     }
