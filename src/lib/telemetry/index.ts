@@ -3,11 +3,12 @@ import type {Point3} from 'telemethree-ego'
 import SlopGalleryTelemetry from './SlopGalleryTelemetry.ts'
 
 const params = new URLSearchParams(typeof location === 'undefined' ? '' : location.search)
-const endpoint: string | undefined = import.meta.env.TELEMETRY_INGESTION_RELAY_ENDPOINT || undefined
-const enabled = params.get('telemetry') !== 'false' && params.get('test') !== 'true' && (import.meta.env.DEV || Boolean(endpoint))
-
-export const telemetry = enabled ? new SlopGalleryTelemetry({
-  endpoint,
+export const telemetry = params.get('telemetry') === 'true' ? new SlopGalleryTelemetry({
+  endpoints: {
+    logs: params.get('logs_ingestion_endpoint') ?? undefined,
+    metrics: params.get('metrics_ingestion_endpoint') ?? undefined,
+    traces: params.get('traces_ingestion_endpoint') ?? undefined,
+  },
   environment: import.meta.env.MODE,
 }) : null
 

@@ -7,7 +7,7 @@ The browser-only `index.ts` owns the configured `telemetry` singleton and the co
 ```ts
 import SlopGalleryTelemetry from '#src/lib/telemetry/SlopGalleryTelemetry.ts'
 
-const telemetry = new SlopGalleryTelemetry({endpoint: '/api/telemetry'})
+const telemetry = new SlopGalleryTelemetry({endpoints: {logs: 'https://logs.example.com/insert/jsonline'}})
 const disconnect = telemetry.connect(galleryStore, galleryEvents)
 const ego = telemetry.createEgo({read: readPlayerAndAim})
 // Call ego.update() after controller/camera updates, then disconnect on unmount.
@@ -24,21 +24,19 @@ const ego = telemetry.createEgo({read: readPlayerAndAim})
 
 Automatic telemetry selects only counts, flags, state names and numeric player/aim measurements. Explicit X-key dumps additionally include scene object names and scalar metadata as described below. Those automatic samples do not serialize keys, artwork sources, titles, descriptions, prompts, event payloads or exception messages. `victoria-browser-client` supplies the 15-character `service.instance.id` used to distinguish concurrent clients and counter lifetimes. New sessions create new series; retention/cardinality policy belongs to the deployment.
 
-## Victoria delivery and relay
+## Victoria delivery
 
-The checked NAS setup uses native VictoriaMetrics JSON import for metrics and OTLP/HTTP JSON for logs/traces. `SlopGalleryTelemetry` configures those formats directly on `victoria-browser-client`; there is no Slop Gallery exporter implementation anymore. Metrics retain dotted names, while resource and measurement attributes become VictoriaMetrics labels.
+Telemetry is opt-in in every build. Without `?telemetry=true`, the `telemetry` singleton is `null` and nothing is collected or sent. `?ai=false` disables AI, not telemetry.
 
-The browser always targets a same-origin relay prefix. Vite development and preview use Vite’s built-in `server.proxy` / `preview.proxy` configuration for these exact route patterns:
+The browser sends straight to Victoria. There is no relay, Vite proxy or default endpoint. Pass a full ingestion URL per signal; a signal without one is not sent:
 
-| Same-origin route | Default upstream destination |
-| --- | --- |
-| `/api/telemetry/metrics` | `http://10.0.0.22:3304/api/v1/import` |
-| `/api/telemetry/logs` | `http://10.0.0.22:4318/v1/logs` |
-| `/api/telemetry/traces` | `http://10.0.0.22:4318/v1/traces` |
+| Signal | URL parameter | Format | Example |
+| --- | --- | --- | --- |
+| logs | `logs_ingestion_endpoint` | VictoriaLogs JSON lines | `https://logs.example.com/insert/jsonline?_stream_fields=service.name` |
+| metrics | `metrics_ingestion_endpoint` | VictoriaMetrics JSON import | `https://metrics.example.com/api/v1/import` |
+| traces | `traces_ingestion_endpoint` | OTLP/HTTP JSON | `https://traces.example.com/insert/opentelemetry/v1/traces` |
 
-The server-only `TELEMETRY_INGESTION_METRICS_ENDPOINT`, `TELEMETRY_INGESTION_LOGS_ENDPOINT` and `TELEMETRY_INGESTION_TRACES_ENDPOINT` variables override those upstream URLs. The Victoria client itself bounds request/item sizes, refuses redirects, omits browser credentials and keeps unload requests within its keepalive limit. The Vite proxy is development/preview plumbing, not a public authenticated ingestion gateway; static production hosting must provide the same-origin relay separately.
-
-The app enables telemetry in Vite development by default. `?telemetry=false` disables it; `?test=true` also disables it. Production builds are off unless `TELEMETRY_INGESTION_RELAY_ENDPOINT` is set to a relay prefix such as `/api/telemetry`. `?ai=false` disables AI, not telemetry; use both flags for a fully local session.
+The endpoint parameters only apply together with `?telemetry=true`. Remember to URL-encode them. The ingestion hosts must accept unauthenticated POSTs and answer CORS preflights for the gallery origin. Native logs use `_msg`, `level` and flattened resource/attribute fields instead of OTLP’s `severity_text`. VictoriaLogs rejects OTLP JSON, so logs always use JSON lines. Metrics retain dotted names, while resource and measurement attributes become VictoriaMetrics labels. The Victoria client bounds request/item sizes, refuses redirects, omits browser credentials and keeps unload requests within its keepalive limit.
 
 Native WebMCP `get_telemetry` returns the session ID plus `collectionStatus()` and `status()` from `victoria-browser-client`. This is read-only. Delivery is bounded and best-effort; HTTP acceptance is not a durable end-to-end storage guarantee.
 

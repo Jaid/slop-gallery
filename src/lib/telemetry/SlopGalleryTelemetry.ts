@@ -17,7 +17,7 @@ export default class SlopGalleryTelemetry extends VictoriaClient {
 
   constructor(options: SlopGalleryTelemetryOptions = {}) {
     const {
-      endpoint = '/api/telemetry',
+      endpoints = {},
       environment = 'development',
       resource = {},
       sampleIntervalMs = 5000,
@@ -25,18 +25,20 @@ export default class SlopGalleryTelemetry extends VictoriaClient {
       version = '0.1.0',
       ...clientOptions
     } = options
-    const prefix = endpoint.replace(/\/$/u, '')
     super({
       interval: 1000,
       ...clientOptions,
       serviceName: galleryLevel,
       endpoints: {
-        logs: `${prefix}/logs`,
-        metrics: {
-          url: `${prefix}/metrics`,
+        logs: endpoints.logs ? {
+          url: endpoints.logs,
+          format: 'victoria-logs',
+        } : false,
+        metrics: endpoints.metrics ? {
+          url: endpoints.metrics,
           format: 'victoria-json',
-        },
-        traces: `${prefix}/traces`,
+        } : false,
+        traces: endpoints.traces ?? false,
       },
       resource: {
         'service.namespace': 'games',

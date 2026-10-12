@@ -29,8 +29,8 @@ export type GalleryStore = {
   subscribe: (listener: (state: GalleryState, previous: GalleryState) => void) => () => void
 }
 export type SlopGalleryTelemetryOptions = Omit<VictoriaClientOptions, 'endpoint' | 'endpoints' | 'resource' | 'serviceName'> & {
-  /** Same-origin relay prefix, never a private ingestion URL in the browser bundle. */
-  endpoint?: string
+  /** full ingestion URLs of VictoriaLogs JSON lines, VictoriaMetrics JSON import and VictoriaTraces OTLP JSON; a missing signal is not sent */
+  endpoints?: Partial<Record<'logs' | 'metrics' | 'traces', string>>
   environment?: string
   resource?: Attributes
   sampleIntervalMs?: number

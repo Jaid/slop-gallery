@@ -21,28 +21,9 @@ import titlePlugin from 'vite-plugin-title'
 import levels, {defaultLevel, levelIds} from '#src/data/levels.ts'
 import knotMaterialsPlugin from '#src/lib/vite/knotMaterialsPlugin.ts'
 
-const createTelemetryProxy = (target: string) => {
-  const url = new URL(target)
-  return {
-    target: url.origin,
-    changeOrigin: true,
-    rewrite: () => `${url.pathname}${url.search}`,
-  }
-}
-const createTelemetryProxyConfig = (env: Record<string, string>) => ({
-  '^/api/telemetry/metrics$': createTelemetryProxy(env.TELEMETRY_INGESTION_METRICS_ENDPOINT || 'http://10.0.0.22:3304/api/v1/import'),
-  '^/api/telemetry/logs$': createTelemetryProxy(env.TELEMETRY_INGESTION_LOGS_ENDPOINT || 'http://10.0.0.22:4318/v1/logs'),
-  '^/api/telemetry/traces$': createTelemetryProxy(env.TELEMETRY_INGESTION_TRACES_ENDPOINT || 'http://10.0.0.22:4318/v1/traces'),
-})
 const getCommonConfig = (context: ConfigEnv) => {
-  const env = loadEnv(context.mode, process.cwd(), 'TELEMETRY_INGESTION_')
   const level = selectGameLevel(loadEnv(context.mode, process.cwd(), 'GAME_LEVEL').GAME_LEVEL, levelIds, defaultLevel)
-  const telemetryProxy = createTelemetryProxyConfig(env)
   const config: UserConfig = {
-    // Only the public relay prefix enters the client bundle, never private ingestion destinations.
-    define: {
-      'import.meta.env.TELEMETRY_INGESTION_RELAY_ENDPOINT': JSON.stringify(env.TELEMETRY_INGESTION_RELAY_ENDPOINT ?? ''),
-    },
     build: {
       chunkSizeWarningLimit: 5000,
       assetsInlineLimit: 128,
@@ -63,12 +44,6 @@ const getCommonConfig = (context: ConfigEnv) => {
       }),
       mediaMixinsPlugin(),
     ],
-    server: {
-      proxy: telemetryProxy,
-    },
-    preview: {
-      proxy: telemetryProxy,
-    },
     resolve: {
       alias: [
        // Rapier and other dependencies must share the app’s WebGPU-only Fiber implementation.

@@ -11,9 +11,9 @@ import useThreeTelemetry, {TelemetryProvider} from 'telemethree/react'
 const telemetry = new VictoriaClient({
   serviceName: 'my-game',
   endpoints: {
-    logs: '/api/telemetry/logs',
-    metrics: {url: '/api/telemetry/metrics', format: 'victoria-json', acknowledgment: 'victoria'},
-    traces: '/api/telemetry/traces',
+    logs: {url: 'https://victoria-logs.example.com/insert/jsonline', format: 'victoria-logs'},
+    metrics: {url: 'https://victoria-metrics.example.com/api/v1/import', format: 'victoria-json'},
+    traces: 'https://victoria-traces.example.com/insert/opentelemetry/v1/traces',
   },
 })
 

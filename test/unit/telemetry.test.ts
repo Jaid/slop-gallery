@@ -31,6 +31,11 @@ type OtlpSpan = {
 }
 type OtlpTraces = {resourceSpans?: Array<{scopeSpans: Array<{spans: Array<OtlpSpan>}>}>}
 
+const endpoints = {
+  logs: 'https://logs.test/insert/jsonline?_stream_fields=service.name',
+  metrics: 'https://metrics.test/api/v1/import',
+  traces: 'https://traces.test/insert/opentelemetry/v1/traces',
+}
 const decoder = new TextDecoder
 const bodyText = (body: BodyInit | null | undefined) => {
   if (typeof body === 'string') {
@@ -55,7 +60,7 @@ const capture = () => {
       body: bodyText(init?.body),
       headers: new Headers(init?.headers),
     })
-    return requestUrl(url).endsWith('/metrics') ? new Response(null, {status: 204}) : Response.json({})
+    return new Response(null, {status: requestUrl(url).includes('/api/v1/import') ? 204 : 200})
   }) as typeof globalThis.fetch
   return {
     requests,
@@ -85,6 +90,7 @@ test('gallery adapters record bounded state and lifecycle data without private g
   const {requests, fetch} = capture()
   const telemetry = new SlopGalleryTelemetry({
     sessionId: 'test-session',
+    endpoints,
     baseUrl: 'http://gallery.test/',
     interval: false,
     fetch,
@@ -121,7 +127,7 @@ test('gallery adapters record bounded state and lifecycle data without private g
     'service.name': 'gallery',
     'service.instance.id': 'test-session',
   })
-  const metricBodies = requests.filter(request => request.url.endsWith('/metrics')).flatMap(request => request.body.trim().split('\n').filter(Boolean)).map(line => JSON.parse(line) as {
+  const metricBodies = requests.filter(request => request.url === endpoints.metrics).flatMap(request => request.body.trim().split('\n').filter(Boolean)).map(line => JSON.parse(line) as {
     metric: Record<string, string>
     values: Array<number>
   })
@@ -134,10 +140,10 @@ test('gallery adapters record bounded state and lifecycle data without private g
   expect(requests).toHaveLength(count)
   await telemetry.shutdown()
 })
-test('gallery telemetry uses native Victoria metrics and OTLP logs/traces through the same-origin relay', async () => {
+test('gallery telemetry sends native Victoria logs/metrics and OTLP traces straight to the configured backends', async () => {
   const {requests, fetch} = capture()
   const telemetry = new SlopGalleryTelemetry({
-    endpoint: '/relay',
+    endpoints,
     baseUrl: 'http://gallery.test/',
     interval: false,
     fetch,
@@ -150,14 +156,8 @@ test('gallery telemetry uses native Victoria metrics and OTLP logs/traces throug
   })
   telemetry.event('verification')
   await telemetry.flush()
-  expect(requests.map(item => item.url).toSorted()).toEqual([
-    'http://gallery.test/relay/logs',
-    'http://gallery.test/relay/metrics',
-    'http://gallery.test/relay/traces',
-  ])
-  const metricsRequest = requests.find(request => request.url.endsWith('/metrics'))!
-  const logsRequest = requests.find(request => request.url.endsWith('/logs'))!
-  const tracesRequest = requests.find(request => request.url.endsWith('/traces'))!
+  expect(requests.map(item => item.url).toSorted()).toEqual([endpoints.logs, endpoints.metrics, endpoints.traces])
+  const [logsRequest, metricsRequest, tracesRequest] = requests.toSorted((a, b) => a.url.localeCompare(b.url))
   const metric = JSON.parse(metricsRequest.body.trim().split('\n')[0]) as unknown
   expect(metric).toMatchObject({
     metric: {
@@ -168,14 +168,32 @@ test('gallery telemetry uses native Victoria metrics and OTLP logs/traces throug
     values: [4.2],
     timestamps: [1234],
   })
-  expect(JSON.parse(logsRequest.body)).toHaveProperty('resourceLogs')
+  expect(JSON.parse(logsRequest.body.trim().split('\n')[0]) as unknown).toMatchObject({
+    _msg: 'Gallery event: verification',
+    'service.name': 'gallery',
+  })
   expect(JSON.parse(tracesRequest.body)).toHaveProperty('resourceSpans')
   expect(metricsRequest.headers.get('content-type')).toContain('application')
+  await telemetry.shutdown()
+})
+test('signals without an ingestion endpoint are not sent', async () => {
+  const {requests, fetch} = capture()
+  const telemetry = new SlopGalleryTelemetry({
+    endpoints: {metrics: endpoints.metrics},
+    baseUrl: 'http://gallery.test/',
+    interval: false,
+    fetch,
+  })
+  telemetry.metric('ego.position.x', 1)
+  telemetry.event('verification')
+  await telemetry.flush()
+  expect(requests.map(item => item.url)).toEqual([endpoints.metrics])
   await telemetry.shutdown()
 })
 test('startup, gameplay and operations share a session trace with state changes as events', async () => {
   const {requests, fetch} = capture()
   const telemetry = new SlopGalleryTelemetry({
+    endpoints,
     baseUrl: 'http://gallery.test/',
     interval: false,
     fetch,
