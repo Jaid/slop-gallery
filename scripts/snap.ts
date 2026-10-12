@@ -28,7 +28,7 @@ Options:
   --fov <degrees>         vertical field of view. Default: the game camera’s
   --graphics <mode>       mirrors ?graphics (heavy or fast). Default: heavy
   --vision-mode <mode>    mirrors ?vision_mode (wireframe). Default: none
-  --viewport <WxH>        render size in pixels. Default: 3840x2160
+  --viewport <WxH>        render size in pixels. Default: 1920x1080
   --jxl-distance <number> cjxl Butteraugli distance, 0 is lossless. Default: 1
   --settle <frames>       frames to render after posing, lets temporal antialiasing converge. Default: 60
   --name <name>           output file name without extension. Default: <level>-<timestamp>
@@ -115,7 +115,7 @@ const {values} = parseArgs({
     target: {type: 'string'},
     viewport: {
       type: 'string',
-      default: '3840x2160',
+      default: '1920x1080',
     },
     'vision-mode': {type: 'string'},
   },
