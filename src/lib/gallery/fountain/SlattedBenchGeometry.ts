@@ -18,7 +18,8 @@ export default class SlattedBenchGeometry {
     const metal: Array<BufferGeometry> = []
     for (let i = 0; i < slats; i++) {
       const z = (i + 0.5) * pitch - (depth + slatGap) / 2
-      const slat = new RoundedBoxGeometry(width, 0.085, pitch - slatGap, 2, 0.012)
+      // Two smooth-shaded facets per 12 mm round-over stay within 1 mm of the true arc.
+      const slat = new RoundedBoxGeometry(width, 0.085, pitch - slatGap, 1, 0.012)
       // Rotate the grain too, along the seat and the long edges of each batten.
       const uv = slat.getAttribute('uv')
       for (let vertex = 0; vertex < uv.count; vertex++) {
