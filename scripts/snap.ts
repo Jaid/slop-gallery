@@ -2,10 +2,10 @@ import type {CameraPose} from '#src/lib/diagnostics.ts'
 import type {Vec3} from '#src/lib/gallery/types.ts'
 import type {Page} from 'puppeteer-core'
 
+import {mkdir, rm, writeFile} from 'node:fs/promises'
 import {join, relative, resolve} from 'node:path'
 import {parseArgs} from 'node:util'
 
-import fs from 'fs-extra'
 import puppeteer from 'puppeteer-core'
 import {createServer} from 'vite'
 
@@ -194,13 +194,13 @@ try {
   if (frame.nonBlackFraction === 0) {
     throw new Error('The capture is completely black.')
   }
-  await fs.ensureDir(photoRoot)
+  await mkdir(photoRoot, {recursive: true})
   const png = `${output}.png`
-  await fs.writeFile(png, Uint8Array.fromBase64(frame.png))
+  await writeFile(png, Uint8Array.fromBase64(frame.png))
   try {
     await Bun.$`cjxl ${png} ${lossyJxlOptions(jxlDistance)} ${output}`.quiet()
   } finally {
-    await fs.remove(png)
+    await rm(png, {force: true})
   }
   const [pitch, yaw, roll] = pose.rotation
   console.log(`Wrote ${relative(repositoryRoot, output).replaceAll('\\', '/')} (${frame.width}×${frame.height})`)
