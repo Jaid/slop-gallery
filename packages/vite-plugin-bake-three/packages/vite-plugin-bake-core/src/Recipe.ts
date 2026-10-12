@@ -67,7 +67,7 @@ function validate(path: NodePath, allowFreezingRandomness: boolean) {
   }
   if (path.isMemberExpression() || path.isOptionalMemberExpression()) {
     const property = path.node.property
-    const name = path.node.computed ? t.isStringLiteral(property) ? property.value : undefined : t.isIdentifier(property) ? property.name : undefined
+    const name = path.node.computed ? (t.isStringLiteral(property) ? property.value : undefined) : (t.isIdentifier(property) ? property.name : undefined)
     if (name === 'random' && t.isIdentifier(path.node.object, {name: 'Math'}) && !allowFreezingRandomness) {
       throw new NotBakeableError('Unseeded randomness.')
     }
