@@ -33,7 +33,7 @@ Options:
   --name <name>           output file name without extension. Default: <level>-<timestamp>
   -h, --help              show this help
 
-Set BROWSER (or CHROME_PATH) to a Chromium executable with WebGPU support.`
+Set BROWSER to a Chromium executable with WebGPU support.`
 const repositoryRoot = resolve(import.meta.dir, '..')
 const photoRoot = join(repositoryRoot, 'out', 'photos')
 const parseNumbers = (value: string, name: string, lengths: Array<number>) => {
@@ -150,7 +150,7 @@ try {
   }
   const url = `http://127.0.0.1:${address.port}/?${search}`
   browser = await puppeteer.launch({
-    executablePath: Bun.env.BROWSER ?? Bun.env.CHROME_PATH ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe',
+    executablePath: Bun.env.BROWSER,
     headless: true,
     protocolTimeout: 600_000,
     defaultViewport: {

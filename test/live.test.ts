@@ -36,7 +36,7 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     },
   })
   const browser = await puppeteer.launch({
-    executablePath: Bun.env.CHROME_PATH ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe',
+    executablePath: Bun.env.BROWSER,
     headless: true,
     defaultViewport: {
       width: 1440,

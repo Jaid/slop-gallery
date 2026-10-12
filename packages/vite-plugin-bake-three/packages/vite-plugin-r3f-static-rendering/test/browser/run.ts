@@ -8,7 +8,7 @@ import puppeteer from 'puppeteer-core'
 
 import {compileStaticRendering} from '../../src/compile.ts'
 
-const executablePath = process.env.BROWSER
+const executablePath = Bun.env.BROWSER
 if (!executablePath) {
   throw new Error('Set BROWSER to a Chromium executable with native WebGPU.')
 }

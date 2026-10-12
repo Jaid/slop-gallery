@@ -12,7 +12,7 @@ import {threeAdapter} from 'vite-plugin-bake-core/three'
 import {renderCanvasTexture} from '../../../vite-plugin-bake-static-textures/src/canvas.ts'
 import {staticTexturesAdapter} from '../../../vite-plugin-bake-static-textures/src/main.ts'
 
-const executablePath = process.env.BROWSER
+const executablePath = Bun.env.BROWSER
 if (!executablePath) {
   throw new Error('Set BROWSER to a Chromium executable with native WebGPU.')
 }
