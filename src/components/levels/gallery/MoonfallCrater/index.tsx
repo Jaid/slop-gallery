@@ -37,7 +37,7 @@ export default function MoonfallCrater({stone}: {stone: Texture}) {
       </mesh>
     </RigidBody>
     <mesh material={bronze} position={[0, 0.006, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-      <ringGeometry args={[moonfallCrater.radius, moonfallCrater.radius + 0.055, moonfallCrater.angularSegments]} />
+      <ringGeometry args={[moonfallCrater.radius, moonfallCrater.radius + 0.055, moonfallCrater.rimSegments]} />
     </mesh>
   </group>
 }
