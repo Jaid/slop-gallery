@@ -1,0 +1,21 @@
+import type {KnotData} from '../../types.ts'
+
+// Mage run: CbMOkykhfBD7NuC; fixture: knot-material-shaders; result: mixed.
+export default {
+  id: 'sleeping_agate',
+  candidateId: 'claude_haiku',
+  title: 'Sleeping Agate',
+  harness: 'Mage',
+  author: {
+    model: {
+      title: 'Claude Haiku 5.5',
+      slug: 'anthropic/claude-haiku-5.5',
+      effortLevel: 'medium',
+    },
+  },
+  flavorText: 'A geode keeps its slow ledger: each band a season of silica, laid down so patiently that the stone still seems to breathe in its sleep.',
+  placeholder: {
+    color: '#9082a3',
+    shading: 'stone',
+  },
+} as const satisfies KnotData

@@ -119,6 +119,7 @@ describe('arbitrary Knot batches', () => {
   test('uses canonical candidate and model IDs', () => {
     expect(new Set(knotCandidates.map(candidate => candidate.data.id))).toEqual(new Set([
       'claude_fable',
+      'claude_haiku',
       'claude_opus',
       'claude_sonnet',
       'deepseek',
@@ -145,6 +146,7 @@ describe('arbitrary Knot batches', () => {
       'claude-sonnet-5.5',
       'claude-opus-5',
       'claude-opus-5.5',
+      'claude-haiku-5.5',
       'claude-opus-4-6-thinking',
       'deepseek',
       'deepseek-4.1-flash',
@@ -175,6 +177,7 @@ describe('arbitrary Knot batches', () => {
       gpt_astra: 'GPT Astra',
       gpt_luna: 'GPT Luna',
       claude_fable: 'Claude Fable',
+      claude_haiku: 'Claude Haiku',
       gemini_flash: 'Gemini Flash',
       glm: 'GLM',
       glm_flash: 'GLM Flash',
@@ -361,11 +364,11 @@ describe('arbitrary Knot batches', () => {
   })
   test('keeps the second Fable batch and new GLM batch identifiable without plate numbers', () => {
     const fable = knotCandidates.find(candidate => candidate.data.id === 'claude_fable')!
-    expect(fable.items).toHaveLength(24)
+    expect(fable.items).toHaveLength(25)
     const fableOpenRouter = fable.items.filter(entry => entry.author.model.slug === 'anthropic/claude-fable-5.1')
-    expect(fableOpenRouter).toHaveLength(24)
+    expect(fableOpenRouter).toHaveLength(25)
     expect(fableOpenRouter.filter(entry => entry.harness === 'none')).toHaveLength(16)
-    expect(fableOpenRouter.filter(entry => entry.harness === 'Mage')).toHaveLength(8)
+    expect(fableOpenRouter.filter(entry => entry.harness === 'Mage')).toHaveLength(9)
     expect(byId('chladni_resonance').displacement).toBe(0.006)
     const glm = knotCandidates.find(candidate => candidate.data.id === 'glm')!
     const glmFlash = knotCandidates.find(candidate => candidate.data.id === 'glm_flash')!
