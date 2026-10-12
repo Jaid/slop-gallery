@@ -3,6 +3,13 @@ import type {EulerTuple} from 'three/webgpu'
 import type {PauseMenuStage} from 'use-pause-menu/core'
 import type {CaptureFrameApi} from 'webgpu-capture-bridge'
 
+export type CameraPose = {
+  /** vertical field of view in degrees */
+  fov: number
+  position: Vec3
+  /** [pitch, yaw, roll] in radians, applied in YXZ order like the player camera */
+  rotation: Vec3
+}
 export type GalleryDiagnostics = {
   active: string | null
   activeLabel: string | null
@@ -11,6 +18,8 @@ export type GalleryDiagnostics = {
   held: string | null
   locked: boolean
   menuStage: PauseMenuStage
+  /** artwork images still decoding; a fresh pose can request more */
+  pendingImages: number
   placement: Placement | null
   portraits: Array<Pick<Portrait, 'height' | 'hung' | 'id' | 'merging' | 'pending' | 'position' | 'reserved' | 'title' | 'wallId' | 'width'> & {physical?: {
     x: number
@@ -47,6 +56,12 @@ type GalleryDebugApi = Partial<CaptureFrameApi> & {
       y: number
       z: number
     }
+  }
+  /** test mode only: detach the camera from the player and frame it exactly, rotation is a YXZ Euler in radians */
+  pose?: (pose?: Partial<CameraPose>) => {
+    fov: number | null
+    position: Vec3
+    rotation: Vec3
   }
   snapshot?: () => GalleryDiagnostics
   teleport?: (position: Vec3, rotation: Array<number>) => void
