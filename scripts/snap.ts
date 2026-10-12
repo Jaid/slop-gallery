@@ -2,8 +2,8 @@ import type {CameraPose} from '#src/lib/diagnostics.ts'
 import type {Vec3} from '#src/lib/gallery/types.ts'
 import type {Page} from 'puppeteer-core'
 
-import {mkdir, rm, writeFile} from 'node:fs/promises'
-import {join, relative, resolve} from 'node:path'
+import {mkdir, readFile, rm, stat, writeFile} from 'node:fs/promises'
+import {join, relative, resolve, sep} from 'node:path'
 import {parseArgs} from 'node:util'
 
 import puppeteer from 'puppeteer-core'
@@ -16,11 +16,12 @@ import {lossyJxlOptions} from './lib/images/encodeJxl.ts'
 const help = `Usage: bun scripts/snap.ts [options]
 
 Takes a headless photo of a level and writes it to out/photos/<name>.jxl.
-Starts a private Vite dev server and a private headless browser; never touches the visible browser.
+Starts a private Vite dev server (or serves --target) and a private headless browser; never touches the visible browser.
 The photo is a fresh WebGPU render of the scene, so menus and other DOM overlays are not in it.
 
 Options:
   --level <id>            ${levelIds.join(', ')}. Default: GAME_LEVEL or the default level
+  --target <dir>          photograph this static build (e.g. dist) instead of the dev server. Its level-build.json decides the level
   --position <x,y,z>      camera (eye) position in meters. Default: the player spawn
   --angle <yaw,pitch[,roll]>
                           camera angle in degrees. Yaw 0 looks toward −z, positive pitch looks up. Default: the player spawn
@@ -61,6 +62,27 @@ const timestamp = () => {
   const now = new Date
   return now.toISOString().replaceAll(/[.:]/gu, '-').replace(/-\d{3}Z$/u, '')
 }
+const serveStatic = (root: string) => Bun.serve({
+  hostname: '127.0.0.1',
+  port: 0,
+  async fetch(request) {
+    const {pathname: encodedPathname} = new URL(request.url)
+    const pathname = decodeURIComponent(encodedPathname)
+    const file = resolve(root, `.${pathname.endsWith('/') ? `${pathname}index.html` : pathname}`)
+    if (file !== root && !file.startsWith(root + sep)) {
+      return new Response('Forbidden', {status: 403})
+    }
+    const isFile = await stat(file).then(entry => entry.isFile(), () => false)
+    return isFile ? new Response(Bun.file(file)) : new Response('Not found', {status: 404})
+  },
+})
+const readBuildLevel = async (root: string) => {
+  try {
+    const {level} = JSON.parse(await readFile(join(root, 'level-build.json'), 'utf8')) as {level?: string}
+    return level
+  } catch {
+  }
+}
 const waitForFrames = (page: Page, count: number) => page.evaluate(async frames => {
   for (let index = 0; index < frames; index++) {
     await new Promise(requestAnimationFrame)
@@ -87,6 +109,7 @@ const {values} = parseArgs({
       type: 'string',
       default: '60',
     },
+    target: {type: 'string'},
     viewport: {
       type: 'string',
       default: '3840x2160',
@@ -98,7 +121,14 @@ if (values.help) {
   console.log(help)
   process.exit(0)
 }
-const level = values.level ?? Bun.env.GAME_LEVEL
+const target = values.target === undefined ? undefined : resolve(values.target)
+if (target !== undefined && !await stat(join(target, 'index.html')).then(entry => entry.isFile(), () => false)) {
+  throw new Error(`--target ${values.target} has no index.html. Build it first, e.g. bun run build.`)
+}
+if (target !== undefined && values.level !== undefined) {
+  throw new Error('--level only applies to the dev server; a static --target already contains its level.')
+}
+const level = target === undefined ? values.level ?? Bun.env.GAME_LEVEL : await readBuildLevel(target)
 if (level !== undefined && !levelIds.includes(level as typeof levelIds[number])) {
   throw new Error(`--level must be one of: ${levelIds.join(', ')}.`)
 }
@@ -123,11 +153,11 @@ if (values.graphics !== undefined) {
 if (values['vision-mode'] !== undefined) {
   search.set('vision_mode', values['vision-mode'])
 }
-if (level !== undefined) {
+if (target === undefined && level !== undefined) {
   // vite.config.ts reads the level through loadEnv, which includes process.env.
   process.env.GAME_LEVEL = level
 }
-const server = await createServer({
+const server = target === undefined ? await createServer({
   root: repositoryRoot,
   mode: 'development',
   logLevel: 'error',
@@ -140,15 +170,20 @@ const server = await createServer({
     // Source edits must not reload the page while a photo is being taken. HMR itself stays on: Vite needs it to reload the page after discovering and optimizing new dependencies.
     watch: null,
   },
-})
+}) : undefined
+const staticServer = target === undefined ? undefined : serveStatic(target)
 let browser: Awaited<ReturnType<typeof puppeteer.launch>> | undefined
 try {
-  await server.listen()
-  const address = server.httpServer?.address()
-  if (!address || typeof address === 'string') {
-    throw new Error('Vite did not expose a local TCP port.')
+  let port = staticServer?.port
+  if (server) {
+    await server.listen()
+    const address = server.httpServer?.address()
+    if (!address || typeof address === 'string') {
+      throw new Error('Vite did not expose a local TCP port.')
+    }
+    port = address.port
   }
-  const url = `http://127.0.0.1:${address.port}/?${search}`
+  const url = `http://127.0.0.1:${port}/?${search}`
   browser = await puppeteer.launch({
     executablePath: Bun.env.BROWSER,
     headless: true,
@@ -171,7 +206,10 @@ try {
     waitUntil: 'domcontentloaded',
     timeout: 300_000,
   })
-  await page.waitForFunction(() => globalThis.__gallery?.snapshot?.().ready && globalThis.__gallery.pose && globalThis.__gallery.captureFrame, {timeout: 300_000})
+  await page.waitForFunction(() => globalThis.__gallery?.snapshot?.().ready && globalThis.__gallery.captureFrame, {timeout: 300_000})
+  if (!await page.evaluate(() => Boolean(globalThis.__gallery!.pose))) {
+    throw new Error('This build has no __gallery.pose() hook. Rebuild it from a version that includes scripts/snap.ts.')
+  }
   if (!await page.evaluate(() => globalThis.__gallery!.snapshot!().webGPU)) {
     throw new Error('The browser fell back to WebGL. Photos need native WebGPU.')
   }
@@ -211,6 +249,7 @@ try {
   try {
     await browser?.close()
   } finally {
-    await server.close()
+    await server?.close()
+    await staticServer?.stop(true)
   }
 }
