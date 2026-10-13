@@ -684,7 +684,7 @@ const rarities: Record<KnotId, Rarity> = {
   solar_flare_plasma: prime,
   solar_flare: common,
   solar_loom: rare,
-  solar_maelstrom: rare,
+  solar_maelstrom: prime,
   solar_prominence: rare,
   solar_reliquary: common,
   solar_silk: rare,
