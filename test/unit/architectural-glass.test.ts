@@ -1,12 +1,12 @@
 import {expect, spyOn, test} from 'bun:test'
 
-import {MeshPhysicalNodeMaterial, MeshStandardNodeMaterial} from 'three/webgpu'
+import {MeshStandardNodeMaterial} from 'three/webgpu'
 
-import {floorGlassThickness} from '../../src/lib/gallery/floors.ts'
-import {lodgeWindow} from '../../src/lib/gallery/lodge.ts'
 import {createArchitecturalGlassMaterials, disposeArchitecturalGlassMaterials} from '../../src/lib/materials/ArchitecturalGlassMaterials.ts'
+import CastFloorGlassMaterial from '../../src/lib/materials/CastFloorGlassMaterial.ts'
+import ClearGlassMaterial from '../../src/lib/materials/ClearGlassMaterial.ts'
 
-test('fast glass is one shared plain material for lobby and cabin', () => {
+test('fast glass keeps its plain shared pane for lobby and cabin and the original tunnel pane', () => {
   const materials = createArchitecturalGlassMaterials(false)
   expect(materials.lobby).toBe(materials.cabin)
   expect(materials.lobby).toBeInstanceOf(MeshStandardNodeMaterial)
@@ -14,22 +14,50 @@ test('fast glass is one shared plain material for lobby and cabin', () => {
   expect(material.transparent).toBe(true)
   expect(material.depthWrite).toBe(false)
   expect(material.envMapIntensity).toBe(0)
-  const dispose = spyOn(material, 'dispose')
+  const tunnel = materials.tunnel as MeshStandardNodeMaterial
+  expect(tunnel).not.toBe(material)
+  expect(tunnel.opacity).toBe(0.16)
+  expect(tunnel.color.getHexString()).toBe('b7d8d9')
+  const disposals = [material, tunnel].map(entry => spyOn(entry, 'dispose'))
   disposeArchitecturalGlassMaterials(materials)
-  expect(dispose).toHaveBeenCalledTimes(1)
+  for (const dispose of disposals) {
+    expect(dispose).toHaveBeenCalledTimes(1)
+  }
 })
-test('heavy glass gives lobby and cabin distinct physical treatments', () => {
+test('heavy floor glass refracts the room below through cast pavers', () => {
   const materials = createArchitecturalGlassMaterials(true)
-  expect(materials.lobby).not.toBe(materials.cabin)
-  expect(materials.lobby).toBeInstanceOf(MeshPhysicalNodeMaterial)
-  expect(materials.cabin).toBeInstanceOf(MeshPhysicalNodeMaterial)
-  const lobby = materials.lobby as MeshPhysicalNodeMaterial
-  const cabin = materials.cabin as MeshPhysicalNodeMaterial
-  expect(lobby.thickness).toBe(floorGlassThickness)
-  expect(cabin.thickness).toBe(lodgeWindow.glassThickness)
-  expect(lobby.roughness).toBeLessThan(cabin.roughness)
-  expect(lobby.transmission).toBeGreaterThan(cabin.transmission)
-  expect(lobby.ior).not.toBe(cabin.ior)
-  expect(lobby.attenuationColor.getHex()).not.toBe(cabin.attenuationColor.getHex())
+  const lobby = materials.lobby as CastFloorGlassMaterial
+  expect(lobby).toBeInstanceOf(CastFloorGlassMaterial)
+  expect(lobby.name).toBe('lobby-glass-heavy')
+  // The view through the floor is refracted by the material itself, after every opaque surface below has been drawn.
+  expect(lobby.transparent).toBe(true)
+  expect(lobby.transmission).toBe(0)
+  expect(lobby.emissiveNode).not.toBeNull()
+  expect(lobby.normalNode).not.toBeNull()
   disposeArchitecturalGlassMaterials(materials)
+})
+test('heavy cabin and tunnel glass blend over the untouched backdrop so the view stays sharp', () => {
+  const materials = createArchitecturalGlassMaterials(true)
+  const panes = [materials.cabin, materials.tunnel] as Array<ClearGlassMaterial>
+  expect(materials.cabin).not.toBe(materials.tunnel)
+  for (const pane of panes) {
+    expect(pane).toBeInstanceOf(ClearGlassMaterial)
+    // Physical transmission would resample the backdrop through a smoothing filter.
+    expect(pane.transmission).toBe(0)
+    expect(pane.transparent).toBe(true)
+    expect(pane.depthWrite).toBe(false)
+    expect(pane.roughness).toBe(0)
+    expect(pane.color.getHex()).toBe(0)
+    expect(pane.opacityNode).not.toBeNull()
+  }
+  const [cabin, tunnel] = panes
+  expect(cabin.name).toBe('cabin-glass-heavy')
+  expect(tunnel.name).toBe('tunnel-glass-heavy')
+  expect(cabin.clearcoat).toBeGreaterThan(0)
+  expect(tunnel.iridescence).toBeGreaterThan(0)
+  const disposals = [materials.lobby, ...panes].map(material => spyOn(material, 'dispose'))
+  disposeArchitecturalGlassMaterials(materials)
+  for (const dispose of disposals) {
+    expect(dispose).toHaveBeenCalledTimes(1)
+  }
 })
