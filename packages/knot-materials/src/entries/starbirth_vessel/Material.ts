@@ -1,6 +1,6 @@
 import type {Node, Texture} from 'three/webgpu'
 
-import {Break, color, float, Fn, If, Loop, mix, mx_cell_noise_float, mx_fractal_noise_float, mx_noise_float, mx_noise_vec3, refract, time, vec3, vec4} from 'three/tsl'
+import {Break, color, float, Fn, If, Loop, mix, mx_fractal_noise_float, mx_noise_float, mx_noise_vec3, refract, step as stepFunction, time, vec3, vec4} from 'three/tsl'
 
 import {surfaceFrame, tubeChord} from '../../candidates/claude_opus/lib/knotSpace.ts'
 import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
@@ -13,6 +13,15 @@ const glassIndex = 1.47
 /** Star lattice cells per object unit, and the true radius of a star in object units. */
 const starScale = 46
 const starRadius = 0.0011
+/** Share of its cell a star may wander in, centered, so every star keeps a margin to the cell walls. */
+const starJitter = 0.5
+/** Distance from a star at which its light, halo included, has fully faded: the margin, so it never leaks into another cell. */
+const starReach = (1 - starJitter) / 2 / starScale
+/**
+ * Cells one march step can cross. A step is at most 0.5 / 26 ≈ 0.019 units long, shorter than one 0.022-unit cell, so it
+ * crosses each axis’ cell walls at most once and touches at most four cells.
+ */
+const segmentCells = 4
 /** Slow drift of the whole cloud. */
 const drift = vec3(time.mul(0.011), time.mul(-0.007), time.mul(0.009))
 /** Low-frequency fields – domain warp and ionization – that barely change across one chord, so they are sampled at the ends only. */
@@ -42,27 +51,62 @@ function nebula(q: Node<'vec3'>, large: Node<'vec4'>) {
   const extinction = dust.mul(70).add(gas.mul(3))
   return vec4(emission, extinction)
 }
-/** Point stars along a ray through one step’s segment: the exact closest approach, so stars never sample out of existence. */
-function stars(origin: Node<'vec3'>, direction: Node<'vec3'>, center: Node<'float'>, halfStep: Node<'float'>, footprint: Node<'float'>, richness: Node<'float'>) {
-  const q = origin.add(direction.mul(center)).mul(starScale)
-  const cell = q.floor()
-  const random = cellNoiseVec3(cell)
-  const identity = cellNoiseVec3(cell.add(vec3(17, 59, 113)))
-  const star = cell.add(random.mul(0.7).add(0.15)).div(starScale)
-  const toStar = star.sub(origin)
-  const along = toStar.dot(direction)
-  const inStep = along.sub(center).abs().lessThan(halfStep).select(float(1), float(0))
-  const miss = toStar.sub(direction.mul(along)).length()
-// Sub-pixel stars spread to the pixel footprint while keeping their total energy.
-  const radius = footprint.max(starRadius)
-  const energy = float(starRadius).div(radius).pow2()
-  const brightness = identity.x.smoothstep(richness, 1).pow(2.5).mul(14)
-  const twinkle = time.mul(identity.y.mul(3).add(1.2)).add(identity.z.mul(50)).sin().mul(0.22).add(0.88)
-  const hue = mix(mix(color('#ffb877'), color('#fff5ea'), identity.y.smoothstep(0.2, 0.55)), color('#a9c8ff'), identity.z.smoothstep(0.55, 0.95))
-  const core = miss.div(radius).pow2().negate().exp()
-  const halo = miss.div(radius.mul(5)).pow2().negate().exp().mul(0.05)
-  return hue.mul(core.add(halo).mul(energy).mul(brightness).mul(twinkle).mul(inStep))
-}
+/**
+ * Point stars whose closest approach to the ray lies within one step’s segment [start, end). The segment walks the star lattice
+ * cell by cell (a 3D DDA) and every star’s light fades out within its own cell, so each visible star is found exactly once, wherever
+ * the steps happen to fall, and always stays round. The light arrives dimmed by the gas in front of it: `entering` is the
+ * transmittance at `start`, `extinction` the segment’s extinction coefficient.
+ */
+const stars = Fn(([origin, direction, chord, start, end, entering, extinction, footprint, richness]: [Node<'vec3'>, Node<'vec3'>, Node<'float'>, Node<'float'>, Node<'float'>, Node<'float'>, Node<'float'>, Node<'float'>, Node<'float'>]) => {
+  const light = vec3(0).toVar()
+  const q = origin.add(direction.mul(start)).mul(starScale)
+  const cell = q.floor().toVar()
+  const stride = direction.sign()
+  // Object units the ray travels to cross one cell along each axis, and the distance from `start` to the next wall of each axis.
+  const crossing = vec3(1).div(direction.abs().max(0.000001).mul(starScale))
+  const wall = q.sub(cell)
+  const toWall = mix(wall, wall.oneMinus(), stepFunction(0, direction)).mul(crossing).toVar()
+  const length = end.sub(start)
+  // Sub-pixel stars spread to the pixel footprint while keeping their total energy; the visible spread stays within their own cell.
+  const energy = float(starRadius).div(footprint.max(starRadius)).pow2()
+  const radius = footprint.clamp(starRadius, starReach * 0.4)
+  Loop(segmentCells, () => {
+    const random = cellNoiseVec3(cell)
+    const identity = cellNoiseVec3(cell.add(vec3(17, 59, 113)))
+    const star = cell.add(random.mul(starJitter).add((1 - starJitter) / 2)).div(starScale)
+    const toStar = star.sub(origin)
+    const along = toStar.dot(direction)
+    const miss = toStar.sub(direction.mul(along)).length()
+    const inSegment = along.greaterThanEqual(start).and(along.lessThan(end)).select(float(1), float(0))
+    // Stars fade out at the glass instead of being sliced by it.
+    const inside = along.smoothstep(0, 0.006).mul(chord.sub(along).smoothstep(0, 0.006))
+    const transmittance = entering.mul(extinction.mul(along.sub(start).max(0)).negate().exp())
+    // Compact support: one at the star, zero with zero slope at its reach.
+    const window = miss.div(starReach).pow2().oneMinus().max(0).pow2()
+    const brightness = identity.x.smoothstep(richness, 1).pow(2.5).mul(14)
+    const twinkle = time.mul(identity.y.mul(3).add(1.2)).add(identity.z.mul(50)).sin().mul(0.22).add(0.88)
+    const hue = mix(mix(color('#ffb877'), color('#fff5ea'), identity.y.smoothstep(0.2, 0.55)), color('#a9c8ff'), identity.z.smoothstep(0.55, 0.95))
+    const core = miss.div(radius).pow2().negate().exp()
+    const halo = miss.div(starReach * 0.45).pow2().negate().exp().mul(0.05)
+    light.addAssign(hue.mul(core.add(halo).mul(window).mul(energy).mul(brightness).mul(twinkle).mul(inSegment).mul(inside).mul(transmittance)))
+    // Move into whichever neighbor the ray enters first, unless the segment ends before reaching it.
+    const next = toWall.x.min(toWall.y).min(toWall.z)
+    If(next.greaterThanEqual(length), () => {
+      Break()
+    })
+    If(toWall.x.lessThanEqual(next), () => {
+      cell.x.addAssign(stride.x)
+      toWall.x.addAssign(crossing.x)
+    }).ElseIf(toWall.y.lessThanEqual(next), () => {
+      cell.y.addAssign(stride.y)
+      toWall.y.addAssign(crossing.y)
+    }).Else(() => {
+      cell.z.addAssign(stride.z)
+      toWall.z.addAssign(crossing.z)
+    })
+  })
+  return light
+})
 const march = Fn(([origin, direction, chord, footprint, richness]: [Node<'vec3'>, Node<'vec3'>, Node<'float'>, Node<'float'>, Node<'float'>]) => {
   const radiance = vec3(0).toVar()
   const transmittance = float(1).toVar()
@@ -73,11 +117,14 @@ const march = Fn(([origin, direction, chord, footprint, richness]: [Node<'vec3'>
     const fraction = float(i).add(0.5).div(steps)
     const center = fraction.mul(chord)
     const sample = nebula(origin.add(direction.mul(center)), mix(entry, exit, fraction))
-    const absorbed = sample.w.mul(step).negate().exp()
+    const absorbed = sample.w.mul(step).negate().exp().toVar()
 // Analytic in-segment integration: emission absorbed by the segment itself.
     const segment = absorbed.oneMinus().div(sample.w.max(0.0001))
     radiance.addAssign(sample.xyz.mul(segment).mul(transmittance))
-    radiance.addAssign(stars(origin, direction, center, step.mul(0.5), footprint, richness).mul(transmittance))
+// Settled before the star walk, whose own loop counter must not capture this one.
+    const start = float(i).mul(step).toVar()
+    const extinction = sample.w.toVar()
+    radiance.addAssign(stars(origin, direction, chord, start, start.add(step), transmittance, extinction, footprint, richness))
     transmittance.mulAssign(absorbed)
 // Nothing behind an opaque pillar can reach the eye.
     If(transmittance.lessThan(0.01), () => {
@@ -105,10 +152,10 @@ export default class extends KnotMaterial {
     const richness = mix(float(0.93), float(0.86), intimate)
     const volume = march(p, direction, chord, footprint, richness)
     const fresnel = facing.oneMinus().pow(5).mul(0.96).add(0.04)
-// Newborn suns: a few cores breathe as they ignite.
-    const ignitionCell = p.mul(5.5).floor()
-    const ignitionSeed = mx_cell_noise_float(ignitionCell)
-    const ignition = time.mul(0.6).add(ignitionSeed.mul(20)).sin().mul(0.5).add(0.5).pow(6).mul(ignitionSeed.smoothstep(0.75, 0.95))
+// Newborn suns: a few soft-edged regions breathe as their cores ignite, each on its own slowly varying phase.
+    const ignitionSeed = mx_noise_float(p.mul(5.5)).mul(0.5).add(0.5)
+    const ignitionPhase = mx_noise_float(p.mul(1.6).add(vec3(7.1, -2.3, 4.9))).mul(9)
+    const ignition = time.mul(0.6).add(ignitionPhase).sin().mul(0.5).add(0.5).pow(6).mul(ignitionSeed.smoothstep(0.62, 0.8))
     this.colorNode = color('#010103')
     this.metalness = 0
     this.roughness = 0.03
