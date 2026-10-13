@@ -8,6 +8,7 @@ import {useEffect, useMemo} from 'react'
 import {EquirectangularReflectionMapping, MeshStandardNodeMaterial, SRGBColorSpace} from 'three/webgpu'
 import useGraphicsMode from 'use-graphics-mode'
 
+import DineLights from '#component/levels/gallery/DineLights'
 import Fountain from '#component/levels/gallery/Fountain'
 import FountainBenches from '#component/levels/gallery/FountainBenches'
 import GalleryStairs from '#component/levels/gallery/GalleryStairs'
@@ -33,6 +34,8 @@ const pointLightPositions: Partial<Record<Wall['room'], Array<number>>> = {
   antechamber: [0],
   lobby: [-16, -8, 0, 8.5, 15.5],
 }
+// These rooms are lit by breakable LED panes with their own dimming lights instead of the fixed light boxes.
+const ledRooms = new Set<Wall['room']>(['dine'])
 
 export default function Architecture() {
   const isHeavy = useGraphicsMode()
@@ -78,13 +81,14 @@ export default function Architecture() {
       </RigidBody>
       <RoomFloor glass={glass.lobby} room={room} stone={stone} wood={wood} />
       <Box color={room.id === 'vesper' ? '#7c9586' : '#e1dccc'} position={[0, 5.78, 0]} size={[room.size[0], 0.18, room.size[1]]} />
-      {(room.id === 'antechamber' ? [0] : Array.from({length: room.size[1] / 4 - 1}, (_, i) => i * 4 - room.size[1] / 2 + 4)).map(z => <group key={z}>
+      {lightBoxOffsets(room).map(z => <group key={z}>
         <Box color='#a29982' position={[0, 5.6, z]} size={[room.size[0] * 0.48, 0.1, 2.6]} />
-        <mesh position={[0, 5.54, z]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[room.size[0] * 0.48 - 0.1, 2.45]} /><meshBasicNodeMaterial color={room.id === 'dine' ? '#efe6ff' : '#fff3d8'} /></mesh>
+        <mesh position={[0, 5.54, z]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[room.size[0] * 0.48 - 0.1, 2.45]} /><meshBasicNodeMaterial color='#fff3d8' /></mesh>
         {[-1, 0, 1].map(x => <Box key={x} color='#c0b7a1' position={[x * room.size[0] * 0.12, 5.5, z]} size={[0.045, 0.12, 2.5]} />)}
       </group>)}
-      {(pointLightPositions[room.id] ?? [-3.5, 3.5]).map(z => <pointLight key={z} castShadow={room.id === 'lobby' && z === -8} color={room.id === 'dine' ? '#eee3ff' : '#fff1d8'} decay={2} distance={room.id === 'lobby' && z === -8 ? 22 : 14} intensity={room.id === 'vesper' ? 40 : 32} position={[0, 4.9, z]} shadow-mapSize={[1024, 1024]} shadow-normalBias={0.03} />)}
+      {(ledRooms.has(room.id) ? [] : pointLightPositions[room.id] ?? [-3.5, 3.5]).map(z => <pointLight key={z} castShadow={room.id === 'lobby' && z === -8} color='#fff1d8' decay={2} distance={room.id === 'lobby' && z === -8 ? 22 : 14} intensity={room.id === 'vesper' ? 40 : 32} position={[0, 4.9, z]} shadow-mapSize={[1024, 1024]} shadow-normalBias={0.03} />)}
     </group>)}
+    <DineLights />
     <PottedPlants />
     <Fountain />
     <FountainBenches wood={wood} />
@@ -100,6 +104,16 @@ export default function Architecture() {
   </>
 }
 
+/** Z offsets of the recessed light boxes: one every 4 m along the room’s depth, none where LED panes take over. */
+function lightBoxOffsets(room: typeof rooms[number]) {
+  if (ledRooms.has(room.id)) {
+    return []
+  }
+  if (room.id === 'antechamber') {
+    return [0]
+  }
+  return Array.from({length: room.size[1] / 4 - 1}, (_, i) => i * 4 - room.size[1] / 2 + 4)
+}
 function ReflectionEnvironment() {
   const scene = useThree(s => s.scene)
   useEffect(() => {

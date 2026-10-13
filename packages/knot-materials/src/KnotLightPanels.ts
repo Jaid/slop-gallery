@@ -38,7 +38,8 @@ export default class KnotLightPanels {
   readonly liveFractions: Float32Array
   private readonly matrix = new Matrix4
 
-  constructor(readonly slots: ReadonlyArray<KnotLightSlot>) {
+  /** `name` prefixes both instanced meshes, so aim dumps tell fixtures in different rooms apart. */
+  constructor(readonly slots: ReadonlyArray<KnotLightSlot>, name = 'knot-slot-led') {
     this.intensities = new InstancedBufferAttribute(new Float32Array(slots.length).fill(1), 1).setUsage(DynamicDrawUsage)
     // Normal.xy, signed line offset, enabled. Local X/Z coordinates are normalized to [-1, 1].
     this.fractures = new InstancedBufferAttribute(new Float32Array(slots.length * 4), 4).setUsage(DynamicDrawUsage)
@@ -54,9 +55,9 @@ export default class KnotLightPanels {
     this.diffuserMaterial.colorNode = mix(color('#383a33'), color(knotLightColor).mul(knotLightSurfaceIntensity), emission)
     this.diffuserMaterial.name = 'Knot exposed emissive LED diffusers'
     this.housings = new InstancedMesh(this.housingGeometry, this.housingMaterial, slots.length)
-    this.housings.name = 'knot-slot-led-housings'
+    this.housings.name = `${name}-housings`
     this.diffusers = new InstancedMesh(this.diffuserGeometry, this.diffuserMaterial, slots.length)
-    this.diffusers.name = 'knot-slot-led-diffusers'
+    this.diffusers.name = `${name}-diffusers`
     this.diffusers.instanceMatrix.setUsage(DynamicDrawUsage)
     for (const [index, slot] of slots.entries()) {
       this.housings.setMatrixAt(index, this.matrix.makeTranslation(slot.position[0], slot.position[1] + knotLightHousingY, slot.position[2]))
