@@ -127,6 +127,54 @@ describe('boolean architecture', () => {
       }
     })
   }
+  const rakingWalls = walls.filter(wall => wall.slope && wall.trimStyle !== 'none')
+  test('there are raking cornices to check', () => {
+    expect(rakingWalls.length).toBeGreaterThanOrEqual(4)
+  })
+  for (const wall of rakingWalls) {
+    test(`${wall.id}: raking cornice bands end plumb and flush with the wall, keeping the level profile`, () => {
+      const geometry = createArchitectureGeometry(wall)
+      const level = createArchitectureGeometry({
+        ...wall,
+        slope: 0,
+      })
+      try {
+        expect(geometry.cornice).toHaveLength(2)
+        for (const [i, part] of geometry.cornice.entries()) {
+          const box = part.boundingBox!
+          const levelBox = level.cornice[i].boundingBox!
+          // No end may overshoot into a doorway reveal or stop short of the adjoining landing cornice.
+          expect(box.min.x).toBeCloseTo(-wall.width / 2, 6)
+          expect(box.max.x).toBeCloseTo(wall.width / 2, 6)
+          expect(box.min.z).toBeCloseTo(levelBox.min.z, 6)
+          expect(box.max.z).toBeCloseTo(levelBox.max.z, 6)
+          const positions = part.getAttribute('position')
+          const normals = part.getAttribute('normal')
+          for (const end of [-1, 1]) {
+            const u = end * wall.width / 2
+            const heights: Array<number> = []
+            for (let vertex = 0; vertex < positions.count; vertex++) {
+              if (Math.abs(positions.getX(vertex) - u) < 1e-6) {
+                heights.push(positions.getY(vertex) - u * wall.slope!)
+              }
+            }
+            // Every vertex at the wall end lies in one vertical plane, with the level band’s exact section.
+            expect(Math.min(...heights)).toBeCloseTo(levelBox.min.y, 6)
+            expect(heights.length).toBeGreaterThan(0)
+            expect(Math.max(...heights)).toBeCloseTo(levelBox.max.y, 6)
+          }
+          for (let vertex = 0; vertex < normals.count; vertex++) {
+            expect(Math.hypot(normals.getX(vertex), normals.getY(vertex), normals.getZ(vertex))).toBeCloseTo(1, 5)
+          }
+          // Sheared boxes keep their volume: section height × depth × run.
+          expect(computeMeshVolume(part)).toBeCloseTo(computeMeshVolume(level.cornice[i]), 6)
+        }
+      } finally {
+        level.dispose()
+        geometry.dispose()
+      }
+    })
+  }
   test('placement rays hit the solid arch shoulders, not the opening beneath them', () => {
     const wall = walls.find(wall => wall.id === 'lobby-east')!
     const hole = wall.holes![0]
