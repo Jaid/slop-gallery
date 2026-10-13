@@ -1,10 +1,23 @@
 import type {Rarity} from './rarities.ts'
 import type {KnotCandidateData, KnotData, KnotEntry, KnotId} from './types.ts'
 
-import rarities from './rarities.ts'
+import rarities, {special as specialRarity} from './rarities.ts'
 
 const identifier = /^[a-z][0-9_a-z]*$/u
 const byId = (a: KnotEntry, b: KnotEntry) => a.id.localeCompare(b.id)
+
+export type KnotSelectionOptions = {
+  /** additional predicate, for example a model or an exact ID whitelist */
+  filter?: (item: KnotEntry) => boolean
+  /**
+   * Whether `special` entries are eligible. They never enter an automatic selection, so this defaults to whether
+   * `rarityFilter` explicitly asks for them.
+   */
+  includeSpecial?: boolean
+  /** whether rarity decides omissions and order; `false` uses canonical ID order */
+  rarity?: boolean
+  rarityFilter?: ReadonlySet<Rarity>
+}
 
 export function indexKnots(candidates: ReadonlyArray<KnotCandidate>) {
   const candidateIds = new Set<string>
@@ -59,11 +72,12 @@ export default class KnotCandidate {
     }).toSorted(byId)
   }
 
-  select(limit?: number, useRarity = true, rarityFilter?: ReadonlySet<Rarity>, filter?: (item: KnotEntry) => boolean) {
+  select(limit?: number, {filter, includeSpecial, rarity: useRarity = true, rarityFilter}: KnotSelectionOptions = {}) {
     if (limit !== undefined && (!Number.isSafeInteger(limit) || limit < 1)) {
       throw new Error('Knot shot limit must be a positive integer.')
     }
-    const available = this.items.filter(item => !item.archived && (!rarityFilter || rarityFilter.has(item.rarity)) && (!filter || filter(item)))
+    const special = includeSpecial ?? rarityFilter?.has(specialRarity) ?? false
+    const available = this.items.filter(item => !item.archived && (special || item.rarity !== specialRarity) && (!rarityFilter || rarityFilter.has(item.rarity)) && (!filter || filter(item)))
     if (!useRarity) {
       return limit === undefined ? available : available.slice(0, limit)
     }

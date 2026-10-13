@@ -57,7 +57,8 @@ describe('multi-model Knot challenge', () => {
     try {
       expect(dumpKnots().find(item => item.id === exhibit.id)?.rarity).toBe(edited)
     } finally {
-      for (let count = 0; count < 4; count++) {
+      // The cycle covers all six tiers: unknown, common, rare, prime, ethereal and special.
+      for (let count = 0; count < 5; count++) {
         knotRarityEditor.cycle(exhibit.id)
       }
       expect(knotRarityEditor.getSnapshot().get(exhibit.id)).toBe(baseline)

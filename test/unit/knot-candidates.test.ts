@@ -2,7 +2,7 @@ import type {KnotCandidateData, KnotData, KnotId} from 'knot-materials/types.ts'
 
 import {describe, expect, test} from 'bun:test'
 
-import {entries, knotCandidates, knots, knotsById} from 'knot-materials'
+import {entries, knotCandidates, knots, knotsById, special} from 'knot-materials'
 import {knotAnnouncementPaths, knotModelSlug} from 'knot-materials/announcements.ts'
 import {enumerateKnotBays, formatKnotLabels, selectKnotBays} from 'knot-materials/exhibition.ts'
 import KnotCandidate, {indexKnots} from 'knot-materials/KnotCandidate.ts'
@@ -338,7 +338,7 @@ describe('arbitrary Knot batches', () => {
     expect(bays[0].candidate.data.id).toBe(candidate.data.id)
     expect(bays[0].finishes).toHaveLength(3)
     expect(bays[0].finishes.every(entry => knotModelSlug(entry) === model)).toBe(true)
-    const available = candidate.items.filter(entry => !entry.archived && knotModelSlug(entry) === model)
+    const available = candidate.items.filter(entry => !entry.archived && entry.rarity !== special && knotModelSlug(entry) === model)
     const selected = new Set(bays[0].finishes.map(entry => entry.id))
     const omitted = available.filter(entry => !selected.has(entry.id))
     if (omitted.length) {

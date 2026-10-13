@@ -4,7 +4,7 @@ import {describe, expect, test} from 'bun:test'
 
 import fs from 'fs-extra'
 import {knotsById} from 'knot-materials'
-import {unknown} from 'knot-materials/rarities.ts'
+import {special, unknown} from 'knot-materials/rarities.ts'
 import {Texture} from 'three/webgpu'
 
 const runs = [
@@ -42,7 +42,8 @@ describe('mixed Mage knot imports', () => {
       expect(data.candidateId).toBe(entry.candidateId)
       expect(data.harness).toBe('Mage')
       expect(data.author.model).toEqual(authors[entry.candidateId])
-      expect(data.rarity).toBe(unknown)
+      // Both Claude Opus cats were later curated as special.
+      expect(data.rarity).toBe(entry.candidateId === 'claude_opus' ? special : unknown)
       expect(data.placeholder.color).toMatch(/^#[0-9a-f]{6}$/u)
       const folder = new URL(`../../packages/knot-materials/src/entries/${entry.id}/`, import.meta.url)
       expect((await fs.readdir(folder)).toSorted()).toEqual(['Material.ts', 'data.ts'])

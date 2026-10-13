@@ -4,14 +4,15 @@ import {knotModelSlug} from './announcements.ts'
 import parseCandidateOrder from './candidateOrder.ts'
 import KnotLayout from './KnotLayout.ts'
 import {knotCandidates} from './main.ts'
-import {unknown as unknownRarity} from './rarities.ts'
+import {special as specialRarity, unknown as unknownRarity} from './rarities.ts'
 import parseRarityFilter from './rarityFilter.ts'
 import parseRarityMode from './rarityMode.ts'
 
 export const knotFloatHeight = 1
 
+/** Curatorial score of a candidate row. Unknown and special entries are excluded, so neither lifts nor lowers it. */
 export function candidateScore(candidate: (typeof knotCandidates)[number]) {
-  const rated = candidate.items.filter(item => item.rarity !== unknownRarity)
+  const rated = candidate.items.filter(item => item.rarity !== unknownRarity && item.rarity !== specialRarity)
   if (!rated.length) {
     return 1.1
   }
@@ -59,34 +60,27 @@ export function selectKnotBays(search = '') {
   const candidateLimit = positiveIntegerParam('candidate_limit', 8)
   const requestedKnotIdSet = new Set(requestedKnotIds)
   const exactKnotSelection = requestedKnotIds.length > 0
+  // Special knots are only shown when intentionally requested by ID or by a rarity filter that names them.
+  const selection = {
+    rarity: rarityMode !== 'false',
+    rarityFilter,
+    includeSpecial: exactKnotSelection || rarityFilter?.has(specialRarity) || false,
+    filter: (item: KnotEntry) => (!exactKnotSelection || requestedKnotIdSet.has(item.id)) && (!modelFilter || modelFilter(item)),
+  }
   let selected = knotCandidates
-  if (exactKnotSelection) {
-    selected = knotCandidates.filter(candidate => candidate.items.some(item => requestedKnotIdSet.has(item.id)))
-  } else {
-    if (requested.length) {
-      selected = selected.filter(candidate => requested.includes(candidate.data.id))
-    }
-    if (modelFilter) {
-      selected = selected.filter(candidate => candidate.items.some(modelFilter))
-    }
+  if (!exactKnotSelection && requested.length) {
+    selected = selected.filter(candidate => requested.includes(candidate.data.id))
   }
-  if (rarityFilter) {
-    selected = selected.filter(candidate => candidate.items.some(item => !item.archived && rarityFilter.has(item.rarity)))
-  }
+  // Rows without an eligible knot must not take a slot under candidate_limit.
+  selected = selected.filter(candidate => candidate.select(1, selection).length > 0)
   const byName = (a: (typeof knotCandidates)[number], b: (typeof knotCandidates)[number]) => a.data.title.localeCompare(b.data.title) || a.data.id.localeCompare(b.data.id)
   const byScore = (a: (typeof knotCandidates)[number], b: (typeof knotCandidates)[number]) => candidateScore(b) - candidateScore(a) || byName(a, b)
   const ordered = selected.toSorted(candidateOrder === 'score' ? byScore : byName)
   const candidates = exactKnotSelection ? ordered : ordered.slice(0, candidateLimit)
-  return candidates.map(candidate => {
-    let finishes = candidate.select(exactKnotSelection ? undefined : shots, rarityMode !== 'false', rarityFilter, modelFilter)
-    if (exactKnotSelection) {
-      finishes = finishes.filter(item => requestedKnotIdSet.has(item.id))
-    }
-    return {
-      candidate,
-      finishes,
-    }
-  }).filter(bay => bay.finishes.length > 0)
+  return candidates.map(candidate => ({
+    candidate,
+    finishes: candidate.select(exactKnotSelection ? undefined : shots, selection),
+  }))
 }
 
 export function enumerateKnotBays(bays: ReturnType<typeof selectKnotBays>) {

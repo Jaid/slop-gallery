@@ -9,7 +9,7 @@ import {Color, MeshPhysicalNodeMaterial, Texture} from 'three/webgpu'
 
 import createPlaceholderMaterial, {placeholderPresets} from '../src/createPlaceholderMaterial.ts'
 import {entries, KnotCandidate, knotCandidates, knots, knotsById} from '../src/main.ts'
-import rarities, {common, ethereal, prime, rare, unknown} from '../src/rarities.ts'
+import rarities, {common, ethereal, prime, rare, special, unknown} from '../src/rarities.ts'
 
 const root = fileURLToPath(new URL('../src', import.meta.url))
 const source = (file: string) => readFile(resolve(root, file), 'utf8')
@@ -58,17 +58,18 @@ describe('flat knot catalogue', () => {
     }
   })
   test('rarity is exhaustive, separate from entry data, and drives selection before display ordering', () => {
-    expect([unknown, common, rare, prime, ethereal]).toEqual([0, 1, 2, 3, 4])
+    expect([unknown, common, rare, prime, ethereal, special]).toEqual([0, 1, 2, 3, 4, 5])
     expect(rarities.chladni_resonance).toBe(ethereal)
     expect(rarities.lichtenberg_reliquary).toBe(prime)
     expect(rarities.washi_lantern).toBe(common)
-    expect(new Set(Object.values(rarities))).toEqual(new Set([unknown, common, rare, prime, ethereal]))
+    expect(new Set(Object.values(rarities))).toEqual(new Set([unknown, common, rare, prime, ethereal, special]))
+    expect(Object.keys(rarities).filter(id => rarities[id as KnotId] === special).toSorted()).toEqual(['felis_major_menagerie', 'great_cat_emergence', 'knotty_prince'])
     for (const candidate of knotCandidates) {
-      const available = candidate.items.filter(entry => !entry.archived)
+      const available = candidate.items.filter(entry => !entry.archived && entry.rarity !== special)
       const selected = candidate.select(3)
       expect(selected.map(entry => entry.rarity)).toEqual(selected.map(entry => entry.rarity).sort((a, b) => a - b))
       expect(selected.map(entry => entry.id).sort()).toEqual(available.toSorted((a, b) => b.rarity - a.rarity || a.id.localeCompare(b.id)).slice(0, 3).map(entry => entry.id).sort())
-      expect(selected.every(entry => !entry.archived)).toBe(true)
+      expect(selected.every(entry => !entry.archived && entry.rarity !== special)).toBe(true)
     }
   })
   test('all material modules construct independently and respect caller-owned environment textures', async () => {

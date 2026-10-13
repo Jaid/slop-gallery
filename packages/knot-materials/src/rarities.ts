@@ -5,8 +5,10 @@ export const common = 1
 export const rare = 2
 export const prime = 3
 export const ethereal = 4
+/** Five stars that are never exhibited automatically: only an explicit `knot_id` or `rarity_filter` request shows them. */
+export const special = 5
 
-export type Rarity = typeof common | typeof ethereal | typeof prime | typeof rare | typeof unknown
+export type Rarity = typeof common | typeof ethereal | typeof prime | typeof rare | typeof special | typeof unknown
 
 /** Curatorial ranking, independent of authorship and archive status. New arrivals start unknown. */
 const rarities: Record<KnotId, Rarity> = {
@@ -228,7 +230,7 @@ const rarities: Record<KnotId, Rarity> = {
   felidae_nocturne: rare,
   feline_atlas: common,
   felis_astra: prime,
-  felis_major_menagerie: unknown,
+  felis_major_menagerie: special,
   felis_major: common,
   felis_noctiluca: prime,
   felis_noctis: rare,
@@ -293,7 +295,7 @@ const rarities: Record<KnotId, Rarity> = {
   grand_complication: prime,
   graphene_weave: common,
   gravity_well: rare,
-  great_cat_emergence: unknown,
+  great_cat_emergence: special,
   hadal_abyss: rare,
   hadal_bioluminescence: rare,
   hadal_blossom: rare,
@@ -371,7 +373,7 @@ const rarities: Record<KnotId, Rarity> = {
   kintsugi_void: common,
   kintsugi_vow: unknown,
   kintsugi: common,
-  knotty_prince: unknown,
+  knotty_prince: special,
   koi_ascendant: prime,
   labrador_veil: rare,
   lacuna_brass: common,
