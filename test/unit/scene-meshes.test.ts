@@ -5,6 +5,8 @@ import {MeshBVH} from 'three-mesh-bvh'
 import {Box3, Mesh, MeshBasicMaterial, Raycaster, TorusKnotGeometry, Vector3} from 'three/webgpu'
 
 import ChandelierGeometry from '../../src/lib/gallery/ChandelierGeometry.ts'
+import {siennaCeilingBeam, siennaCeilingBeamOffsets} from '../../src/lib/gallery/sienna.ts'
+import {rooms} from '../../src/lib/gallery/walls.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 import {chandelierPhysics} from '../../src/lib/physics/chandelier.ts'
 
@@ -62,6 +64,51 @@ describe('chandelier geometry', () => {
     } finally {
       geometry.dispose()
       material.dispose()
+    }
+  })
+  test('hangs in a clear bay between the Sienna ceiling beams, at rest and while swinging', () => {
+    const geometry = new ChandelierGeometry
+    try {
+      const sienna = rooms.find(room => room.id === 'sienna')!
+      const beamBottom = siennaCeilingBeam.centerY - siennaCeilingBeam.height / 2
+      const offsets = siennaCeilingBeamOffsets(sienna.size[0])
+      expect(offsets).toHaveLength(siennaCeilingBeam.count)
+      // The joists still span the room evenly, with half a bay to each wall.
+      expect(offsets[0] + sienna.size[0] / 2).toBeCloseTo((offsets[1] - offsets[0]) / 2, 5)
+      const pivot = new Vector3(...chandelierPhysics.anchor)
+      const point = new Vector3
+      const swingAxis = new Vector3(0, 0, 1)
+      let clearance = Infinity
+      let checked = 0
+      const check = (x: number, y: number) => {
+        if (y + chandelierPhysics.height < beamBottom) {
+          return
+        }
+        checked++
+        for (const offset of offsets) {
+          clearance = Math.min(clearance, Math.abs(x - offset) - siennaCeilingBeam.width / 2)
+        }
+      }
+      const canopy = geometry.canopy.getAttribute('position')
+      for (let i = 0; i < canopy.count; i++) {
+        point.fromBufferAttribute(canopy, i)
+        check(point.x, point.y)
+      }
+      // The fixture swings about its pivot; the heavy pot in chandelier.test.ts peaks at about 26°.
+      for (const geometryPart of [geometry.brass, geometry.candles, geometry.flames, geometry.pendant]) {
+        const positions = geometryPart.getAttribute('position')
+        for (const tilt of [-30, -20, -10, 0, 10, 20, 30]) {
+          for (let i = 0; i < positions.count; i++) {
+            point.fromBufferAttribute(positions, i).sub(pivot).applyAxisAngle(swingAxis, tilt * Math.PI / 180).add(pivot)
+            check(point.x, point.y)
+          }
+        }
+      }
+      // The canopy and the top of the stem reach above the beams’ underside.
+      expect(checked).toBeGreaterThan(0)
+      expect(clearance).toBeGreaterThan(0.5)
+    } finally {
+      geometry.dispose()
     }
   })
   test('releases all five owned geometries', () => {

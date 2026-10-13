@@ -8,7 +8,7 @@ import {useGraphicsModeValue} from 'use-graphics-mode'
 import Chandelier from '#component/levels/gallery/Chandelier'
 import Box from '#src/components/Scene/primitives.tsx'
 import {rooms, useGallery, walls} from '#src/lib/gallery.ts'
-import {siennaRugSize} from '#src/lib/gallery/sienna.ts'
+import {siennaCeilingBeam, siennaCeilingBeamOffsets, siennaRugSize} from '#src/lib/gallery/sienna.ts'
 import RoomFloorTextures from '#src/lib/materials/RoomFloorTextures.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
@@ -30,7 +30,7 @@ export default function SiennaRoom({wood}: {wood: Texture}) {
         <planeGeometry args={[...room.size]} />
         <meshStandardNodeMaterial {...floor.wood} bumpScale={0.035} envMapIntensity={floorReflections ? 1 : 0} roughness={floorReflections ? 0.55 : 0.72} />
       </mesh>
-      {[-4, 0, 4].map(x => <Box key={x} color='#493226' map={wood} position={[x, 5.56, 0]} size={[0.18, 0.3, room.size[1]]} />)}
+      {siennaCeilingBeamOffsets(room.size[0]).map(x => <Box key={x} color='#493226' map={wood} position={[x, siennaCeilingBeam.centerY, 0]} size={[siennaCeilingBeam.width, siennaCeilingBeam.height, room.size[1]]} />)}
       <Box color='#3b1010' envMapIntensity={floorReflections ? 1 : 0} position={[0, 0.007, 0]} roughness={1} size={[siennaRugSize[0], 0.012, siennaRugSize[1]]} />
       <mesh name='sienna-carpet' position={[0, 0.014, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[...siennaRugSize]} />
