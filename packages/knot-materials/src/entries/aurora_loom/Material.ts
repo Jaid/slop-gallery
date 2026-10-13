@@ -1,70 +1,84 @@
 import type {Node, Texture} from 'three/webgpu'
 
-import {color, float, mix, mx_noise_float, time, uv, vec3} from 'three/tsl'
+import {color, float, mix, mx_fractal_noise_float, mx_noise_float, time, uv, vec3} from 'three/tsl'
 
-import {fractalNoise} from '../../candidates/grok/lib/fractalNoise.ts'
-import {palette} from '../../candidates/grok/lib/palette.ts'
-import {screenRibbon} from '../../candidates/grok/lib/screenRibbon.ts'
+import {filament} from '../../lib/filament.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
+import {opticalBands} from '../../lib/opticalBands.ts'
+import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {starfield} from '../../lib/starfield.ts'
+import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/** A night loom. Fine anisotropic silk carries curtains of aurora that parallax through the tube, while a sparse starfield only appears in the grazing dark. */
+type Curtain = {
+  coverage: Node<'float'>
+  glow: Node<'vec3'>
+  height: Node<'float'>
+}
+
+/** The night side of the world, woven rather than painted. Three aurora curtains hang at three depths inside black tourmaline silk: they parallax against one another as you circle, breathe on slow magnetic swells, and resolve – only when you lean in – into fine vertical rays with stars caught in the dark between them. At grazing angles the whole knot rims with the green edge-light every aurora photographer waits for. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
-    super(environment, 0.45)
+    super(environment, 0.35)
     this.name = knotData.id
-    const {p, view, facing, grazing, near, intimate, rim} = viewerFrame()
+    const {p, view, facing, rim, near, intimate} = viewerFrame()
     const tube = uv()
-    const warp = screenRibbon(tube.x.mul(160).sin(), 0.35)
-    const weft = screenRibbon(tube.y.mul(42).add(tube.x.mul(6)).sin(), 0.28)
-    const weave = warp.mul(0.7).add(weft.mul(0.45))
-    const curtains = 5
-    let glow: Node<'vec3'> = vec3(0)
-    let veilSum: Node<'float'> = float(0)
-    for (let index = 0;index < curtains;index++) {
-      const depth = 0.015 + index * 0.028
+    const curtain = (depth: number, scale: number, speed: number, seed: number, low: string, high: string): Curtain => {
       const q = p.sub(view.mul(depth))
-      const fold = q.y.mul(5.5 + index * 0.4).add(q.x.mul(0.8)).add(time.mul(0.22 + index * 0.035)).add(fractalNoise(q.mul(1.3), 3).mul(1.6))
-      const sheet = fold.sin()
-      const veil = sheet.smoothstep(0.15, 0.85).pow(2.2).mul(1 - index * 0.12)
-      const hue = palette(fold.mul(0.07).add(index * 0.16).add(0.5).fract(), [{
-        at: 0,
-        hex: '#03140f',
-      }, {
-        at: 0.18,
-        hex: '#13f0a4',
-      }, {
-        at: 0.4,
-        hex: '#7af7ff',
-      }, {
-        at: 0.62,
-        hex: '#6d46ff',
-      }, {
-        at: 0.82,
-        hex: '#ff4f9a',
-      }, {
-        at: 1,
-        hex: '#03140f',
-      }])
-      glow = glow.add(hue.mul(veil).mul(1.15))
-      veilSum = veilSum.add(veil)
+      const warp = mx_fractal_noise_float(q.mul(scale * 0.5).add(vec3(seed, seed * 0.7, seed * 1.3)), 3, 2, 0.5)
+      const drift = vec3(time.mul(speed * 0.37), time.mul(speed * -0.21), seed).add(warp.mul(1.5))
+      const field = mx_noise_float(q.mul(scale).add(drift))
+      // Curtains are the bright folds where the field crosses zero, with a
+      // wide halo and a narrow core – never a flood over the whole surface.
+      const ridge = filament(field, 0.085)
+      const fold = filament(field, 0.022).mul(0.95).add(ridge.mul(0.32))
+      // Fine rays run around the tube, combed by the same warp that bends the
+      // curtains; unresolved rays settle to their mean instead of shimmering.
+      const rayPhase = tube.y.mul(TAU * 34).add(warp.mul(7)).sub(time.mul(speed * 2.2))
+      const rays = opticalBands(rayPhase).mul(0.55).add(0.45)
+      const coverage = fold.mul(rays.mul(0.6).add(0.4))
+      const tint = mix(color(low), color(high), warp.mul(0.5).add(0.5))
+      return {
+        glow: tint.mul(coverage),
+        coverage,
+        height: ridge,
+      }
     }
-    const silk = mix(color('#05070d'), color('#121826'), weave.mul(0.55).add(facing.mul(0.08)))
-    const stars = starfield(view.add(p.mul(0.2)), 34, 0.62).mul(grazing.pow(1.2)).mul(veilSum.smoothstep(0.4, 1.4).oneMinus())
-    this.colorNode = mix(silk, glow.mul(0.55), veilSum.clamp().mul(0.72))
-    this.metalnessNode = float(0.05).add(weave.mul(0.35))
-    this.roughnessNode = float(0.42).sub(weave.mul(0.16)).sub(veilSum.mul(0.08)).clamp(0.16, 0.62)
-    this.anisotropyNode = vec3(1, tube.y.mul(6).sin().mul(0.15), 0).xy.mul(0.95)
-    this.sheenNode = color('#d9fff6').mul(weave).mul(rim).mul(0.7)
-    this.sheenRoughnessNode = float(0.22).add(weft.mul(0.25))
-    this.iridescenceNode = grazing.pow(1.4).mul(0.85).add(veilSum.mul(0.15))
-    this.iridescenceIOR = 1.33
-    this.iridescenceThicknessNode = tube.x.mul(640).add(view.y.mul(80)).add(160).abs()
-    this.clearcoatNode = float(0.15).add(facing.mul(0.15))
-    this.clearcoatRoughness = 0.18
-    const dust = mx_noise_float(p.mul(40)).smoothstep(0.72, 0.9).mul(intimate)
-    this.emissiveNode = glow.mul(0.72).mul(near.mul(0.25).add(0.85)).add(stars.mul(1.3)).add(color('#b8ffe8').mul(weave).mul(rim).mul(0.16)).add(color('#ffd2ef').mul(dust).mul(0.2))
+    const outer = curtain(0.02, 5.5, 0.16, 2.4, '#00ff8a', '#8dff57')
+    const middle = curtain(0.075, 8.5, 0.11, 6.9, '#00e5a0', '#00b7ff')
+    const inner = curtain(0.14, 13, 0.07, 11.3, '#7a5cff', '#ff5ce1')
+    const coverage = outer.coverage.mul(0.8).add(middle.coverage.mul(0.9)).add(inner.coverage.mul(0.8)).clamp()
+    const glow = outer.glow.mul(1.05).add(middle.glow.mul(0.55)).add(inner.glow.mul(0.38))
+    // One slow magnetic swell travels the length of the knot, brightening
+    // whichever curtain it passes through.
+    const swellPhase = tube.x.mul(TAU * 2).sub(time.mul(0.4)).add(coverage.mul(2))
+    const swell = swellPhase.sin().mul(0.5).add(0.5).pow(3)
+    const aliveness = float(0.72).add(swell.mul(0.45)).add(near.mul(0.18))
+    // Stars are caught in the weave itself: invisible from across the room,
+    // they appear between the rays when the curtains part up close.
+    const stars = starfield(p.normalize(), 26, 0.72).mul(coverage.oneMinus()).mul(intimate)
+    const nightNoise = mx_noise_float(p.mul(2.4)).mul(0.5).add(0.5)
+    const night = mix(color('#03040c'), color('#0a1030'), nightNoise)
+    this.colorNode = mix(night, glow, coverage.mul(0.22))
+    this.metalness = 0
+    this.roughnessNode = float(0.6).sub(coverage.mul(0.22)).clamp(0.32, 0.62)
+    this.clearcoat = 0.45
+    this.clearcoatRoughness = 0.28
+    this.sheen = 0.45
+    this.sheenColor.set('#1de9b6')
+    this.sheenRoughness = 0.42
+    this.iridescence = 0.35
+    this.iridescenceNode = coverage.mul(0.6).clamp()
+    this.iridescenceIOR = 1.35
+    this.iridescenceThicknessNode = coverage.mul(260).add(140)
+    const weave = outer.height.mul(0.5).add(middle.height.mul(0.35)).add(inner.height.mul(0.25))
+    this.normalNode = proceduralNormal(weave, 0.0011)
+    this.emissiveNode = glow
+      .mul(aliveness.mul(0.82))
+      .mul(facing.mul(0.35).add(0.75))
+      .add(color('#2bff9e').mul(rim).mul(coverage.mul(0.6).add(0.25)).mul(0.7))
+      .add(stars.mul(1.4))
+      .add(color('#8a6cff').mul(inner.coverage).mul(rim).mul(0.35))
   }
 }

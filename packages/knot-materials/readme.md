@@ -7,7 +7,7 @@ Procedural Three.js/WebGPU knot materials and the metadata, geometry, loading, p
 ```text
 src/
   entries/
-    abyssal_lantern/
+    benthic_beacon/
       data.ts
       Material.ts
     ferrothorn/
@@ -43,9 +43,9 @@ Every knot lives directly in `src/entries/<id>`. Candidate folders contain attri
 import type {KnotData} from '../../types.ts'
 
 export default {
-  id: 'abyssal_lantern',
+  id: 'benthic_beacon',
   candidateId: 'gpt_astra',
-  title: 'Abyssal Lantern',
+  title: 'Benthic Beacon',
   flavorText: 'One small beacon keeps watch at the bottom of the world.',
   placeholder: {
     color: '#4de3ff',

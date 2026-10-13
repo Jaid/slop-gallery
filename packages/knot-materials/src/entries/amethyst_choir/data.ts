@@ -1,0 +1,22 @@
+import type {KnotData} from '../../types.ts'
+
+// Mage run: Cp16WUQoUlMTqRD; fixture: knot-material-shaders; result: success.
+export default {
+  id: 'amethyst_choir',
+  candidateId: 'muse_wonder',
+  title: 'Amethyst Choir',
+  harness: 'Mage',
+  author: {
+    model: {
+      title: 'Muse Wonder 1.0',
+      slug: 'meta/muse-wonder-1.0',
+      effortLevel: 'xhigh',
+    },
+  },
+  displacement: 0.01,
+  flavorText: 'A hundred violet throats are cut into one stone; each turns its own cold note toward the light that finds it.',
+  placeholder: {
+    color: '#9280b0',
+    shading: 'glass',
+  },
+} as const satisfies KnotData

@@ -1,18 +1,22 @@
 import type {KnotData} from '../../types.ts'
 
+// Mage run: Cp16WUQoUlMTqRD; fixture: knot-material-shaders; result: success.
 export default {
   id: 'abyssal_lantern',
-  candidateId: 'gpt_astra',
+  candidateId: 'muse_wonder',
   title: 'Abyssal Lantern',
-  harness: 'Codex',
+  harness: 'Mage',
   author: {
     model: {
-      title: 'GPT-6 Astra',
+      title: 'Muse Wonder 1.0',
+      slug: 'meta/muse-wonder-1.0',
+      effortLevel: 'xhigh',
     },
   },
-  flavorText: 'One small beacon keeps watch at the bottom of the world.',
+  displacement: 0.016,
+  flavorText: 'A gentle animal of glass drifts in the dark, carrying small violet suns along the seam of its one endless body.',
   placeholder: {
-    color: '#46d6ff',
+    color: '#50848b',
     shading: 'glass',
   },
 } as const satisfies KnotData

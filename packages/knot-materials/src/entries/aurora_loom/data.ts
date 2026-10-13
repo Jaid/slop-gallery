@@ -1,20 +1,21 @@
 import type {KnotData} from '../../types.ts'
 
+// Mage run: 0gaFob3tIS0Bvlc; fixture: knot-material-shaders; result: success.
 export default {
   id: 'aurora_loom',
-  candidateId: 'grok',
+  candidateId: 'muse_wonder',
   title: 'Aurora Loom',
   harness: 'Mage',
   author: {
     model: {
-      title: 'Grok 4.7',
-      slug: 'x-ai/grok-4.7',
-      effortLevel: 'xhigh',
+      title: 'Muse Wonder 1.0',
+      slug: 'meta/muse-wonder-1.0',
+      effortLevel: 'high',
     },
   },
-  flavorText: 'Night is the warp. Everything colored is only a thread that refused to stay in the dark.',
+  flavorText: 'Night is woven here, not painted. Green curtains breathe along the threads while small stars keep time in the dark between them.',
   placeholder: {
-    color: '#154c58',
+    color: '#47776b',
     shading: 'fabric',
   },
 } as const satisfies KnotData

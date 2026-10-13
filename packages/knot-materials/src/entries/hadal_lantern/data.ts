@@ -3,7 +3,7 @@ import type {KnotData} from '../../types.ts'
 export default {
   id: 'hadal_lantern',
   candidateId: 'claude_fable',
-  title: 'Abyssal Lantern',
+  title: 'Hadal Lantern',
   harness: 'none',
   author: {
     model: {

@@ -1,42 +1,53 @@
 import type {Texture} from 'three/webgpu'
 
-import {cameraPosition, color, mix, modelWorldMatrixInverse, mx_noise_float, normalViewGeometry, positionGeometry, positionView, positionViewDirection, time, vec3, vec4} from 'three/tsl'
+import {color, float, mix, mx_noise_float, normalLocal, time, uv, vec3} from 'three/tsl'
 
+import {cellularPoints} from '../../lib/cellularPoints.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {liquidNormal} from '../../lib/liquidNormal.ts'
-import {opticalLine} from '../../lib/opticalLine.ts'
+import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
+/** A translucent deep-sea animal in knotted form. A luminous pulse travels endlessly along its tube, violet organs drift at two parallax depths inside the bell, and its skin ripples like water whenever you lean close. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
-    super(environment)
+    super(environment, 0.9)
     this.name = knotData.id
-    const p = positionGeometry
-    const facing = normalViewGeometry.dot(positionViewDirection).abs().clamp()
-    const grazing = facing.oneMinus()
-    const rim = grazing.pow(2)
-    const view = modelWorldMatrixInverse.mul(vec4(cameraPosition, 1)).xyz.sub(p).normalize()
-    // World-unit camera distance, not screen UVs or changing texture scale.
-    // Fine/deep layers fade in continuously on approach; their positions stay fixed.
-    const near = positionView.length().smoothstep(1.25, 5.5).oneMinus()
-    const inner = p.sub(view.mul(0.17))
-    const deep = p.sub(view.mul(0.28))
-    const drift = vec3(0, time.mul(-0.045), time.mul(0.02))
-    const chamber = mx_noise_float(inner.mul(11).add(drift))
-    const membrane = opticalLine(chamber, 0.038)
-    const distantCells = opticalLine(mx_noise_float(deep.mul(19).sub(drift)), 0.028)
-    const pulse = inner.y.mul(9).sub(time.mul(0.65)).sin().mul(0.22).add(0.78)
-    const glow = mix(color('#064fff'), color('#25ffd2'), chamber.mul(2).add(0.5).clamp())
-    this.colorNode = mix(color('#020c24'), color('#073d52'), chamber.abs().mul(2).clamp())
-    this.transmission = 0.38
-    this.thickness = 0.42
-    this.ior = 1.5
-    this.attenuationColor.set('#087d9c')
-    this.attenuationDistance = 0.6
-    this.roughness = 0.095
-    this.clearcoat = 0.9
-    this.clearcoatRoughness = 0.045
-    this.normalNode = liquidNormal(near, 0.16)
-    this.emissiveNode = glow.mul(membrane).mul(pulse).mul(near.mul(0.7).add(0.55)).add(color('#3283ff').mul(distantCells).mul(near).mul(0.55)).add(color('#04bfb0').mul(rim).mul(0.14))
+    const tube = uv()
+    const {p, view, facing, grazing, near, intimate} = viewerFrame()
+    // Breathing is derivative-free so it can run in the vertex stage.
+    const travel = tube.x.mul(Math.PI * 12).sub(time.mul(Math.PI * 2))
+    const pulseRaw = travel.sin().mul(0.5).add(0.5)
+    const swell = pulseRaw.pow(3).mul(0.009).add(mx_noise_float(p.mul(5)).mul(0.0025)).add(0.004)
+    this.positionNode = p.add(normalLocal.normalize().mul(swell))
+    // The same traveling wave, read again for light: three crests chase each other around the knot.
+    const pulse = pulseRaw.pow(4)
+    const drift = vec3(time.mul(0.02), time.mul(-0.013), time.mul(0.017))
+    const organsNear = cellularPoints(p.sub(view.mul(0.09)).add(drift).mul(23), 0.03, 0.19, 0.55)
+    const organsDeep = cellularPoints(p.sub(view.mul(0.19)).sub(drift).mul(15), 0.04, 0.22, 0.62)
+    const membrane = mx_noise_float(p.mul(9).add(drift.mul(3))).mul(0.5).add(0.5)
+    const bell = mix(color('#04222e'), color('#2b8fa3'), facing.mul(0.55).add(membrane.mul(0.3)).clamp())
+    this.colorNode = mix(bell, color('#7a2d6d'), organsDeep.mul(0.35))
+    this.transmission = 0.74
+    this.thickness = 0.55
+    this.ior = 1.38
+    this.dispersion = 0.22
+    this.attenuationColor.set('#2fbfae')
+    this.attenuationDistance = 0.85
+    this.metalness = 0
+    this.roughnessNode = float(0.14).sub(pulse.mul(0.05)).add(organsNear.mul(0.08)).clamp(0.05, 0.3)
+    this.clearcoat = 1
+    this.clearcoatRoughness = 0.08
+    this.iridescence = 0.55
+    this.iridescenceIOR = 1.34
+    this.iridescenceThicknessNode = facing.mul(220).add(180)
+    this.normalNode = liquidNormal(near.mul(0.85).add(0.25), 0.75)
+    this.emissiveNode = color('#2fe8d8')
+      .mul(pulse)
+      .mul(near.mul(0.75).add(0.3))
+      .mul(0.85)
+      .add(color('#ff4fd8').mul(organsNear).mul(intimate.mul(0.9).add(0.25)).mul(1.6))
+      .add(color('#8a5cff').mul(organsDeep).mul(near.mul(0.6).add(0.3)).mul(1.1))
+      .add(color('#315dff').mul(grazing.pow(3)).mul(0.28))
   }
 }

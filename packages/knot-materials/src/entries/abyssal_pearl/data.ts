@@ -1,20 +1,21 @@
 import type {KnotData} from '../../types.ts'
 
+// Mage run: EC58pRKjMMMNqsv; fixture: knot-material-shaders; result: success.
 export default {
   id: 'abyssal_pearl',
-  candidateId: 'gpt_terra',
+  candidateId: 'muse_wonder',
   title: 'Abyssal Pearl',
   harness: 'Mage',
   author: {
     model: {
-      title: 'GPT-5.6 Terra',
-      slug: 'openai/gpt-5.6-terra',
-      effortLevel: 'max',
+      title: 'Muse Wonder 1.0',
+      slug: 'meta/muse-wonder-1.0',
+      effortLevel: 'medium',
     },
   },
-  flavorText: 'A pearl from water without a shore carries moonlit layers beneath its skin, tender colors arriving only when invited.',
+  flavorText: 'A thousand nacre tiles laid by patient tides, each one keeping a different pastel secret from the sun.',
   placeholder: {
-    color: '#506b72',
-    shading: 'glass',
+    color: '#a9a3a3',
+    shading: 'smooth',
   },
 } as const satisfies KnotData

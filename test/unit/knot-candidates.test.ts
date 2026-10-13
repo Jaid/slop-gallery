@@ -136,6 +136,7 @@ describe('arbitrary Knot batches', () => {
       'mimo',
       'minimax',
       'muse_spark',
+      'muse_wonder',
       'qwen_max',
       'space_bunny',
     ]))
@@ -169,6 +170,7 @@ describe('arbitrary Knot batches', () => {
       'claude-fable-5.1',
       'muse-spark-1.3',
       'muse-spark',
+      'muse-wonder-1.0',
       'hy4-preview',
     ]))
   })
@@ -187,6 +189,7 @@ describe('arbitrary Knot batches', () => {
       mimo: 'MiMo',
       minimax: 'MiniMax M3',
       muse_spark: 'Muse Spark',
+      muse_wonder: 'Muse Wonder',
       qwen_max: 'Qwen Max',
       gpt_sol: 'GPT Sol',
       gpt_terra: 'GPT Terra',

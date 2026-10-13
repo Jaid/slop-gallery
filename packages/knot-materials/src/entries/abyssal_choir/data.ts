@@ -1,19 +1,22 @@
 import type {KnotData} from '../../types.ts'
 
+// Mage run: 2b7SAOfgKTVu0qb; fixture: knot-material-shaders; result: success.
 export default {
   id: 'abyssal_choir',
-  candidateId: 'glm',
+  candidateId: 'muse_wonder',
   title: 'Abyssal Choir',
-  harness: 'chat.z.ai',
+  harness: 'Mage',
   author: {
     model: {
-      title: 'GLM 5.3',
+      title: 'Muse Wonder 1.0',
+      slug: 'meta/muse-wonder-1.0',
       effortLevel: 'max',
     },
   },
-  flavorText: 'A chorus too deep to hear leaves its harmonies in living light.',
+  displacement: 0.006,
+  flavorText: 'Photophores kindle in slow procession along a deep-sea skin, singing light into the dark as you draw near.',
   placeholder: {
-    color: '#38d6ff',
+    color: '#244c59',
     shading: 'smooth',
   },
 } as const satisfies KnotData

@@ -108,7 +108,7 @@ const batches = [
       effortLevel: 'xhigh',
     },
     ids: [
-      'aurora_loom',
+      'night_warp',
       'basalt_psalm',
       'cinnabar_kiln',
       'glacier_memory',

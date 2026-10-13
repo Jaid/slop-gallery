@@ -1,44 +1,43 @@
-import type {Node, Texture} from 'three/webgpu'
+import type {Texture} from 'three/webgpu'
 
-import {color, mix, mx_noise_float, time, uv} from 'three/tsl'
+import {color, float, mix, mx_noise_float, normalLocal, positionGeometry, time, uv} from 'three/tsl'
 
-import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
-import {hairline as opticalLine} from '../../lib/hairline.ts'
-import BaseKnotMaterial from '../../lib/KnotMaterial.ts'
+import {beads} from '../../lib/beads.ts'
+import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
+import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-function wrap01(x: Node<'float'>) {
-  return x.fract().sub(0.5).abs().oneMinus()
-}
-
-/** A deep-sea choir: rows of photophores ignite in a travelling cascade when something draws near, and a lone lure wanders the skin forever. */
-export default class extends BaseKnotMaterial {
+/** A deep-sea creature wearing the knot as its skin. Rows of photophores kindle in a slow traveling procession around the body, each lens swelling under a wet clearcoat; a second, finer constellation wakes only at intimate range, while teal light bleeds around the silhouette like gills breathing. The whole skin rises and falls in a two-second breath. */
+export default class extends KnotMaterial {
   constructor(environment: Texture) {
-    super(environment, 0.9)
+    super(environment, 0.5)
     this.name = knotData.id
-    const {p, grazing, near, intimate} = viewerFrame()
+    const {p, facing, grazing, near, intimate} = viewerFrame()
     const tube = uv()
-    const ribs = tube.x.mul(Math.PI * 2 * 34).sin().mul(0.5).add(0.5)
-    const rows = opticalLine(tube.y.mul(Math.PI * 2 * 5).sin(), 0.2)
-    const sites = opticalLine(tube.x.mul(Math.PI * 2 * 46).sin(), 0.3)
-    const photophores = rows.mul(sites)
-    const organRnd = cellNoiseVec3(p.mul(7)).x
-    const organTint = mix(color('#48d9ff'), color('#b2fff0'), organRnd)
-    const front = tube.x.sub(time.mul(0.16)).fract()
-    const flash = front.smoothstep(0.05, 0.42).oneMinus()
-    const excite = time.mul(16).add(tube.x.mul(Math.PI * 2 * 46)).sin().mul(0.5).add(0.5)
-    const breath = time.mul(0.7).sin().mul(0.25).add(0.75)
-    const lureD2 = wrap01(tube.x.sub(time.mul(0.085).fract())).mul(6).pow(2).add(wrap01(tube.y.sub(time.mul(0.31).fract())).pow(2))
-    const lure = lureD2.mul(-60).exp()
-    const mottle = mx_noise_float(p.mul(3)).mul(0.5).add(0.5)
-    this.colorNode = mix(mix(color('#04060b'), color('#122031'), mottle.mul(0.6).add(ribs.mul(0.25))), color('#0d3540'), grazing.pow(2).mul(0.5))
+    const mottle = mx_noise_float(p.mul(6)).mul(0.5).add(0.5)
+    const skin = mix(color('#03222b'), color('#0a4250'), mottle).add(color('#0a4a56').mul(mx_noise_float(p.mul(17)).mul(0.5).add(0.5)).mul(0.35))
+    const lenses = beads(p.mul(15), 2.9)
+    const sparks = beads(p.mul(36), 8.4)
+    const procession = tube.x.mul(TAU * 3).sub(time.mul(Math.PI * 2))
+    const pulse = procession.add(lenses.random.z.mul(TAU)).sin().mul(0.5).add(0.5).pow(2)
+    const glowPulse = pulse.mul(0.75).add(0.3)
+    const lensColor = mix(color('#2fe8ff'), color('#7a5cff'), lenses.random.x)
+    const sparkPulse = procession.mul(1.7).add(sparks.random.z.mul(TAU)).sin().mul(0.5).add(0.5).pow(2)
+    const facingWeight = mix(float(0.3), float(1), facing)
+    const choir = lensColor.mul(lenses.mask).mul(glowPulse).mul(facingWeight)
+    const constellation = mix(color('#67f7ff'), color('#b18cff'), sparks.random.x).mul(sparks.mask).mul(sparkPulse).mul(intimate)
+    const breath = time.mul(Math.PI).sin().mul(0.5).add(0.5)
+    const gills = color('#0d7d8c').mul(grazing.pow(2)).mul(breath.mul(0.3).add(0.34))
+    this.positionNode = positionGeometry.add(normalLocal.mul(time.mul(Math.PI).add(tube.x.mul(TAU * 2)).sin().mul(0.0035)))
+    this.colorNode = skin
     this.metalness = 0.05
-    this.roughnessNode = ribs.mul(0.12).add(0.46)
+    this.roughnessNode = mix(mix(float(0.34), float(0.58), mottle), float(0.12), lenses.mask)
     this.clearcoat = 0.85
-    this.clearcoatRoughness = 0.28
-    this.normalNode = proceduralNormal(ribs, 0.0016)
-    this.emissiveNode = organTint.mul(photophores.mul(breath.mul(0.25).add(flash.mul(2.4).mul(near)).add(intimate.mul(excite).mul(0.6)))).add(organTint.mul(rows).mul(0.08)).add(mix(color('#3fb9ff'), color('#e6fbff'), lure).mul(lure).mul(3.2)).add(color('#2a6bff').mul(grazing.pow(2)).mul(0.22))
+    this.clearcoatRoughness = 0.12
+    this.normalNode = proceduralNormal(lenses.cap.mul(lenses.mask).add(mx_noise_float(p.mul(30)).mul(intimate).mul(0.2)), 0.0012)
+    this.clearcoatNormalNode = this.normalNode
+    this.emissiveNode = choir.mul(3.4).add(constellation.mul(2)).add(gills).add(skin.mul(0.1)).mul(near.mul(0.25).add(0.85))
   }
 }
