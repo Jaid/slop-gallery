@@ -1,7 +1,7 @@
 import type {Rarity} from './rarities.ts'
 import type {KnotEntry} from './types.ts'
 
-import {ethereal, unknown} from './rarities.ts'
+import {special, unknown} from './rarities.ts'
 
 /** Session-local ratings. Selection and world positions deliberately stay fixed while editing. */
 export default class KnotRarityEditor {
@@ -25,7 +25,7 @@ export default class KnotRarityEditor {
     if (previous === undefined) {
       throw new Error(`Unknown Knot ID: ${id}`)
     }
-    const value = (previous === ethereal ? unknown : previous + 1) as Rarity
+    const value = (previous === special ? unknown : previous + 1) as Rarity
     const snapshot = new Map(this.snapshot)
     snapshot.set(id, value)
     this.snapshot = snapshot

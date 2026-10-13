@@ -1,8 +1,8 @@
 import type {Rarity} from './rarities.ts'
 
-import {common, ethereal, prime, rare, unknown} from './rarities.ts'
+import {common, ethereal, prime, rare, special, unknown} from './rarities.ts'
 
-export type RarityName = 'common' | 'ethereal' | 'prime' | 'rare' | 'unknown'
+export type RarityName = 'common' | 'ethereal' | 'prime' | 'rare' | 'special' | 'unknown'
 
 const byName = {
   unknown,
@@ -10,6 +10,7 @@ const byName = {
   rare,
   prime,
   ethereal,
+  special,
 } as const satisfies Record<RarityName, Rarity>
 
 export default function parseRarityFilter(search = ''): ReadonlySet<Rarity> | undefined {
@@ -23,13 +24,13 @@ export default function parseRarityFilter(search = ''): ReadonlySet<Rarity> | un
     throw new Error('Knot rarity_filter URL parameter must be a comma-separated list of rarity integers or names.')
   }
   const values = tokens.map(token => {
-    if (/^[0-4]$/u.test(token)) {
+    if (/^[0-5]$/u.test(token)) {
       return Number(token) as Rarity
     }
     if (Object.hasOwn(byName, token)) {
       return byName[token as RarityName]
     }
-    throw new Error('Knot rarity_filter URL parameter accepts only 0–4 or unknown, common, rare, prime, ethereal.')
+    throw new Error('Knot rarity_filter URL parameter accepts only 0–5 or unknown, common, rare, prime, ethereal, special.')
   })
   return new Set(values)
 }
