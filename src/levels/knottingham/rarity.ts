@@ -1,6 +1,6 @@
 import type {KnotEntry} from 'knot-materials'
 
-import {knots, unknown} from 'knot-materials'
+import {knots, special, unknown} from 'knot-materials'
 import {knotRarityMode} from 'knot-materials/exhibition.ts'
 import KnotRarityEditor from 'knot-materials/KnotRarityEditor.ts'
 
@@ -14,6 +14,11 @@ export function activateKnotSign(entry: KnotEntry) {
     return
   }
   const value = knotRarityEditor.cycle(entry.id)
-  const rating = value === unknown ? 'unknown' : `${value}/4 stars`
+  let rating = `${value}/4 stars`
+  if (value === unknown) {
+    rating = 'unknown'
+  } else if (value === special) {
+    rating = 'special, only shown on request'
+  }
   notify(`${entry.title}: ${rating}`)
 }
