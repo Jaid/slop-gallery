@@ -14,7 +14,6 @@ type Context = {
 }
 type Pending = {
   attached: boolean
-  compiling: boolean
   contexts: Array<Context>
   failed: boolean
   material: Material
@@ -40,6 +39,7 @@ function isolatedSamples(samples: number) {
 
 /** One queue per renderer. Caller owns every mesh, material, target and geometry. */
 export default class AsyncMaterials {
+  private compiling = false
   private readonly disposal = Promise.withResolvers<void>()
   private disposed = false
   private readonly pending: Array<Pending> = []
@@ -58,7 +58,6 @@ export default class AsyncMaterials {
       mesh: null,
       attached: false,
       contexts: [],
-      compiling: false,
       ready: false,
       failed: false,
     }
@@ -82,7 +81,7 @@ export default class AsyncMaterials {
       },
       onBeforeRender(this: Mesh, renderer, scene, camera) {
         // Three's shared hook typings still assume the GL backend, even for WebGPU.
-        if (!Object.is(renderer, queue.renderer) || queue.disposed || !item.attached || item.compiling || this !== item.mesh || item.ready || item.failed) {
+        if (!Object.is(renderer, queue.renderer) || queue.disposed || !item.attached || queue.compiling || this !== item.mesh || item.ready || item.failed) {
           return
         }
         const target = queue.renderer.getRenderTarget()
@@ -120,7 +119,7 @@ export default class AsyncMaterials {
     await this.disposal.promise
   }
 
-  private compile(item: Pending, mesh: Mesh, fullMaterial: Material, context: Context) {
+  private compile(mesh: Mesh, fullMaterial: Material, context: Context) {
     const {renderer} = this
     const compileTarget = this.scratchTarget(context.target, context.mip)
     const compileOutput = this.scratchTarget(context.output, context.mip)
@@ -140,12 +139,12 @@ export default class AsyncMaterials {
       mesh.visible = true
       mesh.frustumCulled = false
       // compileAsync traverses synchronously before returning its Promise. Ignore
-      // onBeforeRender from that synthetic traversal so scratch targets cannot be
-      // admitted as new live contexts (and recursively generate more scratches).
-      item.compiling = true
+      // every hook in that synthetic traversal, including child meshes, so scratch
+      // targets cannot become live contexts and recursively generate more scratches.
+      this.compiling = true
       return renderer.compileAsync(mesh, context.camera, context.scene)
     } finally {
-      item.compiling = false
+      this.compiling = false
       // No temporary state may survive across an await or ordinary render frame.
       mesh.material = material
       mesh.visible = visible
@@ -231,7 +230,7 @@ export default class AsyncMaterials {
               break
             }
             result.contexts++
-            await this.compile(next, mesh, next.material, context)
+            await this.compile(mesh, next.material, context)
           }
           if (!cancelled()) {
             next.ready = true

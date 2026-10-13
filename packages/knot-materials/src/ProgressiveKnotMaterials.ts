@@ -7,6 +7,8 @@ import {Vector3} from 'three/webgpu'
 
 import createPlaceholderMaterial from './createPlaceholderMaterial.ts'
 import KnotResources from './KnotResources.ts'
+import LayeredKnotBinding from './LayeredKnotBinding.ts'
+import KnotMaterial from './lib/KnotMaterial.ts'
 import StudioEnvironment from './StudioEnvironment.ts'
 
 type KnotMaterialEntry = KnotResourceEntry & Pick<KnotEntry, 'placeholder'>
@@ -20,6 +22,7 @@ export default class ProgressiveKnotMaterials {
   readonly resources: KnotResources
   private disposal?: Promise<void>
   private readonly environment: StudioEnvironment
+  private readonly layered = new Map<MeshPhysicalNodeMaterial, LayeredKnotBinding>
   private readonly queue: AsyncMaterials
 
   constructor(renderer: WebGPURenderer, camera: Camera, entries: ReadonlyArray<KnotMaterialEntry>, constructors: ReadonlyMap<string, KnotMaterialConstructor>, heavy: boolean) {
@@ -64,7 +67,9 @@ export default class ProgressiveKnotMaterials {
         position.setFromMatrixPosition(mesh.matrixWorld)
         return position.distanceToSquared(eye)
       },
-      onSettled({material, startedAt, contexts, status, error}) {
+      onSettled: result => {
+        const {material, startedAt, contexts, status, error} = result
+        this.layered.get(material as MeshPhysicalNodeMaterial)?.settled(result)
         if (status === 'failed') {
           console.error('Knot material compilation failed:', material.name, error)
         }
@@ -78,7 +83,18 @@ export default class ProgressiveKnotMaterials {
         })
       },
     })
-    const bindings = this.fullMaterials.map(material => this.queue.add(material))
+    const bindings = this.fullMaterials.map(material => {
+      if (material instanceof KnotMaterial && material.coreMaterial) {
+        const layered = new LayeredKnotBinding(this.queue, material, material.coreMaterial)
+        this.layered.set(material, layered)
+        this.layered.set(material.coreMaterial, layered)
+        return {
+          ref: (mesh: Mesh | null) => layered.ref(mesh),
+          onBeforeRender: layered.binding.onBeforeRender,
+        }
+      }
+      return this.queue.add(material)
+    })
     this.refs = bindings.map(binding => binding.ref)
     this.observers = bindings.map(binding => binding.onBeforeRender)
   }
@@ -98,6 +114,10 @@ export default class ProgressiveKnotMaterials {
   private async release() {
     // The queue never owns these resources; keep full materials alive until compilation stops.
     await this.queue.disposeAsync()
+    for (const layered of new Set(this.layered.values())) {
+      layered.dispose()
+    }
+    this.layered.clear()
     this.resources.dispose()
     for (const material of this.fullMaterials) {
       material.dispose()

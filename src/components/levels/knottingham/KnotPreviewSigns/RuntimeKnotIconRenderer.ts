@@ -1,10 +1,11 @@
 import type {KnotEntry, KnotMaterialConstructor} from 'knot-materials/types.ts'
-import type {NodeFrame} from 'three/webgpu'
+import type {Mesh, NodeFrame} from 'three/webgpu'
 
+import createKnotMesh from 'knot-materials/createKnotMesh.ts'
 import {createKnotGeometry} from 'knot-materials/geometry.ts'
 import StudioEnvironment from 'knot-materials/StudioEnvironment.ts'
 import {WebgpuRenderer} from 'three-fiber-game'
-import {ACESFilmicToneMapping, AmbientLight, DirectionalLight, HalfFloatType, HemisphereLight, Mesh, PerspectiveCamera, RenderTarget, Scene, SRGBColorSpace, UnsignedByteType} from 'three/webgpu'
+import {ACESFilmicToneMapping, AmbientLight, DirectionalLight, HalfFloatType, HemisphereLight, PerspectiveCamera, RenderTarget, Scene, SRGBColorSpace, UnsignedByteType} from 'three/webgpu'
 
 type OfflineRenderer = WebgpuRenderer & {
   _animation: {stop: () => void}
@@ -198,7 +199,7 @@ export default class RuntimeKnotIconRenderer {
     if (!Material) {
       throw new Error(`Missing material constructor for ${item.id}.`)
     }
-    this.active = new Mesh(this.geometry, new Material(this.environment))
+    this.active = createKnotMesh(this.geometry, new Material(this.environment))
     this.active.frustumCulled = false
     this.scene.add(this.active)
     this.errors.length = 0

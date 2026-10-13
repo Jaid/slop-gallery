@@ -91,6 +91,10 @@ Placeholders use the entry's exact `placeholder.color`. The seven shading option
 
 `createPlaceholderMaterial` provides lit surfaces without loading any entry shader. Heavy mode adds physical glass transmission, fabric sheen, and liquid clearcoat where appropriate. Fast mode stays on cheaper standard lit materials; its glass is tinted transparency rather than a transmission pass. Ghosts remain visibly translucent. `ProgressiveKnotMaterials.placeholderMaterials` owns these fallback surfaces and replaces them with warmed-up full materials. Because Knottingham exists to review entry shaders, full materials are constructed and warmed up in both graphics modes; fast mode only keeps the interim placeholders on the cheap standard path. Resource disposal waits for pending compilation to settle before releasing geometry or textures.
 
+### Opaque cores under alpha-cut shells
+
+A material may own an optional `coreMaterial` for a solid interior beneath its alpha-cut shell. `createKnotMesh` renders both on the same geometry and transform in preview scenes; `ProgressiveKnotMaterials` warms both real render contexts and activates the pair together in the exhibition. Core children do not contribute duplicate raycast hits. Disposing the outer `KnotMaterial` also disposes its core, but neither disposes the caller-owned environment. Knotty Prince uses this to retain its original displaced fuzz shell over a closed felt body.
+
 ## Generate an inference prompt
 
 From the repository root:

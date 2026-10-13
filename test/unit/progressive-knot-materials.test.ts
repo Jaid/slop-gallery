@@ -6,10 +6,17 @@ import RetainedLifetime from 'disposable-lifetime'
 import {knotsById} from 'knot-materials'
 import KnotMaterial from 'knot-materials/lib/KnotMaterial.ts'
 import ProgressiveKnotMaterials from 'knot-materials/ProgressiveKnotMaterials.ts'
-import {Color, Mesh, PerspectiveCamera, RenderTarget, Scene} from 'three/webgpu'
+import {Color, Mesh, MeshPhysicalNodeMaterial, PerspectiveCamera, RenderTarget, Scene} from 'three/webgpu'
 
-function fixture(third = false) {
-  class TestMaterial extends KnotMaterial {}
+function fixture(third = false, layered = false) {
+  class TestMaterial extends KnotMaterial {
+    constructor(environment: Texture) {
+      super(environment)
+      if (layered) {
+        this.coreMaterial = new MeshPhysicalNodeMaterial({envMap: environment})
+      }
+    }
+  }
   const original = knotsById.get('lenticular_mirage')!
   const entry = {
     ...original,
@@ -84,6 +91,7 @@ function fixture(third = false) {
   }
   return {
     materials,
+    scene,
     camera,
     meshes,
     renderer,
@@ -191,5 +199,35 @@ test('fast mode keeps cheap lit placeholders but still constructs full knot mate
     expect(surface.roughness).toBe(0.45)
   } finally {
     await materials.disposeAsync()
+  }
+})
+test('layered entries warm and activate their core with the shell, then dispose the owned interior once', async () => {
+  const f = fixture(false, true)
+  const shell = f.materials.fullMaterials[0] as KnotMaterial
+  const core = shell.coreMaterial!
+  let coreDisposals = 0
+  core.addEventListener('dispose', () => coreDisposals++)
+  try {
+    const coreMesh = f.meshes[0].children[0] as Mesh
+    expect(coreMesh.geometry).toBe(f.meshes[0].geometry)
+    f.observe(0)
+    f.renderer.setRenderTarget(f.main)
+    coreMesh.onBeforeRender(f.renderer as unknown as Parameters<Mesh['onBeforeRender']>[0], f.scene, f.camera, coreMesh.geometry, coreMesh.material as never, null as never)
+    f.renderer.setRenderTarget(null)
+    await flush()
+    f.calls[0].gate.resolve()
+    await flush()
+    expect(f.meshes[0].material).toBe(f.materials.placeholderMaterials[0])
+    expect(coreMesh.material).not.toBe(core)
+    expect(f.calls).toHaveLength(2)
+    f.calls[1].gate.resolve()
+    await flush()
+    expect(f.meshes[0].material).toBe(shell)
+    expect(coreMesh.material).toBe(core)
+    await f.materials.disposeAsync()
+    expect(coreDisposals).toBe(1)
+    expect(f.meshes[0].children).toHaveLength(0)
+  } finally {
+    f.dispose()
   }
 })

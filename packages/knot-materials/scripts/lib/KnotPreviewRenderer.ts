@@ -1,10 +1,11 @@
 import type {KnotEntry} from '../../src/types.ts'
 import type {RenderFrame} from './renderSettings.ts'
-import type {MeshPhysicalNodeMaterial, NodeFrame} from 'three/webgpu'
+import type {Mesh, MeshPhysicalNodeMaterial, NodeFrame} from 'three/webgpu'
 
 import {WebgpuRenderer} from 'three-fiber-game'
-import {ACESFilmicToneMapping, AmbientLight, DirectionalLight, HalfFloatType, HemisphereLight, Mesh, PerspectiveCamera, RenderTarget, Scene} from 'three/webgpu'
+import {ACESFilmicToneMapping, AmbientLight, DirectionalLight, HalfFloatType, HemisphereLight, PerspectiveCamera, RenderTarget, Scene} from 'three/webgpu'
 
+import createKnotMesh from '../../src/createKnotMesh.ts'
 import {createKnotGeometry} from '../../src/geometry.ts'
 import loadKnotMaterial from '../../src/materials.ts'
 import StudioEnvironment from '../../src/StudioEnvironment.ts'
@@ -178,7 +179,7 @@ export default class KnotPreviewRenderer {
       throw new Error('A preview material is already active.')
     }
     const Material = await loadKnotMaterial(item)
-    this.active = new Mesh(this.geometry, new Material(this.environment))
+    this.active = createKnotMesh(this.geometry, new Material(this.environment))
     this.active.frustumCulled = false
     this.scene.add(this.active)
     this.errors.length = 0

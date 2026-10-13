@@ -55,3 +55,11 @@ bun test/browser/run.ts abyssalPulse.ts
 ```
 
 This detached fixture reads the actual GPU feature seeds and checks thousands of organ-core samples, including cross-cell support, against the isolated photophore mask. Nearby features must not cut off an active organ.
+
+For Knotty Prince’s solid felt core and unchanged frayed shell:
+
+```sh
+bun test/browser/run.ts knottyPrince.ts
+```
+
+The detached fixture reproduces the original alpha-cut slices, checks core coverage across 24 views and animation phases, verifies retained fuzz outside the core, and warms both materials atomically in the native WebGPU queue.

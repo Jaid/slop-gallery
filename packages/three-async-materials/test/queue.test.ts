@@ -64,7 +64,11 @@ function fixture(third = false, prioritized = true) {
       })
       // Three's WebGPU compileAsync traverses the object synchronously before
       // returning its native-pipeline Promise, including onBeforeRender hooks.
-      mesh.onBeforeRender(renderer as unknown as Parameters<Mesh['onBeforeRender']>[0], scene as Scene, camera as PerspectiveCamera, mesh.geometry, mesh.material as never, null as never)
+      mesh.traverse(object => {
+        if (object instanceof Mesh) {
+          object.onBeforeRender(renderer as unknown as Parameters<Mesh['onBeforeRender']>[0], scene as Scene, camera as PerspectiveCamera, object.geometry, object.material as never, null as never)
+        }
+      })
       return gate.promise
     },
   }
@@ -551,5 +555,32 @@ test('failures are reported by default when no application reporter was supplied
   } finally {
     await f.dispose()
     log.mockRestore()
+  }
+})
+test('warming a parent cannot admit its child binding from synthetic traversal', async () => {
+  const f = fixture()
+  try {
+    f.meshes[0].add(f.meshes[1])
+    f.observe(0)
+    await flush()
+    f.calls[0].gate.resolve()
+    await flush()
+    expect(f.calls).toHaveLength(1)
+    expect(f.results[0]).toMatchObject({
+      status: 'ready',
+      contexts: 1,
+    })
+    f.observe(1)
+    await flush()
+    expect(f.calls).toHaveLength(2)
+    expect(f.calls[1].target?.texture.name).toBe('main-target')
+    f.calls[1].gate.resolve()
+    await flush()
+    expect(f.results[1]).toMatchObject({
+      status: 'ready',
+      contexts: 1,
+    })
+  } finally {
+    await f.dispose()
   }
 })

@@ -2,6 +2,7 @@ import type {Triple} from '../../lib/Triple.ts'
 import type {Node, Texture} from 'three/webgpu'
 
 import {atan, cameraPosition, cameraViewMatrix, color, float, mix, modelWorldMatrixInverse, mx_cell_noise_float, mx_fractal_noise_float, mx_noise_float, positionView, time, transformNormalToView, uv, vec2, vec3, vec4} from 'three/tsl'
+import {MeshPhysicalNodeMaterial} from 'three/webgpu'
 
 import {knotCurve} from '../../lib/knotCurve.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
@@ -771,5 +772,12 @@ export default class extends KnotMaterial {
     const satin = reflected.dot(cameraViewMatrix.mul(vec4(0, 1, 0, 0)).xyz).smoothstep(0.3, 1).mul(bowCover).mul(0.03)
     this.emissiveNode = color('#ffffff').mul(sparkle.mul(glossyPupil).mul(1.1)).add(color('#cfd8ff').mul(satin))
       .add(color('#d5ff5a').mul(facing.oneMinus().pow(3).mul(felted).mul(0.06)))
+// The alpha-cut fuzz is only an outer layer: the stuffed felt underneath must remain closed.
+    this.coreMaterial = (new MeshPhysicalNodeMaterial).copy(this)
+    this.coreMaterial.name = `${knotData.id} core`
+    this.coreMaterial.positionNode = placeInObject(shape.point)
+    this.coreMaterial.opacityNode = float(1)
+    this.coreMaterial.alphaTest = 0
+    this.coreMaterial.alphaToCoverage = false
   }
 }
