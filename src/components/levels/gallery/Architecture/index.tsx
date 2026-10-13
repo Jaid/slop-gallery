@@ -71,7 +71,7 @@ export default function Architecture() {
     <color args={['#ded8ca']} attach='background' />
     <ambientLight intensity={0.65} /><hemisphereLight args={['#ecf3ff', '#a29270', 1.15]} />
     <directionalLight castShadow color='#fff0d7' intensity={2.3} position={[-3, 9, 4]} shadow-camera-bottom={-20} shadow-camera-left={-24} shadow-camera-right={24} shadow-camera-top={20} shadow-mapSize={[4096, 4096]} shadow-normalBias={0.035} />
-    {walls.map(wall => <WallSurface key={wall.id} material={wallMaterial(wall)} plaster={wall.room === 'sienna' ? damask : plaster} wall={wall} />)}
+    {walls.map(wall => <WallSurface key={wall.id} glass={glass.tunnel} material={wallMaterial(wall)} plaster={wall.room === 'sienna' ? damask : plaster} wall={wall} />)}
     {rooms.filter(room => room.floorY === 0 && room.id !== 'sienna').map(room => <group key={room.id} position={[room.center[0], 0, room.center[1]]}>
       <RigidBody colliders={false} type='fixed'>
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]} />
