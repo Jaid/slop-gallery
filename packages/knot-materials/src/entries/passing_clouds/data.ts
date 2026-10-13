@@ -1,0 +1,22 @@
+import type {KnotData} from '../../types.ts'
+
+// Mage run: AfC9LOF1p8reY9V; fixture: knot-material-shaders; result: success.
+export default {
+  id: 'passing_clouds',
+  candidateId: 'muse_wonder',
+  title: 'Passing Clouds',
+  harness: 'Mage',
+  author: {
+    model: {
+      title: 'Muse Wonder 1.0',
+      slug: 'meta/muse-wonder-1.0',
+      effortLevel: 'max',
+    },
+  },
+  displacement: 0.008,
+  flavorText: 'It thinks in color. Pigment cells breathe and bloom beneath wet skin, and the closer you lean, the brighter its warning burns.',
+  placeholder: {
+    color: '#80c3a0',
+    shading: 'liquid',
+  },
+} as const satisfies KnotData

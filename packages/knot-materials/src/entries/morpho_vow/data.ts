@@ -1,0 +1,21 @@
+import type {KnotData} from '../../types.ts'
+
+// Mage run: D2pmfQp7iycRJKh; fixture: knot-material-shaders; result: success.
+export default {
+  id: 'morpho_vow',
+  candidateId: 'muse_wonder',
+  title: 'Morpho Vow',
+  harness: 'Mage',
+  author: {
+    model: {
+      title: 'Muse Wonder 1.0',
+      slug: 'meta/muse-wonder-1.0',
+      effortLevel: 'max',
+    },
+  },
+  flavorText: 'Ten thousand blue scales keep a wing’s old promise: color is not worn, it is agreed upon by light, tilt and witness.',
+  placeholder: {
+    color: '#183e92',
+    shading: 'glass',
+  },
+} as const satisfies KnotData

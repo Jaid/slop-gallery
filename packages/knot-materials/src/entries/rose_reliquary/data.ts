@@ -1,0 +1,21 @@
+import type {KnotData} from '../../types.ts'
+
+// Mage run: KsUDOPCUWqzzKMp; fixture: knot-material-shaders; result: success.
+export default {
+  id: 'rose_reliquary',
+  candidateId: 'muse_wonder',
+  title: 'Rose Reliquary',
+  harness: 'Mage',
+  author: {
+    model: {
+      title: 'Muse Wonder 1.0',
+      slug: 'meta/muse-wonder-1.0',
+      effortLevel: 'max',
+    },
+  },
+  flavorText: 'A cathedral rose folded into a knot, its jewel panes lit by a sun that circles forever inside the glass.',
+  placeholder: {
+    color: '#7c1752',
+    shading: 'glass',
+  },
+} as const satisfies KnotData
