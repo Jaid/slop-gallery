@@ -2,9 +2,13 @@ import type {EgoDump} from 'ego-player'
 
 import {playSoundEffect} from '../audio/soundEffects.ts'
 import SoundEngine from '../audio/SoundEngine.ts'
+import {readDevelopmentMode} from '../developmentMode.ts'
 import {useGallery} from '../gallery.ts'
 import {galleryLevel} from '../level.ts'
 import {telemetry} from './index.ts'
+import saveDumpScreenshot from './saveDumpScreenshot.ts'
+
+const isDevelopmentMode = readDevelopmentMode()
 
 export default function recordPlayerDump(dump: EgoDump) {
   const {room, active, held, inspecting, locked} = useGallery.getState()
@@ -23,6 +27,9 @@ export default function recordPlayerDump(dump: EgoDump) {
   }, {depth: null})
   if (useGallery.getState().sound) {
     void confirmDump()
+  }
+  if (isDevelopmentMode) {
+    void saveDumpScreenshot(`${galleryLevel}-${dump.id}`)
   }
   if (!telemetry) {
     return
