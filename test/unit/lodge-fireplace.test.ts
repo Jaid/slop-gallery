@@ -6,7 +6,9 @@ import {expect, test} from 'bun:test'
 import {Children, isValidElement} from 'react'
 import {Euler, Matrix4, MeshBasicMaterial, Texture, Vector3} from 'three/webgpu'
 
+import LodgeFire from '../../src/components/levels/gallery/LodgeFire/index.tsx'
 import renderLodgeRoom from '../../src/components/levels/gallery/LodgeRoom/index.tsx'
+import fire, {fireWorldOrigin} from '../../src/lib/gallery/fireplace/config.ts'
 import lodge from '../../src/lib/gallery/lodge.ts'
 
 type Props = {
@@ -32,13 +34,20 @@ test('the complete fireplace faces inward from the south wall without moving the
     expect(fireplace.props.rotation).toEqual([0, Math.PI, 0])
     const parts = descendants(fireplace.props.children)
     expect(parts.find(child => child.props.colliders === 'cuboid')!.props.type).toBe('fixed')
+    expect(parts.some(child => child.type === LodgeFire)).toBe(true)
     const transform = (new Matrix4).makeRotationFromEuler(new Euler(...fireplace.props.rotation!)).setPosition(lodge.center[0], lodge.floorY, lodge.center[1])
-    for (const [name, expectedZ] of [['lodge-hearth', -26.65], ['lodge-embers', -26.8], ['lodge-firelight', -27.15]] as const) {
-      const part = parts.find(child => child.props.name === name)!
-      const position = new Vector3(...part.props.position!).applyMatrix4(transform)
-      expect(position.x).toBeCloseTo(lodge.center[0])
-      expect(position.z).toBeCloseTo(expectedZ)
+    const toWorld = (position: Vec3) => new Vector3(...position).applyMatrix4(transform)
+    const hearth = toWorld(parts.find(child => child.props.name === 'lodge-hearth')!.props.position!)
+    expect(hearth.x).toBeCloseTo(lodge.center[0])
+    expect(hearth.z).toBeCloseTo(-26.65)
+    // The fire sits where the old embers and firelight were.
+    const origin = toWorld(fire.position)
+    for (const [axis, value] of origin.toArray().entries()) {
+      expect(value).toBeCloseTo(fireWorldOrigin[axis])
     }
+    expect(origin.x).toBeCloseTo(lodge.center[0])
+    expect(origin.z).toBeCloseTo(-26.8)
+    expect(toWorld([fire.position[0], fire.position[1], fire.position[2] + fire.light.glowPosition[2]]).z).toBeCloseTo(-27.15)
     expect(new Vector3(0, 0, 1).transformDirection(transform).z).toBeCloseTo(-1)
     expect(descendants(room).find(child => child.props.position?.[0] === -3.7)).toBeDefined()
     expect(parts.some(child => child.props.position?.[0] === -3.7)).toBe(false)
