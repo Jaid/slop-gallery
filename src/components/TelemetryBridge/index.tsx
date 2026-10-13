@@ -10,6 +10,7 @@ import useGraphicsMode from 'use-graphics-mode'
 
 import {useGallery} from '#src/lib/gallery.ts'
 import pauseMenu from '#src/lib/pauseMenu.ts'
+import {getAntiAliasing} from '#src/lib/rendering/antiAliasing.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 import {playerTelemetry, telemetry} from '#src/lib/telemetry/index.ts'
 
@@ -23,6 +24,7 @@ function Collectors() {
   const inspector = new AimInspector(scene, camera)
   const isHeavy = useGraphicsMode()
   const profile = getGraphicsProfile(isHeavy)
+  const antiAliasing = getAntiAliasing(isHeavy)
   useThreeTelemetry({
     telemetry: telemetry!,
     getAttributes: () => {
@@ -33,6 +35,7 @@ function Collectors() {
         'graphics.profile': useGraphicsMode.getName(isHeavy),
         'graphics.shadows': profile.shadows,
         'graphics.postprocessing': profile.postprocessing,
+        'graphics.anti_aliasing': antiAliasing || 'none',
         'graphics.floor_reflections': profile.floorReflections,
         'graphics.noise_textures': profile.noiseTextures,
       }

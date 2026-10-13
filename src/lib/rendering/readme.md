@@ -9,10 +9,19 @@ current-frame scene color + depth + normals + velocity
   → ambient occlusion
   → Knot focus isolation / aperture blur / sharp foreground composite
   → bloom with the inspection background mask
-  → one TRAA resolve
+  → one antialiasing resolve (TRAA, SMAA or none)
   → Z zoom tilt-shift and vignette
   → output color transform
 ```
+
+## Antialiasing
+
+`?anti_aliasing` picks the resolve: `traa`, `smaa` or `false`. Without it, heavy graphics use TRAA and fast graphics use none. The renderer has `antialias: false` and the scene pass is single-sampled for GTAO, so these are the only antialiasing paths.
+
+- `traa` is temporal. It jitters the camera, needs the velocity MRT and calms shimmering materials such as `bismuth_staircase` and `magnetite_field`.
+- `smaa` (1× medium, color edges) is a current-frame filter: no ghosting or camera jitter, but no subpixel stability either.
+
+Both run on linear color before the output transform. Any choice other than `false` in fast graphics mounts a light pipeline (scene pass and the resolve only, no knot focus or other heavy effects) that renders every frame.
 
 ## Focus boundary invariant
 

@@ -28,6 +28,7 @@ Options:
   --fov <degrees>         vertical field of view. Default: the game camera’s
   --graphics <mode>       mirrors ?graphics (heavy or fast). Default: heavy
   --vision-mode <mode>    mirrors ?vision_mode (wireframe). Default: none
+  --anti-aliasing <mode>  mirrors ?anti_aliasing (traa, smaa or false). Default: the graphics mode’s
   --viewport <WxH>        render size in pixels. Default: 1920x1080
   --jxl-distance <number> cjxl Butteraugli distance, 0 is lossless. Default: 1
   --settle <frames>       frames to render after posing, lets temporal antialiasing converge. Default: 60
@@ -118,6 +119,7 @@ const {values} = parseArgs({
       default: '1920x1080',
     },
     'vision-mode': {type: 'string'},
+    'anti-aliasing': {type: 'string'},
   },
 })
 if (values.help) {
@@ -153,6 +155,9 @@ const search = new URLSearchParams({
 search.set('graphics', values.graphics)
 if (values['vision-mode'] !== undefined) {
   search.set('vision_mode', values['vision-mode'])
+}
+if (values['anti-aliasing'] !== undefined) {
+  search.set('anti_aliasing', values['anti-aliasing'])
 }
 if (target === undefined && level !== undefined) {
   // vite.config.ts reads the level through loadEnv, which includes process.env.

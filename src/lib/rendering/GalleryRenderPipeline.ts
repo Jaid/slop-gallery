@@ -1,8 +1,10 @@
+import type {AntiAliasing} from './antiAliasing.ts'
 import type {Camera, Node, Object3D, Renderer, TextureNode} from 'three/webgpu'
 
 import {bloom} from 'three/addons/tsl/display/BloomNode.js'
 import {gaussianBlur} from 'three/addons/tsl/display/GaussianBlurNode.js'
 import {ao} from 'three/addons/tsl/display/GTAONode.js'
+import {smaa} from 'three/addons/tsl/display/SMAANode.js'
 import {traa} from 'three/addons/tsl/display/TRAANode.js'
 import {float, length, mrt, normalView, output, pass, rtt, screenUV, smoothstep, uniform, vec3, vec4, velocity} from 'three/tsl'
 import {PerspectiveCamera, RenderPipeline} from 'three/webgpu'
@@ -11,6 +13,7 @@ import KnotBokeh from './KnotBokeh.ts'
 import tiltShift from './tiltShift.ts'
 
 export type GalleryRenderPipelineOptions = {
+  antiAliasing?: AntiAliasing
   contactDarkening?: boolean
   focus?: {
     amount: () => number
@@ -21,12 +24,12 @@ export type GalleryRenderPipelineOptions = {
   zoom?: () => number
 }
 
-/** All depth-dependent work stays in the current frame; one TRAA resolve antialiases the finished composite. */
+/** All depth-dependent work stays in the current frame; one antialiasing resolve (TRAA by default) antialiases the finished composite. */
 export default class GalleryRenderPipeline extends RenderPipeline {
   readonly scenePass: ReturnType<typeof pass>
   private readonly effects: Array<{dispose: () => void}> = []
 
-  constructor(renderer: Renderer, scene: Object3D, camera: Camera, {contactDarkening = false, focus, heavy = true, zoom = () => 0}: GalleryRenderPipelineOptions = {}) {
+  constructor(renderer: Renderer, scene: Object3D, camera: Camera, {antiAliasing = 'traa', contactDarkening = false, focus, heavy = true, zoom = () => 0}: GalleryRenderPipelineOptions = {}) {
     super(renderer)
     const own = <T extends {dispose: () => void}>(effect: T) => {
       this.effects.push(effect)
@@ -35,11 +38,11 @@ export default class GalleryRenderPipeline extends RenderPipeline {
     // GTAO and TRAA require single-sampled scene depth.
     const scenePass = own(pass(scene, camera, {samples: 0}))
     this.scenePass = scenePass
-    if (heavy) {
+    if (heavy || antiAliasing === 'traa') {
       scenePass.setMRT(mrt({
         output,
-        normal: normalView,
-        velocity,
+        ...heavy ? {normal: normalView} : {},
+        ...antiAliasing === 'traa' ? {velocity} : {},
       }))
     }
     const depth = scenePass.getTextureNode('depth')
@@ -72,12 +75,23 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       // Preserve the existing inspection bloom treatment, but apply its depth mask BEFORE temporal reconstruction, not as a jagged stencil over an already antialiased image.
       const glow = own(bloom(current, 0.18, 0.25, 1))
       current = vec4(current.rgb.add(glow.rgb.mul(float(1).sub(background))), current.a)
-      // Own the materialized input explicitly; Three's TRAANode does not dispose an implicit RTT.
-      const temporalInput = own(rtt(current, null, null, {depthBuffer: false}))
-      temporalInput.name = 'galleryTemporalInput'
-      const temporal = own(traa(temporalInput, depth, scenePass.getTextureNode('velocity'), camera))
+    }
+    // Own the materialized composite explicitly; Three's TRAANode, SMAANode and GaussianBlurNode do not dispose an implicit RTT.
+    const materialize = () => {
+      const composite = own(rtt(current, null, null, {depthBuffer: false}))
+      composite.name = 'galleryComposite'
+      return composite
+    }
+    if (antiAliasing === 'traa') {
+      const temporal = own(traa(materialize(), depth, scenePass.getTextureNode('velocity'), camera))
       // The native accessor exists in r186 but is missing from its declaration file.
-      const resolved = (temporal as typeof temporal & {getTextureNode: () => TextureNode}).getTextureNode()
+      current = (temporal as typeof temporal & {getTextureNode: () => TextureNode}).getTextureNode()
+    } else if (antiAliasing === 'smaa') {
+      // Like TRAA, SMAA expects linear color before the output transform.
+      current = own(smaa(materialize())).getTextureNode()
+    }
+    if (heavy) {
+      const resolved = antiAliasing ? current : materialize()
       const zoomAmount = uniform(0).onRenderUpdate(zoom)
       const zoomBlur = own(gaussianBlur(resolved, zoomAmount.mul(0.75), 8, {resolutionScale: 1}))
       current = tiltShift(resolved, zoomBlur, zoomAmount)
