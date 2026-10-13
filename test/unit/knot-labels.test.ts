@@ -187,7 +187,7 @@ describe('Knot nameplates', () => {
   })
 })
 test('star strip paints one through four stars and clears the previous count at any atlas offset', () => {
-  for (const rarity of [1, 2, 3, 4] as const) {
+  for (const rarity of [1, 2, 3, 4, 5] as const) {
     const calls: Array<Array<unknown>> = []
     const context = {
       fillRect: (...args: Array<unknown>) => calls.push(args),
