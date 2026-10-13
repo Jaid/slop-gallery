@@ -155,21 +155,22 @@ export function createArchitectureGeometry(wall: Wall) {
       retained.add(geometry)
       return geometry
     })
+    // Raking bands are sheared with the wall rather than rotated: their ends stay plumb and flush with
+    // the wall ends, and their vertical section matches the level cornice they meet at a stair landing.
+    const cornice = wall.trimStyle === 'none' ? [] : [
+      box(wall.width, 0.1, 0.22, 0, wall.height - 0.42, 0.16),
+      box(wall.width, 0.23, 0.32, 0, wall.height - 0.22, 0.18),
+    ]
+    for (const part of cornice) {
+      retained.add(part)
+    }
     if (wall.slope) {
       const shear = (new Matrix4).set(1, 0, 0, 0, wall.slope, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
-      for (const geometry of [surface, ...trim, ...glazing]) {
+      for (const geometry of [surface, ...trim, ...glazing, ...cornice]) {
         geometry.applyMatrix4(shear)
         geometry.computeBoundingBox()
         geometry.computeBoundingSphere()
       }
-    }
-    const corniceBand = (height: number, depth: number, y: number, z: number) => box(wall.width * Math.hypot(1, wall.slope ?? 0), height, depth, 0, 0, 0).rotateZ(Math.atan(wall.slope ?? 0)).translate(0, y, z)
-    const cornice = wall.trimStyle === 'none' ? [] : [
-      corniceBand(0.1, 0.22, wall.height - 0.42, 0.16),
-      corniceBand(0.23, 0.32, wall.height - 0.22, 0.18),
-    ]
-    for (const part of cornice) {
-      retained.add(part)
     }
     for (const part of retained) {
       if (wall.curveRadius) {
