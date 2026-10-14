@@ -44,18 +44,22 @@ const orientation = (image: CanvasImageSource & {
         continue
       }
       if (pixels[i] > pixels[i + 2] + 32) {
-        redY += y; redCount++
+        redY += y
+        redCount++
       }
       if (pixels[i + 2] > pixels[i] + 32) {
-        blueY += y; blueCount++
+        blueY += y
+        blueCount++
       }
       if (pixels[i + 1] > 60) {
-        greenX += x; greenCount++
+        greenX += x
+        greenCount++
       }
       if (!(pixels[i + 1] < 5)) {
         continue
       }
-      noGreenX += x; noGreenCount++
+      noGreenX += x
+      noGreenCount++
     }
   }
   canvas.width = 0
@@ -97,7 +101,7 @@ export async function previewOrientationProbe(renderer: KnotPreviewRenderer) {
       seconds: 0,
       size: 'animation',
     })
-    const bitmap = await createImageBitmap(new Blob([Uint8Array.from(atob(png), character => character.charCodeAt(0))], {type: 'image/png'}))
+    const bitmap = await createImageBitmap(new Blob([Uint8Array.fromBase64(png)], {type: 'image/png'}))
     try {
       results.push({
         path: 'offline PNG',
@@ -120,7 +124,8 @@ export async function previewOrientationProbe(renderer: KnotPreviewRenderer) {
         })
       } finally {
         for (const image of images.values()) {
-          image.width = 0; image.height = 0
+          image.width = 0
+          image.height = 0
         }
       }
     } finally {
