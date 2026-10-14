@@ -144,12 +144,8 @@ export default class RuntimeKnotIconRenderer {
       if (this.errors.length) {
         throw new Error(`${id}: ${this.errors.join('\n')}`)
       }
-      const output = new Uint8ClampedArray(pixels.length)
-      const stride = renderSize * 4
-      for (let y = 0; y < renderSize; y++) {
-        output.set(pixels.subarray(y * stride, (y + 1) * stride), (renderSize - 1 - y) * stride)
-      }
-      const data = new ImageData(output, renderSize, renderSize)
+      // WebGPU readback rows already have ImageData orientation, unlike WebGL readPixels.
+      const data = new ImageData(new Uint8ClampedArray(pixels), renderSize, renderSize)
       const bounds = visibleBounds(data)
       if (!bounds) {
         throw new Error(`${id} produced an empty preview.`)

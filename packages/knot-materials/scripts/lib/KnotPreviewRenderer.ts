@@ -137,11 +137,8 @@ export default class KnotPreviewRenderer {
       if (this.errors.length) {
         throw new Error(`${id}: ${this.errors.join('\n')}`)
       }
-      const output = new Uint8ClampedArray(pixels.length)
-      const stride = sourceWidth * 4
-      for (let y = 0; y < sourceHeight; y++) {
-        output.set(pixels.subarray(y * stride, (y + 1) * stride), (sourceHeight - 1 - y) * stride)
-      }
+      // WebGPU readback is already top-to-bottom, matching ImageData; a GL-style row flip inverts the preview.
+      const output = new Uint8ClampedArray(pixels)
       let visible = false
       for (let index = 3; index < output.length; index += 4) {
         if (output[index] !== 0) {
