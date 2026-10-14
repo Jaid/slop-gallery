@@ -19,7 +19,10 @@ class OrientationMaterial extends KnotMaterial {
     this.roughness = 1
   }
 }
-const orientation = (image: CanvasImageSource & {width: number, height: number}) => {
+const orientation = (image: CanvasImageSource & {
+  height: number
+  width: number
+}) => {
   const canvas = document.createElement('canvas')
   canvas.width = image.width
   canvas.height = image.height
@@ -37,41 +40,92 @@ const orientation = (image: CanvasImageSource & {width: number, height: number})
   for (let y = 0; y < canvas.height; y++) {
     for (let x = 0; x < canvas.width; x++) {
       const i = (y * canvas.width + x) * 4
-      if (pixels[i + 3] < 200) continue
-      if (pixels[i] > pixels[i + 2] + 32) { redY += y; redCount++ }
-      if (pixels[i + 2] > pixels[i] + 32) { blueY += y; blueCount++ }
-      if (pixels[i + 1] > 60) { greenX += x; greenCount++ }
-      if (pixels[i + 1] < 5) { noGreenX += x; noGreenCount++ }
+      if (pixels[i + 3] < 200) {
+        continue
+      }
+      if (pixels[i] > pixels[i + 2] + 32) {
+        redY += y; redCount++
+      }
+      if (pixels[i + 2] > pixels[i] + 32) {
+        blueY += y; blueCount++
+      }
+      if (pixels[i + 1] > 60) {
+        greenX += x; greenCount++
+      }
+      if (!(pixels[i + 1] < 5)) {
+        continue
+      }
+      noGreenX += x; noGreenCount++
     }
   }
   canvas.width = 0
   canvas.height = 0
-  if (Math.min(redCount, blueCount, greenCount, noGreenCount) < 100) throw new Error('Missing orientation markers')
-  return {topY: redY / redCount, bottomY: blueY / blueCount, rightX: greenX / greenCount, leftX: noGreenX / noGreenCount}
+  if (Math.min(redCount, blueCount, greenCount, noGreenCount) < 100) {
+    throw new Error('Missing orientation markers')
+  }
+  return {
+    topY: redY / redCount,
+    bottomY: blueY / blueCount,
+    rightX: greenX / greenCount,
+    leftX: noGreenX / noGreenCount,
+  }
 }
 
 /** Exercise actual offline PNG capture and actual fast/heavy runtime billboard capture in a private browser. */
 export async function previewOrientationProbe(renderer: KnotPreviewRenderer) {
   const entry = knotsById.get('lenticular_mirage')!
   const preview = await renderer.createPreview(entry)
-  const owned = renderer as unknown as {active: Mesh, environment: Texture}
+  const owned = renderer as unknown as {
+    active: Mesh
+    environment: Texture
+  }
   const material = new OrientationMaterial(owned.environment)
+  const original = owned.active.material
+  if (Array.isArray(original)) {
+    for (const item of original) {
+      item.dispose()
+    }
+  } else {
+    original.dispose()
+  }
   owned.active.material = material
   const results = []
   try {
-    const png = await preview.renderFrame({angle: 0, distanceScale: 1, seconds: 0, size: 'animation'})
+    const png = await preview.renderFrame({
+      angle: 0,
+      distanceScale: 1,
+      seconds: 0,
+      size: 'animation',
+    })
     const bitmap = await createImageBitmap(new Blob([Uint8Array.from(atob(png), character => character.charCodeAt(0))], {type: 'image/png'}))
-    try { results.push({path: 'offline PNG', ...orientation(bitmap)}) } finally { bitmap.close() }
+    try {
+      results.push({
+        path: 'offline PNG',
+        ...orientation(bitmap),
+      })
+    } finally {
+      bitmap.close()
+    }
   } finally {
     preview.dispose()
   }
   for (const heavy of [false, true]) {
     const runtime = new RuntimeKnotIconRenderer(new Map([[entry.id, OrientationMaterial]]), heavy)
     try {
-      const images = await runtime.render([entry], new AbortController().signal)
-      try { results.push({path: heavy ? 'heavy billboard' : 'fast billboard', ...orientation(images.get(entry.id)!)}) }
-      finally { for (const image of images.values()) { image.width = 0; image.height = 0 } }
-    } finally { await runtime.disposeAsync() }
+      const images = await runtime.render([entry], (new AbortController).signal)
+      try {
+        results.push({
+          path: heavy ? 'heavy billboard' : 'fast billboard',
+          ...orientation(images.get(entry.id)!),
+        })
+      } finally {
+        for (const image of images.values()) {
+          image.width = 0; image.height = 0
+        }
+      }
+    } finally {
+      await runtime.disposeAsync()
+    }
   }
   return results
 }

@@ -37,7 +37,6 @@ test.skipIf(Bun.env.KNOT_TEST_GPU !== '1')('GPU readback encodes display RGB exa
   expect(result.aces[1]).toBeGreaterThan(150)
   console.info('Preview output calibration:', JSON.stringify(result))
 }, 60_000)
-
 // Opt in to private GPU testing; both canvas and PNG paths must preserve +Y up and +X right.
 test.skipIf(Bun.env.KNOT_TEST_GPU !== '1')('offline PNG and runtime billboard readback keep asymmetric knots upright', async () => {
   const results = await withPreviewRenderer(handle => handle.evaluate(async renderer => {
