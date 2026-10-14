@@ -302,6 +302,100 @@ async function verifyTemporal(renderer: WebGPURenderer) {
     wallMaterial.dispose()
   }
 }
+/** Count real submissions, not shader blend weights: zero-weight effects must do no GPU work. */
+async function verifyModes(renderer: WebGPURenderer) {
+  renderer.setSize(128, 96, false)
+  const scene = new Scene
+  scene.background = new Color(0.2, 0, 0)
+  const camera = new PerspectiveCamera(50, 128 / 96, 0.05, 90)
+  camera.position.z = 6
+  const geometry = new TorusGeometry(1.2, 0.35, 16, 64)
+  const material = new MeshBasicNodeMaterial({color: new Color(0.05, 4, 4)})
+  scene.add(new Mesh(geometry, material))
+  const target = new RenderTarget(128, 96, {
+    type: HalfFloatType,
+    depthBuffer: false,
+  })
+  // Preserve the exact method for restoration; the wrapper explicitly supplies its receiver.
+  // eslint-disable-next-line typescript/unbound-method
+  const render = renderer.render
+  const submissions: Array<string> = []
+  renderer.render = function (object, view) {
+    submissions.push(object.name)
+    return render.call(this, object, view)
+  }
+  const observations: Array<{
+    antiAliasing: false | string
+    aperture: number
+    focus: number
+    gaussian: number
+    source: number
+    zoom: number
+  }> = []
+  try {
+    renderer.setOutputRenderTarget(target)
+    renderer.setRenderTarget(target)
+    for (const antiAliasing of [false, 'smaa', 'traa'] as const) {
+      let zoom = 0
+      let focus = 0
+      const pipeline = new GalleryRenderPipeline(renderer, scene, camera, {
+        antiAliasing,
+        zoom: () => zoom,
+        focus: {
+          amount: () => focus,
+          distance: () => 3,
+          proximity: () => 1,
+        },
+      })
+      pipeline.outputColorTransform = false
+      try {
+        // Includes first-frame inactivity, both transition tails, simultaneous modes,
+        // exit/re-entry, and a resize while both effects are sleeping.
+        for (const [nextZoom, nextFocus] of [[0, 0], [1, 0], [0.01, 0], [0, 0], [0, 1], [0, 0.01], [1, 1], [0, 0], [1, 1], [0, 0]]) {
+          zoom = nextZoom
+          focus = nextFocus
+          submissions.length = 0
+          await renderFrame(pipeline)
+          const gaussian = submissions.filter(name => name.startsWith('Gaussian Blur')).length
+          const aperture = submissions.filter(name => name.startsWith('knotApertureGather')).length
+          const source = submissions.filter(name => name.startsWith('zoomSource')).length
+          assert(gaussian === (zoom > 0 ? 2 : 0), `Zoom Gaussian pass gating failed: ${JSON.stringify(submissions)}`)
+          assert(aperture === (focus > 0 ? 1 : 0), `V-view aperture gating failed: ${JSON.stringify(submissions)}`)
+          assert(submissions.filter(name => name.startsWith('knotFocusSource')).length === (focus > 0 ? 1 : 0), 'V-view isolation gating failed.')
+          assert(source === (!antiAliasing && zoom > 0 ? 1 : 0), 'Zoom-only materialization gating failed.')
+          const pixels = decode(await renderer.readRenderTargetPixelsAsync(target, 0, 0, target.width, target.height), target.width, target.height)
+          assert(pixels.every(Number.isFinite), 'Mode transition produced invalid pixels.')
+          assert(pixels.some((value, index) => index % 4 === 2 && value > 1), 'Mode transition lost the current scene.')
+          observations.push({
+            antiAliasing,
+            zoom,
+            focus,
+            gaussian,
+            aperture,
+            source,
+          })
+          if (!(zoom === 0 && focus === 0)) {
+            continue
+          }
+          renderer.setSize(129, 97, false)
+          target.setSize(129, 97)
+          camera.aspect = 129 / 97
+          camera.updateProjectionMatrix()
+        }
+      } finally {
+        pipeline.dispose()
+      }
+    }
+    return observations
+  } finally {
+    renderer.render = render
+    renderer.setOutputRenderTarget(null)
+    renderer.setRenderTarget(null)
+    target.dispose()
+    geometry.dispose()
+    material.dispose()
+  }
+}
 /** Detached native GPU tests: no input, navigation, focus, live scene edits or visible canvases. */
 async function verifyKnotBokeh() {
   const renderer = new WebGPURenderer({
@@ -315,11 +409,13 @@ async function verifyKnotBokeh() {
     device.addEventListener('uncapturederror', event => errors.push(event.error.message))
     const spatial = await verifySpatial(renderer)
     const temporal = await verifyTemporal(renderer)
+    const modes = await verifyModes(renderer)
     await device.queue.onSubmittedWorkDone()
     assert(errors.length === 0, errors.join('\n'))
     return {
       spatial,
       temporal,
+      modes,
       errors,
     }
   } catch (error) {

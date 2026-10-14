@@ -1,7 +1,9 @@
-import type {Node, NodeFrame} from 'three/webgpu'
+import type {Node} from 'three/webgpu'
 
 import {Fn as fn, int, Loop as loop, max, mix, smoothstep, step, uniformArray, uv, vec2, vec3, vec4} from 'three/tsl'
-import {RTTNode, Vector2} from 'three/webgpu'
+import {Vector2} from 'three/webgpu'
+
+import ConditionalTexture from './ConditionalTexture.ts'
 
 const sampleCount = 64
 const focusMargin = 0.12
@@ -39,28 +41,12 @@ function apertureSamples() {
   }
   return result
 }
-/** Built-in RTT ownership/state handling, with no GPU work outside the focus transition. */
-class FocusTexture extends RTTNode {
-  constructor(node: Node<'vec4'>, private readonly enabled: () => boolean, resolutionScale: number) {
-    super(node, null, null, {
-      depthBuffer: false,
-      resolutionScale,
-    })
-  }
-
-  override updateBefore(frame: NodeFrame): boolean | undefined {
-    if (this.enabled()) {
-      return super.updateBefore(frame)
-    }
-    return undefined
-  }
-}
 /** Current-frame, far-field lens blur. RGB stays coverage-premultiplied until the full-resolution composite. */
 class KnotBokeh {
   readonly backgroundNode: Node<'float'>
   readonly outputNode: Node<'vec4'>
-  private readonly backgroundTexture: FocusTexture
-  private readonly blurTexture: FocusTexture
+  private readonly backgroundTexture: ConditionalTexture
+  private readonly blurTexture: ConditionalTexture
 
   constructor(source: Node<'vec4'>, viewZ: Node<'float'>, {amount, distance, enabled, radius}: KnotBokehOptions) {
     const viewDistance = viewZ.negate()
@@ -68,7 +54,7 @@ class KnotBokeh {
     this.backgroundNode = smoothstep(distance.add(focusMargin), distance.add(0.32), viewDistance).mul(amount)
     // This pass MUST be full resolution: reject foreground at native pixel centers BEFORE
     // any bilinear sampling, downsampling or temporal reconstruction can mix its color in.
-    this.backgroundTexture = new FocusTexture(vec4(source.rgb.mul(coverage), coverage), enabled, 1)
+    this.backgroundTexture = new ConditionalTexture(vec4(source.rgb.mul(coverage), coverage), enabled, 1)
     this.backgroundTexture.name = 'knotFocusSource'
     const background = this.backgroundTexture
     const kernel = uniformArray<'vec2'>(apertureSamples(), 'vec2')
@@ -87,11 +73,11 @@ class KnotBokeh {
       const average = sum.rgb.div(max(sum.a, minimumWeight))
       const color = mix(average, peak, coc.mul(highlightRetention))
       const weight = sum.a.div(sampleCount)
-      // Keep coverage through half-resolution filtering. Storing normalized RGB with alpha=1
+      // Keep coverage through filtering. Storing normalized RGB with alpha=1
       // here would turn empty foreground pixels into black outlines when upsampled.
       return vec4(color.mul(weight), weight)
     })
-    this.blurTexture = new FocusTexture(blur(), enabled, 1)
+    this.blurTexture = new ConditionalTexture(blur(), enabled, 1)
     this.blurTexture.name = 'knotApertureGather'
     const filtered = this.blurTexture
     const valid = step(minimumWeight, filtered.a)

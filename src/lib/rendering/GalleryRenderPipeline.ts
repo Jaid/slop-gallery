@@ -2,15 +2,16 @@ import type {AntiAliasing} from './antiAliasing.ts'
 import type {Camera, Node, Object3D, Renderer, TextureNode} from 'three/webgpu'
 
 import {bloom} from 'three/addons/tsl/display/BloomNode.js'
-import {gaussianBlur} from 'three/addons/tsl/display/GaussianBlurNode.js'
 import {ao} from 'three/addons/tsl/display/GTAONode.js'
 import {smaa} from 'three/addons/tsl/display/SMAANode.js'
 import {traa} from 'three/addons/tsl/display/TRAANode.js'
-import {float, length, mrt, normalView, output, pass, rtt, screenUV, smoothstep, uniform, vec3, vec4, velocity} from 'three/tsl'
+import {convertToTexture, float, length, mrt, normalView, output, pass, rtt, screenUV, smoothstep, uniform, vec3, vec4, velocity} from 'three/tsl'
 import {PerspectiveCamera, RenderPipeline} from 'three/webgpu'
 
+import ConditionalTexture from './ConditionalTexture.ts'
 import KnotBokeh from './KnotBokeh.ts'
 import tiltShift from './tiltShift.ts'
+import ZoomBlur from './ZoomBlur.ts'
 
 export type GalleryRenderPipelineOptions = {
   antiAliasing?: AntiAliasing
@@ -91,9 +92,15 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       current = own(smaa(materialize())).getTextureNode()
     }
     if (heavy) {
-      const resolved = antiAliasing ? current : materialize()
+      const resolved = current
+      const zoomEnabled = () => zoom() > 0
+      // With no AA, only the blur needs a texture; keep the sharp path inline and skip its RTT outside zoom.
+      const zoomSource = antiAliasing ? convertToTexture(resolved) : own(new ConditionalTexture(resolved, zoomEnabled))
+      if (!antiAliasing) {
+        zoomSource.name = 'zoomSource'
+      }
       const zoomAmount = uniform(0).onRenderUpdate(zoom)
-      const zoomBlur = own(gaussianBlur(resolved, zoomAmount.mul(0.75), 8, {resolutionScale: 1}))
+      const zoomBlur = own(new ZoomBlur(zoomSource, zoomAmount, zoomEnabled))
       current = tiltShift(resolved, zoomBlur, zoomAmount)
       const edge = smoothstep(float(0.26), float(0.78), length(screenUV.sub(0.5)))
       current = current.mul(vec4(vec3(float(1).sub(edge.mul(0.2))), 1))
