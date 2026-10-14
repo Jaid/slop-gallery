@@ -1,12 +1,12 @@
 import type {AntiAliasing} from './antiAliasing.ts'
-import type {Camera, Node, Object3D, Renderer, TextureNode} from 'three/webgpu'
+import type {Camera, Node, NodeMaterial, Object3D, Renderer, TextureNode} from 'three/webgpu'
 
 import {bloom} from 'three/addons/tsl/display/BloomNode.js'
 import {ao} from 'three/addons/tsl/display/GTAONode.js'
 import {smaa} from 'three/addons/tsl/display/SMAANode.js'
 import {traa} from 'three/addons/tsl/display/TRAANode.js'
-import {convertToTexture, float, length, mrt, normalView, output, pass, rtt, screenUV, smoothstep, uniform, vec3, vec4, velocity} from 'three/tsl'
-import {PerspectiveCamera, RenderPipeline} from 'three/webgpu'
+import {convertToTexture, float, int, length, max, min, mrt, normalView, output, pass, rtt, screenUV, smoothstep, uniform, uv, vec2, vec3, vec4, velocity} from 'three/tsl'
+import {NoBlending, PerspectiveCamera, RenderPipeline} from 'three/webgpu'
 
 import ConditionalTexture from './ConditionalTexture.ts'
 import KnotBokeh from './KnotBokeh.ts'
@@ -73,18 +73,21 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       background = bokeh.backgroundNode
     }
     if (heavy) {
-      // Preserve the existing inspection bloom treatment, but apply its depth mask BEFORE temporal reconstruction, not as a jagged stencil over an already antialiased image.
-      const glow = own(bloom(current, 0.18, 0.25, 1))
-      current = vec4(current.rgb.add(glow.rgb.mul(float(1).sub(background))), current.a)
+      // The canvas is opaque, so alpha carries the inspection bloom mask through the antialiasing resolve. The mask is still applied BEFORE temporal reconstruction, never as a raw, jittered stencil over antialiased color.
+      current = vec4(current.rgb, float(1).sub(background))
     }
     // Own the materialized composite explicitly; Three's TRAANode, SMAANode and GaussianBlurNode do not dispose an implicit RTT.
+    let composite: ReturnType<typeof rtt> | undefined
     const materialize = () => {
-      const composite = own(rtt(current, null, null, {depthBuffer: false}))
+      composite = own(rtt(current, null, null, {depthBuffer: false}))
       composite.name = 'galleryComposite'
       return composite
     }
     if (antiAliasing === 'traa') {
       const temporal = own(traa(materialize(), depth, scenePass.getTextureNode('velocity'), camera))
+      // The resolve is an opaque colorNode material, which forces alpha to 1. Without blending it is no longer opaque and keeps the resolved mask.
+      // eslint-disable-next-line no-underscore-dangle
+      ;(temporal as typeof temporal & {_resolveMaterial: NodeMaterial})._resolveMaterial.blending = NoBlending
       // The native accessor exists in r186 but is missing from its declaration file.
       current = (temporal as typeof temporal & {getTextureNode: () => TextureNode}).getTextureNode()
     } else if (antiAliasing === 'smaa') {
@@ -92,6 +95,24 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       current = own(smaa(materialize())).getTextureNode()
     }
     if (heavy) {
+      let mask: Node<'float'> = current.a.saturate()
+      if (antiAliasing === 'traa' && composite) {
+        // TRAA clips only RGB, so the resolved mask can keep stale history after focus changes. The current mask, dilated by about 2 px, keeps the antialiased edge but never lets glow back onto distant background.
+        const source = composite
+        const reach = vec2(1.5).div(vec2(source.size(int(0)) as Node<'uvec2'>))
+        let near: Node<'float'> = source.a
+        for (const x of [-1, 0, 1]) {
+          for (const y of [-1, 0, 1]) {
+            if (x || y) {
+              near = max(near, source.sample(uv().add(reach.mul(vec2(x, y)))).a)
+            }
+          }
+        }
+        mask = min(mask, near)
+      }
+      // Bloom MUST read the resolved image. Its hard luminance threshold and half-resolution downsample turn TRAA's subpixel jitter on small HDR features into frame-to-frame halo changes, and TRAA's variance clipping cannot calm such smooth, low-frequency flicker.
+      const glow = own(bloom(current, 0.18, 0.25, 1))
+      current = vec4(current.rgb.add(glow.rgb.mul(mask)), 1)
       const resolved = current
       const zoomEnabled = () => zoom() > 0
       // With no AA, only the blur needs a texture; keep the sharp path inline and skip its RTT outside zoom.

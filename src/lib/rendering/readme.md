@@ -8,8 +8,9 @@ Quality rendering runs:
 current-frame scene color + depth + normals + velocity
   → ambient occlusion
   → Knot focus isolation / aperture blur / sharp foreground composite
-  → bloom with the inspection background mask
+  → inspection background mask packed into alpha
   → one antialiasing resolve (TRAA, SMAA or none)
+  → bloom from the resolved color, masked by the resolved alpha
   → Z zoom tilt-shift and vignette
   → output color transform
 ```
@@ -23,6 +24,14 @@ current-frame scene color + depth + normals + velocity
 
 Both run on linear color before the output transform. Any choice other than `false` in fast graphics mounts a light pipeline (scene pass and the resolve only, no knot focus or other heavy effects) that renders every frame.
 
+## Bloom
+
+Bloom reads the antialiased image, never the jittered scene pass. Its luminance threshold has a 0.01 knee and its first downsample is half resolution, so subpixel HDR features (flames, sparkles, thin emissive veins) that TRAA's jitter moves across pixel centers switch whole halos on and off. Those halos are smooth, so TRAA's variance clipping clamps their history to the current frame and cannot average the flicker away. Feeding bloom the resolved image keeps a still scene's halo still, and thin features bloom by their real pixel coverage instead of jitter-inflated peaks.
+
+The inspection mask (glow is suppressed over the defocused background) is still computed before TRAA: alpha carries it through the resolve, so its edge is temporally antialiased. TRAA's resolve material is opaque by default, which would force alpha to 1, so the pipeline sets it to `NoBlending`. TRAA clips only RGB history, so the resolved mask is additionally clamped by the current mask dilated by about 2 px; stale history can then never put glow back onto distant background after focus changes.
+
+The canvas is opaque (`alpha: false`), so this alpha channel is free.
+
 ## Focus boundary invariant
 
 `KnotBokeh` first renders **full-resolution** background color multiplied by a binary background-coverage mask, with coverage in alpha. Both come from the same current-frame scene pass. Foreground RGB is zero before any bilinear filtering or downsampling.
@@ -33,7 +42,7 @@ Do not replace this with `sample(sceneColor) * accepted(sample(depth))`: bilinea
 
 All depth-based masks are applied **before TRAA**. Applying a raw, camera-jittered depth mask over resolved color would cut away the temporal edge coverage. The focused knot retains temporal antialiasing; disabling TRAA during inspection is not necessary.
 
-The six-bladed 64-tap aperture, proximity-dependent radius, and highlight treatment are unchanged. The focus textures render only while V-viewing (including fades). Zoom’s two Gaussian passes render only while zoom is nonzero (including fades); without AA, its source RTT is also gated. Walking runs neither camera-blur branch. Bloom and the floor reflection’s mipmap roughness filtering remain unchanged; they are not camera blur. Floor reflections use native resolution (scale 1). Intermediate RTTs have explicit owners; borrowed scene textures are not disposed by the focus effect.
+The six-bladed 64-tap aperture, proximity-dependent radius, and highlight treatment are unchanged. The focus textures render only while V-viewing (including fades). Zoom’s two Gaussian passes render only while zoom is nonzero (including fades); without AA, its source RTT is also gated. Walking runs neither camera-blur branch. Bloom and the floor reflection’s mipmap roughness filtering are not camera blur. Floor reflections use native resolution (scale 1). Intermediate RTTs have explicit owners; borrowed scene textures are not disposed by the focus effect.
 
 ## Native regression
 
@@ -41,7 +50,10 @@ With the existing browser on the Knottingham production origin:
 
 ```sh
 bun test/browser/run.ts knotBokeh.ts --standalone
+bun test/browser/run.ts bloomStability.ts --standalone
 ```
+
+`bloomStability.ts` renders a perfectly still scene of subpixel HDR filaments and specks and reports the temporal deviation of the bloom halo under TRAA and SMAA. SMAA is the zero-jitter reference. Before bloom moved behind the resolve, TRAA halos deviated by 10.3% of their mean glow; after, by 0.1%.
 
 `BROWSER_TEST_ORIGIN` can select a different already-open origin. The fixture bundles its own dependencies and only creates detached canvases and renderers; it does not navigate, change focus, resize the game, simulate input, or mutate the live scene. The independent bundle can emit Three's multiple-instance warning.
 
