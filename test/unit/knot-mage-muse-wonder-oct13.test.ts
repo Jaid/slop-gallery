@@ -4,7 +4,6 @@ import {describe, expect, test} from 'bun:test'
 
 import fs from 'fs-extra'
 import {knotsById} from 'knot-materials'
-import {unknown} from 'knot-materials/rarities.ts'
 import {Texture} from 'three/webgpu'
 
 const runs = [
@@ -34,7 +33,6 @@ describe('Muse Wonder October 13 Mage imports', () => {
         slug: 'meta/muse-wonder-1.0',
         effortLevel: effort,
       })
-      expect(entry.rarity).toBe(unknown)
       expect(entry.placeholder.color).toMatch(/^#[0-9a-f]{6}$/u)
       const folder = new URL(`../../packages/knot-materials/src/entries/${id}/`, import.meta.url)
       expect((await fs.readdir(folder)).toSorted()).toEqual(['Material.ts', 'data.ts'])

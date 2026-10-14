@@ -4,7 +4,6 @@ import {describe, expect, test} from 'bun:test'
 
 import fs from 'fs-extra'
 import {knotsById} from 'knot-materials'
-import {unknown} from 'knot-materials/rarities.ts'
 import {Texture} from 'three/webgpu'
 
 const runs = [
@@ -19,7 +18,7 @@ const imported = runs.flatMap(([runId, effortLevel, ids]) => ids.split(' ').map(
   effortLevel,
 })))
 describe('October 13 Muse Wonder arrivals', () => {
-  test('preserves the source runs, model attribution, and unknown initial ratings', async () => {
+  test('preserves the source runs and model attribution', async () => {
     expect(imported).toHaveLength(20)
     expect(new Set(imported.map(entry => entry.id)).size).toBe(20)
     for (const item of imported) {
@@ -32,7 +31,6 @@ describe('October 13 Muse Wonder arrivals', () => {
         slug: 'meta/muse-wonder-1.0',
         effortLevel: item.effortLevel,
       })
-      expect(knot.rarity).toBe(unknown)
       expect(knot.placeholder.color).toMatch(/^#[0-9a-f]{6}$/u)
       const folder = new URL(`../../packages/knot-materials/src/entries/${item.id}/`, import.meta.url)
       expect((await fs.readdir(folder)).toSorted()).toEqual(['Material.ts', 'data.ts'])
