@@ -1,0 +1,22 @@
+import type {KnotData} from '../../types.ts'
+
+// Mage run: 2E09QDOVGvyWUoU; fixture: knot-material-shaders; result: success.
+export default {
+  id: 'cryo_seraph',
+  candidateId: 'gemini_argon',
+  title: 'Cryo Seraph',
+  harness: 'Mage',
+  author: {
+    model: {
+      title: 'Gemini 4 Argon',
+      slug: 'google/gemini-4-argon',
+      effortLevel: 'medium',
+    },
+  },
+  displacement: 0.013,
+  flavorText: 'Six-pointed hoarfrost ferns crystallize over glacier blue ice, hiding trapped air bubbles and an auroral ribbon that dances deep within.',
+  placeholder: {
+    color: '#749fbd',
+    shading: 'glass',
+  },
+} as const satisfies KnotData
