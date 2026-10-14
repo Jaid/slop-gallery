@@ -37,3 +37,18 @@ test.skipIf(Bun.env.KNOT_TEST_GPU !== '1')('GPU readback encodes display RGB exa
   expect(result.aces[1]).toBeGreaterThan(150)
   console.info('Preview output calibration:', JSON.stringify(result))
 }, 60_000)
+
+// Opt in to private GPU testing; both canvas and PNG paths must preserve +Y up and +X right.
+test.skipIf(Bun.env.KNOT_TEST_GPU !== '1')('offline PNG and runtime billboard readback keep asymmetric knots upright', async () => {
+  const results = await withPreviewRenderer(handle => handle.evaluate(async renderer => {
+    const moduleURL = new URL('../test/lib/previewOrientationProbe.ts', location.href).href
+    const {previewOrientationProbe} = await import(/* @vite-ignore */ moduleURL) as typeof import('./lib/previewOrientationProbe.ts')
+    return previewOrientationProbe(renderer)
+  }))
+  expect(results).toHaveLength(3)
+  for (const result of results) {
+    expect(result.topY).toBeLessThan(result.bottomY)
+    expect(result.rightX).toBeGreaterThan(result.leftX)
+  }
+  console.info('Preview orientation:', JSON.stringify(results))
+}, 120_000)
