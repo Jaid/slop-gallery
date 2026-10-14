@@ -32,6 +32,8 @@ The inspection mask (glow is suppressed over the defocused background) is still 
 
 The canvas is opaque (`alpha: false`), so this alpha channel is free.
 
+Each pixel feeds bloom at most luminance 8. Sharp specular highlights (clearcoat at roughness 0.015, high-exponent glints) reach hundreds on a single pixel, and as a knot rotates they land on and leave pixel centers frame by frame. Uncapped, each one flashed a halo far larger than any intended glow source, which read as heavy flicker even without antialiasing jitter. Intended sources such as the chandelier flames peak around 4 and are unaffected.
+
 ## Focus boundary invariant
 
 `KnotBokeh` first renders **full-resolution** background color multiplied by a binary background-coverage mask, with coverage in alpha. Both come from the same current-frame scene pass. Foreground RGB is zero before any bilinear filtering or downsampling.
@@ -53,7 +55,7 @@ bun test/browser/run.ts knotBokeh.ts --standalone
 bun test/browser/run.ts bloomStability.ts --standalone
 ```
 
-`bloomStability.ts` renders a perfectly still scene of subpixel HDR filaments and specks and reports the temporal deviation of the bloom halo under TRAA and SMAA. SMAA is the zero-jitter reference. Before bloom moved behind the resolve, TRAA halos deviated by 10.3% of their mean glow; after, by 0.1%.
+`bloomStability.ts` renders a perfectly still scene of subpixel HDR filaments and specks and reports the temporal deviation of the bloom halo under TRAA and SMAA. It also compares the halo of a one-pixel firefly against a glowing speck. SMAA is the zero-jitter reference. Before bloom moved behind the resolve, TRAA halos deviated by 10.3% of their mean glow; after, by 0.1%.
 
 `BROWSER_TEST_ORIGIN` can select a different already-open origin. The fixture bundles its own dependencies and only creates detached canvases and renderers; it does not navigate, change focus, resize the game, simulate input, or mutate the live scene. The independent bundle can emit Three's multiple-instance warning.
 

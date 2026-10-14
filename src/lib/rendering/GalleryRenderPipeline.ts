@@ -5,13 +5,16 @@ import {bloom} from 'three/addons/tsl/display/BloomNode.js'
 import {ao} from 'three/addons/tsl/display/GTAONode.js'
 import {smaa} from 'three/addons/tsl/display/SMAANode.js'
 import {traa} from 'three/addons/tsl/display/TRAANode.js'
-import {convertToTexture, float, int, length, max, min, mrt, normalView, output, pass, rtt, screenUV, smoothstep, uniform, uv, vec2, vec3, vec4, velocity} from 'three/tsl'
+import {convertToTexture, float, int, length, luminance, max, min, mrt, normalView, output, pass, rtt, screenUV, smoothstep, uniform, uv, vec2, vec3, vec4, velocity} from 'three/tsl'
 import {NoBlending, PerspectiveCamera, RenderPipeline} from 'three/webgpu'
 
 import ConditionalTexture from './ConditionalTexture.ts'
 import KnotBokeh from './KnotBokeh.ts'
 import tiltShift from './tiltShift.ts'
 import ZoomBlur from './ZoomBlur.ts'
+
+/** Brightest luminance one pixel may feed into bloom. Intended glow sources (chandelier flames, emissive veins) peak around 4; sharp specular fireflies reach hundreds. */
+const bloomLuminanceCap = 8
 
 export type GalleryRenderPipelineOptions = {
   antiAliasing?: AntiAliasing
@@ -112,6 +115,12 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       }
       // Bloom MUST read the resolved image. Its hard luminance threshold and half-resolution downsample turn TRAA's subpixel jitter on small HDR features into frame-to-frame halo changes, and TRAA's variance clipping cannot calm such smooth, low-frequency flicker.
       const glow = own(bloom(current, 0.18, 0.25, 1))
+      // Stock high pass, but brightness-capped: a subpixel specular hit (clearcoat or glint on a rotating knot) would otherwise flash a full halo whenever it lands on a pixel.
+      glow.highPassFn = ({input, threshold, smoothWidth}) => {
+        const value = luminance(input.rgb)
+        const capped = input.rgb.mul(min(float(1), float(bloomLuminanceCap).div(max(value, 1e-4))))
+        return vec4(capped.mul(smoothstep(threshold, threshold.add(smoothWidth), value)), 1)
+      }
       current = vec4(current.rgb.add(glow.rgb.mul(mask)), 1)
       const resolved = current
       const zoomEnabled = () => zoom() > 0

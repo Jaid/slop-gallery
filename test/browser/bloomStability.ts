@@ -142,7 +142,56 @@ async function measure(renderer: WebGPURenderer, antiAliasing: 'smaa' | 'traa') 
     dispose()
   }
 }
-/** Detached native GPU check: a perfectly still scene must produce a still bloom halo. No input, navigation or visible canvases. */
+/** Mean halo 4–10 px around a speck about one pixel wide, like a sharp clearcoat highlight that a rotating knot moves on and off a pixel. */
+async function measureSpeck(renderer: WebGPURenderer, brightness: number) {
+  const scene = new Scene
+  scene.background = new Color(0.02, 0.02, 0.025)
+  const geometry = new SphereGeometry(0.03, 8, 6)
+  const material = new MeshBasicNodeMaterial({color: new Color(brightness, brightness, brightness)})
+  scene.add(new Mesh(geometry, material))
+  const camera = new PerspectiveCamera(50, width / height, 0.05, 90)
+  camera.position.z = 6
+  const pipeline = new GalleryRenderPipeline(renderer, scene, camera, {
+    antiAliasing: false,
+    heavy: true,
+  })
+  pipeline.outputColorTransform = false
+  const target = new RenderTarget(width, height, {
+    type: HalfFloatType,
+    depthBuffer: false,
+  })
+  try {
+    renderer.setSize(width, height, false)
+    renderer.setOutputRenderTarget(target)
+    renderer.setRenderTarget(target)
+    for (let frame = 0; frame < 8; frame++) {
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+      pipeline.render()
+    }
+    const output = decode(await renderer.readRenderTargetPixelsAsync(target, 0, 0, width, height))
+    let halo = 0
+    let count = 0
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const distance = Math.hypot(x + 0.5 - width / 2, y + 0.5 - height / 2)
+        if (!(distance >= 4 && distance <= 10)) {
+          continue
+        }
+        halo += output[y * width + x]
+        count++
+      }
+    }
+    return halo / count
+  } finally {
+    renderer.setOutputRenderTarget(null)
+    renderer.setRenderTarget(null)
+    pipeline.dispose()
+    target.dispose()
+    geometry.dispose()
+    material.dispose()
+  }
+}
+/** Detached native GPU check: a perfectly still scene must produce a still bloom halo, and a lone firefly must not flash an oversized one. No input, navigation or visible canvases. */
 async function verifyBloomStability() {
   const renderer = new WebGPURenderer({
     canvas: document.createElement('canvas'),
@@ -155,6 +204,8 @@ async function verifyBloomStability() {
     device.addEventListener('uncapturederror', event => errors.push(event.error.message))
     const smaa = await measure(renderer, 'smaa')
     const traa = await measure(renderer, 'traa')
+    const glowSpeck = await measureSpeck(renderer, 16)
+    const firefly = await measureSpeck(renderer, 2000)
     await device.queue.onSubmittedWorkDone()
     assert(errors.length === 0, errors.join('\n'))
     for (const result of [smaa, traa]) {
@@ -162,9 +213,17 @@ async function verifyBloomStability() {
       // Jittered bloom input measured 10.3%; resolved input 0.1%.
       assert(result.relativeFlicker < 0.01, `A still scene produced a flickering halo: ${JSON.stringify(result)}`)
     }
+    // The background alone measures about 0.02.
+    assert(glowSpeck > 0.03, `A glowing speck lost its bloom: ${glowSpeck}`)
+    // Without the luminance cap, the firefly halo measured 3.25 instead of 0.073 (glowing speck: 0.046).
+    assert(firefly < glowSpeck * 2, `A firefly flashed an oversized halo: ${firefly} vs ${glowSpeck}`)
     return {
       smaa,
       traa,
+      speckHalo: {
+        glowSpeck,
+        firefly,
+      },
     }
   } finally {
     await renderer.dispose()
