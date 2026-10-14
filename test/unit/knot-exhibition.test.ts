@@ -17,8 +17,8 @@ import {insideKnotGallery, knotGalleryBounds} from '../../src/lib/gallery/knotGa
 
 describe('multi-model Knot challenge', () => {
   test('enumerates displayed Knots at initialization while keeping stable identities', () => {
-    expect(knots).toHaveLength(779)
-    expect(knotsById.size).toBe(779)
+    expect(knots).toHaveLength(787)
+    expect(knotsById.size).toBe(787)
     const displayedKnots = knots.filter(item => !item.archived)
     const displayedByCandidate = Map.groupBy(displayedKnots, item => item.candidate.id)
     expect(knotBays).toHaveLength(8)
@@ -38,7 +38,7 @@ describe('multi-model Knot challenge', () => {
       expect(item.candidate.id).toBe(item.candidateId)
     }
     expect(knotsById.get('stained_requiem')?.title).toBe('Stained Requiem')
-    expect(knotsById.get('event_horizon')?.modelTitle).toBe('Claude Fable 5.1')
+    expect(knotsById.get('lightless_border')?.modelTitle).toBe('Claude Fable 5.1')
   })
   test('dumps the current world selection and live session rarities', () => {
     const before = dumpKnots()

@@ -31,7 +31,7 @@ describe('Knot nameplates', () => {
     expect(await iconHash('lenticular_mirage')).toBe(await iconHash('solar_reliquary'))
     expect(await iconHash('solar_reliquary')).toBe(await iconHash('coralline_crown'))
     expect(await iconHash('celestial_rose')).toBe(await iconHash('lenticular_mirage'))
-    expect(await iconHash('opal_fire')).toBe(await iconHash('event_horizon'))
+    expect(await iconHash('opal_fire')).toBe(await iconHash('lightless_border'))
     expect(await iconHash('cyber_kintsugi')).toBe(await iconHash('schwarzschild_vault'))
   })
   test('centers the candidate icon and model text together and fits long names', () => {

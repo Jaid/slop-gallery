@@ -1,9 +1,9 @@
 import type {KnotData} from '../../types.ts'
 
 export default {
-  id: 'event_horizon',
+  id: 'lightless_border',
   candidateId: 'claude_fable',
-  title: 'Event Horizon',
+  title: 'Lightless Border',
   harness: 'none',
   author: {
     model: {

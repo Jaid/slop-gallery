@@ -3,7 +3,7 @@ import type {KnotData} from '../../types.ts'
 export default {
   id: 'schwarzschild_vault',
   candidateId: 'gemini_flash',
-  title: 'Event Horizon',
+  title: 'Schwarzschild Vault',
   harness: 'none',
   author: {
     model: {
