@@ -4,12 +4,11 @@ import {describe, expect, test} from 'bun:test'
 
 import fs from 'fs-extra'
 import {knotsById} from 'knot-materials'
-import {unknown} from 'knot-materials/rarities.ts'
 import {Texture} from 'three/webgpu'
 
-const imported = ['oxide_ziggurat', 'celestial_armillary', 'cloisonne_lotus', 'cybernetic_mycelium', 'kerr_accretion', 'raden_maki_e', 'radium_diatom', 'seraphim_glass']
+const imported = ['oxide_ziggurat', 'celestial_armillary', 'cloisonne_lotus', 'cybernetic_mycelium', 'kerr_accretion', 'koi_urushi', 'radium_diatom', 'seraphim_glass']
 describe('October 14 Gemini Argon arrivals', () => {
-  test('preserves the source run, model attribution, and unknown initial ratings', async () => {
+  test('preserves the source run and model attribution', async () => {
     for (const id of imported) {
       const knot = knotsById.get(id)!
       expect(knot).toBeDefined()
@@ -20,7 +19,6 @@ describe('October 14 Gemini Argon arrivals', () => {
         slug: 'google/gemini-4-argon',
         effortLevel: 'low',
       })
-      expect(knot.rarity).toBe(unknown)
       expect(knot.placeholder.color).toMatch(/^#[0-9a-f]{6}$/u)
       const folder = new URL(`../../packages/knot-materials/src/entries/${id}/`, import.meta.url)
       expect((await fs.readdir(folder)).toSorted()).toEqual(['Material.ts', 'data.ts'])

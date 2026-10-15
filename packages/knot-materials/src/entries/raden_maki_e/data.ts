@@ -1,6 +1,6 @@
 import type {KnotData} from '../../types.ts'
 
-// Mage run: 77fsRvmePazcbTS; fixture: knot-material-shaders; result: success.
+// Mage run: 7elL7dDIwnRWI8n; fixture: knot-material-shaders; result: crashed, knot rescued from the run container.
 export default {
   id: 'raden_maki_e',
   candidateId: 'gemini_argon',
@@ -10,12 +10,13 @@ export default {
     model: {
       title: 'Gemini 4 Argon',
       slug: 'google/gemini-4-argon',
-      effortLevel: 'low',
+      effortLevel: 'medium',
     },
   },
-  flavorText: 'Midnight urushi lacquer holds an autumn koi pond: gold maki-e waves and mother-of-pearl raden shells shimmer above drifting lanterns.',
+  displacement: 0.008,
+  flavorText: 'Midnight urushi lacquer conceals rivers of gold dust and inlaid mother-of-pearl. Lean close and Seigaiha ocean crests shimmer with nacreous fire.',
   placeholder: {
-    color: '#827460',
+    color: '#3d3530',
     shading: 'smooth',
   },
 } as const satisfies KnotData
