@@ -1,27 +1,20 @@
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
-import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import EntranceGeometry from '#src/lib/gallery/EntranceGeometry.ts'
+import BronzeMaterial from '#src/lib/materials/BronzeMaterial.ts'
 import LimestoneMaterial from '#src/lib/materials/LimestoneMaterial.ts'
+import WalnutMaterial from '#src/lib/materials/WalnutMaterial.ts'
 
 export default function MainEntrance() {
   const geometry = useDisposable(useMemo(() => new EntranceGeometry, []))
   const stone = useDisposable(useMemo(() => new LimestoneMaterial, []))
-  const wood = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
-    color: '#33251e',
-    roughness: 0.55,
-  }), []))
-  const brass = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
-    color: '#c3a062',
-    roughness: 0.3,
-    metalness: 0.85,
-  }), []))
+  const wood = useDisposable(useMemo(() => new WalnutMaterial, []))
+  const bronze = useDisposable(useMemo(() => new BronzeMaterial, []))
   // The existing solid north wall remains its collider: there is no unfinished exterior.
   return <group name='lobby-main-entrance' userData={{closed: true}}>
     <mesh castShadow geometry={geometry.leaves} material={wood} name='entrance-walnut-doors' receiveShadow />
     <mesh castShadow geometry={geometry.frame} material={stone} name='entrance-stone-surround' receiveShadow />
-    <mesh castShadow geometry={geometry.metal} material={brass} name='entrance-bronze-details' receiveShadow />
-    <mesh position={[0, 4.25, 0.31]}><torusGeometry args={[0.28, 0.018, 8, 48]} /><primitive attach='material' object={brass} /></mesh>
+    <mesh castShadow geometry={geometry.metal} material={bronze} name='entrance-bronze-details' receiveShadow />
   </group>
 }
