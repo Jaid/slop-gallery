@@ -68,16 +68,32 @@ describe('Aventurine Enamel', () => {
       expect(spokeDistance(middle, 0.3)).toBeGreaterThan(0.25)
     }
   })
-  test('keeps every aventurine platelet inside its cell', async () => {
+  test('keeps every aventurine platelet a whole polygon inside its cell', async () => {
     const text = await source()
     const support = constant(text, 'aventurineSupport')
     const [minimum, span] = /const aventurineJitter = \[(?<minimum>[\d.]+), (?<span>[\d.]+)\]/u.exec(text)!.slice(1).map(Number)
     expect(text).toContain('const outer = radius.add(aa.mul(0.5)).min(aventurineSupport)')
-    expect(text).toContain('const crystal = hexDist.smoothstep(inner, outer).oneMinus()')
-    // hexDist bounds |rx| and |ry| of the rotated platelet, so its corners reach √2 × support in the plane and support / 1.15 in depth.
+    expect(text).toContain('const crystal = lensDist.smoothstep(inner, outer).oneMinus()')
+    // The platelet lies in the enamel plane instead of being an object-axis block that the curved surface slices into rectangles.
+    expect(text).toContain('const across = d.dot(normal)')
+    expect(text).toContain('const lensDist = polygon.pow2().add(across.pow2()).sqrt()')
+    expect(text).not.toContain('hexDist')
+    // Both polygon gauges are scaled to their circumradius, so the lens gauge never undershoots the 3D distance from the center: the whole platelet stays inside a sphere of radius `support`.
+    const hexagon = (x: number, y: number) => Math.max(Math.abs(x), Math.abs(x * 0.5 + y * 0.866), Math.abs(x * 0.5 - y * 0.866)) * 2 / Math.sqrt(3)
+    const triangle = (x: number, y: number) => Math.max(y, x * 0.866 - y * 0.5, x * -0.866 - y * 0.5) * 2
+    for (let index = 0; index < 4000; index++) {
+      const angle = index * 2.399963
+      const length = (index % 97 + 1) / 97
+      const x = Math.cos(angle) * length
+      const y = Math.sin(angle) * length
+      expect(hexagon(x, y)).toBeGreaterThanOrEqual(length * 0.9995)
+      expect(triangle(x, y)).toBeGreaterThanOrEqual(length * 0.9995)
+    }
+    // The gauges are tight at the vertices, so the shapes really are a hexagon and a triangle with circumradius 1.
+    expect(hexagon(Math.cos(Math.PI / 6), Math.sin(Math.PI / 6))).toBeCloseTo(1, 3)
+    expect(triangle(0, -1)).toBeCloseTo(1, 3)
     const margin = Math.min(minimum, 1 - minimum - span)
-    expect(Math.SQRT2 * support).toBeLessThan(margin)
-    expect(support / 1.15).toBeLessThan(margin)
+    expect(support).toBeLessThan(margin)
   })
   test('keeps the guilloché foil shallow and continuous across cell edges', async () => {
     const text = await source()
