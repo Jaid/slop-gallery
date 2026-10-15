@@ -7,6 +7,7 @@ import {glitter} from '../../candidates/gemini_argon/lib/glitter.ts'
 import {tubeHex} from '../../candidates/gemini_argon/lib/tubeHex.ts'
 import {tubeRay} from '../../lib/atelier.ts'
 import {beads} from '../../lib/beads.ts'
+import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
 import {cellularBoundary} from '../../lib/cellularBoundary.ts'
 import {filteredRibbon} from '../../lib/filteredRibbon.ts'
 import {knotFrame} from '../../lib/knotFrame.ts'
@@ -39,11 +40,25 @@ function dendriteCrystal(tube: Node<'vec2'>) {
     rimMask,
   }
 }
+/** Round diamond-dust grains inside the glitter lattice, so sparkles read as points instead of lighting whole cubic cells. */
+function diamondDustGrains(position: Node<'vec3'>, cellSize: number, sharpness: number, tilt: number) {
+  const facets = glitter(position, cellSize, sharpness, tilt)
+  const q = position.div(cellSize)
+  const center = cellNoiseVec3(q.floor()).mul(0.5).add(0.25)
+  const outer = q.fwidth().length().add(0.18).min(0.24)
+  const mask = q.fract().sub(center).length().smoothstep(0.06, outer).oneMinus()
+  return {
+    resolved: facets.resolved,
+    sparkle: facets.sparkle.mul(mask),
+  }
+}
+// Vertices are 2.8 cm apart along the tube, far coarser than the 6–17 mm dendrite arms, so the geometry only carries a smooth frost mound per crystal; the arms themselves stay in the per-pixel relief below.
 const displacedGlacier = Fn(([tube]: [Node<'vec2'>]) => {
   const {position, normal} = knotFrame(tube)
   const frost = dendriteCrystal(tube)
+  const mound = frost.r.smoothstep(0.1, 1).oneMinus().pow2().mul(frost.id.x.smoothstep(0.12, 0.55))
   const swell = tube.x.mul(TAU * 9).add(tube.y.mul(TAU * 2).sin()).cos().mul(0.0032)
-  return position.add(normal.mul(frost.crystal.mul(0.0085).add(swell)))
+  return position.add(normal.mul(mound.mul(0.0085).add(swell)))
 })
 /** Arctic Hoarfrost & Sub-Glacial Aurora Borealis: 6-fold dendritic frost ferns and diamond-dust micro-glitter over deep glacier blue ice with parallax pressure fractures, frozen air-bubble chains and an internal auroral curtain. */
 export default class extends KnotMaterial {
@@ -76,7 +91,7 @@ export default class extends KnotMaterial {
     const auroraCurtain = opticalLine(auroraWave.sin(), 0.18).mul(deepP.y.mul(6).add(loopAngle).cos().mul(0.4).add(0.6))
     const auroraColor = mix(color('#00ff9d'), mix(color('#00d9ff'), color('#b833ff'), deepP.y.mul(1.8).add(0.5).clamp()), auroraWave.cos().mul(0.5).add(0.5))
 // Diamond-dust micro-crystal facets that ignite under the gallery's studio lamps.
-    const diamondDust = glitter(p, 0.011, 85, 0.6)
+    const diamondDust = diamondDustGrains(p, 0.011, 85, 0.6)
 // Deep glacier blue Beer-Lambert absorption in the clear windows, snow-white crystalline frost on the dendrites.
     const abyssalIce = mix(color('#021329'), color('#0b4f82'), facing.mul(0.65).add(0.35))
     const fractureIce = mix(abyssalIce, color('#8cebff'), crackShallow.mul(0.75).add(crackMid.mul(0.45)).add(crackDeep.mul(0.25)).add(internalBubbles.mul(0.6)).clamp(0, 1))
@@ -94,7 +109,8 @@ export default class extends KnotMaterial {
     this.iridescenceNode = crackShallow.add(frostCoverage.mul(0.35)).clamp(0, 1).mul(0.55)
     this.iridescenceIOR = 1.35
     this.iridescenceThicknessNode = facing.mul(240).add(frost.r.mul(180)).add(200)
-    const fineRelief = frost.crystal.mul(0.0022).sub(crackShallow.mul(0.0012)).add(diamondDust.resolved.mul(0.0003))
+    // The arms' relief moved out of the vertex displacement, so the per-pixel bump carries a little more of it.
+    const fineRelief = frost.crystal.mul(0.0035).sub(crackShallow.mul(0.0012)).add(diamondDust.resolved.mul(0.0003))
     this.normalNode = detailNormal(glacierNormal, fineRelief, 0.92)
 // Sub-glacial auroral ribbon, backlit Tyndall ice scatter, and diamond-dust frost sparkles.
     const tyndallScatter = color('#12b8ff').mul(crackMid.add(crackDeep).add(internalBubbles)).mul(0.55)
