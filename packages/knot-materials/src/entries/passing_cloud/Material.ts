@@ -14,10 +14,7 @@ import knotData from './data.ts'
 
 /** Chromatophore organs per object unit, in two interleaved layers. */
 const organScale = 105
-/**
- * One layer of chromatophores: elastic pigment sacs whose radius follows the nervous signal `expansion` in [0, 1].
- * Returns the pigment coverage and color. Unresolved sacs fade to their mean coverage so distant skin keeps its tone.
- */
+/** One layer of chromatophores: elastic pigment sacs whose radius follows the nervous signal `expansion` in [0, 1]. Returns the pigment coverage and color. Unresolved sacs fade to their mean coverage so distant skin keeps its tone. */
 function chromatophores(position: Node<'vec3'>, expansion: Node<'float'>, seed: number) {
   const cells = voronoiCells(position.add(seed), 0.85)
   const identity = cellNoiseVec3(cells.cell.add(seed * 3.1))
@@ -38,11 +35,7 @@ function chromatophores(position: Node<'vec3'>, expansion: Node<'float'>, seed: 
     pigment: pigment.mul(density.mul(response.mul(0.3).add(0.7))),
   }
 }
-/**
- * Cuttlefish skin, a living display. Thousands of pigment organs expand and contract under nervous control: dark “passing
- * cloud” bands sweep along the knot while slow mottling drifts beneath. Where the viewer’s gaze rests – the middle of their
- * view – the organs relax and the iridophores beneath surface as a sheet of shifting blue-green and rose.
- */
+/** Cuttlefish skin, a living display. Thousands of pigment organs expand and contract under nervous control: dark “passing cloud” bands sweep along the knot while slow mottling drifts beneath. Where the viewer’s gaze rests – the middle of their view – the organs relax and the iridophores beneath surface as a sheet of shifting blue-green and rose. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.8)

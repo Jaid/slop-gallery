@@ -13,12 +13,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 const pyrite = rgb('#e8c060')
-/**
- * Polished lapis lazuli. Lazurite's ultramarine is mottled into deeper and brighter domains and veiled by drifting calcite
- * clouds; pyrite crystals are scattered through it in clusters, each a tiny cube with its own facet tilt, so every step flips
- * which ones blaze gold. The finest pyrite dust is beyond sight from across the room – it wakes star by star as a visitor
- * approaches, and twinkles slowly while they stay.
- */
+/** Polished lapis lazuli. Lazurite's ultramarine is mottled into deeper and brighter domains and veiled by drifting calcite clouds; pyrite crystals are scattered through it in clusters, each a tiny cube with its own facet tilt, so every step flips which ones blaze gold. The finest pyrite dust is beyond sight from across the room – it wakes star by star as a visitor approaches, and twinkles slowly while they stay. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.8)

@@ -35,13 +35,7 @@ function raySegmentDistance(origin: Node<'vec3'>, direction: Node<'vec3'>, a: No
   const t = bd.mul(s).sub(dw).max(0)
   return w.add(direction.mul(t)).sub(edge.mul(s)).length()
 }
-/**
- * A plasma tube. A thin electrode runs through the heart of the knot; from it, writhing filaments
- * crawl outward to the smoked glass, flickering in and out. Like a plasma globe, the discharge seeks
- * the nearest conductor — the visitor: the closer one stands, the more filaments bend toward them,
- * and where they touch the glass a hot spot blooms. Filaments are true polylines intersected with
- * the refracted viewing ray, so they stay continuous and crisp at any distance.
- */
+/** A plasma tube. A thin electrode runs through the heart of the knot; from it, writhing filaments crawl outward to the smoked glass, flickering in and out. Like a plasma globe, the discharge seeks the nearest conductor — the visitor: the closer one stands, the more filaments bend toward them, and where they touch the glass a hot spot blooms. Filaments are true polylines intersected with the refracted viewing ray, so they stay continuous and crisp at any distance. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.8)

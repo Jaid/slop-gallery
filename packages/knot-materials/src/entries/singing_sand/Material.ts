@@ -38,11 +38,7 @@ function mix32(value: number) {
   hashed = Math.imul(hashed ^ hashed >>> 13, 0xC2_B2_AE_35)
   return ((hashed ^ hashed >>> 16) >>> 0) / 4_294_967_296
 }
-/**
- * A plate ringing in several modes at once: the sand settles on the nodal lines, the zero set of the
- * superposition. Mode numbers are integers, so the figure closes around the tube, and each mode drifts
- * slowly, which is what keeps the figure alive.
- */
+/** A plate ringing in several modes at once: the sand settles on the nodal lines, the zero set of the superposition. Mode numbers are integers, so the figure closes around the tube, and each mode drifts slowly, which is what keeps the figure alive. */
 function plateMode(tube: Node<'vec2'>, {base, count, seed}: PlateOptions): PlateMode {
   const along: Array<number> = []
   const across: Array<number> = []

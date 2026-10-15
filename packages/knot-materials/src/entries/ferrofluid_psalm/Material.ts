@@ -31,11 +31,7 @@ const magneticSurface = Fn(([tube]: [Node<'vec2'>]) => {
   const height = swell.mul(0.007).add(spine.mul(0.058).mul(attraction))
   return p.add(normal.mul(height))
 })
-/**
- * Liquid iron that feels the visitor. A black magnetic tide crawls over the knot and, as you approach, its spines
- * lengthen toward you as if your body carried the magnet. The spikes themselves are polished near-mirror, but a
- * living oil film crawls over their tips, breaking grazing light into a slow spectral bloom.
- */
+/** Liquid iron that feels the visitor. A black magnetic tide crawls over the knot and, as you approach, its spines lengthen toward you as if your body carried the magnet. The spikes themselves are polished near-mirror, but a living oil film crawls over their tips, breaking grazing light into a slow spectral bloom. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.15)

@@ -48,11 +48,7 @@ function periodicVoronoi(position: Node<'vec2'>, period: Node<'vec2'>) {
   }
 }
 
-/**
- * A rose window bent until it meets itself. Hand-cut jewel panes, none of them quite the same color twice,
- * are held in dark lead came over a light that never stops circling inside the glass. Face a pane and it
- * burns; turn away and it falls back to colored stone, leaving only the leadwork to catch the room.
- */
+/** A rose window bent until it meets itself. Hand-cut jewel panes, none of them quite the same color twice, are held in dark lead came over a light that never stops circling inside the glass. Face a pane and it burns; turn away and it falls back to colored stone, leaving only the leadwork to catch the room. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.7)

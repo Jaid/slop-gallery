@@ -9,13 +9,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A tiger's eye, cabochon cut. The stone is a crowd of parallel silicates that all run the length of
- * the tube, so every one of them reflects at the same angle. Ask the tube's own frame where the
- * visitor is standing and the one sheet of fibre that faces them lights up: that sheet is the eye, and
- * it slides across the gold as you walk, while the fibres and the chatoyant pupil stay locked to the
- * stone.
- */
+/** A tiger's eye, cabochon cut. The stone is a crowd of parallel silicates that all run the length of the tube, so every one of them reflects at the same angle. Ask the tube's own frame where the visitor is standing and the one sheet of fibre that faces them lights up: that sheet is the eye, and it slides across the gold as you walk, while the fibres and the chatoyant pupil stay locked to the stone. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.3)

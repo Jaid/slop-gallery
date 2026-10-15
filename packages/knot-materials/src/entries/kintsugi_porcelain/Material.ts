@@ -9,11 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Porcelain repaired with gold. Two scales of Voronoi fracture cut the glaze: broad shard seams flooded with metal,
- * and a hairline crazing that only resolves when the visitor leans in. Celadon pools in the hollows of the glaze,
- * while the gold stays dark until a shard seam turns to mirror the gallery lights toward the eye.
- */
+/** Porcelain repaired with gold. Two scales of Voronoi fracture cut the glaze: broad shard seams flooded with metal, and a hairline crazing that only resolves when the visitor leans in. Celadon pools in the hollows of the glaze, while the gold stays dark until a shard seam turns to mirror the gallery lights toward the eye. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.75)

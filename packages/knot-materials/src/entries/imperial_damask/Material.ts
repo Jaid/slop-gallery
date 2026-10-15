@@ -53,12 +53,7 @@ function ornament(tube: Node<'vec2'>) {
     tile: dropped,
   }
 }
-/**
- * Silk damask. Crimson warp and golden weft are woven into one satin cloth: the ground is warp-faced,
- * the pomegranate figure weft-faced. Their threads run at right angles, so each catches the light
- * along a different axis — circling the knot, the pattern flares, vanishes and inverts against its
- * ground. A slow draught moves through the cloth, sliding the sheen along its folds.
- */
+/** Silk damask. Crimson warp and golden weft are woven into one satin cloth: the ground is warp-faced, the pomegranate figure weft-faced. Their threads run at right angles, so each catches the light along a different axis — circling the knot, the pattern flares, vanishes and inverts against its ground. A slow draught moves through the cloth, sliding the sheen along its folds. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.05)

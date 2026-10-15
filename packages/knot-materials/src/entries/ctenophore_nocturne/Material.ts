@@ -38,12 +38,7 @@ function combs(tube: Node<'vec2'>) {
     stroke,
   }
 }
-/**
- * A comb jelly drifting in the dark. Eight ciliated comb rows spiral around a body of glassy
- * mesoglea; metachronal waves ripple down them, and each beating plate diffracts the gallery
- * light into running rainbows whose hues slide with the viewer's angle. Meridional canals glow
- * with bioluminescence that swells as the observer approaches, and marine snow drifts inside.
- */
+/** A comb jelly drifting in the dark. Eight ciliated comb rows spiral around a body of glassy mesoglea; metachronal waves ripple down them, and each beating plate diffracts the gallery light into running rainbows whose hues slide with the viewer's angle. Meridional canals glow with bioluminescence that swells as the observer approaches, and marine snow drifts inside. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.45)

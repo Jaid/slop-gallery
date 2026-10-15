@@ -24,12 +24,7 @@ const amberAbsorption = vec3(0.9, 2.6, 10)
 const lacquerThickness = 0.02
 /** The gallery’s lights, in object space: overhead, the key light, a low fill. */
 const lamps: Array<[[number, number, number], number]> = [[[0, 1, 0.15], 1], [[-0.17, 0.49, -0.86], 0.75], [[0.62, 0.25, 0.74], 0.5]]
-/**
- * Figured maple under amber lacquer. Growth rings, pores and bird’s-eye swirls come from one continuous 3D block of wood, so the
- * figure flows through the knot as if carved. The curl is physical chatoyance: the fibers dive in and out of the surface, and
- * each lamp’s fiber highlight lights the stripes leaning toward the viewer – step sideways and the bright and dark flames trade
- * places. Dappled light, as if through leaves, drifts slowly across the piece.
- */
+/** Figured maple under amber lacquer. Growth rings, pores and bird’s-eye swirls come from one continuous 3D block of wood, so the figure flows through the knot as if carved. The curl is physical chatoyance: the fibers dive in and out of the surface, and each lamp’s fiber highlight lights the stripes leaning toward the viewer – step sideways and the bright and dark flames trade places. Dappled light, as if through leaves, drifts slowly across the piece. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)

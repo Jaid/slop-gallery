@@ -18,11 +18,7 @@ const seam = (distance: Node<'float'>, width: Node<'float'>) => {
 /** Object-space domain warp, so the crack lattice reads as crazed glaze rather than a regular Voronoi grid. */
 const drift = (p: Node<'vec3'>, scale: number) => vec3(mx_noise_float(p.mul(scale)), mx_noise_float(p.mul(scale).add(17.3)), mx_noise_float(p.mul(scale).sub(9.1))).mul(0.3)
 
-/**
- * Celadon porcelain crazed by time, mended with urushi lacquer and powdered gold. The crack lattice is a 3D Voronoi boundary,
- * so each seam is a true curve through the glaze that follows the knot's volume. Gold rides above the glaze, the lacquer is
- * mirror-glossy, and maki-e flecks catch the light as you turn. A slow pulse of candlelight travels along the seams.
- */
+/** Celadon porcelain crazed by time, mended with urushi lacquer and powdered gold. The crack lattice is a 3D Voronoi boundary, so each seam is a true curve through the glaze that follows the knot's volume. Gold rides above the glaze, the lacquer is mirror-glossy, and maki-e flecks catch the light as you turn. A slow pulse of candlelight travels along the seams. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)

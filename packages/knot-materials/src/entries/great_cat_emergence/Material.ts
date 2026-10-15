@@ -34,10 +34,7 @@ type TubeChart = {
 /** per-row cell counts along the tube, chosen for square cells on each row’s center path */
   columns: Array<number>
   metricRows: number
-/**
- * RG, metricRows texel rows per cell row: R is the physical width of one cell unit along x, relative
- * to the nominal cell size; G is the minimum of R over the whole cell containing the texel
- */
+/** RG, metricRows texel rows per cell row: R is the physical width of one cell unit along x, relative to the nominal cell size; G is the minimum of R over the whole cell containing the texel */
   metricTexture: DataTexture
   rows: number
 /** whole-row shift accumulated by the frame twist over one traversal */
@@ -76,15 +73,7 @@ function knotSurface(u: number, v: number): Vector {
   const around = v * TAU
   return add(center, add(scale(normal, -tube * Math.cos(around)), scale(binormal, tube * Math.sin(around))))
 }
-/**
- * An orthogonal chart for the knot tube, built once on the CPU.
- *
- * Plain mesh UVs stretch up to 3× along the tube and shear by up to 60° because the tube frame
- * twists. φ = v + W(u) follows paths that stay orthogonal to the cross-section circles, so rows
- * never lean. Columns depend on u alone – keeping cells rectangular – and are spaced by arc length
- * along each row’s own center path. The residual frame twist is snapped to whole rows, so the
- * seam at u = 0/1 remains a cell boundary.
- */
+/** An orthogonal chart for the knot tube, built once on the CPU. Plain mesh UVs stretch up to 3× along the tube and shear by up to 60° because the tube frame twists. φ = v + W(u) follows paths that stay orthogonal to the cross-section circles, so rows never lean. Columns depend on u alone – keeping cells rectangular – and are spaced by arc length along each row’s own center path. The residual frame twist is snapped to whole rows, so the seam at u = 0/1 remains a cell boundary. */
 function createTubeChart({rows, width = 2048, metricRows = 16}: TubeChartOptions): TubeChart {
   const epsilon = 1e-5
   const velocityU = (u: number, v: number) => scale(sub(knotSurface(u + epsilon, v), knotSurface(u - epsilon, v)), 0.5 / epsilon)
@@ -208,13 +197,7 @@ function wrap(value: Node<'float'>, period: Node<'float'> | number) {
   const p = typeof period === 'number' ? float(period) : period
   return value.sub(value.div(p).floor().mul(p))
 }
-/**
- * Per-fragment cell coordinates on the knot: one cat per cell. Cells are square in object units,
- * orthogonal and rectangular thanks to the tube chart, and seamless at both UV seams.
- *
- * With a depth, the cells are read where the refracted view ray reaches that depth below the
- * surface, so the constellation layer floats inside the lacquer and slides as the visitor moves.
- */
+/** Per-fragment cell coordinates on the knot: one cat per cell. Cells are square in object units, orthogonal and rectangular thanks to the tube chart, and seamless at both UV seams. With a depth, the cells are read where the refracted view ray reaches that depth below the surface, so the constellation layer floats inside the lacquer and slides as the visitor moves. */
 function catCells(chart: TubeChart, {depth = 0, refraction = 1.5} = {}) {
   const tube = uv()
 // Surface frame in view space: y follows the circumferential direction exactly, x is orthogonal.
@@ -650,10 +633,7 @@ function lineCoverage(distance: Float, halfWidth: Float | number, footprint: Flo
   const half = max(w, footprint.mul(0.5))
   return smoothstep(half.add(footprint.mul(0.5)), half.sub(footprint.mul(0.5)), distance).mul(w.div(half))
 }
-/**
- * Evaluates one cat constellation at the fragment. Everything lives in cell coordinates, so the cat
- * never crosses into a neighboring cell and needs no neighbor search.
- */
+/** Evaluates one cat constellation at the fragment. Everything lives in cell coordinates, so the cat never crosses into a neighboring cell and needs no neighbor search. */
 function catConstellation({local, footprint, halfExtent, seed, turn, nearness, farness, reveal, viewInCell: viewInGrid, intimacy}: CatPose) {
   const {stars, threads, facets, whiskers, eye} = catModel
 // --- whole-head motion is applied to the fragment instead of to 33 stars ---
@@ -983,10 +963,7 @@ function catConstellation({local, footprint, halfExtent, seed, turn, nearness, f
     whiskerLight,
   }
 }
-/**
- * One layer of pinpoint stars on a jittered 3D lattice. Unresolved stars fade toward an even haze
- * instead of sparkling as aliasing.
- */
+/** One layer of pinpoint stars on a jittered 3D lattice. Unresolved stars fade toward an even haze instead of sparkling as aliasing. */
 function dustLayer(point: Vec3, density: number, threshold: Float, seed: number) {
   const q = point.mul(density)
   const cell = q.floor()
@@ -1003,11 +980,7 @@ function dustLayer(point: Vec3, density: number, threshold: Float, seed: number)
   const resolved = footprint.smoothstep(0.5, 1.4).oneMinus()
   return tint.mul(core.mul(gate).mul(twinkle).mul(energy).mul(resolved))
 }
-/**
- * Deep space beneath a thick glass lacquer. Every layer is sampled at its own depth along the
- * refracted view ray, so the sky slides against the constellations as the visitor moves; a winding
- * Milky Way with dark dust lanes gives the knot a large-scale composition.
- */
+/** Deep space beneath a thick glass lacquer. Every layer is sampled at its own depth along the refracted view ray, so the sky slides against the constellations as the visitor moves; a winding Milky Way with dark dust lanes gives the knot a large-scale composition. */
 function deepSky(position: Vec3, view: Vec3, normal: Vec3) {
   const cosine = normal.dot(view).max(0.22)
 // Tangential view component over cos θ: the lateral shift of a point at unit depth.
@@ -1038,10 +1011,7 @@ function deepSky(position: Vec3, view: Vec3, normal: Vec3) {
     nebula,
   }
 }
-/**
- * Occasional meteors racing along the tube, one lane per cell row. `along` is the continuous
- * along-row coordinate in cells and `columns` its period.
- */
+/** Occasional meteors racing along the tube, one lane per cell row. `along` is the continuous along-row coordinate in cells and `columns` its period. */
 function meteors(along: Float, columns: Float, row: Float, local: Node<'vec2'>) {
   const speed = 7
   const period = 6
@@ -1082,13 +1052,7 @@ function pick(value: Float, palette: Array<string>): Vec3 { // Hex colors are sR
   return result
 }
 
-/**
- * Felis Major: a sky chart of cats. Every cell of the knot holds a low-poly cat head drawn as a
- * constellation over a lacquered window into deep space. Cats draw themselves outward from the
- * nose in slow waves around the knot, open their eyes, purr light along their threads, blink,
- * flick their ears, and follow the visitor with their pupils and ears. Facets are cut like a gem
- * dome, so they flash as the visitor walks around; up close the threads resolve into beads.
- */
+/** Felis Major: a sky chart of cats. Every cell of the knot holds a low-poly cat head drawn as a constellation over a lacquered window into deep space. Cats draw themselves outward from the nose in slow waves around the knot, open their eyes, purr light along their threads, blink, flick their ears, and follow the visitor with their pupils and ears. Facets are cut like a gem dome, so they flash as the visitor walks around; up close the threads resolve into beads. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

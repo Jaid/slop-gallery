@@ -19,12 +19,7 @@ const trellisAround = 3
 const enamelIndex = 1.52
 /** Raspberry enamel absorbs green and blue; the path length through it sets how deep the red becomes. */
 const enamelAbsorption = vec3(0.9, 8.5, 5.6)
-/**
- * A Fabergé surface. Gold is engine-turned on a rose engine – sunbursts in some panels, waved barleycorn rings in the others –
- * then flooded with translucent raspberry enamel. The grooves are real analytic facets that steer the reflections, so the pattern
- * flickers and flows as you walk; the enamel deepens toward the limb where the light's path through the glass grows long.
- * A trellis of gold bands with milgrain edges holds a rose-cut diamond at every crossing, and the sunbursts tick like a watch.
- */
+/** A Fabergé surface. Gold is engine-turned on a rose engine – sunbursts in some panels, waved barleycorn rings in the others – then flooded with translucent raspberry enamel. The grooves are real analytic facets that steer the reflections, so the pattern flickers and flows as you walk; the enamel deepens toward the limb where the light's path through the glass grows long. A trellis of gold bands with milgrain edges holds a rose-cut diamond at every crossing, and the sunbursts tick like a watch. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.8)

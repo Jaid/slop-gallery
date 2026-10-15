@@ -17,12 +17,7 @@ const combRows = 8
 const platesPerRow = 560
 const wavesPerRow = 29
 const jellyIndex = 1.34
-/**
- * A comb jelly in the lightless deep. Eight rows of ciliary plates beat in metachronal waves; each plate is a diffraction
- * grating, so rainbows run along the rows and shift hue as you move. Beneath the gel, canals and a crimson gut glow through
- * a parallax of real depth. The creature is shy: approach it and it startles, rings of blue-green bioluminescence
- * blooming across its body more and more often.
- */
+/** A comb jelly in the lightless deep. Eight rows of ciliary plates beat in metachronal waves; each plate is a diffraction grating, so rainbows run along the rows and shift hue as you move. Beneath the gel, canals and a crimson gut glow through a parallax of real depth. The creature is shy: approach it and it startles, rings of blue-green bioluminescence blooming across its body more and more often. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.35)

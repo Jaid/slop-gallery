@@ -10,13 +10,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Urushi, built the long way. Cinnabar is ground into the lacquer and it is opaque, so the piece has
- * no depth at all - but it is laid on thin over a curve, so the light crosses more of it at the
- * silhouette than head on, and the vermilion burns up to an orange there while the belly of every
- * stroke sinks to oxblood. The black underneath only shows where the film has cracked, and the gold
- * dust laid into the wet coats catches the studio and travels as you walk.
- */
+/** Urushi, built the long way. Cinnabar is ground into the lacquer and it is opaque, so the piece has no depth at all - but it is laid on thin over a curve, so the light crosses more of it at the silhouette than head on, and the vermilion burns up to an orange there while the belly of every stroke sinks to oxblood. The black underneath only shows where the film has cracked, and the gold dust laid into the wet coats catches the studio and travels as you walk. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.32)

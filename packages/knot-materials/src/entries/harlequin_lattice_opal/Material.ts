@@ -16,11 +16,7 @@ import knotData from './data.ts'
 const opalIndex = 1.45
 /** View-space studio lamps shared with the glint helper: each patch diffracts each lamp separately. */
 const lamps = [vec3(0.35, 0.78, 0.52), vec3(-0.62, 0.28, 0.73), vec3(0.1, -0.35, 0.93)]
-/**
- * One layer of play-of-color: Voronoi patches of ordered silica spheres, each a diffraction grating with its own
- * orientation and spacing. A patch flashes a color when the grating equation is satisfied between a lamp and the eye,
- * so each patch has a narrow window of view directions – walk past and the fire jumps from patch to patch.
- */
+/** One layer of play-of-color: Voronoi patches of ordered silica spheres, each a diffraction grating with its own orientation and spacing. A patch flashes a color when the grating equation is satisfied between a lamp and the eye, so each patch has a narrow window of view directions – walk past and the fire jumps from patch to patch. */
 function playOfColor(position: Node<'vec3'>, normal: Node<'vec3'>, scale: number, seed: number) {
   const q = position.mul(scale).add(seed * 13.7)
   const {cell, edge} = voronoi(q)
@@ -50,12 +46,7 @@ function playOfColor(position: Node<'vec3'>, normal: Node<'vec3'>, scale: number
   const border = edge.smoothstep(0.01, 0.07)
   return fire.mul(gate).mul(border).mul(patch2.z.mul(0.8).add(0.5))
 }
-/**
- * Precious opal. Under a polished dome the stone holds several depths of play-of-color, each patch a tiny diffraction
- * grating that only lights up for a particular angle between lamp and eye. The colors therefore belong to the viewer's
- * position, not to the stone: they slide, vanish and reappear as one walks around the piece. The milky body scatters a
- * soft blue (opalescence) at the limb and warms to a faint orange where light passes through thicker stone.
- */
+/** Precious opal. Under a polished dome the stone holds several depths of play-of-color, each patch a tiny diffraction grating that only lights up for a particular angle between lamp and eye. The colors therefore belong to the viewer's position, not to the stone: they slide, vanish and reappear as one walks around the piece. The milky body scatters a soft blue (opalescence) at the limb and warms to a faint orange where light passes through thicker stone. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.45)

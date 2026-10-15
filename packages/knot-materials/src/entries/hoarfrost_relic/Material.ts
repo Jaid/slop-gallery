@@ -10,12 +10,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Winter taking a dark stone. Frost does not fall evenly here: it creeps in branching dendrites over the upward
- * faces, thickens into druzy crystals in the hollows and leaves the polished night-stone bare in between.
- * From across the room it reads as white lace on slate; only a close visitor earns the individual crystals,
- * which answer the gallery lights one facet at a time.
- */
+/** Winter taking a dark stone. Frost does not fall evenly here: it creeps in branching dendrites over the upward faces, thickens into druzy crystals in the hollows and leaves the polished night-stone bare in between. From across the room it reads as white lace on slate; only a close visitor earns the individual crystals, which answer the gallery lights one facet at a time. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.8)

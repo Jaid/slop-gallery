@@ -68,12 +68,7 @@ function tracery(tube: Node<'vec2'>) {
     pearlBand,
   }
 }
-/**
- * Medieval stained glass. Leaded mosaics of cobalt and ruby fill alternating medallions ringed with
- * pearl borders and held by iron armatures. Each pane glows with the light standing behind it from
- * the viewer's position — gallery lights and a slow, circling sun — refracted a little differently
- * by every hand-blown sheet, so walking past sets the window flickering pane by pane.
- */
+/** Medieval stained glass. Leaded mosaics of cobalt and ruby fill alternating medallions ringed with pearl borders and held by iron armatures. Each pane glows with the light standing behind it from the viewer's position — gallery lights and a slow, circling sun — refracted a little differently by every hand-blown sheet, so walking past sets the window flickering pane by pane. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.3)

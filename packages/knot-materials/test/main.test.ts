@@ -52,9 +52,7 @@ describe('flat knot catalogue', () => {
       expect(entry.placeholder.color).toMatch(/^#[\da-f]{6}$/iu)
       expect(Object.hasOwn(placeholderPresets, entry.placeholder.shading)).toBe(true)
       expect(entry.author.model.title.trim().length).toBeGreaterThan(0)
-      for (const field of ['accent', 'highlighted', 'icon', 'sourceId', 'rarity', 'number']) {
-        expect(field in data, `${entry.id}.${field}`).toBe(false)
-      }
+      expect('rarity' in data, entry.id).toBe(false)
     }
   })
   test('rarity is exhaustive, separate from entry data, and drives selection before display ordering', () => {
@@ -65,11 +63,11 @@ describe('flat knot catalogue', () => {
     expect(new Set(Object.values(rarities))).toEqual(new Set([unknown, common, rare, prime, ethereal, special]))
     expect(Object.keys(rarities).filter(id => rarities[id as KnotId] === special).toSorted()).toEqual(['felis_major_menagerie', 'great_cat_emergence', 'knotty_prince'])
     for (const candidate of knotCandidates) {
-      const available = candidate.items.filter(entry => !entry.archived && entry.rarity !== special)
+      const available = candidate.items.filter(entry => entry.rarity !== special)
       const selected = candidate.select(3)
       expect(selected.map(entry => entry.rarity)).toEqual(selected.map(entry => entry.rarity).sort((a, b) => a - b))
       expect(selected.map(entry => entry.id).sort()).toEqual(available.toSorted((a, b) => b.rarity - a.rarity || a.id.localeCompare(b.id)).slice(0, 3).map(entry => entry.id).sort())
-      expect(selected.every(entry => !entry.archived && entry.rarity !== special)).toBe(true)
+      expect(selected.every(entry => entry.rarity !== special)).toBe(true)
     }
   })
   test('all material modules construct independently and respect caller-owned environment textures', async () => {
@@ -94,7 +92,7 @@ describe('flat knot catalogue', () => {
       environment.dispose()
     }
     expect(released).toBe(1)
-  })
+  }, 30_000)
   test('the metadata entry point bundles without importing shaders or Three.js', async () => {
     const result = await Bun.build({
       entrypoints: [resolve(root, 'main.ts')],

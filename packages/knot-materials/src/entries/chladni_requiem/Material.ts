@@ -10,22 +10,14 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A standing wave on the bronze, in the Chladni tradition: the plate only moves where the two modes
- * agree, and the sand can only rest there. `note` is the signed displacement of the plate, so its zero
- * set is the figure the sand draws.
- */
+/** A standing wave on the bronze, in the Chladni tradition: the plate only moves where the two modes agree, and the sand can only rest there. `note` is the signed displacement of the plate, so its zero set is the figure the sand draws. */
 const mode = (tube: Node<'vec2'>, along: number, around: number, drift: Node<'float'>, warp: number) => {
   const bow = tube.y.mul(TAU * around).sin().mul(warp)
   const u = tube.x.add(bow).add(mx_noise_float(tube.mul(vec2(3, 2))).mul(warp * 0.6))
   return u.mul(TAU * along).add(drift).sin().mul(tube.y.mul(TAU * around).add(drift.mul(0.37)).sin())
 }
 
-/**
- * Chladni's requiem. An ancient bronze plate, tapped at one point: the note is a standing wave, the
- * sand rides the nodes, and the figure breathes as the tone drifts. Walk around the piece and the
- * pattern slides across the bronze; lean in and the individual grains start to catch the studio.
- */
+/** Chladni's requiem. An ancient bronze plate, tapped at one point: the note is a standing wave, the sand rides the nodes, and the figure breathes as the tone drifts. Walk around the piece and the pattern slides across the bronze; lean in and the individual grains start to catch the studio. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.72)

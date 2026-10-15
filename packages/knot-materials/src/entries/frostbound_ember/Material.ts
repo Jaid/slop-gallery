@@ -22,12 +22,7 @@ const barbLengthOf = (growth: Node<'float'>, reach: Node<'float'>) => growth.one
 function flameColor(heat: Node<'float'>) {
   return mix(mix(rgb('#5a0800'), rgb('#ff4a0a'), heat.smoothstep(0, 0.45)), rgb('#ffd98a'), heat.smoothstep(0.45, 1))
 }
-/**
- * Black ice around a living ember. Stellar frost dendrites – six arms with 60° barbs – grow from scattered nuclei across the
- * surface; the ember inside is ray-marched through the tube along the refracted line of sight. The frost is lit from within,
- * glowing warm where the flame is near. A visitor's body heat melts a window: step close and the crystals recede toward
- * their nuclei, a ring of condensation beads at the thaw line, and the flame shows through clear ice. Step away and it freezes over.
- */
+/** Black ice around a living ember. Stellar frost dendrites – six arms with 60° barbs – grow from scattered nuclei across the surface; the ember inside is ray-marched through the tube along the refracted line of sight. The frost is lit from within, glowing warm where the flame is near. A visitor's body heat melts a window: step close and the crystals recede toward their nuclei, a ring of condensation beads at the thaw line, and the flame shows through clear ice. Step away and it freezes over. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.8)

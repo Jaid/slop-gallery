@@ -12,12 +12,7 @@ import {viewerFrame} from '../../lib/viewerFrame.ts'
 import {wrapCell} from '../../lib/wrapCell.ts'
 import knotData from './data.ts'
 
-/**
- * One staggered lattice of wing scales on the tube. Each scale owns a random
- * film thickness, ridge phase and tint, carries a domed crown that sinks at
- * its exposed tip, and dissolves its microscopic ridges before they can alias.
- * Distances are in lattice cells, so the UV seam keeps the same identities.
- */
+/** One staggered lattice of wing scales on the tube. Each scale owns a random film thickness, ridge phase and tint, carries a domed crown that sinks at its exposed tip, and dissolves its microscopic ridges before they can alias. Distances are in lattice cells, so the UV seam keeps the same identities. */
 function scaleField(tube: Node<'vec2'>) {
   const grid = vec2(144, 12)
   const q = tube.mul(grid)
@@ -65,15 +60,7 @@ function scaleField(tube: Node<'vec2'>) {
   }
 }
 
-/**
- * A Morpho wing persuaded around the knot: thousands of staggered scales, each
- * with its own thin-film thickness. No scale is painted blue – its color is the
- * interference agreement between film, lamp and witness, so a step sideways
- * sends cyan fire rolling into violet while the exposed tips stay near-black.
- * A slow shiver travels the wing once per exhibition loop, lifting each scale
- * in turn, and the finest ridges surrender to satin long before they can sparkle
- * into noise at gallery distance.
- */
+/** A Morpho wing persuaded around the knot: thousands of staggered scales, each with its own thin-film thickness. No scale is painted blue – its color is the interference agreement between film, lamp and witness, so a step sideways sends cyan fire rolling into violet while the exposed tips stay near-black. A slow shiver travels the wing once per exhibition loop, lifting each scale in turn, and the finest ridges surrender to satin long before they can sparkle into noise at gallery distance. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)

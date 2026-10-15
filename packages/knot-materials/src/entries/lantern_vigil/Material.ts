@@ -37,13 +37,7 @@ function petals(lattice: Node<'vec2'>, period: Node<'vec2'>, seed: number, keep:
     tint: random2.z,
   }
 }
-/**
- * A paper lantern. Washi over a bamboo frame, lit from inside by a single flame that travels along the knot's core.
- * The paper transmits the flame with real geometry: brightest where the flame is directly behind the sheet as seen by
- * the viewer, dimming with distance and the paper's thickness at grazing angles. Long mulberry fibers, the bamboo ribs
- * and pressed petals all show only in transmission – as shadows that appear when the light passes behind them – while
- * in reflection the paper stays a soft, matte cream with an ink ensō brushed onto one face.
- */
+/** A paper lantern. Washi over a bamboo frame, lit from inside by a single flame that travels along the knot's core. The paper transmits the flame with real geometry: brightest where the flame is directly behind the sheet as seen by the viewer, dimming with distance and the paper's thickness at grazing angles. Long mulberry fibers, the bamboo ribs and pressed petals all show only in transmission – as shadows that appear when the light passes behind them – while in reflection the paper stays a soft, matte cream with an ink ensō brushed onto one face. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.2)

@@ -18,12 +18,7 @@ type Stratum = {
 }
 /** Absorption of Baltic amber per object unit: red passes, blue drowns. */
 const absorption = vec3(5.5, 17, 52)
-/**
- * Baltic amber with inclusions. A refracted ray crosses the resin; along it, strata of sun spangles
- * (disc-shaped stress fractures that flare when their plane mirrors a light toward you), trapped air
- * bubbles and drifting plant dust sit at true parallax depths. Thin rims glow lemon, the thick core
- * deepens to cognac, and the gallery light behind the knot shines through it.
- */
+/** Baltic amber with inclusions. A refracted ray crosses the resin; along it, strata of sun spangles (disc-shaped stress fractures that flare when their plane mirrors a light toward you), trapped air bubbles and drifting plant dust sit at true parallax depths. Thin rims glow lemon, the thick core deepens to cognac, and the gallery light behind the knot shines through it. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.5)

@@ -24,12 +24,7 @@ const fbm = (position: Node<'vec3'>, octaves = 3) => {
   }
   return sum.div(norm)
 }
-/**
- * One layer of pigment sacs. The distance to the nearest sac center comes from a true
- * Worley neighborhood search, so sacs overlap and interlock with no cell-boundary clipping.
- * Regional swell patches make whole neighborhoods bloom together, and deeper layers get
- * softer edges, as if seen through the epidermis above them.
- */
+/** One layer of pigment sacs. The distance to the nearest sac center comes from a true Worley neighborhood search, so sacs overlap and interlock with no cell-boundary clipping. Regional swell patches make whole neighborhoods bloom together, and deeper layers get softer edges, as if seen through the epidermis above them. */
 function chromatophore(q: Node<'vec3'>, drive: Node<'float'>, seed: number, speed: number, softness: number) {
   const nearest = mx_worley_noise_vec3(q, 1, 0).x
   const swell = mx_noise_float(q.mul(0.45).add(seed)).mul(0.5).add(0.5)
@@ -48,13 +43,7 @@ function chromatophore(q: Node<'vec3'>, drive: Node<'float'>, seed: number, spee
   }
 }
 
-/**
- * Living cephalopod skin. Three sizes of chromatophore — black-brown, rust red, amber —
- * breathe at their own rates over a pale fleshy dermis. Dark “passing cloud” bands travel
- * along the tube by swelling the great dark sacs in sequence, while the flank nearest the
- * viewer flushes into a warning display: amber blooms open, papillae stand up, structural
- * teal-violet iridophore light shows through the gaps and buried photophores twinkle.
- */
+/** Living cephalopod skin. Three sizes of chromatophore — black-brown, rust red, amber — breathe at their own rates over a pale fleshy dermis. Dark “passing cloud” bands travel along the tube by swelling the great dark sacs in sequence, while the flank nearest the viewer flushes into a warning display: amber blooms open, papillae stand up, structural teal-violet iridophore light shows through the gaps and buried photophores twinkle. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.5)

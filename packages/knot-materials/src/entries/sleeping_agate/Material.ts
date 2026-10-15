@@ -22,11 +22,7 @@ const agateTone = (h: Node<'float'>) => {
   return select(h.lessThan(0.25), mix(ivory, honey, h.mul(4)), select(h.lessThan(0.5), mix(honey, rust, h.sub(0.25).mul(4)), select(h.lessThan(0.75), mix(rust, smoke, h.sub(0.5).mul(4)), mix(smoke, ivory, h.sub(0.75).mul(4)))))
 }
 
-/**
- * Polished agate with concentric silica bands that never quite close. The bands are sampled a little below the surface, so they
- * slide as you walk around the stone, as if you were seeing the stone's depth. Moss-like dendrites grow in patches, a drusy of
- * quartz points sparkles near the surface, and the whole stone breathes on a two-second loop.
- */
+/** Polished agate with concentric silica bands that never quite close. The bands are sampled a little below the surface, so they slide as you walk around the stone, as if you were seeing the stone's depth. Moss-like dendrites grow in patches, a drusy of quartz points sparkles near the surface, and the whole stone breathes on a two-second loop. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

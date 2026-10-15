@@ -78,13 +78,7 @@ function roseGlass(x: Node<'float'>, y: Node<'float'>, roseSeed: Node<'vec3'>) {
     pieceId: cellNoiseVec3(vec3(pieceSeed, roseSeed.z.mul(50), 5.5)),
   }
 }
-/**
- * A dark stone knot pierced by gothic rose windows, seen by the light that passes through them. The glass is set back behind
- * the stone face, so walking past shifts it against the opening and reveals the lit stone jamb on the far side. Each rose has
- * an oculus, eight cusped petals, sixteen roundels and a border, in lead came and fine stone mullions. An evening sun travels
- * slowly along the inside of the knot, so the windows kindle, burn nearly white and fade in turn. Antique glass carries seeds,
- * streaks and uneven thickness, and up close the painter's grisaille lines appear.
- */
+/** A dark stone knot pierced by gothic rose windows, seen by the light that passes through them. The glass is set back behind the stone face, so walking past shifts it against the opening and reveals the lit stone jamb on the far side. Each rose has an oculus, eight cusped petals, sixteen roundels and a border, in lead came and fine stone mullions. An evening sun travels slowly along the inside of the knot, so the windows kindle, burn nearly white and fade in turn. Antique glass carries seeds, streaks and uneven thickness, and up close the painter's grisaille lines appear. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.25)

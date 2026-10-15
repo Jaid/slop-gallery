@@ -12,12 +12,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Deep glacier ice carved into a knot. A polished, frost-bitten skin seals three
- * parallax strata of bright fracture planes and two depths of trapped air bubbles;
- * looking straight in, you see down a blue well, while a grazing view turns the
- * surface to white frost. Fractures flare only when they mirror a lamp to your eye.
- */
+/** Deep glacier ice carved into a knot. A polished, frost-bitten skin seals three parallax strata of bright fracture planes and two depths of trapped air bubbles; looking straight in, you see down a blue well, while a grazing view turns the surface to white frost. Fractures flare only when they mirror a lamp to your eye. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.15)

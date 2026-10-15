@@ -19,11 +19,7 @@ type Layer = {
   scale: number
   seed: number
 }
-/**
- * Black opal. Beneath a polished potch surface, stacked silica domains act as Bragg gratings:
- * each patch diffracts the wavelength λ = 2nd·cosθ toward the viewer, lit by whatever part of the
- * gallery its mirror direction sees. Tilting the head sweeps every patch through the spectrum.
- */
+/** Black opal. Beneath a polished potch surface, stacked silica domains act as Bragg gratings: each patch diffracts the wavelength λ = 2nd·cosθ toward the viewer, lit by whatever part of the gallery its mirror direction sees. Tilting the head sweeps every patch through the spectrum. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.65)

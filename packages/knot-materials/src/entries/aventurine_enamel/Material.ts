@@ -21,11 +21,7 @@ const foilDepth = 0.02
 const aventurineSupport = 0.19
 /** Jitter range [min, min + span] of the aventurine platelet center within its cell. */
 const aventurineJitter = [0.27, 0.46] as const
-/**
- * Imperial Jingtai Lan Cloisonné & Ginbari Guilloché Enamel lattice:
- * Partitioned into 8-petaled lotus medallions, inner cusped corollas, central ruby cabochon bosses,
- * and cloud-scroll corner cartouches separated by flat-topped 24k gold filigree wire walls (cloisons).
- */
+/** Imperial Jingtai Lan Cloisonné & Ginbari Guilloché Enamel lattice: Partitioned into 8-petaled lotus medallions, inner cusped corollas, central ruby cabochon bosses, and cloud-scroll corner cartouches separated by flat-topped 24k gold filigree wire walls (cloisons). */
 function cloisonneField(cells: Node<'vec2'>) {
   const period = vec2(columns, rows)
   const baseCell = cells.floor()
@@ -84,10 +80,7 @@ function cloisonneField(cells: Node<'vec2'>) {
     wireCenterDist,
   }
 }
-/**
- * 3D suspended Murashiki Aventurine (goldstone) triangular & hexagonal copper crystals ($\text{Cu}_2\text{O}$)
- * with screen-space minimum pixel clamping so copper glints remain crisp and visible at wide angles as well as closeups!
- */
+/** 3D suspended Murashiki Aventurine (goldstone) triangular & hexagonal copper crystals ($\text{Cu}_2\text{O}$) with screen-space minimum pixel clamping so copper glints remain crisp and visible at wide angles as well as closeups! */
 function aventurineSparks(position: Node<'vec3'>, view: Node<'vec3'>, depth: number, scale: number, threshold: number, seed: number) {
   const q = position.sub(view.mul(depth)).mul(scale).add(seed)
   const cell = q.floor()
@@ -121,11 +114,7 @@ function aventurineSparks(position: Node<'vec3'>, view: Node<'vec3'>, depth: num
   const attenuation = Math.exp(-depth * 20)
   return crystal.mul(gate).mul(specularFlash).mul(attenuation).mul(visibility)
 }
-/**
- * Cloisonné Lotus (Imperial Jingtai Lan & Ginbari Basse-Taille Guilloché Enamel):
- * True physical Beer-Lambert exponential glass absorption `exp(-sigma_a * d)` over a sunken, refracted rose-engine chased pure silver foil floor,
- * bounded by flat-topped 24k gold filigree ribbons and sealed under an optically flat lapidary-ground vitreous polish.
- */
+/** Cloisonné Lotus (Imperial Jingtai Lan & Ginbari Basse-Taille Guilloché Enamel): True physical Beer-Lambert exponential glass absorption `exp(-sigma_a * d)` over a sunken, refracted rose-engine chased pure silver foil floor, bounded by flat-topped 24k gold filigree ribbons and sealed under an optically flat lapidary-ground vitreous polish. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.25)

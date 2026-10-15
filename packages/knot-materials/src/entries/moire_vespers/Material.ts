@@ -44,10 +44,7 @@ function sealLattice(tube: Node<'vec2'>, {columns, rows, seed}: {
   }
 }
 
-/**
- * A holographic seal: the object wave is the reference grating bent by a field of wax seals, and the
- * fringes between the two drift as the viewer walks, because a hologram is only a picture from one seat.
- */
+/** A holographic seal: the object wave is the reference grating bent by a field of wax seals, and the fringes between the two drift as the viewer walks, because a hologram is only a picture from one seat. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.3)

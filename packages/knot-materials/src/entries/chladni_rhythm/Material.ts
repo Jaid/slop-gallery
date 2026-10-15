@@ -35,11 +35,7 @@ const plate = (tube: Node<'vec2'>) => {
 /** Bow strength: swells and relaxes on the two-second loop. */
 const excitation = () => time.mul(Math.PI).add(0.9).cos().mul(0.5).add(0.5)
 
-/**
- * A bowed iron plate wrapped around the knot, carrying standing waves whose nodal lines morph over time. Sand gathers on the
- * lines where the metal stays still and gleams as each grain turns toward you; the antinodes glow with a cold resonance.
- * The closer you stand, the harder the plate is driven, so the figure trembles more and the sand scatters.
- */
+/** A bowed iron plate wrapped around the knot, carrying standing waves whose nodal lines morph over time. Sand gathers on the lines where the metal stays still and gleams as each grain turns toward you; the antinodes glow with a cold resonance. The closer you stand, the harder the plate is driven, so the figure trembles more and the sand scatters. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

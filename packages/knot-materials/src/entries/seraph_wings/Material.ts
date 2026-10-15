@@ -16,11 +16,7 @@ import knotData from './data.ts'
 
 const columns = 20
 const rows = 4
-/**
- * Overlapping Seraphim / Peacock plumage imbrication along the knot tube.
- * Evaluates a neighborhood of staggered candidate feathers using a smooth depth-sorted height field (`max()` with smooth margin).
- * Every feather's proximal base and quill root is tucked underneath the preceding column's distal feather tip!
- */
+/** Overlapping Seraphim / Peacock plumage imbrication along the knot tube. Evaluates a neighborhood of staggered candidate feathers using a smooth depth-sorted height field (`max()` with smooth margin). Every feather's proximal base and quill root is tucked underneath the preceding column's distal feather tip! */
 function plumageField(cells: Node<'vec2'>) {
   const period = vec2(columns, rows)
   const baseCell = cells.floor()
@@ -116,11 +112,7 @@ function plumageField(cells: Node<'vec2'>) {
     underLipDropShadow,
   }
 }
-/**
- * Morpho Rhetenor & Seraphim Ocellus Structural Iridescent Plumage:
- * Analytic tangent-space cabochon normal domes bow specular highlights over every Seraph's Eye,
- * while 24k golden quills anchor into the eye's limbal bezel and backscattered sapphire-violet iridescence illuminates the shadow side.
- */
+/** Morpho Rhetenor & Seraphim Ocellus Structural Iridescent Plumage: Analytic tangent-space cabochon normal domes bow specular highlights over every Seraph's Eye, while 24k golden quills anchor into the eye's limbal bezel and backscattered sapphire-violet iridescence illuminates the shadow side. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.15)

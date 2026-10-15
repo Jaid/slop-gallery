@@ -30,12 +30,7 @@ const bodySurface = Fn(([tube]: [Node<'vec2'>]) => {
   const {position: p, normal} = knotFrame(tube)
   return p.add(normal.mul(breathing(tube, p)))
 })
-/**
- * A deep-sea creature. Its skin is a dark, wet, translucent gel with a scatter of photophores – light organs arranged in
- * a lattice – that fire in rings running away from the point nearest to the viewer, so the animal visibly reacts to being
- * approached. Chromatophores under the skin bloom from violet to crimson as the viewer comes close; the whole body
- * breathes with a peristaltic wave and shivers at close range. At the limb, the gel glows with subsurface cyan.
- */
+/** A deep-sea creature. Its skin is a dark, wet, translucent gel with a scatter of photophores – light organs arranged in a lattice – that fire in rings running away from the point nearest to the viewer, so the animal visibly reacts to being approached. Chromatophores under the skin bloom from violet to crimson as the viewer comes close; the whole body breathes with a peristaltic wave and shivers at close range. At the limb, the gel glows with subsurface cyan. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.6)

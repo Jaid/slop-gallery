@@ -18,11 +18,7 @@ import knotData from './data.ts'
 const plateScale = 10
 /** Depth of the molten surface below the crust, in object units – the fissures’ parallax. */
 const magmaDepth = 0.016
-/**
- * Cooling lava. Basalt plates float on a molten core whose temperature – and therefore color and brightness, through Planck’s
- * law – is a physical field. The fissures are real trenches: the magma lies below the crust, so walking around shifts it
- * against the openings and the walls swallow it at grazing angles. A double heartbeat travels the knot, flushing every vein.
- */
+/** Cooling lava. Basalt plates float on a molten core whose temperature – and therefore color and brightness, through Planck’s law – is a physical field. The fissures are real trenches: the magma lies below the crust, so walking around shifts it against the openings and the walls swallow it at grazing angles. A double heartbeat travels the knot, flushing every vein. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.75)

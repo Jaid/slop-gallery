@@ -14,11 +14,7 @@ import knotData from './data.ts'
 
 /** Mercury's reflectance is a little dimmer and cooler than silver. */
 const mercury = vec3(0.74, 0.75, 0.78)
-/**
- * Surface height of the liquid in object units. Runs in the vertex stage, so it is free of screen-space derivatives.
- * A slow slosh from drifting noise, two crossing swells, and rings that race away from the point nearest the viewer –
- * the closer the viewer stands, the stronger the rings.
- */
+/** Surface height of the liquid in object units. Runs in the vertex stage, so it is free of screen-space derivatives. A slow slosh from drifting noise, two crossing swells, and rings that race away from the point nearest the viewer – the closer the viewer stands, the stronger the rings. */
 const liquidHeight = (tube: Node<'vec2'>, p: Node<'vec3'>) => {
   const t = time
   const cameraLocal = modelWorldMatrixInverse.mul(vec4(cameraPosition, 1)).xyz
@@ -35,12 +31,7 @@ const liquidSurface = Fn(([tube]: [Node<'vec2'>]) => {
   const {position: p, normal} = knotFrame(tube)
   return p.add(normal.mul(liquidHeight(tube, p)))
 })
-/**
- * Quicksilver. A liquid mirror whose skin is displaced in the vertex stage – rings emanate from wherever the viewer
- * stands, so the piece visibly notices whoever walks up to it. Beads of mercury roll along the tube on top of the swell,
- * and every lamp in the room is drawn as a crisp, distorted image in the metal. A dark floor and bright ceiling are
- * folded into the reflectance so the mirror keeps its contrast in soft gallery light.
- */
+/** Quicksilver. A liquid mirror whose skin is displaced in the vertex stage – rings emanate from wherever the viewer stands, so the piece visibly notices whoever walks up to it. Beads of mercury roll along the tube on top of the swell, and every lamp in the room is drawn as a crisp, distorted image in the metal. A dark floor and bright ceiling are folded into the reflectance so the mirror keeps its contrast in soft gallery light. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.1)

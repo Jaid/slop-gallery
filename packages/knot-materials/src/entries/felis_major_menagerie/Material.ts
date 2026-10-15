@@ -60,11 +60,7 @@ const breeds: Array<Breed> = [
     iris: '#d2ff4f',
   },
 ]
-/**
- * The low-poly cat head every constellation is built from, in cat units: x spans about ±1, y points from the chin (−0.6) to the ear tips (+0.98) and z is a relief height used for facet normals and for the head turning toward the viewer.
- *
- * Only the right half is authored; everything with x > 0 is mirrored. Faces are triangles and quads – quads keep their diagonal invisible, so the wireframe really reads as a mix of both.
- */
+/** The low-poly cat head every constellation is built from, in cat units: x spans about ±1, y points from the chin (−0.6) to the ear tips (+0.98) and z is a relief height used for facet normals and for the head turning toward the viewer. Only the right half is authored; everything with x > 0 is mirrored. Faces are triangles and quads – quads keep their diagonal invisible, so the wireframe really reads as a mix of both. */
 type CatVertexName = 'bridge' | 'brow' | 'browSide' | 'cheek' | 'cheekTop' | 'chin' | 'chinSide' | 'crown' | 'earInner' | 'earMid' | 'earOuter' | 'earTip' | 'eyeBottom' | 'eyeInner' | 'eyeOuter' | 'eyeTop' | 'jaw' | 'mouth' | 'noseTip' | 'noseWing' | 'temple' | 'whiskerPad'
 type CatFaceGroup = 'cheek' | 'chin' | 'ear' | 'eye' | 'forehead' | 'innerEar' | 'muzzle' | 'nose'
 
@@ -488,11 +484,7 @@ class CatMesh {
   }
 }
 const catMesh = new CatMesh
-/**
- * Build-time acceleration tables for the constellation shader.
- *
- * A settled cat only moves within known bounds: its per-cat morphs (ears, cheeks, eye shape, folded ears, cocked head) and its small live motions (blinks, ear twitches). Breathing and the head turn are applied to the fragment instead of the vertices, so every vertex stays inside a precomputed box. The cat plane is cut into bins, and each bin lists only the vertices, edges and faces that can possibly affect a fragment inside it – so the shader walks a handful of elements instead of the whole mesh.
- */
+/** Build-time acceleration tables for the constellation shader. A settled cat only moves within known bounds: its per-cat morphs (ears, cheeks, eye shape, folded ears, cocked head) and its small live motions (blinks, ear twitches). Breathing and the head turn are applied to the fragment instead of the vertices, so every vertex stays inside a precomputed box. The cat plane is cut into bins, and each bin lists only the vertices, edges and faces that can possibly affect a fragment inside it – so the shader walks a handful of elements instead of the whole mesh. */
 /** Ranges of the per-cat shape parameters, which the shader must respect. */
 const shapeRanges = {
   ear: [-0.8, 1.2],
@@ -656,9 +648,7 @@ function buildBins(keyOf: (vertex: CatVertex) => number) {
 }
 const emptyBin = binDomain.columns * binDomain.rows
 const fullBin = emptyBin + 1
-/**
- * Relief height of the rest-pose cat on a regular grid, for warping fragments instead of vertices when the head turns. Outside the head the relief is zero.
- */
+/** Relief height of the rest-pose cat on a regular grid, for warping fragments instead of vertices when the head turns. Outside the head the relief is zero. */
 const reliefGrid = {
   minX: -1.6,
   minY: -1.1,
@@ -702,9 +692,7 @@ function hash(...values: Array<number>) {
   }
   return (state >>> 0) / 4_294_967_296
 }
-/**
- * All constant data of the constellation packed into one uniform array of vec4 rows – a single binding, well below the 64 kb limit – with named sections.
- */
+/** All constant data of the constellation packed into one uniform array of vec4 rows – a single binding, well below the 64 kb limit – with named sections. */
 const eyeCorners = new Set(['eyeBottom', 'eyeInner', 'eyeOuter', 'eyeTop'])
 const breathingCenter: [number, number] = [0, 0.2]
 const eyeCenters = ([-1, 1] as const).map(side => [catMesh.vertices[catMesh.find('eyeInner', side)], catMesh.vertices[catMesh.find('eyeOuter', side)]]).map(([a, b]) => [(a.x + b.x) / 2, (a.y + b.y) / 2])
@@ -918,11 +906,7 @@ type Corner = {
   live: Node<'vec2'>
   shape: Node<'vec4'>
 }
-/**
- * One living constellation cat, built from the cat mesh. Every vertex is a star that blinks, twitches and turns toward the viewer; every edge is a thread of light; every face is a facet with its own normal. The whole figure periodically dissolves into drifting stardust while its eyes stay behind, then redraws itself from the eyes outward.
- *
- * Performance: breathing and the head turn warp the fragment instead of the vertices, so a settled cat only needs the few mesh elements of the bin the fragment falls into (see catBins.ts). Only cats in the middle of dissolving or reassembling walk the whole mesh.
- */
+/** One living constellation cat, built from the cat mesh. Every vertex is a star that blinks, twitches and turns toward the viewer; every edge is a thread of light; every face is a facet with its own normal. The whole figure periodically dissolves into drifting stardust while its eyes stay behind, then redraws itself from the eyes outward. Performance: breathing and the head turn warp the fragment instead of the vertices, so a settled cat only needs the few mesh elements of the bin the fragment falls into (see catBins.ts). Only cats in the middle of dissolving or reassembling walk the whole mesh. */
 function constellation(input: ConstellationInput) {
   const {p: surface, footprint, look, viewer, gaze, seeds: [s1, s2, s3, s4], cycle, closeness, detail, sleep, dilation} = input
   // --- per-cat life: breathing, blinking, ear twitches
@@ -1036,9 +1020,7 @@ function constellation(input: ConstellationInput) {
     const bestTone = float(1).toVar()
     const bestBlush = float(0).toVar()
     const bestFaceSeed = float(0).toVar()
-    /**
-     * Walk the bin’s vertices, edges and faces. `vertexAt` animates a vertex for its star; `cornerAt` provides a vertex again for the edges and faces – recomputed for a settled cat (far cheaper on GPUs than a local array indexed at run time), cached for a cat in motion, whose full animation is expensive and whose bin is the whole mesh.
-     */
+    /** Walk the bin’s vertices, edges and faces. `vertexAt` animates a vertex for its star; `cornerAt` provides a vertex again for the edges and faces – recomputed for a settled cat (far cheaper on GPUs than a local array indexed at run time), cached for a cat in motion, whose full animation is expensive and whose bin is the whole mesh. */
     const walk = (vertexAt: (vertex: Node<'int'>) => Animated, remember: (vertex: Node<'int'>, animated: Animated) => void, cornerAt: (vertex: Node<'int'>) => Corner, threadsShown: Node<'float'> = float(1), facetsShown: Node<'float'> = float(1)) => { // --- stars: keep the one nearest to the fragment
       Loop({
         start: int(0),
@@ -1243,9 +1225,7 @@ function constellation(input: ConstellationInput) {
     }, flash, blink}
 }
 const lamps = [[0.35, 0.78, 0.52], [-0.62, 0.28, 0.73], [0.1, -0.35, 0.93]] as const
-/**
- * Sparse metal flakes suspended in the lacquer, like maki-e gold dust. Each flake has its own tilt and flashes only when it mirrors one of three fixed view-space lamps toward the viewer, so the field twinkles as you walk past. Flakes smaller than a pixel fade instead of aliasing. `normal` is in object space; `density` is the fraction of lattice cells holding a flake.
- */
+/** Sparse metal flakes suspended in the lacquer, like maki-e gold dust. Each flake has its own tilt and flashes only when it mirrors one of three fixed view-space lamps toward the viewer, so the field twinkles as you walk past. Flakes smaller than a pixel fade instead of aliasing. `normal` is in object space; `density` is the fraction of lattice cells holding a flake. */
 function flakes(p: Node<'vec3'>, normal: Node<'vec3'>, scale: number, density: number) {
   const q = p.mul(scale)
   const cell = q.floor()
@@ -1285,9 +1265,7 @@ function tubePoint(t: Node<'float'>, angle: Node<'float'>) {
     position: center.add(outward.mul(tubeRadius)),
   }
 }
-/**
- * Object-space surface frame of the knot for a uv coordinate, independent of vertex tangents and screen derivatives: `along` follows +u, `around` follows +v, `outward` is the tube normal. `stretch` is the local surface speed along u relative to its mean, i.e. how much the uv grid is stretched on the outside of bends (> 1) or squeezed on the inside (< 1).
- */
+/** Object-space surface frame of the knot for a uv coordinate, independent of vertex tangents and screen derivatives: `along` follows +u, `around` follows +v, `outward` is the tube normal. `stretch` is the local surface speed along u relative to its mean, i.e. how much the uv grid is stretched on the outside of bends (> 1) or squeezed on the inside (< 1). */
 function tubeFrame(tube: Node<'vec2'>) {
   const angle = tube.y.mul(TAU)
   const here = tubePoint(tube.x.mul(parameterSpan), angle)
@@ -1361,9 +1339,7 @@ function surface(u: number, v: number) {
     stretch: length(velocity) / (delta * 2) * parameterSpan / knotLength,
   }
 }
-/**
- * Per-cell constants of the cat lattice, computed once on the CPU instead of for every fragment: the tube frame at the cell center (for sitting cats upright), the tightest stretch across the cell (for shrinking cats in bends) and the two knots on the cell’s side borders where the threads to the neighbors are tied.
- */
+/** Per-cell constants of the cat lattice, computed once on the CPU instead of for every fragment: the tube frame at the cell center (for sitting cats upright), the tightest stretch across the cell (for shrinking cats in bends) and the two knots on the cell’s side borders where the threads to the neighbors are tied. */
 function cellTables({columns, rows}: CellLayout) {
   const frames: Array<{
     along: Vector
@@ -1442,9 +1418,7 @@ function nightSky(p: Node<'vec3'>, view: Node<'vec3'>) {
     /** a far denser field for the inside of the figures – every cat carries a galaxy */
     galaxy: starLayer(p, view, 0.055, 230, 0.62, 29).mul(1.3)}
 }
-/**
- * Shooting stars that streak along the lanes between the rows of cats. Lane k runs along uv.y = k / lanes; each lane launches its own meteor every few seconds at a new place. `head(k)` gives where a lane’s meteor is (in uv) and how visible it is, so the cats can turn to watch it.
- */
+/** Shooting stars that streak along the lanes between the rows of cats. Lane k runs along uv.y = k / lanes; each lane launches its own meteor every few seconds at a new place. `head(k)` gives where a lane’s meteor is (in uv) and how visible it is, so the cats can turn to watch it. */
 class Meteors {
   constructor(readonly lanes: number) {
     if (lanes > periods.length) {
@@ -1472,9 +1446,7 @@ class Meteors {
       brightness,
     }
   }
-  /**
-   * Light of the meteor on the nearest lane at `tube` (uv). `length` and `circumference` convert uv to object units; `footprint` is the size of a pixel in object units.
-   */
+  /** Light of the meteor on the nearest lane at `tube` (uv). `length` and `circumference` convert uv to object units; `footprint` is the size of a pixel in object units. */
   light(tube: Node<'vec2'>, length: number, circumference: number, footprint: Node<'float'>) {
     const k = tube.y.mul(this.lanes).round()
     const {uv, direction, brightness} = this.head(k.mod(this.lanes))
@@ -1509,9 +1481,7 @@ const figureDepth = 0.008
 const catCenterY = 0.23
 /** Seconds for a full dissolve → reassembly → life cycle; every cat keeps its own schedule. */
 const cyclePeriod = 48
-/**
- * Felis Major – a sky of low-poly cats drawn in starlight on black lacquer. Each cat is a constellation of stars joined by threads into triangles and quads, with faceted glass between them that opens onto a denser, breed-tinted nebula. The cats breathe, blink, twitch their ears, purr waves of light through their wireframes and turn their heads and pupils toward the viewer; sleeping ones wake when approached. Shooting stars streak along the lanes between the rows and every cat nearby turns to watch. Now and then a cat dissolves into drifting stardust, leaves only its eyes hanging in the dark, then redraws itself line by line from the eyes outward.
- */
+/** Felis Major – a sky of low-poly cats drawn in starlight on black lacquer. Each cat is a constellation of stars joined by threads into triangles and quads, with faceted glass between them that opens onto a denser, breed-tinted nebula. The cats breathe, blink, twitch their ears, purr waves of light through their wireframes and turn their heads and pupils toward the viewer; sleeping ones wake when approached. Shooting stars streak along the lanes between the rows and every cat nearby turns to watch. Now and then a cat dissolves into drifting stardust, leaves only its eyes hanging in the dark, then redraws itself line by line from the eyes outward. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.45)

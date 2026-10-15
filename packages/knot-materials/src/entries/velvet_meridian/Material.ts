@@ -1,8 +1,7 @@
 import type {Node, Texture} from 'three/webgpu'
 
-import {color, float, Fn as fn, mix, mx_fractal_noise_float, time, transformNormalToView, uv, varying, vec2, vec3} from 'three/tsl'
+import {color, float, Fn as fn, mix, mx_fractal_noise_float, negateOnBackSide, positionView, time, transformNormalToView, uv, varying, vec2, vec3} from 'three/tsl'
 
-import {detailNormal} from '../../candidates/deepseek/lib/detailNormal.ts'
 import {knotFrame} from '../../lib/knotFrame.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {spectralColor} from '../../lib/spectralColor.ts'
@@ -10,6 +9,16 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
+/** Surface-gradient bump mapping around the displaced normal, with resolution-independent unnormalized derivatives. */
+const detailNormal = (base: Node<'vec3'>, height: Node<'float'>, strength: number) => {
+  const dx = positionView.dFdx()
+  const dy = positionView.dFdy()
+  const rx = dy.cross(base)
+  const ry = base.cross(dx)
+  const determinant = dx.dot(rx)
+  const gradient = rx.mul(height.dFdx()).add(ry.mul(height.dFdy())).mul(determinant.sign()).div(determinant.abs().max(1e-12))
+  return negateOnBackSide(base.sub(gradient.mul(strength)).normalize())
+}
 /** Smooth periodic noise coordinates with independent along/across scales. */
 const textileCoordinate = (tube: Node<'vec2'>, along: number, around: number) => {
   const u = tube.x.mul(TAU)

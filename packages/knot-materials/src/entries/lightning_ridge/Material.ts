@@ -16,11 +16,7 @@ import knotData from './data.ts'
 const silicaIndex = 1.45
 /** The gallery’s lights, in object space: overhead, the key light, a low fill. */
 const lamps: Array<[[number, number, number], number]> = [[[0, 1, 0.15], 1], [[-0.17, 0.49, -0.86], 0.9], [[0.62, 0.25, 0.74], 0.6]]
-/**
- * One layer of play-of-color. Every domain is a crystal of silica spheres: a Bragg mirror with its own lattice normal and
- * spacing, reflecting a single pure wavelength – and only when the light, the lattice and the eye line up. Mosaic spread inside
- * a domain makes the flash roll across it instead of switching all at once.
- */
+/** One layer of play-of-color. Every domain is a crystal of silica spheres: a Bragg mirror with its own lattice normal and spacing, reflecting a single pure wavelength – and only when the light, the lattice and the eye line up. Mosaic spread inside a domain makes the flash roll across it instead of switching all at once. */
 function playOfColor(environment: Texture, position: Node<'vec3'>, inside: Node<'vec3'>, scale: number, seed: number) {
   const cells = voronoiCells(position.mul(scale).add(seed), 1)
   const identity = cellNoiseVec3(cells.cell.add(seed))
@@ -53,10 +49,7 @@ function playOfColor(environment: Texture, position: Node<'vec3'>, inside: Node<
     identity,
   }
 }
-/**
- * Black opal in an ironstone matrix. Two layers of play-of-color sit at different depths beneath the polished surface, so
- * the harlequin patches slide over one another with every step; ironstone veins and sandy boulder rock thread through.
- */
+/** Black opal in an ironstone matrix. Two layers of play-of-color sit at different depths beneath the polished surface, so the harlequin patches slide over one another with every step; ironstone veins and sandy boulder rock thread through. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)

@@ -16,13 +16,7 @@ const absorption = vec3(14, 4.6, 1.7)
 const lamps = [vec3(0.35, 0.78, 0.52), vec3(-0.62, 0.28, 0.73), vec3(0.1, -0.35, 0.93)]
 /** Beyond the critical angle of an ice–air gap (≈ 49.8°) a fracture becomes a perfect mirror. */
 const criticalCosine = Math.sqrt(1 - 1 / (iceIndex * iceIndex))
-/**
- * Glacier ice. The eye's ray is refracted into the surface and interior layers are sampled along it, so trapped air
- * bubbles and internal fracture planes have real parallax and slide against the surface as the viewer walks by.
- * Fracture planes are thin ice–air gaps: they flash white when the refracted ray meets them beyond the critical angle,
- * exactly like the sheets of light that wink inside real ice. Frost gathers on upward faces and at the limb;
- * a warm pulse keeps time within.
- */
+/** Glacier ice. The eye's ray is refracted into the surface and interior layers are sampled along it, so trapped air bubbles and internal fracture planes have real parallax and slide against the surface as the viewer walks by. Fracture planes are thin ice–air gaps: they flash white when the refracted ray meets them beyond the critical angle, exactly like the sheets of light that wink inside real ice. Frost gathers on upward faces and at the limb; a warm pulse keeps time within. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

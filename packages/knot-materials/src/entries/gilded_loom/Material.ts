@@ -16,14 +16,7 @@ function medallion(md: Node<'float'>, radius: Node<'float'>) {
   const aa = md.fwidth().mul(1.2).add(0.004)
   return md.smoothstep(radius.sub(aa), radius.add(aa)).oneMinus()
 }
-/**
- * Brocade silk wound into a knot. A damask lattice of medallions is woven along
- * the tube — violet silk petals, gold rim, ring and heart, with a small gold
- * diamond sown between them — over an indigo velvet ground. Nothing here glows;
- * the life is in the cloth: warp floats over weft in a satin weave, the sheen
- * re-dyes itself as you circle, and the anisotropic threads catch the light in
- * long runs. Only a close look resolves the individual threads and goldwork.
- */
+/** Brocade silk wound into a knot. A damask lattice of medallions is woven along the tube — violet silk petals, gold rim, ring and heart, with a small gold diamond sown between them — over an indigo velvet ground. Nothing here glows; the life is in the cloth: warp floats over weft in a satin weave, the sheen re-dyes itself as you circle, and the anisotropic threads catch the light in long runs. Only a close look resolves the individual threads and goldwork. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.7)

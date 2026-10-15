@@ -8,13 +8,7 @@ import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A neon tube bent into a knot. The wall is black soda-lime glass, so the piece is really a line of
- * light: brightest where the eye looks through the most gas, with a white-hot filament down the very
- * centre of the column and the last of the glow eaten by the wall at the silhouette. Walk around it
- * and the far arc of the tube dims while the near arc ignites; lean in and the mercury striations,
- * the two electrodes and the buzz on the glass all come forward.
- */
+/** A neon tube bent into a knot. The wall is black soda-lime glass, so the piece is really a line of light: brightest where the eye looks through the most gas, with a white-hot filament down the very centre of the column and the last of the glow eaten by the wall at the silhouette. Walk around it and the far arc of the tube dims while the near arc ignites; lean in and the mercury striations, the two electrodes and the buzz on the glass all come forward. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.32)

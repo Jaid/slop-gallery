@@ -19,14 +19,7 @@ const length = (a: Triple) => Math.hypot(a[0], a[1], a[2])
 const normalize = (a: Triple) => scale(a, 1 / length(a))
 /** Sum of scaled vectors. */
 const combine = (...terms: Array<[Triple, number]>) => terms.reduce<Triple>((sum, [vector, weight]) => add(sum, scale(vector, weight)), [0, 0, 0])
-/**
- * CPU-side anatomy of the felt prince. Everything here is evaluated once at import time and baked into
- * the node graph as constants, so the GPU only ever sees plain vectors and numbers.
- *
- * “Knot space” is the space of the stock TorusKnotGeometry. The face frame (right, up, forward) is
- * anchored at the apex of one outer lobe, which grows into the head; the material re-poses the knot so
- * that frame becomes object x, y and z.
- */
+/** CPU-side anatomy of the felt prince. Everything here is evaluated once at import time and baked into the node graph as constants, so the GPU only ever sees plain vectors and numbers. “Knot space” is the space of the stock TorusKnotGeometry. The face frame (right, up, forward) is anchored at the apex of one outer lobe, which grows into the head; the material re-poses the knot so that frame becomes object x, y and z. */
 const tubeRadius = 0.13
 /** Mesh parameter of the lobe apex that grows into the head (lobes sit at u = 0, ⅓, ⅔; 0 is the UV seam). */
 const headU = 1 / 3
@@ -35,10 +28,7 @@ function knotPoint(angle: number): Triple {
   const radius = (2 + Math.cos(1.5 * angle)) * 0.225
   return [radius * Math.cos(angle), radius * Math.sin(angle), Math.sin(1.5 * angle) * 0.225]
 }
-/**
- * Chibi proportions: the body knot shrinks toward the head while the tube keeps its plump radius.
- * The closest strands of the knot sit 0.374 apart, so 0.85 still leaves a gap between the tubes.
- */
+/** Chibi proportions: the body knot shrinks toward the head while the tube keeps its plump radius. The closest strands of the knot sit 0.374 apart, so 0.85 still leaves a gap between the tubes. */
 const bodyScale = 0.85
 const pivot = knotPoint(headU * TAU * 2)
 const bodyPoint = (angle: number) => combine([pivot, 1 - bodyScale], [knotPoint(angle), bodyScale])
@@ -69,11 +59,7 @@ const toFace = (point: Triple): Triple => {
   const offset = sub(point, apex.point)
   return [dot(offset, right), dot(offset, up), dot(offset, forward)]
 }
-/**
- * Arc length along the shrunken centerline: s(u) = total·u + Σ c_k·sin(2π·3k·u). The knot’s speed
- * varies by 1.9×, so stitches spaced in u would bunch up; the threefold-symmetric sine series undoes
- * that and vanishes at u = 0 and 1, so whole-numbered stitch counts close seamlessly.
- */
+/** Arc length along the shrunken centerline: s(u) = total·u + Σ c_k·sin(2π·3k·u). The knot’s speed varies by 1.9×, so stitches spaced in u would bunch up; the threefold-symmetric sine series undoes that and vanishes at u = 0 and 1, so whole-numbered stitch counts close seamlessly. */
 const arcLength = (() => {
   const samples = 6000
   const speeds = Array.from({length: samples}, (_, index) => {
@@ -202,10 +188,7 @@ const bounds = (() => {
     high,
   }
 })()
-/**
- * Object-space translation (applied after re-posing). Visitors look at the object origin, so the figure
- * sits a little lower than its bounding box would suggest: close views then favor the face.
- */
+/** Object-space translation (applied after re-posing). Visitors look at the object origin, so the figure sits a little lower than its bounding box would suggest: close views then favor the face. */
 const faceBias = 0.08
 const lift: Triple = [0, -(bounds.low + bounds.high) / 2 - faceBias - dot(apex.point, up), 0]
 /** Wing reach, the pinch at the knot and the flare at the tips (half-heights), in object units. */
@@ -218,11 +201,7 @@ const knotRadii = [0.036, 0.05] as const
 const knotHeight = 0.062
 /** A smooth step that collapses to a hard edge as softness reaches zero. */
 const soft = (value: Node<'float'>, softness: number) => value.div(softness).add(0.5).clamp()
-/**
- * A glossy black bow tie as a height field in the plane under the chin. Two pillowy wings flare from a
- * pinched middle, each with two folds radiating from the knot, and an oval knot rides on top.
- * `offset` is the surface point relative to the bow anchor (knot space).
- */
+/** A glossy black bow tie as a height field in the plane under the chin. Two pillowy wings flare from a pinched middle, each with two folds radiating from the knot, and an oval knot rides on top. `offset` is the surface point relative to the bow anchor (knot space). */
 function bowRelief(offset: Node<'vec3'>, softness: number) {
   const x = offset.dot(vec3(...bow.right))
   const y = offset.dot(vec3(...bow.up))
@@ -257,10 +236,7 @@ function bowRelief(offset: Node<'vec3'>, softness: number) {
     fold: folds.mul(wingCoverage).mul(knotCoverage.oneMinus()),
   }
 }
-/**
- * Surface-gradient bump mapping around an arbitrary view-space base normal, for heights in object
- * units. Unnormalized derivatives keep the strength independent of distance and resolution.
- */
+/** Surface-gradient bump mapping around an arbitrary view-space base normal, for heights in object units. Unnormalized derivatives keep the strength independent of distance and resolution. */
 function bump(normal: Node<'vec3'>, height: Node<'float'>) {
   const dx = positionView.dFdx()
   const dy = positionView.dFdy()
@@ -295,11 +271,7 @@ type EyeInput = {
   point: Node<'vec3'>
 }
 
-/**
- * The sewn-in satin care label on the back of one foot – the kind every plush has and every child
- * eventually cuts off. Tiny rows of printed “text” resolve only when a visitor walks around and leans
- * in. Coordinates are arc lengths on the tube (`u`, `v` are the warped mesh parameters).
- */
+/** The sewn-in satin care label on the back of one foot – the kind every plush has and every child eventually cuts off. Tiny rows of printed “text” resolve only when a visitor walks around and leans in. Coordinates are arc lengths on the tube (`u`, `v` are the warped mesh parameters). */
 function careLabel(u: Node<'float'>, v: Node<'float'>) {
   const along = wrappedCare(u.sub(label.u)).mul(label.speed)
   const around = wrappedCare(v.sub(label.around)).mul(TAU * tubeRadius)
@@ -333,11 +305,7 @@ const above = (value: Node<'float'>, edge: Node<'float'> | number) => {
   const width = value.fwidth().mul(0.75).max(0.0005)
   return value.sub(edge).div(width).mul(0.5).add(0.5).clamp()
 }
-/**
- * The felt-and-plastic eyes: a white felt disc on each eye bump, a domed glossy safety eye that rolls
- * toward the viewer and a green felt lid that sweeps down when he blinks. Masks never overlap between
- * the two eyes, so they are combined with max/sum.
- */
+/** The felt-and-plastic eyes: a white felt disc on each eye bump, a domed glossy safety eye that rolls toward the viewer and a green felt lid that sweeps down when he blinks. Masks never overlap between the two eyes, so they are combined with max/sum. */
 function eyeLayers({point, aims, blink, lift, dilation}: EyeInput) {
   let white: Node<'float'> = float(0)
   let pupil: Node<'float'> = float(0)
@@ -396,11 +364,7 @@ function eyeLayers({point, aims, blink, lift, dilation}: EyeInput) {
 }
 /** Fiber lay directions: felt is non-woven, so a handful of skewed orientations reads as random. */
 const fiberAxes: Array<Triple> = [[0.82, 0.31, -0.48], [-0.27, 0.91, 0.32], [0.36, -0.42, 0.83], [-0.71, -0.52, -0.47], [0.12, 0.68, 0.72], [0.94, -0.2, 0.27]]
-/**
- * Pressed wool felt. Returns a height (object units), an albedo factor around 1 and the fiber and
- * clump fields. `footprint` is the pixel size in object units; detail below two pixels settles to
- * its mean, so distant felt neither shimmers nor changes tone.
- */
+/** Pressed wool felt. Returns a height (object units), an albedo factor around 1 and the fiber and clump fields. `footprint` is the pixel size in object units; detail below two pixels settles to its mean, so distant felt neither shimmers nor changes tone. */
 function felt(p: Node<'vec3'>, footprint: Node<'float'>) {
 // Matted clumps and the uneven density of stuffed felt, readable from across the room.
   const mottle = mx_fractal_noise_float(p.mul(11), 3, 2.1, 0.5)
@@ -432,10 +396,7 @@ function felt(p: Node<'vec3'>, footprint: Node<'float'>) {
     mottle,
   }
 }
-/**
- * Loose fibers that stand proud of the felt and fray the silhouette. `facing` is |N·V| of the inflated
- * shell, `radius` the local radius of curvature and `fuzz` the shell thickness. Returns opacity.
- */
+/** Loose fibers that stand proud of the felt and fray the silhouette. `facing` is |N·V| of the inflated shell, `radius` the local radius of curvature and `fuzz` the shell thickness. Returns opacity. */
 function fuzzOpacity(p: Node<'vec3'>, normal: Node<'vec3'>, facing: Node<'float'>, radius: Node<'float'>, fuzz: number) {
 // Rays steeper than this hit the dense core under the fuzz layer.
   const core = float(1).sub(radius.div(radius.add(fuzz)).pow2()).sqrt()
@@ -456,11 +417,7 @@ const viewerKnot = () => toKnot(modelWorldMatrixInverse.mul(vec4(cameraPosition,
 const hash = (value: Node<'float'>, seed: number) => value.mul(12.9898).add(seed).sin().mul(43_758.5453).fract()
 /** One quick lid stroke: snaps shut in 70 ms, rests, then lifts lazily. */
 const lidStroke = (elapsed: Node<'float'>) => elapsed.smoothstep(0, 0.07).mul(elapsed.smoothstep(0.11, 0.26).oneMinus())
-/**
- * Blinks on an irregular but deterministic schedule: each 3.2 s window holds one blink, sometimes a
- * double blink, and occasionally none. The first window blinks well inside the 2 s preview loop, so
- * the loop stays seamless.
- */
+/** Blinks on an irregular but deterministic schedule: each 3.2 s window holds one blink, sometimes a double blink, and occasionally none. The first window blinks well inside the 2 s preview loop, so the loop stays seamless. */
 function blink() {
   const period = 3.2
   const cycle = time.div(period).floor()
@@ -490,10 +447,7 @@ function saccade() {
   }
   return mix(at(previous), at(index), settle)
 }
-/**
- * Where each pupil points (knot space). The safety eyes roll toward the viewer and saturate smoothly
- * at the felt rim, so the prince keeps watching whoever walks around him. Closer visitors dilate them.
- */
+/** Where each pupil points (knot space). The safety eyes roll toward the viewer and saturate smoothly at the felt rim, so the prince keeps watching whoever walks around him. Closer visitors dilate them. */
 function gaze(viewer: Node<'vec3'>) {
   const jitter = saccade()
   return eyes.map(eye => {
@@ -514,10 +468,7 @@ const smax = (a: Node<'float'>, b: Node<'float'>, k: number) => {
   const h = float(k).sub(a.sub(b).abs()).max(0)
   return a.max(b).add(h.mul(h).div(4 * k))
 }
-/**
- * The mesh has only 256 rings, so the head would be faceted. Rings are slid along the knot instead:
- * three times denser over the head, 6% sparser elsewhere. Monotonic, periodic and seam-safe.
- */
+/** The mesh has only 256 rings, so the head would be faceted. Rings are slid along the knot instead: three times denser over the head, 6% sparser elsewhere. Monotonic, periodic and seam-safe. */
 const warpWidth = 0.04
 const warpStrength = 0.76
 const warpBalance = 2 * warpWidth * Math.tanh(0.5 / warpWidth)
@@ -569,10 +520,7 @@ type SurfaceOptions = {
 /** Breathing, roughly in −1…1. */
   breath: Node<'float'>
 }
-/**
- * Three plump toes on each lower lobe, splayed along the tube at the front-bottom, as a 0…1 height.
- * Gaussian bumps in arc-length units keep them round however fast the parametrization runs.
- */
+/** Three plump toes on each lower lobe, splayed along the tube at the front-bottom, as a 0…1 height. Gaussian bumps in arc-length units keep them round however fast the parametrization runs. */
 function webbedToes(u: Node<'float'>, v: Node<'float'>) {
   let toes: Node<'float'> = float(0)
   for (const foot of feet) {
@@ -587,11 +535,7 @@ function webbedToes(u: Node<'float'>, v: Node<'float'>) {
   }
   return toes
 }
-/**
- * The plush figure as a radius field over the tube: the head lobe inflates into an ellipsoidal pillow,
- * two eye spheres bulge through the crown with stuffed fillets and a bow tie is raised under the chin.
- * Every shape is ray-cast from the tube centerline, so the surface stays a single closed sheet.
- */
+/** The plush figure as a radius field over the tube: the head lobe inflates into an ellipsoidal pillow, two eye spheres bulge through the crown with stuffed fillets and a bow tie is raised under the chin. Every shape is ray-cast from the tube centerline, so the surface stays a single closed sheet. */
 function plushSurface(u: Node<'float'>, v: Node<'float'>, {breath, bowSoftness}: SurfaceOptions) {
   const ring = ringFrame(u)
   const around = v.mul(TAU)
@@ -641,11 +585,7 @@ const arc = (u: Node<'float'>) => {
   }
   return sum
 }
-/**
- * A felt frog prince: a lime wool-felt plush sewn around the infinity knot, with a pillowy head, felt
- * eyes whose glossy safety pupils follow visitors, a satin bow tie, slow breathing, blinking and a
- * blush that rises when someone leans in close.
- */
+/** A felt frog prince: a lime wool-felt plush sewn around the infinity knot, with a pillowy head, felt eyes whose glossy safety pupils follow visitors, a satin bow tie, slow breathing, blinking and a blush that rises when someone leans in close. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.75)

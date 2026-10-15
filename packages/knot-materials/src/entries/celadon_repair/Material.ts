@@ -20,12 +20,7 @@ function fracture(position: Node<'vec3'>, scale: number, warp: number, seed: num
   const bend = mx_noise_vec3(position.mul(scale * 0.55).add(seed)).mul(warp)
   return voronoiCells(position.mul(scale).add(bend).add(seed), 0.9)
 }
-/**
- * Celadon porcelain mended with gold. The glaze is a real absorbing layer: it deepens to jade where it pools and where the eye
- * meets it at a slant, and the two crackle networks of Ge ware – iron threads and golden wires – lie inside it, shifting with
- * parallax. The great fractures are filled with raised gold lacquer; a slow wave of light passes through them, as if the
- * mending were still going on.
- */
+/** Celadon porcelain mended with gold. The glaze is a real absorbing layer: it deepens to jade where it pools and where the eye meets it at a slant, and the two crackle networks of Ge ware – iron threads and golden wires – lie inside it, shifting with parallax. The great fractures are filled with raised gold lacquer; a slow wave of light passes through them, as if the mending were still going on. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)

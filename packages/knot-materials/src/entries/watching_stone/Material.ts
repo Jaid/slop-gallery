@@ -39,10 +39,7 @@ const folds = [{
   amplitude: 0.04,
   phase: 5.3,
 }]
-/**
- * Veins run lengthwise and meander; this many fit around the tube. (A helical twist is impossible: with coprime windings
- * every vein would be one and the same strip, and no vein could keep its own mineral.)
- */
+/** Veins run lengthwise and meander; this many fit around the tube. (A helical twist is impossible: with coprime windings every vein would be one and the same strip, and no vein could keep its own mineral.) */
 const veinsAround = 15
 /** Each vein changes mineral along its length in this many segments. */
 const veinSegments = 11
@@ -108,12 +105,7 @@ const minerals: Array<[number, Mineral]> = [[0.42, {
 }]]
 /** Directions on the half-cone a fiber reflects into, as angles away from the surface normal. */
 const coneAngles = [-0.35, 0, 0.35]
-/**
- * Tiger's eye and tiger iron. Crocidolite fibers grow straight across each folded vein. A fiber is a tiny cylinder that mirrors
- * light into a cone around its axis, so the stone samples the real room along that cone: veins blaze where their fibers stand
- * square to the light, and neighboring veins lean their fibers opposite ways, flipping between gold and umber as you walk.
- * A second, silken eye is lit from the visitor's own position – it follows them, and narrows when they lean close.
- */
+/** Tiger's eye and tiger iron. Crocidolite fibers grow straight across each folded vein. A fiber is a tiny cylinder that mirrors light into a cone around its axis, so the stone samples the real room along that cone: veins blaze where their fibers stand square to the light, and neighboring veins lean their fibers opposite ways, flipping between gold and umber as you walk. A second, silken eye is lit from the visitor's own position – it follows them, and narrows when they lean close. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.5)

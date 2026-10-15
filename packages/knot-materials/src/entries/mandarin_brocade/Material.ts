@@ -21,11 +21,7 @@ const disc = (distance: Node<'float'>, radius: number) => {
   return distance.smoothstep(float(radius).sub(aa), float(radius).add(aa)).oneMinus()
 }
 
-/**
- * Mandarin silk: midnight weft covers the knot, and gold warp floats rise where a seigaiha wave pattern calls for them. Warp floats
- * run along the tube and weft runs around it, so the anisotropic highlight changes direction between motifs as you circle.
- * Sheen rakes across the silk at grazing angles, and one brighter current of light travels the length of the weave on a two-second loop.
- */
+/** Mandarin silk: midnight weft covers the knot, and gold warp floats rise where a seigaiha wave pattern calls for them. Warp floats run along the tube and weft runs around it, so the anisotropic highlight changes direction between motifs as you circle. Sheen rakes across the silk at grazing angles, and one brighter current of light travels the length of the weave on a two-second loop. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.95)

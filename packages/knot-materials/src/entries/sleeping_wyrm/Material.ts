@@ -23,10 +23,7 @@ const aspect = rowPitch / scalePitch
 const radius = 0.74
 /** The wyrm's slow breath: a swell that travels from head to tail. */
 const breath = (arc: Node<'float'>) => arc.mul(TAU * 3).sub(time.mul(0.55)).sin().mul(0.5).add(0.5)
-/**
- * Overlapping scales, staggered like shingles: later rows lie on top of earlier ones. Returns the
- * visible scale, its local coordinates and the gap to the free edge of the row lying over it.
- */
+/** Overlapping scales, staggered like shingles: later rows lie on top of earlier ones. Returns the visible scale, its local coordinates and the gap to the free edge of the row lying over it. */
 function scales(tube: Node<'vec2'>, lift: Node<'float'>) {
   const arc = knotArc(tube.x)
   const grid = vec2(arc.mul(rows), tube.y.mul(perRow))
@@ -67,12 +64,7 @@ function scales(tube: Node<'vec2'>, lift: Node<'float'>) {
     row: row.mod(rows),
   }
 }
-/**
- * A sleeping dragon. Staggered scales of blackened bronze, each domed and keeled, overlap along the
- * knot like shingles. Between them glows the fire of its body, breathing in a slow wave from head
- * to tail. As a visitor approaches, the wyrm stirs: its scales lift, the embers beneath flare, and an
- * oil-dark iridescence slides over the plates with every step.
- */
+/** A sleeping dragon. Staggered scales of blackened bronze, each domed and keeled, overlap along the knot like shingles. Between them glows the fire of its body, breathing in a slow wave from head to tail. As a visitor approaches, the wyrm stirs: its scales lift, the embers beneath flare, and an oil-dark iridescence slides over the plates with every step. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

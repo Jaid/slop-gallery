@@ -36,11 +36,7 @@ function combIridescence(view: Node<'vec3'>, grating: Node<'vec3'>, across: Node
   }
   return light
 }
-/**
- * A comb jelly. Eight rows of ciliary plates beat in metachronal waves that run the length of the knot; each plate is a
- * diffraction grating, so the light of the room breaks into rainbows whose colors depend on the plate’s tilt and on where the
- * viewer stands. Beneath the clear body, true-parallax canals and a glowing core carry the animal’s own blue-green light.
- */
+/** A comb jelly. Eight rows of ciliary plates beat in metachronal waves that run the length of the knot; each plate is a diffraction grating, so the light of the room breaks into rainbows whose colors depend on the plate’s tilt and on where the viewer stands. Beneath the clear body, true-parallax canals and a glowing core carry the animal’s own blue-green light. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)

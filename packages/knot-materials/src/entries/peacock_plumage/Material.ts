@@ -14,11 +14,7 @@ import {viewerFrame} from '../../lib/viewerFrame.ts'
 import {wrapCell} from '../../lib/wrapCell.ts'
 import knotData from './data.ts'
 
-/**
- * A feather made monumental. Emerald barbs stream along the knot while staggered eyes open in the plumage:
- * bronze and copper rings around a turquoise heart and a sapphire pupil. Tilt the feather and the hearts
- * slide toward violet; lean in and the individual barbs, too fine to see from the doorway, resolve and shiver.
- */
+/** A feather made monumental. Emerald barbs stream along the knot while staggered eyes open in the plumage: bronze and copper rings around a turquoise heart and a sapphire pupil. Tilt the feather and the hearts slide toward violet; lean in and the individual barbs, too fine to see from the doorway, resolve and shiver. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)

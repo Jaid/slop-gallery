@@ -23,13 +23,7 @@ function iceRay(ior: number) {
   }
 }
 
-/**
- * A frozen cathedral. Clear glacial ice, blue to the core where the light has to cross the whole
- * body and white at the edge where the chord is short, with the studio bent through it and split by
- * the 1.31 index. Rime has settled on the upward faces and nowhere else, and it arrives as you come
- * closer: the nearer you stand, the more of the frost, the fracture planes and the air it traps
- * resolve out of the ice.
- */
+/** A frozen cathedral. Clear glacial ice, blue to the core where the light has to cross the whole body and white at the edge where the chord is short, with the studio bent through it and split by the 1.31 index. Rime has settled on the upward faces and nowhere else, and it arrives as you come closer: the nearer you stand, the more of the frost, the fracture planes and the air it traps resolve out of the ice. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.45)

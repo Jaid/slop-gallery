@@ -35,10 +35,7 @@ function filteredBead(distance: Node<'float'>, width: number, footprint: Node<'f
   const filteredWidth = footprint.mul(1.2).pow2().add(width ** 2).sqrt()
   return distance.div(filteredWidth).pow2().negate().exp().mul(float(width).div(filteredWidth))
 }
-/**
- * Seigaiha (blue ocean wave) overlapping concentric fan scales on a seamless tube lattice.
- * Includes generous Ro-iro mirror-black resting zones (Yohaku/Ma) and hand-placed Kiri-Raden shell mosaic tiles.
- */
+/** Seigaiha (blue ocean wave) overlapping concentric fan scales on a seamless tube lattice. Includes generous Ro-iro mirror-black resting zones (Yohaku/Ma) and hand-placed Kiri-Raden shell mosaic tiles. */
 function seigaihaField(cells: Node<'vec2'>) {
   const period = vec2(columns, rows)
   const baseCell = cells.floor()
@@ -124,10 +121,7 @@ const displacedMakiE = Fn(([tube]: [Node<'vec2'>]) => {
   }
   return position.add(normal.mul(dome.mul(domeHeight)))
 })
-/**
- * Polygonal Hirame & Nashiji gold filings suspended in translucent amber lacquer:
- * Uses rotated anisotropic Chebyshev/hexagonal facets per cell so particles read as angular crushed gold leaf rather than circular dots.
- */
+/** Polygonal Hirame & Nashiji gold filings suspended in translucent amber lacquer: Uses rotated anisotropic Chebyshev/hexagonal facets per cell so particles read as angular crushed gold leaf rather than circular dots. */
 function polygonalGoldFlakes(position: Node<'vec3'>, view: Node<'vec3'>, depth: number, scale: number, maxRadius: number, threshold: number, seed: number) {
   const q = position.sub(view.mul(depth)).mul(scale).add(seed)
   const cell = q.floor()
@@ -153,11 +147,7 @@ function polygonalGoldFlakes(position: Node<'vec3'>, view: Node<'vec3'>, depth: 
   const beerLambert = Math.exp(-depth * 22)
   return shape.mul(gate).mul(glint).mul(beerLambert).mul(visibility)
 }
-/**
- * Imperial Japanese Raden & Takamaki-e Urushi Lacquerware:
- * Ro-iro mirror-black lacquer and Tame-urushi oxblood depth, inlaid with hand-cut Kiri-Raden abalone mother-of-pearl shards,
- * burnished Kinpun (gold powder) Takamaki-e relief, and multi-depth angular Nashiji/Hirame 24k gold filings.
- */
+/** Imperial Japanese Raden & Takamaki-e Urushi Lacquerware: Ro-iro mirror-black lacquer and Tame-urushi oxblood depth, inlaid with hand-cut Kiri-Raden abalone mother-of-pearl shards, burnished Kinpun (gold powder) Takamaki-e relief, and multi-depth angular Nashiji/Hirame 24k gold filings. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.1)

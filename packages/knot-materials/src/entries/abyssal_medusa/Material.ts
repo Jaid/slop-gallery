@@ -10,12 +10,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * A medusa from the bathypelagic dark. The bell is almost pure water, so the piece is really its own
- * nerve net: a mesh of light that fires a wave around the body, twice as fast as you walk away from
- * it, leaving the flesh behind it slowly closing. The plankton caught in the net drifts, and every
- * time a wave passes they answer.
- */
+/** A medusa from the bathypelagic dark. The bell is almost pure water, so the piece is really its own nerve net: a mesh of light that fires a wave around the body, twice as fast as you walk away from it, leaving the flesh behind it slowly closing. The plankton caught in the net drifts, and every time a wave passes they answer. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.35)

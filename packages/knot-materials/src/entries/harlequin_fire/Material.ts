@@ -12,11 +12,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 const silicaIndex = 1.45
-/**
- * Black opal. Every grain is a crystal of stacked silica spheres with its own lattice orientation and spacing.
- * A grain only ignites when its lattice mirrors a real light source of the environment toward the eye,
- * and its color obeys Bragg's law – tilt away from the lattice and a red grain slides through green into violet.
- */
+/** Black opal. Every grain is a crystal of stacked silica spheres with its own lattice orientation and spacing. A grain only ignites when its lattice mirrors a real light source of the environment toward the eye, and its color obeys Bragg's law – tilt away from the lattice and a red grain slides through green into violet. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.3)

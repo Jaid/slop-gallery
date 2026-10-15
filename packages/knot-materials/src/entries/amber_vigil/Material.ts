@@ -30,14 +30,7 @@ function refractedRay(ior: number) {
   }
 }
 
-/**
- * A ten-million-year vigil cast in amber. Every photon that reaches your eye crossed the whole body of
- * the resin and was eaten on the way, so the stone runs from pale gold at the grazing silhouette -
- * where the chord is short - to a burning cognac where you look straight through two hundred
- * millimetres of tree. What lights it is the studio bent through the body and split by the 1.55 index
- * into a faint chromatic fringe, and the flow striae and trapped air slide against the surface as you
- * walk, because they really are a centimetre below it.
- */
+/** A ten-million-year vigil cast in amber. Every photon that reaches your eye crossed the whole body of the resin and was eaten on the way, so the stone runs from pale gold at the grazing silhouette - where the chord is short - to a burning cognac where you look straight through two hundred millimetres of tree. What lights it is the studio bent through the body and split by the 1.55 index into a faint chromatic fringe, and the flow striae and trapped air slide against the surface as you walk, because they really are a centimetre below it. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.34)

@@ -20,13 +20,7 @@ function perturbNormal(base: Node<'vec3'>, height: Node<'float'>, strength: Node
   const gradient = rx.mul(height.dFdx()).add(ry.mul(height.dFdy())).mul(determinant.sign()).div(determinant.abs().max(1e-12))
   return base.sub(gradient.mul(strength)).normalize()
 }
-/**
- * One anemone polyp per lattice cell of the tube. Centers and radii are constrained
- * so a polyp never crosses its cell wall, which keeps every creature whole. The
- * displacement itself stays smooth — dome, crown envelope and a dipped mouth — while
- * the individual tentacles are carved into the fragment normal, where the mesh
- * tessellation cannot facet them. No derivatives, so the field is vertex-safe.
- */
+/** One anemone polyp per lattice cell, kept whole inside its cell; the smooth dome carries the vertex-safe displacement while the tentacles live in the fragment normal. */
 function polypField(tube: Node<'vec2'>) {
   const q = tube.mul(vec2(...grid))
   const wrapped = wrapCell(q.floor(), vec2(...grid))
@@ -77,11 +71,7 @@ function polypShape(tube: Node<'vec2'>) {
   const frame = knotFrame(tube)
   return frame.position.add(frame.normal.mul(polypField(tube).height))
 }
-/**
- * A living anemone colony on a knot of dark reef flesh. Hundreds of polyps breathe,
- * swell open as you approach, and pass a slow bioluminescent tide around the knot;
- * their teal crowns catch a wet rim light while amber mouths glow at the center.
- */
+/** A living anemone colony on a knot of dark reef flesh. Hundreds of polyps breathe, swell open as you approach, and pass a slow bioluminescent tide around the knot; their teal crowns catch a wet rim light while amber mouths glow at the center. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.6)

@@ -27,14 +27,7 @@ const fbm = (position: Node<'vec3'>, octaves = 2) => {
   return sum.div(norm)
 }
 
-/**
- * Polished feldspar with a buried aurora. Every crystal grain tilts its lamella plane a
- * little away from the surface, so a grain stays charcoal-black until the halfway direction
- * between viewer and key light aligns with that plane — then the whole grain ignites, sweeps
- * blue → teal → gold as the alignment tightens, and dies again. Twin lamellae stripe the
- * flash, each grain breaks the polish with its own tiny tilt, and cleavage dust sparkles
- * only at reading distance.
- */
+/** Polished feldspar with a buried aurora. Every crystal grain tilts its lamella plane a little away from the surface, so a grain stays charcoal-black until the halfway direction between viewer and key light aligns with that plane — then the whole grain ignites, sweeps blue → teal → gold as the alignment tightens, and dies again. Twin lamellae stripe the flash, each grain breaks the polish with its own tiny tilt, and cleavage dust sparkles only at reading distance. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.15)

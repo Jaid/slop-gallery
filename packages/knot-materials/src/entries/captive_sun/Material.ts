@@ -9,12 +9,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Two depths of solar granulation. The wide cells are the bright granules and
- * the dark lanes between them; the fine cells only resolve for a close witness.
- * Sampling both from object position keeps every granule nailed to the star
- * while the caller breathes the sample point along a closed, looping drift.
- */
+/** Two depths of solar granulation. The wide cells are the bright granules and the dark lanes between them; the fine cells only resolve for a close witness. Sampling both from object position keeps every granule nailed to the star while the caller breathes the sample point along a closed, looping drift. */
 function granulation(position: Node<'vec3'>, drift: Node<'vec3'>) {
   const laneWide = cellularBoundary(position.mul(12.5).add(drift))
   const laneFine = cellularBoundary(position.mul(30).sub(drift.mul(1.7)))
@@ -37,16 +32,7 @@ function blackbody(temperature: Node<'float'>) {
   return shade
 }
 
-/**
- * A star held at gallery scale. Granules boil in two depths – wide golden cells
- * with cooling red lanes, and a fine grain that only a close witness earns –
- * while magnetic spots sink and darken the fire. The limb obeys a star’s
- * manners: it reddens and dims toward the edge, then tears into a flickering
- * corona with red prominences crawling along the silhouette. Every drift
- * walks a closed path, so the fire breathes forever without ever repeating a
- * visible jump; drawing near does not change the star, it changes how much of
- * its weather you are allowed to see.
- */
+/** A star held at gallery scale. Granules boil in two depths – wide golden cells with cooling red lanes, and a fine grain that only a close witness earns – while magnetic spots sink and darken the fire. The limb obeys a star’s manners: it reddens and dims toward the edge, then tears into a flickering corona with red prominences crawling along the silhouette. Every drift walks a closed path, so the fire breathes forever without ever repeating a visible jump; drawing near does not change the star, it changes how much of its weather you are allowed to see. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.2)

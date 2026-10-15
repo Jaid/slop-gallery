@@ -14,13 +14,7 @@ import {viewerFrame} from '../../lib/viewerFrame.ts'
 import {wrapCell} from '../../lib/wrapCell.ts'
 import knotData from './data.ts'
 
-/**
- * A woven damask medallion in a diamond trellis. The medallion is an
- * eight-petalled rosette with two engraved rings, a raised heart and veins
- * running out along every petal; neighboring cells are stitched together by
- * the trellis and its corner beads, so the cloth reads as one continuous
- * brocade rather than a sheet of stamps.
- */
+/** A woven damask medallion in a diamond trellis. The medallion is an eight-petalled rosette with two engraved rings, a raised heart and veins running out along every petal; neighboring cells are stitched together by the trellis and its corner beads, so the cloth reads as one continuous brocade rather than a sheet of stamps. */
 function damask(tube: Node<'vec2'>) {
   const grid = vec2(16, 3)
   const q = tube.mul(grid)
@@ -66,13 +60,7 @@ function damask(tube: Node<'vec2'>) {
     trellis,
   }
 }
-/**
- * Plain-weave silk at thread scale: warp and weft take turns passing over one
- * another, producing the tiny checkerboard relief a fingertip would feel. The
- * weave is honestly resolved – as soon as a thread falls below a pixel it
- * retires into smooth silk instead of shimmering – and a slow diagonal slub
- * keeps long runs of ground cloth from ever looking printed.
- */
+/** Plain-weave silk at thread scale: warp and weft take turns passing over one another, producing the tiny checkerboard relief a fingertip would feel. The weave is honestly resolved – as soon as a thread falls below a pixel it retires into smooth silk instead of shimmering – and a slow diagonal slub keeps long runs of ground cloth from ever looking printed. */
 function weave(tube: Node<'vec2'>) {
   const threads = tube.mul(vec2(430, 130))
   const resolved = threads.fwidth().length().smoothstep(0.4, 1.3).oneMinus()
@@ -87,15 +75,7 @@ function weave(tube: Node<'vec2'>) {
   }
 }
 
-/**
- * Imperial plum silk under gold thread. The damask obeys the oldest trick of
- * jacquard weaving: face a medallion squarely and it nearly vanishes into the
- * ground, caught in passing it blazes – so the pattern does not sit on the
- * knot, it patrols it as you walk. Under the gold, plain-weave threads cross
- * at fingertip scale and retire politely with distance, the silk ground shifts
- * from plum to peacock in the sheen, and once per exhibition loop a slow
- * shimmer crosses the court like light moving along a hem.
- */
+/** Imperial plum silk under gold thread. The damask obeys the oldest trick of jacquard weaving: face a medallion squarely and it nearly vanishes into the ground, caught in passing it blazes – so the pattern does not sit on the knot, it patrols it as you walk. Under the gold, plain-weave threads cross at fingertip scale and retire politely with distance, the silk ground shifts from plum to peacock in the sheen, and once per exhibition loop a slow shimmer crosses the court like light moving along a hem. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.05)

@@ -12,13 +12,7 @@ import {viewerFrame} from '../../candidates/claude_fable/lib/viewerFrame.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import knotData from './data.ts'
 
-/**
- * Pattern-welded steel. The billet is a stack of alternating bright (nickel) and dark (carbon) layers, folded and twisted;
- * the knot's surface cuts through that stack, so the pattern is a true 3D slice and flows around the tube in the
- * topographic ribbons of real Damascus. Acid etching leaves the dark layers recessed and matte while the bright layers stay
- * polished and brushed, and heat has tinted the bright steel with the straw–bronze–purple–blue oxide colors of tempering,
- * which shift with the viewing angle as thin films do. Close up, the etched grooves keep a faint memory of the forge.
- */
+/** Pattern-welded steel. The billet is a stack of alternating bright (nickel) and dark (carbon) layers, folded and twisted; the knot's surface cuts through that stack, so the pattern is a true 3D slice and flows around the tube in the topographic ribbons of real Damascus. Acid etching leaves the dark layers recessed and matte while the bright layers stay polished and brushed, and heat has tinted the bright steel with the straw–bronze–purple–blue oxide colors of tempering, which shift with the viewing angle as thin films do. Close up, the etched grooves keep a faint memory of the forge. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.2)

@@ -21,11 +21,7 @@ function perturbNormal(base: Node<'vec3'>, height: Node<'float'>, strength: Node
   const gradient = rx.mul(height.dFdx()).add(ry.mul(height.dFdy())).mul(determinant.sign()).div(determinant.abs().max(1e-12))
   return base.sub(gradient.mul(strength)).normalize()
 }
-/**
- * One overlapping wing scale per staggered lattice cell. The field is free of
- * derivatives so it can drive the vertex displacement; the micro-ridges that give
- * Morpho scales their fire are added later as a fragment-only normal perturbation.
- */
+/** One overlapping wing scale per staggered lattice cell. The field is free of derivatives so it can drive the vertex displacement; the micro-ridges that give Morpho scales their fire are added later as a fragment-only normal perturbation. */
 function scaleField(tube: Node<'vec2'>) {
   const q = tube.mul(vec2(...grid))
   const row = q.y.floor()
@@ -57,12 +53,7 @@ function scaleShape(tube: Node<'vec2'>) {
   const frame = knotFrame(tube)
   return frame.position.add(frame.normal.mul(scaleField(tube).height))
 }
-/**
- * A knot shingled with Morpho wing scales. No pigment is blue: each scale is a tiny
- * tilted mirror over black velvet, and its color is pure interference between the
- * scale, its micro-ridges and your eye — so a walk around the knot sends slow
- * weather of blue, teal and violet drifting across the scales.
- */
+/** A knot shingled with Morpho wing scales. No pigment is blue: each scale is a tiny tilted mirror over black velvet, and its color is pure interference between the scale, its micro-ridges and your eye — so a walk around the knot sends slow weather of blue, teal and violet drifting across the scales. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

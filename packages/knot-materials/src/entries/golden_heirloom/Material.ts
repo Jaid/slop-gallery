@@ -16,14 +16,7 @@ import {viewerFrame} from '../../lib/viewerFrame.ts'
 import {wrapCell} from '../../lib/wrapCell.ts'
 import knotData from './data.ts'
 
-/**
- * Porcelain mended with gold. A warm ivory glaze carries deep cobalt underglaze painting —
- * a broken brush band, fine double lines and scattered plum rings that wrap the tube
- * seamlessly — while a noise-warped fracture network is filled with satin gold that sits a
- * hair proud of the surface under clear lacquer. The gold is true metal: dull umber in
- * shadow, igniting as you walk the highlight across it. Hairline crackle, gold dust and
- * wheel-throwing lines only resolve up close.
- */
+/** Porcelain mended with gold. A warm ivory glaze carries deep cobalt underglaze painting — a broken brush band, fine double lines and scattered plum rings that wrap the tube seamlessly — while a noise-warped fracture network is filled with satin gold that sits a hair proud of the surface under clear lacquer. The gold is true metal: dull umber in shadow, igniting as you walk the highlight across it. Hairline crackle, gold dust and wheel-throwing lines only resolve up close. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

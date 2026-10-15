@@ -21,11 +21,7 @@ const spacingAround = tubeCircumference / scalesAround
 const lift = 0.0065
 /** The skin glides along the knot, in knot laps per second. */
 const glide = 0.0045
-/**
- * Overlapping keeled scales on a body that swallows itself. The whole skin glides endlessly along the knot while a slow
- * muscular wave lifts the scales as it passes. Each plate carries a microscopic film whose thickness differs from scale to scale
- * and from base to tip, so walking around the piece sends rainbows rippling across the dark body like on a sunbeam snake.
- */
+/** Overlapping keeled scales on a body that swallows itself. The whole skin glides endlessly along the knot while a slow muscular wave lifts the scales as it passes. Each plate carries a microscopic film whose thickness differs from scale to scale and from base to tip, so walking around the piece sends rainbows rippling across the dark body like on a sunbeam snake. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

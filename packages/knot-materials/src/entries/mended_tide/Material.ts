@@ -13,10 +13,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/**
- * Scales around the tube; rows along the knot are chosen so each scale is nearly round. The row count is a multiple of four,
- * so both the half-scale stagger and the wash's four-row rhythm meet seamlessly where the knot closes.
- */
+/** Scales around the tube; rows along the knot are chosen so each scale is nearly round. The row count is a multiple of four, so both the half-scale stagger and the wash's four-row rhythm meet seamlessly where the knot closes. */
 const scalesAround = 6
 const rowsAlong = 4 * Math.round(knotLength / (tubeCircumference / scalesAround) / 2)
 const glazeIndex = 1.5
@@ -45,11 +42,7 @@ function seigaiha(x: Node<'float'>, y: Node<'float'>) {
     local,
   }
 }
-/**
- * Blue-and-white porcelain with a seigaiha sea, cobalt brushed under a thick glaze, crackled by age – and once shattered.
- * The shards were rejoined with gold lacquer, slightly out of register as real mends are. The painted waves still roll
- * slowly along the knot, a molten glimmer travels the scars, and the gold warms when a visitor comes close.
- */
+/** Blue-and-white porcelain with a seigaiha sea, cobalt brushed under a thick glaze, crackled by age – and once shattered. The shards were rejoined with gold lacquer, slightly out of register as real mends are. The painted waves still roll slowly along the knot, a molten glimmer travels the scars, and the gold warms when a visitor comes close. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.75)

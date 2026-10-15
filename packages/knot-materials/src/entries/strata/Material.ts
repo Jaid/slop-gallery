@@ -16,12 +16,7 @@ const bedHeight = (p: Node<'vec3'>, scale: number) => {
   return p.y.mul(6.5).add(fold.mul(0.42)).add(swell.mul(0.9))
 }
 
-/**
- * Sandstone, read the way a canyon is read. The beds are laid down flat and then the whole rock is
- * folded, so on this knot they slice across the form at a constant angle and the whole geology is
- * legible in one glance. Every bed is a different summer: iron red, ochre, bone, rust. The rock is
- * sand-fine and dry, and where the water has kept it polished the studio runs along the bedding.
- */
+/** Sandstone, read the way a canyon is read. The beds are laid down flat and then the whole rock is folded, so on this knot they slice across the form at a constant angle and the whole geology is legible in one glance. Every bed is a different summer: iron red, ochre, bone, rust. The rock is sand-fine and dry, and where the water has kept it polished the studio runs along the bedding. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.55)

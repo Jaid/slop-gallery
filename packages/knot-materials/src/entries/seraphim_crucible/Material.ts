@@ -31,11 +31,7 @@ function solarBlackbody(heat: Node<'float'>) {
   const bright = mix(mid, color('#ffd25a'), heat.smoothstep(0.55, 0.88))
   return mix(bright, color('#fffdf4'), heat.smoothstep(0.82, 1.18))
 }
-/**
- * An ancient celestial astrolabe and Dyson-sphere reliquary forged from burnished orichalcum and
- * deep cobalt-lapis enamel, caging a miniature boiling star. As the viewer approaches, the mechanical
- * iris louvers slide open and lift to reveal the magnetic coronal loops inside.
- */
+/** An ancient celestial astrolabe and Dyson-sphere reliquary forged from burnished orichalcum and deep cobalt-lapis enamel, caging a miniature boiling star. As the viewer approaches, the mechanical iris louvers slide open and lift to reveal the magnetic coronal loops inside. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1.15)

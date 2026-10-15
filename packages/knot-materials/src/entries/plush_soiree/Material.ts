@@ -10,13 +10,7 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {TAU} from '../../lib/TAU.ts'
 import knotData from './data.ts'
 
-/**
- * Where the fuzzy fellows sit: tube coordinate along the knot and the around-the-tube heading each one looks toward
- * (0.75 faces +z, the gallery's default viewpoint; 0.25 faces −z; 0.5 faces away from the knot's axis).
- * Found by a greedy search with local refinement over 576 candidate spots: the worst of 96 viewpoints around the
- * exhibit (with tube self-occlusion) still meets someone's face as squarely as possible, while the front, 45°, 90°
- * and closeup views stay strong. Spots are at least 0.55 object units apart along the tube.
- */
+/** Where the fuzzy fellows sit: tube coordinate along the knot and the around-the-tube heading each one looks toward (0.75 faces +z, the gallery's default viewpoint; 0.25 faces −z; 0.5 faces away from the knot's axis). Found by a greedy search with local refinement over 576 candidate spots: the worst of 96 viewpoints around the exhibit (with tube self-occlusion) still meets someone's face as squarely as possible, while the front, 45°, 90° and closeup views stay strong. Spots are at least 0.55 object units apart along the tube. */
 const facePlacements = [{
   tube: 0,
   heading: 0.5,
@@ -55,10 +49,7 @@ function knotPoint(angle: number) {
   return new Vector3(radius * Math.cos(angle), radius * Math.sin(angle), Math.sin(phase) * 0.225)
 }
 const curveSpeed = (angle: number) => knotPoint(angle + 0.0001).distanceTo(knotPoint(angle - 0.0001)) / 0.0002
-/**
- * The curve's speed is a smooth even function of the radial phase, so a few cosine terms reproduce it to 1e-5.
- * Integrating them gives a closed-form arc length the shader can evaluate per fragment.
- */
+/** The curve's speed is a smooth even function of the radial phase, so a few cosine terms reproduce it to 1e-5. Integrating them gives a closed-form arc length the shader can evaluate per fragment. */
 const speedHarmonics = (() => {
   const steps = 2048
   const harmonics: Array<number> = []
@@ -141,11 +132,7 @@ function arcLength(tubeX: Node<'float'>) {
   }
   return length
 }
-/**
- * Face-local coordinates from tube UV; identical math in both shader stages keeps masks and relief aligned.
- * Each face is a sticker on the tube: distances are arc lengths along and around the tube, rotated so that the
- * ears point toward the exhibit's +y as far as the surface allows. Every point belongs to the nearest face center.
- */
+/** Face-local coordinates from tube UV; identical math in both shader stages keeps masks and relief aligned. Each face is a sticker on the tube: distances are arc lengths along and around the tube, rotated so that the ears point toward the exhibit's +y as far as the surface allows. Every point belongs to the nearest face center. */
 function faceLocal(tube: Node<'vec2'>): FaceLocal {
   const arc = arcLength(tube.x)
   let cell: Node<'float'> = float(0)
@@ -177,10 +164,7 @@ function glance(cell: Node<'float'>) {
   const target = (index: Node<'float'>) => vec2(mx_cell_noise_float(vec3(index, cell, 3.5)), mx_cell_noise_float(vec3(index, cell, 8.5))).sub(0.5).mul(0.011)
   return mix(target(slot.sub(1)), target(slot), ease)
 }
-/**
- * Face-plane components (right, up) of an object-space direction, for a face standing upright on a surface with this normal.
- * Degenerate where the normal is vertical, which no face is; the division is guarded so stray fragments stay finite.
- */
+/** Face-plane components (right, up) of an object-space direction, for a face standing upright on a surface with this normal. Degenerate where the normal is vertical, which no face is; the division is guarded so stray fragments stay finite. */
 function faceAxes(normal: Node<'vec3'>, direction: Node<'vec3'>) {
   const upRaw = vec3(0, 1, 0).sub(normal.mul(normal.y))
   const up = upRaw.div(upRaw.length().max(0.001))
@@ -217,10 +201,7 @@ function eyeDelta(local: FaceLocal, side: -1 | 1, look: Node<'vec2'>) {
   const center = vec2(side * eyeSpacing, eyeCenterY).add(look)
   return vec2(local.x, local.y).sub(center)
 }
-/**
- * Ear-lobe profile 0…1 for both ears (a slow alternating wiggle keeps them alive).
- * The full, rounded lobe reads well even though the tube's 256 segments give each ear only about four vertices along the knot.
- */
+/** Ear-lobe profile 0…1 for both ears (a slow alternating wiggle keeps them alive). The full, rounded lobe reads well even though the tube's 256 segments give each ear only about four vertices along the knot. */
 function earProfile(local: FaceLocal) {
   const wiggle = time.mul(1.9).add(local.cell.mul(2.1)).sin().mul(0.0045)
   let profile: Node<'float'> = float(0)
@@ -233,12 +214,7 @@ function earProfile(local: FaceLocal) {
   return profile.min(1)
 }
 const offsets = [-1, 0, 1].flatMap(x => [-1, 0, 1].flatMap(y => [-1, 0, 1].map(z => [x, y, z] as const)))
-/**
- * One strand per lattice cell, lying in the tangent plane at a random height around the surface.
- * Each strand is placed with its own parallax, so fibers buried in the felt slide against the surface
- * ones as the viewer moves, and strands above the surface only show up as flyaways.
- * Works in cell units: `q` is already scaled, `view` and `normal` are unit vectors, `facing` is their dot product.
- */
+/** One strand per lattice cell, lying in the tangent plane at a random height around the surface. Each strand is placed with its own parallax, so fibers buried in the felt slide against the surface ones as the viewer moves, and strands above the surface only show up as flyaways. Works in cell units: `q` is already scaled, `view` and `normal` are unit vectors, `facing` is their dot product. */
 const strandField = Fn(([q, normal, view, facing, seed, halfWidth]: [Node<'vec3'>, Node<'vec3'>, Node<'vec3'>, Node<'float'>, Node<'float'>, Node<'float'>]) => {
   const base = q.floor().toVar()
   const footprint = q.fwidth().length().max(0.0001).toVar()
@@ -283,10 +259,7 @@ type FeltLayer = {
 /** 1 where strands are wider than a pixel, fading to 0 as they alias away. */
   resolved: Node<'float'>
 }
-/**
- * A layer of matted wool strands around the surface at `scale` cells per object unit, in object space, seamless and
- * independent of any tangent frame. Unresolved strands settle to their mean coverage rather than shimmering.
- */
+/** A layer of matted wool strands around the surface at `scale` cells per object unit, in object space, seamless and independent of any tangent frame. Unresolved strands settle to their mean coverage rather than shimmering. */
 function feltStrands(q: Node<'vec3'>, normal: Node<'vec3'>, view: Node<'vec3'>, facing: Node<'float'>, scale: number, seed: number, halfWidth: number, mean: number): FeltLayer {
   const scaled = q.mul(scale)
   const field = strandField(scaled, normal, view, facing, float(seed), float(halfWidth))
@@ -322,10 +295,7 @@ function plushPoint(tube: Node<'vec2'>) {
     position: frame.position.add(frame.normal.mul(height)),
   }
 }
-/**
- * Analytic displaced surface for the vertex stage. The normal comes from finite differences of the same
- * displacement, so ears and lumps shade smoothly even where the 256×64 tessellation is coarse.
- */
+/** Analytic displaced surface for the vertex stage. The normal comes from finite differences of the same displacement, so ears and lumps shade smoothly even where the 256×64 tessellation is coarse. */
 function plushSurface(tube: Node<'vec2'>) {
   const base = plushPoint(tube)
   const along = plushPoint(tube.add(vec2(stepAlong, 0))).position.sub(base.position)
@@ -343,11 +313,7 @@ function fill(distance: Node<'float'>) {
   const aa = distance.fwidth().max(0.00002)
   return distance.smoothstep(aa.negate(), aa).oneMinus()
 }
-/**
- * Needle-felted wool with a soirée of faces: glossy bead eyes that blink and glance, black felt bow ties and stuffed ears.
- * The wool is built from individual strands at two scales, lying at different depths with real parallax, so leaning in
- * reveals a mat of fibers rather than a texture; stray strands fray the silhouette, and the whole body breathes.
- */
+/** Needle-felted wool with a soirée of faces: glossy bead eyes that blink and glance, black felt bow ties and stuffed ears. The wool is built from individual strands at two scales, lying at different depths with real parallax, so leaning in reveals a mat of fibers rather than a texture; stray strands fray the silhouette, and the whole body breathes. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.85)

@@ -17,10 +17,7 @@ const starRadius = 0.0011
 const starJitter = 0.5
 /** Distance from a star at which its light, halo included, has fully faded: the margin, so it never leaks into another cell. */
 const starReach = (1 - starJitter) / 2 / starScale
-/**
- * Cells one march step can cross. A step is at most 0.5 / 26 ≈ 0.019 units long, shorter than one 0.022-unit cell, so it
- * crosses each axis’ cell walls at most once and touches at most four cells.
- */
+/** Cells one march step can cross. A step is at most 0.5 / 26 ≈ 0.019 units long, shorter than one 0.022-unit cell, so it crosses each axis’ cell walls at most once and touches at most four cells. */
 const segmentCells = 4
 /** Slow drift of the whole cloud. */
 const drift = vec3(time.mul(0.011), time.mul(-0.007), time.mul(0.009))
@@ -28,11 +25,7 @@ const drift = vec3(time.mul(0.011), time.mul(-0.007), time.mul(0.009))
 function largeScale(q: Node<'vec3'>) {
   return vec4(mx_noise_vec3(q.mul(2.6).add(drift)).mul(0.16), mx_noise_float(q.mul(1.9).add(vec3(3.3, 1.1, 9.9))).mul(0.75).add(0.5))
 }
-/**
- * Emission nebula sampled at an object-space point, given the interpolated large-scale fields. Returns vec4(emitted radiance,
- * extinction coefficient). Hydrogen-alpha filaments, doubly ionized oxygen in the hot cavities, and opaque pillars of dust whose
- * sunlit rims glow brightest – everything slowly churns.
- */
+/** Emission nebula sampled at an object-space point, given the interpolated large-scale fields. Returns vec4(emitted radiance, extinction coefficient). Hydrogen-alpha filaments, doubly ionized oxygen in the hot cavities, and opaque pillars of dust whose sunlit rims glow brightest – everything slowly churns. */
 function nebula(q: Node<'vec3'>, large: Node<'vec4'>) {
   const w = q.add(large.xyz)
   const ionization = large.w
@@ -51,12 +44,7 @@ function nebula(q: Node<'vec3'>, large: Node<'vec4'>) {
   const extinction = dust.mul(70).add(gas.mul(3))
   return vec4(emission, extinction)
 }
-/**
- * Point stars whose closest approach to the ray lies within one step’s segment [start, end). The segment walks the star lattice
- * cell by cell (a 3D DDA) and every star’s light fades out within its own cell, so each visible star is found exactly once, wherever
- * the steps happen to fall, and always stays round. The light arrives dimmed by the gas in front of it: `entering` is the
- * transmittance at `start`, `extinction` the segment’s extinction coefficient.
- */
+/** Point stars whose closest approach to the ray lies within one step’s segment [start, end). The segment walks the star lattice cell by cell (a 3D DDA) and every star’s light fades out within its own cell, so each visible star is found exactly once, wherever the steps happen to fall, and always stays round. The light arrives dimmed by the gas in front of it: `entering` is the transmittance at `start`, `extinction` the segment’s extinction coefficient. */
 const stars = Fn(([origin, direction, chord, start, end, entering, extinction, footprint, richness]: [Node<'vec3'>, Node<'vec3'>, Node<'float'>, Node<'float'>, Node<'float'>, Node<'float'>, Node<'float'>, Node<'float'>, Node<'float'>]) => {
   const light = vec3(0).toVar()
   const q = origin.add(direction.mul(start)).mul(starScale)
@@ -133,11 +121,7 @@ const march = Fn(([origin, direction, chord, footprint, richness]: [Node<'vec3'>
   })
   return vec4(radiance, transmittance)
 })
-/**
- * A crystal tube holding a true volume. Each pixel refracts into the glass and integrates emission and absorption along its
- * own chord through the tube, so pillars of dust occlude the glowing gas behind them and shift against it with every step the
- * viewer takes. Grazing rays travel farther through the cloud and gather more light: the limbs brighten like a nebula’s rim.
- */
+/** A crystal tube holding a true volume. Each pixel refracts into the glass and integrates emission and absorption along its own chord through the tube, so pillars of dust occlude the glowing gas behind them and shift against it with every step the viewer takes. Grazing rays travel farther through the cloud and gather more light: the limbs brighten like a nebula’s rim. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 1)

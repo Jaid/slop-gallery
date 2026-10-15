@@ -37,12 +37,7 @@ function crackle(position: Node<'vec3'>, scale: number, seed: number) {
   const warp = mx_noise_vec3(position.mul(scale * 0.35).add(seed)).mul(0.35)
   return voronoi3d(position.mul(scale).add(warp), seed).gap.div(scale * 2)
 }
-/**
- * Kintsugi on Ge-ware celadon. A thick jade glaze, pooled darker where it ran deep, is crazed twice
- * over: bold "iron wire" cracks and a finer "gold thread" net just beneath the surface, shifting with
- * parallax. Across it run the old breaks, filled with raised gold lacquer — and the gold is not quite
- * cold: a slow light travels along the scars, warming as the visitor draws near.
- */
+/** Kintsugi on Ge-ware celadon. A thick jade glaze, pooled darker where it ran deep, is crazed twice over: bold "iron wire" cracks and a finer "gold thread" net just beneath the surface, shifting with parallax. Across it run the old breaks, filled with raised gold lacquer — and the gold is not quite cold: a slow light travels along the scars, warming as the visitor draws near. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment, 0.9)
