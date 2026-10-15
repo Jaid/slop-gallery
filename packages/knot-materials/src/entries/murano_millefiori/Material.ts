@@ -6,6 +6,7 @@ import {glitter} from '../../candidates/gemini_argon/lib/glitter.ts'
 import {tubeHex} from '../../candidates/gemini_argon/lib/tubeHex.ts'
 import {tubeMetric, tubeTurns} from '../../candidates/gemini_argon/lib/tubeMetric.ts'
 import {inkFill, inkLine, tubeRay} from '../../lib/atelier.ts'
+import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
 import {cosinePalette} from '../../lib/cosinePalette.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {proceduralNormal} from '../../lib/proceduralNormal.ts'
@@ -50,6 +51,36 @@ function murrineCane(tube: Node<'vec2'>, cells: readonly [number, number], maxRa
     mask: outerMask,
   }
 }
+/** Round grain per cell of a jittered lattice: the center stays in [0.25, 0.75] and the support radius at most 0.24, so no grain ever touches a cell wall. */
+function roundGrain(q: Node<'vec3'>) {
+  const rnd = cellNoiseVec3(q.floor())
+  const outer = q.fwidth().length().add(0.18).min(0.24)
+  return {
+    mask: q.fract().sub(rnd.mul(0.5).add(0.25)).length().smoothstep(0.06, outer).oneMinus(),
+    rnd,
+  }
+}
+/** Round copper flecks inside the glitter lattice, so aventurine sparkles read as points instead of lighting whole 9.5 mm cubic cells. */
+function aventurineFlecks(position: Node<'vec3'>, cellSize: number, sharpness: number, tilt: number) {
+  const facets = glitter(position, cellSize, sharpness, tilt)
+  const grain = roundGrain(position.div(cellSize))
+  // A three times finer bed of copper crystals that face away from the lamps; they stay visible as dull flecks and fade out once they shrink below a pixel.
+  const dustQ = position.div(cellSize / 3)
+  const dust = roundGrain(dustQ)
+  const dustResolved = dustQ.fwidth().length().smoothstep(0.32, 1.15).oneMinus()
+  return {
+    fleck: dust.mask.mul(dust.rnd.z.mul(0.6).add(0.4)).mul(dustResolved),
+    resolved: facets.resolved,
+    sparkle: facets.sparkle.mul(grain.mask),
+  }
+}
+/** Parallax depths in object-space meters; all of them stay inside the 13 cm tube radius, so the buried strata don’t smear into streaks toward the silhouettes. */
+const caneDepths = {
+  top: 0.025,
+  mid: 0.07,
+  ribbon: 0.095,
+  deep: 0.12,
+} as const
 /** Venetian Murano Millefiori & Filigrana Cristallo Glass: three parallax depths of starry murrine rosettes, counter-spiraling lattimo canes and glittering copper aventurine goldstone ribbons. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
@@ -61,21 +92,21 @@ export default class extends KnotMaterial {
     const turns = tubeTurns(tube)
     const metric = tubeMetric(tube)
 // Three distinct depth strata of fused murrine flowers and twisted filigrana threads.
-    const topTube = tube.sub(ray.mul(0.06))
-    const midTube = tube.sub(ray.mul(0.22))
-    const deepTube = tube.sub(ray.mul(0.42))
+    const topTube = tube.sub(ray.mul(caneDepths.top))
+    const midTube = tube.sub(ray.mul(caneDepths.mid))
+    const deepTube = tube.sub(ray.mul(caneDepths.deep))
     const topCane = murrineCane(topTube, [56, 6], 0.056, 1.3)
     const midCane = murrineCane(midTube, [44, 6], 0.064, 7.9)
     const deepCane = murrineCane(deepTube, [36, 4], 0.078, 15.4)
 // Zanfirico / Reticello counter-spiraling milk-glass lattimo canes and copper aventurine goldstone ribbons.
     const twistA = tube.x.mul(36).add(turns.mul(6))
-    const twistB = tube.x.mul(36).sub(turns.mul(6)).sub(ray.x.mul(8))
+    const twistB = tube.x.mul(36).sub(turns.mul(6)).sub(ray.x.mul(36 * caneDepths.ribbon))
     const twistFootprint = twistA.fwidth().max(0.001)
     const lattimoRibbon = inkLine(twistA.fract().sub(0.5), 0.065, twistFootprint)
     const aventurineRibbon = inkLine(twistB.fract().sub(0.5), 0.085, twistFootprint)
 // Copper aventurine micro-crystals suspended inside the glass that sparkle under studio lights.
-    const aventurineSparkle = glitter(p.sub(view.mul(0.035)), 0.0095, 68, 0.55)
-    const aventurineBody = mix(color('#6e2c0b'), color('#f29f24'), aventurineSparkle.sparkle.min(1.2).mul(0.75).add(0.15))
+    const aventurineSparkle = aventurineFlecks(p.sub(view.mul(0.035)), 0.0095, 68, 0.55)
+    const aventurineBody = mix(color('#6e2c0b'), color('#f29f24'), aventurineSparkle.sparkle.min(1.2).mul(0.75).add(aventurineSparkle.fleck.mul(0.6)).add(0.15).min(1))
 // Deep Venetian cobalt-teal cristallo matrix at the core, layered bottom-to-top with Beer-Lambert depth tint.
     const cristalloCore = mix(color('#030d1c'), color('#09384a'), facing.mul(0.65).add(0.35))
     let composite: Node<'vec3'> = mix(cristalloCore, deepCane.caneColor.mul(color('#6ab8d4')).mul(0.58), deepCane.mask)
@@ -84,8 +115,10 @@ export default class extends KnotMaterial {
     composite = mix(composite, color('#f7f2e8'), lattimoRibbon.mul(0.78))
     composite = mix(composite, topCane.caneColor, topCane.mask)
     this.colorNode = composite
-    this.metalnessNode = aventurineRibbon.mul(topCane.mask.oneMinus()).mul(0.78)
-    this.roughnessNode = float(0.025).add(aventurineRibbon.mul(topCane.mask.oneMinus()).mul(0.08))
+    // The ribbon lies beneath the middle canes too, so its metallic copper only shows where neither cane stratum covers it.
+    const ribbonVisible = aventurineRibbon.mul(midCane.mask.oneMinus()).mul(topCane.mask.oneMinus())
+    this.metalnessNode = ribbonVisible.mul(0.78)
+    this.roughnessNode = float(0.025).add(ribbonVisible.mul(0.08))
     this.ior = 1.56
     this.clearcoat = 1
     this.clearcoatRoughness = 0.012
@@ -100,9 +133,12 @@ export default class extends KnotMaterial {
     const caneLuminance = topCane.caneColor.mul(topCane.mask).mul(0.28)
       .add(midCane.caneColor.mul(midCane.mask).mul(topCane.mask.oneMinus()).mul(0.22))
     const aventurineGlint = color('#ffd97d').mul(aventurineSparkle.sparkle).mul(aventurineRibbon.max(0.22)).mul(topCane.mask.oneMinus()).mul(intimate.mul(0.65).add(0.45))
+    // The copper crystals that face away from the lamps still glint faintly in the ribbon, so the goldstone reads as densely flecked rather than flat brown.
+    const aventurineFleckGlow = color('#e08a3a').mul(aventurineSparkle.fleck).mul(ribbonVisible).mul(intimate.mul(0.2).add(0.18))
     const glassRim = mix(color('#1ee6c8'), color('#ff6ea8'), loopWave).mul(grazing.pow(3)).mul(0.32)
     this.emissiveNode = caneLuminance.mul(near.mul(0.45).add(0.55))
       .add(aventurineGlint.mul(0.95))
+      .add(aventurineFleckGlow)
       .add(glassRim)
   }
 }
