@@ -62,7 +62,7 @@ export default function Player() {
       if (playerTelemetry.read === read) {
         playerTelemetry.read = null
       }
-      const diagnostics = globalThis.__gallery
+      const diagnostics = globalThis.slopGallery
       if (diagnostics) {
         delete diagnostics.player
       }
@@ -89,7 +89,7 @@ export default function Player() {
         pitch: angles.x,
       })
     }
-    const diagnostics = globalThis.__gallery
+    const diagnostics = globalThis.slopGallery
     if (diagnostics) {
       diagnostics.player = {
         keys: input(),

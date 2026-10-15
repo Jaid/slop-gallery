@@ -11,8 +11,8 @@ import {preview} from 'vite'
 import initialPortraits from '../src/lib/gallery/collection.ts'
 
 const baseline = initialPortraits.length
-const snapshot = (page: Page): Promise<Snapshot> => page.evaluate(() => globalThis.__gallery!.snapshot!())
-const teleport = (page: Page, position: Vec3, rotation = [0, 0, 0, 1]) => page.evaluate((cameraPosition, cameraRotation) => globalThis.__gallery!.teleport!(cameraPosition, cameraRotation), position, rotation)
+const snapshot = (page: Page): Promise<Snapshot> => page.evaluate(() => globalThis.slopGallery!.snapshot!())
+const teleport = (page: Page, position: Vec3, rotation = [0, 0, 0, 1]) => page.evaluate((cameraPosition, cameraRotation) => globalThis.slopGallery!.teleport!(cameraPosition, cameraRotation), position, rotation)
 const enter = async (page: Page) => {
   await page.waitForSelector('#enter-gallery')
   await page.click('#enter-gallery')
@@ -62,7 +62,7 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     })
     // Wait for scene readiness below; network-idle navigation is not a rendering signal.
     await page.goto(`${baseUrl}?ai=false&test=true`, {waitUntil: 'domcontentloaded'})
-    await page.waitForFunction(() => globalThis.__gallery?.snapshot?.().ready, {timeout: 60_000})
+    await page.waitForFunction(() => globalThis.slopGallery?.snapshot?.().ready, {timeout: 60_000})
     await page.evaluate(() => document.fonts.ready)
     await fs.ensureDir('private/agent/reports')
     const welcomeSnapshot = await snapshot(page)
@@ -105,23 +105,23 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     expect(walkedSnapshot.hasControlled).toBe(true)
     const {rotation: rotationBeforeLook} = await snapshot(page)
     await page.mouse.move(820, 460)
-    await page.waitForFunction(before => JSON.stringify(globalThis.__gallery!.snapshot!().rotation) !== JSON.stringify(before), {}, rotationBeforeLook)
+    await page.waitForFunction(before => JSON.stringify(globalThis.slopGallery!.snapshot!().rotation) !== JSON.stringify(before), {}, rotationBeforeLook)
     const lookingAtPlate = Math.atan2(1.105 - 1.62, 3.28)
     await teleport(page, [-3.6, 1.62, -4.5], [Math.sin(lookingAtPlate / 2), 0, 0, Math.cos(lookingAtPlate / 2)])
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().activeLabel === 'goose')
+    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().activeLabel === 'goose')
     expect(await page.$eval('[data-testid="artwork-overlay"]', element => element.textContent)).toContain('His Unbothered Majesty')
     expect(await page.$eval('[data-testid="artwork-overlay"]', element => element.textContent)).toContain('Cornelius van Honk')
     expect(await page.$eval('[data-testid="artwork-overlay"]', element => element.textContent)).toContain('Undated')
     const lookingUp = [Math.sin(0.13), 0, 0, Math.cos(0.13)]
     await teleport(page, [-3.6, 1.62, -4.5], lookingUp)
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().active === 'goose')
+    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().active === 'goose')
     const lookingUpSnapshot = await snapshot(page)
     expect(lookingUpSnapshot.activeLabel).toBeNull()
     expect(await page.$('[data-testid="artwork-overlay"]')).toBeNull()
     await page.mouse.down({button: 'left'})
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().held === 'goose')
+    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().held === 'goose')
     await teleport(page, [-6.3, 1.62, -4.5], lookingUp)
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().placement?.valid && Math.abs(globalThis.__gallery!.snapshot!().camera[0] + 6.3) < 0.01)
+    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().placement?.valid && Math.abs(globalThis.slopGallery!.snapshot!().camera[0] + 6.3) < 0.01)
     await page.mouse.up({button: 'left'})
     const {portraits: portraitsAfterDrop} = await snapshot(page)
     expect(portraitsAfterDrop.find(p => p.id === 'goose')!.position[0]).toBeCloseTo(-6.3)
@@ -132,17 +132,17 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     expect(portraitsAfterUndo.find(p => p.id === 'goose')!.position[0]).toBe(-3.6)
     // A low wall target is invalid; dropping must leave the original untouched.
     await teleport(page, [-3.6, 1.62, -4.5], lookingUp)
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().active === 'goose')
+    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().active === 'goose')
     await page.mouse.down({button: 'left'})
     await teleport(page, [-3.6, 1.62, -4.5])
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().placement?.valid === false)
+    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().placement?.valid === false)
     await page.mouse.up({button: 'left'})
     const {portraits: portraitsAfterInvalidDrop} = await snapshot(page)
     expect(portraitsAfterInvalidDrop.find(p => p.id === 'goose')!.position).toEqual([-3.6, 2.5, -7.78])
     await teleport(page, [-3.6, 1.62, -4.5], lookingUp)
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().active === 'goose')
+    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().active === 'goose')
     await page.mouse.down({button: 'left'})
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().held === 'goose')
+    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().held === 'goose')
     await page.mouse.down({button: 'right'})
     await page.mouse.up({button: 'right'})
     await page.mouse.up({button: 'left'})
@@ -176,7 +176,7 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
       }))
     }, image)
     await page.waitForFunction(baselinePortraitCount => {
-      const portraits = globalThis.__gallery!.snapshot!().portraits
+      const portraits = globalThis.slopGallery!.snapshot!().portraits
       return portraits.length === baselinePortraitCount + 1 && portraits.some(p => p.title === 'import fixture')
     }, {}, baseline)
     const {portraits: portraitsAfterImport} = await snapshot(page)
@@ -184,13 +184,13 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     expect(imported.width / imported.height).toBe(2)
     expect(imported.hung).toBe(false)
     const pending = await page.evaluate(id => {
-      globalThis.__gallery!.merge!('orange', id)
-      return globalThis.__gallery!.snapshot!()
+      globalThis.slopGallery!.merge!('orange', id)
+      return globalThis.slopGallery!.snapshot!()
     }, imported.id)
     expect(pending.portraits.find(p => p.id === 'orange')?.merging).toBe(true)
     expect(pending.portraits).toHaveLength(baseline + 1)
     await page.waitForFunction(id => {
-      const portraits = globalThis.__gallery!.snapshot!().portraits
+      const portraits = globalThis.slopGallery!.snapshot!().portraits
       return !portraits.some(p => p.id === id) && portraits.some(p => p.id === 'orange' && p.title === 'An unexpected collaboration' && !p.merging)
     }, {}, imported.id)
     const {portraits: portraitsAfterMerge} = await snapshot(page)
@@ -202,14 +202,14 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     await history(page, true)
     const {portraits: portraitsAfterMergeRedo} = await snapshot(page)
     expect(portraitsAfterMergeRedo).toHaveLength(baseline)
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().saveStatus === 'saved')
+    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().saveStatus === 'saved')
     await Bun.sleep(700)
     await page.reload({waitUntil: 'domcontentloaded'})
-    await page.waitForFunction(() => globalThis.__gallery?.snapshot?.().ready)
+    await page.waitForFunction(() => globalThis.slopGallery?.snapshot?.().ready)
     const {portraits: reloadedPortraits} = await snapshot(page)
     expect(reloadedPortraits.find(p => p.id === 'orange')!.title).toBe('An unexpected collaboration')
     await clickText(page, 'New game')
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().locked)
+    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().locked)
     await page.keyboard.press('Escape')
     const {portraits: newGamePortraits} = await snapshot(page)
     expect(newGamePortraits.find(p => p.id === 'orange')!.title).toBe('A Slightly Larger Tomorrow')
@@ -217,7 +217,7 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     const {portraits: restoredPortraits} = await snapshot(page)
     expect(restoredPortraits.find(p => p.id === 'orange')!.title).toBe('An unexpected collaboration')
     await teleport(page, [-6.3, 1.62, -4.5], lookingUp)
-    await page.waitForFunction(() => Math.abs(globalThis.__gallery!.snapshot!().camera[0] + 6.3) < 0.01)
+    await page.waitForFunction(() => Math.abs(globalThis.slopGallery!.snapshot!().camera[0] + 6.3) < 0.01)
     const drag = (type: string, offset = 0) => page.evaluate((eventType, encoded, horizontalOffset) => {
       const file = new File([Uint8Array.fromBase64(encoded)], 'dropped fixture.png', {type: 'image/png'})
       const dataTransfer = new DataTransfer
@@ -235,11 +235,11 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     await drag('dragenter')
     await page.waitForSelector('[data-testid="drop-overlay"]')
     await drag('dragover')
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().placement?.valid)
+    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().placement?.valid)
     // Deliberately change the final drop coordinate without another preview frame.
     await drag('drop', -10)
     await page.waitForFunction(baselinePortraitCount => {
-      const portraits = globalThis.__gallery!.snapshot!().portraits
+      const portraits = globalThis.slopGallery!.snapshot!().portraits
       return portraits.length === baselinePortraitCount + 1 && portraits.some(p => p.title === 'dropped fixture')
     }, {}, baseline)
     const {portraits: portraitsAfterFileDrop} = await snapshot(page)
@@ -257,7 +257,7 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
       }))
     }, image)
     await page.waitForFunction(baselinePortraitCount => {
-      const portraits = globalThis.__gallery!.snapshot!().portraits
+      const portraits = globalThis.slopGallery!.snapshot!().portraits
       return portraits.length === baselinePortraitCount + 1 && portraits.some(p => p.title === 'pasted fixture')
     }, {}, baseline)
     const {portraits: portraitsAfterPaste} = await snapshot(page)
@@ -265,7 +265,7 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     await history(page)
     for (const [x, room] of [[-14, 'vesper'], [14, 'dine']] as const) {
       await teleport(page, [x, 1.62, 3])
-      await page.waitForFunction(expectedRoom => globalThis.__gallery!.snapshot!().room === expectedRoom, {}, room)
+      await page.waitForFunction(expectedRoom => globalThis.slopGallery!.snapshot!().room === expectedRoom, {}, room)
       await page.screenshot({path: `private/agent/reports/production-${room}.png`})
     }
     // Walk through both boolean-cut portals from both sides, including near a jamb.
@@ -279,7 +279,7 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
         await page.waitForFunction(() => !!document.pointerLockElement)
         await page.keyboard.down('w')
         await page.waitForFunction(({side: portalSide, returning: isReturning}) => {
-          const cameraX = globalThis.__gallery!.snapshot!().camera[0]
+          const cameraX = globalThis.slopGallery!.snapshot!().camera[0]
           return isReturning ? Math.abs(cameraX) < 7.4 : cameraX * portalSide > 8.6
         }, {timeout: 8000}, {
           side,
@@ -294,9 +294,9 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     // Carried sculptures must never become moving platforms for the character controller.
     await teleport(page, [-12.25, 1.62, -39.4], [Math.sin(0.12), 0, 0, Math.cos(0.12)])
     await enter(page)
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().active === 'prop-knot-astra1')
+    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().active === 'prop-knot-astra1')
     await page.mouse.down({button: 'left'})
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().held === 'prop-knot-astra1')
+    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().held === 'prop-knot-astra1')
     for (const [position, rotation] of [
       [[19.45, 1.62, 3], [0, -Math.SQRT1_2, 0, Math.SQRT1_2]],
       [[16, 1.62, 3], [-Math.sin(0.65), 0, 0, Math.cos(0.65)]],
@@ -319,9 +319,9 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     expect(released.props.find(prop => prop.id === 'prop-knot-astra1')!.collidersEnabled.every(Boolean)).toBe(true)
     expect(released.props.find(prop => prop.id === 'prop-knot-astra1')!.position.z).toBeLessThan(7)
     await teleport(page, [-12.25, 1.62, -39.4], [Math.sin(0.12), 0, 0, Math.cos(0.12)])
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().active === 'prop-knot-astra1')
+    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().active === 'prop-knot-astra1')
     await page.mouse.down({button: 'left'})
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().held === 'prop-knot-astra1')
+    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().held === 'prop-knot-astra1')
     const {props: propsBeforeThrow} = await snapshot(page)
     const beforeThrow = propsBeforeThrow.find(prop => prop.id === 'prop-knot-astra1')!.position
     await page.keyboard.press('q')
@@ -337,17 +337,17 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     await teleport(page, [0, 1.62, 6], [0, 1, 0, 0])
     await enter(page)
     await page.keyboard.down('w')
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().room === 'antechamber')
+    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().room === 'antechamber')
     await page.keyboard.up('w')
     await page.evaluate(() => document.exitPointerLock())
     await page.screenshot({path: 'private/agent/reports/production-good-taste.png'})
     await enter(page)
     // The book sits below eye level; look down toward the pedestal.
     await teleport(page, [-3.2, 1.62, 5.2], [0, Math.cos(0.07), Math.sin(0.07), 0])
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().active === 'prop-book')
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().props.find(prop => prop.id === 'prop-book')?.sleeping)
+    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().active === 'prop-book')
+    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().props.find(prop => prop.id === 'prop-book')?.sleeping)
     await page.mouse.down({button: 'left'})
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().held === 'prop-book')
+    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().held === 'prop-book')
     await teleport(page, [-3.2, 1.62, 4.2], [0, 1, 0, 0])
     await Bun.sleep(350)
     const heldBookSnapshot = await snapshot(page)
@@ -359,15 +359,15 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     expect(heldBook.visualPosition[2]).toBeCloseTo(5.65, 1)
     expect(Math.hypot(...heldBook.visualPosition.map((value, i) => value - [heldBook.position.x, heldBook.position.y, heldBook.position.z][i]))).toBeLessThan(0.03)
     await page.mouse.up({button: 'left'})
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().held === null)
+    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().held === null)
     const {props: propsAfterBookDrop} = await snapshot(page)
     expect(propsAfterBookDrop.find(prop => prop.id === 'prop-book')!.bodyType).toBe(0)
     // Re-grab the fallen book with the mouse, then verify that cancel still restores its pose.
     await teleport(page, [-3.2, 1.62, 4.2], [0, Math.cos(0.4), Math.sin(0.4), 0])
     await Bun.sleep(1200)
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().active === 'prop-book')
+    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().active === 'prop-book')
     await page.mouse.down({button: 'left'})
-    await page.waitForFunction(() => globalThis.__gallery!.snapshot!().held === 'prop-book')
+    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().held === 'prop-book')
     await page.evaluate(() => document.exitPointerLock())
     const {held: heldAfterPointerUnlock} = await snapshot(page)
     expect(heldAfterPointerUnlock).toBeNull()
@@ -381,7 +381,7 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     await page.waitForFunction(before => document.querySelector('[aria-label="Heavy graphics"] small')?.textContent !== before, {}, graphicsLabel)
     await page.screenshot({path: 'private/agent/reports/production-heavy.png'})
     const captures = await page.evaluate(async () => {
-      const [a, b] = await Promise.all([globalThis.__gallery!.captureFrame!(), globalThis.__gallery!.captureFrame!()])
+      const [a, b] = await Promise.all([globalThis.slopGallery!.captureFrame!(), globalThis.slopGallery!.captureFrame!()])
       return [a.width, b.width, a.nonBlackFraction]
     })
     expect(captures[0]).toBe(1440)

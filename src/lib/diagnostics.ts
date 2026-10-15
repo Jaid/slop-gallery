@@ -68,8 +68,8 @@ type GalleryDebugApi = Partial<CaptureFrameApi> & {
 }
 
 declare global {
-  var __gallery: GalleryDebugApi | undefined
+  var slopGallery: GalleryDebugApi | undefined
   interface Window {
-    __gallery?: GalleryDebugApi
+    slopGallery?: GalleryDebugApi
   }
 }

@@ -14,8 +14,8 @@ import {propObjects} from '../GrabbableProp.tsx'
 
 export default function useInteractionDiagnostics(camera: RootState['camera'], renderer: RootState['renderer'], placement: MutableRef<Placement | null>) {
   useEffect(() => {
-    globalThis.__gallery ??= {}
-    const api = globalThis.__gallery
+    globalThis.slopGallery ??= {}
+    const api = globalThis.slopGallery
     api.snapshot = () => ({
       webGPU: 'isWebGPUBackend' in renderer.backend && renderer.backend.isWebGPUBackend === true,
       camera: camera.position.toArray(),

@@ -7,8 +7,8 @@ import {useCaptureFrame} from 'webgpu-capture-bridge/react'
 const WebgpuCaptureBridge = () => {
   const captureFrame = useCaptureFrame()
   useEffect(() => {
-    globalThis.__gallery ??= {}
-    const gallery = globalThis.__gallery
+    globalThis.slopGallery ??= {}
+    const gallery = globalThis.slopGallery
     gallery.captureFrame = captureFrame
     return () => {
       if (gallery.captureFrame === captureFrame) {

@@ -2,7 +2,7 @@ import '#src/lib/diagnostics.ts'
 
 /** Download the current frame as `<level>-<dump id>.png` so it can be matched with its ego.dump records. Rejects when the capture fails. */
 export default async function saveDumpScreenshot(name: string) {
-  const captureFrame = globalThis.__gallery?.captureFrame
+  const captureFrame = globalThis.slopGallery?.captureFrame
   if (!captureFrame) {
     console.warn('Dump screenshot skipped: WebGPU capture is not mounted.')
     return

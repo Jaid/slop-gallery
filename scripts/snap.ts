@@ -213,24 +213,24 @@ try {
     waitUntil: 'domcontentloaded',
     timeout: 300_000,
   })
-  await page.waitForFunction(() => globalThis.__gallery?.snapshot?.().ready && globalThis.__gallery.captureFrame, {timeout: 300_000})
-  if (!await page.evaluate(() => Boolean(globalThis.__gallery!.pose))) {
-    throw new Error('This build has no __gallery.pose() hook. Rebuild it from a version that includes scripts/snap.ts.')
+  await page.waitForFunction(() => globalThis.slopGallery?.snapshot?.().ready && globalThis.slopGallery.captureFrame, {timeout: 300_000})
+  if (!await page.evaluate(() => Boolean(globalThis.slopGallery!.pose))) {
+    throw new Error('This build has no slopGallery.pose() hook. Rebuild it from a version that includes scripts/snap.ts.')
   }
-  if (!await page.evaluate(() => globalThis.__gallery!.snapshot!().webGPU)) {
+  if (!await page.evaluate(() => globalThis.slopGallery!.snapshot!().webGPU)) {
     throw new Error('The browser fell back to WebGL. Photos need native WebGPU.')
   }
-  const pose = await page.evaluate((requested: Partial<CameraPose>) => globalThis.__gallery!.pose!(requested), {
+  const pose = await page.evaluate((requested: Partial<CameraPose>) => globalThis.slopGallery!.pose!(requested), {
     position,
     rotation: angle ? [radians(angle[1]), radians(angle[0]), radians(angle[2] ?? 0)] as Vec3 : undefined,
     fov,
   })
   // A new pose can bring artworks into view that still need decoding.
   await waitForFrames(page, settle)
-  await page.waitForFunction(() => globalThis.__gallery!.snapshot!().pendingImages === 0, {timeout: 120_000})
+  await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().pendingImages === 0, {timeout: 120_000})
   await waitForFrames(page, settle)
   const frame = await page.evaluate(async () => {
-    const {dataUrl, width, height, nonBlackFraction} = await globalThis.__gallery!.captureFrame!()
+    const {dataUrl, width, height, nonBlackFraction} = await globalThis.slopGallery!.captureFrame!()
     return {
       png: dataUrl.slice(dataUrl.indexOf(',') + 1),
       width,
