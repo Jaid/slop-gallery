@@ -1,5 +1,6 @@
 import type Passage from '#src/lib/gallery/passages/Passage.ts'
 import type {PassageCutout} from '#src/lib/gallery/passages/Passage.ts'
+import type PassageTransition from '#src/lib/gallery/passages/PassageTransition.ts'
 import type {Material} from 'three/webgpu'
 
 import {CuboidCollider, RigidBody, TrimeshCollider} from '@react-three/rapier'
@@ -15,11 +16,13 @@ import TimberGeometry from '#src/lib/gallery/passages/TimberGeometry.ts'
 import VaultGeometry from '#src/lib/gallery/passages/VaultGeometry.ts'
 import {mergeParts} from '#src/lib/geometry.ts'
 
-export default function CoveredPassage({passage, material, timber, ribCutouts}: {
+export default function CoveredPassage({passage, material, timber, ribCutouts, transition}: {
   material: Material
   passage: Passage
   ribCutouts?: ReadonlyArray<PassageCutout>
   timber?: Material
+  /** a stone passage’s timber end, rendered separately; the paving and vault ribs stop where it begins */
+  transition?: PassageTransition
 }) {
   const lantern = useDisposable(useMemo(() => mergeParts([
     ...[-1, 1].map(side => {
@@ -31,16 +34,17 @@ export default function CoveredPassage({passage, material, timber, ribCutouts}: 
       return cornerPost.translate(x * 0.09, 0, z * 0.09)
     })),
   ]), []))
-  const geometry = useDisposable(useMemo(() => (timber ? TimberGeometry.passage(passage, ribCutouts) : new VaultGeometry(passage)), [passage, ribCutouts, timber]))
+  const geometry = useDisposable(useMemo(() => (timber ? TimberGeometry.passage(passage, ribCutouts) : new VaultGeometry(passage, transition?.length)), [passage, ribCutouts, timber, transition]))
+  const paving = transition?.stoneFloors ?? passage.floors
   const collision = timber ? [] : [geometry.shell, geometry.ribs].map(colliderGeometry)
   return <group name={passage.id}>
     <RigidBody colliders={false} type='fixed'>
       {passage.floors.map(({center: [x, z], size: [width, depth]}, i) => <group key={i}>
         <CuboidCollider args={[width / 2, 0.12, depth / 2]} position={[x, passage.floorY - 0.12, z]} />
-        <Box material={material} position={[x, passage.floorY - 0.12, z]} size={[width, 0.24, depth]} />
         <CuboidCollider args={[width / 2, 0.12, depth / 2]} position={[x, passage.floorY + passage.height + 0.12, z]} />
         <Box material={material} position={[x, passage.floorY + passage.height + 0.12, z]} size={[width, 0.24, depth]} />
       </group>)}
+      {paving.map(({center: [x, z], size: [width, depth]}, i) => <Box key={i} material={material} position={[x, passage.floorY - 0.12, z]} size={[width, 0.24, depth]} />)}
       <Branch not={timber}>{collision.map((args, i) => <TrimeshCollider key={i} args={args} />)}</Branch>
       <Branch if={timber}><TimberFrame geometry={geometry} lining={material} material={timber!} /></Branch>
       <Branch not={timber}>

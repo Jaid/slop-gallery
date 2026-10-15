@@ -10,7 +10,11 @@ export default class VaultGeometry {
   readonly ribs: BufferGeometry
   readonly shell: BufferGeometry
 
-  constructor(passage: Passage) {
+  /** `ribFreeEnd` keeps the final meters free of stone ribs, e.g. for a timber transition. */
+  constructor(passage: Passage, ribFreeEnd = 0) {
+    if (!Number.isFinite(ribFreeEnd) || ribFreeEnd < 0) {
+      throw new RangeError('The rib-free end of a vault needs a finite, nonnegative length.')
+    }
     const shells: Array<BufferGeometry> = []
     const ribs: Array<BufferGeometry> = []
     const radius = passage.width / 2
@@ -43,9 +47,13 @@ export default class VaultGeometry {
           .translate(start[0] + dx / length * distance, passage.floorY, start[1] + dz / length * distance)
       }
       shells.push(part(radius, to - from, 0.22, (to + from) / 2))
-      const count = Math.max(1, Math.ceil((to - from) / 3.2))
+      const ribTo = to - (i === passage.spans.length - 1 ? ribFreeEnd : 0)
+      if (ribTo - from < 0.3) {
+        continue
+      }
+      const count = Math.max(1, Math.ceil((ribTo - from) / 3.2))
       for (let rib = 0; rib <= count; rib++) {
-        const distance = from + 0.15 + (to - from - 0.3) * rib / count
+        const distance = from + 0.15 + (ribTo - from - 0.3) * rib / count
         ribs.push(part(radius - 0.085, 0.22, 0.085, distance))
       }
     }

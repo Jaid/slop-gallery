@@ -36,7 +36,8 @@ export function timberProfile(radius: number, height: number, inset: number) {
     new Vector2(r, -0.25),
   ]
 }
-function timberRing(inside: Array<Vector2>, outside: Array<Vector2>, depth: number, distance: number, transform: Matrix4) {
+/** Extrudes the band between two matching polylines, with wood grain following each segment. */
+export function timberRing(inside: Array<Vector2>, outside: Array<Vector2>, depth: number, distance: number, transform: Matrix4) {
   const parts: Array<BufferGeometry> = []
   for (let i = 1; i < inside.length; i++) {
     const a = inside[i - 1]

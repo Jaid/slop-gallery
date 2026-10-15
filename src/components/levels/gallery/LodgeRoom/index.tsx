@@ -5,7 +5,7 @@ import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import BenchSeat from '#component/levels/gallery/BenchSeat'
 import LodgeFire from '#component/levels/gallery/LodgeFire'
 import Box from '#src/components/Scene/primitives.tsx'
-import lodge from '#src/lib/gallery/lodge.ts'
+import lodge, {lodgeFloorFinish} from '#src/lib/gallery/lodge.ts'
 
 export default function LodgeRoom({wood, stone}: {
   stone: Material
@@ -16,7 +16,7 @@ export default function LodgeRoom({wood, stone}: {
     <RigidBody colliders={false} type='fixed'>
       <CuboidCollider args={[width / 2, 0.15, depth / 2]} position={[0, -0.15, 0]} />
       <CuboidCollider args={[width / 2, 0.12, depth / 2]} position={[0, lodge.height + 0.12, 0]} />
-      <Box color='#765036' envMapIntensity={0.2} map={wood} position={[0, -0.15, 0]} roughness={0.86} size={[width, 0.3, depth]} />
+      <Box color={lodgeFloorFinish.color} envMapIntensity={lodgeFloorFinish.envMapIntensity} map={wood} position={[0, -0.15, 0]} roughness={lodgeFloorFinish.roughness} size={[width, 0.3, depth]} />
       <Box color='#513a29' map={wood} position={[0, lodge.height + 0.12, 0]} size={[width, 0.24, depth]} />
       {[-3.5, 0, 3.5].map(z => <Box key={z} color='#302319' map={wood} position={[0, lodge.height - 0.16, z]} size={[width, 0.32, 0.3]} />)}
     </RigidBody>

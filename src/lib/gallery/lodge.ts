@@ -4,6 +4,7 @@ import type {Vec3} from './types.ts'
 import lowerGallery, {oculusPlatform} from './lowerGallery.ts'
 import oculusTower from './oculusTower.ts'
 import Passage from './passages/Passage.ts'
+import PassageTransition from './passages/PassageTransition.ts'
 
 const timberWidth = 4
 const lodge = {
@@ -67,6 +68,17 @@ export function lodgeWindowFloor(x: number, z: number) {
 
 export const lodgeTunnel = new Passage('lodge-tunnel', 'lodge', [[lodge.entranceX, lodge.entranceZ], [lodge.entranceX, lodge.tunnelZ], [-20, lodge.tunnelZ]], lodge.floorY, lodge.passageWidth)
 export const lodgeTunnelWalls = lodgeTunnel.walls
+/** The tunnel’s last two meters trade the castle stone for the Lodge’s timber, instead of switching at the doorway. */
+export const lodgeTunnelTransition = new PassageTransition(lodgeTunnel, 2)
+/** The Lodge’s plank floor, which continues into the tunnel’s timber transition. */
+export const lodgeFloorFinish = {
+  color: '#765036',
+  envMapIntensity: 0.2,
+  roughness: 0.86,
+  // The floor box maps its texture three times across its top face.
+  tilesPerMeter: 3 / lodge.size[0],
+  origin: [lodge.center[0] - lodge.size[0] / 2, lodge.center[1] + lodge.size[1] / 2],
+} as const
 
 export function insideLodgeAccess(position: Vec3) {
   const sill = lodgeWindowFloor(position[0], position[2])
