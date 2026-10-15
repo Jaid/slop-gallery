@@ -20,7 +20,8 @@ const pack = (value: unknown, adapter: BakeAdapter) => {
   const writer = new SnapshotWriter(adapter, 16 * 1024 * 1024, () => false)
   return Buffer.from(writer.write(value)).toString('base64')
 }
-const geometry = new TorusKnotGeometry(0.45, 0.13, 48, 12).rotateY(0.2)
+const geometry = new TorusKnotGeometry(0.45, 0.13, 48, 12)
+geometry.rotateY(0.2)
 geometry.computeTangents()
 geometry.computeBoundingBox()
 const texture = new DataTexture(new Uint8Array([255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 255, 255, 0, 255]), 2, 2)
@@ -56,7 +57,8 @@ const server = Bun.serve({
   port: 0,
   hostname: '127.0.0.1',
   fetch(request) {
-    return new URL(request.url).pathname === '/fixture.js' ? new Response(source, {headers: {'Content-Type': 'text/javascript'}}) : new Response('<!doctype html><title>Baked resource regression</title>', {headers: {'Content-Type': 'text/html'}})
+    const requestUrl = new URL(request.url)
+    return requestUrl.pathname === '/fixture.js' ? new Response(source, {headers: {'Content-Type': 'text/javascript'}}) : new Response('<!doctype html><title>Baked resource regression</title>', {headers: {'Content-Type': 'text/html'}})
   },
 })
 const profile = await mkdtemp(join(tmpdir(), 'baked-webgpu-'))

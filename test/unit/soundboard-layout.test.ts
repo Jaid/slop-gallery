@@ -35,13 +35,15 @@ test('announcer wall exposes a small prerecorded sample set on the north short w
   const north = soundboardWalls.find(wall => wall.id === 'soundboard-north')!
   expect(north.center[2]).toBe(soundboardBounds.northZ)
   expect(announcerSampleDefinitions).toHaveLength(4)
-  expect(new Set(announcerSampleDefinitions.map(sample => sample.id)).size).toBe(announcerSampleDefinitions.length)
+  const announcerSampleIds = new Set(announcerSampleDefinitions.map(sample => sample.id))
+  expect(announcerSampleIds.size).toBe(announcerSampleDefinitions.length)
   expect(announcerSamplePriority).toBe('normal')
   expect(announcerPriorityModes).toEqual(['volatile', 'high', 'inject', 'async'])
   expect(announcerPrioritySampleDefinitions).toHaveLength(4)
   expect(announcerPrioritySampleDefinitions.map(sample => sample.label)).toEqual(['Gemini Flash', 'GLM', 'GPT Astra', 'Grok'])
   expect(announcerPriorityDemoDefinitions.map(demo => demo.title)).toEqual(['VOLATILE · Gemini Flash', 'HIGH · GLM', 'INJECT · GPT Astra', 'ASYNC · Grok'])
-  expect(new Set([...announcerSampleDefinitions, ...announcerPrioritySampleDefinitions].map(sample => sample.id)).size).toBe(8)
+  const allAnnouncerSampleIds = new Set([...announcerSampleDefinitions, ...announcerPrioritySampleDefinitions].map(sample => sample.id))
+  expect(allAnnouncerSampleIds.size).toBe(8)
 })
 test('sprint lane spans four equal longitudinal material stripes', () => {
   expect(soundboardSize[2]).toBeGreaterThanOrEqual(40)
@@ -56,7 +58,8 @@ test('sprint lane spans four equal longitudinal material stripes', () => {
 test('generated button positions stay inside the content wall and center partial rows', () => {
   for (const [section, effects] of [['enabled', enabledSoundEffects], ['archived', archivedSoundEffects]] as const) {
     const positions = effects.map((_, index) => soundboardLayout.buttonPosition(section, index))
-    expect(new Set(positions.map(position => position.join(','))).size).toBe(effects.length)
+    const occupiedPositions = new Set(positions.map(position => position.join(',')))
+    expect(occupiedPositions.size).toBe(effects.length)
     for (const [x, y] of positions) {
       expect(Math.abs(x) + soundboardButton.width / 2).toBeLessThan(soundboardSize[0] / 2)
       expect(y - soundboardButton.height / 2).toBeGreaterThan(0.5)

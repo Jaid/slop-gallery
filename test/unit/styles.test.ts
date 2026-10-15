@@ -15,7 +15,8 @@ function expectStaticStyles(code: string) {
   })
 }
 test('components use real, locally scoped Sass module exports', async () => {
-  const files = [...new Bun.Glob('src/components/**/style.module.sass').scanSync()].toSorted()
+  const sassModuleGlob = new Bun.Glob('src/components/**/style.module.sass')
+  const files = [...sassModuleGlob.scanSync()].toSorted()
   expect(files.length).toBeGreaterThan(0)
   for (const file of files) {
     const source = await Bun.file(file).text()
@@ -40,8 +41,10 @@ test('components use real, locally scoped Sass module exports', async () => {
   }
 })
 test('component styles no longer depend on the global App stylesheet or literal classes', async () => {
-  expect([...new Bun.Glob('src/**/*.css').scanSync()]).toEqual([])
-  for (const file of new Bun.Glob('src/components/**/*.tsx').scanSync()) {
+  const stylesheetGlob = new Bun.Glob('src/**/*.css')
+  expect([...stylesheetGlob.scanSync()]).toEqual([])
+  const componentGlob = new Bun.Glob('src/components/**/*.tsx')
+  for (const file of componentGlob.scanSync()) {
     const source = await Bun.file(file).text()
     expect(source, file).not.toMatch(/className=["']/u)
     expect(source, file).not.toContain("import './style.css'")

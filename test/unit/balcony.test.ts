@@ -25,11 +25,13 @@ describe('separate semicircular Oculus balcony', () => {
     const meshes = [new Mesh(geometry, material), new Mesh(ground, material)]
     try {
       for (const z of [-17.5, -17, -16.5, -16, -15.5]) {
-        expect(new Raycaster(new Vector3(0, -2, z), new Vector3(0, -1, 0), 0, 5).intersectObjects(meshes)).toHaveLength(0)
+        const passageRay = new Raycaster(new Vector3(0, -2, z), new Vector3(0, -1, 0), 0, 5)
+        expect(passageRay.intersectObjects(meshes)).toHaveLength(0)
         expect(floorHeight([0, -2, z])).toBe(lowerGallery.floorY)
       }
       for (const x of [-2.1, 2.1]) {
-        expect(new Raycaster(new Vector3(x, -2, tower.z), new Vector3(0, -1, 0)).intersectObjects(meshes)[0].point.y).toBeCloseTo(balcony.topY)
+        const towerTopRay = new Raycaster(new Vector3(x, -2, tower.z), new Vector3(0, -1, 0))
+        expect(towerTopRay.intersectObjects(meshes)[0].point.y).toBeCloseTo(balcony.topY)
       }
     } finally {
       material.dispose()
@@ -49,7 +51,8 @@ describe('separate semicircular Oculus balcony', () => {
       expect(balcony.thickness).toBeCloseTo(0.73, 6)
       const mesh = new Mesh(geometry, material)
       for (const x of [-lowerGallery.tunnel.width / 2, 0, lowerGallery.tunnel.width / 2]) {
-        const hits = new Raycaster(new Vector3(x, lowerGallery.floorY + 1.7, balcony.z - 0.25), new Vector3(0, 1, 0)).intersectObject(mesh)
+        const undersideRay = new Raycaster(new Vector3(x, lowerGallery.floorY + 1.7, balcony.z - 0.25), new Vector3(0, 1, 0))
+        const hits = undersideRay.intersectObject(mesh)
         expect(hits[0].point.y).toBeCloseTo(frameTop, 6)
       }
     } finally {
@@ -75,7 +78,8 @@ describe('separate semicircular Oculus balcony', () => {
       for (const [x, z, inside] of [[0, -14.6, true], [1.2, -14.5, true], [-1.2, -14.5, true], [1.7, -15, false], [0, -15.3, false], [0, -13.9, false]] as const) {
         const origin = new Vector3(x, -2, z)
         const direction = new Vector3(0, -1, 0)
-        const hits = new Raycaster(origin, direction).intersectObject(mesh)
+        const visualRay = new Raycaster(origin, direction)
+        const hits = visualRay.intersectObject(mesh)
         const collision = world.castRay(new RAPIER.Ray(origin, direction), 5, true)
         expect(hits.length > 0).toBe(inside)
         expect(collision !== null).toBe(inside)

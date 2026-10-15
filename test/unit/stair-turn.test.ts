@@ -47,12 +47,14 @@ describe('round stair landing', () => {
           const [x, z] = stairTurn.point(i / 32 * Math.PI, radius)
           const origin = new Vector3(x, stairTurn.top + 2, z)
           const direction = new Vector3(0, -1, 0)
-          expect(new Raycaster(origin, direction).intersectObject(mesh)[0].point.y).toBeCloseTo(stairTurn.top, 5)
+          const landingRay = new Raycaster(origin, direction)
+          expect(landingRay.intersectObject(mesh)[0].point.y).toBeCloseTo(stairTurn.top, 5)
           expect(world.castRay(new RAPIER.Ray(origin, direction), 3, true)!.timeOfImpact).toBeCloseTo(2, 5)
         }
       }
       const empty = new Vector3(staircase.turnX + 0.1, stairTurn.top + 2, stairTurn.innerCenterZ)
-      expect(new Raycaster(empty, new Vector3(0, -1, 0)).intersectObject(mesh)).toHaveLength(0)
+      const gapRay = new Raycaster(empty, new Vector3(0, -1, 0))
+      expect(gapRay.intersectObject(mesh)).toHaveLength(0)
       expect(world.castRay(new RAPIER.Ray(empty, new Vector3(0, -1, 0)), 3, true)).toBeNull()
     } finally {
       world.free()
@@ -78,7 +80,8 @@ describe('round stair landing', () => {
             const surface = new Vector3(...wallPosition(wall, u, y, wallFace))
             const direction = surface.clone().sub(origin).normalize()
             expect(wallCoordinates(wall, wallPosition(wall, u, y))).toBeCloseTo(u, 5)
-            const hit = new Raycaster(origin, direction).intersectObject(mesh)[0]
+            const wallRay = new Raycaster(origin, direction)
+            const hit = wallRay.intersectObject(mesh)[0]
             expect(hit.distance).toBeCloseTo(0.8 - wallFace, 2)
             const placement = findPlacement(origin.toArray(), direction.toArray(), 1, 1, [])
             expect(placement?.wallId).toBe(wall.id)

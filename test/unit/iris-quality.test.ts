@@ -8,8 +8,9 @@ import IrisQualityAudition from '../../scripts/lib/knots/IrisQualityAudition.ts'
 import {auditionTranscript} from '../../scripts/lib/knots/voiceAuditions.ts'
 
 function envelope(rate = 48_000) {
+  const silentSamples = new Int16Array(rate)
   return {
-    audio: Buffer.from(new Int16Array(rate).buffer).toString('base64'),
+    audio: Buffer.from(silentSamples.buffer).toString('base64'),
     content_type: 'audio/pcm',
     duration: 1,
     audio_timestamps: {
@@ -18,7 +19,10 @@ function envelope(rate = 48_000) {
     },
   }
 }
-const encode = (value: unknown) => (new TextEncoder).encode(JSON.stringify(value))
+const encode = (value: unknown) => {
+  const utf8Encoder = new TextEncoder
+  return utf8Encoder.encode(JSON.stringify(value))
+}
 test('Iris review requests use loud tags, native English, timestamps, maximum PCM rate and quality-first latency', () => {
   const direct = irisQualityRequest('xai', 'GPT-6 Astra.', {normalization: true})
   expect(direct).toEqual({
@@ -146,20 +150,26 @@ test('both transports retain five independent responses and never send the direc
       expect(manifest.clips.map(clip => clip.offset)).toEqual([0, 1.5, 3, 4.5, 6])
       expect(manifest.duration).toBe(7)
       expect(manifest.sampleRate).toBe(transport === 'xai' ? 48_000 : 24_000)
-      await new IrisQualityAudition(output, transport, '').run()
+      const cachedRunner = new IrisQualityAudition(output, transport, '')
+      await cachedRunner.run()
     }
     expect(requests).toHaveLength(10)
-    expect(new Set(requests.map(request => JSON.stringify(request.body))).size).toBe(10)
-    const plain = await new IrisQualityAudition(output, 'xai', 'direct-key').run({loud: false})
+    const requestBodies = new Set(requests.map(request => JSON.stringify(request.body)))
+    expect(requestBodies.size).toBe(10)
+    const plainRunner = new IrisQualityAudition(output, 'xai', 'direct-key')
+    const plain = await plainRunner.run({loud: false})
     expect(plain.id).toBe('xai-quality')
     expect(plain.loud).toBe(false)
     expect(requests).toHaveLength(15)
     expect(plain.clips.map(clip => clip.request)).toEqual(auditionTranscript.map(text => irisQualityRequest('xai', text, {loud: false})))
-    await new IrisQualityAudition(output, 'xai', '').run({loud: false})
+    const cachedPlainRunner = new IrisQualityAudition(output, 'xai', '')
+    await cachedPlainRunner.run({loud: false})
     expect(requests).toHaveLength(15)
-    const files = await Array.fromAsync(new Bun.Glob('**/response.bin').scan(output))
+    const responseGlob = new Bun.Glob('**/response.bin')
+    const files = await Array.fromAsync(responseGlob.scan(output))
     await Bun.write(resolve(output, files.find(path => path.startsWith('xai-loud-'))!), 'damaged')
-    await expect(new IrisQualityAudition(output, 'xai', '').run()).rejects.toThrow('Cached response changed')
+    const damagedCacheRunner = new IrisQualityAudition(output, 'xai', '')
+    await expect(damagedCacheRunner.run()).rejects.toThrow('Cached response changed')
   } finally {
     fetch.mockRestore()
     await fs.remove(output)

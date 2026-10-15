@@ -106,7 +106,8 @@ describe('arbitrary Knot batches', () => {
   })
   test('collapses effort labels and spelling variants into one model identity', () => {
     for (const [slug, grouped] of Map.groupBy(knots, knotModelSlug)) {
-      expect(new Set(grouped.map(entry => entry.modelTitle)).size, slug).toBe(1)
+      const modelTitles = new Set(grouped.map(entry => entry.modelTitle))
+      expect(modelTitles.size, slug).toBe(1)
     }
   })
   test('credits API and Mage entries with a model slug', () => {

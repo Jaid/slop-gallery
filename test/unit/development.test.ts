@@ -133,9 +133,11 @@ describe('aim inspection', () => {
     parent.position.set(1, 2, 0)
     parent.scale.set(2, 1, 0.5)
     const mesh = new InstancedMesh(new PlaneGeometry(2, 2), new MeshBasicMaterial, 2)
-    const firstMatrix = (new Matrix4).makeRotationY(Math.PI / 4).setPosition(0, 0, -6)
+    const firstMatrix = new Matrix4
+    firstMatrix.makeRotationY(Math.PI / 4).setPosition(0, 0, -6)
     mesh.setMatrixAt(0, firstMatrix)
-    mesh.setMatrixAt(1, (new Matrix4).makeTranslation(0, 0, -10))
+    const secondMatrix = new Matrix4
+    mesh.setMatrixAt(1, secondMatrix.makeTranslation(0, 0, -10))
     parent.add(mesh)
     scene.add(parent)
     camera.position.set(1, 2, 3)
@@ -151,7 +153,9 @@ describe('aim inspection', () => {
       expect(component).toBeCloseTo(0)
     }
     const world = parent.matrixWorld.clone().multiply(firstMatrix)
-    const normal = new Vector3(0, 0, 1).applyNormalMatrix((new Matrix3).getNormalMatrix(world))
+    const normalMatrix = new Matrix3
+    const normal = new Vector3(0, 0, 1)
+    normal.applyNormalMatrix(normalMatrix.getNormalMatrix(world))
     expect(result.hit!.normal!.x).toBeCloseTo(normal.x)
     expect(result.hit!.normal!.y).toBeCloseTo(normal.y)
     expect(result.hit!.normal!.z).toBeCloseTo(normal.z)

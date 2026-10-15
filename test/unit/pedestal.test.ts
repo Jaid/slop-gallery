@@ -65,9 +65,12 @@ describe('sculpture pedestals', () => {
     for (let side = 0; side < 4; side++) {
       for (const y of [0.004, 0.053, 0.12, 0.2, 0.237, 0.247, 0.4, 0.83, 1.133, 1.16, 1.22, 1.3, 1.346]) {
         for (const x of [0.013, 0.047, 0.079, 0.141, 0.3291, 0.42, 0.466, 0.562]) {
-          const origin = new Vector3(x, y, 2).applyAxisAngle(new Vector3(0, 1, 0), side * Math.PI / 2)
-          const direction = new Vector3(0, 0, -1).applyAxisAngle(new Vector3(0, 1, 0), side * Math.PI / 2)
-          const visible = new Raycaster(origin, direction, 0, 4).intersectObjects(meshes)[0]
+          const origin = new Vector3(x, y, 2)
+          origin.applyAxisAngle(new Vector3(0, 1, 0), side * Math.PI / 2)
+          const direction = new Vector3(0, 0, -1)
+          direction.applyAxisAngle(new Vector3(0, 1, 0), side * Math.PI / 2)
+          const sightline = new Raycaster(origin, direction, 0, 4)
+          const visible = sightline.intersectObjects(meshes)[0]
           const collision = world.castRay(new RAPIER.Ray(origin, direction), 4, true)
           expect(!!visible).toBe(!!collision)
           if (visible) {
@@ -77,7 +80,10 @@ describe('sculpture pedestals', () => {
       }
     }
     const stone = meshes[0]
-    const depth = (x: number) => new Raycaster(new Vector3(x, 0.7, 2), new Vector3(0, 0, -1)).intersectObject(stone)[0].distance
+    const depth = (x: number) => {
+      const fluteProbe = new Raycaster(new Vector3(x, 0.7, 2), new Vector3(0, 0, -1))
+      return fluteProbe.intersectObject(stone)[0].distance
+    }
     expect(depth(0.047) - depth(0)).toBeCloseTo(0.022, 5)
   })
   test('keeps a dropped sculpture resting on the cap', () => {

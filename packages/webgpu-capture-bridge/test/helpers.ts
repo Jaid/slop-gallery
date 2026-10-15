@@ -14,7 +14,10 @@ export class TestRenderer {
   mipmapLevel = 2
   onRender = () => {}
   outputTarget: RenderTarget | null = new RenderTarget
-  readback = () => Promise.resolve(new Uint8Array(this.size.width * this.size.height * 4).fill(255))
+  readback = () => {
+    const whitePixels = new Uint8Array(this.size.width * this.size.height * 4)
+    return Promise.resolve(whitePixels.fill(255))
+  }
   readCount = 0
   samples = 4
   size = new Vector2(2, 2)

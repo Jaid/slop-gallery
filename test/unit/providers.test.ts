@@ -36,7 +36,8 @@ test('the real text adapter consumes streamed structured output', async () => {
   })}\n\n`
   fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(new Response(`${chunk(JSON.stringify(flavor)) + chunk('', 'stop')}data: [DONE]\n\n`, {headers: {'content-type': 'text/event-stream'}}))
   const partials: Array<unknown> = []
-  const result = await new FlavorGenerator('test-key', 'test-model').generate(new Blob(['pixels'], {type: 'image/webp'}), partial => partials.push(partial))
+  const flavorGenerator = new FlavorGenerator('test-key', 'test-model')
+  const result = await flavorGenerator.generate(new Blob(['pixels'], {type: 'image/webp'}), partial => partials.push(partial))
   expect(result).toEqual(flavor)
   expect(partials.length).toBeGreaterThan(0)
   expect(fetchSpy.mock.calls[0][0]).toBe('https://openrouter.ai/api/v1/chat/completions')
@@ -55,12 +56,15 @@ test('the real image adapter keeps hanging/thrown attachment order', async () =>
   }))
   const first = new Blob([data], {type: 'image/png'})
   const second = new Blob([Uint8Array.fromBase64('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACAQMAAABIeJ9nAAAAA1BMVEUAAP+KeNJXAAAADElEQVQI12NgYGAAAAAEAAEnNCcKAAAAAElFTkSuQmCC')], {type: 'image/png'})
-  const result = await new MergeGenerator('test-key', 'test-image-model').generate(first, second)
+  const mergeGenerator = new MergeGenerator('test-key', 'test-image-model')
+  const result = await mergeGenerator.generate(first, second)
   expect(result.size).toBe(data.byteLength)
   expect(fetchSpy.mock.calls[0][0]).toBe('https://openrouter.ai/api/v1/images')
   const request = JSON.parse(fetchSpy.mock.calls[0][1]!.body as string) as {input_references: Array<{image_url: {url: string}}>}
+  const firstImageBytes = new Uint8Array(await first.arrayBuffer())
+  const secondImageBytes = new Uint8Array(await second.arrayBuffer())
   expect(request.input_references.map((r: {image_url: {url: string}}) => r.image_url.url.split(',')[1])).toEqual([
-    new Uint8Array(await first.arrayBuffer()).toBase64(),
-    new Uint8Array(await second.arrayBuffer()).toBase64(),
+    firstImageBytes.toBase64(),
+    secondImageBytes.toBase64(),
   ])
 })

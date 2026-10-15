@@ -18,7 +18,8 @@ function simulate(mass: number, miss = false, yaw = 0) {
     z: 0,
   })
   world.timestep = 1 / 120
-  const rotation = (new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), yaw)
+  const rotation = new Quaternion
+  rotation.setFromAxisAngle(new Vector3(0, 1, 0), yaw)
   const elevation = knotGalleryBounds.height - knotCandidateSign.ceilingInset - knotCandidateSign.anchor[1]
   const pivot = new Vector3(0, elevation + knotCandidateSign.anchor[1], 0)
   const anchor = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(pivot.x, pivot.y, pivot.z).setRotation(rotation))
@@ -38,8 +39,10 @@ function simulate(mass: number, miss = false, yaw = 0) {
       world.step()
     }
     expect(displacement()).toBeLessThan(0.001)
-    const origin = new Vector3(miss ? 3 : 0.6, elevation, 2).applyQuaternion(rotation)
-    const velocity = new Vector3(0, 0, -12).applyQuaternion(rotation)
+    const origin = new Vector3(miss ? 3 : 0.6, elevation, 2)
+    origin.applyQuaternion(rotation)
+    const velocity = new Vector3(0, 0, -12)
+    velocity.applyQuaternion(rotation)
     const projectile = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(origin.x, origin.y, origin.z).setLinvel(velocity.x, velocity.y, velocity.z).setGravityScale(0).setCcdEnabled(true))
     world.createCollider(RAPIER.ColliderDesc.ball(0.18).setMass(mass), projectile)
     let peak = 0
@@ -49,7 +52,8 @@ function simulate(mass: number, miss = false, yaw = 0) {
       peak = Math.max(peak, displacement())
       const q = body.rotation()
       const position = body.translation()
-      const pin = new Vector3(...knotCandidateSign.anchor).applyQuaternion(new Quaternion(q.x, q.y, q.z, q.w)).add(new Vector3(position.x, position.y, position.z))
+      const pin = new Vector3(...knotCandidateSign.anchor)
+      pin.applyQuaternion(new Quaternion(q.x, q.y, q.z, q.w)).add(new Vector3(position.x, position.y, position.z))
       drift = Math.max(drift, pin.distanceTo(pivot))
     }
     expect(drift).toBeLessThan(0.015)
@@ -59,7 +63,8 @@ function simulate(mass: number, miss = false, yaw = 0) {
       world.step()
     }
     expect(displacement()).toBeLessThan(0.02)
-    expect(new Vector3(body.linvel().x, body.linvel().y, body.linvel().z).length()).toBeLessThan(0.002)
+    const settledVelocity = new Vector3(body.linvel().x, body.linvel().y, body.linvel().z)
+    expect(settledVelocity.length()).toBeLessThan(0.002)
     return peak
   } finally {
     world.free()

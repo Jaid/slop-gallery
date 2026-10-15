@@ -92,7 +92,8 @@ describe('lower gallery', () => {
           mesh.updateMatrixWorld(true)
           const origin = new Vector3(block.position[0], 2, block.position[2])
           const direction = new Vector3(0, -1, 0)
-          expect(new Raycaster(origin, direction).intersectObject(mesh)[0].point.y).toBeCloseTo(block.top)
+          const treadRay = new Raycaster(origin, direction)
+          expect(treadRay.intersectObject(mesh)[0].point.y).toBeCloseTo(block.top)
           expect(world.castRay(new RAPIER.Ray(origin, direction), 12, true)!.timeOfImpact).toBeCloseTo(2 - block.top)
         } finally {
           geometry.dispose()
@@ -140,7 +141,8 @@ describe('lower gallery', () => {
               geometry: createArchitectureGeometry(wall),
             }))
             for (const {wall, geometry} of geometries) {
-              const rotation = (new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)
+              const rotation = new Quaternion
+              rotation.setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)
               for (const [vertices, indices] of geometry.collision) {
                 world.createCollider(RAPIER.ColliderDesc.trimesh(vertices, indices).setTranslation(...wall.center).setRotation(rotation))
               }
@@ -154,7 +156,9 @@ describe('lower gallery', () => {
               part.dispose()
             }
             for (const beam of stairRoofs) {
-              world.createCollider(RAPIER.ColliderDesc.cuboid(beam.size[0] / 2, beam.size[1] / 2, beam.size[2] / 2).setTranslation(...beam.position).setRotation((new Quaternion).setFromEuler(new Euler(...beam.rotation))))
+              const beamRotation = new Quaternion
+              beamRotation.setFromEuler(new Euler(...beam.rotation))
+              world.createCollider(RAPIER.ColliderDesc.cuboid(beam.size[0] / 2, beam.size[1] / 2, beam.size[2] / 2).setTranslation(...beam.position).setRotation(beamRotation))
             }
             world.createCollider(RAPIER.ColliderDesc.cuboid(4, 0.15, 3.5).setTranslation(0, -0.15, 11.5))
             world.createCollider(RAPIER.ColliderDesc.cuboid(lower.size[0] / 2, 0.15, lower.size[1] / 2).setTranslation(lower.center[0], lower.floorY - 0.15, lower.center[1]))

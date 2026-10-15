@@ -50,9 +50,15 @@ describe('connected Oculus railings', () => {
       const indices = tube.index!
       for (let i = 0; i < indices.count; i += 3) {
         const ids = [indices.getX(i), indices.getX(i + 1), indices.getX(i + 2)]
-        const [a, b, c] = ids.map(index => (new Vector3).fromBufferAttribute(positions, index))
+        const [a, b, c] = ids.map(index => {
+          const corner = new Vector3
+          return corner.fromBufferAttribute(positions, index)
+        })
         const face = b.sub(a).cross(c.sub(a)).normalize()
-        const outward = ids.reduce((sum, index) => sum.add((new Vector3).fromBufferAttribute(normals, index)), new Vector3).normalize()
+        const outward = ids.reduce((sum, index) => {
+          const vertexNormal = new Vector3
+          return sum.add(vertexNormal.fromBufferAttribute(normals, index))
+        }, new Vector3).normalize()
         expect(face.dot(outward)).toBeGreaterThan(0.9)
       }
     } finally {
@@ -127,8 +133,10 @@ describe('connected Oculus railings', () => {
       const axis = new Vector3(0, 1, 0)
       for (const [i, segment] of railing.segments.entries()) {
         const rotation = new Quaternion(...segment.rotation)
-        const start = new Vector3(...segment.position).add(axis.clone().applyQuaternion(rotation).multiplyScalar(-segment.halfLength))
-        const end = new Vector3(...segment.position).add(axis.clone().applyQuaternion(rotation).multiplyScalar(segment.halfLength))
+        const start = new Vector3(...segment.position)
+        start.add(axis.clone().applyQuaternion(rotation).multiplyScalar(-segment.halfLength))
+        const end = new Vector3(...segment.position)
+        end.add(axis.clone().applyQuaternion(rotation).multiplyScalar(segment.halfLength))
         expect(start.distanceTo(railing.getPoint(railing.distances[i] / railing.length))).toBeLessThan(0.00001)
         expect(end.distanceTo(railing.getPoint(railing.distances[i + 1] / railing.length))).toBeLessThan(0.00001)
       }
@@ -140,13 +148,15 @@ describe('connected Oculus railings', () => {
   })
   test('every post stands on the existing stone instead of floating outside the rounded edges', () => {
     const ground = new OculusGroundGeometry
-    const floor = new BoxGeometry(lowerGallery.oculus.size[0], 0.24, lowerGallery.oculus.size[1]).translate(lowerGallery.oculus.center[0], lowerGallery.floorY - 0.12, lowerGallery.oculus.center[1])
+    const floor = new BoxGeometry(lowerGallery.oculus.size[0], 0.24, lowerGallery.oculus.size[1])
+    floor.translate(lowerGallery.oculus.center[0], lowerGallery.floorY - 0.12, lowerGallery.oculus.center[1])
     const material = new MeshBasicMaterial
     const meshes = [new Mesh(ground, material), new Mesh(floor, material)]
     try {
       for (const post of railing.posts) {
         const baseY = post.position[1] - post.height / 2
-        const hit = new Raycaster(new Vector3(post.position[0], baseY + 0.1, post.position[2]), new Vector3(0, -1, 0), 0, 0.2).intersectObjects(meshes)[0]
+        const footingRay = new Raycaster(new Vector3(post.position[0], baseY + 0.1, post.position[2]), new Vector3(0, -1, 0), 0, 0.2)
+        const hit = footingRay.intersectObjects(meshes)[0]
         expect(hit).toBeDefined()
         expect(hit.point.y).toBeCloseTo(baseY, 2)
       }

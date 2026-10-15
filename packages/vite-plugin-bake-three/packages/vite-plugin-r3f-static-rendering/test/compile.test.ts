@@ -34,7 +34,10 @@ test('bakes matrices, removes the JSX map and makes one owned InstancedMesh', as
     objectsAfter: 1,
   })
   expect(result.code).not.toContain('.map(')
-  expect(walk(plan.nodes).find(node => node.kind === 'instances')!.matrices).toEqual([0, 1, 2, 3].flatMap(x => (new Three.Matrix4).makeTranslation(x * 2, 0, 0).toArray()))
+  expect(walk(plan.nodes).find(node => node.kind === 'instances')!.matrices).toEqual([0, 1, 2, 3].flatMap(x => {
+    const instanceTranslation = new Three.Matrix4
+    return instanceTranslation.makeTranslation(x * 2, 0, 0).toArray()
+  }))
   const first = create(plan)
   const second = create(plan)
   const a = first.children[0] as Three.InstancedMesh
@@ -128,7 +131,12 @@ test('composes nested anonymous transforms and preserves named groups', async ()
   for (let index = 0; index < 4; index++) {
     const actual = new Three.Matrix4
     instanced.getMatrixAt(index, actual)
-    const expected = (new Three.Matrix4).compose(new Three.Vector3(index, 0, 0), (new Three.Quaternion).setFromEuler(new Three.Euler(0, 0.5, 0)), new Three.Vector3(1, 1, 1)).multiply((new Three.Matrix4).makeTranslation(0, 2, 0))
+    const groupRotation = new Three.Quaternion
+    groupRotation.setFromEuler(new Three.Euler(0, 0.5, 0))
+    const meshOffset = new Three.Matrix4
+    meshOffset.makeTranslation(0, 2, 0)
+    const expected = new Three.Matrix4
+    expected.compose(new Three.Vector3(index, 0, 0), groupRotation, new Three.Vector3(1, 1, 1)).multiply(meshOffset)
     for (const [i, value] of actual.elements.entries()) {
       expect(value).toBeCloseTo(expected.elements[i], 6)
     }

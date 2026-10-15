@@ -118,7 +118,9 @@ describe('knot inspection renders', () => {
       stdout: 'pipe',
       stderr: 'pipe',
     })
-    const [exitCode, stdout, stderr] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()])
+    const stdoutResponse = new Response(child.stdout)
+    const stderrResponse = new Response(child.stderr)
+    const [exitCode, stdout, stderr] = await Promise.all([child.exited, stdoutResponse.text(), stderrResponse.text()])
     expect(exitCode, stderr).toBe(0)
     expect(stdout).toContain('--category snapshot,animation,video')
     expect(stdout).toContain('default: snapshot,animation,video')

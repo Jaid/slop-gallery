@@ -10,7 +10,8 @@ describe('RGBA8 readback', () => {
           const rowBytes = width * 4
           const stride = layout === 'packed' ? rowBytes : Math.ceil(rowBytes / 256) * 256
           const length = layout === 'unpadded-final-row' ? stride * (height - 1) + rowBytes : stride * height
-          const input = new Uint8Array(length).fill(255)
+          const input = new Uint8Array(length)
+          input.fill(255)
           const expected = new Uint8ClampedArray(rowBytes * height)
           for (let y = 0; y < height; y += 1) {
             const row = Uint8Array.from({length: rowBytes}, (_, x) => (x + y * 17) % 251)

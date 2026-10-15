@@ -258,8 +258,10 @@ test('separate motors do not share velocity or jump state', () => {
 })
 test('movement follows yaw even when the camera looks straight up', () => {
   const motor = grounded()
-  const yaw = (new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), Math.PI / 2)
-  const pitch = (new Quaternion).setFromAxisAngle(new Vector3(1, 0, 0), Math.PI / 2)
+  const yaw = new Quaternion
+  yaw.setFromAxisAngle(new Vector3(0, 1, 0), Math.PI / 2)
+  const pitch = new Quaternion
+  pitch.setFromAxisAngle(new Vector3(1, 0, 0), Math.PI / 2)
   const look = yaw.multiply(pitch)
   for (let i = 0; i < 90; i++) {
     motor.step(world.timestep, {forward: true}, look)

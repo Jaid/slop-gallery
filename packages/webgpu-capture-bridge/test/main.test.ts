@@ -15,7 +15,8 @@ describe('WebgpuCapture', () => {
       camera: new PerspectiveCamera,
     })).toThrow('native WebGPU')
     renderer.backend.isWebGPUBackend = true
-    const pipeline = new RenderPipeline((new TestRenderer).asRenderer())
+    const foreignRenderer = new TestRenderer
+    const pipeline = new RenderPipeline(foreignRenderer.asRenderer())
     expect(() => new WebgpuCapture({
       renderer: renderer.asRenderer(),
       scene: new Scene,
@@ -85,7 +86,8 @@ describe('WebgpuCapture', () => {
     expect(renderer.cubeFace).toBe(3)
     expect(renderer.mipmapLevel).toBe(2)
     expect(renderer.autoClear).toBe(false)
-    readback.resolve(new Uint8Array(16).fill(255))
+    const whiteFrame = new Uint8Array(16)
+    readback.resolve(whiteFrame.fill(255))
     const result = await pending
     expect(result.meanLuminance).toBeCloseTo(255)
     expect(result).toEqual({
@@ -285,7 +287,8 @@ describe('WebgpuCapture', () => {
   test('respects byte offsets and excludes padding from image statistics and encoder input', async () => {
     const renderer = new TestRenderer
     renderer.size.set(1, 2)
-    const bytes = new Uint8Array(280).fill(255)
+    const bytes = new Uint8Array(280)
+    bytes.fill(255)
     bytes.set([0, 0, 0, 255], 8)
     bytes.set([255, 0, 0, 128], 264)
     renderer.readback = () => Promise.resolve(bytes.subarray(8, 268))

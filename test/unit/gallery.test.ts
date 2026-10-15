@@ -287,7 +287,8 @@ describe('transactional history', () => {
 })
 describe('backup validation', () => {
   test('default IDs match unique, existing artwork and narration filenames', async () => {
-    expect(new Set(initialPortraits.map(p => p.id)).size).toBe(initialPortraits.length)
+    const defaultIds = new Set(initialPortraits.map(p => p.id))
+    expect(defaultIds.size).toBe(initialPortraits.length)
     for (const p of initialPortraits) {
       if (typeof p.source !== 'string') {
         throw new TypeError('Default artworks must reference bundled images.')

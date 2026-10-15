@@ -141,7 +141,10 @@ describe('Moonfall impact hall', () => {
     const edges = new Map<string, number>
     for (let i = 0; i < index.count; i += 3) {
       const corners = [index.getX(i), index.getX(i + 1), index.getX(i + 2)]
-      const [a, b, c] = corners.map(corner => (new Vector3).fromBufferAttribute(terrainPositions, corner))
+      const [a, b, c] = corners.map(corner => {
+        const cornerPosition = new Vector3
+        return cornerPosition.fromBufferAttribute(terrainPositions, corner)
+      })
       expect(b.sub(a).cross(c.sub(a)).y).toBeGreaterThan(0)
       for (let k = 0; k < 3; k++) {
         const edge = [corners[k], corners[(k + 1) % 3]].toSorted((first, second) => first - second).join()
@@ -232,7 +235,8 @@ describe('Moonfall impact hall', () => {
           const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(Math.cos(angle) * 11.2, 0.04, Math.sin(angle) * 11.2))
           const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
           const motor = new EgoMotor(RAPIER, world, body, collider)
-          const facing = (new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), Math.atan2(Math.cos(angle), Math.sin(angle)))
+          const facing = new Quaternion
+          facing.setFromAxisAngle(new Vector3(0, 1, 0), Math.atan2(Math.cos(angle), Math.sin(angle)))
           for (let i = 0; i < fps * 2; i++) {
             motor.step(world.timestep, {
               forward: true,
@@ -259,7 +263,8 @@ describe('Moonfall impact hall', () => {
     }))
     for (const {wall, geometry: part} of architecture) {
       for (const args of part.collision) {
-        world.createCollider(RAPIER.ColliderDesc.trimesh(...args).setTranslation(wall.center[0] - room.center[0], 0, wall.center[2] - room.center[1]).setRotation((new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)))
+        const wallRotation = new Quaternion
+        world.createCollider(RAPIER.ColliderDesc.trimesh(...args).setTranslation(wall.center[0] - room.center[0], 0, wall.center[2] - room.center[1]).setRotation(wallRotation.setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)))
       }
     }
     const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(11, 0.04, 0))

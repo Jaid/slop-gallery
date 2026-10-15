@@ -103,12 +103,13 @@ test('malformed pixel lengths cannot produce invalid GPU uploads', () => {
 test('async recipes allocate and rasterize only once, after all inputs resolve', async () => {
   const gate = Promise.withResolvers<string>()
   const draw = mock(() => {})
+  const pendingController = new AbortController
   const pending = prepareCanvasTexture({
     width: 4,
     height: 2,
     prepare: () => gate.promise,
     draw,
-  }, (new AbortController).signal)
+  }, pendingController.signal)
   expect(fixture.createElement).not.toHaveBeenCalled()
   gate.resolve('final icon')
   const texture = await pending
@@ -157,6 +158,7 @@ test('late results after cancellation never allocate pixels or GPU textures', as
 })
 test('real preparation failures propagate without allocating a placeholder', async () => {
   const failure = new Error('icon failed')
+  const failedPreparationController = new AbortController
   await expect(prepareCanvasTexture({
     width: 4,
     height: 2,
@@ -164,18 +166,19 @@ test('real preparation failures propagate without allocating a placeholder', asy
       throw failure
     },
     draw() {},
-  }, (new AbortController).signal)).rejects.toBe(failure)
+  }, failedPreparationController.signal)).rejects.toBe(failure)
   expect(fixture.createElement).not.toHaveBeenCalled()
 })
 test('prepared inputs are released after success, cancellation and draw failure', async () => {
   const release = mock(() => {})
+  const successController = new AbortController
   const success = await prepareCanvasTexture({
     width: 4,
     height: 2,
     prepare: async () => 'success',
     disposeInputs: release,
     draw() {},
-  }, (new AbortController).signal)
+  }, successController.signal)
   expect(release).toHaveBeenCalledWith('success')
   success!.dispose()
   const controller = new AbortController
@@ -191,6 +194,7 @@ test('prepared inputs are released after success, cancellation and draw failure'
   gate.resolve('cancelled')
   expect(await cancelled).toBeNull()
   expect(release).toHaveBeenCalledWith('cancelled')
+  const failedDrawController = new AbortController
   await expect(prepareCanvasTexture({
     width: 4,
     height: 2,
@@ -199,7 +203,7 @@ test('prepared inputs are released after success, cancellation and draw failure'
     draw() {
       throw new Error('draw failed')
     },
-  }, (new AbortController).signal)).rejects.toThrow('draw failed')
+  }, failedDrawController.signal)).rejects.toThrow('draw failed')
   expect(release).toHaveBeenCalledWith('failed draw')
 })
 test('external-image draw failures and resized surfaces release their canvases without readback', () => {
@@ -232,6 +236,7 @@ test('synchronous external images retain canvas storage until texture disposal',
   expect(fixture.surfaces[0].canvas.width).toBe(0)
 })
 test('input cleanup failure cannot leak an otherwise completed canvas texture', async () => {
+  const failedCleanupController = new AbortController
   await expect(prepareCanvasTexture({
     width: 4,
     height: 2,
@@ -240,16 +245,17 @@ test('input cleanup failure cannot leak an otherwise completed canvas texture', 
       throw new Error('cleanup failed')
     },
     draw() {},
-  }, (new AbortController).signal)).rejects.toThrow('cleanup failed')
+  }, failedCleanupController.signal)).rejects.toThrow('cleanup failed')
   expect(fixture.surfaces[0].canvas.width).toBe(0)
 })
 test('prepared GPU textures never snapshot canvases or read pixels', async () => {
+  const gpuTextureController = new AbortController
   const texture = await prepareCanvasTexture({
     width: 4,
     height: 2,
     prepare: async () => {},
     draw() {},
-  }, (new AbortController).signal)
+  }, gpuTextureController.signal)
   expect(texture!.image).toBe(fixture.surfaces[0].canvas as unknown as HTMLCanvasElement)
   expect(fixture.createImageBitmap).not.toHaveBeenCalled()
   expect(fixture.surfaces[0].context.getImageData).not.toHaveBeenCalled()

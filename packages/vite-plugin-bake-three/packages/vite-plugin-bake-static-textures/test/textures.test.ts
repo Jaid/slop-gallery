@@ -151,7 +151,8 @@ test('automatically discovers canvas-textures through aliased imports', async ()
   if (Array.isArray(path) || !path.isCallExpression()) {
     throw new Error('Expected call initializer')
   }
-  const evaluated = await new Recipe(graph, adapter).evaluate(path, 1000)
+  const textureRecipe = new Recipe(graph, adapter)
+  const evaluated = await textureRecipe.evaluate(path, 1000)
   const writer = new SnapshotWriter(adapter, 1024 * 1024, evaluated.isShared)
   const bytes = writer.write(evaluated.value)
   canvasDom()

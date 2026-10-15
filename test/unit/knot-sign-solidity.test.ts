@@ -29,7 +29,8 @@ for (const [title, parts, elevation] of [
         mesh.rotation.set(rotation[0], rotation[1], rotation[2])
         mesh.updateMatrixWorld()
         meshes.push(mesh)
-        world.createCollider(RAPIER.ColliderDesc.cuboid(size[0] / 2, size[1] / 2, size[2] / 2).setTranslation(...position).setRotation((new Quaternion).setFromEuler(new Euler(...rotation))))
+        const cuboidRotation = new Quaternion
+        world.createCollider(RAPIER.ColliderDesc.cuboid(size[0] / 2, size[1] / 2, size[2] / 2).setTranslation(...position).setRotation(cuboidRotation.setFromEuler(new Euler(...rotation))))
       }
       if (title === 'nameplate') {
         // The rendered, instanced stand geometry, not a separately tessellated stand-in.
@@ -37,13 +38,15 @@ for (const [title, parts, elevation] of [
         stand.updateMatrixWorld()
         meshes.push(stand)
         for (const {position, rotation = [0, 0, 0], radius, height} of knotSignRoundParts) {
-          world.createCollider(RAPIER.ColliderDesc.cylinder(height / 2, radius).setTranslation(...position).setRotation((new Quaternion).setFromEuler(new Euler(...rotation))))
+          const roundPartRotation = new Quaternion
+          world.createCollider(RAPIER.ColliderDesc.cylinder(height / 2, radius).setTranslation(...position).setRotation(roundPartRotation.setFromEuler(new Euler(...rotation))))
         }
         expect(Math.min(...knotSignRoundParts.map(part => part.position[1] - part.height / 2)) + elevation).toBeCloseTo(0, 6)
       } else {
         expect(Math.min(...parts.filter(part => !part.rotation).map(part => part.position[1] - part.size[1] / 2)) + elevation).toBeCloseTo(0, 6)
       }
-      const face = new Vector3(0, 0, parts[0].size[2] / 2).applyEuler(new Euler(...parts[0].rotation ?? [0, 0, 0])).add(new Vector3(...parts[0].position))
+      const face = new Vector3(0, 0, parts[0].size[2] / 2)
+      face.applyEuler(new Euler(...parts[0].rotation ?? [0, 0, 0])).add(new Vector3(...parts[0].position))
       expect(face.length()).toBeCloseTo(0, 6)
       expect(parts[0].size[2]).toBeLessThanOrEqual(0.05)
       world.step()
@@ -51,7 +54,8 @@ for (const [title, parts, elevation] of [
         for (const part of title === 'nameplate' ? [...parts, ...knotSignRoundParts] : parts) {
           const origin = new Vector3(part.position[0], part.position[1], side * 2)
           const direction = new Vector3(0, 0, -side)
-          const visible = new Raycaster(origin, direction).intersectObjects(meshes)[0]
+          const sightRay = new Raycaster(origin, direction)
+          const visible = sightRay.intersectObjects(meshes)[0]
           const hit = world.castRay(new RAPIER.Ray(origin, direction), 4, true)
           expect(visible).toBeDefined()
           expect(hit).not.toBeNull()
@@ -87,7 +91,8 @@ test('museum stand has a slender stem, round grounded foot and upward-facing pla
   expect(boss.rotation?.[0]).toBeCloseTo(Math.PI / 2 + knotSign.tilt)
   expect(stem.position[1] - stem.height / 2 + knotSign.elevation).toBeCloseTo(0)
   expect(stem.position[1] + stem.height / 2).toBeCloseTo(0)
-  const normal = new Vector3(0, 0, 1).applyEuler(new Euler(knotSign.tilt, 0, 0))
+  const normal = new Vector3(0, 0, 1)
+  normal.applyEuler(new Euler(knotSign.tilt, 0, 0))
   const collarFrontmost = new Vector3(collar.position[0], collar.position[1] + collar.height / 2, collar.position[2] + collar.radius)
   expect(normal.dot(collarFrontmost)).toBeLessThan(-knotSign.thickness)
   expect(normal.dot(new Vector3(...boss.position)) + boss.height / 2).toBeCloseTo(-knotSign.thickness)
@@ -101,8 +106,10 @@ test('stand stays on the left with its back turned toward its knot', () => {
       position: [0, 0, 0],
       rotation,
     })
-    const towardKnot = new Vector3(-position[0], 0, -position[2]).normalize()
-    const back = new Vector3(0, 0, -1).applyAxisAngle(new Vector3(0, 1, 0), rotation + knotSign.inwardRotation)
+    const towardKnot = new Vector3(-position[0], 0, -position[2])
+    towardKnot.normalize()
+    const back = new Vector3(0, 0, -1)
+    back.applyAxisAngle(new Vector3(0, 1, 0), rotation + knotSign.inwardRotation)
     expect(back.dot(towardKnot)).toBeGreaterThan(0.8)
   }
 })
@@ -120,8 +127,10 @@ test('stand parts share one half-millimeter silhouette tolerance and drop only b
   expect(knotSignRoundParts.filter(part => part.openEnded)).toEqual([stem])
   // The stem’s foot is flush with the base’s underside and its head sits inside the mounting boss.
   expect(stem.position[1] - stem.height / 2).toBeCloseTo(base.position[1] - base.height / 2, 9)
-  const head = new Vector3(stem.position[0], stem.position[1] + stem.height / 2, stem.position[2]).sub(new Vector3(...boss.position))
-  const axis = new Vector3(0, 1, 0).applyEuler(new Euler(...boss.rotation!))
+  const head = new Vector3(stem.position[0], stem.position[1] + stem.height / 2, stem.position[2])
+  head.sub(new Vector3(...boss.position))
+  const axis = new Vector3(0, 1, 0)
+  axis.applyEuler(new Euler(...boss.rotation!))
   const along = head.dot(axis)
   expect(Math.abs(along)).toBeLessThan(boss.height / 2)
   expect(head.addScaledVector(axis, -along).length() + stem.radius).toBeLessThan(boss.radius)

@@ -73,7 +73,9 @@ for (const ramp of oculusRamps) {
               const [vertices, indices] = colliderGeometry(geometry)
               world.createCollider(RAPIER.ColliderDesc.trimesh(vertices, indices).setTranslation(ramp.x, ramp.floorY, ramp.startZ))
               for (const [wallVertices, wallIndices] of wallGeometry.collision) {
-                world.createCollider(RAPIER.ColliderDesc.trimesh(wallVertices, wallIndices).setTranslation(...wall.center).setRotation((new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)))
+                const wallRotation = new Quaternion
+                wallRotation.setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)
+                world.createCollider(RAPIER.ColliderDesc.trimesh(wallVertices, wallIndices).setTranslation(...wall.center).setRotation(wallRotation))
               }
               world.createCollider(RAPIER.ColliderDesc.cuboid(oculusPlatform.size[0] / 2, oculusPlatform.size[1] / 2, oculusPlatform.size[2] / 2).setTranslation(...oculusPlatform.position))
               world.createCollider(RAPIER.ColliderDesc.cuboid(lowerGallery.oculus.size[0] / 2, 0.12, lowerGallery.oculus.size[1] / 2).setTranslation(0, ramp.floorY - 0.12, lowerGallery.oculus.center[1]))
@@ -81,7 +83,8 @@ for (const ramp of oculusRamps) {
               const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(ramp.x + offset, ramp.floorY + (ascending ? 0 : ramp.rise) + 0.04, ascending ? ramp.startZ + 0.8 : ramp.startZ - ramp.run - 1))
               const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
               const motor = new EgoMotor(RAPIER, world, body, collider)
-              const facing = (new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), ascending ? 0 : Math.PI)
+              const facing = new Quaternion
+              facing.setFromAxisAngle(new Vector3(0, 1, 0), ascending ? 0 : Math.PI)
               try {
                 let reached = false
                 for (let i = 0; i < fps * 8; i++) {

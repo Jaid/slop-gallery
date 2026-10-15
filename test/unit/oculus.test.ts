@@ -85,7 +85,8 @@ describe('oculus and connecting tunnel', () => {
       world.step()
       const origin = new Vector3(0, -3, -28.5)
       const direction = new Vector3(0, -1, 0)
-      expect(new Raycaster(origin, direction).intersectObject(mesh)[0].point.y).toBe(-5)
+      const platformRay = new Raycaster(origin, direction)
+      expect(platformRay.intersectObject(mesh)[0].point.y).toBe(-5)
       expect(world.castRay(new RAPIER.Ray(origin, direction), 4, true)!.timeOfImpact).toBe(2)
     } finally {
       geometry.dispose()
@@ -132,7 +133,8 @@ describe('oculus and connecting tunnel', () => {
       for (const x of [-5, -3.9, 0, 3.9, 5]) {
         for (const z of [-30, -24.1, -23.9, -20, -16.1, -15.9, -14.5]) {
           const glass = Math.abs(x) < 4 && z > -24 && z < -16
-          expect(new Raycaster(new Vector3(x, 4.9, z), new Vector3(0, -1, 0), 0, 13).intersectObjects(meshes).length === 0).toBe(glass)
+          const sightline = new Raycaster(new Vector3(x, 4.9, z), new Vector3(0, -1, 0), 0, 13)
+          expect(sightline.intersectObjects(meshes).length === 0).toBe(glass)
         }
       }
       const visit = (node: ReactNode) => {
@@ -173,7 +175,9 @@ describe('oculus and connecting tunnel', () => {
             }))
             for (const {wall, geometry} of geometries) {
               for (const [vertices, indices] of geometry.collision) {
-                world.createCollider(RAPIER.ColliderDesc.trimesh(vertices, indices).setTranslation(...wall.center).setRotation((new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)))
+                const wallRotation = new Quaternion
+                wallRotation.setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)
+                world.createCollider(RAPIER.ColliderDesc.trimesh(vertices, indices).setTranslation(...wall.center).setRotation(wallRotation))
               }
             }
             for (const room of [moonfall, oculus]) {
@@ -184,7 +188,8 @@ describe('oculus and connecting tunnel', () => {
             const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(offset, floorY + 0.04, returning ? -15.5 : 6))
             const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
             const motor = new EgoMotor(RAPIER, world, body, collider)
-            const facing = (new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), returning ? Math.PI : 0)
+            const facing = new Quaternion
+            facing.setFromAxisAngle(new Vector3(0, 1, 0), returning ? Math.PI : 0)
             try {
               for (let i = 0; i < fps * 10; i++) {
                 motor.step(world.timestep, {

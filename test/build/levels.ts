@@ -31,7 +31,8 @@ for (const level of levelIds) {
   if (level !== 'knottingham' && report.modules.some(id => id.startsWith('packages/knot-materials/src/entries/') || id.startsWith('packages/knot-materials/src/candidates/'))) {
     throw new Error(`Knot shaders or catalog leaked into ${level}.`)
   }
-  const files = await Array.fromAsync(new Bun.Glob('**/*').scan(directory))
+  const everyFileGlob = new Bun.Glob('**/*')
+  const files = await Array.fromAsync(everyFileGlob.scan(directory))
   if (files.some(file => file.endsWith('.map'))) {
     throw new Error(`Production source map escaped into ${level}.`)
   }

@@ -131,7 +131,8 @@ test('save strips runtime ownership before structured cloning', async () => {
   expect(loaded?.portraits[0]).not.toHaveProperty('pending')
 })
 test('import rejects an oversized document even when gzip compresses it below the file limit', async () => {
-  const encoded = new Uint8Array(maximumImageBytes).toBase64()
+  const largestImage = new Uint8Array(maximumImageBytes)
+  const encoded = largestImage.toBase64()
   const portraits = initialPortraits.slice(0, 7).map((p, i) => ({
     ...p,
     source: {
@@ -139,14 +140,17 @@ test('import rejects an oversized document even when gzip compresses it below th
       data: i < 6 ? encoded : 'eA==',
     },
   }))
-  const stream = new Blob([
+  const oversizedDocument = new Blob([
     JSON.stringify({
       ...original,
       portraits,
     }),
-  ]).stream().pipeThrough(new CompressionStream('gzip'))
-  const backup = await new Response(stream).blob()
-  await expect((new GalleryRepository).import(backup)).rejects.toThrow('150')
+  ])
+  const stream = oversizedDocument.stream().pipeThrough(new CompressionStream('gzip'))
+  const backupResponse = new Response(stream)
+  const backup = await backupResponse.blob()
+  const repo = new GalleryRepository
+  await expect(repo.import(backup)).rejects.toThrow('150')
   expect(useGallery.getState().portraits.map(p => p.id)).toEqual(original.portraits.map(p => p.id))
 }, 30_000)
 test('recovery can retry storage after a transient open failure', async () => {

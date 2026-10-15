@@ -17,10 +17,12 @@ test('a complete nameplate can be picked up, canceled, thrown and picked up agai
   world.createCollider(RAPIER.ColliderDesc.cuboid(30, 0.1, 30).setTranslation(0, -0.1, 0))
   const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(0, knotSign.elevation, 0).setCcdEnabled(true).setLinearDamping(0.1).setAngularDamping(0.15))
   for (const {size, position, rotation = [0, 0, 0]} of knotSignParts) {
-    world.createCollider(RAPIER.ColliderDesc.cuboid(size[0] / 2, size[1] / 2, size[2] / 2).setTranslation(...position).setRotation((new Quaternion).setFromEuler(new Euler(...rotation))).setMass(knotSign.plateMass).setFriction(0.9).setRestitution(0.1), body)
+    const plateRotation = new Quaternion
+    world.createCollider(RAPIER.ColliderDesc.cuboid(size[0] / 2, size[1] / 2, size[2] / 2).setTranslation(...position).setRotation(plateRotation.setFromEuler(new Euler(...rotation))).setMass(knotSign.plateMass).setFriction(0.9).setRestitution(0.1), body)
   }
   for (const {radius, height, position, rotation = [0, 0, 0], mass} of knotSignRoundParts) {
-    world.createCollider(RAPIER.ColliderDesc.cylinder(height / 2, radius).setTranslation(...position).setRotation((new Quaternion).setFromEuler(new Euler(...rotation))).setMass(mass).setFriction(0.9).setRestitution(0.1), body)
+    const roundPartRotation = new Quaternion
+    world.createCollider(RAPIER.ColliderDesc.cylinder(height / 2, radius).setTranslation(...position).setRotation(roundPartRotation.setFromEuler(new Euler(...rotation))).setMass(mass).setFriction(0.9).setRestitution(0.1), body)
   }
   const carried = new GrabbableBody(body, world)
   try {
@@ -100,11 +102,13 @@ test('instanced faces and supports follow prop transforms, even outside their or
       for (const mesh of [faces, supports]) {
         const matrix = new Matrix4
         mesh.getMatrixAt(0, matrix)
-        const worldMatrix = (new Matrix4).multiplyMatrices(mesh.matrixWorld, matrix)
+        const worldMatrix = new Matrix4
+        worldMatrix.multiplyMatrices(mesh.matrixWorld, matrix)
         for (let i = 0; i < 16; i++) {
           expect(worldMatrix.elements[i]).toBeCloseTo(first.matrixWorld.elements[i], 4)
         }
-        expect(mesh.boundingBox!.containsPoint((new Vector3).setFromMatrixPosition(matrix))).toBe(true)
+        const instancePosition = new Vector3
+        expect(mesh.boundingBox!.containsPoint(instancePosition.setFromMatrixPosition(matrix))).toBe(true)
       }
     }
     const version = faces.instanceMatrix.version
@@ -116,7 +120,8 @@ test('instanced faces and supports follow prop transforms, even outside their or
     first.position.set(0, 0, -2)
     first.rotation.set(0, 0, 0)
     first.updateMatrixWorld(true)
-    expect(new Raycaster(new Vector3, new Vector3(0, 0, -1)).intersectObject(first, true)).not.toHaveLength(0)
+    const proxyRay = new Raycaster(new Vector3, new Vector3(0, 0, -1))
+    expect(proxyRay.intersectObject(first, true)).not.toHaveLength(0)
   } finally {
     faces.dispose()
     supports.dispose()

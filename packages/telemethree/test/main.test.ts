@@ -45,7 +45,10 @@ test('Three statistics include all passes and distinguish draw calls from cumula
   const stats = new ThreeStatistics(telemetry, renderer, scene, {intervalMs: 1000})
   const stop = stats.connect()
   expect(info.autoReset).toBe(false)
-  expect(() => new ThreeStatistics(telemetry, renderer, scene).connect()).toThrow()
+  expect(() => {
+    const duplicateStats = new ThreeStatistics(telemetry, renderer, scene)
+    duplicateStats.connect()
+  }).toThrow()
   stats.endFrame(0.1)
   for (let frame = 1; frame <= 100; frame++) {
     stats.beginFrame()

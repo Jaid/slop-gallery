@@ -78,7 +78,8 @@ describe('continuous stair handrails', () => {
               for (const direction of [-1, 1]) {
                 const origin = new Vector3(stairTurn.center[0] + dx, y - direction, z + across)
                 const aim = new Vector3(0, direction, 0)
-                const hit = new Raycaster(origin, aim, 0, 2).intersectObject(mesh)[0]
+                const handrailRay = new Raycaster(origin, aim, 0, 2)
+                const hit = handrailRay.intersectObject(mesh)[0]
                 expect(hit.distance).toBeCloseTo(1 - 0.065 / 2, 5)
                 expect(world.castRay(new RAPIER.Ray(origin, aim), 2, true)!.timeOfImpact).toBeCloseTo(hit.distance, 5)
               }

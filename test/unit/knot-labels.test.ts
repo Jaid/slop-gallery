@@ -22,7 +22,8 @@ describe('Knot nameplates', () => {
     for (const bay of knotBays) {
       const url = bay.candidate.icon
       expect(url).toBeDefined()
-      expect(new URL(url).pathname.endsWith('/symbol.svg')).toBe(true)
+      const iconUrl = new URL(url)
+      expect(iconUrl.pathname.endsWith('/symbol.svg')).toBe(true)
       expect(await Bun.file(new URL(url)).text()).toContain('<svg')
       urls.add(Bun.hash(await Bun.file(new URL(url)).arrayBuffer()).toString())
     }

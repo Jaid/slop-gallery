@@ -20,7 +20,8 @@ test('a knot can be targeted across the museum wall that does not exist in Knott
     mesh.updateMatrixWorld()
     const origin = mesh.position.clone().add(new Vector3(Math.SQRT2, 0, Math.SQRT2))
     const direction = mesh.position.clone().sub(origin).normalize()
-    const hit = new Raycaster(origin, direction, 0, 9).intersectObject(mesh)[0]
+    const targetingRay = new Raycaster(origin, direction, 0, 9)
+    const hit = targetingRay.intersectObject(mesh)[0]
     expect(hit).toBeDefined()
     expect(museumWallDistance(origin.toArray(), direction.toArray())).toBeLessThan(hit.distance)
     expect(levelWallDistance(origin.toArray(), direction.toArray())).toBeGreaterThan(hit.distance)

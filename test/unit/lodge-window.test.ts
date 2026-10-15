@@ -156,7 +156,8 @@ describe('Lodge through-window', () => {
     const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(lodgeWindow.roomX - 0.35, lodgeWindow.bottom + 0.02, lodgeWindow.z))
     const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
     const motor = new EgoMotor(RAPIER, world, body, collider)
-    const facing = (new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), Math.PI / 2)
+    const facing = new Quaternion
+    facing.setFromAxisAngle(new Vector3(0, 1, 0), Math.PI / 2)
     try {
       for (let i = 0; i < 180; i++) {
         motor.step(world.timestep, {
@@ -213,7 +214,8 @@ describe('Lodge through-window', () => {
       for (const side of [-1, 1]) {
         const origin = new Vector3(side < 0 ? lodgeWindow.roomX + 0.5 : lodgeWindow.tunnelX - 0.5, (lodgeWindow.bottom + lodgeWindow.top) / 2, lodgeWindow.z)
         const direction = new Vector3(side, 0, 0)
-        const hit = new Raycaster(origin, direction).intersectObjects([...opaque, glass], false)[0]
+        const glassRay = new Raycaster(origin, direction)
+        const hit = glassRay.intersectObjects([...opaque, glass], false)[0]
         expect(hit.object).toBe(glass)
         expect(hit.point.x).toBeCloseTo(lodgeWindow.tunnelX + (side < 0 ? lodgeWindow.glassThickness : 0), 5)
         expect(world.castRay(new RAPIER.Ray(origin, direction), 10, true)!.timeOfImpact).toBeCloseTo(hit.distance, 5)
@@ -230,7 +232,8 @@ describe('Lodge through-window', () => {
     const x = (lodgeWindow.roomX + lodgeWindow.tunnelX) / 2
     const y = (lodgeWindow.bottom + lodgeWindow.top) / 2
     for (const direction of [new Vector3(0, 1, 0), new Vector3(0, -1, 0), new Vector3(0, 0, 1), new Vector3(0, 0, -1)]) {
-      const hits = new Raycaster(new Vector3(x, y, lodgeWindow.z), direction, 0, 2).intersectObjects(opaque, false)
+      const revealRay = new Raycaster(new Vector3(x, y, lodgeWindow.z), direction, 0, 2)
+      const hits = revealRay.intersectObjects(opaque, false)
       expect(hits.length).toBeGreaterThan(0)
       expect(hits.filter(hit => Math.abs(hit.distance - hits[0].distance) < 0.0001)).toHaveLength(1)
     }

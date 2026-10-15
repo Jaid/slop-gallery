@@ -20,7 +20,8 @@ function roomBounds(position: Vec3, inset: number) {
 describe('placed pots', () => {
   test('the random pool includes every decorative and interactive variety exactly once', () => {
     expect(pottedPlantKinds).toEqual([...plants, ...destructiblePlants].map(plant => plant.id))
-    expect(new Set(pottedPlantKinds).size).toBe(10)
+    const distinctKinds = new Set(pottedPlantKinds)
+    expect(distinctKinds.size).toBe(10)
   })
   test('only the requested pots are placed', () => {
     expect(potPlacements).toEqual([
@@ -45,7 +46,8 @@ describe('placed pots', () => {
         position: [7.09, 0, -7.01],
       },
     ])
-    expect(new Set(potPlacements.map(placement => placement.id)).size).toBe(potPlacements.length)
+    const placementIds = new Set(potPlacements.map(placement => placement.id))
+    expect(placementIds.size).toBe(potPlacements.length)
     for (const placement of potPlacements) {
       const pot = potDefinition(placement.pot)
       const allowed = roomBounds(placement.position, 0.25 + pot.radius)
@@ -55,10 +57,14 @@ describe('placed pots', () => {
   test.each(pottedPlantKinds)('%s clears the walls at every pot placement', kind => {
     const geometry = kind === 'birdOfParadise' || kind === 'peaceLily' ? new DestructiblePlantGeometry(kind) : new PlantGeometry(kind)
     try {
-      const bounds = (new Box3).union(geometry.stems.boundingBox!)
+      const bounds = new Box3
+      bounds.union(geometry.stems.boundingBox!)
       if (geometry instanceof DestructiblePlantGeometry) {
         for (const leaf of geometry.leaves) {
-          const transform = (new Matrix4).compose(new Vector3(...leaf.position), (new Quaternion).setFromEuler(new Euler(...leaf.rotation)), new Vector3(1, 1, 1))
+          const leafOrientation = new Quaternion
+          leafOrientation.setFromEuler(new Euler(...leaf.rotation))
+          const transform = new Matrix4
+          transform.compose(new Vector3(...leaf.position), leafOrientation, new Vector3(1, 1, 1))
           for (const part of [leaf.geometry, leaf.stem]) {
             if (part) {
               bounds.union(part.boundingBox!.clone().applyMatrix4(transform))
@@ -70,7 +76,8 @@ describe('placed pots', () => {
       }
       for (const placement of potPlacements) {
         const pot = potDefinition(placement.pot)
-        const placed = bounds.clone().translate(new Vector3(...placement.position).add(new Vector3(0, pot.soilHeight, 0)))
+        const potPosition = new Vector3(...placement.position)
+        const placed = bounds.clone().translate(potPosition.add(new Vector3(0, pot.soilHeight, 0)))
         expect(roomBounds(placement.position, wallFace + 0.02).containsBox(placed)).toBe(true)
       }
     } finally {

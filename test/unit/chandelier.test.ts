@@ -42,7 +42,8 @@ function simulate(mass: number, miss = false, fixture = chandelierPhysics) {
       peak = Math.max(peak, offset())
       const q = body.rotation()
       const p = body.translation()
-      const pin = new Vector3(...fixture.anchor).applyQuaternion(new Quaternion(q.x, q.y, q.z, q.w)).add(new Vector3(p.x, p.y, p.z))
+      const pin = new Vector3(...fixture.anchor)
+      pin.applyQuaternion(new Quaternion(q.x, q.y, q.z, q.w)).add(new Vector3(p.x, p.y, p.z))
       drift = Math.max(drift, pin.distanceTo(new Vector3(0, fixture.height + fixture.anchor[1], 0)))
     }
     expect(drift).toBeLessThan(0.012)

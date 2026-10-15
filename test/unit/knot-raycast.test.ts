@@ -21,8 +21,10 @@ test('shared Knot BVH preserves native hits, face indices, UVs, sides and transf
           material.side = side
           for (let x = -0.6; x <= 0.6; x += 0.24) {
             for (let y = -0.6; y <= 0.6; y += 0.24) {
-              const origin = new Vector3(x, y, 3).applyMatrix4(mesh.matrixWorld)
-              const direction = new Vector3(0, 0, -1).transformDirection(mesh.matrixWorld)
+              const origin = new Vector3(x, y, 3)
+              origin.applyMatrix4(mesh.matrixWorld)
+              const direction = new Vector3(0, 0, -1)
+              direction.transformDirection(mesh.matrixWorld)
               const ray = new Raycaster(origin, direction, 0, 9)
               mesh.raycast = Mesh.prototype.raycast
               const expected = ray.intersectObject(mesh)

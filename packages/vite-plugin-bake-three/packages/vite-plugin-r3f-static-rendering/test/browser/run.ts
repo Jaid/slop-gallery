@@ -37,7 +37,8 @@ const server = Bun.serve({
   port: 0,
   hostname: '127.0.0.1',
   fetch(request) {
-    return new URL(request.url).pathname === '/fixture.js' ? new Response(source, {headers: {'Content-Type': 'text/javascript'}}) : new Response('<!doctype html><title>Static rendering regression</title>', {headers: {'Content-Type': 'text/html'}})
+    const requestUrl = new URL(request.url)
+    return requestUrl.pathname === '/fixture.js' ? new Response(source, {headers: {'Content-Type': 'text/javascript'}}) : new Response('<!doctype html><title>Static rendering regression</title>', {headers: {'Content-Type': 'text/html'}})
   },
 })
 const profile = await mkdtemp(join(tmpdir(), 'r3f-static-webgpu-'))

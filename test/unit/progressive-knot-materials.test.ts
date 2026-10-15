@@ -194,7 +194,8 @@ test('fast mode keeps cheap lit placeholders but still constructs full knot mate
     expect(surface.isMeshStandardNodeMaterial).toBe(true)
     expect(surface).not.toHaveProperty('isMeshPhysicalNodeMaterial')
     expect(surface.envMap).toBeNull()
-    expect(surface.color.getHexString()).toBe(new Color(entry.placeholder.color).getHexString())
+    const placeholderColor = new Color(entry.placeholder.color)
+    expect(surface.color.getHexString()).toBe(placeholderColor.getHexString())
     expect(surface.metalness).toBe(0)
     expect(surface.roughness).toBe(0.45)
   } finally {

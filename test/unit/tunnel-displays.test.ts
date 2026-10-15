@@ -30,7 +30,8 @@ describe('widened tunnel with sealed display rooms', () => {
         expect(Math.abs(exhibit.position[2] - display.center[1]) + 0.7).toBeLessThan(display.size[1] / 2)
       }
     }
-    expect(new Set(tunnelDisplays.flatMap(display => display.exhibits.map(exhibit => exhibit.kind))).size).toBe(6)
+    const exhibitKinds = new Set(tunnelDisplays.flatMap(display => display.exhibits.map(exhibit => exhibit.kind)))
+    expect(exhibitKinds.size).toBe(6)
     expect(rooms).toHaveLength(9)
   })
   for (const display of tunnelDisplays) {
@@ -65,7 +66,8 @@ describe('widened tunnel with sealed display rooms', () => {
           }
         }
         for (const [u, y] of [[0, 0.3], [0, 3], [-7.2, 1.6], [7.2, 1.6]]) {
-          expect(new Raycaster(new Vector3(u, y, 1), new Vector3(0, 0, -1), 0, 2).intersectObjects(opaque).length).toBeGreaterThan(0)
+          const surroundRay = new Raycaster(new Vector3(u, y, 1), new Vector3(0, 0, -1), 0, 2)
+          expect(surroundRay.intersectObjects(opaque).length).toBeGreaterThan(0)
         }
       } finally {
         world.free()
@@ -107,13 +109,16 @@ describe('widened tunnel with sealed display rooms', () => {
           const wall = walls.find(value => value.id === `oculus-tunnel-${display.side}`)!
           const geometry = createArchitectureGeometry(wall)
           for (const collision of geometry.collision) {
-            world.createCollider(RAPIER.ColliderDesc.trimesh(...collision).setTranslation(...wall.center).setRotation((new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)))
+            const wallRotation = new Quaternion
+            wallRotation.setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)
+            world.createCollider(RAPIER.ColliderDesc.trimesh(...collision).setTranslation(...wall.center).setRotation(wallRotation))
           }
           world.createCollider(RAPIER.ColliderDesc.cuboid(tunnel.width / 2, 0.12, 10).setTranslation(tunnel.x, floorY - 0.12, display.center[1]))
           const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(tunnel.x, floorY + 0.04, display.center[1]))
           const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
           const motor = new EgoMotor(RAPIER, world, body, collider)
-          const facing = (new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), -Math.sign(display.frontX) * Math.PI / 2)
+          const facing = new Quaternion
+          facing.setFromAxisAngle(new Vector3(0, 1, 0), -Math.sign(display.frontX) * Math.PI / 2)
           try {
             for (let i = 0; i < fps * 3; i++) {
               motor.step(world.timestep, {

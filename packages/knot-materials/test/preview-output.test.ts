@@ -21,8 +21,8 @@ test('output byte targets never add a hardware sRGB transfer to the renderer out
 // Opt in to a private headless browser; never attach to the interactive gallery.
 test.skipIf(Bun.env.KNOT_TEST_GPU !== '1')('GPU readback encodes display RGB exactly once, including the ACES preview path', async () => {
   const result = await withPreviewRenderer(handle => handle.evaluate(async () => {
-    const moduleURL = new URL('../test/lib/previewOutputProbe.ts', location.href).href
-    const {previewOutputProbe} = await import(/* @vite-ignore */ moduleURL)
+    const probeModuleUrl = new URL('../test/lib/previewOutputProbe.ts', location.href)
+    const {previewOutputProbe} = await import(/* @vite-ignore */ probeModuleUrl.href)
     return previewOutputProbe() as ReturnType<typeof import('./lib/previewOutputProbe.ts').previewOutputProbe>
   }))
   for (const {value, bytes} of result.samples) {
@@ -40,8 +40,8 @@ test.skipIf(Bun.env.KNOT_TEST_GPU !== '1')('GPU readback encodes display RGB exa
 // Opt in to private GPU testing; both canvas and PNG paths must preserve +Y up and +X right.
 test.skipIf(Bun.env.KNOT_TEST_GPU !== '1')('offline PNG and runtime billboard readback keep asymmetric knots upright', async () => {
   const results = await withPreviewRenderer(handle => handle.evaluate(async renderer => {
-    const moduleURL = new URL('../test/lib/previewOrientationProbe.ts', location.href).href
-    const {previewOrientationProbe} = await import(/* @vite-ignore */ moduleURL) as typeof import('./lib/previewOrientationProbe.ts')
+    const probeModuleUrl = new URL('../test/lib/previewOrientationProbe.ts', location.href)
+    const {previewOrientationProbe} = await import(/* @vite-ignore */ probeModuleUrl.href) as typeof import('./lib/previewOrientationProbe.ts')
     return previewOrientationProbe(renderer)
   }))
   expect(results).toHaveLength(3)

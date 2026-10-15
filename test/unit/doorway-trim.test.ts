@@ -37,7 +37,8 @@ describe('plain doorway trim', () => {
               } else if (y < 0.38) {
                 front = 0.2
               }
-              const hits = new Raycaster(origin, direction, 0, 2).intersectObjects(meshes)
+              const jambRay = new Raycaster(origin, direction, 0, 2)
+              const hits = jambRay.intersectObjects(meshes)
               const hit = world.castRay(new RAPIER.Ray(origin, direction), 2, true)
               expect(hits[0].point.z).toBeCloseTo(front, 6)
               expect(hit!.timeOfImpact).toBeCloseTo(1 - front, 6)

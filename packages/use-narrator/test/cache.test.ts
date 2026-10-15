@@ -3,7 +3,10 @@ import {expect, test} from 'bun:test'
 import {flush} from '../packages/use-audio-queue/test/helpers.ts'
 import {SpeechCache} from '../src/core.ts'
 
-const signal = () => (new AbortController).signal
+const signal = () => {
+  const consumerController = new AbortController
+  return consumerController.signal
+}
 test('shared generation has independently cancellable consumers', async () => {
   const ready = Promise.withResolvers<string>()
   let calls = 0

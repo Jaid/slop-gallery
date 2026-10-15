@@ -12,7 +12,9 @@ test('frequency bands measure silence, full scale and isolated speech frequencie
     frequencies[bin] = 255
   }
   expect([...frequencyLevels(frequencies, 48_000, 2048)]).toEqual([0, 0, 1, 0, 0])
-  expect([...frequencyLevels(new Uint8Array(1024).fill(255), 8000, 2048)]).toEqual([1, 1, 1, 1, 0])
+  const fullScaleFrequencies = new Uint8Array(1024)
+  fullScaleFrequencies.fill(255)
+  expect([...frequencyLevels(fullScaleFrequencies, 8000, 2048)]).toEqual([1, 1, 1, 1, 0])
 })
 test('meter routes narration once, clears silence and protects newer connections', () => {
   const routes: Array<unknown> = []

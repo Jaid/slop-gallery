@@ -53,7 +53,10 @@ describe('vesper wall ornaments', () => {
     const material = new MeshBasicMaterial
     try {
       const meshes = [geometry.foliage, geometry.brass].map(part => new Mesh(part, material))
-      const ray = (x: number, y: number) => new Raycaster(new Vector3(x, y, 1), new Vector3(0, 0, -1)).intersectObjects(meshes)
+      const ray = (x: number, y: number) => {
+        const reliefProbe = new Raycaster(new Vector3(x, y, 1), new Vector3(0, 0, -1))
+        return reliefProbe.intersectObjects(meshes)
+      }
       expect(ray(0, 0).length).toBeGreaterThan(0)
       expect(ray(0.7, 0.2)).toHaveLength(0)
       expect(ray(-0.7, 0.2)).toHaveLength(0)

@@ -39,7 +39,8 @@ function plant(kind: DestructiblePlantKind, id = kind as string, x = 0) {
   owned.push(geometry, potGeometry)
   const definition = potDefinition(specimen.pot)
   const center = definition.height / 2
-  const yaw = (new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), 0.47)
+  const yaw = new Quaternion
+  yaw.setFromAxisAngle(new Vector3(0, 1, 0), 0.47)
   const attachments = new PlantAttachment(geometry.leaves.map(leaf => `${id}-${leaf.id}`))
   const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(x, center, 0).setRotation(yaw).setCcdEnabled(true))
   world.createCollider(RAPIER.ColliderDesc.convexHull(potGeometry.vertices)!.setTranslation(0, -center, 0).setMass(3.8), body)
@@ -53,8 +54,10 @@ function plant(kind: DestructiblePlantKind, id = kind as string, x = 0) {
   })
   pot.rememberHome()
   const leaves = geometry.leaves.map(leaf => {
-    const position = new Vector3(...leaf.position).add(new Vector3(0, definition.soilHeight, 0)).applyQuaternion(yaw).add(new Vector3(x, 0, 0))
-    const rotation = yaw.clone().multiply((new Quaternion).setFromEuler(new Euler(...leaf.rotation)))
+    const position = new Vector3(...leaf.position)
+    position.add(new Vector3(0, definition.soilHeight, 0)).applyQuaternion(yaw).add(new Vector3(x, 0, 0))
+    const leafRotation = new Quaternion
+    const rotation = yaw.clone().multiply(leafRotation.setFromEuler(new Euler(...leaf.rotation)))
     const leafBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(position.x, position.y, position.z).setRotation(rotation).setCcdEnabled(true).setGravityScale(leafPhysics.gravityScale).setLinearDamping(leafPhysics.linearDamping).setAngularDamping(leafPhysics.angularDamping))
     world.createCollider(RAPIER.ColliderDesc.convexHull(leaf.vertices)!.setEnabled(false).setMass(leaf.mass), leafBody)
     if (leaf.stemVertices) {
@@ -105,8 +108,10 @@ describe('new destructible botanical models', () => {
     const repeat = new DestructiblePlantGeometry(kind)
     owned.push(geometry, repeat)
     expect(geometry.leaves).toHaveLength(count)
-    expect(new Set(geometry.leaves.map(leaf => leaf.id)).size).toBe(count)
-    expect(new Set(geometry.leaves.map(leaf => Bun.hash(leaf.vertices))).size).toBeGreaterThan(3)
+    const leafIds = new Set(geometry.leaves.map(leaf => leaf.id))
+    expect(leafIds.size).toBe(count)
+    const leafShapeHashes = new Set(geometry.leaves.map(leaf => Bun.hash(leaf.vertices)))
+    expect(leafShapeHashes.size).toBeGreaterThan(3)
     expect(geometry.triangles).toBeLessThan(budget)
     expect(geometry.triangles).toBe(triangleCount(geometry.stems) + geometry.leaves.reduce((sum, leaf) => sum + triangleCount(leaf.geometry) + triangleCount(leaf.stem), 0))
     expect(geometry.leaves.some(leaf => !leaf.stem)).toBe(true)
@@ -135,7 +140,9 @@ describe('new destructible botanical models', () => {
       owned.push(geometry)
       const bounds = geometry.stems.boundingBox!.clone()
       for (const leaf of geometry.leaves) {
-        const transform = (new Matrix4).compose(new Vector3(...leaf.position), (new Quaternion).setFromEuler(new Euler(...leaf.rotation)), new Vector3(1, 1, 1))
+        const leafRotation = new Quaternion
+        const transform = new Matrix4
+        transform.compose(new Vector3(...leaf.position), leafRotation.setFromEuler(new Euler(...leaf.rotation)), new Vector3(1, 1, 1))
         bounds.union(leaf.geometry.boundingBox!.clone().applyMatrix4(transform))
         if (leaf.stem) {
           bounds.union(leaf.stem.boundingBox!.clone().applyMatrix4(transform))
@@ -295,7 +302,8 @@ for (const kind of ['birdOfParadise', 'peaceLily'] as const) {
       const rotation = pot.body.rotation()
       const translation = pot.body.translation()
       const offset = collider.translationWrtParent()!
-      const point = (new Vector3).fromArray(vertices, top).add(new Vector3(offset.x, offset.y, offset.z)).applyQuaternion(new Quaternion(rotation.x, rotation.y, rotation.z, rotation.w)).add(new Vector3(translation.x, translation.y, translation.z))
+      const point = new Vector3
+      point.fromArray(vertices, top).add(new Vector3(offset.x, offset.y, offset.z)).applyQuaternion(new Quaternion(rotation.x, rotation.y, rotation.z, rotation.w)).add(new Vector3(translation.x, translation.y, translation.z))
       const obstacle = world.createCollider(RAPIER.ColliderDesc.ball(0.015).setTranslation(point.x, point.y, point.z))
       world.step()
       const position = pot.body.translation()

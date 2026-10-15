@@ -68,7 +68,8 @@ export default async function verify(fixtures: Fixtures) {
     }
   }
   try {
-    const original = new Three.TorusKnotGeometry(0.45, 0.13, 48, 12).rotateY(0.2)
+    const original = new Three.TorusKnotGeometry(0.45, 0.13, 48, 12)
+    original.rotateY(0.2)
     original.computeTangents()
     original.computeBoundingBox()
     const baked = restore(fixtures.geometry) as Three.BufferGeometry

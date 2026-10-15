@@ -44,7 +44,8 @@ export default async function verifyKnotLabels() {
   material.toneMapped = false
   const mesh = new InstancedMesh(geometry, material, indices.length)
   for (let i = 0; i < indices.length; i++) {
-    mesh.setMatrixAt(i, (new Matrix4).makeTranslation((i - 1.5) * 1.5, 0, 0))
+    const labelPlacement = new Matrix4
+    mesh.setMatrixAt(i, labelPlacement.makeTranslation((i - 1.5) * 1.5, 0, 0))
   }
   mesh.instanceMatrix.needsUpdate = true
   const scene = new Scene

@@ -79,7 +79,8 @@ test.each([false, true])('BVH round-trip preserves geometry/index pairing, cycle
   }
 })
 test('BVH preserves non-indexed indirect geometry, groups and explicit draw ranges', async () => {
-  const geometry = new Three.BoxGeometry(1, 1, 1, 2, 2, 2).toNonIndexed()
+  const indexedBox = new Three.BoxGeometry(1, 1, 1, 2, 2, 2)
+  const geometry = indexedBox.toNonIndexed()
   geometry.setDrawRange(6, 48)
   const tree = new MeshBVH(geometry, {
     indirect: true,

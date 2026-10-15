@@ -20,7 +20,8 @@ const farKnotPosition: PlayerPose['position'] = [knotGalleryBounds.maxX - 2, 0.0
 const parseGalleryLevel = (value?: string) => selectGameLevel(value, levelIds, defaultLevel)
 describe('build-time levels', () => {
   test('keeps every level-specific component in its own index entry', async () => {
-    const files = await Array.fromAsync(new Bun.Glob('src/components/levels/**/*.tsx').scan())
+    const levelComponentGlob = new Bun.Glob('src/components/levels/**/*.tsx')
+    const files = await Array.fromAsync(levelComponentGlob.scan())
     expect(files.length).toBeGreaterThan(40)
     for (const file of files) {
       expect(file.replaceAll('\\', '/')).toMatch(/^src\/components\/levels\/(gallery|knottingham|soundboard)\/[^/]+\/index\.tsx$/u)
@@ -49,7 +50,8 @@ describe('build-time levels', () => {
       storageKey: 'slop-soundboard',
       supportsMap: false,
     })
-    expect(new Set(levelIds.map(id => levels[id].storageKey)).size).toBe(levelIds.length)
+    const storageKeys = new Set(levelIds.map(id => levels[id].storageKey))
+    expect(storageKeys.size).toBe(levelIds.length)
   })
   test('defaults to the museum and rejects invalid selections instead of silently deploying the wrong world', () => {
     expect(parseGalleryLevel()).toBe('gallery')

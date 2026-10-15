@@ -49,7 +49,8 @@ function createWorld(fps: number) {
   world.timestep = 1 / fps
   for (const {wall, geometry} of architecture) {
     for (const args of geometry.collision) {
-      world.createCollider(RAPIER.ColliderDesc.trimesh(...args).setTranslation(...wall.center).setRotation((new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)))
+      const wallRotation = new Quaternion
+      world.createCollider(RAPIER.ColliderDesc.trimesh(...args).setTranslation(...wall.center).setRotation(wallRotation.setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)))
     }
   }
   for (const vault of vaults) {
@@ -71,7 +72,8 @@ function createWorld(fps: number) {
     box(block.position, block.size)
   }
   for (const beam of corridorRails) {
-    box(beam.position, beam.size).setRotation((new Quaternion).setFromEuler(new Euler(...beam.rotation)))
+    const beamRotation = new Quaternion
+    box(beam.position, beam.size).setRotation(beamRotation.setFromEuler(new Euler(...beam.rotation)))
   }
   box(oculusPlatform.position, oculusPlatform.size)
   box([lodge.center[0], lodge.floorY - 0.15, lodge.center[1]], [10, 0.3, 10])
@@ -105,7 +107,8 @@ describe('Lodge and Corridor route', () => {
           expect(corridorPassage.floorAt(x, z)).toBe(lodge.floorY)
           expect(insideRoute([x, lodge.floorY + 1.6, z])).toBe(true)
           expect(corridorPassage.floorAt(lodge.approachX + side * (corridorPassage.width / 2 + 0.01), z)).toBeUndefined()
-          const hit = new Raycaster(new Vector3(lodge.approachX, lodge.floorY + 1.6, z), new Vector3(side, 0, 0)).intersectObjects(meshes)[0]
+          const lateralRay = new Raycaster(new Vector3(lodge.approachX, lodge.floorY + 1.6, z), new Vector3(side, 0, 0))
+          const hit = lateralRay.intersectObjects(meshes)[0]
           expect(hit.distance).toBeGreaterThan(corridorPassage.width / 2 - 0.26)
           expect(hit.distance).toBeLessThan(corridorPassage.width / 2 - 0.08)
         }
@@ -124,7 +127,8 @@ describe('Lodge and Corridor route', () => {
         const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(lodge.approachX + offset, lodge.floorY + 0.04, start))
         const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
         const motor = new EgoMotor(RAPIER, world, body, collider)
-        const facing = (new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), returning ? 0 : Math.PI)
+        const facing = new Quaternion
+        facing.setFromAxisAngle(new Vector3(0, 1, 0), returning ? 0 : Math.PI)
         try {
           for (let i = 0; i < 60 * 12 && Math.abs(body.translation().z - end) > 0.15; i++) {
             motor.step(world.timestep, {
@@ -190,7 +194,8 @@ describe('Lodge and Corridor route', () => {
           const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(start[0], lodge.floorY + 0.04, start[1]))
           const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
           const motor = new EgoMotor(RAPIER, world, body, collider)
-          const facing = (new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), Math.atan2(start[0] - end[0], start[1] - end[1]))
+          const facing = new Quaternion
+          facing.setFromAxisAngle(new Vector3(0, 1, 0), Math.atan2(start[0] - end[0], start[1] - end[1]))
           const distance = () => Math.hypot(body.translation().x - end[0], body.translation().z - end[1])
           try {
             for (let i = 0; i < 60 * 5 && distance() > 0.15; i++) {
@@ -359,7 +364,8 @@ test('faceted timber portals keep their centerlines and level elbows open', () =
     ]
     for (const [start, end] of segments) {
       const origin = new Vector3(...start)
-      const direction = new Vector3(...end).sub(origin)
+      const direction = new Vector3(...end)
+      direction.sub(origin)
       const ray = new Raycaster(origin, direction.clone().normalize(), 0, direction.length())
       expect(ray.intersectObjects(meshes)).toHaveLength(0)
     }

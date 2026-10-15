@@ -16,14 +16,19 @@ describe('placement preview', () => {
         expect(positions.count).toBe(10)
         expect(indices.count).toBe(24)
         for (const offset of [0, 1]) {
-          expect((new Vector3).fromBufferAttribute(positions, offset)).toEqual((new Vector3).fromBufferAttribute(positions, 8 + offset))
+          const openingVertex = new Vector3
+          const closingVertex = new Vector3
+          expect(openingVertex.fromBufferAttribute(positions, offset)).toEqual(closingVertex.fromBufferAttribute(positions, 8 + offset))
           expect(uvs.getX(8 + offset)).toBeCloseTo(2 * (width + height))
         }
         let area = 0
         for (let i = 0; i < indices.count; i += 3) {
-          const a = (new Vector3).fromBufferAttribute(positions, indices.getX(i))
-          const b = (new Vector3).fromBufferAttribute(positions, indices.getX(i + 1))
-          const c = (new Vector3).fromBufferAttribute(positions, indices.getX(i + 2))
+          const a = new Vector3
+          a.fromBufferAttribute(positions, indices.getX(i))
+          const b = new Vector3
+          b.fromBufferAttribute(positions, indices.getX(i + 1))
+          const c = new Vector3
+          c.fromBufferAttribute(positions, indices.getX(i + 2))
           const normal = b.sub(a).cross(c.sub(a))
           expect(normal.z).toBeGreaterThan(0)
           area += normal.z / 2

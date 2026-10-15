@@ -4,7 +4,10 @@ import {Euler, Quaternion} from 'three/webgpu'
 
 import InspectionLook from '../../src/lib/camera/InspectionLook.ts'
 
-const rotation = (yaw = 0, pitch = 0) => (new Quaternion).setFromEuler(new Euler(pitch, yaw, 0, 'YXZ'))
+const rotation = (yaw = 0, pitch = 0) => {
+  const orientation = new Quaternion
+  return orientation.setFromEuler(new Euler(pitch, yaw, 0, 'YXZ'))
+}
 describe('inspection look', () => {
   test('buffers mouse changes without exposing raw camera jumps', () => {
     const look = new InspectionLook(rotation())
@@ -91,7 +94,8 @@ describe('inspection look', () => {
       let previous = Math.abs(yaw)
       for (let i = 0; i < 240; i++) {
         look.update(rotation(), 1 / 60)
-        const current = (new Euler).setFromQuaternion(look.rotation, 'YXZ').y * Math.sign(yaw)
+        const lookAngles = new Euler
+        const current = lookAngles.setFromQuaternion(look.rotation, 'YXZ').y * Math.sign(yaw)
         expect(current).toBeGreaterThanOrEqual(0)
         expect(current).toBeLessThanOrEqual(previous)
         previous = current
@@ -120,7 +124,8 @@ describe('inspection look', () => {
       look.addInput(i % 2 ? 0 : 0.08, 0)
       look.update(rotation(), 1 / 60)
       if (i >= 60) {
-        const yaw = (new Euler).setFromQuaternion(look.rotation, 'YXZ').y
+        const lookAngles = new Euler
+        const yaw = lookAngles.setFromQuaternion(look.rotation, 'YXZ').y
         minimum = Math.min(minimum, yaw)
         maximum = Math.max(maximum, yaw)
       }
@@ -150,7 +155,8 @@ describe('inspection look', () => {
       look.addInput(0, 1)
       look.addInput(Number.NaN, Infinity)
       look.update(target, 1 / 60)
-      const angles = (new Euler).setFromQuaternion(look.rotation, 'YXZ')
+      const angles = new Euler
+      angles.setFromQuaternion(look.rotation, 'YXZ')
       expect(angles.x).toBeGreaterThan(1.5)
       expect(angles.x).toBeLessThanOrEqual(Math.PI / 2)
       expect(Math.abs(angles.y)).toBeLessThan(0.000001)
@@ -161,7 +167,8 @@ describe('inspection look', () => {
     for (const delta of [0, -1, Number.NaN, Infinity]) {
       expect(look.update(rotation(1), delta).angleTo(rotation())).toBeLessThan(0.000001)
     }
-    const bounded = new InspectionLook(rotation()).update(rotation(1), 0.06)
+    const referenceLook = new InspectionLook(rotation())
+    const bounded = referenceLook.update(rotation(1), 0.06)
     expect(look.update(rotation(1), 5).angleTo(bounded)).toBeLessThan(0.000001)
     look.addInput(-1, 0)
     expect(look.update(rotation(0.4), 1 / 60).angleTo(rotation(0.4))).toBeGreaterThan(0.000001)

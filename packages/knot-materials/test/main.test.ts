@@ -13,7 +13,10 @@ import rarities, {common, ethereal, prime, rare, special, unknown} from '../src/
 
 const root = fileURLToPath(new URL('../src', import.meta.url))
 const source = (file: string) => readFile(resolve(root, file), 'utf8')
-const tsFiles = async () => Array.fromAsync(new Bun.Glob('**/*.ts').scan(root))
+const tsFiles = async () => {
+  const tsFileGlob = new Bun.Glob('**/*.ts')
+  return Array.fromAsync(tsFileGlob.scan(root))
+}
 describe('flat knot catalogue', () => {
   test('entry folders, metadata exports and rarity keys have exactly the same globally unique IDs', async () => {
     const folders = (await readdir(resolve(root, 'entries'), {withFileTypes: true})).filter(entry => entry.isDirectory()).map(entry => entry.name).sort()
@@ -23,12 +26,14 @@ describe('flat knot catalogue', () => {
     expect(ids).toEqual(Object.keys(rarities).sort())
     expect(knotsById.size).toBe(ids.length)
     expect(knotCandidates.flatMap(candidate => candidate.items)).toHaveLength(ids.length)
-    expect(new Set(knotCandidates.map(candidate => candidate.data.id)).size).toBe(knotCandidates.length)
+    const candidateIds = new Set(knotCandidates.map(candidate => candidate.data.id))
+    expect(candidateIds.size).toBe(knotCandidates.length)
     for (const id of ids) {
       expect(id).toMatch(/^[a-z][0-9_a-z]*$/u)
       expect(await Bun.file(resolve(root, 'entries', id, 'Material.ts')).exists()).toBe(true)
       expect(await Bun.file(resolve(root, 'entries', id, 'data.ts')).exists()).toBe(true)
-      expect((await Array.fromAsync(new Bun.Glob('**/*.ts').scan(resolve(root, 'entries', id)))).toSorted()).toEqual(['Material.ts', 'data.ts'])
+      const entryFileGlob = new Bun.Glob('**/*.ts')
+      expect((await Array.fromAsync(entryFileGlob.scan(resolve(root, 'entries', id)))).toSorted()).toEqual(['Material.ts', 'data.ts'])
       const materialSource = await source(`entries/${id}/Material.ts`)
       expect(materialSource).toContain('export default class extends')
       for (const jsdoc of materialSource.matchAll(/\/\*\*[\s\S]*?\*\//gu)) {
@@ -146,7 +151,8 @@ describe('placeholder presets', () => {
             shading,
           }, heavy, heavy ? environment : undefined)
           try {
-            expect(material.color.getHexString()).toBe(new Color('#d45e91').getHexString())
+            const expectedColor = new Color('#d45e91')
+            expect(material.color.getHexString()).toBe(expectedColor.getHexString())
             expect(material.isMeshStandardNodeMaterial).toBe(true)
             expect(material instanceof MeshPhysicalNodeMaterial).toBe(heavy)
             expect(material.envMap).toBe(heavy ? environment : null)

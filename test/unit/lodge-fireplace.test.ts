@@ -35,8 +35,12 @@ test('the complete fireplace faces inward from the south wall without moving the
     const parts = descendants(fireplace.props.children)
     expect(parts.find(child => child.props.colliders === 'cuboid')!.props.type).toBe('fixed')
     expect(parts.some(child => child.type === LodgeFire)).toBe(true)
-    const transform = (new Matrix4).makeRotationFromEuler(new Euler(...fireplace.props.rotation!)).setPosition(lodge.center[0], lodge.floorY, lodge.center[1])
-    const toWorld = (position: Vec3) => new Vector3(...position).applyMatrix4(transform)
+    const transform = new Matrix4
+    transform.makeRotationFromEuler(new Euler(...fireplace.props.rotation!)).setPosition(lodge.center[0], lodge.floorY, lodge.center[1])
+    const toWorld = (position: Vec3) => {
+      const worldPosition = new Vector3(...position)
+      return worldPosition.applyMatrix4(transform)
+    }
     const hearth = toWorld(parts.find(child => child.props.name === 'lodge-hearth')!.props.position!)
     expect(hearth.x).toBeCloseTo(lodge.center[0])
     expect(hearth.z).toBeCloseTo(-26.65)
@@ -48,7 +52,8 @@ test('the complete fireplace faces inward from the south wall without moving the
     expect(origin.x).toBeCloseTo(lodge.center[0])
     expect(origin.z).toBeCloseTo(-26.8)
     expect(toWorld([fire.position[0], fire.position[1], fire.position[2] + fire.light.glowPosition[2]]).z).toBeCloseTo(-27.15)
-    expect(new Vector3(0, 0, 1).transformDirection(transform).z).toBeCloseTo(-1)
+    const fireplaceForward = new Vector3(0, 0, 1)
+    expect(fireplaceForward.transformDirection(transform).z).toBeCloseTo(-1)
     expect(descendants(room).find(child => child.props.position?.[0] === -3.7)).toBeDefined()
     expect(parts.some(child => child.props.position?.[0] === -3.7)).toBe(false)
   } finally {

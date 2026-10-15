@@ -25,7 +25,8 @@ describe('physical mesh topology', () => {
         const [vertices, indices] = colliderGeometry(geometry)
         expect(vertices).toHaveLength(12)
         expect(indices).toHaveLength(6)
-        expect(new Set(indices).size).toBe(4)
+        const referencedVertices = new Set(indices)
+        expect(referencedVertices.size).toBe(4)
         expect([...geometry.getAttribute('position').array]).toEqual(positions)
         expect([...geometry.getAttribute('uv').array]).toEqual(originalUv)
         expect(geometry.index).toBe(originalIndex)
@@ -211,10 +212,12 @@ describe('boolean architecture', () => {
       const meshes = [geometry.surface, ...geometry.trim].map(geometry => new Mesh(geometry, material))
       for (const hole of wall.holes) {
         for (const y of [0.001, 1.62, 3.4]) {
-          expect(new Raycaster(new Vector3(hole.u, y, 1), new Vector3(0, 0, -1), 0, 2).intersectObjects(meshes)).toHaveLength(0)
+          const openingRay = new Raycaster(new Vector3(hole.u, y, 1), new Vector3(0, 0, -1), 0, 2)
+          expect(openingRay.intersectObjects(meshes)).toHaveLength(0)
         }
       }
-      expect(new Raycaster(new Vector3(0, 1.62, 1), new Vector3(0, 0, -1), 0, 2).intersectObjects(meshes).length).toBeGreaterThan(0)
+      const solidWallRay = new Raycaster(new Vector3(0, 1.62, 1), new Vector3(0, 0, -1), 0, 2)
+      expect(solidWallRay.intersectObjects(meshes).length).toBeGreaterThan(0)
     } finally {
       material.dispose()
       geometry.dispose()

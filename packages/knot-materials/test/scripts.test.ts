@@ -14,9 +14,12 @@ describe('inference prompts', () => {
     const first = selectExamples()
     expect(first.map(entry => entry.id)).toEqual(selectExamples().map(entry => entry.id))
     expect(first).toHaveLength(3)
-    expect(new Set(first.map(entry => entry.id)).size).toBe(3)
-    expect(new Set(first.map(entry => entry.candidateId)).size).toBe(3)
-    expect(new Set(first.map(entry => entry.placeholder.shading)).size).toBe(3)
+    const distinctExampleIds = new Set(first.map(entry => entry.id))
+    expect(distinctExampleIds.size).toBe(3)
+    const distinctCandidateIds = new Set(first.map(entry => entry.candidateId))
+    expect(distinctCandidateIds.size).toBe(3)
+    const distinctShadings = new Set(first.map(entry => entry.placeholder.shading))
+    expect(distinctShadings.size).toBe(3)
     expect(selectExamples({examples: 1})).toHaveLength(1)
     expect(selectExamples({examples: knots.length})).toHaveLength(knots.length)
     expect(selectExamples({exampleIds: ['ferrothorn', 'washi_lantern']}).map(entry => entry.id)).toEqual(['ferrothorn', 'washi_lantern'])
@@ -31,7 +34,8 @@ describe('inference prompts', () => {
     expect(prompt).toBe(await makePrompt(options))
     expect(prompt).toContain('# Create 5 new knot materials')
     expect(prompt).toContain('candidate `claude_opus`')
-    for (const file of await Array.fromAsync(new Bun.Glob('**/*.ts').scan(resolve(root, 'src/lib')))) {
+    const libraryFileGlob = new Bun.Glob('**/*.ts')
+    for (const file of await Array.fromAsync(libraryFileGlob.scan(resolve(root, 'src/lib')))) {
       expect(prompt).toContain(`### src/lib/${file.replaceAll('\\', '/')}`)
       expect(prompt).toContain((await readSource(`src/lib/${file}`)).trimEnd())
     }
@@ -77,7 +81,8 @@ describe('inference prompts', () => {
         stdout: 'pipe',
         stderr: 'pipe',
       })
-      const [exitCode, stderr] = await Promise.all([process.exited, new Response(process.stderr).text()])
+      const stderrResponse = new Response(process.stderr)
+      const [exitCode, stderr] = await Promise.all([process.exited, stderrResponse.text()])
       expect(exitCode, stderr).toBe(0)
       expect(await readFile(output, 'utf8')).toBe(await makePrompt({
         candidate: 'hy',

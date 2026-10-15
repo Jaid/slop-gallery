@@ -40,7 +40,8 @@ describe('multi-model Knot challenge', () => {
     expect(knotBays.every(bay => bay.finishes.length === 4)).toBe(true)
     const expectedCount = 32
     expect(knotExhibition).toHaveLength(expectedCount)
-    expect(new Set(knotExhibition.map(item => item.id)).size).toBe(expectedCount)
+    const exhibitIds = new Set(knotExhibition.map(item => item.id))
+    expect(exhibitIds.size).toBe(expectedCount)
     expect(knotBays.every(bay => displayedByCandidate.has(bay.candidate.id))).toBe(true)
     expect(knotExhibition.map(item => item.number)).toEqual(Array.from({length: expectedCount}, (_, index) => index + 1))
     for (const bay of knotBays) {
@@ -98,7 +99,8 @@ describe('multi-model Knot challenge', () => {
     expect(knotFloatHeight).toBe(1)
     for (const bay of knotBays) {
       const row = knotExhibition.filter(exhibit => exhibit.candidate.id === bay.candidate.id)
-      expect(new Set(row.map(exhibit => exhibit.position[2])).size).toBe(1)
+      const rowDepths = new Set(row.map(exhibit => exhibit.position[2]))
+      expect(rowDepths.size).toBe(1)
       for (let i = 1; i < row.length; i++) {
         expect(row[i].position[0] - row[i - 1].position[0]).toBe(3.5)
       }

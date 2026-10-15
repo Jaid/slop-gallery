@@ -24,7 +24,8 @@ function connectedParts(geometry: BufferGeometry) {
     parents[root(indices[i + 1])] = a
     parents[root(indices[i + 2])] = a
   }
-  return new Set([...indices].map(root)).size
+  const componentRoots = new Set([...indices].map(root))
+  return componentRoots.size
 }
 describe('botanical mesh efficiency', () => {
   test.each([

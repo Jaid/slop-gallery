@@ -12,10 +12,13 @@ describe('modular botanical catalog', () => {
   test('four vessels × eight botanicals produce every pair exactly once, numbered 01–32', () => {
     expect(pots).toHaveLength(4)
     expect(plants).toHaveLength(8)
-    expect(new Set(pots.map(pot => pot.id)).size).toBe(4)
-    expect(new Set(plants.map(plant => plant.id)).size).toBe(8)
+    const potIds = new Set(pots.map(pot => pot.id))
+    expect(potIds.size).toBe(4)
+    const plantIds = new Set(plants.map(plant => plant.id))
+    expect(plantIds.size).toBe(8)
     expect(plantCombinations.map(combination => combination.number)).toEqual(Array.from({length: 32}, (_, i) => i + 1))
-    expect(new Set(plantCombinations.map(combination => `${combination.pot}:${combination.plant}`)).size).toBe(32)
+    const potPlantPairs = new Set(plantCombinations.map(combination => `${combination.pot}:${combination.plant}`))
+    expect(potPlantPairs.size).toBe(32)
     for (const [row, pot] of pots.entries()) {
       expect(plantCombinations.slice(row * 8, row * 8 + 8).map(combination => combination.plant)).toEqual(plants.map(plant => plant.id))
       expect(plantCombinations.filter(combination => combination.pot === pot.id)).toHaveLength(8)
@@ -31,11 +34,13 @@ describe('modular botanical catalog', () => {
           hashes.add(Bun.hash(geometry.vertices))
           const shell = new Mesh(geometry.shell, material)
           shell.updateMatrixWorld(true)
-          const down = new Raycaster(new Vector3(0.1, 1, 0), new Vector3(0, -1, 0)).intersectObject(shell)
+          const cavityRay = new Raycaster(new Vector3(0.1, 1, 0), new Vector3(0, -1, 0))
+          const down = cavityRay.intersectObject(shell)
           expect(down[0].point.y).toBeLessThan(pot.soilHeight - 0.1)
           for (let i = 0; i < 16; i++) {
             const angle = i * Math.PI / 8
-            const inside = new Raycaster(new Vector3(0, pot.soilHeight, 0), new Vector3(Math.cos(angle), 0, Math.sin(angle))).intersectObject(shell)
+            const radialRay = new Raycaster(new Vector3(0, pot.soilHeight, 0), new Vector3(Math.cos(angle), 0, Math.sin(angle)))
+            const inside = radialRay.intersectObject(shell)
             expect(inside[0].distance).toBeGreaterThanOrEqual(pot.soilRadius)
             expect(inside[0].distance - pot.soilRadius).toBeLessThan(0.006)
           }

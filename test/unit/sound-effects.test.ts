@@ -7,7 +7,8 @@ import {archivedSoundEffects, enabledSoundEffectIds, enabledSoundEffects, soundE
 test('sound effect catalog has 105 stable unique IDs with playable recipes', () => {
   expect(soundEffects).toHaveLength(105)
   expect(soundEffects.map(effect => effect.id)).toEqual(Array.from({length: 105}, (_, index) => `SFX-${String(index + 1).padStart(2, '0')}`))
-  expect(new Set(soundEffects.map(effect => effect.label)).size).toBe(105)
+  const labels = new Set(soundEffects.map(effect => effect.label))
+  expect(labels.size).toBe(105)
   const recipes = new Set(soundEffects.map(effect => JSON.stringify(effect.voices)))
   expect(recipes.size).toBe(105)
   for (const effect of soundEffects) {
@@ -109,7 +110,8 @@ test('all seven player cues are enabled and independently auditionable', () => {
   const cues = Object.values(playerSoundEffects)
   expect(cues).toHaveLength(7)
   expect(cues.map(cue => cue.id)).toEqual(enabledSoundEffectIds.slice(13))
-  expect(new Set(cues.map(cue => JSON.stringify(cue.voices))).size).toBe(7)
+  const cueRecipes = new Set(cues.map(cue => JSON.stringify(cue.voices)))
+  expect(cueRecipes.size).toBe(7)
 })
 test('Soft Weight keeps a restrained three-layer recipe', () => {
   const walk = footstepVoices('generic', 3)
@@ -125,7 +127,8 @@ test('surface modifiers keep one Soft Weight family while changing material char
   const hollow = footstepVoices('hollow', 3)
   const glass = footstepVoices('glass', 3)
   const fabric = footstepVoices('fabric', 3)
-  expect(new Set([generic, hollow, glass, fabric].map(recipe => JSON.stringify(recipe))).size).toBe(4)
+  const surfaceRecipes = new Set([generic, hollow, glass, fabric].map(recipe => JSON.stringify(recipe)))
+  expect(surfaceRecipes.size).toBe(4)
   expect(hollow[0].kind === 'oscillator' && hollow[0].frequency).toBeLessThan(generic[0].kind === 'oscillator' ? generic[0].frequency : 0)
   expect(glass[0].kind === 'oscillator' && glass[0].frequency).toBeGreaterThan(generic[0].kind === 'oscillator' ? generic[0].frequency : Infinity)
   expect(fabric.reduce((sum, voice) => sum + voice.volume, 0)).toBeLessThan(generic.reduce((sum, voice) => sum + voice.volume, 0))

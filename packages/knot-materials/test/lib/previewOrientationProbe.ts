@@ -116,7 +116,8 @@ export async function previewOrientationProbe(renderer: KnotPreviewRenderer) {
   for (const heavy of [false, true]) {
     const runtime = new RuntimeKnotIconRenderer(new Map([[entry.id, OrientationMaterial]]), heavy)
     try {
-      const images = await runtime.render([entry], (new AbortController).signal)
+      const billboardRenderController = new AbortController
+      const images = await runtime.render([entry], billboardRenderController.signal)
       try {
         results.push({
           path: heavy ? 'heavy billboard' : 'fast billboard',

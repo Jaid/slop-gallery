@@ -24,7 +24,8 @@ test('Knottingham minimap has a transparent hall outline, no visible labels and 
   expect(html.match(/data-knot=/gu)).toHaveLength(knotExhibition.length)
   expect(html).toContain('translate(-14 -9) rotate(90)')
   for (const item of knotExhibition) {
-    const circle = new RegExp(`<circle[^>]+data-knot="${item.id}"[^>]*>`, 'u').exec(html)?.[0]
+    const knotMarkerPattern = new RegExp(`<circle[^>]+data-knot="${item.id}"[^>]*>`, 'u')
+    const circle = knotMarkerPattern.exec(html)?.[0]
     expect(circle).toContain(`cx="${item.position[0]}"`)
     expect(circle).toContain(`cy="${item.position[2]}"`)
   }

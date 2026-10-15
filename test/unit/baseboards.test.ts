@@ -33,7 +33,8 @@ describe('floor-following wall baseboards', () => {
           for (const offset of [-0.02, 0.02, 0.19, 0.379, 0.381, 0.41, 0.439, 0.46]) {
             const origin = new Vector3(u, floor + offset, 1)
             const direction = new Vector3(0, 0, -1)
-            const hits = new Raycaster(origin, direction, 0, 1).intersectObjects(meshes)
+            const faceRay = new Raycaster(origin, direction, 0, 1)
+            const hits = faceRay.intersectObjects(meshes)
             const collision = world.castRay(new RAPIER.Ray(origin, direction), 1, true)
             const visible = offset > 0 && offset < 0.44
             expect(hits.length > 0).toBe(visible)
@@ -67,7 +68,8 @@ describe('floor-following wall baseboards', () => {
       expect(geometry.trim[0].boundingBox!.max.y).toBeCloseTo(north.holes![0].height + 0.17)
       const material = new MeshBasicMaterial
       const mesh = new Mesh(geometry.trim[0], material)
-      const hit = new Raycaster(new Vector3(-4, height + 1, 0.23), new Vector3(0, -1, 0)).intersectObject(mesh)[0]
+      const trimTopRay = new Raycaster(new Vector3(-4, height + 1, 0.23), new Vector3(0, -1, 0))
+      const hit = trimTopRay.intersectObject(mesh)[0]
       expect(hit.point.y).toBeCloseTo(height + 0.44)
       material.dispose()
       expect(geometry.surface.boundingBox!.min.y).toBeCloseTo(0, 6)

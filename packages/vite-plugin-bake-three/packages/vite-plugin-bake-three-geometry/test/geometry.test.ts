@@ -38,7 +38,8 @@ function sameGeometry(actual: BufferGeometry, expected: BufferGeometry) {
   }
 }
 test('stores final transformed geometry, tangents, bounds, groups and native prototypes', () => {
-  const geometry = new Three.BoxGeometry(2, 3, 4, 3, 4, 5).rotateY(0.4).translate(3, -2, 5)
+  const geometry = new Three.BoxGeometry(2, 3, 4, 3, 4, 5)
+  geometry.rotateY(0.4).translate(3, -2, 5)
   geometry.computeTangents()
   geometry.computeBoundingBox()
   geometry.computeBoundingSphere()
@@ -108,7 +109,8 @@ test('recognizes arbitrary class names and retains custom disposal methods witho
   if (Array.isArray(path) || !path.isNewExpression()) {
     throw new Error('Expected constructor initializer')
   }
-  const evaluated = await new Recipe(graph, adapter).evaluate(path, 1000)
+  const specimenRecipe = new Recipe(graph, adapter)
+  const evaluated = await specimenRecipe.evaluate(path, 1000)
   const writer = new SnapshotWriter(adapter, 1024 * 1024, evaluated.isShared, evaluated.rootPrototype)
   const create = decodeSnapshot(writer.write(evaluated.value), constructors)
   class RuntimeSpecimen {
@@ -136,5 +138,6 @@ test('does not bake data derived from native resource identity', async () => {
   if (Array.isArray(path) || !path.isCallExpression()) {
     throw new Error('Expected call initializer')
   }
-  await expect(new Recipe(graph, adapter).evaluate(path, 1000)).rejects.toThrow('identity')
+  const identityRecipe = new Recipe(graph, adapter)
+  await expect(identityRecipe.evaluate(path, 1000)).rejects.toThrow('identity')
 })

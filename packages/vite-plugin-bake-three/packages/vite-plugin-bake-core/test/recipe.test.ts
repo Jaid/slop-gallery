@@ -39,7 +39,8 @@ const graph = new SourceGraph(async (source, importer) => resolve(importer, '..'
 async function evaluate(code: string, timeout = 1000, allowFreezingRandomness = false) {
   const source = await graph.input(join(directory, 'input.ts'), `import {Resource} from 'test:resources';\n${code}`)
   const path = source.path.scope.getBinding('result')!.path.get('init') as NodePath<CallExpression | NewExpression>
-  return new Recipe(graph, adapter, allowFreezingRandomness).evaluate(path, timeout)
+  const inputRecipe = new Recipe(graph, adapter, allowFreezingRandomness)
+  return inputRecipe.evaluate(path, timeout)
 }
 function roundTrip(result: Awaited<ReturnType<typeof evaluate>>) {
   const writer = new SnapshotWriter(adapter, 1024 * 1024, result.isShared, result.rootPrototype)
@@ -134,7 +135,8 @@ test.each([
     source.path.traverse({NewExpression(value) {
       path = value
     }})
-    await expect(new Recipe(graph, adapter).evaluate(path, 1000)).rejects.toThrow()
+    const parameterRecipe = new Recipe(graph, adapter)
+    await expect(parameterRecipe.evaluate(path, 1000)).rejects.toThrow()
     return
   }
   await expect((async () => roundTrip(await evaluate(code)))()).rejects.toThrow()

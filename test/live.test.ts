@@ -150,7 +150,8 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
       context.fillRect(0, 0, 600, 300)
       context.fillStyle = '#244746'
       context.fillRect(100, 50, 300, 200)
-      return new Uint8Array(await (await canvas.convertToBlob({type: 'image/png'})).arrayBuffer()).toBase64()
+      const pngBytes = new Uint8Array(await (await canvas.convertToBlob({type: 'image/png'})).arrayBuffer())
+      return pngBytes.toBase64()
     })
     await teleport(page, [0, 1.62, 4])
     await page.evaluate(encoded => {

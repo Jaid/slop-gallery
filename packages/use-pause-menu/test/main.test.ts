@@ -49,9 +49,11 @@ test('start marks a visit exactly once and preserves a stable server snapshot', 
   const first = new PauseMenu(options)
   first.start()
   first.start()
-  const disconnect = first.attach((new TestTarget).element)
+  const attachedTarget = new TestTarget
+  const disconnect = first.attach(attachedTarget.element)
   disconnect()
-  first.attach((new TestTarget).element)()
+  const reattachedTarget = new TestTarget
+  first.attach(reattachedTarget.element)()
   expect(writes).toBe(1)
   expect(first.getSnapshot().stage).toBe('first')
   const nextVisit = new PauseMenu(options)
@@ -299,7 +301,8 @@ test('enter failures do not invent a pause or a successful lock', async () => {
     throw new Error('Synchronous failure')
   }
   await expect(menu.enter()).rejects.toThrow('Synchronous failure')
-  await expect((new PauseMenu).enter()).rejects.toThrow('Attach')
+  const unattachedMenu = new PauseMenu
+  await expect(unattachedMenu.enter()).rejects.toThrow('Attach')
 })
 test('disconnect is idempotent, releases only its own lock and removes listeners', () => {
   const {menu, document, target, disconnect} = setup()
@@ -379,7 +382,10 @@ test('each target uses its owner document rather than a global document', () => 
   expect(b.document.exits).toBe(0)
 })
 test('release without an attachment is a no-op', () => {
-  expect(() => (new PauseMenu).release()).not.toThrow()
+  expect(() => {
+    const unattachedMenu = new PauseMenu
+    unattachedMenu.release()
+  }).not.toThrow()
 })
 test('replacing an attachment to the same locked canvas preserves the pending application release', () => {
   const {menu, target, document, disconnect} = setup()

@@ -109,7 +109,8 @@ describe('rectangular floor openings', () => {
           const solid = !(Math.abs(x) < 4 && z > -24 && z < -16)
           const origin = new Vector3(x, 1, z)
           const direction = new Vector3(0, -1, 0)
-          expect(new Raycaster(origin, direction, 0, 2).intersectObjects(meshes).length > 0).toBe(solid)
+          const slabRay = new Raycaster(origin, direction, 0, 2)
+          expect(slabRay.intersectObjects(meshes).length > 0).toBe(solid)
           expect(!!world.castRay(new RAPIER.Ray(origin, direction), 2, true)).toBe(solid)
         }
       }
@@ -124,7 +125,8 @@ describe('rectangular floor openings', () => {
         for (const z of [-24.01, -24, -23.99, -20, -16.01, -16, -15.99]) {
           const origin = new Vector3(x, 1, z)
           const direction = new Vector3(0, -1, 0)
-          expect(new Raycaster(origin, direction, 0, 2).intersectObjects(meshes)[0].point.y).toBeCloseTo(0)
+          const glazedFloorRay = new Raycaster(origin, direction, 0, 2)
+          expect(glazedFloorRay.intersectObjects(meshes)[0].point.y).toBeCloseTo(0)
           expect(world.castRay(new RAPIER.Ray(origin, direction), 2, true)!.timeOfImpact).toBeCloseTo(1)
         }
       }

@@ -93,7 +93,8 @@ describe('cylindrical Oculus platform', () => {
     try {
       for (const slope of oculusRamps) {
         for (const z of [slope.startZ - 0.01, -20, -25.99, -26.01]) {
-          const hits = new Raycaster(new Vector3(slope.x, -2, z), new Vector3(0, -1, 0)).intersectObject(mesh)
+          const slopeRay = new Raycaster(new Vector3(slope.x, -2, z), new Vector3(0, -1, 0))
+          const hits = slopeRay.intersectObject(mesh)
           expect(hits).toHaveLength(1)
           const expected = z < slope.startZ - slope.run ? slope.floorY + slope.rise : slope.floorY + (slope.startZ - z) / slope.run * slope.rise
           expect(hits[0].point.y).toBeCloseTo(expected, 5)
@@ -109,7 +110,8 @@ describe('cylindrical Oculus platform', () => {
     const mesh = new Mesh(geometry, material)
     try {
       for (const z of [-21.55, -21.3, -21.01, -20.8, -20.13]) {
-        const hits = new Raycaster(new Vector3(0.37, -2, z), new Vector3(0, -1, 0)).intersectObject(mesh)
+        const landingRay = new Raycaster(new Vector3(0.37, -2, z), new Vector3(0, -1, 0))
+        const hits = landingRay.intersectObject(mesh)
         expect(hits).toHaveLength(1)
         expect(hits[0].point.y).toBeCloseTo(ramp.endY, 5)
       }
@@ -168,7 +170,8 @@ describe('cylindrical Oculus platform', () => {
         const z = towerArch.z - u
         const origin = new Vector3(tower.x, tower.floorY + 0.5, z)
         const direction = new Vector3(0, 1, 0)
-        const visible = new Raycaster(origin, direction).intersectObject(mesh)[0]
+        const archRay = new Raycaster(origin, direction)
+        const visible = archRay.intersectObject(mesh)[0]
         const physical = world.castRay(new RAPIER.Ray(origin, direction), 5, true)!
         expect(visible.point.y).toBeCloseTo(tower.floorY + height, 3)
         expect(origin.y + physical.timeOfImpact).toBeCloseTo(visible.point.y, 4)
@@ -204,7 +207,8 @@ describe('cylindrical Oculus platform', () => {
           const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(returning ? 2 : -2, tower.floorY + 0.04, towerArch.z + offset))
           const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
           const motor = new EgoMotor(RAPIER, world, body, collider)
-          const facing = (new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), returning ? Math.PI / 2 : -Math.PI / 2)
+          const facing = new Quaternion
+          facing.setFromAxisAngle(new Vector3(0, 1, 0), returning ? Math.PI / 2 : -Math.PI / 2)
           try {
             for (let i = 0; i < fps * 2; i++) {
               motor.step(world.timestep, {forward: true}, facing)
@@ -251,7 +255,8 @@ describe('cylindrical Oculus platform', () => {
           const origin = new Vector3(x, -2, z)
           const direction = new Vector3(0, -1, 0)
           const height = towerFloorHeight(x, z)!
-          expect(new Raycaster(origin, direction).intersectObjects(meshes)[0].point.y).toBeCloseTo(height, 5)
+          const deckRay = new Raycaster(origin, direction)
+          expect(deckRay.intersectObjects(meshes)[0].point.y).toBeCloseTo(height, 5)
           expect(world.castRay(new RAPIER.Ray(origin, direction), 10, true)!.timeOfImpact).toBeCloseTo(origin.y - height, 4)
         }
       }
@@ -270,7 +275,8 @@ describe('cylindrical Oculus platform', () => {
             const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(tower.x + offset, (ascending ? ramp.startY : tower.floorY + tower.height) + 0.04, ascending ? ramp.startZ - 0.7 : tower.z))
             const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
             const motor = new EgoMotor(RAPIER, world, body, collider)
-            const facing = (new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), ascending ? Math.PI : 0)
+            const facing = new Quaternion
+            facing.setFromAxisAngle(new Vector3(0, 1, 0), ascending ? Math.PI : 0)
             try {
               // Brake on entry to the small top; sprint momentum must not carry the player off its far edge.
               let reached = false

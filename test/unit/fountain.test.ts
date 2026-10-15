@@ -45,7 +45,8 @@ describe('revolved profiles', () => {
     const geometry = new RevolvedProfileGeometry([[0, 1], [1, 1], [1, 0]], {sides: 8})
     try {
       const mesh = new Mesh(geometry, new MeshBasicMaterial)
-      const side = new Raycaster(new Vector3(3, 0.5, 0.2), new Vector3(-1, 0, 0)).intersectObject(mesh)[0]
+      const sideRay = new Raycaster(new Vector3(3, 0.5, 0.2), new Vector3(-1, 0, 0))
+      const side = sideRay.intersectObject(mesh)[0]
       expect(side.point.x).toBeCloseTo(1, 6)
       expect(side.face!.normal.x).toBeCloseTo(1, 6)
       const position = geometry.getAttribute('position')
@@ -136,7 +137,10 @@ describe('Lobby fountain', () => {
     const material = new MeshBasicMaterial
     try {
       const stone = new Mesh(geometry.stone, material)
-      const lip = (radius: number) => new Raycaster(new Vector3(radius, 5, 0.013), down).intersectObject(stone)[0]?.point.y ?? Number.NaN
+      const lip = (radius: number) => {
+        const lipRay = new Raycaster(new Vector3(radius, 5, 0.013), down)
+        return lipRay.intersectObject(stone)[0]?.point.y ?? Number.NaN
+      }
       for (const [sheet, pool] of [[veils.tazza, pools.tazza], [veils.cup, pools.cup]] as const) {
         expect(sheet.y).toBe(pool)
         // Water fills the bowl and brims a few millimeters over the lip it spills from.
@@ -162,7 +166,8 @@ describe('Lobby fountain', () => {
       // The pools’ water surfaces are where the material and the physics expect them.
       const water = new Mesh(geometry.pools, material)
       for (const [radius, y] of [[1.4, pools.basin], [0.7, pools.tazza], [0.2, pools.cup]]) {
-        expect(new Raycaster(new Vector3(radius, 5, 0.013), down).intersectObject(water)[0].point.y).toBeCloseTo(y, 6)
+        const waterSurfaceRay = new Raycaster(new Vector3(radius, 5, 0.013), down)
+        expect(waterSurfaceRay.intersectObject(water)[0].point.y).toBeCloseTo(y, 6)
       }
     } finally {
       material.dispose()
@@ -183,7 +188,8 @@ describe('Lobby fountain', () => {
       const mesh = new Mesh(geometry.stone, material)
       for (const x of [0, 0.3, 0.7, 1.3, 1.75, 1.93, 2.1]) {
         const origin = new Vector3(x, 5, 0.013)
-        const visual = new Raycaster(origin, down).intersectObject(mesh)[0]
+        const visualRay = new Raycaster(origin, down)
+        const visual = visualRay.intersectObject(mesh)[0]
         const physical = world.castRay(new RAPIER.Ray(origin, down), 6, true)
         expect(!!physical).toBe(!!visual)
         if (visual && physical) {

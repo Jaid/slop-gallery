@@ -59,7 +59,8 @@ test('announcement inventory includes candidates, models and knot titles with sa
     'candidates/glm_flash/slug/glm-5.3-flash',
     'entries/ember_cortex',
   ])
-  expect(new Set(entries.map(entry => entry.id)).size).toBe(entries.length)
+  const entryIds = new Set(entries.map(entry => entry.id))
+  expect(entryIds.size).toBe(entries.length)
   expect(() => knotAnnouncementPaths({
     ...item,
     author: {

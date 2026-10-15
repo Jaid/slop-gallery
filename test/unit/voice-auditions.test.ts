@@ -9,7 +9,8 @@ import {auditionRequest, auditionTranscript, voiceAuditions} from '../../scripts
 test('audition requests explicitly disable inherited response caching', async () => {
   const fetch = spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, {status: 502}))
   try {
-    await new VoiceAuditionRunner('unused', 'test-key').request('audio/speech')
+    const runner = new VoiceAuditionRunner('unused', 'test-key')
+    await runner.request('audio/speech')
     const headers = new Headers(fetch.mock.calls[0][1]?.headers)
     expect(headers.get('X-OpenRouter-Cache')).toBe('false')
     expect(headers.has('X-OpenRouter-Cache-TTL')).toBe(false)
@@ -19,12 +20,14 @@ test('audition requests explicitly disable inherited response caching', async ()
 })
 test('each character has five single-transcript requests with a fixed voice and style', () => {
   expect(voiceAuditions).toHaveLength(15)
-  expect(new Set(voiceAuditions.map(voice => voice.id)).size).toBe(15)
+  const auditionIds = new Set(voiceAuditions.map(voice => voice.id))
+  expect(auditionIds.size).toBe(15)
   expect(auditionTranscript).toHaveLength(5)
   expect(auditionTranscript.at(-1)).toBe('GPT-6 Astra.')
   for (const voice of voiceAuditions) {
     const requests = auditionTranscript.map(text => auditionRequest(voice, text))
-    expect(new Set(requests.map(request => request.input)).size).toBe(5)
+    const requestInputs = new Set(requests.map(request => request.input))
+    expect(requestInputs.size).toBe(5)
     for (const [index, request] of requests.entries()) {
       expect(request.voice).toBe(voice.voice)
       if (voice.model.startsWith('google/')) {
@@ -81,7 +84,8 @@ test('five independent requests are stitched in order, cached and never silently
     try {
       await retry.run(voiceAuditions[1])
       expect(retryRequest).toHaveBeenCalledTimes(5)
-      const attempts = await Array.fromAsync(new Bun.Glob('**/request-*.json').scan(output))
+      const attemptGlob = new Bun.Glob('**/request-*.json')
+      const attempts = await Array.fromAsync(attemptGlob.scan(output))
       expect(attempts).toHaveLength(1)
     } finally {
       retryRequest.mockRestore()

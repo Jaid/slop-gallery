@@ -40,13 +40,16 @@ test('uses content-addressed AVIF caching and deduplicates concurrent encodes', 
   const cache = new AvifCache(join(root, 'cache'))
   const source = join(root, 'source/image.jxl')
   const paths = await Promise.all([cache.convert(source), cache.convert(source), cache.convert(source)])
-  expect(new Set(paths).size).toBe(1)
+  const distinctPaths = new Set(paths)
+  expect(distinctPaths.size).toBe(1)
   expect(paths[0]).toMatch(/[0-9a-f]{64}\.avif$/u)
   expect((await fs.readFile(paths[0])).toString('ascii', 4, 8)).toBe('ftyp')
   const modified = (await fs.stat(paths[0])).mtimeMs
-  expect(await new AvifCache(join(root, 'cache')).convert(source)).toBe(paths[0])
+  const reopenedCache = new AvifCache(join(root, 'cache'))
+  expect(await reopenedCache.convert(source)).toBe(paths[0])
   expect((await fs.stat(paths[0])).mtimeMs).toBe(modified)
-  expect(await new AvifCache(join(root, 'cache'), {quality: 51}).convert(source)).not.toBe(paths[0])
+  const higherQualityCache = new AvifCache(join(root, 'cache'), {quality: 51})
+  expect(await higherQualityCache.convert(source)).not.toBe(paths[0])
   expect(() => new AvifCache('unused', {quality: Number.NaN})).toThrow(RangeError)
 }, 30_000)
 test('serves AVIF for source and public URLs, with HEAD, ETag and the requested default cache', async () => {
@@ -80,7 +83,8 @@ test('serves AVIF for source and public URLs, with HEAD, ETag and the requested 
     expect(transformed!.code).toContain('/art/portrait.avif')
     expect(transformed!.code).toContain('/source/image.avif')
     expect(transformed!.code).toContain("// '/art/portrait.jxl'")
-    expect(await Array.fromAsync(new Bun.Glob('*.avif').scan(join(root, 'temp/vite-plugin-avif-only/cache')))).toHaveLength(1)
+    const cachedAvifGlob = new Bun.Glob('*.avif')
+    expect(await Array.fromAsync(cachedAvifGlob.scan(join(root, 'temp/vite-plugin-avif-only/cache')))).toHaveLength(1)
   } finally {
     await server.close()
   }
@@ -107,7 +111,8 @@ test('builds AVIF-only imports, new URLs, CSS and public images after level filt
     ],
     build: {assetsInlineLimit: 0},
   })
-  const files = await Array.fromAsync(new Bun.Glob('**/*').scan(join(root, 'dist')))
+  const distFileGlob = new Bun.Glob('**/*')
+  const files = await Array.fromAsync(distFileGlob.scan(join(root, 'dist')))
   expect(files.some(file => file.endsWith('.jxl'))).toBe(false)
   expect(files.some(file => file.replaceAll('\\', '/') === 'art/portrait.avif')).toBe(true)
   expect(files.some(file => file.includes('hidden'))).toBe(false)

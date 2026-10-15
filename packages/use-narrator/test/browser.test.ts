@@ -133,5 +133,8 @@ test('native failure settles and allows the next queued utterance to start', asy
 })
 test('missing browser speech reports a capability error rather than hanging', () => {
   Object.assign(globalThis, {speechSynthesis: undefined})
-  expect(() => browserSpeech({text: 'Hello'}, (new AbortController).signal)).toThrow('unavailable')
+  expect(() => {
+    const speechController = new AbortController
+    browserSpeech({text: 'Hello'}, speechController.signal)
+  }).toThrow('unavailable')
 })

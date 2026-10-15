@@ -29,8 +29,10 @@ test('four matching slatted benches surround the relocated fountain and leave th
     }
     for (const {position, rotation} of fountainBenches) {
       expect(Math.hypot(position[0] - fountain.position[0], position[2] - fountain.position[2])).toBeCloseTo(fountainBench.radius)
-      const transform = (new Matrix4).makeRotationFromEuler(new Euler(...rotation)).setPosition(...position)
-      const bounds = (new Box3).copy(seat).applyMatrix4(transform)
+      const transform = new Matrix4
+      transform.makeRotationFromEuler(new Euler(...rotation)).setPosition(...position)
+      const bounds = new Box3
+      bounds.copy(seat).applyMatrix4(transform)
       expect(bounds.distanceToPoint(new Vector3(...playerSpawn.position))).toBeGreaterThan(0.5)
       const center = new Vector3(fountain.position[0], 0.48, fountain.position[2])
       expect(bounds.distanceToPoint(center) - fountain.radius).toBeGreaterThan(1.4)
@@ -53,8 +55,10 @@ test('four matching slatted benches surround the relocated fountain and leave th
           ray.ray.origin.z += pitch / 2
           expect(ray.intersectObject(mesh)).toHaveLength(0)
         }
-        const left = new Raycaster(new Vector3(-1, 1, z), new Vector3(0, -1, 0)).intersectObject(mesh)[0]
-        const right = new Raycaster(new Vector3(1, 1, z), new Vector3(0, -1, 0)).intersectObject(mesh)[0]
+        const leftEndRay = new Raycaster(new Vector3(-1, 1, z), new Vector3(0, -1, 0))
+        const left = leftEndRay.intersectObject(mesh)[0]
+        const rightEndRay = new Raycaster(new Vector3(1, 1, z), new Vector3(0, -1, 0))
+        const right = rightEndRay.intersectObject(mesh)[0]
         expect(left.uv!.x).toBeCloseTo(right.uv!.x)
         expect(Math.abs(left.uv!.y - right.uv!.y)).toBeGreaterThan(0.6)
       }
@@ -102,16 +106,19 @@ test('timber entrances have a single exposed face across the ribs, lining and st
           for (const cross of [1.06, 1.12, 1.19, 1.2, 1.215, 1.22, 1.24, 1.28, 1.31]) {
             for (const height of [0.1, 0.41, 0.83, 1.37, 1.9, 2.2, 2.9, 3.35]) {
               const origin = new Vector3(start[0] + 0.8, start[1] + height, start[2] + side * (width / 2 - 1.3 + cross))
-              const hits = new Raycaster(origin, new Vector3(-1, 0, 0), 0, 2).intersectObjects(meshes)
+              const exposedFaceRay = new Raycaster(origin, new Vector3(-1, 0, 0), 0, 2)
+              const hits = exposedFaceRay.intersectObjects(meshes)
               expect(hits.length).toBeGreaterThan(0)
               const front = hits.filter(hit => Math.abs(hit.distance - hits[0].distance) < 0.0001)
-              expect(new Set(front.map(hit => hit.object)).size).toBe(1)
+              const frontMeshes = new Set(front.map(hit => hit.object))
+              expect(frontMeshes.size).toBe(1)
             }
           }
         }
         // The timber is a real projecting reveal, not a depth-biased material or an open ceiling seam.
         const origin = new Vector3(start[0] + 0.015, start[1] + 1.6, start[2])
-        const ceiling = new Raycaster(origin, new Vector3(0, 1, 0), 0, 3).intersectObjects(meshes)[0]
+        const ceilingRay = new Raycaster(origin, new Vector3(0, 1, 0), 0, 3)
+        const ceiling = ceilingRay.intersectObjects(meshes)[0]
         expect(ceiling.distance).toBeGreaterThan(1.5)
         expect(ceiling.distance).toBeLessThan(2.1)
       } finally {
