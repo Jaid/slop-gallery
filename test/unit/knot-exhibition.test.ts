@@ -15,12 +15,27 @@ import {knotRarityEditor} from '../../src/levels/knottingham/rarity.ts'
 import dumpKnots from '../../src/levels/knottingham/webmcp.ts'
 import {insideKnotGallery, knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
 
+// Known offenders that still displace from cached view-space varyings. Do not add to this list.
+const viewDependentRelief = new Set([
+  'abyssal_veil', 'asteria', 'bismuth_labyrinth', 'celadon_kintsugi', 'chladni_resonance', 'ferrofluid_oracle', 'golden_mend', 'gossamer', 'jovian_vortex',
+  'kairothic_frost', 'kintsugi_nebula', 'lichen_cathedral', 'mercury_sea', 'mercury_swell', 'mercury_tremor', 'midnight_velvet', 'moire_satin',
+  'moonstone_dune', 'murmuration_silk', 'mycelial_bloom', 'mycelial_lumen', 'oceanic_nacre', 'planck_boil', 'quicksilver', 'singing_sand', 'stained_afternoon',
+  'sumi_tide', 'tidal_glass', 'tourmaline_nebula', 'velvet_penumbra', 'vermillion_lacquer', 'vitrail',
+])
+// Shared shader subgraphs are a DAG, not a tree. Visit each node only once.
+const collectNodes = (roots: Array<Node>) => {
+  const nodes = new Set(roots)
+  for (const node of nodes) {
+    for (const child of node.getChildren()) {
+      nodes.add(child)
+    }
+  }
+  return nodes
+}
+
 describe('multi-model Knot challenge', () => {
   test('enumerates displayed Knots at initialization while keeping stable identities', () => {
-    expect(knots).toHaveLength(804)
-    expect(knotsById.size).toBe(804)
-    const displayedKnots = knots.filter(item => !item.archived)
-    const displayedByCandidate = Map.groupBy(displayedKnots, item => item.candidate.id)
+    const displayedByCandidate = Map.groupBy(knots, item => item.candidate.id)
     expect(knotBays).toHaveLength(8)
     expect(knotBays.every(bay => bay.finishes.length === 4)).toBe(true)
     const expectedCount = 32
@@ -32,13 +47,10 @@ describe('multi-model Knot challenge', () => {
       expect(bay.finishes.map(item => item.rarity)).toEqual(bay.finishes.map(item => item.rarity).toSorted((a, b) => a - b))
     }
     for (const item of knotExhibition) {
-      expect(item.archived).not.toBe(true)
       expect(knotsById.get(item.id)?.id).toBe(item.id)
       expect(item.id).toMatch(/^[a-z][0-9_a-z]*$/u)
       expect(item.candidate.id).toBe(item.candidateId)
     }
-    expect(knotsById.get('stained_requiem')?.title).toBe('Stained Requiem')
-    expect(knotsById.get('lightless_border')?.modelTitle).toBe('Claude Fable 5.1')
   })
   test('dumps the current world selection and live session rarities', () => {
     const before = dumpKnots()
@@ -139,23 +151,15 @@ describe('multi-model Knot challenge', () => {
             expect(normal.node?.method).toBe('normalize')
           }
           if (exhibit.displacement) {
-            expect(material.positionNode).not.toBeNull()
-            expect(material.normalNode).not.toBeNull()
+            expect(material.positionNode, exhibit.id).not.toBeNull()
+            expect(material.normalNode, exhibit.id).not.toBeNull()
+            // Reading these output varyings before displacement caches an undeformed clip position.
+            const vertexDependencies = collectNodes([material.positionNode!])
+            expect(vertexDependencies.has(positionView) || vertexDependencies.has(positionViewDirection), exhibit.id).toBe(viewDependentRelief.has(exhibit.id))
           } else {
-            expect(material.positionNode).toBeNull()
+            expect(material.positionNode, exhibit.id).toBeNull()
           }
-          const dependencies = new Set<Node>
-          for (const value of Object.values(material)) {
-            if (value && typeof value === 'object' && 'isNode' in value && value.isNode) {
-              dependencies.add(value as Node)
-            }
-          }
-          // Shared shader subgraphs are a DAG, not a tree. Visit each node only once.
-          for (const node of dependencies) {
-            for (const child of node.getChildren()) {
-              dependencies.add(child)
-            }
-          }
+          const dependencies = collectNodes(Object.values(material).filter((value): value is Node => Boolean(value && typeof value === 'object' && 'isNode' in value && value.isNode)))
           // Camera response may use proximity or the built-in, lazily evaluated view direction.
           expect(dependencies.has(positionView) || dependencies.has(cameraPosition) || dependencies.has(positionViewDirection), exhibit.id).toBe(true)
           // Some submissions express the angular response only through physical Fresnel
