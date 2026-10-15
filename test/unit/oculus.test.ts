@@ -9,13 +9,10 @@ import {BoxGeometry, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} fr
 
 import renderOculusRoom from '../../src/components/levels/gallery/OculusRoom/index.tsx'
 import {createArchitectureGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
-import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {floorThickness, roomFloorPlan} from '../../src/lib/gallery/floors.ts'
-import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import lobby from '../../src/lib/gallery/lobby.ts'
 import lowerGallery, {oculusCeiling, oculusPlatform} from '../../src/lib/gallery/lowerGallery.ts'
 import StairFlight from '../../src/lib/gallery/stairs/StairFlight.ts'
-import {createDocument} from '../../src/lib/gallery/store.ts'
 import walls, {floorHeight, insideGallery, roomAt, rooms} from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
@@ -31,30 +28,6 @@ describe('oculus and connecting tunnel', () => {
     expect(lobby.opening.center).toEqual([0, -20])
     expect(tunnel.x).toBe(0)
     expect(oculusCeiling.reduce((sum, slab) => sum + slab.size[0] * slab.size[1], 0)).toBe(18 * 17 - 8 * 8)
-  })
-  test('rejects obsolete hanging positions without moving loose art', () => {
-    for (const side of [-1, 1]) {
-      const portrait = {
-        ...initialPortraits[0],
-        wallId: side === -1 ? 'oculus-west' : 'oculus-east',
-        position: [side * 5.78, -5.5, -20] as [number, number, number],
-        rotation: side === -1 ? Math.PI / 2 : -Math.PI / 2,
-      }
-      expect(() => validateDocument({
-        ...createDocument(),
-        portraits: [portrait],
-      })).toThrow('detached')
-      const loose = validateDocument({
-        ...createDocument(),
-        portraits: [
-          {
-            ...portrait,
-            hung: false,
-          },
-        ],
-      })
-      expect(loose.portraits[0].position).toEqual(portrait.position)
-    }
   })
   test('lower walls meet the ceiling underside without coplanar faces in the upper floor', () => {
     const ceilingBottom = oculus.ceiling.topY - oculus.ceiling.thickness

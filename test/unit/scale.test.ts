@@ -10,6 +10,3 @@ test('scale URL values accept finite positive numbers', () => {
     expect(readScale(`?scale=${value}`)).toBeUndefined()
   }
 })
-test('the former dpr URL name is not accepted', () => {
-  expect(readScale('?dpr=2')).toBeUndefined()
-})

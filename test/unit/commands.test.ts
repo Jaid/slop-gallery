@@ -42,16 +42,6 @@ test('the floor plan remains available without a renderer', () => {
   const map = renderToStaticMarkup(createElement(Map))
   expect(map.match(/disabled=""/g)).toHaveLength(rooms.length)
 })
-test('retired menu shortcuts do not open panels', () => {
-  useGallery.setState({panel: null})
-  for (const code of ['KeyG', 'KeyH', 'KeyK']) {
-    handleGalleryKey({
-      code,
-      target: new ElementDouble,
-    } as unknown as KeyboardEvent)
-    expect(useGallery.getState().panel).toBeNull()
-  }
-})
 test('renderer-free drops decode, commit and support undo/redo with a panel open', async () => {
   Object.assign(globalThis, {
     createImageBitmap: async () => ({

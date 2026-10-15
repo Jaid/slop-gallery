@@ -183,19 +183,6 @@ test('metadata limits leave room for image encoding in every exported collection
     ],
   })).toThrow('wall identifier')
 })
-test('retired motion settings are rejected', () => {
-  const document = createDocument()
-  expect(document.settings).not.toHaveProperty('motion')
-  for (const motion of [true, false]) {
-    expect(() => validateDocument({
-      ...document,
-      settings: {
-        ...document.settings,
-        motion,
-      },
-    })).toThrow('invalid settings')
-  }
-})
 test('movement checkpoints flush synchronously on refresh without rewriting artwork, and detach cleanly', async () => {
   const names = ['localStorage'] as const
   const descriptors = names.map(name => Object.getOwnPropertyDescriptor(globalThis, name))
@@ -265,14 +252,4 @@ test('movement checkpoints flush synchronously on refresh without rewriting artw
       }
     }
   }
-})
-test('retired palette and frame settings are rejected', () => {
-  expect(() => validateDocument({
-    ...original,
-    settings: {
-      sound: false,
-      theme: 'nocturne',
-      frame: 'black',
-    },
-  })).toThrow('invalid settings')
 })

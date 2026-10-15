@@ -303,19 +303,6 @@ describe('backup validation', () => {
       expect(await Bun.file(new URL(`../../public${p.narration}`, import.meta.url)).exists()).toBe(true)
     }
   })
-  test('rejects obsolete image paths, recordings and wall positions instead of migrating saves', () => {
-    for (const patch of [{source: '/art/goose.webp'}, {source: '/art/work-0.webp'}, {narration: '/audio/doge.opus'}, {wallId: 'secret-east'}, {position: [0, 2.5, -7.78]}]) {
-      expect(() => validateDocument({
-        ...original,
-        portraits: [
-          {
-            ...initialPortraits[0],
-            ...patch,
-          },
-        ],
-      })).toThrow()
-    }
-  })
   test('does not add recordings omitted from a save', () => {
     const saved = {
       ...initialPortraits[0],

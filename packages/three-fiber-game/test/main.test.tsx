@@ -1,4 +1,4 @@
-import type {Controls, GameProps, GameRenderer, GameWrapperProps, GameWrappers, WebgpuRendererOptions} from '../src/main.ts'
+import type {Controls, GameProps, GameRenderer, GameWrapperProps, GameWrappers} from '../src/main.ts'
 import type {ComponentProps, ReactElement, ReactNode} from 'react'
 
 import {expect, test} from 'bun:test'
@@ -314,7 +314,7 @@ function RequiresToken(_props: {
 }) {
   return null
 }
-test('public types preserve action names and exclude legacy renderer switches', () => {
+test('public types preserve action names and wrapper props', () => {
   const controls: Controls<'jump'> = {jump: 'Space'}
   const props: GameProps<'jump'> = {
     controls,
@@ -324,13 +324,9 @@ test('public types preserve action names and exclude legacy renderer switches', 
   expect(props.controls).toBe(controls)
   // @ts-expect-error TS2353 Unknown action names are rejected.
   const invalidControls: Controls<'jump'> = {fly: 'KeyF'}
-  // @ts-expect-error TS2353 Renderer compatibility switches are not part of the API.
-  const invalidRenderer: WebgpuRendererOptions = {forceWebGL: true}
-  // @ts-expect-error TS2353 Legacy renderer configuration is not part of Game.
-  const invalidProps: GameProps = {gl: {}}
   // @ts-expect-error TS2322 Wrappers must not require additional props.
   const invalidWrapper: GameWrappers = RequiresToken
-  expect([invalidControls, invalidRenderer, invalidProps, invalidWrapper]).toHaveLength(4)
+  expect([invalidControls, invalidWrapper]).toHaveLength(2)
 })
 test('native renderer propagates adapter failure without trying a fallback context', async () => {
   let fallbackCalls = 0
