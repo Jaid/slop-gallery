@@ -9,7 +9,7 @@ export const minimapHeading = ([x, , z]: Vec3) => Math.atan2(x, -z) * 180 / Math
 export function minimapPortrait(portrait: Portrait) {
   const physical = portraitObjects.get(portrait.id)?.body.translation()
   const position: Vec3 = physical ? [physical.x, physical.y, physical.z] : portrait.position
-  const wall = portrait.hung ? walls.find(wall => wall.id === portrait.wallId) : undefined
+  const wall = portrait.hung ? walls.find(candidate => candidate.id === portrait.wallId) : undefined
   return {
     position,
     lower: isLowerRoom(wall?.room ?? roomAt(position)),

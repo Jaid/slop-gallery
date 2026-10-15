@@ -2,6 +2,7 @@ import type {AiSettings} from '../ai/settings.ts'
 import type {Portrait} from '../gallery/types.ts'
 import type {AudioHandle, Narrator} from 'use-narrator/core'
 
+import {noop} from 'es-toolkit'
 import {SpeechCache} from 'use-narrator/core'
 
 import NarrationGenerator from '../ai/NarrationGenerator.ts'
@@ -23,7 +24,7 @@ const transcriptFor = (story: Story) => `${story.title.replace(/[!.?]$/, '')}. $
 function waitForStory(id: string, signal: AbortSignal): Promise<Story> {
   signal.throwIfAborted()
   return new Promise((resolve, reject) => {
-    let unsubscribe = () => {}
+    let unsubscribe = noop
     const abort = () => {
       unsubscribe()
       signal.removeEventListener('abort', abort)
@@ -119,6 +120,8 @@ export default class PortraitNarration {
       if (this.requests.get(id) === request) {
         this.requests.delete(id)
       }
+    }).catch(error => {
+      console.error('Portrait narration cleanup failed.', error)
     })
     if (story.pending || story.merging) {
       notify('The narrator is waiting for the ink to dry…')

@@ -47,7 +47,9 @@ export default class TerracottaTextures {
           bumps[i + channel] = relief
           roughness[i + channel] = matte
         }
-        colors[i + 3] = bumps[i + 3] = roughness[i + 3] = 255
+        colors[i + 3] = 255
+        bumps[i + 3] = 255
+        roughness[i + 3] = 255
       }
     }
     this.map = texture(colors, true)

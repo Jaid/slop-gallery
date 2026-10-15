@@ -45,7 +45,7 @@ export default class NarrationGenerator extends ExternalGenerator {
     if (!blob.size || blob.size > 25_000_000) {
       throw new Error('The speech provider returned invalid audio.')
     }
-    if (/audio\/(l16|pcm)/i.test(type)) {
+    if (/audio\/(?:l16|pcm)/i.test(type)) {
       const rate = /(?:^|;)\s*rate=(\d+)/iu.exec(type)?.[1]
       const channels = /(?:^|;)\s*channels=(\d+)/iu.exec(type)?.[1]
       if (channels && Number(channels) !== 1) {

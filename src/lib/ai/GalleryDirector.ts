@@ -171,7 +171,8 @@ export default class GalleryDirector {
       // One original may have been removed mid-request. Release the survivor as well.
       this.releaseMerge(first, token)
       this.releaseMerge(second, token)
-      if (!this.controller.signal.aborted) {
+      // dispose() can abort while the merge is awaited, which the narrowing from the early return above cannot see.
+      if (!(this.controller.signal.aborted as boolean)) {
         this.narrator.ready(first)
       }
     }

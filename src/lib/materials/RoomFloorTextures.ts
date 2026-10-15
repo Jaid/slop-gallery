@@ -12,7 +12,8 @@ const random = (seed: number) => {
 }
 function finish(source: ReadbackCanvas, color = true) {
   const texture = textureFromPixels(source.read(), {color})
-  texture.wrapS = texture.wrapT = RepeatWrapping
+  texture.wrapS = RepeatWrapping
+  texture.wrapT = RepeatWrapping
   return texture
 }
 /** Adapted from the ox_smart-gallery-webgpu reference: six board courses per 2.4 m tile. */
@@ -33,7 +34,7 @@ function wood() {
     for (let row = 0; row < 6; row++) {
       const y = row * plankHeight
       const tone = 0.82 + rng() * 0.36
-      context.fillStyle = `rgb(${109 * tone | 0},${74 * tone | 0},${44 * tone | 0})`
+      context.fillStyle = `rgb(${Math.trunc(109 * tone)},${Math.trunc(74 * tone)},${Math.trunc(44 * tone)})`
       context.fillRect(0, y, size, plankHeight)
       bump.fillStyle = tone > 1 ? '#a0a0a0' : '#808080'
       bump.fillRect(0, y, size, plankHeight)
@@ -113,9 +114,15 @@ function carpet() {
     for (let i = 0; i < pixels.data.length; i += 4) {
       const fiber = (rng() - 0.5) * 46
       pixels.data[i] = 95 + fiber + (rng() > 0.985 ? 40 : 0)
-      pixels.data[i + 1] = pixels.data[i + 2] = 22 + fiber * 0.4
-      pixels.data[i + 3] = heights.data[i + 3] = 255
-      heights.data[i] = heights.data[i + 1] = heights.data[i + 2] = 128 + fiber * 2
+      const greenAndBlue = 22 + fiber * 0.4
+      pixels.data[i + 1] = greenAndBlue
+      pixels.data[i + 2] = greenAndBlue
+      pixels.data[i + 3] = 255
+      heights.data[i + 3] = 255
+      const pileHeight = 128 + fiber * 2
+      heights.data[i] = pileHeight
+      heights.data[i + 1] = pileHeight
+      heights.data[i + 2] = pileHeight
     }
     context.putImageData(pixels, 0, 0)
     bump.putImageData(heights, 0, 0)
@@ -124,7 +131,8 @@ function carpet() {
       bumpMap: finish(height, false),
     }
     for (const texture of Object.values(textures)) {
-      texture.wrapS = texture.wrapT = MirroredRepeatWrapping
+      texture.wrapS = MirroredRepeatWrapping
+      texture.wrapT = MirroredRepeatWrapping
     }
     return textures
   } finally {

@@ -6,14 +6,14 @@ export default function Alcove({width = 3.1, color = '#c8c8b6'}: {
   width?: number
 }) {
   const shape = useMemo(() => {
-    const shape = new Shape
+    const arch = new Shape
     const radius = width / 2
-    shape.moveTo(-radius, 0)
-    shape.lineTo(radius, 0)
-    shape.lineTo(radius, 3.05)
-    shape.absarc(0, 3.05, radius, 0, Math.PI, false)
-    shape.lineTo(-radius, 0)
-    return shape
+    arch.moveTo(-radius, 0)
+    arch.lineTo(radius, 0)
+    arch.lineTo(radius, 3.05)
+    arch.absarc(0, 3.05, radius, 0, Math.PI, false)
+    arch.lineTo(-radius, 0)
+    return arch
   }, [width])
   return <group position={[0, 0.42, 0.112]}>
     <mesh><shapeGeometry args={[shape, 48]} /><meshStandardNodeMaterial color='#a6a68e' roughness={0.95} /></mesh>

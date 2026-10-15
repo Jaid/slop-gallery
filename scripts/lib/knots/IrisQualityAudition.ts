@@ -115,7 +115,7 @@ export default class IrisQualityAudition extends ExternalGenerator {
     const gap = resolve(directory, 'gap.wav')
     await Bun.write(gap, pcmWave(new ArrayBuffer(sampleRate), sampleRate))
     const paths = clips.flatMap((clip, index) => {
-      return index ? [gap, clip.source] : [clip.source]
+      return index ? [gap, clip.source] : clip.source
     })
     const concat = resolve(directory, 'concat.txt')
     await fs.writeFile(concat, paths.map(path => `file '${path.replaceAll('\\', '/').replaceAll("'", String.raw`'\''`)}'`).join('\n'))

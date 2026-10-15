@@ -1,7 +1,6 @@
 import {execFile} from 'node:child_process'
 import {once} from 'node:events'
 import {createReadStream, createWriteStream} from 'node:fs'
-import {chmod, mkdir, open, readFile, rename, rm, stat} from 'node:fs/promises'
 import {dirname, resolve} from 'node:path'
 import {createInterface} from 'node:readline'
 import type {Readable} from 'node:stream'
@@ -9,6 +8,7 @@ import {pipeline} from 'node:stream/promises'
 import {parseArgs, promisify} from 'node:util'
 import {createBrotliCompress, createGunzip, constants as zlibConstants} from 'node:zlib'
 
+import fs from 'fs-extra'
 import getFree from 'get-free'
 import {Packr} from 'msgpackr'
 
@@ -112,7 +112,7 @@ const getUserDataDirFromCommandLine = (commandLine: string) => {
   return match?.[1] ?? match?.[2] ?? match?.[3]
 }
 export const readBrowserFlags = async (userDataDir: string): Promise<BrowserFlags> => {
-  const localState = JSON.parse(await readFile(resolve(userDataDir, 'Local State'), 'utf8')) as {
+  const localState = JSON.parse(await fs.readFile(resolve(userDataDir, 'Local State'), 'utf8')) as {
     browser?: {
       enabled_labs_experiments?: unknown
       enabled_labs_experiments_origin_lists?: unknown
@@ -201,11 +201,11 @@ export const ensureTraceconv = async (cacheRoot: string) => {
   if (sha256 !== build.sha256) {
     throw new Error(`traceconv checksum mismatch: expected ${build.sha256}, got ${sha256}.`)
   }
-  await mkdir(dirname(executable), {recursive: true})
+  await fs.mkdir(dirname(executable), {recursive: true})
   const temporary = `${executable}.partial`
   await Bun.write(temporary, data)
-  await chmod(temporary, 0o755)
-  await rename(temporary, executable)
+  await fs.chmod(temporary, 0o755)
+  await fs.rename(temporary, executable)
   return executable
 }
 const convertProtoTraceToJson = async (traceconv: string, input: string, output: string) => {
@@ -253,7 +253,7 @@ export default async function recordBrowserTrace({port = 9222, buffer = 4_000_00
     throw new TypeError('reload must be a boolean.')
   }
   const outputRoot = resolve(import.meta.dir, '../temp')
-  await mkdir(outputRoot, {recursive: true})
+  await fs.mkdir(outputRoot, {recursive: true})
   const outputName = await getFree('trace', candidate => Bun.file(resolve(outputRoot, `${candidate}.msgpack.br`)).exists())
   const output = resolve(outputRoot, `${outputName}.msgpack.br`)
   const traceconv = await ensureTraceconv(resolve(outputRoot, 'perfetto'))
@@ -278,12 +278,7 @@ export default async function recordBrowserTrace({port = 9222, buffer = 4_000_00
   const pending = new Map<number, Pending>
   const consoleEvents: Array<BrowserConsoleEvent> = []
   let captureConsoleEvents = false
-  let tracingCompleteResolve!: (stream: string) => void
-  let tracingCompleteReject!: (error: Error) => void
-  const tracingComplete = new Promise<string>((resolveComplete, rejectComplete) => {
-    tracingCompleteResolve = resolveComplete
-    tracingCompleteReject = rejectComplete
-  })
+  const {promise: tracingComplete, resolve: tracingCompleteResolve, reject: tracingCompleteReject} = Promise.withResolvers<string>()
   const call = (method: string, params: unknown = {}, sessionId?: string) => {
     const id = ++nextId
     return new Promise<any>((resolveCall, rejectCall) => {
@@ -466,7 +461,7 @@ export default async function recordBrowserTrace({port = 9222, buffer = 4_000_00
   const messagePackTemporary = `${output}.msgpack.partial`
   const compressedTemporary = `${output}.partial`
   const temporaries = [protoTemporary, jsonTemporary, messagePackTemporary, compressedTemporary]
-  await Promise.all(temporaries.map(temporary => rm(temporary, {force: true})))
+  await Promise.all(temporaries.map(temporary => fs.rm(temporary, {force: true})))
   const gunzip = createGunzip()
   let compressedTraceBytes = 0
   const writingProto = pipeline(gunzip, createWriteStream(protoTemporary))
@@ -480,7 +475,7 @@ export default async function recordBrowserTrace({port = 9222, buffer = 4_000_00
         data: string
         eof?: boolean
       }
-      const data = chunk.base64Encoded ? Buffer.from(chunk.data, 'base64') : Buffer.from(chunk.data, 'utf8')
+      const data = chunk.base64Encoded ? Uint8Array.fromBase64(chunk.data) : Buffer.from(chunk.data, 'utf8')
       if (data.length) {
         compressedTraceBytes += data.length
         if (!gunzip.write(data)) {
@@ -508,13 +503,13 @@ export default async function recordBrowserTrace({port = 9222, buffer = 4_000_00
     socket.close()
   }
   try {
-    const {size: protoBytes} = await stat(protoTemporary)
+    const {size: protoBytes} = await fs.stat(protoTemporary)
     if (!protoBytes) {
       throw new Error('The browser returned an empty trace stream.')
     }
     console.error(`Converting ${(protoBytes / 1024 / 1024).toFixed(1)} MiB Perfetto trace to JSON…`)
     await convertProtoTraceToJson(traceconv, protoTemporary, jsonTemporary)
-    await rm(protoTemporary, {force: true})
+    await fs.rm(protoTemporary, {force: true})
     const eventCount = await encodeTraceJsonAsMessagePack(jsonTemporary, messagePackTemporary, consoleEvents, {
       Browser: version.Browser,
       BraveFlags: browserFlags,
@@ -526,14 +521,14 @@ export default async function recordBrowserTrace({port = 9222, buffer = 4_000_00
     if (!eventCount) {
       throw new Error('traceconv produced no trace events.')
     }
-    await rm(jsonTemporary, {force: true})
+    await fs.rm(jsonTemporary, {force: true})
     await brotliCompressFile(messagePackTemporary, compressedTemporary)
-    await rm(output, {force: true})
-    await rename(compressedTemporary, output)
-    const {size} = await stat(output)
+    await fs.rm(output, {force: true})
+    await fs.rename(compressedTemporary, output)
+    const {size} = await fs.stat(output)
     console.error(`Saved ${output} (${(size / 1024 / 1024).toFixed(1)} MiB, ${eventCount.toLocaleString()} trace events, ${consoleEvents.length.toLocaleString()} console events; CDP gzip ${(compressedTraceBytes / 1024 / 1024).toFixed(1)} MiB, proto ${(protoBytes / 1024 / 1024).toFixed(1)} MiB)`)
   } finally {
-    await Promise.all(temporaries.map(temporary => rm(temporary, {force: true})))
+    await Promise.all(temporaries.map(temporary => fs.rm(temporary, {force: true})))
   }
   return output
 }
@@ -648,7 +643,7 @@ export async function encodeTraceJsonAsMessagePack(input: Readable | string, out
     } else {
       console.error(`Chromium trace stream ended after ${eventCount.toLocaleString()} complete events without a JSON footer; saving the recoverable trace.`)
     }
-    const definedMetadataAdditions = Object.fromEntries(Object.entries({
+    const definedMetadataAdditions = Object.fromEntries(Object.entries<unknown>({
       ...metadataAdditions,
       ...sawFooter ? {} : {TraceJsonFooterMissing: true},
     }).filter(([, value]) => value !== undefined))
@@ -690,7 +685,7 @@ export async function encodeTraceJsonAsMessagePack(input: Readable | string, out
     }
   }
   const count = Buffer.allocUnsafe(4)
-  await using file = await open(output, 'r+')
+  await using file = await fs.promises.open(output, 'r+')
   count.writeUInt32BE(mapCount)
   await file.write(count, 0, count.byteLength, mapCountOffset)
   count.writeUInt32BE(eventCount)
@@ -699,7 +694,7 @@ export async function encodeTraceJsonAsMessagePack(input: Readable | string, out
 }
 
 async function brotliCompressFile(input: string, output: string) {
-  const {size} = await stat(input)
+  const {size} = await fs.stat(input)
   await pipeline(createReadStream(input), createBrotliCompress({
     params: {
       [zlibConstants.BROTLI_PARAM_QUALITY]: 6,

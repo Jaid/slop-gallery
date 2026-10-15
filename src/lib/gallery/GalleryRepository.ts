@@ -201,8 +201,8 @@ export default class GalleryRepository {
     const value = await new Promise<unknown>((resolve, reject) => {
       const transaction = db.transaction('collections', 'readonly')
       const request = transaction.objectStore('collections').get('current')
-      request.onsuccess = () => resolve(request.result)
-      request.onerror = () => reject(request.error)
+      request.addEventListener('success', () => resolve(request.result))
+      request.addEventListener('error', () => reject(request.error))
     })
     return value === undefined ? null : validateDocument(value)
   }
@@ -214,8 +214,10 @@ export default class GalleryRepository {
       await new Promise<void>((resolve, reject) => {
         const transaction = db.transaction('collections', 'readwrite', {durability: 'strict'})
         transaction.objectStore('collections').put(document, 'current')
-        transaction.oncomplete = () => resolve()
-        transaction.onabort = transaction.onerror = () => reject(transaction.error ?? new Error('The gallery could not be saved.'))
+        const rejectSave = () => reject(transaction.error ?? new Error('The gallery could not be saved.'))
+        transaction.addEventListener('complete', () => resolve())
+        transaction.addEventListener('abort', rejectSave)
+        transaction.addEventListener('error', rejectSave)
       })
     })
     this.writes = next
@@ -229,26 +231,26 @@ export default class GalleryRepository {
     let blocked = false
     const pending = new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open(galleryStorageKey, 1)
-      request.onupgradeneeded = () => request.result.createObjectStore('collections')
-      request.onsuccess = () => {
+      request.addEventListener('upgradeneeded', () => request.result.createObjectStore('collections'))
+      request.addEventListener('success', () => {
         // A previously blocked request can succeed after its caller has already failed.
         if (blocked) {
           request.result.close()
           return
         }
-        request.result.onversionchange = () => {
+        request.result.addEventListener('versionchange', () => {
           request.result.close()
           if (this.database === pending) {
             this.database = undefined
           }
-        }
+        })
         resolve(request.result)
-      }
-      request.onerror = () => reject(request.error)
-      request.onblocked = () => {
+      })
+      request.addEventListener('error', () => reject(request.error))
+      request.addEventListener('blocked', () => {
         blocked = true
         reject(new Error('Close the other gallery tabs to unlock storage.'))
-      }
+      })
     })
     this.database = pending
     void pending.catch(() => {

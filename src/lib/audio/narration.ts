@@ -51,6 +51,7 @@ export function attachNarration(target: Narrator = narrator, events: Pick<EventT
   }
 }
 
-if (import.meta.hot) {
+// Bun’s types claim import.meta.hot always exists, but outside the Vite dev server it is undefined.
+if (import.meta.hot as ImportMeta['hot'] | undefined) {
   import.meta.hot.dispose(() => narrator.dispose())
 }

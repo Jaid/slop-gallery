@@ -42,7 +42,8 @@ export function surfaceTexture(kind: 'plaster' | 'stone' | 'wood') {
     },
   })
   t.colorSpace = SRGBColorSpace
-  t.wrapS = t.wrapT = RepeatWrapping
+  t.wrapS = RepeatWrapping
+  t.wrapT = RepeatWrapping
   t.repeat.set(kind === 'stone' ? 8 : 3, kind === 'stone' ? 8 : 3)
   t.anisotropy = 8
   return t
@@ -99,7 +100,8 @@ export function damaskTexture(width: number, height: number) {
       }
     },
   })
-  texture.wrapS = texture.wrapT = RepeatWrapping
+  texture.wrapS = RepeatWrapping
+  texture.wrapT = RepeatWrapping
   // The reference uses 0.55 tiles per meter: rosettes are about 27 cm across.
   texture.repeat.set(width * 0.55, height * 0.55)
   return texture
@@ -154,7 +156,8 @@ export function checkerMarbleTexture(width: number, depth: number) {
       }
     },
   })
-  texture.wrapS = texture.wrapT = RepeatWrapping
+  texture.wrapS = RepeatWrapping
+  texture.wrapT = RepeatWrapping
   // The reference samples 0.36 repeats per meter: each tile is about 69 cm wide.
   texture.repeat.set(width * 0.36, depth * 0.36)
   return texture

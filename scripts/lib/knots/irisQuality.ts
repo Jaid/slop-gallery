@@ -50,7 +50,7 @@ export function decodeIrisQuality(bytes: Uint8Array) {
   if (typeof envelope.audio !== 'string' || !/^audio\/pcm(?:;|$)/iu.test(envelope.content_type) || !Number.isFinite(envelope.duration) || envelope.duration <= 0) {
     throw new Error('Expected a timed PCM envelope, not raw audio or a compressed codec.')
   }
-  const pcm = Buffer.from(envelope.audio, 'base64')
+  const pcm = Uint8Array.fromBase64(envelope.audio)
   if (!pcm.byteLength || pcm.byteLength % 2) {
     throw new Error('Invalid 16-bit PCM payload.')
   }

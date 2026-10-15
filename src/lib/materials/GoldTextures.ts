@@ -9,8 +9,8 @@ function noise(u: number, v: number, frequency: number) {
   const y = v * frequency
   const ix = Math.floor(x)
   const iy = Math.floor(y)
-  const hash = (x: number, y: number) => {
-    let n = Math.imul(wrap(x, frequency), 374_761_393) ^ Math.imul(wrap(y, frequency), 668_265_263) ^ 91
+  const hash = (latticeX: number, latticeY: number) => {
+    let n = Math.imul(wrap(latticeX, frequency), 374_761_393) ^ Math.imul(wrap(latticeY, frequency), 668_265_263) ^ 91
     n = Math.imul(n ^ n >>> 13, 1_274_126_177)
     return ((n ^ n >>> 16) >>> 0) / 4_294_967_295
   }
@@ -31,7 +31,8 @@ function texture(pixels: Uint8Array, color = false) {
   if (color) {
     map.colorSpace = SRGBColorSpace
   }
-  map.wrapS = map.wrapT = RepeatWrapping
+  map.wrapS = RepeatWrapping
+  map.wrapT = RepeatWrapping
   map.repeat.set(3, 1)
   map.generateMipmaps = true
   map.minFilter = LinearMipmapLinearFilter

@@ -28,7 +28,7 @@ export default class RenderBoundary extends Component<PropsWithChildren<{onFailu
   }
   render() {
     if (this.state.failed) {
-      return <RenderError><span className={css.eyebrow}>THE LIGHTS WENT OUT</span><h2>The gallery needs a fresh start.</h2><p>Use an up-to-date Chromium browser with WebGPU and hardware acceleration enabled. Your saved collection is still on this device.</p><button className={css.primaryButton} onClick={() => location.reload()}>Reopen the gallery</button></RenderError>
+      return <RenderError><span className={css.eyebrow}>THE LIGHTS WENT OUT</span><h2>The gallery needs a fresh start.</h2><p>Use an up-to-date Chromium browser with WebGPU and hardware acceleration enabled. Your saved collection is still on this device.</p><button className={css.primaryButton} type='button' onClick={() => location.reload()}>Reopen the gallery</button></RenderError>
     }
     return this.props.children
   }

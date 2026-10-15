@@ -25,13 +25,13 @@ export default function OpenRouterConnection({params, setParams}: ReturnType<typ
       }}
     >
       <label htmlFor='settings-key'>API key</label>
-      <div className={css.keyRow}><input id='settings-key' autoComplete='off' placeholder='sk-or-…' spellCheck={false} type='password' value={key} onChange={event => setKey(event.target.value)} /><button className={css.primaryButton} disabled={!key.trim()}>{apiKey ? 'Update' : 'Connect'}</button></div>
+      <div className={css.keyRow}><input id='settings-key' autoComplete='off' placeholder='sk-or-…' spellCheck={false} type='password' value={key} onChange={event => setKey(event.target.value)} /><button className={css.primaryButton} disabled={!key.trim()} type='submit'>{apiKey ? 'Update' : 'Connect'}</button></div>
     </form>
     <p className={css.note}>Your key stays in this tab and is never included in backups. Saving a key does not verify it or make a paid request.</p>
     <Branch if={apiKey}><div>
       <label className={css.toggleRow}>Enable AI<input checked={params.ai} type='checkbox' onChange={event => setParams({ai: event.target.checked})} /></label>
       <button
-        className={css.textButton} onClick={() => {
+        className={css.textButton} type='button' onClick={() => {
           setApiKey('')
           setKey('')
           setParams({ai: false})

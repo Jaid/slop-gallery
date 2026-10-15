@@ -26,10 +26,14 @@ export default function recordPlayerDump(dump: EgoDump) {
     context,
   }, {depth: null})
   if (useGallery.getState().sound) {
-    void confirmDump()
+    confirmDump().catch(error => {
+      console.warn('Dump confirmation sound could not be played.', error)
+    })
   }
   if (isDevelopmentMode) {
-    void saveDumpScreenshot(`${galleryLevel}-${dump.id}`)
+    saveDumpScreenshot(`${galleryLevel}-${dump.id}`).catch(error => {
+      console.warn('Dump screenshot could not be captured.', error)
+    })
   }
   if (!telemetry) {
     return
@@ -65,13 +69,9 @@ export default function recordPlayerDump(dump: EgoDump) {
 }
 
 async function confirmDump() {
-  try {
-    const sound = SoundEngine.get()
-    await sound.resume()
-    if (useGallery.getState().sound) {
-      playSoundEffect(sound, 'SFX-04')
-    }
-  } catch (error) {
-    console.warn('Dump confirmation sound could not be played.', error)
+  const sound = SoundEngine.get()
+  await sound.resume()
+  if (useGallery.getState().sound) {
+    playSoundEffect(sound, 'SFX-04')
   }
 }

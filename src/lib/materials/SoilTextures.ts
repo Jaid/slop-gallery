@@ -39,8 +39,11 @@ export default class SoilTextures {
         colors[i + 1] = Math.round(36 * tone + mineral * 34)
         colors[i + 2] = Math.round(22 * tone + mineral * 24)
         const relief = Math.round(128 + crumb * 36 + grit * 18 + mineral * 15)
-        bumps[i] = bumps[i + 1] = bumps[i + 2] = relief
-        colors[i + 3] = bumps[i + 3] = 255
+        bumps[i] = relief
+        bumps[i + 1] = relief
+        bumps[i + 2] = relief
+        colors[i + 3] = 255
+        bumps[i + 3] = 255
       }
     }
     this.map = texture(colors, true)

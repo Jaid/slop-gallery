@@ -17,9 +17,10 @@ export default function Panel({title, children}: {
   const notice = useGallery(s => s.notice)
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null
-    ref.current?.showModal()
+    const dialog = ref.current
+    dialog?.showModal()
     return () => {
-      ref.current?.close()
+      dialog?.close()
       previous?.focus()
     }
   }, [])
@@ -34,7 +35,7 @@ export default function Panel({title, children}: {
     }}
   >
     <section className={css.content}>
-      <div className={css.heading}><div><div className={css.eyebrow}>THE SLOP GALLERY</div><h2 id='panel-title'>{title}</h2></div><button className={css.iconButton} aria-label='Close panel' autoFocus onClick={() => openPanel(null)}><Icon name='close' /></button></div>
+      <div className={css.heading}><div><div className={css.eyebrow}>THE SLOP GALLERY</div><h2 id='panel-title'>{title}</h2></div><button className={css.iconButton} aria-label='Close panel' autoFocus type='button' onClick={() => openPanel(null)}><Icon name='close' /></button></div>
       <Branch if={notice}><Toast panel>{notice}</Toast></Branch>
       {children}
     </section>

@@ -104,7 +104,7 @@ export default async function measureIrisLatency(text: string, timestamps: boole
           finish(new Error(event.message ?? 'Iris returned an error.'))
         } else if (event.type === 'audio.delta') {
           if (event.delta) {
-            const bytes = Buffer.from(event.delta, 'base64').byteLength
+            const bytes = Uint8Array.fromBase64(event.delta).byteLength
             received += bytes
             if (bytes) {
               firstAudio ??= ms

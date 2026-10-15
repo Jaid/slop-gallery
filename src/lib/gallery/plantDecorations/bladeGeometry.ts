@@ -89,11 +89,12 @@ export default function bladeGeometry({at, direction, length, width, bend = 0.12
       const shade = 0.85 + 0.15 * Math.sin(t * Math.PI) + Math.abs(s) * 0.08
       const tint = base.clone().lerp(pale, Math.min(0.92, pattern)).multiplyScalar(shade)
       colors.push(tint.r, tint.g, tint.b)
-      if (row < rows && column < columns) {
-        const a = row * (columns + 1) + column
-        const b = a + columns + 1
-        indices.push(a, a + 1, b, a + 1, b + 1, b)
+      if (row >= rows || column >= columns) {
+        continue
       }
+      const a = row * (columns + 1) + column
+      const b = a + columns + 1
+      indices.push(a, a + 1, b, a + 1, b + 1, b)
     }
   }
   const geometry = new BufferGeometry

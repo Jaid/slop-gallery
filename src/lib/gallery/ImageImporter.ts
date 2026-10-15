@@ -73,7 +73,7 @@ export async function compositeImages(first: Blob | string, second: Blob | strin
     context.moveTo(w * 0.48, 0)
     context.bezierCurveTo(w * 0.95, h * 0.3, w * 0.05, h * 0.7, w * 0.52, h)
     context.stroke()
-    return canvas.convertToBlob({
+    return await canvas.convertToBlob({
       type: 'image/webp',
       quality: 0.94,
     })
@@ -135,8 +135,8 @@ export default class ImageImporter {
           } finally {
             bitmap.close()
           }
-          // Reset/undo during decoding must not resurrect an abandoned import batch.
-          if (this.disposed || useGallery.getState().importEpoch !== epoch) {
+          // Reset/undo during decoding must not resurrect an abandoned import batch. dispose() can also run meanwhile, which the narrowing from the check above cannot see.
+          if ((this.disposed as boolean) || useGallery.getState().importEpoch !== epoch) {
             break
           }
           const title = file.name.replace(/\.[^.]+$/, '').replaceAll(/[-_]/g, ' ').trim().slice(0, 150) || 'An untitled arrival'

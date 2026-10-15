@@ -50,20 +50,6 @@ type State = GallerySettings & GallerySnapshot & {
   update: (id: string, patch: Partial<Portrait>) => void
 }
 
-// Entering the menu or acquiring pointer lock is not an in-game control.
-export function markControlled() {
-  const s = useGallery.getState()
-  if (s.hasControlled || !s.locked || s.panel) {
-    return
-  }
-  useGallery.setState({hasControlled: true})
-  try {
-    localStorage.setItem('slop-gallery-controlled', 'true')
-  } catch {
-    // Control history still remains available for this visit when storage is blocked.
-  }
-}
-
 function cleanPortrait(p: Portrait): Portrait {
   return {
     ...p,
@@ -144,6 +130,20 @@ export const useGallery = create<State>((set, get) => ({
   remove: id => get().commit(get().portraits.filter(p => p.id !== id)),
 }))
 
+// Entering the menu or acquiring pointer lock is not an in-game control.
+export function markControlled() {
+  const s = useGallery.getState()
+  if (s.hasControlled || !s.locked || s.panel) {
+    return
+  }
+  useGallery.setState({hasControlled: true})
+  try {
+    localStorage.setItem('slop-gallery-controlled', 'true')
+  } catch {
+    // Control history still remains available for this visit when storage is blocked.
+  }
+}
+
 export function undo() {
   const s = useGallery.getState()
   const previous = s.past.at(-1)
@@ -166,7 +166,7 @@ export function undo() {
 
 export function redo() {
   const s = useGallery.getState()
-  const next = s.future[0]
+  const next = s.future.at(0)
   if (!next) {
     return false
   }

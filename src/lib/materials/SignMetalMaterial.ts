@@ -2,10 +2,6 @@ import {knotSign} from 'knot-materials/signs.ts'
 import {bumpMap, color, float, mix, mx_noise_float, positionLocal, vec2, vec3} from 'three/tsl'
 import {MeshBasicNodeMaterial, MeshPhysicalNodeMaterial} from 'three/webgpu'
 
-export function signSupportMaterial(isHeavy: boolean) {
-  return isHeavy ? new SignMetalMaterial : new MeshBasicNodeMaterial({color: '#9ca6ad'})
-}
-
 /** Satin stainless steel: fine vertical brushing and a lathe-turned circular foot. */
 class SignMetalMaterial extends MeshPhysicalNodeMaterial {
   constructor() {
@@ -28,3 +24,5 @@ class SignMetalMaterial extends MeshPhysicalNodeMaterial {
     this.normalNode = bumpMap(machining, float(0.00012))
   }
 }
+
+export const signSupportMaterial = (isHeavy: boolean) => (isHeavy ? new SignMetalMaterial : new MeshBasicNodeMaterial({color: '#9ca6ad'}))

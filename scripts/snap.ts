@@ -2,10 +2,10 @@ import type {CameraPose} from '#src/lib/diagnostics.ts'
 import type {Vec3} from '#src/lib/gallery/types.ts'
 import type {Page} from 'puppeteer-core'
 
-import {mkdir, readFile, rm, stat, writeFile} from 'node:fs/promises'
 import {join, relative, resolve, sep} from 'node:path'
 import {parseArgs} from 'node:util'
 
+import fs from 'fs-extra'
 import {lossyJxlOptions} from 'knot-materials/scripts/lib/encodeJxl.ts'
 import puppeteer from 'puppeteer-core'
 import {createServer} from 'vite'
@@ -72,13 +72,13 @@ const serveStatic = (root: string) => Bun.serve({
     if (file !== root && !file.startsWith(root + sep)) {
       return new Response('Forbidden', {status: 403})
     }
-    const isFile = await stat(file).then(entry => entry.isFile(), () => false)
+    const isFile = await fs.stat(file).then(entry => entry.isFile(), () => false)
     return isFile ? new Response(Bun.file(file)) : new Response('Not found', {status: 404})
   },
 })
 const readBuildLevel = async (root: string) => {
   try {
-    const {level} = JSON.parse(await readFile(join(root, 'level-build.json'), 'utf8')) as {level?: string}
+    const {level} = JSON.parse(await fs.readFile(join(root, 'level-build.json'), 'utf8')) as {level?: string}
     return level
   } catch {
   }
@@ -126,7 +126,7 @@ if (values.help) {
   process.exit(0)
 }
 const target = values.target === undefined ? undefined : resolve(values.target)
-if (target !== undefined && !await stat(join(target, 'index.html')).then(entry => entry.isFile(), () => false)) {
+if (target !== undefined && !await fs.stat(join(target, 'index.html')).then(entry => entry.isFile(), () => false)) {
   throw new Error(`--target ${values.target} has no index.html. Build it first, e.g. bun run build.`)
 }
 if (target !== undefined && values.level !== undefined) {
@@ -202,9 +202,11 @@ try {
   const page = await browser.newPage()
   page.on('pageerror', error => console.error(`Page error: ${String(error)}`))
   // A crashed tab never resolves pending waits; closing the browser rejects them.
-  page.on('error', error => {
-    console.error(`Page crashed: ${String(error)}`)
-    void browser?.close()
+  page.on('error', crash => {
+    console.error(`Page crashed: ${String(crash)}`)
+    if (browser) {
+      void browser.close().catch(closeError => console.error(`Closing the browser after the crash failed: ${String(closeError)}`))
+    }
   })
   console.log(`Loading ${url}`)
   await page.goto(url, {
@@ -239,13 +241,13 @@ try {
   if (frame.nonBlackFraction === 0) {
     throw new Error('The capture is completely black.')
   }
-  await mkdir(photoRoot, {recursive: true})
+  await fs.mkdir(photoRoot, {recursive: true})
   const png = `${output}.png`
-  await writeFile(png, Uint8Array.fromBase64(frame.png))
+  await fs.writeFile(png, Uint8Array.fromBase64(frame.png))
   try {
     await Bun.$`cjxl ${png} ${lossyJxlOptions(jxlDistance)} ${output}`.quiet()
   } finally {
-    await rm(png, {force: true})
+    await fs.rm(png, {force: true})
   }
   const [pitch, yaw, roll] = pose.rotation
   console.log(`Wrote ${relative(repositoryRoot, output).replaceAll('\\', '/')} (${frame.width}×${frame.height})`)

@@ -6,7 +6,7 @@ import type {Group} from 'three/webgpu'
 
 import {useFrame} from '@react-three/fiber'
 import {RigidBody, useRapier} from '@react-three/rapier'
-import {useEffect, useRef} from 'react'
+import {useEffect, useLayoutEffect, useRef} from 'react'
 
 import {cameraPose, notify, useGallery} from '#src/lib/gallery.ts'
 import GrabbableBody from '#src/lib/physics/GrabbableBody.ts'
@@ -42,13 +42,16 @@ export default function GrabbableProp({id, title, children, canGrab, blockedMess
     recoverAsDynamic,
     attachmentBody,
   })
-  callbacks.current = {
-    canGrab,
-    blockedMessage,
-    onAttachmentChange,
-    recoverAsDynamic,
-    attachmentBody,
-  }
+  // Only effects, frame callbacks and input handlers read these, so committing them before paint is early enough.
+  useLayoutEffect(() => {
+    callbacks.current = {
+      canGrab,
+      blockedMessage,
+      onAttachmentChange,
+      recoverAsDynamic,
+      attachmentBody,
+    }
+  }, [canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, attachmentBody])
   const {world} = useRapier()
   const held = useGallery(s => s.held === id)
   useEffect(() => {

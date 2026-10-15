@@ -95,12 +95,12 @@ export default class PropPlacement {
     return Array.from({length: this.body.numColliders()}, (_, i) => {
       const collider = this.body.collider(i)
       const offset = collider.translationWrtParent()!
-      const rotation = collider.rotationWrtParent()!
+      const colliderRotation = collider.rotationWrtParent()!
       const colliderCenter = new Vector3(offset.x, offset.y, offset.z)
       return {
         shape: collider.shape,
         center: colliderCenter.applyQuaternion(parentRotation).add(new Vector3(...position)),
-        orientation: parentRotation.clone().multiply(new Quaternion(rotation.x, rotation.y, rotation.z, rotation.w)),
+        orientation: parentRotation.clone().multiply(new Quaternion(colliderRotation.x, colliderRotation.y, colliderRotation.z, colliderRotation.w)),
       }
     })
   }

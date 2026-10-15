@@ -42,10 +42,11 @@ export default function CoveredPassage({passage, material, timber, ribCutouts}: 
         <Box material={material} position={[x, passage.floorY + passage.height + 0.12, z]} size={[width, 0.24, depth]} />
       </group>)}
       <Branch not={timber}>{collision.map((args, i) => <TrimeshCollider key={i} args={args} />)}</Branch>
-      {timber ? <TimberFrame geometry={geometry} lining={material} material={timber} /> : <>
+      <Branch if={timber}><TimberFrame geometry={geometry} lining={material} material={timber!} /></Branch>
+      <Branch not={timber}>
         <mesh castShadow geometry={geometry.shell} material={material} name='castle-barrel-vault' receiveShadow />
         <mesh castShadow geometry={geometry.ribs} material={material} name='castle-vault-ribs' receiveShadow />
-      </>}
+      </Branch>
     </RigidBody>
     {passage.spans.flatMap(({start, end}, span) => {
       const length = Math.hypot(end[0] - start[0], end[1] - start[1])

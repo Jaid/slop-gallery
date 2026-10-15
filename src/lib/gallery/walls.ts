@@ -424,27 +424,27 @@ export function roomAt(position: Vec3): RoomId {
   }
   return tunnelContains(position) ? 'oculus' : 'lobby'
 }
-export function wallPosition(wall: Wall, u: number, y: number, offset = 0.22): Vec3 {
-  const sin = Math.sin(wall.rotation)
-  const cos = Math.cos(wall.rotation)
-  const radius = wall.curveRadius
+export function wallPosition(targetWall: Wall, u: number, y: number, offset = 0.22): Vec3 {
+  const sin = Math.sin(targetWall.rotation)
+  const cos = Math.cos(targetWall.rotation)
+  const radius = targetWall.curveRadius
   const x = radius ? (radius - offset) * Math.sin(u / radius) : u
   const z = radius ? radius - (radius - offset) * Math.cos(u / radius) : offset
-  return [wall.center[0] + x * cos + z * sin, y, wall.center[2] - x * sin + z * cos]
+  return [targetWall.center[0] + x * cos + z * sin, y, targetWall.center[2] - x * sin + z * cos]
 }
 
-export function wallCoordinates(wall: Wall, [x, , z]: Vec3) {
-  const u = (x - wall.center[0]) * Math.cos(wall.rotation) - (z - wall.center[2]) * Math.sin(wall.rotation)
-  if (wall.curveRadius) {
-    const depth = (x - wall.center[0]) * Math.sin(wall.rotation) + (z - wall.center[2]) * Math.cos(wall.rotation)
-    return Math.atan2(u / wall.curveRadius, 1 - depth / wall.curveRadius) * wall.curveRadius
+export function wallCoordinates(targetWall: Wall, [x, , z]: Vec3) {
+  const u = (x - targetWall.center[0]) * Math.cos(targetWall.rotation) - (z - targetWall.center[2]) * Math.sin(targetWall.rotation)
+  if (targetWall.curveRadius) {
+    const depth = (x - targetWall.center[0]) * Math.sin(targetWall.rotation) + (z - targetWall.center[2]) * Math.cos(targetWall.rotation)
+    return Math.atan2(u / targetWall.curveRadius, 1 - depth / targetWall.curveRadius) * targetWall.curveRadius
   }
   return u
 }
 
-export function placementIssue(wall: Wall, position: Vec3, width: number, height: number, portraits: ReadonlyArray<Portrait>, ignoreId = '') {
-  const u = wallCoordinates(wall, position)
-  if (wall.hangable === false) {
+export function placementIssue(targetWall: Wall, position: Vec3, width: number, height: number, portraits: ReadonlyArray<Portrait>, ignoreId = '') {
+  const u = wallCoordinates(targetWall, position)
+  if (targetWall.hangable === false) {
     return 'Keep the stairway clear.'
   }
   // Include the frame, the physical label and a small breathing space.
@@ -452,13 +452,13 @@ export function placementIssue(wall: Wall, position: Vec3, width: number, height
   const halfWidth = Math.max(width / 2 + 0.16, label.width / 2)
   const bottom = position[1] + label.bottom - portraitLabel.clearance
   const top = position[1] + height / 2 + 0.16
-  if (Math.abs(u) + halfWidth > wall.width / 2 - 0.24 || bottom < wall.center[1] + 0.48 || top > wall.center[1] + wall.height - 0.55) {
+  if (Math.abs(u) + halfWidth > targetWall.width / 2 - 0.24 || bottom < targetWall.center[1] + 0.48 || top > targetWall.center[1] + targetWall.height - 0.55) {
     return 'Leave space for the frame and its label.'
   }
-  if ([...wall.holes ?? [], ...wall.reservations ?? []].some(hole => Math.abs(u - hole.u) < halfWidth + hole.width / 2 + 0.14 && bottom < wall.center[1] + hole.height + 0.14 && top > wall.center[1] + (hole.bottom ?? 0) - 0.14)) {
+  if ([...targetWall.holes ?? [], ...targetWall.reservations ?? []].some(hole => Math.abs(u - hole.u) < halfWidth + hole.width / 2 + 0.14 && bottom < targetWall.center[1] + hole.height + 0.14 && top > targetWall.center[1] + (hole.bottom ?? 0) - 0.14)) {
     return 'Let’s keep the doorway clear.'
   }
-  if (portraits.some(p => p.id !== ignoreId && p.hung && p.wallId === wall.id && Math.abs(wallCoordinates(wall, p.position) - u) < halfWidth + p.width / 2 + 0.18 && top > p.position[1] + portraitLabelLayout(p.width, p.height).bottom - portraitLabel.neighborClearance && bottom < p.position[1] + p.height / 2 + 0.23)) {
+  if (portraits.some(p => p.id !== ignoreId && p.hung && p.wallId === targetWall.id && Math.abs(wallCoordinates(targetWall, p.position) - u) < halfWidth + p.width / 2 + 0.18 && top > p.position[1] + portraitLabelLayout(p.width, p.height).bottom - portraitLabel.neighborClearance && bottom < p.position[1] + p.height / 2 + 0.23)) {
     return 'A little too close to another masterpiece.'
   }
   return ''
@@ -502,28 +502,28 @@ export function findPlacement(origin: Vec3, direction: Vec3, width: number, heig
     valid: false,
     reason: 'Keep the window clear.',
   } : null
-  for (const wall of walls) {
-    const distance = wallRayDistance(wall, origin, direction)
+  for (const candidateWall of walls) {
+    const distance = wallRayDistance(candidateWall, origin, direction)
     if (distance < 0 || distance >= nearest) {
       continue
     }
     const point: Vec3 = [origin[0] + direction[0] * distance, origin[1] + direction[1] * distance, origin[2] + direction[2] * distance]
-    const u = wallCoordinates(wall, point)
-    if (Math.abs(u) > wall.width / 2 || point[1] < wall.center[1] + u * (wall.slope ?? 0) || point[1] > wall.center[1] + u * (wall.slope ?? 0) + wall.height) {
+    const u = wallCoordinates(candidateWall, point)
+    if (Math.abs(u) > candidateWall.width / 2 || point[1] < candidateWall.center[1] + u * (candidateWall.slope ?? 0) || point[1] > candidateWall.center[1] + u * (candidateWall.slope ?? 0) + candidateWall.height) {
       continue
     }
-    if (wall.holes?.some(hole => !hole.glassThickness && insideOpening(hole, u, point[1] - wall.center[1]))) {
+    if (candidateWall.holes?.some(hole => !hole.glassThickness && insideOpening(hole, u, point[1] - candidateWall.center[1]))) {
       continue
     }
     nearest = distance
-    const position = wallPosition(wall, u, point[1])
+    const position = wallPosition(candidateWall, u, point[1])
     const inReach = distance * Math.hypot(...direction) <= placementReach
-    const reason = inReach ? placementIssue(wall, position, width, height, portraits, ignoreId) : 'Move closer to hang this artwork.'
+    const reason = inReach ? placementIssue(candidateWall, position, width, height, portraits, ignoreId) : 'Move closer to hang this artwork.'
     result = {
       inReach,
       position,
-      rotation: wall.rotation - (wall.curveRadius ? u / wall.curveRadius : 0),
-      wallId: wall.id,
+      rotation: candidateWall.rotation - (candidateWall.curveRadius ? u / candidateWall.curveRadius : 0),
+      wallId: candidateWall.id,
       valid: !reason,
       reason,
     }

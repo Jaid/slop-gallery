@@ -3,6 +3,7 @@ import type {KnotLightSlot} from 'knot-materials/KnotLights.ts'
 
 import {useFrame} from '@react-three/fiber'
 import {CuboidCollider, RigidBody, useAfterPhysicsStep, useBeforePhysicsStep} from '@react-three/rapier'
+import Branch from 'branch-component'
 import useDisposable from 'disposable-lifetime/react'
 import KnotLightPanels, {knotLightDiffuserContactSkin, knotLightDiffuserSize, knotLightDiffuserY, knotLightHousingSize, knotLightHousingY} from 'knot-materials/KnotLightPanels.ts'
 import KnotLightDamage, {knotLightFracture} from 'knot-materials/KnotLights.ts'
@@ -80,7 +81,7 @@ function LedPanelSystem({name, onBrightness, slots}: LedPanelsProps) {
     <RigidBody colliders={false} type='fixed'>
       {slots.map((slot, index) => <group key={slot.id} position={slot.position}>
         <CuboidCollider args={[knotLightHousingSize[0] / 2, knotLightHousingSize[1] / 2, knotLightHousingSize[2] / 2]} friction={0.6} position={[0, knotLightHousingY, 0]} restitution={0.08} ref={collider => impacts.register(collider, index)} />
-        {!broken.has(index) && <CuboidCollider args={[knotLightDiffuserSize[0] / 2, knotLightDiffuserSize[1] / 2, knotLightDiffuserSize[2] / 2]} contactSkin={knotLightDiffuserContactSkin} position={[0, knotLightDiffuserY, 0]} restitution={0.08} ref={collider => impacts.register(collider, index)} />}
+        <Branch not={broken.has(index)}><CuboidCollider args={[knotLightDiffuserSize[0] / 2, knotLightDiffuserSize[1] / 2, knotLightDiffuserSize[2] / 2]} contactSkin={knotLightDiffuserContactSkin} position={[0, knotLightDiffuserY, 0]} restitution={0.08} ref={collider => impacts.register(collider, index)} /></Branch>
       </group>)}
     </RigidBody>
     {slots.map((slot, index) => broken.has(index) && <RigidBody key={slot.id} angularDamping={0.4} ccd colliders={false} position={[slot.position[0], slot.position[1] + knotLightDiffuserY, slot.position[2]]}>

@@ -24,10 +24,11 @@ export function previewBorderGeometry(width: number, height: number, thickness =
   for (const [index, [cx, cy]] of corners.entries()) {
     positions.push(cx, cy, 0, cx - Math.sign(cx) * thickness, cy - Math.sign(cy) * thickness, 0)
     uvs.push(distances[index], 0, distances[index], 1)
-    if (index < 4) {
-      const i = index * 2
-      indices.push(i, i + 2, i + 1, i + 2, i + 3, i + 1)
+    if (index >= 4) {
+      continue
     }
+    const i = index * 2
+    indices.push(i, i + 2, i + 1, i + 2, i + 3, i + 1)
   }
   const geometry = new BufferGeometry
   geometry.setAttribute('position', new Float32BufferAttribute(positions, 3))

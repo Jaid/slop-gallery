@@ -27,7 +27,8 @@ export default function App() {
   useGalleryCommands()
   const s = useGallery()
   const [renderFailed, setRenderFailed] = useState(false)
-  const gpu = navigator.gpu !== undefined && globalThis.isSecureContext
+  // lib.dom types navigator.gpu as always present, but browsers without WebGPU leave it undefined.
+  const gpu = (navigator.gpu as GPU | undefined) !== undefined && globalThis.isSecureContext
   if (!gpu) {
     return <RenderError><h2>WebGPU is unavailable.</h2><p>{galleryTitle} requires native WebGPU. Open it in current Chrome or Edge with hardware acceleration enabled, using HTTPS or localhost.</p></RenderError>
   }

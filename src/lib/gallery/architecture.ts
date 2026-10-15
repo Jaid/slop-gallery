@@ -203,10 +203,10 @@ export function createArchitectureGeometry(wall: Wall) {
     }
     throw error
   } finally {
-    for (const brush of brushes) {
-      brush.disposeCacheData()
-      if (!retained.has(brush.geometry)) {
-        brush.geometry.dispose()
+    for (const createdBrush of brushes) {
+      createdBrush.disposeCacheData()
+      if (!retained.has(createdBrush.geometry)) {
+        createdBrush.geometry.dispose()
       }
     }
     material.dispose()
@@ -224,7 +224,8 @@ export function architectureGeometry(wall: Wall) {
   return geometry
 }
 
-if (import.meta.hot) {
+// Bun’s types claim import.meta.hot always exists, but outside the Vite dev server it is undefined.
+if (import.meta.hot as ImportMeta['hot'] | undefined) {
   import.meta.hot.dispose(() => {
     for (const geometry of cache.values()) {
       geometry.dispose()

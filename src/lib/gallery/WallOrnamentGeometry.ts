@@ -25,7 +25,7 @@ export function wallOrnamentPositions(wall: Wall) {
   })
   // Every nearest valid position is either a wall end or a padded doorway edge.
   const candidates = [-corner, corner, ...openings.flatMap(opening => [opening.left, opening.right])].filter(x => x >= -corner && x <= corner && !openings.some(opening => x > opening.left && x < opening.right)).toSorted((a, b) => a - b)
-  const left = candidates[0]
+  const left = candidates.at(0)
   const right = candidates.at(-1)
   if (left === undefined || right === undefined || right - left < spacing) {
     return []

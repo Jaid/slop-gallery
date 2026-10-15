@@ -142,15 +142,13 @@ export default class Passage {
         if (min >= max) {
           return []
         }
-        return [
-          {
-            u: ((min + max) / 2 - center) * (edge.axis === 0 ? Math.cos(face.rotation) : -Math.sin(face.rotation)),
-            width: max - min,
-            bottom: cutout.position[1] - cutout.size[1] / 2 - floorY,
-            height: cutout.position[1] + cutout.size[1] / 2 - floorY,
-            profile: 'rectangle' as const,
-          },
-        ]
+        return {
+          u: ((min + max) / 2 - center) * (edge.axis === 0 ? Math.cos(face.rotation) : -Math.sin(face.rotation)),
+          width: max - min,
+          bottom: cutout.position[1] - cutout.size[1] / 2 - floorY,
+          height: cutout.position[1] + cutout.size[1] / 2 - floorY,
+          profile: 'rectangle' as const,
+        }
       })
       this.walls.push({
         id: `${id}-wall-${i}`,

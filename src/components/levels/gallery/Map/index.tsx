@@ -111,6 +111,6 @@ export default function Map({css}: {css: Record<string, string>}) {
         </g></Branch>
       </svg>
     </div>)}
-    <div className={css.rooms}>{rooms.map(room => <button key={room.id} disabled={!ready} onClick={() => visit(room)}><span>{room.number}</span><div><strong>{room.title}</strong><small>{room.subtitle}</small></div><em>{room.id === current ? 'YOU ARE HERE' : '↗'}</em></button>)}</div>
+    <div className={css.rooms}>{rooms.map(room => <button key={room.id} disabled={!ready} type='button' onClick={() => visit(room)}><span>{room.number}</span><div><strong>{room.title}</strong><small>{room.subtitle}</small></div><em>{room.id === current ? 'YOU ARE HERE' : '↗'}</em></button>)}</div>
   </>
 }
