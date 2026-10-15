@@ -1,6 +1,7 @@
 import {clamp} from 'math'
 
 import aimDot from '#src/lib/aimDot.ts'
+import interactionHint from '#src/lib/interactionHint.ts'
 
 let zoom = 0
 let knotFocus = 0
@@ -14,6 +15,8 @@ export function getPlayerZoom() {
 export function setPlayerZoom(amount: number) {
   zoom = clamp(amount, 0, 1)
   aimDot.setBlocked('zoom', zoom > 0)
+  // Only the overlay is hidden; the aimed target and its controls keep working while zoomed.
+  interactionHint.setSuppressed(zoom > 0)
 }
 
 export function getKnotFocus() {
