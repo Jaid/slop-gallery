@@ -121,7 +121,7 @@ export default class extends KnotMaterial {
     const flake1 = cellularPoints(nashijiP1, 0.03, 0.18, 0.44).mul(near.mul(0.5).add(0.5))
     const flake2 = cellularPoints(nashijiP2, 0.04, 0.2, 0.42).mul(0.8)
     const flake3 = cellularPoints(nashijiP3, 0.05, 0.22, 0.4).mul(0.55)
-    const microGoldDust = cellularPoints(p.sub(view.mul(0.008)).mul(135), 0.03, 0.17, 0.5).mul(intimate)
+    const microGoldDust = cellularPoints(p.sub(view.mul(0.008)).mul(135), 0.03, 0.17).mul(intimate)
     const nashijiTotal = flake1.add(flake2).add(flake3).add(microGoldDust.mul(0.9))
 // Golden Kintsugi (gold-mended fracture veins) meandering across the urushi knot
     const kintsugiWarp = mx_fractal_noise_float(p.mul(3.6).add(vec3(2.1, -4.7, 1.3)), 3, 2.1, 0.52)

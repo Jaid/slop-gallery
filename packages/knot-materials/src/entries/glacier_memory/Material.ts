@@ -38,7 +38,7 @@ export default class extends KnotMaterial {
       at: 1,
       hex: '#d8f6ff',
     }])
-    const milk = ridgedNoise(p.mul(3.1).add(vec3(4, 0, 1)), 4).smoothstep(0.42, 0.78)
+    const milk = ridgedNoise(p.mul(3.1).add(vec3(4, 0, 1))).smoothstep(0.42, 0.78)
     const body = mix(ice, color('#f4fbff'), milk.mul(0.22))
     const steps = 5
     let inclusion: Node<'vec3'> = vec3(0)

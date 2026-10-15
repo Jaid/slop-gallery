@@ -12,9 +12,9 @@ import knotData from './data.ts'
 
 /** Growth rings: the oyster's slow accretion, warped by the soft tissue that laid it down. The mantle is still metabolising, so the ring spacing breathes — the shell is not finished being an animal. */
 function growthRings(q: Node<'vec3'>, clock: Node<'float'>) {
-  const warp = fbm(q.mul(1.4).add(vec3(0, clock.mul(0.05), 0)), 3)
+  const warp = fbm(q.mul(1.4).add(vec3(0, clock.mul(0.05), 0)))
   const drift = fbm(q.mul(0.6).add(vec3(8.2, -3.4, 5.1).add(vec3(clock.mul(0.09), 0, clock.mul(-0.06)))), 2).mul(3.4)
-  const pulse = fbm(q.mul(2.6).add(vec3(clock.mul(0.16), 0, clock.mul(0.11))), 3).mul(1.1)
+  const pulse = fbm(q.mul(2.6).add(vec3(clock.mul(0.16), 0, clock.mul(0.11)))).mul(1.1)
   const radius = q.x.add(q.y.mul(0.3)).add(q.z.mul(0.2)).length().mul(9).add(warp.mul(2.2)).add(drift).add(pulse)
   return {
     rings: ridgeBand(radius.fract().sub(0.5), 0, 0.3),
@@ -23,7 +23,7 @@ function growthRings(q: Node<'vec3'>, clock: Node<'float'>) {
 }
 /** A radial fracture that only opens where the shell was pulled off its bed. */
 function shellFracture(q: Node<'vec3'>, drift: Node<'float'>, clock: Node<'float'>) {
-  const crackField = fbm(q.mul(3.4).add(drift.mul(1.1)).add(vec3(clock.mul(0.05), 0, 0)), 3)
+  const crackField = fbm(q.mul(3.4).add(drift.mul(1.1)).add(vec3(clock.mul(0.05), 0, 0)))
   return {
     crack: ridgeBand(crackField, 0, 0.026),
     crackField,
@@ -45,7 +45,7 @@ export default class extends KnotMaterial {
     const luster = spectralColor(film)
     const luster2 = spectralColor(film.mul(1.31).add(0.29))
 // The organic matrix behind the platelets: warm, dark, and mottled where the mantle tissue was uneven.
-    const mottle = fbm(deep.mul(2.4), 3).mul(0.5).add(0.5)
+    const mottle = fbm(deep.mul(2.4)).mul(0.5).add(0.5)
     const body = mix(color('#080605'), color('#241a13'), mottle)
     const platelet = mix(body, luster.mul(0.7).add(luster2.mul(0.2)), 0.44)
     this.colorNode = mix(platelet, color('#020201'), crack.mul(0.85))

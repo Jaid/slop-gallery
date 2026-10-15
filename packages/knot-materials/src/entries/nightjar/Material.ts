@@ -11,7 +11,7 @@ import knotData from './data.ts'
 
 /** Feather barbs. A vane is thousands of parallel barbs raked off a central rachis and locked together by hooklets, so the surface has a direction it can only be read along. The barbs separate under light and shadow exactly the way they do on a real feather: the whole vane splits into two unequal light halves. */
 function vane(q: Node<'vec3'>, clock: Node<'float'>, barbs = 320) { // A draught moves through the vane, so the barbs lift and resettle instead of sitting still.
-  const draught = fbm(q.mul(2.4).add(vec3(clock.mul(0.13), 0, clock.mul(0.05))), 3)
+  const draught = fbm(q.mul(2.4).add(vec3(clock.mul(0.13), 0, clock.mul(0.05))))
   const along = q.y.mul(barbs).add(fbm(q.mul(9).add(vec3(0, clock.mul(0.05), 0)), 2).mul(9)).add(draught.mul(7))
   const barbLine = ridgeBand(along.fract().sub(0.5), 0, 0.34)
   const hooklets = ridgeBand(q.x.mul(barbs * 0.55).add(draught.mul(6)), 0, 0.3)
@@ -37,7 +37,7 @@ function barring(q: Node<'vec3'>, clock: Node<'float'>) {
   return {
     field,
     bars: ridgeBand(field.fract().sub(0.5), 0, 0.3).mul(0.6).add(ridgeBand(field.fract().sub(0.5), 0, 0.1).mul(0.4)),
-    mottle: fbm(q.mul(16), 3),
+    mottle: fbm(q.mul(16)),
   }
 }
 
@@ -47,7 +47,7 @@ export default class extends KnotMaterial {
     super(environment, 0.7)
     this.name = knotData.id
     const {p, grazing, near, intimate} = viewerFrame()
-    const {barb, hooklet, drift, draught} = vane(p, time, 320)
+    const {barb, hooklet, drift, draught} = vane(p, time)
     const {shaft, groove} = rachis(p, time)
     const {bars, mottle} = barring(p, time)
 // The barb rakes are what catch the studio: they brighten along the feather and vanish across it.

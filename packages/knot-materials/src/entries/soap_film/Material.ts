@@ -12,9 +12,9 @@ import knotData from './data.ts'
 
 /** A film's optical thickness drifts as liquid drains downhill under gravity: thick at the crown, thinning toward the lowest point, where it finally tears. The field is a live solution, not a texture, so the colours crawl and merge instead of scrolling. */
 function filmThickness(q: Node<'vec3'>, clock: Node<'float'>, drainRate = 0.02) {
-  const flow = fbm(q.mul(2.2).add(vec3(clock.mul(drainRate), clock.mul(drainRate * 0.6), 0)), 3)
+  const flow = fbm(q.mul(2.2).add(vec3(clock.mul(drainRate), clock.mul(drainRate * 0.6), 0)))
   const drift = fbm(q.mul(5.5).add(vec3(clock.mul(0.05), clock.mul(-0.03), clock.mul(0.02))), 4)
-  const ripple = fbm(q.mul(17).add(flow.mul(3.4)), 3)
+  const ripple = fbm(q.mul(17).add(flow.mul(3.4)))
   return {
     thickness: flow.mul(0.55).add(drift.mul(0.3)).add(ripple.mul(0.15)).mul(0.5).add(0.5),
     ripple,
@@ -30,7 +30,7 @@ export default class extends KnotMaterial {
     const {p, view, facing, grazing, near, intimate} = viewerFrame()
 // The film is two surfaces a wavelength apart, and the light between them is what the eye finally sees.
     const behind = p.sub(view.mul(0.02))
-    const {thickness, ripple, drift} = filmThickness(behind, time, 0.02)
+    const {thickness, ripple, drift} = filmThickness(behind, time)
 // Optical path grows at grazing incidence, so the fringes crowd and shift exactly where they should.
     const path = thickness.mul(11).add(grazing.mul(3.4)).add(facing.mul(0.4))
     const fringe = spectralColor(path)
@@ -39,9 +39,9 @@ export default class extends KnotMaterial {
     const blackFilm = ridgeBand(order, 0, 0.055)
     const interference = fringe.mul(blackFilm.oneMinus().mul(0.85).add(0.15))
 // Plateau borders: the thicker rims where two films meet and drain together.
-    const border = fbm(p.mul(6.5).add(drift.mul(4)), 3)
+    const border = fbm(p.mul(6.5).add(drift.mul(4)))
     const rim = ridgeBand(border, 0, 0.1)
-    const iris = fbm(p.mul(26), 3)
+    const iris = fbm(p.mul(26))
     this.colorNode = mix(color('#08090c'), interference.mul(1.25), blackFilm.oneMinus().mul(0.94).add(0.06))
     this.metalness = 0
     this.roughnessNode = float(0.015).add(rim.mul(0.35)).add(iris.mul(0.02))

@@ -18,7 +18,7 @@ const silicaIndex = 1.45
 const lamps: Array<[[number, number, number], number]> = [[[0, 1, 0.15], 1], [[-0.17, 0.49, -0.86], 0.9], [[0.62, 0.25, 0.74], 0.6]]
 /** One layer of play-of-color. Every domain is a crystal of silica spheres: a Bragg mirror with its own lattice normal and spacing, reflecting a single pure wavelength – and only when the light, the lattice and the eye line up. Mosaic spread inside a domain makes the flash roll across it instead of switching all at once. */
 function playOfColor(environment: Texture, position: Node<'vec3'>, inside: Node<'vec3'>, scale: number, seed: number) {
-  const cells = voronoiCells(position.mul(scale).add(seed), 1)
+  const cells = voronoiCells(position.mul(scale).add(seed))
   const identity = cellNoiseVec3(cells.cell.add(seed))
   const spacing = cellNoiseVec3(cells.cell.add(seed + 41.7))
 // Lattice normal: random per domain, gently precessing, and rippled by mosaic spread within the domain.
@@ -59,7 +59,7 @@ export default class extends KnotMaterial {
     const inside = refract(view.negate(), normal, 1 / silicaIndex).negate().normalize()
 // Ironstone: warped veins of the host boulder running through the opal.
     const veinWarp = mx_fractal_noise_vec3(p.mul(1.6), 2, 2, 0.5).mul(0.35)
-    const veinField = voronoiCells(p.mul(3.4).add(veinWarp), 1).border
+    const veinField = voronoiCells(p.mul(3.4).add(veinWarp)).border
     const veinWidth = mx_noise_float(p.mul(5).add(3.1)).mul(0.5).add(0.5).mul(0.07).add(0.012)
     const veinFootprint = veinField.fwidth().max(0.0001)
     const vein = veinField.smoothstep(veinWidth.sub(veinFootprint), veinWidth.add(veinFootprint)).oneMinus().mul(mx_noise_float(p.mul(2.2).add(9.4)).smoothstep(-0.2, 0.15))

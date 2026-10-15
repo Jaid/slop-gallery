@@ -23,9 +23,9 @@ function crust(q: Node<'vec3'>, clock: Node<'float'>) {
 /** Heat: what is left of the eruption, still radiating through the fissures. */
 function heatField(q: Node<'vec3'>, clock: Node<'float'>) {
   const convection = fbm(q.mul(1.7).add(vec3(clock.mul(0.09), clock.mul(-0.06), 0)), 4)
-  const pulse = fbm(q.mul(4.6).add(vec3(clock.mul(0.3), 0, clock.mul(0.2))), 3)
+  const pulse = fbm(q.mul(4.6).add(vec3(clock.mul(0.3), 0, clock.mul(0.2))))
 // A slow surf: the whole mass breathes, so the glow never settles into a still image.
-  const breath = fbm(q.mul(0.8).add(vec3(clock.mul(0.13), clock.mul(0.07), 0)), 3)
+  const breath = fbm(q.mul(0.8).add(vec3(clock.mul(0.13), clock.mul(0.07), 0)))
   return {
     convection,
     pulse,
@@ -68,7 +68,7 @@ export default class extends KnotMaterial {
     this.clearcoatRoughnessNode = float(0.06).add(pulse.mul(0.04))
 // Vesicles frozen into the glass, and the ropy texture the crust kept while it was still moving.
     const vesicles = fbm(p.mul(120), 2).smoothstep(0.16, 0.26)
-    const ropy = fbm(p.mul(7.5).add(convection.mul(2.2)), 3)
+    const ropy = fbm(p.mul(7.5).add(convection.mul(2.2)))
     const surface = seam.mul(-0.4).add(fracture.mul(-0.3)).add(vesicles.mul(0.4).mul(near)).add(ropy.mul(0.05).add(pulse.mul(0.02)))
     this.normalNode = proceduralNormal(surface, 0.0016)
 // Only the open fissures emit, and the ramp is steep enough that the core is the only thing that whitens.

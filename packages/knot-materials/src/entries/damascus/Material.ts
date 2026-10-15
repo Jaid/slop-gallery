@@ -12,8 +12,8 @@ import knotData from './data.ts'
 /** The watered pattern of pattern-welded steel. Real damascus is a fold history: the bar is folded, welded, drawn out and folded again, so the layer count survives as a slowly curving ribbon. Reproducing the fold rather than the picture means the bands curve, pool and swirl the way the metal actually did. */
 function layerCount(q: Node<'vec3'>, clock: Node<'float'>) { // The bar is still on the wheel: the fold relaxes by a hair between hammer blows.
   const creep = sin(clock.mul(0.13)).mul(0.02)
-  const twist = fbm(q.mul(1.15).add(vec3(0, clock.mul(0.012), 0)), 3).mul(2.2)
-  const weld = fbm(q.mul(3.4).add(vec3(twist.mul(0.6), 0, 0)), 3).mul(0.9)
+  const twist = fbm(q.mul(1.15).add(vec3(0, clock.mul(0.012), 0))).mul(2.2)
+  const weld = fbm(q.mul(3.4).add(vec3(twist.mul(0.6), 0, 0))).mul(0.9)
 // Each pass doubles the layer density, which is exactly what a fold-and-weld cycle does.
   const pass1 = q.y.add(twist).add(weld.mul(1.6)).add(creep)
   const pass2 = pass1.mul(2.1).add(fbm(q.mul(2.2).add(vec3(5.3, 1.9, -4.1)), 2).mul(2.4)).add(creep.mul(2.3))
@@ -63,7 +63,7 @@ export default class extends KnotMaterial {
     const etched = mix(color('#1e2126'), color('#0a0b0d'), pattern).mul(belt.mul(0.35).add(0.8))
     const polished = mix(color('#d8e0ea'), color('#ffffff'), line).mul(belt.mul(0.5).add(0.8))
     const base = mix(etched, polished, line)
-    const oxide = fbm(p.mul(4.2).add(vec3(twist.mul(0.5), 0, 0)), 3)
+    const oxide = fbm(p.mul(4.2).add(vec3(twist.mul(0.5), 0, 0)))
     const tempered = mix(base, base.mul(color('#ff9a52')), oxide.smoothstep(0.08, 0.26).mul(0.4))
     this.colorNode = tempered.mul(facing.oneMinus().mul(0.24).add(0.84))
     this.metalnessNode = mix(float(0.7), float(1), line)

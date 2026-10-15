@@ -22,11 +22,11 @@ export default class extends KnotMaterial {
     const {facing, grazing, near, intimate} = viewerFrame()
 // A slow, closed boil keeps the slick alive without drifting off its two-second loop.
     const warp = mx_fractal_noise_float(loopDrift(p.mul(1.6), 0.3), 3, 2, 0.5)
-    const flowRaw = mx_fractal_noise_float(p.mul(2.4).add(warp.mul(0.9)).add(loopDrift(p.mul(0.5), 0.22, 1)), 4, 2.05, 0.5)
+    const flowRaw = mx_fractal_noise_float(p.mul(2.4).add(warp.mul(0.9)).add(loopDrift(p.mul(0.5), 0.22)), 4, 2.05, 0.5)
 // Fractal noise rarely reaches its extremes; stretch it so the film really spans from bare water to thick oil.
     const flow = flowRaw.mul(1.35).add(0.5).clamp()
     const veins = mx_noise_float(p.mul(5.2).add(flow.mul(2.6)).add(11)).mul(0.5).add(0.5)
-    const fine = mx_noise_float(loopDrift(p.mul(13).add(flow.mul(3)), 0.16, 1)).mul(near.mul(0.7).add(0.3))
+    const fine = mx_noise_float(loopDrift(p.mul(13).add(flow.mul(3)), 0.16)).mul(near.mul(0.7).add(0.3))
     const drain = float(0.55).sub(p.y).mul(300)
     const thickness = flow.smoothstep(0.12, 0.86).mul(700).add(veins.mul(140)).add(drain).add(fine.mul(38)).add(loopPhase.add(p.y.mul(6)).sin().mul(18))
 // Pockets where the film thins toward zero read as inky black between the colors.

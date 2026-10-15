@@ -62,7 +62,7 @@ export default class extends KnotMaterial {
     const contact = distance.smoothstep(0.85, 3.3).oneMinus()
     const wake = contact.pow(1.2).mul(0.7).add(0.26)
     const rings = distance.mul(9.5).sub(loopPhase.mul(2)).sin().mul(0.5).add(0.5).pow(3)
-    const cloud = mx_noise_float(loopDrift(p.mul(2.6), 0.5, 1)).mul(0.5).add(0.5)
+    const cloud = mx_noise_float(loopDrift(p.mul(2.6), 0.5)).mul(0.5).add(0.5)
     const mote = glitter(p, 0.019, 80, 0.6)
     // Keep each plankton highlight inside its cell, rather than lighting the entire box.
     const moteCoord = p.div(0.019)

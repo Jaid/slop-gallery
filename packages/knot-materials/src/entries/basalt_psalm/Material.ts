@@ -21,7 +21,7 @@ export default class extends KnotMaterial {
     const boundary = cellularBoundary(scale)
     const joint = boundary.smoothstep(0.16, 0.035)
     const column = screenRibbon(boundary.sub(0.055), 0.045)
-    const strata = ridgedNoise(p.mul(vec3(0.8, 6.4, 0.8)), 4)
+    const strata = ridgedNoise(p.mul(vec3(0.8, 6.4, 0.8)))
     const pits = fractalNoise(p.mul(11), 3).smoothstep(0.68, 0.9)
     const stone = palette(strata.mul(0.75).add(0.12), [{
       at: 0,

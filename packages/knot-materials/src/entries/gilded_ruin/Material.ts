@@ -12,10 +12,10 @@ import knotData from './data.ts'
 
 /** Domain-warped fbm level sets: connected branching networks, the way lacquer actually crazes. */
 function fissures(q: Node<'vec3'>) {
-  const warp = fbm(q.mul(2.3), 3)
-  const warpB = fbm(q.mul(2.3).add(vec3(4.1, -1.7, 2.8)), 3)
-  const veinField = fbm(q.mul(3.1).add(warpB.mul(2.6)), 3)
-  const hairField = fbm(q.mul(10.5).add(warp.mul(3.2)), 3)
+  const warp = fbm(q.mul(2.3))
+  const warpB = fbm(q.mul(2.3).add(vec3(4.1, -1.7, 2.8)))
+  const veinField = fbm(q.mul(3.1).add(warpB.mul(2.6)))
+  const hairField = fbm(q.mul(10.5).add(warp.mul(3.2)))
   const swell = fbm(q.mul(1.15), 2)
   return {
     swell,
@@ -25,7 +25,7 @@ function fissures(q: Node<'vec3'>) {
 }
 /** Gold reached some cracks and is still creeping along the rest. */
 function pour(q: Node<'vec3'>, seam: Node<'float'>, clock: Node<'float'>) {
-  const drift = fbm(q.mul(0.9).add(vec3(clock.mul(0.02), 0, clock.mul(-0.013))), 3)
+  const drift = fbm(q.mul(0.9).add(vec3(clock.mul(0.02), 0, clock.mul(-0.013))))
   return drift.mul(1.7).add(seam.mul(0.6)).smoothstep(0.08, 0.32).mul(seam)
 }
 const relief = Fn(([tube]: [Node<'vec2'>]) => {

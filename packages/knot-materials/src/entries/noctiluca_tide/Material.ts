@@ -61,7 +61,7 @@ export default class extends KnotMaterial {
       return along.sub(radius).div(0.22).pow2().negate().exp().mul(phase.oneMinus().pow(1.5))
     }
     const pulse = front(clock.fract()).add(front(clock.add(0.5).fract()).mul(0.7))
-    const plankton = cellularPoints(p.mul(34), 0.1, 0.22, 0.5)
+    const plankton = cellularPoints(p.mul(34), 0.1)
     const shimmer = mx_noise_float(p.mul(3.1).add(vec3(0, 0, time.mul(0.1)))).mul(0.5).add(0.5)
     const glow = mix(color('#2ff5d6'), color('#2a7bff'), shimmer)
     const intensity = near.mul(0.9).add(0.25)

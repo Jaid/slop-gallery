@@ -35,7 +35,7 @@ export default class extends KnotMaterial {
     const wall = q.fract().smoothstep(0.72, 0.84).mul(q.fract().smoothstep(0.9, 0.98).oneMinus()).mul(resolved)
     const seam = grain.edge.smoothstep(0.015, 0.07)
     const height = terrace.mul(0.0034).sub(seam.oneMinus().mul(0.0012))
-    this.normalNode = bumpNormal(normalViewGeometry.normalize(), height, 1)
+    this.normalNode = bumpNormal(normalViewGeometry.normalize(), height)
   // Oxide color: thickness follows the stair index, the view angle slides the whole ladder through the spectrum.
     const sway = view.z.mul(0.9).add(view.x.mul(0.35)).add(view.y.mul(0.2))
     const filmPhase = level.mul(0.115).add(grain.id.z.mul(0.9)).add(sway).add(q.fract().mul(0.05)).add(time.mul(0.018))
@@ -51,7 +51,7 @@ export default class extends KnotMaterial {
     this.iridescenceThicknessNode = level.mul(38).add(grain.id.z.mul(160)).add(180)
     this.clearcoat = 0.25
     this.clearcoatRoughness = 0.04
-    const glitter = glints(bumpNormal(normalViewGeometry.normalize(), height, 1), 260).mul(wall.oneMinus()).mul(0.05)
+    const glitter = glints(bumpNormal(normalViewGeometry.normalize(), height), 260).mul(wall.oneMinus()).mul(0.05)
   // A wave of warm light climbs each grain outward, stair by stair, at a rate unique to the grain.
     const climb = level.mul(0.55).sub(time.mul(grain.id.x.mul(0.5).add(0.6))).add(grain.id.y.mul(6.28)).sin().mul(0.5).add(0.5).pow(6).mul(wall.oneMinus()).mul(seam)
     this.emissiveNode = oxideBoost.mul(climb.mul(0.09).add(0.02))

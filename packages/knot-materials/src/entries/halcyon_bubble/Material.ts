@@ -49,7 +49,7 @@ export default class extends KnotMaterial {
     this.clearcoatRoughness = 0
     this.attenuationColor.set('#ffffff')
     this.attenuationDistance = 4
-    this.normalNode = bumpNormal(normalViewGeometry.normalize(), swirl.mul(0.0025).add(eddies.mul(0.0006)), 1)
+    this.normalNode = bumpNormal(normalViewGeometry.normalize(), swirl.mul(0.0025).add(eddies.mul(0.0006)))
     const twinkle = mx_noise_float(p.mul(30).add(vec3(0, 0, time.mul(0.8)))).mul(0.5).add(0.5).pow(6)
     this.emissiveNode = reflected.mul(intimate.mul(0.25).add(0.75)).mul(1.15)
       .add(mix(color('#7ac9ff'), color('#ff9ad8'), swirl).mul(twinkle).mul(grazing).mul(0.25).mul(near))

@@ -95,7 +95,6 @@ function createOxbloodCarpetNormal() {
     height: normalSize,
     width: normalSize,
   }, {
-    anisotropy: 16,
     color: false,
     name: 'knottingham-wall-carpet-normal',
   }))

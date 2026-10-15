@@ -23,7 +23,7 @@ export default class extends KnotMaterial {
     const speckle = fbm(p.mul(9), 2)
     const matrix = fbm(p.mul(2.3), 4)
     const widman = opticalLine(matrix.sub(0.1), 0.07).mul(0.6)
-    const glint = starGlints(p.mul(110), view, 22)
+    const glint = starGlints(p.mul(110), view)
     const rare = starGlints(p.mul(36).add(vec3(7.7, 4.1, 2.3)), view, 30)
     const glintColor = mix(color('#e9f2ff'), color('#ffe4bd'), hash1(p.mul(110).add(vec3(3.3, 8.8, 1.1))).mul(0.5).add(0.5))
     const inner = p.sub(view.mul(0.24))

@@ -68,12 +68,12 @@ export default class extends KnotMaterial {
     const frost = crystals.x
     const dust = crystals.y
     const needles = crystals.z
-    const drifts = mx_noise_float(loopDrift(p.mul(2.2), 0.5, 1))
+    const drifts = mx_noise_float(loopDrift(p.mul(2.2), 0.5))
     const depth = mix(color('#03070b'), color('#08131f'), drifts.mul(0.5).add(0.5))
     const crystalColor = mix(color('#9dbcd6'), color('#f4faff'), needles.mul(0.6))
     const frostHeight = frost.mul(0.5).add(dust.mul(0.28)).add(needles.mul(0.3)).add(mx_noise_float(p.mul(38)).mul(0.05))
     const ice = frostGlitter(p, 0.021, 64, 0.6)
-    const snow = frostGlitter(loopDrift(p, 0.05, 1), 0.041, 26, 0.85)
+    const snow = frostGlitter(loopDrift(p, 0.05), 0.041, 26, 0.85)
     this.colorNode = mix(mix(depth, crystalColor, frost.mul(0.72).add(dust.mul(0.34)).min(1)), crystalColor.mul(1.08), ice.sparkle.mul(intimate).mul(0.5))
     this.roughnessNode = mix(float(0.42).sub(near.mul(0.1)), float(0.2), frost.mul(0.8).add(dust.mul(0.5)).min(1)).sub(ice.sparkle.mul(0.06)).clamp(0.05, 0.5)
     this.metalness = 0

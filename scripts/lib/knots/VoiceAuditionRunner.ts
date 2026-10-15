@@ -81,7 +81,7 @@ export default class VoiceAuditionRunner extends ExternalGenerator {
             throw new Error('Invalid speech payload length.')
           }
           if (/^audio\/(?:l16|pcm)(?:;|$)/iu.test(type)) {
-            await Bun.write(source, pcmWave(bytes, 24_000))
+            await Bun.write(source, pcmWave(bytes))
           } else if (/^audio\/(?:wav|x-wav)(?:;|$)/iu.test(type)) {
             await Bun.write(source, bytes)
           } else {

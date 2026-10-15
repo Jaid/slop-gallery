@@ -63,7 +63,7 @@ export default class extends KnotMaterial {
   // Gold lacquer stands proud of the glaze and carries hammered micro-facets.
     const hammered = mx_noise_float(p.mul(85)).mul(near).mul(0.00035)
     const height = gold.mul(0.0022).add(hammered.mul(gold)).add(spot.mul(0.0003))
-    this.normalNode = bumpNormal(normalViewGeometry.normalize(), height, 1)
+    this.normalNode = bumpNormal(normalViewGeometry.normalize(), height)
   // Gold flakes catch the studio lamps individually.
     const flake = mx_noise_float(p.mul(160)).mul(0.5).add(0.5)
     const flakeNormal = normalViewGeometry.add(vec3(flake.sub(0.5), flake.mul(7.3).fract().sub(0.5), flake.mul(3.1).fract().sub(0.5)).mul(0.6)).normalize()

@@ -36,7 +36,7 @@ export default class extends KnotMaterial {
     const inside = mix(innerColor, middleBone, middle.mul(0.85))
     const age = softNoise(p.mul(7)).mul(0.5).add(0.5).toVar()
     const poresDomain = p.mul(150)
-    const pores = mx_worley_noise_vec3(poresDomain, 1, 0).x.smoothstep(0.04, 0.17).oneMinus().mul(resolved(poresDomain.fwidth().length(), 0.25, 1.2)).toVar()
+    const pores = mx_worley_noise_vec3(poresDomain, 1, 0).x.smoothstep(0.04, 0.17).oneMinus().mul(resolved(poresDomain.fwidth().length(), 0.25)).toVar()
     const ivory = mix(color('#c6a578'), color('#fff5da'), age.mul(0.55).add(0.35)).mul(pores.mul(-0.21).add(1)).toVar()
     const edge = outer.smoothstep(0.05, 0.5).sub(outer.smoothstep(0.7, 1)).clamp().toVar()
     this.colorNode = mix(inside, ivory, outer).mul(edge.mul(-0.13).add(1))

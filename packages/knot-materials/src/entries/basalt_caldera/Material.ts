@@ -68,7 +68,7 @@ function calderaTectonics(tube: Node<'vec2'>) {
   const uAng = tube.x.mul(TAU)
   const vAng = turns.mul(TAU)
   const warp = vec2(uAng.sin().mul(0.11).add(vAng.cos().mul(0.08)), uAng.cos().mul(0.11).sub(vAng.sin().mul(0.08)))
-  const plate = smoothEdgeVoronoi(cells.add(warp), plateGrid, 11, 0.7)
+  const plate = smoothEdgeVoronoi(cells.add(warp), plateGrid, 11)
   const colId = cellNoiseVec3(vec3(plate.cell, 2.7))
   const edgeDist = plate.edgeDist
   const quantizedStep = colId.x.mul(4).floor().div(3)

@@ -32,10 +32,10 @@ function napReveal(crush: Node<'float'>, eye: Node<'vec3'>, wobble: Node<'float'
 /** A crushed brocade. The pile is pressed flat along the motif so the gold weft underneath shows through it. The motif is a woven ogee lattice: a product of two cosines, so its own symmetry is the cloth's symmetry. */
 function damask(q: Node<'vec3'>, clock: Node<'float'>, scale = 6) {
   const t = clock.mul(0.02)
-  const warp = fbm(q.mul(scale * 0.35).add(vec3(t, 0, t.mul(-0.6))), 3).mul(0.4)
+  const warp = fbm(q.mul(scale * 0.35).add(vec3(t, 0, t.mul(-0.6)))).mul(0.4)
   const ogee = cos(q.x.mul(scale).add(warp.mul(2.4)).cos()).mul(cos(q.y.mul(scale * 0.5).add(warp.mul(1.8)).cos()))
   const motif = ridgeBand(ogee, 0, 0.34).pow(0.7)
-  const relief = fbm(q.mul(scale * 4).add(ogee.mul(2)), 3)
+  const relief = fbm(q.mul(scale * 4).add(ogee.mul(2)))
   return {
     field: ogee,
     relief,
@@ -52,7 +52,7 @@ function fibreTips(q: Node<'vec3'>, near: Node<'float'>, clock: Node<'float'>) {
 }
 /** A slow breath through the pile, as if someone had just walked past it. The lay does not return to where it was: velvet keeps the impression of the last hand that touched it, so this term never fully unwinds. */
 function settling(q: Node<'vec3'>, clock: Node<'float'>) {
-  return fbm(q.mul(1.6).add(vec3(0, clock.mul(0.09), 0)), 3)
+  return fbm(q.mul(1.6).add(vec3(0, clock.mul(0.09), 0)))
     .add(fbm(q.mul(0.6).add(vec3(clock.mul(0.05), 0, 0)), 2).mul(0.5))
 }
 
@@ -63,8 +63,8 @@ export default class extends KnotMaterial {
     this.name = knotData.id
     const {p, view, grazing, near, intimate} = viewerFrame()
     const settle = settling(p, time)
-    const {warp, weft} = weave(p, time, 150)
-    const {damask: motif, field, relief} = damask(p, time, 6)
+    const {warp, weft} = weave(p, time)
+    const {damask: motif, field, relief} = damask(p, time)
 // `view` points from the camera to the surface, so flipping it gives the direction the eye arrives from.
     const turn = sin(time.mul(0.17)).mul(1.4).add(sin(time.mul(0.06)).mul(0.9))
     const reveal = napReveal(motif, view.negate(), fbm(p.mul(0.9), 2), settle, turn).reveal

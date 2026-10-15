@@ -43,6 +43,6 @@ describe('Sandfall grains', () => {
     expect(text).toContain('sub(loopTurn.mul(2))')
     expect(text).toContain('add(loopTurn.mul(5))')
     expect(text).toContain('slip.smoothstep(0, 0.12).min(slip.oneMinus().smoothstep(0, 0.12))')
-    expect(text).toContain('sandGrains(loopDrift(p, 0.035, 1), 0.0055, 45, 0.9)')
+    expect(text).toContain('sandGrains(loopDrift(p, 0.035), 0.0055, 45, 0.9)')
   })
 })

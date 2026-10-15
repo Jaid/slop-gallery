@@ -43,7 +43,7 @@ describe('Hoarfrost crystals', () => {
     expect(text).toContain('sparkle: facets.sparkle.mul(mask)')
     expect(0.24).toBeLessThan(0.25)
     expect(text).toContain('frostGlitter(p, 0.021, 64, 0.6)')
-    expect(text).toContain('frostGlitter(loopDrift(p, 0.05, 1), 0.041, 26, 0.85)')
+    expect(text).toContain('frostGlitter(loopDrift(p, 0.05), 0.041, 26, 0.85)')
     expect(text).toContain('this.iridescenceThicknessNode = mx_noise_float(p.mul(14)).mul(0.5).add(0.5).mul(380).add(260)')
     expect(text).not.toContain('this.iridescenceThicknessNode = rnd.')
   })

@@ -95,7 +95,7 @@ export default class extends KnotMaterial {
     this.iridescenceIOR = 1.7
     this.iridescenceThicknessNode = rr.mul(520).add(170)
     const height = barbs.mul(0.0006).add(fluff.mul(0.0002))
-    this.normalNode = bumpNormal(normalViewGeometry.normalize(), height, 1)
+    this.normalNode = bumpNormal(normalViewGeometry.normalize(), height)
     this.emissiveNode = mix(color('#0a5bff'), color('#12f0b0'), rr.smoothstep(0.1, 0.24)).mul(glow).mul(intimate.mul(0.2).add(0.1)).mul(facing.mul(0.6).add(0.4))
       .add(color('#7bffd6').mul(grazing.pow(3)).mul(eyeMask.mul(0.05)))
   }

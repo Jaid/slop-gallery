@@ -62,7 +62,7 @@ export default class extends KnotMaterial {
     this.sheenRoughness = 0.7
     const plateHeight = plate.edge.smoothstep(0, 0.32).mul(0.006).add(plate.id.z.mul(0.0015))
     const height = plateHeight.add(grit.mul(0.0011)).sub(crack.mul(0.0035)).sub(hairCrack.mul(0.0012))
-    this.normalNode = bumpNormal(normalViewGeometry.normalize(), height, 1)
+    this.normalNode = bumpNormal(normalViewGeometry.normalize(), height)
   // Vertex stage cannot use screen derivatives, so the sunken seam is derived from the raw distance instead.
     const seamDepth = plate.edge.smoothstep(crackWidth.sub(0.02), crackWidth.add(0.04)).oneMinus().mul(0.0018)
     this.positionNode = p.add(normalLocal.mul(plateHeight.mul(0.5).sub(seamDepth)))

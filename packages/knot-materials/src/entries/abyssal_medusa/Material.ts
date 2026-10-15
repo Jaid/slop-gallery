@@ -29,7 +29,7 @@ export default class extends KnotMaterial {
     const net = walls.smoothstep(0.06, 0).oneMinus().add(fine.smoothstep(0.04, 0).oneMinus().mul(0.45)).clamp().mul(wave.mul(1.5).add(0.12))
     const lantern = node.mul(wave.mul(1.8).add(0.15))
 // Flesh: cold water, a little protein, and the light that made it through.
-    const flesh = cellularPoints(p.mul(9), 0.05, 0.24, 0.5)
+    const flesh = cellularPoints(p.mul(9), 0.05, 0.24)
     const scatter = backlight(normalView, 2.2, 0.5)
     this.colorNode = mix(color('#05060f'), color('#150e33'), facing.pow(0.7)).mul(float(1).add(flesh.mul(0.4)))
     this.metalness = 0

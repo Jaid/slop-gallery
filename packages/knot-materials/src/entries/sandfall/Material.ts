@@ -55,7 +55,7 @@ export default class extends KnotMaterial {
     const relief = crest.mul(0.34).add(fineRipple.mul(0.08)).add(micro.mul(0.02)).mul(scouring.mul(-0.45).add(1))
     const grain = sandGrains(p, 0.0072, 55, 0.55)
     const grit = sandGrains(p, 0.0034, 44, 0.4)
-    const dust = sandGrains(loopDrift(p, 0.035, 1), 0.0055, 45, 0.9)
+    const dust = sandGrains(loopDrift(p, 0.035), 0.0055, 45, 0.9)
     const garnet = grain.random
     const grainMask = grain.coverage
     const pale = mix(color('#9c8253'), color('#c6ae7e'), crest)

@@ -50,7 +50,7 @@ export default class extends KnotMaterial {
     this.iridescenceNode = frostMask.mul(0.25)
     this.iridescenceThicknessNode = cover.mul(220).add(180)
     const height = frostMask.mul(0.0028).add(fronds.mul(0.0012)).add(hoar.x.mul(frostMask).mul(near).mul(0.0009))
-    const shaded = bumpNormal(normalViewGeometry.normalize(), height, 1)
+    const shaded = bumpNormal(normalViewGeometry.normalize(), height)
     this.normalNode = shaded
   // Crystal faces: every cell of the lattice flashes only for viewers standing in exactly the right place.
     const facet = shaded.add(vec3(hoar.x.sub(0.25), hoar.y.sub(0.25), hoar.z.sub(0.25)).mul(1.6)).normalize()

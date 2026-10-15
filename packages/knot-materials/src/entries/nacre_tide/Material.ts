@@ -28,7 +28,7 @@ export default class extends KnotMaterial {
     this.name = knotData.id
     const {p, view, facing, grazing, near, intimate} = viewerFrame()
     const tube = uv()
-    const slope = tubeSlope(1)
+    const slope = tubeSlope()
     const growth = screenRibbon(tube.y.mul(TAU * 8).add(mx_noise_float(p.mul(5)).mul(0.8)).sin(), 0.28)
     const layers = 6
     let film: Node<'vec3'> = vec3(0)

@@ -60,7 +60,7 @@ export default class extends KnotMaterial {
     this.sheen = 0.2
     this.sheenColor.set('#ffe6c4')
     const height = goldLine.mul(0.0011).add(field.mul(0.0006)).add(paper.mul(0.00025).mul(near))
-    const shaded = bumpNormal(normalViewGeometry.normalize(), height, 1)
+    const shaded = bumpNormal(normalViewGeometry.normalize(), height)
     this.normalNode = shaded
     const foil = glints(shaded.add(vec3(paper.sub(0.5), paper.mul(9.7).fract().sub(0.5), paper.mul(4.3).fract().sub(0.5)).mul(0.4)).normalize(), 110).mul(gold).mul(near.mul(0.6).add(0.25))
     this.emissiveNode = color('#ffe3a0').mul(foil).mul(0.28)

@@ -44,7 +44,7 @@ export default class extends KnotMaterial {
     const churn = mx_fractal_noise_float(p.mul(26).add(vec3(time.mul(0.21), time.mul(-0.13), time.mul(0.17))), 3, 2.1, 0.55)
     const skin = mx_noise_float(p.mul(61).add(vec3(0, time.mul(0.45), 0))).mul(0.5).add(0.5)
 // Hairline cracks in the crust: dim red threads, gated in patches and energy-preserving once sub-pixel.
-    const hairField = voronoiCells(p.mul(plateScale * 2.7).add(3.1), 1).border
+    const hairField = voronoiCells(p.mul(plateScale * 2.7).add(3.1)).border
     const hairGate = mx_noise_float(p.mul(3.1).add(5.7)).smoothstep(-0.15, 0.35)
     const hairline = filteredRibbon(hairField, 0.022).mul(hairGate).mul(fissure.oneMinus())
 // Temperature in kelvin: crust heated from its edges, glowing walls, a white-hot churning floor.

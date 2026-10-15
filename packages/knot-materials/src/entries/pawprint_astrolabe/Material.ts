@@ -42,11 +42,11 @@ function catGlyph(grid: Node<'vec2'>) {
 // The head is a pearl ellipse with two unmistakable pointed ears.
   const head = vec2(point.x, point.y.sub(0.11)).div(vec2(0.115, 0.085)).length().sub(1).mul(0.085)
   lines = lines.max(hairline(head, 0.009))
-  addLine(vec2(-0.083, 0.154), vec2(-0.125, 0.235), 0.009)
-  addLine(vec2(-0.125, 0.235), vec2(-0.012, 0.185), 0.009)
-  addLine(vec2(0.012, 0.185), vec2(0.075, 0.157), 0.009)
-  addLine(vec2(0.075, 0.157), vec2(0.125, 0.235), 0.009)
-  addLine(vec2(0.125, 0.235), vec2(0.085, 0.153), 0.009)
+  addLine(vec2(-0.083, 0.154), vec2(-0.125, 0.235))
+  addLine(vec2(-0.125, 0.235), vec2(-0.012, 0.185))
+  addLine(vec2(0.012, 0.185), vec2(0.075, 0.157))
+  addLine(vec2(0.075, 0.157), vec2(0.125, 0.235))
+  addLine(vec2(0.125, 0.235), vec2(0.085, 0.153))
 // A small body, four paws and a questioning tail turn the glyph unmistakably feline.
   addLine(vec2(-0.067, 0.05), vec2(-0.095, -0.12), 0.012)
   addLine(vec2(-0.095, -0.12), vec2(-0.065, -0.205), 0.012)

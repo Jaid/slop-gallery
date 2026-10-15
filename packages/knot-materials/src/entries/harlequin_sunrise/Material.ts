@@ -66,7 +66,7 @@ export default class extends KnotMaterial {
     this.iridescenceThicknessNode = A.id.z.mul(320).add(180)
   // Each patch is a very slightly domed cabochon facet.
     const dome = A.distance.mul(A.distance).mul(-0.004).add(seamA.mul(0.0012)).add(B.distance.mul(-0.0006).mul(resolvedB).mul(near))
-    this.normalNode = bumpNormal(normalViewGeometry.normalize(), dome, 1)
+    this.normalNode = bumpNormal(normalViewGeometry.normalize(), dome)
     const pulse = time.mul(0.5).add(A.id.x.mul(30)).sin().mul(0.12).add(0.88)
     const wake = intimate.mul(0.35).add(0.65)
     this.emissiveNode = spectrum.mul(pulse).mul(wake).mul(0.62).add(color('#3a2a8a').mul(grazing.pow(3)).mul(0.05))
