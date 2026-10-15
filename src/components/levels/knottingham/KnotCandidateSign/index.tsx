@@ -64,7 +64,7 @@ export default function KnotCandidateSign({bay}: {bay: KnotBay}) {
     <RigidBody additionalSolverIterations={8} angularDamping={knotCandidateSign.angularDamping} canSleep={false} ccd colliders={false} linearDamping={knotCandidateSign.linearDamping} ref={sign}>
       <CuboidCollider args={[width / 2, height / 2, depth / 2]} mass={knotCandidateSign.mass} restitution={0.15} />
       {knotCandidateSign.suspensionX.map(x => <CylinderCollider key={x} args={[candidateSignSuspensionHeight / 2, 0.014]} mass={knotCandidateSign.suspensionMass} position={[x, candidateSignSuspensionCenter, 0]} />)}
-      <InteractiveObject id={`candidate-sign-${candidate.id}`} onActivate={() => narrate(`candidate-sign-${candidate.id}`)}>
+      <InteractiveObject id={`candidate-sign-${candidate.id}`} action='Listen' title={`${candidate.title} sign`} onActivate={() => narrate(`candidate-sign-${candidate.id}`)}>
         <mesh castShadow geometry={geometry.panel} material={[metal, metal, metal, metal, face, face]} receiveShadow />
         <mesh castShadow geometry={geometry.chains} material={metal} receiveShadow />
       </InteractiveObject>

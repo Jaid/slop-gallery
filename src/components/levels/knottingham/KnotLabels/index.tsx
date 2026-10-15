@@ -5,7 +5,7 @@ import {CuboidCollider, CylinderCollider} from '@react-three/rapier'
 import {loadCanvasFonts} from 'canvas-textures'
 import useCanvasTexture from 'canvas-textures/react'
 import useDisposable from 'disposable-lifetime/react'
-import {knotExhibition} from 'knot-materials/exhibition.ts'
+import {knotExhibition, knotRarityMode} from 'knot-materials/exhibition.ts'
 import loadCandidateIcons from 'knot-materials/loadCandidateIcons.ts'
 import {knotSign, knotSignId, knotSignParts, knotSignPosition, knotSignRoundParts} from 'knot-materials/signs.ts'
 import {useEffect, useMemo, useSyncExternalStore} from 'react'
@@ -136,7 +136,7 @@ export default function KnotLabels() {
     <primitive object={resources.supports}><primitive attach='material' object={supportMaterial} /></primitive>
     {knotExhibition.map(exhibit => <GrabbableProp key={exhibit.id} id={knotSignId(exhibit.id)} angularDamping={0.15} colliders={false} friction={0.9} linearDamping={0.1} position={knotSignPosition(exhibit)} restitution={0.1} rotation={[0, exhibit.rotation + knotSign.inwardRotation, 0]} title={`${exhibit.title} · nameplate`} type='dynamic'>
       {/* Raycast-only copy; visible geometry remains instanced. */}
-      <InteractiveObject id={knotSignId(exhibit.id)} onActivate={() => activateKnotSign(exhibit)}>
+      <InteractiveObject id={knotSignId(exhibit.id)} action={knotRarityMode === 'edit' ? 'Rate' : 'Listen'} title={`${exhibit.title} nameplate`} onActivate={() => activateKnotSign(exhibit)}>
         <mesh dispose={null} geometry={resources.supports.geometry} material={supportMaterial} visible={false} />
       </InteractiveObject>
       {knotSignParts.map(({position, rotation, size}, index) => <CuboidCollider key={index} args={[size[0] / 2, size[1] / 2, size[2] / 2]} mass={knotSign.plateMass} position={position} rotation={rotation} />)}

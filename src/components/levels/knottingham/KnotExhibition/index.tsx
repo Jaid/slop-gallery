@@ -50,7 +50,7 @@ export default function KnotExhibition() {
             }
           }}
         />
-        <InteractiveObject id={id} onActivate={() => narrateModel(id)}>
+        <InteractiveObject id={id} action='Listen' inspectable title={finish.title} onActivate={() => narrateModel(id)}>
           <mesh castShadow material={materials.placeholderMaterials[index]} name={`knot-${finish.id}`} raycast={resources.raycast} receiveShadow ref={materials.refs[index]} onBeforeRender={materials.observers[index]}>
             <primitive attach='geometry' object={geometry} />
           </mesh>

@@ -42,6 +42,8 @@ const SoundButton = ({effect, index, section}: {
     }
     const target = {
       group: group.current,
+      action: 'Play',
+      title: `${effect.label} (${effect.id})`,
       activate: async () => {
         const muted = !useGallery.getState().sound
         notify(`${effect.id} · ${effect.label}${muted ? ' · audio muted' : ''}`)

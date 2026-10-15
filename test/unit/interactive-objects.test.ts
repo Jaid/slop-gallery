@@ -13,10 +13,12 @@ test('interactive objects activate by stable ID and clean up by identity', () =>
   const first = {
     activate: mock(() => {}),
     group: {} as Object3D,
+    title: 'Sound button',
   }
   const second = {
     activate: mock(() => {}),
     group: {} as Object3D,
+    title: 'Sound button',
   }
   const unregisterFirst = registerInteractiveObject('SFX-01', first)
   expect(activateInteractiveObject('missing')).toBe(false)
@@ -30,11 +32,17 @@ test('interactive group registers on attachment and unregisters on disposal', ()
   const activate = mock(() => {})
   const element = InteractiveObject({
     id: 'preview-test',
+    action: 'Listen',
+    title: 'Preview billboard',
     onActivate: activate,
   }) as ReactElement<{ref: (group: Group) => () => void}>
   const group = new Group
   const cleanup = element.props.ref(group)
-  expect(interactiveObjects.get('preview-test')?.group).toBe(group)
+  expect(interactiveObjects.get('preview-test')).toMatchObject({
+    group,
+    action: 'Listen',
+    title: 'Preview billboard',
+  })
   expect(activateInteractiveObject('preview-test')).toBe(true)
   expect(activate).toHaveBeenCalledTimes(1)
   cleanup()

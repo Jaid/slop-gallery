@@ -14,6 +14,8 @@ import GrabbableBody from '#src/lib/physics/GrabbableBody.ts'
 export type PropHandle = {
   body: RapierRigidBody
   cancel: () => void
+  /** whether a grab would currently succeed, without attempting it */
+  canGrab: () => boolean
   grab: () => boolean
   group: Group
   move: (origin: Vec3, position: Vec3, delta: number) => void
@@ -64,6 +66,7 @@ export default function GrabbableProp({id, title, children, canGrab, blockedMess
       body: body.current,
       group: group.current,
       title,
+      canGrab: () => !carried.active && (callbacks.current.canGrab?.() ?? true),
       grab: () => {
         if (!carried.grab()) {
           const message = callbacks.current.blockedMessage?.()
