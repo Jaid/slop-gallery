@@ -2,6 +2,7 @@
   "name": "rolldown-plugin-thematic-chunks",
   "version": "0.1.0",
   "type": "module",
+  "description": "Rolldown chunk groups for Monaco, Rapier, Three.js, React, workspace and vendor code",
   "funding": "https://github.com/sponsors/Jaid",
   "license": "MIT",
   "repository": {

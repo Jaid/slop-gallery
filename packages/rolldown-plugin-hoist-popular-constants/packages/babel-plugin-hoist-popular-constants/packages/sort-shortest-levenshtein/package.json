@@ -2,6 +2,7 @@
   "name": "sort-shortest-levenshtein",
   "version": "0.1.0",
   "type": "module",
+  "description": "Sorts by UTF-8 byte length, chaining equal-length values by nearest Levenshtein distance",
   "funding": "https://github.com/sponsors/Jaid",
   "license": "MIT",
   "repository": {

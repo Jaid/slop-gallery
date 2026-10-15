@@ -153,16 +153,16 @@
       "dependencies": {
         "math": "0.1.0",
         "three-async-materials": "workspace:*",
-        "three-mesh-bvh": "^0.9.16",
+        "three-mesh-bvh": "0.9.16",
       },
       "devDependencies": {
-        "@types/fs-extra": "^11.0.4",
-        "@types/three": "^0.186.0",
-        "fs-extra": "^11.4.1",
-        "puppeteer-core": "^25.14.0",
+        "@types/fs-extra": "11.0.4",
+        "@types/three": "0.186.0",
+        "fs-extra": "11.4.1",
+        "puppeteer-core": "25.14.0",
         "three-fiber-game": "workspace:*",
         "typescript": "npm:typescript-classic@6.0.4",
-        "vite": "^8.3.4",
+        "vite": "8.3.4",
       },
       "peerDependencies": {
         "three": "^0.186.1",
@@ -351,9 +351,9 @@
       "name": "vite-plugin-avif-only",
       "version": "0.1.0",
       "dependencies": {
-        "@babel/parser": "^8.0.7",
+        "@babel/parser": "8.0.7",
         "fs-extra": "11.4.1",
-        "magic-string": "^1.4.3",
+        "magic-string": "1.4.3",
       },
       "peerDependencies": {
         "vite": "^8.3.4",
@@ -383,12 +383,12 @@
       "version": "0.1.0",
       "dependencies": {
         "@babel/core": "8.0.7",
-        "@babel/generator": "^8.0.6",
-        "@babel/parser": "^8.0.7",
-        "@babel/plugin-transform-typescript": "^8.0.6",
-        "@babel/traverse": "^8.0.7",
-        "@babel/types": "^8.0.6",
-        "magic-string": "^1.4.3",
+        "@babel/generator": "8.0.6",
+        "@babel/parser": "8.0.7",
+        "@babel/plugin-transform-typescript": "8.0.6",
+        "@babel/traverse": "8.0.7",
+        "@babel/types": "8.0.6",
+        "magic-string": "1.4.3",
         "math": "0.1.0",
       },
       "peerDependencies": {
@@ -405,7 +405,7 @@
       "name": "vite-plugin-bake-static-textures",
       "version": "0.1.0",
       "dependencies": {
-        "@napi-rs/canvas": "^1.0.11",
+        "@napi-rs/canvas": "1.0.11",
         "vite-plugin-bake-core": "workspace:*",
       },
       "peerDependencies": {
@@ -417,8 +417,8 @@
       "name": "vite-plugin-bake-three-geometry",
       "version": "0.1.0",
       "dependencies": {
-        "@babel/traverse": "^8.0.7",
-        "@babel/types": "^8.0.6",
+        "@babel/traverse": "8.0.7",
+        "@babel/types": "8.0.6",
         "vite-plugin-bake-core": "workspace:*",
       },
       "peerDependencies": {
@@ -434,10 +434,10 @@
       "name": "vite-plugin-r3f-static-rendering",
       "version": "0.1.0",
       "dependencies": {
-        "@babel/traverse": "^8.0.7",
-        "@babel/types": "^8.0.6",
+        "@babel/traverse": "8.0.7",
+        "@babel/types": "8.0.6",
         "disposable-lifetime": "workspace:*",
-        "magic-string": "^1.4.3",
+        "magic-string": "1.4.3",
         "vite-plugin-bake-core": "workspace:*",
       },
       "peerDependencies": {

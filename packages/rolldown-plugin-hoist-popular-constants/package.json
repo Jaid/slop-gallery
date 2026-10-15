@@ -2,6 +2,7 @@
   "name": "rolldown-plugin-hoist-popular-constants",
   "version": "0.1.0",
   "type": "module",
+  "description": "Rolldown plugin that pools profitable primitive constants in rendered ESM chunks before minification",
   "funding": "https://github.com/sponsors/Jaid",
   "license": "MIT",
   "repository": {

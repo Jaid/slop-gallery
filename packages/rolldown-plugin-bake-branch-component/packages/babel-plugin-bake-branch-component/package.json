@@ -2,6 +2,7 @@
   "name": "babel-plugin-bake-branch-component",
   "version": "0.1.0",
   "type": "module",
+  "description": "Babel plugin that compiles branch-component JSX away at build time",
   "funding": "https://github.com/sponsors/Jaid",
   "license": "MIT",
   "repository": {

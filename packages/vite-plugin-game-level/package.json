@@ -2,6 +2,7 @@
   "name": "vite-plugin-game-level",
   "version": "0.1.0",
   "type": "module",
+  "description": "Vite plugin that builds one game level without bundling the alternate worlds",
   "funding": "https://github.com/sponsors/Jaid",
   "license": "MIT",
   "repository": {

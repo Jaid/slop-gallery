@@ -2,6 +2,7 @@
   "name": "babel-plugin-hoist-popular-constants",
   "version": "0.1.0",
   "type": "module",
+  "description": "Babel plugin that pools repeated primitive constants into shared bindings to shrink minified output",
   "funding": "https://github.com/sponsors/Jaid",
   "license": "MIT",
   "repository": {
