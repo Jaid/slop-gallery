@@ -3,6 +3,7 @@ import type {Vec3} from './types.ts'
 import lodge, {lodgeWindowCutout} from './lodge.ts'
 import Passage from './passages/Passage.ts'
 import StairFlight, {stairHeadroom} from './stairs/StairFlight.ts'
+import StairRunner from './stairs/StairRunner.ts'
 
 const corridor = {
   center: [lodge.approachX, (lodge.returnZ + lodge.siennaZ) / 2],
@@ -14,6 +15,8 @@ const corridor = {
 export const corridorPassage = new Passage('corridor', 'corridor', [[-30, lodge.returnZ], [lodge.approachX, lodge.returnZ], [lodge.approachX, lodge.siennaZ], [-31, lodge.siennaZ]], lodge.floorY, lodge.timberWidth, corridor.height, [lodgeWindowCutout])
 // The first tread begins at Sienna’s west doorway, without an intervening landing.
 export const corridorStairs = new StairFlight('return', [-20, 0, lodge.siennaZ], [-31, lodge.floorY, lodge.siennaZ], lodge.timberWidth, 28, 0, 0.35, 'corridor')
+// A 2.4 m runner leaves wide oak margins and clears both handrails’ posts.
+export const corridorRunner = new StairRunner(corridorStairs, 2.4)
 export const corridorRails = [-1, 1].map(side => corridorStairs.beam(1, 0.065, 0.065, lodge.siennaZ + side * (corridorStairs.width / 2 - 0.23)))
 export const corridorWalls = [...corridorPassage.walls, ...[-1, 1].map(side => corridorStairs.wall(side))].map(wall => ({
   ...wall,

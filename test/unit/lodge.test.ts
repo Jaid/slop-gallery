@@ -8,7 +8,7 @@ import {DoubleSide, Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vecto
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import initialPortraits from '../../src/lib/gallery/collection.ts'
-import {corridorPassage, corridorRails, corridorStairs, insideCorridor} from '../../src/lib/gallery/corridor.ts'
+import {corridorPassage, corridorRails, corridorRunner, corridorStairs, insideCorridor} from '../../src/lib/gallery/corridor.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import lodge, {insideLodgeAccess, lodgeTunnel, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import LodgeWindowGeometry from '../../src/lib/gallery/LodgeWindowGeometry.ts'
@@ -17,7 +17,7 @@ import oculusTower from '../../src/lib/gallery/oculusTower.ts'
 import Passage from '../../src/lib/gallery/passages/Passage.ts'
 import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
 import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
-import StairCarpetGeometry from '../../src/lib/gallery/stairs/StairCarpetGeometry.ts'
+import StairRunner from '../../src/lib/gallery/stairs/StairRunner.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
 import walls, {floorHeight, insideGallery, placementIssue, roomAt, rooms, wallPosition} from '../../src/lib/gallery/walls.ts'
 
@@ -247,35 +247,23 @@ describe('Lodge and Corridor route', () => {
     expect(wallPosition(west, west.holes![0].u, lodge.floorY, 0)).toEqual([-30, lodge.floorY, lodge.returnZ])
     expect(walls.find(candidate => candidate.id === 'lodge-south')!.holes).toBeUndefined()
   })
-  test('Sienna opens directly onto descending treads with half-round pads contained on every step', () => {
+  test('Sienna opens directly onto descending treads with a continuous runner inset between the handrails', () => {
     const first = corridorStairs.blocks[0]
     expect(first.tread).toBe(true)
     expect(first.top).toBeLessThan(0)
     expect(first.position[0] + first.size[0] / 2).toBe(-20)
     expect(corridorStairs.axis).toBe(0)
-    const radius = Math.min(0.38, corridorStairs.run - 0.05)
-    const carpet = new StairCarpetGeometry(corridorStairs.width - 0.5, radius)
-    try {
-      const bounds = carpet.boundingBox!
-      expect(bounds.max.x - bounds.min.x).toBeCloseTo(corridorStairs.width - 0.5)
-      expect(bounds.min.z).toBeCloseTo(-radius)
-      expect(bounds.max.z).toBeCloseTo(0)
-      expect(bounds.max.y).toBeCloseTo(0.008)
-      expect(bounds.max.x).toBeLessThan(corridorStairs.width / 2 - 0.2)
-      carpet.rotateY(Math.PI / 2)
-      carpet.computeBoundingBox()
-      expect(carpet.boundingBox!.max.x).toBeCloseTo(0)
-      expect(carpet.boundingBox!.min.x).toBeCloseTo(-radius)
-      for (const block of corridorStairs.blocks) {
-        if (!block.tread) {
-          continue
-        }
-        const x = block.position[0] + block.size[0] / 2 - 0.025
-        expect(x + carpet.boundingBox!.min.x).toBeGreaterThan(block.position[0] - block.size[0] / 2)
-        expect(x + carpet.boundingBox!.max.x).toBeLessThan(block.position[0] + block.size[0] / 2)
-      }
-    } finally {
-      carpet.dispose()
+    // Rod finials stay on bare oak, inside the handrail posts.
+    const railOffset = Math.abs(corridorRails[0].position[2] - lodge.siennaZ)
+    expect(corridorRunner.finialOffset + corridorRunner.finialRadius).toBeLessThan(railOffset - 0.1)
+    expect(corridorRunner.halfWidth).toBeLessThan(corridorStairs.width / 2 - 0.4)
+    // Rods sit on every tread, behind its center, and nosings fit within the rise.
+    expect(corridorRunner.rodCenter + corridorRunner.rodRadius).toBeLessThan(corridorStairs.run / 4)
+    expect(corridorRunner.nosingRadius + corridorRunner.thickness).toBeLessThan(corridorStairs.rise / 4)
+    // The path runs across a tread, then down its riser, without gaps or overlaps between steps.
+    for (let step = 0; step < corridorStairs.count - 1; step++) {
+      expect(corridorRunner.pathDistance(step, 'riser', corridorStairs.rise)).toBeCloseTo(corridorRunner.pathDistance(step + 1, 'tread', 0))
+      expect(corridorRunner.pathDistance(step, 'tread', corridorStairs.run)).toBeCloseTo(corridorRunner.pathDistance(step, 'riser', 0))
     }
   })
   for (const fps of [30, 60, 120]) {
@@ -411,8 +399,8 @@ test('timber geometry handles trimmed-away spans and rejects invalid inputs', ()
       },
     ])).toThrow(RangeError)
   }
-  for (const [width, radius] of [[0, 0.3], [2, 0], [Number.NaN, 0.3], [2, Number.POSITIVE_INFINITY]]) {
-    expect(() => new StairCarpetGeometry(width, radius)).toThrow(RangeError)
+  for (const width of [0, -1, Number.NaN, Number.POSITIVE_INFINITY, corridorStairs.width]) {
+    expect(() => new StairRunner(corridorStairs, width)).toThrow(RangeError)
   }
   for (const entryProjection of [-0.01, Number.NaN, Number.POSITIVE_INFINITY]) {
     expect(() => new TimberGeometry([
