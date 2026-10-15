@@ -77,7 +77,7 @@ export default class KnotCandidate {
       throw new Error('Knot shot limit must be a positive integer.')
     }
     const special = includeSpecial ?? rarityFilter?.has(specialRarity) ?? false
-    const available = this.items.filter(item => !item.archived && (special || item.rarity !== specialRarity) && (!rarityFilter || rarityFilter.has(item.rarity)) && (!filter || filter(item)))
+    const available = this.items.filter(item => (special || item.rarity !== specialRarity) && (!rarityFilter || rarityFilter.has(item.rarity)) && (!filter || filter(item)))
     if (!useRarity) {
       return limit === undefined ? available : available.slice(0, limit)
     }

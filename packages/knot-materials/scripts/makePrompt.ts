@@ -44,7 +44,7 @@ export function selectExamples({exampleIds, examples = 3, seed = 'knot-materials
   })).toSorted((a, b) => a.score.localeCompare(b.score)).map(({entry}) => entry)
   const selected: Array<KnotEntry> = []
   for (const entry of ordered) {
-    if (entry.archived || selected.some(other => other.candidateId === entry.candidateId || other.placeholder.shading === entry.placeholder.shading)) {
+    if (selected.some(other => other.candidateId === entry.candidateId || other.placeholder.shading === entry.placeholder.shading)) {
       continue
     }
     selected.push(entry)
@@ -52,7 +52,7 @@ export function selectExamples({exampleIds, examples = 3, seed = 'knot-materials
       return selected
     }
   }
-  for (const entry of ordered.toSorted((a, b) => Number(Boolean(a.archived)) - Number(Boolean(b.archived)))) {
+  for (const entry of ordered) {
     if (!selected.includes(entry)) {
       selected.push(entry)
     }
@@ -103,7 +103,7 @@ Each metadata module must be a default object with \`as const satisfies KnotData
 - A globally unique snake_case \`id\`, an evocative \`title\`, and a distinct one- or two-sentence \`flavorText\`.
 - \`candidateId: ${author ? `'${author.data.id}'` : "'<candidate ID supplied by the caller>'"}\`, plus accurate \`author.model\` provenance and \`harness\`. Never invent model versions or effort levels; ask the inference caller to fill unknown provenance.
 - \`placeholder: {color: '#rrggbb', shading: 'smooth' | 'ghost' | 'metal' | 'glass' | 'stone' | 'liquid' | 'fabric'}\`. Choose one shading literal appropriate for that entry.
-- A conservative positive \`displacement\` bound in meters whenever vertices move; omit it for undisplaced materials. New submissions are not archived.
+- A conservative positive \`displacement\` bound in meters whenever vertices move; omit it for undisplaced materials.
 
 Do not add \`accent\`, \`highlighted\`, \`sourceId\`, plate numbers, or a per-entry rarity field. Supply separate export additions for \`src/entries/index.ts\` and additions to \`src/rarities.ts\` using \`unknown\` for new entries; rarity is curated centrally afterward. Existing rarity constants are unknown=0 (no stars), common=1, rare=2, prime=3, ethereal=4, special=5 (never exhibited automatically).
 
@@ -121,7 +121,7 @@ The mesh is a torus knot with geometry arguments [0.45, 0.13, 256, 64, 2, 3], in
 
 ## Reserved global IDs
 
-None of these IDs may be reused, even for a different candidate or an archived material:
+None of these IDs may be reused, even for a different candidate:
 
 ${reserved}
 

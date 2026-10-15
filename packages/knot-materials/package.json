@@ -43,8 +43,7 @@
     "src",
     "scripts",
     "readme.md",
-    "license.txt",
-    "migration.md"
+    "license.txt"
   ],
   "sideEffects": false,
   "types": "./src/main.ts"

@@ -1,6 +1,6 @@
 import type {KnotEntry, KnotMaterialModule} from './types.ts'
 
-// Each shader is its own chunk. Metadata never evaluates omitted or archived shaders.
+// Each shader is its own chunk. Metadata never evaluates omitted shaders.
 const materials = import.meta.glob<KnotMaterialModule>('./entries/*/Material.ts')
 
 export default async function loadKnotMaterial(item: Pick<KnotEntry, 'id'>) {

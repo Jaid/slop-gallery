@@ -32,20 +32,20 @@ describe('rarity selection policy', () => {
   })
   test('filters before shot and candidate limits and composes with edit and knot_id', () => {
     const unknownBays = selectKnotBays('?rarity=edit&rarity_filter=0')
-    expect(unknownBays).toHaveLength(Math.min(8, knotCandidates.filter(candidate => candidate.items.some(item => !item.archived && item.rarity === 0)).length))
+    expect(unknownBays).toHaveLength(Math.min(8, knotCandidates.filter(candidate => candidate.items.some(item => item.rarity === 0)).length))
     expect(unknownBays.every(bay => bay.finishes.length > 0 && bay.finishes.length <= 4)).toBe(true)
     expect(unknownBays.flatMap(bay => bay.finishes).every(item => item.rarity === 0)).toBe(true)
     const mixed = selectKnotBays('?rarity_filter=unknown,rare&candidate_limit=3&shots=2')
     expect(mixed).toHaveLength(3)
     expect(mixed.every(bay => bay.finishes.length <= 2 && bay.finishes.every(item => item.rarity === 0 || item.rarity === 2))).toBe(true)
-    const rareItem = knots.find(item => item.rarity === 2 && !item.archived)!
-    const otherItem = knots.find(item => item.rarity !== 2 && !item.archived)!
+    const rareItem = knots.find(item => item.rarity === 2)!
+    const otherItem = knots.find(item => item.rarity !== 2)!
     const exact = selectKnotBays(`?knot_id=${rareItem.id},${otherItem.id}&rarity_filter=rare`)
     expect(exact.flatMap(bay => bay.finishes).map(item => item.id)).toEqual([rareItem.id])
   })
   test('omits lower rarities first for every shot cap and places rarer knots away from the billboard', () => {
     for (const candidate of knotCandidates) {
-      const available = candidate.items.filter(item => !item.archived && item.rarity !== special)
+      const available = candidate.items.filter(item => item.rarity !== special)
       for (let limit = 1; limit <= available.length; limit++) {
         const selected = candidate.select(limit)
         const ids = new Set(selected.map(item => item.id))
@@ -67,7 +67,7 @@ describe('rarity selection policy', () => {
     for (const candidate of knotCandidates) {
       const search = `?candidates=${candidate.data.id}&shots=3`
       const selected = selectKnotBays(`${search}&rarity=false`)[0]?.finishes ?? []
-      const expected = candidate.items.filter(item => !item.archived && item.rarity !== special).toSorted((a, b) => a.id.localeCompare(b.id)).slice(0, 3)
+      const expected = candidate.items.filter(item => item.rarity !== special).toSorted((a, b) => a.id.localeCompare(b.id)).slice(0, 3)
       expect(selected.map(item => item.id)).toEqual(expected.map(item => item.id))
       expect(selectKnotBays(`${search}&rarity=edit`)).toEqual(selectKnotBays(`${search}&rarity=true`))
     }
@@ -161,9 +161,9 @@ describe('special rarity', () => {
     expect(shown('?rarity_filter=special&shots=1000')).toEqual(new Set(specialIds))
     expect(shown('?rarity_filter=5&shots=1000')).toEqual(new Set(specialIds))
     const mixed = shown('?rarity_filter=ethereal,special&shots=1000&candidate_limit=1000')
-    expect(knots.filter(item => !item.archived && (item.rarity === 4 || item.rarity === special)).every(item => mixed.has(item.id))).toBe(true)
+    expect(knots.filter(item => (item.rarity === 4 || item.rarity === special)).every(item => mixed.has(item.id))).toBe(true)
     expect([...mixed].every(id => [4, special].includes(knotsById.get(id)!.rarity))).toBe(true)
-    const rareItem = knots.find(item => item.rarity === 2 && !item.archived)!
+    const rareItem = knots.find(item => item.rarity === 2)!
     expect(shown(`?knot_id=knotty_prince,${rareItem.id}&rarity_filter=rare`)).toEqual(new Set([rareItem.id]))
     expect(shown(`?knot_id=knotty_prince,${rareItem.id}&rarity_filter=special`)).toEqual(new Set(['knotty_prince']))
     const explicit = knotCandidates.find(candidate => candidate.data.id === 'claude_opus')!
@@ -183,7 +183,7 @@ describe('special rarity', () => {
   test('filters drop special knots before rows are formed, leaving no empty rows', () => {
     const opus = knotCandidates.find(candidate => candidate.data.id === 'claude_opus')!
     const onlySpecialModel = 'claude-opus-5.5'
-    const nonSpecialOpus55 = opus.items.filter(item => !item.archived && item.rarity !== special && item.author.model.slug?.endsWith(onlySpecialModel))
+    const nonSpecialOpus55 = opus.items.filter(item => item.rarity !== special && item.author.model.slug?.endsWith(onlySpecialModel))
     const bays = selectKnotBays(`?model=${onlySpecialModel}&shots=1000`)
     expect(bays.every(bay => bay.finishes.length > 0)).toBe(true)
     expect(bays.flatMap(bay => bay.finishes).map(item => item.id).toSorted()).toEqual(nonSpecialOpus55.map(item => item.id).toSorted())

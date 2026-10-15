@@ -17,7 +17,6 @@ describe('inference prompts', () => {
     expect(new Set(first.map(entry => entry.id)).size).toBe(3)
     expect(new Set(first.map(entry => entry.candidateId)).size).toBe(3)
     expect(new Set(first.map(entry => entry.placeholder.shading)).size).toBe(3)
-    expect(first.every(entry => !entry.archived)).toBe(true)
     expect(selectExamples({examples: 1})).toHaveLength(1)
     expect(selectExamples({examples: knots.length})).toHaveLength(knots.length)
     expect(selectExamples({exampleIds: ['ferrothorn', 'washi_lantern']}).map(entry => entry.id)).toEqual(['ferrothorn', 'washi_lantern'])

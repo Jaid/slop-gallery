@@ -20,7 +20,6 @@ export type KnotAuthor = {
 }
 
 export type KnotData = {
-  archived?: boolean
   author: KnotAuthor
   candidateId: KnotCandidateId
   /** Conservative maximum vertex displacement in meters, used for culling and collision bounds. */

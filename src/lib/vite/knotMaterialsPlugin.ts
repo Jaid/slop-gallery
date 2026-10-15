@@ -15,9 +15,8 @@ const knotMaterialsPlugin = (): Plugin => ({
     if (id !== resolvedKnotMaterialsModule) {
       return
     }
-    const displayed = knots.filter(item => !item.archived)
-    const imports = displayed.map((item, index) => `import Material${index} from ${JSON.stringify(`/packages/knot-materials/src/entries/${item.id}/Material.ts`)}`)
-    const constructors = displayed.map((item, index) => `[${JSON.stringify(item.id)}, Material${index}]`)
+    const imports = knots.map((item, index) => `import Material${index} from ${JSON.stringify(`/packages/knot-materials/src/entries/${item.id}/Material.ts`)}`)
+    const constructors = knots.map((item, index) => `[${JSON.stringify(item.id)}, Material${index}]`)
     return `${imports.join('\n')}\nexport default new Map([${constructors.join(', ')}])\n`
   },
 })
