@@ -18,7 +18,7 @@
     "test": "bun test --max-concurrency 1 ./test"
   },
   "peerDependencies": {
-    "react": "^19.3.0",
+    "react": "^19.3.1",
     "three": "^0.186.1",
     "victoria-browser-client": "^0.3.0",
     "@react-three/fiber": "^10.0.0-canary.fbc659b"

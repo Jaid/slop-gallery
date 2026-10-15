@@ -21,7 +21,7 @@
     "use-pause-menu": "workspace:*"
   },
   "peerDependencies": {
-    "react": "^19.3.0",
+    "react": "^19.3.1",
     "victoria-browser-client": "^0.3.0"
   },
   "peerDependenciesMeta": {

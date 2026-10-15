@@ -20,7 +20,7 @@
     "babel-plugin-bake-branch-component": "workspace:*"
   },
   "peerDependencies": {
-    "rolldown": "^1.2.13",
+    "rolldown": "^1.2.14",
     "@rolldown/plugin-babel": "^0.2.4"
   },
   "devDependencies": {

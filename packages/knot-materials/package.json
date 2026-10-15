@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "fs-extra": "^11.4.1",
-    "puppeteer-core": "^25.13.0",
+    "puppeteer-core": "^25.14.0",
     "three-fiber-game": "workspace:*",
     "typescript": "npm:typescript-classic@6.0.4",
     "vite": "^8.3.4",
