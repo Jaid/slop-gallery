@@ -15,6 +15,12 @@ import knotData from './data.ts'
 
 const columns = 20
 const rows = 4
+/** Depth of the guilloché foil under the enamel surface (object-space meters) for the refracted parallax. */
+const foilDepth = 0.02
+/** Outer `hexDist` bound of an aventurine platelet; its corners reach √2 × this, inside the 0.27 cell margin. */
+const aventurineSupport = 0.19
+/** Jitter range [min, min + span] of the aventurine platelet center within its cell. */
+const aventurineJitter = [0.27, 0.46] as const
 /**
  * Imperial Jingtai Lan Cloisonné & Ginbari Guilloché Enamel lattice:
  * Partitioned into 8-petaled lotus medallions, inner cusped corollas, central ruby cabochon bosses,
@@ -39,14 +45,18 @@ function cloisonneField(cells: Node<'vec2'>) {
   const outerRadius = outerPetalWave.mul(0.058).add(0.415)
   const dOuterLotus = r.sub(outerRadius)
 // Smooth radial gold wire partitions separating the 8 petals inside the inner and outer rings.
-  const spokeSin = angle.mul(4).sin()
-  const petalSpokeDist = spokeSin.pow(2).add(0.0004).sqrt().mul(r)
+// Petals bulge at the crests of cos(8θ), so the dividers run through its notches at 22.5° + k · 45°, which is exactly where `petalIndex` changes color. Dividers at the crests (sin(4θ)) left every color boundary without a wire and split each petal with a midrib.
+  const spokeCos = angle.mul(4).cos()
+  const petalSpokeDist = spokeCos.pow(2).add(0.0004).sqrt().mul(r)
   const petalIndex = angle.div(TAU).mul(8).add(4.5).floor().mod(8)
 // 4. Corner quatrefoil cloud-scroll medallions centered at the 4 cell corners (+/-0.5, +/-0.5).
   const cornerQ = q.abs().sub(0.5)
   const cornerR = cornerQ.length()
   const cornerAngle = atan(cornerQ.y, cornerQ.x.add(1e-6))
   const dCornerCloud = cornerR.sub(cornerAngle.mul(4).cos().mul(0.024).add(0.215))
+// Signed offset from the nearest cell corner; unlike `cornerQ`, it runs on continuously into the neighboring cells.
+  const cornerOffset = q.sub(q.sign().mul(0.5))
+  const cornerTurn = atan(cornerOffset.y, cornerOffset.x.add(1e-6))
 // Smoothly combine signed distances to the nearest 24k gold cloison wire centerline.
   const sabs = (x: Node<'float'>) => x.pow(2).add(0.00008).sqrt()
   const ringWires = sabs(dBoss).min(sabs(dInnerPetal)).min(sabs(dOuterLotus)).min(sabs(dCornerCloud))
@@ -61,6 +71,7 @@ function cloisonneField(cells: Node<'vec2'>) {
     angle,
     cornerQ,
     cornerR,
+    cornerTurn,
     isBoss,
     isCorner,
     isInner,
@@ -82,22 +93,26 @@ function aventurineSparks(position: Node<'vec3'>, view: Node<'vec3'>, depth: num
   const cell = q.floor()
   const rnd = cellNoiseVec3(cell)
   const rnd2 = cellNoiseVec3(cell.add(vec3(31.7, 17.3, 59.1)))
-  const center = rnd.mul(0.46).add(0.27)
+  const center = rnd.mul(aventurineJitter[1]).add(aventurineJitter[0])
   const d = q.fract().sub(center)
   const rot = rnd2.x.mul(TAU)
   const c = rot.cos()
   const s = rot.sin()
   const rx = d.x.mul(c).sub(d.y.mul(s))
   const ry = d.x.mul(s).add(d.y.mul(c))
-// Triangular/hexagonal copper platelet crystal silhouette strictly bounded inside cell (< 0.22).
+// Triangular/hexagonal copper platelet crystal silhouette strictly bounded inside its cell.
   const hexDist = rx.abs().max(ry.abs()).max(rx.add(ry).abs().mul(0.72)).max(d.z.abs().mul(1.15))
   const footprint = q.fwidth().length().max(0.001)
   const visibility = footprint.smoothstep(0.32, 1.15).oneMinus()
 // Ensure the crystal radius expands slightly with screen-space footprint so glints never vanish sub-pixel in `angle_0`!
   const baseRadius = rnd.z.mul(0.075).add(0.11)
-  const radius = baseRadius.max(footprint.mul(0.65)).min(0.22)
+  const radius = baseRadius.max(footprint.mul(0.65))
   const aa = footprint.mul(0.85).max(0.018)
-  const crystal = hexDist.smoothstep(radius.sub(aa), radius.add(aa.mul(0.5))).oneMinus()
+// The uncut corners of the rotated platelet reach √2 × hexDist from its center, which is jittered at least 0.27 from every cell wall.
+// Capping the outer edge at 0.19 keeps the whole platelet, antialiasing included, inside the cell; otherwise the walls cut it into squares.
+  const outer = radius.add(aa.mul(0.5)).min(aventurineSupport)
+  const inner = radius.sub(aa).min(outer.sub(0.02))
+  const crystal = hexDist.smoothstep(inner, outer).oneMinus()
   const gate = rnd.x.smoothstep(threshold, Math.min(threshold + 0.08, 0.99))
   const plateletNormal = rnd2.sub(0.5).mul(2).normalize()
 // Dual-lobe copper glint: ultra-sharp Dirac flash + broader warm copper reflection so crystals read across all gallery angles.
@@ -128,16 +143,31 @@ export default class extends KnotMaterial {
     const wireAA = wireDist.fwidth().max(footprint.mul(1.35)).max(0.0006)
     const wireMask = wireDist.smoothstep(wireAA.mul(-1.25), wireAA.mul(1.25)).oneMinus()
     const wireShoulder = top.wireCenterDist.smoothstep(wireHalfWidth * 0.6, wireHalfWidth * 1.3).oneMinus()
-// 2. Sunken Ginbari Silver-Leaf Guilloché Floor (with strong refracted Snell parallax `ray * 0.085`!):
+// 2. Sunken Ginbari Silver-Leaf Guilloché Floor (with refracted Snell parallax `ray * foilDepth`):
+// The foil used to sit 8.5 cm deep in a 13 cm tube, so toward the silhouettes the parallax shift swept across whole cells: the lathe pattern smeared into streaks and crumpled noise, and the wall shadows slid away from the wires above.
 // Precision geometric rose-engine lathe turning: intersecting cycloidal/triangular fluting & grain d'orge (barleycorn) diamond facets!
-    const refractedCells = cells.sub(ray.mul(0.085))
+    const refractedCells = cells.sub(ray.mul(foilDepth))
     const deep = cloisonneField(refractedCells)
-    const guillocheResolved = footprint.mul(34).smoothstep(0.06, 0.28).oneMinus()
+// The parallax still compresses the foil toward the silhouettes, so its pattern is filtered by its own footprint, not the surface’s.
+    const deepFootprint = refractedCells.fwidth().x.max(refractedCells.fwidth().y).max(0.0004)
+    const guillocheResolved = deepFootprint.mul(34).smoothstep(0.06, 0.28).oneMinus()
 // Cycloidal rose-engine lathe waves: sharp V-crested machined grooves (`1 - |sin(theta)|^0.75`) instead of soft fluid ripples!
-    const sunPhase = deep.angle.mul(40).add(deep.r.mul(110).sin().mul(0.85))
-    const ringPhase = deep.r.mul(96).add(deep.angle.mul(24).cos().mul(0.45))
-    const sunChisel = float(1).sub(sunPhase.sin().abs().pow(0.75))
-    const ringChisel = float(1).sub(ringPhase.sin().abs().pow(0.75))
+// The sunburst’s wobble fades out at the cell edges, where neighboring cells meet mirrored; there |sin(40θ)| matches on both sides, while the wobble would cut a seam.
+    const sunWobble = deep.q.x.abs().max(deep.q.y.abs()).smoothstep(0.4, 0.5).oneMinus()
+// Each corner cartouche straddles four cells and is turned around its own center, instead of showing four mirrored corners of the neighboring rosettes. The switch hides under the cartouche’s wire and wall shadow.
+    const latheCorner = deep.isCorner.greaterThan(0.5)
+    const latheR = select(latheCorner, deep.cornerR, deep.r)
+    const latheAngle = select(latheCorner, deep.cornerTurn, deep.angle)
+    const sunPhase = latheAngle.mul(40).add(latheR.mul(110).sin().mul(sunWobble.mul(0.85)))
+    const ringPhase = latheR.mul(96).add(latheAngle.mul(24).cos().mul(0.45))
+// Each band fades to its mean once a groove spans fewer than ~4 pixels. The analytic phase rates avoid the atan seam; the 40 spokes crowd together toward every medallion center (40 / r).
+    const deepRadius = latheR.max(0.001)
+    const sunDetail = float(40).div(deepRadius).add(110 * 0.85).mul(deepFootprint).smoothstep(0.25, 0.8).oneMinus()
+    const ringDetail = float(24 * 0.45).div(deepRadius).add(96).mul(deepFootprint).smoothstep(0.25, 0.8).oneMinus()
+// Mean of 1 − |sin|^0.75 over a period.
+    const chiselMean = 0.3084
+    const sunChisel = mix(float(chiselMean), float(1).sub(sunPhase.sin().abs().pow(0.75)), sunDetail)
+    const ringChisel = mix(float(chiselMean), float(1).sub(ringPhase.sin().abs().pow(0.75)), ringDetail)
     const silverRelief = sunChisel.mul(0.58).add(ringChisel.mul(0.42)).mul(guillocheResolved).add(guillocheResolved.oneMinus().mul(0.5))
 // Steep occlusion shadow cast by the vertical gold cloison walls onto the sunken silver floor along the refracted ray!
     const wallShadow = deep.wireCenterDist.smoothstep(0.012, 0.095).mul(0.66).add(0.34)
@@ -158,8 +188,8 @@ export default class extends KnotMaterial {
 // Chased pure Silver Foil (`F_0 = vec3(0.98, 0.97, 0.95)`) at the bottom of the enamel pool:
 // Catches directional studio light and blasts brilliant colored reflections back up through the Beer-Lambert glass!
     const loopWave = tube.x.mul(TAU * 2).sub(time.mul(Math.PI)).sin().mul(0.1)
-    const facetTiltX = sunPhase.cos().mul(guillocheResolved).mul(0.6)
-    const facetTiltY = ringPhase.cos().mul(guillocheResolved).mul(0.6)
+    const facetTiltX = sunPhase.cos().mul(sunDetail).mul(guillocheResolved).mul(0.6)
+    const facetTiltY = ringPhase.cos().mul(ringDetail).mul(guillocheResolved).mul(0.6)
     const foilDot = facing.add(facetTiltX.mul(view.x)).add(facetTiltY.mul(view.y)).add(loopWave).clamp(0, 1)
     const silverFoilRadiance = vec3(0.98, 0.97, 0.95).mul(foilDot.pow(6).mul(1.9).add(foilDot.pow(1.5).mul(0.75)).add(0.28))
     const ginbariPoolColor = silverFoilRadiance.mul(beerLambertTransmission).mul(wallShadow)
@@ -205,8 +235,10 @@ export default class extends KnotMaterial {
     this.iridescenceIOR = 1.56
     this.iridescenceThicknessNode = opticalDepth.mul(190).add(160)
 // Radial anisotropic sheen from the sunken Ginbari guilloché silver foil beneath the glass.
-    const foilTangent = vec2(deep.angle.sin().negate(), deep.angle.cos())
-    this.anisotropyNode = mix(foilTangent.mul(0.76), vec2(1, 0).mul(0.55), wireMask)
+    const foilTangent = vec2(latheAngle.sin().negate(), latheAngle.cos())
+// The radial tangent spins once around every lathe center, faster than a pixel can resolve close to it, so the sheen fades out there.
+    const foilTangentResolved = latheR.div(deepFootprint.mul(8)).smoothstep(0.5, 1)
+    this.anisotropyNode = mix(foilTangent.mul(foilTangentResolved.mul(0.76)), vec2(1, 0).mul(0.55), wireMask)
     this.aoNode = wallShadow.max(wireMask)
 // Imperial palace gallery lighting: crisp overhead pavilion skylights to make the Ginbari silver foil flash through the colored glass pools!
     const palace = panelSky({
