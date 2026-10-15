@@ -376,6 +376,7 @@ export default class AudioQueue<T extends object = Record<string, never>> implem
   private play(job: Job<T>) {
     job.phase = 'starting'
     const version = ++job.version
+    // eslint-disable-next-line unicorn/prefer-promise-try -- Deferred on purpose; Promise.try would start playback synchronously.
     void Promise.resolve().then(() => {
       if (this.active(job) && job.version === version) {
         return job.playback!.play()
@@ -395,6 +396,7 @@ export default class AudioQueue<T extends object = Record<string, never>> implem
   private prepare(job: Job<T>) {
     job.phase = 'preparing'
     // Run user factories outside a queue mutation; they may synchronously push/cancel other jobs.
+    // eslint-disable-next-line unicorn/prefer-promise-try -- Deferred on purpose; Promise.try would run the factory synchronously, inside the mutation.
     void Promise.resolve().then(() => {
       job.controller.signal.throwIfAborted()
       return job.task({

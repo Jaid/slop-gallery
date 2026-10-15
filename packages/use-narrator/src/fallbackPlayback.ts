@@ -37,6 +37,7 @@ export default function fallbackPlayback(primary: AudioPlayback, fallback: (erro
     }
     switched = true
     // Defer the switch so duplicate error/play-rejection callbacks see one shared operation.
+    // eslint-disable-next-line unicorn/prefer-promise-try -- Deferred on purpose; Promise.try would switch synchronously.
     switching = Promise.resolve().then(async () => {
       failed.dispose()
       signal.throwIfAborted()

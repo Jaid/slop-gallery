@@ -26,6 +26,7 @@ test('shared Knot BVH preserves native hits, face indices, UVs, sides and transf
               const direction = new Vector3(0, 0, -1)
               direction.transformDirection(mesh.matrixWorld)
               const ray = new Raycaster(origin, direction, 0, 9)
+              // eslint-disable-next-line typescript/unbound-method -- Swaps in three’s own raycast as the reference; Raycaster calls it with the mesh as this.
               mesh.raycast = Mesh.prototype.raycast
               const expected = ray.intersectObject(mesh)
               mesh.raycast = resources.raycast
@@ -50,6 +51,7 @@ test('shared Knot BVH preserves native hits, face indices, UVs, sides and transf
               expect(ray.intersectObject(mesh)).toHaveLength(0)
               ray.far = 9
               ray.near = expected[0].distance + 0.01
+              // eslint-disable-next-line typescript/unbound-method -- Swaps in three’s own raycast as the reference; Raycaster calls it with the mesh as this.
               mesh.raycast = Mesh.prototype.raycast
               const clipped = ray.intersectObject(mesh)
               mesh.raycast = resources.raycast
@@ -76,6 +78,7 @@ test('accelerated raycasts bypass the linear Mesh vertex walk without patching T
   const {geometry} = resources.items[0]
   const material = new MeshBasicNodeMaterial
   const mesh = new Mesh(geometry, material)
+  // eslint-disable-next-line typescript/unbound-method -- Only compared by identity, never called.
   const native = Mesh.prototype.raycast
   let vertexReads = 0
   mesh.getVertexPosition = function (index, target) {
@@ -90,6 +93,7 @@ test('accelerated raycasts bypass the linear Mesh vertex walk without patching T
     mesh.raycast = resources.raycast
     expect(ray.intersectObject(mesh).length).toBe(expected.length)
     expect(vertexReads).toBe(0)
+    // eslint-disable-next-line typescript/unbound-method -- Only compared by identity, never called.
     expect(Mesh.prototype.raycast).toBe(native)
   } finally {
     material.dispose()

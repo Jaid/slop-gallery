@@ -28,6 +28,7 @@ export default class SpeechCache implements Disposable {
         users: 0,
         promise: Promise.resolve(''),
       }
+      // eslint-disable-next-line unicorn/prefer-promise-try -- Deferred on purpose; Promise.try would call the provider synchronously.
       created.promise = Promise.resolve().then(() => {
         controller.signal.throwIfAborted()
         return this.provider(speech, controller.signal)

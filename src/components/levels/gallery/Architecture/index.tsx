@@ -137,6 +137,7 @@ function ReflectionEnvironment() {
     texture.mapping = EquirectangularReflectionMapping
     texture.colorSpace = SRGBColorSpace
     const previous = scene.environment
+    // eslint-disable-next-line react-hooks/immutability -- R3F expects the scene environment to be set from an effect; the cleanup restores it.
     scene.environment = texture
     scene.environmentIntensity = 0.5
     return () => {
