@@ -4,6 +4,7 @@ import {cameraPosition, color, float, Fn, interleavedGradientNoise, Loop, mix, m
 
 import {panelSky, proceduralEnvironment} from '../../candidates/gemini_argon/lib/environment.ts'
 import {knotTubeRadius} from '../../candidates/gemini_argon/lib/tubeMetric.ts'
+import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
 import {glints} from '../../lib/glints.ts'
 import {knotFrame} from '../../lib/knotFrame.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
@@ -23,6 +24,18 @@ function engravedLine(field: Node<'float'>, width: number, footprint: Node<'floa
   const coverage = field.abs().smoothstep(width, aa.add(width)).oneMinus()
   const survival = float(width * 2.2).div(aa).min(1)
   return coverage.mul(survival)
+}
+/** Raised-cosine lobe on a periodic phase: 1 on the crest, 0 in the trough, with no harmonic above `sharpness`. */
+function lobe(phase: Node<'float'>, sharpness: number) {
+  return phase.cos().mul(0.5).add(0.5).pow(sharpness)
+}
+/** Round pyrite grain per cell of a jittered lattice: the center stays in [0.25, 0.75] and the support radius at most 0.24, so no grain ever touches a cell wall. */
+function pyriteGrains(position: Node<'vec3'>, cellSize: number) {
+  const q = position.div(cellSize)
+  const rnd = cellNoiseVec3(q.floor())
+  const outer = q.fwidth().length().add(0.18).min(0.24)
+  const grain = q.fract().sub(rnd.mul(0.5).add(0.25)).length().smoothstep(0.06, outer).oneMinus()
+  return grain.mul(rnd.z.smoothstep(0.62, 0.78))
 }
 /** Blackbody solar plasma ramp from deep crimson-umbral red to blinding photosphere white-gold. */
 function solarBlackbody(heat: Node<'float'>) {
@@ -55,23 +68,16 @@ export default class extends KnotMaterial {
     const ribWave = ribPhase.cos()
     const helixAWave = helixAPhase.cos()
     const helixBWave = helixBPhase.cos()
-// Vertex displacement: raised gimbal rings, helical bands, and breathing iris shutters.
+// Vertex displacement: raised gimbal rings, ribs and helical bands.
+// Vertices are 2.8 cm apart along the knot and 1.3 cm around it, far coarser than the 1–2 cm bevels of the struts, so the geometry only carries a smooth swell under each strut; the sharp strut edges, bevels and iris shutters stay in the per-pixel relief below.
     const surface = (at: Node<'vec2'>) => {
       const frame = knotFrame(at)
-      const toViewer = cameraLocal.sub(frame.center).normalize()
-      const gazeAlignment = frame.normal.dot(toViewer).smoothstep(-0.2, 0.85)
-      const openAmount = proximity.mul(0.65).add(gazeAlignment.mul(0.35))
-      const uPhase = at.x.mul(TAU * ringCount)
-      const vPhase = at.y.mul(TAU * ribCount)
-      const hA = at.x.mul(TAU * 5).add(at.y.mul(TAU * 2)).sub(loopAngle).cos().smoothstep(0.76, 0.92)
-      const hB = at.x.mul(TAU * 7).sub(at.y.mul(TAU * 3)).add(loopAngle).cos().smoothstep(0.8, 0.94)
-      const ringArch = uPhase.cos().smoothstep(-0.15, 0.35)
-      const ribArch = vPhase.cos().smoothstep(0.58, 0.84)
-      const lattice = ringArch.mul(0.65).add(ribArch.mul(0.5)).add(hA.mul(0.85)).add(hB.mul(0.7)).clamp()
-// Shutters lift outward at the edges of the apertures when the viewer approaches.
-      const rimLift = uPhase.sin().abs().smoothstep(0.55, 0.92).mul(openAmount).mul(0.0045)
-      const displacement = lattice.mul(0.014).add(rimLift)
-      return frame.center.add(frame.normal.mul(displacement.add(knotTubeRadius)))
+      const ringArch = lobe(at.x.mul(TAU * ringCount), 1)
+      const ribArch = lobe(at.y.mul(TAU * ribCount), 2)
+      const hA = lobe(at.x.mul(TAU * 5).add(at.y.mul(TAU * 2)).sub(loopAngle), 4)
+      const hB = lobe(at.x.mul(TAU * 7).sub(at.y.mul(TAU * 3)).add(loopAngle), 4)
+      const lattice = ringArch.mul(0.65).add(ribArch.mul(0.5)).add(hA.mul(0.85)).add(hB.mul(0.7))
+      return frame.center.add(frame.normal.mul(lattice.mul(0.0075).add(knotTubeRadius)))
     }
     this.positionNode = surface(tube)
     const eu = vec2(0.00025, 0)
@@ -112,15 +118,19 @@ export default class extends KnotMaterial {
 // Lapis lazuli enamel recessed panels vs raised burnished gold.
     const recessedPanel = ringWave.smoothstep(shutterThreshold.add(0.16), shutterThreshold.add(0.28)).mul(ribStrut.oneMinus()).mul(helixAStrut.oneMinus()).mul(helixBStrut.oneMinus())
 // Pyrite gold flecks inside the cobalt-lapis enamel.
-    const pyriteCell = mx_cell_noise_float(p.mul(95).floor())
-    const pyriteSpark = pyriteCell.smoothstep(0.88, 0.96).mul(near)
+    const pyriteSpark = pyriteGrains(p, 1 / 95).mul(near)
     const lapisColor = mix(color('#091b3a'), color('#163c73'), mx_noise_float(p.mul(24)).mul(0.5).add(0.5)).add(color('#ebd186').mul(pyriteSpark.mul(0.55)))
 // Brushed anisotropic gold with subtle warm copper-rose variation along the knot.
-    const brushWave = filteredCos(tube.y.mul(TAU * 420), 0.5, 2.8).mul(near)
+// The 2 mm brush period fades out before it gets closer than ~6 px, so its relief never aliases into stripes along the tube.
+    const brushWave = filteredCos(tube.y.mul(TAU * 420), 0.3, 1.05).mul(near)
     const goldBase = mix(color('#c98e32'), color('#ffe094'), helixAStrut.max(bezelRim).mul(0.55).add(brushWave.mul(0.06)).add(0.25))
     const armorColor = mix(goldBase, lapisColor, recessedPanel.mul(inlayPattern.oneMinus()))
-// Fine micro-relief for the engravings and recessed enamel, blended with the vertex-displaced normal.
-    const microRelief = bezelRim.mul(0.0022).add(inlayPattern.mul(0.0014)).sub(recessedPanel.mul(0.0018)).add(brushWave.mul(0.00018))
+// Shutters lift outward at the edges of the apertures when the viewer approaches.
+    const gazeAlignment = baseNormal.dot(view).smoothstep(-0.2, 0.85)
+    const openAmount = proximity.mul(0.65).add(gazeAlignment.mul(0.35))
+    const rimLift = ringPhase.sin().abs().smoothstep(0.55, 0.92).mul(openAmount).mul(0.0045)
+// Fine micro-relief for the engravings, recessed enamel and iris shutters, blended with the vertex-displaced normal.
+    const microRelief = rimLift.add(bezelRim.mul(0.0022)).add(inlayPattern.mul(0.0014)).sub(recessedPanel.mul(0.0018)).add(brushWave.mul(0.00018))
     const vertexViewNormal = transformNormalToView(baseNormal).normalize()
     const bumpViewNormal = proceduralNormal(microRelief, 0.75)
     const viewNormal = vertexViewNormal.add(bumpViewNormal.mul(0.45)).normalize()
@@ -152,19 +162,20 @@ export default class extends KnotMaterial {
         const granulation = mx_noise_float(q.mul(14).add(vec3(0, loopAngle.cos().mul(0.5), 0))).mul(0.5).add(0.5)
         const sunspotMask = granulation.smoothstep(0.22, 0.68)
         const coreProximity = float(1).sub(transmittance).smoothstep(0, 0.85)
-        const plasmaDensity = filamentA.mul(0.85).add(filamentB.mul(0.65)).add(coreProximity.mul(sunspotMask).mul(0.9))
+        const plasmaDensity = filamentA.mul(0.85).add(filamentB.mul(0.65)).add(coreProximity.mul(sunspotMask).mul(0.5))
 // Temperature rises toward the core and along magnetic reconnection filaments, amplified by viewer proximity.
         const flareBoost = proximity.mul(0.28).add(intimate.mul(0.22))
-        const heat = coreProximity.mul(0.55).add(filamentA.mul(0.55)).add(filamentB.mul(0.4)).add(flareBoost).mul(sunspotMask.mul(0.65).add(0.35))
+        const heat = coreProximity.mul(0.35).add(filamentA.mul(0.85)).add(filamentB.mul(0.5)).add(flareBoost.mul(0.6)).mul(sunspotMask.mul(0.65).add(0.35))
         const emissionColor = solarBlackbody(heat)
 // Volumetric self-shadowing from cooler dark coronal dust/umbral filaments.
-        const extinction = plasmaDensity.mul(14).add(sunspotMask.oneMinus().mul(8))
+// The medium stays optically thin enough that filaments add up against the cooler background instead of every ray saturating to the same white-gold source color.
+        const extinction = plasmaDensity.mul(7).add(sunspotMask.oneMinus().mul(9))
         accumLight.addAssign(emissionColor.mul(plasmaDensity).mul(transmittance).mul(stepSize).mul(42))
         transmittance.mulAssign(extinction.mul(stepSize).negate().exp())
         rayPos.addAssign(enterDir.mul(stepSize))
       })
-// Deep inner stellar furnace core behind the raymarch steps.
-      const furnaceCore = solarBlackbody(float(0.92).add(proximity.mul(0.18))).mul(1.9)
+// Deep inner stellar furnace core behind the raymarch steps, glowing orange so the hotter filaments in front of it still read.
+      const furnaceCore = solarBlackbody(float(0.5).add(proximity.mul(0.2))).mul(1.15)
       return accumLight.add(furnaceCore.mul(transmittance))
     })
 // Subsurface scattering and golden rim incandescence where the inner star backlights the shutter edges.
