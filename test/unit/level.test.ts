@@ -95,7 +95,7 @@ test('Knot build retains poses beyond the museum bounds and falls back safely', 
     throw new Error(JSON.stringify(result.logs))
   }
   const source = await result.outputs[0].text()
-  const {default: PlayerSession, validatePlayerPose, playerSpawn} = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`) as typeof import('../../src/lib/gallery/PlayerSession.ts')
+  const {default: PlayerSession, validatePlayerPose, playerSpawn} = await import(`data:text/javascript;base64,${Buffer.from(source).toBase64()}`) as typeof import('../../src/lib/gallery/PlayerSession.ts')
   const session = new PlayerSession
   const pose: PlayerPose = {
     position: farKnotPosition,
@@ -146,7 +146,7 @@ test('Knottingham resets only its exhibition, without duplicate sibling keys or 
   })
   expect(result.success).toBe(true)
   const source = await result.outputs[0].text()
-  const {default: scene} = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`) as {default: () => ReactElement<{children: Array<ReactElement>}>}
+  const {default: scene} = await import(`data:text/javascript;base64,${Buffer.from(source).toBase64()}`) as {default: () => ReactElement<{children: Array<ReactElement>}>}
   const children = scene().props.children
   expect(children.map(child => child.type)).toEqual([
     '#component/levels/knottingham/KnotLobby',

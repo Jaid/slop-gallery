@@ -115,7 +115,9 @@ export default async function verifyCanvasTextures() {
     unmountFiber = undefined
     owner.unmount()
     await Promise.resolve()
-    assert(Number(owned.image.width) === 0, 'Final owner unmount did not release canvas storage.')
+    // Read the width as a plain number again; the StrictMode assertion above narrowed it to 4.
+    const releasedCanvasWidth: number = owned.image.width
+    assert(releasedCanvasWidth === 0, 'Final owner unmount did not release canvas storage.')
     return {
       setups,
       cleanups,

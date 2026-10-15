@@ -39,11 +39,12 @@ describe('physical mesh topology', () => {
   }
 })
 describe('boolean architecture', () => {
-  for (const wall of walls.filter(wall => wall.holes?.length)) {
+  const wallsWithOpenings = walls.filter(wall => wall.holes?.length)
+  for (const wall of wallsWithOpenings) {
     test(`${wall.id}: curved openings match the visible solid and physical collision on both faces`, () => {
       const geometry = createArchitectureGeometry(wall)
       const material = new MeshBasicMaterial({side: DoubleSide})
-      const meshes = [geometry.surface, ...geometry.trim].map(geometry => new Mesh(geometry, material))
+      const meshes = [geometry.surface, ...geometry.trim].map(partGeometry => new Mesh(partGeometry, material))
       const world = new RAPIER.World({
         x: 0,
         y: 0,
@@ -58,7 +59,10 @@ describe('boolean architecture', () => {
           // Sample the jambs, upper corners and crown, staying off exact cut edges.
           for (const offset of [-1.45, -1.19, -0.6, 0, 0.6, 1.19, 1.45]) {
             const u = hole.u + offset
-            for (const y of [0.2, 1.62, 2.5, 3.2, 3.55, 3.75, 3.9, 4.1].filter(value => value < wall.height + 0.3 - 0.001)) {
+            for (const y of [0.2, 1.62, 2.5, 3.2, 3.55, 3.75, 3.9, 4.1]) {
+              if (y >= wall.height + 0.3 - 0.001) {
+                continue
+              }
               const opening = wall.holes!.find(candidate => insideOpening(candidate, u, y))
               const solid = Math.abs(u) <= wall.width / 2 && !opening
               for (const side of [-1, 1]) {
@@ -73,7 +77,7 @@ describe('boolean architecture', () => {
           }
         }
         const openingArea = wall.holes!.reduce((sum, hole) => sum + (hole.profile === 'arch' ? hole.width * (hole.height - hole.width / 2 - (hole.bottom ?? 0)) + Math.PI * (hole.width / 2) ** 2 / 2 : hole.width * (hole.height - (hole.bottom ?? 0))), 0)
-        expect(Number(computeMeshVolume(geometry.surface))).toBeCloseTo((wall.width * (wall.height + 0.3) - openingArea) * wallFace, 3)
+        expect(computeMeshVolume(geometry.surface)).toBeCloseTo((wall.width * (wall.height + 0.3) - openingArea) * wallFace, 3)
         expect(geometry.surface.boundingBox!.min.z).toBeCloseTo(0)
         expect(geometry.surface.boundingBox!.max.z).toBeCloseTo(wallFace)
         for (const mesh of meshes) {
@@ -88,15 +92,18 @@ describe('boolean architecture', () => {
       }
     })
   }
-  for (const wall of walls.filter(wall => wall.holes?.length)) {
+  for (const wall of wallsWithOpenings) {
     test(`${wall.id}: doorway reveals have exactly one visible face through the plaster, baseboard and plinth`, () => {
       const geometry = createArchitectureGeometry(wall)
       const material = new MeshBasicMaterial
       try {
-        const meshes = [geometry.surface, ...geometry.trim].map(geometry => new Mesh(geometry, material))
+        const meshes = [geometry.surface, ...geometry.trim].map(partGeometry => new Mesh(partGeometry, material))
         for (const hole of wall.holes!) {
           for (const side of [-1, 1]) {
-            for (const offsetY of [0.173, 0.393, 0.417, 0.613, 1.731].filter(value => value < hole.height - (hole.bottom ?? 0))) {
+            for (const offsetY of [0.173, 0.393, 0.417, 0.613, 1.731]) {
+              if (offsetY >= hole.height - (hole.bottom ?? 0)) {
+                continue
+              }
               const y = (hole.bottom ?? 0) + offsetY
               for (const z of [0.051, 0.092, 0.121, 0.183, 0.231, 0.259, 0.301]) {
                 const classicDepth = y < 0.4 ? 0.325 : 0.27
@@ -107,16 +114,17 @@ describe('boolean architecture', () => {
                 const ray = new Raycaster(new Vector3(hole.u, y, z), new Vector3(side, 0, 0), 0, hole.width / 2 + 0.4)
                 const hits = ray.intersectObjects(meshes)
                 expect(hits.length).toBe(z < depth ? 1 : 0)
-                if (hits.length) {
-                  const radius = hole.width / 2
-                  const aboveSpring = y - (hole.height - radius)
-                  if (hole.profile === 'arch' && aboveSpring > 0) {
-                    // Wider arches start curving lower; their reveal is not a vertical jamb.
-                    const reach = Math.sqrt(radius ** 2 - aboveSpring ** 2)
-                    expect(Math.abs(hits[0].distance - reach)).toBeLessThan(0.001)
-                  } else {
-                    expect(hits[0].distance).toBeCloseTo(radius, 5)
-                  }
+                if (hits.length === 0) {
+                  continue
+                }
+                const radius = hole.width / 2
+                const aboveSpring = y - (hole.height - radius)
+                if (hole.profile === 'arch' && aboveSpring > 0) {
+                  // Wider arches start curving lower; their reveal is not a vertical jamb.
+                  const reach = Math.sqrt(radius ** 2 - aboveSpring ** 2)
+                  expect(Math.abs(hits[0].distance - reach)).toBeLessThan(0.001)
+                } else {
+                  expect(hits[0].distance).toBeCloseTo(radius, 5)
                 }
               }
             }
@@ -177,7 +185,7 @@ describe('boolean architecture', () => {
     })
   }
   test('placement rays hit the solid arch shoulders, not the opening beneath them', () => {
-    const wall = walls.find(wall => wall.id === 'lobby-east')!
+    const wall = walls.find(candidate => candidate.id === 'lobby-east')!
     const hole = wall.holes![0]
     expect(openingTop(hole, hole.u)).toBeCloseTo(3.8)
     expect(openingTop(hole, hole.u + 1.2)).toBeLessThan(3.2)
@@ -209,7 +217,7 @@ describe('boolean architecture', () => {
     const geometry = createArchitectureGeometry(wall)
     const material = new MeshBasicMaterial({side: DoubleSide})
     try {
-      const meshes = [geometry.surface, ...geometry.trim].map(geometry => new Mesh(geometry, material))
+      const meshes = [geometry.surface, ...geometry.trim].map(partGeometry => new Mesh(partGeometry, material))
       for (const hole of wall.holes) {
         for (const y of [0.001, 1.62, 3.4]) {
           const openingRay = new Raycaster(new Vector3(hole.u, y, 1), new Vector3(0, 0, -1), 0, 2)

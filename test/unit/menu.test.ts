@@ -138,6 +138,18 @@ describe('minimal menu', () => {
     }
   })
 })
+function primaryActionLabel(stage: MenuStage) {
+  if (stage === 'reset') {
+    return 'New game'
+  }
+  if (stage === 'first') {
+    return 'Enter gallery'
+  }
+  if (stage === 'return') {
+    return 'Continue'
+  }
+  return 'Resume'
+}
 test.each(['first', 'reset', 'return', 'pause', 'unfocus'] as const)('renders the %s menu stage', (stage: MenuStage) => {
   const initial = {...useGallery.getInitialState()}
   const snapshot = spyOn(pauseMenu, 'getServerSnapshot').mockReturnValue({
@@ -159,7 +171,7 @@ test.each(['first', 'reset', 'return', 'pause', 'unfocus'] as const)('renders th
       }),
     }))
     expect(html).toContain(`data-stage="${stage}"`)
-    expect(html).toContain(stage === 'reset' ? 'New game' : stage === 'first' ? 'Enter gallery' : stage === 'return' ? 'Continue' : 'Resume')
+    expect(html).toContain(primaryActionLabel(stage))
     expect(html.includes('data-testid="minimap"')).toBe(stage === 'pause')
     expect(html.includes('New game')).toBe(stage === 'return' || stage === 'reset')
     expect(html.includes('Your position')).toBe(stage === 'pause')
@@ -170,7 +182,7 @@ test.each(['first', 'reset', 'return', 'pause', 'unfocus'] as const)('renders th
     }
     expect(html.includes('OpenRouter')).toBe(stage !== 'unfocus')
     expect(html.includes('Mute audio')).toBe(stage !== 'unfocus')
-    expect(html.includes('Good taste.')).toBe(stage === 'first' || stage === 'return' || stage === 'reset')
+    expect(html.includes('Good taste.')).toBe(['first', 'reset', 'return'].includes(stage))
     expect(html).not.toContain('Reset gallery')
     expect(html).not.toContain('Confirm reset')
     if (stage === 'unfocus') {
@@ -184,7 +196,7 @@ test.each(['first', 'reset', 'return', 'pause', 'unfocus'] as const)('renders th
   }
 })
 test('New game resets and enters directly; it does nothing before the scene is ready', () => {
-  const engine: SoundEngine = Object.create(SoundEngine.prototype)
+  const engine = Object.create(SoundEngine.prototype) as SoundEngine
   const getSound = spyOn(SoundEngine, 'get').mockReturnValue(engine)
   const resume = spyOn(engine, 'resume').mockResolvedValue()
   let entered = 0

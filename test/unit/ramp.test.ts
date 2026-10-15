@@ -32,7 +32,7 @@ for (const ramp of oculusRamps) {
       const geometry = new RampGeometry(ramp.width, ramp.rise, ramp.run)
       const material = new MeshBasicMaterial
       try {
-        expect(Number(computeMeshVolume(geometry))).toBeCloseTo(ramp.width * ramp.rise * ramp.run / 2, 4)
+        expect(computeMeshVolume(geometry)).toBeCloseTo(ramp.width * ramp.rise * ramp.run / 2, 4)
         expect(geometry.getAttribute('position').count).toBe(24)
         expect([...geometry.getAttribute('normal').array].every(Number.isFinite)).toBe(true)
         const mesh = new Mesh(geometry, material)

@@ -51,7 +51,7 @@ describe('continuous stair handrails', () => {
         const radius = side === 'inner' ? stairTurn.innerRadius + 0.22 : stairTurn.outerRadius - 0.22
         const segments = Math.ceil(Math.PI * 32)
         const length = stairFlights.reduce((sum, flight) => sum + flight.length, 0)
-        expect(Number(computeMeshVolume(geometry))).toBeCloseTo(0.065 ** 2 * (length + radius * segments * Math.sin(Math.PI / segments)), 5)
+        expect(computeMeshVolume(geometry)).toBeCloseTo(0.065 ** 2 * (length + radius * segments * Math.sin(Math.PI / segments)), 5)
       } finally {
         geometry.dispose()
       }

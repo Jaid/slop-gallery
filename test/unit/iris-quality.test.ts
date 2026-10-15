@@ -10,7 +10,7 @@ import {auditionTranscript} from '../../scripts/lib/knots/voiceAuditions.ts'
 function envelope(rate = 48_000) {
   const silentSamples = new Int16Array(rate)
   return {
-    audio: Buffer.from(silentSamples.buffer).toString('base64'),
+    audio: Buffer.from(silentSamples.buffer).toBase64(),
     content_type: 'audio/pcm',
     duration: 1,
     audio_timestamps: {

@@ -17,7 +17,8 @@ describe('Knot cellular fields', () => {
     }
   })
   test('keeps feature identity out of the point distance and bounds its support before gating', async () => {
-    const text = (await Promise.all(['lib/cellularPoints.ts', 'lib/cellularBoundary.ts'].map(knotSource))).join('\n')
+    const fieldSources = await Promise.all(['lib/cellularPoints.ts', 'lib/cellularBoundary.ts'].map(knotSource))
+    const text = fieldSources.join('\n')
     expect(text).toContain('cellNoiseVec3(cell).mul(0.5).add(0.25)')
     expect(text).toContain('position.fract().sub(center).length()')
     expect(text).toContain('mx_cell_noise_float(cell)')

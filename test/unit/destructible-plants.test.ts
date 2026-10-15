@@ -122,7 +122,10 @@ describe('new destructible botanical models', () => {
       expect(leaf.vertices).toEqual(Float32Array.from(leaf.geometry.getAttribute('position').array))
       expect(leaf.geometry.getAttribute('color').count).toBe(leaf.geometry.getAttribute('position').count)
       expect(leaf.mass).toBeGreaterThan(0)
-      for (const part of [leaf.geometry, leaf.stem].filter(candidate => candidate !== null)) {
+      for (const part of [leaf.geometry, leaf.stem]) {
+        if (part === null) {
+          continue
+        }
         expect(part.index).not.toBeNull()
         for (const attribute of Object.values(part.attributes)) {
           expect([...attribute.array].every(Number.isFinite)).toBe(true)

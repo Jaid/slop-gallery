@@ -78,7 +78,10 @@ describe('rectangular floor openings', () => {
       expect(subtractFloorOpening(rectangle, opening)).toEqual([rectangle])
       expect(rectangle.size.every(value => value > 0 && Number.isFinite(value))).toBe(true)
     }
-    for (const other of rooms.filter(value => value.id !== 'lobby')) {
+    for (const other of rooms) {
+      if (other.id === 'lobby') {
+        continue
+      }
       expect(roomFloorPlan(other).glazing).toBeUndefined()
       expect(roomFloorPlan(other).slabs).toEqual([
         {

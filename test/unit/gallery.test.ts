@@ -19,7 +19,8 @@ describe('wall geometry', () => {
   for (const wall of walls) {
     test(`${wall.id}: local coordinates round-trip`, () => {
       // Curved walls wrap; round-trip coordinates within the actual wall span.
-      for (const u of [-0.45, 0, 0.45].map(fraction => fraction * wall.width)) {
+      for (const fraction of [-0.45, 0, 0.45]) {
+        const u = fraction * wall.width
         expect(wallCoordinates(wall, wallPosition(wall, u, 2.5))).toBeCloseTo(u)
       }
     })
@@ -330,7 +331,7 @@ describe('backup validation', () => {
     expect(result.source).toBe(source)
   })
   test('round-trips artwork hung in the Sienna', () => {
-    const wall = walls.find(wall => wall.id === 'sienna-south')!
+    const wall = walls.find(candidate => candidate.id === 'sienna-south')!
     const portrait = {
       ...initialPortraits[0],
       wallId: wall.id,

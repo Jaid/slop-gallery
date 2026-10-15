@@ -10,6 +10,12 @@ import PortraitNarration from '../../src/lib/audio/PortraitNarration.ts'
 import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {useGallery} from '../../src/lib/gallery/store.ts'
 
+type SpeechRequestBody = {
+  input: string
+  provider: {options: {google: {instructions: string}}}
+  response_format: string
+}
+
 const settings: AiSettings = readAiSettings()
 let producer: PortraitNarration
 let narrator: Narrator
@@ -96,7 +102,8 @@ test('stopping a waiting portrait prevents later label readiness from starting i
   useGallery.getState().update('goose', {pending: false})
   producer.ready('goose')
   await flush()
-  expect((await handle.finished).status).toBe('cancelled')
+  const handleOutcome = await handle.finished
+  expect(handleOutcome.status).toBe('cancelled')
   expect(spoken).toHaveLength(0)
   expect(narrator.getSnapshot().idle).toBe(true)
 })
@@ -108,7 +115,7 @@ test('TTS keeps character steering out of speech and caches successful generated
   expect(fetchSpy).toHaveBeenCalledTimes(1)
   const [url, request] = fetchSpy.mock.calls[0]
   expect(url).toBe('https://openrouter.ai/api/v1/audio/speech')
-  const body = JSON.parse(request!.body as string)
+  const body = JSON.parse(request!.body as string) as SpeechRequestBody
   expect(body.input).not.toContain(settings.narrator_character)
   expect(body.provider.options.google.instructions).toBe(settings.narrator_character)
   expect(body.response_format).toBe('pcm')
@@ -168,7 +175,8 @@ test('editing a spoken portrait cancels its transport without interrupting unrel
   await flush()
   useGallery.getState().update('goose', {description: 'Replacement story'})
   await flush()
-  expect((await first.finished).status).toBe('cancelled')
+  const firstOutcome = await first.finished
+  expect(firstOutcome.status).toBe('cancelled')
   expect(players[0].disposals).toBe(1)
   expect(narrator.getSnapshot().current?.id).toBe(second.id)
 })
@@ -183,7 +191,8 @@ test('replacing a story cancels in-flight generation and prevents late output/fa
   expect(signal.aborted).toBe(true)
   fetched.resolve(new Response(new Blob(['audio'], {type: 'audio/mpeg'})))
   await flush()
-  expect((await handle.finished).status).toBe('cancelled')
+  const handleOutcome = await handle.finished
+  expect(handleOutcome.status).toBe('cancelled')
   expect(recordings).toHaveLength(0)
   expect(spoken).toHaveLength(0)
 })
@@ -194,7 +203,8 @@ test('removing a queued portrait cancels just that request', async () => {
   await flush()
   useGallery.getState().remove('orange')
   await flush()
-  expect((await removed.finished).status).toBe('cancelled')
+  const removedOutcome = await removed.finished
+  expect(removedOutcome.status).toBe('cancelled')
   expect(narrator.getSnapshot().current?.id).toBe(first.id)
 })
 test('producer disposal does not stop narration owned by another component', async () => {
@@ -203,7 +213,8 @@ test('producer disposal does not stop narration owned by another component', asy
   const owned = producer.enqueue('goose')!
   await flush()
   producer.dispose()
-  expect((await owned.finished).status).toBe('cancelled')
+  const ownedOutcome = await owned.finished
+  expect(ownedOutcome.status).toBe('cancelled')
   expect(narrator.getSnapshot().current?.id).toBe(independent.id)
   expect(players[0].disposals).toBe(0)
 })

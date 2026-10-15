@@ -145,7 +145,8 @@ describe('hold-to-orbit camera', () => {
   test('keeps the same approach at different frame rates and supports portrait aspect ratios', () => {
     const a = setup()
     const b = setup()
-    a.camera.aspect = b.camera.aspect = 0.5
+    a.camera.aspect = 0.5
+    b.camera.aspect = 0.5
     for (let i = 0; i < 60; i++) {
       a.orbit.update(center, 1 / 60)
     }

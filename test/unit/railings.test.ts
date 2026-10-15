@@ -111,10 +111,12 @@ describe('connected Oculus railings', () => {
       expect(anchor.height).toBe(0.5)
       expect(anchor.ground[1]).toBe(ramp.endY)
     }
-    for (const anchor of railing.anchors.filter(value => Math.abs(value.ground[0]) > 3)) {
+    const rampAnchors = railing.anchors.filter(value => Math.abs(value.ground[0]) > 3)
+    for (const anchor of rampAnchors) {
       expect(anchor.height).toBe(1)
     }
-    for (const post of railing.posts.filter(value => value.position[2] > ramp.endZ && Math.abs(value.position[0]) < 3)) {
+    const towerPosts = railing.posts.filter(value => value.position[2] > ramp.endZ && Math.abs(value.position[0]) < 3)
+    for (const post of towerPosts) {
       expect(post.height).toBe(0.5)
       expect(post.position[1]).toBe(ramp.endY + 0.25)
     }

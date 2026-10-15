@@ -58,7 +58,7 @@ test('player dumps preserve precision, join separate hit logs and respect disabl
         ],
       })
       expect(build.success).toBe(true)
-      const module = await import(`data:text/javascript;base64,${Buffer.from(await build.outputs[0].text()).toString('base64')}`) as {
+      const module = await import(`data:text/javascript;base64,${Buffer.from(await build.outputs[0].text()).toBase64()}`) as {
         default: (dump: EgoDump) => void
         played: Array<string>
         SoundEngine: {requests: number}
@@ -85,24 +85,25 @@ test('player dumps preserve precision, join separate hit logs and respect disabl
           sessionId: enabled ? 'dump-test' : null,
         },
       }, {depth: null})
-      if (enabled) {
-        const records = module.telemetry!.records
-        expect(records).toHaveLength(2)
-        const summary = JSON.parse(records[0][0]) as EgoDump & {hitCount: number}
-        expect(summary.aim.hit!.point).toEqual(dump.aim.hit!.point)
-        expect(summary.aim.hits).toBeUndefined()
-        expect(summary.hitCount).toBe(1)
-        expect(records[0][1].attributes).toMatchObject({
-          'event.name': 'ego.dump',
-          'dump.id': dump.id,
-        })
-        expect(records[1][1].attributes).toMatchObject({
-          'event.name': 'ego.dump.hit',
-          'dump.id': dump.id,
-          'hit.index': 0,
-        })
-        expect(JSON.parse(records[1][0])).toEqual(dump.aim.hit)
+      if (!enabled) {
+        continue
       }
+      const records = module.telemetry!.records
+      expect(records).toHaveLength(2)
+      const summary = JSON.parse(records[0][0]) as EgoDump & {hitCount: number}
+      expect(summary.aim.hit!.point).toEqual(dump.aim.hit!.point)
+      expect(summary.aim.hits).toBeUndefined()
+      expect(summary.hitCount).toBe(1)
+      expect(records[0][1].attributes).toMatchObject({
+        'event.name': 'ego.dump',
+        'dump.id': dump.id,
+      })
+      expect(records[1][1].attributes).toMatchObject({
+        'event.name': 'ego.dump.hit',
+        'dump.id': dump.id,
+        'hit.index': 0,
+      })
+      expect(JSON.parse(records[1][0])).toEqual(dump.aim.hit)
     }
   } finally {
     dir.mockRestore()

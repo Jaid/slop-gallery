@@ -80,7 +80,7 @@ describe('arbitrary Knot batches', () => {
       ...item('lenticular_mirage'),
       candidateId: 'gpt_astra',
     }])
-    expect([...indexKnots([a, b]).keys()]).toEqual(['damascus_ember', 'lenticular_mirage'])
+    expect(indexKnots([a, b]).keys().toArray()).toEqual(['damascus_ember', 'lenticular_mirage'])
     const duplicate = new KnotCandidate(astra, [{
       ...item('damascus_ember'),
       candidateId: 'gpt_astra',
@@ -111,7 +111,8 @@ describe('arbitrary Knot batches', () => {
     }
   })
   test('credits API and Mage entries with a model slug', () => {
-    for (const entry of knots.filter(knot => knot.harness === 'none' || knot.harness === 'Mage')) {
+    const apiAndMageEntries = knots.filter(knot => knot.harness === 'none' || knot.harness === 'Mage')
+    for (const entry of apiAndMageEntries) {
       expect(entry.author.model.slug, entry.id).toBeDefined()
     }
   })

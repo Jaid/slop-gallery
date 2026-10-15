@@ -14,7 +14,7 @@ const glmFlash = knotCandidates.find(candidate => candidate.data.id === 'glm_fla
 const setup = (resolve: (id: string) => string | undefined = id => id) => {
   const players: Array<FakePlayback> = []
   const narrator = new Narrator({createAudio: reference => {
-    const player = new FakePlayback(String(reference))
+    const player = new FakePlayback(reference instanceof Blob ? 'blob' : String(reference))
     players.push(player)
     return player
   }, createSpeech: () => {
@@ -110,7 +110,8 @@ test('cancelled introductions and titles are not marked heard and can be retried
   await flush()
   owner.abort()
   for (const handle of handles) {
-    expect((await handle.finished).status).toBe('cancelled')
+    const outcome = await handle.finished
+    expect(outcome.status).toBe('cancelled')
   }
   expect(narrator.hasSpoken(knotAnnouncementPaths(item).model)).toBe(false)
   expect(narrator.hasSpoken(knotAnnouncementPaths(item).item)).toBe(false)

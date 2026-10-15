@@ -189,7 +189,7 @@ describe('Lobby fountain', () => {
       for (const x of [0, 0.3, 0.7, 1.3, 1.75, 1.93, 2.1]) {
         const origin = new Vector3(x, 5, 0.013)
         const visualRay = new Raycaster(origin, down)
-        const visual = visualRay.intersectObject(mesh)[0]
+        const visual = visualRay.intersectObject(mesh).at(0)
         const physical = world.castRay(new RAPIER.Ray(origin, down), 6, true)
         expect(!!physical).toBe(!!visual)
         if (visual && physical) {

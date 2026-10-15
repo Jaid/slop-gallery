@@ -10,6 +10,8 @@ import lowerGallery from '../../src/lib/gallery/lowerGallery.ts'
 import {minimapHeading, minimapPortrait, minimapViewBox, minimapWalls} from '../../src/lib/gallery/minimap.ts'
 import portraitObjects from '../../src/lib/gallery/portraitObjects.ts'
 
+type PortraitObject = Parameters<typeof portraitObjects.set>[1]
+
 const initial = {...useGallery.getInitialState()}
 const pose = {
   position: cameraPose.position,
@@ -84,7 +86,7 @@ test('portrait dots follow rigid bodies instead of stale saved positions', () =>
     y: lowerGallery.floorY + 1,
     z: lowerGallery.oculus.center[1],
   }
-  portraitObjects.set(portrait.id, Object.assign(Object.create(null), {body: {translation: () => physical}}))
+  portraitObjects.set(portrait.id, Object.assign(Object.create(null) as PortraitObject, {body: {translation: () => physical}}))
   try {
     expect(minimapPortrait(portrait)).toEqual({
       position: [physical.x, physical.y, physical.z],

@@ -92,7 +92,7 @@ test('instanced faces and supports follow prop transforms, even outside their or
   const first = new Group
   const second = new Group
   const targets = new Map([[knotSignId('first'), first], [knotSignId('second'), second]])
-  const visuals = new InstancedPropVisuals([faces, supports], [...targets.keys()])
+  const visuals = new InstancedPropVisuals([faces, supports], targets.keys().toArray())
   try {
     for (const x of [0, 50, -100]) {
       first.position.set(x, 1.5, 8)

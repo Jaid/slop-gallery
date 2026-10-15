@@ -123,12 +123,13 @@ describe('inspection look', () => {
     for (let i = 0; i < 180; i++) {
       look.addInput(i % 2 ? 0 : 0.08, 0)
       look.update(rotation(), 1 / 60)
-      if (i >= 60) {
-        const lookAngles = new Euler
-        const yaw = lookAngles.setFromQuaternion(look.rotation, 'YXZ').y
-        minimum = Math.min(minimum, yaw)
-        maximum = Math.max(maximum, yaw)
+      if (i < 60) {
+        continue
       }
+      const lookAngles = new Euler
+      const yaw = lookAngles.setFromQuaternion(look.rotation, 'YXZ').y
+      minimum = Math.min(minimum, yaw)
+      maximum = Math.max(maximum, yaw)
     }
     expect(maximum - minimum).toBeLessThan(0.001)
   })

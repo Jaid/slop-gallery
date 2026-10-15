@@ -53,9 +53,14 @@ const viewDependentRelief = new Set([
 // Shared shader subgraphs are a DAG, not a tree. Visit each node only once.
 const collectNodes = (roots: Array<Node>) => {
   const nodes = new Set(roots)
-  for (const node of nodes) {
-    for (const child of node.getChildren()) {
+  const queue = [...nodes]
+  for (let cursor = 0; cursor < queue.length; cursor++) {
+    for (const child of queue[cursor].getChildren()) {
+      if (nodes.has(child)) {
+        continue
+      }
       nodes.add(child)
+      queue.push(child)
     }
   }
   return nodes
@@ -112,7 +117,7 @@ describe('multi-model Knot challenge', () => {
       expect(x + 0.58).toBeLessThan(knotGalleryBounds.maxX - 1)
       expect(z - 0.58).toBeGreaterThan(knotGalleryBounds.northZ + 1)
       expect(z + 0.58).toBeLessThan(knotGalleryBounds.southZ - 1)
-      const bay = knotBays.find(bay => bay.candidate.id === exhibit.candidate.id)!
+      const bay = knotBays.find(knotBay => knotBay.candidate.id === exhibit.candidate.id)!
       expect(z).toBe(bay.center[2])
       expect(exhibit.rotation).toBe(0)
       expect(exhibit.label).toBe(`#${String(exhibit.number).padStart(2, '0')}`)
@@ -188,7 +193,7 @@ describe('multi-model Knot challenge', () => {
           } else {
             expect(material.positionNode, exhibit.id).toBeNull()
           }
-          const dependencies = collectNodes(Object.values(material).filter((value): value is Node => Boolean(value && typeof value === 'object' && 'isNode' in value && value.isNode)))
+          const dependencies = collectNodes(Object.values(material).filter((value: unknown): value is Node => Boolean(value && typeof value === 'object' && 'isNode' in value && value.isNode)))
           // Camera response may use proximity or the built-in, lazily evaluated view direction.
           expect(dependencies.has(positionView) || dependencies.has(cameraPosition) || dependencies.has(positionViewDirection), exhibit.id).toBe(true)
           // Some submissions express the angular response only through physical Fresnel

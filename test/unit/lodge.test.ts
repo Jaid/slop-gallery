@@ -266,7 +266,10 @@ describe('Lodge and Corridor route', () => {
       carpet.computeBoundingBox()
       expect(carpet.boundingBox!.max.x).toBeCloseTo(0)
       expect(carpet.boundingBox!.min.x).toBeCloseTo(-radius)
-      for (const block of corridorStairs.blocks.filter(step => step.tread)) {
+      for (const block of corridorStairs.blocks) {
+        if (!block.tread) {
+          continue
+        }
         const x = block.position[0] + block.size[0] / 2 - 0.025
         expect(x + carpet.boundingBox!.min.x).toBeGreaterThan(block.position[0] - block.size[0] / 2)
         expect(x + carpet.boundingBox!.max.x).toBeLessThan(block.position[0] + block.size[0] / 2)

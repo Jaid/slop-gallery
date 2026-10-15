@@ -7,7 +7,7 @@ const config = resolveConfig({
   configLoader: 'runner',
   logLevel: 'silent',
 }, 'serve')
-await Bun.plugin({
+Bun.plugin({
   name: 'sass-modules-test-loader',
   setup(build) {
     build.onLoad({filter: /\.module\.sass$/u}, async ({path}) => {

@@ -8,7 +8,7 @@ function silentWave(duration: number) {
   const view = new DataView(buffer)
   const text = (offset: number, value: string) => {
     for (let i = 0; i < value.length; i++) {
-      view.setUint8(offset + i, value.charCodeAt(i))
+      view.setUint8(offset + i, value.codePointAt(i)!)
     }
   }
   text(0, 'RIFF')
@@ -39,13 +39,14 @@ export default async function verify() {
   })
   const media: Array<HTMLAudioElement> = []
   let disconnected = 0
+  const recordDisconnect = () => {
+    disconnected++
+  }
   const options = {
     volume: 0,
     connect: (audio: HTMLAudioElement) => {
       media.push(audio)
-      return () => {
-        disconnected++
-      }
+      return recordDisconnect
     },
   }
   const timeout = AbortSignal.timeout(10_000)

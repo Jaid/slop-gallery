@@ -154,19 +154,17 @@ test('import rejects an oversized document even when gzip compresses it below th
   expect(useGallery.getState().portraits.map(p => p.id)).toEqual(original.portraits.map(p => p.id))
 }, 30_000)
 test('recovery can retry storage after a transient open failure', async () => {
-  const request = {
-    onerror: null as (() => void) | null,
-    error: new Error('Storage unavailable'),
-  }
+  const request = Object.assign(new EventTarget, {error: new Error('Storage unavailable')})
   const open = spyOn(indexedDB, 'open').mockImplementationOnce(() => {
-    queueMicrotask(() => request.onerror?.())
+    queueMicrotask(() => request.dispatchEvent(new Event('error')))
     return request as unknown as IDBOpenDBRequest
   })
   try {
     const repo = new GalleryRepository
     await expect(repo.load()).rejects.toThrow('Storage unavailable')
     await repo.save(original)
-    expect((await repo.load())?.portraits.map(p => p.id)).toEqual(original.portraits.map(p => p.id))
+    const loadedDocument = await repo.load()
+    expect(loadedDocument?.portraits.map(p => p.id)).toEqual(original.portraits.map(p => p.id))
   } finally {
     open.mockRestore()
   }

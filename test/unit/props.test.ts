@@ -165,7 +165,7 @@ describe('carried prop flight', () => {
       const next = placement.follow(destination, 1 / 60)!
       expect(next).not.toBeNull()
       expect(placement.hasRoom(next, false)).toBe(true)
-      expect(Math.hypot(...next.map((v, i) => v - previous[i]))).toBeLessThanOrEqual(20 / 60 + 0.0001)
+      expect(Math.hypot(...next.map((v, axis) => v - previous[axis]))).toBeLessThanOrEqual(20 / 60 + 0.0001)
       if (i === 0) {
         expect(next[1]).toBeGreaterThan(1.42)
         expect(next[2]).toBeGreaterThan(1.6 - 20 / 60)

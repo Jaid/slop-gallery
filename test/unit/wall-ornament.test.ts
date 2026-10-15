@@ -124,7 +124,8 @@ describe('vesper wall ornaments', () => {
       expect(doorGap).toBeCloseTo(wallOrnament.clearance, 10)
       expect(doorGap).toBeCloseTo(cornerGap, 10)
     }
-    for (const wall of walls.filter(candidate => candidate.room === 'vesper')) {
+    const vesperWalls = walls.filter(candidate => candidate.room === 'vesper')
+    for (const wall of vesperWalls) {
       const ornaments = vesperOrnaments.filter(ornament => ornament.wallId === wall.id)
       const defaults = wallOrnamentPositions(wall)
       if (wall.id === 'vesper-south') {

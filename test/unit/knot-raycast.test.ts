@@ -42,20 +42,21 @@ test('shared Knot BVH preserves native hits, face indices, UVs, sides and transf
               ray.firstHitOnly = true
               const nearest = ray.intersectObject(mesh)
               expect(nearest).toHaveLength(Math.min(1, expected.length))
-              if (expected.length) {
-                expect(nearest[0].distance).toBeCloseTo(expected[0].distance, 8)
-                ray.far = expected[0].distance - 0.01
-                expect(ray.intersectObject(mesh)).toHaveLength(0)
-                ray.far = 9
-                ray.near = expected[0].distance + 0.01
-                mesh.raycast = Mesh.prototype.raycast
-                const clipped = ray.intersectObject(mesh)
-                mesh.raycast = resources.raycast
-                const clippedNearest = ray.intersectObject(mesh)
-                expect(clippedNearest).toHaveLength(Math.min(1, clipped.length))
-                if (clipped.length) {
-                  expect(clippedNearest[0].distance).toBeCloseTo(clipped[0].distance, 8)
-                }
+              if (expected.length === 0) {
+                continue
+              }
+              expect(nearest[0].distance).toBeCloseTo(expected[0].distance, 8)
+              ray.far = expected[0].distance - 0.01
+              expect(ray.intersectObject(mesh)).toHaveLength(0)
+              ray.far = 9
+              ray.near = expected[0].distance + 0.01
+              mesh.raycast = Mesh.prototype.raycast
+              const clipped = ray.intersectObject(mesh)
+              mesh.raycast = resources.raycast
+              const clippedNearest = ray.intersectObject(mesh)
+              expect(clippedNearest).toHaveLength(Math.min(1, clipped.length))
+              if (clipped.length) {
+                expect(clippedNearest[0].distance).toBeCloseTo(clipped[0].distance, 8)
               }
             }
           }

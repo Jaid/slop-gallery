@@ -70,7 +70,7 @@ describe('sculpture pedestals', () => {
           const direction = new Vector3(0, 0, -1)
           direction.applyAxisAngle(new Vector3(0, 1, 0), side * Math.PI / 2)
           const sightline = new Raycaster(origin, direction, 0, 4)
-          const visible = sightline.intersectObjects(meshes)[0]
+          const visible = sightline.intersectObjects(meshes).at(0)
           const collision = world.castRay(new RAPIER.Ray(origin, direction), 4, true)
           expect(!!visible).toBe(!!collision)
           if (visible) {
