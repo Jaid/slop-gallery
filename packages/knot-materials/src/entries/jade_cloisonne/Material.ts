@@ -46,13 +46,25 @@ function lotusCloison(cells: Node<'vec2'>) {
     wireDist,
   }
 }
+/** Round aventurine flecks inside the glitter lattice, so sparkles read as points instead of lighting whole 9 mm cubic cells. */
+function aventurineFlecks(position: Node<'vec3'>, cellSize: number, sharpness: number, tilt: number) {
+  const facets = glitter(position, cellSize, sharpness, tilt)
+  const q = position.div(cellSize)
+  const center = cellNoiseVec3(q.floor()).mul(0.5).add(0.25)
+  const outer = q.fwidth().length().add(0.18).min(0.24)
+  const mask = q.fract().sub(center).length().smoothstep(0.06, outer).oneMinus()
+  return {
+    resolved: facets.resolved,
+    sparkle: facets.sparkle.mul(mask),
+  }
+}
+// Vertices are 2.8 cm apart along the tube, but the cloison wires are under 1 cm wide, so the geometry only carries a smooth cabochon swell over each lotus medallion and corner scroll; the wires and the enamel meniscus stay in the per-pixel relief below.
 const displacedCloisonne = Fn(([tube]: [Node<'vec2'>]) => {
   const {position, normal} = knotFrame(tube)
   const cells = tubeCells(tube, lotusAlong, lotusAround)
-  const {wireDist} = lotusCloison(cells)
-  const wireRibbon = wireDist.smoothstep(0, 0.032).oneMinus()
-  const meniscus = wireDist.smoothstep(0.02, 0.16).mul(0.0028)
-  return position.add(normal.mul(wireRibbon.mul(0.0042).add(meniscus)))
+  const {cornerR, r} = lotusCloison(cells)
+  const swell = r.smoothstep(0, 0.46).oneMinus().pow2().add(cornerR.smoothstep(0, 0.36).oneMinus().pow2().mul(0.8))
+  return position.add(normal.mul(swell.mul(0.0028)))
 })
 /** Imperial Jingfa Cloisonné & Ginbari Basse-Taille Enamel: hand-bent gilded brass cloisons filled with translucent vitreous enamel over engine-turned guilloché silver leaf that shimmers with parallax as the viewer moves. */
 export default class extends KnotMaterial {
@@ -74,10 +86,12 @@ export default class extends KnotMaterial {
     const meniscusDepth = cloison.wireDist.smoothstep(0.015, 0.14)
 // Ginbari silver-foil substrate shifted by tangent-space refraction ray beneath the vitreous enamel layer.
     const ray = tubeRay().mul(vec2(lotusAlong, lotusAround))
-    const foilCoord = cells.sub(ray.mul(0.042)).fract().sub(0.5)
+// Mirror-tiled (whole-cell counts are even, so the seams still close), so neighboring guilloché rosettes meet without a hard seam through the enamel.
+    const foilCoord = cells.sub(ray.mul(0.042)).mul(0.5).fract().mul(2).sub(1).abs().sub(0.5)
     const foilR = foilCoord.length()
     const foilAngle = atan(foilCoord.y, foilCoord.x.add(1e-6))
-    const guillocheResolved = footprint.smoothstep(0.008, 0.028).oneMinus()
+    // The 24 spokes converge at each rosette center, so they also fade where they get finer than a few pixels.
+    const guillocheResolved = footprint.smoothstep(0.008, 0.028).oneMinus().mul(foilR.smoothstep(footprint.mul(6), footprint.mul(12)))
     const engineTurned = foilAngle.mul(24).add(foilR.mul(85).sin().mul(3.5)).cos().mul(0.5).add(0.5)
     const ginbariFoil = engineTurned.mul(guillocheResolved).add(guillocheResolved.oneMinus().mul(0.5))
 // Region masks for the distinct polychrome enamel cells.
@@ -100,7 +114,7 @@ export default class extends KnotMaterial {
     enamelColor = mix(enamelColor, imperialAmber, inStamen)
 // Modulate translucent enamel by the submerged ginbari silver guilloché foil and microscopic firing pinholes.
     const foilRadiance = ginbariFoil.mul(0.55).add(0.65)
-    const aventurineSpark = glitter(p, 0.009, 80, 0.5)
+    const aventurineSpark = aventurineFlecks(p, 0.009, 80, 0.5)
     const enamelWithFoil = enamelColor.mul(foilRadiance).add(enamelColor.mul(ginbariFoil.pow(3)).mul(0.45))
     const gildedWireColor = mix(color('#d99b26'), color('#fff0a8'), cloison.wireDist.div(0.025).clamp().oneMinus())
     this.colorNode = mix(enamelWithFoil, gildedWireColor, wireMask)
@@ -112,7 +126,9 @@ export default class extends KnotMaterial {
     this.iridescenceNode = wireMask.oneMinus().mul(0.28)
     this.iridescenceIOR = 1.52
     this.iridescenceThicknessNode = meniscusDepth.mul(220).add(facing.mul(160)).add(180)
-    const detailHeight = wireMask.mul(0.0024).add(meniscusDepth.mul(0.0012)).add(ginbariFoil.mul(0.0003).mul(wireMask.oneMinus()))
+    // The wires and meniscus left the vertex displacement, so the per-pixel bump carries a little more of their relief.
+    const wireCrown = cloison.wireDist.div(0.021).clamp().pow2().oneMinus().mul(0.6).add(0.4)
+    const detailHeight = wireMask.mul(wireCrown).mul(0.0036).add(meniscusDepth.mul(0.0018)).add(ginbariFoil.mul(0.0003).mul(wireMask.oneMinus()))
     this.normalNode = detailNormal(baseNormal, detailHeight, 0.95)
     this.aoNode = meniscusDepth.mul(0.35).add(0.65).max(wireMask)
 // Luminous internal reflection off the curved ginbari silver foil + золотой glint on the brass cloisons.
