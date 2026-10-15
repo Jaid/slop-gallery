@@ -17,6 +17,24 @@ import knotData from './data.ts'
 
 const columns = 22
 const rows = 3
+const fanRadius = 0.68
+const fanAspect = 1.12
+// Fan centers of the staggered Seigaiha lattice relative to a cell, ordered front-most first: lower rows overlap higher rows, and within a row the left scale overlaps the right one. Every cell applies the same global order, so overlapping scales meet without seams at cell edges.
+const fanCenters = [[0.5, -0.5], [0, 0], [1, 0], [-0.5, 0.5], [0.5, 0.5], [1.5, 0.5], [0, 1], [1, 1]] as const
+// The vertex domes also need the scale above the cell, which is always hidden behind a nearer fan but still reaches into the cell.
+const domeCenters = [...fanCenters, [0.5, 1.5]] as const
+// Peak height of each scale’s smooth vertex dome, in meters.
+const domeHeight = 0.0015
+// Height of the hand-piped gold bead relief, in meters. It is drawn per pixel only: the beads are far narrower than the 1.3–2.8 cm vertex spacing.
+const beadHeight = 0.0028
+// Bead half-widths in normalized fan radius: the crest along the rim, the ribs on the arch joints (a fifth of the radius apart).
+const crestWidth = 0.03
+const ribWidth = 0.042 / 5
+/** Gaussian bead widened to at least the pixel footprint while keeping its area, so a bead thinner than a pixel fades instead of breaking into a dotted line. */
+function filteredBead(distance: Node<'float'>, width: number, footprint: Node<'float'>) {
+  const filteredWidth = footprint.mul(1.2).pow2().add(width ** 2).sqrt()
+  return distance.div(filteredWidth).pow2().negate().exp().mul(float(width).div(filteredWidth))
+}
 /**
  * Seigaiha (blue ocean wave) overlapping concentric fan scales on a seamless tube lattice.
  * Includes generous Ro-iro mirror-black resting zones (Yohaku/Ma) and hand-placed Kiri-Raden shell mosaic tiles.
@@ -25,22 +43,18 @@ function seigaihaField(cells: Node<'vec2'>) {
   const period = vec2(columns, rows)
   const baseCell = cells.floor()
   const local = cells.fract()
-// Candidate fan centers ordered from front-most (overlapping row) to back-most.
-  const candidates = [[0.5, -0.5], [0, 0], [1, 0], [0.5, 0.5], [-0.5, 0.5], [1.5, 0.5], [0, 1], [1, 1]] as const
-  const fanRadius = 0.68
   let chosenR: Node<'float'> = float(2)
   let chosenQ: Node<'vec2'> = vec2(0, 1)
   let chosenCell: Node<'vec2'> = baseCell
   let chosenHit: Node<'float'> = float(0)
-  for (const [ox, oy] of candidates) {
-    const stagger = baseCell.y.add(oy * 2).mod(2).mul(0.25)
-    const center = vec2(ox, oy).add(vec2(stagger, 0))
-    const q = local.sub(center).mul(vec2(1, 1.12))
+  for (const [ox, oy] of fanCenters) {
+    const q = local.sub(vec2(ox, oy)).mul(vec2(1, fanAspect))
     const r = q.length()
     const inside = r.lessThan(fanRadius).and(chosenHit.lessThan(0.5))
     chosenR = select(inside, r, chosenR)
     chosenQ = select(inside, q, chosenQ)
-    chosenCell = select(inside, baseCell.add(vec2(ox * 2, oy * 2)), chosenCell)
+    // Identity on the doubled lattice (fan centers sit on half cells), so every cell names the same scale alike.
+    chosenCell = select(inside, baseCell.add(vec2(ox, oy)).mul(2), chosenCell)
     chosenHit = select(inside, float(1), chosenHit)
   }
   const normR = chosenR.div(fanRadius).clamp(0, 1)
@@ -51,7 +65,10 @@ function seigaihaField(cells: Node<'vec2'>) {
   const ringCoord = normR.mul(5)
   const ringIndex = ringCoord.floor()
   const ringFract = ringCoord.fract()
+  const nearestRingEdge = ringCoord.round()
   const borderDist = float(1).sub(normR)
+// Pixel footprint in normalized fan radius, from the continuous cell coordinate so fan overlaps don’t spike it.
+  const footprint = cells.fwidth().mul(vec2(1, fanAspect)).length().div(fanRadius)
 // Compositional negative space (Yohaku): ~38% of scales are serene unadorned Ro-iro mirror-black lacquer with only a crisp outer gold crest.
   const isQuietScale = rnd.z.lessThan(0.38)
   const isNacreScale = rnd.x.greaterThan(0.32).and(isQuietScale.not())
@@ -59,7 +76,8 @@ function seigaihaField(cells: Node<'vec2'>) {
 // Kiri-Raden: hand-cut mosaic shell segments along each arch, separated by hairline lacquer joints.
   const mosaicCount = ringIndex.mul(6).add(10)
   const mosaicCoord = angle.div(TAU).mul(mosaicCount).add(rnd.y.mul(7))
-  const tileId = mosaicCoord.floor()
+// Wrapped by the shard count, so the shard cut by atan’s branch at the scale’s side keeps one identity.
+  const tileId = mosaicCoord.floor().mod(mosaicCount)
   const tileFract = mosaicCoord.fract()
 // Two independent cell hashes per mosaic shard so every individual tile has a strongly distinct phase, brightness, and planar tilt.
   const tileSeedA = vec3(wrapped.x.mul(17.3).add(tileId.mul(5.7)), wrapped.y.mul(23.1).add(ringIndex.mul(11.3)), 31.4)
@@ -70,10 +88,12 @@ function seigaihaField(cells: Node<'vec2'>) {
   const tileMask = jointDist.smoothstep(0.43, 0.482).oneMinus().mul(ringEdgeDist.smoothstep(0.335, 0.4).oneMinus())
   const nacreMask = isNacreBand.toFloat().mul(tileMask)
 // Viscous Gaussian bead profile for hand-piped Takamaki-e sabi-urushi relief.
-  const crestGaussian = borderDist.div(0.052).pow(2).negate().exp()
-  const ribActive = ringIndex.equal(1).or(ringIndex.equal(3)).and(isQuietScale.not()).toFloat()
-  const ribEdgeDist = float(0.5).sub(ringEdgeDist)
-  const ribGaussian = ribEdgeDist.div(0.068).pow(2).negate().exp().mul(ribActive)
+// The crest bead sits just inside the scale’s rim and has settled to its foot there, so the overlapped scale behind continues without a height cliff.
+  const crestGaussian = filteredBead(borderDist.sub(0.06), crestWidth, footprint)
+// Ribs are piped on every arch joint bordering the nacre arches 1 and 3 – from both sides of the joint, so each rib is a whole round bead.
+  const ribActive = nearestRingEdge.greaterThan(0.5).and(nearestRingEdge.lessThan(4.5)).and(isQuietScale.not()).toFloat()
+  const ribEdgeDist = float(0.5).sub(ringEdgeDist).div(5)
+  const ribGaussian = filteredBead(ribEdgeDist, ribWidth, footprint).mul(ribActive)
   return {
     angle,
     borderDist,
@@ -93,14 +113,16 @@ function seigaihaField(cells: Node<'vec2'>) {
     tileRnd2,
   }
 }
+// Each scale swells into a smooth lacquer dome. It is summed over every nearby scale instead of following the front-most one, so the surface stays smooth where scales overlap and across cell edges; vertices 1.3–2.8 cm apart can follow it. The gold beads stay in the per-pixel relief.
 const displacedMakiE = Fn(([tube]: [Node<'vec2'>]) => {
   const {position, normal} = knotFrame(tube)
-  const cells = tubeCells(tube, columns, rows)
-  const {crestGaussian, ribGaussian, normR} = seigaihaField(cells)
-// Smooth Gaussian liquid-lacquer bead profile for Takamaki-e relief.
-  const goldBead = crestGaussian.max(ribGaussian.mul(0.74))
-  const relief = goldBead.mul(0.0042).add(normR.oneMinus().mul(0.0011))
-  return position.add(normal.mul(relief))
+  const local = tubeCells(tube, columns, rows).fract()
+  let dome: Node<'float'> = float(0)
+  for (const [ox, oy] of domeCenters) {
+    const r = local.sub(vec2(ox, oy)).mul(vec2(1, fanAspect)).length()
+    dome = dome.add(r.smoothstep(0, fanRadius).oneMinus().pow2())
+  }
+  return position.add(normal.mul(dome.mul(domeHeight)))
 })
 /**
  * Polygonal Hirame & Nashiji gold filings suspended in translucent amber lacquer:
@@ -111,7 +133,8 @@ function polygonalGoldFlakes(position: Node<'vec3'>, view: Node<'vec3'>, depth: 
   const cell = q.floor()
   const rnd = cellNoiseVec3(cell)
   const rnd2 = cellNoiseVec3(cell.add(vec3(19.3, 47.1, 83.5)))
-  const center = rnd.mul(0.46).add(0.27)
+// Centers stay 0.3 from the cell walls: a rotated, stretched shard reaches up to 0.283 from its center, so no wall cuts it square.
+  const center = rnd.mul(0.4).add(0.3)
   const d = q.fract().sub(center)
   const rot = rnd2.x.mul(TAU)
   const c = rot.cos()
@@ -225,7 +248,7 @@ export default class extends KnotMaterial {
     this.roughnessNode = mix(mix(float(0.04), float(0.2), top.nacreMask), float(0.23).sub(kintsugiGaussian.mul(0.04)), goldReliefMask)
 // Base normal: each Kiri-Raden shard tilts on its own planar facet with internal aragonite growth striations, while Takamaki-e gold has a viscous Gaussian bead profile.
     const microHeight = shardPlanarHeight
-      .add(goldBeadField.mul(0.0028))
+      .add(goldBeadField.mul(beadHeight))
       .add(top.tileMask.mul(top.nacreMask).mul(0.001))
       .add(nacreLamellae.add(nacreTerrace.mul(0.6)).mul(top.nacreMask).mul(0.00058).mul(intimate.mul(0.7).add(0.3)))
       .add(kinpunGrain.mul(goldReliefMask).mul(0.00035))
