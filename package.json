@@ -93,7 +93,7 @@
     "caniuse-lite": "1.0.30001816",
     "cssnano-preset-advanced": "10.0.0",
     "eslint": "10.12.0",
-    "eslint-config-jaid": "37.0.0",
+    "eslint-config-jaid": "37.1.0",
     "eslint-plugin-branch-component": "workspace:*",
     "fake-indexeddb": "6.2.5",
     "forward-slash-path": "0.3.0",
