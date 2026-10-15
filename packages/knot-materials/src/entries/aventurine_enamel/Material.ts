@@ -1,6 +1,6 @@
 import type {Node, Texture} from 'three/webgpu'
 
-import {atan, color, exp, float, mix, mx_noise_float, normalViewGeometry, select, time, uv, vec2, vec3} from 'three/tsl'
+import {atan, color, exp, float, mix, mx_noise_float, normalGeometry, normalViewGeometry, select, tangentGeometry, time, uv, vec2, vec3} from 'three/tsl'
 
 import {panelSky, proceduralEnvironment} from '../../candidates/gemini_argon/lib/environment.ts'
 import {tubeCells} from '../../candidates/gemini_argon/lib/tubeMetric.ts'
@@ -17,8 +17,8 @@ const columns = 20
 const rows = 4
 /** Depth of the guilloché foil under the enamel surface (object-space meters) for the refracted parallax. */
 const foilDepth = 0.02
-/** Outer `hexDist` bound of an aventurine platelet; its corners reach √2 × this, inside the 0.27 cell margin. */
-const aventurineSupport = 0.19
+/** Outer bound of an aventurine platelet’s lens gauge, which is also its farthest reach from the center; it stays inside the 0.27 cell margin. */
+const aventurineSupport = 0.25
 /** Jitter range [min, min + span] of the aventurine platelet center within its cell. */
 const aventurineJitter = [0.27, 0.46] as const
 /** Imperial Jingtai Lan Cloisonné & Ginbari Guilloché Enamel lattice: Partitioned into 8-petaled lotus medallions, inner cusped corollas, central ruby cabochon bosses, and cloud-scroll corner cartouches separated by flat-topped 24k gold filigree wire walls (cloisons). */
@@ -88,24 +88,32 @@ function aventurineSparks(position: Node<'vec3'>, view: Node<'vec3'>, depth: num
   const rnd2 = cellNoiseVec3(cell.add(vec3(31.7, 17.3, 59.1)))
   const center = rnd.mul(aventurineJitter[1]).add(aventurineJitter[0])
   const d = q.fract().sub(center)
+// Each platelet lies in the enamel plane. Before, it was a block aligned to the object axes, and the curved tube cut it at arbitrary angles into rectangles and parallelograms.
+  const normal = normalGeometry.normalize()
+  const tangent = tangentGeometry.xyz.sub(normal.mul(tangentGeometry.xyz.dot(normal))).normalize()
+  const across = d.dot(normal)
+  const along = vec2(d.dot(tangent), d.dot(normal.cross(tangent)))
   const rot = rnd2.x.mul(TAU)
   const c = rot.cos()
   const s = rot.sin()
-  const rx = d.x.mul(c).sub(d.y.mul(s))
-  const ry = d.x.mul(s).add(d.y.mul(c))
-// Triangular/hexagonal copper platelet crystal silhouette strictly bounded inside its cell.
-  const hexDist = rx.abs().max(ry.abs()).max(rx.add(ry).abs().mul(0.72)).max(d.z.abs().mul(1.15))
+  const rx = along.x.mul(c).sub(along.y.mul(s))
+  const ry = along.x.mul(s).add(along.y.mul(c))
+// Polygon gauges scaled to the circumradius, so a value of ρ never reaches farther than ρ from the center.
+  const hexagon = rx.abs().max(rx.mul(0.5).add(ry.mul(0.866)).abs()).max(rx.mul(0.5).sub(ry.mul(0.866)).abs()).mul(2 / Math.sqrt(3))
+  const triangle = ry.max(rx.mul(0.866).sub(ry.mul(0.5))).max(rx.mul(-0.866).sub(ry.mul(0.5))).mul(2)
+  const polygon = select(rnd2.y.lessThan(0.4), triangle, hexagon)
+// A polygonal lens: any slice parallel to the surface is the whole polygon, only scaled by √(ρ² − across²), and the body stays inside a sphere of radius ρ.
+  const lensDist = polygon.pow2().add(across.pow2()).sqrt()
   const footprint = q.fwidth().length().max(0.001)
   const visibility = footprint.smoothstep(0.32, 1.15).oneMinus()
 // Ensure the crystal radius expands slightly with screen-space footprint so glints never vanish sub-pixel in `angle_0`!
-  const baseRadius = rnd.z.mul(0.075).add(0.11)
+  const baseRadius = rnd.z.mul(0.08).add(0.13)
   const radius = baseRadius.max(footprint.mul(0.65))
   const aa = footprint.mul(0.85).max(0.018)
-// The uncut corners of the rotated platelet reach √2 × hexDist from its center, which is jittered at least 0.27 from every cell wall.
-// Capping the outer edge at 0.19 keeps the whole platelet, antialiasing included, inside the cell; otherwise the walls cut it into squares.
+// The center is jittered at least 0.27 from every cell wall; capping the outer edge below that keeps the whole platelet, antialiasing included, inside its cell, so no wall can cut it.
   const outer = radius.add(aa.mul(0.5)).min(aventurineSupport)
   const inner = radius.sub(aa).min(outer.sub(0.02))
-  const crystal = hexDist.smoothstep(inner, outer).oneMinus()
+  const crystal = lensDist.smoothstep(inner, outer).oneMinus()
   const gate = rnd.x.smoothstep(threshold, Math.min(threshold + 0.08, 0.99))
   const plateletNormal = rnd2.sub(0.5).mul(2).normalize()
 // Dual-lobe copper glint: ultra-sharp Dirac flash + broader warm copper reflection so crystals read across all gallery angles.
