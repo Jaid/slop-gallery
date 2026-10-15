@@ -27,7 +27,8 @@
   "devDependencies": {
     "fs-extra": "11.4.1",
     "terser": "5.51.2",
-    "vite": "8.3.4"
+    "vite": "8.3.4",
+    "@types/fs-extra": "11.0.4"
   },
   "workspaces": [
     "packages/*",
