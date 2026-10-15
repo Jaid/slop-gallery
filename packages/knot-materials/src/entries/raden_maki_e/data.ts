@@ -13,7 +13,7 @@ export default {
       effortLevel: 'medium',
     },
   },
-  displacement: 0.008,
+  displacement: 0.002,
   flavorText: 'Midnight urushi lacquer conceals rivers of gold dust and inlaid mother-of-pearl. Lean close and Seigaiha ocean crests shimmer with nacreous fire.',
   placeholder: {
     color: '#3d3530',
