@@ -34,6 +34,8 @@ function AnnouncerButton({index, sample, priority = announcerSamplePriority, pri
     }
     return registerInteractiveObject(priorityDemo ? `announcer-priority-${priority}` : `announcer-sample-${sample.id}`, {
       group: group.current,
+      action: 'Play',
+      title: priorityDemo ? `${sample.label} (priority ${priority})` : `${sample.label} announcement`,
       activate: () => {
         const muted = !useGallery.getState().sound
         notify(`${priorityDemo ? `Priority ${priority} · ${sample.label}` : `Announcer · ${sample.label}`}${muted ? ' · audio muted' : ''}`)

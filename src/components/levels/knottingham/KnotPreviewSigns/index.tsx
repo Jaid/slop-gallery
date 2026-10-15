@@ -53,7 +53,7 @@ export default function KnotPreviewSign({bay, renderer}: {
     map: texture,
     toneMapped: false,
   }), [texture]))
-  return <InteractiveObject id={`preview-${bay.candidate.id}`} name={`preview-${bay.candidate.id}`} position={[knotPreviewX, knotPreviewMountY, 0]} rotation={[0, Math.PI / 2, 0]} onActivate={() => narrate(`preview-${bay.candidate.id}`)}>
+  return <InteractiveObject id={`preview-${bay.candidate.id}`} action='Listen' name={`preview-${bay.candidate.id}`} position={[knotPreviewX, knotPreviewMountY, 0]} rotation={[0, Math.PI / 2, 0]} title={`${bay.candidate.title} billboard`} onActivate={() => narrate(`preview-${bay.candidate.id}`)}>
     <RigidBody additionalSolverIterations={knotBillboardPhysics.solverIterations} angularDamping={knotBillboardPhysics.stand.angularDamping} ccd colliders={false} linearDamping={knotBillboardPhysics.stand.linearDamping} name='billboard-stand'>
       <Stand />
     </RigidBody>

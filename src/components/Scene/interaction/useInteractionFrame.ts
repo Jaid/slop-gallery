@@ -9,12 +9,13 @@ import {cameraPose, dragPose, findPlacement, narrate, roomAt, setCameraFocused, 
 import {interactiveObjects} from '#src/lib/gallery/interactiveObjects.ts'
 import {isPortraitLabelHit} from '#src/lib/gallery/portraitLabel.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
+import interactionHint from '#src/lib/interactionHint.ts'
 import {isGallery} from '#src/lib/level.ts'
 
 import {propObjects} from '../GrabbableProp.tsx'
+import {describeHeld, describeTarget} from './describeTarget.ts'
 
 const up = new Vector3(0, 1, 0)
-
 export default function useInteractionFrame(camera: RootState['camera'], renderer: RootState['renderer'], {
   cursor,
   direction,
@@ -103,6 +104,7 @@ export default function useInteractionFrame(camera: RootState['camera'], rendere
     } else if (s.activeLabel) {
       useGallery.setState({activeLabel: null})
     }
+    updateHint()
     if (!isGallery || !ghost.current) {
       return
     }
@@ -123,4 +125,19 @@ export default function useInteractionFrame(camera: RootState['camera'], rendere
       ghost.current.rotation.set(0, candidate.rotation, 0)
     }
   })
+}
+
+/** Feeds the debounced HUD hint from the target resolved this frame. */
+function updateHint() {
+  const s = useGallery.getState()
+  const now = performance.now() / 1000
+  if (!s.locked || s.panel || s.dragging || cameraPose.focused) {
+    interactionHint.update(null, now, true)
+    return
+  }
+  if (s.held) {
+    interactionHint.update(describeHeld(s.held, s.portraits), now, true)
+    return
+  }
+  interactionHint.update(describeTarget(s.active, s.portraits), now)
 }
