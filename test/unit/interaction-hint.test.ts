@@ -156,6 +156,64 @@ describe('hint debouncing', () => {
     unsubscribe()
     expect(updates).toBe(0)
   })
+  test('suppression hides a shown hint without forgetting its target and restores it without a new dwell', () => {
+    const hint = new InteractionHint({
+      dwell: 0.3,
+      grace: 0.15,
+    })
+    hint.update(sign, 0)
+    hint.update(sign, 0.3)
+    hint.setSuppressed(true)
+    expect(hint.getSnapshot()).toEqual({
+      content: sign,
+      visible: false,
+    })
+    hint.update(sign, 1)
+    expect(hint.getSnapshot().visible).toBe(false)
+    hint.setSuppressed(false)
+    expect(hint.getSnapshot()).toEqual({
+      content: sign,
+      visible: true,
+    })
+  })
+  test('targets keep being tracked while suppressed', () => {
+    const hint = new InteractionHint({
+      dwell: 0.3,
+      grace: 0.15,
+    })
+    hint.setSuppressed(true)
+    hint.update(knot, 0)
+    hint.update(knot, 0.3)
+    expect(hint.getSnapshot()).toEqual({
+      content: knot,
+      visible: false,
+    })
+    hint.update(null, 0.4)
+    hint.update(null, 0.6)
+    hint.setSuppressed(false)
+    expect(hint.getSnapshot().visible).toBe(false)
+    hint.setSuppressed(true)
+    hint.update(sign, 0.7)
+    hint.setSuppressed(false)
+    expect(hint.getSnapshot().visible).toBe(false)
+    hint.update(sign, 1)
+    expect(hint.getSnapshot()).toEqual({
+      content: sign,
+      visible: true,
+    })
+  })
+  test('repeated suppression changes do not notify', () => {
+    const hint = new InteractionHint
+    hint.update(sign, 0, true)
+    let updates = 0
+    const unsubscribe = hint.subscribe(() => updates++)
+    hint.setSuppressed(true)
+    hint.setSuppressed(true)
+    hint.setSuppressed(false)
+    hint.setSuppressed(false)
+    unsubscribe()
+    expect(updates).toBe(2)
+  })
   test('immediate updates skip both delays', () => {
     const hint = new InteractionHint({
       dwell: 0.3,

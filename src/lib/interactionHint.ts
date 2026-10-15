@@ -30,7 +30,8 @@ const sameContent = (a: HintContent, b: HintContent) => a.id === b.id && a.title
 /**
  * Debounces the aimed target into a HUD hint. A target has to stay aimed for `dwell` seconds before its hint appears, so
  * sweeping the view across objects does not flash a hint for each of them. A shown hint survives losing its target for
- * `grace` seconds, so aiming jitter at an object’s edge does not make it blink.
+ * `grace` seconds, so aiming jitter at an object’s edge does not make it blink. While suppressed, for example during zoom,
+ * the hint stays hidden but keeps tracking targets, so it reappears without a new dwell once the suppression ends.
  */
 export class InteractionHint {
   readonly dwell: number
@@ -54,12 +55,23 @@ export class InteractionHint {
     visible: false,
   }
 
+  private suppressed = false
+
   constructor({dwell = 0.3, grace = 0.15}: {
     dwell?: number
     grace?: number
   } = {}) {
     this.dwell = dwell
     this.grace = grace
+  }
+
+  /** Hides the hint without affecting target tracking or the controls themselves. */
+  setSuppressed(suppressed: boolean) {
+    if (suppressed === this.suppressed) {
+      return
+    }
+    this.suppressed = suppressed
+    this.refresh()
   }
 
   /**
@@ -97,17 +109,20 @@ export class InteractionHint {
   private hide() {
     this.shown = null
     this.lostSince = null
-    this.publish({
-      content: this.snapshot.content,
-      visible: false,
-    })
+    this.refresh()
   }
 
-  private publish(snapshot: HintSnapshot) {
-    if (snapshot.content === this.snapshot.content && snapshot.visible === this.snapshot.visible) {
+  /** Publishes the current state; a hidden hint keeps its last content for the exit animation. */
+  private refresh() {
+    const content = this.shown ?? this.snapshot.content
+    const visible = this.shown !== null && !this.suppressed
+    if (content === this.snapshot.content && visible === this.snapshot.visible) {
       return
     }
-    this.snapshot = snapshot
+    this.snapshot = {
+      content,
+      visible,
+    }
     for (const listener of this.listeners) {
       listener()
     }
@@ -116,10 +131,7 @@ export class InteractionHint {
   private show(target: HintContent) {
     this.shown = target
     this.lostSince = null
-    this.publish({
-      content: target,
-      visible: true,
-    })
+    this.refresh()
   }
 }
 
