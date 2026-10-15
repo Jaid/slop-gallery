@@ -8,7 +8,6 @@ export type GalleryLevel = LevelId
 export const galleryLevel = (import.meta.env.GAME_LEVEL ?? 'gallery') as GalleryLevel
 export const isGallery = galleryLevel === 'gallery'
 export const isKnottingham = galleryLevel === 'knottingham'
-export const isSoundboard = galleryLevel === 'soundboard'
 const level = levels[galleryLevel]
 export const galleryTitle = level.title
 export const galleryStorageKey = level.storageKey

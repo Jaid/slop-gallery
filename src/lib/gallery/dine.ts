@@ -13,7 +13,7 @@ export const dineCeilingUnderside = 5.78 - 0.18 / 2
  * Knottingham LED panes in a 2 × 3 grid, symmetric about the room center. The offsets leave about 1.9 m to the
  * side walls, 1.6 m to the end walls and 2.6–2.9 m between neighboring housings.
  */
-export const dineLedGrid = {
+const dineLedGrid = {
   x: [-2.75, 2.75],
   z: [-5, 0, 5],
 }

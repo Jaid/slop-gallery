@@ -28,7 +28,7 @@ export const announcerSamples = [
   },
 ] as const
 
-export const announcerPrioritySamples = [
+const announcerPrioritySamples = [
   {
     ...announcerPrioritySampleDefinitions[0],
     audio: geminiFlashAudio,
@@ -53,4 +53,4 @@ export const announcerPriorityDemos = announcerPriorityDemoDefinitions.map(({pri
   title,
 }))
 
-export {announcerPriorityModes, announcerSamplePriority} from './announcerCatalog.ts'
+export {announcerSamplePriority} from './announcerCatalog.ts'

@@ -20,7 +20,7 @@ const normalizeBoolean = (fallback: boolean) => (value: unknown) => {
 }
 const normalizeString = (fallback: string) => (value: unknown) => (typeof value === 'string' ? value : fallback)
 
-export const aiSettingsSchema = optis({
+const aiSettingsSchema = optis({
   defaults,
   normalizations: {
     ai: normalizeBoolean(defaults.ai),

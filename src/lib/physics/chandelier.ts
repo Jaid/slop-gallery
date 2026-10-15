@@ -11,7 +11,7 @@ export const chandelierPhysics = {
   pendantMass: 0.08,
 }
 
-export const chandelierStem = {
+const chandelierStem = {
   top: chandelierPhysics.anchor[1] + 0.05,
   bottom: 0.1,
 }

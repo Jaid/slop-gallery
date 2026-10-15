@@ -161,7 +161,7 @@ export function setApiKey(key: string) {
   useGallery.setState({apiKey: key})
 }
 
-export function changeHistory(redone = false) {
+function changeHistory(redone = false) {
   galleryEvents.dispatchEvent(new Event('cancel-interaction'))
   galleryEvents.dispatchEvent(new Event('cancel-view'))
   if (redone ? redo() : undo()) {

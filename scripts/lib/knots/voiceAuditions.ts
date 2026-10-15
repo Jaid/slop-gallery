@@ -88,7 +88,7 @@ export const voiceAuditions = [
 
 export type VoiceAudition = typeof voiceAuditions[number]
 
-export function auditionInput(character: string, text: string) {
+function auditionInput(character: string, text: string) {
   return `Read aloud in this voice: ${character}\n\nSay exactly: ${text}`
 }
 

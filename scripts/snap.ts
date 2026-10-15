@@ -11,7 +11,7 @@ import {createServer} from 'vite'
 
 import {defaultLevel, levelIds} from '#src/data/levels.ts'
 
-import {lossyJxlOptions} from './lib/images/encodeJxl.ts'
+import {lossyJxlOptions} from 'knot-materials/scripts/lib/encodeJxl.ts'
 
 const help = `Usage: bun scripts/snap.ts [options]
 

@@ -7,7 +7,7 @@ export function signSupportMaterial(isHeavy: boolean) {
 }
 
 /** Satin stainless steel: fine vertical brushing and a lathe-turned circular foot. */
-export default class SignMetalMaterial extends MeshPhysicalNodeMaterial {
+class SignMetalMaterial extends MeshPhysicalNodeMaterial {
   constructor() {
     super({
       metalness: 1,

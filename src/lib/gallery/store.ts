@@ -50,7 +50,7 @@ type State = GallerySettings & GallerySnapshot & {
   update: (id: string, patch: Partial<Portrait>) => void
 }
 
-export function cleanPortrait(p: Portrait): Portrait {
+function cleanPortrait(p: Portrait): Portrait {
   return {
     ...p,
     pending: false,

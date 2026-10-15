@@ -9,8 +9,6 @@ import {attachNarration} from './audio/narration.ts'
 import SoundEngine from './audio/SoundEngine.ts'
 import {galleryEvents, notify, useGallery} from './gallery.ts'
 
-export {aiSettingsSchema, readAiSettings} from './ai/settings.ts'
-
 export default function useGalleryAI() {
   useEffect(attachNarration, [])
   const [params, setParamsState] = useState<AiSettings>(() => readAiSettings())

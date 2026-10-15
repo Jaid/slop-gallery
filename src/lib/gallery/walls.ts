@@ -12,7 +12,7 @@ import portraitLabel, {portraitLabelLayout} from './portraitLabel.ts'
 import staircase, {insideStairway, stairFlights, stairFloorHeight, stairTurn} from './staircase.ts'
 import {tunnelDisplayWindow} from './tunnelDisplays.ts'
 
-export const placementReach = 10
+const placementReach = 10
 
 export type WallOpening = {
   bottom?: number

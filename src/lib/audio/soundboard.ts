@@ -9,8 +9,7 @@ export const soundboardLayout = new SoundboardLayout({
 })
 export const soundboardBounds = soundboardLayout.bounds
 export const soundboardSize = soundboardLayout.size
-export const soundboardCenter: Vec3 = [0, 0, 0]
-export const soundboardGroundSurfaces = ['generic', 'hollow', 'glass', 'fabric'] as const
+const soundboardGroundSurfaces = ['generic', 'hollow', 'glass', 'fabric'] as const
 const soundboardGroundWidth = soundboardSize[0] / soundboardGroundSurfaces.length
 export const soundboardGroundStripes = soundboardGroundSurfaces.map((surface, index) => ({
   surface,
