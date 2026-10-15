@@ -23,10 +23,10 @@ function flake(point: Node<'vec2'>, phase: Node<'float'>, footprint: Node<'float
   const local = q.fract().sub(0.5)
   const randomPhase = cell.x.mul(17.13).add(cell.y.mul(9.71)).sin().mul(43_758.55).fract()
   const radius = randomPhase.mul(0.14).add(0.25)
-  const flake = local.length().smoothstep(radius, radius.add(footprint.mul(1.4))).oneMinus()
+  const flakeMask = local.length().smoothstep(radius, radius.add(footprint.mul(1.4))).oneMinus()
   const resolved = footprint.smoothstep(0.05, 0.3).oneMinus()
   return {
-    flake: flake.mul(resolved),
+    flake: flakeMask.mul(resolved),
     randomPhase,
   }
 }

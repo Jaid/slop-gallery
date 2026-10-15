@@ -87,7 +87,7 @@ export default async function makePrompt({candidate, count = 8, ...sampling}: Pr
     await context.add(`src/entries/${entry.id}/data.ts`)
     await context.add(`src/entries/${entry.id}/Material.ts`)
   }
-  const exampleFiles = [...context.files.keys()].filter(file => !authoringFiles.has(file))
+  const exampleFiles = context.files.keys().filter(file => !authoringFiles.has(file)).toArray()
   const exampleSource = context.markdown(exampleFiles)
   const importable = [...authoringFiles].filter(file => file.startsWith('src/lib/') || file.startsWith('src/candidates/')).map(file => `- \`../../${file.slice(4)}\``).join('\n')
   const reserved = knots.map(entry => entry.id).toSorted().join(', ')

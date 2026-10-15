@@ -1,19 +1,19 @@
 import type {DataTexture} from 'three/webgpu'
 
 import {expect, test} from 'bun:test'
-import {mkdtemp, rm, writeFile} from 'node:fs/promises'
 import {join} from 'node:path'
 import {pathToFileURL} from 'node:url'
 
+import fs from 'fs-extra'
 import {build} from 'vite'
 
 import bakeTextures from '../src/main.ts'
 
 test('Vite removes the pixel generator while retaining dynamic sampling and fresh texture ownership', async () => {
-  const directory = await mkdtemp(join(import.meta.dirname, 'build-'))
+  const directory = await fs.mkdtemp(join(import.meta.dirname, 'build-'))
   const originalFetch = globalThis.fetch
   try {
-    await writeFile(join(directory, 'entry.ts'), `
+    await fs.writeFile(join(directory, 'entry.ts'), `
       import {DataTexture, RepeatWrapping} from 'three/webgpu'
       export class Pixels {
         constructor() {
@@ -67,7 +67,7 @@ test('Vite removes the pixel generator while retaining dynamic sampling and fres
       return new Response(file.source as Uint8Array<ArrayBuffer>)
     }) as typeof fetch
     const file = join(directory, 'output.mjs')
-    await writeFile(file, code)
+    await fs.writeFile(file, code)
     type Pixels = {
       dispose: () => void
       map: DataTexture
@@ -90,16 +90,16 @@ test('Vite removes the pixel generator while retaining dynamic sampling and fres
     expect(disposed).toBe(true)
   } finally {
     globalThis.fetch = originalFetch
-    await rm(directory, {
+    await fs.rm(directory, {
       recursive: true,
       force: true,
     })
   }
 })
 test('Vite freezes free randomness only when explicitly allowed', async () => {
-  const directory = await mkdtemp(join(import.meta.dirname, 'random-build-'))
+  const directory = await fs.mkdtemp(join(import.meta.dirname, 'random-build-'))
   try {
-    await writeFile(join(directory, 'entry.ts'), `
+    await fs.writeFile(join(directory, 'entry.ts'), `
       import {DataTexture} from 'three/webgpu'
       export function randomTexture() {
         const data = new Uint8Array([Math.floor(Math.random() * 256), 0, 0, 255])
@@ -138,7 +138,7 @@ test('Vite freezes free randomness only when explicitly allowed', async () => {
     const chunk = frozen.find(item => item.type === 'chunk')
     expect(chunk?.type === 'chunk' ? chunk.code : '').not.toContain('Math.random')
   } finally {
-    await rm(directory, {
+    await fs.rm(directory, {
       recursive: true,
       force: true,
     })

@@ -73,8 +73,8 @@ export function audioFile<T extends object = Record<string, never>>(reference: A
           state.wanted = true
           const startVersion = ++state.version
           await audio!.play()
-          // A stale start may resolve after pause/disposal. Do not let it resurrect output.
-          if (startVersion !== state.version && !state.wanted) {
+          // A stale start may resolve after pause/disposal. Do not let it resurrect output. pause() can reset wanted meanwhile, which the narrowing from the assignment above cannot see.
+          if (startVersion !== state.version && !(state.wanted as boolean)) {
             audio!.pause()
           }
         },

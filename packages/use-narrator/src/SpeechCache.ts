@@ -65,12 +65,13 @@ export default class SpeechCache implements Disposable {
         }
         return true
       }
-      const abort = () => {
+      // Function declarations, because release() above already removes these listeners.
+      function abort() {
         if (release()) {
           reject(signal.reason)
         }
       }
-      const sharedAbort = () => {
+      function sharedAbort() {
         if (release()) {
           reject(shared.controller.signal.reason)
         }

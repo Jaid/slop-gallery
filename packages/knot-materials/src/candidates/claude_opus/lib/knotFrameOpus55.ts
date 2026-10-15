@@ -17,7 +17,14 @@ export function knotFrame(tube: Node<'vec2'>) {
   const frameNormal = binormal.cross(tangent).normalize()
   const around = tube.y.mul(TAU)
   const normal = frameNormal.mul(around.cos().negate()).add(binormal.mul(around.sin()))
-  return {binormal, center, frameNormal, normal, position: center.add(normal.mul(knotTubeRadius)),
-/** centerline length per unit of `uv().x` */
-    speed: tangent.length().mul(TAU * 2 / frameStep), tangent: tangent.normalize()}
+  return {
+    binormal,
+    center,
+    frameNormal,
+    normal,
+    position: center.add(normal.mul(knotTubeRadius)),
+    /** centerline length per unit of `uv().x` */
+    speed: tangent.length().mul(TAU * 2 / frameStep),
+    tangent: tangent.normalize(),
+  }
 }

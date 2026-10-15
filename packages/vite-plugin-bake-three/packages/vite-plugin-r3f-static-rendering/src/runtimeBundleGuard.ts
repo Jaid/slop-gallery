@@ -8,7 +8,8 @@ const id = (value: object | null | undefined) => {
   }
   let result = ids.get(value)
   if (result === undefined) {
-    result = nextId++; ids.set(value, result)
+    result = nextId++
+    ids.set(value, result)
   }
   return result
 }
@@ -22,7 +23,8 @@ const cache = new WeakMap<WebGPURenderer, WeakMap<Scene, {
 export function bundleSignature(scene: Scene, renderer: WebGPURenderer, frame: number) {
   let scenes = cache.get(renderer)
   if (!scenes) {
-    scenes = new WeakMap; cache.set(renderer, scenes)
+    scenes = new WeakMap
+    cache.set(renderer, scenes)
   }
   const previous = scenes.get(scene)
   const calls = renderer.info.calls

@@ -21,7 +21,8 @@ function fixture() {
   }
   const renderer = fields as unknown as WebGPURenderer
   const next = () => {
-    fields.info.calls++; return bundleSignature(scene, renderer, fields.info.calls)
+    fields.info.calls++
+    return bundleSignature(scene, renderer, fields.info.calls)
   }
   return {
     scene,
@@ -34,7 +35,9 @@ test('invalidates bundles for light topology, visibility, shadow and render-sett
   const {scene, fields, next} = fixture()
   let last = next()
   const changed = () => {
-    const value = next(); expect(value).not.toBe(last); last = value
+    const value = next()
+    expect(value).not.toBe(last)
+    last = value
   }
   const light = new PointLight
   scene.add(light)
@@ -75,7 +78,8 @@ test('stable uniform values do not force bundle re-recording and scans are share
   const traverse = scene.traverseVisible.bind(scene)
   let scans = 0
   scene.traverseVisible = callback => {
-    scans++; traverse(callback)
+    scans++
+    traverse(callback)
   }
   fields.info.calls++
   bundleSignature(scene, renderer, fields.info.calls)

@@ -336,6 +336,8 @@ const whiskerRoots: Array<{
     to: [1.22, -0.58],
   },
 ]
+/** Order-independent key of the edge between two vertex indices. */
+const edgeKey = (a: number, b: number) => (a < b ? `${a}:${b}` : `${b}:${a}`)
 class CatMesh {
   readonly edges: Array<CatEdge> = []
   readonly faces: Array<CatFace> = []
@@ -401,11 +403,12 @@ class CatMesh {
   }
   /** split a face into counter-clockwise triangles for point-in-face tests */
   triangles(face: CatFace): Array<[number, number, number]> {
-    const [a, b, c, d] = face.indices
+    const [a, b, c] = face.indices
+    const d = face.indices.at(3)
     return d === undefined ? [[a, b, c]] : [[a, b, c], [a, c, d]]
   }
   private addFace(group: CatFaceGroup, indices: Array<number>) {
-    const ordered = this.area(indices) < 0 ? [...indices].reverse() : indices
+    const ordered = this.area(indices) < 0 ? indices.toReversed() : indices
     this.faces.push({
       group,
       indices: ordered,
@@ -413,11 +416,10 @@ class CatMesh {
   }
   private buildEdges() {
     const uses = new Map<string, number>
-    const key = (a: number, b: number) => (a < b ? `${a}:${b}` : `${b}:${a}`)
     for (const face of this.faces) {
       for (const [k, a] of face.indices.entries()) {
         const b = face.indices[(k + 1) % face.indices.length]
-        uses.set(key(a, b), (uses.get(key(a, b)) ?? 0) + 1)
+        uses.set(edgeKey(a, b), (uses.get(edgeKey(a, b)) ?? 0) + 1)
       }
     }
     for (const [id, count] of uses) {
@@ -599,26 +601,26 @@ function buildBins(keyOf: (vertex: CatVertex) => number) {
         maxX: binDomain.minX + (column + 1) * width,
         maxY: binDomain.minY + (row + 1) * height,
       }
-      const vertices = vertexBoxes.flatMap((vertexBox, vertex) => (overlaps(box, vertexBox) ? [vertex] : []))
+      const vertices = vertexBoxes.flatMap((vertexBox, vertex) => (overlaps(box, vertexBox) ? vertex : []))
       const edges = catMesh.edges.flatMap((edge, index) => {
         if (!overlaps(box, edgeBoxes[index])) {
           return []
         }
         const [from, to] = keyOf(catMesh.vertices[edge.a]) <= keyOf(catMesh.vertices[edge.b]) ? [edge.a, edge.b] : [edge.b, edge.a]
-        return [{
+        return {
           from,
           to,
           outline: edge.outline,
-        }]
+        }
       })
       const faces = catMesh.faces.flatMap((face, index) => {
         if (!overlaps(box, faceBoxes[index])) {
           return []
         }
-        return [{
+        return {
           corners: [face.indices[0], face.indices[1], face.indices[2], face.indices[3] ?? face.indices[2]] as [number, number, number, number],
           face: index,
-        }]
+        }
       })
       bins.push({
         vertices,
@@ -908,7 +910,7 @@ type Corner = {
 }
 /** One living constellation cat, built from the cat mesh. Every vertex is a star that blinks, twitches and turns toward the viewer; every edge is a thread of light; every face is a facet with its own normal. The whole figure periodically dissolves into drifting stardust while its eyes stay behind, then redraws itself from the eyes outward. Performance: breathing and the head turn warp the fragment instead of the vertices, so a settled cat only needs the few mesh elements of the bin the fragment falls into (see catBins.ts). Only cats in the middle of dissolving or reassembling walk the whole mesh. */
 function constellation(input: ConstellationInput) {
-  const {p: surface, footprint, look, viewer, gaze, seeds: [s1, s2, s3, s4], cycle, closeness, detail, sleep, dilation} = input
+  const {p: surfacePoint, footprint, look, viewer, gaze, seeds: [s1, s2, s3, s4], cycle, closeness, detail, sleep, dilation} = input
   // --- per-cat life: breathing, blinking, ear twitches
   // Per-cat values are pinned in variables: the loops below would otherwise recompute them for every mesh element.
   const breath = time.mul(1.7).add(s3.x.mul(TAU)).sin().mul(0.014).toVar()
@@ -993,7 +995,7 @@ function constellation(input: ConstellationInput) {
     }
   }
   const figure = Fn(() => { // Undo breathing and the head turn on the fragment: the rest pose is what the tables describe.
-    const relaxed = surface.sub(vec2(...breathingCenter)).div(breath.add(1)).add(vec2(...breathingCenter))
+    const relaxed = surfacePoint.sub(vec2(...breathingCenter)).div(breath.add(1)).add(vec2(...breathingCenter))
     const p = relaxed.sub(look.mul(reliefAt(relaxed.sub(look.mul(reliefAt(relaxed)))))).toVar()
     const settled = step(settledCycle, cycle)
     const cell = p.sub(vec2(binDomain.minX, binDomain.minY)).div(vec2((binDomain.maxX - binDomain.minX) / binDomain.columns, (binDomain.maxY - binDomain.minY) / binDomain.rows)).floor()
@@ -1090,22 +1092,23 @@ function constellation(input: ConstellationInput) {
           const corner = cornerAt(int(value))
           return vec3(corner.live, corner.shape.z)
         })
-        const inside = sideOf(p, a.xy, b.xy).min(sideOf(p, b.xy, c.xy)).min(sideOf(p, c.xy, d.xy).min(sideOf(p, d.xy, a.xy)))
+        const insideDistance = sideOf(p, a.xy, b.xy).min(sideOf(p, b.xy, c.xy)).min(sideOf(p, c.xy, d.xy).min(sideOf(p, d.xy, a.xy)))
         // Cross product of the diagonals: the quad’s mean normal, and exactly the triangle normal when d repeats c.
         const tilt = c.sub(a).cross(d.sub(b))
         const style = tableRow(int(tableRow(row.add(1)).x).add(styleRows))
-        const better = step(bestInside, inside)
+        const better = step(bestInside, insideDistance)
         bestNormal.assign(mix(bestNormal, tilt, better))
         bestTone.assign(mix(bestTone, style.x, better))
         bestBlush.assign(mix(bestBlush, style.y, better))
         bestFaceSeed.assign(mix(bestFaceSeed, style.z, better))
-        bestInside.assign(bestInside.max(inside))
+        bestInside.assign(bestInside.max(insideDistance))
       }))
     }
     // A settled cat skips everything about dissolving and reassembling.
     If(settled.greaterThan(0.5), () => walk(rest, () => {}, rest)).Else(() => {
       const cache = array('vec4', vertexCount).toVar()
       const cached = (vertex: Node<'int'>) => (cache as unknown as {element: (at: Node<'int'>) => Node<'vec4'>}).element(vertex)
+      // No thread is visible between the moment they fade and the first one being drawn; facets only exist once the figure is filled.
       walk(animate, (vertex, animated) => {
         cached(vertex).assign(vec4(animated.live, animated.shape.zw))
       }, vertex => {
@@ -1114,9 +1117,7 @@ function constellation(input: ConstellationInput) {
           live: corner.xy,
           shape: vec4(0, 0, corner.zw),
         }
-      },
-      // No thread is visible between the moment they fade and the first one being drawn; facets only exist once the figure is filled.
-      step(0.01, cycle).mul(step(cycle, 0.061)).oneMinus(), step(0.001, fillOn))
+      }, step(0.01, cycle).mul(step(cycle, 0.061)).oneMinus(), step(0.001, fillOn))
     })
     // --- threads and stars
     const innerWeight = detail.mul(0.52).add(0.1)
@@ -1215,14 +1216,36 @@ function constellation(input: ConstellationInput) {
     return Figure(head, normal.mul(head).add(vec3(0, 0, head.oneMinus())), facetShade, facetGlint, head.mul(bestBlush), lines, glow, purrLight, pens, stars, halos, iris, irisCore, limbus, pupils.clamp(), catchlights, eyeGlow, whiskers.mul(detail.mul(0.8).add(0.2)), surfaceEar(earLeft), surfaceEar(earRight))
   })()
   const get = <Type extends 'float' | 'vec2' | 'vec3'>(name: string) => figure.get(name) as unknown as Node<Type>
-  return {head: get<'float'>('head'), normal: get<'vec3'>('normal'), facetShade: get<'float'>('facetShade'), facetGlint: get<'float'>('facetGlint'), blush: get<'float'>('blush'), lines: get<'float'>('lines'), glow: get<'float'>('glow'), purr: get<'float'>('purr'), pens: get<'float'>('pens'), stars: get<'float'>('stars'), halos: get<'float'>('halos'), iris: get<'float'>('iris'), irisCore: get<'float'>('irisCore'), limbus: get<'float'>('limbus'), pupils: get<'float'>('pupils'), catchlights: get<'float'>('catchlights'), eyeGlow: get<'float'>('eyeGlow'), whiskers: get<'float'>('whiskers'), fillOn,
+  return {
+    head: get<'float'>('head'),
+    normal: get<'vec3'>('normal'),
+    facetShade: get<'float'>('facetShade'),
+    facetGlint: get<'float'>('facetGlint'),
+    blush: get<'float'>('blush'),
+    lines: get<'float'>('lines'),
+    glow: get<'float'>('glow'),
+    purr: get<'float'>('purr'),
+    pens: get<'float'>('pens'),
+    stars: get<'float'>('stars'),
+    halos: get<'float'>('halos'),
+    iris: get<'float'>('iris'),
+    irisCore: get<'float'>('irisCore'),
+    limbus: get<'float'>('limbus'),
+    pupils: get<'float'>('pupils'),
+    catchlights: get<'float'>('catchlights'),
+    eyeGlow: get<'float'>('eyeGlow'),
+    whiskers: get<'float'>('whiskers'),
+    fillOn,
     /** threads toward the neighbors grow with the whiskers */
     grown,
     /** live ear tips, where the threads to the neighboring cats are tied */
     ears: {
       left: get<'vec2'>('earLeft'),
       right: get<'vec2'>('earRight'),
-    }, flash, blink}
+    },
+    flash,
+    blink,
+  }
 }
 const lamps = [[0.35, 0.78, 0.52], [-0.62, 0.28, 0.73], [0.1, -0.35, 0.93]] as const
 /** Sparse metal flakes suspended in the lacquer, like maki-e gold dust. Each flake has its own tilt and flashes only when it mirrors one of three fixed view-space lamps toward the viewer, so the field twinkles as you walk past. Flakes smaller than a pixel fade instead of aliasing. `normal` is in object space; `density` is the fraction of lattice cells holding a flake. */
@@ -1376,9 +1399,9 @@ function cellTables({columns, rows}: CellLayout) {
 /** The cell tables as a uniform array: three rows per cell (along + tightest stretch, around, both knots’ height and stretch). */
 function cellTableNode(layout: CellLayout) {
   const {frames, knots} = cellTables(layout)
-  const rows = frames.flatMap((frame, index) => [new Vector4(...frame.along, frame.tightest), new Vector4(...frame.around, 0), new Vector4(...knots[index])])
-  const table = uniformArray(rows, 'vec4') as unknown as {element: (at: Node<'int'>) => Node<'vec4'>}
-  return (cell: Node<'float'>, row: 0 | 1 | 2) => table.element(int(cell).mul(3).add(row))
+  const rows = frames.flatMap((frame, cellIndex) => [new Vector4(...frame.along, frame.tightest), new Vector4(...frame.around, 0), new Vector4(...knots[cellIndex])])
+  const cellTable = uniformArray(rows, 'vec4') as unknown as {element: (at: Node<'int'>) => Node<'vec4'>}
+  return (cell: Node<'float'>, row: 0 | 1 | 2) => cellTable.element(int(cell).mul(3).add(row))
 }
 /** Seconds between two meteors on the same lane, per lane, and the fraction of that period a meteor is in flight. */
 const periods = [9.7, 12.3, 8.1, 14.9] as const
@@ -1386,8 +1409,8 @@ const flightShare = 0.3
 /** How far along the knot (in uv.x) a meteor travels during its flight. */
 const reach = 0.45
 /** A layer of point stars that sits `depth` object units beneath the lacquer, so it slides against the surface as the viewer moves. */
-function starLayer(p: Node<'vec3'>, view: Node<'vec3'>, depth: number, scale: number, threshold: number, seed: number) {
-  const q = p.sub(view.mul(depth)).mul(scale).add(seed)
+function starLayer(p: Node<'vec3'>, view: Node<'vec3'>, depth: number, frequency: number, threshold: number, seed: number) {
+  const q = p.sub(view.mul(depth)).mul(frequency).add(seed)
   const cell = q.floor()
   const random = cellNoiseVec3(cell).toVar()
   const identity = cellNoiseVec3(cell.add(71.3)).toVar()
@@ -1414,9 +1437,13 @@ function nightSky(p: Node<'vec3'>, view: Node<'vec3'>) {
   // Outside the figures only the brightest filaments survive, so the lacquer stays black.
   const nebula = nebulaTint.mul(density.smoothstep(0.35, 0.95).mul(filament.smoothstep(0.5, 0.8)).mul(0.07).add(0.002))
   const stars = starLayer(p, view, 0.035, 95, 0.86, 0).mul(1.6).add(starLayer(p, view, 0.085, 170, 0.9, 13).mul(1.1))
-  return {nebula, density, stars,
+  return {
+    nebula,
+    density,
+    stars,
     /** a far denser field for the inside of the figures – every cat carries a galaxy */
-    galaxy: starLayer(p, view, 0.055, 230, 0.62, 29).mul(1.3)}
+    galaxy: starLayer(p, view, 0.055, 230, 0.62, 29).mul(1.3),
+  }
 }
 /** Shooting stars that streak along the lanes between the rows of cats. Lane k runs along uv.y = k / lanes; each lane launches its own meteor every few seconds at a new place. `head(k)` gives where a lane’s meteor is (in uv) and how visible it is, so the cats can turn to watch it. */
 class Meteors {
@@ -1428,8 +1455,8 @@ class Meteors {
   /** uv position of the meteor head on lane `k` (a float node holding an integer) and its brightness in [0, 1] */
   head(k: Node<'float'>) {
     let period: Node<'float'> = float(periods[0])
-    for (let index = 1;index < this.lanes;index++) {
-      period = k.greaterThan(index - 0.5).select(float(periods[index]), period)
+    for (let lane = 1;lane < this.lanes;lane++) {
+      period = k.greaterThan(lane - 0.5).select(float(periods[lane]), period)
     }
     const cycle = time.div(period).add(k.mul(0.37))
     const launch = cycle.floor()
@@ -1446,11 +1473,11 @@ class Meteors {
       brightness,
     }
   }
-  /** Light of the meteor on the nearest lane at `tube` (uv). `length` and `circumference` convert uv to object units; `footprint` is the size of a pixel in object units. */
-  light(tube: Node<'vec2'>, length: number, circumference: number, footprint: Node<'float'>) {
+  /** Light of the meteor on the nearest lane at `tube` (uv). `tubeLength` and `circumference` convert uv to object units; `footprint` is the size of a pixel in object units. */
+  light(tube: Node<'vec2'>, tubeLength: number, circumference: number, footprint: Node<'float'>) {
     const k = tube.y.mul(this.lanes).round()
-    const {uv, direction, brightness} = this.head(k.mod(this.lanes))
-    const along = tube.x.sub(uv.x).add(0.5).fract().sub(0.5).mul(length).mul(direction)
+    const {uv: headUv, direction, brightness} = this.head(k.mod(this.lanes))
+    const along = tube.x.sub(headUv.x).add(0.5).fract().sub(0.5).mul(tubeLength).mul(direction)
     const across = tube.y.sub(k.div(this.lanes)).mul(circumference)
     const width = footprint.mul(0.8).max(0.0022)
     const energy = float(0.0022).div(width)
@@ -1560,10 +1587,10 @@ export default class extends KnotMaterial {
       const along = head.x.sub(cellU).add(0.5).fract().sub(0.5).mul(knotLength / catScale)
       const across = lane.div(rows).sub(cellV).mul(TAU * tubeRadius / catScale).negate()
       const toward = rotateIn(vec2(along, across).sub(offset)).div(size).sub(vec2(0, catCenterY))
-      const reach = toward.length().max(0.0001)
+      const meteorDistance = toward.length().max(0.0001)
       return {
-        direction: toward.div(reach),
-        attention: brightness.mul(reach.smoothstep(7, 2.5)),
+        direction: toward.div(meteorDistance),
+        attention: brightness.mul(meteorDistance.smoothstep(7, 2.5)),
       }
     }
     const [above, below] = [watch(row), watch(row.add(1))]

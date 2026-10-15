@@ -1,6 +1,6 @@
 import type {ReactNode} from 'react'
 
-import {createContext, useContext} from 'react'
+import {createContext, use} from 'react'
 
 export type GraphicsModeProviderProps = {
   children: ReactNode
@@ -18,7 +18,7 @@ export function GraphicsModeProvider({children, isHeavy, onChange}: GraphicsMode
 
 /** Read whether heavy graphics are enabled without subscribing to the change callback. */
 export default function useGraphicsMode() {
-  const isHeavy = useContext(ModeContext)
+  const isHeavy = use(ModeContext)
   if (isHeavy === null) {
     throw new Error('useGraphicsMode requires a GraphicsModeProvider.')
   }
@@ -32,7 +32,7 @@ useGraphicsMode.getName = (isHeavy: boolean) => {
 
 /** Request a change; the provider’s owner decides when to commit the boolean. */
 export function useSetGraphicsMode() {
-  const onChange = useContext(ChangeContext)
+  const onChange = use(ChangeContext)
   if (onChange === null) {
     throw new Error('useSetGraphicsMode requires a GraphicsModeProvider.')
   }

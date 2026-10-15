@@ -22,6 +22,54 @@ type Raster = TextureOptions & {
 }
 const canvases = new WeakSet<object>
 const owners = new WeakSet<object>
+/** Canvas methods that depend on fonts or images, so recipes calling them stay at runtime. */
+const fontOrImageDependentMethods = new Set<string | symbol>(['fillText', 'strokeText', 'measureText', 'drawImage'])
+
+/** Build-only implementation of the synchronous canvas-textures surface contract. */
+export class ReadbackCanvas {
+  readonly canvas: Canvas
+  readonly context: SKRSContext2D
+  private disposed = false
+
+  constructor(width: number, height: number) {
+    validateSize(width, height)
+    this.canvas = createCanvas(width, height)
+    canvases.add(this.canvas)
+    const context = this.canvas.getContext('2d')
+    this.context = new Proxy(context, {
+      get(target, key): unknown {
+        if (fontOrImageDependentMethods.has(key)) {
+          throw new NotBakeableError('Font/image-dependent canvas recipes remain at runtime.')
+        }
+        const value: unknown = Reflect.get(target, key, target)
+        return typeof value === 'function' ? value.bind(target) : value
+      },
+      set(target, key, value) {
+        return Reflect.set(target, key, value, target)
+      },
+    })
+  }
+
+  dispose() {
+    this.disposed = true
+    this.canvas.width = 0
+    this.canvas.height = 0
+  }
+
+  read(): Pixels {
+    if (this.disposed) {
+      throw new Error('Cannot read a disposed canvas.')
+    }
+    const {width, height} = this.canvas
+    const {data} = this.context.getImageData(0, 0, width, height)
+    return {
+      width,
+      height,
+      data: new Uint8Array(data.buffer, data.byteOffset, data.byteLength),
+    }
+  }
+}
+
 export const ownsCanvas = (value: object) => owners.has(value)
 
 export function textureFromPixels({data, width, height}: Pixels, options: TextureOptions = {}) {
@@ -70,49 +118,4 @@ function configure<T extends Texture>(texture: T, {color = true, mipmaps = true,
   texture.anisotropy = mipmaps ? anisotropy : 1
   texture.needsUpdate = true
   return texture
-}
-
-/** Build-only implementation of the synchronous canvas-textures surface contract. */
-export class ReadbackCanvas {
-  readonly canvas: Canvas
-  readonly context: SKRSContext2D
-  private disposed = false
-
-  constructor(width: number, height: number) {
-    validateSize(width, height)
-    this.canvas = createCanvas(width, height)
-    canvases.add(this.canvas)
-    const context = this.canvas.getContext('2d')
-    this.context = new Proxy(context, {
-      get(target, key): unknown {
-        if (key === 'fillText' || key === 'strokeText' || key === 'measureText' || key === 'drawImage') {
-          throw new NotBakeableError('Font/image-dependent canvas recipes remain at runtime.')
-        }
-        const value: unknown = Reflect.get(target, key, target)
-        return typeof value === 'function' ? value.bind(target) : value
-      },
-      set(target, key, value) {
-        return Reflect.set(target, key, value, target)
-      },
-    })
-  }
-
-  dispose() {
-    this.disposed = true
-    this.canvas.width = 0
-    this.canvas.height = 0
-  }
-
-  read(): Pixels {
-    if (this.disposed) {
-      throw new Error('Cannot read a disposed canvas.')
-    }
-    const {width, height} = this.canvas
-    const {data} = this.context.getImageData(0, 0, width, height)
-    return {
-      width,
-      height,
-      data: new Uint8Array(data.buffer, data.byteOffset, data.byteLength),
-    }
-  }
 }

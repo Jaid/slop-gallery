@@ -22,8 +22,8 @@ test('output byte targets never add a hardware sRGB transfer to the renderer out
 test.skipIf(Bun.env.KNOT_TEST_GPU !== '1')('GPU readback encodes display RGB exactly once, including the ACES preview path', async () => {
   const result = await withPreviewRenderer(handle => handle.evaluate(async () => {
     const probeModuleUrl = new URL('../test/lib/previewOutputProbe.ts', location.href)
-    const {previewOutputProbe} = await import(/* @vite-ignore */ probeModuleUrl.href)
-    return previewOutputProbe() as ReturnType<typeof import('./lib/previewOutputProbe.ts').previewOutputProbe>
+    const {previewOutputProbe} = await import(/* @vite-ignore */ probeModuleUrl.href) as typeof import('./lib/previewOutputProbe.ts')
+    return previewOutputProbe()
   }))
   for (const {value, bytes} of result.samples) {
     const expected = Math.round(255 * (value <= 0.0031308 ? value * 12.92 : 1.055 * value ** (1 / 2.4) - 0.055))

@@ -222,7 +222,8 @@ function sampleChart(chart: Constellation, x: number, y: number): [number, numbe
     if (!(d2 < lineDistanceSquared)) {
       continue
     }
-    lineDistanceSquared = d2; arrival = a.phase + (b.phase - a.phase) * t
+    lineDistanceSquared = d2
+    arrival = a.phase + (b.phase - a.phase) * t
   }
   let starDistance = 2
   let identity = 0
@@ -261,8 +262,10 @@ class StarAtlas extends DataTexture {
     super(data, width, size, RGBAFormat, HalfFloatType)
     this.name = 'The Ninth Sky – graph distance and arrival-time atlas'
     this.colorSpace = NoColorSpace
-    this.wrapS = this.wrapT = ClampToEdgeWrapping
-    this.minFilter = this.magFilter = LinearFilter
+    this.wrapS = ClampToEdgeWrapping
+    this.wrapT = ClampToEdgeWrapping
+    this.minFilter = LinearFilter
+    this.magFilter = LinearFilter
     this.generateMipmaps = false
     this.needsUpdate = true
   }

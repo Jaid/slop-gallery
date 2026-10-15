@@ -30,36 +30,6 @@ const typedArrays: Constructors = {
   BigInt64Array,
   BigUint64Array,
 } as unknown as Constructors
-const textDecoder = new TextDecoder
-const magic = 'BAKE0001'
-
-/** Parse once; every invocation of the returned factory owns a fresh object graph. */
-export function decodeSnapshot(bytes: Uint8Array, constructors: Constructors = {}, codecs: RuntimeCodecs = {}) {
-  const header = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-  if (textDecoder.decode(bytes.subarray(0, 8)) !== magic) {
-    throw new Error('Invalid baked-resource artifact.')
-  }
-  const size = header.getUint32(8, true)
-  const snapshot = JSON.parse(textDecoder.decode(bytes.subarray(12, 12 + size))) as Snapshot
-  const payload = bytes.subarray(Math.ceil((12 + size) / 8) * 8)
-  return (rootConstructor?: Constructor) => {
-    const reader = new SnapshotReader(snapshot, payload, constructors, rootConstructor, codecs)
-    const result = reader.read(snapshot.root)
-    reader.finish()
-    return result
-  }
-}
-
-/** Top-level-await loading keeps original resource constructors synchronous. */
-export async function loadSnapshot(url: string, constructors: Constructors = {}, compressed = true, codecs: RuntimeCodecs = {}) {
-  const response = await fetch(url)
-  if (!response.ok) {
-    throw new Error(`Could not load baked resource (${response.status}): ${url}`)
-  }
-  const decoded = compressed ? new Response(response.body!.pipeThrough(new DecompressionStream('gzip'))) : response
-  return decodeSnapshot(new Uint8Array(await decoded.arrayBuffer()), constructors, codecs)
-}
-
 class SnapshotReader {
   private readonly canvases = new WeakSet<object>
   private readonly objects = new Map<number, object>
@@ -214,4 +184,33 @@ class SnapshotReader {
     }
     return node.prototype ? this.constructors[node.prototype].prototype : Object.prototype
   }
+}
+const textDecoder = new TextDecoder
+const magic = 'BAKE0001'
+
+/** Parse once; every invocation of the returned factory owns a fresh object graph. */
+export function decodeSnapshot(bytes: Uint8Array, constructors: Constructors = {}, codecs: RuntimeCodecs = {}) {
+  const header = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+  if (textDecoder.decode(bytes.subarray(0, 8)) !== magic) {
+    throw new Error('Invalid baked-resource artifact.')
+  }
+  const size = header.getUint32(8, true)
+  const snapshot = JSON.parse(textDecoder.decode(bytes.subarray(12, 12 + size))) as Snapshot
+  const payload = bytes.subarray(Math.ceil((12 + size) / 8) * 8)
+  return (rootConstructor?: Constructor) => {
+    const reader = new SnapshotReader(snapshot, payload, constructors, rootConstructor, codecs)
+    const result = reader.read(snapshot.root)
+    reader.finish()
+    return result
+  }
+}
+
+/** Top-level-await loading keeps original resource constructors synchronous. */
+export async function loadSnapshot(url: string, constructors: Constructors = {}, compressed = true, codecs: RuntimeCodecs = {}) {
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error(`Could not load baked resource (${response.status}): ${url}`)
+  }
+  const decoded = compressed ? new Response(response.body!.pipeThrough(new DecompressionStream('gzip'))) : response
+  return decodeSnapshot(new Uint8Array(await decoded.arrayBuffer()), constructors, codecs)
 }

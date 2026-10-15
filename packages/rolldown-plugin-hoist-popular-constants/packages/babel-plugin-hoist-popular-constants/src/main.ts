@@ -280,6 +280,7 @@ const isStableBuiltinRead = (path: NodePath<t.MemberExpression>) => {
     || ancestor.isObjectPattern()
     || ancestor.isRestElement())
 }
+const generatedStringBytes = (value: string) => Buffer.byteLength(JSON.stringify(value))
 /** Size with the quote style that needs fewer escapes, as chosen by minifiers. */
 const minifiedStringBytes = (value: string) => {
   let doubleQuotes = 0
@@ -489,7 +490,6 @@ type StringDeclarationPlan = {
   mainDeclarators: Array<t.VariableDeclarator>
 }
 
-const generatedStringBytes = (value: string) => Buffer.byteLength(JSON.stringify(value))
 const generatedStringHasEscape = (value: string) => generatedStringBytes(value) > Buffer.byteLength(value) + 2
 const findJoinSeparator = (values: Array<string>) => {
   for (const candidate of joinCandidates) {

@@ -37,7 +37,7 @@ describe('authoring context', () => {
       await fs.outputFile(join(dir, 'lib/unrelated.ts'), 'throw new Error("Do not evaluate or include me")\n')
       const context = new PromptSources(dir)
       await context.add('lib/index.ts')
-      expect([...context.files.keys()].toSorted()).toEqual(['lib/dependency.ts', 'lib/index.ts', 'lib/types.ts', 'lib/used.ts'])
+      expect(context.files.keys().toArray().toSorted()).toEqual(['lib/dependency.ts', 'lib/index.ts', 'lib/types.ts', 'lib/used.ts'])
       expect(context.markdown()).not.toContain('Do not evaluate')
       expect(context.markdown().match(/### lib\/types.ts/g)).toHaveLength(1)
     } finally {

@@ -56,7 +56,7 @@ export default class ThreeStatistics {
     samples: 0,
   }
   private parent?: TraceContext
-  private previousMemory: Record<string, number> = {}
+  private previousMemory: Partial<Record<string, number>> = {}
   private readonly size = new Vector2
   private skipFrame = true
   private readonly slow = new Float64Array(thresholds.length)
@@ -225,8 +225,9 @@ export default class ThreeStatistics {
     const result: Record<string, number> = {'memory.render_targets': memory.renderTargets}
     for (const [key, value] of Object.entries(current)) {
       result[`memory.${key}`] = value
-      if (this.previousMemory[key] !== undefined) {
-        result[`memory.${key}_delta`] = value - this.previousMemory[key]
+      const previousValue = this.previousMemory[key]
+      if (previousValue !== undefined) {
+        result[`memory.${key}_delta`] = value - previousValue
       }
     }
     for (const [key, name] of Object.entries(memoryNames)) {

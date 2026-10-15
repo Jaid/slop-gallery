@@ -1,19 +1,19 @@
 import type {BoxGeometry} from 'three/webgpu'
 
 import {expect, test} from 'bun:test'
-import {mkdtemp, rm, writeFile} from 'node:fs/promises'
 import {join} from 'node:path'
 import {pathToFileURL} from 'node:url'
 
+import fs from 'fs-extra'
 import {build} from 'vite'
 
 import bakeGeometry from '../src/main.ts'
 
 test('Vite specializes class definitions, preserves subclassing, and removes dead artifacts', async () => {
-  const directory = await mkdtemp(join(import.meta.dirname, 'build-'))
+  const directory = await fs.mkdtemp(join(import.meta.dirname, 'build-'))
   const originalFetch = globalThis.fetch
   try {
-    await writeFile(join(directory, 'shape.ts'), `
+    await fs.writeFile(join(directory, 'shape.ts'), `
       import {BoxGeometry, SphereGeometry} from 'three/webgpu'
       function buildContour() { return new BoxGeometry(2, 3, 4, 4, 4, 4).translate(5, 6, 7) }
       export class Sculpture {
@@ -23,7 +23,7 @@ test('Vite specializes class definitions, preserves subclassing, and removes dea
       }
       export function unusedResource() { return new SphereGeometry(91, 80, 64) }
     `)
-    await writeFile(join(directory, 'entry.ts'), `
+    await fs.writeFile(join(directory, 'entry.ts'), `
       import {Sculpture} from './shape.ts'
       export {Sculpture}
       export class Child extends Sculpture { child = 7 }
@@ -64,13 +64,13 @@ test('Vite specializes class definitions, preserves subclassing, and removes dea
       const url = input instanceof Request ? input.url : String(input)
       fetches.push(url)
       const file = assets.find(item => url.endsWith(item.fileName))
-      if (!file || file.type !== 'asset') {
+      if (file?.type !== 'asset') {
         throw new Error(`Unexpected resource URL: ${url}`)
       }
       return new Response(file.source as Uint8Array<ArrayBuffer>)
     }) as typeof fetch
     const file = join(directory, 'output.mjs')
-    await writeFile(file, code)
+    await fs.writeFile(file, code)
     type Sculpture = {
       dispose: () => void
       geometry: BoxGeometry
@@ -98,16 +98,16 @@ test('Vite specializes class definitions, preserves subclassing, and removes dea
     expect(fetches).toHaveLength(1)
   } finally {
     globalThis.fetch = originalFetch
-    await rm(directory, {
+    await fs.rm(directory, {
       recursive: true,
       force: true,
     })
   }
 })
 test('leaves runtime arguments in place and preserves argument side effects on specialized classes', async () => {
-  const directory = await mkdtemp(join(import.meta.dirname, 'dynamic-'))
+  const directory = await fs.mkdtemp(join(import.meta.dirname, 'dynamic-'))
   try {
-    await writeFile(join(directory, 'entry.ts'), `
+    await fs.writeFile(join(directory, 'entry.ts'), `
       import {BoxGeometry} from 'three/webgpu'
       export class Static { constructor() { this.geometry = new BoxGeometry(1, 2, 3) } }
       let calls = 0
@@ -139,7 +139,7 @@ test('leaves runtime arguments in place and preserves argument side effects on s
     expect(code).toContain('++calls')
     expect(code).toContain('new Static(')
   } finally {
-    await rm(directory, {
+    await fs.rm(directory, {
       recursive: true,
       force: true,
     })

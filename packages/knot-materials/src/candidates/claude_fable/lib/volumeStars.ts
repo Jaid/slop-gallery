@@ -4,6 +4,15 @@ import {mix, time, vec3} from 'three/tsl'
 
 import {cellNoiseVec3} from './cellNoiseVec3.ts'
 
+const hexToLinear = (hex: string): [number, number, number] => {
+  const value = Number.parseInt(hex.slice(1), 16)
+  const channel = (shift: number) => {
+    const c = (value >> shift & 255) / 255
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+  }
+  return [channel(16), channel(8), channel(0)]
+}
+
 /**
  * Point lights in a volume, seen along a ray: a star lights the ray when the ray passes within `radius` of it,
  * measured perpendicular to the ray. Unlike slicing a 3D cell lattice with the surface, this keeps every star visible
@@ -29,12 +38,4 @@ export function volumeStars(position: Node<'vec3'>, direction: Node<'vec3'>, sca
   const magnitude = random.x.pow(3).mul(3).add(0.7)
   const resolved = footprint.smoothstep(0.3, 1.2).oneMinus()
   return tint.mul(core.add(halo.mul(0.35))).mul(gate).mul(twinkle).mul(magnitude).mul(resolved)
-}
-const hexToLinear = (hex: string): [number, number, number] => {
-  const value = Number.parseInt(hex.slice(1), 16)
-  const channel = (shift: number) => {
-    const c = (value >> shift & 255) / 255
-    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
-  }
-  return [channel(16), channel(8), channel(0)]
 }

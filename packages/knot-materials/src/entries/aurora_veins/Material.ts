@@ -7,6 +7,8 @@ import KnotMaterial from '../../lib/KnotMaterial.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
+const tone = (hue: Node<'float'>, shift: number) => vec3(hue.add(shift), hue.add(shift).add(2.1), hue.add(shift).add(4.2)).cos().mul(0.5).add(0.5)
+
 /** Three curtains of polar light, hung at different depths inside black glass. Circling slides you between the sheets. Coming close lifts the violet curtain and makes the green one flutter. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
@@ -29,7 +31,6 @@ export default class extends KnotMaterial {
     const green = curtain(0.03, 0.2, 1.15)
     const violet = curtain(0.18, 3.4, 1.7)
     const rose = curtain(0.34, 6.6, 2.3)
-    const tone = (hue: Node<'float'>, shift: number) => vec3(hue.add(shift), hue.add(shift).add(2.1), hue.add(shift).add(4.2)).cos().mul(0.5).add(0.5)
     const light = tone(green.hue, 0.4).mul(green.edge.mul(1.4).add(green.body.mul(0.35)))
       .add(tone(violet.hue, 2.2).mul(violet.edge.mul(1.2).add(violet.body.mul(0.25))))
       .add(tone(rose.hue, 4.4).mul(rose.edge.mul(1.6).add(rose.body.mul(0.2))).mul(near.mul(0.6).add(0.4)))

@@ -33,6 +33,10 @@
     "vite": "^8.3.4",
     "@react-three/fiber": "^10.0.0-canary.fd3335d"
   },
+  "devDependencies": {
+    "fs-extra": "11.4.1",
+    "@types/fs-extra": "11.0.4"
+  },
   "files": [
     "src",
     "readme.md"

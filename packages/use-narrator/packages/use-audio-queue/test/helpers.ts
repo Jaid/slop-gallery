@@ -30,7 +30,7 @@ export class FakeClock implements AudioClock {
     const until = this.time + seconds
     await flush()
     for (;;) {
-      const next = [...this.jobs].filter(job => job.at <= until + 1e-9).sort((a, b) => a.at - b.at)[0]
+      const next = [...this.jobs].filter(job => job.at <= until + 1e-9).toSorted((a, b) => a.at - b.at).at(0)
       if (!next) {
         break
       }
@@ -48,21 +48,28 @@ export class FakePlayback implements AudioPlayback {
   completion = Promise.withResolvers<void>()
   disposals = 0
   dispose = () => {
-    this.playing = false; this.disposals++; this.log.push(`dispose:${this.name}`)
+    this.playing = false
+    this.disposals++
+    this.log.push(`dispose:${this.name}`)
   }
   finished = this.completion.promise
   pause = () => {
-    this.playing = false; this.pauses++; this.log.push(`pause:${this.name}`)
+    this.playing = false
+    this.pauses++
+    this.log.push(`pause:${this.name}`)
   }
   pauses = 0
   play = () => {
-    this.playing = true; this.plays++; this.log.push(`play:${this.name}:${this.position}`)
+    this.playing = true
+    this.plays++
+    this.log.push(`play:${this.name}:${this.position}`)
   }
   playing = false
   plays = 0
   position = 0
   constructor(readonly name = '', readonly log: Array<string> = []) {}
   end() {
-    this.playing = false; this.completion.resolve()
+    this.playing = false
+    this.completion.resolve()
   }
 }

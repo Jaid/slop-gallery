@@ -9,10 +9,25 @@ export type Fixtures = {
   texture: string
 }
 const pixels = new Uint8Array([255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 255, 255, 0, 255])
+const compare = (name: string, actual: Uint8Array, expected: Uint8Array) => {
+  if (actual.length !== expected.length || actual.some((value, index) => value !== expected[index])) {
+    throw new Error(`${name}: native GPU output differs after baking.`)
+  }
+  if (!actual.some(value => value !== 0)) {
+    throw new Error(`${name}: empty rendering.`)
+  }
+  return {
+    name,
+    comparedBytes: actual.byteLength,
+    equal: true,
+  }
+}
 
 /** Native GPU regression on a detached canvas. Does not touch the gallery scene or UI. */
 export default async function verify(fixtures: Fixtures) {
-  const adapter = await navigator.gpu?.requestAdapter()
+  // Browsers without WebGPU leave navigator.gpu undefined despite its DOM type.
+  const gpu = navigator.gpu as GPU | undefined
+  const adapter = await gpu?.requestAdapter()
   if (!adapter) {
     throw new Error('No native WebGPU adapter is available in this headless session.')
   }
@@ -53,19 +68,6 @@ export default async function verify(fixtures: Fixtures) {
     const data = await renderer.readRenderTargetPixelsAsync(target, 0, 0, 32, 32)
     scene.remove(mesh)
     return new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
-  }
-  const compare = (name: string, actual: Uint8Array, expected: Uint8Array) => {
-    if (actual.length !== expected.length || actual.some((value, index) => value !== expected[index])) {
-      throw new Error(`${name}: native GPU output differs after baking.`)
-    }
-    if (!actual.some(value => value !== 0)) {
-      throw new Error(`${name}: empty rendering.`)
-    }
-    return {
-      name,
-      comparedBytes: actual.byteLength,
-      equal: true,
-    }
   }
   try {
     const original = new Three.TorusKnotGeometry(0.45, 0.13, 48, 12)

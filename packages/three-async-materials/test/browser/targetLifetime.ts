@@ -3,13 +3,14 @@ import {BoxGeometry, Color, HalfFloatType, Mesh, MeshStandardNodeMaterial, Ortho
 
 import AsyncMaterials from '../../src/main.ts'
 
+const assert: (value: unknown, message: string) => asserts value = (value, message) => {
+  if (!value) {
+    throw new Error(message)
+  }
+}
+
 /** Detached WebGPU regression for live-target invalidation during async warmup. */
 export default async function verifyLiveTargetLifetime() {
-  const assert: (value: unknown, message: string) => asserts value = (value, message) => {
-    if (!value) {
-      throw new Error(message)
-    }
-  }
   const renderer = new WebGPURenderer({
     canvas: document.createElement('canvas'),
     antialias: false,

@@ -9,7 +9,8 @@ const boundsMethods = new Set(['computeBoundingBox', 'computeBoundingSphere'])
 export async function bvhCandidates(source: SourceModule): Promise<ReadonlyArray<BakeCandidate>> {
   const candidates: Array<BakeCandidate> = []
   source.path.traverse({NewExpression(path) {
-    const candidate = pair(path); if (candidate) {
+    const candidate = pair(path)
+    if (candidate) {
       candidates.push(candidate)
     }
   }})
@@ -24,6 +25,24 @@ function isBvh(path: NodePath<t.NewExpression>) {
   const binding = path.scope.getBinding(name)
   const imported = binding && importInfo(binding.path)
   return imported?.source === 'three-mesh-bvh' && (imported.imported === 'MeshBVH' || imported.imported === '*' && t.isMemberExpression(callee))
+}
+/** Whether the class assigns, updates or deletes `this.<propertyName>` or a member reached through it. */
+function isPropertyMutated(owner: NodePath<t.Class>, propertyName: string): boolean {
+  let mutated = false
+  owner.traverse({MemberExpression(member) {
+    if (!t.isThisExpression(member.node.object) || member.node.computed || !t.isIdentifier(member.node.property, {name: propertyName})) {
+      return
+    }
+    let target: NodePath = member
+    while (target.parentPath.isMemberExpression() && target.parentPath.node.object === target.node) {
+      target = target.parentPath
+    }
+    const parent = target.parentPath
+    if (parent.isAssignmentExpression() && parent.node.left === target.node || parent.isUpdateExpression() || parent.isUnaryExpression({operator: 'delete'})) {
+      mutated = true
+    }
+  }})
+  return mutated
 }
 function storesInOwnedMap(statement: NodePath, geometry: string) {
   if (!statement.isExpressionStatement()) {
@@ -46,21 +65,7 @@ function storesInOwnedMap(statement: NodePath, geometry: string) {
     return false
   }
   const propertyName = receiver.property.name
-  let mutated = false
-  owner.traverse({MemberExpression(member) {
-    if (!t.isThisExpression(member.node.object) || member.node.computed || !t.isIdentifier(member.node.property, {name: propertyName})) {
-      return
-    }
-    let target: NodePath = member
-    while (target.parentPath?.isMemberExpression() && target.parentPath.node.object === target.node) {
-      target = target.parentPath
-    }
-    const parent = target.parentPath
-    if (parent?.isAssignmentExpression() && parent.node.left === target.node || parent?.isUpdateExpression() || parent?.isUnaryExpression({operator: 'delete'})) {
-      mutated = true
-    }
-  }})
-  if (mutated) {
+  if (isPropertyMutated(owner, propertyName)) {
     return false
   }
   return owner.node.body.body.some(field => t.isClassProperty(field) && !field.static && t.isIdentifier(field.key, {name: propertyName}) && t.isNewExpression(field.value) && t.isIdentifier(field.value.callee, {name: 'Map'}) && !statement.scope.getBinding('Map'))
@@ -86,7 +91,7 @@ function pair(path: NodePath<t.NewExpression>): BakeCandidate | undefined {
     return
   }
   const endStatement = path.getStatementParent()
-  if (!endStatement || endStatement.parentPath !== block || !endStatement.isVariableDeclaration() || endStatement.node.declarations.length !== 1) {
+  if (endStatement.parentPath !== block || !endStatement.isVariableDeclaration() || endStatement.node.declarations.length !== 1) {
     return
   }
   // Only a standalone initializer; no conditional/new expression is moved out of its branch.

@@ -3,9 +3,10 @@ import type {NodePath} from '@babel/traverse'
 import type {CallExpression, NewExpression} from '@babel/types'
 
 import {afterAll, expect, test} from 'bun:test'
-import {mkdtemp, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join, resolve} from 'node:path'
+
+import fs from 'fs-extra'
 
 import Recipe from '../src/Recipe.ts'
 import {decodeSnapshot} from '../src/runtime.ts'
@@ -30,8 +31,8 @@ const adapter: BakeAdapter = {
   }],
   accepts: resources => resources.has('test'),
 }
-const directory = await mkdtemp(join(tmpdir(), 'bake-recipes-'))
-afterAll(() => rm(directory, {
+const directory = await fs.mkdtemp(join(tmpdir(), 'bake-recipes-'))
+afterAll(() => fs.rm(directory, {
   recursive: true,
   force: true,
 }))
@@ -59,13 +60,13 @@ test('evaluates locally mutable algorithms and strips TypeScript', async () => {
   expect((roundTrip(evaluated)() as Resource).data).toEqual([8, 9, 10, 11])
 })
 test('follows aliased imports and re-exports without executing the application module', async () => {
-  await writeFile(join(directory, 'source.ts'), `
+  await fs.writeFile(join(directory, 'source.ts'), `
     import {Resource} from 'test:resources'
     throw new Error('Module side effect must NOT execute at build time')
     export const width = 17
     export function create() { return new Resource(width) }
   `)
-  await writeFile(join(directory, 'barrel.ts'), "export {create as make} from './source.ts'")
+  await fs.writeFile(join(directory, 'barrel.ts'), "export {create as make} from './source.ts'")
   const result = await evaluate("import {make as alias} from './barrel.ts'; const result = alias()")
   expect((roundTrip(result)() as Resource).data).toBe(17)
   expect([...result.dependencies].some(path => path.endsWith('source.ts'))).toBe(true)

@@ -44,7 +44,7 @@ export default class extends ReliefKnotMaterial {
     this.name = data.id
     const tube = uv()
     const {p, facing, grazing, intimate} = viewerFrame()
-    const baseNormal = this.sculpt(tube => carving(tube).height)
+    const baseNormal = this.sculpt(sampleTube => carving(sampleTube).height)
     const fields = carving(tube)
     const {random, footprint} = tiles(tube, 18, 4, 3.7)
     const aa = footprint.mul(1.6)

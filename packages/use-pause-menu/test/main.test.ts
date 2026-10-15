@@ -335,9 +335,11 @@ test('stale cleanup cannot detach a replacement target', () => {
 test('pending requests finishing after detach cannot leave an orphaned lock', async () => {
   const {menu, document, target, disconnect} = setup()
   let finish!: () => void
-  target.request = () => new Promise(resolve => {
-    finish = resolve
-  })
+  target.request = () => {
+    const lockRequest = Promise.withResolvers<void>()
+    finish = lockRequest.resolve
+    return lockRequest.promise
+  }
   const pending = menu.enter()
   disconnect()
   document.change(target)
@@ -349,9 +351,11 @@ test('pending requests finishing after detach cannot leave an orphaned lock', as
 test('late completion does not release a replacement canvas’s lock', async () => {
   const {menu, document, target} = setup()
   let finish!: () => void
-  target.request = () => new Promise(resolve => {
-    finish = resolve
-  })
+  target.request = () => {
+    const lockRequest = Promise.withResolvers<void>()
+    finish = lockRequest.resolve
+    return lockRequest.promise
+  }
   const pending = menu.enter()
   const next = new TestTarget(document)
   menu.attach(next.element)

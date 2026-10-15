@@ -13,7 +13,9 @@ export type Plans = {
 
 /** Detached rendering only: no navigation, focus, input, viewport changes or gallery-scene mutations. */
 export default async function verify(plans: Plans) {
-  const adapter = await navigator.gpu?.requestAdapter()
+  // Browsers without WebGPU leave navigator.gpu undefined despite its DOM type.
+  const gpu = navigator.gpu as GPU | undefined
+  const adapter = await gpu?.requestAdapter()
   if (!adapter) {
     throw new Error('No WebGPU adapter is available to run the native rendering regression.')
   }
@@ -41,16 +43,16 @@ export default async function verify(plans: Plans) {
   scene.background = new Three.Color('#101010')
   scene.add(new Three.AmbientLight('#ffffff', 1.5))
   let frame = 0
-  const render = async (object: Three.Object3D, target: Three.RenderTarget) => {
+  const render = async (object: Three.Object3D, renderTarget: Three.RenderTarget) => {
     scene.add(object)
     if (object instanceof StaticSceneResources) {
       object.updateBundles(bundleSignature(scene, renderer, ++frame))
     }
-    renderer.setRenderTarget(target)
-    renderer.setOutputRenderTarget(target)
+    renderer.setRenderTarget(renderTarget)
+    renderer.setOutputRenderTarget(renderTarget)
     renderer.render(scene, camera)
     await backend.device.queue.onSubmittedWorkDone()
-    const pixels = await renderer.readRenderTargetPixelsAsync(target, 0, 0, target.width, target.height)
+    const pixels = await renderer.readRenderTargetPixelsAsync(renderTarget, 0, 0, renderTarget.width, renderTarget.height)
     scene.remove(object)
     return new Uint8Array(pixels.buffer, pixels.byteOffset, pixels.byteLength)
   }
@@ -69,13 +71,13 @@ export default async function verify(plans: Plans) {
     }
     return group
   }
-  const compare = async (name: string, original: Three.Object3D, compiled: StaticSceneResources, target: Three.RenderTarget) => {
-    const expected = await render(original, target)
-    const actual = await render(compiled, target)
-    const rowStride = Math.ceil(target.width * 4 / 256) * 256
+  const compare = async (name: string, original: Three.Object3D, compiled: StaticSceneResources, renderTarget: Three.RenderTarget) => {
+    const expected = await render(original, renderTarget)
+    const actual = await render(compiled, renderTarget)
+    const rowStride = Math.ceil(renderTarget.width * 4 / 256) * 256
     const colors = new Set<string>
-    for (let y = 0; y < target.height; y++) {
-      for (let x = 0; x < target.width; x++) {
+    for (let y = 0; y < renderTarget.height; y++) {
+      for (let x = 0; x < renderTarget.width; x++) {
         const offset = y * rowStride + x * 4
         colors.add(expected.subarray(offset, offset + 3).join(','))
       }

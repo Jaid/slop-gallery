@@ -257,7 +257,7 @@ test('hitches retain real stall duration, resource deltas and sparse severity-es
       'ego.speed': 2,
     },
   })
-  expect(traces()[0].events?.find(event => event.name === 'three.render.pass')).toMatchObject({
+  expect(traces()[0].events.find(event => event.name === 'three.render.pass')).toMatchObject({
     attributes: {
       kind: 'main',
       'cpu.inclusive_ms': 100,

@@ -58,7 +58,7 @@ const build = await Bun.build({
 if (!build.success) {
   throw new AggregateError(build.logs, 'Hook fixture build failed.')
 }
-const harness = await import(`data:text/javascript;base64,${Buffer.from(await build.outputs[0].text()).toString('base64')}`) as {
+const harness = await import(`data:text/javascript;base64,${Buffer.from(await build.outputs[0].text()).toBase64()}`) as {
   commit: () => void
   default: <T>(recipe: ReactCanvasTextureRecipe<T>) => Texture | null
   disposed: Array<Texture>

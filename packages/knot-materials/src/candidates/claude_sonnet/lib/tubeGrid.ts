@@ -10,9 +10,12 @@ export const knotAround = 0.81649
 export function tubeGrid(around: number, stretch = 1) {
   const along = Math.round(around * knotAlong / knotAround * stretch)
   const period = [along, around] as const
-  return {grid: uv().mul(vec2(along, around)), period,
+  return {
+    grid: uv().mul(vec2(along, around)),
+    period,
     /** World size of a single cell edge, for converting grid distances into object units. */
-    cell: knotAround / around}
+    cell: knotAround / around,
+  }
 }
 
 /** View direction expressed in the surface's tangent frame: x along the knot, y around it, z out of the surface. */

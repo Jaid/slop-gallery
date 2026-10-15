@@ -20,7 +20,8 @@ export default function fallbackPlayback(primary: AudioPlayback, fallback: (erro
       }
     })
   }
-  const recover = (failed: AudioPlayback, error: unknown): Promise<void> => {
+  // A function declaration, because observe() and recover() call each other.
+  function recover(failed: AudioPlayback, error: unknown): Promise<void> {
     if (disposed || signal.aborted) {
       return Promise.resolve()
     }

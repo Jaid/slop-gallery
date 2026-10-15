@@ -4,16 +4,14 @@ import {flush} from '../packages/use-audio-queue/test/helpers.ts'
 import {browserSpeech} from '../src/browser.ts'
 import {Narrator} from '../src/core.ts'
 
-class Utterance {
+class Utterance extends EventTarget {
   lang = ''
-  onboundary: ((event: {charIndex: number}) => void) | null = null
-  onend: (() => void) | null = null
-  onerror: ((event: {error: string}) => void) | null = null
-  onstart: (() => void) | null = null
   pitch = 1
   rate = 1
   voice = null
-  constructor(readonly text: string) {}
+  constructor(readonly text: string) {
+    super()
+  }
 }
 const original = {
   speechSynthesis: globalThis.speechSynthesis,
@@ -39,10 +37,13 @@ beforeEach(() => {
     cancellations: 0,
     getVoices: () => [],
     cancel() {
-      this.cancellations++; this.speaking = false
+      this.cancellations++
+      this.speaking = false
     },
     speak(utterance) {
-      this.speaking = true; utterances.push(utterance); utterance.onstart?.()
+      this.speaking = true
+      utterances.push(utterance)
+      utterance.dispatchEvent(new Event('start'))
     },
   }
   Object.assign(globalThis, {
@@ -52,10 +53,12 @@ beforeEach(() => {
   narrator = new Narrator
 })
 afterEach(() => {
-  narrator.dispose(); Object.assign(globalThis, original)
+  narrator.dispose()
+  Object.assign(globalThis, original)
 })
 const end = () => {
-  synthesis.speaking = false; utterances.at(-1)!.onend?.()
+  synthesis.speaking = false
+  utterances.at(-1)!.dispatchEvent(new Event('end'))
 }
 test('native speech obeys the same serialized queue and exposes browser metadata', async () => {
   narrator.push({
@@ -73,19 +76,19 @@ test('native speech obeys the same serialized queue and exposes browser metadata
   expect(utterances.map(u => u.text)).toEqual(['First', 'Second'])
 })
 test('injected native speech resumes at the last reported boundary and ignores stale callbacks', async () => {
-  const original = narrator.push('Alpha beta gamma')
+  const interrupted = narrator.push('Alpha beta gamma')
   await flush()
-  const staleEnd = utterances[0].onend!
-  utterances[0].onboundary?.({charIndex: 6})
+  const [interruptedUtterance] = utterances
+  interruptedUtterance.dispatchEvent(Object.assign(new Event('boundary'), {charIndex: 6}))
   const inserted = narrator.push('Inserted', {priority: 'inject'})
   await flush()
   expect(synthesis.cancellations).toBe(1)
   expect(utterances.map(u => u.text)).toEqual(['Alpha beta gamma', 'Inserted'])
-  staleEnd()
+  interruptedUtterance.dispatchEvent(new Event('end'))
   expect(narrator.getSnapshot().current?.id).toBe(inserted.id)
   end()
   await flush()
-  expect(narrator.getSnapshot().current?.id).toBe(original.id)
+  expect(narrator.getSnapshot().current?.id).toBe(interrupted.id)
   expect(utterances.at(-1)!.text).toBe('beta gamma')
   expect(synthesis.cancellations).toBe(1)
 })
@@ -106,7 +109,8 @@ test('overlapping native speech fails explicitly without cancelling the active u
 test('an unrelated native utterance is not cancelled when our attempt is rejected', async () => {
   synthesis.speaking = true
   const rejected = narrator.push('Cannot acquire native speech')
-  expect((await rejected.finished).status).toBe('failed')
+  const result = await rejected.finished
+  expect(result.status).toBe('failed')
   expect(synthesis.cancellations).toBe(0)
   expect(synthesis.speaking).toBe(true)
 })
@@ -116,8 +120,10 @@ test('stop cancels the owned native utterance once and never starts pending spee
   await flush()
   narrator.stop()
   await flush()
-  expect((await first.finished).status).toBe('cancelled')
-  expect((await second.finished).status).toBe('cancelled')
+  const firstResult = await first.finished
+  expect(firstResult.status).toBe('cancelled')
+  const secondResult = await second.finished
+  expect(secondResult.status).toBe('cancelled')
   expect(synthesis.cancellations).toBe(1)
   expect(utterances).toHaveLength(1)
 })
@@ -126,9 +132,10 @@ test('native failure settles and allows the next queued utterance to start', asy
   const next = narrator.push('Next')
   await flush()
   synthesis.speaking = false
-  utterances[0].onerror?.({error: 'synthesis-failed'})
+  utterances[0].dispatchEvent(Object.assign(new Event('error'), {error: 'synthesis-failed'}))
   await flush()
-  expect((await broken.finished).status).toBe('failed')
+  const brokenResult = await broken.finished
+  expect(brokenResult.status).toBe('failed')
   expect(narrator.getSnapshot().current?.id).toBe(next.id)
 })
 test('missing browser speech reports a capability error rather than hanging', () => {

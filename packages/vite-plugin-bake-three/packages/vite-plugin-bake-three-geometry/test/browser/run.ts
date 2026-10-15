@@ -1,9 +1,9 @@
 import type {BakeAdapter} from 'vite-plugin-bake-core'
 
-import {mkdtemp, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 
+import fs from 'fs-extra'
 import puppeteer from 'puppeteer-core'
 import {DataTexture, SRGBColorSpace, TorusKnotGeometry} from 'three/webgpu'
 import {SnapshotWriter} from 'vite-plugin-bake-core'
@@ -18,7 +18,7 @@ if (!executablePath) {
 }
 const pack = (value: unknown, adapter: BakeAdapter) => {
   const writer = new SnapshotWriter(adapter, 16 * 1024 * 1024, () => false)
-  return Buffer.from(writer.write(value)).toString('base64')
+  return writer.write(value).toBase64()
 }
 const geometry = new TorusKnotGeometry(0.45, 0.13, 48, 12)
 geometry.rotateY(0.2)
@@ -61,30 +61,26 @@ const server = Bun.serve({
     return requestUrl.pathname === '/fixture.js' ? new Response(source, {headers: {'Content-Type': 'text/javascript'}}) : new Response('<!doctype html><title>Baked resource regression</title>', {headers: {'Content-Type': 'text/html'}})
   },
 })
-const profile = await mkdtemp(join(tmpdir(), 'baked-webgpu-'))
+const profile = await fs.mkdtemp(join(tmpdir(), 'baked-webgpu-'))
 try {
   // A separate headless browser/profile; never the user's visible desktop session.
-  const browser = await puppeteer.launch({
+  await using browser = await puppeteer.launch({
     executablePath,
     userDataDir: profile,
     headless: true,
     args: ['--enable-gpu', '--enable-unsafe-webgpu', '--ignore-gpu-blocklist'],
   })
-  try {
-    const page = await browser.newPage()
-    await page.goto(server.url.href)
-    const report = await page.evaluate(async fixtures => {
-      const fixture = '/fixture.js'
-      const {default: verify} = await import(fixture) as typeof import('./roundTrip.ts')
-      return verify(fixtures)
-    }, fixtures)
-    console.log(JSON.stringify(report, null, 2))
-  } finally {
-    await browser.close()
-  }
+  const page = await browser.newPage()
+  await page.goto(server.url.href)
+  const report = await page.evaluate(async pageFixtures => {
+    const fixture = '/fixture.js'
+    const {default: verify} = await import(fixture) as typeof import('./roundTrip.ts')
+    return verify(pageFixtures)
+  }, fixtures)
+  console.log(JSON.stringify(report, null, 2))
 } finally {
   await server.stop(true)
-  await rm(profile, {
+  await fs.rm(profile, {
     recursive: true,
     force: true,
   })

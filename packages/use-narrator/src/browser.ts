@@ -6,7 +6,8 @@ let owner: symbol | undefined
 /** Native speech has a single global lane. Pause releases it and saves the last word boundary. */
 export function browserSpeech(speech: SpeechReference, signal: AbortSignal): AudioPlayback {
   signal.throwIfAborted()
-  const synthesis = globalThis.speechSynthesis
+  // The Web Speech API is missing in some browsers and in non-browser runtimes.
+  const synthesis = globalThis.speechSynthesis as SpeechSynthesis | undefined
   if (!synthesis || typeof SpeechSynthesisUtterance === 'undefined') {
     throw new Error('Browser speech is unavailable.')
   }
@@ -14,17 +15,14 @@ export function browserSpeech(speech: SpeechReference, signal: AbortSignal): Aud
   const completion = Promise.withResolvers<void>()
   void completion.promise.catch(() => {})
   let utterance: SpeechSynthesisUtterance | undefined
+  let utteranceListeners: AbortController | undefined
   let start: ReturnType<typeof Promise.withResolvers<void>> | undefined
   let offset = 0
   let disposed = false
   const detach = () => {
-    if (utterance) {
-      utterance.onstart = null
-      utterance.onend = null
-      utterance.onerror = null
-      utterance.onboundary = null
-      utterance = undefined
-    }
+    utteranceListeners?.abort()
+    utteranceListeners = undefined
+    utterance = undefined
   }
   const pause = () => {
     detach()
@@ -68,20 +66,23 @@ export function browserSpeech(speech: SpeechReference, signal: AbortSignal): Aud
       current.voice = (speech.voice ? voices.find(voice => voice.voiceURI === speech.voice || voice.name === speech.voice) : voices.find(voice => voice.lang === current.lang && voice.localService) ?? voices.find(voice => voice.lang.startsWith(current.lang.split('-')[0]))) ?? null
       const started = Promise.withResolvers<void>()
       void started.promise.catch(() => {})
+      const currentListeners = new AbortController
+      const listenerOptions = {signal: currentListeners.signal}
       start = started
       utterance = current
+      utteranceListeners = currentListeners
       owner = token
-      current.onstart = () => {
+      current.addEventListener('start', () => {
         if (utterance === current) {
           started.resolve()
         }
-      }
-      current.onboundary = event => {
+      }, listenerOptions)
+      current.addEventListener('boundary', event => {
         if (utterance === current) {
           offset = beginning + event.charIndex
         }
-      }
-      current.onend = () => {
+      }, listenerOptions)
+      current.addEventListener('end', () => {
         if (utterance !== current) {
           return
         }
@@ -89,8 +90,8 @@ export function browserSpeech(speech: SpeechReference, signal: AbortSignal): Aud
         detach()
         started.resolve()
         completion.resolve()
-      }
-      current.onerror = event => {
+      }, listenerOptions)
+      current.addEventListener('error', event => {
         if (utterance !== current) {
           return
         }
@@ -99,7 +100,7 @@ export function browserSpeech(speech: SpeechReference, signal: AbortSignal): Aud
         const error = new Error(`Browser speech failed: ${event.error}`)
         started.reject(error)
         completion.reject(error)
-      }
+      }, listenerOptions)
       try {
         synthesis.speak(current)
       } catch (error) {

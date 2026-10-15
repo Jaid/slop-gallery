@@ -41,7 +41,8 @@ export default class extends KnotMaterial {
         })
         travel.addAssign(distance.max(0.00012))
         If(travel.greaterThan(maximum), () => {
-          travel.assign(maximum); Break()
+          travel.assign(maximum)
+          Break()
         })
       })
       return vec4(p.sub(direction.mul(travel)).mul(frequency).add(drift), travel)

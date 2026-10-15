@@ -10,11 +10,13 @@ const setup = (options: ConstructorParameters<typeof Narrator>[0] = {}) => {
   const clock = new FakeClock
   const players: Array<FakePlayback> = []
   const create = (name: string) => {
-    const player = new FakePlayback(name); players.push(player); return player
+    const player = new FakePlayback(name)
+    players.push(player)
+    return player
   }
   const narrator = new Narrator({
     clock,
-    createAudio: reference => create(`audio:${String(reference)}`),
+    createAudio: reference => create(`audio:${reference instanceof Blob ? 'blob' : String(reference)}`),
     createSpeech: speech => create(`speech:${speech.text}`),
     ...options,
   })
@@ -105,19 +107,22 @@ test('interrupted, cancelled and failed announcements are not remembered', async
   const cancelled = narrator.push('Cancelled', {once: 'key'})
   await flush()
   cancelled.cancel()
-  expect((await cancelled.finished).status).toBe('cancelled')
+  const cancelledResult = await cancelled.finished
+  expect(cancelledResult.status).toBe('cancelled')
   expect(narrator.hasSpoken('key')).toBe(false)
   const failed = narrator.push('Retry', {once: 'key'})
   await flush()
   players[1].completion.reject(new Error('No voice'))
-  expect((await failed.finished).status).toBe('failed')
+  const failedResult = await failed.finished
+  expect(failedResult.status).toBe('failed')
   expect(narrator.hasSpoken('key')).toBe(false)
   narrator.dispose()
 })
 test('provider-generated speech uses the same pausable audio transport as recordings', async () => {
   const calls: Array<string> = []
   const {narrator, players} = setup({synthesize: speech => {
-    calls.push(speech.text); return '/generated.opus'
+    calls.push(speech.text)
+    return '/generated.opus'
   }})
   narrator.push('Generated speech')
   await flush()
@@ -162,7 +167,8 @@ for (const duringStart of [true, false]) {
     const audio = new FakePlayback('audio')
     if (duringStart) {
       audio.play = () => {
-        audio.completion.reject(new Error('media error')); throw new Error('play rejected')
+        audio.completion.reject(new Error('media error'))
+        throw new Error('play rejected')
       }
     }
     const {narrator, players} = setup({
@@ -187,7 +193,8 @@ for (const duringStart of [true, false]) {
     expect(players[0].plays).toBe(1)
     expect(narrationState(narrator.getSnapshot())?.source).toBe('browser')
     players[0].end()
-    expect((await handle.finished).status).toBe('completed')
+    const result = await handle.finished
+    expect(result.status).toBe('completed')
   })
 }
 test('stopping during deferred preparation discards late output instead of playing it', async () => {
@@ -199,7 +206,8 @@ test('stopping during deferred preparation discards late output instead of playi
   narrator.stop()
   ready.resolve(late)
   await flush()
-  expect((await handle.finished).status).toBe('cancelled')
+  const result = await handle.finished
+  expect(result.status).toBe('cancelled')
   expect(late.plays).toBe(0)
   expect(late.disposals).toBe(1)
   expect(narrator.getSnapshot().idle).toBe(true)
@@ -239,7 +247,8 @@ test('stopping during fallback preparation disposes the late fallback without sp
   narrator.stop()
   ready.resolve(fallback)
   await flush()
-  expect((await handle.finished).status).toBe('cancelled')
+  const result = await handle.finished
+  expect(result.status).toBe('cancelled')
   expect(fallback.disposals).toBe(1)
   expect(fallback.plays).toBe(0)
 })
@@ -253,7 +262,8 @@ test('recordings without fallback text fail without requesting speech, then the 
   await flush()
   players[0].completion.reject(new Error('broken'))
   await flush()
-  expect((await broken.finished).status).toBe('failed')
+  const brokenResult = await broken.finished
+  expect(brokenResult.status).toBe('failed')
   expect(failures).toBe(1)
   expect(players.map(p => p.name)).toEqual(['audio:/broken.opus', 'audio:/good.opus'])
   narrator.dispose()
@@ -266,7 +276,8 @@ test('disabling narration clears both lanes and skips new requests until re-enab
   await flush()
   narrator.enabled = false
   for (const handle of [first, second, concurrent]) {
-    expect((await handle.finished).status).toBe('cancelled')
+    const result = await handle.finished
+    expect(result.status).toBe('cancelled')
   }
   expect(await narrator.push('Muted').finished).toEqual({
     status: 'skipped',

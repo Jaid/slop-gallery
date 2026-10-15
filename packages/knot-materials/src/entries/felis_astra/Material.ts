@@ -225,7 +225,7 @@ function createAtlasPixels(): Uint16Array {
   if (atlasPixels) {
     return atlasPixels
   }
-  const data = new Uint16Array(atlasWidth * atlasHeight * 4)
+  const pixels = new Uint16Array(atlasWidth * atlasHeight * 4)
   for (const [tile, cat] of constellations.entries()) {
     const outline = graphSegments(cat, cat.outline)
     const facets = graphSegments(cat, cat.facets)
@@ -235,13 +235,13 @@ function createAtlasPixels(): Uint16Array {
         const distances = sampleConstellation(cat, (x + 0.5) / atlasCellSize - 0.5, (y + 0.5) / atlasCellSize - 0.5, outline, facets, eyes)
         const offset = (y * atlasWidth + tile * atlasCellSize + x) * 4
         for (let channel = 0; channel < 4; channel++) {
-          data[offset + channel] = DataUtils.toHalfFloat(distances[channel])
+          pixels[offset + channel] = DataUtils.toHalfFloat(distances[channel])
         }
       }
     }
   }
-  atlasPixels = data
-  return data
+  atlasPixels = pixels
+  return pixels
 }
 /** Analytic coverage in cell units, including energy conservation once a link is thinner than a pixel. */
 function thread(distance: Node<'float'>, width: number, footprint: Node<'float'>) {

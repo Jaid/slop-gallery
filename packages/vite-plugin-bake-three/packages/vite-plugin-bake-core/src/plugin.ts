@@ -90,12 +90,12 @@ export default function createBakePlugin(adapter: BakeAdapter, options: BakeOpti
       })
       const imports: Array<string> = [`import {loadSnapshot} from ${JSON.stringify(runtime)}`]
       const constructors: Array<string> = []
-      for (const [index, type] of [...artifact.constructors.values()].entries()) {
+      for (const [index, type] of artifact.constructors.values().toArray().entries()) {
         imports.push(`import {${type.name} as C${index}} from ${JSON.stringify(type.module)}`)
         constructors.push(`${JSON.stringify(type.name)}:C${index}`)
       }
       const codecs: Array<string> = []
-      for (const [index, codec] of [...artifact.codecs.values()].entries()) {
+      for (const [index, codec] of artifact.codecs.values().toArray().entries()) {
         imports.push(`import {${codec.exportName} as R${index}} from ${JSON.stringify(codec.module)}`)
         codecs.push(`${JSON.stringify(codec.name)}:R${index}`)
       }
@@ -131,17 +131,20 @@ export default function createBakePlugin(adapter: BakeAdapter, options: BakeOpti
           })
         },
         ClassDeclaration(path) {
-          const candidate = definitionCandidate(path); if (candidate) {
+          const candidate = definitionCandidate(path)
+          if (candidate) {
             candidates.push(candidate)
           }
         },
         FunctionDeclaration(path) {
-          const candidate = definitionCandidate(path); if (candidate) {
+          const candidate = definitionCandidate(path)
+          if (candidate) {
             candidates.push(candidate)
           }
         },
         VariableDeclarator(path) {
-          const candidate = definitionCandidate(path); if (candidate) {
+          const candidate = definitionCandidate(path)
+          if (candidate) {
             candidates.push(candidate)
           }
         },

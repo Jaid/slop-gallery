@@ -163,7 +163,7 @@ export default class extends KnotMaterial {
       seed: 11.7,
       width: 0.0014,
     })
-    const germinate = (coverage: Node<'float'>, bias: number) => max(coverage.mul(0.22), front.mul(0.85)).mul(bias).clamp(0, 1)
+    const germinate = (patchCoverage: Node<'float'>, bias: number) => max(patchCoverage.mul(0.22), front.mul(0.85)).mul(bias).clamp(0, 1)
     const plume = plumes.mask.mul(germinate(coverage, 0.95))
     const bud = buds.mask.mul(germinate(coverage, 0.8))
     const crystal = max(plume, bud)

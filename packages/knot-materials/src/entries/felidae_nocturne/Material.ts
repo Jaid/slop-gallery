@@ -42,6 +42,14 @@ const width = 1024
 const height = 512
 const tile = 512
 const channels = 4
+const random = (seed: number) => {
+  let state = seed >>> 0
+  return () => {
+    state = Math.imul(state ^ state >>> 15, 1 | state)
+    state ^= state + Math.imul(state ^ state >>> 7, 61 | state)
+    return ((state ^ state >>> 14) >>> 0) / 4_294_967_296
+  }
+}
 /** A tiny additive vector rasterizer: R = silver thread, G = star cores, B = halos, A = etched cartography. */
 function createConstellationAtlas() {
   const pixels = new Float32Array(width * height * channels)
@@ -67,14 +75,6 @@ function createConstellationAtlas() {
     for (let i = 0;i <= steps;i++) {
       const t = i / steps
       stamp(variant, a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, radius, channel, energy)
-    }
-  }
-  const random = (seed: number) => {
-    let state = seed >>> 0
-    return () => {
-      state = Math.imul(state ^ state >>> 15, 1 | state)
-      state ^= state + Math.imul(state ^ state >>> 7, 61 | state)
-      return ((state ^ state >>> 14) >>> 0) / 4_294_967_296
     }
   }
   for (const [variant, chains] of [leaper, wayfarer].entries()) {
@@ -135,13 +135,13 @@ function createConstellationAtlas() {
   for (let i = 0;i < bytes.length;i++) {
     bytes[i] = Math.round(Math.min(1, pixels[i]) * 255)
   }
-  const texture = new DataTexture(bytes, width, height, RGBAFormat, UnsignedByteType)
-  texture.name = 'Felidae Nocturne – illustrated stellar atlas'
-  texture.magFilter = LinearFilter
-  texture.minFilter = LinearMipmapLinearFilter
-  texture.generateMipmaps = true
-  texture.needsUpdate = true
-  return texture
+  const atlas = new DataTexture(bytes, width, height, RGBAFormat, UnsignedByteType)
+  atlas.name = 'Felidae Nocturne – illustrated stellar atlas'
+  atlas.magFilter = LinearFilter
+  atlas.minFilter = LinearMipmapLinearFilter
+  atlas.generateMipmaps = true
+  atlas.needsUpdate = true
+  return atlas
 }
 
 /** An engraved nocturne, not a star field: two hand-drawn cat asterisms alternate along the tube. */

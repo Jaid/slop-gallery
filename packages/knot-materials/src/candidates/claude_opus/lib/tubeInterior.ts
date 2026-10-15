@@ -31,9 +31,12 @@ export function tubeInterior({ior = 1.5, maxChord = 0.55}: {
     const x = relative.dot(frameNormal)
     const y = relative.dot(binormal)
     const radius = vec3(x, y, 0).length()
-    return {position, radius: radius.div(knotTubeRadius),
-/** tube coordinates of the sample, in UV units */
-      tube: vec2(tube.x.add(relative.dot(tangent).div(speed)), atan(y, x.negate()).div(TAU).fract())}
+    return {
+      position,
+      radius: radius.div(knotTubeRadius),
+      /** tube coordinates of the sample, in UV units */
+      tube: vec2(tube.x.add(relative.dot(tangent).div(speed)), atan(y, x.negate()).div(TAU).fract()),
+    }
   }
   return {
     cameraLocal,

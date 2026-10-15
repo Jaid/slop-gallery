@@ -9,6 +9,8 @@ import {proceduralNormal} from '../../lib/proceduralNormal.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
+const pick = (value: Node<'float'>) => value.sub(0.5).smoothstep(0.04, 0.015)
+
 /** Opus tessellatum: glass cubes laid one by one into a gold ground, each a few degrees off true. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
@@ -34,7 +36,6 @@ export default class extends KnotMaterial {
 // Four glasses from the same kiln, chosen per cube so the lozenges read as a design, not a shuffle.
     const choice = cellNoiseVec3(vec2(cell.x.mul(1.71), cell.y.mul(0.83)).add(5.1))
     const bias = choice.add(band.mul(0.1)).clamp(0, 1)
-    const pick = (value: Node<'float'>) => value.sub(0.5).smoothstep(0.04, 0.015)
     const lapis = color('#1b3f9e')
     const emerald = color('#0d7a52')
     const crimson = color('#8e1f33')

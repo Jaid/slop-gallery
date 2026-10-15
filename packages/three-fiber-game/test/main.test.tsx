@@ -6,11 +6,10 @@ import {expect, test} from 'bun:test'
 import {KeyboardControls} from '@react-three/drei/webgpu'
 import {Canvas} from '@react-three/fiber'
 import {Physics} from '@react-three/rapier'
-import {createContext, createRef, isValidElement, useContext} from 'react'
+import {createContext, createRef, isValidElement, use} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
 
-import DefaultGame, {normalizeControls, WebgpuRenderer} from '../src/main.ts'
-import createGame from '../src/main.ts'
+import DefaultGame, {default as createGame, normalizeControls, WebgpuRenderer} from '../src/main.ts'
 import RendererShadows from '../src/RendererShadows.tsx'
 
 function element<Props>(node: ReactNode): ReactElement<Props> {
@@ -252,7 +251,7 @@ function Inject({children}: GameWrapperProps) {
   return <Dependency value='injected'><span>before</span>{children}<span>after</span></Dependency>
 }
 function Consume() {
-  return <span>{useContext(Dependency)}</span>
+  return <span>{use(Dependency)}</span>
 }
 test('scene wrappers can inject dependencies and ordered sibling content', () => {
   const scene = sceneOf({

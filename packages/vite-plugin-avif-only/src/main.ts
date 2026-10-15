@@ -247,7 +247,7 @@ export default function avifOnly(options: AvifOnlyOptions = {}): Plugin {
         if (!['GET', 'HEAD'].includes(request.method ?? '') || !request.url) {
           return next()
         }
-        void (async () => {
+        const respondWithAvif = async () => {
           try {
             const file = await serve(server, request.url!)
             if (!file) {
@@ -269,7 +269,11 @@ export default function avifOnly(options: AvifOnlyOptions = {}): Plugin {
           } catch (error) {
             next(error)
           }
-        })()
+        }
+        // Serving errors go to next(); only a throwing next() itself can still reject.
+        respondWithAvif().catch((error: unknown) => {
+          server.config.logger.error(String(error))
+        })
       })
     },
     generateBundle(_options, bundle) {

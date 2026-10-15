@@ -13,6 +13,9 @@ const axisAngles = [0, Math.PI * 2 / 3, Math.PI * 4 / 3]
 const cAxis = vec3(0.31, 0.87, 0.39).normalize()
 const aAxis = cAxis.cross(vec3(0.9, -0.3, 0.2)).normalize()
 const bAxis = cAxis.cross(aAxis).normalize()
+/** The crystal axis at an angle inside the basal plane, as an object-space and a view-space direction. */
+const axisObject = (angle: number) => aAxis.mul(Math.cos(angle)).add(bAxis.mul(Math.sin(angle))).normalize()
+const axisView = (angle: number) => modelViewMatrix.mul(vec4(axisObject(angle), 0)).xyz.normalize()
 /** A star ruby. Needles of rutile grew along three axes of the corundum lattice, and light that grazes them is thrown back the way it came, so a six-rayed star floats over the stone and follows the eye across it. Move closer and the silk itself appears: hair-fine needles at 120°, and the growth zones the crystal laid down while it cooled. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
@@ -23,9 +26,6 @@ export default class extends KnotMaterial {
 // Two of the studio lights: the key lamp and a cool panel further around the room.
     const keyLight = cameraViewMatrix.mul(vec4(-3, 9, -16, 0)).xyz.normalize()
     const panel = cameraViewMatrix.mul(vec4(0.62, -0.2, 0.75, 0)).xyz.normalize()
-/** The crystal axis at an angle inside the basal plane, as an object-space and a view-space direction. */
-    const axisObject = (angle: number) => aAxis.mul(Math.cos(angle)).add(bAxis.mul(Math.sin(angle))).normalize()
-    const axisView = (angle: number) => modelViewMatrix.mul(vec4(axisObject(angle), 0)).xyz.normalize()
 // Silk: hair-fine needles along each axis, with a slow crystalline tilt so nothing is perfectly ruled.
     const tilt = mx_noise_float(p.mul(2.4)).mul(0.22)
     let silk: Node<'float'> = float(0)

@@ -2,10 +2,10 @@ import type {MeshBVH} from 'three-mesh-bvh'
 import type {BufferGeometry} from 'three/webgpu'
 
 import {expect, test} from 'bun:test'
-import {mkdtemp, rm, writeFile} from 'node:fs/promises'
 import {join} from 'node:path'
 import {pathToFileURL} from 'node:url'
 
+import fs from 'fs-extra'
 import {build} from 'vite'
 
 import bakeThreeGeometry from '../src/main.ts'
@@ -27,11 +27,11 @@ const source = `
   }
 `
 test('couples an existing local geometry/BVH pair without annotations or changes to its dynamic consumers', async () => {
-  const directory = await mkdtemp(join(import.meta.dirname, 'bvh-build-'))
+  const directory = await fs.mkdtemp(join(import.meta.dirname, 'bvh-build-'))
   const originalFetch = globalThis.fetch
   try {
     const input = join(directory, 'entry.ts')
-    await writeFile(input, source)
+    await fs.writeFile(input, source)
     const result = await build({
       configFile: false,
       root: directory,
@@ -60,8 +60,8 @@ test('couples an existing local geometry/BVH pair without annotations or changes
     expect(code).not.toContain('new TorusKnotGeometry(')
     expect(code).toContain('MeshBVH.deserialize')
     expect(code).toContain('entries.map')
-    globalThis.fetch = (async input => {
-      const url = input instanceof Request ? input.url : String(input)
+    globalThis.fetch = (async fetchInput => {
+      const url = fetchInput instanceof Request ? fetchInput.url : String(fetchInput)
       const asset = assets.find(item => url.endsWith(item.fileName))
       if (asset?.type !== 'asset') {
         throw new Error(`Unexpected resource: ${url}`)
@@ -69,7 +69,7 @@ test('couples an existing local geometry/BVH pair without annotations or changes
       return new Response(asset.source as Uint8Array<ArrayBuffer>)
     }) as typeof fetch
     const output = join(directory, 'output.mjs')
-    await writeFile(output, code)
+    await fs.writeFile(output, code)
     type Resources = {
       geometries: Map<number, BufferGeometry>
       items: Array<{
@@ -89,7 +89,7 @@ test('couples an existing local geometry/BVH pair without annotations or changes
     expect(first.tree.geometry.boundingBox).toBeNull()
   } finally {
     globalThis.fetch = originalFetch
-    await rm(directory, {
+    await fs.rm(directory, {
       recursive: true,
       force: true,
     })
@@ -102,10 +102,10 @@ test.each([
   ['intervening mutation', source.replace('base.computeBoundingSphere()', 'base.translate(entries[0], 0, 0)'), true],
   ['progress callback', source.replace('indirect: true,', 'onProgress: () => {}, indirect: true,'), true],
 ])('declines unsafe or disabled BVH specialization: %s', async (_name, code, meshBvh) => {
-  const directory = await mkdtemp(join(import.meta.dirname, 'bvh-decline-'))
+  const directory = await fs.mkdtemp(join(import.meta.dirname, 'bvh-decline-'))
   try {
     const input = join(directory, 'entry.ts')
-    await writeFile(input, code)
+    await fs.writeFile(input, code)
     const result = await build({
       configFile: false,
       root: directory,
@@ -138,7 +138,7 @@ test.each([
     }>}
     expect(diagnostics.diagnostics.some(item => item.status === 'baked' && item.resources?.includes('mesh-bvh'))).toBe(false)
   } finally {
-    await rm(directory, {
+    await fs.rm(directory, {
       recursive: true,
       force: true,
     })

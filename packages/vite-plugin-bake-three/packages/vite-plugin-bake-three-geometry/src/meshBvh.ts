@@ -32,7 +32,7 @@ export function withMeshBvh(base: BakeAdapter): BakeAdapter {
             if (options?.onProgress || options?.useSharedArrayBuffer) {
               throw new NotBakeableError('MeshBVH callbacks and shared buffers stay at runtime.')
             }
-            return Reflect.construct(target, args)
+            return Reflect.construct(target, args) as InstanceType<typeof MeshBVH>
           },
         })
         roots.add(Constructor)

@@ -261,12 +261,12 @@ const inside = (distance: Node<'float'>) => {
 type EyeInput = {
 /** Pupil direction for each eye, from `gaze`. */
   aims: Array<Node<'vec3'>>
-/** Lid closure, 0 open … 1 shut. */
-  blink: Node<'float'>
+/** Vertical drift of the eye bumps while breathing. */
+  breathLift: Node<'vec3'>
 /** Pupil dilation factor around 1. */
   dilation: Node<'float'>
-/** Vertical drift of the eye bumps while breathing. */
-  lift: Node<'vec3'>
+/** Lid closure, 0 open … 1 shut. */
+  lidClosure: Node<'float'>
 /** Fragment position on the plush surface (knot space). */
   point: Node<'vec3'>
 }
@@ -306,7 +306,7 @@ const above = (value: Node<'float'>, edge: Node<'float'> | number) => {
   return value.sub(edge).div(width).mul(0.5).add(0.5).clamp()
 }
 /** The felt-and-plastic eyes: a white felt disc on each eye bump, a domed glossy safety eye that rolls toward the viewer and a green felt lid that sweeps down when he blinks. Masks never overlap between the two eyes, so they are combined with max/sum. */
-function eyeLayers({point, aims, blink, lift, dilation}: EyeInput) {
+function eyeLayers({point, aims, lidClosure, breathLift, dilation}: EyeInput) {
   let white: Node<'float'> = float(0)
   let pupil: Node<'float'> = float(0)
   let lid: Node<'float'> = float(0)
@@ -315,7 +315,7 @@ function eyeLayers({point, aims, blink, lift, dilation}: EyeInput) {
   let rim: Node<'float'> = float(0)
   let pupilNormal: Node<'vec3'> = vec3(0, 0, 1)
   for (const [index, eye] of eyes.entries()) {
-    const center = vec3(...eye.center).add(lift)
+    const center = vec3(...eye.center).add(breathLift)
     const offset = point.sub(center)
     const distance = offset.length()
     const direction = offset.div(distance.max(1e-5))
@@ -339,15 +339,15 @@ function eyeLayers({point, aims, blink, lift, dilation}: EyeInput) {
     const upness = direction.dot(vec3(...eye.lidUp))
     const sideways = direction.dot(vec3(...eye.lidSide))
     const reachUp = Math.sin(whiteAngle) + 0.06
-    const edge = float(reachUp).sub(blink.mul(reachUp * 2 + 0.06)).add(sideways.mul(sideways).mul(blink.mul(1.6).add(0.15)))
+    const edge = float(reachUp).sub(lidClosure.mul(reachUp * 2 + 0.06)).add(sideways.mul(sideways).mul(lidClosure.mul(1.6).add(0.15)))
     const covered = above(upness, edge).mul(onBall.max(disc))
-    const edgeLine = upness.sub(edge).abs().smoothstep(0, 0.03).oneMinus().mul(blink.smoothstep(0.02, 0.1)).mul(disc)
+    const edgeLine = upness.sub(edge).abs().smoothstep(0, 0.03).oneMinus().mul(lidClosure.smoothstep(0.02, 0.1)).mul(disc)
     white = white.add(disc)
     pupil = pupil.add(cap)
-    lid = lid.add(covered.mul(blink.smoothstep(0, 0.04)))
+    lid = lid.add(covered.mul(lidClosure.smoothstep(0, 0.04)))
     lidEdge = lidEdge.add(edgeLine)
 // Domed lid: thickens toward its edge so it reads as a felt flap, not paint.
-    lidHeight = lidHeight.add(covered.mul(upness.sub(edge).smoothstep(0, 0.05).mul(-0.0018).add(0.0028)).mul(blink.smoothstep(0, 0.04)))
+    lidHeight = lidHeight.add(covered.mul(upness.sub(edge).smoothstep(0, 0.05).mul(-0.0018).add(0.0028)).mul(lidClosure.smoothstep(0, 0.04)))
 // A thin band of green felt just outside the disc, where its cut edge casts a hairline shadow.
     rim = rim.add(above(facing, Math.cos(whiteAngle + 0.03)).sub(disc).max(0).mul(onBall))
     pupilNormal = cap.greaterThan(0).select(dome, pupilNormal)
@@ -434,18 +434,18 @@ function breath() {
   const phase = time.mul(TAU / 2)
   return phase.sin().mul(0.85).add(phase.mul(2).add(0.6).sin().mul(0.15))
 }
+/** A point in the unit disc per slot, scaled to the saccade amplitude. */
+const saccadePoint = (slot: Node<'float'>) => {
+  const angle = hash(slot, 2.1).mul(TAU)
+  return vec3(angle.cos(), angle.sin(), 0).mul(hash(slot, 5.3).sqrt().mul(saccadeAmplitude))
+}
 /** Tiny fixational saccades: three quick hops per 2 s loop, so the eyes never look painted on. */
 function saccade() {
   const step = time.mul(1.5)
   const index = step.floor().mod(3)
   const settle = step.fract().smoothstep(0, 0.04)
   const previous = index.add(2).mod(3)
-// A point in the unit disc per slot, scaled to the saccade amplitude.
-  const at = (slot: Node<'float'>) => {
-    const angle = hash(slot, 2.1).mul(TAU)
-    return vec3(angle.cos(), angle.sin(), 0).mul(hash(slot, 5.3).sqrt().mul(saccadeAmplitude))
-  }
-  return mix(at(previous), at(index), settle)
+  return mix(saccadePoint(previous), saccadePoint(index), settle)
 }
 /** Where each pupil points (knot space). The safety eyes roll toward the viewer and saturate smoothly at the felt rim, so the prince keeps watching whoever walks around him. Closer visitors dilate them. */
 function gaze(viewer: Node<'vec3'>) {
@@ -518,7 +518,7 @@ type SurfaceOptions = {
 /** Edge softness of the bow, in object units: wide for the coarse mesh, crisp for per-pixel normals. */
   bowSoftness: number
 /** Breathing, roughly in −1…1. */
-  breath: Node<'float'>
+  breathing: Node<'float'>
 }
 /** Three plump toes on each lower lobe, splayed along the tube at the front-bottom, as a 0…1 height. Gaussian bumps in arc-length units keep them round however fast the parametrization runs. */
 function webbedToes(u: Node<'float'>, v: Node<'float'>) {
@@ -536,11 +536,11 @@ function webbedToes(u: Node<'float'>, v: Node<'float'>) {
   return toes
 }
 /** The plush figure as a radius field over the tube: the head lobe inflates into an ellipsoidal pillow, two eye spheres bulge through the crown with stuffed fillets and a bow tie is raised under the chin. Every shape is ray-cast from the tube centerline, so the surface stays a single closed sheet. */
-function plushSurface(u: Node<'float'>, v: Node<'float'>, {breath, bowSoftness}: SurfaceOptions) {
+function plushSurface(u: Node<'float'>, v: Node<'float'>, {breathing, bowSoftness}: SurfaceOptions) {
   const ring = ringFrame(u)
   const around = v.mul(TAU)
   const direction = ring.normal.mul(around.cos().negate()).add(ring.binormal.mul(around.sin()))
-  const swell = breath.mul(0.012).add(1)
+  const swell = breathing.mul(0.012).add(1)
   const radii = vec3(...head.radii).mul(vec3(swell, swell, swell.sub(1).mul(1.6).add(1)))
   const pillow = ellipsoidExit(ring.point, direction, vec3(...head.center), radii)
 // Fades the head out as the centerline leaves the pillow, so no other strand ever inflates.
@@ -549,10 +549,10 @@ function plushSurface(u: Node<'float'>, v: Node<'float'>, {breath, bowSoftness}:
   let radius: Node<'float'> = body
   let crease: Node<'float'> = float(0)
   for (const eye of eyes) {
-    const bump = sphereExit(ring.point, direction, vec3(...eye.center).add(vec3(...up).mul(breath.mul(0.003))), eyeRadius)
-    const joined = smax(radius, bump, eyeFillet)
+    const eyeBulge = sphereExit(ring.point, direction, vec3(...eye.center).add(vec3(...up).mul(breathing.mul(0.003))), eyeRadius)
+    const joined = smax(radius, eyeBulge, eyeFillet)
 // How much stuffing the fillet adds: a proxy for the crease where the eye bump meets the head.
-    crease = crease.max(joined.sub(radius.max(bump)).div(eyeFillet / 4))
+    crease = crease.max(joined.sub(radius.max(eyeBulge)).div(eyeFillet / 4))
     radius = joined
   }
   radius = float(tubeRadius).add(radius.sub(tubeRadius).mul(inHead))
@@ -595,13 +595,13 @@ export default class extends KnotMaterial {
     const blinking = blink()
 // Geometry: the knot is re-posed head-up, shrunk to chibi proportions, inflated into the plush and wrapped in fuzz.
     const shape = plushSurface(warpU(tube.x), tube.y, {
-      breath: breathing,
+      breathing,
       bowSoftness: 0.012,
     })
     this.positionNode = placeInObject(shape.ring.point.add(shape.direction.mul(shape.radius.add(fuzz))))
 // Per-pixel shape: the same surface with a crisp bow, differentiated in u and v for a smooth normal.
     const surface = (u: Node<'float'>, v: Node<'float'>) => plushSurface(warpU(u), v, {
-      breath: breathing,
+      breathing,
       bowSoftness: 0.0025,
     })
     const here = surface(tube.x, tube.y)
@@ -627,8 +627,8 @@ export default class extends KnotMaterial {
     const eye = eyeLayers({
       point,
       aims: gaze(viewer),
-      blink: blinking,
-      lift: vec3(...up).mul(breathing.mul(0.003)),
+      lidClosure: blinking,
+      breathLift: vec3(...up).mul(breathing.mul(0.003)),
       dilation: intimate.mul(maxDilation - 0.94).add(0.94),
     })
     const openEye = eye.lid.oneMinus()

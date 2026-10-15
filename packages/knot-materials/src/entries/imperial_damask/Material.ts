@@ -42,8 +42,8 @@ function ornament(tube: Node<'vec2'>) {
   const blossom = petals.max(veins).max(ring).min(heart.max(seeds.negate()))
 // four leaves curling from the blossom, and sprigs where tiles meet
   let foliage: Node<'float'> = float(1)
-  for (const [x, y, angle] of [[0.27, 0.2, 0.9], [-0.27, -0.2, 0.9], [0.27, -0.2, -0.9], [-0.27, 0.2, -0.9]] as const) {
-    foliage = foliage.min(leaf(q, [x, y], angle, 0.13, 0.045))
+  for (const [x, y, leafAngle] of [[0.27, 0.2, 0.9], [-0.27, -0.2, 0.9], [0.27, -0.2, -0.9], [-0.27, 0.2, -0.9]] as const) {
+    foliage = foliage.min(leaf(q, [x, y], leafAngle, 0.13, 0.045))
   }
   const midrib = leaf(q, [0.27, 0.2], 0.9, 0.11, 0.004).min(leaf(q, [-0.27, -0.2], 0.9, 0.11, 0.004)).min(leaf(q, [0.27, -0.2], -0.9, 0.11, 0.004)).min(leaf(q, [-0.27, 0.2], -0.9, 0.11, 0.004))
   const corner = q.abs().sub(0.5).length()

@@ -10,10 +10,10 @@ const setup = (options = {}) => {
     ...options,
   })
   const players = new Map<string, FakePlayback>
-  const push = (name: string, options: Parameters<typeof queue.push>[1] = {}) => {
+  const push = (name: string, pushOptions: Parameters<typeof queue.push>[1] = {}) => {
     const player = new FakePlayback(name)
     players.set(name, player)
-    return queue.push(() => player, options)
+    return queue.push(() => player, pushOptions)
   }
   return {
     queue,
@@ -81,7 +81,8 @@ test('destructive cancels current, suspended, queued and explicitly concurrent j
   expect(queue.getSnapshot().interrupted).toHaveLength(0)
   expect(queue.getSnapshot().concurrent).toHaveLength(0)
   for (const handle of old) {
-    expect((await handle.finished).status).toBe('cancelled')
+    const result = await handle.finished
+    expect(result.status).toBe('cancelled')
   }
   for (const name of ['a', 'injection', 'parallel']) {
     expect(players.get(name)!.disposals).toBe(1)
@@ -99,7 +100,8 @@ test('async bypasses the serial queue without advancing it on completion', async
   expect(players.get('parallel')!.playing).toBe(true)
   players.get('parallel')!.end()
   await flush()
-  expect((await parallel.finished).status).toBe('completed')
+  const parallelResult = await parallel.finished
+  expect(parallelResult.status).toBe('completed')
   expect(queue.getSnapshot().current?.id).toBe(a.id)
   players.get('a')!.end()
   await flush()
@@ -113,7 +115,8 @@ for (const priority of ['normal', 'high', 'inject', 'async', 'destructive', 'vol
     await flush()
     push('other', {priority})
     await flush()
-    expect((await shy.finished).status).toBe('cancelled')
+    const shyResult = await shy.finished
+    expect(shyResult.status).toBe('cancelled')
     expect(players.get('shy')!.disposals).toBe(1)
     players.get('other')!.end()
     await flush()
@@ -144,7 +147,8 @@ test('a new shy request is skipped without interrupting the current shy request'
   expect(players.get('current-shy')!.playing).toBe(true)
   players.get('current-shy')!.end()
   await flush()
-  expect((await current.finished).status).toBe('completed')
+  const currentResult = await current.finished
+  expect(currentResult.status).toBe('completed')
 })
 test('volatile queues normally behind current work and ahead of later normal work', async () => {
   const {queue, players, push} = setup()
@@ -160,7 +164,8 @@ test('volatile queues normally behind current work and ahead of later normal wor
   expect(players.get('volatile')!.playing).toBe(true)
   players.get('volatile')!.end()
   await flush()
-  expect((await volatile.finished).status).toBe('completed')
+  const volatileResult = await volatile.finished
+  expect(volatileResult.status).toBe('completed')
   expect(queue.getSnapshot().current?.id).toBe(later.id)
   queue.dispose()
 })
@@ -179,7 +184,8 @@ for (const priority of ['normal', 'high', 'inject', 'async', 'destructive', 'vol
     expect(players.get('volatile')!.plays).toBe(1)
     players.get('other')!.end()
     await flush()
-    expect((await replacement.finished).status).toBe('completed')
+    const replacementResult = await replacement.finished
+    expect(replacementResult.status).toBe('completed')
     expect(players.get('volatile')!.plays).toBe(1)
     queue.dispose()
   })
@@ -223,7 +229,8 @@ test('before/after indicator padding contributes to the minimum audible gap', as
   await clock.advance(0.29)
   expect(queue.getSnapshot().current?.id).toBe(a.id)
   await clock.advance(0.01)
-  expect((await a.finished).status).toBe('completed')
+  const aResult = await a.finished
+  expect(aResult.status).toBe('completed')
   expect(queue.getSnapshot().current?.id).toBe(b.id)
   await clock.advance(0.69)
   expect(players.get('b')!.plays).toBe(0)
@@ -308,8 +315,10 @@ test('an old pending play rejection after injection does not kill resumed audio'
   const original = new FakePlayback
   let attempts = 0
   const handle = queue.push(() => ({
-    ...original,
+    finished: original.finished,
     play: () => (++attempts === 1 ? starting.promise : undefined),
+    pause: original.pause,
+    dispose: original.dispose,
   }))
   await flush()
   push('injection', {priority: 'inject'})
@@ -364,8 +373,10 @@ test('external abort cancels pending and suspended items without cancelling the 
   await flush()
   controller.abort('owner unmounted')
   await flush()
-  expect((await a.finished).status).toBe('cancelled')
-  expect((await pending.finished).status).toBe('cancelled')
+  const aResult = await a.finished
+  expect(aResult.status).toBe('cancelled')
+  const pendingResult = await pending.finished
+  expect(pendingResult.status).toBe('cancelled')
   expect(queue.getSnapshot().current?.id).toBe(injection.id)
   expect(queue.getSnapshot().interrupted).toHaveLength(0)
   queue.dispose()
@@ -385,7 +396,8 @@ test('key deduplication, stable snapshots, validation and idempotent disposal', 
   await flush()
   queue.dispose()
   queue.dispose()
-  expect((await first.finished).status).toBe('cancelled')
+  const firstResult = await first.finished
+  expect(firstResult.status).toBe('cancelled')
   expect(() => push('late')).toThrow('disposed')
 })
 test('reentrant subscribers can replace newly prepared jobs without resurrecting them', async () => {
@@ -399,7 +411,8 @@ test('reentrant subscribers can replace newly prepared jobs without resurrecting
   })
   const original = push('original')
   await flush()
-  expect((await original.finished).status).toBe('cancelled')
+  const originalResult = await original.finished
+  expect(originalResult.status).toBe('cancelled')
   expect(players.get('original')!.plays).toBe(0)
   expect(players.get('replacement')!.plays).toBe(1)
   queue.dispose()

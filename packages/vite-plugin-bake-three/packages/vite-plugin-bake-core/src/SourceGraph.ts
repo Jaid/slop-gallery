@@ -1,11 +1,10 @@
 import type {ResolveModule, SourceModule} from './types.ts'
 import type {Binding, NodePath} from '@babel/traverse'
 
-import {readFile} from 'node:fs/promises'
-
 import {parse} from '@babel/parser'
 import traverse from '@babel/traverse'
 import * as t from '@babel/types'
+import fs from 'fs-extra'
 
 import {NotBakeableError} from './types.ts'
 
@@ -17,7 +16,14 @@ export function importInfo(path: NodePath) {
   if (!declaration.isImportDeclaration() || declaration.node.importKind === 'type') {
     throw new NotBakeableError('Type-only import.')
   }
-  const imported = path.isImportDefaultSpecifier() ? 'default' : path.isImportNamespaceSpecifier() ? '*' : t.isIdentifier(path.node.imported) ? path.node.imported.name : path.node.imported.value
+  let imported: string
+  if (path.isImportDefaultSpecifier()) {
+    imported = 'default'
+  } else if (path.isImportNamespaceSpecifier()) {
+    imported = '*'
+  } else {
+    imported = t.isIdentifier(path.node.imported) ? path.node.imported.name : path.node.imported.value
+  }
   return {
     source: declaration.node.source.value,
     imported,
@@ -79,7 +85,7 @@ export default class SourceGraph {
         }
       } else if (declaration.isVariableDeclaration()) {
         const binding = module.path.scope.getBinding(name)
-        if (binding && binding.path.parentPath === declaration) {
+        if (binding?.path.parentPath === declaration) {
           return binding.path
         }
       }
@@ -108,14 +114,15 @@ export default class SourceGraph {
     if (id.includes('\0') || id.includes('?')) {
       throw new NotBakeableError('Virtual and query modules are not evaluated.')
     }
-    const code = suppliedCode ?? await readFile(id, 'utf8')
+    const code = suppliedCode ?? await fs.readFile(id, 'utf8')
     const ast = parse(code, {
       sourceType: 'module',
       plugins: ['typescript', 'jsx'],
     })
     let path!: NodePath<t.Program>
     traverse(ast, {Program(program) {
-      path = program; program.stop()
+      path = program
+      program.stop()
     }})
     const result = {
       id,
@@ -141,23 +148,23 @@ export function assertConstant(binding: Binding, visited = new Set<Binding>) {
   }
   for (const reference of binding.referencePaths) {
     let path: NodePath = reference
-    while (path.parentPath?.isMemberExpression() && path.parentPath.node.object === path.node) {
+    while (path.parentPath.isMemberExpression() && path.parentPath.node.object === path.node) {
       path = path.parentPath
     }
     const parent = path.parentPath
-    if (parent?.isVariableDeclarator() && parent.node.init === path.node && t.isIdentifier(parent.node.id)) {
+    if (parent.isVariableDeclarator() && parent.node.init === path.node && t.isIdentifier(parent.node.id)) {
       const alias = parent.scope.getBinding(parent.node.id.name)
       if (alias) {
         assertConstant(alias, visited)
       }
     }
-    if (parent?.isCallExpression() && parent.node.arguments[0] === path.node && t.isMemberExpression(parent.node.callee) && t.isIdentifier(parent.node.callee.object, {name: 'Object'}) && t.isIdentifier(parent.node.callee.property) && ['assign', 'defineProperties', 'defineProperty', 'setPrototypeOf'].includes(parent.node.callee.property.name)) {
+    if (parent.isCallExpression() && parent.node.arguments[0] === path.node && t.isMemberExpression(parent.node.callee) && t.isIdentifier(parent.node.callee.object, {name: 'Object'}) && t.isIdentifier(parent.node.callee.property) && ['assign', 'defineProperties', 'defineProperty', 'setPrototypeOf'].includes(parent.node.callee.property.name)) {
       throw new NotBakeableError('A captured dependency is mutated by Object methods.')
     }
-    if (parent?.isAssignmentExpression() && parent.node.left === path.node || parent?.isUpdateExpression() || parent?.isUnaryExpression({operator: 'delete'})) {
+    if (parent.isAssignmentExpression() && parent.node.left === path.node || parent.isUpdateExpression() || parent.isUnaryExpression({operator: 'delete'})) {
       throw new NotBakeableError(`Mutated dependency: ${binding.identifier.name}.`)
     }
-    if (parent?.isCallExpression() && parent.node.callee === path.node && path.isMemberExpression() && !path.node.computed && t.isIdentifier(path.node.property) && mutators.has(path.node.property.name)) {
+    if (parent.isCallExpression() && parent.node.callee === path.node && path.isMemberExpression() && !path.node.computed && t.isIdentifier(path.node.property) && mutators.has(path.node.property.name)) {
       throw new NotBakeableError(`Mutated dependency: ${binding.identifier.name}.`)
     }
   }

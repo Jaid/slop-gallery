@@ -42,43 +42,46 @@ function transparentBranch(path: NodePath<t.JSXElement>) {
   const info = binding && importInfo(binding.path)
   return info?.source === 'branch-component' && info.imported === 'default'
 }
+/** Whether the function calls the frame loop or imperative Three state hooks of @react-three/fiber. */
+function usesImperativeFiberHooks(component: NodePath<t.Function>): boolean {
+  let imperative = false
+  component.traverse({CallExpression(call) {
+    const callee = call.node.callee
+    if (!t.isIdentifier(callee)) {
+      return
+    }
+    const binding = call.scope.getBinding(callee.name)
+    const imported = binding && importInfo(binding.path)
+    if (imported?.source.startsWith('@react-three/fiber') && ['useFrame', 'useThree'].includes(imported.imported)) {
+      imperative = true
+    }
+  }})
+  return imperative
+}
+/** Babel types parentPath as always present, but the Program path has none. */
+function parentPathOf(path: NodePath): NodePath | null {
+  return path.parentPath
+}
 function contextReason(path: NodePath) {
-  let parent = path.parentPath
+  let parent = parentPathOf(path)
   while (parent) {
     if (parent.isJSXElement()) {
       const name = parent.node.openingElement.name
       if (!t.isJSXIdentifier(name) || name.name !== 'group' && !transparentBranch(parent)) {
         return 'Opaque ancestor may observe individual objects, collect colliders, or attach interaction.'
       }
-      if (parent.node.openingElement.attributes.some(attribute => !t.isJSXAttribute(attribute) || !t.isJSXIdentifier(attribute.name) || /^(dispose|layers|matrix|on|ref|renderOrder)/u.test(attribute.name.name))) {
+      if (parent.node.openingElement.attributes.some(attribute => !t.isJSXAttribute(attribute) || !t.isJSXIdentifier(attribute.name) || /^(?:dispose|layers|matrix|on|ref|renderOrder)/u.test(attribute.name.name))) {
         return 'Ancestor has imperative, interaction or ordering behavior.'
       }
     }
-    if (parent.isFunction()) {
-      let imperative = false
-      parent.traverse({CallExpression(call) {
-        const callee = call.node.callee
-        if (!t.isIdentifier(callee)) {
-          return
-        }
-        const binding = call.scope.getBinding(callee.name)
-        const imported = binding && importInfo(binding.path)
-        if (imported?.source.startsWith('@react-three/fiber') && ['useFrame', 'useThree'].includes(imported.imported)) {
-          imperative = true
-        }
-      }})
-      if (imperative) {
-        return 'Enclosing component accesses the frame loop or imperative Three state.'
-      }
+    if (parent.isFunction() && usesImperativeFiberHooks(parent)) {
+      return 'Enclosing component accesses the frame loop or imperative Three state.'
     }
-    parent = parent.parentPath
+    parent = parentPathOf(parent)
   }
 }
 function renderPosition(path: NodePath): boolean {
   const parent = path.parentPath
-  if (!parent) {
-    return false
-  }
   if (parent.isJSXExpressionContainer()) {
     return parent.parentPath.isJSXElement() || parent.parentPath.isJSXFragment()
   }
@@ -150,7 +153,7 @@ export async function compileStaticRendering(code: string, id: string, options: 
     expression,
     start: path.node.start!,
     end: path.node.end!,
-    jsxChild: path.parentPath?.isJSXElement() || path.parentPath?.isJSXFragment(),
+    jsxChild: path.parentPath.isJSXElement() || path.parentPath.isJSXFragment(),
   })
   source.path.traverse({
     JSXElement(path) {
@@ -189,10 +192,12 @@ export async function compileStaticRendering(code: string, id: string, options: 
         }
         const expression = child.isJSXExpressionContainer() && t.isExpression(child.node.expression) ? child.node.expression : (child.isJSXElement() || child.isJSXFragment() ? child.node : undefined)
         if (!expression) {
-          flush(); continue
+          flush()
+          continue
         }
         try {
-          lowerScene(expression); run.push({
+          lowerScene(expression)
+          run.push({
             path: child,
             expression,
           })
@@ -305,7 +310,7 @@ export async function compileStaticRendering(code: string, id: string, options: 
       includeContent: true,
       hires: true,
     }),
-    plans: [...plans.values()],
+    plans: plans.values().toArray(),
     diagnostics,
     dependencies,
   }

@@ -14,6 +14,7 @@ const multiply = (a: Array<number>, b: Array<number>) => {
   const rightFactor = new Matrix4
   return leftFactor.fromArray(a).multiply(rightFactor.fromArray(b)).toArray()
 }
+const isInstancingCandidate = (node: SceneNode) => node.kind === 'mesh' && !node.props.name && node.props.visible !== false && orthogonal(node.matrix)
 export function optimizeScene(input: Array<SceneNode>, options: ResolvedR3fStaticRenderingOptions): StaticPlan {
   let instances = 0
   let batches = 0
@@ -24,11 +25,11 @@ export function optimizeScene(input: Array<SceneNode>, options: ResolvedR3fStati
       if (node.kind === 'group' && Object.keys(node.props).length === 0) {
         return flatten(node.children, matrix)
       }
-      return [{
+      return {
         ...node,
         matrix,
         children: node.children.map(child => ({...child})),
-      }]
+      }
     })
   }
   function instance(nodes: Array<SceneNode>): Array<SceneNode> {
@@ -40,11 +41,10 @@ export function optimizeScene(input: Array<SceneNode>, options: ResolvedR3fStati
     const flat = flatten(nodes)
     for (let index = 0; index < flat.length;) {
       const first = flat[index]
-      const candidate = (node: SceneNode) => node.kind === 'mesh' && !node.props.name && node.props.visible !== false && orthogonal(node.matrix)
       const key = (node: SceneNode) => JSON.stringify([node.geometry, node.material, node.props])
       let end = index + 1
-      if (candidate(first)) {
-        while (end < flat.length && candidate(flat[end]) && key(flat[end]) === key(first)) {
+      if (isInstancingCandidate(first)) {
+        while (end < flat.length && isInstancingCandidate(flat[end]) && key(flat[end]) === key(first)) {
           end++
         }
       }
@@ -118,7 +118,7 @@ export function constructorsFor(plan: StaticPlan) {
     }
   }
   walk(plan.nodes)
-  return [...names].sort()
+  return [...names].toSorted()
 }
 
 function orthogonal(matrix: Array<number>) {

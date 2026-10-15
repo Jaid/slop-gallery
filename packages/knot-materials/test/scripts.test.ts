@@ -1,14 +1,15 @@
 import {describe, expect, test} from 'bun:test'
-import {mkdtemp, readFile, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join, resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
+
+import fs from 'fs-extra'
 
 import makePrompt, {selectExamples} from '../scripts/makePrompt.ts'
 import {knots} from '../src/main.ts'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
-const readSource = (file: string) => readFile(resolve(root, file), 'utf8')
+const readSource = (file: string) => fs.readFile(resolve(root, file), 'utf8')
 describe('inference prompts', () => {
   test('sampling is deterministic, distinct and diverse without hardcoding example IDs', () => {
     const first = selectExamples()
@@ -37,15 +38,19 @@ describe('inference prompts', () => {
     const libraryFileGlob = new Bun.Glob('**/*.ts')
     for (const file of await Array.fromAsync(libraryFileGlob.scan(resolve(root, 'src/lib')))) {
       expect(prompt).toContain(`### src/lib/${file.replaceAll('\\', '/')}`)
-      expect(prompt).toContain((await readSource(`src/lib/${file}`)).trimEnd())
+      const librarySource = await readSource(`src/lib/${file}`)
+      expect(prompt).toContain(librarySource.trimEnd())
     }
     for (const id of options.exampleIds) {
       for (const file of ['data.ts', 'Material.ts']) {
-        expect(prompt).toContain((await readSource(`src/entries/${id}/${file}`)).trimEnd())
+        const exampleSource = await readSource(`src/entries/${id}/${file}`)
+        expect(prompt).toContain(exampleSource.trimEnd())
       }
     }
-    expect(prompt).toContain((await readSource('src/candidates/gpt_astra/lib/viewerFrame.ts')).trimEnd())
-    expect(prompt).toContain((await readSource('src/candidates/gpt_astra/lib/knotShell.ts')).trimEnd())
+    const viewerFrameSource = await readSource('src/candidates/gpt_astra/lib/viewerFrame.ts')
+    expect(prompt).toContain(viewerFrameSource.trimEnd())
+    const knotShellSource = await readSource('src/candidates/gpt_astra/lib/knotShell.ts')
+    expect(prompt).toContain(knotShellSource.trimEnd())
     expect(prompt).toContain('exports an anonymous default class')
     expect(prompt).toContain('compact one-line JSDoc immediately above that class')
     expect(prompt).toContain('do not create knot-scoped helper or library files')
@@ -73,7 +78,7 @@ describe('inference prompts', () => {
     await expect(makePrompt({candidate: 'missing'})).rejects.toThrow('Unknown Knot candidate')
   })
   test('the CLI writes Markdown from another working directory without making inference requests', async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'knot-prompt-test-'))
+    const directory = await fs.mkdtemp(join(tmpdir(), 'knot-prompt-test-'))
     try {
       const output = join(directory, 'nested', 'prompt.md')
       const process = Bun.spawn(['bun', resolve(root, 'scripts/makePrompt.ts'), '--candidate', 'hy', '--count', '2', '--example-ids', 'ferrothorn,washi_lantern', '--output', output], {
@@ -84,13 +89,13 @@ describe('inference prompts', () => {
       const stderrResponse = new Response(process.stderr)
       const [exitCode, stderr] = await Promise.all([process.exited, stderrResponse.text()])
       expect(exitCode, stderr).toBe(0)
-      expect(await readFile(output, 'utf8')).toBe(await makePrompt({
+      expect(await fs.readFile(output, 'utf8')).toBe(await makePrompt({
         candidate: 'hy',
         count: 2,
         exampleIds: ['ferrothorn', 'washi_lantern'],
       }))
     } finally {
-      await rm(directory, {
+      await fs.rm(directory, {
         recursive: true,
         force: true,
       })

@@ -1,5 +1,5 @@
 import type {MaterialCompilation} from '../src/main.ts'
-import type {WebGPURenderer} from 'three/webgpu'
+import type {BufferGeometry, WebGPURenderer} from 'three/webgpu'
 
 import {expect, spyOn, test} from 'bun:test'
 
@@ -48,14 +48,14 @@ function fixture(third = false, prioritized = true) {
     setMRT: (next: typeof mrt) => mrt = next,
     getActiveCubeFace: () => face,
     getActiveMipmapLevel: () => mip,
-    compileAsync(mesh: Mesh, camera: unknown, scene: unknown) {
+    compileAsync(mesh: Mesh, compileCamera: unknown, compileScene: unknown) {
       const gate = Promise.withResolvers<void>()
       calls.push({
         gate,
         material: mesh.material,
         mesh,
-        camera,
-        scene,
+        camera: compileCamera,
+        scene: compileScene,
         target,
         output,
         mrt,
@@ -66,7 +66,7 @@ function fixture(third = false, prioritized = true) {
       // returning its native-pipeline Promise, including onBeforeRender hooks.
       mesh.traverse(object => {
         if (object instanceof Mesh) {
-          object.onBeforeRender(renderer as unknown as Parameters<Mesh['onBeforeRender']>[0], scene as Scene, camera as PerspectiveCamera, object.geometry, object.material as never, null as never)
+          object.onBeforeRender(renderer as unknown as Parameters<Mesh['onBeforeRender']>[0], compileScene as Scene, compileCamera as PerspectiveCamera, object.geometry as BufferGeometry, object.material as never, null as never)
         }
       })
       return gate.promise
@@ -76,10 +76,8 @@ function fixture(third = false, prioritized = true) {
   const position = new Vector3
   const eye = new Vector3
   const options = {
-    priority(mesh: Mesh) {
-      return position.setFromMatrixPosition(mesh.matrixWorld).distanceToSquared(eye.setFromMatrixPosition(camera.matrixWorld))
-    },
-    onSettled(result: MaterialCompilation) {
+    priority: (mesh: Mesh) => position.setFromMatrixPosition(mesh.matrixWorld).distanceToSquared(eye.setFromMatrixPosition(camera.matrixWorld)),
+    onSettled: (result: MaterialCompilation) => {
       results.push(result)
     },
   }

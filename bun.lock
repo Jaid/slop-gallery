@@ -388,8 +388,12 @@
         "@babel/plugin-transform-typescript": "8.0.6",
         "@babel/traverse": "8.0.7",
         "@babel/types": "8.0.6",
+        "fs-extra": "11.4.1",
         "magic-string": "1.4.3",
         "math": "0.1.0",
+      },
+      "devDependencies": {
+        "@types/fs-extra": "11.0.4",
       },
       "peerDependencies": {
         "three": "^0.186.1",
@@ -408,6 +412,10 @@
         "@napi-rs/canvas": "1.0.11",
         "vite-plugin-bake-core": "workspace:*",
       },
+      "devDependencies": {
+        "@types/fs-extra": "11.0.4",
+        "fs-extra": "11.4.1",
+      },
       "peerDependencies": {
         "three": "^0.186.1",
         "vite": "^8.3.4",
@@ -420,6 +428,10 @@
         "@babel/traverse": "8.0.7",
         "@babel/types": "8.0.6",
         "vite-plugin-bake-core": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/fs-extra": "11.0.4",
+        "fs-extra": "11.4.1",
       },
       "peerDependencies": {
         "three": "^0.186.1",
@@ -439,6 +451,10 @@
         "disposable-lifetime": "workspace:*",
         "magic-string": "1.4.3",
         "vite-plugin-bake-core": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/fs-extra": "11.0.4",
+        "fs-extra": "11.4.1",
       },
       "peerDependencies": {
         "@react-three/fiber": "^10.0.0-canary.fd3335d",

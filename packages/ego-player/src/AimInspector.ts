@@ -114,7 +114,8 @@ export default class AimInspector {
         continue
       }
       const materialIndex = intersection.face?.materialIndex ?? 0
-      const material = Array.isArray(mesh.material) ? mesh.material[materialIndex] : mesh.material
+      // A geometry group can name a material index that the mesh’s material array does not have.
+      const material = Array.isArray(mesh.material) ? mesh.material[materialIndex] as Material | undefined : mesh.material
       if (!material || !visibleMaterial(material)) {
         continue
       }

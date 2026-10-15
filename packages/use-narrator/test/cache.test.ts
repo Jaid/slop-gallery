@@ -12,7 +12,9 @@ test('shared generation has independently cancellable consumers', async () => {
   let calls = 0
   let providerSignal: AbortSignal | undefined
   const cache = new SpeechCache((_speech, active) => {
-    calls++; providerSignal = active; return ready.promise
+    calls++
+    providerSignal = active
+    return ready.promise
   })
   const first = new AbortController
   const second = new AbortController
@@ -35,7 +37,9 @@ test('the last consumer leaving aborts generation and a late result is not cache
   let calls = 0
   let providerSignal: AbortSignal | undefined
   const cache = new SpeechCache((_speech, active) => {
-    calls++; providerSignal = active; return calls === 1 ? ready.promise : '/fresh.opus'
+    calls++
+    providerSignal = active
+    return calls === 1 ? ready.promise : '/fresh.opus'
   })
   const controller = new AbortController
   const first = cache.synthesize({text: 'Hello'}, controller.signal)
@@ -88,7 +92,8 @@ test('failed generation is not cached and invalid capacities are rejected', asyn
   const cache = new SpeechCache(() => {
     if (++calls === 1) {
       throw new Error('failed')
-    }; return '/success.opus'
+    }
+    return '/success.opus'
   })
   await expect(cache.synthesize({text: 'Hello'}, signal())).rejects.toThrow('failed')
   expect(await cache.synthesize({text: 'Hello'}, signal())).toBe('/success.opus')

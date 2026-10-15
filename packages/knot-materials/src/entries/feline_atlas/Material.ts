@@ -82,7 +82,7 @@ export default class extends KnotMaterial {
       threads = threads.max(segment(p, stars[a], stars[b], 0.0027, footprint))
     }
     for (const [i, star] of stars.entries()) {
-      const radius = i === 1 || i === 4 || i === 18 ? 0.019 : 0.011
+      const radius = [1, 4, 18].includes(i) ? 0.019 : 0.011
       const pulse = time.mul(1.4 + i % 5 * 0.17).add(random.x.mul(8)).add(i * 1.618).sin().mul(0.25).add(0.76)
       lights = lights.max(disk(p.sub(vec2(...star)), radius, footprint).mul(pulse))
     }

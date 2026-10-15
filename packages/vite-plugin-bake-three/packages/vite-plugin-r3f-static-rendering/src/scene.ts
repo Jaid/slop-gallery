@@ -13,6 +13,7 @@ const transforms = new Set(['position', 'rotation', 'quaternion', 'scale'])
 const meshProps = new Set([...transforms, 'key', 'name', 'castShadow', 'receiveShadow', 'visible', 'frustumCulled', 'renderOrder'])
 const groupProps = new Set([...transforms, 'key', 'name', 'visible'])
 const materialProps = new Set(['key', 'color', 'emissive', 'emissiveIntensity', 'roughness', 'metalness', 'flatShading', 'wireframe', 'side', 'toneMapped', 'fog', 'envMapIntensity', 'transparent', 'opacity', 'depthTest', 'depthWrite', 'alphaTest', 'clearcoat', 'clearcoatRoughness', 'reflectivity', 'ior', 'specularIntensity', 'specularColor', 'shininess'])
+const isStaticArray = (value: StaticValue): value is ReadonlyArray<StaticValue> => Array.isArray(value)
 const identity = () => {
   const identityMatrix = new Matrix4
   return identityMatrix.toArray()
@@ -28,7 +29,7 @@ type RawNode = {
 export function lowerScene(expression: t.Expression): t.Expression {
   const ast = t.file(t.program([t.expressionStatement(t.cloneNode(expression, true))]))
   const replace = (path: NodePath, value: t.Expression) => {
-    path.replaceWith(path.parentPath?.isJSXElement() || path.parentPath?.isJSXFragment() ? t.jsxExpressionContainer(value) : value)
+    path.replaceWith(path.parentPath.isJSXElement() || path.parentPath.isJSXFragment() ? t.jsxExpressionContainer(value) : value)
   }
   traverse(ast, {
     JSXElement: {exit(path) {
@@ -55,20 +56,20 @@ export function lowerScene(expression: t.Expression): t.Expression {
 
 export function sceneFromValue(value: unknown, maxNodes: number): Array<SceneNode> {
   let count = 0
-  function flatten(value: unknown): Array<RawNode> {
-    if (value === null || value === undefined || typeof value === 'boolean') {
+  function flatten(renderOutput: unknown): Array<RawNode> {
+    if (renderOutput === null || renderOutput === undefined || typeof renderOutput === 'boolean') {
       return []
     }
-    if (Array.isArray(value)) {
-      return value.flatMap(flatten)
+    if (Array.isArray(renderOutput)) {
+      return renderOutput.flatMap(flatten)
     }
-    if (!value || typeof value !== 'object' || !('tag' in value)) {
+    if (typeof renderOutput !== 'object' || !('tag' in renderOutput)) {
       throw new NotStaticError('Non-scene value returned by render expression.')
     }
-    const node = value as RawNode
     if (++count > maxNodes) {
       throw new NotStaticError('Static scene exceeds maxNodes.')
     }
+    const node = renderOutput as RawNode
     return [{
       tag: node.tag,
       props: plain(node.props) as Record<string, StaticValue>,
@@ -81,11 +82,11 @@ export function sceneFromValue(value: unknown, maxNodes: number): Array<SceneNod
     }
     const children = node.children.flatMap(flatten)
     const {key: _key, position: _position, rotation: _rotation, quaternion: _quaternion, scale: _scale, ...props} = node.props
-    for (const [key, value] of Object.entries(props)) {
-      if (['castShadow', 'frustumCulled', 'receiveShadow', 'visible'].includes(key) && typeof value !== 'boolean') {
+    for (const [key, propValue] of Object.entries(props)) {
+      if (['castShadow', 'frustumCulled', 'receiveShadow', 'visible'].includes(key) && typeof propValue !== 'boolean') {
         throw new NotStaticError('Invalid render flag.')
       }
-      if (key === 'name' && typeof value !== 'string' || key === 'renderOrder' && typeof value !== 'number') {
+      if (key === 'name' && typeof propValue !== 'string' || key === 'renderOrder' && typeof propValue !== 'number') {
         throw new NotStaticError('Invalid object property.')
       }
     }
@@ -121,7 +122,16 @@ function lowerJsx(path: NodePath<t.JSXElement>) {
     throw new NotStaticError('Unknown JSX component.')
   }
   const tag = openingElement.name.name
-  const allowed = tag === 'mesh' ? meshProps : tag === 'group' ? groupProps : geometries.has(tag) ? new Set(['args', 'key']) : materials.has(tag) ? materialProps : undefined
+  let allowed: Set<string> | undefined
+  if (tag === 'mesh') {
+    allowed = meshProps
+  } else if (tag === 'group') {
+    allowed = groupProps
+  } else if (geometries.has(tag)) {
+    allowed = new Set(['args', 'key'])
+  } else if (materials.has(tag)) {
+    allowed = materialProps
+  }
   if (!allowed) {
     throw new NotStaticError(`Opaque or non-renderable JSX: ${tag}.`)
   }
@@ -183,7 +193,7 @@ function plain(value: unknown, depth = 0): StaticValue {
     return value.map(item => plain(item, depth + 1))
   }
   if (value && typeof value === 'object' && Object.getPrototypeOf(Object.getPrototypeOf(value)) === null) {
-    return Object.fromEntries(Object.keys(value).sort().map(key => {
+    return Object.fromEntries(Object.keys(value).toSorted().map(key => {
       const descriptor = Object.getOwnPropertyDescriptor(value, key)!
       if (!('value' in descriptor)) {
         throw new NotStaticError('Accessor in static output.')
@@ -200,13 +210,14 @@ function tuple(value: StaticValue | undefined, fallback: Array<number>, length: 
   }
   return result as Array<number>
 }
-function transform(props: Record<string, StaticValue>) {
+/** Transform properties are optional in JSX, so any of them may be absent. */
+function transform(props: Partial<Record<string, StaticValue>>) {
   const position = tuple(props.position, [0, 0, 0], 3)
   const scale = tuple(typeof props.scale === 'number' ? [props.scale, props.scale, props.scale] : props.scale, [1, 1, 1], 3)
-  const quaternion = new Quaternion
   if (props.quaternion !== undefined && props.rotation !== undefined) {
     throw new NotStaticError('Combined rotation and quaternion assignments.')
   }
+  const quaternion = new Quaternion
   if (props.quaternion !== undefined) {
     quaternion.fromArray(tuple(props.quaternion, [0, 0, 0, 1], 4))
   } else {
@@ -224,13 +235,17 @@ function transform(props: Record<string, StaticValue>) {
   const localMatrix = new Matrix4
   return localMatrix.compose(new Vector3(...position as [number, number, number]), quaternion, new Vector3(...scale as [number, number, number])).toArray()
 }
+/** Whether transparency, order-dependent blending or a wireframe keeps the material at runtime. JSX may omit any of these properties. */
+function isOrderSensitiveMaterial(props: Partial<Record<string, StaticValue>>) {
+  return props.transparent === true || typeof props.opacity === 'number' && props.opacity < 1 || props.depthWrite === false || props.depthTest === false || props.wireframe === true || props.alphaTest !== undefined && props.alphaTest !== 0
+}
 function resource(node: RawNode, kind: 'geometry' | 'material'): ResourcePlan {
   if (node.children.length) {
     throw new NotStaticError('Nested mutable resource properties.')
   }
   const {key: _key, args: rawArgs, ...props} = node.props
   const args = rawArgs ?? []
-  if (!Array.isArray(args)) {
+  if (!isStaticArray(args)) {
     throw new NotStaticError('Resource arguments must be an array.')
   }
   if (kind === 'geometry' && !args.every(value => typeof value === 'number' || typeof value === 'boolean')) {
@@ -251,7 +266,7 @@ function resource(node: RawNode, kind: 'geometry' | 'material'): ResourcePlan {
       }
     }
   }
-  if (kind === 'material' && (props.transparent === true || typeof props.opacity === 'number' && props.opacity < 1 || props.depthWrite === false || props.depthTest === false || props.wireframe === true || props.alphaTest !== undefined && props.alphaTest !== 0)) {
+  if (kind === 'material' && isOrderSensitiveMaterial(props)) {
     throw new NotStaticError('Transparency, order-dependent blending or wireframes stay at runtime.')
   }
   return {

@@ -6,6 +6,11 @@ import {filament} from '../../lib/filament.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
 import knotData from './data.ts'
 
+const lattice = (q: Node<'vec3'>) => {
+  const cell = vec3(q.x.add(q.y), q.y.add(q.z), q.z.add(q.x)).mul(24).sin()
+  return vec3(filament(cell.x, 0.028), filament(cell.y, 0.028), filament(cell.z, 0.028))
+}
+
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
     super(environment)
@@ -18,10 +23,6 @@ export default class extends KnotMaterial {
     const near = positionView.length().smoothstep(1.25, 5.5).oneMinus()
     const inner = p.sub(view.mul(0.17))
     const deep = p.sub(view.mul(0.28))
-    const lattice = (q: Node<'vec3'>) => {
-      const cell = vec3(q.x.add(q.y), q.y.add(q.z), q.z.add(q.x)).mul(24).sin()
-      return vec3(filament(cell.x, 0.028), filament(cell.y, 0.028), filament(cell.z, 0.028))
-    }
     const front = lattice(depth)
     const back = lattice(deep)
     const nodes = front.x.mul(front.y).add(front.y.mul(front.z)).add(front.z.mul(front.x))

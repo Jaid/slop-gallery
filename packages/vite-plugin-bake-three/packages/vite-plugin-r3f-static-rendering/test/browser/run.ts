@@ -1,9 +1,9 @@
 import type {Plans} from './fixture.ts'
 
-import {mkdtemp, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 
+import fs from 'fs-extra'
 import puppeteer from 'puppeteer-core'
 
 import {compileStaticRendering} from '../../src/compile.ts'
@@ -41,30 +41,26 @@ const server = Bun.serve({
     return requestUrl.pathname === '/fixture.js' ? new Response(source, {headers: {'Content-Type': 'text/javascript'}}) : new Response('<!doctype html><title>Static rendering regression</title>', {headers: {'Content-Type': 'text/html'}})
   },
 })
-const profile = await mkdtemp(join(tmpdir(), 'r3f-static-webgpu-'))
+const profile = await fs.mkdtemp(join(tmpdir(), 'r3f-static-webgpu-'))
 try {
   // Isolated headless browser and temporary profile; never the user's visible game session.
-  const browser = await puppeteer.launch({
+  await using browser = await puppeteer.launch({
     executablePath,
     userDataDir: profile,
     headless: true,
     args: ['--enable-gpu', '--enable-unsafe-webgpu', '--ignore-gpu-blocklist'],
   })
-  try {
-    const page = await browser.newPage()
-    await page.goto(server.url.href)
-    const report = await page.evaluate(async plans => {
-      const path = '/fixture.js'
-      const {default: verify} = await import(path) as typeof import('./fixture.ts')
-      return verify(plans)
-    }, plans)
-    console.log(JSON.stringify(report, null, 2))
-  } finally {
-    await browser.close()
-  }
+  const page = await browser.newPage()
+  await page.goto(server.url.href)
+  const report = await page.evaluate(async pagePlans => {
+    const path = '/fixture.js'
+    const {default: verify} = await import(path) as typeof import('./fixture.ts')
+    return verify(pagePlans)
+  }, plans)
+  console.log(JSON.stringify(report, null, 2))
 } finally {
   await server.stop(true)
-  await rm(profile, {
+  await fs.rm(profile, {
     recursive: true,
     force: true,
   })

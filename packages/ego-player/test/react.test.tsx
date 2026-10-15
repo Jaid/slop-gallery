@@ -6,6 +6,7 @@ import {expect, test} from 'bun:test'
 
 import {createRoot, extend, useThree} from '@react-three/fiber'
 import {CuboidCollider, Physics, RigidBody, useRapier} from '@react-three/rapier'
+import Branch from 'branch-component'
 import {act, createRef, StrictMode, Suspense} from 'react'
 import {Object3D, WebGPURenderer} from 'three/webgpu'
 
@@ -50,10 +51,10 @@ test('React lifecycle preserves the motor, camera ownership and ref contract wit
   const cameraToggle = () => cameraEnabled
   const render = (props: Partial<EgoPlayerProps> = {}, mounted = true) => <StrictMode><Suspense fallback={null}><Physics paused>
     {mounted && <EgoPlayer cameraEnabled={cameraToggle} gravity={0} input={input} pointerLock={false} ref={player} onInput={onInput} onUpdate={onUpdate} {...props} />}
-    {ceiling !== undefined && <RigidBody key={ceiling} colliders={false} type='fixed'>
-      <CuboidCollider args={[1, 0.1, 1]} position={[4, ceiling, 0]} />
+    <Branch if={ceiling !== undefined}><RigidBody key={ceiling} colliders={false} type='fixed'>
+      <CuboidCollider args={[1, 0.1, 1]} position={[4, ceiling!, 0]} />
       <CuboidCollider args={[10, 0.1, 10]} position={[0, -0.1, 0]} />
-    </RigidBody>}
+    </RigidBody></Branch>
     <Probe />
   </Physics></Suspense></StrictMode>
   try {
@@ -142,7 +143,7 @@ test('React lifecycle preserves the motor, camera ownership and ref contract wit
     frame()
     expect(interactions).toBe(1)
     expect(dumps).toHaveLength(1)
-    expect(dumps[0].camera.fov).toBe(Number(originalFov) / 2)
+    expect(dumps[0].camera.fov).toBe(originalFov / 2)
     expect(zoomAmounts.at(-1)).toBe(1)
     keys = {}
     tick()

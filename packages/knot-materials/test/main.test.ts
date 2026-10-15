@@ -1,10 +1,10 @@
 import type {KnotId, KnotMaterialModule} from '../src/types.ts'
 
 import {describe, expect, test} from 'bun:test'
-import {readdir, readFile} from 'node:fs/promises'
 import {dirname, resolve} from 'node:path'
 import {fileURLToPath, pathToFileURL} from 'node:url'
 
+import fs from 'fs-extra'
 import {Color, MeshPhysicalNodeMaterial, Texture} from 'three/webgpu'
 
 import createPlaceholderMaterial, {placeholderPresets} from '../src/createPlaceholderMaterial.ts'
@@ -12,18 +12,19 @@ import {entries, KnotCandidate, knotCandidates, knots, knotsById} from '../src/m
 import rarities, {common, ethereal, prime, rare, special, unknown} from '../src/rarities.ts'
 
 const root = fileURLToPath(new URL('../src', import.meta.url))
-const source = (file: string) => readFile(resolve(root, file), 'utf8')
+const source = (file: string) => fs.readFile(resolve(root, file), 'utf8')
 const tsFiles = async () => {
   const tsFileGlob = new Bun.Glob('**/*.ts')
   return Array.fromAsync(tsFileGlob.scan(root))
 }
 describe('flat knot catalogue', () => {
   test('entry folders, metadata exports and rarity keys have exactly the same globally unique IDs', async () => {
-    const folders = (await readdir(resolve(root, 'entries'), {withFileTypes: true})).filter(entry => entry.isDirectory()).map(entry => entry.name).sort()
-    const ids = knots.map(entry => entry.id).sort()
+    const entryDirectoryEntries = await fs.readdir(resolve(root, 'entries'), {withFileTypes: true})
+    const folders = entryDirectoryEntries.filter(entry => entry.isDirectory()).map(entry => entry.name).toSorted()
+    const ids = knots.map(entry => entry.id).toSorted()
     expect(ids).toEqual(folders)
-    expect(ids).toEqual(Object.keys(entries).sort())
-    expect(ids).toEqual(Object.keys(rarities).sort())
+    expect(ids).toEqual(Object.keys(entries).toSorted())
+    expect(ids).toEqual(Object.keys(rarities).toSorted())
     expect(knotsById.size).toBe(ids.length)
     expect(knotCandidates.flatMap(candidate => candidate.items)).toHaveLength(ids.length)
     const candidateIds = new Set(knotCandidates.map(candidate => candidate.data.id))
@@ -33,7 +34,8 @@ describe('flat knot catalogue', () => {
       expect(await Bun.file(resolve(root, 'entries', id, 'Material.ts')).exists()).toBe(true)
       expect(await Bun.file(resolve(root, 'entries', id, 'data.ts')).exists()).toBe(true)
       const entryFileGlob = new Bun.Glob('**/*.ts')
-      expect((await Array.fromAsync(entryFileGlob.scan(resolve(root, 'entries', id)))).toSorted()).toEqual(['Material.ts', 'data.ts'])
+      const entryFiles = await Array.fromAsync(entryFileGlob.scan(resolve(root, 'entries', id)))
+      expect(entryFiles.toSorted()).toEqual(['Material.ts', 'data.ts'])
       const materialSource = await source(`entries/${id}/Material.ts`)
       expect(materialSource).toContain('export default class extends')
       for (const jsdoc of materialSource.matchAll(/\/\*\*[\s\S]*?\*\//gu)) {
@@ -70,8 +72,8 @@ describe('flat knot catalogue', () => {
     for (const candidate of knotCandidates) {
       const available = candidate.items.filter(entry => entry.rarity !== special)
       const selected = candidate.select(3)
-      expect(selected.map(entry => entry.rarity)).toEqual(selected.map(entry => entry.rarity).sort((a, b) => a - b))
-      expect(selected.map(entry => entry.id).sort()).toEqual(available.toSorted((a, b) => b.rarity - a.rarity || a.id.localeCompare(b.id)).slice(0, 3).map(entry => entry.id).sort())
+      expect(selected.map(entry => entry.rarity)).toEqual(selected.map(entry => entry.rarity).toSorted((a, b) => a - b))
+      expect(selected.map(entry => entry.id).toSorted()).toEqual(available.toSorted((a, b) => b.rarity - a.rarity || a.id.localeCompare(b.id)).slice(0, 3).map(entry => entry.id).toSorted())
       expect(selected.every(entry => entry.rarity !== special)).toBe(true)
     }
   })
@@ -104,7 +106,8 @@ describe('flat knot catalogue', () => {
       target: 'browser',
     })
     expect(result.success).toBe(true)
-    const output = (await Promise.all(result.outputs.map(file => file.text()))).join('\n')
+    const outputTexts = await Promise.all(result.outputs.map(file => file.text()))
+    const output = outputTexts.join('\n')
     expect(output).not.toContain('MeshPhysicalNodeMaterial')
     expect(output).not.toContain('three/tsl')
     expect(output).not.toContain('/Material.ts')
@@ -127,11 +130,12 @@ describe('flat knot catalogue', () => {
           expect(dependency.replaceAll('\\', '/')).not.toContain('/src/candidates/')
         }
         const entryId = /^entries\/([^/]+)\//u.exec(normalized)?.[1]
-        if (entryId) {
-          const helperCandidate = /\/candidates\/([^/]+)\/lib\//u.exec(dependency.replaceAll('\\', '/'))?.[1]
-          if (helperCandidate) {
-            expect(helperCandidate).toBe(knotsById.get(entryId)!.candidateId)
-          }
+        if (!entryId) {
+          continue
+        }
+        const helperCandidate = /\/candidates\/([^/]+)\/lib\//u.exec(dependency.replaceAll('\\', '/'))?.[1]
+        if (helperCandidate) {
+          expect(helperCandidate).toBe(knotsById.get(entryId)!.candidateId)
         }
       }
       if (normalized.endsWith('/Material.ts')) {

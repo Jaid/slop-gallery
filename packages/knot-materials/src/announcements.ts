@@ -48,5 +48,5 @@ export function knotAnnouncements(candidates: ReadonlyArray<AnnouncementCandidat
       })
     }
   }
-  return [...entries.values()]
+  return entries.values().toArray()
 }

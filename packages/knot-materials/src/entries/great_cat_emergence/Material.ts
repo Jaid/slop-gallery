@@ -167,13 +167,13 @@ function createTubeChart({rows, width = 2048, metricRows = 16}: TubeChartOptions
   const metricTexture = new DataTexture(metric, metricWidth, rows * metricRows, RGFormat, FloatType)
   const arcTexture = new DataTexture(arc, width, rows, RedFormat, FloatType)
   const twistTexture = new DataTexture(twist, width, 1, RedFormat, FloatType)
-  for (const texture of [arcTexture, twistTexture, metricTexture]) {
-    texture.wrapS = RepeatWrapping
-    texture.wrapT = RepeatWrapping
-    texture.minFilter = LinearFilter
-    texture.magFilter = LinearFilter
-    texture.generateMipmaps = false
-    texture.needsUpdate = true
+  for (const chartTexture of [arcTexture, twistTexture, metricTexture]) {
+    chartTexture.wrapS = RepeatWrapping
+    chartTexture.wrapT = RepeatWrapping
+    chartTexture.minFilter = LinearFilter
+    chartTexture.magFilter = LinearFilter
+    chartTexture.generateMipmaps = false
+    chartTexture.needsUpdate = true
   }
   arcTexture.name = 'Felis Major arc-length chart'
   twistTexture.name = 'Felis Major twist chart'
@@ -189,9 +189,6 @@ function createTubeChart({rows, width = 2048, metricRows = 16}: TubeChartOptions
     twistTexture,
   }
 }
-
-/** A low-poly cat head as a constellation: stars (vertices), threads (edges) and facets. */
-
 /** Floor-based wrap into [0, period), safe for negative inputs. */
 function wrap(value: Node<'float'>, period: Node<'float'> | number) {
   const p = typeof period === 'number' ? float(period) : period
@@ -199,7 +196,7 @@ function wrap(value: Node<'float'>, period: Node<'float'> | number) {
 }
 /** Per-fragment cell coordinates on the knot: one cat per cell. Cells are square in object units, orthogonal and rectangular thanks to the tube chart, and seamless at both UV seams. With a depth, the cells are read where the refracted view ray reaches that depth below the surface, so the constellation layer floats inside the lacquer and slides as the visitor moves. */
 function catCells(chart: TubeChart, {depth = 0, refraction = 1.5} = {}) {
-  const tube = uv()
+  const tubeUv = uv()
 // Surface frame in view space: y follows the circumferential direction exactly, x is orthogonal.
   const normal = normalViewGeometry.normalize()
   const bitangent = vec3(bitangentView as unknown as Node<'vec3'>)
@@ -212,23 +209,23 @@ function catCells(chart: TubeChart, {depth = 0, refraction = 1.5} = {}) {
   const slide = sine.div(sine.dot(sine).oneMinus().max(0.05).sqrt())
   const cellSize = chart.circumference / chart.rows
   const shift = slide.mul(depth / cellSize)
-  const twist = texture(chart.twistTexture, vec2(tube.x, 0.5)).r
-  const phi = tube.y.add(twist).add(tube.x.mul(chart.rowShift / chart.rows))
+  const twist = texture(chart.twistTexture, vec2(tubeUv.x, 0.5)).r
+  const phi = tubeUv.y.add(twist).add(tubeUv.x.mul(chart.rowShift / chart.rows))
   const rowCoord = phi.mul(chart.rows).sub(shift.y)
   const row = wrap(rowCoord.floor(), chart.rows)
 // Each texel row stores the arc-length correction of one cell row; sample exactly at its center.
-  const arc = texture(chart.arcTexture, vec2(tube.x, row.add(0.5).div(chart.rows))).r
+  const arc = texture(chart.arcTexture, vec2(tubeUv.x, row.add(0.5).div(chart.rows))).r
   let columns: Node<'float'> = float(chart.columns[0])
   for (const [index, count] of chart.columns.entries()) {
     if (index > 0) {
       columns = select(row.sub(index).abs().lessThan(0.5), float(count), columns)
     }
   }
-  const along = tube.x.add(arc).mul(columns).sub(shift.x)
+  const along = tubeUv.x.add(arc).mul(columns).sub(shift.x)
   const column = wrap(along.floor(), columns)
 // True local width of the cell, so cats keep their proportions where the tube bends.
   const band = rowCoord.fract().clamp(0.5 / chart.metricRows, 1 - 0.5 / chart.metricRows)
-  const metric = texture(chart.metricTexture, vec2(tube.x, row.add(band).div(chart.rows))).rg
+  const metric = texture(chart.metricTexture, vec2(tubeUv.x, row.add(band).div(chart.rows))).rg
   const stretch = metric.x
   const unit = vec2(along.fract().sub(0.5), rowCoord.fract().sub(0.5))
   const local = vec2(unit.x.mul(stretch), unit.y)
@@ -236,12 +233,24 @@ function catCells(chart: TubeChart, {depth = 0, refraction = 1.5} = {}) {
   const edgeDistance = unit.x.abs().oneMinus().sub(0.5).mul(stretch).min(unit.y.abs().oneMinus().sub(0.5))
 // Pixel footprint in physical cell units, from the unwrapped (continuous) coordinates.
   const footprint = max(along.fwidth().mul(stretch), rowCoord.fwidth()).clamp(0.0004, 0.25)
-  return {along, edgeDistance,
-/** half extents of the cell in physical cell units, using its narrowest width */
-    halfExtent: vec2(metric.y.min(1.6).mul(0.5), 0.5), column, columns, footprint, local, normal, row,
-/** the viewer’s direction projected onto the cell plane, in cell axes */
-    viewInCell, xAxis, yAxis}
+  return {
+    along,
+    edgeDistance,
+    /** half extents of the cell in physical cell units, using its narrowest width */
+    halfExtent: vec2(metric.y.min(1.6).mul(0.5), 0.5),
+    column,
+    columns,
+    footprint,
+    local,
+    normal,
+    row,
+    /** the viewer’s direction projected onto the cell plane, in cell axes */
+    viewInCell,
+    xAxis,
+    yAxis,
+  }
 }
+// A low-poly cat head as a constellation: stars (vertices), threads (edges) and facets.
 /** Left half (x < 0) and center line of the head; +y points toward the ears. */
 const specs: Array<StarSpec> = [
   {
@@ -456,7 +465,7 @@ const makeFacet = (members: Array<number>, kind: FacetKind): Facet => {
     area += ax * by - bx * ay
   }
   return {
-    stars: area < 0 ? [...members].reverse() : members,
+    stars: area < 0 ? members.toReversed() : members,
     centroid: [x / members.length, y / members.length],
     kind,
   }
@@ -529,12 +538,12 @@ for (const key of eyeRing) {
       distance[other] = Math.min(distance[other], distance[best] + Math.hypot(ax - bx, ay - by))
     }
   }
-  const max = Math.max(...distance)
-  if (!Number.isFinite(max)) {
+  const maxDistance = Math.max(...distance)
+  if (!Number.isFinite(maxDistance)) {
     throw new TypeError('The cat constellation must be connected.')
   }
   for (const [k, star] of stars.entries()) {
-    star.reach = distance[k] / max
+    star.reach = distance[k] / maxDistance
   } }
 for (const thread of threads) {
   if (stars[thread.a].reach > stars[thread.b].reach) {
@@ -635,7 +644,6 @@ function lineCoverage(distance: Float, halfWidth: Float | number, footprint: Flo
 }
 /** Evaluates one cat constellation at the fragment. Everything lives in cell coordinates, so the cat never crosses into a neighboring cell and needs no neighbor search. */
 function catConstellation({local, footprint, halfExtent, seed, turn, nearness, farness, reveal, viewInCell: viewInGrid, intimacy}: CatPose) {
-  const {stars, threads, facets, whiskers, eye} = catModel
 // --- whole-head motion is applied to the fragment instead of to 33 stars ---
   const breathe = sin(time.mul(1.55).add(seed.z.mul(TAU))).mul(0.018).add(1)
   const curiousSide = select(seed.y.greaterThan(0.5), float(1), float(-1))
@@ -648,7 +656,7 @@ function catConstellation({local, footprint, halfExtent, seed, turn, nearness, f
   const size = seed.z.mul(0.16).add(0.7).min(room.x.min(room.y).div(0.575))
   const freedom = room.sub(size.mul(0.575)).max(0)
   const seat = vec2(seed.y.sub(0.5), seed.x.sub(0.5)).mul(freedom).mul(2)
-  const scale = breathe.mul(size)
+  const headScale = breathe.mul(size)
 // Like constellations on a sky chart, cats lie at any angle.
   const orientation = turn
 // The head is posed by moving the fragment into model space, instead of moving 33 stars.
@@ -656,8 +664,8 @@ function catConstellation({local, footprint, halfExtent, seed, turn, nearness, f
   const viewInCell = rotate(viewInGrid, orientation.negate())
 // Tilting about the bounding center never pushes the head out of its cell.
   const pivot = vec2(0, -catModel.offsetY)
-  const p = rotate(upright.div(scale).sub(vec2(0, catModel.offsetY)).sub(pivot), tilt.negate()).add(pivot)
-  const px = footprint.div(scale)
+  const p = rotate(upright.div(headScale).sub(vec2(0, catModel.offsetY)).sub(pivot), tilt.negate()).add(pivot)
+  const px = footprint.div(headScale)
 // --- eyelids: quick blinks, and a slow “I trust you” blink when the visitor is close ---
   const quickBlink = blink(0.26, seed.z.mul(5.3), 0.075)
   const slowBlink = sin(time.mul(0.45).add(seed.x.mul(11))).mul(0.5).add(0.5).pow(14).mul(intimacy).mul(0.6)
@@ -702,10 +710,10 @@ function catConstellation({local, footprint, halfExtent, seed, turn, nearness, f
 // A sequential search with a mutable variable: chained selects would grow exponentially.
   const nearestStarSearch = Fn(() => {
     const best = vec4(1e3, 0, 0, 0).toVar()
-    for (const [index, star] of stars.entries()) {
-      const distance = p.sub(positions[index]).length()
+    for (const [starId, star] of stars.entries()) {
+      const distance = p.sub(positions[starId]).length()
       If(distance.lessThan(best.x), () => {
-        best.assign(vec4(distance, star.magnitude, star.reach, index))
+        best.assign(vec4(distance, star.magnitude, star.reach, starId))
       })
     }
     return best
@@ -727,13 +735,13 @@ function catConstellation({local, footprint, halfExtent, seed, turn, nearness, f
   let starHeat: Float = starFlare.mul(starCore.add(starHalo.mul(0.5)))
 // Only the alpha stars carry six-pointed diffraction spikes, like a segmented telescope mirror.
 // They lie far apart, so only the nearest one needs to be drawn.
-  const alphaStars = [...stars.entries()].filter(([, star]) => star.magnitude >= 0.65)
+  const alphaStars = stars.entries().filter(([, star]) => star.magnitude >= 0.65).toArray()
   const alphaSearch = Fn(() => {
     const best = vec4(1e3, 0, 0, 0).toVar()
-    for (const [index, star] of alphaStars) {
-      const offset = p.sub(positions[index])
+    for (const [starId, star] of alphaStars) {
+      const offset = p.sub(positions[starId])
       If(offset.length().lessThan(best.x), () => {
-        best.assign(vec4(offset.length(), offset.x, offset.y, index + star.magnitude * 0.5))
+        best.assign(vec4(offset.length(), offset.x, offset.y, starId + star.magnitude * 0.5))
       })
     }
     return best
@@ -742,8 +750,8 @@ function catConstellation({local, footprint, halfExtent, seed, turn, nearness, f
   const alphaIndex = float(alphaSearch.w).floor()
   const alphaMagnitude = float(alphaSearch.w).fract().mul(2)
   let alphaReach: Float = float(0)
-  for (const [index, star] of alphaStars) {
-    alphaReach = select(alphaIndex.equal(index), float(star.reach), alphaReach)
+  for (const [starId, star] of alphaStars) {
+    alphaReach = select(alphaIndex.equal(starId), float(star.reach), alphaReach)
   }
   const alphaHash = seed.x.mul(17.3).add(alphaIndex.mul(0.618034)).fract()
   const glimmer = sin(time.mul(alphaHash.mul(2.6).add(1.4)).add(alphaHash.mul(40))).mul(0.22).add(0.88)
@@ -843,7 +851,7 @@ function catConstellation({local, footprint, halfExtent, seed, turn, nearness, f
   let noseMask: Float = float(0)
   let tilt2: Vec2 = vec2(0, 0)
   let facetShade: Float = float(0)
-  for (const [index, facet] of facets.entries()) {
+  for (const [facetIndex, facet] of facets.entries()) {
     let inside: Float = float(1)
 // Left of every counter-clockwise edge.
     for (const [k, a] of facet.stars.entries()) {
@@ -858,9 +866,9 @@ function catConstellation({local, footprint, halfExtent, seed, turn, nearness, f
     facetMask = facetMask.add(inside)
 // Facets lean outward like a cut gem dome, plus a little per-facet character.
     const [cx, cy] = facet.centroid
-    const jitter = index * 0.754877 % 1 - 0.5
+    const jitter = facetIndex * 0.754877 % 1 - 0.5
     tilt2 = tilt2.add(vec2(cx * 1.35 + jitter * 0.12, (cy + 0.03) * 1.2 - jitter * 0.08).mul(inside))
-    facetShade = facetShade.add(inside.mul(index * 0.381966 % 1 * 0.6 + 0.4))
+    facetShade = facetShade.add(inside.mul(facetIndex * 0.381966 % 1 * 0.6 + 0.4))
   }
   const noseShade = p.sub(positions[catModel.id('noseTip')]).length().div(0.06).clamp()
 // --- eyes: evaluated once in a mirrored frame ---
@@ -910,29 +918,29 @@ function catConstellation({local, footprint, halfExtent, seed, turn, nearness, f
   const eyeRim = exp(lid.max(0).div(0.009).negate()).mul(smoothstep(px.negate(), px, lid)).mul(smoothstep(halfWidth + 0.03, halfWidth - 0.02, e.x.abs())).mul(awake)
 // --- whiskers: gently bowed, swaying, brighter at the root ---
   let whiskerLight: Float = float(0)
-  for (const [index, whisker] of whiskers.entries()) {
+  for (const [whiskerIndex, whisker] of whiskers.entries()) {
     const root = vec(whisker.root)
     const tipSide = whisker.tip[0] < 0 ? -1 : 1
-    const sway = sin(time.mul(1.3).add(seed.z.mul(6)).add(index * 0.9)).mul(0.012)
+    const sway = sin(time.mul(1.3).add(seed.z.mul(6)).add(whiskerIndex * 0.9)).mul(0.012)
       .add(twitch(0.13, seed.x.mul(4).add(tipSide * 0.2), 0.05).mul(0.03))
     const tip = vec(whisker.tip).add(vec2(0, sway))
     const axis = tip.sub(root)
     const whiskerLength = axis.length()
     const direction = axis.div(whiskerLength)
     const offset = p.sub(root)
-    const along = offset.dot(direction)
-    const t = along.div(whiskerLength)
+    const alongWhisker = offset.dot(direction)
+    const t = alongWhisker.div(whiskerLength)
     const clamped = t.clamp()
     const across = direction.x.mul(offset.y).sub(direction.y.mul(offset.x)).mul(tipSide)
     const sag = clamped.mul(clamped.oneMinus()).mul(4 * whisker.bend)
 // A chain of shrinking dots that ends in a tiny star, drifting outward like a slow purr.
     const spacing = 0.021
-    const beadPhase = clamped.mul(whiskerLength).div(spacing).sub(time.mul(0.35)).add(index * 0.37)
-    const beadAlong = beadPhase.fract().sub(0.5).mul(spacing)
+    const beadPhase = clamped.mul(whiskerLength).div(spacing).sub(time.mul(0.35)).add(whiskerIndex * 0.37)
+    const whiskerBeadAlong = beadPhase.fract().sub(0.5).mul(spacing)
     const outside = t.sub(clamped).mul(whiskerLength)
     const across2 = across.add(sag)
     const dotRadius = clamped.mul(-0.55).add(1).mul(0.0036)
-    const dots = lineCoverage(vec2(beadAlong.add(outside), across2).length(), dotRadius, px)
+    const dots = lineCoverage(vec2(whiskerBeadAlong.add(outside), across2).length(), dotRadius, px)
     const thread = lineCoverage(vec2(outside, across2).length(), 0.0009, px).mul(0.35)
     const tipStar = lineCoverage(p.sub(tip).length(), 0.004, px).mul(1.4)
     whiskerLight = whiskerLight.add(max(dots, thread).mul(clamped.mul(0.6).oneMinus())).add(tipStar)
@@ -971,9 +979,9 @@ function dustLayer(point: Vec3, density: number, threshold: Float, seed: number)
   const center = random.mul(0.6).add(0.2)
   const distance = q.fract().sub(center).length()
   const footprint = q.fwidth().length().max(0.0001)
-  const radius = footprint.mul(0.75).max(0.035)
-  const energy = float(0.035).div(radius).pow2()
-  const core = smoothstep(radius, float(0), distance).pow(1.6)
+  const starRadius = footprint.mul(0.75).max(0.035)
+  const energy = float(0.035).div(starRadius).pow2()
+  const core = smoothstep(starRadius, float(0), distance).pow(1.6)
   const gate = smoothstep(threshold, threshold.add(0.02), mx_cell_noise_float(cell.add(seed + 13.1)))
   const twinkle = sin(time.mul(random.y.mul(3).add(0.8)).add(random.z.mul(60))).mul(0.4).add(0.7)
   const tint = mix(color('#ffc9a0'), color('#a9c8ff'), random.x)
@@ -1044,9 +1052,9 @@ function pick(value: Float, palette: Array<string>): Vec3 { // Hex colors are sR
     return vec3(r, g, b)
   })
   let result: Vec3 = linear[0]
-  for (const [index, entry] of linear.entries()) {
-    if (index > 0) {
-      result = select(value.greaterThanEqual(index / palette.length), entry, result)
+  for (const [colorIndex, entry] of linear.entries()) {
+    if (colorIndex > 0) {
+      result = select(value.greaterThanEqual(colorIndex / palette.length), entry, result)
     }
   }
   return result
@@ -1115,8 +1123,8 @@ export default class extends KnotMaterial {
     const threadLight = threadCore.mul(cat.threadCore.mul(1.15))
       .add(threadTint.mul(cat.threadGlow.mul(0.12).mul(farBoost)))
       .add(color('#dff6ff').mul(cat.threadFlow.mul(3)))
-    const stars = mix(color('#fff1dc'), threadCore, 0.3).mul(cat.starLight.mul(1.7))
-    const whiskers = color('#e8f2ff').mul(cat.whiskerLight.mul(0.9))
+    const starGlow = mix(color('#fff1dc'), threadCore, 0.3).mul(cat.starLight.mul(1.7))
+    const whiskerGlow = color('#e8f2ff').mul(cat.whiskerLight.mul(0.9))
     const sparks = sparkTint.mul(cat.threadSpark.mul(2.6).add(cat.starHeat.mul(2.2)))
 // Bright near the pupil, a darker limbal ring at the rim, fibers between.
     const irisLight = mix(eyeTint.mul(1.5), eyeDeep.mul(0.6), smoothstep(0.15, 1.05, cat.irisRadius))
@@ -1133,7 +1141,7 @@ export default class extends KnotMaterial {
     const meteorLight = color('#e6f4ff').mul(meteor.mul(3.2))
 // Far away the stardust would only glitter, so it recedes and leaves the cats to carry the view.
     const skyLight = sky.nebula.mul(0.5).add(sky.dust.mul(farness.mul(-0.75).add(1).mul(0.9))).mul(cat.facetMask.mul(0.45).oneMinus())
-    const emissive = threadLight.add(stars).add(whiskers).add(sparks).mul(presence).mul(cellEdge)
+    const emissive = threadLight.add(starGlow).add(whiskerGlow).add(sparks).mul(presence).mul(cellEdge)
       .add(eyes)
       .add(nose)
       .add(facetGlow)

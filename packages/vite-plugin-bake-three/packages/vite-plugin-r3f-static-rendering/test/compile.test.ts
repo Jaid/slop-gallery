@@ -3,9 +3,9 @@ import type {SceneNode} from '../src/plan.ts'
 import type {CompiledScene} from '../src/runtime.ts'
 
 import {expect, test} from 'bun:test'
-import {mkdtemp, rm, writeFile} from 'node:fs/promises'
 import {join, resolve} from 'node:path'
 
+import fs from 'fs-extra'
 import * as Three from 'three/webgpu'
 import {SourceGraph} from 'vite-plugin-bake-core'
 
@@ -144,21 +144,21 @@ test('composes nested anonymous transforms and preserves named groups', async ()
   resources.dispose()
 })
 test('supports constant imports, aliases, re-exports and watch-style fresh evaluation', async () => {
-  const directory = await mkdtemp(join(import.meta.dirname, 'imports-'))
+  const directory = await fs.mkdtemp(join(import.meta.dirname, 'imports-'))
   try {
-    await writeFile(join(directory, 'data.ts'), 'throw new Error(\'do not execute unrelated module effects\'); export const data = [0,1,2,3]')
-    await writeFile(join(directory, 'barrel.ts'), 'export {data as points} from \'./data.ts\'')
+    await fs.writeFile(join(directory, 'data.ts'), 'throw new Error(\'do not execute unrelated module effects\'); export const data = [0,1,2,3]')
+    await fs.writeFile(join(directory, 'barrel.ts'), 'export {data as points} from \'./data.ts\'')
     const code = `import {points as offsets} from './barrel.ts'; export function Scene() {return <group>{offsets.map(x=>${mesh('key={x} position={[x,0,0]}')})}</group>}`
     const run = () => compileStaticRendering(code, join(directory, 'entry.tsx'), {}, new SourceGraph(async (source, importer) => resolve(importer, '..', source)))
     const first = await run()
     expect(first.plans[0].plan.instances).toBe(4)
     expect([...first.dependencies].some(path => path.endsWith('barrel.ts'))).toBe(true)
-    await writeFile(join(directory, 'data.ts'), 'export const data = [0,1,2,3,4]')
+    await fs.writeFile(join(directory, 'data.ts'), 'export const data = [0,1,2,3,4]')
     const second = await run()
     expect(second.plans[0].plan.instances).toBe(5)
     expect(second.plans[0].hash).not.toBe(first.plans[0].hash)
   } finally {
-    await rm(directory, {
+    await fs.rm(directory, {
       recursive: true,
       force: true,
     })
@@ -224,5 +224,6 @@ test('does not replace a mapped array consumed by length or another array operat
 })
 test('rejects truthy non-boolean material transparency instead of reordering it', async () => {
   const code = scene(`{${map(mesh('key={x}', '[1,2,3]', 'transparent={{enabled:true}}'))}}`)
-  expect((await compile(code)).plans).toHaveLength(0)
+  const result = await compile(code)
+  expect(result.plans).toHaveLength(0)
 })

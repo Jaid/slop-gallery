@@ -4,6 +4,7 @@ import {audioFile} from '../src/browser.ts'
 import {AudioQueue} from '../src/core.ts'
 import {flush} from './helpers.ts'
 
+const disconnectNothing = () => {}
 class Media extends EventTarget {
   static instances: Array<Media> = []
   currentTime = 0
@@ -16,19 +17,23 @@ class Media extends EventTarget {
   starts = 0
   volume = 1
   constructor(readonly src: string) {
-    super(); Media.instances.push(this)
+    super()
+    Media.instances.push(this)
   }
   end() {
-    this.ended = true; this.dispatchEvent(new Event('ended'))
+    this.ended = true
+    this.dispatchEvent(new Event('ended'))
   }
   load() {
     this.loads++
   }
   pause() {
-    this.pauses++; this.paused = true
+    this.pauses++
+    this.paused = true
   }
   async play() {
-    this.starts++; this.paused = false
+    this.starts++
+    this.paused = false
   }
   removeAttribute() {
     this.removals++
@@ -42,15 +47,17 @@ beforeEach(() => {
   queue = new AudioQueue
 })
 afterEach(() => {
-  queue.dispose(); Object.assign(globalThis, {Audio: original})
+  queue.dispose()
+  Object.assign(globalThis, {Audio: original})
 })
 test('local audio waits for ended, releases its connection and unloads exactly once', async () => {
   let disconnected = 0
+  const disconnect = () => {
+    disconnected++
+  }
   const handle = queue.push(audioFile('/voice.opus', {
     volume: 0.85,
-    connect: () => () => {
-      disconnected++
-    },
+    connect: () => disconnect,
   }))
   await flush()
   const audio = Media.instances[0]
@@ -71,32 +78,34 @@ test('cancellation while a shared context resumes never creates or connects stal
   const handle = queue.push(audioFile('/voice.opus', {
     prepare: () => resumed.promise,
     connect: () => {
-      connections++; return () => {}
+      connections++
+      return disconnectNothing
     },
   }))
   await flush()
   handle.cancel()
   resumed.resolve()
   await flush()
-  expect((await handle.finished).status).toBe('cancelled')
+  const result = await handle.finished
+  expect(result.status).toBe('cancelled')
   expect(Media.instances).toHaveLength(0)
   expect(connections).toBe(0)
 })
 test('injection pauses/resumes the same media element at its preserved playback position', async () => {
   queue.push(audioFile('/original.opus'))
   await flush()
-  const original = Media.instances[0]
-  original.currentTime = 4.25
+  const interruptedMedia = Media.instances[0]
+  interruptedMedia.currentTime = 4.25
   queue.push(audioFile('/insert.opus'), {priority: 'inject'})
   await flush()
-  expect(original.paused).toBe(true)
-  expect(original.removals).toBe(0)
+  expect(interruptedMedia.paused).toBe(true)
+  expect(interruptedMedia.removals).toBe(0)
   Media.instances[1].end()
   await flush()
   expect(Media.instances).toHaveLength(2)
-  expect(original.currentTime).toBe(4.25)
-  expect(original.starts).toBe(2)
-  expect(original.paused).toBe(false)
+  expect(interruptedMedia.currentTime).toBe(4.25)
+  expect(interruptedMedia.starts).toBe(2)
+  expect(interruptedMedia.paused).toBe(false)
 })
 test('Blob URLs are owned and revoked, while caller-owned URLs are preserved', async () => {
   const create = spyOn(URL, 'createObjectURL').mockReturnValue('blob:owned')
@@ -112,22 +121,25 @@ test('Blob URLs are owned and revoked, while caller-owned URLs are preserved', a
     queue.clear()
     expect(revoke).toHaveBeenCalledTimes(1)
   } finally {
-    create.mockRestore(); revoke.mockRestore()
+    create.mockRestore()
+    revoke.mockRestore()
   }
 })
 test('a media error and rejected start settle once and advance to the next recording', async () => {
   let disconnected = 0
+  const disconnect = () => {
+    disconnected++
+  }
   const play = spyOn(Media.prototype, 'play').mockImplementationOnce(async function (this: Media) {
     this.dispatchEvent(new Event('error'))
     throw new Error('play rejected')
   })
   try {
-    const broken = queue.push(audioFile('/broken.opus', {connect: () => () => {
-      disconnected++
-    }}))
+    const broken = queue.push(audioFile('/broken.opus', {connect: () => disconnect}))
     const next = queue.push(audioFile('/next.opus'))
     await flush()
-    expect((await broken.finished).status).toBe('failed')
+    const brokenResult = await broken.finished
+    expect(brokenResult.status).toBe('failed')
     expect(disconnected).toBe(1)
     expect(queue.getSnapshot().current?.id).toBe(next.id)
   } finally {
@@ -161,16 +173,16 @@ test('a stale first start cannot pause media that has already resumed after inje
   try {
     queue.push(audioFile('/original.opus'))
     await flush()
-    const original = Media.instances[0]
+    const interruptedMedia = Media.instances[0]
     queue.push(audioFile('/insert.opus'), {priority: 'inject'})
     await flush()
-    expect(original.paused).toBe(true)
+    expect(interruptedMedia.paused).toBe(true)
     Media.instances[1].end()
     await flush()
-    expect(original.paused).toBe(false)
+    expect(interruptedMedia.paused).toBe(false)
     firstStart.resolve()
     await flush()
-    expect(original.paused).toBe(false)
+    expect(interruptedMedia.paused).toBe(false)
   } finally {
     play.mockRestore()
   }
@@ -182,10 +194,12 @@ test('failure while connecting audio releases a generated URL', async () => {
     const handle = queue.push(audioFile(new Blob(['audio']), {connect: () => {
       throw new Error('connect failed')
     }}))
-    expect((await handle.finished).status).toBe('failed')
+    const result = await handle.finished
+    expect(result.status).toBe('failed')
     expect(revoke).toHaveBeenCalledTimes(1)
     expect(Media.instances[0].loads).toBe(1)
   } finally {
-    create.mockRestore(); revoke.mockRestore()
+    create.mockRestore()
+    revoke.mockRestore()
   }
 })

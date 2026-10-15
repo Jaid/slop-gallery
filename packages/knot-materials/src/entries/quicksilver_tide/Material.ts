@@ -46,6 +46,11 @@ const ripples = (tube: Node<'vec2'>) => {
   const chatterB = tube.x.mul(TAU * -131).add(tube.y.mul(TAU * 9)).sub(time.mul(1.7)).sin()
   return height.add(chatterA.add(chatterB).mul(0.00042))
 }
+/** The displaced mercury surface; a numeric `detail` leaves out the fragment-only ripples. */
+const surface = (at: Node<'vec2'>, detail: Node<'float'> | number) => {
+  const {center, normal} = knotFrame(at)
+  return center.add(normal.mul(swell(at).add(typeof detail === 'number' ? 0 : ripples(at).mul(detail)).add(knotTubeRadius)))
+}
 
 /** Liquid mercury in a mirrored gallery: beads of metal flow around the knot, droplets keep landing on it and a thin oil film swirls over the rings. */
 export default class extends KnotMaterial {
@@ -57,10 +62,6 @@ export default class extends KnotMaterial {
 // Capillary detail fades out as it approaches pixel size, so distant metal stays calm instead of shimmering.
     const footprint = tube.x.fwidth().mul(knotLength)
     const resolved = footprint.smoothstep(0.012, 0.05).oneMinus()
-    const surface = (at: Node<'vec2'>, detail: Node<'float'> | number) => {
-      const {center, normal} = knotFrame(at)
-      return center.add(normal.mul(swell(at).add(typeof detail === 'number' ? 0 : ripples(at).mul(detail)).add(knotTubeRadius)))
-    }
     this.positionNode = surface(tube, 0)
     const eu = vec2(0.000012, 0)
     const ev = vec2(0, 0.00018)

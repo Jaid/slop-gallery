@@ -64,7 +64,13 @@ export function voronoi(position: Node<'vec3'>, jitter = 0.95) {
   const result = (core(position) as unknown as {toVar: () => {get: Member}}).toVar()
   const toFeature = result.get<'vec3'>('toFeature')
   const cell = position.floor().add(position.fract().add(toFeature).floor())
-  return {cell, toFeature, distance: toFeature.length(), border: result.get<'float'>('border'),
-/** Unit direction (in the Voronoi domain) in which the nearest border lies. */
-    borderDirection: result.get<'vec3'>('borderDirection'), random: cellNoiseVec3(cell.add(0.5))}
+  return {
+    cell,
+    toFeature,
+    distance: toFeature.length(),
+    border: result.get<'float'>('border'),
+    /** Unit direction (in the Voronoi domain) in which the nearest border lies. */
+    borderDirection: result.get<'vec3'>('borderDirection'),
+    random: cellNoiseVec3(cell.add(0.5)),
+  }
 }

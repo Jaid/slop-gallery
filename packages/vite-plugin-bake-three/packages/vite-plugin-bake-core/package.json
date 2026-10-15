@@ -19,6 +19,7 @@
     "test": "bun test --max-concurrency 1 ./test"
   },
   "dependencies": {
+    "fs-extra": "11.4.1",
     "magic-string": "1.4.3",
     "math": "0.1.0",
     "@babel/core": "8.0.7",
@@ -40,6 +41,9 @@
     "three-bvh-csg": {
       "optional": true
     }
+  },
+  "devDependencies": {
+    "@types/fs-extra": "11.0.4"
   },
   "files": [
     "src",
