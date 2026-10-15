@@ -17,7 +17,7 @@ for (const Material of [MarbleFloorMaterial, WoodFloorMaterial]) {
       expect(heavy.map).toBe(texture)
       expect(heavy.envMapIntensity).toBe(1)
       expect(heavy.outputNode).not.toBeNull()
-      expect(heavy.reflection!.reflector.resolutionScale).toBe(1.5)
+      expect(heavy.reflection!.reflector.resolutionScale).toBe(1)
       expect(heavy.reflection!.reflector.generateMipmaps).toBe(true)
       expect(heavy.reflection!.reflector.bounces).toBe(false)
       expect(fast.map).toBe(texture)
