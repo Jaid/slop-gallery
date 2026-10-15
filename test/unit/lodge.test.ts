@@ -10,12 +10,13 @@ import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/galler
 import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {corridorPassage, corridorRails, corridorRunner, corridorStairs, insideCorridor} from '../../src/lib/gallery/corridor.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
-import lodge, {insideLodgeAccess, lodgeTunnel, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
+import lodge, {insideLodgeAccess, lodgeTunnel, lodgeTunnelTransition, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import LodgeWindowGeometry from '../../src/lib/gallery/LodgeWindowGeometry.ts'
 import {oculusPlatform} from '../../src/lib/gallery/lowerGallery.ts'
 import oculusTower from '../../src/lib/gallery/oculusTower.ts'
 import Passage from '../../src/lib/gallery/passages/Passage.ts'
 import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
+import TransitionGeometry from '../../src/lib/gallery/passages/TransitionGeometry.ts'
 import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
 import StairRunner from '../../src/lib/gallery/stairs/StairRunner.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
@@ -30,9 +31,11 @@ const architecture = routeWalls.map(wall => ({
   geometry: createArchitectureGeometry(wall),
 }))
 const windowGeometry = new LodgeWindowGeometry
-const vaults = [new VaultGeometry(lodgeTunnel), TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts), TimberGeometry.stairs(corridorStairs)]
+const transition = new TransitionGeometry(lodgeTunnelTransition)
+const vaults = [new VaultGeometry(lodgeTunnel, lodgeTunnelTransition.length), TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts), TimberGeometry.stairs(corridorStairs)]
 afterAll(() => {
   windowGeometry.dispose()
+  transition.dispose()
   for (const {geometry} of architecture) {
     geometry.dispose()
   }
@@ -58,7 +61,7 @@ function createWorld(fps: number) {
       world.createCollider(RAPIER.ColliderDesc.trimesh(...colliderGeometry(geometry)))
     }
   }
-  for (const geometry of [windowGeometry.lining, windowGeometry.glass, windowGeometry.frame]) {
+  for (const geometry of [windowGeometry.lining, windowGeometry.glass, windowGeometry.frame, transition.timber, transition.lining]) {
     world.createCollider(RAPIER.ColliderDesc.trimesh(...colliderGeometry(geometry)))
   }
   const box = (position: Vec3, size: Vec3) => world.createCollider(RAPIER.ColliderDesc.cuboid(size[0] / 2, size[1] / 2, size[2] / 2).setTranslation(...position))
