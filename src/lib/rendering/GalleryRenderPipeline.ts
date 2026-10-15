@@ -89,7 +89,6 @@ export default class GalleryRenderPipeline extends RenderPipeline {
     if (antiAliasing === 'traa') {
       const temporal = own(traa(materialize(), depth, scenePass.getTextureNode('velocity'), camera))
       // The resolve is an opaque colorNode material, which forces alpha to 1. Without blending it is no longer opaque and keeps the resolved mask.
-      // eslint-disable-next-line no-underscore-dangle
       ;(temporal as typeof temporal & {_resolveMaterial: NodeMaterial})._resolveMaterial.blending = NoBlending
       // The native accessor exists in r186 but is missing from its declaration file.
       current = (temporal as typeof temporal & {getTextureNode: () => TextureNode}).getTextureNode()

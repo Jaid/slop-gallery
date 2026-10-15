@@ -34,14 +34,12 @@ export default function KnotExhibition() {
       const {geometry, colliderVertices} = resources.items[index]
       const id = `prop-knot-${finish.id}`
       const body = () => propObjects.get(id)?.body
+      const outOfShowcase = () => {
+        const current = body()
+        return current !== undefined && !rotation.isShowcased(current)
+      }
       return <GrabbableProp
-        key={finish.id} id={id} blockedMessage={() => 'Knock this Knot out of its showcase first.'} canGrab={() => {
-          const current = body()
-          return current ? !rotation.isShowcased(current) : false
-        }} colliders={false} position={[finish.position[0], knotFloatHeight, finish.position[2]]} recoverAsDynamic={() => {
-          const current = body()
-          return current ? !rotation.isShowcased(current) : false
-        }} rotation={[0, finish.rotation, 0]} title={`${finish.label} · ${finish.title} · ${finish.modelTitle}`} type='fixed'
+        key={finish.id} id={id} blockedMessage={() => 'Knock this Knot out of its showcase first.'} canGrab={outOfShowcase} colliders={false} position={[finish.position[0], knotFloatHeight, finish.position[2]]} recoverAsDynamic={outOfShowcase} rotation={[0, finish.rotation, 0]} title={`${finish.label} · ${finish.title} · ${finish.modelTitle}`} type='fixed'
       >
         <ConvexHullCollider
           args={[colliderVertices]} contactSkin={finish.displacement ?? 0} onContactForce={({target}) => {
