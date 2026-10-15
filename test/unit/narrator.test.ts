@@ -51,7 +51,7 @@ beforeEach(() => {
   })
 })
 afterEach(() => {
-  producer?.dispose()
+  producer.dispose()
   narrator.dispose()
   fetchSpy?.mockRestore()
   fetchSpy = undefined
