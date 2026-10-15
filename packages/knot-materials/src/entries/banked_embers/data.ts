@@ -1,0 +1,19 @@
+import type {KnotData} from '../../types.ts'
+
+// Mage run: 4eznRMVv3vZMHhr; fixture: knot-material-shaders; result: success.
+export default {
+  id: 'banked_embers',
+  candidateId: 'claude_opus',
+  title: 'Banked Embers',
+  harness: 'Mage',
+  author: {model: {
+    title: 'Claude Opus 5.5',
+    slug: 'anthropic/claude-opus-5.5',
+    effortLevel: 'high',
+  }},
+  flavorText: 'Charcoal that remembers the fire. It sleeps beneath its own ash, but lean in close and it wakes, breathing heat back at you.',
+  placeholder: {
+    color: '#402d27',
+    shading: 'stone',
+  },
+} as const satisfies KnotData

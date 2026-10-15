@@ -1,20 +1,19 @@
 import type {KnotData} from '../../types.ts'
 
+// Mage run: 4ayQMqfdM3WbrB2; fixture: knot-material-shaders; result: success.
 export default {
   id: 'kintsugi',
-  candidateId: 'mimo',
+  candidateId: 'claude_fable',
   title: 'Kintsugi',
   harness: 'Mage',
-  author: {
-    model: {
-      title: 'MiMo V2.6 Pro',
-      slug: 'xiaomi/mimo-v2.6-pro',
-      effortLevel: 'xhigh',
-    },
-  },
-  flavorText: 'Shattered on purpose, mended with gold. The seam is not a scar but a river of light through the dark clay.',
+  author: {model: {
+    title: 'Claude Fable 5.1',
+    slug: 'anthropic/claude-fable-5.1',
+    effortLevel: 'high',
+  }},
+  flavorText: 'It was dropped once and mended with gold, the way the old masters did – not to hide the break but to honor it. The gold is still warm, and it still moves.',
   placeholder: {
-    color: '#1c1610',
+    color: '#646c64',
     shading: 'stone',
   },
 } as const satisfies KnotData

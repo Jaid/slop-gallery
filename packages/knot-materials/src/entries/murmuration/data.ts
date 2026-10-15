@@ -1,21 +1,19 @@
 import type {KnotData} from '../../types.ts'
 
+// Mage run: 4eznRMVv3vZMHhr; fixture: knot-material-shaders; result: success.
 export default {
   id: 'murmuration',
-  candidateId: 'gpt_terra',
+  candidateId: 'claude_opus',
   title: 'Murmuration',
   harness: 'Mage',
-  author: {
-    model: {
-      title: 'GPT-5.6 Terra',
-      slug: 'openai/gpt-5.6-terra',
-      effortLevel: 'max',
-    },
-  },
-  flavorText: 'Thousands of dark barbs turn as one flock, gathering cobalt and green only at the instant the viewer finds their wind.',
-  displacement: 0.009,
+  author: {model: {
+    title: 'Claude Opus 5.5',
+    slug: 'anthropic/claude-opus-5.5',
+    effortLevel: 'high',
+  }},
+  flavorText: 'Ten thousand starlings ride the evening gold along the knot. Draw near and the flock startles open around you, then quietly closes behind.',
   placeholder: {
-    color: '#163a36',
-    shading: 'fabric',
+    color: '#574245',
+    shading: 'smooth',
   },
 } as const satisfies KnotData
