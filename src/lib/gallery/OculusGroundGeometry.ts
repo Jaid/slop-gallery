@@ -23,7 +23,10 @@ export default class OculusGroundGeometry extends BufferGeometry {
       return result
     }
     const combine = (left: Brush, right: Brush, operation = ADDITION) => evaluator.evaluate(left, right, operation, brush(new BufferGeometry))
-    const block = ({position, size}: typeof oculusPlatform) => brush(new BoxGeometry(...size).translate(...position))
+    const block = ({position, size}: typeof oculusPlatform) => {
+      const platformBlock = new BoxGeometry(...size)
+      return brush(platformBlock.translate(...position))
+    }
     try {
       const {floorY} = lowerGallery
       const slope = new BoxGeometry(towerRamp.width, 1, towerRamp.endZ - towerRamp.startZ, 1, 1, towerRampSections.length - 1)
@@ -94,7 +97,8 @@ export default class OculusGroundGeometry extends BufferGeometry {
       solid = combine(solid, brush(cutter), SUBTRACTION)
       solid = combine(solid, block(oculusPlatform))
       for (const ramp of oculusRamps) {
-        solid = combine(solid, brush(new RampGeometry(ramp.width, ramp.rise, ramp.run).translate(ramp.x, ramp.floorY, ramp.startZ)))
+        const rampPrism = new RampGeometry(ramp.width, ramp.rise, ramp.run)
+        solid = combine(solid, brush(rampPrism.translate(ramp.x, ramp.floorY, ramp.startZ)))
       }
       this.copy(solid.geometry)
       // World-scale projection keeps the stone grain consistent across the joined pieces.

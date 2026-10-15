@@ -27,13 +27,16 @@ export default class SlattedBenchGeometry {
       }
       wood.push(slat.translate(0, height - 0.0425, z))
       for (const x of [-1.04, 1.04]) {
-        metal.push(new CylinderGeometry(0.01, 0.01, 0.003, 8).translate(x, height + 0.001, z))
+        const screwHead = new CylinderGeometry(0.01, 0.01, 0.003, 8)
+        metal.push(screwHead.translate(x, height + 0.001, z))
       }
     }
     for (const x of [-1.04, 1.04]) {
-      metal.push(new BoxGeometry(0.085, 0.065, depth - 0.06).translate(x, height - 0.1, 0))
+      const crossRail = new BoxGeometry(0.085, 0.065, depth - 0.06)
+      metal.push(crossRail.translate(x, height - 0.1, 0))
       for (const side of [-1, 1]) {
-        metal.push(new BoxGeometry(0.085, height - 0.1, 0.05).translate(x, (height - 0.1) / 2, side * (depth / 2 - 0.075)))
+        const frameLeg = new BoxGeometry(0.085, height - 0.1, 0.05)
+        metal.push(frameLeg.translate(x, (height - 0.1) / 2, side * (depth / 2 - 0.075)))
       }
     }
     this.wood = mergeParts(wood)

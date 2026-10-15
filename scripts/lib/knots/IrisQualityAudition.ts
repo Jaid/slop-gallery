@@ -41,9 +41,10 @@ export default class IrisQualityAudition extends ExternalGenerator {
         if (this.retryFailed && await fs.pathExists(reservation)) {
           await fs.move(reservation, resolve(cache, `request-${crypto.randomUUID()}.json`))
         }
+        const requestStartedAt = new Date
         await fs.writeJson(reservation, {
           request,
-          startedAt: (new Date).toISOString(),
+          startedAt: requestStartedAt.toISOString(),
         }, {
           spaces: 2,
           flag: 'wx',

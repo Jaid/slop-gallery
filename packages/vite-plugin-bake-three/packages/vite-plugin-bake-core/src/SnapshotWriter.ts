@@ -27,14 +27,16 @@ export default class SnapshotWriter {
       root: this.atom(value),
       nodes: this.nodes,
     }
-    const metadata = (new TextEncoder).encode(JSON.stringify(snapshot))
+    const utf8Encoder = new TextEncoder
+    const metadata = utf8Encoder.encode(JSON.stringify(snapshot))
     const start = Math.ceil((12 + metadata.byteLength) / 8) * 8
     if (start + this.payloadLength > this.maxBytes) {
       throw new NotBakeableError('Artifact exceeds maxBytes.')
     }
     const bytes = new Uint8Array(start + this.payloadLength)
-    bytes.set((new TextEncoder).encode('BAKE0001'))
-    new DataView(bytes.buffer).setUint32(8, metadata.byteLength, true)
+    bytes.set(utf8Encoder.encode('BAKE0001'))
+    const headerView = new DataView(bytes.buffer)
+    headerView.setUint32(8, metadata.byteLength, true)
     bytes.set(metadata, 12)
     let offset = start
     for (const part of this.payload) {

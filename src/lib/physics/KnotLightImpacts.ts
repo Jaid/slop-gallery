@@ -28,11 +28,14 @@ export default class KnotLightImpacts {
     world.forEachActiveRigidBody(body => {
       const attack = bodyThrow(body)
       if (attack && body.isDynamic()) {
+        const centerOfMass = new Vector3
+        const linearVelocity = new Vector3
+        const angularVelocity = new Vector3
         this.motions.set(body, {
           attackId: attack.id,
-          center: (new Vector3).copy(body.worldCom()),
-          linear: (new Vector3).copy(body.linvel()),
-          angular: (new Vector3).copy(body.angvel()),
+          center: centerOfMass.copy(body.worldCom()),
+          linear: linearVelocity.copy(body.linvel()),
+          angular: angularVelocity.copy(body.angvel()),
         })
       }
     })
@@ -85,8 +88,10 @@ export default class KnotLightImpacts {
       const projection = fixture.projectPoint(body.translation(), true)
       point.copy(projection?.point ?? body.translation())
     }
-    const velocity = (new Vector3).crossVectors(motion.angular, point.clone().sub(motion.center)).add(motion.linear)
-    const normal = (new Vector3).copy(manifold.normal())
+    const velocity = new Vector3
+    velocity.crossVectors(motion.angular, point.clone().sub(motion.center)).add(motion.linear)
+    const normal = new Vector3
+    normal.copy(manifold.normal())
     return {
       attackId: motion.attackId,
       mass: body.mass(),

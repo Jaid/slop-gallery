@@ -49,11 +49,18 @@ export default class PotGeometry {
     this.shell.computeVertexNormals()
     this.shell.computeBoundingBox()
     this.vertices = Float32Array.from(positions.array)
-    this.soil = new CylinderGeometry(definition.soilRadius, definition.soilRadius, 0.03, 64).translate(0, definition.soilHeight - 0.015, 0)
-    this.trim = kind === 'noir' ? mergeParts([
-      new CylinderGeometry(0.22, 0.24, 0.13, 64).translate(0, 0.065, 0),
-      new TorusGeometry(0.325, 0.006, 6, 64).rotateX(Math.PI / 2).translate(0, 0.772, 0),
-    ]) : null
+    const soilDisc = new CylinderGeometry(definition.soilRadius, definition.soilRadius, 0.03, 64)
+    this.soil = soilDisc.translate(0, definition.soilHeight - 0.015, 0)
+    if (kind === 'noir') {
+      const footPlinth = new CylinderGeometry(0.22, 0.24, 0.13, 64)
+      const rimBead = new TorusGeometry(0.325, 0.006, 6, 64)
+      this.trim = mergeParts([
+        footPlinth.translate(0, 0.065, 0),
+        rimBead.rotateX(Math.PI / 2).translate(0, 0.772, 0),
+      ])
+    } else {
+      this.trim = null
+    }
   }
 
   dispose() {

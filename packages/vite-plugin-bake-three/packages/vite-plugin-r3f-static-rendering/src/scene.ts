@@ -13,7 +13,10 @@ const transforms = new Set(['position', 'rotation', 'quaternion', 'scale'])
 const meshProps = new Set([...transforms, 'key', 'name', 'castShadow', 'receiveShadow', 'visible', 'frustumCulled', 'renderOrder'])
 const groupProps = new Set([...transforms, 'key', 'name', 'visible'])
 const materialProps = new Set(['key', 'color', 'emissive', 'emissiveIntensity', 'roughness', 'metalness', 'flatShading', 'wireframe', 'side', 'toneMapped', 'fog', 'envMapIntensity', 'transparent', 'opacity', 'depthTest', 'depthWrite', 'alphaTest', 'clearcoat', 'clearcoatRoughness', 'reflectivity', 'ior', 'specularIntensity', 'specularColor', 'shininess'])
-const identity = () => (new Matrix4).toArray()
+const identity = () => {
+  const identityMatrix = new Matrix4
+  return identityMatrix.toArray()
+}
 
 type RawNode = {
   children: Array<unknown>
@@ -218,7 +221,8 @@ function transform(props: Record<string, StaticValue>) {
   if (scale.some(value => value <= 0) || Math.abs(quaternion.lengthSq() - 1) > 1e-6) {
     throw new NotStaticError('Mirrored, singular or non-unit transform.')
   }
-  return (new Matrix4).compose(new Vector3(...position as [number, number, number]), quaternion, new Vector3(...scale as [number, number, number])).toArray()
+  const localMatrix = new Matrix4
+  return localMatrix.compose(new Vector3(...position as [number, number, number]), quaternion, new Vector3(...scale as [number, number, number])).toArray()
 }
 function resource(node: RawNode, kind: 'geometry' | 'material'): ResourcePlan {
   if (node.children.length) {

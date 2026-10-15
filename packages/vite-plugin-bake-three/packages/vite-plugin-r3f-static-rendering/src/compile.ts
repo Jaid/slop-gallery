@@ -138,7 +138,8 @@ export async function compileStaticRendering(code: string, id: string, options: 
     if (reason) {
       throw new Error(reason)
     }
-    const evaluated = await new Recipe(graph, adapter, options.allowFreezingRandomness ?? false).evaluateValue(path, options.timeoutMs ?? 1000, lowerScene(expression))
+    const sceneRecipe = new Recipe(graph, adapter, options.allowFreezingRandomness ?? false)
+    const evaluated = await sceneRecipe.evaluateValue(path, options.timeoutMs ?? 1000, lowerScene(expression))
     for (const dependency of evaluated.dependencies) {
       dependencies.add(dependency)
     }

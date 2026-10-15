@@ -46,7 +46,8 @@ export default class RailingPath extends Curve<Vector3> {
       const a = this.points[i].clone()
       const b = this.points[i + 1]
       const direction = b.clone().sub(a)
-      const rotation = (new Quaternion).setFromUnitVectors(new Vector3(0, 1, 0), direction.clone().normalize())
+      const rotation = new Quaternion
+      rotation.setFromUnitVectors(new Vector3(0, 1, 0), direction.clone().normalize())
       return {
         position: a.add(b).multiplyScalar(0.5).toArray(),
         rotation: rotation.toArray(),

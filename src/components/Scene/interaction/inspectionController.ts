@@ -51,8 +51,12 @@ export default function createInspectionController(camera: RootState['camera'], 
     const normal = new Vector3(Math.sin(portrait.rotation), 0, Math.cos(portrait.rotation))
     galleryEvents.dispatchEvent(new Event('release-zoom'))
     const distance = camera instanceof PerspectiveCamera ? Math.max(portrait.height + 0.65, portrait.width / camera.aspect) / (2 * Math.tan(camera.fov * Math.PI / 360)) * 1.14 : 3
-    const position = new Vector3(...portrait.position).addScaledVector(normal, distance)
-    const rotation = (new Quaternion).setFromRotationMatrix((new Matrix4).lookAt(position, new Vector3(...portrait.position), up))
+    const position = new Vector3(...portrait.position)
+    position.addScaledVector(normal, distance)
+    const lookAtPortrait = new Matrix4
+    lookAtPortrait.lookAt(position, new Vector3(...portrait.position), up)
+    const rotation = new Quaternion
+    rotation.setFromRotationMatrix(lookAtPortrait)
     galleryEvents.dispatchEvent(new CustomEvent('teleport', {
       detail: {
         position: position.toArray(),

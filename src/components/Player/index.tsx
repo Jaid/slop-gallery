@@ -70,11 +70,12 @@ export default function Player() {
   }, [])
   useEffect(() => {
     const pose = playerSession.snapshot()
+    const sessionRotation = new Quaternion
     galleryEvents.dispatchEvent(new CustomEvent('teleport', {
       detail: {
         feet: true,
         position: pose.position,
-        rotation: (new Quaternion).setFromEuler(new Euler(pose.pitch, pose.yaw, 0, 'YXZ')).toArray(),
+        rotation: sessionRotation.setFromEuler(new Euler(pose.pitch, pose.yaw, 0, 'YXZ')).toArray(),
       },
     }))
   }, [playerEpoch])

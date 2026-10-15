@@ -108,13 +108,22 @@ export default class GalleryRepository {
 
   async export(document = createDocument()) {
     document = validateDocument(document)
-    const portraits = await Promise.all(document.portraits.map(async p => ({
-      ...p,
-      source: p.source instanceof Blob ? {
-        mime: p.source.type,
-        data: new Uint8Array(await p.source.arrayBuffer()).toBase64(),
-      } : p.source,
-    })))
+    const portraits = await Promise.all(document.portraits.map(async p => {
+      if (p.source instanceof Blob) {
+        const imageBytes = new Uint8Array(await p.source.arrayBuffer())
+        return {
+          ...p,
+          source: {
+            mime: p.source.type,
+            data: imageBytes.toBase64(),
+          },
+        }
+      }
+      return {
+        ...p,
+        source: p.source,
+      }
+    }))
     const serialized = new Blob([
       JSON.stringify({
         ...document,
@@ -125,7 +134,8 @@ export default class GalleryRepository {
       throw new Error('The collection backup is too large.')
     }
     const stream = serialized.stream().pipeThrough(new CompressionStream('gzip'))
-    const backup = await new Response(stream).blob()
+    const compressedResponse = new Response(stream)
+    const backup = await compressedResponse.blob()
     if (backup.size > maximumBackupBytes) {
       throw new Error('The compressed collection backup is too large.')
     }
@@ -155,7 +165,8 @@ export default class GalleryRepository {
       await reader.cancel().catch(() => {})
       reader.releaseLock()
     }
-    const parsed: unknown = JSON.parse(await new Blob(chunks).text())
+    const unpackedBackup = new Blob(chunks)
+    const parsed: unknown = JSON.parse(await unpackedBackup.text())
     if (!object(parsed) || !Array.isArray(parsed.portraits)) {
       throw new Error('This is not a Slop Gallery collection.')
     }

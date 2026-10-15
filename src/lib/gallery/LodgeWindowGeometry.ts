@@ -43,10 +43,11 @@ export default class LodgeWindowGeometry {
       }
       shape.lineTo(edgeX(from), from)
       shape.closePath()
-      return new ExtrudeGeometry(shape, {
+      const liningPanel = new ExtrudeGeometry(shape, {
         depth,
         bevelEnabled: false,
-      }).translate(0, 0, startZ)
+      })
+      return liningPanel.translate(0, 0, startZ)
     }
     this.lining = mergeParts([
       panel(bottom - lining, bottom, z - width / 2 - lining, width + lining * 2),
@@ -54,12 +55,19 @@ export default class LodgeWindowGeometry {
       panel(bottom, top, z - width / 2 - lining, lining),
       panel(bottom, top, z + width / 2, lining),
     ])
-    this.glass = new BoxGeometry(glassThickness, height, width).translate(tunnelX + glassThickness / 2, y, z)
+    const pane = new BoxGeometry(glassThickness, height, width)
+    this.glass = pane.translate(tunnelX + glassThickness / 2, y, z)
     // A narrow brass stop makes the recessed pane legible without a second room-side sheet.
     const stop = 0.035
     this.frame = mergeParts([
-      ...[bottom + stop / 2, top - stop / 2].map(level => new BoxGeometry(0.025, stop, width).translate(tunnelX + glassThickness + 0.0125, level, z)),
-      ...[-1, 1].map(side => new BoxGeometry(0.025, height - stop * 2, stop).translate(tunnelX + glassThickness + 0.0125, y, z + side * (width - stop) / 2)),
+      ...[bottom + stop / 2, top - stop / 2].map(level => {
+        const horizontalStop = new BoxGeometry(0.025, stop, width)
+        return horizontalStop.translate(tunnelX + glassThickness + 0.0125, level, z)
+      }),
+      ...[-1, 1].map(side => {
+        const verticalStop = new BoxGeometry(0.025, height - stop * 2, stop)
+        return verticalStop.translate(tunnelX + glassThickness + 0.0125, y, z + side * (width - stop) / 2)
+      }),
     ])
   }
 

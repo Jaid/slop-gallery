@@ -63,7 +63,8 @@ export default class StairTurn {
   }
 
   private geometry(radius: number, width: number, height: number, y: number, centerZ: number) {
-    return new CurvedBoxGeometry(Math.PI * radius, height, width, radius)
+    const halfRingSlab = new CurvedBoxGeometry(Math.PI * radius, height, width, radius)
+    return halfRingSlab
       .rotateY(-Math.PI / 2)
       .translate(this.center[0] + radius, y, centerZ)
   }

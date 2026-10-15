@@ -187,10 +187,11 @@ export function redo() {
 
 export function createDocument(): GalleryDocument {
   const s = useGallery.getState()
+  const savedAt = new Date
   return {
     ...snapshot(s),
     version: 1,
-    savedAt: (new Date).toISOString(),
+    savedAt: savedAt.toISOString(),
     player: playerSession.snapshot(),
     settings: {
       sound: s.sound,

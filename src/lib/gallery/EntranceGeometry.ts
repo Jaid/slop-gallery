@@ -5,11 +5,14 @@ import {BoxGeometry, CylinderGeometry, ExtrudeGeometry, Shape, SphereGeometry, T
 import {mergeParts} from '../geometry.ts'
 import mainEntrance from './entrance.ts'
 
-const extrude = (shape: Shape, thickness: number, z: number) => new ExtrudeGeometry(shape, {
-  depth: thickness,
-  bevelEnabled: false,
-  curveSegments: 48,
-}).translate(0, 0, z)
+const extrude = (shape: Shape, thickness: number, z: number) => {
+  const extrudedProfile = new ExtrudeGeometry(shape, {
+    depth: thickness,
+    bevelEnabled: false,
+    curveSegments: 48,
+  })
+  return extrudedProfile.translate(0, 0, z)
+}
 
 /** A paired, arched walnut door in a deep limestone and bronze surround. */
 export default class EntranceGeometry {
@@ -51,19 +54,28 @@ export default class EntranceGeometry {
       leaves.push(extrude(shape, depth, 0.115))
       for (const y of [0.75, 2.12]) {
         const centerX = side * radius / 2
-        leaves.push(new BoxGeometry(1.24, 1.1, 0.065).translate(centerX, y, 0.3))
+        const raisedPanel = new BoxGeometry(1.24, 1.1, 0.065)
+        leaves.push(raisedPanel.translate(centerX, y, 0.3))
         for (const x of [-0.66, 0.66]) {
-          metal.push(new BoxGeometry(0.024, 1.2, 0.015).translate(centerX + x, y, 0.342))
+          const trimStile = new BoxGeometry(0.024, 1.2, 0.015)
+          metal.push(trimStile.translate(centerX + x, y, 0.342))
         }
         for (const dy of [-0.6, 0.6]) {
-          metal.push(new BoxGeometry(1.34, 0.024, 0.015).translate(centerX, y + dy, 0.342))
+          const trimRail = new BoxGeometry(1.34, 0.024, 0.015)
+          metal.push(trimRail.translate(centerX, y + dy, 0.342))
         }
       }
       for (const y of [0.36, 1.48, 2.86, 3.44]) {
-        metal.push(new BoxGeometry(0.4, 0.065, 0.045).translate(side * 1.43, y, 0.33), new CylinderGeometry(0.048, 0.048, 0.19, 12).translate(side * 1.6, y, 0.36))
+        const hingeStrap = new BoxGeometry(0.4, 0.065, 0.045)
+        const hingeBarrel = new CylinderGeometry(0.048, 0.048, 0.19, 12)
+        metal.push(hingeStrap.translate(side * 1.43, y, 0.33), hingeBarrel.translate(side * 1.6, y, 0.36))
       }
-      metal.push(new TorusGeometry(0.12, 0.025, 8, 32).scale(0.7, 1.4, 1).translate(side * 0.22, 1.54, 0.4), new SphereGeometry(0.07, 16, 12).translate(side * 0.22, 1.7, 0.36))
-      frame.push(new BoxGeometry(0.55, 0.3, 0.48).translate(side * 1.84, 0.15, 0.24), new BoxGeometry(0.46, 0.2, 0.42).translate(side * 1.84, spring, 0.21))
+      const pullRing = new TorusGeometry(0.12, 0.025, 8, 32)
+      const pullMount = new SphereGeometry(0.07, 16, 12)
+      metal.push(pullRing.scale(0.7, 1.4, 1).translate(side * 0.22, 1.54, 0.4), pullMount.translate(side * 0.22, 1.7, 0.36))
+      const plinthBlock = new BoxGeometry(0.55, 0.3, 0.48)
+      const impostBlock = new BoxGeometry(0.46, 0.2, 0.42)
+      frame.push(plinthBlock.translate(side * 1.84, 0.15, 0.24), impostBlock.translate(side * 1.84, spring, 0.21))
     }
     this.leaves = mergeParts(leaves)
     this.frame = mergeParts(frame)

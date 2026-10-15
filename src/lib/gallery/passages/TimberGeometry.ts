@@ -78,7 +78,8 @@ function cutTimber(geometry: BufferGeometry, cutouts: ReadonlyArray<PassageCutou
   try {
     let result = brush(geometry)
     for (const {position, size} of cutouts) {
-      const cutter = brush(new BoxGeometry(...size).translate(...position))
+      const cutoutBox = new BoxGeometry(...size)
+      const cutter = brush(cutoutBox.translate(...position))
       result = evaluator.evaluate(result, cutter, SUBTRACTION, brush(new BufferGeometry))
     }
     retained = result.geometry
@@ -157,8 +158,10 @@ export default class TimberGeometry {
         continue
       }
       const radius = width / 2 - 0.09
-      const transform = (new Matrix4).makeRotationY(Math.atan2(dx, dz))
-        .multiply((new Matrix4).set(1, 0, 0, 0, 0, 1, (end[1] - start[1]) / length, 0, 0, 0, 1, 0, 0, 0, 0, 1))
+      const slopeShear = new Matrix4
+      slopeShear.set(1, 0, 0, 0, 0, 1, (end[1] - start[1]) / length, 0, 0, 0, 1, 0, 0, 0, 0, 1)
+      const transform = new Matrix4
+      transform.makeRotationY(Math.atan2(dx, dz)).multiply(slopeShear)
       transform.setPosition(...start)
       const backing = timberProfile(radius, height, 0)
       const outside = timberProfile(radius, height, -0.18)

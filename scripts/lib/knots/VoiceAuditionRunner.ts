@@ -45,9 +45,10 @@ export default class VoiceAuditionRunner extends ExternalGenerator {
           // Preserve the unsuccessful attempt rather than erasing its evidence.
           await fs.move(reservation, resolve(cache, `request-${crypto.randomUUID()}.json`))
         }
+        const requestStartedAt = new Date
         await fs.writeJson(reservation, {
           request,
-          startedAt: (new Date).toISOString(),
+          startedAt: requestStartedAt.toISOString(),
         }, {
           flag: 'wx',
           spaces: 2,

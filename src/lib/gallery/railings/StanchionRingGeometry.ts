@@ -20,7 +20,9 @@ export default class StanchionRingGeometry {
       const angle = i / count * Math.PI * 2
       const x = radius * Math.cos(angle)
       const z = radius * Math.sin(angle)
-      metal.push(new LatheGeometry(profile, 16).translate(x, 0, z), new SphereGeometry(0.075, 12, 8).translate(x, 1.045, z))
+      const stanchionPost = new LatheGeometry(profile, 16)
+      const postFinial = new SphereGeometry(0.075, 12, 8)
+      metal.push(stanchionPost.translate(x, 0, z), postFinial.translate(x, 1.045, z))
     }
     this.posts = mergeParts(metal)
     this.rope = new TubeGeometry(new RopeRing(radius, count), count * 16, 0.028, 8, true)

@@ -6,7 +6,10 @@ export default function pcmWave(pcm: ArrayBuffer, sampleRate = 24_000) {
   const header = new ArrayBuffer(44)
   const bytes = new Uint8Array(header)
   const view = new DataView(header)
-  const text = (offset: number, value: string) => bytes.set((new TextEncoder).encode(value), offset)
+  const text = (offset: number, value: string) => {
+    const chunkIdEncoder = new TextEncoder
+    bytes.set(chunkIdEncoder.encode(value), offset)
+  }
   text(0, 'RIFF')
   view.setUint32(4, 36 + pcm.byteLength, true)
   text(8, 'WAVE')

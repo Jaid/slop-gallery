@@ -114,9 +114,12 @@ export default class KnotLightDamage {
       throw new RangeError('Knot light count must be a non-negative integer.')
     }
     this.stages = new Uint8Array(count)
-    this.lastAttack = new Float64Array(count).fill(Number.NaN)
-    this.lastImpact = new Float64Array(count).fill(Number.NEGATIVE_INFINITY)
-    this.damagedAt = new Float64Array(count).fill(Number.POSITIVE_INFINITY)
+    const lastAttackIds = new Float64Array(count)
+    this.lastAttack = lastAttackIds.fill(Number.NaN)
+    const lastImpactTimes = new Float64Array(count)
+    this.lastImpact = lastImpactTimes.fill(Number.NEGATIVE_INFINITY)
+    const damageTimes = new Float64Array(count)
+    this.damagedAt = damageTimes.fill(Number.POSITIVE_INFINITY)
   }
 
   hit(index: number, mass: number, speed: number, time: number, attackId: number) {

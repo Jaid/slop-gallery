@@ -40,10 +40,14 @@ export default class KnotLightPanels {
 
   /** `name` prefixes both instanced meshes, so aim dumps tell fixtures in different rooms apart. */
   constructor(readonly slots: ReadonlyArray<KnotLightSlot>, name = 'knot-slot-led') {
-    this.intensities = new InstancedBufferAttribute(new Float32Array(slots.length).fill(1), 1).setUsage(DynamicDrawUsage)
+    const intensityValues = new Float32Array(slots.length)
+    const intensityAttribute = new InstancedBufferAttribute(intensityValues.fill(1), 1)
+    this.intensities = intensityAttribute.setUsage(DynamicDrawUsage)
     // Normal.xy, signed line offset, enabled. Local X/Z coordinates are normalized to [-1, 1].
-    this.fractures = new InstancedBufferAttribute(new Float32Array(slots.length * 4), 4).setUsage(DynamicDrawUsage)
-    this.liveFractions = new Float32Array(slots.length).fill(1)
+    const fractureAttribute = new InstancedBufferAttribute(new Float32Array(slots.length * 4), 4)
+    this.fractures = fractureAttribute.setUsage(DynamicDrawUsage)
+    const slotLiveFractions = new Float32Array(slots.length)
+    this.liveFractions = slotLiveFractions.fill(1)
     this.diffuserGeometry.setAttribute('lightIntensity', this.intensities)
     this.diffuserGeometry.setAttribute('lightFracture', this.fractures)
     const point = positionGeometry.xz.div(vec2(knotLightDiffuserSize[0] / 2, knotLightDiffuserSize[2] / 2))

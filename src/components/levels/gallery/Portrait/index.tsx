@@ -46,7 +46,8 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
       y: p.position[1],
       z: p.position[2],
     }, false)
-    const q = p.orientation ? new Quaternion(...p.orientation) : (new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), p.rotation)
+    const yawRotation = new Quaternion
+    const q = p.orientation ? new Quaternion(...p.orientation) : yawRotation.setFromAxisAngle(new Vector3(0, 1, 0), p.rotation)
     body.current.setRotation(q, false)
   }, [p.position, p.rotation, p.orientation])
   useEffect(() => {

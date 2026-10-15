@@ -54,7 +54,8 @@ function block(width: number, bottom: number, top: number, bevel: number, fluted
     bevelSize: bevel,
     bevelOffset: -bevel,
     bevelSegments: 2,
-  }).rotateX(-Math.PI / 2).translate(0, bottom + bevel, 0)
+  })
+  geometry.rotateX(-Math.PI / 2).translate(0, bottom + bevel, 0)
   // The normal utility welds positions at 0.01 units; use centimeters so it does
   // not merge neighboring samples in these small channels and edge bevels.
   return fluted ? toCreasedNormals(geometry.scale(100, 100, 100), Math.PI / 6).scale(0.01, 0.01, 0.01) : geometry

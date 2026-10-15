@@ -1,7 +1,8 @@
 import type {KnotCandidateData} from '../../types.ts'
 
+const symbolUrl = new URL('symbol.svg', import.meta.url)
 export default {
   id: 'deepseek',
   title: 'DeepSeek Flash',
-  icon: new URL('symbol.svg', import.meta.url).href,
+  icon: symbolUrl.href,
 } as const satisfies KnotCandidateData

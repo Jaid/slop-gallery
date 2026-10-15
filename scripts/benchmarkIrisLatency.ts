@@ -19,13 +19,14 @@ export default async function benchmarkIrisLatency({key = Bun.env.XAI_API_KEY, o
       await fs.ensureDir(directory)
       const result = resolve(directory, 'result.json')
       if (!await fs.pathExists(result)) {
+        const requestStartedAt = new Date
         await fs.writeJson(resolve(directory, 'request.json'), {
           text,
           timestamps,
           sampleRate: 48_000,
           optimizeStreamingLatency: 0,
           turns: 2,
-          startedAt: (new Date).toISOString(),
+          startedAt: requestStartedAt.toISOString(),
         }, {
           spaces: 2,
           flag: 'wx',

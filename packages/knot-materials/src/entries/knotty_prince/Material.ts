@@ -713,7 +713,8 @@ export default class extends KnotMaterial {
     this.emissiveNode = color('#ffffff').mul(sparkle.mul(glossyPupil).mul(1.1)).add(color('#cfd8ff').mul(satin))
       .add(color('#d5ff5a').mul(facing.oneMinus().pow(3).mul(felted).mul(0.06)))
 // The alpha-cut fuzz is only an outer layer: the stuffed felt underneath must remain closed.
-    this.coreMaterial = (new MeshPhysicalNodeMaterial).copy(this)
+    const stuffedCoreMaterial = new MeshPhysicalNodeMaterial
+    this.coreMaterial = stuffedCoreMaterial.copy(this)
     this.coreMaterial.name = `${knotData.id} core`
     this.coreMaterial.positionNode = placeInObject(shape.point)
     this.coreMaterial.opacityNode = float(1)

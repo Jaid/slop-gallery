@@ -41,7 +41,8 @@ function stem(path: Path, radius: number, z: number) {
   // Most leaf veins are straight despite being authored as quadratic paths.
   const straight = points.every(point => line.closestPointToPoint(point, true, closest).distanceToSquared(point) < 1e-12)
   const segments = straight ? 1 : Math.max(4, Math.ceil(path.getLength() * 48))
-  return new TubeGeometry(curve, segments, radius, 6, false).scale(1, 1, 0.65)
+  const stemTube = new TubeGeometry(curve, segments, radius, 6, false)
+  return stemTube.scale(1, 1, 0.65)
 }
 /**
  * The back cap and rear bevel of a relief leaf face the plaster and are never seen.
@@ -144,11 +145,14 @@ export default class WallOrnamentGeometry {
       vein.lineTo(0, 0.12)
       brass.push(stem(vein, 0.003, 0.03).rotateZ(angle))
     }
-    brass.push(new TorusGeometry(0.034, 0.005, 6, 24).translate(0, 0, 0.018))
-    brass.push(new SphereGeometry(0.025, 12, 8).scale(1, 1, 0.4).translate(0, 0, 0.02))
+    const flowerRing = new TorusGeometry(0.034, 0.005, 6, 24)
+    brass.push(flowerRing.translate(0, 0, 0.018))
+    const flowerBoss = new SphereGeometry(0.025, 12, 8)
+    brass.push(flowerBoss.scale(1, 1, 0.4).translate(0, 0, 0.02))
     // Small pearl finials finish the central flower without a rectangular backing.
     for (const y of [-0.2, 0.2]) {
-      brass.push(new SphereGeometry(0.013, 10, 8).scale(1, 1.4, 0.5).translate(0, y, 0.012))
+      const pearlFinial = new SphereGeometry(0.013, 10, 8)
+      brass.push(pearlFinial.scale(1, 1.4, 0.5).translate(0, y, 0.012))
     }
     this.foliage = mergeParts(foliage)
     this.brass = mergeParts(brass)

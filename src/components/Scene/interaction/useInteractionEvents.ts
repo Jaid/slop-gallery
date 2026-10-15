@@ -121,11 +121,12 @@ export default function useInteractionEvents({
     const home = () => {
       grabbing.cancel()
       inspection.stop()
+      const spawnRotation = new Quaternion
       galleryEvents.dispatchEvent(new CustomEvent('teleport', {
         detail: {
           feet: true,
           position: [...playerSpawn.position],
-          rotation: (new Quaternion).setFromEuler(new Euler(playerSpawn.pitch, playerSpawn.yaw, 0, 'YXZ')).toArray(),
+          rotation: spawnRotation.setFromEuler(new Euler(playerSpawn.pitch, playerSpawn.yaw, 0, 'YXZ')).toArray(),
         },
       }))
     }

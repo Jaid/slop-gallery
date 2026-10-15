@@ -22,7 +22,7 @@ type Event = {
 /** Real network measurements only: never play audio or interact with the user’s browser. */
 export default async function measureIrisLatency(text: string, timestamps: boolean, key: string) {
   const url = new URL('wss://api.x.ai/v1/tts')
-  url.search = new URLSearchParams({
+  const ttsParameters = new URLSearchParams({
     voice: 'iris',
     language: 'en',
     codec: 'pcm',
@@ -30,7 +30,8 @@ export default async function measureIrisLatency(text: string, timestamps: boole
     optimize_streaming_latency: '0',
     with_timestamps: String(timestamps),
     text_normalization: 'false',
-  }).toString()
+  })
+  url.search = ttsParameters.toString()
   const started = performance.now()
   // The project’s DOM types hide Bun’s native header-enabled constructor overload.
   const Socket = WebSocket as unknown as new (url: URL, options: Bun.WebSocketOptions) => WebSocket

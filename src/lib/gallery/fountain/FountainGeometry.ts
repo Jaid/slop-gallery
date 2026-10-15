@@ -134,8 +134,11 @@ function jetColumn(samples: number) {
 }
 /** A water surface with the same polygon corners as RevolvedProfileGeometry, `apothem` measured like its profiles. */
 function pool(apothem: number, sides: number, y: number, splash: number) {
-  const geometry = new CircleGeometry(apothem / Math.cos(Math.PI / sides), sides, Math.PI / sides).rotateX(-Math.PI / 2).translate(0, y, 0)
-  geometry.setAttribute('splashRadius', new Float32BufferAttribute(new Float32Array(geometry.getAttribute('position').count).fill(splash), 1))
+  const geometry = new CircleGeometry(apothem / Math.cos(Math.PI / sides), sides, Math.PI / sides)
+  geometry.rotateX(-Math.PI / 2).translate(0, y, 0)
+  const splashRadii = new Float32Array(geometry.getAttribute('position').count)
+  splashRadii.fill(splash)
+  geometry.setAttribute('splashRadius', new Float32BufferAttribute(splashRadii, 1))
   return geometry
 }
 

@@ -26,7 +26,8 @@ export function selectExamples({exampleIds, examples = 3, seed = 'knot-materials
     throw new Error(`Example count must be an integer between 1 and ${knots.length}.`)
   }
   if (exampleIds) {
-    if (!exampleIds.length || new Set(exampleIds).size !== exampleIds.length) {
+    const uniqueExampleIds = new Set(exampleIds)
+    if (!exampleIds.length || uniqueExampleIds.size !== exampleIds.length) {
       throw new Error('Example IDs must be nonempty and unique.')
     }
     return exampleIds.map(id => {

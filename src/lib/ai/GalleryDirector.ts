@@ -95,7 +95,8 @@ export default class GalleryDirector {
   protected async generateFlavor(image: Blob, onPartial: (partial: Partial<Portrait>) => void, signal: AbortSignal): Promise<Partial<Portrait>> {
     const {default: FlavorGenerator} = await import('./FlavorGenerator.ts')
     const effort = ['high', 'low', 'medium', 'minimal', 'none'].includes(this.settings.text_model_effort) ? this.settings.text_model_effort : 'low'
-    return new FlavorGenerator(this.key, this.settings.text_model, effort as 'low').generate(image, onPartial, signal)
+    const flavorGenerator = new FlavorGenerator(this.key, this.settings.text_model, effort as 'low')
+    return flavorGenerator.generate(image, onPartial, signal)
   }
   protected async generateMerge(first: Portrait['source'], second: Portrait['source'], signal: AbortSignal, aspect: number) {
     if (!this.settings.ai || !this.key) {
@@ -103,7 +104,8 @@ export default class GalleryDirector {
     }
     const {default: MergeGenerator} = await import('./MergeGenerator.ts')
     const [hanging, thrown] = await Promise.all([loadBlob(first), loadBlob(second)])
-    const result = await new MergeGenerator(this.key, this.settings.image_model).generate(hanging, thrown, signal)
+    const mergeGenerator = new MergeGenerator(this.key, this.settings.image_model)
+    const result = await mergeGenerator.generate(hanging, thrown, signal)
     return fitGeneratedImage(result, aspect)
   }
 
@@ -141,6 +143,7 @@ export default class GalleryDirector {
       if (!current()) {
         return
       }
+      const mergedAt = new Date
       const result: Portrait = {
         ...a,
         source: merged,
@@ -152,7 +155,7 @@ export default class GalleryDirector {
         imported: true,
         title: 'An unexpected collaboration',
         creator: 'You · accidental alchemist',
-        year: (new Date).getFullYear(),
+        year: mergedAt.getFullYear(),
         description: `“${a.title}” met “${b.title}”. Neither had planned to share a frame. ${this.settings.ai && this.key ? 'An AI-assisted collaboration.' : 'A locally made cut-paper collage, joined with a little gold.'}`.slice(0, 5000),
       }
       const state = useGallery.getState()

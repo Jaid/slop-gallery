@@ -32,11 +32,12 @@ export default class VaultGeometry {
         shape.lineTo(r + thickness, spring)
         shape.absarc(0, spring, r + thickness, 0, Math.PI, false)
         shape.closePath()
-        return new ExtrudeGeometry(shape, {
+        const archBand = new ExtrudeGeometry(shape, {
           depth,
           bevelEnabled: false,
           curveSegments: 32,
         })
+        return archBand
           .translate(0, 0, -depth / 2)
           .rotateY(rotation)
           .translate(start[0] + dx / length * distance, passage.floorY, start[1] + dz / length * distance)

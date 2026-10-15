@@ -28,12 +28,13 @@ export default class CraterGeometry {
     const hole = new Path
     hole.absarc(0, 0, radius, 0, Math.PI * 2, true)
     outline.holes.push(hole)
-    this.floor = new ExtrudeGeometry(outline, {
+    const floorSlab = new ExtrudeGeometry(outline, {
       depth: 0.32,
       bevelEnabled: false,
       // Arcs resolve to twice the curve segments, so the hole shares the terrain’s rim vertices.
       curveSegments: rimSegments / 2,
-    }).rotateX(-Math.PI / 2).translate(0, -0.32, 0)
+    })
+    this.floor = floorSlab.rotateX(-Math.PI / 2).translate(0, -0.32, 0)
     // Vertices concentrate where the relief needs them instead of on a dense polar grid.
     const surface = new DiscTerrainMesh({
       radius,
@@ -85,7 +86,8 @@ export default class CraterGeometry {
       const x = Math.cos(angle) * r
       const z = Math.sin(angle) * r
       const size = 0.065 + random() ** 3 * 0.42
-      const rock = new IcosahedronGeometry(size, 0).scale(0.7 + random(), 0.55 + random() * 0.6, 0.7 + random()).rotateY(random() * Math.PI).rotateZ(random() * 0.5).translate(x, craterTerrain.height(x, z) + size * 0.35, z)
+      const rock = new IcosahedronGeometry(size, 0)
+      rock.scale(0.7 + random(), 0.55 + random() * 0.6, 0.7 + random()).rotateY(random() * Math.PI).rotateZ(random() * 0.5).translate(x, craterTerrain.height(x, z) + size * 0.35, z)
       rocks.push(rock)
     }
     this.rocks = mergeParts(rocks)

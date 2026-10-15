@@ -53,7 +53,8 @@ export default function useInteractionDiagnostics(camera: RootState['camera'], r
         physical: portraitObjects.get(portrait.id)?.body.translation(),
       })),
     })
-    if (new URLSearchParams(location.search).get('test') === 'true') {
+    const pageQuery = new URLSearchParams(location.search)
+    if (pageQuery.get('test') === 'true') {
       api.teleport = (position: Vec3, rotation: Array<number>) => galleryEvents.dispatchEvent(new CustomEvent('teleport', {
         detail: {
           position,

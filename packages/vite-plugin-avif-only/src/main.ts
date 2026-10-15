@@ -185,7 +185,11 @@ export default function avifOnly(options: AvifOnlyOptions = {}): Plugin {
     }
   }
   async function serve(server: ViteDevServer, url: string) {
-    const base = config.base.startsWith('/') ? config.base : new URL(config.base, 'http://vite.local/').pathname
+    let base = config.base
+    if (!config.base.startsWith('/')) {
+      const resolvedBaseUrl = new URL(config.base, 'http://vite.local/')
+      base = resolvedBaseUrl.pathname
+    }
     const pathname = clean(url)
     if (!pathname.startsWith(base) || !/\.avif$/iu.test(pathname)) {
       return
@@ -279,7 +283,8 @@ export default function avifOnly(options: AvifOnlyOptions = {}): Plugin {
       async handler() {
         // Runs after normal public copying and level-specific public-asset filters.
         const directory = isAbsolute(config.build.outDir) ? config.build.outDir : resolve(config.root, config.build.outDir)
-        const paths = await Array.fromAsync(new Bun.Glob('**/*.jxl').scan(directory))
+        const jxlFileGlob = new Bun.Glob('**/*.jxl')
+        const paths = await Array.fromAsync(jxlFileGlob.scan(directory))
         await Promise.all(paths.map(async path => {
           const source = resolve(directory, path)
           await fs.copyFile(await cache.convert(source), source.replace(/\.jxl$/iu, '.avif'))

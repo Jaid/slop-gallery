@@ -43,7 +43,8 @@ export function irisQualityRequest(transport: IrisTransport, text: string, {norm
 
 /** Inspect the actual envelope, not OpenRouter’s sometimes incorrect audio/pcm HTTP header. */
 export function decodeIrisQuality(bytes: Uint8Array) {
-  const envelope = JSON.parse((new TextDecoder).decode(bytes)) as TimestampEnvelope
+  const utf8Decoder = new TextDecoder
+  const envelope = JSON.parse(utf8Decoder.decode(bytes)) as TimestampEnvelope
   if (typeof envelope.audio !== 'string' || !/^audio\/pcm(?:;|$)/iu.test(envelope.content_type) || !Number.isFinite(envelope.duration) || envelope.duration <= 0) {
     throw new Error('Expected a timed PCM envelope, not raw audio or a compressed codec.')
   }

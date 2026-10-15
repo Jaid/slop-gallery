@@ -8,7 +8,10 @@ import GoldMaterial from '#component/levels/gallery/GoldMaterial'
 import vesperOrnaments from '#src/lib/gallery/vesperOrnaments.ts'
 import WallOrnamentGeometry from '#src/lib/gallery/WallOrnamentGeometry.ts'
 
-const placements = vesperOrnaments.map(({position, rotation}) => (new Matrix4).makeRotationY(rotation).setPosition(...position))
+const placements = vesperOrnaments.map(({position, rotation}) => {
+  const ornamentTransform = new Matrix4
+  return ornamentTransform.makeRotationY(rotation).setPosition(...position)
+})
 
 export default function VesperOrnaments() {
   const geometry = useDisposable(useMemo(() => new WallOrnamentGeometry, []))

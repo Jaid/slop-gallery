@@ -27,12 +27,13 @@ const openingShape = (hole: WallOpening, padding = 0, bottom = hole.bottom ?? -0
   return shape
 }
 const extrude = (shape: Shape, depth: number, z: number) => {
-  return new ExtrudeGeometry(shape, {
+  const extrudedProfile = new ExtrudeGeometry(shape, {
     depth,
     bevelEnabled: false,
     steps: 1,
     curveSegments,
-  }).translate(0, 0, z)
+  })
+  return extrudedProfile.translate(0, 0, z)
 }
 
 export type ArchitectureGeometry = ReturnType<typeof createArchitectureGeometry>
@@ -78,7 +79,10 @@ export function createArchitectureGeometry(wall: Wall) {
   if (wall.curveRadius && (wall.holes?.length || wall.baseboardProfile || wall.slope)) {
     throw new RangeError('Curved walls currently need a level rectangular profile without openings.')
   }
-  const box = (width: number, height: number, depth: number, x: number, y: number, z: number) => new BoxGeometry(width, height, depth, wall.curveRadius ? bendSegments(width, wall.curveRadius) : 1).translate(x, y, z)
+  const box = (width: number, height: number, depth: number, x: number, y: number, z: number) => {
+    const bendableBlock = new BoxGeometry(width, height, depth, wall.curveRadius ? bendSegments(width, wall.curveRadius) : 1)
+    return bendableBlock.translate(x, y, z)
+  }
   const evaluator = new Evaluator
   evaluator.useGroups = false
   const material = new MeshBasicNodeMaterial
@@ -165,7 +169,8 @@ export function createArchitectureGeometry(wall: Wall) {
       retained.add(part)
     }
     if (wall.slope) {
-      const shear = (new Matrix4).set(1, 0, 0, 0, wall.slope, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
+      const shear = new Matrix4
+      shear.set(1, 0, 0, 0, wall.slope, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
       for (const geometry of [surface, ...trim, ...glazing, ...cornice]) {
         geometry.applyMatrix4(shear)
         geometry.computeBoundingBox()

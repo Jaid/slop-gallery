@@ -135,7 +135,8 @@ export default class AimInspector {
       const localPoint = intersection.point.clone().applyMatrix4(world.clone().invert())
       const normal = intersection.normal?.clone() ?? intersection.face?.normal.clone()
       if (normal) {
-        normal.applyNormalMatrix((new Matrix3).getNormalMatrix(world))
+        const normalMatrix = new Matrix3
+        normal.applyNormalMatrix(normalMatrix.getNormalMatrix(world))
         if (normal.dot(raycaster.ray.direction) > 0) {
           normal.negate()
         }

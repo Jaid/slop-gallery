@@ -18,9 +18,10 @@ export default class EgoDiagnostics {
   capture(state: EgoState, input: EgoInput) {
     const aim = this.inspector.getAim()
     const {camera} = this
+    const capturedAt = new Date
     return {
       id: crypto.randomUUID(),
-      time: (new Date).toISOString(),
+      time: capturedAt.toISOString(),
       player: structuredClone(state),
       input: {...input},
       camera: {

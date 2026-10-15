@@ -49,9 +49,16 @@ export default class DestructiblePlantGeometry extends DestructibleGeometry {
   }
 
   private leaf({angle, at, direction, length, width, bend, color, flower}: LeafOptions) {
-    const quaternion = (new Quaternion).setFromUnitVectors(up, new Vector3(...direction).normalize()).multiply((new Quaternion).setFromAxisAngle(up, -angle - Math.PI / 2))
-    const position = new Vector3(0, length / 2, 0).applyQuaternion(quaternion).add(new Vector3(...at))
-    const rotation = (new Euler).setFromQuaternion(quaternion)
+    const leafDirection = new Vector3(...direction)
+    leafDirection.normalize()
+    const bladeRoll = new Quaternion
+    bladeRoll.setFromAxisAngle(up, -angle - Math.PI / 2)
+    const quaternion = new Quaternion
+    quaternion.setFromUnitVectors(up, leafDirection).multiply(bladeRoll)
+    const position = new Vector3(0, length / 2, 0)
+    position.applyQuaternion(quaternion).add(new Vector3(...at))
+    const rotation = new Euler
+    rotation.setFromQuaternion(quaternion)
     let geometry = bladeGeometry({
       at: [0, -length / 2, 0],
       direction: [0, 1, 0],
@@ -61,7 +68,8 @@ export default class DestructiblePlantGeometry extends DestructibleGeometry {
       color,
     })
     if (flower) {
-      const spadix = new SphereGeometry(1, 8, 6).scale(0.013, 0.075, 0.013).translate(0, -0.01, 0.038)
+      const spadix = new SphereGeometry(1, 8, 6)
+      spadix.scale(0.013, 0.075, 0.013).translate(0, -0.01, 0.038)
       const tint = new Color('#d7b74d')
       spadix.setAttribute('color', new Float32BufferAttribute(Array.from({length: spadix.getAttribute('position').count}, () => tint.toArray()).flat(), 3))
       geometry = mergeParts([geometry, spadix])
@@ -78,15 +86,19 @@ export default class DestructiblePlantGeometry extends DestructibleGeometry {
     const bottomRadius = this.kind === 'birdOfParadise' ? 0.012 : 0.007
     const topRadius = flower ? 0.003 : bottomRadius * 0.5
     const cutRadius = bottomRadius + (topRadius - bottomRadius) * cutFraction
-    const stemRotation = (new Quaternion).setFromUnitVectors(up, axis.normalize())
+    const stemRotation = new Quaternion
+    stemRotation.setFromUnitVectors(up, axis.normalize())
     const remainingCenter = root.clone().addScaledVector(axis, stemLength * cutFraction / 2)
-    const remaining = new CylinderGeometry(cutRadius, bottomRadius, stemLength * cutFraction, 6).applyQuaternion(stemRotation).translate(remainingCenter.x, remainingCenter.y, remainingCenter.z)
+    const remaining = new CylinderGeometry(cutRadius, bottomRadius, stemLength * cutFraction, 6)
+    remaining.applyQuaternion(stemRotation).translate(remainingCenter.x, remainingCenter.y, remainingCenter.z)
     let stem: BufferGeometry | null = null
     const carriedLength = stemLength * (1 - cutFraction)
     if (carriedLength > 0) {
       const center = tip.clone().addScaledVector(axis, -carriedLength / 2)
-      const toLeaf = (new Matrix4).compose(position, quaternion, new Vector3(1, 1, 1)).invert()
-      stem = new CylinderGeometry(topRadius, cutRadius, carriedLength, 6).applyQuaternion(stemRotation).translate(center.x, center.y, center.z).applyMatrix4(toLeaf)
+      const toLeaf = new Matrix4
+      toLeaf.compose(position, quaternion, new Vector3(1, 1, 1)).invert()
+      stem = new CylinderGeometry(topRadius, cutRadius, carriedLength, 6)
+      stem.applyQuaternion(stemRotation).translate(center.x, center.y, center.z).applyMatrix4(toLeaf)
       stem.computeBoundingBox()
       stem.computeBoundingSphere()
     }

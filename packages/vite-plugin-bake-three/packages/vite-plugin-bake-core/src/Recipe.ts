@@ -122,7 +122,8 @@ export default class Recipe {
     const readonly = new ReadOnlyGraph
     const start = performance.now()
     const randomGuard = this.allowFreezingRandomness ? '' : "Object.defineProperty(Math, 'random', {value() {throw new Error('Unseeded randomness.')}});"
-    const result = new Script(`'use strict'; ${randomGuard} Object.freeze(Math);\n${code}`).runInNewContext({
+    const recipeScript = new Script(`'use strict'; ${randomGuard} Object.freeze(Math);\n${code}`)
+    const result = recipeScript.runInNewContext({
       __bakeNative: this.nativeValues.map(({allowRandomProperty, value}) => protectNative(value, allowRandomProperty)),
       __bakeReadonly: readonly.capture,
       __bakeIdentityAccess: identityAccess(this.adapter.types),

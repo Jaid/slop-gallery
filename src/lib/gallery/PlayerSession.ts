@@ -45,11 +45,12 @@ export default class PlayerSession {
     this.revision++
   }
 
-  checkpoint(savedAt = (new Date).toISOString()) {
+  checkpoint(savedAt?: string) {
+    const checkpointedAt = new Date
     try {
       localStorage.setItem(checkpointKey, JSON.stringify({
         player: this.pose,
-        savedAt,
+        savedAt: savedAt ?? checkpointedAt.toISOString(),
       }))
       return true
     } catch {

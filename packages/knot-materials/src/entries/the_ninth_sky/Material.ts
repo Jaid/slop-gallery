@@ -74,7 +74,8 @@ class StarChart {
     return this
   }
 }
-const sentinel = new StarChart('The sentinel')
+const sentinelChart = new StarChart('The sentinel')
+const sentinel = sentinelChart
   .star('earL', [-0.25, 0.425], 0.009)
   .star('browL', [-0.075, 0.305])
   .star('browR', [0.07, 0.305])
@@ -119,7 +120,8 @@ const sentinel = new StarChart('The sentinel')
   .path('pawL pawR', 0.8)
   .path('heelR tail0 tail1 tail2 tail3 tail4')
   .build()
-const dreamer = new StarChart('The dreamer')
+const dreamerChart = new StarChart('The dreamer')
+const dreamer = dreamerChart
   .star('earL', [-0.35, 0.32], 0.009)
   .star('brow', [-0.18, 0.19])
   .star('earR', [-0.04, 0.33], 0.009)
@@ -160,7 +162,8 @@ const dreamer = new StarChart('The dreamer')
   .path('templeR back rump hip heel paw base baseL shoulder cheekL')
   .path('baseL tail0 tail1 tail2 tail3 tail4 tail5')
   .build()
-const familiar = new StarChart('The familiar')
+const familiarChart = new StarChart('The familiar')
+const familiar = familiarChart
   .star('earL', [-0.29, 0.4], 0.012)
   .star('earBaseL', [-0.115, 0.225], 0.006)
   .star('crown', [0, 0.24], 0.005)

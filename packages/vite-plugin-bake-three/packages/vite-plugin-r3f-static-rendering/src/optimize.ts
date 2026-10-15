@@ -9,7 +9,11 @@ import {canInstance} from './features/staticInstancing.ts'
 import {identity} from './scene.ts'
 
 const count = (nodes: ReadonlyArray<SceneNode>): number => nodes.reduce((sum, node) => sum + (node.kind === 'mesh' || node.kind === 'instances' ? 1 : count(node.children)), 0)
-const multiply = (a: Array<number>, b: Array<number>) => (new Matrix4).fromArray(a).multiply((new Matrix4).fromArray(b)).toArray()
+const multiply = (a: Array<number>, b: Array<number>) => {
+  const leftFactor = new Matrix4
+  const rightFactor = new Matrix4
+  return leftFactor.fromArray(a).multiply(rightFactor.fromArray(b)).toArray()
+}
 export function optimizeScene(input: Array<SceneNode>, options: ResolvedR3fStaticRenderingOptions): StaticPlan {
   let instances = 0
   let batches = 0

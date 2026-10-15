@@ -50,8 +50,12 @@ export default function useInteractionFrame(camera: RootState['camera'], rendere
       if (!viewing.returning && portrait) {
         const normal = new Vector3(Math.sin(portrait.rotation), 0, Math.cos(portrait.rotation))
         const distance = camera instanceof PerspectiveCamera ? Math.max(portrait.height + 0.4, portrait.width / camera.aspect) / (2 * Math.tan(camera.fov * Math.PI / 360)) * 1.14 : 3
-        target = new Vector3(...portrait.position).addScaledVector(normal, distance)
-        rotation = (new Quaternion).setFromRotationMatrix((new Matrix4).lookAt(target, new Vector3(...portrait.position), up))
+        const viewpoint = new Vector3(...portrait.position)
+        target = viewpoint.addScaledVector(normal, distance)
+        const lookAtPortrait = new Matrix4
+        lookAtPortrait.lookAt(target, new Vector3(...portrait.position), up)
+        const portraitFacing = new Quaternion
+        rotation = portraitFacing.setFromRotationMatrix(lookAtPortrait)
       }
       camera.position.lerp(target, 1 - Math.exp(-dt * 8))
       camera.quaternion.copy(viewing.look.update(rotation, dt))

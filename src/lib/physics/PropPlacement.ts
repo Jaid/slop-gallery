@@ -18,7 +18,8 @@ export default class PropPlacement {
   constructor(readonly world: World, readonly body: RigidBody, private readonly extractionAnchor?: () => RigidBody | undefined) {}
 
   constrain(origin: Vec3, target: Vec3): Vec3 | null {
-    const direction = new Vector3(...target).sub(new Vector3(...origin))
+    const direction = new Vector3(...target)
+    direction.sub(new Vector3(...origin))
     let distance = direction.length()
     direction.normalize()
     // Sweep every part of the object, including offset covers and labels. A center ray
@@ -27,7 +28,8 @@ export default class PropPlacement {
     if (collision) {
       distance = Math.max(0, collision.hit.time_of_impact)
     }
-    const position = new Vector3(...origin).addScaledVector(direction, distance).toArray()
+    const destination = new Vector3(...origin)
+    const position = destination.addScaledVector(direction, distance).toArray()
     // In a space narrower than the prop, keep its previous pose rather than pushing
     // geometry through an obstacle. Release still checks the player as well.
     return this.hasRoom(position, false) ? position : null
@@ -40,7 +42,8 @@ export default class PropPlacement {
       return position.toArray()
     }
     const dt = Math.min(delta, 0.05)
-    const movement = new Vector3(...target).sub(position)
+    const movement = new Vector3(...target)
+    movement.sub(position)
     // About 95% settled in 125 ms, independent of refresh rate. Limit both
     // long-distance pickups and resumed frames so neither produces a one-frame jump.
     let budget = Math.min(movement.length() * -Math.expm1(-24 * dt), 20 * dt)
@@ -56,10 +59,12 @@ export default class PropPlacement {
       const travel = Math.max(0, hit.time_of_impact)
       position.addScaledVector(direction, travel)
       budget = Math.max(0, budget - travel)
-      const normal = new Vector3(hit.normal1.x, hit.normal1.y, hit.normal1.z).normalize()
+      const normal = new Vector3(hit.normal1.x, hit.normal1.y, hit.normal1.z)
+      normal.normalize()
       // Rapier reports the obstacle witness in world space and the moving witness
       // in shape-local space. Ease a resting book out of its tiny contact overlap.
-      const witness = new Vector3(hit.witness2.x, hit.witness2.y, hit.witness2.z).applyQuaternion(orientation).add(center).addScaledVector(direction, travel)
+      const witness = new Vector3(hit.witness2.x, hit.witness2.y, hit.witness2.z)
+      witness.applyQuaternion(orientation).add(center).addScaledVector(direction, travel)
       const separation = witness.sub(new Vector3(hit.witness1.x, hit.witness1.y, hit.witness1.z)).dot(normal)
       let lift = Math.min(budget, Math.max(0, skin - separation) + 0.0001)
       const obstruction = this.sweep(position.toArray(), normal, lift, 0)
@@ -91,9 +96,10 @@ export default class PropPlacement {
       const collider = this.body.collider(i)
       const offset = collider.translationWrtParent()!
       const rotation = collider.rotationWrtParent()!
+      const colliderCenter = new Vector3(offset.x, offset.y, offset.z)
       return {
         shape: collider.shape,
-        center: new Vector3(offset.x, offset.y, offset.z).applyQuaternion(parentRotation).add(new Vector3(...position)),
+        center: colliderCenter.applyQuaternion(parentRotation).add(new Vector3(...position)),
         orientation: parentRotation.clone().multiply(new Quaternion(rotation.x, rotation.y, rotation.z, rotation.w)),
       }
     })

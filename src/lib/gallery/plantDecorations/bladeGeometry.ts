@@ -37,9 +37,17 @@ export default function bladeGeometry({at, direction, length, width, bend = 0.12
   if (style === 'silver') {
     pale.set('#a0b693')
   }
-  const transform = (new Matrix4).compose(new Vector3(...at), (new Quaternion).setFromUnitVectors(up, new Vector3(...direction).normalize()).multiply((new Quaternion).setFromAxisAngle(up, roll)), new Vector3(1, 1, 1))
+  const bladeDirection = new Vector3(...direction)
+  bladeDirection.normalize()
+  const bladeRoll = new Quaternion
+  bladeRoll.setFromAxisAngle(up, roll)
+  const bladeOrientation = new Quaternion
+  bladeOrientation.setFromUnitVectors(up, bladeDirection).multiply(bladeRoll)
+  const transform = new Matrix4
+  transform.compose(new Vector3(...at), bladeOrientation, new Vector3(1, 1, 1))
   if (style === 'succulent') {
-    const geometry = new SphereGeometry(1, 12, 8).scale(width / 2, length / 2, width * 0.22).translate(0, length / 2, 0)
+    const geometry = new SphereGeometry(1, 12, 8)
+    geometry.scale(width / 2, length / 2, width * 0.22).translate(0, length / 2, 0)
     const fleshyPositions = geometry.getAttribute('position')
     const fleshyColors: Array<number> = []
     for (let i = 0; i < fleshyPositions.count; i++) {
@@ -65,7 +73,8 @@ export default function bladeGeometry({at, direction, length, width, bend = 0.12
       const s = column / columns * 2 - 1
       const fold = (1 - Math.abs(s)) * width * 0.16 * Math.sin(Math.PI * t)
       const wave = Math.abs(s) ** 2 * Math.sin(t * 28) * width * (style === 'split' ? 0.065 : 0.015)
-      const point = new Vector3(s * width * profile / 2, t * length, bend * t * t + fold + wave).applyMatrix4(transform)
+      const point = new Vector3(s * width * profile / 2, t * length, bend * t * t + fold + wave)
+      point.applyMatrix4(transform)
       positions.push(...point)
       uvs.push(column / columns, t)
       const vein = Math.exp(-Math.abs(s) * 35) * 0.32

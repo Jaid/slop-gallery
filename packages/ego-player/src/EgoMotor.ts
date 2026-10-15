@@ -152,7 +152,8 @@ export default class EgoMotor {
       this.isCrouching = true
     } else if (this.isCrouching) {
       const feet = this.body.translation()
-      const standingShape = new this.rapier.Capsule(getCapsuleHalfHeight(this.standingHeight, this.radius), this.radius)
+      const {Capsule} = this.rapier
+      const standingShape = new Capsule(getCapsuleHalfHeight(this.standingHeight, this.radius), this.radius)
       const obstruction = this.world.intersectionWithShape({
         x: feet.x,
         y: feet.y + this.standingHeight / 2,
@@ -312,8 +313,9 @@ export default class EgoMotor {
   }
 
   private canOccupy(position: EgoPosition, height: number) {
+    const {Capsule} = this.rapier
     // Inset by 0.1 mm so resting contact/float32 noise is not mistaken for penetration.
-    const shape = new this.rapier.Capsule(getCapsuleHalfHeight(height, this.radius), this.radius - 0.0001)
+    const shape = new Capsule(getCapsuleHalfHeight(height, this.radius), this.radius - 0.0001)
     const center = {
       x: position[0],
       y: position[1] + height / 2,
@@ -376,7 +378,8 @@ export default class EgoMotor {
     if (this.shapeHeight === height && this.shapeRadius === this.radius) {
       return
     }
-    this.collider.setShape(new this.rapier.Capsule(getCapsuleHalfHeight(height, this.radius), this.radius))
+    const {Capsule} = this.rapier
+    this.collider.setShape(new Capsule(getCapsuleHalfHeight(height, this.radius), this.radius))
     this.collider.setTranslationWrtParent({
       x: 0,
       y: height / 2,
