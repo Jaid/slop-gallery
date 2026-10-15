@@ -90,12 +90,12 @@ describe('arbitrary Knot batches', () => {
   })
   test('uses canonical candidate and model IDs', () => {
     for (const candidate of knotCandidates) {
-      expect(candidate.data.id).toMatch(/^[a-z][a-z0-9_]*$/u)
+      expect(candidate.data.id).toMatch(/^[a-z][0-9_a-z]*$/u)
     }
     for (const entry of knots) {
-      expect(knotAnnouncementPaths(entry).model.split('/slug/')[1], entry.id).toMatch(/^[a-z0-9][a-z0-9.-]*$/u)
+      expect(knotAnnouncementPaths(entry).model.split('/slug/')[1], entry.id).toMatch(/^[0-9a-z][-.0-9a-z]*$/u)
       if (entry.author.model.slug) {
-        expect(entry.author.model.slug, entry.id).toMatch(/^[a-z0-9-]+\/[a-z0-9.-]+$/u)
+        expect(entry.author.model.slug, entry.id).toMatch(/^[-0-9a-z]+\/[-.0-9a-z]+$/u)
       }
     }
   })

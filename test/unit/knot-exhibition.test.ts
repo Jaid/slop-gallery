@@ -17,10 +17,38 @@ import {insideKnotGallery, knotGalleryBounds} from '../../src/lib/gallery/knotGa
 
 // Known offenders that still displace from cached view-space varyings. Do not add to this list.
 const viewDependentRelief = new Set([
-  'abyssal_veil', 'asteria', 'bismuth_labyrinth', 'celadon_kintsugi', 'chladni_resonance', 'ferrofluid_oracle', 'golden_mend', 'gossamer', 'jovian_vortex',
-  'kairothic_frost', 'kintsugi_nebula', 'lichen_cathedral', 'mercury_sea', 'mercury_swell', 'mercury_tremor', 'midnight_velvet', 'moire_satin',
-  'moonstone_dune', 'murmuration_silk', 'mycelial_bloom', 'mycelial_lumen', 'oceanic_nacre', 'planck_boil', 'quicksilver', 'singing_sand', 'stained_afternoon',
-  'sumi_tide', 'tidal_glass', 'tourmaline_nebula', 'velvet_penumbra', 'vermillion_lacquer', 'vitrail',
+  'abyssal_veil',
+  'asteria',
+  'bismuth_labyrinth',
+  'celadon_kintsugi',
+  'chladni_resonance',
+  'ferrofluid_oracle',
+  'golden_mend',
+  'gossamer',
+  'jovian_vortex',
+  'kairothic_frost',
+  'kintsugi_nebula',
+  'lichen_cathedral',
+  'mercury_sea',
+  'mercury_swell',
+  'mercury_tremor',
+  'midnight_velvet',
+  'moire_satin',
+  'moonstone_dune',
+  'murmuration_silk',
+  'mycelial_bloom',
+  'mycelial_lumen',
+  'oceanic_nacre',
+  'planck_boil',
+  'quicksilver',
+  'singing_sand',
+  'stained_afternoon',
+  'sumi_tide',
+  'tidal_glass',
+  'tourmaline_nebula',
+  'velvet_penumbra',
+  'vermillion_lacquer',
+  'vitrail',
 ])
 // Shared shader subgraphs are a DAG, not a tree. Visit each node only once.
 const collectNodes = (roots: Array<Node>) => {
@@ -32,7 +60,6 @@ const collectNodes = (roots: Array<Node>) => {
   }
   return nodes
 }
-
 describe('multi-model Knot challenge', () => {
   test('enumerates displayed Knots at initialization while keeping stable identities', () => {
     const displayedByCandidate = Map.groupBy(knots, item => item.candidate.id)

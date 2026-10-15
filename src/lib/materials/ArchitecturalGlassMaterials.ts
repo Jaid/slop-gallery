@@ -14,7 +14,6 @@ export type ArchitecturalGlassMaterials = {
 
 /** Edge length of the cast pavers in the lobby’s 8 m floor window. */
 const floorGlassTileSize = 1
-
 const createFastMaterials = (): ArchitecturalGlassMaterials => {
   const material = new MeshStandardNodeMaterial({
     color: '#afd0d4',

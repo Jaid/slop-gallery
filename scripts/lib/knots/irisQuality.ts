@@ -4,8 +4,10 @@ type TimestampEnvelope = {
   audio: string
   audio_timestamps?: {
     graph_chars: Array<string>
-    graph_times: Array<[number, number] | {end: number
-      start: number}>
+    graph_times: Array<[number, number] | {
+      end: number
+      start: number
+    }>
   }
   content_type: string
   duration: number

@@ -88,10 +88,6 @@ export const voiceAuditions = [
 
 export type VoiceAudition = typeof voiceAuditions[number]
 
-function auditionInput(character: string, text: string) {
-  return `Read aloud in this voice: ${character}\n\nSay exactly: ${text}`
-}
-
 export function auditionRequest(candidate: VoiceAudition, text: string) {
   const google = candidate.model.startsWith('google/')
   const request = {
@@ -120,4 +116,8 @@ export function auditionRequest(candidate: VoiceAudition, text: string) {
       },
     },
   }
+}
+
+function auditionInput(character: string, text: string) {
+  return `Read aloud in this voice: ${character}\n\nSay exactly: ${text}`
 }

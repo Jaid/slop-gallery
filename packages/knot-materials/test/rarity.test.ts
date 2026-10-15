@@ -161,7 +161,7 @@ describe('special rarity', () => {
     expect(shown('?rarity_filter=special&shots=1000')).toEqual(new Set(specialIds))
     expect(shown('?rarity_filter=5&shots=1000')).toEqual(new Set(specialIds))
     const mixed = shown('?rarity_filter=ethereal,special&shots=1000&candidate_limit=1000')
-    expect(knots.filter(item => (item.rarity === 4 || item.rarity === special)).every(item => mixed.has(item.id))).toBe(true)
+    expect(knots.filter(item => item.rarity === 4 || item.rarity === special).every(item => mixed.has(item.id))).toBe(true)
     expect([...mixed].every(id => [4, special].includes(knotsById.get(id)!.rarity))).toBe(true)
     const rareItem = knots.find(item => item.rarity === 2)!
     expect(shown(`?knot_id=knotty_prince,${rareItem.id}&rarity_filter=rare`)).toEqual(new Set([rareItem.id]))

@@ -238,9 +238,7 @@ $process.CommandLine
   })
   return stdout.trim()
 }
-export default async function recordBrowserTrace({port = 9222,
-  buffer = 4_000_000_000,
-  reload = false}: {
+export default async function recordBrowserTrace({port = 9222, buffer = 4_000_000_000, reload = false}: {
   buffer?: number
   port?: number
   reload?: boolean
@@ -314,8 +312,10 @@ export default async function recordBrowserTrace({port = 9222,
   socket.addEventListener('message', message => {
     try {
       const data = JSON.parse(String(message.data)) as {
-        error?: {code: number
-          message: string}
+        error?: {
+          code: number
+          message: string
+        }
         id?: number
         method?: string
         params?: {

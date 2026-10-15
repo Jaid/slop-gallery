@@ -27,7 +27,7 @@ export default async function auditionKnots({ids = [], output = resolve(import.m
         const result = await runner.run(candidate)
         console.log(`${candidate.title} → ${result.file}`)
       } catch (error) {
-        const message = `${candidate.id}: ${error instanceof Error ? error.message : String(error)}`
+        const message = `${candidate.id}: ${Error.isError(error) ? error.message : String(error)}`
         errors.push(message)
         console.error(message)
       }

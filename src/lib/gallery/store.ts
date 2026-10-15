@@ -50,18 +50,6 @@ type State = GallerySettings & GallerySnapshot & {
   update: (id: string, patch: Partial<Portrait>) => void
 }
 
-function cleanPortrait(p: Portrait): Portrait {
-  return {
-    ...p,
-    pending: false,
-    merging: false,
-    reserved: false,
-    velocity: undefined,
-    mergeJob: undefined,
-    flavorJob: undefined,
-  }
-}
-
 // Entering the menu or acquiring pointer lock is not an in-game control.
 export function markControlled() {
   const s = useGallery.getState()
@@ -76,6 +64,17 @@ export function markControlled() {
   }
 }
 
+function cleanPortrait(p: Portrait): Portrait {
+  return {
+    ...p,
+    pending: false,
+    merging: false,
+    reserved: false,
+    velocity: undefined,
+    mergeJob: undefined,
+    flavorJob: undefined,
+  }
+}
 function snapshot(state: GallerySnapshot): GallerySnapshot {
   return {
     portraits: state.portraits.map(cleanPortrait),

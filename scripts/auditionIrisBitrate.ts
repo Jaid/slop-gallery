@@ -10,9 +10,11 @@ export default async function auditionIrisBitrate() {
   const wave = await Bun.file(source).bytes()
   const probe = await Bun.$`ffprobe -v error -show_entries stream=codec_name,sample_rate,channels:format=duration -of json ${source}`.json() as {
     format: {duration: string}
-    streams: Array<{channels: number
+    streams: Array<{
+      channels: number
       codec_name: string
-      sample_rate: string}>
+      sample_rate: string
+    }>
   }
   const duration = Number(probe.format.duration)
   const stream = probe.streams[0]

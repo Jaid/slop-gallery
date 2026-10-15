@@ -161,14 +161,6 @@ export function setApiKey(key: string) {
   useGallery.setState({apiKey: key})
 }
 
-function changeHistory(redone = false) {
-  galleryEvents.dispatchEvent(new Event('cancel-interaction'))
-  galleryEvents.dispatchEvent(new Event('cancel-view'))
-  if (redone ? redo() : undo()) {
-    notify(redone ? 'Redone. A second thought about your second thought.' : 'Undone. Even happy accidents are reversible.')
-  }
-}
-
 export function handleGalleryKey(event: KeyboardEvent) {
   if (isTextInput(event.target) || event.defaultPrevented) {
     return
@@ -190,4 +182,12 @@ export function handleGalleryKey(event: KeyboardEvent) {
 export async function importDroppedFiles(files: Array<File>, x: number, y: number) {
   const s = useGallery.getState()
   return s.importFiles?.(files, s.panel ? undefined : s.importTarget?.(x, y))
+}
+
+function changeHistory(redone = false) {
+  galleryEvents.dispatchEvent(new Event('cancel-interaction'))
+  galleryEvents.dispatchEvent(new Event('cancel-view'))
+  if (redone ? redo() : undo()) {
+    notify(redone ? 'Redone. A second thought about your second thought.' : 'Undone. Even happy accidents are reversible.')
+  }
 }

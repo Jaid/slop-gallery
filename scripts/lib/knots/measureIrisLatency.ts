@@ -1,7 +1,9 @@
 export type IrisLatencyTurn = {
   doneMs: number
-  events: Array<{event: Event
-    ms: number}>
+  events: Array<{
+    event: Event
+    ms: number
+  }>
   firstAudioMs: number
   firstPlayableMs: number
   firstTimestampMs: number | null
@@ -137,7 +139,7 @@ export default async function measureIrisLatency(text: string, timestamps: boole
           }
         }
       } catch (error) {
-        finish(error instanceof Error ? error : new Error(String(error)))
+        finish(Error.isError(error) ? error : new Error(String(error)))
       }
     })
   })

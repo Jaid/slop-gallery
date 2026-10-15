@@ -77,10 +77,12 @@ export default class IrisQualityAudition extends ExternalGenerator {
         await Bun.write(responseFile, bytes)
       }
       const bytes = await Bun.file(responseFile).bytes()
-      const receipt = await fs.readJson(receiptFile) as {contentType: string | null
+      const receipt = await fs.readJson(receiptFile) as {
+        contentType: string | null
         generationId: string | null
         sha256: string
-        traceId: string | null}
+        traceId: string | null
+      }
       if (createHash('sha256').update(bytes).digest('hex') !== receipt.sha256) {
         throw new Error(`Cached response changed: ${cache}`)
       }
@@ -123,8 +125,10 @@ export default class IrisQualityAudition extends ExternalGenerator {
     await Bun.$`ffmpeg -nostdin -hide_banner -loglevel error -y -f concat -safe 0 -i ${concat} -map 0:a:0 -map_metadata -1 -c:a copy ${wave}`
     // Maximum mono Opus bitrate for review. Preserve the native PCM/WAV masters separately.
     await Bun.$`ffmpeg -nostdin -hide_banner -loglevel error -y -i ${wave} -map 0:a:0 -map_metadata -1 -c:a libopus -b:a 256000 -vbr on -compression_level 10 -application audio ${temporary}`
-    const probe = await Bun.$`ffprobe -v error -show_entries stream=codec_name:format=duration -of json ${temporary}`.json() as {format: {duration: string}
-      streams: Array<{codec_name: string}>}
+    const probe = await Bun.$`ffprobe -v error -show_entries stream=codec_name:format=duration -of json ${temporary}`.json() as {
+      format: {duration: string}
+      streams: Array<{codec_name: string}>
+    }
     if (probe.streams[0]?.codec_name !== 'opus' || Math.abs(Number(probe.format.duration) - (offset - 0.5)) > 0.02) {
       throw new Error('Review audio does not match its five sources.')
     }

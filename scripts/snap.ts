@@ -6,12 +6,11 @@ import {mkdir, readFile, rm, stat, writeFile} from 'node:fs/promises'
 import {join, relative, resolve, sep} from 'node:path'
 import {parseArgs} from 'node:util'
 
+import {lossyJxlOptions} from 'knot-materials/scripts/lib/encodeJxl.ts'
 import puppeteer from 'puppeteer-core'
 import {createServer} from 'vite'
 
 import {defaultLevel, levelIds} from '#src/data/levels.ts'
-
-import {lossyJxlOptions} from 'knot-materials/scripts/lib/encodeJxl.ts'
 
 const help = `Usage: bun scripts/snap.ts [options]
 
