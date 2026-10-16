@@ -55,6 +55,7 @@ describe('minimal menu', () => {
       isHeavy: true,
       onChange: () => {},
       children: createElement(Menu, {
+        available: true,
         params,
         setParams: () => {},
       }),
@@ -166,6 +167,7 @@ test.each(['first', 'reset', 'return', 'pause', 'unfocus'] as const)('renders th
       isHeavy: true,
       onChange: () => {},
       children: createElement(Menu, {
+        available: true,
         params,
         setParams: () => {},
       }),
@@ -236,6 +238,7 @@ test.each(['lobby', 'oculus'] as const)('pause heading identifies the %s room an
       isHeavy: true,
       onChange: () => {},
       children: createElement(Menu, {
+        available: true,
         params,
         setParams: () => {},
       }),

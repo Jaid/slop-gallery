@@ -70,7 +70,8 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     expect(welcomeSnapshot.hasControlled).toBe(false)
     expect(await page.$('[data-testid="menu-overlay"]')).not.toBeNull()
     expect(await page.$('[data-testid="menu-reset"]')).toBeNull()
-    expect(await page.$('section[data-testid="connection"] input[type="password"]')).not.toBeNull()
+    // `?ai=false` hides every AI option, including the OpenRouter key form.
+    expect(await page.$('[data-testid="connection"]')).toBeNull()
     await page.screenshot({path: 'private/agent/reports/production-welcome.png'})
     await page.click('[aria-label="Mute audio"]')
     await enter(page)
