@@ -14,7 +14,8 @@ beforeEach(() => {
   })
 })
 afterEach(() => world.free())
-function book() {
+/** a flat, three-part prop, so sweeps have to handle offset compound parts */
+function slab() {
   const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, 1.42, 1.6))
   for (const [width, height, depth, y] of [[0.64, 0.095, 0.86, 0], [0.69, 0.025, 0.91, -0.06], [0.69, 0.025, 0.91, 0.06]]) {
     world.createCollider(RAPIER.ColliderDesc.cuboid(width / 2, height / 2, depth / 2).setTranslation(0, y, 0).setEnabled(false), body)
@@ -25,8 +26,8 @@ function pedestal() {
   return world.createCollider(RAPIER.ColliderDesc.cuboid(0.58, 0.675, 0.58).setTranslation(0, 0.675, 1.6))
 }
 describe('carried prop clearance', () => {
-  test('pulls the whole book toward the hand instead of through its pedestal', () => {
-    const placement = book()
+  test('pulls the whole slab toward the hand instead of through its pedestal', () => {
+    const placement = slab()
     pedestal()
     world.step()
     const desired: [number, number, number] = [0, 1.2, 1.45]
@@ -38,7 +39,7 @@ describe('carried prop clearance', () => {
     expect(placement.hasRoom(position)).toBe(true)
   })
   test('uses rotated compound geometry, not a hardcoded bounding radius', () => {
-    const placement = book()
+    const placement = slab()
     placement.body.setRotation({
       x: 0,
       y: Math.SQRT1_2,
@@ -53,7 +54,7 @@ describe('carried prop clearance', () => {
     expect(placement.hasRoom(position)).toBe(true)
   })
   test('does not tunnel through a thin obstacle to a clear endpoint', () => {
-    const placement = book()
+    const placement = slab()
     world.createCollider(RAPIER.ColliderDesc.cuboid(2, 2, 0.02).setTranslation(0, 1, 0.9))
     world.step()
     expect(placement.hasRoom([0, 1.4, 1.6])).toBe(true)
@@ -62,7 +63,7 @@ describe('carried prop clearance', () => {
     expect(placement.hasRoom(position)).toBe(true)
   })
   test('ignores the player while holding but checks them before release', () => {
-    const placement = book()
+    const placement = slab()
     const player = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased())
     player.userData = {isPlayer: true}
     world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), player)
@@ -72,14 +73,14 @@ describe('carried prop clearance', () => {
     expect(placement.hasRoom([0, 1.4, 0], false)).toBe(true)
   })
   test('does not treat an unrelated kinematic body like the player', () => {
-    const placement = book()
+    const placement = slab()
     const door = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0, 1.8, 1.3))
     world.createCollider(RAPIER.ColliderDesc.cuboid(1.3, 1.8, 0.14), door)
     world.step()
     expect(placement.constrain([0, 1.4, 0], [0, 1.4, 1.45])![2]).toBeLessThan(0.71)
   })
   test('ignores disabled colliders and sensors but respects dynamic props', () => {
-    const placement = book()
+    const placement = slab()
     pedestal().setSensor(true)
     pedestal().setEnabled(false)
     world.step()
@@ -89,8 +90,8 @@ describe('carried prop clearance', () => {
     world.step()
     expect(placement.constrain([0, 1.4, 0], [0, 1.2, 1.45])![2]).toBeLessThan(0.7)
   })
-  test('keeps the book above the floor when looking down', () => {
-    const placement = book()
+  test('keeps the slab above the floor when looking down', () => {
+    const placement = slab()
     world.createCollider(RAPIER.ColliderDesc.cuboid(10, 0.15, 10).setTranslation(0, -0.15, 0))
     world.step()
     const position = placement.constrain([0, 1.4, 0], [0, -0.1, 0])!
@@ -98,14 +99,14 @@ describe('carried prop clearance', () => {
     expect(placement.hasRoom(position)).toBe(true)
   })
   test('does not return an intersecting pose when there is no room', () => {
-    const placement = book()
+    const placement = slab()
     world.createCollider(RAPIER.ColliderDesc.cuboid(2, 2, 2))
     world.step()
     expect(placement.constrain([0, 1.4, 0], [0, 1.2, 1.45])).toBeNull()
     expect(placement.constrain([0, 1.4, 0], [0, 1.4, 0])).toBeNull()
   })
   test('leaves an unobstructed pose unchanged, including a zero-length move', () => {
-    const placement = book()
+    const placement = slab()
     world.step()
     expect(placement.constrain([0, 1.4, 0], [0, 1.4, 1.45])).toEqual([0, 1.4, 1.45])
     expect(placement.constrain([0, 1.4, 0], [0, 1.4, 0])).toEqual([0, 1.4, 0])
@@ -120,7 +121,7 @@ function setPosition(placement: PropPlacement, position: [number, number, number
 }
 describe('carried prop flight', () => {
   test('eases toward a newly unblocked hand without overshooting or snapping', () => {
-    const placement = book()
+    const placement = slab()
     setPosition(placement, [0, 1.4, 0])
     world.step()
     let previous = 0
@@ -135,7 +136,7 @@ describe('carried prop flight', () => {
     expect(previous).toBeGreaterThan(0.49999)
   })
   test('settles at the same rate at 30, 60, 144 and 240 fps', () => {
-    const placement = book()
+    const placement = slab()
     for (const fps of [30, 60, 144, 240]) {
       setPosition(placement, [0, 1.4, 0])
       for (let i = 0; i < fps / 6; i++) {
@@ -145,7 +146,7 @@ describe('carried prop flight', () => {
     }
   })
   test('bounds far-away pickups and resumed frames instead of teleporting', () => {
-    const placement = book()
+    const placement = slab()
     setPosition(placement, [0, 1.4, 0])
     expect(placement.follow([0, 1.4, 9], 1 / 60)![2]).toBeCloseTo(20 / 60)
     expect(placement.follow([0, 1.4, 9], 5)![2]).toBeCloseTo(1)
@@ -154,7 +155,7 @@ describe('carried prop flight', () => {
     }
   })
   test('flies off the resting pedestal, then smoothly follows the retreating hand', () => {
-    const placement = book()
+    const placement = slab()
     pedestal()
     world.step()
     let previous = [0, 1.42, 1.6]
@@ -181,7 +182,7 @@ describe('carried prop flight', () => {
     expect(previous[2]).toBeCloseTo(0.45, 3)
   })
   test('checks the flight path as well as the destination', () => {
-    const placement = book()
+    const placement = slab()
     setPosition(placement, [0, 1.4, 0])
     world.createCollider(RAPIER.ColliderDesc.cuboid(2, 2, 0.02).setTranslation(0, 1, 0.9))
     world.step()
@@ -194,7 +195,7 @@ describe('carried prop flight', () => {
     }
   })
   test('slides along a rotated obstacle without penetrating it', () => {
-    const placement = book()
+    const placement = slab()
     setPosition(placement, [0, 1.4, 0])
     world.createCollider(RAPIER.ColliderDesc.cuboid(3, 2, 0.02).setTranslation(0, 1, 1.2).setRotation({
       x: 0,
@@ -212,7 +213,7 @@ describe('carried prop flight', () => {
     expect(Math.abs(placement.body.translation().x)).toBeGreaterThan(0.3)
   })
   test('smooths movement without disabling collision checks', () => {
-    const placement = book()
+    const placement = slab()
     setPosition(placement, [0, 1.4, 0])
     const next = placement.follow([0, 1.4, 1.6], 1 / 60)!
     expect(next[2]).toBeGreaterThan(0)
