@@ -17,6 +17,18 @@ export type ClearGlassOptions = {
 }
 
 /**
+ * Share of the backdrop that survives the Fresnel reflections at the front and the back face of a pane, including the inner bounces between them.
+ * Follows the material’s own normal, so a perturbed `normalNode` also perturbs the transmission.
+ */
+export function paneFresnelTransmittance(ior: number) {
+  const reflectance = ((ior - 1) / (ior + 1)) ** 2
+  const cosine = normalView.dot(positionViewDirection).abs().clamp(0, 1)
+  const surface = float(reflectance).add(float(1 - reflectance).mul(float(1).sub(cosine).pow(5)))
+  const bothFaces = surface.mul(2).div(surface.add(1))
+  return float(1).sub(bothFaces)
+}
+
+/**
  * Thin, flat window glass that keeps the view behind it pixel-sharp.
  *
  * Physical transmission resamples the backdrop through a smoothing bicubic filter, which visibly softens anything seen through a pane.
@@ -49,11 +61,6 @@ export default class ClearGlassMaterial extends MeshPhysicalNodeMaterial {
       blendDstAlpha: OneMinusSrcAlphaFactor,
     })
     this.name = name
-    const reflectance = ((ior - 1) / (ior + 1)) ** 2
-    const cosine = normalView.dot(positionViewDirection).abs().clamp(0, 1)
-    const surface = float(reflectance).add(float(1 - reflectance).mul(float(1).sub(cosine).pow(5)))
-    // Light reflects once at the front and once at the back face, including the inner bounces between them.
-    const bothFaces = surface.mul(2).div(surface.add(1))
-    this.opacityNode = float(1).sub(float(1 - absorption).mul(float(1).sub(bothFaces)))
+    this.opacityNode = float(1).sub(float(1 - absorption).mul(paneFresnelTransmittance(ior)))
   }
 }
