@@ -2,6 +2,7 @@ import type {Wall} from '#src/lib/gallery.ts'
 
 import {useThree} from '@react-three/fiber'
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
+import Branch from 'branch-component'
 import renderCanvasTexture from 'canvas-textures/three'
 import useDisposable from 'disposable-lifetime/react'
 import {useEffect, useMemo} from 'react'
@@ -12,6 +13,7 @@ import DineLights from '#component/levels/gallery/DineLights'
 import Fountain from '#component/levels/gallery/Fountain'
 import FountainBenches from '#component/levels/gallery/FountainBenches'
 import GalleryStairs from '#component/levels/gallery/GalleryStairs'
+import LobbyCeiling from '#component/levels/gallery/LobbyCeiling'
 import LodgeCorridorRoute from '#component/levels/gallery/LodgeCorridorRoute'
 import LodgeRoom from '#component/levels/gallery/LodgeRoom'
 import LodgeWindow from '#component/levels/gallery/LodgeWindow'
@@ -35,10 +37,11 @@ import VesperWallMaterial from '#src/lib/materials/VesperWallMaterial.ts'
 
 const pointLightPositions: Partial<Record<Wall['room'], Array<number>>> = {
   antechamber: [0],
-  lobby: [-16, -8, 0, 8.5, 15.5],
 }
 // These rooms are lit by breakable LED panes with their own dimming lights instead of the fixed light boxes.
 const ledRooms = new Set<Wall['room']>(['dine'])
+// The Lobby keeps the shared slab but builds its own coffered laylight ceiling and the lamps under it.
+const cofferedRooms = new Set<Wall['room']>(['lobby'])
 // These upper rooms build their own floor, ceiling and lights.
 const customRooms = new Set<Wall['room']>(['salon', 'sienna'])
 const vesper = rooms.find(room => room.id === 'vesper')!
@@ -108,7 +111,8 @@ export default function Architecture() {
         <mesh position={[0, 5.54, z]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[room.size[0] * 0.48 - 0.1, 2.45]} /><meshBasicNodeMaterial color='#fff3d8' /></mesh>
         {[-1, 0, 1].map(x => <Box key={x} color='#c0b7a1' position={[x * room.size[0] * 0.12, 5.5, z]} size={[0.045, 0.12, 2.5]} />)}
       </group>)}
-      {(ledRooms.has(room.id) ? [] : pointLightPositions[room.id] ?? [-3.5, 3.5]).map(z => <pointLight key={z} castShadow={room.id === 'lobby' && z === -8} color='#fff1d8' decay={2} distance={room.id === 'lobby' && z === -8 ? 22 : 14} intensity={room.id === 'vesper' ? 40 : 32} position={[0, 4.9, z]} shadow-mapSize={[1024, 1024]} shadow-normalBias={0.03} />)}
+      <Branch if={cofferedRooms.has(room.id)} then={LobbyCeiling} />
+      {(ledRooms.has(room.id) || cofferedRooms.has(room.id) ? [] : pointLightPositions[room.id] ?? [-3.5, 3.5]).map(z => <pointLight key={z} color='#fff1d8' decay={2} distance={14} intensity={room.id === 'vesper' ? 40 : 32} position={[0, 4.9, z]} />)}
     </group>)}
     <DineLights />
     <PottedPlants />
@@ -130,9 +134,9 @@ export default function Architecture() {
 function isLodgeRoomWall(wall: Wall) {
   return wall.room === 'lodge' && !wall.id.startsWith('lodge-tunnel-')
 }
-/** Z offsets of the recessed light boxes: one every 4 m along the room’s depth, none where LED panes take over. */
+/** Z offsets of the recessed light boxes: one every 4 m along the room’s depth, none where LED panes or laylights take over. */
 function lightBoxOffsets(room: typeof rooms[number]) {
-  if (ledRooms.has(room.id)) {
+  if (ledRooms.has(room.id) || cofferedRooms.has(room.id)) {
     return []
   }
   if (room.id === 'antechamber') {
