@@ -26,7 +26,7 @@ type BodyPose = {
   type: ReturnType<RigidBody['bodyType']>
 }
 
-// Shared by sculptures, the book and detachable foliage. A canceled pluck restores
+// Shared by sculptures, the apple and detachable foliage. A canceled pluck restores
 // the original fixed attachment; a canceled re-grab restores a loose dynamic leaf.
 export default class GrabbableBody {
   readonly placement: PropPlacement
