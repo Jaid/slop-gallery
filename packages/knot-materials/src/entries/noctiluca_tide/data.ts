@@ -5,6 +5,7 @@ export default {
   id: 'noctiluca_tide',
   candidateId: 'claude_haiku',
   title: 'Noctiluca Tide',
+  createdAt: 1791758567,
   harness: 'Mage',
   author: {
     model: {

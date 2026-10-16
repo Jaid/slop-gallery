@@ -4,6 +4,7 @@ export default {
   id: 'noctiluca_bloom',
   candidateId: 'grok',
   title: 'Noctiluca Bloom',
+  createdAt: 1790125939,
   author: {
     model: {
       title: 'Grok 4.6',

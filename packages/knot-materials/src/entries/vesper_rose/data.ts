@@ -4,6 +4,7 @@ export default {
   id: 'vesper_rose',
   candidateId: 'mimo',
   title: 'Vesper Rose',
+  createdAt: 1790119994,
   harness: 'Mage',
   author: {
     model: {

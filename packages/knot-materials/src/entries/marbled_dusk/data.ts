@@ -5,6 +5,7 @@ export default {
   id: 'marbled_dusk',
   candidateId: 'claude_sonnet',
   title: 'Marbled Dusk',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

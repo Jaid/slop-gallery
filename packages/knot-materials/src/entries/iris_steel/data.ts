@@ -4,6 +4,7 @@ export default {
   id: 'iris_steel',
   candidateId: 'grok',
   title: 'Iris Steel',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'Grok 4.6',

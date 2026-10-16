@@ -5,6 +5,7 @@ export default {
   id: 'amethyst_choir',
   candidateId: 'muse_wonder',
   title: 'Amethyst Choir',
+  createdAt: 1791848243,
   harness: 'Mage',
   author: {
     model: {

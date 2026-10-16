@@ -5,6 +5,7 @@ export default {
   id: 'pelagic_opal',
   candidateId: 'gpt_sol',
   title: 'Pelagic Opal',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

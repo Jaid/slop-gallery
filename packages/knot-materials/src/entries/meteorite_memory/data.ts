@@ -4,6 +4,7 @@ export default {
   id: 'meteorite_memory',
   candidateId: 'gpt_astra',
   title: 'Meteorite Memory',
+  createdAt: 1789075137,
   harness: 'Codex',
   author: {
     model: {

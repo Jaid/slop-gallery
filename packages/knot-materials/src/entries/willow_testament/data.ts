@@ -4,6 +4,7 @@ export default {
   id: 'willow_testament',
   candidateId: 'gpt_astra',
   title: 'Willow Testament',
+  createdAt: 1789979276,
   harness: 'Mage',
   author: {
     model: {

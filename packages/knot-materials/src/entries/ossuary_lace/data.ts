@@ -5,6 +5,7 @@ export default {
   id: 'ossuary_lace',
   candidateId: 'gpt_sol',
   title: 'Ossuary Lace',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

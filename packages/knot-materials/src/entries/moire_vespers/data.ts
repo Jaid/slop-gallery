@@ -5,6 +5,7 @@ export default {
   id: 'moire_vespers',
   candidateId: 'space_bunny',
   title: 'Moiré Vespers',
+  createdAt: 1790458629,
   harness: 'Mage',
   author: {
     model: {

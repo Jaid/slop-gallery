@@ -4,6 +4,7 @@ export default {
   id: 'aurora_choir',
   candidateId: 'gpt_sol',
   title: 'Aurora Choir',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'GPT-5.6 Sol',

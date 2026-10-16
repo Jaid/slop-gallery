@@ -4,6 +4,7 @@ export default {
   id: 'murmuration_silk',
   candidateId: 'gpt_luna',
   title: 'Murmuration Silk',
+  createdAt: 1789979276,
   harness: 'Mage',
   author: {
     model: {

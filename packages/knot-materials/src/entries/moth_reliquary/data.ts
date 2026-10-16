@@ -4,6 +4,7 @@ export default {
   id: 'moth_reliquary',
   candidateId: 'grok',
   title: 'Moth Reliquary',
+  createdAt: 1790119994,
   harness: 'Mage',
   author: {
     model: {

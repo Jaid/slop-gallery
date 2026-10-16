@@ -5,6 +5,7 @@ export default {
   id: 'lunar_kintsugi',
   candidateId: 'muse_wonder',
   title: 'Lunar Kintsugi',
+  createdAt: 1791858712,
   harness: 'Mage',
   author: {
     model: {

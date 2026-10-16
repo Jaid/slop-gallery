@@ -5,6 +5,7 @@ export default {
   id: 'glacier_hush',
   candidateId: 'space_bunny',
   title: 'Glacier Hush',
+  createdAt: 1790868534,
   harness: 'Mage',
   author: {
     model: {

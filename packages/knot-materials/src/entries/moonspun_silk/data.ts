@@ -4,6 +4,7 @@ export default {
   id: 'moonspun_silk',
   candidateId: 'mimo',
   title: 'Moonspun Silk',
+  createdAt: 1790126896,
   harness: 'Mage',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'celadon_kintsugi',
   candidateId: 'deepseek',
   title: 'Celadon Kintsugi',
+  createdAt: 1789949253,
   harness: 'Mage',
   author: {
     model: {

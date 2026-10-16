@@ -4,6 +4,7 @@ export default {
   id: 'astral_loom',
   candidateId: 'gemini_flash',
   title: 'Astral Loom',
+  createdAt: 1789075137,
   harness: 'none',
   author: {
     model: {

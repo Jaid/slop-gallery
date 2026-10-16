@@ -5,6 +5,7 @@ export default {
   id: 'tourmaline_nebula',
   candidateId: 'space_bunny',
   title: 'Tourmaline Nebula',
+  createdAt: 1790327078,
   harness: 'Mage',
   author: {
     model: {

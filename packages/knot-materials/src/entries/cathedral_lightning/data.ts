@@ -4,6 +4,7 @@ export default {
   id: 'cathedral_lightning',
   candidateId: 'muse_spark',
   title: 'Cathedral Lightning',
+  createdAt: 1789231507,
   harness: 'meta.ai',
   author: {
     model: {

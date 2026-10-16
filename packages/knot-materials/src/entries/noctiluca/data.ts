@@ -4,6 +4,7 @@ export default {
   id: 'noctiluca',
   candidateId: 'deepseek',
   title: 'Noctiluca',
+  createdAt: 1789075137,
   harness: 'Mage',
   author: {
     model: {

@@ -5,6 +5,7 @@ export default {
   id: 'caustic_undertow',
   candidateId: 'claude_haiku',
   title: 'Caustic Undertow',
+  createdAt: 1791758567,
   harness: 'Mage',
   author: {
     model: {

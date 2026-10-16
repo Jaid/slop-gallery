@@ -5,6 +5,7 @@ export default {
   id: 'seraph_wings',
   candidateId: 'gemini_argon',
   title: 'Seraph Wings',
+  createdAt: 1792035158,
   harness: 'Mage',
   author: {
     model: {

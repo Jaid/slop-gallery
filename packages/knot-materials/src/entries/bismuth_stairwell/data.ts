@@ -5,6 +5,7 @@ export default {
   id: 'bismuth_stairwell',
   candidateId: 'claude_sonnet',
   title: 'Bismuth Stairwell',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

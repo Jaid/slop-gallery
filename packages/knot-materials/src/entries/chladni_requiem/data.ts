@@ -5,6 +5,7 @@ export default {
   id: 'chladni_requiem',
   candidateId: 'space_bunny',
   title: 'Chladni Requiem',
+  createdAt: 1790458629,
   harness: 'Mage',
   author: {
     model: {

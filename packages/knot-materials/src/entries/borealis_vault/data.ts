@@ -5,6 +5,7 @@ export default {
   id: 'borealis_vault',
   candidateId: 'claude_opus',
   title: 'Borealis Vault',
+  createdAt: 1792085143,
   harness: 'Mage',
   author: {model: {
     title: 'Claude Opus 5.5',

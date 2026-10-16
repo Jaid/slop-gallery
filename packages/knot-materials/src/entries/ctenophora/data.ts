@@ -5,6 +5,7 @@ export default {
   id: 'ctenophora',
   candidateId: 'claude_opus',
   title: 'Ctenophora',
+  createdAt: 1792085143,
   harness: 'Mage',
   author: {model: {
     title: 'Claude Opus 5.5',

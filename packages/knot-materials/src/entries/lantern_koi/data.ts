@@ -5,6 +5,7 @@ export default {
   id: 'lantern_koi',
   candidateId: 'claude_opus',
   title: 'Lantern Koi',
+  createdAt: 1792085143,
   harness: 'Mage',
   author: {model: {
     title: 'Claude Opus 5.5',

@@ -4,6 +4,7 @@ export default {
   id: 'abyssal_lumen',
   candidateId: 'deepseek',
   title: 'Abyssal Lumen',
+  createdAt: 1789094423,
   harness: 'Mage',
   author: {
     model: {

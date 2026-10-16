@@ -4,6 +4,7 @@ export default {
   id: 'gilded_fracture',
   candidateId: 'deepseek',
   title: 'Gilded Fracture',
+  createdAt: 1790125939,
   harness: 'Mage',
   author: {
     model: {

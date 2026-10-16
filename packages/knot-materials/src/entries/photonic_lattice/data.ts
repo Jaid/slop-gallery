@@ -4,6 +4,7 @@ export default {
   id: 'photonic_lattice',
   candidateId: 'gemini_flash',
   title: 'Photonic Lattice',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

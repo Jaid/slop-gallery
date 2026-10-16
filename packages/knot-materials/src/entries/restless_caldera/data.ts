@@ -5,6 +5,7 @@ export default {
   id: 'restless_caldera',
   candidateId: 'space_bunny',
   title: 'Restless Caldera',
+  createdAt: 1791064898,
   harness: 'Mage',
   author: {
     model: {

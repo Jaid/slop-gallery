@@ -4,6 +4,7 @@ export default {
   id: 'coralline_crown',
   candidateId: 'gpt_astra',
   title: 'Coralline Crown',
+  createdAt: 1789075137,
   harness: 'Codex',
   author: {
     model: {

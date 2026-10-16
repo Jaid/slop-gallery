@@ -4,6 +4,7 @@ export default {
   id: 'threshold_mirror',
   candidateId: 'claude_fable',
   title: 'Threshold Mirror',
+  createdAt: 1789239146,
   harness: 'none',
   author: {
     model: {

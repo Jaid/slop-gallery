@@ -4,6 +4,7 @@ export default {
   id: 'morpho_chrysalis',
   candidateId: 'deepseek',
   title: 'Morpho Chrysalis',
+  createdAt: 1790125939,
   harness: 'Mage',
   author: {
     model: {

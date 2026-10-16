@@ -4,6 +4,7 @@ export default {
   id: 'nacre_tide',
   candidateId: 'grok',
   title: 'Nacre Tide',
+  createdAt: 1790119994,
   harness: 'Mage',
   author: {
     model: {

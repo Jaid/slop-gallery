@@ -5,6 +5,7 @@ export default {
   id: 'halcyon_bubble',
   candidateId: 'claude_sonnet',
   title: 'Halcyon Bubble',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

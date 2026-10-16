@@ -4,6 +4,7 @@ export default {
   id: 'chrono_sand',
   candidateId: 'qwen_max',
   title: 'Chrono Amber',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'Qwen 3.8 Max',

@@ -5,6 +5,7 @@ export default {
   id: 'kintsugi_nebula',
   candidateId: 'space_bunny',
   title: 'Kintsugi Nebula',
+  createdAt: 1790327078,
   harness: 'Mage',
   author: {
     model: {

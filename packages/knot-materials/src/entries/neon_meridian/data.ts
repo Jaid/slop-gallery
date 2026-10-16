@@ -4,6 +4,7 @@ export default {
   id: 'neon_meridian',
   candidateId: 'glm',
   title: 'Neon Meridian',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

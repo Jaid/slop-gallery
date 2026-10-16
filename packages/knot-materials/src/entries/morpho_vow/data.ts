@@ -5,6 +5,7 @@ export default {
   id: 'morpho_vow',
   candidateId: 'muse_wonder',
   title: 'Morpho Vow',
+  createdAt: 1791886417,
   harness: 'Mage',
   author: {
     model: {

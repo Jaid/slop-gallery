@@ -5,6 +5,7 @@ export default {
   id: 'chroma_cipher',
   candidateId: 'gpt_sol',
   title: 'Chroma Cipher',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

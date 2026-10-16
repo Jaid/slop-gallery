@@ -5,6 +5,7 @@ export default {
   id: 'kintsugi_embers',
   candidateId: 'space_bunny',
   title: 'Kintsugi Embers',
+  createdAt: 1790868534,
   harness: 'Mage',
   author: {
     model: {

@@ -5,6 +5,7 @@ export default {
   id: 'glasswing_atlas',
   candidateId: 'space_bunny',
   title: 'Glasswing Atlas',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

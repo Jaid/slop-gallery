@@ -4,6 +4,7 @@ export default {
   id: 'eclipse_marrow',
   candidateId: 'grok',
   title: 'Eclipse Marrow',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'Grok 4.6',

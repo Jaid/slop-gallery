@@ -4,6 +4,7 @@ export default {
   id: 'bragg_opal',
   candidateId: 'gemini_flash',
   title: 'Bragg Opal',
+  createdAt: 1789983011,
   harness: 'Mage',
   author: {
     model: {

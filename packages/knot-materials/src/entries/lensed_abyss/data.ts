@@ -4,6 +4,7 @@ export default {
   id: 'lensed_abyss',
   candidateId: 'deepseek',
   title: 'Lensed Abyss',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

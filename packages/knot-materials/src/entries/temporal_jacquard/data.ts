@@ -4,6 +4,7 @@ export default {
   id: 'temporal_jacquard',
   candidateId: 'gemini_flash',
   title: 'Temporal Jacquard',
+  createdAt: 1789290805,
   harness: 'none',
   author: {
     model: {

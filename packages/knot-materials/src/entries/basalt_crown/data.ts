@@ -5,6 +5,7 @@ export default {
   id: 'basalt_crown',
   candidateId: 'space_bunny',
   title: 'Basalt Crown',
+  createdAt: 1790868534,
   harness: 'Mage',
   author: {
     model: {

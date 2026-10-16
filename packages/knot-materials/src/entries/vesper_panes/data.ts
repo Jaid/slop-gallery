@@ -5,6 +5,7 @@ export default {
   id: 'vesper_panes',
   candidateId: 'claude_sonnet',
   title: 'Vesper Panes',
+  createdAt: 1791064898,
   harness: 'Mage',
   author: {
     model: {

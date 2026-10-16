@@ -4,6 +4,7 @@ export default {
   id: 'meissner_core',
   candidateId: 'kimi',
   title: 'Meissner Core',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'Kimi K3',

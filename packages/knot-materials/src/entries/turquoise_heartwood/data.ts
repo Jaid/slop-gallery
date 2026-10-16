@@ -4,6 +4,7 @@ export default {
   id: 'turquoise_heartwood',
   candidateId: 'gpt_astra',
   title: 'Turquoise Heartwood',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'graphene_weave',
   candidateId: 'claude_sonnet',
   title: 'Graphene Weave',
+  createdAt: 1789575270,
   harness: 'none',
   author: {
     model: {

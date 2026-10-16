@@ -4,6 +4,7 @@ export default {
   id: 'molten_core',
   candidateId: 'claude_sonnet',
   title: 'Molten Core',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'Claude Sonnet 5',

@@ -4,6 +4,7 @@ export default {
   id: 'solenoid',
   candidateId: 'deepseek',
   title: 'Solenoid',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

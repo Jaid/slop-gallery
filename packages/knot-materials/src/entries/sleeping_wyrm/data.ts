@@ -5,6 +5,7 @@ export default {
   id: 'sleeping_wyrm',
   candidateId: 'claude_opus',
   title: 'Sleeping Wyrm',
+  createdAt: 1790461810,
   harness: 'Mage',
   author: {
     model: {

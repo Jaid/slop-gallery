@@ -5,6 +5,7 @@ export default {
   id: 'mercury_rain',
   candidateId: 'claude_sonnet',
   title: 'Mercury Rain',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

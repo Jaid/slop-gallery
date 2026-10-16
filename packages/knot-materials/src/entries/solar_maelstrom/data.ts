@@ -5,6 +5,7 @@ export default {
   id: 'solar_maelstrom',
   candidateId: 'muse_wonder',
   title: 'Solar Maelstrom',
+  createdAt: 1791858712,
   harness: 'Mage',
   author: {
     model: {

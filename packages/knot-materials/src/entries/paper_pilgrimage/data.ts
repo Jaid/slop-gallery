@@ -4,6 +4,7 @@ export default {
   id: 'paper_pilgrimage',
   candidateId: 'gpt_astra',
   title: 'Paper Pilgrimage',
+  createdAt: 1789979276,
   harness: 'Mage',
   author: {
     model: {

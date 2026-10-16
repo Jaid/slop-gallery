@@ -4,6 +4,7 @@ export default {
   id: 'vitrail',
   candidateId: 'mimo',
   title: 'Vitrail',
+  createdAt: 1790036112,
   harness: 'Mage',
   author: {
     model: {

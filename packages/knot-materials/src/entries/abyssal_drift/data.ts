@@ -4,6 +4,7 @@ export default {
   id: 'abyssal_drift',
   candidateId: 'kimi',
   title: 'Abyssal Drift',
+  createdAt: 1789231507,
   harness: 'kimi.ai',
   author: {
     model: {

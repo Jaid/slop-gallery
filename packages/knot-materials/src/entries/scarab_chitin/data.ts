@@ -4,6 +4,7 @@ export default {
   id: 'scarab_chitin',
   candidateId: 'gemini_flash',
   title: 'Scarab Chitin',
+  createdAt: 1789983011,
   harness: 'Mage',
   author: {
     model: {

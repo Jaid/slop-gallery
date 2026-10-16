@@ -5,6 +5,7 @@ export default {
   id: 'constellation_cattery',
   candidateId: 'grok',
   title: 'Constellation Cattery',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

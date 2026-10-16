@@ -4,6 +4,7 @@ export default {
   id: 'porifera',
   candidateId: 'gpt_astra',
   title: 'Porifera',
+  createdAt: 1790122624,
   harness: 'Mage',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'river_of_gold',
   candidateId: 'mimo',
   title: 'River of Gold',
+  createdAt: 1792098068,
   harness: 'Mage',
   author: {
     model: {

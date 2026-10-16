@@ -4,6 +4,7 @@ export default {
   id: 'mercury_swell',
   candidateId: 'deepseek',
   title: 'Mercury Swell',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

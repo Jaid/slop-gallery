@@ -4,6 +4,7 @@ export default {
   id: 'play_of_color',
   candidateId: 'deepseek',
   title: 'Play of Color',
+  createdAt: 1789949253,
   harness: 'Mage',
   author: {
     model: {

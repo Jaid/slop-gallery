@@ -5,6 +5,7 @@ export default {
   id: 'passing_cloud',
   candidateId: 'claude_opus',
   title: 'Passing Cloud',
+  createdAt: 1791585164,
   harness: 'Mage',
   author: {
     model: {

@@ -5,6 +5,7 @@ export default {
   id: 'quicksilver_tide',
   candidateId: 'claude_sonnet',
   title: 'Quicksilver Tide',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

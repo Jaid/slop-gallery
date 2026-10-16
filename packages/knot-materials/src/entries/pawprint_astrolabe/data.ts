@@ -5,6 +5,7 @@ export default {
   id: 'pawprint_astrolabe',
   candidateId: 'space_bunny',
   title: 'Pawprint Astrolabe',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

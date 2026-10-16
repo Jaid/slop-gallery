@@ -4,6 +4,7 @@ export default {
   id: 'cherenkov_core',
   candidateId: 'gemini_flash',
   title: 'Cherenkov Core',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

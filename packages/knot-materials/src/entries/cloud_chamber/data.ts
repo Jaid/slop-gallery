@@ -5,6 +5,7 @@ export default {
   id: 'cloud_chamber',
   candidateId: 'claude_opus',
   title: 'Cloud Chamber',
+  createdAt: 1792085143,
   harness: 'Mage',
   author: {model: {
     title: 'Claude Opus 5.5',

@@ -4,6 +4,7 @@ export default {
   id: 'shatterlight',
   candidateId: 'deepseek',
   title: 'Shatterlight',
+  createdAt: 1790125939,
   harness: 'Mage',
   author: {
     model: {

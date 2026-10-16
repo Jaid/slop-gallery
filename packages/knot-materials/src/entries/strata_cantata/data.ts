@@ -5,6 +5,7 @@ export default {
   id: 'strata_cantata',
   candidateId: 'gpt_sol',
   title: 'Strata Cantata',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'nocturne_moth',
   candidateId: 'gpt_astra',
   title: 'Nocturne Moth',
+  createdAt: 1789075137,
   harness: 'Codex',
   author: {
     model: {

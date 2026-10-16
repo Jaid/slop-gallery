@@ -5,6 +5,7 @@ export default {
   id: 'pocket_nebula',
   candidateId: 'claude_fable',
   title: 'Pocket Nebula',
+  createdAt: 1790695541,
   harness: 'Mage',
   author: {
     model: {

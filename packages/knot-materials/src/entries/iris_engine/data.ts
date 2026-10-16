@@ -5,6 +5,7 @@ export default {
   id: 'iris_engine',
   candidateId: 'gpt_sol',
   title: 'Iris Engine',
+  createdAt: 1791064898,
   harness: 'Mage',
   author: {
     model: {

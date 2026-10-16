@@ -4,6 +4,7 @@ export default {
   id: 'mercury_tide',
   candidateId: 'claude_sonnet',
   title: 'Mercury Tide',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'Claude Sonnet 5',

@@ -4,6 +4,7 @@ export default {
   id: 'tungsten_afterglow',
   candidateId: 'grok',
   title: 'Tungsten Afterglow',
+  createdAt: 1789231507,
   harness: 'grok.com Build',
   author: {
     model: {

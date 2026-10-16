@@ -4,6 +4,7 @@ export default {
   id: 'pavonine_vow',
   candidateId: 'gpt_astra',
   title: 'Pavonine Vow',
+  createdAt: 1790119994,
   harness: 'Mage',
   author: {
     model: {

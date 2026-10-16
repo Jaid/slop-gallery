@@ -4,6 +4,7 @@ export default {
   id: 'star_atlas',
   candidateId: 'kimi',
   title: 'Star Atlas',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'Kimi K3',

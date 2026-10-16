@@ -4,6 +4,7 @@ export default {
   id: 'eidolon_silk',
   candidateId: 'deepseek',
   title: 'Eidolon Silk',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

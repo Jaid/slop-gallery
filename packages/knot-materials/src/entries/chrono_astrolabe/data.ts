@@ -5,6 +5,7 @@ export default {
   id: 'chrono_astrolabe',
   candidateId: 'gemini_flash',
   title: 'Chrono Astrolabe',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

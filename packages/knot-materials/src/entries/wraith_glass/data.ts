@@ -4,6 +4,7 @@ export default {
   id: 'wraith_glass',
   candidateId: 'claude_sonnet',
   title: 'Wraith Glass',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'Claude Sonnet 5',

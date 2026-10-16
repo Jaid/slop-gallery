@@ -4,6 +4,7 @@ export default {
   id: 'frost_crypt',
   candidateId: 'hy',
   title: 'Frost Crypt',
+  createdAt: 1789575270,
   harness: 'none',
   author: {
     model: {

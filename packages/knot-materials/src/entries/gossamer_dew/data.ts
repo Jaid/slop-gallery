@@ -4,6 +4,7 @@ export default {
   id: 'gossamer_dew',
   candidateId: 'grok',
   title: 'Gossamer Dew',
+  createdAt: 1789231507,
   harness: 'grok.com',
   author: {
     model: {

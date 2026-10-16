@@ -5,6 +5,7 @@ export default {
   id: 'frozen_orbit',
   candidateId: 'space_bunny',
   title: 'Frozen Orbit',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

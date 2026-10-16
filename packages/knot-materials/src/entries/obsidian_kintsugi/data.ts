@@ -4,6 +4,7 @@ export default {
   id: 'obsidian_kintsugi',
   candidateId: 'gemini_flash',
   title: 'Obsidian Kintsugi',
+  createdAt: 1789983011,
   harness: 'Mage',
   author: {
     model: {

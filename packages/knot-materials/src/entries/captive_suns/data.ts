@@ -5,6 +5,7 @@ export default {
   id: 'captive_suns',
   candidateId: 'gpt_sol',
   title: 'Captive Suns',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

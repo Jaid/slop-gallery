@@ -4,6 +4,7 @@ export default {
   id: 'malachite',
   candidateId: 'gpt_astra',
   title: 'Emerald Heart',
+  createdAt: 1789075137,
   harness: 'Codex',
   author: {
     model: {

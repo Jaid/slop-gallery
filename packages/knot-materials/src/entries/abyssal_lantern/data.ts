@@ -5,6 +5,7 @@ export default {
   id: 'abyssal_lantern',
   candidateId: 'muse_wonder',
   title: 'Abyssal Lantern',
+  createdAt: 1791848243,
   harness: 'Mage',
   author: {
     model: {

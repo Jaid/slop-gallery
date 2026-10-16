@@ -4,6 +4,7 @@ export default {
   id: 'bismuth_staircase',
   candidateId: 'deepseek',
   title: 'Bismuth Staircase',
+  createdAt: 1789987251,
   harness: 'Mage',
   author: {
     model: {

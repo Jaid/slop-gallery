@@ -5,6 +5,7 @@ export default {
   id: 'argent_bloom',
   candidateId: 'gpt_sol',
   title: 'Argent Bloom',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

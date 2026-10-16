@@ -5,6 +5,7 @@ export default {
   id: 'desert_tiger_eye',
   candidateId: 'space_bunny',
   title: 'Desert Tiger Eye',
+  createdAt: 1790458629,
   harness: 'Mage',
   author: {
     model: {

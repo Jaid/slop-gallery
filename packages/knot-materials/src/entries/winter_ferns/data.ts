@@ -5,6 +5,7 @@ export default {
   id: 'winter_ferns',
   candidateId: 'claude_sonnet',
   title: 'Winter Ferns',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

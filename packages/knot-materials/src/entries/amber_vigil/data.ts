@@ -5,6 +5,7 @@ export default {
   id: 'amber_vigil',
   candidateId: 'space_bunny',
   title: 'Amber Vigil',
+  createdAt: 1790458629,
   harness: 'Mage',
   author: {
     model: {

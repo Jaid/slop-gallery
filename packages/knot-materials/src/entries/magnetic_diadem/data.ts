@@ -5,6 +5,7 @@ export default {
   id: 'magnetic_diadem',
   candidateId: 'claude_sonnet',
   title: 'Magnetic Diadem',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

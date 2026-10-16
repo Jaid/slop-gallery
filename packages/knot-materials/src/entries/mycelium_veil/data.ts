@@ -4,6 +4,7 @@ export default {
   id: 'mycelium_veil',
   candidateId: 'hy',
   title: 'Mycelium Veil',
+  createdAt: 1789575270,
   harness: 'none',
   author: {
     model: {

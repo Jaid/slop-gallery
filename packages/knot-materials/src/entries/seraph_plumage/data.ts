@@ -4,6 +4,7 @@ export default {
   id: 'seraph_plumage',
   candidateId: 'gpt_sol',
   title: 'Seraph Plumage',
+  createdAt: 1790119994,
   harness: 'Mage',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'abyssal_syllable',
   candidateId: 'deepseek',
   title: 'Abyssal Syllable',
+  createdAt: 1790125939,
   harness: 'none',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'deep_field',
   candidateId: 'mimo',
   title: 'Deep Field',
+  createdAt: 1790126896,
   harness: 'Mage',
   author: {
     model: {

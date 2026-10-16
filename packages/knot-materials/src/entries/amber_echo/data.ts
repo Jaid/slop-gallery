@@ -5,6 +5,7 @@ export default {
   id: 'amber_echo',
   candidateId: 'space_bunny',
   title: 'Amber Echo',
+  createdAt: 1790327078,
   harness: 'Mage',
   author: {
     model: {

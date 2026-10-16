@@ -5,6 +5,7 @@ export default {
   id: 'moire_satin',
   candidateId: 'space_bunny',
   title: 'Moiré Satin',
+  createdAt: 1790327078,
   harness: 'Mage',
   author: {
     model: {

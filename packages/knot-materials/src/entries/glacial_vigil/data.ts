@@ -5,6 +5,7 @@ export default {
   id: 'glacial_vigil',
   candidateId: 'gpt_sol',
   title: 'Glacial Vigil',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

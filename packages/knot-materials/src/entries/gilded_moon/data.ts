@@ -5,6 +5,7 @@ export default {
   id: 'gilded_moon',
   candidateId: 'claude_sonnet',
   title: 'Gilded Moon',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

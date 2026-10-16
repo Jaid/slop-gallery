@@ -5,6 +5,7 @@ export default {
   id: 'pyre_heart',
   candidateId: 'muse_wonder',
   title: 'Pyre Heart',
+  createdAt: 1791844628,
   harness: 'Mage',
   author: {
     model: {

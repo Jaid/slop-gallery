@@ -5,6 +5,7 @@ export default {
   id: 'aurora_veins',
   candidateId: 'grok',
   title: 'Aurora Veins',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

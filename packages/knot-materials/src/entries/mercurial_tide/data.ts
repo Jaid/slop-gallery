@@ -5,6 +5,7 @@ export default {
   id: 'mercurial_tide',
   candidateId: 'claude_fable',
   title: 'Mercurial Tide',
+  createdAt: 1790695541,
   harness: 'Mage',
   author: {
     model: {

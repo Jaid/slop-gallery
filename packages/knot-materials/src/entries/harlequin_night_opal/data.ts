@@ -5,6 +5,7 @@ export default {
   id: 'harlequin_night_opal',
   candidateId: 'claude_opus',
   title: 'Harlequin Night Opal',
+  createdAt: 1790461810,
   harness: 'Mage',
   author: {
     model: {

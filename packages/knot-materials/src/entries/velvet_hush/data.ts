@@ -4,6 +4,7 @@ export default {
   id: 'velvet_hush',
   candidateId: 'mimo',
   title: 'Velvet Hush',
+  createdAt: 1790119994,
   harness: 'Mage',
   author: {
     model: {

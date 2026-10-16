@@ -4,6 +4,7 @@ export default {
   id: 'stardust_relic',
   candidateId: 'glm',
   title: 'Stardust Relic',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

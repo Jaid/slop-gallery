@@ -4,6 +4,7 @@ export default {
   id: 'benthic_beacon',
   candidateId: 'gpt_astra',
   title: 'Benthic Beacon',
+  createdAt: 1791852458,
   harness: 'Codex',
   author: {
     model: {

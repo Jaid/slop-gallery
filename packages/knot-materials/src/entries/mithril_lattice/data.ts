@@ -4,6 +4,7 @@ export default {
   id: 'mithril_lattice',
   candidateId: 'minimax',
   title: 'Mithril Lattice',
+  createdAt: 1789979276,
   harness: 'Mage',
   author: {
     model: {

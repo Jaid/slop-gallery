@@ -5,6 +5,7 @@ export default {
   id: 'octahedrite',
   candidateId: 'space_bunny',
   title: 'Octahedrite',
+  createdAt: 1790458629,
   harness: 'Mage',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'kintsugi_void',
   candidateId: 'kimi',
   title: 'Kintsugi Void',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'Kimi K3',

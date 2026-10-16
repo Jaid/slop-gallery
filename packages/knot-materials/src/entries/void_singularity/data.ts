@@ -5,6 +5,7 @@ export default {
   id: 'void_singularity',
   candidateId: 'gemini_argon',
   title: 'Void Singularity',
+  createdAt: 1792017078,
   harness: 'Mage',
   author: {
     model: {

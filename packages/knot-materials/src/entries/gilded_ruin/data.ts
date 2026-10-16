@@ -5,6 +5,7 @@ export default {
   id: 'gilded_ruin',
   candidateId: 'space_bunny',
   title: 'Gilded Ruin',
+  createdAt: 1791064898,
   harness: 'Mage',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'photonic_morpho',
   candidateId: 'gemini_flash',
   title: 'Photonic Morpho',
+  createdAt: 1789075137,
   harness: 'none',
   author: {
     model: {

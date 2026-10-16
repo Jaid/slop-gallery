@@ -5,6 +5,7 @@ export default {
   id: 'tidal_glass',
   candidateId: 'space_bunny',
   title: 'Tidal Glass',
+  createdAt: 1790327078,
   harness: 'Mage',
   author: {
     model: {

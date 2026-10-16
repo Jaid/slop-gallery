@@ -4,6 +4,7 @@ export default {
   id: 'voltaic_lattice',
   candidateId: 'claude_opus',
   title: 'Voltaic Lattice',
+  createdAt: 1789575270,
   harness: 'none',
   author: {
     model: {

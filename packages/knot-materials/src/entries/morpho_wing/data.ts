@@ -5,6 +5,7 @@ export default {
   id: 'morpho_wing',
   candidateId: 'space_bunny',
   title: 'Morpho Wing',
+  createdAt: 1790868534,
   harness: 'Mage',
   author: {
     model: {

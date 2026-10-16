@@ -4,6 +4,7 @@ export default {
   id: 'ghost_mycelium',
   candidateId: 'gemini_flash',
   title: 'Ghost Mycelium',
+  createdAt: 1789983011,
   harness: 'Mage',
   author: {
     model: {

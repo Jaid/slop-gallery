@@ -5,6 +5,7 @@ export default {
   id: 'changeant_brocade',
   candidateId: 'muse_wonder',
   title: 'Changeant Brocade',
+  createdAt: 1791848243,
   harness: 'Mage',
   author: {
     model: {

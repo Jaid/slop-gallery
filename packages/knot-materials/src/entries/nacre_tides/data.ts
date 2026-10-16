@@ -5,6 +5,7 @@ export default {
   id: 'nacre_tides',
   candidateId: 'space_bunny',
   title: 'Nacre Tides',
+  createdAt: 1791064898,
   harness: 'Mage',
   author: {
     model: {

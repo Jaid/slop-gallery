@@ -4,6 +4,7 @@ export default {
   id: 'lightless_border',
   candidateId: 'claude_fable',
   title: 'Lightless Border',
+  createdAt: 1789075137,
   harness: 'none',
   author: {
     model: {

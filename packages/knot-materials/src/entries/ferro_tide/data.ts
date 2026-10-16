@@ -5,6 +5,7 @@ export default {
   id: 'ferro_tide',
   candidateId: 'space_bunny',
   title: 'Ferro Tide',
+  createdAt: 1790868534,
   harness: 'Mage',
   author: {
     model: {

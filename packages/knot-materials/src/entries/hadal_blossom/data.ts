@@ -4,6 +4,7 @@ export default {
   id: 'hadal_blossom',
   candidateId: 'muse_spark',
   title: 'Abyssal Bloom',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

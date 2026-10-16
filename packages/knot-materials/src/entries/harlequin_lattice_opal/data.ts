@@ -5,6 +5,7 @@ export default {
   id: 'harlequin_lattice_opal',
   candidateId: 'claude_fable',
   title: 'Harlequin Lattice Opal',
+  createdAt: 1790695541,
   harness: 'Mage',
   author: {
     model: {

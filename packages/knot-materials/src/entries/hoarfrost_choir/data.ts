@@ -5,6 +5,7 @@ export default {
   id: 'hoarfrost_choir',
   candidateId: 'gpt_sol',
   title: 'Hoarfrost Choir',
+  createdAt: 1791064898,
   harness: 'Mage',
   author: {
     model: {

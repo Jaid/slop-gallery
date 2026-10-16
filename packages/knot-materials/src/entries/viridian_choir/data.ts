@@ -5,6 +5,7 @@ export default {
   id: 'viridian_choir',
   candidateId: 'gpt_sol',
   title: 'Viridian Choir',
+  createdAt: 1790868534,
   harness: 'Mage',
   author: {
     model: {

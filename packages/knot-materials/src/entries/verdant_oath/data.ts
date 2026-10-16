@@ -4,6 +4,7 @@ export default {
   id: 'verdant_oath',
   candidateId: 'gpt_astra',
   title: 'Verdant Oath',
+  createdAt: 1790122624,
   harness: 'Mage',
   author: {
     model: {

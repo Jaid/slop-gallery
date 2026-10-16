@@ -4,6 +4,7 @@ export default {
   id: 'amber_menagerie',
   candidateId: 'claude_opus',
   title: 'Amber Menagerie',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

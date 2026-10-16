@@ -5,6 +5,7 @@ export default {
   id: 'hopper_labyrinth',
   candidateId: 'gemini_argon',
   title: 'Hopper Labyrinth',
+  createdAt: 1792017078,
   harness: 'Mage',
   author: {
     model: {

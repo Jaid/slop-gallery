@@ -4,6 +4,7 @@ export default {
   id: 'foam_vespers',
   candidateId: 'deepseek',
   title: 'Foam Vespers',
+  createdAt: 1790125939,
   harness: 'Mage',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'chrysalis_engine',
   candidateId: 'gpt_sol',
   title: 'Chrysalis Engine',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'GPT-5.6 Sol',

@@ -5,6 +5,7 @@ export default {
   id: 'cinnabar_lacquer',
   candidateId: 'grok',
   title: 'Cinnabar Lacquer',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

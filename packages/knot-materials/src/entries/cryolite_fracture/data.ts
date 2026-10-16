@@ -4,6 +4,7 @@ export default {
   id: 'cryolite_fracture',
   candidateId: 'claude_opus',
   title: 'Cryolite Fracture',
+  createdAt: 1789575270,
   harness: 'none',
   author: {
     model: {

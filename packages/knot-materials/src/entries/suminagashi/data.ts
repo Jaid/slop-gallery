@@ -4,6 +4,7 @@ export default {
   id: 'suminagashi',
   candidateId: 'deepseek',
   title: 'Suminagashi',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

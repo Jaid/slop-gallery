@@ -4,6 +4,7 @@ export default {
   id: 'heartwood_atlas',
   candidateId: 'gpt_astra',
   title: 'Heartwood Atlas',
+  createdAt: 1790119994,
   harness: 'Mage',
   author: {
     model: {

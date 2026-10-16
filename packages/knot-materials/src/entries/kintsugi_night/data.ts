@@ -5,6 +5,7 @@ export default {
   id: 'kintsugi_night',
   candidateId: 'claude_sonnet',
   title: 'Kintsugi Night',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

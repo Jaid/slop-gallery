@@ -5,6 +5,7 @@ export default {
   id: 'harlequin_mosaic',
   candidateId: 'claude_sonnet',
   title: 'Harlequin Mosaic',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

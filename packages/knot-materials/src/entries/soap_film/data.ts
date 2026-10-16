@@ -5,6 +5,7 @@ export default {
   id: 'soap_film',
   candidateId: 'space_bunny',
   title: 'Soap Film',
+  createdAt: 1791064898,
   harness: 'Mage',
   author: {
     model: {

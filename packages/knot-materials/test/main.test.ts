@@ -52,6 +52,9 @@ describe('flat knot catalogue', () => {
       const data = entries[entry.id as KnotId]
       expect(entry.candidateId).toBe(data.candidateId)
       expect(entry.candidate.id).toBe(entry.candidateId)
+      expect(Number.isSafeInteger(entry.createdAt)).toBe(true)
+      expect(entry.createdAt).toBeGreaterThan(0)
+      expect(entry.createdAt).toBeLessThanOrEqual(Math.floor(Date.now() / 1000))
       expect(entry.flavorText.trim().length).toBeGreaterThan(30)
       expect(entry.flavorText.trim()).toBe(entry.flavorText)
       expect(flavors.has(entry.flavorText)).toBe(false)

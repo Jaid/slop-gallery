@@ -4,6 +4,7 @@ export default {
   id: 'desert_glaze',
   candidateId: 'hy',
   title: 'Desert Glaze',
+  createdAt: 1789575270,
   harness: 'none',
   author: {
     model: {

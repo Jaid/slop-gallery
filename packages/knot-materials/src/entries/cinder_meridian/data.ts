@@ -4,6 +4,7 @@ export default {
   id: 'cinder_meridian',
   candidateId: 'grok',
   title: 'Cinder Meridian',
+  createdAt: 1789231507,
   harness: 'grok.com',
   author: {
     model: {

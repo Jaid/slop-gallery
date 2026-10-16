@@ -4,6 +4,7 @@ export default {
   id: 'saffron_cathedral',
   candidateId: 'gpt_astra',
   title: 'Saffron Cathedral',
+  createdAt: 1789075137,
   harness: 'Codex',
   author: {
     model: {

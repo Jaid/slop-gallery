@@ -5,6 +5,7 @@ export default {
   id: 'vermilion_tide',
   candidateId: 'gpt_sol',
   title: 'Vermilion Tide',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

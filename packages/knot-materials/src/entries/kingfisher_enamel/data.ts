@@ -4,6 +4,7 @@ export default {
   id: 'kingfisher_enamel',
   candidateId: 'gpt_astra',
   title: 'Kingfisher Enamel',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

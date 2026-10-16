@@ -4,6 +4,7 @@ export default {
   id: 'prismatic_haunt',
   candidateId: 'deepseek',
   title: 'Prismatic Haunt',
+  createdAt: 1789235998,
   harness: 'chat.deepseek.com',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'biolume_tide',
   candidateId: 'kimi',
   title: 'Biolume Tide',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'Kimi K3',

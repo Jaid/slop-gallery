@@ -5,6 +5,7 @@ export default {
   id: 'blue_ice',
   candidateId: 'space_bunny',
   title: 'Blue Ice',
+  createdAt: 1790868534,
   harness: 'Mage',
   author: {
     model: {

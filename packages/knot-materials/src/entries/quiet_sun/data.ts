@@ -4,6 +4,7 @@ export default {
   id: 'quiet_sun',
   candidateId: 'grok',
   title: 'Quiet Sun',
+  createdAt: 1790126896,
   harness: 'Mage',
   author: {
     model: {

@@ -5,6 +5,7 @@ export default {
   id: 'damascus_steel',
   candidateId: 'space_bunny',
   title: 'Damascus Steel',
+  createdAt: 1790327078,
   harness: 'Mage',
   author: {
     model: {

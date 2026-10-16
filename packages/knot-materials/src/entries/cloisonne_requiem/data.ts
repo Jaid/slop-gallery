@@ -5,6 +5,7 @@ export default {
   id: 'cloisonne_requiem',
   candidateId: 'space_bunny',
   title: 'Cloisonné Requiem',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

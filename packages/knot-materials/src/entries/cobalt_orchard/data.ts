@@ -5,6 +5,7 @@ export default {
   id: 'cobalt_orchard',
   candidateId: 'gpt_sol',
   title: 'Cobalt Orchard',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

@@ -5,6 +5,7 @@ export default {
   id: 'frostbound_ember',
   candidateId: 'claude_opus',
   title: 'Frostbound Ember',
+  createdAt: 1790461810,
   harness: 'Mage',
   author: {
     model: {

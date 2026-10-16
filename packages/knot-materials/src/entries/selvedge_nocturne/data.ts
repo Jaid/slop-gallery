@@ -4,6 +4,7 @@ export default {
   id: 'selvedge_nocturne',
   candidateId: 'gpt_astra',
   title: 'Selvedge Nocturne',
+  createdAt: 1790119994,
   harness: 'Mage',
   author: {
     model: {

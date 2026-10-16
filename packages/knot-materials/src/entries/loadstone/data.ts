@@ -5,6 +5,7 @@ export default {
   id: 'loadstone',
   candidateId: 'space_bunny',
   title: 'Loadstone',
+  createdAt: 1790868534,
   harness: 'Mage',
   author: {
     model: {

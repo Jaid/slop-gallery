@@ -4,6 +4,7 @@ export default {
   id: 'sunken_cathedral',
   candidateId: 'gpt_astra',
   title: 'Sunken Cathedral',
+  createdAt: 1789075137,
   harness: 'Codex',
   author: {
     model: {

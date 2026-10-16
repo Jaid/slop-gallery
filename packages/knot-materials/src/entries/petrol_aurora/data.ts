@@ -5,6 +5,7 @@ export default {
   id: 'petrol_aurora',
   candidateId: 'claude_sonnet',
   title: 'Petrol Aurora',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

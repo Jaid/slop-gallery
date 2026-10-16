@@ -4,6 +4,7 @@ export default {
   id: 'glacial_memory',
   candidateId: 'gpt_astra',
   title: 'Glacial Memory',
+  createdAt: 1789075137,
   harness: 'Codex',
   author: {
     model: {

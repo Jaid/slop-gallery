@@ -4,6 +4,7 @@ export default {
   id: 'soap_cathedral',
   candidateId: 'grok',
   title: 'Soap Cathedral',
+  createdAt: 1790119994,
   harness: 'Mage',
   author: {
     model: {

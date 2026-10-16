@@ -4,6 +4,7 @@ export default {
   id: 'plasma_weave',
   candidateId: 'hy',
   title: 'Plasma Weave',
+  createdAt: 1789575270,
   harness: 'none',
   author: {
     model: {

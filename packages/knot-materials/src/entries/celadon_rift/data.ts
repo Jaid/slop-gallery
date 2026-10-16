@@ -4,6 +4,7 @@ export default {
   id: 'celadon_rift',
   candidateId: 'deepseek',
   title: 'Celadon Rift',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

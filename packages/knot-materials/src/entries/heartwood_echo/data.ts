@@ -4,6 +4,7 @@ export default {
   id: 'heartwood_echo',
   candidateId: 'gpt_luna',
   title: 'Heartwood Echo',
+  createdAt: 1789979276,
   harness: 'Mage',
   author: {
     model: {

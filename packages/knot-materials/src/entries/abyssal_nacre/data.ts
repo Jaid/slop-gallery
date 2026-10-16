@@ -4,6 +4,7 @@ export default {
   id: 'abyssal_nacre',
   candidateId: 'grok',
   title: 'Abyssal Nacre',
+  createdAt: 1789231507,
   harness: 'grok.com Build',
   author: {
     model: {

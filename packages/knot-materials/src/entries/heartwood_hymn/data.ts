@@ -4,6 +4,7 @@ export default {
   id: 'heartwood_hymn',
   candidateId: 'gpt_astra',
   title: 'Heartwood Hymn',
+  createdAt: 1789979276,
   harness: 'Mage',
   author: {
     model: {

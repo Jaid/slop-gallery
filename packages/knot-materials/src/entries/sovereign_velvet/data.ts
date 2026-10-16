@@ -5,6 +5,7 @@ export default {
   id: 'sovereign_velvet',
   candidateId: 'gpt_sol',
   title: 'Sovereign Velvet',
+  createdAt: 1791064898,
   harness: 'Mage',
   author: {
     model: {

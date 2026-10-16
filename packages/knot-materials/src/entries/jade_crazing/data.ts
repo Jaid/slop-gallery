@@ -4,6 +4,7 @@ export default {
   id: 'jade_crazing',
   candidateId: 'kimi',
   title: 'Celadon Crackle',
+  createdAt: 1789231507,
   harness: 'kimi.ai',
   author: {
     model: {

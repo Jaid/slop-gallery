@@ -4,6 +4,7 @@ export default {
   id: 'ember_cortex',
   candidateId: 'glm_flash',
   title: 'Ember Cortex',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

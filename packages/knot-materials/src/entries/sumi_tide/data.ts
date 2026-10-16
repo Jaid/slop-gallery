@@ -4,6 +4,7 @@ export default {
   id: 'sumi_tide',
   candidateId: 'claude_opus',
   title: 'Sumi Tide',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

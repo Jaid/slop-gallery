@@ -4,6 +4,7 @@ export default {
   id: 'storm_vessel',
   candidateId: 'glm',
   title: 'Storm Vessel',
+  createdAt: 1789231507,
   harness: 'chat.z.ai',
   author: {
     model: {

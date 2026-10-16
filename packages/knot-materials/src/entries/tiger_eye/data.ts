@@ -4,6 +4,7 @@ export default {
   id: 'tiger_eye',
   candidateId: 'mimo',
   title: 'Tiger’s Eye',
+  createdAt: 1790126896,
   harness: 'Mage',
   author: {
     model: {

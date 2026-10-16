@@ -5,6 +5,7 @@ export default {
   id: 'scarab_armor',
   candidateId: 'gemini_flash',
   title: 'Scarab Armor',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

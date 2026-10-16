@@ -5,6 +5,7 @@ export default {
   id: 'sirocco',
   candidateId: 'space_bunny',
   title: 'Sirocco',
+  createdAt: 1790868534,
   harness: 'Mage',
   author: {
     model: {

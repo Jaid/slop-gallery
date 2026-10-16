@@ -4,6 +4,7 @@ export default {
   id: 'cinnabar_kiln',
   candidateId: 'grok',
   title: 'Cinnabar Kiln',
+  createdAt: 1790119994,
   harness: 'Mage',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'cyber_kintsugi',
   candidateId: 'gemini_flash',
   title: 'Cyber Kintsugi',
+  createdAt: 1789075137,
   harness: 'none',
   author: {
     model: {

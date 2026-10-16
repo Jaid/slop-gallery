@@ -5,6 +5,7 @@ export default {
   id: 'anamorphosis',
   candidateId: 'muse_wonder',
   title: 'Anamorphosis',
+  createdAt: 1791858712,
   harness: 'Mage',
   author: {
     model: {

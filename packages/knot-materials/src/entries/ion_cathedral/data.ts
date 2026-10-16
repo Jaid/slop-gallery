@@ -4,6 +4,7 @@ export default {
   id: 'ion_cathedral',
   candidateId: 'glm_flash',
   title: 'Ion Cathedral',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

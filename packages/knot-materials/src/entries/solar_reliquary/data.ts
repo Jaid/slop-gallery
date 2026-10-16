@@ -4,6 +4,7 @@ export default {
   id: 'solar_reliquary',
   candidateId: 'gpt_astra',
   title: 'Solar Reliquary',
+  createdAt: 1789075137,
   harness: 'Codex',
   author: {
     model: {

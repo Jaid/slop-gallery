@@ -4,6 +4,7 @@ export default {
   id: 'signal_bloom',
   candidateId: 'gpt_astra',
   title: 'Signal Bloom',
+  createdAt: 1789979276,
   harness: 'Mage',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'thousand_cranes',
   candidateId: 'deepseek',
   title: 'Thousand Cranes',
+  createdAt: 1790125939,
   harness: 'Mage',
   author: {
     model: {

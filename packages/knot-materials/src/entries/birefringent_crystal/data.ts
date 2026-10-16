@@ -4,6 +4,7 @@ export default {
   id: 'birefringent_crystal',
   candidateId: 'gemini_flash',
   title: 'Birefringent Crystal',
+  createdAt: 1789290805,
   harness: 'none',
   author: {
     model: {

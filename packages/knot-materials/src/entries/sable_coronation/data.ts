@@ -4,6 +4,7 @@ export default {
   id: 'sable_coronation',
   candidateId: 'gpt_astra',
   title: 'Sable Coronation',
+  createdAt: 1789979276,
   harness: 'Mage',
   author: {
     model: {

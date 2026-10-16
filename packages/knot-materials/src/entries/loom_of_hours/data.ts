@@ -4,6 +4,7 @@ export default {
   id: 'loom_of_hours',
   candidateId: 'deepseek',
   title: 'Loom of Hours',
+  createdAt: 1790125939,
   harness: 'Mage',
   author: {
     model: {

@@ -22,6 +22,8 @@ export type KnotAuthor = {
 export type KnotData = {
   author: KnotAuthor
   candidateId: KnotCandidateId
+  /** Unix timestamp in seconds when the knot was created. */
+  createdAt: number
   /** Conservative maximum vertex displacement in meters, used for culling and collision bounds. */
   displacement?: number
   flavorText: string

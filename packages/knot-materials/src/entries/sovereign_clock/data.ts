@@ -5,6 +5,7 @@ export default {
   id: 'sovereign_clock',
   candidateId: 'gpt_sol',
   title: 'Sovereign Clock',
+  createdAt: 1790868534,
   harness: 'Mage',
   author: {
     model: {

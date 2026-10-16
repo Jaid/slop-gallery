@@ -4,6 +4,7 @@ export default {
   id: 'photon_ring',
   candidateId: 'deepseek',
   title: 'Photon Ring',
+  createdAt: 1789949253,
   harness: 'Mage',
   author: {
     model: {

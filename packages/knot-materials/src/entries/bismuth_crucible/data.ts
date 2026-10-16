@@ -4,6 +4,7 @@ export default {
   id: 'bismuth_crucible',
   candidateId: 'gemini_flash',
   title: 'Bismuth Crucible',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

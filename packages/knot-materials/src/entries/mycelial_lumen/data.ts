@@ -5,6 +5,7 @@ export default {
   id: 'mycelial_lumen',
   candidateId: 'space_bunny',
   title: 'Mycelial Lumen',
+  createdAt: 1790327078,
   harness: 'Mage',
   author: {
     model: {

@@ -5,6 +5,7 @@ export default {
   id: 'harlequin_depths',
   candidateId: 'claude_sonnet',
   title: 'Harlequin Depths',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

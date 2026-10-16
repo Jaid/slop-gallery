@@ -4,6 +4,7 @@ export default {
   id: 'abyssal_leviathan',
   candidateId: 'qwen_max',
   title: 'Abyssal Leviathan',
+  createdAt: 1789231507,
   harness: 'chat.qwen.ai',
   author: {
     model: {

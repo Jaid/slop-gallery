@@ -4,6 +4,7 @@ export default {
   id: 'abyssal_siphonophore',
   candidateId: 'gemini_flash',
   title: 'Abyssal Siphonophore',
+  createdAt: 1789983011,
   harness: 'Mage',
   author: {
     model: {

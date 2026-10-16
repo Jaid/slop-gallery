@@ -4,6 +4,7 @@ export default {
   id: 'asteria',
   candidateId: 'mimo',
   title: 'Asteria',
+  createdAt: 1790036112,
   harness: 'Mage',
   author: {
     model: {

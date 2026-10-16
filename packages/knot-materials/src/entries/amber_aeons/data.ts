@@ -5,6 +5,7 @@ export default {
   id: 'amber_aeons',
   candidateId: 'gpt_sol',
   title: 'Amber Aeons',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

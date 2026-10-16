@@ -5,6 +5,7 @@ export default {
   id: 'willowwake',
   candidateId: 'gpt_sol',
   title: 'Willowwake',
+  createdAt: 1791064898,
   harness: 'Mage',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'lichtenberg_glacier',
   candidateId: 'minimax',
   title: 'Lichtenberg Glacier',
+  createdAt: 1789979276,
   harness: 'Mage',
   author: {
     model: {

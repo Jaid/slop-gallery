@@ -4,6 +4,7 @@ export default {
   id: 'prism_cascade',
   candidateId: 'deepseek',
   title: 'Prism Cascade',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'DeepSeek 4.1 Flash',

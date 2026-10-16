@@ -5,6 +5,7 @@ export default {
   id: 'emberhide',
   candidateId: 'claude_fable',
   title: 'Emberhide',
+  createdAt: 1792086001,
   harness: 'Mage',
   author: {model: {
     title: 'Claude Fable 5.1',

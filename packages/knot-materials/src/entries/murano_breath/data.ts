@@ -5,6 +5,7 @@ export default {
   id: 'murano_breath',
   candidateId: 'muse_wonder',
   title: 'Murano Breath',
+  createdAt: 1791848243,
   harness: 'Mage',
   author: {
     model: {

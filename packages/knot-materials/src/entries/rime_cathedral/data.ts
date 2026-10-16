@@ -5,6 +5,7 @@ export default {
   id: 'rime_cathedral',
   candidateId: 'space_bunny',
   title: 'Rime Cathedral',
+  createdAt: 1790458629,
   harness: 'Mage',
   author: {
     model: {

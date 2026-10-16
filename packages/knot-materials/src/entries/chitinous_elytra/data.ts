@@ -4,6 +4,7 @@ export default {
   id: 'chitinous_elytra',
   candidateId: 'gemini_flash',
   title: 'Chitinous Elytra',
+  createdAt: 1789983011,
   harness: 'Mage',
   author: {
     model: {

@@ -5,6 +5,7 @@ export default {
   id: 'ouroboros',
   candidateId: 'claude_opus',
   title: 'Ouroboros',
+  createdAt: 1791585164,
   harness: 'Mage',
   author: {
     model: {

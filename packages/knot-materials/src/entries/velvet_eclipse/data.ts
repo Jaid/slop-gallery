@@ -4,6 +4,7 @@ export default {
   id: 'velvet_eclipse',
   candidateId: 'gpt_terra',
   title: 'Velvet Eclipse',
+  createdAt: 1789979276,
   harness: 'Mage',
   author: {
     model: {

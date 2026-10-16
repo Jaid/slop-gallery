@@ -4,6 +4,7 @@ export default {
   id: 'kintsugi_relic',
   candidateId: 'gemini_flash',
   title: 'Kintsugi Relic',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

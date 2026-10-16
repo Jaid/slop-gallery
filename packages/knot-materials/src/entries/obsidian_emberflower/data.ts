@@ -4,6 +4,7 @@ export default {
   id: 'obsidian_emberflower',
   candidateId: 'deepseek',
   title: 'Obsidian Emberflower',
+  createdAt: 1790125939,
   author: {
     model: {
       title: 'DeepSeek 4.1 Flash',

@@ -4,6 +4,7 @@ export default {
   id: 'gossamer',
   candidateId: 'mimo',
   title: 'Gossamer',
+  createdAt: 1790036112,
   harness: 'Mage',
   author: {
     model: {

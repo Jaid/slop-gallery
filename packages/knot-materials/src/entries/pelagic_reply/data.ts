@@ -4,6 +4,7 @@ export default {
   id: 'pelagic_reply',
   candidateId: 'deepseek',
   title: 'Pelagic Reply',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

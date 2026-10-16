@@ -5,6 +5,7 @@ export default {
   id: 'amber_cosmos',
   candidateId: 'claude_sonnet',
   title: 'Amber Cosmos',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

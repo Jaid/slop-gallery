@@ -5,6 +5,7 @@ export default {
   id: 'celestial_felines',
   candidateId: 'gemini_flash',
   title: 'Celestial Felines',
+  createdAt: 1790309623,
   harness: 'Mage',
   author: {
     model: {

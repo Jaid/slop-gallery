@@ -5,6 +5,7 @@ export default {
   id: 'celestial_brocade',
   candidateId: 'claude_sonnet',
   title: 'Celestial Brocade',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

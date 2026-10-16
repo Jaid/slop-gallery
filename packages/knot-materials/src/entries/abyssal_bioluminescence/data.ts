@@ -4,6 +4,7 @@ export default {
   id: 'abyssal_bioluminescence',
   candidateId: 'gemini_flash',
   title: 'Abyssal Bioluminescence',
+  createdAt: 1789290805,
   harness: 'none',
   author: {
     model: {

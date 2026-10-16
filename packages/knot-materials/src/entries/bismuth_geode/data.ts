@@ -4,6 +4,7 @@ export default {
   id: 'bismuth_geode',
   candidateId: 'gemini_flash',
   title: 'Bismuth Geode',
+  createdAt: 1789983011,
   harness: 'Mage',
   author: {
     model: {

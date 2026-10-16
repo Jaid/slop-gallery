@@ -4,6 +4,7 @@ export default {
   id: 'verdigris_hull',
   candidateId: 'hy',
   title: 'Verdigris Hull',
+  createdAt: 1789575270,
   harness: 'none',
   author: {
     model: {

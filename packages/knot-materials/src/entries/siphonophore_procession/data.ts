@@ -5,6 +5,7 @@ export default {
   id: 'siphonophore_procession',
   candidateId: 'gemini_flash',
   title: 'Siphonophore Procession',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

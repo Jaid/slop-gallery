@@ -5,6 +5,7 @@ export default {
   id: 'living_kintsugi',
   candidateId: 'gemini_flash',
   title: 'Living Kintsugi',
+  createdAt: 1790309624,
   harness: 'Mage',
   author: {
     model: {

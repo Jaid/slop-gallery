@@ -4,6 +4,7 @@ export default {
   id: 'frost_monarch',
   candidateId: 'gemini_flash',
   title: 'Frost Monarch',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'hoarfrost_lattice',
   candidateId: 'grok',
   title: 'Hoarfrost Lattice',
+  createdAt: 1789231507,
   harness: 'grok.com',
   author: {
     model: {

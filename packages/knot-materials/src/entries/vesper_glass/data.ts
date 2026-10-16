@@ -4,6 +4,7 @@ export default {
   id: 'vesper_glass',
   candidateId: 'gpt_astra',
   title: 'Vesper Glass',
+  createdAt: 1790119994,
   harness: 'Mage',
   author: {
     model: {

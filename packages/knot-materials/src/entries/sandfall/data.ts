@@ -4,6 +4,7 @@ export default {
   id: 'sandfall',
   candidateId: 'deepseek',
   title: 'Sandfall',
+  createdAt: 1790125939,
   harness: 'Mage',
   author: {
     model: {

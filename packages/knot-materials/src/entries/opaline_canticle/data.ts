@@ -4,6 +4,7 @@ export default {
   id: 'opaline_canticle',
   candidateId: 'deepseek',
   title: 'Opaline Canticle',
+  createdAt: 1790125939,
   harness: 'Mage',
   author: {
     model: {

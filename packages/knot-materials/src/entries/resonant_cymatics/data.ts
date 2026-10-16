@@ -4,6 +4,7 @@ export default {
   id: 'resonant_cymatics',
   candidateId: 'gemini_flash',
   title: 'Resonant Cymatics',
+  createdAt: 1789290805,
   harness: 'none',
   author: {
     model: {

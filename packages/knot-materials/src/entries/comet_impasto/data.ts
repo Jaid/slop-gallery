@@ -5,6 +5,7 @@ export default {
   id: 'comet_impasto',
   candidateId: 'space_bunny',
   title: 'Comet Impasto',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'stellar_flare',
   candidateId: 'gemini_flash',
   title: 'Stellar Flare',
+  createdAt: 1789983011,
   harness: 'Mage',
   author: {
     model: {

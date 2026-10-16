@@ -4,6 +4,7 @@ export default {
   id: 'mercury_script',
   candidateId: 'grok',
   title: 'Mercury Script',
+  createdAt: 1790119994,
   harness: 'Mage',
   author: {
     model: {

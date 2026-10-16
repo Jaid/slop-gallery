@@ -12,6 +12,7 @@ export default {
     },
   },
   title: 'Tidal Register',
+  createdAt: 1789816097,
   flavorText: 'Small enamel shutters turn in patient succession, recording a tide that never reaches the shore.',
   placeholder: {
     color: '#72baad',

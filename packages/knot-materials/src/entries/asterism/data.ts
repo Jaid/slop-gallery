@@ -4,6 +4,7 @@ export default {
   id: 'asterism',
   candidateId: 'deepseek',
   title: 'Asterism',
+  createdAt: 1789987251,
   harness: 'Mage',
   author: {
     model: {

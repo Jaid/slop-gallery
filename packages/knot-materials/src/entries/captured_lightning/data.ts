@@ -4,6 +4,7 @@ export default {
   id: 'captured_lightning',
   candidateId: 'deepseek',
   title: 'Captured Lightning',
+  createdAt: 1789987251,
   harness: 'Mage',
   author: {
     model: {

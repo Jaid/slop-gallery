@@ -5,6 +5,7 @@ export default {
   id: 'amber_vault',
   candidateId: 'claude_opus',
   title: 'Amber Vault',
+  createdAt: 1790461810,
   harness: 'Mage',
   author: {
     model: {

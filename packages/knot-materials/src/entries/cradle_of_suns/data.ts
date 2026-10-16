@@ -5,6 +5,7 @@ export default {
   id: 'cradle_of_suns',
   candidateId: 'claude_sonnet',
   title: 'Cradle of Suns',
+  createdAt: 1790868534,
   harness: 'Mage',
   author: {
     model: {

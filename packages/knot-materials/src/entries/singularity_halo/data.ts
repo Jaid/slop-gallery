@@ -4,6 +4,7 @@ export default {
   id: 'singularity_halo',
   candidateId: 'claude_opus',
   title: 'Singularity Halo',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

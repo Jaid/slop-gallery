@@ -4,6 +4,7 @@ export default {
   id: 'aurora_cocoon',
   candidateId: 'glm_flash',
   title: 'Aurora Cocoon',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

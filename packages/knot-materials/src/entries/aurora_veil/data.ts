@@ -4,6 +4,7 @@ export default {
   id: 'aurora_veil',
   candidateId: 'deepseek',
   title: 'Aurora Veil',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'DeepSeek 4.1 Flash',

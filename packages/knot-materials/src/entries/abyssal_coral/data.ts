@@ -5,6 +5,7 @@ export default {
   id: 'abyssal_coral',
   candidateId: 'space_bunny',
   title: 'Abyssal Coral',
+  createdAt: 1790327078,
   harness: 'Mage',
   author: {
     model: {

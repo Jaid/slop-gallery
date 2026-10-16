@@ -5,6 +5,7 @@ export default {
   id: 'felis_astra',
   candidateId: 'gpt_astra',
   title: 'Felis Astra',
+  createdAt: 1790327078,
   harness: 'Mage',
   author: {
     model: {

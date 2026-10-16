@@ -4,6 +4,7 @@ export default {
   id: 'chladni_sands',
   candidateId: 'gpt_astra',
   title: 'Chladni Sands',
+  createdAt: 1789293909,
   harness: 'none',
   author: {
     model: {

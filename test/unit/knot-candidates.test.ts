@@ -15,6 +15,7 @@ const candidateData: KnotCandidateData = {
 const item = (id: string): KnotData => ({
   id,
   title: id.replaceAll('_', ' '),
+  createdAt: 1_789_000_000,
   candidateId: 'claude_fable',
   placeholder: {
     color: '#ffffff',

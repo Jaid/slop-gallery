@@ -5,6 +5,7 @@ export default {
   id: 'glacial_psalm',
   candidateId: 'gpt_sol',
   title: 'Glacial Psalm',
+  createdAt: 1790868534,
   harness: 'Mage',
   author: {
     model: {

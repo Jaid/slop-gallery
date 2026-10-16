@@ -5,6 +5,7 @@ export default {
   id: 'felis_noctiluca',
   candidateId: 'gpt_astra',
   title: 'Felis Noctiluca',
+  createdAt: 1790327078,
   harness: 'Mage',
   author: {
     model: {

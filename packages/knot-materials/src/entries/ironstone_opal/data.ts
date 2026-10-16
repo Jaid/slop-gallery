@@ -5,6 +5,7 @@ export default {
   id: 'ironstone_opal',
   candidateId: 'claude_opus',
   title: 'Ironstone Opal',
+  createdAt: 1792085143,
   harness: 'Mage',
   author: {model: {
     title: 'Claude Opus 5.5',

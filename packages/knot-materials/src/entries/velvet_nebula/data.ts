@@ -5,6 +5,7 @@ export default {
   id: 'velvet_nebula',
   candidateId: 'grok',
   title: 'Velvet Nebula',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

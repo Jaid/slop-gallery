@@ -5,6 +5,7 @@ export default {
   id: 'plush_soiree',
   candidateId: 'claude_fable',
   title: 'Plush Soirée',
+  createdAt: 1791603706,
   harness: 'Mage',
   author: {
     model: {

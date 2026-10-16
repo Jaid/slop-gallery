@@ -4,6 +4,7 @@ export default {
   id: 'kintsugi_dawn',
   candidateId: 'glm',
   title: 'Kintsugi Dawn',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {
