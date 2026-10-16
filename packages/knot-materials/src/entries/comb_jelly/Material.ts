@@ -91,7 +91,7 @@ export default class extends KnotMaterial {
 // Light outside the plane of the grating vector spreads out quickly.
       const lobe = half.dot(sideways).pow2().mul(-3.2).exp()
       const lit = light.direction.dot(plateNormal).smoothstep(-0.05, 0.25).mul(view.dot(plateNormal).smoothstep(-0.05, 0.2))
-      rainbow = rainbow.add(gratingSpectrum(shift, spacing, 3).mul(lobe).mul(lit).mul(light.strength))
+      rainbow = rainbow.add(gratingSpectrum(shift, spacing).mul(lobe).mul(lit).mul(light.strength))
       mirror = mirror.add(shift.pow2().mul(-260).exp().mul(lobe).mul(lit).mul(light.strength))
     }
     const combGlow = band.mul(plate)
