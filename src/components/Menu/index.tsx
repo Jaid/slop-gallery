@@ -35,7 +35,7 @@ export default function Menu(settings: ReturnType<typeof useGalleryAI>) {
         <Branch if={stage === 'return'}><button className={css.newGame} disabled={!s.ready} type='button' onClick={startNewGame}>New game</button></Branch>
         <Branch not={stage === 'unfocus'}>
           <MenuOptions />
-          <OpenRouterConnection {...settings} />
+          <Branch if={settings.available}><OpenRouterConnection {...settings} /></Branch>
           <MenuNarration />
         </Branch>
       </div>

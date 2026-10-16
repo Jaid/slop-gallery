@@ -38,3 +38,13 @@ export type AiSettings = ReturnType<typeof readAiSettings>
 export function readAiSettings(input: URL | string = typeof location === 'undefined' ? '' : location.href) {
   return readPermalink(input, {schema: aiSettingsSchema})
 }
+
+/** Applies a settings change; once the page is opened with `?ai=false`, nothing can switch AI back on. */
+export function patchAiSettings(current: AiSettings, patch: Partial<AiSettings>, available: boolean): AiSettings {
+  const next = {
+    ...current,
+    ...patch,
+  }
+  next.ai = available && next.ai
+  return next
+}

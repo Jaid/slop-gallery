@@ -4,7 +4,7 @@ import type {Portrait} from './gallery.ts'
 import {useEffect, useState} from 'react'
 
 import GalleryDirector from './ai/GalleryDirector.ts'
-import {readAiSettings} from './ai/settings.ts'
+import {patchAiSettings, readAiSettings} from './ai/settings.ts'
 import {attachNarration} from './audio/narration.ts'
 import SoundEngine from './audio/SoundEngine.ts'
 import {galleryEvents, notify, useGallery} from './gallery.ts'
@@ -12,10 +12,9 @@ import {galleryEvents, notify, useGallery} from './gallery.ts'
 export default function useGalleryAI() {
   useEffect(attachNarration, [])
   const [params, setParamsState] = useState<AiSettings>(() => readAiSettings())
-  const setParams = (patch: Partial<AiSettings>) => setParamsState(current => ({
-    ...current,
-    ...patch,
-  }))
+  // `?ai=false` turns AI off for the whole page, unlike the in-menu toggle, which can turn it back on.
+  const [available] = useState(() => params.ai)
+  const setParams = (patch: Partial<AiSettings>) => setParamsState(current => patchAiSettings(current, patch, available))
   const key = useGallery(s => s.apiKey)
   useEffect(() => {
     useGallery.setState({ai: params.ai})
@@ -45,6 +44,8 @@ export default function useGalleryAI() {
     }
   }, [key, params.ai, params.text_model, params.text_model_effort, params.image_model, params.audio_model, params.narrator_voice, params.narrator_character, params.eager_audio])
   return {
+    /** whether the page allows AI at all; `false` for `?ai=false`, which also hides every AI option */
+    available,
     params,
     setParams,
   }
