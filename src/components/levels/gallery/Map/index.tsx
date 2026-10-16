@@ -20,6 +20,7 @@ const roomColors: Partial<Record<RoomId, string>> = {
   sienna: '#dbc6a9',
   oculus: '#adced0',
   lodge: '#ceae87',
+  salon: '#c79a9e',
 }
 const scale = 10
 const padding = 20
@@ -61,7 +62,7 @@ export default function Map({css}: {css: Record<string, string>}) {
     notify(`Welcome to ${room.title}.`)
   }
   return <>
-    <p className={css.intro}>Nine rooms across the upper and lower galleries. The Oculus’s raised north platform leads through a stone tunnel to the Lodge. The Corridor follows the timber return route from the Lodge to Sienna.</p>
+    <p className={css.intro}>Ten rooms across the upper and lower galleries. The Salon lies through the arch in Dine’s north wall. The Oculus’s raised north platform leads through a stone tunnel to the Lodge. The Corridor follows the timber return route from the Lodge to Sienna.</p>
     {levels.map(level => <div key={String(level.lower)} className={css.level}>
       <h3>{level.lower ? 'Lower level' : 'Upper level'}</h3>
       <svg aria-label={level.lower ? 'Moonfall below the Antechamber, connected north by tunnel to the Oculus beneath the glass floor' : 'Upper gallery and U-turn stairs from the Antechamber'} role='img' viewBox={`0 0 ${level.width} ${level.height}`}>

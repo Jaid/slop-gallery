@@ -6,6 +6,7 @@ import Branch from 'branch-component'
 import {useGraphicsModeValue} from 'use-graphics-mode'
 
 import FloorGlass from '#component/levels/gallery/FloorGlass'
+import ParquetFloor from '#component/levels/gallery/ParquetFloor'
 import WoodFloor from '#component/levels/gallery/WoodFloor'
 import CheckerMarbleFloor from '#src/components/Scene/CheckerMarbleFloor.tsx'
 import Box from '#src/components/Scene/primitives.tsx'
@@ -30,6 +31,7 @@ export default function RoomFloor({glass, room, stone, wood}: {
       color: '#c5a585',
     },
     dine: {color: '#23201d'},
+    salon: {color: '#3a2616'},
   }
   const surface = surfaces[room.id] ?? {
     map: stone,
@@ -45,7 +47,8 @@ export default function RoomFloor({glass, room, stone, wood}: {
     </RigidBody>
     <Branch if={room.id === 'vesper'}><WoodFloor depth={room.size[1]} texture={wood} width={room.size[0]} /></Branch>
     <Branch if={room.id === 'dine'}><CheckerMarbleFloor depth={room.size[1]} width={room.size[0]} /></Branch>
-    <Branch if={room.id !== 'dine'}>
+    <Branch if={room.id === 'salon'}><ParquetFloor depth={room.size[1]} name={room.id} width={room.size[0]} /></Branch>
+    <Branch none={[room.id === 'dine', room.id === 'salon']}>
       {plan.seams.map(({center: [x, z], size: [width, depth]}, i) => <Box key={i} color='#a8a18f' envMapIntensity={envMapIntensity} position={[x, 0.008, z]} size={[width, 0.008, depth]} />)}
       {plan.inlays.map(({center: [x, z], size: [width, depth]}, i) => <Box key={i} color='#9d8354' envMapIntensity={envMapIntensity} metalness={0.45} position={[x, 0.015, z]} size={[width, 0.012, depth]} />)}
     </Branch>
