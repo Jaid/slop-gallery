@@ -1,3 +1,4 @@
+import type {PlankOptions} from '../materials/PlankMaterial.ts'
 import type {PassageCutout} from './passages/Passage.ts'
 import type {Vec3} from './types.ts'
 
@@ -70,15 +71,28 @@ export const lodgeTunnel = new Passage('lodge-tunnel', 'lodge', [[lodge.entrance
 export const lodgeTunnelWalls = lodgeTunnel.walls
 /** The tunnel’s last two meters trade the castle stone for the Lodge’s timber, instead of switching at the doorway. */
 export const lodgeTunnelTransition = new PassageTransition(lodgeTunnel, 2)
-/** The Lodge’s plank floor, which continues into the tunnel’s timber transition. */
-export const lodgeFloorFinish = {
-  color: '#765036',
-  envMapIntensity: 0.2,
-  roughness: 0.86,
-  // The floor box maps its texture three times across its top face.
-  tilesPerMeter: 3 / lodge.size[0],
-  origin: [lodge.center[0] - lodge.size[0] / 2, lodge.center[1] + lodge.size[1] / 2],
-} as const
+/**
+ * The Lodge’s wide-plank oak floor. It is mapped in world space, so the tunnel’s timber transition continues its boards and joints.
+ *
+ * The boards run east–west, along the last span of the tunnel and straight into the room.
+ */
+export const lodgeFloorPlanks = {
+  axis: 'x',
+  width: 0.17,
+  length: [1.6, 3.4],
+  knots: 0.3,
+  bevel: 0.004,
+  seam: 0.0024,
+  seed: 3,
+  roughness: 0.62,
+  envMapIntensity: 0.25,
+  colors: {
+    dark: '#5a3a22',
+    light: '#8e6239',
+    ring: '#3a2312',
+    seam: '#1a0f08',
+  },
+} as const satisfies PlankOptions
 
 export function insideLodgeAccess(position: Vec3) {
   const sill = lodgeWindowFloor(position[0], position[2])

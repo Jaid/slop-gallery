@@ -28,6 +28,8 @@ import {rooms, walls} from '#src/lib/gallery.ts'
 import {wallTop} from '#src/lib/gallery/architecture.ts'
 import {createArchitecturalGlassMaterials, disposeArchitecturalGlassMaterials} from '#src/lib/materials/ArchitecturalGlassMaterials.ts'
 import CastleStoneMaterial from '#src/lib/materials/CastleStoneMaterial.ts'
+import {lightIndoors} from '#src/lib/materials/IndoorLightsNode.ts'
+import LodgeMaterials from '#src/lib/materials/LodgeMaterials.ts'
 import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
 
 const pointLightPositions: Partial<Record<Wall['room'], Array<number>>> = {
@@ -46,8 +48,10 @@ export default function Architecture() {
       dispose: () => disposeArchitecturalGlassMaterials(materials),
     }
   }, [isHeavy]))
-  const castleStone = useDisposable(useMemo(() => new CastleStoneMaterial, []))
-  const lodgeWood = useDisposable(useMemo(() => new LodgeWoodMaterial, []))
+  // The Lodge, its tunnel and the corridor run underground, beyond the reach of the sun.
+  const castleStone = useDisposable(useMemo(() => lightIndoors(new CastleStoneMaterial), []))
+  const lodgeWood = useDisposable(useMemo(() => lightIndoors(new LodgeWoodMaterial), []))
+  const lodgeMaterials = useDisposable(useMemo(() => new LodgeMaterials, []))
   const stone = useDisposable(useMemo(() => surfaceTexture('stone'), []))
   const plaster = useDisposable(useMemo(() => surfaceTexture('plaster'), []))
   const wood = useDisposable(useMemo(() => surfaceTexture('wood'), []))
@@ -63,7 +67,7 @@ export default function Architecture() {
       return oculusMaterial
     }
     if (wall.room === 'lodge') {
-      return wall.id.startsWith('lodge-tunnel-') ? castleStone : lodgeWood
+      return wall.id.startsWith('lodge-tunnel-') ? castleStone : lodgeMaterials.timber
     }
     if (wall.room === 'corridor') {
       return lodgeWood
@@ -74,7 +78,7 @@ export default function Architecture() {
     <color args={['#ded8ca']} attach='background' />
     <ambientLight intensity={0.65} /><hemisphereLight args={['#ecf3ff', '#a29270', 1.15]} />
     <directionalLight castShadow color='#fff0d7' intensity={2.3} position={[-3, 9, 4]} shadow-camera-bottom={-20} shadow-camera-left={-24} shadow-camera-right={24} shadow-camera-top={20} shadow-mapSize={[4096, 4096]} shadow-normalBias={0.035} />
-    {walls.map(wall => <WallSurface key={wall.id} glass={glass.tunnel} material={wallMaterial(wall)} plaster={wall.room === 'sienna' ? damask : plaster} wall={wall} />)}
+    {walls.map(wall => <WallSurface key={wall.id} glass={glass.tunnel} material={wallMaterial(wall)} plaster={wall.room === 'sienna' ? damask : plaster} surfaceMaterial={isLodgeRoomWall(wall) ? lodgeMaterials.logWall : undefined} wall={wall} />)}
     {rooms.filter(room => room.floorY === 0 && room.id !== 'sienna').map(room => <group key={room.id} position={[room.center[0], 0, room.center[1]]}>
       <RigidBody colliders={false} type='fixed'>
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]} />
@@ -92,7 +96,7 @@ export default function Architecture() {
     <PottedPlants />
     <Fountain />
     <FountainBenches wood={wood} />
-    <LodgeRoom stone={castleStone} wood={wood} />
+    <LodgeRoom materials={lodgeMaterials} />
     <LodgeWindow glass={glass.cabin} material={lodgeWood} />
     <LodgeCorridorRoute material={castleStone} />
     <VesperOrnaments />
@@ -104,6 +108,10 @@ export default function Architecture() {
   </>
 }
 
+/** The Lodge’s own four walls get log courses; its tunnel keeps the castle stone. */
+function isLodgeRoomWall(wall: Wall) {
+  return wall.room === 'lodge' && !wall.id.startsWith('lodge-tunnel-')
+}
 /** Z offsets of the recessed light boxes: one every 4 m along the room’s depth, none where LED panes take over. */
 function lightBoxOffsets(room: typeof rooms[number]) {
   if (ledRooms.has(room.id)) {
