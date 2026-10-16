@@ -11,6 +11,7 @@ import {corridorRails, corridorRunner, corridorStairs} from '#src/lib/gallery/co
 import TimberGeometry from '#src/lib/gallery/passages/TimberGeometry.ts'
 import {GlobeBody} from '#src/lib/gallery/pendants/index.ts'
 import {stairPendantMounts} from '#src/lib/gallery/pendants/mounts.ts'
+import {lightIndoors} from '#src/lib/materials/IndoorLightsNode.ts'
 import StairRunnerMaterial from '#src/lib/materials/StairRunnerMaterial.ts'
 
 const globe = new GlobeBody
@@ -32,7 +33,7 @@ export default function CorridorStairs({timber, lining}: {
   const frame = useDisposable(useMemo(() => TimberGeometry.stairs(corridorStairs), []))
   const mounts = useMemo(() => stairPendantMounts(corridorStairs, [frame.shell, frame.ribs]), [frame])
   // The runner, rods and nosings are shaded into the treads, so every step stays a single box.
-  const treads = useDisposable(useMemo(() => new StairRunnerMaterial(corridorRunner), []))
+  const treads = useDisposable(useMemo(() => lightIndoors(new StairRunnerMaterial(corridorRunner)), []))
   return <group name='corridor-wooden-stairs'>
     <RigidBody colliders={false} type='fixed'>
       {corridorStairs.blocks.map((block, i) => <group key={i}>

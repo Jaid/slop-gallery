@@ -1,47 +1,60 @@
-import type {Material, Texture} from 'three/webgpu'
+import type LodgeMaterials from '#src/lib/materials/LodgeMaterials.ts'
 
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 
 import BenchSeat from '#component/levels/gallery/BenchSeat'
 import LodgeFire from '#component/levels/gallery/LodgeFire'
+import LodgeFurnishings from '#component/levels/gallery/LodgeFurnishings'
 import Box from '#src/components/Scene/primitives.tsx'
-import lodge, {lodgeFloorFinish} from '#src/lib/gallery/lodge.ts'
+import lodge from '#src/lib/gallery/lodge.ts'
+import lodgeInterior from '#src/lib/gallery/lodgeInterior/layout.ts'
 
-export default function LodgeRoom({wood, stone}: {
-  stone: Material
-  wood: Texture
-}) {
+const {fireplace, beams, windowSeat} = lodgeInterior
+/** Interior face of the room walls, measured from the room’s center. */
+const wallInside = lodge.size[1] / 2 - 0.105
+/** Past the wall face, so breast and chimney never show a seam against the logs. */
+const breastBack = wallInside + 0.055
+
+/**
+ * The Lodge: log walls with chinking, a wide-plank oak floor, a smoke-darkened board ceiling on hewn beams and a fieldstone fireplace, furnished around the hearth.
+ *
+ * The walls themselves are drawn by `WallSurface` with `materials.logWall`; this adds everything inside them.
+ */
+export default function LodgeRoom({materials}: {materials: LodgeMaterials}) {
   const [width, depth] = lodge.size
+  const {hearth, mantel, chimney} = fireplace
+  const pillarWidth = fireplace.width / 2 - fireplace.openingHalfWidth
+  const breastDepth = breastBack - fireplace.front
+  const lintelTop = fireplace.opening + fireplace.lintelHeight
+  const chimneyHeight = lodge.height - lintelTop
   return <group name='lodge-room' position={[lodge.center[0], lodge.floorY, lodge.center[1]]}>
     <RigidBody colliders={false} type='fixed'>
       <CuboidCollider args={[width / 2, 0.15, depth / 2]} position={[0, -0.15, 0]} />
       <CuboidCollider args={[width / 2, 0.12, depth / 2]} position={[0, lodge.height + 0.12, 0]} />
-      <Box color={lodgeFloorFinish.color} envMapIntensity={lodgeFloorFinish.envMapIntensity} map={wood} position={[0, -0.15, 0]} roughness={lodgeFloorFinish.roughness} size={[width, 0.3, depth]} />
-      <Box color='#513a29' map={wood} position={[0, lodge.height + 0.12, 0]} size={[width, 0.24, depth]} />
-      {[-3.5, 0, 3.5].map(z => <Box key={z} color='#302319' map={wood} position={[0, lodge.height - 0.16, z]} size={[width, 0.32, 0.3]} />)}
+      <Box material={materials.floor} name='lodge-floor' position={[0, -0.15, 0]} size={[width, 0.3, depth]} />
+      <Box material={materials.ceiling} name='lodge-ceiling' position={[0, lodge.height + 0.12, 0]} size={[width, 0.24, depth]} />
+      {/* Hewn beams rest on the top plates of the east and west walls. */}
+      {beams.z.map(z => <Box key={z} material={materials.timber} name='lodge-beam' position={[0, lodge.height - beams.size[1] / 2, z]} size={[width, beams.size[1], beams.size[0]]} />)}
     </RigidBody>
     <RigidBody colliders='cuboid' type='fixed'>
-      <group position={[-3.7, 0, 1.5]} rotation={[0, Math.PI / 2, 0]}>
-        <BenchSeat position={[0, 0.52, 0]} size={[3.3, 0.23, 0.85]} />
-        {[-1.2, 1.2].map(x => <Box key={x} color='#37291d' position={[x, 0.21, 0]} size={[0.22, 0.42, 0.65]} />)}
-        <Box color='#60432c' map={wood} position={[0, 0.95, -0.36]} size={[3.3, 0.52, 0.13]} />
+      <group name='lodge-window-seat' position={windowSeat.position} rotation={[0, Math.PI / 2, 0]}>
+        <BenchSeat material={materials.leather} position={[0, 0.52, 0]} size={[windowSeat.length, 0.23, 0.85]} />
+        {[-1, 1].map(side => <Box key={side} material={materials.timber} position={[side * (windowSeat.length / 2 - 0.08), 0.32, 0]} size={[0.14, 0.64, 0.85]} />)}
+        <Box material={materials.timber} position={[0, 0.2, 0.03]} size={[windowSeat.length - 0.3, 0.4, 0.72]} />
+        <Box material={materials.timber} position={[0, 0.95, -0.36]} size={[windowSeat.length, 0.52, 0.13]} />
       </group>
-      <Box color='#65432b' map={wood} position={[0, 0.7, -1.3]} size={[2.5, 0.25, 1.05]} />
-      {[-0.95, 0.95].map(x => <Box key={x} color='#342319' position={[x, 0.3, -1.3]} size={[0.18, 0.6, 0.75]} />)}
     </RigidBody>
     <group name='lodge-fireplace' rotation={[0, Math.PI, 0]}>
       <RigidBody colliders='cuboid' type='fixed'>
-        <Box material={stone} name='lodge-hearth' position={[0, 0.1, -4.35]} size={[3.8, 0.2, 1.2]} />
-        {[-1.45, 1.45].map(x => <Box key={x} material={stone} position={[x, 1, -4.35]} size={[0.6, 1.8, 0.9]} />)}
-        <Box material={stone} position={[0, 2.1, -4.35]} size={[3.8, 0.4, 1.1]} />
-        <Box material={stone} position={[0, 3, -4.62]} size={[3, 1.6, 0.18]} />
-        <Box color='#120e0b' position={[0, 0.95, -4.7]} size={[2.3, 1.5, 0.06]} />
+        <Box material={materials.stone} name='lodge-hearth' position={[0, hearth.size[1] / 2, -hearth.z]} size={hearth.size} />
+        {[-1, 1].map(side => <Box key={side} material={materials.stone} name='lodge-fireplace-pillar' position={[side * (fireplace.openingHalfWidth + pillarWidth / 2), (hearth.size[1] + fireplace.opening) / 2, -(fireplace.front + breastDepth / 2)]} size={[pillarWidth, fireplace.opening - hearth.size[1], breastDepth]} />)}
+        <Box material={materials.stone} name='lodge-fireplace-lintel' position={[0, fireplace.opening + fireplace.lintelHeight / 2, -(fireplace.front + breastDepth / 2)]} size={[fireplace.width, fireplace.lintelHeight, breastDepth]} />
+        <Box material={materials.timber} name='lodge-mantel' position={[0, lintelTop + mantel.size[1] / 2, -(fireplace.front - mantel.overhang + mantel.size[2] / 2)]} size={mantel.size} />
+        <Box material={materials.stone} name='lodge-chimney' position={[0, lintelTop + chimneyHeight / 2, -(breastBack - chimney.depth / 2)]} size={[chimney.width, chimneyHeight, chimney.depth]} />
+        <Box material={materials.soot} name='lodge-firebox-back' position={[0, (hearth.size[1] + fireplace.opening) / 2, -fireplace.back - 0.02]} size={[fireplace.openingHalfWidth * 2, fireplace.opening - hearth.size[1], 0.04]} />
       </RigidBody>
       <LodgeFire />
     </group>
-    <Box color='#443c2b' envMapIntensity={0} position={[0, 0.008, 0.4]} roughness={1} size={[3.5, 0.015, 4.6]} />
-    <mesh position={[0, 3.1, 0.8]}><cylinderGeometry args={[0.5, 0.65, 0.16, 32]} /><meshStandardNodeMaterial color='#e8c894' emissive='#ffd69a' emissiveIntensity={1.8} /></mesh>
-    <Box color='#302319' metalness={0.8} position={[0, 3.55, 0.8]} size={[0.025, 0.65, 0.025]} />
-    <pointLight color='#ffdfad' decay={2} distance={12} intensity={48} position={[0, 2.9, 0.8]} />
+    <LodgeFurnishings materials={materials} />
   </group>
 }
