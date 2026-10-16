@@ -11,6 +11,7 @@ import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {corridorPassage, corridorRails, corridorRunner, corridorStairs, insideCorridor} from '../../src/lib/gallery/corridor.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import lodge, {insideLodgeAccess, lodgeTunnel, lodgeTunnelTransition, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
+import lodgeInterior, {lodgeFurnitureColliders} from '../../src/lib/gallery/lodgeInterior/layout.ts'
 import LodgeWindowGeometry from '../../src/lib/gallery/LodgeWindowGeometry.ts'
 import {oculusPlatform} from '../../src/lib/gallery/lowerGallery.ts'
 import oculusTower from '../../src/lib/gallery/oculusTower.ts'
@@ -83,10 +84,14 @@ function createWorld(fps: number) {
   box([lodge.center[0], lodge.floorY + lodge.height + 0.12, lodge.center[1]], [10, 0.24, 10])
   box([-14, -0.15, 14], [12, 0.3, 12])
   box([-14, 5.9, 14], [12, 0.3, 12])
-  box([-28.7, lodge.floorY + 0.52, -29.5], [0.85, 0.23, 3.3])
-  box([-29.06, lodge.floorY + 0.95, -29.5], [0.13, 0.52, 3.3])
-  box([-25, lodge.floorY + 0.7, -32.3], [2.5, 0.25, 1.05])
-  box([-25, lodge.floorY + 0.1, -26.65], [3.8, 0.2, 1.2])
+  // The Lodge’s furniture, window seat and hearth, as the room mounts them.
+  for (const {position, yaw, size} of lodgeFurnitureColliders()) {
+    const turn = new Quaternion
+    box([lodge.center[0] + position[0], lodge.floorY + position[1] + size[1] / 2, lodge.center[1] + position[2]], size).setRotation(turn.setFromAxisAngle(new Vector3(0, 1, 0), yaw))
+  }
+  const {windowSeat, fireplace} = lodgeInterior
+  box([lodge.center[0] + windowSeat.position[0], lodge.floorY + 0.5, lodge.center[1] + windowSeat.position[2]], [0.85, 1, windowSeat.length])
+  box([lodge.center[0], lodge.floorY + fireplace.hearth.size[1] / 2, lodge.center[1] + fireplace.hearth.z], fireplace.hearth.size)
   return world
 }
 describe('Lodge and Corridor route', () => {
@@ -238,6 +243,25 @@ describe('Lodge and Corridor route', () => {
     }
     expect(insideGallery([-18, -3.4, -20])).toBe(false)
     expect(insideGallery([-25, -6.01, -20])).toBe(false)
+  })
+  test('the Lodge furniture leaves the walkway between both doorways clear', () => {
+    // The loop walks along z = tunnelZ from the tunnel doorway to the corridor doorway; a 0.3 m capsule needs room on both sides.
+    const walkway = lodge.tunnelZ - lodge.center[1]
+    for (const {position, yaw, size} of lodgeFurnitureColliders()) {
+      const reach = Math.abs(Math.sin(yaw)) * size[0] / 2 + Math.abs(Math.cos(yaw)) * size[2] / 2
+      expect(position[2] - reach).toBeGreaterThanOrEqual(lodgeInterior.walkwayEdge)
+      expect(position[2] - reach - walkway).toBeGreaterThan(0.9)
+      // Everything stays inside the room’s walls.
+      const halfX = Math.abs(Math.cos(yaw)) * size[0] / 2 + Math.abs(Math.sin(yaw)) * size[2] / 2
+      expect(Math.abs(position[0]) + halfX).toBeLessThan(lodge.size[0] / 2 - 0.105)
+      expect(position[2] + reach).toBeLessThan(lodge.size[1] / 2 - 0.105)
+      // Nothing stands in front of the window seat.
+      const {windowSeat} = lodgeInterior
+      expect(position[0] - halfX).toBeGreaterThan(windowSeat.position[0] + 0.425 + 0.3)
+      // Nothing stands inside the chimney breast.
+      const {fireplace} = lodgeInterior
+      expect(Math.abs(position[0]) - halfX >= fireplace.width / 2 || position[2] + reach <= fireplace.front).toBe(true)
+    }
   })
   test('the Oculus entrance starts at its platform, not at the buried lower floor', () => {
     const wall = walls.find(candidate => candidate.id === 'oculus-north')!
