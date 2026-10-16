@@ -22,6 +22,7 @@ export default function WallSurface({wall, plaster, glass, material, surfaceMate
     vesper: '#658578',
     dine: '#9295a2',
     antechamber: '#ded4b8',
+    salon: '#34506a',
   }
   const color = colors[surfaceRoom] ?? '#eee7d7'
   const trims: Partial<Record<Wall['room'], string>> = {
@@ -30,6 +31,7 @@ export default function WallSurface({wall, plaster, glass, material, surfaceMate
     sienna: '#35251f',
     vesper: '#44655a',
     dine: '#71778b',
+    salon: '#1f2f3e',
   }
   const trim = trims[surfaceRoom] ?? '#ded5c1'
   const geometry = architectureGeometry(wall)

@@ -4,6 +4,7 @@ import {create} from 'zustand'
 
 import {readControlled} from '../pauseMenu.ts'
 import initialPortraits from './collection.ts'
+import {exhibitionRevision} from './exhibitionUpdates.ts'
 import {validateCollectionImages} from './imagePolicy.ts'
 import {playerSession} from './PlayerSession.ts'
 
@@ -190,6 +191,7 @@ export function createDocument(): GalleryDocument {
   return {
     ...snapshot(s),
     version: 1,
+    exhibition: exhibitionRevision,
     savedAt: savedAt.toISOString(),
     player: playerSession.snapshot(),
     settings: {

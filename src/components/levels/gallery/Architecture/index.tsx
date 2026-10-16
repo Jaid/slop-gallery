@@ -19,6 +19,7 @@ import MoonfallRoom from '#component/levels/gallery/MoonfallRoom'
 import OculusRoom from '#component/levels/gallery/OculusRoom'
 import PottedPlants from '#component/levels/gallery/PottedPlants'
 import RoomFloor from '#component/levels/gallery/RoomFloor'
+import SalonRoom from '#component/levels/gallery/SalonRoom'
 import SiennaRoom from '#component/levels/gallery/SiennaRoom'
 import VesperOrnaments from '#component/levels/gallery/VesperOrnaments'
 import {damaskTexture, surfaceTexture} from '#src/components/Scene/materials.ts'
@@ -38,6 +39,8 @@ const pointLightPositions: Partial<Record<Wall['room'], Array<number>>> = {
 }
 // These rooms are lit by breakable LED panes with their own dimming lights instead of the fixed light boxes.
 const ledRooms = new Set<Wall['room']>(['dine'])
+// These upper rooms build their own floor, ceiling and lights.
+const customRooms = new Set<Wall['room']>(['salon', 'sienna'])
 
 export default function Architecture() {
   const isHeavy = useGraphicsMode()
@@ -79,7 +82,7 @@ export default function Architecture() {
     <ambientLight intensity={0.65} /><hemisphereLight args={['#ecf3ff', '#a29270', 1.15]} />
     <directionalLight castShadow color='#fff0d7' intensity={2.3} position={[-3, 9, 4]} shadow-camera-bottom={-20} shadow-camera-left={-24} shadow-camera-right={24} shadow-camera-top={20} shadow-mapSize={[4096, 4096]} shadow-normalBias={0.035} />
     {walls.map(wall => <WallSurface key={wall.id} glass={glass.tunnel} material={wallMaterial(wall)} plaster={wall.room === 'sienna' ? damask : plaster} surfaceMaterial={isLodgeRoomWall(wall) ? lodgeMaterials.logWall : undefined} wall={wall} />)}
-    {rooms.filter(room => room.floorY === 0 && room.id !== 'sienna').map(room => <group key={room.id} position={[room.center[0], 0, room.center[1]]}>
+    {rooms.filter(room => room.floorY === 0 && !customRooms.has(room.id)).map(room => <group key={room.id} position={[room.center[0], 0, room.center[1]]}>
       <RigidBody colliders={false} type='fixed'>
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]} />
       </RigidBody>
@@ -101,6 +104,7 @@ export default function Architecture() {
     <LodgeCorridorRoute material={castleStone} />
     <VesperOrnaments />
     <SiennaRoom wood={wood} />
+    <SalonRoom glass={glass.lobby} stone={stone} wood={wood} />
     <GalleryStairs />
     <MoonfallRoom stone={stone} />
     <OculusRoom material={oculusMaterial} />

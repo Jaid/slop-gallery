@@ -1,0 +1,117 @@
+import type {Vec3} from './types.ts'
+import type {Wall, WallOpening} from './walls.ts'
+
+/**
+ * The Salon sits north of Dine, behind the arch in Dine’s north wall. Its west wall backs onto the Lobby’s east extension; the
+ * Oculus ceiling below never reaches under it.
+ */
+const salon = {
+  center: [14, -14],
+  size: [12, 12],
+  /** shared by Dine’s north wall and the Salon’s south wall; both are centered on x = 14 */
+  doorway: {
+    u: 0,
+    width: 2.8,
+    height: 3.8,
+    profile: 'arch',
+  },
+} as const satisfies {
+  center: readonly [number, number]
+  doorway: WallOpening
+  size: readonly [number, number]
+}
+
+/** The 18 cm ceiling slab every upper-floor room gets at 5.78 m. */
+export const salonCeiling = {
+  y: 5.78,
+  thickness: 0.18,
+  underside: 5.78 - 0.18 / 2,
+} as const
+
+/**
+ * A laylight: a field of frosted panes in the middle of the ceiling, held by a deep coffered frame. All values are in meters,
+ * relative to the room center.
+ */
+export const salonLaylight = {
+  /** clear glazed opening, square */
+  opening: 6,
+  /** width of the coffer beams around the opening */
+  frame: 0.55,
+  /** how far the coffer beams hang below the ceiling */
+  depth: 0.34,
+  /** glazing bars split the glass into a 6 × 6 grid of panes */
+  panes: 6,
+  barWidth: 0.05,
+  barDepth: 0.07,
+  /** the glass sits 1 cm below the slab, above the glazing bars */
+  glassY: salonCeiling.underside - 0.01,
+} as const
+
+/**
+ * Lower wall finish: raised field panels on a painted dado under a gilt chair rail. The rail stays low enough that the placards
+ * of the lowest frames clear it by more than a hand’s width, even seen from above.
+ */
+export const salonWainscot = {
+  bottom: 0.44,
+  railBottom: 0.82,
+  railHeight: 0.07,
+  railDepth: 0.045,
+  panelDepth: 0.012,
+  /** raised fields stand this far proud of the dado */
+  fieldDepth: 0.012,
+  /** target width of a raised field, before it is fitted to the span */
+  fieldWidth: 1.2,
+  /** stile between fields and rail above and below them */
+  margin: 0.07,
+} as const
+
+/** Raised fields along one wainscot span, as [center, width] pairs. Short spans get a single field. */
+export function wainscotFields(start: number, end: number) {
+  const {fieldWidth, margin} = salonWainscot
+  const length = end - start
+  const count = Math.max(1, Math.round(length / fieldWidth))
+  const pitch = length / count
+  return Array.from({length: count}, (_, i) => [start + pitch * (i + 0.5), pitch - margin * 2] as const).filter(([, width]) => width > 0.1)
+}
+
+/** A double-sided velvet ottoman, centered a little south of the room center so it faces the north wall from a distance. */
+export const salonBench = {
+  position: [salon.center[0], 0, salon.center[1] + 0.8] as Vec3,
+  width: 3.2,
+  depth: 0.9,
+  legHeight: 0.28,
+  apronHeight: 0.1,
+  cushionHeight: 0.11,
+  get seatHeight() {
+    return this.legHeight + this.apronHeight + this.cushionHeight
+  },
+} as const
+
+/** Ottoman leg centers relative to its position, inset from the corners. */
+export const salonBenchLegs = [-1, 1].flatMap(x => [-1, 1].map(z => [x * (salonBench.width / 2 - 0.12), z * (salonBench.depth / 2 - 0.12)] as const))
+
+/**
+ * Point lights below the laylight, as room-relative z offsets, at `salonLightY`. They stay well inside the coffer so its gilt bead
+ * never sits close enough to a lamp to flare. The northern one casts shadows, throwing the ottoman’s toward the doorway, where visitors see it.
+ */
+export const salonLightOffsets = [-1.5, 1.5] as const
+export const salonLightY = 4.5
+
+/**
+ * Wall-local u ranges a horizontal band of wall dressing can run along without crossing a walk-through opening or its trim.
+ * The ends are pulled in by `inset`, so bands of neighboring walls meet at the corners instead of reaching through them.
+ */
+export function wallDressingSpans(wall: Pick<Wall, 'holes' | 'width'>, padding: number, inset = 0): Array<readonly [number, number]> {
+  let spans: Array<readonly [number, number]> = [[-wall.width / 2 + inset, wall.width / 2 - inset]]
+  for (const hole of wall.holes ?? []) {
+    if ((hole.bottom ?? 0) > 0) {
+      continue
+    }
+    const left = hole.u - hole.width / 2 - padding
+    const right = hole.u + hole.width / 2 + padding
+    spans = spans.flatMap(([start, end]) => [[start, Math.min(end, left)], [Math.max(start, right), end]] as const).filter(([start, end]) => end - start > 1e-6)
+  }
+  return spans
+}
+
+export default salon

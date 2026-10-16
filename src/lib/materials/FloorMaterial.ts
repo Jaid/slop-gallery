@@ -11,11 +11,15 @@ type FloorReflection = {
   strength: number
 }
 
-/** Optional planar reflection ownership; fast-mode materials allocate no reflection targets. */
+/**
+ * Optional planar reflection ownership; fast-mode materials allocate no reflection targets.
+ *
+ * Procedural floors pass no `map` and set their own `colorNode`; the reflection mixes over whatever the surface shades to.
+ */
 export default class FloorMaterial extends MeshStandardNodeMaterial {
   readonly reflection: ReturnType<typeof reflector> | null
 
-  constructor(map: Texture, {color, roughness, reflection}: {
+  constructor(map: Texture | null, {color, roughness, reflection}: {
     color: string
     reflection?: FloorReflection
     roughness: number

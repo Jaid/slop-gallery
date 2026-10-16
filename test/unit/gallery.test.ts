@@ -1,6 +1,7 @@
 import {beforeEach, describe, expect, test} from 'bun:test'
 
 import initialPortraits from '../../src/lib/gallery/collection.ts'
+import {exhibitionUpdates} from '../../src/lib/gallery/exhibitionUpdates.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import ImageImporter, {containedRect, imageSize} from '../../src/lib/gallery/ImageImporter.ts'
 import portraitLabel, {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
@@ -209,7 +210,7 @@ describe('image dimensions', () => {
     const job = importer.import([new File(['image'], 'pending.png', {type: 'image/png'})])
     restoreDocument(original)
     await job
-    expect(useGallery.getState().portraits).toHaveLength(16)
+    expect(useGallery.getState().portraits).toHaveLength(initialPortraits.length)
     importer.dispose()
   })
   test('preserves landscape, portrait and square aspect ratios', () => {
@@ -297,8 +298,9 @@ describe('backup validation', () => {
       expect(p.id).toMatch(/^[a-z]+(?:-[a-z]+)*$/)
       expect(p.source).toMatch(new RegExp(String.raw`^/art/${p.id}\.jxl$`))
       expect(await Bun.file(new URL(`../../public${p.source}`, import.meta.url)).exists()).toBe(true)
-      expect(p.narration).toBe(`/audio/${p.id}.opus`)
       if (!p.narration) {
+        // Recordings are prerendered with an OpenRouter key; only the Salon’s works may still be waiting for theirs.
+        expect(exhibitionUpdates[0].artworks).toContain(p.id)
         continue
       }
       expect(p.narration).toBe(`/audio/${p.id}.opus`)
@@ -385,7 +387,7 @@ describe('backup validation', () => {
     })).toThrow('outside the gallery')
   })
   test('accepts the shipped collection', () => {
-    expect(validateDocument(original).portraits).toHaveLength(16)
+    expect(validateDocument(original).portraits).toHaveLength(35)
   })
   for (const secretOpen of [false, true]) {
     test(`rejects the retired puzzle state (${secretOpen})`, () => {

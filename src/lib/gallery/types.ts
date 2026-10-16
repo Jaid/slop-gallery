@@ -1,7 +1,7 @@
 import type {Quat as MathQuat, Vec3 as MathVec3} from 'math'
 
 export type {Quat, Vec3} from 'math'
-export type RoomId = 'antechamber' | 'corridor' | 'dine' | 'lobby' | 'lodge' | 'moonfall' | 'oculus' | 'sienna' | 'vesper'
+export type RoomId = 'antechamber' | 'corridor' | 'dine' | 'lobby' | 'lodge' | 'moonfall' | 'oculus' | 'salon' | 'sienna' | 'vesper'
 export type Portrait = {
   creator: string
   description: string
@@ -41,6 +41,8 @@ export type GallerySnapshot = {
   portraits: Array<Portrait>
 }
 export type GalleryDocument = GallerySnapshot & {
+  /** how many exhibition updates the collection has received; missing in collections saved before the first one */
+  exhibition?: number
   player: PlayerPose
   savedAt: string
   settings: GallerySettings

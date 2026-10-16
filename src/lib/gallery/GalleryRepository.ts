@@ -4,6 +4,7 @@ import {galleryStorageKey} from '../level.ts'
 import pauseMenu from '../pauseMenu.ts'
 import {notify} from './actions.ts'
 import initialPortraits from './collection.ts'
+import {exhibitionRevision, upgradeDocument} from './exhibitionUpdates.ts'
 import {imageSize} from './ImageImporter.ts'
 import {imageExtensions, maximumBackupBytes, validateCollectionImages, validateImage} from './imagePolicy.ts'
 import {playerSession, validatePlayerPose} from './PlayerSession.ts'
@@ -18,11 +19,15 @@ const shortText = (value: unknown, max: number): value is string => typeof value
 const exactKeys = (value: Record<string, unknown>, keys: ReadonlyArray<string>) => Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value, key))
 
 export function validateDocument(value: unknown): GalleryDocument {
-  if (!object(value) || !exactKeys(value, ['version', 'portraits', 'player', 'savedAt', 'settings']) || value.version !== 1 || !Array.isArray(value.portraits) || value.portraits.length > maximumPortraits || !object(value.settings)) {
+  const keys = ['version', 'portraits', 'player', 'savedAt', 'settings']
+  if (!object(value) || !exactKeys(value, Object.hasOwn(value, 'exhibition') ? [...keys, 'exhibition'] : keys) || value.version !== 1 || !Array.isArray(value.portraits) || value.portraits.length > maximumPortraits || !object(value.settings)) {
     throw new Error('This is not a supported Slop Gallery collection.')
   }
   if (!shortText(value.savedAt, 100)) {
     throw new Error('The collection timestamp is too long.')
+  }
+  if (value.exhibition !== undefined && !(Number.isInteger(value.exhibition) && (value.exhibition as number) >= 0 && (value.exhibition as number) <= exhibitionRevision)) {
+    throw new Error('The collection is from a newer exhibition.')
   }
   const settings = value.settings
   if (!exactKeys(settings, ['sound']) || typeof settings.sound !== 'boolean') {
@@ -93,6 +98,7 @@ export function validateDocument(value: unknown): GalleryDocument {
   }
   return {
     version: 1,
+    ...value.exhibition === undefined ? {} : {exhibition: value.exhibition as number},
     portraits,
     player,
     savedAt: value.savedAt,
@@ -180,7 +186,7 @@ export default class GalleryRepository {
       }
       p.source = new Blob([Uint8Array.fromBase64(data)], {type: mime})
     }
-    const document = validateDocument(parsed)
+    const document = validateDocument(upgradeDocument(parsed))
     // Decode every embedded image before replacing anything in the current collection.
     for (const p of document.portraits) {
       if (!(p.source instanceof Blob)) {
@@ -204,7 +210,7 @@ export default class GalleryRepository {
       request.addEventListener('success', () => resolve(request.result))
       request.addEventListener('error', () => reject(request.error))
     })
-    return value === undefined ? null : validateDocument(value)
+    return value === undefined ? null : validateDocument(upgradeDocument(value))
   }
 
   async save(document: GalleryDocument) {

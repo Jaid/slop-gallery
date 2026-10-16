@@ -9,6 +9,7 @@ import {craterTerrain} from './moonfall/CraterTerrain.ts'
 import {balconyFloorHeight} from './oculusBalcony.ts'
 import {towerFloorHeight} from './oculusTower.ts'
 import portraitLabel, {portraitLabelLayout} from './portraitLabel.ts'
+import salon from './salon.ts'
 import staircase, {insideStairway, stairFlights, stairFloorHeight, stairTurn} from './staircase.ts'
 import {tunnelDisplayWindow} from './tunnelDisplays.ts'
 
@@ -143,6 +144,17 @@ export const rooms = [
     size: corridor.size,
     color: '#8c6747',
   },
+  {
+    id: 'salon',
+    floorY: 0,
+    height: 5.8,
+    number: '10',
+    title: 'The Salon',
+    subtitle: 'Hung frame to frame. Judged elbow to elbow.',
+    center: salon.center,
+    size: salon.size,
+    color: '#7d2a31',
+  },
 ] as const
 
 const tunnelContains = ([x, y, z]: Vec3) => Math.abs(x - lowerGallery.tunnel.x) <= lowerGallery.tunnel.width / 2 && z >= lowerGallery.tunnel.northZ && z <= lowerGallery.tunnel.southZ && y >= lowerGallery.floorY - 1 && y <= lowerGallery.floorY + lowerGallery.tunnel.height
@@ -271,10 +283,14 @@ const walls: Array<Wall> = [
       profile: 'arch',
     },
   ]),
-  wall('dine-north', 'dine', 14, -8, 0, 12),
+  wall('dine-north', 'dine', 14, -8, 0, 12, [salon.doorway]),
   wall('dine-east', 'dine', 20, 0, -Math.PI / 2, 16),
   wall('dine-south', 'dine', 14, 8, Math.PI, 12),
   wall('dine-west', 'dine', 8, 0, Math.PI / 2, 16, doorway),
+  roomWall('salon', 'north'),
+  roomWall('salon', 'east'),
+  roomWall('salon', 'south', [salon.doorway]),
+  roomWall('salon', 'west'),
   wall('antechamber-north', 'antechamber', 0, 8, 0, 8, [
     {
       u: 0,
