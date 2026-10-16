@@ -5,6 +5,7 @@ import {useFrame} from '@react-three/fiber'
 import {Matrix4, PerspectiveCamera, Quaternion, Vector3} from 'three/webgpu'
 
 import {levelWallDistance} from '#level/navigation.ts'
+import {readIntroNarration} from '#src/lib/audio/intro.ts'
 import {cameraPose, dragPose, findPlacement, narrate, roomAt, setCameraFocused, useGallery} from '#src/lib/gallery.ts'
 import {interactiveObjects} from '#src/lib/gallery/interactiveObjects.ts'
 import {isPortraitLabelHit} from '#src/lib/gallery/portraitLabel.ts'
@@ -16,6 +17,8 @@ import {propObjects} from '../GrabbableProp.tsx'
 import {describeHeld, describeTarget} from './describeTarget.ts'
 
 const up = new Vector3(0, 1, 0)
+// `?intro_narration=false` skips the welcome narration for the whole page.
+const introNarration = readIntroNarration()
 export default function useInteractionFrame(camera: RootState['camera'], renderer: RootState['renderer'], {
   cursor,
   direction,
@@ -30,7 +33,7 @@ export default function useInteractionFrame(camera: RootState['camera'], rendere
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.06)
     const s = useGallery.getState()
-    if (isGallery && s.locked && !introduced.current && firstPose.current && (camera.position.distanceTo(firstPose.current.position) > 0.12 || camera.quaternion.angleTo(firstPose.current.rotation) > 0.1)) {
+    if (introNarration && isGallery && s.locked && !introduced.current && firstPose.current && (camera.position.distanceTo(firstPose.current.position) > 0.12 || camera.quaternion.angleTo(firstPose.current.rotation) > 0.1)) {
       introduced.current = true
       narrate('__intro')
     }
