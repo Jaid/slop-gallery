@@ -5,6 +5,7 @@ import rarities, {special as specialRarity} from './rarities.ts'
 
 const identifier = /^[a-z][0-9_a-z]*$/u
 const byId = (a: KnotEntry, b: KnotEntry) => a.id.localeCompare(b.id)
+const byFreshness = (a: KnotEntry, b: KnotEntry) => b.createdAt - a.createdAt || byId(a, b)
 
 export type KnotSelectionOptions = {
   /** additional predicate, for example a model or an exact ID whitelist */
@@ -14,7 +15,7 @@ export type KnotSelectionOptions = {
    * `rarityFilter` explicitly asks for them.
    */
   includeSpecial?: boolean
-  /** whether rarity decides omissions and order; `false` uses canonical ID order */
+  /** whether rarity, then freshness, decides omissions and order; `false` uses canonical ID order */
   rarity?: boolean
   rarityFilter?: ReadonlySet<Rarity>
 }
@@ -81,7 +82,7 @@ export default class KnotCandidate {
     if (!useRarity) {
       return limit === undefined ? available : available.slice(0, limit)
     }
-    const prioritized = available.toSorted((a, b) => b.rarity - a.rarity || byId(a, b))
-    return (limit === undefined ? prioritized : prioritized.slice(0, limit)).toSorted((a, b) => a.rarity - b.rarity || byId(a, b))
+    const prioritized = available.toSorted((a, b) => b.rarity - a.rarity || byFreshness(a, b))
+    return (limit === undefined ? prioritized : prioritized.slice(0, limit)).toSorted((a, b) => a.rarity - b.rarity || byFreshness(a, b))
   }
 }

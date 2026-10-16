@@ -46,11 +46,14 @@ describe('rarity selection policy', () => {
   test('omits lower rarities first for every shot cap and places rarer knots away from the billboard', () => {
     for (const candidate of knotCandidates) {
       const available = candidate.items.filter(item => item.rarity !== special)
+      const prioritized = available.toSorted((a, b) => b.rarity - a.rarity || b.createdAt - a.createdAt || a.id.localeCompare(b.id))
       for (let limit = 1; limit <= available.length; limit++) {
         const selected = candidate.select(limit)
         const ids = new Set(selected.map(item => item.id))
         const omitted = available.filter(item => !ids.has(item.id))
         expect(selected).toHaveLength(limit)
+        const expected = prioritized.slice(0, limit).toSorted((a, b) => a.rarity - b.rarity || b.createdAt - a.createdAt || a.id.localeCompare(b.id))
+        expect(selected.map(item => item.id)).toEqual(expected.map(item => item.id))
         if (omitted.length) {
           expect(Math.min(...selected.map(item => item.rarity))).toBeGreaterThanOrEqual(Math.max(...omitted.map(item => item.rarity)))
         }
@@ -167,7 +170,7 @@ describe('special rarity', () => {
     expect(shown(`?knot_id=knotty_prince,${rareItem.id}&rarity_filter=rare`)).toEqual(new Set([rareItem.id]))
     expect(shown(`?knot_id=knotty_prince,${rareItem.id}&rarity_filter=special`)).toEqual(new Set(['knotty_prince']))
     const explicit = knotCandidates.find(candidate => candidate.data.id === 'claude_opus')!
-    expect(explicit.select(undefined, {includeSpecial: true}).filter(item => item.rarity === special).map(item => item.id)).toEqual(specialIds)
+    expect(explicit.select(undefined, {includeSpecial: true}).filter(item => item.rarity === special).map(item => item.id)).toEqual(specialIds.toSorted((a, b) => knotsById.get(b)!.createdAt - knotsById.get(a)!.createdAt || a.localeCompare(b)))
   })
   test('is excluded from candidate scores', () => {
     const affected = knotCandidates.filter(entry => entry.items.some(item => item.rarity === special))

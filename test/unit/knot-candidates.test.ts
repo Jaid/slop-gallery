@@ -12,10 +12,10 @@ const candidateData: KnotCandidateData = {
   title: 'Claude Fable',
   icon: 'symbol.svg',
 }
-const item = (id: string): KnotData => ({
+const item = (id: string, createdAt = 1_789_000_000): KnotData => ({
   id,
   title: id.replaceAll('_', ' '),
-  createdAt: 1_789_000_000,
+  createdAt,
   candidateId: 'claude_fable',
   placeholder: {
     color: '#ffffff',
@@ -29,15 +29,29 @@ describe('arbitrary Knot batches', () => {
   test('places rarer entries at the far end while prioritizing them for shot limits', () => {
     const items = [item('washi_lantern'), item('lichtenberg_reliquary'), item('damascus_ember'), item('chladni_resonance'), item('glacial_aurora')]
     const candidate = new KnotCandidate(candidateData, items)
-    const byRarityThenId = (a: typeof candidate.items[number], b: typeof candidate.items[number]) => a.rarity - b.rarity || a.id.localeCompare(b.id)
-    const expected = candidate.items.toSorted(byRarityThenId)
+    const byDisplay = (a: typeof candidate.items[number], b: typeof candidate.items[number]) => a.rarity - b.rarity || b.createdAt - a.createdAt || a.id.localeCompare(b.id)
+    const expected = candidate.items.toSorted(byDisplay)
     expect(ids(candidate)).toEqual(expected.map(entry => entry.id))
     expect(ids(new KnotCandidate(candidateData, items.toReversed()))).toEqual(expected.map(entry => entry.id))
     const limited = candidate.select(3)
-    const expectedLimited = candidate.items.toSorted((a, b) => b.rarity - a.rarity || a.id.localeCompare(b.id)).slice(0, 3).toSorted(byRarityThenId)
+    const expectedLimited = candidate.items.toSorted((a, b) => b.rarity - a.rarity || b.createdAt - a.createdAt || a.id.localeCompare(b.id)).slice(0, 3).toSorted(byDisplay)
     expect(limited.map(entry => entry.id)).toEqual(expectedLimited.map(entry => entry.id))
     expect(limited.map(entry => entry.rarity)).toEqual(expectedLimited.map(entry => entry.rarity))
     expect(() => candidate.select(0)).toThrow('shot limit')
+  })
+  test('newer knots win rarity ties without outranking older knots of higher rarity', () => {
+    const candidate = new KnotCandidate(candidateData, [
+      item('damascus_ember', 1_789_000_100),
+      item('glacial_aurora', 1_789_000_300),
+      item('kintsugi_obsidian', 1_789_000_300),
+      item('lichtenberg_reliquary', 1_788_000_000),
+      item('chladni_resonance', 1_787_000_000),
+    ])
+    expect(candidate.select(1).map(entry => entry.id)).toEqual(['chladni_resonance'])
+    expect(candidate.select(3).map(entry => entry.id)).toEqual(['glacial_aurora', 'lichtenberg_reliquary', 'chladni_resonance'])
+    expect(candidate.select(4).map(entry => entry.id)).toEqual(['glacial_aurora', 'kintsugi_obsidian', 'lichtenberg_reliquary', 'chladni_resonance'])
+    expect(candidate.select().map(entry => entry.id)).toEqual(['glacial_aurora', 'kintsugi_obsidian', 'damascus_ember', 'lichtenberg_reliquary', 'chladni_resonance'])
+    expect(candidate.select(3, {rarity: false}).map(entry => entry.id)).toEqual(['chladni_resonance', 'damascus_ember', 'glacial_aurora'])
   })
   test('handles empty and partial rows without padding', () => {
     expect(ids(new KnotCandidate(candidateData, []))).toEqual([])

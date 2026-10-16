@@ -76,7 +76,7 @@ describe('flat knot catalogue', () => {
       const available = candidate.items.filter(entry => entry.rarity !== special)
       const selected = candidate.select(3)
       expect(selected.map(entry => entry.rarity)).toEqual(selected.map(entry => entry.rarity).toSorted((a, b) => a - b))
-      expect(selected.map(entry => entry.id).toSorted()).toEqual(available.toSorted((a, b) => b.rarity - a.rarity || a.id.localeCompare(b.id)).slice(0, 3).map(entry => entry.id).toSorted())
+      expect(selected.map(entry => entry.id).toSorted()).toEqual(available.toSorted((a, b) => b.rarity - a.rarity || b.createdAt - a.createdAt || a.id.localeCompare(b.id)).slice(0, 3).map(entry => entry.id).toSorted())
       expect(selected.every(entry => entry.rarity !== special)).toBe(true)
     }
   })
