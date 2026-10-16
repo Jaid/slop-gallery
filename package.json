@@ -107,7 +107,7 @@
     "rolldown-plugin-bake-branch-component": "workspace:*",
     "rolldown-plugin-hoist-popular-constants": "workspace:*",
     "rolldown-plugin-thematic-chunks": "workspace:*",
-    "sass-embedded": "1.105.1",
+    "sass-embedded": "1.105.2",
     "terser": "5.51.2",
     "tsconfig-jaid-react": "16.0.0",
     "typescript": "npm:typescript-classic@6.0.4",
