@@ -5,6 +5,7 @@ export default {
   id: 'gothic_vitrail',
   candidateId: 'gemini_flash',
   title: 'Gothic Vitrail',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

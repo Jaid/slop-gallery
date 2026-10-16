@@ -5,6 +5,7 @@ export default {
   id: 'lantern_vigil',
   candidateId: 'claude_fable',
   title: 'Lantern Vigil',
+  createdAt: 1790695541,
   harness: 'Mage',
   author: {
     model: {

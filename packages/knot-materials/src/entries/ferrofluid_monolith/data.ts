@@ -4,6 +4,7 @@ export default {
   id: 'ferrofluid_monolith',
   candidateId: 'gemini_flash',
   title: 'Ferrofluid Monolith',
+  createdAt: 1789290805,
   harness: 'none',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'gilded_seam',
   candidateId: 'grok',
   title: 'Gilded Seam',
+  createdAt: 1790126896,
   harness: 'Mage',
   author: {
     model: {

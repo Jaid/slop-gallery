@@ -4,6 +4,7 @@ export default {
   id: 'umbra_procession',
   candidateId: 'gpt_sol',
   title: 'Umbra Procession',
+  createdAt: 1790119994,
   harness: 'Mage',
   author: {
     model: {

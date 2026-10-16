@@ -5,6 +5,7 @@ export default {
   id: 'radium_diatom',
   candidateId: 'gemini_argon',
   title: 'Radium Diatom',
+  createdAt: 1791968199,
   harness: 'Mage',
   author: {
     model: {

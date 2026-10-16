@@ -4,6 +4,7 @@ export default {
   id: 'emberwake',
   candidateId: 'deepseek',
   title: 'Emberwake',
+  createdAt: 1790125939,
   harness: 'Mage',
   author: {
     model: {

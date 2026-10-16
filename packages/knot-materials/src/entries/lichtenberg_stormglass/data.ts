@@ -4,6 +4,7 @@ export default {
   id: 'lichtenberg_stormglass',
   candidateId: 'grok',
   title: 'Lichtenberg Stormglass',
+  createdAt: 1789231507,
   harness: 'grok.com Build',
   author: {
     model: {

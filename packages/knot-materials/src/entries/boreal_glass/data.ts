@@ -4,6 +4,7 @@ export default {
   id: 'boreal_glass',
   candidateId: 'grok',
   title: 'Boreal Glass',
+  createdAt: 1790126896,
   harness: 'Mage',
   author: {
     model: {

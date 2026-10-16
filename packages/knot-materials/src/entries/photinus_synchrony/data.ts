@@ -4,6 +4,7 @@ export default {
   id: 'photinus_synchrony',
   candidateId: 'claude_opus',
   title: 'Photinus Synchrony',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

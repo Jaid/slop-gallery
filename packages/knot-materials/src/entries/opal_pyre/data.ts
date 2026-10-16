@@ -4,6 +4,7 @@ export default {
   id: 'opal_pyre',
   candidateId: 'minimax',
   title: 'Opal Pyre',
+  createdAt: 1789979276,
   harness: 'Mage',
   author: {
     model: {

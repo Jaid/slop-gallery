@@ -5,6 +5,7 @@ export default {
   id: 'rimewake',
   candidateId: 'space_bunny',
   title: 'Rimewake',
+  createdAt: 1790868534,
   harness: 'Mage',
   author: {
     model: {

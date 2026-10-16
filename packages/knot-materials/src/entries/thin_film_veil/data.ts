@@ -4,6 +4,7 @@ export default {
   id: 'thin_film_veil',
   candidateId: 'claude_opus',
   title: 'Thin Film Veil',
+  createdAt: 1789575270,
   harness: 'none',
   author: {
     model: {

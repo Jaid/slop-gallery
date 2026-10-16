@@ -5,6 +5,7 @@ export default {
   id: 'soap_iridescence',
   candidateId: 'grok',
   title: 'Soap Iridescence',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

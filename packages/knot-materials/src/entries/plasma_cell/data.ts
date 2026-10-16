@@ -4,6 +4,7 @@ export default {
   id: 'plasma_cell',
   candidateId: 'hy',
   title: 'Plasma Cell',
+  createdAt: 1789575270,
   harness: 'none',
   author: {
     model: {

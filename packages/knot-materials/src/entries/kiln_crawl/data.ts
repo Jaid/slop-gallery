@@ -4,6 +4,7 @@ export default {
   id: 'kiln_crawl',
   candidateId: 'hy',
   title: 'Kiln Crawl',
+  createdAt: 1789575270,
   harness: 'none',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'caged_star',
   candidateId: 'glm',
   title: 'Caged Star',
+  createdAt: 1789231507,
   harness: 'chat.z.ai',
   author: {
     model: {

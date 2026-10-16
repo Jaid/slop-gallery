@@ -4,6 +4,7 @@ export default {
   id: 'quantum_damascus',
   candidateId: 'gemini_flash',
   title: 'Quantum Damascus',
+  createdAt: 1789075137,
   harness: 'none',
   author: {
     model: {

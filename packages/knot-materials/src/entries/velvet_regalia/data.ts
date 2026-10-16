@@ -4,6 +4,7 @@ export default {
   id: 'velvet_regalia',
   candidateId: 'mimo',
   title: 'Velvet Regalia',
+  createdAt: 1790036112,
   harness: 'Mage',
   author: {
     model: {

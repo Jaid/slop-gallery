@@ -4,6 +4,7 @@ export default {
   id: 'drowned_basilica',
   candidateId: 'deepseek',
   title: 'Sunken Cathedral',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'DeepSeek 4.1 Flash',

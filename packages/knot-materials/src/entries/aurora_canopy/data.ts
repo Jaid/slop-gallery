@@ -4,6 +4,7 @@ export default {
   id: 'aurora_canopy',
   candidateId: 'minimax',
   title: 'Aurora Canopy',
+  createdAt: 1789979276,
   harness: 'Mage',
   author: {
     model: {

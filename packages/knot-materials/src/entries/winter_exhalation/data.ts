@@ -5,6 +5,7 @@ export default {
   id: 'winter_exhalation',
   candidateId: 'gpt_sol',
   title: 'Winter Exhalation',
+  createdAt: 1791064898,
   harness: 'Mage',
   author: {
     model: {

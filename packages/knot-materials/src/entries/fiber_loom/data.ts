@@ -4,6 +4,7 @@ export default {
   id: 'fiber_loom',
   candidateId: 'claude_opus',
   title: 'Fiber Loom',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'volcanic_chrysalis',
   candidateId: 'gemini_flash',
   title: 'Magma Chrysalis',
+  createdAt: 1789290805,
   harness: 'none',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'mycelium_oracle',
   candidateId: 'muse_spark',
   title: 'Mycelium Oracle',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

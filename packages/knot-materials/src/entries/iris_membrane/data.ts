@@ -4,6 +4,7 @@ export default {
   id: 'iris_membrane',
   candidateId: 'claude_opus',
   title: 'Iris Membrane',
+  createdAt: 1789575270,
   harness: 'none',
   author: {
     model: {

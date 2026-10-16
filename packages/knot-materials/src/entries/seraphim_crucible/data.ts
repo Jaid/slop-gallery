@@ -5,6 +5,7 @@ export default {
   id: 'seraphim_crucible',
   candidateId: 'gemini_argon',
   title: 'Seraphim Crucible',
+  createdAt: 1792035158,
   harness: 'Mage',
   author: {
     model: {

@@ -5,6 +5,7 @@ export default {
   id: 'moonstone_dune',
   candidateId: 'space_bunny',
   title: 'Moonstone Dune',
+  createdAt: 1790327078,
   harness: 'Mage',
   author: {
     model: {

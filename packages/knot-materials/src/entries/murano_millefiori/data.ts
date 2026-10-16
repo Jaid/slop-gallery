@@ -5,6 +5,7 @@ export default {
   id: 'murano_millefiori',
   candidateId: 'gemini_argon',
   title: 'Murano Millefiori',
+  createdAt: 1792017078,
   harness: 'Mage',
   author: {
     model: {

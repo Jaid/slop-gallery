@@ -5,6 +5,7 @@ export default {
   id: 'golden_repair',
   candidateId: 'claude_opus',
   title: 'Golden Repair',
+  createdAt: 1790461810,
   harness: 'Mage',
   author: {
     model: {

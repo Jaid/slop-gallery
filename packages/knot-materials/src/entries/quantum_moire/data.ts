@@ -4,6 +4,7 @@ export default {
   id: 'quantum_moire',
   candidateId: 'gpt_sol',
   title: 'Quantum Moiré',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'GPT-5.6 Sol',

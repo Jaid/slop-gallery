@@ -4,6 +4,7 @@ export default {
   id: 'petrified_lightning',
   candidateId: 'qwen_max',
   title: 'Petrified Lightning',
+  createdAt: 1789231507,
   harness: 'chat.qwen.ai',
   author: {
     model: {

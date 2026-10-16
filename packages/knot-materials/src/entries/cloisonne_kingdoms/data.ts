@@ -6,6 +6,7 @@ export default {
   id: 'cloisonne_kingdoms',
   candidateId: 'space_bunny',
   title: 'Cloisonné Kingdoms',
+  createdAt: 1790327078,
   harness: 'Mage',
   author: {
     model: {

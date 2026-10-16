@@ -5,6 +5,7 @@ export default {
   id: 'cinnabar_requiem',
   candidateId: 'space_bunny',
   title: 'Cinnabar Requiem',
+  createdAt: 1790458629,
   harness: 'Mage',
   author: {
     model: {

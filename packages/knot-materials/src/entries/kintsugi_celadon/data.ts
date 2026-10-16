@@ -5,6 +5,7 @@ export default {
   id: 'kintsugi_celadon',
   candidateId: 'gemini_argon',
   title: 'Kintsugi Celadon',
+  createdAt: 1792050794,
   harness: 'Mage',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'prism_orchard',
   candidateId: 'gpt_astra',
   title: 'Prism Orchard',
+  createdAt: 1789979276,
   harness: 'Mage',
   author: {
     model: {

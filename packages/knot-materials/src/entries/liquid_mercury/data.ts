@@ -4,6 +4,7 @@ export default {
   id: 'liquid_mercury',
   candidateId: 'qwen_max',
   title: 'Ferrofluid Bloom',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'Qwen 3.8 Max',

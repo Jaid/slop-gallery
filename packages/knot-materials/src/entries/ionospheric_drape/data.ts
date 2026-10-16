@@ -4,6 +4,7 @@ export default {
   id: 'ionospheric_drape',
   candidateId: 'kimi',
   title: 'Aurora Veil',
+  createdAt: 1789231507,
   harness: 'kimi.ai',
   author: {
     model: {

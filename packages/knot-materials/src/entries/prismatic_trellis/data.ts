@@ -5,6 +5,7 @@ export default {
   id: 'prismatic_trellis',
   candidateId: 'gpt_sol',
   title: 'Prismatic Trellis',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

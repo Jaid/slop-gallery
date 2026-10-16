@@ -4,6 +4,7 @@ export default {
   id: 'cymatic_resonance',
   candidateId: 'qwen_max',
   title: 'Cymatic Resonance',
+  createdAt: 1789231507,
   harness: 'chat.qwen.ai',
   author: {
     model: {

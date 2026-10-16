@@ -4,6 +4,7 @@ export default {
   id: 'frost_bloom',
   candidateId: 'glm',
   title: 'Frost Bloom',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

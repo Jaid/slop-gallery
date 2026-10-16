@@ -5,6 +5,7 @@ export default {
   id: 'moth_lanterns',
   candidateId: 'gpt_sol',
   title: 'Moth Lanterns',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

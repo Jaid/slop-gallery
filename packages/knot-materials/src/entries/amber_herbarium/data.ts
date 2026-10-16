@@ -4,6 +4,7 @@ export default {
   id: 'amber_herbarium',
   candidateId: 'gpt_astra',
   title: 'Amber Herbarium',
+  createdAt: 1790122624,
   harness: 'Mage',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'glacier_script',
   candidateId: 'gpt_astra',
   title: 'Glacier Script',
+  createdAt: 1790119994,
   harness: 'Mage',
   author: {
     model: {

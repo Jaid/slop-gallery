@@ -4,6 +4,7 @@ export default {
   id: 'obsidian_bloom',
   candidateId: 'deepseek',
   title: 'Obsidian Bloom',
+  createdAt: 1789075137,
   harness: 'Mage',
   author: {
     model: {

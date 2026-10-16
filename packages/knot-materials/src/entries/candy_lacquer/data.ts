@@ -4,6 +4,7 @@ export default {
   id: 'candy_lacquer',
   candidateId: 'gpt_terra',
   title: 'Candy Lacquer',
+  createdAt: 1789979276,
   harness: 'Mage',
   author: {
     model: {

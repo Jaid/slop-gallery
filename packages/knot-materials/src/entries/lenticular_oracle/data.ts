@@ -5,6 +5,7 @@ export default {
   id: 'lenticular_oracle',
   candidateId: 'claude_sonnet',
   title: 'Lenticular Oracle',
+  createdAt: 1791064898,
   harness: 'Mage',
   author: {
     model: {

@@ -5,6 +5,7 @@ export default {
   id: 'neon_relic',
   candidateId: 'space_bunny',
   title: 'Neon Relic',
+  createdAt: 1790458629,
   harness: 'Mage',
   author: {
     model: {

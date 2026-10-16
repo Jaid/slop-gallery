@@ -5,6 +5,7 @@ export default {
   id: 'rose_medallions',
   candidateId: 'claude_opus',
   title: 'Rose Medallions',
+  createdAt: 1790461810,
   harness: 'Mage',
   author: {
     model: {

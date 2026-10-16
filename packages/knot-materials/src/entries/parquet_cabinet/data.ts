@@ -12,6 +12,7 @@ export default {
     },
   },
   title: 'Parquet Cabinet',
+  createdAt: 1789816097,
   flavorText: 'Maple and rosewood trade places at every joint, guarding a room too small to enter.',
   placeholder: {
     color: '#b97942',

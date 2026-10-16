@@ -5,6 +5,7 @@ export default {
   id: 'cathedral_skin',
   candidateId: 'muse_wonder',
   title: 'Cathedral Skin',
+  createdAt: 1791848912,
   harness: 'Mage',
   author: {
     model: {

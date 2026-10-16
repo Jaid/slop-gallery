@@ -5,6 +5,7 @@ export default {
   id: 'umbra_choir',
   candidateId: 'gpt_sol',
   title: 'Umbra Choir',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

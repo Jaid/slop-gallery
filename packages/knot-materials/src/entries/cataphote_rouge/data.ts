@@ -4,6 +4,7 @@ export default {
   id: 'cataphote_rouge',
   candidateId: 'gpt_astra',
   title: 'Cataphote Rouge',
+  createdAt: 1789293909,
   harness: 'none',
   author: {
     model: {

@@ -5,6 +5,7 @@ export default {
   id: 'cloisonne_lotus',
   candidateId: 'gemini_argon',
   title: 'Cloisonné Lotus',
+  createdAt: 1791968199,
   harness: 'Mage',
   author: {
     model: {

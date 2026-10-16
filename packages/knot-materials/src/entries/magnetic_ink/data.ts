@@ -4,6 +4,7 @@ export default {
   id: 'magnetic_ink',
   candidateId: 'glm',
   title: 'Magnetic Ink',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'GLM 5.3',

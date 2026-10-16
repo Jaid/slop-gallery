@@ -4,6 +4,7 @@ export default {
   id: 'ferro_crown',
   candidateId: 'claude_opus',
   title: 'Ferro Crown',
+  createdAt: 1789575270,
   harness: 'none',
   author: {
     model: {

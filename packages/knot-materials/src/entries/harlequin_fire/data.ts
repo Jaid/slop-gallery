@@ -5,6 +5,7 @@ export default {
   id: 'harlequin_fire',
   candidateId: 'claude_opus',
   title: 'Harlequin Fire',
+  createdAt: 1790461810,
   harness: 'Mage',
   author: {
     model: {

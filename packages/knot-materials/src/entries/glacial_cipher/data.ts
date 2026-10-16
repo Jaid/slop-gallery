@@ -4,6 +4,7 @@ export default {
   id: 'glacial_cipher',
   candidateId: 'gpt_sol',
   title: 'Glacial Cipher',
+  createdAt: 1789293909,
   harness: 'none',
   author: {
     model: {

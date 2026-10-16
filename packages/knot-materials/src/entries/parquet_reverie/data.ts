@@ -12,6 +12,7 @@ export default {
     },
   },
   title: 'Parquet Reverie',
+  createdAt: 1789816097,
   flavorText: 'A cabinetmaker tiled a daydream with maple and rosewood, then misplaced every straight line.',
   placeholder: {
     color: '#b67b43',

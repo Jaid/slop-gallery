@@ -4,6 +4,7 @@ export default {
   id: 'solar_corona',
   candidateId: 'deepseek',
   title: 'Solar Corona',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'scarab_reliquary',
   candidateId: 'glm',
   title: 'Scarab Reliquary',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'GLM 5.3',

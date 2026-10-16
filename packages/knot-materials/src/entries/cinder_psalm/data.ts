@@ -5,6 +5,7 @@ export default {
   id: 'cinder_psalm',
   candidateId: 'claude_sonnet',
   title: 'Cinder Psalm',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

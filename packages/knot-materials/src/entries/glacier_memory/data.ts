@@ -4,6 +4,7 @@ export default {
   id: 'glacier_memory',
   candidateId: 'grok',
   title: 'Glacier Memory',
+  createdAt: 1790119994,
   harness: 'Mage',
   author: {
     model: {

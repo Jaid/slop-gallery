@@ -4,6 +4,7 @@ export default {
   id: 'hadal_bioluminescence',
   candidateId: 'gemini_flash',
   title: 'Hadal Combglow',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

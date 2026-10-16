@@ -4,6 +4,7 @@ export default {
   id: 'kintsugi_confession',
   candidateId: 'minimax',
   title: 'Kintsugi Confession',
+  createdAt: 1789979276,
   harness: 'Mage',
   author: {
     model: {

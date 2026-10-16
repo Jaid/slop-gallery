@@ -4,6 +4,7 @@ export default {
   id: 'midnight_opal',
   candidateId: 'glm_flash',
   title: 'Midnight Opal',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

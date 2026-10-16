@@ -5,6 +5,7 @@ export default {
   id: 'peacock_moon',
   candidateId: 'space_bunny',
   title: 'Peacock Moon',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

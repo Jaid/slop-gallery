@@ -5,6 +5,7 @@ export default {
   id: 'brilliant_cut',
   candidateId: 'claude_sonnet',
   title: 'Brilliant Cut',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

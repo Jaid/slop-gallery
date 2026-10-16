@@ -5,6 +5,7 @@ export default {
   id: 'celadon_repair',
   candidateId: 'claude_opus',
   title: 'Celadon Repair',
+  createdAt: 1791585164,
   harness: 'Mage',
   author: {
     model: {

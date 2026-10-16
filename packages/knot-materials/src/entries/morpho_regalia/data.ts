@@ -4,6 +4,7 @@ export default {
   id: 'morpho_regalia',
   candidateId: 'glm',
   title: 'Morpho Regalia',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

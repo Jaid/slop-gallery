@@ -4,6 +4,7 @@ export default {
   id: 'opal_fire',
   candidateId: 'claude_sonnet',
   title: 'Opal Fire',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'Claude Sonnet 5',

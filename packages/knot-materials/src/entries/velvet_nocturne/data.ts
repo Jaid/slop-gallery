@@ -4,6 +4,7 @@ export default {
   id: 'velvet_nocturne',
   candidateId: 'deepseek',
   title: 'Velvet Nocturne',
+  createdAt: 1789949253,
   harness: 'Mage',
   author: {
     model: {

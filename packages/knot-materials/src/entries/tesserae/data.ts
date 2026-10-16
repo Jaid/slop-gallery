@@ -5,6 +5,7 @@ export default {
   id: 'tesserae',
   candidateId: 'space_bunny',
   title: 'Tesserae',
+  createdAt: 1790458629,
   harness: 'Mage',
   author: {
     model: {

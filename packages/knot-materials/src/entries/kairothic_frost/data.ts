@@ -4,6 +4,7 @@ export default {
   id: 'kairothic_frost',
   candidateId: 'muse_spark',
   title: 'Kairothic Frost',
+  createdAt: 1789231507,
   harness: 'meta.ai',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'bismuth_wells',
   candidateId: 'gemini_flash',
   title: 'Bismuth Wells',
+  createdAt: 1789983011,
   harness: 'Mage',
   author: {
     model: {

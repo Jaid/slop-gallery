@@ -5,6 +5,7 @@ export default {
   id: 'nightjar',
   candidateId: 'space_bunny',
   title: 'Nightjar',
+  createdAt: 1791064898,
   harness: 'Mage',
   author: {
     model: {

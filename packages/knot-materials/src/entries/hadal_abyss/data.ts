@@ -4,6 +4,7 @@ export default {
   id: 'hadal_abyss',
   candidateId: 'gemini_flash',
   title: 'Hadal Siphonophore',
+  createdAt: 1789075137,
   harness: 'none',
   author: {
     model: {

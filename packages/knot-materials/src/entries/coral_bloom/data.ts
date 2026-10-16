@@ -4,6 +4,7 @@ export default {
   id: 'coral_bloom',
   candidateId: 'claude_sonnet',
   title: 'Coral Bloom',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'Claude Sonnet 5',

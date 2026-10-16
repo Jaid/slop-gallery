@@ -5,6 +5,7 @@ export default {
   id: 'reticle',
   candidateId: 'space_bunny',
   title: 'Reticle',
+  createdAt: 1790868534,
   harness: 'Mage',
   author: {
     model: {

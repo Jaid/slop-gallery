@@ -4,6 +4,7 @@ export default {
   id: 'void_damask',
   candidateId: 'gemini_flash',
   title: 'Void Damask',
+  createdAt: 1789983011,
   harness: 'Mage',
   author: {
     model: {

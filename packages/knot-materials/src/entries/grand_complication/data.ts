@@ -5,6 +5,7 @@ export default {
   id: 'grand_complication',
   candidateId: 'claude_sonnet',
   title: 'Grand Complication',
+  createdAt: 1790868534,
   harness: 'Mage',
   author: {
     model: {

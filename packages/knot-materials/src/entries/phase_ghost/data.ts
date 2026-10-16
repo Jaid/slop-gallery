@@ -4,6 +4,7 @@ export default {
   id: 'phase_ghost',
   candidateId: 'claude_fable',
   title: 'Phase Ghost',
+  createdAt: 1789075137,
   harness: 'none',
   author: {
     model: {

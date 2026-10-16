@@ -4,6 +4,7 @@ export default {
   id: 'nebula_alloy',
   candidateId: 'hy',
   title: 'Nebula Alloy',
+  createdAt: 1789575270,
   harness: 'none',
   author: {
     model: {

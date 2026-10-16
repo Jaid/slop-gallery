@@ -4,6 +4,7 @@ export default {
   id: 'obsidian_rift',
   candidateId: 'glm',
   title: 'Obsidian Rift',
+  createdAt: 1789231507,
   harness: 'chat.z.ai',
   author: {
     model: {

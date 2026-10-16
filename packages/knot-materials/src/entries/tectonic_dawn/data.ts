@@ -5,6 +5,7 @@ export default {
   id: 'tectonic_dawn',
   candidateId: 'space_bunny',
   title: 'Tectonic Dawn',
+  createdAt: 1790309623,
   harness: 'Mage',
   author: {
     model: {

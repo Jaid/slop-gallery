@@ -4,6 +4,7 @@ export default {
   id: 'interference_shrine',
   candidateId: 'glm',
   title: 'Interference Shrine',
+  createdAt: 1789231507,
   harness: 'chat.z.ai',
   author: {
     model: {

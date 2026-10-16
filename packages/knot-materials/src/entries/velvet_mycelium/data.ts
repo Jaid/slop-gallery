@@ -4,6 +4,7 @@ export default {
   id: 'velvet_mycelium',
   candidateId: 'gemini_flash',
   title: 'Velvet Mycelium',
+  createdAt: 1789075137,
   harness: 'none',
   author: {
     model: {

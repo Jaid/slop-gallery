@@ -4,6 +4,7 @@ export default {
   id: 'mercury_tremor',
   candidateId: 'mimo',
   title: 'Mercury Tremor',
+  createdAt: 1790125939,
   harness: 'Mage',
   author: {
     model: {

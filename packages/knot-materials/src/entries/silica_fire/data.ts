@@ -4,6 +4,7 @@ export default {
   id: 'silica_fire',
   candidateId: 'deepseek',
   title: 'Silica Fire',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

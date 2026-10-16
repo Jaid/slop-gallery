@@ -4,6 +4,7 @@ export default {
   id: 'crimson_loom',
   candidateId: 'gpt_astra',
   title: 'Crimson Loom',
+  createdAt: 1790122624,
   harness: 'Mage',
   author: {
     model: {

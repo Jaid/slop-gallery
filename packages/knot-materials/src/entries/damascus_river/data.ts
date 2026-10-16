@@ -4,6 +4,7 @@ export default {
   id: 'damascus_river',
   candidateId: 'grok',
   title: 'Damascus River',
+  createdAt: 1790126896,
   harness: 'Mage',
   author: {
     model: {

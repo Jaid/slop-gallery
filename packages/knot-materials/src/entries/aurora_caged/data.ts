@@ -4,6 +4,7 @@ export default {
   id: 'aurora_caged',
   candidateId: 'deepseek',
   title: 'Aurora Caged',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

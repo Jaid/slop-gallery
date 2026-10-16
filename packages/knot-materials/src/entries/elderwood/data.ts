@@ -5,6 +5,7 @@ export default {
   id: 'elderwood',
   candidateId: 'gpt_sol',
   title: 'Elderwood',
+  createdAt: 1791064898,
   harness: 'Mage',
   author: {
     model: {

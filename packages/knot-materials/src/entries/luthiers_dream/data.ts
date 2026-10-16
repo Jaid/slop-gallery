@@ -4,6 +4,7 @@ export default {
   id: 'luthiers_dream',
   candidateId: 'gpt_astra',
   title: "Luthier's Dream",
+  createdAt: 1789293909,
   harness: 'none',
   author: {
     model: {

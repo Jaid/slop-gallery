@@ -4,6 +4,7 @@ export default {
   id: 'void_echo',
   candidateId: 'qwen_max',
   title: 'Singularity',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'Qwen 3.8 Max',

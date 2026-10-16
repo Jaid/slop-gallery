@@ -5,6 +5,7 @@ export default {
   id: 'verdigris_testament',
   candidateId: 'gpt_sol',
   title: 'Verdigris Testament',
+  createdAt: 1791064898,
   harness: 'Mage',
   author: {
     model: {

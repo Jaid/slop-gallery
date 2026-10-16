@@ -23,7 +23,7 @@ export default class PropPlacement {
     let distance = direction.length()
     direction.normalize()
     // Sweep every part of the object, including offset covers and labels. A center ray
-    // misses pedestals below the sightline and lets the book’s edges enter the stone.
+    // misses pedestals below the sightline and lets the prop’s edges enter the stone.
     const collision = this.sweep(origin, direction, distance)
     if (collision) {
       distance = Math.max(0, collision.hit.time_of_impact)
@@ -62,7 +62,7 @@ export default class PropPlacement {
       const normal = new Vector3(hit.normal1.x, hit.normal1.y, hit.normal1.z)
       normal.normalize()
       // Rapier reports the obstacle witness in world space and the moving witness
-      // in shape-local space. Ease a resting book out of its tiny contact overlap.
+      // in shape-local space. Ease a resting prop out of its tiny contact overlap.
       const witness = new Vector3(hit.witness2.x, hit.witness2.y, hit.witness2.z)
       witness.applyQuaternion(orientation).add(center).addScaledVector(direction, travel)
       const separation = witness.sub(new Vector3(hit.witness1.x, hit.witness1.y, hit.witness1.z)).dot(normal)

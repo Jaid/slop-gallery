@@ -5,6 +5,7 @@ export default {
   id: 'blue_hour_porcelain',
   candidateId: 'gpt_sol',
   title: 'Blue Hour Porcelain',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

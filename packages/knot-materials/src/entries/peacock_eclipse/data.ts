@@ -5,6 +5,7 @@ export default {
   id: 'peacock_eclipse',
   candidateId: 'claude_sonnet',
   title: 'Peacock Eclipse',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

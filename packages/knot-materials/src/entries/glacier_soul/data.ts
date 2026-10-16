@@ -4,6 +4,7 @@ export default {
   id: 'glacier_soul',
   candidateId: 'muse_spark',
   title: 'Glacier Soul',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

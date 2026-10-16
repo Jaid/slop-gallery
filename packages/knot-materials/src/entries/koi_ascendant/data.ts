@@ -5,6 +5,7 @@ export default {
   id: 'koi_ascendant',
   candidateId: 'gpt_sol',
   title: 'Koi Ascendant',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

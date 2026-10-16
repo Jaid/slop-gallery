@@ -4,6 +4,7 @@ export default {
   id: 'kintsugi_soul',
   candidateId: 'hy',
   title: 'Kintsugi Soul',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

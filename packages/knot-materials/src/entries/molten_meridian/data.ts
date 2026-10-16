@@ -5,6 +5,7 @@ export default {
   id: 'molten_meridian',
   candidateId: 'muse_wonder',
   title: 'Molten Meridian',
+  createdAt: 1791844380,
   harness: 'Mage',
   author: {
     model: {

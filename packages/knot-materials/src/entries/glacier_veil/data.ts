@@ -4,6 +4,7 @@ export default {
   id: 'glacier_veil',
   candidateId: 'mimo',
   title: 'Glacier Veil',
+  createdAt: 1790119994,
   harness: 'Mage',
   author: {
     model: {

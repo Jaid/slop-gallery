@@ -4,6 +4,7 @@ export default {
   id: 'amber_requiem',
   candidateId: 'deepseek',
   title: 'Amber Requiem',
+  createdAt: 1789987251,
   harness: 'Mage',
   author: {
     model: {

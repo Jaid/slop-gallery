@@ -4,6 +4,7 @@ export default {
   id: 'ferrofluidic_resonance',
   candidateId: 'qwen_max',
   title: 'Ferrofluidic Resonance',
+  createdAt: 1789231507,
   harness: 'chat.qwen.ai',
   author: {
     model: {

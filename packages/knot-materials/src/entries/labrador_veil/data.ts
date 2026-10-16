@@ -4,6 +4,7 @@ export default {
   id: 'labrador_veil',
   candidateId: 'deepseek',
   title: 'Labrador Veil',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

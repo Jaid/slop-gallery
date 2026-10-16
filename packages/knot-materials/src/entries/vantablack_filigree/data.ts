@@ -4,6 +4,7 @@ export default {
   id: 'vantablack_filigree',
   candidateId: 'hy',
   title: 'Vantablack Filigree',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

@@ -5,6 +5,7 @@ export default {
   id: 'clockwork_eclipse',
   candidateId: 'grok',
   title: 'Clockwork Eclipse',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

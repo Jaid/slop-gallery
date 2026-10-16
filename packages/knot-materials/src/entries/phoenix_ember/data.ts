@@ -4,6 +4,7 @@ export default {
   id: 'phoenix_ember',
   candidateId: 'kimi',
   title: 'Phoenix Ember',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'Kimi K3',

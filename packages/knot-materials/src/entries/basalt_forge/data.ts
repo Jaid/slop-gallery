@@ -4,6 +4,7 @@ export default {
   id: 'basalt_forge',
   candidateId: 'hy',
   title: 'Basalt Forge',
+  createdAt: 1789575270,
   harness: 'none',
   author: {
     model: {

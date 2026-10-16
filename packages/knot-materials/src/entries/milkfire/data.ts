@@ -5,6 +5,7 @@ export default {
   id: 'milkfire',
   candidateId: 'muse_wonder',
   title: 'Milkfire',
+  createdAt: 1791844380,
   harness: 'Mage',
   author: {
     model: {

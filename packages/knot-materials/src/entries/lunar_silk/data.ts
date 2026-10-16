@@ -4,6 +4,7 @@ export default {
   id: 'lunar_silk',
   candidateId: 'deepseek',
   title: 'Lunar Silk',
+  createdAt: 1789987251,
   harness: 'Mage',
   author: {
     model: {

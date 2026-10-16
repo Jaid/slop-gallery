@@ -4,6 +4,7 @@ export default {
   id: 'winter_orchard',
   candidateId: 'gpt_astra',
   title: 'Winter Orchard',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

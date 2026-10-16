@@ -4,6 +4,7 @@ export default {
   id: 'nacre_reverie',
   candidateId: 'gpt_astra',
   title: 'Nacre Reverie',
+  createdAt: 1790119994,
   harness: 'Mage',
   author: {
     model: {

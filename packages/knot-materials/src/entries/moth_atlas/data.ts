@@ -5,6 +5,7 @@ export default {
   id: 'moth_atlas',
   candidateId: 'gpt_sol',
   title: 'Moth Atlas',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

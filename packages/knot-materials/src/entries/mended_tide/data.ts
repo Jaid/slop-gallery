@@ -5,6 +5,7 @@ export default {
   id: 'mended_tide',
   candidateId: 'claude_opus',
   title: 'Mended Tide',
+  createdAt: 1790461810,
   harness: 'Mage',
   author: {
     model: {

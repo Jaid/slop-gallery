@@ -4,6 +4,7 @@ export default {
   id: 'nacre_lattice',
   candidateId: 'hy',
   title: 'Nacre Lattice',
+  createdAt: 1789575270,
   harness: 'none',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'abyssal_veil',
   candidateId: 'deepseek',
   title: 'Abyssal Veil',
+  createdAt: 1790125939,
   harness: 'Mage',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'solar_flare_plasma',
   candidateId: 'claude_sonnet',
   title: 'Solar Flare Plasma',
+  createdAt: 1789575270,
   harness: 'none',
   author: {
     model: {

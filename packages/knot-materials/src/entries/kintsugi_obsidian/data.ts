@@ -4,6 +4,7 @@ export default {
   id: 'kintsugi_obsidian',
   candidateId: 'claude_fable',
   title: 'Kintsugi Obsidian',
+  createdAt: 1789239146,
   harness: 'none',
   author: {
     model: {

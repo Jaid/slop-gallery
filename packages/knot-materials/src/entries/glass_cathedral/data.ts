@@ -5,6 +5,7 @@ export default {
   id: 'glass_cathedral',
   candidateId: 'muse_wonder',
   title: 'Glass Cathedral',
+  createdAt: 1791848243,
   harness: 'Mage',
   author: {
     model: {

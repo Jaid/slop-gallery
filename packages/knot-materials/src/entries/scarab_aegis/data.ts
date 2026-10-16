@@ -4,6 +4,7 @@ export default {
   id: 'scarab_aegis',
   candidateId: 'gemini_flash',
   title: 'Scarab Aegis',
+  createdAt: 1789075137,
   harness: 'none',
   author: {
     model: {

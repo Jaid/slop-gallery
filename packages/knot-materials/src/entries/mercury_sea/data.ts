@@ -5,6 +5,7 @@ export default {
   id: 'mercury_sea',
   candidateId: 'space_bunny',
   title: 'Liquid Mercury',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

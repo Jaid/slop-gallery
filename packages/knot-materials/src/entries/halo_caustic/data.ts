@@ -5,6 +5,7 @@ export default {
   id: 'halo_caustic',
   candidateId: 'grok',
   title: 'Halo Caustic',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

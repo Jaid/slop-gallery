@@ -4,6 +4,7 @@ export default {
   id: 'cinnabar_palimpsest',
   candidateId: 'grok',
   title: 'Cinnabar Palimpsest',
+  createdAt: 1789231507,
   harness: 'grok.com Build',
   author: {
     model: {

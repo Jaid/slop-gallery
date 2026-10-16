@@ -4,6 +4,7 @@ export default {
   id: 'ghostwood',
   candidateId: 'qwen_max',
   title: 'Spirit Birch',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'Qwen 3.8 Max',

@@ -4,6 +4,7 @@ export default {
   id: 'nacre',
   candidateId: 'mimo',
   title: 'Nacre',
+  createdAt: 1790119994,
   harness: 'Mage',
   author: {
     model: {

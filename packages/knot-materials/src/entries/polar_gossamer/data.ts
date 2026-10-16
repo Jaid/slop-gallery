@@ -4,6 +4,7 @@ export default {
   id: 'polar_gossamer',
   candidateId: 'hy',
   title: 'Aurora Veil',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

@@ -5,6 +5,7 @@ export default {
   id: 'feldspar_veil',
   candidateId: 'space_bunny',
   title: 'Feldspar Veil',
+  createdAt: 1790868534,
   harness: 'Mage',
   author: {
     model: {

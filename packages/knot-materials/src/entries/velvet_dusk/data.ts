@@ -5,6 +5,7 @@ export default {
   id: 'velvet_dusk',
   candidateId: 'claude_haiku',
   title: 'Velvet Dusk',
+  createdAt: 1791758567,
   harness: 'Mage',
   author: {
     model: {

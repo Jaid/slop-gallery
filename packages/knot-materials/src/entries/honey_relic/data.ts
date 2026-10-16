@@ -4,6 +4,7 @@ export default {
   id: 'honey_relic',
   candidateId: 'grok',
   title: 'Honey Relic',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'Grok 4.6',

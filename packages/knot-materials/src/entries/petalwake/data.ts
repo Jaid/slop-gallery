@@ -5,6 +5,7 @@ export default {
   id: 'petalwake',
   candidateId: 'gpt_sol',
   title: 'Petalwake',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'zero_point_lather',
   candidateId: 'deepseek',
   title: 'Quantum Foam',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

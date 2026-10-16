@@ -5,6 +5,7 @@ export default {
   id: 'rootlight',
   candidateId: 'gpt_sol',
   title: 'Rootlight',
+  createdAt: 1791064898,
   harness: 'Mage',
   author: {
     model: {

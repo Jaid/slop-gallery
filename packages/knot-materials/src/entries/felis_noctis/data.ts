@@ -5,6 +5,7 @@ export default {
   id: 'felis_noctis',
   candidateId: 'gpt_sol',
   title: 'Felis Noctis',
+  createdAt: 1790327078,
   harness: 'Mage',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'mycelial_moon',
   candidateId: 'gpt_luna',
   title: 'Mycelial Moon',
+  createdAt: 1789979276,
   harness: 'Mage',
   author: {
     model: {

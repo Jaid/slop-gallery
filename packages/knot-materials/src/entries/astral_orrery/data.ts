@@ -4,6 +4,7 @@ export default {
   id: 'astral_orrery',
   candidateId: 'deepseek',
   title: 'Astral Orrery',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

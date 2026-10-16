@@ -4,6 +4,7 @@ export default {
   id: 'meissner_vortex',
   candidateId: 'gemini_flash',
   title: 'Meissner Vortex',
+  createdAt: 1789983011,
   harness: 'Mage',
   author: {
     model: {

@@ -5,6 +5,7 @@ export default {
   id: 'felis_major',
   candidateId: 'gpt_sol',
   title: 'Felis Major',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

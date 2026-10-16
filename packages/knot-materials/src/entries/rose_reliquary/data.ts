@@ -5,6 +5,7 @@ export default {
   id: 'rose_reliquary',
   candidateId: 'muse_wonder',
   title: 'Rose Reliquary',
+  createdAt: 1791854180,
   harness: 'Mage',
   author: {
     model: {

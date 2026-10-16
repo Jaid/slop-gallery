@@ -5,6 +5,7 @@ export default {
   id: 'velvet_ovation',
   candidateId: 'gpt_sol',
   title: 'Velvet Ovation',
+  createdAt: 1790868534,
   harness: 'Mage',
   author: {
     model: {

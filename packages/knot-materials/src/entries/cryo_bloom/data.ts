@@ -4,6 +4,7 @@ export default {
   id: 'cryo_bloom',
   candidateId: 'deepseek',
   title: 'Cryo Bloom',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

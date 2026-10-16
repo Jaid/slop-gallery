@@ -4,6 +4,7 @@ export default {
   id: 'singularity_crown',
   candidateId: 'glm',
   title: 'Event Horizon',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

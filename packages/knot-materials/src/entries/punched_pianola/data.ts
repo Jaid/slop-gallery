@@ -12,6 +12,7 @@ export default {
     },
   },
   title: 'Punched Pianola',
+  createdAt: 1789816097,
   flavorText: 'The missing pieces hold the music; the brass remembers only the spaces between notes.',
   placeholder: {
     color: '#b89252',

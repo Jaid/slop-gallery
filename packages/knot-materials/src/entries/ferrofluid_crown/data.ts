@@ -4,6 +4,7 @@ export default {
   id: 'ferrofluid_crown',
   candidateId: 'kimi',
   title: 'Ferrofluid Crown',
+  createdAt: 1789231507,
   harness: 'kimi.ai',
   author: {
     model: {

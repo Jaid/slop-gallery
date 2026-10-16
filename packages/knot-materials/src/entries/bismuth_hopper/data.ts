@@ -4,6 +4,7 @@ export default {
   id: 'bismuth_hopper',
   candidateId: 'deepseek',
   title: 'Bismuth Hopper',
+  createdAt: 1789235998,
   harness: 'chat.deepseek.com',
   author: {
     model: {

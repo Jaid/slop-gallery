@@ -5,6 +5,7 @@ export default {
   id: 'fire_in_milk',
   candidateId: 'muse_wonder',
   title: 'Fire in Milk',
+  createdAt: 1791848912,
   harness: 'Mage',
   author: {
     model: {

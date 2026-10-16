@@ -5,6 +5,7 @@ export default {
   id: 'rosewood_oracle',
   candidateId: 'gpt_sol',
   title: 'Rosewood Oracle',
+  createdAt: 1791064898,
   harness: 'Mage',
   author: {
     model: {

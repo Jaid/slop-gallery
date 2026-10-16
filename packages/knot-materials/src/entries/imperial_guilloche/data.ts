@@ -5,6 +5,7 @@ export default {
   id: 'imperial_guilloche',
   candidateId: 'claude_opus',
   title: 'Imperial Guilloché',
+  createdAt: 1790461810,
   harness: 'Mage',
   author: {
     model: {

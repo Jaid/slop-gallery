@@ -5,6 +5,7 @@ export default {
   id: 'resonant_dust',
   candidateId: 'claude_sonnet',
   title: 'Resonant Dust',
+  createdAt: 1791064898,
   harness: 'Mage',
   author: {
     model: {

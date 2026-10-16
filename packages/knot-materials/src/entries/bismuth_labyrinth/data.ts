@@ -4,6 +4,7 @@ export default {
   id: 'bismuth_labyrinth',
   candidateId: 'claude_opus',
   title: 'Bismuth Labyrinth',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

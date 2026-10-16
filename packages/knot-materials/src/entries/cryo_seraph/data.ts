@@ -5,6 +5,7 @@ export default {
   id: 'cryo_seraph',
   candidateId: 'gemini_argon',
   title: 'Cryo Seraph',
+  createdAt: 1792017078,
   harness: 'Mage',
   author: {
     model: {

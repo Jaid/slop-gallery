@@ -4,6 +4,7 @@ export default {
   id: 'noble_opal',
   candidateId: 'deepseek',
   title: 'Noble Opal',
+  createdAt: 1789949253,
   harness: 'Mage',
   author: {
     model: {

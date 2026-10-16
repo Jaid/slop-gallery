@@ -4,6 +4,7 @@ export default {
   id: 'abyssal_velvet',
   candidateId: 'claude_opus',
   title: 'Abyssal Velvet',
+  createdAt: 1789575270,
   harness: 'none',
   author: {
     model: {

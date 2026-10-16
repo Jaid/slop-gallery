@@ -5,6 +5,7 @@ export default {
   id: 'imperial_damask',
   candidateId: 'claude_opus',
   title: 'Imperial Damask',
+  createdAt: 1790461810,
   harness: 'Mage',
   author: {
     model: {

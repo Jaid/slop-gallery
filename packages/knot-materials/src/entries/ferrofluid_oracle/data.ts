@@ -4,6 +4,7 @@ export default {
   id: 'ferrofluid_oracle',
   candidateId: 'grok',
   title: 'Ferrofluid Oracle',
+  createdAt: 1789231507,
   harness: 'grok.com Build',
   author: {
     model: {

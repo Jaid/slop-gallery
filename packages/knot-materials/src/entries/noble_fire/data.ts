@@ -4,6 +4,7 @@ export default {
   id: 'noble_fire',
   candidateId: 'deepseek',
   title: 'Noble Fire',
+  createdAt: 1790125939,
   harness: 'Mage',
   author: {
     model: {

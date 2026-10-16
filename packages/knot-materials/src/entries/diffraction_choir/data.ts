@@ -4,6 +4,7 @@ export default {
   id: 'diffraction_choir',
   candidateId: 'gpt_astra',
   title: 'Diffraction Choir',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

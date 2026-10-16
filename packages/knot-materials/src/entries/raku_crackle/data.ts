@@ -4,6 +4,7 @@ export default {
   id: 'raku_crackle',
   candidateId: 'claude_opus',
   title: 'Raku Crackle',
+  createdAt: 1789575270,
   harness: 'none',
   author: {
     model: {

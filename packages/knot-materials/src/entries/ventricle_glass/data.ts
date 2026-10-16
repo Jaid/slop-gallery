@@ -4,6 +4,7 @@ export default {
   id: 'ventricle_glass',
   candidateId: 'grok',
   title: 'Ventricle Glass',
+  createdAt: 1789231507,
   harness: 'grok.com',
   author: {
     model: {

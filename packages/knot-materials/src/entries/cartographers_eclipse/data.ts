@@ -4,6 +4,7 @@ export default {
   id: 'cartographers_eclipse',
   candidateId: 'minimax',
   title: 'Cartographer\'s Eclipse',
+  createdAt: 1789979276,
   harness: 'Mage',
   author: {
     model: {

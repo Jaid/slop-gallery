@@ -4,6 +4,7 @@ export default {
   id: 'mnemonic_mercury',
   candidateId: 'muse_spark',
   title: 'Mnemonic Mercury',
+  createdAt: 1789231507,
   harness: 'meta.ai',
   author: {
     model: {

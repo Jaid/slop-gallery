@@ -4,6 +4,7 @@ export default {
   id: 'mycelial_lace',
   candidateId: 'gpt_astra',
   title: 'Mycelial Lace',
+  createdAt: 1790119994,
   harness: 'Mage',
   author: {
     model: {

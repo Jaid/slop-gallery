@@ -5,6 +5,7 @@ export default {
   id: 'strata',
   candidateId: 'space_bunny',
   title: 'Strata',
+  createdAt: 1790458629,
   harness: 'Mage',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'obsidian_bioluminescence',
   candidateId: 'qwen_max',
   title: 'Obsidian Leviathan',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'Qwen 3.8 Max',

@@ -4,6 +4,7 @@ export default {
   id: 'moth_regent',
   candidateId: 'gpt_astra',
   title: 'Moth Regent',
+  createdAt: 1790122624,
   harness: 'Mage',
   author: {
     model: {

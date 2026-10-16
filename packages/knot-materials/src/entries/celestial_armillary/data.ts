@@ -5,6 +5,7 @@ export default {
   id: 'celestial_armillary',
   candidateId: 'gemini_argon',
   title: 'Celestial Armillary',
+  createdAt: 1791968199,
   harness: 'Mage',
   author: {
     model: {

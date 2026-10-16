@@ -5,6 +5,7 @@ export default {
   id: 'kiln_memory',
   candidateId: 'gpt_sol',
   title: 'Kiln Memory',
+  createdAt: 1790868534,
   harness: 'Mage',
   author: {
     model: {

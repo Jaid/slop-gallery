@@ -4,6 +4,7 @@ export default {
   id: 'cinnabar_edict',
   candidateId: 'grok',
   title: 'Cinnabar Edict',
+  createdAt: 1789231507,
   harness: 'grok.com',
   author: {
     model: {

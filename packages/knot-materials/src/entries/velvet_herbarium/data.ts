@@ -5,6 +5,7 @@ export default {
   id: 'velvet_herbarium',
   candidateId: 'gpt_sol',
   title: 'Velvet Herbarium',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

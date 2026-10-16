@@ -12,6 +12,7 @@ export default {
     },
   },
   title: 'Lacuna Brass',
+  createdAt: 1789816097,
   flavorText: 'A brass music roll keeps its missing notes, waiting for an instrument that can play a circle.',
   placeholder: {
     color: '#c79b50',

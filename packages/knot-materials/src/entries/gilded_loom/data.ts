@@ -5,6 +5,7 @@ export default {
   id: 'gilded_loom',
   candidateId: 'muse_wonder',
   title: 'Gilded Loom',
+  createdAt: 1791867537,
   harness: 'Mage',
   author: {
     model: {

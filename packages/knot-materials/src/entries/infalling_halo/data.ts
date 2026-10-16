@@ -4,6 +4,7 @@ export default {
   id: 'infalling_halo',
   candidateId: 'deepseek',
   title: 'Infalling Halo',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

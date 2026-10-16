@@ -5,6 +5,7 @@ export default {
   id: 'first_frost',
   candidateId: 'claude_fable',
   title: 'First Frost',
+  createdAt: 1792086001,
   harness: 'Mage',
   author: {model: {
     title: 'Claude Fable 5.1',

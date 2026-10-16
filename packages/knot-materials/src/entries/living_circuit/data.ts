@@ -4,6 +4,7 @@ export default {
   id: 'living_circuit',
   candidateId: 'gpt_astra',
   title: 'Photon Lattice',
+  createdAt: 1789075137,
   harness: 'Codex',
   author: {
     model: {

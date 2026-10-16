@@ -4,6 +4,7 @@ export default {
   id: 'porcelain_reverie',
   candidateId: 'gpt_astra',
   title: 'Porcelain Reverie',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

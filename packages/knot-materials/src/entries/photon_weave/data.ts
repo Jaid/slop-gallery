@@ -4,6 +4,7 @@ export default {
   id: 'photon_weave',
   candidateId: 'glm_flash',
   title: 'Photon Weave',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

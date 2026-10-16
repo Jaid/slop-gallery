@@ -4,6 +4,7 @@ export default {
   id: 'boreal_veil',
   candidateId: 'mimo',
   title: 'Boreal Veil',
+  createdAt: 1790036112,
   harness: 'Mage',
   author: {
     model: {

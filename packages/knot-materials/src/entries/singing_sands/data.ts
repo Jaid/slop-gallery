@@ -5,6 +5,7 @@ export default {
   id: 'singing_sands',
   candidateId: 'space_bunny',
   title: 'Singing Sands',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

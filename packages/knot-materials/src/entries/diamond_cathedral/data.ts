@@ -4,6 +4,7 @@ export default {
   id: 'diamond_cathedral',
   candidateId: 'muse_spark',
   title: 'Diamond Cathedral',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

@@ -12,6 +12,7 @@ export default {
     },
   },
   title: 'Ribbon Bonbon',
+  createdAt: 1789816097,
   flavorText: 'Strawberry and mint follow six sugar flutes around a confection with no first bite.',
   displacement: 0.02,
   placeholder: {

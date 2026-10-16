@@ -5,6 +5,7 @@ export default {
   id: 'velvet_meridian',
   candidateId: 'space_bunny',
   title: 'Velvet Meridian',
+  createdAt: 1790309623,
   harness: 'Mage',
   author: {
     model: {

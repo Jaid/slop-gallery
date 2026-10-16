@@ -4,6 +4,7 @@ export default {
   id: 'velvet_vespers',
   candidateId: 'gpt_astra',
   title: 'Velvet Vespers',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

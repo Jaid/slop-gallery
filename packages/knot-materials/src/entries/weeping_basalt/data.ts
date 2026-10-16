@@ -4,6 +4,7 @@ export default {
   id: 'weeping_basalt',
   candidateId: 'gpt_sol',
   title: 'Weeping Basalt',
+  createdAt: 1789293909,
   harness: 'none',
   author: {
     model: {

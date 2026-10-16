@@ -4,6 +4,7 @@ export default {
   id: 'midnight_prophecy',
   candidateId: 'gpt_sol',
   title: 'Midnight Prophecy',
+  createdAt: 1790119994,
   harness: 'Mage',
   author: {
     model: {

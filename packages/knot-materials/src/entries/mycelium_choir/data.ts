@@ -4,6 +4,7 @@ export default {
   id: 'mycelium_choir',
   candidateId: 'grok',
   title: 'Mycelium Choir',
+  createdAt: 1789231507,
   harness: 'grok.com Build',
   author: {
     model: {

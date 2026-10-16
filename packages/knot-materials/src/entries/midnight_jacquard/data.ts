@@ -5,6 +5,7 @@ export default {
   id: 'midnight_jacquard',
   candidateId: 'muse_wonder',
   title: 'Midnight Jacquard',
+  createdAt: 1791844628,
   harness: 'Mage',
   author: {
     model: {

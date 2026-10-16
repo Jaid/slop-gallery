@@ -4,6 +4,7 @@ export default {
   id: 'nocturne_glass',
   candidateId: 'deepseek',
   title: 'Nocturne Glass',
+  createdAt: 1790125939,
   harness: 'Mage',
   author: {
     model: {

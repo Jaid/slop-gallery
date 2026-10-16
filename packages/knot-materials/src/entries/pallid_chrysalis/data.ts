@@ -4,6 +4,7 @@ export default {
   id: 'pallid_chrysalis',
   candidateId: 'muse_spark',
   title: 'Pallid Chrysalis',
+  createdAt: 1789231507,
   harness: 'meta.ai',
   author: {
     model: {

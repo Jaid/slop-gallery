@@ -5,6 +5,7 @@ export default {
   id: 'shot_silk',
   candidateId: 'claude_haiku',
   title: 'Shot Silk',
+  createdAt: 1791759582,
   harness: 'Mage',
   author: {
     model: {

@@ -5,6 +5,7 @@ export default {
   id: 'tectonic_ember',
   candidateId: 'space_bunny',
   title: 'Tectonic Ember',
+  createdAt: 1790327078,
   harness: 'Mage',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'ion_wake',
   candidateId: 'grok',
   title: 'Ion Wake',
+  createdAt: 1789231507,
   harness: 'grok.com',
   author: {
     model: {

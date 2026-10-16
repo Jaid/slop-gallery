@@ -4,6 +4,7 @@ export default {
   id: 'kintsugi_storm',
   candidateId: 'grok',
   title: 'Kintsugi Storm',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'Grok 4.6',

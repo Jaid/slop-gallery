@@ -4,6 +4,7 @@ export default {
   id: 'ephemeral_foam',
   candidateId: 'gpt_astra',
   title: 'Ephemeral Assembly',
+  createdAt: 1789293909,
   harness: 'none',
   author: {
     model: {

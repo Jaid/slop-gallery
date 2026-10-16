@@ -4,6 +4,7 @@ export default {
   id: 'seraphim_veil',
   candidateId: 'gpt_sol',
   title: 'Seraphim Veil',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'GPT-5.6 Sol',

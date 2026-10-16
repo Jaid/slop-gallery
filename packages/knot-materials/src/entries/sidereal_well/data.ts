@@ -5,6 +5,7 @@ export default {
   id: 'sidereal_well',
   candidateId: 'gpt_sol',
   title: 'Sidereal Well',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

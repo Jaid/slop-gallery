@@ -4,6 +4,7 @@ export default {
   id: 'solar_prominence',
   candidateId: 'deepseek',
   title: 'Solar Prominence',
+  createdAt: 1789235998,
   harness: 'chat.deepseek.com',
   author: {
     model: {

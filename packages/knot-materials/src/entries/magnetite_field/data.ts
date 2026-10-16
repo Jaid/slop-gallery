@@ -4,6 +4,7 @@ export default {
   id: 'magnetite_field',
   candidateId: 'gpt_sol',
   title: 'Magnetite Field',
+  createdAt: 1789293909,
   harness: 'none',
   author: {
     model: {

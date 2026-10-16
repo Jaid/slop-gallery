@@ -5,6 +5,7 @@ export default {
   id: 'opal_oracle',
   candidateId: 'gpt_sol',
   title: 'Opal Oracle',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

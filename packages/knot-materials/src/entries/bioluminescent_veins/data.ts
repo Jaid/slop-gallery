@@ -4,6 +4,7 @@ export default {
   id: 'bioluminescent_veins',
   candidateId: 'claude_sonnet',
   title: 'Bioluminescent Veins',
+  createdAt: 1789575270,
   harness: 'none',
   author: {
     model: {

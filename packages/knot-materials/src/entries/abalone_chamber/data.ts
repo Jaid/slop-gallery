@@ -5,6 +5,7 @@ export default {
   id: 'abalone_chamber',
   candidateId: 'grok',
   title: 'Abalone Chamber',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

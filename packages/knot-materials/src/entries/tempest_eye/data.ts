@@ -4,6 +4,7 @@ export default {
   id: 'tempest_eye',
   candidateId: 'muse_spark',
   title: 'Tempest Eye',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

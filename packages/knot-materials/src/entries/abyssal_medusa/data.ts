@@ -5,6 +5,7 @@ export default {
   id: 'abyssal_medusa',
   candidateId: 'space_bunny',
   title: 'Abyssal Medusa',
+  createdAt: 1790458629,
   harness: 'Mage',
   author: {
     model: {

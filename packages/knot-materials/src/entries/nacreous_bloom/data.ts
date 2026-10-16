@@ -4,6 +4,7 @@ export default {
   id: 'nacreous_bloom',
   candidateId: 'deepseek',
   title: 'Nacreous Bloom',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

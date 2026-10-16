@@ -5,6 +5,7 @@ export default {
   id: 'plasma_reliquary',
   candidateId: 'claude_opus',
   title: 'Plasma Reliquary',
+  createdAt: 1792086173,
   harness: 'Mage',
   author: {model: {
     title: 'Claude Opus 5.5',

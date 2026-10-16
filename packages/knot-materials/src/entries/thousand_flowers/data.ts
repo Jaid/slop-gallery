@@ -5,6 +5,7 @@ export default {
   id: 'thousand_flowers',
   candidateId: 'claude_sonnet',
   title: 'Thousand Flowers',
+  createdAt: 1790868534,
   harness: 'Mage',
   author: {
     model: {

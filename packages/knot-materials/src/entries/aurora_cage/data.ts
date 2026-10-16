@@ -4,6 +4,7 @@ export default {
   id: 'aurora_cage',
   candidateId: 'deepseek',
   title: 'Aurora Cage',
+  createdAt: 1789235998,
   harness: 'chat.deepseek.com',
   author: {
     model: {

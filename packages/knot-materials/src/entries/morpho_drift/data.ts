@@ -5,6 +5,7 @@ export default {
   id: 'morpho_drift',
   candidateId: 'muse_wonder',
   title: 'Morpho Drift',
+  createdAt: 1791867537,
   harness: 'Mage',
   author: {
     model: {

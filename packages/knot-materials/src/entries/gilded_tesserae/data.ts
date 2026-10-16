@@ -5,6 +5,7 @@ export default {
   id: 'gilded_tesserae',
   candidateId: 'claude_sonnet',
   title: 'Gilded Tesserae',
+  createdAt: 1790868534,
   harness: 'Mage',
   author: {
     model: {

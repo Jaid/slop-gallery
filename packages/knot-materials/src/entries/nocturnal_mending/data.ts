@@ -5,6 +5,7 @@ export default {
   id: 'nocturnal_mending',
   candidateId: 'claude_sonnet',
   title: 'Nocturnal Mending',
+  createdAt: 1790868534,
   harness: 'Mage',
   author: {
     model: {

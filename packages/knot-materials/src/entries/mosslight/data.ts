@@ -5,6 +5,7 @@ export default {
   id: 'mosslight',
   candidateId: 'gpt_sol',
   title: 'Mosslight',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

@@ -4,6 +4,7 @@ export default {
   id: 'ferrothorn',
   candidateId: 'gpt_astra',
   title: 'Ferrothorn',
+  createdAt: 1789293909,
   harness: 'none',
   author: {
     model: {

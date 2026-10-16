@@ -12,6 +12,7 @@ export default {
     },
   },
   title: 'Enamel Semaphore',
+  createdAt: 1789816097,
   flavorText: 'A message for ships that never sailed, fired into enamel and folded beyond the horizon.',
   placeholder: {
     color: '#e85032',

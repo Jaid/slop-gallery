@@ -4,6 +4,7 @@ export default {
   id: 'folded_silence',
   candidateId: 'gpt_astra',
   title: 'Folded Silence',
+  createdAt: 1789293909,
   harness: 'none',
   author: {
     model: {

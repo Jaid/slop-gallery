@@ -5,6 +5,7 @@ export default {
   id: 'magnetic_bloom',
   candidateId: 'claude_sonnet',
   title: 'Magnetic Bloom',
+  createdAt: 1790802275,
   harness: 'Mage',
   author: {
     model: {

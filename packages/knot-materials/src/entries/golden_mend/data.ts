@@ -4,6 +4,7 @@ export default {
   id: 'golden_mend',
   candidateId: 'deepseek',
   title: 'Golden Mend',
+  createdAt: 1790023263,
   harness: 'Mage',
   author: {
     model: {

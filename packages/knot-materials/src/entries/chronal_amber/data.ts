@@ -4,6 +4,7 @@ export default {
   id: 'chronal_amber',
   candidateId: 'qwen_max',
   title: 'Chronal Amber',
+  createdAt: 1789231507,
   harness: 'chat.qwen.ai',
   author: {
     model: {

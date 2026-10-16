@@ -4,6 +4,7 @@ export default {
   id: 'marginalia',
   candidateId: 'deepseek',
   title: 'Marginalia',
+  createdAt: 1790125939,
   harness: 'Mage',
   author: {
     model: {

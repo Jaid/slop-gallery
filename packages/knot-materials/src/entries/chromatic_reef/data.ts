@@ -4,6 +4,7 @@ export default {
   id: 'chromatic_reef',
   candidateId: 'deepseek',
   title: 'Chromatic Reef',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'DeepSeek 4.1 Flash',

@@ -4,6 +4,7 @@ export default {
   id: 'tesseract_projection',
   candidateId: 'qwen_max',
   title: 'Tesseract Projection',
+  createdAt: 1789231507,
   harness: 'chat.qwen.ai',
   author: {
     model: {

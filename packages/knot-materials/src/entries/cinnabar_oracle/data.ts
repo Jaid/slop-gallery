@@ -4,6 +4,7 @@ export default {
   id: 'cinnabar_oracle',
   candidateId: 'grok',
   title: 'Cinnabar Oracle',
+  createdAt: 1789075137,
   author: {
     model: {
       title: 'Grok 4.6',

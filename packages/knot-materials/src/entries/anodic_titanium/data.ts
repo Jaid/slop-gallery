@@ -4,6 +4,7 @@ export default {
   id: 'anodic_titanium',
   candidateId: 'claude_opus',
   title: 'Anodic Titanium',
+  createdAt: 1789575270,
   harness: 'none',
   author: {
     model: {

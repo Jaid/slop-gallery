@@ -4,6 +4,7 @@ export default {
   id: 'opaline_aerogel',
   candidateId: 'gemini_flash',
   title: 'Opaline Aerogel',
+  createdAt: 1789075137,
   harness: 'none',
   author: {
     model: {

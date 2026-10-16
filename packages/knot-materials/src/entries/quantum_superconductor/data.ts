@@ -4,6 +4,7 @@ export default {
   id: 'quantum_superconductor',
   candidateId: 'gemini_flash',
   title: 'Quantum Superconductor',
+  createdAt: 1789075137,
   harness: 'none',
   author: {
     model: {

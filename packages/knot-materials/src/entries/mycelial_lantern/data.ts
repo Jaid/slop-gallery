@@ -4,6 +4,7 @@ export default {
   id: 'mycelial_lantern',
   candidateId: 'gpt_sol',
   title: 'Mycelial Lantern',
+  createdAt: 1789293909,
   harness: 'none',
   author: {
     model: {

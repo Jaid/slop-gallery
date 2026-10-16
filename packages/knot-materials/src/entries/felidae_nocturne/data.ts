@@ -5,6 +5,7 @@ export default {
   id: 'felidae_nocturne',
   candidateId: 'gpt_sol',
   title: 'Felidae Nocturne',
+  createdAt: 1790327078,
   harness: 'Mage',
   author: {
     model: {

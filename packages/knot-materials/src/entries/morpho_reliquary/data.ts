@@ -5,6 +5,7 @@ export default {
   id: 'morpho_reliquary',
   candidateId: 'gemini_argon',
   title: 'Morpho Reliquary',
+  createdAt: 1792017078,
   harness: 'Mage',
   author: {
     model: {

@@ -5,6 +5,7 @@ export default {
   id: 'abyssal_pulse',
   candidateId: 'claude_fable',
   title: 'Abyssal Pulse',
+  createdAt: 1790695541,
   harness: 'Mage',
   author: {
     model: {

@@ -5,6 +5,7 @@ export default {
   id: 'parallax_palace',
   candidateId: 'gpt_sol',
   title: 'Parallax Palace',
+  createdAt: 1790311863,
   harness: 'Mage',
   author: {
     model: {

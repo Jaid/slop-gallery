@@ -4,6 +4,7 @@ export default {
   id: 'bismuth_ziggurat',
   candidateId: 'glm_flash',
   title: 'Bismuth Ziggurat',
+  createdAt: 1789094423,
   harness: 'none',
   author: {
     model: {

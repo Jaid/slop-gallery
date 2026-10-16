@@ -5,6 +5,7 @@ export default {
   id: 'chladni_rhythm',
   candidateId: 'claude_haiku',
   title: 'Chladni Rhythm',
+  createdAt: 1791758163,
   harness: 'Mage',
   author: {
     model: {

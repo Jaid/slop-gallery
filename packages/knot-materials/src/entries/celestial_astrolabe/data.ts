@@ -4,6 +4,7 @@ export default {
   id: 'celestial_astrolabe',
   candidateId: 'gemini_flash',
   title: 'Celestial Astrolabe',
+  createdAt: 1789290805,
   harness: 'none',
   author: {
     model: {

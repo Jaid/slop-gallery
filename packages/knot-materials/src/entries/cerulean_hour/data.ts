@@ -4,6 +4,7 @@ export default {
   id: 'cerulean_hour',
   candidateId: 'gpt_astra',
   title: 'Cerulean Hour',
+  createdAt: 1790126896,
   harness: 'Mage',
   author: {
     model: {

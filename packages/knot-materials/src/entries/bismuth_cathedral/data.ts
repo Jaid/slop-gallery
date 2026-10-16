@@ -4,6 +4,7 @@ export default {
   id: 'bismuth_cathedral',
   candidateId: 'deepseek',
   title: 'Bismuth Cathedral',
+  createdAt: 1789949253,
   harness: 'Mage',
   author: {
     model: {

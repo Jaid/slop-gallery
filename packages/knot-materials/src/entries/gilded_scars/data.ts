@@ -4,6 +4,7 @@ export default {
   id: 'gilded_scars',
   candidateId: 'mimo',
   title: 'Gilded Scars',
+  createdAt: 1790119994,
   harness: 'Mage',
   author: {
     model: {

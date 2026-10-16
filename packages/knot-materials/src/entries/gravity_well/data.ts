@@ -4,6 +4,7 @@ export default {
   id: 'gravity_well',
   candidateId: 'gpt_astra',
   title: 'Gravity Well',
+  createdAt: 1789075137,
   harness: 'Codex',
   author: {
     model: {

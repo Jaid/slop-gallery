@@ -4,6 +4,7 @@ export default {
   id: 'basalt_psalm',
   candidateId: 'grok',
   title: 'Basalt Psalm',
+  createdAt: 1790119994,
   harness: 'Mage',
   author: {
     model: {

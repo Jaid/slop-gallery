@@ -4,6 +4,7 @@ export default {
   id: 'kintsugi_oracle',
   candidateId: 'gpt_luna',
   title: 'Kintsugi Oracle',
+  createdAt: 1789979276,
   harness: 'Mage',
   author: {
     model: {

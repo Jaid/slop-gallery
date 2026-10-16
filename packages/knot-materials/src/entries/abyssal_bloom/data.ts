@@ -4,6 +4,7 @@ export default {
   id: 'abyssal_bloom',
   candidateId: 'mimo',
   title: 'Abyssal Bloom',
+  createdAt: 1789094423,
   harness: 'Mage',
   author: {
     model: {

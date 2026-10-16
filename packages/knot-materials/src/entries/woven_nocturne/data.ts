@@ -4,6 +4,7 @@ export default {
   id: 'woven_nocturne',
   candidateId: 'deepseek',
   title: 'Woven Nocturne',
+  createdAt: 1790125939,
   harness: 'Mage',
   author: {
     model: {

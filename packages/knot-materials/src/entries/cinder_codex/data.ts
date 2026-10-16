@@ -4,6 +4,7 @@ export default {
   id: 'cinder_codex',
   candidateId: 'muse_spark',
   title: 'Cinder Codex',
+  createdAt: 1789231507,
   harness: 'meta.ai',
   author: {
     model: {

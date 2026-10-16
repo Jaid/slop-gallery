@@ -4,6 +4,7 @@ export default {
   id: 'filament_lattice',
   candidateId: 'claude_opus',
   title: 'Filament Lattice',
+  createdAt: 1789575270,
   harness: 'none',
   author: {
     model: {

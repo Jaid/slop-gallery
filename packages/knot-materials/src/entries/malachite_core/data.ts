@@ -4,6 +4,7 @@ export default {
   id: 'malachite_core',
   candidateId: 'claude_opus',
   title: 'Malachite Core',
+  createdAt: 1789575270,
   harness: 'none',
   author: {
     model: {
