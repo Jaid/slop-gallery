@@ -11,7 +11,7 @@ import lodgeInterior, {lodgeFurnitureColliders} from '../../src/lib/gallery/lodg
 import UpholsteredSeatGeometry from '../../src/lib/gallery/lodgeInterior/UpholsteredSeatGeometry.ts'
 import WagonWheelGeometry from '../../src/lib/gallery/lodgeInterior/WagonWheelGeometry.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
-import IndoorLightsNode, {reachesIndoors} from '../../src/lib/materials/IndoorLightsNode.ts'
+import {IndoorLightsNode, reachesIndoors} from '../../src/lib/materials/lights/index.ts'
 import LodgeMaterials from '../../src/lib/materials/LodgeMaterials.ts'
 import PlankMaterial from '../../src/lib/materials/PlankMaterial.ts'
 
