@@ -28,7 +28,7 @@ import {rooms, walls} from '#src/lib/gallery.ts'
 import {wallTop} from '#src/lib/gallery/architecture.ts'
 import {createArchitecturalGlassMaterials, disposeArchitecturalGlassMaterials} from '#src/lib/materials/ArchitecturalGlassMaterials.ts'
 import CastleStoneMaterial from '#src/lib/materials/CastleStoneMaterial.ts'
-import {lightIndoors} from '#src/lib/materials/IndoorLightsNode.ts'
+import {corridorLanterns, lightIndoors, lodgeWindowLights} from '#src/lib/materials/lights/index.ts'
 import LodgeMaterials from '#src/lib/materials/LodgeMaterials.ts'
 import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
 import VesperWallMaterial from '#src/lib/materials/VesperWallMaterial.ts'
@@ -54,7 +54,9 @@ export default function Architecture() {
   }, [isHeavy]))
   // The Lodge, its tunnel and the corridor run underground, beyond the reach of the sun.
   const castleStone = useDisposable(useMemo(() => lightIndoors(new CastleStoneMaterial), []))
-  const lodgeWood = useDisposable(useMemo(() => lightIndoors(new LodgeWoodMaterial), []))
+  // The corridor and its stairs see nothing but their own lanterns.
+  const corridorWood = useDisposable(useMemo(() => corridorLanterns.adopt(new LodgeWoodMaterial), []))
+  const windowReveal = useDisposable(useMemo(() => lodgeWindowLights.adopt(new LodgeWoodMaterial), []))
   const lodgeMaterials = useDisposable(useMemo(() => new LodgeMaterials, []))
   const vesperWall = useDisposable(useMemo(() => new VesperWallMaterial({
     center: vesper.center,
@@ -78,7 +80,7 @@ export default function Architecture() {
       return wall.id.startsWith('lodge-tunnel-') ? castleStone : lodgeMaterials.timber
     }
     if (wall.room === 'corridor') {
-      return lodgeWood
+      return corridorWood
     }
   }
   const surfaceMaterial = (wall: Wall) => {
@@ -113,8 +115,8 @@ export default function Architecture() {
     <Fountain />
     <FountainBenches wood={wood} />
     <LodgeRoom materials={lodgeMaterials} />
-    <LodgeWindow glass={glass.cabin} material={lodgeWood} />
-    <LodgeCorridorRoute material={castleStone} />
+    <LodgeWindow glass={glass.cabin} material={windowReveal} />
+    <LodgeCorridorRoute corridorLining={corridorWood} material={castleStone} />
     <SiennaRoom wood={wood} />
     <SalonRoom glass={glass.lobby} stone={stone} wood={wood} />
     <GalleryStairs />

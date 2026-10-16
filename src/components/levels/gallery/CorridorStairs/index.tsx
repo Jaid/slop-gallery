@@ -10,8 +10,9 @@ import Box from '#src/components/Scene/primitives.tsx'
 import {corridorRails, corridorRunner, corridorStairs} from '#src/lib/gallery/corridor.ts'
 import TimberGeometry from '#src/lib/gallery/passages/TimberGeometry.ts'
 import {GlobeBody} from '#src/lib/gallery/pendants/index.ts'
+import {soleLampBounce, soleLampReach} from '#src/lib/gallery/pendants/lighting.ts'
 import {stairPendantMounts} from '#src/lib/gallery/pendants/mounts.ts'
-import {lightIndoors} from '#src/lib/materials/IndoorLightsNode.ts'
+import {corridorLanterns} from '#src/lib/materials/lights/index.ts'
 import StairRunnerMaterial from '#src/lib/materials/StairRunnerMaterial.ts'
 
 const globe = new GlobeBody
@@ -20,12 +21,14 @@ const globeGlow = {
   emissive: '#ffd69a',
   emissiveIntensity: 2,
 }
+// The globes are the flight’s only light, like the corridor’s lanterns.
 const globeLight = {
-  color: '#ffdca3',
-  distance: 6,
-  intensity: 14,
+  ...soleLampReach,
+  bounce: soleLampBounce,
+  color: '#ffc27e',
 }
 
+/** The flight from the corridor up to Sienna. Its materials must be lit by {@link corridorLanterns}, like the treads. */
 export default function CorridorStairs({timber, lining}: {
   lining: Material
   timber: Material
@@ -33,7 +36,7 @@ export default function CorridorStairs({timber, lining}: {
   const frame = useDisposable(useMemo(() => TimberGeometry.stairs(corridorStairs), []))
   const mounts = useMemo(() => stairPendantMounts(corridorStairs, [frame.shell, frame.ribs]), [frame])
   // The runner, rods and nosings are shaded into the treads, so every step stays a single box.
-  const treads = useDisposable(useMemo(() => lightIndoors(new StairRunnerMaterial(corridorRunner)), []))
+  const treads = useDisposable(useMemo(() => corridorLanterns.adopt(new StairRunnerMaterial(corridorRunner)), []))
   return <group name='corridor-wooden-stairs'>
     <RigidBody colliders={false} type='fixed'>
       {corridorStairs.blocks.map((block, i) => <group key={i}>
@@ -46,6 +49,6 @@ export default function CorridorStairs({timber, lining}: {
         <Box material={timber} size={beam.size} />
       </group>)}
     </RigidBody>
-    <PendantLamps body={globe} glow={globeGlow} light={globeLight} mounts={mounts} name='corridor-stair-pendants' />
+    <PendantLamps body={globe} glow={globeGlow} light={globeLight} lighting={corridorLanterns} mounts={mounts} name='corridor-stair-pendants' />
   </group>
 }

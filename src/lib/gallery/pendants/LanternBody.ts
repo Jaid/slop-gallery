@@ -18,6 +18,12 @@ export default class LanternBody extends PendantBody {
   readonly id = 'lantern'
   // The plates’ corners reach furthest.
   readonly radius = plateHalf * Math.SQRT2
+  // The top plate’s edges are 0.82 above the horizon seen from the flame, its corners 0.71; only light bounced inside the glass gets past.
+  readonly roof = {
+    start: 0.66,
+    end: 0.86,
+    leak: 0.1,
+  }
 
   frame() {
     const plates = [-1, 1].map(side => {

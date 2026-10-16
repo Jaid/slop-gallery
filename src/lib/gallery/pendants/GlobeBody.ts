@@ -14,6 +14,12 @@ export default class GlobeBody extends PendantBody {
   readonly hook = cupBottom + cupHeight + collarHeight - 0.01
   readonly id = 'globe'
   readonly radius = globeRadius
+  // The cup’s lower rim is 0.72 above the horizon seen from the center; the opal glass under it still glows a little.
+  readonly roof = {
+    start: 0.6,
+    end: 0.8,
+    leak: 0.25,
+  }
 
   frame() {
     // The cup’s lower rim lies inside the globe, so no seam shows between glass and metal.

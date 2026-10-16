@@ -1,6 +1,7 @@
 import type Passage from '#src/lib/gallery/passages/Passage.ts'
 import type {PassageCutout} from '#src/lib/gallery/passages/Passage.ts'
 import type PassageTransition from '#src/lib/gallery/passages/PassageTransition.ts'
+import type {LanternLightsNode} from '#src/lib/materials/lights/index.ts'
 import type {Material} from 'three/webgpu'
 
 import {CuboidCollider, RigidBody, TrimeshCollider} from '@react-three/rapier'
@@ -15,6 +16,7 @@ import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import TimberGeometry from '#src/lib/gallery/passages/TimberGeometry.ts'
 import VaultGeometry from '#src/lib/gallery/passages/VaultGeometry.ts'
 import {LanternBody} from '#src/lib/gallery/pendants/index.ts'
+import {soleLampBounce, soleLampReach} from '#src/lib/gallery/pendants/lighting.ts'
 import {passagePendantMounts} from '#src/lib/gallery/pendants/mounts.ts'
 
 const lantern = new LanternBody
@@ -28,8 +30,16 @@ const lanternLight = {
   distance: 7,
   intensity: 12,
 }
+/** Where the lanterns are all there is, their flames burn warmer and each one throws its own pool. */
+const soleLanternLight = {
+  ...soleLampReach,
+  bounce: soleLampBounce,
+  color: '#ffb363',
+}
 
-export default function CoveredPassage({passage, material, timber, ribCutouts, transition}: {
+export default function CoveredPassage({passage, lighting, material, timber, ribCutouts, transition}: {
+  /** makes the passage’s lanterns its sole light sources; its materials must be adopted by the same node */
+  lighting?: LanternLightsNode
   material: Material
   passage: Passage
   ribCutouts?: ReadonlyArray<PassageCutout>
@@ -56,6 +66,6 @@ export default function CoveredPassage({passage, material, timber, ribCutouts, t
         <mesh castShadow geometry={geometry.ribs} material={material} name='castle-vault-ribs' receiveShadow />
       </Branch>
     </RigidBody>
-    <PendantLamps body={lantern} glow={lanternGlow} light={lanternLight} mounts={mounts} name={`${passage.id}-pendants`} />
+    <PendantLamps body={lantern} glow={lanternGlow} light={lighting ? soleLanternLight : lanternLight} lighting={lighting} mounts={mounts} name={`${passage.id}-pendants`} />
   </group>
 }
