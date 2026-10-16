@@ -21,7 +21,6 @@ import PottedPlants from '#component/levels/gallery/PottedPlants'
 import RoomFloor from '#component/levels/gallery/RoomFloor'
 import SalonRoom from '#component/levels/gallery/SalonRoom'
 import SiennaRoom from '#component/levels/gallery/SiennaRoom'
-import VesperOrnaments from '#component/levels/gallery/VesperOrnaments'
 import {damaskTexture, surfaceTexture} from '#src/components/Scene/materials.ts'
 import Box from '#src/components/Scene/primitives.tsx'
 import WallSurface from '#src/components/Scene/WallSurface.tsx'
@@ -32,6 +31,7 @@ import CastleStoneMaterial from '#src/lib/materials/CastleStoneMaterial.ts'
 import {lightIndoors} from '#src/lib/materials/IndoorLightsNode.ts'
 import LodgeMaterials from '#src/lib/materials/LodgeMaterials.ts'
 import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
+import VesperWallMaterial from '#src/lib/materials/VesperWallMaterial.ts'
 
 const pointLightPositions: Partial<Record<Wall['room'], Array<number>>> = {
   antechamber: [0],
@@ -41,6 +41,7 @@ const pointLightPositions: Partial<Record<Wall['room'], Array<number>>> = {
 const ledRooms = new Set<Wall['room']>(['dine'])
 // These upper rooms build their own floor, ceiling and lights.
 const customRooms = new Set<Wall['room']>(['salon', 'sienna'])
+const vesper = rooms.find(room => room.id === 'vesper')!
 
 export default function Architecture() {
   const isHeavy = useGraphicsMode()
@@ -55,6 +56,10 @@ export default function Architecture() {
   const castleStone = useDisposable(useMemo(() => lightIndoors(new CastleStoneMaterial), []))
   const lodgeWood = useDisposable(useMemo(() => lightIndoors(new LodgeWoodMaterial), []))
   const lodgeMaterials = useDisposable(useMemo(() => new LodgeMaterials, []))
+  const vesperWall = useDisposable(useMemo(() => new VesperWallMaterial({
+    center: vesper.center,
+    size: vesper.size,
+  }), []))
   const stone = useDisposable(useMemo(() => surfaceTexture('stone'), []))
   const plaster = useDisposable(useMemo(() => surfaceTexture('plaster'), []))
   const wood = useDisposable(useMemo(() => surfaceTexture('wood'), []))
@@ -76,12 +81,20 @@ export default function Architecture() {
       return lodgeWood
     }
   }
+  const surfaceMaterial = (wall: Wall) => {
+    if (isLodgeRoomWall(wall)) {
+      return lodgeMaterials.logWall
+    }
+    if (wall.room === 'vesper') {
+      return vesperWall
+    }
+  }
   return <>
     <ReflectionEnvironment />
     <color args={['#ded8ca']} attach='background' />
     <ambientLight intensity={0.65} /><hemisphereLight args={['#ecf3ff', '#a29270', 1.15]} />
     <directionalLight castShadow color='#fff0d7' intensity={2.3} position={[-3, 9, 4]} shadow-camera-bottom={-20} shadow-camera-left={-24} shadow-camera-right={24} shadow-camera-top={20} shadow-mapSize={[4096, 4096]} shadow-normalBias={0.035} />
-    {walls.map(wall => <WallSurface key={wall.id} glass={glass.tunnel} material={wallMaterial(wall)} plaster={wall.room === 'sienna' ? damask : plaster} surfaceMaterial={isLodgeRoomWall(wall) ? lodgeMaterials.logWall : undefined} wall={wall} />)}
+    {walls.map(wall => <WallSurface key={wall.id} glass={glass.tunnel} material={wallMaterial(wall)} plaster={wall.room === 'sienna' ? damask : plaster} surfaceMaterial={surfaceMaterial(wall)} wall={wall} />)}
     {rooms.filter(room => room.floorY === 0 && !customRooms.has(room.id)).map(room => <group key={room.id} position={[room.center[0], 0, room.center[1]]}>
       <RigidBody colliders={false} type='fixed'>
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]} />
@@ -102,7 +115,6 @@ export default function Architecture() {
     <LodgeRoom materials={lodgeMaterials} />
     <LodgeWindow glass={glass.cabin} material={lodgeWood} />
     <LodgeCorridorRoute material={castleStone} />
-    <VesperOrnaments />
     <SiennaRoom wood={wood} />
     <SalonRoom glass={glass.lobby} stone={stone} wood={wood} />
     <GalleryStairs />
