@@ -4,7 +4,7 @@ export default {
   id: 'midnight_velvet',
   candidateId: 'gpt_luna',
   title: 'Midnight Velvet',
-  createdAt: 1789979276,
+  createdAt: 1_789_979_276,
   harness: 'Mage',
   author: {
     model: {

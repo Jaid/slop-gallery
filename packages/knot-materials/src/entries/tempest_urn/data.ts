@@ -4,7 +4,7 @@ export default {
   id: 'tempest_urn',
   candidateId: 'glm_flash',
   title: 'Tempest Urn',
-  createdAt: 1789094423,
+  createdAt: 1_789_094_423,
   harness: 'none',
   author: {
     model: {

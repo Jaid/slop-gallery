@@ -4,7 +4,7 @@ export default {
   id: 'horologists_paradox',
   candidateId: 'gpt_astra',
   title: "Horologist's Paradox",
-  createdAt: 1789293909,
+  createdAt: 1_789_293_909,
   harness: 'none',
   author: {
     model: {

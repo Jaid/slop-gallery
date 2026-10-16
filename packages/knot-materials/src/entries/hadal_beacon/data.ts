@@ -5,7 +5,7 @@ export default {
   id: 'hadal_beacon',
   candidateId: 'muse_wonder',
   title: 'Hadal Beacon',
-  createdAt: 1791858712,
+  createdAt: 1_791_858_712,
   harness: 'Mage',
   author: {
     model: {

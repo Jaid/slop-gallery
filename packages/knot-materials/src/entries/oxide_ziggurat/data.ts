@@ -5,7 +5,7 @@ export default {
   id: 'oxide_ziggurat',
   candidateId: 'gemini_argon',
   title: 'Oxide Ziggurat',
-  createdAt: 1791968199,
+  createdAt: 1_791_968_199,
   harness: 'Mage',
   author: {
     model: {

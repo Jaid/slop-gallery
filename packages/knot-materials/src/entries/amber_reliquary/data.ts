@@ -4,7 +4,7 @@ export default {
   id: 'amber_reliquary',
   candidateId: 'mimo',
   title: 'Amber Reliquary',
-  createdAt: 1790119994,
+  createdAt: 1_790_119_994,
   harness: 'Mage',
   author: {
     model: {

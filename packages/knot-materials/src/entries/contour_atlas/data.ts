@@ -12,7 +12,7 @@ export default {
     },
   },
   title: 'Contour Atlas',
-  createdAt: 1789816097,
+  createdAt: 1_789_816_097,
   flavorText: 'An uncharted coast folds back on itself; every ink line measures a place no traveler can reach.',
   displacement: 0.008,
   placeholder: {

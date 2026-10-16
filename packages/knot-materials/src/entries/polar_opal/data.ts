@@ -4,7 +4,7 @@ export default {
   id: 'polar_opal',
   candidateId: 'grok',
   title: 'Polar Opal',
-  createdAt: 1789231507,
+  createdAt: 1_789_231_507,
   harness: 'grok.com',
   author: {
     model: {

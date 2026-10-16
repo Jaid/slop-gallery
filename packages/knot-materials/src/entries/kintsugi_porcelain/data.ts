@@ -5,7 +5,7 @@ export default {
   id: 'kintsugi_porcelain',
   candidateId: 'muse_wonder',
   title: 'Kintsugi Porcelain',
-  createdAt: 1791854180,
+  createdAt: 1_791_854_180,
   harness: 'Mage',
   author: {
     model: {

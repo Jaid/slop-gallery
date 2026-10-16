@@ -5,7 +5,7 @@ export default {
   id: 'hoarfrost_relic',
   candidateId: 'muse_wonder',
   title: 'Hoarfrost Relic',
-  createdAt: 1791854180,
+  createdAt: 1_791_854_180,
   harness: 'Mage',
   author: {
     model: {

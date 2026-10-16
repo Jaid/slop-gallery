@@ -5,7 +5,7 @@ export default {
   id: 'panoptes',
   candidateId: 'claude_sonnet',
   title: 'Panoptes',
-  createdAt: 1791064898,
+  createdAt: 1_791_064_898,
   harness: 'Mage',
   author: {
     model: {

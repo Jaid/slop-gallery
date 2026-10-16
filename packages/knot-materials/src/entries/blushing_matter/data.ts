@@ -4,7 +4,7 @@ export default {
   id: 'blushing_matter',
   candidateId: 'gpt_astra',
   title: 'Blushing Matter',
-  createdAt: 1789293909,
+  createdAt: 1_789_293_909,
   harness: 'none',
   author: {
     model: {

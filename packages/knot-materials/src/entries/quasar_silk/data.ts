@@ -4,7 +4,7 @@ export default {
   id: 'quasar_silk',
   candidateId: 'gpt_terra',
   title: 'Quasar Silk',
-  createdAt: 1790119994,
+  createdAt: 1_790_119_994,
   harness: 'Mage',
   author: {
     model: {

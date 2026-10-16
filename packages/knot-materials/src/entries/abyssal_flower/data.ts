@@ -4,7 +4,7 @@ export default {
   id: 'abyssal_flower',
   candidateId: 'hy',
   title: 'Abyssal Flower',
-  createdAt: 1790126896,
+  createdAt: 1_790_126_896,
   harness: 'none',
   author: {
     model: {

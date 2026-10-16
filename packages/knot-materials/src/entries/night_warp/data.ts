@@ -4,7 +4,7 @@ export default {
   id: 'night_warp',
   candidateId: 'grok',
   title: 'Night Warp',
-  createdAt: 1791852458,
+  createdAt: 1_791_852_458,
   harness: 'Mage',
   author: {
     model: {

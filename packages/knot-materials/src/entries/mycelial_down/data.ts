@@ -4,7 +4,7 @@ export default {
   id: 'mycelial_down',
   candidateId: 'claude_opus',
   title: 'Mycelial Down',
-  createdAt: 1789575270,
+  createdAt: 1_789_575_270,
   harness: 'none',
   author: {
     model: {

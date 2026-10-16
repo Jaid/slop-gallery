@@ -5,7 +5,7 @@ export default {
   id: 'rose_engine',
   candidateId: 'gpt_sol',
   title: 'Rose Engine',
-  createdAt: 1790802275,
+  createdAt: 1_790_802_275,
   harness: 'Mage',
   author: {
     model: {

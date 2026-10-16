@@ -5,7 +5,7 @@ export default {
   id: 'gilded_glaze',
   candidateId: 'claude_haiku',
   title: 'Gilded Glaze',
-  createdAt: 1791758567,
+  createdAt: 1_791_758_567,
   harness: 'Mage',
   author: {
     model: {

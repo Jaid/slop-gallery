@@ -4,7 +4,7 @@ export default {
   id: 'velvet_umbra',
   candidateId: 'grok',
   title: 'Velvet Umbra',
-  createdAt: 1789231507,
+  createdAt: 1_789_231_507,
   harness: 'grok.com',
   author: {
     model: {

@@ -4,7 +4,7 @@ export default {
   id: 'opal_vespers',
   candidateId: 'grok',
   title: 'Opal Vespers',
-  createdAt: 1790126896,
+  createdAt: 1_790_126_896,
   harness: 'Mage',
   author: {
     model: {

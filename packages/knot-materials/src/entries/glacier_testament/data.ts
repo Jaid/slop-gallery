@@ -5,7 +5,7 @@ export default {
   id: 'glacier_testament',
   candidateId: 'muse_wonder',
   title: 'Glacier Testament',
-  createdAt: 1791867537,
+  createdAt: 1_791_867_537,
   harness: 'Mage',
   author: {
     model: {

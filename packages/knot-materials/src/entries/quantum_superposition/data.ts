@@ -4,7 +4,7 @@ export default {
   id: 'quantum_superposition',
   candidateId: 'qwen_max',
   title: 'Quantum Superposition',
-  createdAt: 1789231507,
+  createdAt: 1_789_231_507,
   harness: 'chat.qwen.ai',
   author: {
     model: {

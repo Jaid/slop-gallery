@@ -4,7 +4,7 @@ export default {
   id: 'heartwood_knot',
   candidateId: 'deepseek',
   title: 'Heartwood Knot',
-  createdAt: 1790125939,
+  createdAt: 1_790_125_939,
   harness: 'Mage',
   author: {
     model: {

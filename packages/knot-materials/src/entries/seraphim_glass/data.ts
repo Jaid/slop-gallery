@@ -5,7 +5,7 @@ export default {
   id: 'seraphim_glass',
   candidateId: 'gemini_argon',
   title: 'Seraphim Glass',
-  createdAt: 1791968199,
+  createdAt: 1_791_968_199,
   harness: 'Mage',
   author: {
     model: {

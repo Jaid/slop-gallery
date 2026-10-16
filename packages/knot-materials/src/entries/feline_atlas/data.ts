@@ -5,7 +5,7 @@ export default {
   id: 'feline_atlas',
   candidateId: 'gpt_sol',
   title: 'Feline Atlas',
-  createdAt: 1790311863,
+  createdAt: 1_790_311_863,
   harness: 'Mage',
   author: {
     model: {

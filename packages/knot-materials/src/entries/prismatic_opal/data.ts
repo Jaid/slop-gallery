@@ -5,7 +5,7 @@ export default {
   id: 'prismatic_opal',
   candidateId: 'space_bunny',
   title: 'Prismatic Opal',
-  createdAt: 1790311863,
+  createdAt: 1_790_311_863,
   harness: 'Mage',
   author: {
     model: {

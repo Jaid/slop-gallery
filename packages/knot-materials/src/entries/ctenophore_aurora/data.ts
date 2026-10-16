@@ -5,7 +5,7 @@ export default {
   id: 'ctenophore_aurora',
   candidateId: 'claude_sonnet',
   title: 'Ctenophore Aurora',
-  createdAt: 1790868534,
+  createdAt: 1_790_868_534,
   harness: 'Mage',
   author: {
     model: {

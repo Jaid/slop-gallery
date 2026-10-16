@@ -4,7 +4,7 @@ export default {
   id: 'prismatic_rain',
   candidateId: 'gpt_luna',
   title: 'Prismatic Rain',
-  createdAt: 1789979276,
+  createdAt: 1_789_979_276,
   harness: 'Mage',
   author: {
     model: {

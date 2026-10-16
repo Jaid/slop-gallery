@@ -4,7 +4,7 @@ export default {
   id: 'sidereal_compass',
   candidateId: 'hy',
   title: 'Celestial Astrolabe',
-  createdAt: 1789094423,
+  createdAt: 1_789_094_423,
   harness: 'none',
   author: {
     model: {

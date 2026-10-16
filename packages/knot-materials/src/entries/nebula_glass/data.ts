@@ -4,7 +4,7 @@ export default {
   id: 'nebula_glass',
   candidateId: 'qwen_max',
   title: 'Stellar Nursery',
-  createdAt: 1789075137,
+  createdAt: 1_789_075_137,
   author: {
     model: {
       title: 'Qwen 3.8 Max',

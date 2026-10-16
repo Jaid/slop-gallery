@@ -4,7 +4,7 @@ export default {
   id: 'solar_chronosphere',
   candidateId: 'gemini_flash',
   title: 'Solar Chronosphere',
-  createdAt: 1789983011,
+  createdAt: 1_789_983_011,
   harness: 'Mage',
   author: {
     model: {

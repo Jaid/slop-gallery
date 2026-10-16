@@ -4,7 +4,7 @@ export default {
   id: 'opaline_cosmos',
   candidateId: 'gpt_sol',
   title: 'Opaline Cosmos',
-  createdAt: 1789075137,
+  createdAt: 1_789_075_137,
   author: {
     model: {
       title: 'GPT-5.6 Sol',

@@ -4,7 +4,7 @@ export default {
   id: 'abyssal_chromatophore',
   candidateId: 'claude_fable',
   title: 'Abyssal Chromatophore',
-  createdAt: 1789239146,
+  createdAt: 1_789_239_146,
   harness: 'none',
   author: {
     model: {

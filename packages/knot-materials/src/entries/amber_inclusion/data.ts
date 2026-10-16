@@ -4,7 +4,7 @@ export default {
   id: 'amber_inclusion',
   candidateId: 'claude_opus',
   title: 'Amber Inclusion',
-  createdAt: 1789575270,
+  createdAt: 1_789_575_270,
   harness: 'none',
   author: {
     model: {

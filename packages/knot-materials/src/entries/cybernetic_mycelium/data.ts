@@ -5,7 +5,7 @@ export default {
   id: 'cybernetic_mycelium',
   candidateId: 'gemini_argon',
   title: 'Cybernetic Mycelium',
-  createdAt: 1791968199,
+  createdAt: 1_791_968_199,
   harness: 'Mage',
   author: {
     model: {

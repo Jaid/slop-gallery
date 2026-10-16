@@ -4,7 +4,7 @@ export default {
   id: 'starling_plumage',
   candidateId: 'gpt_terra',
   title: 'Starling Plumage',
-  createdAt: 1792098068,
+  createdAt: 1_792_098_068,
   harness: 'Mage',
   author: {
     model: {

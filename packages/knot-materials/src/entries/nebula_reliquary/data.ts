@@ -4,7 +4,7 @@ export default {
   id: 'nebula_reliquary',
   candidateId: 'claude_fable',
   title: 'Nebula Reliquary',
-  createdAt: 1789075137,
+  createdAt: 1_789_075_137,
   harness: 'none',
   author: {
     model: {

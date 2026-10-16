@@ -4,7 +4,7 @@ export default {
   id: 'cloisonne',
   candidateId: 'grok',
   title: 'Cloisonné',
-  createdAt: 1790126896,
+  createdAt: 1_790_126_896,
   harness: 'Mage',
   author: {
     model: {

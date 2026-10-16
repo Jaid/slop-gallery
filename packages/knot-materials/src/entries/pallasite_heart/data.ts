@@ -5,7 +5,7 @@ export default {
   id: 'pallasite_heart',
   candidateId: 'space_bunny',
   title: 'Pallasite Heart',
-  createdAt: 1790311863,
+  createdAt: 1_790_311_863,
   harness: 'Mage',
   author: {
     model: {

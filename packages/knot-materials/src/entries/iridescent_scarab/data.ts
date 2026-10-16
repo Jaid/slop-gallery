@@ -4,7 +4,7 @@ export default {
   id: 'iridescent_scarab',
   candidateId: 'deepseek',
   title: 'Iridescent Scarab',
-  createdAt: 1789235998,
+  createdAt: 1_789_235_998,
   harness: 'chat.deepseek.com',
   author: {
     model: {

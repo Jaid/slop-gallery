@@ -5,7 +5,7 @@ export default {
   id: 'raden_lacquer',
   candidateId: 'claude_haiku',
   title: 'Raden Lacquer',
-  createdAt: 1791758567,
+  createdAt: 1_791_758_567,
   harness: 'Mage',
   author: {
     model: {

@@ -5,7 +5,7 @@ export default {
   id: 'frost_genealogy',
   candidateId: 'space_bunny',
   title: 'Frost Genealogy',
-  createdAt: 1790458629,
+  createdAt: 1_790_458_629,
   harness: 'Mage',
   author: {
     model: {

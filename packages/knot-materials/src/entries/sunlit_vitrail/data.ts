@@ -5,7 +5,7 @@ export default {
   id: 'sunlit_vitrail',
   candidateId: 'space_bunny',
   title: 'Sunlit Vitrail',
-  createdAt: 1790868534,
+  createdAt: 1_790_868_534,
   harness: 'Mage',
   author: {
     model: {

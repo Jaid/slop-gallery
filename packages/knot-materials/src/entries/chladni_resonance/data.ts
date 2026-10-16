@@ -4,7 +4,7 @@ export default {
   id: 'chladni_resonance',
   candidateId: 'claude_fable',
   title: 'Chladni Resonance',
-  createdAt: 1789239146,
+  createdAt: 1_789_239_146,
   harness: 'none',
   author: {
     model: {

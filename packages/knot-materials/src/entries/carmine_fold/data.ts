@@ -4,7 +4,7 @@ export default {
   id: 'carmine_fold',
   candidateId: 'gpt_astra',
   title: 'Carmine Fold',
-  createdAt: 1790119994,
+  createdAt: 1_790_119_994,
   harness: 'Mage',
   author: {
     model: {

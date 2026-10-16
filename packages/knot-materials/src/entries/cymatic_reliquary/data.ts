@@ -5,7 +5,7 @@ export default {
   id: 'cymatic_reliquary',
   candidateId: 'space_bunny',
   title: 'Cymatic Reliquary',
-  createdAt: 1790311863,
+  createdAt: 1_790_311_863,
   harness: 'Mage',
   author: {
     model: {

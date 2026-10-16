@@ -5,7 +5,7 @@ export default {
   id: 'infinite_cloister',
   candidateId: 'gpt_sol',
   title: 'Infinite Cloister',
-  createdAt: 1790868534,
+  createdAt: 1_790_868_534,
   harness: 'Mage',
   author: {
     model: {

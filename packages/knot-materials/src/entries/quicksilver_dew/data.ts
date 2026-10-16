@@ -5,7 +5,7 @@ export default {
   id: 'quicksilver_dew',
   candidateId: 'muse_wonder',
   title: 'Quicksilver Dew',
-  createdAt: 1791848912,
+  createdAt: 1_791_848_912,
   harness: 'Mage',
   author: {
     model: {

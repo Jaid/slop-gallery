@@ -4,7 +4,7 @@ export default {
   id: 'rosefire_mosaic',
   candidateId: 'gpt_sol',
   title: 'Rosefire Mosaic',
-  createdAt: 1790119994,
+  createdAt: 1_790_119_994,
   harness: 'Mage',
   author: {
     model: {

@@ -4,7 +4,7 @@ export default {
   id: 'planck_boil',
   candidateId: 'claude_opus',
   title: 'Planck Boil',
-  createdAt: 1790023263,
+  createdAt: 1_790_023_263,
   harness: 'Mage',
   author: {
     model: {

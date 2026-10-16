@@ -5,7 +5,7 @@ export default {
   id: 'kintsugi_vow',
   candidateId: 'space_bunny',
   title: 'Kintsugi Vow',
-  createdAt: 1790868534,
+  createdAt: 1_790_868_534,
   harness: 'Mage',
   author: {
     model: {

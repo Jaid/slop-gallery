@@ -4,7 +4,7 @@ export default {
   id: 'velvet_penumbra',
   candidateId: 'claude_opus',
   title: 'Velvet Penumbra',
-  createdAt: 1790023263,
+  createdAt: 1_790_023_263,
   harness: 'Mage',
   author: {
     model: {

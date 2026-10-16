@@ -6,7 +6,7 @@ export default {
   id: 'kintsugi_twilight',
   candidateId: 'space_bunny',
   title: 'Kintsugi Twilight',
-  createdAt: 1790327078,
+  createdAt: 1_790_327_078,
   harness: 'Mage',
   author: {
     model: {

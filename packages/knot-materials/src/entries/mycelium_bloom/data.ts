@@ -4,7 +4,7 @@ export default {
   id: 'mycelium_bloom',
   candidateId: 'deepseek',
   title: 'Mycelium Bloom',
-  createdAt: 1789235998,
+  createdAt: 1_789_235_998,
   harness: 'chat.deepseek.com',
   author: {
     model: {

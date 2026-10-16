@@ -5,7 +5,7 @@ export default {
   id: 'crimson_nap',
   candidateId: 'space_bunny',
   title: 'Crimson Nap',
-  createdAt: 1790868534,
+  createdAt: 1_790_868_534,
   harness: 'Mage',
   author: {
     model: {

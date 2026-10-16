@@ -5,7 +5,7 @@ export default {
   id: 'heartwood_vespers',
   candidateId: 'space_bunny',
   title: 'Heartwood Vespers',
-  createdAt: 1790311863,
+  createdAt: 1_790_311_863,
   harness: 'Mage',
   author: {
     model: {

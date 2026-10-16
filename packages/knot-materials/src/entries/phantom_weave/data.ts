@@ -5,7 +5,7 @@ export default {
   id: 'phantom_weave',
   candidateId: 'space_bunny',
   title: 'Phantom Weave',
-  createdAt: 1790327078,
+  createdAt: 1_790_327_078,
   harness: 'Mage',
   author: {
     model: {

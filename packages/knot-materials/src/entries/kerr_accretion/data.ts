@@ -5,7 +5,7 @@ export default {
   id: 'kerr_accretion',
   candidateId: 'gemini_argon',
   title: 'Kerr Accretion',
-  createdAt: 1791968199,
+  createdAt: 1_791_968_199,
   harness: 'Mage',
   author: {
     model: {

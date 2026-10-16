@@ -4,7 +4,7 @@ export default {
   id: 'bismuth_bloom',
   candidateId: 'minimax',
   title: 'Bismuth Bloom',
-  createdAt: 1789979276,
+  createdAt: 1_789_979_276,
   harness: 'Mage',
   author: {
     model: {

@@ -5,7 +5,7 @@ export default {
   id: 'frozen_thunder',
   candidateId: 'claude_sonnet',
   title: 'Frozen Thunder',
-  createdAt: 1790802275,
+  createdAt: 1_790_802_275,
   harness: 'Mage',
   author: {
     model: {

@@ -5,7 +5,7 @@ export default {
   id: 'morpho_liturgy',
   candidateId: 'muse_wonder',
   title: 'Morpho Liturgy',
-  createdAt: 1791879378,
+  createdAt: 1_791_879_378,
   harness: 'Mage',
   author: {
     model: {

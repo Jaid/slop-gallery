@@ -5,7 +5,7 @@ export default {
   id: 'soap_psalm',
   candidateId: 'claude_haiku',
   title: 'Soap Psalm',
-  createdAt: 1791758567,
+  createdAt: 1_791_758_567,
   harness: 'Mage',
   author: {
     model: {

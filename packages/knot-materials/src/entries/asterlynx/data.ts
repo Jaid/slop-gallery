@@ -5,7 +5,7 @@ export default {
   id: 'asterlynx',
   candidateId: 'gpt_astra',
   title: 'Asterlynx',
-  createdAt: 1790397986,
+  createdAt: 1_790_397_986,
   harness: 'Mage',
   author: {
     model: {

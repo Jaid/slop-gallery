@@ -4,7 +4,7 @@ export default {
   id: 'damascus_tide',
   candidateId: 'claude_fable',
   title: 'Damascus Tide',
-  createdAt: 1789075137,
+  createdAt: 1_789_075_137,
   harness: 'none',
   author: {
     model: {

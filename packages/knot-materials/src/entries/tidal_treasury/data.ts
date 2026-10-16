@@ -4,7 +4,7 @@ export default {
   id: 'tidal_treasury',
   candidateId: 'gpt_astra',
   title: 'Tidal Treasury',
-  createdAt: 1789979276,
+  createdAt: 1_789_979_276,
   harness: 'Mage',
   author: {
     model: {

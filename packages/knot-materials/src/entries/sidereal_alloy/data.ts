@@ -5,7 +5,7 @@ export default {
   id: 'sidereal_alloy',
   candidateId: 'gpt_sol',
   title: 'Sidereal Alloy',
-  createdAt: 1791064898,
+  createdAt: 1_791_064_898,
   harness: 'Mage',
   author: {
     model: {

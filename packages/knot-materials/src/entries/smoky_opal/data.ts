@@ -5,7 +5,7 @@ export default {
   id: 'smoky_opal',
   candidateId: 'gemini_flash',
   title: 'Smoky Opal',
-  createdAt: 1790309623,
+  createdAt: 1_790_309_623,
   harness: 'Mage',
   author: {
     model: {

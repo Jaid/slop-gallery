@@ -5,7 +5,7 @@ export default {
   id: 'porcelain_moon',
   candidateId: 'muse_wonder',
   title: 'Porcelain Moon',
-  createdAt: 1791848243,
+  createdAt: 1_791_848_243,
   harness: 'Mage',
   author: {
     model: {

@@ -4,7 +4,7 @@ export default {
   id: 'obsidian_heartbeat',
   candidateId: 'muse_spark',
   title: 'Obsidian Heartbeat',
-  createdAt: 1789094423,
+  createdAt: 1_789_094_423,
   harness: 'none',
   author: {
     model: {

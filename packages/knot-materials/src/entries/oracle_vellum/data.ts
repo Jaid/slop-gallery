@@ -5,7 +5,7 @@ export default {
   id: 'oracle_vellum',
   candidateId: 'gpt_sol',
   title: 'Oracle Vellum',
-  createdAt: 1791064898,
+  createdAt: 1_791_064_898,
   harness: 'Mage',
   author: {
     model: {

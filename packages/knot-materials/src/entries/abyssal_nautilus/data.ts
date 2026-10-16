@@ -5,7 +5,7 @@ export default {
   id: 'abyssal_nautilus',
   candidateId: 'gemini_argon',
   title: 'Abyssal Nautilus',
-  createdAt: 1792017078,
+  createdAt: 1_792_017_078,
   harness: 'Mage',
   author: {
     model: {

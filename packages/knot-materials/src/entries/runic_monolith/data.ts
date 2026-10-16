@@ -4,7 +4,7 @@ export default {
   id: 'runic_monolith',
   candidateId: 'kimi',
   title: 'Runic Monolith',
-  createdAt: 1789231507,
+  createdAt: 1_789_231_507,
   harness: 'kimi.ai',
   author: {
     model: {

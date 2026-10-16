@@ -4,7 +4,7 @@ export default {
   id: 'obsidian_shard',
   candidateId: 'claude_sonnet',
   title: 'Obsidian Shard',
-  createdAt: 1789575270,
+  createdAt: 1_789_575_270,
   harness: 'none',
   author: {
     model: {

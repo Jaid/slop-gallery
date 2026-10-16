@@ -5,7 +5,7 @@ export default {
   id: 'abyssal_ctenophore',
   candidateId: 'gemini_argon',
   title: 'Abyssal Ctenophore',
-  createdAt: 1792050794,
+  createdAt: 1_792_050_794,
   harness: 'Mage',
   author: {
     model: {

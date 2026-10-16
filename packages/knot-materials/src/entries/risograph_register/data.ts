@@ -12,7 +12,7 @@ export default {
     },
   },
   title: 'Risograph Register',
-  createdAt: 1789816097,
+  createdAt: 1_789_816_097,
   flavorText: 'Three imperfect impressions agree on a color none of their inks could make alone.',
   placeholder: {
     color: '#dfbd83',

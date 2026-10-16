@@ -5,7 +5,7 @@ export default {
   id: 'harlequin_sunrise',
   candidateId: 'claude_sonnet',
   title: 'Harlequin Sunrise',
-  createdAt: 1790802275,
+  createdAt: 1_790_802_275,
   harness: 'Mage',
   author: {
     model: {

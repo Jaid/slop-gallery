@@ -4,7 +4,7 @@ export default {
   id: 'chromatophore_skin',
   candidateId: 'gpt_sol',
   title: 'Chromatophore Skin',
-  createdAt: 1789293909,
+  createdAt: 1_789_293_909,
   harness: 'none',
   author: {
     model: {

@@ -4,7 +4,7 @@ export default {
   id: 'celestial_kintsugi',
   candidateId: 'gemini_flash',
   title: 'Celestial Kintsugi',
-  createdAt: 1789983011,
+  createdAt: 1_789_983_011,
   harness: 'Mage',
   author: {
     model: {

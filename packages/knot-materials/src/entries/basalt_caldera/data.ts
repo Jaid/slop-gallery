@@ -5,7 +5,7 @@ export default {
   id: 'basalt_caldera',
   candidateId: 'gemini_argon',
   title: 'Basalt Caldera',
-  createdAt: 1792050794,
+  createdAt: 1_792_050_794,
   harness: 'Mage',
   author: {
     model: {

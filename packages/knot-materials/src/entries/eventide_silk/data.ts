@@ -4,7 +4,7 @@ export default {
   id: 'eventide_silk',
   candidateId: 'qwen_max',
   title: 'Eventide Silk',
-  createdAt: 1789231507,
+  createdAt: 1_789_231_507,
   harness: 'chat.qwen.ai',
   author: {
     model: {

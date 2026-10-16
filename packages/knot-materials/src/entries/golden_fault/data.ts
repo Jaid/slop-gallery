@@ -5,7 +5,7 @@ export default {
   id: 'golden_fault',
   candidateId: 'gpt_sol',
   title: 'Golden Fault',
-  createdAt: 1790311863,
+  createdAt: 1_790_311_863,
   harness: 'Mage',
   author: {
     model: {

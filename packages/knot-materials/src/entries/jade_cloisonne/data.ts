@@ -5,7 +5,7 @@ export default {
   id: 'jade_cloisonne',
   candidateId: 'gemini_argon',
   title: 'Jade Cloisonné',
-  createdAt: 1792017078,
+  createdAt: 1_792_017_078,
   harness: 'Mage',
   author: {
     model: {

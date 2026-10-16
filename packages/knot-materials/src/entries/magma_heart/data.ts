@@ -4,7 +4,7 @@ export default {
   id: 'magma_heart',
   candidateId: 'kimi',
   title: 'Magma Heart',
-  createdAt: 1789231507,
+  createdAt: 1_789_231_507,
   harness: 'kimi.ai',
   author: {
     model: {

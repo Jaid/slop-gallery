@@ -4,7 +4,7 @@ export default {
   id: 'pentimento_fresco',
   candidateId: 'gpt_sol',
   title: 'Pentimento Fresco',
-  createdAt: 1789293909,
+  createdAt: 1_789_293_909,
   harness: 'none',
   author: {
     model: {

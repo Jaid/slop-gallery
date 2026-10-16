@@ -5,7 +5,7 @@ export default {
   id: 'raden_maki_e',
   candidateId: 'gemini_argon',
   title: 'Raden Maki-e',
-  createdAt: 1792011214,
+  createdAt: 1_792_011_214,
   harness: 'Mage',
   author: {
     model: {

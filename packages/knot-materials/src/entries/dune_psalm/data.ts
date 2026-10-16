@@ -4,7 +4,7 @@ export default {
   id: 'dune_psalm',
   candidateId: 'gpt_astra',
   title: 'Dune Psalm',
-  createdAt: 1790119994,
+  createdAt: 1_790_119_994,
   harness: 'Mage',
   author: {
     model: {

@@ -5,7 +5,7 @@ export default {
   id: 'abyssal_pearl',
   candidateId: 'muse_wonder',
   title: 'Abyssal Pearl',
-  createdAt: 1791844628,
+  createdAt: 1_791_844_628,
   harness: 'Mage',
   author: {
     model: {

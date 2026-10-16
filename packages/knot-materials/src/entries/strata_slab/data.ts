@@ -4,7 +4,7 @@ export default {
   id: 'strata_slab',
   candidateId: 'hy',
   title: 'Strata Slab',
-  createdAt: 1789575270,
+  createdAt: 1_789_575_270,
   harness: 'none',
   author: {
     model: {

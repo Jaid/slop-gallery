@@ -5,7 +5,7 @@ export default {
   id: 'great_cat_emergence',
   candidateId: 'claude_opus',
   title: 'Great Cat Emergence',
-  createdAt: 1790458629,
+  createdAt: 1_790_458_629,
   harness: 'Mage',
   author: {
     model: {

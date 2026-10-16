@@ -4,7 +4,7 @@ export default {
   id: 'auric_joinery',
   candidateId: 'deepseek',
   title: 'Auric Joinery',
-  createdAt: 1790126896,
+  createdAt: 1_790_126_896,
   harness: 'Mage',
   author: {
     model: {

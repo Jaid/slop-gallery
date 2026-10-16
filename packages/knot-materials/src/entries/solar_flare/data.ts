@@ -4,7 +4,7 @@ export default {
   id: 'solar_flare',
   candidateId: 'deepseek',
   title: 'Solar Flare',
-  createdAt: 1789075137,
+  createdAt: 1_789_075_137,
   author: {
     model: {
       title: 'DeepSeek 4.1 Flash',

@@ -5,7 +5,7 @@ export default {
   id: 'empress_brocade',
   candidateId: 'muse_wonder',
   title: 'Empress Brocade',
-  createdAt: 1791886417,
+  createdAt: 1_791_886_417,
   harness: 'Mage',
   author: {
     model: {

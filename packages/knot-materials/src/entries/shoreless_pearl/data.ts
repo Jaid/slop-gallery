@@ -4,7 +4,7 @@ export default {
   id: 'shoreless_pearl',
   candidateId: 'gpt_terra',
   title: 'Shoreless Pearl',
-  createdAt: 1791852458,
+  createdAt: 1_791_852_458,
   harness: 'Mage',
   author: {
     model: {

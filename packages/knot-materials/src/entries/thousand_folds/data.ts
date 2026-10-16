@@ -5,7 +5,7 @@ export default {
   id: 'thousand_folds',
   candidateId: 'claude_fable',
   title: 'Thousand Folds',
-  createdAt: 1790695541,
+  createdAt: 1_790_695_541,
   harness: 'Mage',
   author: {
     model: {

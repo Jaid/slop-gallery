@@ -4,7 +4,7 @@ export default {
   id: 'nacre_nocturne',
   candidateId: 'gpt_astra',
   title: 'Nacre Nocturne',
-  createdAt: 1790122624,
+  createdAt: 1_790_122_624,
   harness: 'Mage',
   author: {
     model: {

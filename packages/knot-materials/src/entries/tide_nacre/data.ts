@@ -4,7 +4,7 @@ export default {
   id: 'tide_nacre',
   candidateId: 'grok',
   title: 'Tide Nacre',
-  createdAt: 1789075137,
+  createdAt: 1_789_075_137,
   author: {
     model: {
       title: 'Grok 4.6',

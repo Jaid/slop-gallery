@@ -4,7 +4,7 @@ export default {
   id: 'silver_slipstream',
   candidateId: 'glm',
   title: 'Silver Slipstream',
-  createdAt: 1790036112,
+  createdAt: 1_790_036_112,
   author: {
     model: {
       title: 'GLM 5.3',

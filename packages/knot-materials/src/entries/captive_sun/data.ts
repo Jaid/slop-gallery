@@ -5,7 +5,7 @@ export default {
   id: 'captive_sun',
   candidateId: 'muse_wonder',
   title: 'Captive Sun',
-  createdAt: 1791886417,
+  createdAt: 1_791_886_417,
   harness: 'Mage',
   author: {
     model: {

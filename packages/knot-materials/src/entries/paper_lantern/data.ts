@@ -5,7 +5,7 @@ export default {
   id: 'paper_lantern',
   candidateId: 'claude_fable',
   title: 'Paper Lantern',
-  createdAt: 1792086001,
+  createdAt: 1_792_086_001,
   harness: 'Mage',
   author: {model: {
     title: 'Claude Fable 5.1',

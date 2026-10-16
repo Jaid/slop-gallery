@@ -4,7 +4,7 @@ export default {
   id: 'abyssal_cathedral',
   candidateId: 'deepseek',
   title: 'Abyssal Cathedral',
-  createdAt: 1789235998,
+  createdAt: 1_789_235_998,
   harness: 'chat.deepseek.com',
   author: {
     model: {

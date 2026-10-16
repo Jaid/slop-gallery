@@ -4,7 +4,7 @@ export default {
   id: 'black_opal',
   candidateId: 'gemini_flash',
   title: 'Black Opal',
-  createdAt: 1790023263,
+  createdAt: 1_790_023_263,
   harness: 'Mage',
   author: {
     model: {

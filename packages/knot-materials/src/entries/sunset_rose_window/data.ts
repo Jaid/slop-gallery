@@ -5,7 +5,7 @@ export default {
   id: 'sunset_rose_window',
   candidateId: 'claude_opus',
   title: 'Sunset Rose Window',
-  createdAt: 1790461810,
+  createdAt: 1_790_461_810,
   harness: 'Mage',
   author: {
     model: {

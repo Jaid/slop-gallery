@@ -5,7 +5,7 @@ export default {
   id: 'lightning_ridge',
   candidateId: 'claude_opus',
   title: 'Lightning Ridge',
-  createdAt: 1791585164,
+  createdAt: 1_791_585_164,
   harness: 'Mage',
   author: {
     model: {

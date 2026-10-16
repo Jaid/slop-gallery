@@ -5,7 +5,7 @@ export default {
   id: 'aventurine_enamel',
   candidateId: 'gemini_argon',
   title: 'Aventurine Enamel',
-  createdAt: 1792035158,
+  createdAt: 1_792_035_158,
   harness: 'Mage',
   author: {
     model: {

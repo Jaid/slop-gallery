@@ -4,7 +4,7 @@ export default {
   id: 'celadon_crackle',
   candidateId: 'claude_opus',
   title: 'Celadon Crackle',
-  createdAt: 1789575270,
+  createdAt: 1_789_575_270,
   harness: 'none',
   author: {
     model: {

@@ -4,7 +4,7 @@ export default {
   id: 'orrery_of_hours',
   candidateId: 'deepseek',
   title: 'Orrery of Hours',
-  createdAt: 1790125939,
+  createdAt: 1_790_125_939,
   harness: 'Mage',
   author: {
     model: {

@@ -4,7 +4,7 @@ export default {
   id: 'void_velvet',
   candidateId: 'hy',
   title: 'Void Velvet',
-  createdAt: 1789575270,
+  createdAt: 1_789_575_270,
   harness: 'none',
   author: {
     model: {

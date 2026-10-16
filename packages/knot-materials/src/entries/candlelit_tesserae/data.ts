@@ -5,7 +5,7 @@ export default {
   id: 'candlelit_tesserae',
   candidateId: 'claude_sonnet',
   title: 'Candlelit Tesserae',
-  createdAt: 1791064898,
+  createdAt: 1_791_064_898,
   harness: 'Mage',
   author: {
     model: {

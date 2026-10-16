@@ -4,7 +4,7 @@ export default {
   id: 'gilded_celadon',
   candidateId: 'deepseek',
   title: 'Gilded Celadon',
-  createdAt: 1789987251,
+  createdAt: 1_789_987_251,
   harness: 'Mage',
   author: {
     model: {

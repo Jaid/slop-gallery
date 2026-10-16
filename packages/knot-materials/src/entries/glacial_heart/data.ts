@@ -5,7 +5,7 @@ export default {
   id: 'glacial_heart',
   candidateId: 'claude_fable',
   title: 'Glacial Heart',
-  createdAt: 1790695541,
+  createdAt: 1_790_695_541,
   harness: 'Mage',
   author: {
     model: {

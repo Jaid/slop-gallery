@@ -4,7 +4,7 @@ export default {
   id: 'morpho_veil',
   candidateId: 'glm_flash',
   title: 'Morpho Veil',
-  createdAt: 1789094423,
+  createdAt: 1_789_094_423,
   harness: 'none',
   author: {
     model: {

@@ -4,7 +4,7 @@ export default {
   id: 'stained_requiem',
   candidateId: 'claude_sonnet',
   title: 'Stained Requiem',
-  createdAt: 1789075137,
+  createdAt: 1_789_075_137,
   author: {
     model: {
       title: 'Claude Sonnet 5',

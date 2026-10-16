@@ -5,7 +5,7 @@ export default {
   id: 'raku_celadon',
   candidateId: 'gemini_argon',
   title: 'Raku Celadon',
-  createdAt: 1792017078,
+  createdAt: 1_792_017_078,
   harness: 'Mage',
   author: {
     model: {

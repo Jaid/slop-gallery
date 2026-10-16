@@ -4,7 +4,7 @@ export default {
   id: 'rust_ceramic',
   candidateId: 'claude_sonnet',
   title: 'Rust Ceramic',
-  createdAt: 1789575270,
+  createdAt: 1_789_575_270,
   harness: 'none',
   author: {
     model: {

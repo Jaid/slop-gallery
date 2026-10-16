@@ -5,7 +5,7 @@ export default {
   id: 'cinnabar_bloom',
   candidateId: 'gpt_sol',
   title: 'Cinnabar Bloom',
-  createdAt: 1791064898,
+  createdAt: 1_791_064_898,
   harness: 'Mage',
   author: {
     model: {

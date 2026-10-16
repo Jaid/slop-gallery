@@ -5,7 +5,7 @@ export default {
   id: 'thin_film_ephemera',
   candidateId: 'space_bunny',
   title: 'Thin-Film Ephemera',
-  createdAt: 1790458629,
+  createdAt: 1_790_458_629,
   harness: 'Mage',
   author: {
     model: {

@@ -4,7 +4,7 @@ export default {
   id: 'marquetry_aurora',
   candidateId: 'gpt_terra',
   title: 'Marquetry Aurora',
-  createdAt: 1789979276,
+  createdAt: 1_789_979_276,
   harness: 'Mage',
   author: {
     model: {

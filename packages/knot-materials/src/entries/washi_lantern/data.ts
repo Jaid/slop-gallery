@@ -4,7 +4,7 @@ export default {
   id: 'washi_lantern',
   candidateId: 'claude_fable',
   title: 'Washi Lantern',
-  createdAt: 1789239146,
+  createdAt: 1_789_239_146,
   harness: 'none',
   author: {
     model: {

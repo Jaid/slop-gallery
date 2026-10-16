@@ -4,7 +4,7 @@ export default {
   id: 'quicksilver_echo',
   candidateId: 'claude_fable',
   title: 'Quicksilver Echo',
-  createdAt: 1789075137,
+  createdAt: 1_789_075_137,
   harness: 'none',
   author: {
     model: {

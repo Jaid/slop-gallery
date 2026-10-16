@@ -5,7 +5,7 @@ export default {
   id: 'kintsugi_vessel',
   candidateId: 'claude_haiku',
   title: 'Kintsugi Vessel',
-  createdAt: 1791758163,
+  createdAt: 1_791_758_163,
   harness: 'Mage',
   author: {
     model: {

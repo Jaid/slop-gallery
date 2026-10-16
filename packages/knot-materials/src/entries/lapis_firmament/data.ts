@@ -5,7 +5,7 @@ export default {
   id: 'lapis_firmament',
   candidateId: 'claude_opus',
   title: 'Lapis Firmament',
-  createdAt: 1790461810,
+  createdAt: 1_790_461_810,
   harness: 'Mage',
   author: {
     model: {

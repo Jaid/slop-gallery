@@ -5,7 +5,7 @@ export default {
   id: 'mandarin_brocade',
   candidateId: 'claude_haiku',
   title: 'Mandarin Brocade',
-  createdAt: 1791758163,
+  createdAt: 1_791_758_163,
   harness: 'Mage',
   author: {
     model: {

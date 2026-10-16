@@ -4,7 +4,7 @@ export default {
   id: 'solar_silk',
   candidateId: 'glm',
   title: 'Solar Silk',
-  createdAt: 1789094423,
+  createdAt: 1_789_094_423,
   harness: 'none',
   author: {
     model: {

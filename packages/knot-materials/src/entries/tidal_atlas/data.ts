@@ -4,7 +4,7 @@ export default {
   id: 'tidal_atlas',
   candidateId: 'gpt_sol',
   title: 'Tidal Atlas',
-  createdAt: 1790119994,
+  createdAt: 1_790_119_994,
   harness: 'Mage',
   author: {
     model: {

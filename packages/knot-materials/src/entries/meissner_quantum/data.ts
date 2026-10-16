@@ -4,7 +4,7 @@ export default {
   id: 'meissner_quantum',
   candidateId: 'gemini_flash',
   title: 'Meissner Quantum',
-  createdAt: 1789983011,
+  createdAt: 1_789_983_011,
   harness: 'Mage',
   author: {
     model: {

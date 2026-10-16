@@ -4,7 +4,7 @@ export default {
   id: 'tesseract_echo',
   candidateId: 'hy',
   title: 'Tesseract Echo',
-  createdAt: 1789094423,
+  createdAt: 1_789_094_423,
   harness: 'none',
   author: {
     model: {

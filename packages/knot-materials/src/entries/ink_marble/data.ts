@@ -4,7 +4,7 @@ export default {
   id: 'ink_marble',
   candidateId: 'claude_sonnet',
   title: 'Ink Marble',
-  createdAt: 1789575270,
+  createdAt: 1_789_575_270,
   harness: 'none',
   author: {
     model: {

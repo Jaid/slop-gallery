@@ -6,7 +6,7 @@ export default {
   id: 'oceanic_nacre',
   candidateId: 'space_bunny',
   title: 'Oceanic Nacre',
-  createdAt: 1790327078,
+  createdAt: 1_790_327_078,
   harness: 'Mage',
   author: {
     model: {

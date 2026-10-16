@@ -5,7 +5,7 @@ export default {
   id: 'solar_loom',
   candidateId: 'space_bunny',
   title: 'Solar Loom',
-  createdAt: 1790311863,
+  createdAt: 1_790_311_863,
   harness: 'Mage',
   author: {
     model: {

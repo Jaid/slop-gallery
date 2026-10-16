@@ -5,7 +5,7 @@ export default {
   id: 'chatoyant_dusk',
   candidateId: 'claude_sonnet',
   title: 'Chatoyant Dusk',
-  createdAt: 1790802275,
+  createdAt: 1_790_802_275,
   harness: 'Mage',
   author: {
     model: {

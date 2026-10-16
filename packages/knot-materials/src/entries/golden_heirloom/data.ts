@@ -5,7 +5,7 @@ export default {
   id: 'golden_heirloom',
   candidateId: 'muse_wonder',
   title: 'Golden Heirloom',
-  createdAt: 1791864248,
+  createdAt: 1_791_864_248,
   harness: 'Mage',
   author: {
     model: {

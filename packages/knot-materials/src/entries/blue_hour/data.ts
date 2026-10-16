@@ -4,7 +4,7 @@ export default {
   id: 'blue_hour',
   candidateId: 'mimo',
   title: 'Blue Hour',
-  createdAt: 1790119994,
+  createdAt: 1_790_119_994,
   harness: 'Mage',
   author: {
     model: {

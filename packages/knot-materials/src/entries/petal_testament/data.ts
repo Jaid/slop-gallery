@@ -4,7 +4,7 @@ export default {
   id: 'petal_testament',
   candidateId: 'gpt_astra',
   title: 'Petal Testament',
-  createdAt: 1790122624,
+  createdAt: 1_790_122_624,
   harness: 'Mage',
   author: {
     model: {

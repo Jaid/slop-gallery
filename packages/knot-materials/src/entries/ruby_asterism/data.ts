@@ -4,7 +4,7 @@ export default {
   id: 'ruby_asterism',
   candidateId: 'deepseek',
   title: 'Ruby Asterism',
-  createdAt: 1790125939,
+  createdAt: 1_790_125_939,
   harness: 'Mage',
   author: {
     model: {

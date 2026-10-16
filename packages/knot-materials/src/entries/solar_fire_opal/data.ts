@@ -4,7 +4,7 @@ export default {
   id: 'solar_fire_opal',
   candidateId: 'gemini_flash',
   title: 'Solar Fire Opal',
-  createdAt: 1789983011,
+  createdAt: 1_789_983_011,
   harness: 'Mage',
   author: {
     model: {

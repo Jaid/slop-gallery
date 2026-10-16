@@ -5,7 +5,7 @@ export default {
   id: 'harlequin_awakening',
   candidateId: 'claude_sonnet',
   title: 'Harlequin Awakening',
-  createdAt: 1791064898,
+  createdAt: 1_791_064_898,
   harness: 'Mage',
   author: {
     model: {

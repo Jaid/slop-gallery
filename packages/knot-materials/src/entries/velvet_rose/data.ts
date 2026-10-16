@@ -4,7 +4,7 @@ export default {
   id: 'velvet_rose',
   candidateId: 'mimo',
   title: 'Velvet Rose',
-  createdAt: 1790126896,
+  createdAt: 1_790_126_896,
   harness: 'Mage',
   author: {
     model: {

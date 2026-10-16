@@ -4,7 +4,7 @@ export default {
   id: 'moire_sanctum',
   candidateId: 'claude_fable',
   title: 'Moiré Sanctum',
-  createdAt: 1789075137,
+  createdAt: 1_789_075_137,
   harness: 'none',
   author: {
     model: {

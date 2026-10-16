@@ -4,7 +4,7 @@ export default {
   id: 'boreal_curtain',
   candidateId: 'glm',
   title: 'Aurora Veil',
-  createdAt: 1789075137,
+  createdAt: 1_789_075_137,
   author: {
     model: {
       title: 'GLM 5.3',

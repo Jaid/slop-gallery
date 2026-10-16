@@ -4,7 +4,7 @@ export default {
   id: 'kintsugi_nocturne',
   candidateId: 'gpt_terra',
   title: 'Kintsugi Nocturne',
-  createdAt: 1789979276,
+  createdAt: 1_789_979_276,
   harness: 'Mage',
   author: {
     model: {

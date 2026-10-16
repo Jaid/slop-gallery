@@ -4,7 +4,7 @@ export default {
   id: 'vapor_prism',
   candidateId: 'hy',
   title: 'Vapor Prism',
-  createdAt: 1789575270,
+  createdAt: 1_789_575_270,
   harness: 'none',
   author: {
     model: {

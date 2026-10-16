@@ -4,7 +4,7 @@ export default {
   id: 'nacre_shell',
   candidateId: 'hy',
   title: 'Nacre Shell',
-  createdAt: 1789575270,
+  createdAt: 1_789_575_270,
   harness: 'none',
   author: {
     model: {

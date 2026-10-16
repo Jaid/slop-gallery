@@ -4,7 +4,7 @@ export default {
   id: 'prism_cathedral',
   candidateId: 'claude_opus',
   title: 'Prism Cathedral',
-  createdAt: 1789575270,
+  createdAt: 1_789_575_270,
   harness: 'none',
   author: {
     model: {

@@ -4,7 +4,7 @@ export default {
   id: 'oracle_stone',
   candidateId: 'gpt_terra',
   title: 'Oracle Stone',
-  createdAt: 1789979276,
+  createdAt: 1_789_979_276,
   harness: 'Mage',
   author: {
     model: {

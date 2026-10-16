@@ -5,7 +5,7 @@ export default {
   id: 'banked_embers',
   candidateId: 'claude_opus',
   title: 'Banked Embers',
-  createdAt: 1792086173,
+  createdAt: 1_792_086_173,
   harness: 'Mage',
   author: {model: {
     title: 'Claude Opus 5.5',

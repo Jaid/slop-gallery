@@ -4,7 +4,7 @@ export default {
   id: 'amber_archive',
   candidateId: 'gpt_astra',
   title: 'Amber Archive',
-  createdAt: 1789979276,
+  createdAt: 1_789_979_276,
   harness: 'Mage',
   author: {
     model: {

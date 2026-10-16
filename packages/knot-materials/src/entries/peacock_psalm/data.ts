@@ -5,7 +5,7 @@ export default {
   id: 'peacock_psalm',
   candidateId: 'muse_wonder',
   title: 'Peacock Psalm',
-  createdAt: 1791848243,
+  createdAt: 1_791_848_243,
   harness: 'Mage',
   author: {
     model: {

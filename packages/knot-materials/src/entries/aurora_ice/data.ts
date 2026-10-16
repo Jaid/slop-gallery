@@ -4,7 +4,7 @@ export default {
   id: 'aurora_ice',
   candidateId: 'gpt_sol',
   title: 'Aurora Ice',
-  createdAt: 1790119994,
+  createdAt: 1_790_119_994,
   harness: 'Mage',
   author: {
     model: {

@@ -4,7 +4,7 @@ export default {
   id: 'bismuth_pagoda',
   candidateId: 'glm',
   title: 'Bismuth Pagoda',
-  createdAt: 1789231507,
+  createdAt: 1_789_231_507,
   harness: 'chat.z.ai',
   author: {
     model: {

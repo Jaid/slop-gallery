@@ -4,7 +4,7 @@ export default {
   id: 'tesseract_matrix',
   candidateId: 'gemini_flash',
   title: 'Tesseract Matrix',
-  createdAt: 1789290805,
+  createdAt: 1_789_290_805,
   harness: 'none',
   author: {
     model: {

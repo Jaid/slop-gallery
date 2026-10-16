@@ -5,7 +5,7 @@ export default {
   id: 'resin_nebula',
   candidateId: 'muse_wonder',
   title: 'Resin Nebula',
-  createdAt: 1791844628,
+  createdAt: 1_791_844_628,
   harness: 'Mage',
   author: {
     model: {

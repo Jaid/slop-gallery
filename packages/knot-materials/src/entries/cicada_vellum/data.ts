@@ -4,7 +4,7 @@ export default {
   id: 'cicada_vellum',
   candidateId: 'gpt_terra',
   title: 'Cicada Vellum',
-  createdAt: 1789979276,
+  createdAt: 1_789_979_276,
   harness: 'Mage',
   author: {
     model: {

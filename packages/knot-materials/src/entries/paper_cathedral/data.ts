@@ -4,7 +4,7 @@ export default {
   id: 'paper_cathedral',
   candidateId: 'gpt_astra',
   title: 'Paper Cathedral',
-  createdAt: 1790023263,
+  createdAt: 1_790_023_263,
   harness: 'Mage',
   author: {
     model: {

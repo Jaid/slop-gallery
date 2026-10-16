@@ -5,7 +5,7 @@ export default {
   id: 'seraphim_censers',
   candidateId: 'gemini_argon',
   title: 'Seraphim Censers',
-  createdAt: 1792017078,
+  createdAt: 1_792_017_078,
   harness: 'Mage',
   author: {
     model: {

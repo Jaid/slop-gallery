@@ -5,7 +5,7 @@ export default {
   id: 'caldera_heart',
   candidateId: 'claude_opus',
   title: 'Caldera Heart',
-  createdAt: 1791585164,
+  createdAt: 1_791_585_164,
   harness: 'Mage',
   author: {
     model: {

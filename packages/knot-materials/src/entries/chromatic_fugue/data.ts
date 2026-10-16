@@ -4,7 +4,7 @@ export default {
   id: 'chromatic_fugue',
   candidateId: 'gpt_astra',
   title: 'Chromatic Fugue',
-  createdAt: 1790122624,
+  createdAt: 1_790_122_624,
   harness: 'Mage',
   author: {
     model: {

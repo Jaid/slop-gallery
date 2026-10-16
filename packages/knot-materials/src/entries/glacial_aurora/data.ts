@@ -4,7 +4,7 @@ export default {
   id: 'glacial_aurora',
   candidateId: 'claude_fable',
   title: 'Glacial Aurora',
-  createdAt: 1789239146,
+  createdAt: 1_789_239_146,
   harness: 'none',
   author: {
     model: {

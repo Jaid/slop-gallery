@@ -4,7 +4,7 @@ export default {
   id: 'cinder_bloom',
   candidateId: 'gpt_terra',
   title: 'Cinder Bloom',
-  createdAt: 1790119994,
+  createdAt: 1_790_119_994,
   harness: 'Mage',
   author: {
     model: {

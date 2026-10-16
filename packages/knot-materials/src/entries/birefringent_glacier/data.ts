@@ -4,7 +4,7 @@ export default {
   id: 'birefringent_glacier',
   candidateId: 'grok',
   title: 'Birefringent Glacier',
-  createdAt: 1789231507,
+  createdAt: 1_789_231_507,
   harness: 'grok.com Build',
   author: {
     model: {

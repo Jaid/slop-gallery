@@ -12,7 +12,7 @@ export default {
     },
   },
   title: 'Semaphore Enamel',
-  createdAt: 1789816097,
+  createdAt: 1_789_816_097,
   flavorText: 'Vermilion flags wait in brass frames, spelling a patient message to a train that never arrives.',
   placeholder: {
     color: '#cf4936',

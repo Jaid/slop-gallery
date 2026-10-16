@@ -4,7 +4,7 @@ export default {
   id: 'kintsugi_faults',
   candidateId: 'mimo',
   title: 'Kintsugi Faults',
-  createdAt: 1790036112,
+  createdAt: 1_790_036_112,
   harness: 'Mage',
   author: {
     model: {

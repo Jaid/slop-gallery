@@ -4,7 +4,7 @@ export default {
   id: 'ciliary_rainbow',
   candidateId: 'gemini_flash',
   title: 'Ciliary Rainbow',
-  createdAt: 1792053515,
+  createdAt: 1_792_053_515,
   harness: 'Mage',
   author: {
     model: {

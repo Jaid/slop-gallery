@@ -4,7 +4,7 @@ export default {
   id: 'clockwork_oracle',
   candidateId: 'deepseek',
   title: 'Clockwork Oracle',
-  createdAt: 1789235998,
+  createdAt: 1_789_235_998,
   harness: 'chat.deepseek.com',
   author: {
     model: {

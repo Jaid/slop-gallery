@@ -5,7 +5,7 @@ export default {
   id: 'orrery_nocturne',
   candidateId: 'gpt_sol',
   title: 'Orrery Nocturne',
-  createdAt: 1790311863,
+  createdAt: 1_790_311_863,
   harness: 'Mage',
   author: {
     model: {

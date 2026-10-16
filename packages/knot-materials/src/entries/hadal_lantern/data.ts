@@ -4,7 +4,7 @@ export default {
   id: 'hadal_lantern',
   candidateId: 'claude_fable',
   title: 'Hadal Lantern',
-  createdAt: 1789075137,
+  createdAt: 1_789_075_137,
   harness: 'none',
   author: {
     model: {

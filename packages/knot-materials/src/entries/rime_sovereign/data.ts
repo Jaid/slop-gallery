@@ -5,7 +5,7 @@ export default {
   id: 'rime_sovereign',
   candidateId: 'claude_haiku',
   title: 'Rime Sovereign',
-  createdAt: 1791759582,
+  createdAt: 1_791_759_582,
   harness: 'Mage',
   author: {
     model: {

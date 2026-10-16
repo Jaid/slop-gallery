@@ -5,7 +5,7 @@ export default {
   id: 'chrome_bloom',
   candidateId: 'space_bunny',
   title: 'Chrome Bloom',
-  createdAt: 1790311863,
+  createdAt: 1_790_311_863,
   harness: 'Mage',
   author: {
     model: {

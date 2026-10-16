@@ -5,7 +5,7 @@ export default {
   id: 'abyssal_anemones',
   candidateId: 'muse_wonder',
   title: 'Abyssal Anemones',
-  createdAt: 1791867537,
+  createdAt: 1_791_867_537,
   harness: 'Mage',
   author: {
     model: {

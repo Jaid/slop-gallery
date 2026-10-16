@@ -5,7 +5,7 @@ export default {
   id: 'aurora_loom',
   candidateId: 'muse_wonder',
   title: 'Aurora Loom',
-  createdAt: 1791844380,
+  createdAt: 1_791_844_380,
   harness: 'Mage',
   author: {
     model: {

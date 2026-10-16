@@ -5,7 +5,7 @@ export default {
   id: 'koi_urushi',
   candidateId: 'gemini_argon',
   title: 'Koi Urushi',
-  createdAt: 1791968199,
+  createdAt: 1_791_968_199,
   harness: 'Mage',
   author: {
     model: {

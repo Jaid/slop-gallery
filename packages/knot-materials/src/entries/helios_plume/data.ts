@@ -4,7 +4,7 @@ export default {
   id: 'helios_plume',
   candidateId: 'kimi',
   title: 'Solar Prominence',
-  createdAt: 1789075137,
+  createdAt: 1_789_075_137,
   author: {
     model: {
       title: 'Kimi K3',

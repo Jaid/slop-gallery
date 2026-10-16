@@ -4,7 +4,7 @@ export default {
   id: 'hoar_frost',
   candidateId: 'hy',
   title: 'Hoar Frost',
-  createdAt: 1789575270,
+  createdAt: 1_789_575_270,
   harness: 'none',
   author: {
     model: {

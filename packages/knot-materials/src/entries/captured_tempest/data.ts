@@ -4,7 +4,7 @@ export default {
   id: 'captured_tempest',
   candidateId: 'gpt_sol',
   title: 'Captured Tempest',
-  createdAt: 1789293909,
+  createdAt: 1_789_293_909,
   harness: 'none',
   author: {
     model: {

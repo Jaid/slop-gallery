@@ -4,7 +4,7 @@ export default {
   id: 'ferrite_sand',
   candidateId: 'hy',
   title: 'Ferrite Sand',
-  createdAt: 1789575270,
+  createdAt: 1_789_575_270,
   harness: 'none',
   author: {
     model: {

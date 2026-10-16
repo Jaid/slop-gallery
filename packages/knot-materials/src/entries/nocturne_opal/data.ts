@@ -4,7 +4,7 @@ export default {
   id: 'nocturne_opal',
   candidateId: 'muse_spark',
   title: 'Nocturne Opal',
-  createdAt: 1789231507,
+  createdAt: 1_789_231_507,
   harness: 'meta.ai',
   author: {
     model: {

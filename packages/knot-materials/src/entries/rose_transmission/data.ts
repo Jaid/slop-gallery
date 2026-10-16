@@ -5,7 +5,7 @@ export default {
   id: 'rose_transmission',
   candidateId: 'space_bunny',
   title: 'Rose Transmission',
-  createdAt: 1790311863,
+  createdAt: 1_790_311_863,
   harness: 'Mage',
   author: {
     model: {

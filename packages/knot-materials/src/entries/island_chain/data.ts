@@ -4,7 +4,7 @@ export default {
   id: 'island_chain',
   candidateId: 'deepseek',
   title: 'Island Chain',
-  createdAt: 1790125939,
+  createdAt: 1_790_125_939,
   harness: 'Mage',
   author: {
     model: {

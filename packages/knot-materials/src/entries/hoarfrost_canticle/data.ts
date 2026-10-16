@@ -5,7 +5,7 @@ export default {
   id: 'hoarfrost_canticle',
   candidateId: 'gpt_sol',
   title: 'Hoarfrost Canticle',
-  createdAt: 1790311863,
+  createdAt: 1_790_311_863,
   harness: 'Mage',
   author: {
     model: {

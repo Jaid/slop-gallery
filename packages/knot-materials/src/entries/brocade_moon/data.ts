@@ -5,7 +5,7 @@ export default {
   id: 'brocade_moon',
   candidateId: 'space_bunny',
   title: 'Brocade Moon',
-  createdAt: 1790311863,
+  createdAt: 1_790_311_863,
   harness: 'Mage',
   author: {
     model: {

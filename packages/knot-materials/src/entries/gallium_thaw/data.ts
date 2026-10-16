@@ -4,7 +4,7 @@ export default {
   id: 'gallium_thaw',
   candidateId: 'grok',
   title: 'Gallium Thaw',
-  createdAt: 1789231507,
+  createdAt: 1_789_231_507,
   harness: 'grok.com Build',
   author: {
     model: {

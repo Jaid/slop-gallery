@@ -12,7 +12,7 @@ export default {
     },
   },
   title: 'Confetti Terrazzo',
-  createdAt: 1789816097,
+  createdAt: 1_789_816_097,
   flavorText: 'The workshop swept its brightest offcuts into one stone and polished the celebration smooth.',
   placeholder: {
     color: '#e1cbb0',

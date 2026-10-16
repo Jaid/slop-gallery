@@ -4,7 +4,7 @@ export default {
   id: 'dragon_opal',
   candidateId: 'kimi',
   title: 'Dragon Opal',
-  createdAt: 1789075137,
+  createdAt: 1_789_075_137,
   author: {
     model: {
       title: 'Kimi K3',

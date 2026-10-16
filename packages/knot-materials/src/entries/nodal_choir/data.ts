@@ -5,7 +5,7 @@ export default {
   id: 'nodal_choir',
   candidateId: 'claude_haiku',
   title: 'Nodal Choir',
-  createdAt: 1791758567,
+  createdAt: 1_791_758_567,
   harness: 'Mage',
   author: {
     model: {

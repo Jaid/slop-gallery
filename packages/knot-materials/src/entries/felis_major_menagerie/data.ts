@@ -5,7 +5,7 @@ export default {
   id: 'felis_major_menagerie',
   candidateId: 'claude_opus',
   title: 'Felis Major Menagerie',
-  createdAt: 1790458629,
+  createdAt: 1_790_458_629,
   harness: 'Mage',
   author: {
     model: {

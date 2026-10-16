@@ -5,7 +5,7 @@ export default {
   id: 'morpho_mirage',
   candidateId: 'muse_wonder',
   title: 'Morpho Mirage',
-  createdAt: 1791858712,
+  createdAt: 1_791_858_712,
   harness: 'Mage',
   author: {
     model: {

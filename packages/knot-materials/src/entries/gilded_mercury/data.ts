@@ -4,7 +4,7 @@ export default {
   id: 'gilded_mercury',
   candidateId: 'mimo',
   title: 'Gilded Mercury',
-  createdAt: 1790119994,
+  createdAt: 1_790_119_994,
   harness: 'Mage',
   author: {
     model: {

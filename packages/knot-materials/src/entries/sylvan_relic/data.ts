@@ -5,7 +5,7 @@ export default {
   id: 'sylvan_relic',
   candidateId: 'muse_wonder',
   title: 'Sylvan Relic',
-  createdAt: 1791848243,
+  createdAt: 1_791_848_243,
   harness: 'Mage',
   author: {
     model: {

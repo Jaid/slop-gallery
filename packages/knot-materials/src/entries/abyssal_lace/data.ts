@@ -5,7 +5,7 @@ export default {
   id: 'abyssal_lace',
   candidateId: 'claude_sonnet',
   title: 'Abyssal Lace',
-  createdAt: 1791064898,
+  createdAt: 1_791_064_898,
   harness: 'Mage',
   author: {
     model: {

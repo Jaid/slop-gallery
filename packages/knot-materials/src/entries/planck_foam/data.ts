@@ -4,7 +4,7 @@ export default {
   id: 'planck_foam',
   candidateId: 'hy',
   title: 'Planck Foam',
-  createdAt: 1789094423,
+  createdAt: 1_789_094_423,
   harness: 'none',
   author: {
     model: {

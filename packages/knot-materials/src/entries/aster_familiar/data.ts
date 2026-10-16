@@ -5,7 +5,7 @@ export default {
   id: 'aster_familiar',
   candidateId: 'gpt_sol',
   title: 'Aster Familiar',
-  createdAt: 1790327078,
+  createdAt: 1_790_327_078,
   harness: 'Mage',
   author: {
     model: {

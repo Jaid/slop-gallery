@@ -5,7 +5,7 @@ export default {
   id: 'shot_silk_damask',
   candidateId: 'claude_sonnet',
   title: 'Shot Silk Damask',
-  createdAt: 1790868534,
+  createdAt: 1_790_868_534,
   harness: 'Mage',
   author: {
     model: {

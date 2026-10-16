@@ -5,7 +5,7 @@ export default {
   id: 'parallax_deep_field',
   candidateId: 'claude_sonnet',
   title: 'Parallax Deep Field',
-  createdAt: 1790802275,
+  createdAt: 1_790_802_275,
   harness: 'Mage',
   author: {
     model: {

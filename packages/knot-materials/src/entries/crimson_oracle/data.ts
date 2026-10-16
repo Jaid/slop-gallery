@@ -4,7 +4,7 @@ export default {
   id: 'crimson_oracle',
   candidateId: 'gpt_sol',
   title: 'Crimson Oracle',
-  createdAt: 1789075137,
+  createdAt: 1_789_075_137,
   author: {
     model: {
       title: 'GPT-5.6 Sol',

@@ -5,7 +5,7 @@ export default {
   id: 'cymatics',
   candidateId: 'space_bunny',
   title: 'Cymatics',
-  createdAt: 1791064898,
+  createdAt: 1_791_064_898,
   harness: 'Mage',
   author: {
     model: {

@@ -5,7 +5,7 @@ export default {
   id: 'vermillion_lacquer',
   candidateId: 'space_bunny',
   title: 'Vermillion Lacquer',
-  createdAt: 1790327078,
+  createdAt: 1_790_327_078,
   harness: 'Mage',
   author: {
     model: {

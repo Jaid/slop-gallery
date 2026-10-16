@@ -5,7 +5,7 @@ export default {
   id: 'sleeping_agate',
   candidateId: 'claude_haiku',
   title: 'Sleeping Agate',
-  createdAt: 1791758163,
+  createdAt: 1_791_758_163,
   harness: 'Mage',
   author: {
     model: {

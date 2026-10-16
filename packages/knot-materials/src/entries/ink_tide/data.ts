@@ -5,7 +5,7 @@ export default {
   id: 'ink_tide',
   candidateId: 'space_bunny',
   title: 'Ink Tide',
-  createdAt: 1790868534,
+  createdAt: 1_790_868_534,
   harness: 'Mage',
   author: {
     model: {

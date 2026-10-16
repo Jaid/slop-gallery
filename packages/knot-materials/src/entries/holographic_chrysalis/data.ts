@@ -4,7 +4,7 @@ export default {
   id: 'holographic_chrysalis',
   candidateId: 'minimax',
   title: 'Holographic Chrysalis',
-  createdAt: 1789979276,
+  createdAt: 1_789_979_276,
   harness: 'Mage',
   author: {
     model: {

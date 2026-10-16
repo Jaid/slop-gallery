@@ -5,7 +5,7 @@ export default {
   id: 'lodestone_bloom',
   candidateId: 'claude_haiku',
   title: 'Lodestone Bloom',
-  createdAt: 1791758567,
+  createdAt: 1_791_758_567,
   harness: 'Mage',
   author: {
     model: {

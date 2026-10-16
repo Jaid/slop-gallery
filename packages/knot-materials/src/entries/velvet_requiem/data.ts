@@ -4,7 +4,7 @@ export default {
   id: 'velvet_requiem',
   candidateId: 'grok',
   title: 'Velvet Requiem',
-  createdAt: 1790126896,
+  createdAt: 1_790_126_896,
   harness: 'Mage',
   author: {
     model: {

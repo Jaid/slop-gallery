@@ -5,7 +5,7 @@ export default {
   id: 'captive_lightning',
   candidateId: 'claude_opus',
   title: 'Captive Lightning',
-  createdAt: 1790461810,
+  createdAt: 1_790_461_810,
   harness: 'Mage',
   author: {
     model: {

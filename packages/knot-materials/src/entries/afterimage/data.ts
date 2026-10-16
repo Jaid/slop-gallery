@@ -5,7 +5,7 @@ export default {
   id: 'afterimage',
   candidateId: 'gpt_sol',
   title: 'Afterimage',
-  createdAt: 1790868534,
+  createdAt: 1_790_868_534,
   harness: 'Mage',
   author: {
     model: {

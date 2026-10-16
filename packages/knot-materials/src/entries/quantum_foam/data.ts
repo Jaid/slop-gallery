@@ -4,7 +4,7 @@ export default {
   id: 'quantum_foam',
   candidateId: 'deepseek',
   title: 'Quantum Foam',
-  createdAt: 1789075137,
+  createdAt: 1_789_075_137,
   author: {
     model: {
       title: 'DeepSeek 4.1 Flash',

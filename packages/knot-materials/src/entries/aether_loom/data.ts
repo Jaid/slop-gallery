@@ -4,7 +4,7 @@ export default {
   id: 'aether_loom',
   candidateId: 'muse_spark',
   title: 'Aether Loom',
-  createdAt: 1789231507,
+  createdAt: 1_789_231_507,
   harness: 'meta.ai',
   author: {
     model: {

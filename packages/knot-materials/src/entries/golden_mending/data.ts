@@ -5,7 +5,7 @@ export default {
   id: 'golden_mending',
   candidateId: 'muse_wonder',
   title: 'Golden Mending',
-  createdAt: 1791848912,
+  createdAt: 1_791_848_912,
   harness: 'Mage',
   author: {
     model: {

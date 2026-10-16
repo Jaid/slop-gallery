@@ -4,7 +4,7 @@ export default {
   id: 'mycelial_bloom',
   candidateId: 'deepseek',
   title: 'Mycelial Bloom',
-  createdAt: 1790023263,
+  createdAt: 1_790_023_263,
   harness: 'Mage',
   author: {
     model: {

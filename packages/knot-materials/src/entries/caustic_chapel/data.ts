@@ -4,7 +4,7 @@ export default {
   id: 'caustic_chapel',
   candidateId: 'grok',
   title: 'Caustic Chapel',
-  createdAt: 1790126896,
+  createdAt: 1_790_126_896,
   harness: 'Mage',
   author: {
     model: {

@@ -4,7 +4,7 @@ export default {
   id: 'velvet_chiaroscuro',
   candidateId: 'gpt_sol',
   title: 'Velvet Chiaroscuro',
-  createdAt: 1789293909,
+  createdAt: 1_789_293_909,
   harness: 'none',
   author: {
     model: {

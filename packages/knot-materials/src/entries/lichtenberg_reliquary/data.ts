@@ -4,7 +4,7 @@ export default {
   id: 'lichtenberg_reliquary',
   candidateId: 'claude_fable',
   title: 'Lichtenberg Reliquary',
-  createdAt: 1789239146,
+  createdAt: 1_789_239_146,
   harness: 'none',
   author: {
     model: {

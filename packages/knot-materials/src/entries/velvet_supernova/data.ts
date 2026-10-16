@@ -4,7 +4,7 @@ export default {
   id: 'velvet_supernova',
   candidateId: 'gpt_astra',
   title: 'Velvet Supernova',
-  createdAt: 1789075137,
+  createdAt: 1_789_075_137,
   harness: 'Codex',
   author: {
     model: {

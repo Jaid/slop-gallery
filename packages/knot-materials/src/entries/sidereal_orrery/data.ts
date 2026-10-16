@@ -4,7 +4,7 @@ export default {
   id: 'sidereal_orrery',
   candidateId: 'gpt_astra',
   title: 'Sidereal Orrery',
-  createdAt: 1790119994,
+  createdAt: 1_790_119_994,
   harness: 'Mage',
   author: {
     model: {

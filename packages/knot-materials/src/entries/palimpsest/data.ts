@@ -5,7 +5,7 @@ export default {
   id: 'palimpsest',
   candidateId: 'gpt_sol',
   title: 'Palimpsest',
-  createdAt: 1790868534,
+  createdAt: 1_790_868_534,
   harness: 'Mage',
   author: {
     model: {

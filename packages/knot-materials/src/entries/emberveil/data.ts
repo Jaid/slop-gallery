@@ -5,7 +5,7 @@ export default {
   id: 'emberveil',
   candidateId: 'muse_wonder',
   title: 'Emberveil',
-  createdAt: 1791879378,
+  createdAt: 1_791_879_378,
   harness: 'Mage',
   author: {
     model: {

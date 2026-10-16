@@ -4,7 +4,7 @@ export default {
   id: 'quicksilver',
   candidateId: 'deepseek',
   title: 'Quicksilver',
-  createdAt: 1789075137,
+  createdAt: 1_789_075_137,
   harness: 'Mage',
   author: {
     model: {

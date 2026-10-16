@@ -5,7 +5,7 @@ export default {
   id: 'labradorescence',
   candidateId: 'muse_wonder',
   title: 'Labradorescence',
-  createdAt: 1791864248,
+  createdAt: 1_791_864_248,
   harness: 'Mage',
   author: {
     model: {

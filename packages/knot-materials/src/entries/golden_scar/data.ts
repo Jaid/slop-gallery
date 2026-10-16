@@ -5,7 +5,7 @@ export default {
   id: 'golden_scar',
   candidateId: 'muse_wonder',
   title: 'Golden Scar',
-  createdAt: 1791879378,
+  createdAt: 1_791_879_378,
   harness: 'Mage',
   author: {
     model: {

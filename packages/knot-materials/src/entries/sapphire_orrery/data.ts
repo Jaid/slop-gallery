@@ -5,7 +5,7 @@ export default {
   id: 'sapphire_orrery',
   candidateId: 'gpt_sol',
   title: 'Sapphire Orrery',
-  createdAt: 1791064898,
+  createdAt: 1_791_064_898,
   harness: 'Mage',
   author: {
     model: {

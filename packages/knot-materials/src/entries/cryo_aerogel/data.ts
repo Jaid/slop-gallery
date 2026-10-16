@@ -4,7 +4,7 @@ export default {
   id: 'cryo_aerogel',
   candidateId: 'gemini_flash',
   title: 'Cryo Aerogel',
-  createdAt: 1789075137,
+  createdAt: 1_789_075_137,
   harness: 'none',
   author: {
     model: {

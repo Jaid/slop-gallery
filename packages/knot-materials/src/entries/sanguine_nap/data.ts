@@ -5,7 +5,7 @@ export default {
   id: 'sanguine_nap',
   candidateId: 'space_bunny',
   title: 'Sanguine Nap',
-  createdAt: 1790458629,
+  createdAt: 1_790_458_629,
   harness: 'Mage',
   author: {
     model: {

@@ -5,7 +5,7 @@ export default {
   id: 'knotty_prince',
   candidateId: 'claude_opus',
   title: 'Knotty Prince',
-  createdAt: 1791761130,
+  createdAt: 1_791_761_130,
   harness: 'Mage',
   author: {
     model: {

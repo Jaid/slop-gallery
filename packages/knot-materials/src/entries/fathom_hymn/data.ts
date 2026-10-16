@@ -4,7 +4,7 @@ export default {
   id: 'fathom_hymn',
   candidateId: 'glm',
   title: 'Fathom Hymn',
-  createdAt: 1791852458,
+  createdAt: 1_791_852_458,
   harness: 'chat.z.ai',
   author: {
     model: {

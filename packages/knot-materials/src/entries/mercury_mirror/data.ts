@@ -4,7 +4,7 @@ export default {
   id: 'mercury_mirror',
   candidateId: 'deepseek',
   title: 'Mercury Mirror',
-  createdAt: 1789949253,
+  createdAt: 1_789_949_253,
   harness: 'Mage',
   author: {
     model: {

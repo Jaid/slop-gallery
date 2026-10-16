@@ -5,7 +5,7 @@ export default {
   id: 'winter_palace',
   candidateId: 'gpt_sol',
   title: 'Winter Palace',
-  createdAt: 1790311863,
+  createdAt: 1_790_311_863,
   harness: 'Mage',
   author: {
     model: {

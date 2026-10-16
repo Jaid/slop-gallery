@@ -4,7 +4,7 @@ export default {
   id: 'helios_forge',
   candidateId: 'deepseek',
   title: 'Helios Forge',
-  createdAt: 1789094423,
+  createdAt: 1_789_094_423,
   harness: 'none',
   author: {
     model: {

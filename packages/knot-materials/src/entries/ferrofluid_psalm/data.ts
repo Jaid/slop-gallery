@@ -5,7 +5,7 @@ export default {
   id: 'ferrofluid_psalm',
   candidateId: 'muse_wonder',
   title: 'Ferrofluid Psalm',
-  createdAt: 1791854180,
+  createdAt: 1_791_854_180,
   harness: 'Mage',
   author: {
     model: {

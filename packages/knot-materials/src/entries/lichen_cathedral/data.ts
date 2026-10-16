@@ -4,7 +4,7 @@ export default {
   id: 'lichen_cathedral',
   candidateId: 'muse_spark',
   title: 'Lichen Cathedral',
-  createdAt: 1789231507,
+  createdAt: 1_789_231_507,
   harness: 'meta.ai',
   author: {
     model: {

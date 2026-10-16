@@ -5,7 +5,7 @@ export default {
   id: 'kintsugi',
   candidateId: 'claude_fable',
   title: 'Kintsugi',
-  createdAt: 1792086001,
+  createdAt: 1_792_086_001,
   harness: 'Mage',
   author: {model: {
     title: 'Claude Fable 5.1',

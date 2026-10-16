@@ -5,7 +5,7 @@ export default {
   id: 'heartwood',
   candidateId: 'claude_opus',
   title: 'Heartwood',
-  createdAt: 1791585164,
+  createdAt: 1_791_585_164,
   harness: 'Mage',
   author: {
     model: {

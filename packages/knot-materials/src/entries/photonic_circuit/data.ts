@@ -5,7 +5,7 @@ export default {
   id: 'photonic_circuit',
   candidateId: 'gemini_flash',
   title: 'Photonic Circuit',
-  createdAt: 1790311863,
+  createdAt: 1_790_311_863,
   harness: 'Mage',
   author: {
     model: {

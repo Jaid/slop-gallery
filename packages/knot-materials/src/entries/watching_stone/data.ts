@@ -5,7 +5,7 @@ export default {
   id: 'watching_stone',
   candidateId: 'claude_opus',
   title: 'Watching Stone',
-  createdAt: 1790461810,
+  createdAt: 1_790_461_810,
   harness: 'Mage',
   author: {
     model: {

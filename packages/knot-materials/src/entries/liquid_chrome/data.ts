@@ -4,7 +4,7 @@ export default {
   id: 'liquid_chrome',
   candidateId: 'hy',
   title: 'Liquid Chrome',
-  createdAt: 1789094423,
+  createdAt: 1_789_094_423,
   harness: 'none',
   author: {
     model: {

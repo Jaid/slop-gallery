@@ -4,7 +4,7 @@ export default {
   id: 'hoarfrost_hymn',
   candidateId: 'deepseek',
   title: 'Hoarfrost Hymn',
-  createdAt: 1790125939,
+  createdAt: 1_790_125_939,
   harness: 'Mage',
   author: {
     model: {

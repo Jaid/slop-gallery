@@ -4,7 +4,7 @@ export default {
   id: 'bismuth_terraces',
   candidateId: 'gpt_luna',
   title: 'Bismuth Terraces',
-  createdAt: 1789979276,
+  createdAt: 1_789_979_276,
   harness: 'Mage',
   author: {
     model: {

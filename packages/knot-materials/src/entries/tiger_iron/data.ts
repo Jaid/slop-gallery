@@ -4,7 +4,7 @@ export default {
   id: 'tiger_iron',
   candidateId: 'gpt_astra',
   title: 'Tiger Iron',
-  createdAt: 1789075137,
+  createdAt: 1_789_075_137,
   harness: 'Codex',
   author: {
     model: {

@@ -5,7 +5,7 @@ export default {
   id: 'rosensweig_crown',
   candidateId: 'claude_sonnet',
   title: 'Rosensweig Crown',
-  createdAt: 1791064898,
+  createdAt: 1_791_064_898,
   harness: 'Mage',
   author: {
     model: {

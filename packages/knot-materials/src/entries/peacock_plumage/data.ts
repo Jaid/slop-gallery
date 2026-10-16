@@ -5,7 +5,7 @@ export default {
   id: 'peacock_plumage',
   candidateId: 'muse_wonder',
   title: 'Peacock Plumage',
-  createdAt: 1791854180,
+  createdAt: 1_791_854_180,
   harness: 'Mage',
   author: {
     model: {

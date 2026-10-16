@@ -5,7 +5,7 @@ export default {
   id: 'gilded_midnight',
   candidateId: 'claude_sonnet',
   title: 'Gilded Midnight',
-  createdAt: 1790802275,
+  createdAt: 1_790_802_275,
   harness: 'Mage',
   author: {
     model: {

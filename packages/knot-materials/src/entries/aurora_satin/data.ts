@@ -4,7 +4,7 @@ export default {
   id: 'aurora_satin',
   candidateId: 'claude_sonnet',
   title: 'Aurora Veil',
-  createdAt: 1789075137,
+  createdAt: 1_789_075_137,
   author: {
     model: {
       title: 'Claude Sonnet 5',

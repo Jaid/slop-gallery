@@ -5,7 +5,7 @@ export default {
   id: 'rose_cathedral',
   candidateId: 'gpt_sol',
   title: 'Rose Cathedral',
-  createdAt: 1791064898,
+  createdAt: 1_791_064_898,
   harness: 'Mage',
   author: {
     model: {

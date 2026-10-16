@@ -5,7 +5,7 @@ export default {
   id: 'medusa_pulse',
   candidateId: 'claude_sonnet',
   title: 'Medusa Pulse',
-  createdAt: 1790802275,
+  createdAt: 1_790_802_275,
   harness: 'Mage',
   author: {
     model: {

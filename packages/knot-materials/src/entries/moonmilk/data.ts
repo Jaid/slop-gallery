@@ -4,7 +4,7 @@ export default {
   id: 'moonmilk',
   candidateId: 'mimo',
   title: 'Moonmilk',
-  createdAt: 1790036112,
+  createdAt: 1_790_036_112,
   harness: 'Mage',
   author: {
     model: {

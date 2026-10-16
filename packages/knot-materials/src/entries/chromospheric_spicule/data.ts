@@ -4,7 +4,7 @@ export default {
   id: 'chromospheric_spicule',
   candidateId: 'gemini_flash',
   title: 'Chromospheric Spicule',
-  createdAt: 1789290805,
+  createdAt: 1_789_290_805,
   harness: 'none',
   author: {
     model: {

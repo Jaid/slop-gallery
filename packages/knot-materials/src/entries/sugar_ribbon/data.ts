@@ -12,7 +12,7 @@ export default {
     },
   },
   title: 'Sugar Ribbon',
-  createdAt: 1789816097,
+  createdAt: 1_789_816_097,
   flavorText: 'A confectioner pulled one last ribbon of raspberry and mint, then forgot where its ends should meet.',
   placeholder: {
     color: '#ef7591',

@@ -5,7 +5,7 @@ export default {
   id: 'dream_reservoir',
   candidateId: 'gpt_sol',
   title: 'Dream Reservoir',
-  createdAt: 1790802275,
+  createdAt: 1_790_802_275,
   harness: 'Mage',
   author: {
     model: {

@@ -4,7 +4,7 @@ export default {
   id: 'frost_lattice',
   candidateId: 'claude_sonnet',
   title: 'Frost Lattice',
-  createdAt: 1789575270,
+  createdAt: 1_789_575_270,
   harness: 'none',
   author: {
     model: {

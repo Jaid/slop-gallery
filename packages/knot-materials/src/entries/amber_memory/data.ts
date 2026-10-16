@@ -4,7 +4,7 @@ export default {
   id: 'amber_memory',
   candidateId: 'gpt_luna',
   title: 'Amber Memory',
-  createdAt: 1789979276,
+  createdAt: 1_789_979_276,
   harness: 'Mage',
   author: {
     model: {

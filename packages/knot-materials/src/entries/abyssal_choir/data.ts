@@ -5,7 +5,7 @@ export default {
   id: 'abyssal_choir',
   candidateId: 'muse_wonder',
   title: 'Abyssal Choir',
-  createdAt: 1791848912,
+  createdAt: 1_791_848_912,
   harness: 'Mage',
   author: {
     model: {

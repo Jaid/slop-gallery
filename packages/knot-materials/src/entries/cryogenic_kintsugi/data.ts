@@ -4,7 +4,7 @@ export default {
   id: 'cryogenic_kintsugi',
   candidateId: 'gemini_flash',
   title: 'Cryogenic Kintsugi',
-  createdAt: 1789290805,
+  createdAt: 1_789_290_805,
   harness: 'none',
   author: {
     model: {

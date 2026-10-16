@@ -4,7 +4,7 @@ export default {
   id: 'makie_lacquer',
   candidateId: 'claude_fable',
   title: 'Maki-e Lacquer',
-  createdAt: 1789075137,
+  createdAt: 1_789_075_137,
   harness: 'none',
   author: {
     model: {
