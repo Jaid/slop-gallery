@@ -7,6 +7,7 @@ import {lodgeWindow} from '../gallery/lodge.ts'
 import CastFloorGlassMaterial from './CastFloorGlassMaterial.ts'
 import ClearGlassMaterial from './ClearGlassMaterial.ts'
 import CrownGlassMaterial from './CrownGlassMaterial.ts'
+import {lodgeWindowLights} from './lights/index.ts'
 
 export type ArchitecturalGlassMaterials = {
   cabin: Material
@@ -50,7 +51,8 @@ export function createArchitecturalGlassMaterials(isHeavy: boolean): Architectur
   }
   return {
     // Old drawn cabin glass: a faint green body, ripples that bend the view and the reflections, a pale veil, wiped smudges and grime along the frame, plus a warm clearcoat sheen that catches the lodge’s firelight.
-    cabin: new CrownGlassMaterial({
+    // It sits between two underground spaces, so it only reflects their lamps and their darkness.
+    cabin: lodgeWindowLights.adopt(new CrownGlassMaterial({
       name: 'cabin-glass-heavy',
       ior: 1.52,
       absorption: 0.06,
@@ -63,7 +65,7 @@ export function createArchitecturalGlassMaterials(isHeavy: boolean): Architectur
       smudges: 0.065,
       grime: 0.5,
       waviness: 0.005,
-    }),
+    })),
     // Cast pavers that bend the Oculus below into a rippling, dispersive view.
     lobby: new CastFloorGlassMaterial({
       thickness: floorGlassThickness,
