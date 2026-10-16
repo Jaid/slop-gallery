@@ -280,10 +280,10 @@ describe('target descriptions', () => {
     ])
   })
   test('a plain prop can only be grabbed', () => {
-    propObjects.set('prop-book', prop(true, 'A suspiciously well-read book'))
-    expect(describeTarget('prop-book', [])).toEqual({
-      id: 'prop-book',
-      title: 'A suspiciously well-read book',
+    propObjects.set('prop-apple', prop(true, 'The original forbidden download'))
+    expect(describeTarget('prop-apple', [])).toEqual({
+      id: 'prop-apple',
+      title: 'The original forbidden download',
       keys: [
         {
           controls: ['MouseLeft'],

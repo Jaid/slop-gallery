@@ -95,7 +95,7 @@ describe('sculpture pedestals', () => {
     expect(body.translation().y).toBeCloseTo(1.4225, 2)
     expect(Math.abs(body.linvel().y)).toBeLessThan(0.01)
   })
-  test('lets a carried book clear the new cap without flying through it', () => {
+  test('lets a carried flat prop clear the new cap without flying through it', () => {
     const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, 1.43, 0))
     world.createCollider(RAPIER.ColliderDesc.cuboid(0.345, 0.0725, 0.455).setEnabled(false), body)
     const placement = new PropPlacement(world, body)
@@ -116,9 +116,9 @@ describe('sculpture pedestals', () => {
     expect(body.translation().z).toBeGreaterThan(1)
   })
   for (const [x, z] of [[0, 1], [0, -1], [1, 0], [-1, 0], [-0.96, 0.28]] as const) {
-    test(`picks up the settled three-part book from direction ${x}, ${z}, including after canceling`, () => {
-      // Match the live spawn and separate pages/covers, not a single bounding box:
-      // a cover spawned inside the cap can settle below it and trap the whole book.
+    test(`picks up a settled three-part prop from direction ${x}, ${z}, including after canceling`, () => {
+      // Separate parts, not a single bounding box: a lower part spawned inside the cap
+      // can settle below it and trap the whole prop.
       const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 1.43, 0).setCcdEnabled(true))
       for (const [width, height, depth, y] of [[0.64, 0.095, 0.86, 0], [0.69, 0.025, 0.91, -0.06], [0.69, 0.025, 0.91, 0.06]] as const) {
         world.createCollider(RAPIER.ColliderDesc.cuboid(width / 2, height / 2, depth / 2).setTranslation(0, y, 0).setFriction(0.8).setRestitution(0.32), body)
