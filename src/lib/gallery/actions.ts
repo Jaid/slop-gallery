@@ -5,6 +5,7 @@ import placement from '#level/placement.ts'
 
 import aimDot from '../aimDot.ts'
 import SoundEngine from '../audio/SoundEngine.ts'
+import {rollSeed} from '../environmentSeed.ts'
 import pauseMenu from '../pauseMenu.ts'
 import initialPortraits from './collection.ts'
 import {playerSession, playerSpawn} from './PlayerSession.ts'
@@ -93,7 +94,8 @@ export function importRejected() {
 
 export function resetGallery() {
   playerSession.restore(playerSpawn)
-  useGallery.getState().commit(initialPortraits.map(p => ({...p})))
+  // A new game state rolls a new environment; undo brings back the previous one along with its collection.
+  useGallery.getState().commit(initialPortraits.map(p => ({...p})), rollSeed())
   useGallery.setState(s => ({
     active: null,
     activeLabel: null,

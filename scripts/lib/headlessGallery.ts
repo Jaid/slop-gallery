@@ -8,6 +8,7 @@ import puppeteer from 'puppeteer-core'
 import {createServer} from 'vite'
 
 import {defaultLevel, levelIds} from '#src/data/levels.ts'
+import {maximumSeed, parseSeed} from '#src/lib/environmentSeed.ts'
 
 export const repositoryRoot = resolve(import.meta.dir, '..', '..')
 export const galleryHelp = `  --level <id>            ${levelIds.join(', ')}. Default: GAME_LEVEL or the default level
@@ -15,6 +16,7 @@ export const galleryHelp = `  --level <id>            ${levelIds.join(', ')}. De
   --graphics <mode>       mirrors ?graphics (heavy or fast). Default: heavy
   --vision-mode <mode>    mirrors ?vision_mode (wireframe). Default: none
   --anti-aliasing <mode>  mirrors ?anti_aliasing (traa, smaa or false). Default: the graphics mode’s
+  --seed <number>         mirrors ?seed, the environment seed (0–${maximumSeed}) that decides random details like the potted plants. Default: 1
   --width <pixels>        render width. Default: --height × 16/9, or 1280
   --height <pixels>       render height. Default: --width × 9/16, or 720`
 export const galleryOptions = {
@@ -24,6 +26,10 @@ export const galleryOptions = {
     default: 'heavy',
   },
   level: {type: 'string'},
+  seed: {
+    type: 'string',
+    default: '1',
+  },
   target: {type: 'string'},
   width: {type: 'string'},
   height: {type: 'string'},
@@ -34,6 +40,7 @@ export type GalleryValues = {
   graphics: string
   height?: string
   level?: string
+  seed: string
   target?: string
   'vision-mode'?: string
   width?: string
@@ -120,6 +127,11 @@ export const resolveGallerySetup = async (values: GalleryValues) => {
     ai: 'false',
     test: 'true',
   })
+  const seed = parseSeed(values.seed)
+  if (seed === undefined) {
+    throw new Error(`--seed expects a whole number between 0 and ${maximumSeed}, got “${values.seed}”.`)
+  }
+  search.set('seed', String(seed))
   search.set('graphics', values.graphics)
   if (values['vision-mode'] !== undefined) {
     search.set('vision_mode', values['vision-mode'])
@@ -132,6 +144,7 @@ export const resolveGallerySetup = async (values: GalleryValues) => {
     level,
     levelName: level ?? defaultLevel,
     search,
+    seed,
     viewport: resolveSize(values),
   }
 }

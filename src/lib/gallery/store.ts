@@ -2,6 +2,7 @@ import type {GalleryDocument, GallerySettings, GallerySnapshot, NarrationState, 
 
 import {create} from 'zustand'
 
+import {effectiveSeed, rollSeed} from '../environmentSeed.ts'
 import {readControlled} from '../pauseMenu.ts'
 import initialPortraits from './collection.ts'
 import {exhibitionRevision} from './exhibitionUpdates.ts'
@@ -18,7 +19,8 @@ type State = GallerySettings & GallerySnapshot & {
   add: (portrait: Portrait) => void
   ai: boolean
   apiKey: string
-  commit: (portraits: Array<Portrait>) => void
+  /** replaces the collection as one undoable step; a new `seed` starts a new environment, like a new game */
+  commit: (portraits: Array<Portrait>, seed?: number) => void
   dragging: boolean
   future: Array<GallerySnapshot>
   hasControlled: boolean
@@ -65,6 +67,7 @@ function cleanPortrait(p: Portrait): Portrait {
 function snapshot(state: GallerySnapshot): GallerySnapshot {
   return {
     portraits: state.portraits.map(cleanPortrait),
+    seed: state.seed,
   }
 }
 function readKey() {
@@ -77,6 +80,7 @@ function readKey() {
 
 export const useGallery = create<State>((set, get) => ({
   portraits: initialPortraits.map(p => ({...p})),
+  seed: rollSeed(),
   active: null,
   activeLabel: null,
   held: null,
@@ -113,10 +117,11 @@ export const useGallery = create<State>((set, get) => ({
     }
     return {portraits}
   }),
-  commit: portraits => {
+  commit: (portraits, seed) => {
     validateCollectionImages(portraits)
     set(s => ({
       portraits,
+      seed: seed ?? s.seed,
       past: [...s.past.slice(-19), snapshot(s)],
       future: [],
       revision: s.revision + 1,
@@ -185,6 +190,11 @@ export function redo() {
   return true
 }
 
+/** The seed the environment of the current game state is built from, honoring the `?seed` override. */
+export function useEnvironmentSeed() {
+  return effectiveSeed(useGallery(s => s.seed))
+}
+
 export function createDocument(): GalleryDocument {
   const s = useGallery.getState()
   const savedAt = new Date
@@ -204,7 +214,11 @@ export function restoreDocument(document: GalleryDocument) {
   validateCollectionImages(document.portraits)
   playerSession.restore(document.player)
   useGallery.setState({
-    ...snapshot(document),
+    ...snapshot({
+      portraits: document.portraits,
+      // Collections saved before seeds existed get theirs now; the next save keeps it.
+      seed: document.seed ?? rollSeed(),
+    }),
     sound: document.settings.sound,
     playerEpoch: useGallery.getState().playerEpoch + 1,
     past: [],

@@ -2,6 +2,7 @@ import type {GalleryDocument, Portrait} from './types.ts'
 
 import placement from '#level/placement.ts'
 
+import {isSeed} from '../environmentSeed.ts'
 import {galleryStorageKey} from '../level.ts'
 import pauseMenu from '../pauseMenu.ts'
 import {obstructionIssue, placementIssues, wallCoordinates, wallPosition} from '../placement/wallGeometry.ts'
@@ -22,7 +23,7 @@ const exactKeys = (value: Record<string, unknown>, keys: ReadonlyArray<string>) 
 
 export function validateDocument(value: unknown): GalleryDocument {
   const keys = ['version', 'portraits', 'player', 'savedAt', 'settings']
-  if (!object(value) || !exactKeys(value, Object.hasOwn(value, 'exhibition') ? [...keys, 'exhibition'] : keys) || value.version !== 1 || !Array.isArray(value.portraits) || value.portraits.length > maximumPortraits || !object(value.settings)) {
+  if (!object(value) || !exactKeys(value, [...keys, ...['exhibition', 'seed'].filter(key => Object.hasOwn(value, key))]) || value.version !== 1 || !Array.isArray(value.portraits) || value.portraits.length > maximumPortraits || !object(value.settings)) {
     throw new Error('This is not a supported Slop Gallery collection.')
   }
   if (!shortText(value.savedAt, 100)) {
@@ -30,6 +31,9 @@ export function validateDocument(value: unknown): GalleryDocument {
   }
   if (value.exhibition !== undefined && !(Number.isInteger(value.exhibition) && (value.exhibition as number) >= 0 && (value.exhibition as number) <= exhibitionRevision)) {
     throw new Error('The collection is from a newer exhibition.')
+  }
+  if (value.seed !== undefined && !isSeed(value.seed)) {
+    throw new Error('The collection has an invalid environment seed.')
   }
   const settings = value.settings
   if (!exactKeys(settings, ['sound']) || typeof settings.sound !== 'boolean') {
@@ -102,6 +106,7 @@ export function validateDocument(value: unknown): GalleryDocument {
   return {
     version: 1,
     ...value.exhibition === undefined ? {} : {exhibition: value.exhibition as number},
+    ...value.seed === undefined ? {} : {seed: value.seed},
     portraits,
     player,
     savedAt: value.savedAt,
@@ -274,8 +279,10 @@ export default class GalleryRepository {
 export const repository = new GalleryRepository
 
 export async function initializePersistence() {
+  let savedSeed: number | undefined
   try {
     const saved = await repository.load()
+    savedSeed = saved?.seed
     if (saved) {
       restoreDocument(saved)
     }
@@ -326,17 +333,24 @@ export async function initializePersistence() {
       notify('Local save failed. Changes in this session may not survive a reload.')
     })
   }
+  const schedule = () => {
+    clearTimeout(timer)
+    timer = setTimeout(flush, 400)
+    useGallery.setState({saveStatus: 'saving'})
+  }
   const unsubscribe = useGallery.subscribe((s, previous) => {
     if (s.storageRecoveryRequired) {
       return
     }
-    if (s.storageRecoveryRequired === previous.storageRecoveryRequired && s.portraits === previous.portraits && s.sound === previous.sound && s.playerEpoch === previous.playerEpoch) {
+    if (s.storageRecoveryRequired === previous.storageRecoveryRequired && s.portraits === previous.portraits && s.seed === previous.seed && s.sound === previous.sound && s.playerEpoch === previous.playerEpoch) {
       return
     }
-    clearTimeout(timer)
-    timer = setTimeout(flush, 400)
-    useGallery.setState({saveStatus: 'saving'})
+    schedule()
   })
+  // The seed is rolled once per game state, so a new game or a collection from before seeds existed keeps it right away instead of rerolling on the next visit.
+  if (!useGallery.getState().storageRecoveryRequired && savedSeed === undefined) {
+    schedule()
+  }
   // Do not rewrite a potentially large image collection every time the player moves.
   const playerTimer = setInterval(() => {
     if (playerSession.revision !== playerRevision && !checkpoint()) {
