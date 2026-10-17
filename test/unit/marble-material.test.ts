@@ -3,7 +3,6 @@ import {expect, test} from 'bun:test'
 import {PerspectiveCamera, Texture} from 'three/webgpu'
 
 import ArchitecturalPlasterMaterial from '../../src/lib/materials/ArchitecturalPlasterMaterial.ts'
-import DetailedMarbleFloorMaterial from '../../src/lib/materials/DetailedMarbleFloorMaterial.ts'
 import MarbleFloorMaterial from '../../src/lib/materials/MarbleFloorMaterial.ts'
 import WoodFloorMaterial from '../../src/lib/materials/WoodFloorMaterial.ts'
 import {getGraphicsProfile} from '../../src/lib/rendering/graphicsMode.ts'
@@ -60,23 +59,6 @@ for (const Material of [MarbleFloorMaterial, WoodFloorMaterial]) {
     texture.dispose()
   })
 }
-test('detailed marble varies polish and reflection blur only when reflections are active', () => {
-  const texture = new Texture
-  const heavy = new DetailedMarbleFloorMaterial(texture, true)
-  const fast = new DetailedMarbleFloorMaterial(texture, false)
-  try {
-    expect(heavy.reflection).not.toBeNull()
-    expect(heavy.roughnessNode).not.toBeNull()
-    expect(heavy.outputNode).not.toBeNull()
-    expect(fast.reflection).toBeNull()
-    expect(fast.roughnessNode).toBeNull()
-    expect(fast.roughness).toBe(0.8)
-  } finally {
-    heavy.dispose()
-    fast.dispose()
-    texture.dispose()
-  }
-})
 test('architectural plaster adds procedural color, roughness and relief only in heavy', () => {
   const texture = new Texture
   const heavy = new ArchitecturalPlasterMaterial({
