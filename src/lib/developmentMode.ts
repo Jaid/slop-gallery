@@ -17,3 +17,6 @@ const developmentModeSchema = optis({
 export function readDevelopmentMode(input: URL | string = typeof location === 'undefined' ? '' : location.href): boolean {
   return readPermalink(input, {schema: developmentModeSchema}).development
 }
+
+/** whether this page was opened with `?development`, read once at startup */
+export const isDevelopmentMode = readDevelopmentMode()

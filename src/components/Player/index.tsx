@@ -13,7 +13,7 @@ import {activateInteractiveObject} from '#src/lib/gallery/interactiveObjects.ts'
 import {playerSession, playerSpawn} from '#src/lib/gallery/PlayerSession.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
 import {playerTelemetry} from '#src/lib/telemetry/index.ts'
-import recordPlayerDump from '#src/lib/telemetry/recordPlayerDump.ts'
+import {playerDumpHandler} from '#src/lib/telemetry/recordPlayerDump.ts'
 
 const enabled = () => !cameraPose.focused && !useGallery.getState().panel
 const cameraEnabled = () => !cameraPose.focused
@@ -99,5 +99,5 @@ export default function Player() {
       }
     }
   }
-  return <EgoPlayer cameraEnabled={cameraEnabled} enabled={enabled} fallbackPosition={playerSpawn.position} input={input} pitch={initial.pitch} pointerLock={pointerLock} position={initial.position} yaw={initial.yaw} ref={player} onDump={recordPlayerDump} onInput={markControlled} onInteract={onInteract} onLand={onPlayerLand} onStep={onPlayerStep} onUpdate={onUpdate} onZoomChange={onPlayerZoomChange} onZoomTransition={onPlayerZoomTransition} />
+  return <EgoPlayer cameraEnabled={cameraEnabled} enabled={enabled} fallbackPosition={playerSpawn.position} input={input} pitch={initial.pitch} pointerLock={pointerLock} position={initial.position} yaw={initial.yaw} ref={player} onDump={playerDumpHandler} onInput={markControlled} onInteract={onInteract} onLand={onPlayerLand} onStep={onPlayerStep} onUpdate={onUpdate} onZoomChange={onPlayerZoomChange} onZoomTransition={onPlayerZoomTransition} />
 }
