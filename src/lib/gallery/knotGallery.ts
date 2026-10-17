@@ -6,6 +6,10 @@ import {knotLayout} from 'knot-materials/exhibition.ts'
 export const knotGalleryBounds = knotLayout.bounds
 export const knotGallerySize = knotLayout.size
 export const knotGalleryCenter = knotLayout.center
+/** edge length of the floor’s marble tiles: an eighth of the row spacing, which the room’s depth is always a multiple of */
+export const knotFloorTile = knotLayout.rowSpacing / 8
+/** a corner of the floor’s tile grid: whole tiles run from the north wall to the south wall, and across the room the grid is centered, so both side walls cut their tiles alike */
+export const knotFloorOrigin = [knotGalleryCenter[0], knotGalleryBounds.northZ] as const
 
 export const knotGalleryWalls: Array<Wall> = [
   {
