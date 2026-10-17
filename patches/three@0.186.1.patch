@@ -1,5 +1,5 @@
 diff --git a/build/three.webgpu.js b/build/three.webgpu.js
-index 48b30e6bf4bf114ba5524ae509c81c4a043d27ea..a5da35f7fbf53bb3a44f127410302ec2fa908523 100644
+index 48b30e6bf4bf114ba5524ae509c81c4a043d27ea..921e4d2abcc6b50431d69d18df1f835742555d43 100644
 --- a/build/three.webgpu.js
 +++ b/build/three.webgpu.js
 @@ -3,7 +3,7 @@
@@ -56,7 +56,32 @@ index 48b30e6bf4bf114ba5524ae509c81c4a043d27ea..a5da35f7fbf53bb3a44f127410302ec2
  
  		}
  
-@@ -85726,6 +85730,9 @@ class WebGPUPipelineUtils {
+@@ -47645,6 +47649,9 @@ const PointShadowFilter = /*@__PURE__*/ Fn( ( { depthTexture, bd3D, dp, shadow }
+ 
+ const pointShadowFilter = /*@__PURE__*/ Fn( ( { filterFn, depthTexture, shadowCoord, shadow }, builder ) => {
+ 
++	// Only read the builder here. A closure using it would hold it in the scope that the update callbacks of the uniforms below share, and every node builder state keeps those callbacks.
++	const { reversedDepthBuffer, logarithmicDepthBuffer } = builder.renderer;
++
+ 	// for point lights, the uniform @vShadowCoord is re-purposed to hold
+ 	// the vector from the light to the world-space position of the fragment.
+ 	const shadowPosition = shadowCoord.xyz.toConst();
+@@ -47661,12 +47668,12 @@ const pointShadowFilter = /*@__PURE__*/ Fn( ( { filterFn, depthTexture, shadowCo
+ 
+ 		let dp;
+ 
+-		if ( builder.renderer.reversedDepthBuffer ) {
++		if ( reversedDepthBuffer ) {
+ 
+ 			dp = viewZToReversedPerspectiveDepth( viewZ.negate(), shadowCameraNear, shadowCameraFar );
+ 			dp.subAssign( bias );
+ 
+-		} else if ( builder.renderer.logarithmicDepthBuffer ) {
++		} else if ( logarithmicDepthBuffer ) {
+ 
+ 			dp = viewZToLogarithmicDepth( viewZ.negate(), shadowCameraNear, shadowCameraFar );
+ 			dp.addAssign( bias );
+@@ -85726,6 +85733,9 @@ class WebGPUPipelineUtils {
  
  					_renderPipelineDescriptor.reset();
  
@@ -66,7 +91,7 @@ index 48b30e6bf4bf114ba5524ae509c81c4a043d27ea..a5da35f7fbf53bb3a44f127410302ec2
  					if ( pipelinePromise !== null ) {
  
  						try {
-@@ -85740,7 +85747,7 @@ class WebGPUPipelineUtils {
+@@ -85740,7 +85750,7 @@ class WebGPUPipelineUtils {
  
  					}
  
@@ -75,7 +100,7 @@ index 48b30e6bf4bf114ba5524ae509c81c4a043d27ea..a5da35f7fbf53bb3a44f127410302ec2
  
  					if ( errorScope !== null || asyncError !== null ) {
  
-@@ -87631,16 +87638,45 @@ class WebGPUBackend extends Backend {
+@@ -87631,16 +87641,45 @@ class WebGPUBackend extends Backend {
  
  		let descriptors = renderTargetData.descriptors;
  
@@ -144,6 +169,35 @@ index 5aa2ebc9ebf1515d1fa34ee0613c809c5d1c9cc2..d4f1d72072cfa80978b4b4add5eabec2
  			cacheTextures.set( reference, framebufferTexture );
  
  		}
+diff --git a/src/nodes/lighting/PointShadowNode.js b/src/nodes/lighting/PointShadowNode.js
+index 01d6909fea7fc5821c827e9596a3afb73cac9457..593f6f3c7458e4851ea9b958de91afa69ced0d93 100644
+--- a/src/nodes/lighting/PointShadowNode.js
++++ b/src/nodes/lighting/PointShadowNode.js
+@@ -96,6 +96,9 @@ export const PointShadowFilter = /*@__PURE__*/ Fn( ( { depthTexture, bd3D, dp, s
+ 
+ const pointShadowFilter = /*@__PURE__*/ Fn( ( { filterFn, depthTexture, shadowCoord, shadow }, builder ) => {
+ 
++	// Only read the builder here. A closure using it would hold it in the scope that the update callbacks of the uniforms below share, and every node builder state keeps those callbacks.
++	const { reversedDepthBuffer, logarithmicDepthBuffer } = builder.renderer;
++
+ 	// for point lights, the uniform @vShadowCoord is re-purposed to hold
+ 	// the vector from the light to the world-space position of the fragment.
+ 	const shadowPosition = shadowCoord.xyz.toConst();
+@@ -112,12 +115,12 @@ const pointShadowFilter = /*@__PURE__*/ Fn( ( { filterFn, depthTexture, shadowCo
+ 
+ 		let dp;
+ 
+-		if ( builder.renderer.reversedDepthBuffer ) {
++		if ( reversedDepthBuffer ) {
+ 
+ 			dp = viewZToReversedPerspectiveDepth( viewZ.negate(), shadowCameraNear, shadowCameraFar );
+ 			dp.subAssign( bias );
+ 
+-		} else if ( builder.renderer.logarithmicDepthBuffer ) {
++		} else if ( logarithmicDepthBuffer ) {
+ 
+ 			dp = viewZToLogarithmicDepth( viewZ.negate(), shadowCameraNear, shadowCameraFar );
+ 			dp.addAssign( bias );
 diff --git a/src/nodes/lighting/ShadowNode.js b/src/nodes/lighting/ShadowNode.js
 index 7912654fdadc8cd6e3b1567feb81348763a0ab59..2dd24156754ad35d55d03bd3f0bf12bbf24f96bd 100644
 --- a/src/nodes/lighting/ShadowNode.js
