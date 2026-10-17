@@ -24,13 +24,14 @@ import PottedPlants from '#component/levels/gallery/PottedPlants'
 import RoomFloor from '#component/levels/gallery/RoomFloor'
 import SalonRoom from '#component/levels/gallery/SalonRoom'
 import SiennaRoom from '#component/levels/gallery/SiennaRoom'
-import {damaskTexture, surfaceTexture} from '#src/components/Scene/materials.ts'
+import {surfaceTexture} from '#src/components/Scene/materials.ts'
 import Box from '#src/components/Scene/primitives.tsx'
 import WallSurface from '#src/components/Scene/WallSurface.tsx'
 import {rooms, walls} from '#src/lib/gallery.ts'
-import {wallTop} from '#src/lib/gallery/architecture.ts'
 import {createArchitecturalGlassMaterials, disposeArchitecturalGlassMaterials} from '#src/lib/materials/ArchitecturalGlassMaterials.ts'
 import CastleStoneMaterial from '#src/lib/materials/CastleStoneMaterial.ts'
+import DamaskWallpaperMaterial from '#src/lib/materials/DamaskWallpaperMaterial.ts'
+import JoineryWoodMaterial from '#src/lib/materials/JoineryWoodMaterial.ts'
 import {corridorLanterns, lightIndoors, lodgeWindowLights} from '#src/lib/materials/lights/index.ts'
 import LodgeMaterials from '#src/lib/materials/LodgeMaterials.ts'
 import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
@@ -78,7 +79,28 @@ export default function Architecture() {
   const stone = useDisposable(useMemo(() => surfaceTexture('stone'), []))
   const plaster = useDisposable(useMemo(() => surfaceTexture('plaster'), []))
   const wood = useDisposable(useMemo(() => surfaceTexture('wood'), []))
-  const damask = useDisposable(useMemo(() => damaskTexture(rooms.find(room => room.id === 'sienna')!.size[0], wallTop), []))
+  // The Sienna is papered in damask above dark wood: its baseboards, reveals, cornice, wainscot and joists share one varnished timber.
+  const damask = useDisposable(useMemo(() => new DamaskWallpaperMaterial, []))
+  const joineryX = useDisposable(useMemo(() => new JoineryWoodMaterial({grain: 'x'}), []))
+  const joineryZ = useDisposable(useMemo(() => new JoineryWoodMaterial({
+    grain: 'z',
+    // The joists are left in their oiled, unvarnished state.
+    roughness: 0.66,
+  }), []))
+  // The wainscot’s raised fields are a shade darker than their frames, so the paneling reads in depth.
+  const joineryPanel = useDisposable(useMemo(() => new JoineryWoodMaterial({
+    colors: {
+      dark: '#1f0f07',
+      light: '#432613',
+      ring: '#120803',
+    },
+    seed: 3,
+  }), []))
+  const joinery = useMemo(() => ({
+    panel: joineryPanel,
+    x: joineryX,
+    z: joineryZ,
+  }), [joineryPanel, joineryX, joineryZ])
   const oculusMaterial = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
     map: stone,
     color: '#4c5558',
@@ -98,6 +120,9 @@ export default function Architecture() {
     if (wall.room === 'lobby') {
       return lobbyTrim
     }
+    if (wall.room === 'sienna') {
+      return joineryX
+    }
   }
   const surfaceMaterial = (wall: Wall) => {
     if (isLodgeRoomWall(wall)) {
@@ -109,13 +134,16 @@ export default function Architecture() {
     if (wall.room === 'lobby') {
       return lobbyWall
     }
+    if (wall.room === 'sienna') {
+      return damask
+    }
   }
   return <>
     <ReflectionEnvironment />
     <color args={['#ded8ca']} attach='background' />
     <ambientLight intensity={0.65} /><hemisphereLight args={['#ecf3ff', '#a29270', 1.15]} />
     <directionalLight castShadow color='#fff0d7' intensity={2.3} position={[-3, 9, 4]} shadow-camera-bottom={-20} shadow-camera-left={-24} shadow-camera-right={24} shadow-camera-top={20} shadow-mapSize={[4096, 4096]} shadow-normalBias={0.035} />
-    {walls.map(wall => <WallSurface key={wall.id} glass={glass.tunnel} material={wallMaterial(wall)} plaster={wall.room === 'sienna' ? damask : plaster} surfaceMaterial={surfaceMaterial(wall)} wall={wall} />)}
+    {walls.map(wall => <WallSurface key={wall.id} glass={glass.tunnel} material={wallMaterial(wall)} plaster={plaster} surfaceMaterial={surfaceMaterial(wall)} wall={wall} />)}
     {rooms.filter(room => room.floorY === 0 && !customRooms.has(room.id)).map(room => <group key={room.id} position={[room.center[0], 0, room.center[1]]}>
       <RigidBody colliders={false} type='fixed'>
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]} />
@@ -137,7 +165,7 @@ export default function Architecture() {
     <LodgeRoom materials={lodgeMaterials} />
     <LodgeWindow glass={glass.cabin} material={windowReveal} />
     <LodgeCorridorRoute corridorLining={corridorWood} material={castleStone} />
-    <SiennaRoom wood={wood} />
+    <SiennaRoom joinery={joinery} />
     <SalonRoom glass={glass.lobby} stone={stone} wood={wood} />
     <GalleryStairs />
     <MoonfallRoom stone={stone} />

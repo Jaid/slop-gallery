@@ -49,64 +49,6 @@ export function surfaceTexture(kind: 'plaster' | 'stone' | 'wood') {
   return t
 }
 
-/** Burgundy silk and small stamped rosettes, adapted from the ox_smart-gallery-webgpu reference. */
-export function damaskTexture(width: number, height: number) {
-  const size = 512
-  const texture = renderCanvasTexture({
-    width: size,
-    height: size,
-    draw(context) {
-      const random = createMulberry32(7)
-      const noise = simplex2d.create(7)
-      const pixels = context.createImageData(size, size)
-      const base = [87, 18, 26]
-      const shade = [42, 6, 11]
-      for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
-          const u = x / size
-          const v = y / size
-      // Periodic mottling avoids rectangular seams between wallpaper repeats.
-          const top = simplex2d.sample(noise, u * 8, v * 8) * (1 - u) + simplex2d.sample(noise, (u - 1) * 8, v * 8) * u
-          const bottom = simplex2d.sample(noise, u * 8, (v - 1) * 8) * (1 - u) + simplex2d.sample(noise, (u - 1) * 8, (v - 1) * 8) * u
-          const mix = ((top * (1 - v) + bottom * v) * 0.5 + 0.5) * 0.14
-          const fiber = (random() - 0.5) * 5
-          const offset = (y * size + x) * 4
-          for (let channel = 0; channel < 3; channel++) {
-            pixels.data[offset + channel] = base[channel] * (1 - mix) + shade[channel] * mix + fiber
-          }
-          pixels.data[offset + 3] = 255
-        }
-      }
-      context.putImageData(pixels, 0, 0)
-      context.fillStyle = '#7c2a33'
-      context.globalAlpha = 0.45
-      const cell = size / 4
-      const radius = cell * 0.3
-      for (let row = -1; row < 10; row++) {
-        for (let column = -1; column < 6; column++) {
-          context.save()
-          context.translate(column * cell + (row % 2 === 0 ? 0 : cell / 2), row * cell / 2 + cell / 4)
-          for (let petal = 0; petal < 8; petal++) {
-            context.rotate(Math.PI / 4)
-            context.beginPath()
-            context.ellipse(radius * 0.55, 0, radius * 0.45, radius * 0.18, 0, 0, Math.PI * 2)
-            context.fill()
-          }
-          context.beginPath()
-          context.arc(0, 0, radius * 0.16, 0, Math.PI * 2)
-          context.fill()
-          context.restore()
-        }
-      }
-    },
-  })
-  texture.wrapS = RepeatWrapping
-  texture.wrapT = RepeatWrapping
-  // The reference uses 0.55 tiles per meter: rosettes are about 27 cm across.
-  texture.repeat.set(width * 0.55, height * 0.55)
-  return texture
-}
-
 /** Cream and charcoal marble, adapted from the reference run’s vestibule tiles. */
 export function checkerMarbleTexture(width: number, depth: number) {
   const size = 512
