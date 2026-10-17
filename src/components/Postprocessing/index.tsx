@@ -1,7 +1,7 @@
 import type {AntiAliasing} from '#src/lib/rendering/antiAliasing.ts'
 
 import {useStore, useThree} from '@react-three/fiber'
-import {useEffect} from 'react'
+import {useLayoutEffect} from 'react'
 
 import {galleryEvents} from '#src/lib/gallery/actions.ts'
 import {activateRenderPipeline, releaseRenderPipeline} from '#src/lib/rendering/activeRenderPipeline.ts'
@@ -20,7 +20,8 @@ const Postprocessing = ({antiAliasing = 'traa', contactDarkening = false, knotFo
   const scene = useThree(state => state.scene)
   const camera = useThree(state => state.camera)
   const store = useStore()
-  useEffect(() => {
+  // The scene pass renders into targets with their own outputs. Activated after the first frame, every material of the scene would build a second time for them.
+  useLayoutEffect(() => {
     const pipeline = new GalleryRenderPipeline(renderer, scene, camera, {
       antiAliasing,
       contactDarkening,

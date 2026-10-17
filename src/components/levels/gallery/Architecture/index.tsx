@@ -5,7 +5,7 @@ import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import Branch from 'branch-component'
 import renderCanvasTexture from 'canvas-textures/three'
 import useDisposable from 'disposable-lifetime/react'
-import {useEffect, useMemo} from 'react'
+import {useLayoutEffect, useMemo} from 'react'
 import {EquirectangularReflectionMapping, MeshStandardNodeMaterial, SRGBColorSpace} from 'three/webgpu'
 import useGraphicsMode from 'use-graphics-mode'
 
@@ -206,7 +206,8 @@ function lightBoxOffsets(room: typeof rooms[number]) {
 }
 function ReflectionEnvironment() {
   const scene = useThree(s => s.scene)
-  useEffect(() => {
+  // The environment is part of every lit material’s cache key. Set after the first frame, it would build all of them a second time.
+  useLayoutEffect(() => {
     const texture = renderCanvasTexture({
       width: 1024,
       height: 512,
