@@ -53,7 +53,7 @@ function CaptureButtonBinding() {
 
 Mount the component inside the WebGPU `Canvas`. The hook owns setup and disposal, including React Strict Mode effect replay. Calls before effect setup or after unmount reject.
 
-For access outside the canvas, use the ref component:
+For access outside the canvas, use the ref component, whose ref receives both `captureFrame` and `capturePixels`:
 
 ```tsx
 import type {CaptureFrameApi} from 'webgpu-capture-bridge'
@@ -78,6 +78,10 @@ function Viewer() {
 ```
 
 The core entry point never imports React or Fiber. Only consumers of `webgpu-capture-bridge/react` need those optional peers; `@react-three/tsl` is needed for its types only.
+
+## Raw pixels
+
+`capturePixels()` renders the same frame as `captureFrame()` but resolves with the readback as `{pixels, width, height}` (tightly packed, top-to-bottom RGBA8) and skips statistics and encoding. Use it when frames leave the page anyway, e.g. for video encoding. It coalesces concurrent callers like `captureFrame()`, and both kinds may run at the same time. In React, `useWebgpuCapture()` returns a stable `{captureFrame, capturePixels}` object; `useCaptureFrame()` is its `captureFrame`.
 
 ## Result
 

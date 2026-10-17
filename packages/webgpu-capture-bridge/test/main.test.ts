@@ -130,6 +130,56 @@ describe('WebgpuCapture', () => {
     expect(renderCount).toBe(2)
     capture.dispose()
   })
+  test('captures raw pixels without analyzing or encoding them', async () => {
+    const renderer = new TestRenderer
+    let renderCount = 0
+    const capture = new TestCapture({
+      renderer,
+      render: () => {
+        renderCount += 1
+      },
+      encode: () => {
+        throw new Error('Unexpected encode.')
+      },
+    })
+    const first = capture.capturePixels()
+    expect(capture.capturePixels()).toBe(first)
+    const frame = await first
+    expect([frame.width, frame.height]).toEqual([2, 2])
+    expect([...frame.pixels]).toEqual(Array.from({length: 16}, () => 255))
+    await capture.capturePixels()
+    expect(renderCount).toBe(2)
+    capture.dispose()
+  })
+  test('defers disposal until pending captures of both kinds settle', async () => {
+    const renderer = new TestRenderer
+    const readbacks: Array<PromiseWithResolvers<Uint8Array<ArrayBuffer>>> = []
+    renderer.readback = () => {
+      const readback = Promise.withResolvers<Uint8Array<ArrayBuffer>>()
+      readbacks.push(readback)
+      return readback.promise
+    }
+    const capture = new TestCapture({
+      renderer,
+      render() {},
+      encode,
+    })
+    const frame = capture.captureFrame()
+    const pixels = capture.capturePixels()
+    await Promise.resolve()
+    let disposed = 0
+    renderer.capturedTarget!.addEventListener('dispose', () => {
+      disposed += 1
+    })
+    capture.dispose()
+    await expect(capture.capturePixels()).rejects.toThrow('disposed')
+    readbacks[0].resolve(new Uint8Array(16))
+    await frame
+    expect(disposed).toBe(0)
+    readbacks[1].resolve(new Uint8Array(16))
+    await pixels
+    expect(disposed).toBe(1)
+  })
   test('reuses the target and reads the current physical drawing-buffer size for every capture', async () => {
     const renderer = new TestRenderer
     const capture = new TestCapture({

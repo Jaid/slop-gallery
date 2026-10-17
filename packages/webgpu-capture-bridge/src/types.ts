@@ -20,8 +20,11 @@ export type CaptureFrameResult = {
 
 export type CaptureFrame = () => Promise<CaptureFrameResult>
 
+export type CapturePixels = () => Promise<RgbaFrame>
+
 export type CaptureFrameApi = {
   captureFrame: CaptureFrame
+  capturePixels: CapturePixels
 }
 
 export type FrameEncoder = (frame: RgbaFrame) => Promise<string> | string

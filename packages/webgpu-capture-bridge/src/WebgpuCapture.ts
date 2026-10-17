@@ -1,4 +1,4 @@
-import type {CaptureFrame, CaptureFrameApi, CaptureFrameResult, WebgpuCaptureOptions} from './types.ts'
+import type {CaptureFrame, CaptureFrameApi, CaptureFrameResult, CapturePixels, RgbaFrame, WebgpuCaptureOptions} from './types.ts'
 
 import {RenderTarget, RGBAFormat, UnsignedByteType, Vector2} from 'three/webgpu'
 
@@ -12,11 +12,33 @@ export default class WebgpuCapture implements CaptureFrameApi, Disposable {
     if (this.disposed) {
       return Promise.reject(new Error('WebGPU capture has been disposed.'))
     }
-    return this.inFlight ??= this.capture()
+    return this.inFlight ??= this.capture(async () => {
+      const frame = await this.readFrame()
+      const analysis = analyzeFrame(frame)
+      const dataUrl = await (this.options.encode ?? encodePng)(frame)
+      return {
+        ...analysis,
+        dataUrl,
+        width: frame.width,
+        height: frame.height,
+      }
+    }, () => {
+      this.inFlight = null
+    })
+  }
+  /** Like captureFrame, but resolves with the raw pixels and skips statistics and encoding, e.g. for video frames. */
+  readonly capturePixels: CapturePixels = () => {
+    if (this.disposed) {
+      return Promise.reject(new Error('WebGPU capture has been disposed.'))
+    }
+    return this.pixelsInFlight ??= this.capture(() => this.readFrame(), () => {
+      this.pixelsInFlight = null
+    })
   }
   private disposed = false
   private inFlight: Promise<CaptureFrameResult> | null = null
   private readonly options: WebgpuCaptureOptions
+  private pixelsInFlight: Promise<RgbaFrame> | null = null
   private readonly size = new Vector2
 
   private target: RenderTarget | null = null
@@ -35,7 +57,7 @@ export default class WebgpuCapture implements CaptureFrameApi, Disposable {
   /** Reject new captures immediately; release GPU resources after any pending capture settles. */
   dispose() {
     this.disposed = true
-    if (!this.inFlight) {
+    if (!this.inFlight && !this.pixelsInFlight) {
       this.releaseTarget()
     }
   }
@@ -44,21 +66,21 @@ export default class WebgpuCapture implements CaptureFrameApi, Disposable {
     this.dispose()
   }
 
-  private async capture(): Promise<CaptureFrameResult> {
+  private async capture<T>(read: () => Promise<T>, settle: () => void): Promise<T> {
     // Register the shared promise before rendering, including synchronous failures.
     await Promise.resolve()
     try {
-      return await this.readFrame()
+      return await read()
     } finally {
-      this.inFlight = null
-      if (this.disposed) {
+      settle()
+      if (this.disposed && !this.inFlight && !this.pixelsInFlight) {
         this.releaseTarget()
       }
     }
   }
 
-  private async readFrame(): Promise<CaptureFrameResult> {
-    const {renderer, scene, camera, pipeline, encode = encodePng} = this.options
+  private async readFrame(): Promise<RgbaFrame> {
+    const {renderer, scene, camera, pipeline} = this.options
     const {width, height} = renderer.getDrawingBufferSize(this.size)
     validateSize(width, height)
     this.target ??= new RenderTarget(width, height, {
@@ -97,15 +119,7 @@ export default class WebgpuCapture implements CaptureFrameApi, Disposable {
     if (!(readback instanceof Uint8Array)) {
       throw new TypeError('Expected an RGBA8 WebGPU readback.')
     }
-    const frame = unpackRgba(readback, width, height)
-    const analysis = analyzeFrame(frame)
-    const dataUrl = await encode(frame)
-    return {
-      ...analysis,
-      dataUrl,
-      width,
-      height,
-    }
+    return unpackRgba(readback, width, height)
   }
 
   private releaseTarget() {
