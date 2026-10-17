@@ -73,7 +73,7 @@ export default function RoomCulling() {
       })
       shadows.update(scene, hidden, (light: Light) => {
         const lightRoom = visible && roomContaining(light.getWorldPosition(position).toArray())
-        return !lightRoom || visible!.has(lightRoom)
+        return !lightRoom || visible.has(lightRoom)
       })
     }
     galleryRenderer.setCuller(cull)

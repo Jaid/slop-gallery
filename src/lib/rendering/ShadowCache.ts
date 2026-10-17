@@ -1,6 +1,6 @@
-import type {BufferGeometry, Light, LightShadow, Object3D, PerspectiveCamera} from 'three/webgpu'
+import type {BufferGeometry, Light, LightShadow, Matrix4, Object3D, PerspectiveCamera} from 'three/webgpu'
 
-import {Matrix4, Sphere, Vector3} from 'three/webgpu'
+import {Sphere, Vector3} from 'three/webgpu'
 
 type ShadowLight = Light & {
   distance?: number
@@ -28,7 +28,9 @@ type LightState = {
 }
 
 const lightPosition = new Vector3
-
+// Physics keeps settling bodies like the Sienna chandelier wobbling by fractions of a millimeter. A change only counts once it adds up to more than this, in meters and in rotation matrix elements.
+const tolerance = 0.001
+const moved = (from: Matrix4, to: Matrix4) => from.elements.some((value, i) => Math.abs(value - to.elements[i]) > tolerance)
 const worldSphere = (caster: Caster, target: Sphere) => {
   // Instanced meshes bound all of their instances themselves.
   if (caster.computeBoundingSphere && caster.instanceMatrix) {
@@ -45,10 +47,10 @@ const worldSphere = (caster: Caster, target: Sphere) => {
  * Almost everything in the gallery stands still, so most lights render their shadow map once instead of every frame.
  */
 export default class ShadowCache {
-  private readonly casters = new Map<Caster, CasterState>()
+  private readonly casters = new Map<Caster, CasterState>
   private readonly changes: Array<Sphere> = []
   private frame = 0
-  private readonly lights = new Map<ShadowLight, LightState>()
+  private readonly lights = new Map<ShadowLight, LightState>
 
   /** Restores three’s default of updating every shadow map every frame. */
   dispose() {
@@ -73,7 +75,7 @@ export default class ShadowCache {
       }
       const light = object as ShadowLight
       if (light.isLight) {
-        if (light.castShadow && light.shadow) {
+        if (light.castShadow) {
           this.trackLight(light, frame)
         }
       } else if (object.castShadow && 'geometry' in object) {
@@ -85,10 +87,11 @@ export default class ShadowCache {
     }
     visit(scene)
     for (const [caster, state] of this.casters) {
-      if (state.frame !== frame) {
-        this.changes.push(state.sphere)
-        this.casters.delete(caster)
+      if (state.frame === frame) {
+        continue
       }
+      this.changes.push(state.sphere)
+      this.casters.delete(caster)
     }
     for (const [light, state] of this.lights) {
       if (state.frame !== frame) {
@@ -97,10 +100,11 @@ export default class ShadowCache {
         continue
       }
       state.dirty ||= this.changes.some(sphere => this.reaches(light, sphere))
-      if (state.dirty && active(light)) {
-        light.shadow.needsUpdate = true
-        state.dirty = false
+      if (!(state.dirty && active(light))) {
+        continue
       }
+      light.shadow.needsUpdate = true
+      state.dirty = false
     }
   }
 
@@ -129,7 +133,7 @@ export default class ShadowCache {
       return
     }
     state.frame = frame
-    if (state.geometry === caster.geometry && state.instances === instances && state.matrix.equals(caster.matrixWorld)) {
+    if (state.geometry === caster.geometry && state.instances === instances && !moved(state.matrix, caster.matrixWorld)) {
       return
     }
     // Both where it was and where it is now changed.
@@ -152,7 +156,7 @@ export default class ShadowCache {
       return
     }
     state.frame = frame
-    if (!state.matrix.equals(light.matrixWorld)) {
+    if (moved(state.matrix, light.matrixWorld)) {
       state.matrix.copy(light.matrixWorld)
       state.dirty = true
     }

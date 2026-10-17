@@ -37,7 +37,6 @@ const setup = () => {
     step,
   }
 }
-
 test('a shadow map renders once and then only when a caster in reach changes', () => {
   const {far, lamp, near, step} = setup()
   expect(step()).toBe(true)
@@ -53,7 +52,16 @@ test('a shadow map renders once and then only when a caster in reach changes', (
   expect(step()).toBe(true)
   expect(step()).toBe(false)
 })
-
+test('wobbling below a millimeter keeps the shadow map until it adds up', () => {
+  const {near, step} = setup()
+  step()
+  near.position.x = 0.0004
+  expect(step()).toBe(false)
+  near.position.x = 0.0008
+  expect(step()).toBe(false)
+  near.position.x = 0.0012
+  expect(step()).toBe(true)
+})
 test('casters that appear, disappear or hide count as changes', () => {
   const {hidden, near, scene, step} = setup()
   step()
@@ -75,7 +83,6 @@ test('casters that appear, disappear or hide count as changes', () => {
   scene.add(added)
   expect(step()).toBe(false)
 })
-
 test('an inactive light keeps its update until it is active again', () => {
   const {lamp, near, setActive, step} = setup()
   step()
@@ -89,13 +96,17 @@ test('an inactive light keeps its update until it is active again', () => {
   lamp.position.x = 1
   expect(step()).toBe(true)
 })
-
 test('directional lights test changes against their shadow camera', () => {
   const scene = new Scene
   const sun = new DirectionalLight
   sun.castShadow = true
   sun.position.set(0, 10, 0)
-  Object.assign(sun.shadow.camera, {left: -5, right: 5, top: 5, bottom: -5})
+  Object.assign(sun.shadow.camera, {
+    top: 5,
+    bottom: -5,
+    left: -5,
+    right: 5,
+  })
   sun.shadow.camera.updateProjectionMatrix()
   const inside = new Mesh(new BoxGeometry)
   inside.castShadow = true
@@ -116,7 +127,6 @@ test('directional lights test changes against their shadow camera', () => {
   inside.position.x = 1
   expect(step()).toBe(true)
 })
-
 test('dispose restores updates every frame', () => {
   const {cache, lamp, step} = setup()
   step()
