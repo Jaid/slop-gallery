@@ -4,9 +4,9 @@ import {expect, test} from 'bun:test'
 
 import {AmbientLight, DirectionalLight, HemisphereLight, Material, PointLight} from 'three/webgpu'
 
+import CandlestickGeometry from '../../src/lib/gallery/lodgeInterior/CandlestickGeometry.ts'
 import CoffeeTableGeometry from '../../src/lib/gallery/lodgeInterior/CoffeeTableGeometry.ts'
 import FirewoodStack from '../../src/lib/gallery/lodgeInterior/FirewoodStack.ts'
-import HearthAccessoriesGeometry from '../../src/lib/gallery/lodgeInterior/HearthAccessoriesGeometry.ts'
 import lodgeInterior, {lodgeFurnitureColliders} from '../../src/lib/gallery/lodgeInterior/layout.ts'
 import UpholsteredSeatGeometry from '../../src/lib/gallery/lodgeInterior/UpholsteredSeatGeometry.ts'
 import WagonWheelGeometry from '../../src/lib/gallery/lodgeInterior/WagonWheelGeometry.ts'
@@ -44,10 +44,10 @@ test('furniture geometry is finite, merged per material and within its triangle 
   const chair = new UpholsteredSeatGeometry(1, 0.76)
   const table = new CoffeeTableGeometry(lodgeInterior.coffeeTable.size)
   const wheel = new WagonWheelGeometry(0.85)
-  const accessories = new HearthAccessoriesGeometry
+  const candlestick = new CandlestickGeometry
   const stack = new FirewoodStack(lodgeInterior.firewood)
   try {
-    const parts = [sofa.leather, sofa.timber, chair.leather, chair.timber, table.timber, wheel.iron, wheel.wax, wheel.flames, accessories.fireTools, accessories.candlestick, accessories.candleWax, accessories.candleFlame, ...stack.logs.map(log => log.geometry)]
+    const parts = [sofa.leather, sofa.timber, chair.leather, chair.timber, table.timber, wheel.iron, wheel.wax, wheel.flames, candlestick.iron, candlestick.wax, candlestick.flame, ...stack.logs.map(log => log.geometry)]
     for (const geometry of parts) {
       const position = geometry.getAttribute('position')
       expect(position.count).toBeGreaterThan(0)
@@ -69,16 +69,22 @@ test('furniture geometry is finite, merged per material and within its triangle 
     expect(wheel.iron.boundingBox!.max.y).toBeCloseTo(0.85, 3)
     expect(stack.logs).toHaveLength(lodgeInterior.firewood.rows.reduce((sum, count) => sum + count, 0))
   } finally {
-    for (const resource of [sofa, chair, table, wheel, accessories, stack]) {
+    for (const resource of [sofa, chair, table, wheel, candlestick, stack]) {
       resource.dispose()
     }
   }
 })
 test('furniture colliders cover every piece that stands on the floor', () => {
   const names = new Set(lodgeFurnitureColliders().map(collider => collider.name))
-  for (const name of ['lodge-sofa', 'lodge-armchair-0', 'lodge-armchair-1', 'lodge-coffee-table', 'lodge-console-table', 'lodge-firewood', 'lodge-fire-tools']) {
+  for (const name of ['lodge-sofa', 'lodge-armchair-0', 'lodge-armchair-1', 'lodge-coffee-table', 'lodge-firewood']) {
     expect(names.has(name)).toBe(true)
   }
+  // The console table behind the sofa and the fire tool stand were taken out to declutter the room.
+  for (const name of ['lodge-console-table', 'lodge-fire-tools']) {
+    expect(names.has(name)).toBe(false)
+  }
+  // A single candlestick remains on the mantel, at its east end.
+  expect(lodgeInterior.candlesticks).toEqual([1.4])
   for (const {size} of lodgeFurnitureColliders()) {
     expect(size.every(value => Number.isFinite(value) && value > 0)).toBe(true)
   }

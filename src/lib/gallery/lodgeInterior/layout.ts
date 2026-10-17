@@ -35,20 +35,11 @@ const coffeeTable = {
   position: [0, 0, 1.1] as Vec3,
   size: [1.4, 0.46, 0.8] as Vec3,
 }
-/** a narrow sofa table behind the sofa, facing the walkway */
-const consoleTable = {
-  position: [0, 0, -1.22] as Vec3,
-  size: [1.7, 0.74, 0.36] as Vec3,
-}
 const firewood = {
   position: [2.7, 0, 4.3] as Vec3,
   length: 0.52,
   radius: 0.075,
   rows: [5, 4, 3, 2],
-}
-/** on the hearth, beside the chimney breast */
-const fireTools = {
-  position: [-2, 0.2, 4.3] as Vec3,
 }
 /**
  * Furnishings of the Lodge in the room’s frame: the origin is the middle of the floor and +z points toward the fireplace on the south wall.
@@ -73,7 +64,6 @@ const lodgeInterior = {
   seatWidth,
   armchairs,
   coffeeTable,
-  consoleTable,
   /** three cloth-bound books, stacked a little askew on the table */
   books: [
     {
@@ -137,9 +127,8 @@ const lodgeInterior = {
   },
   /** split logs stacked beside the fireplace, ends toward the room */
   firewood,
-  fireTools,
   /** iron candlesticks on the mantel, x in the fireplace’s mirrored frame */
-  candlesticks: [-1.5, -1.25, 1.4],
+  candlesticks: [1.4],
   beams: {
     z: [-3.5, 0, 3.5],
     /** width and height of each beam */
@@ -172,22 +161,10 @@ export function lodgeFurnitureColliders(): Array<FurnitureCollider> {
       size: coffeeTable.size,
     },
     {
-      name: 'lodge-console-table',
-      position: consoleTable.position,
-      yaw: 0,
-      size: consoleTable.size,
-    },
-    {
       name: 'lodge-firewood',
       position: firewood.position,
       yaw: 0,
       size: FirewoodStack.measure(firewood),
-    },
-    {
-      name: 'lodge-fire-tools',
-      position: fireTools.position,
-      yaw: 0,
-      size: [0.3, 0.86, 0.3],
     },
   ]
 }
