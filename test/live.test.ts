@@ -64,7 +64,7 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     await page.goto(`${baseUrl}?ai=false&test=true`, {waitUntil: 'domcontentloaded'})
     await page.waitForFunction(() => globalThis.slopGallery?.snapshot?.().ready, {timeout: 60_000})
     await page.evaluate(() => document.fonts.ready)
-    await fs.ensureDir('private/agent/reports')
+    await fs.ensureDir('out/live-test')
     const welcomeSnapshot = await snapshot(page)
     expect(welcomeSnapshot.locked).toBe(false)
     expect(welcomeSnapshot.hasControlled).toBe(false)
@@ -72,14 +72,14 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     expect(await page.$('[data-testid="menu-reset"]')).toBeNull()
     // `?ai=false` hides every AI option, including the OpenRouter key form.
     expect(await page.$('[data-testid="connection"]')).toBeNull()
-    await page.screenshot({path: 'private/agent/reports/production-welcome.png'})
+    await page.screenshot({path: 'out/live-test/production-welcome.png'})
     await page.click('[aria-label="Mute audio"]')
     await enter(page)
     const enteredSnapshot = await snapshot(page)
     expect(enteredSnapshot.hasControlled).toBe(false)
     expect(await page.$('[data-testid="menu-overlay"]')).toBeNull()
     expect(await page.$('header, footer, [data-testid="artwork-overlay"]')).toBeNull()
-    const screenshot = await page.screenshot({path: 'private/agent/reports/production-gallery.png'})
+    const screenshot = await page.screenshot({path: 'out/live-test/production-gallery.png'})
     // Test the composited browser screenshot, not just a nonblack GPU readback.
     const variance = await page.evaluate(async encoded => {
       const screenshotResponse = await fetch(`data:image/png;base64,${encoded}`)
@@ -267,7 +267,7 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     for (const [x, room] of [[-14, 'vesper'], [14, 'dine']] as const) {
       await teleport(page, [x, 1.62, 3])
       await page.waitForFunction(expectedRoom => globalThis.slopGallery!.snapshot!().room === expectedRoom, {}, room)
-      await page.screenshot({path: `private/agent/reports/production-${room}.png`})
+      await page.screenshot({path: `out/live-test/production-${room}.png`})
     }
     // Walk through both boolean-cut portals from both sides, including near a jamb.
     for (const side of [-1, 1]) {
@@ -341,11 +341,11 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().room === 'antechamber')
     await page.keyboard.up('w')
     await page.evaluate(() => document.exitPointerLock())
-    await page.screenshot({path: 'private/agent/reports/production-good-taste.png'})
+    await page.screenshot({path: 'out/live-test/production-good-taste.png'})
     const graphicsLabel = await page.$eval('[aria-label="Heavy graphics"] small', element => element.textContent)
     await page.click('[aria-label="Heavy graphics"]')
     await page.waitForFunction(before => document.querySelector('[aria-label="Heavy graphics"] small')?.textContent !== before, {}, graphicsLabel)
-    await page.screenshot({path: 'private/agent/reports/production-heavy.png'})
+    await page.screenshot({path: 'out/live-test/production-heavy.png'})
     const captures = await page.evaluate(async () => {
       const [a, b] = await Promise.all([globalThis.slopGallery!.captureFrame!(), globalThis.slopGallery!.captureFrame!()])
       return [a.width, b.width, a.nonBlackFraction]
@@ -366,7 +366,7 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     await page.keyboard.press('Tab')
     expect(await page.evaluate(() => !!document.activeElement?.closest('dialog'))).toBe(true)
     await page.keyboard.press('m')
-    await page.screenshot({path: 'private/agent/reports/production-narrow.png'})
+    await page.screenshot({path: 'out/live-test/production-narrow.png'})
     await page.keyboard.press('Escape')
     expect(await page.$eval('[aria-label="Mute audio"]', button => button.getAttribute('aria-pressed'))).toBe(muted)
     const fallback = await browser.newPage()
@@ -379,7 +379,7 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     expect(external).toEqual([])
     expect(errors).toEqual([])
   } catch (error) {
-    await page.screenshot({path: 'private/agent/reports/live-failure.png'})
+    await page.screenshot({path: 'out/live-test/live-failure.png'})
     console.log('Browser errors:', errors)
     console.log(await snapshot(page), await page.$eval('body', b => b.innerText))
     throw error

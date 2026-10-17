@@ -7,10 +7,10 @@ import {unpack} from 'msgpackr'
 
 import {encodeTraceJsonAsMessagePack, readBrowserFlags} from '../../scripts/recordBrowserTrace.ts'
 
-// private/ is gitignored, so a fresh checkout doesn’t have it until another test happens to create it
-beforeAll(() => fs.ensureDir(resolve(import.meta.dir, '../../private/agent')))
+// temp/ is gitignored, so a fresh checkout doesn’t have it yet
+beforeAll(() => fs.ensureDir(resolve(import.meta.dir, '../../temp')))
 test('reads persisted browser flag selections and custom values', async () => {
-  const root = await fs.mkdtemp(resolve(import.meta.dir, '../../private/agent/browser-flags-test-'))
+  const root = await fs.mkdtemp(resolve(import.meta.dir, '../../temp/browser-flags-test-'))
   try {
     await fs.writeJson(resolve(root, 'Local State'), {
       browser: {
@@ -32,7 +32,7 @@ test('reads persisted browser flag selections and custom values', async () => {
   }
 })
 test('encodes Chromium compact metadata footers without mistaking event metadata for the footer', async () => {
-  const root = await fs.mkdtemp(resolve(import.meta.dir, '../../private/agent/browser-trace-test-'))
+  const root = await fs.mkdtemp(resolve(import.meta.dir, '../../temp/browser-trace-test-'))
   const input = resolve(root, 'trace.json')
   const output = resolve(root, 'trace.msgpack')
   try {
@@ -91,7 +91,7 @@ test('encodes Chromium compact metadata footers without mistaking event metadata
   }
 })
 test('accepts Chromium footers without metadata and preserves extra top-level fields', async () => {
-  const root = await fs.mkdtemp(resolve(import.meta.dir, '../../private/agent/browser-trace-footer-test-'))
+  const root = await fs.mkdtemp(resolve(import.meta.dir, '../../temp/browser-trace-footer-test-'))
   const input = resolve(root, 'trace.json')
   const output = resolve(root, 'trace.msgpack')
   try {
@@ -112,7 +112,7 @@ test('accepts Chromium footers without metadata and preserves extra top-level fi
   }
 })
 test('encodes traceconv JSON with a metadata footer after the last event line', async () => {
-  const root = await fs.mkdtemp(resolve(import.meta.dir, '../../private/agent/browser-trace-traceconv-test-'))
+  const root = await fs.mkdtemp(resolve(import.meta.dir, '../../temp/browser-trace-traceconv-test-'))
   const input = resolve(root, 'trace.json')
   const output = resolve(root, 'trace.msgpack')
   try {
@@ -149,7 +149,7 @@ test('encodes traceconv JSON with a metadata footer after the last event line', 
   }
 })
 test('encodes a gzip Chromium trace stream across chunk boundaries', async () => {
-  const root = await fs.mkdtemp(resolve(import.meta.dir, '../../private/agent/browser-trace-gzip-test-'))
+  const root = await fs.mkdtemp(resolve(import.meta.dir, '../../temp/browser-trace-gzip-test-'))
   const output = resolve(root, 'trace.msgpack')
   const json = '{"traceEvents":[{"name":"streamed","args":{}}],"metadata":{"clock-domain":"MONOTONIC"}}'
   try {
@@ -173,7 +173,7 @@ test('encodes a gzip Chromium trace stream across chunk boundaries', async () =>
   }
 })
 test('recovers complete streamed trace events when Chromium omits the JSON footer', async () => {
-  const root = await fs.mkdtemp(resolve(import.meta.dir, '../../private/agent/browser-trace-recovery-test-'))
+  const root = await fs.mkdtemp(resolve(import.meta.dir, '../../temp/browser-trace-recovery-test-'))
   const output = resolve(root, 'trace.msgpack')
   try {
     const gunzip = createGunzip()
@@ -198,7 +198,7 @@ test('recovers complete streamed trace events when Chromium omits the JSON foote
   }
 })
 test('still rejects a missing Chromium trace footer by default', async () => {
-  const root = await fs.mkdtemp(resolve(import.meta.dir, '../../private/agent/browser-trace-strict-footer-test-'))
+  const root = await fs.mkdtemp(resolve(import.meta.dir, '../../temp/browser-trace-strict-footer-test-'))
   const input = resolve(root, 'trace.json')
   const output = resolve(root, 'trace.msgpack')
   try {

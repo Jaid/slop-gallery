@@ -49,7 +49,7 @@ test('each character has five single-transcript requests with a fixed voice and 
   }
 })
 test('five independent requests are stitched in order, cached and never silently retried', async () => {
-  const root = resolve(import.meta.dir, '../../private/agent')
+  const root = resolve(import.meta.dir, '../../temp')
   await fs.ensureDir(root)
   const output = await fs.mkdtemp(resolve(root, 'voice-audition-test-'))
   const runner = new VoiceAuditionRunner(output, 'test-key')

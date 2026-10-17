@@ -115,7 +115,7 @@ test('invalid PCM, unsupported rates and missing or invalid timestamps cannot ma
   }))).toThrow('Invalid timestamp')
 })
 test('both transports retain five independent responses and never send the direct key to OpenRouter', async () => {
-  const parent = resolve(import.meta.dir, '../../private/agent')
+  const parent = resolve(import.meta.dir, '../../temp')
   await fs.ensureDir(parent)
   const output = await fs.mkdtemp(resolve(parent, 'iris-quality-test-'))
   const requests: Array<{
