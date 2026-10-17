@@ -9,6 +9,7 @@ import {useEffect, useMemo} from 'react'
 import {EquirectangularReflectionMapping, MeshStandardNodeMaterial, SRGBColorSpace} from 'three/webgpu'
 import useGraphicsMode from 'use-graphics-mode'
 
+import DineFloor from '#component/levels/gallery/DineFloor'
 import DineLights from '#component/levels/gallery/DineLights'
 import Fountain from '#component/levels/gallery/Fountain'
 import FountainBenches from '#component/levels/gallery/FountainBenches'
@@ -31,6 +32,7 @@ import {rooms, walls} from '#src/lib/gallery.ts'
 import {createArchitecturalGlassMaterials, disposeArchitecturalGlassMaterials} from '#src/lib/materials/ArchitecturalGlassMaterials.ts'
 import CastleStoneMaterial from '#src/lib/materials/CastleStoneMaterial.ts'
 import DamaskWallpaperMaterial from '#src/lib/materials/DamaskWallpaperMaterial.ts'
+import DineMaterials from '#src/lib/materials/DineMaterials.ts'
 import JoineryWoodMaterial from '#src/lib/materials/JoineryWoodMaterial.ts'
 import {corridorLanterns, lightIndoors, lodgeWindowLights} from '#src/lib/materials/lights/index.ts'
 import LodgeMaterials from '#src/lib/materials/LodgeMaterials.ts'
@@ -101,6 +103,8 @@ export default function Architecture() {
     x: joineryX,
     z: joineryZ,
   }), [joineryPanel, joineryX, joineryZ])
+  // Dine’s walls are painted with gilt boiserie, laid out around each wall’s doorways.
+  const dine = useDisposable(useMemo(() => new DineMaterials, []))
   const oculusMaterial = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
     map: stone,
     color: '#4c5558',
@@ -123,6 +127,7 @@ export default function Architecture() {
     if (wall.room === 'sienna') {
       return joineryX
     }
+    return dine.trim(wall)
   }
   const surfaceMaterial = (wall: Wall) => {
     if (isLodgeRoomWall(wall)) {
@@ -137,6 +142,7 @@ export default function Architecture() {
     if (wall.room === 'sienna') {
       return damask
     }
+    return dine.surface(wall)
   }
   return <>
     <ReflectionEnvironment />
@@ -148,7 +154,7 @@ export default function Architecture() {
       <RigidBody colliders={false} type='fixed'>
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]} />
       </RigidBody>
-      <Branch if={room.id === 'lobby'} else={<RoomFloor glass={glass.lobby} room={room} stone={stone} wood={wood} />}><LobbyFloor glass={glass.lobby} room={room} stone={stone} wood={wood} /></Branch>
+      <RoomFloorFor glass={glass.lobby} room={room} stone={stone} wood={wood} />
       <Box color={room.id === 'vesper' ? '#7c9586' : '#e1dccc'} position={[0, 5.78, 0]} size={[room.size[0], 0.18, room.size[1]]} />
       {lightBoxOffsets(room).map(z => <group key={z}>
         <Box color='#a29982' position={[0, 5.6, z]} size={[room.size[0] * 0.48, 0.1, 2.6]} />
@@ -174,6 +180,16 @@ export default function Architecture() {
   </>
 }
 
+/** The floor of an upper room without a custom room component: the Lobby and Dine lay their own stone, the others share the default slabs. */
+function RoomFloorFor(props: Parameters<typeof RoomFloor>[0]) {
+  if (props.room.id === 'lobby') {
+    return <LobbyFloor {...props} />
+  }
+  if (props.room.id === 'dine') {
+    return <DineFloor {...props} />
+  }
+  return <RoomFloor {...props} />
+}
 /** The Lodge’s own four walls get log courses; its tunnel keeps the castle stone. */
 function isLodgeRoomWall(wall: Wall) {
   return wall.room === 'lodge' && !wall.id.startsWith('lodge-tunnel-')

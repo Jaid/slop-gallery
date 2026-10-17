@@ -8,14 +8,14 @@ import {useGraphicsModeValue} from 'use-graphics-mode'
 import FloorGlass from '#component/levels/gallery/FloorGlass'
 import ParquetFloor from '#component/levels/gallery/ParquetFloor'
 import WoodFloor from '#component/levels/gallery/WoodFloor'
-import CheckerMarbleFloor from '#src/components/Scene/CheckerMarbleFloor.tsx'
 import Box from '#src/components/Scene/primitives.tsx'
 import {floorThickness, roomFloorPlan} from '#src/lib/gallery/floors.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
 /** Materials that replace a room’s default stone slabs and brass inlays. */
 export type RoomFloorMaterials = {
-  inlay: Material
+  /** the brass inlays; rooms without them leave it out */
+  inlay?: Material
   /** the planar reflection target of a reflective slab material, laid at the floor’s surface */
   reflection?: Object3D
   slab: Material
@@ -40,7 +40,6 @@ export default function RoomFloor({glass, materials, room, stone, wood}: {
       map: wood,
       color: '#c5a585',
     },
-    dine: {color: '#23201d'},
     salon: {color: '#3a2616'},
   }
   const surface = surfaces[room.id] ?? {
@@ -57,7 +56,6 @@ export default function RoomFloor({glass, materials, room, stone, wood}: {
     </RigidBody>
     <Branch if={reflection}><group rotation={[-Math.PI / 2, 0, 0]}><primitive object={reflection!} /></group></Branch>
     <Branch if={room.id === 'vesper'}><WoodFloor depth={room.size[1]} texture={wood} width={room.size[0]} /></Branch>
-    <Branch if={room.id === 'dine'}><CheckerMarbleFloor depth={room.size[1]} width={room.size[0]} /></Branch>
     <Branch if={room.id === 'salon'}><ParquetFloor depth={room.size[1]} name={room.id} width={room.size[0]} /></Branch>
     <Branch none={[room.id === 'dine', room.id === 'salon']}>
       {plan.seams.map(({center: [x, z], size: [width, depth]}, i) => <Box key={i} color='#a8a18f' envMapIntensity={envMapIntensity} position={[x, 0.008, z]} size={[width, 0.008, depth]} />)}

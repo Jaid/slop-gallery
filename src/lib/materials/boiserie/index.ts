@@ -1,0 +1,6 @@
+export {default as BoiserieTrimMaterial} from './BoiserieTrimMaterial.ts'
+export type {BoiserieTrimOptions} from './BoiserieTrimMaterial.ts'
+export {default as BoiserieWallMaterial} from './BoiserieWallMaterial.ts'
+export type {BoiserieWallOptions} from './BoiserieWallMaterial.ts'
+export {gilt, paintedPlaster, slateBoiserie} from './paint.ts'
+export type {BoiseriePalette} from './paint.ts'
