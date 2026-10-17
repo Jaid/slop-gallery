@@ -21,7 +21,7 @@ export default function KnotStudyMap({compact}: {compact?: boolean} = {}) {
   }, [])
   return <svg className={css.container} aria-label={`Knottingham: ${knotBays.length} candidate rows in the exhibition hall`} role='img' viewBox={`${knotGalleryBounds.minX - 1} ${knotGalleryBounds.northZ - 1} ${knotGallerySize[0] + 2} ${knotGallerySize[2] + 2}`}>
     <rect fill='none' height={knotGallerySize[2]} stroke='#888' strokeWidth='0.2' width={knotGallerySize[0]} x={knotGalleryBounds.minX} y={knotGalleryBounds.northZ} />
-    {knotBays.map(bay => <path key={bay.candidate.id} d={`M ${knotLayout.previewX} ${bay.center[2] - 2.4} v 4.8`} stroke='#b7a885' strokeWidth='0.25'><title>{`${bay.candidate.title} overview`}</title></path>)}
+    <Branch if={knotLayout.previewX !== null}>{knotBays.map(bay => <path key={bay.candidate.id} d={`M ${knotLayout.previewX} ${bay.center[2] - 2.4} v 4.8`} stroke='#b7a885' strokeWidth='0.25'><title>{`${bay.candidate.title} overview`}</title></path>)}</Branch>
     <Branch not={compact}>{knotBays.map(bay => <text key={bay.candidate.id} className={css.label} fontSize='1.3' fontWeight='600' textAnchor='middle' x={knotLayout.rowCenterX(bay.finishes.length)} y={bay.center[2] - 1.5}>{bay.candidate.title}</text>)}</Branch>
     {knotExhibition.map(exhibit => <g key={exhibit.id}>
       <title>{`${exhibit.label} · ${exhibit.title} · ${exhibit.modelTitle}`}</title>

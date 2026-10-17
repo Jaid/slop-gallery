@@ -5,7 +5,7 @@ import {CuboidCollider, CylinderCollider, RigidBody, useRevoluteJoint} from '@re
 import {loadCanvasFonts} from 'canvas-textures'
 import useCanvasTexture from 'canvas-textures/react'
 import useDisposable from 'disposable-lifetime/react'
-import {knotPreviewX} from 'knot-materials/exhibition.ts'
+import {knotLayout} from 'knot-materials/exhibition.ts'
 import {candidateSignSuspensionCenter, candidateSignSuspensionHeight, knotCandidateSign} from 'knot-materials/knotCandidateSign.ts'
 import KnotCandidateSignGeometry from 'knot-materials/KnotCandidateSignGeometry.ts'
 import loadCandidateIcons from 'knot-materials/loadCandidateIcons.ts'
@@ -58,7 +58,8 @@ export default function KnotCandidateSign({bay}: {bay: KnotBay}) {
     toneMapped: false,
   }), [texture]))
   const [width, height, depth] = knotCandidateSign.size
-  return <group name={`candidate-sign-${candidate.id}`} position={[knotPreviewX, knotGalleryBounds.height - knotCandidateSign.ceilingInset - knotCandidateSign.anchor[1], 0]} rotation={[0, Math.PI / 2, 0]}>
+  const placement = knotLayout.candidateSign
+  return <group name={`candidate-sign-${candidate.id}`} position={[placement.x, knotGalleryBounds.height - knotCandidateSign.ceilingInset - knotCandidateSign.anchor[1], placement.z]} rotation={[0, placement.rotation, 0]}>
     <RigidBody colliders={false} position={knotCandidateSign.anchor} type='fixed' ref={anchor} />
     <mesh castShadow geometry={geometry.canopy} material={metal} receiveShadow />
     <RigidBody additionalSolverIterations={8} angularDamping={knotCandidateSign.angularDamping} canSleep={false} ccd colliders={false} linearDamping={knotCandidateSign.linearDamping} ref={sign}>

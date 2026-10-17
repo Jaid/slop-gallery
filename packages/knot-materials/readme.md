@@ -77,6 +77,8 @@ Knottingham alone recognizes `?rarity=true|false|edit`. The default is `true`. W
 
 Rarity edits are intentionally session-local and emit no telemetry events. Native WebMCP exposes `dump_knots`, which returns every knot currently present in the world as an array of `{id, name, position, rarity}` records using the live edited rarity values. A curation workflow is therefore: enter `?rarity=edit` (optionally with `rarity_filter`), edit signs, call `dump_knots`, and use that dump to update `src/rarities.ts` explicitly.
 
+When the final selection is exactly one Knot (typically a single `?knot_id=`), the exhibition skips the billboard: the Knot stands in the middle of a plain square room, and its candidate sign hangs between the Knot and the north wall, facing the spawn. Any other selection keeps one billboard per row.
+
 Plate numbers are assigned only after final filtering. Candidate billboard composites are built at runtime from the selected entries' individual icons and current labels, so selection and numbering changes require no asset regeneration.
 
 Displayed knots begin in showcase mode: their rigid bodies are fixed in mid-air and rotate slowly. The first Rapier contact-force event permanently releases that knot into normal dynamic physics. Showcase knots cannot be grabbed; after release they can be picked up, dropped and thrown normally, and temporary fixed-body states while carrying them never restore showcase rotation.

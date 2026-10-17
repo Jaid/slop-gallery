@@ -1,28 +1,23 @@
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
+import Branch from 'branch-component'
 import useDisposable from 'disposable-lifetime/react'
-import {knotBays} from 'knot-materials/exhibition.ts'
+import {knotBays, knotPreviewX} from 'knot-materials/exhibition.ts'
 import {useMemo} from 'react'
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 import {color, mix, texture} from 'three/tsl'
 import {MeshPhysicalNodeMaterial, MeshStandardNodeMaterial} from 'three/webgpu'
-import useGraphicsMode from 'use-graphics-mode'
-import constructors from 'virtual:knot-exhibition-materials'
 
 import KnotCandidateSign from '#component/levels/knottingham/KnotCandidateSign'
 import KnotFloor from '#component/levels/knottingham/KnotFloor'
 import KnotLights from '#component/levels/knottingham/KnotLights'
-import KnotPreviewSign from '#component/levels/knottingham/KnotPreviewSigns'
+import {KnotPreviewSigns} from '#component/levels/knottingham/KnotPreviewSigns'
 import {surfaceTexture} from '#src/components/Scene/materials.ts'
 import WallSurface from '#src/components/Scene/WallSurface.tsx'
 import {knotGalleryBounds, knotGalleryCenter, knotGallerySize, knotGalleryWalls} from '#src/lib/gallery/knotGallery.ts'
 import VelvetWallMaterial from '#src/lib/materials/VelvetWallMaterial.ts'
 
-import RuntimeKnotIconRenderer from '../KnotPreviewSigns/RuntimeKnotIconRenderer.ts'
-
 /** The Knot level’s shell and lighting, without museum rooms or their physics. */
 export default function KnotLobby() {
-  const heavy = useGraphicsMode()
-  const runtimeIcons = useDisposable(useMemo(() => new RuntimeKnotIconRenderer(constructors, heavy), [heavy]))
   const plaster = useMemo(() => surfaceTexture('plaster'), [])
   const shell = useMemo(() => ({
     floor: new RoundedBoxGeometry(knotGallerySize[0], 0.24, knotGallerySize[2], 2, 0.035),
@@ -71,10 +66,9 @@ export default function KnotLobby() {
       <KnotFloor />
       <mesh castShadow geometry={shell.ceiling} material={ceilingMaterial} name='knottingham-ceiling' position={[knotGalleryCenter[0], knotGalleryBounds.height, knotGalleryCenter[2]]} receiveShadow />
       <KnotLights />
-      {knotBays.map(bay => <group key={bay.candidate.id} position={bay.center}>
-        <KnotPreviewSign bay={bay} renderer={runtimeIcons} />
-        <KnotCandidateSign bay={bay} />
-      </group>)}
+      {/* A lone Knot gets a plain room: its candidate sign alone names it, without a billboard. */}
+      <Branch if={knotPreviewX !== null}><KnotPreviewSigns x={knotPreviewX!} /></Branch>
+      {knotBays.map(bay => <group key={bay.candidate.id} position={bay.center}><KnotCandidateSign bay={bay} /></group>)}
     </group>
   </>
 }

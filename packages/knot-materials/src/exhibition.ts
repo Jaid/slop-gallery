@@ -127,4 +127,5 @@ export type KnotExhibit = typeof knotExhibition[number]
 export type KnotBay = typeof knotBays[number]
 export type NumberedKnot = KnotEntry & {number: number}
 
+/** x of the row billboards, or null when the exhibition is a single Knot in a plain room without billboard */
 export const knotPreviewX = knotLayout.previewX

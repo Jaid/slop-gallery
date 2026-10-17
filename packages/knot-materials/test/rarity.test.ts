@@ -44,6 +44,7 @@ describe('rarity selection policy', () => {
     expect(exact.flatMap(bay => bay.finishes).map(item => item.id)).toEqual([rareItem.id])
   })
   test('omits lower rarities first for every shot cap and places rarer knots away from the billboard', () => {
+    expect(knotPreviewX).not.toBeNull()
     for (const candidate of knotCandidates) {
       const available = candidate.items.filter(item => item.rarity !== special)
       const prioritized = available.toSorted((a, b) => b.rarity - a.rarity || b.createdAt - a.createdAt || a.id.localeCompare(b.id))
@@ -60,7 +61,7 @@ describe('rarity selection policy', () => {
         let prior = 0
         for (const [index, item] of selected.entries()) {
           expect(item.rarity).toBeGreaterThanOrEqual(prior)
-          expect(index * knotSpacing - knotRowHalfWidth).toBeGreaterThan(knotPreviewX)
+          expect(index * knotSpacing - knotRowHalfWidth).toBeGreaterThan(knotPreviewX!)
           prior = item.rarity
         }
       }
