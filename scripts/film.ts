@@ -101,7 +101,7 @@ const output = values['output-file'] === undefined ? join(filmRoot, `${setup.lev
 const format = frameFormat(output)
 const {width, height} = setup.viewport
 if ((format === 'webm' || format === 'mkv') && (width % 2 || height % 2)) {
-  throw new Error('--viewport needs even dimensions for 4:2:0 video.')
+  throw new Error('--width and --height need to be even for 4:2:0 video.')
 }
 const frameCount = Math.max(1, Math.round(duration * fps))
 const toPose = (shot: Shot): Partial<CameraPose> => ({

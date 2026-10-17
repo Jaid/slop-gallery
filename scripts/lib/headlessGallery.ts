@@ -15,7 +15,8 @@ export const galleryHelp = `  --level <id>            ${levelIds.join(', ')}. De
   --graphics <mode>       mirrors ?graphics (heavy or fast). Default: heavy
   --vision-mode <mode>    mirrors ?vision_mode (wireframe). Default: none
   --anti-aliasing <mode>  mirrors ?anti_aliasing (traa, smaa or false). Default: the graphics mode’s
-  --viewport <WxH>        render size in pixels. Default: 1920x1080`
+  --width <pixels>        render width. Default: --height × 16/9, or 1280
+  --height <pixels>       render height. Default: --width × 9/16, or 720`
 export const galleryOptions = {
   'anti-aliasing': {type: 'string'},
   graphics: {
@@ -24,19 +25,18 @@ export const galleryOptions = {
   },
   level: {type: 'string'},
   target: {type: 'string'},
-  viewport: {
-    type: 'string',
-    default: '1920x1080',
-  },
+  width: {type: 'string'},
+  height: {type: 'string'},
   'vision-mode': {type: 'string'},
 } as const
 export type GalleryValues = {
   'anti-aliasing'?: string
   graphics: string
+  height?: string
   level?: string
   target?: string
-  viewport: string
   'vision-mode'?: string
+  width?: string
 }
 export type GallerySetup = Awaited<ReturnType<typeof resolveGallerySetup>>
 export const parseNumbers = (value: string, name: string, lengths: Array<number>) => {
@@ -46,16 +46,29 @@ export const parseNumbers = (value: string, name: string, lengths: Array<number>
   }
   return numbers
 }
-export const parseViewport = (value: string) => {
-  const match = /^(\d+)\s*[x×]\s*(\d+)$/u.exec(value.trim())
-  const width = Number(match?.[1])
-  const height = Number(match?.[2])
-  if (!match || width <= 0 || height <= 0) {
-    throw new Error(`--viewport expects WIDTHxHEIGHT, got “${value}”.`)
+const parseSize = (value: string | undefined, name: string) => {
+  if (value === undefined) {
+    return
+  }
+  const size = Number(value)
+  if (!Number.isSafeInteger(size) || size <= 0) {
+    throw new Error(`--${name} expects a positive whole number of pixels, got “${value}”.`)
+  }
+  return size
+}
+/** A missing side follows 16:9; without either, 720p. */
+const resolveSize = (values: Pick<GalleryValues, 'height' | 'width'>) => {
+  const width = parseSize(values.width, 'width')
+  const height = parseSize(values.height, 'height')
+  if (width === undefined && height === undefined) {
+    return {
+      width: 1280,
+      height: 720,
+    }
   }
   return {
-    width,
-    height,
+    width: width ?? Math.round(height! * 16 / 9),
+    height: height ?? Math.round(width! * 9 / 16),
   }
 }
 export const degrees = (radians: number) => Math.round(radians * 180 / Math.PI * 1000) / 1000
@@ -119,7 +132,7 @@ export const resolveGallerySetup = async (values: GalleryValues) => {
     level,
     levelName: level ?? defaultLevel,
     search,
-    viewport: parseViewport(values.viewport),
+    viewport: resolveSize(values),
   }
 }
 /**
