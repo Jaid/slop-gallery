@@ -111,7 +111,7 @@ export default class ShadowCache {
   private reaches(light: ShadowLight, sphere: Sphere) {
     if (light.isPointLight) {
       const range = light.distance || light.shadow.camera.far
-      return light.getWorldPosition(lightPosition).distanceTo(sphere.center) <= range + sphere.radius
+      return lightPosition.setFromMatrixPosition(light.matrixWorld).distanceTo(sphere.center) <= range + sphere.radius
     }
     light.shadow.updateMatrices(light)
     return light.shadow.getFrustum().intersectsSphere(sphere)

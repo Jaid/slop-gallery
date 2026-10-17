@@ -21,6 +21,33 @@ const projection = new Matrix4
 const sphere = new Sphere
 const position = new Vector3
 const lightHolders = new WeakMap<Object3D, boolean>
+const objectRooms = new WeakMap<Object3D, {
+  bounds: Sphere
+  matrix: Matrix4
+  room: RoomId | undefined
+}>
+/** the room that encloses the drawable, kept until it moves or its bounds change */
+const roomOf = (drawable: Drawable, geometry: BufferGeometry) => {
+  // Instanced and batched meshes bound all of their instances themselves.
+  if (drawable.computeBoundingSphere && drawable.boundingSphere === null) {
+    drawable.computeBoundingSphere()
+  }
+  if (!drawable.boundingSphere && !geometry.boundingSphere) {
+    geometry.computeBoundingSphere()
+  }
+  const bounds = drawable.boundingSphere ?? geometry.boundingSphere!
+  const cached = objectRooms.get(drawable)
+  if (cached?.matrix.equals(drawable.matrixWorld) && cached.bounds.equals(bounds)) {
+    return cached.room
+  }
+  const room = roomEnclosing(sphere.copy(bounds).applyMatrix4(drawable.matrixWorld))
+  objectRooms.set(drawable, {
+    bounds: bounds.clone(),
+    matrix: drawable.matrixWorld.clone(),
+    room,
+  })
+  return room
+}
 const holdsLight = (object: Object3D) => {
   let result = lightHolders.get(object)
   if (result === undefined) {
@@ -58,21 +85,13 @@ export default function RoomCulling() {
         if (!visible || !drawable.geometry || !drawable.frustumCulled || holdsLight(object)) {
           return
         }
-        // Instanced and batched meshes bound all of their instances themselves.
-        if (drawable.computeBoundingSphere && drawable.boundingSphere === null) {
-          drawable.computeBoundingSphere()
-        }
-        const {geometry} = drawable
-        if (!drawable.boundingSphere && !geometry.boundingSphere) {
-          geometry.computeBoundingSphere()
-        }
-        const objectRoom = roomEnclosing(sphere.copy(drawable.boundingSphere ?? geometry.boundingSphere!).applyMatrix4(object.matrixWorld))
+        const objectRoom = roomOf(drawable, drawable.geometry)
         if (objectRoom && !visible.has(objectRoom)) {
           hidden.add(object)
         }
       })
       shadows.update(scene, hidden, (light: Light) => {
-        const lightRoom = visible && roomContaining(light.getWorldPosition(position).toArray())
+        const lightRoom = visible && roomContaining(position.setFromMatrixPosition(light.matrixWorld).toArray())
         return !lightRoom || visible.has(lightRoom)
       })
     }
