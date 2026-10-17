@@ -52,6 +52,32 @@ export const portoro: MarbleStyle = {
   web: 1,
 }
 
+/** Black Nero Marquina: near-black with a dense, brittle crackle of bone-white veins. */
+export const neroMarquina: MarbleStyle = {
+  base: '#0f0f11',
+  cloud: '#232327',
+  halo: '#3a3a3e',
+  haloStrength: 0.45,
+  thread: '#d4d1cb',
+  threadStrength: 1,
+  vein: '#efece6',
+  veinWidth: 0.003,
+  web: 0.7,
+}
+
+/** Warm cream marble with soft, smoky umber veins that flow rather than crack. */
+export const cremaMarfil: MarbleStyle = {
+  base: '#e9e1d4',
+  cloud: '#bfae95',
+  halo: '#a39480',
+  haloStrength: 0.8,
+  thread: '#94897a',
+  threadStrength: 0.6,
+  vein: '#675d50',
+  veinWidth: 0.004,
+  web: 0.8,
+}
+
 const unit = (node: Float) => node.mul(0.5).add(0.5)
 const noise = (x: Float, y: Float, seed: Float) => mx_noise_float(vec3(x, y, seed))
 /** Like `line`, for a half-width given as a node. */
@@ -63,9 +89,11 @@ export type MarblePattern = ReturnType<typeof marblePattern>
 /**
  * The layout of procedural polished marble on a plane, with `u` and `v` in meters, independent of its colors.
  *
- * The body is domain-warped clouds; long main veins follow the zero lines of a warped noise and bleed a soft halo into the stone; between them runs a coarse web of fracture veins from the cell edges of a warped Worley pattern, and a finer web of hairline cracks, both fading in and out in patches. Every feature fades to its average coverage before it is smaller than the pixel `footprint` (meters), so nothing crawls in the distance.
+ * The body is domain-warped clouds; long main veins follow the zero lines of a warped noise and bleed a soft halo into the stone (with `drift`, they stream along `u` side by side instead of meandering and closing into loops); between them runs a coarse web of fracture veins from the cell edges of a warped Worley pattern, and a finer web of hairline cracks, both fading in and out in patches. Every feature fades to its average coverage before it is smaller than the pixel `footprint` (meters), so nothing crawls in the distance.
  */
-export function marblePattern({footprint, name = 'marble', seed, u, v, veinWidth}: {
+export function marblePattern({drift = false, footprint, name = 'marble', seed, u, v, veinWidth}: {
+  /** whether the main veins and the fracture web stream along `u`, as in a stone cut along its bedding, instead of meandering in every direction */
+  drift?: boolean
   footprint: Float
   /** prefix of the shader variables, unique per call within one material */
   name?: string
@@ -88,7 +116,9 @@ export function marblePattern({footprint, name = 'marble', seed, u, v, veinWidth
   // Main veins: the zero lines of a warped noise, each swelling and thinning along its length.
   // A fine, jagged warp of their own breaks the veins’ smooth contours into the crooked course of a real fracture.
   const jag = noise(qu.mul(6), qv.mul(6), s.add(14)).mul(0.05).add(noise(qu.mul(19), qv.mul(19), s.add(15)).mul(0.02)).mul(visibleDetail(footprint, 0.02))
-  const main = meters(noise(qu.mul(0.45), qv.mul(1.1), s.add(6)).add(jag)).toVar(`${name}MainVein`)
+  // Drifting veins are the level lines of a gently warped ramp across `v`; the warp is too shallow to fold a line back on itself, so they never close into loops.
+  const course = drift ? qv.mul(1.5).add(noise(qu.mul(0.35), qv.mul(0.35), s.add(22)).mul(0.8)).mul(Math.PI).sin().mul(0.5) : noise(qu.mul(0.45), qv.mul(1.1), s.add(6))
+  const main = meters(course.add(jag)).toVar(`${name}MainVein`)
   const swell = unit(noise(qu.mul(1.3), qv.mul(1.3), s.add(7))).smoothstep(0.2, 0.75)
   const halo = main.abs().smoothstep(0, 0.03).oneMinus().mul(swell.mul(0.6).add(0.4))
   // Each vein thins to a thread and swells again along its course, and breaks off in places.
@@ -97,8 +127,9 @@ export function marblePattern({footprint, name = 'marble', seed, u, v, veinWidth
   // A thinner companion vein beside the main ones, as where the stone cracked twice.
   const companion = band(meters(noise(qu.mul(1.2), qv.mul(2.8), s.add(8)).add(jag)), width.mul(0.5)).mul(unit(noise(qu.mul(0.8), qv.mul(0.8), s.add(9))).smoothstep(0.55, 0.85))
   // The fracture web: edges between Worley cells, warped once more at a finer scale so they crack crookedly instead of running straight.
-  const cellU = qu.mul(3.2).add(jag.mul(5))
-  const cellV = qv.mul(3.2).add(noise(qu.mul(6), qv.mul(6), s.add(17)).mul(0.14))
+  // Drifting stone cracks along its bedding, so its cells are drawn out along the veins.
+  const cellU = qu.mul(drift ? 1.7 : 3.2).add(jag.mul(5))
+  const cellV = qv.mul(drift ? 5 : 3.2).add(noise(qu.mul(6), qv.mul(6), s.add(17)).mul(0.14))
   const cells = mx_worley_noise_vec2(vec2(cellU, cellV).add(vec2(s, s.mul(0.37))), 1)
   const webPresence = unit(noise(qu.mul(1.1), qv.mul(1.1), s.add(10))).smoothstep(0.2, 0.6)
   // Strands differ in strength: some are bright, most are faint.

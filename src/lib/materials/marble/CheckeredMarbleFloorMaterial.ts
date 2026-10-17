@@ -10,6 +10,8 @@ import {calacatta, marblePattern, portoro, shadeMarble} from './marble.ts'
 export type CheckeredMarbleFloorOptions = {
   /** cut of the tiles whose column and row add up to an odd number */
   dark?: MarbleStyle
+  /** whether the veins stream along each tile instead of meandering; see `marblePattern` */
+  drift?: boolean
   /** cut of the tiles whose column and row add up to an even number, including the one at `origin` */
   light?: MarbleStyle
   /** a corner of the tile grid in world x/z */
@@ -47,7 +49,7 @@ export function checkeredTile(x: number, z: number, {origin, tile}: Pick<Checker
  * Every tile is cut from another part of its block and turned at random, so neighbors never continue each other’s veins. Tiles are set with hairline grout and eased arrises. In heavy mode the polish mirrors the room, bent faintly by the waviness of hand-polished stone; the grout stays matte.
  */
 export default class CheckeredMarbleFloorMaterial extends FloorMaterial {
-  constructor({dark = portoro, light = calacatta, origin, reflections = true, seed = 0, tile}: CheckeredMarbleFloorOptions) {
+  constructor({dark = portoro, drift = false, light = calacatta, origin, reflections = true, seed = 0, tile}: CheckeredMarbleFloorOptions) {
     if (!(tile > 0)) {
       throw new RangeError('Marble tiles need a positive size.')
     }
@@ -67,6 +69,7 @@ export default class CheckeredMarbleFloorMaterial extends FloorMaterial {
     const footprint = max(positionWorld.x.fwidth(), positionWorld.z.fwidth()).toVar('marbleFloorFootprint')
     // Both cuts share one pattern; each tile shades it in its own stone, so the costly noise runs once per pixel.
     const pattern = marblePattern({
+      drift,
       footprint,
       seed: random(4).mul(50),
       u,
