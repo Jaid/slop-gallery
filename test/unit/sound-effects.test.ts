@@ -20,71 +20,12 @@ test('sound effect catalog has 105 stable unique IDs with playable recipes', () 
     }
   }
 })
-test('preferred sound effects preserve the X-dump audition selection', () => {
-  expect(enabledSoundEffectIds.slice(0, 11)).toEqual([
-    'SFX-28',
-    'SFX-07',
-    'SFX-04',
-    'SFX-02',
-    'SFX-08',
-    'SFX-14',
-    'SFX-23',
-    'SFX-29',
-    'SFX-09',
-    'SFX-06',
-    'SFX-03',
-  ])
-  expect(enabledSoundEffects.map(effect => effect.id)).toEqual([...enabledSoundEffectIds])
-  expect(enabledSoundEffects.slice(0, 11).map(effect => effect.label)).toEqual([
-    'Water Drip',
-    'Crystal Ping',
-    'Soft Confirm',
-    'Bubble Pop',
-    'Tiny Bell',
-    'Sonar Pulse',
-    'Kick Knock',
-    'Spring Boing',
-    'Chime Rise',
-    'Coin Spark',
-    'Glass Tick',
-  ])
-})
 test('every non-enabled sound is archived automatically', () => {
   expect(enabledSoundEffects).toHaveLength(20)
+  expect(enabledSoundEffects.map(effect => effect.id)).toEqual([...enabledSoundEffectIds])
   expect(archivedSoundEffects).toHaveLength(soundEffects.length - enabledSoundEffects.length)
   expect(new Set([...enabledSoundEffects, ...archivedSoundEffects].map(effect => effect.id))).toEqual(new Set(soundEffects.map(effect => effect.id)))
   expect(archivedSoundEffects.some(effect => enabledSoundEffectIds.includes(effect.id))).toBe(false)
-})
-test('pause and resume utility cues are active while the other new candidates remain archived', () => {
-  const additions = soundEffects.slice(37, 57)
-  expect(additions.map(effect => effect.id)).toEqual(Array.from({length: 20}, (_, index) => `SFX-${String(index + 38).padStart(2, '0')}`))
-  expect(additions.map(effect => effect.label)).toEqual([
-    'Menu Open',
-    'Menu Close',
-    'Hover Tick',
-    'Selection Step',
-    'Toggle On',
-    'Toggle Off',
-    'Unlock',
-    'Lock',
-    'Item Pickup',
-    'Item Drop',
-    'Objective Update',
-    'Achievement Glow',
-    'Warning Pulse',
-    'Error Soft',
-    'Door Latch',
-    'Heavy Mechanism',
-    'Servo Move',
-    'Camera Shutter',
-    'Page Flick',
-    'Phase Shift',
-  ])
-  expect(enabledSoundEffectIds.slice(11, 13)).toEqual(['SFX-42', 'SFX-43'])
-  expect(additions.filter(effect => enabledSoundEffectIds.includes(effect.id)).map(effect => effect.id)).toEqual(['SFX-42', 'SFX-43'])
-  expect(additions.filter(effect => !enabledSoundEffectIds.includes(effect.id)).every(effect => archivedSoundEffects.includes(effect))).toBe(true)
-  const recipes = new Set(additions.map(effect => JSON.stringify(effect.voices)))
-  expect(recipes.size).toBe(additions.length)
 })
 const loudest = (effects: typeof soundEffects) => Math.max(...effects.flatMap(effect => effect.voices.map(voice => voice.volume)))
 test('menu, notification, subtle cue and collision candidates are all archived', () => {

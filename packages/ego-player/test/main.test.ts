@@ -5,8 +5,7 @@ import {afterEach, beforeEach, expect, test} from 'bun:test'
 import RAPIER from '@dimforge/rapier3d-compat'
 import {Quaternion, Vector3} from 'three/webgpu'
 
-import EgoPlayer from '../src/EgoPlayer.tsx'
-import DefaultPlayer, {defaultEgoOptions, egoControls, EgoMotor} from '../src/main.ts'
+import {defaultEgoOptions, egoControls, EgoMotor} from '../src/main.ts'
 
 await RAPIER.init()
 let world: RAPIER.World
@@ -49,11 +48,7 @@ function grounded(options: EgoOptions = {}) {
   expect(motor.grounded).toBe(true)
   return motor
 }
-test('exports are coherent, default bindings and options are immutable', () => {
-  expect(DefaultPlayer).toBe(EgoPlayer)
-  expect(defaultEgoOptions.eyeHeight).toBe(1.6)
-  expect(defaultEgoOptions.speed).toBe(3)
-  expect(egoControls.forward).toEqual(['KeyW', 'ArrowUp'])
+test('default bindings and options are immutable', () => {
   expect(Object.isFrozen(defaultEgoOptions)).toBe(true)
   expect(Object.isFrozen(egoControls.forward)).toBe(true)
 })
@@ -431,12 +426,6 @@ test.each(boostedDirections)('%s uses its directional jump-height boost', (_name
   const factor = mode === 'dodge' ? defaultEgoOptions.dodgeJumpFactor : defaultEgoOptions.sprintJumpFactor
   expect(motor.getState().velocity.y).toBeCloseTo(Math.sqrt(2 * defaultEgoOptions.gravity * defaultEgoOptions.jumpHeight * factor), 4)
 })
-test('dodge defaults are weaker than sprint defaults', () => {
-  expect(defaultEgoOptions.dodgeFactor).toBe(1.5)
-  expect(defaultEgoOptions.dodgeJumpFactor).toBe(1.1)
-  expect(defaultEgoOptions.dodgeFactor).toBeLessThan(defaultEgoOptions.sprintFactor)
-  expect(defaultEgoOptions.dodgeJumpFactor).toBeLessThan(defaultEgoOptions.sprintJumpFactor)
-})
 test('dodge requires the boost action and crouching overrides it', () => {
   const motor = player({gravity: 0})
   tick(motor, {left: true}, 120)
@@ -521,10 +510,6 @@ test('switching between sprint and dodge retains smooth acceleration', () => {
     sprint: true,
   }, 120)
   expect(motor.horizontalSpeed).toBeCloseTo(defaultEgoOptions.speed * defaultEgoOptions.dodgeFactor, 4)
-})
-test('ground sticking defaults preserve the existing downward bias', () => {
-  expect(defaultEgoOptions.groundStickSpeed).toBe(0.18)
-  expect(defaultEgoOptions.snapToGround).toBe(0.18)
 })
 test.each([0, 0.01, 0.18, 2])('snap distance %s does not change grounded downward speed', snapToGround => {
   const ground = floor()

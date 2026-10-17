@@ -9,7 +9,7 @@ import {Physics} from '@react-three/rapier'
 import {createContext, createRef, isValidElement, use} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
 
-import DefaultGame, {default as createGame, normalizeControls, WebgpuRenderer} from '../src/main.ts'
+import createGame, {normalizeControls, WebgpuRenderer} from '../src/main.ts'
 import RendererShadows from '../src/RendererShadows.tsx'
 
 function element<Props>(node: ReactNode): ReactElement<Props> {
@@ -38,9 +38,6 @@ function Outer({children}: GameWrapperProps) {
 function Inner({children}: GameWrapperProps) {
   return <article>{children}</article>
 }
-test('default and named exports expose the same Game', () => {
-  expect(DefaultGame).toBe(createGame)
-})
 test('compact controls preserve action order, empty bindings and literal key names', () => {
   const controls = Object.freeze({
     forward: Object.freeze(['KeyW', 'ArrowUp']),

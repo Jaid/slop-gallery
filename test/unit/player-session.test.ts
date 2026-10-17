@@ -32,18 +32,12 @@ afterEach(() => {
 })
 describe('player save state', () => {
   test('current collections require the captured player pose', () => {
-    expect(playerSpawn).toEqual({
-      position: [0.06505674123764038, 0.01948930136859417, -25.913022994995117],
-      yaw: 3.135849777946853,
-      pitch: -0.108,
-    })
     const {player, ...withoutPlayer} = original
     expect(player).toBeDefined()
     expect(() => validateDocument(withoutPlayer)).toThrow('supported')
   })
   test('pitch is required and malformed pitches are rejected', () => {
-    const {pitch: spawnPitch, ...withoutPitch} = playerSpawn
-    expect(spawnPitch).toBe(-0.108)
+    const {pitch: _, ...withoutPitch} = playerSpawn
     expect(validatePlayerPose(withoutPitch)).toBeNull()
     for (const pitch of [Number.NaN, Infinity, '0', null, Math.PI]) {
       expect(validatePlayerPose({

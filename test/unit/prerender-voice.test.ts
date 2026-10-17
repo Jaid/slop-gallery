@@ -1,5 +1,4 @@
 import {afterEach, expect, test} from 'bun:test'
-import {tmpdir} from 'node:os'
 
 import * as path from 'forward-slash-path'
 import fs from 'fs-extra'
@@ -8,7 +7,10 @@ import prerenderVoice, {parsePrerenderVoiceArgs} from '../../scripts/prerenderVo
 
 const roots: Array<string> = []
 const temporaryRoot = async () => {
-  const root = await fs.mkdtemp(path.resolve(tmpdir(), 'prerender-voice-'))
+  // temp/ is gitignored, so a fresh checkout doesn’t have it yet
+  const parent = path.resolve(import.meta.dir, '../../temp')
+  await fs.ensureDir(parent)
+  const root = await fs.mkdtemp(path.resolve(parent, 'prerender-voice-'))
   roots.push(root)
   return root
 }
@@ -139,12 +141,12 @@ test('validates input and output before synthesis', async () => {
     calls++
     return response()
   }
-  expect(prerenderVoice({
+  await expect(prerenderVoice({
     fetch,
     input: ' ',
     rootFolder: root,
   })).rejects.toThrow('nonempty')
-  expect(prerenderVoice({
+  await expect(prerenderVoice({
     fetch,
     input: 'Hi',
     output: 'voice.mp3',

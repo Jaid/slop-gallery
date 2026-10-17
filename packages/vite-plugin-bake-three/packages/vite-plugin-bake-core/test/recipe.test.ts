@@ -3,7 +3,6 @@ import type {NodePath} from '@babel/traverse'
 import type {CallExpression, NewExpression} from '@babel/types'
 
 import {afterAll, expect, test} from 'bun:test'
-import {tmpdir} from 'node:os'
 import {join, resolve} from 'node:path'
 
 import fs from 'fs-extra'
@@ -31,7 +30,9 @@ const adapter: BakeAdapter = {
   }],
   accepts: resources => resources.has('test'),
 }
-const directory = await fs.mkdtemp(join(tmpdir(), 'bake-recipes-'))
+const temporary = resolve(import.meta.dir, '../../../../../temp/plugin-tests')
+await fs.ensureDir(temporary)
+const directory = await fs.mkdtemp(join(temporary, 'bake-recipes-'))
 afterAll(() => fs.rm(directory, {
   recursive: true,
   force: true,
@@ -118,7 +119,6 @@ test.each([
   ['random', 'const result = new Resource(Math.random())'],
   ['indirect random', "const method = 'ran' + 'dom'; const result = new Resource(Math[method]())"],
   ['browser state', 'const result = new Resource(window.innerWidth)'],
-  ['runtime parameter', 'function component(size) { const result = new Resource(size) }; const result = component(1)'],
   ['mutable binding', 'let n = 0; n++; const result = new Resource(n)'],
   ['captured buffer mutation', 'const data = new Uint8Array(4); data[0] = 7; const result = new Resource(data)'],
   ['captured state mutation', 'const settings = {x: 1}; const make = () => { settings.x++; return new Resource(3) }; const result = make()'],
@@ -129,18 +129,17 @@ test.each([
   ['asynchronous recipe', 'const make = async () => new Resource(1); const result = make()'],
   ['private class state', 'class Private extends Resource { #value = 1 }; const result = new Private(1)'],
 ])('declines %s', async (_label, code) => {
-  // A dynamic function argument is legal inside a closed invocation; reject an actually open parameter.
-  if (_label === 'runtime parameter') {
-    const source = await graph.input(join(directory, 'parameter.ts'), "import {Resource} from 'test:resources'; function component(size) { return new Resource(size) }")
-    let path!: NodePath<NewExpression>
-    source.path.traverse({NewExpression(value) {
-      path = value
-    }})
-    const parameterRecipe = new Recipe(graph, adapter)
-    await expect(parameterRecipe.evaluate(path, 1000)).rejects.toThrow()
-    return
-  }
   await expect((async () => roundTrip(await evaluate(code)))()).rejects.toThrow()
+})
+test('declines a resource built from an open runtime parameter', async () => {
+  // A dynamic function argument is legal inside a closed invocation; reject an actually open parameter.
+  const source = await graph.input(join(directory, 'parameter.ts'), "import {Resource} from 'test:resources'; function component(size) { return new Resource(size) }")
+  let path!: NodePath<NewExpression>
+  source.path.traverse({NewExpression(value) {
+    path = value
+  }})
+  const parameterRecipe = new Recipe(graph, adapter)
+  await expect(parameterRecipe.evaluate(path, 1000)).rejects.toThrow()
 })
 test('keeps approved native random methods behind the same opt-in', async () => {
   const code = `

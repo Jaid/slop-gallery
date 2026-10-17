@@ -144,7 +144,9 @@ test('composes nested anonymous transforms and preserves named groups', async ()
   resources.dispose()
 })
 test('supports constant imports, aliases, re-exports and watch-style fresh evaluation', async () => {
-  const directory = await fs.mkdtemp(join(import.meta.dirname, 'imports-'))
+  const temporary = resolve(import.meta.dir, '../../../../../temp/plugin-tests')
+  await fs.ensureDir(temporary)
+  const directory = await fs.mkdtemp(join(temporary, 'r3f-imports-'))
   try {
     await fs.writeFile(join(directory, 'data.ts'), 'throw new Error(\'do not execute unrelated module effects\'); export const data = [0,1,2,3]')
     await fs.writeFile(join(directory, 'barrel.ts'), 'export {data as points} from \'./data.ts\'')

@@ -180,9 +180,9 @@ describe('herringbone parquet', () => {
     for (const reflections of [true, false]) {
       const material = new ParquetFloorMaterial(salonParquet, reflections)
       try {
-        expect(material.colorNode).toBeTruthy()
-        expect(material.normalNode).toBeTruthy()
-        expect(material.roughnessNode).toBeTruthy()
+        expect(material.colorNode?.isNode).toBe(true)
+        expect(material.normalNode?.isNode).toBe(true)
+        expect(material.roughnessNode?.isNode).toBe(true)
         expect(Boolean(material.reflection)).toBe(reflections)
       } finally {
         material.dispose()

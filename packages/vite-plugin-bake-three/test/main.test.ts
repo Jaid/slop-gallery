@@ -1,10 +1,10 @@
 import {expect, test} from 'bun:test'
-import {join} from 'node:path'
+import {join, resolve} from 'node:path'
 
 import fs from 'fs-extra'
 import {build} from 'vite'
 
-import bakeThree, {bakeStaticTextures, bakeThreeGeometry, r3fStaticRendering} from '../src/main.ts'
+import bakeThree from '../src/main.ts'
 
 const pluginName = (plugin: ReturnType<typeof bakeThree>[number]) => {
   if (!plugin || typeof plugin !== 'object' || !('name' in plugin)) {
@@ -27,7 +27,9 @@ test('passes options through and can disable individual passes', () => {
   }).map(pluginName)).toEqual(['r3f-static-rendering'])
 })
 test('forwards allowFreezingRandomness to enabled passes', async () => {
-  const directory = await fs.mkdtemp(join(import.meta.dirname, 'random-build-'))
+  const temporary = resolve(import.meta.dir, '../../../temp/plugin-tests')
+  await fs.ensureDir(temporary)
+  const directory = await fs.mkdtemp(join(temporary, 'bake-three-'))
   try {
     await fs.outputFile(join(directory, 'entry.ts'), `
       import {DataTexture} from 'three/webgpu'
@@ -62,9 +64,4 @@ test('forwards allowFreezingRandomness to enabled passes', async () => {
   } finally {
     await fs.remove(directory)
   }
-})
-test('re-exports individual plugin factories', () => {
-  expect(bakeThreeGeometry).toBeFunction()
-  expect(bakeStaticTextures).toBeFunction()
-  expect(r3fStaticRendering).toBeFunction()
 })

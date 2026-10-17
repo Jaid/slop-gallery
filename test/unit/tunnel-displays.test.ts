@@ -8,7 +8,7 @@ import {createArchitectureGeometry, wallFace} from '../../src/lib/gallery/archit
 import lowerGallery from '../../src/lib/gallery/lowerGallery.ts'
 import oculusBalcony from '../../src/lib/gallery/oculusBalcony.ts'
 import tunnelDisplays, {tunnelDisplayWindow} from '../../src/lib/gallery/tunnelDisplays.ts'
-import walls, {findPlacement, insideGallery, rooms} from '../../src/lib/gallery/walls.ts'
+import walls, {findPlacement, insideGallery} from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
 const {tunnel, floorY} = lowerGallery
@@ -32,7 +32,6 @@ describe('widened tunnel with sealed display rooms', () => {
     }
     const exhibitKinds = new Set(tunnelDisplays.flatMap(display => display.exhibits.map(exhibit => exhibit.kind)))
     expect(exhibitKinds.size).toBe(6)
-    expect(rooms).toHaveLength(10)
   })
   for (const display of tunnelDisplays) {
     test(`${display.side}: windows are real openings with glass collision, solid sills and a sealed room shell`, () => {

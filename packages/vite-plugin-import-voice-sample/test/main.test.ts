@@ -2,8 +2,7 @@ import type {InlineConfig, Rollup} from 'vite'
 import type {VoiceSampleFetch} from 'voice-sample-store'
 
 import {afterEach, describe, expect, test} from 'bun:test'
-import {tmpdir} from 'node:os'
-import {join} from 'node:path'
+import {join, resolve} from 'node:path'
 
 import fs from 'fs-extra'
 import {build, createLogger} from 'vite'
@@ -12,7 +11,9 @@ import importVoiceSample, {defaultVoiceSampleBitrate, styleVoiceSampleText} from
 
 const directories: Array<string> = []
 const temporaryDirectory = async () => {
-  const directory = await fs.mkdtemp(join(tmpdir(), 'voice-sample-'))
+  const temporary = resolve(import.meta.dir, '../../../temp/plugin-tests')
+  await fs.ensureDir(temporary)
+  const directory = await fs.mkdtemp(join(temporary, 'voice-sample-'))
   directories.push(directory)
   return directory
 }

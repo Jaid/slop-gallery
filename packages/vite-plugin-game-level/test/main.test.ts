@@ -1,6 +1,5 @@
 import {expect, test} from 'bun:test'
-import {tmpdir} from 'node:os'
-import {resolve} from 'node:path'
+import {join, resolve} from 'node:path'
 
 import fs from 'fs-extra'
 import {build} from 'vite'
@@ -17,7 +16,9 @@ test('validates selection without knowing anything about a particular game', () 
   })).toThrow('Invalid game level')
 })
 test('builds only the selected entry graph, constant and public assets, and detects leaks', async () => {
-  const root = await fs.mkdtemp(resolve(tmpdir(), 'game-level-'))
+  const temporary = resolve(import.meta.dir, '../../../temp/plugin-tests')
+  await fs.ensureDir(temporary)
+  const root = await fs.mkdtemp(join(temporary, 'game-level-'))
   try {
     await fs.outputFile(resolve(root, 'main.js'), "import value from '#level/main.js'; console.log(value, import.meta.env.GAME_LEVEL)")
     for (const level of ['forest', 'ocean']) {

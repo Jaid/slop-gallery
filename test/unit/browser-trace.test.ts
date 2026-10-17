@@ -203,7 +203,7 @@ test('still rejects a missing Chromium trace footer by default', async () => {
   const output = resolve(root, 'trace.msgpack')
   try {
     await fs.writeFile(input, '{"traceEvents":[{"name":"complete"}')
-    expect(encodeTraceJsonAsMessagePack(input, output)).rejects.toThrow('Chromium trace JSON ended before the traceEvents array closed.')
+    await expect(encodeTraceJsonAsMessagePack(input, output)).rejects.toThrow('Chromium trace JSON ended before the traceEvents array closed.')
   } finally {
     await fs.remove(root)
   }

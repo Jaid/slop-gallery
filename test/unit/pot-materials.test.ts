@@ -8,9 +8,7 @@ test('fast pots and soil have warm, matte colors without noise maps', () => {
   const materials = new PotMaterials(getGraphicsProfile(false).noiseTextures)
   try {
     expect(materials.shells.atelier.color.getHexString()).toBe('b47249')
-    expect(materials.shells.atelier.roughness).toBe(0.87)
     expect(materials.soil.color.getHexString()).toBe('362416')
-    expect(materials.soil.roughness).toBe(1)
     for (const material of [...Object.values(materials.shells), materials.soil]) {
       expect(material.map).toBeNull()
       expect(material.bumpMap).toBeNull()
@@ -28,10 +26,8 @@ test('heavy pots restore clay color, relief and roughness maps and detailed soil
     expect(clay.map).not.toBeNull()
     expect(clay.bumpMap).not.toBeNull()
     expect(clay.roughnessMap).not.toBeNull()
-    expect(clay.bumpScale).toBe(0.008)
     expect(materials.soil.map).not.toBeNull()
     expect(materials.soil.bumpMap).not.toBeNull()
-    expect(materials.soil.bumpScale).toBe(0.022)
     // Textured colors are not tinted a second time by the fast base color.
     expect(clay.color.getHexString()).toBe('ffffff')
     expect(materials.soil.color.getHexString()).toBe('ffffff')

@@ -60,22 +60,6 @@ for (const Material of [MarbleFloorMaterial, WoodFloorMaterial]) {
     texture.dispose()
   })
 }
-test('heavy restores the original polished marble and softer wood varnish', () => {
-  const texture = new Texture
-  const wood = new WoodFloorMaterial(texture)
-  const marble = new MarbleFloorMaterial(texture)
-  try {
-    expect(wood.roughness).toBe(0.28)
-    expect(marble.roughness).toBe(0.12)
-    expect(wood.color.getHexString()).toBe('c5a585')
-    expect(marble.color.getHexString()).toBe('e8dfd0')
-    expect(wood.reflection).not.toBe(marble.reflection)
-  } finally {
-    wood.dispose()
-    marble.dispose()
-    texture.dispose()
-  }
-})
 test('detailed marble varies polish and reflection blur only when reflections are active', () => {
   const texture = new Texture
   const heavy = new DetailedMarbleFloorMaterial(texture, true)

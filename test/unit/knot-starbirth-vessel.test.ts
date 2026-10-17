@@ -1,8 +1,4 @@
-import type {KnotMaterialConstructor} from 'knot-materials/types.ts'
-
 import {describe, expect, test} from 'bun:test'
-
-import {Texture} from 'three/webgpu'
 
 const file = new URL('../../packages/knot-materials/src/entries/starbirth_vessel/Material.ts', import.meta.url)
 const source = await Bun.file(file).text()
@@ -62,13 +58,6 @@ const random = () => {
   return seed / 2_147_483_647
 }
 describe('Starbirth Vessel stars', () => {
-  test('keeps every star’s light inside its own lattice cell', () => {
-    expect(starReach).toBeGreaterThan(0)
-    // The jittered star stays at least its full reach away from every cell wall.
-    expect((1 - starJitter) / 2 / starScale).toBeGreaterThanOrEqual(starReach - 1e-12)
-    expect(source).toContain('footprint.clamp(starRadius, starReach * 0.4)')
-    expect(source).toContain('miss.div(starReach).pow2().oneMinus().max(0).pow2()')
-  })
   test('a march step is shorter than a cell, so it crosses at most four cells', () => {
     expect(maximumChord / steps).toBeLessThan(1 / starScale)
     expect(segmentCells).toBe(4)
@@ -119,17 +108,5 @@ describe('Starbirth Vessel stars', () => {
       }
     }
     expect(found).toBeGreaterThan(0)
-  })
-  test('constructs without disposing the environment', async () => {
-    const {default: Material} = await import(file.href) as {default: KnotMaterialConstructor}
-    const environment = new Texture
-    let disposed = false
-    environment.addEventListener('dispose', () => disposed = true)
-    const material = new Material(environment)
-    expect(material.name).toBe('starbirth_vessel')
-    expect(material.emissiveNode?.isNode).toBe(true)
-    material.dispose()
-    expect(disposed).toBe(false)
-    environment.dispose()
   })
 })

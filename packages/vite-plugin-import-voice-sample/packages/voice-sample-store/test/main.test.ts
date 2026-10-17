@@ -7,7 +7,7 @@ import {join} from 'node:path'
 import fs from 'fs-extra'
 import {unpack} from 'msgpackr'
 
-import VoiceSampleStore, {defaultVoiceSampleBitrate, defaultVoiceSampleCooldown, styleVoiceSampleText} from '../src/main.ts'
+import VoiceSampleStore, {defaultVoiceSampleBitrate, styleVoiceSampleText} from '../src/main.ts'
 
 const directories: Array<string> = []
 const temporaryDirectory = async () => {
@@ -239,7 +239,6 @@ describe('VoiceSampleStore', () => {
         format: 'wav',
       }),
     ])
-    expect(defaultVoiceSampleCooldown).toBe(1000)
     expect(starts).toHaveLength(3)
     expect(starts[1] - starts[0]).toBeGreaterThanOrEqual(cooldown - 2)
     expect(starts[2] - starts[1]).toBeGreaterThanOrEqual(cooldown - 2)
@@ -266,16 +265,16 @@ describe('VoiceSampleStore', () => {
         return response()
       },
     })
-    expect(store.prepare({text: ''})).rejects.toThrow('nonempty')
-    expect(store.prepare({
+    await expect(store.prepare({text: ''})).rejects.toThrow('nonempty')
+    await expect(store.prepare({
       text: 'Hello',
       trimThreshold: 1,
     })).rejects.toThrow('dBFS')
-    expect(store.prepare({
+    await expect(store.prepare({
       text: 'Hello',
       emotion: 'mysteriously-purple',
     })).rejects.toThrow('Unsupported voice sample emotion')
     expect(calls).toBe(0)
-    expect(() => styleVoiceSampleText('Hello', 'cheerful')).not.toThrow()
+    expect(styleVoiceSampleText('Hello', 'cheerful')).toBe('<sing-song>Hello</sing-song>')
   })
 })

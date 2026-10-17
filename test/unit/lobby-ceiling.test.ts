@@ -138,8 +138,8 @@ describe('the Lobby’s coffered laylight ceiling', () => {
     })
     const glass = new LaylightGlassMaterial(lobbyCeiling.pane, [0, 0], {fieldFalloff: 0.2})
     try {
-      expect(plaster.emissiveNode).toBeTruthy()
-      expect(glass.colorNode).toBeTruthy()
+      expect(plaster.emissiveNode?.isNode).toBe(true)
+      expect(glass.colorNode?.isNode).toBe(true)
     } finally {
       plaster.dispose()
       glass.dispose()

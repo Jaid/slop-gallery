@@ -51,14 +51,4 @@ describe('Rolldown adapter', () => {
     expect(await render(source)).toBe(source)
     expect(await render(source, {estimateMinifiedSize: false})).toStartWith('var _=true;')
   })
-  test('uses native renderChunk ordering without Vite-specific properties', () => {
-    const plugin = rolldownPluginHoistPopularConstants()
-    expect(plugin.name).toBe('hoist-popular-constants')
-    expect(plugin).not.toHaveProperty('apply')
-    expect(plugin).not.toHaveProperty('enforce')
-    expect(typeof plugin.renderChunk).toBe('object')
-    if (typeof plugin.renderChunk === 'object') {
-      expect(plugin.renderChunk.order).toBeUndefined()
-    }
-  })
 })

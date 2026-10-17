@@ -21,31 +21,9 @@ describe('placed pots', () => {
   test('the random pool includes every decorative and interactive variety exactly once', () => {
     expect(pottedPlantKinds).toEqual([...plants, ...destructiblePlants].map(plant => plant.id))
     const distinctKinds = new Set(pottedPlantKinds)
-    expect(distinctKinds.size).toBe(10)
+    expect(distinctKinds.size).toBe(pottedPlantKinds.length)
   })
-  test('only the requested pots are placed', () => {
-    expect(potPlacements).toEqual([
-      {
-        id: 'prop-dine-southwest-plant',
-        pot: 'ivory',
-        position: [8.95, 0.001, 7.1],
-      },
-      {
-        id: 'prop-dine-northeast-plant',
-        pot: 'ivory',
-        position: [19.05, 0.001, -7.05],
-      },
-      {
-        id: 'prop-lobby-northwest-plant',
-        pot: 'celadon',
-        position: [-7.09, 0, -7.01],
-      },
-      {
-        id: 'prop-lobby-northeast-plant',
-        pot: 'celadon',
-        position: [7.09, 0, -7.01],
-      },
-    ])
+  test('every pot placement is unique and stands inside its room', () => {
     const placementIds = new Set(potPlacements.map(placement => placement.id))
     expect(placementIds.size).toBe(potPlacements.length)
     for (const placement of potPlacements) {

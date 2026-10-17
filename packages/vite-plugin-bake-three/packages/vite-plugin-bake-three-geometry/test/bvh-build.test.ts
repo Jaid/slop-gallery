@@ -2,7 +2,7 @@ import type {MeshBVH} from 'three-mesh-bvh'
 import type {BufferGeometry} from 'three/webgpu'
 
 import {expect, test} from 'bun:test'
-import {join} from 'node:path'
+import {join, resolve} from 'node:path'
 import {pathToFileURL} from 'node:url'
 
 import fs from 'fs-extra'
@@ -10,6 +10,7 @@ import {build} from 'vite'
 
 import bakeThreeGeometry from '../src/main.ts'
 
+const temporary = resolve(import.meta.dirname, '../../../../../temp/bake-three-geometry-tests')
 const source = `
   import {TorusKnotGeometry} from 'three/webgpu'
   import {MeshBVH as Tree} from 'three-mesh-bvh'
@@ -27,7 +28,8 @@ const source = `
   }
 `
 test('couples an existing local geometry/BVH pair without annotations or changes to its dynamic consumers', async () => {
-  const directory = await fs.mkdtemp(join(import.meta.dirname, 'bvh-build-'))
+  await fs.ensureDir(temporary)
+  const directory = await fs.mkdtemp(join(temporary, 'bvh-build-'))
   const originalFetch = globalThis.fetch
   try {
     const input = join(directory, 'entry.ts')
@@ -102,7 +104,8 @@ test.each([
   ['intervening mutation', source.replace('base.computeBoundingSphere()', 'base.translate(entries[0], 0, 0)'), true],
   ['progress callback', source.replace('indirect: true,', 'onProgress: () => {}, indirect: true,'), true],
 ])('declines unsafe or disabled BVH specialization: %s', async (_name, code, meshBvh) => {
-  const directory = await fs.mkdtemp(join(import.meta.dirname, 'bvh-decline-'))
+  await fs.ensureDir(temporary)
+  const directory = await fs.mkdtemp(join(temporary, 'bvh-decline-'))
   try {
     const input = join(directory, 'entry.ts')
     await fs.writeFile(input, code)

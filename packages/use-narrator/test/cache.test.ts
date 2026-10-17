@@ -61,7 +61,7 @@ test('dispose releases consumers even when the provider ignores its cancellation
   void pending.catch(() => {})
   await flush()
   cache.dispose()
-  await expect(pending).rejects.toBeDefined()
+  await expect(pending).rejects.toMatchObject({name: 'AbortError'})
   await expect(cache.synthesize({text: 'Hello'}, signal())).rejects.toThrow('disposed')
 })
 test('cache is bounded LRU and separates voice/rate choices', async () => {

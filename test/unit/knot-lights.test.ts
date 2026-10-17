@@ -25,8 +25,6 @@ test('every candidate row gets a pane over every slot in the longest row', () =>
 test('impact fractures isolate exactly one dead diffuser corner behind a line through the impact', () => {
   for (const [index, point] of [[0.34, -0.42], [-0.76, 0.18], [0.02, 0.03], [0.88, 0.79]].entries()) {
     const fracture = knotLightFracture(point as [number, number], [4 - index, 1 + index], 17 + index)
-    const signedAtImpact = (fracture.point[0] - fracture.point[0]) * fracture.normal[0] + (fracture.point[1] - fracture.point[1]) * fracture.normal[1]
-    expect(Math.abs(signedAtImpact)).toBeLessThan(1e-9)
     expect(Math.hypot(...fracture.normal)).toBeCloseTo(1, 9)
     expect(fracture.liveFraction).toBeGreaterThanOrEqual(0.5)
     expect(fracture.liveFraction).toBeLessThan(1)

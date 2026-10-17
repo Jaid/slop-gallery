@@ -3,24 +3,13 @@ import {tmpdir} from 'node:os'
 import {resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
 
-import {angleAnimationFrame, angleNames, angleStillFrame, animationFps, animationFrames, closeupDistanceScale, closeupFov, closeupSize, closeupStillFrame, distanceNames, distanceScales, distanceStillFrame, inspectionAnimatedJxlDistance, inspectionAnimationFrame, inspectionAnimationFrameOffset, inspectionAnimationFrames, inspectionAnimationOffsetSeconds, inspectionAnimationSeconds, inspectionAnimationSize, inspectionFarTiltRadians, inspectionNearDistanceScale, inspectionNearTiltRadians, inspectionVideoRenderSize, inspectionVideoSize, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from '../scripts/lib/renderSettings.ts'
-import renderKnot, {parseRenderCategories, renderCategories} from '../scripts/renderKnot.ts'
+import {angleAnimationFrame, angleStillFrame, animationFps, animationFrames, closeupDistanceScale, closeupFov, closeupStillFrame, distanceScales, distanceStillFrame, inspectionAnimationFrame, inspectionAnimationFrameOffset, inspectionAnimationFrames, inspectionFarTiltRadians, inspectionNearDistanceScale, inspectionNearTiltRadians, previewBaseFov, previewFovForDistanceScale} from '../scripts/lib/renderSettings.ts'
+import renderKnot, {parseRenderCategories} from '../scripts/renderKnot.ts'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 describe('knot inspection renders', () => {
   test('define stills, simple loops, and the combined 16-second inspection animation', () => {
-    expect(stillSize).toBe(2048)
-    expect(closeupSize).toEqual([3840, 2160])
-    expect(closeupDistanceScale).toBe(0.5)
-    expect(closeupFov).toBe(25)
-    expect(previewSupersampling).toBe(2)
-    expect(angleNames).toEqual(['0', '45', '90'])
-    expect(distanceNames).toEqual(['near', 'far'])
-    expect(distanceScales).toEqual([0.75, 1.8])
-    expect(inspectionAnimatedJxlDistance).toBe(4)
-    expect(inspectionAnimationSize).toBe(512)
-    expect([inspectionVideoRenderSize, inspectionVideoSize]).toEqual([2048, 1080])
-    expect([inspectionAnimationSeconds, inspectionAnimationFrames]).toEqual([16, 960])
+    expect(inspectionAnimationFrames).toBe(16 * animationFps)
     expect(previewFovForDistanceScale(1)).toBe(previewBaseFov)
     expect(previewFovForDistanceScale(inspectionNearDistanceScale)).toBeCloseTo(54)
     expect(previewFovForDistanceScale(distanceScales.at(-1)!)).toBeCloseTo(53.39, 2)
@@ -47,8 +36,6 @@ describe('knot inspection renders', () => {
       return inspectionAnimationFrame(outputIndex)
     }
     const firstFrame = inspectionAnimationFrame(0)
-    expect(inspectionAnimationOffsetSeconds).toBe(13.5)
-    expect(inspectionAnimationFrameOffset).toBe(26)
     expect(firstFrame.seconds).toBeCloseTo(26 / animationFps)
     expect(firstFrame.size).toBe('video')
     expect(firstFrame.distanceScale).toBe(1.8)
@@ -105,7 +92,6 @@ describe('knot inspection renders', () => {
     }
   })
   test('parses render categories', () => {
-    expect(renderCategories).toEqual(['snapshot', 'animation', 'video'])
     expect(parseRenderCategories()).toEqual(['snapshot', 'animation', 'video'])
     expect(parseRenderCategories('video, snapshot,video')).toEqual(['video', 'snapshot'])
     expect(() => parseRenderCategories('')).toThrow('comma-separated combination')

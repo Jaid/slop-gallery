@@ -1,29 +1,18 @@
 import {describe, expect, test} from 'bun:test'
-import {tmpdir} from 'node:os'
-import {join} from 'node:path'
+import {join, resolve} from 'node:path'
 
 import fs from 'fs-extra'
 
-import {av1Crf, av1Preset, av1SvtParams, encodeAnimatedJxl, encodeWebm} from '../scripts/lib/encodeAnimation.ts'
-import {jxlBrotliEffort, jxlEffort, lossyJxlOptions} from '../scripts/lib/encodeJxl.ts'
-import {animationFilename, animationFps, animationFrames} from '../scripts/lib/renderSettings.ts'
+import {encodeAnimatedJxl, encodeWebm} from '../scripts/lib/encodeAnimation.ts'
 
+const temporaryDirectory = async (prefix: string) => {
+  const temporary = resolve(import.meta.dir, '../../../temp/plugin-tests')
+  await fs.ensureDir(temporary)
+  return fs.mkdtemp(join(temporary, prefix))
+}
 describe('animation encoding', () => {
-  test('declared encoding settings agree with the arguments passed to native encoders', () => {
-    expect(lossyJxlOptions()).toEqual(['--effort', String(jxlEffort), '--brotli_effort', String(jxlBrotliEffort), '--distance', '1', '--keep_invisible', '0'])
-    expect(lossyJxlOptions(4)).toEqual(['--effort', String(jxlEffort), '--brotli_effort', String(jxlBrotliEffort), '--distance', '4', '--keep_invisible', '0'])
-    expect(av1Preset).toBeGreaterThanOrEqual(0)
-    expect(av1Preset).toBeLessThanOrEqual(13)
-    expect(av1Crf).toBe(30)
-    expect(av1SvtParams).toBe('lp=4:enable-variance-boost=1:film-grain=0:tune=0:input-depth=8')
-  })
-  test('uses a two-second 60-fps source sequence', () => {
-    expect([animationFrames, animationFps, animationFrames / animationFps]).toEqual([120, 60, 2])
-    expect(animationFilename(0)).toBe('000.png')
-    expect(animationFilename(119)).toBe('119.png')
-  })
   test.skipIf(!Bun.which('ffmpeg') || !Bun.which('cjxl') || !Bun.which('jxlinfo'))('native animated JXL encoding retains 120 frames, alpha and exactly 2000 milliseconds', async () => {
-    const dir = await fs.mkdtemp(join(tmpdir(), 'knot-animation-jxl-test-'))
+    const dir = await temporaryDirectory('knot-animation-jxl-')
     try {
       const pattern = join(dir, '%03d.png')
       const filter = "format=rgba,geq=r='mod(N*2,255)':g='X*10':b=120:a='if(lt(X,8),0,255)'"
@@ -43,7 +32,7 @@ describe('animation encoding', () => {
     }
   }, 30_000)
   test.skipIf(!Bun.which('ffmpeg') || !Bun.which('ffprobe'))('native encoding produces 120-frame, two-second AV1/WebM', async () => {
-    const dir = await fs.mkdtemp(join(tmpdir(), 'knot-animation-test-'))
+    const dir = await temporaryDirectory('knot-animation-webm-')
     try {
       const pattern = join(dir, '%03d.png')
       const filter = "format=rgba,geq=r='mod(N*2,255)':g='X*10':b=120:a='if(lt(X,8),0,255)'"

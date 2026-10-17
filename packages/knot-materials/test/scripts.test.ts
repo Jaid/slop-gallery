@@ -1,5 +1,4 @@
 import {describe, expect, test} from 'bun:test'
-import {tmpdir} from 'node:os'
 import {join, resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
 
@@ -78,7 +77,9 @@ describe('inference prompts', () => {
     await expect(makePrompt({candidate: 'missing'})).rejects.toThrow('Unknown Knot candidate')
   })
   test('the CLI writes Markdown from another working directory without making inference requests', async () => {
-    const directory = await fs.mkdtemp(join(tmpdir(), 'knot-prompt-test-'))
+    const temporary = resolve(root, '../../temp/plugin-tests')
+    await fs.ensureDir(temporary)
+    const directory = await fs.mkdtemp(join(temporary, 'knot-prompt-'))
     try {
       const output = join(directory, 'nested', 'prompt.md')
       const process = Bun.spawn(['bun', resolve(root, 'scripts/makePrompt.ts'), '--candidate', 'hy', '--count', '2', '--example-ids', 'ferrothorn,washi_lantern', '--output', output], {

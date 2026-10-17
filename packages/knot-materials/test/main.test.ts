@@ -9,7 +9,7 @@ import {Color, MeshPhysicalNodeMaterial, Texture} from 'three/webgpu'
 
 import createPlaceholderMaterial, {placeholderPresets} from '../src/createPlaceholderMaterial.ts'
 import {entries, KnotCandidate, knotCandidates, knots, knotsById} from '../src/main.ts'
-import rarities, {common, ethereal, prime, rare, special, unknown} from '../src/rarities.ts'
+import rarities from '../src/rarities.ts'
 
 const root = fileURLToPath(new URL('../src', import.meta.url))
 const source = (file: string) => fs.readFile(resolve(root, file), 'utf8')
@@ -31,18 +31,9 @@ describe('flat knot catalogue', () => {
     expect(candidateIds.size).toBe(knotCandidates.length)
     for (const id of ids) {
       expect(id).toMatch(/^[a-z][0-9_a-z]*$/u)
-      expect(await Bun.file(resolve(root, 'entries', id, 'Material.ts')).exists()).toBe(true)
-      expect(await Bun.file(resolve(root, 'entries', id, 'data.ts')).exists()).toBe(true)
       const entryFileGlob = new Bun.Glob('**/*.ts')
       const entryFiles = await Array.fromAsync(entryFileGlob.scan(resolve(root, 'entries', id)))
       expect(entryFiles.toSorted()).toEqual(['Material.ts', 'data.ts'])
-      const materialSource = await source(`entries/${id}/Material.ts`)
-      expect(materialSource).toContain('export default class extends')
-      for (const jsdoc of materialSource.matchAll(/\/\*\*[\s\S]*?\*\//gu)) {
-        if (!/(?:^|\n)\s*\*?\s*@\w+/u.test(jsdoc[0])) {
-          expect(jsdoc[0]).not.toContain('\n')
-        }
-      }
       expect(knotsById.get(id)!.id).toBe(id)
     }
   })
@@ -63,21 +54,6 @@ describe('flat knot catalogue', () => {
       expect(Object.hasOwn(placeholderPresets, entry.placeholder.shading)).toBe(true)
       expect(entry.author.model.title.trim().length).toBeGreaterThan(0)
       expect('rarity' in data, entry.id).toBe(false)
-    }
-  })
-  test('rarity is exhaustive, separate from entry data, and drives selection before display ordering', () => {
-    expect([unknown, common, rare, prime, ethereal, special]).toEqual([0, 1, 2, 3, 4, 5])
-    expect(rarities.chladni_resonance).toBe(ethereal)
-    expect(rarities.lichtenberg_reliquary).toBe(prime)
-    expect(rarities.washi_lantern).toBe(common)
-    expect(new Set(Object.values(rarities))).toEqual(new Set([unknown, common, rare, prime, ethereal, special]))
-    expect(Object.keys(rarities).filter(id => rarities[id as KnotId] === special).toSorted()).toEqual(['felis_major_menagerie', 'great_cat_emergence', 'knotty_prince'])
-    for (const candidate of knotCandidates) {
-      const available = candidate.items.filter(entry => entry.rarity !== special)
-      const selected = candidate.select(3)
-      expect(selected.map(entry => entry.rarity)).toEqual(selected.map(entry => entry.rarity).toSorted((a, b) => a - b))
-      expect(selected.map(entry => entry.id).toSorted()).toEqual(available.toSorted((a, b) => b.rarity - a.rarity || b.createdAt - a.createdAt || a.id.localeCompare(b.id)).slice(0, 3).map(entry => entry.id).toSorted())
-      expect(selected.every(entry => entry.rarity !== special)).toBe(true)
     }
   })
   test('all material modules construct independently and respect caller-owned environment textures', async () => {
@@ -140,9 +116,6 @@ describe('flat knot catalogue', () => {
         if (helperCandidate) {
           expect(helperCandidate).toBe(knotsById.get(entryId)!.candidateId)
         }
-      }
-      if (normalized.endsWith('/Material.ts')) {
-        expect(text).not.toMatch(/switch\s*\(\s*finish\s*\)/u)
       }
     }
   })

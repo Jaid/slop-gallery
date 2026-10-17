@@ -1,4 +1,4 @@
-import {describe, expect, test} from 'bun:test'
+import {afterAll, describe, expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
 import EgoMotor from 'ego-player/motor'
@@ -14,6 +14,7 @@ import {addOculusRailings} from './helpers/oculusRailings.ts'
 await RAPIER.init()
 const geometry = new OculusGroundGeometry
 const collision = colliderGeometry(geometry)
+afterAll(() => geometry.dispose())
 function createWorld() {
   const world = new RAPIER.World({
     x: 0,

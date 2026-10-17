@@ -7,7 +7,7 @@ import {Euler, Matrix4, Quaternion, Vector3} from 'three/webgpu'
 
 import destructiblePlants from '../../src/lib/gallery/destructiblePlants/catalog.ts'
 import DestructiblePlantGeometry from '../../src/lib/gallery/destructiblePlants/DestructiblePlantGeometry.ts'
-import {plantCombinations, potDefinition} from '../../src/lib/gallery/plantDecorations/catalog.ts'
+import {potDefinition} from '../../src/lib/gallery/plantDecorations/catalog.ts'
 import PotGeometry from '../../src/lib/gallery/plantDecorations/PotGeometry.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 import GrabbableBody from '../../src/lib/physics/GrabbableBody.ts'
@@ -136,7 +136,6 @@ describe('new destructible botanical models', () => {
     expect(geometry.leaves.filter(leaf => leaf.title.includes('flower'))).toHaveLength(kind === 'peaceLily' ? 3 : 0)
   })
   test('interactive models preserve catalog numbers and fit below gallery ceilings', () => {
-    expect(plantCombinations).toHaveLength(32)
     expect(destructiblePlants.map(specimen => specimen.number)).toEqual([33, 34])
     for (const specimen of destructiblePlants) {
       const geometry = new DestructiblePlantGeometry(specimen.id)

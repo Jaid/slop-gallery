@@ -1,4 +1,4 @@
-import {afterEach, beforeEach, expect, spyOn, test} from 'bun:test'
+import {afterEach, beforeEach, expect, jest, spyOn, test} from 'bun:test'
 
 import {IDBFactory} from 'fake-indexeddb'
 
@@ -39,6 +39,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup?.()
   cleanup = undefined
+  jest.useRealTimers()
   loadSpy?.mockRestore()
   saveSpy?.mockRestore()
   Object.assign(globalThis, previous)
@@ -97,20 +98,23 @@ test('one byte beyond the aggregate limit is rejected by every admission and ser
 test('a failed load protects the stored record until explicit recovery', async () => {
   loadSpy = spyOn(repository, 'load').mockRejectedValue(new Error('Unreadable saved record'))
   saveSpy = spyOn(repository, 'save').mockResolvedValue()
+  jest.useFakeTimers()
   cleanup = await initializePersistence()
   useGallery.setState({
     sound: true,
   })
-  await Bun.sleep(450)
+  jest.advanceTimersByTime(450)
   expect(saveSpy).not.toHaveBeenCalled()
   expect(useGallery.getState()).toMatchObject({
     saveStatus: 'error',
     storageRecoveryRequired: true,
   })
   useGallery.setState({storageRecoveryRequired: false})
-  await Bun.sleep(450)
+  jest.advanceTimersByTime(450)
   expect(saveSpy).toHaveBeenCalledTimes(1)
   expect(saveSpy.mock.calls[0][0].settings.sound).toBe(true)
+  await saveSpy.mock.results[0].value
+  await Promise.resolve()
   expect(useGallery.getState().saveStatus).toBe('saved')
 })
 test('save strips runtime ownership before structured cloning', async () => {
@@ -204,6 +208,7 @@ test('movement checkpoints flush synchronously on refresh without rewriting artw
   })
   saveSpy = spyOn(repository, 'save').mockResolvedValue()
   try {
+    jest.useFakeTimers()
     cleanup = await initializePersistence()
     const pose = {
       position: [-33, -4.98, -20] as [number, number, number],
@@ -221,7 +226,7 @@ test('movement checkpoints flush synchronously on refresh without rewriting artw
       ...pose,
       yaw: -0.6,
     })
-    await Bun.sleep(1100)
+    jest.advanceTimersByTime(1100)
     refreshed.resume('2026-01-01T00:00:00Z')
     expect(refreshed.snapshot().yaw).toBeCloseTo(-0.6)
     expect(saveSpy).not.toHaveBeenCalled()
