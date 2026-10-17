@@ -4,18 +4,18 @@ import {knotBays} from 'knot-materials/exhibition.ts'
 import {useMemo} from 'react'
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 import {color, mix, texture} from 'three/tsl'
-import {MeshStandardNodeMaterial, Vector2} from 'three/webgpu'
+import {MeshPhysicalNodeMaterial, MeshStandardNodeMaterial} from 'three/webgpu'
 import useGraphicsMode from 'use-graphics-mode'
 import constructors from 'virtual:knot-exhibition-materials'
 
 import KnotCandidateSign from '#component/levels/knottingham/KnotCandidateSign'
+import KnotFloor from '#component/levels/knottingham/KnotFloor'
 import KnotLights from '#component/levels/knottingham/KnotLights'
 import KnotPreviewSign from '#component/levels/knottingham/KnotPreviewSigns'
-import CheckerMarbleFloor from '#src/components/Scene/CheckerMarbleFloor.tsx'
 import {surfaceTexture} from '#src/components/Scene/materials.ts'
 import WallSurface from '#src/components/Scene/WallSurface.tsx'
 import {knotGalleryBounds, knotGalleryCenter, knotGallerySize, knotGalleryWalls} from '#src/lib/gallery/knotGallery.ts'
-import {createKnotWallCarpetTextures, disposeKnotWallCarpetTextures} from '#src/lib/materials/KnotWallCarpetTextures.ts'
+import VelvetWallMaterial from '#src/lib/materials/VelvetWallMaterial.ts'
 
 import RuntimeKnotIconRenderer from '../KnotPreviewSigns/RuntimeKnotIconRenderer.ts'
 
@@ -24,47 +24,20 @@ export default function KnotLobby() {
   const heavy = useGraphicsMode()
   const runtimeIcons = useDisposable(useMemo(() => new RuntimeKnotIconRenderer(constructors, heavy), [heavy]))
   const plaster = useMemo(() => surfaceTexture('plaster'), [])
-  const wood = useMemo(() => surfaceTexture('wood'), [])
   const shell = useMemo(() => ({
     floor: new RoundedBoxGeometry(knotGallerySize[0], 0.24, knotGallerySize[2], 2, 0.035),
     ceiling: new RoundedBoxGeometry(knotGallerySize[0], 0.18, knotGallerySize[2], 2, 0.045),
   }), [])
-  const carpetTextureResource = useDisposable(useMemo(() => {
-    const textures = heavy ? createKnotWallCarpetTextures() : null
-    return {
-      textures,
-      dispose() {
-        if (textures) {
-          disposeKnotWallCarpetTextures(textures)
-        }
-      },
-    }
-  }, [heavy]))
-  const wallMaterial = useMemo(() => {
-    if (!heavy) {
-      return new MeshStandardNodeMaterial({
-        color: '#7a1c27',
-        envMapIntensity: 0.04,
-        metalness: 0,
-        roughness: 0.98,
-      })
-    }
-    const textures = carpetTextureResource.textures!
-    return new MeshStandardNodeMaterial({
-      color: '#ffffff',
-      envMapIntensity: 0.08,
-      map: textures.color,
-      metalness: 0,
-      normalMap: textures.normal,
-      normalScale: new Vector2(0.42, 0.42),
-      roughness: 0.97,
-    })
-  }, [carpetTextureResource, heavy])
-  const trimMaterial = useMemo(() => new MeshStandardNodeMaterial({
-    color: '#6d4a35',
-    map: wood,
-    roughness: 0.68,
-  }), [wood])
+  const wallMaterial = useMemo(() => new VelvetWallMaterial, [])
+  // Baseboards and cornice in black semi-gloss paint under a clear lacquer, which draws a crisp line of light along every edge.
+  const trimMaterial = useMemo(() => new MeshPhysicalNodeMaterial({
+    clearcoat: 1,
+    clearcoatRoughness: 0.12,
+    color: '#141315',
+    envMapIntensity: 0.6,
+    metalness: 0,
+    roughness: 0.42,
+  }), [])
   const ceilingMaterial = useDisposable(useMemo(() => {
     const material = new MeshStandardNodeMaterial({
       envMapIntensity: 0.7,
@@ -77,7 +50,6 @@ export default function KnotLobby() {
     return material
   }, [plaster]))
   useDisposable(plaster)
-  useDisposable(wood)
   useDisposable(shell.floor)
   useDisposable(shell.ceiling)
   useDisposable(wallMaterial)
@@ -96,7 +68,7 @@ export default function KnotLobby() {
       <mesh castShadow geometry={shell.floor} name='knottingham-floor-slab' position={[knotGalleryCenter[0], -0.12, knotGalleryCenter[2]]} receiveShadow>
         <meshStandardNodeMaterial color='#23201d' roughness={0.8} />
       </mesh>
-      <group position={knotGalleryCenter}><CheckerMarbleFloor depth={knotGallerySize[2]} detailed width={knotGallerySize[0]} /></group>
+      <KnotFloor />
       <mesh castShadow geometry={shell.ceiling} material={ceilingMaterial} name='knottingham-ceiling' position={[knotGalleryCenter[0], knotGalleryBounds.height, knotGalleryCenter[2]]} receiveShadow />
       <KnotLights />
       {knotBays.map(bay => <group key={bay.candidate.id} position={bay.center}>
