@@ -19,7 +19,7 @@ Starts a private Vite dev server (or serves --target) and a private headless bro
 The engine clock is virtual: every frame advances the scene by exactly 1/fps seconds, however long it takes to render. Artworks that come into view are decoded before their frame is captured, so nothing pops in.
 
 Options:
-  --recipe <file>         JSON camera recipe, or - to read it from stdin. Default: scripts/recipes/spawn.json, a one-second metronome sway at the gallery spawn
+  --recipe <file>         JSON camera recipe, or - to read it from stdin. Default: scripts/recipes/spawn.json, a two-second metronome sway at the gallery spawn
 ${galleryHelp}
   --output-file <file>    the extension picks the format. Default: out/film/<level>-<timestamp>.jxl
                           .jxl  animated JPEG XL
