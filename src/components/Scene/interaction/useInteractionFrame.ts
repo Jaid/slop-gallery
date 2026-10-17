@@ -5,8 +5,9 @@ import {useFrame} from '@react-three/fiber'
 import {Matrix4, PerspectiveCamera, Quaternion, Vector3} from 'three/webgpu'
 
 import {levelWallDistance} from '#level/navigation.ts'
+import placementSpace from '#level/placement.ts'
 import {readIntroNarration} from '#src/lib/audio/intro.ts'
-import {cameraPose, dragPose, findPlacement, narrate, roomAt, setCameraFocused, useGallery} from '#src/lib/gallery.ts'
+import {cameraPose, dragPose, narrate, roomAt, setCameraFocused, useGallery} from '#src/lib/gallery.ts'
 import {interactiveObjects} from '#src/lib/gallery/interactiveObjects.ts'
 import {isPortraitLabelHit} from '#src/lib/gallery/portraitLabel.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
@@ -112,7 +113,7 @@ export default function useInteractionFrame(camera: RootState['camera'], rendere
       useGallery.setState({activeLabel: null})
     }
     updateHint()
-    if (!isGallery || !ghost.current) {
+    if (!ghost.current) {
       return
     }
     const portrait = s.portraits.find(candidate => candidate.id === s.held)
@@ -121,7 +122,7 @@ export default function useInteractionFrame(camera: RootState['camera'], rendere
       placement.current = null
       return
     }
-    const candidate = findPlacement(ray.current.ray.origin.toArray(), ray.current.ray.direction.toArray(), portrait?.width ?? 2.4, portrait?.height ?? 2.4, s.portraits, portrait?.id)
+    const candidate = placementSpace.findPlacement(ray.current.ray.origin.toArray(), ray.current.ray.direction.toArray(), portrait?.width ?? 2.4, portrait?.height ?? 2.4, s.portraits, portrait?.id)
     placement.current = candidate
     if (candidate?.valid !== s.placement?.valid || candidate?.inReach !== s.placement?.inReach || candidate?.reason !== s.placement?.reason || candidate?.wallId !== s.placement?.wallId || !candidate && s.placement) {
       useGallery.setState({placement: candidate})

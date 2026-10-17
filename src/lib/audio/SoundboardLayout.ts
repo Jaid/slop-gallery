@@ -14,8 +14,28 @@ export const soundboardButton = {
   rowPitch: 0.56,
 } as const
 
+/** the announcer wall’s two rows of wider sample buttons */
+export const announcerButton = {
+  width: 2.55,
+  height: 0.48,
+  columnPitch: 2.75,
+  rowPitch: 0.92,
+} as const
+/** height of the caption above each panel of buttons */
+export const soundboardHeadingHeight = 0.58
+
+/** a rectangle of wall covered by a caption and its buttons, in wall coordinates: `u` is the center along the wall and `bottom` and `top` are heights above the floor */
+export type SoundboardPanel = {
+  bottom: number
+  top: number
+  u: number
+  width: number
+}
+
 const sidePadding = 0.7
 const headingClearance = 1.3
+/** width of the announcer wall’s caption */
+export const announcerHeadingWidth = 6.8
 const bottomClearance = 0.65
 
 /** Derives a compact two-wall room from the current effect inventory. */
@@ -50,6 +70,24 @@ export default class SoundboardLayout {
     }
   }
 
+  /** position of an announcer button: the first row holds the samples, the second row the priority demos, both aligned to the same columns */
+  announcerButtonPosition(columns: number, index: number, row: 0 | 1): [number, number] {
+    return [
+      (index - (columns - 1) / 2) * announcerButton.columnPitch,
+      this.bounds.height - 1.55 - row * announcerButton.rowPitch,
+    ]
+  }
+
+  /** the announcer wall’s caption and both rows of its buttons, `columns` wide */
+  announcerPanel(columns: number): SoundboardPanel {
+    return {
+      u: 0,
+      width: Math.max(announcerHeadingWidth, (columns - 1) * announcerButton.columnPitch + announcerButton.width),
+      bottom: this.announcerButtonPosition(columns, 0, 1)[1] - announcerButton.height / 2,
+      top: this.headingY() + soundboardHeadingHeight / 2,
+    }
+  }
+
   buttonPosition(section: SoundboardSection, index: number): [number, number] {
     const layout = this.sections[section]
     if (!Number.isSafeInteger(index) || index < 0 || index >= layout.count) {
@@ -65,8 +103,24 @@ export default class SoundboardLayout {
     ]
   }
 
+  headingWidth() {
+    return Math.min(this.size[0] - 1.2, 5.4)
+  }
+
   headingY() {
     return this.bounds.height - 0.62
+  }
+
+  /** a section’s caption and all of its buttons */
+  panel(section: SoundboardSection): SoundboardPanel {
+    const layout = this.sections[section]
+    const top = this.headingY() + soundboardHeadingHeight / 2
+    return {
+      u: 0,
+      width: Math.max(this.headingWidth(), layout.width),
+      bottom: layout.rows ? this.bounds.height - headingClearance - soundboardButton.height - (layout.rows - 1) * soundboardButton.rowPitch : this.headingY() - soundboardHeadingHeight / 2,
+      top,
+    }
   }
 
   private section(count: number): SectionLayout {

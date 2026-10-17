@@ -8,9 +8,10 @@ import Branch from 'branch-component'
 import {useEffect, useRef} from 'react'
 import {Object3D, Quaternion, Vector3} from 'three/webgpu'
 
-import DynamicImageMaterial from '#component/levels/gallery/DynamicImageMaterial'
-import PortraitLabel from '#component/levels/gallery/PortraitLabel'
-import {chime, floorHeight, requestMerge, useGallery} from '#src/lib/gallery.ts'
+import DynamicImageMaterial from '#component/DynamicImageMaterial'
+import PortraitLabel from '#component/PortraitLabel'
+import placement from '#level/placement.ts'
+import {chime, requestMerge, useGallery} from '#src/lib/gallery.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
 
 export default function Portrait({portrait: p}: {portrait: PortraitData}) {
@@ -79,11 +80,12 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
       magic.current.instanceMatrix.needsUpdate = true
     }
     const position = body.current?.translation()
-    if (body.current && position && !p.hung && position.y < floorHeight([position.x, position.y, position.z]) - 4) {
+    if (body.current && position && !p.hung && position.y < placement.floorHeight([position.x, position.y, position.z]) - 4) {
+      const [x, y, z] = placement.recoveryPosition
       body.current.setTranslation({
-        x: 0,
-        y: 1,
-        z: 4,
+        x,
+        y,
+        z,
       }, true)
       body.current.setLinvel({
         x: 0,

@@ -15,7 +15,8 @@ describe('permanent Knot Gallery', () => {
     for (const wall of knotGalleryWalls) {
       expect(wall.holes).toBeUndefined()
       expect(wall.room).toBe('lobby')
-      expect(wall.hangable).toBe(false)
+      expect(wall.hangable).toBeUndefined()
+      expect(wall.reservations).toBeUndefined()
       expect(walls.some(original => original.id === wall.id)).toBe(false)
     }
     expect(rooms.find(room => room.id === 'lobby')!.size).toEqual([16, 40])

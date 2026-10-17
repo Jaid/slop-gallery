@@ -2,7 +2,7 @@ import {describe, expect, test} from 'bun:test'
 
 import {DataTexture, Vector3} from 'three/webgpu'
 
-import PreviewVisual, {previewBorderGeometry, previewOpacity} from '../../src/components/levels/gallery/PlacementPreview/PreviewVisual.ts'
+import PreviewVisual, {previewBorderGeometry, previewOpacity} from '../../src/components/PlacementPreview/PreviewVisual.ts'
 import portraitLabel, {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
 
 describe('placement preview', () => {

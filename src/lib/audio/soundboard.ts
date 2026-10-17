@@ -1,5 +1,8 @@
-import type {Vec3, Wall} from '#src/lib/gallery.ts'
+import type {Vec3} from '#src/lib/gallery/types.ts'
+import type {Wall, WallReservation} from '#src/lib/placement/wallGeometry.ts'
+import type {SoundboardPanel} from './SoundboardLayout.ts'
 
+import {announcerPriorityDemoDefinitions, announcerSampleDefinitions} from './announcerCatalog.ts'
 import SoundboardLayout from './SoundboardLayout.ts'
 import {archivedSoundEffects, enabledSoundEffects} from './soundEffects.ts'
 
@@ -7,6 +10,8 @@ export const soundboardLayout = new SoundboardLayout({
   enabled: enabledSoundEffects.length,
   archived: archivedSoundEffects.length,
 })
+/** columns of the announcer wall: samples in the first row, priority demos in the second */
+export const announcerColumns = Math.max(announcerSampleDefinitions.length, announcerPriorityDemoDefinitions.length)
 export const soundboardBounds = soundboardLayout.bounds
 export const soundboardSize = soundboardLayout.size
 const soundboardGroundSurfaces = ['generic', 'hollow', 'glass', 'fabric'] as const
@@ -22,24 +27,40 @@ export function soundboardGroundSurface([x]: Vec3) {
   return soundboardGroundSurfaces[index]
 }
 
+export const soundboardButtonsIssue = 'Keep the sound buttons clear.'
+/** Artworks may hang anywhere on the walls except over the button panels, which stay playable. */
+const buttons = ({u, width, bottom, top}: SoundboardPanel): Array<WallReservation> => [
+  {
+    u,
+    width,
+    bottom,
+    height: top,
+    profile: 'rectangle',
+    reason: soundboardButtonsIssue,
+  },
+]
+
 export const soundboardWalls: Array<Wall> = [
   {
     id: 'soundboard-enabled',
     center: [soundboardBounds.minX, 0, 0],
     rotation: Math.PI / 2,
     width: soundboardSize[2],
+    reservations: buttons(soundboardLayout.panel('enabled')),
   },
   {
     id: 'soundboard-archived',
     center: [soundboardBounds.maxX, 0, 0],
     rotation: -Math.PI / 2,
     width: soundboardSize[2],
+    reservations: buttons(soundboardLayout.panel('archived')),
   },
   {
     id: 'soundboard-north',
     center: [0, 0, soundboardBounds.northZ],
     rotation: 0,
     width: soundboardSize[0],
+    reservations: buttons(soundboardLayout.announcerPanel(announcerColumns)),
   },
   {
     id: 'soundboard-south',
@@ -52,7 +73,6 @@ export const soundboardWalls: Array<Wall> = [
   center: wall.center as Vec3,
   room: 'lobby',
   height: soundboardBounds.height,
-  hangable: false,
 }))
 
 export function insideSoundboard([x, y, z]: Vec3) {

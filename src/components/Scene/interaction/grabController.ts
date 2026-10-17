@@ -5,7 +5,8 @@ import type {RootState} from '@react-three/fiber'
 import {Vector3} from 'three/webgpu'
 
 import {levelWallDistance} from '#level/navigation.ts'
-import {cameraPose, chime, findPlacement, notify, useGallery} from '#src/lib/gallery.ts'
+import placementSpace from '#level/placement.ts'
+import {cameraPose, chime, notify, useGallery} from '#src/lib/gallery.ts'
 
 import {propObjects} from '../GrabbableProp.tsx'
 
@@ -77,7 +78,7 @@ export default function createGrabController(camera: RootState['camera'], placem
       }))
       chime(130)
     } else {
-      const candidate = findPlacement(camera.position.toArray(), camera.getWorldDirection(new Vector3).toArray(), portrait.width, portrait.height, state.portraits, portrait.id)
+      const candidate = placementSpace.findPlacement(camera.position.toArray(), camera.getWorldDirection(new Vector3).toArray(), portrait.width, portrait.height, state.portraits, portrait.id)
       if (candidate?.valid) {
         state.commit(state.portraits.map(item => {
           return item.id === id ? {

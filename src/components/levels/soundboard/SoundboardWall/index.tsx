@@ -7,7 +7,7 @@ import {useEffect, useRef} from 'react'
 import CanvasText from '#component/CanvasText'
 import Box from '#src/components/Scene/primitives.tsx'
 import {soundboardLayout} from '#src/lib/audio/soundboard.ts'
-import {soundboardButton} from '#src/lib/audio/SoundboardLayout.ts'
+import {soundboardButton, soundboardHeadingHeight} from '#src/lib/audio/SoundboardLayout.ts'
 import {playSoundEffect} from '#src/lib/audio/soundEffects.ts'
 import SoundEngine from '#src/lib/audio/SoundEngine.ts'
 import {notify} from '#src/lib/gallery/actions.ts'
@@ -81,7 +81,7 @@ export default function SoundboardWall({section, effects, position, rotationY}: 
 }) {
   const style = palette[section]
   return <group name={`soundboard-${section}-wall`} position={position} rotation={[0, rotationY, 0]}>
-    <CanvasText color={style.heading} fontSize={0.62} fontWeight={750} height={0.58} position={[0, soundboardLayout.headingY(), 0.16]} text={`${section.toUpperCase()} · ${effects.length}`} width={Math.min(soundboardLayout.size[0] - 1.2, 5.4)} />
+    <CanvasText color={style.heading} fontSize={0.62} fontWeight={750} height={soundboardHeadingHeight} position={[0, soundboardLayout.headingY(), 0.16]} text={`${section.toUpperCase()} · ${effects.length}`} width={soundboardLayout.headingWidth()} />
     {effects.map((effect, index) => <SoundButton key={effect.id} effect={effect} index={index} section={section} />)}
   </group>
 }

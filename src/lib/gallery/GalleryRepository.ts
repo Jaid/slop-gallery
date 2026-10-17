@@ -1,15 +1,17 @@
 import type {GalleryDocument, Portrait} from './types.ts'
 
+import placement from '#level/placement.ts'
+
 import {galleryStorageKey} from '../level.ts'
 import pauseMenu from '../pauseMenu.ts'
+import {obstructionIssue, placementIssues, wallCoordinates, wallPosition} from '../placement/wallGeometry.ts'
 import {notify} from './actions.ts'
 import initialPortraits from './collection.ts'
-import {exhibitionRevision, upgradeDocument} from './exhibitionUpdates.ts'
+import {exhibitionRevision, settleDocument, upgradeDocument} from './exhibitionUpdates.ts'
 import {imageSize} from './ImageImporter.ts'
 import {imageExtensions, maximumBackupBytes, validateCollectionImages, validateImage} from './imagePolicy.ts'
 import {playerSession, validatePlayerPose} from './PlayerSession.ts'
 import {createDocument, maximumPortraits, restoreDocument, useGallery} from './store.ts'
-import walls, {insideGallery, placementIssue, wallCoordinates, wallPosition} from './walls.ts'
 
 const images = new Set(initialPortraits.map(p => p.source).filter((p): p is string => typeof p === 'string'))
 const narrations = new Set(initialPortraits.map(p => p.narration).filter((p): p is string => typeof p === 'string'))
@@ -56,21 +58,22 @@ export function validateDocument(value: unknown): GalleryDocument {
     if (p.orientation !== undefined && (!vector(p.orientation, 4) || Math.abs(Math.hypot(...p.orientation as Array<number>) - 1) > 0.01)) {
       throw new Error('The artwork orientation is invalid.')
     }
-    if (p.hung && (!walls.some(wall => wall.id === p.wallId) || p.orientation)) {
+    const wall = p.hung && typeof p.wallId === 'string' ? placement.wall(p.wallId) : undefined
+    if (p.hung && (!wall || p.orientation)) {
       throw new Error('A hanging artwork has an invalid wall.')
     }
-    if (p.hung) {
-      const wall = walls.find(w => w.id === p.wallId)!
+    if (wall) {
       const pos = p.position as Portrait['position']
       const expected = wallPosition(wall, wallCoordinates(wall, pos), pos[1])
       if (Math.hypot(...expected.map((n, i) => n - pos[i])) > 0.025 || Math.abs(Math.sin((p.rotation - wall.rotation) / 2)) > 0.001) {
         throw new Error('A hanging artwork is detached from its wall.')
       }
-      if (placementIssue(wall, pos, p.width, p.height, []) === 'Let’s keep the doorway clear.') {
-        throw new Error('A hanging artwork overlaps a doorway.')
+      const obstruction = obstructionIssue(wall, pos, p.width, p.height)
+      if (obstruction) {
+        throw new Error(obstruction === placementIssues.doorway ? 'A hanging artwork overlaps a doorway.' : 'A hanging artwork covers a reserved part of its wall.')
       }
     }
-    if (!insideGallery(p.position as Portrait['position'])) {
+    if (!placement.contains(p.position as Portrait['position'])) {
       throw new Error('An artwork is outside the gallery.')
     }
     return {
@@ -186,7 +189,7 @@ export default class GalleryRepository {
       }
       p.source = new Blob([Uint8Array.fromBase64(data)], {type: mime})
     }
-    const document = validateDocument(upgradeDocument(parsed))
+    const document = validateDocument(settleDocument(upgradeDocument(parsed)))
     // Decode every embedded image before replacing anything in the current collection.
     for (const p of document.portraits) {
       if (!(p.source instanceof Blob)) {
@@ -210,7 +213,7 @@ export default class GalleryRepository {
       request.addEventListener('success', () => resolve(request.result))
       request.addEventListener('error', () => reject(request.error))
     })
-    return value === undefined ? null : validateDocument(upgradeDocument(value))
+    return value === undefined ? null : validateDocument(settleDocument(upgradeDocument(value)))
   }
 
   async save(document: GalleryDocument) {
