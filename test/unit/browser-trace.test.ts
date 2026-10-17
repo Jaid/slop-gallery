@@ -1,4 +1,4 @@
-import {expect, test} from 'bun:test'
+import {beforeAll, expect, test} from 'bun:test'
 import {resolve} from 'node:path'
 import {createGunzip, gzipSync} from 'node:zlib'
 
@@ -7,6 +7,8 @@ import {unpack} from 'msgpackr'
 
 import {encodeTraceJsonAsMessagePack, readBrowserFlags} from '../../scripts/recordBrowserTrace.ts'
 
+// private/ is gitignored, so a fresh checkout doesn’t have it until another test happens to create it
+beforeAll(() => fs.ensureDir(resolve(import.meta.dir, '../../private/agent')))
 test('reads persisted browser flag selections and custom values', async () => {
   const root = await fs.mkdtemp(resolve(import.meta.dir, '../../private/agent/browser-flags-test-'))
   try {
