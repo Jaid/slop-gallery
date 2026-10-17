@@ -1,43 +1,34 @@
 import type {CameraPose} from '#src/lib/diagnostics.ts'
 import type {Shot} from './lib/cameraRecipe.ts'
 
-import {join, relative} from 'node:path'
+import {dirname, join, relative, resolve} from 'node:path'
 import {parseArgs} from 'node:util'
 
 import fs from 'fs-extra'
+import {av1Crf} from 'knot-materials/scripts/lib/encodeAnimation.ts'
 
 import {parseRecipe, recipeDuration, sampleRecipe, tweens} from './lib/cameraRecipe.ts'
+import {createFrameSink, frameFormat} from './lib/frameSinks.ts'
 import {degrees, galleryHelp, galleryOptions, openHeadlessGallery, parseNumbers, radians, repositoryRoot, resolveGallerySetup, timestamp, waitForFrames} from './lib/headlessGallery.ts'
 import {installVirtualClock} from './lib/virtualClock.ts'
 
-const codecs = {
-  av1: {
-    args: ['-c:v', 'libsvtav1', '-preset', '4', '-pix_fmt', 'yuv420p10le'],
-    crf: 24,
-  },
-  hevc: {
-    args: ['-c:v', 'libx265', '-preset', 'slow', '-tag:v', 'hvc1', '-pix_fmt', 'yuv420p10le'],
-    crf: 18,
-  },
-  h264: {
-    args: ['-c:v', 'libx264', '-preset', 'slow', '-pix_fmt', 'yuv420p'],
-    crf: 16,
-  },
-}
 const help = `Usage: bun scripts/film.ts --recipe <file> [options]
 
-Renders a camera flight through a level and writes it to out/videos/<name>.mp4.
+Renders a camera flight through a level and writes it as an animated JPEG XL, a video or a PNG sequence.
 Starts a private Vite dev server (or serves --target) and a private headless browser; never touches the visible browser.
 The engine clock is virtual: every frame advances the scene by exactly 1/fps seconds, however long it takes to render. Artworks that come into view are decoded before their frame is captured, so nothing pops in.
 
 Options:
   --recipe <file>         JSON camera recipe, or - to read it from stdin. Required
 ${galleryHelp}
+  --output-file <file>    the extension picks the format. Default: out/film/<level>-<timestamp>.jxl
+                          .jxl  animated JPEG XL
+                          .webm, .mkv  AV1 video
+                          .png  one PNG per frame, each written to the next free name after the given one (shot.png → shot_001.png, shot_002.png, …)
   --fps <number>          frames per second. Default: 60
-  --codec <codec>         ${Object.keys(codecs).join(', ')}. Default: av1
-  --crf <number>          encoder quality, lower is better. Default: ${Object.entries(codecs).map(([codec, {crf}]) => `${crf} (${codec})`).join(', ')}
+  --jxl-distance <number> cjxl Butteraugli distance for .jxl, 0 is lossless. Default: 1
+  --crf <number>          AV1 quality for .webm and .mkv, lower is better. Default: ${av1Crf}
   --settle <frames>       wall-clock frames to render at the first keyframe before recording, lets temporal antialiasing converge. Default: 60
-  --name <name>           output file name without extension. Default: <level>-<timestamp>
   -h, --help              show this help
 
 A recipe is a JSON array of keyframes, ordered by time:
@@ -60,16 +51,12 @@ A recipe is a JSON array of keyframes, ordered by time:
 Each property animates on its own track, so a keyframe only affects the properties it sets. Before its first keyframe and after its last, a property holds still; properties no keyframe sets stay at the player spawn’s camera.
 The video lasts until the last keyframe.
 
-Set BROWSER to a Chromium executable with WebGPU support. ffmpeg must be on PATH.`
-const videoRoot = join(repositoryRoot, 'out', 'videos')
+Set BROWSER to a Chromium executable with WebGPU support. ffmpeg (and cjxl for .jxl) must be on PATH.`
+const filmRoot = join(repositoryRoot, 'out', 'film')
 const {values} = parseArgs({
   args: Bun.argv.slice(2),
   options: {
     ...galleryOptions,
-    codec: {
-      type: 'string',
-      default: 'av1',
-    },
     crf: {type: 'string'},
     fps: {
       type: 'string',
@@ -79,7 +66,11 @@ const {values} = parseArgs({
       type: 'boolean',
       short: 'h',
     },
-    name: {type: 'string'},
+    'jxl-distance': {
+      type: 'string',
+      default: '1',
+    },
+    'output-file': {type: 'string'},
     recipe: {type: 'string'},
     settle: {
       type: 'string',
@@ -100,24 +91,21 @@ const duration = recipeDuration(recipe)
 if (duration === 0) {
   throw new Error('The recipe needs a keyframe with a time after 0.')
 }
-if (!Object.hasOwn(codecs, values.codec)) {
-  throw new Error(`--codec must be one of: ${Object.keys(codecs).join(', ')}.`)
-}
-const codec = codecs[values.codec as keyof typeof codecs]
-const crf = values.crf === undefined ? codec.crf : parseNumbers(values.crf, 'crf', [1])[0]
+const crf = values.crf === undefined ? av1Crf : parseNumbers(values.crf, 'crf', [1])[0]
+const jxlDistance = parseNumbers(values['jxl-distance'], 'jxl-distance', [1])[0]
 const fps = parseNumbers(values.fps, 'fps', [1])[0]
 if (fps <= 0) {
   throw new Error('--fps must be positive.')
 }
 const settle = parseNumbers(values.settle, 'settle', [1])[0]
 const setup = await resolveGallerySetup(values)
+const output = values['output-file'] === undefined ? join(filmRoot, `${setup.levelName}-${timestamp()}.jxl`) : resolve(values['output-file'])
+const format = frameFormat(output)
 const {width, height} = setup.viewport
-if (width % 2 || height % 2) {
+if ((format === 'webm' || format === 'mkv') && (width % 2 || height % 2)) {
   throw new Error('--viewport needs even dimensions for 4:2:0 video.')
 }
 const frameCount = Math.round(duration * fps) + 1
-const name = values.name ?? `${setup.levelName}-${timestamp()}`
-const output = join(videoRoot, `${name}.mp4`)
 const toPose = (shot: Shot): Partial<CameraPose> => ({
   position: shot.position,
   rotation: [radians(shot.pitch), radians(shot.yaw), radians(shot.roll)],
@@ -141,16 +129,15 @@ await page.evaluate((pose: Partial<CameraPose>) => globalThis.slopGallery!.pose!
 await waitForFrames(page, settle)
 await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().pendingImages === 0, {timeout: 120_000})
 await waitForFrames(page, settle)
-await fs.mkdir(videoRoot, {recursive: true})
-const ffmpeg = Bun.spawn(['ffmpeg', '-hide_banner', '-loglevel', 'error', '-y', '-f', 'rawvideo', '-pix_fmt', 'rgba', '-video_size', `${width}x${height}`, '-framerate', String(fps), '-i', '-', '-vf', 'scale=out_color_matrix=bt709:out_range=tv', ...codec.args, '-crf', String(crf), '-color_primaries', 'bt709', '-color_trc', 'bt709', '-colorspace', 'bt709', '-color_range', 'tv', '-movflags', '+faststart', output], {
-  stdin: 'pipe',
-  stdout: 'inherit',
-  stderr: 'inherit',
-  // SVT-AV1 prints its configuration banner regardless of ffmpeg’s log level.
-  env: {
-    ...process.env,
-    SVT_LOG: '1',
-  },
+await fs.mkdir(dirname(output), {recursive: true})
+const sink = createFrameSink(format, {
+  crf,
+  fps,
+  frameCount,
+  height,
+  jxlDistance,
+  output,
+  width,
 })
 const frameBytes = width * height * 4
 let received = 0
@@ -174,8 +161,7 @@ const frameServer = Bun.serve({
         headers,
       })
     }
-    await ffmpeg.stdin.write(pixels)
-    await ffmpeg.stdin.flush()
+    await sink.write(pixels)
     received++
     return new Response(null, {
       status: 204,
@@ -207,7 +193,7 @@ try {
         if (Date.now() > deadline) {
           throw new Error('Artworks did not finish decoding within 2 minutes.')
         }
-        await new Promise(resolve => setTimeout(resolve, 20))
+        await new Promise(resolveDelay => setTimeout(resolveDelay, 20))
       }
       const {pixels} = await api.capturePixels!()
       const response = await fetch(frame.url, {
@@ -230,14 +216,11 @@ try {
     console.log(`Rendered ${(rendered / fps).toFixed(1)}/${duration.toFixed(1)} s (frame ${rendered}/${frameCount}, ${rate.toFixed(1)} frames per second)`)
   }
 } catch (error) {
-  ffmpeg.kill()
+  sink.abort()
   throw error
 } finally {
   await frameServer.stop(true)
 }
-await ffmpeg.stdin.end()
-const exitCode = await ffmpeg.exited
-if (exitCode !== 0) {
-  throw new Error(`ffmpeg exited with code ${exitCode}.`)
-}
-console.log(`Wrote ${relative(repositoryRoot, output).replaceAll('\\', '/')} (${width}×${height}, ${frameCount} frames at ${fps} fps, ${(frameCount / fps).toFixed(2)} s)`)
+await sink.finish()
+const written = relative(repositoryRoot, output).replaceAll('\\', '/')
+console.log(`Wrote ${format === 'png' ? `${frameCount} numbered PNGs for ${written}` : written} (${width}×${height}, ${frameCount} frames at ${fps} fps, ${(frameCount / fps).toFixed(2)} s)`)
