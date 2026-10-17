@@ -14,6 +14,7 @@ import Fountain from '#component/levels/gallery/Fountain'
 import FountainBenches from '#component/levels/gallery/FountainBenches'
 import GalleryStairs from '#component/levels/gallery/GalleryStairs'
 import LobbyCeiling from '#component/levels/gallery/LobbyCeiling'
+import LobbyFloor from '#component/levels/gallery/LobbyFloor'
 import LodgeCorridorRoute from '#component/levels/gallery/LodgeCorridorRoute'
 import LodgeRoom from '#component/levels/gallery/LodgeRoom'
 import LodgeWindow from '#component/levels/gallery/LodgeWindow'
@@ -33,6 +34,7 @@ import CastleStoneMaterial from '#src/lib/materials/CastleStoneMaterial.ts'
 import {corridorLanterns, lightIndoors, lodgeWindowLights} from '#src/lib/materials/lights/index.ts'
 import LodgeMaterials from '#src/lib/materials/LodgeMaterials.ts'
 import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
+import {TravertineWallMaterial} from '#src/lib/materials/travertine/index.ts'
 import VesperWallMaterial from '#src/lib/materials/VesperWallMaterial.ts'
 
 const pointLightPositions: Partial<Record<Wall['room'], Array<number>>> = {
@@ -45,6 +47,11 @@ const cofferedRooms = new Set<Wall['room']>(['lobby'])
 // These upper rooms build their own floor, ceiling and lights.
 const customRooms = new Set<Wall['room']>(['salon', 'sienna'])
 const vesper = rooms.find(room => room.id === 'vesper')!
+// Five courses of 1.1 m reach the cornice; slabs are twice as long as they are high.
+const lobbyCladding = {
+  course: 1.1,
+  length: 2.2,
+}
 
 export default function Architecture() {
   const isHeavy = useGraphicsMode()
@@ -65,6 +72,9 @@ export default function Architecture() {
     center: vesper.center,
     size: vesper.size,
   }), []))
+  // The Lobby’s walls are clad in slabs; its baseboards, cornice, pilasters and reveals are carved from the same stone without joints.
+  const lobbyWall = useDisposable(useMemo(() => new TravertineWallMaterial({cladding: lobbyCladding}), []))
+  const lobbyTrim = useDisposable(useMemo(() => new TravertineWallMaterial, []))
   const stone = useDisposable(useMemo(() => surfaceTexture('stone'), []))
   const plaster = useDisposable(useMemo(() => surfaceTexture('plaster'), []))
   const wood = useDisposable(useMemo(() => surfaceTexture('wood'), []))
@@ -85,6 +95,9 @@ export default function Architecture() {
     if (wall.room === 'corridor') {
       return corridorWood
     }
+    if (wall.room === 'lobby') {
+      return lobbyTrim
+    }
   }
   const surfaceMaterial = (wall: Wall) => {
     if (isLodgeRoomWall(wall)) {
@@ -92,6 +105,9 @@ export default function Architecture() {
     }
     if (wall.room === 'vesper') {
       return vesperWall
+    }
+    if (wall.room === 'lobby') {
+      return lobbyWall
     }
   }
   return <>
@@ -104,7 +120,7 @@ export default function Architecture() {
       <RigidBody colliders={false} type='fixed'>
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]} />
       </RigidBody>
-      <RoomFloor glass={glass.lobby} room={room} stone={stone} wood={wood} />
+      <Branch if={room.id === 'lobby'} else={<RoomFloor glass={glass.lobby} room={room} stone={stone} wood={wood} />}><LobbyFloor glass={glass.lobby} room={room} stone={stone} wood={wood} /></Branch>
       <Box color={room.id === 'vesper' ? '#7c9586' : '#e1dccc'} position={[0, 5.78, 0]} size={[room.size[0], 0.18, room.size[1]]} />
       {lightBoxOffsets(room).map(z => <group key={z}>
         <Box color='#a29982' position={[0, 5.6, z]} size={[room.size[0] * 0.48, 0.1, 2.6]} />
