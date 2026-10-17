@@ -5,6 +5,7 @@ import placement from '#level/placement.ts'
 
 import aimDot from '../aimDot.ts'
 import SoundEngine from '../audio/SoundEngine.ts'
+import crosshair, {crosshairToggleKey} from '../crosshair.ts'
 import {rollSeed} from '../environmentSeed.ts'
 import pauseMenu from '../pauseMenu.ts'
 import initialPortraits from './collection.ts'
@@ -179,6 +180,10 @@ export function handleGalleryKey(event: KeyboardEvent) {
   }
   if (event.code === 'KeyM') {
     useGallery.setState({sound: !s.sound})
+  }
+  // The aim dot only shows while playing, so the toggle is limited to that too and gives immediate visual feedback.
+  if (event.code === crosshairToggleKey && s.locked && !s.dragging) {
+    crosshair.toggle()
   }
 }
 
