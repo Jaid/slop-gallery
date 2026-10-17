@@ -26,6 +26,7 @@ ${galleryHelp}
                           .webm, .mkv  AV1 video
                           .png  one PNG per frame, each written to the next free name after the given one (shot.png → shot_001.png, shot_002.png, …)
   --fps <number>          frames per second. Default: 60
+  --starting-frame <n>    recipe frame that becomes the first frame of the output, wrapping around at the end; moves the loop seam without changing the motion. Default: 1
   --jxl-distance <number> cjxl Butteraugli distance for .jxl, 0 is lossless. Default: 1
   --crf <number>          AV1 quality for .webm and .mkv, lower is better. Default: ${av1Crf}
   --settle <frames>       wall-clock frames to render at the first keyframe before recording, lets temporal antialiasing converge. Default: 60
@@ -76,6 +77,10 @@ const {values} = parseArgs({
       type: 'string',
       default: '60',
     },
+    'starting-frame': {
+      type: 'string',
+      default: '1',
+    },
   },
 })
 if (values.help) {
@@ -104,6 +109,11 @@ if ((format === 'webm' || format === 'mkv') && (width % 2 || height % 2)) {
   throw new Error('--width and --height need to be even for 4:2:0 video.')
 }
 const frameCount = Math.max(1, Math.round(duration * fps))
+const startingFrame = parseNumbers(values['starting-frame'], 'starting-frame', [1])[0]
+if (!Number.isSafeInteger(startingFrame) || startingFrame < 1 || startingFrame > frameCount) {
+  throw new Error(`--starting-frame must be a whole number between 1 and ${frameCount}.`)
+}
+const frameSeconds = (index: number) => (index + startingFrame - 1) % frameCount / fps
 const toPose = (shot: Shot): Partial<CameraPose> => ({
   position: shot.position,
   rotation: [radians(shot.pitch), radians(shot.yaw), radians(shot.roll)],
@@ -122,7 +132,7 @@ const fallback: Shot = {
   roll: degrees(spawn.rotation[2]),
   fov: spawn.fov ?? 60,
 }
-const first = toPose(sampleRecipe(recipe, 0, fallback))
+const first = toPose(sampleRecipe(recipe, frameSeconds(0), fallback))
 await page.evaluate((pose: Partial<CameraPose>) => globalThis.slopGallery!.pose!(pose), first)
 await waitForFrames(page, settle)
 await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().pendingImages === 0, {timeout: 120_000})
@@ -176,7 +186,7 @@ try {
   })
   const startedAt = performance.now()
   for (let index = 0; index < frameCount; index++) {
-    const pose = toPose(sampleRecipe(recipe, index / fps, fallback))
+    const pose = toPose(sampleRecipe(recipe, frameSeconds(index), fallback))
     await page.evaluate(async (frame: {
       delta: number
       pose: Partial<CameraPose>
