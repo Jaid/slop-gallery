@@ -82,6 +82,10 @@ export function herringboneBlock(x: number, y: number, ratio: number) {
  */
 export default class ParquetFloorMaterial extends FloorMaterial {
   constructor(readonly options: ParquetOptions = salonParquet, reflections = true) {
+    const {bevel, colors, ratio, seam, seed, width} = options
+    if (!Number.isInteger(ratio) || ratio < 2 || !(width > 0)) {
+      throw new RangeError('Parquet blocks need a positive width and a whole-number length ratio of at least 2.')
+    }
     const roughness = reflections ? 0.32 : 0.62
     super(null, {
       color: '#ffffff',
@@ -93,10 +97,6 @@ export default class ParquetFloorMaterial extends FloorMaterial {
         blur: 4,
       } : undefined,
     })
-    const {bevel, colors, ratio, seam, seed, width} = options
-    if (!Number.isInteger(ratio) || ratio < 2 || !(width > 0)) {
-      throw new RangeError('Parquet blocks need a positive width and a whole-number length ratio of at least 2.')
-    }
     // Block-width units in a frame turned 45° about the vertical.
     const diagonal = Math.SQRT1_2 / width
     const x = positionWorld.x.add(positionWorld.z).mul(diagonal).toVar('parquetX')

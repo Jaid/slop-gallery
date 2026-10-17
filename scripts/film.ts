@@ -135,7 +135,10 @@ const fallback: Shot = {
 const first = toPose(sampleRecipe(recipe, frameSeconds(0), fallback))
 await page.evaluate((pose: Partial<CameraPose>) => globalThis.slopGallery!.pose!(pose), first)
 await waitForFrames(page, settle)
-await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().pendingImages === 0, {timeout: 120_000})
+await page.waitForFunction(() => {
+  const {pendingImages, pendingPipelines} = globalThis.slopGallery!.snapshot!()
+  return pendingImages === 0 && pendingPipelines === 0
+}, {timeout: 120_000})
 await waitForFrames(page, settle)
 await fs.mkdir(dirname(output), {recursive: true})
 const sink = createFrameSink(format, {
@@ -195,11 +198,11 @@ try {
       const api = globalThis.slopGallery!
       api.pose!(frame.pose)
       globalThis.virtualClock!.step(frame.delta)
-      // The clock stands still while artworks that just came into view decode in the background.
+      // The clock stands still while artworks that just came into view decode and pipelines compile in the background.
       const deadline = Date.now() + 120_000
-      while (api.snapshot!().pendingImages > 0) {
+      while (api.snapshot!().pendingImages > 0 || api.snapshot!().pendingPipelines > 0) {
         if (Date.now() > deadline) {
-          throw new Error('Artworks did not finish decoding within 2 minutes.')
+          throw new Error('Artworks and pipelines did not finish loading within 2 minutes.')
         }
         await new Promise(resolveDelay => setTimeout(resolveDelay, 20))
       }

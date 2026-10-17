@@ -72,9 +72,12 @@ const pose = await page.evaluate((requested: Partial<CameraPose>) => globalThis.
   rotation: angle ? [radians(angle[1]), radians(angle[0]), radians(angle[2] ?? 0)] as Vec3 : undefined,
   fov,
 })
-// A new pose can bring artworks into view that still need decoding.
+// A new pose can bring artworks into view that still need decoding, and objects whose pipelines still compile.
 await waitForFrames(page, settle)
-await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().pendingImages === 0, {timeout: 120_000})
+await page.waitForFunction(() => {
+  const {pendingImages, pendingPipelines} = globalThis.slopGallery!.snapshot!()
+  return pendingImages === 0 && pendingPipelines === 0
+}, {timeout: 120_000})
 await waitForFrames(page, settle)
 const frame = await page.evaluate(async () => {
   const {dataUrl, width, height, nonBlackFraction} = await globalThis.slopGallery!.captureFrame!()

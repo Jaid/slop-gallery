@@ -19,7 +19,7 @@ export default function CheckerMarbleFloor({width, depth, reflections, detailed 
   const {floorReflections} = useGraphicsModeValue(getGraphicsProfile)
   const reflective = reflections ?? floorReflections
   const material = useDisposable(useMemo(() => (detailed ? new DetailedMarbleFloorMaterial(texture, reflective) : new MarbleFloorMaterial(texture, reflective)), [detailed, reflective, texture]))
-  const reflection = material.reflection?.target
+  const reflection = material.reflectionTarget
   return <mesh name='knot-room-marble-floor' position={[0, 0.001, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
     <planeGeometry args={[width, depth]} />
     <primitive attach='material' object={material} />

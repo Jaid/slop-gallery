@@ -16,7 +16,7 @@ export default function ParquetFloor({width, depth, name, reflections}: {
   const {floorReflections} = useGraphicsModeValue(getGraphicsProfile)
   const reflective = reflections ?? floorReflections
   const material = useDisposable(useMemo(() => new ParquetFloorMaterial(undefined, reflective), [reflective]))
-  const reflection = material.reflection?.target
+  const reflection = material.reflectionTarget
   return <mesh name={`${name}-parquet`} position={[0, 0.001, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
     <planeGeometry args={[width, depth]} />
     <primitive attach='material' object={material} />

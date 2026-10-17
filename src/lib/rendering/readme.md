@@ -46,6 +46,17 @@ All depth-based masks are applied **before TRAA**. Applying a raw, camera-jitter
 
 The six-bladed 64-tap aperture, proximity-dependent radius, and highlight treatment are unchanged. The focus textures render only while V-viewing (including fades). Zoom’s two Gaussian passes render only while zoom is nonzero (including fades); without AA, its source RTT is also gated. Walking runs neither camera-blur branch. Bloom and the floor reflection’s mipmap roughness filtering are not camera blur. Floor reflections use native resolution (scale 1). Intermediate RTTs have explicit owners; borrowed scene textures are not disposed by the focus effect.
 
+## Frame work
+
+`GalleryRenderer` treats the Fiber scene as the frame scene. Every shadow face and the floor reflection render that scene again, so per-frame work is kept to once per frame:
+
+- Scene matrices update before the first pass of a frame. Later passes reuse them.
+- Point, spot and directional shadow maps update once per frame, not once per camera (patched `ShadowNode`). Without it, each reflection re-rendered every shadow map.
+- All reflective floors of a level lie in one plane and share one reflection (`FloorMaterial`), so the scene is mirrored once per frame. All of these floors hide while it renders, since a pass that samples its own target fails WebGPU validation.
+- Render pipelines of the frame scene compile with `createRenderPipelineAsync`. An object is drawn once its pipeline is ready, so a new variant no longer blocks the GPU process for seconds. The patched `WebGPUPipelineUtils` closes each pipeline’s error scope before awaiting it; otherwise any later device error lands in that scope and three never draws the pipeline’s objects. Render bundles keep synchronous pipelines, since they record their draws once.
+- While loading, every object is drawn in every pass regardless of the camera frustum, at most 48 new ones per frame. The loading screen stays until no object is left and no pipeline is compiling, so unseen rooms, shadow and reflection variants are compiled before the first step.
+- In the gallery, `RoomCulling` leaves out rooms that the camera can’t see through an opening (up to two deep) from all passes, and freezes the shadow maps of lights in those rooms. Objects that reach past one room, like shared walls, always render.
+
 ## Native regression
 
 With the existing browser on the Knottingham production origin:

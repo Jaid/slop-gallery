@@ -29,7 +29,7 @@ export default function LobbyFloor({room, ...props}: {
   const materials = useMemo(() => ({
     slab,
     inlay,
-    reflection: slab.reflection?.target,
+    reflection: slab.reflectionTarget ?? undefined,
   }), [inlay, slab])
   return <RoomFloor {...props} materials={materials} room={room} />
 }

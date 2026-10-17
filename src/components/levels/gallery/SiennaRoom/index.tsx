@@ -32,7 +32,7 @@ export default function SiennaRoom({joinery}: {
   const floor = useDisposable(useMemo(() => new PlankFloorMaterial(undefined, floorReflections), [floorReflections]))
   const ceiling = useDisposable(useMemo(() => new PlankMaterial(siennaCeilingPlanks), []))
   const rug = useDisposable(useMemo(() => new PersianRugMaterial(siennaRugSize), []))
-  const reflection = floor.reflection?.target
+  const reflection = floor.reflectionTarget
   return <>
     <group position={[room.center[0], 0, room.center[1]]}>
       <RigidBody colliders={false} type='fixed'>

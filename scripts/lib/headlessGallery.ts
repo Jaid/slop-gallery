@@ -200,6 +200,12 @@ export const openHeadlessGallery = async (setup: GallerySetup, options: {
     })
     const page = await browser.newPage()
     page.on('pageerror', error => console.error(`Page error: ${String(error)}`))
+    // WebGPU validation errors only reach the console, and a failed pass silently leaves its target stale.
+    page.on('console', message => {
+      if (message.type() === 'error') {
+        console.error(`Console error: ${message.text()}`)
+      }
+    })
     // A crashed tab never resolves pending waits; closing the browser rejects them.
     page.on('error', crash => {
       console.error(`Page crashed: ${String(crash)}`)

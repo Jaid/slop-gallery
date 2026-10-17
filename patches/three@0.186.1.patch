@@ -1,5 +1,5 @@
 diff --git a/build/three.webgpu.js b/build/three.webgpu.js
-index 48b30e6..ad61788 100644
+index 48b30e6bf4bf114ba5524ae509c81c4a043d27ea..a5da35f7fbf53bb3a44f127410302ec2fa908523 100644
 --- a/build/three.webgpu.js
 +++ b/build/three.webgpu.js
 @@ -3,7 +3,7 @@
@@ -22,7 +22,60 @@ index 48b30e6..ad61788 100644
  			cacheTextures.set( reference, framebufferTexture );
  
  		}
-@@ -87631,16 +87635,45 @@ class WebGPUBackend extends Backend {
+@@ -46942,13 +46946,13 @@ class ShadowNode extends ShadowBaseNode {
+ 		this._currentShadowType = null;
+ 
+ 		/**
+-		 * A Weak Map holding the current frame ID per camera. Used
+-		 * to control the update of shadow maps.
++		 * The frame id of the last shadow map update. Point, spot and directional shadows don't depend on the rendering camera, so additional cameras like reflectors reuse the shadow map rendered earlier in the same frame.
+ 		 *
+-		 * @type {WeakMap<Camera,number>}
+ 		 * @private
++		 * @type {number}
++		 * @default -1
+ 		 */
+-		this._cameraFrameId = new WeakMap();
++		this._frameId = - 1;
+ 
+ 		/**
+ 		 * This flag can be used for type testing.
+@@ -47526,13 +47530,13 @@ class ShadowNode extends ShadowBaseNode {
+ 
+ 		if ( needsUpdate ) {
+ 
+-			if ( this._cameraFrameId.get( frame.camera ) === frame.frameId ) {
++			if ( this._frameId === frame.frameId ) {
+ 
+ 				needsUpdate = false;
+ 
+ 			}
+ 
+-			this._cameraFrameId.set( frame.camera, frame.frameId );
++			this._frameId = frame.frameId;
+ 
+ 		}
+ 
+@@ -85726,6 +85730,9 @@ class WebGPUPipelineUtils {
+ 
+ 					_renderPipelineDescriptor.reset();
+ 
++					// The scope must close before the first await, or it captures the errors of everything else the device does until the pipeline is compiled.
++					const errorScopePromise = device.popErrorScope();
++
+ 					if ( pipelinePromise !== null ) {
+ 
+ 						try {
+@@ -85740,7 +85747,7 @@ class WebGPUPipelineUtils {
+ 
+ 					}
+ 
+-					const errorScope = await device.popErrorScope();
++					const errorScope = await errorScopePromise;
+ 
+ 					if ( errorScope !== null || asyncError !== null ) {
+ 
+@@ -87631,16 +87638,45 @@ class WebGPUBackend extends Backend {
  
  		let descriptors = renderTargetData.descriptors;
  
@@ -69,7 +122,7 @@ index 48b30e6..ad61788 100644
  		}
  
 diff --git a/src/nodes/display/ViewportTextureNode.js b/src/nodes/display/ViewportTextureNode.js
-index 5aa2ebc..d4f1d72 100644
+index 5aa2ebc9ebf1515d1fa34ee0613c809c5d1c9cc2..d4f1d72072cfa80978b4b4add5eabec2c1526d59 100644
 --- a/src/nodes/display/ViewportTextureNode.js
 +++ b/src/nodes/display/ViewportTextureNode.js
 @@ -5,6 +5,7 @@ import { screenUV } from './ScreenNode.js';
@@ -91,8 +144,46 @@ index 5aa2ebc..d4f1d72 100644
  			cacheTextures.set( reference, framebufferTexture );
  
  		}
+diff --git a/src/nodes/lighting/ShadowNode.js b/src/nodes/lighting/ShadowNode.js
+index 7912654fdadc8cd6e3b1567feb81348763a0ab59..2dd24156754ad35d55d03bd3f0bf12bbf24f96bd 100644
+--- a/src/nodes/lighting/ShadowNode.js
++++ b/src/nodes/lighting/ShadowNode.js
+@@ -217,13 +217,13 @@ class ShadowNode extends ShadowBaseNode {
+ 		this._currentShadowType = null;
+ 
+ 		/**
+-		 * A Weak Map holding the current frame ID per camera. Used
+-		 * to control the update of shadow maps.
++		 * The frame id of the last shadow map update. Point, spot and directional shadows don't depend on the rendering camera, so additional cameras like reflectors reuse the shadow map rendered earlier in the same frame.
+ 		 *
+-		 * @type {WeakMap<Camera,number>}
+ 		 * @private
++		 * @type {number}
++		 * @default -1
+ 		 */
+-		this._cameraFrameId = new WeakMap();
++		this._frameId = - 1;
+ 
+ 		/**
+ 		 * This flag can be used for type testing.
+@@ -801,13 +801,13 @@ class ShadowNode extends ShadowBaseNode {
+ 
+ 		if ( needsUpdate ) {
+ 
+-			if ( this._cameraFrameId.get( frame.camera ) === frame.frameId ) {
++			if ( this._frameId === frame.frameId ) {
+ 
+ 				needsUpdate = false;
+ 
+ 			}
+ 
+-			this._cameraFrameId.set( frame.camera, frame.frameId );
++			this._frameId = frame.frameId;
+ 
+ 		}
+ 
 diff --git a/src/renderers/webgpu/WebGPUBackend.js b/src/renderers/webgpu/WebGPUBackend.js
-index e6345e4..3b3515f 100644
+index e6345e42e2008f6606971c626326d6479e50a51a..3b3515f79c2069659e3109196d186b5c813a31b8 100644
 --- a/src/renderers/webgpu/WebGPUBackend.js
 +++ b/src/renderers/webgpu/WebGPUBackend.js
 @@ -675,16 +675,45 @@ class WebGPUBackend extends Backend {
@@ -140,4 +231,27 @@ index e6345e4..3b3515f 100644
 +			renderTargetData.descriptorAttachmentTextures = attachmentTextures;
  
  		}
+ 
+diff --git a/src/renderers/webgpu/utils/WebGPUPipelineUtils.js b/src/renderers/webgpu/utils/WebGPUPipelineUtils.js
+index 802f98b6e061d4c1580a1e06a43d9b41aeec5b90..040d4598e874723bb4fe63c4faf0c12525f07e17 100644
+--- a/src/renderers/webgpu/utils/WebGPUPipelineUtils.js
++++ b/src/renderers/webgpu/utils/WebGPUPipelineUtils.js
+@@ -298,6 +298,9 @@ class WebGPUPipelineUtils {
+ 
+ 					_renderPipelineDescriptor.reset();
+ 
++					// The scope must close before the first await, or it captures the errors of everything else the device does until the pipeline is compiled.
++					const errorScopePromise = device.popErrorScope();
++
+ 					if ( pipelinePromise !== null ) {
+ 
+ 						try {
+@@ -312,7 +315,7 @@ class WebGPUPipelineUtils {
+ 
+ 					}
+ 
+-					const errorScope = await device.popErrorScope();
++					const errorScope = await errorScopePromise;
+ 
+ 					if ( errorScope !== null || asyncError !== null ) {
  

@@ -20,6 +20,8 @@ export type GalleryDiagnostics = {
   menuStage: PauseMenuStage
   /** artwork images still decoding; a fresh pose can request more */
   pendingImages: number
+  /** render pipelines still compiling in the background; objects that need them are not drawn yet */
+  pendingPipelines: number
   placement: Placement | null
   portraits: Array<Pick<Portrait, 'height' | 'hung' | 'id' | 'merging' | 'pending' | 'position' | 'reserved' | 'title' | 'wallId' | 'width'> & {physical?: {
     x: number
