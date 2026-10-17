@@ -1,6 +1,7 @@
-import type {Texture} from 'three/webgpu'
+import type {Material} from 'three/webgpu'
 
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
+import Branch from 'branch-component'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 import {useGraphicsModeValue} from 'use-graphics-mode'
@@ -8,41 +9,54 @@ import {useGraphicsModeValue} from 'use-graphics-mode'
 import Chandelier from '#component/levels/gallery/Chandelier'
 import Box from '#src/components/Scene/primitives.tsx'
 import {rooms, useGallery, walls} from '#src/lib/gallery.ts'
-import {siennaCeilingBeam, siennaCeilingBeamOffsets, siennaRugSize} from '#src/lib/gallery/sienna.ts'
-import RoomFloorTextures from '#src/lib/materials/RoomFloorTextures.ts'
+import {siennaCeilingBeam, siennaCeilingBeamOffsets, siennaCeilingPlanks, siennaRugSize, siennaRugThickness, siennaWainscot} from '#src/lib/gallery/sienna.ts'
+import PersianRugMaterial from '#src/lib/materials/PersianRugMaterial.ts'
+import PlankFloorMaterial from '#src/lib/materials/PlankFloorMaterial.ts'
+import PlankMaterial from '#src/lib/materials/PlankMaterial.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
 const room = rooms.find(candidate => candidate.id === 'sienna')!
 
-export default function SiennaRoom({wood}: {wood: Texture}) {
+/** The Sienna’s floor, rug, beams, wainscot and chandelier; its papered walls and their trim come from the shared wall surfaces. */
+export default function SiennaRoom({joinery}: {
+  /** dark wood with its grain along each mesh’s x axis (varnished, shared with the walls’ trim) and z axis (oiled, for the joists) */
+  joinery: {
+    /** the darker raised fields of the wainscot */
+    panel: Material
+    x: Material
+    z: Material
+  }
+}) {
   const resetEpoch = useGallery(s => s.resetEpoch)
   const {floorReflections} = useGraphicsModeValue(getGraphicsProfile)
-  const floor = useDisposable(useMemo(() => new RoomFloorTextures(...room.size, ...siennaRugSize), []))
+  const floor = useDisposable(useMemo(() => new PlankFloorMaterial(undefined, floorReflections), [floorReflections]))
+  const ceiling = useDisposable(useMemo(() => new PlankMaterial(siennaCeilingPlanks), []))
+  const rug = useDisposable(useMemo(() => new PersianRugMaterial(siennaRugSize), []))
+  const reflection = floor.reflection?.target
   return <>
     <group position={[room.center[0], 0, room.center[1]]}>
       <RigidBody colliders={false} type='fixed'>
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, -0.15, 0]} />
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]} />
         <Box color='#392517' envMapIntensity={floorReflections ? 1 : 0} position={[0, -0.12, 0]} size={[room.size[0], 0.24, room.size[1]]} />
-        <Box color='#211b1e' position={[0, 5.78, 0]} size={[room.size[0], 0.18, room.size[1]]} />
+        <Box material={ceiling} position={[0, 5.78, 0]} size={[room.size[0], 0.18, room.size[1]]} />
       </RigidBody>
       <mesh name='sienna-wood-floor' position={[0, 0.001, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[...room.size]} />
-        <meshStandardNodeMaterial {...floor.wood} bumpScale={0.035} envMapIntensity={floorReflections ? 1 : 0} roughness={floorReflections ? 0.55 : 0.72} />
+        <primitive attach='material' object={floor} />
+        <Branch if={reflection}><primitive object={reflection!} /></Branch>
       </mesh>
-      {siennaCeilingBeamOffsets(room.size[0]).map(x => <Box key={x} color='#493226' map={wood} position={[x, siennaCeilingBeam.centerY, 0]} size={[siennaCeilingBeam.width, siennaCeilingBeam.height, room.size[1]]} />)}
-      <Box color='#3b1010' envMapIntensity={floorReflections ? 1 : 0} position={[0, 0.007, 0]} roughness={1} size={[siennaRugSize[0], 0.012, siennaRugSize[1]]} />
-      <mesh name='sienna-carpet' position={[0, 0.014, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[...siennaRugSize]} />
-        <meshStandardNodeMaterial {...floor.carpet} bumpScale={0.008} envMapIntensity={floorReflections ? 1 : 0} roughness={1} />
+      {siennaCeilingBeamOffsets(room.size[0]).map(x => <Box key={x} material={joinery.z} position={[x, siennaCeilingBeam.centerY, 0]} size={[siennaCeilingBeam.width, siennaCeilingBeam.height, room.size[1]]} />)}
+      <mesh material={rug} name='sienna-carpet' position={[0, siennaRugThickness / 2, 0]} receiveShadow>
+        <boxGeometry args={[siennaRugSize[0], siennaRugThickness, siennaRugSize[1]]} />
       </mesh>
       <Chandelier key={resetEpoch} />
     </group>
     {walls.filter(wall => wall.room === 'sienna').map(wall => <group key={wall.id} position={wall.center} rotation={[0, wall.rotation, 0]}>
-      {Array.from({length: Math.floor(wall.width / 2)}, (_, i) => i * 2 - wall.width / 2 + 1).filter(u => !wall.holes?.some(hole => Math.abs(u - hole.u) < hole.width / 2 + 1)).map(u => <group key={u} position={[u, 0, 0]}>
-        <Box color='#684632' map={wood} position={[0, 0.92, 0.125]} roughness={0.6} size={[1.88, 0.94, 0.025]} />
-        <Box color='#503528' map={wood} position={[0, 0.92, 0.145]} roughness={0.7} size={[1.55, 0.65, 0.025]} />
-        <Box color='#785b35' metalness={0.4} position={[0, 1.42, 0.145]} size={[1.98, 0.045, 0.09]} />
+      {siennaWainscot(wall).map(u => <group key={u} position={[u, 0, 0]}>
+        <Box material={joinery.x} position={[0, 0.92, 0.125]} size={[2, 0.94, 0.025]} />
+        <Box material={joinery.panel} position={[0, 0.92, 0.145]} size={[1.55, 0.65, 0.025]} />
+        <Box material={joinery.x} position={[0, 1.42, 0.145]} size={[2, 0.045, 0.09]} />
       </group>)}
     </group>)}
   </>
