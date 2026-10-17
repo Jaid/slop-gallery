@@ -52,6 +52,7 @@ The six-bladed 64-tap aperture, proximity-dependent radius, and highlight treatm
 
 - Scene matrices update before the first pass of a frame. Later passes reuse them.
 - Point, spot and directional shadow maps update once per frame, not once per camera (patched `ShadowNode`). Without it, each reflection re-rendered every shadow map.
+- In the gallery, `ShadowCache` keeps each shadow map until a shadow caster in its light’s reach moves, appears or disappears, or the light moves. Lights in rooms the camera can’t see keep a pending update until their room is in view.
 - All reflective floors of a level lie in one plane and share one reflection (`FloorMaterial`), so the scene is mirrored once per frame. All of these floors hide while it renders, since a pass that samples its own target fails WebGPU validation.
 - Render pipelines of the frame scene compile with `createRenderPipelineAsync`. An object is drawn once its pipeline is ready, so a new variant no longer blocks the GPU process for seconds. The patched `WebGPUPipelineUtils` closes each pipeline’s error scope before awaiting it; otherwise any later device error lands in that scope and three never draws the pipeline’s objects. Render bundles keep synchronous pipelines, since they record their draws once.
 - While loading, every object is drawn in every pass regardless of the camera frustum, at most 48 new ones per frame. The loading screen stays until no object is left and no pipeline is compiling, so unseen rooms, shadow and reflection variants are compiled before the first step.

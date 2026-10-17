@@ -1,5 +1,5 @@
 import type {RoomId} from '#src/lib/gallery/types.ts'
-import type {BufferGeometry, Camera, Light, LightShadow, Object3D} from 'three/webgpu'
+import type {BufferGeometry, Camera, Light, Object3D} from 'three/webgpu'
 
 import {useThree} from '@react-three/fiber'
 import {useEffect} from 'react'
@@ -8,8 +8,8 @@ import {Frustum, Matrix4, Sphere, Vector3} from 'three/webgpu'
 import {useGallery} from '#src/lib/gallery.ts'
 import {roomContaining, roomEnclosing, visibleRooms} from '#src/lib/gallery/roomVisibility.ts'
 import {GalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
+import ShadowCache from '#src/lib/rendering/ShadowCache.ts'
 
-type ShadowLight = Light & {shadow?: LightShadow}
 type Drawable = Object3D & {
   boundingSphere?: Sphere | null
   computeBoundingSphere?: () => void
@@ -35,7 +35,7 @@ const holdsLight = (object: Object3D) => {
 
 /**
  * Leaves out the rooms the camera can’t see from the room it is in, from every pass of the frame: the camera, its reflection and all shadow maps.
- * Shadows of lights in hidden rooms freeze until their room comes back into view. Lights themselves stay, since a different set of lights would recompile every lit material.
+ * Shadow maps only update when something in their light’s reach changes, and lights in hidden rooms wait until their room comes back into view. Lights themselves stay, since a different set of lights would recompile every lit material.
  */
 export default function RoomCulling() {
   const renderer = useThree(state => state.renderer)
@@ -47,29 +47,13 @@ export default function RoomCulling() {
       return
     }
     const {hidden} = galleryRenderer
-    const frozen = new Set<ShadowLight>
+    const shadows = new ShadowCache
     const cull = (camera: Camera) => {
       hidden.clear()
       camera.updateWorldMatrix(true, false)
       const room = roomContaining(camera.getWorldPosition(position).toArray())
       const visible: Set<RoomId> | undefined = room && visibleRooms(room, frustum.setFromProjectionMatrix(projection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse), camera.coordinateSystem, camera.reversedDepth))
       scene.traverse(object => {
-        const light = object as ShadowLight
-        if (light.isLight) {
-          if (!light.castShadow || !light.shadow) {
-            return
-          }
-          const lightRoom = roomContaining(light.getWorldPosition(position).toArray())
-          const freeze = visible !== undefined && lightRoom !== undefined && !visible.has(lightRoom)
-          if (freeze && !frozen.has(light)) {
-            frozen.add(light)
-            light.shadow.autoUpdate = false
-          } else if (!freeze && frozen.delete(light)) {
-            light.shadow.autoUpdate = true
-            light.shadow.needsUpdate = true
-          }
-          return
-        }
         const drawable = object as Drawable
         if (!visible || !drawable.geometry || !drawable.frustumCulled || holdsLight(object)) {
           return
@@ -87,14 +71,15 @@ export default function RoomCulling() {
           hidden.add(object)
         }
       })
+      shadows.update(scene, hidden, (light: Light) => {
+        const lightRoom = visible && roomContaining(light.getWorldPosition(position).toArray())
+        return !lightRoom || visible!.has(lightRoom)
+      })
     }
     galleryRenderer.setCuller(cull)
     return () => {
       galleryRenderer.setCuller(null)
-      for (const light of frozen) {
-        light.shadow!.autoUpdate = true
-        light.shadow!.needsUpdate = true
-      }
+      shadows.dispose()
     }
   }, [galleryRenderer, ready, scene])
   return null
