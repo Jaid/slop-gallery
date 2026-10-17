@@ -3,7 +3,8 @@ import type {RigidBody, World} from '@dimforge/rapier3d-compat'
 
 import {RigidBodyType} from '@dimforge/rapier3d-compat'
 
-import {floorHeight} from '../gallery/walls.ts'
+import placement from '#level/placement.ts'
+
 import PropPlacement from './PropPlacement.ts'
 import {beginBodyThrow, clearBodyThrow} from './ThrowState.ts'
 
@@ -93,7 +94,7 @@ export default class GrabbableBody {
   recover() {
     this.rememberHome()
     const position = this.body.translation()
-    if (!this.active && this.home && position.y < floorHeight([position.x, position.y, position.z]) - 4) {
+    if (!this.active && this.home && position.y < placement.floorHeight([position.x, position.y, position.z]) - 4) {
       // A leaf cannot reattach to an anchor that has itself been picked up or thrown.
       const home = this.options.recoverAsDynamic?.() ? {
         ...this.home,

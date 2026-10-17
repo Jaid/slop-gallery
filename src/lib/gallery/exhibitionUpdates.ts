@@ -1,8 +1,10 @@
 import type {Portrait, Vec3} from './types.ts'
 
+import placement from '#level/placement.ts'
+
+import {placementIssues, wallCoordinates, wallPosition} from '../placement/wallGeometry.ts'
 import initialPortraits from './collection.ts'
 import {maximumPortraits} from './imagePolicy.ts'
-import walls, {placementIssue, wallCoordinates, wallPosition} from './walls.ts'
 
 type ExhibitionUpdate = {
   /** artworks of the shipped collection that first appeared with this update */
@@ -20,7 +22,6 @@ export const exhibitionUpdates: ReadonlyArray<ExhibitionUpdate> = [
 ]
 export const exhibitionRevision = exhibitionUpdates.length
 
-const doorwayIssue = 'Let’s keep the doorway clear.'
 const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 const finiteVector = (value: unknown): value is Vec3 => Array.isArray(value) && value.length === 3 && value.every(Number.isFinite)
 /** Saved artworks that look complete enough to measure; anything else is left for validation to judge. */
@@ -45,16 +46,16 @@ export function upgradeDocument(value: unknown): unknown {
       if (!measurable(portrait) || !portrait.hung || !update.openedWalls.includes(portrait.wallId ?? '')) {
         return portrait
       }
-      const wall = walls.find(candidate => candidate.id === portrait.wallId)!
-      return placementIssue(wall, portrait.position, portrait.width, portrait.height, []) === doorwayIssue ? relocate(portrait, measured()) : portrait
+      const wall = placement.wall(portrait.wallId ?? '')
+      return wall && placement.placementIssue(wall, portrait.position, portrait.width, portrait.height, []) === placementIssues.doorway ? relocate(portrait, measured()) : portrait
     })
     for (const id of update.artworks) {
       const artwork = initialPortraits.find(portrait => portrait.id === id)
       if (!artwork || portraits.length >= maximumPortraits || portraits.some(portrait => record(portrait) && portrait.id === id)) {
         continue
       }
-      const wall = walls.find(candidate => candidate.id === artwork.wallId)
-      if (wall && !placementIssue(wall, artwork.position, artwork.width, artwork.height, measured(), artwork.id)) {
+      const wall = placement.wall(artwork.wallId ?? '')
+      if (wall && !placement.placementIssue(wall, artwork.position, artwork.width, artwork.height, measured(), artwork.id)) {
         portraits.push({
           ...artwork,
           position: [...artwork.position],
@@ -68,19 +69,32 @@ export function upgradeDocument(value: unknown): unknown {
     exhibition: exhibitionRevision,
   }
 }
+/**
+ * Lets the level settle the works of a stored collection, before validation, into its current walls and volume, which can change between visits in the halls. Returns the input itself if nothing moved, and malformed input untouched for validation to reject.
+ */
+export function settleDocument(value: unknown): unknown {
+  if (!record(value) || !Array.isArray(value.portraits)) {
+    return value
+  }
+  const portraits = placement.settle(value.portraits as Array<unknown>)
+  return portraits === value.portraits ? value : {
+    ...value,
+    portraits,
+  }
+}
 
 /**
  * The nearest position along its wall where `portrait` hangs without any issue, searching in 5 cm steps. Falls back to standing
  * the work on the floor 60 cm in front of the wall, where the player can pick it up and hang it again.
  */
 function relocate(portrait: Portrait, portraits: ReadonlyArray<Portrait>): Portrait {
-  const wall = walls.find(candidate => candidate.id === portrait.wallId)!
+  const wall = placement.wall(portrait.wallId!)!
   const u = wallCoordinates(wall, portrait.position)
   const y = portrait.position[1]
   for (let step = 1; step * 0.05 <= wall.width; step++) {
     for (const side of [-1, 1]) {
       const position = wallPosition(wall, u + side * step * 0.05, y)
-      if (!placementIssue(wall, position, portrait.width, portrait.height, portraits, portrait.id)) {
+      if (!placement.placementIssue(wall, position, portrait.width, portrait.height, portraits, portrait.id)) {
         return {
           ...portrait,
           position,

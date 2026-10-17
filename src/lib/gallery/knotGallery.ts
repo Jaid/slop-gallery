@@ -1,5 +1,5 @@
+import type {Wall} from '../placement/wallGeometry.ts'
 import type {Vec3} from './types.ts'
-import type {Wall} from './walls.ts'
 
 import {knotLayout} from 'knot-materials/exhibition.ts'
 
@@ -41,7 +41,6 @@ export const knotGalleryWalls: Array<Wall> = [
   center: wall.center as Vec3,
   room: 'lobby',
   height: knotGalleryBounds.height,
-  hangable: false,
 }))
 
 export function insideKnotGallery([x, y, z]: Vec3) {

@@ -7,9 +7,8 @@ import Branch from 'branch-component'
 import {useRef} from 'react'
 import {Raycaster, Vector2, Vector3} from 'three/webgpu'
 
-import {PlacementPreview} from '#level/components.ts'
+import PlacementPreview from '#component/PlacementPreview'
 import {useGallery} from '#src/lib/gallery.ts'
-import {isGallery} from '#src/lib/level.ts'
 
 import useInteractionDiagnostics from './interaction/useInteractionDiagnostics.ts'
 import useInteractionEvents from './interaction/useInteractionEvents.ts'
@@ -50,6 +49,6 @@ export default function Interaction() {
     view,
   })
   return <group visible={false} ref={ghost}>
-    <Branch if={isGallery} some={[artwork, dragging]} not={held?.startsWith('prop-')}><PlacementPreview key={artwork?.id ?? 'import'} creator={artwork?.creator} height={artwork?.height ?? 2.4} pending={artwork?.pending} source={artwork?.source} title={artwork?.title} width={artwork?.width ?? 2.4} /></Branch>
+    <Branch some={[artwork, dragging]} not={held?.startsWith('prop-')}><PlacementPreview key={artwork?.id ?? 'import'} creator={artwork?.creator} height={artwork?.height ?? 2.4} pending={artwork?.pending} source={artwork?.source} title={artwork?.title} width={artwork?.width ?? 2.4} /></Branch>
   </group>
 }

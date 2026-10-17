@@ -2,11 +2,12 @@ import {useFrame} from '@react-three/fiber'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 
-import PortraitLabel from '#component/levels/gallery/PortraitLabel'
-import PreviewVisual, {previewColors, previewOpacity} from '#src/components/levels/gallery/PlacementPreview/PreviewVisual.ts'
+import PortraitLabel from '#component/PortraitLabel'
 import {useGallery} from '#src/lib/gallery.ts'
 import portraitLabel, {portraitLabelLayout} from '#src/lib/gallery/portraitLabel.ts'
 import useArtworkTexture from '#src/lib/useArtworkTexture.ts'
+
+import PreviewVisual, {previewColors, previewOpacity} from './PreviewVisual.ts'
 
 export default function PlacementPreview({width, height, source, title, creator, pending}: {
   creator?: string

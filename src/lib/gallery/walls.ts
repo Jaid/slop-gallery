@@ -1,47 +1,21 @@
+import type {Wall, WallOpening} from '../placement/wallGeometry.ts'
 import type {Placement, Portrait, RoomId, Vec3} from './types.ts'
 
+import {GalleryPlacementSpace} from '../placement/GalleryPlacementSpace.ts'
 import corridor, {corridorPassage, corridorStairFloor, corridorWalls, insideCorridor} from './corridor.ts'
 import mainEntrance from './entrance.ts'
 import lobby from './lobby.ts'
-import lodge, {insideLodgeAccess, lodgeTunnel, lodgeTunnelWalls, lodgeWindow, lodgeWindowFloor, lodgeWindowGlassDistance} from './lodge.ts'
+import lodge, {insideLodgeAccess, lodgeTunnel, lodgeTunnelWalls, lodgeWindow, lodgeWindowFloor} from './lodge.ts'
 import lowerGallery, {oculusPlatform, oculusRamps, rampFloorHeight} from './lowerGallery.ts'
 import {craterTerrain} from './moonfall/CraterTerrain.ts'
 import {balconyFloorHeight} from './oculusBalcony.ts'
 import {towerFloorHeight} from './oculusTower.ts'
-import portraitLabel, {portraitLabelLayout} from './portraitLabel.ts'
 import salon from './salon.ts'
 import staircase, {insideStairway, stairFlights, stairFloorHeight, stairTurn} from './staircase.ts'
 import {tunnelDisplayWindow} from './tunnelDisplays.ts'
 
-const placementReach = 10
-
-export type WallOpening = {
-  bottom?: number
-  glassThickness?: number
-  height: number
-  profile: 'arch' | 'rectangle'
-  u: number
-  width: number
-}
-
-export type Wall = {
-  baseboardHeight?: number
-  baseboardProfile?: Array<readonly [number, number]>
-  center: Vec3
-  /** Signed bend radius, measured from the untrimmed wall plane. */
-  curveRadius?: number
-  hangable?: boolean
-  height: number
-  holes?: Array<WallOpening>
-  id: string
-  /** Solid architectural features which must remain free of hanging artwork. */
-  reservations?: Array<WallOpening>
-  room: RoomId
-  rotation: number
-  slope?: number
-  trimStyle?: 'classic' | 'none' | 'plain'
-  width: number
-}
+export type {Wall, WallOpening, WallReservation} from '../placement/wallGeometry.ts'
+export {insideOpening, obstructionIssue, openingTop, placementIssue, placementIssues, wallCoordinates, wallPosition} from '../placement/wallGeometry.ts'
 
 export const rooms = [
   {
@@ -410,20 +384,6 @@ const walls: Array<Wall> = [
   })),
 ]
 
-// This profile is shared by CSG cutters, portal trim and interaction ray tests.
-export function openingTop(hole: WallOpening, u: number, padding = 0) {
-  const radius = hole.width / 2 + padding
-  const x = Math.abs(u - hole.u)
-  if (x > radius) {
-    return -Infinity
-  }
-  return hole.profile === 'arch' ? hole.height - hole.width / 2 + Math.sqrt(Math.max(0, radius ** 2 - x ** 2)) : hole.height + padding
-}
-
-export function insideOpening(hole: WallOpening, u: number, y: number) {
-  return y >= (hole.bottom ?? 0) && y < openingTop(hole, u)
-}
-
 export function roomAt(position: Vec3): RoomId {
   if (insideCorridor(position)) {
     return 'corridor'
@@ -440,111 +400,14 @@ export function roomAt(position: Vec3): RoomId {
   }
   return tunnelContains(position) ? 'oculus' : 'lobby'
 }
-export function wallPosition(targetWall: Wall, u: number, y: number, offset = 0.22): Vec3 {
-  const sin = Math.sin(targetWall.rotation)
-  const cos = Math.cos(targetWall.rotation)
-  const radius = targetWall.curveRadius
-  const x = radius ? (radius - offset) * Math.sin(u / radius) : u
-  const z = radius ? radius - (radius - offset) * Math.cos(u / radius) : offset
-  return [targetWall.center[0] + x * cos + z * sin, y, targetWall.center[2] - x * sin + z * cos]
-}
-
-export function wallCoordinates(targetWall: Wall, [x, , z]: Vec3) {
-  const u = (x - targetWall.center[0]) * Math.cos(targetWall.rotation) - (z - targetWall.center[2]) * Math.sin(targetWall.rotation)
-  if (targetWall.curveRadius) {
-    const depth = (x - targetWall.center[0]) * Math.sin(targetWall.rotation) + (z - targetWall.center[2]) * Math.cos(targetWall.rotation)
-    return Math.atan2(u / targetWall.curveRadius, 1 - depth / targetWall.curveRadius) * targetWall.curveRadius
-  }
-  return u
-}
-
-export function placementIssue(targetWall: Wall, position: Vec3, width: number, height: number, portraits: ReadonlyArray<Portrait>, ignoreId = '') {
-  const u = wallCoordinates(targetWall, position)
-  if (targetWall.hangable === false) {
-    return 'Keep the stairway clear.'
-  }
-  // Include the frame, the physical label and a small breathing space.
-  const label = portraitLabelLayout(width, height)
-  const halfWidth = Math.max(width / 2 + 0.16, label.width / 2)
-  const bottom = position[1] + label.bottom - portraitLabel.clearance
-  const top = position[1] + height / 2 + 0.16
-  if (Math.abs(u) + halfWidth > targetWall.width / 2 - 0.24 || bottom < targetWall.center[1] + 0.48 || top > targetWall.center[1] + targetWall.height - 0.55) {
-    return 'Leave space for the frame and its label.'
-  }
-  if ([...targetWall.holes ?? [], ...targetWall.reservations ?? []].some(hole => Math.abs(u - hole.u) < halfWidth + hole.width / 2 + 0.14 && bottom < targetWall.center[1] + hole.height + 0.14 && top > targetWall.center[1] + (hole.bottom ?? 0) - 0.14)) {
-    return 'Let’s keep the doorway clear.'
-  }
-  if (portraits.some(p => p.id !== ignoreId && p.hung && p.wallId === targetWall.id && Math.abs(wallCoordinates(targetWall, p.position) - u) < halfWidth + p.width / 2 + 0.18 && top > p.position[1] + portraitLabelLayout(p.width, p.height).bottom - portraitLabel.neighborClearance && bottom < p.position[1] + p.height / 2 + 0.23)) {
-    return 'A little too close to another masterpiece.'
-  }
-  return ''
-}
-
-const wallRayDistance = (targetWall: Wall, origin: Vec3, direction: Vec3) => {
-  const sin = Math.sin(targetWall.rotation)
-  const cos = Math.cos(targetWall.rotation)
-  const facing = direction[0] * sin + direction[2] * cos
-  if (!targetWall.curveRadius) {
-    return facing < -0.0001 ? ((targetWall.center[0] - origin[0]) * sin + (targetWall.center[2] - origin[2]) * cos) / facing : Infinity
-  }
-  const radius = targetWall.curveRadius
-  const x = (origin[0] - targetWall.center[0]) * cos - (origin[2] - targetWall.center[2]) * sin
-  const z = (origin[0] - targetWall.center[0]) * sin + (origin[2] - targetWall.center[2]) * cos - radius
-  const dx = direction[0] * cos - direction[2] * sin
-  const dz = facing
-  const a = dx * dx + dz * dz
-  const b = 2 * (x * dx + z * dz)
-  const c = x * x + z * z - radius * radius
-  const discriminant = b * b - 4 * a * c
-  if (a < 1e-12 || discriminant < 0) {
-    return Infinity
-  }
-  for (const distance of [(-b - Math.sqrt(discriminant)) / (2 * a), (-b + Math.sqrt(discriminant)) / (2 * a)]) {
-    const angle = Math.atan2((x + dx * distance) / radius, -(z + dz * distance) / radius)
-    if (distance >= 0 && Math.abs(angle * radius) <= targetWall.width / 2 + 1e-9 && -dx * Math.sin(angle) + dz * Math.cos(angle) < -0.0001) {
-      return distance
-    }
-  }
-  return Infinity
-}
+/** Where artworks hang and land in the museum. */
+export const galleryPlacement = /* @__PURE__ */ new GalleryPlacementSpace(walls, {
+  contains: insideGallery,
+  floorHeight,
+})
 
 export function findPlacement(origin: Vec3, direction: Vec3, width: number, height: number, portraits: ReadonlyArray<Portrait>, ignoreId = ''): Placement | null {
-  let nearest = lodgeWindowGlassDistance(origin, direction) ?? Infinity
-  let result: Placement | null = Number.isFinite(nearest) ? {
-    inReach: nearest * Math.hypot(...direction) <= placementReach,
-    position: [origin[0] + direction[0] * nearest, origin[1] + direction[1] * nearest, origin[2] + direction[2] * nearest],
-    rotation: direction[0] < 0 ? Math.PI / 2 : -Math.PI / 2,
-    wallId: 'lodge-west',
-    valid: false,
-    reason: 'Keep the window clear.',
-  } : null
-  for (const candidateWall of walls) {
-    const distance = wallRayDistance(candidateWall, origin, direction)
-    if (distance < 0 || distance >= nearest) {
-      continue
-    }
-    const point: Vec3 = [origin[0] + direction[0] * distance, origin[1] + direction[1] * distance, origin[2] + direction[2] * distance]
-    const u = wallCoordinates(candidateWall, point)
-    if (Math.abs(u) > candidateWall.width / 2 || point[1] < candidateWall.center[1] + u * (candidateWall.slope ?? 0) || point[1] > candidateWall.center[1] + u * (candidateWall.slope ?? 0) + candidateWall.height) {
-      continue
-    }
-    if (candidateWall.holes?.some(hole => !hole.glassThickness && insideOpening(hole, u, point[1] - candidateWall.center[1]))) {
-      continue
-    }
-    nearest = distance
-    const position = wallPosition(candidateWall, u, point[1])
-    const inReach = distance * Math.hypot(...direction) <= placementReach
-    const reason = inReach ? placementIssue(candidateWall, position, width, height, portraits, ignoreId) : 'Move closer to hang this artwork.'
-    result = {
-      inReach,
-      position,
-      rotation: candidateWall.rotation - (candidateWall.curveRadius ? u / candidateWall.curveRadius : 0),
-      wallId: candidateWall.id,
-      valid: !reason,
-      reason,
-    }
-  }
-  return result
+  return galleryPlacement.findPlacement(origin, direction, width, height, portraits, ignoreId)
 }
 
 export function wallDistance(origin: Vec3, direction: Vec3) {

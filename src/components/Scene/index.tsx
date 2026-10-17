@@ -2,6 +2,7 @@ import {useFrame, useThree} from '@react-three/fiber'
 import {useEffect, useRef} from 'react'
 
 import Player from '#component/Player'
+import Portraits from '#component/Portraits'
 import WebmcpBridge from '#component/WebmcpBridge'
 import {Scene as LevelScene} from '#level/components.ts'
 import {useGallery} from '#src/lib/gallery.ts'
@@ -13,6 +14,7 @@ import Interaction from './Interaction.tsx'
 export default function Scene() {
   return <>
     <LevelScene />
+    <Portraits />
     <Player />
     <Interaction />
     <WebmcpBridge />
