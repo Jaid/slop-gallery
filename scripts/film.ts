@@ -12,14 +12,14 @@ import {createFrameSink, frameFormat} from './lib/frameSinks.ts'
 import {degrees, galleryHelp, galleryOptions, openHeadlessGallery, parseNumbers, radians, repositoryRoot, resolveGallerySetup, timestamp, waitForFrames} from './lib/headlessGallery.ts'
 import {installVirtualClock} from './lib/virtualClock.ts'
 
-const help = `Usage: bun scripts/film.ts --recipe <file> [options]
+const help = `Usage: bun scripts/film.ts [options]
 
 Renders a camera flight through a level and writes it as an animated JPEG XL, a video or a PNG sequence.
 Starts a private Vite dev server (or serves --target) and a private headless browser; never touches the visible browser.
 The engine clock is virtual: every frame advances the scene by exactly 1/fps seconds, however long it takes to render. Artworks that come into view are decoded before their frame is captured, so nothing pops in.
 
 Options:
-  --recipe <file>         JSON camera recipe, or - to read it from stdin. Required
+  --recipe <file>         JSON camera recipe, or - to read it from stdin. Default: scripts/recipes/spawn.json, a one-second metronome sway at the gallery spawn
 ${galleryHelp}
   --output-file <file>    the extension picks the format. Default: out/film/<level>-<timestamp>.jxl
                           .jxl  animated JPEG XL
@@ -49,7 +49,7 @@ A recipe is a JSON array of keyframes, ordered by time:
             ${Object.keys(tweens).join(', ')}
 
 Each property animates on its own track, so a keyframe only affects the properties it sets. Before its first keyframe and after its last, a property holds still; properties no keyframe sets stay at the player spawn’s camera.
-The video lasts until the last keyframe.
+The video lasts until the last keyframe, which is not rendered itself: 1 second at 60 fps is 60 frames, and a recipe that ends where it starts loops seamlessly.
 
 Set BROWSER to a Chromium executable with WebGPU support. ffmpeg (and cjxl for .jxl) must be on PATH.`
 const filmRoot = join(repositoryRoot, 'out', 'film')
@@ -82,10 +82,8 @@ if (values.help) {
   console.log(help)
   process.exit(0)
 }
-if (values.recipe === undefined) {
-  throw new Error('--recipe is required. See --help for its format.')
-}
-const recipeText = values.recipe === '-' ? await Bun.stdin.text() : await fs.readFile(values.recipe, 'utf8')
+const recipeFile = values.recipe ?? join(import.meta.dir, 'recipes', 'spawn.json')
+const recipeText = recipeFile === '-' ? await Bun.stdin.text() : await fs.readFile(recipeFile, 'utf8')
 const recipe = parseRecipe(JSON.parse(recipeText))
 const duration = recipeDuration(recipe)
 if (duration === 0) {
@@ -105,7 +103,7 @@ const {width, height} = setup.viewport
 if ((format === 'webm' || format === 'mkv') && (width % 2 || height % 2)) {
   throw new Error('--viewport needs even dimensions for 4:2:0 video.')
 }
-const frameCount = Math.round(duration * fps) + 1
+const frameCount = Math.max(1, Math.round(duration * fps))
 const toPose = (shot: Shot): Partial<CameraPose> => ({
   position: shot.position,
   rotation: [radians(shot.pitch), radians(shot.yaw), radians(shot.roll)],

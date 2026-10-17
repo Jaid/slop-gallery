@@ -1,0 +1,6 @@
+[
+  {"time": 0, "yaw": 179.67},
+  {"time": 0.25, "yaw": 191.67, "tween": "easeOutSine"},
+  {"time": 0.75, "yaw": 167.67, "tween": "easeInOutSine"},
+  {"time": 1, "yaw": 179.67, "tween": "easeInSine"}
+]
