@@ -1,16 +1,16 @@
-import type RuntimeKnotIconRenderer from './RuntimeKnotIconRenderer.ts'
 import type {KnotBay} from 'knot-materials/exhibition.ts'
 
 import {RigidBody} from '@react-three/rapier'
 import {loadCanvasFonts} from 'canvas-textures'
 import useCanvasTexture from 'canvas-textures/react'
 import useDisposable from 'disposable-lifetime/react'
-import {knotNumberLabel, knotPreviewX} from 'knot-materials/exhibition.ts'
+import {knotBays, knotNumberLabel} from 'knot-materials/exhibition.ts'
 import {knotBillboardPhysics} from 'knot-materials/knotBillboardPhysics.ts'
 import {knotPreviewMountY, knotPreviewPanelOffsetY, knotPreviewTextureLayout} from 'knot-materials/KnotPreviewLayout.ts'
 import {useMemo} from 'react'
 import {MeshBasicNodeMaterial} from 'three/webgpu'
 import useGraphicsMode from 'use-graphics-mode'
+import constructors from 'virtual:knot-exhibition-materials'
 
 import InteractiveObject from '#component/InteractiveObject'
 import Stand, {Sign} from '#component/levels/knottingham/KnotBillboardSupport'
@@ -18,12 +18,24 @@ import {narrate} from '#src/lib/gallery/actions.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
 import drawPreview, {knotPreviewBackground, knotPreviewCaptionFontFamily, knotPreviewCaptionFontSize, knotPreviewCaptionFontWeight} from './drawPreview.ts'
-import {releaseCanvases} from './RuntimeKnotIconRenderer.ts'
+import RuntimeKnotIconRenderer, {releaseCanvases} from './RuntimeKnotIconRenderer.ts'
+
+/** One billboard at the west end of every row, sharing one detached renderer for their Knot screenshots. */
+export function KnotPreviewSigns({x}: {
+  /** where the billboards stand, relative to their row centers */
+  x: number
+}) {
+  const heavy = useGraphicsMode()
+  const renderer = useDisposable(useMemo(() => new RuntimeKnotIconRenderer(constructors, heavy), [heavy]))
+  return knotBays.map(bay => <group key={bay.candidate.id} position={bay.center}><KnotPreviewSign bay={bay} renderer={renderer} x={x} /></group>)
+}
 
 /** Runtime billboard composed into one texture per candidate; no combined texture is persisted. */
-export default function KnotPreviewSign({bay, renderer}: {
+export default function KnotPreviewSign({bay, renderer, x}: {
   bay: KnotBay
   renderer: RuntimeKnotIconRenderer
+  /** where the billboard stands, relative to the row center */
+  x: number
 }) {
   const layout = knotPreviewTextureLayout(bay.finishes.length)
   const resolution = getGraphicsProfile(useGraphicsMode()).canvasTextureResolution
@@ -53,7 +65,7 @@ export default function KnotPreviewSign({bay, renderer}: {
     map: texture,
     toneMapped: false,
   }), [texture]))
-  return <InteractiveObject id={`preview-${bay.candidate.id}`} action='Listen' name={`preview-${bay.candidate.id}`} position={[knotPreviewX, knotPreviewMountY, 0]} rotation={[0, Math.PI / 2, 0]} title={`${bay.candidate.title} billboard`} onActivate={() => narrate(`preview-${bay.candidate.id}`)}>
+  return <InteractiveObject id={`preview-${bay.candidate.id}`} action='Listen' name={`preview-${bay.candidate.id}`} position={[x, knotPreviewMountY, 0]} rotation={[0, Math.PI / 2, 0]} title={`${bay.candidate.title} billboard`} onActivate={() => narrate(`preview-${bay.candidate.id}`)}>
     <RigidBody additionalSolverIterations={knotBillboardPhysics.solverIterations} angularDamping={knotBillboardPhysics.stand.angularDamping} ccd colliders={false} linearDamping={knotBillboardPhysics.stand.linearDamping} name='billboard-stand'>
       <Stand />
     </RigidBody>

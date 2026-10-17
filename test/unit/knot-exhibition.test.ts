@@ -139,10 +139,11 @@ describe('multi-model Knot challenge', () => {
     }
   })
   test('aligns every row to the summary-board side', () => {
+    expect(knotPreviewX).not.toBeNull()
     for (const bay of knotBays) {
       const row = knotExhibition.filter(exhibit => exhibit.candidate.id === bay.candidate.id)
       expect(row[0].position[0]).toBe(-knotRowHalfWidth)
-      expect(row[0].position[0] - knotPreviewX).toBe(6.25)
+      expect(row[0].position[0] - knotPreviewX!).toBe(6.25)
       for (const [index, exhibit] of row.entries()) {
         expect(exhibit.position[0]).toBe(-knotRowHalfWidth + index * knotSpacing)
       }
