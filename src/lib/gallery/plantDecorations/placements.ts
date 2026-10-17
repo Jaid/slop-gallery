@@ -2,17 +2,24 @@ import type {DestructiblePlantKind} from '../destructiblePlants/catalog.ts'
 import type {Vec3} from '../types.ts'
 import type {PlantKind, PotKind} from './catalog.ts'
 
+import {environmentPick} from '../../environmentSeed.ts'
 import destructiblePlants from '../destructiblePlants/catalog.ts'
 import {plants} from './catalog.ts'
 
 export type PottedPlantKind = DestructiblePlantKind | PlantKind
 export type PotPlacement = {
+  /** fixed ID of the spot, mixed with the environment seed to roll its plant */
   id: string
   position: Vec3
   pot: PotKind
 }
 
 export const pottedPlantKinds: Array<PottedPlantKind> = [...plants, ...destructiblePlants].map(plant => plant.id)
+
+/** The plant growing in the pot placement `id` in the environment of `seed`. */
+export function pottedPlantKind(seed: number, id: string) {
+  return environmentPick(seed, `potted-plant:${id}`, pottedPlantKinds)
+}
 
 export const potPlacements: Array<PotPlacement> = [
   {

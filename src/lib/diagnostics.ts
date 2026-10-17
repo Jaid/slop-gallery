@@ -45,6 +45,8 @@ export type GalleryDiagnostics = {
   room: RoomId
   rotation: EulerTuple
   saveStatus: string
+  /** the environment seed in effect, after the `?seed` override */
+  seed: number
   webGPU: boolean
 }
 type GalleryDebugApi = Partial<CaptureFrameApi> & {

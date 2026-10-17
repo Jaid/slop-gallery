@@ -61,7 +61,7 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
       }
     })
     // Wait for scene readiness below; network-idle navigation is not a rendering signal.
-    await page.goto(`${baseUrl}?ai=false&test=true`, {waitUntil: 'domcontentloaded'})
+    await page.goto(`${baseUrl}?ai=false&test=true&seed=1`, {waitUntil: 'domcontentloaded'})
     await page.waitForFunction(() => globalThis.slopGallery?.snapshot?.().ready, {timeout: 60_000})
     await page.evaluate(() => document.fonts.ready)
     await fs.ensureDir('out/live-test')
