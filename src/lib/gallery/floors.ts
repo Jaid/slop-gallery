@@ -9,6 +9,8 @@ export type FloorRectangle = {
 export type FloorRoom = (typeof rooms)[number]
 export const floorThickness = 0.24
 export const floorGlassThickness = 0.12
+/** edge length of the square floor tiles, measured from each room’s north-west corner */
+export const floorTile = 2
 
 // Split slabs and their decoration with the same cut, leaving no invisible floor
 // collider or floating grout across an opening. Rectangles never overlap.
@@ -49,12 +51,12 @@ export function roomFloorPlan(room: FloorRoom) {
   const cut = (rectangle: FloorRectangle) => subtractFloorOpening(rectangle, opening)
   const [width, depth] = room.size
   const seams: Array<FloorRectangle> = [
-    ...Array.from({length: Math.floor(width / 2) + 1}, (_, i): FloorRectangle => ({
-      center: [i * 2 - width / 2, 0],
+    ...Array.from({length: Math.floor(width / floorTile) + 1}, (_, i): FloorRectangle => ({
+      center: [i * floorTile - width / 2, 0],
       size: [0.012, depth],
     })),
-    ...Array.from({length: Math.floor(depth / 2) + 1}, (_, i): FloorRectangle => ({
-      center: [0, i * 2 - depth / 2],
+    ...Array.from({length: Math.floor(depth / floorTile) + 1}, (_, i): FloorRectangle => ({
+      center: [0, i * floorTile - depth / 2],
       size: [width, 0.012],
     })),
   ]
