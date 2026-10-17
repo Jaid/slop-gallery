@@ -14,7 +14,7 @@
         "fs-extra": "11.4.1",
       },
       "peerDependencies": {
-        "@react-three/fiber": "^10.0.0-canary.fbc659b",
+        "@react-three/fiber": "^10.0.0-alpha.6",
         "react": "^19.3.1",
         "three": "^0.186.1",
         "vite": "^8.3.4",

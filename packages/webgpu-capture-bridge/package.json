@@ -20,8 +20,8 @@
   "peerDependencies": {
     "react": "^19.3.1",
     "three": "^0.186.1",
-    "@react-three/fiber": "^10.0.0-canary.fbc659b",
-    "@react-three/tsl": "^10.0.0-canary.fbc659b"
+    "@react-three/fiber": "^10.0.0-alpha.6",
+    "@react-three/tsl": "^10.0.0-alpha.6"
   },
   "peerDependenciesMeta": {
     "react": {
