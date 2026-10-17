@@ -19,7 +19,6 @@ export default function WallSurface({wall, plaster, glass, material, surfaceMate
     moonfall: '#14282f',
     oculus: '#4b5559',
     vesper: '#658578',
-    dine: '#9295a2',
     antechamber: '#ded4b8',
     salon: '#34506a',
   }
@@ -28,7 +27,6 @@ export default function WallSurface({wall, plaster, glass, material, surfaceMate
     moonfall: '#253a40',
     oculus: '#303d42',
     vesper: '#44655a',
-    dine: '#71778b',
     salon: '#1f2f3e',
   }
   const trim = trims[surfaceRoom] ?? '#ded5c1'
