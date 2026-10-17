@@ -1,3 +1,4 @@
+import type {Wall} from '../placement/wallGeometry.ts'
 import type {Portrait, Vec3} from './types.ts'
 
 import placement from '#level/placement.ts'
@@ -9,7 +10,9 @@ import {maximumPortraits} from './imagePolicy.ts'
 type ExhibitionUpdate = {
   /** artworks of the shipped collection that first appeared with this update */
   artworks: ReadonlyArray<string>
-  /** walls that gained a walk-through opening; saved artworks in its way are moved along the wall */
+  /** Walls that moved, with the world offset they moved by. Saved artworks still hanging where the wall used to be move with it. */
+  movedWalls?: Readonly<Record<string, Vec3>>
+  /** walls that gained an opening, like a doorway or a window; saved artworks in its way are moved along the wall */
   openedWalls: ReadonlyArray<string>
 }
 
@@ -18,6 +21,12 @@ export const exhibitionUpdates: ReadonlyArray<ExhibitionUpdate> = [
   {
     artworks: ['raft', 'hamster', 'noodles', 'onion', 'wave', 'venus', 'walrus', 'penguins', 'alpacas', 'raccoons', 'wanderer', 'scream', 'corgi', 'swing', 'kiss', 'gleaners', 'gnomes', 'otter', 'jatte'],
     openedWalls: ['dine-north'],
+  },
+  {
+    // The Salon grew 12 m north to center the glass wall it shares with the Lobby.
+    artworks: [],
+    movedWalls: {'salon-north': [0, 0, -12]},
+    openedWalls: ['lobby-extension-east', 'salon-west'],
   },
 ]
 export const exhibitionRevision = exhibitionUpdates.length
@@ -42,6 +51,7 @@ export function upgradeDocument(value: unknown): unknown {
   let portraits = [...value.portraits as Array<unknown>]
   for (const update of exhibitionUpdates.slice(received)) {
     const measured = () => portraits.filter(measurable)
+    portraits = portraits.map(portrait => (measurable(portrait) ? follow(portrait, update) : portrait))
     portraits = portraits.map(portrait => {
       if (!measurable(portrait) || !portrait.hung || !update.openedWalls.includes(portrait.wallId ?? '')) {
         return portrait
@@ -83,6 +93,23 @@ export function settleDocument(value: unknown): unknown {
   }
 }
 
+/** The work moved along with its wall, if the wall moved in this update and the work still hangs where the wall used to be. */
+function follow(portrait: Portrait, update: ExhibitionUpdate): Portrait {
+  const offset = portrait.hung ? update.movedWalls?.[portrait.wallId ?? ''] : undefined
+  const wall = offset && placement.wall(portrait.wallId!)
+  if (!wall || onWall(wall, portrait.position)) {
+    return portrait
+  }
+  const position = portrait.position.map((value, i) => value + offset[i]) as Vec3
+  return onWall(wall, position) ? {
+    ...portrait,
+    position,
+  } : portrait
+}
+function onWall(wall: Wall, position: Vec3) {
+  const expected = wallPosition(wall, wallCoordinates(wall, position), position[1])
+  return Math.hypot(...expected.map((value, i) => value - position[i])) <= 0.025
+}
 /**
  * The nearest position along its wall where `portrait` hangs without any issue, searching in 5 cm steps. Falls back to standing
  * the work on the floor 60 cm in front of the wall, where the player can pick it up and hang it again.

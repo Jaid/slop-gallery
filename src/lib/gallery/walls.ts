@@ -2,6 +2,7 @@ import type {Wall, WallOpening} from '../placement/wallGeometry.ts'
 import type {Placement, Portrait, RoomId, Vec3} from './types.ts'
 
 import {GalleryPlacementSpace} from '../placement/GalleryPlacementSpace.ts'
+import {wallCoordinates} from '../placement/wallGeometry.ts'
 import corridor, {corridorPassage, corridorStairFloor, corridorWalls, insideCorridor} from './corridor.ts'
 import mainEntrance from './entrance.ts'
 import lobby from './lobby.ts'
@@ -11,6 +12,7 @@ import {craterTerrain} from './moonfall/CraterTerrain.ts'
 import {balconyFloorHeight} from './oculusBalcony.ts'
 import {towerFloorHeight} from './oculusTower.ts'
 import salon from './salon.ts'
+import salonWindow from './salonWindow.ts'
 import staircase, {insideStairway, stairFlights, stairFloorHeight, stairTurn} from './staircase.ts'
 import {tunnelDisplayWindow} from './tunnelDisplays.ts'
 
@@ -206,6 +208,20 @@ const roomWall = (roomId: RoomId, side: 'east' | 'north' | 'south' | 'west', hol
   }
   return result
 }
+/** The wall with the cast-glass window between the Lobby and the Salon cut into it; the glass itself stands in the shared plane. */
+const withSalonWindow = (target: Wall): Wall => ({
+  ...target,
+  holes: [
+    ...target.holes ?? [],
+    {
+      u: wallCoordinates(target, [salonWindow.x, 0, salonWindow.z]),
+      width: salonWindow.width,
+      bottom: salonWindow.bottom,
+      height: salonWindow.top,
+      profile: 'rectangle',
+    },
+  ],
+})
 const doorway: Array<WallOpening> = [
   {
     u: -3,
@@ -221,7 +237,7 @@ const walls: Array<Wall> = [
   },
   // Keep the original side walls and doorways fixed; extend only their north ends.
   wall('lobby-extension-west', 'lobby', -lobby.width / 2, (lobby.northZ + lobby.previousNorthZ) / 2, Math.PI / 2, lobby.previousNorthZ - lobby.northZ),
-  wall('lobby-extension-east', 'lobby', lobby.width / 2, (lobby.northZ + lobby.previousNorthZ) / 2, -Math.PI / 2, lobby.previousNorthZ - lobby.northZ),
+  withSalonWindow(wall('lobby-extension-east', 'lobby', lobby.width / 2, (lobby.northZ + lobby.previousNorthZ) / 2, -Math.PI / 2, lobby.previousNorthZ - lobby.northZ)),
   wall('lobby-west', 'lobby', -8, 0, Math.PI / 2, 16, doorway),
   wall('lobby-east', 'lobby', 8, 0, -Math.PI / 2, 16, [
     {
@@ -264,7 +280,7 @@ const walls: Array<Wall> = [
   roomWall('salon', 'north'),
   roomWall('salon', 'east'),
   roomWall('salon', 'south', [salon.doorway]),
-  roomWall('salon', 'west'),
+  withSalonWindow(roomWall('salon', 'west')),
   wall('antechamber-north', 'antechamber', 0, 8, 0, 8, [
     {
       u: 0,

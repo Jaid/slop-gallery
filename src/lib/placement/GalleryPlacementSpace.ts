@@ -3,6 +3,7 @@ import type {PlacementObstruction} from './base/PlacementSpace.ts'
 import type {Wall} from './wallGeometry.ts'
 
 import {lodgeWindowGlassDistance} from '../gallery/lodge.ts'
+import {salonWindowGlassDistance} from '../gallery/salonWindow.ts'
 import {PlacementSpace} from './base/PlacementSpace.ts'
 
 /**
@@ -28,19 +29,30 @@ export class GalleryPlacementSpace extends PlacementSpace {
     return this.level.floorHeight(position)
   }
 
-  /** The Lodge window’s glass stops the aim before the tunnel walls behind it. */
+  /** The glass of the Lodge window and of the window between the Lobby and the Salon stops the aim before the walls behind it. */
   protected override obstruction(origin: Vec3, direction: Vec3): PlacementObstruction | null {
-    const distance = lodgeWindowGlassDistance(origin, direction)
-    if (distance === undefined) {
+    const panes = [
+      {
+        distance: lodgeWindowGlassDistance(origin, direction),
+        wallId: 'lodge-west',
+      },
+      {
+        distance: salonWindowGlassDistance(origin, direction),
+        wallId: direction[0] < 0 ? 'salon-west' : 'lobby-extension-east',
+      },
+    ]
+    const pane = panes.filter(candidate => candidate.distance !== undefined).toSorted((a, b) => a.distance! - b.distance!).at(0)
+    if (!pane) {
       return null
     }
+    const distance = pane.distance!
     return {
       distance,
       placement: {
         inReach: distance * Math.hypot(...direction) <= this.reach,
         position: [origin[0] + direction[0] * distance, origin[1] + direction[1] * distance, origin[2] + direction[2] * distance],
         rotation: direction[0] < 0 ? Math.PI / 2 : -Math.PI / 2,
-        wallId: 'lodge-west',
+        wallId: pane.wallId,
         valid: false,
         reason: 'Keep the window clear.',
       },

@@ -42,14 +42,16 @@ export default function SalonRoom({glass, stone, wood}: {
     metalness: 0.2,
     roughness: 0.7,
   }), []))
-  const laylight = useDisposable(useMemo(() => new LaylightGlassMaterial(salonLaylight.opening / salonLaylight.panes, [room.center[0] - salonLaylight.opening / 2, room.center[1] - salonLaylight.opening / 2]), []))
+  // Both laylights lie a whole number of panes apart, so one pane grid serves them both.
+  const laylight = useDisposable(useMemo(() => new LaylightGlassMaterial(salonLaylight.opening / salonLaylight.panes, [room.center[0] - salonLaylight.opening / 2, room.center[1] + salonLaylight.centers[0] - salonLaylight.opening / 2]), []))
   return <group name='salon'>
     <group position={[room.center[0], 0, room.center[1]]}>
       <RigidBody colliders={false} type='fixed'>
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]} />
       </RigidBody>
       <RoomFloor glass={glass} room={room} stone={stone} wood={wood} />
-      <Laylight gilt={gilt} glass={laylight} ironwork={ironwork} plaster={plaster} />
+      <Box material={plaster} position={[0, salonCeiling.y, 0]} size={[room.size[0], salonCeiling.thickness, room.size[1]]} />
+      {salonLaylight.centers.map(z => <Laylight key={z} gilt={gilt} glass={laylight} ironwork={ironwork} plaster={plaster} z={z} />)}
       {salonLightOffsets.map(z => <pointLight key={z} castShadow={z < 0} color='#f6f1e6' decay={2} distance={14} intensity={32} position={[0, salonLightY, z]} shadow-mapSize={[1024, 1024]} shadow-normalBias={0.03} />)}
     </group>
     {salonWalls.map(wall => <WallDressing key={wall.id} dado={dado} gilt={gilt} wall={wall} />)}
@@ -57,18 +59,19 @@ export default function SalonRoom({glass, stone, wood}: {
   </group>
 }
 
-function Laylight({gilt, glass, ironwork, plaster}: {
+function Laylight({gilt, glass, ironwork, plaster, z}: {
   gilt: Material
   glass: Material
   ironwork: Material
   plaster: Material
+  /** offset of its center from the room center along z */
+  z: number
 }) {
   const {barDepth, barWidth, depth, frame, opening, panes} = salonLaylight
   const half = opening / 2
   const beamY = salonCeiling.underside - depth / 2
   const bars = Array.from({length: panes - 1}, (_, i) => -half + (i + 1) * opening / panes)
-  return <group name='salon-laylight'>
-    <Box material={plaster} position={[0, salonCeiling.y, 0]} size={[room.size[0], salonCeiling.thickness, room.size[1]]} />
+  return <group name='salon-laylight' position={[0, 0, z]}>
     {/* The coffer ring hangs below the slab and frames the glass, with a gilt bead along its lower inner edge. */}
     {[-1, 1].map(side => <group key={side}>
       <Box material={plaster} position={[0, beamY, side * (half + frame / 2)]} size={[opening + frame * 2, depth, frame]} />

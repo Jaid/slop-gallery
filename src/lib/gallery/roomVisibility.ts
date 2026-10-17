@@ -63,6 +63,11 @@ const openings: Array<{
     rooms: ['lodge', 'corridor'],
     holes: [['lodge-west', 1], ['corridor-wall-5', 0]],
   },
+  {
+    // The glass wall between the Lobby extension and the Salon.
+    rooms: ['lobby', 'salon'],
+    holes: [['lobby-extension-east', 0], ['salon-west', 0]],
+  },
 ]
 const holeBox = (wallId: string, index: number) => {
   const wall = walls.find(value => value.id === wallId)

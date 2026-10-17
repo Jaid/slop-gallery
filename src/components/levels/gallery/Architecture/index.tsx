@@ -24,6 +24,7 @@ import OculusRoom from '#component/levels/gallery/OculusRoom'
 import PottedPlants from '#component/levels/gallery/PottedPlants'
 import RoomFloor from '#component/levels/gallery/RoomFloor'
 import SalonRoom from '#component/levels/gallery/SalonRoom'
+import SalonWindow from '#component/levels/gallery/SalonWindow'
 import SiennaRoom from '#component/levels/gallery/SiennaRoom'
 import {surfaceTexture} from '#src/components/Scene/materials.ts'
 import Box from '#src/components/Scene/primitives.tsx'
@@ -173,6 +174,7 @@ export default function Architecture() {
     <LodgeCorridorRoute corridorLining={corridorWood} material={castleStone} />
     <SiennaRoom joinery={joinery} />
     <SalonRoom glass={glass.lobby} stone={stone} wood={wood} />
+    <SalonWindow glass={glass.salon} />
     <GalleryStairs />
     <MoonfallRoom stone={stone} />
     <OculusRoom material={oculusMaterial} />

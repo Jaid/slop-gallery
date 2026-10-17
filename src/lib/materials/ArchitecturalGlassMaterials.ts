@@ -4,6 +4,7 @@ import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import {floorGlassThickness} from '../gallery/floors.ts'
 import {lodgeWindow} from '../gallery/lodge.ts'
+import {salonWindow} from '../gallery/salonWindow.ts'
 import CastFloorGlassMaterial from './CastFloorGlassMaterial.ts'
 import ClearGlassMaterial from './ClearGlassMaterial.ts'
 import CrownGlassMaterial from './CrownGlassMaterial.ts'
@@ -12,11 +13,13 @@ import {lodgeWindowLights} from './lights/index.ts'
 export type ArchitecturalGlassMaterials = {
   cabin: Material
   lobby: Material
+  /** the glass wall between the Lobby and the Salon, cast like the Lobby’s floor window */
+  salon: Material
   tunnel: Material
 }
 
-/** Edge length of the cast pavers in the lobby’s 8 m floor window. */
-const floorGlassTileSize = 1
+/** Edge length of the cast pavers in the lobby’s 8 m floor window and in the glass wall beside it. */
+const floorGlassTileSize = salonWindow.tileSize
 const createFastMaterials = (): ArchitecturalGlassMaterials => {
   const material = new MeshStandardNodeMaterial({
     color: '#afd0d4',
@@ -41,6 +44,7 @@ const createFastMaterials = (): ArchitecturalGlassMaterials => {
   return {
     cabin: material,
     lobby: material,
+    salon: material,
     tunnel,
   }
 }
@@ -71,6 +75,7 @@ export function createArchitecturalGlassMaterials(isHeavy: boolean): Architectur
       thickness: floorGlassThickness,
       tileSize: floorGlassTileSize,
     }),
+    salon: createSalonWindowGlass(),
     // Low-iron museum display glass whose anti-reflective coating leaves a faint violet and green sheen at grazing angles.
     tunnel: new ClearGlassMaterial({
       name: 'tunnel-glass-heavy',
@@ -88,4 +93,21 @@ export function disposeArchitecturalGlassMaterials(materials: ArchitecturalGlass
   for (const material of new Set(Object.values(materials))) {
     material.dispose()
   }
+}
+
+/**
+ * The Lobby’s cast pavers, set upright between the Lobby and the Salon.
+ *
+ * Its own instance because it leaves the depth buffer alone: the pane refracts only opaque surfaces, so seen from the Salon it
+ * would replace the floor window behind it with the Oculus below. Drawn before every other transparent surface and without depth,
+ * the floor window still draws over it.
+ */
+function createSalonWindowGlass() {
+  const material = new CastFloorGlassMaterial({
+    thickness: salonWindow.thickness,
+    tileSize: salonWindow.tileSize,
+  })
+  material.name = 'salon-window-glass-heavy'
+  material.depthWrite = false
+  return material
 }
