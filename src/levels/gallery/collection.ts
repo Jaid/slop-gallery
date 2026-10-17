@@ -300,7 +300,7 @@ const initialPortraits: Array<Portrait> = [
     position: [
       14,
       2.95,
-      -19.78,
+      -31.78,
     ],
     rotation: 0,
     width: 3.1976,
@@ -317,7 +317,7 @@ const initialPortraits: Array<Portrait> = [
     position: [
       9.9,
       2.08,
-      -19.78,
+      -31.78,
     ],
     rotation: 0,
     width: 0.8803,
@@ -334,7 +334,7 @@ const initialPortraits: Array<Portrait> = [
     position: [
       9.9,
       4.1,
-      -19.78,
+      -31.78,
     ],
     rotation: 0,
     width: 1.7333,
@@ -351,7 +351,7 @@ const initialPortraits: Array<Portrait> = [
     position: [
       18.1,
       2.08,
-      -19.78,
+      -31.78,
     ],
     rotation: 0,
     width: 0.8803,
@@ -368,7 +368,7 @@ const initialPortraits: Array<Portrait> = [
     position: [
       18.1,
       4.1,
-      -19.78,
+      -31.78,
     ],
     rotation: 0,
     width: 1.95,
@@ -419,7 +419,7 @@ const initialPortraits: Array<Portrait> = [
     position: [
       19.78,
       2.9,
-      -17.9,
+      -28,
     ],
     rotation: -1.5707963267948966,
     width: 1.2805,
@@ -504,7 +504,7 @@ const initialPortraits: Array<Portrait> = [
     position: [
       8.22,
       2.9,
-      -17.9,
+      -28,
     ],
     rotation: 1.5707963267948966,
     width: 1.2004,

@@ -12,6 +12,7 @@ import lowerGallery, {oculusPlatform, oculusRamps} from '#src/lib/gallery/lowerG
 import {moonfallCrater} from '#src/lib/gallery/moonfall/config.ts'
 import oculusBalcony from '#src/lib/gallery/oculusBalcony.ts'
 import oculusTower, {towerRampHalfWidth, towerRampSections} from '#src/lib/gallery/oculusTower.ts'
+import salonWindow from '#src/lib/gallery/salonWindow.ts'
 import staircase, {stairBlocks, stairTurn} from '#src/lib/gallery/staircase.ts'
 import tunnelDisplays from '#src/lib/gallery/tunnelDisplays.ts'
 
@@ -62,7 +63,7 @@ export default function Map({css}: {css: Record<string, string>}) {
     notify(`Welcome to ${room.title}.`)
   }
   return <>
-    <p className={css.intro}>Ten rooms across the upper and lower galleries. The Salon lies through the arch in Dine’s north wall. The Oculus’s raised north platform leads through a stone tunnel to the Lodge. The Corridor follows the timber return route from the Lodge to Sienna.</p>
+    <p className={css.intro}>Ten rooms across the upper and lower galleries. The Salon lies through the arch in Dine’s north wall, behind a glass wall in the Lobby. The Oculus’s raised north platform leads through a stone tunnel to the Lodge. The Corridor follows the timber return route from the Lodge to Sienna.</p>
     {levels.map(level => <div key={String(level.lower)} className={css.level}>
       <h3>{level.lower ? 'Lower level' : 'Upper level'}</h3>
       <svg aria-label={level.lower ? 'Moonfall below the Antechamber, connected north by tunnel to the Oculus beneath the glass floor' : 'Upper gallery and U-turn stairs from the Antechamber'} role='img' viewBox={`0 0 ${level.width} ${level.height}`}>
@@ -109,6 +110,7 @@ export default function Map({css}: {css: Record<string, string>}) {
           <path aria-label='Closed main entrance' d={`M ${level.x(-1.65)} ${level.y(lobby.northZ)} H ${level.x(1.65)}`} stroke='#8d7044' strokeWidth='4' />
           <rect fill='#adced0' height={lobby.opening.size[1] * scale} stroke='#6b969e' width={lobby.opening.size[0] * scale} x={level.x(lobby.opening.center[0] - lobby.opening.size[0] / 2)} y={level.y(lobby.opening.center[1] - lobby.opening.size[1] / 2)} />
           <text fill='#355c63' fontSize='11' textAnchor='middle' x={level.x(lobby.opening.center[0])} y={level.y(lobby.opening.center[1])}>GLASS FLOOR</text>
+          <path aria-label='Glass wall between the Lobby and the Salon' d={`M ${level.x(salonWindow.x) - 2} ${level.y(salonWindow.z - salonWindow.width / 2)} V ${level.y(salonWindow.z + salonWindow.width / 2)}`} stroke='#6b969e' strokeWidth='4' />
         </g></Branch>
       </svg>
     </div>)}

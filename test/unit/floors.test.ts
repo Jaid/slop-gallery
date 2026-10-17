@@ -60,8 +60,9 @@ describe('rectangular floor openings', () => {
     expect(visit.position[2]).toBeCloseTo(5.6)
     expect(insideGallery([7, 1.7, -20])).toBe(true)
     expect(insideGallery([0, 1.7, -31])).toBe(true)
-    // Beyond the extension’s east wall: the Salon starts at z = −20, north of it is outside.
-    expect(insideGallery([9, 1.7, -24])).toBe(false)
+    // Beyond the extension’s east wall lies the Salon, as deep as the extension; north of both is outside.
+    expect(insideGallery([9, 1.7, -24])).toBe(true)
+    expect(insideGallery([9, 1.7, -32.5])).toBe(false)
     expect(walls.find(wall => wall.id === 'lobby-north')!.center).toEqual([0, 0, -32])
     for (const side of ['west', 'east']) {
       const extension = walls.find(wall => wall.id === `lobby-extension-${side}`)!

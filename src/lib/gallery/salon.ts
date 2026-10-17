@@ -1,13 +1,17 @@
 import type {Vec3} from './types.ts'
 import type {Wall, WallOpening} from './walls.ts'
 
+import salonWindow from './salonWindow.ts'
+
+/** Dine’s north wall, which the Salon’s south wall backs onto */
+const southZ = -8
 /**
- * The Salon sits north of Dine, behind the arch in Dine’s north wall. Its west wall backs onto the Lobby’s east extension; the
- * Oculus ceiling below never reaches under it.
+ * The Salon sits north of Dine, behind the arch in Dine’s north wall. Its west wall backs onto the Lobby’s east extension and
+ * reaches as far north on either side of the glass wall between them, keeping the window centered on it.
  */
 const salon = {
-  center: [14, -14],
-  size: [12, 12],
+  center: [14, salonWindow.z],
+  size: [12, (southZ - salonWindow.z) * 2],
   /** shared by Dine’s north wall and the Salon’s south wall; both are centered on x = 14 */
   doorway: {
     u: 0,
@@ -29,10 +33,12 @@ export const salonCeiling = {
 } as const
 
 /**
- * A laylight: a field of frosted panes in the middle of the ceiling, held by a deep coffered frame. All values are in meters,
- * relative to the room center.
+ * Two laylights along the room’s long axis: fields of frosted panes, each held by a deep coffered frame, with a plain plaster band
+ * between them above the glass wall. All values are in meters, relative to the room center.
  */
 export const salonLaylight = {
+  /** z offsets of the laylights’ centers, a quarter of the room’s depth from either end */
+  centers: [-salon.size[1] / 4, salon.size[1] / 4],
   /** clear glazed opening, square */
   opening: 6,
   /** width of the coffer beams around the opening */
@@ -91,10 +97,11 @@ export const salonBench = {
 export const salonBenchLegs = [-1, 1].flatMap(x => [-1, 1].map(z => [x * (salonBench.width / 2 - 0.12), z * (salonBench.depth / 2 - 0.12)] as const))
 
 /**
- * Point lights below the laylight, as room-relative z offsets, at `salonLightY`. They stay well inside the coffer so its gilt bead
- * never sits close enough to a lamp to flare. The northern one casts shadows, throwing the ottoman’s toward the doorway, where visitors see it.
+ * Point lights below the laylights, as room-relative z offsets, at `salonLightY`: one centered under each, so their coffers’ gilt
+ * beads never sit close enough to a lamp to flare. The northern one casts shadows, throwing the ottoman’s toward the doorway, where
+ * visitors see it.
  */
-export const salonLightOffsets = [-1.5, 1.5] as const
+export const salonLightOffsets = salonLaylight.centers
 export const salonLightY = 4.5
 
 /**
