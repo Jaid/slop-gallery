@@ -1,5 +1,5 @@
 import {useFrame, useThree} from '@react-three/fiber'
-import {useEffect, useRef} from 'react'
+import {useEffect, useLayoutEffect, useRef} from 'react'
 
 import Player from '#component/Player'
 import WebmcpBridge from '#component/WebmcpBridge'
@@ -29,7 +29,8 @@ function Ready() {
   const scene = useThree(state => state.scene)
   const galleryRenderer = renderer instanceof GalleryRenderer ? renderer : null
   useEffect(() => () => useGallery.setState({ready: false}), [])
-  useEffect(() => {
+  // A layout effect runs before the first frame draws the scene. A passive one can wait until after that frame, which then compiles every pipeline of the scene synchronously.
+  useLayoutEffect(() => {
     if (!galleryRenderer) {
       return
     }
