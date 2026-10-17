@@ -46,12 +46,12 @@ describe('the Salon', () => {
       const overlapZ = Math.min(room.center[1] + room.size[1] / 2, other.center[1] + other.size[1] / 2) - Math.max(room.center[1] - room.size[1] / 2, other.center[1] - other.size[1] / 2)
       expect(Math.min(overlapX, overlapZ)).toBeLessThanOrEqual(0)
     }
-    for (const [x, z] of [[8.5, -19.5], [19.5, -8.5], [14, -14]]) {
+    for (const [x, z] of [[8.5, -19.5], [19.5, -8.5], [14, -14], [8.5, -31.5], [19.5, -31.5]]) {
       expect(roomAt([x, 1.7, z])).toBe('salon')
       expect(floorHeight([x, 1.7, z])).toBe(0)
     }
     expect(insideGallery([20.5, 1.7, -14])).toBe(false)
-    expect(insideGallery([14, 1.7, -20.5])).toBe(false)
+    expect(insideGallery([14, 1.7, -32.5])).toBe(false)
   })
   test('the floor-plan visit lands inside the Salon, looking at its north wall', () => {
     const visit = roomVisit(room)
@@ -117,13 +117,21 @@ describe('the Salon', () => {
     expect(Math.abs(position[0] - room.center[0]) + width / 2).toBeLessThan(room.size[0] / 2 - 3)
     expect(salonBench.seatHeight).toBeCloseTo(0.49, 5)
   })
-  test('the laylight hangs inside the room, under its slab and above every lamp', () => {
-    const {depth, frame, glassY, opening} = salonLaylight
+  test('the laylights hang inside the room, apart, under its slab and each above its lamp', () => {
+    const {centers, depth, frame, glassY, opening, panes} = salonLaylight
     expect(opening / 2 + frame).toBeLessThan(room.size[0] / 2)
+    expect(centers).toHaveLength(2)
+    for (const z of centers) {
+      expect(Math.abs(z) + opening / 2 + frame).toBeLessThan(room.size[1] / 2)
+    }
+    // Their coffers don’t touch, and they share one pane grid.
+    expect(centers[1] - centers[0]).toBeGreaterThan(opening + frame * 2)
+    expect((centers[1] - centers[0]) / (opening / panes) % 1).toBeCloseTo(0, 9)
     expect(glassY).toBeLessThan(salonCeiling.underside)
     expect(salonCeiling.underside - depth).toBeGreaterThan(salonLightY + 0.6)
+    expect(salonLightOffsets).toHaveLength(centers.length)
     for (const z of salonLightOffsets) {
-      expect(Math.abs(z)).toBeLessThan(opening / 2)
+      expect(centers.some(center => Math.abs(z - center) < opening / 2)).toBe(true)
     }
   })
   test('wainscot runs stop at the arch trim and fit between the corners', () => {
