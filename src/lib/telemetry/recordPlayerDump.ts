@@ -2,14 +2,13 @@ import type {EgoDump} from 'ego-player'
 
 import {playSoundEffect} from '../audio/soundEffects.ts'
 import SoundEngine from '../audio/SoundEngine.ts'
-import {readDevelopmentMode} from '../developmentMode.ts'
+import {isDevelopmentMode} from '../developmentMode.ts'
 import {useGallery} from '../gallery.ts'
 import {galleryLevel} from '../level.ts'
 import {telemetry} from './index.ts'
 import saveDumpScreenshot from './saveDumpScreenshot.ts'
 
-const isDevelopmentMode = readDevelopmentMode()
-
+/** Log an X-key dump, confirm it audibly and download the current frame. Only wired up in development mode, see `playerDumpHandler`. */
 export default function recordPlayerDump(dump: EgoDump) {
   const {room, active, held, inspecting, locked} = useGallery.getState()
   const context = {
@@ -30,11 +29,9 @@ export default function recordPlayerDump(dump: EgoDump) {
       console.warn('Dump confirmation sound could not be played.', error)
     })
   }
-  if (isDevelopmentMode) {
-    saveDumpScreenshot(`${galleryLevel}-${dump.id}`).catch(error => {
-      console.warn('Dump screenshot could not be captured.', error)
-    })
-  }
+  saveDumpScreenshot(`${galleryLevel}-${dump.id}`).catch(error => {
+    console.warn('Dump screenshot could not be captured.', error)
+  })
   if (!telemetry) {
     return
   }
@@ -67,6 +64,9 @@ export default function recordPlayerDump(dump: EgoDump) {
     })
   }
 }
+
+/** The player’s `onDump` handler: X only dumps with `?development`, otherwise ego-player ignores the key and skips its diagnostic raycaster. */
+export const playerDumpHandler = isDevelopmentMode ? recordPlayerDump : undefined
 
 async function confirmDump() {
   const sound = SoundEngine.get()

@@ -7,7 +7,7 @@ import {BoxGeometry, Mesh, MeshBasicMaterial, PerspectiveCamera, Scene} from 'th
 
 import EgoDiagnostics from '../../packages/ego-player/src/EgoDiagnostics.ts'
 
-test('player dumps preserve precision, join separate hit logs and respect disabled telemetry', async () => {
+test('player dumps are development-only, preserve precision, join separate hit logs and respect disabled telemetry', async () => {
   const source = resolve(import.meta.dir, '../../src/lib/telemetry/recordPlayerDump.ts')
   const scene = new Scene
   const camera = new PerspectiveCamera
@@ -21,7 +21,7 @@ test('player dumps preserve precision, join separate hit logs and respect disabl
   const dir = spyOn(console, 'dir').mockImplementation(() => {})
   const warn = spyOn(console, 'warn').mockImplementation(() => {})
   try {
-    for (const [enabled, sound, audioFails] of [[true, true, false], [false, true, false], [true, false, false], [false, false, false], [true, true, true], [false, true, true]]) {
+    for (const [enabled, sound, audioFails, development] of [[true, true, false, true], [false, true, false, true], [true, false, false, true], [false, false, false, true], [true, true, true, true], [false, true, true, true], [true, true, false, false]]) {
       const build = await Bun.build({
         entrypoints: [source],
         target: 'bun',
@@ -31,7 +31,7 @@ test('player dumps preserve precision, join separate hit logs and respect disabl
             setup(builder) {
               builder.onLoad({filter: /recordPlayerDump\.ts$/u}, async () => ({
                 loader: 'ts',
-                contents: `${await Bun.file(source).text()}\nexport {telemetry}; export {played} from "../audio/soundEffects.ts"; export {default as SoundEngine} from "../audio/SoundEngine.ts"`,
+                contents: `${await Bun.file(source).text()}\nexport {telemetry}; export {played} from "../audio/soundEffects.ts"; export {default as SoundEngine} from "../audio/SoundEngine.ts"; export {screenshots} from "./saveDumpScreenshot.ts"`,
               }))
               builder.onLoad({filter: /telemetry[/\\]index\.ts$/u}, () => ({
                 loader: 'ts',
@@ -49,6 +49,14 @@ test('player dumps preserve precision, join separate hit logs and respect disabl
                 loader: 'ts',
                 contents: 'export const played = []; export const playSoundEffect = (_sound, id) => played.push(id)',
               }))
+              builder.onLoad({filter: /lib[/\\]developmentMode\.ts$/u}, () => ({
+                loader: 'ts',
+                contents: `export const isDevelopmentMode = ${development}`,
+              }))
+              builder.onLoad({filter: /telemetry[/\\]saveDumpScreenshot\.ts$/u}, () => ({
+                loader: 'ts',
+                contents: 'export const screenshots = []; export default async name => {screenshots.push(name)}',
+              }))
               builder.onLoad({filter: /lib[/\\]level\.ts$/u}, () => ({
                 loader: 'ts',
                 contents: "export const galleryLevel = 'knottingham'",
@@ -61,6 +69,8 @@ test('player dumps preserve precision, join separate hit logs and respect disabl
       const module = await import(`data:text/javascript;base64,${Buffer.from(await build.outputs[0].text()).toBase64()}`) as {
         default: (dump: EgoDump) => void
         played: Array<string>
+        playerDumpHandler: ((dump: EgoDump) => void) | undefined
+        screenshots: Array<string>
         SoundEngine: {requests: number}
         telemetry: {
           records: Array<[string, {
@@ -69,8 +79,15 @@ test('player dumps preserve precision, join separate hit logs and respect disabl
           }]>
         } | null
       }
-      module.default(dump)
+      if (!development) {
+        // Without ?development the player gets no handler, so X stays unbound and ego-player skips its diagnostics.
+        expect(module.playerDumpHandler).toBeUndefined()
+        continue
+      }
+      expect(module.playerDumpHandler).toBe(module.default)
+      module.playerDumpHandler!(dump)
       await Bun.sleep(0)
+      expect(module.screenshots).toEqual([`knottingham-${dump.id}`])
       expect(module.played).toEqual(sound && !audioFails ? ['SFX-04'] : [])
       expect(module.SoundEngine.requests).toBe(sound ? 1 : 0)
       expect(dir).toHaveBeenLastCalledWith({

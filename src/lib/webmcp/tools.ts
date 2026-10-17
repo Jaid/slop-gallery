@@ -30,7 +30,7 @@ export default function createWebmcpTools(getBridge: () => WebmcpBridge): Array<
     {
       name: 'get_telemetry',
       title: 'Inspect telemetry delivery',
-      description: 'Read the current session ID, collection limits and Victoria delivery status, or null when telemetry is disabled. Use the session ID to correlate VictoriaLogs, VictoriaMetrics, VictoriaTraces and X-key ego.dump records. Does not enable telemetry or send data.',
+      description: 'Read the current session ID, collection limits and Victoria delivery status, or null when telemetry is disabled. Use the session ID to correlate VictoriaLogs, VictoriaMetrics, VictoriaTraces and X-key ego.dump records (X dumps only with ?development). Does not enable telemetry or send data.',
       read: () => getBridge().getTelemetry(),
     },
     {
