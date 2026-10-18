@@ -5,6 +5,7 @@
     "": {
       "name": "use-narrator",
       "dependencies": {
+        "compose-id": "0.2.0",
         "use-audio-queue": "workspace:*",
       },
       "peerDependencies": {
@@ -18,7 +19,7 @@
       "name": "use-audio-queue",
       "version": "0.1.0",
       "peerDependencies": {
-        "react": "latest",
+        "react": "^19.3.1",
       },
       "optionalPeers": [
         "react",
@@ -26,6 +27,10 @@
     },
   },
   "packages": {
+    "compose-id": ["compose-id@0.2.0", "", { "dependencies": { "flatten-string": "^0.1.0" } }, "sha512-i1JRNBEi3fKjGyTCF/bspdlHh9Lpy9IEpKqMey0FvAuoDnaT3ulbCKIwWjiGkpNjmrEcjCW3HbTShvVMdRS3Rw=="],
+
+    "flatten-string": ["flatten-string@0.1.0", "", {}, "sha512-HE080piHX8dkviOoIOwgL7AbhAuswgZtsMwM5pr096dEwlHI21L72zcuVdzCwIZL0VX3UBI9//QQ9odWVfou/g=="],
+
     "use-audio-queue": ["use-audio-queue@workspace:packages/use-audio-queue"],
   }
 }
