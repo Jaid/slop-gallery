@@ -49,7 +49,7 @@ Place the provider above both the settings UI and the scene. Three Fiber bridges
 
 Selectors run during rendering and must be pure. Select existing values or resource factories, then instantiate selected factories inside lifecycle-aware hooks. Dispose owned GPU resources on replacement or unmount. Renderer constructor-only options cannot be made reactive by this package; keep them stable or implement an explicit renderer transition.
 
-URL parsing, persistence, defaults, labels, frame budgets and material art direction belong to the consumer. Slop Gallery serializes `?graphics=fast` or `?graphics=heavy` through `getName`. It defaults to fast and disables procedural dirt/pot noise and ground reflections in that mode. Renderer scale defaults to 1× in fast mode and the device pixel ratio in heavy mode; `?scale=N` overrides either profile with any finite positive value.
+URL parsing, persistence, defaults, labels, frame budgets and material art direction belong to the consumer. Slop Gallery serializes `?graphics=fast` or `?graphics=heavy` through `getName`. It defaults to fast and disables procedural dirt/pot noise and ground reflections in that mode. The renderer draws one pixel per physical display pixel in both modes, independent of browser zoom; `?scale=N` multiplies that by any finite positive value.
 
 ## Development
 

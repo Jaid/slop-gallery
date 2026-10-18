@@ -6,14 +6,15 @@ import Scene from '#component/Scene'
 import {playerSession} from '#src/lib/gallery/PlayerSession.ts'
 import {createGalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
-import {readScale} from '#src/lib/rendering/scale.ts'
+import {readScale, useZoomIndependentDpr} from '#src/lib/rendering/scale.ts'
 
 import controls from './controls.ts'
 import GameScene from './GameScene.tsx'
 
 export default function World() {
   const profile = useGraphicsModeValue(getGraphicsProfile)
-  const [scaleOverride] = useState(() => readScale())
+  const [scale] = useState(() => readScale() ?? 1)
+  const dpr = useZoomIndependentDpr(scale)
   const [initial] = useState(() => playerSession.snapshot())
   return <Game
     camera={{
@@ -21,6 +22,6 @@ export default function World() {
       position: [initial.position[0], initial.position[1] + 1.6, initial.position[2]],
       near: 0.05,
       far: 90,
-    }} controls={controls} dpr={scaleOverride ?? profile.dpr} physics renderer={createGalleryRenderer} sceneWrapper={GameScene} shadows={profile.shadows}
+    }} controls={controls} dpr={dpr} physics renderer={createGalleryRenderer} sceneWrapper={GameScene} shadows={profile.shadows}
   ><Scene /></Game>
 }

@@ -23,7 +23,6 @@ const graphicsModeSchema = optis({
 type GraphicsProfile = {
   /** backing pixels per logical texel for runtime canvas textures such as signs */
   canvasTextureResolution: number
-  dpr: number
   floorReflections: boolean
   noiseTextures: boolean
   postprocessing: boolean
@@ -36,7 +35,6 @@ export function readGraphicsMode(input: URL | string = typeof location === 'unde
 
 const fastProfile: GraphicsProfile = {
   canvasTextureResolution: 0.5,
-  dpr: 1,
   noiseTextures: false,
   floorReflections: false,
   shadows: false,
@@ -44,10 +42,6 @@ const fastProfile: GraphicsProfile = {
 }
 const heavyProfile: GraphicsProfile = {
   canvasTextureResolution: 1,
-  get dpr() {
-    const deviceDpr: unknown = Reflect.get(globalThis, 'devicePixelRatio')
-    return typeof deviceDpr === 'number' ? deviceDpr : 1
-  },
   noiseTextures: true,
   floorReflections: true,
   shadows: true,
