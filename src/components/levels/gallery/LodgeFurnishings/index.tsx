@@ -1,4 +1,3 @@
-import type {Vec3} from '#src/lib/gallery/types.ts'
 import type LodgeMaterials from '#src/lib/materials/LodgeMaterials.ts'
 
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
@@ -7,26 +6,20 @@ import {useMemo} from 'react'
 import useGraphicsMode from 'use-graphics-mode'
 
 import lodge from '#src/lib/gallery/lodge.ts'
-import CandlestickGeometry from '#src/lib/gallery/lodgeInterior/CandlestickGeometry.ts'
 import CoffeeTableGeometry from '#src/lib/gallery/lodgeInterior/CoffeeTableGeometry.ts'
-import FirewoodStack from '#src/lib/gallery/lodgeInterior/FirewoodStack.ts'
-import lodgeInterior, {bookCenters, lodgeFurnitureColliders} from '#src/lib/gallery/lodgeInterior/layout.ts'
+import lodgeInterior, {lodgeFurnitureColliders} from '#src/lib/gallery/lodgeInterior/layout.ts'
 import UpholsteredSeatGeometry from '#src/lib/gallery/lodgeInterior/UpholsteredSeatGeometry.ts'
 import WagonWheelGeometry from '#src/lib/gallery/lodgeInterior/WagonWheelGeometry.ts'
 
-const {armchairs, books, candlesticks, chandelier, coffeeTable, fireplace, firewood, rug, sofa} = lodgeInterior
-const mantelTop = fireplace.opening + fireplace.lintelHeight + fireplace.mantel.size[1]
-const mantelZ = fireplace.front - fireplace.mantel.overhang + fireplace.mantel.size[2] / 2
+const {armchairs, chandelier, coffeeTable, rug, sofa} = lodgeInterior
 
-/** Seating, table, rug, wagon-wheel chandelier, firewood and mantel candlestick of the Lodge, in the room’s frame. */
+/** Seating, table, rug and wagon-wheel chandelier of the Lodge, in the room’s frame. */
 export default function LodgeFurnishings({materials}: {materials: LodgeMaterials}) {
   const isHeavy = useGraphicsMode()
   const sofaGeometry = useDisposable(useMemo(() => new UpholsteredSeatGeometry(sofa.seats, lodgeInterior.seatWidth), []))
   const armchairGeometry = useDisposable(useMemo(() => new UpholsteredSeatGeometry(1, lodgeInterior.seatWidth + 0.08), []))
   const table = useDisposable(useMemo(() => new CoffeeTableGeometry(coffeeTable.size), []))
   const wheel = useDisposable(useMemo(() => new WagonWheelGeometry(lodge.height - chandelier.position[1]), []))
-  const candlestick = useDisposable(useMemo(() => new CandlestickGeometry, []))
-  const stack = useDisposable(useMemo(() => new FirewoodStack(firewood), []))
   const seats = [
     {
       geometry: sofaGeometry,
@@ -50,9 +43,6 @@ export default function LodgeFurnishings({materials}: {materials: LodgeMaterials
     </group>)}
     <group name='lodge-coffee-table' position={coffeeTable.position}>
       <mesh castShadow geometry={table.timber} material={materials.timber} receiveShadow />
-      {books.map(({size, yaw}, index) => <mesh key={index} castShadow material={materials.books[index]} position={[0.28 + index * 0.01, bookCenters[index], -0.06 + index * 0.015]} receiveShadow rotation={[0, yaw, 0]}>
-        <boxGeometry args={size} />
-      </mesh>)}
     </group>
     <group name='lodge-chandelier' position={chandelier.position}>
       {/* The light burns among the candles, so the wheel would throw its spokes across the whole room; real candle flames are too broad for that. */}
@@ -62,22 +52,5 @@ export default function LodgeFurnishings({materials}: {materials: LodgeMaterials
       {/* In the candle plane, below the rim, so the iron never shadows its own light; heavy graphics let it ground the furniture with shadows. */}
       <pointLight castShadow={isHeavy} color={chandelier.color} decay={2} distance={chandelier.distance} intensity={chandelier.intensity} position={[0, chandelier.lightY, 0]} shadow-camera-far={chandelier.distance} shadow-camera-near={0.1} shadow-mapSize={[1024, 1024]} shadow-normalBias={0.035} shadow-radius={chandelier.shadowRadius} />
     </group>
-    <group name='lodge-firewood' position={firewood.position}>
-      {stack.logs.map(({geometry, position, roll}, index) => <mesh key={index} castShadow geometry={geometry} material={materials.firewood} position={position} receiveShadow rotation={[Math.PI / 2, roll, 0]} />)}
-    </group>
-    {candlesticks.map(x => <Candlestick key={x} geometry={candlestick} materials={materials} position={[-x, mantelTop, mantelZ]} />)}
-  </group>
-}
-
-function Candlestick({geometry, materials, position}: {
-  geometry: CandlestickGeometry
-  materials: LodgeMaterials
-  position: Vec3
-}) {
-  return <group name='lodge-candlestick' position={position}>
-    {/* Small enough that its shadow would only blow up into a giant silhouette on the walls. */}
-    <mesh geometry={geometry.iron} material={materials.iron} />
-    <mesh geometry={geometry.wax} material={materials.wax} />
-    <mesh geometry={geometry.flame} material={materials.flame} />
   </group>
 }

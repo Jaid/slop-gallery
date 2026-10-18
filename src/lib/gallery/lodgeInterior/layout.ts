@@ -1,6 +1,5 @@
 import type {Vec3} from '../types.ts'
 
-import FirewoodStack from './FirewoodStack.ts'
 import UpholsteredSeatGeometry from './UpholsteredSeatGeometry.ts'
 
 export type Placement = {
@@ -35,12 +34,6 @@ const coffeeTable = {
   position: [0, 0, 1.1] as Vec3,
   size: [1.4, 0.46, 0.8] as Vec3,
 }
-const firewood = {
-  position: [2.7, 0, 4.3] as Vec3,
-  length: 0.52,
-  radius: 0.075,
-  rows: [5, 4, 3, 2],
-}
 /**
  * Furnishings of the Lodge in the room’s frame: the origin is the middle of the floor and +z points toward the fireplace on the south wall.
  *
@@ -64,24 +57,6 @@ const lodgeInterior = {
   seatWidth,
   armchairs,
   coffeeTable,
-  /** three cloth-bound books, stacked a little askew on the table */
-  books: [
-    {
-      size: [0.25, 0.045, 0.18] as Vec3,
-      yaw: 0.12,
-      color: '#2f4a3a',
-    },
-    {
-      size: [0.23, 0.035, 0.16] as Vec3,
-      yaw: -0.1,
-      color: '#5c1d1b',
-    },
-    {
-      size: [0.19, 0.03, 0.14] as Vec3,
-      yaw: 0.34,
-      color: '#b59d6c',
-    },
-  ],
   /** the wagon wheel’s hub, hanging above the coffee table */
   chandelier: {
     position: [0, 3.05, 1] as Vec3,
@@ -125,19 +100,12 @@ const lodgeInterior = {
     /** soot-black lining at the back of the firebox */
     back: 4.67,
   },
-  /** split logs stacked beside the fireplace, ends toward the room */
-  firewood,
-  /** iron candlesticks on the mantel, x in the fireplace’s mirrored frame */
-  candlesticks: [1.4],
   beams: {
     z: [-3.5, 0, 3.5],
     /** width and height of each beam */
     size: [0.3, 0.34] as [number, number],
   },
 } as const
-
-/** Height of every book’s center on the coffee table, stacked from the table top. */
-export const bookCenters = lodgeInterior.books.map((book, index) => lodgeInterior.books.slice(0, index).reduce((top, below) => top + below.size[1], coffeeTable.size[1]) + book.size[1] / 2)
 
 /** Solid volumes of the furniture for the physics world, in the room’s frame. */
 export function lodgeFurnitureColliders(): Array<FurnitureCollider> {
@@ -159,12 +127,6 @@ export function lodgeFurnitureColliders(): Array<FurnitureCollider> {
       position: coffeeTable.position,
       yaw: 0,
       size: coffeeTable.size,
-    },
-    {
-      name: 'lodge-firewood',
-      position: firewood.position,
-      yaw: 0,
-      size: FirewoodStack.measure(firewood),
     },
   ]
 }

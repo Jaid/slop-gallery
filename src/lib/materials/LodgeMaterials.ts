@@ -5,7 +5,6 @@ import {Material, MeshStandardNodeMaterial, NodeMaterial} from 'three/webgpu'
 import lodge, {lodgeFloorPlanks} from '../gallery/lodge.ts'
 import lodgeInterior from '../gallery/lodgeInterior/layout.ts'
 import FieldstoneMaterial from './FieldstoneMaterial.ts'
-import FirewoodMaterial from './FirewoodMaterial.ts'
 import LeatherMaterial from './LeatherMaterial.ts'
 import {lightIndoors} from './lights/index.ts'
 import LodgeTimberMaterial from './LodgeTimberMaterial.ts'
@@ -32,17 +31,9 @@ const ceilingPlanks: PlankOptions = {
     seam: '#120a05',
   },
 }
-const bookMaterial = ({color}: {color: string}) => new MeshStandardNodeMaterial({
-  color,
-  roughness: 0.85,
-})
-
 /** Every surface of the Lodge interior, created once and disposed together. */
 export default class LodgeMaterials {
-  /** cloth-bound books on the coffee table */
-  readonly books = lodgeInterior.books.map(bookMaterial)
   readonly ceiling = new PlankMaterial(ceilingPlanks)
-  readonly firewood = new FirewoodMaterial(lodgeInterior.firewood.radius)
   readonly flame = new MeshStandardNodeMaterial({
     color: '#fff0b6',
     emissive: '#ffc96a',
@@ -68,7 +59,7 @@ export default class LodgeMaterials {
   })
 
   constructor() {
-    // The Lodge is underground: only its own fire, candles and lamps light it, not the gallery’s sun.
+    // The Lodge is underground: only its own fire and chandelier light it, not the gallery’s sun.
     for (const material of this.all()) {
       if (material instanceof NodeMaterial) {
         lightIndoors(material)
