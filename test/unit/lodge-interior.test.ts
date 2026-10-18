@@ -4,9 +4,7 @@ import {expect, test} from 'bun:test'
 
 import {AmbientLight, DirectionalLight, HemisphereLight, Material, PointLight} from 'three/webgpu'
 
-import CandlestickGeometry from '../../src/lib/gallery/lodgeInterior/CandlestickGeometry.ts'
 import CoffeeTableGeometry from '../../src/lib/gallery/lodgeInterior/CoffeeTableGeometry.ts'
-import FirewoodStack from '../../src/lib/gallery/lodgeInterior/FirewoodStack.ts'
 import lodgeInterior, {lodgeFurnitureColliders} from '../../src/lib/gallery/lodgeInterior/layout.ts'
 import UpholsteredSeatGeometry from '../../src/lib/gallery/lodgeInterior/UpholsteredSeatGeometry.ts'
 import WagonWheelGeometry from '../../src/lib/gallery/lodgeInterior/WagonWheelGeometry.ts'
@@ -19,16 +17,15 @@ test('every Lodge material is lit only by indoor lights and builds its surface n
   const materials = new LodgeMaterials
   try {
     const all = Object.values(materials).flat().filter(value => value instanceof Material)
-    expect(all.length).toBeGreaterThan(12)
+    expect(all).toHaveLength(11)
     const lightsNodes = new Set(all.map(material => (material as NodeMaterial).lightsNode))
     expect(lightsNodes.size).toBe(1)
     expect([...lightsNodes][0]).toBeInstanceOf(IndoorLightsNode)
-    for (const material of [materials.floor, materials.ceiling, materials.logWall, materials.stone, materials.timber, materials.leather, materials.rug, materials.iron, materials.firewood]) {
+    for (const material of [materials.floor, materials.ceiling, materials.logWall, materials.stone, materials.timber, materials.leather, materials.rug, materials.iron]) {
       expect(material.colorNode).not.toBeNull()
       expect(material.normalNode).not.toBeNull()
     }
     expect(materials.floor).toBeInstanceOf(PlankMaterial)
-    expect(materials.books).toHaveLength(lodgeInterior.books.length)
   } finally {
     materials.dispose()
   }
@@ -44,10 +41,8 @@ test('furniture geometry is finite, merged per material and within its triangle 
   const chair = new UpholsteredSeatGeometry(1, 0.76)
   const table = new CoffeeTableGeometry(lodgeInterior.coffeeTable.size)
   const wheel = new WagonWheelGeometry(0.85)
-  const candlestick = new CandlestickGeometry
-  const stack = new FirewoodStack(lodgeInterior.firewood)
   try {
-    const parts = [sofa.leather, sofa.timber, chair.leather, chair.timber, table.timber, wheel.iron, wheel.wax, wheel.flames, candlestick.iron, candlestick.wax, candlestick.flame, ...stack.logs.map(log => log.geometry)]
+    const parts = [sofa.leather, sofa.timber, chair.leather, chair.timber, table.timber, wheel.iron, wheel.wax, wheel.flames]
     for (const geometry of parts) {
       const position = geometry.getAttribute('position')
       expect(position.count).toBeGreaterThan(0)
@@ -67,24 +62,25 @@ test('furniture geometry is finite, merged per material and within its triangle 
     // The wheel’s canopy meets the ceiling.
     wheel.iron.computeBoundingBox()
     expect(wheel.iron.boundingBox!.max.y).toBeCloseTo(0.85, 3)
-    expect(stack.logs).toHaveLength(lodgeInterior.firewood.rows.reduce((sum, count) => sum + count, 0))
   } finally {
-    for (const resource of [sofa, chair, table, wheel, candlestick, stack]) {
+    for (const resource of [sofa, chair, table, wheel]) {
       resource.dispose()
     }
   }
 })
 test('furniture colliders cover every piece that stands on the floor', () => {
   const names = new Set(lodgeFurnitureColliders().map(collider => collider.name))
-  for (const name of ['lodge-sofa', 'lodge-armchair-0', 'lodge-armchair-1', 'lodge-coffee-table', 'lodge-firewood']) {
+  for (const name of ['lodge-sofa', 'lodge-armchair-0', 'lodge-armchair-1', 'lodge-coffee-table']) {
     expect(names.has(name)).toBe(true)
   }
-  // The console table behind the sofa and the fire tool stand were taken out to declutter the room.
-  for (const name of ['lodge-console-table', 'lodge-fire-tools']) {
+  // The console table, the fire tool stand and the firewood stack were taken out to declutter the room.
+  for (const name of ['lodge-console-table', 'lodge-fire-tools', 'lodge-firewood']) {
     expect(names.has(name)).toBe(false)
   }
-  // A single candlestick remains on the mantel, at its east end.
-  expect(lodgeInterior.candlesticks).toEqual([1.4])
+  // The mantel and the coffee table stay bare.
+  for (const key of ['candlesticks', 'books', 'firewood']) {
+    expect(key in lodgeInterior).toBe(false)
+  }
   for (const {size} of lodgeFurnitureColliders()) {
     expect(size.every(value => Number.isFinite(value) && value > 0)).toBe(true)
   }
@@ -94,9 +90,4 @@ test('furniture geometry rejects impossible inputs', () => {
   expect(() => new UpholsteredSeatGeometry(1.5)).toThrow(RangeError)
   expect(() => new CoffeeTableGeometry([1, Number.NaN, 1])).toThrow(RangeError)
   expect(() => new WagonWheelGeometry(0.2)).toThrow(RangeError)
-  expect(() => new FirewoodStack({
-    rows: [2, 3],
-    radius: 0.07,
-    length: 0.5,
-  })).toThrow(RangeError)
 })
