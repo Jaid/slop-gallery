@@ -5,6 +5,32 @@ import lowerGallery, {oculusPlatform, oculusRamps} from './lowerGallery.ts'
 import tower, {towerArch, towerPlatformOutline, towerRamp, towerRampGradient, towerRampHalfWidth, towerRampHeight, towerRampSections} from './oculusTower.ts'
 import RampGeometry from './RampGeometry.ts'
 
+/**
+ * Replaces the faceted normals of an extruded shape’s side walls with the true radial normals wherever a vertex lies on one of
+ * the given arcs (center x, center y, radius in shape space). The arcs meet their neighboring straight edges tangentially,
+ * so the shading stays continuous into the flat faces.
+ */
+function smoothArcNormals(geometry: BufferGeometry, arcs: ReadonlyArray<readonly [number, number, number]>) {
+  const positions = geometry.getAttribute('position')
+  const normals = geometry.getAttribute('normal')
+  for (let i = 0; i < positions.count; i++) {
+    // Caps face along the extrusion axis and stay flat.
+    if (Math.abs(normals.getZ(i)) > 0.5) {
+      continue
+    }
+    const x = positions.getX(i)
+    const y = positions.getY(i)
+    for (const [centerX, centerY, radius] of arcs) {
+      const distance = Math.hypot(x - centerX, y - centerY)
+      if (Math.abs(distance - radius) < 1e-6) {
+        normals.setXYZ(i, (x - centerX) / distance, (y - centerY) / distance, 0)
+        break
+      }
+    }
+  }
+  normals.needsUpdate = true
+}
+
 // One architectural solid supplies both the visible surface and collision.
 export default class OculusGroundGeometry extends BufferGeometry {
   constructor() {
@@ -64,19 +90,26 @@ export default class OculusGroundGeometry extends BufferGeometry {
       const shape = new Shape
       // Local −X faces the taller tower end after rotation. Circular fillets
       // join the sloping roof tangentially to both vertical jambs.
+      // The lower jamb coincides with the base’s front face. Instead of cutting along that plane, which would leave coplanar
+      // faces to the CSG, the cutter reaches into the base volume, which the base block refills afterward.
+      const overshoot = 0.2
       shape.moveTo(-halfWidth, -0.1)
-      shape.lineTo(halfWidth, -0.1)
+      shape.lineTo(halfWidth + overshoot, -0.1)
+      shape.lineTo(halfWidth + overshoot, cornerY)
       shape.lineTo(halfWidth, cornerY)
       shape.absarc(cornerX, cornerY, radius, 0, tangentAngle, false)
       shape.lineTo(highCornerX + highRadius * Math.cos(tangentAngle), highCornerY + highRadius * Math.sin(tangentAngle))
       shape.absarc(highCornerX, highCornerY, highRadius, tangentAngle, Math.PI, false)
       shape.closePath()
       const cutterDepth = towerRamp.width + towerRamp.baseCornerRadius * 2 + 2
+      // Shapes sample every arc with twice the curve segments. Radial normals keep the few chords looking round, so
+      // the cut doesn’t have to fragment the walls into hundreds of slivers.
       const cutter = new ExtrudeGeometry(shape, {
         depth: cutterDepth,
         bevelEnabled: false,
-        curveSegments: 64,
+        curveSegments: 6,
       })
+      smoothArcNormals(cutter, [[cornerX, cornerY, radius], [highCornerX, highCornerY, highRadius]])
       cutter.translate(0, 0, -cutterDepth / 2).rotateY(Math.PI / 2).translate(tower.x, floorY, towerArch.z)
       const outline = new Shape
       for (const [i, [x, z]] of towerPlatformOutline.entries()) {
