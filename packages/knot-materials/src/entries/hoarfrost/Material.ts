@@ -1,93 +1,109 @@
 import type {Node, Texture} from 'three/webgpu'
 
-import {atan, color, float, Fn as fn, Loop as loop, mix, mx_noise_float, vec3} from 'three/tsl'
+import {color, float, mix, mx_fractal_noise_float, normalLocal, time, transformNormalToView, uv, vec2, vec3} from 'three/tsl'
 
-import {glitter} from '../../candidates/deepseek/lib/glitter.ts'
-import {loopDrift, loopOsc} from '../../candidates/deepseek/lib/loopClock.ts'
-import {cellNoiseVec3} from '../../lib/cellNoiseVec3.ts'
+import {detailNormal} from '../../candidates/deepseek/lib/detailNormal.ts'
+import {environmentHighlight} from '../../candidates/deepseek/lib/environment.ts'
+import {panelSky, proceduralEnvironment} from '../../candidates/deepseek/lib/sky.ts'
+import {knotCircumference, knotLength} from '../../candidates/deepseek/lib/tubeMetric.ts'
+import {glints} from '../../lib/glints.ts'
 import KnotMaterial from '../../lib/KnotMaterial.ts'
-import {proceduralNormal} from '../../lib/proceduralNormal.ts'
-import {TAU} from '../../lib/TAU.ts'
 import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
-/** Whole growing crystals, including those centered in adjacent lattice cells. */
-const frostField = fn(([q, p, breath, near]: [Node<'vec3'>, Node<'vec3'>, Node<'float'>, Node<'float'>]) => {
-  const cell = q.floor()
-  const local = q.fract()
-  const footprint = q.fwidth().length()
-  const visibility = footprint.smoothstep(0.2, 0.8).oneMinus()
-  const coverage = vec3(0).toVar()
-  loop(27, ({i}) => {
-    const neighbor = vec3(i.mod(3), i.div(3).mod(3), i.div(9)).sub(1)
-    const rnd = cellNoiseVec3(cell.add(neighbor))
-    const offset = local.sub(neighbor.add(rnd.mul(0.5).add(0.25)))
-    const radius = offset.length()
-    const theta = atan(offset.y, offset.x)
-    const growth = loopOsc(1, rnd.z.mul(TAU).add(p.dot(vec3(2.4, 1.1, -3.1)))).mul(breath.mul(0.22).add(0.32)).add(breath.mul(0.08).add(0.14))
-    const lobes = theta.mul(6).add(rnd.x.mul(TAU)).cos()
-    const subLobes = theta.mul(18).add(rnd.y.mul(TAU)).cos()
-    const boundary = growth.mul(lobes.mul(0.5).add(0.5).pow(1.4).mul(0.62).add(0.44)).mul(subLobes.mul(0.07).add(0.93))
-    const crystal = radius.sub(boundary)
-    // Filter from continuous coordinates, not cell-dependent angular phases.
-    const angularFootprint = footprint.div(offset.xy.length().max(0.05))
-    const aa = footprint.add(angularFootprint.mul(growth).mul(4)).min(0.1).max(0.0006)
-    const frost = crystal.smoothstep(aa.negate(), aa).oneMinus()
-    const dust = crystal.smoothstep(-0.045, 0.05).oneMinus().mul(0.34)
-    const fan = theta.mul(42).add(rnd.z.mul(TAU)).cos().mul(0.5).add(0.5)
-    const fanVisibility = angularFootprint.mul(42).smoothstep(0.6, 3).oneMinus()
-    const needles = mix(float(5 / 16), fan.pow(3), fanVisibility).mul(frost).mul(near.mul(0.7).add(0.3))
-    coverage.assign(coverage.max(vec3(frost, dust, needles)))
-  })
-  return coverage.mul(visibility)
-})
-/** Localized facets, rather than random normals covering entire grid cells. */
-function frostGlitter(position: Node<'vec3'>, cellSize: number, sharpness: number, tilt: number) {
-  const facets = glitter(position, cellSize, sharpness, tilt)
-  const q = position.div(cellSize)
-  const center = cellNoiseVec3(q.floor()).mul(0.5).add(0.25)
-  const distance = q.fract().sub(center).length()
-  const outer = q.fwidth().length().add(0.18).min(0.24)
-  const mask = distance.smoothstep(0.06, outer).oneMinus()
-  return {
-    lean: facets.lean.mul(mask),
-    sparkle: facets.sparkle.mul(mask),
-  }
+/** A radial fern of ice, its branches drawn in the physical plane of the tube. */
+const frond = (tube: Node<'vec2'>, p: Node<'vec3'>, cu: number, cv: number, arms: number, scale: number, seed: number) => {
+  const du = tube.x.sub(cu).add(0.5).fract().sub(0.5).mul(knotLength)
+  const dv = tube.y.sub(cv).add(0.5).fract().sub(0.5).mul(knotCircumference)
+  const radius = vec2(du, dv).length()
+  const angle = dv.atan(du)
+  const wobble = mx_fractal_noise_float(p.mul(9.5).add(seed), 2, 2.12, 0.5)
+  const phase = angle.mul(arms).add(radius.mul(scale)).add(wobble.mul(3.6))
+  const sidePhase = angle.mul(arms * 3).add(radius.mul(scale * 0.41)).add(wobble.mul(7.4))
+  const branch = phase.sin().abs().pow(7)
+  const side = sidePhase.sin().abs().pow(13).mul(0.44)
+  const envelope = radius.mul(5.8).negate().exp()
+  const resolved = phase.fwidth().smoothstep(0.35, 1.4).oneMinus()
+  return branch.mul(resolved).add(branch.oneMinus().mul(0.16)).add(side).mul(envelope).clamp()
 }
-
-/** Hoarfrost that grows and evaporates. Every nucleation site raises a hexagonal star of needles whose radius follows a harmonic of the two-second loop with a travelling phase, so waves of freezing sweep the knot, fan out and retreat. Each crystal is a tilted facet: it glitters when it catches the key light and goes dull a moment later. Warm breath widens the growth where a visitor stands, and the fine fan structure only resolves at arm's length. */
+/**
+ * Midnight lacquer on a freezing window. Fern frost grows from four seeds, a fine crystalline web
+ * fills the dark, and every needle waits for the angle at which it can return the moon.
+ */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {
-    super(environment, 0.6)
+    super(environment, 1.05)
     this.name = knotData.id
-    const {p, grazing, distance, near, intimate} = viewerFrame()
-    const cellSize = 0.072
-    const q = p.div(cellSize)
-    const breath = distance.smoothstep(1.05, 3.1).oneMinus()
-    const crystals = frostField(q, p, breath, near)
-    const frost = crystals.x
-    const dust = crystals.y
-    const needles = crystals.z
-    const drifts = mx_noise_float(loopDrift(p.mul(2.2), 0.5))
-    const depth = mix(color('#03070b'), color('#08131f'), drifts.mul(0.5).add(0.5))
-    const crystalColor = mix(color('#9dbcd6'), color('#f4faff'), needles.mul(0.6))
-    const frostHeight = frost.mul(0.5).add(dust.mul(0.28)).add(needles.mul(0.3)).add(mx_noise_float(p.mul(38)).mul(0.05))
-    const ice = frostGlitter(p, 0.021, 64, 0.6)
-    const snow = frostGlitter(loopDrift(p, 0.05), 0.041, 26, 0.85)
-    this.colorNode = mix(mix(depth, crystalColor, frost.mul(0.72).add(dust.mul(0.34)).min(1)), crystalColor.mul(1.08), ice.sparkle.mul(intimate).mul(0.5))
-    this.roughnessNode = mix(float(0.42).sub(near.mul(0.1)), float(0.2), frost.mul(0.8).add(dust.mul(0.5)).min(1)).sub(ice.sparkle.mul(0.06)).clamp(0.05, 0.5)
+    const {p, view, facing, grazing, near, intimate} = viewerFrame()
+    const tube = uv()
+    const n = normalLocal.normalize()
+    const baseNormal = transformNormalToView(n).normalize()
+    const fern = frond(tube, p, 0.16, 0.3, 5, 54, 3.1)
+      .max(frond(tube, p, 0.54, 0.63, 6, 47, 17.4))
+      .max(frond(tube, p, 0.83, 0.22, 4, 61, -8.2))
+      .max(frond(tube, p, 0.34, 0.83, 7, 43, 29.7))
+    const warp = mx_fractal_noise_float(p.mul(3.4).add(4.2), 3, 2.03, 0.52)
+    const webA = p.dot(vec3(31, 17, 23)).add(warp.mul(7.2)).sin().abs()
+    const webB = p.dot(vec3(-13, 41, 7)).add(warp.mul(5.3)).sin().abs()
+    const webC = p.dot(vec3(19, -11, 37)).sub(warp.mul(4.1)).sin().abs()
+    const web = webA.mul(webB).add(webB.mul(webC)).add(webC.mul(webA)).smoothstep(0.02, 0.14).oneMinus()
+    const webFootprint = warp.fwidth().mul(0.5).add(0.001)
+    const webResolved = webFootprint.smoothstep(0.03, 0.12).oneMinus()
+    const needles = p.dot(vec3(86, 24, 64)).add(warp.mul(15)).sin().abs().pow(25)
+    const needleResolved = p.dot(vec3(86, 24, 64)).fwidth().smoothstep(0.35, 1.2).oneMinus()
+    const frost = fern.mul(1.35).add(web.mul(webResolved).mul(0.44)).add(needles.mul(needleResolved).mul(fern).mul(0.38)).clamp()
+    const frostHalo = fern.mul(0.52).add(web.mul(webResolved).mul(0.13)).clamp()
+// The lacquer is nearly black, with a cold blue bloom where the ice has begun to cloud it.
+    const mottle = mx_fractal_noise_float(p.mul(2.6).add(19.4), 3, 2.02, 0.5).mul(0.5).add(0.5)
+    const lacquer = mix(color('#050b16'), mix(color('#0c1d36'), color('#1a1230'), mottle.mul(0.8)), mottle.mul(0.7).add(facing.mul(0.3)))
+    const frostColor = mix(mix(color('#8fc4ee'), color('#b8f0e0'), mottle.mul(0.5)), color('#ecf8ff'), frost.mul(0.55).add(mottle.mul(0.2)))
+    const frostShade = mix(color('#3c678c'), frostColor, facing.mul(0.4).add(0.55))
+    const ice = mix(frostShade, color('#ffffff'), frost.pow(2).mul(0.8))
+    this.colorNode = mix(lacquer, ice, frost.add(frostHalo.mul(0.34)).clamp().mul(near.mul(0.12).add(0.9)))
     this.metalness = 0
-    this.ior = 1.31
-    this.clearcoat = 0.65
-    this.clearcoatRoughness = 0.09
-    this.iridescence = 0.2
-    this.iridescenceThicknessNode = mx_noise_float(p.mul(14)).mul(0.5).add(0.5).mul(380).add(260)
-    this.normalNode = proceduralNormal(frostHeight, 0.0011).add(ice.lean.mul(0.55)).add(snow.lean.mul(0.12)).normalize()
-    this.emissiveNode = color('#7fb6f5').mul(frost.mul(needles.mul(0.4).add(0.14)).mul(0.18))
-      .add(color('#dceeff').mul(grazing.pow(3.2)).mul(frost.mul(0.22).add(dust.mul(0.35)).add(0.05)).mul(0.45))
-      .add(color('#fff0d2').mul(snow.sparkle).mul(0.36))
-      .add(color('#cfe6ff').mul(ice.sparkle).mul(intimate).mul(0.6))
-      .add(color('#2f5c85').mul(distance.smoothstep(0.9, 2.8).oneMinus()).mul(frost.mul(0.7).add(0.3)).mul(0.06))
-      .add(color('#cfe4ff').mul(breath.pow(3)).mul(0.05))
+    this.roughnessNode = mix(float(0.055), float(0.28).sub(frost.mul(0.12)), frost)
+    this.clearcoatNode = float(1).sub(frost.mul(0.32))
+    this.clearcoatRoughnessNode = mix(float(0.025), float(0.16), frost)
+    this.sheen = 0.5
+    this.sheenColor.set('#bfe4ff')
+    this.sheenRoughness = 0.24
+    this.iridescenceNode = frost.mul(0.22)
+    this.iridescenceIOR = 1.31
+    this.iridescenceThicknessNode = frost.mul(240).add(mottle.mul(160)).add(260)
+    this.normalNode = detailNormal(baseNormal, frost.mul(0.00055).add(needles.mul(0.00028).mul(needleResolved)).add(web.mul(0.00016)), 1.1)
+    this.aoNode = float(1).sub(frost.mul(0.12))
+    const moonGlint = environmentHighlight(environment, n, 0.03, {threshold: 1.4}).mul(frost).mul(near.mul(0.6).add(0.4))
+    const sparkle = glints(baseNormal, 180).mul(frost.pow(1.5)).mul(needleResolved).mul(intimate.mul(0.9).add(0.1)).mul(1.2)
+    const sparkleTint = mix(color('#dff4ff'), color('#a9c8ff'), mottle)
+    const moonSpot = view.negate().reflect(n).dot(vec3(0.35, 0.72, -0.6).normalize()).clamp().pow(760)
+    const moonFlare = color('#e8f6ff').mul(moonSpot).mul(frost.mul(0.7).add(frostHalo.mul(0.3))).mul(3.2)
+    const breathing = frost.mul(0.026).mul(time.mul(0.15).sin().mul(0.4).add(0.8))
+    this.emissiveNode = moonGlint.mul(1.1).add(sparkleTint.mul(sparkle).mul(1.5)).add(moonFlare).add(color('#7fb6e8').mul(frostHalo).mul(near.oneMinus().mul(0.12).add(0.28))).add(color('#bfe7ff').mul(frost.pow(0.7)).mul(0.07)).add(color('#c8e6ff').mul(grazing.pow(2.2)).mul(frost).mul(0.15)).add(color('#eaf7ff').mul(frost).mul(0.05)).add(breathing)
+    this.envNode = proceduralEnvironment(panelSky({
+      zenith: [0.003, 0.01, 0.03],
+      horizon: [0.02, 0.05, 0.1],
+      nadir: [0.001, 0.003, 0.008],
+      glow: {
+        color: [0.08, 0.18, 0.36],
+        intensity: 0.24,
+        width: 0.13,
+      },
+      panels: [{
+        azimuth: 0.9,
+        elevation: 0.55,
+        halfWidth: 0.07,
+        halfHeight: 0.07,
+        color: [0.68, 0.82, 1],
+        intensity: 12,
+        softness: 0.06,
+      }, {
+        azimuth: -1.2,
+        elevation: 0.3,
+        halfWidth: 0.7,
+        halfHeight: 0.1,
+        color: [0.12, 0.25, 0.5],
+        intensity: 0.7,
+      }],
+    }))
   }
 }
