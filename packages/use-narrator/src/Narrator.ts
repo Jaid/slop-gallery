@@ -1,6 +1,7 @@
 import type {NarrationInput, NarrationMetadata, NarrationPushOptions, NarrationReference, NarratorOptions, RecordingReference, SpeechReference} from './types.ts'
 import type {AudioHandle, AudioPlayback, AudioQueueSnapshot} from 'use-audio-queue/core'
 
+import composeId from 'compose-id'
 import {audioFile} from 'use-audio-queue/browser'
 import {AudioQueue} from 'use-audio-queue/core'
 
@@ -86,7 +87,7 @@ export default class Narrator implements Disposable {
     }
     if (!this.enabled) {
       return {
-        id: crypto.randomUUID(),
+        id: composeId(),
         finished: Promise.resolve({
           status: 'skipped',
           reason: 'disabled',
@@ -106,8 +107,8 @@ export default class Narrator implements Disposable {
     }
     const immediate = typeof input === 'function' ? undefined : normalize(input)
     let metadata: NarrationMetadata = {
-      id: options.id ?? crypto.randomUUID(),
-      instanceId: crypto.randomUUID(),
+      id: options.id ?? composeId(),
+      instanceId: composeId(),
       title: options.title ?? immediate?.title ?? immediate?.text?.slice(0, 100) ?? 'Narration',
       text: immediate?.text,
       source: null,

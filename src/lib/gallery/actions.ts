@@ -1,6 +1,8 @@
 import type {Panel} from './store.ts'
 import type {Portrait, Vec3} from './types.ts'
 
+import composeId from 'compose-id'
+
 import placement from '#level/placement.ts'
 
 import aimDot from '../aimDot.ts'
@@ -134,7 +136,7 @@ export function newPortrait(source: Blob, title: string, width: number, height: 
   const d = pose.direction
   const p = pose.position
   return {
-    id: crypto.randomUUID(),
+    id: composeId(),
     title,
     creator: 'You · guest artist',
     description: 'A new arrival. Every collection starts with a little curiosity.',

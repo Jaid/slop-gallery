@@ -1,6 +1,7 @@
 import type {EgoInput, EgoState} from './types.ts'
 import type {Camera, Object3D} from 'three/webgpu'
 
+import composeId from 'compose-id'
 import {OrthographicCamera, PerspectiveCamera, Quaternion} from 'three/webgpu'
 
 import AimInspector from './AimInspector.ts'
@@ -20,7 +21,7 @@ export default class EgoDiagnostics {
     const {camera} = this
     const capturedAt = new Date
     return {
-      id: crypto.randomUUID(),
+      id: composeId(),
       time: capturedAt.toISOString(),
       player: structuredClone(state),
       input: {...input},

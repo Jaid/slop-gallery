@@ -3,6 +3,7 @@ import type {IrisTransport} from './irisQuality.ts'
 import {createHash} from 'node:crypto'
 import {resolve} from 'node:path'
 
+import composeId from 'compose-id'
 import fs from 'fs-extra'
 
 import ExternalGenerator from '../../../src/lib/ai/ExternalGenerator.ts'
@@ -39,7 +40,7 @@ export default class IrisQualityAudition extends ExternalGenerator {
           throw new Error(`Missing ${this.transport === 'xai' ? 'XAI_API_KEY' : 'OPENROUTER_API_KEY'}.`)
         }
         if (this.retryFailed && await fs.pathExists(reservation)) {
-          await fs.move(reservation, resolve(cache, `request-${crypto.randomUUID()}.json`))
+          await fs.move(reservation, resolve(cache, `request-${composeId()}.json`))
         }
         const requestStartedAt = new Date
         await fs.writeJson(reservation, {
@@ -70,7 +71,7 @@ export default class IrisQualityAudition extends ExternalGenerator {
           sha256: createHash('sha256').update(bytes).digest('hex'),
         }
         if (!response.ok) {
-          await Bun.write(resolve(cache, `error-${crypto.randomUUID()}.bin`), bytes)
+          await Bun.write(resolve(cache, `error-${composeId()}.bin`), bytes)
           throw new Error(`Speech request failed (${response.status}). The failed response was preserved.`)
         }
         await fs.writeJson(receiptFile, receipt, {spaces: 2})

@@ -1,11 +1,12 @@
 import type {App, ResolvedVoiceSampleRequest, VoiceSampleAudioFormat, VoiceSampleFetch, VoiceSampleMetadata, VoiceSampleTiming} from './types.ts'
 
 import {execFile} from 'node:child_process'
-import {createHash, randomUUID} from 'node:crypto'
+import {createHash} from 'node:crypto'
 import {resolve} from 'node:path'
 import {setTimeout as sleep} from 'node:timers/promises'
 import {promisify} from 'node:util'
 
+import composeId from 'compose-id'
 import fs from 'fs-extra'
 import makeArgv from 'make-argv'
 import {pack, unpack} from 'msgpackr'
@@ -388,7 +389,7 @@ export default class VoiceSampleCache {
       return output
     }
     await fs.ensureDir(this.#cacheFolder)
-    const token = `${process.pid}-${randomUUID()}`
+    const token = `${process.pid}-${composeId()}`
     const temporary = `${output}.${token}.tmp`
     try {
       if (format === 'opus') {
@@ -479,7 +480,7 @@ export default class VoiceSampleCache {
     const wav = wavFromPcm(pcm, metadata.sampleRate)
     const rawPath = this.rawPath(key)
     const metadataPath = this.metadataPath(key)
-    const token = `${process.pid}-${randomUUID()}`
+    const token = `${process.pid}-${composeId()}`
     const temporaryRaw = `${rawPath}.${token}.tmp`
     const temporaryMetadata = `${metadataPath}.${token}.tmp`
     try {
@@ -600,7 +601,7 @@ export default class VoiceSampleCache {
     await fs.ensureDir(this.#cacheFolder)
     const wavPath = resolve(this.#cacheFolder, `${sourceKey}.wav`)
     const metadataPath = resolve(this.#cacheFolder, `${sourceKey}.msgpack`)
-    const token = `${process.pid}-${randomUUID()}`
+    const token = `${process.pid}-${composeId()}`
     const temporaryWav = `${wavPath}.${token}.tmp`
     const temporaryMetadata = `${metadataPath}.${token}.tmp`
     try {
@@ -664,7 +665,7 @@ export default class VoiceSampleCache {
     }
     if (!await hasFile(wavPath) || !await hasFile(metadataPath)) {
       await fs.ensureDir(this.#cacheFolder)
-      const token = `${process.pid}-${randomUUID()}`
+      const token = `${process.pid}-${composeId()}`
       const temporaryWav = `${wavPath}.${token}.tmp`
       const temporaryMetadata = `${metadataPath}.${token}.tmp`
       try {

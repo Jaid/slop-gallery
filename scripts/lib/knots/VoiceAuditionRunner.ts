@@ -3,6 +3,7 @@ import type {VoiceAudition} from './voiceAuditions.ts'
 import {createHash} from 'node:crypto'
 import {resolve} from 'node:path'
 
+import composeId from 'compose-id'
 import fs from 'fs-extra'
 
 import ExternalGenerator from '../../../src/lib/ai/ExternalGenerator.ts'
@@ -43,7 +44,7 @@ export default class VoiceAuditionRunner extends ExternalGenerator {
         const reservation = resolve(cache, 'request.json')
         if (await fs.pathExists(reservation) && this.retryFailed) {
           // Preserve the unsuccessful attempt rather than erasing its evidence.
-          await fs.move(reservation, resolve(cache, `request-${crypto.randomUUID()}.json`))
+          await fs.move(reservation, resolve(cache, `request-${composeId()}.json`))
         }
         const requestStartedAt = new Date
         await fs.writeJson(reservation, {
@@ -101,7 +102,7 @@ export default class VoiceAuditionRunner extends ExternalGenerator {
           }
           await fs.writeJson(receipt, clip, {spaces: 2})
         } catch (error) {
-          await fs.writeJson(resolve(cache, `error-${crypto.randomUUID()}.json`), {message: String(error)}, {spaces: 2})
+          await fs.writeJson(resolve(cache, `error-${composeId()}.json`), {message: String(error)}, {spaces: 2})
           throw error
         }
       }

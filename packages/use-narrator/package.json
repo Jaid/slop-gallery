@@ -20,6 +20,7 @@
     "test": "bun test --max-concurrency 1 ./test"
   },
   "dependencies": {
+    "compose-id": "0.2.0",
     "use-audio-queue": "workspace:*"
   },
   "peerDependencies": {
