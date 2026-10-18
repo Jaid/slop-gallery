@@ -49,6 +49,8 @@ export type PortraitSlot = {
 }
 export type Placement = {
   inReach: boolean
+  /** whether the placard goes above the frame, because below it would block the spot */
+  labelAbove?: boolean
   position: MathVec3
   reason: string
   rotation: number

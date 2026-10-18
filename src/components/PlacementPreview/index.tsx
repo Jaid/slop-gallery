@@ -20,7 +20,9 @@ export default function PlacementPreview({width, height, source, title, creator,
   const {texture} = useArtworkTexture(source)
   const valid = useGallery(s => s.placement?.valid === true)
   const inReach = useGallery(s => s.placement?.inReach === true)
-  const label = portraitLabelLayout(width, height)
+  // The placard previews on the side it would hang, which flips when only the placard blocks a spot.
+  const above = useGallery(s => s.placement?.labelAbove === true)
+  const label = portraitLabelLayout(width, height, above)
   const visual = useDisposable(useMemo(() => new PreviewVisual(width, height, texture), [height, texture, width]))
   useFrame((_, delta) => {
     const {placement} = useGallery.getState()
@@ -36,7 +38,7 @@ export default function PlacementPreview({width, height, source, title, creator,
       <primitive attach='material' object={visual.borderMaterial} />
     </mesh>
     <PortraitLabel
-      creator={creator} height={height} pending={pending} preview={{
+      above={above} creator={creator} height={height} pending={pending} preview={{
         color: valid ? previewColors.valid : previewColors.invalid,
         opacity: previewOpacity(inReach),
       }} title={title} width={width}

@@ -122,9 +122,9 @@ export default function useInteractionFrame(camera: RootState['camera'], rendere
       placement.current = null
       return
     }
-    const candidate = placementSpace.findPlacement(ray.current.ray.origin.toArray(), ray.current.ray.direction.toArray(), portrait?.width ?? 2.4, portrait?.height ?? 2.4, s.portraits, portrait?.id)
+    const candidate = placementSpace.findPlacement(ray.current.ray.origin.toArray(), ray.current.ray.direction.toArray(), portrait?.width ?? 2.4, portrait?.height ?? 2.4, s.portraits, portrait?.id, portrait?.labelAbove === true)
     placement.current = candidate
-    if (candidate?.valid !== s.placement?.valid || candidate?.inReach !== s.placement?.inReach || candidate?.reason !== s.placement?.reason || candidate?.wallId !== s.placement?.wallId || !candidate && s.placement) {
+    if (candidate?.valid !== s.placement?.valid || candidate?.inReach !== s.placement?.inReach || candidate?.reason !== s.placement?.reason || candidate?.wallId !== s.placement?.wallId || candidate?.labelAbove !== s.placement?.labelAbove || !candidate && s.placement) {
       useGallery.setState({placement: candidate})
     }
     ghost.current.visible = !!candidate

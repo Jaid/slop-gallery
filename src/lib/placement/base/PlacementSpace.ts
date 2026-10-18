@@ -32,8 +32,12 @@ export abstract class PlacementSpace {
 
   /** whether an artwork, hung or loose, may be at this position */
   abstract contains(position: Vec3): boolean
-  /** The wall an artwork aimed along this ray would hang on, with whether and why not it fits there, or `null` if the ray hits no wall. */
-  findPlacement(origin: Vec3, direction: Vec3, width: number, height: number, portraits: ReadonlyArray<Portrait>, ignoreId = ''): Placement | null {
+  /**
+   * The wall an artwork aimed along this ray would hang on, with whether and why not it fits there, or `null` if the ray hits no wall.
+   *
+   * The placard stays on the side given by `labelAbove` unless only the placard blocks the spot: then it moves to the other side of the frame, and the placement says so.
+   */
+  findPlacement(origin: Vec3, direction: Vec3, width: number, height: number, portraits: ReadonlyArray<Portrait>, ignoreId = '', labelAbove = false): Placement | null {
     const obstruction = this.obstruction(origin, direction)
     let nearest = obstruction?.distance ?? Infinity
     let result = obstruction?.placement ?? null
@@ -55,9 +59,15 @@ export abstract class PlacementSpace {
       nearest = distance
       const position = wallPosition(candidateWall, u, point[1])
       const inReach = distance * length <= this.reach
-      const reason = inReach ? this.placementIssue(candidateWall, position, width, height, portraits, ignoreId) : placementIssues.reach
+      let above = labelAbove
+      let reason = inReach ? this.placementIssue(candidateWall, position, width, height, portraits, ignoreId, above) : placementIssues.reach
+      if (reason && inReach && !this.placementIssue(candidateWall, position, width, height, portraits, ignoreId, !above)) {
+        above = !above
+        reason = ''
+      }
       result = {
         inReach,
+        labelAbove: above,
         position,
         rotation: candidateWall.rotation - (candidateWall.curveRadius ? u / candidateWall.curveRadius : 0),
         wallId: candidateWall.id,

@@ -150,6 +150,7 @@ export default class ImageImporter {
               position: place.position,
               rotation: place.rotation,
               wallId: place.wallId,
+              labelAbove: place.labelAbove === true ? true : undefined,
               hung: true,
             })
           } else {
