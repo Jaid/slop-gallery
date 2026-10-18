@@ -27,7 +27,8 @@ export default function recordPlayerDump(dump: EgoDump) {
     context,
   }
   console.dir(snapshot, {depth: null})
-  copyDump(snapshot).catch(error => {
+  const {id, time, ...rest} = snapshot
+  copyDump(`<game-state-dump id="${id}" time="${time}">${stringifyClank(rest)}</game-state-dump>`).catch(error => {
     console.warn('Dump could not be copied to the clipboard.', error)
   })
   if (useGallery.getState().sound) {
@@ -81,8 +82,7 @@ async function confirmDump() {
     playSoundEffect(sound, 'SFX-04')
   }
 }
-async function copyDump(snapshot: Parameters<typeof stringifyClank>[0]) {
-  const text = `<game-state-dump>${stringifyClank(snapshot)}</game-state-dump>`
+async function copyDump(text: string) {
   await navigator.clipboard.writeText(text)
   console.info(`Dump copied to the clipboard as Clank (${text.length} characters).`)
 }
