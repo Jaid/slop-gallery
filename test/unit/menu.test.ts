@@ -12,6 +12,7 @@ import Menu from '#component/Menu'
 import {readAiSettings} from '../../src/lib/ai/settings.ts'
 import SoundEngine from '../../src/lib/audio/SoundEngine.ts'
 import {galleryEvents, resetGallery, startNewGame} from '../../src/lib/gallery/actions.ts'
+import defaultPortraits from '../../src/lib/gallery/defaultPortraits.ts'
 import {playerSession, playerSpawn} from '../../src/lib/gallery/PlayerSession.ts'
 import {createDocument, markControlled, readControlled, undo, useGallery} from '../../src/lib/gallery/store.ts'
 import pauseMenu from '../../src/lib/pauseMenu.ts'
@@ -127,7 +128,7 @@ describe('minimal menu', () => {
     try {
       resetGallery()
       const after = useGallery.getState()
-      expect(after.portraits).toEqual(useGallery.getInitialState().portraits)
+      expect(after.portraits).toEqual(defaultPortraits(after.seed))
       expect(after.resetEpoch).toBe(before.resetEpoch + 1)
       expect(after.importEpoch).toBe(before.importEpoch + 1)
       expect(after.hasControlled).toBe(true)

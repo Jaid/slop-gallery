@@ -10,7 +10,7 @@ import SoundEngine from '../audio/SoundEngine.ts'
 import crosshair, {crosshairToggleKey} from '../crosshair.ts'
 import {rollSeed} from '../environmentSeed.ts'
 import pauseMenu from '../pauseMenu.ts'
-import initialPortraits from './collection.ts'
+import defaultPortraits from './defaultPortraits.ts'
 import {playerSession, playerSpawn} from './PlayerSession.ts'
 import {redo, undo, useGallery} from './store.ts'
 
@@ -98,7 +98,8 @@ export function importRejected() {
 export function resetGallery() {
   playerSession.restore(playerSpawn)
   // A new game state rolls a new environment; undo brings back the previous one along with its collection.
-  useGallery.getState().commit(initialPortraits.map(p => ({...p})), rollSeed())
+  const seed = rollSeed()
+  useGallery.getState().commit(defaultPortraits(seed), seed)
   useGallery.setState(s => ({
     active: null,
     activeLabel: null,

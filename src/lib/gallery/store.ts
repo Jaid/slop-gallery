@@ -4,7 +4,7 @@ import {create} from 'zustand'
 
 import {effectiveSeed, rollSeed} from '../environmentSeed.ts'
 import {readControlled} from '../pauseMenu.ts'
-import initialPortraits from './collection.ts'
+import defaultPortraits from './defaultPortraits.ts'
 import {validateCollectionImages} from './imagePolicy.ts'
 import {playerSession} from './PlayerSession.ts'
 
@@ -76,10 +76,10 @@ function readKey() {
     return ''
   }
 }
-
+const initialSeed = rollSeed()
 export const useGallery = create<State>((set, get) => ({
-  portraits: initialPortraits.map(p => ({...p})),
-  seed: rollSeed(),
+  portraits: defaultPortraits(initialSeed),
+  seed: initialSeed,
   active: null,
   activeLabel: null,
   held: null,

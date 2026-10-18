@@ -8,9 +8,9 @@ import fs from 'fs-extra'
 import puppeteer from 'puppeteer-core'
 import {preview} from 'vite'
 
-import initialPortraits from '../src/lib/gallery/collection.ts'
+import artworks from '../src/lib/gallery/artworks.ts'
 
-const baseline = initialPortraits.length
+const baseline = artworks.length
 const snapshot = (page: Page): Promise<Snapshot> => page.evaluate(() => globalThis.slopGallery!.snapshot!())
 const teleport = (page: Page, position: Vec3, rotation = [0, 0, 0, 1]) => page.evaluate((cameraPosition, cameraRotation) => globalThis.slopGallery!.teleport!(cameraPosition, cameraRotation), position, rotation)
 const enter = async (page: Page) => {

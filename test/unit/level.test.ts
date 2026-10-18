@@ -7,11 +7,11 @@ import {resolve} from 'node:path'
 import {selectGameLevel} from 'vite-plugin-game-level'
 
 import levels, {defaultLevel, levelIds} from '../../src/data/levels.ts'
-import museumPortraits from '../../src/levels/gallery/collection.ts'
+import museumArtworks from '../../src/levels/gallery/artworks.ts'
 import {insideLevel as insideMuseum, playerSpawn as museumSpawn} from '../../src/levels/gallery/navigation.ts'
-import knotPortraits from '../../src/levels/knottingham/collection.ts'
+import knotArtworks from '../../src/levels/knottingham/artworks.ts'
 import {groundSurface, insideLevel as insideKnots, playerSpawn as knotSpawn, levelFloorHeight} from '../../src/levels/knottingham/navigation.ts'
-import soundboardPortraits from '../../src/levels/soundboard/collection.ts'
+import soundboardArtworks from '../../src/levels/soundboard/artworks.ts'
 import {insideLevel as insideSoundboard, playerSpawn as soundboardSpawn} from '../../src/levels/soundboard/navigation.ts'
 import {soundboardBounds} from '../../src/lib/audio/soundboard.ts'
 import {knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
@@ -71,10 +71,10 @@ describe('build-time levels', () => {
     expect(insideKnots([0, 0, knotGalleryBounds.northZ - 1])).toBe(false)
     expect(levelFloorHeight(farKnotPosition)).toBe(0)
     expect(groundSurface('vesper', [0, 0, 0])).toBe('generic')
-    expect(knotPortraits).toEqual([])
-    expect(soundboardPortraits).toEqual([])
+    expect(knotArtworks).toEqual([])
+    expect(soundboardArtworks).toEqual([])
     expect(insideSoundboard([soundboardBounds.maxX + 1, 0.04, 0])).toBe(false)
-    expect(museumPortraits).toEqual([])
+    expect(museumArtworks.length).toBeGreaterThan(0)
   })
 })
 test('Knot build retains poses beyond the museum bounds and falls back safely', async () => {
