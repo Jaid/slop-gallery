@@ -23,7 +23,7 @@
   },
   "peerDependencies": {
     "three": "^0.186.1",
-    "three-mesh-bvh": "^0.9.16",
+    "three-mesh-bvh": "latest",
     "vite": "^8.3.4"
   },
   "peerDependenciesMeta": {

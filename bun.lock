@@ -339,7 +339,7 @@
       "name": "use-audio-queue",
       "version": "0.1.0",
       "peerDependencies": {
-        "react": "^19.3.1",
+        "react": "latest",
       },
       "optionalPeers": [
         "react",
@@ -408,7 +408,7 @@
       },
       "peerDependencies": {
         "three": "^0.186.1",
-        "three-bvh-csg": "^0.0.18",
+        "three-bvh-csg": "latest",
         "vite": "^8.3.4",
       },
       "optionalPeers": [
@@ -446,7 +446,7 @@
       },
       "peerDependencies": {
         "three": "^0.186.1",
-        "three-mesh-bvh": "^0.9.16",
+        "three-mesh-bvh": "latest",
         "vite": "^8.3.4",
       },
       "optionalPeers": [
@@ -468,7 +468,7 @@
         "fs-extra": "11.4.1",
       },
       "peerDependencies": {
-        "@react-three/fiber": "^10.0.0-alpha.6",
+        "@react-three/fiber": "^10.0.0-canary.fd3335d",
         "react": "^19.3.1",
         "three": "^0.186.1",
         "vite": "^8.3.4",
