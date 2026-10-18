@@ -126,6 +126,31 @@ describe('Lodge and Corridor route', () => {
       material.dispose()
     }
   })
+  test('the timber lining closes the corners behind its knees where it stops at an elbow', () => {
+    const material = new MeshBasicMaterial
+    const geometry = TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts)
+    try {
+      const meshes = [geometry.shell, geometry.ribs].map(part => new Mesh(part, material))
+      const half = corridorPassage.width / 2
+      for (const [x, z] of [[lodge.approachX, lodge.returnZ], [lodge.approachX, lodge.siennaZ]]) {
+        // From the open elbow, look into each adjoining lining end, high in the corner between wall, ceiling and chamfer.
+        const directions = [[1, 0], [0, Math.sign(lodge.returnZ + lodge.siennaZ - 2 * z)]]
+        for (const [dx, dz] of directions) {
+          for (const side of [-1, 1]) {
+            const origin = new Vector3(x + side * dz * (half - 0.25), lodge.floorY + corridorPassage.height - 0.15, z + side * dx * (half - 0.25))
+            const ray = new Raycaster(origin, new Vector3(dx, 0, dz))
+            const hit = ray.intersectObjects(meshes)[0]
+            expect(hit).toBeDefined()
+            expect(hit.distance).toBeGreaterThan(half - 0.05)
+            expect(hit.distance).toBeLessThan(half + 0.05)
+          }
+        }
+      }
+    } finally {
+      geometry.dispose()
+      material.dispose()
+    }
+  })
   for (const offset of [-1.1, 1.1]) {
     for (const returning of [false, true]) {
       test(`the outer timber lanes are physically walkable, offset ${offset}, returning ${returning}`, () => {

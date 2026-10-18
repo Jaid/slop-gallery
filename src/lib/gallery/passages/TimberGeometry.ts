@@ -20,6 +20,8 @@ export type TimberSpan = {
 }
 
 const entranceProjection = 0.03
+/** thickness of the boards closing the void behind the knees where a lining ends inside a passage */
+const spandrelDepth = 0.04
 export function timberProfile(radius: number, height: number, inset: number) {
   const r = radius - inset
   const h = height - inset
@@ -59,6 +61,25 @@ export function timberRing(inside: Array<Vector2>, outside: Array<Vector2>, dept
     parts.push(geometry.translate(0, 0, distance).applyMatrix4(transform))
   }
   return parts
+}
+/**
+ * Boards up the two upper corners between a ring’s chamfered outside and the square passage around it, at a lining end within a passage.
+ *
+ * Behind the knees, the square passage leaves a triangular void along the whole span. Where the lining stops at an open elbow, that void would be seen end-on, all the way to whatever closes it meters away.
+ */
+export function timberSpandrels(outside: ReadonlyArray<Vector2>, depth: number, distance: number, transform: Matrix4) {
+  const knee = outside.at(-2)!
+  const crown = outside.at(-5)!
+  return [-1, 1].map(side => {
+    const point = ({x, y}: Vector2) => new Vector2(x * side, y)
+    // ExtrudeGeometry normalizes the winding of the mirrored outlines.
+    const shape = new Shape([...outside.slice(-5, -1).map(point), new Vector2(knee.x * side, crown.y)])
+    const geometry = new ExtrudeGeometry(shape, {
+      depth,
+      bevelEnabled: false,
+    })
+    return geometry.translate(0, 0, distance).applyMatrix4(transform)
+  })
 }
 /** Cut both the lining and projecting ribs, sharing the resulting surface with collision. */
 function cutTimber(geometry: BufferGeometry, cutouts: ReadonlyArray<PassageCutout>) {
@@ -171,6 +192,14 @@ export default class TimberGeometry {
       // At internal junctions the ends still butt together without overlapping lengths.
       const front = from - entryProjection
       shells.push(...timberRing(backing, outside, to - front, front, transform))
+      // Lining ends at an open elbow show the void behind the knees end-on; room entrances are closed by the room wall.
+      const spandrel = Math.min(spandrelDepth, (to - front) / 2)
+      if (from > 0) {
+        shells.push(...timberSpandrels(outside, spandrel, front, transform))
+      }
+      if (to < length) {
+        shells.push(...timberSpandrels(outside, spandrel, to - spandrel, transform))
+      }
       const count = Math.max(1, Math.ceil((to - front) / 1.3))
       const depth = Math.min(0.19, (to - front) / 3)
       for (let rib = 0; rib <= count; rib++) {
