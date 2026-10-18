@@ -48,7 +48,7 @@ test('catalog effects respect the SoundEngine mute state', () => {
   sound.playEffect('SFX-43')
   expect(sources).toHaveLength(count)
 })
-test('stride callbacks at time zero and closer than the old cooldown all produce footsteps', () => {
+test('stride callbacks at time zero and in quick succession all produce footsteps', () => {
   const {sound, context, sources, buffers} = setup()
   for (const time of [0, 0.18, 0.36]) {
     context.currentTime = time

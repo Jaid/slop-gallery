@@ -69,7 +69,7 @@ const firstHit = (origin: Vector3, direction: Vector3, far = Infinity) => {
   return raycaster.intersectObjects(meshes)[0]
 }
 describe('ceiling-hung pendants', () => {
-  test('every light still hangs where it used to, at its old height', () => {
+  test('every light hangs at its passage height or beside its stair step', () => {
     expect(groups[0].mounts).toHaveLength(5)
     expect(groups[1].mounts).toHaveLength(11)
     expect(groups[2].mounts).toHaveLength(stairLightSteps.length)

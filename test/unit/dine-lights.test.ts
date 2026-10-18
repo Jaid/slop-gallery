@@ -96,8 +96,9 @@ test('housings meet the ceiling without a gap and the diffuser is the first surf
     panels.dispose()
   }
 })
-test('the pane lights replace the old pair without changing how bright floor and walls are', () => {
-  const before = [-3.5, 3.5].map(z => ({
+test('the pane lights match the reference pair’s floor and wall brightness', () => {
+  // Two 32 cd point lights 4.9 m up, the calibration the room’s materials were tuned against.
+  const reference = [-3.5, 3.5].map(z => ({
     intensity: 32,
     position: local(0, 4.9, z),
   }))
@@ -109,12 +110,12 @@ test('the pane lights replace the old pair without changing how bright floor and
     // Each light sits below its own diffuser, close enough that the housing hides its brightest ceiling spot.
     expect(light.position.y).toBeLessThan(dineLedSlots[0].position[1] + knotLightDiffuserY - knotLightDiffuserSize[1] / 2)
   }
-  const old = meanIrradiance(before)
+  const target = meanIrradiance(reference)
   const current = meanIrradiance(after)
-  expect(current.floor / old.floor).toBeGreaterThan(0.9)
-  expect(current.floor / old.floor).toBeLessThan(1.1)
-  expect(current.walls / old.walls).toBeGreaterThan(0.9)
-  expect(current.walls / old.walls).toBeLessThan(1.1)
+  expect(current.floor / target.floor).toBeGreaterThan(0.9)
+  expect(current.floor / target.floor).toBeLessThan(1.1)
+  expect(current.walls / target.walls).toBeGreaterThan(0.9)
+  expect(current.walls / target.walls).toBeLessThan(1.1)
 })
 test('a prop thrown at a dine pane cracks it first, then knocks the diffuser loose', () => {
   const world = new RAPIER.World({

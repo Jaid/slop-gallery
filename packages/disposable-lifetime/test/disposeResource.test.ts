@@ -4,13 +4,13 @@ import disposeResource from '../src/disposeResource.ts'
 
 test('uses the native Disposable protocol when available', () => {
   const dispose = mock(() => {})
-  const legacyDispose = mock(() => {})
+  const methodDispose = mock(() => {})
   disposeResource({
     [Symbol.dispose]: dispose,
-    dispose: legacyDispose,
+    dispose: methodDispose,
   })
   expect(dispose).toHaveBeenCalledTimes(1)
-  expect(legacyDispose).not.toHaveBeenCalled()
+  expect(methodDispose).not.toHaveBeenCalled()
 })
 test('adapts dispose-method resources', () => {
   const dispose = mock(() => {})

@@ -40,7 +40,7 @@ test('components use real, locally scoped Sass module exports', async () => {
     })
   }
 })
-test('component styles no longer depend on the global App stylesheet or literal classes', async () => {
+test('components use no global stylesheets or literal class names', async () => {
   const stylesheetGlob = new Bun.Glob('src/**/*.css')
   expect([...stylesheetGlob.scanSync()]).toEqual([])
   const componentGlob = new Bun.Glob('src/components/**/*.tsx')

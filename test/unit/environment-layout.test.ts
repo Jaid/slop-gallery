@@ -134,7 +134,7 @@ test('timber entrances have a single exposed face across the ribs, lining and st
     }
   }
 })
-test('the reported timber rib no longer shares its visible face with a wall baseboard', () => {
+test('corridor timber ribs never share their visible face with a wall baseboard', () => {
   const wall = walls.find(value => value.id === 'corridor-wall-4')!
   const architecture = createArchitectureGeometry(wall)
   const timber = TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts)
