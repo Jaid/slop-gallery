@@ -96,6 +96,12 @@ test('an inactive light keeps its update until it is active again', () => {
   lamp.position.x = 1
   expect(step()).toBe(true)
 })
+test('a new light renders its shadow map right away, even while inactive', () => {
+  const {setActive, step} = setup()
+  setActive(false)
+  expect(step()).toBe(true)
+  expect(step()).toBe(false)
+})
 test('directional lights test changes against their shadow camera', () => {
   const scene = new Scene
   const sun = new DirectionalLight

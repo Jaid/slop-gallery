@@ -147,9 +147,11 @@ export default class ShadowCache {
   private trackLight(light: ShadowLight, frame: number) {
     const state = this.lights.get(light)
     if (!state) {
+      // Its map has nothing to keep yet, so it renders right away, even in a room out of view.
       light.shadow.autoUpdate = false
+      light.shadow.needsUpdate = true
       this.lights.set(light, {
-        dirty: true,
+        dirty: false,
         frame,
         matrix: light.matrixWorld.clone(),
       })

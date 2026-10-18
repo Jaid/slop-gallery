@@ -96,7 +96,8 @@ export class GalleryRenderer extends WebgpuRenderer {
   private projectWarming?: ProjectObject
   private warmedFrame = -1
   private warming = false
-  private readonly warmObjects = new WeakSet<Object3D>
+  /** the cameras each object was drawn for outside their frustum while loading */
+  private readonly warmObjects = new WeakMap<Object3D, Set<Camera>>
   private warmupAdmissions = 0
 
   constructor(options: WebgpuRendererOptions) {
@@ -202,7 +203,8 @@ export class GalleryRenderer extends WebgpuRenderer {
         projectObject.call(this, object, camera, groupOrder, renderList, clippingContext)
         return
       }
-      if (!this.warmObjects.has(object)) {
+      let cameras = this.warmObjects.get(object)
+      if (!cameras) {
         if (this.warmupAdmissions >= warmupObjectsPerFrame) {
           // Postpone the rest of the scene to the next frames.
           this.warmedFrame = -1
@@ -210,8 +212,18 @@ export class GalleryRenderer extends WebgpuRenderer {
           return
         }
         this.warmupAdmissions++
-        this.warmObjects.add(object)
+        cameras = new Set
+        this.warmObjects.set(object, cameras)
       }
+      // One draw per pass requests the object’s pipelines. Drawing it outside the frustum again would only redo the work, which in every shadow map of every loading frame adds up to seconds.
+      if (cameras.has(camera)) {
+        // Shadow maps drawn while loading are redrawn once the shadow cache takes over, so they only draw what still needs its pipelines.
+        if (!this.frameScene?.overrideMaterial) {
+          projectObject.call(this, object, camera, groupOrder, renderList, clippingContext)
+        }
+        return
+      }
+      cameras.add(camera)
       object.frustumCulled = false
       try {
         projectObject.call(this, object, camera, groupOrder, renderList, clippingContext)
