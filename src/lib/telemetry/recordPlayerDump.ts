@@ -82,7 +82,7 @@ async function confirmDump() {
   }
 }
 async function copyDump(snapshot: Parameters<typeof stringifyClank>[0]) {
-  const clank = stringifyClank(snapshot)
-  await navigator.clipboard.writeText(clank)
-  console.info(`Dump copied to the clipboard as Clank (${clank.length} characters).`)
+  const text = `<game-state-dump>${stringifyClank(snapshot)}</game-state-dump>`
+  await navigator.clipboard.writeText(text)
+  console.info(`Dump copied to the clipboard as Clank (${text.length} characters).`)
 }
