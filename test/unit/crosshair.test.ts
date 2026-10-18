@@ -1,5 +1,6 @@
 import {afterEach, beforeEach, describe, expect, test} from 'bun:test'
 
+import {createAimDot} from '../../src/lib/aimDot.ts'
 import crosshair, {CrosshairPreference, crosshairToggleKey} from '../../src/lib/crosshair.ts'
 import {handleGalleryKey} from '../../src/lib/gallery/actions.ts'
 import {useGallery} from '../../src/lib/gallery/store.ts'
@@ -39,6 +40,27 @@ describe('crosshair preference', () => {
   test('without an explicit value it follows ?crosshair, which is absent in tests', () => {
     const preference = new CrosshairPreference
     expect(preference.getSnapshot()).toBe(false)
+  })
+})
+describe('aim dot', () => {
+  test('hides while V viewing or zoom blocks it', () => {
+    const aimDot = createAimDot(false)
+    let updates = 0
+    aimDot.subscribe(() => updates++)
+    aimDot.setBlocked('viewing', true)
+    expect(aimDot.getSnapshot()).toBe(false)
+    aimDot.setBlocked('zoom', true)
+    aimDot.setBlocked('viewing', false)
+    expect(aimDot.getSnapshot()).toBe(false)
+    aimDot.setBlocked('zoom', false)
+    expect(aimDot.getSnapshot()).toBe(true)
+    expect(updates).toBe(2)
+  })
+  test('stays visible through blockers with ?crosshair=always', () => {
+    const aimDot = createAimDot(true)
+    aimDot.setBlocked('viewing', true)
+    aimDot.setBlocked('zoom', true)
+    expect(aimDot.getSnapshot()).toBe(true)
   })
 })
 describe('H key', () => {

@@ -52,6 +52,7 @@ describe('?crosshair', () => {
     expect(readCrosshair('https://slop.gallery/?crosshair')).toBe(true)
     expect(readCrosshair('https://slop.gallery/?crosshair=true')).toBe(true)
     expect(readCrosshair('https://slop.gallery/?graphics=heavy&crosshair')).toBe(true)
+    expect(readCrosshair('https://slop.gallery/?crosshair=always')).toBe('always')
   })
 })
 describe('hint debouncing', () => {
