@@ -50,7 +50,7 @@ test('player dumps are development-only, preserve precision, join separate hit l
               }))
               builder.onLoad({filter: /lib[/\\]gallery\.ts$/u}, () => ({
                 loader: 'ts',
-                contents: `export const rooms = [{id: 'lobby', title: 'Lobby'}]; export const useGallery = {getState: () => ({room: 'lobby', active: null, held: null, inspecting: null, locked: true, sound: ${sound}})}`,
+                contents: `export const useGallery = {getState: () => ({room: 'lobby', active: null, held: null, inspecting: null, locked: true, sound: ${sound}})}`,
               }))
               builder.onLoad({filter: /audio[/\\]SoundEngine\.ts$/u}, () => ({
                 loader: 'ts',
@@ -74,7 +74,7 @@ test('player dumps are development-only, preserve precision, join separate hit l
               }))
               builder.onLoad({filter: /lib[/\\]level\.ts$/u}, () => ({
                 loader: 'ts',
-                contents: "export const galleryLevel = 'knottingham'; export const galleryTitle = 'Knottingham'; export const isGallery = false",
+                contents: "export const galleryLevel = 'knottingham'; export const galleryTitle = 'Knottingham'",
               }))
             },
           },
