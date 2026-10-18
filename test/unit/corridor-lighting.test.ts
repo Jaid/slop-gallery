@@ -7,7 +7,7 @@ import {lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
 import {GlobeBody, LanternBody} from '../../src/lib/gallery/pendants/index.ts'
 import {soleLampBounce, soleLampReach} from '../../src/lib/gallery/pendants/lighting.ts'
-import {passageLightHeight, passagePendantMounts} from '../../src/lib/gallery/pendants/mounts.ts'
+import {corridorLightSpacing, passageLightHeight, passagePendantMounts} from '../../src/lib/gallery/pendants/mounts.ts'
 import {corridorLanterns, IndoorLightsNode, LanternEnvironment, LanternLight, LanternLightNode, LanternLightsNode, lightIndoors, lodgeWindowLights} from '../../src/lib/materials/lights/index.ts'
 import {sample} from '../../src/lib/materials/lights/LanternEnvironment.ts'
 
@@ -109,12 +109,12 @@ test('a fixture’s roof shades the ceiling above it but not the room around and
 test('lantern pools fade to a dim gap between neighbors without going black', () => {
   const geometry = TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts)
   try {
-    const lamps = passagePendantMounts(corridorPassage, [geometry.shell, geometry.ribs]).map(mount => mount.light)
+    const lamps = passagePendantMounts(corridorPassage, [geometry.shell, geometry.ribs], corridorLightSpacing).map(mount => mount.light)
     const light = lamp(corridorLanterns)
     const floor = (x: number, z: number) => lamps.reduce((sum, [lampX, , lampZ]) => sum + floorIrradiance(light, Math.hypot(x - lampX, z - lampZ)), 0)
     // Along the long span, every pair of neighbors leaves a dimmer stretch between their pools.
     const span = lamps.filter(([x]) => x === corridorPassage.spans[1].start[0])
-    expect(span.length).toBeGreaterThan(5)
+    expect(span.length).toBe(5)
     for (let i = 1; i < span.length; i++) {
       const [x, , z] = span[i]
       const previous = span[i - 1][2]

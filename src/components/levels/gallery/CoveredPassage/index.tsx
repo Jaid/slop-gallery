@@ -17,7 +17,7 @@ import TimberGeometry from '#src/lib/gallery/passages/TimberGeometry.ts'
 import VaultGeometry from '#src/lib/gallery/passages/VaultGeometry.ts'
 import {LanternBody} from '#src/lib/gallery/pendants/index.ts'
 import {soleLampBounce, soleLampReach} from '#src/lib/gallery/pendants/lighting.ts'
-import {passagePendantMounts} from '#src/lib/gallery/pendants/mounts.ts'
+import {corridorLightSpacing, passagePendantMounts} from '#src/lib/gallery/pendants/mounts.ts'
 
 const lantern = new LanternBody
 const lanternGlow = {
@@ -48,7 +48,7 @@ export default function CoveredPassage({passage, lighting, material, timber, rib
   transition?: PassageTransition
 }) {
   const geometry = useDisposable(useMemo(() => (timber ? TimberGeometry.passage(passage, ribCutouts) : new VaultGeometry(passage, transition?.length)), [passage, ribCutouts, timber, transition]))
-  const mounts = useMemo(() => passagePendantMounts(passage, [geometry.shell, geometry.ribs]), [geometry, passage])
+  const mounts = useMemo(() => passagePendantMounts(passage, [geometry.shell, geometry.ribs], lighting ? corridorLightSpacing : undefined), [geometry, lighting, passage])
   const paving = transition?.stoneFloors ?? passage.floors
   // A timber lining’s crown is the ceiling along its spans; a slab there would share its plane. Only the open elbows show the slab.
   const ceilings = timber ? passage.junctions : passage.floors

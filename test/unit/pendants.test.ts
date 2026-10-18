@@ -11,7 +11,7 @@ import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
 import TransitionGeometry from '../../src/lib/gallery/passages/TransitionGeometry.ts'
 import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
 import {CeilingProbe, GlobeBody, LanternBody, PendantGeometry} from '../../src/lib/gallery/pendants/index.ts'
-import {passageLightHeight, passagePendantMounts, stairLightHeight, stairLightSteps, stairPendantMounts} from '../../src/lib/gallery/pendants/mounts.ts'
+import {corridorLightSpacing, passageLightHeight, passagePendantMounts, stairLightHeight, stairLightSteps, stairPendantMounts} from '../../src/lib/gallery/pendants/mounts.ts'
 import {canopyEmbed, canopyHeight, canopyRadius} from '../../src/lib/gallery/pendants/PendantGeometry.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 
@@ -46,7 +46,7 @@ const groups: Array<{
   {
     label: 'timber corridor',
     body: lantern,
-    mounts: passagePendantMounts(corridorPassage, [corridor.shell, corridor.ribs]),
+    mounts: passagePendantMounts(corridorPassage, [corridor.shell, corridor.ribs], corridorLightSpacing),
   },
   {
     label: 'corridor stairs',
@@ -71,7 +71,7 @@ const firstHit = (origin: Vector3, direction: Vector3, far = Infinity) => {
 describe('ceiling-hung pendants', () => {
   test('every light hangs at its passage height or beside its stair step', () => {
     expect(groups[0].mounts).toHaveLength(5)
-    expect(groups[1].mounts).toHaveLength(11)
+    expect(groups[1].mounts).toHaveLength(7)
     expect(groups[2].mounts).toHaveLength(stairLightSteps.length)
     for (const [i, passage] of [lodgeTunnel, corridorPassage].entries()) {
       for (const mount of groups[i].mounts) {
