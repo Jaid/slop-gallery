@@ -1,61 +1,110 @@
 import {describe, expect, test} from 'bun:test'
 
-import {NoColorSpace, RepeatWrapping, SRGBColorSpace} from 'three/webgpu'
+import StudioEnvironment from 'knot-materials/StudioEnvironment.ts'
+import {MeshPhysicalNodeMaterial, Vector3} from 'three/webgpu'
 
-import GoldTextures from '../../src/lib/materials/GoldTextures.ts'
+import {moonfallCrater} from '../../src/lib/gallery/moonfall/config.ts'
+import StanchionRingGeometry from '../../src/lib/gallery/railings/StanchionRingGeometry.ts'
+import {triangleCount} from '../../src/lib/geometry.ts'
+import gold from '../../src/lib/materials/gold.ts'
+import GoldMaterial, {goldReflectance} from '../../src/lib/materials/GoldMaterial.ts'
+import VelvetRopeMaterial from '../../src/lib/materials/VelvetRopeMaterial.ts'
 
-describe('polished gold', () => {
-  test('generates deterministic, independently owned color and normal maps', () => {
-    const a = new GoldTextures
-    const b = new GoldTextures
+const sharedGoldUsers = [
+  'src/components/levels/gallery/MoonfallCrater/index.tsx',
+  'src/components/levels/gallery/SalonRoom/index.tsx',
+  'src/components/levels/gallery/WallDecorations/index.tsx',
+  'src/components/levels/gallery/Props/index.tsx',
+]
+describe('gold', () => {
+  test('is a lacquered, fully metallic and procedurally varied physical material', () => {
+    const material = new GoldMaterial
     try {
-      expect(a.map).not.toBe(b.map)
-      expect(a.map.image.data).not.toBe(b.map.image.data)
-      expect(a.map.image.data).toEqual(b.map.image.data)
-      expect(a.normal.image.data).toEqual(b.normal.image.data)
-      expect(a.map.colorSpace).toBe(SRGBColorSpace)
-      expect(a.normal.colorSpace).toBe(NoColorSpace)
-      expect(a.map.repeat.toArray()).toEqual(a.normal.repeat.toArray())
-      for (const texture of [a.map, a.normal]) {
-        expect(texture.wrapS).toBe(RepeatWrapping)
-        expect(texture.wrapT).toBe(RepeatWrapping)
-        expect(texture.generateMipmaps).toBe(true)
-      }
-      const color = a.map.image.data
-      const normal = a.normal.image.data
-      if (!color || !normal) {
-        throw new Error('Missing gold pixels.')
-      }
-      let minimumRed = 255
-      let maximumRed = 0
-      let variedNormals = false
-      for (let i = 0; i < color.length; i += 4) {
-        minimumRed = Math.min(minimumRed, color[i])
-        maximumRed = Math.max(maximumRed, color[i])
-        if (normal[i] !== 128 || normal[i + 1] !== 128) {
-          variedNormals = true
-        }
-        if (!(color[i] > color[i + 1] && color[i + 1] > color[i + 2] && color[i + 3] === 255)) {
-          throw new Error('Invalid gold color.')
-        }
-        const length = Math.hypot(normal[i] / 255 * 2 - 1, normal[i + 1] / 255 * 2 - 1, normal[i + 2] / 255 * 2 - 1)
-        if (Math.abs(length - 1) > 0.015 || normal[i + 2] < 230 || normal[i + 3] !== 255) {
-          throw new Error('Invalid surface normal.')
-        }
-      }
-      expect(maximumRed - minimumRed).toBeGreaterThan(10)
-      expect(variedNormals).toBe(true)
+      expect(material).toBeInstanceOf(MeshPhysicalNodeMaterial)
+      expect(material.metalness).toBe(1)
+      expect(material.roughness).toBeLessThan(0.25)
+      expect(material.clearcoat).toBeGreaterThan(0)
+      expect(material.clearcoatRoughness).toBeLessThan(0.1)
+      expect(material.colorNode).not.toBeNull()
+      expect(material.roughnessNode).not.toBeNull()
+      expect(material.clearcoatRoughnessNode).not.toBeNull()
+      // Without an environment of its own it mirrors the scene’s.
+      expect(material.envMap).toBeNull()
     } finally {
-      a.dispose()
-      b.dispose()
+      material.dispose()
     }
   })
-  test('releases both owned textures', () => {
-    const textures = new GoldTextures
-    const disposed: Array<string> = []
-    textures.map.addEventListener('dispose', () => disposed.push('color'))
-    textures.normal.addEventListener('dispose', () => disposed.push('normal'))
-    textures.dispose()
-    expect(disposed).toEqual(['color', 'normal'])
+  test('reflects warm gold: strongest in red, weakest in blue', () => {
+    const [red, green, blue] = goldReflectance
+    expect(red).toBe(1)
+    expect(green).toBeLessThan(red)
+    expect(blue).toBeLessThan(green / 2)
+  })
+  test('the gallery shares one instance that mirrors its own studio', () => {
+    expect(gold).toBeInstanceOf(GoldMaterial)
+    expect(gold.envMap).toBeInstanceOf(StudioEnvironment)
+    expect(gold.envMapIntensity).toBeGreaterThan(0)
+  })
+  test('the stanchions, crater trim, gilt rails, lamp hoods and golden props all use the shared instance', async () => {
+    for (const file of sharedGoldUsers) {
+      const source = await Bun.file(file).text()
+      expect(source, file).toContain('import gold from \'#src/lib/materials/gold.ts\'')
+    }
+    const crater = await Bun.file(sharedGoldUsers[0]).text()
+    expect(crater).toContain('geometry={fence.posts} material={gold}')
+    expect(crater).toContain('material={gold} name=\'moonfall-crater-trim\'')
+  })
+})
+describe('the stanchion barrier', () => {
+  test('its rope is red velvet', () => {
+    const velvet = new VelvetRopeMaterial
+    try {
+      expect(velvet).toBeInstanceOf(MeshPhysicalNodeMaterial)
+      expect(velvet.metalness).toBe(0)
+      expect(velvet.roughness).toBeGreaterThan(0.8)
+      expect(velvet.sheen).toBeGreaterThan(0)
+      expect(velvet.colorNode).not.toBeNull()
+      expect(velvet.sheenNode).not.toBeNull()
+    } finally {
+      velvet.dispose()
+    }
+  })
+  test('finely turned posts for polished metal, with coarse stand-ins of the same size for collision', () => {
+    const fence = new StanchionRingGeometry(moonfallCrater.fenceRadius, moonfallCrater.fencePosts)
+    try {
+      const posts = triangleCount(fence.posts)
+      const collision = triangleCount(fence.postCollision)
+      expect(collision).toBeLessThan(posts / 2)
+      expect(posts).toBeLessThan(80_000)
+      expect(collision).toBeLessThan(20_000)
+      for (const part of [fence.posts, fence.postCollision, fence.rope]) {
+        expect(part.index).not.toBeNull()
+        for (const attribute of Object.values(part.attributes)) {
+          expect([...attribute.array].every(Number.isFinite)).toBe(true)
+        }
+      }
+      const normals = fence.posts.getAttribute('normal')
+      const normal = new Vector3
+      for (let i = 0; i < normals.count; i++) {
+        expect(normal.fromBufferAttribute(normals, i).length()).toBeCloseTo(1, 4)
+      }
+      fence.posts.computeBoundingBox()
+      fence.postCollision.computeBoundingBox()
+      const render = fence.posts.boundingBox!
+      const stand = fence.postCollision.boundingBox!
+      for (const axis of ['x', 'y', 'z'] as const) {
+        expect(Math.abs(render.min[axis] - stand.min[axis])).toBeLessThan(0.02)
+        expect(Math.abs(render.max[axis] - stand.max[axis])).toBeLessThan(0.02)
+      }
+      // Every post stands on the floor with its finial at rope height.
+      const size = render.getSize(new Vector3)
+      expect(render.min.y).toBeCloseTo(0, 6)
+      expect(size.y).toBeGreaterThan(1.1)
+      expect(size.y).toBeLessThan(1.13)
+      fence.rope.computeBoundingBox()
+      expect(fence.rope.boundingBox!.max.y).toBeLessThan(render.max.y)
+    } finally {
+      fence.dispose()
+    }
   })
 })
