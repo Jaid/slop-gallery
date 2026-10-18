@@ -74,7 +74,7 @@ describe('build-time levels', () => {
     expect(knotPortraits).toEqual([])
     expect(soundboardPortraits).toEqual([])
     expect(insideSoundboard([soundboardBounds.maxX + 1, 0.04, 0])).toBe(false)
-    expect(museumPortraits).toHaveLength(19)
+    expect(museumPortraits).toEqual([])
   })
 })
 test('Knot build retains poses beyond the museum bounds and falls back safely', async () => {

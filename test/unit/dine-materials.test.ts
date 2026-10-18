@@ -2,13 +2,13 @@ import {describe, expect, test} from 'bun:test'
 
 import {PerspectiveCamera} from 'three/webgpu'
 
-import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {dineBoiserie, dineFloorOrigin, dineFloorTile, dineWallPanels, freeWallRuns} from '../../src/lib/gallery/dine.ts'
 import {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
 import walls, {rooms} from '../../src/lib/gallery/walls.ts'
 import {BoiserieTrimMaterial, BoiserieWallMaterial} from '../../src/lib/materials/boiserie/index.ts'
 import DineMaterials from '../../src/lib/materials/DineMaterials.ts'
 import {calacatta, CheckeredMarbleFloorMaterial, checkeredTile, portoro} from '../../src/lib/materials/marble/index.ts'
+import samplePortraits from './fixtures/portraits.ts'
 
 const dine = rooms.find(room => room.id === 'dine')!
 const dineWalls = walls.filter(wall => wall.room === 'dine')
@@ -162,7 +162,7 @@ describe('Dine’s boiserie layout', () => {
     expect(sliver.some(([, right]) => right > 1)).toBe(false)
   })
   test('the placards of the shipped artworks clear the chair rail', () => {
-    const hung = initialPortraits.filter(portrait => portrait.wallId?.startsWith('dine-'))
+    const hung = samplePortraits.filter(portrait => portrait.wallId?.startsWith('dine-'))
     expect(hung.length).toBeGreaterThan(0)
     for (const portrait of hung) {
       const bottom = portrait.position[1] + portraitLabelLayout(portrait.width, portrait.height).bottom

@@ -2,15 +2,15 @@ import {afterEach, beforeEach, expect, jest, spyOn, test} from 'bun:test'
 
 import {IDBFactory} from 'fake-indexeddb'
 
-import initialPortraits from '../../src/lib/gallery/collection.ts'
 import GalleryRepository, {initializePersistence, repository, validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import {maximumCollectionImageBytes, maximumImageBytes} from '../../src/lib/gallery/imagePolicy.ts'
 import PlayerSession, {playerSession} from '../../src/lib/gallery/PlayerSession.ts'
 import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
+import samplePortraits from './fixtures/portraits.ts'
 
 const original = {
   ...createDocument(),
-  portraits: initialPortraits.map(p => ({...p})),
+  portraits: samplePortraits.map(p => ({...p})),
 }
 const previous = {
   indexedDB: globalThis.indexedDB,
@@ -49,7 +49,7 @@ test('new gallery documents default to muted audio', () => {
 })
 test('the aggregate boundary round-trips through store, IndexedDB and compressed backup', async () => {
   const source = new Blob([new Uint8Array(maximumImageBytes)], {type: 'image/webp'})
-  const portraits = initialPortraits.slice(0, maximumCollectionImageBytes / maximumImageBytes).map(p => ({
+  const portraits = samplePortraits.slice(0, maximumCollectionImageBytes / maximumImageBytes).map(p => ({
     ...p,
     source,
   }))
@@ -70,13 +70,13 @@ test('the aggregate boundary round-trips through store, IndexedDB and compressed
 }, 30_000)
 test('one byte beyond the aggregate limit is rejected by every admission and serialization boundary', async () => {
   const source = new Blob([new Uint8Array(maximumImageBytes)], {type: 'image/png'})
-  const portraits = initialPortraits.slice(0, 6).map(p => ({
+  const portraits = samplePortraits.slice(0, 6).map(p => ({
     ...p,
     source,
   }))
   useGallery.getState().commit(portraits)
   const extra = {
-    ...initialPortraits[6],
+    ...samplePortraits[6],
     source: new Blob(['x'], {type: 'image/png'}),
   }
   const invalid = {
@@ -92,7 +92,7 @@ test('one byte beyond the aggregate limit is rejected by every admission and ser
   await expect(repo.export(invalid)).rejects.toThrow('150')
   expect(await repo.load()).toBeNull()
   expect(useGallery.getState().portraits).toHaveLength(6)
-  useGallery.getState().commit([...portraits, initialPortraits[6]])
+  useGallery.getState().commit([...portraits, samplePortraits[6]])
   expect(() => useGallery.getState().update(extra.id, {source: extra.source})).toThrow('150')
 })
 test('a failed load protects the stored record until explicit recovery', async () => {
@@ -123,7 +123,7 @@ test('save strips runtime ownership before structured cloning', async () => {
     ...original,
     portraits: [
       {
-        ...initialPortraits[0],
+        ...samplePortraits[0],
         mergeJob: Symbol(),
         flavorJob: Symbol(),
         pending: true,
@@ -137,7 +137,7 @@ test('save strips runtime ownership before structured cloning', async () => {
 test('import rejects an oversized document even when gzip compresses it below the file limit', async () => {
   const largestImage = new Uint8Array(maximumImageBytes)
   const encoded = largestImage.toBase64()
-  const portraits = initialPortraits.slice(0, 7).map((p, i) => ({
+  const portraits = samplePortraits.slice(0, 7).map((p, i) => ({
     ...p,
     source: {
       mime: 'image/png',
@@ -182,7 +182,7 @@ test('metadata limits leave room for image encoding in every exported collection
     ...original,
     portraits: [
       {
-        ...initialPortraits[0],
+        ...samplePortraits[0],
         hung: false,
         wallId: 'x'.repeat(101),
       },

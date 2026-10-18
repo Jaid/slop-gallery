@@ -9,14 +9,16 @@ const portraitLabel = {
   neighborClearance: 0.125,
 }
 
-export function portraitLabelLayout(width: number, height: number) {
-  const y = -height / 2 - portraitLabel.offset
+/** The placard of a frame, centered below it or, for a low hang, above it. */
+export function portraitLabelLayout(width: number, height: number, above = false) {
+  const y = above ? height / 2 + portraitLabel.offset : -height / 2 - portraitLabel.offset
   return {
     width: Math.min(width, 1.65),
     titleWidth: Math.min(width, 1.55),
     creatorWidth: Math.min(width, 1.5),
     y,
     bottom: y - portraitLabel.height / 2,
+    top: y + portraitLabel.height / 2,
   }
 }
 

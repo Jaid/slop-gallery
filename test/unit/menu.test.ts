@@ -15,6 +15,7 @@ import {galleryEvents, resetGallery, startNewGame} from '../../src/lib/gallery/a
 import {playerSession, playerSpawn} from '../../src/lib/gallery/PlayerSession.ts'
 import {createDocument, markControlled, readControlled, undo, useGallery} from '../../src/lib/gallery/store.ts'
 import pauseMenu from '../../src/lib/pauseMenu.ts'
+import samplePortraits from './fixtures/portraits.ts'
 
 const state = useGallery.getState()
 const storageDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')
@@ -110,6 +111,7 @@ describe('minimal menu', () => {
   })
   test('reset restores the collection, restarts props and returns home without forgetting prior control', () => {
     useGallery.setState({hasControlled: true})
+    useGallery.getState().commit(samplePortraits.map(p => ({...p})))
     useGallery.getState().remove('goose')
     const before = useGallery.getState()
     let homes = 0
@@ -125,14 +127,14 @@ describe('minimal menu', () => {
     try {
       resetGallery()
       const after = useGallery.getState()
-      expect(after.portraits.some(p => p.id === 'goose')).toBe(true)
+      expect(after.portraits).toEqual(useGallery.getInitialState().portraits)
       expect(after.resetEpoch).toBe(before.resetEpoch + 1)
       expect(after.importEpoch).toBe(before.importEpoch + 1)
       expect(after.hasControlled).toBe(true)
       expect(homes).toBe(1)
       expect(stops).toBe(1)
       expect(undo()).toBe(true)
-      expect(useGallery.getState().portraits.some(p => p.id === 'goose')).toBe(false)
+      expect(useGallery.getState().portraits.map(p => p.id)).toEqual(samplePortraits.map(p => p.id).filter(id => id !== 'goose'))
     } finally {
       galleryEvents.removeEventListener('home', home)
       galleryEvents.removeEventListener('stop-narration', stop)

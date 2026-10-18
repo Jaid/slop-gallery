@@ -7,11 +7,11 @@ import EgoMotor from 'ego-player/motor'
 import {BoxGeometry, Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import staircase, {stairBlocks, stairFlights, stairFloorHeight, stairRailGeometry, stairRoofs, stairTurn} from '../../src/lib/gallery/staircase.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
 import walls, {floorHeight, galleryPlacement, insideGallery, placementIssue, roomAt, rooms, roomVisit, wallPosition} from '../../src/lib/gallery/walls.ts'
+import samplePortraits from './fixtures/portraits.ts'
 
 await RAPIER.init()
 const lower = rooms.find(candidate => candidate.id === 'moonfall')!
@@ -60,7 +60,7 @@ describe('lower gallery', () => {
   })
   test('current loose artwork on the stair landing is not mistaken for the original Moonfall', () => {
     const portrait = {
-      ...initialPortraits[0],
+      ...samplePortraits[0],
       hung: false,
       wallId: 'moonfall-east',
       position: [15.3, -3.8, 13.3] as Vec3,

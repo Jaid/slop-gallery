@@ -4,17 +4,17 @@ import {IDBFactory} from 'fake-indexeddb'
 
 import {effectiveSeed, environmentPick, environmentRoll, isSeed, maximumSeed, parseSeed, readSeedOverride, rollSeed} from '../../src/lib/environmentSeed.ts'
 import {resetGallery} from '../../src/lib/gallery/actions.ts'
-import initialPortraits from '../../src/lib/gallery/collection.ts'
 import GalleryRepository, {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import {potPlacements, pottedPlantKind, pottedPlantKinds} from '../../src/lib/gallery/plantDecorations/placements.ts'
 import {createDocument, restoreDocument, undo, useGallery} from '../../src/lib/gallery/store.ts'
+import samplePortraits from './fixtures/portraits.ts'
 
 const previousIndexedDB = globalThis.indexedDB
 beforeEach(() => {
   globalThis.indexedDB = new IDBFactory
   restoreDocument({
     ...createDocument(),
-    portraits: initialPortraits.map(p => ({...p})),
+    portraits: samplePortraits.map(p => ({...p})),
     seed: 1,
   })
 })
@@ -111,7 +111,7 @@ test('a new game rolls a new seed, and undo brings the previous environment back
   }
   expect(useGallery.getState().seed).toBe(77)
   useGallery.getState().add({
-    ...initialPortraits[0],
+    ...samplePortraits[0],
     id: 'seed-test',
   })
   expect(useGallery.getState().seed).toBe(77)

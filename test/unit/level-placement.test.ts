@@ -11,11 +11,11 @@ import soundboardPlacement from '../../src/levels/soundboard/placement.ts'
 import {announcerColumns, soundboardBounds, soundboardButtonsIssue, soundboardLayout, soundboardWalls} from '../../src/lib/audio/soundboard.ts'
 import {announcerButton, soundboardButton} from '../../src/lib/audio/SoundboardLayout.ts'
 import {archivedSoundEffects, enabledSoundEffects} from '../../src/lib/audio/soundEffects.ts'
-import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {knotGalleryBounds, knotGalleryCenter, knotGalleryWalls} from '../../src/lib/gallery/knotGallery.ts'
 import walls, {galleryPlacement} from '../../src/lib/gallery/walls.ts'
 import {HallPlacementSpace} from '../../src/lib/placement/HallPlacementSpace.ts'
 import {placementIssues, wallCoordinates, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
+import samplePortraits from './fixtures/portraits.ts'
 
 const eye = 1.6
 const artwork = (patch: Partial<Portrait>): Portrait => ({
@@ -46,7 +46,7 @@ describe('museum placement', () => {
     expect(galleryPlacement.walls).toBe(walls)
   })
   test('stored collections are never rearranged silently', () => {
-    const portraits = initialPortraits.map(p => ({...p}))
+    const portraits = samplePortraits.map(p => ({...p}))
     expect(galleryPlacement.settle(portraits)).toBe(portraits)
   })
 })

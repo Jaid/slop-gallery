@@ -77,8 +77,8 @@ export abstract class PlacementSpace {
   }
 
   /** Why an artwork of this size cannot hang centered at `position` on a wall, or an empty string if it can. */
-  placementIssue(targetWall: Wall, position: Vec3, width: number, height: number, portraits: ReadonlyArray<Portrait>, ignoreId = '') {
-    return placementIssue(targetWall, position, width, height, portraits, ignoreId)
+  placementIssue(targetWall: Wall, position: Vec3, width: number, height: number, portraits: ReadonlyArray<Portrait>, ignoreId = '', labelAbove = false) {
+    return placementIssue(targetWall, position, width, height, portraits, ignoreId, labelAbove)
   }
 
   /**
@@ -99,7 +99,7 @@ export abstract class PlacementSpace {
         if (targetWall) {
           const u = wallCoordinates(targetWall, portrait.position)
           const position = wallPosition(targetWall, u, portrait.position[1])
-          if (!this.placementIssue(targetWall, position, portrait.width, portrait.height, hung, portrait.id)) {
+          if (!this.placementIssue(targetWall, position, portrait.width, portrait.height, hung, portrait.id, portrait.labelAbove)) {
             const rotation = targetWall.rotation - (targetWall.curveRadius ? u / targetWall.curveRadius : 0)
             const aligned = !portrait.orientation && Math.hypot(...position.map((n, i) => n - portrait.position[i])) < 1e-6 && Math.abs(Math.sin((portrait.rotation - rotation) / 2)) < 1e-9
             portrait = aligned ? portrait : {

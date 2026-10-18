@@ -3,7 +3,6 @@ import {describe, expect, test} from 'bun:test'
 import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {floorGlassThickness} from '../../src/lib/gallery/floors.ts'
 import lobby from '../../src/lib/gallery/lobby.ts'
 import salon from '../../src/lib/gallery/salon.ts'
@@ -11,6 +10,7 @@ import salonWindow, {salonWindowGlassDistance} from '../../src/lib/gallery/salon
 import walls, {galleryPlacement, insideOpening, placementIssue, rooms, wallCoordinates, wallPosition} from '../../src/lib/gallery/walls.ts'
 import {createArchitecturalGlassMaterials, disposeArchitecturalGlassMaterials} from '../../src/lib/materials/ArchitecturalGlassMaterials.ts'
 import CastFloorGlassMaterial from '../../src/lib/materials/CastFloorGlassMaterial.ts'
+import samplePortraits from './fixtures/portraits.ts'
 
 const lobbySide = walls.find(wall => wall.id === 'lobby-extension-east')!
 const salonSide = walls.find(wall => wall.id === 'salon-west')!
@@ -120,12 +120,12 @@ describe('the glass wall between the Lobby and the Salon', () => {
     expect(placementIssue(salonSide, wallPosition(salonSide, wallCoordinates(salonSide, [8, 0, -15.5]), 2.7), 1, 1, [])).not.toBe('')
   })
   test('the shipped collection hangs clear of it', () => {
-    for (const p of initialPortraits) {
+    for (const p of samplePortraits) {
       const wall = [salonSide, lobbySide].find(candidate => candidate.id === p.wallId)
       if (!wall) {
         continue
       }
-      expect(placementIssue(wall, p.position, p.width, p.height, initialPortraits, p.id)).toBe('')
+      expect(placementIssue(wall, p.position, p.width, p.height, samplePortraits, p.id)).toBe('')
     }
   })
 })

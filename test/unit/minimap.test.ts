@@ -5,10 +5,11 @@ import {renderToStaticMarkup} from 'react-dom/server'
 
 import Minimap from '#component/Minimap'
 
-import {cameraPose, initialPortraits, useGallery} from '../../src/lib/gallery.ts'
+import {cameraPose, useGallery} from '../../src/lib/gallery.ts'
 import lowerGallery from '../../src/lib/gallery/lowerGallery.ts'
 import {minimapHeading, minimapPortrait, minimapViewBox, minimapWalls} from '../../src/lib/gallery/minimap.ts'
 import portraitObjects from '../../src/lib/gallery/portraitObjects.ts'
+import samplePortraits from './fixtures/portraits.ts'
 
 type PortraitObject = Parameters<typeof portraitObjects.set>[1]
 
@@ -53,14 +54,14 @@ test('both layers render without visible labels, numbers, legends or room fills'
   expect(html).not.toContain('Lower level')
   expect(html).not.toMatch(/<(?:button|h[1-6]|rect|text)\b/u)
   expect(html).toContain('translate(1 2) rotate(90)')
-  expect(html.match(/data-portrait=/gu)).toHaveLength(initial.portraits.length * 2)
+  expect(html.match(/data-portrait=/gu) ?? []).toHaveLength(initial.portraits.length * 2)
   const players = html.match(/<path[^>]+aria-label="Your position"[^>]*>/gu)!
   expect(players).toHaveLength(2)
   expect(players.filter(player => player.includes('display="inline"'))).toHaveLength(1)
 })
 test('hanging portraits belong to their wall’s floor even when rooms overlap vertically', () => {
   const portrait = {
-    ...initialPortraits[0],
+    ...samplePortraits[0],
     hung: true,
     wallId: 'oculus-north',
     position: [0, 0.1, -24] as [number, number, number],
@@ -73,7 +74,7 @@ test('hanging portraits belong to their wall’s floor even when rooms overlap v
 })
 test('portrait dots follow rigid bodies instead of stale saved positions', () => {
   const portrait = {
-    ...initialPortraits[0],
+    ...samplePortraits[0],
     id: 'minimap-test',
     hung: false,
   }

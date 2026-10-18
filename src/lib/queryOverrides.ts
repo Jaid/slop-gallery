@@ -3,6 +3,7 @@ import {readIntroNarration} from './audio/intro.ts'
 import {readCrosshair} from './crosshair.ts'
 import {readDevelopmentMode} from './developmentMode.ts'
 import {readSeedOverride} from './environmentSeed.ts'
+import {readPortraitSlotEditing} from './gallery/portraitSlotStore.ts'
 import {readAntiAliasing} from './rendering/antiAliasing.ts'
 import {readGraphicsMode} from './rendering/graphicsMode.ts'
 import {readScale} from './rendering/scale.ts'
@@ -22,6 +23,7 @@ const readers: Record<string, Reader> = {
   anti_aliasing: readAntiAliasing,
   crosshair: readCrosshair,
   development: readDevelopmentMode,
+  edit_portrait_slots: readPortraitSlotEditing,
   graphics: readGraphicsMode,
   intro_narration: readIntroNarration,
   scale: readScale,

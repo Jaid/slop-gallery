@@ -1,15 +1,15 @@
 import {beforeEach, describe, expect, test} from 'bun:test'
 
-import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import ImageImporter, {containedRect, imageSize} from '../../src/lib/gallery/ImageImporter.ts'
 import portraitLabel, {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
 import {createDocument, maximumPortraits, redo, restoreDocument, undo, useGallery} from '../../src/lib/gallery/store.ts'
 import walls, {galleryPlacement, insideGallery, placementIssue, roomAt, rooms, roomVisit, wallCoordinates, wallPosition} from '../../src/lib/gallery/walls.ts'
+import samplePortraits from './fixtures/portraits.ts'
 
 const original = {
   ...createDocument(),
-  portraits: initialPortraits.map(p => ({...p})),
+  portraits: samplePortraits.map(p => ({...p})),
 }
 beforeEach(() => {
   restoreDocument(original)
@@ -26,9 +26,9 @@ describe('wall geometry', () => {
     })
   }
   test('the shipped exhibition leaves space for frames, plates and doors', () => {
-    for (const p of initialPortraits) {
+    for (const p of samplePortraits) {
       const wall = walls.find(w => w.id === p.wallId)!
-      expect(placementIssue(wall, p.position, p.width, p.height, initialPortraits, p.id)).toBe('')
+      expect(placementIssue(wall, p.position, p.width, p.height, samplePortraits, p.id)).toBe('')
     }
   })
   test('hits the facing wall and preserves the frame offset', () => {
@@ -57,9 +57,9 @@ describe('wall geometry', () => {
     for (const [u, y] of [[7, 2.5], [0, 1], [0, 5]] as const) {
       expect(placementIssue(wall, wallPosition(wall, u, y), 2, 2, [])).not.toBe('')
     }
-    const p = initialPortraits[0]
-    expect(placementIssue(wall, p.position, p.width, p.height, initialPortraits)).toContain('close')
-    expect(placementIssue(wall, p.position, p.width, p.height, initialPortraits, p.id)).toBe('')
+    const p = samplePortraits[0]
+    expect(placementIssue(wall, p.position, p.width, p.height, samplePortraits)).toContain('close')
+    expect(placementIssue(wall, p.position, p.width, p.height, samplePortraits, p.id)).toBe('')
   })
   test('keeps distant wall previews but never accepts them as placements', () => {
     for (const z of [-21.999, 5, 7.5]) {
@@ -190,7 +190,7 @@ describe('image dimensions', () => {
     const job = importer.import([new File(['image'], 'pending.png', {type: 'image/png'})])
     restoreDocument(original)
     await job
-    expect(useGallery.getState().portraits).toHaveLength(initialPortraits.length)
+    expect(useGallery.getState().portraits).toHaveLength(samplePortraits.length)
     importer.dispose()
   })
   test('preserves landscape, portrait and square aspect ratios', () => {
@@ -245,7 +245,7 @@ describe('transactional history', () => {
     expect(redo()).toBe(false)
   })
   test('enforces collection capacity', () => {
-    const p = initialPortraits[0]
+    const p = samplePortraits[0]
     useGallery.setState({
       portraits: Array.from({length: maximumPortraits}, (_, i) => ({
         ...p,
@@ -269,9 +269,9 @@ describe('transactional history', () => {
 })
 describe('backup validation', () => {
   test('default IDs match unique, existing artwork and narration filenames', async () => {
-    const defaultIds = new Set(initialPortraits.map(p => p.id))
-    expect(defaultIds.size).toBe(initialPortraits.length)
-    for (const p of initialPortraits) {
+    const defaultIds = new Set(samplePortraits.map(p => p.id))
+    expect(defaultIds.size).toBe(samplePortraits.length)
+    for (const p of samplePortraits) {
       if (typeof p.source !== 'string') {
         throw new TypeError('Default artworks must reference bundled images.')
       }
@@ -289,7 +289,7 @@ describe('backup validation', () => {
   })
   test('does not add recordings omitted from a save', () => {
     const saved = {
-      ...initialPortraits[0],
+      ...samplePortraits[0],
       narration: undefined,
     }
     expect(validateDocument({
@@ -300,7 +300,7 @@ describe('backup validation', () => {
   test('preserves imported image identity', () => {
     const source = new Blob(['pixels'], {type: 'image/webp'})
     const custom = {
-      ...initialPortraits[0],
+      ...samplePortraits[0],
       id: 'my-artwork',
       source,
       imported: true,
@@ -315,7 +315,7 @@ describe('backup validation', () => {
   test('round-trips artwork hung in the Sienna', () => {
     const wall = walls.find(candidate => candidate.id === 'sienna-south')!
     const portrait = {
-      ...initialPortraits[0],
+      ...samplePortraits[0],
       wallId: wall.id,
       rotation: wall.rotation,
       position: wallPosition(wall, 0, 2.5),
@@ -332,7 +332,7 @@ describe('backup validation', () => {
       ...original,
       portraits: [
         {
-          ...initialPortraits[0],
+          ...samplePortraits[0],
           hung: false,
           position: [-6, 2, 18],
         },

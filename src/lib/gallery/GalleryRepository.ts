@@ -7,14 +7,14 @@ import {galleryStorageKey} from '../level.ts'
 import pauseMenu from '../pauseMenu.ts'
 import {obstructionIssue, placementIssues, wallCoordinates, wallPosition} from '../placement/wallGeometry.ts'
 import {notify} from './actions.ts'
-import initialPortraits from './collection.ts'
+import artworks from './artworks.ts'
 import {imageSize} from './ImageImporter.ts'
 import {imageExtensions, maximumBackupBytes, validateCollectionImages, validateImage} from './imagePolicy.ts'
 import {playerSession, validatePlayerPose} from './PlayerSession.ts'
 import {createDocument, maximumPortraits, restoreDocument, useGallery} from './store.ts'
 
-const images = new Set(initialPortraits.map(p => p.source).filter((p): p is string => typeof p === 'string'))
-const narrations = new Set(initialPortraits.map(p => p.narration).filter((p): p is string => typeof p === 'string'))
+const images = new Set(artworks.map(p => p.source))
+const narrations = new Set(artworks.map(p => p.narration).filter((p): p is string => typeof p === 'string'))
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 const vector = (value: unknown, length: number) => Array.isArray(value) && value.length === length && value.every(v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) < 1000)
 const shortText = (value: unknown, max: number): value is string => typeof value === 'string' && value.length <= max
@@ -66,7 +66,7 @@ export function validateDocument(value: unknown): GalleryDocument {
       if (Math.hypot(...expected.map((n, i) => n - pos[i])) > 0.025 || Math.abs(Math.sin((p.rotation - wall.rotation) / 2)) > 0.001) {
         throw new Error('A hanging artwork is detached from its wall.')
       }
-      const obstruction = obstructionIssue(wall, pos, p.width, p.height)
+      const obstruction = obstructionIssue(wall, pos, p.width, p.height, p.labelAbove === true)
       if (obstruction) {
         throw new Error(obstruction === placementIssues.doorway ? 'A hanging artwork overlaps a doorway.' : 'A hanging artwork covers a reserved part of its wall.')
       }
@@ -86,6 +86,7 @@ export function validateDocument(value: unknown): GalleryDocument {
       width: p.width,
       height: p.height,
       hung: p.hung,
+      ...p.labelAbove === true ? {labelAbove: true} : {},
       wallId: typeof p.wallId === 'string' ? p.wallId : undefined,
       orientation: p.orientation as Portrait['orientation'],
       narration: p.narration,

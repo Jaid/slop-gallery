@@ -2,6 +2,8 @@ import CanvasText from '#component/CanvasText'
 import portraitLabel, {portraitLabelLayout} from '#src/lib/gallery/portraitLabel.ts'
 
 type PortraitLabelProps = {
+  /** hangs the placard above the frame, for a low hang */
+  above?: boolean
   creator?: string
   height: number
   pending?: boolean
@@ -13,8 +15,8 @@ type PortraitLabelProps = {
   width: number
 }
 
-export default function PortraitLabel({width, height, title, creator = '', pending, preview}: PortraitLabelProps) {
-  const layout = portraitLabelLayout(width, height)
+export default function PortraitLabel({width, height, title, creator = '', pending, preview, above}: PortraitLabelProps) {
+  const layout = portraitLabelLayout(width, height, above)
   const textMaterial = preview ? {
     color: preview.color,
     opacity: preview.opacity * 0.95,

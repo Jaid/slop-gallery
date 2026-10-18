@@ -5,7 +5,6 @@ import EgoMotor, {defaultEgoOptions} from 'ego-player/motor'
 import {Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {corridorPassage} from '../../src/lib/gallery/corridor.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import lodge, {lodgeWindow, lodgeWindowFloor, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
@@ -14,6 +13,7 @@ import TimberGeometry, {timberProfile} from '../../src/lib/gallery/passages/Timb
 import PlayerSession, {playerSpawn} from '../../src/lib/gallery/PlayerSession.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
 import walls, {floorHeight, galleryPlacement, insideGallery, placementIssue, roomAt, wallPosition} from '../../src/lib/gallery/walls.ts'
+import samplePortraits from './fixtures/portraits.ts'
 
 await RAPIER.init()
 const material = new MeshBasicMaterial
@@ -246,7 +246,7 @@ describe('Lodge through-window', () => {
   test('rejects artwork overlapping the rectangular opening', () => {
     const wall = walls.find(value => value.id === 'lodge-west')!
     const portrait = {
-      ...initialPortraits[0],
+      ...samplePortraits[0],
       wallId: wall.id,
       rotation: wall.rotation,
       width: 1,

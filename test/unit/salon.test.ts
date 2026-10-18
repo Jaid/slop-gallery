@@ -1,17 +1,17 @@
 import {beforeEach, describe, expect, test} from 'bun:test'
 
 import {wallFace} from '../../src/lib/gallery/architecture.ts'
-import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
 import {salonBench, salonCeiling, salonLaylight, salonLightOffsets, salonLightY, salonWainscot, wainscotFields, wallDressingSpans} from '../../src/lib/gallery/salon.ts'
 import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
 import walls, {floorHeight, insideGallery, insideOpening, placementIssue, roomAt, rooms, roomVisit, wallCoordinates, wallPosition} from '../../src/lib/gallery/walls.ts'
 import ParquetFloorMaterial, {herringboneBlock, salonParquet} from '../../src/lib/materials/ParquetFloorMaterial.ts'
+import samplePortraits from './fixtures/portraits.ts'
 
 const room = rooms.find(candidate => candidate.id === 'salon')!
 const shipped = {
   ...createDocument(),
-  portraits: initialPortraits.map(p => ({...p})),
+  portraits: samplePortraits.map(p => ({...p})),
 }
 beforeEach(() => {
   restoreDocument(shipped)
@@ -61,18 +61,18 @@ describe('the Salon', () => {
     expect(Math.abs(Math.cos(salonWest.rotation - lobbyEast.rotation) + 1)).toBeLessThan(1e-12)
   })
   test('every Salon work hangs in a valid, labelled place', () => {
-    const hung = initialPortraits.filter(p => p.wallId?.startsWith('salon-'))
+    const hung = samplePortraits.filter(p => p.wallId?.startsWith('salon-'))
     expect(hung.map(p => p.id).toSorted()).toEqual(['gleaners', 'gnomes', 'jatte', 'venus', 'wave'])
     for (const p of hung) {
       const wall = walls.find(candidate => candidate.id === p.wallId)!
-      expect(placementIssue(wall, p.position, p.width, p.height, initialPortraits, p.id)).toBe('')
+      expect(placementIssue(wall, p.position, p.width, p.height, samplePortraits, p.id)).toBe('')
       // Every lowest placard clears the chair rail, so no label sits on it.
       expect(p.position[1] + portraitLabelLayout(p.width, p.height).bottom).toBeGreaterThan(salonWainscot.railBottom + salonWainscot.railHeight + 0.02)
     }
   })
   test('Dine’s works keep clear of the new arch', () => {
     const dineNorth = walls.find(wall => wall.id === 'dine-north')!
-    for (const p of initialPortraits) {
+    for (const p of samplePortraits) {
       if (p.wallId !== 'dine-north') {
         continue
       }

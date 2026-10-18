@@ -1,20 +1,28 @@
 import {useFrame, useThree} from '@react-three/fiber'
-import {useEffect, useLayoutEffect, useRef} from 'react'
+import Branch from 'branch-component'
+import {useEffect, useLayoutEffect, useRef, useState} from 'react'
 
 import Player from '#component/Player'
 import Portraits from '#component/Portraits'
+import PortraitSlotEditor from '#component/PortraitSlotEditor'
+import PortraitSlots from '#component/PortraitSlots'
 import WebmcpBridge from '#component/WebmcpBridge'
 import {Scene as LevelScene} from '#level/components.ts'
 import {useGallery} from '#src/lib/gallery.ts'
+import {isEditingPortraitSlots} from '#src/lib/gallery/portraitSlotStore.ts'
 import {GalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
+import {readVisionMode} from '#src/lib/rendering/visionMode.ts'
 import {pendingImages} from '#src/lib/useArtworkTexture.ts'
 
 import Interaction from './Interaction.tsx'
 
 export default function Scene() {
+  const [visionMode] = useState(() => readVisionMode())
   return <>
     <LevelScene />
     <Portraits />
+    <Branch if={visionMode === 'portrait_slots' || isEditingPortraitSlots} then={PortraitSlots} />
+    <Branch if={isEditingPortraitSlots} then={PortraitSlotEditor} />
     <Player />
     <Interaction />
     <WebmcpBridge />

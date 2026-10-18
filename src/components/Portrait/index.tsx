@@ -133,7 +133,7 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
         <mesh position={[side * (w / 2 + 0.055), 0, 0.1]}><boxGeometry args={[0.022, h + 0.14, 0.026]} /><meshStandardNodeMaterial color='#ddbc7c' metalness={0.6} roughness={0.3} /></mesh>
         <mesh position={[0, side * (h / 2 + 0.055), 0.1]}><boxGeometry args={[w + 0.14, 0.022, 0.026]} /><meshStandardNodeMaterial color='#ddbc7c' metalness={0.6} roughness={0.3} /></mesh>
       </group>)}
-      <Branch if={p.hung}><PortraitLabel creator={p.creator} height={h} pending={p.pending} title={p.title} width={w} /></Branch>
+      <Branch if={p.hung}><PortraitLabel above={p.labelAbove} creator={p.creator} height={h} pending={p.pending} title={p.title} width={w} /></Branch>
       <instancedMesh args={[undefined, undefined, 64]} frustumCulled={false} visible={!!p.merging} ref={magic}><octahedronGeometry args={[1]} /><meshBasicNodeMaterial color='#efcf84' toneMapped={false} /></instancedMesh>
     </group>
   </RigidBody>

@@ -7,8 +7,8 @@ import {narrationState, Narrator} from 'use-narrator/core'
 import {FakePlayback, flush} from '../../packages/use-narrator/packages/use-audio-queue/test/helpers.ts'
 import {readAiSettings} from '../../src/lib/ai/settings.ts'
 import PortraitNarration from '../../src/lib/audio/PortraitNarration.ts'
-import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {useGallery} from '../../src/lib/gallery/store.ts'
+import samplePortraits from './fixtures/portraits.ts'
 
 type SpeechRequestBody = {
   input: string
@@ -44,7 +44,7 @@ beforeEach(() => {
   useGallery.setState({
     sound: true,
     narration: null,
-    portraits: initialPortraits.map(p => ({
+    portraits: samplePortraits.map(p => ({
       ...p,
       narration: undefined,
     })),
@@ -141,7 +141,7 @@ test('a failed speech provider falls back to browser speech in the shared queue'
   })
 })
 test('bundled narration is queued as a URL without a provider or redundant fetch', async () => {
-  useGallery.setState({portraits: initialPortraits.map(p => ({...p}))})
+  useGallery.setState({portraits: samplePortraits.map(p => ({...p}))})
   fetchSpy = spyOn(globalThis, 'fetch')
   create()
   producer.enqueue('goose')

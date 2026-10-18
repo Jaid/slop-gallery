@@ -13,10 +13,10 @@ import {InteractionHintView} from '#component/InteractionHint'
 import {propObjects} from '../../src/components/Scene/GrabbableProp.tsx'
 import {describeHeld, describeTarget} from '../../src/components/Scene/interaction/describeTarget.ts'
 import {readCrosshair} from '../../src/lib/crosshair.ts'
-import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {interactiveObjects, registerInteractiveObject} from '../../src/lib/gallery/interactiveObjects.ts'
 import portraitObjects from '../../src/lib/gallery/portraitObjects.ts'
 import {InteractionHint} from '../../src/lib/interactionHint.ts'
+import samplePortraits from './fixtures/portraits.ts'
 
 const sign: HintContent = {
   id: 'sign',
@@ -242,7 +242,7 @@ describe('target descriptions', () => {
   })
   test('a hung portrait can be narrated, inspected and grabbed', () => {
     const portrait: Portrait = {
-      ...initialPortraits[0],
+      ...samplePortraits[0],
       hung: true,
     }
     portraitObjects.set(portrait.id, {} as never)

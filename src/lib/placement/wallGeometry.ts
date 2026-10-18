@@ -87,8 +87,8 @@ export function wallCoordinates(targetWall: Wall, [x, , z]: Vec3) {
 }
 
 /** Why an artwork of this size, centered at `position`, would cover an opening or a reservation of its wall, or an empty string if it covers neither. */
-export function obstructionIssue(targetWall: Wall, position: Vec3, width: number, height: number) {
-  const {u, halfWidth, bottom, top} = footprint(targetWall, position, width, height)
+export function obstructionIssue(targetWall: Wall, position: Vec3, width: number, height: number, labelAbove = false) {
+  const {u, halfWidth, bottom, top} = footprint(targetWall, position, width, height, labelAbove)
   const overlaps = (hole: WallOpening) => Math.abs(u - hole.u) < halfWidth + hole.width / 2 + 0.14 && bottom < targetWall.center[1] + hole.height + 0.14 && top > targetWall.center[1] + (hole.bottom ?? 0) - 0.14
   if (targetWall.holes?.some(overlaps)) {
     return placementIssues.doorway
@@ -101,19 +101,19 @@ export function obstructionIssue(targetWall: Wall, position: Vec3, width: number
 }
 
 /** Why an artwork of this size cannot hang centered at `position` on a wall, or an empty string if it can. */
-export function placementIssue(targetWall: Wall, position: Vec3, width: number, height: number, portraits: ReadonlyArray<Portrait>, ignoreId = '') {
+export function placementIssue(targetWall: Wall, position: Vec3, width: number, height: number, portraits: ReadonlyArray<Portrait>, ignoreId = '', labelAbove = false) {
   if (targetWall.hangable === false) {
     return placementIssues.unhangable
   }
-  const {u, halfWidth, bottom, top} = footprint(targetWall, position, width, height)
+  const {u, halfWidth, bottom, top} = footprint(targetWall, position, width, height, labelAbove)
   if (Math.abs(u) + halfWidth > targetWall.width / 2 - 0.24 || bottom < targetWall.center[1] + 0.48 || top > targetWall.center[1] + targetWall.height - 0.55) {
     return placementIssues.frame
   }
-  const obstruction = obstructionIssue(targetWall, position, width, height)
+  const obstruction = obstructionIssue(targetWall, position, width, height, labelAbove)
   if (obstruction) {
     return obstruction
   }
-  if (portraits.some(p => p.id !== ignoreId && p.hung && p.wallId === targetWall.id && Math.abs(wallCoordinates(targetWall, p.position) - u) < halfWidth + p.width / 2 + 0.18 && top > p.position[1] + portraitLabelLayout(p.width, p.height).bottom - portraitLabel.neighborClearance && bottom < p.position[1] + p.height / 2 + 0.23)) {
+  if (portraits.some(p => p.id !== ignoreId && p.hung && p.wallId === targetWall.id && Math.abs(wallCoordinates(targetWall, p.position) - u) < halfWidth + p.width / 2 + 0.18 && overlapsVertically(p, bottom, top))) {
     return placementIssues.neighbor
   }
   return ''
@@ -148,13 +148,20 @@ export function wallRayDistance(targetWall: Wall, origin: Vec3, direction: Vec3)
   return Infinity
 }
 
+/** Whether a footprint from `bottom` to `top` comes too close above or below a hung work, its placard included. */
+function overlapsVertically(p: Portrait, bottom: number, top: number) {
+  const label = portraitLabelLayout(p.width, p.height, p.labelAbove)
+  const lowest = p.position[1] + (p.labelAbove ? -p.height / 2 : label.bottom)
+  const highest = p.position[1] + (p.labelAbove ? label.top : p.height / 2)
+  return top > lowest - (p.labelAbove ? 0.23 : portraitLabel.neighborClearance) && bottom < highest + (p.labelAbove ? portraitLabel.neighborClearance : 0.23)
+}
 /** The space an artwork of this size, centered at `position`, takes up on a wall, including its frame, its label and a little breathing space. */
-function footprint(targetWall: Wall, position: Vec3, width: number, height: number) {
-  const label = portraitLabelLayout(width, height)
+function footprint(targetWall: Wall, position: Vec3, width: number, height: number, labelAbove = false) {
+  const label = portraitLabelLayout(width, height, labelAbove)
   return {
     u: wallCoordinates(targetWall, position),
     halfWidth: Math.max(width / 2 + 0.16, label.width / 2),
-    bottom: position[1] + label.bottom - portraitLabel.clearance,
-    top: position[1] + height / 2 + 0.16,
+    bottom: labelAbove ? position[1] - height / 2 - 0.16 : position[1] + label.bottom - portraitLabel.clearance,
+    top: labelAbove ? position[1] + label.top + portraitLabel.clearance : position[1] + height / 2 + 0.16,
   }
 }

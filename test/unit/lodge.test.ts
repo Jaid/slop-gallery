@@ -7,7 +7,6 @@ import EgoMotor from 'ego-player/motor'
 import {DoubleSide, Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {corridorPassage, corridorRails, corridorRunner, corridorStairs, insideCorridor} from '../../src/lib/gallery/corridor.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import lodge, {insideLodgeAccess, lodgeTunnel, lodgeTunnelTransition, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
@@ -22,6 +21,7 @@ import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
 import StairRunner from '../../src/lib/gallery/stairs/StairRunner.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
 import walls, {floorHeight, insideGallery, placementIssue, roomAt, rooms, wallPosition} from '../../src/lib/gallery/walls.ts'
+import samplePortraits from './fixtures/portraits.ts'
 
 await RAPIER.init()
 const routePassages = [lodgeTunnel, corridorPassage] as const
@@ -370,7 +370,7 @@ describe('Lodge and Corridor route', () => {
   test('the new room accepts hanging and loose artwork in backups', () => {
     const wall = walls.find(candidate => candidate.id === 'lodge-north')!
     const portrait = {
-      ...initialPortraits[0],
+      ...samplePortraits[0],
       wallId: wall.id,
       position: wallPosition(wall, -2.5, lodge.floorY + 2.1),
       width: 1.2,

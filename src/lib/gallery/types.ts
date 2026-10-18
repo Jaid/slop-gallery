@@ -10,6 +10,8 @@ export type Portrait = {
   hung: boolean
   id: string
   imported?: boolean
+  /** whether the placard hangs above the frame instead of below it, as in a low slot */
+  labelAbove?: boolean
   mergeJob?: symbol
   merging?: boolean
   narration?: string
@@ -24,6 +26,26 @@ export type Portrait = {
   wallId?: string
   width: number
   year?: number
+}
+/** the aspect ratios of default works and their slots, as width:height */
+export type PortraitRatio = '1:1' | '2:3' | '3:2'
+/** a default work of the level, before it hangs in a portrait slot */
+export type Artwork = Pick<Portrait, 'creator' | 'description' | 'id' | 'narration' | 'title' | 'year'> & {
+  ratio: PortraitRatio
+  source: string
+}
+/** a spot on a wall reserved for one default work of matching ratio; players rehang works by wall collisions instead */
+export type PortraitSlot = {
+  height: number
+  id: string
+  /** whether the slot hangs low and its work’s placard goes above the frame */
+  labelAbove?: boolean
+  /** center of the frame, hanging in front of its wall */
+  position: MathVec3
+  ratio: PortraitRatio
+  rotation: number
+  wallId: string
+  width: number
 }
 export type Placement = {
   inReach: boolean

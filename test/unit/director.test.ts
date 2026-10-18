@@ -5,13 +5,13 @@ import {beforeEach, expect, test} from 'bun:test'
 
 import GalleryDirector from '../../src/lib/ai/GalleryDirector.ts'
 import {readAiSettings} from '../../src/lib/ai/settings.ts'
-import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {createDocument, restoreDocument, undo, useGallery} from '../../src/lib/gallery/store.ts'
+import samplePortraits from './fixtures/portraits.ts'
 
 const defaults: AiSettings = readAiSettings()
 const original = {
   ...createDocument(),
-  portraits: initialPortraits.map(p => ({...p})),
+  portraits: samplePortraits.map(p => ({...p})),
 }
 const a = new Blob(['hanging'], {type: 'image/webp'})
 const b = new Blob(['thrown'], {type: 'image/webp'})

@@ -7,7 +7,6 @@ import EgoMotor from 'ego-player/motor'
 import {Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import lowerGallery from '../../src/lib/gallery/lowerGallery.ts'
 import {moonfallCrater} from '../../src/lib/gallery/moonfall/config.ts'
@@ -20,6 +19,7 @@ import staircase from '../../src/lib/gallery/staircase.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
 import walls, {floorHeight, insideGallery, roomAt, rooms, roomVisit, wallPosition} from '../../src/lib/gallery/walls.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
+import samplePortraits from './fixtures/portraits.ts'
 
 await RAPIER.init()
 const room = rooms.find(value => value.id === 'moonfall')!
@@ -177,7 +177,7 @@ describe('Moonfall impact hall', () => {
         player: session.snapshot(),
         portraits: [
           {
-            ...initialPortraits[0],
+            ...samplePortraits[0],
             hung: false,
             position,
           },

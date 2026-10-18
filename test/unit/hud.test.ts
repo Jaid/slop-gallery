@@ -8,10 +8,10 @@ import ArtworkOverlay from '#component/ArtworkOverlay'
 import {lingerBarScale} from '#component/NarrationBars'
 import NarrationIndicator, {NarrationIndicatorStack} from '#component/NarrationIndicator'
 
-import initialPortraits from '../../src/lib/gallery/collection.ts'
 import GalleryRepository, {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import portraitLabel, {isPortraitLabelHit, portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
+import samplePortraits from './fixtures/portraits.ts'
 
 describe('title plate targeting', () => {
   const layout = portraitLabelLayout(2, 2)
@@ -69,7 +69,7 @@ describe('narration linger animation', () => {
 describe('contextual HUD', () => {
   test('the artwork overlay includes title, description, creator and year', () => {
     const p = {
-      ...initialPortraits[0],
+      ...samplePortraits[0],
       year: 1924,
     }
     const html = renderToStaticMarkup(createElement(ArtworkOverlay, {portrait: p}))
@@ -81,7 +81,7 @@ describe('contextual HUD', () => {
   test('year zero is not mistaken for a missing year', () => {
     const html = renderToStaticMarkup(createElement(ArtworkOverlay, {
       portrait: {
-        ...initialPortraits[0],
+        ...samplePortraits[0],
         year: 0,
       },
     }))
@@ -89,7 +89,7 @@ describe('contextual HUD', () => {
     expect(html).not.toContain('Undated')
   })
   test('missing years are explicitly undated', () => {
-    expect(renderToStaticMarkup(createElement(ArtworkOverlay, {portrait: initialPortraits[0]}))).toContain('Undated')
+    expect(renderToStaticMarkup(createElement(ArtworkOverlay, {portrait: samplePortraits[0]}))).toContain('Undated')
   })
   test('recorded and provider audio show the real five-band visualization', () => {
     const html = renderToStaticMarkup(createElement(NarrationIndicator, {

@@ -1,3 +1,4 @@
+import type {PortraitSlot} from '#src/lib/gallery/types.ts'
 import type {AimSnapshot} from 'ego-player'
 import type {Rarity} from 'knot-materials/rarities.ts'
 import type VictoriaClient from 'victoria-browser-client'
@@ -12,6 +13,7 @@ export type KnotDump = {
 export type WebmcpBridge = {
   getAim: () => AimSnapshot
   getKnots: () => ReadonlyArray<KnotDump>
+  getPortraitSlots: () => ReadonlyArray<PortraitSlot>
   getTelemetry: () => {
     collection: ReturnType<VictoriaClient['collectionStatus']>
     delivery: ReturnType<VictoriaClient['status']>
@@ -38,6 +40,12 @@ export default function createWebmcpTools(getBridge: () => WebmcpBridge): Array<
       title: 'Dump current Knots',
       description: 'Return every Knot currently present in the level with its canonical ID, display name, world position and current session rarity. In Knottingham rarity edit mode, this includes unsaved sign edits. Other levels return an empty array.',
       read: () => getBridge().getKnots(),
+    },
+    {
+      name: 'dump_portrait_slots',
+      title: 'Dump portrait slots',
+      description: 'Return every portrait slot of the level with its ID, wall ID, ratio, frame width and height in meters, world-space frame center, rotation and whether its placard hangs above the frame. With ?edit_portrait_slots, this includes the edits made in this browser. Levels without slots return an empty array.',
+      read: () => getBridge().getPortraitSlots(),
     },
   ].map(({read, ...tool}) => ({
     ...tool,
