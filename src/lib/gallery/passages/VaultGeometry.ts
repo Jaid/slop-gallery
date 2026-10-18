@@ -5,6 +5,10 @@ import {ExtrudeGeometry, Shape} from 'three/webgpu'
 
 import {mergeParts} from '../../geometry.ts'
 
+/** how far a barrel vault reaches into an elbow, burying the ends of the walls’ cornices that stop where it would otherwise end */
+const junctionOverlap = 0.01
+const ribDepth = 0.22
+
 /** Barrel vaults stop short of elbows, where the continuous roof closes the turn. */
 export default class VaultGeometry {
   readonly ribs: BufferGeometry
@@ -28,6 +32,8 @@ export default class VaultGeometry {
       if (to <= from) {
         continue
       }
+      const shellFrom = from - (i > 0 ? junctionOverlap : 0)
+      const shellTo = to + (i < passage.spans.length - 1 ? junctionOverlap : 0)
       const rotation = Math.atan2(dx, dz)
       const part = (r: number, depth: number, thickness: number, distance: number) => {
         const shape = new Shape
@@ -46,15 +52,21 @@ export default class VaultGeometry {
           .rotateY(rotation)
           .translate(start[0] + dx / length * distance, passage.floorY, start[1] + dz / length * distance)
       }
-      shells.push(part(radius, to - from, 0.22, (to + from) / 2))
+      shells.push(part(radius, shellTo - shellFrom, 0.22, (shellTo + shellFrom) / 2))
       const ribTo = to - (i === passage.spans.length - 1 ? ribFreeEnd : 0)
       if (ribTo - from < 0.3) {
         continue
       }
+      const span = ribTo - from - 0.3
+      // On a short run, the ribs at both ends would overlap and share their faces; a single rib in the middle takes their place.
+      if (span < ribDepth) {
+        ribs.push(part(radius - 0.085, ribDepth, 0.085, (from + ribTo) / 2))
+        continue
+      }
       const count = Math.max(1, Math.ceil((ribTo - from) / 3.2))
       for (let rib = 0; rib <= count; rib++) {
-        const distance = from + 0.15 + (ribTo - from - 0.3) * rib / count
-        ribs.push(part(radius - 0.085, 0.22, 0.085, distance))
+        const distance = from + 0.15 + span * rib / count
+        ribs.push(part(radius - 0.085, ribDepth, 0.085, distance))
       }
     }
     this.shell = mergeParts(shells)

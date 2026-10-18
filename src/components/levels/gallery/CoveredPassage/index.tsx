@@ -50,14 +50,16 @@ export default function CoveredPassage({passage, lighting, material, timber, rib
   const geometry = useDisposable(useMemo(() => (timber ? TimberGeometry.passage(passage, ribCutouts) : new VaultGeometry(passage, transition?.length)), [passage, ribCutouts, timber, transition]))
   const mounts = useMemo(() => passagePendantMounts(passage, [geometry.shell, geometry.ribs]), [geometry, passage])
   const paving = transition?.stoneFloors ?? passage.floors
+  // A timber lining’s crown is the ceiling along its spans; a slab there would share its plane. Only the open elbows show the slab.
+  const ceilings = timber ? passage.junctions : passage.floors
   const collision = timber ? [] : [geometry.shell, geometry.ribs].map(colliderGeometry)
   return <group name={passage.id}>
     <RigidBody colliders={false} type='fixed'>
       {passage.floors.map(({center: [x, z], size: [width, depth]}, i) => <group key={i}>
         <CuboidCollider args={[width / 2, 0.12, depth / 2]} position={[x, passage.floorY - 0.12, z]} />
         <CuboidCollider args={[width / 2, 0.12, depth / 2]} position={[x, passage.floorY + passage.height + 0.12, z]} />
-        <Box material={material} position={[x, passage.floorY + passage.height + 0.12, z]} size={[width, 0.24, depth]} />
       </group>)}
+      {ceilings.map(({center: [x, z], size: [width, depth]}, i) => <Box key={i} material={material} position={[x, passage.floorY + passage.height + 0.12, z]} size={[width, 0.24, depth]} />)}
       {paving.map(({center: [x, z], size: [width, depth]}, i) => <Box key={i} material={material} position={[x, passage.floorY - 0.12, z]} size={[width, 0.24, depth]} />)}
       <Branch not={timber}>{collision.map((args, i) => <TrimeshCollider key={i} args={args} />)}</Branch>
       <Branch if={timber}><TimberFrame geometry={geometry} lining={material} material={timber!} /></Branch>

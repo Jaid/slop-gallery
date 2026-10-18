@@ -22,8 +22,10 @@ const lodge = {
   approachX: -31.7 - timberWidth / 2,
   timberWidth,
   passageWidth: oculusTower.radius * 2,
-  // Leave room for the widened stone doorway’s trim beside the north wall.
-  tunnelZ: -33.6,
+  // The widened stone doorway sits beside the north wall: its jamb stays 2 cm in front of the north baseboard’s cap (−35.75) and
+  // 7 cm in front of its face (−35.8), and its casing still tucks into the north wall’s logs (−35.895). On the baseboard’s face, the
+  // jamb shared that plane and flickered.
+  tunnelZ: -35.73 + oculusTower.radius,
 } as const
 
 export const lodgeWindow = {

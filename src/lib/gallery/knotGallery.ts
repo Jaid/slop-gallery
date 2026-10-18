@@ -3,6 +3,8 @@ import type {Vec3} from './types.ts'
 
 import {knotLayout} from 'knot-materials/exhibition.ts'
 
+import miterCorners from './cornerMiters.ts'
+
 export const knotGalleryBounds = knotLayout.bounds
 export const knotGallerySize = knotLayout.size
 export const knotGalleryCenter = knotLayout.center
@@ -11,7 +13,7 @@ export const knotFloorTile = knotLayout.rowSpacing / 8
 /** a corner of the floor’s tile grid: whole tiles run from the north wall to the south wall, and across the room the grid is centered, so both side walls cut their tiles alike */
 export const knotFloorOrigin = [knotGalleryCenter[0], knotGalleryBounds.northZ] as const
 
-export const knotGalleryWalls: Array<Wall> = [
+export const knotGalleryWalls: Array<Wall> = miterCorners([
   {
     id: 'study-north',
     center: [knotGalleryCenter[0], 0, knotGalleryBounds.northZ],
@@ -41,7 +43,7 @@ export const knotGalleryWalls: Array<Wall> = [
   center: wall.center as Vec3,
   room: 'lobby',
   height: knotGalleryBounds.height,
-}))
+})))
 
 export function insideKnotGallery([x, y, z]: Vec3) {
   return x > knotGalleryBounds.minX + 0.6 && x < knotGalleryBounds.maxX - 0.6 && z > knotGalleryBounds.northZ + 0.6 && z < knotGalleryBounds.southZ - 0.6 && y >= -0.2 && y < 5

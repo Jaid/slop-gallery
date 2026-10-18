@@ -2,6 +2,8 @@ import type {Vec3} from '#src/lib/gallery/types.ts'
 import type {Wall, WallReservation} from '#src/lib/placement/wallGeometry.ts'
 import type {SoundboardPanel} from './SoundboardLayout.ts'
 
+import miterCorners from '#src/lib/gallery/cornerMiters.ts'
+
 import {announcerPriorityDemoDefinitions, announcerSampleDefinitions} from './announcerCatalog.ts'
 import SoundboardLayout from './SoundboardLayout.ts'
 import {archivedSoundEffects, enabledSoundEffects} from './soundEffects.ts'
@@ -40,7 +42,7 @@ const buttons = ({u, width, bottom, top}: SoundboardPanel): Array<WallReservatio
   },
 ]
 
-export const soundboardWalls: Array<Wall> = [
+export const soundboardWalls: Array<Wall> = miterCorners([
   {
     id: 'soundboard-enabled',
     center: [soundboardBounds.minX, 0, 0],
@@ -73,7 +75,7 @@ export const soundboardWalls: Array<Wall> = [
   center: wall.center as Vec3,
   room: 'lobby',
   height: soundboardBounds.height,
-}))
+})))
 
 export function insideSoundboard([x, y, z]: Vec3) {
   return x > soundboardBounds.minX + 0.6 && x < soundboardBounds.maxX - 0.6 && z > soundboardBounds.northZ + 0.6 && z < soundboardBounds.southZ - 0.6 && y >= -0.2 && y < soundboardBounds.height - 0.3

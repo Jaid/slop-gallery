@@ -34,12 +34,13 @@ export default function LodgeRoom({materials}: {materials: LodgeMaterials}) {
       <Box material={materials.floor} name='lodge-floor' position={[0, -0.15, 0]} size={[width, 0.3, depth]} />
       <Box material={materials.ceiling} name='lodge-ceiling' position={[0, lodge.height + 0.12, 0]} size={[width, 0.24, depth]} />
       {/* Hewn beams rest on the top plates of the east and west walls. */}
-      {beams.z.map(z => <Box key={z} material={materials.timber} name='lodge-beam' position={[0, lodge.height - beams.size[1] / 2, z]} size={[width, beams.size[1], beams.size[0]]} />)}
+      {/* Their ends stop inside the walls instead of in the walls’ outer faces, which they would share. */}
+      {beams.z.map(z => <Box key={z} material={materials.timber} name='lodge-beam' position={[0, lodge.height - beams.size[1] / 2, z]} size={[width - 0.1, beams.size[1], beams.size[0]]} />)}
     </RigidBody>
     <RigidBody colliders='cuboid' type='fixed'>
       <group name='lodge-window-seat' position={windowSeat.position} rotation={[0, Math.PI / 2, 0]}>
-        <BenchSeat material={materials.leather} position={[0, 0.52, 0]} size={[windowSeat.length, 0.23, 0.85]} />
-        {[-1, 1].map(side => <Box key={side} material={materials.timber} position={[side * (windowSeat.length / 2 - 0.08), 0.32, 0]} size={[0.14, 0.64, 0.85]} />)}
+        <BenchSeat material={materials.leather} position={[0, 0.52, 0]} size={windowSeat.cushion} />
+        {[-1, 1].map(side => <Box key={side} material={materials.timber} position={[side * (windowSeat.length / 2 - 0.01 - windowSeat.endWidth / 2), 0.32, 0]} size={[windowSeat.endWidth, 0.64, windowSeat.depth]} />)}
         <Box material={materials.timber} position={[0, 0.2, 0.03]} size={[windowSeat.length - 0.3, 0.4, 0.72]} />
         <Box material={materials.timber} position={[0, 0.95, -0.36]} size={[windowSeat.length, 0.52, 0.13]} />
       </group>

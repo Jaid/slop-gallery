@@ -29,8 +29,9 @@ export default class UpholsteredSeatGeometry {
     const deckTop = 0.34
     const armTop = 0.6
     const leather: Array<BufferGeometry> = []
-    // Upholstered deck and back frame.
-    leather.push(place(roundedBox([width - 0.02, deckTop - 0.2, depth - 0.02], 0.03), 0, (deckTop + 0.2) / 2, 0), place(roundedBox([width, backHeight - 0.2, back], 0.06), 0, (backHeight + 0.2) / 2, -depth / 2 + back / 2))
+    // Upholstered deck and back frame. Their rear faces step back 5 mm each behind the arms’ instead of sharing one plane, and
+    // their ends, hidden in the arms, stay apart as well.
+    leather.push(place(roundedBox([width - 0.02, deckTop - 0.2, depth - 0.02], 0.03), 0, (deckTop + 0.2) / 2, 0), place(roundedBox([width - 0.03, backHeight - 0.2, back - 0.005], 0.06), 0, (backHeight + 0.2) / 2, -depth / 2 + 0.005 + (back - 0.005) / 2))
     for (const side of [-1, 1]) {
       const x = side * (width / 2 - armWidth / 2)
       // Rolled arm, swelling a little past the arm’s face.

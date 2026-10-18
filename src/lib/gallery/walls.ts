@@ -3,6 +3,7 @@ import type {RoomId, Vec3} from './types.ts'
 
 import {GalleryPlacementSpace} from '../placement/GalleryPlacementSpace.ts'
 import {wallCoordinates} from '../placement/wallGeometry.ts'
+import miterCorners from './cornerMiters.ts'
 import corridor, {corridorPassage, corridorStairFloor, corridorWalls, insideCorridor} from './corridor.ts'
 import mainEntrance from './entrance.ts'
 import lobby from './lobby.ts'
@@ -223,7 +224,7 @@ const doorway: Array<WallOpening> = [
     profile: 'arch',
   },
 ]
-const walls: Array<Wall> = [
+const walls: Array<Wall> = miterCorners([
   {
     ...wall('lobby-north', 'lobby', 0, lobby.northZ, 0, lobby.width),
     reservations: [mainEntrance.reservation],
@@ -391,7 +392,7 @@ const walls: Array<Wall> = [
     hangable: false,
     trimStyle: 'plain' as const,
   })),
-]
+])
 
 export function roomAt(position: Vec3): RoomId {
   if (insideCorridor(position)) {

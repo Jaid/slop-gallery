@@ -2,6 +2,7 @@ import type {FloorRectangle} from '../floors.ts'
 import type {RoomId, Vec3} from '../types.ts'
 import type {Wall} from '../walls.ts'
 
+import {wallFace} from '../architectureDimensions.ts'
 import passageOrientation from './orientation.ts'
 
 export type PassageCutout = {
@@ -27,6 +28,8 @@ type Edge = {
 /** An open-ended, level passage. One footprint drives its floors, walls and navigation. */
 export default class Passage {
   readonly floors: Array<FloorRectangle> = []
+  /** the floors at the elbows, where two spans overlap */
+  readonly junctions: Array<FloorRectangle> = []
   readonly spans: Array<{
     end: Point
     start: Point
@@ -73,7 +76,8 @@ export default class Passage {
     // Partition the union, not overlapping slabs with internal collision walls at turns.
     const xs = [...new Set(rectangles.flatMap(r => [r.minX, r.maxX]))].toSorted((a, b) => a - b)
     const zs = [...new Set(rectangles.flatMap(r => [r.minZ, r.maxZ]))].toSorted((a, b) => a - b)
-    const occupied = (x: number, z: number) => rectangles.some(r => x > r.minX && x < r.maxX && z > r.minZ && z < r.maxZ)
+    const covering = (x: number, z: number) => rectangles.filter(r => x > r.minX && x < r.maxX && z > r.minZ && z < r.maxZ).length
+    const occupied = (x: number, z: number) => covering(x, z) > 0
     const edges: Array<Edge> = []
     for (let x = 1; x < xs.length; x++) {
       for (let z = 1; z < zs.length; z++) {
@@ -86,10 +90,14 @@ export default class Passage {
         if (!occupied(cx, cz)) {
           continue
         }
-        this.floors.push({
+        const floor: FloorRectangle = {
           center: [cx, cz],
           size: [maxX - minX, maxZ - minZ],
-        })
+        }
+        this.floors.push(floor)
+        if (covering(cx, cz) > 1) {
+          this.junctions.push(floor)
+        }
         for (const side of [-1, 1]) {
           const zEdge = side < 0 ? minZ : maxZ
           const xEdge = side < 0 ? minX : maxX
@@ -127,6 +135,20 @@ export default class Passage {
         previous.max = edge.max
       } else {
         merged.push({...edge})
+      }
+    }
+    for (const edge of merged) {
+      // At the inner corner of an elbow, both walls end on their shared line and leave the square between their faces open, exposing
+      // their end caps in the planes where linings and vaults end too. Extending one of the two walls by its thickness closes it.
+      if (edge.axis !== 2) {
+        continue
+      }
+      const outside = edge.cross + edge.side * 1e-6
+      if (occupied(outside, edge.min - 1e-6)) {
+        edge.min -= wallFace
+      }
+      if (occupied(outside, edge.max + 1e-6)) {
+        edge.max += wallFace
       }
     }
     for (const [i, edge] of merged.entries()) {

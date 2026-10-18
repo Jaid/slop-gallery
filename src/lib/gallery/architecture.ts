@@ -83,6 +83,23 @@ export function createArchitectureGeometry(wall: Wall) {
     const bendableBlock = new BoxGeometry(width, height, depth, wall.curveRadius ? bendSegments(width, wall.curveRadius) : 1)
     return bendableBlock.translate(x, y, z)
   }
+  // A band running the full width ends at 45° in an inside corner, through the corner of both wall faces, meeting the adjoining wall’s band.
+  const miter = (geometry: BufferGeometry) => {
+    const {miters} = wall
+    if (!miters?.some(Boolean)) {
+      return geometry
+    }
+    const position = geometry.getAttribute('position')
+    for (let vertex = 0; vertex < position.count; vertex++) {
+      const x = position.getX(vertex)
+      const side = Math.sign(x)
+      if (miters[side < 0 ? 0 : 1] && Math.abs(Math.abs(x) - wall.width / 2) < 1e-6) {
+        position.setX(vertex, side * (wall.width / 2 - position.getZ(vertex)))
+      }
+    }
+    geometry.computeVertexNormals()
+    return geometry
+  }
   const evaluator = new Evaluator
   evaluator.useGroups = false
   const material = new MeshBasicNodeMaterial
@@ -113,7 +130,7 @@ export function createArchitectureGeometry(wall: Wall) {
     const trimBox = (width: number, height: number, front: number, x: number, y: number) => brush(box(width, height, front - wallFace, x, y, (front + wallFace) / 2))
     const baseboardBand = (bottom: number, height: number, front: number) => {
       if (!wall.baseboardProfile) {
-        return trimBox(wall.width, height, front, 0, bottom + height / 2)
+        return brush(miter(box(wall.width, height, front - wallFace, 0, bottom + height / 2, (front + wallFace) / 2)))
       }
       // Sweep each band along the actual floor contact instead of burying a
       // horizontal molding in the ramp and exposing a tapering triangular stub.
@@ -161,10 +178,10 @@ export function createArchitectureGeometry(wall: Wall) {
     })
     // Raking bands are sheared with the wall rather than rotated: their ends stay plumb and flush with
     // the wall ends, and their vertical section matches the level cornice they meet at a stair landing.
-    const cornice = wall.trimStyle === 'none' ? [] : [
-      box(wall.width, 0.1, 0.22, 0, wall.height - 0.42, 0.16),
-      box(wall.width, 0.23, 0.32, 0, wall.height - 0.22, 0.18),
-    ]
+    // Like the baseboards, both bands start at the plaster face, so their ends never share the wall’s end faces. The lower band
+    // stands 1 cm proud of a classic opening casing (0.27 m), which can run up into it in low rooms.
+    const corniceBand = (height: number, front: number, y: number) => miter(box(wall.width, height, front - wallFace, 0, y, (front + wallFace) / 2))
+    const cornice = wall.trimStyle === 'none' ? [] : [corniceBand(0.1, 0.28, wall.height - 0.42), corniceBand(0.23, 0.34, wall.height - 0.22)]
     for (const part of cornice) {
       retained.add(part)
     }
@@ -215,7 +232,7 @@ export function createArchitectureGeometry(wall: Wall) {
 
 const cache = new Map<string, ArchitectureGeometry>
 export function architectureGeometry(wall: Wall) {
-  const key = JSON.stringify([wall.width, wall.height, wall.holes ?? [], wall.slope ?? 0, wall.baseboardProfile ?? null, wall.trimStyle ?? 'classic', wall.curveRadius ?? 0, wall.baseboardHeight ?? 0.44])
+  const key = JSON.stringify([wall.width, wall.height, wall.holes ?? [], wall.slope ?? 0, wall.baseboardProfile ?? null, wall.trimStyle ?? 'classic', wall.curveRadius ?? 0, wall.baseboardHeight ?? 0.44, wall.miters ?? null])
   let geometry = cache.get(key)
   if (!geometry) {
     geometry = createArchitectureGeometry(wall)

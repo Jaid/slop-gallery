@@ -46,6 +46,15 @@ const lodgeInterior = {
   windowSeat: {
     position: [-3.7, 0, 1.5] as Vec3,
     length: 2.8,
+    depth: 0.85,
+    /** width of the timber ends, which stand proud of the cushion */
+    endWidth: 0.14,
+    /**
+     * The cushion runs between the ends and tucks 1 cm into each. It stays 1.5 cm behind their faces.
+     *
+     * Run over the full length, it poked out of the ends and shared their front and back faces, which flickered.
+     */
+    cushion: [2.8 - 0.28, 0.23, 0.85 - 0.03] as Vec3,
   },
   /** a flat-woven kilim, centered in front of the fire */
   rug: {
