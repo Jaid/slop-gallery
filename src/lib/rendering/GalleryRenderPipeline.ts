@@ -1,5 +1,5 @@
 import type {AntiAliasing} from './antiAliasing.ts'
-import type {Camera, Node, NodeMaterial, Object3D, Renderer, TextureNode} from 'three/webgpu'
+import type {Camera, Node, NodeMaterial, Object3D, Renderer, Scene, TextureNode} from 'three/webgpu'
 
 import {bloom} from 'three/addons/tsl/display/BloomNode.js'
 import {ao} from 'three/addons/tsl/display/GTAONode.js'
@@ -8,7 +8,9 @@ import {traa} from 'three/addons/tsl/display/TRAANode.js'
 import {convertToTexture, float, int, length, luminance, max, min, mrt, normalView, output, pass, rtt, screenUV, smoothstep, uniform, uv, vec2, vec3, vec4, velocity} from 'three/tsl'
 import {NoBlending, PerspectiveCamera, RenderPipeline} from 'three/webgpu'
 
+import {renderFloorReflection} from '../materials/FloorMaterial.ts'
 import ConditionalTexture from './ConditionalTexture.ts'
+import {GalleryRenderer} from './GalleryRenderer.ts'
 import KnotBokeh from './KnotBokeh.ts'
 import tiltShift from './tiltShift.ts'
 import ZoomBlur from './ZoomBlur.ts'
@@ -42,6 +44,25 @@ export default class GalleryRenderPipeline extends RenderPipeline {
     // GTAO and TRAA require single-sampled scene depth.
     const scenePass = own(pass(scene, camera, {samples: 0}))
     this.scenePass = scenePass
+    const renderScene = scenePass.updateBefore.bind(scenePass)
+    scenePass.updateBefore = frame => {
+      const reflect = () => {
+        renderFloorReflection({
+          camera,
+          mrt: scenePass.getMRT(),
+          renderer,
+          scene: scene as Scene,
+          target: scenePass.renderTarget,
+        })
+      }
+      // The reflection sees what the camera’s pass sees.
+      if (renderer instanceof GalleryRenderer) {
+        renderer.prepass(scene, camera, reflect)
+      } else {
+        reflect()
+      }
+      return renderScene(frame)
+    }
     if (heavy || antiAliasing === 'traa') {
       scenePass.setMRT(mrt({
         output,

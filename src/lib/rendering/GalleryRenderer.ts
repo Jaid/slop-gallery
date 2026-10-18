@@ -137,12 +137,15 @@ export class GalleryRenderer extends WebgpuRenderer {
     return this.initialization
   }
 
-  override render(scene: Object3D, camera: Camera) {
+  /**
+   * Runs passes of the frame scene that belong to the camera’s frame, such as its reflection rendered ahead of it, with the frame’s matrices and the camera’s culling.
+   * Shadow faces and reflections render the same scene again within a frame. They reuse the matrices of the first pass instead of walking the whole scene graph every time.
+   */
+  prepass(scene: Object3D, camera: Camera, pass: () => void) {
     if (scene !== this.frameScene || !scene.matrixWorldAutoUpdate) {
-      super.render(scene, camera)
+      pass()
       return
     }
-    // Shadow faces and reflections render the same scene again within a frame. Reuse the matrices of the first pass instead of walking the whole scene graph every time.
     this.startFrame()
     if (this.culler && this.culledCamera !== camera) {
       this.culledCamera = camera
@@ -150,10 +153,20 @@ export class GalleryRenderer extends WebgpuRenderer {
     }
     scene.matrixWorldAutoUpdate = false
     try {
-      super.render(scene, camera)
+      pass()
     } finally {
       scene.matrixWorldAutoUpdate = true
     }
+  }
+
+  override render(scene: Object3D, camera: Camera) {
+    if (scene !== this.frameScene || !scene.matrixWorldAutoUpdate) {
+      super.render(scene, camera)
+      return
+    }
+    this.prepass(scene, camera, () => {
+      super.render(scene, camera)
+    })
   }
 
   /** Sets the function that fills {@link hidden} for the camera of each frame, once the frame’s matrices are up to date. */
