@@ -25,7 +25,7 @@ await RAPIER.init()
 const room = rooms.find(value => value.id === 'moonfall')!
 const geometry = new CraterGeometry
 const fence = new StanchionRingGeometry(moonfallCrater.fenceRadius, moonfallCrater.fencePosts)
-const surfaceCollisions = [geometry.floor, geometry.terrain, geometry.rocks, fence.posts, fence.rope].map(colliderGeometry)
+const surfaceCollisions = [geometry.floor, geometry.terrain, geometry.rocks, fence.postCollision, fence.rope].map(colliderGeometry)
 const planarKey = (x: number, z: number) => `${x.toFixed(4)},${z.toFixed(4)}`
 afterAll(() => {
   geometry.dispose()
@@ -66,7 +66,7 @@ describe('Moonfall impact hall', () => {
     const terrain = new Mesh(geometry.terrain, material)
     const second = new CraterTerrain
     try {
-      for (const part of [geometry.floor, geometry.terrain, geometry.rocks, fence.posts, fence.rope]) {
+      for (const part of [geometry.floor, geometry.terrain, geometry.rocks, fence.posts, fence.postCollision, fence.rope]) {
         for (const attribute of Object.values(part.attributes)) {
           expect([...attribute.array].every(Number.isFinite)).toBe(true)
         }

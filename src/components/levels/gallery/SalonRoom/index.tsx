@@ -12,6 +12,7 @@ import Box from '#src/components/Scene/primitives.tsx'
 import {rooms, walls} from '#src/lib/gallery.ts'
 import {wallFace, wallOpeningTrim} from '#src/lib/gallery/architecture.ts'
 import {salonBench, salonBenchLegs, salonCeiling, salonLaylight, salonLightOffsets, salonLightY, salonWainscot, wainscotFields, wallDressingSpans} from '#src/lib/gallery/salon.ts'
+import gold from '#src/lib/materials/gold.ts'
 import LaylightGlassMaterial from '#src/lib/materials/LaylightGlassMaterial.ts'
 
 const room = rooms.find(candidate => candidate.id === 'salon')!
@@ -23,11 +24,6 @@ export default function SalonRoom({glass, stone, wood}: {
   stone: Texture
   wood: Texture
 }) {
-  const gilt = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
-    color: '#b38f4f',
-    metalness: 0.8,
-    roughness: 0.3,
-  }), []))
   const dado = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
     color: '#16222f',
     roughness: 0.78,
@@ -51,10 +47,10 @@ export default function SalonRoom({glass, stone, wood}: {
       </RigidBody>
       <RoomFloor glass={glass} room={room} stone={stone} wood={wood} />
       <Box material={plaster} position={[0, salonCeiling.y, 0]} size={[room.size[0], salonCeiling.thickness, room.size[1]]} />
-      {salonLaylight.centers.map(z => <Laylight key={z} gilt={gilt} glass={laylight} ironwork={ironwork} plaster={plaster} z={z} />)}
+      {salonLaylight.centers.map(z => <Laylight key={z} gilt={gold} glass={laylight} ironwork={ironwork} plaster={plaster} z={z} />)}
       {salonLightOffsets.map(z => <pointLight key={z} castShadow={z < 0} color='#f6f1e6' decay={2} distance={14} intensity={32} position={[0, salonLightY, z]} shadow-mapSize={[1024, 1024]} shadow-normalBias={0.03} />)}
     </group>
-    {salonWalls.map(wall => <WallDressing key={wall.id} dado={dado} gilt={gilt} wall={wall} />)}
+    {salonWalls.map(wall => <WallDressing key={wall.id} dado={dado} gilt={gold} wall={wall} />)}
     <Ottoman />
   </group>
 }

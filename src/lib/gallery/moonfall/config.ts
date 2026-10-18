@@ -3,7 +3,7 @@ export const moonfallCrater = {
   depth: 3.6,
   fenceRadius: 10,
   fencePosts: 32,
-  /** vertices on the cut edge, shared by the terrain, the floor’s hole and the bronze trim */
+  /** vertices on the cut edge, shared by the terrain, the floor’s hole and the gold trim */
   rimSegments: 128,
   /** largest vertical deviation of the low-poly terrain from its height field at any sample */
   terrainTolerance: 0.08,

@@ -3,7 +3,6 @@ import type {Texture} from 'three/webgpu'
 import {RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
-import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
@@ -11,18 +10,16 @@ import {moonfallCrater} from '#src/lib/gallery/moonfall/config.ts'
 import CraterGeometry from '#src/lib/gallery/moonfall/CraterGeometry.ts'
 import StanchionRingGeometry from '#src/lib/gallery/railings/StanchionRingGeometry.ts'
 import CraterMaterial from '#src/lib/materials/CraterMaterial.ts'
+import gold from '#src/lib/materials/gold.ts'
+import VelvetRopeMaterial from '#src/lib/materials/VelvetRopeMaterial.ts'
 
 export default function MoonfallCrater({stone}: {stone: Texture}) {
   const geometry = useDisposable(useMemo(() => new CraterGeometry, []))
   const fence = useDisposable(useMemo(() => new StanchionRingGeometry(moonfallCrater.fenceRadius, moonfallCrater.fencePosts), []))
-  const collision = [geometry.floor, geometry.terrain, geometry.rocks, fence.posts, fence.rope].map(colliderGeometry)
+  const collision = [geometry.floor, geometry.terrain, geometry.rocks, fence.postCollision, fence.rope].map(colliderGeometry)
   const rock = useDisposable(useMemo(() => new CraterMaterial(false), []))
   const terrain = useDisposable(useMemo(() => new CraterMaterial, []))
-  const bronze = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
-    color: '#ad9470',
-    metalness: 0.78,
-    roughness: 0.32,
-  }), []))
+  const velvet = useDisposable(useMemo(() => new VelvetRopeMaterial, []))
   return <group name='moonfall-impact-crater'>
     <RigidBody colliders={false} type='fixed'>
       {collision.map((args, i) => <MeshSurfaceCollider key={i} args={args} />)}
@@ -31,12 +28,10 @@ export default function MoonfallCrater({stone}: {stone: Texture}) {
       </mesh>
       <mesh castShadow geometry={geometry.terrain} material={terrain} name='moonfall-crater-terrain' receiveShadow />
       <mesh castShadow geometry={geometry.rocks} material={rock} name='moonfall-impact-ejecta' receiveShadow />
-      <mesh castShadow geometry={fence.posts} material={bronze} name='moonfall-crater-stanchions' receiveShadow />
-      <mesh castShadow geometry={fence.rope} name='moonfall-crater-rope' receiveShadow>
-        <meshStandardNodeMaterial color='#293f40' envMapIntensity={0.1} roughness={0.96} />
-      </mesh>
+      <mesh castShadow geometry={fence.posts} material={gold} name='moonfall-crater-stanchions' receiveShadow />
+      <mesh castShadow geometry={fence.rope} material={velvet} name='moonfall-crater-rope' receiveShadow />
     </RigidBody>
-    <mesh material={bronze} position={[0, 0.006, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+    <mesh material={gold} name='moonfall-crater-trim' position={[0, 0.006, 0]} rotation={[-Math.PI / 2, 0, 0]}>
       <ringGeometry args={[moonfallCrater.radius, moonfallCrater.radius + 0.055, moonfallCrater.rimSegments]} />
     </mesh>
   </group>
