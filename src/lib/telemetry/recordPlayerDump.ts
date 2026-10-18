@@ -7,6 +7,7 @@ import SoundEngine from '../audio/SoundEngine.ts'
 import {isDevelopmentMode} from '../developmentMode.ts'
 import {rooms, useGallery} from '../gallery.ts'
 import {galleryLevel, galleryTitle, isGallery} from '../level.ts'
+import readQueryOverrides from '../queryOverrides.ts'
 import {telemetry} from './index.ts'
 import saveDumpScreenshot from './saveDumpScreenshot.ts'
 
@@ -21,10 +22,17 @@ export default function recordPlayerDump(dump: EgoDump) {
     inspecting,
     locked,
     sessionId: telemetry?.sessionId ?? null,
+    // The camera already carries fov and aspect; the CSS viewport adds the absolute size.
+    viewport: typeof window === 'undefined' ? null : {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    },
   }
+  const query = readQueryOverrides()
   const snapshot = {
     ...dump,
     context,
+    ...query ? {query} : {},
   }
   console.dir(snapshot, {depth: null})
   const {id, time, ...rest} = snapshot

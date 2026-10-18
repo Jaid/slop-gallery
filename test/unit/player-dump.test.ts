@@ -68,6 +68,10 @@ test('player dumps are development-only, preserve precision, join separate hit l
                 loader: 'ts',
                 contents: 'export const screenshots = []; export default async name => {screenshots.push(name)}',
               }))
+              builder.onLoad({filter: /lib[/\\]queryOverrides\.ts$/u}, () => ({
+                loader: 'ts',
+                contents: `export default () => (${enabled ? '{development: true, seed: 42, graphics: true}' : 'undefined'})`,
+              }))
               builder.onLoad({filter: /lib[/\\]level\.ts$/u}, () => ({
                 loader: 'ts',
                 contents: "export const galleryLevel = 'knottingham'; export const galleryTitle = 'Knottingham'; export const isGallery = false",
@@ -99,7 +103,7 @@ test('player dumps are development-only, preserve precision, join separate hit l
       module.playerDumpHandler!(dump)
       await Bun.sleep(0)
       expect(module.screenshots).toEqual([`knottingham-${dump.id}`])
-      expect(clipboard.pop()).toMatch(new RegExp(String.raw`^<details><summary>session from \d{4}-\d{2}-\d{2} \d{2}:\d{2} in Knottingham</summary><dump id=${dump.id} date="${dump.time}">player .* context \{ level knottingham room lobby .*\}</dump></details>$`, 'u'))
+      expect(clipboard.pop()).toMatch(new RegExp(String.raw`^<details><summary>session from \d{4}-\d{2}-\d{2} \d{2}:\d{2} in Knottingham</summary><dump id=${dump.id} date="${dump.time}">player .* context \{ level knottingham room lobby .*\}${enabled ? String.raw` query \{ development true seed 42 graphics true\}` : ''}</dump></details>$`, 'u'))
       expect(module.played).toEqual(sound && !audioFails ? ['SFX-04'] : [])
       expect(module.SoundEngine.requests).toBe(sound ? 1 : 0)
       expect(dir).toHaveBeenLastCalledWith({
@@ -112,7 +116,15 @@ test('player dumps are development-only, preserve precision, join separate hit l
           inspecting: null,
           locked: true,
           sessionId: enabled ? 'dump-test' : null,
+          viewport: null,
         },
+        ...enabled ? {
+          query: {
+            development: true,
+            seed: 42,
+            graphics: true,
+          },
+        } : {},
       }, {depth: null})
       if (!enabled) {
         continue
