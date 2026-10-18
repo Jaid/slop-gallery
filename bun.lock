@@ -27,6 +27,7 @@
         "react-dom": "19.3.1",
         "react-dropzone": "20.1.4",
         "read-permalink": "0.4.0",
+        "stringify-clank": "0.1.1",
         "telemethree": "workspace:*",
         "telemethree-ego": "workspace:*",
         "telemethree-pause-menu": "workspace:*",
@@ -1693,6 +1694,8 @@
     "string-ts": ["string-ts@2.3.1", "", {}, "sha512-xSJq+BS52SaFFAVxuStmx6n5aYZU571uYUnUrPXkPFCfdHyZMMlbP2v2Wx5sNBnAVzq/2+0+mcBLBa3Xa5ubYw=="],
 
     "string-width": ["string-width@8.3.0", "", { "dependencies": { "get-east-asian-width": "^1.5.0", "strip-ansi": "^7.1.2" } }, "sha512-ZbmZM0JCihQN91dWnxoipT2KOEyHqEyfRXUyjuRhW8b/xnqPDoq4gWEVApTVa9db2wN8mmoikgFBbjh71+cGeQ=="],
+
+    "stringify-clank": ["stringify-clank@0.1.1", "", {}, "sha512-x2KdSOVJLYKwZfbynoUuOxdshXKboQ6ee2sa7NepTi1wbIdFbqON8vjOECN9WWfjPGUeozIYplVrfhw+nITRYA=="],
 
     "strip-ansi": ["strip-ansi@7.2.0", "", { "dependencies": { "ansi-regex": "^6.2.2" } }, "sha512-yDPMNjp4WyfYBkHnjIRLfca1i6KMyGCtsVgoKe/z1+6vukgaENdgGBZt+ZmKPc4gavvEZ5OgHfHdrazhgNyG7w=="],
 

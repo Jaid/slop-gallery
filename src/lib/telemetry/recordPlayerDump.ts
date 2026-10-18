@@ -1,5 +1,7 @@
 import type {EgoDump} from 'ego-player'
 
+import stringifyClank from 'stringify-clank'
+
 import {playSoundEffect} from '../audio/soundEffects.ts'
 import SoundEngine from '../audio/SoundEngine.ts'
 import {isDevelopmentMode} from '../developmentMode.ts'
@@ -8,7 +10,7 @@ import {galleryLevel} from '../level.ts'
 import {telemetry} from './index.ts'
 import saveDumpScreenshot from './saveDumpScreenshot.ts'
 
-/** Log an X-key dump, confirm it audibly and download the current frame. Only wired up in development mode, see `playerDumpHandler`. */
+/** Log an X-key dump, copy it to the clipboard as Clank, confirm it audibly and download the current frame. Only wired up in development mode, see `playerDumpHandler`. */
 export default function recordPlayerDump(dump: EgoDump) {
   const {room, active, held, inspecting, locked} = useGallery.getState()
   const context = {
@@ -20,10 +22,14 @@ export default function recordPlayerDump(dump: EgoDump) {
     locked,
     sessionId: telemetry?.sessionId ?? null,
   }
-  console.dir({
+  const snapshot = {
     ...dump,
     context,
-  }, {depth: null})
+  }
+  console.dir(snapshot, {depth: null})
+  copyDump(snapshot).catch(error => {
+    console.warn('Dump could not be copied to the clipboard.', error)
+  })
   if (useGallery.getState().sound) {
     confirmDump().catch(error => {
       console.warn('Dump confirmation sound could not be played.', error)
@@ -74,4 +80,9 @@ async function confirmDump() {
   if (useGallery.getState().sound) {
     playSoundEffect(sound, 'SFX-04')
   }
+}
+async function copyDump(snapshot: Parameters<typeof stringifyClank>[0]) {
+  const clank = stringifyClank(snapshot)
+  await navigator.clipboard.writeText(clank)
+  console.info(`Dump copied to the clipboard as Clank (${clank.length} characters).`)
 }
