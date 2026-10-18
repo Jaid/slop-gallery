@@ -24,14 +24,16 @@ export const towerRamp = {
   segments: 64,
   railHeight: 1,
 }
-// Keep the lower jamb fixed; the taller jamb meets the circular tower’s rear edge.
-const archStartZ = startZ + 0.75
+// The lower jamb lies flush with the base’s flat front face, so no sliver of the rounded fillets is left standing beside the
+// opening; the taller jamb meets the circular tower’s rear edge.
+const archStartZ = startZ
 const archEndZ = oculusTower.z - oculusTower.radius
 export const towerArch = {
   z: (archStartZ + archEndZ) / 2,
   width: archEndZ - archStartZ,
   height: 3.5,
-  lowHeight: 2.7,
+  // low enough that more than 50 cm of stone stays between the rounded corner and the ramp’s deck above it
+  lowHeight: 2.4,
   cornerRadius: 0.7,
   highCornerRadius: 0.45,
 }
