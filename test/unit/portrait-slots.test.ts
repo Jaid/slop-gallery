@@ -1,5 +1,6 @@
 import {describe, expect, test} from 'bun:test'
 
+import artworks from '../../src/lib/gallery/artworks.ts'
 import slots from '../../src/lib/gallery/slots.ts'
 import {galleryPlacement, placementIssue} from '../../src/lib/gallery/walls.ts'
 import {asPortrait, portraitRatios, slotFrame} from '../../src/lib/placement/portraitSlots.ts'
@@ -25,6 +26,11 @@ describe('portrait slots', () => {
       const wall = galleryPlacement.wall(slot.wallId)!
       expect(placementIssue(wall, slot.position, slot.width, slot.height, occupied, slot.id, slot.labelAbove)).toBe('')
       expect(galleryPlacement.contains(slot.position)).toBe(true)
+    }
+  })
+  test('offer room for every default work of the catalog', () => {
+    for (const ratio of new Set(artworks.map(artwork => artwork.ratio))) {
+      expect(slots.filter(slot => slot.ratio === ratio).length).toBeGreaterThanOrEqual(artworks.filter(artwork => artwork.ratio === ratio).length)
     }
   })
 })
