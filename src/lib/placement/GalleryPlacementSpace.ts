@@ -60,7 +60,7 @@ export class GalleryPlacementSpace extends PlacementSpace {
   }
 
   /**
-   * The museum’s layout only changes with exhibition updates, which move affected works explicitly. Anything else that does not fit is a damaged or forged collection, which validation rejects instead of silently rearranging it.
+   * Anything that does not fit the museum is a damaged or forged collection, which validation rejects instead of silently rearranging it.
    */
   override settle(portraits: ReadonlyArray<unknown>) {
     return portraits

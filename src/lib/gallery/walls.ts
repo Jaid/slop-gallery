@@ -1,5 +1,5 @@
 import type {Wall, WallOpening} from '../placement/wallGeometry.ts'
-import type {Placement, Portrait, RoomId, Vec3} from './types.ts'
+import type {RoomId, Vec3} from './types.ts'
 
 import {GalleryPlacementSpace} from '../placement/GalleryPlacementSpace.ts'
 import {wallCoordinates} from '../placement/wallGeometry.ts'
@@ -142,13 +142,6 @@ const contains = (room: (typeof rooms)[number], position: Vec3) => {
   const ground = room.id === 'moonfall' ? Math.min(room.floorY, room.floorY + craterTerrain.height(x - room.center[0], z - room.center[1])) : room.floorY
   return y >= ground - 1 && y <= room.floorY + room.height + 0.2 && Math.abs(x - room.center[0]) <= room.size[0] / 2 && Math.abs(z - room.center[1]) <= room.size[1] / 2
 }
-export const galleryBounds = {
-  minX: Math.min(...rooms.map(room => room.center[0] - room.size[0] / 2), ...[lodgeTunnel, corridorPassage].flatMap(passage => passage.floors.map(floor => floor.center[0] - floor.size[0] / 2))),
-  maxX: Math.max(...rooms.map(room => room.center[0] + room.size[0] / 2)),
-  minZ: Math.min(...rooms.map(room => room.center[1] - room.size[1] / 2)),
-  maxZ: Math.max(...rooms.map(room => room.center[1] + room.size[1] / 2)),
-}
-
 export function insideGallery(position: Vec3) {
   return position.every(Number.isFinite) && (rooms.some(room => contains(room, position)) || insideStairway(position) || tunnelContains(position) || insideLodgeAccess(position))
 }
@@ -422,12 +415,8 @@ export const galleryPlacement = /* @__PURE__ */ new GalleryPlacementSpace(walls,
   floorHeight,
 })
 
-export function findPlacement(origin: Vec3, direction: Vec3, width: number, height: number, portraits: ReadonlyArray<Portrait>, ignoreId = ''): Placement | null {
-  return galleryPlacement.findPlacement(origin, direction, width, height, portraits, ignoreId)
-}
-
 export function wallDistance(origin: Vec3, direction: Vec3) {
-  const hit = findPlacement(origin, direction, 0, 0, [])
+  const hit = galleryPlacement.findPlacement(origin, direction, 0, 0, [])
   return hit ? Math.hypot(...hit.position.map((v, i) => v - origin[i]) as Vec3) + 0.3 : Infinity
 }
 

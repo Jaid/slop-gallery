@@ -91,20 +91,12 @@ test('the seed is saved, restored and validated with the collection', async () =
   const backup = await repository.export(document)
   const imported = await repository.import(backup)
   expect(imported.seed).toBe(123_456)
-  for (const seed of [-1, 1.5, maximumSeed + 1, '1', null]) {
+  for (const seed of [undefined, -1, 1.5, maximumSeed + 1, '1', null]) {
     expect(() => validateDocument({
       ...document,
       seed,
     })).toThrow('seed')
   }
-})
-test('collections from before seeds existed roll one once', () => {
-  const {seed: _, ...legacy} = createDocument()
-  expect(validateDocument(legacy)).not.toHaveProperty('seed')
-  restoreDocument(legacy)
-  const {seed} = useGallery.getState()
-  expect(isSeed(seed)).toBe(true)
-  expect(createDocument().seed).toBe(seed)
 })
 test('a new game rolls a new seed, and undo brings the previous environment back', () => {
   useGallery.setState({seed: 77})

@@ -1,11 +1,7 @@
-import type {Portrait} from '../../src/lib/gallery/types.ts'
-
 import {beforeEach, describe, expect, test} from 'bun:test'
 
 import {wallFace} from '../../src/lib/gallery/architecture.ts'
 import initialPortraits from '../../src/lib/gallery/collection.ts'
-import {exhibitionRevision, exhibitionUpdates, upgradeDocument} from '../../src/lib/gallery/exhibitionUpdates.ts'
-import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
 import {salonBench, salonCeiling, salonLaylight, salonLightOffsets, salonLightY, salonWainscot, wainscotFields, wallDressingSpans} from '../../src/lib/gallery/salon.ts'
 import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
@@ -13,21 +9,9 @@ import walls, {floorHeight, insideGallery, insideOpening, placementIssue, roomAt
 import ParquetFloorMaterial, {herringboneBlock, salonParquet} from '../../src/lib/materials/ParquetFloorMaterial.ts'
 
 const room = rooms.find(candidate => candidate.id === 'salon')!
-const salonArtworks = exhibitionUpdates[0].artworks
 const shipped = {
   ...createDocument(),
   portraits: initialPortraits.map(p => ({...p})),
-}
-/** A save from before the Salon: no exhibition revision, no Salon works and the bread where Dine’s north wall now has its arch. */
-const legacySave = () => {
-  const {exhibition: _, ...document} = createDocument()
-  return structuredClone({
-    ...document,
-    portraits: initialPortraits.filter(p => !salonArtworks.includes(p.id)).map(p => (p.id === 'bread' ? {
-      ...p,
-      position: [16, 2.6, -7.78],
-    } : p)),
-  })
 }
 beforeEach(() => {
   restoreDocument(shipped)
@@ -78,7 +62,7 @@ describe('the Salon', () => {
   })
   test('the Salon is hung frame to frame on all four walls, every work in a valid, labelled place', () => {
     const hung = initialPortraits.filter(p => p.wallId?.startsWith('salon-'))
-    expect(hung.map(p => p.id).toSorted()).toEqual([...salonArtworks].toSorted())
+    expect(hung.map(p => p.id).toSorted()).toEqual(['alpacas', 'corgi', 'gleaners', 'gnomes', 'hamster', 'jatte', 'kiss', 'noodles', 'onion', 'otter', 'penguins', 'raccoons', 'raft', 'scream', 'swing', 'venus', 'walrus', 'wanderer', 'wave'])
     expect(new Set(hung.map(p => p.wallId))).toEqual(new Set(['salon-north', 'salon-east', 'salon-south', 'salon-west']))
     for (const p of hung) {
       const wall = walls.find(candidate => candidate.id === p.wallId)!
@@ -202,97 +186,5 @@ describe('herringbone parquet', () => {
         ...options,
       })).toThrow(RangeError)
     }
-  })
-})
-describe('saved collections catch up with the Salon', () => {
-  test('new documents record the current exhibition and round-trip', () => {
-    const document = createDocument()
-    expect(document.exhibition).toBe(exhibitionRevision)
-    const saved = validateDocument(document)
-    expect(saved.exhibition).toBe(exhibitionRevision)
-    expect(validateDocument(saved)).toEqual(saved)
-    expect(upgradeDocument(document)).toBe(document)
-  })
-  test('an older save gains the Salon’s works and its bread moves out of the arch', () => {
-    const legacy = legacySave()
-    expect(() => validateDocument(legacy)).toThrow('overlaps a doorway')
-    const upgraded = validateDocument(upgradeDocument(legacy))
-    expect(upgraded.exhibition).toBe(exhibitionRevision)
-    expect(upgraded.portraits.map(p => p.id).toSorted()).toEqual(initialPortraits.map(p => p.id).toSorted())
-    const bread = upgraded.portraits.find(p => p.id === 'bread')!
-    const wall = walls.find(candidate => candidate.id === 'dine-north')!
-    expect(bread.hung).toBe(true)
-    expect(bread.wallId).toBe('dine-north')
-    expect(placementIssue(wall, bread.position, bread.width, bread.height, upgraded.portraits, bread.id)).toBe('')
-    // It moves the shortest way along the wall, away from the arch.
-    expect(wallCoordinates(wall, bread.position)).toBeGreaterThan(2)
-    expect(wallCoordinates(wall, bread.position)).toBeLessThan(3)
-  })
-  test('works removed after the update stay removed, and the visitor’s own works are kept', () => {
-    const upgraded = validateDocument(upgradeDocument(legacySave()))
-    const trimmed = validateDocument({
-      ...upgraded,
-      portraits: upgraded.portraits.filter(p => p.id !== 'raft'),
-    })
-    expect(upgradeDocument(trimmed)).toBe(trimmed)
-    const legacy = legacySave()
-    const own: Portrait = {
-      ...initialPortraits[0],
-      id: 'visitor-own-work',
-      wallId: 'salon-north',
-      position: [14, 2.95, -19.78],
-      width: 1,
-      height: 1,
-      rotation: 0,
-      hung: true,
-    }
-    const upgradedWithOwn = validateDocument(upgradeDocument({
-      ...legacy,
-      portraits: [...legacy.portraits, own],
-    }))
-    // The raft would overlap the visitor’s own work, so it stays in storage instead of crowding it.
-    expect(upgradedWithOwn.portraits.some(p => p.id === 'visitor-own-work')).toBe(true)
-    expect(upgradedWithOwn.portraits.some(p => p.id === 'raft')).toBe(false)
-    expect(upgradedWithOwn.portraits.some(p => p.id === 'hamster')).toBe(true)
-  })
-  test('a work with nowhere left on its wall is set down in front of it instead of being lost', () => {
-    const legacy = legacySave()
-    const wall = walls.find(candidate => candidate.id === 'dine-north')!
-    const wide = {
-      ...legacy.portraits.find(p => p.id === 'bread')!,
-      position: wallPosition(wall, 0, 2.6),
-      width: 4,
-      height: 2,
-    }
-    const upgraded = validateDocument(upgradeDocument({
-      ...legacy,
-      portraits: [...legacy.portraits.filter(p => p.id !== 'bread'), wide],
-    }))
-    const bread = upgraded.portraits.find(p => p.id === 'bread')!
-    expect(bread.hung).toBe(false)
-    expect(bread.wallId).toBeUndefined()
-    expect(roomAt(bread.position)).toBe('dine')
-  })
-  test('malformed and future documents are left to validation', () => {
-    for (const value of [null, 'x', {
-      version: 2,
-      portraits: [],
-    }, {
-      ...createDocument(),
-      exhibition: exhibitionRevision + 1,
-    }, {
-      ...createDocument(),
-      exhibition: -1,
-    }]) {
-      expect(upgradeDocument(value)).toBe(value)
-    }
-    expect(() => validateDocument({
-      ...createDocument(),
-      exhibition: exhibitionRevision + 1,
-    })).toThrow('newer exhibition')
-    expect(() => validateDocument({
-      ...createDocument(),
-      exhibition: 0.5,
-    })).toThrow('newer exhibition')
   })
 })

@@ -13,7 +13,7 @@ import LodgeWindowGeometry from '../../src/lib/gallery/LodgeWindowGeometry.ts'
 import TimberGeometry, {timberProfile} from '../../src/lib/gallery/passages/TimberGeometry.ts'
 import PlayerSession, {playerSpawn} from '../../src/lib/gallery/PlayerSession.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
-import walls, {findPlacement, floorHeight, insideGallery, placementIssue, roomAt, wallPosition} from '../../src/lib/gallery/walls.ts'
+import walls, {floorHeight, galleryPlacement, insideGallery, placementIssue, roomAt, wallPosition} from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
 const material = new MeshBasicMaterial
@@ -219,7 +219,7 @@ describe('Lodge through-window', () => {
         expect(hit.object).toBe(glass)
         expect(hit.point.x).toBeCloseTo(lodgeWindow.tunnelX + (side < 0 ? lodgeWindow.glassThickness : 0), 5)
         expect(world.castRay(new RAPIER.Ray(origin, direction), 10, true)!.timeOfImpact).toBeCloseTo(hit.distance, 5)
-        expect(findPlacement(origin.toArray(), direction.toArray(), 1, 1, [])).toMatchObject({
+        expect(galleryPlacement.findPlacement(origin.toArray(), direction.toArray(), 1, 1, [])).toMatchObject({
           valid: false,
           reason: 'Keep the window clear.',
         })

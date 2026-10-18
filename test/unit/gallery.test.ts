@@ -1,12 +1,11 @@
 import {beforeEach, describe, expect, test} from 'bun:test'
 
 import initialPortraits from '../../src/lib/gallery/collection.ts'
-import {exhibitionUpdates} from '../../src/lib/gallery/exhibitionUpdates.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import ImageImporter, {containedRect, imageSize} from '../../src/lib/gallery/ImageImporter.ts'
 import portraitLabel, {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
 import {createDocument, maximumPortraits, redo, restoreDocument, undo, useGallery} from '../../src/lib/gallery/store.ts'
-import walls, {findPlacement, insideGallery, placementIssue, roomAt, rooms, roomVisit, wallCoordinates, wallPosition} from '../../src/lib/gallery/walls.ts'
+import walls, {galleryPlacement, insideGallery, placementIssue, roomAt, rooms, roomVisit, wallCoordinates, wallPosition} from '../../src/lib/gallery/walls.ts'
 
 const original = {
   ...createDocument(),
@@ -33,19 +32,19 @@ describe('wall geometry', () => {
     }
   })
   test('hits the facing wall and preserves the frame offset', () => {
-    expect(findPlacement([4, 2.5, -24], [0, 0, -1], 2, 2, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([4, 2.5, -24], [0, 0, -1], 2, 2, [])).toMatchObject({
       wallId: 'lobby-north',
       position: [4, 2.5, -31.78],
       valid: true,
     })
-    expect(findPlacement([0, 2.5, 5], [0, 0, -1], 2, 2, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([0, 2.5, 5], [0, 0, -1], 2, 2, [])).toMatchObject({
       wallId: 'lobby-north',
       inReach: false,
       valid: false,
     })
   })
   test('doorways are not hanging surfaces', () => {
-    expect(findPlacement([0, 2, 3], [-1, 0, 0], 2, 2, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([0, 2, 3], [-1, 0, 0], 2, 2, [])).toMatchObject({
       wallId: 'vesper-west',
       inReach: false,
       valid: false,
@@ -64,7 +63,7 @@ describe('wall geometry', () => {
   })
   test('keeps distant wall previews but never accepts them as placements', () => {
     for (const z of [-21.999, 5, 7.5]) {
-      expect(findPlacement([4, 2.5, z], [0, 0, -1], 2, 2, [])).toMatchObject({
+      expect(galleryPlacement.findPlacement([4, 2.5, z], [0, 0, -1], 2, 2, [])).toMatchObject({
         wallId: 'lobby-north',
         position: [4, 2.5, -31.78],
         inReach: false,
@@ -72,44 +71,44 @@ describe('wall geometry', () => {
         reason: 'Move closer to hang this artwork.',
       })
     }
-    expect(findPlacement([4, 2.5, -22], [0, 0, -1], 2, 2, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([4, 2.5, -22], [0, 0, -1], 2, 2, [])).toMatchObject({
       inReach: true,
       valid: true,
     })
-    expect(findPlacement([4, 2.5, -22.001], [0, 0, -1], 2, 2, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([4, 2.5, -22.001], [0, 0, -1], 2, 2, [])).toMatchObject({
       inReach: true,
       valid: true,
     })
   })
   test('reach is measured in world units, not ray parameter units', () => {
-    expect(findPlacement([0, 2.5, 5], [0, 0, -2], 2, 2, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([0, 2.5, 5], [0, 0, -2], 2, 2, [])).toMatchObject({
       inReach: false,
       valid: false,
     })
-    expect(findPlacement([4, 2.5, -24], [0, 0, -0.5], 2, 2, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([4, 2.5, -24], [0, 0, -0.5], 2, 2, [])).toMatchObject({
       inReach: true,
       valid: true,
     })
   })
   test('only wall hits produce previews and closer walls still occlude farther walls', () => {
-    expect(findPlacement([0, 2.5, 0], [0, 1, 0], 2, 2, [])).toBeNull()
-    expect(findPlacement([0, 2.5, 0], [0, 0, 0], 2, 2, [])).toBeNull()
-    expect(findPlacement([0, 2.5, 0], [-1, 0, 0], 2, 2, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([0, 2.5, 0], [0, 1, 0], 2, 2, [])).toBeNull()
+    expect(galleryPlacement.findPlacement([0, 2.5, 0], [0, 0, 0], 2, 2, [])).toBeNull()
+    expect(galleryPlacement.findPlacement([0, 2.5, 0], [-1, 0, 0], 2, 2, [])).toMatchObject({
       wallId: 'lobby-west',
       inReach: true,
     })
-    expect(findPlacement([0, 2.5, 0], [0, 0, 1], 2, 2, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([0, 2.5, 0], [0, 0, 1], 2, 2, [])).toMatchObject({
       wallId: 'antechamber-south',
       inReach: false,
     })
   })
   test('the Antechamber is always available for hanging artwork', () => {
-    expect(findPlacement([0, 2.5, 10], [0, 0, 1], 2, 2, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([0, 2.5, 10], [0, 0, 1], 2, 2, [])).toMatchObject({
       wallId: 'antechamber-south',
       inReach: true,
       valid: true,
     })
-    expect(findPlacement([0, 2.5, 10], [0, 0, -1], 2, 2, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([0, 2.5, 10], [0, 0, -1], 2, 2, [])).toMatchObject({
       wallId: 'lobby-north',
       inReach: false,
     })
@@ -122,25 +121,25 @@ describe('wall geometry', () => {
     for (const [i, value] of entrance.entries()) {
       expect(value).toBeCloseTo(exit[i])
     }
-    expect(findPlacement([-10.2, 2.5, 6], [0, 0, 1], 2, 2, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([-10.2, 2.5, 6], [0, 0, 1], 2, 2, [])).toMatchObject({
       wallId: 'sienna-south',
       inReach: false,
     })
-    expect(findPlacement([-10.2, 2.5, 10], [0, 0, -1], 2, 2, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([-10.2, 2.5, 10], [0, 0, -1], 2, 2, [])).toMatchObject({
       wallId: 'vesper-north',
       inReach: false,
     })
-    expect(findPlacement([-14, 2.5, 6], [0, 0, 1], 2, 2, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([-14, 2.5, 6], [0, 0, 1], 2, 2, [])).toMatchObject({
       wallId: 'vesper-south',
       inReach: true,
     })
-    expect(findPlacement([-14, 2.5, 10], [0, 0, -1], 2, 2, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([-14, 2.5, 10], [0, 0, -1], 2, 2, [])).toMatchObject({
       wallId: 'sienna-north',
       inReach: true,
     })
   })
   test('the Sienna has usable hanging walls', () => {
-    expect(findPlacement([-14, 2.5, 14], [0, 0, 1], 2, 2, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([-14, 2.5, 14], [0, 0, 1], 2, 2, [])).toMatchObject({
       wallId: 'sienna-south',
       position: [-14, 2.5, 19.78],
       inReach: true,
@@ -281,7 +280,7 @@ describe('backup validation', () => {
       expect(await Bun.file(new URL(`../../public${p.source}`, import.meta.url)).exists()).toBe(true)
       if (!p.narration) {
         // Recordings are prerendered with an OpenRouter key; only the Salon’s works may still be waiting for theirs.
-        expect(exhibitionUpdates[0].artworks).toContain(p.id)
+        expect(p.wallId).toStartWith('salon-')
         continue
       }
       expect(p.narration).toBe(`/audio/${p.id}.opus`)
@@ -343,14 +342,12 @@ describe('backup validation', () => {
   test('accepts the shipped collection', () => {
     expect(validateDocument(original).portraits.map(p => p.id)).toEqual(original.portraits.map(p => p.id))
   })
-  for (const secretOpen of [false, true]) {
-    test(`rejects the retired puzzle state (${secretOpen})`, () => {
-      expect(() => validateDocument({
-        ...original,
-        secretOpen,
-      })).toThrow('supported')
-    })
-  }
+  test('rejects unknown top-level state instead of silently stripping it', () => {
+    expect(() => validateDocument({
+      ...original,
+      exhibition: 2,
+    })).toThrow('supported')
+  })
   test('rejects unknown settings instead of silently stripping them', () => {
     expect(() => validateDocument({
       ...original,

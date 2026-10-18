@@ -5,7 +5,7 @@ import {computeMeshVolume} from 'three-bvh-csg'
 import {BufferGeometry, DoubleSide, Float32BufferAttribute, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
-import walls, {findPlacement, insideOpening, openingTop} from '../../src/lib/gallery/walls.ts'
+import walls, {galleryPlacement, insideOpening, openingTop} from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
 describe('physical mesh topology', () => {
@@ -189,8 +189,8 @@ describe('boolean architecture', () => {
     const hole = wall.holes![0]
     expect(openingTop(hole, hole.u)).toBeCloseTo(3.8)
     expect(openingTop(hole, hole.u + 1.2)).toBeLessThan(3.2)
-    expect(findPlacement([5, 3.5, 4.2], [1, 0, 0], 0, 0, [])?.wallId).toBe(wall.id)
-    expect(findPlacement([5, 3.5, 3], [1, 0, 0], 0, 0, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([5, 3.5, 4.2], [1, 0, 0], 0, 0, [])?.wallId).toBe(wall.id)
+    expect(galleryPlacement.findPlacement([5, 3.5, 3], [1, 0, 0], 0, 0, [])).toMatchObject({
       wallId: 'dine-east',
       inReach: false,
       valid: false,

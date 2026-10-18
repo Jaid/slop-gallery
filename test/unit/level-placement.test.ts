@@ -13,7 +13,7 @@ import {announcerButton, soundboardButton} from '../../src/lib/audio/SoundboardL
 import {archivedSoundEffects, enabledSoundEffects} from '../../src/lib/audio/soundEffects.ts'
 import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {knotGalleryBounds, knotGalleryCenter, knotGalleryWalls} from '../../src/lib/gallery/knotGallery.ts'
-import walls, {findPlacement, galleryPlacement} from '../../src/lib/gallery/walls.ts'
+import walls, {galleryPlacement} from '../../src/lib/gallery/walls.ts'
 import {HallPlacementSpace} from '../../src/lib/placement/HallPlacementSpace.ts'
 import {placementIssues, wallCoordinates, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
 
@@ -44,11 +44,6 @@ describe('museum placement', () => {
   test('the level module exposes the museum’s placement space', () => {
     expect(levelPlacement).toBe(galleryPlacement)
     expect(galleryPlacement.walls).toBe(walls)
-  })
-  test('the legacy helper still delegates to it', () => {
-    const origin: Vec3 = [4, 2.5, -24]
-    const direction: Vec3 = [0, 0, -1]
-    expect(findPlacement(origin, direction, 2, 2, [])).toEqual(galleryPlacement.findPlacement(origin, direction, 2, 2, []))
   })
   test('stored collections are never rearranged silently', () => {
     const portraits = initialPortraits.map(p => ({...p}))

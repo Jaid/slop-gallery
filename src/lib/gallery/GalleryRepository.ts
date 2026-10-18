@@ -8,7 +8,6 @@ import pauseMenu from '../pauseMenu.ts'
 import {obstructionIssue, placementIssues, wallCoordinates, wallPosition} from '../placement/wallGeometry.ts'
 import {notify} from './actions.ts'
 import initialPortraits from './collection.ts'
-import {exhibitionRevision, settleDocument, upgradeDocument} from './exhibitionUpdates.ts'
 import {imageSize} from './ImageImporter.ts'
 import {imageExtensions, maximumBackupBytes, validateCollectionImages, validateImage} from './imagePolicy.ts'
 import {playerSession, validatePlayerPose} from './PlayerSession.ts'
@@ -20,19 +19,14 @@ const object = (value: unknown): value is Record<string, unknown> => !!value && 
 const vector = (value: unknown, length: number) => Array.isArray(value) && value.length === length && value.every(v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) < 1000)
 const shortText = (value: unknown, max: number): value is string => typeof value === 'string' && value.length <= max
 const exactKeys = (value: Record<string, unknown>, keys: ReadonlyArray<string>) => Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value, key))
-
 export function validateDocument(value: unknown): GalleryDocument {
-  const keys = ['version', 'portraits', 'player', 'savedAt', 'settings']
-  if (!object(value) || !exactKeys(value, [...keys, ...['exhibition', 'seed'].filter(key => Object.hasOwn(value, key))]) || value.version !== 1 || !Array.isArray(value.portraits) || value.portraits.length > maximumPortraits || !object(value.settings)) {
+  if (!object(value) || !exactKeys(value, ['version', 'portraits', 'player', 'savedAt', 'seed', 'settings']) || value.version !== 1 || !Array.isArray(value.portraits) || value.portraits.length > maximumPortraits || !object(value.settings)) {
     throw new Error('This is not a supported Slop Gallery collection.')
   }
   if (!shortText(value.savedAt, 100)) {
     throw new Error('The collection timestamp is too long.')
   }
-  if (value.exhibition !== undefined && !(Number.isInteger(value.exhibition) && (value.exhibition as number) >= 0 && (value.exhibition as number) <= exhibitionRevision)) {
-    throw new Error('The collection is from a newer exhibition.')
-  }
-  if (value.seed !== undefined && !isSeed(value.seed)) {
+  if (!isSeed(value.seed)) {
     throw new Error('The collection has an invalid environment seed.')
   }
   const settings = value.settings
@@ -105,14 +99,27 @@ export function validateDocument(value: unknown): GalleryDocument {
   }
   return {
     version: 1,
-    ...value.exhibition === undefined ? {} : {exhibition: value.exhibition as number},
-    ...value.seed === undefined ? {} : {seed: value.seed},
+    seed: value.seed,
     portraits,
     player,
     savedAt: value.savedAt,
     settings: {
       sound: settings.sound,
     },
+  }
+}
+
+/**
+ * Lets the level settle the works of a stored collection, before validation, into its current walls and volume, which can change between visits in the halls. Returns the input itself if nothing moved, and malformed input untouched for validation to reject.
+ */
+function settleDocument(value: unknown): unknown {
+  if (!object(value) || !Array.isArray(value.portraits)) {
+    return value
+  }
+  const portraits = placement.settle(value.portraits as Array<unknown>)
+  return portraits === value.portraits ? value : {
+    ...value,
+    portraits,
   }
 }
 
@@ -194,7 +201,7 @@ export default class GalleryRepository {
       }
       p.source = new Blob([Uint8Array.fromBase64(data)], {type: mime})
     }
-    const document = validateDocument(settleDocument(upgradeDocument(parsed)))
+    const document = validateDocument(settleDocument(parsed))
     // Decode every embedded image before replacing anything in the current collection.
     for (const p of document.portraits) {
       if (!(p.source instanceof Blob)) {
@@ -218,7 +225,7 @@ export default class GalleryRepository {
       request.addEventListener('success', () => resolve(request.result))
       request.addEventListener('error', () => reject(request.error))
     })
-    return value === undefined ? null : validateDocument(settleDocument(upgradeDocument(value)))
+    return value === undefined ? null : validateDocument(settleDocument(value))
   }
 
   async save(document: GalleryDocument) {
@@ -279,10 +286,10 @@ export default class GalleryRepository {
 export const repository = new GalleryRepository
 
 export async function initializePersistence() {
-  let savedSeed: number | undefined
+  let fresh = false
   try {
     const saved = await repository.load()
-    savedSeed = saved?.seed
+    fresh = saved === null
     if (saved) {
       restoreDocument(saved)
     }
@@ -347,8 +354,8 @@ export async function initializePersistence() {
     }
     schedule()
   })
-  // The seed is rolled once per game state, so a new game or a collection from before seeds existed keeps it right away instead of rerolling on the next visit.
-  if (!useGallery.getState().storageRecoveryRequired && savedSeed === undefined) {
+  // The seed is rolled once per game state, so a new game keeps it right away instead of rerolling on the next visit.
+  if (fresh) {
     schedule()
   }
   // Do not rewrite a potentially large image collection every time the player moves.

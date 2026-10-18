@@ -8,11 +8,11 @@ import {wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
 import CurvedBoxGeometry from '../../src/lib/gallery/CurvedBoxGeometry.ts'
 import staircase, {stairFlights, stairFloorHeight, stairRoofs, stairTurn} from '../../src/lib/gallery/staircase.ts'
 import StairTurn from '../../src/lib/gallery/stairs/StairTurn.ts'
-import walls, {findPlacement, insideGallery, roomAt, wallCoordinates, wallPosition} from '../../src/lib/gallery/walls.ts'
+import walls, {galleryPlacement, insideGallery, roomAt, wallCoordinates, wallPosition} from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
 describe('round stair landing', () => {
-  test('joins both flights tangentially at their full width and excludes the old square corners', () => {
+  test('joins both flights tangentially at their full width without square corners', () => {
     for (const radius of [stairTurn.innerRadius, stairTurn.radius, stairTurn.outerRadius]) {
       for (const angle of [0, Math.PI / 4, Math.PI / 2, Math.PI * 3 / 4, Math.PI]) {
         const [x, z] = stairTurn.point(angle, radius)
@@ -83,7 +83,7 @@ describe('round stair landing', () => {
             const wallRay = new Raycaster(origin, direction)
             const hit = wallRay.intersectObject(mesh)[0]
             expect(hit.distance).toBeCloseTo(0.8 - wallFace, 2)
-            const placement = findPlacement(origin.toArray(), direction.toArray(), 1, 1, [])
+            const placement = galleryPlacement.findPlacement(origin.toArray(), direction.toArray(), 1, 1, [])
             expect(placement?.wallId).toBe(wall.id)
             expect(placement?.valid).toBe(false)
             expect(placement?.reason).toBe('Keep the stairway clear.')

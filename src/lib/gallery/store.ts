@@ -5,7 +5,6 @@ import {create} from 'zustand'
 import {effectiveSeed, rollSeed} from '../environmentSeed.ts'
 import {readControlled} from '../pauseMenu.ts'
 import initialPortraits from './collection.ts'
-import {exhibitionRevision} from './exhibitionUpdates.ts'
 import {validateCollectionImages} from './imagePolicy.ts'
 import {playerSession} from './PlayerSession.ts'
 
@@ -201,7 +200,6 @@ export function createDocument(): GalleryDocument {
   return {
     ...snapshot(s),
     version: 1,
-    exhibition: exhibitionRevision,
     savedAt: savedAt.toISOString(),
     player: playerSession.snapshot(),
     settings: {
@@ -214,11 +212,7 @@ export function restoreDocument(document: GalleryDocument) {
   validateCollectionImages(document.portraits)
   playerSession.restore(document.player)
   useGallery.setState({
-    ...snapshot({
-      portraits: document.portraits,
-      // Collections saved before seeds existed get theirs now; the next save keeps it.
-      seed: document.seed ?? rollSeed(),
-    }),
+    ...snapshot(document),
     sound: document.settings.sound,
     playerEpoch: useGallery.getState().playerEpoch + 1,
     past: [],

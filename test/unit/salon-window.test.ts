@@ -1,19 +1,14 @@
-import type {Portrait} from '../../src/lib/gallery/types.ts'
-
 import {describe, expect, test} from 'bun:test'
 
 import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import initialPortraits from '../../src/lib/gallery/collection.ts'
-import {exhibitionRevision, upgradeDocument} from '../../src/lib/gallery/exhibitionUpdates.ts'
 import {floorGlassThickness} from '../../src/lib/gallery/floors.ts'
-import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import lobby from '../../src/lib/gallery/lobby.ts'
 import salon from '../../src/lib/gallery/salon.ts'
 import salonWindow, {salonWindowGlassDistance} from '../../src/lib/gallery/salonWindow.ts'
-import {createDocument} from '../../src/lib/gallery/store.ts'
-import walls, {findPlacement, insideOpening, placementIssue, rooms, wallCoordinates, wallPosition} from '../../src/lib/gallery/walls.ts'
+import walls, {galleryPlacement, insideOpening, placementIssue, rooms, wallCoordinates, wallPosition} from '../../src/lib/gallery/walls.ts'
 import {createArchitecturalGlassMaterials, disposeArchitecturalGlassMaterials} from '../../src/lib/materials/ArchitecturalGlassMaterials.ts'
 import CastFloorGlassMaterial from '../../src/lib/materials/CastFloorGlassMaterial.ts'
 
@@ -21,29 +16,6 @@ const lobbySide = walls.find(wall => wall.id === 'lobby-extension-east')!
 const salonSide = walls.find(wall => wall.id === 'salon-west')!
 const salonRoom = rooms.find(room => room.id === 'salon')!
 const windowCenter = [salonWindow.x, (salonWindow.bottom + salonWindow.top) / 2, salonWindow.z] as const
-/** A save from before the glass wall: the Salon’s north wall at z = −20 and the corgi where the window now is. */
-const previousSave = () => {
-  const document = createDocument()
-  return structuredClone({
-    ...document,
-    exhibition: exhibitionRevision - 1,
-    portraits: document.portraits.map((p): Portrait => {
-      if (p.wallId === 'salon-north') {
-        return {
-          ...p,
-          position: [p.position[0], p.position[1], -19.78],
-        }
-      }
-      if (p.id === 'corgi' || p.id === 'penguins') {
-        return {
-          ...p,
-          position: [p.position[0], p.position[1], -17.9],
-        }
-      }
-      return p
-    }),
-  })
-}
 describe('the glass wall between the Lobby and the Salon', () => {
   test('lines up with the floor window, edge to edge along z', () => {
     expect(salonWindow.z - salonWindow.width / 2).toBe(lobby.opening.center[1] - lobby.opening.size[1] / 2)
@@ -125,22 +97,22 @@ describe('the glass wall between the Lobby and the Salon', () => {
     expect(salonWindowGlassDistance([12, 2.7, -20], [-1, 0, 0])).toBeCloseTo(4 - floorGlassThickness / 2)
     expect(salonWindowGlassDistance([4, 0.8, -20], [1, 0, 0])).toBeUndefined()
     expect(salonWindowGlassDistance([4, 2.7, -20], [-1, 0, 0])).toBeUndefined()
-    expect(findPlacement([4, 2.7, -20], [1, 0, 0], 1, 1, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([4, 2.7, -20], [1, 0, 0], 1, 1, [])).toMatchObject({
       wallId: 'lobby-extension-east',
       valid: false,
       reason: 'Keep the window clear.',
     })
-    expect(findPlacement([12, 2.7, -18], [-1, 0, 0], 1, 1, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([12, 2.7, -18], [-1, 0, 0], 1, 1, [])).toMatchObject({
       wallId: 'salon-west',
       valid: false,
       reason: 'Keep the window clear.',
     })
     // Beside it and below it the walls stay what they were.
-    expect(findPlacement([12, 2.7, -12], [-1, 0, 0], 1, 1, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([12, 2.7, -12], [-1, 0, 0], 1, 1, [])).toMatchObject({
       wallId: 'salon-west',
       valid: true,
     })
-    expect(findPlacement([4, 2.7, -28], [1, 0, 0], 1, 1, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([4, 2.7, -28], [1, 0, 0], 1, 1, [])).toMatchObject({
       wallId: 'lobby-extension-east',
       valid: true,
     })
@@ -157,61 +129,3 @@ describe('the glass wall between the Lobby and the Salon', () => {
     }
   })
 })
-describe('saved collections catch up with the larger Salon', () => {
-  test('the old save no longer fits the new walls', () => {
-    expect(() => validateDocument(previousSave())).toThrow()
-  })
-  test('works on the moved north wall move with it, and the corgi steps aside from the window', () => {
-    const before = previousSave()
-    const upgraded = validateDocument(upgradeDocument(before))
-    expect(upgraded.exhibition).toBe(exhibitionRevision)
-    expect(upgraded.portraits.map(p => p.id)).toEqual(before.portraits.map(p => p.id))
-    for (const p of upgraded.portraits) {
-      if (p.wallId !== 'salon-north') {
-        continue
-      }
-      expect(p.position[2]).toBeCloseTo(-31.78)
-      expect(p.position[0]).toBe(initialPortraits.find(candidate => candidate.id === p.id)!.position[0])
-    }
-    const corgi = upgraded.portraits.find(p => p.id === 'corgi')!
-    expect(corgi.hung).toBe(true)
-    expect(corgi.wallId).toBe('salon-west')
-    expect(placementIssue(salonSide, corgi.position, corgi.width, corgi.height, upgraded.portraits, corgi.id)).toBe('')
-    // It moves the shortest way, south past the window’s edge at z = −16, into the first gap between the Salon’s columns.
-    expect(corgi.position[2]).toBeGreaterThan(-16)
-    expect(corgi.position[2]).toBeLessThan(-10.1)
-    // The penguins’ wall has no window; they stay where the visitor last saw them.
-    expect(upgraded.portraits.find(p => p.id === 'penguins')!.position[2]).toBe(-17.9)
-  })
-  test('a visitor’s own work on the Lobby side of the window moves along the wall beside it', () => {
-    const before = previousSave()
-    const own: Portrait = {
-      ...initialPortraits[0],
-      id: 'visitor-own-work',
-      wallId: 'lobby-extension-east',
-      position: wallPosition(lobbySide, 0, 2.7),
-      rotation: lobbySide.rotation,
-      width: 4,
-      height: 2,
-      hung: true,
-      orientation: undefined,
-    }
-    const upgraded = validateDocument(upgradeDocument({
-      ...before,
-      portraits: [...before.portraits, own],
-    }))
-    const work = upgraded.portraits.find(p => p.id === own.id)!
-    expect(work.hung).toBe(true)
-    expect(work.wallId).toBe('lobby-extension-east')
-    expect(placementIssue(lobbySide, work.position, work.width, work.height, upgraded.portraits, work.id)).toBe('')
-    expect(Math.abs(work.position[2] - salonWindow.z)).toBeGreaterThan(salonWindow.width / 2 + work.width / 2)
-  })
-  test('works already on the new north wall stay put, so older saves gaining the Salon’s works are not moved twice', () => {
-    const current = createDocument()
-    expect(upgradeDocument({
-      ...current,
-      exhibition: exhibitionRevision - 1,
-    })).toEqual(current)
-  })
-})
-

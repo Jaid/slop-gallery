@@ -11,7 +11,7 @@ import initialPortraits from '../../src/lib/gallery/collection.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import staircase, {stairBlocks, stairFlights, stairFloorHeight, stairRailGeometry, stairRoofs, stairTurn} from '../../src/lib/gallery/staircase.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
-import walls, {findPlacement, floorHeight, insideGallery, placementIssue, roomAt, rooms, roomVisit, wallPosition} from '../../src/lib/gallery/walls.ts'
+import walls, {floorHeight, galleryPlacement, insideGallery, placementIssue, roomAt, rooms, roomVisit, wallPosition} from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
 const lower = rooms.find(candidate => candidate.id === 'moonfall')!
@@ -47,13 +47,13 @@ describe('lower gallery', () => {
     expect(position[1]).toBeCloseTo(-5.5)
     expect(placementIssue(wall, position, 2, 2, [])).toBe('')
     expect(placementIssue(wall, wallPosition(wall, 2, lower.floorY + 1), 2, 2, [])).toContain('label')
-    expect(findPlacement([-2, -5.5, 27], [0, 0, 1], 2, 2, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([-2, -5.5, 27], [0, 0, 1], 2, 2, [])).toMatchObject({
       wallId: wall.id,
       valid: true,
     })
-    expect(findPlacement([4, -6.4, staircase.returnZ], [1, 0, 0], 1, 1, [])).toBeNull()
-    expect(findPlacement([4, -6.4, 11.5], [1, 0, 0], 1, 1, [])?.wallId).toBe('moonfall-east')
-    expect(findPlacement([8, -0.5, 11.5], [0, 0, -1], 1, 1, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([4, -6.4, staircase.returnZ], [1, 0, 0], 1, 1, [])).toBeNull()
+    expect(galleryPlacement.findPlacement([4, -6.4, 11.5], [1, 0, 0], 1, 1, [])?.wallId).toBe('moonfall-east')
+    expect(galleryPlacement.findPlacement([8, -0.5, 11.5], [0, 0, -1], 1, 1, [])).toMatchObject({
       valid: false,
       reason: 'Keep the stairway clear.',
     })

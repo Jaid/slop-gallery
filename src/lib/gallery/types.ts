@@ -42,13 +42,9 @@ export type GallerySnapshot = {
   /** rolled once per game state and mixed with fixed IDs for environment randomization like the potted plants; part of the undo history, so undoing a new game brings back its environment */
   seed: number
 }
-export type GalleryDocument = Omit<GallerySnapshot, 'seed'> & {
-  /** how many exhibition updates the collection has received; missing in collections saved before the first one */
-  exhibition?: number
+export type GalleryDocument = GallerySnapshot & {
   player: PlayerPose
   savedAt: string
-  /** see {@link GallerySnapshot.seed}; missing in collections saved before seeds existed, which roll one when they are restored */
-  seed?: number
   settings: GallerySettings
   version: 1
 }

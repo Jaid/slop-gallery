@@ -1,7 +1,0 @@
-export type {PlacementObstruction} from './base/PlacementSpace.ts'
-export {PlacementSpace} from './base/PlacementSpace.ts'
-export {GalleryPlacementSpace} from './GalleryPlacementSpace.ts'
-export type {HallBounds} from './HallPlacementSpace.ts'
-export {HallPlacementSpace} from './HallPlacementSpace.ts'
-export type {Wall, WallOpening, WallReservation} from './wallGeometry.ts'
-export * from './wallGeometry.ts'
