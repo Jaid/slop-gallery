@@ -31,7 +31,7 @@ test('player dumps are development-only, preserve precision, join separate hit l
             setup(builder) {
               builder.onLoad({filter: /recordPlayerDump\.ts$/u}, async () => ({
                 loader: 'ts',
-                contents: `${await Bun.file(source).text()}\nexport {telemetry}; export {played} from "../audio/soundEffects.ts"; export {default as SoundEngine} from "../audio/SoundEngine.ts"; export {copies} from "./copyDumpToClipboard.ts"`,
+                contents: `${await Bun.file(source).text()}\nexport {telemetry}; export {played} from "../audio/soundEffects.ts"; export {default as SoundEngine} from "../audio/SoundEngine.ts"; export {screenshots} from "./saveDumpScreenshot.ts"`,
               }))
               builder.onLoad({filter: /telemetry[/\\]index\.ts$/u}, () => ({
                 loader: 'ts',
@@ -53,9 +53,9 @@ test('player dumps are development-only, preserve precision, join separate hit l
                 loader: 'ts',
                 contents: `export const isDevelopmentMode = ${development}`,
               }))
-              builder.onLoad({filter: /telemetry[/\\]copyDumpToClipboard\.ts$/u}, () => ({
+              builder.onLoad({filter: /telemetry[/\\]saveDumpScreenshot\.ts$/u}, () => ({
                 loader: 'ts',
-                contents: 'export const copies = []; export default async clank => {copies.push(clank)}',
+                contents: 'export const screenshots = []; export default async name => {screenshots.push(name)}',
               }))
               builder.onLoad({filter: /lib[/\\]level\.ts$/u}, () => ({
                 loader: 'ts',
@@ -67,10 +67,10 @@ test('player dumps are development-only, preserve precision, join separate hit l
       })
       expect(build.success).toBe(true)
       const module = await import(`data:text/javascript;base64,${Buffer.from(await build.outputs[0].text()).toBase64()}`) as {
-        copies: Array<string>
         default: (dump: EgoDump) => void
         played: Array<string>
         playerDumpHandler: ((dump: EgoDump) => void) | undefined
+        screenshots: Array<string>
         SoundEngine: {requests: number}
         telemetry: {
           records: Array<[string, {
@@ -87,9 +87,7 @@ test('player dumps are development-only, preserve precision, join separate hit l
       expect(module.playerDumpHandler).toBe(module.default)
       module.playerDumpHandler!(dump)
       await Bun.sleep(0)
-      expect(module.copies).toHaveLength(1)
-      expect(module.copies[0]).toStartWith(`id ${dump.id} time ${dump.time} `)
-      expect(module.copies[0]).toContain('context { level knottingham room lobby')
+      expect(module.screenshots).toEqual([`knottingham-${dump.id}`])
       expect(module.played).toEqual(sound && !audioFails ? ['SFX-04'] : [])
       expect(module.SoundEngine.requests).toBe(sound ? 1 : 0)
       expect(dir).toHaveBeenLastCalledWith({
