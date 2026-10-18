@@ -4,7 +4,7 @@ import {afterAll, describe, expect, test} from 'bun:test'
 
 import {BoxGeometry, DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
-import {corridorPassage, corridorStairs} from '../../src/lib/gallery/corridor.ts'
+import {corridorLamps, corridorPassage, corridorStairs} from '../../src/lib/gallery/corridor.ts'
 import {lodgeTunnel, lodgeTunnelTransition, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import LodgeWindowGeometry from '../../src/lib/gallery/LodgeWindowGeometry.ts'
 import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
@@ -46,7 +46,7 @@ const groups: Array<{
   {
     label: 'timber corridor',
     body: lantern,
-    mounts: passagePendantMounts(corridorPassage, [corridor.shell, corridor.ribs]),
+    mounts: passagePendantMounts(corridorPassage, [corridor.shell, corridor.ribs], corridorLamps.spacing),
   },
   {
     label: 'corridor stairs',
@@ -71,7 +71,7 @@ const firstHit = (origin: Vector3, direction: Vector3, far = Infinity) => {
 describe('ceiling-hung pendants', () => {
   test('every light hangs at its passage height or beside its stair step', () => {
     expect(groups[0].mounts).toHaveLength(5)
-    expect(groups[1].mounts).toHaveLength(11)
+    expect(groups[1].mounts).toHaveLength(5)
     expect(groups[2].mounts).toHaveLength(stairLightSteps.length)
     for (const [i, passage] of [lodgeTunnel, corridorPassage].entries()) {
       for (const mount of groups[i].mounts) {

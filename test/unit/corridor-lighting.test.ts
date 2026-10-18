@@ -2,7 +2,7 @@ import {expect, test} from 'bun:test'
 
 import {AmbientLight, DirectionalLight, HemisphereLight, MeshPhysicalNodeMaterial, MeshStandardNodeMaterial, PointLight, StandardNodeLibrary} from 'three/webgpu'
 
-import {corridorPassage} from '../../src/lib/gallery/corridor.ts'
+import {corridorLamps, corridorPassage} from '../../src/lib/gallery/corridor.ts'
 import {lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
 import {GlobeBody, LanternBody} from '../../src/lib/gallery/pendants/index.ts'
@@ -12,12 +12,12 @@ import {corridorLanterns, IndoorLightsNode, LanternEnvironment, LanternLight, La
 import {sample} from '../../src/lib/materials/lights/LanternEnvironment.ts'
 
 const lanternBody = new LanternBody
-const lamp = (zone: LanternLightsNode) => {
+const lamp = (zone: LanternLightsNode, bounce = soleLampBounce) => {
   const light = new LanternLight({
     intensity: soleLampReach.intensity,
     distance: soleLampReach.distance,
     roof: lanternBody.roof,
-    bounce: soleLampBounce,
+    bounce,
   })
   Object.assign(light.userData, zone.lampUserData())
   return light
@@ -109,12 +109,12 @@ test('a fixture’s roof shades the ceiling above it but not the room around and
 test('lantern pools fade to a dim gap between neighbors without going black', () => {
   const geometry = TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts)
   try {
-    const lamps = passagePendantMounts(corridorPassage, [geometry.shell, geometry.ribs]).map(mount => mount.light)
-    const light = lamp(corridorLanterns)
+    const lamps = passagePendantMounts(corridorPassage, [geometry.shell, geometry.ribs], corridorLamps.spacing).map(mount => mount.light)
+    const light = lamp(corridorLanterns, corridorLamps.bounce)
     const floor = (x: number, z: number) => lamps.reduce((sum, [lampX, , lampZ]) => sum + floorIrradiance(light, Math.hypot(x - lampX, z - lampZ)), 0)
     // Along the long span, every pair of neighbors leaves a dimmer stretch between their pools.
     const span = lamps.filter(([x]) => x === corridorPassage.spans[1].start[0])
-    expect(span.length).toBeGreaterThan(5)
+    expect(span.length).toBeGreaterThan(1)
     for (let i = 1; i < span.length; i++) {
       const [x, , z] = span[i]
       const previous = span[i - 1][2]

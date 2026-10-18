@@ -8,7 +8,7 @@ import CorridorStairs from '#component/levels/gallery/CorridorStairs'
 import CoveredPassage from '#component/levels/gallery/CoveredPassage'
 import TimberTransition from '#component/levels/gallery/TimberTransition'
 import {surfaceTexture} from '#src/components/Scene/materials.ts'
-import {corridorPassage} from '#src/lib/gallery/corridor.ts'
+import {corridorLamps, corridorPassage} from '#src/lib/gallery/corridor.ts'
 import {lodgeFloorPlanks, lodgeTunnel, lodgeTunnelTransition, lodgeWindowRibCutouts} from '#src/lib/gallery/lodge.ts'
 import {corridorLanterns, lightIndoors} from '#src/lib/materials/lights/index.ts'
 import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
@@ -37,7 +37,7 @@ export default function LodgeCorridorRoute({material, corridorLining}: {
   return <group name='lodge-corridor-route'>
     <CoveredPassage material={material} passage={lodgeTunnel} transition={lodgeTunnelTransition} />
     <TimberTransition floor={floor} lining={lining} timber={timber} transition={lodgeTunnelTransition} />
-    <CoveredPassage lighting={corridorLanterns} material={corridorLining} passage={corridorPassage} ribCutouts={lodgeWindowRibCutouts} timber={corridorTimber} />
+    <CoveredPassage lamps={corridorLamps} lighting={corridorLanterns} material={corridorLining} passage={corridorPassage} ribCutouts={lodgeWindowRibCutouts} timber={corridorTimber} />
     <CorridorStairs lining={corridorLining} timber={corridorTimber} />
   </group>
 }

@@ -10,6 +10,14 @@ export const soleLampBounce: LanternBounce = {
   radius: 2.5,
   share: 0.05,
 }
+/**
+ * The corridor’s lamps stand far apart, so their bounce has to reach the dark stretch between them. Lamps closer together keep {@link soleLampBounce}.
+ */
+export const corridorLampBounce: LanternBounce = {
+  distance: 14,
+  radius: 4,
+  share: 0.07,
+}
 /** Range and strength of a lamp that is the only light around: a warm pool under each lamp, dimming toward the next. */
 export const soleLampReach = {
   // The direct light’s cutoff makes the pools; the wider bounce keeps the dark between them from going black.

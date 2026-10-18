@@ -1,6 +1,7 @@
 import type Passage from '#src/lib/gallery/passages/Passage.ts'
 import type {PassageCutout} from '#src/lib/gallery/passages/Passage.ts'
 import type PassageTransition from '#src/lib/gallery/passages/PassageTransition.ts'
+import type {LanternBounce} from '#src/lib/materials/lights/LanternLight.ts'
 import type {LanternLightsNode} from '#src/lib/materials/lights/index.ts'
 import type {Material} from 'three/webgpu'
 
@@ -17,7 +18,7 @@ import TimberGeometry from '#src/lib/gallery/passages/TimberGeometry.ts'
 import VaultGeometry from '#src/lib/gallery/passages/VaultGeometry.ts'
 import {LanternBody} from '#src/lib/gallery/pendants/index.ts'
 import {soleLampBounce, soleLampReach} from '#src/lib/gallery/pendants/lighting.ts'
-import {passagePendantMounts} from '#src/lib/gallery/pendants/mounts.ts'
+import {passageLightSpacing, passagePendantMounts} from '#src/lib/gallery/pendants/mounts.ts'
 
 const lantern = new LanternBody
 const lanternGlow = {
@@ -31,13 +32,15 @@ const lanternLight = {
   intensity: 12,
 }
 /** Where the lanterns are all there is, their flames burn warmer and each one throws its own pool. */
-const soleLanternLight = {
-  ...soleLampReach,
-  bounce: soleLampBounce,
-  color: '#ffb363',
-}
+const soleLanternColor = '#ffb363'
 
-export default function CoveredPassage({passage, lighting, material, timber, ribCutouts, transition}: {
+export default function CoveredPassage({passage, lamps, lighting, material, timber, ribCutouts, transition}: {
+  /** how the lanterns are placed and how far their bounce light reaches, without it one lantern every 5 m with the default bounce */
+  lamps?: {
+    bounce: LanternBounce
+    /** at most this far between two lanterns along a span */
+    spacing: number
+  }
   /** makes the passage’s lanterns its sole light sources; its materials must be adopted by the same node */
   lighting?: LanternLightsNode
   material: Material
@@ -48,7 +51,14 @@ export default function CoveredPassage({passage, lighting, material, timber, rib
   transition?: PassageTransition
 }) {
   const geometry = useDisposable(useMemo(() => (timber ? TimberGeometry.passage(passage, ribCutouts) : new VaultGeometry(passage, transition?.length)), [passage, ribCutouts, timber, transition]))
-  const mounts = useMemo(() => passagePendantMounts(passage, [geometry.shell, geometry.ribs]), [geometry, passage])
+  const spacing = lamps?.spacing ?? passageLightSpacing
+  const bounce = lamps?.bounce ?? soleLampBounce
+  const mounts = useMemo(() => passagePendantMounts(passage, [geometry.shell, geometry.ribs], spacing), [geometry, passage, spacing])
+  const soleLanternLight = useMemo(() => ({
+    ...soleLampReach,
+    bounce,
+    color: soleLanternColor,
+  }), [bounce])
   const paving = transition?.stoneFloors ?? passage.floors
   // A timber lining’s crown is the ceiling along its spans; a slab there would share its plane. Only the open elbows show the slab.
   const ceilings = timber ? passage.junctions : passage.floors
