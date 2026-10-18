@@ -80,3 +80,60 @@ test('the panels stay in front of the baseboard and the keystone tucks under the
     expect(keystoneTop).toBeCloseTo(mainEntrance.keystoneTop, 4)
   })
 })
+test('the bottom rails are bare walnut, without metal kick plates', () => {
+  withEntrance(geometry => {
+    const material = new MeshBasicMaterial({side: FrontSide})
+    try {
+      const leaves = new Mesh(geometry.leaves, material)
+      const metal = new Mesh(geometry.metal, material)
+      for (const x of [-1.4, -0.7, 0.7, 1.4]) {
+        for (const y of [0.08, 0.18, 0.28]) {
+          const ray = new Raycaster(new Vector3(x, y, 0.8), new Vector3(0, 0, -1))
+          expect(ray.intersectObject(metal)).toHaveLength(0)
+          const [hit] = ray.intersectObject(leaves)
+          expect(hit).toBeDefined()
+          expect(hit.point.z).toBeCloseTo(0.3, 5)
+        }
+      }
+    } finally {
+      material.dispose()
+    }
+  })
+})
+test('there is no metal saddle across the floor below the leaves', () => {
+  withEntrance(geometry => {
+    const material = new MeshBasicMaterial({side: FrontSide})
+    try {
+      const metal = new Mesh(geometry.metal, material)
+      for (const x of [-1.6, -0.8, 0, 0.8, 1.6]) {
+        for (const z of [0.12, 0.23, 0.34]) {
+          const ray = new Raycaster(new Vector3(x, 0.5, z), new Vector3(0, -1, 0), 0, 0.5)
+          expect(ray.intersectObject(metal)).toHaveLength(0)
+        }
+      }
+    } finally {
+      material.dispose()
+    }
+  })
+})
+test('the bronze pull bars and architrave trim stay in place', () => {
+  withEntrance(geometry => {
+    const material = new MeshBasicMaterial({side: FrontSide})
+    try {
+      const metal = new Mesh(geometry.metal, material)
+      for (const side of [-1, 1]) {
+        // Pull bar, its backplate and the slim trim outside the leaves.
+        for (const [x, y, z] of [[0.091, 1.22, 0.387], [0.091, 1.68, 0.306], [1.69, 0.18, 0.38], [1.69, 3.2, 0.38]]) {
+          const ray = new Raycaster(new Vector3(side * x, y, 0.8), new Vector3(0, 0, -1))
+          const [hit] = ray.intersectObject(metal)
+          expect(hit).toBeDefined()
+          expect(hit.point.z).toBeCloseTo(z, 5)
+        }
+      }
+      const crown = new Raycaster(new Vector3(0, mainEntrance.spring + mainEntrance.width / 2 + 0.04, 0.8), new Vector3(0, 0, -1))
+      expect(crown.intersectObject(metal)[0]?.point.z).toBeCloseTo(0.38, 5)
+    } finally {
+      material.dispose()
+    }
+  })
+})
