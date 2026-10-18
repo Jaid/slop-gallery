@@ -2,6 +2,7 @@ import type {Vec3} from './types.ts'
 
 import lodge, {lodgeWindowCutout} from './lodge.ts'
 import Passage from './passages/Passage.ts'
+import {corridorLightSpacing} from './pendants/mounts.ts'
 import StairFlight, {stairHeadroom} from './stairs/StairFlight.ts'
 import StairRunner from './stairs/StairRunner.ts'
 
@@ -12,7 +13,7 @@ const corridor = {
   height: 3.4,
 } as const
 
-export const corridorPassage = new Passage('corridor', 'corridor', [[-30, lodge.returnZ], [lodge.approachX, lodge.returnZ], [lodge.approachX, lodge.siennaZ], [-31, lodge.siennaZ]], lodge.floorY, lodge.timberWidth, corridor.height, [lodgeWindowCutout])
+export const corridorPassage = new Passage('corridor', 'corridor', [[-30, lodge.returnZ], [lodge.approachX, lodge.returnZ], [lodge.approachX, lodge.siennaZ], [-31, lodge.siennaZ]], lodge.floorY, lodge.timberWidth, corridor.height, [lodgeWindowCutout], corridorLightSpacing)
 // The first tread begins at Sienna’s west doorway, without an intervening landing.
 export const corridorStairs = new StairFlight('return', [-20, 0, lodge.siennaZ], [-31, lodge.floorY, lodge.siennaZ], lodge.timberWidth, 28, 0, 0.35, 'corridor')
 // A 2.4 m runner leaves wide oak margins and clears both handrails’ posts.

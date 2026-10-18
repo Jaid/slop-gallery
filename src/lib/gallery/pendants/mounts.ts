@@ -10,12 +10,14 @@ import CeilingProbe from './CeilingProbe.ts'
 export const passageLightHeight = 2.8
 /** At most this far between two passage lights along a span. */
 export const passageLightSpacing = 5
+/** At most this far between two corridor lights along a span. */
+export const corridorLightSpacing = 10
 /** Light height above the tread it hangs over. */
 export const stairLightHeight = 2.5
 export const stairLightSteps = [4, 13, 23] as const
 
 /** Evenly spaced lights along every span, hung from the vault, timber lining or the flat roof slabs over the elbows. */
-export function passagePendantMounts(passage: Passage, surfaces: ReadonlyArray<BufferGeometry>): Array<PendantMount> {
+export function passagePendantMounts(passage: Passage, surfaces: ReadonlyArray<BufferGeometry>, spacing = passage.lightSpacing ?? (passage.id === 'corridor' ? corridorLightSpacing : passageLightSpacing)): Array<PendantMount> {
   const probe = new CeilingProbe(surfaces, [
     {
       y: passage.floorY + passage.height,
@@ -23,7 +25,7 @@ export function passagePendantMounts(passage: Passage, surfaces: ReadonlyArray<B
     },
   ])
   return passage.spans.flatMap(({start, end}, span) => {
-    const count = Math.max(1, Math.ceil(Math.hypot(end[0] - start[0], end[1] - start[1]) / passageLightSpacing))
+    const count = Math.max(1, Math.ceil(Math.hypot(end[0] - start[0], end[1] - start[1]) / spacing))
     return Array.from({length: count}, (_, i) => {
       const t = (i + 0.5) / count
       const light: Vec3 = [start[0] + (end[0] - start[0]) * t, passage.floorY + passageLightHeight, start[1] + (end[1] - start[1]) * t]
@@ -53,4 +55,3 @@ function mountOrThrow(probe: CeilingProbe, light: Vec3, along: Vec3, label: stri
   }
   return mount
 }
-

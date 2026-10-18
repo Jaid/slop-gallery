@@ -389,6 +389,9 @@ test('passages reject malformed paths instead of producing cracked geometry', ()
   for (const path of [[], [[0, 0]], [[0, 0], [0, 0]], [[0, 0], [1, 1]], [[0, 0], [Number.NaN, 1]]] as Array<Array<[number, number]>>) {
     expect(() => new Passage('bad', 'lodge', path, 0)).toThrow(RangeError)
   }
+  for (const lightSpacing of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
+    expect(() => new Passage('bad', 'lodge', [[0, 0], [0, 1]], 0, 2.6, 3.4, [], lightSpacing)).toThrow(RangeError)
+  }
 })
 test('faceted timber portals keep their centerlines and level elbows open', () => {
   const material = new MeshBasicMaterial({side: DoubleSide})

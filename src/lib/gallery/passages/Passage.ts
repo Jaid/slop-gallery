@@ -36,12 +36,15 @@ export default class Passage {
   }> = []
   readonly walls: Array<Wall> = []
 
-  constructor(readonly id: string, readonly room: RoomId, readonly path: ReadonlyArray<Point>, readonly floorY: number, readonly width = 2.6, readonly height = 3.4, readonly cutouts: ReadonlyArray<PassageCutout> = []) {
+  constructor(readonly id: string, readonly room: RoomId, readonly path: ReadonlyArray<Point>, readonly floorY: number, readonly width = 2.6, readonly height = 3.4, readonly cutouts: ReadonlyArray<PassageCutout> = [], readonly lightSpacing?: number) {
     if (path.length < 2 || ![floorY, width, height, ...path.flat()].every(Number.isFinite) || width <= 0 || height <= 0) {
       throw new RangeError('A passage needs at least two finite points and positive dimensions.')
     }
     if (cutouts.some(cutout => ![...cutout.position, ...cutout.size].every(Number.isFinite) || cutout.size.some(size => size <= 0))) {
       throw new RangeError('Passage cutouts need finite centers and positive dimensions.')
+    }
+    if (lightSpacing !== undefined && (!Number.isFinite(lightSpacing) || lightSpacing <= 0)) {
+      throw new RangeError('Passage light spacing must be positive and finite.')
     }
     const half = width / 2
     const rectangles: Array<Rectangle> = []

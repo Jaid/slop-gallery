@@ -71,7 +71,8 @@ const firstHit = (origin: Vector3, direction: Vector3, far = Infinity) => {
 describe('ceiling-hung pendants', () => {
   test('every light hangs at its passage height or beside its stair step', () => {
     expect(groups[0].mounts).toHaveLength(5)
-    expect(groups[1].mounts).toHaveLength(11)
+    expect(groups[1].mounts).toHaveLength(7)
+    expect(groups[1].mounts.filter(mount => mount.light[0] === corridorPassage.spans[1].start[0])).toHaveLength(5)
     expect(groups[2].mounts).toHaveLength(stairLightSteps.length)
     for (const [i, passage] of [lodgeTunnel, corridorPassage].entries()) {
       for (const mount of groups[i].mounts) {

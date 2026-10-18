@@ -7,7 +7,7 @@ import {lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
 import {GlobeBody, LanternBody} from '../../src/lib/gallery/pendants/index.ts'
 import {soleLampBounce, soleLampReach} from '../../src/lib/gallery/pendants/lighting.ts'
-import {passageLightHeight, passagePendantMounts} from '../../src/lib/gallery/pendants/mounts.ts'
+import {corridorLightSpacing, passageLightHeight, passageLightSpacing, passagePendantMounts} from '../../src/lib/gallery/pendants/mounts.ts'
 import {corridorLanterns, IndoorLightsNode, LanternEnvironment, LanternLight, LanternLightNode, LanternLightsNode, lightIndoors, lodgeWindowLights} from '../../src/lib/materials/lights/index.ts'
 import {sample} from '../../src/lib/materials/lights/LanternEnvironment.ts'
 
@@ -29,6 +29,10 @@ const floorIrradiance = (light: LanternLight, horizontal: number) => {
   const direct = light.intensity * window / distance ** light.decay * (passageLightHeight / distance)
   return direct + light.intensity * light.bounceAt(distance)
 }
+test('the corridor substantially increases the gap between lights over standard passages', () => {
+  expect(corridorLightSpacing).toBeGreaterThan(passageLightSpacing)
+  expect(corridorPassage.lightSpacing).toBe(corridorLightSpacing)
+})
 test('the corridor’s lanterns light only the corridor, and nothing else lights it', () => {
   const lantern = lamp(corridorLanterns)
   const otherZone = lamp(new LanternLightsNode('elsewhere'))
@@ -114,14 +118,14 @@ test('lantern pools fade to a dim gap between neighbors without going black', ()
     const floor = (x: number, z: number) => lamps.reduce((sum, [lampX, , lampZ]) => sum + floorIrradiance(light, Math.hypot(x - lampX, z - lampZ)), 0)
     // Along the long span, every pair of neighbors leaves a dimmer stretch between their pools.
     const span = lamps.filter(([x]) => x === corridorPassage.spans[1].start[0])
-    expect(span.length).toBeGreaterThan(5)
+    expect(span).toHaveLength(5)
     for (let i = 1; i < span.length; i++) {
       const [x, , z] = span[i]
       const previous = span[i - 1][2]
       const under = Math.min(floor(x, z), floor(x, previous))
       const between = floor(x, (z + previous) / 2)
-      expect(between / under).toBeLessThan(0.5)
-      expect(between / under).toBeGreaterThan(0.15)
+      expect(between / under).toBeLessThan(0.2)
+      expect(between / under).toBeGreaterThan(0.05)
     }
   } finally {
     geometry.dispose()
