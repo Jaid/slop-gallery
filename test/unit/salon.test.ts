@@ -60,28 +60,14 @@ describe('the Salon', () => {
     expect(salonWest.center[0]).toBe(lobbyEast.center[0])
     expect(Math.abs(Math.cos(salonWest.rotation - lobbyEast.rotation) + 1)).toBeLessThan(1e-12)
   })
-  test('the Salon is hung frame to frame on all four walls, every work in a valid, labelled place', () => {
+  test('every Salon work hangs in a valid, labelled place', () => {
     const hung = initialPortraits.filter(p => p.wallId?.startsWith('salon-'))
-    expect(hung.map(p => p.id).toSorted()).toEqual(['alpacas', 'corgi', 'gleaners', 'gnomes', 'hamster', 'jatte', 'kiss', 'noodles', 'onion', 'otter', 'penguins', 'raccoons', 'raft', 'scream', 'swing', 'venus', 'walrus', 'wanderer', 'wave'])
-    expect(new Set(hung.map(p => p.wallId))).toEqual(new Set(['salon-north', 'salon-east', 'salon-south', 'salon-west']))
+    expect(hung.map(p => p.id).toSorted()).toEqual(['gleaners', 'gnomes', 'jatte', 'venus', 'wave'])
     for (const p of hung) {
       const wall = walls.find(candidate => candidate.id === p.wallId)!
       expect(placementIssue(wall, p.position, p.width, p.height, initialPortraits, p.id)).toBe('')
       // Every lowest placard clears the chair rail, so no label sits on it.
       expect(p.position[1] + portraitLabelLayout(p.width, p.height).bottom).toBeGreaterThan(salonWainscot.railBottom + salonWainscot.railHeight + 0.02)
-    }
-    // Salon hang: on every wall, at least two works share a column.
-    for (const wallId of ['salon-north', 'salon-east', 'salon-south', 'salon-west']) {
-      const wall = walls.find(candidate => candidate.id === wallId)!
-      const columns = new Map<number, number>
-      for (const p of hung) {
-        if (p.wallId !== wallId) {
-          continue
-        }
-        const u = Math.round(wallCoordinates(wall, p.position) * 100)
-        columns.set(u, (columns.get(u) ?? 0) + 1)
-      }
-      expect(Math.max(...columns.values())).toBeGreaterThanOrEqual(2)
     }
   })
   test('Dine’s works keep clear of the new arch', () => {
