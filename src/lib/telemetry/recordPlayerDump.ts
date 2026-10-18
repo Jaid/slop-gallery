@@ -5,8 +5,8 @@ import stringifyClank from 'stringify-clank'
 import {playSoundEffect} from '../audio/soundEffects.ts'
 import SoundEngine from '../audio/SoundEngine.ts'
 import {isDevelopmentMode} from '../developmentMode.ts'
-import {useGallery} from '../gallery.ts'
-import {galleryLevel} from '../level.ts'
+import {rooms, useGallery} from '../gallery.ts'
+import {galleryLevel, galleryTitle, isGallery} from '../level.ts'
 import {telemetry} from './index.ts'
 import saveDumpScreenshot from './saveDumpScreenshot.ts'
 
@@ -28,7 +28,9 @@ export default function recordPlayerDump(dump: EgoDump) {
   }
   console.dir(snapshot, {depth: null})
   const {id, time, ...rest} = snapshot
-  copyDump(`<game-state-dump id="${id}" time="${time}">${stringifyClank(rest)}</game-state-dump>`).catch(error => {
+  // Only the museum has titled rooms; other levels report their default room, so name the level instead.
+  const roomTitle = isGallery ? rooms.find(entry => entry.id === room)?.title ?? room : galleryTitle
+  copyDump(`<details><summary>session from ${formatLocalTime(new Date(time))} in ${roomTitle}</summary><dump id=${id} date="${time}">${stringifyClank(rest)}</dump></details>`).catch(error => {
     console.warn('Dump could not be copied to the clipboard.', error)
   })
   if (useGallery.getState().sound) {
@@ -85,4 +87,10 @@ async function confirmDump() {
 async function copyDump(text: string) {
   await navigator.clipboard.writeText(text)
   console.info(`Dump copied to the clipboard as Clank (${text.length} characters).`)
+}
+function pad(value: number) {
+  return String(value).padStart(2, '0')
+}
+function formatLocalTime(date: Date) {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
 }

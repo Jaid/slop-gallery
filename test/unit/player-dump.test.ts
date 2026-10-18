@@ -20,6 +20,17 @@ test('player dumps are development-only, preserve precision, join separate hit l
   const dump = diagnostics.capture({} as EgoState, {dump: true})
   const dir = spyOn(console, 'dir').mockImplementation(() => {})
   const warn = spyOn(console, 'warn').mockImplementation(() => {})
+  const info = spyOn(console, 'info').mockImplementation(() => {})
+  const clipboard: Array<string> = []
+  const clipboardDescriptor = Object.getOwnPropertyDescriptor(navigator, 'clipboard')
+  Object.defineProperty(navigator, 'clipboard', {
+    configurable: true,
+    value: {
+      writeText: async (text: string) => {
+        clipboard.push(text)
+      },
+    },
+  })
   try {
     for (const [enabled, sound, audioFails, development] of [[true, true, false, true], [false, true, false, true], [true, false, false, true], [false, false, false, true], [true, true, true, true], [false, true, true, true], [true, true, false, false]]) {
       const build = await Bun.build({
@@ -39,7 +50,7 @@ test('player dumps are development-only, preserve precision, join separate hit l
               }))
               builder.onLoad({filter: /lib[/\\]gallery\.ts$/u}, () => ({
                 loader: 'ts',
-                contents: `export const useGallery = {getState: () => ({room: 'lobby', active: null, held: null, inspecting: null, locked: true, sound: ${sound}})}`,
+                contents: `export const rooms = [{id: 'lobby', title: 'Lobby'}]; export const useGallery = {getState: () => ({room: 'lobby', active: null, held: null, inspecting: null, locked: true, sound: ${sound}})}`,
               }))
               builder.onLoad({filter: /audio[/\\]SoundEngine\.ts$/u}, () => ({
                 loader: 'ts',
@@ -59,7 +70,7 @@ test('player dumps are development-only, preserve precision, join separate hit l
               }))
               builder.onLoad({filter: /lib[/\\]level\.ts$/u}, () => ({
                 loader: 'ts',
-                contents: "export const galleryLevel = 'knottingham'",
+                contents: "export const galleryLevel = 'knottingham'; export const galleryTitle = 'Knottingham'; export const isGallery = false",
               }))
             },
           },
@@ -88,6 +99,7 @@ test('player dumps are development-only, preserve precision, join separate hit l
       module.playerDumpHandler!(dump)
       await Bun.sleep(0)
       expect(module.screenshots).toEqual([`knottingham-${dump.id}`])
+      expect(clipboard.pop()).toMatch(new RegExp(String.raw`^<details><summary>session from \d{4}-\d{2}-\d{2} \d{2}:\d{2} in Knottingham</summary><dump id=${dump.id} date="${dump.time}">player .* context \{ level knottingham room lobby .*\}</dump></details>$`, 'u'))
       expect(module.played).toEqual(sound && !audioFails ? ['SFX-04'] : [])
       expect(module.SoundEngine.requests).toBe(sound ? 1 : 0)
       expect(dir).toHaveBeenLastCalledWith({
@@ -125,6 +137,12 @@ test('player dumps are development-only, preserve precision, join separate hit l
   } finally {
     dir.mockRestore()
     warn.mockRestore()
+    info.mockRestore()
+    if (clipboardDescriptor) {
+      Object.defineProperty(navigator, 'clipboard', clipboardDescriptor)
+    } else {
+      delete (navigator as {clipboard?: unknown}).clipboard
+    }
     geometry.dispose()
     material.dispose()
   }
