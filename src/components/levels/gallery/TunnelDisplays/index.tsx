@@ -1,10 +1,12 @@
 import type {Material} from 'three/webgpu'
 
-import {CuboidCollider, RigidBody} from '@react-three/rapier'
+import {RigidBody} from '@react-three/rapier'
 import Branch from 'branch-component'
 import {Object3D} from 'three/webgpu'
 
+import SlopedBox from '#component/levels/gallery/SlopedBox'
 import Box from '#src/components/Scene/primitives.tsx'
+import {tunnelSlope} from '#src/lib/gallery/lowerGallery.ts'
 import tunnelDisplays from '#src/lib/gallery/tunnelDisplays.ts'
 
 const displayLightTarget = () => {
@@ -19,7 +21,7 @@ const DisplayExhibit = ({kind, material}: {
   const target = displayLightTarget()
   return <>
     <primitive object={target} />
-    <Box material={material} position={[0, 0.45, 0]} size={[1.15, 0.9, 1.15]} />
+    <SlopedBox bottomSlope={tunnelSlope} collision={false} material={material} position={[0, 0.45, 0]} size={[1.15, 0.9, 1.15]} slope={0} />
     <Box color='#788586' metalness={0.65} position={[0, 0.93, 0]} roughness={0.35} size={[1.2, 0.06, 1.2]} />
     <mesh castShadow position={[0, 1.65, 0]} receiveShadow rotation={[0.2, 0.35, kind === 3 ? Math.PI / 4 : 0]}>
       <Branch if={kind === 0}><torusKnotGeometry args={[0.42, 0.13, 96, 16, 2, 3]} /></Branch>
@@ -46,8 +48,7 @@ export default function TunnelDisplays({material}: {material: Material}) {
     {tunnelDisplays.map(display => <group key={display.side} name={`tunnel-display-${display.side}`}>
       <RigidBody colliders={false} type='fixed'>
         {display.shell.map(({position, size}, i) => <group key={i}>
-          <CuboidCollider args={[size[0] / 2, size[1] / 2, size[2] / 2]} position={position} />
-          <Box material={material} position={position} size={size} />
+          <SlopedBox material={material} position={position} size={size} slope={tunnelSlope} />
         </group>)}
       </RigidBody>
       {display.exhibits.map(exhibit => <group key={exhibit.id} name={exhibit.id} position={exhibit.position}>

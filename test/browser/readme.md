@@ -70,3 +70,12 @@ bun test/browser/run.ts brushedMetal.ts --standalone
 ```
 
 This detached HDR fixture uses the real frame, bent rail and sign geometry with UVs removed, in 24 views/scales and without scene lights or a scene environment. It rejects non-finite pixels, black sectors, overly bright broad reflections and missing light/dark structure. It also compares ordinary and rotated instanced supports and checks that moving a support does not move its local grain. The shader uses a static procedural studio environment, not live reflections. Knottingham keeps its existing flat-color support fallback in fast graphics; the benches and Oculus railings use the shared steel in both modes.
+## Oculus keyboard traversal
+
+```sh
+BROWSER=/path/to/chromium bun run test:live:oculus
+```
+
+This builds the gallery and opens a private headless browser. The test walks the production player through the sloped Moonfall connection in both directions, up the east two-flight switchback and down the west one, including both lateral landing turns. It checks grounded feet at each destination and rejects browser errors. It uses fast graphics; the geometry and colliders are shared with heavy mode.
+
+To reuse a build, run `LIVE_TEST=true LIVE_TARGET=out/production/gallery BROWSER=/path/to/chromium bun test test/oculus.live.test.ts`.

@@ -1,9 +1,10 @@
 import {ADDITION, Brush, Evaluator, SUBTRACTION} from 'three-bvh-csg'
 import {BoxGeometry, BufferGeometry, ExtrudeGeometry, Float32BufferAttribute, MeshBasicNodeMaterial, Shape} from 'three/webgpu'
 
-import lowerGallery, {oculusPlatform, oculusRamps} from './lowerGallery.ts'
+import lowerGallery, {oculusLowerRamps, oculusPlatform, oculusRampLandings, oculusRamps} from './lowerGallery.ts'
 import tower, {towerArch, towerPlatformOutline, towerRamp, towerRampGradient, towerRampHalfWidth, towerRampHeight, towerRampSections} from './oculusTower.ts'
 import RampGeometry from './RampGeometry.ts'
+import SlopedBoxGeometry from './SlopedBoxGeometry.ts'
 
 /**
  * Replaces the faceted normals of an extruded shape’s side walls with the true radial normals wherever a vertex lies on one of
@@ -54,7 +55,7 @@ export default class OculusGroundGeometry extends BufferGeometry {
       return brush(platformBlock.translate(...position))
     }
     try {
-      const {floorY} = lowerGallery
+      const {floorY} = lowerGallery.oculus
       const slope = new BoxGeometry(towerRamp.width, 1, towerRamp.endZ - towerRamp.startZ, 1, 1, towerRampSections.length - 1)
       const vertices = slope.getAttribute('position')
       for (let i = 0; i < vertices.count; i++) {
@@ -130,8 +131,17 @@ export default class OculusGroundGeometry extends BufferGeometry {
       solid = combine(solid, brush(cutter), SUBTRACTION)
       solid = combine(solid, block(oculusPlatform))
       for (const ramp of oculusRamps) {
+        const middleY = ramp.floorY + ramp.rise / 2
+        const height = middleY - floorY
+        const rampPrism = new SlopedBoxGeometry(ramp.width, height, ramp.run, -ramp.rise / ramp.run, 0)
+        solid = combine(solid, brush(rampPrism.translate(ramp.x, floorY + height / 2, ramp.startZ - ramp.run / 2)))
+      }
+      for (const ramp of oculusLowerRamps) {
         const rampPrism = new RampGeometry(ramp.width, ramp.rise, ramp.run)
-        solid = combine(solid, brush(rampPrism.translate(ramp.x, ramp.floorY, ramp.startZ)))
+        solid = combine(solid, brush(rampPrism.rotateY(Math.PI).translate(ramp.x, ramp.floorY, ramp.startZ)))
+      }
+      for (const landing of oculusRampLandings) {
+        solid = combine(solid, block(landing))
       }
       this.copy(solid.geometry)
       // World-scale projection keeps the stone grain consistent across the joined pieces.

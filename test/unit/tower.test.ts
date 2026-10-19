@@ -199,7 +199,7 @@ describe('cylindrical Oculus platform', () => {
         const direction = new Vector3(0, 1, 0)
         const archRay = new Raycaster(origin, direction)
         const visible = archRay.intersectObject(mesh)[0]
-        const physical = world.castRay(new RAPIER.Ray(origin, direction), 5, true)!
+        const physical = world.castRay(new RAPIER.Ray(origin, direction), towerArch.height + 1, true)!
         if (arc) {
           // The rounded corners are a few chords each; they stay within 2 mm of the true arcs.
           const [centerU, centerHeight, arcRadius] = arc
@@ -264,14 +264,14 @@ describe('cylindrical Oculus platform', () => {
     }
   }
   test('the tower leaves tunnel clearance and headroom below the unchanged glass', () => {
-    expect(tower.height).toBe(4.5)
+    expect(tower.height).toBe(7.5)
     expect(tower.radius).toBe(2.2)
     expect(tower.z + tower.radius).toBeLessThan(lowerGallery.tunnel.northZ - 3.5)
     expect(tower.floorY + tower.height + 1.8).toBeLessThan(-0.12)
     expect(floorHeight([tower.x, tower.floorY + tower.height + 1.6, tower.z])).toBe(-3.5)
     expect(floorHeight([tower.x, 1.6, tower.z])).toBe(0)
     expect(towerFloorHeight(tower.x + tower.radius + 0.01, tower.z)).toBeUndefined()
-    expect(floorHeight([tower.x, -6.4, (ramp.startZ + ramp.endZ) / 2])).toBe(-8)
+    expect(floorHeight([tower.x, -6.4, (ramp.startZ + ramp.endZ) / 2])).toBe(-11)
   })
   test('the visible deck and cylindrical top match collision and navigation heights', () => {
     const material = new MeshBasicMaterial

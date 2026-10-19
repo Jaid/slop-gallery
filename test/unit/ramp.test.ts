@@ -48,8 +48,8 @@ for (const ramp of oculusRamps) {
           const ray = new Raycaster(new Vector3(ramp.x, 0, z), new Vector3(0, -1, 0))
           expect(ray.intersectObject(mesh)[0].point.y).toBeCloseTo(top)
         }
-        expect(rampFloorHeight(ramp.x + ramp.width, ramp.startZ)).toBeUndefined()
-        expect(rampFloorHeight(ramp.x, ramp.startZ + 0.01)).toBeUndefined()
+        expect(rampFloorHeight(ramp.x + (ramp.side === 'west' ? -1 : 1) * ramp.width, ramp.startZ)).toBeUndefined()
+        expect(rampFloorHeight(ramp.x, ramp.startZ + 0.01)).toBe(ramp.floorY)
         expect(rampFloorHeight(ramp.x, ramp.startZ - ramp.run - 0.01)).toBeUndefined()
       } finally {
         geometry.dispose()

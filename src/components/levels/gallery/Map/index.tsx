@@ -8,7 +8,7 @@ import {fountainBench, fountainBenches} from '#src/lib/gallery/fountain/benches.
 import fountain from '#src/lib/gallery/fountain/config.ts'
 import lobby from '#src/lib/gallery/lobby.ts'
 import {lodgeTunnel} from '#src/lib/gallery/lodge.ts'
-import lowerGallery, {oculusPlatform, oculusRamps} from '#src/lib/gallery/lowerGallery.ts'
+import lowerGallery, {oculusPlatform, oculusRampFlights, oculusRampLandings} from '#src/lib/gallery/lowerGallery.ts'
 import {moonfallCrater} from '#src/lib/gallery/moonfall/config.ts'
 import oculusBalcony from '#src/lib/gallery/oculusBalcony.ts'
 import oculusTower, {towerRampHalfWidth, towerRampSections} from '#src/lib/gallery/oculusTower.ts'
@@ -63,10 +63,10 @@ export default function Map({css}: {css: Record<string, string>}) {
     notify(`Welcome to ${room.title}.`)
   }
   return <>
-    <p className={css.intro}>Ten rooms across the upper and lower galleries. The Salon lies through the arch in Dine’s north wall, behind a glass wall in the Lobby. The Oculus’s raised north platform leads through a stone tunnel to the Lodge. The Corridor follows the timber return route from the Lodge to Sienna.</p>
+    <p className={css.intro}>Ten rooms across the upper and lower galleries. The Salon lies through the arch in Dine’s north wall, behind a glass wall in the Lobby. A descending ramp leads from Moonfall into the deeper Oculus, where two-flight switchbacks climb to the raised north platform. The platform leads through a stone tunnel to the Lodge. The Corridor follows the timber return route from the Lodge to Sienna.</p>
     {levels.map(level => <div key={String(level.lower)} className={css.level}>
       <h3>{level.lower ? 'Lower level' : 'Upper level'}</h3>
-      <svg aria-label={level.lower ? 'Moonfall below the Antechamber, connected north by tunnel to the Oculus beneath the glass floor' : 'Upper gallery and U-turn stairs from the Antechamber'} role='img' viewBox={`0 0 ${level.width} ${level.height}`}>
+      <svg aria-label={level.lower ? 'Moonfall below the Antechamber, connected north by a descending ramp to the Oculus beneath the glass floor' : 'Upper gallery and U-turn stairs from the Antechamber'} role='img' viewBox={`0 0 ${level.width} ${level.height}`}>
         <g aria-label='Lodge access and Corridor to Sienna'>
           {routePassages.filter(passage => passage.floorY < 0 === level.lower).flatMap(passage => passage.floors.map(({center, size}, i) => <rect key={passage.id + i} fill={routeFill(passage.room, current)} height={size[1] * scale} width={size[0] * scale} x={level.x(center[0] - size[0] / 2)} y={level.y(center[1] - size[1] / 2)} />))}
           {corridorStairs.blocks.map((block, i) => <rect key={i} fill={current === 'corridor' ? '#c9d4b6' : '#784d35'} height={block.size[2] * scale} stroke='#692325' strokeWidth='0.5' width={block.size[0] * scale} x={level.x(block.position[0] - block.size[0] / 2)} y={level.y(block.position[2] - block.size[2] / 2)} />)}
@@ -76,7 +76,7 @@ export default function Map({css}: {css: Record<string, string>}) {
           <path d={`M ${level.x(staircase.turnX)} ${level.y(stairTurn.outerCenterZ - stairTurn.outerRadius)} A ${stairTurn.outerRadius * scale} ${stairTurn.outerRadius * scale} 0 0 1 ${level.x(staircase.turnX)} ${level.y(stairTurn.outerCenterZ + stairTurn.outerRadius)} L ${level.x(staircase.turnX)} ${level.y(stairTurn.innerCenterZ + stairTurn.innerRadius)} A ${stairTurn.innerRadius * scale} ${stairTurn.innerRadius * scale} 0 0 0 ${level.x(staircase.turnX)} ${level.y(stairTurn.innerCenterZ - stairTurn.innerRadius)} Z`} fill='#c3ccc4' stroke='#71857e' strokeWidth='0.5' />
           <path d={`M ${level.x(staircase.startX + 1)} ${level.y(staircase.z)} H ${level.x(staircase.turnX)} A ${stairTurn.radius * scale} ${stairTurn.radius * scale} 0 0 1 ${level.x(staircase.turnX)} ${level.y(staircase.returnZ)} H ${level.x(staircase.endX)}`} fill='none' stroke='#526e65' strokeWidth='2' />
         </g>
-        <Branch if={level.lower}><rect aria-label='Connecting tunnel' fill='#c3ccc4' height={(lowerGallery.tunnel.southZ - lowerGallery.tunnel.northZ) * scale} stroke='#71857e' width={lowerGallery.tunnel.width * scale} x={level.x(-lowerGallery.tunnel.width / 2)} y={level.y(lowerGallery.tunnel.northZ)} /></Branch>
+        <Branch if={level.lower}><rect aria-label='Descending ramp to Oculus' fill='#c3ccc4' height={(lowerGallery.tunnel.southZ - lowerGallery.tunnel.northZ) * scale} stroke='#71857e' width={lowerGallery.tunnel.width * scale} x={level.x(-lowerGallery.tunnel.width / 2)} y={level.y(lowerGallery.tunnel.northZ)} /></Branch>
         <Branch if={level.lower}>{tunnelDisplays.map(display => <g key={display.side} aria-label={`${display.side} display room, visible through glass but inaccessible`}>
           <rect fill='#657276' height={display.size[1] * scale} stroke='#46575b' width={display.size[0] * scale} x={level.x(display.center[0] - display.size[0] / 2)} y={level.y(display.center[1] - display.size[1] / 2)} />
           <path d={`M ${level.x(display.frontX)} ${level.y(display.center[1] - display.size[1] / 2)} V ${level.y(display.center[1] + display.size[1] / 2)}`} stroke='#a9e0e4' strokeWidth='2' />
@@ -100,7 +100,8 @@ export default function Map({css}: {css: Record<string, string>}) {
           <path aria-label='Tower access ramp' d={`M ${[-1, 1].flatMap(side => (side === -1 ? towerRampSections : towerRampSections.toReversed()).map(z => `${level.x(oculusTower.x + side * towerRampHalfWidth(z))} ${level.y(z)}`)).join(' L ')} Z`} fill='#657276' stroke='#46575b' />
           <path aria-label='Separate wall balcony' d={`M ${level.x(oculusBalcony.x - oculusBalcony.width / 2)} ${level.y(oculusBalcony.z)} A ${oculusBalcony.width / 2 * scale} ${oculusBalcony.depth * scale} 0 0 1 ${level.x(oculusBalcony.x + oculusBalcony.width / 2)} ${level.y(oculusBalcony.z)} Z`} fill='#718c8e' stroke='#46575b' />
           <circle aria-label='Cylindrical platform' cx={level.x(oculusTower.x)} cy={level.y(oculusTower.z)} fill='#718c8e' r={oculusTower.radius * scale} stroke='#46575b' />
-          {oculusRamps.map(ramp => <rect key={ramp.side} aria-label={`${ramp.side} access ramp`} fill='#657276' height={ramp.run * scale} stroke='#46575b' width={ramp.width * scale} x={level.x(ramp.x - ramp.width / 2)} y={level.y(ramp.startZ - ramp.run)} />)}
+          {oculusRampFlights.map((ramp, i) => <rect key={i} aria-label={`${ramp.side} access ramp`} fill='#657276' height={ramp.run * scale} stroke='#46575b' width={ramp.width * scale} x={level.x(ramp.x - ramp.width / 2)} y={level.y(Math.min(ramp.startZ, ramp.startZ + ramp.direction * ramp.run))} />)}
+          {oculusRampLandings.map(landing => <rect key={landing.side} aria-label={`${landing.side} switchback landing`} fill='#657276' height={landing.size[2] * scale} stroke='#46575b' width={landing.size[0] * scale} x={level.x(landing.position[0] - landing.size[0] / 2)} y={level.y(landing.position[2] - landing.size[2] / 2)} />)}
           <rect fill='#718c8e' height={oculusPlatform.size[2] * scale} width={oculusPlatform.size[0] * scale - 4} x={level.x(oculusPlatform.position[0] - oculusPlatform.size[0] / 2)} y={level.y(oculusPlatform.position[2] - oculusPlatform.size[2] / 2)} />
           <text fill='#f0f0e5' fontSize='10' textAnchor='middle' x={level.x(oculusPlatform.position[0]) - 2} y={level.y(oculusPlatform.position[2])}>RAISED FLOOR</text>
         </g></Branch>

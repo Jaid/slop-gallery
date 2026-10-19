@@ -4,14 +4,16 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import EgoMotor from 'ego-player/motor'
 import {Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
-import {createArchitectureGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
-import lowerGallery from '../../src/lib/gallery/lowerGallery.ts'
+import {colliderGeometry, createArchitectureGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
+import lowerGallery, {tunnelFloorHeight, tunnelSlope} from '../../src/lib/gallery/lowerGallery.ts'
 import oculusBalcony from '../../src/lib/gallery/oculusBalcony.ts'
+import SlopedBoxGeometry from '../../src/lib/gallery/SlopedBoxGeometry.ts'
 import tunnelDisplays, {tunnelDisplayWindow} from '../../src/lib/gallery/tunnelDisplays.ts'
 import walls, {galleryPlacement, insideGallery} from '../../src/lib/gallery/walls.ts'
 
 await RAPIER.init()
-const {tunnel, floorY} = lowerGallery
+const {tunnel} = lowerGallery
+const floorY = tunnelFloorHeight((tunnel.northZ + tunnel.southZ) / 2)
 describe('widened tunnel with sealed display rooms', () => {
   test('both portals, floor bounds and balcony follow the wider tunnel, without adding visitable rooms', () => {
     expect(tunnel.width).toBe(4.2)
@@ -51,10 +53,10 @@ describe('widened tunnel with sealed display rooms', () => {
           world.createCollider(RAPIER.ColliderDesc.trimesh(...collision))
         }
         world.step()
-        for (const u of [-6.8, -4.5, 0, 4.5, 6.8]) {
+        for (const u of [-4.8, -2.5, 0, 2.5, 4.8]) {
           for (const y of [0.6, 1.62, 2.8]) {
             for (const side of [-1, 1]) {
-              const origin = new Vector3(u, y, side)
+              const origin = new Vector3(u, y + u * wall.slope!, side)
               const direction = new Vector3(0, 0, -side)
               const ray = new Raycaster(origin, direction, 0, 2)
               expect(ray.intersectObjects(opaque)).toHaveLength(0)
@@ -64,8 +66,8 @@ describe('widened tunnel with sealed display rooms', () => {
             }
           }
         }
-        for (const [u, y] of [[0, 0.3], [0, 3], [-7.2, 1.6], [7.2, 1.6]]) {
-          const surroundRay = new Raycaster(new Vector3(u, y, 1), new Vector3(0, 0, -1), 0, 2)
+        for (const [u, y] of [[0, 0.3], [0, 3], [-5.2, 1.6], [5.2, 1.6]]) {
+          const surroundRay = new Raycaster(new Vector3(u, y + u * wall.slope!, 1), new Vector3(0, 0, -1), 0, 2)
           expect(surroundRay.intersectObjects(opaque).length).toBeGreaterThan(0)
         }
       } finally {
@@ -80,7 +82,10 @@ describe('widened tunnel with sealed display rooms', () => {
       })
       try {
         for (const box of display.shell) {
-          shell.createCollider(RAPIER.ColliderDesc.cuboid(box.size[0] / 2, box.size[1] / 2, box.size[2] / 2).setTranslation(...box.position))
+          const slab = new SlopedBoxGeometry(...box.size, tunnelSlope)
+          slab.translate(...box.position)
+          shell.createCollider(RAPIER.ColliderDesc.trimesh(...colliderGeometry(slab)))
+          slab.dispose()
         }
         shell.step()
         const origin = new Vector3(display.center[0], floorY + 1.6, display.center[1])
@@ -112,7 +117,10 @@ describe('widened tunnel with sealed display rooms', () => {
             wallRotation.setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)
             world.createCollider(RAPIER.ColliderDesc.trimesh(...collision).setTranslation(...wall.center).setRotation(wallRotation))
           }
-          world.createCollider(RAPIER.ColliderDesc.cuboid(tunnel.width / 2, 0.12, 10).setTranslation(tunnel.x, floorY - 0.12, display.center[1]))
+          const floor = new SlopedBoxGeometry(tunnel.width, 0.24, tunnel.southZ - tunnel.northZ, tunnelSlope)
+          floor.translate(tunnel.x, floorY - 0.12, display.center[1])
+          world.createCollider(RAPIER.ColliderDesc.trimesh(...colliderGeometry(floor)))
+          floor.dispose()
           const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(tunnel.x, floorY + 0.04, display.center[1]))
           const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
           const motor = new EgoMotor(RAPIER, world, body, collider)

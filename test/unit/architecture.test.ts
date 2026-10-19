@@ -66,7 +66,7 @@ describe('boolean architecture', () => {
               const opening = wall.holes!.find(candidate => insideOpening(candidate, u, y))
               const solid = Math.abs(u) <= wall.width / 2 && !opening
               for (const side of [-1, 1]) {
-                const origin = new Vector3(u, y, side)
+                const origin = new Vector3(u, y + (wall.slope ?? 0) * u, side)
                 const direction = new Vector3(0, 0, -side)
                 const ray = new Raycaster(origin, direction, 0, 2)
                 expect(ray.intersectObject(meshes[0]).length > 0).toBe(solid)
@@ -111,7 +111,9 @@ describe('boolean architecture', () => {
                 if (wall.trimStyle === 'none') {
                   depth = wallFace
                 }
-                const ray = new Raycaster(new Vector3(hole.u, y, z), new Vector3(side, 0, 0), 0, hole.width / 2 + 0.4)
+                const direction = new Vector3(side, side * (wall.slope ?? 0), 0)
+                direction.normalize()
+                const ray = new Raycaster(new Vector3(hole.u, y + (wall.slope ?? 0) * hole.u, z), direction, 0, hole.width / 2 + 0.4)
                 const hits = ray.intersectObjects(meshes)
                 expect(hits.length).toBe(z < depth ? 1 : 0)
                 if (hits.length === 0) {
@@ -124,7 +126,7 @@ describe('boolean architecture', () => {
                   const reach = Math.sqrt(radius ** 2 - aboveSpring ** 2)
                   expect(Math.abs(hits[0].distance - reach)).toBeLessThan(0.001)
                 } else {
-                  expect(hits[0].distance).toBeCloseTo(radius, 5)
+                  expect(hits[0].distance).toBeCloseTo(radius * Math.hypot(1, wall.slope ?? 0), 5)
                 }
               }
             }

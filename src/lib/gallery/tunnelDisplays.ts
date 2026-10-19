@@ -1,8 +1,8 @@
 import type {Vec3} from './types.ts'
 
-import lowerGallery from './lowerGallery.ts'
+import lowerGallery, {tunnelFloorHeight} from './lowerGallery.ts'
 
-const {tunnel, floorY} = lowerGallery
+const {tunnel} = lowerGallery
 export const tunnelDisplayWindow = {
   bottom: 0.55,
   top: 2.85,
@@ -10,6 +10,7 @@ export const tunnelDisplayWindow = {
   glassThickness: 0.06,
 }
 const centerZ = (tunnel.northZ + tunnel.southZ) / 2
+const floorY = tunnelFloorHeight(centerZ)
 const depth = 3.2
 const thickness = 0.18
 export type DisplayBox = {
@@ -36,7 +37,7 @@ const tunnelDisplays = (['west', 'east'] as const).map((side, index) => {
       size: [thickness, tunnel.height, width],
     },
     ...[-1, 1].map(end => ({
-      position: [centerX, floorY + tunnel.height / 2, centerZ + end * (width + thickness) / 2] as Vec3,
+      position: [centerX, tunnelFloorHeight(centerZ + end * (width + thickness) / 2) + tunnel.height / 2, centerZ + end * (width + thickness) / 2] as Vec3,
       size: [depth, tunnel.height, thickness] as Vec3,
     })),
   ]
@@ -49,7 +50,7 @@ const tunnelDisplays = (['west', 'east'] as const).map((side, index) => {
     exhibits: [-1, 0, 1].map((slot, i) => ({
       id: `tunnel-${side}-exhibit-${i}`,
       kind: (index * 3 + i) as 0 | 1 | 2 | 3 | 4 | 5,
-      position: [centerX, floorY, centerZ + slot * width / 3] as Vec3,
+      position: [centerX, tunnelFloorHeight(centerZ + slot * width / 3), centerZ + slot * width / 3] as Vec3,
     })),
   }
 })
