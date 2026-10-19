@@ -18,7 +18,7 @@
     "test": "bun test --max-concurrency 1 ./test"
   },
   "dependencies": {
-    "browserslist": "4.29.3",
+    "browserslist": "4.29.4",
     "browserslist-to-esbuild": "2.1.1"
   },
   "peerDependencies": {
