@@ -76,7 +76,10 @@ describe('H key', () => {
   afterEach(() => {
     Object.assign(globalThis, {HTMLElement: previousHTMLElement})
     crosshair.set(false)
-    useGallery.setState({locked: false})
+    useGallery.setState({
+      locked: false,
+      sound: false,
+    })
   })
   test('shows and hides the aim dot while playing', () => {
     press()
