@@ -15,12 +15,15 @@ jobs:
         bun-version: 1.4.2
     - name: installSystemTools
       env:
-        GH_TOKEN: ${{ github.token }}
+        HOMEBREW_NO_AUTO_UPDATE: 1
+        HOMEBREW_NO_INSTALL_CLEANUP: 1
       run: |
         sudo apt-get update
-        sudo apt-get install --yes --no-install-recommends ffmpeg libfuse2t64
-        gh release download --repo ImageMagick/ImageMagick --pattern '*-gcc-x86_64.AppImage' --output "$RUNNER_TEMP/magick"
-        sudo install --mode 755 "$RUNNER_TEMP/magick" /usr/local/bin/magick
+        sudo apt-get install --yes --no-install-recommends ffmpeg
+        # Homebrew’s ImageMagick 7 comes with the JPEG XL delegate that apt’s and the official AppImage lack
+        /home/linuxbrew/.linuxbrew/bin/brew install imagemagick
+        echo /home/linuxbrew/.linuxbrew/bin >> "$GITHUB_PATH"
+        export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
         magick -version
         magick -list format | grep --ignore-case --extended-regexp "^ *(AVIF|JXL)"
     - name: install
