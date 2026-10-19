@@ -20,7 +20,7 @@ export default function World() {
     camera={{
       fov: 62,
       position: [initial.position[0], initial.position[1] + 1.6, initial.position[2]],
-      near: 0.05,
+      near: 0.01,
       far: 90,
     }} controls={controls} dpr={dpr} physics renderer={createGalleryRenderer} sceneWrapper={GameScene} shadows={profile.shadows}
   ><Scene /></Game>
