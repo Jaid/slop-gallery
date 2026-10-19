@@ -157,9 +157,6 @@ export default class EntranceGeometry {
         const inset = insetPolygon(field, panelBevel.size - 0.004)
         wood(mirror(inset), sideOf(vertical), leafBack, panelEdge + panelBevel.thickness, panelBevel)
       }
-      // Bronze kick plate on the bottom rail.
-      const kick = new BoxGeometry(leafRadius - inner - 0.06, 0.24, 0.003)
-      metal.push(kick.translate(side * (inner + leafRadius) / 2, rails.bottom[0] + 0.16, leafFront + 0.0015))
       // Long pull bar on standoffs, on the meeting stile at hand height.
       const pullX = side * (inner + meetingStile * 0.55)
       const pullY = (rails.lock[0] + rails.lock[1]) / 2 + 0.12
@@ -176,7 +173,7 @@ export default class EntranceGeometry {
       const impostBlock = new BoxGeometry(0.36, 0.2, 0.42)
       frame.push(plinthBlock.translate(side * (soffit + 0.165), 0.15, 0.24), impostBlock.translate(side * (soffit + 0.18), spring, 0.21))
     }
-    // The astragal covers the meeting gap from threshold to crown.
+    // The astragal covers the meeting gap from the bottom rail to the crown.
     wood(rectangle(-0.03, rails.bottom[0], 0.03, archHeight(0.03, leafRadius) - 0.02), vertical, leafFront - 0.008, leafFront + 0.018, {
       size: 0.006,
       thickness: 0.006,
@@ -195,9 +192,6 @@ export default class EntranceGeometry {
     const keystoneAngle = Math.acos(0.13 / keystoneRadius)
     frame.push(extrude([...arc(archCenter, keystoneRadius, keystoneAngle, Math.PI - keystoneAngle, 4), [-0.19, mainEntrance.keystoneTop], [0.19, mainEntrance.keystoneTop]], wallFront, 0.39))
     metal.push(surround(radius + 0.03, radius + 0.055, 0.36, 0.38))
-    // Bronze saddle under the leaves.
-    const threshold = new BoxGeometry(soffit * 2, rails.bottom[0], 0.24)
-    metal.push(threshold.translate(0, rails.bottom[0] / 2, wallFront + 0.12))
     this.leaves = mergeParts(leaves)
     this.frame = mergeParts(frame)
     this.metal = mergeParts(metal)
