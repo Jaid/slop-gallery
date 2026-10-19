@@ -6,6 +6,7 @@ import {readSeedOverride} from './environmentSeed.ts'
 import {readPortraitSlotEditing} from './gallery/portraitSlotStore.ts'
 import {readAntiAliasing} from './rendering/antiAliasing.ts'
 import {readGraphicsMode} from './rendering/graphicsMode.ts'
+import {readNear} from './rendering/near.ts'
 import {readScale} from './rendering/scale.ts'
 import {readVisionMode} from './rendering/visionMode.ts'
 
@@ -26,6 +27,7 @@ const readers: Record<string, Reader> = {
   edit_portrait_slots: readPortraitSlotEditing,
   graphics: readGraphicsMode,
   intro_narration: readIntroNarration,
+  near: readNear,
   scale: readScale,
   seed: readSeedOverride,
   vision_mode: readVisionMode,
