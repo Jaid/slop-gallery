@@ -6,7 +6,7 @@ import Scene from '#component/Scene'
 import {playerSession} from '#src/lib/gallery/PlayerSession.ts'
 import {createGalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
-import {defaultNear, readNear} from '#src/lib/rendering/near.ts'
+import {readNear} from '#src/lib/rendering/near.ts'
 import {readScale, useZoomIndependentDpr} from '#src/lib/rendering/scale.ts'
 
 import controls from './controls.ts'
@@ -17,12 +17,12 @@ export default function World() {
   const [scale] = useState(() => readScale() ?? 1)
   const dpr = useZoomIndependentDpr(scale)
   const [initial] = useState(() => playerSession.snapshot())
-  const [near] = useState(() => readNear() ?? defaultNear)
+  const [near] = useState(() => readNear())
   return <Game
     camera={{
       fov: 62,
       position: [initial.position[0], initial.position[1] + 1.6, initial.position[2]],
-      near,
+      ...near === undefined ? {} : {near},
     }} controls={controls} dpr={dpr} physics renderer={createGalleryRenderer} sceneWrapper={GameScene} shadows={profile.shadows}
   ><Scene /></Game>
 }
