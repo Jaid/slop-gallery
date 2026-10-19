@@ -117,7 +117,7 @@ describe('Lobby fountain', () => {
       expect(bounds.min.z).toBeCloseTo(-fountain.basinApothem, 5)
       expect(fountain.position[2] - fountain.radius).toBeGreaterThan(lobby.opening.center[1] + lobby.opening.size[1] / 2 + 1)
       expect(fountainBench.radius - fountainBench.depth / 2 - fountain.basinApothem).toBeGreaterThan(1.4)
-      expect(fountainBenches).toHaveLength(4)
+      expect(fountainBenches).toHaveLength(2)
     } finally {
       geometry.dispose()
     }

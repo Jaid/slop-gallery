@@ -11,10 +11,8 @@ export const fountainBench = {
   slatGap: 0.025,
 } as const
 
-export const fountainBenches = Array.from({length: 4}, (_, i) => {
-  const angle = i * Math.PI / 2
-  return {
-    position: [fountain.position[0] + Math.sin(angle) * fountainBench.radius, fountain.position[1], fountain.position[2] + Math.cos(angle) * fountainBench.radius] as Vec3,
-    rotation: [0, angle, 0] as Vec3,
-  }
-})
+/** The two benches that face the fountain’s flat sides. The side benches were removed. */
+export const fountainBenches = [0, Math.PI].map(angle => ({
+  position: [fountain.position[0] + Math.sin(angle) * fountainBench.radius, fountain.position[1], fountain.position[2] + Math.cos(angle) * fountainBench.radius] as Vec3,
+  rotation: [0, angle, 0] as Vec3,
+}))

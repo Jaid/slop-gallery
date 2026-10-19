@@ -12,16 +12,21 @@ import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
 import {playerSpawn} from '../../src/lib/gallery/PlayerSession.ts'
 import walls from '../../src/lib/gallery/walls.ts'
 
-test('four matching slatted benches surround the relocated fountain and leave the spawn clear', () => {
+test('two matching slatted benches face the fountain and leave the spawn clear', () => {
   expect(fountain.position).toEqual([0, 0, -6])
-  expect(fountainBenches).toHaveLength(4)
+  expect(fountainBenches).toHaveLength(2)
   const geometry = new SlattedBenchGeometry
   try {
     const seat = geometry.wood.boundingBox!
     expect(seat.max.y).toBeCloseTo(0.5)
     expect(seat.max.x - seat.min.x).toBeGreaterThan(2.7)
     expect(seat.max.z - seat.min.z).toBeCloseTo(0.8)
-    expect(geometry.metal.boundingBox!.min.y).toBeCloseTo(0)
+    const frame = geometry.metal.boundingBox!
+    expect(frame.min.y).toBeCloseTo(0)
+    // Both feet reach the foot inset and stay inside the seat's depth.
+    expect(frame.max.z).toBeCloseTo(fountainBench.depth / 2 - 0.04, 2)
+    expect(frame.min.z).toBeCloseTo(-(fountainBench.depth / 2 - 0.04), 2)
+    expect(frame.max.z).toBeLessThan(fountainBench.depth / 2)
     for (const part of [geometry.wood, geometry.metal]) {
       for (const attribute of Object.values(part.attributes)) {
         expect([...attribute.array].every(Number.isFinite)).toBe(true)
@@ -61,6 +66,32 @@ test('four matching slatted benches surround the relocated fountain and leave th
         const right = rightEndRay.intersectObject(mesh)[0]
         expect(left.uv!.x).toBeCloseTo(right.uv!.x)
         expect(Math.abs(left.uv!.y - right.uv!.y)).toBeGreaterThan(0.6)
+      }
+      // Each sled is one round tube: an upright, the rail under the battens, the floor runner and the foot, with nothing crossing the opening.
+      const {width, height} = fountainBench
+      const railX = width / 2 - 0.055
+      const legZ = depth / 2 - 0.18
+      const footZ = depth / 2 - 0.04
+      const sled = new Mesh(geometry.metal, material)
+      const legY = 0.2
+      const legZAt = -footZ + (legY - 0.022) / (height - 0.1 - 0.022) * (footZ - legZ)
+      const hit = (origin: Vector3, direction: Vector3) => {
+        const ray = new Raycaster(origin, direction, 0, 0.6)
+        return ray.intersectObject(sled)[0]?.point
+      }
+      for (const side of [-1, 1]) {
+        const x = side * railX
+        const outward = new Vector3(side, 0, 0)
+        const leg = hit(new Vector3(x + side * 0.2, legY, legZAt), outward.clone().negate())
+        const rail = hit(new Vector3(x, 0.7, 0), new Vector3(0, -1, 0))
+        const runner = hit(new Vector3(x, 0.3, 0), new Vector3(0, -1, 0))
+        expect(leg).toBeDefined()
+        expect(rail).toBeDefined()
+        expect(runner).toBeDefined()
+        expect(leg.x).toBeCloseTo(x + side * 0.022, 2)
+        expect(rail.y).toBeCloseTo(height - 0.1 + 0.022, 2)
+        expect(runner.y).toBeCloseTo(0.044, 2)
+        expect(hit(new Vector3(x + side * 0.2, legY, 0), outward.clone().negate())).toBeUndefined()
       }
     } finally {
       material.dispose()
