@@ -63,3 +63,10 @@ bun test/browser/run.ts knottyPrince.ts
 ```
 
 The detached fixture reproduces the original alpha-cut slices, checks core coverage across 24 views and animation phases, verifies retained fuzz outside the core, and warms both materials atomically in the native WebGPU queue.
+For the shared satin stainless steel on the Lobby benches, Oculus railings and Knottingham nameplate supports:
+
+```sh
+bun test/browser/run.ts brushedMetal.ts --standalone
+```
+
+This detached HDR fixture uses the real frame, bent rail and sign geometry with UVs removed, in 24 views/scales and without scene lights or a scene environment. It rejects non-finite pixels, black sectors, overly bright broad reflections and missing light/dark structure. It also compares ordinary and rotated instanced supports and checks that moving a support does not move its local grain. The shader uses a static procedural studio environment, not live reflections. Knottingham keeps its existing flat-color support fallback in fast graphics; the benches and Oculus railings use the shared steel in both modes.

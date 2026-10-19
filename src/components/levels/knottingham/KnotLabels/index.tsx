@@ -16,7 +16,7 @@ import useGraphicsMode from 'use-graphics-mode'
 import InteractiveObject from '#component/InteractiveObject'
 import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
 import {activateKnotSign, knotRarityEditor} from '#src/levels/knottingham/rarity.ts'
-import {signSupportMaterial} from '#src/lib/materials/SignMetalMaterial.ts'
+import metal from '#src/lib/materials/metal.ts'
 import InstancedPropVisuals from '#src/lib/physics/InstancedPropVisuals.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
@@ -29,7 +29,9 @@ export default function KnotLabels() {
   const isHeavy = useGraphicsMode()
   const resolution = getGraphicsProfile(isHeavy).canvasTextureResolution
   const ratings = useSyncExternalStore(knotRarityEditor.subscribe, knotRarityEditor.getSnapshot, knotRarityEditor.getSnapshot)
-  const supportMaterial = useDisposable(useMemo(() => signSupportMaterial(isHeavy), [isHeavy]))
+  // Only the flat fallback is owned here; the reflective steel is shared for the page lifetime.
+  const flatSupportMaterial = useDisposable(useMemo(() => new MeshBasicNodeMaterial({color: '#9ca6ad'}), []))
+  const supportMaterial = isHeavy ? metal : flatSupportMaterial
   const resources = useDisposable(useMemo(() => {
     const offsets = new Float32Array(knotExhibition.length * 2)
     for (let index = 0; index < knotExhibition.length; index++) {
