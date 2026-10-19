@@ -13,19 +13,29 @@ jobs:
       uses: oven-sh/setup-bun@v2.2.0
       with:
         bun-version: 1.4.2
-    - name: installSystemTools
-      env:
-        HOMEBREW_NO_AUTO_UPDATE: 1
-        HOMEBREW_NO_INSTALL_CLEANUP: 1
+    - name: installSystemPackages
       run: |
         sudo apt-get update
-        sudo apt-get install --yes --no-install-recommends ffmpeg
-        # Homebrew’s ImageMagick 7 comes with the JPEG XL delegate that apt’s and the official AppImage lack
-        /home/linuxbrew/.linuxbrew/bin/brew install imagemagick
-        echo /home/linuxbrew/.linuxbrew/bin >> "$GITHUB_PATH"
-        export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
-        magick -version
-        magick -list format | grep --ignore-case --extended-regexp "^ *(AVIF|JXL)"
+        sudo apt-get install --yes --no-install-recommends ffmpeg build-essential pkg-config libjxl-dev libheif-dev libheif-plugin-aomenc libheif-plugin-dav1d libpng-dev libjpeg-dev liblcms2-dev zlib1g-dev
+    # Prebuilt ImageMagick 7 packages (official AppImage, Homebrew) lack the JPEG XL delegate that vite-plugin-avif-only needs
+    - name: cacheImageMagick
+      id: cacheImageMagick
+      uses: actions/cache@v4.3.0
+      with:
+        path: ~/imagemagick
+        key: imagemagick-7.1.2-34-${{ runner.os }}-${{ runner.arch }}-${{ env.ImageOS }}
+    - name: buildImageMagick
+      if: steps.cacheImageMagick.outputs.cache-hit != 'true'
+      run: |
+        git clone --quiet --depth 1 --branch 7.1.2-34 https://github.com/ImageMagick/ImageMagick.git "$RUNNER_TEMP/imagemagick"
+        cd "$RUNNER_TEMP/imagemagick"
+        ./configure --prefix="$HOME/imagemagick" --with-jxl --with-heic --without-x --without-perl --without-magick-plus-plus --disable-docs --disable-openmp
+        make --jobs="$(nproc)"
+        make install
+    - name: setupImageMagick
+      run: |
+        echo "$HOME/imagemagick/bin" >> "$GITHUB_PATH"
+        "$HOME/imagemagick/bin/magick" -list format | grep --extended-regexp "^ *(AVIF|JXL)"
     - name: install
       run: bun install --frozen-lockfile
     - name: check
