@@ -29,7 +29,7 @@
     "dev:gallery": "GAME_LEVEL=gallery bun run dev",
     "dev:knottingham": "GAME_LEVEL=knottingham bun run dev",
     "dev:soundboard": "GAME_LEVEL=soundboard bun run dev",
-    "lint": "eslint .",
+    "lint": "bun --bun eslint .",
     "preview": "bun run vite preview --host 127.0.0.1",
     "test": "bun test --max-concurrency 1 ./test/unit",
     "test:baking": "bun run --cwd packages/vite-plugin-bake-three test",

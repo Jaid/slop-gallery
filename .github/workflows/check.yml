@@ -13,6 +13,14 @@ jobs:
       uses: oven-sh/setup-bun@v2.2.0
       with:
         bun-version: 1.4.2
+    - name: installSystemTools
+      run: |
+        sudo apt-get update
+        sudo apt-get install --yes --no-install-recommends ffmpeg libfuse2t64
+        sudo curl --fail --silent --show-error --location --output /usr/local/bin/magick https://imagemagick.org/archive/binaries/magick
+        sudo chmod +x /usr/local/bin/magick
+        magick -version
+        magick -list format | grep --ignore-case --extended-regexp "^ *(AVIF|JXL)"
     - name: install
       run: bun install --frozen-lockfile
     - name: check
