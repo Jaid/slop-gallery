@@ -14,11 +14,13 @@ jobs:
       with:
         bun-version: 1.4.2
     - name: installSystemTools
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         sudo apt-get update
         sudo apt-get install --yes --no-install-recommends ffmpeg libfuse2t64
-        sudo curl --fail --silent --show-error --location --output /usr/local/bin/magick https://imagemagick.org/archive/binaries/magick
-        sudo chmod +x /usr/local/bin/magick
+        gh release download --repo ImageMagick/ImageMagick --pattern '*-gcc-x86_64.AppImage' --output "$RUNNER_TEMP/magick"
+        sudo install --mode 755 "$RUNNER_TEMP/magick" /usr/local/bin/magick
         magick -version
         magick -list format | grep --ignore-case --extended-regexp "^ *(AVIF|JXL)"
     - name: install
