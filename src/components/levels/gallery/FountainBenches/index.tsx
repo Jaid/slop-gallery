@@ -7,6 +7,9 @@ import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import {fountainBench, fountainBenches} from '#src/lib/gallery/fountain/benches.ts'
 import SlattedBenchGeometry from '#src/lib/gallery/fountain/SlattedBenchGeometry.ts'
+import BrushedMetalMaterial from '#src/lib/materials/metal/BrushedMetalMaterial.ts'
+import {geometryGrain} from '#src/lib/materials/metal/grain.ts'
+import {surroundings} from '#src/lib/materials/metal/rooms.ts'
 
 export default function FountainBenches({wood}: {wood: Texture}) {
   const geometry = useDisposable(useMemo(() => new SlattedBenchGeometry, []))
@@ -16,10 +19,16 @@ export default function FountainBenches({wood}: {wood: Texture}) {
     roughness: 0.63,
     envMapIntensity: 0.35,
   }), [wood]))
-  const metal = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
-    color: '#c0c0b2',
-    metalness: 0.8,
-    roughness: 0.38,
+  const metal = useDisposable(useMemo(() => new BrushedMetalMaterial({
+    name: 'Lobby bench brushed steel',
+    grain: geometryGrain,
+    // The seat shades the floor under and around the frame.
+    surroundings: {
+      ...surroundings.lobby,
+      contact: 0.7,
+    },
+    roughness: 0.24,
+    anisotropy: 0.7,
   }), []))
   const {width, height, depth} = fountainBench
   return <group name='lobby-fountain-benches'>
