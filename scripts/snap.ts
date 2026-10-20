@@ -11,6 +11,7 @@ import {Packr} from 'msgpackr'
 
 import {degrees, galleryHelp, galleryOptions, openHeadlessGallery, parseNumbers, radians, repositoryRoot, resolveGallerySetup, waitForFrames} from './lib/headlessGallery.ts'
 
+const snapHeight = 1080
 const help = `Usage: bun scripts/snap.ts [options]
 
 Takes a headless photo of a level and writes it to out/snap/<name>.jxl, next to out/snap/<name>.msgpack with the X dump of the same view.
@@ -18,7 +19,7 @@ Starts a private Vite dev server (or serves --target) and a private headless bro
 The photo is a fresh WebGPU render of the scene, so menus and other DOM overlays are not in it.
 
 Options:
-${galleryHelp}
+${galleryHelp(snapHeight)}
   --position <x,y,z>      camera (eye) position in meters. Default: the player spawn
   --angle <yaw,pitch[,roll]>
                           camera angle in degrees. Yaw 0 looks toward −z, positive pitch looks up. Default: the player spawn
@@ -56,7 +57,7 @@ if (values.help) {
   console.log(help)
   process.exit(0)
 }
-const setup = await resolveGallerySetup(values)
+const setup = await resolveGallerySetup(values, snapHeight)
 const position = values.position === undefined ? undefined : parseNumbers(values.position, 'position', [3]) as Vec3
 const angle = values.angle === undefined ? undefined : parseNumbers(values.angle, 'angle', [2, 3])
 const fov = values.fov === undefined ? undefined : parseNumbers(values.fov, 'fov', [1])[0]

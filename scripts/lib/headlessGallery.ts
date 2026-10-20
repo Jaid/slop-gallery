@@ -11,14 +11,15 @@ import {defaultLevel, levelIds} from '#src/data/levels.ts'
 import {maximumSeed, parseSeed} from '#src/lib/environmentSeed.ts'
 
 export const repositoryRoot = resolve(import.meta.dir, '..', '..')
-export const galleryHelp = `  --level <id>            ${levelIds.join(', ')}. Default: GAME_LEVEL or the default level
+/** Scripts pick their own default height; the width follows 16:9. */
+export const galleryHelp = (defaultHeight = 720) => `  --level <id>            ${levelIds.join(', ')}. Default: GAME_LEVEL or the default level
   --target <dir>          use this static build (e.g. dist) instead of the dev server. Its level-build.json decides the level
   --graphics <mode>       mirrors ?graphics (heavy or fast). Default: heavy
   --vision-mode <mode>    mirrors ?vision_mode (wireframe). Default: none
   --anti-aliasing <mode>  mirrors ?anti_aliasing (traa, smaa or false). Default: the graphics mode’s
   --seed <number>         mirrors ?seed, the environment seed (0–${maximumSeed}) that decides random details like the potted plants. Default: 1
-  --width <pixels>        render width. Default: --height × 16/9, or 1280
-  --height <pixels>       render height. Default: --width × 9/16, or 720`
+  --width <pixels>        render width. Default: --height × 16/9, or ${Math.round(defaultHeight * 16 / 9)}
+  --height <pixels>       render height. Default: --width × 9/16, or ${defaultHeight}`
 export const galleryOptions = {
   'anti-aliasing': {type: 'string'},
   graphics: {
@@ -63,14 +64,14 @@ const parseSize = (value: string | undefined, name: string) => {
   }
   return size
 }
-/** A missing side follows 16:9; without either, 720p. */
-const resolveSize = (values: Pick<GalleryValues, 'height' | 'width'>) => {
+/** A missing side follows 16:9; without either, the default height. */
+const resolveSize = (values: Pick<GalleryValues, 'height' | 'width'>, defaultHeight: number) => {
   const width = parseSize(values.width, 'width')
   const height = parseSize(values.height, 'height')
   if (width === undefined && height === undefined) {
     return {
-      width: 1280,
-      height: 720,
+      width: Math.round(defaultHeight * 16 / 9),
+      height: defaultHeight,
     }
   }
   return {
@@ -111,7 +112,7 @@ const readBuildLevel = async (root: string) => {
   }
 }
 /** Validates the shared gallery options before anything is started. */
-export const resolveGallerySetup = async (values: GalleryValues) => {
+export const resolveGallerySetup = async (values: GalleryValues, defaultHeight = 720) => {
   const target = values.target === undefined ? undefined : resolve(values.target)
   if (target !== undefined && !await fs.stat(join(target, 'index.html')).then(entry => entry.isFile(), () => false)) {
     throw new Error(`--target ${values.target} has no index.html. Build it first, e.g. bun run build.`)
@@ -145,7 +146,7 @@ export const resolveGallerySetup = async (values: GalleryValues) => {
     levelName: level ?? defaultLevel,
     search,
     seed,
-    viewport: resolveSize(values),
+    viewport: resolveSize(values, defaultHeight),
   }
 }
 /**

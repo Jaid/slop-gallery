@@ -20,7 +20,7 @@ The engine clock is virtual: every frame advances the scene by exactly 1/fps sec
 
 Options:
   --recipe <file>         JSON camera recipe, or - to read it from stdin. Default: scripts/recipes/spawn.json, a two-second metronome sway at the gallery spawn
-${galleryHelp}
+${galleryHelp()}
   --output-file <file>    the extension picks the format. Default: out/film/<level>-<timestamp>.jxl
                           .jxl  animated JPEG XL
                           .webm, .mkv  AV1 video
