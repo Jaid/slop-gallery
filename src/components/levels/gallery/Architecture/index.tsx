@@ -9,8 +9,8 @@ import {useLayoutEffect, useMemo} from 'react'
 import {EquirectangularReflectionMapping, MeshStandardNodeMaterial, SRGBColorSpace} from 'three/webgpu'
 import useGraphicsMode from 'use-graphics-mode'
 
+import CeilingLeds from '#component/levels/gallery/CeilingLeds'
 import DineFloor from '#component/levels/gallery/DineFloor'
-import DineLights from '#component/levels/gallery/DineLights'
 import Fountain from '#component/levels/gallery/Fountain'
 import FountainBenches from '#component/levels/gallery/FountainBenches'
 import GalleryStairs from '#component/levels/gallery/GalleryStairs'
@@ -30,6 +30,7 @@ import {surfaceTexture} from '#src/components/Scene/materials.ts'
 import Box from '#src/components/Scene/primitives.tsx'
 import WallSurface from '#src/components/Scene/WallSurface.tsx'
 import {rooms, walls} from '#src/lib/gallery.ts'
+import {antechamberLedLight, antechamberLedSlots, dineLedLight, dineLedSlots} from '#src/lib/gallery/dine.ts'
 import sun from '#src/lib/gallery/sun.ts'
 import {createArchitecturalGlassMaterials, disposeArchitecturalGlassMaterials} from '#src/lib/materials/ArchitecturalGlassMaterials.ts'
 import CastleStoneMaterial from '#src/lib/materials/CastleStoneMaterial.ts'
@@ -43,11 +44,8 @@ import proceduralSky from '#src/lib/materials/ProceduralSky.ts'
 import {TravertineWallMaterial} from '#src/lib/materials/travertine/index.ts'
 import VesperWallMaterial from '#src/lib/materials/VesperWallMaterial.ts'
 
-const pointLightPositions: Partial<Record<Wall['room'], Array<number>>> = {
-  antechamber: [0],
-}
 // These rooms are lit by breakable LED panes with their own dimming lights instead of the fixed light boxes.
-const ledRooms = new Set<Wall['room']>(['dine'])
+const ledRooms = new Set<Wall['room']>(['antechamber', 'dine'])
 // The Lobby has no flat ceiling: its coffered vault rises above the walls, lit by its chandeliers and the sun.
 const vaultedRooms = new Set<Wall['room']>(['lobby'])
 // These upper rooms build their own floor, ceiling and lights.
@@ -167,9 +165,10 @@ export default function Architecture() {
         {[-1, 0, 1].map(x => <Box key={x} color='#c0b7a1' position={[x * room.size[0] * 0.12, 5.5, z]} size={[0.045, 0.12, 2.5]} />)}
       </group>)}
       <Branch if={vaultedRooms.has(room.id)}><LobbyVault cladding={lobbyWall} /></Branch>
-      {(ledRooms.has(room.id) || vaultedRooms.has(room.id) ? [] : pointLightPositions[room.id] ?? [-3.5, 3.5]).map(z => <pointLight key={z} color='#fff1d8' decay={2} distance={14} intensity={room.id === 'vesper' ? 40 : 32} position={[0, 4.9, z]} />)}
+      {(ledRooms.has(room.id) || vaultedRooms.has(room.id) ? [] : [-3.5, 3.5]).map(z => <pointLight key={z} color='#fff1d8' decay={2} distance={14} intensity={room.id === 'vesper' ? 40 : 32} position={[0, 4.9, z]} />)}
     </group>)}
-    <DineLights />
+    <CeilingLeds light={dineLedLight} name='dine' slots={dineLedSlots} />
+    <CeilingLeds light={antechamberLedLight} name='antechamber' slots={antechamberLedSlots} />
     <PottedPlants />
     <Fountain />
     <FountainBenches wood={wood} />
@@ -204,9 +203,6 @@ function isLodgeRoomWall(wall: Wall) {
 function lightBoxOffsets(room: typeof rooms[number]) {
   if (ledRooms.has(room.id) || vaultedRooms.has(room.id)) {
     return []
-  }
-  if (room.id === 'antechamber') {
-    return [0]
   }
   return Array.from({length: room.size[1] / 4 - 1}, (_, i) => i * 4 - room.size[1] / 2 + 4)
 }

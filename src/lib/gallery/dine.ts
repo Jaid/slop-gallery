@@ -1,3 +1,4 @@
+import type {RoomId} from './types.ts'
 import type {Wall} from './walls.ts'
 import type {KnotLightSlot} from 'knot-materials/KnotLights.ts'
 
@@ -33,15 +34,34 @@ export const dineLedLight = {
 
 // Like Knottingham, the housing’s top sits 5 mm into the slab so no light leaks between them.
 const slotY = dineCeilingUnderside + 0.005 - knotLightHousingY - knotLightHousingSize[1] / 2
+/** Breakable LED panes under a room’s ceiling slab, one at each pair of the grid’s offsets from the room center. */
+function ceilingLedSlots(roomId: RoomId, grid: {
+  x: ReadonlyArray<number>
+  z: ReadonlyArray<number>
+}): ReadonlyArray<KnotLightSlot> {
+  const room = rooms.find(candidate => candidate.id === roomId)!
+  return grid.z.flatMap((z, row) => grid.x.map((x, slot) => ({
+    id: `${row}:${slot}`,
+    position: [room.center[0] + x, slotY, room.center[1] + z],
+    row,
+    slot,
+  })))
+}
 
-export const dineLedSlots: ReadonlyArray<KnotLightSlot> = dineLedGrid.z.flatMap((z, row) => dineLedGrid.x.map((x, slot) => ({
-  id: `${row}:${slot}`,
-  position: [dine.center[0] + x, slotY, dine.center[1] + z],
-  row,
-  slot,
-})))
+export const dineLedSlots = ceilingLedSlots('dine', dineLedGrid)
 
-/** Edge length of Dine’s checkered marble tiles, laid from the room’s north-west corner: 12 × 16 whole tiles fill the floor. */
+/** The Antechamber’s single pane, centered on its ceiling. */
+export const antechamberLedSlots = ceilingLedSlots('antechamber', {
+  x: [0],
+  z: [0],
+})
+export const antechamberLedLight = {
+  ...dineLedLight,
+  // Matches the mean floor and wall irradiance of the 32 cd light behind the old light box.
+  intensity: 36,
+}
+
+/** Edge length of Dine’s checkered marble tiles, laid from the room’s north-west corner: 12 × 24 whole tiles fill the floor. */
 export const dineFloorTile = 1
 /** the room’s north-west corner in world x/z, where the tile grid starts */
 export const dineFloorOrigin = [dine.center[0] - dine.size[0] / 2, dine.center[1] - dine.size[1] / 2] as const
