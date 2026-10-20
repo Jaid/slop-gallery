@@ -206,7 +206,6 @@ export default createRule({
     schema: [],
     messages: {simplify: 'Hoist the shared className to Branch.'},
   },
-  defaultOptions: [],
   create(context) {
     const {sourceCode} = context
     return {

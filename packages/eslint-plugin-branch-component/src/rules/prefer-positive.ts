@@ -13,7 +13,6 @@ export default createRule({
     schema: [],
     messages: {prefer: 'Use not={{value}} instead of if={!{{value}}}.'},
   },
-  defaultOptions: [],
   create(context) {
     const {sourceCode} = context
     return {

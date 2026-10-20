@@ -13,7 +13,6 @@ export default createRule({
     schema: [],
     messages: {simplify: 'Pass {{component}} directly as the {{prop}} prop.'},
   },
-  defaultOptions: [],
   create(context) {
     const {sourceCode} = context
     return {

@@ -13,7 +13,6 @@ export default createRule({
     schema: [],
     messages: {expand: 'Write this JSX between the Branch opening and closing tags.'},
   },
-  defaultOptions: [],
   create(context) {
     const {sourceCode} = context
     return {

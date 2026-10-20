@@ -60,11 +60,11 @@ export default createRule<Options, 'prefer'>({
       },
     }],
     messages: {prefer: 'Use Branch for conditional rendering.'},
+    defaultOptions: [{
+      keepPrimitives: true,
+      name: 'Branch',
+    }],
   },
-  defaultOptions: [{
-    keepPrimitives: true,
-    name: 'Branch',
-  }],
   create(context, [{keepPrimitives = true, name = 'Branch'}]) {
     const {sourceCode} = context
     const resolveImport = createImportResolver(sourceCode, name)
