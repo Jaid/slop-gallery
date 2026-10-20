@@ -7,12 +7,13 @@ import {parseArgs} from 'node:util'
 import fs from 'fs-extra'
 import getFree from 'get-free'
 import {lossyJxlOptions} from 'knot-materials/scripts/lib/encodeJxl.ts'
+import {Packr} from 'msgpackr'
 
 import {degrees, galleryHelp, galleryOptions, openHeadlessGallery, parseNumbers, radians, repositoryRoot, resolveGallerySetup, waitForFrames} from './lib/headlessGallery.ts'
 
 const help = `Usage: bun scripts/snap.ts [options]
 
-Takes a headless photo of a level and writes it to out/snap/<name>.jxl, next to out/snap/<name>.json with the X dump of the same view.
+Takes a headless photo of a level and writes it to out/snap/<name>.jxl, next to out/snap/<name>.msgpack with the X dump of the same view.
 Starts a private Vite dev server (or serves --target) and a private headless browser; never touches the visible browser.
 The photo is a fresh WebGPU render of the scene, so menus and other DOM overlays are not in it.
 
@@ -96,7 +97,7 @@ if (frame.nonBlackFraction === 0) {
   throw new Error('The capture is completely black.')
 }
 await fs.mkdir(snapRoot, {recursive: true})
-const isTaken = async (candidate: string) => await fs.pathExists(join(snapRoot, `${candidate}.jxl`)) || fs.pathExists(join(snapRoot, `${candidate}.json`))
+const isTaken = async (candidate: string) => await fs.pathExists(join(snapRoot, `${candidate}.jxl`)) || fs.pathExists(join(snapRoot, `${candidate}.msgpack`))
 // Picked after the capture to keep the window for concurrent snaps short.
 const name = values.name ?? await getFree('', isTaken, {
   connector: '',
@@ -111,10 +112,12 @@ try {
   await fs.rm(png, {force: true})
 }
 if (frame.dump) {
-  await fs.writeJson(join(snapRoot, `${name}.json`), frame.dump, {spaces: 2})
+  // Plain MessagePack maps without msgpackr records, so any decoder reads it.
+  const messagePack = new Packr({useRecords: false})
+  await fs.writeFile(join(snapRoot, `${name}.msgpack`), messagePack.pack(frame.dump))
 } else {
   console.warn('No X dump written: the player is not ready.')
 }
 const [pitch, yaw, roll] = pose.rotation
-console.log(`Wrote ${relative(repositoryRoot, output).replaceAll('\\', '/')} (${frame.width}×${frame.height})${frame.dump ? ' and its .json X dump' : ''}`)
+console.log(`Wrote ${relative(repositoryRoot, output).replaceAll('\\', '/')} (${frame.width}×${frame.height})${frame.dump ? ' and its .msgpack X dump' : ''}`)
 console.log(`--position ${pose.position.map(value => Math.round(value * 1000) / 1000).join(',')} --angle ${[yaw, pitch, roll].map(degrees).join(',')} --fov ${pose.fov}`)
