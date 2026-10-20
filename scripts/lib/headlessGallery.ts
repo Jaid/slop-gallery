@@ -9,19 +9,23 @@ import {createServer} from 'vite'
 
 import {defaultLevel, levelIds} from '#src/data/levels.ts'
 import {maximumSeed, parseSeed} from '#src/lib/environmentSeed.ts'
+import {queryParameters} from '#src/lib/queryOverrides.ts'
 
 export const repositoryRoot = resolve(import.meta.dir, '..', '..')
+// seed and graphics have dedicated options with validation and defaults.
+const queryOptionNames = queryParameters.filter(key => key !== 'seed' && key !== 'graphics').toSorted()
+const queryOptions: Record<string, {type: 'string'}> = Object.fromEntries(queryOptionNames.map(key => [key, {type: 'string'}]))
 /** Scripts pick their own default height; the width follows 16:9. */
 export const galleryHelp = (defaultHeight = 720) => `  --level <id>            ${levelIds.join(', ')}. Default: GAME_LEVEL or the default level
   --target <dir>          use this static build (e.g. dist) instead of the dev server. Its level-build.json decides the level
   --graphics <mode>       mirrors ?graphics (heavy or fast). Default: heavy
-  --vision-mode <mode>    mirrors ?vision_mode (wireframe). Default: none
-  --anti-aliasing <mode>  mirrors ?anti_aliasing (traa, smaa or false). Default: the graphics mode’s
   --seed <number>         mirrors ?seed, the environment seed (0–${maximumSeed}) that decides random details like the potted plants. Default: 1
   --width <pixels>        render width. Default: --height × 16/9, or ${Math.round(defaultHeight * 16 / 9)}
-  --height <pixels>       render height. Default: --width × 9/16, or ${defaultHeight}`
+  --height <pixels>       render height. Default: --width × 9/16, or ${defaultHeight}
+  --<parameter> <value>   mirrors ?<parameter>=<value> for every other URL query parameter the app reads, e.g. --vision_mode wireframe or --anti_aliasing false:
+                          ${queryOptionNames.join(', ')}`
 export const galleryOptions = {
-  'anti-aliasing': {type: 'string'},
+  ...queryOptions,
   graphics: {
     type: 'string',
     default: 'heavy',
@@ -34,16 +38,13 @@ export const galleryOptions = {
   target: {type: 'string'},
   width: {type: 'string'},
   height: {type: 'string'},
-  'vision-mode': {type: 'string'},
 } as const
-export type GalleryValues = {
-  'anti-aliasing'?: string
+export type GalleryValues = Partial<Record<string, boolean | string>> & {
   graphics: string
   height?: string
   level?: string
   seed: string
   target?: string
-  'vision-mode'?: string
   width?: string
 }
 export type GallerySetup = Awaited<ReturnType<typeof resolveGallerySetup>>
@@ -134,11 +135,11 @@ export const resolveGallerySetup = async (values: GalleryValues, defaultHeight =
   }
   search.set('seed', String(seed))
   search.set('graphics', values.graphics)
-  if (values['vision-mode'] !== undefined) {
-    search.set('vision_mode', values['vision-mode'])
-  }
-  if (values['anti-aliasing'] !== undefined) {
-    search.set('anti_aliasing', values['anti-aliasing'])
+  for (const key of queryOptionNames) {
+    const value = values[key]
+    if (typeof value === 'string') {
+      search.set(key, value)
+    }
   }
   return {
     target,

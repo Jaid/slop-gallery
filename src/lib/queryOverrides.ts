@@ -37,6 +37,9 @@ const readers: Record<string, Reader> = {
   traces_ingestion_endpoint: searchParameter('traces_ingestion_endpoint'),
 }
 
+/** Every query parameter the app reads, apart from the `data` permalink payload. */
+export const queryParameters = Object.keys(readers)
+
 /** Query parameters of the page that differ from their defaults: known parameters as the app normalizes them, unknown ones as given. `undefined` when everything is at its default. */
 export default function readQueryOverrides(href = typeof location === 'undefined' ? defaultsUrl : location.href): Record<string, boolean | number | string> | undefined {
   const overrides: Record<string, boolean | number | string> = {}

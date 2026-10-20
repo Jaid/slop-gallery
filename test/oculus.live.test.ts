@@ -11,7 +11,7 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production Oculus: inclined connectio
     target: Bun.env.LIVE_TARGET ?? 'dist',
     seed: '1',
     graphics: 'fast',
-    'anti-aliasing': 'false',
+    anti_aliasing: 'false',
     width: '800',
     height: '450',
   })
