@@ -15,7 +15,7 @@ const ray = (camera: {
 }) => [camera.position.toArray(), camera.getWorldDirection(new Vector3).toArray()] as const
 
 /**
- * `?edit_portrait_slots`: aim at a slot and press ←/→ to cycle its ratio, ↑/↓ to cycle its size, L to move its placard above or below the frame and X to delete it. Hold the left mouse button on a slot to drag it and release to drop it where you aim. Aimed at a bare wall, a preview of a new slot follows the crosshair; the arrows shape it and X or the right mouse button places it. Edits stay in this browser until dumped with the `dump_portrait_slots` WebMCP tool.
+ * `?edit_portrait_slots`: aim at a slot and press ←/→ to cycle its ratio, ↑/↓ to cycle its size, L to move its placard above or below the frame and Delete to delete it. Hold the left mouse button on a slot to drag it and release to drop it where you aim. Aimed at a bare wall, a preview of a new slot follows the crosshair; the arrows and L shape it and the right mouse button places it. Edits stay in this browser until dumped with the `dump_portrait_slots` WebMCP tool.
  */
 export default function PortraitSlotEditor() {
   const camera = useThree(state => state.camera)
@@ -76,11 +76,9 @@ export default function PortraitSlotEditor() {
         ArrowUp: () => cycleSlotSize(aimed, 1),
         ArrowDown: () => cycleSlotSize(aimed, -1),
         KeyL: () => flipSlotLabel(aimed),
-        KeyX: () => {
+        Delete: () => {
           if (aimed) {
             removeSlot(aimed)
-          } else if (preview.current) {
-            createSlot(preview.current)
           }
         },
       }
@@ -91,7 +89,7 @@ export default function PortraitSlotEditor() {
       if (!action) {
         return
       }
-      // Editing takes these keys from the game, including the development dump on X.
+      // Editing takes these keys from the game.
       event.preventDefault()
       event.stopImmediatePropagation()
       if (!event.repeat) {
