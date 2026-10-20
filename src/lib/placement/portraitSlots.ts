@@ -7,16 +7,24 @@ export const portraitRatios: Record<PortraitRatio, number> = {
   '3:2': 3 / 2,
 }
 
-/** the longer frame edges, in meters, that slots come in */
-export const slotSizes = [0.9, 1.3, 1.8, 2.4, 3] as const
+/** the frame areas, in cm², that slots come in, about 1.5× apart */
+export const slotAreas = [6000, 10_000, 16_000, 24_000, 38_000, 60_000, 90_000] as const
 
-/** Frame width and height of a ratio at a size. */
-export function slotFrame(ratio: PortraitRatio, size: number) {
+const toMillimeters = (meters: number) => Math.round(meters * 1000) / 1000
+
+/** Frame width and height in meters of a ratio at an area in cm², rounded to the millimeter. */
+export function slotFrame(ratio: PortraitRatio, area: number) {
   const aspect = portraitRatios[ratio]
+  const squareMeters = area / 10_000
   return {
-    width: aspect >= 1 ? size : size * aspect,
-    height: aspect >= 1 ? size / aspect : size,
+    width: toMillimeters(Math.sqrt(squareMeters * aspect)),
+    height: toMillimeters(Math.sqrt(squareMeters / aspect)),
   }
+}
+
+/** the frame area of a slot in cm² */
+export function slotArea({width, height}: Pick<PortraitSlot, 'height' | 'width'>) {
+  return Math.round(width * height * 10_000)
 }
 
 /** A slot as a hung work, for clearance checks against works and other slots. */

@@ -6,7 +6,7 @@ import {create} from 'zustand'
 
 import placement from '#level/placement.ts'
 
-import {asPortrait, slotFrame, slotSizes} from '../placement/portraitSlots.ts'
+import {asPortrait, slotArea, slotAreas, slotFrame} from '../placement/portraitSlots.ts'
 import {wallPosition} from '../placement/wallGeometry.ts'
 import shippedSlots from './slots.ts'
 
@@ -41,7 +41,7 @@ type PortraitSlotState = {
   /** the slot picked up with the left mouse button, following the crosshair until dropped */
   dragging: string | null
   slots: ReadonlyArray<PortraitSlot>
-  /** the ratio and longer edge the next new slot gets, following the last edit */
+  /** the ratio and area in cm² the next new slot gets, following the last edit */
   template: readonly [PortraitRatio, number]
 }
 
@@ -64,7 +64,7 @@ function restore(): ReadonlyArray<PortraitSlot> {
 export const usePortraitSlots = create<PortraitSlotState>(() => ({
   aimed: null,
   dragging: null,
-  template: ['1:1', slotSizes[1]],
+  template: ['1:1', slotAreas[2]],
   slots: restore(),
 }))
 
@@ -83,23 +83,22 @@ if (isEditingPortraitSlots) {
     }
   })
 }
-const longerEdge = (slot: PortraitSlot) => Math.max(slot.width, slot.height)
 const nextRatio = (ratio: PortraitRatio, step: -1 | 1) => ratioCycle[(ratioCycle.indexOf(ratio) + step + ratioCycle.length) % ratioCycle.length]
-/** Switches the aimed slot, or the preview of a new one, to the previous or next ratio, keeping its longer edge. */
+/** Switches the aimed slot, or the preview of a new one, to the previous or next ratio, keeping its area. */
 export function cycleSlotRatio(id: string | null, step: -1 | 1) {
   if (!id) {
-    usePortraitSlots.setState(({template: [ratio, size]}) => ({template: [nextRatio(ratio, step), size]}))
+    usePortraitSlots.setState(({template: [ratio, area]}) => ({template: [nextRatio(ratio, step), area]}))
     return
   }
-  replace(id, slot => resized(slot, nextRatio(slot.ratio, step), longerEdge(slot)))
+  replace(id, slot => resized(slot, nextRatio(slot.ratio, step), slotArea(slot)))
 }
-/** Switches the aimed slot, or the preview of a new one, to the next larger or smaller of the slot sizes, wrapping around. */
+/** Switches the aimed slot, or the preview of a new one, to the next larger or smaller of the slot areas, wrapping around. */
 export function cycleSlotSize(id: string | null, step: -1 | 1) {
   if (!id) {
-    usePortraitSlots.setState(({template: [ratio, size]}) => ({template: [ratio, nextSize(size, step)]}))
+    usePortraitSlots.setState(({template: [ratio, area]}) => ({template: [ratio, nextArea(area, step)]}))
     return
   }
-  replace(id, slot => resized(slot, slot.ratio, nextSize(longerEdge(slot), step)))
+  replace(id, slot => resized(slot, slot.ratio, nextArea(slotArea(slot), step)))
 }
 export function removeSlot(id: string) {
   usePortraitSlots.setState(state => ({
@@ -202,17 +201,18 @@ export function slotTarget(origin: Vec3, direction: Vec3) {
   }
 }
 
-/** the next larger or smaller of the slot sizes from the one closest to `size`, wrapping around */
-function nextSize(size: number, step: -1 | 1) {
-  const nearest = slotSizes.reduce((best, candidate, index) => (Math.abs(candidate - size) < Math.abs(slotSizes[best] - size) ? index : best), 0)
-  return slotSizes[(nearest + step + slotSizes.length) % slotSizes.length]
+/** the next larger or smaller of the slot areas from the one closest in proportion to `area`, wrapping around */
+function nextArea(area: number, step: -1 | 1) {
+  const distance = (candidate: number) => Math.abs(Math.log(candidate / area))
+  const nearest = slotAreas.reduce((best, candidate, index) => (distance(candidate) < distance(slotAreas[best]) ? index : best), 0)
+  return slotAreas[(nearest + step + slotAreas.length) % slotAreas.length]
 }
-/** A slot of this ratio whose longer edge is `size`, at the same center. */
-function resized(slot: PortraitSlot, ratio: PortraitRatio, size: number): PortraitSlot {
+/** A slot of this ratio with an area of `area` cm², at the same center. */
+function resized(slot: PortraitSlot, ratio: PortraitRatio, area: number): PortraitSlot {
   return {
     ...slot,
     ratio,
-    ...slotFrame(ratio, size),
+    ...slotFrame(ratio, area),
   }
 }
 function replace(id: string, change: (slot: PortraitSlot) => PortraitSlot) {
@@ -221,7 +221,7 @@ function replace(id: string, change: (slot: PortraitSlot) => PortraitSlot) {
     const edited = slots.find(slot => slot.id === id)
     return {
       slots,
-      template: edited ? [edited.ratio, longerEdge(edited)] : state.template,
+      template: edited ? [edited.ratio, slotArea(edited)] : state.template,
     }
   })
 }
