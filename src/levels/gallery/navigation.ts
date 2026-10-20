@@ -10,10 +10,12 @@ export {insideGallery as insideLevel, floorHeight as levelFloorHeight, wallDista
 
 export type GroundSurface = 'fabric' | 'generic' | 'glass' | 'hollow'
 
+/** Between the Lobby’s north wall and its glass floor, on the room’s axis, looking south over the glass. */
 export const playerSpawn: PlayerPose = {
-  position: [0.06505674123764038, 0.01948930136859417, -29.913022994995117],
-  yaw: 3.135849777946853,
-  pitch: -0.108,
+  position: [lobby.opening.center[0], 0.04, lobby.northZ + 1.3],
+  // The session keeps yaw in [−π, π), so due south is −π.
+  yaw: -Math.PI,
+  pitch: 0,
 }
 
 const containsRectangle = (x: number, z: number, center: readonly [number, number], size: readonly [number, number]) => Math.abs(x - center[0]) <= size[0] / 2 + 1e-6 && Math.abs(z - center[1]) <= size[1] / 2 + 1e-6
