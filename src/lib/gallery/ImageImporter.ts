@@ -7,7 +7,8 @@ import {cameraPose, chime, loadBlob, newPortrait, notify} from './actions.ts'
 import {validateImage} from './imagePolicy.ts'
 import {maximumPortraits, useGallery} from './store.ts'
 
-export function imageSize(width: number, height: number, longest = 2.4) {
+/** The frame of an imported image in meters: its own aspect at an area of `area` cm². */
+export function imageSize(width: number, height: number, area = 30_000) {
   if (!(width > 0 && height > 0) || !Number.isFinite(width + height) || width * height > 64_000_000) {
     throw new Error('Choose an image with at most 64 million pixels.')
   }
@@ -15,9 +16,10 @@ export function imageSize(width: number, height: number, longest = 2.4) {
   if (ratio < 1 / 12 || ratio > 12) {
     throw new Error('This image is too panoramic for a frame. Try a crop between 1:12 and 12:1.')
   }
+  const squareMeters = area / 10_000
   return {
-    width: longest * Math.min(1, ratio),
-    height: longest * Math.min(1, 1 / ratio),
+    width: Math.sqrt(squareMeters * ratio),
+    height: Math.sqrt(squareMeters / ratio),
   }
 }
 
