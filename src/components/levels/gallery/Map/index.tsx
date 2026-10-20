@@ -4,6 +4,7 @@ import Branch from 'branch-component'
 
 import {galleryEvents, notify, openPanel, rooms, roomVisit, useGallery} from '#src/lib/gallery.ts'
 import {corridorPassage, corridorStairs} from '#src/lib/gallery/corridor.ts'
+import dineTable, {banquetChairs} from '#src/lib/gallery/dineTable/layout.ts'
 import {fountainBench, fountainBenches} from '#src/lib/gallery/fountain/benches.ts'
 import fountain from '#src/lib/gallery/fountain/config.ts'
 import lobby from '#src/lib/gallery/lobby.ts'
@@ -88,8 +89,8 @@ export default function Map({css}: {css: Record<string, string>}) {
             <circle cx={level.x(lowerGallery.moonfall.center[0])} cy={level.y(lowerGallery.moonfall.center[1])} fill='#6b665c' fillOpacity={0.55} r={moonfallCrater.radius * scale} stroke='#82796a' strokeWidth='3' />
             <circle cx={level.x(lowerGallery.moonfall.center[0])} cy={level.y(lowerGallery.moonfall.center[1])} fill='none' r={moonfallCrater.fenceRadius * scale} stroke='#9d815c' strokeDasharray='4 3' />
           </g></Branch>
-          <text fill='#58684b' fontFamily='Georgia' fontSize='23' textAnchor='middle' x={level.x(room.center[0]) - 2} y={level.y(room.id === 'lobby' ? 0 : room.center[1])}>{room.number}</text>
-          <Branch if={room.id === current}><circle cx={level.x(room.center[0]) - 2} cy={level.y(room.id === 'lobby' ? 0 : room.center[1]) + 20} fill='#596e42' r='3' /></Branch>
+          <text fill='#58684b' fontFamily='Georgia' fontSize='23' textAnchor='middle' x={level.x(room.center[0] - (room.id === 'dine' ? 4 : 0)) - 2} y={level.y(room.id === 'lobby' ? 0 : room.center[1])}>{room.number}</text>
+          <Branch if={room.id === current}><circle cx={level.x(room.center[0] - (room.id === 'dine' ? 4 : 0)) - 2} cy={level.y(room.id === 'lobby' ? 0 : room.center[1]) + 20} fill='#596e42' r='3' /></Branch>
         </g>)}
 
         <Branch if={level.lower}><g aria-label='Corridor'>
@@ -106,6 +107,10 @@ export default function Map({css}: {css: Record<string, string>}) {
           {oculusRampLandings.map(landing => <path key={landing.side} aria-label={`${landing.side} switchback landing`} d={`M ${rampLandingOutline(landing).map(([x, z]) => `${level.x(x)} ${level.y(z)}`).join(' L ')} Z`} fill='#657276' stroke='#46575b' />)}
           <rect fill='#718c8e' height={oculusPlatform.size[2] * scale} width={oculusPlatform.size[0] * scale - 4} x={level.x(oculusPlatform.position[0] - oculusPlatform.size[0] / 2)} y={level.y(oculusPlatform.position[2] - oculusPlatform.size[2] / 2)} />
           <text fill='#f0f0e5' fontSize='10' textAnchor='middle' x={level.x(oculusPlatform.position[0]) - 2} y={level.y(oculusPlatform.position[2])}>RAISED FLOOR</text>
+        </g></Branch>
+        <Branch not={level.lower}><g aria-label='Dine banquet'>
+          <rect aria-label='Feast table' fill='#755038' height={dineTable.length * scale} rx={dineTable.cornerRadius * scale} stroke='#bfa16c' width={dineTable.width * scale} x={level.x(dineTable.position[0] - dineTable.width / 2)} y={level.y(dineTable.position[2] - dineTable.length / 2)} />
+          {banquetChairs.map(({id, position, yaw}) => <rect key={id} aria-label='Dining chair' fill='#334e65' height={dineTable.chair.depth * scale} rx='1' transform={`rotate(${-yaw * 180 / Math.PI} ${level.x(dineTable.position[0] + position[0])} ${level.y(dineTable.position[2] + position[2])})`} width={dineTable.chair.width * scale} x={level.x(dineTable.position[0] + position[0] - dineTable.chair.width / 2)} y={level.y(dineTable.position[2] + position[2] - dineTable.chair.depth / 2)} />)}
         </g></Branch>
         <Branch not={level.lower}><g aria-label='Glass floor above the Oculus'>
           {fountainBenches.map(({position, rotation}, i) => <rect key={i} aria-label='Fountain bench' fill='#977455' height={fountainBench.depth * scale} transform={`rotate(${-rotation[1] * 180 / Math.PI} ${level.x(position[0])} ${level.y(position[2])})`} width={fountainBench.width * scale} x={level.x(position[0]) - fountainBench.width * scale / 2} y={level.y(position[2]) - fountainBench.depth * scale / 2} />)}

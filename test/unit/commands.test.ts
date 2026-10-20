@@ -41,6 +41,8 @@ afterEach(() => Object.assign(globalThis, previous))
 test('the floor plan remains available without a renderer', () => {
   const map = renderToStaticMarkup(createElement(Map))
   expect(map.match(/disabled=""/g)).toHaveLength(rooms.length)
+  expect(map.match(/aria-label="Feast table"/gu)).toHaveLength(1)
+  expect(map.match(/aria-label="Dining chair"/gu)).toHaveLength(18)
 })
 test('renderer-free drops decode, commit and support undo/redo with a panel open', async () => {
   Object.assign(globalThis, {
