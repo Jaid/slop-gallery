@@ -1,175 +1,218 @@
 import type {LanternRoof} from '../materials/lights/LanternLight.ts'
 import type {FloorRectangle} from './floors.ts'
 
+import {skySunDirection} from '../materials/SkyBoxMaterial.ts'
 import lobby from './lobby.ts'
 
 /**
- * The Lobby’s coffered laylight ceiling, in meters relative to the room center.
+ * The Lobby’s barrel-vaulted cathedral ceiling, in meters relative to the room center.
  *
- * Plaster beams hang below the 18 cm ceiling slab on a 4 m grid. They split the ceiling into a central band as wide as the
- * glazed floor opening and two side bands of square coffers. Every coffer of the central band is a laylight: frosted panes
- * in thin bronze glazing bars, set back behind a stepped plaster frame. Above the floor opening the band’s cross beam is left
- * out, so one square laylight mirrors the glass floor beneath it.
+ * A semicircular vault of 8 m radius springs from the top of the 5.5 m walls and rises to a 13.5 m crown. Molded transverse
+ * arch ribs divide the 40 m hall into ten 4 m bays, crossed by longitudinal ribs at ±32° and ±60° and a central spine rib
+ * along the crown.
+ *
+ * The upper vault (within ±60° of the crown) is glazed with curved conservatory panes in bronze glazing bars, looking out
+ * into a procedural light-blue sky dome with cumulus clouds and a bright sun. The lower haunches (60° to 90°) are carved into
+ * curved recessed coffers with gilt inner frames and radial petal medallions, framed above the north and south end walls by
+ * matching semicircular tympanums with ornate wheel-rose windows.
+ *
+ * Three grand two-tier brass chandeliers hang along the nave axis from the spine bosses and light the hall together with the
+ * sunlight streaming down through the glass.
  */
 export const lobbyCeiling = {
-  /** center of the ceiling slab every upper-floor room gets */
-  slabY: 5.78,
-  slabThickness: 0.18,
-  underside: 5.78 - 0.18 / 2,
-  /** beam pitch in both directions */
+  /** spring height where the semicircular vault meets the top of the walls */
+  springY: 5.5,
+  /** inner radius of the barrel vault, matching the half-width of the 16 m room */
+  radius: lobby.width / 2,
+  /** inner crown height of the vault (springY + radius = 13.5 m) */
+  crownY: 5.5 + lobby.width / 2,
+  /** thickness of the outer masonry vault shell */
+  shellThickness: 0.34,
+  /** bay length along the z axis (10 bays across the 40 m room) */
   bay: 4,
-  beam: {
-    width: 0.4,
-    /** the beam’s body below the slab, above its soffit lip */
-    depth: 0.22,
-    /** a slightly wider lip finishes the soffit and catches a highlight along each edge */
-    lipWidth: 0.47,
-    lipDepth: 0.045,
+  /** angle from the crown (0 rad) to the outer edge of the glazed skylight band (60° = π/3) */
+  glazedAngle: Math.PI / 3,
+  /** longitudinal ribs dividing the glazed crown and side coffers, in radians from the crown */
+  longitudinalAngles: [
+    0,
+    Math.PI * 32 / 180,
+    Math.PI / 3,
+  ] as const,
+  /** transverse and longitudinal stone rib profile */
+  rib: {
+    width: 0.42,
+    depth: 0.26,
+    lipWidth: 0.5,
+    lipDepth: 0.055,
   },
-  /** the stepped frame between a beam and the coffer’s field */
-  step: {
-    width: 0.3,
-    depth: 0.055,
+  /** stepped coffer frame on the solid lower haunches (between 60° and 90°) */
+  cofferStep: {
+    width: 0.28,
+    depth: 0.075,
   },
-  /** square pane size of the laylight glass; every field is a whole number of panes */
+  /** recessed glass offset outside the vault intrados so ribs and frames stand proud inside */
+  glassOffset: 0.04,
+  /** approximate pane size in meters for the bronze muntin grid and glass shader */
   pane: 1,
-  /** glazing bars run under the glass and frame its edges */
+  /** bronze glazing bars and perimeter rim inside each skylight bay */
   bar: {
-    width: 0.03,
-    depth: 0.04,
-    rim: 0.06,
+    width: 0.032,
+    depth: 0.045,
+    rim: 0.065,
   },
-  /** the glass sits a hair under the slab, recessed behind the stepped frame */
-  glassOffset: 0.006,
+  /** procedural sky dome enclosing the upper vault */
+  skyDome: {
+    radius: 29,
+    sunDirection: skySunDirection,
+  },
 } as const
 
-/** Lowest point of the beams; they have to stay above the cornice’s top at 5.395 m. */
-export const lobbyBeamBottom = lobbyCeiling.underside - lobbyCeiling.beam.depth - lobbyCeiling.beam.lipDepth
+/** Lowest point of the vault’s springing ribs; stays above the wall cornice’s top at 5.395 m and the entrance keystone at 5.16 m. */
+export const lobbyBeamBottom = lobbyCeiling.springY - lobbyCeiling.rib.lipDepth
 
-export type CofferedBeam = {
-  /** position across the beam: z for an x beam, x for a z beam */
-  at: number
-  axis: 'x' | 'z'
-  /** start and end along the beam */
-  from: number
-  to: number
-}
-export type Coffer = FloorRectangle & {
-  /** the clear field inside the stepped frame; for laylights, exactly the glazed area */
-  field: FloorRectangle
+export type VaultCoffer = {
+  /** angular span [fromAngle, toAngle] in radians measured from the crown (+x is positive, −x is negative) */
+  angles: readonly [number, number]
+  /** clear inner angular span inside the rib and coffer step */
+  clearAngles: readonly [number, number]
+  /** clear inner z span [z1, z2] relative to the room center */
+  clearZ: readonly [number, number]
+  /** whether this vault compartment is glazed open to the sky or a solid plaster coffer */
   laylight: boolean
+  /** bay z span [z1, z2] relative to the room center */
+  z: readonly [number, number]
 }
 
 const halfWidth = lobby.width / 2
 const halfDepth = (lobby.southZ - lobby.northZ) / 2
 const roomCenterZ = (lobby.northZ + lobby.southZ) / 2
+
 /** The glazed floor opening, relative to the room center. */
 export const lobbyOpening: FloorRectangle = {
   center: [lobby.opening.center[0], lobby.opening.center[1] - roomCenterZ],
   size: lobby.opening.size,
 }
-const bandHalf = lobbyOpening.size[0] / 2
-const openingNorth = lobbyOpening.center[1] - lobbyOpening.size[1] / 2
-const openingSouth = lobbyOpening.center[1] + lobbyOpening.size[1] / 2
-/** Beam lines across the room; the outermost ones sit on the end walls, so half of them disappears into the plaster. */
-const crossLines = Array.from({length: Math.round(halfDepth * 2 / lobbyCeiling.bay) + 1}, (_, i) => -halfDepth + i * lobbyCeiling.bay)
-/** Cross lines that stop at the central band, because they would cross the laylight over the floor opening. */
-const insideOpening = (z: number) => z > openingNorth + 1e-6 && z < openingSouth - 1e-6
-const longLines = [-halfWidth, -bandHalf, bandHalf, halfWidth]
 
-/** Every beam of the ceiling, the wall-side ones included. Beams cross each other; they share one material, so the overlap never shows. */
-export function lobbyBeams(): Array<CofferedBeam> {
-  const beams: Array<CofferedBeam> = longLines.map(x => ({
-    axis: 'z',
-    at: x,
-    from: -halfDepth,
-    to: halfDepth,
-  }))
-  for (const z of crossLines) {
-    if (insideOpening(z)) {
-      beams.push({
-        axis: 'x',
-        at: z,
-        from: -halfWidth,
-        to: -bandHalf,
-      }, {
-        axis: 'x',
-        at: z,
-        from: bandHalf,
-        to: halfWidth,
-      })
-    } else {
-      beams.push({
-        axis: 'x',
-        at: z,
-        from: -halfWidth,
-        to: halfWidth,
-      })
-    }
-  }
-  return beams
-}
+/** Z coordinates of the 11 transverse arch ribs from north (−20) to south (+20). */
+export const transverseRibZs = Array.from(
+  {length: Math.round(halfDepth * 2 / lobbyCeiling.bay) + 1},
+  (_, i) => -halfDepth + i * lobbyCeiling.bay,
+)
 
-const coffer = (x1: number, x2: number, z1: number, z2: number, laylight: boolean): Coffer => {
-  const inset = lobbyCeiling.beam.width / 2 + lobbyCeiling.step.width
-  const width = x2 - x1
-  const depth = z2 - z1
-  const center = [(x1 + x2) / 2, (z1 + z2) / 2] as const
-  return {
-    center,
-    size: [width, depth],
-    field: {
-      center,
-      size: [width - inset * 2, depth - inset * 2],
-    },
-    laylight,
-  }
-}
-
-/** Every coffer between the beam lines, north to south and west to east. */
-export function lobbyCoffers(): Array<Coffer> {
-  const bandLines = crossLines.filter(z => !insideOpening(z))
-  const coffers: Array<Coffer> = []
-  for (const [lines, x1, x2, laylight] of [
-    [crossLines, -halfWidth, -bandHalf, false],
-    [bandLines, -bandHalf, bandHalf, true],
-    [crossLines, bandHalf, halfWidth, false],
-  ] as const) {
-    for (let i = 0; i < lines.length - 1; i++) {
-      coffers.push(coffer(x1, x2, lines[i], lines[i + 1], laylight))
-    }
-  }
-  return coffers.toSorted((a, b) => a.center[1] - b.center[1] || a.center[0] - b.center[0])
-}
-
-/** Positions of the glazing bars inside one laylight field, along one axis, measured from the field’s center. */
-export function glazingBarOffsets(length: number) {
-  const panes = length / lobbyCeiling.pane
-  if (Math.abs(panes - Math.round(panes)) > 1e-6) {
-    throw new RangeError(`A laylight field of ${length} m does not hold a whole number of ${lobbyCeiling.pane} m panes.`)
-  }
-  return Array.from({length: Math.round(panes) - 1}, (_, i) => -length / 2 + (i + 1) * lobbyCeiling.pane)
+/**
+ * Height of the vault intrados (inner stone curve) at horizontal offset `x` from the room center.
+ */
+export function vaultHeightAt(x: number) {
+  const clamped = Math.min(halfWidth, Math.abs(x))
+  return lobbyCeiling.springY + Math.sqrt(Math.max(0, halfWidth ** 2 - clamped ** 2))
 }
 
 /**
- * Lamps under the laylight band, as z offsets from the room center: one per bay, each centered between two cross beams. They
- * stand in for the daylight falling through the glass, so like it they shine down and out but barely up: a roof shades the
- * coffers above them, which would otherwise catch the full lamp half a meter away and burn out. The lamp over the floor
- * opening casts the room’s shadows.
+ * Every compartment of the vaulted ceiling, ordered north to south and west to east.
+ * Each 4 m bay has six compartments across the arch:
+ * - west haunch coffer (−90° to −60°): solid carved coffer with gilt rosette
+ * - west outer skylight (−60° to −32°): glazed
+ * - west crown skylight (−32° to 0°): glazed
+ * - east crown skylight (0° to +32°): glazed
+ * - east outer skylight (+32° to +60°): glazed
+ * - east haunch coffer (+60° to +90°): solid carved coffer with gilt rosette
  */
-export const lobbyLamps = {
-  y: 4.9,
-  offsets: [-14, -8, -2, 6, 14],
+export function lobbyVaultCoffers(): Array<VaultCoffer> {
+  const [, midAngle, glazedAngle] = lobbyCeiling.longitudinalAngles
+  const bands: ReadonlyArray<readonly [number, number, boolean]> = [
+    [-Math.PI / 2, -glazedAngle, false],
+    [-glazedAngle, -midAngle, true],
+    [-midAngle, 0, true],
+    [0, midAngle, true],
+    [midAngle, glazedAngle, true],
+    [glazedAngle, Math.PI / 2, false],
+  ]
+  const angularInset = (lobbyCeiling.rib.width / 2 + lobbyCeiling.cofferStep.width) / lobbyCeiling.radius
+  const zInset = lobbyCeiling.rib.width / 2 + lobbyCeiling.cofferStep.width
+  const coffers: Array<VaultCoffer> = []
+  for (let i = 0; i < transverseRibZs.length - 1; i++) {
+    const z1 = transverseRibZs[i]
+    const z2 = transverseRibZs[i + 1]
+    for (const [a1, a2, laylight] of bands) {
+      coffers.push({
+        angles: [a1, a2],
+        clearAngles: [a1 + angularInset, a2 - angularInset],
+        z: [z1, z2],
+        clearZ: [z1 + zInset, z2 - zInset],
+        laylight,
+      })
+    }
+  }
+  return coffers
+}
+
+/**
+ * Horizontal projection of the glazed skylight fields, used for coffer spill and daylight alignment checks.
+ */
+export function lobbySkylightFields(): Array<FloorRectangle> {
+  return lobbyVaultCoffers()
+    .filter(c => c.laylight)
+    .map(c => {
+      const x1 = lobbyCeiling.radius * Math.sin(c.clearAngles[0])
+      const x2 = lobbyCeiling.radius * Math.sin(c.clearAngles[1])
+      const [z1, z2] = c.clearZ
+      return {
+        center: [(x1 + x2) / 2, (z1 + z2) / 2] as const,
+        size: [Math.abs(x2 - x1), z2 - z1] as const,
+      }
+    })
+}
+
+/**
+ * Three grand cathedral chandeliers suspended along the Lobby’s nave, plus high daylight fill from the glazed vault.
+ *
+ * The chandeliers hang at z = −14 (north nave), z = −2 (above the north approach to the fountain) and z = +10 (south nave),
+ * leaving the 8×8 m glass floor at z = −8 open so visitors looking up from the Oculus see the high vaulted glass and sky.
+ * Each chandelier carries a roofed LanternLight so its warm candle glow lights the travertine walls and floor without
+ * washing out the plaster spine directly above it.
+ */
+export const lobbyChandeliers = {
+  /** z offsets from the room center (world z = −26, −14, −2) */
+  offsets: [-14, -2, 10] as const,
+  /** height of the chandelier’s central hub above the Lobby floor */
+  hubY: 7.45,
+  /** height where the suspension chain meets the vault crown boss */
+  anchorY: lobbyCeiling.crownY - lobbyCeiling.rib.depth - lobbyCeiling.rib.lipDepth,
+  /** radius of the lower candle tier */
+  outerRadius: 1.78,
+  /** radius of the upper candle tier */
+  innerRadius: 1.14,
+  /** warm candle-gold LanternLight inside each chandelier, shaded upward by the fixture’s rings and canopy */
+  light: {
+    /** light position relative to the hub, below the lower ring so the metalwork never shadows its own light */
+    offsetY: -0.68,
+    color: '#ffd894',
+    intensity: 44,
+    distance: 18,
+    roof: {
+      start: 0.12,
+      end: 0.48,
+      leak: 0.14,
+    },
+  },
+} as const satisfies Record<string, unknown> & {light: Record<string, unknown> & {roof: LanternRoof}}
+
+/**
+ * High daylight sources under the glazed vault crown that complement the scene’s directional sun and the three chandeliers.
+ * Roofed so they pour crisp sky-tinted sunlight down onto the travertine walls, fountain and floor opening without burning
+ * out the vault ribs right beside them.
+ */
+export const lobbyDaylights = {
+  y: 9.8,
+  offsets: [-8, 4] as const,
   shadowCaster: -8,
-  color: '#fff1d8',
-  intensity: 32,
-  distance: 14,
-  shadowDistance: 22,
+  color: '#fff7ea',
+  intensity: 42,
+  distance: 22,
+  shadowDistance: 26,
   roof: {
-    // Seen from a lamp, the cornice and the tops of the walls stay below an elevation of 0.08, so they keep the full light. The
-    // cross beams’ sides, 2 m away and up to 0.75 m higher, sit between 0.24 and 0.35, and the long beams around 0.12–0.18.
-    start: 0.08,
-    end: 0.3,
+    start: 0.06,
+    end: 0.34,
     leak: 0.12,
   },
 } as const satisfies Record<string, unknown> & {roof: LanternRoof}

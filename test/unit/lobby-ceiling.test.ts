@@ -1,14 +1,18 @@
 import {describe, expect, test} from 'bun:test'
 
+import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
+
 import {wallTop} from '../../src/lib/gallery/architecture.ts'
 import lobby from '../../src/lib/gallery/lobby.ts'
-import lobbyCeiling, {glazingBarOffsets, lobbyBeamBottom, lobbyBeams, lobbyCoffers, lobbyLamps, lobbyOpening} from '../../src/lib/gallery/lobbyCeiling.ts'
+import lobbyCeiling, {lobbyBeamBottom, lobbyChandeliers, lobbyDaylights, lobbyOpening, lobbySkylightFields, lobbyVaultCoffers, transverseRibZs, vaultHeightAt} from '../../src/lib/gallery/lobbyCeiling.ts'
 import LobbyCeilingGeometry from '../../src/lib/gallery/LobbyCeilingGeometry.ts'
 import walls, {rooms} from '../../src/lib/gallery/walls.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 import CofferPlasterMaterial from '../../src/lib/materials/CofferPlasterMaterial.ts'
 import LaylightGlassMaterial from '../../src/lib/materials/LaylightGlassMaterial.ts'
 import {LanternLight} from '../../src/lib/materials/lights/index.ts'
+import SkyBoxMaterial, {skySunDirection} from '../../src/lib/materials/SkyBoxMaterial.ts'
+import VaultGlassMaterial from '../../src/lib/materials/VaultGlassMaterial.ts'
 
 const room = rooms.find(candidate => candidate.id === 'lobby')!
 const halfWidth = room.size[0] / 2
@@ -16,145 +20,142 @@ const halfDepth = room.size[1] / 2
 const lobbyWalls = walls.filter(wall => wall.room === 'lobby')
 /** Top of the cornice’s upper band, as built by the wall geometry. */
 const corniceTop = Math.max(...lobbyWalls.map(wall => wall.height)) - 0.22 + 0.23 / 2
-const area = (rectangle: {size: readonly [number, number]}) => rectangle.size[0] * rectangle.size[1]
 const contains = (outer: {
   center: readonly [number, number]
   size: readonly [number, number]
 }, x: number, z: number) => Math.abs(x - outer.center[0]) <= outer.size[0] / 2 + 1e-9 && Math.abs(z - outer.center[1]) <= outer.size[1] / 2 + 1e-9
 /** Sine of the elevation of a point seen from a lamp. */
 const elevation = (horizontal: number, height: number) => height / Math.hypot(horizontal, height)
-const crossBeams = lobbyBeams().filter(beam => beam.axis === 'x')
-describe('the Lobby’s coffered laylight ceiling', () => {
-  test('coffers tile the whole ceiling without overlapping', () => {
-    const coffers = lobbyCoffers()
-    expect(coffers.reduce((sum, coffer) => sum + area(coffer), 0)).toBeCloseTo(room.size[0] * room.size[1], 9)
-    for (const [i, a] of coffers.entries()) {
-      expect(Math.abs(a.center[0]) + a.size[0] / 2).toBeLessThanOrEqual(halfWidth + 1e-9)
-      expect(Math.abs(a.center[1]) + a.size[1] / 2).toBeLessThanOrEqual(halfDepth + 1e-9)
-      for (const b of coffers.slice(i + 1)) {
-        const overlapX = Math.min(a.center[0] + a.size[0] / 2, b.center[0] + b.size[0] / 2) - Math.max(a.center[0] - a.size[0] / 2, b.center[0] - b.size[0] / 2)
-        const overlapZ = Math.min(a.center[1] + a.size[1] / 2, b.center[1] + b.size[1] / 2) - Math.max(a.center[1] - a.size[1] / 2, b.center[1] - b.size[1] / 2)
-        expect(Math.min(overlapX, overlapZ)).toBeLessThanOrEqual(1e-9)
-      }
-    }
-  })
-  test('the laylight band is as wide as the floor opening, and one laylight mirrors the opening exactly', () => {
-    const laylights = lobbyCoffers().filter(coffer => coffer.laylight)
-    expect(laylights.length).toBeGreaterThan(5)
-    for (const laylight of laylights) {
-      expect(laylight.center[0]).toBe(lobbyOpening.center[0])
-      expect(laylight.size[0]).toBe(lobbyOpening.size[0])
-    }
-    const overOpening = laylights.filter(laylight => contains(laylight, ...lobbyOpening.center))
-    expect(overOpening).toHaveLength(1)
-    expect(overOpening[0].center).toEqual(lobbyOpening.center)
-    expect(overOpening[0].size).toEqual(lobbyOpening.size)
-    // No beam crosses the laylight over the opening.
-    for (const beam of crossBeams) {
-      if (contains(overOpening[0], 0, beam.at) && Math.abs(Math.abs(beam.at - lobbyOpening.center[1]) - lobbyOpening.size[1] / 2) > 1e-9) {
-        expect(Math.max(beam.from, beam.to) <= -lobbyOpening.size[0] / 2 || Math.min(beam.from, beam.to) >= lobbyOpening.size[0] / 2).toBe(true)
-      }
-    }
-  })
-  test('every laylight field holds whole panes, so no glazing bar runs into the frame', () => {
-    for (const {field, laylight} of lobbyCoffers()) {
-      expect(field.size[0]).toBeGreaterThan(0)
-      expect(field.size[1]).toBeGreaterThan(0)
-      if (laylight) {
-        for (const length of field.size) {
-          const offsets = glazingBarOffsets(length)
-          expect(offsets).toHaveLength(Math.round(length / lobbyCeiling.pane) - 1)
-          expect(offsets.every(offset => Math.abs(offset) < length / 2 - lobbyCeiling.bar.rim)).toBe(true)
-        }
-      }
-    }
-    expect(() => glazingBarOffsets(lobbyCeiling.pane * 2.5)).toThrow(RangeError)
-  })
-  test('beams stay above the cornice and the main entrance’s keystone, and below the slab', () => {
+describe('the Lobby’s cathedral barrel-vaulted ceiling', () => {
+  test('rises from the top of the walls as a high semicircular barrel vault', () => {
+    expect(lobbyCeiling.radius).toBe(halfWidth)
+    expect(lobbyCeiling.springY).toBeCloseTo(wallTop - 0.3, 6)
+    expect(lobbyCeiling.crownY).toBeCloseTo(lobbyCeiling.springY + halfWidth, 6)
+    expect(lobbyCeiling.crownY).toBeGreaterThan(12)
+    expect(vaultHeightAt(0)).toBeCloseTo(lobbyCeiling.crownY, 9)
+    expect(vaultHeightAt(-halfWidth)).toBeCloseTo(lobbyCeiling.springY, 9)
+    expect(vaultHeightAt(halfWidth)).toBeCloseTo(lobbyCeiling.springY, 9)
+    // Springing ribs stay above the cornice and the main entrance’s keystone.
     expect(lobbyBeamBottom).toBeGreaterThan(corniceTop)
     expect(lobbyBeamBottom).toBeGreaterThan(5.16)
-    expect(lobbyCeiling.underside).toBeLessThan(wallTop)
-    expect(lobbyCeiling.underside).toBeCloseTo(lobbyCeiling.slabY - lobbyCeiling.slabThickness / 2, 9)
   })
-  test('the geometry is finite, stays inside the room and under the slab, and is cheap', () => {
+  test('vault compartments tile all ten 4 m bays across the arch without overlapping', () => {
+    const coffers = lobbyVaultCoffers()
+    expect(transverseRibZs).toHaveLength(11)
+    expect(coffers).toHaveLength(10 * 6)
+    const skylit = coffers.filter(coffer => coffer.laylight)
+    const solid = coffers.filter(coffer => !coffer.laylight)
+    expect(skylit).toHaveLength(10 * 4)
+    expect(solid).toHaveLength(10 * 2)
+    for (const coffer of coffers) {
+      expect(coffer.clearAngles[0]).toBeGreaterThan(coffer.angles[0])
+      expect(coffer.clearAngles[1]).toBeLessThan(coffer.angles[1])
+      expect(coffer.clearAngles[1]).toBeGreaterThan(coffer.clearAngles[0])
+      expect(coffer.clearZ[0]).toBeGreaterThan(coffer.z[0])
+      expect(coffer.clearZ[1]).toBeLessThan(coffer.z[1])
+      expect(coffer.clearZ[1]).toBeGreaterThan(coffer.clearZ[0])
+    }
+    const fields = lobbySkylightFields()
+    expect(fields).toHaveLength(skylit.length)
+    for (const field of fields) {
+      expect(field.size[0]).toBeGreaterThan(2)
+      expect(field.size[1]).toBeGreaterThan(2)
+      expect(Math.abs(field.center[0]) + field.size[0] / 2).toBeLessThan(halfWidth)
+      expect(Math.abs(field.center[1]) + field.size[1] / 2).toBeLessThan(halfDepth)
+    }
+  })
+  test('the geometry is finite, arches high above the room, encloses the vault in a sky dome and stays within budget', () => {
     const geometry = new LobbyCeilingGeometry
+    const material = new MeshBasicMaterial
     try {
-      for (const part of [geometry.plaster, geometry.bars, geometry.glass]) {
+      const parts = [geometry.plaster, geometry.bars, geometry.glass, geometry.gilt, geometry.candles, geometry.flames, geometry.sky]
+      for (const part of parts) {
         const positions = part.getAttribute('position').array
         expect(positions.every(Number.isFinite)).toBe(true)
         part.computeBoundingBox()
-        const box = part.boundingBox!
-        expect(box.min.x).toBeGreaterThanOrEqual(-halfWidth - lobbyCeiling.beam.lipWidth / 2 - 1e-6)
-        expect(box.max.x).toBeLessThanOrEqual(halfWidth + lobbyCeiling.beam.lipWidth / 2 + 1e-6)
-        expect(box.max.y).toBeLessThanOrEqual(lobbyCeiling.underside + 1e-6)
-        expect(box.min.y).toBeGreaterThanOrEqual(lobbyBeamBottom - 1e-6)
       }
-      // The glass faces down, toward the room.
-      const normals = geometry.glass.getAttribute('normal')
-      for (let i = 0; i < normals.count; i++) {
-        expect(normals.getY(i)).toBeCloseTo(-1, 6)
-      }
-      const triangles = triangleCount(geometry.plaster) + triangleCount(geometry.bars) + triangleCount(geometry.glass)
-      expect(triangles).toBeLessThan(10_000)
+      const plasterBox = geometry.plaster.boundingBox!
+      expect(plasterBox.min.x).toBeGreaterThanOrEqual(-halfWidth - lobbyCeiling.shellThickness - 1e-5)
+      expect(plasterBox.max.x).toBeLessThanOrEqual(halfWidth + lobbyCeiling.shellThickness + 1e-5)
+      expect(plasterBox.min.y).toBeGreaterThanOrEqual(lobbyBeamBottom - 1e-5)
+      expect(plasterBox.max.y).toBeGreaterThan(lobbyCeiling.crownY)
+      // Downward-facing normals along the curved glass crown point into the Lobby.
+      const glassMesh = new Mesh(geometry.glass, material)
+      const skyMesh = new Mesh(geometry.sky, material)
+      const ray = new Raycaster(new Vector3(1.2, 2, -6), new Vector3(0, 1, 0))
+      const glassHits = ray.intersectObject(glassMesh)
+      expect(glassHits.length).toBeGreaterThan(0)
+      expect(glassHits[0].point.y).toBeGreaterThan(12)
+      expect(glassHits[0].face!.normal.y).toBeLessThan(-0.8)
+      // Every upward sightline through the skylight glass reaches the sky dome above it without hitting another room’s ceiling.
+      const skyBox = geometry.sky.boundingBox!
+      expect(skyBox.max.y).toBeGreaterThan(lobbyCeiling.crownY + 10)
+      expect(skyBox.min.y).toBeGreaterThan(5.8 - 1.6)
+      expect(skyMesh.geometry.getAttribute('position').count).toBeGreaterThan(100)
+      const triangles = parts.reduce((sum, part) => sum + triangleCount(part), 0)
+      expect(triangles).toBeLessThan(95_000)
     } finally {
+      material.dispose()
       geometry.dispose()
     }
   })
-  test('each lamp hangs in the middle of a bay, under the laylight band, away from every cross beam', () => {
-    const laylights = lobbyCoffers().filter(coffer => coffer.laylight)
-    // Beams that cross the band over the lamps; the side bays’ beams end 4 m away from them.
-    const beamLines = new Set(crossBeams.filter(beam => beam.from < 0 && beam.to > 0).map(beam => beam.at))
-    expect(lobbyLamps.offsets).toContain(lobbyLamps.shadowCaster)
-    expect(contains({
-      center: lobbyOpening.center,
-      size: lobbyOpening.size,
-    }, 0, lobbyLamps.shadowCaster)).toBe(true)
-    for (const z of lobbyLamps.offsets) {
-      expect(laylights.some(laylight => contains(laylight, 0, z))).toBe(true)
-      const nearest = Math.min(...[...beamLines].map(line => Math.abs(line - z)))
-      expect(nearest).toBeGreaterThanOrEqual(lobbyCeiling.bay / 2 - 1e-9)
-      expect(Math.abs(z)).toBeLessThan(halfDepth)
-      expect(lobbyLamps.y).toBeLessThan(lobbyBeamBottom)
+  test('three grand chandeliers hang along the central nave, clear of the glass floor opening and cross ribs', () => {
+    expect(lobbyChandeliers.offsets).toHaveLength(3)
+    expect(lobbyChandeliers.hubY).toBeGreaterThan(6.5)
+    expect(lobbyChandeliers.hubY).toBeLessThan(lobbyCeiling.crownY - 3)
+    expect(lobbyChandeliers.outerRadius).toBeGreaterThan(1.5)
+    for (const z of lobbyChandeliers.offsets) {
+      expect(Math.abs(z)).toBeLessThan(halfDepth - 4)
+      // Each chandelier hangs in the middle of a 4 m bay, 2 m clear of the nearest transverse arch rib.
+      const nearestRib = Math.min(...transverseRibZs.map(ribZ => Math.abs(ribZ - z)))
+      expect(nearestRib).toBeCloseTo(lobbyCeiling.bay / 2, 6)
+      // None of the chandeliers hang over the 8×8 m glass floor opening at z = −8, keeping the Oculus view open to the sky.
+      expect(contains(lobbyOpening, 0, z)).toBe(false)
     }
-    expect(lobby.opening.center[1] - room.center[1]).toBe(lobbyLamps.shadowCaster)
   })
-  test('the lamps’ roof spares the walls and cornice but shades the beams beside them', () => {
-    const lamp = new LanternLight({roof: lobbyLamps.roof})
-    // The cornice top, 8 m to the side, and the nearest wall’s upper edge down the room.
-    expect(lamp.transmission(elevation(halfWidth, corniceTop - lobbyLamps.y))).toBe(1)
-    expect(lamp.transmission(elevation(halfWidth, wallTop - 0.3 - lobbyLamps.y))).toBe(1)
-    // The side of a cross beam, half a bay away, from its soffit up to the slab.
-    const beamSide = lobbyCeiling.bay / 2 - lobbyCeiling.beam.width / 2
-    expect(lamp.transmission(elevation(beamSide, lobbyBeamBottom - lobbyLamps.y))).toBeLessThan(0.5)
-    expect(lamp.transmission(elevation(beamSide, lobbyCeiling.underside - lobbyLamps.y))).toBeCloseTo(lobbyLamps.roof.leak, 6)
-    // Straight down is untouched.
-    expect(lamp.transmission(-1)).toBe(1)
+  test('chandelier and daylight roofs spare the walls and cornice while shading the vault spine directly above them', () => {
+    expect(lobbyDaylights.offsets).toContain(lobbyDaylights.shadowCaster)
+    expect(lobby.opening.center[1] - room.center[1]).toBe(lobbyDaylights.shadowCaster)
+    const daylight = new LanternLight({roof: lobbyDaylights.roof})
+    expect(daylight.transmission(-1)).toBe(1)
+    expect(daylight.transmission(elevation(halfWidth, corniceTop - lobbyDaylights.y))).toBe(1)
+    expect(daylight.transmission(1)).toBeCloseTo(lobbyDaylights.roof.leak, 6)
+    const chandelierLamp = new LanternLight({roof: lobbyChandeliers.light.roof})
+    const lightY = lobbyChandeliers.hubY + lobbyChandeliers.light.offsetY
+    expect(chandelierLamp.transmission(-1)).toBe(1)
+    expect(chandelierLamp.transmission(elevation(halfWidth, corniceTop - lightY))).toBe(1)
+    expect(chandelierLamp.transmission(1)).toBeCloseTo(lobbyChandeliers.light.roof.leak, 6)
   })
-  test('materials build their nodes and reject impossible settings', () => {
-    const fields = lobbyCoffers().filter(coffer => coffer.laylight).map(coffer => coffer.field)
+  test('vault glass, procedural skybox and coffer plaster materials build their nodes and validate inputs', () => {
+    const fields = lobbySkylightFields()
     const plaster = new CofferPlasterMaterial({
       fields,
-      glassY: lobbyCeiling.underside,
+      glassY: lobbyCeiling.crownY,
     })
-    const glass = new LaylightGlassMaterial(lobbyCeiling.pane, [0, 0], {fieldFalloff: 0.2})
+    const vaultGlassHeavy = new VaultGlassMaterial({heavy: true})
+    const vaultGlassFast = new VaultGlassMaterial({heavy: false})
+    const sky = new SkyBoxMaterial({sunDirection: skySunDirection})
+    const laylight = new LaylightGlassMaterial(1, [0, 0], {fieldFalloff: 0.2})
     try {
       expect(plaster.emissiveNode?.isNode).toBe(true)
-      expect(glass.colorNode?.isNode).toBe(true)
+      expect(vaultGlassHeavy.emissiveNode?.isNode).toBe(true)
+      expect(vaultGlassHeavy.normalNode?.isNode).toBe(true)
+      expect(vaultGlassFast.transparent).toBe(true)
+      expect(sky.colorNode?.isNode).toBe(true)
+      expect(laylight.colorNode?.isNode).toBe(true)
     } finally {
       plaster.dispose()
-      glass.dispose()
+      vaultGlassHeavy.dispose()
+      vaultGlassFast.dispose()
+      sky.dispose()
+      laylight.dispose()
     }
+    expect(() => new VaultGlassMaterial({paneSize: [0, 1]})).toThrow(RangeError)
+    expect(() => new VaultGlassMaterial({thickness: 0})).toThrow(RangeError)
+    expect(() => new SkyBoxMaterial({sunDirection: [0, 0, 0]})).toThrow(RangeError)
     expect(() => new CofferPlasterMaterial({
       fields: [],
       glassY: 5,
     })).toThrow(RangeError)
-    expect(() => new CofferPlasterMaterial({
-      fields,
-      glassY: 5,
-      reach: 0,
-    })).toThrow(RangeError)
-    expect(() => new LaylightGlassMaterial(1, [0, 0], {fieldFalloff: 1.5})).toThrow(RangeError)
-    expect(() => new LaylightGlassMaterial(1, [0, 0], {brightness: 1.2})).toThrow(RangeError)
-    expect(() => new LaylightGlassMaterial(0, [0, 0])).toThrow(RangeError)
   })
 })
