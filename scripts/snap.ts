@@ -9,7 +9,7 @@ import getFree from 'get-free'
 import {lossyJxlOptions} from 'knot-materials/scripts/lib/encodeJxl.ts'
 import {Packr} from 'msgpackr'
 
-import {degrees, galleryHelp, galleryOptions, openHeadlessGallery, parseNumbers, radians, repositoryRoot, resolveGallerySetup, waitForFrames} from './lib/headlessGallery.ts'
+import {degrees, galleryHelp, galleryOptions, openHeadlessGallery, parseNumbers, radians, repositoryRoot, resolveGallerySetup, resolveSettle, waitForFrames} from './lib/headlessGallery.ts'
 
 const snapHeight = 1080
 const help = `Usage: bun scripts/snap.ts [options]
@@ -25,7 +25,7 @@ ${galleryHelp(snapHeight)}
                           camera angle in degrees. Yaw 0 looks toward −z, positive pitch looks up. Default: the player spawn
   --fov <degrees>         vertical field of view. Default: the game camera’s
   --jxl-distance <number> cjxl Butteraugli distance, 0 is lossless. Default: 1
-  --settle <frames>       frames to render after posing, lets temporal antialiasing converge. Default: 60
+  --settle <frames|auto>  frames to render after posing, lets temporal antialiasing converge. Default: auto, 60 with TRAA, otherwise 2
   --name <name>           output file name without extension. Default: the next free number, starting at 1
   -h, --help              show this help
 
@@ -49,7 +49,7 @@ const {values} = parseArgs({
     position: {type: 'string'},
     settle: {
       type: 'string',
-      default: '60',
+      default: 'auto',
     },
   },
 })
@@ -58,6 +58,7 @@ if (values.help) {
   process.exit(0)
 }
 const setup = await resolveGallerySetup(values, snapHeight)
+const settle = resolveSettle(values.settle, setup)
 const position = values.position === undefined ? undefined : parseNumbers(values.position, 'position', [3]) as Vec3
 const angle = values.angle === undefined ? undefined : parseNumbers(values.angle, 'angle', [2, 3])
 const fov = values.fov === undefined ? undefined : parseNumbers(values.fov, 'fov', [1])[0]
@@ -65,7 +66,6 @@ if (fov !== undefined && (fov <= 0 || fov >= 180)) {
   throw new Error('--fov must be between 0 and 180 degrees.')
 }
 const jxlDistance = parseNumbers(values['jxl-distance'], 'jxl-distance', [1])[0]
-const settle = parseNumbers(values.settle, 'settle', [1])[0]
 await using gallery = await openHeadlessGallery(setup, {cacheDir: 'node_modules/.vite-snap'})
 const {page} = gallery
 const pose = await page.evaluate((requested: Partial<CameraPose>) => globalThis.slopGallery!.pose!(requested), {

@@ -9,7 +9,7 @@ import {av1Crf} from 'knot-materials/scripts/lib/encodeAnimation.ts'
 
 import {parseRecipe, recipeDuration, sampleRecipe, tweens} from './lib/cameraRecipe.ts'
 import {createFrameSink, frameFormat} from './lib/frameSinks.ts'
-import {degrees, galleryHelp, galleryOptions, openHeadlessGallery, parseNumbers, radians, repositoryRoot, resolveGallerySetup, timestamp, waitForFrames} from './lib/headlessGallery.ts'
+import {degrees, galleryHelp, galleryOptions, openHeadlessGallery, parseNumbers, radians, repositoryRoot, resolveGallerySetup, resolveSettle, timestamp, waitForFrames} from './lib/headlessGallery.ts'
 import {installVirtualClock} from './lib/virtualClock.ts'
 
 const help = `Usage: bun scripts/film.ts [options]
@@ -29,7 +29,7 @@ ${galleryHelp()}
   --starting-frame <n>    recipe frame that becomes the first frame of the output, wrapping around at the end; moves the loop seam without changing the motion. Default: 1
   --jxl-distance <number> cjxl Butteraugli distance for .jxl, 0 is lossless. Default: 1
   --crf <number>          AV1 quality for .webm and .mkv, lower is better. Default: ${av1Crf}
-  --settle <frames>       wall-clock frames to render at the first keyframe before recording, lets temporal antialiasing converge. Default: 60
+  --settle <frames|auto>  wall-clock frames to render at the first keyframe before recording, lets temporal antialiasing converge. Default: auto, 60 with TRAA, otherwise 2
   -h, --help              show this help
 
 A recipe is a JSON array of keyframes, ordered by time:
@@ -75,7 +75,7 @@ const {values} = parseArgs({
     recipe: {type: 'string'},
     settle: {
       type: 'string',
-      default: '60',
+      default: 'auto',
     },
     'starting-frame': {
       type: 'string',
@@ -100,8 +100,8 @@ const fps = parseNumbers(values.fps, 'fps', [1])[0]
 if (fps <= 0) {
   throw new Error('--fps must be positive.')
 }
-const settle = parseNumbers(values.settle, 'settle', [1])[0]
 const setup = await resolveGallerySetup(values)
+const settle = resolveSettle(values.settle, setup)
 const output = values['output-file'] === undefined ? join(filmRoot, `${setup.levelName}-${timestamp()}.jxl`) : resolve(values['output-file'])
 const format = frameFormat(output)
 const {width, height} = setup.viewport
