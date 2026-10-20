@@ -1,5 +1,7 @@
 import type {ProfilePoint} from '../RevolvedProfileGeometry.ts'
 
+import lobby from '../lobby.ts'
+
 const gravity = 9.81
 
 /** Water leaving the stone as a free sheet, sampled at equal flight times so that its UV v is the age of the water in seconds. */
@@ -35,7 +37,8 @@ const pools = {
 const basinApothem = 1.95
 /** An octagonal basin holding a baluster tazza and a small cup, each overflowing as a continuous veil, crowned by a single jet. */
 const fountain = {
-  position: [0, 0, -6] as [number, number, number],
+  /** in the middle of the Lobby, right under its middle chandelier */
+  position: [0, 0, (lobby.northZ + lobby.southZ) / 2] as [number, number, number],
   /** apothem of the octagonal plinth, its flat sides face the benches */
   basinApothem,
   /** circumradius of the plinth, the farthest the fountain reaches from its axis */

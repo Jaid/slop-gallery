@@ -7,6 +7,7 @@ import {Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/web
 
 import {colliderGeometry} from '../../src/lib/gallery/architecture.ts'
 import {fountainBench, fountainBenches, fountainBenchFrame} from '../../src/lib/gallery/fountain/benches.ts'
+import fountain from '../../src/lib/gallery/fountain/config.ts'
 import SlattedBenchGeometry from '../../src/lib/gallery/fountain/SlattedBenchGeometry.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 
@@ -127,7 +128,7 @@ describe('round-tube fountain bench frames', () => {
       material.dispose()
     }
   })
-  test('both surviving seats collide while the former east/west benches leave no invisible seats or legs', async () => {
+  test('all four seats collide, along their whole length, while the diagonals between them stay open', async () => {
     const world = new RAPIER.World({
       x: 0,
       y: 0,
@@ -142,30 +143,23 @@ describe('round-tube fountain bench frames', () => {
         world.createCollider(RAPIER.ColliderDesc.trimesh(...colliderGeometry(geometry.metal), RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES), body)
       }
       world.step()
-      for (const [x, z, present] of [[0, -2, true], [0, -10, true], [-4, -6, false], [4, -6, false]] as const) {
-        for (const dx of [-1, 0, 1]) {
-          const hit = world.castRay(new RAPIER.Ray({
-            x: x + dx,
-            y: 1,
-            z,
-          }, {
-            x: 0,
-            y: -1,
-            z: 0,
-          }), 1, true)
-          expect(hit !== null).toBe(present)
+      const down = (x: number, z: number) => world.castRay(new RAPIER.Ray({
+        x,
+        y: 1,
+        z,
+      }, {
+        x: 0,
+        y: -1,
+        z: 0,
+      }), 1, true)
+      for (const {position, rotation} of fountainBenches) {
+        for (const along of [-1, 0, 1]) {
+          expect(down(position[0] + Math.cos(rotation[1]) * along, position[2] - Math.sin(rotation[1]) * along)).not.toBeNull()
         }
       }
-      for (const x of [-4, 4]) {
-        expect(world.castRay(new RAPIER.Ray({
-          x: x - 0.5,
-          y: 0.2,
-          z: -7.5,
-        }, {
-          x: 0,
-          y: 0,
-          z: 1,
-        }), 3, true)).toBeNull()
+      const diagonal = fountainBench.radius / Math.SQRT2
+      for (const [dx, dz] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
+        expect(down(fountain.position[0] + dx * diagonal, fountain.position[2] + dz * diagonal)).toBeNull()
       }
       const component = await Bun.file(new URL('../../src/components/levels/gallery/FountainBenches/index.tsx', import.meta.url)).text()
       expect(component).toContain('fountainBenches.map(')

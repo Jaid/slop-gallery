@@ -20,8 +20,11 @@ export const fountainBenchFrame = {
   topY: fountainBench.height - 0.1,
 } as const
 
-// Keep the north/south pair. The east/west approaches to the fountain stay open.
-export const fountainBenches = [0, Math.PI].map(angle => ({
-  position: [fountain.position[0], fountain.position[1], fountain.position[2] + Math.cos(angle) * fountainBench.radius] as Vec3,
-  rotation: [0, angle, 0] as Vec3,
-}))
+/** One bench on each side of the fountain, facing it. */
+export const fountainBenches = Array.from({length: 4}, (_, i) => {
+  const angle = i * Math.PI / 2
+  return {
+    position: [fountain.position[0] + Math.sin(angle) * fountainBench.radius, fountain.position[1], fountain.position[2] + Math.cos(angle) * fountainBench.radius] as Vec3,
+    rotation: [0, angle, 0] as Vec3,
+  }
+})
