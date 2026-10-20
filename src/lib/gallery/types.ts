@@ -28,7 +28,7 @@ export type Portrait = {
   year?: number
 }
 /** the aspect ratios of default works and their slots, as width:height */
-export type PortraitRatio = '1:1' | '2:3' | '3:2'
+export type PortraitRatio = '1:1' | '2:3' | '3:2' | '9:16' | '16:9'
 /** a default work of the level, before it hangs in a portrait slot */
 export type Artwork = Pick<Portrait, 'creator' | 'description' | 'id' | 'narration' | 'title' | 'year'> & {
   ratio: PortraitRatio

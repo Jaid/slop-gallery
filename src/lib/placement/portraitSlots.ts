@@ -5,6 +5,8 @@ export const portraitRatios: Record<PortraitRatio, number> = {
   '1:1': 1,
   '2:3': 2 / 3,
   '3:2': 3 / 2,
+  '9:16': 9 / 16,
+  '16:9': 16 / 9,
 }
 
 /** the frame areas, in cm², that slots of every ratio come in */

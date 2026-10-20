@@ -7,6 +7,8 @@ export const slotColors: Record<PortraitRatio, string> = {
   '1:1': '#2dd4bf',
   '2:3': '#f59e0b',
   '3:2': '#c084fc',
+  '9:16': '#f472b6',
+  '16:9': '#60a5fa',
 }
 export const invalidSlotColor = '#ef4444'
 export const slotBorder = 0.04

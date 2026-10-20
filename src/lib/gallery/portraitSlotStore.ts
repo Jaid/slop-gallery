@@ -30,7 +30,8 @@ export function readPortraitSlotEditing(input: URL | string = typeof location ==
 /** whether this page was opened with `?edit_portrait_slots`, read once at startup */
 export const isEditingPortraitSlots = readPortraitSlotEditing()
 
-const ratioCycle: ReadonlyArray<PortraitRatio> = ['1:1', '2:3', '3:2']
+/** the ratios from tallest to widest */
+const ratioCycle: ReadonlyArray<PortraitRatio> = ['9:16', '2:3', '1:1', '3:2', '16:9']
 const storageKey = 'slop-gallery.portrait-slot-edits'
 // Edits are kept only as long as the shipped slots they started from stay the same.
 const baseline = JSON.stringify(shippedSlots)
