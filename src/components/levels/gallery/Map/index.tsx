@@ -4,6 +4,7 @@ import Branch from 'branch-component'
 
 import {galleryEvents, notify, openPanel, rooms, roomVisit, useGallery} from '#src/lib/gallery.ts'
 import {corridorPassage, corridorStairs} from '#src/lib/gallery/corridor.ts'
+import dineTable from '#src/lib/gallery/dineTable.ts'
 import {fountainBench, fountainBenches} from '#src/lib/gallery/fountain/benches.ts'
 import fountain from '#src/lib/gallery/fountain/config.ts'
 import lobby from '#src/lib/gallery/lobby.ts'
@@ -107,6 +108,7 @@ export default function Map({css}: {css: Record<string, string>}) {
           <rect fill='#718c8e' height={oculusPlatform.size[2] * scale} width={oculusPlatform.size[0] * scale - 4} x={level.x(oculusPlatform.position[0] - oculusPlatform.size[0] / 2)} y={level.y(oculusPlatform.position[2] - oculusPlatform.size[2] / 2)} />
           <text fill='#f0f0e5' fontSize='10' textAnchor='middle' x={level.x(oculusPlatform.position[0]) - 2} y={level.y(oculusPlatform.position[2])}>RAISED FLOOR</text>
         </g></Branch>
+        <Branch not={level.lower}><rect aria-label='Dine feast table' fill='#6b4228' height={dineTable.length * scale} width={dineTable.width * scale} x={level.x(dineTable.position[0] - dineTable.width / 2)} y={level.y(dineTable.position[2] - dineTable.length / 2)} /></Branch>
         <Branch not={level.lower}><g aria-label='Glass floor above the Oculus'>
           {fountainBenches.map(({position, rotation}, i) => <rect key={i} aria-label='Fountain bench' fill='#977455' height={fountainBench.depth * scale} transform={`rotate(${-rotation[1] * 180 / Math.PI} ${level.x(position[0])} ${level.y(position[2])})`} width={fountainBench.width * scale} x={level.x(position[0]) - fountainBench.width * scale / 2} y={level.y(position[2]) - fountainBench.depth * scale / 2} />)}
           <circle aria-label='Lobby fountain' cx={level.x(fountain.position[0])} cy={level.y(fountain.position[2])} fill='#73a9a1' r={fountain.radius * scale} stroke='#b1a283' strokeWidth='2' />

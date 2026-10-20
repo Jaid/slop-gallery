@@ -11,6 +11,7 @@ import useGraphicsMode from 'use-graphics-mode'
 
 import CeilingLeds from '#component/levels/gallery/CeilingLeds'
 import DineFloor from '#component/levels/gallery/DineFloor'
+import DineTable from '#component/levels/gallery/DineTable'
 import Fountain from '#component/levels/gallery/Fountain'
 import FountainBenches from '#component/levels/gallery/FountainBenches'
 import GalleryStairs from '#component/levels/gallery/GalleryStairs'
@@ -168,6 +169,7 @@ export default function Architecture() {
       {(ledRooms.has(room.id) || vaultedRooms.has(room.id) ? [] : [-3.5, 3.5]).map(z => <pointLight key={z} color='#fff1d8' decay={2} distance={14} intensity={room.id === 'vesper' ? 40 : 32} position={[0, 4.9, z]} />)}
     </group>)}
     <CeilingLeds light={dineLedLight} name='dine' slots={dineLedSlots} />
+    <DineTable />
     <CeilingLeds light={antechamberLedLight} name='antechamber' slots={antechamberLedSlots} />
     <PottedPlants />
     <Fountain />
