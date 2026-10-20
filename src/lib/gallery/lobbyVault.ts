@@ -15,7 +15,8 @@ const shell = 0.35
  *
  * A semicircular vault springs from the wall faces right on top of the walls’ cornice. Transverse ribs span it every 4 m.
  * Between them, the flanks are coffered with a gilt rosette in every field, and a glazed band runs along the crown, showing the
- * sky and letting the sun in. A lunette closes each end; the north one is pierced by a clear wheel-rose window.
+ * sky and letting the sun in. A lunette closes each end; the north one is pierced by a clear wheel-rose window, and the
+ * south one stays solid and answers it with a gilt sun medallion in relief.
  *
  * Angles around the vault’s axis (z) are measured from +x: 0 is the east springing, π/2 the crown, π the west springing.
  */
@@ -78,6 +79,32 @@ export const lobbyVault = {
     wheel: 1.54,
     foil: 0.3,
     bar: 0.035,
+  },
+  /**
+   * The gilt sun medallion on the south lunette: a deep-blue fresco field inside stepped limestone archivolts, crossed by
+   * gilt rays and a bronze wheel, with a halo of longer rays laid straight on the travertine and a smaller gilt-rosette
+   * medallion to either side. It sits a little higher than the north rose window, because it is larger: its halo almost
+   * reaches both the springing below and the vault’s inner arc above.
+   */
+  sun: {
+    /** height of the center above the springing */
+    center: 3.72,
+    /** radius of the blue field */
+    field: 2.88,
+    /** radius of the outer edge of the stepped stone frame */
+    frame: 3.24,
+    /** tips of the longest halo rays; the whole medallion stays inside the lunette and above the springing */
+    halo: 3.66,
+    /** gilt rays inside the field, alternating long and short */
+    innerRays: 16,
+    /** longer gilt rays around the frame, alternating long and short */
+    haloRays: 12,
+    /** how far the medallion’s relief stands proud of the lunette face */
+    relief: 0.29,
+    /** center of each flanking rosette medallion, as [distance from the room’s axis, height above the springing] */
+    companionCenter: [5.3, 3.55],
+    /** outer radius of each flanking medallion, frame included */
+    companionRadius: 1.05,
   },
 } as const
 

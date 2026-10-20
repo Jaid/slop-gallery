@@ -1,4 +1,4 @@
-import {BufferGeometry, CylinderGeometry, ExtrudeGeometry, Float32BufferAttribute, Path, Shape, SphereGeometry, TorusGeometry} from 'three/webgpu'
+import {BufferGeometry, CircleGeometry, CylinderGeometry, ExtrudeGeometry, Float32BufferAttribute, Path, Shape, SphereGeometry, TorusGeometry} from 'three/webgpu'
 
 import {mergeParts} from '../geometry.ts'
 import {colliderGeometry} from './architecture.ts'
@@ -7,6 +7,8 @@ import lobbyVault, {glazingStart, lobbyChandeliers, vaultBays, vaultCoffers, vau
 
 /** Height of the rose window’s center above the floor. */
 export const roseCenterY = lobbyVault.springY + lobbyVault.rose.rise
+/** Height of the south sun medallion’s center above the floor. */
+export const sunCenterY = lobbyVault.springY + lobbyVault.sun.center
 
 /** A slab bent around the vault’s axis, which runs along z at the springing height. */
 const arc = (radii: readonly [number, number], angles: readonly [number, number], z: readonly [number, number], segments?: number) => {
@@ -124,7 +126,28 @@ const rosette = (size: number) => {
   }
   return mergeParts(parts)
 }
-
+/**
+ * A gilt sun ray in the xy plane, pointing +y: a tapered kite that is widest a third of the way out, extruded toward the
+ * viewer. Turn it around the medallion’s center with `rotateZ` and then move it into place.
+ */
+const sunRay = (inner: number, outer: number, halfWidth: number, depth: number) => {
+  const shoulder = inner + (outer - inner) * 0.38
+  const shape = new Shape
+  shape.moveTo(0, inner)
+  shape.lineTo(-halfWidth, shoulder)
+  shape.lineTo(0, outer)
+  shape.lineTo(halfWidth, shoulder)
+  shape.closePath()
+  return new ExtrudeGeometry(shape, {
+    bevelEnabled: false,
+    depth,
+  })
+}
+/** A flat ring facing +z: a torus around (x, y) at depth z, with `sides` segments around its tube and `segments` around the ring. */
+const flatRing = (size: number, tube: number, z: number, segments: number, x: number, y: number, sides = 6) => {
+  const torus = new TorusGeometry(size, tube, sides, segments)
+  return torus.translate(x, y, z)
+}
 /**
  * A smooth half-cylinder along the vault’s inner face, so thrown things bounce off the coffer frames and the glass instead of
  * disappearing into the vault. Returned as vertices and indices for a triangle mesh collider.
@@ -146,21 +169,23 @@ export function lobbyVaultCollision() {
 
 /**
  * Merged meshes of the Lobby’s barrel vault, relative to the room center at floor level, by material: the clad lunettes, the
- * vault’s limestone ribs and coffer frames, the plaster behind the coffers, gilding, bronze glazing bars and the glass of the
- * crown band and the rose window.
+ * vault’s limestone ribs and coffer frames, the plaster behind the coffers, gilding, bronze glazing bars, the glass of the
+ * crown band and the rose window, and the blue fresco fields of the south sun medallion.
  */
 export default class LobbyVaultGeometry {
   readonly bars: BufferGeometry
   readonly clad: BufferGeometry
   readonly glass: BufferGeometry
   readonly gold: BufferGeometry
+  /** blue fresco fields of the south sun medallion and its two companions, only on the south lunette */
+  readonly inlay: BufferGeometry
   readonly plaster: BufferGeometry
   /** clear glass of the north rose window, centered at x = 0 and {@link roseCenterY} in local space */
   readonly roseGlass: BufferGeometry
   readonly stone: BufferGeometry
 
   constructor() {
-    const {coffer, glazing, halfLength, outerRadius, radius, rib, rose, springY} = lobbyVault
+    const {coffer, glazing, halfLength, outerRadius, radius, rib, rose, springY, sun} = lobbyVault
     const clad: Array<BufferGeometry> = []
     const stone: Array<BufferGeometry> = []
     const plaster: Array<BufferGeometry> = []
@@ -168,6 +193,7 @@ export default class LobbyVaultGeometry {
     const bars: Array<BufferGeometry> = []
     const glass: Array<BufferGeometry> = []
     const roseGlass: Array<BufferGeometry> = []
+    const inlay: Array<BufferGeometry> = []
     const back = radius + coffer.depth
     const fullLength = [-halfLength, halfLength] as const
     // Where a chandelier hangs, the fillets open into a gilt octagon: the spine’s carry on as two of its sides and the arch’s end
@@ -285,8 +311,8 @@ export default class LobbyVaultGeometry {
       }
     }
     template.dispose()
-    // Lunettes close both ends above the walls. Only the north one is pierced by a rose window: the space behind the south one is
-    // kept for a future upper room.
+    // Lunettes close both ends above the walls. Only the north one is pierced by a rose window; the south one stays solid
+    // and carries the gilt sun medallion instead.
     const roseY = roseCenterY
     for (const side of [-1, 1]) {
       const windowed = side < 0
@@ -296,6 +322,7 @@ export default class LobbyVaultGeometry {
         gold: [] as Array<BufferGeometry>,
         bars: [] as Array<BufferGeometry>,
         roseGlass: [] as Array<BufferGeometry>,
+        inlay: [] as Array<BufferGeometry>,
       }
       const lunette = new Shape
       lunette.moveTo(-outerRadius, springY)
@@ -312,18 +339,14 @@ export default class LobbyVaultGeometry {
       })
       // Built for the north end, facing +z into the room; the south one is the same turned half around.
       parts.clad.push(wall.translate(0, 0, -halfLength - rose.lunetteThickness))
+      const face = -halfLength
+      const middle = face - rose.lunetteThickness / 2
       if (windowed) {
-        const face = -halfLength
-        const middle = face - rose.lunetteThickness / 2
-        const ring = (size: number, tube: number, z: number, segments: number, x = 0, y = 0, sides = 6) => {
-          const torus = new TorusGeometry(size, tube, sides, segments)
-          return torus.translate(x, roseY + y, z)
-        }
         // Stepped stone archivolts frame the opening on the lunette’s face, between a gilt ring outside and one lining the opening.
-        parts.stone.push(ring(rose.radius + 0.33, 0.16, face - 0.04, 36, 0, 0, 8), ring(rose.radius + 0.12, 0.13, face - 0.01, 36, 0, 0, 8))
-        parts.gold.push(ring(rose.radius + 0.49, 0.05, face - 0.01, 36), ring(rose.radius - 0.02, 0.06, face - 0.02, 36))
+        parts.stone.push(flatRing(rose.radius + 0.33, 0.16, face - 0.04, 36, 0, roseY, 8), flatRing(rose.radius + 0.12, 0.13, face - 0.01, 36, 0, roseY, 8))
+        parts.gold.push(flatRing(rose.radius + 0.49, 0.05, face - 0.01, 36, 0, roseY), flatRing(rose.radius - 0.02, 0.06, face - 0.02, 36, 0, roseY))
         // A gilt hub ring and boss stand proud of the bronze wheel.
-        parts.gold.push(ring(rose.hub, 0.07, middle + 0.08, 24))
+        parts.gold.push(flatRing(rose.hub, 0.07, middle + 0.08, 24, 0, roseY))
         const boss = new SphereGeometry(0.28, 12, 8)
         parts.gold.push(boss.scale(1, 1, 0.48).translate(0, roseY, middle + 0.08))
         // Bronze spokes from the hub ring to the rim, crossed by a wheel, with a small ring between each pair of spokes at the rim.
@@ -334,10 +357,50 @@ export default class LobbyVaultGeometry {
           parts.bars.push(spoke.translate(0, rose.hub + length / 2, middle).rotateZ(angle - Math.PI / 2).translate(0, roseY, 0))
           const between = angle + Math.PI / rose.spokes
           const distance = rose.radius - rose.foil - 0.1
-          parts.bars.push(ring(rose.foil, rose.bar * 0.8, middle, 12, distance * Math.cos(between), distance * Math.sin(between)))
+          parts.bars.push(flatRing(rose.foil, rose.bar * 0.8, middle, 12, distance * Math.cos(between), roseY + distance * Math.sin(between)))
         }
-        parts.bars.push(ring(rose.wheel, rose.bar * 1.15, middle, 28))
+        parts.bars.push(flatRing(rose.wheel, rose.bar * 1.15, middle, 28, 0, roseY))
         parts.roseGlass.push(glassDisc(rose.radius, 0, roseY, middle, 96))
+      } else {
+        // The south sun, built facing +z like the rose and turned half around with the rest of the lunette below. Its blue
+        // fresco fields sit just proud of the travertine; everything else is relief laid over them and the bare wall.
+        const sunY = springY + sun.center
+        const fieldDisc = new CircleGeometry(sun.field, 56)
+        parts.inlay.push(fieldDisc.translate(0, sunY, face + 0.045))
+        for (const flip of [-1, 1]) {
+          const companionDisc = new CircleGeometry(sun.companionRadius - 0.17, 36)
+          parts.inlay.push(companionDisc.translate(flip * sun.companionCenter[0], springY + sun.companionCenter[1], face + 0.045))
+        }
+        // A halo of longer rays on the travertine, their bases tucked under the stone frame.
+        for (let i = 0; i < sun.haloRays; i++) {
+          const long = i % 2 === 0
+          parts.gold.push(sunRay(sun.field - 0.2, long ? sun.halo : sun.halo - 0.34, long ? 0.15 : 0.12, 0.07).rotateZ(i * Math.PI * 2 / sun.haloRays).translate(0, sunY, face + 0.025))
+        }
+        // Stepped limestone archivolts frame the field, with a gilt bead outside them and another lining the field’s edge.
+        parts.stone.push(flatRing(sun.frame - 0.16, 0.16, face + 0.09, 48, 0, sunY, 8), flatRing(sun.field + 0.03, 0.1, face + 0.1, 44, 0, sunY))
+        parts.gold.push(flatRing(sun.frame + 0.1, 0.045, face + 0.07, 48, 0, sunY), flatRing(sun.field - 0.12, 0.04, face + 0.15, 44, 0, sunY))
+        // Inside the field, alternating long and short rays run from under the gilt hub ring to near the frame, crossed by a
+        // bronze wheel – the rose window’s tracery, redrawn as a sun – with a gilt bead between every pair of rays.
+        for (let i = 0; i < sun.innerRays; i++) {
+          const long = i % 2 === 0
+          const angle = (i + 0.5) * Math.PI * 2 / sun.innerRays
+          parts.gold.push(sunRay(0.61, long ? 2.62 : 2.19, long ? 0.145 : 0.11, 0.08).rotateZ(angle).translate(0, sunY, face + 0.065))
+          const beadAngle = angle + Math.PI / sun.innerRays
+          const bead = new SphereGeometry(0.068, 6, 4)
+          parts.gold.push(bead.scale(1, 1, 0.55).translate(2.42 * Math.cos(beadAngle), sunY + 2.42 * Math.sin(beadAngle), face + 0.125))
+        }
+        parts.bars.push(flatRing(1.68, 0.04, face + 0.16, 40, 0, sunY))
+        parts.gold.push(flatRing(0.75, 0.075, face + 0.15, 28, 0, sunY))
+        const boss = new SphereGeometry(0.58, 18, 10)
+        parts.gold.push(boss.scale(1, 1, 0.38).translate(0, sunY, face + 0.07))
+        // Two smaller medallions flank the sun: a gilt coffer rosette on a blue field in a stone frame.
+        for (const flip of [-1, 1]) {
+          const companionY = springY + sun.companionCenter[1]
+          parts.stone.push(flatRing(sun.companionRadius - 0.09, 0.1, face + 0.08, 36, flip * sun.companionCenter[0], companionY, 8))
+          parts.gold.push(flatRing(sun.companionRadius + 0.05, 0.035, face + 0.06, 36, flip * sun.companionCenter[0], companionY))
+          const flower = rosette(0.72)
+          parts.gold.push(flower.rotateX(Math.PI / 2).translate(flip * sun.companionCenter[0], companionY, face + 0.08))
+        }
       }
       const targets = {
         clad,
@@ -345,6 +408,7 @@ export default class LobbyVaultGeometry {
         gold,
         bars,
         roseGlass,
+        inlay,
       }
       for (const [key, list] of Object.entries(parts) as Array<[keyof typeof parts, Array<BufferGeometry>]>) {
         for (const part of list) {
@@ -362,10 +426,11 @@ export default class LobbyVaultGeometry {
     this.bars = mergeParts(bars)
     this.glass = mergeParts(glass)
     this.roseGlass = mergeParts(roseGlass)
+    this.inlay = mergeParts(inlay)
   }
 
   dispose() {
-    for (const geometry of [this.bars, this.clad, this.glass, this.gold, this.plaster, this.roseGlass, this.stone]) {
+    for (const geometry of [this.bars, this.clad, this.glass, this.gold, this.inlay, this.plaster, this.roseGlass, this.stone]) {
       geometry.dispose()
     }
   }

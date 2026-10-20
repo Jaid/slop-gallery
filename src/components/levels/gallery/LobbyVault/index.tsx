@@ -1,6 +1,6 @@
 import type {Material} from 'three/webgpu'
 
-import {CuboidCollider, RigidBody} from '@react-three/rapier'
+import {CuboidCollider, CylinderCollider, RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
@@ -9,14 +9,15 @@ import useGraphicsMode from 'use-graphics-mode'
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
 import LobbyChandelierGeometry from '#src/lib/gallery/LobbyChandelierGeometry.ts'
 import lobbyVault, {lobbyChandeliers} from '#src/lib/gallery/lobbyVault.ts'
-import LobbyVaultGeometry, {lobbyVaultCollision} from '#src/lib/gallery/LobbyVaultGeometry.ts'
+import LobbyVaultGeometry, {lobbyVaultCollision, sunCenterY} from '#src/lib/gallery/LobbyVaultGeometry.ts'
 import ArchitecturalPlasterMaterial from '#src/lib/materials/ArchitecturalPlasterMaterial.ts'
 import gold from '#src/lib/materials/gold.ts'
 import LimestoneMaterial from '#src/lib/materials/LimestoneMaterial.ts'
 import VaultGlassMaterial from '#src/lib/materials/VaultGlassMaterial.ts'
 
 /**
- * The Lobby’s coffered barrel vault with its glazed crown and rose windows, and the great chandeliers hanging from it.
+ * The Lobby’s coffered barrel vault with its glazed crown, its north rose window and the gilt sun medallion answering it
+ * on the south lunette, and the great chandeliers hanging from it.
  * Rendered inside the room’s group, at its center. `cladding` is the walls’ own travertine, carried on up the lunettes.
  */
 export default function LobbyVault({cladding}: {
@@ -30,6 +31,12 @@ export default function LobbyVault({cladding}: {
     baseColor: '#ece7d9',
     heavy: isHeavy,
     roughness: 0.86,
+  }), [isHeavy]))
+  // Deep-blue fresco fields of the south sun medallion, matte plaster against the gilt relief laid over them.
+  const sunField = useDisposable(useMemo(() => new ArchitecturalPlasterMaterial({
+    baseColor: '#2f5e8d',
+    heavy: isHeavy,
+    roughness: 0.78,
   }), [isHeavy]))
   // Painted bronze glazing bars, as on the Salon’s skylight.
   const bars = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
@@ -54,10 +61,14 @@ export default function LobbyVault({cladding}: {
     <RigidBody colliders={false} type='fixed'>
       <MeshSurfaceCollider args={collision} />
       {[-1, 1].map(side => <CuboidCollider key={side} args={[lobbyVault.outerRadius, (lobbyVault.crownY + lobbyVault.shell + lobbyVault.coffer.depth - lobbyVault.springY) / 2, lobbyVault.rose.lunetteThickness / 2]} position={[0, (lobbyVault.crownY + lobbyVault.shell + lobbyVault.coffer.depth + lobbyVault.springY) / 2, side * (lobbyVault.halfLength + lobbyVault.rose.lunetteThickness / 2)]} />)}
+      {/* The south sun’s relief stands proud of the lunette face, toward the room; flat discs cover the medallion and its companions. */}
+      <CylinderCollider args={[lobbyVault.sun.relief / 2, lobbyVault.sun.halo]} position={[0, sunCenterY, lobbyVault.halfLength - lobbyVault.sun.relief / 2]} rotation={[Math.PI / 2, 0, 0]} />
+      {[-1, 1].map(flip => <CylinderCollider key={flip} args={[lobbyVault.sun.relief / 2, lobbyVault.sun.companionRadius]} position={[flip * lobbyVault.sun.companionCenter[0], lobbyVault.springY + lobbyVault.sun.companionCenter[1], lobbyVault.halfLength - lobbyVault.sun.relief / 2]} rotation={[Math.PI / 2, 0, 0]} />)}
     </RigidBody>
     <mesh castShadow geometry={geometry.clad} material={cladding} name='lobby-vault-lunettes' receiveShadow />
     <mesh castShadow geometry={geometry.stone} material={stone} name='lobby-vault-stone' receiveShadow />
     <mesh castShadow geometry={geometry.plaster} material={plaster} name='lobby-vault-coffers' receiveShadow />
+    <mesh castShadow geometry={geometry.inlay} material={sunField} name='lobby-vault-sun-field' receiveShadow />
     <mesh castShadow geometry={geometry.gold} material={gilt} name='lobby-vault-gilding' receiveShadow />
     <mesh castShadow geometry={geometry.bars} material={bars} name='lobby-vault-glazing-bars' />
     {/* The glass lets the sun through: it casts no shadow, only its bars and tracery do. */}

@@ -9,7 +9,7 @@ import {wallTop} from '../../src/lib/gallery/architecture.ts'
 import ArcSlabGeometry from '../../src/lib/gallery/ArcSlabGeometry.ts'
 import LobbyChandelierGeometry, {lobbyChandelier, lobbyChandelierBottom} from '../../src/lib/gallery/LobbyChandelierGeometry.ts'
 import lobbyVault, {glazingStart, lobbyChandeliers, vaultBays, vaultCoffers, vaultHeight, vaultRibs} from '../../src/lib/gallery/lobbyVault.ts'
-import LobbyVaultGeometry, {lobbyVaultCollision, roseCenterY} from '../../src/lib/gallery/LobbyVaultGeometry.ts'
+import LobbyVaultGeometry, {lobbyVaultCollision, roseCenterY, sunCenterY} from '../../src/lib/gallery/LobbyVaultGeometry.ts'
 import sun, {sunClearance, sunlitPoints} from '../../src/lib/gallery/sun.ts'
 import walls, {insideGallery, roomAt, roomClearHeight, rooms} from '../../src/lib/gallery/walls.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
@@ -92,7 +92,7 @@ describe('the Lobby’s barrel vault', () => {
     expect(glazingStart).toBeLessThan(Math.PI / 2)
   })
   test('stays within the Lobby’s footprint and above its walls', () => {
-    for (const part of [geometry.clad, geometry.stone, geometry.plaster, geometry.gold, geometry.bars, geometry.glass, geometry.roseGlass]) {
+    for (const part of [geometry.clad, geometry.stone, geometry.plaster, geometry.gold, geometry.bars, geometry.glass, geometry.roseGlass, geometry.inlay]) {
       const box = part.boundingBox!
       expect(box.min.x).toBeGreaterThanOrEqual(-halfWidth - lobbyVault.shell - 0.25)
       expect(box.max.x).toBeLessThanOrEqual(halfWidth + lobbyVault.shell + 0.25)
@@ -111,11 +111,53 @@ describe('the Lobby’s barrel vault', () => {
     expect(roseCenterY - lobbyVault.rose.radius).toBeGreaterThan(lobbyVault.springY)
   })
   test('keeps a reasonable triangle budget', () => {
-    const total = [geometry.clad, geometry.stone, geometry.plaster, geometry.gold, geometry.bars, geometry.glass, geometry.roseGlass].reduce((sum, part) => sum + triangleCount(part), 0)
+    const total = [geometry.clad, geometry.stone, geometry.plaster, geometry.gold, geometry.bars, geometry.glass, geometry.roseGlass, geometry.inlay].reduce((sum, part) => sum + triangleCount(part), 0)
     expect(total).toBeLessThan(150_000)
   })
+  test('the south lunette carries a gilt sun medallion answering the north rose', () => {
+    const medallion = lobbyVault.sun
+    // Large enough to fill the lunette, yet wholly inside the vault’s inner arc and above the springing.
+    expect(sunCenterY).toBeCloseTo(lobbyVault.springY + medallion.center, 9)
+    expect(sunCenterY - medallion.halo).toBeGreaterThan(lobbyVault.springY)
+    expect(medallion.center + medallion.halo).toBeLessThan(lobbyVault.radius)
+    expect(Math.hypot(...medallion.companionCenter) + medallion.companionRadius).toBeLessThan(lobbyVault.radius)
+    // The companions clear the sun’s halo, so the three medallions read as one composition rather than touching.
+    expect(Math.hypot(medallion.companionCenter[0], medallion.companionCenter[1] - medallion.center)).toBeGreaterThan(medallion.halo + medallion.companionRadius)
+    // The blue fields exist only on the south lunette, just proud of its face, spanning the sun and both companions.
+    const field = geometry.inlay.boundingBox!
+    expect(field.min.z).toBeGreaterThan(lobbyVault.halfLength - 0.1)
+    expect(field.min.x).toBeCloseTo(-medallion.companionCenter[0] - (medallion.companionRadius - 0.17), 4)
+    expect(field.max.x).toBeCloseTo(medallion.companionCenter[0] + (medallion.companionRadius - 0.17), 4)
+    expect(field.min.y).toBeCloseTo(sunCenterY - medallion.field, 4)
+    expect(field.max.y).toBeCloseTo(sunCenterY + medallion.field, 4)
+    expect(triangleCount(geometry.inlay)).toBeLessThan(200)
+    const clad = new Mesh(geometry.clad, material)
+    const inlay = new Mesh(geometry.inlay, material)
+    const gold = new Mesh(geometry.gold, material)
+    for (const mesh of [clad, inlay, gold]) {
+      mesh.geometry.boundsTree = new MeshBVH(mesh.geometry)
+      mesh.raycast = acceleratedRaycast
+      mesh.updateMatrixWorld()
+    }
+    const hitFrom = (x: number, y: number) => {
+      const raycaster = new Raycaster(new Vector3(x, y, lobbyVault.halfLength - 4), new Vector3(0, 0, 1))
+      raycaster.firstHitOnly = true
+      return raycaster.intersectObjects([clad, inlay, gold], false).at(0)
+    }
+    // The gilt boss, a halo ray and a companion rosette all stand in front of the wall, over a blue field at the center.
+    const boss = hitFrom(0, sunCenterY)
+    expect(boss?.object).toBe(gold)
+    expect(boss!.point.z).toBeCloseTo(lobbyVault.halfLength - medallion.relief, 1)
+    expect(hitFrom(0, sunCenterY + 3.3)?.object).toBe(gold)
+    expect(hitFrom(-medallion.companionCenter[0], lobbyVault.springY + medallion.companionCenter[1])?.object).toBe(gold)
+    const bare = hitFrom(0, sunCenterY + 1.1)
+    expect(bare?.object).toBe(inlay)
+    expect(bare!.point.z).toBeCloseTo(lobbyVault.halfLength - 0.045, 6)
+    // Away from the medallion the lunette is still bare travertine.
+    expect(hitFrom(-6.5, sunCenterY)?.object).toBe(clad)
+  })
   test('lets the sun in through the glazed crown and nowhere else', () => {
-    const meshes = [geometry.clad, geometry.stone, geometry.plaster, geometry.gold, geometry.bars, geometry.roseGlass].map(part => new Mesh(part, material))
+    const meshes = [geometry.clad, geometry.stone, geometry.plaster, geometry.gold, geometry.bars, geometry.roseGlass, geometry.inlay].map(part => new Mesh(part, material))
     const glass = new Mesh(geometry.glass, material)
     for (const mesh of [...meshes, glass]) {
       mesh.geometry.boundsTree = new MeshBVH(mesh.geometry)
