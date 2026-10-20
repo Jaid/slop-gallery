@@ -37,12 +37,16 @@ export default class OculusRailing extends RailingPath {
       const z = ramp.startZ + ramp.baseCornerRadius - (ramp.baseCornerRadius + inset) * Math.cos(theta)
       add([cornerX + (ramp.baseCornerRadius + inset) * Math.sin(theta), towerRampHeight((z - ramp.startZ) / (ramp.endZ - ramp.startZ)), z])
     }
+    // The sloped rail climbs until it reaches the tower fence’s level, easing into it with a smooth minimum instead of rising past it and dropping back.
+    const fenceY = ramp.endY + ramp.railHeight / 2
+    const blend = 0.4
     const straightStart = ramp.startZ + ramp.baseCornerRadius
     for (let i = 1; i <= 64; i++) {
       const z = straightStart + (ramp.endZ - straightStart) * i / 64
-      const transition = clamp((z - (ramp.endZ - 0.65)) / 0.65, 0, 1)
-      const height = ramp.railHeight * (1 - 0.5 * transition * transition * (3 - 2 * transition))
-      add([tower.x - ramp.width / 2 + inset, towerRampHeight((z - ramp.startZ) / (ramp.endZ - ramp.startZ)), z], height)
+      const groundY = towerRampHeight((z - ramp.startZ) / (ramp.endZ - ramp.startZ))
+      const sloped = groundY + ramp.railHeight
+      const overlap = Math.max(blend - Math.abs(sloped - fenceY), 0) / blend
+      add([tower.x - ramp.width / 2 + inset, groundY, z], Math.min(sloped, fenceY) - overlap * overlap * blend / 4 - groundY)
     }
     // Offset the open perimeter, not its closing entrance chord. Offsetting the
     // chord pulls the endpoints forward and makes the rail double back at the shoulders.
