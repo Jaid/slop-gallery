@@ -48,7 +48,7 @@
     "three-bvh-csg@0.0.18": "patches/three-bvh-csg@0.0.18.patch"
   },
   "dependencies": {
-    "ai": "7.0.143",
+    "ai": "7.0.145",
     "branch-component": "0.4.0",
     "canvas-textures": "workspace:*",
     "clsx": "2.1.1",
