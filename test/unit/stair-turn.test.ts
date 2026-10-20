@@ -62,7 +62,7 @@ describe('round stair landing', () => {
       material.dispose()
     }
   })
-  test('walls, moldings and placement rays follow both arcs instead of the former end wall', () => {
+  test('walls, moldings and placement rays follow both arcs', () => {
     const material = new MeshBasicMaterial
     try {
       for (const wall of stairTurn.walls()) {

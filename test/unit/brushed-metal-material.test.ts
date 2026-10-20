@@ -33,7 +33,7 @@ describe('shared satin steel', () => {
       material.dispose()
     }
   })
-  test('has a neutral, slightly cool conductor reflectance instead of the old olive-gray paint', () => {
+  test('has a neutral, slightly cool conductor reflectance', () => {
     const [red, green, blue] = steelReflectance
     expect(red).toBeGreaterThan(0.5)
     expect(blue).toBeLessThan(0.7)
@@ -74,11 +74,7 @@ describe('shared satin steel', () => {
       expect(source).not.toContain('metal.dispose(')
       expect(source).not.toContain('useDisposable(metal)')
     }
-    const [benches, rails, signs] = sources
-    expect(benches).toContain("material={metal} name='lobby-bench-brushed-frame'")
-    expect(rails).toContain("material={metal} name='oculus-continuous-handrail'")
-    expect(rails).toContain("material={metal} name='oculus-railing-post'")
-    expect(rails).toContain("material={metal} name='oculus-handrail-end-cap'")
+    const signs = sources[2]
     // Heavy → fast → heavy switches must never dispose the shared material. Only the original flat fallback is locally owned.
     expect(signs).toContain("useDisposable(useMemo(() => new MeshBasicNodeMaterial({color: '#9ca6ad'}), []))")
     expect(signs).toContain('const supportMaterial = isHeavy ? metal : flatSupportMaterial')

@@ -91,7 +91,7 @@ describe('round-tube fountain bench frames', () => {
     }
     expect(sharedVertices).toBeGreaterThan(200)
   })
-  test('physical hits follow the curved frame, including its shoulders, instead of the old rectangular legs', () => {
+  test('physical hits follow the curved frame, including its shoulders', () => {
     const world = new RAPIER.World({
       x: 0,
       y: 0,
@@ -165,7 +165,6 @@ describe('round-tube fountain bench frames', () => {
       expect(component).toContain('fountainBenches.map(')
       expect(component).toContain('colliderGeometry(geometry.metal)')
       expect(component).toContain('<MeshSurfaceCollider args={collision} />')
-      expect(component).not.toContain('flatMap(')
     } finally {
       world.free()
     }

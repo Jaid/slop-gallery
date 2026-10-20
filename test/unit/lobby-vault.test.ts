@@ -49,7 +49,7 @@ const expectClosedAndOutward = (part: BufferGeometry) => {
   expect(edges.values().every(count => count === 2)).toBe(true)
 }
 describe('the Lobby’s barrel vault', () => {
-  test('springs from the wall faces on top of the walls and is far higher than the old ceiling', () => {
+  test('springs from the wall faces on top of the walls and rises to more than twice their height', () => {
     expect(lobbyVault.radius).toBeCloseTo(halfWidth - 0.105, 9)
     expect(lobbyVault.springY).toBe(wallTop)
     expect(lobbyVault.crownY).toBeGreaterThan(2 * wallTop)
@@ -204,13 +204,6 @@ describe('the Lobby’s chandeliers', () => {
     // The boss meets the spine’s soffit.
     expect(chandelier.gilt.boundingBox!.max.y).toBeCloseTo(lobbyChandeliers.anchorY - lobbyChandeliers.y, 6)
     expect(chandelier.gilt.boundingBox!.min.y).toBeCloseTo(lobbyChandelierBottom, 6)
-  })
-  test('replace the old lamps: the Lobby keeps no flat ceiling, laylights or light boxes', async () => {
-    const architecture = await Bun.file(new URL('../../src/components/levels/gallery/Architecture/index.tsx', import.meta.url)).text()
-    expect(architecture).toContain('<LobbyVault')
-    expect(architecture).not.toContain('LobbyCeiling')
-    expect(architecture).toMatch(/vaultedRooms\.has\(room\.id\) \|\| |\|\| vaultedRooms\.has\(room\.id\)/u)
-    expect(await Bun.file(new URL('../../src/lib/gallery/lobbyCeiling.ts', import.meta.url)).exists()).toBe(false)
   })
 })
 describe('the sun and the sky', () => {

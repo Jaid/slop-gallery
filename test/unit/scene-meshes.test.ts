@@ -47,7 +47,7 @@ describe('chandelier geometry', () => {
       geometry.dispose()
     }
   })
-  test('all eight arms still end in a saucer, candle and flame at their original locations', () => {
+  test('all eight arms end in a saucer, candle and flame', () => {
     const geometry = new ChandelierGeometry
     const material = new MeshBasicMaterial
     try {
