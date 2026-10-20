@@ -23,6 +23,8 @@ export type GalleryRenderPipelineOptions = {
   contactDarkening?: boolean
   focus?: {
     amount: () => number
+    /** scales the lens blur’s radius; 0 keeps the background sharp */
+    blur?: () => number
     distance: () => number
     proximity: () => number
   }
@@ -87,10 +89,11 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       const amount = uniform(0).onRenderUpdate(focus.amount)
       const distance = uniform(1).onRenderUpdate(focus.distance)
       const proximity = uniform(0).onRenderUpdate(focus.proximity)
+      const blur = uniform(1).onRenderUpdate(focus.blur ?? (() => 1))
       const bokeh = own(new KnotBokeh(current, scenePass.getViewZNode(), {
         amount,
         distance,
-        radius: proximity.pow3().mul(26).add(8),
+        radius: proximity.pow3().mul(26).add(8).mul(blur),
         enabled: () => focus.amount() > 0,
       }))
       current = bokeh.outputNode

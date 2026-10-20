@@ -5,6 +5,7 @@ import {MeshStandardNodeMaterial} from 'three/webgpu'
 import useGraphicsMode from 'use-graphics-mode'
 
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
+import Orbitable from '#component/Orbitable'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import fountain from '#src/lib/gallery/fountain/config.ts'
 import FountainGeometry from '#src/lib/gallery/fountain/FountainGeometry.ts'
@@ -25,7 +26,15 @@ export default function Fountain() {
   const spray = useDisposable(useMemo(() => new FountainSpray, []))
   const pool = useDisposable(useMemo(() => new FountainWaterMaterial(false, isHeavy), [isHeavy]))
   const falling = useDisposable(useMemo(() => new FountainWaterMaterial(true, isHeavy), [isHeavy]))
-  return <group name='lobby-fountain' position={fountain.position}>
+  // Framed around the jet’s crown and the plinth’s reach, circling at a bench’s distance at most.
+  return <Orbitable
+    id='lobby-fountain' center={[0, 1.4, 0]} name='lobby-fountain' orbit={{
+      radius: 2.5,
+      minDistance: 3.2,
+      maxDistance: 8,
+      floorY: fountain.position[1],
+    }} position={fountain.position} title='Fountain'
+  >
     <RigidBody colliders={false} type='fixed'>
       <MeshSurfaceCollider args={collision} />
       <mesh castShadow geometry={geometry.stone} material={stone} name='fountain-carved-stone' receiveShadow />
@@ -34,5 +43,5 @@ export default function Fountain() {
     <mesh geometry={geometry.pools} material={pool} name='fountain-pools' receiveShadow />
     <mesh geometry={geometry.water} material={falling} name='fountain-falling-water' />
     <primitive object={spray} />
-  </group>
+  </Orbitable>
 }

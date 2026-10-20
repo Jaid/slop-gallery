@@ -24,6 +24,6 @@ export default function GameScene({children}: GameWrapperProps) {
     <WebgpuCaptureBridge />
     <TelemetryBridge />
     {children}
-    <Branch if={visionMode === 'wireframe'} then={WireframeVision} else={<Branch if={profile.postprocessing || antiAliasing !== false}><Postprocessing antiAliasing={antiAliasing} contactDarkening={isKnottingham} heavy={profile.postprocessing} knotFocus={isKnottingham && profile.postprocessing} /></Branch>} />
+    <Branch if={visionMode === 'wireframe'} then={WireframeVision} else={<Branch if={profile.postprocessing || antiAliasing !== false}><Postprocessing antiAliasing={antiAliasing} contactDarkening={isKnottingham} focus={profile.postprocessing} heavy={profile.postprocessing} /></Branch>} />
   </>
 }

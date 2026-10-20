@@ -2,6 +2,7 @@ import {useThree} from '@react-three/fiber'
 import {ConvexHullCollider, useBeforePhysicsStep} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {knotExhibition, knotFloatHeight} from 'knot-materials/exhibition.ts'
+import {createKnotGeometry} from 'knot-materials/geometry.ts'
 import ProgressiveKnotMaterials from 'knot-materials/ProgressiveKnotMaterials.ts'
 import {useMemo} from 'react'
 import useGraphicsMode from 'use-graphics-mode'
@@ -12,6 +13,14 @@ import KnotLabels from '#component/levels/knottingham/KnotLabels'
 import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
 import {narrateModel} from '#src/lib/gallery/actions.ts'
 import KnotRotation from '#src/lib/physics/KnotRotation.ts'
+
+const baseRadius = (() => {
+  const geometry = createKnotGeometry()
+  geometry.computeBoundingSphere()
+  const radius = geometry.boundingSphere!.radius
+  geometry.dispose()
+  return radius
+})()
 
 export default function KnotExhibition() {
   const camera = useThree(state => state.camera)
@@ -39,7 +48,7 @@ export default function KnotExhibition() {
         return current !== undefined && !rotation.isShowcased(current)
       }
       return <GrabbableProp
-        key={finish.id} id={id} blockedMessage={() => 'Knock this Knot out of its showcase first.'} canGrab={outOfShowcase} colliders={false} position={[finish.position[0], knotFloatHeight, finish.position[2]]} recoverAsDynamic={outOfShowcase} rotation={[0, finish.rotation, 0]} title={`${finish.label} · ${finish.title} · ${finish.modelTitle}`} type='fixed'
+        key={finish.id} id={id} blockedMessage={() => 'Knock this Knot out of its showcase first.'} canGrab={outOfShowcase} colliders={false} orbit={{radius: baseRadius + (finish.displacement ?? 0)}} position={[finish.position[0], knotFloatHeight, finish.position[2]]} recoverAsDynamic={outOfShowcase} rotation={[0, finish.rotation, 0]} title={`${finish.label} · ${finish.title} · ${finish.modelTitle}`} type='fixed'
       >
         <ConvexHullCollider
           args={[colliderVertices]} contactSkin={finish.displacement ?? 0} onContactForce={({target}) => {

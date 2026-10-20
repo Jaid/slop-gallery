@@ -11,7 +11,10 @@ function setup() {
   camera.lookAt(center)
   return {
     camera,
-    orbit: new OrbitInspection(camera, center, 0.85),
+    orbit: new OrbitInspection(camera, center, {
+      radius: 0.85,
+      floorY: 0,
+    }),
   }
 }
 function settle(orbit: OrbitInspection) {
@@ -87,6 +90,93 @@ describe('hold-to-orbit camera', () => {
     orbit.addInput(10, 10)
     settle(orbit)
     expect(camera.fov).toBe(75)
+  })
+  test('orbits on both axes above a floor that isn’t at zero, such as a plinth below the ground floor', () => {
+    const camera = new PerspectiveCamera(75, 16 / 9, 0.05, 200)
+    const raised = new Vector3(7.5, -9.7, -16.5)
+    camera.position.set(4, -9.4, -16.7)
+    camera.lookAt(raised)
+    const orbit = new OrbitInspection(camera, raised, {
+      radius: 0.24,
+      floorY: -9.8,
+    })
+    for (let i = 0; i < 300; i++) {
+      orbit.update(raised, 1 / 60)
+    }
+    const level = camera.position.y
+    expect(level).toBeLessThan(raised.y + 0.5)
+    orbit.addInput(0, 0.5)
+    for (let i = 0; i < 300; i++) {
+      orbit.update(raised, 1 / 60)
+    }
+    expect(camera.position.y).toBeGreaterThan(level + 0.1)
+    orbit.addInput(0, -100)
+    for (let i = 0; i < 300; i++) {
+      orbit.update(raised, 1 / 60)
+    }
+    expect(camera.position.y).toBeGreaterThanOrEqual(-9.8 + 0.1799)
+  })
+  test('stays below a ceiling, such as Moonfall’s beams above its sculpture', () => {
+    const {camera} = setup()
+    const orbit = new OrbitInspection(camera, center, {
+      radius: 0.85,
+      ceilingY: 2,
+    })
+    orbit.addInput(0, 100)
+    settle(orbit)
+    expect(camera.position.y).toBeLessThanOrEqual(2 - 0.1799)
+    expect(camera.position.distanceTo(center)).toBeCloseTo(0.85 / Math.sin(50 * Math.PI / 360) * 0.96, 5)
+  })
+  test('starts from a given direction at a given distance and keeps within its turn limits, as in front of a portrait', () => {
+    const {camera} = setup()
+    const orbit = new OrbitInspection(camera, center, {
+      radius: 0.85,
+      distance: 3,
+      minDistance: 2,
+      maxDistance: 4,
+      facing: [0, 0, 1],
+      yawLimit: 1.2,
+      pitchLimit: 0.9,
+    })
+    settle(orbit)
+    expect(camera.position.x).toBeCloseTo(0, 5)
+    expect(camera.position.y).toBeCloseTo(1, 5)
+    expect(camera.position.z).toBeCloseTo(3, 5)
+    orbit.addInput(10, 10)
+    settle(orbit)
+    const offset = camera.position.clone().sub(center)
+    expect(Math.atan2(offset.x, offset.z)).toBeCloseTo(1.2, 5)
+    expect(Math.asin(offset.y / offset.length())).toBeCloseTo(0.9, 5)
+    orbit.adjustDistance(-10)
+    settle(orbit)
+    expect(camera.position.distanceTo(center)).toBeCloseTo(2, 5)
+    orbit.adjustDistance(10)
+    settle(orbit)
+    expect(camera.position.distanceTo(center)).toBeCloseTo(4, 5)
+  })
+  test('never spins around when the start direction lies where the orbit angle wraps, as for a portrait facing −z', () => {
+    const camera = new PerspectiveCamera(62, 1.4, 0.1, 1000)
+    const portrait = new Vector3(6.2, -5.9, -15.3)
+    camera.position.set(3.7, -9.4, -18.8)
+    camera.lookAt(portrait)
+    const orbit = new OrbitInspection(camera, portrait, {
+      radius: 1,
+      distance: 3,
+      facing: [Math.sin(Math.PI), 0, Math.cos(Math.PI)],
+      yawLimit: 1.2,
+      pitchLimit: 0.9,
+    })
+    let previous = Math.atan2(camera.position.x - portrait.x, camera.position.z - portrait.z)
+    let turned = 0
+    for (let i = 0; i < 300; i++) {
+      orbit.addInput(i < 150 ? 0.01 : -0.01, 0)
+      orbit.update(portrait, 1 / 60)
+      const angle = Math.atan2(camera.position.x - portrait.x, camera.position.z - portrait.z)
+      turned += Math.abs(Math.atan2(Math.sin(angle - previous), Math.cos(angle - previous)))
+      previous = angle
+      expect(camera.position.z).toBeLessThan(portrait.z)
+    }
+    expect(turned).toBeLessThan(Math.PI)
   })
   test('keeps the Knot centered and at a steady distance during fast orbits', () => {
     const {camera, orbit} = setup()

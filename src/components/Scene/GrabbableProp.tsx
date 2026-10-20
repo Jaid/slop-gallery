@@ -1,3 +1,4 @@
+import type {OrbitSettings} from '#src/lib/camera/OrbitInspection.ts'
 import type {Vec3} from '#src/lib/gallery.ts'
 import type {GrabbableBodyOptions} from '#src/lib/physics/GrabbableBody.ts'
 import type {RapierRigidBody, RigidBodyProps} from '@react-three/rapier'
@@ -9,6 +10,7 @@ import {RigidBody, useRapier} from '@react-three/rapier'
 import {useEffect, useLayoutEffect, useRef} from 'react'
 
 import {cameraPose, notify, useGallery} from '#src/lib/gallery.ts'
+import {registerOrbitable} from '#src/lib/gallery/orbitables.ts'
 import GrabbableBody from '#src/lib/physics/GrabbableBody.ts'
 
 export type PropHandle = {
@@ -27,11 +29,13 @@ type GrabbablePropProps = Omit<RigidBodyProps, 'children' | 'position' | 'ref'> 
   blockedMessage?: () => string
   children: ReactNode
   id: string
+  /** lets holding V orbit around the prop */
+  orbit?: OrbitSettings
   position: Vec3
   title: string
 }
 
-export default function GrabbableProp({id, title, children, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, attachmentBody, ...props}: GrabbablePropProps) {
+export default function GrabbableProp({id, title, orbit, children, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, attachmentBody, ...props}: GrabbablePropProps) {
   const body = useRef<RapierRigidBody>(null)
   const group = useRef<Group>(null)
   const controller = useRef<GrabbableBody | null>(null)
@@ -52,6 +56,8 @@ export default function GrabbableProp({id, title, children, canGrab, blockedMess
       attachmentBody,
     }
   }, [canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, attachmentBody])
+  // Settings are read once per registration, so inline objects don’t re-register every render.
+  const orbitSettings = useRef(orbit)
   const {world} = useRapier()
   const held = useGallery(s => s.held === id)
   useEffect(() => {
@@ -89,7 +95,14 @@ export default function GrabbableProp({id, title, children, canGrab, blockedMess
       },
     }
     propObjects.set(id, handle)
+    const unregisterOrbitable = orbitSettings.current && registerOrbitable(id, {
+      body: body.current,
+      group: group.current,
+      orbit: orbitSettings.current,
+      title,
+    })
     return () => {
+      unregisterOrbitable?.()
       if (propObjects.get(id) === handle) {
         propObjects.delete(id)
       }

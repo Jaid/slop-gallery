@@ -9,6 +9,7 @@ import placementSpace from '#level/placement.ts'
 import {readIntroNarration} from '#src/lib/audio/intro.ts'
 import {cameraPose, dragPose, narrate, roomAt, setCameraFocused, useGallery} from '#src/lib/gallery.ts'
 import {interactiveObjects} from '#src/lib/gallery/interactiveObjects.ts'
+import {orbitables} from '#src/lib/gallery/orbitables.ts'
 import {isPortraitLabelHit, portraitLabelLayout} from '#src/lib/gallery/portraitLabel.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
 import interactionHint from '#src/lib/interactionHint.ts'
@@ -29,7 +30,6 @@ export default function useInteractionFrame(camera: RootState['camera'], rendere
   placement,
   previousHeld,
   ray,
-  view,
 }: InteractionFrameRefs) {
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.06)
@@ -41,38 +41,6 @@ export default function useInteractionFrame(camera: RootState['camera'], rendere
     if (previousHeld.current !== s.held) {
       placement.current = null
       previousHeld.current = s.held
-    }
-    const viewing = view.current
-    if (viewing) {
-      const portrait = s.portraits.find(candidate => candidate.id === viewing.id)
-      if (!portrait?.hung && !viewing.returning) {
-        viewing.returning = true
-        useGallery.setState({inspecting: null})
-      }
-      let target = viewing.position
-      let rotation = viewing.rotation
-      if (!viewing.returning && portrait) {
-        const normal = new Vector3(Math.sin(portrait.rotation), 0, Math.cos(portrait.rotation))
-        // Inspecting the name plate frames the portrait and its plate together, with extra room around both. The portrait alone only gets the proportional margin.
-        const label = portraitLabelLayout(portrait.width, portrait.height, portrait.labelAbove)
-        const bottom = viewing.label ? Math.min(-portrait.height / 2, label.bottom) : -portrait.height / 2
-        const top = viewing.label ? Math.max(portrait.height / 2, label.top) : portrait.height / 2
-        const distance = camera instanceof PerspectiveCamera ? Math.max(top - bottom + (viewing.label ? 0.4 : 0), portrait.width / camera.aspect) / (2 * Math.tan(camera.fov * Math.PI / 360)) * 1.14 : 3
-        const center = new Vector3(...portrait.position)
-        center.y += (top + bottom) / 2
-        target = center.clone().addScaledVector(normal, distance)
-        const lookAtPortrait = new Matrix4
-        lookAtPortrait.lookAt(target, center, up)
-        const portraitFacing = new Quaternion
-        rotation = portraitFacing.setFromRotationMatrix(lookAtPortrait)
-      }
-      camera.position.lerp(target, 1 - Math.exp(-dt * 8))
-      camera.quaternion.copy(viewing.look.update(rotation, dt))
-      if (viewing.returning && camera.position.distanceTo(target) < 0.01 && camera.quaternion.angleTo(rotation) < 0.005) {
-        viewing.restoreControls()
-        view.current = null
-        setCameraFocused(false)
-      }
     }
     camera.getWorldDirection(direction.current)
     cameraPose.position = camera.position.toArray()
@@ -92,7 +60,7 @@ export default function useInteractionFrame(camera: RootState['camera'], rendere
       let closest = levelWallDistance(cameraPose.position, cameraPose.direction)
       let active: string | null = null
       let activeLabel: string | null = null
-      for (const [id, object] of [...portraitObjects, ...propObjects, ...interactiveObjects]) {
+      for (const [id, object] of [...portraitObjects, ...propObjects, ...interactiveObjects, ...orbitables]) {
         if (id === s.held || !object.group.visible) {
           continue
         }

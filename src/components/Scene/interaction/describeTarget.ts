@@ -2,6 +2,7 @@ import type {Portrait} from '#src/lib/gallery.ts'
 import type {HintContent, HintKey} from '#src/lib/interactionHint.ts'
 
 import {interactiveObjects} from '#src/lib/gallery/interactiveObjects.ts'
+import {orbitables} from '#src/lib/gallery/orbitables.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
 
 import {propObjects} from '../GrabbableProp.tsx'
@@ -47,8 +48,8 @@ export function describeTarget(id: string | null, portraits: ReadonlyArray<Portr
       action: 'Listen',
     })
   }
-  // Holding V inspects hung portraits and Knottingham exhibits.
-  if (portrait?.hung || interactive?.inspectable) {
+  // Holding V inspects hung portraits and orbits around exhibits.
+  if (portrait?.hung || interactive?.inspectable || orbitables.has(id)) {
     keys.push(inspect)
   }
   if (prop) {
@@ -82,5 +83,5 @@ function findPortrait(id: string, portraits: ReadonlyArray<Portrait>) {
   return portraitObjects.has(id) ? portraits.find(candidate => candidate.id === id) : undefined
 }
 function titleOf(id: string, portrait: Portrait | undefined) {
-  return interactiveObjects.get(id)?.title ?? portrait?.title ?? propObjects.get(id)?.title
+  return interactiveObjects.get(id)?.title ?? portrait?.title ?? propObjects.get(id)?.title ?? orbitables.get(id)?.title
 }

@@ -1,5 +1,5 @@
 import type {Placement} from '#src/lib/gallery.ts'
-import type {FirstPose, InspectionState} from './interaction/types.ts'
+import type {FirstPose} from './interaction/types.ts'
 import type {Group} from 'three/webgpu'
 
 import {useThree} from '@react-three/fiber'
@@ -7,6 +7,7 @@ import Branch from 'branch-component'
 import {useRef} from 'react'
 import {Raycaster, Vector2, Vector3} from 'three/webgpu'
 
+import OrbitViewing from '#component/OrbitViewing'
 import PlacementPreview from '#component/PlacementPreview'
 import {useGallery} from '#src/lib/gallery.ts'
 
@@ -21,7 +22,6 @@ export default function Interaction() {
   const placement = useRef<Placement | null>(null)
   const direction = useRef(new Vector3)
   const cursor = useRef(new Vector2)
-  const view = useRef<InspectionState | null>(null)
   const previousHeld = useRef<string | null>(null)
   const firstPose = useRef<FirstPose | null>(null)
   const introduced = useRef(false)
@@ -33,7 +33,6 @@ export default function Interaction() {
     controls,
     renderer,
     placement,
-    view,
     firstPose,
   })
   useInteractionDiagnostics(camera, renderer, placement)
@@ -46,9 +45,11 @@ export default function Interaction() {
     placement,
     previousHeld,
     ray,
-    view,
   })
-  return <group visible={false} ref={ghost}>
-    <Branch some={[artwork, dragging]} not={held?.startsWith('prop-')}><PlacementPreview key={artwork?.id ?? 'import'} creator={artwork?.creator} height={artwork?.height ?? 2.4} pending={artwork?.pending} source={artwork?.source} title={artwork?.title} width={artwork?.width ?? 2.4} /></Branch>
-  </group>
+  return <>
+    <OrbitViewing />
+    <group visible={false} ref={ghost}>
+      <Branch some={[artwork, dragging]} not={held?.startsWith('prop-')}><PlacementPreview key={artwork?.id ?? 'import'} creator={artwork?.creator} height={artwork?.height ?? 2.4} pending={artwork?.pending} source={artwork?.source} title={artwork?.title} width={artwork?.width ?? 2.4} /></Branch>
+    </group>
+  </>
 }

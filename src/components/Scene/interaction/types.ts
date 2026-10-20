@@ -1,20 +1,8 @@
-import type InspectionLook from '#src/lib/camera/InspectionLook.ts'
 import type {Placement} from '#src/lib/gallery.ts'
 import type {Group, Quaternion, Raycaster, Vector2, Vector3} from 'three/webgpu'
 
 export type MutableRef<T> = {
   current: T
-}
-
-export type InspectionState = {
-  id: string
-  /** whether V was pressed on the name plate, so the view frames the plate together with the portrait */
-  label: boolean
-  look: InspectionLook
-  position: Vector3
-  restoreControls: () => void
-  returning: boolean
-  rotation: Quaternion
 }
 
 export type FirstPose = {
@@ -31,5 +19,4 @@ export type InteractionFrameRefs = {
   placement: MutableRef<Placement | null>
   previousHeld: MutableRef<string | null>
   ray: MutableRef<Raycaster>
-  view: MutableRef<InspectionState | null>
 }

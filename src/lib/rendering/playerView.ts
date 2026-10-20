@@ -4,9 +4,10 @@ import aimDot from '#src/lib/aimDot.ts'
 import interactionHint from '#src/lib/interactionHint.ts'
 
 let zoom = 0
-let knotFocus = 0
-let knotFocusDistance = 1
-let knotFocusProximity = 0
+let focus = 0
+let focusBlur = 1
+let focusDistance = 1
+let focusProximity = 0
 
 export function getPlayerZoom() {
   return zoom
@@ -19,22 +20,31 @@ export function setPlayerZoom(amount: number) {
   interactionHint.setSuppressed(zoom > 0)
 }
 
-export function getKnotFocus() {
-  return knotFocus
+export function getInspectionFocus() {
+  return focus
 }
 
-export function getKnotFocusDistance() {
-  return knotFocusDistance
+/** how strongly the background blurs while inspecting, relative to the default */
+export function getInspectionFocusBlur() {
+  return focusBlur
 }
 
-export function getKnotFocusProximity() {
-  return knotFocusProximity
+export function getInspectionFocusDistance() {
+  return focusDistance
 }
 
-export function setKnotFocus(amount: number, distance: number, proximity: number) {
-  knotFocus = clamp(amount, 0, 1)
-  knotFocusProximity = clamp(proximity, 0, 1)
+export function getInspectionFocusProximity() {
+  return focusProximity
+}
+
+/** Without a blur factor, the last one stays, so a fade-out keeps the strength it faded in with. */
+export function setInspectionFocus(amount: number, distance: number, proximity: number, blur?: number) {
+  focus = clamp(amount, 0, 1)
+  if (blur !== undefined && Number.isFinite(blur) && blur >= 0) {
+    focusBlur = blur
+  }
+  focusProximity = clamp(proximity, 0, 1)
   if (Number.isFinite(distance) && distance > 0) {
-    knotFocusDistance = distance
+    focusDistance = distance
   }
 }
