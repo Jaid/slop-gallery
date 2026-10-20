@@ -23,6 +23,13 @@ export function imageSize(width: number, height: number, area = 30_000) {
   }
 }
 
+/** The centered part of an image, as x, y, width and height, that is at most `limit` times as wide as tall or as tall as wide. */
+export function centeredCrop(width: number, height: number, limit = 2) {
+  const cropWidth = Math.min(width, height * limit)
+  const cropHeight = Math.min(height, width * limit)
+  return [(width - cropWidth) / 2, (height - cropHeight) / 2, cropWidth, cropHeight] as const
+}
+
 export function containedRect(width: number, height: number, targetWidth: number, targetHeight: number) {
   const scale = Math.min(targetWidth / width, targetHeight / height)
   return [(targetWidth - width * scale) / 2, (targetHeight - height * scale) / 2, width * scale, height * scale] as const
@@ -122,16 +129,19 @@ export default class ImageImporter {
           let size: ReturnType<typeof imageSize>
           let source: Blob
           try {
-            size = imageSize(bitmap.width, bitmap.height)
-            const scale = Math.min(1, 3072 / Math.max(bitmap.width, bitmap.height))
-            const canvas = new OffscreenCanvas(Math.max(1, Math.round(bitmap.width * scale)), Math.max(1, Math.round(bitmap.height * scale)))
+            // Works wider than 2:1 or taller than 1:2 keep only their middle.
+            const crop = centeredCrop(bitmap.width, bitmap.height)
+            const [, , cropWidth, cropHeight] = crop
+            size = imageSize(cropWidth, cropHeight)
+            const scale = Math.min(1, 3072 / Math.max(cropWidth, cropHeight))
+            const canvas = new OffscreenCanvas(Math.max(1, Math.round(cropWidth * scale)), Math.max(1, Math.round(cropHeight * scale)))
             const context = canvas.getContext('2d')
             if (!context) {
               throw new Error('The image could not be decoded.')
             }
             context.fillStyle = '#f2eee3'
             context.fillRect(0, 0, canvas.width, canvas.height)
-            context.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+            context.drawImage(bitmap, ...crop, 0, 0, canvas.width, canvas.height)
             source = await canvas.convertToBlob({
               type: 'image/webp',
               quality: 0.94,
