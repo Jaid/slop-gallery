@@ -25,7 +25,7 @@ export const towerRamp = {
   railHeight: 1,
 }
 // The lower jamb lies flush with the base’s flat front face, so no sliver of the rounded fillets is left standing beside the
-// opening; the taller jamb meets the circular tower’s rear edge.
+// opening; the taller end reaches the circular tower’s rear edge, where the round tower itself closes the passage.
 const archStartZ = startZ
 const archEndZ = oculusTower.z - oculusTower.radius
 export const towerArch = {
@@ -35,7 +35,8 @@ export const towerArch = {
   // low enough that more than 50 cm of stone stays between the rounded corner and the ramp’s deck above it
   lowHeight: 2.4 + oculusDrop,
   cornerRadius: 0.7,
-  highCornerRadius: 0.45,
+  // where the roof rounds down into the round tower behind the bridge’s end
+  highCornerRadius: 0.6,
 }
 
 const easedHeight = (t: number) => startY + t * t * (3 - 2 * t) * (endY - startY)

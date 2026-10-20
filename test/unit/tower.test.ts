@@ -163,9 +163,10 @@ describe('cylindrical Oculus platform', () => {
     }
   })
   test('the cut stays lean', () => {
-    expect((geometry.index?.count ?? geometry.getAttribute('position').count) / 3).toBeLessThan(2200)
+    // The smooth junction of the round tower with the bridge accounts for most of these.
+    expect((geometry.index?.count ?? geometry.getAttribute('position').count) / 3).toBeLessThan(3000)
   })
-  test('the underpass has a tall tower-side jamb, a sloping roof and tangent rounded corners', () => {
+  test('the underpass has a sloping roof with tangent rounded corners, the tall one curving into the round tower', () => {
     const half = towerArch.width / 2
     const slope = (towerArch.height - towerArch.lowHeight) / towerArch.width
     const radius = towerArch.cornerRadius
@@ -173,14 +174,17 @@ describe('cylindrical Oculus platform', () => {
     const cy = towerArch.lowHeight + slope * radius - radius * Math.hypot(1, slope)
     const tangentAngle = Math.atan2(1, slope)
     const highRadius = towerArch.highCornerRadius
-    const highCx = -half + highRadius
-    const highCy = towerArch.height - slope * highRadius - highRadius * Math.hypot(1, slope)
+    // Above the passage’s center line, the fillet meets the tower’s wall at its northernmost point.
+    const highCz = tower.z - tower.radius + 0.002 - highRadius
+    const highCu = towerArch.z - highCz
+    const highCy = towerArch.height - slope * (towerArch.z + half - highCz) - highRadius * Math.hypot(1, slope)
+    const highEnd = Math.PI - Math.atan(1 / slope)
     // Each sample keeps the arc it lies on (center u, center height, radius), if any.
     const points: Array<[number, number, [number, number, number]?]> = [
-      [0, towerArch.height - slope * half],
-      ...[0.05, 0.3, 0.6, 0.85, 0.97].map((fraction): [number, number, [number, number, number]] => {
-        const angle = tangentAngle + (Math.PI - tangentAngle) * fraction
-        return [highCx + highRadius * Math.cos(angle), highCy + highRadius * Math.sin(angle), [highCx, highCy, highRadius]]
+      ...[0, -1, -1.5].map((u): [number, number] => [u, towerArch.height - slope * (u + half)]),
+      ...[0.2, 0.45, 0.7, 0.95].map((fraction): [number, number, [number, number, number]] => {
+        const angle = highEnd * fraction
+        return [towerArch.z - (highCz + highRadius * Math.cos(angle)), highCy + highRadius * Math.sin(angle), [highCu, highCy, highRadius]]
       }),
       ...[0.15, 0.4, 0.7, 0.95].map((fraction): [number, number, [number, number, number]] => {
         const angle = tangentAngle * fraction
@@ -218,7 +222,7 @@ describe('cylindrical Oculus platform', () => {
           }
         }
       }
-      // The tower-side jamb; the lower one is the base’s front face and has its own test.
+      // The round tower closes the passage; the lower jamb is the base’s front face and has its own test.
       for (const inset of [-0.02, 0.02]) {
         const z = towerArch.z + half - inset
         const ray = new Raycaster(new Vector3(tower.x - 2, tower.floorY + 1, z), new Vector3(1, 0, 0), 0, 4)

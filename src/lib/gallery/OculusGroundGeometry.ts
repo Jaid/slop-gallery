@@ -1,5 +1,5 @@
 import {ADDITION, Brush, Evaluator, SUBTRACTION} from 'three-bvh-csg'
-import {BoxGeometry, BufferGeometry, ExtrudeGeometry, Float32BufferAttribute, MeshBasicNodeMaterial, Shape} from 'three/webgpu'
+import {BoxGeometry, BufferGeometry, ExtrudeGeometry, Float32BufferAttribute, MeshBasicNodeMaterial, Shape, ShapeUtils, Vector2} from 'three/webgpu'
 
 import lowerGallery, {oculusCornerRamps, oculusLowerRamps, oculusPlatform, oculusQuarterLandings, oculusRampLandings, oculusRamps, rampLandingCorner, rampLandingOutline} from './lowerGallery.ts'
 import tower, {towerArch, towerPlatformOutline, towerRamp, towerRampGradient, towerRampHalfWidth, towerRampHeight, towerRampSections} from './oculusTower.ts'
@@ -79,56 +79,17 @@ export default class OculusGroundGeometry extends BufferGeometry {
         topNormals.setXYZ(i, 0, 1 / length, -gradient / length)
       }
       slope.translate(tower.x, floorY, (towerRamp.startZ + towerRamp.endZ) / 2)
-      const halfWidth = towerArch.width / 2
       const roofSlope = (towerArch.height - towerArch.lowHeight) / towerArch.width
-      const radius = towerArch.cornerRadius
-      const cornerX = halfWidth - radius
-      const cornerY = towerArch.lowHeight + roofSlope * radius - radius * Math.hypot(1, roofSlope)
-      const highRadius = towerArch.highCornerRadius
-      const highCornerX = -halfWidth + highRadius
-      const highCornerY = towerArch.height - roofSlope * highRadius - highRadius * Math.hypot(1, roofSlope)
-      const tangentAngle = Math.atan2(1, roofSlope)
-      const shape = new Shape
-      // Local −X faces the taller tower end after rotation. Circular fillets
-      // join the sloping roof tangentially to both vertical jambs.
-      // The lower jamb coincides with the base’s front face. Instead of cutting along that plane, which would leave coplanar
-      // faces to the CSG, the cutter reaches into the base volume, which the base block refills afterward.
-      const overshoot = 0.2
-      shape.moveTo(-halfWidth, -0.1)
-      shape.lineTo(halfWidth + overshoot, -0.1)
-      shape.lineTo(halfWidth + overshoot, cornerY)
-      shape.lineTo(halfWidth, cornerY)
-      shape.absarc(cornerX, cornerY, radius, 0, tangentAngle, false)
-      shape.lineTo(highCornerX + highRadius * Math.cos(tangentAngle), highCornerY + highRadius * Math.sin(tangentAngle))
-      shape.absarc(highCornerX, highCornerY, highRadius, tangentAngle, Math.PI, false)
-      shape.closePath()
-      const cutterDepth = towerRamp.width + towerRamp.baseCornerRadius * 2 + 2
-      // Shapes sample every arc with twice the curve segments. Radial normals keep the few chords looking round, so
-      // the cut doesn’t have to fragment the walls into hundreds of slivers.
-      const cutter = new ExtrudeGeometry(shape, {
-        depth: cutterDepth,
-        bevelEnabled: false,
-        curveSegments: 6,
-      })
-      smoothArcNormals(cutter, [[cornerX, cornerY, radius], [highCornerX, highCornerY, highRadius]])
-      cutter.translate(0, 0, -cutterDepth / 2).rotateY(Math.PI / 2).translate(tower.x, floorY, towerArch.z)
-      const outline = new Shape
-      for (const [i, [x, z]] of towerPlatformOutline.entries()) {
-        if (i === 0) {
-          outline.moveTo(x, z)
-        } else {
-          outline.lineTo(x, z)
-        }
-      }
-      outline.closePath()
-      const platform = new ExtrudeGeometry(outline, {
-        depth: tower.height,
-        bevelEnabled: false,
-      })
-      platform.rotateX(Math.PI / 2).translate(tower.x, tower.floorY + tower.height, tower.z)
-      // Cut the joined support so the platform’s rounded shoulder cannot refill the opening.
-      let solid = combine(brush(slope), brush(platform))
-      solid = combine(solid, brush(cutter), SUBTRACTION)
+      const roofAtBridgeEnd = floorY + towerArch.height - roofSlope * (towerArch.z + towerArch.width / 2 - towerRamp.endZ)
+      // Behind its end, the bridge reaches into the tower up to the passage’s roof, so the fillet that rounds the roof down
+      // into the tower is carved from one piece and stays flush with the bridge’s sides. It starts well below the fillet but
+      // above the floor, whose plane it would otherwise share with the tower.
+      const reachBottom = floorY + towerArch.height - towerArch.highCornerRadius * 3
+      const reach = new BoxGeometry(towerRamp.width, roofAtBridgeEnd - reachBottom, tower.z - towerRamp.endZ)
+      reach.translate(tower.x, (reachBottom + roofAtBridgeEnd) / 2, (towerRamp.endZ + tower.z) / 2)
+      // Only the bridge is cut, so the passage ends against the round tower.
+      const bridge = combine(combine(brush(slope), brush(reach)), brush(new ArchCutterGeometry), SUBTRACTION)
+      let solid = combine(bridge, brush(new TowerGeometry(roofAtBridgeEnd)))
       solid = combine(solid, block(oculusPlatform))
       for (const ramp of oculusRamps) {
         const middleY = ramp.floorY + ramp.rise / 2
@@ -191,5 +152,316 @@ export default class OculusGroundGeometry extends BufferGeometry {
       }
       material.dispose()
     }
+  }
+}
+
+/**
+ * The air of the passage under the bridge, with a sloping roof between two circular fillets: a fixed one into the base’s
+ * front face, and one into the round tower’s wall, which follows the wall around. Only the part near the tower is split into
+ * sections across the bridge, so the rest of the cut stays as lean as a plain extrusion. Radial normals keep the few chords
+ * of both fillets looking round.
+ */
+class ArchCutterGeometry extends BufferGeometry {
+  constructor() {
+    super()
+    const halfWidth = towerArch.width / 2
+    const roofSlope = (towerArch.height - towerArch.lowHeight) / towerArch.width
+    const tangent = Math.hypot(1, roofSlope)
+    const tangentAngle = Math.atan2(1, roofSlope)
+    const lowRadius = towerArch.cornerRadius
+    const lowU = halfWidth - lowRadius
+    const lowY = towerArch.lowHeight + roofSlope * lowRadius - lowRadius * tangent
+    const highRadius = towerArch.highCornerRadius
+    // Local u runs from the tower toward the base, in the passage’s cross section.
+    const roof = (u: number) => towerArch.height - roofSlope * (u + halfWidth)
+    // The lower jamb coincides with the base’s front face. Instead of cutting along that plane, which would leave coplanar
+    // faces to the CSG, the cutter reaches into the base volume, which the base block refills afterward.
+    const overshoot = 0.2
+    const lowSteps = 12
+    const highSteps = 14
+    const sections = 8
+    const bridgeHalfWidth = towerRamp.width / 2
+    const reach = bridgeHalfWidth + towerRamp.baseCornerRadius + 1
+    type Vertex = {
+      arc?: number
+      normal?: readonly [number, number, number]
+      position: readonly [number, number, number]
+    }
+    const at = (x: number, u: number, y: number) => [tower.x + x, tower.floorY + y, towerArch.z - u] as const
+    const xs = [-reach, ...Array.from({length: sections + 1}, (_, i) => -bridgeHalfWidth + bridgeHalfWidth * 2 * i / sections), reach]
+    const walls = xs.map(x => {
+      const along = Math.max(-bridgeHalfWidth, Math.min(bridgeHalfWidth, x))
+      const depth = Math.sqrt(tower.radius ** 2 - along ** 2)
+      // A hair inside the faceted cylinder, so the bridge leaves no sliver standing beside its chords.
+      return {
+        u: towerArch.z - (tower.z - depth + 0.002),
+        radial: [along / tower.radius, -depth / tower.radius] as const,
+      }
+    })
+    // Where the sections begin, a little before the first fillet leaves the roof
+    const split = Math.max(...walls.map(({u}) => u)) + highRadius * (1 + Math.cos(tangentAngle)) + 0.05
+    const lowChain = (x: number): Array<Vertex> => [
+      {position: at(x, halfWidth + overshoot, -0.1)},
+      {position: at(x, halfWidth + overshoot, lowY)},
+      ...Array.from({length: lowSteps + 1}, (__, k): Vertex => {
+        const angle = tangentAngle * k / lowSteps
+        return {
+          position: at(x, lowU + lowRadius * Math.cos(angle), lowY + lowRadius * Math.sin(angle)),
+          normal: [0, Math.sin(angle), -Math.cos(angle)],
+          arc: 0,
+        }
+      }),
+    ]
+    const highChains = xs.map((x, i): Array<Vertex> => {
+      const {u: wallU, radial} = walls[i]
+      const highU = wallU + highRadius
+      const highY = roof(highU) - highRadius * tangent
+      return [
+        {position: at(x, split, roof(split))},
+        ...Array.from({length: highSteps + 1}, (__, k): Vertex => {
+          const angle = tangentAngle + (Math.PI - tangentAngle) * k / highSteps
+          // Pointing away from the passage: into the roof, turning into the tower’s wall.
+          const wall = Math.max(0, -Math.cos(angle))
+          const normal = [-radial[0] * wall, Math.sin(angle), -Math.cos(angle) * (1 - (1 - Math.abs(radial[1])) * wall)]
+          const length = Math.hypot(...normal)
+          return {
+            position: at(x, highU + highRadius * Math.cos(angle), highY + highRadius * Math.sin(angle)),
+            normal: normal.map(value => value / length) as unknown as readonly [number, number, number],
+            arc: 1,
+          }
+        }),
+        {position: at(x, wallU, -0.1)},
+      ]
+    })
+    const positions: Array<number> = []
+    const normals: Array<number> = []
+    const face = ([a, b, c]: Array<readonly [number, number, number]>) => {
+      const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]]
+      const v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]]
+      const result = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]
+      const length = Math.hypot(...result)
+      return result.map(value => value / length) as unknown as readonly [number, number, number]
+    }
+    // The cross section is star-shaped around a point inside the passage, which tells every face which way is out.
+    const inside = at(0, 0, 2)
+    const triangle = (corners: Array<Vertex>, outward?: readonly [number, number, number], smooth = false) => {
+      const flat = face(corners.map(({position}) => position))
+      const center = [0, 1, 2].map(axis => corners.reduce((sum, {position}) => sum + position[axis], 0) / 3)
+      const direction = outward ?? [0, center[1] - inside[1], center[2] - inside[2]]
+      const flip = flat[0] * direction[0] + flat[1] * direction[1] + flat[2] * direction[2] < 0
+      for (const corner of flip ? [corners[0], corners[2], corners[1]] : corners) {
+        positions.push(...corner.position)
+        normals.push(...smooth ? corner.normal! : (flip ? flat.map(value => -value) : flat))
+      }
+    }
+    const strip = (left: Array<Vertex>, right: Array<Vertex>) => {
+      for (let k = 0; k < left.length - 1; k++) {
+        const smooth = left[k].arc !== undefined && left[k].arc === left[k + 1].arc
+        triangle([left[k], right[k], left[k + 1]], undefined, smooth)
+        triangle([left[k + 1], right[k], right[k + 1]], undefined, smooth)
+      }
+    }
+    const polygon = (vertices: Array<Vertex>, outward: readonly [number, number, number], project: (position: readonly [number, number, number]) => Vector2) => {
+      for (const indices of ShapeUtils.triangulateShape(vertices.map(({position}) => project(position)), [])) {
+        triangle(indices.map(index => vertices[index]), outward)
+      }
+    }
+    const lowLeft = lowChain(-reach)
+    const lowRight = lowChain(reach)
+    strip(lowLeft, lowRight)
+    for (let i = 0; i < xs.length - 1; i++) {
+      strip(highChains[i], highChains[i + 1])
+    }
+    // The roof between the base’s fillet and the sections, and the floor beneath it all, close the seams without T-junctions.
+    polygon([lowLeft.at(-1)!, lowRight.at(-1)!, ...highChains.toReversed().map(chain => chain[0])], [0, 1, 0], ([x, , z]) => new Vector2(x, z))
+    polygon([lowLeft[0], lowRight[0], ...highChains.toReversed().map(chain => chain.at(-1)!)], [0, -1, 0], ([x, , z]) => new Vector2(x, z))
+    for (const [low, high, facing] of [[lowLeft, highChains[0], -1], [lowRight, highChains.at(-1)!, 1]] as const) {
+      polygon([...low, ...high], [facing, 0, 0], position => new Vector2(position[2], position[1]))
+    }
+    this.setAttribute('position', new Float32BufferAttribute(positions, 3))
+    this.setAttribute('normal', new Float32BufferAttribute(normals, 3))
+  }
+}
+/**
+ * The tower as one closed solid: a full cylinder whose top flows into the shoulders joining it to the bridge, like modeled clay.
+ * Below their rim, the shoulders ease sideways in a smooth S-curve, onto the cylinder or onto the bridge’s side where that
+ * stands in front of it, so nothing flattens the cylinder down to the floor and no ledge is left beneath them. Building the
+ * union directly keeps the CSG from fragmenting the shared surfaces.
+ */
+class TowerGeometry extends BufferGeometry {
+  constructor(bottom: number) {
+    super()
+    const top = tower.floorY + tower.height
+    const {floorY, radius} = tower
+    const rim = 0.2
+    const steps = 6
+    const southSegments = 96
+    const neckSegments = 4
+    // The outline starts at the neck’s west end, followed by the east shoulder up to where it meets the circle.
+    const [[neckX, neckZ]] = towerPlatformOutline
+    const profile = towerPlatformOutline.slice(1, 18)
+    // A column exactly where the bridge’s side meets the cylinder keeps the shoulders’ underside from overhanging that side.
+    const cornerZ = -Math.sqrt(radius ** 2 - neckX ** 2)
+    const crossing = profile.findIndex(([, z]) => z > cornerZ)
+    const [[x0, z0], [x1, z1]] = [profile[crossing - 1], profile[crossing]]
+    const shoulder = profile.toSpliced(crossing, 0, [x0 + (x1 - x0) * (cornerZ - z0) / (z1 - z0), cornerZ])
+    const join = shoulder.at(-1)!
+    const joinAngle = Math.atan2(join[1], join[0])
+    const southStep = (Math.PI - 2 * joinAngle) / southSegments
+    const outline: Array<readonly [number, number]> = [
+      ...shoulder,
+      ...Array.from({length: southSegments - 1}, (_, i): [number, number] => {
+        const theta = joinAngle + southStep * (i + 1)
+        return [Math.cos(theta) * radius, Math.sin(theta) * radius]
+      }),
+      ...shoulder.toReversed().map(([x, z]): [number, number] => [-x, z]),
+      ...Array.from({length: neckSegments - 1}, (_, i): [number, number] => [neckX * (1 - 2 * (i + 1) / neckSegments), neckZ]),
+    ]
+    const count = outline.length
+    const eastCorner = 0
+    const westCorner = shoulder.length * 2 + southSegments - 2
+    const targets = outline.map(([x, z]) => {
+      const reach = Math.max(-neckX, Math.sqrt(Math.max(0, radius ** 2 - z ** 2)))
+      return [Math.sign(x) * Math.min(Math.abs(x), reach), z] as const
+    })
+    // Near the join, the shoulder curve dips a few millimeters inside the circle; there it stands on the ground as it is.
+    const grounded = targets.map(([x, z]) => Math.hypot(x, z) < radius + 1e-6)
+    const easing = outline.map(([x], i) => Math.abs(x - targets[i][0]) > 1e-9)
+    const at = (index: number) => (index + count) % count
+    // 0 along the rim, 1 at the bottom, with level tangents at both ends.
+    const span = top - rim - bottom
+    const ease = (y: number) => {
+      const t = Math.min(1, Math.max(0, (top - rim - y) / span))
+      return [t * t * (3 - 2 * t), y > top - rim || y < bottom ? 0 : -6 * t * (1 - t) / span] as const
+    }
+    const point = (index: number, y: number) => {
+      const [x, z] = outline[at(index)]
+      return [tower.x + x + (targets[at(index)][0] - x) * ease(y)[0], y, tower.z + z] as const
+    }
+    const normal = (index: number, y: number) => {
+      const [targetX, targetZ] = targets[index]
+      // Below the shoulders, standing columns are plain cylinder.
+      if (y < bottom && grounded[index]) {
+        return [targetX / radius, 0, targetZ / radius] as const
+      }
+      const level = Math.max(y, bottom)
+      // The neck’s corners, and the columns where the bridge’s side meets the cylinder, take their tangent from the curved side
+      // alone, keeping the creases crisp.
+      const previous = index === eastCorner || grounded[index] && !grounded[at(index - 1)] ? index : index - 1
+      const next = index === westCorner || grounded[index] && !grounded[at(index + 1)] ? index : index + 1
+      const a = point(previous, level)
+      const b = point(next, level)
+      const ring = [b[0] - a[0], 0, b[2] - a[2]]
+      const vertical = [(targets[index][0] - outline[index][0]) * ease(level)[1], 1, 0]
+      const result = [vertical[1] * ring[2] - vertical[2] * ring[1], vertical[2] * ring[0] - vertical[0] * ring[2], vertical[0] * ring[1] - vertical[1] * ring[0]]
+      const sign = Math.sign(result[0] * outline[index][0] + result[2] * outline[index][1]) / Math.hypot(...result)
+      return result.map(value => value * sign) as unknown as readonly [number, number, number]
+    }
+    type Vertex = {
+      normal: readonly [number, number, number]
+      position: readonly [number, number, number]
+    }
+    const levels = [bottom, ...Array.from({length: steps - 1}, (_, k) => bottom + span * (k + 1) / steps), top - rim, top]
+    const columns = outline.map((_, i): Array<Vertex> => {
+      const band = easing[i] || easing[at(i - 1)] || easing[at(i + 1)] ? levels : [bottom, top]
+      const heights = grounded[i] ? [floorY, ...band.slice(band === levels ? 0 : 1)] : band
+      return heights.map(y => ({
+        position: point(i, y),
+        normal: normal(i, y),
+      }))
+    })
+    // Below the shoulders, the cylinder closes behind the bridge’s end along its own arc.
+    const eastGrounded = grounded.findIndex(Boolean)
+    const westGrounded = shoulder.length + southSegments - 2 + grounded.slice(shoulder.length + southSegments - 2, westCorner + 1).lastIndexOf(true)
+    const eastAngle = Math.atan2(targets[eastGrounded][1], targets[eastGrounded][0])
+    // Both lie north of the center, so the arc between them runs the short way through −z.
+    const westAngle = Math.atan2(targets[westGrounded][1], targets[westGrounded][0])
+    const arcSegments = Math.ceil((eastAngle - westAngle) / southStep)
+    const backArc = Array.from({length: arcSegments - 1}, (_, k): Array<Vertex> => {
+      const theta = westAngle + (eastAngle - westAngle) * (k + 1) / arcSegments
+      const radial = [Math.cos(theta), 0, Math.sin(theta)] as const
+      return [floorY, bottom].map(y => ({
+        position: [tower.x + Math.cos(theta) * radius, y, tower.z + Math.sin(theta) * radius] as const,
+        normal: radial,
+      }))
+    })
+    const lower = (column: Array<Vertex>) => column.filter(({position}) => position[1] <= bottom)
+    const upper = (column: Array<Vertex>) => column.filter(({position}) => position[1] >= bottom)
+    const positions: Array<number> = []
+    const normals: Array<number> = []
+    const face = ([a, b, c]: Array<readonly [number, number, number]>) => {
+      const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]]
+      const v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]]
+      return [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]
+    }
+    const triangle = (corners: Array<Vertex>, flip: boolean) => {
+      for (const corner of flip ? [corners[0], corners[2], corners[1]] : corners) {
+        positions.push(...corner.position)
+        normals.push(...corner.normal)
+      }
+    }
+    // Every strip runs the same way around the tower, so one plain wall decides the winding for all of them.
+    const reference = face([columns[shoulder.length + 1][0].position, columns[shoulder.length + 2][0].position, columns[shoulder.length + 1][1].position])
+    const flipStrips = reference[0] * outline[shoulder.length + 1][0] + reference[2] * outline[shoulder.length + 1][1] < 0
+    // Zip neighboring columns together level by level, so columns with different levels still share every edge.
+    const zip = (left: Array<Vertex>, right: Array<Vertex>) => {
+      let l = 0
+      let r = 0
+      while (l < left.length - 1 || r < right.length - 1) {
+        const advanceLeft = r === right.length - 1 || l < left.length - 1 && left[l + 1].position[1] <= right[r + 1].position[1]
+        triangle(advanceLeft ? [left[l], right[r], left[l + 1]] : [left[l], right[r], right[r + 1]], flipStrips)
+        if (advanceLeft) {
+          l++
+        } else {
+          r++
+        }
+      }
+    }
+    // Where the bridge’s flat side meets the tower, the strip between them stays flat, keeping the crease crisp instead of
+    // smearing the tower’s curvature across the bridge’s side.
+    const flatten = (column: Array<Vertex>, side: Array<Vertex>) => column.map(({position}) => ({
+      position,
+      normal: side.find(vertex => vertex.position[1] === position[1])?.normal ?? side[0].normal,
+    }))
+    for (const [i, left] of columns.entries()) {
+      const right = columns[at(i + 1)]
+      if (grounded[i] && grounded[at(i + 1)]) {
+        zip(left, right)
+      } else if (grounded[i] || grounded[at(i + 1)]) {
+        zip(upper(grounded[i] ? flatten(left, right) : left), upper(grounded[i] ? right : flatten(right, left)))
+      } else {
+        zip(upper(left), upper(right))
+      }
+    }
+    const back = [lower(columns[westGrounded]), ...backArc, lower(columns[eastGrounded])]
+    for (let k = 0; k < back.length - 1; k++) {
+      zip(back[k], back[k + 1])
+    }
+    const cap = (vertices: Array<readonly [number, number, number]>, up: boolean) => {
+      for (const indices of ShapeUtils.triangulateShape(vertices.map(([x, , z]) => new Vector2(x, z)), [])) {
+        const corners = indices.map(index => vertices[index])
+        triangle(corners.map(position => ({
+          position,
+          normal: [0, up ? 1 : -1, 0] as const,
+        })), face(corners)[1] > 0 !== up)
+      }
+    }
+    cap(columns.map(column => column.at(-1)!.position), true)
+    const ground: Array<readonly [number, number, number]> = []
+    for (let i = eastGrounded; i !== at(westGrounded + 1); i = at(i + 1)) {
+      ground.push(columns[i][0].position)
+    }
+    cap([...ground, ...backArc.map(column => column[0].position)], false)
+    // The underside behind the bridge’s end, between the neck and the cylinder, continues the passage’s roof.
+    const underside: Array<readonly [number, number, number]> = []
+    for (let i = eastGrounded; ; i = at(i - 1)) {
+      underside.push(upper(columns[i])[0].position)
+      if (i === westGrounded) {
+        break
+      }
+    }
+    cap([...underside, ...backArc.map(column => column[1].position)], false)
+    this.setAttribute('position', new Float32BufferAttribute(positions, 3))
+    this.setAttribute('normal', new Float32BufferAttribute(normals, 3))
   }
 }
