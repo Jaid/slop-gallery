@@ -7,7 +7,9 @@ const moonfallFloorY = -8
 export const oculusDrop = 3
 const oculusNorthZ = lobby.opening.center[1] - 11
 // Extend toward Moonfall; the connecting tunnel takes up whatever is left.
-const oculusSouthZ = lobby.opening.center[1] + 10
+const oculusSouthZ = lobby.opening.center[1] + 9
+/** how far the balcony along the south wall reaches into the Oculus, from the wall’s centerline */
+export const oculusBalconyDepth = 2
 const lowerGallery = {
   floorY: moonfallFloorY,
   moonfall: {
@@ -51,12 +53,14 @@ export const oculusCeiling = subtractFloorOpening({
 
 const platformTopY = moonfallFloorY + 3
 const platformHeight = platformTopY - lowerGallery.oculus.floorY
+// measured from the north wall’s centerline
+const platformDepth = 4
 export const oculusPlatform: {
   position: Vec3
   size: Vec3
 } = {
-  position: [lowerGallery.oculus.center[0], lowerGallery.oculus.floorY + platformHeight / 2, oculusNorthZ + 2.5],
-  size: [lowerGallery.oculus.size[0], platformHeight, 5],
+  position: [lowerGallery.oculus.center[0], lowerGallery.oculus.floorY + platformHeight / 2, oculusNorthZ + platformDepth / 2],
+  size: [lowerGallery.oculus.size[0], platformHeight, platformDepth],
 }
 
 // The original wall-side flights keep their elevations. Parallel lower flights run in the opposite direction, turning on a full-width landing.
@@ -71,22 +75,81 @@ export const oculusRamps = (['west', 'east'] as const).map(side => ({
   direction: -1,
   railHeight: 1,
 }))
-export const oculusLowerRamps = oculusRamps.map(ramp => ({
-  ...ramp,
-  x: ramp.x + (ramp.side === 'west' ? 1 : -1) * ramp.width,
-  // Leave a ground-level approach between the lower foot and the tall north platform.
-  startZ: ramp.startZ - ramp.run + 1.6,
-  run: ramp.run - 1.6,
-  floorY: lowerGallery.oculus.floorY,
-  rise: oculusDrop,
-  direction: 1,
-}))
+/** how far the short flight from the room’s center runs toward the quarter landing */
+const cornerRun = 1.8
+// The lower flights start on a quarter landing against the platform’s face, reached by a short flight from the room’s center.
+// Both share one slope, so the whole climb to the turning landing feels even.
+export const oculusLowerRamps = oculusRamps.map(ramp => {
+  const startZ = oculusPlatform.position[2] + oculusPlatform.size[2] / 2 + ramp.width
+  const run = ramp.startZ - startZ
+  const slope = oculusDrop / (run + cornerRun)
+  return {
+    ...ramp,
+    x: ramp.x + (ramp.side === 'west' ? 1 : -1) * ramp.width,
+    startZ,
+    run,
+    floorY: lowerGallery.oculus.floorY + slope * cornerRun,
+    rise: slope * run,
+    direction: 1,
+  }
+})
 export const oculusRampFlights = [...oculusRamps, ...oculusLowerRamps]
-export const oculusRampLandings = oculusRamps.map(ramp => ({
+/** Runs along x, rising from its foot toward the side wall. */
+export const oculusCornerRamps = oculusLowerRamps.map(ramp => {
+  const towardCenter = ramp.side === 'west' ? 1 : -1
+  return {
+    side: ramp.side,
+    z: ramp.startZ - ramp.width / 2,
+    startX: ramp.x + towardCenter * (ramp.width / 2 + cornerRun),
+    direction: -towardCenter,
+    run: cornerRun,
+    width: ramp.width,
+    floorY: lowerGallery.oculus.floorY,
+    rise: ramp.floorY - lowerGallery.oculus.floorY,
+    railHeight: ramp.railHeight,
+  }
+})
+export const oculusQuarterLandings = oculusLowerRamps.map(ramp => ({
   side: ramp.side,
-  position: [ramp.x + (ramp.side === 'west' ? 1 : -1) * ramp.width / 2, lowerGallery.oculus.floorY + oculusDrop / 2, ramp.startZ + ramp.width / 2] as Vec3,
-  size: [ramp.width * 2, oculusDrop, ramp.width] as Vec3,
+  position: [ramp.x, (lowerGallery.oculus.floorY + ramp.floorY) / 2, ramp.startZ - ramp.width / 2] as Vec3,
+  size: [ramp.width, ramp.floorY - lowerGallery.oculus.floorY, ramp.width] as Vec3,
 }))
+// Reaching south to right below the balcony’s edge, with the open corner rounded by one flight width.
+export const oculusRampLandings = oculusRamps.map(ramp => {
+  const depth = oculusSouthZ - oculusBalconyDepth - ramp.startZ
+  return {
+    side: ramp.side,
+    position: [ramp.x + (ramp.side === 'west' ? 1 : -1) * ramp.width / 2, lowerGallery.oculus.floorY + oculusDrop / 2, ramp.startZ + depth / 2] as Vec3,
+    size: [ramp.width * 2, oculusDrop, depth] as Vec3,
+    cornerRadius: ramp.width,
+  }
+})
+type RampLanding = typeof oculusRampLandings[number]
+
+/** The rounded corner sits on the room side, toward the tunnel. */
+export function rampLandingCorner({side, position, size, cornerRadius}: RampLanding) {
+  const sign = side === 'west' ? 1 : -1
+  return {
+    x: position[0] + sign * (size[0] / 2 - cornerRadius),
+    z: position[2] + size[2] / 2 - cornerRadius,
+    sign,
+  }
+}
+
+/** Footprint in x/z, starting at the wall-side north corner. */
+export function rampLandingOutline(landing: RampLanding, segments = 16) {
+  const {position, size, cornerRadius} = landing
+  const corner = rampLandingCorner(landing)
+  const wallX = position[0] - corner.sign * size[0] / 2
+  const northZ = position[2] - size[2] / 2
+  const points: Array<[number, number]> = [[wallX, northZ], [position[0] + corner.sign * size[0] / 2, northZ]]
+  for (let i = 0; i <= segments; i++) {
+    const angle = i / segments * Math.PI / 2
+    points.push([corner.x + corner.sign * cornerRadius * Math.cos(angle), corner.z + cornerRadius * Math.sin(angle)])
+  }
+  points.push([wallX, northZ + size[2]])
+  return points
+}
 
 export function rampFloorHeight(x: number, z: number) {
   for (const ramp of oculusRampFlights) {
@@ -95,10 +158,32 @@ export function rampFloorHeight(x: number, z: number) {
       return ramp.floorY + distance / ramp.run * ramp.rise
     }
   }
-  const landing = oculusRampLandings.find(({position, size}) => Math.abs(x - position[0]) <= size[0] / 2 && Math.abs(z - position[2]) <= size[2] / 2)
+  for (const ramp of oculusCornerRamps) {
+    const distance = (x - ramp.startX) * ramp.direction
+    if (Math.abs(z - ramp.z) <= ramp.width / 2 && distance >= 0 && distance <= ramp.run) {
+      return ramp.floorY + distance / ramp.run * ramp.rise
+    }
+  }
+  const quarter = oculusQuarterLandings.find(({position, size}) => Math.abs(x - position[0]) <= size[0] / 2 && Math.abs(z - position[2]) <= size[2] / 2)
+  if (quarter) {
+    return quarter.position[1] + quarter.size[1] / 2
+  }
+  const landing = oculusRampLandings.find(value => rampLandingContains(value, x, z))
   if (landing) {
     return landing.position[1] + landing.size[1] / 2
   }
+}
+
+function rampLandingContains(landing: RampLanding, x: number, z: number) {
+  const {position, size, cornerRadius} = landing
+  if (Math.abs(x - position[0]) > size[0] / 2 || Math.abs(z - position[2]) > size[2] / 2) {
+    return false
+  }
+  const corner = rampLandingCorner(landing)
+  if ((x - corner.x) * corner.sign <= 0 || z <= corner.z) {
+    return true
+  }
+  return Math.hypot(x - corner.x, z - corner.z) <= cornerRadius
 }
 
 export default lowerGallery

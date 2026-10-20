@@ -29,7 +29,7 @@ describe('oculus and connecting tunnel', () => {
     expect(insideGallery([9.01, -6.4, -24])).toBe(false)
     expect(lobby.opening.center).toEqual([0, -24])
     expect(tunnel.x).toBe(0)
-    expect(oculusCeiling.reduce((sum, slab) => sum + slab.size[0] * slab.size[1], 0)).toBe(18 * 21 - 8 * 8)
+    expect(oculusCeiling.reduce((sum, slab) => sum + slab.size[0] * slab.size[1], 0)).toBe(18 * 20 - 8 * 8)
   })
   test('lower walls meet the ceiling underside without coplanar faces in the upper floor', () => {
     const ceilingBottom = oculus.ceiling.topY - oculus.ceiling.thickness
@@ -64,14 +64,14 @@ describe('oculus and connecting tunnel', () => {
   })
   test('the plain cuboid fills the extended north end with a matching walkable top', () => {
     const {position, size} = oculusPlatform
-    expect(size).toEqual([18, 6, 5])
-    expect(position).toEqual([0, -8, -32.5])
+    expect(size).toEqual([18, 6, 4])
+    expect(position).toEqual([0, -8, -33])
     expect(position[1] - size[1] / 2).toBe(floorY)
     expect(position[2] - size[2] / 2).toBe(-35)
-    expect(position[2] + size[2] / 2).toBe(-30)
-    expect(floorHeight([0, -3.4, -31])).toBe(-5)
-    expect(floorHeight([0, 1.6, -31])).toBe(0)
-    expect(floorHeight([0, -6.4, -29.9])).toBe(floorY)
+    expect(position[2] + size[2] / 2).toBe(-31)
+    expect(floorHeight([0, -3.4, -32])).toBe(-5)
+    expect(floorHeight([0, 1.6, -32])).toBe(0)
+    expect(floorHeight([0, -6.4, -30.9])).toBe(floorY)
     const geometry = new BoxGeometry(...size)
     const material = new MeshBasicMaterial
     const mesh = new Mesh(geometry, material)
@@ -98,9 +98,9 @@ describe('oculus and connecting tunnel', () => {
   })
   test('the Oculus runs from the Lodge exit, past the glass, to the tunnel toward Moonfall', () => {
     expect(walls.find(wall => wall.id === 'oculus-north')!.center[2]).toBe(-35)
-    expect(walls.find(wall => wall.id === 'oculus-south')!.center[2]).toBe(-14)
-    expect(oculus.center).toEqual([0, -24.5])
-    expect(oculus.size).toEqual([18, 21])
+    expect(walls.find(wall => wall.id === 'oculus-south')!.center[2]).toBe(-15)
+    expect(oculus.center).toEqual([0, -25])
+    expect(oculus.size).toEqual([18, 20])
     expect(lobby.opening.center).toEqual([0, -24])
     expect(lobby.opening.size).toEqual([8, 8])
     expect(insideGallery([0, -6.4, -34.8])).toBe(true)

@@ -8,7 +8,7 @@ import {fountainBench, fountainBenches} from '#src/lib/gallery/fountain/benches.
 import fountain from '#src/lib/gallery/fountain/config.ts'
 import lobby from '#src/lib/gallery/lobby.ts'
 import {lodgeTunnel} from '#src/lib/gallery/lodge.ts'
-import lowerGallery, {oculusPlatform, oculusRampFlights, oculusRampLandings} from '#src/lib/gallery/lowerGallery.ts'
+import lowerGallery, {oculusCornerRamps, oculusPlatform, oculusQuarterLandings, oculusRampFlights, oculusRampLandings, rampLandingOutline} from '#src/lib/gallery/lowerGallery.ts'
 import {moonfallCrater} from '#src/lib/gallery/moonfall/config.ts'
 import oculusBalcony from '#src/lib/gallery/oculusBalcony.ts'
 import oculusTower, {towerRampHalfWidth, towerRampSections} from '#src/lib/gallery/oculusTower.ts'
@@ -98,10 +98,12 @@ export default function Map({css}: {css: Record<string, string>}) {
         </g></Branch>
         <Branch if={level.lower}><g aria-label='Raised ground in the Oculus'>
           <path aria-label='Tower access ramp' d={`M ${[-1, 1].flatMap(side => (side === -1 ? towerRampSections : towerRampSections.toReversed()).map(z => `${level.x(oculusTower.x + side * towerRampHalfWidth(z))} ${level.y(z)}`)).join(' L ')} Z`} fill='#657276' stroke='#46575b' />
-          <path aria-label='Separate wall balcony' d={`M ${level.x(oculusBalcony.x - oculusBalcony.width / 2)} ${level.y(oculusBalcony.z)} A ${oculusBalcony.width / 2 * scale} ${oculusBalcony.depth * scale} 0 0 1 ${level.x(oculusBalcony.x + oculusBalcony.width / 2)} ${level.y(oculusBalcony.z)} Z`} fill='#718c8e' stroke='#46575b' />
+          <rect aria-label='South wall balcony' fill='#718c8e' height={oculusBalcony.size[2] * scale} stroke='#46575b' width={oculusBalcony.size[0] * scale} x={level.x(oculusBalcony.position[0] - oculusBalcony.size[0] / 2)} y={level.y(oculusBalcony.position[2] - oculusBalcony.size[2] / 2)} />
           <circle aria-label='Cylindrical platform' cx={level.x(oculusTower.x)} cy={level.y(oculusTower.z)} fill='#718c8e' r={oculusTower.radius * scale} stroke='#46575b' />
           {oculusRampFlights.map((ramp, i) => <rect key={i} aria-label={`${ramp.side} access ramp`} fill='#657276' height={ramp.run * scale} stroke='#46575b' width={ramp.width * scale} x={level.x(ramp.x - ramp.width / 2)} y={level.y(Math.min(ramp.startZ, ramp.startZ + ramp.direction * ramp.run))} />)}
-          {oculusRampLandings.map(landing => <rect key={landing.side} aria-label={`${landing.side} switchback landing`} fill='#657276' height={landing.size[2] * scale} stroke='#46575b' width={landing.size[0] * scale} x={level.x(landing.position[0] - landing.size[0] / 2)} y={level.y(landing.position[2] - landing.size[2] / 2)} />)}
+          {oculusCornerRamps.map(ramp => <rect key={ramp.side} aria-label={`${ramp.side} corner ramp`} fill='#657276' height={ramp.width * scale} stroke='#46575b' width={ramp.run * scale} x={level.x(Math.min(ramp.startX, ramp.startX + ramp.direction * ramp.run))} y={level.y(ramp.z - ramp.width / 2)} />)}
+          {oculusQuarterLandings.map(landing => <rect key={landing.side} aria-label={`${landing.side} quarter landing`} fill='#657276' height={landing.size[2] * scale} stroke='#46575b' width={landing.size[0] * scale} x={level.x(landing.position[0] - landing.size[0] / 2)} y={level.y(landing.position[2] - landing.size[2] / 2)} />)}
+          {oculusRampLandings.map(landing => <path key={landing.side} aria-label={`${landing.side} switchback landing`} d={`M ${rampLandingOutline(landing).map(([x, z]) => `${level.x(x)} ${level.y(z)}`).join(' L ')} Z`} fill='#657276' stroke='#46575b' />)}
           <rect fill='#718c8e' height={oculusPlatform.size[2] * scale} width={oculusPlatform.size[0] * scale - 4} x={level.x(oculusPlatform.position[0] - oculusPlatform.size[0] / 2)} y={level.y(oculusPlatform.position[2] - oculusPlatform.size[2] / 2)} />
           <text fill='#f0f0e5' fontSize='10' textAnchor='middle' x={level.x(oculusPlatform.position[0]) - 2} y={level.y(oculusPlatform.position[2])}>RAISED FLOOR</text>
         </g></Branch>

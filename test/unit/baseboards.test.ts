@@ -27,7 +27,7 @@ describe('floor-following wall baseboards', () => {
           world.createCollider(RAPIER.ColliderDesc.trimesh(...colliderGeometry(part)))
         }
         world.step()
-        for (const z of [-34.7, -30.01, -30, -29.99, -28, -24, -22.3, -21.01, -21, -20.99, -18.81, -18.79, -18.2, -14.2]) {
+        for (const z of [-34.7, -30.01, -30, -29.99, -28, -24, -22.3, -21.01, -21, -20.99, -18.81, -18.79, -18.2, -15.2]) {
           const u = (z - wall.center[2]) * (side === 'east' ? 1 : -1)
           const floor = (z <= ramp.startZ + ramp.width ? ramp.floorY - lowerGallery.oculus.floorY : 0) + Math.max(0, Math.min(ramp.rise, (ramp.startZ - z) / ramp.run * ramp.rise))
           for (const offset of [-0.02, 0.02, 0.19, 0.379, 0.381, 0.41, 0.439, 0.46]) {

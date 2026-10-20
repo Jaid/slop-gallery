@@ -139,7 +139,7 @@ describe('cylindrical Oculus platform', () => {
   test('the underpass spans from the base’s flat front face to the circular tower’s rear edge', () => {
     expect(towerArch.z - towerArch.width / 2).toBe(ramp.startZ)
     expect(towerArch.z + towerArch.width / 2).toBeCloseTo(tower.z - tower.radius)
-    expect(towerArch.width).toBeCloseTo(3.8)
+    expect(towerArch.width).toBeCloseTo(4.8)
   })
   test('the lower jamb is flush with the base’s front face, with no leftover sliver of the rounded fillets', () => {
     const material = new MeshBasicMaterial

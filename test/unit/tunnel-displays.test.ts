@@ -6,7 +6,6 @@ import {Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/web
 
 import {colliderGeometry, createArchitectureGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
 import lowerGallery, {tunnelFloorHeight, tunnelSlope} from '../../src/lib/gallery/lowerGallery.ts'
-import oculusBalcony from '../../src/lib/gallery/oculusBalcony.ts'
 import SlopedBoxGeometry from '../../src/lib/gallery/SlopedBoxGeometry.ts'
 import tunnelDisplays, {tunnelDisplayWindow} from '../../src/lib/gallery/tunnelDisplays.ts'
 import walls, {galleryPlacement, insideGallery} from '../../src/lib/gallery/walls.ts'
@@ -15,12 +14,11 @@ await RAPIER.init()
 const {tunnel} = lowerGallery
 const floorY = tunnelFloorHeight((tunnel.northZ + tunnel.southZ) / 2)
 describe('widened tunnel with sealed display rooms', () => {
-  test('both portals, floor bounds and balcony follow the wider tunnel, without adding visitable rooms', () => {
+  test('both portals and floor bounds follow the wider tunnel, without adding visitable rooms', () => {
     expect(tunnel.width).toBe(4.2)
     for (const id of ['oculus-south', 'moonfall-north']) {
       expect(walls.find(wall => wall.id === id)!.holes![0].width).toBe(tunnel.width)
     }
-    expect(oculusBalcony.width).toBe(tunnel.width + 1)
     expect(tunnelDisplays).toHaveLength(2)
     expect(tunnelDisplays[0].center[0]).toBe(-tunnelDisplays[1].center[0])
     for (const display of tunnelDisplays) {

@@ -1,7 +1,7 @@
 import {ADDITION, Brush, Evaluator, SUBTRACTION} from 'three-bvh-csg'
 import {BoxGeometry, BufferGeometry, ExtrudeGeometry, Float32BufferAttribute, MeshBasicNodeMaterial, Shape} from 'three/webgpu'
 
-import lowerGallery, {oculusLowerRamps, oculusPlatform, oculusRampLandings, oculusRamps} from './lowerGallery.ts'
+import lowerGallery, {oculusCornerRamps, oculusLowerRamps, oculusPlatform, oculusQuarterLandings, oculusRampLandings, oculusRamps, rampLandingCorner, rampLandingOutline} from './lowerGallery.ts'
 import tower, {towerArch, towerPlatformOutline, towerRamp, towerRampGradient, towerRampHalfWidth, towerRampHeight, towerRampSections} from './oculusTower.ts'
 import RampGeometry from './RampGeometry.ts'
 import SlopedBoxGeometry from './SlopedBoxGeometry.ts'
@@ -137,11 +137,37 @@ export default class OculusGroundGeometry extends BufferGeometry {
         solid = combine(solid, brush(rampPrism.translate(ramp.x, floorY + height / 2, ramp.startZ - ramp.run / 2)))
       }
       for (const ramp of oculusLowerRamps) {
+        const middleY = ramp.floorY + ramp.rise / 2
+        const height = middleY - floorY
+        const rampPrism = new SlopedBoxGeometry(ramp.width, height, ramp.run, ramp.rise / ramp.run, 0)
+        solid = combine(solid, brush(rampPrism.translate(ramp.x, floorY + height / 2, ramp.startZ + ramp.run / 2)))
+      }
+      for (const landing of oculusQuarterLandings) {
+        solid = combine(solid, block(landing))
+      }
+      for (const ramp of oculusCornerRamps) {
+        // The prism rises toward local −z, turned to rise along the flight’s direction on x.
         const rampPrism = new RampGeometry(ramp.width, ramp.rise, ramp.run)
-        solid = combine(solid, brush(rampPrism.rotateY(Math.PI).translate(ramp.x, ramp.floorY, ramp.startZ)))
+        solid = combine(solid, brush(rampPrism.rotateY(-ramp.direction * Math.PI / 2).translate(ramp.startX, ramp.floorY, ramp.z)))
       }
       for (const landing of oculusRampLandings) {
-        solid = combine(solid, block(landing))
+        const footprint = new Shape
+        for (const [i, [x, z]] of rampLandingOutline(landing).entries()) {
+          if (i === 0) {
+            footprint.moveTo(x, z)
+          } else {
+            footprint.lineTo(x, z)
+          }
+        }
+        footprint.closePath()
+        const landingBlock = new ExtrudeGeometry(footprint, {
+          depth: landing.size[1],
+          bevelEnabled: false,
+        })
+        const corner = rampLandingCorner(landing)
+        smoothArcNormals(landingBlock, [[corner.x, corner.z, landing.cornerRadius]])
+        landingBlock.rotateX(Math.PI / 2).translate(0, landing.position[1] + landing.size[1] / 2, 0)
+        solid = combine(solid, brush(landingBlock))
       }
       this.copy(solid.geometry)
       // World-scale projection keeps the stone grain consistent across the joined pieces.

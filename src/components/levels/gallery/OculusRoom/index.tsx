@@ -2,13 +2,13 @@ import type {Material} from 'three/webgpu'
 
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 
-import OculusBalcony from '#component/levels/gallery/OculusBalcony'
 import OculusGround from '#component/levels/gallery/OculusGround'
 import OculusRailings from '#component/levels/gallery/OculusRailings'
 import SlopedBox from '#component/levels/gallery/SlopedBox'
 import TunnelDisplays from '#component/levels/gallery/TunnelDisplays'
 import Box from '#src/components/Scene/primitives.tsx'
 import lowerGallery, {oculusCeiling, tunnelFloorHeight, tunnelSlope} from '#src/lib/gallery/lowerGallery.ts'
+import oculusBalcony from '#src/lib/gallery/oculusBalcony.ts'
 
 const {oculus, tunnel} = lowerGallery
 const {floorY} = oculus
@@ -18,11 +18,12 @@ const ceilingY = oculus.ceiling.topY - oculus.ceiling.thickness / 2
 
 export default function OculusRoom({material}: {material: Material}) {
   return <group name='oculus-room'>
-    <OculusBalcony material={material} />
     <OculusGround material={material} />
     <OculusRailings />
     <TunnelDisplays material={material} />
     <RigidBody colliders={false} type='fixed'>
+      <CuboidCollider args={oculusBalcony.size.map(value => value / 2) as [number, number, number]} position={oculusBalcony.position} />
+      <Box material={material} name='oculus-balcony' position={oculusBalcony.position} size={oculusBalcony.size} />
       <CuboidCollider args={[oculus.size[0] / 2, 0.12, oculus.size[1] / 2]} position={[oculus.center[0], floorY - 0.12, oculus.center[1]]} />
       <Box material={material} name='oculus-floor' position={[oculus.center[0], floorY - 0.12, oculus.center[1]]} size={[oculus.size[0], 0.24, oculus.size[1]]} />
       {oculusCeiling.map(({center: [x, z], size: [width, depth]}, i) => <group key={i}>

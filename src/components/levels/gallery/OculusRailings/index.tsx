@@ -4,13 +4,14 @@ import {CapsuleCollider, CuboidCollider, RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 
+import OculusBalconyRailing from '#src/lib/gallery/railings/OculusBalconyRailing.ts'
 import OculusRailing from '#src/lib/gallery/railings/OculusRailing.ts'
 import OculusSwitchbackRailing from '#src/lib/gallery/railings/OculusSwitchbackRailing.ts'
 import PolylineTubeGeometry from '#src/lib/gallery/railings/PolylineTubeGeometry.ts'
 import metal from '#src/lib/materials/metal.ts'
 
 export default function OculusRailings() {
-  const paths = useMemo(() => [new OculusRailing, new OculusSwitchbackRailing('west'), new OculusSwitchbackRailing('east')], [])
+  const paths = useMemo(() => [new OculusRailing, new OculusSwitchbackRailing('west'), new OculusSwitchbackRailing('east'), new OculusBalconyRailing], [])
   return paths.map((path, i) => <Railing key={i} path={path} />)
 }
 
