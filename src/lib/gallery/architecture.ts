@@ -26,7 +26,7 @@ const openingShape = (hole: WallOpening, padding = 0, bottom = hole.bottom ?? -0
   shape.closePath()
   return shape
 }
-const extrude = (shape: Shape, depth: number, z: number) => {
+const extrude = (shape: Array<Shape> | Shape, depth: number, z: number) => {
   const extrudedProfile = new ExtrudeGeometry(shape, {
     depth,
     bevelEnabled: false,
@@ -134,19 +134,33 @@ export function createArchitectureGeometry(wall: Wall) {
       }
       // Sweep each band along the actual floor contact instead of burying a
       // horizontal molding in the ramp and exposing a tapering triangular stub.
-      const shape = new Shape
-      for (const [i, [u, y]] of wall.baseboardProfile.entries()) {
-        if (i === 0) {
-          shape.moveTo(u, y + bottom)
+      // Repeated coordinates mark a discontinuity, such as the end of a raised landing. Sweeping one polygon through a vertical
+      // jump would cross its own offset edges. Terminate both bands there instead of leaving self-intersecting trim or a tall riser.
+      const sections: Array<Array<readonly [number, number]>> = [[]]
+      for (const point of wall.baseboardProfile) {
+        const section = sections.at(-1)!
+        if (section.at(-1)?.[0] === point[0]) {
+          sections.push([point])
         } else {
-          shape.lineTo(u, y + bottom)
+          section.push(point)
         }
       }
-      for (const [u, y] of wall.baseboardProfile.toReversed()) {
-        shape.lineTo(u, y + bottom + height)
-      }
-      shape.closePath()
-      return brush(extrude(shape, front - wallFace, wallFace))
+      const shapes = sections.filter(section => section.length >= 2).map(section => {
+        const shape = new Shape
+        for (const [i, [u, y]] of section.entries()) {
+          if (i === 0) {
+            shape.moveTo(u, y + bottom)
+          } else {
+            shape.lineTo(u, y + bottom)
+          }
+        }
+        for (const [u, y] of section.toReversed()) {
+          shape.lineTo(u, y + bottom + height)
+        }
+        shape.closePath()
+        return shape
+      })
+      return brush(extrude(shapes, front - wallFace, wallFace))
     }
     const trim: Array<BufferGeometry> = []
     if (wall.trimStyle !== 'none') {

@@ -8,7 +8,7 @@ import corridor, {corridorPassage, corridorStairFloor, corridorWalls, insideCorr
 import mainEntrance from './entrance.ts'
 import lobby from './lobby.ts'
 import lodge, {insideLodgeAccess, lodgeTunnel, lodgeTunnelWalls, lodgeWindow, lodgeWindowFloor} from './lodge.ts'
-import lowerGallery, {oculusPlatform, oculusRamps, rampFloorHeight} from './lowerGallery.ts'
+import lowerGallery, {oculusPlatform, oculusRamps, rampFloorHeight, tunnelFloorHeight, tunnelSlope} from './lowerGallery.ts'
 import {craterTerrain} from './moonfall/CraterTerrain.ts'
 import {balconyFloorHeight} from './oculusBalcony.ts'
 import {towerFloorHeight} from './oculusTower.ts'
@@ -89,9 +89,9 @@ export const rooms = [
   },
   {
     id: 'oculus',
-    floorY: lowerGallery.floorY,
+    floorY: lowerGallery.oculus.floorY,
     // Stop at the ceiling underside, not the upper room’s walkable surface.
-    height: lowerGallery.oculus.ceiling.topY - lowerGallery.oculus.ceiling.thickness - lowerGallery.floorY,
+    height: lowerGallery.oculus.ceiling.topY - lowerGallery.oculus.ceiling.thickness - lowerGallery.oculus.floorY,
     number: '07',
     title: 'Oculus',
     subtitle: 'Borrowed light from the gallery above.',
@@ -134,7 +134,7 @@ export const rooms = [
   },
 ] as const
 
-const tunnelContains = ([x, y, z]: Vec3) => Math.abs(x - lowerGallery.tunnel.x) <= lowerGallery.tunnel.width / 2 && z >= lowerGallery.tunnel.northZ && z <= lowerGallery.tunnel.southZ && y >= lowerGallery.floorY - 1 && y <= lowerGallery.floorY + lowerGallery.tunnel.height
+const tunnelContains = ([x, y, z]: Vec3) => Math.abs(x - lowerGallery.tunnel.x) <= lowerGallery.tunnel.width / 2 && z >= lowerGallery.tunnel.northZ && z <= lowerGallery.tunnel.southZ && y >= tunnelFloorHeight(z) - 1 && y <= tunnelFloorHeight(z) + lowerGallery.tunnel.height
 const contains = (room: (typeof rooms)[number], position: Vec3) => {
   if (room.id === 'corridor') {
     return insideCorridor(position)
@@ -192,11 +192,13 @@ const roomWall = (roomId: RoomId, side: 'east' | 'north' | 'south' | 'west', hol
       const ramp = oculusRamps.find(value => value.side === side)
       if (ramp) {
         result.baseboardProfile = [
-          [room.center[1] - depth / 2, ramp.rise],
-          [ramp.startZ - ramp.run, ramp.rise],
-          [ramp.startZ, 0],
+          [room.center[1] - depth / 2, ramp.floorY + ramp.rise - room.floorY],
+          [ramp.startZ - ramp.run, ramp.floorY + ramp.rise - room.floorY],
+          [ramp.startZ, ramp.floorY - room.floorY],
+          [ramp.startZ + ramp.width, ramp.floorY - room.floorY],
+          [ramp.startZ + ramp.width, 0],
           [room.center[1] + depth / 2, 0],
-        ].map(([worldZ, y]): [number, number] => [(worldZ - room.center[1]) * (side === 'east' ? 1 : -1), y]).toSorted((a, b) => a[0] - b[0])
+        ].map(([worldZ, y]): [number, number] => [(worldZ - room.center[1]) * (side === 'east' ? 1 : -1), y]).toSorted((a, b) => a[0] - b[0] || (side === 'east' ? b[1] - a[1] : a[1] - b[1]))
       }
     }
   }
@@ -334,9 +336,9 @@ const walls: Array<Wall> = miterCorners([
   roomWall('oculus', 'north', [
     {
       u: lodge.entranceX,
-      bottom: lodge.floorY - lowerGallery.floorY,
+      bottom: lodge.floorY - lowerGallery.oculus.floorY,
       width: lodge.passageWidth,
-      height: lodge.floorY - lowerGallery.floorY + 3.4,
+      height: lodge.floorY - lowerGallery.oculus.floorY + 3.4,
       profile: 'arch',
     },
   ]),
@@ -388,6 +390,8 @@ const walls: Array<Wall> = miterCorners([
         profile: 'rectangle',
       },
     ]),
+    center: [lowerGallery.tunnel.x + side * lowerGallery.tunnel.width / 2, tunnelFloorHeight((lowerGallery.tunnel.northZ + lowerGallery.tunnel.southZ) / 2), (lowerGallery.tunnel.northZ + lowerGallery.tunnel.southZ) / 2] as Vec3,
+    slope: side * tunnelSlope,
     height: lowerGallery.tunnel.height,
     hangable: false,
     trimStyle: 'plain' as const,
@@ -458,8 +462,8 @@ export function floorHeight([x, y, z]: Vec3) {
   if (ramp !== undefined) {
     heights.push(ramp)
   }
-  if (tunnelContains([x, lowerGallery.floorY, z])) {
-    heights.push(lowerGallery.floorY)
+  if (tunnelContains([x, tunnelFloorHeight(z), z])) {
+    heights.push(tunnelFloorHeight(z))
   }
   heights.sort((a, b) => b - a)
   return heights.find(height => y >= height - 1) ?? heights.at(-1) ?? 0

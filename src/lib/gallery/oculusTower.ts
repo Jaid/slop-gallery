@@ -1,14 +1,14 @@
 import {clamp} from 'math'
 
 import lobby from './lobby.ts'
-import lowerGallery, {oculusPlatform} from './lowerGallery.ts'
+import lowerGallery, {oculusDrop, oculusPlatform} from './lowerGallery.ts'
 
 const oculusTower = {
   x: lobby.opening.center[0],
   z: lobby.opening.center[1],
   radius: 2.2,
-  height: 4.5,
-  floorY: lowerGallery.floorY,
+  height: 4.5 + oculusDrop,
+  floorY: lowerGallery.oculus.floorY,
 }
 const startZ = oculusPlatform.position[2] + oculusPlatform.size[2] / 2
 const endZ = oculusTower.z - oculusTower.radius - 0.1
@@ -31,9 +31,9 @@ const archEndZ = oculusTower.z - oculusTower.radius
 export const towerArch = {
   z: (archStartZ + archEndZ) / 2,
   width: archEndZ - archStartZ,
-  height: 3.5,
+  height: 3.5 + oculusDrop,
   // low enough that more than 50 cm of stone stays between the rounded corner and the ramp’s deck above it
-  lowHeight: 2.4,
+  lowHeight: 2.4 + oculusDrop,
   cornerRadius: 0.7,
   highCornerRadius: 0.45,
 }

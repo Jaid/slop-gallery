@@ -27,9 +27,9 @@ describe('floor-following wall baseboards', () => {
           world.createCollider(RAPIER.ColliderDesc.trimesh(...colliderGeometry(part)))
         }
         world.step()
-        for (const z of [-30.7, -26.01, -26, -25.99, -24, -20, -18.3, -17.01, -17, -16.99, -14.2]) {
+        for (const z of [-30.7, -26.01, -26, -25.99, -24, -20, -18.3, -17.01, -17, -16.99, -14.81, -14.79, -14.2, -10.2]) {
           const u = (z - wall.center[2]) * (side === 'east' ? 1 : -1)
-          const floor = Math.max(0, Math.min(ramp.rise, (ramp.startZ - z) / ramp.run * ramp.rise))
+          const floor = (z <= ramp.startZ + ramp.width ? ramp.floorY - lowerGallery.oculus.floorY : 0) + Math.max(0, Math.min(ramp.rise, (ramp.startZ - z) / ramp.run * ramp.rise))
           for (const offset of [-0.02, 0.02, 0.19, 0.379, 0.381, 0.41, 0.439, 0.46]) {
             const origin = new Vector3(u, floor + offset, 1)
             const direction = new Vector3(0, 0, -1)
@@ -60,7 +60,7 @@ describe('floor-following wall baseboards', () => {
   }
   test('the north trim follows the raised floor and surrounds the elevated Lodge portal', () => {
     const north = walls.find(value => value.id === 'oculus-north')!
-    const height = oculusPlatform.position[1] + oculusPlatform.size[1] / 2 - lowerGallery.floorY
+    const height = oculusPlatform.position[1] + oculusPlatform.size[1] / 2 - lowerGallery.oculus.floorY
     expect(north.baseboardProfile).toEqual([[-north.width / 2, height], [north.width / 2, height]])
     const geometry = createArchitectureGeometry(north)
     try {

@@ -33,6 +33,7 @@ export type WallReservation = WallOpening & {
 
 export type Wall = {
   baseboardHeight?: number
+  /** Floor contact in local coordinates; repeated u coordinates split the trim at a vertical jump. */
   baseboardProfile?: Array<readonly [number, number]>
   center: Vec3
   /** Signed bend radius, measured from the untrimmed wall plane. */

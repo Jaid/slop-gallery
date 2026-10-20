@@ -5,11 +5,15 @@ import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import OculusBalcony from '#component/levels/gallery/OculusBalcony'
 import OculusGround from '#component/levels/gallery/OculusGround'
 import OculusRailings from '#component/levels/gallery/OculusRailings'
+import SlopedBox from '#component/levels/gallery/SlopedBox'
 import TunnelDisplays from '#component/levels/gallery/TunnelDisplays'
 import Box from '#src/components/Scene/primitives.tsx'
-import lowerGallery, {oculusCeiling} from '#src/lib/gallery/lowerGallery.ts'
+import lowerGallery, {oculusCeiling, tunnelFloorHeight, tunnelSlope} from '#src/lib/gallery/lowerGallery.ts'
 
-const {oculus, tunnel, floorY} = lowerGallery
+const {oculus, tunnel} = lowerGallery
+const {floorY} = oculus
+const tunnelCenterZ = (tunnel.northZ + tunnel.southZ) / 2
+const tunnelCenterY = tunnelFloorHeight(tunnelCenterZ)
 const ceilingY = oculus.ceiling.topY - oculus.ceiling.thickness / 2
 
 export default function OculusRoom({material}: {material: Material}) {
@@ -25,10 +29,8 @@ export default function OculusRoom({material}: {material: Material}) {
         <CuboidCollider args={[width / 2, oculus.ceiling.thickness / 2, depth / 2]} position={[oculus.center[0] + x, ceilingY, oculus.center[1] + z]} />
         <Box material={material} name='oculus-ceiling-rim' position={[oculus.center[0] + x, ceilingY, oculus.center[1] + z]} size={[width, oculus.ceiling.thickness, depth]} />
       </group>)}
-      <CuboidCollider args={[tunnel.width / 2, 0.12, (tunnel.southZ - tunnel.northZ) / 2]} position={[tunnel.x, floorY - 0.12, (tunnel.northZ + tunnel.southZ) / 2]} />
-      <Box material={material} name='lower-tunnel-floor' position={[tunnel.x, floorY - 0.12, (tunnel.northZ + tunnel.southZ) / 2]} size={[tunnel.width, 0.24, tunnel.southZ - tunnel.northZ]} />
-      <CuboidCollider args={[tunnel.width / 2, 0.09, (tunnel.southZ - tunnel.northZ) / 2]} position={[tunnel.x, floorY + tunnel.height + 0.09, (tunnel.northZ + tunnel.southZ) / 2]} />
-      <Box material={material} name='lower-tunnel-ceiling' position={[tunnel.x, floorY + tunnel.height + 0.09, (tunnel.northZ + tunnel.southZ) / 2]} size={[tunnel.width, 0.18, tunnel.southZ - tunnel.northZ]} />
+      <SlopedBox material={material} name='lower-tunnel-floor' position={[tunnel.x, tunnelCenterY - 0.12, tunnelCenterZ]} size={[tunnel.width, 0.24, tunnel.southZ - tunnel.northZ]} slope={tunnelSlope} />
+      <SlopedBox material={material} name='lower-tunnel-ceiling' position={[tunnel.x, tunnelCenterY + tunnel.height + 0.09, tunnelCenterZ]} size={[tunnel.width, 0.18, tunnel.southZ - tunnel.northZ]} slope={tunnelSlope} />
     </RigidBody>
   </group>
 }

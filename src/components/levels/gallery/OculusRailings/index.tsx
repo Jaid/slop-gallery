@@ -1,13 +1,20 @@
+import type RailingPath from '#src/lib/gallery/railings/RailingPath.ts'
+
 import {CapsuleCollider, CuboidCollider, RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 
 import OculusRailing from '#src/lib/gallery/railings/OculusRailing.ts'
+import OculusSwitchbackRailing from '#src/lib/gallery/railings/OculusSwitchbackRailing.ts'
 import PolylineTubeGeometry from '#src/lib/gallery/railings/PolylineTubeGeometry.ts'
 import metal from '#src/lib/materials/metal.ts'
 
 export default function OculusRailings() {
-  const path = useMemo(() => new OculusRailing, [])
+  const paths = useMemo(() => [new OculusRailing, new OculusSwitchbackRailing('west'), new OculusSwitchbackRailing('east')], [])
+  return paths.map((path, i) => <Railing key={i} path={path} />)
+}
+
+function Railing({path}: {path: RailingPath}) {
   const handrail = useDisposable(useMemo(() => new PolylineTubeGeometry(path.points, path.radius, 12), [path]))
   return <RigidBody colliders={false} type='fixed'>
     <mesh castShadow geometry={handrail} material={metal} name='oculus-continuous-handrail' />
