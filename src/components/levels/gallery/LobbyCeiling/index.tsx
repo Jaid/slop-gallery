@@ -1,80 +1,74 @@
+import {RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
-import {MeshStandardNodeMaterial} from 'three/webgpu'
+import {MeshPhysicalNodeMaterial, MeshStandardNodeMaterial} from 'three/webgpu'
 
-import {rooms} from '#src/lib/gallery.ts'
-import lobbyCeiling, {lobbyCoffers, lobbyLamps} from '#src/lib/gallery/lobbyCeiling.ts'
+import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
+import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
+import {lobbyChandeliers} from '#src/lib/gallery/lobbyCeiling.ts'
 import LobbyCeilingGeometry from '#src/lib/gallery/LobbyCeilingGeometry.ts'
-import CofferPlasterMaterial from '#src/lib/materials/CofferPlasterMaterial.ts'
-import LaylightGlassMaterial from '#src/lib/materials/LaylightGlassMaterial.ts'
-import {LanternLight} from '#src/lib/materials/lights/index.ts'
+import LobbyChandelierGeometry from '#src/lib/gallery/LobbyChandelierGeometry.ts'
+import ArchitecturalPlasterMaterial from '#src/lib/materials/ArchitecturalPlasterMaterial.ts'
+import BronzeMaterial from '#src/lib/materials/BronzeMaterial.ts'
+import ClearGlassMaterial from '#src/lib/materials/ClearGlassMaterial.ts'
+import ChandelierLightsNode from '#src/lib/materials/lights/ChandelierLightsNode.ts'
+import PolishedBrassMaterial from '#src/lib/materials/PolishedBrassMaterial.ts'
 
-const room = rooms.find(candidate => candidate.id === 'lobby')!
-const laylightFields = lobbyCoffers().filter(coffer => coffer.laylight).map(({field}) => ({
-  center: [room.center[0] + field.center[0], room.center[1] + field.center[1]] as const,
-  size: field.size,
-}))
-const firstLaylight = laylightFields[0]
-/** World x/z of a pane corner; every laylight field starts on the same pane grid. */
-const paneOrigin = [
-  firstLaylight.center[0] - firstLaylight.size[0] / 2,
-  firstLaylight.center[1] - firstLaylight.size[1] / 2,
-] as const
-
-/** The Lobby’s coffered ceiling with a band of laylights down its middle. Rendered inside the room’s group, at its center. */
+/** Tall round vault, carved coffers, gilt ribs and real clear glazing. Rendered at the Lobby’s floor-level center. */
 export default function LobbyCeiling() {
   const geometry = useDisposable(useMemo(() => new LobbyCeilingGeometry, []))
-  // A shade lighter than the slab, so the coffers still read in fast mode, where no shadows or occlusion draw them.
-  const plaster = useDisposable(useMemo(() => new CofferPlasterMaterial({
-    color: '#ece7d9',
-    fields: laylightFields,
-    glassY: lobbyCeiling.underside - lobbyCeiling.glassOffset,
+  const fixtures = useDisposable(useMemo(() => new LobbyChandelierGeometry, []))
+  const roofCollision = useMemo(() => [geometry.plaster, geometry.ribs, geometry.glass].map(colliderGeometry), [geometry])
+  const fixtureCollision = useMemo(() => [fixtures.metal, fixtures.suspension].map(colliderGeometry), [fixtures])
+  const plaster = useDisposable(useMemo(() => new ArchitecturalPlasterMaterial({
+    baseColor: '#e5dfcf',
+    heavy: true,
+    roughness: 0.86,
   }), []))
-  // Painted bronze glazing bars: dark enough to draw the pane grid, matte enough not to streak under the lamps.
-  const bars = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
-    color: '#6e5a40',
-    metalness: 0.4,
-    roughness: 0.55,
+  const trim = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
+    color: '#f3ead8',
+    roughness: 0.72,
   }), []))
-  const glass = useDisposable(useMemo(() => new LaylightGlassMaterial(lobbyCeiling.pane, paneOrigin, {
-    brightness: 0.9,
-    fieldFalloff: 0.16,
-    // Warm ivory like the room’s lamps, rather than the Salon’s cooler north light.
-    haze: '#eae4d6',
-    tint: '#fbf3e3',
+  const fixtureLights = useMemo(() => new ChandelierLightsNode, [])
+  const fixtureBrass = useDisposable(useMemo(() => fixtureLights.adopt(new PolishedBrassMaterial), [fixtureLights]))
+  const candles = useDisposable(useMemo(() => fixtureLights.adopt(new MeshStandardNodeMaterial({
+    color: '#f8e9cb',
+    roughness: 0.65,
+  })), [fixtureLights]))
+  const crystals = useDisposable(useMemo(() => fixtureLights.adopt(new MeshPhysicalNodeMaterial({
+    color: '#a9c5c9',
+    envMapIntensity: 0.65,
+    metalness: 0.15,
+    roughness: 0.15,
+  })), [fixtureLights]))
+  const gold = useDisposable(useMemo(() => new PolishedBrassMaterial, []))
+  const bronze = useDisposable(useMemo(() => new BronzeMaterial, []))
+  const glass = useDisposable(useMemo(() => new ClearGlassMaterial({
+    absorption: 0.025,
+    ior: 1.52,
+    envMapIntensity: 0.22,
+    name: 'lobby-vault-clear-glass',
   }), []))
-  const lamps = useDisposable(useMemo(() => new LobbyLamps, []))
-  // The lamps stand in for the daylight through the glass; coffers shadowing the ceiling from below would look backward.
-  return <group name='lobby-ceiling'>
-    <mesh castShadow={false} geometry={geometry.plaster} material={plaster} name='lobby-ceiling-coffers' receiveShadow />
-    <mesh castShadow={false} geometry={geometry.bars} material={bars} name='lobby-ceiling-glazing-bars' />
-    <mesh castShadow={false} geometry={geometry.glass} material={glass} name='lobby-ceiling-laylights' />
-    {lamps.lights.map(lamp => <primitive key={lamp.uuid} object={lamp} />)}
+  return <group name='lobby-cathedral-ceiling'>
+    <mesh castShadow geometry={geometry.plaster} material={plaster} name='lobby-vault-shell' receiveShadow />
+    <mesh castShadow geometry={geometry.ribs} material={trim} name='lobby-vault-carvings' receiveShadow />
+    <mesh geometry={geometry.gold} material={gold} name='lobby-vault-gilding' />
+    <mesh castShadow geometry={geometry.bars} material={bronze} name='lobby-vault-tracery' receiveShadow />
+    {/* Clear glass transmits the sun; neither the glass nor an invisible flat slab casts an opaque roof shadow. */}
+    <mesh castShadow={false} geometry={geometry.glass} material={glass} name='lobby-vault-glass' />
+    <RigidBody colliders={false} type='fixed'>
+      {roofCollision.map((args, i) => <MeshSurfaceCollider key={i} args={args} />)}
+    </RigidBody>
+    {lobbyChandeliers.offsets.map(z => <group key={z} name={`lobby-chandelier-${z}`} position={[0, lobbyChandeliers.y, z]}>
+      <mesh castShadow geometry={fixtures.metal} material={fixtureBrass} name='lobby-chandelier-corona' receiveShadow />
+      <mesh castShadow geometry={fixtures.suspension} material={bronze} name='lobby-chandelier-suspension' />
+      <mesh geometry={fixtures.candles} material={candles} name='lobby-chandelier-candles' />
+      <mesh geometry={fixtures.flames} name='lobby-chandelier-flames'><meshBasicNodeMaterial color={[3.5, 2.1, 0.7]} /></mesh>
+      <mesh geometry={fixtures.crystals} material={crystals} name='lobby-chandelier-crystals' />
+      <pointLight color={lobbyChandeliers.color} decay={2} distance={lobbyChandeliers.distance} intensity={lobbyChandeliers.intensity} position={[0, -1.3, 0]} userData={fixtureLights.lampUserData()} />
+      <RigidBody colliders={false} type='fixed'>
+        {fixtureCollision.map((args, i) => <MeshSurfaceCollider key={i} args={args} />)}
+      </RigidBody>
+    </group>)}
   </group>
-}
-
-/** The Lobby’s lamps, roofed so they light the room and its walls but not the coffers right above them. */
-class LobbyLamps {
-  readonly lights = lobbyLamps.offsets.map(z => {
-    const shadows = z === lobbyLamps.shadowCaster
-    const lamp = new LanternLight({
-      color: lobbyLamps.color,
-      intensity: lobbyLamps.intensity,
-      distance: shadows ? lobbyLamps.shadowDistance : lobbyLamps.distance,
-      decay: 2,
-      roof: lobbyLamps.roof,
-    })
-    lamp.name = `lobby-lamp-${z}`
-    lamp.position.set(0, lobbyLamps.y, z)
-    lamp.castShadow = shadows
-    lamp.shadow.mapSize.set(1024, 1024)
-    lamp.shadow.normalBias = 0.03
-    return lamp
-  })
-
-  dispose() {
-    for (const lamp of this.lights) {
-      lamp.dispose()
-    }
-  }
 }

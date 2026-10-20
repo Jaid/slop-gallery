@@ -79,3 +79,19 @@ BROWSER=/path/to/chromium bun run test:live:oculus
 This builds the gallery and opens a private headless browser. The test walks the production player through the sloped Moonfall connection in both directions, up the east two-flight switchback and down the west one, including both lateral landing turns. It checks grounded feet at each destination and rejects browser errors. It uses fast graphics; the geometry and colliders are shared with heavy mode.
 
 To reuse a build, run `LIVE_TEST=true LIVE_TARGET=out/production/gallery BROWSER=/path/to/chromium bun test test/oculus.live.test.ts`.
+
+## Lobby cathedral roof
+
+```sh
+BROWSER=/path/to/chromium bun run test:live:lobby
+```
+
+This builds the gallery before opening a private headless browser. The test verifies successful initial asset requests, captures the vault from both ends, the sun through the glass, views from Dine/Oculus and heavy → fast → heavy switching. It also drops the real player through the removed flat ceiling’s elevation to catch a leftover collider. Captures are written to `out/lobby/`.
+
+The included detached HDR fixture renders the real roof and procedural sky, verifies blue-sky transmission through the glass, checks the sun disk and measures sunlight/shade contrast beneath the pierced roof. It rejects non-finite pixels and GPU validation errors. It can also be run separately against an existing browser page:
+
+```sh
+bun test/browser/run.ts lobbyCeiling.ts --standalone
+```
+
+To reuse a completed production build: `LIVE_TEST=true LIVE_TARGET=out/production/gallery BROWSER=/path/to/chromium bun test test/lobby.live.test.ts`.

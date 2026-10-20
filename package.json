@@ -35,6 +35,7 @@
     "test:baking": "bun run --cwd packages/vite-plugin-bake-three test",
     "test:knot-materials": "bun run --cwd packages/knot-materials test",
     "test:live": "GAME_LEVEL=gallery bun run build && LIVE_TEST=true bun test ./test/live.test.ts",
+    "test:live:lobby": "GAME_LEVEL=gallery bun run build && LIVE_TEST=true bun test ./test/lobby.live.test.ts",
     "test:live:oculus": "GAME_LEVEL=gallery bun run build && LIVE_TEST=true bun test ./test/oculus.live.test.ts",
     "test:rolldown-plugins": "bun test --max-concurrency 1 ./packages/rolldown-plugin-thematic-chunks ./packages/rolldown-plugin-hoist-popular-constants ./packages/rolldown-plugin-bake-branch-component",
     "typecheck": "tsc --noEmit --noUnusedLocals --noUnusedParameters --pretty false",

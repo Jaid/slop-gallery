@@ -7,6 +7,7 @@ import miterCorners from './cornerMiters.ts'
 import corridor, {corridorPassage, corridorStairFloor, corridorWalls, insideCorridor} from './corridor.ts'
 import mainEntrance from './entrance.ts'
 import lobby from './lobby.ts'
+import lobbyCeiling, {lobbyVaultHeight} from './lobbyCeiling.ts'
 import lodge, {insideLodgeAccess, lodgeTunnel, lodgeTunnelWalls, lodgeWindow, lodgeWindowFloor} from './lodge.ts'
 import lowerGallery, {oculusPlatform, oculusRamps, rampFloorHeight, tunnelFloorHeight, tunnelSlope} from './lowerGallery.ts'
 import {craterTerrain} from './moonfall/CraterTerrain.ts'
@@ -24,7 +25,7 @@ export const rooms = [
   {
     id: 'lobby',
     floorY: 0,
-    height: 5.8,
+    height: lobbyCeiling.crown,
     number: '01',
     title: 'Lobby',
     subtitle: 'Nothing here is quite as it seems.',
@@ -141,7 +142,8 @@ const contains = (room: (typeof rooms)[number], position: Vec3) => {
   }
   const [x, y, z] = position
   const ground = room.id === 'moonfall' ? Math.min(room.floorY, room.floorY + craterTerrain.height(x - room.center[0], z - room.center[1])) : room.floorY
-  return y >= ground - 1 && y <= room.floorY + room.height + 0.2 && Math.abs(x - room.center[0]) <= room.size[0] / 2 && Math.abs(z - room.center[1]) <= room.size[1] / 2
+  const ceiling = room.id === 'lobby' ? lobbyVaultHeight(x - room.center[0]) : room.floorY + room.height
+  return y >= ground - 1 && y <= ceiling + 0.2 && Math.abs(x - room.center[0]) <= room.size[0] / 2 && Math.abs(z - room.center[1]) <= room.size[1] / 2
 }
 export function insideGallery(position: Vec3) {
   return position.every(Number.isFinite) && (rooms.some(room => contains(room, position)) || insideStairway(position) || tunnelContains(position) || insideLodgeAccess(position))
@@ -168,7 +170,8 @@ const wall = (id: string, room: RoomId, x: number, z: number, rotation: number, 
   center: [x, rooms.find(value => value.id === room)!.floorY, z],
   rotation,
   width,
-  height: rooms.find(value => value.id === room)!.height - 0.3,
+  // Keep the original lower Lobby walls and saved artwork coordinates; its upper story is the pierced vault geometry.
+  height: (room === 'lobby' ? lobbyCeiling.wallTop : rooms.find(value => value.id === room)!.height) - 0.3,
   holes,
 })
 const roomWall = (roomId: RoomId, side: 'east' | 'north' | 'south' | 'west', holes?: Wall['holes']) => {
