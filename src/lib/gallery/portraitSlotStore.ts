@@ -42,8 +42,8 @@ type PortraitSlotState = {
   /** the slot picked up with the left mouse button, following the crosshair until dropped */
   dragging: string | null
   slots: ReadonlyArray<PortraitSlot>
-  /** the ratio and area in cm² the next new slot gets, following the last edit */
-  template: readonly [PortraitRatio, number]
+  /** the ratio, area in cm² and placard side the next new slot gets, following the last edit */
+  template: readonly [ratio: PortraitRatio, area: number, labelAbove: boolean]
 }
 
 function restore(): ReadonlyArray<PortraitSlot> {
@@ -65,7 +65,7 @@ function restore(): ReadonlyArray<PortraitSlot> {
 export const usePortraitSlots = create<PortraitSlotState>(() => ({
   aimed: null,
   dragging: null,
-  template: ['1:1', slotAreas[2]],
+  template: ['1:1', slotAreas[2], false],
   slots: restore(),
 }))
 
@@ -88,7 +88,7 @@ const nextRatio = (ratio: PortraitRatio, step: -1 | 1) => ratioCycle[(ratioCycle
 /** Switches the aimed slot, or the preview of a new one, to the previous or next ratio, keeping its area. */
 export function cycleSlotRatio(id: string | null, step: -1 | 1) {
   if (!id) {
-    usePortraitSlots.setState(({template: [ratio, area]}) => ({template: [nextRatio(ratio, step), area]}))
+    usePortraitSlots.setState(({template: [ratio, area, labelAbove]}) => ({template: [nextRatio(ratio, step), area, labelAbove]}))
     return
   }
   replace(id, slot => resized(slot, nextRatio(slot.ratio, step), slotArea(slot)))
@@ -96,10 +96,21 @@ export function cycleSlotRatio(id: string | null, step: -1 | 1) {
 /** Switches the aimed slot, or the preview of a new one, to the next larger or smaller of the slot areas, wrapping around. */
 export function cycleSlotSize(id: string | null, step: -1 | 1) {
   if (!id) {
-    usePortraitSlots.setState(({template: [ratio, area]}) => ({template: [ratio, nextArea(area, step)]}))
+    usePortraitSlots.setState(({template: [ratio, area, labelAbove]}) => ({template: [ratio, nextArea(area, step), labelAbove]}))
     return
   }
   replace(id, slot => resized(slot, slot.ratio, nextArea(slotArea(slot), step)))
+}
+/** Moves the placard of the aimed slot, or of the preview of a new one, to the other side of its frame. */
+export function flipSlotLabel(id: string | null) {
+  if (!id) {
+    usePortraitSlots.setState(({template: [ratio, area, labelAbove]}) => ({template: [ratio, area, !labelAbove]}))
+    return
+  }
+  replace(id, ({labelAbove, ...slot}) => (labelAbove ? slot : {
+    ...slot,
+    labelAbove: true,
+  }))
 }
 export function removeSlot(id: string) {
   usePortraitSlots.setState(state => ({
@@ -119,9 +130,10 @@ export function previewSlot(target: Placement): PortraitSlot {
     id: `${target.wallId}-custom-${index}`,
     wallId: target.wallId,
     ratio: template[0],
-    ...slotFrame(...template),
+    ...slotFrame(template[0], template[1]),
     position: target.position,
     rotation: target.rotation,
+    ...template[2] ? {labelAbove: true} : {},
   }
 }
 
@@ -222,7 +234,7 @@ function replace(id: string, change: (slot: PortraitSlot) => PortraitSlot) {
     const edited = slots.find(slot => slot.id === id)
     return {
       slots,
-      template: edited ? [edited.ratio, slotArea(edited)] : state.template,
+      template: edited ? [edited.ratio, slotArea(edited), Boolean(edited.labelAbove)] : state.template,
     }
   })
 }
