@@ -8,6 +8,12 @@ import registerWebmcp from '../../src/lib/webmcp/register.ts'
 import createWebmcpTools from '../../src/lib/webmcp/tools.ts'
 
 const bridge: WebmcpBridge = {
+  downloadFrame: name => Promise.resolve({
+    fileName: `${name ?? 'gallery-default'}.webp`,
+    width: 2,
+    height: 1,
+    bytes: 3,
+  }),
   getAim: () => ({
     origin: {
       x: 0,
@@ -40,12 +46,12 @@ const bridge: WebmcpBridge = {
   }],
   getTelemetry: () => null,
 }
-test('WebMCP tools are read-only, validate input and read the current bridge', () => {
+test('WebMCP read tools are read-only, validate input and read the current bridge', () => {
   let current = bridge
   const tools = createWebmcpTools(() => current)
   const controller = new AbortController
-  expect(tools.map(tool => tool.name)).toEqual(['get_aim', 'get_telemetry', 'dump_knots', 'dump_portrait_slots'])
-  for (const tool of tools) {
+  expect(tools.map(tool => tool.name)).toEqual(['get_aim', 'get_telemetry', 'dump_knots', 'dump_portrait_slots', 'download_frame'])
+  for (const tool of tools.slice(0, 4)) {
     expect(tool.annotations?.readOnlyHint).toBe(true)
     expect(() => tool.execute({unexpected: true}, {signal: controller.signal})).toThrow(TypeError)
   }
@@ -67,6 +73,24 @@ test('WebMCP tools are read-only, validate input and read the current bridge', (
   expect(tools[3].execute({}, {signal: controller.signal})).toEqual(current.getPortraitSlots())
   controller.abort()
   expect(() => tools[0].execute({}, {signal: controller.signal})).toThrow()
+})
+test('download_frame validates its optional name and downloads through the bridge', async () => {
+  const tool = createWebmcpTools(() => bridge).find(({name}) => name === 'download_frame')!
+  const controller = new AbortController
+  const execute = (input: unknown) => tool.execute(input as Record<string, unknown>, {signal: controller.signal}) as Promise<unknown>
+  expect(tool.annotations?.readOnlyHint).toBe(false)
+  expect(await execute({})).toEqual({
+    fileName: 'gallery-default.webp',
+    width: 2,
+    height: 1,
+    bytes: 3,
+  })
+  expect(await execute({name: 'lobby-2026.10'})).toHaveProperty('fileName', 'lobby-2026.10.webp')
+  for (const input of [null, [], {unexpected: true}, {name: ''}, {name: '../escape'}, {name: 'a b'}, {name: 5}]) {
+    await expect(execute(input)).rejects.toThrow(TypeError)
+  }
+  controller.abort()
+  await expect(execute({})).rejects.toThrow()
 })
 test('levels without Knots expose an empty dump', () => {
   expect(dumpGalleryKnots()).toEqual([])
@@ -90,7 +114,7 @@ test('registrations clean up on unmount, failure and cancellation during registr
     const registered = registerWebmcp(() => bridge, controller.signal, context)
     if (mode === 'success') {
       const cleanup = await registered
-      expect(signals).toHaveLength(4)
+      expect(signals).toHaveLength(5)
       expect(signals[0].aborted).toBe(false)
       cleanup()
       cleanup()

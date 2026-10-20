@@ -1,3 +1,4 @@
+import type {FrameDownload} from '#src/lib/downloadFrame.ts'
 import type {PortraitSlot} from '#src/lib/gallery/types.ts'
 import type {AimSnapshot} from 'ego-player'
 import type {Rarity} from 'knot-materials/rarities.ts'
@@ -11,6 +12,7 @@ export type KnotDump = {
 }
 
 export type WebmcpBridge = {
+  downloadFrame: (name?: string) => Promise<FrameDownload>
   getAim: () => AimSnapshot
   getKnots: () => ReadonlyArray<KnotDump>
   getPortraitSlots: () => ReadonlyArray<PortraitSlot>
@@ -21,8 +23,10 @@ export type WebmcpBridge = {
   } | null
 }
 
+const fileNamePattern = /^[\w\-.]{1,100}$/u
+
 export default function createWebmcpTools(getBridge: () => WebmcpBridge): Array<WebMCP.ModelContextTool> {
-  return [
+  const readTools: Array<WebMCP.ModelContextTool> = [
     {
       name: 'get_aim',
       title: 'Inspect player aim',
@@ -66,4 +70,37 @@ export default function createWebmcpTools(getBridge: () => WebmcpBridge): Array<
       return read()
     },
   }))
+  return [
+    ...readTools,
+    {
+      name: 'download_frame',
+      title: 'Download current frame',
+      description: 'Render the current camera view once more through the WebGPU capture bridge and save it as a lossless WebP browser download. DOM overlays such as menus are not in it. Returns the file name, width, height and encoded byte size. Does not move the player, change focus or simulate input.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          name: {
+            type: 'string',
+            description: 'file name without extension, made of letters, digits, “_”, “.” and “-”. Default: <level>-<timestamp>',
+            pattern: fileNamePattern.source,
+          },
+        },
+        additionalProperties: false,
+      },
+      annotations: {
+        readOnlyHint: false,
+      },
+      execute: async (input: unknown, {signal}) => {
+        signal.throwIfAborted()
+        if (!input || typeof input !== 'object' || Array.isArray(input) || Object.keys(input).some(key => key !== 'name')) {
+          throw new TypeError('This tool takes an object with an optional name.')
+        }
+        const {name} = input as {name?: unknown}
+        if (name !== undefined && (typeof name !== 'string' || !fileNamePattern.test(name))) {
+          throw new TypeError(`name must match ${fileNamePattern}.`)
+        }
+        return getBridge().downloadFrame(name)
+      },
+    },
+  ]
 }

@@ -3,6 +3,7 @@ import {AimInspector} from 'ego-player'
 import {useEffect} from 'react'
 
 import dumpKnots from '#level/webmcp.ts'
+import downloadFrame from '#src/lib/downloadFrame.ts'
 import {usePortraitSlots} from '#src/lib/gallery/portraitSlotStore.ts'
 import {telemetry} from '#src/lib/telemetry/index.ts'
 import registerWebmcp from '#src/lib/webmcp/register.ts'
@@ -14,6 +15,7 @@ export default function WebmcpBridge() {
     const controller = new AbortController
     const inspector = new AimInspector(scene, camera)
     const bridge = {
+      downloadFrame,
       getAim: () => inspector.getAim(),
       getKnots: dumpKnots,
       getPortraitSlots: () => usePortraitSlots.getState().slots,
