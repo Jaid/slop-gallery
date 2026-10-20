@@ -4,7 +4,7 @@ import type {Frustum, Sphere} from 'three/webgpu'
 import {Box3, Vector3} from 'three/webgpu'
 
 import lobby from './lobby.ts'
-import walls, {openingTop, rooms, wallPosition} from './walls.ts'
+import walls, {openingTop, roomClearHeight, rooms, wallPosition} from './walls.ts'
 
 type Portal = {
   box: Box3
@@ -103,7 +103,7 @@ export const portals: Array<Portal> = [
 
 export const roomBoxes = rooms.map(room => ({
   id: room.id,
-  box: new Box3(new Vector3(room.center[0] - room.size[0] / 2, room.floorY - 1, room.center[1] - room.size[1] / 2), new Vector3(room.center[0] + room.size[0] / 2, room.floorY + room.height + 0.2, room.center[1] + room.size[1] / 2)),
+  box: new Box3(new Vector3(room.center[0] - room.size[0] / 2, room.floorY - 1, room.center[1] - room.size[1] / 2), new Vector3(room.center[0] + room.size[0] / 2, room.floorY + roomClearHeight(room) + 0.2, room.center[1] + room.size[1] / 2)),
 }))
 
 const point = new Vector3

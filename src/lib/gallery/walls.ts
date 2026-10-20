@@ -7,6 +7,7 @@ import miterCorners from './cornerMiters.ts'
 import corridor, {corridorPassage, corridorStairFloor, corridorWalls, insideCorridor} from './corridor.ts'
 import mainEntrance from './entrance.ts'
 import lobby from './lobby.ts'
+import lobbyVault from './lobbyVault.ts'
 import lodge, {insideLodgeAccess, lodgeTunnel, lodgeTunnelWalls, lodgeWindow, lodgeWindowFloor} from './lodge.ts'
 import lowerGallery, {oculusPlatform, oculusRamps, rampFloorHeight, tunnelFloorHeight, tunnelSlope} from './lowerGallery.ts'
 import {craterTerrain} from './moonfall/CraterTerrain.ts'
@@ -134,6 +135,11 @@ export const rooms = [
   },
 ] as const
 
+/** Height from a room’s floor to the highest point of its ceiling: the crown of the Lobby’s vault, the flat ceiling everywhere else. */
+export function roomClearHeight(room: (typeof rooms)[number]) {
+  return room.id === 'lobby' ? lobbyVault.springY + lobbyVault.outerRadius - room.floorY : room.height
+}
+
 const tunnelContains = ([x, y, z]: Vec3) => Math.abs(x - lowerGallery.tunnel.x) <= lowerGallery.tunnel.width / 2 && z >= lowerGallery.tunnel.northZ && z <= lowerGallery.tunnel.southZ && y >= tunnelFloorHeight(z) - 1 && y <= tunnelFloorHeight(z) + lowerGallery.tunnel.height
 const contains = (room: (typeof rooms)[number], position: Vec3) => {
   if (room.id === 'corridor') {
@@ -141,7 +147,7 @@ const contains = (room: (typeof rooms)[number], position: Vec3) => {
   }
   const [x, y, z] = position
   const ground = room.id === 'moonfall' ? Math.min(room.floorY, room.floorY + craterTerrain.height(x - room.center[0], z - room.center[1])) : room.floorY
-  return y >= ground - 1 && y <= room.floorY + room.height + 0.2 && Math.abs(x - room.center[0]) <= room.size[0] / 2 && Math.abs(z - room.center[1]) <= room.size[1] / 2
+  return y >= ground - 1 && y <= room.floorY + roomClearHeight(room) + 0.2 && Math.abs(x - room.center[0]) <= room.size[0] / 2 && Math.abs(z - room.center[1]) <= room.size[1] / 2
 }
 export function insideGallery(position: Vec3) {
   return position.every(Number.isFinite) && (rooms.some(room => contains(room, position)) || insideStairway(position) || tunnelContains(position) || insideLodgeAccess(position))

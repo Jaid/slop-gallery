@@ -14,8 +14,8 @@ import DineLights from '#component/levels/gallery/DineLights'
 import Fountain from '#component/levels/gallery/Fountain'
 import FountainBenches from '#component/levels/gallery/FountainBenches'
 import GalleryStairs from '#component/levels/gallery/GalleryStairs'
-import LobbyCeiling from '#component/levels/gallery/LobbyCeiling'
 import LobbyFloor from '#component/levels/gallery/LobbyFloor'
+import LobbyVault from '#component/levels/gallery/LobbyVault'
 import LodgeCorridorRoute from '#component/levels/gallery/LodgeCorridorRoute'
 import LodgeRoom from '#component/levels/gallery/LodgeRoom'
 import LodgeWindow from '#component/levels/gallery/LodgeWindow'
@@ -30,6 +30,7 @@ import {surfaceTexture} from '#src/components/Scene/materials.ts'
 import Box from '#src/components/Scene/primitives.tsx'
 import WallSurface from '#src/components/Scene/WallSurface.tsx'
 import {rooms, walls} from '#src/lib/gallery.ts'
+import sun from '#src/lib/gallery/sun.ts'
 import {createArchitecturalGlassMaterials, disposeArchitecturalGlassMaterials} from '#src/lib/materials/ArchitecturalGlassMaterials.ts'
 import CastleStoneMaterial from '#src/lib/materials/CastleStoneMaterial.ts'
 import DamaskWallpaperMaterial from '#src/lib/materials/DamaskWallpaperMaterial.ts'
@@ -38,6 +39,7 @@ import JoineryWoodMaterial from '#src/lib/materials/JoineryWoodMaterial.ts'
 import {corridorLanterns, lightIndoors, lodgeWindowLights} from '#src/lib/materials/lights/index.ts'
 import LodgeMaterials from '#src/lib/materials/LodgeMaterials.ts'
 import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
+import proceduralSky from '#src/lib/materials/ProceduralSky.ts'
 import {TravertineWallMaterial} from '#src/lib/materials/travertine/index.ts'
 import VesperWallMaterial from '#src/lib/materials/VesperWallMaterial.ts'
 
@@ -46,8 +48,8 @@ const pointLightPositions: Partial<Record<Wall['room'], Array<number>>> = {
 }
 // These rooms are lit by breakable LED panes with their own dimming lights instead of the fixed light boxes.
 const ledRooms = new Set<Wall['room']>(['dine'])
-// The Lobby keeps the shared slab but builds its own coffered laylight ceiling and the lamps under it.
-const cofferedRooms = new Set<Wall['room']>(['lobby'])
+// The Lobby has no flat ceiling: its coffered vault rises above the walls, lit by its chandeliers and the sun.
+const vaultedRooms = new Set<Wall['room']>(['lobby'])
 // These upper rooms build their own floor, ceiling and lights.
 const customRooms = new Set<Wall['room']>(['salon', 'sienna'])
 const vesper = rooms.find(room => room.id === 'vesper')!
@@ -147,23 +149,25 @@ export default function Architecture() {
   }
   return <>
     <ReflectionEnvironment />
-    <color args={['#ded8ca']} attach='background' />
+    <Sky />
     <ambientLight intensity={0.65} /><hemisphereLight args={['#ecf3ff', '#a29270', 1.15]} />
-    <directionalLight castShadow color='#fff0d7' intensity={2.3} position={[-3, 9, 4]} shadow-camera-bottom={-20} shadow-camera-left={-24} shadow-camera-right={24} shadow-camera-top={20} shadow-mapSize={[4096, 4096]} shadow-normalBias={0.035} />
+    <directionalLight castShadow color={sun.color} intensity={sun.intensity} position={sun.position} shadow-camera-bottom={sun.shadow.bottom} shadow-camera-far={sun.shadow.far} shadow-camera-left={sun.shadow.left} shadow-camera-near={sun.shadow.near} shadow-camera-right={sun.shadow.right} shadow-camera-top={sun.shadow.top} shadow-mapSize={[sun.shadow.mapSize, sun.shadow.mapSize]} shadow-normalBias={sun.shadow.normalBias} />
     {walls.map(wall => <WallSurface key={wall.id} glass={glass.tunnel} material={wallMaterial(wall)} plaster={plaster} surfaceMaterial={surfaceMaterial(wall)} wall={wall} />)}
     {rooms.filter(room => room.floorY === 0 && !customRooms.has(room.id)).map(room => <group key={room.id} position={[room.center[0], 0, room.center[1]]}>
-      <RigidBody colliders={false} type='fixed'>
-        <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]} />
-      </RigidBody>
+      <Branch not={vaultedRooms.has(room.id)}>
+        <RigidBody colliders={false} type='fixed'>
+          <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]} />
+        </RigidBody>
+        <Box color={room.id === 'vesper' ? '#7c9586' : '#e1dccc'} position={[0, 5.78, 0]} size={[room.size[0], 0.18, room.size[1]]} />
+      </Branch>
       <RoomFloorFor glass={glass.lobby} room={room} stone={stone} wood={wood} />
-      <Box color={room.id === 'vesper' ? '#7c9586' : '#e1dccc'} position={[0, 5.78, 0]} size={[room.size[0], 0.18, room.size[1]]} />
       {lightBoxOffsets(room).map(z => <group key={z}>
         <Box color='#a29982' position={[0, 5.6, z]} size={[room.size[0] * 0.48, 0.1, 2.6]} />
         <mesh position={[0, 5.54, z]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[room.size[0] * 0.48 - 0.1, 2.45]} /><meshBasicNodeMaterial color='#fff3d8' /></mesh>
         {[-1, 0, 1].map(x => <Box key={x} color='#c0b7a1' position={[x * room.size[0] * 0.12, 5.5, z]} size={[0.045, 0.12, 2.5]} />)}
       </group>)}
-      <Branch if={cofferedRooms.has(room.id)} then={LobbyCeiling} />
-      {(ledRooms.has(room.id) || cofferedRooms.has(room.id) ? [] : pointLightPositions[room.id] ?? [-3.5, 3.5]).map(z => <pointLight key={z} color='#fff1d8' decay={2} distance={14} intensity={room.id === 'vesper' ? 40 : 32} position={[0, 4.9, z]} />)}
+      <Branch if={vaultedRooms.has(room.id)}><LobbyVault cladding={lobbyWall} trim={lobbyTrim} /></Branch>
+      {(ledRooms.has(room.id) || vaultedRooms.has(room.id) ? [] : pointLightPositions[room.id] ?? [-3.5, 3.5]).map(z => <pointLight key={z} color='#fff1d8' decay={2} distance={14} intensity={room.id === 'vesper' ? 40 : 32} position={[0, 4.9, z]} />)}
     </group>)}
     <DineLights />
     <PottedPlants />
@@ -196,15 +200,29 @@ function RoomFloorFor(props: Parameters<typeof RoomFloor>[0]) {
 function isLodgeRoomWall(wall: Wall) {
   return wall.room === 'lodge' && !wall.id.startsWith('lodge-tunnel-')
 }
-/** Z offsets of the recessed light boxes: one every 4 m along the room’s depth, none where LED panes or laylights take over. */
+/** Z offsets of the recessed light boxes: one every 4 m along the room’s depth, none where LED panes or the vault’s chandeliers take over. */
 function lightBoxOffsets(room: typeof rooms[number]) {
-  if (ledRooms.has(room.id) || cofferedRooms.has(room.id)) {
+  if (ledRooms.has(room.id) || vaultedRooms.has(room.id)) {
     return []
   }
   if (room.id === 'antechamber') {
     return [0]
   }
   return Array.from({length: room.size[1] / 4 - 1}, (_, i) => i * 4 - room.size[1] / 2 + 4)
+}
+/** The procedural daytime sky behind every glazed opening of the gallery, with its sun where the gallery’s sunlight comes from. */
+function Sky() {
+  const scene = useThree(s => s.scene)
+  // Like the environment, the background is set before the first frame, so the pipelines are compiled once.
+  useLayoutEffect(() => {
+    const previous = scene.backgroundNode
+    // eslint-disable-next-line react-hooks/immutability -- the scene background belongs to the level; the cleanup restores it.
+    scene.backgroundNode = proceduralSky({sunDirection: sun.direction})
+    return () => {
+      scene.backgroundNode = previous
+    }
+  }, [scene])
+  return null
 }
 function ReflectionEnvironment() {
   const scene = useThree(s => s.scene)
