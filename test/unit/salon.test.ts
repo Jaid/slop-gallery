@@ -2,7 +2,8 @@ import {beforeEach, describe, expect, test} from 'bun:test'
 
 import {wallFace} from '../../src/lib/gallery/architecture.ts'
 import {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
-import {salonBench, salonCeiling, salonLaylight, salonLightOffsets, salonLightY, salonWainscot, wainscotFields, wallDressingSpans} from '../../src/lib/gallery/salon.ts'
+import {salonBench, salonCeiling, salonLightOffsets, salonLightY, salonSkylight, salonWainscot, wainscotFields, wallDressingSpans} from '../../src/lib/gallery/salon.ts'
+import salonWindow from '../../src/lib/gallery/salonWindow.ts'
 import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
 import walls, {floorHeight, insideGallery, insideOpening, placementIssue, roomAt, rooms, roomVisit, wallCoordinates, wallPosition} from '../../src/lib/gallery/walls.ts'
 import ParquetFloorMaterial, {herringboneBlock, salonParquet} from '../../src/lib/materials/ParquetFloorMaterial.ts'
@@ -87,21 +88,17 @@ describe('the Salon', () => {
     expect(Math.abs(position[0] - room.center[0]) + width / 2).toBeLessThan(room.size[0] / 2 - 3)
     expect(salonBench.seatHeight).toBeCloseTo(0.49, 5)
   })
-  test('the laylights hang inside the room, apart, under its slab and each above its lamp', () => {
-    const {centers, depth, frame, glassY, opening, panes} = salonLaylight
-    expect(opening / 2 + frame).toBeLessThan(room.size[0] / 2)
-    expect(centers).toHaveLength(2)
-    for (const z of centers) {
-      expect(Math.abs(z) + opening / 2 + frame).toBeLessThan(room.size[1] / 2)
+  test('the skylight sits inside the room, under its slab, along the glass wall and clear of the lamps, in whole panes', () => {
+    const {depth, frame, glassY, opening, pane} = salonSkylight
+    for (const [axis, size] of opening.entries()) {
+      expect(size / 2 + frame).toBeLessThan(room.size[axis] / 2)
+      expect(size / pane % 1).toBeCloseTo(0, 9)
     }
-    // Their coffers don’t touch, and they share one pane grid.
-    expect(centers[1] - centers[0]).toBeGreaterThan(opening + frame * 2)
-    expect((centers[1] - centers[0]) / (opening / panes) % 1).toBeCloseTo(0, 9)
     expect(glassY).toBeLessThan(salonCeiling.underside)
     expect(salonCeiling.underside - depth).toBeGreaterThan(salonLightY + 0.6)
-    expect(salonLightOffsets).toHaveLength(centers.length)
+    expect(opening[1]).toBe(salonWindow.width)
     for (const z of salonLightOffsets) {
-      expect(centers.some(center => Math.abs(z - center) < opening / 2)).toBe(true)
+      expect(Math.abs(z) - opening[1] / 2 - frame).toBeGreaterThan(1)
     }
   })
   test('wainscot runs stop at the arch trim and fit between the corners', () => {

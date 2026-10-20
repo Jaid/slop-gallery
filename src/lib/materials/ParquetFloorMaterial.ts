@@ -90,7 +90,7 @@ export default class ParquetFloorMaterial extends FloorMaterial {
     super(null, {
       color: '#ffffff',
       roughness,
-      // Oiled oak, not lacquer: the laylight panes overhead should only show as a soft sheen, never as crisp mirrored tiles.
+      // Oiled oak, not lacquer: the skylight panes overhead should only show as a soft sheen, never as crisp mirrored tiles.
       reflection: reflections ? {
         strength: 0.02,
         grazingStrength: 0.16,

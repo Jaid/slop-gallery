@@ -33,20 +33,18 @@ export const salonCeiling = {
 } as const
 
 /**
- * Two laylights along the room’s long axis: fields of frosted panes, each held by a deep coffered frame, with a plain plaster band
- * between them above the glass wall. All values are in meters, relative to the room center.
+ * One skylight along the room’s long axis, centered on it: clear cast glass open to the sky, held by a deep coffered frame. All
+ * values are in meters, relative to the room center.
  */
-export const salonLaylight = {
-  /** z offsets of the laylights’ centers, a quarter of the room’s depth from either end */
-  centers: [-salon.size[1] / 4, salon.size[1] / 4],
-  /** clear glazed opening, square */
-  opening: 6,
+export const salonSkylight = {
+  /** glazed opening along x and z, cut through the slab; as long as the glass wall below it, so their ends line up */
+  opening: [6, salonWindow.width],
   /** width of the coffer beams around the opening */
   frame: 0.55,
   /** how far the coffer beams hang below the ceiling */
   depth: 0.34,
-  /** glazing bars split the glass into a 6 × 6 grid of panes */
-  panes: 6,
+  /** glazing bars split the glass into square panes of this size */
+  pane: 1,
   barWidth: 0.05,
   barDepth: 0.07,
   /** the glass sits 1 cm below the slab, above the glazing bars */
@@ -97,11 +95,11 @@ export const salonBench = {
 export const salonBenchLegs = [-1, 1].flatMap(x => [-1, 1].map(z => [x * (salonBench.width / 2 - 0.12), z * (salonBench.depth / 2 - 0.12)] as const))
 
 /**
- * Point lights below the laylights, as room-relative z offsets, at `salonLightY`: one centered under each, so their coffers’ gilt
- * beads never sit close enough to a lamp to flare. The northern one casts shadows, throwing the ottoman’s toward the doorway, where
+ * Point lights beyond either end of the skylight, as room-relative z offsets, at `salonLightY`: a quarter of the room’s depth from
+ * either end, far enough from the coffer that its gilt beads never flare. The northern one casts shadows, throwing the ottoman’s toward the doorway, where
  * visitors see it.
  */
-export const salonLightOffsets = salonLaylight.centers
+export const salonLightOffsets = [-salon.size[1] / 4, salon.size[1] / 4]
 export const salonLightY = 4.5
 
 /**
