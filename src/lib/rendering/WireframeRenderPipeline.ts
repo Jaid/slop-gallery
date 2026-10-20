@@ -44,8 +44,10 @@ export default class WireframeRenderPipeline extends RenderPipeline {
   override render() {
     const {camera, renderer, scene} = this
     const {autoClear} = renderer
-    const {background, overrideMaterial} = scene
+    const {background, backgroundNode, overrideMaterial} = scene
     try {
+      // A background node, like the gallery’s procedural sky, takes precedence over the plain background color.
+      scene.backgroundNode = null
       scene.background = this.background
       scene.overrideMaterial = this.fill
       renderer.render(scene, camera)
@@ -57,6 +59,7 @@ export default class WireframeRenderPipeline extends RenderPipeline {
     } finally {
       renderer.autoClear = autoClear
       scene.background = background
+      scene.backgroundNode = backgroundNode
       scene.overrideMaterial = overrideMaterial
     }
   }
