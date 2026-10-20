@@ -2,7 +2,7 @@ import type {PortraitRatio, PortraitSlot} from '#src/lib/gallery/types.ts'
 
 import {dineWallPanels} from '#src/lib/gallery/dine.ts'
 import {lodgeWindow} from '#src/lib/gallery/lodge.ts'
-import {oculusRampLandings} from '#src/lib/gallery/lowerGallery.ts'
+import {oculusPlatform, oculusRampLandings} from '#src/lib/gallery/lowerGallery.ts'
 import portraitLabel from '#src/lib/gallery/portraitLabel.ts'
 import {siennaWainscot} from '#src/lib/gallery/sienna.ts'
 import {galleryPlacement} from '#src/lib/gallery/walls.ts'
@@ -24,9 +24,11 @@ const dineY = middle(dineWallPanels(wall('dine-east')).upper[0].v) + placardLift
 const siennaPanel = (id: string, index: number) => siennaWainscot(wall(id))[index]
 // The Lodge hangs at the height of its window’s middle, and the east wall faces the window.
 const lodgeY = -3
-/** The wide Oculus frames beside the south doorway face the switchback landings, centered on them. Their placards go on top, with frame and placard together at the usual height above the landing’s floor. */
-const oculusLandingU = Math.abs(oculusRampLandings[0].position[0])
-const oculusLandingY = oculusRampLandings[0].position[1] + oculusRampLandings[0].size[1] / 2 + 2.7 - placardLift
+/** The wide Oculus frames beside the south doorway face the switchback landings, a little toward the doorway, low over the landing’s floor with their placards on top. */
+const oculusLandingU = 6.6
+const oculusLandingY = oculusRampLandings[0].position[1] + oculusRampLandings[0].size[1] / 2 + 1.85
+/** The side frames hang over the middle of the raised north platform. */
+const oculusPlatformU = oculusPlatform.position[2] - wall('oculus-east').center[2]
 const lodgeWindowU = lodgeWindow.z - wall('lodge-east').center[2]
 const specs: ReadonlyArray<SlotSpec> = [
   // Lobby: the arched alcoves, the piers beside the south door and the near end of the extension
@@ -63,12 +65,12 @@ const specs: ReadonlyArray<SlotSpec> = [
   ['sienna-south', '1:1', 1.3, siennaPanel('sienna-south', 4), 3.15],
   ['sienna-west', '1:1', 1.3, siennaPanel('sienna-west', 1), 3.15],
   // Oculus: the piers beside the south and north openings, and the east and west landings
-  ['oculus-south', '3:2', 2.4, -oculusLandingU, oculusLandingY, true],
-  ['oculus-south', '3:2', 2.4, oculusLandingU, oculusLandingY, true],
+  ['oculus-south', '3:2', 3, -oculusLandingU, oculusLandingY, true],
+  ['oculus-south', '3:2', 3, oculusLandingU, oculusLandingY, true],
   ['oculus-north', '3:2', 2.4, -5.6, -2.7],
   ['oculus-north', '3:2', 2.4, 5.6, -2.7],
-  ['oculus-east', '3:2', 1.8, -6, -2.7],
-  ['oculus-west', '3:2', 1.8, 6, -2.7],
+  ['oculus-east', '3:2', 1.8, oculusPlatformU, -2.85],
+  ['oculus-west', '3:2', 1.8, -oculusPlatformU, -2.85],
   // Lodge: three evenly along the north wall, one each side of the fireplace and one facing the window
   ['lodge-north', '3:2', 1.8, -3, lodgeY],
   ['lodge-north', '3:2', 1.8, 0, lodgeY],
