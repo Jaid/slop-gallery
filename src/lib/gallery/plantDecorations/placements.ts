@@ -31,7 +31,7 @@ export const potPlacements: Array<PotPlacement> = [
   {
     id: 'prop-dine-northeast-plant',
     pot: 'ivory',
-    position: [19.05, 0.001, -7.05],
+    position: [19.05, 0.001, -15.05],
   },
   {
     id: 'prop-lobby-northwest-plant',
