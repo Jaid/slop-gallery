@@ -6,6 +6,7 @@ import {useMemo} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 import useGraphicsMode from 'use-graphics-mode'
 
+import LobbyTympanum from '#component/levels/gallery/LobbyTympanum'
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
 import LobbyChandelierGeometry from '#src/lib/gallery/LobbyChandelierGeometry.ts'
 import lobbyVault, {lobbyChandeliers} from '#src/lib/gallery/lobbyVault.ts'
@@ -63,6 +64,7 @@ export default function LobbyVault({cladding}: {
     {/* The glass lets the sun through: it casts no shadow, only its bars and tracery do. */}
     <mesh castShadow={false} geometry={geometry.glass} material={glass} name='lobby-vault-glass' />
     <mesh castShadow={false} geometry={geometry.roseGlass} material={glass} name='lobby-vault-rose-window' />
+    <LobbyTympanum gilt={gold} stone={stone} />
     <LobbyChandeliers />
   </group>
 }
