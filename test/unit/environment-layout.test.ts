@@ -12,9 +12,10 @@ import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
 import {playerSpawn} from '../../src/lib/gallery/PlayerSession.ts'
 import walls from '../../src/lib/gallery/walls.ts'
 
-test('four matching slatted benches surround the relocated fountain and leave the spawn clear', () => {
+test('two matching slatted benches flank the fountain north/south and leave the spawn and side approaches clear', () => {
   expect(fountain.position).toEqual([0, 0, -6])
-  expect(fountainBenches).toHaveLength(4)
+  expect(fountainBenches.map(pose => pose.position)).toEqual([[0, 0, -2], [0, 0, -10]])
+  expect(fountainBenches.map(pose => pose.rotation)).toEqual([[0, 0, 0], [0, Math.PI, 0]])
   const geometry = new SlattedBenchGeometry
   try {
     const seat = geometry.wood.boundingBox!
