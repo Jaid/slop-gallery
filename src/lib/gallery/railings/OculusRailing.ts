@@ -1,8 +1,6 @@
 import type {Vec3} from '../types.ts'
 import type {RailingAnchor} from './RailingPath.ts'
 
-import {clamp} from 'math'
-
 import {oculusRamps} from '../lowerGallery.ts'
 import tower, {towerRamp as ramp, towerPlatformOutline, towerRampHeight} from '../oculusTower.ts'
 import RailingPath from './RailingPath.ts'
