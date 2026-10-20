@@ -7,8 +7,8 @@ export const portraitRatios: Record<PortraitRatio, number> = {
   '3:2': 3 / 2,
 }
 
-/** the frame areas, in cm², that slots come in, about 1.5× apart */
-export const slotAreas = [6000, 10_000, 16_000, 24_000, 38_000, 60_000, 90_000] as const
+/** the frame areas, in cm², that slots of every ratio come in */
+export const slotAreas = [7500, 15_000, 30_000, 60_000, 100_000] as const
 
 const toMillimeters = (meters: number) => Math.round(meters * 1000) / 1000
 
