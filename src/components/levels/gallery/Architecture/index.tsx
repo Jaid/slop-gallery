@@ -166,7 +166,7 @@ export default function Architecture() {
         <mesh position={[0, 5.54, z]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[room.size[0] * 0.48 - 0.1, 2.45]} /><meshBasicNodeMaterial color='#fff3d8' /></mesh>
         {[-1, 0, 1].map(x => <Box key={x} color='#c0b7a1' position={[x * room.size[0] * 0.12, 5.5, z]} size={[0.045, 0.12, 2.5]} />)}
       </group>)}
-      <Branch if={vaultedRooms.has(room.id)}><LobbyVault cladding={lobbyWall} trim={lobbyTrim} /></Branch>
+      <Branch if={vaultedRooms.has(room.id)}><LobbyVault cladding={lobbyWall} /></Branch>
       {(ledRooms.has(room.id) || vaultedRooms.has(room.id) ? [] : pointLightPositions[room.id] ?? [-3.5, 3.5]).map(z => <pointLight key={z} color='#fff1d8' decay={2} distance={14} intensity={room.id === 'vesper' ? 40 : 32} position={[0, 4.9, z]} />)}
     </group>)}
     <DineLights />

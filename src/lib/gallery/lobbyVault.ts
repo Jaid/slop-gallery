@@ -6,65 +6,27 @@ const degrees = Math.PI / 180
 const halfSpan = lobby.width / 2 - wallFace
 /** Inner face of the end walls, measured from the room center. */
 const halfLength = (lobby.southZ - lobby.northZ) / 2 - wallFace
-const springY = 9.6
+const springY = wallTop
 const cofferDepth = 0.2
 const shell = 0.35
 
 /**
  * The Lobby’s coffered barrel vault, in meters relative to the room center at floor level.
  *
- * Above the walls’ cornice, an attic storey of the same clad stone rises to an impost molding, where a semicircular vault
- * springs from the wall faces. Transverse ribs stand over pilasters every 4 m. Between them, the flanks are coffered with a gilt
- * rosette in every field, and a glazed band runs along the crown, showing the sky and letting the sun in. Each end wall closes
- * the vault with a lunette pierced by a stained-glass rose window.
+ * A semicircular vault springs from the wall faces right on top of the walls’ cornice. Transverse ribs span it every 4 m.
+ * Between them, the flanks are coffered with a gilt rosette in every field, and a glazed band runs along the crown, showing the
+ * sky and letting the sun in. A lunette closes each end; the north one is pierced by a clear wheel-rose window.
  *
  * Angles around the vault’s axis (z) are measured from +x: 0 is the east springing, π/2 the crown, π the west springing.
  */
 export const lobbyVault = {
   halfSpan,
   halfLength,
-  /** the attic storey starts on top of the walls */
-  atticBottom: wallTop,
   springY,
   /** radius of the coffer frames’ inner face, flush with the walls below */
   radius: halfSpan,
   crownY: springY + halfSpan,
-  /** top of the cornice’s upper band that the walls below already carry */
-  corniceTop: wallTop - 0.3 - 0.22 + 0.23 / 2,
   bay: 4,
-  impost: {
-    /** the upper, deeper band ends at the springing line */
-    height: 0.3,
-    projection: 0.3,
-    /** a slimmer band under it */
-    lowerHeight: 0.14,
-    lowerProjection: 0.14,
-    /** height and projection of the gilt fillet along the upper band’s face */
-    bead: 0.05,
-    fillet: 0.012,
-  },
-  pilaster: {
-    width: 0.56,
-    projection: 0.12,
-    base: {
-      height: 0.16,
-      width: 0.68,
-      projection: 0.18,
-    },
-    capital: {
-      height: 0.22,
-      width: 0.74,
-      projection: 0.22,
-    },
-  },
-  /** sunk panels framed by a slim molding between the pilasters of the attic */
-  atticPanel: {
-    inset: 0.42,
-    bottom: wallTop + 0.35,
-    top: springY - 0.85,
-    molding: 0.08,
-    projection: 0.05,
-  },
   rib: {
     width: 0.56,
     /** how far a rib hangs below the coffer frames */
@@ -74,48 +36,48 @@ export const lobbyVault = {
     fillet: 0.012,
     beadInset: 0.08,
   },
+  /** the spine rib along the crown, of the ribs’ profile but wider */
+  spine: 1.1,
   coffer: {
     depth: cofferDepth,
-    /** coffer rows on each flank, from the springing to the glazed band */
-    rows: 4,
-    /** coffers along z between two ribs */
-    columns: 2,
     /** width of the frames between coffers */
     frame: 0.2,
-    /** the frames along the glazed band are heavier: they carry the glazing */
-    curb: 0.34,
-    rosette: 0.2,
+    /** gilt molding lining each field inside its step: width and inset from the step */
+    molding: 0.05,
+    moldingInset: 0.12,
+    rosette: 0.55,
   },
   /** shell thickness behind the coffers and the glass */
   shell,
   /** outer radius of the vault, which the attic walls and lunettes reach */
   outerRadius: halfSpan + cofferDepth + shell,
   glazing: {
-    /** the band spans this angle on either side of the crown */
-    halfAngle: 32 * degrees,
-    /** panes across the band and along each bay */
-    across: 8,
-    along: 3,
+    /** the glazed span reaches this angle on either side of the crown, leaving one row of coffers low on each flank */
+    halfAngle: 60 * degrees,
+    /** a longitudinal rib on either side of the spine, at this angle from the crown */
+    purlin: 32 * degrees,
+    /** size of the panes the bars divide every field into, and of the glass’s cast panes */
+    pane: 1,
     bar: {
-      width: 0.045,
-      depth: 0.08,
+      width: 0.032,
+      depth: 0.045,
     },
+    /** heavier bars around every field */
+    rim: 0.065,
+    /** a bronze ring in the middle of every field */
+    medallion: 0.34,
   },
   rose: {
     /** height of the center above the springing line */
     rise: 3.4,
     radius: 2.5,
-    /** stone ring lining the opening, between the glass and the wall */
-    ring: 0.14,
-    hub: 0.42,
-    spokes: 12,
-    tracery: {
-      width: 0.1,
-      depth: 0.16,
-    },
-    /** small rings between the spokes */
-    foil: 0.36,
     lunetteThickness: 0.4,
+    /** bronze glazing bars: spokes from the gilt hub ring, a wheel across them and a small ring between each pair at the rim */
+    spokes: 12,
+    hub: 0.62,
+    wheel: 1.54,
+    foil: 0.3,
+    bar: 0.035,
   },
 } as const
 
@@ -158,10 +120,27 @@ export function vaultBays(): Array<readonly [number, number]> {
 /** Angle where the glazed band meets the east flank; the west one mirrors it at π minus this. */
 export const glazingStart = Math.PI / 2 - lobbyVault.glazing.halfAngle
 
-/** Angles of the frames between coffer rows on the east flank, from the springing up to the curb of the glazed band. */
-export function cofferFrameAngles() {
-  const {rows} = lobbyVault.coffer
-  return Array.from({length: rows + 1}, (_, i) => glazingStart * i / rows)
+/**
+ * The fields of the square coffers in the row along each flank, between the springing and the lowest longitudinal rib. They
+ * follow their own spacing rather than the bays of the glazing above. Angles are on the east flank; the west one mirrors them.
+ */
+export function vaultCoffers() {
+  const {coffer, radius, rib} = lobbyVault
+  const top = glazingStart - rib.width / 2 / radius
+  const frame = coffer.frame / radius
+  const angles = [frame, top - frame] as const
+  const side = (angles[1] - angles[0]) * radius
+  const count = Math.round((halfLength * 2 - coffer.frame) / (side + coffer.frame))
+  const length = (halfLength * 2 - coffer.frame * (count + 1)) / count
+  return {
+    /** the frames below and above the row */
+    top,
+    angles,
+    z: Array.from({length: count}, (_, i) => {
+      const north = -halfLength + coffer.frame + i * (length + coffer.frame)
+      return [north, north + length] as const
+    }),
+  }
 }
 
 /** Height of a point on the vault’s inner face, or the springing height beyond it. */
@@ -171,22 +150,16 @@ export function vaultHeight(x: number) {
 }
 
 /**
- * The great chandeliers hang on long rods from the crown of every other rib, 8 m apart and as far from the end walls.
- * Each one’s light stands in for all of its candles.
+ * Three great chandeliers hang on long rods where arches cross the spine rib, one over the room’s center and two 8 m to
+ * either side. The north one hangs right over the glass floor above the Oculus.
  */
 export const lobbyChandeliers = {
-  /** z of the ribs they hang from, relative to the room center */
-  offsets: [-12, -4, 4, 12],
-  /** the one nearest the fountain, 2 m north of it */
-  shadowCaster: 4,
-  /** height of the top of each chandelier’s column above the floor */
-  y: 10.4,
-  /** where the rods meet the ribs: the soffit at the crown */
+  /** z relative to the room center */
+  offsets: [-8, 0, 8],
+  /** height of each chandelier’s hub above the floor */
+  y: 8.5,
+  /** where the rods meet the spine rib’s soffit */
   anchorY: lobbyVault.crownY - lobbyVault.rib.depth,
-  color: '#ffd9a0',
-  intensity: 55,
-  /** like the old lamps’, short enough that hardly any light reaches the neighboring rooms through their doorways */
-  distance: 16,
 } as const
 
 export default lobbyVault

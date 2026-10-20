@@ -6,14 +6,13 @@ import {DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/web
 
 import {wallTop} from '../../src/lib/gallery/architecture.ts'
 import ArcSlabGeometry from '../../src/lib/gallery/ArcSlabGeometry.ts'
-import LobbyChandelierGeometry, {lobbyChandelier, lobbyChandelierBottom, turned} from '../../src/lib/gallery/LobbyChandelierGeometry.ts'
-import lobbyVault, {cofferFrameAngles, glazingStart, lobbyChandeliers, vaultBays, vaultHeight, vaultRibs} from '../../src/lib/gallery/lobbyVault.ts'
+import LobbyChandelierGeometry, {lobbyChandelier, lobbyChandelierBottom} from '../../src/lib/gallery/LobbyChandelierGeometry.ts'
+import lobbyVault, {glazingStart, lobbyChandeliers, vaultBays, vaultCoffers, vaultHeight, vaultRibs} from '../../src/lib/gallery/lobbyVault.ts'
 import LobbyVaultGeometry, {lobbyVaultCollision, roseCenterY} from '../../src/lib/gallery/LobbyVaultGeometry.ts'
 import sun, {sunClearance, sunlitPoints} from '../../src/lib/gallery/sun.ts'
 import walls, {insideGallery, roomAt, roomClearHeight, rooms} from '../../src/lib/gallery/walls.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 import proceduralSky from '../../src/lib/materials/ProceduralSky.ts'
-import StainedGlassMaterial from '../../src/lib/materials/StainedGlassMaterial.ts'
 
 const room = rooms.find(candidate => candidate.id === 'lobby')!
 const halfWidth = room.size[0] / 2
@@ -49,11 +48,10 @@ const expectClosedAndOutward = (part: BufferGeometry) => {
   expect(edges.values().every(count => count === 2)).toBe(true)
 }
 describe('the Lobby’s barrel vault', () => {
-  test('springs from the wall faces above an attic storey and is far higher than the old ceiling', () => {
+  test('springs from the wall faces on top of the walls and is far higher than the old ceiling', () => {
     expect(lobbyVault.radius).toBeCloseTo(halfWidth - 0.105, 9)
-    expect(lobbyVault.atticBottom).toBe(wallTop)
-    expect(lobbyVault.springY).toBeGreaterThan(wallTop + 3)
-    expect(lobbyVault.crownY).toBeGreaterThan(2.5 * 5.8)
+    expect(lobbyVault.springY).toBe(wallTop)
+    expect(lobbyVault.crownY).toBeGreaterThan(2 * wallTop)
     expect(vaultHeight(0)).toBeCloseTo(lobbyVault.crownY, 9)
     expect(vaultHeight(lobbyVault.radius)).toBeCloseTo(lobbyVault.springY, 9)
     expect(roomClearHeight(room)).toBeGreaterThan(lobbyVault.crownY)
@@ -76,40 +74,47 @@ describe('the Lobby’s barrel vault', () => {
     }
     expect(vaultBays()).toHaveLength(ribs.length - 1)
   })
-  test('coffer rows climb from the springing to the glazed crown band', () => {
-    const angles = cofferFrameAngles()
-    expect(angles[0]).toBe(0)
-    expect(angles.at(-1)).toBeCloseTo(glazingStart, 12)
-    expect(angles).toHaveLength(lobbyVault.coffer.rows + 1)
-    expect(glazingStart).toBeGreaterThan(Math.PI / 4)
+  test('square coffers line the flanks below the glazing, spaced on their own', () => {
+    const {angles, top, z} = vaultCoffers()
+    const {coffer, halfLength, radius} = lobbyVault
+    expect(top).toBeLessThan(glazingStart)
+    expect(angles[0]).toBeCloseTo(coffer.frame / radius, 12)
+    expect(angles[1]).toBeCloseTo(top - coffer.frame / radius, 12)
+    const side = (angles[1] - angles[0]) * radius
+    for (const [north, south] of z) {
+      expect(Math.abs(south - north - side)).toBeLessThan(0.3)
+    }
+    expect(z[0][0]).toBeCloseTo(-halfLength + coffer.frame, 9)
+    expect(z.at(-1)![1]).toBeCloseTo(halfLength - coffer.frame, 9)
+    expect(z).not.toHaveLength(vaultBays().length)
+    expect(glazingStart).toBeGreaterThan(Math.PI / 8)
     expect(glazingStart).toBeLessThan(Math.PI / 2)
   })
   test('stays within the Lobby’s footprint and above its walls', () => {
-    for (const part of [geometry.clad, geometry.trim, geometry.stone, geometry.plaster, geometry.gold, geometry.bars, geometry.glass, geometry.roseGlass]) {
+    for (const part of [geometry.clad, geometry.stone, geometry.plaster, geometry.gold, geometry.bars, geometry.glass, geometry.roseGlass]) {
       const box = part.boundingBox!
       expect(box.min.x).toBeGreaterThanOrEqual(-halfWidth - lobbyVault.shell - 0.25)
       expect(box.max.x).toBeLessThanOrEqual(halfWidth + lobbyVault.shell + 0.25)
       // The lunettes sit on top of the end walls, whose outer faces are half a wall behind the room’s edge.
       expect(box.min.z).toBeGreaterThanOrEqual(-halfDepth - 0.35)
       expect(box.max.z).toBeLessThanOrEqual(halfDepth + 0.35)
-      // Only the pilaster bases reach down onto the cornice.
-      expect(box.min.y).toBeGreaterThanOrEqual(lobbyVault.corniceTop - 1e-6)
+      expect(box.min.y).toBeGreaterThanOrEqual(lobbyVault.springY - 1e-6)
       expect(box.max.y).toBeLessThanOrEqual(lobbyVault.crownY + lobbyVault.coffer.depth + lobbyVault.shell + 1e-6)
     }
   })
   test('glass of the crown band spans every bay between the ribs', () => {
     const box = geometry.glass.boundingBox!
     expect(box.min.y).toBeCloseTo(lobbyVault.springY + (lobbyVault.radius + lobbyVault.coffer.depth) * Math.sin(glazingStart), 2)
-    expect(box.max.x).toBeCloseTo((lobbyVault.radius + lobbyVault.coffer.depth + 0.02) * Math.cos(glazingStart), 2)
+    expect(box.max.x).toBeCloseTo((lobbyVault.radius + lobbyVault.coffer.depth) * Math.cos(glazingStart), 2)
     expect(roseCenterY + lobbyVault.rose.radius).toBeLessThan(vaultHeight(lobbyVault.rose.radius))
     expect(roseCenterY - lobbyVault.rose.radius).toBeGreaterThan(lobbyVault.springY)
   })
   test('keeps a reasonable triangle budget', () => {
-    const total = [geometry.clad, geometry.trim, geometry.stone, geometry.plaster, geometry.gold, geometry.bars, geometry.glass, geometry.roseGlass].reduce((sum, part) => sum + triangleCount(part), 0)
+    const total = [geometry.clad, geometry.stone, geometry.plaster, geometry.gold, geometry.bars, geometry.glass, geometry.roseGlass].reduce((sum, part) => sum + triangleCount(part), 0)
     expect(total).toBeLessThan(150_000)
   })
   test('lets the sun in through the glazed crown and nowhere else', () => {
-    const meshes = [geometry.clad, geometry.trim, geometry.stone, geometry.plaster, geometry.gold, geometry.bars, geometry.roseGlass].map(part => new Mesh(part, material))
+    const meshes = [geometry.clad, geometry.stone, geometry.plaster, geometry.gold, geometry.bars, geometry.roseGlass].map(part => new Mesh(part, material))
     const glass = new Mesh(geometry.glass, material)
     for (const mesh of [...meshes, glass]) {
       mesh.updateMatrixWorld()
@@ -180,54 +185,21 @@ describe('the Lobby’s barrel vault', () => {
   })
 })
 describe('the Lobby’s chandeliers', () => {
-  test('hang from the crowns of the ribs, high above the visitors and clear of each other', () => {
-    const ribs = vaultRibs().map(rib => rib.z)
+  test('hang from the spine, high above the visitors and clear of each other and the end walls', () => {
+    const reachOut = Math.max(...lobbyChandelier.tiers.map(tier => tier.radius)) + 0.2
     for (const z of lobbyChandeliers.offsets) {
-      expect(ribs).toContain(z)
+      expect(Math.abs(z)).toBeLessThan(lobbyVault.halfLength - reachOut)
     }
     expect(lobbyChandeliers.anchorY).toBeCloseTo(lobbyVault.crownY - lobbyVault.rib.depth, 9)
     expect(lobbyChandeliers.y + lobbyChandelierBottom).toBeGreaterThan(7)
-    const reach = Math.max(...lobbyChandelier.tiers.map(tier => tier.reach))
+    const reach = Math.max(...lobbyChandelier.tiers.map(tier => tier.radius))
     const offsets = lobbyChandeliers.offsets
     for (let i = 1; i < offsets.length; i++) {
       expect(offsets[i] - offsets[i - 1]).toBeGreaterThan(reach * 2 + 2)
     }
-    expect(lobbyChandeliers.offsets).toContain(lobbyChandeliers.shadowCaster)
-    // The canopy meets the rib soffit.
+    // The boss meets the spine’s soffit.
     expect(chandelier.gilt.boundingBox!.max.y).toBeCloseTo(lobbyChandeliers.anchorY - lobbyChandeliers.y, 6)
-    expect(chandelier.crystal.boundingBox!.min.y).toBeGreaterThanOrEqual(lobbyChandelierBottom - 1e-6)
-    // Its light sits below the whole fixture.
-    expect(lobbyChandelier.lightY).toBeLessThan(lobbyChandelierBottom)
-  })
-  test('turned parts face outward', () => {
-    // Listed top to bottom like the column’s profile: a capsule-like drum, closed at both ends on the axis.
-    const part = turned([[0, 0], [0.1, -0.1], [0.1, -0.9], [0, -1]], 12)
-    const positions = part.getAttribute('position')
-    const normals = part.getAttribute('normal')
-    let measured = 0
-    for (let i = 0; i < positions.count; i++) {
-      const horizontal = Math.hypot(positions.getX(i), positions.getZ(i))
-      const y = positions.getY(i)
-      if (!(horizontal > 0.09 && y < -0.05 && y > -0.95)) {
-        continue
-      }
-      measured++
-      expect((positions.getX(i) * normals.getX(i) + positions.getZ(i) * normals.getZ(i)) / horizontal).toBeGreaterThan(0.5)
-    }
-    expect(measured).toBeGreaterThan(0)
-    // Triangles wind the same way as their normals.
-    const indices = part.index!
-    for (let i = 0; i < indices.count; i += 3) {
-      const ids = [indices.getX(i), indices.getX(i + 1), indices.getX(i + 2)]
-      const [a, b, c] = ids.map(index => point(positions, index))
-      const face = b.clone().sub(a).cross(c.clone().sub(a))
-      if (face.length() < 1e-9) {
-        continue
-      }
-      const shading = ids.reduce((sum, index) => sum.add(point(normals, index)), new Vector3)
-      expect(face.dot(shading)).toBeGreaterThan(0)
-    }
-    part.dispose()
+    expect(chandelier.gilt.boundingBox!.min.y).toBeCloseTo(lobbyChandelierBottom, 6)
   })
   test('replace the old lamps: the Lobby keeps no flat ceiling, laylights or light boxes', async () => {
     const architecture = await Bun.file(new URL('../../src/components/levels/gallery/Architecture/index.tsx', import.meta.url)).text()
@@ -260,36 +232,18 @@ describe('the sun and the sky', () => {
     expect(sunClearance).toBeGreaterThan(sun.shadow.near)
     expect(sunlitPoints().some(([x, y, z]) => Math.abs(x) < 9 && y > lobbyVault.crownY && Math.abs(z - room.center[1]) < 21)).toBe(true)
   })
-  test('the sky and the stained glass validate their options', () => {
+  test('the sky validates its options', () => {
     expect(() => proceduralSky({sunDirection: sun.direction})).not.toThrow()
     expect(() => proceduralSky({
       sunDirection: sun.direction,
       cloudCover: 1.5,
     })).toThrow(RangeError)
     expect(() => proceduralSky({sunDirection: [0, 0, 0]})).toThrow(RangeError)
-    const options = {
-      center: [0, roseCenterY],
-      radius: lobbyVault.rose.radius - lobbyVault.rose.ring,
-      hub: lobbyVault.rose.hub,
-      foil: lobbyVault.rose.foil,
-      spokes: lobbyVault.rose.spokes,
-    } as const
-    const glass = new StainedGlassMaterial(options)
-    expect(glass.colorNode).toBeTruthy()
-    glass.dispose()
-    expect(() => new StainedGlassMaterial({
-      ...options,
-      hub: options.radius * 2,
-    })).toThrow(RangeError)
-    expect(() => new StainedGlassMaterial({
-      ...options,
-      brightness: 2,
-    })).toThrow(RangeError)
   })
-  test('the end walls stop below the attic, which carries their cladding on up to the vault', () => {
+  test('the end walls stop below the lunettes, which carry their cladding on up to the vault', () => {
     for (const wall of walls) {
       if (wall.room === 'lobby') {
-        expect(wall.height + 0.3).toBeCloseTo(lobbyVault.atticBottom, 9)
+        expect(wall.height + 0.3).toBeCloseTo(lobbyVault.springY, 9)
       }
     }
   })
