@@ -1,5 +1,6 @@
 import type {GalleryDocument, Portrait} from './types.ts'
 
+import artworks from '#level/artworks.ts'
 import placement from '#level/placement.ts'
 
 import {isSeed} from '../environmentSeed.ts'
@@ -7,7 +8,6 @@ import {galleryStorageKey} from '../level.ts'
 import pauseMenu from '../pauseMenu.ts'
 import {obstructionIssue, placementIssues, wallCoordinates, wallPosition} from '../placement/wallGeometry.ts'
 import {notify} from './actions.ts'
-import artworks from './artworks.ts'
 import {imageSize} from './ImageImporter.ts'
 import {imageExtensions, maximumBackupBytes, validateCollectionImages, validateImage} from './imagePolicy.ts'
 import {playerSession, validatePlayerPose} from './PlayerSession.ts'

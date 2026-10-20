@@ -3,9 +3,10 @@ import type {Portrait} from './types.ts'
 import optis from 'optis'
 import readPermalink from 'read-permalink'
 
+import artworks from '#level/artworks.ts'
+import slots from '#level/slots.ts'
+
 import {environmentRoll} from '../environmentSeed.ts'
-import artworks from './artworks.ts'
-import slots from './slots.ts'
 
 const disabledValues = new Set<unknown>([false, 'false', '0'])
 const portraitsSchema = optis({

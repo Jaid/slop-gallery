@@ -5,10 +5,10 @@ import readPermalink from 'read-permalink'
 import {create} from 'zustand'
 
 import placement from '#level/placement.ts'
+import shippedSlots from '#level/slots.ts'
 
 import {asPortrait, slotArea, slotAreas, slotFrame} from '../placement/portraitSlots.ts'
 import {wallPosition} from '../placement/wallGeometry.ts'
-import shippedSlots from './slots.ts'
 
 const enabledValues = new Set<unknown>([true, '', 'true'])
 const editingSchema = optis({

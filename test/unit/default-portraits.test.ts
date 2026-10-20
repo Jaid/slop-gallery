@@ -1,8 +1,8 @@
 import {expect, test} from 'bun:test'
 
-import artworks from '../../src/lib/gallery/artworks.ts'
+import artworks from '../../src/levels/gallery/artworks.ts'
+import slots from '../../src/levels/gallery/slots.ts'
 import defaultPortraits, {readDefaultPortraitsEnabled} from '../../src/lib/gallery/defaultPortraits.ts'
-import slots from '../../src/lib/gallery/slots.ts'
 
 test('default works hang in distinct slots of their ratio, taking the slot’s size', () => {
   const portraits = defaultPortraits(7)

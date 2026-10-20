@@ -8,7 +8,7 @@ import fs from 'fs-extra'
 import puppeteer from 'puppeteer-core'
 import {preview} from 'vite'
 
-import artworks from '../src/lib/gallery/artworks.ts'
+import artworks from '../src/levels/gallery/artworks.ts'
 
 const baseline = artworks.length
 const snapshot = (page: Page): Promise<Snapshot> => page.evaluate(() => globalThis.slopGallery!.snapshot!())

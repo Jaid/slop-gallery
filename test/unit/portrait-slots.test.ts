@@ -1,7 +1,7 @@
 import {describe, expect, test} from 'bun:test'
 
-import artworks from '../../src/lib/gallery/artworks.ts'
-import slots from '../../src/lib/gallery/slots.ts'
+import artworks from '../../src/levels/gallery/artworks.ts'
+import slots from '../../src/levels/gallery/slots.ts'
 import {galleryPlacement, placementIssue} from '../../src/lib/gallery/walls.ts'
 import {asPortrait, portraitRatios, slotArea, slotAreas, slotFrame} from '../../src/lib/placement/portraitSlots.ts'
 
