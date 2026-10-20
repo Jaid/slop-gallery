@@ -114,9 +114,11 @@ export const oculusQuarterLandings = oculusLowerRamps.map(ramp => ({
   position: [ramp.x, (lowerGallery.oculus.floorY + ramp.floorY) / 2, ramp.startZ - ramp.width / 2] as Vec3,
   size: [ramp.width, ramp.floorY - lowerGallery.oculus.floorY, ramp.width] as Vec3,
 }))
-// Reaching south to right below the balcony’s edge, with the open corner rounded by one flight width.
+/** how far the turning landing reaches south past the flights, leaving a gap before the balcony */
+const rampLandingDepth = 4
+// The open corner is rounded by one flight width.
 export const oculusRampLandings = oculusRamps.map(ramp => {
-  const depth = oculusSouthZ - oculusBalconyDepth - ramp.startZ
+  const depth = rampLandingDepth
   return {
     side: ramp.side,
     position: [ramp.x + (ramp.side === 'west' ? 1 : -1) * ramp.width / 2, lowerGallery.oculus.floorY + oculusDrop / 2, ramp.startZ + depth / 2] as Vec3,
@@ -135,6 +137,22 @@ export function rampLandingCorner({side, position, size, cornerRadius}: RampLand
     sign,
   }
 }
+
+/** A can-shaped plinth stands behind each turning landing, equally far from its south edge, the south wall and the side wall. */
+export const oculusLandingPlinths = oculusRampLandings.map(landing => {
+  const sign = landing.side === 'west' ? -1 : 1
+  const radius = 0.6
+  const height = 1.2
+  const wallX = landing.position[0] + sign * landing.size[0] / 2
+  const northZ = landing.position[2] + landing.size[2] / 2
+  return {
+    side: landing.side,
+    // as far from the side wall as from the landing and the south wall
+    position: [wallX - sign * (oculusSouthZ - northZ) / 2, lowerGallery.oculus.floorY + height / 2, (northZ + oculusSouthZ) / 2] as Vec3,
+    radius,
+    height,
+  }
+})
 
 /** Footprint in x/z, starting at the wall-side north corner. */
 export function rampLandingOutline(landing: RampLanding, segments = 16) {
