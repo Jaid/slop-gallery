@@ -1,3 +1,4 @@
+import type {EgoDump} from './EgoDiagnostics.ts'
 import type {RapierRigidBody} from '@react-three/rapier'
 
 export type EgoAction = 'backward' | 'crouch' | 'dump' | 'forward' | 'interact' | 'jump' | 'left' | 'modifier' | 'right' | 'sprint' | 'zoom'
@@ -23,6 +24,8 @@ export type EgoState = Readonly<{
 }>
 export type EgoPlayerHandle = {
   readonly body: RapierRigidBody | null
+  /** The same detached diagnostic snapshot the dump action produces, with the current input, or null before the body is ready. Works without `onDump`. */
+  dump: () => EgoDump | null
   /** A detached snapshot, or null before the body is ready. */
   getState: () => EgoState | null
   /** Restore zoom before another camera controller snapshots the current FOV. */

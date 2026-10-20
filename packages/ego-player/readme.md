@@ -93,7 +93,8 @@ All coordinates are Y-up world coordinates. `position` and snapshots describe th
 - `position` defaults to `[0, 0.05, 0]` and is read only on mount. Rerenders, new position arrays and option changes do not respawn the player.
 - `fallbackPosition` optionally supplies a safe feet position for obstructed spawns and teleports. It is tested too; neither position is accepted if the capsule cannot fit.
 - `yaw` and `pitch` default to 0 and use radians. Updating either intentionally reapplies both angles and resets roll, using YXZ order.
-- `ref` exposes `body`, `getState()` and `teleport(feetPosition, cameraQuaternion?)`.
+- `ref` exposes `body`, `getState()`, `dump()` and `teleport(feetPosition, cameraQuaternion?)`.
+- `dump()` returns the same `EgoDump` the X key passes to `onDump`, with the current input, or null before setup. It works without `onDump`, e.g. for tooling that wants a snapshot on demand.
 - `getState()` returns a detached, readonly-typed snapshot, or null before setup and after cleanup. It contains `active`, `grounded`, `crouching`, `position` and collision-resolved `velocity`. Velocity excludes camera smoothing, bobbing and inspection.
 - Teleport resets velocity, ground/coyote history, buffered jumps and camera bob/smoothing. A held jump does not become a fresh press. It preserves crouch state when possible, automatically crouches under low ceilings, uses the resolved stance’s eye height and optionally normalizes the supplied camera quaternion.
 - Teleport explicitly updates the camera even when `cameraEnabled` is false. It checks the full capsule at the destination and tries `fallbackPosition` only if neither standing nor crouching fits. If neither destination is safe, it throws before moving the player. It does not search for a floor or exit an application inspection mode. Calls before setup are no-ops; mount-time calls after setup are copied and queued until sibling colliders are mounted.

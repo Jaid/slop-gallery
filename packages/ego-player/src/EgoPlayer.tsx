@@ -209,6 +209,13 @@ export default function EgoPlayer({cameraEnabled = true, casualZoomFactor = 2, c
       return bodyRef.current
     },
     getState: () => motorRef.current?.getState() ?? null,
+    dump: () => {
+      const motor = motorRef.current
+      if (!motor) {
+        return null
+      }
+      return (diagnostics.current ?? new EgoDiagnostics(scene, camera)).capture(motor.getState(), input())
+    },
     teleport: (destination, rotation) => {
       const motor = motorRef.current
       if (!motor) {
