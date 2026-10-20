@@ -62,10 +62,6 @@ export default function createBakePlugin(adapter: BakeAdapter, options: BakeOpti
         return resolved && !resolved.external ? normalize(resolved.id) : undefined
       })
     },
-    // A fresh dependency slice on each watch build prevents stale imported configuration.
-    shouldTransformCachedModule() {
-      return true
-    },
     resolveId(id) {
       if (id.startsWith(prefix)) {
         return {

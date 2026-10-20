@@ -44,9 +44,6 @@ export default function r3fStaticRendering(options: R3fStaticRenderingOptions = 
         return result && !result.external ? normalize(result.id) : undefined
       })
     },
-    shouldTransformCachedModule() {
-      return true
-    },
     resolveId(id) {
       if (id.startsWith(prefix)) {
         return {
