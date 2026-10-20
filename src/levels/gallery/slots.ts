@@ -2,7 +2,7 @@ import type {PortraitRatio, PortraitSlot} from '#src/lib/gallery/types.ts'
 
 import {dineWallPanels} from '#src/lib/gallery/dine.ts'
 import {lodgeWindow} from '#src/lib/gallery/lodge.ts'
-import oculusBalcony from '#src/lib/gallery/oculusBalcony.ts'
+import {oculusRampLandings} from '#src/lib/gallery/lowerGallery.ts'
 import portraitLabel from '#src/lib/gallery/portraitLabel.ts'
 import {siennaWainscot} from '#src/lib/gallery/sienna.ts'
 import {galleryPlacement} from '#src/lib/gallery/walls.ts'
@@ -24,8 +24,9 @@ const dineY = middle(dineWallPanels(wall('dine-east')).upper[0].v) + placardLift
 const siennaPanel = (id: string, index: number) => siennaWainscot(wall(id))[index]
 // The Lodge hangs at the height of its window’s middle, and the east wall faces the window.
 const lodgeY = -3
-/** The big Oculus frames beside the south doorway share their top edge with the balcony above it. */
-const oculusBalconyY = oculusBalcony.topY - slotFrame('1:1', 2.4).height / 2
+/** The big Oculus frames beside the south doorway face the switchback landings, centered on them at the usual height above their floor. */
+const oculusLandingU = Math.abs(oculusRampLandings[0].position[0])
+const oculusLandingY = oculusRampLandings[0].position[1] + oculusRampLandings[0].size[1] / 2 + 2.7
 const lodgeWindowU = lodgeWindow.z - wall('lodge-east').center[2]
 const specs: ReadonlyArray<SlotSpec> = [
   // Lobby: the arched alcoves, the piers beside the south door and the near end of the extension
@@ -62,8 +63,8 @@ const specs: ReadonlyArray<SlotSpec> = [
   ['sienna-south', '1:1', 1.3, siennaPanel('sienna-south', 4), 3.15],
   ['sienna-west', '1:1', 1.3, siennaPanel('sienna-west', 1), 3.15],
   // Oculus: the piers beside the south and north openings, and the east and west landings
-  ['oculus-south', '1:1', 2.4, -5.6, oculusBalconyY],
-  ['oculus-south', '1:1', 2.4, 5.6, oculusBalconyY],
+  ['oculus-south', '1:1', 2.4, -oculusLandingU, oculusLandingY],
+  ['oculus-south', '1:1', 2.4, oculusLandingU, oculusLandingY],
   ['oculus-north', '3:2', 2.4, -5.6, -2.7],
   ['oculus-north', '3:2', 2.4, 5.6, -2.7],
   ['oculus-east', '3:2', 1.8, -6, -2.7],
