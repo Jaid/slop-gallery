@@ -5,13 +5,14 @@ import {join, relative} from 'node:path'
 import {parseArgs} from 'node:util'
 
 import fs from 'fs-extra'
+import getFree from 'get-free'
 import {lossyJxlOptions} from 'knot-materials/scripts/lib/encodeJxl.ts'
 
-import {degrees, galleryHelp, galleryOptions, openHeadlessGallery, parseNumbers, radians, repositoryRoot, resolveGallerySetup, timestamp, waitForFrames} from './lib/headlessGallery.ts'
+import {degrees, galleryHelp, galleryOptions, openHeadlessGallery, parseNumbers, radians, repositoryRoot, resolveGallerySetup, waitForFrames} from './lib/headlessGallery.ts'
 
 const help = `Usage: bun scripts/snap.ts [options]
 
-Takes a headless photo of a level and writes it to out/photos/<name>.jxl.
+Takes a headless photo of a level and writes it to out/snap/<name>.jxl, next to out/snap/<name>.json with the X dump of the same view.
 Starts a private Vite dev server (or serves --target) and a private headless browser; never touches the visible browser.
 The photo is a fresh WebGPU render of the scene, so menus and other DOM overlays are not in it.
 
@@ -23,11 +24,11 @@ ${galleryHelp}
   --fov <degrees>         vertical field of view. Default: the game camera’s
   --jxl-distance <number> cjxl Butteraugli distance, 0 is lossless. Default: 1
   --settle <frames>       frames to render after posing, lets temporal antialiasing converge. Default: 60
-  --name <name>           output file name without extension. Default: <level>-<timestamp>
+  --name <name>           output file name without extension. Default: the next free number, starting at 1
   -h, --help              show this help
 
 Set BROWSER to a Chromium executable with WebGPU support.`
-const photoRoot = join(repositoryRoot, 'out', 'photos')
+const snapRoot = join(repositoryRoot, 'out', 'snap')
 const {values} = parseArgs({
   args: Bun.argv.slice(2),
   options: {
@@ -63,8 +64,6 @@ if (fov !== undefined && (fov <= 0 || fov >= 180)) {
 }
 const jxlDistance = parseNumbers(values['jxl-distance'], 'jxl-distance', [1])[0]
 const settle = parseNumbers(values.settle, 'settle', [1])[0]
-const name = values.name ?? `${setup.levelName}-${timestamp()}`
-const output = join(photoRoot, `${name}.jxl`)
 await using gallery = await openHeadlessGallery(setup, {cacheDir: 'node_modules/.vite-snap'})
 const {page} = gallery
 const pose = await page.evaluate((requested: Partial<CameraPose>) => globalThis.slopGallery!.pose!(requested), {
@@ -80,11 +79,14 @@ await page.waitForFunction(() => {
 }, {timeout: 120_000})
 await waitForFrames(page, settle)
 const frame = await page.evaluate(async () => {
+  // Dump first, like X: the frame then shows the view the dump describes.
+  const dump = globalThis.slopGallery!.dump?.() ?? null
   const {image, width, height, nonBlackFraction} = await globalThis.slopGallery!.captureFrame!()
   const png = await image.bytes()
   // page.evaluate returns JSON, so the PNG crosses as base64.
   return {
     png: png.toBase64(),
+    dump,
     width,
     height,
     nonBlackFraction,
@@ -93,7 +95,14 @@ const frame = await page.evaluate(async () => {
 if (frame.nonBlackFraction === 0) {
   throw new Error('The capture is completely black.')
 }
-await fs.mkdir(photoRoot, {recursive: true})
+await fs.mkdir(snapRoot, {recursive: true})
+const isTaken = async (candidate: string) => await fs.pathExists(join(snapRoot, `${candidate}.jxl`)) || fs.pathExists(join(snapRoot, `${candidate}.json`))
+// Picked after the capture to keep the window for concurrent snaps short.
+const name = values.name ?? await getFree('', isTaken, {
+  connector: '',
+  consistent: true,
+})
+const output = join(snapRoot, `${name}.jxl`)
 const png = `${output}.png`
 await fs.writeFile(png, Uint8Array.fromBase64(frame.png))
 try {
@@ -101,6 +110,11 @@ try {
 } finally {
   await fs.rm(png, {force: true})
 }
+if (frame.dump) {
+  await fs.writeJson(join(snapRoot, `${name}.json`), frame.dump, {spaces: 2})
+} else {
+  console.warn('No X dump written: the player is not ready.')
+}
 const [pitch, yaw, roll] = pose.rotation
-console.log(`Wrote ${relative(repositoryRoot, output).replaceAll('\\', '/')} (${frame.width}×${frame.height})`)
+console.log(`Wrote ${relative(repositoryRoot, output).replaceAll('\\', '/')} (${frame.width}×${frame.height})${frame.dump ? ' and its .json X dump' : ''}`)
 console.log(`--position ${pose.position.map(value => Math.round(value * 1000) / 1000).join(',')} --angle ${[yaw, pitch, roll].map(degrees).join(',')} --fov ${pose.fov}`)

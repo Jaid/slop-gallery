@@ -13,7 +13,7 @@ import {activateInteractiveObject} from '#src/lib/gallery/interactiveObjects.ts'
 import {playerSession, playerSpawn} from '#src/lib/gallery/PlayerSession.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
 import {playerTelemetry} from '#src/lib/telemetry/index.ts'
-import {playerDumpHandler, playerDumps} from '#src/lib/telemetry/recordPlayerDump.ts'
+import {playerDumpHandler, playerDumps, snapshotPlayerDump} from '#src/lib/telemetry/recordPlayerDump.ts'
 
 const enabled = () => !cameraPose.focused && !useGallery.getState().panel
 const cameraEnabled = () => !cameraPose.focused
@@ -40,6 +40,12 @@ export default function Player() {
     playerTelemetry.read = read
     const capture = () => player.current?.dump() ?? null
     playerDumps.capture = capture
+    const dump = () => {
+      const captured = capture()
+      return captured ? snapshotPlayerDump(captured) : null
+    }
+    globalThis.slopGallery ??= {}
+    globalThis.slopGallery.dump = dump
     const releaseZoom = () => player.current?.releaseZoom()
     galleryEvents.addEventListener('release-zoom', releaseZoom)
     const teleport = (event: Event) => {
@@ -70,6 +76,9 @@ export default function Player() {
       const diagnostics = globalThis.slopGallery
       if (diagnostics) {
         delete diagnostics.player
+        if (diagnostics.dump === dump) {
+          delete diagnostics.dump
+        }
       }
     }
   }, [])

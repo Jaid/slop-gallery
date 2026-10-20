@@ -1,4 +1,5 @@
 import type {Placement, Portrait, RoomId, Vec3} from './gallery/types.ts'
+import type {PlayerDumpSnapshot} from './telemetry/recordPlayerDump.ts'
 import type {EulerTuple} from 'three/webgpu'
 import type {PauseMenuStage} from 'use-pause-menu/core'
 import type {CaptureFrameApi} from 'webgpu-capture-bridge'
@@ -50,6 +51,8 @@ export type GalleryDiagnostics = {
   webGPU: boolean
 }
 type GalleryDebugApi = Partial<CaptureFrameApi> & {
+  /** the X dump snapshot of the current view, without logging, copying or sound; null before the player is ready */
+  dump?: () => PlayerDumpSnapshot | null
   merge?: (first: string, second: string) => void
   player?: {
     enabled: boolean
