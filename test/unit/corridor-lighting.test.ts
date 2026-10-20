@@ -114,7 +114,7 @@ test('lantern pools fade to a dim gap between neighbors without going black', ()
     const floor = (x: number, z: number) => lamps.reduce((sum, [lampX, , lampZ]) => sum + floorIrradiance(light, Math.hypot(x - lampX, z - lampZ)), 0)
     // Along the long span, every pair of neighbors leaves a dimmer stretch between their pools.
     const span = lamps.filter(([x]) => x === corridorPassage.spans[1].start[0])
-    expect(span.length).toBe(5)
+    expect(span.length).toBe(6)
     for (let i = 1; i < span.length; i++) {
       const [x, , z] = span[i]
       const previous = span[i - 1][2]

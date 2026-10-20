@@ -8,31 +8,33 @@ import Passage from './passages/Passage.ts'
 import PassageTransition from './passages/PassageTransition.ts'
 
 const timberWidth = 4
+/** The Lodge lies west of the Oculus’ north end, and everything here keeps its place relative to its north wall. */
+const northZ = lowerGallery.oculus.center[1] - lowerGallery.oculus.size[1] / 2 - 5
 const lodge = {
-  center: [-25, -31],
+  center: [-25, northZ + 5],
   size: [10, 10],
   floorY: oculusPlatform.position[1] + oculusPlatform.size[1] / 2,
   height: 3.9,
   entranceX: oculusTower.x,
   // Keep both widened doorways inset from their neighboring room corners.
-  returnZ: -35.6 + timberWidth / 2,
+  returnZ: northZ + 0.4 + timberWidth / 2,
   entranceZ: lowerGallery.oculus.center[1] - lowerGallery.oculus.size[1] / 2,
   siennaZ: 8.4 + timberWidth / 2,
   // Expand the long timber passage westward, keeping its east wall fixed.
   approachX: -31.7 - timberWidth / 2,
   timberWidth,
   passageWidth: oculusTower.radius * 2,
-  // The widened stone doorway sits beside the north wall: its jamb stays 2 cm in front of the north baseboard’s cap (−35.75) and
-  // 7 cm in front of its face (−35.8), and its casing still tucks into the north wall’s logs (−35.895). On the baseboard’s face, the
-  // jamb shared that plane and flickered.
-  tunnelZ: -35.73 + oculusTower.radius,
+  // The widened stone doorway sits beside the north wall: its jamb stays 2 cm in front of the north baseboard’s cap (25 cm from the
+  // wall) and 7 cm in front of its face (20 cm), and its casing still tucks into the north wall’s logs (10.5 cm). On the baseboard’s
+  // face, the jamb shared that plane and flickered.
+  tunnelZ: northZ + 0.27 + oculusTower.radius,
 } as const
 
 export const lodgeWindow = {
   roomX: lodge.center[0] - lodge.size[0] / 2,
   // The pane meets the vertical plank lining, never projecting into the passage.
   tunnelX: lodge.approachX + lodge.timberWidth / 2 - 0.09,
-  z: -29.5,
+  z: northZ + 6.5,
   width: 2.4,
   bottom: lodge.floorY + 1.35,
   top: lodge.floorY + 2.65,

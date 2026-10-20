@@ -105,7 +105,7 @@ describe('player save state', () => {
   })
   test('room, tunnel and stair poses round-trip without camera-height offsets or shared arrays', () => {
     const tread = corridorStairs.blocks[12]
-    for (const position of [[0, 0.02, -9], [-25, lodge.floorY + 0.02, -31], [-33, lodge.floorY + 0.02, -20], [(lodgeWindow.roomX + lodgeWindow.tunnelX) / 2, lodgeWindow.bottom + 0.02, lodgeWindow.z], [tread.position[0], tread.top + 0.02, tread.position[2]]] as const) {
+    for (const position of [[0, 0.02, -9], [-25, lodge.floorY + 0.02, -35], [-33, lodge.floorY + 0.02, -20], [(lodgeWindow.roomX + lodgeWindow.tunnelX) / 2, lodgeWindow.bottom + 0.02, lodgeWindow.z], [tread.position[0], tread.top + 0.02, tread.position[2]]] as const) {
       const pose = {
         position: [...position] as [number, number, number],
         yaw: 1.23,
@@ -123,7 +123,7 @@ describe('player save state', () => {
   })
   test('movement stays out of React updates and artwork undo, while Reset returns home', () => {
     const pose = {
-      position: [-25, -4.98, -31] as [number, number, number],
+      position: [-25, -4.98, -35] as [number, number, number],
       yaw: -0.7,
       pitch: 0,
     }

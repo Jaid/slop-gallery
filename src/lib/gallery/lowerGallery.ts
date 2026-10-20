@@ -6,7 +6,7 @@ import lobby from './lobby.ts'
 const moonfallFloorY = -8
 export const oculusDrop = 3
 const oculusNorthZ = lobby.opening.center[1] - 11
-// Extend toward Moonfall, shortening the connection by four meters without moving the Lobby glass or Lodge entrance.
+// Extend toward Moonfall; the connecting tunnel takes up whatever is left.
 const oculusSouthZ = lobby.opening.center[1] + 10
 const lowerGallery = {
   floorY: moonfallFloorY,

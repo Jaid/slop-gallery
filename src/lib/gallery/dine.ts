@@ -12,12 +12,12 @@ const dine = rooms.find(room => room.id === 'dine')!
 export const dineCeilingUnderside = 5.78 - 0.18 / 2
 
 /**
- * Knottingham LED panes in a 2 × 3 grid, symmetric about the room center. The offsets leave about 1.9 m to the
- * side walls, 1.6 m to the end walls and 2.6–2.9 m between neighboring housings.
+ * Knottingham LED panes in a 2 × 4 grid of 5.5 m squares, symmetric about the room center. The offsets leave about 1.9 m to the
+ * side walls and 2.4 m to the end walls.
  */
 const dineLedGrid = {
   x: [-2.75, 2.75],
-  z: [-5, 0, 5],
+  z: [-8.25, -2.75, 2.75, 8.25],
 }
 
 /** Each pane lights the room through one point light hung just below its diffuser. */
@@ -25,8 +25,8 @@ export const dineLedLight = {
   /** distance below the pane’s origin, close enough that the brightest ceiling spot stays hidden behind the housing */
   drop: 0.32,
   color: '#eee3ff',
-  // Six of these match the mean floor and wall irradiance of the two 32 cd lights behind the old light boxes.
-  intensity: 13,
+  // Eight of these match the mean floor and wall irradiance of the 32 cd lights behind the old light boxes, one per 8 m of room.
+  intensity: 14,
   distance: 14,
   decay: 2,
 }

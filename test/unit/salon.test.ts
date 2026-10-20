@@ -31,7 +31,7 @@ describe('the Salon', () => {
       const overlapZ = Math.min(room.center[1] + room.size[1] / 2, other.center[1] + other.size[1] / 2) - Math.max(room.center[1] - room.size[1] / 2, other.center[1] - other.size[1] / 2)
       expect(Math.min(overlapX, overlapZ)).toBeLessThanOrEqual(0)
     }
-    for (const [x, z] of [[8.5, -19.5], [19.5, -8.5], [14, -14], [8.5, -31.5], [19.5, -31.5]]) {
+    for (const [x, z] of [[8.5, -19.5], [19.5, -16.5], [14, -24], [8.5, -31.5], [19.5, -31.5]]) {
       expect(roomAt([x, 1.7, z])).toBe('salon')
       expect(floorHeight([x, 1.7, z])).toBe(0)
     }
@@ -48,13 +48,13 @@ describe('the Salon', () => {
     const salonSouth = walls.find(wall => wall.id === 'salon-south')!
     expect(dineNorth.center).toEqual(salonSouth.center)
     expect(Math.abs(Math.cos(dineNorth.rotation - salonSouth.rotation) + 1)).toBeLessThan(1e-12)
-    const doorway = [14, 1.7, -8] as const
+    const doorway = [14, 1.7, -16] as const
     for (const wall of [dineNorth, salonSouth]) {
       expect(wall.holes).toHaveLength(1)
       expect(insideOpening(wall.holes![0], wallCoordinates(wall, [...doorway]), 1.7)).toBe(true)
     }
-    expect(roomAt([14, 1.7, -7.9])).toBe('dine')
-    expect(roomAt([14, 1.7, -8.1])).toBe('salon')
+    expect(roomAt([14, 1.7, -15.9])).toBe('dine')
+    expect(roomAt([14, 1.7, -16.1])).toBe('salon')
     // Its west wall backs the Lobby extension the same way.
     const salonWest = walls.find(wall => wall.id === 'salon-west')!
     const lobbyEast = walls.find(wall => wall.id === 'lobby-extension-east')!

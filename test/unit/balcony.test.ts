@@ -24,7 +24,7 @@ describe('separate semicircular Oculus balcony', () => {
     const ground = new OculusGroundGeometry
     const meshes = [new Mesh(geometry, material), new Mesh(ground, material)]
     try {
-      for (const z of [-17.5, -17, -16.5, -16, -15.5]) {
+      for (const z of [-21.5, -21, -20.5, -20, -19.5]) {
         const passageRay = new Raycaster(new Vector3(0, -2, z), new Vector3(0, -1, 0), 0, 5)
         expect(passageRay.intersectObjects(meshes)).toHaveLength(0)
         expect(floorHeight([0, -2, z])).toBe(lowerGallery.oculus.floorY)
@@ -75,7 +75,7 @@ describe('separate semicircular Oculus balcony', () => {
       expect(geometry.boundingBox!.max.y).toBeCloseTo(balcony.topY)
       world.createCollider(RAPIER.ColliderDesc.trimesh(...colliderGeometry(geometry)))
       world.step()
-      for (const [x, z, inside] of [[0, -10.6, true], [1.2, -10.5, true], [-1.2, -10.5, true], [1.7, -11, false], [0, -11.3, false], [0, -9.9, false]] as const) {
+      for (const [x, z, inside] of [[0, -14.6, true], [1.2, -14.5, true], [-1.2, -14.5, true], [1.7, -15, false], [0, -15.3, false], [0, -13.9, false]] as const) {
         const origin = new Vector3(x, -2, z)
         const direction = new Vector3(0, -1, 0)
         const visualRay = new Raycaster(origin, direction)
@@ -92,7 +92,7 @@ describe('separate semicircular Oculus balcony', () => {
         expect(floorHeight([x, balcony.topY + 1.6, z])).toBe(balcony.topY)
         expect(floorHeight([x, lowerGallery.oculus.floorY + 1.6, z])).toBe(lowerGallery.oculus.floorY)
       }
-      expect(world.castRay(new RAPIER.Ray(new Vector3(0, lowerGallery.oculus.floorY + 1.7, -13), new Vector3(0, 0, -1)), 3, true)).toBeNull()
+      expect(world.castRay(new RAPIER.Ray(new Vector3(0, lowerGallery.oculus.floorY + 1.7, -17), new Vector3(0, 0, -1)), 3, true)).toBeNull()
       const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(0, balcony.topY + 1, balcony.z - 0.5))
       world.createCollider(RAPIER.ColliderDesc.ball(0.2), body)
       for (let i = 0; i < 120; i++) {

@@ -11,7 +11,7 @@ export {insideGallery as insideLevel, floorHeight as levelFloorHeight, wallDista
 export type GroundSurface = 'fabric' | 'generic' | 'glass' | 'hollow'
 
 export const playerSpawn: PlayerPose = {
-  position: [0.06505674123764038, 0.01948930136859417, -25.913022994995117],
+  position: [0.06505674123764038, 0.01948930136859417, -29.913022994995117],
   yaw: 3.135849777946853,
   pitch: -0.108,
 }

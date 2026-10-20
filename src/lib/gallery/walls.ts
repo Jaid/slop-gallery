@@ -13,7 +13,7 @@ import lowerGallery, {oculusPlatform, oculusRamps, rampFloorHeight, tunnelFloorH
 import {craterTerrain} from './moonfall/CraterTerrain.ts'
 import {balconyFloorHeight} from './oculusBalcony.ts'
 import {towerFloorHeight} from './oculusTower.ts'
-import salon from './salon.ts'
+import salon, {salonSouthZ} from './salon.ts'
 import salonWindow from './salonWindow.ts'
 import staircase, {insideStairway, stairFlights, stairFloorHeight, stairTurn} from './staircase.ts'
 import {tunnelDisplayWindow} from './tunnelDisplays.ts'
@@ -51,8 +51,9 @@ export const rooms = [
     number: '03',
     title: 'Dine',
     subtitle: 'A change of perspective is encouraged.',
-    center: [14, 0],
-    size: [12, 16],
+    // From the Salon’s south wall to the Vesper’s south wall’s line.
+    center: [14, (salonSouthZ + 8) / 2],
+    size: [12, 8 - salonSouthZ],
     color: '#af9294',
   },
   {
@@ -224,6 +225,18 @@ const withSalonWindow = (target: Wall): Wall => ({
     },
   ],
 })
+/** Dine’s west wall, with the arch through to the Lobby cut where the Lobby’s east wall has it. */
+const withLobbyDoorway = (target: Wall): Wall => ({
+  ...target,
+  holes: [
+    {
+      u: wallCoordinates(target, [lobby.width / 2, 0, 3]),
+      width: 2.8,
+      height: 3.8,
+      profile: 'arch',
+    },
+  ],
+})
 const doorway: Array<WallOpening> = [
   {
     u: -3,
@@ -275,10 +288,10 @@ const walls: Array<Wall> = miterCorners([
       profile: 'arch',
     },
   ]),
-  wall('dine-north', 'dine', 14, -8, 0, 12, [salon.doorway]),
-  wall('dine-east', 'dine', 20, 0, -Math.PI / 2, 16),
-  wall('dine-south', 'dine', 14, 8, Math.PI, 12),
-  wall('dine-west', 'dine', 8, 0, Math.PI / 2, 16, doorway),
+  roomWall('dine', 'north', [salon.doorway]),
+  roomWall('dine', 'east'),
+  roomWall('dine', 'south'),
+  withLobbyDoorway(roomWall('dine', 'west')),
   roomWall('salon', 'north'),
   roomWall('salon', 'east'),
   roomWall('salon', 'south', [salon.doorway]),

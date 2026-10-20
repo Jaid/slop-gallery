@@ -32,7 +32,7 @@ const samplePortraits: Array<Portrait> = [
     position: [
       7.78,
       2.65,
-      -28,
+      -14,
     ],
     rotation: -Math.PI / 2,
     width: 2.7,
@@ -212,7 +212,7 @@ const samplePortraits: Array<Portrait> = [
     position: [
       17,
       2.6,
-      -7.78,
+      -15.78,
     ],
     rotation: 0,
     width: 1.8,
@@ -282,7 +282,7 @@ const samplePortraits: Array<Portrait> = [
     position: [
       19.78,
       2.18,
-      -14,
+      -18,
     ],
     rotation: -1.5707963267948966,
     width: 1.95,
@@ -299,7 +299,7 @@ const samplePortraits: Array<Portrait> = [
     position: [
       17.65,
       2.08,
-      -8.22,
+      -16.22,
     ],
     rotation: 3.141592653589793,
     width: 1.65,
@@ -316,7 +316,7 @@ const samplePortraits: Array<Portrait> = [
     position: [
       17.65,
       4.1,
-      -8.22,
+      -16.22,
     ],
     rotation: 3.141592653589793,
     width: 1.95,
@@ -333,7 +333,7 @@ const samplePortraits: Array<Portrait> = [
     position: [
       10.35,
       4.1,
-      -8.22,
+      -16.22,
     ],
     rotation: 3.141592653589793,
     width: 1.95,

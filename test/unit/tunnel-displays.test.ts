@@ -66,7 +66,7 @@ describe('widened tunnel with sealed display rooms', () => {
             }
           }
         }
-        for (const [u, y] of [[0, 0.3], [0, 3], [-5.2, 1.6], [5.2, 1.6]]) {
+        for (const [u, y] of [[0, 0.3], [0, 3], [-tunnelDisplayWindow.width / 2 - 0.2, 1.6], [tunnelDisplayWindow.width / 2 + 0.2, 1.6]]) {
           const surroundRay = new Raycaster(new Vector3(u, y + u * wall.slope!, 1), new Vector3(0, 0, -1), 0, 2)
           expect(surroundRay.intersectObjects(opaque).length).toBeGreaterThan(0)
         }

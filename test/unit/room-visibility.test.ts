@@ -32,7 +32,7 @@ test('a room shows the rooms behind the openings in view', () => {
   expect(['moonfall', 'lodge', 'corridor'].filter(room => vesper.has(room as never))).toEqual([])
   // The Salon’s glass wall shows the Lobby extension, and the Lobby’s shows the Salon.
   expect(visibleRooms('salon', view([16, 1.6, -20], [0, 1.6, -20])).has('lobby')).toBe(true)
-  expect(visibleRooms('lobby', view([0, 1.6, -28], [8, 1.6, -20])).has('salon')).toBe(true)
+  expect(visibleRooms('lobby', view([0, 1.6, -28], [8, 1.6, -24])).has('salon')).toBe(true)
   // Facing the blank west wall of the Vesper.
   expect([...visibleRooms('vesper', view([-14, 1.6, 0], [-20, 1.6, 0]))]).toEqual(['vesper'])
   const lobby = visibleRooms('lobby', view([0, 1.6, -28], [0, 1.6, 8]))

@@ -1,17 +1,16 @@
 import type {Vec3} from './types.ts'
 import type {Wall, WallOpening} from './walls.ts'
 
+import lobby from './lobby.ts'
 import salonWindow from './salonWindow.ts'
 
-/** Dine’s north wall, which the Salon’s south wall backs onto */
-const southZ = -8
 /**
- * The Salon sits north of Dine, behind the arch in Dine’s north wall. Its west wall backs onto the Lobby’s east extension and
- * reaches as far north on either side of the glass wall between them, keeping the window centered on it.
+ * The Salon sits north of Dine, behind the arch in Dine’s north wall. Its west wall backs onto the Lobby’s east extension, from
+ * the Lobby’s north wall to as far south of the glass wall between them, keeping the window centered on it. Dine takes the rest.
  */
 const salon = {
   center: [14, salonWindow.z],
-  size: [12, (southZ - salonWindow.z) * 2],
+  size: [12, (salonWindow.z - lobby.northZ) * 2],
   /** shared by Dine’s north wall and the Salon’s south wall; both are centered on x = 14 */
   doorway: {
     u: 0,
@@ -95,11 +94,11 @@ export const salonBench = {
 export const salonBenchLegs = [-1, 1].flatMap(x => [-1, 1].map(z => [x * (salonBench.width / 2 - 0.12), z * (salonBench.depth / 2 - 0.12)] as const))
 
 /**
- * Point lights beyond either end of the skylight, as room-relative z offsets, at `salonLightY`: a quarter of the room’s depth from
- * either end, far enough from the coffer that its gilt beads never flare. The northern one casts shadows, throwing the ottoman’s toward the doorway, where
- * visitors see it.
+ * Point lights beyond either end of the skylight, as room-relative z offsets, at `salonLightY`: halfway between its coffer and the
+ * end walls, far enough from the coffer that its gilt beads never flare. The northern one casts shadows, throwing the ottoman’s
+ * toward the doorway, where visitors see it.
  */
-export const salonLightOffsets = [-salon.size[1] / 4, salon.size[1] / 4]
+export const salonLightOffsets = [-1, 1].map(side => side * (salon.size[1] / 2 + salonSkylight.opening[1] / 2 + salonSkylight.frame) / 2)
 export const salonLightY = 4.5
 
 /**
@@ -118,5 +117,8 @@ export function wallDressingSpans(wall: Pick<Wall, 'holes' | 'width'>, padding: 
   }
   return spans
 }
+
+/** Dine’s north wall, which the Salon’s south wall backs onto */
+export const salonSouthZ = salon.center[1] + salon.size[1] / 2
 
 export default salon

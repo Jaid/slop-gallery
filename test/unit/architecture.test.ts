@@ -177,8 +177,8 @@ describe('boolean architecture', () => {
           for (let vertex = 0; vertex < normals.count; vertex++) {
             expect(Math.hypot(normals.getX(vertex), normals.getY(vertex), normals.getZ(vertex))).toBeCloseTo(1, 5)
           }
-          // Sheared boxes keep their volume: section height × depth × run.
-          expect(computeMeshVolume(part)).toBeCloseTo(computeMeshVolume(level.cornice[i]), 6)
+          // Sheared boxes keep their volume: section height × depth × run, up to the triangulation’s rounding on a long slope.
+          expect(computeMeshVolume(part)).toBeCloseTo(computeMeshVolume(level.cornice[i]), 5)
         }
       } finally {
         level.dispose()

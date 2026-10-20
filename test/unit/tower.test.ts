@@ -93,7 +93,7 @@ describe('cylindrical Oculus platform', () => {
     const mesh = new Mesh(geometry, material)
     try {
       for (const slope of oculusRamps) {
-        for (const z of [slope.startZ - 0.01, -20, -25.99, -26.01]) {
+        for (const z of [slope.startZ - 0.01, -24, -29.99, -30.01]) {
           const slopeRay = new Raycaster(new Vector3(slope.x, -2, z), new Vector3(0, -1, 0))
           const hits = slopeRay.intersectObject(mesh)
           expect(hits).toHaveLength(1)
@@ -110,7 +110,7 @@ describe('cylindrical Oculus platform', () => {
     const material = new MeshBasicMaterial
     const mesh = new Mesh(geometry, material)
     try {
-      for (const z of [-21.55, -21.3, -21.01, -20.8, -20.13]) {
+      for (const z of [-25.55, -25.3, -25.01, -24.8, -24.13]) {
         const landingRay = new Raycaster(new Vector3(0.37, -2, z), new Vector3(0, -1, 0))
         const hits = landingRay.intersectObject(mesh)
         expect(hits).toHaveLength(1)
@@ -283,7 +283,7 @@ describe('cylindrical Oculus platform', () => {
     try {
       world.step()
       for (const x of [-0.35, 0, 0.35]) {
-        for (const z of [ramp.startZ + 0.3, -24, ramp.endZ - 0.1, ramp.endZ + 0.1, tower.z]) {
+        for (const z of [ramp.startZ + 0.3, -28, ramp.endZ - 0.1, ramp.endZ + 0.1, tower.z]) {
           const origin = new Vector3(x, -2, z)
           const direction = new Vector3(0, -1, 0)
           const height = towerFloorHeight(x, z)!

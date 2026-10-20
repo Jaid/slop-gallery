@@ -25,20 +25,19 @@ describe('the glass wall between the Lobby and the Salon', () => {
     expect((salonWindow.top - salonWindow.bottom) / salonWindow.tileSize % 1).toBe(0)
     expect(lobby.opening.size[0] / salonWindow.tileSize % 1).toBe(0)
   })
-  test('stands centered in both walls and the enlarged Salon', () => {
+  test('stands centered in the Salon, cut through both walls', () => {
     expect(salonWindow.x).toBe(lobby.width / 2)
     expect(salonRoom.center[1]).toBe(salonWindow.z)
     expect(salonRoom.center[0] - salonRoom.size[0] / 2).toBe(salonWindow.x)
-    // The Salon still backs onto Dine and now spans the whole Lobby extension.
-    expect(salonRoom.center[1] + salonRoom.size[1] / 2).toBe(lobby.previousNorthZ)
+    // The Salon reaches from the Lobby’s north wall as far south of the window.
     expect(salonRoom.center[1] - salonRoom.size[1] / 2).toBe(lobby.northZ)
     expect(salon.center).toEqual(salonRoom.center)
     for (const wall of [lobbySide, salonSide]) {
       expect(wall.center[0]).toBe(salonWindow.x)
-      expect(wall.center[2]).toBe(salonWindow.z)
+      expect(wallPosition(wall, wall.holes![0].u, 0)[2]).toBeCloseTo(salonWindow.z, 12)
       expect(wall.holes).toHaveLength(1)
       const [hole] = wall.holes!
-      expect(hole.u).toBeCloseTo(0, 12)
+      expect(hole.u).toBeCloseTo(wall === salonSide ? 0 : wallCoordinates(wall, [...windowCenter]), 12)
       expect(hole.width).toBe(salonWindow.width)
       expect(insideOpening(hole, wallCoordinates(wall, [...windowCenter]), windowCenter[1])).toBe(true)
       // The sill stays above the Salon’s chair rail and its frame below the cornice.
@@ -93,31 +92,31 @@ describe('the glass wall between the Lobby and the Salon', () => {
     expect(salonWindow.thickness).toBe(floorGlassThickness)
   })
   test('stops the aim at its glass from both sides, while the wall around it still takes artworks', () => {
-    expect(salonWindowGlassDistance([4, 2.7, -20], [1, 0, 0])).toBeCloseTo(4 - floorGlassThickness / 2)
-    expect(salonWindowGlassDistance([12, 2.7, -20], [-1, 0, 0])).toBeCloseTo(4 - floorGlassThickness / 2)
-    expect(salonWindowGlassDistance([4, 0.8, -20], [1, 0, 0])).toBeUndefined()
-    expect(salonWindowGlassDistance([4, 2.7, -20], [-1, 0, 0])).toBeUndefined()
-    expect(galleryPlacement.findPlacement([4, 2.7, -20], [1, 0, 0], 1, 1, [])).toMatchObject({
+    expect(salonWindowGlassDistance([4, 2.7, -24], [1, 0, 0])).toBeCloseTo(4 - floorGlassThickness / 2)
+    expect(salonWindowGlassDistance([12, 2.7, -24], [-1, 0, 0])).toBeCloseTo(4 - floorGlassThickness / 2)
+    expect(salonWindowGlassDistance([4, 0.8, -24], [1, 0, 0])).toBeUndefined()
+    expect(salonWindowGlassDistance([4, 2.7, -24], [-1, 0, 0])).toBeUndefined()
+    expect(galleryPlacement.findPlacement([4, 2.7, -24], [1, 0, 0], 1, 1, [])).toMatchObject({
       wallId: 'lobby-extension-east',
       valid: false,
       reason: 'Keep the window clear.',
     })
-    expect(galleryPlacement.findPlacement([12, 2.7, -18], [-1, 0, 0], 1, 1, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([12, 2.7, -22], [-1, 0, 0], 1, 1, [])).toMatchObject({
       wallId: 'salon-west',
       valid: false,
       reason: 'Keep the window clear.',
     })
     // Beside it and below it the walls stay what they were.
-    expect(galleryPlacement.findPlacement([12, 2.7, -12], [-1, 0, 0], 1, 1, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([12, 2.7, -17.5], [-1, 0, 0], 1, 1, [])).toMatchObject({
       wallId: 'salon-west',
       valid: true,
     })
-    expect(galleryPlacement.findPlacement([4, 2.7, -28], [1, 0, 0], 1, 1, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([4, 2.7, -12], [1, 0, 0], 1, 1, [])).toMatchObject({
       wallId: 'lobby-extension-east',
       valid: true,
     })
     // An artwork reaching over the window’s edge is turned away.
-    expect(placementIssue(salonSide, wallPosition(salonSide, wallCoordinates(salonSide, [8, 0, -15.5]), 2.7), 1, 1, [])).not.toBe('')
+    expect(placementIssue(salonSide, wallPosition(salonSide, wallCoordinates(salonSide, [8, 0, -19.5]), 2.7), 1, 1, [])).not.toBe('')
   })
   test('the shipped collection hangs clear of it', () => {
     for (const p of samplePortraits) {

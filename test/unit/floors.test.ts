@@ -42,18 +42,18 @@ describe('rectangular floor openings', () => {
       size: [2, 20],
     }))).toBe(80)
   })
-  test('reserves an 8 × 8 square with at least four meters of padding', () => {
+  test('reserves an 8 × 8 square four meters from the north and side walls', () => {
     expect(lobby.previousNorthZ - lobby.northZ).toBe(24)
     expect(lobby.opening.size).toEqual([8, 8])
     expect(area(plan.slabs)).toBe(16 * 40 - 8 * 8)
     expect(plan.slabs).toHaveLength(4)
     expect(plan.glazing).toEqual({
-      center: [0, -8],
+      center: [0, -12],
       size: [8, 8],
     })
     expect((lobby.width - lobby.opening.size[0]) / 2).toBe(4)
-    expect(lobby.opening.center[1] - lobby.opening.size[1] / 2 - lobby.northZ).toBe(8)
-    expect(lobby.previousNorthZ - (lobby.opening.center[1] + lobby.opening.size[1] / 2)).toBe(8)
+    expect(lobby.opening.center[1] - lobby.opening.size[1] / 2 - lobby.northZ).toBe(4)
+    expect(lobby.previousNorthZ - (lobby.opening.center[1] + lobby.opening.size[1] / 2)).toBe(12)
     const visit = roomVisit(room)
     expect(visit.position[0]).toBe(0)
     expect(visit.position[1]).toBe(1.7)
@@ -110,8 +110,8 @@ describe('rectangular floor openings', () => {
     try {
       world.step()
       for (const x of [-7, -4.01, -3.99, 0, 3.99, 4.01, 7]) {
-        for (const z of [-31, -24.01, -23.99, -20, -16.01, -15.99, -9, -7, 0, 5.8]) {
-          const solid = !(Math.abs(x) < 4 && z > -24 && z < -16)
+        for (const z of [-31, -28.01, -27.99, -24, -20.01, -19.99, -9, -7, 0, 5.8]) {
+          const solid = !(Math.abs(x) < 4 && z > -28 && z < -20)
           const origin = new Vector3(x, 1, z)
           const direction = new Vector3(0, -1, 0)
           const slabRay = new Raycaster(origin, direction, 0, 2)

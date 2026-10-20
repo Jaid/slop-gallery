@@ -57,10 +57,10 @@ const meanIrradiance = (lights: Array<PointSource>) => {
     walls: mean(walls),
   }
 }
-test('six panes hang in a grid that is symmetric about the room center and clear of walls and each other', () => {
-  expect(dineLedSlots).toHaveLength(6)
+test('eight panes hang in a grid that is symmetric about the room center and clear of walls and each other', () => {
+  expect(dineLedSlots).toHaveLength(8)
   const ids = new Set(dineLedSlots.map(slot => slot.id))
-  expect(ids.size).toBe(6)
+  expect(ids.size).toBe(8)
   for (const slot of dineLedSlots) {
     const [x, , z] = slot.position
     expect(dineLedSlots.some(other => Math.abs(other.position[0] - mirrored(x, dine.center[0])) < 1e-9 && Math.abs(other.position[2] - z) < 1e-9)).toBe(true)
@@ -96,9 +96,11 @@ test('housings meet the ceiling without a gap and the diffuser is the first surf
     panels.dispose()
   }
 })
-test('the pane lights match the reference pair’s floor and wall brightness', () => {
-  // Two 32 cd point lights 4.9 m up, the calibration the room’s materials were tuned against.
-  const reference = [-3.5, 3.5].map(z => ({
+test('the pane lights match the reference lights’ floor and wall brightness', () => {
+  // 32 cd point lights 4.9 m up and 7 m apart, one per 8 m of the room’s length: the calibration the room’s materials were tuned
+  // against, when two of them lit its first 16 m.
+  const count = dine.size[1] / 8
+  const reference = Array.from({length: count}, (_, i) => (i - (count - 1) / 2) * 7).map(z => ({
     intensity: 32,
     position: local(0, 4.9, z),
   }))

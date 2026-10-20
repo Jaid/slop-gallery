@@ -24,10 +24,10 @@ describe('oculus and connecting tunnel', () => {
   test('both side walls expand three meters while the centered glass and entrance stay fixed', () => {
     expect(walls.find(value => value.id === 'oculus-west')!.center[0]).toBe(-9)
     expect(walls.find(value => value.id === 'oculus-east')!.center[0]).toBe(9)
-    expect(insideGallery([-8.9, -6.4, -20])).toBe(true)
-    expect(insideGallery([8.9, -6.4, -20])).toBe(true)
-    expect(insideGallery([9.01, -6.4, -20])).toBe(false)
-    expect(lobby.opening.center).toEqual([0, -20])
+    expect(insideGallery([-8.9, -6.4, -24])).toBe(true)
+    expect(insideGallery([8.9, -6.4, -24])).toBe(true)
+    expect(insideGallery([9.01, -6.4, -24])).toBe(false)
+    expect(lobby.opening.center).toEqual([0, -24])
     expect(tunnel.x).toBe(0)
     expect(oculusCeiling.reduce((sum, slab) => sum + slab.size[0] * slab.size[1], 0)).toBe(18 * 21 - 8 * 8)
   })
@@ -65,13 +65,13 @@ describe('oculus and connecting tunnel', () => {
   test('the plain cuboid fills the extended north end with a matching walkable top', () => {
     const {position, size} = oculusPlatform
     expect(size).toEqual([18, 6, 5])
-    expect(position).toEqual([0, -8, -28.5])
+    expect(position).toEqual([0, -8, -32.5])
     expect(position[1] - size[1] / 2).toBe(floorY)
-    expect(position[2] - size[2] / 2).toBe(-31)
-    expect(position[2] + size[2] / 2).toBe(-26)
-    expect(floorHeight([0, -3.4, -28.5])).toBe(-5)
-    expect(floorHeight([0, 1.6, -28.5])).toBe(0)
-    expect(floorHeight([0, -6.4, -25.9])).toBe(floorY)
+    expect(position[2] - size[2] / 2).toBe(-35)
+    expect(position[2] + size[2] / 2).toBe(-30)
+    expect(floorHeight([0, -3.4, -31])).toBe(-5)
+    expect(floorHeight([0, 1.6, -31])).toBe(0)
+    expect(floorHeight([0, -6.4, -29.9])).toBe(floorY)
     const geometry = new BoxGeometry(...size)
     const material = new MeshBasicMaterial
     const mesh = new Mesh(geometry, material)
@@ -85,7 +85,7 @@ describe('oculus and connecting tunnel', () => {
     try {
       world.createCollider(RAPIER.ColliderDesc.cuboid(size[0] / 2, size[1] / 2, size[2] / 2).setTranslation(...position))
       world.step()
-      const origin = new Vector3(0, -3, -28.5)
+      const origin = new Vector3(0, -3, -31)
       const direction = new Vector3(0, -1, 0)
       const platformRay = new Raycaster(origin, direction)
       expect(platformRay.intersectObject(mesh)[0].point.y).toBe(-5)
@@ -96,18 +96,18 @@ describe('oculus and connecting tunnel', () => {
       world.free()
     }
   })
-  test('the south wall extends toward Moonfall while the north wall and glass stay fixed', () => {
-    expect(walls.find(wall => wall.id === 'oculus-north')!.center[2]).toBe(-31)
-    expect(walls.find(wall => wall.id === 'oculus-south')!.center[2]).toBe(-10)
-    expect(oculus.center).toEqual([0, -20.5])
+  test('the Oculus runs from the Lodge exit, past the glass, to the tunnel toward Moonfall', () => {
+    expect(walls.find(wall => wall.id === 'oculus-north')!.center[2]).toBe(-35)
+    expect(walls.find(wall => wall.id === 'oculus-south')!.center[2]).toBe(-14)
+    expect(oculus.center).toEqual([0, -24.5])
     expect(oculus.size).toEqual([18, 21])
-    expect(lobby.opening.center).toEqual([0, -20])
+    expect(lobby.opening.center).toEqual([0, -24])
     expect(lobby.opening.size).toEqual([8, 8])
-    expect(insideGallery([0, -6.4, -30.8])).toBe(true)
-    expect(insideGallery([0, -6.4, -31.01])).toBe(false)
-    expect(roomAt([0, -6.4, -20])).toBe('oculus')
-    expect(roomAt([0, 1.6, -20])).toBe('lobby')
-    for (const z of [-9.9, -8, 0, 4.4]) {
+    expect(insideGallery([0, -6.4, -34.8])).toBe(true)
+    expect(insideGallery([0, -6.4, -35.01])).toBe(false)
+    expect(roomAt([0, -6.4, -24])).toBe('oculus')
+    expect(roomAt([0, 1.6, -24])).toBe('lobby')
+    for (const z of [-13.9, -8, 0, 4.4]) {
       expect(insideGallery([0, tunnelFloorHeight(z) + 1.6, z])).toBe(true)
       expect(floorHeight([0, tunnelFloorHeight(z) + 1.6, z])).toBeCloseTo(tunnelFloorHeight(z))
       expect(roomAt([0, tunnelFloorHeight(z) + 1.6, z])).toBe('oculus')
@@ -133,8 +133,8 @@ describe('oculus and connecting tunnel', () => {
         mesh.updateMatrixWorld(true)
       }
       for (const x of [-5, -3.9, 0, 3.9, 5]) {
-        for (const z of [-30, -24.1, -23.9, -20, -16.1, -15.9, -14.5]) {
-          const glass = Math.abs(x) < 4 && z > -24 && z < -16
+        for (const z of [-34, -28.1, -27.9, -24, -20.1, -19.9, -18.5]) {
+          const glass = Math.abs(x) < 4 && z > -28 && z < -20
           const sightline = new Raycaster(new Vector3(x, 4.9, z), new Vector3(0, -1, 0), 0, 13)
           expect(sightline.intersectObjects(meshes).length === 0).toBe(glass)
         }

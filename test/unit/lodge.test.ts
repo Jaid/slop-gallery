@@ -323,7 +323,7 @@ describe('Lodge and Corridor route', () => {
       for (const sprint of [false, true]) {
         test(`real player traverses the entire loop at ${fps} Hz, returning ${returning}, sprint ${sprint}`, () => {
           const world = createWorld(fps)
-          const path = [[lodge.entranceX, -29], [lodge.entranceX, lodge.tunnelZ], [-28, lodge.tunnelZ], [-28, lodge.returnZ], [lodge.approachX, lodge.returnZ], [lodge.approachX, lodge.siennaZ], [-31, lodge.siennaZ], [-18.5, lodge.siennaZ]]
+          const path = [[lodge.entranceX, -33], [lodge.entranceX, lodge.tunnelZ], [-28, lodge.tunnelZ], [-28, lodge.returnZ], [lodge.approachX, lodge.returnZ], [lodge.approachX, lodge.siennaZ], [-31, lodge.siennaZ], [-18.5, lodge.siennaZ]]
           if (returning) {
             path.reverse()
           }

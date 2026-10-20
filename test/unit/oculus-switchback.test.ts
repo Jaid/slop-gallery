@@ -22,10 +22,10 @@ test('Oculus is three meters deeper and four meters longer, without moving Moonf
   expect(lowerGallery.floorY).toBe(-8)
   expect(oculus.floorY).toBe(-11)
   expect(oculus.size).toEqual([18, 21])
-  expect(tunnel.southZ - tunnel.northZ).toBe(14.5)
+  expect(tunnel.southZ - tunnel.northZ).toBe(18.5)
   expect(tunnelFloorHeight(tunnel.northZ)).toBe(oculus.floorY)
   expect(tunnelFloorHeight(tunnel.southZ)).toBe(lowerGallery.floorY)
-  expect(tunnelSlope).toBeCloseTo(3 / 14.5)
+  expect(tunnelSlope).toBeCloseTo(3 / 18.5)
   expect(oculusPlatform.position[1] + oculusPlatform.size[1] / 2).toBe(-5)
   const room = rooms.find(value => value.id === 'oculus')!
   const visit = roomVisit(room)
