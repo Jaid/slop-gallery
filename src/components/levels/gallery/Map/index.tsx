@@ -4,6 +4,7 @@ import Branch from 'branch-component'
 
 import {galleryEvents, notify, openPanel, rooms, roomVisit, useGallery} from '#src/lib/gallery.ts'
 import {corridorPassage, corridorStairs} from '#src/lib/gallery/corridor.ts'
+import feastTable from '#src/lib/gallery/feastTable/layout.ts'
 import {fountainBench, fountainBenches} from '#src/lib/gallery/fountain/benches.ts'
 import fountain from '#src/lib/gallery/fountain/config.ts'
 import lobby from '#src/lib/gallery/lobby.ts'
@@ -84,6 +85,7 @@ export default function Map({css}: {css: Record<string, string>}) {
         </g>)}</Branch>
         {level.rooms.filter(room => room.id !== 'corridor').map(room => <g key={room.id}>
           <rect fill={room.id === current ? '#c9d4b6' : roomColors[room.id] ?? '#e4e3d7'} height={room.size[1] * scale - 4} rx='2' stroke='#a8b196' strokeWidth='1.5' width={room.size[0] * scale - 4} x={level.x(room.center[0] - room.size[0] / 2)} y={level.y(room.center[1] - room.size[1] / 2)} />
+          <Branch if={room.id === 'dine'}><rect aria-label='Feast table' fill='#977455' fillOpacity={0.7} height={feastTable.length * scale} rx='2' width={feastTable.width * scale} x={level.x(feastTable.position[0] - feastTable.width / 2)} y={level.y(feastTable.position[2] - feastTable.length / 2)} /></Branch>
           <Branch if={room.id === 'moonfall'}><g aria-label='Moonfall impact crater and circular safety barrier'>
             <circle cx={level.x(lowerGallery.moonfall.center[0])} cy={level.y(lowerGallery.moonfall.center[1])} fill='#6b665c' fillOpacity={0.55} r={moonfallCrater.radius * scale} stroke='#82796a' strokeWidth='3' />
             <circle cx={level.x(lowerGallery.moonfall.center[0])} cy={level.y(lowerGallery.moonfall.center[1])} fill='none' r={moonfallCrater.fenceRadius * scale} stroke='#9d815c' strokeDasharray='4 3' />

@@ -26,8 +26,16 @@ const objectRooms = new WeakMap<Object3D, {
   matrix: Matrix4
   room: RoomId | undefined
 }>
-/** the room that encloses the drawable, kept until it moves or its bounds change */
+/**
+ * The room that encloses the drawable, kept until it moves or its bounds change.
+ *
+ * Long, low furniture has a bounding sphere that reaches far below the floor, past every room box, although the furniture itself stays inside one room. Such objects declare their room in `userData.room`, which wins over the sphere.
+ */
 const roomOf = (drawable: Drawable, geometry: BufferGeometry) => {
+  const declared = (drawable.userData as {room?: RoomId}).room
+  if (declared) {
+    return declared
+  }
   // Instanced and batched meshes bound all of their instances themselves.
   if (drawable.computeBoundingSphere && drawable.boundingSphere === null) {
     drawable.computeBoundingSphere()

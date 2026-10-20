@@ -11,6 +11,7 @@ import useGraphicsMode from 'use-graphics-mode'
 
 import CeilingLeds from '#component/levels/gallery/CeilingLeds'
 import DineFloor from '#component/levels/gallery/DineFloor'
+import FeastTable from '#component/levels/gallery/FeastTable'
 import Fountain from '#component/levels/gallery/Fountain'
 import FountainBenches from '#component/levels/gallery/FountainBenches'
 import GalleryStairs from '#component/levels/gallery/GalleryStairs'
@@ -169,6 +170,7 @@ export default function Architecture() {
     </group>)}
     <CeilingLeds light={dineLedLight} name='dine' slots={dineLedSlots} />
     <CeilingLeds light={antechamberLedLight} name='antechamber' slots={antechamberLedSlots} />
+    <FeastTable />
     <PottedPlants />
     <Fountain />
     <FountainBenches wood={wood} />
