@@ -46,8 +46,8 @@ const pointLightPositions: Partial<Record<Wall['room'], Array<number>>> = {
 }
 // These rooms are lit by breakable LED panes with their own dimming lights instead of the fixed light boxes.
 const ledRooms = new Set<Wall['room']>(['dine'])
-// The Lobby keeps the shared slab but builds its own coffered laylight ceiling and the lamps under it.
-const cofferedRooms = new Set<Wall['room']>(['lobby'])
+// The Lobby builds its own barrel vault, glass sky and chandeliers instead of the shared slab and light boxes.
+const vaultedRooms = new Set<Wall['room']>(['lobby'])
 // These upper rooms build their own floor, ceiling and lights.
 const customRooms = new Set<Wall['room']>(['salon', 'sienna'])
 const vesper = rooms.find(room => room.id === 'vesper')!
@@ -153,17 +153,17 @@ export default function Architecture() {
     {walls.map(wall => <WallSurface key={wall.id} glass={glass.tunnel} material={wallMaterial(wall)} plaster={plaster} surfaceMaterial={surfaceMaterial(wall)} wall={wall} />)}
     {rooms.filter(room => room.floorY === 0 && !customRooms.has(room.id)).map(room => <group key={room.id} position={[room.center[0], 0, room.center[1]]}>
       <RigidBody colliders={false} type='fixed'>
-        <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]} />
+        <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, vaultedRooms.has(room.id) ? 13.6 : 5.9, 0]} />
       </RigidBody>
       <RoomFloorFor glass={glass.lobby} room={room} stone={stone} wood={wood} />
-      <Box color={room.id === 'vesper' ? '#7c9586' : '#e1dccc'} position={[0, 5.78, 0]} size={[room.size[0], 0.18, room.size[1]]} />
+      <Branch not={vaultedRooms.has(room.id)}><Box color={room.id === 'vesper' ? '#7c9586' : '#e1dccc'} position={[0, 5.78, 0]} size={[room.size[0], 0.18, room.size[1]]} /></Branch>
       {lightBoxOffsets(room).map(z => <group key={z}>
         <Box color='#a29982' position={[0, 5.6, z]} size={[room.size[0] * 0.48, 0.1, 2.6]} />
         <mesh position={[0, 5.54, z]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[room.size[0] * 0.48 - 0.1, 2.45]} /><meshBasicNodeMaterial color='#fff3d8' /></mesh>
         {[-1, 0, 1].map(x => <Box key={x} color='#c0b7a1' position={[x * room.size[0] * 0.12, 5.5, z]} size={[0.045, 0.12, 2.5]} />)}
       </group>)}
-      <Branch if={cofferedRooms.has(room.id)} then={LobbyCeiling} />
-      {(ledRooms.has(room.id) || cofferedRooms.has(room.id) ? [] : pointLightPositions[room.id] ?? [-3.5, 3.5]).map(z => <pointLight key={z} color='#fff1d8' decay={2} distance={14} intensity={room.id === 'vesper' ? 40 : 32} position={[0, 4.9, z]} />)}
+      <Branch if={vaultedRooms.has(room.id)} then={LobbyCeiling} />
+      {(ledRooms.has(room.id) || vaultedRooms.has(room.id) ? [] : pointLightPositions[room.id] ?? [-3.5, 3.5]).map(z => <pointLight key={z} color='#fff1d8' decay={2} distance={14} intensity={room.id === 'vesper' ? 40 : 32} position={[0, 4.9, z]} />)}
     </group>)}
     <DineLights />
     <PottedPlants />
@@ -198,7 +198,7 @@ function isLodgeRoomWall(wall: Wall) {
 }
 /** Z offsets of the recessed light boxes: one every 4 m along the room’s depth, none where LED panes or laylights take over. */
 function lightBoxOffsets(room: typeof rooms[number]) {
-  if (ledRooms.has(room.id) || cofferedRooms.has(room.id)) {
+  if (ledRooms.has(room.id) || vaultedRooms.has(room.id)) {
     return []
   }
   if (room.id === 'antechamber') {

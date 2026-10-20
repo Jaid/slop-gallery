@@ -103,7 +103,7 @@ export const portals: Array<Portal> = [
 
 export const roomBoxes = rooms.map(room => ({
   id: room.id,
-  box: new Box3(new Vector3(room.center[0] - room.size[0] / 2, room.floorY - 1, room.center[1] - room.size[1] / 2), new Vector3(room.center[0] + room.size[0] / 2, room.floorY + room.height + 0.2, room.center[1] + room.size[1] / 2)),
+  box: new Box3(new Vector3(room.center[0] - room.size[0] / 2, room.floorY - 1, room.center[1] - room.size[1] / 2), new Vector3(room.center[0] + room.size[0] / 2, ('ceiling' in room ? room.ceiling : room.floorY + room.height) + 0.2, room.center[1] + room.size[1] / 2)),
 }))
 
 const point = new Vector3

@@ -24,7 +24,10 @@ export const rooms = [
   {
     id: 'lobby',
     floorY: 0,
+    // The walls stay at the shared cornice line; the barrel vault above them is not part of the wall height.
     height: 5.8,
+    /** top of the space the room owns, above the vault */
+    ceiling: 14.6,
     number: '01',
     title: 'Lobby',
     subtitle: 'Nothing here is quite as it seems.',
@@ -141,7 +144,8 @@ const contains = (room: (typeof rooms)[number], position: Vec3) => {
   }
   const [x, y, z] = position
   const ground = room.id === 'moonfall' ? Math.min(room.floorY, room.floorY + craterTerrain.height(x - room.center[0], z - room.center[1])) : room.floorY
-  return y >= ground - 1 && y <= room.floorY + room.height + 0.2 && Math.abs(x - room.center[0]) <= room.size[0] / 2 && Math.abs(z - room.center[1]) <= room.size[1] / 2
+  const ceiling = 'ceiling' in room ? room.ceiling : room.floorY + room.height
+  return y >= ground - 1 && y <= ceiling + 0.2 && Math.abs(x - room.center[0]) <= room.size[0] / 2 && Math.abs(z - room.center[1]) <= room.size[1] / 2
 }
 export function insideGallery(position: Vec3) {
   return position.every(Number.isFinite) && (rooms.some(room => contains(room, position)) || insideStairway(position) || tunnelContains(position) || insideLodgeAccess(position))
