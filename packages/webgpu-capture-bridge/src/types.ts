@@ -9,8 +9,9 @@ export type RgbaFrame = {
 
 export type CaptureFrameResult = {
   centerPixel: [number, number, number, number]
-  dataUrl: string
   height: number
+  /** The encoded frame, PNG with the default encoder. */
+  image: Blob
   /** Rec. 709 weighted RGB bytes, in the range 0–255; not linear-light luminance. */
   meanLuminance: number
   /** Fraction of pixels with at least one RGB channel greater than 8. Alpha is ignored. */
@@ -27,11 +28,11 @@ export type CaptureFrameApi = {
   capturePixels: CapturePixels
 }
 
-export type FrameEncoder = (frame: RgbaFrame) => Promise<string> | string
+export type FrameEncoder = (frame: RgbaFrame) => Blob | Promise<Blob>
 
 export type WebgpuCaptureOptions = {
   camera: Camera
-  /** Defaults to PNG encoding with a detached HTML canvas. */
+  /** Defaults to PNG encoding with an OffscreenCanvas. */
   encode?: FrameEncoder
   pipeline?: RenderPipeline | null
   renderer: WebGPURenderer

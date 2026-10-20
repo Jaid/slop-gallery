@@ -63,7 +63,7 @@ export class TestRenderer {
   }
 }
 
-export const encode: FrameEncoder = ({width, height}: RgbaFrame) => `data:image/png;test,${width}x${height}`
+export const encode: FrameEncoder = ({width, height}: RgbaFrame) => new Blob([`${width}x${height}`], {type: 'image/png'})
 
 /** Test-only adapter: deliberately small doubles do not broaden the published renderer API. */
 export class TestCapture extends WebgpuCapture {

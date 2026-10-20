@@ -15,10 +15,10 @@ export default class WebgpuCapture implements CaptureFrameApi, Disposable {
     return this.inFlight ??= this.capture(async () => {
       const frame = await this.readFrame()
       const analysis = analyzeFrame(frame)
-      const dataUrl = await (this.options.encode ?? encodePng)(frame)
+      const image = await (this.options.encode ?? encodePng)(frame)
       return {
         ...analysis,
-        dataUrl,
+        image,
         width: frame.width,
         height: frame.height,
       }

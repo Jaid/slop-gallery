@@ -19,7 +19,7 @@ const capture = new WebgpuCapture({
 
 try {
   const frame = await capture.captureFrame()
-  console.log(frame.dataUrl, frame.width, frame.height)
+  console.log(frame.image, frame.width, frame.height)
 } finally {
   capture.dispose()
 }
@@ -71,7 +71,7 @@ function Viewer() {
     </Canvas>
     <button onClick={async () => {
       const frame = await capture.current?.captureFrame()
-      if (frame) console.log(frame.dataUrl)
+      if (frame) open(URL.createObjectURL(frame.image))
     }}>Capture</button>
   </>
 }
@@ -87,7 +87,7 @@ The core entry point never imports React or Fiber. Only consumers of `webgpu-cap
 
 | Property | Meaning |
 | --- | --- |
-| `dataUrl` | PNG data URL with the default encoder |
+| `image` | Encoded frame as a `Blob`, PNG with the default encoder |
 | `width`, `height` | Physical capture dimensions |
 | `centerPixel` | RGBA bytes at `floor(width / 2), floor(height / 2)` |
 | `meanLuminance` | Mean of `0.2126 × R + 0.7152 × G + 0.0722 × B`, using encoded bytes in 0–255 |
@@ -97,7 +97,7 @@ The statistics ignore alpha. `meanLuminance` is a byte-based diagnostic, not a l
 
 ## Encoding and lifecycle
 
-The default encoder uses a detached HTML canvas. A custom `encode` function receives `{pixels, width, height}`, where `pixels` is a tightly packed, top-to-bottom `Uint8ClampedArray`. It may return a data URL directly or asynchronously. This also allows worker or non-DOM encoding without changing the capture service. Statistics are computed before calling the encoder.
+Results are binary: the default encoder draws into an `OffscreenCanvas` and resolves with its PNG `Blob`, so it also works in workers. Convert to base64 only where a boundary needs text, such as returning a frame from Puppeteer’s `page.evaluate`. A custom `encode` function receives `{pixels, width, height}`, where `pixels` is a tightly packed, top-to-bottom `Uint8ClampedArray`, and returns a `Blob` directly or asynchronously, e.g. for another image format. Statistics are computed before calling the encoder.
 
 Concurrent calls on one instance share the same promise and result through rendering, readback and encoding. Treat shared results as read-only. A later call captures a new frame. Any failure rejects all current callers and permits a later retry.
 

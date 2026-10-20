@@ -2,7 +2,7 @@ import {afterEach, describe, expect, test} from 'bun:test'
 
 import encodePng from '../src/encodePng.ts'
 
-const originalDocument = Object.getOwnPropertyDescriptor(globalThis, 'document')
+const originalOffscreenCanvas = Object.getOwnPropertyDescriptor(globalThis, 'OffscreenCanvas')
 const originalImageData = Object.getOwnPropertyDescriptor(globalThis, 'ImageData')
 const frame = {
   pixels: new Uint8ClampedArray([1, 2, 3, 255]),
@@ -10,7 +10,7 @@ const frame = {
   height: 1,
 }
 afterEach(() => {
-  for (const [key, descriptor] of [['document', originalDocument], ['ImageData', originalImageData]] as const) {
+  for (const [key, descriptor] of [['OffscreenCanvas', originalOffscreenCanvas], ['ImageData', originalImageData]] as const) {
     if (descriptor) {
       Object.defineProperty(globalThis, key, descriptor)
     } else {
@@ -18,33 +18,36 @@ afterEach(() => {
     }
   }
 })
-const setup = (contextAvailable = true, dataUrl = 'data:image/png;base64,encoded') => {
-  let writtenImage: unknown
-  let requestedType: string | undefined
-  const canvas = {
-    width: 0,
-    height: 0,
-    getContext: (type: string) => {
-      expect(type).toBe('2d')
-      return contextAvailable ? {
-        putImageData: (image: unknown, x: number, y: number) => {
-          expect([x, y]).toEqual([0, 0])
-          writtenImage = image
-        },
-      } : null
-    },
-    toDataURL: (type: string) => {
-      requestedType = type
-      return dataUrl
-    },
+type Size = {
+  height: number
+  width: number
+}
+const setup = (contextAvailable = true, encodedType = 'image/png') => {
+  const state = {
+    canvas: null as Size | null,
+    convert: (type: string) => Promise.resolve(new Blob(['encoded'], {type: type === 'image/png' ? encodedType : type})),
+    requestedType: undefined as string | undefined,
+    writtenImage: undefined as unknown,
   }
-  Object.defineProperty(globalThis, 'document', {
+  Object.defineProperty(globalThis, 'OffscreenCanvas', {
     configurable: true,
-    value: {
-      createElement: (tag: string) => {
-        expect(tag).toBe('canvas')
-        return canvas
-      },
+    value: class {
+      constructor(readonly width: number, readonly height: number) {
+        state.canvas = this
+      }
+      convertToBlob({type}: {type: string}) {
+        state.requestedType = type
+        return state.convert(type)
+      }
+      getContext(type: string) {
+        expect(type).toBe('2d')
+        return contextAvailable ? {
+          putImageData: (image: unknown, x: number, y: number) => {
+            expect([x, y]).toEqual([0, 0])
+            state.writtenImage = image
+          },
+        } : null
+      }
     },
   })
   Object.defineProperty(globalThis, 'ImageData', {
@@ -53,21 +56,15 @@ const setup = (contextAvailable = true, dataUrl = 'data:image/png;base64,encoded
       constructor(readonly data: Uint8ClampedArray, readonly width: number, readonly height: number) {}
     },
   })
-  return {
-    canvas,
-    get writtenImage() {
-      return writtenImage
-    },
-    get requestedType() {
-      return requestedType
-    },
-  }
+  return state
 }
 describe('PNG encoding', () => {
-  test('encodes the packed pixels at their native dimensions', () => {
+  test('encodes the packed pixels at their native dimensions into a PNG blob', async () => {
     const state = setup()
-    expect(encodePng(frame)).toBe('data:image/png;base64,encoded')
-    expect([state.canvas.width, state.canvas.height]).toEqual([1, 1])
+    const image = await encodePng(frame)
+    expect(image.type).toBe('image/png')
+    expect(await image.text()).toBe('encoded')
+    expect([state.canvas?.width, state.canvas?.height]).toEqual([1, 1])
     expect(state.writtenImage).toEqual({
       data: frame.pixels,
       width: 1,
@@ -75,23 +72,21 @@ describe('PNG encoding', () => {
     })
     expect(state.requestedType).toBe('image/png')
   })
-  test('explains how to encode without a DOM', () => {
-    Reflect.deleteProperty(globalThis, 'document')
-    expect(() => encodePng(frame)).toThrow('Provide an encode function')
+  test('explains how to encode without OffscreenCanvas', async () => {
+    Reflect.deleteProperty(globalThis, 'OffscreenCanvas')
+    await expect(encodePng(frame)).rejects.toThrow('Provide an encode function')
   })
-  test('rejects when a 2D context is unavailable', () => {
+  test('rejects when a 2D context is unavailable', async () => {
     setup(false)
-    expect(() => encodePng(frame)).toThrow('Could not create a 2D canvas context')
+    await expect(encodePng(frame)).rejects.toThrow('Could not create a 2D canvas context')
   })
-  test('rejects the browser’s empty data URL for an unsupported canvas size', () => {
-    setup(true, 'data:,')
-    expect(() => encodePng(frame)).toThrow('could not encode')
+  test('rejects a blob of another type', async () => {
+    setup(true, '')
+    await expect(encodePng(frame)).rejects.toThrow('could not encode')
   })
-  test('propagates browser encoding failures', () => {
+  test('propagates browser encoding failures', async () => {
     const state = setup()
-    state.canvas.toDataURL = () => {
-      throw new Error('Encoding failed.')
-    }
-    expect(() => encodePng(frame)).toThrow('Encoding failed.')
+    state.convert = () => Promise.reject(new Error('Encoding failed.'))
+    await expect(encodePng(frame)).rejects.toThrow('Encoding failed.')
   })
 })

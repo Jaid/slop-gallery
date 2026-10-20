@@ -94,15 +94,17 @@ describe('WebgpuCapture', () => {
       width: 2,
       height: 2,
       centerPixel: [255, 255, 255, 255],
-      dataUrl: 'data:image/png;test,2x2',
+      image: result.image,
       meanLuminance: result.meanLuminance,
       nonBlackFraction: 1,
     })
+    expect(result.image.type).toBe('image/png')
+    expect(await result.image.text()).toBe('2x2')
     capture.dispose()
   })
   test('coalesces concurrent callers until encoding completes and starts a fresh capture afterward', async () => {
     const renderer = new TestRenderer
-    const encoding = Promise.withResolvers<string>()
+    const encoding = Promise.withResolvers<Blob>()
     const started = Promise.withResolvers<void>()
     let renderCount = 0
     const capture = new TestCapture({
@@ -121,9 +123,10 @@ describe('WebgpuCapture', () => {
     expect(capture.captureFrame()).toBe(first)
     expect(renderCount).toBe(1)
     expect(renderer.readCount).toBe(1)
-    encoding.resolve('data:image/png;test,encoded')
+    const encoded = new Blob(['encoded'], {type: 'image/png'})
+    encoding.resolve(encoded)
     const result = await first
-    expect(result.dataUrl).toBe('data:image/png;test,encoded')
+    expect(result.image).toBe(encoded)
     const next = capture.captureFrame()
     expect(next).not.toBe(first)
     await next

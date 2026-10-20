@@ -80,9 +80,11 @@ await page.waitForFunction(() => {
 }, {timeout: 120_000})
 await waitForFrames(page, settle)
 const frame = await page.evaluate(async () => {
-  const {dataUrl, width, height, nonBlackFraction} = await globalThis.slopGallery!.captureFrame!()
+  const {image, width, height, nonBlackFraction} = await globalThis.slopGallery!.captureFrame!()
+  const png = await image.bytes()
+  // page.evaluate returns JSON, so the PNG crosses as base64.
   return {
-    png: dataUrl.slice(dataUrl.indexOf(',') + 1),
+    png: png.toBase64(),
     width,
     height,
     nonBlackFraction,
