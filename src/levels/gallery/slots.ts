@@ -34,10 +34,10 @@ const specs: ReadonlyArray<SlotSpec> = [
   // Lobby: the arched alcoves, the piers beside the south door and the near end of the extension
   ['lobby-north', '2:3', 30_000, 0, -3.6, 2.7],
   ['lobby-north', '2:3', 30_000, 0, 3.6, 2.7],
-  ['lobby-east', '2:3', 30_000, 0, -2.8, 2.7],
-  ['lobby-west', '2:3', 30_000, 0, 2.8, 2.7],
-  ['lobby-south', '1:1', 60_000, 100, -4.6, 2.7],
-  ['lobby-south', '1:1', 60_000, 100, 4.6, 2.7],
+  ['lobby-east', '2:3', 30_000, 100, -2.8, 2.7],
+  ['lobby-west', '2:3', 30_000, 100, 2.8, 2.7],
+  ['lobby-south', '1:1', 60_000, 0, -4.6, 2.7],
+  ['lobby-south', '1:1', 60_000, 0, 4.6, 2.7],
   ['lobby-extension-east', '3:2', 30_000, 100, 8, 2.7],
   ['lobby-extension-west', '3:2', 30_000, 100, -8, 2.7],
   // Antechamber and Vesper: one large work centered on each wall
