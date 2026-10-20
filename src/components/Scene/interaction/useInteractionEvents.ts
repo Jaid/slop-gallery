@@ -105,7 +105,7 @@ export default function useInteractionEvents({
         if (view.current) {
           inspection.cancel()
         } else {
-          inspection.begin(state.active)
+          inspection.begin(state.active, state.activeLabel === state.active)
         }
       }
       if (event.code === 'KeyQ' && state.held) {

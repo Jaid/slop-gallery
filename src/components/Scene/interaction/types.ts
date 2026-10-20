@@ -8,6 +8,8 @@ export type MutableRef<T> = {
 
 export type InspectionState = {
   id: string
+  /** whether V was pressed on the name plate, so the view frames the plate together with the portrait */
+  label: boolean
   look: InspectionLook
   position: Vector3
   restoreControls: () => void

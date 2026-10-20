@@ -22,7 +22,7 @@ export default function createInspectionController(camera: RootState['camera'], 
     }
     useGallery.setState({inspecting: null})
   }
-  const begin = (id: string) => {
+  const begin = (id: string, label = false) => {
     if (useGallery.getState().held || !(controls instanceof PointerLockControls)) {
       return
     }
@@ -32,6 +32,7 @@ export default function createInspectionController(camera: RootState['camera'], 
     controls.enabled = false
     view.current = {
       id,
+      label,
       look: new InspectionLook(camera.quaternion),
       restoreControls: () => {
         controls.enabled = wasEnabled
