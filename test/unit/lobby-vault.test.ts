@@ -2,6 +2,7 @@ import type {BufferGeometry} from 'three/webgpu'
 
 import {afterAll, describe, expect, test} from 'bun:test'
 
+import {acceleratedRaycast, MeshBVH} from 'three-mesh-bvh'
 import {DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {wallTop} from '../../src/lib/gallery/architecture.ts'
@@ -117,6 +118,8 @@ describe('the Lobby’s barrel vault', () => {
     const meshes = [geometry.clad, geometry.stone, geometry.plaster, geometry.gold, geometry.bars, geometry.roseGlass].map(part => new Mesh(part, material))
     const glass = new Mesh(geometry.glass, material)
     for (const mesh of [...meshes, glass]) {
+      mesh.geometry.boundsTree = new MeshBVH(mesh.geometry)
+      mesh.raycast = acceleratedRaycast
       mesh.updateMatrixWorld()
     }
     const direction = new Vector3(...sun.direction)
@@ -131,6 +134,7 @@ describe('the Lobby’s barrel vault', () => {
           continue
         }
         const raycaster = new Raycaster(origin, direction)
+        raycaster.firstHitOnly = true
         const blocked = raycaster.intersectObjects(meshes, false).at(0)
         const pane = raycaster.intersectObject(glass, false).at(0)
         total++

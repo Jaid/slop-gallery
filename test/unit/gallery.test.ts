@@ -193,19 +193,12 @@ describe('image dimensions', () => {
     expect(useGallery.getState().portraits).toHaveLength(samplePortraits.length)
     importer.dispose()
   })
-  test('preserves landscape, portrait and square aspect ratios', () => {
-    expect(imageSize(400, 200)).toEqual({
-      width: 2.4,
-      height: 1.2,
-    })
-    expect(imageSize(200, 400)).toEqual({
-      width: 1.2,
-      height: 2.4,
-    })
-    expect(imageSize(400, 400)).toEqual({
-      width: 2.4,
-      height: 2.4,
-    })
+  test('keeps landscape, portrait and square aspect ratios at a frame area of 30 000 cm²', () => {
+    for (const [width, height] of [[400, 200], [200, 400], [400, 400]]) {
+      const size = imageSize(width, height)
+      expect(size.width / size.height).toBeCloseTo(width / height, 9)
+      expect(size.width * size.height).toBeCloseTo(3, 9)
+    }
   })
   for (const dimensions of [[0, 100], [-1, 100], [Number.NaN, 100], [Infinity, 100], [9000, 9000], [1300, 100], [100, 1300]]) {
     test(`rejects ${dimensions.join('×')}`, () => {
