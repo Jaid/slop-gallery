@@ -6,6 +6,7 @@ import {useMemo} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 import useGraphicsMode from 'use-graphics-mode'
 
+import LobbyClock from '#component/levels/gallery/LobbyClock'
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
 import LobbyChandelierGeometry from '#src/lib/gallery/LobbyChandelierGeometry.ts'
 import lobbyVault, {lobbyChandeliers} from '#src/lib/gallery/lobbyVault.ts'
@@ -16,7 +17,8 @@ import LimestoneMaterial from '#src/lib/materials/LimestoneMaterial.ts'
 import VaultGlassMaterial from '#src/lib/materials/VaultGlassMaterial.ts'
 
 /**
- * The Lobby’s coffered barrel vault with its glazed crown and rose windows, and the great chandeliers hanging from it.
+ * The Lobby’s coffered barrel vault with its glazed crown, the rose window in the north lunette and the great clock in the south
+ * one, and the great chandeliers hanging from it.
  * Rendered inside the room’s group, at its center. `cladding` is the walls’ own travertine, carried on up the lunettes.
  */
 export default function LobbyVault({cladding}: {
@@ -63,6 +65,7 @@ export default function LobbyVault({cladding}: {
     {/* The glass lets the sun through: it casts no shadow, only its bars and tracery do. */}
     <mesh castShadow={false} geometry={geometry.glass} material={glass} name='lobby-vault-glass' />
     <mesh castShadow={false} geometry={geometry.roseGlass} material={glass} name='lobby-vault-rose-window' />
+    <LobbyClock gilt={gilt} stone={stone} z={lobbyVault.halfLength} />
     <LobbyChandeliers />
   </group>
 }

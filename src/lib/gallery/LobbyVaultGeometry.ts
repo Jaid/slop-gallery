@@ -112,6 +112,23 @@ const soffitRing = (size: number, z: number, sides?: number) => {
   geometry.computeVertexNormals()
   return geometry
 }
+/** A ring of the round frame, finely enough divided that its 3 m sweep stays round. */
+const frameRing = (size: number, tube: number, z: number, sides: number) => {
+  const torus = new TorusGeometry(size, tube, sides, 72)
+  return torus.translate(0, 0, z)
+}
+/**
+ * The round stone frame shared by the rose window and the clock, on a wall face at z = 0 that faces +z: stepped archivolts
+ * between a gilt ring outside and one lining the opening of `radius`.
+ */
+export function roundFrame(radius: number) {
+  return {
+    stone: [frameRing(radius + 0.33, 0.16, -0.04, 8), frameRing(radius + 0.12, 0.13, -0.01, 8)],
+    gold: [frameRing(radius + 0.49, 0.05, -0.01, 6), frameRing(radius - 0.02, 0.06, -0.02, 6)],
+  }
+}
+/** Outer radius of {@link roundFrame}, to the outside of its gilt ring. */
+export const roundFrameReach = (radius: number) => radius + 0.54
 /** A gilt rosette facing +y: a domed boss inside a beaded ring with eight petals. */
 const rosette = (size: number) => {
   const boss = new SphereGeometry(size * 0.38, 8, 3, 0, Math.PI * 2, 0, Math.PI / 2)
@@ -286,7 +303,7 @@ export default class LobbyVaultGeometry {
     }
     template.dispose()
     // Lunettes close both ends above the walls. Only the north one is pierced by a rose window: the space behind the south one is
-    // kept for a future upper room.
+    // kept for a future upper room, and the great clock (LobbyClockGeometry) hangs on its face instead.
     const roseY = roseCenterY
     for (const side of [-1, 1]) {
       const windowed = side < 0
@@ -319,9 +336,9 @@ export default class LobbyVaultGeometry {
           const torus = new TorusGeometry(size, tube, sides, segments)
           return torus.translate(x, roseY + y, z)
         }
-        // Stepped stone archivolts frame the opening on the lunette’s face, between a gilt ring outside and one lining the opening.
-        parts.stone.push(ring(rose.radius + 0.33, 0.16, face - 0.04, 36, 0, 0, 8), ring(rose.radius + 0.12, 0.13, face - 0.01, 36, 0, 0, 8))
-        parts.gold.push(ring(rose.radius + 0.49, 0.05, face - 0.01, 36), ring(rose.radius - 0.02, 0.06, face - 0.02, 36))
+        const frame = roundFrame(rose.radius)
+        parts.stone.push(...frame.stone.map(part => part.translate(0, roseY, face)))
+        parts.gold.push(...frame.gold.map(part => part.translate(0, roseY, face)))
         // A gilt hub ring and boss stand proud of the bronze wheel.
         parts.gold.push(ring(rose.hub, 0.07, middle + 0.08, 24))
         const boss = new SphereGeometry(0.28, 12, 8)

@@ -15,7 +15,7 @@ const shell = 0.35
  *
  * A semicircular vault springs from the wall faces right on top of the walls’ cornice. Transverse ribs span it every 4 m.
  * Between them, the flanks are coffered with a gilt rosette in every field, and a glazed band runs along the crown, showing the
- * sky and letting the sun in. A lunette closes each end; the north one is pierced by a clear wheel-rose window.
+ * sky and letting the sun in. A lunette closes each end; the north one is pierced by a clear wheel-rose window, the south one carries the great clock (see lobbyClock.ts).
  *
  * Angles around the vault’s axis (z) are measured from +x: 0 is the east springing, π/2 the crown, π the west springing.
  */
