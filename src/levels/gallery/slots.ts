@@ -9,8 +9,8 @@ import {galleryPlacement} from '#src/lib/gallery/walls.ts'
 import {slotFrame} from '#src/lib/placement/portraitSlots.ts'
 import {wallPosition} from '#src/lib/placement/wallGeometry.ts'
 
-/** a slot as wall, ratio, longer edge, position along the wall and height of the frame’s center */
-type SlotSpec = readonly [wallId: string, ratio: PortraitRatio, size: number, u: number, y: number]
+/** a slot as wall, ratio, longer edge, position along the wall, height of the frame’s center and whether its placard goes above it */
+type SlotSpec = readonly [wallId: string, ratio: PortraitRatio, size: number, u: number, y: number, labelAbove?: boolean]
 
 const wall = (id: string) => galleryPlacement.wall(id)!
 const middle = ([start, end]: readonly [number, number]) => (start + end) / 2
@@ -24,9 +24,9 @@ const dineY = middle(dineWallPanels(wall('dine-east')).upper[0].v) + placardLift
 const siennaPanel = (id: string, index: number) => siennaWainscot(wall(id))[index]
 // The Lodge hangs at the height of its window’s middle, and the east wall faces the window.
 const lodgeY = -3
-/** The big Oculus frames beside the south doorway face the switchback landings, centered on them at the usual height above their floor. */
+/** The wide Oculus frames beside the south doorway face the switchback landings, centered on them. Their placards go on top, with frame and placard together at the usual height above the landing’s floor. */
 const oculusLandingU = Math.abs(oculusRampLandings[0].position[0])
-const oculusLandingY = oculusRampLandings[0].position[1] + oculusRampLandings[0].size[1] / 2 + 2.7
+const oculusLandingY = oculusRampLandings[0].position[1] + oculusRampLandings[0].size[1] / 2 + 2.7 - placardLift
 const lodgeWindowU = lodgeWindow.z - wall('lodge-east').center[2]
 const specs: ReadonlyArray<SlotSpec> = [
   // Lobby: the arched alcoves, the piers beside the south door and the near end of the extension
@@ -63,8 +63,8 @@ const specs: ReadonlyArray<SlotSpec> = [
   ['sienna-south', '1:1', 1.3, siennaPanel('sienna-south', 4), 3.15],
   ['sienna-west', '1:1', 1.3, siennaPanel('sienna-west', 1), 3.15],
   // Oculus: the piers beside the south and north openings, and the east and west landings
-  ['oculus-south', '1:1', 2.4, -oculusLandingU, oculusLandingY],
-  ['oculus-south', '1:1', 2.4, oculusLandingU, oculusLandingY],
+  ['oculus-south', '3:2', 2.4, -oculusLandingU, oculusLandingY, true],
+  ['oculus-south', '3:2', 2.4, oculusLandingU, oculusLandingY, true],
   ['oculus-north', '3:2', 2.4, -5.6, -2.7],
   ['oculus-north', '3:2', 2.4, 5.6, -2.7],
   ['oculus-east', '3:2', 1.8, -6, -2.7],
@@ -78,7 +78,7 @@ const specs: ReadonlyArray<SlotSpec> = [
   ['lodge-east', '1:1', 1.3, lodgeWindowU, lodgeY],
 ]
 const counts = new Map<string, number>
-const slots: Array<PortraitSlot> = specs.map(([wallId, ratio, size, u, y]) => {
+const slots: Array<PortraitSlot> = specs.map(([wallId, ratio, size, u, y, labelAbove]) => {
   const index = counts.get(wallId) ?? 0
   counts.set(wallId, index + 1)
   return {
@@ -88,6 +88,7 @@ const slots: Array<PortraitSlot> = specs.map(([wallId, ratio, size, u, y]) => {
     ...slotFrame(ratio, size),
     position: wallPosition(wall(wallId), u, y),
     rotation: wall(wallId).rotation,
+    ...labelAbove ? {labelAbove} : {},
   }
 })
 
