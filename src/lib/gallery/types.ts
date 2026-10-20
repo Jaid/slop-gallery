@@ -42,6 +42,8 @@ export type PortraitSlot = {
   labelAbove?: boolean
   /** center of the frame, hanging in front of its wall */
   position: MathVec3
+  /** Default works fill free slots of higher priority first, and slots of equal priority in random order. */
+  priority: number
   ratio: PortraitRatio
   rotation: number
   wallId: string

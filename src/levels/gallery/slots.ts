@@ -9,8 +9,8 @@ import {galleryPlacement} from '#src/lib/gallery/walls.ts'
 import {slotFrame} from '#src/lib/placement/portraitSlots.ts'
 import {wallPosition} from '#src/lib/placement/wallGeometry.ts'
 
-/** a slot as wall, ratio, frame area in cm², position along the wall, height of the frame’s center and whether its placard goes above it */
-type SlotSpec = readonly [wallId: string, ratio: PortraitRatio, area: number, u: number, y: number, labelAbove?: boolean]
+/** a slot as wall, ratio, frame area in cm², priority for default works, position along the wall, height of the frame’s center and whether its placard goes above it */
+type SlotSpec = readonly [wallId: string, ratio: PortraitRatio, area: number, priority: number, u: number, y: number, labelAbove?: boolean]
 
 const wall = (id: string) => galleryPlacement.wall(id)!
 const middle = ([start, end]: readonly [number, number]) => (start + end) / 2
@@ -32,61 +32,62 @@ const oculusPlatformU = oculusPlatform.position[2] - wall('oculus-east').center[
 const lodgeWindowU = lodgeWindow.z - wall('lodge-east').center[2]
 const specs: ReadonlyArray<SlotSpec> = [
   // Lobby: the arched alcoves, the piers beside the south door and the near end of the extension
-  ['lobby-north', '2:3', 30_000, -3.6, 2.7],
-  ['lobby-north', '2:3', 30_000, 3.6, 2.7],
-  ['lobby-east', '2:3', 30_000, -2.8, 2.7],
-  ['lobby-west', '2:3', 30_000, 2.8, 2.7],
-  ['lobby-south', '1:1', 60_000, -4.6, 2.7],
-  ['lobby-south', '1:1', 60_000, 4.6, 2.7],
-  ['lobby-extension-east', '3:2', 30_000, 8, 2.7],
-  ['lobby-extension-west', '3:2', 30_000, -8, 2.7],
+  ['lobby-north', '2:3', 30_000, 0, -3.6, 2.7],
+  ['lobby-north', '2:3', 30_000, 0, 3.6, 2.7],
+  ['lobby-east', '2:3', 30_000, 0, -2.8, 2.7],
+  ['lobby-west', '2:3', 30_000, 0, 2.8, 2.7],
+  ['lobby-south', '1:1', 60_000, 0, -4.6, 2.7],
+  ['lobby-south', '1:1', 60_000, 0, 4.6, 2.7],
+  ['lobby-extension-east', '3:2', 30_000, 0, 8, 2.7],
+  ['lobby-extension-west', '3:2', 30_000, 0, -8, 2.7],
   // Antechamber and Vesper: one large work centered on each wall
-  ['antechamber-south', '1:1', 100_000, 0, 3],
-  ['antechamber-west', '1:1', 100_000, 0, 3],
-  ['vesper-north', '1:1', 100_000, 0, 3.2],
-  ['vesper-west', '1:1', 100_000, 0, 3.2],
+  ['antechamber-south', '1:1', 100_000, 0, 0, 3],
+  ['antechamber-west', '1:1', 100_000, 0, 0, 3],
+  ['vesper-north', '1:1', 100_000, 0, 0, 3.2],
+  ['vesper-west', '1:1', 100_000, 0, 0, 3.2],
   // Dine: one work per boiserie panel
-  ['dine-north', '2:3', 30_000, dinePanel('dine-north', 0), dineY],
-  ['dine-north', '2:3', 30_000, dinePanel('dine-north', 1), dineY],
-  ['dine-east', '3:2', 30_000, dinePanel('dine-east', 0), dineY],
-  ['dine-east', '3:2', 30_000, dinePanel('dine-east', 1), dineY],
-  ['dine-east', '3:2', 30_000, dinePanel('dine-east', 2), dineY],
-  ['dine-south', '3:2', 30_000, dinePanel('dine-south', 0), dineY],
-  ['dine-south', '3:2', 30_000, dinePanel('dine-south', 1), dineY],
-  ['dine-south', '3:2', 30_000, dinePanel('dine-south', 2), dineY],
-  ['dine-west', '2:3', 30_000, dinePanel('dine-west', 0), dineY],
-  ['dine-west', '3:2', 30_000, dinePanel('dine-west', 1), dineY],
-  ['dine-west', '3:2', 30_000, dinePanel('dine-west', 2), dineY],
+  ['dine-north', '2:3', 30_000, 0, dinePanel('dine-north', 0), dineY],
+  ['dine-north', '2:3', 30_000, 0, dinePanel('dine-north', 1), dineY],
+  ['dine-east', '3:2', 30_000, 0, dinePanel('dine-east', 0), dineY],
+  ['dine-east', '3:2', 30_000, 0, dinePanel('dine-east', 1), dineY],
+  ['dine-east', '3:2', 30_000, 0, dinePanel('dine-east', 2), dineY],
+  ['dine-south', '3:2', 30_000, 0, dinePanel('dine-south', 0), dineY],
+  ['dine-south', '3:2', 30_000, 0, dinePanel('dine-south', 1), dineY],
+  ['dine-south', '3:2', 30_000, 0, dinePanel('dine-south', 2), dineY],
+  ['dine-west', '2:3', 30_000, 0, dinePanel('dine-west', 0), dineY],
+  ['dine-west', '3:2', 30_000, 0, dinePanel('dine-west', 1), dineY],
+  ['dine-west', '3:2', 30_000, 0, dinePanel('dine-west', 2), dineY],
   // Sienna: above wainscot panels
-  ['sienna-north', '1:1', 15_000, siennaPanel('sienna-north', 2), 3.15],
-  ['sienna-east', '1:1', 15_000, siennaPanel('sienna-east', 1), 3.15],
-  ['sienna-east', '1:1', 15_000, siennaPanel('sienna-east', 4), 3.15],
-  ['sienna-south', '1:1', 15_000, siennaPanel('sienna-south', 1), 3.15],
-  ['sienna-south', '1:1', 15_000, siennaPanel('sienna-south', 4), 3.15],
-  ['sienna-west', '1:1', 15_000, siennaPanel('sienna-west', 1), 3.15],
+  ['sienna-north', '1:1', 15_000, 0, siennaPanel('sienna-north', 2), 3.15],
+  ['sienna-east', '1:1', 15_000, 0, siennaPanel('sienna-east', 1), 3.15],
+  ['sienna-east', '1:1', 15_000, 0, siennaPanel('sienna-east', 4), 3.15],
+  ['sienna-south', '1:1', 15_000, 0, siennaPanel('sienna-south', 1), 3.15],
+  ['sienna-south', '1:1', 15_000, 0, siennaPanel('sienna-south', 4), 3.15],
+  ['sienna-west', '1:1', 15_000, 0, siennaPanel('sienna-west', 1), 3.15],
   // Oculus: the piers beside the south and north openings, and the east and west landings
-  ['oculus-south', '3:2', 60_000, -oculusLandingU, oculusLandingY, true],
-  ['oculus-south', '3:2', 60_000, oculusLandingU, oculusLandingY, true],
-  ['oculus-north', '3:2', 30_000, -5.6, -2.7],
-  ['oculus-north', '3:2', 30_000, 5.6, -2.7],
-  ['oculus-east', '3:2', 30_000, oculusPlatformU, -2.85],
-  ['oculus-west', '3:2', 30_000, -oculusPlatformU, -2.85],
+  ['oculus-south', '3:2', 60_000, 0, -oculusLandingU, oculusLandingY, true],
+  ['oculus-south', '3:2', 60_000, 0, oculusLandingU, oculusLandingY, true],
+  ['oculus-north', '3:2', 30_000, 0, -5.6, -2.7],
+  ['oculus-north', '3:2', 30_000, 0, 5.6, -2.7],
+  ['oculus-east', '3:2', 30_000, 0, oculusPlatformU, -2.85],
+  ['oculus-west', '3:2', 30_000, 0, -oculusPlatformU, -2.85],
   // Lodge: three evenly along the north wall, one each side of the fireplace and one facing the window
-  ['lodge-north', '3:2', 30_000, -3, lodgeY],
-  ['lodge-north', '3:2', 30_000, 0, lodgeY],
-  ['lodge-north', '3:2', 30_000, 3, lodgeY],
-  ['lodge-south', '1:1', 15_000, -3.5, lodgeY],
-  ['lodge-south', '1:1', 15_000, 3.5, lodgeY],
-  ['lodge-east', '1:1', 15_000, lodgeWindowU, lodgeY],
+  ['lodge-north', '3:2', 30_000, 0, -3, lodgeY],
+  ['lodge-north', '3:2', 30_000, 0, 0, lodgeY],
+  ['lodge-north', '3:2', 30_000, 0, 3, lodgeY],
+  ['lodge-south', '1:1', 15_000, 0, -3.5, lodgeY],
+  ['lodge-south', '1:1', 15_000, 0, 3.5, lodgeY],
+  ['lodge-east', '1:1', 15_000, 0, lodgeWindowU, lodgeY],
 ]
 const counts = new Map<string, number>
-const slots: Array<PortraitSlot> = specs.map(([wallId, ratio, area, u, y, labelAbove]) => {
+const slots: Array<PortraitSlot> = specs.map(([wallId, ratio, area, priority, u, y, labelAbove]) => {
   const index = counts.get(wallId) ?? 0
   counts.set(wallId, index + 1)
   return {
     id: `${wallId}-${index}`,
     wallId,
     ratio,
+    priority,
     ...slotFrame(ratio, area),
     position: wallPosition(wall(wallId), u, y),
     rotation: wall(wallId).rotation,

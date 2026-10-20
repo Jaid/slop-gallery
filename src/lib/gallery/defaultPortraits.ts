@@ -5,10 +5,10 @@ import artworks from './artworks.ts'
 import slots from './slots.ts'
 
 /**
- * The level’s default works for a new game state, each hung in a portrait slot of its ratio drawn by the environment `seed`. A work takes the size of its slot, so the same work hangs larger or smaller from one seed to the next.
+ * The level’s default works for a new game state, each hung in a portrait slot of its ratio, the free ones of higher priority first and among equal ones drawn by the environment `seed`. A work takes the size of its slot, so the same work hangs larger or smaller from one seed to the next.
  */
 export default function defaultPortraits(seed: number): Array<Portrait> {
-  const free = slots.toSorted((a, b) => environmentRoll(seed, `portrait-slot:${a.id}`) - environmentRoll(seed, `portrait-slot:${b.id}`))
+  const free = slots.toSorted((a, b) => b.priority - a.priority || environmentRoll(seed, `portrait-slot:${a.id}`) - environmentRoll(seed, `portrait-slot:${b.id}`))
   return artworks.map(({ratio, ...artwork}) => {
     const index = free.findIndex(slot => slot.ratio === ratio)
     if (index === -1) {

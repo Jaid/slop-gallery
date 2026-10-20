@@ -32,6 +32,7 @@ const bridge: WebmcpBridge = {
     id: 'lobby-north-0',
     wallId: 'lobby-north',
     ratio: '2:3',
+    priority: 0,
     width: 1.6,
     height: 2.4,
     position: [-3.6, 2.55, -31.78],

@@ -130,6 +130,7 @@ export function previewSlot(target: Placement): PortraitSlot {
     id: `${target.wallId}-custom-${index}`,
     wallId: target.wallId,
     ratio: template[0],
+    priority: 0,
     ...slotFrame(template[0], template[1]),
     position: target.position,
     rotation: target.rotation,

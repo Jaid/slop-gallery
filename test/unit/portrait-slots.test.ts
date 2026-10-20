@@ -3,15 +3,18 @@ import {describe, expect, test} from 'bun:test'
 import artworks from '../../src/lib/gallery/artworks.ts'
 import slots from '../../src/lib/gallery/slots.ts'
 import {galleryPlacement, placementIssue} from '../../src/lib/gallery/walls.ts'
-import {asPortrait, portraitRatios, slotFrame} from '../../src/lib/placement/portraitSlots.ts'
+import {asPortrait, portraitRatios, slotArea, slotAreas, slotFrame} from '../../src/lib/placement/portraitSlots.ts'
 
 const occupied = slots.map(asPortrait)
 describe('portrait slots', () => {
-  test('frames keep their ratio at every size', () => {
-    for (const ratio of ['1:1', '2:3', '3:2'] as const) {
-      const {width, height} = slotFrame(ratio, 1.8)
-      expect(width / height).toBeCloseTo(portraitRatios[ratio], 9)
-      expect(Math.max(width, height)).toBe(1.8)
+  test('frames keep their ratio and area at every size', () => {
+    for (const ratio of Object.keys(portraitRatios) as Array<keyof typeof portraitRatios>) {
+      for (const area of slotAreas) {
+        const frame = slotFrame(ratio, area)
+        // Frames are rounded to the millimeter.
+        expect(frame.width / frame.height).toBeCloseTo(portraitRatios[ratio], 2)
+        expect(Math.abs(slotArea(frame) - area) / area).toBeLessThan(0.002)
+      }
     }
   })
   test('have unique IDs and frames of their ratio', () => {
