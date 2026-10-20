@@ -11,8 +11,13 @@ import readQueryOverrides from '../queryOverrides.ts'
 import {telemetry} from './index.ts'
 import saveDumpScreenshot from './saveDumpScreenshot.ts'
 
-/** Log an X-key dump, copy it to the clipboard as Clank, confirm it audibly and download the current frame. Only wired up in development mode, see `playerDumpHandler`. */
-export default function recordPlayerDump(dump: EgoDump) {
+export type PlayerDumpSnapshot = ReturnType<typeof snapshotPlayerDump>
+
+/** The mounted player’s on-demand dump, set by the Player component. */
+export const playerDumps: {capture: (() => EgoDump | null) | null} = {capture: null}
+
+/** Attach the gallery context and query overrides to an ego-player dump, as printed and copied for X dumps. */
+export function snapshotPlayerDump(dump: EgoDump) {
   const {room, active, held, inspecting, locked} = useGallery.getState()
   const context = {
     level: galleryLevel,
@@ -29,11 +34,17 @@ export default function recordPlayerDump(dump: EgoDump) {
     },
   }
   const query = readQueryOverrides()
-  const snapshot = {
+  return {
     ...dump,
     context,
     ...query ? {query} : {},
   }
+}
+
+/** Log an X-key dump, copy it to the clipboard as Clank, confirm it audibly and download the current frame. Only wired up in development mode, see `playerDumpHandler`. */
+export default function recordPlayerDump(dump: EgoDump) {
+  const snapshot = snapshotPlayerDump(dump)
+  const {context} = snapshot
   console.dir(snapshot, {depth: null})
   const {id, time, ...rest} = snapshot
   copyDump(`<details><summary>session from ${formatLocalTime(new Date(time))} in ${galleryTitle}</summary><dump id=${id} date="${time}">${stringifyClank(rest)}</dump></details>`).catch(error => {
@@ -52,7 +63,7 @@ export default function recordPlayerDump(dump: EgoDump) {
   }
   const attributes = {
     'dump.id': dump.id,
-    room,
+    room: context.room,
     'event.name': 'ego.dump',
   }
   // Keep arbitrarily deep sightlines out of one oversized OTLP record. Join hits by dump.id.

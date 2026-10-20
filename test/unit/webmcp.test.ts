@@ -13,6 +13,7 @@ const bridge: WebmcpBridge = {
     width: 2,
     height: 1,
     bytes: 3,
+    dump: null,
   }),
   getAim: () => ({
     origin: {
@@ -84,6 +85,7 @@ test('download_frame validates its optional name and downloads through the bridg
     width: 2,
     height: 1,
     bytes: 3,
+    dump: null,
   })
   expect(await execute({name: 'lobby-2026.10'})).toHaveProperty('fileName', 'lobby-2026.10.webp')
   for (const input of [null, [], {unexpected: true}, {name: ''}, {name: '../escape'}, {name: 'a b'}, {name: 5}]) {

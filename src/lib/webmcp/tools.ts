@@ -1,5 +1,6 @@
 import type {FrameDownload} from '#src/lib/downloadFrame.ts'
 import type {PortraitSlot} from '#src/lib/gallery/types.ts'
+import type {PlayerDumpSnapshot} from '#src/lib/telemetry/recordPlayerDump.ts'
 import type {AimSnapshot} from 'ego-player'
 import type {Rarity} from 'knot-materials/rarities.ts'
 import type VictoriaClient from 'victoria-browser-client'
@@ -12,7 +13,7 @@ export type KnotDump = {
 }
 
 export type WebmcpBridge = {
-  downloadFrame: (name?: string) => Promise<FrameDownload>
+  downloadFrame: (name?: string) => Promise<FrameDownload & {dump: PlayerDumpSnapshot | null}>
   getAim: () => AimSnapshot
   getKnots: () => ReadonlyArray<KnotDump>
   getPortraitSlots: () => ReadonlyArray<PortraitSlot>
@@ -75,13 +76,13 @@ export default function createWebmcpTools(getBridge: () => WebmcpBridge): Array<
     {
       name: 'download_frame',
       title: 'Download current frame',
-      description: 'Render the current camera view once more through the WebGPU capture bridge and save it as a lossless WebP browser download. DOM overlays such as menus are not in it. Returns the file name, width, height and encoded byte size. Does not move the player, change focus or simulate input.',
+      description: 'Render the current camera view once more through the WebGPU capture bridge and save it as a lossless WebP browser download. DOM overlays such as menus are not in it. Returns the file name, width, height and encoded byte size, plus `dump`: the same player snapshot the X key prints (player and input state, camera matrices, full-precision aim hits, gallery context and query overrides), taken right before the frame, or null without a player. Unlike X, it is not logged, copied or confirmed with a sound. Does not move the player, change focus or simulate input.',
       inputSchema: {
         type: 'object',
         properties: {
           name: {
             type: 'string',
-            description: 'file name without extension, made of letters, digits, “_”, “.” and “-”. Default: <level>-<timestamp>',
+            description: 'file name without extension, made of letters, digits, “_”, “.” and “-”. Default: <level>-<dump id>, like X dump screenshots, or <level>-<timestamp> without a player',
             pattern: fileNamePattern.source,
           },
         },
