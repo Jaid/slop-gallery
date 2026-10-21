@@ -226,9 +226,20 @@ export const watchPage = (page: Page) => {
     void page.browser().close().catch((closeError: unknown) => console.error(`Closing the browser after the crash failed: ${String(closeError)}`))
   })
 }
-/** Waits until the scene is ready and checks the debug hooks that captures rely on. */
+/** Waits until the scene is ready and checks the debug hooks that captures rely on. Fails early when the app shows its render error screen instead. */
 export const waitForGallery = async (page: Page) => {
-  await page.waitForFunction(() => globalThis.slopGallery?.snapshot?.().ready && globalThis.slopGallery.captureFrame, {timeout: 300_000})
+  const outcome = await page.waitForFunction(() => {
+    // RenderError replaces the scene when WebGPU is missing or rendering threw, e.g. because no adapter could be created; ready would never come.
+    const renderError = document.querySelector('[data-testid="render-error"]')
+    if (renderError) {
+      return {error: renderError.querySelector('h2')?.textContent ?? 'unknown'}
+    }
+    return Boolean(globalThis.slopGallery?.snapshot?.().ready && globalThis.slopGallery.captureFrame) && {}
+  }, {timeout: 300_000})
+  const {error} = await outcome.jsonValue() as {error?: string}
+  if (error !== undefined) {
+    throw new Error(`The gallery showed its render error screen (“${error}”). The console errors above name the cause.`)
+  }
   if (!await page.evaluate(() => Boolean(globalThis.slopGallery!.pose))) {
     throw new Error('This build has no slopGallery.pose() hook. Rebuild it from a version that includes scripts/snap.ts.')
   }
