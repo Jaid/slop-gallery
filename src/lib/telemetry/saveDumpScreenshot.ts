@@ -8,6 +8,6 @@ export default async function saveDumpScreenshot(name: string) {
     console.warn('Dump screenshot skipped: WebGPU capture is not mounted.')
     return
   }
-  const {fileName, width, height, bytes} = await downloadFrame(name)
+  const {fileName, width, height, bytes} = await downloadFrame({name})
   console.info(`Dump screenshot saved as ${fileName} (${width}×${height}, ${bytes} bytes).`)
 }

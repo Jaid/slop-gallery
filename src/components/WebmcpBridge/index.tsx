@@ -1,3 +1,5 @@
+import type {FrameFormat} from '#src/lib/downloadFrame.ts'
+
 import {useThree} from '@react-three/fiber'
 import {AimInspector} from 'ego-player'
 import {useEffect} from 'react'
@@ -17,11 +19,17 @@ export default function WebmcpBridge() {
     const controller = new AbortController
     const inspector = new AimInspector(scene, camera)
     const bridge = {
-      downloadFrame: async (name?: string) => {
+      downloadFrame: async ({name, format}: {
+        format?: FrameFormat
+        name?: string
+      }) => {
         // Dump first, like X: the frame then shows the pose the dump describes.
         const capture = playerDumps.capture?.()
         const dump = capture ? snapshotPlayerDump(capture) : null
-        const download = await downloadFrame(name ?? (dump ? `${galleryLevel}-${dump.id}` : undefined))
+        const download = await downloadFrame({
+          name: name ?? (dump ? `${galleryLevel}-${dump.id}` : undefined),
+          format,
+        })
         return {
           ...download,
           dump,

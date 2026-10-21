@@ -2,11 +2,16 @@ import '#src/lib/diagnostics.ts'
 
 import {galleryLevel} from './level.ts'
 
+export type FrameFormat = 'png' | 'webp'
+
 export type FrameDownload = {
   /** encoded size in bytes */
   bytes: number
   fileName: string
+  format: FrameFormat
   height: number
+  /** fraction of pixels with any RGB channel above 8, only known for PNG */
+  nonBlackFraction?: number
   width: number
 }
 
@@ -14,9 +19,22 @@ const defaultName = () => {
   const now = new Date
   return `${galleryLevel}-${now.toISOString().replaceAll(/[.:]/gu, '-').replace(/-\d{3}Z$/u, '')}`
 }
+type EncodedFrame = Pick<FrameDownload, 'height' | 'nonBlackFraction' | 'width'> & {blob: Blob}
 
-/** Download the current frame as lossless `<name>.webp`, by default `<level>-<timestamp>.webp`. Rejects when the capture is not mounted or encoding fails. */
-export default async function downloadFrame(name = defaultName()): Promise<FrameDownload> {
+const encodePng = async (): Promise<EncodedFrame> => {
+  const captureFrame = globalThis.slopGallery?.captureFrame
+  if (!captureFrame) {
+    throw new Error('WebGPU capture is not mounted.')
+  }
+  const {image, width, height, nonBlackFraction} = await captureFrame()
+  return {
+    blob: image,
+    width,
+    height,
+    nonBlackFraction,
+  }
+}
+const encodeWebp = async (): Promise<EncodedFrame> => {
   const capturePixels = globalThis.slopGallery?.capturePixels
   if (!capturePixels) {
     throw new Error('WebGPU capture is not mounted.')
@@ -36,18 +54,34 @@ export default async function downloadFrame(name = defaultName()): Promise<Frame
   if (blob.type !== 'image/webp') {
     throw new Error('The browser could not encode the frame as WebP.')
   }
+  return {
+    blob,
+    width,
+    height,
+  }
+}
+
+/** Download the current frame losslessly as `<name>.<format>`, by default `<level>-<timestamp>.webp`. Rejects when the capture is not mounted or encoding fails. */
+export default async function downloadFrame({name = defaultName(), format = 'webp'}: {
+  format?: FrameFormat
+  name?: string
+} = {}): Promise<FrameDownload> {
+  const {blob, width, height, nonBlackFraction} = format === 'png' ? await encodePng() : await encodeWebp()
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = `${name}.webp`
+  link.download = `${name}.${format}`
   link.click()
+  // Revoking right after the click can cancel the download before Chromium has read the blob.
   setTimeout(() => {
     URL.revokeObjectURL(url)
-  })
+  }, 60_000)
   return {
     fileName: link.download,
+    format,
     width,
     height,
     bytes: blob.size,
+    ...nonBlackFraction === undefined ? {} : {nonBlackFraction},
   }
 }

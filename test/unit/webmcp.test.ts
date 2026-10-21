@@ -8,8 +8,9 @@ import registerWebmcp from '../../src/lib/webmcp/register.ts'
 import createWebmcpTools from '../../src/lib/webmcp/tools.ts'
 
 const bridge: WebmcpBridge = {
-  downloadFrame: name => Promise.resolve({
-    fileName: `${name ?? 'gallery-default'}.webp`,
+  downloadFrame: ({name, format = 'webp'}) => Promise.resolve({
+    fileName: `${name ?? 'gallery-default'}.${format}`,
+    format,
     width: 2,
     height: 1,
     bytes: 3,
@@ -82,13 +83,18 @@ test('download_frame validates its optional name and downloads through the bridg
   expect(tool.annotations?.readOnlyHint).toBe(false)
   expect(await execute({})).toEqual({
     fileName: 'gallery-default.webp',
+    format: 'webp',
     width: 2,
     height: 1,
     bytes: 3,
     dump: null,
   })
   expect(await execute({name: 'lobby-2026.10'})).toHaveProperty('fileName', 'lobby-2026.10.webp')
-  for (const input of [null, [], {unexpected: true}, {name: ''}, {name: '../escape'}, {name: 'a b'}, {name: 5}]) {
+  expect(await execute({
+    name: 'shot',
+    format: 'png',
+  })).toHaveProperty('fileName', 'shot.png')
+  for (const input of [null, [], {unexpected: true}, {name: ''}, {name: '../escape'}, {name: 'a b'}, {name: 5}, {format: 'jxl'}]) {
     await expect(execute(input)).rejects.toThrow(TypeError)
   }
   controller.abort()
