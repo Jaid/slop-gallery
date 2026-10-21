@@ -8,6 +8,7 @@ import useGraphicsMode from 'use-graphics-mode'
 
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
 import LobbyChandelierGeometry from '#src/lib/gallery/LobbyChandelierGeometry.ts'
+import LobbyLunetteReliefGeometry from '#src/lib/gallery/LobbyLunetteReliefGeometry.ts'
 import lobbyVault, {lobbyChandeliers} from '#src/lib/gallery/lobbyVault.ts'
 import LobbyVaultGeometry, {lobbyVaultCollision} from '#src/lib/gallery/LobbyVaultGeometry.ts'
 import ArchitecturalPlasterMaterial from '#src/lib/materials/ArchitecturalPlasterMaterial.ts'
@@ -31,7 +32,7 @@ export default function LobbyVault({cladding}: {
     heavy: isHeavy,
     roughness: 0.86,
   }), [isHeavy]))
-  // Painted bronze glazing bars, as on the Salon’s skylight.
+  // Painted bronze glazing bars, as on the Salon's skylight.
   const bars = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
     color: '#5b4a35',
     metalness: 0.5,
@@ -44,7 +45,7 @@ export default function LobbyVault({cladding}: {
     metalness: 0.55,
     roughness: 0.34,
   }), []))
-  // Cast conservatory glass like the floor’s, divided into the same panes as the bars in front of it.
+  // Cast conservatory glass like the floor's, divided into the same panes as the bars in front of it.
   const glass = useDisposable(useMemo(() => new VaultGlassMaterial({
     heavy: isHeavy,
     paneSize: [lobbyVault.glazing.pane, lobbyVault.glazing.pane],
@@ -63,10 +64,31 @@ export default function LobbyVault({cladding}: {
     {/* The glass lets the sun through: it casts no shadow, only its bars and tracery do. */}
     <mesh castShadow={false} geometry={geometry.glass} material={glass} name='lobby-vault-glass' />
     <mesh castShadow={false} geometry={geometry.roseGlass} material={glass} name='lobby-vault-rose-window' />
+    <LobbyLunetteRelief />
     <LobbyChandeliers />
   </group>
 }
 
+/** The carved frieze on the north lunette: gilt-framed panels, each with the gallery’s eight-pointed star, and its name in gilt. */
+function LobbyLunetteRelief() {
+  const geometry = useDisposable(useMemo(() => new LobbyLunetteReliefGeometry, []))
+  // The gallery’s shared gold mirrors a dim studio and reads near black on these small faces, so the relief keeps its own
+  // brighter gilt that catches the room’s light.
+  const gilt = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
+    color: '#b8862f',
+    metalness: 1,
+    roughness: 0.38,
+  }), []))
+  const field = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
+    color: '#2e2818',
+    roughness: 0.62,
+    metalness: 0.35,
+  }), []))
+  return <group name='lobby-lunette-relief'>
+    <mesh castShadow geometry={geometry.field} material={field} name='lobby-lunette-relief-field' receiveShadow />
+    <mesh castShadow geometry={geometry.gilt} material={gilt} name='lobby-lunette-relief-gilt' />
+  </group>
+}
 /**
  * The great chandeliers. They emit no light of their own: next to the sun pouring through the glazing, a light per fixture
  * hardly showed, and a shadowed point light cost six extra renders of the scene every frame. Their flames glow instead.
