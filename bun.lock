@@ -61,6 +61,7 @@
         "babel-plugin-react-compiler": "1.0.0",
         "browserslist": "4.29.4",
         "caniuse-lite": "1.0.30001817",
+        "capture-page": "0.3.0",
         "cssnano-preset-advanced": "10.0.0",
         "eslint": "10.13.0",
         "eslint-config-jaid": "37.1.0",
@@ -1007,6 +1008,8 @@
 
     "canvas-textures": ["canvas-textures@workspace:packages/canvas-textures"],
 
+    "capture-page": ["capture-page@0.3.0", "", { "dependencies": { "fs-extra": "^11.4.1", "puppeteer-core": "^25.15.0" }, "optionalDependencies": { "sass": "^1.106.0" } }, "sha512-cUMfhnv2nvqRlqjVY+h3ltxI0QKMDRSQ7XzjfL1OMpZchjMOapI0LzA7I7Zmqzuewffue5WniNKfG+U/BJTbNQ=="],
+
     "ccount": ["ccount@2.0.1", "", {}, "sha512-eyrF0jiFpY+3drT6383f1qhkbGsLSifNAjA61IUjZjmLCWjItY6LB9ft9YhoDgwfmclB2zhu51Lc7+95b8NRAg=="],
 
     "change-case": ["change-case@5.4.4", "", {}, "sha512-HRQyTk2/YPEkt9TnUPbOpr64Uw3KOicFWPVBb+xiHvd6eBx/qPr9xqfBFDT8P2vWsvvz4jbEkfDe71W3VyNu2w=="],
@@ -1621,7 +1624,7 @@
 
     "sanitize.css": ["sanitize.css@13.0.0", "", {}, "sha512-ZRwKbh/eQ6w9vmTjkuG0Ioi3HBwPFce0O+v//ve+aOq1oeCy7jMV2qzzAlpsNuqpqCBjjriM1lbtZbF/Q8jVyA=="],
 
-    "sass": ["sass@1.105.2", "", { "dependencies": { "chokidar": "^5.0.0", "immutable": "^5.1.5", "source-map-js": ">=0.6.2 <2.0.0" }, "optionalDependencies": { "@parcel/watcher": "^2.4.1" }, "bin": { "sass": "sass.js" } }, "sha512-KxW6ZKZiBKWK3ziQ4YZ3cpqo8/1TlHXE8t9nBNvGDZFoBFbk2MD7RacxYFs8zy8hzeFwpFYkVyAhboi47uYPEQ=="],
+    "sass": ["sass@1.106.0", "", { "dependencies": { "chokidar": "^5.0.0", "immutable": "^5.1.5", "source-map-js": ">=0.6.2 <2.0.0" }, "optionalDependencies": { "@parcel/watcher": "^2.4.1" }, "bin": { "sass": "sass.js" } }, "sha512-JHAqUksyijU5tsmDLCDq8/IX3Mq8mVkOtxvcXnUdwy8vsX5MVnvQauMomauxyuEux8uBJdT/OuBwWBYavoWUqQ=="],
 
     "sass-embedded": ["sass-embedded@1.105.2", "", { "dependencies": { "@bufbuild/protobuf": "^2.5.0", "colorjs.io": "^0.7.0", "immutable": "^5.1.5", "rxjs": "^7.4.0", "supports-color": "^8.1.1", "sync-child-process": "^1.0.2", "varint": "^6.0.0" }, "optionalDependencies": { "sass-embedded-all-unknown": "1.105.2", "sass-embedded-android-arm": "1.105.2", "sass-embedded-android-arm64": "1.105.2", "sass-embedded-android-riscv64": "1.105.2", "sass-embedded-android-x64": "1.105.2", "sass-embedded-darwin-arm64": "1.105.2", "sass-embedded-darwin-x64": "1.105.2", "sass-embedded-linux-arm": "1.105.2", "sass-embedded-linux-arm64": "1.105.2", "sass-embedded-linux-musl-arm": "1.105.2", "sass-embedded-linux-musl-arm64": "1.105.2", "sass-embedded-linux-musl-riscv64": "1.105.2", "sass-embedded-linux-musl-x64": "1.105.2", "sass-embedded-linux-riscv64": "1.105.2", "sass-embedded-linux-x64": "1.105.2", "sass-embedded-unknown-all": "1.105.2", "sass-embedded-win32-arm64": "1.105.2", "sass-embedded-win32-x64": "1.105.2" }, "bin": { "sass": "dist/bin/sass.js" } }, "sha512-I8uIL7+eE3hPL/Ms2yDY7Km0lsn8xbgqUc231WaWuv+uUphy5LRgRQvMm/MQb9nx/okN9lY47x7sJbVk4o4JYQ=="],
 
@@ -1926,6 +1929,10 @@
     "mdast-util-frontmatter/escape-string-regexp": ["escape-string-regexp@5.0.0", "", {}, "sha512-/veY75JbMK4j1yjvuUxuVsiS/hr/4iHs9FTT6cgTexxdE0Ly/glccBAkloH/DofkjRbZU3bnoj38mOmhkZ0lHw=="],
 
     "qified/hookified": ["hookified@2.2.0", "", {}, "sha512-p/LgFzRN5FeoD3DLS6bkUapeye6E4SI6yJs6KetENd18S+FBthqYq2amJUWpt5z0EQwwHemidjY5OqJGEKm5uA=="],
+
+    "sass-embedded-all-unknown/sass": ["sass@1.105.2", "", { "dependencies": { "chokidar": "^5.0.0", "immutable": "^5.1.5", "source-map-js": ">=0.6.2 <2.0.0" }, "optionalDependencies": { "@parcel/watcher": "^2.4.1" }, "bin": { "sass": "sass.js" } }, "sha512-KxW6ZKZiBKWK3ziQ4YZ3cpqo8/1TlHXE8t9nBNvGDZFoBFbk2MD7RacxYFs8zy8hzeFwpFYkVyAhboi47uYPEQ=="],
+
+    "sass-embedded-unknown-all/sass": ["sass@1.105.2", "", { "dependencies": { "chokidar": "^5.0.0", "immutable": "^5.1.5", "source-map-js": ">=0.6.2 <2.0.0" }, "optionalDependencies": { "@parcel/watcher": "^2.4.1" }, "bin": { "sass": "sass.js" } }, "sha512-KxW6ZKZiBKWK3ziQ4YZ3cpqo8/1TlHXE8t9nBNvGDZFoBFbk2MD7RacxYFs8zy8hzeFwpFYkVyAhboi47uYPEQ=="],
 
     "three-stdlib/fflate": ["fflate@0.6.11", "", {}, "sha512-3JyEFWGjFn7zHmoa9+zG1BmW7X2okcmAB+0Cnu9UFbVs/jCBnl2A8o065ZlXiw145K3eBM3uLuzrYXC0RK7eDg=="],
 

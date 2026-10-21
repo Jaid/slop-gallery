@@ -1,5 +1,4 @@
 import type {Browser, Page} from 'puppeteer-core'
-import type {ViteDevServer} from 'vite'
 
 import {join, resolve, sep} from 'node:path'
 
@@ -168,99 +167,116 @@ export const resolveGallerySetup = async (values: GalleryValues, defaultHeight =
     viewport: resolveSize(values, defaultHeight),
   }
 }
-/**
- * Starts a private Vite dev server (or serves the static target) and a private headless browser, then waits until the scene is ready.
- * Never touches the visible browser. Dispose the result to stop everything again.
- */
-export const openHeadlessGallery = async (setup: GallerySetup, options: {
+/** Starts a private Vite dev server, or serves the static target, and resolves with the page URL. Dispose it to stop the server. */
+export const serveGallery = async (setup: GallerySetup, options: {
   /** Vite cache directory; a running dev server may share the default cache, and concurrent dependency optimization would invalidate each other’s chunks */
   cacheDir: string
-  /** runs in the page before any of its own scripts */
-  initScript?: () => void
 }) => {
-  const {target, level, search, viewport} = setup
+  const {target, level, search} = setup
   if (target === undefined && level !== undefined) {
     // vite.config.ts reads the level through loadEnv, which includes process.env.
     process.env.GAME_LEVEL = level
   }
-  let server: ViteDevServer | undefined
-  let staticServer: ReturnType<typeof serveStatic> | undefined
+  if (target !== undefined) {
+    const staticServer = serveStatic(target)
+    return {
+      url: `http://127.0.0.1:${staticServer.port}/?${search}`,
+      [Symbol.asyncDispose]: () => staticServer.stop(true),
+    }
+  }
+  const server = await createServer({
+    root: repositoryRoot,
+    mode: 'development',
+    logLevel: 'error',
+    cacheDir: options.cacheDir,
+    server: {
+      host: '127.0.0.1',
+      port: 0,
+      strictPort: true,
+      // Source edits must not reload the page during a capture. HMR itself stays on: Vite needs it to reload the page after discovering and optimizing new dependencies.
+      watch: null,
+    },
+  })
+  try {
+    await server.listen()
+    const address = server.httpServer?.address()
+    if (!address || typeof address === 'string') {
+      throw new Error('Vite did not expose a local TCP port.')
+    }
+    return {
+      url: `http://127.0.0.1:${address.port}/?${search}`,
+      [Symbol.asyncDispose]: () => server.close(),
+    }
+  } catch (error) {
+    await server.close()
+    throw error
+  }
+}
+/** Reports page errors and closes the browser when the tab crashes, so pending waits reject instead of hanging. */
+export const watchPage = (page: Page) => {
+  page.on('pageerror', error => console.error(`Page error: ${String(error)}`))
+  // WebGPU validation errors only reach the console, and a failed pass silently leaves its target stale.
+  page.on('console', message => {
+    if (message.type() === 'error') {
+      console.error(`Console error: ${message.text()}`)
+    }
+  })
+  page.on('error', crash => {
+    console.error(`Page crashed: ${String(crash)}`)
+    void page.browser().close().catch((closeError: unknown) => console.error(`Closing the browser after the crash failed: ${String(closeError)}`))
+  })
+}
+/** Waits until the scene is ready and checks the debug hooks that captures rely on. */
+export const waitForGallery = async (page: Page) => {
+  await page.waitForFunction(() => globalThis.slopGallery?.snapshot?.().ready && globalThis.slopGallery.captureFrame, {timeout: 300_000})
+  if (!await page.evaluate(() => Boolean(globalThis.slopGallery!.pose))) {
+    throw new Error('This build has no slopGallery.pose() hook. Rebuild it from a version that includes scripts/snap.ts.')
+  }
+  if (!await page.evaluate(() => globalThis.slopGallery!.snapshot!().webGPU)) {
+    throw new Error('The browser fell back to WebGL. Captures need native WebGPU.')
+  }
+}
+/**
+ * Starts the gallery server and a private headless browser, then waits until the scene is ready.
+ * Never touches the visible browser. Dispose the result to stop everything again.
+ */
+export const openHeadlessGallery = async (setup: GallerySetup, options: {
+  /** Vite cache directory, see serveGallery */
+  cacheDir: string
+  /** runs in the page before any of its own scripts */
+  initScript?: () => void
+}) => {
+  const server = await serveGallery(setup, options)
   let browser: Browser | undefined
   const close = async () => {
     try {
       await browser?.close()
     } finally {
-      await server?.close()
-      await staticServer?.stop(true)
+      await server[Symbol.asyncDispose]()
     }
   }
   try {
-    let port: number | undefined
-    if (target === undefined) {
-      server = await createServer({
-        root: repositoryRoot,
-        mode: 'development',
-        logLevel: 'error',
-        cacheDir: options.cacheDir,
-        server: {
-          host: '127.0.0.1',
-          port: 0,
-          strictPort: true,
-          // Source edits must not reload the page during a capture. HMR itself stays on: Vite needs it to reload the page after discovering and optimizing new dependencies.
-          watch: null,
-        },
-      })
-      await server.listen()
-      const address = server.httpServer?.address()
-      if (!address || typeof address === 'string') {
-        throw new Error('Vite did not expose a local TCP port.')
-      }
-      port = address.port
-    } else {
-      staticServer = serveStatic(target)
-      port = staticServer.port
-    }
-    const url = `http://127.0.0.1:${port}/?${search}`
     browser = await puppeteer.launch({
       executablePath: Bun.env.BROWSER,
       headless: true,
       protocolTimeout: 600_000,
       defaultViewport: {
-        ...viewport,
+        ...setup.viewport,
         deviceScaleFactor: 1,
       },
       args: ['--enable-unsafe-webgpu'],
     })
     const page = await browser.newPage()
-    page.on('pageerror', error => console.error(`Page error: ${String(error)}`))
-    // WebGPU validation errors only reach the console, and a failed pass silently leaves its target stale.
-    page.on('console', message => {
-      if (message.type() === 'error') {
-        console.error(`Console error: ${message.text()}`)
-      }
-    })
-    // A crashed tab never resolves pending waits; closing the browser rejects them.
-    page.on('error', crash => {
-      console.error(`Page crashed: ${String(crash)}`)
-      if (browser) {
-        void browser.close().catch(closeError => console.error(`Closing the browser after the crash failed: ${String(closeError)}`))
-      }
-    })
+    watchPage(page)
     if (options.initScript) {
       await page.evaluateOnNewDocument(options.initScript)
     }
-    console.log(`Loading ${url}`)
-    await page.goto(url, {
+    console.log(`Loading ${server.url}`)
+    await page.goto(server.url, {
       waitUntil: 'domcontentloaded',
       timeout: 300_000,
     })
-    await page.waitForFunction(() => globalThis.slopGallery?.snapshot?.().ready && globalThis.slopGallery.captureFrame, {timeout: 300_000})
-    if (!await page.evaluate(() => Boolean(globalThis.slopGallery!.pose))) {
-      throw new Error('This build has no slopGallery.pose() hook. Rebuild it from a version that includes scripts/snap.ts.')
-    }
-    if (!await page.evaluate(() => globalThis.slopGallery!.snapshot!().webGPU)) {
-      throw new Error('The browser fell back to WebGL. Captures need native WebGPU.')
-    }
+    await waitForGallery(page)
     return {
       page,
       [Symbol.asyncDispose]: close,

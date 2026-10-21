@@ -4,18 +4,19 @@ import type {Vec3} from '#src/lib/gallery/types.ts'
 import {join, relative} from 'node:path'
 import {parseArgs} from 'node:util'
 
+import capturePage from 'capture-page'
 import fs from 'fs-extra'
 import getFree from 'get-free'
 import {lossyJxlOptions} from 'knot-materials/scripts/lib/encodeJxl.ts'
 import {Packr} from 'msgpackr'
 
-import {degrees, galleryHelp, galleryOptions, openHeadlessGallery, parseNumbers, radians, repositoryRoot, resolveGallerySetup, resolveSettle, waitForFrames} from './lib/headlessGallery.ts'
+import {degrees, galleryHelp, galleryOptions, parseNumbers, radians, repositoryRoot, resolveGallerySetup, resolveSettle, serveGallery, waitForFrames, waitForGallery, watchPage} from './lib/headlessGallery.ts'
 
 const snapHeight = 1080
 const help = `Usage: bun scripts/snap.ts [options]
 
 Takes a headless photo of a level and writes it to out/snap/<name>.jxl, next to out/snap/<name>.msgpack with the X dump of the same view.
-Starts a private Vite dev server (or serves --target) and a private headless browser; never touches the visible browser.
+Starts a private Vite dev server (or serves --target) and a private headless browser through capture-page; never touches the visible browser.
 The photo is a fresh WebGPU render of the scene, so menus and other DOM overlays are not in it.
 
 Options:
@@ -66,34 +67,51 @@ if (fov !== undefined && (fov <= 0 || fov >= 180)) {
   throw new Error('--fov must be between 0 and 180 degrees.')
 }
 const jxlDistance = parseNumbers(values['jxl-distance'], 'jxl-distance', [1])[0]
-await using gallery = await openHeadlessGallery(setup, {cacheDir: 'node_modules/.vite-snap'})
-const {page} = gallery
-const pose = await page.evaluate((requested: Partial<CameraPose>) => globalThis.slopGallery!.pose!(requested), {
-  position,
-  rotation: angle ? [radians(angle[1]), radians(angle[0]), radians(angle[2] ?? 0)] as Vec3 : undefined,
-  fov,
+type DownloadFrameResult = {
+  dump: Record<string, unknown> | null
+  height: number
+  nonBlackFraction: number
+  width: number
+}
+await using server = await serveGallery(setup, {cacheDir: 'node_modules/.vite-snap'})
+console.log(`Loading ${server.url}`)
+let pose: {
+  fov: number | null
+  position: Vec3
+  rotation: Vec3
+} | undefined
+// The page renders and encodes the photo itself; download_frame hands it over as a browser download.
+const capture = await capturePage(server.url, {
+  browser: Bun.env.BROWSER,
+  args: ['--enable-unsafe-webgpu'],
+  ...setup.viewport,
+  body: false,
+  capture: 'download',
+  timeout: 300_000,
+  wait: 'domcontentloaded',
+  hook: async page => {
+    watchPage(page)
+    await waitForGallery(page)
+    pose = await page.evaluate((requested: Partial<CameraPose>) => globalThis.slopGallery!.pose!(requested), {
+      position,
+      rotation: angle ? [radians(angle[1]), radians(angle[0]), radians(angle[2] ?? 0)] as Vec3 : undefined,
+      fov,
+    })
+    // A new pose can bring artworks into view that still need decoding, and objects whose pipelines still compile.
+    await waitForFrames(page, settle)
+    await page.waitForFunction(() => {
+      const {pendingImages, pendingPipelines} = globalThis.slopGallery!.snapshot!()
+      return pendingImages === 0 && pendingPipelines === 0
+    }, {timeout: 120_000})
+    await waitForFrames(page, settle)
+  },
+  // Dumps before rendering, like X: the frame shows the view the dump describes.
+  toolCalls: [{
+    name: 'download_frame',
+    input: {format: 'png'},
+  }],
 })
-// A new pose can bring artworks into view that still need decoding, and objects whose pipelines still compile.
-await waitForFrames(page, settle)
-await page.waitForFunction(() => {
-  const {pendingImages, pendingPipelines} = globalThis.slopGallery!.snapshot!()
-  return pendingImages === 0 && pendingPipelines === 0
-}, {timeout: 120_000})
-await waitForFrames(page, settle)
-const frame = await page.evaluate(async () => {
-  // Dump first, like X: the frame then shows the view the dump describes.
-  const dump = globalThis.slopGallery!.dump?.() ?? null
-  const {image, width, height, nonBlackFraction} = await globalThis.slopGallery!.captureFrame!()
-  const png = await image.bytes()
-  // page.evaluate returns JSON, so the PNG crosses as base64.
-  return {
-    png: png.toBase64(),
-    dump,
-    width,
-    height,
-    nonBlackFraction,
-  }
-})
+const frame = capture.toolResults[0] as DownloadFrameResult
 if (frame.nonBlackFraction === 0) {
   throw new Error('The capture is completely black.')
 }
@@ -106,7 +124,7 @@ const name = values.name ?? await getFree('', isTaken, {
 })
 const output = join(snapRoot, `${name}.jxl`)
 const png = `${output}.png`
-await fs.writeFile(png, Uint8Array.fromBase64(frame.png))
+await fs.writeFile(png, capture.buffer)
 try {
   await Bun.$`cjxl ${png} ${lossyJxlOptions(jxlDistance)} ${output}`.quiet()
 } finally {
@@ -119,6 +137,6 @@ if (frame.dump) {
 } else {
   console.warn('No X dump written: the player is not ready.')
 }
-const [pitch, yaw, roll] = pose.rotation
+const [pitch, yaw, roll] = pose!.rotation
 console.log(`Wrote ${relative(repositoryRoot, output).replaceAll('\\', '/')} (${frame.width}×${frame.height})${frame.dump ? ' and its .msgpack X dump' : ''}`)
-console.log(`--position ${pose.position.map(value => Math.round(value * 1000) / 1000).join(',')} --angle ${[yaw, pitch, roll].map(degrees).join(',')} --fov ${pose.fov}`)
+console.log(`--position ${pose!.position.map(value => Math.round(value * 1000) / 1000).join(',')} --angle ${[yaw, pitch, roll].map(degrees).join(',')} --fov ${pose!.fov}`)
