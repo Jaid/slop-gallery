@@ -271,6 +271,9 @@ export const openHeadlessGallery = async (setup: GallerySetup, options: {
       executablePath: Bun.env.BROWSER,
       headless: true,
       protocolTimeout: 600_000,
+      // Frames leave the page as raw uploads of tens of megabytes. With network tracking, Chrome echoes every upload body through
+      // the DevTools protocol, which slows film.ts down about 15× at 2160p and can exceed Bun’s WebSocket message limit.
+      networkEnabled: false,
       defaultViewport: {
         ...setup.viewport,
         deviceScaleFactor: 1,
