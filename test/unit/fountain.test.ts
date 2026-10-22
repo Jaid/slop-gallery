@@ -15,7 +15,7 @@ import lobby from '../../src/lib/gallery/lobby.ts'
 import RevolvedProfileGeometry from '../../src/lib/gallery/RevolvedProfileGeometry.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 import FountainStoneMaterial from '../../src/lib/materials/FountainStoneMaterial.ts'
-import FountainWaterMaterial from '../../src/lib/materials/FountainWaterMaterial.ts'
+import FountainWaterMaterial, {fountainWaterEnvironment} from '../../src/lib/materials/FountainWaterMaterial.ts'
 
 await RAPIER.init()
 const down = new Vector3(0, -1, 0)
@@ -97,7 +97,7 @@ describe('Lobby fountain', () => {
     const geometry = new FountainGeometry
     try {
       expect(fountain.position[0]).toBe(0)
-      const parts = [geometry.stone, geometry.brass, geometry.pools, geometry.water]
+      const parts = [geometry.stone, geometry.brass, geometry.lining, geometry.pools, geometry.water]
       const bounds = new Box3
       for (const part of parts) {
         part.computeBoundingBox()
@@ -107,11 +107,20 @@ describe('Lobby fountain', () => {
           expect([...attribute.array].every(Number.isFinite)).toBe(true)
         }
       }
-      // The previous fountain needed about 32k triangles; the stone alone was 8k.
-      expect(parts.reduce((sum, part) => sum + triangleCount(part), 0)).toBeLessThan(5000)
-      expect(triangleCount(geometry.stone)).toBeLessThan(2500)
-      expect(bounds.max.y).toBeGreaterThan(2.5)
-      expect(bounds.max.y).toBeLessThan(3.2)
+      // Count the instanced droplet mesh once per instance, not just the static architecture.
+      const staticTriangles = parts.reduce((sum, part) => sum + triangleCount(part), 0)
+      const spray = new FountainSpray
+      try {
+        expect(staticTriangles).toBeLessThanOrEqual(10_000)
+        expect(staticTriangles + triangleCount(spray.geometry) * spray.count).toBeLessThanOrEqual(13_000)
+      } finally {
+        spray.dispose()
+      }
+      expect(triangleCount(geometry.stone)).toBeLessThan(7500)
+      expect(bounds.max.y).toBeGreaterThan(3.4)
+      expect(bounds.max.y).toBeLessThan(3.7)
+      expect(fountain.pools.tazza).toBeGreaterThan(1.8)
+      expect(fountain.pools.cup).toBeGreaterThan(2.8)
       // Flat sides face the benches along x and z.
       expect(bounds.max.x).toBeCloseTo(fountain.basinApothem, 5)
       expect(bounds.min.z).toBeCloseTo(-fountain.basinApothem, 5)
@@ -127,12 +136,14 @@ describe('Lobby fountain', () => {
     try {
       expect(frontFacesMatchNormals(geometry.stone)).toBe(true)
       expect(frontFacesMatchNormals(geometry.brass)).toBe(true)
+      expect(frontFacesMatchNormals(geometry.water)).toBe(true)
+      expect(frontFacesMatchNormals(geometry.pools)).toBe(true)
     } finally {
       geometry.dispose()
     }
   })
-  test('each pool brims at its lip and each veil lands inside the pool below', () => {
-    const {veils, pools, basinInnerApothem} = fountain
+  test('each pool brims at its spill saddles and each stream lands inside the pool below', () => {
+    const {spills, pools, basinInnerApothem} = fountain
     const geometry = new FountainGeometry
     const material = new MeshBasicMaterial
     try {
@@ -141,7 +152,7 @@ describe('Lobby fountain', () => {
         const lipRay = new Raycaster(new Vector3(radius, 5, 0.013), down)
         return lipRay.intersectObject(stone)[0]?.point.y ?? Number.NaN
       }
-      for (const [sheet, pool] of [[veils.tazza, pools.tazza], [veils.cup, pools.cup]] as const) {
+      for (const [sheet, pool] of [[spills.tazza, pools.tazza], [spills.cup, pools.cup]] as const) {
         expect(sheet.y).toBe(pool)
         // Water fills the bowl and brims a few millimeters over the lip it spills from.
         const crest = Math.max(...Array.from({length: 41}, (_, i) => lip(sheet.radius - 0.04 + i * 0.001)))
@@ -150,10 +161,10 @@ describe('Lobby fountain', () => {
         expect(lip(sheet.radius + 0.004)).toBeLessThan(pool)
         expect(sheetFlightTime(sheet)).toBeGreaterThan(0)
       }
-      expect(sheetLanding(veils.cup)).toBeLessThan(veils.tazza.radius - 0.2)
-      expect(sheetLanding(veils.tazza)).toBeLessThan(basinInnerApothem - 0.2)
-      // Veils must pass outside the bowl below them rather than through its stone.
-      for (const [sheet, clearOf] of [[veils.cup, 0.21], [veils.tazza, 0.4]] as const) {
+      expect(sheetLanding(spills.cup)).toBeLessThan(spills.tazza.radius - 0.2)
+      expect(sheetLanding(spills.tazza)).toBeLessThan(basinInnerApothem - 0.2)
+      // Streams must pass outside the bowl below them rather than through its stone.
+      for (const [sheet, clearOf] of [[spills.cup, 0.21], [spills.tazza, 0.4]] as const) {
         const duration = sheetFlightTime(sheet)
         for (let i = 1; i <= 20; i++) {
           const [radius, y] = sheetPoint(sheet, duration * i / 20)
@@ -172,6 +183,54 @@ describe('Lobby fountain', () => {
     } finally {
       material.dispose()
       geometry.dispose()
+    }
+  })
+  test('spill saddles hold back the pools between streams, leaving the carved bowls visible', () => {
+    const geometry = new FountainGeometry
+    const material = new MeshBasicMaterial
+    try {
+      const stone = new Mesh(geometry.stone, material)
+      const water = new Mesh(geometry.pools, material)
+      const stream = new Mesh(geometry.water, material)
+      const {tazza} = fountain.spills
+      const midpoint = Math.PI / tazza.streams
+      const rayAt = (angle: number) => new Raycaster(new Vector3(Math.cos(angle) * 0.99, 2.3, Math.sin(angle) * 0.99), down)
+      expect(rayAt(0).intersectObject(stone)[0].point.y).toBeLessThan(fountain.pools.tazza)
+      expect(rayAt(midpoint).intersectObject(stone)[0].point.y).toBeGreaterThan(fountain.pools.tazza)
+      expect(rayAt(0).intersectObject(water)[0].point.y).toBeCloseTo(fountain.pools.tazza, 5)
+      // The water perimeter is fitted to the raised banks, not a circular disc protruding through them.
+      expect(rayAt(midpoint).intersectObject(water)[0].point.y).toBeCloseTo(fountain.pools.basin, 5)
+      const inward = (angle: number) => new Raycaster(new Vector3(Math.cos(angle) * 2, 1.1, Math.sin(angle) * 2), new Vector3(-Math.cos(angle), 0, -Math.sin(angle)))
+      expect(inward(0).intersectObject(stream).length).toBeGreaterThan(0)
+      expect(inward(midpoint).intersectObject(stream)).toHaveLength(0)
+    } finally {
+      geometry.dispose()
+      material.dispose()
+    }
+  })
+  test('shared water radiance survives material replacement and geometry has a single owner', () => {
+    let disposed = 0
+    const onDispose = () => disposed++
+    fountainWaterEnvironment.addEventListener('dispose', onDispose)
+    const geometry = new FountainGeometry
+    const parts = [geometry.stone, geometry.brass, geometry.lining, geometry.pools, geometry.water]
+    let geometriesDisposed = 0
+    for (const part of parts) {
+      part.addEventListener('dispose', () => geometriesDisposed++)
+    }
+    try {
+      for (const heavy of [true, false, true]) {
+        const pool = new FountainWaterMaterial(false, heavy)
+        const spill = new FountainWaterMaterial(true, heavy)
+        pool.dispose()
+        spill.dispose()
+      }
+      expect(disposed).toBe(0)
+      expect(fountainWaterEnvironment.image.data!.every(Number.isFinite)).toBe(true)
+      geometry.dispose()
+      expect(geometriesDisposed).toBe(parts.length)
+    } finally {
+      fountainWaterEnvironment.removeEventListener('dispose', onDispose)
     }
   })
   test('the basin is hollow and uses the same carved mesh for physics and visible surfaces', () => {
@@ -220,6 +279,10 @@ describe('Lobby fountain', () => {
         expect(material.opacityNode !== null).toBe(falling)
         expect(material.ior).toBeCloseTo(1.333)
         expect(material.transmission > 0).toBe(heavy)
+        expect(material.transmissionNode !== null).toBe(heavy)
+        expect(material.useTransmission).toBe(heavy)
+        expect(material.envMap).toBe(fountainWaterEnvironment)
+        expect(material.clearcoat).toBe(0)
         material.dispose()
       }
     }
@@ -257,7 +320,7 @@ describe('Lobby fountain', () => {
     for (const {origin, velocity, until} of fountainDroplets()) {
       const lifetime = (velocity[1] + Math.sqrt(velocity[1] ** 2 + 2 * gravity * (origin[1] - until))) / gravity
       const landing = Math.hypot(origin[0] + velocity[0] * lifetime, origin[2] + velocity[2] * lifetime)
-      const pool = until === fountain.pools.cup ? fountain.veils.cup.radius : (until === fountain.pools.tazza ? fountain.veils.tazza.radius : basinInnerApothem)
+      const pool = until === fountain.pools.cup ? fountain.spills.cup.radius : (until === fountain.pools.tazza ? fountain.spills.tazza.radius : basinInnerApothem)
       expect(landing).toBeLessThan(pool)
     }
   })

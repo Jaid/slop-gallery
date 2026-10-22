@@ -10,8 +10,12 @@ export type WaterSheet = {
   outward: number
   /** distance from the axis where the water leaves the stone */
   radius: number
+  /** number of separate spill channels around the lip */
+  streams: number
   /** height of the receiving pool */
   until: number
+  /** width of each channel at its lip, in meters */
+  width: number
   /** height where the water leaves the stone, the brim of the overflowing pool */
   y: number
 }
@@ -30,12 +34,12 @@ export function sheetLanding(sheet: WaterSheet) {
 }
 
 const pools = {
-  basin: 0.46,
-  tazza: 1.37,
-  cup: 1.985,
+  basin: 0.5,
+  tazza: 1.94,
+  cup: 2.96,
 } as const
 const basinApothem = 1.95
-/** An octagonal basin holding a baluster tazza and a small cup, each overflowing as a continuous veil, crowned by a single jet. */
+/** A molded octagonal basin, two melon-fluted tazze and discrete spill channels, crowned by a low bubbling jet. */
 const fountain = {
   /** in the middle of the Lobby, right under its middle chandelier */
   position: [0, 0, (lobby.northZ + lobby.southZ) / 2] as [number, number, number],
@@ -46,33 +50,43 @@ const fountain = {
   /** apothem of the basin’s inner wall */
   basinInnerApothem: 1.6,
   basinFloor: 0.2,
-  rimTop: 0.58,
+  rimTop: 0.66,
   poolY: pools.basin,
   pools,
-  veils: {
+  spills: {
     tazza: {
-      radius: 0.99,
+      radius: 1.108,
+      streams: 12,
+      width: 0.085,
       y: pools.tazza,
-      outward: 0.42,
+      outward: 0.38,
       until: pools.basin,
     },
     cup: {
-      radius: 0.38,
+      radius: 0.532,
+      streams: 8,
+      width: 0.055,
       y: pools.cup,
-      outward: 0.3,
+      outward: 0.28,
       until: pools.tazza,
     },
   } satisfies Record<string, WaterSheet>,
   /** a laminar jet that slows, swells and breaks into droplets near its apex */
   jet: {
-    radius: 0.02,
-    y: 2.03,
+    radius: 0.026,
+    y: 3.045,
     /** launch speed in m/s */
-    speed: 4.6,
+    speed: 3.2,
     /** fraction of the rise that is drawn as a solid column, droplets take over above it */
     solid: 0.86,
+    /** six small outward arcs around the central bubbler */
+    fan: {
+      count: 6,
+      outward: 0.5,
+      speed: 2.35,
+    },
   },
-  sprayCount: 200,
+  sprayCount: 144,
   gravity,
 }
 

@@ -17,16 +17,16 @@ const goldenRatio = (Math.sqrt(5) - 1) / 2
 /** deterministic, evenly spread pseudo-random fractions */
 const sequence = (i: number, seed: number) => (i * goldenRatio + seed) % 1
 
-/** The jet’s crown breaks into drops that rain back into the cup; where veils land, small splashes hop off the pools. */
+/** The jet’s crown breaks into drops that rain back into the cup; where spills land, small splashes hop off the pools. */
 export function fountainDroplets(count = fountain.sprayCount) {
-  const {jet, gravity, pools, veils} = fountain
+  const {jet, gravity, pools, spills} = fountain
   const rise = jet.speed ** 2 / (2 * gravity)
   const crownSpeed = jet.speed * Math.sqrt(1 - jet.solid)
   const crown = Math.round(count * 0.5)
   const tazza = Math.round(count * 0.32)
   const droplets: Array<Droplet> = []
   for (let i = 0; i < count; i++) {
-    const angle = i * goldenAngle
+    let angle = i * goldenAngle
     const a = sequence(i, 0.13)
     const b = sequence(i * 7, 0.51)
     if (i < crown) {
@@ -39,8 +39,10 @@ export function fountainDroplets(count = fountain.sprayCount) {
       })
       continue
     }
-    const sheet = i < crown + tazza ? veils.tazza : veils.cup
-    const radius = sheetLanding(sheet) + (b - 0.5) * 0.03
+    const sheet = i < crown + tazza ? spills.tazza : spills.cup
+    // Splash only where a spill actually lands, not as a necklace of beads around an empty ring.
+    angle = i % sheet.streams * Math.PI * 2 / sheet.streams + (b - 0.5) * sheet.width / sheetLanding(sheet)
+    const radius = sheetLanding(sheet) + (a - 0.5) * 0.025
     const outward = 0.05 + a * 0.25
     const tangent = (b - 0.5) * 0.2
     droplets.push({
@@ -57,6 +59,7 @@ export function fountainDroplets(count = fountain.sprayCount) {
 export default class FountainSpray extends InstancedMesh<IcosahedronGeometry, MeshStandardNodeMaterial> {
   constructor(count = fountain.sprayCount) {
     const geometry = new IcosahedronGeometry(0.009, 0)
+    geometry.scale(0.7, 1.6, 0.7)
     const droplets = fountainDroplets(count)
     const origins = new Float32Array(count * 3)
     const velocities = new Float32Array(count * 3)
@@ -77,8 +80,8 @@ export default class FountainSpray extends InstancedMesh<IcosahedronGeometry, Me
     geometry.setAttribute('sprayLifetime', new InstancedBufferAttribute(lifetimes, 1))
     geometry.setAttribute('spraySize', new InstancedBufferAttribute(sizes, 1))
     const material = new MeshStandardNodeMaterial({
-      color: '#e4f4ef',
-      roughness: 0.08,
+      color: '#d7eae4',
+      roughness: 0.18,
       transparent: true,
       opacity: 0.8,
       depthWrite: false,
