@@ -51,6 +51,8 @@ export const lobbyVault = {
   shell,
   /** outer radius of the vault, which the attic walls and lunettes reach */
   outerRadius: halfSpan + cofferDepth + shell,
+  /** the south lunette stays inside the wall it shares with the taller Antechamber, short of that room’s face */
+  southLunetteThickness: wallFace * 2 - 0.01,
   glazing: {
     /** the glazed span reaches this angle on either side of the crown, leaving one row of coffers low on each flank */
     halfAngle: 60 * degrees,

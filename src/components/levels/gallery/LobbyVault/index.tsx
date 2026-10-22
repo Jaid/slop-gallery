@@ -53,7 +53,7 @@ export default function LobbyVault({cladding}: {
   return <group name='lobby-vault'>
     <RigidBody colliders={false} type='fixed'>
       <MeshSurfaceCollider args={collision} />
-      {[-1, 1].map(side => <CuboidCollider key={side} args={[lobbyVault.outerRadius, (lobbyVault.crownY + lobbyVault.shell + lobbyVault.coffer.depth - lobbyVault.springY) / 2, lobbyVault.rose.lunetteThickness / 2]} position={[0, (lobbyVault.crownY + lobbyVault.shell + lobbyVault.coffer.depth + lobbyVault.springY) / 2, side * (lobbyVault.halfLength + lobbyVault.rose.lunetteThickness / 2)]} />)}
+      {[[-1, lobbyVault.rose.lunetteThickness], [1, lobbyVault.southLunetteThickness]].map(([side, thickness]) => <CuboidCollider key={side} args={[lobbyVault.outerRadius, (lobbyVault.crownY + lobbyVault.shell + lobbyVault.coffer.depth - lobbyVault.springY) / 2, thickness / 2]} position={[0, (lobbyVault.crownY + lobbyVault.shell + lobbyVault.coffer.depth + lobbyVault.springY) / 2, side * (lobbyVault.halfLength + thickness / 2)]} />)}
     </RigidBody>
     <mesh castShadow geometry={geometry.clad} material={cladding} name='lobby-vault-lunettes' receiveShadow />
     <mesh castShadow geometry={geometry.stone} material={stone} name='lobby-vault-stone' receiveShadow />

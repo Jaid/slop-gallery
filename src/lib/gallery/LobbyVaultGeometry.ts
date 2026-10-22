@@ -285,11 +285,12 @@ export default class LobbyVaultGeometry {
       }
     }
     template.dispose()
-    // Lunettes close both ends above the walls. Only the north one is pierced by a rose window: the space behind the south one is
-    // kept for a future upper room.
+    // Lunettes close both ends above the walls. Only the north one is pierced by a rose window; the south one is only as thick as
+    // the wall it shares with the Antechamber, which rises behind it.
     const roseY = roseCenterY
     for (const side of [-1, 1]) {
       const windowed = side < 0
+      const thickness = windowed ? rose.lunetteThickness : lobbyVault.southLunetteThickness
       const parts = {
         clad: [] as Array<BufferGeometry>,
         stone: [] as Array<BufferGeometry>,
@@ -306,12 +307,12 @@ export default class LobbyVaultGeometry {
         lunette.holes.push(opening)
       }
       const wall = new ExtrudeGeometry(lunette, {
-        depth: rose.lunetteThickness,
+        depth: thickness,
         bevelEnabled: false,
         curveSegments: 96,
       })
       // Built for the north end, facing +z into the room; the south one is the same turned half around.
-      parts.clad.push(wall.translate(0, 0, -halfLength - rose.lunetteThickness))
+      parts.clad.push(wall.translate(0, 0, -halfLength - thickness))
       if (windowed) {
         const face = -halfLength
         const middle = face - rose.lunetteThickness / 2
