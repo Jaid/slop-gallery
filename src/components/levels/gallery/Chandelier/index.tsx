@@ -32,7 +32,7 @@ export default function Chandelier() {
       <mesh geometry={geometry.flames} name='chandelier-flames'><meshStandardNodeMaterial color='#fff0b6' emissive='#ffd36c' emissiveIntensity={4} toneMapped={false} /></mesh>
       <mesh geometry={geometry.pendant} name='chandelier-pendant'><primitive attach='material' object={brass} /></mesh>
       {/* Keep the shared light below the metalwork so the fixture cannot shadow its own source. */}
-      <pointLight castShadow color='#ffd36c' decay={2} distance={13} intensity={110} position={[0, -0.6, 0]} shadow-camera-far={13} shadow-camera-near={0.1} shadow-mapSize={[1024, 1024]} shadow-normalBias={0.035} />
+      <pointLight castShadow color='#ffd36c' decay={2} distance={13} intensity={110} position={[0, -0.5, 0]} shadow-camera-far={13} shadow-camera-near={0.1} shadow-mapSize={[1024, 1024]} shadow-normalBias={0.035} />
     </RigidBody>
   </group>
 }

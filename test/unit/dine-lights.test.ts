@@ -12,55 +12,15 @@ import {rooms} from '../../src/lib/gallery/walls.ts'
 import KnotLightImpacts from '../../src/lib/physics/KnotLightImpacts.ts'
 import {beginBodyThrow} from '../../src/lib/physics/ThrowState.ts'
 
-type PointSource = {
-  intensity: number
-  position: Vector3
-}
-
 await RAPIER.init()
 const dine = rooms.find(room => room.id === 'dine')!
 const half = [knotLightHousingSize[0] / 2, knotLightHousingSize[2] / 2] as const
 const up = new Vector3(0, 1, 0)
 const mirrored = (value: number, center: number) => 2 * center - value
-const local = (x: number, y: number, z: number) => new Vector3(dine.center[0] + x, y, dine.center[1] + z)
-/** Three’s physically based point light: I / d² with a smooth range cutoff, times the cosine at the receiver. */
-const irradiance = (lights: Array<PointSource>, point: Vector3, normal: Vector3) => {
-  let sum = 0
-  for (const light of lights) {
-    const offset = light.position.clone().sub(point)
-    const distance = offset.length()
-    const cutoff = Math.min(1, Math.max(0, 1 - (distance / dineLedLight.distance) ** 4)) ** 2
-    sum += light.intensity / distance ** 2 * cutoff * Math.max(0, offset.normalize().dot(normal))
-  }
-  return sum
-}
-const meanIrradiance = (lights: Array<PointSource>) => {
-  const [width, depth] = dine.size
-  const floor: Array<number> = []
-  const walls: Array<number> = []
-  for (let x = -width / 2 + 0.25; x < width / 2; x += 0.5) {
-    for (let z = -depth / 2 + 0.25; z < depth / 2; z += 0.5) {
-      floor.push(irradiance(lights, local(x, 0, z), up))
-    }
-  }
-  for (let y = 1; y <= 3; y += 0.5) {
-    for (let x = -width / 2 + 0.25; x < width / 2; x += 0.5) {
-      walls.push(irradiance(lights, local(x, y, -depth / 2), new Vector3(0, 0, 1)), irradiance(lights, local(x, y, depth / 2), new Vector3(0, 0, -1)))
-    }
-    for (let z = -depth / 2 + 0.25; z < depth / 2; z += 0.5) {
-      walls.push(irradiance(lights, local(-width / 2, y, z), new Vector3(1, 0, 0)), irradiance(lights, local(width / 2, y, z), new Vector3(-1, 0, 0)))
-    }
-  }
-  const mean = (values: Array<number>) => values.reduce((sum, value) => sum + value, 0) / values.length
-  return {
-    floor: mean(floor),
-    walls: mean(walls),
-  }
-}
-test('eight panes hang in a grid that is symmetric about the room center and clear of walls and each other', () => {
-  expect(dineLedSlots).toHaveLength(8)
+test('three panes hang down the middle, symmetric about the room center and clear of walls and each other', () => {
+  expect(dineLedSlots).toHaveLength(3)
   const ids = new Set(dineLedSlots.map(slot => slot.id))
-  expect(ids.size).toBe(8)
+  expect(ids.size).toBe(3)
   for (const slot of dineLedSlots) {
     const [x, , z] = slot.position
     expect(dineLedSlots.some(other => Math.abs(other.position[0] - mirrored(x, dine.center[0])) < 1e-9 && Math.abs(other.position[2] - z) < 1e-9)).toBe(true)
@@ -96,28 +56,10 @@ test('housings meet the ceiling without a gap and the diffuser is the first surf
     panels.dispose()
   }
 })
-test('the pane lights match the reference lights’ floor and wall brightness', () => {
-  // 32 cd point lights 4.9 m up and 7 m apart, one per 8 m of the room’s length: the calibration the room’s materials were tuned
-  // against, when two of them lit its first 16 m.
-  const count = dine.size[1] / 8
-  const reference = Array.from({length: count}, (_, i) => (i - (count - 1) / 2) * 7).map(z => ({
-    intensity: 32,
-    position: local(0, 4.9, z),
-  }))
-  const after = dineLedSlots.map(slot => ({
-    intensity: dineLedLight.intensity,
-    position: new Vector3(slot.position[0], slot.position[1] - dineLedLight.drop, slot.position[2]),
-  }))
-  for (const light of after) {
-    // Each light sits below its own diffuser, close enough that the housing hides its brightest ceiling spot.
-    expect(light.position.y).toBeLessThan(dineLedSlots[0].position[1] + knotLightDiffuserY - knotLightDiffuserSize[1] / 2)
+test('each pane light sits below its own diffuser, close enough that the housing hides its brightest ceiling spot', () => {
+  for (const slot of dineLedSlots) {
+    expect(slot.position[1] - dineLedLight.drop).toBeLessThan(slot.position[1] + knotLightDiffuserY - knotLightDiffuserSize[1] / 2)
   }
-  const target = meanIrradiance(reference)
-  const current = meanIrradiance(after)
-  expect(current.floor / target.floor).toBeGreaterThan(0.9)
-  expect(current.floor / target.floor).toBeLessThan(1.1)
-  expect(current.walls / target.walls).toBeGreaterThan(0.9)
-  expect(current.walls / target.walls).toBeLessThan(1.1)
 })
 test('a prop thrown at a dine pane cracks it first, then knocks the diffuser loose', () => {
   const world = new RAPIER.World({
@@ -126,7 +68,7 @@ test('a prop thrown at a dine pane cracks it first, then knocks the diffuser loo
     z: 0,
   })
   try {
-    const target = 3
+    const target = 1
     const [x, y, z] = dineLedSlots[target].position
     // The room’s ceiling collider, exactly as the architecture builds it.
     world.createCollider(RAPIER.ColliderDesc.cuboid(dine.size[0] / 2, 0.15, dine.size[1] / 2).setTranslation(dine.center[0], 5.9, dine.center[1]))

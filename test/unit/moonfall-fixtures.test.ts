@@ -19,7 +19,7 @@ test('every Moonfall LED is backed by solid wall across its entire housing', () 
       mesh.rotation.y = wall.rotation
       mesh.updateMatrixWorld(true)
       try {
-        expect(lightZs).toHaveLength(5)
+        expect(lightZs).toHaveLength(side < 0 ? 4 : 2)
         for (const z of lightZs) {
           for (const offset of [-0.124, 0, 0.124]) {
             for (const y of [0.801, 2.2, 3.599]) {

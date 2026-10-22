@@ -11,7 +11,17 @@ const moonfallWallFixtures = [-1, 1].map(side => ({
   side,
   // The housing's rear face meets the wall, rather than hovering in front of it.
   lightX: side * (room.size[0] / 2 - wallFace - 0.07),
-  lightZs: side < 0 ? [-10, -5, 0, 5, 10] : [-10, doorMin - 1, doorMax + 1, 6, 10],
+  // Four down the west wall, leaving its middle dark; on the east only the pair flanking the stair door, whose lights hang lower and brighter.
+  lightZs: side < 0 ? [-10, -5, 5, 10] : [doorMin - 1, doorMax + 1],
+  lamp: side < 0 ? {
+    y: 2.8,
+    intensity: 5,
+    distance: 6,
+  } : {
+    y: 2.2,
+    intensity: 15,
+    distance: 10,
+  },
 }))
 
 export default moonfallWallFixtures

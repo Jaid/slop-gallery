@@ -12,13 +12,10 @@ const dine = rooms.find(room => room.id === 'dine')!
 const ceilingUnderside = (room: {height: number}) => room.height - 0.02 - 0.18 / 2
 export const dineCeilingUnderside = ceilingUnderside(dine)
 
-/**
- * Knottingham LED panes in a 2 × 4 grid of 5.5 m squares, symmetric about the room center. The offsets leave about 1.9 m to the
- * side walls and 2.4 m to the end walls.
- */
+/** Three Knottingham LED panes down the room’s middle, gathered 5 m apart around its center. */
 const dineLedGrid = {
-  x: [-2.75, 2.75],
-  z: [-8.25, -2.75, 2.75, 8.25],
+  x: [0],
+  z: [-5, 0, 5],
 }
 
 /** Each pane lights the room through one point light hung just below its diffuser. */
@@ -26,10 +23,10 @@ export const dineLedLight = {
   /** distance below the pane’s origin, close enough that the brightest ceiling spot stays hidden behind the housing */
   drop: 0.32,
   color: '#eee3ff',
-  // Eight of these match the mean floor and wall irradiance of the 32 cd lights behind the old light boxes, one per 8 m of room.
-  intensity: 14,
-  distance: 14,
-  decay: 2,
+  intensity: 36,
+  distance: 8,
+  // fades more gently than physical light, so the three pools blend into one even wash
+  decay: 1.5,
 }
 
 // Like Knottingham, the housing’s top sits 5 mm into the slab so no light leaks between them.
@@ -59,6 +56,8 @@ export const antechamberLedLight = {
   ...dineLedLight,
   // Matches the mean floor and wall irradiance of the 32 cd light behind the old light box.
   intensity: 36,
+  distance: 14,
+  decay: 2,
 }
 
 /** Edge length of Dine’s checkered marble tiles, laid from the room’s north-west corner: 12 × 24 whole tiles fill the floor. */

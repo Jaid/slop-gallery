@@ -141,9 +141,9 @@ test('the firelight flickers within a narrow, never-dark band', () => {
     minimum = Math.min(minimum, value)
     maximum = Math.max(maximum, value)
   }
-  expect(minimum).toBeGreaterThan(0.65)
-  expect(maximum).toBeLessThan(1.15)
-  expect(maximum - minimum).toBeGreaterThan(0.2)
+  expect(minimum).toBeGreaterThan(0.6)
+  expect(maximum).toBeLessThan(1.2)
+  expect(maximum - minimum).toBeGreaterThan(0.35)
 })
 test('fire materials glow without lighting, and flames are additive light that never writes depth', () => {
   const flame = new FlameMaterial

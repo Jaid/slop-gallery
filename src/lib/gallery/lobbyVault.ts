@@ -160,6 +160,8 @@ export const lobbyChandeliers = {
   offsets: [-8, 0, 8],
   /** height of each chandelier’s hub above the floor */
   y: 8.5,
+  /** height of the middle chandelier’s light above the floor, below its hub so it reaches past the candle ring */
+  lightY: 6.6,
   /** where the rods meet the spine rib’s soffit */
   anchorY: lobbyVault.crownY - lobbyVault.rib.depth,
 } as const

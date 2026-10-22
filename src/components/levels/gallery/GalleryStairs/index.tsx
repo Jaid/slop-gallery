@@ -7,6 +7,28 @@ import Box from '#src/components/Scene/primitives.tsx'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import {stairBlocks, stairFlights, stairRailGeometry, stairRoofs, stairTurn} from '#src/lib/gallery/staircase.ts'
 
+/** One lamp over each flight, hanging over its 15th step, with its height above the tread and how it fades per flight. */
+const stairLampStep = 14
+const stairLamps: Record<string, {
+  decay: number
+  distance: number
+  intensity: number
+  y: number
+}> = {
+  upper: {
+    decay: 1,
+    distance: 10,
+    intensity: 6,
+    y: 1.68,
+  },
+  lower: {
+    decay: 0.5,
+    distance: 10,
+    intensity: 24,
+    y: 1.95,
+  },
+}
+
 export default function GalleryStairs() {
   const turnResource = useDisposable(useMemo(() => {
     const parts = [
@@ -64,10 +86,10 @@ export default function GalleryStairs() {
     <RigidBody colliders='cuboid' type='fixed'>
       {stairRoofs.map((beam, i) => <Box key={i} name='stairway-ceiling' {...beam} color='#101e24' envMapIntensity={0} />)}
     </RigidBody>
-    {stairFlights.flatMap(flight => [3, 10, 17].map(index => {
-      const step = flight.blocks[index]
-      return <pointLight key={flight.id + index} color='#8ad6cd' decay={2} distance={3} intensity={2} position={[step.position[0], step.top + 0.65, step.position[2]]} />
-    }))}
-    <pointLight color='#8ad6cd' decay={2} distance={5} intensity={4} position={[stairTurn.position[0], stairTurn.top + 2.8, stairTurn.position[2]]} />
+    {stairFlights.map(flight => {
+      const step = flight.blocks[stairLampStep]
+      const {decay, distance, intensity, y} = stairLamps[flight.id]
+      return <pointLight key={flight.id} color='#8ad6cd' decay={decay} distance={distance} intensity={intensity} position={[step.position[0], step.top + y, step.position[2]]} />
+    })}
   </group>
 }

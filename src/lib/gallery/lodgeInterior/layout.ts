@@ -69,11 +69,11 @@ const lodgeInterior = {
   /** the wagon wheel’s hub, hanging above the coffee table */
   chandelier: {
     position: [0, 3.05, 1] as Vec3,
-    /** light height above the hub, among the candle flames */
-    lightY: 0.16,
+    /** light height relative to the hub, a little below the wheel */
+    lightY: -0.14,
     color: '#ffc68a',
-    intensity: 38,
-    distance: 14,
+    intensity: 22.8,
+    distance: 5,
     /** eight flames on a 1.6 m wheel cast broad, soft shadows */
     shadowRadius: 8,
   },
