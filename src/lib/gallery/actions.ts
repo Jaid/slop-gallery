@@ -12,6 +12,7 @@ import {isDevelopmentMode} from '../developmentMode.ts'
 import {rollSeed} from '../environmentSeed.ts'
 import {hiddenUiKey, toggleHiddenUi} from '../hiddenUi.ts'
 import pauseMenu from '../pauseMenu.ts'
+import {bookmarkKey, teleportToNextBookmark} from './bookmarks.ts'
 import defaultPortraits from './defaultPortraits.ts'
 import {playerSession, playerSpawn} from './PlayerSession.ts'
 import {redo, undo, useGallery} from './store.ts'
@@ -192,6 +193,9 @@ export function handleGalleryKey(event: KeyboardEvent) {
   }
   if (event.code === hiddenUiKey && isDevelopmentMode) {
     toggleHiddenUi()
+  }
+  if (event.code === bookmarkKey && isDevelopmentMode && s.locked) {
+    teleportToNextBookmark()
   }
 }
 

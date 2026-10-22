@@ -18,6 +18,21 @@ export const playerSpawn: PlayerPose = {
   pitch: 0,
 }
 
+/** placeholder spots that T teleports between with `?development`, see `src/lib/gallery/bookmarks.ts` */
+export const bookmarks: Array<PlayerPose> = [
+  playerSpawn,
+  {
+    position: [-14, 0.04, 17.6],
+    yaw: 0,
+    pitch: 0,
+  },
+  {
+    position: [-8, -7.96, 30.1],
+    yaw: 0,
+    pitch: 0,
+  },
+]
+
 const containsRectangle = (x: number, z: number, center: readonly [number, number], size: readonly [number, number]) => Math.abs(x - center[0]) <= size[0] / 2 + 1e-6 && Math.abs(z - center[1]) <= size[1] / 2 + 1e-6
 const moonfall = rooms.find(room => room.id === 'moonfall')!
 const sienna = rooms.find(room => room.id === 'sienna')!
