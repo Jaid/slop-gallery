@@ -10,6 +10,7 @@ const smooth = (from: number, to: number, value: number) => {
 
 /** The same deterministic height field drives visible relief, floor queries and collision. */
 export default class CraterTerrain {
+  private lowestHeight: number | undefined
   private noise = simplex2d.create(0x61_73_74_65)
   private secondary = [
     [-3.3, -1.6, 1.1],
@@ -46,6 +47,21 @@ export default class CraterTerrain {
       }
     }
     return (bowl + rim + ridges + rubble + peak + secondary) * fade
+  }
+
+  /** the deepest point of the height field, sampled as finely as the terrain’s vertices may lie */
+  lowest() {
+    if (this.lowestHeight === undefined) {
+      const step = moonfallCrater.terrainSpacing
+      let lowest = 0
+      for (let x = -this.radius; x <= this.radius; x += step) {
+        for (let z = -this.radius; z <= this.radius; z += step) {
+          lowest = Math.min(lowest, this.height(x, z))
+        }
+      }
+      this.lowestHeight = lowest
+    }
+    return this.lowestHeight
   }
 
   /** tonal variation; the fine octave is finer than terrain vertices, so materials may add it per pixel instead */

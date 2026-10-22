@@ -3,6 +3,7 @@ import type {FloorRectangle} from './floors.ts'
 
 import corridor, {corridorHallEastX, corridorStairs, lodgeThreshold} from './corridor.ts'
 import lodge from './lodge.ts'
+import {craterTerrain} from './moonfall/CraterTerrain.ts'
 import {stairHeadroom} from './stairs/StairFlight.ts'
 import {roomClearHeight, rooms} from './walls.ts'
 
@@ -30,10 +31,13 @@ const corridorFence = [
 
 /**
  * Every room of the gallery fenced by 3D boxes from its floor to its clear height, up to the vault crown in the Lobby. All rooms are one box except the Corridor,
- * its hall and the stair flight up to the Sienna, and the Lodge, which adds its threshold: its half of the doorway passage from the Corridor’s hall.
+ * its hall and the stair flight up to the Sienna, and the Lodge, which adds its threshold: its half of the doorway passage from the Corridor’s hall. The Moonfall’s box reaches
+ * down to the bottom of its crater.
  */
 export const worldRooms: ReadonlyArray<WorldRoom> = rooms.map(room => {
-  const own = box(room, room.floorY, roomClearHeight(room))
+  // The Moonfall’s fence reaches down to the deepest air in its crater.
+  const bottom = room.id === 'moonfall' ? room.floorY + craterTerrain.lowest() : room.floorY
+  const own = box(room, bottom, roomClearHeight(room) + room.floorY - bottom)
   return {
     id: room.id,
     title: room.title,

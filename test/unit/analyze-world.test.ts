@@ -4,7 +4,8 @@ import {expect, test} from 'bun:test'
 
 import {AmbientLight, BoxGeometry, Group, InstancedMesh, Matrix4, Mesh, MeshBasicNodeMaterial, MeshStandardNodeMaterial, PointLight, Scene} from 'three/webgpu'
 
-import {rooms} from '../../src/lib/gallery/walls.ts'
+import {craterTerrain} from '../../src/lib/gallery/moonfall/CraterTerrain.ts'
+import {roomClearHeight, rooms} from '../../src/lib/gallery/walls.ts'
 import {worldRooms} from '../../src/lib/gallery/worldRooms.ts'
 import analyzeWorld from '../../src/lib/webmcp/analyzeWorld.ts'
 
@@ -28,6 +29,11 @@ test('every gallery room is fenced around its center', () => {
   expect(boxes.lodge).toHaveLength(2)
   expect(boxes.lodge[1].min[0]).toBe(boxes.corridor[0].max[0])
   expect(boxes.lodge[1].max[0]).toBe(boxes.lodge[0].min[0])
+  // The Moonfall reaches down into its crater, deeper than its floor.
+  const moonfall = rooms.find(room => room.id === 'moonfall')!
+  expect(boxes.moonfall[0].min[1]).toBeCloseTo(moonfall.floorY + craterTerrain.lowest(), 3)
+  expect(boxes.moonfall[0].min[1]).toBeLessThan(moonfall.floorY - 3)
+  expect(boxes.moonfall[0].max[1]).toBeCloseTo(moonfall.floorY + roomClearHeight(moonfall), 3)
   for (const room of rooms) {
     expect(boxes[room.id].some(({min, max}) => room.center[0] > min[0] && room.center[0] < max[0] && room.center[1] > min[2] && room.center[1] < max[2])).toBe(true)
   }
