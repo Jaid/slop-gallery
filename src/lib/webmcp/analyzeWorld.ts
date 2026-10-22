@@ -2,12 +2,15 @@ import type {BufferAttribute, BufferGeometry, InstancedBufferGeometry, Instanced
 
 import {Matrix4, Vector3} from 'three/webgpu'
 
-/** A room’s floor footprint: a closed polygon in world x/z meters, clockwise seen from above, and the clear height above its floor. */
+/** an axis-aligned box in world meters, from the floor to the clear height of the space it covers */
+export type WorldBox = {
+  max: [number, number, number]
+  min: [number, number, number]
+}
+/** a room as the union of its boxes */
 export type WorldRoom = {
-  floorY: number
-  height: number
+  boxes: ReadonlyArray<WorldBox>
   id: string
-  polygon: ReadonlyArray<Point>
   title: string
 }
 export type WorldMesh = {
@@ -38,7 +41,7 @@ export type WorldRegion = {
   triangles: number
 }
 export type WorldAnalysis = {
-  /** meshes and positioned lights whose center lies in no room’s footprint: passages, stairways, the outdoors and walls centered on a room boundary */
+  /** meshes and positioned lights whose center lies outside every room’s boxes seen from above: passages, stairways, the outdoors and walls centered on a room boundary */
   elsewhere: WorldRegion
   /** ambient, hemisphere and directional lights, which light the world without a place in it */
   globalLights: Array<WorldLight>
@@ -50,29 +53,16 @@ export type WorldAnalysis = {
     triangles: number
   }
 }
-type Point = readonly [number, number]
 
 const globalLightTypes = new Set(['AmbientLight', 'DirectionalLight', 'HemisphereLight', 'LightProbe'])
 const round = (value: number) => Math.round(value * 1e4) / 1e4 + 0
 const center = new Vector3
 const instanceMatrix = new Matrix4
-/** whether the x/z point lies inside the polygon, at least 1 mm from its outline, so walls centered on a shared boundary belong to neither room */
-function insidePolygon(x: number, z: number, polygon: ReadonlyArray<Point>) {
-  let inside = false
-  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-    const [ax, az] = polygon[j]
-    const [bx, bz] = polygon[i]
-    const dx = bx - ax
-    const dz = bz - az
-    const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz)))
-    if (Math.hypot(x - ax - t * dx, z - az - t * dz) < 1e-3) {
-      return false
-    }
-    if (az > z !== bz > z && x < ax + (z - az) / dz * dx) {
-      inside = !inside
-    }
+/** how far the point lies above or below the box, with a meter below its floor and 20 cm above its top to spare; undefined unless it is at least 1 mm inside the box seen from above, so walls centered on a shared boundary belong to neither room */
+function verticalDistance({x, y, z}: Vector3, {min, max}: WorldBox) {
+  if (x > min[0] + 1e-3 && x < max[0] - 1e-3 && z > min[2] + 1e-3 && z < max[2] - 1e-3) {
+    return Math.max(min[1] - 1 - y, y - max[1] - 0.2, 0)
   }
-  return inside
 }
 const pathOf = (object: Object3D) => {
   const names: Array<string> = []
@@ -117,7 +107,7 @@ const describeLight = (light: Light): WorldLight => {
 }
 
 /**
- * Sorts every visible mesh and light of the scene into the room whose floor footprint holds its center; where rooms stack, the one nearest in height.
+ * Sorts every visible mesh and light of the scene into the room whose boxes hold its center; where none does, the room above or below it nearest in height.
  * Instanced meshes are sorted per instance. Counts follow the geometry’s draw range and instance count, not what culling skips in a given frame.
  */
 export default function analyzeWorld(scene: Object3D, rooms: ReadonlyArray<WorldRoom>): WorldAnalysis {
@@ -128,11 +118,25 @@ export default function analyzeWorld(scene: Object3D, rooms: ReadonlyArray<World
     lights: [],
   }]))
   const globalLights: Array<WorldLight> = []
-  // Where rooms stack, the one whose height range is nearest: crater floors and skylight lamps reach past their room’s range.
-  const roomAt = ({x, y, z}: Vector3) => rooms.filter(room => insidePolygon(x, z, room.polygon)).map(room => ({
-    id: room.id,
-    distance: Math.max(room.floorY - 1 - y, y - room.floorY - room.height - 0.2, 0),
-  })).toSorted((a, b) => a.distance - b.distance)[0]?.id
+  // Crater floors and skylight lamps reach past their room’s boxes, so the nearest box above or below the point counts too.
+  const roomAt = (point: Vector3) => {
+    let result: {
+      distance: number
+      id: string
+    } | undefined
+    for (const room of rooms) {
+      for (const box of room.boxes) {
+        const distance = verticalDistance(point, box)
+        if (distance !== undefined && (!result || distance < result.distance)) {
+          result = {
+            id: room.id,
+            distance,
+          }
+        }
+      }
+    }
+    return result?.id
+  }
   const totals = {
     meshes: 0,
     instances: 0,

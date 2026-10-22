@@ -4,53 +4,31 @@ import {expect, test} from 'bun:test'
 
 import {AmbientLight, BoxGeometry, Group, InstancedMesh, Matrix4, Mesh, MeshStandardNodeMaterial, PointLight, Scene} from 'three/webgpu'
 
-import {outline, roomFootprints} from '../../src/lib/gallery/roomFootprints.ts'
 import {rooms} from '../../src/lib/gallery/walls.ts'
+import {worldRooms} from '../../src/lib/gallery/worldRooms.ts'
 import analyzeWorld from '../../src/lib/webmcp/analyzeWorld.ts'
 
 const square = (id: string, x: number): WorldRoom => ({
   id,
   title: id,
-  floorY: 0,
-  height: 4,
-  polygon: [[x - 5, -5], [x + 5, -5], [x + 5, 5], [x - 5, 5]],
+  boxes: [{
+    min: [x - 5, 0, -5],
+    max: [x + 5, 4, 5],
+  }],
 })
-test('outlines run clockwise from the north-west corner without collinear points', () => {
-  expect(outline([{
-    minX: 0,
-    maxX: 4,
-    minZ: 0,
-    maxZ: 1,
-  }, {
-    minX: 0,
-    maxX: 1,
-    minZ: 0,
-    maxZ: 3,
-  }, {
-    minX: 0,
-    maxX: 2,
-    minZ: 1,
-    maxZ: 2,
-  }])).toEqual([[0, 0], [4, 0], [4, 1], [2, 1], [2, 2], [1, 2], [1, 3], [0, 3]])
-  expect(() => outline([{
-    minX: 0,
-    maxX: 1,
-    minZ: 0,
-    maxZ: 1,
-  }, {
-    minX: 2,
-    maxX: 3,
-    minZ: 0,
-    maxZ: 1,
-  }])).toThrow()
-})
-test('every gallery room has a footprint around its center', () => {
-  expect(roomFootprints.map(room => room.id)).toEqual(rooms.map(room => room.id))
-  const corridor = roomFootprints.find(room => room.id === 'corridor')!
-  // The passage’s U plus the stair flight up to the Sienna.
-  expect(corridor.polygon).toHaveLength(8)
-  expect(Math.max(...corridor.polygon.map(([x]) => x))).toBe(-20)
-  expect(roomFootprints.filter(({id}) => id !== 'corridor').map(room => room.polygon.length)).toEqual(Array.from({length: rooms.length - 1}, () => 4))
+test('every gallery room has boxes around its center', () => {
+  expect(worldRooms.map(room => room.id)).toEqual(rooms.map(room => room.id))
+  const boxes = Object.fromEntries(worldRooms.map(room => [room.id, room.boxes]))
+  // The hall, and the stair flight up to the Sienna’s doorway.
+  expect(boxes.corridor).toHaveLength(2)
+  expect(boxes.corridor[1].max[0]).toBe(-20)
+  // The Corridor and the Lodge meet halfway through the doorway passage between them.
+  expect(boxes.lodge).toHaveLength(2)
+  expect(boxes.lodge[1].min[0]).toBe(boxes.corridor[0].max[0])
+  expect(boxes.lodge[1].max[0]).toBe(boxes.lodge[0].min[0])
+  for (const room of rooms) {
+    expect(boxes[room.id].some(({min, max}) => room.center[0] > min[0] && room.center[0] < max[0] && room.center[1] > min[2] && room.center[1] < max[2])).toBe(true)
+  }
 })
 test('meshes, instances and lights land in the room their center lies in', () => {
   const scene = new Scene
