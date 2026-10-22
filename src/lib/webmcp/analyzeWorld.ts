@@ -14,8 +14,8 @@ export type WorldRoom = {
   title: string
 }
 export type WorldMesh = {
-  /** instances of an instanced mesh whose center lies in this region, otherwise 1 */
-  instances: number
+  /** instances of an instanced mesh whose center lies in this region; left out where it is 1 */
+  instances?: number
   /** material name or type, a list for several; left out where it is the plain MeshStandardNodeMaterial */
   material?: Array<string> | string
   /** names of the mesh and its named ancestors, outermost first */
@@ -39,7 +39,6 @@ export type WorldRegion = {
   lights: Array<WorldLight>
   /** sorted by triangles, most first */
   meshes: Array<WorldMesh>
-  triangles: number
 }
 export type WorldAnalysis = {
   /** meshes and positioned lights whose center lies outside every room’s fence seen from above: passages, stairways, the outdoors and walls centered on a room boundary */
@@ -47,12 +46,6 @@ export type WorldAnalysis = {
   /** ambient, hemisphere and directional lights, which light the world without a place in it */
   globalLights: Array<WorldLight>
   rooms: Array<WorldRegion & WorldRoom>
-  totals: {
-    instances: number
-    lights: number
-    meshes: number
-    triangles: number
-  }
 }
 type Arrayable<T> = Array<T> | T
 
@@ -118,7 +111,6 @@ const describeLight = (light: Light): WorldLight => {
 export default function analyzeWorld(scene: Object3D, rooms: ReadonlyArray<WorldRoom>): WorldAnalysis {
   scene.updateMatrixWorld()
   const regions = new Map<string | undefined, WorldRegion>([...rooms.map(room => room.id), undefined].map(id => [id, {
-    triangles: 0,
     meshes: [],
     lights: [],
   }]))
@@ -142,16 +134,9 @@ export default function analyzeWorld(scene: Object3D, rooms: ReadonlyArray<World
     }
     return result?.id
   }
-  const totals = {
-    meshes: 0,
-    instances: 0,
-    triangles: 0,
-    lights: 0,
-  }
   scene.traverseVisible(object => {
     if ((object as Light).isLight) {
       const light = describeLight(object as Light)
-      totals.lights++
       if (globalLightTypes.has(light.type)) {
         globalLights.push(light)
       } else {
@@ -182,25 +167,19 @@ export default function analyzeWorld(scene: Object3D, rooms: ReadonlyArray<World
     }
     const path = pathOf(mesh)
     const material = materialOf(mesh)
-    totals.meshes++
     for (const [room, instances] of counts) {
-      const region = regions.get(room)!
-      region.meshes.push({
+      regions.get(room)!.meshes.push({
         path,
-        instances,
+        ...instances === 1 ? {} : {instances},
         ...material === undefined ? {} : {material},
         triangles: triangles * instances,
       })
-      region.triangles += triangles * instances
-      totals.instances += instances
-      totals.triangles += triangles * instances
     }
   })
   for (const region of regions.values()) {
     region.meshes.sort((a, b) => b.triangles - a.triangles)
   }
   return {
-    totals,
     rooms: rooms.map(room => ({
       ...room,
       ...regions.get(room.id)!,

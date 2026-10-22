@@ -9,15 +9,8 @@ import createWebmcpTools from '../../src/lib/webmcp/tools.ts'
 
 const bridge: WebmcpBridge = {
   analyzeWorld: () => ({
-    totals: {
-      meshes: 0,
-      instances: 0,
-      triangles: 0,
-      lights: 0,
-    },
     rooms: [],
     elsewhere: {
-      triangles: 0,
       meshes: [],
       lights: [],
     },
