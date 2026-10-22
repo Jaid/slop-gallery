@@ -4,12 +4,13 @@ import {useThree} from '@react-three/fiber'
 import {AimInspector} from 'ego-player'
 import {useEffect} from 'react'
 
-import dumpKnots from '#level/webmcp.ts'
+import dumpKnots, {worldRooms} from '#level/webmcp.ts'
 import downloadFrame from '#src/lib/downloadFrame.ts'
 import {usePortraitSlots} from '#src/lib/gallery/portraitSlotStore.ts'
 import {galleryLevel} from '#src/lib/level.ts'
 import {telemetry} from '#src/lib/telemetry/index.ts'
 import {playerDumps, snapshotPlayerDump} from '#src/lib/telemetry/recordPlayerDump.ts'
+import analyzeWorld from '#src/lib/webmcp/analyzeWorld.ts'
 import registerWebmcp from '#src/lib/webmcp/register.ts'
 
 export default function WebmcpBridge() {
@@ -19,6 +20,7 @@ export default function WebmcpBridge() {
     const controller = new AbortController
     const inspector = new AimInspector(scene, camera)
     const bridge = {
+      analyzeWorld: () => analyzeWorld(scene, worldRooms),
       downloadFrame: async ({name, format}: {
         format?: FrameFormat
         name?: string

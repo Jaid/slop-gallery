@@ -1,6 +1,7 @@
 import type {FrameDownload, FrameFormat} from '#src/lib/downloadFrame.ts'
 import type {PortraitSlot} from '#src/lib/gallery/types.ts'
 import type {PlayerDumpSnapshot} from '#src/lib/telemetry/recordPlayerDump.ts'
+import type {WorldAnalysis} from './analyzeWorld.ts'
 import type {AimSnapshot} from 'ego-player'
 import type {Rarity} from 'knot-materials/rarities.ts'
 import type VictoriaClient from 'victoria-browser-client'
@@ -13,6 +14,7 @@ export type KnotDump = {
 }
 
 export type WebmcpBridge = {
+  analyzeWorld: () => WorldAnalysis
   downloadFrame: (options: {
     format?: FrameFormat
     name?: string
@@ -55,6 +57,12 @@ export default function createWebmcpTools(getBridge: () => WebmcpBridge): Array<
       title: 'Dump portrait slots',
       description: 'Return every portrait slot of the level with its ID, wall ID, ratio, priority for default works, frame width and height in meters, world-space frame center, rotation and whether its placard hangs above the frame. With ?edit_portrait_slots, this includes the edits made in this browser. Levels without slots return an empty array.',
       read: () => getBridge().getPortraitSlots(),
+    },
+    {
+      name: 'analyze_world',
+      title: 'Analyze world per room',
+      description: 'Sort every visible mesh and light of the scene into the room whose floor footprint holds its center (where rooms stack, the one nearest in height) and report, per room, its floor footprint (a clockwise x/z polygon in world meters seen from above, north is −z, from its north-west corner), floor level and clear height, its triangle total, its meshes (scene path of named ancestors, instances in the room, material names and triangles, most triangles first) and its lights (type, world position, color, intensity, range, decay, spot cone and whether it casts shadows). Instanced meshes are sorted per instance. Meshes and lights centered outside every footprint, such as passages, stairways and walls on a shared boundary, are listed under elsewhere; ambient, hemisphere and directional lights under globalLights. Triangle counts follow draw ranges and instance counts, not per-frame culling. Levels without rooms list everything under elsewhere.',
+      read: () => getBridge().analyzeWorld(),
     },
   ].map(({read, ...tool}) => ({
     ...tool,

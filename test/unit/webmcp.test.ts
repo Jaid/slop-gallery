@@ -8,6 +8,21 @@ import registerWebmcp from '../../src/lib/webmcp/register.ts'
 import createWebmcpTools from '../../src/lib/webmcp/tools.ts'
 
 const bridge: WebmcpBridge = {
+  analyzeWorld: () => ({
+    totals: {
+      meshes: 0,
+      instances: 0,
+      triangles: 0,
+      lights: 0,
+    },
+    rooms: [],
+    elsewhere: {
+      triangles: 0,
+      meshes: [],
+      lights: [],
+    },
+    globalLights: [],
+  }),
   downloadFrame: ({name, format = 'webp'}) => Promise.resolve({
     fileName: `${name ?? 'gallery-default'}.${format}`,
     format,
@@ -52,8 +67,8 @@ test('WebMCP read tools are read-only, validate input and read the current bridg
   let current = bridge
   const tools = createWebmcpTools(() => current)
   const controller = new AbortController
-  expect(tools.map(tool => tool.name)).toEqual(['get_aim', 'get_telemetry', 'dump_knots', 'dump_portrait_slots', 'download_frame'])
-  for (const tool of tools.slice(0, 4)) {
+  expect(tools.map(tool => tool.name)).toEqual(['get_aim', 'get_telemetry', 'dump_knots', 'dump_portrait_slots', 'analyze_world', 'download_frame'])
+  for (const tool of tools.slice(0, 5)) {
     expect(tool.annotations?.readOnlyHint).toBe(true)
     expect(() => tool.execute({unexpected: true}, {signal: controller.signal})).toThrow(TypeError)
   }
@@ -73,6 +88,7 @@ test('WebMCP read tools are read-only, validate input and read the current bridg
   expect(tools[1].execute({}, {signal: controller.signal})).toBeNull()
   expect(tools[2].execute({}, {signal: controller.signal})).toEqual(current.getKnots())
   expect(tools[3].execute({}, {signal: controller.signal})).toEqual(current.getPortraitSlots())
+  expect(tools[4].execute({}, {signal: controller.signal})).toEqual(current.analyzeWorld())
   controller.abort()
   expect(() => tools[0].execute({}, {signal: controller.signal})).toThrow()
 })
@@ -122,7 +138,7 @@ test('registrations clean up on unmount, failure and cancellation during registr
     const registered = registerWebmcp(() => bridge, controller.signal, context)
     if (mode === 'success') {
       const cleanup = await registered
-      expect(signals).toHaveLength(5)
+      expect(signals).toHaveLength(6)
       expect(signals[0].aborted).toBe(false)
       cleanup()
       cleanup()
