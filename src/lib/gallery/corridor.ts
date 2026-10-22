@@ -1,3 +1,4 @@
+import type {FloorRectangle} from './floors.ts'
 import type {Vec3} from './types.ts'
 
 import lodge, {lodgeWindowCutout} from './lodge.ts'
@@ -11,6 +12,14 @@ const corridor = {
   floorY: lodge.floorY,
   height: 3.4,
 } as const
+const lodgeWestX = lodge.center[0] - lodge.size[0] / 2
+/** Where the Corridor’s hall ends toward the Lodge: halfway through the doorway passage between them. */
+export const corridorHallEastX = (lodge.approachX + lodge.timberWidth / 2 + lodgeWestX) / 2
+/** The Lodge’s half of the doorway passage from the Corridor’s hall, laid with the Lodge’s planks to mark it. */
+export const lodgeThreshold: FloorRectangle = {
+  center: [(corridorHallEastX + lodgeWestX) / 2, lodge.returnZ],
+  size: [lodgeWestX - corridorHallEastX, lodge.timberWidth],
+}
 
 export const corridorPassage = new Passage('corridor', 'corridor', [[-30, lodge.returnZ], [lodge.approachX, lodge.returnZ], [lodge.approachX, lodge.siennaZ], [-31, lodge.siennaZ]], lodge.floorY, lodge.timberWidth, corridor.height, [lodgeWindowCutout])
 // The first tread begins at Sienna’s west doorway, without an intervening landing.

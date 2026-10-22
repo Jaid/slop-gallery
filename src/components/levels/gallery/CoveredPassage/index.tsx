@@ -1,4 +1,5 @@
 import type {PendantLight} from '#component/levels/gallery/PendantLamps'
+import type {FloorRectangle} from '#src/lib/gallery/floors.ts'
 import type Passage from '#src/lib/gallery/passages/Passage.ts'
 import type {PassageCutout} from '#src/lib/gallery/passages/Passage.ts'
 import type PassageTransition from '#src/lib/gallery/passages/PassageTransition.ts'
@@ -68,11 +69,13 @@ const passageLanterns: Partial<Record<string, ReadonlyArray<Partial<PendantLight
   'lodge-tunnel': [{y: -0.1}, null, null, null, null],
 }
 
-export default function CoveredPassage({passage, lighting, material, timber, ribCutouts, transition}: {
+export default function CoveredPassage({passage, lighting, material, paving: pavingOverride, timber, ribCutouts, transition}: {
   /** makes the passage’s lanterns its sole light sources; its materials must be adopted by the same node */
   lighting?: LanternLightsNode
   material: Material
   passage: Passage
+  /** the floor laid in the passage’s material when other floors cover the rest; collision still uses the full passage floors */
+  paving?: ReadonlyArray<FloorRectangle>
   ribCutouts?: ReadonlyArray<PassageCutout>
   timber?: Material
   /** a stone passage’s timber end, rendered separately; the paving and vault ribs stop where it begins */
@@ -83,7 +86,7 @@ export default function CoveredPassage({passage, lighting, material, timber, rib
   // Under timber, lanterns hang from the ribs rather than the planks between them.
   const mounts = useMemo(() => passagePendantMounts(passage, [geometry.shell, geometry.ribs], lighting ? corridorLightSpacing : undefined, timber && geometry.ribs).filter((_, index) => lanterns?.[index] !== null), [geometry, lanterns, lighting, passage, timber])
   const lights = useMemo(() => lanterns?.filter(entry => entry !== null), [lanterns])
-  const paving = transition?.stoneFloors ?? passage.floors
+  const paving = pavingOverride ?? transition?.stoneFloors ?? passage.floors
   // A timber lining’s crown is the ceiling along its spans; a slab there would share its plane. Only the open elbows show the slab.
   const ceilings = timber ? passage.junctions : passage.floors
   const collision = timber ? [] : [geometry.shell, geometry.ribs].map(colliderGeometry)

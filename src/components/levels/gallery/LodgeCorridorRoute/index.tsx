@@ -8,11 +8,15 @@ import CorridorStairs from '#component/levels/gallery/CorridorStairs'
 import CoveredPassage from '#component/levels/gallery/CoveredPassage'
 import TimberTransition from '#component/levels/gallery/TimberTransition'
 import {surfaceTexture} from '#src/components/Scene/materials.ts'
-import {corridorPassage} from '#src/lib/gallery/corridor.ts'
+import Box from '#src/components/Scene/primitives.tsx'
+import {corridorPassage, lodgeThreshold} from '#src/lib/gallery/corridor.ts'
+import {subtractFloorOpening} from '#src/lib/gallery/floors.ts'
 import {lodgeFloorPlanks, lodgeTunnel, lodgeTunnelTransition, lodgeWindowRibCutouts} from '#src/lib/gallery/lodge.ts'
 import {corridorLanterns, lightIndoors} from '#src/lib/materials/lights/index.ts'
 import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
 import PlankMaterial from '#src/lib/materials/PlankMaterial.ts'
+
+const corridorPaving = corridorPassage.floors.flatMap(floor => subtractFloorOpening(floor, lodgeThreshold))
 
 export default function LodgeCorridorRoute({material, corridorLining}: {
   /** the corridor’s board lining, shared with its walls and already lit by {@link corridorLanterns} */
@@ -32,12 +36,13 @@ export default function LodgeCorridorRoute({material, corridorLining}: {
   const timber = useDisposable(useMemo(() => lightIndoors(new MeshStandardNodeMaterial(timberOptions)), [timberOptions]))
   // The corridor is lit by its lanterns alone, so its portals need their own copy of the timber.
   const corridorTimber = useDisposable(useMemo(() => corridorLanterns.adopt(new MeshStandardNodeMaterial(timberOptions)), [timberOptions]))
-  // The Lodge’s plank floor, continued board for board into the tunnel’s timber transition.
+  // The Lodge’s plank floor, continued board for board into the tunnel’s timber transition and over its threshold in the corridor’s doorway.
   const floor = useDisposable(useMemo(() => lightIndoors(new PlankMaterial(lodgeFloorPlanks)), []))
   return <group name='lodge-corridor-route'>
     <CoveredPassage material={material} passage={lodgeTunnel} transition={lodgeTunnelTransition} />
     <TimberTransition floor={floor} lining={lining} timber={timber} transition={lodgeTunnelTransition} />
-    <CoveredPassage lighting={corridorLanterns} material={corridorLining} passage={corridorPassage} ribCutouts={lodgeWindowRibCutouts} timber={corridorTimber} />
+    <CoveredPassage lighting={corridorLanterns} material={corridorLining} passage={corridorPassage} paving={corridorPaving} ribCutouts={lodgeWindowRibCutouts} timber={corridorTimber} />
+    <Box material={floor} name='lodge-threshold' position={[lodgeThreshold.center[0], corridorPassage.floorY - 0.12, lodgeThreshold.center[1]]} size={[lodgeThreshold.size[0], 0.24, lodgeThreshold.size[1]]} />
     <CorridorStairs lining={corridorLining} timber={corridorTimber} />
   </group>
 }
