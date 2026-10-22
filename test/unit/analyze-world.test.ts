@@ -70,7 +70,9 @@ test('meshes land in the room holding most of their volume and spill into the ot
   lamp.position.set(10, 30, 0)
   scene.add(group, wall, instanced, crater, outside, hidden, lamp, new AmbientLight)
   const analysis = analyzeWorld(scene, [square('west', 0), square('east', 10)])
-  const [west, east] = analysis.rooms
+  expect(Object.keys(analysis.rooms)).toEqual(['west', 'east'])
+  expect(analysis.rooms.west).not.toHaveProperty('id')
+  const {west, east} = analysis.rooms
   expect(west.meshes.map(mesh => [mesh.path, mesh.spill])).toEqual([['west/box', undefined], ['wall', 'east'], ['crater', undefined]])
   expect(west.meshes[0].material).toBe('plaster')
   expect(west.meshes[0]).not.toHaveProperty('instances')

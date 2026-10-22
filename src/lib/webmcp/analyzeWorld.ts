@@ -47,7 +47,8 @@ export type WorldAnalysis = {
   elsewhere: WorldRegion
   /** ambient, hemisphere and directional lights, which light the world without a place in it */
   globalLights: Array<WorldLight>
-  rooms: Array<WorldRegion & WorldRoom>
+  /** keyed by room id, in the level’s room order */
+  rooms: Record<string, Omit<WorldRoom, 'id'> & WorldRegion>
 }
 type Arrayable<T> = Array<T> | T
 
@@ -225,10 +226,10 @@ export default function analyzeWorld(scene: Object3D, rooms: ReadonlyArray<World
     region.meshes.sort((a, b) => b.triangles - a.triangles)
   }
   return {
-    rooms: rooms.map(room => ({
+    rooms: Object.fromEntries(rooms.map(({id, ...room}) => [id, {
       ...room,
-      ...regions.get(room.id)!,
-    })),
+      ...regions.get(id)!,
+    }])),
     elsewhere: regions.get(undefined)!,
     globalLights,
   }
