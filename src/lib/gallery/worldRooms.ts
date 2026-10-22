@@ -16,7 +16,7 @@ const hallWestX = lodge.approachX - lodge.timberWidth / 2
 const hallNorthZ = lodge.returnZ - lodge.timberWidth / 2
 const hallSouthZ = lodge.siennaZ + lodge.timberWidth / 2
 const stairXs = corridorStairs.blocks.flatMap(block => [block.position[0] - block.size[0] / 2, block.position[0] + block.size[0] / 2])
-const corridorBoxes = [
+const corridorFence = [
   box({
     center: [(hallWestX + corridorHallEastX) / 2, (hallNorthZ + hallSouthZ) / 2],
     size: [corridorHallEastX - hallWestX, hallSouthZ - hallNorthZ],
@@ -29,7 +29,7 @@ const corridorBoxes = [
 ]
 
 /**
- * Every room of the gallery as 3D boxes from its floor to its clear height, up to the vault crown in the Lobby. All rooms are one box except the Corridor,
+ * Every room of the gallery fenced by 3D boxes from its floor to its clear height, up to the vault crown in the Lobby. All rooms are one box except the Corridor,
  * its hall and the stair flight up to the Sienna, and the Lodge, which adds its threshold: its half of the doorway passage from the Corridor’s hall.
  */
 export const worldRooms: ReadonlyArray<WorldRoom> = rooms.map(room => {
@@ -37,6 +37,6 @@ export const worldRooms: ReadonlyArray<WorldRoom> = rooms.map(room => {
   return {
     id: room.id,
     title: room.title,
-    boxes: room.id === 'corridor' ? corridorBoxes : (room.id === 'lodge' ? [own, box(lodgeThreshold, corridor.floorY, corridor.height)] : [own]),
+    fence: room.id === 'corridor' ? corridorFence : (room.id === 'lodge' ? [own, box(lodgeThreshold, corridor.floorY, corridor.height)] : own),
   }
 })

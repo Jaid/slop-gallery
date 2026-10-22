@@ -7,16 +7,17 @@ export type WorldBox = {
   max: [number, number, number]
   min: [number, number, number]
 }
-/** a room as the union of its boxes */
+/** a room as the union of its fence’s boxes */
 export type WorldRoom = {
-  boxes: ReadonlyArray<WorldBox>
+  fence: Arrayable<WorldBox>
   id: string
   title: string
 }
 export type WorldMesh = {
   /** instances of an instanced mesh whose center lies in this region, otherwise 1 */
   instances: number
-  materials: Array<string>
+  /** material name or type, a list for several; left out where it is the plain MeshStandardNodeMaterial */
+  material?: Array<string> | string
   /** names of the mesh and its named ancestors, outermost first */
   path: string
   /** triangles drawn for these instances */
@@ -41,7 +42,7 @@ export type WorldRegion = {
   triangles: number
 }
 export type WorldAnalysis = {
-  /** meshes and positioned lights whose center lies outside every room’s boxes seen from above: passages, stairways, the outdoors and walls centered on a room boundary */
+  /** meshes and positioned lights whose center lies outside every room’s fence seen from above: passages, stairways, the outdoors and walls centered on a room boundary */
   elsewhere: WorldRegion
   /** ambient, hemisphere and directional lights, which light the world without a place in it */
   globalLights: Array<WorldLight>
@@ -53,6 +54,7 @@ export type WorldAnalysis = {
     triangles: number
   }
 }
+type Arrayable<T> = Array<T> | T
 
 const globalLightTypes = new Set(['AmbientLight', 'DirectionalLight', 'HemisphereLight', 'LightProbe'])
 const round = (value: number) => Math.round(value * 1e4) / 1e4 + 0
@@ -85,7 +87,10 @@ const trianglesOf = (geometry: BufferGeometry) => {
   const instances = instanceCount !== undefined && Number.isFinite(instanceCount) ? instanceCount : 1
   return Math.floor(Math.max(drawn, 0) / 3) * instances
 }
-const materialsOf = (mesh: Mesh) => [...new Set((Array.isArray(mesh.material) ? mesh.material : [mesh.material]).map((material: Material) => material.name || material.type))]
+const materialOf = (mesh: Mesh) => {
+  const names = [...new Set((Array.isArray(mesh.material) ? mesh.material : [mesh.material]).map((material: Material) => material.name || material.type))].filter(name => name !== 'MeshStandardNodeMaterial')
+  return names.length > 1 ? names : names.at(0)
+}
 const describeLight = (light: Light): WorldLight => {
   const spot = light as SpotLight
   return {
@@ -107,7 +112,7 @@ const describeLight = (light: Light): WorldLight => {
 }
 
 /**
- * Sorts every visible mesh and light of the scene into the room whose boxes hold its center; where none does, the room above or below it nearest in height.
+ * Sorts every visible mesh and light of the scene into the room whose fence holds its center; where none does, the room above or below it nearest in height.
  * Instanced meshes are sorted per instance. Counts follow the geometry’s draw range and instance count, not what culling skips in a given frame.
  */
 export default function analyzeWorld(scene: Object3D, rooms: ReadonlyArray<WorldRoom>): WorldAnalysis {
@@ -118,14 +123,14 @@ export default function analyzeWorld(scene: Object3D, rooms: ReadonlyArray<World
     lights: [],
   }]))
   const globalLights: Array<WorldLight> = []
-  // Crater floors and skylight lamps reach past their room’s boxes, so the nearest box above or below the point counts too.
+  // Crater floors and skylight lamps reach past their room’s fence, so the nearest box above or below the point counts too.
   const roomAt = (point: Vector3) => {
     let result: {
       distance: number
       id: string
     } | undefined
     for (const room of rooms) {
-      for (const box of room.boxes) {
+      for (const box of [room.fence].flat()) {
         const distance = verticalDistance(point, box)
         if (distance !== undefined && (!result || distance < result.distance)) {
           result = {
@@ -176,14 +181,14 @@ export default function analyzeWorld(scene: Object3D, rooms: ReadonlyArray<World
       counts.set(room, (counts.get(room) ?? 0) + 1)
     }
     const path = pathOf(mesh)
-    const materials = materialsOf(mesh)
+    const material = materialOf(mesh)
     totals.meshes++
     for (const [room, instances] of counts) {
       const region = regions.get(room)!
       region.meshes.push({
         path,
         instances,
-        materials,
+        ...material === undefined ? {} : {material},
         triangles: triangles * instances,
       })
       region.triangles += triangles * instances

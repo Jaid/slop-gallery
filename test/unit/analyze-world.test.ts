@@ -2,7 +2,7 @@ import type {WorldRoom} from '../../src/lib/webmcp/analyzeWorld.ts'
 
 import {expect, test} from 'bun:test'
 
-import {AmbientLight, BoxGeometry, Group, InstancedMesh, Matrix4, Mesh, MeshStandardNodeMaterial, PointLight, Scene} from 'three/webgpu'
+import {AmbientLight, BoxGeometry, Group, InstancedMesh, Matrix4, Mesh, MeshBasicNodeMaterial, MeshStandardNodeMaterial, PointLight, Scene} from 'three/webgpu'
 
 import {rooms} from '../../src/lib/gallery/walls.ts'
 import {worldRooms} from '../../src/lib/gallery/worldRooms.ts'
@@ -11,14 +11,16 @@ import analyzeWorld from '../../src/lib/webmcp/analyzeWorld.ts'
 const square = (id: string, x: number): WorldRoom => ({
   id,
   title: id,
-  boxes: [{
+  fence: {
     min: [x - 5, 0, -5],
     max: [x + 5, 4, 5],
-  }],
+  },
 })
-test('every gallery room has boxes around its center', () => {
+test('every gallery room is fenced around its center', () => {
   expect(worldRooms.map(room => room.id)).toEqual(rooms.map(room => room.id))
-  const boxes = Object.fromEntries(worldRooms.map(room => [room.id, room.boxes]))
+  const boxes = Object.fromEntries(worldRooms.map(room => [room.id, [room.fence].flat()]))
+  // Single boxes stay unwrapped.
+  expect(Array.isArray(worldRooms.find(room => room.id === 'vesper')!.fence)).toBe(false)
   // The hall, and the stair flight up to the Sienna’s doorway.
   expect(boxes.corridor).toHaveLength(2)
   expect(boxes.corridor[1].max[0]).toBe(-20)
@@ -40,9 +42,9 @@ test('meshes, instances and lights land in the room their center lies in', () =>
   box.position.set(0, 1, 0)
   group.add(box)
   // Centered on the boundary both rooms share.
-  const wall = new Mesh(new BoxGeometry, material)
+  const wall = new Mesh(new BoxGeometry, new MeshStandardNodeMaterial)
   wall.position.set(5, 1, 0)
-  const instanced = new InstancedMesh(new BoxGeometry, material, 3)
+  const instanced = new InstancedMesh(new BoxGeometry, [material, new MeshStandardNodeMaterial, new MeshBasicNodeMaterial], 3)
   const matrix = new Matrix4
   for (const [i, x] of [1, 9, 11].entries()) {
     instanced.setMatrixAt(i, matrix.makeTranslation(x, 1, 1))
@@ -63,7 +65,10 @@ test('meshes, instances and lights land in the room their center lies in', () =>
   const [west, east] = analysis.rooms
   expect(west.triangles).toBe(24)
   expect(west.meshes.map(mesh => [mesh.path, mesh.instances])).toEqual([['west/box', 1], ['Mesh', 1]])
-  expect(west.meshes[0].materials).toEqual(['plaster'])
+  expect(west.meshes[0].material).toBe('plaster')
+  // Plain MeshStandardNodeMaterials are left out.
+  expect(west.meshes[1].material).toEqual(['plaster', 'MeshBasicNodeMaterial'])
+  expect(analysis.elsewhere.meshes[0]).not.toHaveProperty('material')
   expect(east.meshes.map(mesh => [mesh.path, mesh.instances, mesh.triangles])).toEqual([['Mesh', 2, 24]])
   expect(east.lights).toHaveLength(1)
   expect(east.lights[0]).toMatchObject({
