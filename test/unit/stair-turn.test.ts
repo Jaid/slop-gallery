@@ -154,7 +154,7 @@ describe('round stair landing', () => {
     const [upper, lower] = stairFlights
     expect(upper.width).toBe(staircase.width)
     expect(lower.width).toBe(staircase.lowerWidth)
-    expect(lower.start[2] - lower.width / 2).toBeCloseTo(13.8)
+    expect(lower.start[2] - lower.width / 2).toBeCloseTo(15.9)
     for (const block of lower.blocks) {
       expect(block.size[2]).toBe(staircase.lowerWidth)
       for (const side of [-1, 1]) {

@@ -154,9 +154,9 @@ export default function Architecture() {
     {rooms.filter(room => room.floorY === 0 && !customRooms.has(room.id)).map(room => <group key={room.id} position={[room.center[0], 0, room.center[1]]}>
       <Branch not={vaultedRooms.has(room.id)}>
         <RigidBody colliders={false} type='fixed'>
-          <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]} />
+          <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, room.height + 0.1, 0]} />
         </RigidBody>
-        <Box color={room.id === 'vesper' ? '#7c9586' : '#e1dccc'} position={[0, 5.78, 0]} size={[room.size[0], 0.18, room.size[1]]} />
+        <Box color={room.id === 'vesper' ? '#7c9586' : '#e1dccc'} position={[0, room.height - 0.02, 0]} size={[room.size[0], 0.18, room.size[1]]} />
       </Branch>
       <RoomFloorFor glass={glass.lobby} room={room} stone={stone} wood={wood} />
       {lightBoxOffsets(room).map(z => <group key={z}>

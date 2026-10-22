@@ -10,9 +10,10 @@ const staircase = {
   startX: 4,
   turnX: 14,
   endX: 6,
-  z: 11.5,
-  // Widen southward, keeping the upper flight and the shared divider fixed.
-  returnZ: 16.4,
+  // The upper flight leaves through the middle of the Antechamber’s east wall, which runs from the Lobby’s south wall at z = 8.
+  z: 12,
+  // The lower flight arrives in the middle of Moonfall’s east wall.
+  returnZ: lowerGallery.moonfall.center[1],
   width: 2.6,
   lowerWidth: 5.2,
   topY: 0,

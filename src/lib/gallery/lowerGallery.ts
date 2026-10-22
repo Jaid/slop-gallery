@@ -13,7 +13,7 @@ export const oculusBalconyDepth = 2
 const lowerGallery = {
   floorY: moonfallFloorY,
   moonfall: {
-    // Keep the north tunnel and east stair landing fixed; expand west and south.
+    // Keep the north tunnel fixed; expand west and south. The stairs arrive in the middle of the east wall.
     center: [-8, 18.5],
     size: [28, 28],
   },

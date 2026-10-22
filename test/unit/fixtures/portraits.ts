@@ -194,7 +194,7 @@ const samplePortraits: Array<Portrait> = [
     position: [
       0,
       2.4,
-      14.78,
+      15.78,
     ],
     rotation: 3.141592653589793,
     width: 1.6,

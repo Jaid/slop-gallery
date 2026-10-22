@@ -8,9 +8,9 @@ import {wallFace, wallOpeningTrim} from './architectureDimensions.ts'
 import {rooms} from './walls.ts'
 
 const dine = rooms.find(room => room.id === 'dine')!
-
-/** Underside of the 18 cm ceiling slab every upper-floor room gets at 5.78 m. */
-export const dineCeilingUnderside = 5.78 - 0.18 / 2
+/** Underside of the 18 cm ceiling slab every upper-floor room gets 2 cm below its height, at 5.78 m in Dine. */
+const ceilingUnderside = (room: {height: number}) => room.height - 0.02 - 0.18 / 2
+export const dineCeilingUnderside = ceilingUnderside(dine)
 
 /**
  * Knottingham LED panes in a 2 × 4 grid of 5.5 m squares, symmetric about the room center. The offsets leave about 1.9 m to the
@@ -33,7 +33,7 @@ export const dineLedLight = {
 }
 
 // Like Knottingham, the housing’s top sits 5 mm into the slab so no light leaks between them.
-const slotY = dineCeilingUnderside + 0.005 - knotLightHousingY - knotLightHousingSize[1] / 2
+const slotY = (room: {height: number}) => ceilingUnderside(room) + 0.005 - knotLightHousingY - knotLightHousingSize[1] / 2
 /** Breakable LED panes under a room’s ceiling slab, one at each pair of the grid’s offsets from the room center. */
 function ceilingLedSlots(roomId: RoomId, grid: {
   x: ReadonlyArray<number>
@@ -42,7 +42,7 @@ function ceilingLedSlots(roomId: RoomId, grid: {
   const room = rooms.find(candidate => candidate.id === roomId)!
   return grid.z.flatMap((z, row) => grid.x.map((x, slot) => ({
     id: `${row}:${slot}`,
-    position: [room.center[0] + x, slotY, room.center[1] + z],
+    position: [room.center[0] + x, slotY(room), room.center[1] + z],
     row,
     slot,
   })))

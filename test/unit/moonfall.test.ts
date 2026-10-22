@@ -20,7 +20,9 @@ describe('lower gallery', () => {
   test('stacked rooms, both stair flights and the U-turn landing resolve their own elevation', () => {
     expect(lower.size).toEqual([28, 28])
     expect(lower.center).toEqual([-8, 18.5])
-    expect(upper.center).toEqual([0, 11.5])
+    expect(upper.center).toEqual([0, 12])
+    expect(upper.size).toEqual([upper.height, upper.height])
+    expect(stairFlights[1].start[2]).toBe(lower.center[1])
     expect(roomVisit(lower).position[1]).toBeCloseTo(-6.3)
     for (const block of stairBlocks) {
       const position: Vec3 = [block.position[0], block.top + 1.6, block.position[2]]
@@ -39,7 +41,7 @@ describe('lower gallery', () => {
     expect(insideGallery([8, -1, 14])).toBe(false)
     expect(insideGallery([Number.NaN, -2, 15])).toBe(false)
     expect(stairFloorHeight(stairTurn.position[0], stairTurn.position[2])).toBe(-4)
-    expect(stairFloorHeight(8, 13.3)).toBeUndefined()
+    expect(stairFloorHeight(8, 14.6)).toBeUndefined()
   })
   test('wall rays and frame clearance respect lower-level elevations and relocated portals', () => {
     const wall = walls.find(candidate => candidate.id === 'moonfall-south')!
@@ -160,7 +162,7 @@ describe('lower gallery', () => {
               beamRotation.setFromEuler(new Euler(...beam.rotation))
               world.createCollider(RAPIER.ColliderDesc.cuboid(beam.size[0] / 2, beam.size[1] / 2, beam.size[2] / 2).setTranslation(...beam.position).setRotation(beamRotation))
             }
-            world.createCollider(RAPIER.ColliderDesc.cuboid(4, 0.15, 3.5).setTranslation(0, -0.15, 11.5))
+            world.createCollider(RAPIER.ColliderDesc.cuboid(upper.size[0] / 2, 0.15, upper.size[1] / 2).setTranslation(upper.center[0], -0.15, upper.center[1]))
             world.createCollider(RAPIER.ColliderDesc.cuboid(lower.size[0] / 2, 0.15, lower.size[1] / 2).setTranslation(lower.center[0], lower.floorY - 0.15, lower.center[1]))
             world.createCollider(RAPIER.ColliderDesc.cuboid(lower.size[0] / 2, 0.15, lower.size[1] / 2).setTranslation(lower.center[0], lower.floorY + 5.9, lower.center[1]))
             const path = [[3, staircase.z + offset], ...Array.from({length: 17}, (_, i) => stairTurn.point(i / 16 * Math.PI, stairTurn.radius - offset * (staircase.width + staircase.lowerWidth) / (2 * staircase.width))), [4.4, staircase.returnZ - offset * staircase.lowerWidth / staircase.width]]

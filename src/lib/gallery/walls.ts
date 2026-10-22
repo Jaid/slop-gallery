@@ -59,12 +59,13 @@ export const rooms = [
   {
     id: 'antechamber',
     floorY: 0,
-    height: 5.8,
+    // A cube: as tall as it is wide and deep.
+    height: 8,
     number: '04',
     title: 'The Antechamber',
     subtitle: 'A pause between the peculiar and the profound.',
-    center: [0, 11.5],
-    size: [8, 7],
+    center: [0, staircase.z],
+    size: [8, 8],
     color: '#d4be90',
   },
   {
@@ -296,7 +297,7 @@ const walls: Array<Wall> = miterCorners([
   roomWall('salon', 'east'),
   roomWall('salon', 'south', [salon.doorway]),
   withSalonWindow(roomWall('salon', 'west')),
-  wall('antechamber-north', 'antechamber', 0, 8, 0, 8, [
+  roomWall('antechamber', 'north', [
     {
       u: 0,
       width: 2.6,
@@ -304,8 +305,8 @@ const walls: Array<Wall> = miterCorners([
       profile: 'rectangle',
     },
   ]),
-  wall('antechamber-west', 'antechamber', -4, 11.5, Math.PI / 2, 7),
-  wall('antechamber-east', 'antechamber', 4, 11.5, -Math.PI / 2, 7, [
+  roomWall('antechamber', 'west'),
+  roomWall('antechamber', 'east', [
     {
       u: 0,
       width: staircase.width,
@@ -313,7 +314,7 @@ const walls: Array<Wall> = miterCorners([
       profile: 'rectangle',
     },
   ]),
-  wall('antechamber-south', 'antechamber', 0, 15, Math.PI, 8),
+  roomWall('antechamber', 'south'),
   wall('sienna-north', 'sienna', -14, 8, 0, 12, [
     {
       u: 3.8,
