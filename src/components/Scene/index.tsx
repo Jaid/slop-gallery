@@ -2,6 +2,8 @@ import {useFrame, useThree} from '@react-three/fiber'
 import Branch from 'branch-component'
 import {useEffect, useLayoutEffect, useRef, useState} from 'react'
 
+import LightLevels from '#component/LightLevels'
+import LightMarkers from '#component/LightMarkers'
 import Player from '#component/Player'
 import Portraits from '#component/Portraits'
 import PortraitSlotEditor from '#component/PortraitSlotEditor'
@@ -10,7 +12,9 @@ import WebmcpBridge from '#component/WebmcpBridge'
 import {Scene as LevelScene} from '#level/components.ts'
 import {useGallery} from '#src/lib/gallery.ts'
 import {isEditingPortraitSlots} from '#src/lib/gallery/portraitSlotStore.ts'
+import {useHiddenUi} from '#src/lib/hiddenUi.ts'
 import {GalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
+import {isShowingLights} from '#src/lib/rendering/lightLevels.ts'
 import {readVisionMode} from '#src/lib/rendering/visionMode.ts'
 import {pendingImages} from '#src/lib/useArtworkTexture.ts'
 
@@ -18,11 +22,17 @@ import Interaction from './Interaction.tsx'
 
 export default function Scene() {
   const [visionMode] = useState(() => readVisionMode())
+  const uiHidden = useHiddenUi(state => state.hidden)
   return <>
     <LevelScene />
     <Portraits />
-    <Branch if={visionMode === 'portrait_slots' || isEditingPortraitSlots} then={PortraitSlots} />
-    <Branch if={isEditingPortraitSlots} then={PortraitSlotEditor} />
+    {/* Hidden with O, the markers keep working: editors still aim, drag and switch what they mark. */}
+    <group name='scene-ui' visible={!uiHidden}>
+      <Branch if={visionMode === 'portrait_slots' || isEditingPortraitSlots} then={PortraitSlots} />
+      <Branch if={isEditingPortraitSlots} then={PortraitSlotEditor} />
+      <Branch if={isShowingLights} then={LightMarkers} />
+    </group>
+    <LightLevels />
     <Player />
     <Interaction />
     <WebmcpBridge />

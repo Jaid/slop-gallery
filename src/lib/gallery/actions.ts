@@ -8,7 +8,9 @@ import placement from '#level/placement.ts'
 import aimDot from '../aimDot.ts'
 import SoundEngine from '../audio/SoundEngine.ts'
 import crosshair, {crosshairToggleKey} from '../crosshair.ts'
+import {isDevelopmentMode} from '../developmentMode.ts'
 import {rollSeed} from '../environmentSeed.ts'
+import {hiddenUiKey, toggleHiddenUi} from '../hiddenUi.ts'
 import pauseMenu from '../pauseMenu.ts'
 import defaultPortraits from './defaultPortraits.ts'
 import {playerSession, playerSpawn} from './PlayerSession.ts'
@@ -187,6 +189,9 @@ export function handleGalleryKey(event: KeyboardEvent) {
   // The aim dot only shows while playing, so the toggle is limited to that too and gives immediate visual feedback.
   if (event.code === crosshairToggleKey && s.locked && !s.dragging) {
     crosshair.toggle()
+  }
+  if (event.code === hiddenUiKey && isDevelopmentMode) {
+    toggleHiddenUi()
   }
 }
 

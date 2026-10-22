@@ -1,0 +1,231 @@
+import type {Light, Object3D} from 'three/webgpu'
+
+import optis from 'optis'
+import readPermalink from 'read-permalink'
+import {Vector3} from 'three/webgpu'
+import {create} from 'zustand'
+
+type Level = {
+  /** the intensity the light’s owner gave it */
+  base: number
+  /** what {@link applyLightLevels} last turned it into */
+  written: number
+}
+
+const enabledValues = new Set<unknown>([true, '', 'true'])
+const flagsSchema = optis({
+  defaults: {
+    edit_lights: false,
+    show_lights: false,
+  },
+  normalizations: {
+    edit_lights(value: unknown) {
+      return enabledValues.has(value)
+    },
+    show_lights(value: unknown) {
+      return enabledValues.has(value)
+    },
+  },
+})
+
+/** Read the `?show_lights` flag that marks every light in the scene; a bare `?show_lights` counts as enabled. */
+export function readShowLights(input: URL | string = typeof location === 'undefined' ? '' : location.href): boolean {
+  return readPermalink(input, {schema: flagsSchema}).show_lights
+}
+
+/** Read the `?edit_lights` flag that lets E switch the aimed light off and on, the arrows change its strength and range and Numpad 7 and 1 its decay; a bare `?edit_lights` counts as enabled. */
+export function readEditLights(input: URL | string = typeof location === 'undefined' ? '' : location.href): boolean {
+  return readPermalink(input, {schema: flagsSchema}).edit_lights
+}
+
+/** whether this page was opened with `?edit_lights`, read once at startup */
+export const isEditingLights = readEditLights()
+
+/** whether this page shows light markers, read once at startup; editing shows them too */
+export const isShowingLights = isEditingLights || readShowLights()
+
+/** the round values within each power of ten that strength and range steps land on, about a fifth to a third apart */
+const ladder = [1, 1.25, 1.5, 2, 2.5, 3, 4, 5, 6, 8]
+/** The next round value above `value` (positive `steps`) or below it, one rung per step; values between rungs step to the nearest rung first. */
+export function stepRound(value: number, steps: number) {
+  let current = value
+  for (let i = 0; i < Math.abs(steps); i++) {
+    const decade = 10 ** Math.floor(Math.log10(current))
+    const rungs = [decade / 10, decade, decade * 10].flatMap(scale => ladder.map(rung => rung * scale))
+    current = steps > 0 ? rungs.find(rung => rung > current * (1 + 1e-9))! : rungs.findLast(rung => rung < current * (1 - 1e-9))!
+  }
+  return Number(current.toPrecision(6))
+}
+/** the range a light without a cutoff starts from when its range is first changed, in meters */
+const openRange = 20
+
+/** The light the camera aims at while editing lights, the one focused by clicking its marker, the lights moved, the lights whose range or decay changed, and the lights switched off or made stronger or weaker for this page session. */
+export const useLightEdits = create<{
+  aimed: Light | null
+  focused: Light | null
+  moved: ReadonlySet<Light>
+  off: ReadonlySet<Light>
+  reshaped: ReadonlySet<Light>
+  strengths: ReadonlyMap<Light, number>
+}>(() => ({
+  aimed: null,
+  focused: null,
+  moved: new Set,
+  off: new Set,
+  reshaped: new Set,
+  strengths: new Map,
+}))
+
+const markReshaped = (light: Light) => {
+  const {reshaped} = useLightEdits.getState()
+  if (!reshaped.has(light)) {
+    const next = new Set(reshaped)
+    next.add(light)
+    useLightEdits.setState({reshaped: next})
+  }
+}
+
+/** Makes a light stronger (positive `steps`) or weaker, returning its new strength relative to what its owner set. */
+export function changeLightStrength(light: Light, steps: number) {
+  const strengths = new Map(useLightEdits.getState().strengths)
+  const strength = stepRound(strengths.get(light) ?? 1, steps)
+  strengths.set(light, strength)
+  useLightEdits.setState({strengths})
+  return strength
+}
+
+/** the ranges lights had before they were first changed */
+const ranges = new WeakMap<Light, number>
+
+/** Lets a point or spot light reach farther (positive `steps`) or less far, returning its new range in meters. */
+export function changeLightRange(light: Light & {distance?: number}, steps: number) {
+  if (light.distance === undefined) {
+    return
+  }
+  if (!ranges.has(light)) {
+    ranges.set(light, light.distance)
+  }
+  light.distance = stepRound(light.distance || openRange, steps)
+  markReshaped(light)
+  return light.distance
+}
+
+/** how much one step changes a light’s decay */
+const decayStep = 0.25
+/** the decays lights had before they were first changed */
+const decays = new WeakMap<Light, number>
+
+/** Makes a point or spot light fade faster with distance (positive `steps`) or more gently, returning its new decay. */
+export function changeLightDecay(light: Light & {decay?: number}, steps: number) {
+  if (light.decay === undefined) {
+    return
+  }
+  if (!decays.has(light)) {
+    decays.set(light, light.decay)
+  }
+  light.decay = Math.max(0, Math.round((light.decay + steps * decayStep) / decayStep) * decayStep)
+  markReshaped(light)
+  return light.decay
+}
+
+const moving = new Vector3
+/** where moved lights were placed by their owners, in their parents’ space */
+const origins = new WeakMap<Light, Vector3>
+/** Puts a light at a world position, returning that position. */
+export function placeLight(light: Light, world: Vector3) {
+  if (!origins.has(light)) {
+    origins.set(light, light.position.clone())
+  }
+  moving.copy(world)
+  light.position.copy(light.parent ? light.parent.worldToLocal(moving) : moving)
+  light.updateMatrixWorld()
+  const moved = new Set(useLightEdits.getState().moved)
+  if (!moved.has(light)) {
+    moved.add(light)
+    useLightEdits.setState({moved})
+  }
+  return world.clone()
+}
+
+/** Moves a light by a world-space offset, returning its new world position. */
+export function moveLight(light: Light, offset: Vector3) {
+  return placeLight(light, light.getWorldPosition(new Vector3).add(offset))
+}
+
+/** Undoes every edit to a light: puts it back where its owner placed it, with its range, decay, strength and on, returning its world position. */
+export function resetLight(light: Light & {
+  decay?: number
+  distance?: number
+}) {
+  const origin = origins.get(light)
+  if (origin) {
+    light.position.copy(origin)
+    light.updateMatrixWorld()
+    origins.delete(light)
+  }
+  const range = ranges.get(light)
+  if (range !== undefined) {
+    light.distance = range
+    ranges.delete(light)
+  }
+  const decay = decays.get(light)
+  if (decay !== undefined) {
+    light.decay = decay
+    decays.delete(light)
+  }
+  const {moved, off, reshaped, strengths} = useLightEdits.getState()
+  const without = <Value>(set: ReadonlySet<Value>) => new Set([...set].filter(entry => entry !== light))
+  useLightEdits.setState({
+    moved: without(moved),
+    off: without(off),
+    reshaped: without(reshaped),
+    strengths: new Map([...strengths].filter(([entry]) => entry !== light)),
+  })
+  return light.getWorldPosition(new Vector3)
+}
+
+/** Switches a light off or back on, returning whether it is on now. */
+export function toggleLight(light: Light) {
+  const off = new Set(useLightEdits.getState().off)
+  const on = off.has(light)
+  if (on) {
+    off.delete(light)
+  } else {
+    off.add(light)
+  }
+  useLightEdits.setState({off})
+  return on
+}
+
+/**
+ * Multiplies the intensity of every light, on top of what its owner sets, such as a lighting preset’s lamp gain. Levels replace
+ * it while mounted. Strengths changed with {@link changeLightStrength} apply on top, and a light switched off with {@link toggleLight} gets 0 regardless.
+ */
+export const lightGain = {current: (_light: Light) => 1}
+
+const levels = new WeakMap<Light, Level>
+
+/**
+ * Scales every light by {@link lightGain} and switches off the ones toggled off. Call it once per frame after everything else
+ * set its lights, so lights that flicker or dim are scaled after their owner set them for this frame. An intensity that differs
+ * from what this wrote last frame is a new one from the light’s owner.
+ */
+export function applyLightLevels(scene: Object3D) {
+  const {off, strengths} = useLightEdits.getState()
+  scene.traverse(object => {
+    const light = object as Light
+    if (!light.isLight) {
+      return
+    }
+    let level = levels.get(light)
+    if (light.intensity !== level?.written) {
+      level = {
+        base: light.intensity,
+        written: Number.NaN,
+      }
+      levels.set(light, level)
+    }
+    light.intensity = off.has(light) ? 0 : level.base * lightGain.current(light) * (strengths.get(light) ?? 1)
+    level.written = light.intensity
+  })
+}

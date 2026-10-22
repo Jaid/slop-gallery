@@ -1,18 +1,17 @@
 import type {Wall} from '#src/lib/gallery.ts'
 
-import {useThree} from '@react-three/fiber'
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import Branch from 'branch-component'
-import renderCanvasTexture from 'canvas-textures/three'
 import useDisposable from 'disposable-lifetime/react'
-import {useLayoutEffect, useMemo} from 'react'
-import {EquirectangularReflectionMapping, MeshStandardNodeMaterial, SRGBColorSpace} from 'three/webgpu'
+import {useMemo} from 'react'
+import {MeshStandardNodeMaterial} from 'three/webgpu'
 import useGraphicsMode from 'use-graphics-mode'
 
 import CeilingLeds from '#component/levels/gallery/CeilingLeds'
 import DineFloor from '#component/levels/gallery/DineFloor'
 import Fountain from '#component/levels/gallery/Fountain'
 import FountainBenches from '#component/levels/gallery/FountainBenches'
+import GalleryLighting from '#component/levels/gallery/GalleryLighting'
 import GalleryStairs from '#component/levels/gallery/GalleryStairs'
 import LobbyFloor from '#component/levels/gallery/LobbyFloor'
 import LobbyVault from '#component/levels/gallery/LobbyVault'
@@ -31,7 +30,6 @@ import Box from '#src/components/Scene/primitives.tsx'
 import WallSurface from '#src/components/Scene/WallSurface.tsx'
 import {rooms, walls} from '#src/lib/gallery.ts'
 import {antechamberLedLight, antechamberLedSlots, dineLedLight, dineLedSlots} from '#src/lib/gallery/dine.ts'
-import sun from '#src/lib/gallery/sun.ts'
 import {createArchitecturalGlassMaterials, disposeArchitecturalGlassMaterials} from '#src/lib/materials/ArchitecturalGlassMaterials.ts'
 import CastleStoneMaterial from '#src/lib/materials/CastleStoneMaterial.ts'
 import DamaskWallpaperMaterial from '#src/lib/materials/DamaskWallpaperMaterial.ts'
@@ -40,7 +38,6 @@ import JoineryWoodMaterial from '#src/lib/materials/JoineryWoodMaterial.ts'
 import {corridorLanterns, lightIndoors, lodgeWindowLights} from '#src/lib/materials/lights/index.ts'
 import LodgeMaterials from '#src/lib/materials/LodgeMaterials.ts'
 import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
-import proceduralSky from '#src/lib/materials/ProceduralSky.ts'
 import {TravertineWallMaterial} from '#src/lib/materials/travertine/index.ts'
 import VesperWallMaterial from '#src/lib/materials/VesperWallMaterial.ts'
 
@@ -146,10 +143,7 @@ export default function Architecture() {
     return dine.surface(wall)
   }
   return <>
-    <ReflectionEnvironment />
-    <Sky />
-    <ambientLight intensity={0.65} /><hemisphereLight args={['#ecf3ff', '#a29270', 1.15]} />
-    <directionalLight castShadow color={sun.color} intensity={sun.intensity} position={sun.position} shadow-camera-bottom={sun.shadow.bottom} shadow-camera-far={sun.shadow.far} shadow-camera-left={sun.shadow.left} shadow-camera-near={sun.shadow.near} shadow-camera-right={sun.shadow.right} shadow-camera-top={sun.shadow.top} shadow-mapSize={[sun.shadow.mapSize, sun.shadow.mapSize]} shadow-normalBias={sun.shadow.normalBias} />
+    <GalleryLighting />
     {walls.map(wall => <WallSurface key={wall.id} glass={glass.tunnel} material={wallMaterial(wall)} plaster={plaster} surfaceMaterial={surfaceMaterial(wall)} wall={wall} />)}
     {rooms.filter(room => room.floorY === 0 && !customRooms.has(room.id)).map(room => <group key={room.id} position={[room.center[0], 0, room.center[1]]}>
       <Branch not={vaultedRooms.has(room.id)}>
@@ -165,7 +159,7 @@ export default function Architecture() {
         {[-1, 0, 1].map(x => <Box key={x} color='#c0b7a1' position={[x * room.size[0] * 0.12, 5.5, z]} size={[0.045, 0.12, 2.5]} />)}
       </group>)}
       <Branch if={vaultedRooms.has(room.id)}><LobbyVault cladding={lobbyWall} /></Branch>
-      {(ledRooms.has(room.id) || vaultedRooms.has(room.id) ? [] : [-3.5, 3.5]).map(z => <pointLight key={z} color='#fff1d8' decay={2} distance={14} intensity={room.id === 'vesper' ? 40 : 32} position={[0, 4.9, z]} />)}
+      {(ledRooms.has(room.id) || vaultedRooms.has(room.id) ? [] : [-3.5, 3.5]).map(z => <pointLight key={z} color='#fff1d8' decay={2} distance={14} intensity={room.id === 'vesper' ? 40 : 32} position={[0, room.id === 'vesper' ? 4.5 : 4.9, z]} />)}
     </group>)}
     <CeilingLeds light={dineLedLight} name='dine' slots={dineLedSlots} />
     <CeilingLeds light={antechamberLedLight} name='antechamber' slots={antechamberLedSlots} />
@@ -205,52 +199,4 @@ function lightBoxOffsets(room: typeof rooms[number]) {
     return []
   }
   return Array.from({length: room.size[1] / 4 - 1}, (_, i) => i * 4 - room.size[1] / 2 + 4)
-}
-/** The procedural daytime sky behind every glazed opening of the gallery, with its sun where the gallery’s sunlight comes from. */
-function Sky() {
-  const scene = useThree(s => s.scene)
-  // Like the environment, the background is set before the first frame, so the pipelines are compiled once.
-  useLayoutEffect(() => {
-    const previous = scene.backgroundNode
-    // eslint-disable-next-line react-hooks/immutability -- the scene background belongs to the level; the cleanup restores it.
-    scene.backgroundNode = proceduralSky({sunDirection: sun.direction})
-    return () => {
-      scene.backgroundNode = previous
-    }
-  }, [scene])
-  return null
-}
-function ReflectionEnvironment() {
-  const scene = useThree(s => s.scene)
-  // The environment is part of every lit material’s cache key. Set after the first frame, it would build all of them a second time.
-  useLayoutEffect(() => {
-    const texture = renderCanvasTexture({
-      width: 1024,
-      height: 512,
-      draw(context) {
-        const gradient = context.createLinearGradient(0, 0, 0, 512)
-        gradient.addColorStop(0, '#e6eeed')
-        gradient.addColorStop(0.4, '#b6bcac')
-        gradient.addColorStop(0.55, '#7d816c')
-        gradient.addColorStop(1, '#4b4c3d')
-        context.fillStyle = gradient
-        context.fillRect(0, 0, 1024, 512)
-        context.fillStyle = '#fff9e6'
-        for (let i = 0; i < 4; i++) {
-          context.fillRect(i * 256 + 35, 50, 90, 100)
-        }
-      },
-    })
-    texture.mapping = EquirectangularReflectionMapping
-    texture.colorSpace = SRGBColorSpace
-    const previous = scene.environment
-    // eslint-disable-next-line react-hooks/immutability -- R3F expects the scene environment to be set from an effect; the cleanup restores it.
-    scene.environment = texture
-    scene.environmentIntensity = 0.5
-    return () => {
-      scene.environment = previous
-      texture.dispose()
-    }
-  }, [scene])
-  return null
 }

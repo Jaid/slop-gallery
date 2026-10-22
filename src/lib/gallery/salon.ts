@@ -94,12 +94,18 @@ export const salonBench = {
 export const salonBenchLegs = [-1, 1].flatMap(x => [-1, 1].map(z => [x * (salonBench.width / 2 - 0.12), z * (salonBench.depth / 2 - 0.12)] as const))
 
 /**
- * Point lights beyond either end of the skylight, as room-relative z offsets, at `salonLightY`: halfway between its coffer and the
- * end walls, far enough from the coffer that its gilt beads never flare. The northern one casts shadows, throwing the ottoman’s
- * toward the doorway, where visitors see it.
+ * The light of the sky falling through the skylight: a spot far above the room’s center, pointing straight down. Its cone just
+ * covers the opening and, coming from that high, barely widens below it, so it stays inside the room without a shadow of its own:
+ * one more shadow map would take every heavy material past WebGPU’s 16 samplers. The Salon has no lamps of its own.
  */
-export const salonLightOffsets = [-1, 1].map(side => side * (salon.size[1] / 2 + salonSkylight.opening[1] / 2 + salonSkylight.frame) / 2)
-export const salonLightY = 4.5
+const skyLightY = 60
+export const salonSkyLight = {
+  /** height above the room’s floor */
+  y: skyLightY,
+  /** half-angle of the cone in radians, reaching 5% past the opening’s corners at the glass */
+  angle: Math.atan(Math.hypot(...salonSkylight.opening) / 2 * 1.05 / (skyLightY - salonSkylight.glassY)),
+  penumbra: 0.3,
+} as const
 
 /**
  * Wall-local u ranges a horizontal band of wall dressing can run along without crossing a walk-through opening or its trim.

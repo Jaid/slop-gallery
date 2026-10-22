@@ -2,7 +2,7 @@ import {beforeEach, describe, expect, test} from 'bun:test'
 
 import {wallFace} from '../../src/lib/gallery/architecture.ts'
 import {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
-import {salonBench, salonCeiling, salonLightOffsets, salonLightY, salonSkylight, salonWainscot, wainscotFields, wallDressingSpans} from '../../src/lib/gallery/salon.ts'
+import {salonBench, salonCeiling, salonSkyLight, salonSkylight, salonWainscot, wainscotFields, wallDressingSpans} from '../../src/lib/gallery/salon.ts'
 import salonWindow from '../../src/lib/gallery/salonWindow.ts'
 import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
 import walls, {floorHeight, insideGallery, insideOpening, placementIssue, roomAt, rooms, roomVisit, wallCoordinates, wallPosition} from '../../src/lib/gallery/walls.ts'
@@ -88,18 +88,16 @@ describe('the Salon', () => {
     expect(Math.abs(position[0] - room.center[0]) + width / 2).toBeLessThan(room.size[0] / 2 - 3)
     expect(salonBench.seatHeight).toBeCloseTo(0.49, 5)
   })
-  test('the skylight sits inside the room, under its slab, along the glass wall and clear of the lamps, in whole panes', () => {
+  test('the skylight sits inside the room, under its slab, along the glass wall, in whole panes, and the sky’s light covers it', () => {
     const {depth, frame, glassY, opening, pane} = salonSkylight
     for (const [axis, size] of opening.entries()) {
       expect(size / 2 + frame).toBeLessThan(room.size[axis] / 2)
       expect(size / pane % 1).toBeCloseTo(0, 9)
     }
     expect(glassY).toBeLessThan(salonCeiling.underside)
-    expect(salonCeiling.underside - depth).toBeGreaterThan(salonLightY + 0.6)
+    expect(salonCeiling.underside - depth).toBeGreaterThan(0)
     expect(opening[1]).toBe(salonWindow.width)
-    for (const z of salonLightOffsets) {
-      expect(Math.abs(z) - opening[1] / 2 - frame).toBeGreaterThan(1)
-    }
+    expect(Math.tan(salonSkyLight.angle) * (salonSkyLight.y - glassY)).toBeGreaterThan(Math.hypot(...opening) / 2)
   })
   test('wainscot runs stop at the arch trim and fit between the corners', () => {
     const south = walls.find(wall => wall.id === 'salon-south')!

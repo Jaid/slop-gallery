@@ -4,9 +4,11 @@ import {readCrosshair} from './crosshair.ts'
 import {readDevelopmentMode} from './developmentMode.ts'
 import {readSeedOverride} from './environmentSeed.ts'
 import {readDefaultPortraitsEnabled} from './gallery/defaultPortraits.ts'
+import {readLighting} from './gallery/lighting.ts'
 import {readPortraitSlotEditing} from './gallery/portraitSlotStore.ts'
 import {readAntiAliasing} from './rendering/antiAliasing.ts'
 import {readGraphicsMode} from './rendering/graphicsMode.ts'
+import {readEditLights, readShowLights} from './rendering/lightLevels.ts'
 import {readNear} from './rendering/near.ts'
 import {readScale} from './rendering/scale.ts'
 import {readVisionMode} from './rendering/visionMode.ts'
@@ -25,13 +27,16 @@ const readers: Record<string, Reader> = {
   anti_aliasing: readAntiAliasing,
   crosshair: readCrosshair,
   development: readDevelopmentMode,
+  edit_lights: readEditLights,
   edit_portrait_slots: readPortraitSlotEditing,
   graphics: readGraphicsMode,
   intro_narration: readIntroNarration,
+  lighting: readLighting,
   near: readNear,
   portraits: readDefaultPortraitsEnabled,
   scale: readScale,
   seed: readSeedOverride,
+  show_lights: readShowLights,
   vision_mode: readVisionMode,
   telemetry: input => searchParameter('telemetry')(input) === 'true',
   logs_ingestion_endpoint: searchParameter('logs_ingestion_endpoint'),
