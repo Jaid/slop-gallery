@@ -1,6 +1,6 @@
 import type {BufferAttribute, BufferGeometry, InstancedBufferGeometry, InstancedMesh, Light, Material, Mesh, Object3D, SpotLight} from 'three/webgpu'
 
-import {Matrix4, Vector3} from 'three/webgpu'
+import {Box3, Matrix4, Vector3} from 'three/webgpu'
 
 /** an axis-aligned box in world meters, from the floor to the clear height of the space it covers */
 export type WorldBox = {
@@ -14,12 +14,14 @@ export type WorldRoom = {
   title: string
 }
 export type WorldMesh = {
-  /** instances of an instanced mesh whose center lies in this region; left out where it is 1 */
+  /** instances of an instanced mesh; left out where it is 1 */
   instances?: number
   /** material name or type, a list for several; left out where it is the plain MeshStandardNodeMaterial */
   material?: Array<string> | string
   /** names of the mesh and its named ancestors, outermost first */
   path: string
+  /** the other rooms holding at least 1% of the mesh’s bounding volume, most first; the mesh itself is listed in the region holding the most */
+  spill?: Arrayable<string>
   /** triangles drawn for these instances */
   triangles: number
 }
@@ -41,7 +43,7 @@ export type WorldRegion = {
   meshes: Array<WorldMesh>
 }
 export type WorldAnalysis = {
-  /** meshes and positioned lights whose center lies outside every room’s fence seen from above: passages, stairways, the outdoors and walls centered on a room boundary */
+  /** meshes mostly outside every room’s fence and positioned lights outside every fence seen from above: passages, stairways and the outdoors */
   elsewhere: WorldRegion
   /** ambient, hemisphere and directional lights, which light the world without a place in it */
   globalLights: Array<WorldLight>
@@ -51,8 +53,20 @@ type Arrayable<T> = Array<T> | T
 
 const globalLightTypes = new Set(['AmbientLight', 'DirectionalLight', 'HemisphereLight', 'LightProbe'])
 const round = (value: number) => Math.round(value * 1e4) / 1e4 + 0
+/** Planes get a centimeter of depth, so they have a volume to share between rooms too. */
+const minimumExtent = 0.01
+/** the smallest share of a mesh’s bounding volume that counts as spilling into a room */
+const minimumSpill = 0.01
 const center = new Vector3
+const size = new Vector3
 const instanceMatrix = new Matrix4
+const matrix = new Matrix4
+const extent = new Box3
+const overlap = new Box3
+const volumeOf = (box: Box3) => {
+  box.getSize(size)
+  return size.x * size.y * size.z
+}
 /** how far the point lies above or below the box, with a meter below its floor and 20 cm above its top to spare; undefined unless it is at least 1 mm inside the box seen from above, so walls centered on a shared boundary belong to neither room */
 function verticalDistance({x, y, z}: Vector3, {min, max}: WorldBox) {
   if (x > min[0] + 1e-3 && x < max[0] - 1e-3 && z > min[2] + 1e-3 && z < max[2] - 1e-3) {
@@ -105,8 +119,10 @@ const describeLight = (light: Light): WorldLight => {
 }
 
 /**
- * Sorts every visible mesh and light of the scene into the room whose fence holds its center; where none does, the room above or below it nearest in height.
- * Instanced meshes are sorted per instance. Counts follow the geometry’s draw range and instance count, not what culling skips in a given frame.
+ * Sorts every visible mesh of the scene into the region holding most of its world bounding box, summed over all instances, and lists the other rooms it spills into.
+ * Fences count with a meter below their floor and 20 cm above their top to spare. A mesh that meets no fence, like a crater floor, and every light go to the room whose
+ * fence holds their center seen from above, the one nearest in height where several do. Counts follow the geometry’s draw range and instance count, not what culling
+ * skips in a given frame.
  */
 export default function analyzeWorld(scene: Object3D, rooms: ReadonlyArray<WorldRoom>): WorldAnalysis {
   scene.updateMatrixWorld()
@@ -115,6 +131,10 @@ export default function analyzeWorld(scene: Object3D, rooms: ReadonlyArray<World
     lights: [],
   }]))
   const globalLights: Array<WorldLight> = []
+  const fences = rooms.map(room => ({
+    id: room.id,
+    boxes: [room.fence].flat().map(({min, max}) => new Box3(new Vector3(min[0], min[1] - 1, min[2]), new Vector3(max[0], max[1] + 0.2, max[2]))),
+  }))
   // Crater floors and skylight lamps reach past their room’s fence, so the nearest box above or below the point counts too.
   const roomAt = (point: Vector3) => {
     let result: {
@@ -149,32 +169,57 @@ export default function analyzeWorld(scene: Object3D, rooms: ReadonlyArray<World
     }
     const mesh = object as Mesh
     const {geometry} = mesh
-    if (!geometry.boundingSphere) {
-      geometry.computeBoundingSphere()
+    if (!geometry.boundingBox) {
+      geometry.computeBoundingBox()
     }
-    const bounds = geometry.boundingSphere!
-    const triangles = trianglesOf(geometry)
     const instanced = (mesh as Partial<InstancedMesh>).isInstancedMesh ? mesh as InstancedMesh : undefined
-    const counts = new Map<string | undefined, number>
-    for (let i = 0; i < (instanced?.count ?? 1); i++) {
-      center.copy(bounds.center)
+    const instances = instanced?.count ?? 1
+    const volumes = new Map<string | undefined, number>
+    const add = (id: string | undefined, volume: number) => volumes.set(id, (volumes.get(id) ?? 0) + volume)
+    for (let i = 0; i < instances; i++) {
+      matrix.copy(mesh.matrixWorld)
       if (instanced) {
         instanced.getMatrixAt(i, instanceMatrix)
-        center.applyMatrix4(instanceMatrix)
+        matrix.multiply(instanceMatrix)
       }
-      const room = roomAt(center.applyMatrix4(mesh.matrixWorld))
-      counts.set(room, (counts.get(room) ?? 0) + 1)
+      extent.copy(geometry.boundingBox!).applyMatrix4(matrix).getSize(size)
+      extent.expandByVector(size.set(Math.max(minimumExtent - size.x, 0) / 2, Math.max(minimumExtent - size.y, 0) / 2, Math.max(minimumExtent - size.z, 0) / 2))
+      const volume = volumeOf(extent)
+      let inside = 0
+      for (const {id, boxes} of fences) {
+        const shared = Math.min(boxes.reduce((sum, box) => sum + (overlap.copy(extent).intersect(box).isEmpty() ? 0 : volumeOf(overlap)), 0), volume - inside)
+        if (shared <= 0) {
+          continue
+        }
+        add(id, shared)
+        inside += shared
+      }
+      if (inside === 0) {
+        add(roomAt(extent.getCenter(center)), volume)
+      } else if (volume > inside) {
+        add(undefined, volume - inside)
+      }
     }
-    const path = pathOf(mesh)
+    let owner: string | undefined
+    let most = -1
+    let total = 0
+    for (const [id, volume] of volumes) {
+      total += volume
+      if (volume <= most) {
+        continue
+      }
+      owner = id
+      most = volume
+    }
+    const spill = [...volumes].filter(([id, volume]) => id !== undefined && id !== owner && volume >= total * minimumSpill).toSorted((x, y) => y[1] - x[1]).map(([id]) => id!)
     const material = materialOf(mesh)
-    for (const [room, instances] of counts) {
-      regions.get(room)!.meshes.push({
-        path,
-        ...instances === 1 ? {} : {instances},
-        ...material === undefined ? {} : {material},
-        triangles: triangles * instances,
-      })
-    }
+    regions.get(owner)!.meshes.push({
+      path: pathOf(mesh),
+      ...instances === 1 ? {} : {instances},
+      ...material === undefined ? {} : {material},
+      ...spill.length ? {spill: spill.length > 1 ? spill : spill[0]} : {},
+      triangles: trianglesOf(geometry) * instances,
+    })
   })
   for (const region of regions.values()) {
     region.meshes.sort((a, b) => b.triangles - a.triangles)
