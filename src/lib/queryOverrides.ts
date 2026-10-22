@@ -3,6 +3,7 @@ import {readIntroNarration} from './audio/intro.ts'
 import {readCrosshair} from './crosshair.ts'
 import {readDevelopmentMode} from './developmentMode.ts'
 import {readSeedOverride} from './environmentSeed.ts'
+import {readSpawn} from './gallery/bookmarks.ts'
 import {readDefaultPortraitsEnabled} from './gallery/defaultPortraits.ts'
 import {readLighting} from './gallery/lighting.ts'
 import {readPortraitSlotEditing} from './gallery/portraitSlotStore.ts'
@@ -37,6 +38,7 @@ const readers: Record<string, Reader> = {
   scale: readScale,
   seed: readSeedOverride,
   show_lights: readShowLights,
+  spawn: readSpawn,
   vision_mode: readVisionMode,
   telemetry: input => searchParameter('telemetry')(input) === 'true',
   logs_ingestion_endpoint: searchParameter('logs_ingestion_endpoint'),

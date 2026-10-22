@@ -7,8 +7,6 @@ export const playerSpawn: PlayerPose = {
   yaw: 0,
   pitch: 0,
 }
-/** spots that T teleports between with `?development`, see `src/lib/gallery/bookmarks.ts` */
-export const bookmarks: Array<PlayerPose> = []
 export const levelFloorHeight = (_position: Vec3) => 0
 export const groundSurface = (_room: RoomId, position: Vec3) => soundboardGroundSurface(position)
 

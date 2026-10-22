@@ -8,6 +8,7 @@ import {galleryStorageKey} from '../level.ts'
 import pauseMenu from '../pauseMenu.ts'
 import {obstructionIssue, placementIssues, wallCoordinates, wallPosition} from '../placement/wallGeometry.ts'
 import {notify} from './actions.ts'
+import {applySpawnBookmark} from './bookmarks.ts'
 import {imageSize} from './ImageImporter.ts'
 import {imageExtensions, maximumBackupBytes, validateCollectionImages, validateImage} from './imagePolicy.ts'
 import {playerSession, validatePlayerPose} from './PlayerSession.ts'
@@ -295,6 +296,7 @@ export async function initializePersistence() {
       restoreDocument(saved)
     }
     const resumed = playerSession.resume(saved?.savedAt ?? '')
+    applySpawnBookmark()
     pauseMenu.setGameData(saved !== null || resumed === true)
     useGallery.setState({
       saveStatus: 'saved',

@@ -81,3 +81,10 @@ export type PlayerPose = {
   position: MathVec3
   yaw: number
 }
+
+export type LocationBookmark = PlayerPose & {
+  /** snake_case name that `?spawn` refers to */
+  id: string
+  /** whether T cycles through it in `?development`; bookmarks without it only serve `?spawn`, e.g. for deterministic camera snapshots */
+  teleport?: boolean
+}
