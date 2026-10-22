@@ -6,7 +6,6 @@ import UnionLightsNode from './UnionLightsNode.ts'
 
 export {default as FilteredLightsNode} from './base/FilteredLightsNode.ts'
 export {default as IndoorLightsNode, reachesIndoors} from './IndoorLightsNode.ts'
-export {default as LanternEnvironment} from './LanternEnvironment.ts'
 export {default as LanternLight} from './LanternLight.ts'
 export type {LanternBounce, LanternRoof} from './LanternLight.ts'
 export {default as LanternLightNode} from './LanternLightNode.ts'
@@ -24,4 +23,4 @@ export function lightIndoors<T extends NodeMaterial>(material: T) {
 export const corridorLanterns = new LanternLightsNode('corridor')
 
 /** The window between the Lodge and the corridor: its glass and reveal catch both the Lodge’s lights and the corridor’s lanterns, and mirror the dark around them instead of the gallery’s sky. */
-export const lodgeWindowLights = new UnionLightsNode([indoors, corridorLanterns], {environment: corridorLanterns.environment})
+export const lodgeWindowLights = new UnionLightsNode([indoors, corridorLanterns])

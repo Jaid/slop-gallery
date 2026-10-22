@@ -78,16 +78,16 @@ export default class CeilingProbe {
 
   /**
    * Hangs a light near `light` from a ceiling area wide enough for its canopy, so it never straddles a rib edge or seam.
-   * Searches along the horizontal `along` direction in 5 cm steps, nearest first, keeping the light’s height.
+   * Searches along the horizontal `along` direction in steps of `step`, 5 cm by default, nearest first, keeping the light’s height.
    */
-  mount(light: Vec3, along: Vec3, search = 0.6): PendantMount | undefined {
+  mount(light: Vec3, along: Vec3, search = 0.6, step = 0.05): PendantMount | undefined {
     const length = Math.hypot(along[0], along[2])
     if (!(length > 0) || Math.abs(along[1]) > 1e-9) {
       throw new RangeError('Pendants slide along a horizontal direction.')
     }
-    const steps = Math.round(search / 0.05)
-    for (let step = 0; step <= steps * 2; step++) {
-      const offset = (step % 2 ? 1 : -1) * Math.ceil(step / 2) * 0.05
+    const steps = Math.round(search / step)
+    for (let index = 0; index <= steps * 2; index++) {
+      const offset = (index % 2 ? 1 : -1) * Math.ceil(index / 2) * step
       const candidate: Vec3 = [light[0] + along[0] / length * offset, light[1], light[2] + along[2] / length * offset]
       const center = this.hit(candidate)
       if (center && this.flush(candidate, center)) {

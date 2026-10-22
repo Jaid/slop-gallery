@@ -1,7 +1,6 @@
 import type {Light} from 'three/webgpu'
 
 import FilteredLightsNode from './base/FilteredLightsNode.ts'
-import LanternEnvironment from './LanternEnvironment.ts'
 
 const zoneKey = 'lightZone'
 
@@ -9,15 +8,12 @@ const zoneKey = 'lightZone'
 export const lightZone = (light: Light) => light.userData[zoneKey] as string | undefined
 
 /**
- * Lights a dark space with nothing but the lamps hung inside it: no sun, no ambient or hemisphere fill and no daylit reflections.
+ * Lights a dark space with nothing but the lamps hung inside it: no sun and no ambient or hemisphere fill. Adopted materials still
+ * reflect the scene’s environment like every other.
  *
- * Lamps join a zone through {@link LanternLightsNode.lampUserData}. Adopted materials also reflect a near-black {@link LanternEnvironment}, so everything beyond the lamps’ reach sinks into a warm dusk.
+ * Lamps join a zone through {@link LanternLightsNode.lampUserData}.
  */
 export default class LanternLightsNode extends FilteredLightsNode {
-  override readonly environment = new LanternEnvironment
-  // The environment is the space’s own faint bounce light, so it is used at full strength instead of each material’s share of the gallery’s sky.
-  override readonly environmentIntensity = 1
-
   constructor(readonly zone: string) {
     super()
   }

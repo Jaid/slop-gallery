@@ -8,8 +8,7 @@ import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
 import {GlobeBody, LanternBody} from '../../src/lib/gallery/pendants/index.ts'
 import {soleLampBounce, soleLampReach} from '../../src/lib/gallery/pendants/lighting.ts'
 import {corridorLightSpacing, passageLightHeight, passagePendantMounts} from '../../src/lib/gallery/pendants/mounts.ts'
-import {corridorLanterns, IndoorLightsNode, LanternEnvironment, LanternLight, LanternLightNode, LanternLightsNode, lightIndoors, lodgeWindowLights} from '../../src/lib/materials/lights/index.ts'
-import {sample} from '../../src/lib/materials/lights/LanternEnvironment.ts'
+import {corridorLanterns, IndoorLightsNode, LanternLight, LanternLightNode, LanternLightsNode, lodgeWindowLights} from '../../src/lib/materials/lights/index.ts'
 
 const lanternBody = new LanternBody
 const lamp = (zone: LanternLightsNode) => {
@@ -47,45 +46,16 @@ test('the corridor’s lanterns light only the corridor, and nothing else lights
   expect(lodgeWindowLights.admits(new DirectionalLight)).toBe(false)
   expect(lodgeWindowLights.admits(otherZone)).toBe(false)
 })
-test('adopted materials reflect the lanterns’ darkness instead of the gallery’s sky', () => {
+test('adopted materials keep the scene’s environment and their own share of it', () => {
   const wood = corridorLanterns.adopt(new MeshStandardNodeMaterial({envMapIntensity: 0.2}))
   expect(wood.lightsNode).toBe(corridorLanterns)
-  expect(wood.envMap).toBe(corridorLanterns.environment)
-  expect(wood.envMapIntensity).toBe(1)
+  expect(wood.envMap).toBeNull()
+  expect(wood.envMapIntensity).toBe(0.2)
   const glass = lodgeWindowLights.adopt(new MeshPhysicalNodeMaterial({envMapIntensity: 1.6}))
-  expect(glass.envMap).toBe(corridorLanterns.environment)
+  expect(glass.envMap).toBeNull()
   expect(glass.envMapIntensity).toBe(1.6)
-  // The Lodge keeps the scene’s environment.
-  const lodge = lightIndoors(new MeshStandardNodeMaterial)
-  expect(lodge.envMap).toBeNull()
-  for (const material of [wood, glass, lodge]) {
+  for (const material of [wood, glass]) {
     material.dispose()
-  }
-})
-test('the lantern environment is a dim, warm dusk, darkest under the rafters', () => {
-  const environment = new LanternEnvironment
-  try {
-    const {data, width, height} = environment.image as {
-      data: Uint8Array
-      height: number
-      width: number
-    }
-    expect(data).toHaveLength(width * height * 4)
-    // Rows run bottom-up, as three.js uploads data textures without flipping them.
-    const row = (index: number) => [...data.subarray(index * width * 4, index * width * 4 + 3)]
-    const bottom = row(0)
-    const top = row(height - 1)
-    for (const [r, g, b] of [bottom, top]) {
-      expect(r).toBeGreaterThan(g)
-      expect(g).toBeGreaterThan(b)
-      expect(r).toBeLessThan(80)
-    }
-    expect(top[0]).toBeLessThan(bottom[0])
-    expect(top).toEqual(sample(1 - (height - 0.5) / height))
-    expect(sample(-1)).toEqual(sample(0))
-    expect(sample(2)).toEqual(sample(1))
-  } finally {
-    environment.dispose()
   }
 })
 test('a fixture’s roof shades the ceiling above it but not the room around and below it', () => {
@@ -114,7 +84,7 @@ test('lantern pools fade to a dim gap between neighbors without going black', ()
     const floor = (x: number, z: number) => lamps.reduce((sum, [lampX, , lampZ]) => sum + floorIrradiance(light, Math.hypot(x - lampX, z - lampZ)), 0)
     // Along the long span, every pair of neighbors leaves a dimmer stretch between their pools.
     const span = lamps.filter(([x]) => x === corridorPassage.spans[1].start[0])
-    expect(span.length).toBe(6)
+    expect(span.length).toBe(7)
     for (let i = 1; i < span.length; i++) {
       const [x, , z] = span[i]
       const previous = span[i - 1][2]

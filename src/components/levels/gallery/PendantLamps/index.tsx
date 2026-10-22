@@ -4,54 +4,59 @@ import type {LanternBounce, LanternLightsNode} from '#src/lib/materials/lights/i
 import Branch from 'branch-component'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
-import {MeshStandardNodeMaterial} from 'three/webgpu'
+import {MeshStandardNodeMaterial, PointLight} from 'three/webgpu'
 
 import {PendantGeometry} from '#src/lib/gallery/pendants/index.ts'
 import {LanternLight} from '#src/lib/materials/lights/index.ts'
 
-type Glow = {
-  color: string
-  emissive: string
-  emissiveIntensity: number
-}
-type Light = {
+export type PendantLight = {
   /** light thrown back by the surroundings, only used by lamps of a dark zone */
   bounce?: LanternBounce
   color: string
   decay?: number
   distance: number
   intensity: number
+  /** height of the light relative to the fixture’s hanging point, 0 by default */
+  y?: number
+}
+type Glow = {
+  color: string
+  emissive: string
+  emissiveIntensity: number
 }
 
 /** Ceiling-hung light fixtures; each one’s rod reaches the ceiling surface found for its mount. */
-export default function PendantLamps({body, glow, light, lighting, mounts, name}: {
+export default function PendantLamps({body, glow, light, lights, lighting, mounts, name}: {
   body: PendantBody
   glow: Glow
-  light: Light
+  light: PendantLight
   /** a dark zone these fixtures are the only light sources of; their lights join it and their own surfaces are lit by it */
   lighting?: LanternLightsNode
+  /** per fixture, in mount order: changes to `light` for it */
+  lights?: ReadonlyArray<Partial<PendantLight> | undefined>
   mounts: ReadonlyArray<PendantMount>
   name: string
 }) {
-  const set = useDisposable(useMemo(() => new PendantSet(body, mounts, glow, lighting && {
-    lighting,
-    light,
-  }), [body, mounts, glow, light, lighting]))
+  const set = useDisposable(useMemo(() => new PendantSet(body, mounts, glow, light, lights, lighting), [body, mounts, glow, light, lights, lighting]))
   return <group name={name}>
-    {set.items.map(({mount, geometry, lamp}, i) => <group key={i} position={mount.light}>
+    {set.items.map(({mount, geometry, lamp, light: own}, i) => <group key={i} position={mount.light}>
       <mesh geometry={geometry.frame} material={set.frameMaterial} name={`${name}-${body.id}-frame`} />
       <mesh geometry={geometry.glow} material={set.glowMaterial} name={`${name}-${body.id}-glow`} />
       <Branch if={lamp}><primitive object={lamp!} /></Branch>
-      <Branch not={lamp}><pointLight color={light.color} decay={light.decay ?? 2} distance={light.distance} intensity={light.intensity} /></Branch>
+      <Branch not={lamp}><pointLight color={own.color} decay={own.decay ?? 2} distance={own.distance} intensity={own.intensity} position={[0, own.y ?? 0, 0]} /></Branch>
     </group>)}
   </group>
 }
 
-function zoneLamp(body: PendantBody, light: Light, lighting: LanternLightsNode) {
-  const lamp = new LanternLight({
+/** TEMPORARY: zone lamps as plain point lights, without the lanterns’ roof shading and bounce, to compare the two. */
+const plainZoneLamps = true
+function zoneLamp(body: PendantBody, light: PendantLight, lighting: LanternLightsNode) {
+  // eslint-disable-next-line typescript/no-unnecessary-condition -- a temporary switch
+  const lamp = plainZoneLamps ? new PointLight(light.color, light.intensity, light.distance, light.decay ?? 2) : new LanternLight({
     ...light,
     roof: body.roof,
   })
+  lamp.position.y = light.y ?? 0
   Object.assign(lamp.userData, lighting.lampUserData())
   return lamp
 }
@@ -65,25 +70,29 @@ class PendantSet {
   readonly items: Array<{
     geometry: PendantGeometry
     /** sole light source of a dark zone, shaded by the fixture’s roof; a regular point light is rendered otherwise */
-    lamp?: LanternLight
+    lamp?: PointLight
+    /** the fixture’s light, `light` with its changes */
+    light: PendantLight
     mount: PendantMount
   }> = []
 
-  constructor(body: PendantBody, mounts: ReadonlyArray<PendantMount>, glow: Glow, zone?: {
-    light: Light
-    lighting: LanternLightsNode
-  }) {
+  constructor(body: PendantBody, mounts: ReadonlyArray<PendantMount>, glow: Glow, light: PendantLight, lights: ReadonlyArray<Partial<PendantLight> | undefined> = [], lighting?: LanternLightsNode) {
     this.glowMaterial = new MeshStandardNodeMaterial(glow)
-    if (zone) {
-      zone.lighting.adopt(this.frameMaterial)
-      zone.lighting.adopt(this.glowMaterial)
+    if (lighting) {
+      lighting.adopt(this.frameMaterial)
+      lighting.adopt(this.glowMaterial)
     }
     try {
-      for (const mount of mounts) {
+      for (const [index, mount] of mounts.entries()) {
+        const own = {
+          ...light,
+          ...lights[index],
+        }
         this.items.push({
           mount,
           geometry: new PendantGeometry(body, mount),
-          lamp: zone && zoneLamp(body, zone.light, zone.lighting),
+          lamp: lighting && zoneLamp(body, own, lighting),
+          light: own,
         })
       }
     } catch (error) {

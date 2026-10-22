@@ -10,7 +10,7 @@ import Box from '#src/components/Scene/primitives.tsx'
 import {corridorRails, corridorRunner, corridorStairs} from '#src/lib/gallery/corridor.ts'
 import TimberGeometry from '#src/lib/gallery/passages/TimberGeometry.ts'
 import {GlobeBody} from '#src/lib/gallery/pendants/index.ts'
-import {soleLampBounce, soleLampReach} from '#src/lib/gallery/pendants/lighting.ts'
+import {soleLampBounce} from '#src/lib/gallery/pendants/lighting.ts'
 import {stairPendantMounts} from '#src/lib/gallery/pendants/mounts.ts'
 import {corridorLanterns} from '#src/lib/materials/lights/index.ts'
 import StairRunnerMaterial from '#src/lib/materials/StairRunnerMaterial.ts'
@@ -21,9 +21,10 @@ const globeGlow = {
   emissive: '#ffd69a',
   emissiveIntensity: 2,
 }
-// The globes are the flight’s only light, like the corridor’s lanterns.
+// The globe is the flight’s only light, like the corridor’s lanterns. Being alone, it reaches the whole flight, a little dimmer.
 const globeLight = {
-  ...soleLampReach,
+  distance: 6,
+  intensity: 17,
   bounce: soleLampBounce,
   color: '#ffc27e',
 }
@@ -34,7 +35,7 @@ export default function CorridorStairs({timber, lining}: {
   timber: Material
 }) {
   const frame = useDisposable(useMemo(() => TimberGeometry.stairs(corridorStairs), []))
-  const mounts = useMemo(() => stairPendantMounts(corridorStairs, [frame.shell, frame.ribs]), [frame])
+  const mounts = useMemo(() => stairPendantMounts(corridorStairs, frame.ribs), [frame])
   // The runner, rods and nosings are shaded into the treads, so every step stays a single box.
   const treads = useDisposable(useMemo(() => corridorLanterns.adopt(new StairRunnerMaterial(corridorRunner)), []))
   return <group name='corridor-wooden-stairs'>

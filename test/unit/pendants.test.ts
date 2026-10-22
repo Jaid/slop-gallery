@@ -11,7 +11,7 @@ import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
 import TransitionGeometry from '../../src/lib/gallery/passages/TransitionGeometry.ts'
 import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
 import {CeilingProbe, GlobeBody, LanternBody, PendantGeometry} from '../../src/lib/gallery/pendants/index.ts'
-import {corridorLightSpacing, passageLightHeight, passagePendantMounts, stairLightHeight, stairLightSteps, stairPendantMounts} from '../../src/lib/gallery/pendants/mounts.ts'
+import {corridorLightSpacing, passageLightHeight, passagePendantMounts, ribSearch, stairLightHeight, stairLightSteps, stairPendantMounts} from '../../src/lib/gallery/pendants/mounts.ts'
 import {canopyEmbed, canopyHeight, canopyRadius} from '../../src/lib/gallery/pendants/PendantGeometry.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 
@@ -46,12 +46,12 @@ const groups: Array<{
   {
     label: 'timber corridor',
     body: lantern,
-    mounts: passagePendantMounts(corridorPassage, [corridor.shell, corridor.ribs], corridorLightSpacing),
+    mounts: passagePendantMounts(corridorPassage, [corridor.shell, corridor.ribs], corridorLightSpacing, corridor.ribs),
   },
   {
     label: 'corridor stairs',
     body: globe,
-    mounts: stairPendantMounts(corridorStairs, [stairs.shell, stairs.ribs]),
+    mounts: stairPendantMounts(corridorStairs, stairs.ribs),
   },
 ]
 const stairNominal = stairLightSteps.map(step => {
@@ -71,7 +71,7 @@ const firstHit = (origin: Vector3, direction: Vector3, far = Infinity) => {
 describe('ceiling-hung pendants', () => {
   test('every light hangs at its passage height or beside its stair step', () => {
     expect(groups[0].mounts).toHaveLength(5)
-    expect(groups[1].mounts).toHaveLength(8)
+    expect(groups[1].mounts).toHaveLength(9)
     expect(groups[2].mounts).toHaveLength(stairLightSteps.length)
     for (const [i, passage] of [lodgeTunnel, corridorPassage].entries()) {
       for (const mount of groups[i].mounts) {
@@ -79,7 +79,7 @@ describe('ceiling-hung pendants', () => {
       }
     }
     for (const [i, mount] of groups[2].mounts.entries()) {
-      expect(Math.hypot(mount.light[0] - stairNominal[i][0], mount.light[2] - stairNominal[i][2])).toBeLessThanOrEqual(0.6)
+      expect(Math.hypot(mount.light[0] - stairNominal[i][0], mount.light[2] - stairNominal[i][2])).toBeLessThanOrEqual(ribSearch)
       expect(mount.light[1]).toBeCloseTo(stairNominal[i][1])
     }
   })
