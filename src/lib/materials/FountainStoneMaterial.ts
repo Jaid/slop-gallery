@@ -1,34 +1,45 @@
 import type {Node} from 'three/webgpu'
 
-import {abs, float, length, max, mix, normalGeometry, positionGeometry, smoothstep} from 'three/tsl'
+import {abs, float, length, max, mix, mx_noise_float, normalGeometry, positionGeometry, sin, smoothstep, time} from 'three/tsl'
 
 import fountain from '../gallery/fountain/config.ts'
 import LimestoneMaterial from './LimestoneMaterial.ts'
 
-const below = (value: Node<'float'>, edge: number, softness = 0.003) => float(1).sub(smoothstep(edge - softness, edge + softness, value))
+const below = (value: Node<'float'>, edge: number, softness = 0.004) => float(1).sub(smoothstep(edge - softness, edge + softness, value))
+const within = (value: Node<'float'>, edge: number, softness = 0.006) => float(1).sub(smoothstep(edge - softness, edge + softness, value))
 
-/** The fountain’s limestone, a little darker and glossier wherever it is under water. */
+/**
+ * The fountain’s limestone, darkened and polished wherever water covers it, with the light’s caustics crawling over the submerged stone.
+ *
+ * The wet mask follows the water itself: inside the octagonal basin below its surface and inside every bowl below its pool, but only on
+ * surfaces that face up, so the undersides of the bowls stay dry. Caustics fade with depth below the surface, like real light focused
+ * through moving water, and stay far below the bloom threshold.
+ */
 export default class FountainStoneMaterial extends LimestoneMaterial {
   constructor() {
     super()
-    const {basinInnerApothem, pools, veils} = fountain
+    const {basinPoolRadius, bowls, pools} = fountain
     const p = positionGeometry
     const radius = length(p.xz)
     // Distance to the axis measured like an octagon’s apothem, for the basin’s flat inner walls.
-    const x = abs(p.x)
-    const z = abs(p.z)
-    const octagon = max(max(x, z), x.add(z).mul(Math.SQRT1_2))
-    // A bowl’s inside faces up, its dry underside faces down; the stem rising through a pool is wet all around.
-    const inside = smoothstep(-0.1, 0.2, normalGeometry.y).max(below(radius, 0.22, 0.01))
+    const octagon = max(max(abs(p.x), abs(p.z)), abs(p.x).add(abs(p.z)).mul(Math.SQRT1_2))
+    // A bowl’s inside faces up; its dry underside faces down.
+    const up = smoothstep(-0.12, 0.22, normalGeometry.y)
+    const bowlWet = (pool: number, lip: number) => below(p.y, pool).mul(within(radius, lip + 0.01)).mul(up)
     const wet = max(
-      max(
-        below(p.y, pools.cup).mul(below(radius, veils.cup.radius + 0.01)),
-        below(p.y, pools.tazza).mul(below(radius, veils.tazza.radius + 0.01)),
-      ).mul(inside),
-      below(p.y, pools.basin).mul(below(octagon, basinInnerApothem + 0.005)),
+      below(p.y, pools.basin).mul(within(octagon, basinPoolRadius)),
+      max(bowlWet(pools.lower, bowls.lower.lip), max(bowlWet(pools.middle, bowls.middle.lip), bowlWet(pools.cup, bowls.cup.lip))),
     )
+    const depth = float(pools.basin).sub(p.y).max(0)
+    // Two crossing wave trains drifting apart: the bright ridges where the water focuses light onto the stone.
+    const drift = time.mul(0.42)
+    const caustic = sin(p.x.mul(6.2).add(drift)).mul(sin(p.z.mul(5.4).sub(drift.mul(1.4)))).add(sin(p.x.mul(3.1).sub(drift.mul(0.8)).add(p.z.mul(2.6))))
+      .mul(0.5).add(0.5)
+    const focused = mx_noise_float(p.mul(9)).mul(0.5).add(0.5)
+    const shimmer = smoothstep(0.5, 0.92, caustic.mul(0.7).add(focused.mul(0.3))).mul(wet).mul(depth.mul(-1.6).exp()).mul(0.16)
     // LimestoneMaterial assigns both nodes as floats and colors.
-    this.colorNode = (this.colorNode as Node<'color'>).mul(mix(float(1), float(0.82), wet))
-    this.roughnessNode = mix(this.roughnessNode as Node<'float'>, float(0.35), wet)
+    const stone = (this.colorNode as Node<'color'>).mul(mix(float(1), float(0.76), wet))
+    this.colorNode = mix(stone, stone.mul(float(1.16)), shimmer)
+    this.roughnessNode = mix(mix(this.roughnessNode as Node<'float'>, float(0.34), wet), float(0.28), shimmer)
   }
 }
