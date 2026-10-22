@@ -21,7 +21,7 @@ describe('lower gallery', () => {
     expect(lower.size).toEqual([28, 28])
     expect(lower.center).toEqual([-8, 18.5])
     expect(upper.center).toEqual([0, 12])
-    expect(upper.size).toEqual([upper.height, upper.height])
+    expect(upper.size).toEqual([8, 8])
     expect(stairFlights[1].start[2]).toBe(lower.center[1])
     expect(roomVisit(lower).position[1]).toBeCloseTo(-6.3)
     for (const block of stairBlocks) {

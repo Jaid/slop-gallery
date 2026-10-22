@@ -59,8 +59,8 @@ export const rooms = [
   {
     id: 'antechamber',
     floorY: 0,
-    // A cube: as tall as it is wide and deep.
-    height: 8,
+    // Taller than the other upper rooms, a meter short of a cube.
+    height: 7,
     number: '04',
     title: 'The Antechamber',
     subtitle: 'A pause between the peculiar and the profound.',
