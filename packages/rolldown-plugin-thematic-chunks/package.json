@@ -18,11 +18,11 @@
     "test": "bun test --max-concurrency 1 ./test"
   },
   "peerDependencies": {
-    "rolldown": "^1.2.14"
+    "rolldown": "^1.2.15"
   },
   "devDependencies": {
     "fs-extra": "11.4.1",
-    "vite": "8.3.4",
+    "vite": "8.3.5",
     "@types/fs-extra": "11.0.4"
   }
 }

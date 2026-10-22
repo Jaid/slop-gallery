@@ -32,7 +32,7 @@
   "peerDependencies": {
     "three": "^0.186.1",
     "three-bvh-csg": "latest",
-    "vite": "^8.3.4"
+    "vite": "^8.3.5"
   },
   "peerDependenciesMeta": {
     "three": {
