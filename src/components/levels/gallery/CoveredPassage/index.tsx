@@ -17,7 +17,7 @@ import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import TimberGeometry from '#src/lib/gallery/passages/TimberGeometry.ts'
 import VaultGeometry from '#src/lib/gallery/passages/VaultGeometry.ts'
 import {LanternBody} from '#src/lib/gallery/pendants/index.ts'
-import {soleLampBounce, soleLampReach} from '#src/lib/gallery/pendants/lighting.ts'
+import {soleLampReach} from '#src/lib/gallery/pendants/lighting.ts'
 import {corridorLightSpacing, passagePendantMounts} from '#src/lib/gallery/pendants/mounts.ts'
 
 const lantern = new LanternBody
@@ -34,7 +34,6 @@ const lanternLight = {
 /** Where the lanterns are all there is, their flames burn warmer and each one throws its own pool. */
 const soleLanternLight = {
   ...soleLampReach,
-  bounce: soleLampBounce,
   color: '#ffb363',
 }
 /**

@@ -1,32 +1,13 @@
 import {expect, test} from 'bun:test'
 
-import {AmbientLight, DirectionalLight, HemisphereLight, MeshPhysicalNodeMaterial, MeshStandardNodeMaterial, PointLight, StandardNodeLibrary} from 'three/webgpu'
+import {AmbientLight, DirectionalLight, HemisphereLight, MeshPhysicalNodeMaterial, MeshStandardNodeMaterial, PointLight} from 'three/webgpu'
 
-import {corridorPassage} from '../../src/lib/gallery/corridor.ts'
-import {lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
-import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
-import {GlobeBody, LanternBody} from '../../src/lib/gallery/pendants/index.ts'
-import {soleLampBounce, soleLampReach} from '../../src/lib/gallery/pendants/lighting.ts'
-import {corridorLightSpacing, passageLightHeight, passagePendantMounts} from '../../src/lib/gallery/pendants/mounts.ts'
-import {corridorLanterns, IndoorLightsNode, LanternLight, LanternLightNode, LanternLightsNode, lodgeWindowLights} from '../../src/lib/materials/lights/index.ts'
+import {corridorLanterns, IndoorLightsNode, LanternLightsNode, lodgeWindowLights} from '../../src/lib/materials/lights/index.ts'
 
-const lanternBody = new LanternBody
 const lamp = (zone: LanternLightsNode) => {
-  const light = new LanternLight({
-    intensity: soleLampReach.intensity,
-    distance: soleLampReach.distance,
-    roof: lanternBody.roof,
-    bounce: soleLampBounce,
-  })
+  const light = new PointLight
   Object.assign(light.userData, zone.lampUserData())
   return light
-}
-/** Irradiance a lamp at its passage height sends onto the floor, attenuated like a three.js point light: inverse square, windowed to its cutoff. */
-const floorIrradiance = (light: LanternLight, horizontal: number) => {
-  const distance = Math.hypot(horizontal, passageLightHeight)
-  const window = Math.max(0, 1 - (distance / light.distance) ** 4) ** 2
-  const direct = light.intensity * window / distance ** light.decay * (passageLightHeight / distance)
-  return direct + light.intensity * light.bounceAt(distance)
 }
 test('the corridor’s lanterns light only the corridor, and nothing else lights it', () => {
   const lantern = lamp(corridorLanterns)
@@ -57,93 +38,4 @@ test('adopted materials keep the scene’s environment and their own share of it
   for (const material of [wood, glass]) {
     material.dispose()
   }
-})
-test('a fixture’s roof shades the ceiling above it but not the room around and below it', () => {
-  for (const body of [new LanternBody, new GlobeBody]) {
-    const light = new LanternLight({roof: body.roof})
-    expect(light.transmission(-1)).toBe(1)
-    expect(light.transmission(0)).toBe(1)
-    expect(light.transmission(body.roof.start)).toBe(1)
-    expect(light.transmission(1)).toBeCloseTo(body.roof.leak)
-    expect(body.roof.leak).toBeGreaterThan(0)
-    expect(body.roof.leak).toBeLessThan(0.5)
-    // Monotonic between the shade’s start and end.
-    let previous = 1
-    for (let y = body.roof.start; y <= body.roof.end; y += 0.01) {
-      const share = light.transmission(y)
-      expect(share).toBeLessThanOrEqual(previous + 1e-12)
-      previous = share
-    }
-  }
-})
-test('lantern pools fade to a dim gap between neighbors without going black', () => {
-  const geometry = TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts)
-  try {
-    const lamps = passagePendantMounts(corridorPassage, [geometry.shell, geometry.ribs], corridorLightSpacing).map(mount => mount.light)
-    const light = lamp(corridorLanterns)
-    const floor = (x: number, z: number) => lamps.reduce((sum, [lampX, , lampZ]) => sum + floorIrradiance(light, Math.hypot(x - lampX, z - lampZ)), 0)
-    // Along the long span, every pair of neighbors leaves a dimmer stretch between their pools.
-    const span = lamps.filter(([x]) => x === corridorPassage.spans[1].start[0])
-    expect(span.length).toBe(7)
-    for (let i = 1; i < span.length; i++) {
-      const [x, , z] = span[i]
-      const previous = span[i - 1][2]
-      const under = Math.min(floor(x, z), floor(x, previous))
-      const between = floor(x, (z + previous) / 2)
-      expect(between / under).toBeLessThan(0.5)
-      expect(between / under).toBeGreaterThan(0.15)
-    }
-  } finally {
-    geometry.dispose()
-  }
-})
-test('bounce light falls off smoothly and ends at its reach', () => {
-  const light = lamp(corridorLanterns)
-  let previous = Infinity
-  for (let distance = 0; distance <= soleLampBounce.distance + 1; distance += 0.1) {
-    const share = light.bounceAt(distance)
-    expect(share).toBeGreaterThanOrEqual(0)
-    expect(share).toBeLessThanOrEqual(previous)
-    previous = share
-  }
-  expect(light.bounceAt(0)).toBeCloseTo(soleLampBounce.share)
-  expect(light.bounceAt(soleLampBounce.distance)).toBe(0)
-  const unbounced = new LanternLight
-  expect(unbounced.bounceAt(0)).toBe(0)
-})
-test('lantern lights clone with their roof and bounce, and reject impossible shapes', () => {
-  const light = lamp(corridorLanterns)
-  const clone = light.clone()
-  expect(clone).toBeInstanceOf(LanternLight)
-  expect(clone.roof).toEqual(light.roof)
-  expect(clone.roof).not.toBe(light.roof)
-  expect(clone.bounce).toEqual(light.bounce)
-  expect(clone.userData).toEqual(light.userData)
-  expect(() => new LanternLight({
-    roof: {
-      start: 0.8,
-      end: 0.6,
-      leak: 0.1,
-    },
-  })).toThrow(RangeError)
-  expect(() => new LanternLight({
-    roof: {
-      start: 0.6,
-      end: 0.8,
-      leak: 1.5,
-    },
-  })).toThrow(RangeError)
-  expect(() => new LanternLight({
-    bounce: {
-      distance: 4,
-      radius: 0,
-      share: 0.1,
-    },
-  })).toThrow(RangeError)
-})
-test('renderers shade lantern lights with their own node', () => {
-  const library = new StandardNodeLibrary
-  LanternLightNode.register(library)
-  expect(library.getLightNodeClass(LanternLight) as unknown).toBe(LanternLightNode)
-  expect(library.getLightNodeClass(PointLight) as unknown).not.toBe(LanternLightNode)
 })

@@ -10,7 +10,6 @@ import {isDevelopmentMode} from '#src/lib/developmentMode.ts'
 import {isTextInput, notify, rooms, useGallery} from '#src/lib/gallery.ts'
 import {cycleLighting, lightingPresets, useLighting} from '#src/lib/gallery/lighting.ts'
 import lobbyVault from '#src/lib/gallery/lobbyVault.ts'
-import {LanternLight} from '#src/lib/materials/lights/index.ts'
 import proceduralSky, {SkyLook} from '#src/lib/materials/ProceduralSky.ts'
 import {lightGain} from '#src/lib/rendering/lightLevels.ts'
 
@@ -94,7 +93,7 @@ export default function GalleryLighting() {
   useLayoutEffect(() => {
     lightGain.current = light => {
       const lamp = light as Lamp
-      return (lamp.isPointLight || lamp.isSpotLight) && !(lamp instanceof LanternLight) && !lamp.userData.daylight ? preset.lamps : 1
+      return (lamp.isPointLight || lamp.isSpotLight) && !lamp.userData.daylight ? preset.lamps : 1
     }
     return () => {
       lightGain.current = () => 1

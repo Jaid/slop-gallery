@@ -10,7 +10,6 @@ import Box from '#src/components/Scene/primitives.tsx'
 import {corridorRails, corridorRunner, corridorStairs} from '#src/lib/gallery/corridor.ts'
 import TimberGeometry from '#src/lib/gallery/passages/TimberGeometry.ts'
 import {GlobeBody} from '#src/lib/gallery/pendants/index.ts'
-import {soleLampBounce} from '#src/lib/gallery/pendants/lighting.ts'
 import {stairPendantMounts} from '#src/lib/gallery/pendants/mounts.ts'
 import {corridorLanterns} from '#src/lib/materials/lights/index.ts'
 import StairRunnerMaterial from '#src/lib/materials/StairRunnerMaterial.ts'
@@ -25,7 +24,6 @@ const globeGlow = {
 const globeLight = {
   distance: 6,
   intensity: 17,
-  bounce: soleLampBounce,
   color: '#ffc27e',
 }
 

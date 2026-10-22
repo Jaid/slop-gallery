@@ -18,7 +18,6 @@ export default abstract class FilteredLightsNode extends BatchedLightsNode {
   constructor() {
     super()
     this.addBatch('point')
-    this.addBatch('lantern')
   }
 
   // Lighting is only set up for nodes that report lights; the actual list is known once the material builds.

@@ -6,9 +6,6 @@ import UnionLightsNode from './UnionLightsNode.ts'
 
 export {default as FilteredLightsNode} from './base/FilteredLightsNode.ts'
 export {default as IndoorLightsNode, reachesIndoors} from './IndoorLightsNode.ts'
-export {default as LanternLight} from './LanternLight.ts'
-export type {LanternBounce, LanternRoof} from './LanternLight.ts'
-export {default as LanternLightNode} from './LanternLightNode.ts'
 export {default as LanternLightsNode} from './LanternLightsNode.ts'
 export {default as UnionLightsNode} from './UnionLightsNode.ts'
 

@@ -1,5 +1,5 @@
 import type {PendantBody, PendantMount} from '#src/lib/gallery/pendants/index.ts'
-import type {LanternBounce, LanternLightsNode} from '#src/lib/materials/lights/index.ts'
+import type {LanternLightsNode} from '#src/lib/materials/lights/index.ts'
 
 import Branch from 'branch-component'
 import useDisposable from 'disposable-lifetime/react'
@@ -7,11 +7,8 @@ import {useMemo} from 'react'
 import {MeshStandardNodeMaterial, PointLight} from 'three/webgpu'
 
 import {PendantGeometry} from '#src/lib/gallery/pendants/index.ts'
-import {LanternLight} from '#src/lib/materials/lights/index.ts'
 
 export type PendantLight = {
-  /** light thrown back by the surroundings, only used by lamps of a dark zone */
-  bounce?: LanternBounce
   color: string
   decay?: number
   distance: number
@@ -48,14 +45,9 @@ export default function PendantLamps({body, glow, light, lights, lighting, mount
   </group>
 }
 
-/** TEMPORARY: zone lamps as plain point lights, without the lanterns’ roof shading and bounce, to compare the two. */
-const plainZoneLamps = true
-function zoneLamp(body: PendantBody, light: PendantLight, lighting: LanternLightsNode) {
-  // eslint-disable-next-line typescript/no-unnecessary-condition -- a temporary switch
-  const lamp = plainZoneLamps ? new PointLight(light.color, light.intensity, light.distance, light.decay ?? 2) : new LanternLight({
-    ...light,
-    roof: body.roof,
-  })
+/** A dark zone’s lamp, tagged before it mounts so the zone’s first material build already sees it. */
+function zoneLamp(light: PendantLight, lighting: LanternLightsNode) {
+  const lamp = new PointLight(light.color, light.intensity, light.distance, light.decay ?? 2)
   lamp.position.y = light.y ?? 0
   Object.assign(lamp.userData, lighting.lampUserData())
   return lamp
@@ -69,7 +61,7 @@ class PendantSet {
   readonly glowMaterial: MeshStandardNodeMaterial
   readonly items: Array<{
     geometry: PendantGeometry
-    /** sole light source of a dark zone, shaded by the fixture’s roof; a regular point light is rendered otherwise */
+    /** sole light source of a dark zone; a regular point light is rendered otherwise */
     lamp?: PointLight
     /** the fixture’s light, `light` with its changes */
     light: PendantLight
@@ -91,7 +83,7 @@ class PendantSet {
         this.items.push({
           mount,
           geometry: new PendantGeometry(body, mount),
-          lamp: lighting && zoneLamp(body, own, lighting),
+          lamp: lighting && zoneLamp(own, lighting),
           light: own,
         })
       }

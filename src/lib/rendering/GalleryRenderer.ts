@@ -5,7 +5,6 @@ import {WebgpuRenderer} from 'three-fiber-game'
 import {Object3D, Renderer} from 'three/webgpu'
 
 import {BatchedLighting} from '#src/lib/materials/lights/base/BatchedLightsNode.ts'
-import LanternLightNode from '#src/lib/materials/lights/LanternLightNode.ts'
 import {telemetry} from '#src/lib/telemetry/index.ts'
 
 type Culler = (camera: Camera) => void
@@ -107,7 +106,6 @@ export class GalleryRenderer extends WebgpuRenderer {
       antialias: false,
       trackTimestamp: telemetry !== null,
     })
-    LanternLightNode.register(this.library)
     this.lighting = new BatchedLighting
   }
 

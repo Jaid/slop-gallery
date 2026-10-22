@@ -4,7 +4,7 @@ import {Lighting, LightsNode, NodeUtils, PointLight} from 'three/webgpu'
 
 import PointLightsNode from './PointLightsNode.ts'
 
-type Batch = 'lantern' | 'point'
+type Batch = 'point'
 
 // Uniform arrays have a fixed length per build; the gallery has about 50 shadowless point lights.
 const capacity = 128
@@ -13,14 +13,11 @@ const batchOf = (light: Light): Batch | undefined => {
   if (light.castShadow) {
     return undefined
   }
-  if ((light as Light & {isLanternLight?: boolean}).isLanternLight) {
-    return 'lantern'
-  }
   return light.constructor === PointLight ? 'point' : undefined
 }
 
 /**
- * Lights materials like {@link LightsNode}, but shades shadowless point lights and lanterns in one loop each through {@link PointLightsNode}.
+ * Lights materials like {@link LightsNode}, but shades shadowless point lights in one loop through {@link PointLightsNode}.
  *
  * Batched lights also stay out of the cache key: the batches read their members every frame, so lights can move, mount and unmount without rebuilding any material, as long as their batch already exists.
  */
@@ -31,13 +28,13 @@ export default class BatchedLightsNode extends LightsNode {
   /** Sets up the loop for a batch, if not done yet. */
   protected addBatch(batch: Batch) {
     if (!this.batches.has(batch)) {
-      this.batches.set(batch, new PointLightsNode(batch === 'lantern', capacity, () => this.membersOf(batch)))
+      this.batches.set(batch, new PointLightsNode(capacity, () => this.membersOf(batch)))
     }
   }
 
   // The batched lights belong to this instance’s uniform arrays, so materials lit by another lights node must not share its builds.
   override customCacheKey() {
-    return NodeUtils.hashArray([super.customCacheKey(), this.id, ...this.batches.keys().map(batch => (batch === 'lantern' ? 2 : 1))])
+    return NodeUtils.hashArray([super.customCacheKey(), this.id, this.batches.size])
   }
 
   override getBuiltinLights() {
