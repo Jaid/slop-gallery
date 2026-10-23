@@ -4,7 +4,7 @@ import {renderToStaticMarkup} from 'react-dom/server'
 import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 
 import GraphicsMode from '../../src/components/App/GraphicsMode.tsx'
-import {fitCanvasTextureResolution, getGraphicsProfile, readCinematicGraphics, readCustomGraphics, readGraphicsMode, readGraphicsModeName} from '../../src/lib/rendering/graphicsMode.ts'
+import {fitCanvasTextureResolution, getGraphicsProfile, readCinematicGraphics, readGraphicsMode, readGraphicsModeName} from '../../src/lib/rendering/graphicsMode.ts'
 
 function ReadProfile() {
   const isHeavy: boolean = useGraphicsMode()
@@ -17,7 +17,7 @@ test('graphics URL names round-trip through boolean state and default to fast', 
     const name = useGraphicsMode.getName(isHeavy)
     expect(readGraphicsMode(`?graphics=${name}`)).toBe(isHeavy)
   }
-  for (const value of ['', 'lite', 'full', 'auto', 'high', 'quality', 'performance', 'QUALITY', 'true', 'false', 'Cinematic', 'Custom']) {
+  for (const value of ['', 'lite', 'full', 'auto', 'high', 'quality', 'performance', 'QUALITY', 'true', 'false', 'Cinematic']) {
     expect(readGraphicsMode(`?graphics=${value}`)).toBe(false)
     expect(readCinematicGraphics(`?graphics=${value}`)).toBe(false)
     expect(readGraphicsModeName(`?graphics=${value}`)).toBe('fast')
@@ -29,14 +29,6 @@ test('cinematic graphics read as heavy, and only cinematic reads as cinematic', 
   expect(readCinematicGraphics('?graphics=cinematic')).toBe(true)
   expect(readCinematicGraphics('?graphics=heavy')).toBe(false)
   expect(readCinematicGraphics()).toBe(false)
-})
-test('custom graphics read as heavy and cinematic, and only custom reads as custom', () => {
-  expect(readGraphicsModeName('?graphics=custom')).toBe('custom')
-  expect(readGraphicsMode('?graphics=custom')).toBe(true)
-  expect(readCinematicGraphics('?graphics=custom')).toBe(true)
-  expect(readCustomGraphics('?graphics=custom')).toBe(true)
-  expect(readCustomGraphics('?graphics=cinematic')).toBe(false)
-  expect(readCustomGraphics()).toBe(false)
 })
 test('the cinematic profile is heavy with every intermediate map at twice the resolution, shadow maps at four times, more samples, full texture filtering and indirect light', () => {
   const heavy = getGraphicsProfile(true)

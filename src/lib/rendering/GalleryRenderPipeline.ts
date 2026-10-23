@@ -19,7 +19,7 @@ import {BlendMode, DirectionalLight, HalfFloatType, MRTNode, NoBlending, Node, N
 
 import {renderFloorReflection} from '../materials/FloorMaterial.ts'
 import ConditionalTexture from './ConditionalTexture.ts'
-import {useCustomGraphics} from './customGraphics.ts'
+import {getTunedGraphics, subscribeTunedGraphics} from './customGraphics.ts'
 import {GalleryRenderer} from './GalleryRenderer.ts'
 import KnotBokeh from './KnotBokeh.ts'
 import tiltShift from './tiltShift.ts'
@@ -35,7 +35,7 @@ export type GalleryRenderPipelineOptions = {
   ambientOcclusionSamples?: number
   antiAliasing?: AntiAliasing
   contactDarkening?: boolean
-  /** the tuning panel’s passes with `?graphics=custom`, which override the options they cover; the pipeline’s uniforms then follow the panel live */
+  /** the tuned passes, which override the options they cover; the pipeline’s uniforms then follow the tuning panel live, or the graphics mode’s own values while it is hidden */
   custom?: CustomGraphicsStructure
   focus?: {
     amount: () => number
@@ -105,9 +105,9 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       this.effects.push(effect)
       return effect
     }
-    const tuned = custom ? useCustomGraphics.getState() : undefined
+    const tuned = custom ? getTunedGraphics() : undefined
     const bindings: Array<[{value: number}, CustomGraphicsUniform]> = []
-    // With `?graphics=custom`, a uniform starts out at the panel’s value and follows it; otherwise it takes the pipeline’s own.
+    // Built with `custom`, a uniform starts out at its tuned value and follows it; otherwise it takes the pipeline’s own.
     const tune = (node: {value: number}, key: CustomGraphicsUniform, fallback: number) => {
       node.value = tuned ? tuned[key] : fallback
       if (tuned) {
@@ -333,7 +333,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
     }
     this.outputNode = current
     if (tuned) {
-      this.unsubscribe = useCustomGraphics.subscribe(state => {
+      this.unsubscribe = subscribeTunedGraphics(state => {
         for (const [node, key] of bindings) {
           node.value = state[key]
         }

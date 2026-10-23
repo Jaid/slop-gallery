@@ -2,7 +2,11 @@ import type {AntiAliasing} from './antiAliasing.ts'
 
 import {create} from 'zustand'
 
-/** Everything `?graphics=custom` lets the tuning panel change in the render pipeline. It starts out as cinematic. */
+import {isKnottingham} from '../level.ts'
+import {getAntiAliasing} from './antiAliasing.ts'
+import {getGraphicsProfile, readCinematicGraphics} from './graphicsMode.ts'
+
+/** Everything the tuning panel changes in the render pipeline. It starts out as the heavy graphics of the page, heavy or cinematic. */
 export type CustomGraphics = {
   ambientOcclusion: boolean
   ambientOcclusionRadius: number
@@ -51,47 +55,86 @@ export type CustomGraphicsStructure = Pick<CustomGraphics, typeof customGraphics
 
 export type CustomGraphicsUniform = {[Key in CustomGraphicsKey]: CustomGraphics[Key] extends number ? (Key extends typeof customGraphicsStructure[number] ? never : Key) : never}[CustomGraphicsKey]
 
-/** the cinematic pipeline, which the panel starts from and resets to */
-export const defaultCustomGraphics: CustomGraphics = {
-  ambientOcclusion: true,
-  ambientOcclusionRadius: 0.3,
-  ambientOcclusionResolutionScale: 1.5,
-  ambientOcclusionSamples: 32,
-  ambientOcclusionScale: 0.85,
-  ambientOcclusionThickness: 1,
-  antiAliasing: 'traa',
-  bloom: true,
-  bloomRadius: 0.25,
-  bloomStrength: 0.18,
-  bloomThreshold: 1,
-  contactShadowDenoise: true,
-  contactShadowDistance: 0.1,
-  contactShadowIntensity: 0.7,
-  contactShadowQuality: 1,
-  contactShadows: false,
-  contactShadowThickness: 0.01,
-  dither: true,
-  reflectionResolutionScale: 2,
-  screenSpaceIndirectLight: true,
-  screenSpaceIndirectLightIntensity: 4,
-  screenSpaceIndirectLightRadius: 12,
-  screenSpaceIndirectLightSlices: 3,
-  screenSpaceIndirectLightSteps: 16,
-  vignette: 0.2,
-  volumetricLight: true,
-  volumetricLightDensity: 8,
-  volumetricLightMaxDensity: 3,
-  volumetricLightSteps: 120,
-  voxelIndirectLight: true,
-  voxelIndirectLightBounces: 2,
-  voxelIndirectLightIntensity: 0.05,
+/** key that shows or hides the tuning panel with `?development` */
+export const graphicsTuningKey = 'KeyG'
+
+/** The pipeline of the page’s heavy graphics, which the panel starts from and resets to. */
+export function getDefaultCustomGraphics(): CustomGraphics {
+  const profile = getGraphicsProfile(true, readCinematicGraphics())
+  return {
+    ambientOcclusion: true,
+    ambientOcclusionRadius: isKnottingham ? 0.18 : 0.3,
+    ambientOcclusionResolutionScale: profile.ambientOcclusionResolutionScale,
+    ambientOcclusionSamples: profile.ambientOcclusionSamples,
+    ambientOcclusionScale: isKnottingham ? 1.18 : 0.85,
+    ambientOcclusionThickness: isKnottingham ? 0.6 : 1,
+    antiAliasing: getAntiAliasing(true),
+    bloom: true,
+    bloomRadius: 0.25,
+    bloomStrength: 0.18,
+    bloomThreshold: 1,
+    contactShadowDenoise: true,
+    contactShadowDistance: 0.1,
+    contactShadowIntensity: 0.7,
+    contactShadowQuality: 1,
+    contactShadows: false,
+    contactShadowThickness: 0.01,
+    dither: profile.volumetricLight,
+    reflectionResolutionScale: profile.reflectionResolutionScale,
+    screenSpaceIndirectLight: profile.indirectLight,
+    screenSpaceIndirectLightIntensity: 4,
+    screenSpaceIndirectLightRadius: 12,
+    screenSpaceIndirectLightSlices: 3,
+    screenSpaceIndirectLightSteps: 16,
+    vignette: 0.2,
+    volumetricLight: profile.volumetricLight,
+    volumetricLightDensity: 8,
+    volumetricLightMaxDensity: 3,
+    volumetricLightSteps: 120,
+    voxelIndirectLight: profile.indirectLight,
+    voxelIndirectLightBounces: 2,
+    voxelIndirectLightIntensity: 0.05,
+  }
 }
 
-/** the tuning panel’s values, which a pipeline built with `custom` follows */
-export const useCustomGraphics = create<CustomGraphics>(() => defaultCustomGraphics)
+/** the graphics mode’s own pipeline, read once at startup */
+const modeGraphics = getDefaultCustomGraphics()
 
-/** whether focus is in the tuning panel, which hides the pause menu so the scene shows every change */
-export const useGraphicsTuningFocus = create<boolean>(() => false)
+/** the tuning panel’s values, which stay while the panel is hidden */
+export const useCustomGraphics = create<CustomGraphics>(() => modeGraphics)
+
+/** Whether the tuning panel shows, which is the only time the pipeline follows it, and whether focus is in it, which hides the pause menu so the scene shows every change. */
+export const useGraphicsTuning = create<{
+  focused: boolean
+  open: boolean
+}>(() => ({
+  focused: false,
+  open: false,
+}))
+
+/** Shows the tuning panel or hides it, which puts the pipeline back to the graphics mode’s own. */
+export function toggleGraphicsTuning() {
+  useGraphicsTuning.setState(state => ({
+    focused: false,
+    open: !state.open,
+  }))
+}
+
+/** The values a pipeline built with `custom` follows: the panel’s while it shows, otherwise the graphics mode’s own. */
+export function getTunedGraphics() {
+  return useGraphicsTuning.getState().open ? useCustomGraphics.getState() : modeGraphics
+}
+
+/** Calls `listener` with the tuned values whenever the panel or its values change, returning the unsubscribe function. */
+export function subscribeTunedGraphics(listener: (values: CustomGraphics) => void) {
+  const notify = () => listener(getTunedGraphics())
+  const unsubscribers = [useCustomGraphics.subscribe(notify), useGraphicsTuning.subscribe(notify)]
+  return () => {
+    for (const unsubscribe of unsubscribers) {
+      unsubscribe()
+    }
+  }
+}
 
 /** Pick the knobs a pipeline is built from. */
 export function getCustomGraphicsStructure(state: CustomGraphics): CustomGraphicsStructure {

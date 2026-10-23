@@ -1,12 +1,12 @@
 import type {AntiAliasing} from '#src/lib/rendering/antiAliasing.ts'
 
 import {useStore, useThree} from '@react-three/fiber'
-import {useLayoutEffect} from 'react'
+import {useLayoutEffect, useMemo} from 'react'
 import {useShallow} from 'zustand/react/shallow'
 
 import {galleryEvents} from '#src/lib/gallery/actions.ts'
 import {activateRenderPipeline, releaseRenderPipeline} from '#src/lib/rendering/activeRenderPipeline.ts'
-import {getCustomGraphicsStructure, useCustomGraphics} from '#src/lib/rendering/customGraphics.ts'
+import {getCustomGraphicsStructure, getTunedGraphics, useCustomGraphics, useGraphicsTuning} from '#src/lib/rendering/customGraphics.ts'
 import GalleryRenderPipeline from '#src/lib/rendering/GalleryRenderPipeline.ts'
 import {getInspectionFocus, getInspectionFocusBlur, getInspectionFocusDistance, getInspectionFocusProximity, getPlayerZoom} from '#src/lib/rendering/playerView.ts'
 
@@ -15,7 +15,7 @@ type PostprocessingProps = {
   ambientOcclusionSamples?: number
   antiAliasing?: AntiAliasing
   contactDarkening?: boolean
-  /** whether the tuning panel of `?graphics=custom` drives the pipeline */
+  /** whether the pipeline follows the tuned values, which are the graphics mode’s own until the tuning panel changes them */
   custom?: boolean
   /** whether V-viewing blurs the background */
   focus?: boolean
@@ -30,7 +30,11 @@ const Postprocessing = ({ambientOcclusionResolutionScale, ambientOcclusionSample
   const scene = useThree(state => state.scene)
   const camera = useThree(state => state.camera)
   const store = useStore()
-  const structure = useCustomGraphics(useShallow(getCustomGraphicsStructure))
+  const isTuning = useGraphicsTuning(state => state.open)
+  const panelStructure = useCustomGraphics(useShallow(getCustomGraphicsStructure))
+  // Compared by value, so showing or hiding the panel only rebuilds the pipeline when its passes differ from the graphics mode’s.
+  const structureKey = JSON.stringify(isTuning ? panelStructure : getCustomGraphicsStructure(getTunedGraphics()))
+  const structure = useMemo(() => JSON.parse(structureKey) as ReturnType<typeof getCustomGraphicsStructure>, [structureKey])
   const customStructure = custom ? structure : undefined
   // The scene pass renders into targets with their own outputs. Activated after the first frame, every material of the scene would build a second time for them.
   useLayoutEffect(() => {
