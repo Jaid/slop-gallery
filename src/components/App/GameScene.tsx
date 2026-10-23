@@ -2,7 +2,7 @@ import type {GameWrapperProps} from 'three-fiber-game'
 
 import Branch from 'branch-component'
 import {useState} from 'react'
-import useGraphicsMode from 'use-graphics-mode'
+import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 
 import Postprocessing from '#component/Postprocessing'
 import TelemetryBridge from '#component/TelemetryBridge'
@@ -16,7 +16,7 @@ import {readVisionMode} from '#src/lib/rendering/visionMode.ts'
 /** Gallery integrations stay outside the physics subtree and share the WebGPU Canvas. */
 export default function GameScene({children}: GameWrapperProps) {
   const isHeavy = useGraphicsMode()
-  const profile = getGraphicsProfile(isHeavy)
+  const profile = useGraphicsModeValue(getGraphicsProfile)
   const [visionMode] = useState(() => readVisionMode())
   const [requestedAntiAliasing] = useState(() => readAntiAliasing())
   const antiAliasing = getAntiAliasing(isHeavy, requestedAntiAliasing)
@@ -24,6 +24,6 @@ export default function GameScene({children}: GameWrapperProps) {
     <WebgpuCaptureBridge />
     <TelemetryBridge />
     {children}
-    <Branch if={visionMode === 'wireframe'} then={WireframeVision} else={<Branch if={profile.postprocessing || antiAliasing !== false}><Postprocessing antiAliasing={antiAliasing} contactDarkening={isKnottingham} focus={profile.postprocessing} heavy={profile.postprocessing} /></Branch>} />
+    <Branch if={visionMode === 'wireframe'} then={WireframeVision} else={<Branch if={profile.postprocessing || antiAliasing !== false}><Postprocessing ambientOcclusionResolutionScale={profile.ambientOcclusionResolutionScale} antiAliasing={antiAliasing} contactDarkening={isKnottingham} focus={profile.postprocessing} heavy={profile.postprocessing} reflectionResolutionScale={profile.reflectionResolutionScale} /></Branch>} />
   </>
 }

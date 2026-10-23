@@ -9,14 +9,16 @@ import GalleryRenderPipeline from '#src/lib/rendering/GalleryRenderPipeline.ts'
 import {getInspectionFocus, getInspectionFocusBlur, getInspectionFocusDistance, getInspectionFocusProximity, getPlayerZoom} from '#src/lib/rendering/playerView.ts'
 
 type PostprocessingProps = {
+  ambientOcclusionResolutionScale?: number
   antiAliasing?: AntiAliasing
   contactDarkening?: boolean
   /** whether V-viewing blurs the background */
   focus?: boolean
   heavy?: boolean
+  reflectionResolutionScale?: number
 }
 
-const Postprocessing = ({antiAliasing = 'traa', contactDarkening = false, focus = false, heavy = true}: PostprocessingProps) => {
+const Postprocessing = ({ambientOcclusionResolutionScale, antiAliasing = 'traa', contactDarkening = false, focus = false, heavy = true, reflectionResolutionScale}: PostprocessingProps) => {
   const renderer = useThree(state => state.renderer)
   const scene = useThree(state => state.scene)
   const camera = useThree(state => state.camera)
@@ -24,9 +26,11 @@ const Postprocessing = ({antiAliasing = 'traa', contactDarkening = false, focus 
   // The scene pass renders into targets with their own outputs. Activated after the first frame, every material of the scene would build a second time for them.
   useLayoutEffect(() => {
     const pipeline = new GalleryRenderPipeline(renderer, scene, camera, {
+      ambientOcclusionResolutionScale,
       antiAliasing,
       contactDarkening,
       heavy,
+      reflectionResolutionScale,
       zoom: getPlayerZoom,
       focus: focus ? {
         amount: getInspectionFocus,
@@ -58,7 +62,7 @@ const Postprocessing = ({antiAliasing = 'traa', contactDarkening = false, focus 
       deactivate()
       pipeline.dispose()
     }
-  }, [antiAliasing, camera, contactDarkening, focus, heavy, renderer, scene, store])
+  }, [ambientOcclusionResolutionScale, antiAliasing, camera, contactDarkening, focus, heavy, reflectionResolutionScale, renderer, scene, store])
   return null
 }
 export default Postprocessing

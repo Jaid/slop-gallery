@@ -8,7 +8,7 @@ import {readDefaultPortraitsEnabled} from './gallery/defaultPortraits.ts'
 import {readLighting} from './gallery/lighting.ts'
 import {readPortraitSlotEditing} from './gallery/portraitSlotStore.ts'
 import {readAntiAliasing} from './rendering/antiAliasing.ts'
-import {readGraphicsMode} from './rendering/graphicsMode.ts'
+import {readGraphicsModeName} from './rendering/graphicsMode.ts'
 import {readEditLights, readShowLights} from './rendering/lightLevels.ts'
 import {readNear} from './rendering/near.ts'
 import {readScale} from './rendering/scale.ts'
@@ -31,7 +31,7 @@ const readers: Record<string, Reader> = {
   development: readDevelopmentMode,
   edit_lights: readEditLights,
   edit_portrait_slots: readPortraitSlotEditing,
-  graphics: readGraphicsMode,
+  graphics: readGraphicsModeName,
   intro_narration: readIntroNarration,
   lighting: readLighting,
   near: readNear,

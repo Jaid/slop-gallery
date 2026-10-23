@@ -10,6 +10,8 @@ export type ReflectionPass = {
   camera: Camera
   mrt: MRTNode | null
   renderer: Renderer
+  /** reflection pixels per pixel of the pass along each axis */
+  resolutionScale?: number
   scene: Scene
   target: RenderTarget
 }
@@ -60,7 +62,7 @@ function floorBounds(target: Object3D) {
 function acquireReflection(floor: FloorMaterial) {
   if (!shared) {
     const reflection = reflector({
-      // Native-resolution reflections retain mipmap LOD filtering for rough surfaces.
+      // Native-resolution reflections retain mipmap LOD filtering for rough surfaces. Each pass may render it at a scale of its own.
       resolutionScale: 1,
       generateMipmaps: true,
       bounces: false,
@@ -100,7 +102,7 @@ function acquireReflection(floor: FloorMaterial) {
       }
       return renderTarget
     }
-    const render = ({camera, mrt, renderer, scene, target}: ReflectionPass) => {
+    const render = ({camera, mrt, renderer, resolutionScale = 1, scene, target}: ReflectionPass) => {
       // Any mounted floor spans the plane. One that isn’t mounted yet has no world matrix.
       const mounted = [...floors].filter(candidate => candidate.reflectionTarget!.parent)
       // Only a floor the main pass draws needs the reflection, and the main pass leaves out floors outside the camera frustum. The frame’s matrices aren’t updated yet.
@@ -110,6 +112,7 @@ function acquireReflection(floor: FloorMaterial) {
         return
       }
       base.target = mounted[0].reflectionTarget!
+      base.resolutionScale = resolutionScale
       layout = target
       const visible = [...floors].map(candidate => candidate.visible)
       for (const candidate of floors) {

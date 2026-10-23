@@ -2,7 +2,7 @@
   "name": "use-graphics-mode",
   "version": "0.1.0",
   "type": "module",
-  "description": "Controlled fast/heavy graphics mode state for React",
+  "description": "Controlled fast/heavy/cinematic graphics mode state for React",
   "funding": "https://github.com/sponsors/Jaid",
   "license": "MIT",
   "repository": {

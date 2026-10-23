@@ -6,7 +6,7 @@ import {AimInspector} from 'ego-player'
 import useEgoTelemetry from 'telemethree-ego/react'
 import usePauseMenuTelemetry from 'telemethree-pause-menu/react'
 import useThreeTelemetry from 'telemethree/react'
-import useGraphicsMode from 'use-graphics-mode'
+import useGraphicsMode, {useCinematicGraphics} from 'use-graphics-mode'
 
 import {useGallery} from '#src/lib/gallery.ts'
 import pauseMenu from '#src/lib/pauseMenu.ts'
@@ -23,7 +23,8 @@ function Collectors() {
   const camera = useThree(state => state.camera)
   const inspector = new AimInspector(scene, camera)
   const isHeavy = useGraphicsMode()
-  const profile = getGraphicsProfile(isHeavy)
+  const isCinematic = useCinematicGraphics()
+  const profile = getGraphicsProfile(isHeavy, isCinematic)
   const antiAliasing = getAntiAliasing(isHeavy)
   useThreeTelemetry({
     telemetry: telemetry!,
@@ -32,7 +33,7 @@ function Collectors() {
       return {
         room,
         locked,
-        'graphics.profile': useGraphicsMode.getName(isHeavy),
+        'graphics.profile': useGraphicsMode.getName(isHeavy, isCinematic),
         'graphics.shadows': profile.shadows,
         'graphics.postprocessing': profile.postprocessing,
         'graphics.anti_aliasing': antiAliasing || 'none',

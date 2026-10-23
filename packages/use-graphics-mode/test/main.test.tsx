@@ -4,7 +4,7 @@ import {expect, test} from 'bun:test'
 
 import {renderToStaticMarkup} from 'react-dom/server'
 
-import useGraphicsMode, {GraphicsModeProvider, useGraphicsModeValue, useSetGraphicsMode} from '../src/main.ts'
+import useGraphicsMode, {GraphicsModeProvider, useCinematicGraphics, useGraphicsModeValue, useSetGraphicsMode} from '../src/main.ts'
 
 const heavyBudget = {samples: 16} as const
 const fastBudget = {samples: 0} as const
@@ -16,10 +16,28 @@ function ReadMode() {
   return <span>{String(isHeavy)}:{useGraphicsMode.getName(isHeavy)}</span>
 }
 test('getName converts booleans to lowercase names without a provider', () => {
-  const heavy: 'fast' | 'heavy' = useGraphicsMode.getName(true)
-  const fast: 'fast' | 'heavy' = useGraphicsMode.getName(false)
+  const heavy: 'cinematic' | 'fast' | 'heavy' = useGraphicsMode.getName(true)
+  const fast: 'cinematic' | 'fast' | 'heavy' = useGraphicsMode.getName(false)
   expect(heavy).toBe('heavy')
   expect(fast).toBe('fast')
+  expect(useGraphicsMode.getName(true, true)).toBe('cinematic')
+  expect(useGraphicsMode.getName(false, true)).toBe('fast')
+})
+test('cinematic graphics are heavy, and only take effect while heavy', () => {
+  const received: Array<[boolean, boolean]> = []
+  function Read() {
+    const isHeavy = useGraphicsMode()
+    const isCinematic = useCinematicGraphics()
+    useGraphicsModeValue((...mode) => received.push(mode))
+    return <span>{useGraphicsMode.getName(isHeavy, isCinematic)}</span>
+  }
+  const html = renderToStaticMarkup(<>
+    <GraphicsModeProvider isCinematic isHeavy onChange={() => {}}><Read /></GraphicsModeProvider>
+    <GraphicsModeProvider isCinematic isHeavy={false} onChange={() => {}}><Read /></GraphicsModeProvider>
+    <GraphicsModeProvider isHeavy onChange={() => {}}><Read /></GraphicsModeProvider>
+  </>)
+  expect(html).toBe('<span>cinematic</span><span>fast</span><span>heavy</span>')
+  expect(received).toEqual([[true, true], [false, false], [true, false]])
 })
 test('selectors receive booleans and preserve selected identity and literal value types', () => {
   let selected: ReturnType<typeof selectBudget> | undefined
@@ -81,7 +99,7 @@ test('nested providers isolate booleans and callbacks without leaking into sibli
   expect(() => renderToStaticMarkup(<ReadMode />)).toThrow('requires a GraphicsModeProvider')
 })
 test('every hook fails clearly outside a provider', () => {
-  for (const hook of [useGraphicsMode, useSetGraphicsMode, () => useGraphicsModeValue(selectBudget)]) {
+  for (const hook of [useGraphicsMode, useCinematicGraphics, useSetGraphicsMode, () => useGraphicsModeValue(selectBudget)]) {
     function MissingProvider() {
       hook()
       return null

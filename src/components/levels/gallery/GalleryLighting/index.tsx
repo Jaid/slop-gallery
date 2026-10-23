@@ -5,12 +5,14 @@ import {useThree} from '@react-three/fiber'
 import renderCanvasTexture from 'canvas-textures/three'
 import {useEffect, useLayoutEffect, useRef, useState} from 'react'
 import {EquirectangularReflectionMapping, SRGBColorSpace} from 'three/webgpu'
+import {useGraphicsModeValue} from 'use-graphics-mode'
 
 import {isDevelopmentMode} from '#src/lib/developmentMode.ts'
 import {isTextInput, notify, rooms, useGallery} from '#src/lib/gallery.ts'
 import {cycleLighting, lightingPresets, useLighting} from '#src/lib/gallery/lighting.ts'
 import lobbyVault from '#src/lib/gallery/lobbyVault.ts'
 import proceduralSky, {SkyLook} from '#src/lib/materials/ProceduralSky.ts'
+import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 import {lightGain} from '#src/lib/rendering/lightLevels.ts'
 
 /** key that cycles the lighting presets with `?development`, backwards with Shift */
@@ -34,6 +36,7 @@ export default function GalleryLighting() {
   const scene = useThree(s => s.scene)
   const renderer = useThree(s => s.renderer)
   const sunLight = useRef<DirectionalLight>(null)
+  const sunShadowMapSize = preset.sun.shadow.mapSize * useGraphicsModeValue(getGraphicsProfile).shadowMapScale
   const [look] = useState(() => new SkyLook({
     ...preset.sky,
     sunDirection: preset.sun.direction,
@@ -120,7 +123,7 @@ export default function GalleryLighting() {
   return <>
     <ambientLight color={preset.ambient.color} intensity={preset.ambient.intensity} />
     <hemisphereLight color={preset.hemisphere.color} groundColor={preset.hemisphere.ground} intensity={preset.hemisphere.intensity} />
-    <directionalLight castShadow color={sun.color} intensity={sun.intensity} name='sun' position={sun.position} shadow-camera-bottom={sun.shadow.bottom} shadow-camera-far={sun.shadow.far} shadow-camera-left={sun.shadow.left} shadow-camera-near={sun.shadow.near} shadow-camera-right={sun.shadow.right} shadow-camera-top={sun.shadow.top} shadow-mapSize={[sun.shadow.mapSize, sun.shadow.mapSize]} shadow-normalBias={sun.shadow.normalBias} userData={{marker: sunMarker}} ref={sunLight} />
+    <directionalLight castShadow color={sun.color} intensity={sun.intensity} name='sun' position={sun.position} shadow-camera-bottom={sun.shadow.bottom} shadow-camera-far={sun.shadow.far} shadow-camera-left={sun.shadow.left} shadow-camera-near={sun.shadow.near} shadow-camera-right={sun.shadow.right} shadow-camera-top={sun.shadow.top} shadow-mapSize={[sunShadowMapSize, sunShadowMapSize]} shadow-normalBias={sun.shadow.normalBias} userData={{marker: sunMarker}} ref={sunLight} />
   </>
 }
 

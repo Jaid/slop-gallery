@@ -9,7 +9,7 @@ import {knotBillboardPhysics} from 'knot-materials/knotBillboardPhysics.ts'
 import {knotPreviewMountY, knotPreviewPanelOffsetY, knotPreviewTextureLayout} from 'knot-materials/KnotPreviewLayout.ts'
 import {useMemo} from 'react'
 import {MeshBasicNodeMaterial} from 'three/webgpu'
-import useGraphicsMode from 'use-graphics-mode'
+import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 import constructors from 'virtual:knot-exhibition-materials'
 
 import InteractiveObject from '#component/InteractiveObject'
@@ -38,7 +38,7 @@ export default function KnotPreviewSign({bay, renderer, x}: {
   x: number
 }) {
   const layout = knotPreviewTextureLayout(bay.finishes.length)
-  const resolution = getGraphicsProfile(useGraphicsMode()).canvasTextureResolution
+  const resolution = useGraphicsModeValue(getGraphicsProfile).canvasTextureResolution
   const texture = useCanvasTexture(useMemo(() => ({
     width: layout.width,
     height: layout.height,

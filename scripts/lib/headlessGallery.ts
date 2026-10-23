@@ -20,7 +20,7 @@ const queryOptions: Record<string, {type: 'string'}> = Object.fromEntries(queryO
 /** Scripts pick their own default height; the width follows 16:9. */
 export const galleryHelp = (defaultHeight = 720) => `  --level <id>            ${levelIds.join(', ')}. Default: GAME_LEVEL or the default level
   --target <dir>          use this static build (e.g. dist) instead of the dev server. Its level-build.json decides the level
-  --graphics <mode>       mirrors ?graphics (heavy or fast). Default: heavy
+  --graphics <mode>       mirrors ?graphics (fast, heavy or cinematic, which is heavy with doubled shadow, reflection, ambient occlusion and sign texture resolution for non-realtime renders). Default: heavy
   --seed <number>         mirrors ?seed, the environment seed (0–${maximumSeed}) that decides random details like the potted plants. Default: 1
   --width <pixels>        render width. Default: --height × 16/9, or ${Math.round(defaultHeight * 16 / 9)}
   --height <pixels>       render height. Default: --width × 9/16, or ${defaultHeight}

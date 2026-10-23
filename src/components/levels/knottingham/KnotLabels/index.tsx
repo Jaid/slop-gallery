@@ -11,7 +11,7 @@ import {knotSign, knotSignId, knotSignParts, knotSignPosition, knotSignRoundPart
 import {useEffect, useMemo, useSyncExternalStore} from 'react'
 import {attribute, texture, uv, vec2} from 'three/tsl'
 import {InstancedBufferAttribute, InstancedMesh, Matrix4, MeshBasicNodeMaterial, PlaneGeometry} from 'three/webgpu'
-import useGraphicsMode from 'use-graphics-mode'
+import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 
 import InteractiveObject from '#component/InteractiveObject'
 import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
@@ -27,7 +27,7 @@ const atlasRows = Math.ceil(knotExhibition.length / labelAtlasColumns)
 /** One complete face atlas and two instanced batches: faces and physical supports. */
 export default function KnotLabels() {
   const isHeavy = useGraphicsMode()
-  const resolution = getGraphicsProfile(isHeavy).canvasTextureResolution
+  const resolution = useGraphicsModeValue(getGraphicsProfile).canvasTextureResolution
   const ratings = useSyncExternalStore(knotRarityEditor.subscribe, knotRarityEditor.getSnapshot, knotRarityEditor.getSnapshot)
   // Only the flat fallback is owned here; the reflective steel is shared for the page lifetime.
   const flatSupportMaterial = useDisposable(useMemo(() => new MeshBasicNodeMaterial({color: '#9ca6ad'}), []))

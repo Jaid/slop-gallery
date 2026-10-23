@@ -1,4 +1,4 @@
-import useGraphicsMode, {useSetGraphicsMode} from 'use-graphics-mode'
+import useGraphicsMode, {useCinematicGraphics, useSetGraphicsMode} from 'use-graphics-mode'
 
 import Icon from '#component/Icon'
 import {useGallery} from '#src/lib/gallery.ts'
@@ -9,8 +9,9 @@ export default function MenuOptions() {
   const s = useGallery()
   const isHeavy = useGraphicsMode()
   const setIsHeavy = useSetGraphicsMode()
+  const isCinematic = useCinematicGraphics()
   return <div className={css.container}>
     <button className={css.option} aria-label='Mute audio' aria-pressed={!s.sound} type='button' onClick={() => useGallery.setState({sound: !s.sound})}><Icon name={s.sound ? 'sound' : 'mute'} size={18} /><span>Audio</span><small>{s.sound ? 'On' : 'Muted'}</small></button>
-    <button className={css.option} aria-label='Heavy graphics' aria-pressed={isHeavy} type='button' onClick={() => setIsHeavy(!isHeavy)}><Icon name='settings' size={18} /><span>Graphics</span><small>{isHeavy ? 'Heavy' : 'Fast'}</small></button>
+    <button className={css.option} aria-label='Heavy graphics' aria-pressed={isHeavy} type='button' onClick={() => setIsHeavy(!isHeavy)}><Icon name='settings' size={18} /><span>Graphics</span><small>{isHeavy ? (isCinematic ? 'Cinematic' : 'Heavy') : 'Fast'}</small></button>
   </div>
 }

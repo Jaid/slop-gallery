@@ -1,8 +1,8 @@
 # use-graphics-mode
 
-A small, controlled React API for a two-level graphics mode. State is a boolean named `isHeavy`: `true` selects heavy rendering and `false` selects fast rendering. Consumers never need to compare or toggle enum values.
+A small, controlled React API for a graphics mode. State is a boolean named `isHeavy`: `true` selects heavy rendering and `false` selects fast rendering. An optional `isCinematic` boolean marks heavy rendering as meant for non-realtime output, like recorded films, which can afford far more per frame. Consumers never need to compare or toggle enum values.
 
-No renderer, global store, hardware detection, URL library or persistence dependency. The application owns the boolean and defines its rendering budgets.
+No renderer, global store, hardware detection, URL library or persistence dependency. The application owns the booleans and defines its rendering budgets.
 
 ## Usage
 
@@ -35,11 +35,12 @@ function App() {
 
 ## API
 
-- `GraphicsModeProvider`: requires `isHeavy: boolean`, `onChange(isHeavy: boolean)` and `children`. It neither mirrors nor mutates the supplied state.
-- `useGraphicsMode(): boolean`: reads the nearest provider’s `isHeavy`.
-- `useGraphicsMode.getName(isHeavy: boolean)`: returns `'heavy'` for `true` or `'fast'` for `false`. This pure formatter works outside React and does not require a provider.
+- `GraphicsModeProvider`: requires `isHeavy: boolean`, `onChange(isHeavy: boolean)` and `children`, and takes an optional `isCinematic: boolean` (default `false`). It neither mirrors nor mutates the supplied state. `isCinematic` only takes effect while `isHeavy` is `true`, so cinematic graphics are always heavy and an owner can keep the flag across fast/heavy toggles.
+- `useGraphicsMode(): boolean`: reads the nearest provider’s `isHeavy`, which is `true` for cinematic graphics too.
+- `useCinematicGraphics(): boolean`: reads whether the nearest provider’s heavy graphics are cinematic.
+- `useGraphicsMode.getName(isHeavy: boolean, isCinematic = false)`: returns `'cinematic'`, `'heavy'` or `'fast'`. This pure formatter works outside React and does not require a provider.
 - `useSetGraphicsMode()`: returns the nearest provider’s original boolean change callback.
-- `useGraphicsModeValue(select)`: calls `select(isHeavy)`, preserving the selected value’s identity and inferred type without enum-keyed records.
+- `useGraphicsModeValue(select)`: calls `select(isHeavy, isCinematic)`, preserving the selected value’s identity and inferred type without enum-keyed records. A selector that only takes `isHeavy` keeps working.
 
 Hooks throw clearly outside a provider. `false` is a valid setting, not a missing provider. Nested providers isolate their booleans and callbacks. Separate value and callback contexts avoid subscribing read-only consumers to callback changes. There is no module-owned mutable state, so independent roots and server renders cannot leak preferences into each other.
 
@@ -49,7 +50,7 @@ Place the provider above both the settings UI and the scene. Three Fiber bridges
 
 Selectors run during rendering and must be pure. Select existing values or resource factories, then instantiate selected factories inside lifecycle-aware hooks. Dispose owned GPU resources on replacement or unmount. Renderer constructor-only options cannot be made reactive by this package; keep them stable or implement an explicit renderer transition.
 
-URL parsing, persistence, defaults, labels, frame budgets and material art direction belong to the consumer. Slop Gallery serializes `?graphics=fast` or `?graphics=heavy` through `getName`. It defaults to fast and disables procedural dirt/pot noise and ground reflections in that mode. The renderer draws one pixel per physical display pixel in both modes, independent of browser zoom; `?scale=N` multiplies that by any finite positive value.
+URL parsing, persistence, defaults, labels, frame budgets and material art direction belong to the consumer. Slop Gallery serializes `?graphics=fast`, `?graphics=heavy` or `?graphics=cinematic` through `getName`. It defaults to fast and disables procedural dirt/pot noise and ground reflections in that mode. Cinematic is heavy with doubled shadow map sizes, reflection, ambient occlusion and sign texture resolution; the menu toggles between fast and heavy, and switching back to heavy returns to cinematic. The renderer draws one pixel per physical display pixel in both modes, independent of browser zoom; `?scale=N` multiplies that by any finite positive value.
 
 ## Development
 

@@ -4,7 +4,7 @@ import {renderToStaticMarkup} from 'react-dom/server'
 import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 
 import GraphicsMode from '../../src/components/App/GraphicsMode.tsx'
-import {getGraphicsProfile, readGraphicsMode} from '../../src/lib/rendering/graphicsMode.ts'
+import {getGraphicsProfile, readCinematicGraphics, readGraphicsMode, readGraphicsModeName} from '../../src/lib/rendering/graphicsMode.ts'
 
 function ReadProfile() {
   const isHeavy: boolean = useGraphicsMode()
@@ -17,9 +17,31 @@ test('graphics URL names round-trip through boolean state and default to fast', 
     const name = useGraphicsMode.getName(isHeavy)
     expect(readGraphicsMode(`?graphics=${name}`)).toBe(isHeavy)
   }
-  for (const value of ['', 'lite', 'full', 'auto', 'high', 'quality', 'performance', 'QUALITY', 'true', 'false']) {
+  for (const value of ['', 'lite', 'full', 'auto', 'high', 'quality', 'performance', 'QUALITY', 'true', 'false', 'Cinematic']) {
     expect(readGraphicsMode(`?graphics=${value}`)).toBe(false)
+    expect(readCinematicGraphics(`?graphics=${value}`)).toBe(false)
+    expect(readGraphicsModeName(`?graphics=${value}`)).toBe('fast')
   }
+})
+test('cinematic graphics read as heavy, and only cinematic reads as cinematic', () => {
+  expect(readGraphicsModeName('?graphics=cinematic')).toBe('cinematic')
+  expect(readGraphicsMode('?graphics=cinematic')).toBe(true)
+  expect(readCinematicGraphics('?graphics=cinematic')).toBe(true)
+  expect(readCinematicGraphics('?graphics=heavy')).toBe(false)
+  expect(readCinematicGraphics()).toBe(false)
+})
+test('the cinematic profile is heavy with every intermediate map at twice the resolution', () => {
+  const heavy = getGraphicsProfile(true)
+  const cinematic = getGraphicsProfile(true, true)
+  expect(cinematic).toEqual({
+    ...heavy,
+    canvasTextureResolution: 2,
+    ambientOcclusionResolutionScale: 1.5,
+    reflectionResolutionScale: 2,
+    shadowMapScale: 2,
+  })
+  expect(getGraphicsProfile(true, true)).toBe(cinematic)
+  expect(getGraphicsProfile(false, true)).toBe(getGraphicsProfile(false))
 })
 test('the provider exposes the default scene budget during SSR', () => {
   const html = renderToStaticMarkup(<GraphicsMode><ReadProfile /></GraphicsMode>)
@@ -31,6 +53,9 @@ test('the provider exposes the default scene budget during SSR', () => {
     floorReflections: false,
     shadows: false,
     postprocessing: false,
+    ambientOcclusionResolutionScale: 0.75,
+    reflectionResolutionScale: 1,
+    shadowMapScale: 1,
   })
   expect(getGraphicsProfile(true)).toEqual({
     canvasTextureResolution: 1,
@@ -38,6 +63,9 @@ test('the provider exposes the default scene budget during SSR', () => {
     floorReflections: true,
     shadows: true,
     postprocessing: true,
+    ambientOcclusionResolutionScale: 0.75,
+    reflectionResolutionScale: 1,
+    shadowMapScale: 1,
   })
   expect(getGraphicsProfile(true)).toBe(getGraphicsProfile(true))
   expect(getGraphicsProfile(false)).toBe(getGraphicsProfile(false))

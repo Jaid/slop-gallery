@@ -20,6 +20,8 @@ import ZoomBlur from './ZoomBlur.ts'
 const bloomLuminanceCap = 8
 
 export type GalleryRenderPipelineOptions = {
+  /** ambient occlusion pixels per output pixel along each axis */
+  ambientOcclusionResolutionScale?: number
   antiAliasing?: AntiAliasing
   contactDarkening?: boolean
   focus?: {
@@ -30,6 +32,8 @@ export type GalleryRenderPipelineOptions = {
     proximity: () => number
   }
   heavy?: boolean
+  /** floor reflection pixels per output pixel along each axis */
+  reflectionResolutionScale?: number
   zoom?: () => number
 }
 
@@ -67,7 +71,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
   readonly scenePass: ReturnType<typeof pass>
   private readonly effects: Array<{dispose: () => void}> = []
 
-  constructor(renderer: Renderer, scene: Object3D, camera: Camera, {antiAliasing = 'traa', contactDarkening = false, focus, heavy = true, zoom = () => 0}: GalleryRenderPipelineOptions = {}) {
+  constructor(renderer: Renderer, scene: Object3D, camera: Camera, {antiAliasing = 'traa', ambientOcclusionResolutionScale = 0.75, contactDarkening = false, focus, heavy = true, reflectionResolutionScale = 1, zoom = () => 0}: GalleryRenderPipelineOptions = {}) {
     super(renderer)
     const own = <T extends {dispose: () => void}>(effect: T) => {
       this.effects.push(effect)
@@ -85,6 +89,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
           camera,
           mrt: scenePass.getMRT(),
           renderer,
+          resolutionScale: reflectionResolutionScale,
           scene: scene as Scene,
           target: scenePass.renderTarget,
         })
@@ -115,7 +120,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
     let current: Node<'vec4'> = scenePass.getTextureNode('output')
     if (heavy) {
       const ambientOcclusion = own(ao(depth, scenePass.getTextureNode('normal'), camera))
-      ambientOcclusion.resolutionScale = 0.75
+      ambientOcclusion.resolutionScale = ambientOcclusionResolutionScale
       ambientOcclusion.radius.value = contactDarkening ? 0.18 : 0.3
       ambientOcclusion.thickness.value = contactDarkening ? 0.6 : 1
       ambientOcclusion.scale.value = contactDarkening ? 1.18 : 0.85
