@@ -18,9 +18,10 @@ type PostprocessingProps = {
   heavy?: boolean
   indirectLight?: boolean
   reflectionResolutionScale?: number
+  volumetricLight?: boolean
 }
 
-const Postprocessing = ({ambientOcclusionResolutionScale, ambientOcclusionSamples, antiAliasing = 'traa', contactDarkening = false, focus = false, heavy = true, indirectLight = false, reflectionResolutionScale}: PostprocessingProps) => {
+const Postprocessing = ({ambientOcclusionResolutionScale, ambientOcclusionSamples, antiAliasing = 'traa', contactDarkening = false, focus = false, heavy = true, indirectLight = false, reflectionResolutionScale, volumetricLight = false}: PostprocessingProps) => {
   const renderer = useThree(state => state.renderer)
   const scene = useThree(state => state.scene)
   const camera = useThree(state => state.camera)
@@ -35,6 +36,7 @@ const Postprocessing = ({ambientOcclusionResolutionScale, ambientOcclusionSample
       heavy,
       indirectLight,
       reflectionResolutionScale,
+      volumetricLight,
       zoom: getPlayerZoom,
       focus: focus ? {
         amount: getInspectionFocus,
@@ -66,7 +68,7 @@ const Postprocessing = ({ambientOcclusionResolutionScale, ambientOcclusionSample
       deactivate()
       pipeline.dispose()
     }
-  }, [ambientOcclusionResolutionScale, ambientOcclusionSamples, antiAliasing, camera, contactDarkening, focus, heavy, indirectLight, reflectionResolutionScale, renderer, scene, store])
+  }, [ambientOcclusionResolutionScale, ambientOcclusionSamples, antiAliasing, camera, contactDarkening, focus, heavy, indirectLight, reflectionResolutionScale, renderer, scene, store, volumetricLight])
   return null
 }
 export default Postprocessing

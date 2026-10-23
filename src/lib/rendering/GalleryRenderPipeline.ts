@@ -1,15 +1,18 @@
 import type {AntiAliasing} from './antiAliasing.ts'
-import type {Camera, NodeBuilder, NodeMaterial, Object3D, Renderer, Scene, TextureNode} from 'three/webgpu'
+import type {Camera, NodeBuilder, NodeMaterial, Object3D, Renderer, RenderTarget, Scene, TextureNode} from 'three/webgpu'
 
 import {WireframeFloodPass} from 'capture-session'
 import {vxgi} from 'three/addons/lighting/vxgi/VXGINode.js'
 import {bloom} from 'three/addons/tsl/display/BloomNode.js'
+import {depthAwareBlend} from 'three/addons/tsl/display/depthAwareBlend.js'
+import {gaussianBlur} from 'three/addons/tsl/display/GaussianBlurNode.js'
+import {godrays} from 'three/addons/tsl/display/GodraysNode.js'
 import {ao} from 'three/addons/tsl/display/GTAONode.js'
 import {smaa} from 'three/addons/tsl/display/SMAANode.js'
 import {ssgi} from 'three/addons/tsl/display/SSGINode.js'
 import {traa} from 'three/addons/tsl/display/TRAANode.js'
-import {convertToTexture, diffuseColor, float, int, length, luminance, max, min, mrt, normalView, output, pass, rtt, screenUV, smoothstep, uniform, uv, vec2, vec3, vec4, velocity} from 'three/tsl'
-import {BlendMode, MRTNode, NoBlending, Node, NormalBlending, PerspectiveCamera, RenderPipeline} from 'three/webgpu'
+import {convertToTexture, diffuseColor, float, int, interleavedGradientNoise, length, luminance, max, min, mrt, normalView, output, pass, renderOutput, rtt, screenCoordinate, screenUV, smoothstep, uniform, uv, vec2, vec3, vec4, velocity} from 'three/tsl'
+import {BlendMode, DirectionalLight, HalfFloatType, MRTNode, NoBlending, Node, NormalBlending, PerspectiveCamera, RenderPipeline} from 'three/webgpu'
 
 import {renderFloorReflection} from '../materials/FloorMaterial.ts'
 import ConditionalTexture from './ConditionalTexture.ts'
@@ -40,6 +43,8 @@ export type GalleryRenderPipelineOptions = {
   indirectLight?: boolean
   /** floor reflection pixels per output pixel along each axis */
   reflectionResolutionScale?: number
+  /** whether the shadow-casting sun scatters through the air as shafts of light, needs heavy */
+  volumetricLight?: boolean
   zoom?: () => number
 }
 
@@ -78,7 +83,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
   readonly scenePass: ReturnType<typeof pass>
   private readonly effects: Array<{dispose: () => void}> = []
 
-  constructor(renderer: Renderer, scene: Object3D, camera: Camera, {antiAliasing = 'traa', ambientOcclusionResolutionScale = 0.75, ambientOcclusionSamples = 16, contactDarkening = false, focus, heavy = true, indirectLight = false, reflectionResolutionScale = 1, zoom = () => 0}: GalleryRenderPipelineOptions = {}) {
+  constructor(renderer: Renderer, scene: Object3D, camera: Camera, {antiAliasing = 'traa', ambientOcclusionResolutionScale = 0.75, ambientOcclusionSamples = 16, contactDarkening = false, focus, heavy = true, indirectLight = false, reflectionResolutionScale = 1, volumetricLight = false, zoom = () => 0}: GalleryRenderPipelineOptions = {}) {
     super(renderer)
     const own = <T extends {dispose: () => void}>(effect: T) => {
       this.effects.push(effect)
@@ -148,6 +153,35 @@ export default class GalleryRenderPipeline extends RenderPipeline {
         voxel.useTemporalFiltering = antiAliasing === 'traa'
         const bounced = indirect.getGINode().rgb.add(voxel.getGINode().rgb)
         current = vec4(current.rgb.add(scenePass.getTextureNode('diffuseColor').rgb.mul(bounced)), current.a)
+      }
+      let sun: DirectionalLight | undefined
+      scene.traverse(object => {
+        if (!sun && object instanceof DirectionalLight && object.castShadow) {
+          sun = object
+        }
+      })
+      if (volumetricLight && sun && camera instanceof PerspectiveCamera) {
+        // Raymarches the sun’s shadow map through the air at full resolution; a plain Gaussian blur smooths the march, where an edge-preserving one would posterize it.
+        const rays = own(godrays(depth, camera, sun))
+        rays.density.value = 8
+        rays.maxDensity.value = 3
+        rays.raymarchSteps.value = 120
+        rays.resolutionScale = 1
+        const blurred = own(gaussianBlur(rays.getTextureNode(), vec2(1), 3))
+        // The addons default to 8-bit targets, which quantize the faint ray intensities into visible steps.
+        const raysTargets = rays as unknown as {_godraysRenderTarget: RenderTarget}
+        const blurTargets = blurred as unknown as {
+          _horizontalRT: RenderTarget
+          _verticalRT: RenderTarget
+        }
+        for (const target of [raysTargets._godraysRenderTarget, blurTargets._horizontalRT, blurTargets._verticalRT]) {
+          target.texture.type = HalfFloatType
+        }
+        current = vec4(depthAwareBlend(convertToTexture(current), blurred.getTextureNode(), depth, camera, {
+          blendColor: sun.color,
+          edgeRadius: 2,
+          edgeStrength: 2,
+        }).rgb, current.a)
       }
     }
     // Native pixel color + native depth -> isolated background -> aperture gather -> composite. No temporal color or post-TRAA depth mask may enter this branch.
@@ -226,6 +260,12 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       current = current.mul(vec4(vec3(float(1).sub(edge.mul(0.2))), 1))
     }
     current = flood.compose(current)
+    if (volumetricLight && heavy) {
+      // Dithers by half an 8-bit step in display space, so the smooth, dark gradients of the sun shafts don’t band.
+      this.outputColorTransform = false
+      current = renderOutput(current)
+      current = vec4(current.rgb.add(interleavedGradientNoise(screenCoordinate.xy).sub(0.5).div(255)), current.a)
+    }
     this.outputNode = current
   }
 

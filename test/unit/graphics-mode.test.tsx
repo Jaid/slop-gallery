@@ -44,6 +44,7 @@ test('the cinematic profile is heavy with every intermediate map at twice the re
     shadowMapScale: 4,
     shadowSamples: 16,
     surfaceAnisotropy: 16,
+    volumetricLight: true,
   })
   expect(getGraphicsProfile(true, true)).toBe(cinematic)
   expect(getGraphicsProfile(false, true)).toBe(getGraphicsProfile(false))
@@ -66,6 +67,7 @@ test('the provider exposes the default scene budget during SSR', () => {
     shadowMapScale: 1,
     shadowSamples: 5,
     surfaceAnisotropy: 8,
+    volumetricLight: false,
   })
   expect(getGraphicsProfile(true)).toEqual({
     canvasTextureMipmaps: false,
@@ -81,6 +83,7 @@ test('the provider exposes the default scene budget during SSR', () => {
     shadowMapScale: 1,
     shadowSamples: 5,
     surfaceAnisotropy: 8,
+    volumetricLight: false,
   })
   expect(getGraphicsProfile(true)).toBe(getGraphicsProfile(true))
   expect(getGraphicsProfile(false)).toBe(getGraphicsProfile(false))
