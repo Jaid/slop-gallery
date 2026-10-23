@@ -4,17 +4,16 @@ import {BallCollider, ConvexHullCollider, CylinderCollider, RigidBody, useSpheri
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo, useRef} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
-import {useGraphicsModeValue} from 'use-graphics-mode'
 
 import ChandelierGeometry from '#src/lib/gallery/ChandelierGeometry.ts'
 import {chandelierPhysics, chandelierStemCenter, chandelierStemHalfHeight} from '#src/lib/physics/chandelier.ts'
-import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
+import {useShadowProps} from '#src/lib/rendering/shadowFilters.ts'
 
 export default function Chandelier() {
   const anchor = useRef<RapierRigidBody>(null!)
   const fixture = useRef<RapierRigidBody>(null!)
   useSphericalJoint(anchor, fixture, [[0, 0, 0], chandelierPhysics.anchor])
-  const shadowMapSize = 1024 * useGraphicsModeValue(getGraphicsProfile).shadowMapScale
+  const shadow = useShadowProps(1024, {isPoint: true})
   const brass = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
     color: '#bd924c',
     metalness: 0.88,
@@ -35,7 +34,7 @@ export default function Chandelier() {
       <mesh geometry={geometry.flames} name='chandelier-flames'><meshStandardNodeMaterial color='#fff0b6' emissive='#ffd36c' emissiveIntensity={4} toneMapped={false} /></mesh>
       <mesh geometry={geometry.pendant} name='chandelier-pendant'><primitive attach='material' object={brass} /></mesh>
       {/* Keep the shared light below the metalwork so the fixture cannot shadow its own source. */}
-      <pointLight castShadow color='#ffd36c' decay={2} distance={13} intensity={110} position={[0, -0.5, 0]} shadow-camera-far={13} shadow-camera-near={0.1} shadow-mapSize={[shadowMapSize, shadowMapSize]} shadow-normalBias={0.035} />
+      <pointLight castShadow color='#ffd36c' decay={2} distance={13} intensity={110} position={[0, -0.5, 0]} shadow-camera-far={13} shadow-camera-near={0.1} shadow-normalBias={0.035} {...shadow} />
     </RigidBody>
   </group>
 }

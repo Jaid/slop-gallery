@@ -35,6 +35,8 @@ type GraphicsProfile = {
   /** factor on every shadow map’s size along each axis */
   shadowMapScale: number
   shadows: boolean
+  /** shadow map lookups per pixel and light */
+  shadowSamples: number
 }
 
 /** Read the `?graphics` name: fast, heavy or cinematic. Anything else is fast. */
@@ -62,6 +64,7 @@ const fastProfile: GraphicsProfile = {
   ambientOcclusionSamples: 16,
   reflectionResolutionScale: 1,
   shadowMapScale: 1,
+  shadowSamples: 5,
 }
 const heavyProfile: GraphicsProfile = {
   canvasTextureResolution: 1,
@@ -73,6 +76,7 @@ const heavyProfile: GraphicsProfile = {
   ambientOcclusionSamples: 16,
   reflectionResolutionScale: 1,
   shadowMapScale: 1,
+  shadowSamples: 5,
 }
 // Heavy at twice the resolution of every intermediate map and with more samples, for renders that don’t have to keep up with the display.
 const cinematicProfile: GraphicsProfile = {
@@ -82,6 +86,7 @@ const cinematicProfile: GraphicsProfile = {
   ambientOcclusionSamples: 32,
   reflectionResolutionScale: 2,
   shadowMapScale: 2,
+  shadowSamples: 16,
 }
 
 /** Select a stable gallery-specific budget without exposing enum keys to consumers. */

@@ -40,6 +40,7 @@ test('the cinematic profile is heavy with every intermediate map at twice the re
     ambientOcclusionSamples: 32,
     reflectionResolutionScale: 2,
     shadowMapScale: 2,
+    shadowSamples: 16,
   })
   expect(getGraphicsProfile(true, true)).toBe(cinematic)
   expect(getGraphicsProfile(false, true)).toBe(getGraphicsProfile(false))
@@ -58,6 +59,7 @@ test('the provider exposes the default scene budget during SSR', () => {
     ambientOcclusionSamples: 16,
     reflectionResolutionScale: 1,
     shadowMapScale: 1,
+    shadowSamples: 5,
   })
   expect(getGraphicsProfile(true)).toEqual({
     canvasTextureResolution: 1,
@@ -69,6 +71,7 @@ test('the provider exposes the default scene budget during SSR', () => {
     ambientOcclusionSamples: 16,
     reflectionResolutionScale: 1,
     shadowMapScale: 1,
+    shadowSamples: 5,
   })
   expect(getGraphicsProfile(true)).toBe(getGraphicsProfile(true))
   expect(getGraphicsProfile(false)).toBe(getGraphicsProfile(false))
