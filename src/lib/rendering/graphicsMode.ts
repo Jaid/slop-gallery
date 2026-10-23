@@ -92,9 +92,9 @@ const heavyProfile: GraphicsProfile = {
   shadowMapScale: 1,
   shadowSamples: 5,
   surfaceAnisotropy: 8,
-  volumetricLight: false,
+  volumetricLight: true,
 }
-// Heavy at twice the resolution of every intermediate map and four times the shadow map resolution, with more samples, full texture filtering, indirect light and sun shafts, for renders that don’t have to keep up with the display.
+// Heavy at twice the resolution of every intermediate map and four times the shadow map resolution, with more samples, full texture filtering and indirect light, for renders that don’t have to keep up with the display.
 const cinematicProfile: GraphicsProfile = {
   ...heavyProfile,
   canvasTextureMipmaps: true,
@@ -106,7 +106,6 @@ const cinematicProfile: GraphicsProfile = {
   shadowMapScale: 4,
   shadowSamples: 16,
   surfaceAnisotropy: 16,
-  volumetricLight: true,
 }
 /** WebGPU’s default texture size limit, which Three requests whatever the adapter supports */
 const maxTextureSize = 8192

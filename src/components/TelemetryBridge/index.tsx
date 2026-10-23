@@ -3,6 +3,7 @@ import type {Attributes} from 'victoria-browser-client'
 import {useThree} from '@react-three/fiber'
 import Branch from 'branch-component'
 import {AimInspector} from 'ego-player'
+import {useEffect} from 'react'
 import useEgoTelemetry from 'telemethree-ego/react'
 import usePauseMenuTelemetry from 'telemethree-pause-menu/react'
 import useThreeTelemetry from 'telemethree/react'
@@ -11,7 +12,9 @@ import useGraphicsMode, {useCinematicGraphics} from 'use-graphics-mode'
 import {useGallery} from '#src/lib/gallery.ts'
 import pauseMenu from '#src/lib/pauseMenu.ts'
 import {getAntiAliasing} from '#src/lib/rendering/antiAliasing.ts'
+import {useGraphicsTuning} from '#src/lib/rendering/customGraphics.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
+import {attachGraphicsTuningTelemetry} from '#src/lib/telemetry/graphicsTuningTelemetry.ts'
 import {playerTelemetry, telemetry} from '#src/lib/telemetry/index.ts'
 
 function Collectors() {
@@ -26,6 +29,14 @@ function Collectors() {
   const isCinematic = useCinematicGraphics()
   const profile = getGraphicsProfile(isHeavy, isCinematic)
   const antiAliasing = getAntiAliasing(isHeavy)
+  const canvas = useThree(state => state.renderer.domElement)
+  const graphicsProfile = useGraphicsMode.getName(isHeavy, isCinematic)
+  useEffect(() => attachGraphicsTuningTelemetry(telemetry!, () => ({
+    'graphics.profile': graphicsProfile,
+    'canvas.width': canvas.width,
+    'canvas.height': canvas.height,
+    room: useGallery.getState().room,
+  })), [canvas, graphicsProfile])
   useThreeTelemetry({
     telemetry: telemetry!,
     getAttributes: () => {
@@ -39,6 +50,8 @@ function Collectors() {
         'graphics.anti_aliasing': antiAliasing || 'none',
         'graphics.floor_reflections': profile.floorReflections,
         'graphics.noise_textures': profile.noiseTextures,
+        'graphics.volumetric_light': profile.volumetricLight,
+        'graphics.tuning': useGraphicsTuning.getState().open,
       }
     },
     getTraceContext: () => telemetry!.getContext(),

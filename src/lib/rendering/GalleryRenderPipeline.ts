@@ -218,9 +218,9 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       if (volumetricLight && sun && camera instanceof PerspectiveCamera) {
         // Raymarches the sun’s shadow map through the air at full resolution; a plain Gaussian blur smooths the march, where an edge-preserving one would posterize it.
         const rays = own(godrays(depth, camera, sun))
-        tune(rays.density, 'volumetricLightDensity', 8)
-        tune(rays.maxDensity, 'volumetricLightMaxDensity', 3)
-        tune(rays.raymarchSteps, 'volumetricLightSteps', 120)
+        tune(rays.density, 'volumetricLightDensity', 15)
+        tune(rays.maxDensity, 'volumetricLightMaxDensity', 0.1)
+        tune(rays.raymarchSteps, 'volumetricLightSteps', 64)
         rays.resolutionScale = 1
         const blurred = own(gaussianBlur(rays.getTextureNode(), vec2(1), 3))
         // The addons default to 8-bit targets, which quantize the faint ray intensities into visible steps.
