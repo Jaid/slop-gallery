@@ -1,0 +1,71 @@
+@use '../../style/colors'
+@use '../../style/ui'
+
+.container
+  position: fixed
+  top: 0
+  right: 0
+  z-index: 11
+  width: min(340px, 100%)
+  max-height: 100%
+  padding: 1rem
+  overflow: auto
+  overscroll-behavior: contain
+  background: rgb(24 24 24 / 92%)
+  border-left: 1px solid colors.$border
+  font-size: 0.8rem
+  scrollbar-width: thin
+
+.heading
+  display: flex
+  justify-content: space-between
+  align-items: center
+  gap: 0.75rem
+  h2
+    margin: 0
+    font-size: 1.1rem
+  button
+    @include ui.textButton
+
+.hint
+  @include ui.copy
+  margin: 0.25rem 0 0.75rem
+
+.section
+  margin: 0 0 0.75rem
+  padding: 0.5rem 0.75rem 0.25rem
+  border: 1px solid colors.$border
+  border-radius: 4px
+  legend
+    padding-inline: 0.25rem
+    color: colors.$accent
+    label
+      display: inline-flex
+      align-items: center
+      gap: 0.4rem
+  &:has(legend input:not(:checked))
+    opacity: 0.6
+
+.row
+  display: grid
+  grid-template-columns: 6.5rem minmax(0, 1fr) 3.5rem
+  align-items: center
+  gap: 0.5rem
+  margin-block: 0.4rem
+  select
+    grid-column: span 2
+  output
+    text-align: right
+    font-variant-numeric: tabular-nums
+    color: colors.$muted
+  input[type='range']
+    width: 100%
+    accent-color: colors.$accent
+
+.toggle
+  display: flex
+  justify-content: space-between
+  align-items: center
+  margin-block: 0.4rem
+  input
+    accent-color: colors.$accent

@@ -2,9 +2,10 @@ import optis from 'optis'
 import readPermalink from 'read-permalink'
 import useGraphicsMode from 'use-graphics-mode'
 
-type GraphicsModeName = ReturnType<typeof useGraphicsMode.getName>
+/** fast, heavy, cinematic, or custom: cinematic with a panel that tunes the render pipeline */
+type GraphicsModeName = ReturnType<typeof useGraphicsMode.getName> | 'custom'
 
-const graphicsModeNames: Array<GraphicsModeName> = [useGraphicsMode.getName(false), useGraphicsMode.getName(true), useGraphicsMode.getName(true, true)]
+const graphicsModeNames: Array<GraphicsModeName> = [useGraphicsMode.getName(false), useGraphicsMode.getName(true), useGraphicsMode.getName(true, true), 'custom']
 const normalizeGraphicsMode = (value: unknown): GraphicsModeName => {
   if (value === true) {
     return useGraphicsMode.getName(true)
@@ -47,7 +48,7 @@ type GraphicsProfile = {
   volumetricLight: boolean
 }
 
-/** Read the `?graphics` name: fast, heavy or cinematic. Anything else is fast. */
+/** Read the `?graphics` name: fast, heavy, cinematic or custom. Anything else is fast. */
 export function readGraphicsModeName(input: URL | string = typeof location === 'undefined' ? '' : location.href) {
   return readPermalink(input, {schema: graphicsModeSchema}).graphics
 }
@@ -57,10 +58,19 @@ export function readGraphicsMode(input?: URL | string) {
   return readGraphicsModeName(input) !== useGraphicsMode.getName(false)
 }
 
-/** Read whether `?graphics` asks for cinematic graphics: heavy, but budgeted for non-realtime rendering. */
+/** Read whether `?graphics` asks for cinematic graphics: heavy, but budgeted for non-realtime rendering. Custom graphics are cinematic too. */
 export function readCinematicGraphics(input?: URL | string) {
-  return readGraphicsModeName(input) === useGraphicsMode.getName(true, true)
+  const name = readGraphicsModeName(input)
+  return name === useGraphicsMode.getName(true, true) || name === 'custom'
 }
+
+/** Read whether `?graphics` asks for custom graphics: cinematic, with a panel that tunes the render pipeline live. */
+export function readCustomGraphics(input?: URL | string) {
+  return readGraphicsModeName(input) === 'custom'
+}
+
+/** whether this page was opened with `?graphics=custom`, read once at startup */
+export const isCustomGraphics = readCustomGraphics()
 
 const fastProfile: GraphicsProfile = {
   canvasTextureMipmaps: false,

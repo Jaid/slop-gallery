@@ -1,21 +1,25 @@
 import type {AntiAliasing} from './antiAliasing.ts'
+import type {CustomGraphicsStructure, CustomGraphicsUniform} from './customGraphics.ts'
 import type {Camera, NodeBuilder, NodeMaterial, Object3D, Renderer, RenderTarget, Scene, TextureNode} from 'three/webgpu'
 
 import {WireframeFloodPass} from 'capture-session'
 import {vxgi} from 'three/addons/lighting/vxgi/VXGINode.js'
 import {bloom} from 'three/addons/tsl/display/BloomNode.js'
+import {denoise} from 'three/addons/tsl/display/DenoiseNode.js'
 import {depthAwareBlend} from 'three/addons/tsl/display/depthAwareBlend.js'
 import {gaussianBlur} from 'three/addons/tsl/display/GaussianBlurNode.js'
 import {godrays} from 'three/addons/tsl/display/GodraysNode.js'
 import {ao} from 'three/addons/tsl/display/GTAONode.js'
 import {smaa} from 'three/addons/tsl/display/SMAANode.js'
 import {ssgi} from 'three/addons/tsl/display/SSGINode.js'
+import {sss} from 'three/addons/tsl/display/SSSNode.js'
 import {traa} from 'three/addons/tsl/display/TRAANode.js'
 import {convertToTexture, diffuseColor, float, int, interleavedGradientNoise, length, luminance, max, min, mrt, normalView, output, pass, renderOutput, rtt, screenCoordinate, screenUV, smoothstep, uniform, uv, vec2, vec3, vec4, velocity} from 'three/tsl'
 import {BlendMode, DirectionalLight, HalfFloatType, MRTNode, NoBlending, Node, NormalBlending, PerspectiveCamera, RenderPipeline} from 'three/webgpu'
 
 import {renderFloorReflection} from '../materials/FloorMaterial.ts'
 import ConditionalTexture from './ConditionalTexture.ts'
+import {useCustomGraphics} from './customGraphics.ts'
 import {GalleryRenderer} from './GalleryRenderer.ts'
 import KnotBokeh from './KnotBokeh.ts'
 import tiltShift from './tiltShift.ts'
@@ -31,6 +35,8 @@ export type GalleryRenderPipelineOptions = {
   ambientOcclusionSamples?: number
   antiAliasing?: AntiAliasing
   contactDarkening?: boolean
+  /** the tuning panel’s passes with `?graphics=custom`, which override the options they cover; the pipeline’s uniforms then follow the panel live */
+  custom?: CustomGraphicsStructure
   focus?: {
     amount: () => number
     /** scales the lens blur’s radius; 0 keeps the background sharp */
@@ -82,12 +88,31 @@ export class TransparentSpriteOutputsNode extends MRTNode {
 export default class GalleryRenderPipeline extends RenderPipeline {
   readonly scenePass: ReturnType<typeof pass>
   private readonly effects: Array<{dispose: () => void}> = []
+  private readonly unsubscribe?: () => void
 
-  constructor(renderer: Renderer, scene: Object3D, camera: Camera, {antiAliasing = 'traa', ambientOcclusionResolutionScale = 0.75, ambientOcclusionSamples = 16, contactDarkening = false, focus, heavy = true, indirectLight = false, reflectionResolutionScale = 1, volumetricLight = false, zoom = () => 0}: GalleryRenderPipelineOptions = {}) {
+  constructor(renderer: Renderer, scene: Object3D, camera: Camera, options: GalleryRenderPipelineOptions = {}) {
     super(renderer)
+    const {custom} = options
+    const {antiAliasing = 'traa', ambientOcclusionResolutionScale = 0.75, ambientOcclusionSamples = 16, contactDarkening = false, focus, heavy = true, indirectLight = false, reflectionResolutionScale = 1, volumetricLight = false, zoom = () => 0} = custom ? {
+      ...options,
+      ambientOcclusionResolutionScale: custom.ambientOcclusionResolutionScale,
+      antiAliasing: custom.antiAliasing,
+      indirectLight: custom.screenSpaceIndirectLight || custom.voxelIndirectLight,
+      reflectionResolutionScale: custom.reflectionResolutionScale,
+      volumetricLight: custom.volumetricLight,
+    } : options
     const own = <T extends {dispose: () => void}>(effect: T) => {
       this.effects.push(effect)
       return effect
+    }
+    const tuned = custom ? useCustomGraphics.getState() : undefined
+    const bindings: Array<[{value: number}, CustomGraphicsUniform]> = []
+    // With `?graphics=custom`, a uniform starts out at the panel’s value and follows it; otherwise it takes the pipeline’s own.
+    const tune = (node: {value: number}, key: CustomGraphicsUniform, fallback: number) => {
+      node.value = tuned ? tuned[key] : fallback
+      if (tuned) {
+        bindings.push([node, key])
+      }
     }
     // GTAO and TRAA require single-sampled scene depth.
     const scenePass = own(pass(scene, camera, {samples: 0}))
@@ -132,27 +157,46 @@ export default class GalleryRenderPipeline extends RenderPipeline {
     const depth = scenePass.getTextureNode('depth')
     let current: Node<'vec4'> = scenePass.getTextureNode('output')
     if (heavy) {
-      const ambientOcclusion = own(ao(depth, scenePass.getTextureNode('normal'), camera))
-      ambientOcclusion.resolutionScale = ambientOcclusionResolutionScale
-      ambientOcclusion.radius.value = contactDarkening ? 0.18 : 0.3
-      ambientOcclusion.thickness.value = contactDarkening ? 0.6 : 1
-      ambientOcclusion.scale.value = contactDarkening ? 1.18 : 0.85
-      ambientOcclusion.samples.value = ambientOcclusionSamples
-      current = current.mul(vec4(vec3(ambientOcclusion.getTextureNode().r), 1))
+      const normal = scenePass.getTextureNode('normal')
+      // The denoise node’s declaration lacks the node extensions every other node has.
+      const smooth = (input: Node<'vec4'>) => own(denoise(input, depth, normal, camera)) as unknown as Node<'vec4'>
+      if (custom?.ambientOcclusion ?? true) {
+        const ambientOcclusion = own(ao(depth, normal, camera))
+        ambientOcclusion.resolutionScale = ambientOcclusionResolutionScale
+        tune(ambientOcclusion.radius, 'ambientOcclusionRadius', contactDarkening ? 0.18 : 0.3)
+        tune(ambientOcclusion.thickness, 'ambientOcclusionThickness', contactDarkening ? 0.6 : 1)
+        tune(ambientOcclusion.scale, 'ambientOcclusionScale', contactDarkening ? 1.18 : 0.85)
+        tune(ambientOcclusion.samples, 'ambientOcclusionSamples', ambientOcclusionSamples)
+        current = current.mul(vec4(vec3(ambientOcclusion.getTextureNode().r), 1))
+      }
       if (indirectLight && camera instanceof PerspectiveCamera) {
-        // The light the lit scene bounces onto nearby surfaces, tinted by their diffuse color. Its temporal noise resolves in TRAA.
-        const indirect = own(ssgi(scenePass.getTextureNode('output'), depth, scenePass.getTextureNode('normal'), camera))
-        indirect.sliceCount.value = 3
-        indirect.stepCount.value = 16
-        indirect.giIntensity.value = 4
-        indirect.useTemporalFiltering = antiAliasing === 'traa'
-        // Voxel cone tracing adds the bounces from what is off screen or hidden, which the screen-space pass cannot see. Faint, since it brightens far more than SSGI.
-        const voxel = own(vxgi(depth, scenePass.getTextureNode('normal'), scene as Scene, camera, 256))
-        voxel.bounces = 2
-        voxel.giIntensity.value = 0.05
-        voxel.useTemporalFiltering = antiAliasing === 'traa'
-        const bounced = indirect.getGINode().rgb.add(voxel.getGINode().rgb)
-        current = vec4(current.rgb.add(scenePass.getTextureNode('diffuseColor').rgb.mul(bounced)), current.a)
+        const bounces: Array<Node<'vec3'>> = []
+        if (custom?.screenSpaceIndirectLight ?? true) {
+          // The light the lit scene bounces onto nearby surfaces, tinted by their diffuse color. Its temporal noise resolves in TRAA.
+          const indirect = own(ssgi(scenePass.getTextureNode('output'), depth, normal, camera))
+          tune(indirect.sliceCount, 'screenSpaceIndirectLightSlices', 3)
+          tune(indirect.stepCount, 'screenSpaceIndirectLightSteps', 16)
+          tune(indirect.giIntensity, 'screenSpaceIndirectLightIntensity', 4)
+          tune(indirect.radius, 'screenSpaceIndirectLightRadius', 12)
+          indirect.useTemporalFiltering = antiAliasing === 'traa'
+          // Without TRAA, nothing averages the per-pixel samples, so their fireflies are clamped and a spatial pass smooths them instead.
+          bounces.push(antiAliasing === 'traa' ? indirect.getGINode().rgb : smooth(vec4(indirect.getGINode().rgb.min(0.3), 1)).rgb)
+        }
+        if (custom?.voxelIndirectLight ?? true) {
+          // Voxel cone tracing adds the bounces from what is off screen or hidden, which the screen-space pass cannot see. Faint, since it brightens far more than SSGI.
+          const voxel = own(vxgi(depth, normal, scene as Scene, camera, 256))
+          tune({
+            set value(count: number) {
+              voxel.bounces = count
+            },
+          }, 'voxelIndirectLightBounces', 2)
+          tune(voxel.giIntensity, 'voxelIndirectLightIntensity', 0.05)
+          voxel.useTemporalFiltering = antiAliasing === 'traa'
+          bounces.push(voxel.getGINode().rgb)
+        }
+        if (bounces.length > 0) {
+          current = vec4(current.rgb.add(scenePass.getTextureNode('diffuseColor').rgb.mul(bounces.reduce((sum, bounce) => sum.add(bounce)))), current.a)
+        }
       }
       let sun: DirectionalLight | undefined
       scene.traverse(object => {
@@ -160,12 +204,23 @@ export default class GalleryRenderPipeline extends RenderPipeline {
           sun = object
         }
       })
+      if (custom?.contactShadows && sun) {
+        // Marches a short way toward the sun from every pixel, which darkens the small contacts the shadow map is too coarse for.
+        const contact = own(sss(depth, camera, sun))
+        tune(contact.maxDistance, 'contactShadowDistance', 0.1)
+        tune(contact.thickness, 'contactShadowThickness', 0.01)
+        tune(contact.shadowIntensity, 'contactShadowIntensity', 0.7)
+        tune(contact.quality, 'contactShadowQuality', 1)
+        contact.useTemporalFiltering = antiAliasing === 'traa'
+        const shadow = custom.contactShadowDenoise ? smooth(contact.getTextureNode()) : contact.getTextureNode()
+        current = vec4(current.rgb.mul(shadow.r), current.a)
+      }
       if (volumetricLight && sun && camera instanceof PerspectiveCamera) {
         // Raymarches the sun’s shadow map through the air at full resolution; a plain Gaussian blur smooths the march, where an edge-preserving one would posterize it.
         const rays = own(godrays(depth, camera, sun))
-        rays.density.value = 8
-        rays.maxDensity.value = 3
-        rays.raymarchSteps.value = 120
+        tune(rays.density, 'volumetricLightDensity', 8)
+        tune(rays.maxDensity, 'volumetricLightMaxDensity', 3)
+        tune(rays.raymarchSteps, 'volumetricLightSteps', 120)
         rays.resolutionScale = 1
         const blurred = own(gaussianBlur(rays.getTextureNode(), vec2(1), 3))
         // The addons default to 8-bit targets, which quantize the faint ray intensities into visible steps.
@@ -221,7 +276,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       // Like TRAA, SMAA expects linear color before the output transform.
       current = own(smaa(materialize())).getTextureNode()
     }
-    if (heavy) {
+    if (heavy && (custom?.bloom ?? true)) {
       let mask: Node<'float'> = current.a.saturate()
       if (antiAliasing === 'traa' && composite) {
         // TRAA clips only RGB, so the resolved mask can keep stale history after focus changes. The current mask, dilated by about 2 px, keeps the antialiased edge but never lets glow back onto distant background.
@@ -239,6 +294,9 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       }
       // Bloom MUST read the resolved image. Its hard luminance threshold and half-resolution downsample turn TRAA's subpixel jitter on small HDR features into frame-to-frame halo changes, and TRAA's variance clipping cannot calm such smooth, low-frequency flicker.
       const glow = own(bloom(current, 0.18, 0.25, 1))
+      tune(glow.strength, 'bloomStrength', 0.18)
+      tune(glow.radius, 'bloomRadius', 0.25)
+      tune(glow.threshold, 'bloomThreshold', 1)
       // Stock high pass, but brightness-capped: a subpixel specular hit (clearcoat or glint on a rotating knot) would otherwise flash a full halo whenever it lands on a pixel.
       glow.highPassFn = ({input, threshold, smoothWidth}) => {
         const value = luminance(input.rgb)
@@ -246,6 +304,11 @@ export default class GalleryRenderPipeline extends RenderPipeline {
         return vec4(capped.mul(smoothstep(threshold, threshold.add(smoothWidth), value)), 1)
       }
       current = vec4(current.rgb.add(glow.rgb.mul(mask)), 1)
+    } else if (heavy) {
+      // Without glow, the inspection mask in alpha has nothing left to hold back.
+      current = vec4(current.rgb, 1)
+    }
+    if (heavy) {
       const resolved = current
       const zoomEnabled = () => zoom() > 0
       // With no AA, only the blur needs a texture; keep the sharp path inline and skip its RTT outside zoom.
@@ -257,20 +320,30 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       const zoomBlur = own(new ZoomBlur(zoomSource, zoomAmount, zoomEnabled))
       current = tiltShift(resolved, zoomBlur, zoomAmount)
       const edge = smoothstep(float(0.26), float(0.78), length(screenUV.sub(0.5)))
-      current = current.mul(vec4(vec3(float(1).sub(edge.mul(0.2))), 1))
+      const vignette = uniform(0.2)
+      tune(vignette, 'vignette', 0.2)
+      current = current.mul(vec4(vec3(float(1).sub(edge.mul(vignette))), 1))
     }
     current = flood.compose(current)
-    if (volumetricLight && heavy) {
+    if ((custom ? custom.dither : volumetricLight) && heavy) {
       // Dithers by half an 8-bit step in display space, so the smooth, dark gradients of the sun shafts don’t band.
       this.outputColorTransform = false
       current = renderOutput(current)
       current = vec4(current.rgb.add(interleavedGradientNoise(screenCoordinate.xy).sub(0.5).div(255)), current.a)
     }
     this.outputNode = current
+    if (tuned) {
+      this.unsubscribe = useCustomGraphics.subscribe(state => {
+        for (const [node, key] of bindings) {
+          node.value = state[key]
+        }
+      })
+    }
   }
 
   override dispose() {
     super.dispose()
+    this.unsubscribe?.()
     for (const effect of this.effects.toReversed()) {
       effect.dispose()
     }
