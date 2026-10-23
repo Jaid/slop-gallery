@@ -1,3 +1,5 @@
+// Must run before anything reads the clock.
+import './lib/frozenTime.ts'
 import './style.sass'
 
 import mountRoot from 'mount-root'

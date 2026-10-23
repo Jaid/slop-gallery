@@ -3,6 +3,7 @@ import {readIntroNarration} from './audio/intro.ts'
 import {readCrosshair} from './crosshair.ts'
 import {readDevelopmentMode} from './developmentMode.ts'
 import {readSeedOverride} from './environmentSeed.ts'
+import {readFrozenTime} from './frozenTime.ts'
 import {readSpawn} from './gallery/bookmarks.ts'
 import {readDefaultPortraitsEnabled} from './gallery/defaultPortraits.ts'
 import {readLighting} from './gallery/lighting.ts'
@@ -31,6 +32,7 @@ const readers: Record<string, Reader> = {
   development: readDevelopmentMode,
   edit_lights: readEditLights,
   edit_portrait_slots: readPortraitSlotEditing,
+  frozen_time: readFrozenTime,
   graphics: readGraphicsModeName,
   intro_narration: readIntroNarration,
   lighting: readLighting,
