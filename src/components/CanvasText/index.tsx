@@ -3,6 +3,9 @@ import type {ThreeElements} from '@react-three/fiber'
 import {loadCanvasFonts} from 'canvas-textures'
 import useCanvasTexture from 'canvas-textures/react'
 import {useMemo} from 'react'
+import {useGraphicsModeValue} from 'use-graphics-mode'
+
+import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
 type CanvasTextProps = Omit<ThreeElements['mesh'], 'children'> & {
   color?: string
@@ -17,11 +20,12 @@ type CanvasTextProps = Omit<ThreeElements['mesh'], 'children'> & {
 }
 const textureWidth = 1536
 const CanvasText = ({color = '#ffffff', fontFamily = 'sans-serif', fontSize = 0.7, fontWeight = 400, height, maxWidth = 0.9, materialProps, text, width, ...meshProps}: CanvasTextProps) => {
+  const {canvasTextureMipmaps: mipmaps} = useGraphicsModeValue(getGraphicsProfile)
   const texture = useCanvasTexture(useMemo(() => ({
     width: textureWidth,
     height: Math.max(64, Math.round(textureWidth * height / width)),
     name: `Canvas text: ${text}`,
-    mipmaps: false,
+    mipmaps,
     prepare: () => loadCanvasFonts([
       {
         font: `${fontWeight} 16px "${fontFamily}"`,
@@ -41,7 +45,7 @@ const CanvasText = ({color = '#ffffff', fontFamily = 'sans-serif', fontSize = 0.
       context.textBaseline = 'middle'
       context.fillText(text, canvas.width / 2, canvas.height / 2)
     },
-  }), [color, fontFamily, fontSize, fontWeight, height, maxWidth, text, width]))
+  }), [color, fontFamily, fontSize, fontWeight, height, maxWidth, mipmaps, text, width]))
   return <mesh {...meshProps} visible={Boolean(texture) && meshProps.visible !== false}>
     <planeGeometry args={[width, height]} />
     <meshBasicNodeMaterial key={texture?.uuid ?? 'pending'} {...materialProps} depthWrite={false} map={texture} toneMapped={false} transparent />

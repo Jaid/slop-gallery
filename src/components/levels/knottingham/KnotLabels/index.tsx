@@ -27,7 +27,7 @@ const atlasRows = Math.ceil(knotExhibition.length / labelAtlasColumns)
 /** One complete face atlas and two instanced batches: faces and physical supports. */
 export default function KnotLabels() {
   const isHeavy = useGraphicsMode()
-  const resolution = useGraphicsModeValue(getGraphicsProfile).canvasTextureResolution
+  const {canvasTextureMipmaps: mipmaps, canvasTextureResolution: resolution} = useGraphicsModeValue(getGraphicsProfile)
   const ratings = useSyncExternalStore(knotRarityEditor.subscribe, knotRarityEditor.getSnapshot, knotRarityEditor.getSnapshot)
   // Only the flat fallback is owned here; the reflective steel is shared for the page lifetime.
   const flatSupportMaterial = useDisposable(useMemo(() => new MeshBasicNodeMaterial({color: '#9ca6ad'}), []))
@@ -91,7 +91,7 @@ export default function KnotLabels() {
     height: atlasRows * labelHeight,
     resolution,
     name: 'Knot nameplate atlas',
-    mipmaps: false,
+    mipmaps,
     prepare: async () => {
       const [icons] = await Promise.all([
         loadCandidateIcons(knotExhibition.map(exhibit => exhibit.candidate.icon)),
@@ -122,7 +122,7 @@ export default function KnotLabels() {
         drawLabel(context, exhibit, index % labelAtlasColumns * labelWidth, Math.floor(index / labelAtlasColumns) * labelHeight, icons.get(exhibit.candidate.icon))
       }
     },
-  }), [resolution]))
+  }), [mipmaps, resolution]))
   useEffect(() => {
     resources.setAtlas(atlas)
   }, [resources, atlas])

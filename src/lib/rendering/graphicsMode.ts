@@ -25,6 +25,8 @@ type GraphicsProfile = {
   ambientOcclusionResolutionScale: number
   /** ambient occlusion samples per pixel */
   ambientOcclusionSamples: number
+  /** whether runtime canvas textures such as signs keep mipmaps, and with them anisotropic filtering, at the cost of building them */
+  canvasTextureMipmaps: boolean
   /** backing pixels per logical texel for runtime canvas textures such as signs */
   canvasTextureResolution: number
   floorReflections: boolean
@@ -37,6 +39,8 @@ type GraphicsProfile = {
   shadows: boolean
   /** shadow map lookups per pixel and light */
   shadowSamples: number
+  /** anisotropic filtering of the repeating procedural surfaces like plaster, stone and wood */
+  surfaceAnisotropy: number
 }
 
 /** Read the `?graphics` name: fast, heavy or cinematic. Anything else is fast. */
@@ -55,6 +59,7 @@ export function readCinematicGraphics(input?: URL | string) {
 }
 
 const fastProfile: GraphicsProfile = {
+  canvasTextureMipmaps: false,
   canvasTextureResolution: 0.5,
   noiseTextures: false,
   floorReflections: false,
@@ -65,8 +70,10 @@ const fastProfile: GraphicsProfile = {
   reflectionResolutionScale: 1,
   shadowMapScale: 1,
   shadowSamples: 5,
+  surfaceAnisotropy: 8,
 }
 const heavyProfile: GraphicsProfile = {
+  canvasTextureMipmaps: false,
   canvasTextureResolution: 1,
   noiseTextures: true,
   floorReflections: true,
@@ -77,16 +84,19 @@ const heavyProfile: GraphicsProfile = {
   reflectionResolutionScale: 1,
   shadowMapScale: 1,
   shadowSamples: 5,
+  surfaceAnisotropy: 8,
 }
-// Heavy at twice the resolution of every intermediate map and with more samples, for renders that don’t have to keep up with the display.
+// Heavy at twice the resolution of every intermediate map, with more samples and full texture filtering, for renders that don’t have to keep up with the display.
 const cinematicProfile: GraphicsProfile = {
   ...heavyProfile,
+  canvasTextureMipmaps: true,
   canvasTextureResolution: 2,
   ambientOcclusionResolutionScale: 1.5,
   ambientOcclusionSamples: 32,
   reflectionResolutionScale: 2,
   shadowMapScale: 2,
   shadowSamples: 16,
+  surfaceAnisotropy: 16,
 }
 
 /** Select a stable gallery-specific budget without exposing enum keys to consumers. */

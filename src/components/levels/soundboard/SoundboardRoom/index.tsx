@@ -2,6 +2,7 @@ import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import Branch from 'branch-component'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
+import {useGraphicsModeValue} from 'use-graphics-mode'
 
 import AnnouncerSamples from '#component/levels/soundboard/AnnouncerSamples'
 import SoundboardWall from '#component/levels/soundboard/SoundboardWall'
@@ -11,10 +12,12 @@ import Box from '#src/components/Scene/primitives.tsx'
 import WallSurface from '#src/components/Scene/WallSurface.tsx'
 import {soundboardBounds, soundboardGroundStripes, soundboardSize, soundboardWalls} from '#src/lib/audio/soundboard.ts'
 import {archivedSoundEffects, enabledSoundEffects} from '#src/lib/audio/soundEffects.ts'
+import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
 export default function SoundboardRoom() {
-  const plaster = useDisposable(useMemo(() => surfaceTexture('plaster'), []))
-  const wood = useDisposable(useMemo(() => surfaceTexture('wood'), []))
+  const {surfaceAnisotropy} = useGraphicsModeValue(getGraphicsProfile)
+  const plaster = useDisposable(useMemo(() => surfaceTexture('plaster', surfaceAnisotropy), [surfaceAnisotropy]))
+  const wood = useDisposable(useMemo(() => surfaceTexture('wood', surfaceAnisotropy), [surfaceAnisotropy]))
   const enabledWall = soundboardWalls.find(wall => wall.id === 'soundboard-enabled')!
   const archivedWall = soundboardWalls.find(wall => wall.id === 'soundboard-archived')!
   const announcerWall = soundboardWalls.find(wall => wall.id === 'soundboard-north')!

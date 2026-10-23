@@ -25,7 +25,7 @@ export default function KnotCandidateSign({bay}: {bay: KnotBay}) {
   const sign = useRef<RapierRigidBody>(null!)
   useRevoluteJoint(anchor, sign, [[0, 0, 0], knotCandidateSign.anchor, knotCandidateSign.axis, knotCandidateSign.limits])
   const isHeavy = useGraphicsMode()
-  const resolution = useGraphicsModeValue(getGraphicsProfile).canvasTextureResolution
+  const {canvasTextureMipmaps: mipmaps, canvasTextureResolution: resolution} = useGraphicsModeValue(getGraphicsProfile)
   const metal = useDisposable(useMemo(() => (isHeavy ? new MeshStandardNodeMaterial({
     color: '#ac9270',
     metalness: 0.85,
@@ -38,7 +38,7 @@ export default function KnotCandidateSign({bay}: {bay: KnotBay}) {
     height: candidateSignTextureSize[1],
     resolution,
     name: `Candidate sign: ${candidate.title}`,
-    mipmaps: false,
+    mipmaps,
     prepare: async () => {
       const [icons] = await Promise.all([
         loadCandidateIcons([candidate.icon]),

@@ -6,6 +6,7 @@ import {useMemo} from 'react'
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 import {color, mix, texture} from 'three/tsl'
 import {MeshPhysicalNodeMaterial, MeshStandardNodeMaterial} from 'three/webgpu'
+import {useGraphicsModeValue} from 'use-graphics-mode'
 
 import KnotCandidateSign from '#component/levels/knottingham/KnotCandidateSign'
 import KnotFloor from '#component/levels/knottingham/KnotFloor'
@@ -15,10 +16,12 @@ import {surfaceTexture} from '#src/components/Scene/materials.ts'
 import WallSurface from '#src/components/Scene/WallSurface.tsx'
 import {knotGalleryBounds, knotGalleryCenter, knotGallerySize, knotGalleryWalls} from '#src/lib/gallery/knotGallery.ts'
 import VelvetWallMaterial from '#src/lib/materials/VelvetWallMaterial.ts'
+import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
 /** The Knot level’s shell and lighting, without museum rooms or their physics. */
 export default function KnotLobby() {
-  const plaster = useMemo(() => surfaceTexture('plaster'), [])
+  const {surfaceAnisotropy} = useGraphicsModeValue(getGraphicsProfile)
+  const plaster = useMemo(() => surfaceTexture('plaster', surfaceAnisotropy), [surfaceAnisotropy])
   const shell = useMemo(() => ({
     floor: new RoundedBoxGeometry(knotGallerySize[0], 0.24, knotGallerySize[2], 2, 0.035),
     ceiling: new RoundedBoxGeometry(knotGallerySize[0], 0.18, knotGallerySize[2], 2, 0.045),

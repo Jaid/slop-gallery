@@ -8,7 +8,7 @@ const createMulberry32 = (seed: number) => {
   return () => mulberry32.sample(state)
 }
 
-export function surfaceTexture(kind: 'plaster' | 'stone' | 'wood') {
+export function surfaceTexture(kind: 'plaster' | 'stone' | 'wood', anisotropy = 8) {
   const size = 512
   const t = renderCanvasTexture({
     width: size,
@@ -45,7 +45,7 @@ export function surfaceTexture(kind: 'plaster' | 'stone' | 'wood') {
   t.wrapS = RepeatWrapping
   t.wrapT = RepeatWrapping
   t.repeat.set(kind === 'stone' ? 8 : 3, kind === 'stone' ? 8 : 3)
-  t.anisotropy = 8
+  t.anisotropy = anisotropy
   return t
 }
 

@@ -38,13 +38,13 @@ export default function KnotPreviewSign({bay, renderer, x}: {
   x: number
 }) {
   const layout = knotPreviewTextureLayout(bay.finishes.length)
-  const resolution = useGraphicsModeValue(getGraphicsProfile).canvasTextureResolution
+  const {canvasTextureMipmaps: mipmaps, canvasTextureResolution: resolution} = useGraphicsModeValue(getGraphicsProfile)
   const texture = useCanvasTexture(useMemo(() => ({
     width: layout.width,
     height: layout.height,
     resolution,
     name: `Knot preview: ${bay.candidate.title}`,
-    mipmaps: false,
+    mipmaps,
     prepare: async (signal: AbortSignal) => {
       const [images] = await Promise.all([
         renderer.render(bay.finishes, signal),
@@ -59,7 +59,7 @@ export default function KnotPreviewSign({bay, renderer, x}: {
     },
     disposeInputs: releaseCanvases,
     draw: (context: CanvasRenderingContext2D, images: ReadonlyMap<string, HTMLCanvasElement>) => drawPreview(context, bay, images),
-  }), [bay, layout.height, layout.width, renderer, resolution]))
+  }), [bay, layout.height, layout.width, mipmaps, renderer, resolution]))
   const face = useDisposable(useMemo(() => new MeshBasicNodeMaterial({
     color: texture ? '#ffffff' : knotPreviewBackground,
     map: texture,

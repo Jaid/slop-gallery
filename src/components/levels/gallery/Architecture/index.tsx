@@ -5,7 +5,7 @@ import Branch from 'branch-component'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
-import useGraphicsMode from 'use-graphics-mode'
+import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 
 import CeilingLeds from '#component/levels/gallery/CeilingLeds'
 import DineFloor from '#component/levels/gallery/DineFloor'
@@ -40,6 +40,7 @@ import LodgeMaterials from '#src/lib/materials/LodgeMaterials.ts'
 import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
 import {TravertineWallMaterial} from '#src/lib/materials/travertine/index.ts'
 import VesperWallMaterial from '#src/lib/materials/VesperWallMaterial.ts'
+import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
 // These rooms are lit by breakable LED panes with their own dimming lights instead of the fixed light boxes.
 const ledRooms = new Set<Wall['room']>(['antechamber', 'dine'])
@@ -76,9 +77,10 @@ export default function Architecture() {
   // The Lobby’s walls are clad in slabs; its baseboards, cornice, pilasters and reveals are carved from the same stone without joints.
   const lobbyWall = useDisposable(useMemo(() => new TravertineWallMaterial({cladding: lobbyCladding}), []))
   const lobbyTrim = useDisposable(useMemo(() => new TravertineWallMaterial, []))
-  const stone = useDisposable(useMemo(() => surfaceTexture('stone'), []))
-  const plaster = useDisposable(useMemo(() => surfaceTexture('plaster'), []))
-  const wood = useDisposable(useMemo(() => surfaceTexture('wood'), []))
+  const {surfaceAnisotropy} = useGraphicsModeValue(getGraphicsProfile)
+  const stone = useDisposable(useMemo(() => surfaceTexture('stone', surfaceAnisotropy), [surfaceAnisotropy]))
+  const plaster = useDisposable(useMemo(() => surfaceTexture('plaster', surfaceAnisotropy), [surfaceAnisotropy]))
+  const wood = useDisposable(useMemo(() => surfaceTexture('wood', surfaceAnisotropy), [surfaceAnisotropy]))
   // The Sienna is papered in damask above dark wood: its baseboards, reveals, cornice, wainscot and joists share one varnished timber.
   const damask = useDisposable(useMemo(() => new DamaskWallpaperMaterial, []))
   const joineryX = useDisposable(useMemo(() => new JoineryWoodMaterial({grain: 'x'}), []))

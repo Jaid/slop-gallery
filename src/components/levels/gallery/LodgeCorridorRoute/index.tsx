@@ -3,6 +3,7 @@ import type {NodeMaterial} from 'three/webgpu'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
+import {useGraphicsModeValue} from 'use-graphics-mode'
 
 import CorridorStairs from '#component/levels/gallery/CorridorStairs'
 import CoveredPassage from '#component/levels/gallery/CoveredPassage'
@@ -15,6 +16,7 @@ import {lodgeFloorPlanks, lodgeTunnel, lodgeTunnelTransition, lodgeWindowRibCuto
 import {corridorLanterns, lightIndoors} from '#src/lib/materials/lights/index.ts'
 import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
 import PlankMaterial from '#src/lib/materials/PlankMaterial.ts'
+import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
 const corridorPaving = corridorPassage.floors.flatMap(floor => subtractFloorOpening(floor, lodgeThreshold))
 
@@ -24,7 +26,8 @@ export default function LodgeCorridorRoute({material, corridorLining}: {
   material: NodeMaterial
 }) {
   const lining = useDisposable(useMemo(() => lightIndoors(new LodgeWoodMaterial), []))
-  const grain = useDisposable(useMemo(() => surfaceTexture('wood'), []))
+  const {surfaceAnisotropy} = useGraphicsModeValue(getGraphicsProfile)
+  const grain = useDisposable(useMemo(() => surfaceTexture('wood', surfaceAnisotropy), [surfaceAnisotropy]))
   const timberOptions = useMemo(() => ({
     map: grain,
     bumpMap: grain,

@@ -30,17 +30,19 @@ test('cinematic graphics read as heavy, and only cinematic reads as cinematic', 
   expect(readCinematicGraphics('?graphics=heavy')).toBe(false)
   expect(readCinematicGraphics()).toBe(false)
 })
-test('the cinematic profile is heavy with every intermediate map at twice the resolution and more samples', () => {
+test('the cinematic profile is heavy with every intermediate map at twice the resolution, more samples and full texture filtering', () => {
   const heavy = getGraphicsProfile(true)
   const cinematic = getGraphicsProfile(true, true)
   expect(cinematic).toEqual({
     ...heavy,
+    canvasTextureMipmaps: true,
     canvasTextureResolution: 2,
     ambientOcclusionResolutionScale: 1.5,
     ambientOcclusionSamples: 32,
     reflectionResolutionScale: 2,
     shadowMapScale: 2,
     shadowSamples: 16,
+    surfaceAnisotropy: 16,
   })
   expect(getGraphicsProfile(true, true)).toBe(cinematic)
   expect(getGraphicsProfile(false, true)).toBe(getGraphicsProfile(false))
@@ -50,6 +52,7 @@ test('the provider exposes the default scene budget during SSR', () => {
   expect(html).toStartWith('<span>false:')
   expect(html).toContain('postprocessing&quot;:false')
   expect(getGraphicsProfile(false)).toEqual({
+    canvasTextureMipmaps: false,
     canvasTextureResolution: 0.5,
     noiseTextures: false,
     floorReflections: false,
@@ -60,8 +63,10 @@ test('the provider exposes the default scene budget during SSR', () => {
     reflectionResolutionScale: 1,
     shadowMapScale: 1,
     shadowSamples: 5,
+    surfaceAnisotropy: 8,
   })
   expect(getGraphicsProfile(true)).toEqual({
+    canvasTextureMipmaps: false,
     canvasTextureResolution: 1,
     noiseTextures: true,
     floorReflections: true,
@@ -72,6 +77,7 @@ test('the provider exposes the default scene budget during SSR', () => {
     reflectionResolutionScale: 1,
     shadowMapScale: 1,
     shadowSamples: 5,
+    surfaceAnisotropy: 8,
   })
   expect(getGraphicsProfile(true)).toBe(getGraphicsProfile(true))
   expect(getGraphicsProfile(false)).toBe(getGraphicsProfile(false))
