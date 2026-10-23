@@ -1,4 +1,4 @@
-import type {AntiAliasing} from '#src/lib/rendering/antiAliasing.ts'
+import type {RenderPipelineSettings, RenderPipelineStructure} from '#src/lib/rendering/renderPipelineSettings.ts'
 
 import {useStore, useThree} from '@react-three/fiber'
 import {useLayoutEffect, useMemo} from 'react'
@@ -6,48 +6,36 @@ import {useShallow} from 'zustand/react/shallow'
 
 import {galleryEvents} from '#src/lib/gallery/actions.ts'
 import {activateRenderPipeline, releaseRenderPipeline} from '#src/lib/rendering/activeRenderPipeline.ts'
-import {getCustomGraphicsStructure, getTunedGraphics, useCustomGraphics, useGraphicsTuning} from '#src/lib/rendering/customGraphics.ts'
+import {useCustomGraphics, useGraphicsTuning} from '#src/lib/rendering/customGraphics.ts'
 import GalleryRenderPipeline from '#src/lib/rendering/GalleryRenderPipeline.ts'
 import {getInspectionFocus, getInspectionFocusBlur, getInspectionFocusDistance, getInspectionFocusProximity, getPlayerZoom} from '#src/lib/rendering/playerView.ts'
+import {getRenderPipelineStructure} from '#src/lib/rendering/renderPipelineSettings.ts'
+import TunableRenderPipeline from '#src/lib/rendering/TunableRenderPipeline.ts'
 
 type PostprocessingProps = {
-  ambientOcclusionResolutionScale?: number
-  ambientOcclusionSamples?: number
-  antiAliasing?: AntiAliasing
-  contactDarkening?: boolean
-  /** whether the pipeline follows the tuned values, which are the graphics mode’s own until the tuning panel changes them */
-  custom?: boolean
   /** whether V-viewing blurs the background */
   focus?: boolean
   heavy?: boolean
-  indirectLight?: boolean
-  reflectionResolutionScale?: number
-  volumetricLight?: boolean
+  /** the graphics mode’s pipeline */
+  settings: RenderPipelineSettings
+  /** whether the tuning panel of `?development` can change the pipeline */
+  tunable?: boolean
 }
 
-const Postprocessing = ({ambientOcclusionResolutionScale, ambientOcclusionSamples, antiAliasing = 'traa', contactDarkening = false, custom = false, focus = false, heavy = true, indirectLight = false, reflectionResolutionScale, volumetricLight = false}: PostprocessingProps) => {
+const Postprocessing = ({focus = false, heavy = true, settings, tunable = false}: PostprocessingProps) => {
   const renderer = useThree(state => state.renderer)
   const scene = useThree(state => state.scene)
   const camera = useThree(state => state.camera)
   const store = useStore()
-  const isTuning = useGraphicsTuning(state => state.open)
-  const panelStructure = useCustomGraphics(useShallow(getCustomGraphicsStructure))
+  const isTuning = useGraphicsTuning(state => tunable && state.open)
+  const panelStructure = useCustomGraphics(useShallow(getRenderPipelineStructure))
   // Compared by value, so showing or hiding the panel only rebuilds the pipeline when its passes differ from the graphics mode’s.
-  const structureKey = JSON.stringify(isTuning ? panelStructure : getCustomGraphicsStructure(getTunedGraphics()))
-  const structure = useMemo(() => JSON.parse(structureKey) as ReturnType<typeof getCustomGraphicsStructure>, [structureKey])
-  const customStructure = custom ? structure : undefined
+  const structureKey = JSON.stringify(isTuning ? panelStructure : getRenderPipelineStructure(settings))
+  const structure = useMemo(() => JSON.parse(structureKey) as RenderPipelineStructure, [structureKey])
   // The scene pass renders into targets with their own outputs. Activated after the first frame, every material of the scene would build a second time for them.
   useLayoutEffect(() => {
-    const pipeline = new GalleryRenderPipeline(renderer, scene, camera, {
-      ambientOcclusionResolutionScale,
-      ambientOcclusionSamples,
-      antiAliasing,
-      contactDarkening,
-      custom: customStructure,
+    const options = {
       heavy,
-      indirectLight,
-      reflectionResolutionScale,
-      volumetricLight,
       zoom: getPlayerZoom,
       focus: focus ? {
         amount: getInspectionFocus,
@@ -55,9 +43,13 @@ const Postprocessing = ({ambientOcclusionResolutionScale, ambientOcclusionSample
         distance: getInspectionFocusDistance,
         proximity: getInspectionFocusProximity,
       } : undefined,
+    }
+    const pipeline = tunable ? new TunableRenderPipeline(renderer, scene, camera, options) : new GalleryRenderPipeline(renderer, scene, camera, {
+      ...options,
+      settings,
     })
     // Antialiasing has to run every frame; otherwise a light pipeline only takes over during inspection focus.
-    const isPersistent = heavy || antiAliasing !== false
+    const isPersistent = heavy || structure.antiAliasing !== false
     const activate = () => {
       activateRenderPipeline(store, pipeline)
     }
@@ -79,7 +71,7 @@ const Postprocessing = ({ambientOcclusionResolutionScale, ambientOcclusionSample
       deactivate()
       pipeline.dispose()
     }
-  }, [ambientOcclusionResolutionScale, ambientOcclusionSamples, antiAliasing, camera, contactDarkening, customStructure, focus, heavy, indirectLight, reflectionResolutionScale, renderer, scene, store, volumetricLight])
+  }, [camera, focus, heavy, renderer, scene, settings, store, structure, tunable])
   return null
 }
 export default Postprocessing

@@ -20,7 +20,7 @@ const graphicsModeSchema = optis({
   },
 })
 
-type GraphicsProfile = {
+export type GraphicsProfile = {
   /** ambient occlusion pixels per output pixel along each axis */
   ambientOcclusionResolutionScale: number
   /** ambient occlusion samples per pixel */

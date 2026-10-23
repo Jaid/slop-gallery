@@ -4,6 +4,7 @@ import type {Camera, Scene} from 'three/webgpu'
 import {WebgpuRenderer} from 'three-fiber-game'
 import {Object3D, Renderer} from 'three/webgpu'
 
+import {isDevelopmentMode} from '#src/lib/developmentMode.ts'
 import {BatchedLighting} from '#src/lib/materials/lights/base/BatchedLightsNode.ts'
 import {telemetry} from '#src/lib/telemetry/index.ts'
 
@@ -13,6 +14,8 @@ type Culler = (camera: Camera) => void
 type RenderObject = {scene: Object3D}
 type PromiseSink = {push: (promise: Promise<void>) => void}
 type ProjectObject = (this: Renderer, object: Object3D, camera: Camera, groupOrder: number, renderList: unknown, clippingContext: unknown) => void
+/** bytes per pixel of all render targets of a pass, which the tuning panel’s screen-space reflections exceed with a fifth half-float target; WebGPU guarantees 32 and desktop GPUs offer 64 or more */
+const developmentColorAttachmentBytes = 64
 /** Renderer internals that three doesn’t type. */
 type Internals = {
   _currentRenderBundle: unknown
@@ -104,7 +107,10 @@ export class GalleryRenderer extends WebgpuRenderer {
   constructor(options: WebgpuRendererOptions) {
     super({
       ...options,
-      ...readCinematicGraphics() ? {requiredLimits: {maxTextureDimension2D: cinematicMaxTextureSize}} : {},
+      requiredLimits: {
+        ...readCinematicGraphics() ? {maxTextureDimension2D: cinematicMaxTextureSize} : {},
+        ...isDevelopmentMode ? {maxColorAttachmentBytesPerSample: developmentColorAttachmentBytes} : {},
+      },
       alpha: false,
       antialias: false,
       trackTimestamp: telemetry !== null,

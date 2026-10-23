@@ -2,7 +2,7 @@ import type Node from 'three/src/nodes/core/Node.js'
 import type NodeFrame from 'three/src/nodes/core/NodeFrame.js'
 import type {Camera, MRTNode, Renderer, Scene, Texture} from 'three/webgpu'
 
-import {float, mix, normalView, output, positionViewDirection, reflector, vec4} from 'three/tsl'
+import {float, mix, normalView, output, positionViewDirection, reflector, uniform, vec4} from 'three/tsl'
 import {Box3, DepthTexture, Frustum, HalfFloatType, LinearMipMapLinearFilter, Matrix4, MeshStandardNodeMaterial, NodeUpdateType, Object3D, RenderTarget, VelocityNode} from 'three/webgpu'
 
 /** what the reflection needs from the pass it is reflected into */
@@ -40,6 +40,8 @@ VelocityNode.prototype.updateAfter = function (this: VelocityNode, frame) {
 const bounds = new Box3
 const frustum = new Frustum
 const projection = new Matrix4
+/** factor on every floor’s reflectance, which the render pipeline sets to 0 when it renders no reflection */
+export const floorReflectionStrength = uniform(1)
 /** Renders the shared floor reflection for the main pass about to render, if a floor will be in view. */
 export function renderFloorReflection(pass: ReflectionPass) {
   shared?.render(pass)
@@ -187,7 +189,7 @@ export default class FloorMaterial extends MeshStandardNodeMaterial {
     this.reflection = this.reflectionTarget ? acquireReflection(this) : null
     if (this.reflection && reflection) {
       const grazing = normalView.dot(positionViewDirection).abs().oneMinus().pow(5)
-      const reflectance = grazing.mul(reflection.grazingStrength).add(reflection.strength).mul(reflection.mask ?? float(1))
+      const reflectance = grazing.mul(reflection.grazingStrength).add(reflection.strength).mul(reflection.mask ?? float(1)).mul(floorReflectionStrength)
       const blur = typeof reflection.blur === 'number' ? float(reflection.blur) : reflection.blur
       this.outputNode = vec4(mix(output.rgb, this.reflection.level(blur).rgb, reflectance), output.a)
     }

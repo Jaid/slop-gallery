@@ -1,4 +1,4 @@
-import type {CustomGraphics, CustomGraphicsKey} from '#src/lib/rendering/customGraphics.ts'
+import type {RenderPipelineSetting, RenderPipelineSettings} from '#src/lib/rendering/renderPipelineSettings.ts'
 
 import Branch from 'branch-component'
 import useGraphicsMode from 'use-graphics-mode'
@@ -7,24 +7,25 @@ import {getDefaultCustomGraphics, useCustomGraphics, useGraphicsTuning} from '#s
 
 import css from './style.module.sass'
 
-type BooleanKey = {[Key in CustomGraphicsKey]: CustomGraphics[Key] extends boolean ? Key : never}[CustomGraphicsKey]
-type NumberKey = {[Key in CustomGraphicsKey]: CustomGraphics[Key] extends number ? Key : never}[CustomGraphicsKey]
-type Control = {
+type BooleanKey = {[Key in RenderPipelineSetting]: RenderPipelineSettings[Key] extends boolean ? Key : never}[RenderPipelineSetting]
+type NumberKey = {[Key in RenderPipelineSetting]: RenderPipelineSettings[Key] extends number ? Key : never}[RenderPipelineSetting]
+type Control = ({
   key: BooleanKey
   kind: 'toggle'
-  label: string
-} | {
-  key: CustomGraphicsKey
-  kind: 'select'
-  label: string
-  options: Array<[value: CustomGraphics[CustomGraphicsKey], label: string]>
 } | {
   key: NumberKey
   kind: 'range'
-  label: string
   max: number
   min: number
   step: number
+} | {
+  key: RenderPipelineSetting
+  kind: 'select'
+  options: Array<[value: RenderPipelineSettings[RenderPipelineSetting], label: string]>
+}) & {
+  label: string
+  /** whether the control does anything with the current settings, beyond its section being switched on */
+  when?: (settings: RenderPipelineSettings) => boolean
 }
 type Section = {
   controls: Array<Control>
@@ -33,191 +34,121 @@ type Section = {
   toggle?: BooleanKey
 }
 
+const range = (key: NumberKey, label: string, min: number, max: number, step: number): Control => ({
+  key,
+  kind: 'range',
+  label,
+  max,
+  min,
+  step,
+})
+const toggle = (key: BooleanKey, label: string): Control => ({
+  key,
+  kind: 'toggle',
+  label,
+})
+const select = (key: RenderPipelineSetting, label: string, options: Array<[RenderPipelineSettings[RenderPipelineSetting], string]>): Control => ({
+  key,
+  kind: 'select',
+  label,
+  options,
+})
 const scales = (values: Array<number>): Array<[number, string]> => values.map(value => [value, `${value}×`])
+const screenSpaceReflections = (settings: RenderPipelineSettings) => settings.reflectionScope === 'all'
 const sections: Array<Section> = [
   {
     title: 'Antialiasing',
-    controls: [{
-      key: 'antiAliasing',
-      kind: 'select',
-      label: 'Method',
-      options: [['traa', 'TRAA'], ['smaa', 'SMAA'], [false, 'Off']],
-    }],
+    controls: [select('antiAliasing', 'Method', [['traa', 'TRAA'], ['smaa', 'SMAA'], [false, 'Off']])],
+  },
+  {
+    title: 'Reflections',
+    controls: [
+      select('reflectionScope', 'Scope', [['none', 'None'], ['floors', 'Floors'], ['all', 'All']]),
+      {
+        ...select('reflectionResolutionScale', 'Floor resolution', scales([0.5, 1, 2])),
+        when: settings => settings.reflectionScope !== 'none',
+      },
+      {
+        ...select('screenSpaceReflectionResolutionScale', 'SSR resolution', scales([0.25, 0.5, 1])),
+        when: screenSpaceReflections,
+      },
+      {
+        ...range('screenSpaceReflectionIntensity', 'SSR intensity', 0, 2, 0.01),
+        when: screenSpaceReflections,
+      },
+      {
+        ...range('screenSpaceReflectionDistance', 'SSR distance', 0.5, 20, 0.5),
+        when: screenSpaceReflections,
+      },
+      {
+        ...range('screenSpaceReflectionThickness', 'SSR thickness', 0.005, 1, 0.005),
+        when: screenSpaceReflections,
+      },
+    ],
   },
   {
     title: 'Ambient occlusion',
     toggle: 'ambientOcclusion',
     controls: [
-      {
-        key: 'ambientOcclusionResolutionScale',
-        kind: 'select',
-        label: 'Resolution',
-        options: scales([0.5, 0.75, 1, 1.5, 2]),
-      },
-      {
-        key: 'ambientOcclusionSamples',
-        kind: 'range',
-        label: 'Samples',
-        min: 4,
-        max: 64,
-        step: 1,
-      },
-      {
-        key: 'ambientOcclusionRadius',
-        kind: 'range',
-        label: 'Radius',
-        min: 0.05,
-        max: 1,
-        step: 0.01,
-      },
-      {
-        key: 'ambientOcclusionThickness',
-        kind: 'range',
-        label: 'Thickness',
-        min: 0.1,
-        max: 3,
-        step: 0.05,
-      },
-      {
-        key: 'ambientOcclusionScale',
-        kind: 'range',
-        label: 'Strength',
-        min: 0,
-        max: 2,
-        step: 0.05,
-      },
+      select('ambientOcclusionResolutionScale', 'Resolution', scales([0.5, 0.75, 1, 1.5, 2])),
+      range('ambientOcclusionSamples', 'Samples', 4, 64, 1),
+      range('ambientOcclusionRadius', 'Radius', 0.05, 1, 0.01),
+      range('ambientOcclusionThickness', 'Thickness', 0.1, 3, 0.05),
+      range('ambientOcclusionScale', 'Strength', 0, 2, 0.05),
+      toggle('ambientOcclusionTemporalFiltering', 'Temporal filtering'),
     ],
   },
   {
     title: 'Screen-space indirect light',
     toggle: 'screenSpaceIndirectLight',
     controls: [
-      {
-        key: 'screenSpaceIndirectLightIntensity',
-        kind: 'range',
-        label: 'Intensity',
-        min: 0,
-        max: 16,
-        step: 0.1,
-      },
-      {
-        key: 'screenSpaceIndirectLightRadius',
-        kind: 'range',
-        label: 'Radius',
-        min: 1,
-        max: 32,
-        step: 0.5,
-      },
-      {
-        key: 'screenSpaceIndirectLightSlices',
-        kind: 'range',
-        label: 'Slices',
-        min: 1,
-        max: 4,
-        step: 1,
-      },
-      {
-        key: 'screenSpaceIndirectLightSteps',
-        kind: 'range',
-        label: 'Steps',
-        min: 4,
-        max: 32,
-        step: 1,
-      },
+      range('screenSpaceIndirectLightIntensity', 'Intensity', 0, 16, 0.1),
+      range('screenSpaceIndirectLightRadius', 'Radius', 1, 32, 0.5),
+      range('screenSpaceIndirectLightSlices', 'Slices', 1, 4, 1),
+      range('screenSpaceIndirectLightSteps', 'Steps', 4, 32, 1),
+      range('screenSpaceIndirectLightThickness', 'Thickness', 0.1, 4, 0.05),
+      range('screenSpaceIndirectLightExpFactor', 'Exp factor', 1, 4, 0.05),
+      range('screenSpaceIndirectLightBackfaceLighting', 'Backface lighting', 0, 1, 0.01),
+      range('screenSpaceIndirectLightAmbientOcclusion', 'AO intensity', 0, 4, 0.05),
+      toggle('screenSpaceIndirectLightTemporalFiltering', 'Temporal filtering'),
     ],
   },
   {
     title: 'Voxel indirect light',
     toggle: 'voxelIndirectLight',
     controls: [
-      {
-        key: 'voxelIndirectLightIntensity',
-        kind: 'range',
-        label: 'Intensity',
-        min: 0,
-        max: 0.5,
-        step: 0.005,
-      },
-      {
-        key: 'voxelIndirectLightBounces',
-        kind: 'range',
-        label: 'Bounces',
-        min: 0,
-        max: 4,
-        step: 1,
-      },
+      select('voxelIndirectLightResolution', 'Voxels', [[64, '64³'], [128, '128³'], [256, '256³']]),
+      range('voxelIndirectLightIntensity', 'Intensity', 0, 0.5, 0.005),
+      range('voxelIndirectLightBounces', 'Bounces', 0, 4, 1),
+      range('voxelIndirectLightConeCount', 'Cones', 1, 9, 1),
+      range('voxelIndirectLightConeAngle', 'Cone angle', 10, 80, 1),
     ],
   },
   {
     title: 'Volumetric sunlight',
     toggle: 'volumetricLight',
     controls: [
-      {
-        key: 'volumetricLightDensity',
-        kind: 'range',
-        label: 'Density',
-        min: 0,
-        max: 20,
-        step: 0.1,
-      },
-      {
-        key: 'volumetricLightMaxDensity',
-        kind: 'range',
-        label: 'Max density',
-        min: 0,
-        max: 1,
-        step: 0.01,
-      },
-      {
-        key: 'volumetricLightSteps',
-        kind: 'range',
-        label: 'Steps',
-        min: 16,
-        max: 240,
-        step: 1,
-      },
+      select('volumetricLightResolutionScale', 'Resolution', scales([0.25, 0.5, 1])),
+      range('volumetricLightDensity', 'Density', 0, 20, 0.1),
+      range('volumetricLightMaxDensity', 'Max density', 0, 1, 0.01),
+      range('volumetricLightSteps', 'Steps', 16, 240, 1),
+      range('volumetricLightDistanceAttenuation', 'Attenuation', 0, 8, 0.05),
+      select('volumetricLightBlur', 'Blur', [[0, 'None'], [1, '1'], [2, '2'], [3, '3'], [4, '4'], [6, '6'], [8, '8']]),
     ],
   },
   {
     title: 'Contact shadows',
     toggle: 'contactShadows',
     controls: [
+      select('contactShadowResolutionScale', 'Resolution', scales([0.5, 0.75, 1])),
+      range('contactShadowDistance', 'Distance', 0.01, 0.5, 0.005),
+      range('contactShadowThickness', 'Thickness', 0.001, 0.1, 0.001),
+      range('contactShadowIntensity', 'Intensity', 0, 1, 0.01),
+      range('contactShadowQuality', 'Quality', 0.1, 2, 0.05),
+      toggle('contactShadowDenoise', 'Denoise'),
       {
-        key: 'contactShadowDistance',
-        kind: 'range',
-        label: 'Distance',
-        min: 0.01,
-        max: 0.5,
-        step: 0.005,
-      },
-      {
-        key: 'contactShadowThickness',
-        kind: 'range',
-        label: 'Thickness',
-        min: 0.001,
-        max: 0.1,
-        step: 0.001,
-      },
-      {
-        key: 'contactShadowIntensity',
-        kind: 'range',
-        label: 'Intensity',
-        min: 0,
-        max: 1,
-        step: 0.01,
-      },
-      {
-        key: 'contactShadowQuality',
-        kind: 'range',
-        label: 'Quality',
-        min: 0.1,
-        max: 2,
-        step: 0.05,
-      },
-      {
-        key: 'contactShadowDenoise',
-        kind: 'toggle',
-        label: 'Denoise',
+        ...range('contactShadowDenoiseRadius', 'Denoise radius', 1, 16, 0.5),
+        when: settings => settings.contactShadowDenoise,
       },
     ],
   },
@@ -225,60 +156,24 @@ const sections: Array<Section> = [
     title: 'Bloom',
     toggle: 'bloom',
     controls: [
-      {
-        key: 'bloomStrength',
-        kind: 'range',
-        label: 'Strength',
-        min: 0,
-        max: 2,
-        step: 0.01,
-      },
-      {
-        key: 'bloomRadius',
-        kind: 'range',
-        label: 'Radius',
-        min: 0,
-        max: 1,
-        step: 0.01,
-      },
-      {
-        key: 'bloomThreshold',
-        kind: 'range',
-        label: 'Threshold',
-        min: 0,
-        max: 4,
-        step: 0.05,
-      },
+      range('bloomStrength', 'Strength', 0, 2, 0.01),
+      range('bloomRadius', 'Radius', 0, 1, 0.01),
+      range('bloomThreshold', 'Threshold', 0, 4, 0.05),
+      range('bloomSmoothWidth', 'Smooth width', 0, 1, 0.01),
+      range('bloomLuminanceCap', 'Brightness cap', 1, 64, 0.5),
     ],
   },
   {
     title: 'Finish',
     controls: [
-      {
-        key: 'vignette',
-        kind: 'range',
-        label: 'Vignette',
-        min: 0,
-        max: 1,
-        step: 0.01,
-      },
-      {
-        key: 'dither',
-        kind: 'toggle',
-        label: 'Dither',
-      },
-      {
-        key: 'reflectionResolutionScale',
-        kind: 'select',
-        label: 'Reflections',
-        options: scales([0.5, 1, 2]),
-      },
+      range('vignette', 'Vignette', 0, 1, 0.01),
+      toggle('dither', 'Dither'),
     ],
   },
 ]
 /** the values the panel opened with, which a label turns yellow once it leaves */
 const initial = getDefaultCustomGraphics()
-const set = (values: Partial<CustomGraphics>) => {
+const set = (values: Partial<RenderPipelineSettings>) => {
   useCustomGraphics.setState(values)
 }
 /** The panel G shows with `?development`, a column left of the canvas: checkboxes switch passes, which rebuilds the pipeline, and sliders change its uniforms live. */
@@ -295,18 +190,19 @@ function ControlRow({control, disabled}: {
   disabled: boolean
 }) {
   const value = useCustomGraphics(state => state[control.key])
+  const applies = useCustomGraphics(state => control.when?.(state) ?? true)
   const id = `tuning-${control.key}`
   const label = <span data-changed={value !== initial[control.key] || undefined}>{control.label}</span>
   if (control.kind === 'toggle') {
-    return <label className={css.toggle}>{label}<input id={id} checked={value as boolean} disabled={disabled} type='checkbox' onChange={event => set({[control.key]: event.currentTarget.checked})} /></label>
+    return <label className={css.toggle}>{label}<input id={id} checked={value as boolean} disabled={disabled || !applies} type='checkbox' onChange={event => set({[control.key]: event.currentTarget.checked})} /></label>
   }
   if (control.kind === 'select') {
     const index = control.options.findIndex(([option]) => option === value)
-    return <label className={css.row}>{label}<select id={id} disabled={disabled} value={index} onChange={event => set({[control.key]: control.options[Number(event.currentTarget.value)][0]})}>{control.options.map(([, optionLabel], optionIndex) => <option key={optionLabel} value={optionIndex}>{optionLabel}</option>)}</select></label>
+    return <label className={css.row}>{label}<select id={id} disabled={disabled || !applies} value={index} onChange={event => set({[control.key]: control.options[Number(event.currentTarget.value)][0]})}>{control.options.map(([, optionLabel], optionIndex) => <option key={optionLabel} value={optionIndex}>{optionLabel}</option>)}</select></label>
   }
   return <label className={css.row}>
     {label}
-    <input id={id} disabled={disabled} max={control.max} min={control.min} step={control.step} type='range' value={value as number} onChange={event => set({[control.key]: Number(event.currentTarget.value)})} />
+    <input id={id} disabled={disabled || !applies} max={control.max} min={control.min} step={control.step} type='range' value={value as number} onChange={event => set({[control.key]: Number(event.currentTarget.value)})} />
     <output htmlFor={id}>{Number((value as number).toFixed(3))}</output>
   </label>
 }

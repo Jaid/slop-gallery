@@ -1,9 +1,18 @@
+import type {AntiAliasing} from '../../src/lib/rendering/antiAliasing.ts'
+
 import {float, perspectiveDepthToViewZ, texture, uniform} from 'three/tsl'
 import {Color, DataTexture, DataUtils, FloatType, HalfFloatType, LinearFilter, Mesh, MeshBasicNodeMaterial, NearestFilter, NodeMaterial, PerspectiveCamera, PlaneGeometry, QuadMesh, RenderTarget, RGBAFormat, Scene, TorusGeometry, WebGPURenderer} from 'three/webgpu'
 
 import GalleryRenderPipeline from '../../src/lib/rendering/GalleryRenderPipeline.ts'
+import {getGraphicsProfile} from '../../src/lib/rendering/graphicsMode.ts'
 import KnotBokeh from '../../src/lib/rendering/KnotBokeh.ts'
+import {getRenderPipelineSettings} from '../../src/lib/rendering/renderPipelineSettings.ts'
 
+// Heavy graphics, without the dither, which would add noise to the measured pixels.
+const getSettings = (antiAliasing: AntiAliasing) => ({
+  ...getRenderPipelineSettings(getGraphicsProfile(true), antiAliasing),
+  dither: false,
+})
 function assert(value: unknown, message: string): asserts value {
   if (!value) {
     throw new Error(message)
@@ -191,6 +200,7 @@ async function verifyTemporal(renderer: WebGPURenderer) {
   scene.add(wall)
   let focusAmount = 1
   const pipeline = new GalleryRenderPipeline(renderer, scene, camera, {
+    settings: getSettings('traa'),
     focus: {
       amount: () => focusAmount,
       distance: () => 7.6,
@@ -339,7 +349,7 @@ async function verifyModes(renderer: WebGPURenderer) {
       let zoom = 0
       let focus = 0
       const pipeline = new GalleryRenderPipeline(renderer, scene, camera, {
-        antiAliasing,
+        settings: getSettings(antiAliasing),
         zoom: () => zoom,
         focus: {
           amount: () => focus,

@@ -1,8 +1,9 @@
-import type {CustomGraphics, CustomGraphicsKey} from '../rendering/customGraphics.ts'
+import type {RenderPipelineSetting, RenderPipelineSettings} from '../rendering/renderPipelineSettings.ts'
 import type SlopGalleryTelemetry from './SlopGalleryTelemetry.ts'
 import type {Attributes, Span} from 'victoria-browser-client'
 
-import {customGraphicsStructure, getTunedGraphics, useCustomGraphics, useGraphicsTuning} from '../rendering/customGraphics.ts'
+import {getTunedGraphics, useCustomGraphics, useGraphicsTuning} from '../rendering/customGraphics.ts'
+import {renderPipelineStructure} from '../rendering/renderPipelineSettings.ts'
 
 type Context = () => Attributes
 
@@ -10,7 +11,7 @@ type Context = () => Attributes
 const settleMs = 300
 /** frames right after a settled change that the steady statistics leave out, since they carry the pipeline rebuild and shader compilation */
 const warmupMs = 500
-const flatten = (values: CustomGraphics): Attributes => Object.fromEntries(Object.entries(values).map(([key, value]) => [`graphics.tuning.${key}`, value === false && key === 'antiAliasing' ? 'none' : value]))
+const flatten = (values: RenderPipelineSettings): Attributes => Object.fromEntries(Object.entries(values).map(([key, value]) => [`graphics.tuning.${key}`, value === false && key === 'antiAliasing' ? 'none' : value]))
 const percentile = (sorted: Array<number>, fraction: number) => sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * fraction))] ?? 0
 const round = (value: number) => Math.round(value * 1000) / 1000
 
@@ -82,11 +83,11 @@ export function attachGraphicsTuningTelemetry(telemetry: SlopGalleryTelemetry, g
   const settle = () => {
     settleTimer = undefined
     const next = getTunedGraphics()
-    const changed = (Object.keys(next) as Array<CustomGraphicsKey>).filter(key => next[key] !== settled[key])
+    const changed = (Object.keys(next) as Array<RenderPipelineSetting>).filter(key => next[key] !== settled[key])
     if (changed.length === 0) {
       return
     }
-    const rebuilt = changed.some(key => (customGraphicsStructure as ReadonlyArray<string>).includes(key))
+    const rebuilt = changed.some(key => (renderPipelineStructure as ReadonlyArray<string>).includes(key))
     endSegment('changed')
     telemetry.event('graphics.tuned', {
       ...getContext(),
