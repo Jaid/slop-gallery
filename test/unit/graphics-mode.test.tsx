@@ -4,7 +4,7 @@ import {renderToStaticMarkup} from 'react-dom/server'
 import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 
 import GraphicsMode from '../../src/components/App/GraphicsMode.tsx'
-import {getGraphicsProfile, readCinematicGraphics, readGraphicsMode, readGraphicsModeName} from '../../src/lib/rendering/graphicsMode.ts'
+import {fitCanvasTextureResolution, getGraphicsProfile, readCinematicGraphics, readGraphicsMode, readGraphicsModeName} from '../../src/lib/rendering/graphicsMode.ts'
 
 function ReadProfile() {
   const isHeavy: boolean = useGraphicsMode()
@@ -81,4 +81,9 @@ test('the provider exposes the default scene budget during SSR', () => {
   })
   expect(getGraphicsProfile(true)).toBe(getGraphicsProfile(true))
   expect(getGraphicsProfile(false)).toBe(getGraphicsProfile(false))
+})
+test('canvas texture resolutions stay within the texture size limit', () => {
+  expect(fitCanvasTextureResolution(2, 1024, 246)).toBe(2)
+  expect(fitCanvasTextureResolution(2, 7200, 3840) * 7200).toBe(8192)
+  expect(fitCanvasTextureResolution(0.5, 7200, 3840)).toBe(0.5)
 })

@@ -15,7 +15,7 @@ import constructors from 'virtual:knot-exhibition-materials'
 import InteractiveObject from '#component/InteractiveObject'
 import Stand, {Sign} from '#component/levels/knottingham/KnotBillboardSupport'
 import {narrate} from '#src/lib/gallery/actions.ts'
-import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
+import {fitCanvasTextureResolution, getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
 import drawPreview, {knotPreviewBackground, knotPreviewCaptionFontFamily, knotPreviewCaptionFontSize, knotPreviewCaptionFontWeight} from './drawPreview.ts'
 import RuntimeKnotIconRenderer, {releaseCanvases} from './RuntimeKnotIconRenderer.ts'
@@ -42,7 +42,7 @@ export default function KnotPreviewSign({bay, renderer, x}: {
   const texture = useCanvasTexture(useMemo(() => ({
     width: layout.width,
     height: layout.height,
-    resolution,
+    resolution: fitCanvasTextureResolution(resolution, layout.width, layout.height),
     name: `Knot preview: ${bay.candidate.title}`,
     mipmaps,
     prepare: async (signal: AbortSignal) => {

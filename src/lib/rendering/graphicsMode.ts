@@ -98,6 +98,13 @@ const cinematicProfile: GraphicsProfile = {
   shadowSamples: 16,
   surfaceAnisotropy: 16,
 }
+/** WebGPU’s default texture size limit, which Three requests whatever the adapter supports */
+const maxTextureSize = 8192
+
+/** Caps a canvas texture’s resolution so its backing store stays within the texture size limit, which a large atlas would exceed at the cinematic resolution. */
+export function fitCanvasTextureResolution(resolution: number, width: number, height: number) {
+  return Math.min(resolution, maxTextureSize / Math.max(width, height))
+}
 
 /** Select a stable gallery-specific budget without exposing enum keys to consumers. */
 export function getGraphicsProfile(isHeavy: boolean, isCinematic = false) {

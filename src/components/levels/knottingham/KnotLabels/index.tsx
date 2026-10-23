@@ -18,7 +18,7 @@ import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.ts
 import {activateKnotSign, knotRarityEditor} from '#src/levels/knottingham/rarity.ts'
 import metal from '#src/lib/materials/metal.ts'
 import InstancedPropVisuals from '#src/lib/physics/InstancedPropVisuals.ts'
-import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
+import {fitCanvasTextureResolution, getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
 import drawLabel, {labelAtlasColumns, labelBackground, labelFonts, labelHeight, labelWidth, updateRarityAtlas} from './drawLabel.ts'
 import createSupportGeometry from './supportGeometry.ts'
@@ -89,7 +89,7 @@ export default function KnotLabels() {
   const atlas = useCanvasTexture(useMemo(() => ({
     width: labelAtlasColumns * labelWidth,
     height: atlasRows * labelHeight,
-    resolution,
+    resolution: fitCanvasTextureResolution(resolution, labelAtlasColumns * labelWidth, atlasRows * labelHeight),
     name: 'Knot nameplate atlas',
     mipmaps,
     prepare: async () => {
