@@ -30,13 +30,14 @@ test('cinematic graphics read as heavy, and only cinematic reads as cinematic', 
   expect(readCinematicGraphics('?graphics=heavy')).toBe(false)
   expect(readCinematicGraphics()).toBe(false)
 })
-test('the cinematic profile is heavy with every intermediate map at twice the resolution, shadow maps at four times, more samples and full texture filtering', () => {
+test('the cinematic profile is heavy with every intermediate map at twice the resolution, shadow maps at four times, more samples, full texture filtering and indirect light', () => {
   const heavy = getGraphicsProfile(true)
   const cinematic = getGraphicsProfile(true, true)
   expect(cinematic).toEqual({
     ...heavy,
     canvasTextureMipmaps: true,
     canvasTextureResolution: 2,
+    indirectLight: true,
     ambientOcclusionResolutionScale: 1.5,
     ambientOcclusionSamples: 32,
     reflectionResolutionScale: 2,
@@ -56,6 +57,7 @@ test('the provider exposes the default scene budget during SSR', () => {
     canvasTextureResolution: 0.5,
     noiseTextures: false,
     floorReflections: false,
+    indirectLight: false,
     shadows: false,
     postprocessing: false,
     ambientOcclusionResolutionScale: 0.75,
@@ -70,6 +72,7 @@ test('the provider exposes the default scene budget during SSR', () => {
     canvasTextureResolution: 1,
     noiseTextures: true,
     floorReflections: true,
+    indirectLight: false,
     shadows: true,
     postprocessing: true,
     ambientOcclusionResolutionScale: 0.75,

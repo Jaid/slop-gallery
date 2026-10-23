@@ -16,10 +16,11 @@ type PostprocessingProps = {
   /** whether V-viewing blurs the background */
   focus?: boolean
   heavy?: boolean
+  indirectLight?: boolean
   reflectionResolutionScale?: number
 }
 
-const Postprocessing = ({ambientOcclusionResolutionScale, ambientOcclusionSamples, antiAliasing = 'traa', contactDarkening = false, focus = false, heavy = true, reflectionResolutionScale}: PostprocessingProps) => {
+const Postprocessing = ({ambientOcclusionResolutionScale, ambientOcclusionSamples, antiAliasing = 'traa', contactDarkening = false, focus = false, heavy = true, indirectLight = false, reflectionResolutionScale}: PostprocessingProps) => {
   const renderer = useThree(state => state.renderer)
   const scene = useThree(state => state.scene)
   const camera = useThree(state => state.camera)
@@ -32,6 +33,7 @@ const Postprocessing = ({ambientOcclusionResolutionScale, ambientOcclusionSample
       antiAliasing,
       contactDarkening,
       heavy,
+      indirectLight,
       reflectionResolutionScale,
       zoom: getPlayerZoom,
       focus: focus ? {
@@ -64,7 +66,7 @@ const Postprocessing = ({ambientOcclusionResolutionScale, ambientOcclusionSample
       deactivate()
       pipeline.dispose()
     }
-  }, [ambientOcclusionResolutionScale, ambientOcclusionSamples, antiAliasing, camera, contactDarkening, focus, heavy, reflectionResolutionScale, renderer, scene, store])
+  }, [ambientOcclusionResolutionScale, ambientOcclusionSamples, antiAliasing, camera, contactDarkening, focus, heavy, indirectLight, reflectionResolutionScale, renderer, scene, store])
   return null
 }
 export default Postprocessing

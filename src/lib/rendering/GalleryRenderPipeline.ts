@@ -5,8 +5,9 @@ import {WireframeFloodPass} from 'capture-session'
 import {bloom} from 'three/addons/tsl/display/BloomNode.js'
 import {ao} from 'three/addons/tsl/display/GTAONode.js'
 import {smaa} from 'three/addons/tsl/display/SMAANode.js'
+import {ssgi} from 'three/addons/tsl/display/SSGINode.js'
 import {traa} from 'three/addons/tsl/display/TRAANode.js'
-import {convertToTexture, float, int, length, luminance, max, min, mrt, normalView, output, pass, rtt, screenUV, smoothstep, uniform, uv, vec2, vec3, vec4, velocity} from 'three/tsl'
+import {convertToTexture, diffuseColor, float, int, length, luminance, max, min, mrt, normalView, output, pass, rtt, screenUV, smoothstep, uniform, uv, vec2, vec3, vec4, velocity} from 'three/tsl'
 import {BlendMode, MRTNode, NoBlending, Node, NormalBlending, PerspectiveCamera, RenderPipeline} from 'three/webgpu'
 
 import {renderFloorReflection} from '../materials/FloorMaterial.ts'
@@ -34,6 +35,8 @@ export type GalleryRenderPipelineOptions = {
     proximity: () => number
   }
   heavy?: boolean
+  /** whether screen-space indirect light bounces the lit scene off the surfaces’ diffuse color, needs heavy */
+  indirectLight?: boolean
   /** floor reflection pixels per output pixel along each axis */
   reflectionResolutionScale?: number
   zoom?: () => number
@@ -53,6 +56,7 @@ export class TransparentSpriteOutputsNode extends MRTNode {
       normal: vec4(normalView, 0),
       // The velocity node’s declaration lacks the node extensions every other node has.
       velocity: vec4(velocity as unknown as Node<'vec2'>, 0, 0),
+      diffuseColor: vec4(0),
     })
   }
 
@@ -73,7 +77,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
   readonly scenePass: ReturnType<typeof pass>
   private readonly effects: Array<{dispose: () => void}> = []
 
-  constructor(renderer: Renderer, scene: Object3D, camera: Camera, {antiAliasing = 'traa', ambientOcclusionResolutionScale = 0.75, ambientOcclusionSamples = 16, contactDarkening = false, focus, heavy = true, reflectionResolutionScale = 1, zoom = () => 0}: GalleryRenderPipelineOptions = {}) {
+  constructor(renderer: Renderer, scene: Object3D, camera: Camera, {antiAliasing = 'traa', ambientOcclusionResolutionScale = 0.75, ambientOcclusionSamples = 16, contactDarkening = false, focus, heavy = true, indirectLight = false, reflectionResolutionScale = 1, zoom = () => 0}: GalleryRenderPipelineOptions = {}) {
     super(renderer)
     const own = <T extends {dispose: () => void}>(effect: T) => {
       this.effects.push(effect)
@@ -110,10 +114,11 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       const outputs = mrt({
         output,
         ...heavy ? {normal: normalView} : {},
+        ...heavy && indirectLight ? {diffuseColor} : {},
         ...antiAliasing === 'traa' ? {velocity} : {},
       })
       // The geometry buffers blend by their own alpha. Every material writes them with alpha 1, which overwrites like before; a soft sprite can write alpha 0 through its `mrtNode` (see `TransparentSpriteOutputsNode`) to leave the normal and motion of what is behind it alone, which the ambient occlusion and the temporal resolve read.
-      for (const name of ['normal', 'velocity']) {
+      for (const name of ['normal', 'velocity', 'diffuseColor']) {
         outputs.setBlendMode(name, new BlendMode(NormalBlending))
       }
       scenePass.setMRT(outputs)
@@ -128,6 +133,14 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       ambientOcclusion.scale.value = contactDarkening ? 1.18 : 0.85
       ambientOcclusion.samples.value = ambientOcclusionSamples
       current = current.mul(vec4(vec3(ambientOcclusion.getTextureNode().r), 1))
+      if (indirectLight && camera instanceof PerspectiveCamera) {
+        // The light the lit scene bounces onto nearby surfaces, tinted by their diffuse color. Its temporal noise resolves in TRAA.
+        const indirect = own(ssgi(scenePass.getTextureNode('output'), depth, scenePass.getTextureNode('normal'), camera))
+        indirect.sliceCount.value = 3
+        indirect.stepCount.value = 16
+        indirect.giIntensity.value = 4
+        current = vec4(current.rgb.add(scenePass.getTextureNode('diffuseColor').rgb.mul(indirect.getGINode().rgb)), current.a)
+      }
     }
     // Native pixel color + native depth -> isolated background -> aperture gather -> composite. No temporal color or post-TRAA depth mask may enter this branch.
     let background: Node<'float'> = float(0)

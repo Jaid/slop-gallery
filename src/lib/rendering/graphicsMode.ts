@@ -30,6 +30,8 @@ type GraphicsProfile = {
   /** backing pixels per logical texel for runtime canvas textures such as signs */
   canvasTextureResolution: number
   floorReflections: boolean
+  /** whether screen-space indirect light bounces the lit scene off the surfaces’ diffuse color */
+  indirectLight: boolean
   noiseTextures: boolean
   postprocessing: boolean
   /** floor reflection pixels per output pixel along each axis */
@@ -63,6 +65,7 @@ const fastProfile: GraphicsProfile = {
   canvasTextureResolution: 0.5,
   noiseTextures: false,
   floorReflections: false,
+  indirectLight: false,
   shadows: false,
   postprocessing: false,
   ambientOcclusionResolutionScale: 0.75,
@@ -77,6 +80,7 @@ const heavyProfile: GraphicsProfile = {
   canvasTextureResolution: 1,
   noiseTextures: true,
   floorReflections: true,
+  indirectLight: false,
   shadows: true,
   postprocessing: true,
   ambientOcclusionResolutionScale: 0.75,
@@ -86,11 +90,12 @@ const heavyProfile: GraphicsProfile = {
   shadowSamples: 5,
   surfaceAnisotropy: 8,
 }
-// Heavy at twice the resolution of every intermediate map and four times the shadow map resolution, with more samples and full texture filtering, for renders that don’t have to keep up with the display.
+// Heavy at twice the resolution of every intermediate map and four times the shadow map resolution, with more samples, full texture filtering and indirect light, for renders that don’t have to keep up with the display.
 const cinematicProfile: GraphicsProfile = {
   ...heavyProfile,
   canvasTextureMipmaps: true,
   canvasTextureResolution: 2,
+  indirectLight: true,
   ambientOcclusionResolutionScale: 1.5,
   ambientOcclusionSamples: 32,
   reflectionResolutionScale: 2,
