@@ -284,16 +284,9 @@ const set = (values: Partial<CustomGraphics>) => {
 /** The panel G shows with `?development`, a column beside the canvas: checkboxes switch passes, which rebuilds the pipeline, and sliders change its uniforms live. */
 export default function GraphicsTuning() {
   const isHeavy = useGraphicsMode()
-  // Focusable itself, so a click anywhere in the panel, not only on a control, counts as focus.
-  return <aside
-    className={css.container} aria-label='Render pipeline' tabIndex={-1} onBlur={event => {
-      if (!event.currentTarget.contains(event.relatedTarget)) {
-        useGraphicsTuning.setState({focused: false})
-      }
-    }} onFocus={() => useGraphicsTuning.setState({focused: true})}
-  >
+  return <aside className={css.container} aria-label='Render pipeline' onPointerEnter={() => useGraphicsTuning.setState({hovered: true})} onPointerLeave={() => useGraphicsTuning.setState({hovered: false})}>
     <div className={css.heading}><h2>Render pipeline</h2><button type='button' onClick={() => useCustomGraphics.setState(initial, true)}>Reset</button></div>
-    <p className={css.hint}>{isHeavy ? 'Pause to tune. The menu hides while the panel has focus.' : 'Switch graphics on in the menu to tune the pipeline.'}</p>
+    <p className={css.hint}>{isHeavy ? 'Pause to tune. The menu hides while the pointer is over the panel.' : 'Switch graphics on in the menu to tune the pipeline.'}</p>
     <Branch if={isHeavy}>{sections.map(section => <SectionBox key={section.title} section={section} />)}</Branch>
   </aside>
 }

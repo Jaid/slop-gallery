@@ -103,19 +103,19 @@ const modeGraphics = getDefaultCustomGraphics()
 /** the tuning panel’s values, which stay while the panel is hidden */
 export const useCustomGraphics = create<CustomGraphics>(() => modeGraphics)
 
-/** Whether the tuning panel shows, which is the only time the pipeline follows it, and whether focus is in it, which hides the pause menu so the scene shows every change. */
+/** Whether the tuning panel shows, which is the only time the pipeline follows it, and whether the pointer is over it, which hides the pause menu so the scene shows every change. */
 export const useGraphicsTuning = create<{
-  focused: boolean
+  hovered: boolean
   open: boolean
 }>(() => ({
-  focused: false,
+  hovered: false,
   open: false,
 }))
 
 /** Shows the tuning panel or hides it, which puts the pipeline back to the graphics mode’s own. */
 export function toggleGraphicsTuning() {
   useGraphicsTuning.setState(state => ({
-    focused: false,
+    hovered: false,
     open: !state.open,
   }))
 }

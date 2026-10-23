@@ -41,8 +41,8 @@ export default function App() {
     <main className={css.viewport} aria-label='Interactive 3D gallery'>
       <RenderBoundary onFailure={() => setRenderFailed(true)}><World /></RenderBoundary>
     </main>
-    {/* Hidden with O, the paused scene stays in full view, e.g. while tweaking values in an editor; O brings the menu back. Focus in the tuning panel hides it too. */}
-    <Branch none={[s.locked, s.panel, s.dragging, renderFailed, uiHidden, tuning.focused]}><Menu {...settings} /></Branch>
+    {/* Hidden with O, the paused scene stays in full view, e.g. while tweaking values in an editor; O brings the menu back. Hovering the tuning panel hides it too. */}
+    <Branch none={[s.locked, s.panel, s.dragging, renderFailed, uiHidden, tuning.hovered]}><Menu {...settings} /></Branch>
     <Branch not={uiHidden} then={Hud} />
     <Branch if={s.notice} none={[s.panel, uiHidden]}><Toast>{s.notice}</Toast></Branch>
     <Branch if={s.panel === 'map'}><Panel title='Floor plan'><Map /></Panel></Branch>
