@@ -281,7 +281,7 @@ const initial = getDefaultCustomGraphics()
 const set = (values: Partial<CustomGraphics>) => {
   useCustomGraphics.setState(values)
 }
-/** The panel G shows with `?development`, a column beside the canvas: checkboxes switch passes, which rebuilds the pipeline, and sliders change its uniforms live. */
+/** The panel G shows with `?development`, a column left of the canvas: checkboxes switch passes, which rebuilds the pipeline, and sliders change its uniforms live. */
 export default function GraphicsTuning() {
   const isHeavy = useGraphicsMode()
   return <aside className={css.container} aria-label='Render pipeline' onPointerEnter={() => useGraphicsTuning.setState({hovered: true})} onPointerLeave={() => useGraphicsTuning.setState({hovered: false})}>

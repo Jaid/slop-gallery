@@ -37,17 +37,18 @@ export default function App() {
   if (!gpu) {
     return <RenderError><h2>WebGPU is unavailable.</h2><p>{galleryTitle} requires native WebGPU. Open it in current Chrome or Edge with hardware acceleration enabled, using HTTPS or localhost.</p></RenderError>
   }
-  return <GraphicsMode><Dropzone><div className={css.layout}><div className={css.stage}>
-    <main className={css.viewport} aria-label='Interactive 3D gallery'>
-      <RenderBoundary onFailure={() => setRenderFailed(true)}><World /></RenderBoundary>
-    </main>
-    {/* Hidden with O, the paused scene stays in full view, e.g. while tweaking values in an editor; O brings the menu back. Hovering the tuning panel hides it too. */}
-    <Branch none={[s.locked, s.panel, s.dragging, renderFailed, uiHidden, tuning.hovered]}><Menu {...settings} /></Branch>
-    <Branch not={uiHidden} then={Hud} />
-    <Branch if={s.notice} none={[s.panel, uiHidden]}><Toast>{s.notice}</Toast></Branch>
-    <Branch if={s.panel === 'map'}><Panel title='Floor plan'><Map /></Panel></Branch>
-  </div>
-  {/* A column of its own beside the canvas and HUD, so the panel never covers the scene it tunes */}
-  <Branch if={tuning.open} then={GraphicsTuning} />
+  return <GraphicsMode><Dropzone><div className={css.layout}>
+    {/* A column of its own left of the canvas and HUD, so the panel never covers the scene it tunes */}
+    <Branch if={tuning.open} then={GraphicsTuning} />
+    <div className={css.stage}>
+      <main className={css.viewport} aria-label='Interactive 3D gallery'>
+        <RenderBoundary onFailure={() => setRenderFailed(true)}><World /></RenderBoundary>
+      </main>
+      {/* Hidden with O, the paused scene stays in full view, e.g. while tweaking values in an editor; O brings the menu back. Hovering the tuning panel hides it too. */}
+      <Branch none={[s.locked, s.panel, s.dragging, renderFailed, uiHidden, tuning.hovered]}><Menu {...settings} /></Branch>
+      <Branch not={uiHidden} then={Hud} />
+      <Branch if={s.notice} none={[s.panel, uiHidden]}><Toast>{s.notice}</Toast></Branch>
+      <Branch if={s.panel === 'map'}><Panel title='Floor plan'><Map /></Panel></Branch>
+    </div>
   </div></Dropzone></GraphicsMode>
 }
