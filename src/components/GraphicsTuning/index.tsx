@@ -276,6 +276,8 @@ const sections: Array<Section> = [
     ],
   },
 ]
+/** the values the panel opened with, which a label turns yellow once it leaves */
+const initial = getDefaultCustomGraphics()
 const set = (values: Partial<CustomGraphics>) => {
   useCustomGraphics.setState(values)
 }
@@ -289,7 +291,7 @@ export default function GraphicsTuning() {
       }
     }} onFocus={() => useGraphicsTuning.setState({focused: true})}
   >
-    <div className={css.heading}><h2>Render pipeline</h2><button type='button' onClick={() => useCustomGraphics.setState(getDefaultCustomGraphics(), true)}>Reset</button></div>
+    <div className={css.heading}><h2>Render pipeline</h2><button type='button' onClick={() => useCustomGraphics.setState(initial, true)}>Reset</button></div>
     <p className={css.hint}>{isHeavy ? 'Pause to tune. The menu hides while the panel has focus.' : 'Switch graphics on in the menu to tune the pipeline.'}</p>
     <Branch if={isHeavy}>{sections.map(section => <SectionBox key={section.title} section={section} />)}</Branch>
   </aside>
@@ -300,23 +302,25 @@ function ControlRow({control, disabled}: {
 }) {
   const value = useCustomGraphics(state => state[control.key])
   const id = `tuning-${control.key}`
+  const label = <span data-changed={value !== initial[control.key] || undefined}>{control.label}</span>
   if (control.kind === 'toggle') {
-    return <label className={css.toggle}><span>{control.label}</span><input id={id} checked={value as boolean} disabled={disabled} type='checkbox' onChange={event => set({[control.key]: event.currentTarget.checked})} /></label>
+    return <label className={css.toggle}>{label}<input id={id} checked={value as boolean} disabled={disabled} type='checkbox' onChange={event => set({[control.key]: event.currentTarget.checked})} /></label>
   }
   if (control.kind === 'select') {
     const index = control.options.findIndex(([option]) => option === value)
-    return <label className={css.row}><span>{control.label}</span><select id={id} disabled={disabled} value={index} onChange={event => set({[control.key]: control.options[Number(event.currentTarget.value)][0]})}>{control.options.map(([, label], optionIndex) => <option key={label} value={optionIndex}>{label}</option>)}</select></label>
+    return <label className={css.row}>{label}<select id={id} disabled={disabled} value={index} onChange={event => set({[control.key]: control.options[Number(event.currentTarget.value)][0]})}>{control.options.map(([, optionLabel], optionIndex) => <option key={optionLabel} value={optionIndex}>{optionLabel}</option>)}</select></label>
   }
   return <label className={css.row}>
-    <span>{control.label}</span>
+    {label}
     <input id={id} disabled={disabled} max={control.max} min={control.min} step={control.step} type='range' value={value as number} onChange={event => set({[control.key]: Number(event.currentTarget.value)})} />
     <output htmlFor={id}>{Number((value as number).toFixed(3))}</output>
   </label>
 }
 function SectionBox({section}: {section: Section}) {
   const enabled = useCustomGraphics(state => section.toggle === undefined || state[section.toggle])
+  const changed = useCustomGraphics(state => [section.toggle, ...section.controls.map(control => control.key)].some(key => key !== undefined && state[key] !== initial[key]))
   return <fieldset className={css.section}>
-    <legend><Branch if={section.toggle} else={section.title}><label><input checked={enabled} type='checkbox' onChange={event => set({[section.toggle!]: event.currentTarget.checked})} /> {section.title}</label></Branch></legend>
+    <legend data-changed={changed || undefined}><Branch if={section.toggle} else={section.title}><label><input checked={enabled} type='checkbox' onChange={event => set({[section.toggle!]: event.currentTarget.checked})} /> {section.title}</label></Branch></legend>
     {section.controls.map(control => <ControlRow key={control.key} control={control} disabled={!enabled} />)}
   </fieldset>
 }
