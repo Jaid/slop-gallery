@@ -30,7 +30,7 @@ test('cinematic graphics read as heavy, and only cinematic reads as cinematic', 
   expect(readCinematicGraphics('?graphics=heavy')).toBe(false)
   expect(readCinematicGraphics()).toBe(false)
 })
-test('the cinematic profile is heavy with every intermediate map at twice the resolution, more samples and full texture filtering', () => {
+test('the cinematic profile is heavy with every intermediate map at twice the resolution, shadow maps at four times, more samples and full texture filtering', () => {
   const heavy = getGraphicsProfile(true)
   const cinematic = getGraphicsProfile(true, true)
   expect(cinematic).toEqual({
@@ -40,7 +40,7 @@ test('the cinematic profile is heavy with every intermediate map at twice the re
     ambientOcclusionResolutionScale: 1.5,
     ambientOcclusionSamples: 32,
     reflectionResolutionScale: 2,
-    shadowMapScale: 2,
+    shadowMapScale: 4,
     shadowSamples: 16,
     surfaceAnisotropy: 16,
   })

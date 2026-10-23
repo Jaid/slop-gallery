@@ -7,6 +7,8 @@ import {Object3D, Renderer} from 'three/webgpu'
 import {BatchedLighting} from '#src/lib/materials/lights/base/BatchedLightsNode.ts'
 import {telemetry} from '#src/lib/telemetry/index.ts'
 
+import {cinematicMaxTextureSize, readCinematicGraphics} from './graphicsMode.ts'
+
 type Culler = (camera: Camera) => void
 type RenderObject = {scene: Object3D}
 type PromiseSink = {push: (promise: Promise<void>) => void}
@@ -102,6 +104,7 @@ export class GalleryRenderer extends WebgpuRenderer {
   constructor(options: WebgpuRendererOptions) {
     super({
       ...options,
+      ...readCinematicGraphics() ? {requiredLimits: {maxTextureDimension2D: cinematicMaxTextureSize}} : {},
       alpha: false,
       antialias: false,
       trackTimestamp: telemetry !== null,

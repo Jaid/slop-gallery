@@ -86,7 +86,7 @@ const heavyProfile: GraphicsProfile = {
   shadowSamples: 5,
   surfaceAnisotropy: 8,
 }
-// Heavy at twice the resolution of every intermediate map, with more samples and full texture filtering, for renders that don’t have to keep up with the display.
+// Heavy at twice the resolution of every intermediate map and four times the shadow map resolution, with more samples and full texture filtering, for renders that don’t have to keep up with the display.
 const cinematicProfile: GraphicsProfile = {
   ...heavyProfile,
   canvasTextureMipmaps: true,
@@ -94,12 +94,14 @@ const cinematicProfile: GraphicsProfile = {
   ambientOcclusionResolutionScale: 1.5,
   ambientOcclusionSamples: 32,
   reflectionResolutionScale: 2,
-  shadowMapScale: 2,
+  shadowMapScale: 4,
   shadowSamples: 16,
   surfaceAnisotropy: 16,
 }
 /** WebGPU’s default texture size limit, which Three requests whatever the adapter supports */
 const maxTextureSize = 8192
+/** the texture size limit cinematic graphics request instead, for the sun’s shadow map at four times its heavy size; desktop GPUs support it */
+export const cinematicMaxTextureSize = 16_384
 
 /** Caps a canvas texture’s resolution so its backing store stays within the texture size limit, which a large atlas would exceed at the cinematic resolution. */
 export function fitCanvasTextureResolution(resolution: number, width: number, height: number) {
