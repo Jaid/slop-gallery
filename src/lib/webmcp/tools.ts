@@ -2,9 +2,12 @@ import type {FrameDownload, FrameFormat} from '#src/lib/downloadFrame.ts'
 import type {PortraitSlot} from '#src/lib/gallery/types.ts'
 import type {PlayerDumpSnapshot} from '#src/lib/telemetry/recordPlayerDump.ts'
 import type {WorldAnalysis} from './analyzeWorld.ts'
+import type {WireframeFlood} from 'capture-session'
 import type {AimSnapshot} from 'ego-player'
 import type {Rarity} from 'knot-materials/rarities.ts'
 import type VictoriaClient from 'victoria-browser-client'
+
+import {normalizeMeshPath, wireframeFloodAnchors, wireframeFloodDirections, wireframeFloodModes, wireframeFloodShapes, wireframeLineStyles} from 'capture-session'
 
 export type KnotDump = {
   id: string
@@ -27,10 +30,13 @@ export type WebmcpBridge = {
     delivery: ReturnType<VictoriaClient['status']>
     sessionId: string
   } | null
+  setWireframe: (flood: Partial<WireframeFlood>) => WireframeFlood
 }
 
 const frameFormats: Array<FrameFormat> = ['webp', 'png']
 const fileNamePattern = /^[\w\-.]{1,100}$/u
+const colorPattern = /^#(?:[\da-f]{3}){1,2}$/iu
+const wireframeKeys = ['enabled', 'direction', 'mode', 'anchor', 'shape', 'position', 'radius', 'highlight', 'color', 'highlight_color', 'seam_width', 'glow_duration', 'seam_color', 'seam_intensity', 'angle_indicator_strength', 'speed', 'burst', 'burst_duration', 'antialiasing', 'line_style', 'line_width']
 
 export default function createWebmcpTools(getBridge: () => WebmcpBridge): Array<WebMCP.ModelContextTool> {
   const readTools: Array<WebMCP.ModelContextTool> = [
@@ -127,6 +133,268 @@ export default function createWebmcpTools(getBridge: () => WebmcpBridge): Array<
           name,
           format: format as FrameFormat | undefined,
         })
+      },
+    },
+    {
+      name: 'set_wireframe',
+      title: 'Set wireframe flood',
+      description: 'Show every visible surface within a sphere as wireframe, with a glowing seam along its front, while the rest of the frame renders as usual, or the other way around. Surfaces flip by the distance of their triangles or of each pixel, both measured on the wireframe’s solid surfaces, so transparent ones like water flip too. Meant for headless rendering, as it draws the scene up to three extra times per frame. Highlighted objects draw in their own color, everything else in the regular one. Takes effect from the next frame and stays until changed; omitted fields keep their current value, and a null color returns to its fallback. Starts disabled. Needs the regular render pipeline, so ?vision_mode replaces it. Returns the whole flood now in effect.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          enabled: {
+            type: 'boolean',
+            description: 'whether the flood renders at all',
+          },
+          direction: {
+            type: 'string',
+            enum: [...wireframeFloodDirections],
+            description: 'in (at first) turns everything the sphere reaches into wireframe; out starts from a frame that is all wireframe and turns everything the sphere reaches back into the scene. A new direction, or the first one sent, turns the flood on unless enabled says otherwise and starts it over from the radius sent along, or from 0',
+          },
+          mode: {
+            type: 'string',
+            enum: [...wireframeFloodModes],
+            description: 'triangle (default) flips each triangle whole once the sphere reaches its anchor, with the seam glowing on whole triangles for a while after they flip; pixel flips every pixel by its own distance, with a soft edge and the seam along the sphere’s border; combined flips like triangle but glows both ways',
+          },
+          anchor: {
+            type: 'string',
+            enum: [...wireframeFloodAnchors],
+            description: 'what point of a triangle decides when it flips, in triangle and combined mode: nearest (default) flips it as soon as the sphere touches it, centroid once the sphere reaches its middle, farthest once the sphere encloses it',
+          },
+          shape: {
+            type: 'string',
+            enum: [...wireframeFloodShapes],
+            description: 'sphere (default) floods in 3D; circle measures only horizontally, flooding as a vertical cylinder around the position',
+          },
+          position: {
+            type: 'array',
+            description: 'world-space center of the sphere in meters, [x, y, z]',
+            items: {type: 'number'},
+            minItems: 3,
+            maxItems: 3,
+          },
+          radius: {
+            type: 'number',
+            description: 'sphere radius in meters',
+            minimum: 0,
+          },
+          highlight: {
+            description: 'one mesh path or several, like “lobby-fountain” or “lobby-fountain/fountain-falling-water”; their objects and everything below them draw in the highlight color. An empty array highlights nothing',
+            anyOf: [
+              {type: 'string'},
+              {
+                type: 'array',
+                items: {type: 'string'},
+              },
+            ],
+          },
+          color: {
+            description: 'line color of everything not highlighted, as #rgb or #rrggbb. Fallback: #ff1515 beside highlights, #40ff40 otherwise',
+            anyOf: [
+              {
+                type: 'string',
+                pattern: colorPattern.source,
+              },
+              {type: 'null'},
+            ],
+          },
+          highlight_color: {
+            description: 'line color of the highlighted objects, as #rgb or #rrggbb. Fallback: #2f7bff',
+            anyOf: [
+              {
+                type: 'string',
+                pattern: colorPattern.source,
+              },
+              {type: 'null'},
+            ],
+          },
+          seam_width: {
+            description: 'meters from the sphere’s border at which its seam glow falls to 1/e, in pixel and combined mode. Fallback: grows with the radius, 0.06 + 0.12 per meter',
+            anyOf: [
+              {
+                type: 'number',
+                exclusiveMinimum: 0,
+              },
+              {type: 'null'},
+            ],
+          },
+          glow_duration: {
+            type: 'number',
+            description: 'seconds a flipped triangle glows, starting in its full line color the moment it flips and fading into what it flipped to with a steep exponential ease-out, in triangle and combined mode, 1 at first; 0 turns the triangle glow off',
+            minimum: 0,
+          },
+          seam_color: {
+            description: 'glow color of the seam along the sphere’s border, as #rgb or #rrggbb; flipped triangles glow in their own line color. Fallback: #a8d4ff',
+            anyOf: [
+              {
+                type: 'string',
+                pattern: colorPattern.source,
+              },
+              {type: 'null'},
+            ],
+          },
+          seam_intensity: {
+            type: 'number',
+            description: 'peak brightness the seam along the sphere’s border adds, 0.9 at first; 0 turns it off',
+            minimum: 0,
+          },
+          speed: {
+            description: 'meters per second the radius keeps growing by, without an end, starting from the radius it has when direction, speed, burst, burst_duration or radius last changed; null leaves the radius as set. Sending the same values again keeps the flood going',
+            anyOf: [
+              {
+                type: 'number',
+                minimum: 0,
+              },
+              {type: 'null'},
+            ],
+          },
+          burst: {
+            type: 'number',
+            description: 'how the speed starts out, as a multiple of it, 1 at first: above 1 the flood shoots out like a cannon and slows down to its speed, below 1 it builds up to it, 0 starting at rest',
+            minimum: 0,
+          },
+          burst_duration: {
+            type: 'number',
+            description: 'seconds over which the burst eases into the regular speed, as the time constant of an exponential, 0.5 at first',
+            exclusiveMinimum: 0,
+          },
+          line_style: {
+            type: 'string',
+            enum: [...wireframeLineStyles],
+            description: 'barycentric (default) draws antialiased edges of line_width pixels as part of each face, exactly at its depth, so they never break up where surfaces nearly touch; lines draws 1 px hardware lines over the faces',
+          },
+          line_width: {
+            type: 'number',
+            description: 'pixels a barycentric edge is wide, 0.5 at first',
+            exclusiveMinimum: 0,
+          },
+          antialiasing: {
+            type: 'boolean',
+            description: 'draws the wireframe with 4× MSAA for smooth lines, false at first',
+          },
+          angle_indicator_strength: {
+            type: 'number',
+            description: 'percent of its line color a wireframe face shows when facing the camera, 5 at first; edge-on faces are black',
+            minimum: 0,
+            maximum: 100,
+          },
+        },
+        additionalProperties: false,
+      },
+      annotations: {
+        readOnlyHint: false,
+      },
+      execute: (input: unknown, {signal}) => {
+        signal.throwIfAborted()
+        if (!input || typeof input !== 'object' || Array.isArray(input) || Object.keys(input).some(key => !wireframeKeys.includes(key))) {
+          throw new TypeError(`This tool takes an object with optional ${wireframeKeys.join(', ')}.`)
+        }
+        const {enabled, direction, mode, anchor, shape, position, radius, highlight, color, highlight_color: highlightColor, seam_width: seamWidth, glow_duration: glowDuration, seam_color: seamColor, seam_intensity: seamIntensity, angle_indicator_strength: angleIndicatorStrength, speed, burst, burst_duration: burstDuration, antialiasing, line_style: lineStyle, line_width: lineWidth} = input as Record<string, unknown>
+        if (enabled !== undefined && typeof enabled !== 'boolean') {
+          throw new TypeError('enabled must be a boolean.')
+        }
+        if (direction !== undefined && !wireframeFloodDirections.includes(direction as typeof wireframeFloodDirections[number])) {
+          throw new TypeError(`direction must be one of ${wireframeFloodDirections.join(', ')}.`)
+        }
+        if (mode !== undefined && !wireframeFloodModes.includes(mode as typeof wireframeFloodModes[number])) {
+          throw new TypeError(`mode must be one of ${wireframeFloodModes.join(', ')}.`)
+        }
+        if (anchor !== undefined && !wireframeFloodAnchors.includes(anchor as typeof wireframeFloodAnchors[number])) {
+          throw new TypeError(`anchor must be one of ${wireframeFloodAnchors.join(', ')}.`)
+        }
+        if (shape !== undefined && !wireframeFloodShapes.includes(shape as typeof wireframeFloodShapes[number])) {
+          throw new TypeError(`shape must be one of ${wireframeFloodShapes.join(', ')}.`)
+        }
+        if (position !== undefined && !(Array.isArray(position) && position.length === 3 && position.every(value => typeof value === 'number' && Number.isFinite(value)))) {
+          throw new TypeError('position must be three finite numbers.')
+        }
+        if (radius !== undefined && !(typeof radius === 'number' && Number.isFinite(radius) && radius >= 0)) {
+          throw new TypeError('radius must be a finite number of at least 0.')
+        }
+        const paths = highlight === undefined ? undefined : [highlight].flat().map(path => normalizeMeshPath(path))
+        if (paths?.includes(undefined)) {
+          throw new TypeError('highlight must be a mesh path or an array of them.')
+        }
+        if (seamWidth !== undefined && seamWidth !== null && !(typeof seamWidth === 'number' && Number.isFinite(seamWidth) && seamWidth > 0)) {
+          throw new TypeError('seam_width must be a finite number above 0 or null.')
+        }
+        for (const [key, value] of [['glow_duration', glowDuration], ['seam_intensity', seamIntensity]] as const) {
+          if (value !== undefined && !(typeof value === 'number' && Number.isFinite(value) && value >= 0)) {
+            throw new TypeError(`${key} must be a finite number of at least 0.`)
+          }
+        }
+        if (lineStyle !== undefined && !wireframeLineStyles.includes(lineStyle as typeof wireframeLineStyles[number])) {
+          throw new TypeError(`line_style must be one of ${wireframeLineStyles.join(', ')}.`)
+        }
+        if (lineWidth !== undefined && !(typeof lineWidth === 'number' && Number.isFinite(lineWidth) && lineWidth > 0)) {
+          throw new TypeError('line_width must be a finite number above 0.')
+        }
+        if (antialiasing !== undefined && typeof antialiasing !== 'boolean') {
+          throw new TypeError('antialiasing must be a boolean.')
+        }
+        if (speed !== undefined && speed !== null && !(typeof speed === 'number' && Number.isFinite(speed) && speed >= 0)) {
+          throw new TypeError('speed must be a finite number of at least 0 or null.')
+        }
+        if (burst !== undefined && !(typeof burst === 'number' && Number.isFinite(burst) && burst >= 0)) {
+          throw new TypeError('burst must be a finite number of at least 0.')
+        }
+        if (burstDuration !== undefined && !(typeof burstDuration === 'number' && Number.isFinite(burstDuration) && burstDuration > 0)) {
+          throw new TypeError('burst_duration must be a finite number above 0.')
+        }
+        if (angleIndicatorStrength !== undefined && !(typeof angleIndicatorStrength === 'number' && angleIndicatorStrength >= 0 && angleIndicatorStrength <= 100)) {
+          throw new TypeError('angle_indicator_strength must be a percentage from 0 to 100.')
+        }
+        for (const [key, value] of [['color', color], ['highlight_color', highlightColor], ['seam_color', seamColor]] as const) {
+          if (value !== undefined && value !== null && !(typeof value === 'string' && colorPattern.test(value))) {
+            throw new TypeError(`${key} must be #rgb, #rrggbb or null.`)
+          }
+        }
+        const flood = getBridge().setWireframe({
+          enabled,
+          direction: direction as WireframeFlood['direction'] | undefined,
+          mode: mode as WireframeFlood['mode'] | undefined,
+          anchor: anchor as WireframeFlood['anchor'] | undefined,
+          shape: shape as WireframeFlood['shape'] | undefined,
+          position: position as WireframeFlood['position'] | undefined,
+          radius,
+          highlight: paths as Array<string> | undefined,
+          color: color as string | null | undefined,
+          highlightColor: highlightColor as string | null | undefined,
+          seamWidth,
+          glowDuration: glowDuration as number | undefined,
+          seamColor: seamColor as string | null | undefined,
+          seamIntensity: seamIntensity as number | undefined,
+          angleIndicatorStrength,
+          speed,
+          burst,
+          burstDuration,
+          antialiasing,
+          lineStyle: lineStyle as WireframeFlood['lineStyle'] | undefined,
+          lineWidth,
+        })
+        return {
+          enabled: flood.enabled,
+          direction: flood.direction,
+          mode: flood.mode,
+          anchor: flood.anchor,
+          shape: flood.shape,
+          position: flood.position,
+          radius: flood.radius,
+          highlight: flood.highlight,
+          color: flood.color,
+          highlight_color: flood.highlightColor,
+          seam_width: flood.seamWidth,
+          glow_duration: flood.glowDuration,
+          seam_color: flood.seamColor,
+          seam_intensity: flood.seamIntensity,
+          angle_indicator_strength: flood.angleIndicatorStrength,
+          speed: flood.speed,
+          burst: flood.burst,
+          burst_duration: flood.burstDuration,
+          antialiasing: flood.antialiasing,
+          line_style: flood.lineStyle,
+          line_width: flood.lineWidth,
+        }
       },
     },
   ]

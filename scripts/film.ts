@@ -1,16 +1,14 @@
 import type {CameraPose} from '#src/lib/diagnostics.ts'
-import type {Shot} from './lib/cameraRecipe.ts'
+import type {Shot} from 'capture-session/script'
 
 import {dirname, join, relative, resolve} from 'node:path'
 import {parseArgs} from 'node:util'
 
+import {createFrameSink, frameFormat, installVirtualClock, parseRecipe, recipeDuration, sampleRecipe, sampleWireframe, setWireframe, tweens} from 'capture-session/script'
 import fs from 'fs-extra'
 import {av1Crf} from 'knot-materials/scripts/lib/encodeAnimation.ts'
 
-import {parseRecipe, recipeDuration, sampleRecipe, tweens} from './lib/cameraRecipe.ts'
-import {createFrameSink, frameFormat} from './lib/frameSinks.ts'
 import {degrees, galleryHelp, galleryOptions, openHeadlessGallery, parseNumbers, radians, repositoryRoot, resolveGallerySetup, resolveSettle, timestamp, waitForFrames} from './lib/headlessGallery.ts'
-import {installVirtualClock} from './lib/virtualClock.ts'
 
 const help = `Usage: bun scripts/film.ts [options]
 
@@ -48,9 +46,25 @@ A recipe is a JSON array of keyframes, ordered by time:
   fov       vertical field of view in degrees
   tween     how this keyframe’s properties travel toward it from their previous keyframe. Default: linear
             ${Object.keys(tweens).join(', ')}
+  wireframe input for the app’s set_wireframe WebMCP tool, in effect from this keyframe on. See below
 
 Each property animates on its own track, so a keyframe only affects the properties it sets. Before its first keyframe and after its last, a property holds still; properties no keyframe sets stay at the player spawn’s camera.
 The video lasts until the last keyframe, which is not rendered itself: 1 second at 60 fps is 60 frames, and a recipe that ends where it starts loops seamlessly.
+
+A wireframe flood is a sphere growing from a position that turns everything it reaches into wireframe, or back out of it. A keyframe with a new direction starts one, from radius 0 unless it sets another:
+
+  [
+    {"time": 0, "position": [0, 1.7, 4], "yaw": 0},
+    {"time": 1, "wireframe": {"direction": "in", "position": [0, 0.5, -12], "speed": 20, "highlight": "lobby-fountain"}},
+    {"time": 4, "wireframe": {"direction": "out", "speed": 20}},
+    {"time": 6, "yaw": 30}
+  ]
+
+  direction  in turns the scene into wireframe; out starts from all wireframe and turns it back into the scene
+  speed      meters per second the radius grows by; with burst above 1 it shoots out and slows down, below 1 it builds up
+  position   [x, y, z] center in meters; like radius a track of its own, which never travels into a keyframe with a direction
+  radius     meters, for a flood that follows the keyframes instead of a speed
+Every other field of set_wireframe (mode, shape, anchor, colors, seam and glow, line_style and line_width, …) switches at its keyframe and holds from then on. Before the first direction, the scene renders as usual.
 
 Set BROWSER to a Chromium executable with WebGPU support. ffmpeg (and cjxl for .jxl) must be on PATH.`
 const filmRoot = join(repositoryRoot, 'out', 'film')
@@ -132,6 +146,12 @@ const fallback: Shot = {
   roll: degrees(spawn.rotation[2]),
   fov: spawn.fov ?? 60,
 }
+// recipes with wireframe keyframes send their flood to set_wireframe before every frame; unchanged fields keep it growing
+const flood = (index: number) => sampleWireframe(recipe, frameSeconds(index))
+const firstFlood = flood(0)
+if (firstFlood) {
+  await setWireframe(page, firstFlood)
+}
 const first = toPose(sampleRecipe(recipe, frameSeconds(0), fallback))
 await page.evaluate((pose: Partial<CameraPose>) => globalThis.slopGallery!.pose!(pose), first)
 await waitForFrames(page, settle)
@@ -190,6 +210,10 @@ try {
   const startedAt = performance.now()
   for (let index = 0; index < frameCount; index++) {
     const pose = toPose(sampleRecipe(recipe, frameSeconds(index), fallback))
+    const frameFlood = flood(index)
+    if (frameFlood) {
+      await setWireframe(page, frameFlood)
+    }
     await page.evaluate(async (frame: {
       delta: number
       pose: Partial<CameraPose>

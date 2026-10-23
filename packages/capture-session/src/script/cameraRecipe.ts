@@ -1,4 +1,4 @@
-import type {Vec3} from '#src/lib/gallery/types.ts'
+import type {Vec3} from '../types.ts'
 
 const {PI, cos, sqrt} = Math
 const back = 1.70158
@@ -40,6 +40,8 @@ export type Keyframe = {
   time: number
   /** how the properties this keyframe sets travel toward it from their previous keyframe. Default: linear */
   tween?: Tween
+  /** set_wireframe input from this keyframe on; radius and position travel with the tween, the other fields switch at the keyframe */
+  wireframe?: Record<string, unknown>
   /** degrees, 0 looks toward −z, positive turns left; not wrapped, so 0 → 720 spins twice */
   yaw?: number
 }
@@ -53,7 +55,7 @@ export const parseRecipe = (input: unknown): Recipe => {
   if (!Array.isArray(input) || input.length === 0) {
     throw new Error('A recipe is a non-empty JSON array of keyframes.')
   }
-  const known = new Set(['time', 'tween', ...properties])
+  const known = new Set(['time', 'tween', 'wireframe', ...properties])
   return input.map((keyframe: unknown, index) => {
     const at = `Keyframe ${index}`
     if (!isRecord(keyframe)) {
@@ -87,6 +89,10 @@ export const parseRecipe = (input: unknown): Recipe => {
       if (value !== undefined && !isFiniteNumber(value)) {
         throw new Error(`${at} needs ${name} as a number of degrees.`)
       }
+    }
+    // the set_wireframe tool validates the fields themselves
+    if (keyframe.wireframe !== undefined && !isRecord(keyframe.wireframe)) {
+      throw new Error(`${at} needs wireframe as an object of set_wireframe input.`)
     }
     if (fov !== undefined && ((fov as number) <= 0 || (fov as number) >= 180)) {
       throw new Error(`${at} needs fov between 0 and 180 degrees.`)
@@ -130,4 +136,30 @@ export const sampleRecipe = (recipe: Recipe, time: number, fallback: Shot): Shot
     roll: sample('roll'),
     fov: sample('fov'),
   }
+}
+
+/** The set_wireframe input in effect at a point in time, or undefined before the first keyframe that sets one. Radius and position travel like camera properties, each on its own track, but never into a keyframe that starts a flood with a direction; every other field holds its latest value. */
+export const sampleWireframe = (recipe: Recipe, time: number): Record<string, unknown> | undefined => {
+  const keyframes = recipe.filter(keyframe => keyframe.wireframe && keyframe.time <= time)
+  if (keyframes.length === 0) {
+    return
+  }
+  const input: Record<string, unknown> = {}
+  for (const keyframe of keyframes) {
+    Object.assign(input, keyframe.wireframe)
+  }
+  for (const field of ['radius', 'position'] as const) {
+    const track = recipe.filter(keyframe => keyframe.wireframe?.[field] !== undefined)
+    const nextIndex = track.findIndex(keyframe => keyframe.time > time)
+    if (nextIndex < 1 || track[nextIndex].wireframe!.direction !== undefined) {
+      continue
+    }
+    const from = track[nextIndex - 1]
+    const to = track[nextIndex]
+    const t = tweens[to.tween ?? 'linear']((time - from.time) / (to.time - from.time))
+    const start = from.wireframe![field] as Vec3 | number
+    const end = to.wireframe![field] as Vec3 | number
+    input[field] = Array.isArray(start) ? start.map((value, axis) => lerp(value, (end as Vec3)[axis], t)) : lerp(start, end as number, t)
+  }
+  return input
 }

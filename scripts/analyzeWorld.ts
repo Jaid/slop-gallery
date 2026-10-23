@@ -2,7 +2,9 @@ import type {WorldAnalysis} from '#src/lib/webmcp/analyzeWorld.ts'
 
 import {parseArgs} from 'node:util'
 
-import {callWebmcpTool, galleryHelp, galleryOptions, openHeadlessGallery, resolveGallerySetup} from './lib/headlessGallery.ts'
+import {callWebmcpTool} from 'capture-session/script'
+
+import {galleryHelp, galleryOptions, openHeadlessGallery, resolveGallerySetup} from './lib/headlessGallery.ts'
 
 const help = `Usage: bun scripts/analyzeWorld.ts [options]
 

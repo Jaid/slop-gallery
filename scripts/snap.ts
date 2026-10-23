@@ -5,6 +5,7 @@ import {join, relative} from 'node:path'
 import {parseArgs} from 'node:util'
 
 import capturePage from 'capture-page'
+import {setWireframe} from 'capture-session/script'
 import fs from 'fs-extra'
 import getFree from 'get-free'
 import {lossyJxlOptions} from 'knot-materials/scripts/lib/encodeJxl.ts'
@@ -27,6 +28,7 @@ ${galleryHelp(snapHeight)}
   --fov <degrees>         vertical field of view. Default: the game camera’s
   --jxl-distance <number> cjxl Butteraugli distance, 0 is lossless. Default: 1
   --settle <frames|auto>  frames to render after posing, lets temporal antialiasing converge. Default: auto, 60 with TRAA, otherwise 2
+  --wireframe <json>      input for the app’s set_wireframe WebMCP tool, sent after posing, e.g. {"direction": "in", "position": [0, 0.5, -12], "radius": 6}
   --name <name>           output file name without extension. Default: the next free number, starting at 1
   -h, --help              show this help
 
@@ -48,6 +50,7 @@ const {values} = parseArgs({
     },
     name: {type: 'string'},
     position: {type: 'string'},
+    wireframe: {type: 'string'},
     settle: {
       type: 'string',
       default: 'auto',
@@ -67,6 +70,10 @@ if (fov !== undefined && (fov <= 0 || fov >= 180)) {
   throw new Error('--fov must be between 0 and 180 degrees.')
 }
 const jxlDistance = parseNumbers(values['jxl-distance'], 'jxl-distance', [1])[0]
+const wireframe = values.wireframe === undefined ? undefined : JSON.parse(values.wireframe) as unknown
+if (wireframe !== undefined && (typeof wireframe !== 'object' || wireframe === null || Array.isArray(wireframe))) {
+  throw new Error('--wireframe needs a JSON object of set_wireframe input.')
+}
 type DownloadFrameResult = {
   dump: Record<string, unknown> | null
   height: number
@@ -97,6 +104,9 @@ const capture = await capturePage(server.url, {
       rotation: angle ? [radians(angle[1]), radians(angle[0]), radians(angle[2] ?? 0)] as Vec3 : undefined,
       fov,
     })
+    if (wireframe) {
+      await setWireframe(page, wireframe as Record<string, unknown>)
+    }
     // A new pose can bring artworks into view that still need decoding, and objects whose pipelines still compile.
     await waitForFrames(page, settle)
     await page.waitForFunction(() => {

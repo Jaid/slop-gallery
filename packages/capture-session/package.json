@@ -1,0 +1,35 @@
+{
+  "name": "capture-session",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Renderers and helpers for headless captures of the gallery, like the wireframe flood and camera recipes",
+  "funding": "https://github.com/sponsors/Jaid",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jaid/slop-gallery.git",
+    "directory": "packages/capture-session"
+  },
+  "main": "src/main.ts",
+  "exports": {
+    ".": "./src/main.ts",
+    "./script": "./src/script/main.ts"
+  },
+  "scripts": {
+    "test": "bun test ./test"
+  },
+  "dependencies": {
+    "get-free": "0.2.0",
+    "knot-materials": "workspace:*"
+  },
+  "peerDependencies": {
+    "puppeteer-core": "^25.16.0",
+    "three": "^0.186.1"
+  },
+  "peerDependenciesMeta": {
+    "puppeteer-core": {
+      "optional": true
+    }
+  },
+  "types": "./src/main.ts"
+}

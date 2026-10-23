@@ -1,8 +1,8 @@
-import type {Shot} from '#root/scripts/lib/cameraRecipe.ts'
+import type {Shot} from '../src/script/cameraRecipe.ts'
 
 import {describe, expect, test} from 'bun:test'
 
-import {parseRecipe, sampleRecipe, tweens} from '#root/scripts/lib/cameraRecipe.ts'
+import {parseRecipe, sampleRecipe, sampleWireframe, tweens} from '../src/script/cameraRecipe.ts'
 
 const fallback: Shot = {
   position: [0, 1.7, 0],
@@ -91,5 +91,69 @@ describe('camera recipes', () => {
       time: 0,
       zoom: 2,
     }])).toThrow('unknown property “zoom”')
+    expect(() => parseRecipe([{
+      time: 0,
+      wireframe: 'in',
+    }])).toThrow('Keyframe 0 needs wireframe as an object')
+  })
+})
+describe('wireframe keyframes', () => {
+  const recipe = parseRecipe([
+    {
+      time: 0,
+      yaw: 0,
+    },
+    {
+      time: 1,
+      wireframe: {
+        direction: 'in',
+        position: [0, 0, 0],
+        speed: 20,
+        mode: 'combined',
+      },
+    },
+    {
+      time: 2,
+      wireframe: {
+        position: [2, 0, 0],
+      },
+      tween: 'easeInQuad',
+    },
+    {
+      time: 3,
+      wireframe: {
+        direction: 'out',
+        position: [10, 0, 0],
+      },
+    },
+    {
+      time: 4,
+      yaw: 90,
+    },
+  ])
+  test('nothing is sent before the first wireframe keyframe, and recipes without any send nothing', () => {
+    expect(sampleWireframe(recipe, 0.5)).toBeUndefined()
+    expect(sampleWireframe(parseRecipe([{time: 0}, {time: 1}]), 0.5)).toBeUndefined()
+  })
+  test('fields hold from their keyframe on, while position travels with the tween', () => {
+    expect(sampleWireframe(recipe, 1)).toMatchObject({
+      direction: 'in',
+      speed: 20,
+      mode: 'combined',
+      position: [0, 0, 0],
+    })
+    expect(sampleWireframe(recipe, 1.5)!.position).toEqual([0.5, 0, 0])
+    expect(sampleWireframe(recipe, 2.5)).toMatchObject({
+      direction: 'in',
+      position: [2, 0, 0],
+    })
+  })
+  test('a keyframe with a direction starts a new flood, so nothing travels into it', () => {
+    expect(sampleWireframe(recipe, 2.99)!.position).toEqual([2, 0, 0])
+    expect(sampleWireframe(recipe, 3.5)).toMatchObject({
+      direction: 'out',
+      speed: 20,
+      position: [10, 0, 0],
+    })
   })
 })

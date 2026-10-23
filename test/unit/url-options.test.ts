@@ -6,6 +6,7 @@ import {getAntiAliasing, readAntiAliasing} from '../../src/lib/rendering/antiAli
 import {readNear} from '../../src/lib/rendering/near.ts'
 import {readScale} from '../../src/lib/rendering/scale.ts'
 import {readVisionMode} from '../../src/lib/rendering/visionMode.ts'
+import {readWireframeHighlight} from '../../src/lib/rendering/wireframeHighlight.ts'
 
 describe('URL options', () => {
   test('?development is enabled by a bare or true flag only', () => {
@@ -23,6 +24,13 @@ describe('URL options', () => {
     for (const value of ['', '0', '-0.1', 'auto', 'NaN', 'Infinity']) {
       expect(readNear(`?near=${value}`)).toBeUndefined()
       expect(readScale(`?scale=${value}`)).toBeUndefined()
+    }
+  })
+  test('?wireframe_highlight keeps a slash-separated mesh path', () => {
+    expect(readWireframeHighlight('?wireframe_highlight=lobby-fountain')).toBe('lobby-fountain')
+    expect(readWireframeHighlight('?wireframe_highlight=/lobby-fountain//fountain-falling-water/')).toBe('lobby-fountain/fountain-falling-water')
+    for (const search of ['', '?wireframe_highlight=', '?wireframe_highlight=/']) {
+      expect(readWireframeHighlight(search)).toBeUndefined()
     }
   })
   test('?vision_mode accepts known modes only', () => {

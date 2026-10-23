@@ -13,6 +13,7 @@ import {readEditLights, readShowLights} from './rendering/lightLevels.ts'
 import {readNear} from './rendering/near.ts'
 import {readScale} from './rendering/scale.ts'
 import {readVisionMode} from './rendering/visionMode.ts'
+import {readWireframeHighlight} from './rendering/wireframeHighlight.ts'
 
 type Reader = (input: string) => unknown
 
@@ -40,6 +41,7 @@ const readers: Record<string, Reader> = {
   show_lights: readShowLights,
   spawn: readSpawn,
   vision_mode: readVisionMode,
+  wireframe_highlight: readWireframeHighlight,
   telemetry: input => searchParameter('telemetry')(input) === 'true',
   logs_ingestion_endpoint: searchParameter('logs_ingestion_endpoint'),
   metrics_ingestion_endpoint: searchParameter('metrics_ingestion_endpoint'),

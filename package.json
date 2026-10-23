@@ -23,7 +23,7 @@
     "build:gallery": "GAME_LEVEL=gallery bun run build --outDir out/production/gallery",
     "build:knottingham": "GAME_LEVEL=knottingham bun run build --outDir out/production/knottingham",
     "build:soundboard": "GAME_LEVEL=soundboard bun run build --outDir out/production/soundboard",
-    "check": "bun run typecheck && bun run lint && bun run test && bun run test:knot-materials && bun run test:rolldown-plugins && bun run build",
+    "check": "bun run typecheck && bun run lint && bun run test && bun run test:capture-session && bun run test:knot-materials && bun run test:rolldown-plugins && bun run build",
     "check:levels": "bun test/build/levels.ts",
     "dev": "bun run vite --mode development",
     "dev:gallery": "GAME_LEVEL=gallery bun run dev",
@@ -33,6 +33,7 @@
     "preview": "bun run vite preview --host 127.0.0.1",
     "test": "bun test --max-concurrency 1 ./test/unit",
     "test:baking": "bun run --cwd packages/vite-plugin-bake-three test",
+    "test:capture-session": "bun run --cwd packages/capture-session test",
     "test:knot-materials": "bun run --cwd packages/knot-materials test",
     "test:live": "GAME_LEVEL=gallery bun run build && LIVE_TEST=true bun test ./test/live.test.ts",
     "test:live:oculus": "GAME_LEVEL=gallery bun run build && LIVE_TEST=true bun test ./test/oculus.live.test.ts",
@@ -88,7 +89,8 @@
     "@react-three/drei": "11.0.0-alpha.7",
     "@react-three/fiber": "10.0.0-alpha.6",
     "@react-three/rapier": "2.2.0",
-    "@react-three/tsl": "10.0.0-alpha.6"
+    "@react-three/tsl": "10.0.0-alpha.6",
+    "capture-session": "workspace:*"
   },
   "devDependencies": {
     "autoprefixer": "10.6.1",

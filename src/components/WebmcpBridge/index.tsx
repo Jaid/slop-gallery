@@ -1,6 +1,7 @@
 import type {FrameFormat} from '#src/lib/downloadFrame.ts'
 
 import {useThree} from '@react-three/fiber'
+import {applyWireframeFlood} from 'capture-session'
 import {AimInspector} from 'ego-player'
 import {useEffect} from 'react'
 
@@ -40,6 +41,7 @@ export default function WebmcpBridge() {
       getAim: () => inspector.getAim(),
       getKnots: dumpKnots,
       getPortraitSlots: () => usePortraitSlots.getState().slots,
+      setWireframe: applyWireframeFlood,
       getTelemetry: () => {
         if (!telemetry) {
           return null

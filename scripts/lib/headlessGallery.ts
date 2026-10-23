@@ -278,7 +278,7 @@ export const openHeadlessGallery = async (setup: GallerySetup, options: {
         ...setup.viewport,
         deviceScaleFactor: 1,
       },
-      // WebMCP lets scripts call the app’s own tools, see callWebmcpTool.
+      // WebMCP lets scripts call the app’s own tools, see callWebmcpTool from capture-session/script.
       args: ['--enable-unsafe-webgpu', '--enable-features=WebMCP'],
     })
     const page = await browser.newPage()
@@ -301,18 +301,4 @@ export const openHeadlessGallery = async (setup: GallerySetup, options: {
     await close()
     throw error
   }
-}
-/** Runs one of the app’s WebMCP tools in a page from openHeadlessGallery once the app has registered it, and resolves with its parsed JSON result. */
-export const callWebmcpTool = async (page: Page, name: string, input: Record<string, unknown> = {}) => {
-  await page.waitForFunction(async (tool: string) => {
-    const tools = await document.modelContext?.getTools()
-    return Boolean(tools?.some(candidate => candidate.name === tool))
-  }, {timeout: 60_000}, name)
-  const result = await page.evaluate(async (tool: string, toolInput: Record<string, unknown>) => {
-    const context = document.modelContext!
-    const tools = await context.getTools()
-    const registered = tools.find(candidate => candidate.name === tool)!
-    return context.executeTool(registered, toolInput)
-  }, name, input)
-  return JSON.parse(result) as unknown
 }

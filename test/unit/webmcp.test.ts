@@ -55,12 +55,35 @@ const bridge: WebmcpBridge = {
     rotation: 0,
   }],
   getTelemetry: () => null,
+  setWireframe: ({enabled = false, direction = 'in', mode = 'triangle', anchor = 'nearest', shape = 'sphere', position = [0, 0, 0], radius = 0, highlight = [], color = null, highlightColor = null, seamWidth = null, glowDuration = 1, seamColor = null, seamIntensity = 0.9, angleIndicatorStrength = 5, speed = null, burst = 1, burstDuration = 0.5, antialiasing = false, lineStyle = 'barycentric', lineWidth = 0.5}) => ({
+    enabled,
+    direction,
+    mode,
+    anchor,
+    shape,
+    position,
+    radius,
+    highlight,
+    color,
+    highlightColor,
+    seamWidth,
+    glowDuration,
+    seamColor,
+    seamIntensity,
+    angleIndicatorStrength,
+    speed,
+    burst,
+    burstDuration,
+    antialiasing,
+    lineStyle,
+    lineWidth,
+  }),
 }
 test('WebMCP read tools are read-only, validate input and read the current bridge', () => {
   let current = bridge
   const tools = createWebmcpTools(() => current)
   const controller = new AbortController
-  expect(tools.map(tool => tool.name)).toEqual(['get_aim', 'get_telemetry', 'dump_knots', 'dump_portrait_slots', 'analyze_world', 'download_frame'])
+  expect(tools.map(tool => tool.name)).toEqual(['get_aim', 'get_telemetry', 'dump_knots', 'dump_portrait_slots', 'analyze_world', 'download_frame', 'set_wireframe'])
   for (const tool of tools.slice(0, 5)) {
     expect(tool.annotations?.readOnlyHint).toBe(true)
     expect(() => tool.execute({unexpected: true}, {signal: controller.signal})).toThrow(TypeError)
@@ -109,6 +132,87 @@ test('download_frame validates its optional name and downloads through the bridg
   controller.abort()
   await expect(execute({})).rejects.toThrow()
 })
+test('set_wireframe validates its optional fields and sets them through the bridge', () => {
+  const tool = createWebmcpTools(() => bridge).find(({name}) => name === 'set_wireframe')!
+  const controller = new AbortController
+  const execute = (input: unknown) => tool.execute(input as Record<string, unknown>, {signal: controller.signal})
+  expect(tool.annotations?.readOnlyHint).toBe(false)
+  expect(execute({
+    enabled: true,
+    direction: 'out',
+    position: [0, 0.5, -12],
+    radius: 2,
+    highlight: ' lobby-fountain / fountain-falling-water ',
+    color: '#f00',
+    highlight_color: '#2F7BFF',
+    mode: 'pixel',
+    anchor: 'farthest',
+    shape: 'circle',
+    seam_width: 0.3,
+    glow_duration: 0.5,
+    seam_color: '#fff',
+    seam_intensity: 0,
+    angle_indicator_strength: 25,
+    speed: 8,
+    burst: 4,
+    burst_duration: 0.25,
+    antialiasing: true,
+    line_style: 'barycentric',
+    line_width: 1.5,
+  })).toEqual({
+    enabled: true,
+    direction: 'out',
+    mode: 'pixel',
+    anchor: 'farthest',
+    shape: 'circle',
+    position: [0, 0.5, -12],
+    radius: 2,
+    highlight: ['lobby-fountain/fountain-falling-water'],
+    color: '#f00',
+    highlight_color: '#2F7BFF',
+    seam_width: 0.3,
+    glow_duration: 0.5,
+    seam_color: '#fff',
+    seam_intensity: 0,
+    angle_indicator_strength: 25,
+    speed: 8,
+    burst: 4,
+    burst_duration: 0.25,
+    antialiasing: true,
+    line_style: 'barycentric',
+    line_width: 1.5,
+  })
+  expect(execute({highlight: ['a', 'b/c']})).toHaveProperty('highlight', ['a', 'b/c'])
+  expect(execute({mode: 'combined'})).toHaveProperty('mode', 'combined')
+  expect(execute({})).toEqual({
+    enabled: false,
+    direction: 'in',
+    mode: 'triangle',
+    anchor: 'nearest',
+    shape: 'sphere',
+    position: [0, 0, 0],
+    radius: 0,
+    highlight: [],
+    color: null,
+    highlight_color: null,
+    seam_width: null,
+    glow_duration: 1,
+    seam_color: null,
+    seam_intensity: 0.9,
+    angle_indicator_strength: 5,
+    speed: null,
+    burst: 1,
+    burst_duration: 0.5,
+    antialiasing: false,
+    line_style: 'barycentric',
+    line_width: 0.5,
+  })
+  for (const input of [null, [], {unexpected: true}, {enabled: 1}, {position: [1, 2]}, {position: [1, 2, Number.NaN]}, {position: '0,0,0'}, {radius: -1}, {radius: '2'}, {radius: Number.POSITIVE_INFINITY}, {highlight: ''}, {highlight: [' / ']}, {highlight: 5}, {color: 'red'}, {color: '#12345'}, {highlight_color: 3}, {mode: 'edge'}, {anchor: 'middle'}, {shape: 'cube'}, {seam_width: 0}, {seam_width: '1'}, {seam_color: 'blue'}, {seam_intensity: -1}, {glow_duration: -0.1}, {glow_duration: Number.NaN}, {seam_intensity: null}, {angle_indicator_strength: 101}, {angle_indicator_strength: -1}, {angle_indicator_strength: '10'}, {speed: -1}, {speed: '8'}, {burst: -0.5}, {burst: null}, {burst_duration: 0}, {antialiasing: 1}, {line_style: 'dashed'}, {line_width: 0}, {direction: 'up'}, {direction: true}]) {
+    expect(() => execute(input)).toThrow(TypeError)
+  }
+  controller.abort()
+  expect(() => execute({})).toThrow()
+})
 test('levels without Knots expose an empty dump', () => {
   expect(dumpGalleryKnots()).toEqual([])
   expect(dumpSoundboardKnots()).toEqual([])
@@ -131,7 +235,7 @@ test('registrations clean up on unmount, failure and cancellation during registr
     const registered = registerWebmcp(() => bridge, controller.signal, context)
     if (mode === 'success') {
       const cleanup = await registered
-      expect(signals).toHaveLength(6)
+      expect(signals).toHaveLength(7)
       expect(signals[0].aborted).toBe(false)
       cleanup()
       cleanup()

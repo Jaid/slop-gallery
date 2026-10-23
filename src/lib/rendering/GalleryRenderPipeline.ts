@@ -1,6 +1,7 @@
 import type {AntiAliasing} from './antiAliasing.ts'
 import type {Camera, NodeBuilder, NodeMaterial, Object3D, Renderer, Scene, TextureNode} from 'three/webgpu'
 
+import {WireframeFloodPass} from 'capture-session'
 import {bloom} from 'three/addons/tsl/display/BloomNode.js'
 import {ao} from 'three/addons/tsl/display/GTAONode.js'
 import {smaa} from 'three/addons/tsl/display/SMAANode.js'
@@ -76,6 +77,8 @@ export default class GalleryRenderPipeline extends RenderPipeline {
     const scenePass = own(pass(scene, camera, {samples: 0}))
     this.scenePass = scenePass
     const renderScene = scenePass.updateBefore.bind(scenePass)
+    // The wireframe flood draws into targets of its own right after the scene pass, with the same camera, but only while it is enabled
+    const flood = own(new WireframeFloodPass(renderer, scene as Scene, camera))
     scenePass.updateBefore = frame => {
       const reflect = () => {
         renderFloorReflection({
@@ -92,7 +95,9 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       } else {
         reflect()
       }
-      return renderScene(frame)
+      const result = renderScene(frame)
+      flood.draw()
+      return result
     }
     if (heavy || antiAliasing === 'traa') {
       const outputs = mrt({
@@ -192,6 +197,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       const edge = smoothstep(float(0.26), float(0.78), length(screenUV.sub(0.5)))
       current = current.mul(vec4(vec3(float(1).sub(edge.mul(0.2))), 1))
     }
+    current = flood.compose(current)
     this.outputNode = current
   }
 

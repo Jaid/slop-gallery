@@ -14,6 +14,7 @@
         "ai": "7.0.148",
         "branch-component": "0.4.0",
         "canvas-textures": "workspace:*",
+        "capture-session": "workspace:*",
         "clsx": "2.1.1",
         "compose-id": "0.2.0",
         "disposable-lifetime": "workspace:*",
@@ -102,6 +103,21 @@
       "optionalPeers": [
         "react",
         "three",
+      ],
+    },
+    "packages/capture-session": {
+      "name": "capture-session",
+      "version": "0.1.0",
+      "dependencies": {
+        "get-free": "0.2.0",
+        "knot-materials": "workspace:*",
+      },
+      "peerDependencies": {
+        "puppeteer-core": "^25.16.0",
+        "three": "^0.186.1",
+      },
+      "optionalPeers": [
+        "puppeteer-core",
       ],
     },
     "packages/disposable-lifetime": {
@@ -1009,6 +1025,8 @@
     "canvas-textures": ["canvas-textures@workspace:packages/canvas-textures"],
 
     "capture-page": ["capture-page@0.3.0", "", { "dependencies": { "fs-extra": "^11.4.1", "puppeteer-core": "^25.15.0" }, "optionalDependencies": { "sass": "^1.106.0" } }, "sha512-cUMfhnv2nvqRlqjVY+h3ltxI0QKMDRSQ7XzjfL1OMpZchjMOapI0LzA7I7Zmqzuewffue5WniNKfG+U/BJTbNQ=="],
+
+    "capture-session": ["capture-session@workspace:packages/capture-session"],
 
     "ccount": ["ccount@2.0.1", "", {}, "sha512-eyrF0jiFpY+3drT6383f1qhkbGsLSifNAjA61IUjZjmLCWjItY6LB9ft9YhoDgwfmclB2zhu51Lc7+95b8NRAg=="],
 
