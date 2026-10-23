@@ -2,6 +2,7 @@ import type {AntiAliasing} from './antiAliasing.ts'
 import type {Camera, NodeBuilder, NodeMaterial, Object3D, Renderer, Scene, TextureNode} from 'three/webgpu'
 
 import {WireframeFloodPass} from 'capture-session'
+import {vxgi} from 'three/addons/lighting/vxgi/VXGINode.js'
 import {bloom} from 'three/addons/tsl/display/BloomNode.js'
 import {ao} from 'three/addons/tsl/display/GTAONode.js'
 import {smaa} from 'three/addons/tsl/display/SMAANode.js'
@@ -35,7 +36,7 @@ export type GalleryRenderPipelineOptions = {
     proximity: () => number
   }
   heavy?: boolean
-  /** whether screen-space indirect light bounces the lit scene off the surfaces’ diffuse color, needs heavy */
+  /** whether screen-space and voxel indirect light bounce the lit scene off the surfaces’ diffuse color, needs heavy */
   indirectLight?: boolean
   /** floor reflection pixels per output pixel along each axis */
   reflectionResolutionScale?: number
@@ -139,7 +140,14 @@ export default class GalleryRenderPipeline extends RenderPipeline {
         indirect.sliceCount.value = 3
         indirect.stepCount.value = 16
         indirect.giIntensity.value = 4
-        current = vec4(current.rgb.add(scenePass.getTextureNode('diffuseColor').rgb.mul(indirect.getGINode().rgb)), current.a)
+        indirect.useTemporalFiltering = antiAliasing === 'traa'
+        // Voxel cone tracing adds the bounces from what is off screen or hidden, which the screen-space pass cannot see. Faint, since it brightens far more than SSGI.
+        const voxel = own(vxgi(depth, scenePass.getTextureNode('normal'), scene as Scene, camera, 256))
+        voxel.bounces = 2
+        voxel.giIntensity.value = 0.05
+        voxel.useTemporalFiltering = antiAliasing === 'traa'
+        const bounced = indirect.getGINode().rgb.add(voxel.getGINode().rgb)
+        current = vec4(current.rgb.add(scenePass.getTextureNode('diffuseColor').rgb.mul(bounced)), current.a)
       }
     }
     // Native pixel color + native depth -> isolated background -> aperture gather -> composite. No temporal color or post-TRAA depth mask may enter this branch.

@@ -30,7 +30,7 @@ type GraphicsProfile = {
   /** backing pixels per logical texel for runtime canvas textures such as signs */
   canvasTextureResolution: number
   floorReflections: boolean
-  /** whether screen-space indirect light bounces the lit scene off the surfaces’ diffuse color */
+  /** whether screen-space and voxel indirect light bounce the lit scene off the surfaces’ diffuse color */
   indirectLight: boolean
   noiseTextures: boolean
   postprocessing: boolean
