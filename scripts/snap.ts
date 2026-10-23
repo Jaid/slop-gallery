@@ -8,7 +8,7 @@ import capturePage from 'capture-page'
 import {setWireframe} from 'capture-session/script'
 import fs from 'fs-extra'
 import getFree from 'get-free'
-import {lossyJxlOptions} from 'knot-materials/scripts/lib/encodeJxl.ts'
+import {jxlEffort, lossyJxlOptions} from 'knot-materials/scripts/lib/encodeJxl.ts'
 import {Packr} from 'msgpackr'
 
 import {degrees, galleryHelp, galleryOptions, parseNumbers, radians, repositoryRoot, resolveGallerySetup, resolveSettle, serveGallery, waitForFrames, waitForGallery, watchPage} from './lib/headlessGallery.ts'
@@ -27,6 +27,7 @@ ${galleryHelp(snapHeight)}
                           camera angle in degrees. Yaw 0 looks toward −z, positive pitch looks up. Default: the player spawn
   --fov <degrees>         vertical field of view. Default: the game camera’s
   --jxl-distance <number> cjxl Butteraugli distance, 0 is lossless. Default: 1
+  --jxl-effort <1–10>     cjxl effort; lossless 2160p takes about a second at 6 and minutes at 10. Default: ${jxlEffort}
   --settle <frames|auto>  frames to render after posing, lets temporal antialiasing converge. Default: auto, 60 with TRAA, otherwise 2
   --wireframe <json>      input for the app’s set_wireframe WebMCP tool, sent after posing, e.g. {"direction": "in", "position": [0, 0.5, -12], "radius": 6}
   --name <name>           output file name without extension. Default: the next free number, starting at 1
@@ -47,6 +48,10 @@ const {values} = parseArgs({
     'jxl-distance': {
       type: 'string',
       default: '1',
+    },
+    'jxl-effort': {
+      type: 'string',
+      default: String(jxlEffort),
     },
     name: {type: 'string'},
     position: {type: 'string'},
@@ -70,6 +75,10 @@ if (fov !== undefined && (fov <= 0 || fov >= 180)) {
   throw new Error('--fov must be between 0 and 180 degrees.')
 }
 const jxlDistance = parseNumbers(values['jxl-distance'], 'jxl-distance', [1])[0]
+const effort = parseNumbers(values['jxl-effort'], 'jxl-effort', [1])[0]
+if (!Number.isInteger(effort) || effort < 1 || effort > 10) {
+  throw new Error('--jxl-effort must be a whole number from 1 to 10.')
+}
 const wireframe = values.wireframe === undefined ? undefined : JSON.parse(values.wireframe) as unknown
 if (wireframe !== undefined && (typeof wireframe !== 'object' || wireframe === null || Array.isArray(wireframe))) {
   throw new Error('--wireframe needs a JSON object of set_wireframe input.')
@@ -138,7 +147,7 @@ const output = join(snapRoot, `${name}.jxl`)
 const png = `${output}.png`
 await fs.writeFile(png, capture.buffer)
 try {
-  await Bun.$`cjxl ${png} ${lossyJxlOptions(jxlDistance)} ${output}`.quiet()
+  await Bun.$`cjxl ${png} ${lossyJxlOptions(jxlDistance, effort)} ${output}`.quiet()
 } finally {
   await fs.rm(png, {force: true})
 }
