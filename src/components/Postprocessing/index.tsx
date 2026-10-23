@@ -10,6 +10,7 @@ import {getInspectionFocus, getInspectionFocusBlur, getInspectionFocusDistance, 
 
 type PostprocessingProps = {
   ambientOcclusionResolutionScale?: number
+  ambientOcclusionSamples?: number
   antiAliasing?: AntiAliasing
   contactDarkening?: boolean
   /** whether V-viewing blurs the background */
@@ -18,7 +19,7 @@ type PostprocessingProps = {
   reflectionResolutionScale?: number
 }
 
-const Postprocessing = ({ambientOcclusionResolutionScale, antiAliasing = 'traa', contactDarkening = false, focus = false, heavy = true, reflectionResolutionScale}: PostprocessingProps) => {
+const Postprocessing = ({ambientOcclusionResolutionScale, ambientOcclusionSamples, antiAliasing = 'traa', contactDarkening = false, focus = false, heavy = true, reflectionResolutionScale}: PostprocessingProps) => {
   const renderer = useThree(state => state.renderer)
   const scene = useThree(state => state.scene)
   const camera = useThree(state => state.camera)
@@ -27,6 +28,7 @@ const Postprocessing = ({ambientOcclusionResolutionScale, antiAliasing = 'traa',
   useLayoutEffect(() => {
     const pipeline = new GalleryRenderPipeline(renderer, scene, camera, {
       ambientOcclusionResolutionScale,
+      ambientOcclusionSamples,
       antiAliasing,
       contactDarkening,
       heavy,
@@ -62,7 +64,7 @@ const Postprocessing = ({ambientOcclusionResolutionScale, antiAliasing = 'traa',
       deactivate()
       pipeline.dispose()
     }
-  }, [ambientOcclusionResolutionScale, antiAliasing, camera, contactDarkening, focus, heavy, reflectionResolutionScale, renderer, scene, store])
+  }, [ambientOcclusionResolutionScale, ambientOcclusionSamples, antiAliasing, camera, contactDarkening, focus, heavy, reflectionResolutionScale, renderer, scene, store])
   return null
 }
 export default Postprocessing

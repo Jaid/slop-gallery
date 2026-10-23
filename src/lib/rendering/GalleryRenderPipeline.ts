@@ -22,6 +22,8 @@ const bloomLuminanceCap = 8
 export type GalleryRenderPipelineOptions = {
   /** ambient occlusion pixels per output pixel along each axis */
   ambientOcclusionResolutionScale?: number
+  /** ambient occlusion samples per pixel */
+  ambientOcclusionSamples?: number
   antiAliasing?: AntiAliasing
   contactDarkening?: boolean
   focus?: {
@@ -71,7 +73,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
   readonly scenePass: ReturnType<typeof pass>
   private readonly effects: Array<{dispose: () => void}> = []
 
-  constructor(renderer: Renderer, scene: Object3D, camera: Camera, {antiAliasing = 'traa', ambientOcclusionResolutionScale = 0.75, contactDarkening = false, focus, heavy = true, reflectionResolutionScale = 1, zoom = () => 0}: GalleryRenderPipelineOptions = {}) {
+  constructor(renderer: Renderer, scene: Object3D, camera: Camera, {antiAliasing = 'traa', ambientOcclusionResolutionScale = 0.75, ambientOcclusionSamples = 16, contactDarkening = false, focus, heavy = true, reflectionResolutionScale = 1, zoom = () => 0}: GalleryRenderPipelineOptions = {}) {
     super(renderer)
     const own = <T extends {dispose: () => void}>(effect: T) => {
       this.effects.push(effect)
@@ -124,7 +126,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       ambientOcclusion.radius.value = contactDarkening ? 0.18 : 0.3
       ambientOcclusion.thickness.value = contactDarkening ? 0.6 : 1
       ambientOcclusion.scale.value = contactDarkening ? 1.18 : 0.85
-      ambientOcclusion.samples.value = 16
+      ambientOcclusion.samples.value = ambientOcclusionSamples
       current = current.mul(vec4(vec3(ambientOcclusion.getTextureNode().r), 1))
     }
     // Native pixel color + native depth -> isolated background -> aperture gather -> composite. No temporal color or post-TRAA depth mask may enter this branch.

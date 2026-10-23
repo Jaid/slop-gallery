@@ -23,6 +23,8 @@ const graphicsModeSchema = optis({
 type GraphicsProfile = {
   /** ambient occlusion pixels per output pixel along each axis */
   ambientOcclusionResolutionScale: number
+  /** ambient occlusion samples per pixel */
+  ambientOcclusionSamples: number
   /** backing pixels per logical texel for runtime canvas textures such as signs */
   canvasTextureResolution: number
   floorReflections: boolean
@@ -57,6 +59,7 @@ const fastProfile: GraphicsProfile = {
   shadows: false,
   postprocessing: false,
   ambientOcclusionResolutionScale: 0.75,
+  ambientOcclusionSamples: 16,
   reflectionResolutionScale: 1,
   shadowMapScale: 1,
 }
@@ -67,14 +70,16 @@ const heavyProfile: GraphicsProfile = {
   shadows: true,
   postprocessing: true,
   ambientOcclusionResolutionScale: 0.75,
+  ambientOcclusionSamples: 16,
   reflectionResolutionScale: 1,
   shadowMapScale: 1,
 }
-// Heavy at twice the resolution of every intermediate map, for renders that don’t have to keep up with the display.
+// Heavy at twice the resolution of every intermediate map and with more samples, for renders that don’t have to keep up with the display.
 const cinematicProfile: GraphicsProfile = {
   ...heavyProfile,
   canvasTextureResolution: 2,
   ambientOcclusionResolutionScale: 1.5,
+  ambientOcclusionSamples: 32,
   reflectionResolutionScale: 2,
   shadowMapScale: 2,
 }
