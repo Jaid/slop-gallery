@@ -279,12 +279,12 @@ const sections: Array<Section> = [
 const set = (values: Partial<CustomGraphics>) => {
   useCustomGraphics.setState(values)
 }
-/** The panel of `?graphics=custom`, beside the pause menu: checkboxes switch passes, which rebuilds the pipeline, and sliders change its uniforms live. */
+/** The panel of `?graphics=custom`, a column beside the canvas: checkboxes switch passes, which rebuilds the pipeline, and sliders change its uniforms live. */
 export default function GraphicsTuning() {
   const isHeavy = useGraphicsMode()
   return <aside className={css.container} aria-label='Render pipeline'>
     <div className={css.heading}><h2>Render pipeline</h2><button type='button' onClick={() => useCustomGraphics.setState(defaultCustomGraphics, true)}>Reset</button></div>
-    <p className={css.hint}>{isHeavy ? 'Press O to hide the menu and see the scene while tuning.' : 'Switch graphics on in the menu to tune the pipeline.'}</p>
+    <p className={css.hint}>{isHeavy ? 'Pause to tune; press O to hide the menu and see the scene in full.' : 'Switch graphics on in the menu to tune the pipeline.'}</p>
     <Branch if={isHeavy}>{sections.map(section => <SectionBox key={section.title} section={section} />)}</Branch>
   </aside>
 }
