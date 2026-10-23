@@ -83,6 +83,8 @@ export type PlayerPose = {
 }
 
 export type LocationBookmark = PlayerPose & {
+  /** camera height above `position` in meters; with it, `?spawn` holds the camera there, detached from the player until the next teleport, for views from mid-jump or lower than standing */
+  eyeHeight?: number
   /** snake_case name that `?spawn` refers to */
   id: string
   /** whether T cycles through it in `?development`; bookmarks without it only serve `?spawn`, e.g. for deterministic camera snapshots */
