@@ -90,6 +90,9 @@ export const defaultCustomGraphics: CustomGraphics = {
 /** the tuning panel’s values, which a pipeline built with `custom` follows */
 export const useCustomGraphics = create<CustomGraphics>(() => defaultCustomGraphics)
 
+/** whether focus is in the tuning panel, which hides the pause menu so the scene shows every change */
+export const useGraphicsTuningFocus = create<boolean>(() => false)
+
 /** Pick the knobs a pipeline is built from. */
 export function getCustomGraphicsStructure(state: CustomGraphics): CustomGraphicsStructure {
   return Object.fromEntries(customGraphicsStructure.map(key => [key, state[key]])) as CustomGraphicsStructure
