@@ -284,8 +284,9 @@ const set = (values: Partial<CustomGraphics>) => {
 /** The panel G shows with `?development`, a column beside the canvas: checkboxes switch passes, which rebuilds the pipeline, and sliders change its uniforms live. */
 export default function GraphicsTuning() {
   const isHeavy = useGraphicsMode()
+  // Focusable itself, so a click anywhere in the panel, not only on a control, counts as focus.
   return <aside
-    className={css.container} aria-label='Render pipeline' onBlur={event => {
+    className={css.container} aria-label='Render pipeline' tabIndex={-1} onBlur={event => {
       if (!event.currentTarget.contains(event.relatedTarget)) {
         useGraphicsTuning.setState({focused: false})
       }
