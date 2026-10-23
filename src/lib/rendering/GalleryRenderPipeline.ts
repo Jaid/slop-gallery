@@ -1,12 +1,12 @@
 import type {AntiAliasing} from './antiAliasing.ts'
-import type {Camera, Node, NodeMaterial, Object3D, Renderer, Scene, TextureNode} from 'three/webgpu'
+import type {Camera, NodeBuilder, NodeMaterial, Object3D, Renderer, Scene, TextureNode} from 'three/webgpu'
 
 import {bloom} from 'three/addons/tsl/display/BloomNode.js'
 import {ao} from 'three/addons/tsl/display/GTAONode.js'
 import {smaa} from 'three/addons/tsl/display/SMAANode.js'
 import {traa} from 'three/addons/tsl/display/TRAANode.js'
 import {convertToTexture, float, int, length, luminance, max, min, mrt, normalView, output, pass, rtt, screenUV, smoothstep, uniform, uv, vec2, vec3, vec4, velocity} from 'three/tsl'
-import {NoBlending, PerspectiveCamera, RenderPipeline} from 'three/webgpu'
+import {BlendMode, MRTNode, NoBlending, Node, NormalBlending, PerspectiveCamera, RenderPipeline} from 'three/webgpu'
 
 import {renderFloorReflection} from '../materials/FloorMaterial.ts'
 import ConditionalTexture from './ConditionalTexture.ts'
@@ -30,6 +30,35 @@ export type GalleryRenderPipelineOptions = {
   }
   heavy?: boolean
   zoom?: () => number
+}
+
+/**
+ * MRT outputs for a soft, depth-less transparent sprite, like a water droplet or a puff of mist: its color blends as usual, but its geometry buffers carry alpha 0, so the normal and motion of the surface behind it stay in place.
+ *
+ * Without this, the sprite’s whole quad – including the fully transparent part around the soft disc – writes its camera-facing normal over the background’s, and the ambient occlusion, reading that normal against the background’s depth, darkens the quad to a black rectangle.
+ *
+ * Rendered into a target without these buffers, like a capture target or the canvas, the material writes its color alone.
+ */
+export class TransparentSpriteOutputsNode extends MRTNode {
+  constructor() {
+    super({
+      output,
+      normal: vec4(normalView, 0),
+      // The velocity node’s declaration lacks the node extensions every other node has.
+      velocity: vec4(velocity as unknown as Node<'vec2'>, 0, 0),
+    })
+  }
+
+  override setup(builder: NodeBuilder) {
+    const target = builder.renderer.getRenderTarget()
+    if (target?.textures.some(texture => texture.name in this.outputNodes)) {
+      return super.setup(builder)
+    }
+    // The builder keeps the struct output for every MRT node; a target without named outputs gets the color at its first attachment.
+    this.members = [output.convert((builder as NodeBuilder & {getOutputType: (index: number) => string}).getOutputType(0))]
+    const plain = Node.prototype as Node
+    return plain.setup.call(this, builder)
+  }
 }
 
 /** All depth-dependent work stays in the current frame; one antialiasing resolve (TRAA by default) antialiases the finished composite. */
@@ -66,11 +95,16 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       return renderScene(frame)
     }
     if (heavy || antiAliasing === 'traa') {
-      scenePass.setMRT(mrt({
+      const outputs = mrt({
         output,
         ...heavy ? {normal: normalView} : {},
         ...antiAliasing === 'traa' ? {velocity} : {},
-      }))
+      })
+      // The geometry buffers blend by their own alpha. Every material writes them with alpha 1, which overwrites like before; a soft sprite can write alpha 0 through its `mrtNode` (see `TransparentSpriteOutputsNode`) to leave the normal and motion of what is behind it alone, which the ambient occlusion and the temporal resolve read.
+      for (const name of ['normal', 'velocity']) {
+        outputs.setBlendMode(name, new BlendMode(NormalBlending))
+      }
+      scenePass.setMRT(outputs)
     }
     const depth = scenePass.getTextureNode('depth')
     let current: Node<'vec4'> = scenePass.getTextureNode('output')
