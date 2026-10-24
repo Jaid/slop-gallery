@@ -9,9 +9,6 @@ import {createServer} from 'vite'
 import {defaultLevel, levelIds} from '#src/data/levels.ts'
 import {maximumSeed, parseSeed} from '#src/lib/environmentSeed.ts'
 import {queryParameters} from '#src/lib/queryOverrides.ts'
-import {getAntiAliasing, readAntiAliasing} from '#src/lib/rendering/antiAliasing.ts'
-import {readGraphicsMode} from '#src/lib/rendering/graphicsMode.ts'
-import {readVisionMode} from '#src/lib/rendering/visionMode.ts'
 
 export const repositoryRoot = resolve(import.meta.dir, '..', '..')
 // seed and graphics have dedicated options with validation and defaults.
@@ -82,14 +79,10 @@ const resolveSize = (values: Pick<GalleryValues, 'height' | 'width'>, defaultHei
     height: height ?? Math.round(width! * 9 / 16),
   }
 }
-/** `auto` renders 60 frames for TRAA to converge, otherwise 2 so the latest pose is drawn. */
-export const resolveSettle = (value: string, setup: Pick<GallerySetup, 'temporalAntiAliasing'>) => {
-  if (value === 'auto') {
-    return setup.temporalAntiAliasing ? 60 : 2
-  }
+export const resolveSettle = (value: string) => {
   const [frames] = parseNumbers(value, 'settle', [1])
   if (!Number.isSafeInteger(frames) || frames < 0) {
-    throw new Error(`--settle expects auto or a whole number of frames, got “${value}”.`)
+    throw new Error(`--settle expects a whole number of frames, got “${value}”.`)
   }
   return frames
 }
@@ -154,16 +147,12 @@ export const resolveGallerySetup = async (values: GalleryValues, defaultHeight =
       search.set(key, value)
     }
   }
-  // Mirrors GameScene: wireframe vision skips postprocessing, and with it any antialiasing.
-  const page = `http://localhost/?${search}`
-  const temporalAntiAliasing = readVisionMode(page) !== 'wireframe' && getAntiAliasing(readGraphicsMode(page), readAntiAliasing(page)) === 'traa'
   return {
     target,
     level,
     levelName: level ?? defaultLevel,
     search,
     seed,
-    temporalAntiAliasing,
     viewport: resolveSize(values, defaultHeight),
   }
 }

@@ -28,7 +28,7 @@ ${galleryHelp(snapHeight)}
   --fov <degrees>         vertical field of view. Default: the game camera’s
   --jxl-distance <number> cjxl Butteraugli distance, 0 is lossless. Default: 1
   --jxl-effort <1–10>     cjxl effort; lossless 2160p takes about a second at 6 and minutes at 10. Default: ${jxlEffort}
-  --settle <frames|auto>  frames to render after posing and again once everything has loaded; auto renders 60 with TRAA, otherwise 2. Default: 2, enough even with TRAA
+  --settle <frames>       frames to render after posing and again once everything has loaded. Default: 2, enough even with TRAA
   --wireframe <json>      input for the app’s set_wireframe WebMCP tool, sent after posing, e.g. {"direction": "in", "position": [0, 0.5, -12], "radius": 6}
   --name <name>           output file name without extension. Default: the next free number, starting at 1
   -h, --help              show this help
@@ -67,7 +67,7 @@ if (values.help) {
   process.exit(0)
 }
 const setup = await resolveGallerySetup(values, snapHeight)
-const settle = resolveSettle(values.settle, setup)
+const settle = resolveSettle(values.settle)
 const position = values.position === undefined ? undefined : parseNumbers(values.position, 'position', [3]) as Vec3
 const angle = values.angle === undefined ? undefined : parseNumbers(values.angle, 'angle', [2, 3])
 const fov = values.fov === undefined ? undefined : parseNumbers(values.fov, 'fov', [1])[0]

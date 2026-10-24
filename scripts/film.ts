@@ -27,7 +27,7 @@ ${galleryHelp()}
   --starting-frame <n>    recipe frame that becomes the first frame of the output, wrapping around at the end; moves the loop seam without changing the motion. Default: 1
   --jxl-distance <number> cjxl Butteraugli distance for .jxl, 0 is lossless. Default: 1
   --crf <number>          AV1 quality for .webm and .mkv, lower is better. Default: ${av1Crf}
-  --settle <frames|auto>  wall-clock frames to render at the first keyframe before recording, lets temporal antialiasing converge. Default: auto, 60 with TRAA, otherwise 2
+  --settle <frames>       wall-clock frames to render at the first keyframe before recording. Default: 2
   -h, --help              show this help
 
 A recipe is a JSON array of keyframes, ordered by time:
@@ -89,7 +89,7 @@ const {values} = parseArgs({
     recipe: {type: 'string'},
     settle: {
       type: 'string',
-      default: 'auto',
+      default: '2',
     },
     'starting-frame': {
       type: 'string',
@@ -115,7 +115,7 @@ if (fps <= 0) {
   throw new Error('--fps must be positive.')
 }
 const setup = await resolveGallerySetup(values)
-const settle = resolveSettle(values.settle, setup)
+const settle = resolveSettle(values.settle)
 const output = values['output-file'] === undefined ? join(filmRoot, `${setup.levelName}-${timestamp()}.jxl`) : resolve(values['output-file'])
 const format = frameFormat(output)
 const {width, height} = setup.viewport
