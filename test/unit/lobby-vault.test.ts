@@ -7,6 +7,7 @@ import {DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/web
 
 import {wallTop} from '../../src/lib/gallery/architecture.ts'
 import ArcSlabGeometry from '../../src/lib/gallery/ArcSlabGeometry.ts'
+import {getLightingTuning, lightingPresets} from '../../src/lib/gallery/lighting.ts'
 import LobbyChandelierGeometry, {lobbyChandelier, lobbyChandelierBottom} from '../../src/lib/gallery/LobbyChandelierGeometry.ts'
 import lobbyVault, {glazingStart, lobbyChandeliers, vaultBays, vaultCoffers, vaultHeight, vaultRibs} from '../../src/lib/gallery/lobbyVault.ts'
 import LobbyVaultGeometry, {lobbyVaultCollision, roseCenterY} from '../../src/lib/gallery/LobbyVaultGeometry.ts'
@@ -207,10 +208,19 @@ describe('the Lobby’s chandeliers', () => {
   })
 })
 describe('the sun and the sky', () => {
+  test('the Noon preset matches the committed Sun settings', () => {
+    const noon = lightingPresets.noon
+    const tuning = getLightingTuning(noon)
+    expect(tuning.sunIntensity).toBe(6)
+    expect(tuning.sunAzimuth).toBeCloseTo(194, 9)
+    expect(tuning.sunElevation).toBeCloseTo(46, 9)
+    expect(noon.sun.direction).toEqual(sun.direction)
+    expect(noon.sun.shadow).toEqual(sun.shadow)
+  })
   test('the shadow map covers every sunlit room, and the vault stays in front of its near plane', () => {
     const direction = new Vector3(...sun.direction)
     expect(direction.length()).toBeCloseTo(1, 9)
-    expect(direction.y).toBeGreaterThan(0.8)
+    expect(direction.y).toBeCloseTo(Math.sin(46 * Math.PI / 180), 9)
     const position = new Vector3(...sun.position)
     const forward = direction.clone().negate()
     const worldUp = new Vector3(0, 1, 0)

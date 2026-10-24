@@ -63,11 +63,15 @@ export function sunGeometry(toward: Vec3) {
   }
 }
 
-/**
- * Where the gallery’s midday sun stands: high in the south-west sky, about 61° above the horizon, whose shadow map spans every sunlit room, so the vault and the ceilings keep it out of
- * the rooms and only the Lobby’s glass lets it in. The procedural sky draws its disc in the same direction.
- */
-export const sun = sunGeometry([-3, 9, 4])
+/** Direction toward the sun from azimuth (clockwise from north, −z) and elevation, in degrees. */
+export function sunDirectionFromAngles(azimuth: number, elevation: number): Vec3 {
+  const a = azimuth * Math.PI / 180
+  const e = elevation * Math.PI / 180
+  return [Math.sin(a) * Math.cos(e), Math.sin(e), -Math.cos(a) * Math.cos(e)]
+}
+
+/** The gallery’s midday sun, 194° clockwise from north and 46° above the horizon. The shadow frustum covers every sunlit room; only the Lobby’s glazing lets it in. */
+export const sun = sunGeometry(sunDirectionFromAngles(194, 46))
 
 /** The crown of the Lobby’s vault has to stay in front of the shadow camera, or it would cast no shadow. */
 export const sunClearance = distance - dot([0, lobbyVault.crownY, 0], sun.direction)

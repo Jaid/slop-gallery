@@ -7,7 +7,7 @@ import {create} from 'zustand'
 
 import {isDevelopmentMode} from '../developmentMode.ts'
 import {daytimeSky} from '../materials/ProceduralSky.ts'
-import {sunGeometry} from './sun.ts'
+import sun, {sunDirectionFromAngles, sunGeometry} from './sun.ts'
 
 export type LightingPreset = {
   ambient: Light
@@ -51,8 +51,8 @@ const presets = {
     },
     sun: {
       color: '#fff0d7',
-      intensity: 2.76,
-      direction: [-3, 9, 4],
+      intensity: 6,
+      direction: sun.direction,
     },
     environment: {
       gradient: ['#e6eeed', '#b6bcac', '#7d816c', '#4b4c3d'],
@@ -260,8 +260,6 @@ export function pickLightingTuning({environmentIntensity, hemisphereIntensity, l
 export function tuneLighting(preset: GalleryLightingPreset, tuning: LightingTuning, start: LightingTuning): GalleryLightingPreset {
   const own = getLightingTuning(preset)
   const pick = (key: keyof LightingTuning) => (tuning[key] === start[key] ? own[key] : tuning[key])
-  const azimuth = pick('sunAzimuth') / degrees
-  const elevation = pick('sunElevation') / degrees
   const isMoved = pick('sunAzimuth') !== own.sunAzimuth || pick('sunElevation') !== own.sunElevation
   return {
     ...preset,
@@ -276,7 +274,7 @@ export function tuneLighting(preset: GalleryLightingPreset, tuning: LightingTuni
     lamps: pick('lamps'),
     sun: {
       ...preset.sun,
-      ...isMoved ? sunGeometry([Math.sin(azimuth) * Math.cos(elevation), Math.sin(elevation), -Math.cos(azimuth) * Math.cos(elevation)]) : {},
+      ...isMoved ? sunGeometry(sunDirectionFromAngles(pick('sunAzimuth'), pick('sunElevation'))) : {},
       intensity: pick('sunIntensity'),
     },
   }
