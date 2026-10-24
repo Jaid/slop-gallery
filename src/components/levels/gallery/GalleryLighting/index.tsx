@@ -1,4 +1,5 @@
 import type {GalleryLightingPreset, LightingPreset} from '#src/lib/gallery/lighting.ts'
+import type {RoomId} from '#src/lib/gallery/types.ts'
 import type {CanvasTexture, DirectionalLight, Light, Renderer, Scene} from 'three/webgpu'
 
 import {useThree} from '@react-three/fiber'
@@ -114,7 +115,7 @@ export default function GalleryLighting() {
       light.shadow.needsUpdate = true
     }
   }, [shadow])
-  // Lamps glow by the preset’s gain, and the optional ones not at all with only the essential lamps, or every one with none. Their shadows fall as dark as the tuning panel says. The corridor’s lanterns already light a space of their own, without any of the daylight’s fill, and daylight is no lamp.
+  // Lights with a `rooms` list in their userData only shine while the player is in one of those rooms. Lamps glow by the preset’s gain, and the optional ones not at all with only the essential lamps, or every one with none. Their shadows fall as dark as the tuning panel says. The corridor’s lanterns already light a space of their own, without any of the daylight’s fill, and daylight is no lamp.
   const {lamps, lampSet = 'all', lampShadows = 1} = preset
   useLayoutEffect(() => {
     const isLamp = (light: Light) => {
@@ -122,6 +123,10 @@ export default function GalleryLighting() {
       return Boolean(lamp.isPointLight || lamp.isSpotLight) && !lamp.userData.daylight
     }
     lightGain.current = light => {
+      const lightRooms = light.userData.rooms as ReadonlyArray<RoomId> | undefined
+      if (lightRooms && !lightRooms.includes(useGallery.getState().room)) {
+        return 0
+      }
       if (!isLamp(light)) {
         return 1
       }

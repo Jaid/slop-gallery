@@ -5,30 +5,16 @@ import {useMemo} from 'react'
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
 import Box from '#src/components/Scene/primitives.tsx'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
-import {stairBlocks, stairFlights, stairRailGeometry, stairRoofs, stairTurn} from '#src/lib/gallery/staircase.ts'
+import {stairBlocks, stairRailGeometry, stairRoofs, stairTurn} from '#src/lib/gallery/staircase.ts'
 
-/** One lamp over each flight, hanging over its 15th step, with its height above the tread and how it fades per flight. */
-const stairLampStep = 14
-const stairLamps: Record<string, {
-  decay: number
-  distance: number
-  intensity: number
-  y: number
-}> = {
-  upper: {
-    decay: 1,
-    // 4.91 m from the nearest corner of the Lobby’s floor, so it stops just short of shining through into it.
-    distance: 4.9,
-    intensity: 6,
-    y: 1.68,
-  },
-  lower: {
-    decay: 0.5,
-    distance: 10,
-    intensity: 24,
-    y: 1.95,
-  },
-}
+/** the lamp over the upper flight, lighting the stairway only while the player is in Moonfall, the Antechamber or the Oculus */
+const stairLamp = {
+  decay: 1,
+  distance: 15,
+  intensity: 30,
+  position: [16.55, -1.28, 13.52],
+  rooms: ['moonfall', 'antechamber', 'oculus'],
+} as const
 
 export default function GalleryStairs() {
   const turnResource = useDisposable(useMemo(() => {
@@ -87,10 +73,6 @@ export default function GalleryStairs() {
     <RigidBody colliders='cuboid' type='fixed'>
       {stairRoofs.map((beam, i) => <Box key={i} name='stairway-ceiling' {...beam} color='#101e24' envMapIntensity={0} />)}
     </RigidBody>
-    {stairFlights.map(flight => {
-      const step = flight.blocks[stairLampStep]
-      const {decay, distance, intensity, y} = stairLamps[flight.id]
-      return <pointLight key={flight.id} color='#8ad6cd' decay={decay} distance={distance} intensity={intensity} position={[step.position[0], step.top + y, step.position[2]]} />
-    })}
+    <pointLight color='#8ad6cd' decay={stairLamp.decay} distance={stairLamp.distance} intensity={stairLamp.intensity} position={stairLamp.position} userData={{rooms: stairLamp.rooms}} />
   </group>
 }

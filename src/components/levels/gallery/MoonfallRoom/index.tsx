@@ -11,6 +11,8 @@ import moonfallWallFixtures from '#src/lib/gallery/moonfall/fixtures.ts'
 import {useShadowProps} from '#src/lib/rendering/shadowFilters.ts'
 
 const room = rooms.find(candidate => candidate.id === 'moonfall')!
+/** Moonfall’s lights only shine while the player is in Moonfall or the Oculus. */
+const lightRooms = {rooms: ['moonfall', 'oculus']} as const
 const moonfallLightTarget = () => {
   const target = new Object3D
   target.position.set(0, -1.5, 0)
@@ -35,14 +37,14 @@ export default function MoonfallRoom({stone}: {stone: Texture}) {
       {lightZs.map(z => <group key={z} name='moonfall-wall-led' position={[lightX, 0, z]}>
         <Box color='#101e25' envMapIntensity={0} position={[0, 2.2, 0]} size={[0.14, 2.8, 0.25]} />
         <mesh position={[-side * 0.085, 2.2, 0]}><boxGeometry args={[0.025, 2.45, 0.065]} /><meshBasicNodeMaterial color='#83c5bd' toneMapped={false} /></mesh>
-        <pointLight color='#91c9c4' distance={lamp.distance} intensity={lamp.intensity} position={[-side * 0.6, lamp.y, 0]} />
+        <pointLight color='#91c9c4' distance={lamp.distance} intensity={lamp.intensity} position={[-side * 0.6, lamp.y, 0]} userData={lightRooms} />
       </group>)}
     </group>)}
     <MoonfallOrbit />
     <primitive object={target} />
-    <spotLight angle={0.9} castShadow color='#e0d0b2' distance={15} intensity={860} penumbra={0.28} position={[-7, 3.3, -4]} shadow-bias={-0.0001} shadow-normalBias={0.025} target={target} {...shadow} />
+    <spotLight angle={0.9} castShadow color='#e0d0b2' distance={15} intensity={860} penumbra={0.28} position={[-7, 3.3, -4]} shadow-bias={-0.0001} shadow-normalBias={0.025} target={target} userData={lightRooms} {...shadow} />
     {/* The planet’s glow, rising from the crater, throws the orbital sculpture’s shadow onto the ceiling. */}
-    <pointLight castShadow color='#64bfb5' decay={1.25} distance={12.5} intensity={144} position={[1.2, 0.3, 0]} shadow-camera-far={12.5} shadow-camera-near={0.1} shadow-normalBias={0.035} {...planetShadow} />
-    <pointLight color='#af7e5f' decay={1} distance={15} intensity={27} position={[6, 2.6, 6.15]} />
+    <pointLight castShadow color='#64bfb5' decay={1.25} distance={20} intensity={216} position={[5.37, 1.02, -0.19]} shadow-camera-far={20} shadow-camera-near={0.1} shadow-normalBias={0.035} userData={lightRooms} {...planetShadow} />
+    <pointLight color='#af7e5f' decay={1} distance={15} intensity={27} position={[6, 2.6, 6.15]} userData={lightRooms} />
   </group>
 }
