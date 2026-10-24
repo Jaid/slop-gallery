@@ -73,7 +73,7 @@ const sections: Array<Section> = [
         when: screenSpaceReflections,
       },
       {
-        ...range('screenSpaceReflectionIntensity', 'SSR intensity', 0, 2, 0.01),
+        ...range('screenSpaceReflectionIntensity', 'SSR intensity', 0, 2, 0.1),
         when: screenSpaceReflections,
       },
       {
@@ -81,7 +81,7 @@ const sections: Array<Section> = [
         when: screenSpaceReflections,
       },
       {
-        ...range('screenSpaceReflectionThickness', 'SSR thickness', 0.005, 1, 0.005),
+        ...range('screenSpaceReflectionThickness', 'SSR thickness', 0.05, 1, 0.05),
         when: screenSpaceReflections,
       },
     ],
@@ -91,9 +91,9 @@ const sections: Array<Section> = [
     toggle: 'ambientOcclusion',
     controls: [
       select('ambientOcclusionResolutionScale', 'Resolution', scales([0.5, 0.75, 1, 1.5, 2])),
-      range('ambientOcclusionSamples', 'Samples', 4, 64, 1),
-      range('ambientOcclusionRadius', 'Radius', 0.05, 1, 0.01),
-      range('ambientOcclusionThickness', 'Thickness', 0.1, 3, 0.05),
+      range('ambientOcclusionSamples', 'Samples', 4, 64, 4),
+      range('ambientOcclusionRadius', 'Radius', 0.02, 1, 0.02),
+      range('ambientOcclusionThickness', 'Thickness', 0.1, 3, 0.1),
       range('ambientOcclusionScale', 'Strength', 0, 2, 0.05),
       toggle('ambientOcclusionTemporalFiltering', 'Temporal filtering'),
     ],
@@ -102,14 +102,14 @@ const sections: Array<Section> = [
     title: 'Screen-space indirect light',
     toggle: 'screenSpaceIndirectLight',
     controls: [
-      range('screenSpaceIndirectLightIntensity', 'Intensity', 0, 16, 0.1),
-      range('screenSpaceIndirectLightRadius', 'Radius', 1, 32, 0.5),
+      range('screenSpaceIndirectLightIntensity', 'Intensity', 0, 16, 0.5),
+      range('screenSpaceIndirectLightRadius', 'Radius', 1, 32, 1),
       range('screenSpaceIndirectLightSlices', 'Slices', 1, 4, 1),
-      range('screenSpaceIndirectLightSteps', 'Steps', 4, 32, 1),
-      range('screenSpaceIndirectLightThickness', 'Thickness', 0.1, 4, 0.05),
-      range('screenSpaceIndirectLightExpFactor', 'Exp factor', 1, 4, 0.05),
-      range('screenSpaceIndirectLightBackfaceLighting', 'Backface lighting', 0, 1, 0.01),
-      range('screenSpaceIndirectLightAmbientOcclusion', 'AO intensity', 0, 4, 0.05),
+      range('screenSpaceIndirectLightSteps', 'Steps', 4, 32, 4),
+      range('screenSpaceIndirectLightThickness', 'Thickness', 0.1, 4, 0.1),
+      range('screenSpaceIndirectLightExpFactor', 'Exp factor', 1, 4, 0.1),
+      range('screenSpaceIndirectLightBackfaceLighting', 'Backface lighting', 0, 1, 0.05),
+      range('screenSpaceIndirectLightAmbientOcclusion', 'AO intensity', 0, 4, 0.1),
       toggle('screenSpaceIndirectLightTemporalFiltering', 'Temporal filtering'),
     ],
   },
@@ -118,10 +118,10 @@ const sections: Array<Section> = [
     toggle: 'voxelIndirectLight',
     controls: [
       select('voxelIndirectLightResolution', 'Voxels', [[64, '64³'], [128, '128³'], [256, '256³']]),
-      range('voxelIndirectLightIntensity', 'Intensity', 0, 0.5, 0.005),
+      range('voxelIndirectLightIntensity', 'Intensity', 0, 0.5, 0.01),
       range('voxelIndirectLightBounces', 'Bounces', 0, 4, 1),
       range('voxelIndirectLightConeCount', 'Cones', 1, 9, 1),
-      range('voxelIndirectLightConeAngle', 'Cone angle', 10, 80, 1),
+      range('voxelIndirectLightConeAngle', 'Cone angle', 10, 80, 5),
     ],
   },
   {
@@ -129,10 +129,10 @@ const sections: Array<Section> = [
     toggle: 'volumetricLight',
     controls: [
       select('volumetricLightResolutionScale', 'Resolution', scales([0.25, 0.5, 1])),
-      range('volumetricLightDensity', 'Density', 0, 20, 0.1),
-      range('volumetricLightMaxDensity', 'Max density', 0, 1, 0.01),
-      range('volumetricLightSteps', 'Steps', 16, 240, 1),
-      range('volumetricLightDistanceAttenuation', 'Attenuation', 0, 8, 0.05),
+      range('volumetricLightDensity', 'Density', 0, 20, 0.5),
+      range('volumetricLightMaxDensity', 'Max density', 0, 1, 0.05),
+      range('volumetricLightSteps', 'Steps', 16, 256, 16),
+      range('volumetricLightDistanceAttenuation', 'Attenuation', 0, 8, 0.25),
       select('volumetricLightBlur', 'Blur', [[0, 'None'], [1, '1'], [2, '2'], [3, '3'], [4, '4'], [6, '6'], [8, '8']]),
     ],
   },
@@ -141,13 +141,13 @@ const sections: Array<Section> = [
     toggle: 'contactShadows',
     controls: [
       select('contactShadowResolutionScale', 'Resolution', scales([0.5, 0.75, 1])),
-      range('contactShadowDistance', 'Distance', 0.01, 0.5, 0.005),
-      range('contactShadowThickness', 'Thickness', 0.001, 0.1, 0.001),
-      range('contactShadowIntensity', 'Intensity', 0, 1, 0.01),
-      range('contactShadowQuality', 'Quality', 0.1, 2, 0.05),
+      range('contactShadowDistance', 'Distance', 0.01, 0.5, 0.01),
+      range('contactShadowThickness', 'Thickness', 0.005, 0.1, 0.005),
+      range('contactShadowIntensity', 'Intensity', 0, 1, 0.05),
+      range('contactShadowQuality', 'Quality', 0.1, 2, 0.1),
       toggle('contactShadowDenoise', 'Denoise'),
       {
-        ...range('contactShadowDenoiseRadius', 'Denoise radius', 1, 16, 0.5),
+        ...range('contactShadowDenoiseRadius', 'Denoise radius', 1, 16, 1),
         when: settings => settings.contactShadowDenoise,
       },
     ],
@@ -156,17 +156,17 @@ const sections: Array<Section> = [
     title: 'Bloom',
     toggle: 'bloom',
     controls: [
-      range('bloomStrength', 'Strength', 0, 2, 0.01),
-      range('bloomRadius', 'Radius', 0, 1, 0.01),
-      range('bloomThreshold', 'Threshold', 0, 4, 0.05),
-      range('bloomSmoothWidth', 'Smooth width', 0, 1, 0.01),
-      range('bloomLuminanceCap', 'Brightness cap', 1, 64, 0.5),
+      range('bloomStrength', 'Strength', 0, 2, 0.1),
+      range('bloomRadius', 'Radius', 0, 1, 0.05),
+      range('bloomThreshold', 'Threshold', 0, 4, 0.1),
+      range('bloomSmoothWidth', 'Smooth width', 0, 0.5, 0.01),
+      range('bloomLuminanceCap', 'Brightness cap', 1, 64, 1),
     ],
   },
   {
     title: 'Finish',
     controls: [
-      range('vignette', 'Vignette', 0, 1, 0.01),
+      range('vignette', 'Vignette', 0, 1, 0.05),
       toggle('dither', 'Dither'),
     ],
   },
@@ -176,12 +176,21 @@ const initial = getDefaultCustomGraphics()
 const set = (values: Partial<RenderPipelineSettings>) => {
   useCustomGraphics.setState(values)
 }
+const reset = (keys: Array<RenderPipelineSetting>) => {
+  set(Object.fromEntries(keys.map(key => [key, initial[key]])))
+}
+/** Keeps the second click of a double-click from reaching the label’s control, so double-clicking a checkbox’s label resets it instead of switching it twice. */
+const ignoreRepeatedClick = (event: React.MouseEvent) => {
+  if (event.detail > 1) {
+    event.preventDefault()
+  }
+}
 /** The panel G shows with `?development`, a column left of the canvas: checkboxes switch passes, which rebuilds the pipeline, and sliders change its uniforms live. */
 export default function GraphicsTuning() {
   const isHeavy = useGraphicsMode()
   return <aside className={css.container} aria-label='Render pipeline' onPointerEnter={() => useGraphicsTuning.setState({hovered: true})} onPointerLeave={() => useGraphicsTuning.setState({hovered: false})}>
     <div className={css.heading}><h2>Render pipeline</h2><button type='button' onClick={() => useCustomGraphics.setState(initial, true)}>Reset</button></div>
-    <p className={css.hint}>{isHeavy ? 'Pause to tune. The menu hides while the pointer is over the panel.' : 'Switch graphics on in the menu to tune the pipeline.'}</p>
+    <p className={css.hint}>{isHeavy ? 'Pause to tune. The menu hides while the pointer is over the panel. Double-click a label to reset it.' : 'Switch graphics on in the menu to tune the pipeline.'}</p>
     <Branch if={isHeavy}>{sections.map(section => <SectionBox key={section.title} section={section} />)}</Branch>
   </aside>
 }
@@ -192,7 +201,7 @@ function ControlRow({control, disabled}: {
   const value = useCustomGraphics(state => state[control.key])
   const applies = useCustomGraphics(state => control.when?.(state) ?? true)
   const id = `tuning-${control.key}`
-  const label = <span data-changed={value !== initial[control.key] || undefined}>{control.label}</span>
+  const label = <span data-changed={value !== initial[control.key] || undefined} onClick={ignoreRepeatedClick} onDoubleClick={() => reset([control.key])}>{control.label}</span>
   if (control.kind === 'toggle') {
     return <label className={css.toggle}>{label}<input id={id} checked={value as boolean} disabled={disabled || !applies} type='checkbox' onChange={event => set({[control.key]: event.currentTarget.checked})} /></label>
   }
@@ -208,9 +217,10 @@ function ControlRow({control, disabled}: {
 }
 function SectionBox({section}: {section: Section}) {
   const enabled = useCustomGraphics(state => section.toggle === undefined || state[section.toggle])
-  const changed = useCustomGraphics(state => [section.toggle, ...section.controls.map(control => control.key)].some(key => key !== undefined && state[key] !== initial[key]))
+  const keys = [...section.toggle === undefined ? [] : [section.toggle], ...section.controls.map(control => control.key)]
+  const changed = useCustomGraphics(state => keys.some(key => state[key] !== initial[key]))
   return <fieldset className={css.section}>
-    <legend data-changed={changed || undefined}><Branch if={section.toggle} else={section.title}><label><input checked={enabled} type='checkbox' onChange={event => set({[section.toggle!]: event.currentTarget.checked})} /> {section.title}</label></Branch></legend>
+    <legend data-changed={changed || undefined} onClick={ignoreRepeatedClick} onDoubleClick={() => reset(keys)}><Branch if={section.toggle} else={section.title}><label><input checked={enabled} type='checkbox' onChange={event => set({[section.toggle!]: event.currentTarget.checked})} /> {section.title}</label></Branch></legend>
     {section.controls.map(control => <ControlRow key={control.key} control={control} disabled={!enabled} />)}
   </fieldset>
 }
