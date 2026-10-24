@@ -31,7 +31,7 @@ export default class PotMaterials {
       celadon: new MeshStandardNodeMaterial({
         color: '#73978b',
         roughness: 0.23,
-        metalness: 0.06,
+        metalness: 0.1,
       }),
       noir: new MeshStandardNodeMaterial({
         color: '#303735',
