@@ -133,7 +133,7 @@ export function getRenderPipelineSettings(profile: GraphicsProfile, antiAliasing
     // The filter radius grows with the map, so a larger map keeps the penumbra’s width and only resolves it finer.
     sunShadowMapSize: sun.shadow.mapSize * profile.shadowMapScale,
     sunShadowRadius: profile.shadowMapScale,
-    sunShadowSamples: profile.shadowSamples,
+    sunShadowSamples: profile.sunShadowSamples ?? profile.shadowSamples,
     vignette: 0,
     volumetricLight: profile.volumetricLight,
     volumetricLightBlur: 0,
@@ -143,7 +143,7 @@ export function getRenderPipelineSettings(profile: GraphicsProfile, antiAliasing
     volumetricLightResolutionScale: 0.25,
     volumetricLightSteps: profile.volumetricLightSteps,
     voxelIndirectLight: profile.voxelIndirectLight,
-    voxelIndirectLightBounces: 1,
+    voxelIndirectLightBounces: profile.voxelIndirectLightBounces ?? 1,
     voxelIndirectLightConeAngle: 40,
     voxelIndirectLightConeCount: 3,
     voxelIndirectLightIntensity: 0.2,

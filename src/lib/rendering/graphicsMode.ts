@@ -48,6 +48,8 @@ export type GraphicsProfile = {
   shadowSamples: number
   /** optional screen-space indirect-light quality overrides */
   ssgi?: SsgiSettings
+  /** sun-only PCF lookup count; defaults to the other lights’ shadow sample count */
+  sunShadowSamples?: number
   /** anisotropic filtering of the repeating procedural surfaces like plaster, stone and wood */
   surfaceAnisotropy: number
   /** whether the sun scatters through the air as shafts of light */
@@ -56,6 +58,8 @@ export type GraphicsProfile = {
   volumetricLightSteps: number
   /** whether voxel cone tracing supplies indirect lighting, independently of screen-space GI */
   voxelIndirectLight: boolean
+  /** optional voxel GI bounce count; the normal default is one */
+  voxelIndirectLightBounces?: number
 }
 
 type SsgiSettings = Pick<RenderPipelineSettings, | 'screenSpaceIndirectLightAmbientOcclusion'
@@ -133,6 +137,7 @@ const cinematicProfile: GraphicsProfile = {
   reflectionResolutionScale: 2,
   shadowMapScale: 4,
   shadowSamples: 16,
+  sunShadowSamples: 8,
   ssgi: {
     screenSpaceIndirectLightAmbientOcclusion: 0.5,
     screenSpaceIndirectLightBackfaceLighting: 0.2,
@@ -146,6 +151,7 @@ const cinematicProfile: GraphicsProfile = {
   },
   surfaceAnisotropy: 16,
   volumetricLightSteps: 128,
+  voxelIndirectLightBounces: 2,
 }
 /** WebGPU’s default texture size limit, which Three requests whatever the adapter supports */
 const maxTextureSize = 8192

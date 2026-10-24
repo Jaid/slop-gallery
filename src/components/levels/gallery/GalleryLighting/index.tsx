@@ -153,8 +153,7 @@ function useTunedLighting(preset: GalleryLightingPreset) {
 /** The sun’s shadow props, which the tuning panel of `?development` changes in heavy graphics, together with its lookups per pixel. */
 function useSunShadow(mapSize: number) {
   const isHeavy = useGraphicsMode()
-  const {shadowSamples} = useGraphicsModeValue(getGraphicsProfile)
-  const own = useShadowProps(mapSize)
+  const {shadowMapScale, shadowSamples, sunShadowSamples} = useGraphicsModeValue(getGraphicsProfile)
   const tuned = useCustomGraphics(useShallow(state => ({
     mapSize: state.sunShadowMapSize,
     radius: state.sunShadowRadius,
@@ -166,9 +165,14 @@ function useSunShadow(mapSize: number) {
       samples: tuned.samples,
     }
   }
+  const samples = sunShadowSamples ?? shadowSamples
   return {
-    ...own,
-    samples: shadowSamples,
+    ...getShadowProps({
+      mapSize: mapSize * shadowMapScale,
+      radius: shadowMapScale,
+      samples,
+    }),
+    samples,
   }
 }
 /** Paints the reflection environment: a vertical gradient with four bright light boxes in its upper band. */

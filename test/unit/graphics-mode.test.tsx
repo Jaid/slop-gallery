@@ -47,6 +47,7 @@ test('the cinematic profile increases intermediate resolutions, AO quality, shad
     reflectionResolutionScale: 2,
     shadowMapScale: 4,
     shadowSamples: 16,
+    sunShadowSamples: 8,
     ssgi: {
       screenSpaceIndirectLightAmbientOcclusion: 0.5,
       screenSpaceIndirectLightBackfaceLighting: 0.2,
@@ -60,6 +61,7 @@ test('the cinematic profile increases intermediate resolutions, AO quality, shad
     },
     surfaceAnisotropy: 16,
     volumetricLightSteps: 128,
+    voxelIndirectLightBounces: 2,
   })
   expect(getGraphicsProfile(true, true)).toBe(cinematic)
   expect(getGraphicsProfile(false, true)).toBe(getGraphicsProfile(false))
@@ -184,7 +186,20 @@ test('Fast omits voxel GI, Heavy adds it without SSGI, and Cinematic uses both i
   expect(cinematic).toMatchObject({
     ...voxel,
     screenSpaceIndirectLight: true,
+    voxelIndirectLightBounces: 2,
   })
+})
+test('Cinematic uses 8 sun-only shadow samples and 2 voxel bounces, without changing the other presets', () => {
+  const fast = getRenderPipelineSettings(getGraphicsProfile(false), false)
+  const heavy = getRenderPipelineSettings(getGraphicsProfile(true), 'traa')
+  const cinematic = getRenderPipelineSettings(getGraphicsProfile(true, true), 'traa')
+  expect(fast.sunShadowSamples).toBe(5)
+  expect(heavy.sunShadowSamples).toBe(5)
+  expect(cinematic.sunShadowSamples).toBe(8)
+  expect(getGraphicsProfile(true, true).shadowSamples).toBe(16)
+  expect(fast.voxelIndirectLightBounces).toBe(1)
+  expect(heavy.voxelIndirectLightBounces).toBe(1)
+  expect(cinematic.voxelIndirectLightBounces).toBe(2)
 })
 test('Cinematic alone adopts the tuned SSGI settings', () => {
   const fast = getRenderPipelineSettings(getGraphicsProfile(false), false)
