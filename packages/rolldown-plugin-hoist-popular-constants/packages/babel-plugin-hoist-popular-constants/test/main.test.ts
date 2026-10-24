@@ -217,7 +217,7 @@ describe('popular constant hoisting', () => {
     expect(code).not.toContain('var ')
   })
   test('pools member property names together with equal string literals', () => {
-    const code = compile('a.addEventListener(1);b.addEventListener(2);c?.addEventListener(3);sink("addEventListener")')
+    const code = compile('a.addEventListener(1);b.addEventListener(2);c?.addEventListener(3);sink("addEventListener")', {propertyNames: {memberAccess: true}})
     expect(code).toStartWith('var _="addEventListener";')
     expect(code).toContain('a[_](1);b[_](2);c?.[_](3);sink(_)')
   })
@@ -236,8 +236,26 @@ describe('popular constant hoisting', () => {
     expect(code.match(/__proto__:/gu)).toHaveLength(2)
   })
   test('can disable property name pooling', () => {
-    const code = compile('a.addEventListener(1);b.addEventListener(2);c.addEventListener(3)', {propertyNames: false})
+    const code = compile('a.addEventListener(1);b.addEventListener(2);c.addEventListener(3);sink({addEventListener:1},{addEventListener:2})', {propertyNames: false})
     expect(code).not.toContain('var ')
+  })
+  test('pools keys but leaves member access by default', () => {
+    const code = compile('a.addEventListener(1);b.addEventListener(2);c?.addEventListener(3);sink({addEventListener:1},{addEventListener:2})')
+    expect(code).toStartWith('var _="addEventListener";')
+    expect(code).toContain('a.addEventListener(1);b.addEventListener(2);c?.addEventListener(3);sink({[_]:1},{[_]:2})')
+  })
+  test('pools every kind of property name when enabled as a whole', () => {
+    const code = compile('a.addEventListener(1);b.addEventListener(2);sink({addEventListener:1})', {propertyNames: true})
+    expect(code).toContain('a[_](1);b[_](2);sink({[_]:1})')
+  })
+  test('can pool member access without keys', () => {
+    const code = compile('a.addEventListener(1);b.addEventListener(2);c.addEventListener(3);sink({addEventListener:1})', {
+      propertyNames: {
+        keys: false,
+        memberAccess: true,
+      },
+    })
+    expect(code).toContain('a[_](1);b[_](2);c[_](3);sink({addEventListener:1})')
   })
   test('estimates booleans and numbers at their minified size when enabled', () => {
     expect(compile('sink(true,true,true,true)')).toStartWith('var _=true;')

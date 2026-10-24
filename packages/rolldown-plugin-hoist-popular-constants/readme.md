@@ -39,3 +39,5 @@ The Vite-specific flags belong to the consumer, not the Rolldown plugin. Keep th
 ## Options
 
 Import `RolldownPluginHoistPopularConstantsOptions` for the public options type. The adapter defaults to `estimateMinifiedSize: true`, `minimumSavingsBytes: 0`, `stableBuiltins: true` and string joining when stable built-ins are enabled. Set `stableBuiltins: false` when the runtime may modify built-ins.
+
+Property names are pooled as object, pattern and class keys only. Pooling member access too (`propertyNames: {memberAccess: true}` or `propertyNames: true`) saves more bytes, but V8 optimizes computed member access far worse: in a three.js app it cost about 50% of the frame time.

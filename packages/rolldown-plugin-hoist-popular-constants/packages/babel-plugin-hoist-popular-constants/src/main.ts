@@ -6,6 +6,12 @@ import {types as t} from '@babel/core'
 import {declare} from '@babel/helper-plugin-utils'
 import sortShortestLevenshtein from 'sort-shortest-levenshtein'
 
+export type PropertyNameOptions = {
+  /** Pool identifier keys of objects, patterns and class members (`{foo:1}` → `{[_]:1}`). Defaults to true. */
+  keys?: boolean
+  /** Pool non-computed member access (`a.foo` → `a[_]`). Defaults to false: V8 optimizes computed member access far worse, which cost a three.js render loop about 50% of its frame time. */
+  memberAccess?: boolean
+}
 export type HoistPopularConstantsOptions = {
   /** Estimate savings against the output of a following minifier (e.g. `true` as `!0`, `1000000` as `1e6`, `{"a":1}` as `{a:1}`) instead of the source as written. Defaults to false. */
   estimateMinifiedSize?: boolean
@@ -13,8 +19,8 @@ export type HoistPopularConstantsOptions = {
   join?: boolean
   minimumOccurrences?: number
   minimumSavingsBytes?: number
-  /** Pool non-computed property names (`a.foo` → `a[_]`, `{foo:1}` → `{[_]:1}`) together with equal string literals. Defaults to true. */
-  propertyNames?: boolean
+  /** Pool non-computed property names together with equal string literals. `true` and `false` switch every kind on or off. Defaults to keys only. */
+  propertyNames?: PropertyNameOptions | boolean
   /** Also transform scripts, where the hoisted top-level `var` becomes a property of the global object. Defaults to false, leaving scripts untouched. */
   scriptGlobals?: boolean
   /** Assume unbound built-in objects are stable, enabling constants such as Math.PI and `this`-free static functions such as Math.floor and Object.keys to be pooled. */
@@ -687,7 +693,12 @@ const hoistCandidates = (path: NodePath<t.Program>, state: HoistPluginState, opt
 
 export default declare<HoistState, HoistPopularConstantsOptions>((api, options) => {
   api.assertVersion('^8.0.0')
-  const propertyNames = options.propertyNames ?? true
+  const propertyNames = typeof options.propertyNames === 'boolean' ? {
+    keys: options.propertyNames,
+    memberAccess: options.propertyNames,
+  } : options.propertyNames
+  const keys = propertyNames?.keys ?? true
+  const memberAccess = propertyNames?.memberAccess ?? false
   return {
     name: 'hoist-popular-constants',
     visitor: {
@@ -714,12 +725,12 @@ export default declare<HoistState, HoistPopularConstantsOptions>((api, options) 
         addLiteralCandidate(path, state, options)
       },
       'ClassMethod|ClassProperty|ObjectMethod|ObjectProperty'(path, state) {
-        if (propertyNames) {
+        if (keys) {
           addKeyCandidate(path as NodePath<KeyOwner>, state, options)
         }
       },
       MemberExpression(path, state) {
-        if (!addStableBuiltinCandidate(path, state, options) && propertyNames) {
+        if (!addStableBuiltinCandidate(path, state, options) && memberAccess) {
           addMemberPropertyCandidate(path, state, options)
         }
       },
@@ -730,7 +741,7 @@ export default declare<HoistState, HoistPopularConstantsOptions>((api, options) 
         addLiteralCandidate(path, state, options)
       },
       OptionalMemberExpression(path, state) {
-        if (propertyNames) {
+        if (memberAccess) {
           addMemberPropertyCandidate(path, state, options)
         }
       },
