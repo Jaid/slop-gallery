@@ -133,6 +133,30 @@ test('directional lights test changes against their shadow camera', () => {
   inside.position.x = 1
   expect(step()).toBe(true)
 })
+test('directional lights ignore casters hiding, since they draw hidden ones too', () => {
+  const scene = new Scene
+  const sun = new DirectionalLight
+  sun.castShadow = true
+  sun.position.set(0, 10, 0)
+  const caster = new Mesh(new BoxGeometry)
+  caster.castShadow = true
+  scene.add(sun, caster)
+  const cache = new ShadowCache
+  const hidden = new Set<Mesh>
+  const step = () => {
+    sun.shadow.needsUpdate = false
+    scene.updateMatrixWorld()
+    cache.update(scene, hidden, () => true)
+    return sun.shadow.needsUpdate
+  }
+  step()
+  hidden.add(caster)
+  expect(step()).toBe(false)
+  caster.position.x = 1
+  expect(step()).toBe(true)
+  hidden.delete(caster)
+  expect(step()).toBe(false)
+})
 test('dispose restores updates every frame', () => {
   const {cache, lamp, step} = setup()
   step()

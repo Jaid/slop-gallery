@@ -92,13 +92,15 @@ export class GalleryRenderer extends WebgpuRenderer {
   readonly hiddenFromView = new Set<Object3D>
   /** the cameras of shadow maps, which draw {@link hiddenFromView} */
   readonly shadowCameras = new WeakSet<Camera>
+  /** the cameras of shadow maps of lights from outside the rooms, like the sun, which draw {@link hidden} too */
+  readonly unculledCameras = new WeakSet<Camera>
   private culledCamera: Camera | null = null
   private culler: Culler | null = null
   private frame = -1
   private frameScene: Scene | null = null
   private initialization?: Promise<this>
   private pending = 0
-  /** projects objects outside of loading, leaving out {@link hidden} and, outside of shadow maps, {@link hiddenFromView} */
+  /** projects objects outside of loading, leaving out {@link hidden} outside of {@link unculledCameras} and, outside of shadow maps, {@link hiddenFromView} */
   private projectCulled?: ProjectObject
   /** projects objects while loading, admitting the next ones outside the frustum */
   private projectWarming?: ProjectObject
@@ -214,14 +216,14 @@ export class GalleryRenderer extends WebgpuRenderer {
     }
     // A render bundle records its draws once, so an object missing from it would stay missing.
     pipelines.updateForRender = renderObject => pipelines.getForRender(renderObject, renderObject.scene === this.frameScene && internals._currentRenderBundle === null ? sink : null)
-    const {hidden, hiddenFromView, shadowCameras} = this
+    const {hidden, hiddenFromView, shadowCameras, unculledCameras} = this
     this.projectCulled = function (this: Renderer, object, camera, groupOrder, renderList, clippingContext) {
-      if (!hidden.has(object) && (!hiddenFromView.has(object) || shadowCameras.has(camera))) {
+      if ((!hidden.has(object) || unculledCameras.has(camera)) && (!hiddenFromView.has(object) || shadowCameras.has(camera))) {
         projectObject.call(this, object, camera, groupOrder, renderList, clippingContext)
       }
     }
     this.projectWarming = (object, camera, groupOrder, renderList, clippingContext) => {
-      if (hidden.has(object)) {
+      if (hidden.has(object) && !unculledCameras.has(camera)) {
         return
       }
       if (!object.frustumCulled || !('geometry' in object)) {

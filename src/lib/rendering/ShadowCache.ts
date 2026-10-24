@@ -17,8 +17,14 @@ type Caster = Object3D & {
 type CasterState = {
   frame: number
   geometry: BufferGeometry
+  hidden: boolean
   instances: number
   matrix: Matrix4
+  sphere: Sphere
+}
+type Change = {
+  /** whether only its hiding changed, which directional lights don’t see */
+  hiding: boolean
   sphere: Sphere
 }
 type LightState = {
@@ -45,10 +51,11 @@ const worldSphere = (caster: Caster, target: Sphere) => {
 /**
  * Keeps shadow maps until something changes in their light’s reach: a shadow caster that moves, appears or disappears, or the light itself moving.
  * Almost everything in the gallery stands still, so most lights render their shadow map once instead of every frame.
+ * Directional lights shine from outside the culled rooms and draw hidden casters too, so hiding or showing a caster leaves their shadow maps alone.
  */
 export default class ShadowCache {
   private readonly casters = new Map<Caster, CasterState>
-  private readonly changes: Array<Sphere> = []
+  private readonly changes: Array<Change> = []
   private frame = 0
   private readonly lights = new Map<ShadowLight, LightState>
 
@@ -63,34 +70,38 @@ export default class ShadowCache {
 
   /**
    * Compares the scene with the last call and requests an update of every shadow map whose light can reach a change.
-   * Call it once per frame, after the world matrices are up to date. Subtrees in `hidden` count as absent, like in the renderer.
+   * Call it once per frame, after the world matrices are up to date. Subtrees in `hidden` count as absent for all but directional lights, like in the renderer.
    * A light that isn’t `active` keeps its pending update until it is.
    */
   update(scene: Object3D, hidden: ReadonlySet<Object3D>, active: (light: Light) => boolean) {
     const frame = ++this.frame
     this.changes.length = 0
-    const visit = (object: Object3D) => {
-      if (!object.visible || hidden.has(object)) {
+    const visit = (object: Object3D, isHidden: boolean) => {
+      if (!object.visible) {
         return
       }
+      const objectHidden = isHidden || hidden.has(object)
       const light = object as ShadowLight
       if (light.isLight) {
         if (light.castShadow) {
           this.trackLight(light, frame)
         }
       } else if (object.castShadow && 'geometry' in object) {
-        this.trackCaster(object as Caster, frame)
+        this.trackCaster(object as Caster, frame, objectHidden)
       }
       for (const child of object.children) {
-        visit(child)
+        visit(child, objectHidden)
       }
     }
-    visit(scene)
+    visit(scene, false)
     for (const [caster, state] of this.casters) {
       if (state.frame === frame) {
         continue
       }
-      this.changes.push(state.sphere)
+      this.changes.push({
+        hiding: false,
+        sphere: state.sphere,
+      })
       this.casters.delete(caster)
     }
     for (const [light, state] of this.lights) {
@@ -99,7 +110,7 @@ export default class ShadowCache {
         this.lights.delete(light)
         continue
       }
-      state.dirty ||= this.changes.some(sphere => this.reaches(light, sphere))
+      state.dirty ||= this.changes.some(({hiding, sphere}) => !(hiding && light.isDirectionalLight) && this.reaches(light, sphere))
       if (!(state.dirty && active(light))) {
         continue
       }
@@ -117,31 +128,49 @@ export default class ShadowCache {
     return light.shadow.getFrustum().intersectsSphere(sphere)
   }
 
-  private trackCaster(caster: Caster, frame: number) {
+  private trackCaster(caster: Caster, frame: number, hidden: boolean) {
     const instances = caster.instanceMatrix?.version ?? 0
     let state = this.casters.get(caster)
     if (!state) {
       state = {
         frame,
         geometry: caster.geometry,
+        hidden,
         instances,
         matrix: caster.matrixWorld.clone(),
         sphere: worldSphere(caster, new Sphere),
       }
       this.casters.set(caster, state)
-      this.changes.push(state.sphere)
+      this.changes.push({
+        hiding: false,
+        sphere: state.sphere,
+      })
       return
     }
     state.frame = frame
     if (state.geometry === caster.geometry && state.instances === instances && !moved(state.matrix, caster.matrixWorld)) {
+      if (state.hidden !== hidden) {
+        state.hidden = hidden
+        this.changes.push({
+          hiding: true,
+          sphere: state.sphere,
+        })
+      }
       return
     }
     // Both where it was and where it is now changed.
-    this.changes.push(state.sphere.clone())
+    this.changes.push({
+      hiding: false,
+      sphere: state.sphere.clone(),
+    })
     state.geometry = caster.geometry
+    state.hidden = hidden
     state.instances = instances
     state.matrix.copy(caster.matrixWorld)
-    this.changes.push(worldSphere(caster, state.sphere))
+    this.changes.push({
+      hiding: false,
+      sphere: worldSphere(caster, state.sphere),
+    })
   }
 
   private trackLight(light: ShadowLight, frame: number) {

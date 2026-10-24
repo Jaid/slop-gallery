@@ -1,6 +1,6 @@
 import type {ScreenRect} from '#src/lib/gallery/roomVisibility.ts'
 import type {RoomId} from '#src/lib/gallery/types.ts'
-import type {BufferGeometry, Camera, Light, LightShadow, Object3D} from 'three/webgpu'
+import type {BufferGeometry, Camera, DirectionalLight, Light, LightShadow, Object3D} from 'three/webgpu'
 
 import {useThree} from '@react-three/fiber'
 import {useEffect} from 'react'
@@ -74,7 +74,8 @@ const mirror = (box: Box3, floorY: number) => {
 
 /**
  * Leaves out what the camera can’t see from the rooms it is in. An object belongs to every room its bounds reach into, and a room behind an opening only shows through the part of the screen the opening covers, up to two openings deep.
- * Rooms out of sight drop out of every pass of the frame: the camera, its reflection and all shadow maps. Objects in a room in sight that miss its openings on screen only drop out of the camera and its reflection, so the shadows they cast stay.
+ * Rooms out of sight drop out of every pass of the frame: the camera, its reflection and the lamps’ shadow maps. Objects in a room in sight that miss its openings on screen only drop out of the camera and its reflection, so the shadows they cast stay.
+ * The sun shines from outside every room, through openings and skylights that rooms out of sight may frame, so its shadow map keeps them all; otherwise the patches of sunlight would change shape whenever a room leaves the view.
  * Shadow maps only update when something in their light’s reach changes, and lights in hidden rooms or switched off by their room list wait until they matter again. Lights themselves stay, since a different set of lights would recompile every lit material.
  */
 export default function RoomCulling() {
@@ -86,7 +87,7 @@ export default function RoomCulling() {
     if (!ready || !galleryRenderer) {
       return
     }
-    const {hidden, hiddenFromView, shadowCameras} = galleryRenderer
+    const {hidden, hiddenFromView, shadowCameras, unculledCameras} = galleryRenderer
     const shadows = new ShadowCache
     const cull = (camera: Camera) => {
       hidden.clear()
@@ -105,6 +106,9 @@ export default function RoomCulling() {
         const light = object as Light & {shadow?: LightShadow}
         if (light.isLight && light.shadow) {
           shadowCameras.add(light.shadow.camera)
+          if ((light as DirectionalLight).isDirectionalLight) {
+            unculledCameras.add(light.shadow.camera)
+          }
         }
         if (!regions || !drawable.geometry || !drawable.frustumCulled || holdsLight(object)) {
           return
