@@ -19,10 +19,10 @@ const antechamberDome = {
     width: 9,
     /** elevations of the windows’ sills and heads above the springing */
     sill: 6.75,
-    head: 24.75,
+    head: 31.5,
   },
   /** elevation above which the crown is open, under the lattice */
-  oculus: 72,
+  oculus: 63,
   /** how thick the oculus lattice is */
   latticeDepth: 0.05,
 }
@@ -62,19 +62,20 @@ function isOpen(azimuth: number, elevation: number) {
 /** Height of the lattice’s underside above the dome’s springing, where it rests on the rim of the oculus. */
 export const antechamberLatticeY = Math.sqrt(antechamberDome.radius ** 2 - latticeRadius() ** 2)
 
-/** A brass disc over the oculus, cut into an eight-pointed star ringed by eight smaller ones and sixteen round lights, lying flat with its underside at y = 0. */
+/** A brass disc over the oculus, cut into an eight-pointed star ringed by eight smaller ones and sixteen round lights, lying flat with its underside at y = 0. The pattern is laid out in fractions of the oculus’ radius. */
 export function antechamberLatticeGeometry() {
+  const open = oculusRadius()
   const disc = new Shape
   disc.absarc(0, 0, latticeRadius(), 0, Math.PI * 2, false)
-  disc.holes.push(star(new Path, [0, 0], 0.4, 0.2, Math.PI / 8))
+  disc.holes.push(star(new Path, [0, 0], open * 0.34, open * 0.17, Math.PI / 8))
   for (let i = 0; i < 8; i++) {
     const angle = i * Math.PI / 4
-    disc.holes.push(star(new Path, [Math.cos(angle) * 0.72, Math.sin(angle) * 0.72], 0.17, 0.085, angle))
+    disc.holes.push(star(new Path, [Math.cos(angle) * open * 0.61, Math.sin(angle) * open * 0.61], open * 0.145, open * 0.072, angle))
   }
   for (let i = 0; i < 16; i++) {
     const angle = (i + 0.5) * Math.PI / 8
     const light = new Path
-    light.absarc(Math.cos(angle) * 1.04, Math.sin(angle) * 1.04, 0.055, 0, Math.PI * 2, true)
+    light.absarc(Math.cos(angle) * open * 0.885, Math.sin(angle) * open * 0.885, open * 0.047, 0, Math.PI * 2, true)
     disc.holes.push(light)
   }
   const lattice = new ExtrudeGeometry(disc, {
@@ -85,7 +86,10 @@ export function antechamberLatticeGeometry() {
   return lattice.rotateX(-Math.PI / 2)
 }
 function latticeRadius() {
-  return antechamberDome.radius * Math.cos(antechamberDome.oculus * degrees) + 0.08
+  return oculusRadius() + 0.08
+}
+function oculusRadius() {
+  return antechamberDome.radius * Math.cos(antechamberDome.oculus * degrees)
 }
 function star(path: Path, [x, y]: readonly [number, number], outer: number, inner: number, turn = 0) {
   const points = Array.from({length: 16}, (_, i) => {
