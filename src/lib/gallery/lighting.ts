@@ -203,6 +203,8 @@ export type LampSet = 'all' | 'essential' | 'none'
 export type GalleryLightingPreset = LightingPreset & {
   /** all lamps unless the tuning panel says otherwise */
   lampSet?: LampSet
+  /** full lamp shadows unless the tuning panel says otherwise */
+  lampShadows?: number
   sun: LightingPreset['sun'] & ReturnType<typeof sunGeometry>
 }
 
@@ -232,6 +234,8 @@ export type LightingTuning = {
   hemisphereIntensity: number
   lamps: number
   lampSet: LampSet
+  /** how dark the lamps’ shadows fall, where 0 switches their shadow maps off */
+  lampShadows: number
   /** whether the sun shines at all */
   sun: boolean
   sunAzimuth: number
@@ -249,6 +253,7 @@ export function getLightingTuning(preset: LightingPreset): LightingTuning {
     hemisphereIntensity: preset.hemisphere.intensity,
     lamps: preset.lamps,
     lampSet: 'all',
+    lampShadows: 1,
     sun: true,
     sunAzimuth: (Math.atan2(x, -z) * degrees + 360) % 360,
     sunElevation: Math.atan2(y, Math.hypot(x, z)) * degrees,
@@ -263,6 +268,7 @@ export function pickLightingTuning(tuning: LightingTuning): LightingTuning {
     hemisphereIntensity: tuning.hemisphereIntensity,
     lamps: tuning.lamps,
     lampSet: tuning.lampSet,
+    lampShadows: tuning.lampShadows,
     sun: tuning.sun,
     sunAzimuth: tuning.sunAzimuth,
     sunElevation: tuning.sunElevation,
@@ -287,6 +293,7 @@ export function tuneLighting(preset: GalleryLightingPreset, tuning: LightingTuni
     },
     lamps: pick('lamps'),
     lampSet: tuning.lampSet,
+    lampShadows: tuning.lampShadows,
     sun: {
       ...preset.sun,
       ...isMoved ? sunGeometry(sunDirectionFromAngles(pick('sunAzimuth'), pick('sunElevation'))) : {},

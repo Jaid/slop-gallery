@@ -251,6 +251,14 @@ const sections: Array<Section> = [
         ...percent('lamps', 'Lamp multiplier', 0, 4, 0.05),
         when: settings => settings.lampSet !== 'none',
       },
+      {
+        ...percent('lampShadows', 'Lamp shadows', 0.05, 1, 0.05),
+        off: {
+          fallback: 1,
+          off: 0,
+        },
+        when: settings => settings.lampSet !== 'none',
+      },
       range('hemisphereIntensity', 'Base light', 0, 4, 0.1),
       percent('environmentIntensity', 'Environment', 0, 1, 0.05),
     ],

@@ -15,7 +15,7 @@ import lobbyVault from '#src/lib/gallery/lobbyVault.ts'
 import proceduralSky, {SkyLook} from '#src/lib/materials/ProceduralSky.ts'
 import {getDefaultCustomGraphics, useCustomGraphics} from '#src/lib/rendering/customGraphics.ts'
 import {getGraphicsProfile, getSunShadowSettings} from '#src/lib/rendering/graphicsMode.ts'
-import {lightGain} from '#src/lib/rendering/lightLevels.ts'
+import {lightGain, lightShadow} from '#src/lib/rendering/lightLevels.ts'
 import {getShadowProps} from '#src/lib/rendering/shadowFilters.ts'
 import StainedGlassShadowNode from '#src/lib/rendering/StainedGlassShadowNode.ts'
 
@@ -114,20 +114,25 @@ export default function GalleryLighting() {
       light.shadow.needsUpdate = true
     }
   }, [shadow])
-  // Lamps glow by the preset’s gain, and the optional ones not at all with only the essential lamps, or every one with none. The corridor’s lanterns already light a space of their own, without any of the daylight’s fill, and daylight is no lamp.
-  const {lamps, lampSet = 'all'} = preset
+  // Lamps glow by the preset’s gain, and the optional ones not at all with only the essential lamps, or every one with none. Their shadows fall as dark as the tuning panel says. The corridor’s lanterns already light a space of their own, without any of the daylight’s fill, and daylight is no lamp.
+  const {lamps, lampSet = 'all', lampShadows = 1} = preset
   useLayoutEffect(() => {
-    lightGain.current = light => {
+    const isLamp = (light: Light) => {
       const lamp = light as Lamp
-      if (!(lamp.isPointLight || lamp.isSpotLight) || lamp.userData.daylight) {
+      return Boolean(lamp.isPointLight || lamp.isSpotLight) && !lamp.userData.daylight
+    }
+    lightGain.current = light => {
+      if (!isLamp(light)) {
         return 1
       }
-      return lampSet === 'none' || lampSet === 'essential' && lamp.userData.optional ? 0 : lamps
+      return lampSet === 'none' || lampSet === 'essential' && light.userData.optional ? 0 : lamps
     }
+    lightShadow.current = light => (isLamp(light) ? lampShadows : 1)
     return () => {
       lightGain.current = () => 1
+      lightShadow.current = () => 1
     }
-  }, [lamps, lampSet])
+  }, [lamps, lampSet, lampShadows])
   useEffect(() => {
     if (!isDevelopmentMode) {
       return

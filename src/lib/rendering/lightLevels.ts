@@ -1,4 +1,4 @@
-import type {Light, Object3D} from 'three/webgpu'
+import type {Light, LightShadow, Object3D} from 'three/webgpu'
 
 import optis from 'optis'
 import readPermalink from 'read-permalink'
@@ -203,10 +203,20 @@ export function toggleLight(light: Light) {
  */
 export const lightGain = {current: (_light: Light) => 1}
 
+/**
+ * How dark each light’s shadow falls, where 0 stops it from casting one at all. Applies only to lights whose owner made them cast shadows. Levels replace it while mounted.
+ */
+export const lightShadow = {current: (_light: Light) => 1}
+
 const levels = new WeakMap<Light, Level>
+/** whether each light’s owner made it cast shadows, and whether this made it last frame */
+const casters = new WeakMap<Light, {
+  base: boolean
+  written: boolean
+}>
 
 /**
- * Scales every light by {@link lightGain} and switches off the ones toggled off. Call it once per frame after everything else
+ * Scales every light by {@link lightGain}, switches off the ones toggled off and weakens or drops shadows by {@link lightShadow}. Call it once per frame after everything else
  * set its lights, so lights that flicker or dim are scaled after their owner set them for this frame. An intensity that differs
  * from what this wrote last frame is a new one from the light’s owner.
  */
@@ -227,5 +237,20 @@ export function applyLightLevels(scene: Object3D) {
     }
     light.intensity = off.has(light) ? 0 : level.base * lightGain.current(light) * (strengths.get(light) ?? 1)
     level.written = light.intensity
+    let caster = casters.get(light)
+    if (light.castShadow !== caster?.written) {
+      caster = {
+        base: light.castShadow,
+        written: light.castShadow,
+      }
+      casters.set(light, caster)
+    }
+    const {shadow} = light as Light & {shadow?: LightShadow}
+    if (caster.base && shadow) {
+      const strength = lightShadow.current(light)
+      light.castShadow = strength > 0
+      shadow.intensity = strength
+    }
+    caster.written = light.castShadow
   })
 }
