@@ -5,7 +5,7 @@ import {useEffect, useRef} from 'react'
 import {Color, Matrix4, Quaternion, Vector2, Vector3} from 'three/webgpu'
 
 import {isTextInput, notify} from '#src/lib/gallery.ts'
-import {changeLightDecay, changeLightIntensity, changeLightRange, isEditingLights, lightActive, moveLight, placeLight, resetLight, toggleLight, useLightEdits} from '#src/lib/rendering/lightLevels.ts'
+import {changeLightDecay, changeLightIntensity, changeLightRange, isEditingLights, isShadowSlot, lightActive, moveLight, placeLight, resetLight, toggleLight, toggleLightShadow, useLightEdits} from '#src/lib/rendering/lightLevels.ts'
 
 type Positional = Light & {
   isPointLight?: boolean
@@ -59,7 +59,7 @@ const moveKeys: Partial<Record<string, readonly [number, number, number]>> = {
 /** the lights marked this frame, reused across frames */
 const found: Array<Light> = []
 /** Lights without a position of their own, like the sun, can name where their marker goes with `userData.marker`, a world position. */
-const isMarked = (light: Positional) => Boolean(light.isPointLight || light.isSpotLight || light.isRectAreaLight || light.userData.marker)
+const isMarked = (light: Positional) => Boolean(light.isPointLight || light.isSpotLight || light.isRectAreaLight || light.userData.marker) && !isShadowSlot(light)
 const markerPosition = (light: Light, target: Vector3) => {
   const marker = light.userData.marker as [number, number, number] | undefined
   return marker ? target.set(...marker) : target.setFromMatrixPosition(light.matrixWorld)
@@ -95,8 +95,8 @@ const copyEditsKey = 'KeyK'
 const formatPosition = ({x, y, z}: Vector3) => `${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}`
 /** One line per edited light: its name, `off` or its strength factor, its range and decay and its world position, which tells apart lights of the same name. */
 const listEdits = () => {
-  const {moved, off, reshaped, strengths} = useLightEdits.getState()
-  return [...new Set([...off, ...strengths.keys(), ...reshaped, ...moved])].map(light => {
+  const {moved, off, reshaped, shadows, strengths} = useLightEdits.getState()
+  return [...new Set([...off, ...strengths.keys(), ...reshaped, ...moved, ...shadows.keys()])].map(light => {
     const strength = strengths.get(light) ?? 1
     const level = off.has(light) ? 'off' : `×${strength.toFixed(2)}`
     const {decay, distance} = light as Light & {
@@ -104,7 +104,8 @@ const listEdits = () => {
       distance?: number
     }
     const where = `, ${moved.has(light) ? 'moved to' : 'at'} ${formatPosition(light.getWorldPosition(position))}`
-    return `${describe(light)}: ${level}${distance ? `, range ${distance.toFixed(1)} m` : ''}${decay === undefined ? '' : `, decay ${decay.toFixed(2)}`}${where}`
+    const shadow = shadows.get(light)
+    return `${describe(light)}: ${level}${distance ? `, range ${distance.toFixed(1)} m` : ''}${decay === undefined ? '' : `, decay ${decay.toFixed(2)}`}${shadow === undefined ? '' : `, shadow ${shadow ? 'on' : 'off'}`}${where}`
   }).join('\n')
 }
 /** Puts the list on the clipboard, telling how many lights it holds. */
@@ -118,7 +119,7 @@ const copyEdits = async (list: string) => {
 }
 /**
  * `?show_lights`: a glowing, dark-rimmed dot in the color of every point, spot and area light and every light with a `userData.marker`, seen through walls, dark gray for lights switched off. With
- * `?edit_lights`, the light the camera aims at grows: E switches it off and on, ←/→ make it weaker or stronger by 0.1 of its owner’s strength and ↓/↑ shorten or extend its range by 1 m and Numpad 7/1 make it fade faster or more gently, for the rest of the page session.
+ * `?edit_lights`, the light the camera aims at grows: E switches it off and on, X switches its shadow on and off, ←/→ make it weaker or stronger by one unit of intensity and ↓/↑ shorten or extend its range by 1 m and Numpad 7/1 make it fade faster or more gently, for the rest of the page session.
  * Left-clicking a marker focuses its light, which then takes these keys wherever the camera aims, until a click on another marker or anything else. Numpad 8, 2, 4 and 6 move the focused light forward, back, left and right of the view, 9 and 3 up and down, 5 puts it at the camera, 0 undoes all its edits, and K copies every edit.
  */
 export default function LightMarkers() {
@@ -228,6 +229,13 @@ export default function LightMarkers() {
           if (!event.repeat) {
             notify(`${describe(aimed)} ${toggleLight(aimed) ? 'on' : 'off'}`)
           }
+        },
+        KeyX: () => {
+          if (event.repeat) {
+            return
+          }
+          const shadow = toggleLightShadow(aimed)
+          notify(shadow === undefined ? `${describe(aimed)} can’t cast a shadow` : `${describe(aimed)}: shadow ${shadow ? 'on' : 'off'}`)
         },
         ArrowLeft: () => strength(-1),
         ArrowRight: () => strength(1),

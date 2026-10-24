@@ -53,13 +53,19 @@ const openRange = 20
 /** each light’s intensity as its owner set it, and as {@link applyLightLevels} last wrote it */
 const levels = new WeakMap<Light, Level>
 
-/** The light the camera aims at while editing lights, the one focused by clicking its marker, the lights moved, the lights whose range or decay changed, and the lights switched off or made stronger or weaker for this page session. */
+/** `userData` key that marks the shadow pool’s own lights, which nothing but the pool sets */
+export const shadowSlotKey = 'shadowSlot'
+/** whether a light is one of the shadow pool’s */
+export const isShadowSlot = (light: Light) => Boolean(light.userData[shadowSlotKey])
+
+/** The light the camera aims at while editing lights, the one focused by clicking its marker, the lights moved, the lights whose range or decay changed, whose shadow was switched on or off, and the lights switched off or made stronger or weaker for this page session. */
 export const useLightEdits = create<{
   aimed: Light | null
   focused: Light | null
   moved: ReadonlySet<Light>
   off: ReadonlySet<Light>
   reshaped: ReadonlySet<Light>
+  shadows: ReadonlyMap<Light, boolean>
   strengths: ReadonlyMap<Light, number>
 }>(() => ({
   aimed: null,
@@ -67,6 +73,7 @@ export const useLightEdits = create<{
   moved: new Set,
   off: new Set,
   reshaped: new Set,
+  shadows: new Map,
   strengths: new Map,
 }))
 
@@ -153,7 +160,7 @@ export function moveLight(light: Light, offset: Vector3) {
   return placeLight(light, light.getWorldPosition(new Vector3).add(offset))
 }
 
-/** Undoes every edit to a light: puts it back where its owner placed it, with its range, decay, strength and on, returning its world position. */
+/** Undoes every edit to a light: puts it back where its owner placed it, with its range, decay, strength, shadow and on, returning its world position. */
 export function resetLight(light: Light & {
   decay?: number
   distance?: number
@@ -174,12 +181,13 @@ export function resetLight(light: Light & {
     light.decay = decay
     decays.delete(light)
   }
-  const {moved, off, reshaped, strengths} = useLightEdits.getState()
+  const {moved, off, reshaped, shadows, strengths} = useLightEdits.getState()
   const without = <Value>(set: ReadonlySet<Value>) => new Set([...set].filter(entry => entry !== light))
   useLightEdits.setState({
     moved: without(moved),
     off: without(off),
     reshaped: without(reshaped),
+    shadows: new Map([...shadows].filter(([entry]) => entry !== light)),
     strengths: new Map([...strengths].filter(([entry]) => entry !== light)),
   })
   return light.getWorldPosition(new Vector3)
@@ -221,15 +229,37 @@ const casters = new WeakMap<Light, {
 }>
 
 /**
- * Scales every light by {@link lightGain}, switches off the ones toggled off and weakens or drops shadows by {@link lightShadow}. Call it once per frame after everything else
+ * Switches a light’s shadow on or off, returning whether it casts one now, or undefined for a light that can’t.
+ * A light whose owner made it cast shadows stops or starts again, which rebuilds every lit material; a shadowless point light asks the shadow pool for a slot or stops asking.
+ */
+export function toggleLightShadow(light: Light & {isPointLight?: boolean}) {
+  const own = casters.get(light)?.base ?? light.castShadow
+  if (!own && !light.isPointLight) {
+    return
+  }
+  const asks = light.userData.shadow !== undefined && light.userData.shadow !== false
+  const shadows = new Map(useLightEdits.getState().shadows)
+  const on = !(shadows.get(light) ?? (own || asks))
+  if (on === (own || asks)) {
+    shadows.delete(light)
+  } else {
+    shadows.set(light, on)
+  }
+  useLightEdits.setState({shadows})
+  return on
+}
+
+/**
+ * Scales every light by {@link lightGain}, switches off the ones toggled off and weakens or drops shadows by {@link lightShadow} and {@link toggleLightShadow}. Call it once per frame after everything else
  * set its lights, so lights that flicker or dim are scaled after their owner set them for this frame. An intensity that differs
  * from what this wrote last frame is a new one from the light’s owner.
  */
 export function applyLightLevels(scene: Object3D) {
-  const {off, strengths} = useLightEdits.getState()
+  const {off, shadows, strengths} = useLightEdits.getState()
   scene.traverse(object => {
     const light = object as Light
-    if (!light.isLight) {
+    // The shadow pool sets its lights from the ones it shades, after this.
+    if (!light.isLight || isShadowSlot(light)) {
       return
     }
     let level = levels.get(light)
@@ -252,7 +282,7 @@ export function applyLightLevels(scene: Object3D) {
     }
     const {shadow} = light as Light & {shadow?: LightShadow}
     if (caster.base && shadow) {
-      const strength = lightShadow.current(light)
+      const strength = shadows.get(light) === false ? 0 : lightShadow.current(light)
       light.castShadow = strength > 0
       shadow.intensity = strength
     }

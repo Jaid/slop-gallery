@@ -2,6 +2,8 @@ import type {Box3, Light} from 'three/webgpu'
 
 import {Vector3} from 'three/webgpu'
 
+import {isShadowSlot} from '#src/lib/rendering/lightLevels.ts'
+
 import FilteredLightsNode from './base/FilteredLightsNode.ts'
 
 const position = new Vector3
@@ -25,6 +27,14 @@ export default class RoomLightsNode extends FilteredLightsNode {
     if (!isPointLight && !isSpotLight && !isRectAreaLight) {
       return true
     }
+    // Slots move between rooms, and admitting one only while it is inside would rebuild the room’s materials each time; its lights stay in the batch here instead, without a shadow.
+    if (isShadowSlot(light)) {
+      return false
+    }
     return this.bounds.containsPoint(position.setFromMatrixPosition(light.matrixWorld))
+  }
+
+  override sharesShadowSlots() {
+    return false
   }
 }

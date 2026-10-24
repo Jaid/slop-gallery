@@ -16,4 +16,8 @@ export default class UnionLightsNode extends FilteredLightsNode {
   admits(light: Light) {
     return this.parts.some(part => part.admits(light))
   }
+
+  override sharesShadowSlots() {
+    return this.parts.some(part => part.sharesShadowSlots())
+  }
 }

@@ -2,6 +2,8 @@ import type {Light, NodeBuilder} from 'three/webgpu'
 
 import {Lighting, LightsNode, NodeUtils, PointLight} from 'three/webgpu'
 
+import {shadowPool} from '#src/lib/rendering/shadowPool.ts'
+
 import PointLightsNode from './PointLightsNode.ts'
 
 type Batch = 'point'
@@ -64,9 +66,14 @@ export default class BatchedLightsNode extends LightsNode {
     return [...super.setupLightsNode(builder), ...this.batches.values()]
   }
 
+  /** Whether surfaces lit by this node are lit by the shadow pool’s lights, so the lights lent a slot leave the batch. */
+  sharesShadowSlots() {
+    return true
+  }
+
   private *membersOf(batch: Batch) {
     for (const light of this.liveLights()) {
-      if (batchOf(light) === batch) {
+      if (batchOf(light) === batch && !(this.sharesShadowSlots() && shadowPool.isLent(light))) {
         yield light as PointLight
       }
     }

@@ -26,4 +26,9 @@ export default class LanternLightsNode extends FilteredLightsNode {
   lampUserData(): Record<string, unknown> {
     return {[zoneKey]: this.zone}
   }
+
+  // Slots belong to no zone.
+  override sharesShadowSlots() {
+    return false
+  }
 }
