@@ -44,18 +44,12 @@ export const isEditingLights = readEditLights()
 /** whether this page shows light markers, read once at startup; editing shows them too */
 export const isShowingLights = isEditingLights || readShowLights()
 
-/** the round values within each power of ten that strength and range steps land on, about a fifth to a third apart */
-const ladder = [1, 1.25, 1.5, 2, 2.5, 3, 4, 5, 6, 8]
-/** The next round value above `value` (positive `steps`) or below it, one rung per step; values between rungs step to the nearest rung first. */
-export function stepRound(value: number, steps: number) {
-  let current = value
-  for (let i = 0; i < Math.abs(steps); i++) {
-    const decade = 10 ** Math.floor(Math.log10(current))
-    const rungs = [decade / 10, decade, decade * 10].flatMap(scale => ladder.map(rung => rung * scale))
-    current = steps > 0 ? rungs.find(rung => rung > current * (1 + 1e-9))! : rungs.findLast(rung => rung < current * (1 - 1e-9))!
-  }
-  return Number(current.toPrecision(6))
-}
+/** how much one step changes a light’s strength factor */
+const strengthStep = 0.1
+/** how much one step changes a light’s range, in meters */
+const rangeStep = 1
+/** Adds `steps` steps of `size` to `value`, landing on whole steps and no lower than `min`. */
+const stepBy = (value: number, steps: number, size: number, min: number) => Math.max(min, Number(((Math.round(value / size) + steps) * size).toFixed(6)))
 /** the range a light without a cutoff starts from when its range is first changed, in meters */
 const openRange = 20
 
@@ -88,7 +82,7 @@ const markReshaped = (light: Light) => {
 /** Makes a light stronger (positive `steps`) or weaker, returning its new strength relative to what its owner set. */
 export function changeLightStrength(light: Light, steps: number) {
   const strengths = new Map(useLightEdits.getState().strengths)
-  const strength = stepRound(strengths.get(light) ?? 1, steps)
+  const strength = stepBy(strengths.get(light) ?? 1, steps, strengthStep, 0)
   strengths.set(light, strength)
   useLightEdits.setState({strengths})
   return strength
@@ -105,7 +99,7 @@ export function changeLightRange(light: Light & {distance?: number}, steps: numb
   if (!ranges.has(light)) {
     ranges.set(light, light.distance)
   }
-  light.distance = stepRound(light.distance || openRange, steps)
+  light.distance = stepBy(light.distance || openRange, steps, rangeStep, rangeStep)
   markReshaped(light)
   return light.distance
 }

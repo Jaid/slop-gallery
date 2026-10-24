@@ -118,7 +118,7 @@ const copyEdits = async (list: string) => {
 }
 /**
  * `?show_lights`: a glowing, dark-rimmed dot in the color of every point, spot and area light and every light with a `userData.marker`, seen through walls, dark gray for lights switched off. With
- * `?edit_lights`, the light the camera aims at grows: E switches it off and on, ←/→ make it weaker or stronger and ↓/↑ shorten or extend its range and Numpad 7/1 make it fade faster or more gently, for the rest of the page session.
+ * `?edit_lights`, the light the camera aims at grows: E switches it off and on, ←/→ make it weaker or stronger by 0.1 of its owner’s strength and ↓/↑ shorten or extend its range by 1 m and Numpad 7/1 make it fade faster or more gently, for the rest of the page session.
  * Left-clicking a marker focuses its light, which then takes these keys wherever the camera aims, until a click on another marker or anything else. Numpad 8, 2, 4 and 6 move the focused light forward, back, left and right of the view, 9 and 3 up and down, 5 puts it at the camera, 0 undoes all its edits, and K copies every edit.
  */
 export default function LightMarkers() {
