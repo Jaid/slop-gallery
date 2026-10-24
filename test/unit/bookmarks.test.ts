@@ -21,6 +21,11 @@ test('within a meter of a bookmark, T cycles on to the next one', () => {
   expect(nextBookmark([3, 0, 0], list)).toBe(2)
   expect(nextBookmark([20, 0, 0.9], list)).toBe(0)
 })
+test('with Shift, T cycles back to the previous one', () => {
+  expect(nextBookmark([3, 0, 0], list, true)).toBe(0)
+  expect(nextBookmark([0, 0, 0.5], list, true)).toBe(2)
+  expect(nextBookmark([15, 0, 0], list, true)).toBe(2)
+})
 test('a level without bookmarks has no target', () => {
   expect(nextBookmark([0, 0, 0], [])).toBeNull()
 })

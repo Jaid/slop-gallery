@@ -9,7 +9,7 @@ import {locationBookmarks} from '#level/locationBookmarks.ts'
 import {galleryEvents, notify} from './actions.ts'
 import {playerSession} from './PlayerSession.ts'
 
-/** key that teleports the player to the next bookmark with `?development` */
+/** key that teleports the player to the next bookmark with `?development`, or to the previous one with Shift */
 export const bookmarkKey = 'KeyT'
 
 /** how close the player’s feet must be to a bookmark to count as standing in it, in meters */
@@ -47,21 +47,21 @@ export function applySpawnBookmark() {
   }
 }
 
-/** Pick the bookmark to teleport to from feet position `position`: the one after the bookmark the player stands in, or else the closest one. */
-export function nextBookmark(position: Vec3, list: ReadonlyArray<LocationBookmark>): number | null {
+/** Pick the bookmark to teleport to from feet position `position`: the one after (or with `backward`, before) the bookmark the player stands in, or else the closest one. */
+export function nextBookmark(position: Vec3, list: ReadonlyArray<LocationBookmark>, backward = false): number | null {
   if (!list.length) {
     return null
   }
   const distances = list.map(bookmark => Math.hypot(bookmark.position[0] - position[0], bookmark.position[1] - position[1], bookmark.position[2] - position[2]))
   const closest = distances.indexOf(Math.min(...distances))
   // Cycling through the list from the current bookmark reaches every one, while “closest other” could bounce between two neighbors forever.
-  return distances[closest] <= bookmarkRadius ? (closest + 1) % list.length : closest
+  return distances[closest] <= bookmarkRadius ? (closest + (backward ? list.length - 1 : 1)) % list.length : closest
 }
 
-/** Teleport the player to the next of the current level’s `teleport` bookmarks, see `nextBookmark`. */
-export function teleportToNextBookmark() {
+/** Teleport the player to the next (or with `backward`, previous) of the current level’s `teleport` bookmarks, see `nextBookmark`. */
+export function teleportToNextBookmark(backward = false) {
   const targets = locationBookmarks.filter(bookmark => bookmark.teleport)
-  const index = nextBookmark(playerSession.snapshot().position, targets)
+  const index = nextBookmark(playerSession.snapshot().position, targets, backward)
   if (index === null) {
     notify('This level has no teleport bookmarks.')
     return

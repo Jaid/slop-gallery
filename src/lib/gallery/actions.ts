@@ -199,7 +199,7 @@ export function handleGalleryKey(event: KeyboardEvent) {
     toggleGraphicsTuning()
   }
   if (event.code === bookmarkKey && isDevelopmentMode && s.locked) {
-    teleportToNextBookmark()
+    teleportToNextBookmark(event.shiftKey)
   }
 }
 
