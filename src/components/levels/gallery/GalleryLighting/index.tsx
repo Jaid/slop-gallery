@@ -16,7 +16,7 @@ import lobbyVault from '#src/lib/gallery/lobbyVault.ts'
 import proceduralSky, {SkyLook} from '#src/lib/materials/ProceduralSky.ts'
 import {getDefaultCustomGraphics, useCustomGraphics} from '#src/lib/rendering/customGraphics.ts'
 import {getGraphicsProfile, getSunShadowSettings} from '#src/lib/rendering/graphicsMode.ts'
-import {lightGain, lightShadow} from '#src/lib/rendering/lightLevels.ts'
+import {lightActive, lightGain, lightShadow} from '#src/lib/rendering/lightLevels.ts'
 import {getShadowProps} from '#src/lib/rendering/shadowFilters.ts'
 import StainedGlassShadowNode from '#src/lib/rendering/StainedGlassShadowNode.ts'
 
@@ -115,7 +115,7 @@ export default function GalleryLighting() {
       light.shadow.needsUpdate = true
     }
   }, [shadow])
-  // Lights with a `rooms` list in their userData only shine while the player is in one of those rooms. Lamps glow by the preset’s gain, and the optional ones not at all with only the essential lamps, or every one with none. Their shadows fall as dark as the tuning panel says. The corridor’s lanterns already light a space of their own, without any of the daylight’s fill, and daylight is no lamp.
+  // Lamps glow by the preset’s gain, and the optional ones not at all with only the essential lamps, or every one with none. Their shadows fall as dark as the tuning panel says. The corridor’s lanterns already light a space of their own, without any of the daylight’s fill, and daylight is no lamp.
   const {lamps, lampSet = 'all', lampShadows = 1} = preset
   useLayoutEffect(() => {
     const isLamp = (light: Light) => {
@@ -123,10 +123,6 @@ export default function GalleryLighting() {
       return Boolean(lamp.isPointLight || lamp.isSpotLight) && !lamp.userData.daylight
     }
     lightGain.current = light => {
-      const lightRooms = light.userData.rooms as ReadonlyArray<RoomId> | undefined
-      if (lightRooms && !lightRooms.includes(useGallery.getState().room)) {
-        return 0
-      }
       if (!isLamp(light)) {
         return 1
       }
@@ -138,6 +134,16 @@ export default function GalleryLighting() {
       lightShadow.current = () => 1
     }
   }, [lamps, lampSet, lampShadows])
+  // Lights with a `rooms` list in their userData only shine while the player is in one of those rooms.
+  useLayoutEffect(() => {
+    lightActive.current = light => {
+      const lightRooms = light.userData.rooms as ReadonlyArray<RoomId> | undefined
+      return !lightRooms || lightRooms.includes(useGallery.getState().room)
+    }
+    return () => {
+      lightActive.current = () => true
+    }
+  }, [])
   useEffect(() => {
     if (!isDevelopmentMode) {
       return

@@ -204,6 +204,11 @@ export function toggleLight(light: Light) {
 export const lightGain = {current: (_light: Light) => 1}
 
 /**
+ * Whether each light’s surroundings let it shine, such as the room the player is in; a light this rules out gets 0 like one switched off. Levels replace it while mounted.
+ */
+export const lightActive = {current: (_light: Light) => true}
+
+/**
  * How dark each light’s shadow falls, where 0 stops it from casting one at all. Applies only to lights whose owner made them cast shadows. Levels replace it while mounted.
  */
 export const lightShadow = {current: (_light: Light) => 1}
@@ -235,7 +240,7 @@ export function applyLightLevels(scene: Object3D) {
       }
       levels.set(light, level)
     }
-    light.intensity = off.has(light) ? 0 : level.base * lightGain.current(light) * (strengths.get(light) ?? 1)
+    light.intensity = off.has(light) || !lightActive.current(light) ? 0 : level.base * lightGain.current(light) * (strengths.get(light) ?? 1)
     level.written = light.intensity
     let caster = casters.get(light)
     if (light.castShadow !== caster?.written) {

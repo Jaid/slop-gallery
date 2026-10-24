@@ -2,10 +2,10 @@ import type {InstancedMesh, Light} from 'three/webgpu'
 
 import {useFrame, useThree} from '@react-three/fiber'
 import {useEffect, useRef} from 'react'
-import {Color, Matrix4, Vector2, Vector3} from 'three/webgpu'
+import {Color, Matrix4, Quaternion, Vector2, Vector3} from 'three/webgpu'
 
 import {isTextInput, notify} from '#src/lib/gallery.ts'
-import {changeLightDecay, changeLightRange, changeLightStrength, isEditingLights, moveLight, placeLight, resetLight, toggleLight, useLightEdits} from '#src/lib/rendering/lightLevels.ts'
+import {changeLightDecay, changeLightRange, changeLightStrength, isEditingLights, lightActive, moveLight, placeLight, resetLight, toggleLight, useLightEdits} from '#src/lib/rendering/lightLevels.ts'
 
 type Positional = Light & {
   isPointLight?: boolean
@@ -24,6 +24,16 @@ const rim = 1.45
 /** how far away a light can be aimed at */
 const reach = 40
 const offColor = new Color('#3a3a3a')
+/** the width of each bar of the cross over a light its surroundings rule out, as a share of its radius */
+const crossWidth = 0.22
+/** the two bars of the cross, turned 45° either way within the view */
+const viewAxis = new Vector3(0, 0, 1)
+const crossTurns = [Math.PI / 4, -Math.PI / 4].map(angle => {
+  const bar = new Quaternion
+  return bar.setFromAxisAngle(viewAxis, angle)
+})
+const turn = new Quaternion
+const scale = new Vector3
 const position = new Vector3
 const origin = new Vector3
 const direction = new Vector3
@@ -117,10 +127,12 @@ export default function LightMarkers() {
   const canvas = useThree(state => state.renderer.domElement)
   const markers = useRef<InstancedMesh>(null)
   const rims = useRef<InstancedMesh>(null)
+  const crosses = useRef<InstancedMesh>(null)
   useFrame(() => {
     const mesh = markers.current
     const backing = rims.current
-    if (!mesh || !backing) {
+    const crossing = crosses.current
+    if (!mesh || !backing || !crossing) {
       return
     }
     found.length = 0
@@ -139,13 +151,23 @@ export default function LightMarkers() {
       }
     }
     const {focused, off} = useLightEdits.getState()
+    let crossed = 0
     for (const [index, light] of found.entries()) {
       const size = light === focused ? focusedRadius : (light === aimed ? aimedRadius : radius)
       markerPosition(light, position)
       mesh.setMatrixAt(index, matrix.makeScale(size, size, size).setPosition(position))
       backing.setMatrixAt(index, matrix.makeScale(size * rim, size * rim, size * rim).setPosition(position))
       mesh.setColorAt(index, off.has(light) ? offColor : color.copy(light.color).multiplyScalar(light === aimed || light === focused ? 3 : 1.5))
+      if (!(!lightActive.current(light) && crossed + 2 <= capacity)) {
+        continue
+      }
+      scale.set(size * rim * 2, size * crossWidth, size * crossWidth)
+      for (const bar of crossTurns) {
+        crossing.setMatrixAt(crossed++, matrix.compose(position, turn.copy(camera.quaternion).multiply(bar), scale))
+      }
     }
+    crossing.count = crossed
+    crossing.instanceMatrix.needsUpdate = true
     mesh.count = found.length
     backing.count = found.length
     mesh.instanceMatrix.needsUpdate = true
@@ -256,7 +278,7 @@ export default function LightMarkers() {
       })
     }
   }, [camera, canvas])
-  // Drawn over everything, so lights hidden in fixtures or behind walls can be found too.
+  // Drawn over everything, so lights hidden in fixtures or behind walls can be found too. Lights their surroundings rule out, like those of a room the player is not in, are crossed out in the rims’ color.
   return <>
     <instancedMesh args={[undefined, undefined, capacity]} count={0} frustumCulled={false} name='light-marker-rims' raycast={() => {}} renderOrder={10} ref={rims}>
       <sphereGeometry args={[1, 12, 8]} />
@@ -265,6 +287,10 @@ export default function LightMarkers() {
     <instancedMesh args={[undefined, undefined, capacity]} count={0} frustumCulled={false} name='light-markers' raycast={() => {}} renderOrder={11} ref={markers}>
       <sphereGeometry args={[1, 12, 8]} />
       <meshBasicNodeMaterial depthTest={false} depthWrite={false} toneMapped={false} />
+    </instancedMesh>
+    <instancedMesh args={[undefined, undefined, capacity]} count={0} frustumCulled={false} name='light-marker-crosses' raycast={() => {}} renderOrder={12} ref={crosses}>
+      <boxGeometry />
+      <meshBasicNodeMaterial color='#000000' depthTest={false} depthWrite={false} opacity={0.75} transparent />
     </instancedMesh>
   </>
 }
