@@ -18,7 +18,7 @@ const setup = (count: number) => {
     scene,
   }
 }
-const lamp = (scene: Scene, z: number, shadow?: boolean | number) => {
+const lamp = (scene: Scene, z: number, shadow?: boolean) => {
   const light = new PointLight('#ffffff', 10, 5)
   light.position.set(0, 0, z)
   if (shadow !== undefined) {
@@ -46,21 +46,17 @@ test('lights asking for a shadow borrow a slot that copies them, and others don�
   // The unused slot stays dark and belongs to no room, so its shadow map never updates.
   expect(world.pool.slots.filter(candidate => candidate.intensity === 0)).toHaveLength(1)
 })
-test('higher priorities win slots, nearer lights break ties and holders keep theirs', () => {
+test('nearer lights win free slots, holders keep theirs and the rest go without', () => {
   const world = setup(1)
-  const far = lamp(world.scene, -20, 1)
-  const near = lamp(world.scene, -4, 1)
+  const far = lamp(world.scene, -20, true)
+  const near = lamp(world.scene, -4, true)
   update(world)
   expect(world.pool.isLent(near)).toBe(true)
-  // Walking around doesn’t take the slot away from an equal light.
+  // Walking around doesn’t take the slot away from its holder.
   near.position.z = -30
   update(world)
   expect(world.pool.isLent(near)).toBe(true)
   expect(world.pool.isLent(far)).toBe(false)
-  const important = lamp(world.scene, -25, 3)
-  update(world)
-  expect(world.pool.isLent(important)).toBe(true)
-  expect(world.pool.isLent(near)).toBe(false)
 })
 test('dark lights and lights out of view free or never take slots', () => {
   const world = setup(1)

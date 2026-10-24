@@ -6,8 +6,6 @@ import {isShadowSlot, lightShadow, shadowSlotKey, useLightEdits} from './lightLe
 
 /** how many shadow-casting point lights the pool keeps; each one costs every lit pixel, in use or not */
 export const shadowSlotCount = 4
-/** the priority of a light the light editor gave a shadow without one of its own */
-const editedPriority = 1
 /** how far a slot’s shadow reaches when its light has no cutoff, in meters */
 const openReach = 30
 /** an empty slot belongs to no room, so nothing waits for its shadow map */
@@ -17,7 +15,6 @@ type Candidate = {
   distance: number
   inView: boolean
   light: PointLight
-  priority: number
 }
 
 const frustum = new Frustum
@@ -25,18 +22,9 @@ const projection = new Matrix4
 const reach = new Sphere
 const cameraPosition = new Vector3
 
-/**
- * The priority a light asks for a shadow with: `userData.shadow` as a number, 1 for `true`, or what the light editor switched; undefined for lights that don’t ask.
- * Higher priorities win slots over lower ones.
- */
-export function shadowPriority(light: Light) {
-  const own = light.userData.shadow as boolean | number | undefined
-  const ownPriority = typeof own === 'number' ? own : (own ? 1 : undefined)
-  const edited = useLightEdits.getState().shadows.get(light)
-  if (edited === undefined) {
-    return ownPriority
-  }
-  return edited ? ownPriority ?? editedPriority : undefined
+/** whether a light asks for a shadow: its `userData.shadow`, unless the light editor switched it */
+export function wantsShadow(light: Light) {
+  return useLightEdits.getState().shadows.get(light) ?? Boolean(light.userData.shadow)
 }
 
 /**
@@ -44,7 +32,7 @@ export function shadowPriority(light: Light) {
  *
  * Every shadow-casting light adds its own lighting and shadow code to every lit material, and switching `castShadow` rebuilds them all. The pool’s lights always exist and always cast,
  * so lending them out never rebuilds anything: a slot takes over its light’s place, color, reach and strength, and the batched loop skips the light while it is lent a slot.
- * A light keeps its slot until it goes dark or stops asking. Lights out of view never take a slot; lights in view take free slots first, then those of lights out of view, then those of lights with a lower priority.
+ * A light keeps its slot until it goes dark or stops asking. Lights out of view never take a slot; lights in view take free slots first, nearest first, then those of lights out of view. Any left over go without.
  */
 export class ShadowPool {
   readonly slots: ReadonlyArray<PointLight>
@@ -89,8 +77,7 @@ export class ShadowPool {
       if (!light.isPointLight || light.castShadow || isShadowSlot(light) || light.intensity <= 0) {
         return
       }
-      const priority = shadowPriority(light)
-      if (priority === undefined) {
+      if (!wantsShadow(light)) {
         return
       }
       reach.center.setFromMatrixPosition(light.matrixWorld)
@@ -99,7 +86,6 @@ export class ShadowPool {
         distance: reach.center.distanceTo(cameraPosition),
         inView: light.distance <= 0 || frustum.intersectsSphere(reach),
         light,
-        priority,
       })
     })
     for (const [index, source] of this.sources.entries()) {
@@ -107,9 +93,9 @@ export class ShadowPool {
         this.sources[index] = null
       }
     }
-    const waiting = candidates.values().filter(candidate => candidate.inView && !this.sources.includes(candidate.light)).toArray().toSorted((a, b) => b.priority - a.priority || a.distance - b.distance)
+    const waiting = candidates.values().filter(candidate => candidate.inView && !this.sources.includes(candidate.light)).toArray().toSorted((a, b) => a.distance - b.distance)
     for (const candidate of waiting) {
-      const index = this.slotFor(candidate, candidates)
+      const index = this.slotFor(candidates)
       if (index === undefined) {
         continue
       }
@@ -145,26 +131,14 @@ export class ShadowPool {
     this.lent.clear()
   }
 
-  /** a free slot, else that of a light out of view, else that of the light with the lowest priority below the candidate’s */
-  private slotFor(candidate: Candidate, candidates: ReadonlyMap<PointLight, Candidate>) {
+  /** a free slot, else that of a light out of view */
+  private slotFor(candidates: ReadonlyMap<PointLight, Candidate>) {
     const free = this.sources.indexOf(null)
     if (free !== -1) {
       return free
     }
-    let result: number | undefined
-    let lowest = candidate.priority
-    for (const [index, source] of this.sources.entries()) {
-      const held = candidates.get(source!)!
-      if (!held.inView) {
-        return index
-      }
-      if (held.priority >= lowest) {
-        continue
-      }
-      lowest = held.priority
-      result = index
-    }
-    return result
+    const index = this.sources.findIndex(source => !candidates.get(source!)!.inView)
+    return index === -1 ? undefined : index
   }
 }
 

@@ -237,7 +237,7 @@ export function toggleLightShadow(light: Light & {isPointLight?: boolean}) {
   if (!own && !light.isPointLight) {
     return
   }
-  const asks = light.userData.shadow !== undefined && light.userData.shadow !== false
+  const asks = Boolean(light.userData.shadow)
   const shadows = new Map(useLightEdits.getState().shadows)
   const on = !(shadows.get(light) ?? (own || asks))
   if (on === (own || asks)) {
