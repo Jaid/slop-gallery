@@ -3,14 +3,6 @@ import type {Vector3} from 'three/webgpu'
 export {clamp} from 'math'
 export const getCapsuleHalfHeight = (height: number, radius: number) => Math.max(0, height / 2 - radius)
 export const getJumpVelocity = (height: number, gravity = 9.81) => Math.sqrt(2 * Math.max(gravity, 0) * Math.max(height, 0))
-export function approach(current: Vector3, target: Vector3, maxDelta: number) {
-  const distance = current.distanceTo(target)
-  if (distance <= maxDelta || distance === 0) {
-    current.copy(target)
-    return
-  }
-  current.lerp(target, maxDelta / distance)
-}
 export function approachHorizontal(current: Vector3, target: Vector3, maxDelta: number) {
   const dx = target.x - current.x
   const dz = target.z - current.z

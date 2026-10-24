@@ -5,7 +5,7 @@ import type {Quaternion} from 'three/webgpu'
 
 import {Vector3} from 'three/webgpu'
 
-import {approach, approachHorizontal, clamp, getCapsuleHalfHeight, getJumpVelocity} from './math.ts'
+import {approachHorizontal, clamp, getCapsuleHalfHeight, getJumpVelocity} from './math.ts'
 import {resolveEgoOptions} from './options.ts'
 
 const up = new Vector3(0, 1, 0)
@@ -371,15 +371,15 @@ export default class EgoMotor {
     const inputForward = active ? Number(!!input.forward) - Number(!!input.backward) : 0
     const inputRight = active ? Number(!!input.right) - Number(!!input.left) : 0
     const inputUp = active ? Number(!!input.jump) - Number(!!input.crouch) : 0
-    this.targetVelocity.set(0, 0, 0)
-    const hasInput = inputForward !== 0 || inputRight !== 0 || inputUp !== 0
-    if (hasInput) {
+    // Flight speed is constant: it starts and stops with the keys, without acceleration or deceleration.
+    this.velocity.set(0, 0, 0)
+    if (inputForward !== 0 || inputRight !== 0 || inputUp !== 0) {
       this.forward.set(0, 0, -1).applyQuaternion(rotation)
       this.right.set(1, 0, 0).applyQuaternion(rotation)
-      this.targetVelocity.addScaledVector(this.forward, inputForward).addScaledVector(this.right, inputRight).addScaledVector(up, inputUp).normalize()
-      this.targetVelocity.multiplyScalar(Math.max(o.speed * (input.sprint ? o.sprintFactor : 1), 0))
+      this.velocity.addScaledVector(this.forward, inputForward).addScaledVector(this.right, inputRight).addScaledVector(up, inputUp).normalize()
+      // Sprinting flies at twice the sprint speed, since open air has no obstacles to steer around.
+      this.velocity.multiplyScalar(Math.max(o.speed * (input.sprint ? o.sprintFactor * 2 : 1), 0))
     }
-    approach(this.velocity, this.targetVelocity, Math.max(hasInput ? o.acceleration : o.deceleration, 0) * dt)
     this.movement.copy(this.velocity).multiplyScalar(dt)
     this.physicalVelocity.copy(this.movement).divideScalar(delta)
     const translation = this.body.translation()

@@ -80,12 +80,19 @@ test('flying follows the look direction through geometry and falls after landing
     flying: true,
     grounded: false,
   })
-  expect(motor.getState().velocity.y).toBeCloseTo(defaultEgoOptions.speed * Math.SQRT1_2, 2)
-  expect(motor.getState().velocity.z).toBeCloseTo(-defaultEgoOptions.speed * Math.SQRT1_2, 2)
+  expect(motor.getState().velocity.y).toBeCloseTo(defaultEgoOptions.speed * Math.SQRT1_2, 4)
+  expect(motor.getState().velocity.z).toBeCloseTo(-defaultEgoOptions.speed * Math.SQRT1_2, 4)
   const height = motor.body.translation().y
   expect(height).toBeGreaterThan(1)
+  tick(motor, {}, 1, true, true)
+  expect(motor.getState().velocity.y).toBe(0)
+  tick(motor, {
+    left: true,
+    sprint: true,
+  }, 1, true, true)
+  expect(motor.getState().velocity.x).toBeCloseTo(-defaultEgoOptions.speed * defaultEgoOptions.sprintFactor * 2, 4)
   tick(motor, {}, 60, true, true)
-  expect(motor.body.translation().y).toBeGreaterThan(height)
+  expect(motor.body.translation().y).toBeCloseTo(height, 4)
   tick(motor, {crouch: true}, 120, true, true)
   expect(motor.body.translation().y).toBeLessThan(-1)
   tick(motor, {jump: true}, 120, true, true)
