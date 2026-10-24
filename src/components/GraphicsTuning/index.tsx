@@ -233,7 +233,7 @@ const sections: Array<Section> = [
       range('sunAzimuth', 'Azimuth', 0, 360, 1),
       range('sunElevation', 'Elevation', 0, 90, 1),
       select('sunShadowMapSize', 'Shadow map', shadowMapSizes.map(size => [size, `${size}²`])),
-      select('sunShadowSamples', 'Shadow samples', [1, 5, 8, 12, 16, 24, 32].map(samples => [samples, String(samples)])),
+      range('sunShadowSamples', 'Shadow samples', 1, 32, 1),
       range('sunShadowRadius', 'Shadow filter radius', 0, 8, 0.25),
     ],
   },
