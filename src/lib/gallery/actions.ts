@@ -16,6 +16,7 @@ import {graphicsTuningKey, toggleGraphicsTuning} from '../rendering/customGraphi
 import {sessionStore} from '../temporary.ts'
 import {bookmarkKey, teleportToNextBookmark} from './bookmarks.ts'
 import defaultPortraits from './defaultPortraits.ts'
+import {flyModeKey, toggleFlyMode} from './flyMode.ts'
 import {playerSession, playerSpawn} from './PlayerSession.ts'
 import {redo, undo, useGallery} from './store.ts'
 
@@ -198,6 +199,9 @@ export function handleGalleryKey(event: KeyboardEvent) {
   }
   if (event.code === graphicsTuningKey && isDevelopmentMode) {
     toggleGraphicsTuning()
+  }
+  if (event.code === flyModeKey && isDevelopmentMode && s.locked) {
+    notify(toggleFlyMode() ? 'Flying. W follows your gaze, Space and C rise and sink, F lands.' : 'Landed. Gravity is back.')
   }
   if (event.code === bookmarkKey && isDevelopmentMode && s.locked) {
     teleportToNextBookmark(event.shiftKey)
