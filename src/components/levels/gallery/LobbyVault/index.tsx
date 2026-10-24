@@ -1,7 +1,6 @@
 import type {Material} from 'three/webgpu'
 
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
-import Branch from 'branch-component'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
@@ -64,13 +63,13 @@ export default function LobbyVault({cladding}: {
     {/* The glass lets the sun through: it casts no shadow, only its bars and tracery do. */}
     <mesh castShadow={false} geometry={geometry.glass} material={glass} name='lobby-vault-glass' />
     <mesh castShadow={false} geometry={geometry.roseGlass} material={glass} name='lobby-vault-rose-window' />
-    <Branch if={lobbyChandeliers.shown} then={LobbyChandeliers} />
+    <LobbyChandeliers />
   </group>
 }
 
 /**
- * The great chandeliers. Only the middle one emits light, through one warm, shadowless point light hung below its hub: a shadowed one
- * would cost six extra renders of the scene every frame. The flames of the others only glow.
+ * The great chandeliers, each lighting its third of the Lobby through one warm, shadowless point light hung below its hub: a shadowed one
+ * would cost six extra renders of the scene every frame.
  */
 function LobbyChandeliers() {
   const geometry = useDisposable(useMemo(() => new LobbyChandelierGeometry(lobbyChandeliers.anchorY - lobbyChandeliers.y), []))
@@ -89,7 +88,7 @@ function LobbyChandeliers() {
       <mesh geometry={geometry.gilt} material={gold} name='lobby-chandelier-gilt' />
       <mesh geometry={geometry.candles} material={candles} name='lobby-chandelier-candles' />
       <mesh geometry={geometry.flames} material={flames} name='lobby-chandelier-flames' />
-      <Branch if={z === 0}><pointLight color='#ffd27a' decay={1.5} distance={25} intensity={54} name='lobby-chandelier-light' position={[0, lobbyChandeliers.lightY - lobbyChandeliers.y, 0]} /></Branch>
+      <pointLight color='#ffd27a' decay={1.5} distance={16} intensity={24} name='lobby-chandelier-light' position={[0, lobbyChandeliers.lightY - lobbyChandeliers.y, 0]} />
     </group>)}
   </group>
 }
