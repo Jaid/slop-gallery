@@ -70,6 +70,7 @@ test('the provider exposes the default scene budget during SSR', () => {
     surfaceAnisotropy: 8,
     volumetricLight: false,
     volumetricLightSteps: 64,
+    voxelIndirectLight: false,
   })
   expect(getGraphicsProfile(true)).toEqual({
     canvasTextureMipmaps: false,
@@ -87,6 +88,7 @@ test('the provider exposes the default scene budget during SSR', () => {
     surfaceAnisotropy: 8,
     volumetricLight: true,
     volumetricLightSteps: 64,
+    voxelIndirectLight: true,
   })
   expect(getGraphicsProfile(true)).toBe(getGraphicsProfile(true))
   expect(getGraphicsProfile(false)).toBe(getGraphicsProfile(false))
@@ -126,6 +128,28 @@ test('Fast disables bloom, while Heavy and Cinematic use the current tuned bloom
   expect(fast.bloom).toBe(false)
   expect(heavy).toMatchObject(tunedBloom)
   expect(cinematic).toMatchObject(tunedBloom)
+})
+test('Fast omits voxel GI, Heavy adds it without SSGI, and Cinematic uses both indirect-light passes', () => {
+  const fast = getRenderPipelineSettings(getGraphicsProfile(false), false)
+  const heavy = getRenderPipelineSettings(getGraphicsProfile(true), 'traa')
+  const cinematic = getRenderPipelineSettings(getGraphicsProfile(true, true), 'traa')
+  const voxel = {
+    voxelIndirectLight: true,
+    voxelIndirectLightBounces: 1,
+    voxelIndirectLightConeAngle: 40,
+    voxelIndirectLightConeCount: 3,
+    voxelIndirectLightIntensity: 0.2,
+    voxelIndirectLightResolution: 256,
+  }
+  expect(fast.voxelIndirectLight).toBe(false)
+  expect(heavy).toMatchObject({
+    ...voxel,
+    screenSpaceIndirectLight: false,
+  })
+  expect(cinematic).toMatchObject({
+    ...voxel,
+    screenSpaceIndirectLight: true,
+  })
 })
 test('canvas texture resolutions stay within the texture size limit', () => {
   expect(fitCanvasTextureResolution(2, 1024, 246)).toBe(2)

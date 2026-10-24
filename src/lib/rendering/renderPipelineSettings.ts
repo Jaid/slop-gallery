@@ -130,11 +130,11 @@ export function getRenderPipelineSettings(profile: GraphicsProfile, antiAliasing
     volumetricLightMaxDensity: 1,
     volumetricLightResolutionScale: 0.25,
     volumetricLightSteps: profile.volumetricLightSteps,
-    voxelIndirectLight: profile.indirectLight,
-    voxelIndirectLightBounces: 2,
+    voxelIndirectLight: profile.voxelIndirectLight,
+    voxelIndirectLightBounces: 1,
     voxelIndirectLightConeAngle: 40,
     voxelIndirectLightConeCount: 3,
-    voxelIndirectLightIntensity: 0.05,
+    voxelIndirectLightIntensity: 0.2,
     voxelIndirectLightResolution: 256,
   }
 }

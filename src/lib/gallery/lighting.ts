@@ -47,7 +47,7 @@ const presets = {
     hemisphere: {
       color: '#ecf3ff',
       ground: '#a29270',
-      intensity: 2,
+      intensity: 1,
     },
     sun: {
       color: '#fff0d7',

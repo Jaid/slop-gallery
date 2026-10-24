@@ -30,7 +30,7 @@ export type GraphicsProfile = {
   /** backing pixels per logical texel for runtime canvas textures such as signs */
   canvasTextureResolution: number
   floorReflections: boolean
-  /** whether screen-space and voxel indirect light bounce the lit scene off the surfaces’ diffuse color */
+  /** whether screen-space indirect light bounces the lit scene off the surfaces’ diffuse color */
   indirectLight: boolean
   noiseTextures: boolean
   postprocessing: boolean
@@ -47,6 +47,8 @@ export type GraphicsProfile = {
   volumetricLight: boolean
   /** Number of raymarching samples for volumetric sunlight. */
   volumetricLightSteps: number
+  /** whether voxel cone tracing supplies indirect lighting, independently of screen-space GI */
+  voxelIndirectLight: boolean
 }
 
 /** Read the `?graphics` name: fast, heavy or cinematic. Anything else is fast. */
@@ -80,6 +82,7 @@ const fastProfile: GraphicsProfile = {
   surfaceAnisotropy: 8,
   volumetricLight: false,
   volumetricLightSteps: 64,
+  voxelIndirectLight: false,
 }
 const heavyProfile: GraphicsProfile = {
   canvasTextureMipmaps: false,
@@ -97,6 +100,7 @@ const heavyProfile: GraphicsProfile = {
   surfaceAnisotropy: 8,
   volumetricLight: true,
   volumetricLightSteps: 64,
+  voxelIndirectLight: true,
 }
 // Heavy at twice the resolution of every intermediate map and four times the shadow map resolution, with more samples, full texture filtering and indirect light, for renders that don’t have to keep up with the display.
 const cinematicProfile: GraphicsProfile = {

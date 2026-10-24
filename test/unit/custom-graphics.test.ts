@@ -15,7 +15,7 @@ test('the tuning panel starts from the pipeline of the page’s heavy graphics',
     reflectionResolutionScale: profile.reflectionResolutionScale,
     screenSpaceIndirectLight: profile.indirectLight,
     volumetricLight: profile.volumetricLight,
-    voxelIndirectLight: profile.indirectLight,
+    voxelIndirectLight: profile.voxelIndirectLight,
   })
 })
 test('the pipeline keeps the panel’s values after hiding it', () => {
