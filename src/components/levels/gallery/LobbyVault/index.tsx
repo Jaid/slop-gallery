@@ -10,6 +10,7 @@ import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
 import LobbyChandelierGeometry from '#src/lib/gallery/LobbyChandelierGeometry.ts'
 import lobbyVault, {lobbyChandeliers} from '#src/lib/gallery/lobbyVault.ts'
 import LobbyVaultGeometry, {lobbyVaultCollision} from '#src/lib/gallery/LobbyVaultGeometry.ts'
+import {seenFrom} from '#src/lib/gallery/roomVisibility.ts'
 import ArchitecturalPlasterMaterial from '#src/lib/materials/ArchitecturalPlasterMaterial.ts'
 import gold from '#src/lib/materials/gold.ts'
 import LimestoneMaterial from '#src/lib/materials/LimestoneMaterial.ts'
@@ -88,7 +89,7 @@ function LobbyChandeliers() {
       <mesh geometry={geometry.gilt} material={gold} name='lobby-chandelier-gilt' />
       <mesh geometry={geometry.candles} material={candles} name='lobby-chandelier-candles' />
       <mesh geometry={geometry.flames} material={flames} name='lobby-chandelier-flames' />
-      <pointLight color='#ffd27a' decay={2} distance={15} intensity={7.2} name='lobby-chandelier-light' position={[0, lobbyChandeliers.lightY - lobbyChandeliers.y, 0]} />
+      <pointLight color='#ffd27a' decay={2} distance={15} intensity={7.2} name='lobby-chandelier-light' position={[0, lobbyChandeliers.lightY - lobbyChandeliers.y, 0]} userData={{rooms: seenFrom('lobby')}} />
     </group>)}
   </group>
 }

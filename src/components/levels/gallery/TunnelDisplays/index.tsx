@@ -6,6 +6,7 @@ import Branch from 'branch-component'
 import SlopedBox from '#component/levels/gallery/SlopedBox'
 import Box from '#src/components/Scene/primitives.tsx'
 import lowerGallery, {tunnelFloorHeight, tunnelSlope} from '#src/lib/gallery/lowerGallery.ts'
+import {seenFrom} from '#src/lib/gallery/roomVisibility.ts'
 import tunnelDisplays from '#src/lib/gallery/tunnelDisplays.ts'
 
 const DisplayExhibit = ({kind, material}: {
@@ -70,7 +71,7 @@ export default function TunnelDisplays({material}: {material: Material}) {
       <mesh position={[0, -0.091, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <circleGeometry args={[0.16, 24]} /><meshBasicNodeMaterial color={tunnelLights[i].color} toneMapped={false} />
       </mesh>
-      <pointLight {...tunnelLights[i]} position={[0, -0.35, 0]} />
+      <pointLight {...tunnelLights[i]} position={[0, -0.35, 0]} userData={{rooms: seenFrom('oculus')}} />
     </group>)}
   </group>
 }

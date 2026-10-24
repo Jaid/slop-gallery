@@ -1,3 +1,4 @@
+import type {RoomId} from '#src/lib/gallery/types.ts'
 import type {KnotLightSlot} from 'knot-materials/KnotLights.ts'
 
 import useDisposable from 'disposable-lifetime/react'
@@ -7,7 +8,7 @@ import {PointLight} from 'three/webgpu'
 import LedPanels from '#component/LedPanels'
 
 /** Knottingham’s breakable LED panes on a room’s ceiling; each pane’s light flickers and dies with it. */
-export default function CeilingLeds({light, name, optional = false, slots}: {
+export default function CeilingLeds({light, name, optional = false, rooms, slots}: {
   light: {
     color: string
     decay: number
@@ -19,6 +20,8 @@ export default function CeilingLeds({light, name, optional = false, slots}: {
   name: string
   /** whether the lights go out with only the essential lamps */
   optional?: boolean
+  /** the rooms the player must be in for the lights to shine, everywhere by default */
+  rooms?: ReadonlyArray<RoomId>
   slots: ReadonlyArray<KnotLightSlot>
 }) {
   const lights = useDisposable(useMemo(() => {
@@ -26,6 +29,7 @@ export default function CeilingLeds({light, name, optional = false, slots}: {
       const emission = new PointLight(light.color, light.intensity, light.distance, light.decay)
       emission.name = `${name}-led-emission-${slot.id}`
       emission.userData.optional = optional
+      emission.userData.rooms = rooms
       emission.position.set(slot.position[0], slot.position[1] - light.drop, slot.position[2])
       return emission
     })
@@ -34,7 +38,7 @@ export default function CeilingLeds({light, name, optional = false, slots}: {
         emission.dispose()
       }
     }})
-  }, [light, name, optional, slots]))
+  }, [light, name, optional, rooms, slots]))
   const onBrightness = (brightness: Float32Array) => {
     for (const [index, emission] of lights.entries()) {
       emission.intensity = light.intensity * brightness[index]

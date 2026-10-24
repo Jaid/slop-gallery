@@ -10,6 +10,7 @@ import CoffeeTableGeometry from '#src/lib/gallery/lodgeInterior/CoffeeTableGeome
 import lodgeInterior, {lodgeFurnitureColliders} from '#src/lib/gallery/lodgeInterior/layout.ts'
 import UpholsteredSeatGeometry from '#src/lib/gallery/lodgeInterior/UpholsteredSeatGeometry.ts'
 import WagonWheelGeometry from '#src/lib/gallery/lodgeInterior/WagonWheelGeometry.ts'
+import {seenFrom} from '#src/lib/gallery/roomVisibility.ts'
 import {useShadowProps} from '#src/lib/rendering/shadowFilters.ts'
 
 const {armchairs, chandelier, coffeeTable, rug, sofa} = lodgeInterior
@@ -55,7 +56,7 @@ export default function LodgeFurnishings({materials}: {materials: LodgeMaterials
       <mesh geometry={wheel.wax} material={materials.wax} />
       <mesh geometry={wheel.flames} material={materials.flame} />
       {/* In the candle plane, below the rim, so the iron never shadows its own light; heavy graphics let it ground the furniture with shadows. */}
-      <pointLight castShadow={isHeavy} color={chandelier.color} decay={2} distance={chandelier.distance} intensity={chandelier.intensity} position={[0, chandelier.lightY, 0]} shadow-camera-far={chandelier.distance} shadow-camera-near={0.1} shadow-normalBias={0.035} {...shadow} />
+      <pointLight castShadow={isHeavy} color={chandelier.color} decay={2} distance={chandelier.distance} intensity={chandelier.intensity} position={[0, chandelier.lightY, 0]} shadow-camera-far={chandelier.distance} shadow-camera-near={0.1} shadow-normalBias={0.035} userData={{rooms: seenFrom('lodge')}} {...shadow} />
     </group>
   </group>
 }

@@ -1,4 +1,5 @@
 import type {PendantBody, PendantMount} from '#src/lib/gallery/pendants/index.ts'
+import type {RoomId} from '#src/lib/gallery/types.ts'
 import type {LanternLightsNode} from '#src/lib/materials/lights/index.ts'
 
 import Branch from 'branch-component'
@@ -23,7 +24,7 @@ type Glow = {
 }
 
 /** Ceiling-hung light fixtures; each one’s rod reaches the ceiling surface found for its mount. */
-export default function PendantLamps({body, glow, light, lights, lighting, mounts, name, optional = false}: {
+export default function PendantLamps({body, glow, light, lights, lighting, mounts, name, optional = false, rooms}: {
   body: PendantBody
   glow: Glow
   light: PendantLight
@@ -35,14 +36,16 @@ export default function PendantLamps({body, glow, light, lights, lighting, mount
   name: string
   /** whether the lights go out with only the essential lamps */
   optional?: boolean
+  /** the rooms the player must be in for the lights to shine, everywhere by default */
+  rooms?: ReadonlyArray<RoomId>
 }) {
   const set = useDisposable(useMemo(() => new PendantSet(body, mounts, glow, light, lights, lighting), [body, mounts, glow, light, lights, lighting]))
   return <group name={name}>
     {set.items.map(({mount, geometry, lamp, light: own}, i) => <group key={i} position={mount.light}>
       <mesh geometry={geometry.frame} material={set.frameMaterial} name={`${name}-${body.id}-frame`} />
       <mesh geometry={geometry.glow} material={set.glowMaterial} name={`${name}-${body.id}-glow`} />
-      <Branch if={lamp}><primitive object={lamp!} userData-optional={optional} /></Branch>
-      <Branch not={lamp}><pointLight color={own.color} decay={own.decay ?? 2} distance={own.distance} intensity={own.intensity} position={[0, own.y ?? 0, 0]} userData-optional={optional} /></Branch>
+      <Branch if={lamp}><primitive object={lamp!} userData-optional={optional} userData-rooms={rooms} /></Branch>
+      <Branch not={lamp}><pointLight color={own.color} decay={own.decay ?? 2} distance={own.distance} intensity={own.intensity} position={[0, own.y ?? 0, 0]} userData-optional={optional} userData-rooms={rooms} /></Branch>
     </group>)}
   </group>
 }

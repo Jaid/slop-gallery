@@ -20,6 +20,7 @@ import VaultGeometry from '#src/lib/gallery/passages/VaultGeometry.ts'
 import {LanternBody} from '#src/lib/gallery/pendants/index.ts'
 import {soleLampReach} from '#src/lib/gallery/pendants/lighting.ts'
 import {corridorLightSpacing, passagePendantMounts} from '#src/lib/gallery/pendants/mounts.ts'
+import {seenFrom} from '#src/lib/gallery/roomVisibility.ts'
 
 const lantern = new LanternBody
 const lanternGlow = {
@@ -105,6 +106,6 @@ export default function CoveredPassage({passage, lighting, material, paving: pav
         <mesh castShadow geometry={geometry.ribs} material={material} name='castle-vault-ribs' receiveShadow />
       </Branch>
     </RigidBody>
-    <PendantLamps body={lantern} glow={lanternGlow} light={lighting ? soleLanternLight : lanternLight} lighting={lighting} lights={lights} mounts={mounts} name={`${passage.id}-pendants`} />
+    <PendantLamps body={lantern} glow={lanternGlow} light={lighting ? soleLanternLight : lanternLight} lighting={lighting} lights={lights} mounts={mounts} name={`${passage.id}-pendants`} rooms={seenFrom(passage.room)} />
   </group>
 }

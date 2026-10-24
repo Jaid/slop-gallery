@@ -13,6 +13,7 @@ import Box from '#src/components/Scene/primitives.tsx'
 import {rooms, walls} from '#src/lib/gallery.ts'
 import {wallFace, wallOpeningTrim} from '#src/lib/gallery/architecture.ts'
 import {lightingPresets, useLighting} from '#src/lib/gallery/lighting.ts'
+import {seenFrom} from '#src/lib/gallery/roomVisibility.ts'
 import {salonBench, salonBenchLegs, salonCeiling, salonSkyLight, salonSkylight, salonWainscot, wainscotFields, wallDressingSpans} from '#src/lib/gallery/salon.ts'
 import gold from '#src/lib/materials/gold.ts'
 import VaultGlassMaterial from '#src/lib/materials/VaultGlassMaterial.ts'
@@ -73,7 +74,12 @@ function SkyLight() {
   const [target] = useState(() => new Object3D)
   return <>
     <primitive object={target} />
-    <spotLight angle={salonSkyLight.angle} color={color} decay={0} intensity={intensity} penumbra={salonSkyLight.penumbra} position={[0, salonSkyLight.y, 0]} target={target} userData={{daylight: true}} />
+    <spotLight
+      angle={salonSkyLight.angle} color={color} decay={0} intensity={intensity} penumbra={salonSkyLight.penumbra} position={[0, salonSkyLight.y, 0]} target={target} userData={{
+        daylight: true,
+        rooms: seenFrom('salon'),
+      }}
+    />
   </>
 }
 function Skylight({gilt, glass, ironwork, plaster}: {

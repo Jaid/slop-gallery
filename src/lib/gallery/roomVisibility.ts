@@ -141,6 +141,17 @@ export function roomEnclosing(sphere: Sphere) {
   return result
 }
 
+const sightlines = new Map<RoomId, ReadonlyArray<RoomId>>
+/** A room and the rooms that look straight into it through an opening: where the player must be for a light inside it to matter. The same room always gives the same list. */
+export function seenFrom(room: RoomId) {
+  let result = sightlines.get(room)
+  if (!result) {
+    result = [room, ...new Set(portals.filter(portal => portal.rooms.includes(room)).map(portal => portal.rooms[1 - portal.rooms.indexOf(room)]))]
+    sightlines.set(room, result)
+  }
+  return result
+}
+
 /**
  * The rooms the camera can see from its room: a neighbor counts when the opening to it lies in the frustum, and a room behind a neighbor when both openings do.
  * Line of sight never reaches three openings deep in the gallery.

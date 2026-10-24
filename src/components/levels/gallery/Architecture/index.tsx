@@ -31,6 +31,7 @@ import Box from '#src/components/Scene/primitives.tsx'
 import WallSurface from '#src/components/Scene/WallSurface.tsx'
 import {rooms, walls} from '#src/lib/gallery.ts'
 import {antechamberLedLight, antechamberLedSlots, dineLedLight, dineLedSlots} from '#src/lib/gallery/dine.ts'
+import {seenFrom} from '#src/lib/gallery/roomVisibility.ts'
 import {createArchitecturalGlassMaterials, disposeArchitecturalGlassMaterials} from '#src/lib/materials/ArchitecturalGlassMaterials.ts'
 import CastleStoneMaterial from '#src/lib/materials/CastleStoneMaterial.ts'
 import DamaskWallpaperMaterial from '#src/lib/materials/DamaskWallpaperMaterial.ts'
@@ -164,10 +165,10 @@ export default function Architecture() {
         {[-1, 0, 1].map(x => <Box key={x} color='#c0b7a1' position={[x * room.size[0] * 0.12, 5.5, z]} size={[0.045, 0.12, 2.5]} />)}
       </group>)}
       <Branch if={vaultedRooms.has(room.id)}><LobbyVault cladding={lobbyWall} /></Branch>
-      {(ledRooms.has(room.id) || vaultedRooms.has(room.id) ? [] : [-3.5, 3.5]).map(z => <pointLight key={z} color='#fff1d8' decay={2} distance={14} intensity={room.id === 'vesper' ? 40 : 32} position={[0, room.id === 'vesper' ? 4.5 : 4.9, z]} />)}
+      {(ledRooms.has(room.id) || vaultedRooms.has(room.id) ? [] : [-3.5, 3.5]).map(z => <pointLight key={z} color='#fff1d8' decay={2} distance={14} intensity={room.id === 'vesper' ? 40 : 32} position={[0, room.id === 'vesper' ? 4.5 : 4.9, z]} userData={{rooms: seenFrom(room.id)}} />)}
     </group>)}
-    <CeilingLeds light={dineLedLight} name='dine' optional slots={dineLedSlots} />
-    <Branch not={domedRooms.has('antechamber')}><CeilingLeds light={antechamberLedLight} name='antechamber' optional slots={antechamberLedSlots} /></Branch>
+    <CeilingLeds light={dineLedLight} name='dine' optional rooms={seenFrom('dine')} slots={dineLedSlots} />
+    <Branch not={domedRooms.has('antechamber')}><CeilingLeds light={antechamberLedLight} name='antechamber' optional rooms={seenFrom('antechamber')} slots={antechamberLedSlots} /></Branch>
     <PottedPlants />
     <Fountain />
     <FountainBenches wood={wood} />
