@@ -116,6 +116,8 @@ export class GalleryRenderer extends WebgpuRenderer {
       trackTimestamp: telemetry !== null,
     })
     this.lighting = new BatchedLighting
+    // Stained glass tints the light it lets through instead of blocking it.
+    this.shadowMap.transmitted = true
   }
 
   private get internals() {

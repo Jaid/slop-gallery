@@ -1,26 +1,38 @@
-import {ExtrudeGeometry, Path, Shape, SphereGeometry, Vector2} from 'three/webgpu'
+import type Node from 'three/src/nodes/core/Node.js'
+
+import {bool, normalize, positionLocal, vec3} from 'three/tsl'
+import {ExtrudeGeometry, Path, Shape, SphereGeometry, Vector2, Vector3} from 'three/webgpu'
 
 const degrees = Math.PI / 180
 /**
  * The Antechamber’s dome: a hemisphere rising from a round opening in its flat ceiling, its corners left as flat pendentives.
- * A ring of windows pierces its base and a brass lattice of stars closes the oculus at its crown, so the sun draws patterns
- * across the walls and floor. Angles are in degrees, lengths in meters.
+ * Two rings of round stained-glass windows pierce it and a brass lattice of stars closes the oculus at its crown, so the sun
+ * casts colored discs across the walls and floor. Angles are in degrees, lengths in meters.
  */
 const antechamberDome = {
   /** a hand’s width short of the walls’ faces, 3.895 m from the room’s center */
   radius: 3.8,
   /** height of the springing above the floor: the top of the 18 cm ceiling slab under the room’s 7 m */
   springY: 7.07,
-  /** sphere segments around and up; each spans 2.25°, so the windows’ edges fall on them */
+  /** sphere segments around and up; each spans 2.25° */
   segments: [160, 40] as const,
-  windows: {
-    count: 16,
-    /** angle around the dome that each window spans */
-    width: 9,
-    /** elevations of the windows’ sills and heads above the springing */
-    sill: 6.75,
-    head: 31.5,
-  },
+  /** round windows, each ring evenly spaced around the dome; `radius` is the angle from a window’s center to its rim, `turn` the azimuth of the ring’s first window */
+  windows: [
+    {
+      count: 12,
+      elevation: 20,
+      radius: 8.5,
+      turn: 0,
+    },
+    {
+      count: 12,
+      elevation: 43,
+      radius: 5,
+      turn: 15,
+    },
+  ],
+  /** how far the glass sits inside the shell, so the panes never fight its faces */
+  glassInset: 0.01,
   /** elevation above which the crown is open, under the lattice */
   oculus: 63,
   /** how thick the oculus lattice is */
@@ -30,17 +42,37 @@ const antechamberDome = {
 /** Height of the dome’s crown above the floor. */
 export const antechamberDomeCrownY = antechamberDome.springY + antechamberDome.radius
 
-/** The dome’s shell around its own center at the springing, without the faces of its windows and oculus. */
+/** Unit directions from the dome’s center toward the centers of its windows, with each window’s angular radius in radians and the index of its ring. */
+export function antechamberWindows() {
+  return antechamberDome.windows.flatMap((ring, ringIndex) => Array.from({length: ring.count}, (_, i) => {
+    const azimuth = (ring.turn + i * 360 / ring.count) * degrees
+    const elevation = ring.elevation * degrees
+    return {
+      direction: new Vector3(Math.sin(azimuth) * Math.cos(elevation), Math.sin(elevation), Math.cos(azimuth) * Math.cos(elevation)),
+      radius: ring.radius * degrees,
+      ring: ringIndex,
+    }
+  }))
+}
+
+/** The dome’s shell around its own center at the springing, without the faces of its oculus and the ones wholly inside a window; {@link antechamberWindowMask} cuts the windows’ round edges. */
 export function antechamberDomeGeometry() {
   const {radius, segments} = antechamberDome
   const geometry = new SphereGeometry(radius, segments[0], segments[1], 0, Math.PI * 2, 0, Math.PI / 2)
   const position = geometry.getAttribute('position')
   const index = geometry.getIndex()!
   const kept: Array<number> = []
+  const windows = antechamberWindows()
+  const corner = new Vector3
+  const centroid = new Vector3
   for (let i = 0; i < index.count; i += 3) {
     const corners = [index.getX(i), index.getX(i + 1), index.getX(i + 2)]
-    const [x, y, z] = ['getX', 'getY', 'getZ'].map(axis => corners.reduce((sum, corner) => sum + position[axis as 'getX'](corner), 0) / 3)
-    if (!isOpen(Math.atan2(x, z) / degrees + 180, Math.asin(Math.min(1, y / Math.hypot(x, y, z))) / degrees)) {
+    centroid.set(0, 0, 0)
+    const inWindow = windows.some(window => corners.every(vertex => corner.fromBufferAttribute(position, vertex).normalize().dot(window.direction) > Math.cos(window.radius)))
+    for (const vertex of corners) {
+      centroid.add(corner.fromBufferAttribute(position, vertex))
+    }
+    if (!inWindow && Math.asin(Math.min(1, centroid.y / centroid.length())) / degrees <= antechamberDome.oculus) {
       kept.push(...corners)
     }
   }
@@ -48,15 +80,21 @@ export function antechamberDomeGeometry() {
   return geometry
 }
 
-/** Whether a direction from the dome’s center, by azimuth and elevation, looks through a window or the oculus. */
-function isOpen(azimuth: number, elevation: number) {
-  const {oculus, windows} = antechamberDome
-  if (elevation > oculus) {
-    return true
-  }
-  const spacing = 360 / windows.count
-  const offset = Math.abs((azimuth % spacing + spacing * 1.5) % spacing - spacing / 2)
-  return elevation > windows.sill && elevation < windows.head && offset < windows.width / 2
+/** For the shell’s material: false where a fragment lies inside a window, to be discarded in the color and the shadow passes alike. */
+export function antechamberWindowMask() {
+  const direction = normalize(positionLocal)
+  return antechamberWindows().reduce<Node<'bool'>>((mask, window) => mask.and(direction.dot(vec3(...window.direction)).lessThan(Math.cos(window.radius))), bool(true))
+}
+
+/** Where each window’s flat pane sits: its center, the unit normal facing into the dome, its radius, which meets the shell at the window’s rim, and its ring. */
+export function antechamberGlassPlacements() {
+  const {glassInset, radius} = antechamberDome
+  return antechamberWindows().map(window => ({
+    center: window.direction.clone().multiplyScalar(radius * Math.cos(window.radius) - glassInset),
+    normal: window.direction.clone().negate(),
+    radius: radius * Math.sin(window.radius),
+    ring: window.ring,
+  }))
 }
 
 /** Height of the lattice’s underside above the dome’s springing, where it rests on the rim of the oculus. */
