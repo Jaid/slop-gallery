@@ -2,7 +2,7 @@ import {expect, test} from 'bun:test'
 
 import {Group, PerspectiveCamera, PointLight, Scene} from 'three/webgpu'
 
-import {toggleLightShadow, useLightEdits} from '../../src/lib/rendering/lightLevels.ts'
+import {roomSwitches, toggleLightShadow, useLightEdits} from '../../src/lib/rendering/lightLevels.ts'
 import {ShadowPool} from '../../src/lib/rendering/shadowPool.ts'
 
 /** a scene holding a pool of `count` slots, and a camera at the origin looking down -z */
@@ -90,4 +90,45 @@ test('the light editor switches a point light’s request for a shadow', () => {
   expect(world.pool.isLent(plain)).toBe(false)
   // Back to what its owner set, the edit is gone.
   expect(useLightEdits.getState().shadows.has(plain)).toBe(false)
+})
+test('the pool reports once when more lights in view ask for a shadow than it has slots', () => {
+  const world = setup(1)
+  const reports: Array<number> = []
+  world.pool.onOverflow = lights => reports.push(lights.length)
+  const first = lamp(world.scene, -4, true)
+  update(world)
+  expect(reports).toEqual([])
+  lamp(world.scene, -6, true)
+  update(world)
+  update(world)
+  expect(reports).toEqual([2])
+  first.intensity = 0
+  update(world)
+  first.intensity = 10
+  update(world)
+  expect(reports).toEqual([2, 2])
+})
+test('a room change names what it switches on and off', () => {
+  const scene = new Scene
+  const group = new Group
+  group.name = 'lodge-chandelier'
+  scene.add(group)
+  const chandelier = new PointLight
+  chandelier.userData.rooms = ['lodge', 'corridor']
+  group.add(chandelier)
+  for (const _ of [0, 1]) {
+    const stairLamp = new PointLight
+    stairLamp.name = 'stair-lamp'
+    stairLamp.userData.rooms = ['oculus']
+    scene.add(stairLamp)
+  }
+  const everywhere = new PointLight
+  everywhere.name = 'sun-fill'
+  scene.add(everywhere)
+  expect(roomSwitches(scene, 'oculus', 'lodge')).toEqual({
+    enabled: 'PointLight in lodge-chandelier',
+    enabledCount: 1,
+    disabled: 'stair-lamp ×2',
+    disabledCount: 2,
+  })
 })

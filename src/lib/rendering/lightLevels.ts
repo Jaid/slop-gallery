@@ -56,7 +56,48 @@ const levels = new WeakMap<Light, Level>
 /** `userData` key that marks the shadow pool’s own lights, which nothing but the pool sets */
 export const shadowSlotKey = 'shadowSlot'
 /** whether a light is one of the shadow pool’s */
-export const isShadowSlot = (light: Light) => Boolean(light.userData[shadowSlotKey])
+export const isShadowSlot = (light: Object3D) => Boolean(light.userData[shadowSlotKey])
+
+/** A readable name for a light or other object in notices and logs: its own name, or its type and the nearest named ancestor. */
+export function describeObject(object: Object3D) {
+  if (object.name) {
+    return object.name
+  }
+  let parent = object.parent
+  while (parent && !parent.name) {
+    parent = parent.parent
+  }
+  return parent ? `${object.type} in ${parent.name}` : object.type
+}
+
+const listTally = (tally: ReadonlyMap<string, number>) => [...tally].map(([name, count]) => (count > 1 ? `${name} ×${count}` : name)).toSorted().join(', ')
+const sumTally = (tally: ReadonlyMap<string, number>) => tally.values().reduce((sum, count) => sum + count, 0)
+/**
+ * The things a move from one room to another switches on and off through their `userData.rooms` lists, each as {@link describeObject} names it, with a count where several share a name.
+ */
+export function roomSwitches(scene: Object3D, from: string, to: string) {
+  const enabled = new Map<string, number>
+  const disabled = new Map<string, number>
+  scene.traverse(object => {
+    const objectRooms = object.userData.rooms as ReadonlyArray<string> | undefined
+    if (!objectRooms || isShadowSlot(object)) {
+      return
+    }
+    const after = objectRooms.includes(to)
+    if (objectRooms.includes(from) === after) {
+      return
+    }
+    const tally = after ? enabled : disabled
+    const name = describeObject(object)
+    tally.set(name, (tally.get(name) ?? 0) + 1)
+  })
+  return {
+    enabled: listTally(enabled),
+    enabledCount: sumTally(enabled),
+    disabled: listTally(disabled),
+    disabledCount: sumTally(disabled),
+  }
+}
 
 /** The light the camera aims at while editing lights, the one focused by clicking its marker, the lights moved, the lights whose range or decay changed, whose shadow was switched on or off, and the lights switched off or made stronger or weaker for this page session. */
 export const useLightEdits = create<{

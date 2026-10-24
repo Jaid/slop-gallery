@@ -14,8 +14,11 @@ import pauseMenu from '#src/lib/pauseMenu.ts'
 import {getAntiAliasing} from '#src/lib/rendering/antiAliasing.ts'
 import {useGraphicsTuning} from '#src/lib/rendering/customGraphics.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
+import {describeObject, roomSwitches} from '#src/lib/rendering/lightLevels.ts'
+import {shadowPool} from '#src/lib/rendering/shadowPool.ts'
 import {attachGraphicsTuningTelemetry} from '#src/lib/telemetry/graphicsTuningTelemetry.ts'
 import {playerTelemetry, telemetry} from '#src/lib/telemetry/index.ts'
+import {roomChangeDetails} from '#src/lib/telemetry/SlopGalleryTelemetry.ts'
 
 function Collectors() {
   usePauseMenuTelemetry({
@@ -31,6 +34,34 @@ function Collectors() {
   const antiAliasing = getAntiAliasing(isHeavy)
   const canvas = useThree(state => state.renderer.domElement)
   const graphicsProfile = useGraphicsMode.getName(isHeavy, isCinematic)
+  useEffect(() => {
+    roomChangeDetails.current = (from, to) => {
+      const {enabled, enabledCount, disabled, disabledCount} = roomSwitches(scene, from, to)
+      return {
+        'lights.enabled': enabled,
+        'lights.enabled.count': enabledCount,
+        'lights.disabled': disabled,
+        'lights.disabled.count': disabledCount,
+      }
+    }
+    shadowPool.onOverflow = lights => {
+      telemetry!.log(`${lights.length} lights in view ask for a shadow, but the shadow pool only has ${shadowPool.slots.length} slots.`, {
+        level: 'warn',
+        attributes: {
+          'event.name': 'gallery.shadows.overflow',
+          room: useGallery.getState().room,
+          'shadows.requested': lights.length,
+          'shadows.slots': shadowPool.slots.length,
+          'shadows.lights': lights.map(describeObject).join(', '),
+        },
+        context: telemetry!.getContext(),
+      })
+    }
+    return () => {
+      roomChangeDetails.current = () => ({})
+      shadowPool.onOverflow = undefined
+    }
+  }, [scene])
   useEffect(() => attachGraphicsTuningTelemetry(telemetry!, () => ({
     'graphics.profile': graphicsProfile,
     'canvas.width': canvas.width,

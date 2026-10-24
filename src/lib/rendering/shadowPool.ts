@@ -35,8 +35,11 @@ export function wantsShadow(light: Light) {
  * A light keeps its slot until it goes dark or stops asking. Lights out of view never take a slot; lights in view take free slots first, nearest first, then those of lights out of view. Any left over go without.
  */
 export class ShadowPool {
+  /** called once whenever more lights in view ask for a shadow than there are slots, with all of them; not again until they fit */
+  onOverflow: ((lights: ReadonlyArray<PointLight>) => void) | undefined
   readonly slots: ReadonlyArray<PointLight>
   private readonly lent = new Map<PointLight, PointLight>
+  private overflowing = false
   private readonly sources: Array<PointLight | null>
 
   constructor(count: number) {
@@ -88,6 +91,12 @@ export class ShadowPool {
         light,
       })
     })
+    const inView = candidates.values().filter(candidate => candidate.inView).map(candidate => candidate.light).toArray()
+    const overflowing = inView.length > this.slots.length
+    if (overflowing && !this.overflowing) {
+      this.onOverflow?.(inView)
+    }
+    this.overflowing = overflowing
     for (const [index, source] of this.sources.entries()) {
       if (source && !candidates.has(source)) {
         this.sources[index] = null
@@ -127,6 +136,7 @@ export class ShadowPool {
   }
 
   private release() {
+    this.overflowing = false
     this.sources.fill(null)
     this.lent.clear()
   }

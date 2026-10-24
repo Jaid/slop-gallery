@@ -8,6 +8,9 @@ import VictoriaClient from 'victoria-browser-client'
 import {rooms} from '../gallery/walls.ts'
 import {galleryLevel} from '../level.ts'
 
+/** More attributes for a `room.changed` event, set by whoever knows what the move switches; the scene lists the lights it turns on and off. */
+export const roomChangeDetails: {current: (from: string, to: string) => Attributes} = {current: () => ({})}
+
 export default class SlopGalleryTelemetry extends VictoriaClient {
   readonly sessionId: string
   private gameplay: Span | undefined
@@ -92,6 +95,7 @@ export default class SlopGalleryTelemetry extends VictoriaClient {
         this.event('room.changed', {
           from: previous.room,
           to: state.room,
+          ...roomChangeDetails.current(previous.room, state.room),
         })
       }
       for (const key of ['locked', 'ready', 'panel'] as const) {

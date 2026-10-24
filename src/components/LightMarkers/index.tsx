@@ -5,7 +5,7 @@ import {useEffect, useRef} from 'react'
 import {Color, Matrix4, Quaternion, Vector2, Vector3} from 'three/webgpu'
 
 import {isTextInput, notify} from '#src/lib/gallery.ts'
-import {changeLightDecay, changeLightIntensity, changeLightRange, isEditingLights, isShadowSlot, lightActive, moveLight, placeLight, resetLight, toggleLight, toggleLightShadow, useLightEdits} from '#src/lib/rendering/lightLevels.ts'
+import {changeLightDecay, changeLightIntensity, changeLightRange, describeObject, isEditingLights, isShadowSlot, lightActive, moveLight, placeLight, resetLight, toggleLight, toggleLightShadow, useLightEdits} from '#src/lib/rendering/lightLevels.ts'
 
 type Positional = Light & {
   isPointLight?: boolean
@@ -79,17 +79,6 @@ const pick = (lights: ReadonlyArray<Light>, from: Vector3, toward: Vector3) => {
   }
   return picked
 }
-/** A readable name for a light in notices: its own name, or its type and the nearest named ancestor. */
-const describe = (light: Light) => {
-  if (light.name) {
-    return light.name
-  }
-  let parent = light.parent
-  while (parent && !parent.name) {
-    parent = parent.parent
-  }
-  return parent ? `${light.type} in ${parent.name}` : light.type
-}
 /** key that copies every light switched off or made stronger or weaker to the clipboard */
 const copyEditsKey = 'KeyK'
 const formatPosition = ({x, y, z}: Vector3) => `${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}`
@@ -105,7 +94,7 @@ const listEdits = () => {
     }
     const where = `, ${moved.has(light) ? 'moved to' : 'at'} ${formatPosition(light.getWorldPosition(position))}`
     const shadow = shadows.get(light)
-    return `${describe(light)}: ${level}${distance ? `, range ${distance.toFixed(1)} m` : ''}${decay === undefined ? '' : `, decay ${decay.toFixed(2)}`}${shadow === undefined ? '' : `, shadow ${shadow ? 'on' : 'off'}`}${where}`
+    return `${describeObject(light)}: ${level}${distance ? `, range ${distance.toFixed(1)} m` : ''}${decay === undefined ? '' : `, decay ${decay.toFixed(2)}`}${shadow === undefined ? '' : `, shadow ${shadow ? 'on' : 'off'}`}${where}`
   }).join('\n')
 }
 /** Puts the list on the clipboard, telling how many lights it holds. */
@@ -205,7 +194,7 @@ export default function LightMarkers() {
           step.set(0, 0, 0).addScaledVector(forward, move![0]).addScaledVector(right, move![1]).addScaledVector(up, move![2]).multiplyScalar(moveStep)
           at = moveLight(focused, step)
         }
-        notify(`${describe(focused)}: ${event.code === 'Numpad0' ? 'reset, ' : ''}at ${formatPosition(at)}`)
+        notify(`${describeObject(focused)}: ${event.code === 'Numpad0' ? 'reset, ' : ''}at ${formatPosition(at)}`)
         return
       }
       const aimed = focused ?? looked
@@ -214,20 +203,20 @@ export default function LightMarkers() {
       }
       const strength = (steps: number) => {
         const intensity = changeLightIntensity(aimed, steps)
-        notify(intensity === undefined ? `${describe(aimed)} is dark` : `${describe(aimed)}: intensity ${intensity}`)
+        notify(intensity === undefined ? `${describeObject(aimed)} is dark` : `${describeObject(aimed)}: intensity ${intensity}`)
       }
       const range = (steps: number) => {
         const distance = changeLightRange(aimed, steps)
-        notify(distance === undefined ? `${describe(aimed)} has no range` : `${describe(aimed)}: range ${distance.toFixed(1)} m`)
+        notify(distance === undefined ? `${describeObject(aimed)} has no range` : `${describeObject(aimed)}: range ${distance.toFixed(1)} m`)
       }
       const decay = (steps: number) => {
         const value = changeLightDecay(aimed, steps)
-        notify(value === undefined ? `${describe(aimed)} has no decay` : `${describe(aimed)}: decay ${value.toFixed(2)}`)
+        notify(value === undefined ? `${describeObject(aimed)} has no decay` : `${describeObject(aimed)}: decay ${value.toFixed(2)}`)
       }
       const actions: Partial<Record<string, () => void>> = {
         KeyE: () => {
           if (!event.repeat) {
-            notify(`${describe(aimed)} ${toggleLight(aimed) ? 'on' : 'off'}`)
+            notify(`${describeObject(aimed)} ${toggleLight(aimed) ? 'on' : 'off'}`)
           }
         },
         NumpadDivide: () => {
@@ -235,7 +224,7 @@ export default function LightMarkers() {
             return
           }
           const shadow = toggleLightShadow(aimed)
-          notify(shadow === undefined ? `${describe(aimed)} can’t cast a shadow` : `${describe(aimed)}: shadow ${shadow ? 'on' : 'off'}`)
+          notify(shadow === undefined ? `${describeObject(aimed)} can’t cast a shadow` : `${describeObject(aimed)}: shadow ${shadow ? 'on' : 'off'}`)
         },
         ArrowLeft: () => strength(-1),
         ArrowRight: () => strength(1),
@@ -271,7 +260,7 @@ export default function LightMarkers() {
         return
       }
       useLightEdits.setState({focused: clicked})
-      notify(clicked ? `Focused ${describe(clicked)}` : `Unfocused ${describe(focused!)}`)
+      notify(clicked ? `Focused ${describeObject(clicked)}` : `Unfocused ${describeObject(focused!)}`)
       // A click on a marker belongs to the editor; a click elsewhere only unfocuses on its way to the game.
       if (clicked) {
         event.preventDefault()
