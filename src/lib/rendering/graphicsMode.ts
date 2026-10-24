@@ -22,9 +22,12 @@ const graphicsModeSchema = optis({
 
 export type GraphicsProfile = {
   /** ambient occlusion pixels per output pixel along each axis */
+  ambientOcclusionRadius?: number
   ambientOcclusionResolutionScale: number
   /** ambient occlusion samples per pixel */
   ambientOcclusionSamples: number
+  ambientOcclusionScale?: number
+  ambientOcclusionThickness?: number
   /** whether runtime canvas textures such as signs keep mipmaps, and with them anisotropic filtering, at the cost of building them */
   canvasTextureMipmaps: boolean
   /** backing pixels per logical texel for runtime canvas textures such as signs */
@@ -102,14 +105,17 @@ const heavyProfile: GraphicsProfile = {
   volumetricLightSteps: 64,
   voxelIndirectLight: true,
 }
-// Heavy at twice the resolution of every intermediate map and four times the shadow map resolution, with more samples, full texture filtering and indirect light, for renders that don’t have to keep up with the display.
+// Cinematic raises intermediate and shadow-map resolutions, AO quality, texture filtering and indirect light for non-realtime rendering.
 const cinematicProfile: GraphicsProfile = {
   ...heavyProfile,
   canvasTextureMipmaps: true,
   canvasTextureResolution: 2,
   indirectLight: true,
-  ambientOcclusionResolutionScale: 1.5,
-  ambientOcclusionSamples: 32,
+  ambientOcclusionRadius: 1,
+  ambientOcclusionResolutionScale: 2,
+  ambientOcclusionSamples: 64,
+  ambientOcclusionScale: 0.8,
+  ambientOcclusionThickness: 2,
   reflectionResolutionScale: 2,
   shadowMapScale: 4,
   shadowSamples: 16,

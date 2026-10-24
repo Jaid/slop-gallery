@@ -31,7 +31,7 @@ test('cinematic graphics read as heavy, and only cinematic reads as cinematic', 
   expect(readCinematicGraphics('?graphics=heavy')).toBe(false)
   expect(readCinematicGraphics()).toBe(false)
 })
-test('the cinematic profile is heavy with every intermediate map at twice the resolution, shadow maps at four times, more samples, full texture filtering and indirect light', () => {
+test('the cinematic profile increases intermediate resolutions, AO quality, shadow samples, texture filtering and indirect light', () => {
   const heavy = getGraphicsProfile(true)
   const cinematic = getGraphicsProfile(true, true)
   expect(cinematic).toEqual({
@@ -39,8 +39,11 @@ test('the cinematic profile is heavy with every intermediate map at twice the re
     canvasTextureMipmaps: true,
     canvasTextureResolution: 2,
     indirectLight: true,
-    ambientOcclusionResolutionScale: 1.5,
-    ambientOcclusionSamples: 32,
+    ambientOcclusionRadius: 1,
+    ambientOcclusionResolutionScale: 2,
+    ambientOcclusionSamples: 64,
+    ambientOcclusionScale: 0.8,
+    ambientOcclusionThickness: 2,
     reflectionResolutionScale: 2,
     shadowMapScale: 4,
     shadowSamples: 16,
@@ -112,6 +115,27 @@ test('heavy and cinematic share the tuned volumetric sunlight values, apart from
     ...volumetric,
     volumetricLightSteps: 128,
   })
+})
+test('Cinematic uses the tuned AO settings without changing Fast or Heavy', () => {
+  const fast = getRenderPipelineSettings(getGraphicsProfile(false), false)
+  const heavy = getRenderPipelineSettings(getGraphicsProfile(true), 'traa')
+  const cinematic = getRenderPipelineSettings(getGraphicsProfile(true, true), 'traa')
+  expect(cinematic).toMatchObject({
+    ambientOcclusion: true,
+    ambientOcclusionRadius: 1,
+    ambientOcclusionResolutionScale: 2,
+    ambientOcclusionSamples: 64,
+    ambientOcclusionScale: 0.8,
+    ambientOcclusionTemporalFiltering: false,
+    ambientOcclusionThickness: 2,
+  })
+  expect(fast.ambientOcclusionResolutionScale).toBe(0.75)
+  expect(fast.ambientOcclusionSamples).toBe(16)
+  expect(heavy.ambientOcclusionRadius).toBe(0.3)
+  expect(heavy.ambientOcclusionResolutionScale).toBe(0.75)
+  expect(heavy.ambientOcclusionSamples).toBe(16)
+  expect(heavy.ambientOcclusionScale).toBe(0.85)
+  expect(heavy.ambientOcclusionThickness).toBe(1)
 })
 test('Fast disables bloom, while Heavy and Cinematic use the current tuned bloom defaults', () => {
   const fast = getRenderPipelineSettings(getGraphicsProfile(false), false)

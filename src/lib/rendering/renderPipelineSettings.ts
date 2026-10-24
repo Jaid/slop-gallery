@@ -84,12 +84,12 @@ export function getRenderPipelineSettings(profile: GraphicsProfile, antiAliasing
   return {
     ambientOcclusion: true,
     // Knottingham darkens contacts more tightly.
-    ambientOcclusionRadius: isKnottingham ? 0.18 : 0.3,
+    ambientOcclusionRadius: profile.ambientOcclusionRadius ?? (isKnottingham ? 0.18 : 0.3),
     ambientOcclusionResolutionScale: profile.ambientOcclusionResolutionScale,
     ambientOcclusionSamples: profile.ambientOcclusionSamples,
-    ambientOcclusionScale: isKnottingham ? 1.18 : 0.85,
+    ambientOcclusionScale: profile.ambientOcclusionScale ?? (isKnottingham ? 1.18 : 0.85),
     ambientOcclusionTemporalFiltering: false,
-    ambientOcclusionThickness: isKnottingham ? 0.6 : 1,
+    ambientOcclusionThickness: profile.ambientOcclusionThickness ?? (isKnottingham ? 0.6 : 1),
     antiAliasing,
     bloom: profile.postprocessing,
     bloomLuminanceCap: 4,
