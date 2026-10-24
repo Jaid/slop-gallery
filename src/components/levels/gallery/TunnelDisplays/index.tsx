@@ -38,21 +38,24 @@ const tunnelLightRooms = seenFrom('oculus', 'lobby')
 const tunnelLights = [
   {
     color: '#4dff6a',
-    decay: 2,
-    distance: 8,
-    intensity: 8,
+    decay: 1.25,
+    distance: 14,
+    intensity: 10,
+    shadow: true,
   },
   {
     color: '#4d7aff',
-    decay: 1.5,
-    distance: 6,
-    intensity: 40,
+    decay: 1,
+    distance: 10,
+    intensity: 13.2,
+    shadow: false,
   },
   {
     color: '#ff4d4d',
     decay: 1.5,
-    distance: 10,
-    intensity: 20,
+    distance: 17,
+    intensity: 33,
+    shadow: true,
   },
 ]
 
@@ -73,7 +76,12 @@ export default function TunnelDisplays({material}: {material: Material}) {
       <mesh position={[0, -0.091, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <circleGeometry args={[0.16, 24]} /><meshBasicNodeMaterial color={tunnelLights[i].color} toneMapped={false} />
       </mesh>
-      <pointLight {...tunnelLights[i]} position={[0, -0.35, 0]} userData={{rooms: tunnelLightRooms}} />
+      <pointLight
+        color={tunnelLights[i].color} decay={tunnelLights[i].decay} distance={tunnelLights[i].distance} intensity={tunnelLights[i].intensity} position={[0, -0.35, 0]} userData={{
+          rooms: tunnelLightRooms,
+          shadow: tunnelLights[i].shadow,
+        }}
+      />
     </group>)}
   </group>
 }
