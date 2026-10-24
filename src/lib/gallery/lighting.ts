@@ -196,6 +196,9 @@ export type LightingPresetId = keyof typeof presets
 
 export const lightingPresetIds = Object.keys(presets) as Array<LightingPresetId>
 
+/** a preset with the position and shadow frustum its sun direction needs */
+export type GalleryLightingPreset = LightingPreset & {sun: LightingPreset['sun'] & ReturnType<typeof sunGeometry>}
+
 /** Every preset with the shadow frustum its sun direction needs. */
 export const lightingPresets = Object.fromEntries(Object.entries(presets).map(([id, preset]) => [id, {
   ...preset,
@@ -215,6 +218,69 @@ const lightingSchema = optis({
     },
   },
 })
+
+/** The lighting values the tuning panel of `?development` changes. The sun’s azimuth runs clockwise from north (−z) and its elevation up from the horizon, both in degrees. */
+export type LightingTuning = {
+  environmentIntensity: number
+  hemisphereIntensity: number
+  lamps: number
+  sunAzimuth: number
+  sunElevation: number
+  sunIntensity: number
+}
+
+const degrees = 180 / Math.PI
+
+/** A preset’s own values for the tuning panel. */
+export function getLightingTuning(preset: LightingPreset): LightingTuning {
+  const [x, y, z] = preset.sun.direction
+  return {
+    environmentIntensity: preset.environment.intensity,
+    hemisphereIntensity: preset.hemisphere.intensity,
+    lamps: preset.lamps,
+    sunAzimuth: (Math.atan2(x, -z) * degrees + 360) % 360,
+    sunElevation: Math.atan2(y, Math.hypot(x, z)) * degrees,
+    sunIntensity: preset.sun.intensity,
+  }
+}
+
+/** Picks the lighting values out of the tuning panel’s. */
+export function pickLightingTuning({environmentIntensity, hemisphereIntensity, lamps, sunAzimuth, sunElevation, sunIntensity}: LightingTuning): LightingTuning {
+  return {
+    environmentIntensity,
+    hemisphereIntensity,
+    lamps,
+    sunAzimuth,
+    sunElevation,
+    sunIntensity,
+  }
+}
+
+/** Applies the tuning panel’s lighting to a preset. Every value still at `start`, the one the panel opened with, keeps following the preset, so cycling presets with L still changes it. */
+export function tuneLighting(preset: GalleryLightingPreset, tuning: LightingTuning, start: LightingTuning): GalleryLightingPreset {
+  const own = getLightingTuning(preset)
+  const pick = (key: keyof LightingTuning) => (tuning[key] === start[key] ? own[key] : tuning[key])
+  const azimuth = pick('sunAzimuth') / degrees
+  const elevation = pick('sunElevation') / degrees
+  const isMoved = pick('sunAzimuth') !== own.sunAzimuth || pick('sunElevation') !== own.sunElevation
+  return {
+    ...preset,
+    environment: {
+      ...preset.environment,
+      intensity: pick('environmentIntensity'),
+    },
+    hemisphere: {
+      ...preset.hemisphere,
+      intensity: pick('hemisphereIntensity'),
+    },
+    lamps: pick('lamps'),
+    sun: {
+      ...preset.sun,
+      ...isMoved ? sunGeometry([Math.sin(azimuth) * Math.cos(elevation), Math.sin(elevation), -Math.cos(azimuth) * Math.cos(elevation)]) : {},
+      intensity: pick('sunIntensity'),
+    },
+  }
+}
 
 /** Read the `?lighting` preset the gallery starts with. */
 export function readLighting(input: URL | string = typeof location === 'undefined' ? '' : location.href): LightingPresetId {

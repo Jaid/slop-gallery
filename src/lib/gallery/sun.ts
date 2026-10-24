@@ -7,6 +7,8 @@ import {roomClearHeight, rooms} from './walls.ts'
 const distance = 80
 /** Rooms beyond the sun’s reach: their materials ignore it, so they need no shadow map. */
 const unlitRooms = new Set(['corridor', 'lodge'])
+/** Whether the sun reaches into a room at all, so its air can hold sun shafts. */
+export const isSunlitRoom = (room: string) => !unlitRooms.has(room)
 const up = [0, 1, 0] as const
 const cross = (a: readonly [number, number, number], b: readonly [number, number, number]) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]] as const
 const normalize = (v: readonly [number, number, number]) => {

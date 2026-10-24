@@ -1,16 +1,18 @@
-import type {LightingPreset} from '#src/lib/gallery/lighting.ts'
+import type {GalleryLightingPreset, LightingPreset} from '#src/lib/gallery/lighting.ts'
 import type {CanvasTexture, DirectionalLight, Light, Renderer, Scene} from 'three/webgpu'
 
 import {useThree} from '@react-three/fiber'
 import renderCanvasTexture from 'canvas-textures/three'
-import {useEffect, useLayoutEffect, useRef, useState} from 'react'
+import {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react'
 import {EquirectangularReflectionMapping, SRGBColorSpace} from 'three/webgpu'
+import {useShallow} from 'zustand/react/shallow'
 
 import {isDevelopmentMode} from '#src/lib/developmentMode.ts'
 import {isTextInput, notify, rooms, useGallery} from '#src/lib/gallery.ts'
-import {cycleLighting, lightingPresets, useLighting} from '#src/lib/gallery/lighting.ts'
+import {cycleLighting, lightingPresets, pickLightingTuning, tuneLighting, useLighting} from '#src/lib/gallery/lighting.ts'
 import lobbyVault from '#src/lib/gallery/lobbyVault.ts'
 import proceduralSky, {SkyLook} from '#src/lib/materials/ProceduralSky.ts'
+import {getDefaultCustomGraphics, useCustomGraphics, useGraphicsTuning} from '#src/lib/rendering/customGraphics.ts'
 import {lightGain} from '#src/lib/rendering/lightLevels.ts'
 import {useShadowProps} from '#src/lib/rendering/shadowFilters.ts'
 
@@ -20,6 +22,8 @@ export const lightingCycleKey = 'KeyL'
 const lobby = rooms.find(room => room.id === 'lobby')!
 /** Where light markers show the sun, which has no position of its own: 2 m above the crown of the Lobby’s vault. */
 const sunMarker = [lobby.center[0], lobbyVault.crownY + 2, lobby.center[1]] as const
+/** the lighting the tuning panel opens with */
+const tuningStart = pickLightingTuning(getDefaultCustomGraphics())
 
 type Lamp = Light & {
   isPointLight?: boolean
@@ -31,7 +35,7 @@ type Lamp = Light & {
  * Switching presets only changes colors, intensities, uniforms and the environment’s pixels, never which lights exist, so no material recompiles.
  */
 export default function GalleryLighting() {
-  const preset = lightingPresets[useLighting(s => s.preset)]
+  const preset = useTunedLighting(lightingPresets[useLighting(s => s.preset)])
   const scene = useThree(s => s.scene)
   const renderer = useThree(s => s.renderer)
   const sunLight = useRef<DirectionalLight>(null)
@@ -67,40 +71,49 @@ export default function GalleryLighting() {
       texture.dispose()
     }
   }, [scene])
+  // Split by what each part reads, so a tuning slider only redoes its own part; redrawing the environment rebuilds its prefiltered maps.
+  const {environment: {gradient, intensity: environmentIntensity, lightBoxes}, exposure, sky, sun: {direction: sunDirection, shadow}} = preset
   useLayoutEffect(() => {
     look.set({
-      ...preset.sky,
-      sunDirection: preset.sun.direction,
+      ...sky,
+      sunDirection,
     })
+  }, [look, sky, sunDirection])
+  useLayoutEffect(() => {
     if (environment.current) {
-      drawEnvironment(environment.current, preset.environment)
+      drawEnvironment(environment.current, gradient, lightBoxes)
     }
-    applyExposure(scene, renderer, preset)
+  }, [gradient, lightBoxes])
+  useLayoutEffect(() => {
+    applyExposure(scene, renderer, environmentIntensity, exposure)
+  }, [scene, renderer, environmentIntensity, exposure])
+  useLayoutEffect(() => {
     const light = sunLight.current
     if (light) {
       const camera = light.shadow.camera
       Object.assign(camera, {
-        left: preset.sun.shadow.left,
-        right: preset.sun.shadow.right,
-        bottom: preset.sun.shadow.bottom,
-        top: preset.sun.shadow.top,
-        near: preset.sun.shadow.near,
-        far: preset.sun.shadow.far,
+        left: shadow.left,
+        right: shadow.right,
+        bottom: shadow.bottom,
+        top: shadow.top,
+        near: shadow.near,
+        far: shadow.far,
       })
       camera.updateProjectionMatrix()
       light.shadow.needsUpdate = true
     }
-  }, [preset, look, scene, renderer])
+  }, [shadow])
   // Lamps glow by the preset’s gain. The corridor’s lanterns already light a space of their own, without any of the daylight’s fill, and daylight is no lamp.
+  const {lamps} = preset
   useLayoutEffect(() => {
     lightGain.current = light => {
       const lamp = light as Lamp
-      return (lamp.isPointLight || lamp.isSpotLight) && !lamp.userData.daylight ? preset.lamps : 1
+      return (lamp.isPointLight || lamp.isSpotLight) && !lamp.userData.daylight ? lamps : 1
     }
     return () => {
       lightGain.current = () => 1
     }
-  }, [preset])
+  }, [lamps])
   useEffect(() => {
     if (!isDevelopmentMode) {
       return
@@ -126,8 +139,14 @@ export default function GalleryLighting() {
   </>
 }
 
+/** With `?development`, the preset with the lighting the tuning panel changed while it shows. */
+function useTunedLighting(preset: GalleryLightingPreset) {
+  const isTuning = useGraphicsTuning(state => isDevelopmentMode && state.open)
+  const tuning = useCustomGraphics(useShallow(pickLightingTuning))
+  return useMemo(() => (isTuning ? tuneLighting(preset, tuning, tuningStart) : preset), [isTuning, preset, tuning])
+}
 /** Paints the reflection environment: a vertical gradient with four bright light boxes in its upper band. */
-function drawEnvironment(texture: CanvasTexture, {gradient: stops, lightBoxes}: LightingPreset['environment']) {
+function drawEnvironment(texture: CanvasTexture, stops: LightingPreset['environment']['gradient'], lightBoxes: string) {
   const canvas = texture.image as HTMLCanvasElement | OffscreenCanvas
   const context = canvas.getContext('2d') as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
   const gradient = context.createLinearGradient(0, 0, 0, 512)
@@ -152,7 +171,7 @@ function setEnvironment(scene: Scene, texture: CanvasTexture) {
   }
 }
 /** The scene’s environment intensity and the exposure belong to the level’s lighting, like the environment itself. */
-function applyExposure(scene: Scene, renderer: Renderer, preset: LightingPreset) {
-  scene.environmentIntensity = preset.environment.intensity
-  renderer.toneMappingExposure = preset.exposure
+function applyExposure(scene: Scene, renderer: Renderer, environmentIntensity: number, exposure: number) {
+  scene.environmentIntensity = environmentIntensity
+  renderer.toneMappingExposure = exposure
 }

@@ -1,4 +1,4 @@
-import type {RenderPipelineSetting, RenderPipelineSettings} from '#src/lib/rendering/renderPipelineSettings.ts'
+import type {CustomGraphics} from '#src/lib/rendering/customGraphics.ts'
 
 import Branch from 'branch-component'
 import {useEffect} from 'react'
@@ -10,14 +10,15 @@ import {changeTunedGraphics, discardTuningBuffer, useTuningBuffer} from '#src/li
 
 import css from './style.module.sass'
 
-type BooleanKey = {[Key in RenderPipelineSetting]: RenderPipelineSettings[Key] extends boolean ? Key : never}[RenderPipelineSetting]
-type NumberKey = {[Key in RenderPipelineSetting]: RenderPipelineSettings[Key] extends number ? Key : never}[RenderPipelineSetting]
-type Value = RenderPipelineSettings[RenderPipelineSetting]
+type Setting = keyof CustomGraphics
+type BooleanKey = {[Key in Setting]: CustomGraphics[Key] extends boolean ? Key : never}[Setting]
+type NumberKey = {[Key in Setting]: CustomGraphics[Key] extends number ? Key : never}[Setting]
+type Value = CustomGraphics[Setting]
 /** A checkbox that switches a setting to `off` without losing its value, which the panel keeps to bring back when switched on again. */
 type Switch = {
   /** the value to switch on to when the graphics mode starts with the setting off */
   fallback: Value
-  key: RenderPipelineSetting
+  key: Setting
   off: Value
 }
 type Control = ({
@@ -30,15 +31,15 @@ type Control = ({
   min: number
   step: number
 } | {
-  key: RenderPipelineSetting
+  key: Setting
   kind: 'select'
-  options: Array<[value: RenderPipelineSettings[RenderPipelineSetting], label: string]>
+  options: Array<[value: CustomGraphics[Setting], label: string]>
 }) & {
   label: string
   /** the value a checkbox in front of the label switches the setting to */
   off?: Pick<Switch, 'fallback' | 'off'>
   /** whether the control does anything with the current settings, beyond its section being switched on */
-  when?: (settings: RenderPipelineSettings) => boolean
+  when?: (settings: CustomGraphics) => boolean
 }
 type Section = {
   controls: Array<Control>
@@ -60,14 +61,16 @@ const toggle = (key: BooleanKey, label: string): Control => ({
   kind: 'toggle',
   label,
 })
-const select = (key: RenderPipelineSetting, label: string, options: Array<[Value, string]>): Control => ({
+const select = (key: Setting, label: string, options: Array<[Value, string]>): Control => ({
   key,
   kind: 'select',
   label,
   options,
 })
+/** the brightest value a half-float target holds, so a cap there caps nothing */
+const uncappedLuminance = 65_504
 const scales = (values: Array<number>): Array<[number, string]> => values.map(value => [value, `${value}×`])
-const screenSpaceReflections = (settings: RenderPipelineSettings) => settings.reflectionScope === 'all'
+const screenSpaceReflections = (settings: CustomGraphics) => settings.reflectionScope === 'all'
 const sections: Array<Section> = [
   {
     title: 'Antialiasing',
@@ -129,7 +132,13 @@ const sections: Array<Section> = [
       range('screenSpaceIndirectLightThickness', 'Thickness', 0.1, 4, 0.1),
       range('screenSpaceIndirectLightExpFactor', 'Exp factor', 1, 4, 0.1),
       range('screenSpaceIndirectLightBackfaceLighting', 'Backface lighting', 0, 1, 0.05),
-      range('screenSpaceIndirectLightAmbientOcclusion', 'AO intensity', 0, 4, 0.1),
+      {
+        ...range('screenSpaceIndirectLightAmbientOcclusion', 'AO intensity', 0.1, 4, 0.1),
+        off: {
+          fallback: 1,
+          off: 0,
+        },
+      },
       toggle('screenSpaceIndirectLightTemporalFiltering', 'Temporal filtering'),
     ],
   },
@@ -186,7 +195,29 @@ const sections: Array<Section> = [
       range('bloomRadius', 'Radius', 0, 1, 0.05),
       range('bloomThreshold', 'Threshold', 0, 4, 0.1),
       range('bloomSmoothWidth', 'Smooth width', 0, 0.5, 0.01),
-      range('bloomLuminanceCap', 'Brightness cap', 1, 64, 1),
+      {
+        ...range('bloomLuminanceCap', 'Brightness cap', 1, 64, 1),
+        off: {
+          fallback: 8,
+          off: uncappedLuminance,
+        },
+      },
+    ],
+  },
+  {
+    title: 'Sun',
+    controls: [
+      range('sunIntensity', 'Strength', 0, 8, 0.1),
+      range('sunAzimuth', 'Azimuth', 0, 360, 1),
+      range('sunElevation', 'Elevation', 0, 90, 1),
+    ],
+  },
+  {
+    title: 'Lighting',
+    controls: [
+      range('lamps', 'Lamp multiplier', 0, 4, 0.05),
+      range('hemisphereIntensity', 'Base light', 0, 4, 0.1),
+      range('environmentIntensity', 'Environment', 0, 1, 0.05),
     ],
   },
   {
@@ -210,13 +241,13 @@ const switches: Array<Switch> = sections.flatMap(section => [
     key: control.key,
   })),
 ])
-const findSwitch = (key: RenderPipelineSetting) => switches.find(candidate => candidate.key === key)
+const findSwitch = (key: Setting) => switches.find(candidate => candidate.key === key)
 /** the values the panel opened with, which a label turns yellow once it leaves */
 const initial = getDefaultCustomGraphics()
-const initialParked: Partial<Record<RenderPipelineSetting, Value>> = Object.fromEntries(switches.filter(({key, off}) => initial[key] === off).map(({fallback, key}) => [key, fallback]))
+const initialParked: Partial<Record<Setting, Value>> = Object.fromEntries(switches.filter(({key, off}) => initial[key] === off).map(({fallback, key}) => [key, fallback]))
 /** the values of the settings a checkbox switched off, which come back when it switches them on again */
-const useParkedGraphics = create<Partial<Record<RenderPipelineSetting, Value>>>(() => initialParked)
-const set = (values: Partial<RenderPipelineSettings>, parked?: Partial<Record<RenderPipelineSetting, Value>>) => {
+const useParkedGraphics = create<Partial<Record<Setting, Value>>>(() => initialParked)
+const set = (values: Partial<CustomGraphics>, parked?: Partial<Record<Setting, Value>>) => {
   changeTunedGraphics(() => {
     if (parked) {
       useParkedGraphics.setState(parked, true)
@@ -224,7 +255,7 @@ const set = (values: Partial<RenderPipelineSettings>, parked?: Partial<Record<Re
     useCustomGraphics.setState(values)
   })
 }
-const reset = (keys: Array<RenderPipelineSetting>) => {
+const reset = (keys: Array<Setting>) => {
   const parked = {...useParkedGraphics.getState()}
   for (const key of keys) {
     if (key in initialParked) {
@@ -248,7 +279,7 @@ const switchSetting = ({fallback, key, off}: Switch, on: boolean) => {
   }
 }
 /** whether a setting differs from the one the panel opened with, counting the kept value of a switched-off one */
-const isChanged = (state: RenderPipelineSettings, parked: Partial<Record<RenderPipelineSetting, Value>>, key: RenderPipelineSetting) => state[key] !== initial[key] || parked[key] !== initialParked[key]
+const isChanged = (state: CustomGraphics, parked: Partial<Record<Setting, Value>>, key: Setting) => state[key] !== initial[key] || parked[key] !== initialParked[key]
 /** Keeps the second click of a double-click from reaching the label’s control, so double-clicking a checkbox’s label resets it instead of switching it twice. */
 const ignoreRepeatedClick = (event: React.MouseEvent) => {
   if (event.detail > 1) {

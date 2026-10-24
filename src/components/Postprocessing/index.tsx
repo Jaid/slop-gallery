@@ -5,6 +5,7 @@ import {useLayoutEffect, useMemo} from 'react'
 import {useShallow} from 'zustand/react/shallow'
 
 import {galleryEvents} from '#src/lib/gallery/actions.ts'
+import {getSunReach} from '#src/lib/gallery/sunReach.ts'
 import {activateRenderPipeline, releaseRenderPipeline} from '#src/lib/rendering/activeRenderPipeline.ts'
 import {useCustomGraphics, useGraphicsTuning} from '#src/lib/rendering/customGraphics.ts'
 import GalleryRenderPipeline from '#src/lib/rendering/GalleryRenderPipeline.ts'
@@ -36,6 +37,7 @@ const Postprocessing = ({focus = false, heavy = true, settings, tunable = false}
   useLayoutEffect(() => {
     const options = {
       heavy,
+      volumetricLightReach: getSunReach,
       zoom: getPlayerZoom,
       focus: focus ? {
         amount: getInspectionFocus,

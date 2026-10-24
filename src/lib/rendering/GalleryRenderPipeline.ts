@@ -35,6 +35,8 @@ export type GalleryRenderPipelineOptions = {
   /** whether the passes past antialiasing run; without it the settings only pick the antialiasing and the floor reflections */
   heavy?: boolean
   settings: RenderPipelineSettings
+  /** how much of the sun the air around the camera holds, which scales the sun shafts; 0 where the sun never reaches but its shadow map has no walls */
+  volumetricLightReach?: () => number
   zoom?: () => number
 }
 
@@ -75,7 +77,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
   protected readonly uniforms: Array<[{value: number}, RenderPipelineUniform]> = []
   private readonly effects: Array<{dispose: () => void}> = []
 
-  constructor(renderer: Renderer, scene: Object3D, camera: Camera, {focus, heavy = true, settings, zoom = () => 0}: GalleryRenderPipelineOptions) {
+  constructor(renderer: Renderer, scene: Object3D, camera: Camera, {focus, heavy = true, settings, volumetricLightReach = () => 1, zoom = () => 0}: GalleryRenderPipelineOptions) {
     super(renderer)
     const {antiAliasing, reflectionScope} = settings
     const indirectLight = settings.screenSpaceIndirectLight || settings.voxelIndirectLight
@@ -227,7 +229,9 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       if (settings.volumetricLight && sun && camera instanceof PerspectiveCamera) {
         // Raymarches the sun’s shadow map through the air at full resolution; a plain Gaussian blur smooths the march, where an edge-preserving one would posterize it.
         const rays = own(godrays(depth, camera, sun))
-        set(rays.density, 'volumetricLightDensity')
+        const density = {value: 0}
+        set(density, 'volumetricLightDensity')
+        rays.density.onRenderUpdate(() => density.value * volumetricLightReach())
         set(rays.maxDensity, 'volumetricLightMaxDensity')
         set(rays.raymarchSteps, 'volumetricLightSteps')
         set(rays.distanceAttenuation, 'volumetricLightDistanceAttenuation')

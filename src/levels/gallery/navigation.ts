@@ -10,11 +10,11 @@ export {insideGallery as insideLevel, floorHeight as levelFloorHeight, wallDista
 
 export type GroundSurface = 'fabric' | 'generic' | 'glass' | 'hollow'
 
-/** Between the Lobby’s north wall and its glass floor, on the room’s axis, looking south over the glass. */
+/** Between the Lobby’s north wall and its glass floor, a little west of the room’s axis, looking south-south-east over the glass. */
 export const playerSpawn: PlayerPose = {
-  position: [lobby.opening.center[0], 0.04, lobby.northZ + 1.3],
-  // The session keeps yaw in [−π, π), so due south is −π.
-  yaw: -Math.PI,
+  position: [lobby.opening.center[0] - 3, 0.04, lobby.northZ + 1.7],
+  // The session keeps yaw in [−π, π): due south is −π, and 18° toward the east is −0.9π.
+  yaw: -0.9 * Math.PI,
   pitch: 0,
 }
 
