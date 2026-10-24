@@ -60,8 +60,8 @@ describe('the Lobby’s barrel vault', () => {
     // The space under the vault still counts as the Lobby, so room culling keeps the chandeliers and the vault drawn.
     expect(roomAt([0, lobbyVault.crownY - 1, room.center[1]])).toBe('lobby')
     expect(insideGallery([0, lobbyVault.crownY - 1, room.center[1]])).toBe(true)
-    // Every other room keeps its flat ceiling.
-    expect(rooms.filter(other => other.id !== 'lobby').every(other => roomClearHeight(other) === other.height)).toBe(true)
+    // Every other room but the domed Antechamber keeps its flat ceiling.
+    expect(rooms.filter(other => other.id !== 'lobby' && other.id !== 'antechamber').every(other => roomClearHeight(other) === other.height)).toBe(true)
   })
   test('ribs stand on the 4 m grid of the floor tiles, with wall arches against both end walls', () => {
     const ribs = vaultRibs()

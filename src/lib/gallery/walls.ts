@@ -3,6 +3,7 @@ import type {RoomId, Vec3} from './types.ts'
 
 import {GalleryPlacementSpace} from '../placement/GalleryPlacementSpace.ts'
 import {wallCoordinates} from '../placement/wallGeometry.ts'
+import {antechamberDomeCrownY} from './antechamberDome.ts'
 import miterCorners from './cornerMiters.ts'
 import corridor, {corridorPassage, corridorStairFloor, corridorWalls, insideCorridor} from './corridor.ts'
 import mainEntrance from './entrance.ts'
@@ -137,9 +138,12 @@ export const rooms = [
   },
 ] as const
 
-/** Height from a room’s floor to the highest point of its ceiling: the crown of the Lobby’s vault, the flat ceiling everywhere else. */
+/** Height from a room’s floor to the highest point of its ceiling: the crown of the Lobby’s vault or the Antechamber’s dome, the flat ceiling everywhere else. */
 export function roomClearHeight(room: (typeof rooms)[number]) {
-  return room.id === 'lobby' ? lobbyVault.springY + lobbyVault.outerRadius - room.floorY : room.height
+  if (room.id === 'lobby') {
+    return lobbyVault.springY + lobbyVault.outerRadius - room.floorY
+  }
+  return room.id === 'antechamber' ? antechamberDomeCrownY - room.floorY : room.height
 }
 
 const tunnelContains = ([x, y, z]: Vec3) => Math.abs(x - lowerGallery.tunnel.x) <= lowerGallery.tunnel.width / 2 && z >= lowerGallery.tunnel.northZ && z <= lowerGallery.tunnel.southZ && y >= tunnelFloorHeight(z) - 1 && y <= tunnelFloorHeight(z) + lowerGallery.tunnel.height
