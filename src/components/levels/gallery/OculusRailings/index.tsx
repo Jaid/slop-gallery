@@ -4,6 +4,7 @@ import {CapsuleCollider, CuboidCollider, RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 
+import StaticBatch from '#src/components/Scene/StaticBatch.tsx'
 import OculusBalconyRailing from '#src/lib/gallery/railings/OculusBalconyRailing.ts'
 import OculusRailing from '#src/lib/gallery/railings/OculusRailing.ts'
 import OculusSwitchbackRailing from '#src/lib/gallery/railings/OculusSwitchbackRailing.ts'
@@ -17,7 +18,7 @@ export default function OculusRailings() {
 
 function Railing({path}: {path: RailingPath}) {
   const handrail = useDisposable(useMemo(() => new PolylineTubeGeometry(path.points, path.radius, 12), [path]))
-  return <RigidBody colliders={false} type='fixed'>
+  return <RigidBody colliders={false} type='fixed'><StaticBatch name='oculus-railing'>
     <mesh castShadow geometry={handrail} material={metal} name='oculus-continuous-handrail' receiveShadow />
     {path.segments.map((segment, i) => <CapsuleCollider key={i} args={[segment.halfLength, path.radius]} position={segment.position} quaternion={segment.rotation} />)}
     {path.posts.map((post, i) => <group key={i} position={post.position}>
@@ -25,5 +26,5 @@ function Railing({path}: {path: RailingPath}) {
       <mesh castShadow material={metal} name='oculus-railing-post' receiveShadow><cylinderGeometry args={[path.postRadius, path.postRadius, post.height, 12]} /></mesh>
     </group>)}
     {[0, 1].map(t => <mesh key={t} castShadow material={metal} name='oculus-handrail-end-cap' position={path.getPoint(t)} receiveShadow><sphereGeometry args={[path.radius, 12, 8]} /></mesh>)}
-  </RigidBody>
+  </StaticBatch></RigidBody>
 }

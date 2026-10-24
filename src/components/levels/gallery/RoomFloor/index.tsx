@@ -9,6 +9,7 @@ import FloorGlass from '#component/levels/gallery/FloorGlass'
 import ParquetFloor from '#component/levels/gallery/ParquetFloor'
 import WoodFloor from '#component/levels/gallery/WoodFloor'
 import Box from '#src/components/Scene/primitives.tsx'
+import StaticBatch from '#src/components/Scene/StaticBatch.tsx'
 import {floorThickness, roomFloorPlan} from '#src/lib/gallery/floors.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
@@ -46,7 +47,7 @@ export default function RoomFloor({glass, materials, room, stone, wood}: {
     map: stone,
     color: '#f3eddf',
   }
-  return <group name={`${room.id}-floor`}>
+  return <StaticBatch name={`${room.id}-floor`}>
     <RigidBody colliders={false} type='fixed'>
       {plan.slabs.map(({center: [x, z], size: [width, depth]}, i) => <group key={i}>
         <CuboidCollider args={[width / 2, floorThickness / 2, depth / 2]} position={[x, -floorThickness / 2, z]} />
@@ -61,5 +62,5 @@ export default function RoomFloor({glass, materials, room, stone, wood}: {
       {plan.seams.map(({center: [x, z], size: [width, depth]}, i) => <Box key={i} color='#a8a18f' envMapIntensity={envMapIntensity} position={[x, 0.008, z]} size={[width, 0.008, depth]} />)}
       {plan.inlays.map(({center: [x, z], size: [width, depth]}, i) => <Box key={i} color='#9d8354' envMapIntensity={envMapIntensity} material={materials?.inlay} metalness={0.45} position={[x, 0.015, z]} size={[width, 0.012, depth]} />)}
     </Branch>
-  </group>
+  </StaticBatch>
 }

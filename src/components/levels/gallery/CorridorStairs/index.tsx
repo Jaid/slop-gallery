@@ -6,6 +6,7 @@ import {useMemo} from 'react'
 
 import TimberFrame from '#component/levels/gallery/TimberFrame'
 import Box from '#src/components/Scene/primitives.tsx'
+import StaticBatch from '#src/components/Scene/StaticBatch.tsx'
 import {corridorRails, corridorRunner, corridorStairs} from '#src/lib/gallery/corridor.ts'
 import TimberGeometry from '#src/lib/gallery/passages/TimberGeometry.ts'
 import {lightIndoors} from '#src/lib/materials/lights/index.ts'
@@ -19,7 +20,7 @@ export default function CorridorStairs({timber, lining}: {
   const frame = useDisposable(useMemo(() => TimberGeometry.stairs(corridorStairs), []))
   // The runner, rods and nosings are shaded into the treads, so every step stays a single box.
   const treads = useDisposable(useMemo(() => lightIndoors(new StairRunnerMaterial(corridorRunner)), []))
-  return <group name='corridor-wooden-stairs'>
+  return <StaticBatch name='corridor-wooden-stairs'>
     <RigidBody colliders={false} type='fixed'>
       {corridorStairs.blocks.map((block, i) => <group key={i}>
         <CuboidCollider args={[block.size[0] / 2, block.size[1] / 2, block.size[2] / 2]} position={block.position} />
@@ -31,5 +32,5 @@ export default function CorridorStairs({timber, lining}: {
         <Box material={timber} size={beam.size} />
       </group>)}
     </RigidBody>
-  </group>
+  </StaticBatch>
 }

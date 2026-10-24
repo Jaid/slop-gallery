@@ -10,6 +10,7 @@ import useGraphicsMode from 'use-graphics-mode'
 import BenchSeat from '#component/levels/gallery/BenchSeat'
 import RoomFloor from '#component/levels/gallery/RoomFloor'
 import Box from '#src/components/Scene/primitives.tsx'
+import StaticBatch from '#src/components/Scene/StaticBatch.tsx'
 import {rooms, walls} from '#src/lib/gallery.ts'
 import {wallFace, wallOpeningTrim} from '#src/lib/gallery/architecture.ts'
 import {lightingPresets, useLighting} from '#src/lib/gallery/lighting.ts'
@@ -102,7 +103,7 @@ function Skylight({gilt, glass, ironwork, plaster}: {
     }
     return plane
   }, [opening]))
-  return <group name='salon-skylight'>
+  return <StaticBatch name='salon-skylight'>
     {/* The coffer ring hangs below the slab and frames the glass, with a gilt bead along its lower inner edge. */}
     {[-1, 1].map(side => <group key={side}>
       <Box material={plaster} position={[0, beamY, side * (halfZ + frame / 2)]} size={[opening[0] + frame * 2, depth, frame]} />
@@ -113,7 +114,7 @@ function Skylight({gilt, glass, ironwork, plaster}: {
     {bars(opening[0]).map(x => <Box key={x} material={ironwork} position={[x, barY, 0]} size={[barWidth, barDepth, opening[1]]} />)}
     {bars(opening[1]).map(z => <Box key={z} material={ironwork} position={[0, barY, z]} size={[opening[0], barDepth, barWidth]} />)}
     <mesh geometry={geometry} material={glass} name='salon-skylight-glass' position={[0, salonSkylight.glassY, 0]} rotation={[Math.PI / 2, 0, 0]} />
-  </group>
+  </StaticBatch>
 }
 function WallDressing({dado, gilt, wall}: {
   dado: Material
@@ -125,13 +126,13 @@ function WallDressing({dado, gilt, wall}: {
   const reachesCorners = Math.abs(Math.sin(wall.rotation)) < 0.5
   const panels = wallDressingSpans(wall, wallOpeningTrim, wallFace + (reachesCorners ? 0 : panelDepth))
   const rails = wallDressingSpans(wall, wallOpeningTrim, wallFace + (reachesCorners ? 0 : railDepth))
-  return <group name={`${wall.id}-wainscot`} position={wall.center} rotation={[0, wall.rotation, 0]}>
+  return <StaticBatch name={`${wall.id}-wainscot`} position={wall.center} rotation={[0, wall.rotation, 0]}>
     {panels.map(([start, end]) => <group key={start}>
       <Box material={dado} position={[(start + end) / 2, (bottom + railBottom) / 2, wallFace + panelDepth / 2]} size={[end - start, railBottom - bottom, panelDepth]} />
       {wainscotFields(start, end).map(([center, width]) => <Box key={center} material={dado} position={[center, (bottom + railBottom) / 2, wallFace + panelDepth + fieldDepth / 2]} size={[width, railBottom - bottom - margin * 2, fieldDepth]} />)}
     </group>)}
     {rails.map(([start, end]) => <Box key={start} material={gilt} position={[(start + end) / 2, railBottom + railHeight / 2, wallFace + railDepth / 2]} size={[end - start, railHeight, railDepth]} />)}
-  </group>
+  </StaticBatch>
 }
 function Ottoman() {
   const {apronHeight, cushionHeight, depth, legHeight, position, seatHeight, width} = salonBench

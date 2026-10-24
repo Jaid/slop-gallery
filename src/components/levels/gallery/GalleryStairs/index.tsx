@@ -4,6 +4,7 @@ import {useMemo} from 'react'
 
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
 import Box from '#src/components/Scene/primitives.tsx'
+import StaticBatch from '#src/components/Scene/StaticBatch.tsx'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import {stairBlocks, stairRailGeometry, stairRoofs, stairTurn} from '#src/lib/gallery/staircase.ts'
 
@@ -51,7 +52,7 @@ export default function GalleryStairs() {
     }
   }, []))
   const {parts: turn} = turnResource
-  return <group name='moonfall-stairway'>
+  return <StaticBatch name='moonfall-stairway'>
     <RigidBody colliders={false} type='fixed'>
       {stairBlocks.map(({position, size}, i) => <group key={i}>
         <CuboidCollider args={[size[0] / 2, size[1] / 2, size[2] / 2]} position={position} />
@@ -74,5 +75,5 @@ export default function GalleryStairs() {
       {stairRoofs.map((beam, i) => <Box key={i} name='stairway-ceiling' {...beam} color='#101e24' envMapIntensity={0} />)}
     </RigidBody>
     <pointLight color='#8ad6cd' decay={stairLamp.decay} distance={stairLamp.distance} intensity={stairLamp.intensity} position={stairLamp.position} userData={{rooms: stairLamp.rooms}} />
-  </group>
+  </StaticBatch>
 }
