@@ -240,8 +240,17 @@ const sections: Array<Section> = [
   {
     title: 'Lighting',
     controls: [
-      select('lampSet', 'Lamps', [['all', 'All'], ['essential', 'Essential']]),
-      percent('lamps', 'Lamp multiplier', 0, 4, 0.05),
+      {
+        ...select('lampSet', 'Lamps', [['all', 'All'], ['essential', 'Essential']]),
+        off: {
+          fallback: 'all',
+          off: 'none',
+        },
+      },
+      {
+        ...percent('lamps', 'Lamp multiplier', 0, 4, 0.05),
+        when: settings => settings.lampSet !== 'none',
+      },
       range('hemisphereIntensity', 'Base light', 0, 4, 0.1),
       percent('environmentIntensity', 'Environment', 0, 1, 0.05),
     ],

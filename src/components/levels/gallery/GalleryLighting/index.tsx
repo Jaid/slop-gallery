@@ -16,7 +16,7 @@ import proceduralSky, {SkyLook} from '#src/lib/materials/ProceduralSky.ts'
 import {getDefaultCustomGraphics, useCustomGraphics} from '#src/lib/rendering/customGraphics.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 import {lightGain} from '#src/lib/rendering/lightLevels.ts'
-import {getShadowProps, useShadowProps} from '#src/lib/rendering/shadowFilters.ts'
+import {getShadowProps} from '#src/lib/rendering/shadowFilters.ts'
 
 /** key that cycles the lighting presets with `?development`, backwards with Shift */
 export const lightingCycleKey = 'KeyL'
@@ -105,7 +105,7 @@ export default function GalleryLighting() {
       light.shadow.needsUpdate = true
     }
   }, [shadow])
-  // Lamps glow by the preset’s gain, and the optional ones not at all with only the essential lamps. The corridor’s lanterns already light a space of their own, without any of the daylight’s fill, and daylight is no lamp.
+  // Lamps glow by the preset’s gain, and the optional ones not at all with only the essential lamps, or every one with none. The corridor’s lanterns already light a space of their own, without any of the daylight’s fill, and daylight is no lamp.
   const {lamps, lampSet = 'all'} = preset
   useLayoutEffect(() => {
     lightGain.current = light => {
@@ -113,7 +113,7 @@ export default function GalleryLighting() {
       if (!(lamp.isPointLight || lamp.isSpotLight) || lamp.userData.daylight) {
         return 1
       }
-      return lampSet === 'essential' && lamp.userData.optional ? 0 : lamps
+      return lampSet === 'none' || lampSet === 'essential' && lamp.userData.optional ? 0 : lamps
     }
     return () => {
       lightGain.current = () => 1

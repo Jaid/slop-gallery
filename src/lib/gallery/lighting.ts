@@ -196,8 +196,8 @@ export type LightingPresetId = keyof typeof presets
 
 export const lightingPresetIds = Object.keys(presets) as Array<LightingPresetId>
 
-/** which lamps glow: all of them, or only the essential ones, leaving out the lights marked `optional` */
-export type LampSet = 'all' | 'essential'
+/** which lamps glow: all of them, only the essential ones, leaving out the lights marked `optional`, or none */
+export type LampSet = 'all' | 'essential' | 'none'
 
 /** a preset with the position and shadow frustum its sun direction needs */
 export type GalleryLightingPreset = LightingPreset & {
