@@ -100,3 +100,35 @@ test('meshes land in the room holding most of their volume and spill into the ot
   })
   expect(analysis.globalLights.map(light => light.type)).toEqual(['AmbientLight'])
 })
+test('each room lists the lights of other regions its room lists leave on', () => {
+  const scene = new Scene
+  const lamp = (name: string, x: number, lightRooms?: Array<string>) => {
+    const light = new PointLight
+    light.name = name
+    light.position.set(x, 2, 0)
+    if (lightRooms) {
+      light.userData.rooms = lightRooms
+    }
+    scene.add(light)
+    return light
+  }
+  lamp('everywhere', 0)
+  lamp('west-only', 0, ['west'])
+  lamp('seen-from-east', 0, ['west', 'east'])
+  lamp('passage', 30, ['east'])
+  // The shadow pool’s slots only stand in for other lights.
+  lamp('slot', 0).userData.shadowSlot = true
+  const {west, east} = analyzeWorld(scene, [square('west', 0), square('east', 10)]).rooms
+  expect(west.foreignLights).toEqual([])
+  expect(east.foreignLights).toEqual([
+    {
+      path: 'everywhere',
+      room: 'west',
+    },
+    {
+      path: 'seen-from-east',
+      room: 'west',
+    },
+    {path: 'passage'},
+  ])
+})

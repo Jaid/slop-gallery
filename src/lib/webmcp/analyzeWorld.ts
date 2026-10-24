@@ -37,6 +37,12 @@ export type WorldLight = {
   position: [number, number, number]
   type: string
 }
+/** a light of another region that shines while the player stands in this room */
+export type ForeignLight = {
+  path: string
+  /** the room the light sits in; left out for passages, stairways and the outdoors */
+  room?: string
+}
 export type WorldRegion = {
   lights: Array<WorldLight>
   /** sorted by triangles, most first */
@@ -48,7 +54,10 @@ export type WorldAnalysis = {
   /** ambient, hemisphere and directional lights, which light the world without a place in it */
   globalLights: Array<WorldLight>
   /** keyed by room id, in the level’s room order */
-  rooms: Record<string, Omit<WorldRoom, 'id'> & WorldRegion>
+  rooms: Record<string, Omit<WorldRoom, 'id'> & WorldRegion & {
+    /** positioned lights of other regions left on while the player stands here: those without a `userData.rooms` list and those whose list holds this room */
+    foreignLights: Array<ForeignLight>
+  }>
 }
 type Arrayable<T> = Array<T> | T
 
@@ -132,6 +141,7 @@ export default function analyzeWorld(scene: Object3D, rooms: ReadonlyArray<World
     lights: [],
   }]))
   const globalLights: Array<WorldLight> = []
+  const placed: Array<ForeignLight & {rooms?: ReadonlyArray<string>}> = []
   const fences = rooms.map(room => ({
     id: room.id,
     boxes: [room.fence].flat().map(({min, max}) => new Box3(new Vector3(min[0], min[1] - 1, min[2]), new Vector3(max[0], max[1] + 0.2, max[2]))),
@@ -161,7 +171,16 @@ export default function analyzeWorld(scene: Object3D, rooms: ReadonlyArray<World
       if (globalLightTypes.has(light.type)) {
         globalLights.push(light)
       } else {
-        regions.get(roomAt(center.fromArray(light.position)))!.lights.push(light)
+        const room = roomAt(center.fromArray(light.position))
+        regions.get(room)!.lights.push(light)
+        // The shadow pool’s slots only stand in for other lights.
+        if (!object.userData.shadowSlot) {
+          placed.push({
+            path: light.path,
+            ...room === undefined ? {} : {room},
+            rooms: object.userData.rooms as ReadonlyArray<string> | undefined,
+          })
+        }
       }
       return
     }
@@ -229,6 +248,10 @@ export default function analyzeWorld(scene: Object3D, rooms: ReadonlyArray<World
     rooms: Object.fromEntries(rooms.map(({id, ...room}) => [id, {
       ...room,
       ...regions.get(id)!,
+      foreignLights: placed.filter(light => light.room !== id && (!light.rooms || light.rooms.includes(id))).map(({path, room: home}) => (home === undefined ? {path} : {
+        path,
+        room: home,
+      })),
     }])),
     elsewhere: regions.get(undefined)!,
     globalLights,
