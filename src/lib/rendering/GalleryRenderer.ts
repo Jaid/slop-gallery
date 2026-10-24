@@ -14,8 +14,16 @@ type Culler = (camera: Camera) => void
 type RenderObject = {scene: Object3D}
 type PromiseSink = {push: (promise: Promise<void>) => void}
 type ProjectObject = (this: Renderer, object: Object3D, camera: Camera, groupOrder: number, renderList: unknown, clippingContext: unknown) => void
+/** WebGPUBackend parameters three doesn’t type, which it reads when it requests the device in `init` */
+type BackendInternals = {parameters: {
+  device?: GPUDevice
+  powerPreference?: GPUPowerPreference
+  requiredLimits: Record<string, number>
+}}
 /** bytes per pixel of all render targets of a pass, which the tuning panel’s screen-space reflections exceed with a fifth half-float target; WebGPU guarantees 32 and desktop GPUs offer 64 or more */
 const developmentColorAttachmentBytes = 64
+/** sampled textures per shader stage that cinematic asks for; its heaviest fragment shaders sample 18, above the 16 WebGPU guarantees */
+const cinematicSampledTextures = 32
 /** Renderer internals that three doesn’t type. */
 type Internals = {
   _currentRenderBundle: unknown
@@ -143,7 +151,7 @@ export class GalleryRenderer extends WebgpuRenderer {
   }
 
   override init(): Promise<this> {
-    this.initialization ??= (telemetry ? telemetry.wrap('three.init', () => super.init()) : super.init()).then(renderer => {
+    this.initialization ??= this.requestCinematicLimits().then(() => (telemetry ? telemetry.wrap('three.init', () => super.init()) : super.init())).then(renderer => {
       this.compilePipelinesAsync()
       return renderer
     })
@@ -266,6 +274,19 @@ export class GalleryRenderer extends WebgpuRenderer {
     const project = this.warming ? this.projectWarming : this.projectCulled
     if (project) {
       this.internals._projectObject = project
+    }
+  }
+
+  /** Raises the sampled texture limit for cinematic to what the adapter offers, up to {@link cinematicSampledTextures}, so GPUs with fewer still get a device. */
+  private async requestCinematicLimits() {
+    const {parameters} = this.backend as unknown as BackendInternals
+    if (!readCinematicGraphics() || parameters.device !== undefined || typeof navigator === 'undefined' || !('gpu' in navigator)) {
+      return
+    }
+    // three requests the same GPU, so its device can get these limits.
+    const adapter = await navigator.gpu.requestAdapter({powerPreference: parameters.powerPreference})
+    if (adapter) {
+      parameters.requiredLimits.maxSampledTexturesPerShaderStage = Math.min(cinematicSampledTextures, adapter.limits.maxSampledTexturesPerShaderStage)
     }
   }
 
