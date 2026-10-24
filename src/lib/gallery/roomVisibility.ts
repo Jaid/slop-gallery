@@ -142,7 +142,13 @@ export function roomEnclosing(sphere: Sphere) {
 }
 
 /** rooms that look into a room behind a neighbor only in theory, along lines too grazing for its lights to matter, as viewer, the room between and the room behind */
-const blindSightlines: ReadonlyArray<readonly [RoomId, RoomId, RoomId]> = [['vesper', 'sienna', 'corridor']]
+const blindSightlines: ReadonlyArray<readonly [RoomId, RoomId, RoomId]> = [
+  ['vesper', 'sienna', 'corridor'],
+  ['sienna', 'corridor', 'lodge'],
+  ['lodge', 'corridor', 'sienna'],
+  ['corridor', 'lodge', 'oculus'],
+  ['oculus', 'lodge', 'corridor'],
+]
 const sightlines = new Map<string, ReadonlyArray<RoomId>>
 const neighbors = (room: RoomId) => portals.filter(portal => portal.rooms.includes(room)).map(portal => portal.rooms[1 - portal.rooms.indexOf(room)])
 /**
