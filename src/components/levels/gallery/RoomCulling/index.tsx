@@ -8,6 +8,7 @@ import {Frustum, Matrix4, Sphere, Vector3} from 'three/webgpu'
 import {useGallery} from '#src/lib/gallery.ts'
 import {roomContaining, roomEnclosing, visibleRooms} from '#src/lib/gallery/roomVisibility.ts'
 import {GalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
+import {lightActive} from '#src/lib/rendering/lightLevels.ts'
 import ShadowCache from '#src/lib/rendering/ShadowCache.ts'
 
 type Drawable = Object3D & {
@@ -62,7 +63,7 @@ const holdsLight = (object: Object3D) => {
 
 /**
  * Leaves out the rooms the camera can’t see from the room it is in, from every pass of the frame: the camera, its reflection and all shadow maps.
- * Shadow maps only update when something in their light’s reach changes, and lights in hidden rooms wait until their room comes back into view. Lights themselves stay, since a different set of lights would recompile every lit material.
+ * Shadow maps only update when something in their light’s reach changes, and lights in hidden rooms or switched off by their room list wait until they matter again. Lights themselves stay, since a different set of lights would recompile every lit material.
  */
 export default function RoomCulling() {
   const renderer = useThree(state => state.renderer)
@@ -91,6 +92,9 @@ export default function RoomCulling() {
         }
       })
       shadows.update(scene, hidden, (light: Light) => {
+        if (!lightActive.current(light)) {
+          return false
+        }
         const lightRoom = visible && roomContaining(position.setFromMatrixPosition(light.matrixWorld).toArray())
         return !lightRoom || visible.has(lightRoom)
       })

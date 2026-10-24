@@ -94,9 +94,13 @@ export default class PointLightsNode extends LightingNode {
     reflectedLight.directSpecular.addAssign(directSpecular)
   }
 
+  /** Packs the lights that shine into the arrays; dark ones, like those switched off or outside their rooms, cost the loop nothing. */
   override update({camera}: NodeFrame): undefined {
     let i = 0
     for (const light of this.lights()) {
+      if (light.intensity === 0) {
+        continue
+      }
       if (i === this.capacity) {
         throw new RangeError(`More point lights than the batch capacity of ${this.capacity}.`)
       }
