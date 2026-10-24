@@ -78,6 +78,7 @@ Update that object from your own controller or input system.
 | `enabled` | Defaults to true. False suppresses input and buffered jumps while deceleration, gravity and collisions continue. It does not pause physics or disable mouse look. |
 | `requirePointerLock` | Defaults to true. Input requires a lock on this canvas, not an unrelated element. |
 | `pointerLock` | Defaults to true. An object forwards Drei options such as `selector`, `pointerSpeed`, `enabled`, `onLock`, `onUnlock` and `makeDefault`. The component supplies the canvas and defaults `makeDefault` to true. False omits look controls but does not implicitly change the lock requirement. |
+| `flying` | Defaults to false. True turns the player into a free-flying camera: `forward`/`backward` move along the look direction including pitch, `left`/`right` strafe, `jump`/`crouch` rise and sink and `sprint` applies `sprintFactor`. Gravity is off and the capsule collider is disabled, so the player passes through geometry and stops pushing bodies. Turning it off falls from the current position. |
 | `cameraEnabled` | Defaults to true. False releases camera **position** while movement and camera smoothing continue. Control mouse look separately through `pointerLock.enabled` or the default Three controls. |
 
 Both `enabled` and `cameraEnabled` accept a boolean or synchronous predicate. Predicates can read mutable state or an external store without a subscription.

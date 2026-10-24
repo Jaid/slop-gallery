@@ -35,9 +35,9 @@ function player(options: EgoOptions = {}, position: EgoPosition = [0, 0.04, 0]) 
 function floor() {
   return world.createCollider(RAPIER.ColliderDesc.cuboid(20, 0.1, 20).setTranslation(0, -0.1, 0))
 }
-function tick(motor: EgoMotor, input: EgoInput = {}, count = 1, active = true) {
+function tick(motor: EgoMotor, input: EgoInput = {}, count = 1, active = true, flying = false) {
   for (let i = 0; i < count; i++) {
-    motor.step(world.timestep, input, rotation, active)
+    motor.step(world.timestep, input, rotation, active, flying)
     world.step()
   }
 }
@@ -67,6 +67,33 @@ test('settles at feet-relative capsule clearance and reports physical state', ()
   tick(motor, {right: true}, 60)
   expect(snapshot.position.x).toBeCloseTo(0)
   expect(snapshot.velocity.z).toBeCloseTo(-defaultEgoOptions.speed, 2)
+})
+test('flying follows the look direction through geometry and falls after landing', () => {
+  const motor = grounded()
+  const pitched = new Quaternion
+  pitched.setFromAxisAngle(new Vector3(1, 0, 0), Math.PI / 4)
+  for (let i = 0; i < 60; i++) {
+    motor.step(world.timestep, {forward: true}, pitched, true, true)
+    world.step()
+  }
+  expect(motor.getState()).toMatchObject({
+    flying: true,
+    grounded: false,
+  })
+  expect(motor.getState().velocity.y).toBeCloseTo(defaultEgoOptions.speed * Math.SQRT1_2, 2)
+  expect(motor.getState().velocity.z).toBeCloseTo(-defaultEgoOptions.speed * Math.SQRT1_2, 2)
+  const height = motor.body.translation().y
+  expect(height).toBeGreaterThan(1)
+  tick(motor, {}, 60, true, true)
+  expect(motor.body.translation().y).toBeGreaterThan(height)
+  tick(motor, {crouch: true}, 120, true, true)
+  expect(motor.body.translation().y).toBeLessThan(-1)
+  tick(motor, {jump: true}, 120, true, true)
+  expect(motor.body.translation().y).toBeGreaterThan(1)
+  tick(motor, {}, 120)
+  expect(motor.flying).toBe(false)
+  expect(motor.grounded).toBe(true)
+  expect(motor.body.translation().y).toBeCloseTo(0.02, 2)
 })
 test('partial input is neutral and diagonal input is normalized', () => {
   const motor = grounded()

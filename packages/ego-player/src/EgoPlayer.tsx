@@ -29,6 +29,8 @@ export type EgoPlayerProps = EgoOptions & Partial<EgoZoomOptions> & {
   enabled?: EgoToggle
   /** Safe feet position used when a spawn/teleport fits neither standing nor crouching. */
   fallbackPosition?: EgoPosition
+  /** Free flight: forward/backward follow the camera direction including pitch, jump/crouch rise/sink, no gravity or collisions. */
+  flying?: EgoToggle
   input: EgoInputReader
   /** Enables the dump action. Called once per press with a detached diagnostic snapshot. */
   onDump?: (dump: EgoDump) => void
@@ -65,7 +67,7 @@ const initialPosition: EgoPosition = [0, 0.05, 0]
 const readToggle = (value: EgoToggle) => {
   return typeof value === 'function' ? value() : value
 }
-export default function EgoPlayer({cameraEnabled = true, casualZoomFactor = 2, casualZoomTransition = 0.2, children, enabled = true, extendedZoomFactor = 4, extendedZoomTransition = 0.5, fallbackPosition, input, onDump, onInteract, onLand, onZoomChange, onZoomTransition, onInput, onStep, onUpdate, pitch = 0, pointerLock = true, position = initialPosition, ref, requirePointerLock = true, userData, yaw = 0, ...options}: EgoPlayerProps) {
+export default function EgoPlayer({cameraEnabled = true, casualZoomFactor = 2, casualZoomTransition = 0.2, children, enabled = true, extendedZoomFactor = 4, extendedZoomTransition = 0.5, fallbackPosition, flying = false, input, onDump, onInteract, onLand, onZoomChange, onZoomTransition, onInput, onStep, onUpdate, pitch = 0, pointerLock = true, position = initialPosition, ref, requirePointerLock = true, userData, yaw = 0, ...options}: EgoPlayerProps) {
   const [defaultUserData] = useState(() => ({isPlayer: true}))
   for (const [name, factor] of Object.entries({
     casualZoomFactor,
@@ -248,7 +250,7 @@ export default function EgoPlayer({cameraEnabled = true, casualZoomFactor = 2, c
     if (active && onInput && (keys.forward || keys.backward || keys.left || keys.right || keys.jump || keys.crouch || keys.sprint || !keys.modifier && (keys.zoom || keys.interact && onInteract || keys.dump && onDump))) {
       onInput(keys)
     }
-    motor.step(physicsWorld.timestep, keys, camera.quaternion, active)
+    motor.step(physicsWorld.timestep, keys, camera.quaternion, active, readToggle(flying))
   })
   useAfterPhysicsStep(() => {
     const motor = motorRef.current

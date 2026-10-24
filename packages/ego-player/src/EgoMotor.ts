@@ -5,7 +5,7 @@ import type {Quaternion} from 'three/webgpu'
 
 import {Vector3} from 'three/webgpu'
 
-import {approachHorizontal, clamp, getCapsuleHalfHeight, getJumpVelocity} from './math.ts'
+import {approach, approachHorizontal, clamp, getCapsuleHalfHeight, getJumpVelocity} from './math.ts'
 import {resolveEgoOptions} from './options.ts'
 
 const up = new Vector3(0, 1, 0)
@@ -29,6 +29,7 @@ export default class EgoMotor {
   private freshClearance = false
   private hadGroundContact = false
   private isCrouching = false
+  private isFlying = false
   private isGrounded = false
   private jumpBufferedUntil = Number.NEGATIVE_INFINITY
   private jumpHeld = false
@@ -58,6 +59,10 @@ export default class EgoMotor {
 
   get crouchingHeight() {
     return clamp(this.options.crouchHeight, this.radius * 2, this.standingHeight)
+  }
+
+  get flying() {
+    return this.isFlying
   }
 
   get grounded() {
@@ -117,6 +122,7 @@ export default class EgoMotor {
     return {
       active: this.active,
       crouching: this.isCrouching,
+      flying: this.isFlying,
       grounded: this.isGrounded,
       position: {...this.body.translation()},
       velocity: {
@@ -127,7 +133,8 @@ export default class EgoMotor {
     }
   }
 
-  step(delta: number, input: EgoInput, rotation: Quaternion, active = true) {
+  /** `flying` moves freely along the camera direction, without gravity or collisions. Leaving it falls from the current position. */
+  step(delta: number, input: EgoInput, rotation: Quaternion, active = true, flying = false) {
     this.lastLandingSpeed = 0
     if (this.disposed || !Number.isFinite(delta) || delta <= 0) {
       return
@@ -137,6 +144,13 @@ export default class EgoMotor {
     this.clock += dt
     const now = this.clock
     this.active = active
+    if (flying) {
+      this.fly(dt, delta, input, rotation)
+      return
+    }
+    if (this.isFlying) {
+      this.land()
+    }
     const jumpHeld = active && !!input.jump
     if (!active) {
       this.jumpBufferedUntil = Number.NEGATIVE_INFINITY
@@ -339,6 +353,53 @@ export default class EgoMotor {
       }
     })
     return clear
+  }
+
+  private fly(dt: number, delta: number, input: EgoInput, rotation: Quaternion) {
+    const o = this.options
+    if (!this.isFlying) {
+      this.isFlying = true
+      this.collider.setEnabled(false)
+      this.velocity.y = this.verticalVelocity
+      this.verticalVelocity = 0
+      this.isGrounded = false
+    }
+    const active = this.active
+    // Latch jump so that holding Space while landing does not jump.
+    this.jumpHeld = active && !!input.jump
+    this.jumpBufferedUntil = Number.NEGATIVE_INFINITY
+    const inputForward = active ? Number(!!input.forward) - Number(!!input.backward) : 0
+    const inputRight = active ? Number(!!input.right) - Number(!!input.left) : 0
+    const inputUp = active ? Number(!!input.jump) - Number(!!input.crouch) : 0
+    this.targetVelocity.set(0, 0, 0)
+    const hasInput = inputForward !== 0 || inputRight !== 0 || inputUp !== 0
+    if (hasInput) {
+      this.forward.set(0, 0, -1).applyQuaternion(rotation)
+      this.right.set(1, 0, 0).applyQuaternion(rotation)
+      this.targetVelocity.addScaledVector(this.forward, inputForward).addScaledVector(this.right, inputRight).addScaledVector(up, inputUp).normalize()
+      this.targetVelocity.multiplyScalar(Math.max(o.speed * (input.sprint ? o.sprintFactor : 1), 0))
+    }
+    approach(this.velocity, this.targetVelocity, Math.max(hasInput ? o.acceleration : o.deceleration, 0) * dt)
+    this.movement.copy(this.velocity).multiplyScalar(dt)
+    this.physicalVelocity.copy(this.movement).divideScalar(delta)
+    const translation = this.body.translation()
+    this.body.setNextKinematicTranslation({
+      x: translation.x + this.movement.x,
+      y: translation.y + this.movement.y,
+      z: translation.z + this.movement.z,
+    })
+  }
+
+  private land() {
+    this.isFlying = false
+    this.collider.setEnabled(true)
+    // The disabled collider may not have followed the body; force updateShape to place it at the feet again.
+    this.shapeHeight = 0
+    this.updateShape()
+    this.velocity.y = 0
+    this.verticalVelocity = 0
+    this.airborneTime = 0
+    this.lastGroundedAt = Number.NEGATIVE_INFINITY
   }
 
   private pushDynamicBodies(dt: number) {

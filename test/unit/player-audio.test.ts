@@ -25,6 +25,7 @@ const state: EgoState = {
   active: true,
   grounded: true,
   crouching: false,
+  flying: false,
   position: {
     x: 0,
     y: 0.02,

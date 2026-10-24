@@ -16,6 +16,8 @@ export type EgoPoint = Readonly<{
 export type EgoState = Readonly<{
   active: boolean
   crouching: boolean
+  /** Free flight without gravity or collisions. */
+  flying: boolean
   grounded: boolean
   /** World-space feet position. */
   position: EgoPoint

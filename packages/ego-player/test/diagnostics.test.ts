@@ -18,6 +18,7 @@ test('diagnostic dumps detach all data and preserve precise surface placement in
     active: true,
     grounded: true,
     crouching: false,
+    flying: false,
     position: {
       x: 0,
       y: 0,
