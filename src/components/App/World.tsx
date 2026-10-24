@@ -5,22 +5,23 @@ import {useGraphicsModeValue} from 'use-graphics-mode'
 
 import Scene from '#component/Scene'
 import {playerSession} from '#src/lib/gallery/PlayerSession.ts'
+import {defaultFov, useCustomGraphics} from '#src/lib/rendering/customGraphics.ts'
 import {createGalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 import {readNear} from '#src/lib/rendering/near.ts'
-import {readScale, useZoomIndependentDpr} from '#src/lib/rendering/scale.ts'
+import {useZoomIndependentDpr} from '#src/lib/rendering/scale.ts'
 
 import GameScene from './GameScene.tsx'
 
 export default function World() {
   const profile = useGraphicsModeValue(getGraphicsProfile)
-  const [scale] = useState(() => readScale() ?? 1)
-  const dpr = useZoomIndependentDpr(scale)
+  // The permalink’s scale, unless the tuning panel of `?development` changed it.
+  const dpr = useZoomIndependentDpr(useCustomGraphics(state => state.renderScale))
   const [initial] = useState(() => playerSession.snapshot())
   const [near] = useState(() => readNear())
   return <Game
     camera={{
-      fov: 62,
+      fov: defaultFov,
       position: [initial.position[0], initial.position[1] + 1.6, initial.position[2]],
       ...near === undefined ? {} : {near},
     }} controls={egoControls} dpr={dpr} physics renderer={createGalleryRenderer} sceneWrapper={GameScene} shadows={profile.shadows}

@@ -1,24 +1,49 @@
 import type {LightingTuning} from '../gallery/lighting.ts'
 import type {RenderPipelineSettings} from './renderPipelineSettings.ts'
 
+import {ACESFilmicToneMapping} from 'three/webgpu'
 import {create} from 'zustand'
 
 import {getLightingTuning, lightingPresets, useLighting} from '../gallery/lighting.ts'
 import {getAntiAliasing} from './antiAliasing.ts'
 import {getGraphicsProfile, readCinematicGraphics} from './graphicsMode.ts'
 import {getRenderPipelineSettings} from './renderPipelineSettings.ts'
+import {readScale} from './scale.ts'
 
 /** key that shows or hides the tuning panel with `?development` */
 export const graphicsTuningKey = 'KeyG'
 
-/** everything the tuning panel changes: the render pipeline, and the lighting of levels that follow it */
-export type CustomGraphics = LightingTuning & RenderPipelineSettings
+/** the game camera’s vertical field of view in degrees, before any zoom */
+export const defaultFov = 62
+
+/** How the camera sees and the canvas resolves: values outside the render pipeline that the tuning panel changes too. */
+export type ViewTuning = {
+  /** vertical field of view of the game camera in degrees */
+  fov: number
+  /** renderer pixels per physical display pixel */
+  renderScale: number
+  /** one of three’s tone mapping constants */
+  toneMapping: number
+}
+
+/** everything the tuning panel changes: the render pipeline, the lighting of levels that follow it, and the view */
+export type CustomGraphics = LightingTuning & RenderPipelineSettings & ViewTuning
+
+/** The view a page starts with: the permalink’s scale, the camera’s field of view and the tone mapping React Three Fiber sets up. */
+export function getViewTuning(): ViewTuning {
+  return {
+    fov: defaultFov,
+    renderScale: readScale() ?? 1,
+    toneMapping: ACESFilmicToneMapping,
+  }
+}
 
 /** The pipeline of the page’s heavy graphics, heavy or cinematic, and the lighting of the preset the page starts with, which the panel starts from and resets to. */
 export function getDefaultCustomGraphics(): CustomGraphics {
   return {
     ...getRenderPipelineSettings(getGraphicsProfile(true, readCinematicGraphics()), getAntiAliasing(true)),
     ...getLightingTuning(lightingPresets[useLighting.getState().preset]),
+    ...getViewTuning(),
   }
 }
 

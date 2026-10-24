@@ -231,6 +231,8 @@ const lightingSchema = optis({
 /** The lighting values the tuning panel of `?development` changes. The sun’s azimuth runs clockwise from north (−z) and its elevation up from the horizon, both in degrees. */
 export type LightingTuning = {
   environmentIntensity: number
+  /** whether the ambient fill, the hemisphere’s base light and the environment light the scene at all */
+  fill: boolean
   hemisphereIntensity: number
   lamps: number
   lampSet: LampSet
@@ -250,6 +252,7 @@ export function getLightingTuning(preset: LightingPreset): LightingTuning {
   const [x, y, z] = preset.sun.direction
   return {
     environmentIntensity: preset.environment.intensity,
+    fill: true,
     hemisphereIntensity: preset.hemisphere.intensity,
     lamps: preset.lamps,
     lampSet: 'all',
@@ -265,6 +268,7 @@ export function getLightingTuning(preset: LightingPreset): LightingTuning {
 export function pickLightingTuning(tuning: LightingTuning): LightingTuning {
   return {
     environmentIntensity: tuning.environmentIntensity,
+    fill: tuning.fill,
     hemisphereIntensity: tuning.hemisphereIntensity,
     lamps: tuning.lamps,
     lampSet: tuning.lampSet,
@@ -281,15 +285,20 @@ export function tuneLighting(preset: GalleryLightingPreset, tuning: LightingTuni
   const own = getLightingTuning(preset)
   const pick = (key: 'environmentIntensity' | 'hemisphereIntensity' | 'lamps' | 'sunAzimuth' | 'sunElevation' | 'sunIntensity') => (tuning[key] === start[key] ? own[key] : tuning[key])
   const isMoved = pick('sunAzimuth') !== own.sunAzimuth || pick('sunElevation') !== own.sunElevation
+  const fill = tuning.fill ? 1 : 0
   return {
     ...preset,
+    ambient: {
+      ...preset.ambient,
+      intensity: preset.ambient.intensity * fill,
+    },
     environment: {
       ...preset.environment,
-      intensity: pick('environmentIntensity'),
+      intensity: pick('environmentIntensity') * fill,
     },
     hemisphere: {
       ...preset.hemisphere,
-      intensity: pick('hemisphereIntensity'),
+      intensity: pick('hemisphereIntensity') * fill,
     },
     lamps: pick('lamps'),
     lampSet: tuning.lampSet,

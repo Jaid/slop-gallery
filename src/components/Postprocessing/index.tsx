@@ -2,6 +2,7 @@ import type {RenderPipelineSettings, RenderPipelineStructure} from '#src/lib/ren
 
 import {useStore, useThree} from '@react-three/fiber'
 import {useLayoutEffect, useMemo} from 'react'
+import {PerspectiveCamera} from 'three/webgpu'
 import {useShallow} from 'zustand/react/shallow'
 
 import {galleryEvents} from '#src/lib/gallery/actions.ts'
@@ -32,6 +33,23 @@ const Postprocessing = ({focus = false, heavy = true, settings, tunable = false}
   // Compared by value, so a panel change only rebuilds the pipeline when it changes its passes.
   const structureKey = JSON.stringify(tunable ? panelStructure : getRenderPipelineStructure(settings))
   const structure = useMemo(() => JSON.parse(structureKey) as RenderPipelineStructure, [structureKey])
+  // The tuning panel’s view. The camera’s zoom treats a new field of view as the one to zoom from and return to.
+  const fov = useCustomGraphics(state => state.fov)
+  const toneMapping = useCustomGraphics(state => state.toneMapping)
+  useLayoutEffect(() => {
+    if (tunable && camera instanceof PerspectiveCamera && camera.fov !== fov) {
+      // eslint-disable-next-line react-hooks/immutability -- the panel owns the camera’s field of view while tuning.
+      camera.fov = fov
+      camera.updateProjectionMatrix()
+    }
+  }, [camera, fov, tunable])
+  useLayoutEffect(() => {
+    if (tunable) {
+      // A render pipeline notices a new tone mapping and rebuilds its output by itself.
+      // eslint-disable-next-line react-hooks/immutability -- the panel owns the renderer’s tone mapping while tuning.
+      renderer.toneMapping = toneMapping as typeof renderer.toneMapping
+    }
+  }, [renderer, toneMapping, tunable])
   // The scene pass renders into targets with their own outputs. Activated after the first frame, every material of the scene would build a second time for them.
   useLayoutEffect(() => {
     const options = {

@@ -2,6 +2,7 @@ import type {CustomGraphics} from '#src/lib/rendering/customGraphics.ts'
 
 import Branch from 'branch-component'
 import {useEffect} from 'react'
+import {ACESFilmicToneMapping, AgXToneMapping, CineonToneMapping, LinearToneMapping, NeutralToneMapping, NoToneMapping, ReinhardToneMapping} from 'three/webgpu'
 import useGraphicsMode from 'use-graphics-mode'
 import {create} from 'zustand'
 
@@ -86,7 +87,17 @@ const uncappedLuminance = 65_504
 const shadowMapSizes = [1024, 2048, 4096, 8192, ...readCinematicGraphics() ? [cinematicMaxTextureSize] : []]
 const scales = (values: Array<number>): Array<[number, string]> => values.map(value => [value, `${value * 100}%`])
 const screenSpaceReflections = (settings: CustomGraphics) => settings.reflectionScope === 'all'
+const lampShadowsCast = (settings: CustomGraphics) => settings.lampShadows > 0
+const renderScales = scales([0.25, 0.5, 0.75, 1, 1.25, 1.5, 2])
 const sections: Array<Section> = [
+  {
+    title: 'View',
+    controls: [
+      select('renderScale', 'Scale', renderScales.some(([value]) => value === useCustomGraphics.getState().renderScale) ? renderScales : [...renderScales, ...scales([useCustomGraphics.getState().renderScale])]),
+      range('fov', 'Field of view', 30, 110, 1),
+      select('toneMapping', 'Tone mapping', [[ACESFilmicToneMapping, 'ACES Filmic'], [AgXToneMapping, 'AgX'], [NeutralToneMapping, 'Neutral'], [ReinhardToneMapping, 'Reinhard'], [CineonToneMapping, 'Cineon'], [LinearToneMapping, 'Linear'], [NoToneMapping, 'None']]),
+    ],
+  },
   {
     title: 'Antialiasing',
     toggle: {
@@ -238,29 +249,50 @@ const sections: Array<Section> = [
     ],
   },
   {
-    title: 'Lighting',
+    title: 'Lamps',
+    toggle: {
+      fallback: 'all',
+      key: 'lampSet',
+      off: 'none',
+    },
     controls: [
+      select('lampSet', 'Lamps', [['all', 'All'], ['essential', 'Essential']]),
+      percent('lamps', 'Multiplier', 0, 4, 0.05),
       {
-        ...select('lampSet', 'Lamps', [['all', 'All'], ['essential', 'Essential']]),
-        off: {
-          fallback: 'all',
-          off: 'none',
-        },
-      },
-      {
-        ...percent('lamps', 'Lamp multiplier', 0, 4, 0.05),
-        when: settings => settings.lampSet !== 'none',
-      },
-      {
-        ...percent('lampShadows', 'Lamp shadows', 0.05, 1, 0.05),
+        ...percent('lampShadows', 'Shadows', 0.05, 1, 0.05),
         off: {
           fallback: 1,
           off: 0,
         },
-        when: settings => settings.lampSet !== 'none',
       },
-      range('hemisphereIntensity', 'Base light', 0, 4, 0.1),
-      percent('environmentIntensity', 'Environment', 0, 1, 0.05),
+      {
+        ...range('lampShadowSamples', 'Shadow samples', 1, 32, 1),
+        when: lampShadowsCast,
+      },
+      {
+        ...range('lampShadowRadius', 'Shadow filter radius', 0, 8, 0.25),
+        when: lampShadowsCast,
+      },
+    ],
+  },
+  {
+    title: 'Lighting',
+    toggle: 'fill',
+    controls: [
+      {
+        ...range('hemisphereIntensity', 'Base light', 0.1, 4, 0.1),
+        off: {
+          fallback: 1,
+          off: 0,
+        },
+      },
+      {
+        ...percent('environmentIntensity', 'Environment', 0.05, 1, 0.05),
+        off: {
+          fallback: 1,
+          off: 0,
+        },
+      },
     ],
   },
   {

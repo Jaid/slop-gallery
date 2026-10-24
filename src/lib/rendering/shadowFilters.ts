@@ -1,9 +1,12 @@
 import type Node from 'three/src/nodes/core/Node.js'
 import type {CubeTexture, LightShadow, Texture} from 'three/webgpu'
 
-import {abs, cross, cubeTexture, Fn, int, interleavedGradientNoise, normalize, reference, screenCoordinate, texture, vec3, vogelDiskSample} from 'three/tsl'
-import {useGraphicsModeValue} from 'use-graphics-mode'
+import {abs, cross, cubeTexture, float, Fn, int, interleavedGradientNoise, Loop, normalize, reference, screenCoordinate, texture, vec3, vogelDiskSample} from 'three/tsl'
+import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
+import {useShallow} from 'zustand/react/shallow'
 
+import {isDevelopmentMode} from '../developmentMode.ts'
+import {useCustomGraphics} from './customGraphics.ts'
 import {getGraphicsProfile} from './graphicsMode.ts'
 
 type ShadowFilterInputs = {
@@ -59,6 +62,42 @@ function createPointShadowFilter(count: number) {
     }))
   })
 }
+/**
+ * Like {@link createPcfShadowFilter} and {@link createPointShadowFilter}, but looping over `shadow.filterSamples` lookups, a uniform the tuning panel changes live: three builds a light’s shadow with its filter only once.
+ */
+function createTunableShadowFilter(isPoint: boolean) {
+  return Fn((inputs: PointShadowFilterInputs & ShadowFilterInputs) => {
+    const {depthLayer, depthTexture, shadow} = inputs
+    const count = reference('filterSamples', 'int', shadow)
+    const spread = reference('radius', 'float', shadow).div(reference('mapSize', 'vec2', shadow).x)
+    const phi = rotation()
+    const sum = float(0).toVar()
+    if (isPoint) {
+      const {bd3D, dp} = inputs
+      const absolute = abs(bd3D)
+      const tangent = normalize(cross(bd3D, absolute.x.greaterThan(absolute.z).select(vec3(0, 1, 0), vec3(1, 0, 0))))
+      const bitangent = cross(bd3D, tangent)
+      Loop(count, ({i}) => {
+        const offset = vogelDiskSample(i, count, phi)
+        sum.addAssign(cubeTexture(depthTexture, bd3D.add(tangent.mul(offset.x).add(bitangent.mul(offset.y)).mul(spread))).compare(dp))
+      })
+    } else {
+      const {shadowCoord} = inputs
+      Loop(count, ({i}) => {
+        let depth = texture(depthTexture, shadowCoord.xy.add(vogelDiskSample(i, count, phi).mul(spread)))
+        if (depthTexture.isArrayTexture) {
+          depth = depth.depth(depthLayer!)
+        }
+        sum.addAssign(depth.compare(shadowCoord.z))
+      })
+    }
+    return sum.div(float(count))
+  })
+}
+const tunableFilters = {
+  pcf: createTunableShadowFilter(false),
+  point: createTunableShadowFilter(true),
+}
 /** Three’s own filters take this many samples. */
 const defaultSamples = 5
 const filters = new Map<string, ReturnType<typeof createPcfShadowFilter> | ReturnType<typeof createPointShadowFilter>>
@@ -75,12 +114,26 @@ const getFilter = (count: number, isPoint: boolean) => {
 /**
  * Shadow props for a light whose map is `mapSize` texels wide in heavy graphics, scaled to the graphics mode.
  * The filter radius grows with the map, so a larger map keeps the penumbra’s width and only resolves it finer.
+ * In heavy graphics with `?development`, the tuning panel sets the lookups and the radius.
  */
 export function useShadowProps(mapSize: number, {isPoint = false, radius = 1}: {
   isPoint?: boolean
   radius?: number
 } = {}) {
+  const isHeavy = useGraphicsMode()
   const {shadowMapScale, shadowSamples} = useGraphicsModeValue(getGraphicsProfile)
+  const tuned = useCustomGraphics(useShallow(state => ({
+    radius: state.lampShadowRadius,
+    samples: state.lampShadowSamples,
+  })))
+  if (isDevelopmentMode && isHeavy) {
+    return {
+      'shadow-filterNode': isPoint ? tunableFilters.point : tunableFilters.pcf,
+      'shadow-filterSamples': tuned.samples,
+      'shadow-mapSize': [mapSize * shadowMapScale, mapSize * shadowMapScale] as const,
+      'shadow-radius': radius * tuned.radius,
+    }
+  }
   return getShadowProps({
     isPoint,
     mapSize: mapSize * shadowMapScale,

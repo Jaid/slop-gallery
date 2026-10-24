@@ -36,6 +36,10 @@ export type RenderPipelineSettings = {
   contactShadowThickness: number
   /** whether the output dithers by half an 8-bit step, so smooth, dark gradients don’t band */
   dither: boolean
+  /** how many texels each lamp’s shadow filter radius spans per unit of its own radius */
+  lampShadowRadius: number
+  /** shadow map lookups per pixel for every lamp */
+  lampShadowSamples: number
   /** floor reflection pixels per output pixel along each axis */
   reflectionResolutionScale: number
   reflectionScope: ReflectionScope
@@ -115,6 +119,8 @@ export function getRenderPipelineSettings(profile: GraphicsProfile, antiAliasing
     contactShadows: false,
     contactShadowThickness: 0.01,
     dither: false,
+    lampShadowRadius: profile.shadowMapScale,
+    lampShadowSamples: profile.shadowSamples,
     reflectionResolutionScale: profile.reflectionResolutionScale,
     reflectionScope: profile.floorReflections ? 'floors' : 'none',
     screenSpaceIndirectLight: profile.indirectLight,
