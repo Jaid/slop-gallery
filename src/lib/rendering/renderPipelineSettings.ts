@@ -119,7 +119,7 @@ export function getRenderPipelineSettings(profile: GraphicsProfile, antiAliasing
     contactShadows: false,
     contactShadowThickness: 0.01,
     dither: false,
-    lampShadowRadius: profile.shadowMapScale,
+    lampShadowRadius: profile.lampShadowRadius ?? profile.shadowMapScale,
     lampShadowSamples: profile.shadowSamples,
     reflectionResolutionScale: profile.reflectionResolutionScale,
     reflectionScope: profile.floorReflections ? 'floors' : 'none',

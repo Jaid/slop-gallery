@@ -96,6 +96,7 @@ test('the provider exposes the default scene budget during SSR', () => {
     noiseTextures: true,
     floorReflections: true,
     indirectLight: false,
+    lampShadowRadius: 4,
     shadows: true,
     postprocessing: true,
     ambientOcclusionResolutionScale: 0.75,
@@ -237,6 +238,18 @@ test('Sun shadow presets are independent of the other lights and follow the conf
   expect(cinematicProfile.shadowSamples).toBe(16)
   expect(heavy.voxelIndirectLightBounces).toBe(1)
   expect(cinematic.voxelIndirectLightBounces).toBe(2)
+})
+test('Heavy and Cinematic default to four-texel lamp shadow filtering without changing their samples or Sun', () => {
+  const fast = getRenderPipelineSettings(getGraphicsProfile(false), false)
+  const heavy = getRenderPipelineSettings(getGraphicsProfile(true), 'traa')
+  const cinematic = getRenderPipelineSettings(getGraphicsProfile(true, true), 'traa')
+  expect(fast.lampShadowRadius).toBe(1)
+  expect(heavy.lampShadowRadius).toBe(4)
+  expect(cinematic.lampShadowRadius).toBe(4)
+  expect(heavy.lampShadowSamples).toBe(4)
+  expect(cinematic.lampShadowSamples).toBe(16)
+  expect(heavy.sunShadowRadius).toBe(4)
+  expect(cinematic.sunShadowRadius).toBe(8)
 })
 test('Cinematic alone adopts the tuned SSGI settings', () => {
   const fast = getRenderPipelineSettings(getGraphicsProfile(false), false)

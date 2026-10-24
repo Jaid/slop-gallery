@@ -37,6 +37,8 @@ export type GraphicsProfile = {
   floorReflections: boolean
   /** whether screen-space indirect light bounces the lit scene off the surfaces’ diffuse color */
   indirectLight: boolean
+  /** filter-radius multiplier for shadow-casting lamps; independent of the Sun */
+  lampShadowRadius?: number
   noiseTextures: boolean
   postprocessing: boolean
   /** floor reflection pixels per output pixel along each axis */
@@ -115,6 +117,7 @@ const heavyProfile: GraphicsProfile = {
   noiseTextures: true,
   floorReflections: true,
   indirectLight: false,
+  lampShadowRadius: 4,
   shadows: true,
   postprocessing: true,
   ambientOcclusionResolutionScale: 0.75,

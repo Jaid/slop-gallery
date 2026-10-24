@@ -121,7 +121,7 @@ export function useShadowProps(mapSize: number, {isPoint = false, radius = 1}: {
   radius?: number
 } = {}) {
   const isHeavy = useGraphicsMode()
-  const {shadowMapScale, shadowSamples} = useGraphicsModeValue(getGraphicsProfile)
+  const {lampShadowRadius, shadowMapScale, shadowSamples} = useGraphicsModeValue(getGraphicsProfile)
   const tuned = useCustomGraphics(useShallow(state => ({
     radius: state.lampShadowRadius,
     samples: state.lampShadowSamples,
@@ -137,7 +137,7 @@ export function useShadowProps(mapSize: number, {isPoint = false, radius = 1}: {
   return getShadowProps({
     isPoint,
     mapSize: mapSize * shadowMapScale,
-    radius: radius * shadowMapScale,
+    radius: radius * (lampShadowRadius ?? shadowMapScale),
     samples: shadowSamples,
   })
 }
