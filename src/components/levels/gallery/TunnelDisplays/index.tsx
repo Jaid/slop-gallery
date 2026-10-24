@@ -33,15 +33,9 @@ const DisplayExhibit = ({kind, material}: {
 /** Three plain colored lights in housings on the tunnel’s ceiling, abreast of each row of exhibits, lighting both displays at once. */
 const tunnelLightZs = tunnelDisplays[0].exhibits.map(exhibit => exhibit.position[2])
 /** The Lobby looks down into the tunnel through its glazed floor, but the tunnel’s lights stay off from there, so they never light the Lobby from below. */
-const tunnelLightRooms = seenFrom('oculus').filter(room => room !== 'lobby')
-/** red, green and blue, from the tunnel’s north end, each hanging 35 cm under its housing */
+const tunnelLightRooms = seenFrom('oculus', 'lobby')
+/** green, blue and red, from the tunnel’s north end up to its high south end, each hanging 35 cm under its housing */
 const tunnelLights = [
-  {
-    color: '#ff4d4d',
-    decay: 1.5,
-    distance: 10,
-    intensity: 20,
-  },
   {
     color: '#4dff6a',
     decay: 2,
@@ -53,6 +47,12 @@ const tunnelLights = [
     decay: 1.5,
     distance: 6,
     intensity: 40,
+  },
+  {
+    color: '#ff4d4d',
+    decay: 1.5,
+    distance: 10,
+    intensity: 20,
   },
 ]
 

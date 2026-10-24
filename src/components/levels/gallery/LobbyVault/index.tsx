@@ -17,7 +17,7 @@ import LimestoneMaterial from '#src/lib/materials/LimestoneMaterial.ts'
 import VaultGlassMaterial from '#src/lib/materials/VaultGlassMaterial.ts'
 
 /** The Oculus sees the chandeliers only through the glazed floor, which hides their light almost entirely, so they stay off from there. */
-const chandelierRooms = seenFrom('lobby').filter(room => room !== 'oculus')
+const chandelierRooms = seenFrom('lobby', 'oculus')
 
 /**
  * The Lobby’s coffered barrel vault with its glazed crown and rose windows, and the great chandeliers hanging from it.

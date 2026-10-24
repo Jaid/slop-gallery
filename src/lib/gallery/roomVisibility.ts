@@ -141,13 +141,20 @@ export function roomEnclosing(sphere: Sphere) {
   return result
 }
 
-const sightlines = new Map<RoomId, ReadonlyArray<RoomId>>
-/** A room and the rooms that look straight into it through an opening: where the player must be for a light inside it to matter. The same room always gives the same list. */
-export function seenFrom(room: RoomId) {
-  let result = sightlines.get(room)
+const sightlines = new Map<string, ReadonlyArray<RoomId>>
+const neighbors = (room: RoomId) => portals.filter(portal => portal.rooms.includes(room)).map(portal => portal.rooms[1 - portal.rooms.indexOf(room)])
+/**
+ * A room and the rooms that look into it through up to two openings, as far as {@link visibleRooms} reaches: where the player must be for a light inside it to matter.
+ * Hidden rooms are left out, and so are the rooms that would only look in through them. The same arguments always give the same list.
+ */
+export function seenFrom(room: RoomId, ...hidden: Array<RoomId>) {
+  const key = [room, ...hidden].join()
+  let result = sightlines.get(key)
   if (!result) {
-    result = [room, ...new Set(portals.filter(portal => portal.rooms.includes(room)).map(portal => portal.rooms[1 - portal.rooms.indexOf(room)]))]
-    sightlines.set(room, result)
+    const near = neighbors(room).filter(next => !hidden.includes(next))
+    const far = near.flatMap(neighbors).filter(next => !hidden.includes(next))
+    result = [...new Set([room, ...near, ...far])]
+    sightlines.set(key, result)
   }
   return result
 }

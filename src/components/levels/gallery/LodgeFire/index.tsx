@@ -19,7 +19,7 @@ import EmberBedMaterial from '#src/lib/materials/EmberBedMaterial.ts'
 import FlameMaterial from '#src/lib/materials/FlameMaterial.ts'
 
 /** The Lodge’s own lights stay off from the Oculus. */
-const lodgeLightRooms = seenFrom('lodge').filter(room => room !== 'oculus')
+const lodgeLightRooms = seenFrom('lodge', 'oculus')
 const {logs, embers, light} = fire
 const emberRotation = [-Math.PI / 2, 0, 0] as const
 const logRotation = [0, 0, Math.PI / 2] as const
@@ -89,6 +89,11 @@ function LiveFire() {
     <mesh geometry={flameGeometry} material={flameMaterial} name='lodge-flames' renderOrder={1} />
     <primitive object={coals} />
     <primitive object={sparks} />
-    <pointLight color={light.color} decay={light.decay} distance={light.distance} intensity={light.intensity} name='lodge-firelight' position={light.position} userData={{rooms: lodgeLightRooms}} ref={firelight} />
+    <pointLight
+      color={light.color} decay={light.decay} distance={light.distance} intensity={light.intensity} name='lodge-firelight' position={light.position} userData={{
+        rooms: lodgeLightRooms,
+        shadow: true,
+      }} ref={firelight}
+    />
   </>
 }

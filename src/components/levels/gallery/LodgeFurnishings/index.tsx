@@ -11,19 +11,14 @@ import lodgeInterior, {lodgeFurnitureColliders} from '#src/lib/gallery/lodgeInte
 import UpholsteredSeatGeometry from '#src/lib/gallery/lodgeInterior/UpholsteredSeatGeometry.ts'
 import WagonWheelGeometry from '#src/lib/gallery/lodgeInterior/WagonWheelGeometry.ts'
 import {seenFrom} from '#src/lib/gallery/roomVisibility.ts'
-import {useShadowProps} from '#src/lib/rendering/shadowFilters.ts'
 
 /** The Lodge’s own lights stay off from the Oculus. */
-const lodgeLightRooms = seenFrom('lodge').filter(room => room !== 'oculus')
+const lodgeLightRooms = seenFrom('lodge', 'oculus')
 const {armchairs, chandelier, coffeeTable, rug, sofa} = lodgeInterior
 
 /** Seating, table, rug and wagon-wheel chandelier of the Lodge, in the room’s frame. */
 export default function LodgeFurnishings({materials}: {materials: LodgeMaterials}) {
   const isHeavy = useGraphicsMode()
-  const shadow = useShadowProps(1024, {
-    isPoint: true,
-    radius: chandelier.shadowRadius,
-  })
   const sofaGeometry = useDisposable(useMemo(() => new UpholsteredSeatGeometry(sofa.seats, lodgeInterior.seatWidth), []))
   const armchairGeometry = useDisposable(useMemo(() => new UpholsteredSeatGeometry(1, lodgeInterior.seatWidth + 0.08), []))
   const table = useDisposable(useMemo(() => new CoffeeTableGeometry(coffeeTable.size), []))
@@ -58,7 +53,12 @@ export default function LodgeFurnishings({materials}: {materials: LodgeMaterials
       <mesh geometry={wheel.wax} material={materials.wax} />
       <mesh geometry={wheel.flames} material={materials.flame} />
       {/* In the candle plane, below the rim, so the iron never shadows its own light; heavy graphics let it ground the furniture with shadows. */}
-      <pointLight castShadow={isHeavy} color={chandelier.color} decay={2} distance={chandelier.distance} intensity={chandelier.intensity} position={[0, chandelier.lightY, 0]} shadow-camera-far={chandelier.distance} shadow-camera-near={0.1} shadow-normalBias={0.035} userData={{rooms: lodgeLightRooms}} {...shadow} />
+      <pointLight
+        color={chandelier.color} decay={chandelier.decay} distance={chandelier.distance} intensity={chandelier.intensity} position={[0, chandelier.lightY, 0]} userData={{
+          rooms: lodgeLightRooms,
+          shadow: isHeavy,
+        }}
+      />
     </group>
   </group>
 }

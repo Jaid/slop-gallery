@@ -95,11 +95,10 @@ const fire = {
     glowPosition: [0, 0.7, 0.35] as Vec3,
     color: '#ffb45b',
     /** before flickering, which averages 0.9 */
-    intensity: 31.2,
-    glowIntensity: 24,
-    distance: 8,
-    /** fades more gently than physical light, so the glow spreads evenly across the room */
-    decay: 1,
+    intensity: 68,
+    glowIntensity: 52,
+    distance: 10,
+    decay: 2,
   },
   sparks: {
     count: 48,

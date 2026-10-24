@@ -72,10 +72,9 @@ const lodgeInterior = {
     /** light height relative to the hub, a little below the wheel */
     lightY: -0.14,
     color: '#ffc68a',
-    intensity: 22.8,
+    intensity: 20,
     distance: 5,
-    /** eight flames on a 1.6 m wheel cast broad, soft shadows */
-    shadowRadius: 8,
+    decay: 1.25,
   },
   /**
    * The fieldstone chimney breast on the south wall. Lengths are along the room’s z; the fireplace group itself is turned by 180°, so its frame uses the negated values.

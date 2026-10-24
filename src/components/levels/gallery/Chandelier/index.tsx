@@ -8,13 +8,11 @@ import {MeshStandardNodeMaterial} from 'three/webgpu'
 import ChandelierGeometry from '#src/lib/gallery/ChandelierGeometry.ts'
 import {seenFrom} from '#src/lib/gallery/roomVisibility.ts'
 import {chandelierPhysics, chandelierStemCenter, chandelierStemHalfHeight} from '#src/lib/physics/chandelier.ts'
-import {useShadowProps} from '#src/lib/rendering/shadowFilters.ts'
 
 export default function Chandelier() {
   const anchor = useRef<RapierRigidBody>(null!)
   const fixture = useRef<RapierRigidBody>(null!)
   useSphericalJoint(anchor, fixture, [[0, 0, 0], chandelierPhysics.anchor])
-  const shadow = useShadowProps(1024, {isPoint: true})
   const brass = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
     color: '#bd924c',
     metalness: 0.88,
@@ -35,7 +33,12 @@ export default function Chandelier() {
       <mesh geometry={geometry.flames} name='chandelier-flames'><meshStandardNodeMaterial color='#fff0b6' emissive='#ffd36c' emissiveIntensity={4} toneMapped={false} /></mesh>
       <mesh geometry={geometry.pendant} name='chandelier-pendant'><primitive attach='material' object={brass} /></mesh>
       {/* Keep the shared light below the metalwork so the fixture cannot shadow its own source. */}
-      <pointLight castShadow color='#ffd36c' decay={2} distance={13} intensity={110} position={[0, -0.5, 0]} shadow-camera-far={13} shadow-camera-near={0.1} shadow-normalBias={0.035} userData={{rooms: seenFrom('sienna')}} {...shadow} />
+      <pointLight
+        color='#ffd36c' decay={2} distance={13} intensity={110} position={[0, -0.5, 0]} userData={{
+          rooms: seenFrom('sienna'),
+          shadow: true,
+        }}
+      />
     </RigidBody>
   </group>
 }

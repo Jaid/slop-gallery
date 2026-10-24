@@ -22,7 +22,6 @@ const moonfallLightTarget = () => {
 export default function MoonfallRoom({stone}: {stone: Texture}) {
   const target = moonfallLightTarget()
   const shadow = useShadowProps(2048)
-  const planetShadow = useShadowProps(1024, {isPoint: true})
   const [width, depth] = room.size
   return <group name='moonfall-room' position={[room.center[0], room.floorY, room.center[1]]}>
     <MoonfallCrater stone={stone} />
@@ -44,7 +43,12 @@ export default function MoonfallRoom({stone}: {stone: Texture}) {
     <primitive object={target} />
     <spotLight angle={0.9} castShadow color='#e0d0b2' distance={15} intensity={860} penumbra={0.28} position={[-7, 3.3, -4]} shadow-bias={-0.0001} shadow-normalBias={0.025} target={target} userData={lightRooms} {...shadow} />
     {/* The planet’s glow, rising from the crater, throws the orbital sculpture’s shadow onto the ceiling. */}
-    <pointLight castShadow color='#64bfb5' decay={1.25} distance={20} intensity={216} position={[5.37, 1.02, -0.19]} shadow-camera-far={20} shadow-camera-near={0.1} shadow-normalBias={0.035} userData={lightRooms} {...planetShadow} />
+    <pointLight
+      color='#64bfb5' decay={1.25} distance={20} intensity={216} position={[5.37, 1.02, -0.19]} userData={{
+        ...lightRooms,
+        shadow: true,
+      }}
+    />
     <pointLight color='#af7e5f' decay={1} distance={15} intensity={27} position={[6, 2.6, 6.15]} userData={lightRooms} />
   </group>
 }
