@@ -3,6 +3,7 @@ import type {RenderPipelineSetting, RenderPipelineSettings} from '#src/lib/rende
 import Branch from 'branch-component'
 import {useEffect} from 'react'
 import useGraphicsMode from 'use-graphics-mode'
+import {create} from 'zustand'
 
 import {getDefaultCustomGraphics, useCustomGraphics, useGraphicsTuning} from '#src/lib/rendering/customGraphics.ts'
 import {changeTunedGraphics, discardTuningBuffer, useTuningBuffer} from '#src/lib/rendering/tuningBuffer.ts'
@@ -11,6 +12,14 @@ import css from './style.module.sass'
 
 type BooleanKey = {[Key in RenderPipelineSetting]: RenderPipelineSettings[Key] extends boolean ? Key : never}[RenderPipelineSetting]
 type NumberKey = {[Key in RenderPipelineSetting]: RenderPipelineSettings[Key] extends number ? Key : never}[RenderPipelineSetting]
+type Value = RenderPipelineSettings[RenderPipelineSetting]
+/** A checkbox that switches a setting to `off` without losing its value, which the panel keeps to bring back when switched on again. */
+type Switch = {
+  /** the value to switch on to when the graphics mode starts with the setting off */
+  fallback: Value
+  key: RenderPipelineSetting
+  off: Value
+}
 type Control = ({
   key: BooleanKey
   kind: 'toggle'
@@ -26,14 +35,16 @@ type Control = ({
   options: Array<[value: RenderPipelineSettings[RenderPipelineSetting], label: string]>
 }) & {
   label: string
+  /** the value a checkbox in front of the label switches the setting to */
+  off?: Pick<Switch, 'fallback' | 'off'>
   /** whether the control does anything with the current settings, beyond its section being switched on */
   when?: (settings: RenderPipelineSettings) => boolean
 }
 type Section = {
   controls: Array<Control>
   title: string
-  /** the pass this section tunes, which its heading switches on and off */
-  toggle?: BooleanKey
+  /** the pass this section tunes, which its heading switches on and off, or the setting it switches off without losing */
+  toggle?: BooleanKey | Switch
 }
 
 const range = (key: NumberKey, label: string, min: number, max: number, step: number): Control => ({
@@ -49,7 +60,7 @@ const toggle = (key: BooleanKey, label: string): Control => ({
   kind: 'toggle',
   label,
 })
-const select = (key: RenderPipelineSetting, label: string, options: Array<[RenderPipelineSettings[RenderPipelineSetting], string]>): Control => ({
+const select = (key: RenderPipelineSetting, label: string, options: Array<[Value, string]>): Control => ({
   key,
   kind: 'select',
   label,
@@ -60,16 +71,23 @@ const screenSpaceReflections = (settings: RenderPipelineSettings) => settings.re
 const sections: Array<Section> = [
   {
     title: 'Antialiasing',
-    controls: [select('antiAliasing', 'Method', [['traa', 'TRAA'], ['smaa', 'SMAA'], [false, 'Off']])],
+    toggle: {
+      fallback: 'traa',
+      key: 'antiAliasing',
+      off: false,
+    },
+    controls: [select('antiAliasing', 'Method', [['traa', 'TRAA'], ['smaa', 'SMAA']])],
   },
   {
     title: 'Reflections',
+    toggle: {
+      fallback: 'floors',
+      key: 'reflectionScope',
+      off: 'none',
+    },
     controls: [
-      select('reflectionScope', 'Scope', [['none', 'None'], ['floors', 'Floors'], ['all', 'All']]),
-      {
-        ...select('reflectionResolutionScale', 'Floor resolution', scales([0.5, 1, 2])),
-        when: settings => settings.reflectionScope !== 'none',
-      },
+      select('reflectionScope', 'Scope', [['floors', 'Floors'], ['all', 'All']]),
+      select('reflectionResolutionScale', 'Floor resolution', scales([0.5, 1, 2])),
       {
         ...select('screenSpaceReflectionResolutionScale', 'SSR resolution', scales([0.25, 0.5, 1])),
         when: screenSpaceReflections,
@@ -135,7 +153,13 @@ const sections: Array<Section> = [
       range('volumetricLightMaxDensity', 'Max density', 0, 1, 0.05),
       range('volumetricLightSteps', 'Steps', 16, 256, 16),
       range('volumetricLightDistanceAttenuation', 'Attenuation', 0, 8, 0.25),
-      select('volumetricLightBlur', 'Blur', [[0, 'None'], [1, '1'], [2, '2'], [3, '3'], [4, '4'], [6, '6'], [8, '8']]),
+      {
+        ...select('volumetricLightBlur', 'Blur', [[1, '1'], [2, '2'], [3, '3'], [4, '4'], [6, '6'], [8, '8']]),
+        off: {
+          fallback: 3,
+          off: 0,
+        },
+      },
     ],
   },
   {
@@ -168,19 +192,63 @@ const sections: Array<Section> = [
   {
     title: 'Finish',
     controls: [
-      range('vignette', 'Vignette', 0, 1, 0.05),
+      {
+        ...range('vignette', 'Vignette', 0.05, 1, 0.05),
+        off: {
+          fallback: 0.2,
+          off: 0,
+        },
+      },
       toggle('dither', 'Dither'),
     ],
   },
 ]
+const switches: Array<Switch> = sections.flatMap(section => [
+  ...typeof section.toggle === 'object' ? [section.toggle] : [],
+  ...section.controls.filter(control => control.off).map(control => ({
+    ...control.off!,
+    key: control.key,
+  })),
+])
+const findSwitch = (key: RenderPipelineSetting) => switches.find(candidate => candidate.key === key)
 /** the values the panel opened with, which a label turns yellow once it leaves */
 const initial = getDefaultCustomGraphics()
-const set = (values: Partial<RenderPipelineSettings>) => {
-  changeTunedGraphics(() => useCustomGraphics.setState(values))
+const initialParked: Partial<Record<RenderPipelineSetting, Value>> = Object.fromEntries(switches.filter(({key, off}) => initial[key] === off).map(({fallback, key}) => [key, fallback]))
+/** the values of the settings a checkbox switched off, which come back when it switches them on again */
+const useParkedGraphics = create<Partial<Record<RenderPipelineSetting, Value>>>(() => initialParked)
+const set = (values: Partial<RenderPipelineSettings>, parked?: Partial<Record<RenderPipelineSetting, Value>>) => {
+  changeTunedGraphics(() => {
+    if (parked) {
+      useParkedGraphics.setState(parked, true)
+    }
+    useCustomGraphics.setState(values)
+  })
 }
 const reset = (keys: Array<RenderPipelineSetting>) => {
-  set(Object.fromEntries(keys.map(key => [key, initial[key]])))
+  const parked = {...useParkedGraphics.getState()}
+  for (const key of keys) {
+    if (key in initialParked) {
+      parked[key] = initialParked[key]
+    } else {
+      delete parked[key]
+    }
+  }
+  set(Object.fromEntries(keys.map(key => [key, initial[key]])), parked)
 }
+/** Switches a setting off, keeping its value, or back on to the kept one. */
+const switchSetting = ({fallback, key, off}: Switch, on: boolean) => {
+  const {[key]: kept, ...parked} = useParkedGraphics.getState()
+  if (on) {
+    set({[key]: kept ?? fallback}, parked)
+  } else {
+    set({[key]: off}, {
+      ...parked,
+      [key]: useCustomGraphics.getState()[key],
+    })
+  }
+}
+/** whether a setting differs from the one the panel opened with, counting the kept value of a switched-off one */
+const isChanged = (state: RenderPipelineSettings, parked: Partial<Record<RenderPipelineSetting, Value>>, key: RenderPipelineSetting) => state[key] !== initial[key] || parked[key] !== initialParked[key]
 /** Keeps the second click of a double-click from reaching the label’s control, so double-clicking a checkbox’s label resets it instead of switching it twice. */
 const ignoreRepeatedClick = (event: React.MouseEvent) => {
   if (event.detail > 1) {
@@ -224,7 +292,7 @@ export default function GraphicsTuning() {
       useTuningBuffer.setState({showing: false})
     }}
   >
-    <div className={css.heading}><h2>Render pipeline</h2><button type='button' onClick={() => changeTunedGraphics(() => useCustomGraphics.setState(initial, true))}>Reset</button></div>
+    <div className={css.heading}><h2>Render pipeline</h2><button type='button' onClick={() => set(initial, initialParked)}>Reset</button></div>
     <p className={css.hint}>{isHeavy ? 'Pause to tune. The menu hides while the pointer is over the panel. Double-click a label to reset it. Hold Space to see the frame from before the latest change.' : 'Switch graphics on in the menu to tune the pipeline.'}</p>
     <Branch if={isHeavy}>{sections.map(section => <SectionBox key={section.title} section={section} />)}</Branch>
   </aside>
@@ -233,29 +301,54 @@ function ControlRow({control, disabled}: {
   control: Control
   disabled: boolean
 }) {
-  const value = useCustomGraphics(state => state[control.key])
+  const current = useCustomGraphics(state => state[control.key])
+  const parked = useParkedGraphics(state => state[control.key])
   const applies = useCustomGraphics(state => control.when?.(state) ?? true)
+  // A switched-off setting, by its own checkbox or its section’s, shows the value it keeps.
+  const valueSwitch = findSwitch(control.key)
+  const isOff = current === valueSwitch?.off
+  const value = isOff ? parked ?? valueSwitch.fallback : current
+  const changed = current !== initial[control.key] || parked !== initialParked[control.key]
   const id = `tuning-${control.key}`
-  const label = <span data-changed={value !== initial[control.key] || undefined} onClick={ignoreRepeatedClick} onDoubleClick={() => reset([control.key])}>{control.label}</span>
+  const label = <span data-changed={changed || undefined} onClick={ignoreRepeatedClick} onDoubleClick={() => reset([control.key])}>
+    <Branch if={control.off}><input aria-label={`${control.label} on`} checked={!isOff} disabled={disabled} type='checkbox' onChange={event => switchSetting(valueSwitch!, event.currentTarget.checked)} /></Branch>
+    {control.label}
+  </span>
+  disabled ||= !applies || control.off !== undefined && isOff
   if (control.kind === 'toggle') {
-    return <label className={css.toggle}>{label}<input id={id} checked={value as boolean} disabled={disabled || !applies} type='checkbox' onChange={event => set({[control.key]: event.currentTarget.checked})} /></label>
+    return <label className={css.toggle}>{label}<input id={id} checked={value as boolean} disabled={disabled} type='checkbox' onChange={event => set({[control.key]: event.currentTarget.checked})} /></label>
   }
   if (control.kind === 'select') {
     const index = control.options.findIndex(([option]) => option === value)
-    return <label className={css.row}>{label}<select id={id} disabled={disabled || !applies} value={index} onChange={event => set({[control.key]: control.options[Number(event.currentTarget.value)][0]})}>{control.options.map(([, optionLabel], optionIndex) => <option key={optionLabel} value={optionIndex}>{optionLabel}</option>)}</select></label>
+    return <label className={css.row}>{label}<select id={id} disabled={disabled} value={index} onChange={event => set({[control.key]: control.options[Number(event.currentTarget.value)][0]})}>{control.options.map(([, optionLabel], optionIndex) => <option key={optionLabel} value={optionIndex}>{optionLabel}</option>)}</select></label>
   }
   return <label className={css.row}>
     {label}
-    <input id={id} disabled={disabled || !applies} max={control.max} min={control.min} step={control.step} type='range' value={value as number} onChange={event => set({[control.key]: Number(event.currentTarget.value)})} />
+    <input id={id} disabled={disabled} max={control.max} min={control.min} step={control.step} type='range' value={value as number} onChange={event => set({[control.key]: Number(event.currentTarget.value)})} />
     <output htmlFor={id}>{Number((value as number).toFixed(3))}</output>
   </label>
 }
 function SectionBox({section}: {section: Section}) {
-  const enabled = useCustomGraphics(state => section.toggle === undefined || state[section.toggle])
-  const keys = [...section.toggle === undefined ? [] : [section.toggle], ...section.controls.map(control => control.key)]
-  const changed = useCustomGraphics(state => keys.some(key => state[key] !== initial[key]))
+  const {toggle: sectionToggle} = section
+  const enabled = useCustomGraphics(state => {
+    if (sectionToggle === undefined) {
+      return true
+    }
+    return typeof sectionToggle === 'object' ? state[sectionToggle.key] !== sectionToggle.off : state[sectionToggle]
+  })
+  const toggleKey = typeof sectionToggle === 'object' ? sectionToggle.key : sectionToggle
+  const keys = [...new Set([...toggleKey === undefined ? [] : [toggleKey], ...section.controls.map(control => control.key)])]
+  const parked = useParkedGraphics()
+  const changed = useCustomGraphics(state => keys.some(key => isChanged(state, parked, key)))
+  const onToggle = (on: boolean) => {
+    if (typeof sectionToggle === 'object') {
+      switchSetting(sectionToggle, on)
+    } else {
+      set({[sectionToggle!]: on})
+    }
+  }
   return <fieldset className={css.section}>
-    <legend data-changed={changed || undefined} onClick={ignoreRepeatedClick} onDoubleClick={() => reset(keys)}><Branch if={section.toggle} else={section.title}><label><input checked={enabled} type='checkbox' onChange={event => set({[section.toggle!]: event.currentTarget.checked})} /> {section.title}</label></Branch></legend>
+    <legend data-changed={changed || undefined} onClick={ignoreRepeatedClick} onDoubleClick={() => reset(keys)}><Branch if={sectionToggle} else={section.title}><label><input checked={enabled} type='checkbox' onChange={event => onToggle(event.currentTarget.checked)} /> {section.title}</label></Branch></legend>
     {section.controls.map(control => <ControlRow key={control.key} control={control} disabled={!enabled} />)}
   </fieldset>
 }

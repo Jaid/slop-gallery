@@ -53,7 +53,7 @@ test('a settled change logs what changed and splits the measured segments', asyn
   expect(events[1][1]).toMatchObject({
     changed: 'contactShadows,vignette',
     rebuilt: true,
-    'from.vignette': 0.2,
+    'from.vignette': 0,
     'to.vignette': 0.5,
     'graphics.profile': 'heavy',
   })
