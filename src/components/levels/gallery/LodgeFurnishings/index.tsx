@@ -13,6 +13,8 @@ import WagonWheelGeometry from '#src/lib/gallery/lodgeInterior/WagonWheelGeometr
 import {seenFrom} from '#src/lib/gallery/roomVisibility.ts'
 import {useShadowProps} from '#src/lib/rendering/shadowFilters.ts'
 
+/** The Lodge’s own lights stay off from the Oculus. */
+const lodgeLightRooms = seenFrom('lodge').filter(room => room !== 'oculus')
 const {armchairs, chandelier, coffeeTable, rug, sofa} = lodgeInterior
 
 /** Seating, table, rug and wagon-wheel chandelier of the Lodge, in the room’s frame. */
@@ -56,7 +58,7 @@ export default function LodgeFurnishings({materials}: {materials: LodgeMaterials
       <mesh geometry={wheel.wax} material={materials.wax} />
       <mesh geometry={wheel.flames} material={materials.flame} />
       {/* In the candle plane, below the rim, so the iron never shadows its own light; heavy graphics let it ground the furniture with shadows. */}
-      <pointLight castShadow={isHeavy} color={chandelier.color} decay={2} distance={chandelier.distance} intensity={chandelier.intensity} position={[0, chandelier.lightY, 0]} shadow-camera-far={chandelier.distance} shadow-camera-near={0.1} shadow-normalBias={0.035} userData={{rooms: seenFrom('lodge')}} {...shadow} />
+      <pointLight castShadow={isHeavy} color={chandelier.color} decay={2} distance={chandelier.distance} intensity={chandelier.intensity} position={[0, chandelier.lightY, 0]} shadow-camera-far={chandelier.distance} shadow-camera-near={0.1} shadow-normalBias={0.035} userData={{rooms: lodgeLightRooms}} {...shadow} />
     </group>
   </group>
 }

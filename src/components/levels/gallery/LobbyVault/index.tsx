@@ -16,6 +16,9 @@ import gold from '#src/lib/materials/gold.ts'
 import LimestoneMaterial from '#src/lib/materials/LimestoneMaterial.ts'
 import VaultGlassMaterial from '#src/lib/materials/VaultGlassMaterial.ts'
 
+/** The Oculus sees the chandeliers only through the glazed floor, which hides their light almost entirely, so they stay off from there. */
+const chandelierRooms = seenFrom('lobby').filter(room => room !== 'oculus')
+
 /**
  * The Lobby’s coffered barrel vault with its glazed crown and rose windows, and the great chandeliers hanging from it.
  * Rendered inside the room’s group, at its center. `cladding` is the walls’ own travertine, carried on up the lunettes.
@@ -89,7 +92,7 @@ function LobbyChandeliers() {
       <mesh geometry={geometry.gilt} material={gold} name='lobby-chandelier-gilt' />
       <mesh geometry={geometry.candles} material={candles} name='lobby-chandelier-candles' />
       <mesh geometry={geometry.flames} material={flames} name='lobby-chandelier-flames' />
-      <pointLight color='#ffd27a' decay={2} distance={15} intensity={7.2} name='lobby-chandelier-light' position={[0, lobbyChandeliers.lightY - lobbyChandeliers.y, 0]} userData={{rooms: seenFrom('lobby')}} />
+      <pointLight color='#ffd27a' decay={2} distance={15} intensity={7.2} name='lobby-chandelier-light' position={[0, lobbyChandeliers.lightY - lobbyChandeliers.y, 0]} userData={{rooms: chandelierRooms}} />
     </group>)}
   </group>
 }

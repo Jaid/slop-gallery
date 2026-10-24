@@ -18,6 +18,8 @@ import CharredLogMaterial from '#src/lib/materials/CharredLogMaterial.ts'
 import EmberBedMaterial from '#src/lib/materials/EmberBedMaterial.ts'
 import FlameMaterial from '#src/lib/materials/FlameMaterial.ts'
 
+/** The Lodge’s own lights stay off from the Oculus. */
+const lodgeLightRooms = seenFrom('lodge').filter(room => room !== 'oculus')
 const {logs, embers, light} = fire
 const emberRotation = [-Math.PI / 2, 0, 0] as const
 const logRotation = [0, 0, Math.PI / 2] as const
@@ -40,7 +42,7 @@ function GlowingEmbers() {
     <mesh name='lodge-embers' position={[0, embers.y, 0]} rotation={emberRotation}>
       <planeGeometry args={embers.glowSize} /><meshStandardNodeMaterial color='#9b2609' emissive='#f85b12' emissiveIntensity={2} />
     </mesh>
-    <pointLight color={light.color} decay={light.decay} distance={light.distance} intensity={light.glowIntensity} name='lodge-firelight' position={light.glowPosition} userData={{rooms: seenFrom('lodge')}} />
+    <pointLight color={light.color} decay={light.decay} distance={light.distance} intensity={light.glowIntensity} name='lodge-firelight' position={light.glowPosition} userData={{rooms: lodgeLightRooms}} />
   </>
 }
 function LiveFire() {
@@ -87,6 +89,6 @@ function LiveFire() {
     <mesh geometry={flameGeometry} material={flameMaterial} name='lodge-flames' renderOrder={1} />
     <primitive object={coals} />
     <primitive object={sparks} />
-    <pointLight color={light.color} decay={light.decay} distance={light.distance} intensity={light.intensity} name='lodge-firelight' position={light.position} userData={{rooms: seenFrom('lodge')}} ref={firelight} />
+    <pointLight color={light.color} decay={light.decay} distance={light.distance} intensity={light.intensity} name='lodge-firelight' position={light.position} userData={{rooms: lodgeLightRooms}} ref={firelight} />
   </>
 }
