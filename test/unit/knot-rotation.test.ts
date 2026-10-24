@@ -3,7 +3,7 @@ import {afterEach, beforeEach, expect, test} from 'bun:test'
 import RAPIER from '@dimforge/rapier3d-compat'
 
 import GrabbableBody from '../../src/lib/physics/GrabbableBody.ts'
-import KnotRotation from '../../src/lib/physics/KnotRotation.ts'
+import KnotRotation, {knotRotationPeriod} from '../../src/lib/physics/KnotRotation.ts'
 
 await RAPIER.init()
 let world: RAPIER.World
@@ -17,7 +17,8 @@ test('rotates showcased Knots and colliders together without translating them', 
   const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(2, 1, 3))
   const collider = world.createCollider(RAPIER.ColliderDesc.cuboid(0.5, 0.4, 0.2), body)
   const rotation = new KnotRotation
-  for (let i = 0; i < 600; i++) {
+  // a quarter turn
+  for (let i = 0; i < knotRotationPeriod * 15; i++) {
     rotation.step(body, 1 / 60)
   }
   world.step()

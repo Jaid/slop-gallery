@@ -7,7 +7,7 @@ import KnotResources from 'knot-materials/KnotResources.ts'
 import {knotSign, knotSignParts, knotSignPosition, knotSignRoundParts} from 'knot-materials/signs.ts'
 import {Euler, Quaternion} from 'three/webgpu'
 
-import KnotRotation from '../../src/lib/physics/KnotRotation.ts'
+import KnotRotation, {knotRotationPeriod} from '../../src/lib/physics/KnotRotation.ts'
 
 await RAPIER.init()
 const rotation = (value: [number, number, number]) => {
@@ -60,7 +60,7 @@ test('showcase hull clears its own nameplate through a full revolution at maximu
     world.createCollider(RAPIER.ColliderDesc.cuboid(20, 0.1, 20).setTranslation(0, -0.1, 0))
     const showcase = new KnotRotation
     let maximumContactForce = 0
-    for (let frame = 0; frame < 40 * 60; frame++) {
+    for (let frame = 0; frame < knotRotationPeriod * 60; frame++) {
       showcase.step(knot, 1 / 60)
       world.step(events)
       events.drainContactForceEvents(event => {
