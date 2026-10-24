@@ -88,7 +88,7 @@ function LobbyChandeliers() {
       <mesh geometry={geometry.gilt} material={gold} name='lobby-chandelier-gilt' />
       <mesh geometry={geometry.candles} material={candles} name='lobby-chandelier-candles' />
       <mesh geometry={geometry.flames} material={flames} name='lobby-chandelier-flames' />
-      <pointLight color='#ffd27a' decay={1.5} distance={16} intensity={24} name='lobby-chandelier-light' position={[0, lobbyChandeliers.lightY - lobbyChandeliers.y, 0]} />
+      <pointLight color='#ffd27a' decay={2} distance={15} intensity={7.2} name='lobby-chandelier-light' position={[0, lobbyChandeliers.lightY - lobbyChandeliers.y, 0]} />
     </group>)}
   </group>
 }
