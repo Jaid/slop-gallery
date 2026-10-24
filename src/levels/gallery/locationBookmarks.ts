@@ -53,9 +53,9 @@ export const locationBookmarks: Array<LocationBookmark> = [
   },
   {
     id: 'oculus',
-    position: [8.2, -4.96, -33.8],
-    yaw: 2.39,
-    pitch: -0.1,
+    position: [-6.07, -3.48, -16.52],
+    yaw: -0.56,
+    pitch: -0.08,
     teleport: true,
   },
   {
