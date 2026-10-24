@@ -12,17 +12,15 @@ import FountainSpray from '#src/lib/gallery/fountain/FountainSpray.ts'
 import FountainMarbleMaterial from '#src/lib/materials/FountainMarbleMaterial.ts'
 import FountainWaterMaterial from '#src/lib/materials/FountainWaterMaterial.ts'
 import gold from '#src/lib/materials/gold.ts'
-import {lobbyLights} from '#src/lib/materials/lights/index.ts'
 
 export default function Fountain() {
   const isHeavy = useGraphicsMode()
   const geometry = useDisposable(useMemo(() => new FountainGeometry, []))
   const collision = useMemo(() => colliderGeometry(geometry.stone), [geometry])
-  // The polished stone and water would mirror the colored lamps of the tunnel under the floor, so they take the Lobby’s lights only.
-  const marble = useDisposable(useMemo(() => lobbyLights.adopt(new FountainMarbleMaterial({reflections: isHeavy})), [isHeavy]))
+  const marble = useDisposable(useMemo(() => new FountainMarbleMaterial({reflections: isHeavy}), [isHeavy]))
   const spray = useDisposable(useMemo(() => new FountainSpray, []))
-  const pool = useDisposable(useMemo(() => lobbyLights.adopt(new FountainWaterMaterial(false, isHeavy)), [isHeavy]))
-  const falling = useDisposable(useMemo(() => lobbyLights.adopt(new FountainWaterMaterial(true, isHeavy)), [isHeavy]))
+  const pool = useDisposable(useMemo(() => new FountainWaterMaterial(false, isHeavy), [isHeavy]))
+  const falling = useDisposable(useMemo(() => new FountainWaterMaterial(true, isHeavy), [isHeavy]))
   // Framed around the finial and the plinth’s reach, circling at a bench’s distance at most.
   return <Orbitable
     id='lobby-fountain' center={[0, 1.6, 0]} name='lobby-fountain' orbit={{

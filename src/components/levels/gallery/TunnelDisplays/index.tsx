@@ -32,6 +32,8 @@ const DisplayExhibit = ({kind, material}: {
 }
 /** Three plain colored lights in housings on the tunnel’s ceiling, abreast of each row of exhibits, lighting both displays at once. */
 const tunnelLightZs = tunnelDisplays[0].exhibits.map(exhibit => exhibit.position[2])
+/** The Lobby looks down into the tunnel through its glazed floor, but the tunnel’s lights stay off from there, so they never light the Lobby from below. */
+const tunnelLightRooms = seenFrom('oculus').filter(room => room !== 'lobby')
 /** red, green and blue, from the tunnel’s north end, each hanging 35 cm under its housing */
 const tunnelLights = [
   {
@@ -71,7 +73,7 @@ export default function TunnelDisplays({material}: {material: Material}) {
       <mesh position={[0, -0.091, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <circleGeometry args={[0.16, 24]} /><meshBasicNodeMaterial color={tunnelLights[i].color} toneMapped={false} />
       </mesh>
-      <pointLight {...tunnelLights[i]} position={[0, -0.35, 0]} userData={{rooms: seenFrom('oculus')}} />
+      <pointLight {...tunnelLights[i]} position={[0, -0.35, 0]} userData={{rooms: tunnelLightRooms}} />
     </group>)}
   </group>
 }

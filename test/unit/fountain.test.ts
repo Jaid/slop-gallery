@@ -3,7 +3,7 @@ import type {BufferGeometry} from 'three/webgpu'
 import {describe, expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
-import {Box3, DirectionalLight, DoubleSide, Mesh, MeshBasicMaterial, PointLight, Raycaster, Vector3} from 'three/webgpu'
+import {Box3, DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry} from '../../src/lib/gallery/architecture.ts'
 import EntranceGeometry from '../../src/lib/gallery/EntranceGeometry.ts'
@@ -17,7 +17,6 @@ import RevolvedProfileGeometry from '../../src/lib/gallery/RevolvedProfileGeomet
 import {triangleCount} from '../../src/lib/geometry.ts'
 import FountainMarbleMaterial from '../../src/lib/materials/FountainMarbleMaterial.ts'
 import FountainWaterMaterial from '../../src/lib/materials/FountainWaterMaterial.ts'
-import {lobbyLights} from '../../src/lib/materials/lights/index.ts'
 import {TransparentSpriteOutputsNode} from '../../src/lib/rendering/GalleryRenderPipeline.ts'
 
 await RAPIER.init()
@@ -343,7 +342,6 @@ describe('Lobby fountain', () => {
     expect(marble.roughnessNode).not.toBeNull()
     expect(marble.clearcoatNode).not.toBeNull()
     expect(marble.normalNode).not.toBeNull()
-    expect(lobbyLights.adopt(marble).lightsNode).toBe(lobbyLights)
     marble.dispose()
     const geometry = new FountainGeometry
     try {
@@ -389,18 +387,6 @@ describe('Lobby fountain', () => {
     expect(dropLanding([0, 4, 0], [0, 0, 0])).toBe(pools.upper)
     expect(dropLanding([0, 4, 0], [1.4, 0, 0])).toBe(pools.lower)
     expect(dropLanding([0, 4, 0], [2.2, 0, 0])).toBe(pools.basin)
-  })
-  test('the marble and water take the Lobby’s lights only, never the tunnel lamps under the floor', () => {
-    const lamp = new PointLight
-    lamp.position.set(0, 4, -12)
-    lamp.updateMatrixWorld()
-    const tunnelLamp = new PointLight
-    tunnelLamp.position.set(0, -6, -12)
-    tunnelLamp.updateMatrixWorld()
-    const sun = new DirectionalLight
-    expect(lobbyLights.admits(lamp)).toBe(true)
-    expect(lobbyLights.admits(tunnelLamp)).toBe(false)
-    expect(lobbyLights.admits(sun)).toBe(true)
   })
 })
 test('the grand entrance is finite, arched and entirely within the north wall', () => {
