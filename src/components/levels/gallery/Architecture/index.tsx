@@ -4,7 +4,7 @@ import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import Branch from 'branch-component'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
-import {MeshStandardNodeMaterial} from 'three/webgpu'
+import {ExtrudeGeometry, MeshStandardNodeMaterial, Path, Shape} from 'three/webgpu'
 import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 
 import CeilingLeds from '#component/levels/gallery/CeilingLeds'
@@ -49,6 +49,9 @@ const vaultedRooms = new Set<Wall['room']>(['lobby'])
 // These upper rooms build their own floor, ceiling and lights.
 const customRooms = new Set<Wall['room']>(['salon', 'sienna'])
 const vesper = rooms.find(room => room.id === 'vesper')!
+// Temporary trial: the Antechamber’s LED pane makes way for a round, open skylight, to see the sun in another room.
+const skylightRooms = new Set<Wall['room']>(['antechamber'])
+const skylightRadius = 1.3
 // Five courses of 1.1 m reach the cornice; slabs are twice as long as they are high.
 const lobbyCladding = {
   course: 1.1,
@@ -152,7 +155,7 @@ export default function Architecture() {
         <RigidBody colliders={false} type='fixed'>
           <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, room.height + 0.1, 0]} />
         </RigidBody>
-        <Box color={room.id === 'vesper' ? '#7c9586' : '#e1dccc'} position={[0, room.height - 0.02, 0]} size={[room.size[0], 0.18, room.size[1]]} />
+        <Branch if={skylightRooms.has(room.id)} else={<Box color={room.id === 'vesper' ? '#7c9586' : '#e1dccc'} position={[0, room.height - 0.02, 0]} size={[room.size[0], 0.18, room.size[1]]} />}><SkylightCeiling height={room.height} size={room.size} /></Branch>
       </Branch>
       <RoomFloorFor glass={glass.lobby} room={room} stone={stone} wood={wood} />
       {lightBoxOffsets(room).map(z => <group key={z}>
@@ -164,7 +167,7 @@ export default function Architecture() {
       {(ledRooms.has(room.id) || vaultedRooms.has(room.id) ? [] : [-3.5, 3.5]).map(z => <pointLight key={z} color='#fff1d8' decay={2} distance={14} intensity={room.id === 'vesper' ? 40 : 32} position={[0, room.id === 'vesper' ? 4.5 : 4.9, z]} />)}
     </group>)}
     <CeilingLeds light={dineLedLight} name='dine' optional slots={dineLedSlots} />
-    <CeilingLeds light={antechamberLedLight} name='antechamber' optional slots={antechamberLedSlots} />
+    <Branch not={skylightRooms.has('antechamber')}><CeilingLeds light={antechamberLedLight} name='antechamber' optional slots={antechamberLedSlots} /></Branch>
     <PottedPlants />
     <Fountain />
     <FountainBenches wood={wood} />
@@ -201,4 +204,27 @@ function lightBoxOffsets(room: typeof rooms[number]) {
     return []
   }
   return Array.from({length: room.size[1] / 4 - 1}, (_, i) => i * 4 - room.size[1] / 2 + 4)
+}
+/** A ceiling slab like the others, pierced by a round skylight at its center. */
+function SkylightCeiling({height, size}: {
+  height: number
+  size: readonly [number, number]
+}) {
+  const geometry = useDisposable(useMemo(() => {
+    const slab = new Shape
+    slab.moveTo(-size[0] / 2, -size[1] / 2)
+    slab.lineTo(size[0] / 2, -size[1] / 2)
+    slab.lineTo(size[0] / 2, size[1] / 2)
+    slab.lineTo(-size[0] / 2, size[1] / 2)
+    slab.closePath()
+    const opening = new Path
+    opening.absarc(0, 0, skylightRadius, 0, Math.PI * 2, true)
+    slab.holes.push(opening)
+    return new ExtrudeGeometry(slab, {
+      bevelEnabled: false,
+      curveSegments: 48,
+      depth: 0.18,
+    })
+  }, [size]))
+  return <mesh castShadow geometry={geometry} name='skylight-ceiling' position={[0, height - 0.11, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}><meshStandardNodeMaterial color='#e1dccc' roughness={0.7} /></mesh>
 }
