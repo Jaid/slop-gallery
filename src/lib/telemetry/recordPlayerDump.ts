@@ -19,18 +19,22 @@ export const playerDumps: {capture: (() => EgoDump | null) | null} = {capture: n
 /** Attach the gallery context and query overrides to an ego-player dump, as printed and copied for X dumps. */
 export function snapshotPlayerDump(dump: EgoDump) {
   const {room, active, held, inspecting, locked} = useGallery.getState()
+  const sessionId = telemetry?.sessionId
   const context = {
     level: galleryLevel,
     room,
-    active,
-    held,
-    inspecting,
+    // Nothing active, held or inspected is the common case, so those only appear when set.
+    ...active === null ? {} : {active},
+    ...held === null ? {} : {held},
+    ...inspecting === null ? {} : {inspecting},
     locked,
-    sessionId: telemetry?.sessionId ?? null,
+    ...sessionId ? {sessionId} : {},
     // The camera already carries fov and aspect; the CSS viewport adds the absolute size.
-    viewport: typeof window === 'undefined' ? null : {
-      width: window.innerWidth,
-      height: window.innerHeight,
+    ...typeof window === 'undefined' ? {} : {
+      viewport: {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      },
     },
   }
   const query = readQueryOverrides()
@@ -70,16 +74,14 @@ export default function recordPlayerDump(dump: EgoDump) {
   telemetry.log(JSON.stringify({
     ...dump,
     context,
-    aim: {
-      ...dump.aim,
-      hits: undefined,
-    },
-    hitCount: dump.aim.hits.length,
+    hits: undefined,
+    hit: dump.hits[0] ?? null,
+    hitCount: dump.hits.length,
   }), {
     level: 'info',
     attributes,
   })
-  for (const [index, hit] of dump.aim.hits.entries()) {
+  for (const [index, hit] of dump.hits.entries()) {
     telemetry.log(JSON.stringify(hit), {
       level: 'info',
       attributes: {

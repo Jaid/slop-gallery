@@ -94,7 +94,7 @@ export default function createWebmcpTools(getBridge: () => WebmcpBridge): Array<
     {
       name: 'download_frame',
       title: 'Download current frame',
-      description: 'Render the current camera view once more through the WebGPU capture bridge and save it as a lossless WebP or PNG browser download. DOM overlays such as menus are not in it. Returns the file name, format, width, height and encoded byte size (PNG also reports the nonblack pixel fraction), plus `dump`: the same player snapshot the X key prints (player and input state, camera matrices, full-precision aim hits, gallery context and query overrides), taken right before the frame, or null without a player. Unlike X, it is not logged, copied or confirmed with a sound. Does not move the player, change focus or simulate input.',
+      description: 'Render the current camera view once more through the WebGPU capture bridge and save it as a lossless WebP or PNG browser download. DOM overlays such as menus are not in it. Returns the file name, format, width, height and encoded byte size (PNG also reports the nonblack pixel fraction), plus `dump`: the same player snapshot the X key prints (player and input state, camera pose, rounded aim hits, gallery context and query overrides), taken right before the frame, or null without a player. Unlike X, it is not logged, copied or confirmed with a sound. Does not move the player, change focus or simulate input.',
       inputSchema: {
         type: 'object',
         properties: {

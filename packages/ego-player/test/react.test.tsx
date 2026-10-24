@@ -79,9 +79,11 @@ test('React lifecycle preserves the motor, camera ownership and ref contract wit
     }
     expect(player.current?.getState()).not.toBeNull()
     const onDemand = player.current!.dump()!
-    expect(onDemand.player).toEqual(player.current!.getState()!)
-    expect(onDemand.input).toEqual({})
-    expect(onDemand.camera.matrixWorld).toEqual(scene!.camera.matrixWorld.toArray())
+    const {position: livePosition, ...live} = player.current!.getState()!
+    expect(onDemand.player).toMatchObject(live)
+    expect(onDemand.player.position.y).toBeCloseTo(livePosition.y, 3)
+    expect(onDemand.input).toEqual([])
+    expect(onDemand.camera.pitch).toBeCloseTo(-0.108, 4)
     const context = physics!
     const state = scene!
     const handle = player.current!

@@ -1,7 +1,7 @@
 export {default as AimInspector} from './AimInspector.ts'
 export type {AimHit, AimSnapshot} from './AimInspector.ts'
 export {default as egoControls} from './controls.ts'
-export type {EgoDump} from './EgoDiagnostics.ts'
+export type {EgoDump, EgoDumpHit} from './EgoDiagnostics.ts'
 export {default as EgoMotor} from './EgoMotor.ts'
 export {default} from './EgoPlayer.tsx'
 export type {EgoPlayerProps, EgoPointerLockOptions} from './EgoPlayer.tsx'

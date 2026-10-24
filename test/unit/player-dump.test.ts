@@ -1,4 +1,4 @@
-import type {EgoDump, EgoState} from 'ego-player'
+import type {EgoDump, EgoDumpHit, EgoState} from 'ego-player'
 
 import {expect, spyOn, test} from 'bun:test'
 import {resolve} from 'node:path'
@@ -7,7 +7,7 @@ import {BoxGeometry, Mesh, MeshBasicMaterial, PerspectiveCamera, Scene} from 'th
 
 import EgoDiagnostics from '../../packages/ego-player/src/EgoDiagnostics.ts'
 
-test('player dumps are development-only, preserve precision, join separate hit logs and respect disabled telemetry', async () => {
+test('player dumps are development-only, join separate hit logs and respect disabled telemetry', async () => {
   const source = resolve(import.meta.dir, '../../src/lib/telemetry/recordPlayerDump.ts')
   const scene = new Scene
   const camera = new PerspectiveCamera
@@ -17,7 +17,19 @@ test('player dumps are development-only, preserve precision, join separate hit l
   mesh.position.z = -3.123456789
   scene.add(mesh)
   const diagnostics = new EgoDiagnostics(scene, camera)
-  const dump = diagnostics.capture({} as EgoState, {dump: true})
+  const point = {
+    x: 0,
+    y: 0,
+    z: 0,
+  }
+  const dump = diagnostics.capture({
+    active: true,
+    crouching: false,
+    flying: false,
+    grounded: true,
+    position: point,
+    velocity: point,
+  } satisfies EgoState, {dump: true})
   const dir = spyOn(console, 'dir').mockImplementation(() => {})
   const warn = spyOn(console, 'warn').mockImplementation(() => {})
   const info = spyOn(console, 'info').mockImplementation(() => {})
@@ -111,12 +123,8 @@ test('player dumps are development-only, preserve precision, join separate hit l
         context: {
           level: 'knottingham',
           room: 'lobby',
-          active: null,
-          held: null,
-          inspecting: null,
           locked: true,
-          sessionId: enabled ? 'dump-test' : null,
-          viewport: null,
+          ...enabled ? {sessionId: 'dump-test'} : {},
         },
         ...enabled ? {
           query: {
@@ -131,9 +139,12 @@ test('player dumps are development-only, preserve precision, join separate hit l
       }
       const records = module.telemetry!.records
       expect(records).toHaveLength(2)
-      const summary = JSON.parse(records[0][0]) as EgoDump & {hitCount: number}
-      expect(summary.aim.hit!.point).toEqual(dump.aim.hit!.point)
-      expect(summary.aim.hits).toBeUndefined()
+      const summary = JSON.parse(records[0][0]) as EgoDump & {
+        hit: EgoDumpHit | null
+        hitCount: number
+      }
+      expect(summary.hit!.point).toEqual(dump.hits[0].point)
+      expect(summary.hits).toBeUndefined()
       expect(summary.hitCount).toBe(1)
       expect(records[0][1].attributes).toMatchObject({
         'event.name': 'ego.dump',
@@ -144,7 +155,7 @@ test('player dumps are development-only, preserve precision, join separate hit l
         'dump.id': dump.id,
         'hit.index': 0,
       })
-      expect(JSON.parse(records[1][0])).toEqual(dump.aim.hit)
+      expect(JSON.parse(records[1][0])).toEqual(dump.hits[0])
     }
   } finally {
     dir.mockRestore()
