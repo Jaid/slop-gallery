@@ -118,6 +118,7 @@ export function getRenderPipelineSettings(profile: GraphicsProfile, antiAliasing
     screenSpaceIndirectLightSteps: 16,
     screenSpaceIndirectLightTemporalFiltering: antiAliasing === 'traa',
     screenSpaceIndirectLightThickness: 1,
+    ...profile.ssgi,
     screenSpaceReflectionDistance: 4,
     screenSpaceReflectionIntensity: 1,
     screenSpaceReflectionResolutionScale: 1,

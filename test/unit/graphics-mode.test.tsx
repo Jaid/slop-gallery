@@ -47,6 +47,17 @@ test('the cinematic profile increases intermediate resolutions, AO quality, shad
     reflectionResolutionScale: 2,
     shadowMapScale: 4,
     shadowSamples: 16,
+    ssgi: {
+      screenSpaceIndirectLightAmbientOcclusion: 0.5,
+      screenSpaceIndirectLightBackfaceLighting: 0.2,
+      screenSpaceIndirectLightExpFactor: 2,
+      screenSpaceIndirectLightIntensity: 5,
+      screenSpaceIndirectLightRadius: 32,
+      screenSpaceIndirectLightSlices: 4,
+      screenSpaceIndirectLightSteps: 32,
+      screenSpaceIndirectLightTemporalFiltering: true,
+      screenSpaceIndirectLightThickness: 1,
+    },
     surfaceAnisotropy: 16,
     volumetricLightSteps: 128,
   })
@@ -173,6 +184,36 @@ test('Fast omits voxel GI, Heavy adds it without SSGI, and Cinematic uses both i
   expect(cinematic).toMatchObject({
     ...voxel,
     screenSpaceIndirectLight: true,
+  })
+})
+test('Cinematic alone adopts the tuned SSGI settings', () => {
+  const fast = getRenderPipelineSettings(getGraphicsProfile(false), false)
+  const heavy = getRenderPipelineSettings(getGraphicsProfile(true), 'traa')
+  const cinematic = getRenderPipelineSettings(getGraphicsProfile(true, true), 'traa')
+  expect(fast.screenSpaceIndirectLight).toBe(false)
+  expect(heavy.screenSpaceIndirectLight).toBe(false)
+  expect(heavy).toMatchObject({
+    screenSpaceIndirectLightAmbientOcclusion: 0,
+    screenSpaceIndirectLightBackfaceLighting: 0,
+    screenSpaceIndirectLightExpFactor: 2,
+    screenSpaceIndirectLightIntensity: 4,
+    screenSpaceIndirectLightRadius: 12,
+    screenSpaceIndirectLightSlices: 3,
+    screenSpaceIndirectLightSteps: 16,
+    screenSpaceIndirectLightTemporalFiltering: true,
+    screenSpaceIndirectLightThickness: 1,
+  })
+  expect(cinematic.screenSpaceIndirectLight).toBe(true)
+  expect(cinematic).toMatchObject({
+    screenSpaceIndirectLightAmbientOcclusion: 0.5,
+    screenSpaceIndirectLightBackfaceLighting: 0.2,
+    screenSpaceIndirectLightExpFactor: 2,
+    screenSpaceIndirectLightIntensity: 5,
+    screenSpaceIndirectLightRadius: 32,
+    screenSpaceIndirectLightSlices: 4,
+    screenSpaceIndirectLightSteps: 32,
+    screenSpaceIndirectLightTemporalFiltering: true,
+    screenSpaceIndirectLightThickness: 1,
   })
 })
 test('canvas texture resolutions stay within the texture size limit', () => {

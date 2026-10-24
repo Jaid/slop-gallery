@@ -1,3 +1,5 @@
+import type {RenderPipelineSettings} from './renderPipelineSettings.ts'
+
 import optis from 'optis'
 import readPermalink from 'read-permalink'
 import useGraphicsMode from 'use-graphics-mode'
@@ -44,6 +46,8 @@ export type GraphicsProfile = {
   shadows: boolean
   /** shadow map lookups per pixel and light */
   shadowSamples: number
+  /** optional screen-space indirect-light quality overrides */
+  ssgi?: SsgiSettings
   /** anisotropic filtering of the repeating procedural surfaces like plaster, stone and wood */
   surfaceAnisotropy: number
   /** whether the sun scatters through the air as shafts of light */
@@ -53,6 +57,16 @@ export type GraphicsProfile = {
   /** whether voxel cone tracing supplies indirect lighting, independently of screen-space GI */
   voxelIndirectLight: boolean
 }
+
+type SsgiSettings = Pick<RenderPipelineSettings, | 'screenSpaceIndirectLightAmbientOcclusion'
+  | 'screenSpaceIndirectLightBackfaceLighting'
+  | 'screenSpaceIndirectLightExpFactor'
+  | 'screenSpaceIndirectLightIntensity'
+  | 'screenSpaceIndirectLightRadius'
+  | 'screenSpaceIndirectLightSlices'
+  | 'screenSpaceIndirectLightSteps'
+  | 'screenSpaceIndirectLightTemporalFiltering'
+  | 'screenSpaceIndirectLightThickness'>
 
 /** Read the `?graphics` name: fast, heavy or cinematic. Anything else is fast. */
 export function readGraphicsModeName(input: URL | string = typeof location === 'undefined' ? '' : location.href) {
@@ -119,6 +133,17 @@ const cinematicProfile: GraphicsProfile = {
   reflectionResolutionScale: 2,
   shadowMapScale: 4,
   shadowSamples: 16,
+  ssgi: {
+    screenSpaceIndirectLightAmbientOcclusion: 0.5,
+    screenSpaceIndirectLightBackfaceLighting: 0.2,
+    screenSpaceIndirectLightExpFactor: 2,
+    screenSpaceIndirectLightIntensity: 5,
+    screenSpaceIndirectLightRadius: 32,
+    screenSpaceIndirectLightSlices: 4,
+    screenSpaceIndirectLightSteps: 32,
+    screenSpaceIndirectLightTemporalFiltering: true,
+    screenSpaceIndirectLightThickness: 1,
+  },
   surfaceAnisotropy: 16,
   volumetricLightSteps: 128,
 }
