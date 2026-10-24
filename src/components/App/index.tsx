@@ -10,6 +10,7 @@ import Panel from '#component/Panel'
 import RenderBoundary from '#component/RenderBoundary'
 import RenderError from '#component/RenderError'
 import Toast from '#component/Toast'
+import TuningBuffer from '#component/TuningBuffer'
 import {galleryEvents, useGallery} from '#src/lib/gallery.ts'
 import {useHiddenUi} from '#src/lib/hiddenUi.ts'
 import {galleryTitle} from '#src/lib/level.ts'
@@ -43,6 +44,7 @@ export default function App() {
     <div className={css.stage}>
       <main className={css.viewport} aria-label='Interactive 3D gallery'>
         <RenderBoundary onFailure={() => setRenderFailed(true)}><World /></RenderBoundary>
+        <Branch if={tuning.open} then={TuningBuffer} />
       </main>
       {/* Hidden with O, the paused scene stays in full view, e.g. while tweaking values in an editor; O brings the menu back. Hovering the tuning panel hides it too. */}
       <Branch none={[s.locked, s.panel, s.dragging, renderFailed, uiHidden, tuning.hovered]}><Menu {...settings} /></Branch>

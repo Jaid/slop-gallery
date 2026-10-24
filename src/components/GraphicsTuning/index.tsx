@@ -1,9 +1,11 @@
 import type {RenderPipelineSetting, RenderPipelineSettings} from '#src/lib/rendering/renderPipelineSettings.ts'
 
 import Branch from 'branch-component'
+import {useEffect} from 'react'
 import useGraphicsMode from 'use-graphics-mode'
 
 import {getDefaultCustomGraphics, useCustomGraphics, useGraphicsTuning} from '#src/lib/rendering/customGraphics.ts'
+import {changeTunedGraphics, discardTuningBuffer, useTuningBuffer} from '#src/lib/rendering/tuningBuffer.ts'
 
 import css from './style.module.sass'
 
@@ -174,7 +176,7 @@ const sections: Array<Section> = [
 /** the values the panel opened with, which a label turns yellow once it leaves */
 const initial = getDefaultCustomGraphics()
 const set = (values: Partial<RenderPipelineSettings>) => {
-  useCustomGraphics.setState(values)
+  changeTunedGraphics(() => useCustomGraphics.setState(values))
 }
 const reset = (keys: Array<RenderPipelineSetting>) => {
   set(Object.fromEntries(keys.map(key => [key, initial[key]])))
@@ -188,9 +190,42 @@ const ignoreRepeatedClick = (event: React.MouseEvent) => {
 /** The panel G shows with `?development`, a column left of the canvas: checkboxes switch passes, which rebuilds the pipeline, and sliders change its uniforms live. */
 export default function GraphicsTuning() {
   const isHeavy = useGraphicsMode()
-  return <aside className={css.container} aria-label='Render pipeline' onPointerEnter={() => useGraphicsTuning.setState({hovered: true})} onPointerLeave={() => useGraphicsTuning.setState({hovered: false})}>
-    <div className={css.heading}><h2>Render pipeline</h2><button type='button' onClick={() => useCustomGraphics.setState(initial, true)}>Reset</button></div>
-    <p className={css.hint}>{isHeavy ? 'Pause to tune. The menu hides while the pointer is over the panel. Double-click a label to reset it.' : 'Switch graphics on in the menu to tune the pipeline.'}</p>
+  useEffect(() => {
+    // Holding Space over the panel shows the frame from before the latest tweak; it is caught before the focused control or the game sees it.
+    const show = (event: KeyboardEvent) => {
+      if (event.code === 'Space' && useGraphicsTuning.getState().hovered) {
+        event.preventDefault()
+        event.stopPropagation()
+        useTuningBuffer.setState({showing: true})
+      }
+    }
+    const hide = (event: KeyboardEvent) => {
+      if (event.code === 'Space' && useTuningBuffer.getState().showing) {
+        event.preventDefault()
+        event.stopPropagation()
+        useTuningBuffer.setState({showing: false})
+      }
+    }
+    const release = () => useTuningBuffer.setState({showing: false})
+    addEventListener('keydown', show, {capture: true})
+    addEventListener('keyup', hide, {capture: true})
+    addEventListener('blur', release)
+    return () => {
+      removeEventListener('keydown', show, {capture: true})
+      removeEventListener('keyup', hide, {capture: true})
+      removeEventListener('blur', release)
+      // G hid the panel.
+      discardTuningBuffer()
+    }
+  }, [])
+  return <aside
+    className={css.container} aria-label='Render pipeline' onPointerEnter={() => useGraphicsTuning.setState({hovered: true})} onPointerLeave={() => {
+      useGraphicsTuning.setState({hovered: false})
+      useTuningBuffer.setState({showing: false})
+    }}
+  >
+    <div className={css.heading}><h2>Render pipeline</h2><button type='button' onClick={() => changeTunedGraphics(() => useCustomGraphics.setState(initial, true))}>Reset</button></div>
+    <p className={css.hint}>{isHeavy ? 'Pause to tune. The menu hides while the pointer is over the panel. Double-click a label to reset it. Hold Space to see the frame from before the latest change.' : 'Switch graphics on in the menu to tune the pipeline.'}</p>
     <Branch if={isHeavy}>{sections.map(section => <SectionBox key={section.title} section={section} />)}</Branch>
   </aside>
 }
