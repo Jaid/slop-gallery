@@ -212,7 +212,7 @@ describe('the sun and the sky', () => {
     const noon = lightingPresets.noon
     const tuning = getLightingTuning(noon)
     expect(tuning.hemisphereIntensity).toBe(1)
-    expect(tuning.sunIntensity).toBe(6)
+    expect(tuning.sunIntensity).toBe(2)
     expect(tuning.sunAzimuth).toBeCloseTo(193.7, 9)
     expect(tuning.sunElevation).toBeCloseTo(44.5, 9)
     expect(noon.sun.direction).toEqual(sun.direction)

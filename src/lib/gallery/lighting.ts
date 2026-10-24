@@ -51,7 +51,7 @@ const presets = {
     },
     sun: {
       color: '#fff0d7',
-      intensity: 6,
+      intensity: 2,
       direction: sun.direction,
     },
     environment: {
