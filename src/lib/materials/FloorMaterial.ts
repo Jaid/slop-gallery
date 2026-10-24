@@ -42,6 +42,8 @@ const frustum = new Frustum
 const projection = new Matrix4
 /** factor on every floor’s reflectance, which the render pipeline sets to 0 when it renders no reflection */
 export const floorReflectionStrength = uniform(1)
+/** mip levels the reflection lacks when rendered below native resolution, which every floor’s blur already covers */
+const reflectionLevelBias = uniform(0)
 /** Renders the shared floor reflection for the main pass about to render, if a floor will be in view. */
 export function renderFloorReflection(pass: ReflectionPass) {
   shared?.render(pass)
@@ -115,6 +117,8 @@ function acquireReflection(floor: FloorMaterial) {
       }
       base.target = mounted[0].reflectionTarget!
       base.resolutionScale = resolutionScale
+      // A floor sampling mip level n of a native-resolution target only sees a 2ⁿ-fold coarser image, so a smaller target loses nothing as long as the level shrinks along with it.
+      reflectionLevelBias.value = Math.min(Math.log2(resolutionScale), 0)
       layout = target
       const visible = [...floors].map(candidate => candidate.visible)
       for (const candidate of floors) {
@@ -191,7 +195,7 @@ export default class FloorMaterial extends MeshStandardNodeMaterial {
       const grazing = normalView.dot(positionViewDirection).abs().oneMinus().pow(5)
       const reflectance = grazing.mul(reflection.grazingStrength).add(reflection.strength).mul(reflection.mask ?? float(1)).mul(floorReflectionStrength)
       const blur = typeof reflection.blur === 'number' ? float(reflection.blur) : reflection.blur
-      this.outputNode = vec4(mix(output.rgb, this.reflection.level(blur).rgb, reflectance), output.a)
+      this.outputNode = vec4(mix(output.rgb, this.reflection.level(blur.add(reflectionLevelBias).max(0)).rgb, reflectance), output.a)
     }
   }
 
