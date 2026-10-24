@@ -17,6 +17,7 @@ import {getDefaultCustomGraphics, useCustomGraphics} from '#src/lib/rendering/cu
 import {getGraphicsProfile, getSunShadowSettings} from '#src/lib/rendering/graphicsMode.ts'
 import {lightGain} from '#src/lib/rendering/lightLevels.ts'
 import {getShadowProps} from '#src/lib/rendering/shadowFilters.ts'
+import StainedGlassShadowNode from '#src/lib/rendering/StainedGlassShadowNode.ts'
 
 /** key that cycles the lighting presets with `?development`, backwards with Shift */
 export const lightingCycleKey = 'KeyL'
@@ -24,6 +25,7 @@ export const lightingCycleKey = 'KeyL'
 const lobby = rooms.find(room => room.id === 'lobby')!
 /** Where light markers show the sun, which has no position of its own: 2 m above the crown of the Lobby’s vault. */
 const sunMarker = [lobby.center[0], lobbyVault.crownY + 2, lobby.center[1]] as const
+const antechamber = rooms.find(room => room.id === 'antechamber')!
 /** the lighting the tuning panel opens with */
 const tuningStart = pickLightingTuning(getDefaultCustomGraphics())
 
@@ -47,6 +49,13 @@ export default function GalleryLighting() {
     sunDirection: preset.sun.direction,
   }))
   const environment = useRef<CanvasTexture>(null)
+  // Only the Antechamber, under its stained-glass dome, takes the glass’ colors; the light is set up before its first frame, so its pipelines compile once.
+  useLayoutEffect(() => {
+    const light = sunLight.current!
+    light.shadow.shadowNode = new StainedGlassShadowNode(light, position => position.y.greaterThan(antechamber.floorY - 0.05)
+      .and(position.x.sub(antechamber.center[0]).abs().lessThan(antechamber.size[0] / 2))
+      .and(position.z.sub(antechamber.center[1]).abs().lessThan(antechamber.size[1] / 2)))
+  }, [sunShadowSamples])
   // Like the environment, the background is set before the first frame, so the pipelines are compiled once.
   useLayoutEffect(() => {
     const previous = scene.backgroundNode
