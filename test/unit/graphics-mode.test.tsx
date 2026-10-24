@@ -5,6 +5,7 @@ import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 
 import GraphicsMode from '../../src/components/App/GraphicsMode.tsx'
 import {fitCanvasTextureResolution, getGraphicsProfile, readCinematicGraphics, readGraphicsMode, readGraphicsModeName} from '../../src/lib/rendering/graphicsMode.ts'
+import {getRenderPipelineSettings} from '../../src/lib/rendering/renderPipelineSettings.ts'
 
 function ReadProfile() {
   const isHeavy: boolean = useGraphicsMode()
@@ -44,6 +45,7 @@ test('the cinematic profile is heavy with every intermediate map at twice the re
     shadowMapScale: 4,
     shadowSamples: 16,
     surfaceAnisotropy: 16,
+    volumetricLightSteps: 128,
   })
   expect(getGraphicsProfile(true, true)).toBe(cinematic)
   expect(getGraphicsProfile(false, true)).toBe(getGraphicsProfile(false))
@@ -67,6 +69,7 @@ test('the provider exposes the default scene budget during SSR', () => {
     shadowSamples: 5,
     surfaceAnisotropy: 8,
     volumetricLight: false,
+    volumetricLightSteps: 64,
   })
   expect(getGraphicsProfile(true)).toEqual({
     canvasTextureMipmaps: false,
@@ -83,9 +86,30 @@ test('the provider exposes the default scene budget during SSR', () => {
     shadowSamples: 5,
     surfaceAnisotropy: 8,
     volumetricLight: true,
+    volumetricLightSteps: 64,
   })
   expect(getGraphicsProfile(true)).toBe(getGraphicsProfile(true))
   expect(getGraphicsProfile(false)).toBe(getGraphicsProfile(false))
+})
+test('heavy and cinematic share the tuned volumetric sunlight values, apart from cinematic raymarch steps', () => {
+  const heavy = getRenderPipelineSettings(getGraphicsProfile(true), 'traa')
+  const cinematic = getRenderPipelineSettings(getGraphicsProfile(true, true), 'traa')
+  const volumetric = {
+    volumetricLight: true,
+    volumetricLightBlur: 0,
+    volumetricLightDensity: 20,
+    volumetricLightDistanceAttenuation: 2.5,
+    volumetricLightMaxDensity: 1,
+    volumetricLightResolutionScale: 0.25,
+  }
+  expect(heavy).toMatchObject({
+    ...volumetric,
+    volumetricLightSteps: 64,
+  })
+  expect(cinematic).toMatchObject({
+    ...volumetric,
+    volumetricLightSteps: 128,
+  })
 })
 test('canvas texture resolutions stay within the texture size limit', () => {
   expect(fitCanvasTextureResolution(2, 1024, 246)).toBe(2)

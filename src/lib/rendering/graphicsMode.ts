@@ -45,6 +45,8 @@ export type GraphicsProfile = {
   surfaceAnisotropy: number
   /** whether the sun scatters through the air as shafts of light */
   volumetricLight: boolean
+  /** Number of raymarching samples for volumetric sunlight. */
+  volumetricLightSteps: number
 }
 
 /** Read the `?graphics` name: fast, heavy or cinematic. Anything else is fast. */
@@ -77,6 +79,7 @@ const fastProfile: GraphicsProfile = {
   shadowSamples: 5,
   surfaceAnisotropy: 8,
   volumetricLight: false,
+  volumetricLightSteps: 64,
 }
 const heavyProfile: GraphicsProfile = {
   canvasTextureMipmaps: false,
@@ -93,6 +96,7 @@ const heavyProfile: GraphicsProfile = {
   shadowSamples: 5,
   surfaceAnisotropy: 8,
   volumetricLight: true,
+  volumetricLightSteps: 64,
 }
 // Heavy at twice the resolution of every intermediate map and four times the shadow map resolution, with more samples, full texture filtering and indirect light, for renders that don’t have to keep up with the display.
 const cinematicProfile: GraphicsProfile = {
@@ -106,6 +110,7 @@ const cinematicProfile: GraphicsProfile = {
   shadowMapScale: 4,
   shadowSamples: 16,
   surfaceAnisotropy: 16,
+  volumetricLightSteps: 128,
 }
 /** WebGPU’s default texture size limit, which Three requests whatever the adapter supports */
 const maxTextureSize = 8192
