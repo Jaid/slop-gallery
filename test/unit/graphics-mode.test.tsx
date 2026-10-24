@@ -111,6 +111,22 @@ test('heavy and cinematic share the tuned volumetric sunlight values, apart from
     volumetricLightSteps: 128,
   })
 })
+test('Fast disables bloom, while Heavy and Cinematic use the current tuned bloom defaults', () => {
+  const fast = getRenderPipelineSettings(getGraphicsProfile(false), false)
+  const heavy = getRenderPipelineSettings(getGraphicsProfile(true), 'traa')
+  const cinematic = getRenderPipelineSettings(getGraphicsProfile(true, true), 'traa')
+  const tunedBloom = {
+    bloom: true,
+    bloomLuminanceCap: 4,
+    bloomRadius: 0.3,
+    bloomSmoothWidth: 0.5,
+    bloomStrength: 1,
+    bloomThreshold: 2,
+  }
+  expect(fast.bloom).toBe(false)
+  expect(heavy).toMatchObject(tunedBloom)
+  expect(cinematic).toMatchObject(tunedBloom)
+})
 test('canvas texture resolutions stay within the texture size limit', () => {
   expect(fitCanvasTextureResolution(2, 1024, 246)).toBe(2)
   expect(fitCanvasTextureResolution(2, 7200, 3840) * 7200).toBe(8192)
