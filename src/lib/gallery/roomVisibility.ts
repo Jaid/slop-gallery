@@ -4,7 +4,8 @@ import type {Frustum, Matrix4, Sphere} from 'three/webgpu'
 import {Box3, Vector3} from 'three/webgpu'
 
 import lobby from './lobby.ts'
-import walls, {openingTop, roomClearHeight, rooms, wallPosition} from './walls.ts'
+import walls, {openingTop, rooms, wallPosition} from './walls.ts'
+import {worldRooms} from './worldRooms.ts'
 
 /** a rectangle on screen in normalized device coordinates: left, bottom, right, top */
 export type ScreenRect = readonly [number, number, number, number]
@@ -103,11 +104,15 @@ export const portals: Array<Portal> = [
   },
 ]
 
-export const roomBoxes = rooms.map(room => ({
-  id: room.id,
-  floorY: room.floorY,
-  box: new Box3(new Vector3(room.center[0] - room.size[0] / 2, room.floorY - 1, room.center[1] - room.size[1] / 2), new Vector3(room.center[0] + room.size[0] / 2, room.floorY + roomClearHeight(room) + 0.2, room.center[1] + room.size[1] / 2)),
-}))
+/** the boxes fencing each room, a room’s fence can take several (like the Corridor’s hall and its stair flight up to the Sienna); they reach below the floor for its reflection */
+export const roomBoxes = rooms.flatMap(({id, floorY}) => {
+  const {fence} = worldRooms.find(room => room.id === id)!
+  return [fence].flat().map(({min, max}) => ({
+    id,
+    floorY,
+    box: new Box3(new Vector3(min[0], min[1] - 1, min[2]), new Vector3(max[0], max[1] + 0.2, max[2])),
+  }))
+})
 
 const point = new Vector3
 
@@ -119,7 +124,7 @@ export function roomContaining([x, y, z]: Vec3) {
     if (!box.containsPoint(point)) {
       continue
     }
-    if (result) {
+    if (result && result !== id) {
       return
     }
     result = id
@@ -136,7 +141,7 @@ export function roomEnclosing(sphere: Sphere) {
     if (center.x - r < box.min.x || center.x + r > box.max.x || center.y - r < box.min.y || center.y + r > box.max.y || center.z - r < box.min.z || center.z + r > box.max.z) {
       continue
     }
-    if (result) {
+    if (result && result !== id) {
       return
     }
     result = id
@@ -222,14 +227,14 @@ export function roomsAt([x, y, z]: Vec3) {
  * Empty for anything outside the gallery’s rooms and openings, which never gets culled.
  */
 export function roomsOverlapping(box: Box3) {
-  const result: Array<RoomId> = []
+  const result = new Set<RoomId>
   for (const {id, box: roomBox} of roomBoxes) {
     if (roomBox.intersectsBox(box)) {
-      result.push(id)
+      result.add(id)
     }
   }
-  if (result.length) {
-    return result
+  if (result.size) {
+    return [...result]
   }
   return [...new Set(portals.filter(portal => portal.box.intersectsBox(box)).flatMap(portal => portal.rooms))]
 }
