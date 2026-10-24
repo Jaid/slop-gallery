@@ -3,7 +3,6 @@ import type {FloorRectangle} from '#src/lib/gallery/floors.ts'
 import type Passage from '#src/lib/gallery/passages/Passage.ts'
 import type {PassageCutout} from '#src/lib/gallery/passages/Passage.ts'
 import type PassageTransition from '#src/lib/gallery/passages/PassageTransition.ts'
-import type {LanternLightsNode} from '#src/lib/materials/lights/index.ts'
 import type {Material} from 'three/webgpu'
 
 import {CuboidCollider, RigidBody, TrimeshCollider} from '@react-three/rapier'
@@ -70,14 +69,14 @@ const passageLanterns: Partial<Record<string, ReadonlyArray<Partial<PendantLight
   'lodge-tunnel': [{y: -0.1}, null, null, null, null],
 }
 
-export default function CoveredPassage({passage, lighting, material, paving: pavingOverride, timber, ribCutouts, transition}: {
-  /** makes the passage’s lanterns its sole light sources; its materials must be adopted by the same node */
-  lighting?: LanternLightsNode
+export default function CoveredPassage({passage, sole = false, material, paving: pavingOverride, timber, ribCutouts, transition}: {
   material: Material
   passage: Passage
   /** the floor laid in the passage’s material when other floors cover the rest; collision still uses the full passage floors */
   paving?: ReadonlyArray<FloorRectangle>
   ribCutouts?: ReadonlyArray<PassageCutout>
+  /** whether the passage’s lanterns are all that lights it, which spaces them out and makes them warmer and stronger */
+  sole?: boolean
   timber?: Material
   /** a stone passage’s timber end, rendered separately; the paving and vault ribs stop where it begins */
   transition?: PassageTransition
@@ -85,7 +84,7 @@ export default function CoveredPassage({passage, lighting, material, paving: pav
   const geometry = useDisposable(useMemo(() => (timber ? TimberGeometry.passage(passage, ribCutouts) : new VaultGeometry(passage, transition?.length)), [passage, ribCutouts, timber, transition]))
   const lanterns = passageLanterns[passage.id]
   // Under timber, lanterns hang from the ribs rather than the planks between them.
-  const mounts = useMemo(() => passagePendantMounts(passage, [geometry.shell, geometry.ribs], lighting ? corridorLightSpacing : undefined, timber && geometry.ribs).filter((_, index) => lanterns?.[index] !== null), [geometry, lanterns, lighting, passage, timber])
+  const mounts = useMemo(() => passagePendantMounts(passage, [geometry.shell, geometry.ribs], sole ? corridorLightSpacing : undefined, timber && geometry.ribs).filter((_, index) => lanterns?.[index] !== null), [geometry, lanterns, sole, passage, timber])
   const lights = useMemo(() => lanterns?.filter(entry => entry !== null), [lanterns])
   const paving = pavingOverride ?? transition?.stoneFloors ?? passage.floors
   // A timber lining’s crown is the ceiling along its spans; a slab there would share its plane. Only the open elbows show the slab.
@@ -106,6 +105,6 @@ export default function CoveredPassage({passage, lighting, material, paving: pav
         <mesh castShadow geometry={geometry.ribs} material={material} name='castle-vault-ribs' receiveShadow />
       </Branch>
     </RigidBody>
-    <PendantLamps body={lantern} glow={lanternGlow} light={lighting ? soleLanternLight : lanternLight} lighting={lighting} lights={lights} mounts={mounts} name={`${passage.id}-pendants`} rooms={seenFrom(passage.room)} />
+    <PendantLamps body={lantern} glow={lanternGlow} light={sole ? soleLanternLight : lanternLight} lights={lights} mounts={mounts} name={`${passage.id}-pendants`} rooms={seenFrom(passage.room)} />
   </group>
 }

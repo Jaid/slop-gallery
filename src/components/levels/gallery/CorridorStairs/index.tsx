@@ -8,17 +8,17 @@ import TimberFrame from '#component/levels/gallery/TimberFrame'
 import Box from '#src/components/Scene/primitives.tsx'
 import {corridorRails, corridorRunner, corridorStairs} from '#src/lib/gallery/corridor.ts'
 import TimberGeometry from '#src/lib/gallery/passages/TimberGeometry.ts'
-import {corridorLanterns} from '#src/lib/materials/lights/index.ts'
+import {lightIndoors} from '#src/lib/materials/lights/index.ts'
 import StairRunnerMaterial from '#src/lib/materials/StairRunnerMaterial.ts'
 
-/** The flight from the corridor up to Sienna. Its materials must be lit by {@link corridorLanterns}, like the treads. */
+/** The flight from the corridor up to Sienna. Its materials must be lit by {@link lightIndoors}, like the treads. */
 export default function CorridorStairs({timber, lining}: {
   lining: Material
   timber: Material
 }) {
   const frame = useDisposable(useMemo(() => TimberGeometry.stairs(corridorStairs), []))
   // The runner, rods and nosings are shaded into the treads, so every step stays a single box.
-  const treads = useDisposable(useMemo(() => corridorLanterns.adopt(new StairRunnerMaterial(corridorRunner)), []))
+  const treads = useDisposable(useMemo(() => lightIndoors(new StairRunnerMaterial(corridorRunner)), []))
   return <group name='corridor-wooden-stairs'>
     <RigidBody colliders={false} type='fixed'>
       {corridorStairs.blocks.map((block, i) => <group key={i}>

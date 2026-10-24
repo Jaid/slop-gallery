@@ -37,7 +37,7 @@ import CastleStoneMaterial from '#src/lib/materials/CastleStoneMaterial.ts'
 import DamaskWallpaperMaterial from '#src/lib/materials/DamaskWallpaperMaterial.ts'
 import DineMaterials from '#src/lib/materials/DineMaterials.ts'
 import JoineryWoodMaterial from '#src/lib/materials/JoineryWoodMaterial.ts'
-import {corridorLanterns, lightIndoors, lodgeWindowLights} from '#src/lib/materials/lights/index.ts'
+import {lightIndoors} from '#src/lib/materials/lights/index.ts'
 import LodgeMaterials from '#src/lib/materials/LodgeMaterials.ts'
 import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
 import {TravertineWallMaterial} from '#src/lib/materials/travertine/index.ts'
@@ -71,8 +71,8 @@ export default function Architecture() {
   // The Lodge, its tunnel and the corridor run underground, beyond the reach of the sun.
   const castleStone = useDisposable(useMemo(() => lightIndoors(new CastleStoneMaterial), []))
   // The corridor and its stairs see nothing but their own lanterns.
-  const corridorWood = useDisposable(useMemo(() => corridorLanterns.adopt(new LodgeWoodMaterial), []))
-  const windowReveal = useDisposable(useMemo(() => lodgeWindowLights.adopt(new LodgeWoodMaterial), []))
+  const corridorWood = useDisposable(useMemo(() => lightIndoors(new LodgeWoodMaterial), []))
+  const windowReveal = useDisposable(useMemo(() => lightIndoors(new LodgeWoodMaterial), []))
   const lodgeMaterials = useDisposable(useMemo(() => new LodgeMaterials, []))
   const vesperWall = useDisposable(useMemo(() => new VesperWallMaterial({
     center: vesper.center,

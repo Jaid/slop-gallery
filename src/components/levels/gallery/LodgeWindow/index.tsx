@@ -8,7 +8,7 @@ import {MeshStandardNodeMaterial} from 'three/webgpu'
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import LodgeWindowGeometry from '#src/lib/gallery/LodgeWindowGeometry.ts'
-import {lodgeWindowLights} from '#src/lib/materials/lights/index.ts'
+import {lightIndoors} from '#src/lib/materials/lights/index.ts'
 
 export default function LodgeWindow({glass, material}: {
   glass: Material
@@ -16,7 +16,7 @@ export default function LodgeWindow({glass, material}: {
 }) {
   const geometry = useDisposable(useMemo(() => new LodgeWindowGeometry, []))
   // The brass stop sits between the Lodge and the corridor, out of the sun’s reach.
-  const brass = useDisposable(useMemo(() => lodgeWindowLights.adopt(new MeshStandardNodeMaterial({
+  const brass = useDisposable(useMemo(() => lightIndoors(new MeshStandardNodeMaterial({
     color: '#ac8c58',
     metalness: 0.65,
     roughness: 0.4,

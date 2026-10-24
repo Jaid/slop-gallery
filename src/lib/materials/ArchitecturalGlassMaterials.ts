@@ -8,7 +8,7 @@ import {salonWindow} from '../gallery/salonWindow.ts'
 import CastFloorGlassMaterial from './CastFloorGlassMaterial.ts'
 import ClearGlassMaterial from './ClearGlassMaterial.ts'
 import CrownGlassMaterial from './CrownGlassMaterial.ts'
-import {lodgeWindowLights} from './lights/index.ts'
+import {lightIndoors} from './lights/index.ts'
 
 export type ArchitecturalGlassMaterials = {
   cabin: Material
@@ -56,7 +56,7 @@ export function createArchitecturalGlassMaterials(isHeavy: boolean): Architectur
   return {
     // Old drawn cabin glass: a faint green body, ripples that bend the view and the reflections, a pale veil, wiped smudges and grime along the frame, plus a warm clearcoat sheen that catches the lodge’s firelight.
     // It sits between two underground spaces, so it only reflects their lamps and their darkness.
-    cabin: lodgeWindowLights.adopt(new CrownGlassMaterial({
+    cabin: lightIndoors(new CrownGlassMaterial({
       name: 'cabin-glass-heavy',
       ior: 1.52,
       absorption: 0.06,

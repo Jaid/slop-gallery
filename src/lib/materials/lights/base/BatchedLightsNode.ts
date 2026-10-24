@@ -66,14 +66,10 @@ export default class BatchedLightsNode extends LightsNode {
     return [...super.setupLightsNode(builder), ...this.batches.values()]
   }
 
-  /** Whether surfaces lit by this node are lit by the shadow pool’s lights, so the lights lent a slot leave the batch. */
-  sharesShadowSlots() {
-    return true
-  }
-
   private *membersOf(batch: Batch) {
     for (const light of this.liveLights()) {
-      if (batchOf(light) === batch && !(this.sharesShadowSlots() && shadowPool.isLent(light))) {
+      // A light lent a shadow slot is shaded by the slot instead.
+      if (batchOf(light) === batch && !shadowPool.isLent(light)) {
         yield light as PointLight
       }
     }
