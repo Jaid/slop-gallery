@@ -17,7 +17,8 @@ const stairLamps: Record<string, {
 }> = {
   upper: {
     decay: 1,
-    distance: 10,
+    // 4.91 m from the nearest corner of the Lobby’s floor, so it stops just short of shining through into it.
+    distance: 4.9,
     intensity: 6,
     y: 1.68,
   },
