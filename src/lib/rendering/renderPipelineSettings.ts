@@ -1,6 +1,7 @@
 import type {AntiAliasing} from './antiAliasing.ts'
 import type {GraphicsProfile} from './graphicsMode.ts'
 
+import sun from '../gallery/sun.ts'
 import {isKnottingham} from '../level.ts'
 
 /** which surfaces reflect: none, the reflective floors through their shared planar mirror, or those plus screen-space reflections on metallic surfaces */
@@ -51,6 +52,12 @@ export type RenderPipelineSettings = {
   screenSpaceReflectionIntensity: number
   screenSpaceReflectionResolutionScale: number
   screenSpaceReflectionThickness: number
+  /** texels along each axis of the gallery sun’s shadow map */
+  sunShadowMapSize: number
+  /** the sun’s shadow filter radius, in texels */
+  sunShadowRadius: number
+  /** shadow map lookups per pixel for the sun */
+  sunShadowSamples: number
   vignette: number
   volumetricLight: boolean
   /** the Gaussian blur’s sigma over the raymarched shafts */
@@ -71,8 +78,8 @@ export type RenderPipelineSettings = {
 
 export type RenderPipelineSetting = keyof RenderPipelineSettings
 
-/** the settings that change which passes the pipeline has or how they are set up, so changing one builds it anew; every other setting is a uniform that can change live */
-export const renderPipelineStructure = ['ambientOcclusion', 'ambientOcclusionResolutionScale', 'ambientOcclusionTemporalFiltering', 'antiAliasing', 'bloom', 'contactShadowDenoise', 'contactShadowResolutionScale', 'contactShadows', 'dither', 'reflectionResolutionScale', 'reflectionScope', 'screenSpaceIndirectLight', 'screenSpaceIndirectLightTemporalFiltering', 'screenSpaceReflectionResolutionScale', 'volumetricLight', 'volumetricLightBlur', 'volumetricLightResolutionScale', 'voxelIndirectLight', 'voxelIndirectLightResolution'] as const satisfies Array<RenderPipelineSetting>
+/** the settings that change which passes the pipeline has or how they are set up, so changing one builds it anew; every other setting is a uniform that can change live. A new sun filter builds a new sun, which the passes that march its shadow map have to pick up. */
+export const renderPipelineStructure = ['ambientOcclusion', 'ambientOcclusionResolutionScale', 'ambientOcclusionTemporalFiltering', 'antiAliasing', 'bloom', 'contactShadowDenoise', 'contactShadowResolutionScale', 'contactShadows', 'dither', 'reflectionResolutionScale', 'reflectionScope', 'screenSpaceIndirectLight', 'screenSpaceIndirectLightTemporalFiltering', 'screenSpaceReflectionResolutionScale', 'sunShadowSamples', 'volumetricLight', 'volumetricLightBlur', 'volumetricLightResolutionScale', 'voxelIndirectLight', 'voxelIndirectLightResolution'] as const satisfies Array<RenderPipelineSetting>
 
 export type RenderPipelineStructure = Pick<RenderPipelineSettings, typeof renderPipelineStructure[number]>
 
@@ -123,6 +130,10 @@ export function getRenderPipelineSettings(profile: GraphicsProfile, antiAliasing
     screenSpaceReflectionIntensity: 1,
     screenSpaceReflectionResolutionScale: 1,
     screenSpaceReflectionThickness: 0.1,
+    // The filter radius grows with the map, so a larger map keeps the penumbra’s width and only resolves it finer.
+    sunShadowMapSize: sun.shadow.mapSize * profile.shadowMapScale,
+    sunShadowRadius: profile.shadowMapScale,
+    sunShadowSamples: profile.shadowSamples,
     vignette: 0,
     volumetricLight: profile.volumetricLight,
     volumetricLightBlur: 0,

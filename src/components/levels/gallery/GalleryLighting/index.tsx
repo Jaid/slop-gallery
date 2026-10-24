@@ -5,6 +5,7 @@ import {useThree} from '@react-three/fiber'
 import renderCanvasTexture from 'canvas-textures/three'
 import {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react'
 import {EquirectangularReflectionMapping, SRGBColorSpace} from 'three/webgpu'
+import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 import {useShallow} from 'zustand/react/shallow'
 
 import {isDevelopmentMode} from '#src/lib/developmentMode.ts'
@@ -13,8 +14,9 @@ import {cycleLighting, lightingPresets, pickLightingTuning, tuneLighting, useLig
 import lobbyVault from '#src/lib/gallery/lobbyVault.ts'
 import proceduralSky, {SkyLook} from '#src/lib/materials/ProceduralSky.ts'
 import {getDefaultCustomGraphics, useCustomGraphics} from '#src/lib/rendering/customGraphics.ts'
+import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 import {lightGain} from '#src/lib/rendering/lightLevels.ts'
-import {useShadowProps} from '#src/lib/rendering/shadowFilters.ts'
+import {getShadowProps, useShadowProps} from '#src/lib/rendering/shadowFilters.ts'
 
 /** key that cycles the lighting presets with `?development`, backwards with Shift */
 export const lightingCycleKey = 'KeyL'
@@ -39,7 +41,7 @@ export default function GalleryLighting() {
   const scene = useThree(s => s.scene)
   const renderer = useThree(s => s.renderer)
   const sunLight = useRef<DirectionalLight>(null)
-  const sunShadow = useShadowProps(preset.sun.shadow.mapSize)
+  const {samples: sunShadowSamples, ...sunShadow} = useSunShadow(preset.sun.shadow.mapSize)
   const [look] = useState(() => new SkyLook({
     ...preset.sky,
     sunDirection: preset.sun.direction,
@@ -138,7 +140,8 @@ export default function GalleryLighting() {
   return <>
     <ambientLight color={preset.ambient.color} intensity={preset.ambient.intensity} />
     <hemisphereLight color={preset.hemisphere.color} groundColor={preset.hemisphere.ground} intensity={preset.hemisphere.intensity} />
-    <directionalLight castShadow color={sun.color} intensity={sun.intensity} name='sun' position={sun.position} shadow-camera-bottom={sun.shadow.bottom} shadow-camera-far={sun.shadow.far} shadow-camera-left={sun.shadow.left} shadow-camera-near={sun.shadow.near} shadow-camera-right={sun.shadow.right} shadow-camera-top={sun.shadow.top} shadow-normalBias={sun.shadow.normalBias} userData={{marker: sunMarker}} ref={sunLight} {...sunShadow} />
+    {/* The shadow map resizes in place, but a new filter needs a new shadow, so the sun is built anew. */}
+    <directionalLight key={sunShadowSamples} castShadow color={sun.color} intensity={sun.intensity} name='sun' position={sun.position} shadow-camera-bottom={sun.shadow.bottom} shadow-camera-far={sun.shadow.far} shadow-camera-left={sun.shadow.left} shadow-camera-near={sun.shadow.near} shadow-camera-right={sun.shadow.right} shadow-camera-top={sun.shadow.top} shadow-normalBias={sun.shadow.normalBias} userData={{marker: sunMarker}} ref={sunLight} {...sunShadow} />
   </>
 }
 
@@ -146,6 +149,27 @@ export default function GalleryLighting() {
 function useTunedLighting(preset: GalleryLightingPreset) {
   const tuning = useCustomGraphics(useShallow(pickLightingTuning))
   return useMemo(() => (isDevelopmentMode ? tuneLighting(preset, tuning, tuningStart) : preset), [preset, tuning])
+}
+/** The sun’s shadow props, which the tuning panel of `?development` changes in heavy graphics, together with its lookups per pixel. */
+function useSunShadow(mapSize: number) {
+  const isHeavy = useGraphicsMode()
+  const {shadowSamples} = useGraphicsModeValue(getGraphicsProfile)
+  const own = useShadowProps(mapSize)
+  const tuned = useCustomGraphics(useShallow(state => ({
+    mapSize: state.sunShadowMapSize,
+    radius: state.sunShadowRadius,
+    samples: state.sunShadowSamples,
+  })))
+  if (isDevelopmentMode && isHeavy) {
+    return {
+      ...getShadowProps(tuned),
+      samples: tuned.samples,
+    }
+  }
+  return {
+    ...own,
+    samples: shadowSamples,
+  }
 }
 /** Paints the reflection environment: a vertical gradient with four bright light boxes in its upper band. */
 function drawEnvironment(texture: CanvasTexture, stops: LightingPreset['environment']['gradient'], lightBoxes: string) {

@@ -6,6 +6,7 @@ import useGraphicsMode from 'use-graphics-mode'
 import {create} from 'zustand'
 
 import {getDefaultCustomGraphics, useCustomGraphics, useGraphicsTuning} from '#src/lib/rendering/customGraphics.ts'
+import {cinematicMaxTextureSize, readCinematicGraphics} from '#src/lib/rendering/graphicsMode.ts'
 import {changeTunedGraphics, discardTuningBuffer, useTuningBuffer} from '#src/lib/rendering/tuningBuffer.ts'
 
 import css from './style.module.sass'
@@ -81,6 +82,8 @@ const select = (key: Setting, label: string, options: Array<[Value, string]>): C
 })
 /** the brightest value a half-float target holds, so a cap there caps nothing */
 const uncappedLuminance = 65_504
+/** Cinematic graphics request a texture size limit that fits a 16384² map; heavy graphics stop at WebGPU’s default of 8192. */
+const shadowMapSizes = [1024, 2048, 4096, 8192, ...readCinematicGraphics() ? [cinematicMaxTextureSize] : []]
 const scales = (values: Array<number>): Array<[number, string]> => values.map(value => [value, `${value * 100}%`])
 const screenSpaceReflections = (settings: CustomGraphics) => settings.reflectionScope === 'all'
 const sections: Array<Section> = [
@@ -143,7 +146,13 @@ const sections: Array<Section> = [
       range('screenSpaceIndirectLightSteps', 'Steps', 4, 32, 4),
       range('screenSpaceIndirectLightThickness', 'Thickness', 0.1, 4, 0.1),
       range('screenSpaceIndirectLightExpFactor', 'Exp factor', 1, 4, 0.1),
-      percent('screenSpaceIndirectLightBackfaceLighting', 'Backface lighting', 0, 1, 0.05),
+      {
+        ...percent('screenSpaceIndirectLightBackfaceLighting', 'Backface lighting', 0.05, 1, 0.05),
+        off: {
+          fallback: 0.5,
+          off: 0,
+        },
+      },
       {
         ...range('screenSpaceIndirectLightAmbientOcclusion', 'AO intensity', 0.1, 4, 0.1),
         off: {
@@ -223,6 +232,9 @@ const sections: Array<Section> = [
       range('sunIntensity', 'Strength', 0, 8, 0.1),
       range('sunAzimuth', 'Azimuth', 0, 360, 1),
       range('sunElevation', 'Elevation', 0, 90, 1),
+      select('sunShadowMapSize', 'Shadow map', shadowMapSizes.map(size => [size, `${size}²`])),
+      select('sunShadowSamples', 'Shadow samples', [1, 5, 8, 12, 16, 24, 32].map(samples => [samples, String(samples)])),
+      range('sunShadowRadius', 'Shadow filter radius', 0, 8, 0.25),
     ],
   },
   {

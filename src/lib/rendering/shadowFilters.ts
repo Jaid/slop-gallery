@@ -81,10 +81,23 @@ export function useShadowProps(mapSize: number, {isPoint = false, radius = 1}: {
   radius?: number
 } = {}) {
   const {shadowMapScale, shadowSamples} = useGraphicsModeValue(getGraphicsProfile)
-  const size = mapSize * shadowMapScale
+  return getShadowProps({
+    isPoint,
+    mapSize: mapSize * shadowMapScale,
+    radius: radius * shadowMapScale,
+    samples: shadowSamples,
+  })
+}
+/** Shadow props for a map of `mapSize` texels along each axis, filtered by `samples` lookups on a disk of `radius` texels. */
+export function getShadowProps({isPoint = false, mapSize, radius, samples}: {
+  isPoint?: boolean
+  mapSize: number
+  radius: number
+  samples: number
+}) {
   return {
-    'shadow-filterNode': shadowSamples === defaultSamples ? null : getFilter(shadowSamples, isPoint),
-    'shadow-mapSize': [size, size] as const,
-    'shadow-radius': radius * shadowMapScale,
+    'shadow-filterNode': samples === defaultSamples ? null : getFilter(samples, isPoint),
+    'shadow-mapSize': [mapSize, mapSize] as const,
+    'shadow-radius': radius,
   }
 }
