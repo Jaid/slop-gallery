@@ -3,6 +3,7 @@ import type {GraphicsProfile} from './graphicsMode.ts'
 
 import sun from '../gallery/sun.ts'
 import {isKnottingham} from '../level.ts'
+import {getSunShadowSettings} from './graphicsMode.ts'
 
 /** which surfaces reflect: none, the reflective floors through their shared planar mirror, or those plus screen-space reflections on metallic surfaces */
 export type ReflectionScope = 'all' | 'floors' | 'none'
@@ -88,6 +89,7 @@ export type RenderPipelineUniform = {[Key in RenderPipelineSetting]: RenderPipel
 
 /** The render pipeline of a graphics profile. */
 export function getRenderPipelineSettings(profile: GraphicsProfile, antiAliasing: AntiAliasing): RenderPipelineSettings {
+  const sunShadow = getSunShadowSettings(profile, sun.shadow.mapSize)
   return {
     ambientOcclusion: true,
     // Knottingham darkens contacts more tightly.
@@ -130,10 +132,9 @@ export function getRenderPipelineSettings(profile: GraphicsProfile, antiAliasing
     screenSpaceReflectionIntensity: 1,
     screenSpaceReflectionResolutionScale: 1,
     screenSpaceReflectionThickness: 0.1,
-    // The filter radius grows with the map, so a larger map keeps the penumbra’s width and only resolves it finer.
-    sunShadowMapSize: sun.shadow.mapSize * profile.shadowMapScale,
-    sunShadowRadius: profile.shadowMapScale,
-    sunShadowSamples: profile.sunShadowSamples ?? profile.shadowSamples,
+    sunShadowMapSize: sunShadow.mapSize,
+    sunShadowRadius: sunShadow.radius,
+    sunShadowSamples: sunShadow.samples,
     vignette: 0,
     volumetricLight: profile.volumetricLight,
     volumetricLightBlur: 0,

@@ -14,7 +14,7 @@ import {cycleLighting, lightingPresets, pickLightingTuning, tuneLighting, useLig
 import lobbyVault from '#src/lib/gallery/lobbyVault.ts'
 import proceduralSky, {SkyLook} from '#src/lib/materials/ProceduralSky.ts'
 import {getDefaultCustomGraphics, useCustomGraphics} from '#src/lib/rendering/customGraphics.ts'
-import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
+import {getGraphicsProfile, getSunShadowSettings} from '#src/lib/rendering/graphicsMode.ts'
 import {lightGain} from '#src/lib/rendering/lightLevels.ts'
 import {getShadowProps} from '#src/lib/rendering/shadowFilters.ts'
 
@@ -153,7 +153,7 @@ function useTunedLighting(preset: GalleryLightingPreset) {
 /** The sun’s shadow props, which the tuning panel of `?development` changes in heavy graphics, together with its lookups per pixel. */
 function useSunShadow(mapSize: number) {
   const isHeavy = useGraphicsMode()
-  const {shadowMapScale, shadowSamples, sunShadowSamples} = useGraphicsModeValue(getGraphicsProfile)
+  const profile = useGraphicsModeValue(getGraphicsProfile)
   const tuned = useCustomGraphics(useShallow(state => ({
     mapSize: state.sunShadowMapSize,
     radius: state.sunShadowRadius,
@@ -165,14 +165,10 @@ function useSunShadow(mapSize: number) {
       samples: tuned.samples,
     }
   }
-  const samples = sunShadowSamples ?? shadowSamples
+  const sunShadow = getSunShadowSettings(profile, mapSize)
   return {
-    ...getShadowProps({
-      mapSize: mapSize * shadowMapScale,
-      radius: shadowMapScale,
-      samples,
-    }),
-    samples,
+    ...getShadowProps(sunShadow),
+    samples: sunShadow.samples,
   }
 }
 /** Paints the reflection environment: a vertical gradient with four bright light boxes in its upper band. */

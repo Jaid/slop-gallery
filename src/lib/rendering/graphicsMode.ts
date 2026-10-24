@@ -48,6 +48,10 @@ export type GraphicsProfile = {
   shadowSamples: number
   /** optional screen-space indirect-light quality overrides */
   ssgi?: SsgiSettings
+  /** absolute sun shadow-map size, independent of the other lights’ shadow-map scale */
+  sunShadowMapSize?: number
+  /** sun shadow filter radius, in shadow-map texels */
+  sunShadowRadius?: number
   /** sun-only PCF lookup count; defaults to the other lights’ shadow sample count */
   sunShadowSamples?: number
   /** anisotropic filtering of the repeating procedural surfaces like plaster, stone and wood */
@@ -118,6 +122,8 @@ const heavyProfile: GraphicsProfile = {
   reflectionResolutionScale: 1,
   shadowMapScale: 1,
   shadowSamples: 5,
+  sunShadowRadius: 4,
+  sunShadowSamples: 4,
   surfaceAnisotropy: 8,
   volumetricLight: true,
   volumetricLightSteps: 64,
@@ -137,7 +143,9 @@ const cinematicProfile: GraphicsProfile = {
   reflectionResolutionScale: 2,
   shadowMapScale: 4,
   shadowSamples: 16,
-  sunShadowSamples: 8,
+  sunShadowMapSize: 8192,
+  sunShadowRadius: 8,
+  sunShadowSamples: 16,
   ssgi: {
     screenSpaceIndirectLightAmbientOcclusion: 0.5,
     screenSpaceIndirectLightBackfaceLighting: 0.2,
@@ -155,7 +163,7 @@ const cinematicProfile: GraphicsProfile = {
 }
 /** WebGPU’s default texture size limit, which Three requests whatever the adapter supports */
 const maxTextureSize = 8192
-/** the texture size limit cinematic graphics request instead, for the sun’s shadow map at four times its heavy size; desktop GPUs support it */
+/** Cinematic requests room for optional 16K shadow-map experiments; the default sun map is 8K. */
 export const cinematicMaxTextureSize = 16_384
 
 /** Caps a canvas texture’s resolution so its backing store stays within the texture size limit, which a large atlas would exceed at the cinematic resolution. */
@@ -169,4 +177,13 @@ export function getGraphicsProfile(isHeavy: boolean, isCinematic = false) {
     return fastProfile
   }
   return isCinematic ? cinematicProfile : heavyProfile
+}
+
+/** Resolve the sun’s independent shadow-map dimensions, PCF width and sample budget. */
+export function getSunShadowSettings(profile: GraphicsProfile, baseMapSize: number) {
+  return {
+    mapSize: profile.sunShadowMapSize ?? baseMapSize * profile.shadowMapScale,
+    radius: profile.sunShadowRadius ?? profile.shadowMapScale,
+    samples: profile.sunShadowSamples ?? profile.shadowSamples,
+  }
 }

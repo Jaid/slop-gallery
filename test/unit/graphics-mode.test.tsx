@@ -4,7 +4,7 @@ import {renderToStaticMarkup} from 'react-dom/server'
 import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 
 import GraphicsMode from '../../src/components/App/GraphicsMode.tsx'
-import {fitCanvasTextureResolution, getGraphicsProfile, readCinematicGraphics, readGraphicsMode, readGraphicsModeName} from '../../src/lib/rendering/graphicsMode.ts'
+import {fitCanvasTextureResolution, getGraphicsProfile, getSunShadowSettings, readCinematicGraphics, readGraphicsMode, readGraphicsModeName} from '../../src/lib/rendering/graphicsMode.ts'
 import {getRenderPipelineSettings} from '../../src/lib/rendering/renderPipelineSettings.ts'
 
 function ReadProfile() {
@@ -47,7 +47,9 @@ test('the cinematic profile increases intermediate resolutions, AO quality, shad
     reflectionResolutionScale: 2,
     shadowMapScale: 4,
     shadowSamples: 16,
-    sunShadowSamples: 8,
+    sunShadowMapSize: 8192,
+    sunShadowRadius: 8,
+    sunShadowSamples: 16,
     ssgi: {
       screenSpaceIndirectLightAmbientOcclusion: 0.5,
       screenSpaceIndirectLightBackfaceLighting: 0.2,
@@ -101,6 +103,8 @@ test('the provider exposes the default scene budget during SSR', () => {
     reflectionResolutionScale: 1,
     shadowMapScale: 1,
     shadowSamples: 5,
+    sunShadowRadius: 4,
+    sunShadowSamples: 4,
     surfaceAnisotropy: 8,
     volumetricLight: true,
     volumetricLightSteps: 64,
@@ -189,15 +193,48 @@ test('Fast omits voxel GI, Heavy adds it without SSGI, and Cinematic uses both i
     voxelIndirectLightBounces: 2,
   })
 })
-test('Cinematic uses 8 sun-only shadow samples and 2 voxel bounces, without changing the other presets', () => {
-  const fast = getRenderPipelineSettings(getGraphicsProfile(false), false)
-  const heavy = getRenderPipelineSettings(getGraphicsProfile(true), 'traa')
-  const cinematic = getRenderPipelineSettings(getGraphicsProfile(true, true), 'traa')
-  expect(fast.sunShadowSamples).toBe(5)
-  expect(heavy.sunShadowSamples).toBe(5)
-  expect(cinematic.sunShadowSamples).toBe(8)
-  expect(getGraphicsProfile(true, true).shadowSamples).toBe(16)
-  expect(fast.voxelIndirectLightBounces).toBe(1)
+test('Sun shadow presets are independent of the other lights and follow the configured map, radius and samples', () => {
+  const fastProfile = getGraphicsProfile(false)
+  const heavyProfile = getGraphicsProfile(true)
+  const cinematicProfile = getGraphicsProfile(true, true)
+  const fast = getRenderPipelineSettings(fastProfile, false)
+  const heavy = getRenderPipelineSettings(heavyProfile, 'traa')
+  const cinematic = getRenderPipelineSettings(cinematicProfile, 'traa')
+  const fastSun = {
+    mapSize: 4096,
+    radius: 1,
+    samples: 5,
+  }
+  const heavySun = {
+    mapSize: 4096,
+    radius: 4,
+    samples: 4,
+  }
+  const cinematicSun = {
+    mapSize: 8192,
+    radius: 8,
+    samples: 16,
+  }
+  expect(getSunShadowSettings(fastProfile, 4096)).toEqual(fastSun)
+  expect(getSunShadowSettings(heavyProfile, 4096)).toEqual(heavySun)
+  expect(getSunShadowSettings(cinematicProfile, 4096)).toEqual(cinematicSun)
+  expect(fast).toMatchObject({
+    sunShadowMapSize: 4096,
+    sunShadowRadius: 1,
+    sunShadowSamples: 5,
+  })
+  expect(heavy).toMatchObject({
+    sunShadowMapSize: 4096,
+    sunShadowRadius: 4,
+    sunShadowSamples: 4,
+  })
+  expect(cinematic).toMatchObject({
+    sunShadowMapSize: 8192,
+    sunShadowRadius: 8,
+    sunShadowSamples: 16,
+  })
+  expect(heavyProfile.shadowSamples).toBe(5)
+  expect(cinematicProfile.shadowSamples).toBe(16)
   expect(heavy.voxelIndirectLightBounces).toBe(1)
   expect(cinematic.voxelIndirectLightBounces).toBe(2)
 })
