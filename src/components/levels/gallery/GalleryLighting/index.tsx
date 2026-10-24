@@ -12,7 +12,7 @@ import {isTextInput, notify, rooms, useGallery} from '#src/lib/gallery.ts'
 import {cycleLighting, lightingPresets, pickLightingTuning, tuneLighting, useLighting} from '#src/lib/gallery/lighting.ts'
 import lobbyVault from '#src/lib/gallery/lobbyVault.ts'
 import proceduralSky, {SkyLook} from '#src/lib/materials/ProceduralSky.ts'
-import {getDefaultCustomGraphics, useCustomGraphics, useGraphicsTuning} from '#src/lib/rendering/customGraphics.ts'
+import {getDefaultCustomGraphics, useCustomGraphics} from '#src/lib/rendering/customGraphics.ts'
 import {lightGain} from '#src/lib/rendering/lightLevels.ts'
 import {useShadowProps} from '#src/lib/rendering/shadowFilters.ts'
 
@@ -139,11 +139,10 @@ export default function GalleryLighting() {
   </>
 }
 
-/** With `?development`, the preset with the lighting the tuning panel changed while it shows. */
+/** With `?development`, the preset with the lighting the tuning panel changed, which stays after hiding the panel. */
 function useTunedLighting(preset: GalleryLightingPreset) {
-  const isTuning = useGraphicsTuning(state => isDevelopmentMode && state.open)
   const tuning = useCustomGraphics(useShallow(pickLightingTuning))
-  return useMemo(() => (isTuning ? tuneLighting(preset, tuning, tuningStart) : preset), [isTuning, preset, tuning])
+  return useMemo(() => (isDevelopmentMode ? tuneLighting(preset, tuning, tuningStart) : preset), [preset, tuning])
 }
 /** Paints the reflection environment: a vertical gradient with four bright light boxes in its upper band. */
 function drawEnvironment(texture: CanvasTexture, stops: LightingPreset['environment']['gradient'], lightBoxes: string) {

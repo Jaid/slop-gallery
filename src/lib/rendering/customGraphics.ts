@@ -22,13 +22,10 @@ export function getDefaultCustomGraphics(): CustomGraphics {
   }
 }
 
-/** the graphics mode’s own pipeline, read once at startup */
-const modeGraphics = getDefaultCustomGraphics()
+/** The tuning panel’s values, starting from the graphics mode’s own. They stay in effect while the panel is hidden, so hiding it never rebuilds the pipeline. */
+export const useCustomGraphics = create<CustomGraphics>(() => getDefaultCustomGraphics())
 
-/** the tuning panel’s values, which stay while the panel is hidden */
-export const useCustomGraphics = create<CustomGraphics>(() => modeGraphics)
-
-/** Whether the tuning panel shows, which is the only time the pipeline follows it, and whether the pointer is over it, which hides the pause menu so the scene shows every change. */
+/** Whether the tuning panel shows, and whether the pointer is over it, which hides the pause menu so the scene shows every change. */
 export const useGraphicsTuning = create<{
   hovered: boolean
   open: boolean
@@ -37,7 +34,7 @@ export const useGraphicsTuning = create<{
   open: false,
 }))
 
-/** Shows the tuning panel or hides it, which puts the pipeline back to the graphics mode’s own. */
+/** Shows the tuning panel or hides it. */
 export function toggleGraphicsTuning() {
   useGraphicsTuning.setState(state => ({
     hovered: false,
@@ -45,18 +42,12 @@ export function toggleGraphicsTuning() {
   }))
 }
 
-/** The values a tunable pipeline follows: the panel’s while it shows, otherwise the graphics mode’s own. */
+/** The values a tunable pipeline follows: the panel’s, whether it shows or not. */
 export function getTunedGraphics() {
-  return useGraphicsTuning.getState().open ? useCustomGraphics.getState() : modeGraphics
+  return useCustomGraphics.getState()
 }
 
-/** Calls `listener` with the tuned values whenever the panel or its values change, returning the unsubscribe function. */
+/** Calls `listener` with the tuned values whenever they change, returning the unsubscribe function. */
 export function subscribeTunedGraphics(listener: (values: CustomGraphics) => void) {
-  const notify = () => listener(getTunedGraphics())
-  const unsubscribers = [useCustomGraphics.subscribe(notify), useGraphicsTuning.subscribe(notify)]
-  return () => {
-    for (const unsubscribe of unsubscribers) {
-      unsubscribe()
-    }
-  }
+  return useCustomGraphics.subscribe(listener)
 }

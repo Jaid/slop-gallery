@@ -7,7 +7,7 @@ import {useShallow} from 'zustand/react/shallow'
 import {galleryEvents} from '#src/lib/gallery/actions.ts'
 import {getSunReach} from '#src/lib/gallery/sunReach.ts'
 import {activateRenderPipeline, releaseRenderPipeline} from '#src/lib/rendering/activeRenderPipeline.ts'
-import {useCustomGraphics, useGraphicsTuning} from '#src/lib/rendering/customGraphics.ts'
+import {useCustomGraphics} from '#src/lib/rendering/customGraphics.ts'
 import GalleryRenderPipeline from '#src/lib/rendering/GalleryRenderPipeline.ts'
 import {getInspectionFocus, getInspectionFocusBlur, getInspectionFocusDistance, getInspectionFocusProximity, getPlayerZoom} from '#src/lib/rendering/playerView.ts'
 import {getRenderPipelineStructure} from '#src/lib/rendering/renderPipelineSettings.ts'
@@ -28,10 +28,9 @@ const Postprocessing = ({focus = false, heavy = true, settings, tunable = false}
   const scene = useThree(state => state.scene)
   const camera = useThree(state => state.camera)
   const store = useStore()
-  const isTuning = useGraphicsTuning(state => tunable && state.open)
   const panelStructure = useCustomGraphics(useShallow(getRenderPipelineStructure))
-  // Compared by value, so showing or hiding the panel only rebuilds the pipeline when its passes differ from the graphics mode’s.
-  const structureKey = JSON.stringify(isTuning ? panelStructure : getRenderPipelineStructure(settings))
+  // Compared by value, so a panel change only rebuilds the pipeline when it changes its passes.
+  const structureKey = JSON.stringify(tunable ? panelStructure : getRenderPipelineStructure(settings))
   const structure = useMemo(() => JSON.parse(structureKey) as RenderPipelineStructure, [structureKey])
   // The scene pass renders into targets with their own outputs. Activated after the first frame, every material of the scene would build a second time for them.
   useLayoutEffect(() => {

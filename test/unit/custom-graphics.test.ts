@@ -18,14 +18,15 @@ test('the tuning panel starts from the pipeline of the page’s heavy graphics',
     voxelIndirectLight: profile.indirectLight,
   })
 })
-test('the pipeline follows the panel only while it shows', () => {
+test('the pipeline keeps the panel’s values after hiding it', () => {
   const defaults = getDefaultCustomGraphics()
-  useCustomGraphics.setState({vignette: 0.5})
   expect(getTunedGraphics()).toEqual(defaults)
   toggleGraphicsTuning()
   expect(useGraphicsTuning.getState().open).toBe(true)
+  useCustomGraphics.setState({vignette: 0.5})
   expect(getTunedGraphics().vignette).toBe(0.5)
   toggleGraphicsTuning()
-  expect(getTunedGraphics()).toEqual(defaults)
+  expect(useGraphicsTuning.getState().open).toBe(false)
+  expect(getTunedGraphics().vignette).toBe(0.5)
   useCustomGraphics.setState(defaults, true)
 })
