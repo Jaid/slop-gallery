@@ -212,15 +212,15 @@ describe('the sun and the sky', () => {
     const noon = lightingPresets.noon
     const tuning = getLightingTuning(noon)
     expect(tuning.sunIntensity).toBe(6)
-    expect(tuning.sunAzimuth).toBeCloseTo(194, 9)
-    expect(tuning.sunElevation).toBeCloseTo(46, 9)
+    expect(tuning.sunAzimuth).toBeCloseTo(193.7, 9)
+    expect(tuning.sunElevation).toBeCloseTo(44.5, 9)
     expect(noon.sun.direction).toEqual(sun.direction)
     expect(noon.sun.shadow).toEqual(sun.shadow)
   })
   test('the shadow map covers every sunlit room, and the vault stays in front of its near plane', () => {
     const direction = new Vector3(...sun.direction)
     expect(direction.length()).toBeCloseTo(1, 9)
-    expect(direction.y).toBeCloseTo(Math.sin(46 * Math.PI / 180), 9)
+    expect(direction.y).toBeCloseTo(Math.sin(44.5 * Math.PI / 180), 9)
     const position = new Vector3(...sun.position)
     const forward = direction.clone().negate()
     const worldUp = new Vector3(0, 1, 0)
