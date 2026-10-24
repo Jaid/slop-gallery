@@ -1,6 +1,10 @@
+import type {Vec3} from '#src/lib/gallery.ts'
+import type {BufferAttribute} from 'three/webgpu'
+
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
+import {Box3, BoxGeometry, Euler, Matrix4, Vector3} from 'three/webgpu'
 
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
 import Box from '#src/components/Scene/primitives.tsx'
@@ -28,6 +32,47 @@ const stairLamps: Record<string, {
     y: 1.95,
   },
 }
+/**
+ * Earth over the turn, the lower flight and the gap between the flights, which reach out from under the upper rooms into open
+ * ground. Without it, the sun slips through the seams between their roofs and walls, and the shadow map leaves the stairway’s air
+ * lit for sun shafts.
+ */
+const stairEarth = (() => {
+  const roofs = [stairTurn.roofGeometry(), ...stairRoofs.map(({rotation, size, position}) => {
+    const placement = new Matrix4
+    placement.makeRotationFromEuler(new Euler(...rotation)).setPosition(...position)
+    const roof = new BoxGeometry(...size)
+    return roof.applyMatrix4(placement)
+  })]
+  const [turn, upper, lower] = roofs.map(roof => {
+    const box = new Box3
+    return box.setFromBufferAttribute(roof.getAttribute('position') as BufferAttribute)
+  })
+  for (const roof of roofs) {
+    roof.dispose()
+  }
+  // Flat slabs at ground level cover the buried turn and lower flight, the latter reaching over to the upper flight’s side wall. They
+  // reach 2 m past the walls, since a low sun slants in under a slab’s edge; toward the upper flight, they stop where its roof rises
+  // out of the ground.
+  const margin = new Vector3(2, 0, 2)
+  const between = lower.clone().expandByVector(margin)
+  between.min.set(upper.min.x, between.min.y, upper.max.z)
+  const bend = turn.clone().expandByVector(margin)
+  bend.min.x = turn.min.x - 0.6
+  const slabs = [bend, between].map(box => ({
+    position: [(box.min.x + box.max.x) / 2, 0.1, (box.min.z + box.max.z) / 2] as Vec3,
+    rotation: [0, 0, 0] as Vec3,
+    size: [box.max.x - box.min.x, 0.2, box.max.z - box.min.z] as Vec3,
+  }))
+  // The upper flight’s roof rises above ground level, so a wider copy of it lies on top instead.
+  const {position, rotation, size} = stairRoofs[0]
+  const slope = rotation[2]
+  return [...slabs, {
+    position: [position[0] - Math.sin(slope) * 0.19, position[1] + Math.cos(slope) * 0.19, position[2]] as Vec3,
+    rotation,
+    size: [size[0], 0.2, size[2] + 1.2] as Vec3,
+  }]
+})()
 
 export default function GalleryStairs() {
   const turnResource = useDisposable(useMemo(() => {
@@ -86,6 +131,7 @@ export default function GalleryStairs() {
     <RigidBody colliders='cuboid' type='fixed'>
       {stairRoofs.map((beam, i) => <Box key={i} name='stairway-ceiling' {...beam} color='#101e24' envMapIntensity={0} />)}
     </RigidBody>
+    {stairEarth.map(({position, rotation, size}, i) => <Box key={i} color='#101e24' envMapIntensity={0} name='stairway-earth' position={position} rotation={rotation} size={size} />)}
     {stairFlights.map(flight => {
       const step = flight.blocks[stairLampStep]
       const {decay, distance, intensity, y} = stairLamps[flight.id]
