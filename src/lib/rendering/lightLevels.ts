@@ -259,7 +259,7 @@ export const lightGain = {current: (_light: Light) => 1}
 export const lightActive = {current: (_light: Light) => true}
 
 /**
- * How dark each light’s shadow falls, where 0 stops it from casting one at all. Applies only to lights whose owner made them cast shadows. Levels replace it while mounted.
+ * How dark each light’s shadow falls, where 0 hides it. Applies only to lights whose owner made them cast shadows. Levels replace it while mounted.
  */
 export const lightShadow = {current: (_light: Light) => 1}
 
@@ -323,9 +323,9 @@ export function applyLightLevels(scene: Object3D) {
     }
     const {shadow} = light as Light & {shadow?: LightShadow}
     if (caster.base && shadow) {
-      const strength = shadows.get(light) === false ? 0 : lightShadow.current(light)
-      light.castShadow = strength > 0
-      shadow.intensity = strength
+      // Strength 0 keeps the shadow map: casting again would rebuild every lit material, and materials still holding the disposed shadow node crash the renderer.
+      light.castShadow = shadows.get(light) !== false
+      shadow.intensity = lightShadow.current(light)
     }
     caster.written = light.castShadow
   })

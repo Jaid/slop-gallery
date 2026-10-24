@@ -236,7 +236,7 @@ export type LightingTuning = {
   hemisphereIntensity: number
   lamps: number
   lampSet: LampSet
-  /** how dark the lamps’ shadows fall, where 0 switches their shadow maps off */
+  /** how dark the lamps’ shadows fall, where 0 hides them */
   lampShadows: number
   /** whether the sun shines at all */
   sun: boolean
