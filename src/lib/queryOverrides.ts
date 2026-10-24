@@ -15,6 +15,7 @@ import {readNear} from './rendering/near.ts'
 import {readScale} from './rendering/scale.ts'
 import {readVisionMode} from './rendering/visionMode.ts'
 import {readWireframeHighlight} from './rendering/wireframeHighlight.ts'
+import {readTemporary} from './temporary.ts'
 
 type Reader = (input: string) => unknown
 
@@ -42,6 +43,7 @@ const readers: Record<string, Reader> = {
   seed: readSeedOverride,
   show_lights: readShowLights,
   spawn: readSpawn,
+  temporary: readTemporary,
   vision_mode: readVisionMode,
   wireframe_highlight: readWireframeHighlight,
   telemetry: input => searchParameter('telemetry')(input) === 'true',

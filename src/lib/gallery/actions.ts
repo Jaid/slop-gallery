@@ -13,6 +13,7 @@ import {rollSeed} from '../environmentSeed.ts'
 import {hiddenUiKey, toggleHiddenUi} from '../hiddenUi.ts'
 import pauseMenu from '../pauseMenu.ts'
 import {graphicsTuningKey, toggleGraphicsTuning} from '../rendering/customGraphics.ts'
+import {sessionStore} from '../temporary.ts'
 import {bookmarkKey, teleportToNextBookmark} from './bookmarks.ts'
 import defaultPortraits from './defaultPortraits.ts'
 import {playerSession, playerSpawn} from './PlayerSession.ts'
@@ -162,9 +163,9 @@ export function isTextInput(target: EventTarget | null) {
 export function setApiKey(key: string) {
   try {
     if (key) {
-      sessionStorage.setItem('slop-gallery-key', key)
+      sessionStore().setItem('slop-gallery-key', key)
     } else {
-      sessionStorage.removeItem('slop-gallery-key')
+      sessionStore().removeItem('slop-gallery-key')
     }
   } catch {
     notify('Tab storage is unavailable. The key will only stay in memory.')

@@ -7,6 +7,7 @@ import {isSeed} from '../environmentSeed.ts'
 import {galleryStorageKey} from '../level.ts'
 import pauseMenu from '../pauseMenu.ts'
 import {obstructionIssue, placementIssues, wallCoordinates, wallPosition} from '../placement/wallGeometry.ts'
+import {isTemporary} from '../temporary.ts'
 import {notify} from './actions.ts'
 import {applySpawnBookmark} from './bookmarks.ts'
 import {imageSize} from './ImageImporter.ts'
@@ -127,7 +128,12 @@ function settleDocument(value: unknown): unknown {
 
 export default class GalleryRepository {
   private database: Promise<IDBDatabase> | undefined
+  /** the collection saved by a temporary repository, which never opens IndexedDB */
+  private memory: GalleryDocument | null = null
   private writes = Promise.resolve()
+
+  /** @param temporary keep the collection in memory instead of IndexedDB */
+  constructor(private readonly temporary = false) {}
 
   async export(document = createDocument()) {
     document = validateDocument(document)
@@ -220,6 +226,9 @@ export default class GalleryRepository {
   }
 
   async load() {
+    if (this.temporary) {
+      return this.memory
+    }
     const db = await this.open()
     const value = await new Promise<unknown>((resolve, reject) => {
       const transaction = db.transaction('collections', 'readonly')
@@ -232,6 +241,10 @@ export default class GalleryRepository {
 
   async save(document: GalleryDocument) {
     document = validateDocument(document)
+    if (this.temporary) {
+      this.memory = document
+      return
+    }
     const next = this.writes.catch(() => {}).then(async () => {
       const db = await this.open()
       await new Promise<void>((resolve, reject) => {
@@ -285,7 +298,7 @@ export default class GalleryRepository {
   }
 }
 
-export const repository = new GalleryRepository
+export const repository = new GalleryRepository(isTemporary)
 
 export async function initializePersistence() {
   let fresh = false

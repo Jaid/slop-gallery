@@ -4,6 +4,7 @@ import {create} from 'zustand'
 
 import {effectiveSeed, rollSeed} from '../environmentSeed.ts'
 import {readControlled} from '../pauseMenu.ts'
+import {localStore, sessionStore} from '../temporary.ts'
 import defaultPortraits from './defaultPortraits.ts'
 import {validateCollectionImages} from './imagePolicy.ts'
 import {playerSession} from './PlayerSession.ts'
@@ -71,7 +72,7 @@ function snapshot(state: GallerySnapshot): GallerySnapshot {
 }
 function readKey() {
   try {
-    return sessionStorage.getItem('slop-gallery-key') ?? ''
+    return sessionStore().getItem('slop-gallery-key') ?? ''
   } catch {
     return ''
   }
@@ -143,7 +144,7 @@ export function markControlled() {
   }
   useGallery.setState({hasControlled: true})
   try {
-    localStorage.setItem('slop-gallery-controlled', 'true')
+    localStore().setItem('slop-gallery-controlled', 'true')
   } catch {
     // Control history still remains available for this visit when storage is blocked.
   }

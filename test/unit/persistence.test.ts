@@ -6,6 +6,7 @@ import GalleryRepository, {initializePersistence, repository, validateDocument} 
 import {maximumCollectionImageBytes, maximumImageBytes} from '../../src/lib/gallery/imagePolicy.ts'
 import PlayerSession, {playerSession} from '../../src/lib/gallery/PlayerSession.ts'
 import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
+import {readTemporary} from '../../src/lib/temporary.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
 const original = {
@@ -116,6 +117,22 @@ test('a failed load protects the stored record until explicit recovery', async (
   await saveSpy.mock.results[0].value
   await Promise.resolve()
   expect(useGallery.getState().saveStatus).toBe('saved')
+})
+test('a temporary repository keeps the collection in memory without opening IndexedDB', async () => {
+  const open = spyOn(globalThis.indexedDB, 'open')
+  const repo = new GalleryRepository(true)
+  expect(await repo.load()).toBeNull()
+  await repo.save(original)
+  expect(await repo.load()).toEqual(validateDocument(original))
+  const reloaded = new GalleryRepository(true)
+  expect(await reloaded.load()).toBeNull()
+  expect(open).not.toHaveBeenCalled()
+})
+test('?temporary is enabled bare or as true', () => {
+  expect(readTemporary('https://slop.gallery/')).toBe(false)
+  expect(readTemporary('https://slop.gallery/?temporary')).toBe(true)
+  expect(readTemporary('https://slop.gallery/?temporary=true')).toBe(true)
+  expect(readTemporary('https://slop.gallery/?temporary=false')).toBe(false)
 })
 test('save strips runtime ownership before structured cloning', async () => {
   const repo = new GalleryRepository

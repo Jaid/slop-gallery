@@ -5,6 +5,7 @@ import {wrapAngle} from 'math'
 import {insideLevel, playerSpawn} from '#level/navigation.ts'
 
 import {galleryStorageKey} from '../level.ts'
+import {localStore} from '../temporary.ts'
 
 export {playerSpawn} from '#level/navigation.ts'
 
@@ -48,7 +49,7 @@ export default class PlayerSession {
   checkpoint(savedAt?: string) {
     const checkpointedAt = new Date
     try {
-      localStorage.setItem(checkpointKey, JSON.stringify({
+      localStore().setItem(checkpointKey, JSON.stringify({
         player: this.pose,
         savedAt: savedAt ?? checkpointedAt.toISOString(),
       }))
@@ -65,7 +66,7 @@ export default class PlayerSession {
 
   resume(savedAt: string) {
     try {
-      const value: unknown = JSON.parse(localStorage.getItem(checkpointKey) ?? 'null')
+      const value: unknown = JSON.parse(localStore().getItem(checkpointKey) ?? 'null')
       if (!value || typeof value !== 'object' || !('savedAt' in value) || !('player' in value) || typeof value.savedAt !== 'string') {
         return
       }

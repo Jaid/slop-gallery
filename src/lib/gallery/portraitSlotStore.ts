@@ -9,6 +9,7 @@ import shippedSlots from '#level/slots.ts'
 
 import {asPortrait, slotArea, slotAreas, slotFrame} from '../placement/portraitSlots.ts'
 import {wallPosition} from '../placement/wallGeometry.ts'
+import {localStore} from '../temporary.ts'
 
 const enabledValues = new Set<unknown>([true, '', 'true'])
 const editingSchema = optis({
@@ -51,7 +52,7 @@ function restore(): ReadonlyArray<PortraitSlot> {
     return shippedSlots
   }
   try {
-    const stored = JSON.parse(localStorage.getItem(storageKey) ?? 'null') as {
+    const stored = JSON.parse(localStore().getItem(storageKey) ?? 'null') as {
       baseline: string
       slots: Array<PortraitSlot>
     } | null
@@ -75,7 +76,7 @@ if (isEditingPortraitSlots) {
       return
     }
     try {
-      localStorage.setItem(storageKey, JSON.stringify({
+      localStore().setItem(storageKey, JSON.stringify({
         baseline,
         slots: state.slots,
       }))
