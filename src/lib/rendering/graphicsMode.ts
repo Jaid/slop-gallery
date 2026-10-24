@@ -122,7 +122,8 @@ const heavyProfile: GraphicsProfile = {
   postprocessing: true,
   ambientOcclusionResolutionScale: 0.75,
   ambientOcclusionSamples: 16,
-  reflectionResolutionScale: 1,
+  // Floors sample the reflection at mip level 1 or blurrier, so half resolution shows the same detail.
+  reflectionResolutionScale: 0.5,
   shadowMapScale: 1,
   shadowSamples: 4,
   sunShadowRadius: 4,
