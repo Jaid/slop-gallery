@@ -10,7 +10,7 @@ import {meanBrightness} from '#component/LedPanels'
 import {knotGalleryBounds} from '#src/lib/gallery/knotGallery.ts'
 
 RectAreaLightNode.setLTC(RectAreaLightTexturesLib.init())
-const ledEmissionIntensity = 1.35
+const ledEmissionIntensity = 0.675
 
 /** One area light per row of panes, dimmed by that row’s mean brightness. */
 export default class RowEmitters {

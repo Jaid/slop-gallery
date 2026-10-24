@@ -38,8 +38,8 @@ export default class KnotLightPanels {
   readonly liveFractions: Float32Array
   private readonly matrix = new Matrix4
 
-  /** `name` prefixes both instanced meshes, so aim dumps tell fixtures in different rooms apart. */
-  constructor(readonly slots: ReadonlyArray<KnotLightSlot>, name = 'knot-slot-led') {
+  /** `name` prefixes both instanced meshes, so aim dumps tell fixtures in different rooms apart. `surfaceIntensity` is the lit diffuser’s luminance relative to `knotLightColor`. */
+  constructor(readonly slots: ReadonlyArray<KnotLightSlot>, name = 'knot-slot-led', surfaceIntensity = knotLightSurfaceIntensity) {
     const intensityValues = new Float32Array(slots.length)
     const intensityAttribute = new InstancedBufferAttribute(intensityValues.fill(1), 1)
     this.intensities = intensityAttribute.setUsage(DynamicDrawUsage)
@@ -56,7 +56,7 @@ export default class KnotLightPanels {
     const live = float(1).sub(smoothstep(-0.006, 0.006, distance).mul(fracture.w))
     const edge = smoothstep(0.7, 1, point.x.abs().max(point.y.abs()))
     const emission = attribute('lightIntensity', 'float').mul(live).mul(float(1).sub(edge.mul(0.12)))
-    this.diffuserMaterial.colorNode = mix(color('#383a33'), color(knotLightColor).mul(knotLightSurfaceIntensity), emission)
+    this.diffuserMaterial.colorNode = mix(color('#383a33'), color(knotLightColor).mul(surfaceIntensity), emission)
     this.diffuserMaterial.name = 'Knot exposed emissive LED diffusers'
     this.housings = new InstancedMesh(this.housingGeometry, this.housingMaterial, slots.length)
     this.housings.name = `${name}-housings`

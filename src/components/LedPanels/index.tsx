@@ -21,6 +21,8 @@ type LedPanelsProps = {
    */
   onBrightness?: (brightness: Float32Array) => void
   slots: ReadonlyArray<KnotLightSlot>
+  /** the lit diffuser’s luminance relative to its light color, see `KnotLightPanels` */
+  surfaceIntensity?: number
 }
 
 /** Mean brightness of a group of panes, for a light that stands in for all of them. */
@@ -41,9 +43,9 @@ export default function LedPanels(props: LedPanelsProps) {
   return <LedPanelSystem key={resetEpoch} {...props} />
 }
 
-function LedPanelSystem({name, onBrightness, slots}: LedPanelsProps) {
+function LedPanelSystem({name, onBrightness, slots, surfaceIntensity}: LedPanelsProps) {
   const damage = useMemo(() => new KnotLightDamage(slots.length), [slots.length])
-  const panels = useDisposable(useMemo(() => new KnotLightPanels(slots, `${name}-led`), [name, slots]))
+  const panels = useDisposable(useMemo(() => new KnotLightPanels(slots, `${name}-led`, surfaceIntensity), [name, slots, surfaceIntensity]))
   const impacts = useMemo(() => new KnotLightImpacts, [])
   const time = useRef(0)
   const brightness = useRef(new Float32Array(slots.length))
