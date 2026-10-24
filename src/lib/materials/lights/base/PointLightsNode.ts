@@ -1,7 +1,7 @@
 import type {Node, NodeBuilder, NodeFrame, PointLight} from 'three/webgpu'
 
 import {getDistanceAttenuation, Loop, NodeUpdateType, positionView, renderGroup, uniform, uniformArray, vec3} from 'three/tsl'
-import {Color, LightingNode, Vector3, Vector4} from 'three/webgpu'
+import {Color, Frustum, LightingNode, Matrix4, Sphere, Vector3, Vector4} from 'three/webgpu'
 
 type LightingContext = {
   lightingModel: {
@@ -26,6 +26,9 @@ type LightingContext = {
 }
 
 const viewPosition = new Vector3
+const frustum = new Frustum
+const projection = new Matrix4
+const reach = new Sphere
 
 /**
  * Shades a group of shadowless point lights in one shader loop over uniform arrays.
@@ -94,11 +97,15 @@ export default class PointLightsNode extends LightingNode {
     reflectedLight.directSpecular.addAssign(directSpecular)
   }
 
-  /** Packs the lights that shine into the arrays; dark ones, like those switched off or outside their rooms, cost the loop nothing. */
+  /**
+   * Packs the lights that can reach what the camera sees into the arrays. Dark ones, like those switched off or outside their rooms, and those whose range ends before the camera’s view cost the loop nothing.
+   * It runs for every camera that renders, so each one, like a reflection’s, keeps the lights it sees.
+   */
   override update({camera}: NodeFrame): undefined {
+    frustum.setFromProjectionMatrix(projection.multiplyMatrices(camera!.projectionMatrix, camera!.matrixWorldInverse), camera!.coordinateSystem, camera!.reversedDepth)
     let i = 0
     for (const light of this.lights()) {
-      if (light.intensity === 0) {
+      if (light.intensity === 0 || light.distance > 0 && !frustum.intersectsSphere(reach.set(reach.center.setFromMatrixPosition(light.matrixWorld), light.distance))) {
         continue
       }
       if (i === this.capacity) {
