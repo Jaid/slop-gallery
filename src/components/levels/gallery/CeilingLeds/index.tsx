@@ -7,7 +7,7 @@ import {PointLight} from 'three/webgpu'
 import LedPanels from '#component/LedPanels'
 
 /** Knottingham’s breakable LED panes on a room’s ceiling; each pane’s light flickers and dies with it. */
-export default function CeilingLeds({light, name, slots}: {
+export default function CeilingLeds({light, name, optional = false, slots}: {
   light: {
     color: string
     decay: number
@@ -17,12 +17,15 @@ export default function CeilingLeds({light, name, slots}: {
     intensity: number
   }
   name: string
+  /** whether the lights go out with only the essential lamps */
+  optional?: boolean
   slots: ReadonlyArray<KnotLightSlot>
 }) {
   const lights = useDisposable(useMemo(() => {
     const created = slots.map(slot => {
       const emission = new PointLight(light.color, light.intensity, light.distance, light.decay)
       emission.name = `${name}-led-emission-${slot.id}`
+      emission.userData.optional = optional
       emission.position.set(slot.position[0], slot.position[1] - light.drop, slot.position[2])
       return emission
     })
@@ -31,7 +34,7 @@ export default function CeilingLeds({light, name, slots}: {
         emission.dispose()
       }
     }})
-  }, [light, name, slots]))
+  }, [light, name, optional, slots]))
   const onBrightness = (brightness: Float32Array) => {
     for (const [index, emission] of lights.entries()) {
       emission.intensity = light.intensity * brightness[index]

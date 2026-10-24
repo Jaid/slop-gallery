@@ -48,6 +48,6 @@ export default function CorridorStairs({timber, lining}: {
         <Box material={timber} size={beam.size} />
       </group>)}
     </RigidBody>
-    <PendantLamps body={globe} glow={globeGlow} light={globeLight} lighting={corridorLanterns} mounts={mounts} name='corridor-stair-pendants' />
+    <PendantLamps body={globe} glow={globeGlow} light={globeLight} lighting={corridorLanterns} mounts={mounts} name='corridor-stair-pendants' optional />
   </group>
 }

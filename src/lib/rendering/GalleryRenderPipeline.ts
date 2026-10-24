@@ -231,7 +231,9 @@ export default class GalleryRenderPipeline extends RenderPipeline {
         const rays = own(godrays(depth, camera, sun))
         const density = {value: 0}
         set(density, 'volumetricLightDensity')
-        rays.density.onRenderUpdate(() => density.value * volumetricLightReach())
+        // A sun switched off leaves no shafts.
+        const shining = sun
+        rays.density.onRenderUpdate(() => (shining.intensity > 0 ? density.value * volumetricLightReach() : 0))
         set(rays.maxDensity, 'volumetricLightMaxDensity')
         set(rays.raymarchSteps, 'volumetricLightSteps')
         set(rays.distanceAttenuation, 'volumetricLightDistanceAttenuation')

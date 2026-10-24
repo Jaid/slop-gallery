@@ -23,7 +23,7 @@ type Glow = {
 }
 
 /** Ceiling-hung light fixtures; each one’s rod reaches the ceiling surface found for its mount. */
-export default function PendantLamps({body, glow, light, lights, lighting, mounts, name}: {
+export default function PendantLamps({body, glow, light, lights, lighting, mounts, name, optional = false}: {
   body: PendantBody
   glow: Glow
   light: PendantLight
@@ -33,14 +33,16 @@ export default function PendantLamps({body, glow, light, lights, lighting, mount
   lights?: ReadonlyArray<Partial<PendantLight> | undefined>
   mounts: ReadonlyArray<PendantMount>
   name: string
+  /** whether the lights go out with only the essential lamps */
+  optional?: boolean
 }) {
   const set = useDisposable(useMemo(() => new PendantSet(body, mounts, glow, light, lights, lighting), [body, mounts, glow, light, lights, lighting]))
   return <group name={name}>
     {set.items.map(({mount, geometry, lamp, light: own}, i) => <group key={i} position={mount.light}>
       <mesh geometry={geometry.frame} material={set.frameMaterial} name={`${name}-${body.id}-frame`} />
       <mesh geometry={geometry.glow} material={set.glowMaterial} name={`${name}-${body.id}-glow`} />
-      <Branch if={lamp}><primitive object={lamp!} /></Branch>
-      <Branch not={lamp}><pointLight color={own.color} decay={own.decay ?? 2} distance={own.distance} intensity={own.intensity} position={[0, own.y ?? 0, 0]} /></Branch>
+      <Branch if={lamp}><primitive object={lamp!} userData-optional={optional} /></Branch>
+      <Branch not={lamp}><pointLight color={own.color} decay={own.decay ?? 2} distance={own.distance} intensity={own.intensity} position={[0, own.y ?? 0, 0]} userData-optional={optional} /></Branch>
     </group>)}
   </group>
 }

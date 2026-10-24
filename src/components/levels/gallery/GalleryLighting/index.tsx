@@ -103,17 +103,20 @@ export default function GalleryLighting() {
       light.shadow.needsUpdate = true
     }
   }, [shadow])
-  // Lamps glow by the preset’s gain. The corridor’s lanterns already light a space of their own, without any of the daylight’s fill, and daylight is no lamp.
-  const {lamps} = preset
+  // Lamps glow by the preset’s gain, and the optional ones not at all with only the essential lamps. The corridor’s lanterns already light a space of their own, without any of the daylight’s fill, and daylight is no lamp.
+  const {lamps, lampSet = 'all'} = preset
   useLayoutEffect(() => {
     lightGain.current = light => {
       const lamp = light as Lamp
-      return (lamp.isPointLight || lamp.isSpotLight) && !lamp.userData.daylight ? lamps : 1
+      if (!(lamp.isPointLight || lamp.isSpotLight) || lamp.userData.daylight) {
+        return 1
+      }
+      return lampSet === 'essential' && lamp.userData.optional ? 0 : lamps
     }
     return () => {
       lightGain.current = () => 1
     }
-  }, [lamps])
+  }, [lamps, lampSet])
   useEffect(() => {
     if (!isDevelopmentMode) {
       return

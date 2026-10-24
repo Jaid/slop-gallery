@@ -29,6 +29,8 @@ type Control = ({
   kind: 'range'
   max: number
   min: number
+  /** whether the value shows as a percentage */
+  percent?: boolean
   step: number
 } | {
   key: Setting
@@ -56,6 +58,16 @@ const range = (key: NumberKey, label: string, min: number, max: number, step: nu
   min,
   step,
 })
+/** a range of a fraction or factor, shown as a percentage */
+const percent = (key: NumberKey, label: string, min: number, max: number, step: number): Control => ({
+  key,
+  kind: 'range',
+  label,
+  max,
+  min,
+  percent: true,
+  step,
+})
 const toggle = (key: BooleanKey, label: string): Control => ({
   key,
   kind: 'toggle',
@@ -69,7 +81,7 @@ const select = (key: Setting, label: string, options: Array<[Value, string]>): C
 })
 /** the brightest value a half-float target holds, so a cap there caps nothing */
 const uncappedLuminance = 65_504
-const scales = (values: Array<number>): Array<[number, string]> => values.map(value => [value, `${value}×`])
+const scales = (values: Array<number>): Array<[number, string]> => values.map(value => [value, `${value * 100}%`])
 const screenSpaceReflections = (settings: CustomGraphics) => settings.reflectionScope === 'all'
 const sections: Array<Section> = [
   {
@@ -96,7 +108,7 @@ const sections: Array<Section> = [
         when: screenSpaceReflections,
       },
       {
-        ...range('screenSpaceReflectionIntensity', 'SSR intensity', 0, 2, 0.1),
+        ...percent('screenSpaceReflectionIntensity', 'SSR intensity', 0, 2, 0.1),
         when: screenSpaceReflections,
       },
       {
@@ -117,7 +129,7 @@ const sections: Array<Section> = [
       range('ambientOcclusionSamples', 'Samples', 4, 64, 4),
       range('ambientOcclusionRadius', 'Radius', 0.02, 1, 0.02),
       range('ambientOcclusionThickness', 'Thickness', 0.1, 3, 0.1),
-      range('ambientOcclusionScale', 'Strength', 0, 2, 0.05),
+      percent('ambientOcclusionScale', 'Strength', 0, 2, 0.05),
       toggle('ambientOcclusionTemporalFiltering', 'Temporal filtering'),
     ],
   },
@@ -131,7 +143,7 @@ const sections: Array<Section> = [
       range('screenSpaceIndirectLightSteps', 'Steps', 4, 32, 4),
       range('screenSpaceIndirectLightThickness', 'Thickness', 0.1, 4, 0.1),
       range('screenSpaceIndirectLightExpFactor', 'Exp factor', 1, 4, 0.1),
-      range('screenSpaceIndirectLightBackfaceLighting', 'Backface lighting', 0, 1, 0.05),
+      percent('screenSpaceIndirectLightBackfaceLighting', 'Backface lighting', 0, 1, 0.05),
       {
         ...range('screenSpaceIndirectLightAmbientOcclusion', 'AO intensity', 0.1, 4, 0.1),
         off: {
@@ -159,7 +171,7 @@ const sections: Array<Section> = [
     controls: [
       select('volumetricLightResolutionScale', 'Resolution', scales([0.25, 0.5, 1])),
       range('volumetricLightDensity', 'Density', 0, 20, 0.5),
-      range('volumetricLightMaxDensity', 'Max density', 0, 1, 0.05),
+      percent('volumetricLightMaxDensity', 'Max density', 0, 1, 0.05),
       range('volumetricLightSteps', 'Steps', 16, 256, 16),
       range('volumetricLightDistanceAttenuation', 'Attenuation', 0, 8, 0.25),
       {
@@ -178,7 +190,7 @@ const sections: Array<Section> = [
       select('contactShadowResolutionScale', 'Resolution', scales([0.5, 0.75, 1])),
       range('contactShadowDistance', 'Distance', 0.01, 0.5, 0.01),
       range('contactShadowThickness', 'Thickness', 0.005, 0.1, 0.005),
-      range('contactShadowIntensity', 'Intensity', 0, 1, 0.05),
+      percent('contactShadowIntensity', 'Intensity', 0, 1, 0.05),
       range('contactShadowQuality', 'Quality', 0.1, 2, 0.1),
       toggle('contactShadowDenoise', 'Denoise'),
       {
@@ -191,7 +203,7 @@ const sections: Array<Section> = [
     title: 'Bloom',
     toggle: 'bloom',
     controls: [
-      range('bloomStrength', 'Strength', 0, 2, 0.1),
+      percent('bloomStrength', 'Strength', 0, 2, 0.1),
       range('bloomRadius', 'Radius', 0, 1, 0.05),
       range('bloomThreshold', 'Threshold', 0, 4, 0.1),
       range('bloomSmoothWidth', 'Smooth width', 0, 0.5, 0.01),
@@ -206,6 +218,7 @@ const sections: Array<Section> = [
   },
   {
     title: 'Sun',
+    toggle: 'sun',
     controls: [
       range('sunIntensity', 'Strength', 0, 8, 0.1),
       range('sunAzimuth', 'Azimuth', 0, 360, 1),
@@ -215,16 +228,17 @@ const sections: Array<Section> = [
   {
     title: 'Lighting',
     controls: [
-      range('lamps', 'Lamp multiplier', 0, 4, 0.05),
+      select('lampSet', 'Lamps', [['all', 'All'], ['essential', 'Essential']]),
+      percent('lamps', 'Lamp multiplier', 0, 4, 0.05),
       range('hemisphereIntensity', 'Base light', 0, 4, 0.1),
-      range('environmentIntensity', 'Environment', 0, 1, 0.05),
+      percent('environmentIntensity', 'Environment', 0, 1, 0.05),
     ],
   },
   {
     title: 'Finish',
     controls: [
       {
-        ...range('vignette', 'Vignette', 0.05, 1, 0.05),
+        ...percent('vignette', 'Vignette', 0.05, 1, 0.05),
         off: {
           fallback: 0.2,
           off: 0,
@@ -356,7 +370,7 @@ function ControlRow({control, disabled}: {
   return <label className={css.row}>
     {label}
     <input id={id} disabled={disabled} max={control.max} min={control.min} step={control.step} type='range' value={value as number} onChange={event => set({[control.key]: Number(event.currentTarget.value)})} />
-    <output htmlFor={id}>{Number((value as number).toFixed(3))}</output>
+    <output htmlFor={id}>{control.percent ? `${Math.round((value as number) * 100)}%` : Number((value as number).toFixed(3))}</output>
   </label>
 }
 function SectionBox({section}: {section: Section}) {

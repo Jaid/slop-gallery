@@ -163,8 +163,8 @@ export default function Architecture() {
       <Branch if={vaultedRooms.has(room.id)}><LobbyVault cladding={lobbyWall} /></Branch>
       {(ledRooms.has(room.id) || vaultedRooms.has(room.id) ? [] : [-3.5, 3.5]).map(z => <pointLight key={z} color='#fff1d8' decay={2} distance={14} intensity={room.id === 'vesper' ? 40 : 32} position={[0, room.id === 'vesper' ? 4.5 : 4.9, z]} />)}
     </group>)}
-    <CeilingLeds light={dineLedLight} name='dine' slots={dineLedSlots} />
-    <CeilingLeds light={antechamberLedLight} name='antechamber' slots={antechamberLedSlots} />
+    <CeilingLeds light={dineLedLight} name='dine' optional slots={dineLedSlots} />
+    <CeilingLeds light={antechamberLedLight} name='antechamber' optional slots={antechamberLedSlots} />
     <PottedPlants />
     <Fountain />
     <FountainBenches wood={wood} />
