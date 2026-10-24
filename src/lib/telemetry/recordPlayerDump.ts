@@ -51,7 +51,11 @@ export default function recordPlayerDump(dump: EgoDump) {
   const {context} = snapshot
   console.dir(snapshot, {depth: null})
   const {id, time, ...rest} = snapshot
-  copyDump(`<details><summary>session from ${formatLocalTime(new Date(time))} in ${galleryTitle}</summary><dump id=${id} date="${time}">${stringifyClank(rest)}</dump></details>`).catch(error => {
+  const host = readHost()
+  copyDump(`<details><summary>${galleryTitle} at ${formatLocalTime(new Date(time))}</summary><dump id=${id} date="${time}">${stringifyClank(host ? {
+    host,
+    ...rest,
+  } : rest)}</dump></details>`).catch(error => {
     console.warn('Dump could not be copied to the clipboard.', error)
   })
   if (useGallery.getState().sound) {
@@ -107,9 +111,15 @@ async function copyDump(text: string) {
   await navigator.clipboard.writeText(text)
   console.info(`Dump copied to the clipboard as Clank (${text.length} characters).`)
 }
+const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 function pad(value: number) {
   return String(value).padStart(2, '0')
 }
+/** `DD MMM YYYY HH:mm` in local time, e.g. `24 Oct 2026 23:57` */
 function formatLocalTime(date: Date) {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+  return `${pad(date.getDate())} ${monthNames[date.getMonth()]} ${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+/** the page’s URL host name, or null outside a page */
+function readHost() {
+  return typeof location === 'undefined' ? null : location.hostname || null
 }

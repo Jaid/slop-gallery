@@ -7,7 +7,7 @@ import {BoxGeometry, Mesh, MeshBasicMaterial, PerspectiveCamera, Scene} from 'th
 
 import EgoDiagnostics from '../../packages/ego-player/src/EgoDiagnostics.ts'
 
-test('player dumps are development-only, join separate hit logs and respect disabled telemetry', async () => {
+test('player dumps are development-only, name the page host, join separate hit logs and respect disabled telemetry', async () => {
   const source = resolve(import.meta.dir, '../../src/lib/telemetry/recordPlayerDump.ts')
   const scene = new Scene
   const camera = new PerspectiveCamera
@@ -112,10 +112,22 @@ test('player dumps are development-only, join separate hit logs and respect disa
         continue
       }
       expect(module.playerDumpHandler).toBe(module.default)
-      module.playerDumpHandler!(dump)
+      // Outside a page there is no host; the sound flag doubles as the switch between both.
+      const hosted = sound
+      if (hosted) {
+        Object.defineProperty(globalThis, 'location', {
+          configurable: true,
+          value: {hostname: 'vite.tower.lan'},
+        })
+      }
+      try {
+        module.playerDumpHandler!(dump)
+      } finally {
+        delete (globalThis as {location?: unknown}).location
+      }
       await Bun.sleep(0)
       expect(module.screenshots).toEqual([`knottingham-${dump.id}`])
-      expect(clipboard.pop()).toMatch(new RegExp(String.raw`^<details><summary>session from \d{4}-\d{2}-\d{2} \d{2}:\d{2} in Knottingham</summary><dump id=${dump.id} date="${dump.time}">player .* context \{ level knottingham room lobby .*\}${enabled ? String.raw` query \{ development true seed 42 graphics true\}` : ''}</dump></details>$`, 'u'))
+      expect(clipboard.pop()).toMatch(new RegExp(String.raw`^<details><summary>Knottingham at \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}</summary><dump id=${dump.id} date="${dump.time}">${hosted ? 'host vite.tower.lan ' : ''}player .* context \{ level knottingham room lobby .*\}${enabled ? String.raw` query \{ development true seed 42 graphics true\}` : ''}</dump></details>$`, 'u'))
       expect(module.played).toEqual(sound && !audioFails ? ['SFX-04'] : [])
       expect(module.SoundEngine.requests).toBe(sound ? 1 : 0)
       expect(dir).toHaveBeenLastCalledWith({
