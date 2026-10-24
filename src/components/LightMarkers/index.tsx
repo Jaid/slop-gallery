@@ -5,7 +5,7 @@ import {useEffect, useRef} from 'react'
 import {Color, Matrix4, Quaternion, Vector2, Vector3} from 'three/webgpu'
 
 import {isTextInput, notify} from '#src/lib/gallery.ts'
-import {changeLightDecay, changeLightRange, changeLightStrength, isEditingLights, lightActive, moveLight, placeLight, resetLight, toggleLight, useLightEdits} from '#src/lib/rendering/lightLevels.ts'
+import {changeLightDecay, changeLightIntensity, changeLightRange, isEditingLights, lightActive, moveLight, placeLight, resetLight, toggleLight, useLightEdits} from '#src/lib/rendering/lightLevels.ts'
 
 type Positional = Light & {
   isPointLight?: boolean
@@ -211,7 +211,10 @@ export default function LightMarkers() {
       if (!aimed || event.ctrlKey || event.metaKey || event.altKey || isTextInput(event.target)) {
         return
       }
-      const strength = (steps: number) => notify(`${describe(aimed)}: strength ×${changeLightStrength(aimed, steps).toFixed(2)}`)
+      const strength = (steps: number) => {
+        const intensity = changeLightIntensity(aimed, steps)
+        notify(intensity === undefined ? `${describe(aimed)} is dark` : `${describe(aimed)}: intensity ${intensity}`)
+      }
       const range = (steps: number) => {
         const distance = changeLightRange(aimed, steps)
         notify(distance === undefined ? `${describe(aimed)} has no range` : `${describe(aimed)}: range ${distance.toFixed(1)} m`)

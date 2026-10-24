@@ -44,14 +44,14 @@ export const isEditingLights = readEditLights()
 /** whether this page shows light markers, read once at startup; editing shows them too */
 export const isShowingLights = isEditingLights || readShowLights()
 
-/** how much one step changes a light’s strength factor */
-const strengthStep = 0.1
 /** how much one step changes a light’s range, in meters */
 const rangeStep = 1
 /** Adds `steps` steps of `size` to `value`, landing on whole steps and no lower than `min`. */
 const stepBy = (value: number, steps: number, size: number, min: number) => Math.max(min, Number(((Math.round(value / size) + steps) * size).toFixed(6)))
 /** the range a light without a cutoff starts from when its range is first changed, in meters */
 const openRange = 20
+/** each light’s intensity as its owner set it, and as {@link applyLightLevels} last wrote it */
+const levels = new WeakMap<Light, Level>
 
 /** The light the camera aims at while editing lights, the one focused by clicking its marker, the lights moved, the lights whose range or decay changed, and the lights switched off or made stronger or weaker for this page session. */
 export const useLightEdits = create<{
@@ -79,13 +79,20 @@ const markReshaped = (light: Light) => {
   }
 }
 
-/** Makes a light stronger (positive `steps`) or weaker, returning its new strength relative to what its owner set. */
-export function changeLightStrength(light: Light, steps: number) {
+/**
+ * Makes a light stronger (positive `steps`) or weaker by whole units of intensity, the unit its owner sets it in, returning its new intensity before any lamp gain.
+ * A light its owner left dark has nothing to scale, so it returns undefined.
+ */
+export function changeLightIntensity(light: Light, steps: number) {
+  const base = levels.get(light)?.base ?? light.intensity
+  if (base <= 0) {
+    return
+  }
   const strengths = new Map(useLightEdits.getState().strengths)
-  const strength = stepBy(strengths.get(light) ?? 1, steps, strengthStep, 0)
-  strengths.set(light, strength)
+  const intensity = Math.max(0, Math.round(base * (strengths.get(light) ?? 1)) + steps)
+  strengths.set(light, intensity / base)
   useLightEdits.setState({strengths})
-  return strength
+  return intensity
 }
 
 /** the ranges lights had before they were first changed */
@@ -193,7 +200,7 @@ export function toggleLight(light: Light) {
 
 /**
  * Multiplies the intensity of every light, on top of what its owner sets, such as a lighting preset’s lamp gain. Levels replace
- * it while mounted. Strengths changed with {@link changeLightStrength} apply on top, and a light switched off with {@link toggleLight} gets 0 regardless.
+ * it while mounted. Strengths changed with {@link changeLightIntensity} apply on top, and a light switched off with {@link toggleLight} gets 0 regardless.
  */
 export const lightGain = {current: (_light: Light) => 1}
 
@@ -207,7 +214,6 @@ export const lightActive = {current: (_light: Light) => true}
  */
 export const lightShadow = {current: (_light: Light) => 1}
 
-const levels = new WeakMap<Light, Level>
 /** whether each light’s owner made it cast shadows, and whether this made it last frame */
 const casters = new WeakMap<Light, {
   base: boolean
