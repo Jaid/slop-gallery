@@ -10,8 +10,8 @@ import LodgeWindowGeometry from '../../src/lib/gallery/LodgeWindowGeometry.ts'
 import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
 import TransitionGeometry from '../../src/lib/gallery/passages/TransitionGeometry.ts'
 import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
-import {CeilingProbe, GlobeBody, LanternBody, PendantGeometry} from '../../src/lib/gallery/pendants/index.ts'
-import {corridorLightSpacing, passageLightHeight, passagePendantMounts, ribSearch, stairLightHeight, stairLightSteps, stairPendantMounts} from '../../src/lib/gallery/pendants/mounts.ts'
+import {CeilingProbe, LanternBody, PendantGeometry} from '../../src/lib/gallery/pendants/index.ts'
+import {corridorLightSpacing, passageLightHeight, passagePendantMounts} from '../../src/lib/gallery/pendants/mounts.ts'
 import {canopyEmbed, canopyHeight, canopyRadius} from '../../src/lib/gallery/pendants/PendantGeometry.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 
@@ -32,7 +32,6 @@ const meshes = [vault.shell, vault.ribs, corridor.shell, corridor.ribs, stairs.s
   return mesh
 })
 const lantern = new LanternBody
-const globe = new GlobeBody
 const groups: Array<{
   body: PendantBody
   label: string
@@ -48,16 +47,7 @@ const groups: Array<{
     body: lantern,
     mounts: passagePendantMounts(corridorPassage, [corridor.shell, corridor.ribs], corridorLightSpacing, corridor.ribs),
   },
-  {
-    label: 'corridor stairs',
-    body: globe,
-    mounts: stairPendantMounts(corridorStairs, stairs.ribs),
-  },
 ]
-const stairNominal = stairLightSteps.map(step => {
-  const block = corridorStairs.blocks[step]
-  return [block.position[0], block.top + stairLightHeight, block.position[2]] as const
-})
 afterAll(() => {
   for (const geometry of [vault, corridor, stairs, transition, lodgeWindow, ...slabs]) {
     geometry.dispose()
@@ -69,18 +59,13 @@ const firstHit = (origin: Vector3, direction: Vector3, far = Infinity) => {
   return raycaster.intersectObjects(meshes)[0]
 }
 describe('ceiling-hung pendants', () => {
-  test('every light hangs at its passage height or beside its stair step', () => {
+  test('every light hangs at its passage height', () => {
     expect(groups[0].mounts).toHaveLength(5)
     expect(groups[1].mounts).toHaveLength(9)
-    expect(groups[2].mounts).toHaveLength(stairLightSteps.length)
     for (const [i, passage] of [lodgeTunnel, corridorPassage].entries()) {
       for (const mount of groups[i].mounts) {
         expect(mount.light[1]).toBeCloseTo(passage.floorY + passageLightHeight)
       }
-    }
-    for (const [i, mount] of groups[2].mounts.entries()) {
-      expect(Math.hypot(mount.light[0] - stairNominal[i][0], mount.light[2] - stairNominal[i][2])).toBeLessThanOrEqual(ribSearch)
-      expect(mount.light[1]).toBeCloseTo(stairNominal[i][1])
     }
   })
   for (const {label, body, mounts} of groups) {
@@ -155,12 +140,6 @@ describe('ceiling-hung pendants', () => {
       }
     })
   }
-  test('stair globes hang well above the heads of people on the treads', () => {
-    for (const mount of groups[2].mounts) {
-      const floor = corridorStairs.blocks.find(block => Math.abs(mount.light[0] - block.position[0]) <= block.size[0] / 2)!
-      expect(mount.light[1] + globe.bottom - floor.top).toBeGreaterThan(2.2)
-    }
-  })
   test('a probe without a ceiling above refuses to mount, and slides only horizontally', () => {
     const probe = new CeilingProbe([vault.shell])
     expect(probe.mount([1000, 0, 1000], [1, 0, 0])).toBeUndefined()

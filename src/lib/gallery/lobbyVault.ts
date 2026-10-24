@@ -156,6 +156,8 @@ export function vaultHeight(x: number) {
  * either side. The north one hangs right over the glass floor above the Oculus.
  */
 export const lobbyChandeliers = {
+  /** switched off for now: neither the fixtures nor their light are in the scene, though the arches still break for their rods */
+  shown: false as boolean,
   /** z relative to the room center */
   offsets: [-8, 0, 8],
   /** height of each chandelier’s hub above the floor */

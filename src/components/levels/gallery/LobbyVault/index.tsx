@@ -64,7 +64,7 @@ export default function LobbyVault({cladding}: {
     {/* The glass lets the sun through: it casts no shadow, only its bars and tracery do. */}
     <mesh castShadow={false} geometry={geometry.glass} material={glass} name='lobby-vault-glass' />
     <mesh castShadow={false} geometry={geometry.roseGlass} material={glass} name='lobby-vault-rose-window' />
-    <LobbyChandeliers />
+    <Branch if={lobbyChandeliers.shown} then={LobbyChandeliers} />
   </group>
 }
 

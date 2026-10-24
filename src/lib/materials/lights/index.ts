@@ -24,7 +24,7 @@ export function lightIndoors<T extends NodeMaterial>(material: T) {
 /** The Lobby’s fountain is lit by the Lobby’s own lamps, the sun and the fill, not by the colored lamps of the tunnel running under its floor. */
 export const lobbyLights = new RoomLightsNode(new Box3(new Vector3(-lobby.width / 2, -0.5, lobby.northZ), new Vector3(lobby.width / 2, 30, lobby.southZ)))
 
-/** The timber corridor and its stairs are lit by nothing but their own lanterns and globes. */
+/** The timber corridor and its stairs are lit by nothing but the corridor’s lanterns. */
 export const corridorLanterns = new LanternLightsNode('corridor')
 
 /** The window between the Lodge and the corridor: its glass and reveal catch both the Lodge’s lights and the corridor’s lanterns, and mirror the dark around them instead of the gallery’s sky. */
