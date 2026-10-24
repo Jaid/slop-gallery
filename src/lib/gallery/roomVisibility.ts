@@ -1,11 +1,13 @@
 import type {RoomId, Vec3} from './types.ts'
-import type {Frustum, Sphere} from 'three/webgpu'
+import type {Frustum, Matrix4, Sphere} from 'three/webgpu'
 
 import {Box3, Vector3} from 'three/webgpu'
 
 import lobby from './lobby.ts'
 import walls, {openingTop, roomClearHeight, rooms, wallPosition} from './walls.ts'
 
+/** a rectangle on screen in normalized device coordinates: left, bottom, right, top */
+export type ScreenRect = readonly [number, number, number, number]
 type Portal = {
   box: Box3
   rooms: readonly [RoomId, RoomId]
@@ -103,6 +105,7 @@ export const portals: Array<Portal> = [
 
 export const roomBoxes = rooms.map(room => ({
   id: room.id,
+  floorY: room.floorY,
   box: new Box3(new Vector3(room.center[0] - room.size[0] / 2, room.floorY - 1, room.center[1] - room.size[1] / 2), new Vector3(room.center[0] + room.size[0] / 2, room.floorY + roomClearHeight(room) + 0.2, room.center[1] + room.size[1] / 2)),
 }))
 
@@ -191,4 +194,130 @@ export function visibleRooms(room: RoomId, frustum: Frustum) {
   }
   through(room, 2)
   return result
+}
+
+/** the rooms whose boxes contain the position, and in a passage the rooms on both of its ends */
+export function roomsAt([x, y, z]: Vec3) {
+  point.set(x, y, z)
+  const result = new Set<RoomId>
+  for (const {id, box} of roomBoxes) {
+    if (box.containsPoint(point)) {
+      result.add(id)
+    }
+  }
+  if (!result.size) {
+    for (const portal of portals) {
+      if (portal.box.containsPoint(point)) {
+        for (const room of portal.rooms) {
+          result.add(room)
+        }
+      }
+    }
+  }
+  return [...result]
+}
+
+/**
+ * The rooms an object with these world bounds can show up in: every room whose box it overlaps, so that a wall between two rooms belongs to both. Outside of every room box, a passage or doorframe belongs to the rooms of the openings it overlaps.
+ * Empty for anything outside the gallery’s rooms and openings, which never gets culled.
+ */
+export function roomsOverlapping(box: Box3) {
+  const result: Array<RoomId> = []
+  for (const {id, box: roomBox} of roomBoxes) {
+    if (roomBox.intersectsBox(box)) {
+      result.push(id)
+    }
+  }
+  if (result.length) {
+    return result
+  }
+  return [...new Set(portals.filter(portal => portal.box.intersectsBox(box)).flatMap(portal => portal.rooms))]
+}
+
+const fullScreen: ScreenRect = [-1, -1, 1, 1]
+/** clip-space w below which a corner counts as behind the camera */
+const nearW = 1e-5
+
+/** The part of the screen the box covers, or undefined when it is off screen. A box reaching behind the camera covers the whole screen. */
+export function screenRect(box: Box3, viewProjection: Matrix4): ScreenRect | undefined {
+  const e = viewProjection.elements
+  let left = Number.POSITIVE_INFINITY
+  let bottom = Number.POSITIVE_INFINITY
+  let right = Number.NEGATIVE_INFINITY
+  let top = Number.NEGATIVE_INFINITY
+  let behind = 0
+  for (let index = 0; index < 8; index++) {
+    const x = index & 1 ? box.max.x : box.min.x
+    const y = index & 2 ? box.max.y : box.min.y
+    const z = index & 4 ? box.max.z : box.min.z
+    const w = e[3] * x + e[7] * y + e[11] * z + e[15]
+    if (w < nearW) {
+      behind++
+      continue
+    }
+    const screenX = (e[0] * x + e[4] * y + e[8] * z + e[12]) / w
+    const screenY = (e[1] * x + e[5] * y + e[9] * z + e[13]) / w
+    left = Math.min(left, screenX)
+    bottom = Math.min(bottom, screenY)
+    right = Math.max(right, screenX)
+    top = Math.max(top, screenY)
+  }
+  if (behind === 8) {
+    return
+  }
+  if (behind) {
+    return fullScreen
+  }
+  return intersectScreenRects(fullScreen, [left, bottom, right, top])
+}
+
+/** the overlap of two screen rectangles, or undefined when they don’t overlap */
+export function intersectScreenRects(a: ScreenRect, b: ScreenRect): ScreenRect | undefined {
+  const left = Math.max(a[0], b[0])
+  const bottom = Math.max(a[1], b[1])
+  const right = Math.min(a[2], b[2])
+  const top = Math.min(a[3], b[3])
+  if (left > right || bottom > top) {
+    return
+  }
+  return [left, bottom, right, top]
+}
+
+/**
+ * What the camera sees of each room: the rooms it stands in fill the screen, and the rooms behind their openings show through the part of the screen those openings cover, up to two openings deep like {@link visibleRooms}.
+ * An opening seen through another only shows where both overlap, so rooms beyond a narrow gap or around a corner drop out. Rooms missing from the map are out of sight.
+ */
+export function visibleRegions(from: ReadonlyArray<RoomId>, viewProjection: Matrix4) {
+  const regions = new Map<RoomId, Array<ScreenRect>>(from.map(room => [room, [fullScreen]]))
+  const portalRects = new Map<Portal, ScreenRect | undefined>
+  const through = (room: RoomId, rect: ScreenRect, depth: number) => {
+    for (const portal of portals) {
+      const index = portal.rooms.indexOf(room)
+      const next = portal.rooms[1 - index]
+      if (index === -1 || from.includes(next)) {
+        continue
+      }
+      if (!portalRects.has(portal)) {
+        portalRects.set(portal, screenRect(portal.box, viewProjection))
+      }
+      const portalRect = portalRects.get(portal)
+      const seen = portalRect && intersectScreenRects(rect, portalRect)
+      if (!seen) {
+        continue
+      }
+      const rects = regions.get(next)
+      if (rects) {
+        rects.push(seen)
+      } else {
+        regions.set(next, [seen])
+      }
+      if (depth > 1) {
+        through(next, seen, depth - 1)
+      }
+    }
+  }
+  for (const room of from) {
+    through(room, fullScreen, 2)
+  }
+  return regions
 }

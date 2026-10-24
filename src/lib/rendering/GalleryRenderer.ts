@@ -88,13 +88,17 @@ const warmupObjectsPerFrame = 48
 export class GalleryRenderer extends WebgpuRenderer {
   /** objects that every pass of the current frame skips, including their children */
   readonly hidden = new Set<Object3D>
+  /** objects that only the camera and its reflection leave out, while shadow maps keep them as casters */
+  readonly hiddenFromView = new Set<Object3D>
+  /** the cameras of shadow maps, which draw {@link hiddenFromView} */
+  readonly shadowCameras = new WeakSet<Camera>
   private culledCamera: Camera | null = null
   private culler: Culler | null = null
   private frame = -1
   private frameScene: Scene | null = null
   private initialization?: Promise<this>
   private pending = 0
-  /** projects objects outside of loading, leaving out {@link hidden} */
+  /** projects objects outside of loading, leaving out {@link hidden} and, outside of shadow maps, {@link hiddenFromView} */
   private projectCulled?: ProjectObject
   /** projects objects while loading, admitting the next ones outside the frustum */
   private projectWarming?: ProjectObject
@@ -181,6 +185,7 @@ export class GalleryRenderer extends WebgpuRenderer {
     this.culler = culler
     this.culledCamera = null
     this.hidden.clear()
+    this.hiddenFromView.clear()
   }
 
   /** Sets the scene the game renders every frame, together with its shadow and reflection passes. */
@@ -209,9 +214,9 @@ export class GalleryRenderer extends WebgpuRenderer {
     }
     // A render bundle records its draws once, so an object missing from it would stay missing.
     pipelines.updateForRender = renderObject => pipelines.getForRender(renderObject, renderObject.scene === this.frameScene && internals._currentRenderBundle === null ? sink : null)
-    const {hidden} = this
+    const {hidden, hiddenFromView, shadowCameras} = this
     this.projectCulled = function (this: Renderer, object, camera, groupOrder, renderList, clippingContext) {
-      if (!hidden.has(object)) {
+      if (!hidden.has(object) && (!hiddenFromView.has(object) || shadowCameras.has(camera))) {
         projectObject.call(this, object, camera, groupOrder, renderList, clippingContext)
       }
     }
