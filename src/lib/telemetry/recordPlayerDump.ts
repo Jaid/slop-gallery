@@ -50,12 +50,15 @@ export default function recordPlayerDump(dump: EgoDump) {
   const snapshot = snapshotPlayerDump(dump)
   const {context} = snapshot
   console.dir(snapshot, {depth: null})
-  const {id, time, ...rest} = snapshot
+  const {id, time, query, ...rest} = snapshot
   const host = readHost()
-  copyDump(`<details><summary>${galleryTitle} at ${formatLocalTime(new Date(time))}</summary><dump id=${id} date="${time}">${stringifyClank(host ? {
-    host,
+  // Clank keeps insertion order: the host goes right before the query, since both describe the page.
+  const clank = {
     ...rest,
-  } : rest)}</dump></details>`).catch(error => {
+    ...host ? {host} : {},
+    ...query ? {query} : {},
+  }
+  copyDump(`<details><summary>${galleryTitle} at ${formatLocalTime(new Date(time))}</summary><dump id=${id} date="${time}">${stringifyClank(clank)}</dump></details>`).catch(error => {
     console.warn('Dump could not be copied to the clipboard.', error)
   })
   if (useGallery.getState().sound) {
