@@ -102,7 +102,7 @@ test('the provider exposes the default scene budget during SSR', () => {
     ambientOcclusionSamples: 16,
     reflectionResolutionScale: 1,
     shadowMapScale: 1,
-    shadowSamples: 5,
+    shadowSamples: 4,
     sunShadowRadius: 4,
     sunShadowSamples: 4,
     surfaceAnisotropy: 8,
@@ -233,7 +233,7 @@ test('Sun shadow presets are independent of the other lights and follow the conf
     sunShadowRadius: 8,
     sunShadowSamples: 16,
   })
-  expect(heavyProfile.shadowSamples).toBe(5)
+  expect(heavyProfile.shadowSamples).toBe(4)
   expect(cinematicProfile.shadowSamples).toBe(16)
   expect(heavy.voxelIndirectLightBounces).toBe(1)
   expect(cinematic.voxelIndirectLightBounces).toBe(2)

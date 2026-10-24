@@ -121,7 +121,7 @@ const heavyProfile: GraphicsProfile = {
   ambientOcclusionSamples: 16,
   reflectionResolutionScale: 1,
   shadowMapScale: 1,
-  shadowSamples: 5,
+  shadowSamples: 4,
   sunShadowRadius: 4,
   sunShadowSamples: 4,
   surfaceAnisotropy: 8,
