@@ -1,5 +1,6 @@
 import {beforeEach, describe, expect, test} from 'bun:test'
 
+import {dropPortrait} from '../../src/lib/gallery/actions.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import ImageImporter, {containedRect, imageSize} from '../../src/lib/gallery/ImageImporter.ts'
 import portraitLabel, {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
@@ -227,6 +228,27 @@ describe('transactional history', () => {
     expect(useGallery.getState().portraits[0].source).toBe(source)
     expect(redo()).toBe(true)
     expect(useGallery.getState().portraits.some(p => p.id === first.id)).toBe(false)
+  })
+  test('a dropped work falls off its wall as one undoable step and the held work stays in hand', () => {
+    const [dropped, held] = useGallery.getState().portraits
+    useGallery.setState({held: held.id})
+    expect(dropPortrait(dropped.id)).toBe(true)
+    expect(useGallery.getState().held).toBe(held.id)
+    const fallen = useGallery.getState().portraits.find(p => p.id === dropped.id)!
+    expect(fallen).toMatchObject({
+      hung: false,
+      wallId: undefined,
+      position: dropped.position,
+    })
+    // It tips forward, away from its wall.
+    expect(fallen.velocity![0] * Math.sin(dropped.rotation) + fallen.velocity![2] * Math.cos(dropped.rotation)).toBeGreaterThan(0)
+    expect(dropPortrait(dropped.id)).toBe(false)
+    expect(dropPortrait(held.id)).toBe(false)
+    expect(undo()).toBe(true)
+    expect(useGallery.getState().portraits.find(p => p.id === dropped.id)).toMatchObject({
+      hung: true,
+      wallId: dropped.wallId,
+    })
   })
   test('caps history and clears the redo branch after a new edit', () => {
     for (let i = 0; i < 30; i++) {

@@ -89,6 +89,31 @@ export function requestMerge(first: string, second: string) {
   galleryEvents.dispatchEvent(new CustomEvent('merge', {detail: [first, second]}))
 }
 
+/** Knocks a hung work off its wall, as one undoable step that keeps whatever the player holds. */
+export function dropPortrait(id: string) {
+  const state = useGallery.getState()
+  const portrait = state.portraits.find(candidate => candidate.id === id)
+  if (!portrait?.hung || portrait.reserved || portrait.merging || state.held === id) {
+    return false
+  }
+  const {held, placement: heldPlacement} = state
+  // The frame faces +z before its yaw; it tips forward off the wall and falls.
+  state.commit(state.portraits.map(candidate => (candidate.id === id ? {
+    ...candidate,
+    hung: false,
+    wallId: undefined,
+    orientation: undefined,
+    velocity: [Math.sin(portrait.rotation) * 0.8, 0.4, Math.cos(portrait.rotation) * 0.8],
+  } : candidate)))
+  useGallery.setState({
+    held,
+    placement: heldPlacement,
+  })
+  chime(110)
+  notify('Down it goes. Undo hangs it back up.')
+  return true
+}
+
 export function viewPortrait(id: string) {
   if (!useGallery.getState().ready) {
     return

@@ -1,4 +1,4 @@
-import type {EgoAction, EgoPlayerHandle, EgoState} from 'ego-player'
+import type {EgoAction, EgoImpact, EgoPlayerHandle, EgoState} from 'ego-player'
 import type {Camera} from 'three/webgpu'
 
 import {useKeyboardControls} from '@react-three/drei/webgpu'
@@ -10,7 +10,7 @@ import {Euler, PerspectiveCamera, Quaternion, Vector3} from 'three/webgpu'
 import {insideLevel, levelFloorHeight} from '#level/navigation.ts'
 import {attachPlayerAudio, onPlayerLand, onPlayerStep, onPlayerZoomChange, onPlayerZoomTransition} from '#src/lib/audio/playerAudio.ts'
 import {isDevelopmentMode} from '#src/lib/developmentMode.ts'
-import {cameraPose, galleryEvents, markControlled, narrate, setCameraFocused, useGallery} from '#src/lib/gallery.ts'
+import {cameraPose, dropPortrait, galleryEvents, markControlled, narrate, setCameraFocused, useGallery} from '#src/lib/gallery.ts'
 import {cameraBookmarkFeet, findCameraBookmark} from '#src/lib/gallery/bookmarks.ts'
 import {flyMode} from '#src/lib/gallery/flyMode.ts'
 import {activateInteractiveObject} from '#src/lib/gallery/interactiveObjects.ts'
@@ -36,6 +36,19 @@ const onInteract = () => {
   }
   if (portraitObjects.has(active)) {
     narrate(active)
+  }
+}
+/**
+ * Speed in m/s toward a hung work at which jumping into it or landing on it knocks it off the wall. Above a walking (3) or dodging (4.5) jump, below a sprinting jump (9) and the landing after a fall of a meter (6.3).
+ */
+export const portraitDropSpeed = 6
+const onImpact = (impact: EgoImpact) => {
+  if (!impact.airborne || impact.speed < portraitDropSpeed) {
+    return
+  }
+  const id: unknown = (impact.collider.parent()?.userData as {portraitId?: unknown} | undefined)?.portraitId
+  if (typeof id === 'string') {
+    dropPortrait(id)
   }
 }
 export default function Player() {
@@ -154,5 +167,5 @@ export default function Player() {
       }
     }
   }
-  return <EgoPlayer cameraEnabled={cameraEnabled} enabled={enabled} fallbackPosition={playerSpawn.position} flying={flying} input={input} pitch={initial.pitch} pointerLock={pointerLock} position={initial.position} yaw={initial.yaw} ref={player} onDump={playerDumpHandler} onInput={markControlled} onInteract={onInteract} onLand={onPlayerLand} onStep={onPlayerStep} onUpdate={onUpdate} onZoomChange={onPlayerZoomChange} onZoomTransition={onPlayerZoomTransition} />
+  return <EgoPlayer cameraEnabled={cameraEnabled} enabled={enabled} fallbackPosition={playerSpawn.position} flying={flying} input={input} pitch={initial.pitch} pointerLock={pointerLock} position={initial.position} yaw={initial.yaw} ref={player} onDump={playerDumpHandler} onImpact={onImpact} onInput={markControlled} onInteract={onInteract} onLand={onPlayerLand} onStep={onPlayerStep} onUpdate={onUpdate} onZoomChange={onPlayerZoomChange} onZoomTransition={onPlayerZoomTransition} />
 }
