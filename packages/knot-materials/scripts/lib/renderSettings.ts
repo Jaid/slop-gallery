@@ -27,6 +27,10 @@ export const inspectionAnimationOffsetSeconds = 13.5
 export const previewBaseFov = 50
 export const previewSupersampling = 2
 export const previewFovForDistanceScale = (distanceScale: number) => previewBaseFov * (1 + Math.abs(Math.log2(distanceScale)) * 0.08)
+/** camera turn around the knot on top of every frame’s `angle`, in radians */
+export const previewAngleOffset = 0.18
+/** camera distance at which a knot of this bounding radius, displacement included, fills the base FOV */
+export const previewDistance = (radius: number) => Math.max(2.1, radius / Math.sin(previewBaseFov * Math.PI / 360) * 1.08)
 
 export type RenderFrame = {
   angle: number
@@ -35,6 +39,26 @@ export type RenderFrame = {
   fov?: number
   seconds: number
   size: 'animation' | 'closeup' | 'still' | 'video'
+}
+
+/** output width and height of each frame size */
+export const frameSizes = {
+  animation: [inspectionAnimationSize, inspectionAnimationSize],
+  closeup: closeupSize,
+  still: [stillSize, stillSize],
+  video: [inspectionVideoSize, inspectionVideoSize],
+} as const satisfies Record<RenderFrame['size'], readonly [number, number]>
+
+/** where a frame’s camera sits relative to the knot center it looks at, with the knot unturned, and its vertical FOV in degrees */
+export const previewCamera = (frame: RenderFrame, baseDistance: number) => {
+  const distance = baseDistance * frame.distanceScale
+  const angle = previewAngleOffset + frame.angle
+  const elevation = frame.elevation ?? 0
+  const horizontalDistance = Math.cos(elevation) * distance
+  return {
+    fov: frame.fov ?? previewFovForDistanceScale(frame.distanceScale),
+    position: [Math.sin(angle) * horizontalDistance, Math.sin(elevation) * distance, Math.cos(angle) * horizontalDistance] as [number, number, number],
+  }
 }
 
 const assertFrameIndex = (index: number) => {

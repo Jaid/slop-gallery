@@ -10,7 +10,7 @@ import {createKnotGeometry} from '../../src/geometry.ts'
 import loadKnotMaterial from '../../src/materials.ts'
 import StudioEnvironment from '../../src/StudioEnvironment.ts'
 import {createOutputTarget} from './createOutputTarget.ts'
-import {animationFps, closeupSize, inspectionAnimationSize, inspectionVideoRenderSize, inspectionVideoSize, previewBaseFov, previewFovForDistanceScale, previewSupersampling, stillSize} from './renderSettings.ts'
+import {animationFps, closeupSize, frameSizes, inspectionAnimationSize, inspectionVideoRenderSize, previewBaseFov, previewCamera, previewDistance, previewSupersampling, stillSize} from './renderSettings.ts'
 
 export type KnotPreview = {
   dispose: () => void
@@ -28,7 +28,6 @@ const canvas = (width: number, height = width) => Object.assign(document.createE
 })
 const png = (image: HTMLCanvasElement) => image.toDataURL('image/png').split(',')[1]
 const renderSize = (size: number) => Math.round(size * previewSupersampling)
-const squareSize = (size: number) => [size, size] as const
 
 /** Detached scene, private frame clock, and explicit GPU readback. Never changes the live game. */
 export default class KnotPreviewRenderer {
@@ -54,7 +53,6 @@ export default class KnotPreviewRenderer {
     const key = new DirectionalLight('#fff0d7', 2.3)
     key.position.set(-3, 9, -16)
     this.scene.add(new AmbientLight('#ffffff', 0.45), new HemisphereLight('#e1edff', '#80705d', 1.3), key)
-    this.positionCamera(2.1)
   }
 
   private get device() {
@@ -64,27 +62,22 @@ export default class KnotPreviewRenderer {
   async createPreview(item: KnotEntry): Promise<KnotPreview> {
     await this.prepare(item)
     const mesh = this.active!
-    const baseDistance = this.camera.position.length()
+    const baseDistance = previewDistance(this.radius(item))
+    const targets = {
+      animation: this.animationTarget,
+      closeup: this.closeupTarget,
+      still: this.stillTarget,
+      video: this.videoTarget,
+    }
     const render = async (frame: RenderFrame) => {
       if (this.active !== mesh) {
         throw new Error('The knot preview has been disposed.')
       }
       mesh.rotation.y = 0
-      let target = this.animationTarget
-      let size: readonly [number, number] = squareSize(inspectionAnimationSize)
-      if (frame.size === 'closeup') {
-        target = this.closeupTarget
-        size = closeupSize
-      } else if (frame.size === 'still') {
-        target = this.stillTarget
-        size = squareSize(stillSize)
-      } else if (frame.size === 'video') {
-        target = this.videoTarget
-        size = squareSize(inspectionVideoSize)
-      }
+      const size = frameSizes[frame.size]
       this.camera.aspect = size[0] / size[1]
-      this.positionCamera(baseDistance * frame.distanceScale, 0.18 + frame.angle, frame.distanceScale, frame.fov, frame.elevation)
-      return this.capture(item.id, target, size, frame.seconds)
+      this.positionCamera(frame, baseDistance)
+      return this.capture(item.id, targets[frame.size], size, frame.seconds)
     }
     return {
       renderFrame: async frame => png(await render(frame)),
@@ -163,11 +156,11 @@ export default class KnotPreviewRenderer {
     }
   }
 
-  private positionCamera(distance: number, angle = 0.18, distanceScale = 1, fov = previewFovForDistanceScale(distanceScale), elevation = 0) {
+  private positionCamera(frame: RenderFrame, baseDistance: number) {
+    const {fov, position} = previewCamera(frame, baseDistance)
     this.camera.fov = fov
     this.camera.updateProjectionMatrix()
-    const horizontalDistance = Math.cos(elevation) * distance
-    this.camera.position.set(Math.sin(angle) * horizontalDistance, Math.sin(elevation) * distance, Math.cos(angle) * horizontalDistance)
+    this.camera.position.set(...position)
     this.camera.lookAt(0, 0, 0)
   }
 
@@ -180,10 +173,12 @@ export default class KnotPreviewRenderer {
     this.active.frustumCulled = false
     this.scene.add(this.active)
     this.errors.length = 0
-    this.geometry.computeBoundingSphere()
-    const sphere = this.geometry.boundingSphere!
-    const radius = sphere.radius + sphere.center.length() + (item.displacement ?? 0)
-    this.positionCamera(Math.max(2.1, radius / Math.sin(this.camera.fov * Math.PI / 360) * 1.08))
+    this.positionCamera({
+      angle: 0,
+      distanceScale: 1,
+      seconds: 0,
+      size: 'still',
+    }, previewDistance(this.radius(item)))
     try {
       // Compile both real offscreen contexts, rather than compiling against an unused canvas.
       this.renderer.setOutputRenderTarget(this.stillTarget)
@@ -199,6 +194,12 @@ export default class KnotPreviewRenderer {
       this.renderer.setOutputRenderTarget(null)
       this.renderer.setRenderTarget(null)
     }
+  }
+
+  private radius(item: KnotEntry) {
+    this.geometry.computeBoundingSphere()
+    const sphere = this.geometry.boundingSphere!
+    return sphere.radius + sphere.center.length() + (item.displacement ?? 0)
   }
 
   private releaseMaterial() {

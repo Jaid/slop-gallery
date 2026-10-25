@@ -3,8 +3,9 @@ import {tmpdir} from 'node:os'
 import {resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
 
-import {angleAnimationFrame, angleStillFrame, animationFps, animationFrames, closeupDistanceScale, closeupFov, closeupStillFrame, distanceScales, distanceStillFrame, inspectionAnimationFrame, inspectionAnimationFrameOffset, inspectionAnimationFrames, inspectionFarTiltRadians, inspectionNearDistanceScale, inspectionNearTiltRadians, previewBaseFov, previewFovForDistanceScale} from '../scripts/lib/renderSettings.ts'
-import renderKnot, {parseRenderCategories} from '../scripts/renderKnot.ts'
+import {angleAnimationFrame, angleStillFrame, animationFps, animationFrames, closeupDistanceScale, closeupFov, closeupSize, closeupStillFrame, distanceScales, distanceStillFrame, frameSizes, inspectionAnimationFrame, inspectionAnimationFrameOffset, inspectionAnimationFrames, inspectionFarTiltRadians, inspectionNearDistanceScale, inspectionNearTiltRadians, previewAngleOffset, previewBaseFov, previewCamera, previewDistance, previewFovForDistanceScale} from '../scripts/lib/renderSettings.ts'
+import renderKnot, {parseRenderCategories, renderKnotCli} from '../scripts/renderKnot.ts'
+import {knotsById} from '../src/main.ts'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 describe('knot inspection renders', () => {
@@ -91,14 +92,43 @@ describe('knot inspection renders', () => {
       expect(() => inspectionAnimationFrame(invalid)).toThrow(RangeError)
     }
   })
+  test('places the camera on an orbit around the knot center', () => {
+    expect(previewDistance(0.1)).toBe(2.1)
+    expect(previewDistance(1.5)).toBeCloseTo(1.5 / Math.sin(previewBaseFov * Math.PI / 360) * 1.08)
+    expect(frameSizes.closeup).toEqual(closeupSize)
+    const front = previewCamera(angleStillFrame(0), 3)
+    expect(front.fov).toBe(previewBaseFov)
+    expect(front.position[0]).toBeCloseTo(Math.sin(previewAngleOffset) * 3)
+    expect(front.position[1]).toBe(0)
+    expect(front.position[2]).toBeCloseTo(Math.cos(previewAngleOffset) * 3)
+    const closeup = previewCamera(closeupStillFrame(), 3)
+    expect(closeup.fov).toBe(closeupFov)
+    expect(Math.hypot(...closeup.position)).toBeCloseTo(3 * closeupDistanceScale)
+    const tilted = previewCamera({
+      angle: 0,
+      distanceScale: 1,
+      elevation: Math.PI / 6,
+      seconds: 0,
+      size: 'video',
+    }, 2)
+    expect(tilted.position[1]).toBeCloseTo(1)
+    expect(Math.hypot(...tilted.position)).toBeCloseTo(2)
+  })
   test('parses render categories', () => {
     expect(parseRenderCategories()).toEqual(['snapshot', 'animation', 'video'])
     expect(parseRenderCategories('video, snapshot,video')).toEqual(['video', 'snapshot'])
     expect(() => parseRenderCategories('')).toThrow('comma-separated combination')
     expect(() => parseRenderCategories('snapshot,other')).toThrow('comma-separated combination')
   })
-  test('invalid IDs and help do not require Chrome', async () => {
+  test('invalid IDs, scenes and help do not require Chrome', async () => {
     await expect(renderKnot('../outside')).rejects.toThrow('Unknown Knot ID')
+    const [id] = knotsById.keys()
+    await expect(renderKnotCli([id, '--scene', 'studio'], {
+      studio2: {
+        description: 'unused',
+        scene: () => Promise.reject(new Error('unreachable')),
+      },
+    })).rejects.toThrow('--scene must be one of: transparent, studio2.')
     const child = Bun.spawn(['bun', resolve(root, 'scripts/renderKnot.ts'), '--help'], {
       cwd: tmpdir(),
       stdout: 'pipe',
