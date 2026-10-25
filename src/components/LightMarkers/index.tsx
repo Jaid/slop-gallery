@@ -5,7 +5,7 @@ import {useEffect, useRef} from 'react'
 import {Color, Matrix4, Quaternion, Vector2, Vector3} from 'three/webgpu'
 
 import {isTextInput, notify} from '#src/lib/gallery.ts'
-import {changeLightDecay, changeLightIntensity, changeLightRange, describeObject, isEditingLights, isShadowSlot, lightActive, moveLight, placeLight, resetLight, toggleLight, toggleLightShadow, useLightEdits} from '#src/lib/rendering/lightLevels.ts'
+import {changeLightDecay, changeLightIntensity, changeLightRange, describeObject, isEditingLights, isShadowSlot, lightActive, lightShadowOn, moveLight, resetLight, setLightOn, setLightShadow, useLightEdits} from '#src/lib/rendering/lightLevels.ts'
 
 type Positional = Light & {
   isPointLight?: boolean
@@ -15,10 +15,10 @@ type Positional = Light & {
 
 /** the most lights that get a marker */
 const capacity = 1024
-/** marker radius in meters, larger for the aimed light and larger still for the focused one */
+/** marker radius in meters, larger for the aimed light and larger still for selected ones */
 const radius = 0.12
 const aimedRadius = 0.2
-const focusedRadius = 0.26
+const selectedRadius = 0.26
 /** the dark rim around each dot, as a share of its radius, so dots read against bright ceilings too */
 const rim = 1.45
 /** how far away a light can be aimed at */
@@ -45,9 +45,9 @@ const forward = new Vector3
 const right = new Vector3
 const step = new Vector3
 const up = new Vector3(0, 1, 0)
-/** how far one numpad press moves the focused light, in meters */
+/** how far one numpad press moves the selected lights, in meters */
 const moveStep = 0.1
-/** numpad keys that move the focused light: along the view’s heading and its right side, flattened to the floor, and straight up */
+/** numpad keys that move the selected lights: along the view’s heading and its right side, flattened to the floor, and straight up */
 const moveKeys: Partial<Record<string, readonly [number, number, number]>> = {
   Numpad8: [1, 0, 0],
   Numpad2: [-1, 0, 0],
@@ -97,6 +97,19 @@ const listEdits = () => {
     return `${describeObject(light)}: ${level}${distance ? `, range ${distance.toFixed(1)} m` : ''}${decay === undefined ? '' : `, decay ${decay.toFixed(2)}`}${shadow === undefined ? '' : `, shadow ${shadow ? 'on' : 'off'}`}${where}`
   }).join('\n')
 }
+/** A light’s name, or how many lights there are. */
+const describeLights = (lights: ReadonlyArray<Light>) => (lights.length === 1 ? describeObject(lights[0]) : `${lights.length} lights`)
+/** Applies an edit to each light and tells the distinct values it left them with, or that none of them can take it. */
+const editEach = <Value,>(lights: ReadonlyArray<Light>, edit: (light: Light) => Value | undefined, label: string, format: (value: Value) => string, [one, several]: readonly [string, string]) => {
+  const values = new Set<string>
+  for (const light of lights) {
+    const value = edit(light)
+    if (value !== undefined) {
+      values.add(format(value))
+    }
+  }
+  notify(values.size ? `${describeLights(lights)}: ${label} ${[...values].join(', ')}` : `${describeLights(lights)} ${lights.length === 1 ? one : several}`)
+}
 /** Puts the list on the clipboard, telling how many lights it holds. */
 const copyEdits = async (list: string) => {
   try {
@@ -109,7 +122,8 @@ const copyEdits = async (list: string) => {
 /**
  * `?show_lights`: a glowing, dark-rimmed dot in the color of every point, spot and area light and every light with a `userData.marker`, seen through walls, dark gray for lights switched off. With
  * `?edit_lights`, the light the camera aims at grows: E switches it off and on, Numpad / switches its shadow on and off, ←/→ make it weaker or stronger by one unit of intensity and ↓/↑ shorten or extend its range by 1 m and Numpad 7/1 make it fade faster or more gently, for the rest of the page session.
- * Left-clicking a marker focuses its light, which then takes these keys wherever the camera aims, until a click on another marker or anything else. Numpad 8, 2, 4 and 6 move the focused light forward, back, left and right of the view, 9 and 3 up and down, 5 puts it at the camera, 0 undoes all its edits, and K copies every edit.
+ * Left-clicking a marker selects its light, which then takes these keys wherever the camera aims, until a click on another marker or anything else; Shift+clicking a marker adds its light to the selection or takes it out, so the keys change every selected light at once.
+ * Numpad 8, 2, 4 and 6 move the selected lights forward, back, left and right of the view, 9 and 3 up and down, 5 centers them on the camera, 0 undoes all their edits, and K copies every edit.
  */
 export default function LightMarkers() {
   const camera = useThree(state => state.camera)
@@ -140,14 +154,15 @@ export default function LightMarkers() {
         useLightEdits.setState({aimed})
       }
     }
-    const {focused, off} = useLightEdits.getState()
+    const {off, selected} = useLightEdits.getState()
     let crossed = 0
     for (const [index, light] of found.entries()) {
-      const size = light === focused ? focusedRadius : (light === aimed ? aimedRadius : radius)
+      const isSelected = selected.has(light)
+      const size = isSelected ? selectedRadius : (light === aimed ? aimedRadius : radius)
       markerPosition(light, position)
       mesh.setMatrixAt(index, matrix.makeScale(size, size, size).setPosition(position))
       backing.setMatrixAt(index, matrix.makeScale(size * rim, size * rim, size * rim).setPosition(position))
-      mesh.setColorAt(index, off.has(light) ? offColor : color.copy(light.color).multiplyScalar(light === aimed || light === focused ? 3 : 1.5))
+      mesh.setColorAt(index, off.has(light) ? offColor : color.copy(light.color).multiplyScalar(light === aimed || isSelected ? 3 : 1.5))
       if (!(!lightActive.current(light) && crossed + 2 <= capacity)) {
         continue
       }
@@ -177,67 +192,82 @@ export default function LightMarkers() {
         copyEdits(list).catch(console.error)
         return
       }
-      const {aimed: looked, focused} = useLightEdits.getState()
+      const {aimed: looked, selected} = useLightEdits.getState()
+      if (event.ctrlKey || event.metaKey || event.altKey || isTextInput(event.target)) {
+        return
+      }
       const move = moveKeys[event.code]
       // Lights placed by a marker, like the sun, have no position of their own to move, but can still be reset.
-      if ((event.code === 'Numpad0' || (move || event.code === 'Numpad5') && !focused?.userData.marker) && focused && !event.ctrlKey && !event.metaKey && !event.altKey && !isTextInput(event.target)) {
+      const movable = [...selected].filter(light => !light.userData.marker)
+      if (event.code === 'Numpad0' ? selected.size : (move || event.code === 'Numpad5') && movable.length) {
         event.preventDefault()
         event.stopImmediatePropagation()
-        let at: Vector3
         if (event.code === 'Numpad0') {
-          at = resetLight(focused)
-        } else if (event.code === 'Numpad5') {
-          at = placeLight(focused, camera.getWorldPosition(step))
-        } else {
+          const lights = [...selected]
+          const at = lights.map(light => resetLight(light))
+          notify(`${describeLights(lights)}: reset${lights.length === 1 ? `, at ${formatPosition(at[0])}` : ''}`)
+          return
+        }
+        if (move) {
           camera.getWorldDirection(forward).setY(0).normalize()
           right.crossVectors(forward, up)
-          step.set(0, 0, 0).addScaledVector(forward, move![0]).addScaledVector(right, move![1]).addScaledVector(up, move![2]).multiplyScalar(moveStep)
-          at = moveLight(focused, step)
+          step.set(0, 0, 0).addScaledVector(forward, move[0]).addScaledVector(right, move[1]).addScaledVector(up, move[2]).multiplyScalar(moveStep)
+        } else {
+          // The selection keeps its shape, with its center put at the camera.
+          step.set(0, 0, 0)
+          for (const light of movable) {
+            step.add(light.getWorldPosition(position))
+          }
+          step.divideScalar(-movable.length).add(camera.getWorldPosition(origin))
         }
-        notify(`${describeObject(focused)}: ${event.code === 'Numpad0' ? 'reset, ' : ''}at ${formatPosition(at)}`)
+        const at = movable.map(light => moveLight(light, step))
+        notify(movable.length === 1 ? `${describeObject(movable[0])}: at ${formatPosition(at[0])}` : `${describeLights(movable)}: moved`)
         return
       }
-      const aimed = focused ?? looked
-      if (!aimed || event.ctrlKey || event.metaKey || event.altKey || isTextInput(event.target)) {
+      const lights = selected.size ? [...selected] : (looked ? [looked] : [])
+      if (!lights.length) {
         return
-      }
-      const strength = (steps: number) => {
-        const intensity = changeLightIntensity(aimed, steps)
-        notify(intensity === undefined ? `${describeObject(aimed)} is dark` : `${describeObject(aimed)}: intensity ${intensity}`)
-      }
-      const range = (steps: number) => {
-        const distance = changeLightRange(aimed, steps)
-        notify(distance === undefined ? `${describeObject(aimed)} has no range` : `${describeObject(aimed)}: range ${distance.toFixed(1)} m`)
-      }
-      const decay = (steps: number) => {
-        const value = changeLightDecay(aimed, steps)
-        notify(value === undefined ? `${describeObject(aimed)} has no decay` : `${describeObject(aimed)}: decay ${value.toFixed(2)}`)
       }
       const actions: Partial<Record<string, () => void>> = {
         KeyE: () => {
-          if (!event.repeat) {
-            notify(`${describeObject(aimed)} ${toggleLight(aimed) ? 'on' : 'off'}`)
+          if (event.repeat) {
+            return
           }
+          // Mixed lights all come on, so a second press switches them all off.
+          const {off} = useLightEdits.getState()
+          const on = lights.some(light => off.has(light))
+          for (const light of lights) {
+            setLightOn(light, on)
+          }
+          notify(`${describeLights(lights)} ${on ? 'on' : 'off'}`)
         },
         NumpadDivide: () => {
           if (event.repeat) {
             return
           }
-          const shadow = toggleLightShadow(aimed)
-          notify(shadow === undefined ? `${describeObject(aimed)} can’t cast a shadow` : `${describeObject(aimed)}: shadow ${shadow ? 'on' : 'off'}`)
+          const casters = lights.filter(light => lightShadowOn(light) !== undefined)
+          if (!casters.length) {
+            notify(`${describeLights(lights)} can’t cast ${lights.length === 1 ? 'a shadow' : 'shadows'}`)
+            return
+          }
+          const on = !casters.every(light => lightShadowOn(light))
+          for (const light of casters) {
+            setLightShadow(light, on)
+          }
+          notify(`${describeLights(casters)}: shadow ${on ? 'on' : 'off'}`)
         },
-        ArrowLeft: () => strength(-1),
-        ArrowRight: () => strength(1),
-        ArrowDown: () => range(-1),
-        ArrowUp: () => range(1),
-        Numpad7: () => decay(1),
-        Numpad1: () => decay(-1),
+        ArrowLeft: () => editEach(lights, light => changeLightIntensity(light, -1), 'intensity', String, ['is dark', 'are dark']),
+        ArrowRight: () => editEach(lights, light => changeLightIntensity(light, 1), 'intensity', String, ['is dark', 'are dark']),
+        ArrowDown: () => editEach(lights, light => changeLightRange(light, -1), 'range', distance => `${distance.toFixed(1)} m`, ['has no range', 'have no range']),
+        ArrowUp: () => editEach(lights, light => changeLightRange(light, 1), 'range', distance => `${distance.toFixed(1)} m`, ['has no range', 'have no range']),
+        Numpad7: () => editEach(lights, light => changeLightDecay(light, 1), 'decay', decay => decay.toFixed(2), ['has no decay', 'have no decay']),
+        Numpad1: () => editEach(lights, light => changeLightDecay(light, -1), 'decay', decay => decay.toFixed(2), ['has no decay', 'have no decay']),
       }
       const action = actions[event.code]
       if (!action) {
         return
       }
-      // Aimed at or focused on a light, these keys belong to the editor instead of the game.
+      // Aimed at or with lights selected, these keys belong to the editor instead of the game.
       event.preventDefault()
       event.stopImmediatePropagation()
       action()
@@ -255,13 +285,27 @@ export default function LightMarkers() {
         direction.set(pointer.x, pointer.y, 0.5).unproject(camera).sub(origin).normalize()
         clicked = pick(found, origin, direction)
       }
-      const {focused} = useLightEdits.getState()
-      if (clicked === focused) {
-        return
+      const {selected} = useLightEdits.getState()
+      if (event.shiftKey) {
+        // Shift+clicking a marker adds its light to the selection or takes it out; a Shift+click elsewhere leaves the selection be.
+        if (!clicked) {
+          return
+        }
+        const next = new Set(selected)
+        const added = !next.delete(clicked)
+        if (added) {
+          next.add(clicked)
+        }
+        useLightEdits.setState({selected: next})
+        notify(`${added ? 'Selected' : 'Deselected'} ${describeObject(clicked)}${next.size > 1 ? `, ${next.size} lights selected` : ''}`)
+      } else {
+        if (clicked ? selected.size === 1 && selected.has(clicked) : !selected.size) {
+          return
+        }
+        useLightEdits.setState({selected: new Set(clicked ? [clicked] : [])})
+        notify(clicked ? `Selected ${describeObject(clicked)}` : `Deselected ${describeLights([...selected])}`)
       }
-      useLightEdits.setState({focused: clicked})
-      notify(clicked ? `Focused ${describeObject(clicked)}` : `Unfocused ${describeObject(focused!)}`)
-      // A click on a marker belongs to the editor; a click elsewhere only unfocuses on its way to the game.
+      // A click on a marker belongs to the editor; a click elsewhere only deselects on its way to the game.
       if (clicked) {
         event.preventDefault()
         event.stopImmediatePropagation()
@@ -274,7 +318,7 @@ export default function LightMarkers() {
       globalThis.removeEventListener('mousedown', mousedown, {capture: true})
       useLightEdits.setState({
         aimed: null,
-        focused: null,
+        selected: new Set,
       })
     }
   }, [camera, canvas])

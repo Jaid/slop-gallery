@@ -99,21 +99,21 @@ export function roomSwitches(scene: Object3D, from: string, to: string) {
   }
 }
 
-/** The light the camera aims at while editing lights, the one focused by clicking its marker, the lights moved, the lights whose range or decay changed, whose shadow was switched on or off, and the lights switched off or made stronger or weaker for this page session. */
+/** The light the camera aims at while editing lights, the ones selected by clicking their markers, the lights moved, the lights whose range or decay changed, whose shadow was switched on or off, and the lights switched off or made stronger or weaker for this page session. */
 export const useLightEdits = create<{
   aimed: Light | null
-  focused: Light | null
   moved: ReadonlySet<Light>
   off: ReadonlySet<Light>
   reshaped: ReadonlySet<Light>
+  selected: ReadonlySet<Light>
   shadows: ReadonlyMap<Light, boolean>
   strengths: ReadonlyMap<Light, number>
 }>(() => ({
   aimed: null,
-  focused: null,
   moved: new Set,
   off: new Set,
   reshaped: new Set,
+  selected: new Set,
   shadows: new Map,
   strengths: new Map,
 }))
@@ -234,22 +234,20 @@ export function resetLight(light: Light & {
   return light.getWorldPosition(new Vector3)
 }
 
-/** Switches a light off or back on, returning whether it is on now. */
-export function toggleLight(light: Light) {
+/** Switches a light on or off. */
+export function setLightOn(light: Light, on: boolean) {
   const off = new Set(useLightEdits.getState().off)
-  const on = off.has(light)
   if (on) {
     off.delete(light)
   } else {
     off.add(light)
   }
   useLightEdits.setState({off})
-  return on
 }
 
 /**
  * Multiplies the intensity of every light, on top of what its owner sets, such as a lighting preset’s lamp gain. Levels replace
- * it while mounted. Strengths changed with {@link changeLightIntensity} apply on top, and a light switched off with {@link toggleLight} gets 0 regardless.
+ * it while mounted. Strengths changed with {@link changeLightIntensity} apply on top, and a light switched off with {@link setLightOn} gets 0 regardless.
  */
 export const lightGain = {current: (_light: Light) => 1}
 
@@ -269,25 +267,38 @@ const casters = new WeakMap<Light, {
   written: boolean
 }>
 
-/**
- * Switches a light’s shadow on or off, returning whether it casts one now, or undefined for a light that can’t.
- * A light whose owner made it cast shadows stops or starts again, which rebuilds every lit material; a shadowless point light asks the shadow pool for a slot or stops asking.
- */
-export function toggleLightShadow(light: Light & {isPointLight?: boolean}) {
+/** Whether a light casts a shadow its owner gave it or one switched on, or undefined for a light that can’t. */
+export function lightShadowOn(light: Light & {isPointLight?: boolean}) {
   const own = casters.get(light)?.base ?? light.castShadow
   if (!own && !light.isPointLight) {
     return
   }
-  const asks = Boolean(light.userData.shadow)
+  return useLightEdits.getState().shadows.get(light) ?? (own || Boolean(light.userData.shadow))
+}
+
+/**
+ * Switches a light’s shadow on or off, returning whether it casts one now, or undefined for a light that can’t.
+ * A light whose owner made it cast shadows stops or starts again, which rebuilds every lit material; a shadowless point light asks the shadow pool for a slot or stops asking.
+ */
+export function setLightShadow(light: Light & {isPointLight?: boolean}, on: boolean) {
+  const own = casters.get(light)?.base ?? light.castShadow
+  if (!own && !light.isPointLight) {
+    return
+  }
   const shadows = new Map(useLightEdits.getState().shadows)
-  const on = !(shadows.get(light) ?? (own || asks))
-  if (on === (own || asks)) {
+  if (on === (own || Boolean(light.userData.shadow))) {
     shadows.delete(light)
   } else {
     shadows.set(light, on)
   }
   useLightEdits.setState({shadows})
   return on
+}
+
+/** Switches a light’s shadow off or back on like {@link setLightShadow}, returning whether it casts one now, or undefined for a light that can’t. */
+export function toggleLightShadow(light: Light & {isPointLight?: boolean}) {
+  const on = lightShadowOn(light)
+  return on === undefined ? undefined : setLightShadow(light, !on)
 }
 
 /**
