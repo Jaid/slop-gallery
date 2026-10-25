@@ -1,10 +1,11 @@
 import type {Group} from 'three/webgpu'
 
 import {useFrame} from '@react-three/fiber'
-import {useRef} from 'react'
+import {useMemo, useRef} from 'react'
 import {useGraphicsModeValue} from 'use-graphics-mode'
 
 import Orbitable from '#component/Orbitable'
+import {AnimationClock} from '#src/lib/frozenTime.ts'
 import {rooms} from '#src/lib/gallery.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
@@ -19,12 +20,14 @@ const sculptureOrbit = {
 
 export default function MoonfallOrbit() {
   const orbit = useRef<Group>(null)
+  const clock = useMemo(() => new AnimationClock(0.05), [])
   const {curveDetail} = useGraphicsModeValue(getGraphicsProfile)
   // The core’s detail 2 splits each edge in three, so the factor applies to that count.
   const coreDetail = 3 * curveDetail - 1
   useFrame((_, delta) => {
+    const t = clock.advance(delta)
     if (orbit.current) {
-      orbit.current.rotation.y += Math.min(delta, 0.05) * 0.12
+      orbit.current.rotation.y = t * 0.12
     }
   })
   return <Orbitable id='moonfall-orbital-sculpture' name='moonfall-orbital-sculpture' orbit={sculptureOrbit} position={[0, 2.5, 0]} title='Orbital sculpture'>

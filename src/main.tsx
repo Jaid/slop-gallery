@@ -1,4 +1,4 @@
-// Must run before anything reads the clock.
+// Must run before any renderer updates its node time.
 import './lib/frozenTime.ts'
 import './style.sass'
 

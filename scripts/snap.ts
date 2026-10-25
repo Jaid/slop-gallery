@@ -124,8 +124,6 @@ const capture = await capturePage(server.url, {
   hook: async page => {
     watchPage(page)
     await waitForGallery(page)
-    // With ?frozen_time, the app advances its clock on its own once loaded; posing comes after, so every snap animates through the same frames.
-    await page.waitForFunction(() => globalThis.frozenTime?.reached ?? true, {timeout: 300_000})
     pose = await page.evaluate((requested: Partial<CameraPose>) => globalThis.slopGallery!.pose!(requested), {
       position,
       rotation: angle ? [radians(angle[1]), radians(angle[0]), radians(angle[2] ?? 0)] as Vec3 : undefined,

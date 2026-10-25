@@ -11,6 +11,7 @@ import constructors from 'virtual:knot-exhibition-materials'
 import InteractiveObject from '#component/InteractiveObject'
 import KnotLabels from '#component/levels/knottingham/KnotLabels'
 import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
+import {frozenSeconds} from '#src/lib/frozenTime.ts'
 import {narrateModel} from '#src/lib/gallery/actions.ts'
 import {trackPendingLoads} from '#src/lib/pendingLoads.ts'
 import KnotRotation from '#src/lib/physics/KnotRotation.ts'
@@ -33,11 +34,11 @@ export default function KnotExhibition() {
   const rotation = useMemo(() => new KnotRotation, [])
   useBeforePhysicsStep(world => {
     if (isRotating) {
-      // Under ?frozen_time the Knots follow the engine clock itself rather than the count of physics steps, which depends on how the frames fell while the level loaded.
-      if (globalThis.frozenTime) {
-        rotation.set(performance.now() / 1000)
-      } else {
+      // Under ?frozen_time the Knots stand at the frozen angle, while physics keeps stepping for whatever moves through the frozen world.
+      if (frozenSeconds === undefined) {
         rotation.advance(world.timestep)
+      } else {
+        rotation.set(frozenSeconds)
       }
     }
     for (const exhibit of knotExhibition) {

@@ -1,18 +1,12 @@
 import optis from 'optis'
 import readPermalink, {parseNumber} from 'read-permalink'
+import {NodeFrame} from 'three/webgpu'
 
 import {cameraBookmarks} from '#level/bookmarks.ts'
 
 import {readDevelopmentMode} from './developmentMode.ts'
 import {readSpawn} from './gallery/spawn.ts'
 
-declare global {
-  /** set while `?frozen_time` holds the clock; `reached` turns true once the clock stands at the requested time */
-  var frozenTime: {
-    reached: boolean
-    seconds: number
-  } | undefined
-}
 const frozenTimeSchema = optis({
   normalizations: {
     frozen_time(value: unknown) {
@@ -26,81 +20,37 @@ const frozenTimeSchema = optis({
     },
   },
 })
-// Animation steps stay this short, so physics and effects that integrate over time do not jump.
-const step = 1 / 30
-
-/** Read the optional `?frozen_time` from the permalink, or else, without `?development`, the `frozenTime` of the `?spawn` camera bookmark: the engine time in seconds that every animation stands still at, so captures of the same view match. */
+/** Read the optional `?frozen_time` from the permalink, or else, without `?development`, the `frozenTime` of the `?spawn` camera bookmark: the engine time in seconds that every animation stands still at, so captures of the same view match. Only animations stand still: physics, the player and a flying camera keep moving through the frozen world. */
 export function readFrozenTime(input: URL | string = typeof location === 'undefined' ? '' : location.href): number | undefined {
   const spawn = readDevelopmentMode(input) ? '' : readSpawn(input)
   return readPermalink(input, {schema: frozenTimeSchema}).frozen_time ?? (spawn ? cameraBookmarks.find(bookmark => bookmark.id === spawn)?.frozenTime : undefined)
 }
 
-/**
- * Takes over performance.now() and requestAnimationFrame() before the engine reads them. Frames keep coming while the scene loads, but time stands still at 0.
- * Once the scene is ready and its artworks and pipelines are loaded, time advances to the requested seconds in short, equal steps and stands still again.
- * Everything that animates reads one of the two, so fire, water, physics and shaders all freeze at the same moment in every run.
- */
-const freezeTime = (seconds: number) => {
-  const realRequestAnimationFrame = globalThis.requestAnimationFrame.bind(globalThis)
-  const state = {
-    reached: false,
-    seconds,
+/** the seconds of `?frozen_time`, or undefined while the engine time runs */
+export const frozenSeconds = readFrozenTime()
+
+// Every renderer’s node time, which shaders read as TSL `time`, stands still at the frozen seconds from its first frame on. Nothing else reads it, so the real clock still drives physics and input.
+if (frozenSeconds !== undefined) {
+  // eslint-disable-next-line typescript/unbound-method -- called with the frame as this
+  const {update} = NodeFrame.prototype
+  NodeFrame.prototype.update = function (this: NodeFrame) {
+    update.call(this)
+    this.time = frozenSeconds
   }
-  globalThis.frozenTime = state
-  let now = 0
-  let nextId = 1
-  let pumping = false
-  let queue = new Map<number, FrameRequestCallback>
-  const flush = () => {
-    const callbacks = queue
-    queue = new Map
-    for (const callback of callbacks.values()) {
-      try {
-        callback(now)
-      } catch (error) {
-        reportError(error)
-      }
-    }
-  }
-  Object.defineProperty(performance, 'now', {
-    configurable: true,
-    value: () => now,
-  })
-  globalThis.requestAnimationFrame = callback => {
-    const id = nextId++
-    queue.set(id, callback)
-    if (!pumping) {
-      pumping = true
-      realRequestAnimationFrame(() => {
-        pumping = false
-        flush()
-      })
-    }
-    return id
-  }
-  globalThis.cancelAnimationFrame = id => {
-    queue.delete(id)
-  }
-  const isLoaded = () => {
-    const snapshot = globalThis.slopGallery?.snapshot?.()
-    return Boolean(snapshot?.ready && snapshot.pendingImages === 0 && snapshot.pendingLoads === 0 && snapshot.pendingPipelines === 0)
-  }
-  const advance = async () => {
-    while (!isLoaded()) {
-      await new Promise(resolve => setTimeout(resolve, 50))
-    }
-    const count = Math.ceil(seconds / step)
-    for (let index = 0; index < count; index++) {
-      now += seconds / count * 1000
-      flush()
-      // Lets the GPU and background loading catch up between steps.
-      await new Promise(resolve => setTimeout(resolve))
-    }
-    state.reached = true
-  }
-  advance().catch(reportError)
 }
-const requestedSeconds = readFrozenTime()
-if (requestedSeconds !== undefined) {
-  freezeTime(requestedSeconds)
+
+/** The time of a CPU-side animation in seconds: the frame deltas summed up, each capped at `maxDelta`, or the frozen seconds under `?frozen_time`, like the shaders’ time. */
+export class AnimationClock {
+  private elapsed = 0
+
+  constructor(private readonly maxDelta = Infinity) {}
+
+  /** adds a frame’s delta in seconds and returns the animation’s time */
+  advance(delta: number) {
+    if (frozenSeconds !== undefined) {
+      return frozenSeconds
+    }
+    this.elapsed += Math.min(delta, this.maxDelta)
+    return this.elapsed
+  }
 }

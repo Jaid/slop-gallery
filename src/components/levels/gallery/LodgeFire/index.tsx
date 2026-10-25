@@ -7,6 +7,7 @@ import useDisposable from 'disposable-lifetime/react'
 import {useMemo, useRef} from 'react'
 import useGraphicsMode from 'use-graphics-mode'
 
+import {AnimationClock} from '#src/lib/frozenTime.ts'
 import Coals from '#src/lib/gallery/fireplace/Coals.ts'
 import fire from '#src/lib/gallery/fireplace/config.ts'
 import FireSparks from '#src/lib/gallery/fireplace/FireSparks.ts'
@@ -67,14 +68,13 @@ function LiveFire() {
   const sparks = useDisposable(useMemo(() => new FireSparks, []))
   const coals = useDisposable(useMemo(() => new Coals, []))
   const firelight = useRef<PointLight>(null)
-  const clock = useRef(0)
+  const clock = useMemo(() => new AnimationClock(0.1), [])
   useFrame((_, delta) => {
     const lamp = firelight.current
     if (!lamp) {
       return
     }
-    clock.current += Math.min(delta, 0.1)
-    const t = clock.current
+    const t = clock.advance(delta)
     lamp.intensity = light.intensity * fireFlicker(t)
     // The flames’ center of brightness wanders as tongues flare up and die down.
     lamp.position.set(light.position[0] + Math.sin(t * 2.3) * 0.09 + Math.sin(t * 5.9) * 0.04, light.position[1] + Math.sin(t * 4.1 + 1) * 0.045, light.position[2])
