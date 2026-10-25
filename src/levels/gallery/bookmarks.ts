@@ -62,9 +62,10 @@ export const spawnBookmarks: Array<SpawnBookmark> = [
 export const cameraBookmarks: Array<CameraBookmark> = [
   {
     id: 'moonfall',
-    position: [8.63, -4.9, 18.61],
+    // On the lower flight’s centerline, looking due west, so its walls frame the view symmetrically.
+    position: [8.63, -4.9, 18.5],
     aim: {
-      yaw: 1.56,
+      yaw: Math.PI / 2,
       pitch: -0.35,
     },
     fov: 55,
