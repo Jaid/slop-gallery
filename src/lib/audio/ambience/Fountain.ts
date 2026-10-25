@@ -22,7 +22,7 @@ const splashes = {
   volume: [0.015, 0.03] as Range,
 }
 
-/** The Lobby fountain’s quiet trickle: a soft hiss under lots of single bubbles, sounding from its spray. */
+/** The Lobby fountain’s quiet trickle: a soft hiss under lots of single bubbles, sounding from the tip of its finial. */
 export default class Fountain extends AmbienceEmitter {
   protected override readonly beds: ReadonlyArray<NoiseBed> = [
     {
@@ -44,13 +44,14 @@ export default class Fountain extends AmbienceEmitter {
     super({
       id: 'lobby-fountain',
       title: 'Fountain',
-      position: [fountain.position[0], fountain.position[1] + 1.2, fountain.position[2]],
+      // at the finial’s tip, the main jet’s mouth
+      position: [fountain.position[0], fountain.position[1] + fountain.jet.y, fountain.position[2]],
       hearing: {
         near: 1,
         // still faintly audible from the Lobby’s far north end, about 18 m away
         far: 21,
       },
-      gain: 0.6,
+      gain: 0.35,
       rooms: ['lobby'],
     })
   }
