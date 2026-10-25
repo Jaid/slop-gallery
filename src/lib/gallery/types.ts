@@ -105,4 +105,6 @@ export type CameraBookmark = {
   position: MathVec3
   /** frame width divided by height, which snaps render at */
   ratio: number
+  /** environment seed like `?seed`, for views that depend on random details; not applied yet */
+  seed?: number
 }

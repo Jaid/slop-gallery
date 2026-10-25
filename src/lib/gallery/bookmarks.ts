@@ -37,22 +37,20 @@ export function cameraBookmarkFeet({position}: CameraBookmark, flying = false): 
   return [position[0], flying ? feet : Math.max(levelFloorHeight(position) + 0.04, feet), position[2]]
 }
 
-/** Move the player session to the `?spawn` bookmark, overriding any saved position; for a camera bookmark, below it, and with `?development` flying with its eyes at the bookmark. */
+/** Move the player session to the `?spawn` bookmark, overriding any saved position; for a camera bookmark, below it, and with `?development` flying with its eyes at the bookmark. A camera bookmark wins over a spawn bookmark with the same ID, which T still reaches. */
 export function applySpawnBookmark() {
-  const spawnBookmark = findSpawnBookmark()
+  const cameraBookmark = findCameraBookmark()
+  const spawnBookmark = cameraBookmark ? null : findSpawnBookmark()
   if (spawnBookmark) {
     playerSession.restore(spawnBookmark)
-    return
-  }
-  const cameraBookmark = findCameraBookmark()
-  if (cameraBookmark) {
+  } else if (cameraBookmark) {
     // With ?development, the bookmark is a starting point to fly on from instead of a held camera.
     flyMode.active ||= isDevelopmentMode
     playerSession.restore({
       position: cameraBookmarkFeet(cameraBookmark, isDevelopmentMode),
       ...cameraBookmark.aim,
     })
-  } else if (cameraBookmark === undefined) {
+  } else if (spawnBookmark === undefined) {
     notify(`This level has no bookmark “${readSpawn()}”.`)
   }
 }

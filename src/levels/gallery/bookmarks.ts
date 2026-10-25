@@ -70,4 +70,44 @@ export const cameraBookmarks: Array<CameraBookmark> = [
     fov: 55,
     ratio: 16 / 9,
   },
+  {
+    id: 'tunnel_exhibition',
+    position: [0.08, -7.34, 3.53],
+    aim: {
+      yaw: 0.02,
+      pitch: 0.01,
+    },
+    fov: 80,
+    ratio: 16 / 9,
+  },
+  {
+    id: 'oculus',
+    position: [5.97, -2.05, -17.28],
+    aim: {
+      yaw: 0.64,
+      pitch: -0.3,
+    },
+    fov: 70,
+    ratio: 16 / 9,
+  },
+  {
+    id: 'lodge',
+    position: [-20.61, -2.03, -37.53],
+    aim: {
+      yaw: 2.24,
+      pitch: -0.33,
+    },
+    fov: 65,
+    ratio: 16 / 9,
+  },
+  {
+    id: 'sienna',
+    position: [-18.86, 1.07, 8.4],
+    aim: {
+      yaw: -2.44,
+      pitch: 0.13,
+    },
+    fov: 65,
+    ratio: 16 / 9,
+  },
 ]
