@@ -51,7 +51,7 @@ export default class Fountain extends AmbienceEmitter {
         // still faintly audible from the Lobby’s far north end, about 18 m away
         far: 21,
       },
-      gain: 0.35,
+      gain: 0.3,
       rooms: ['lobby'],
     })
   }
