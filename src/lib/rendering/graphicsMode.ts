@@ -24,11 +24,9 @@ const graphicsModeSchema = optis({
 
 export type GraphicsProfile = {
   /** ambient occlusion pixels per output pixel along each axis */
-  ambientOcclusionRadius?: number
   ambientOcclusionResolutionScale: number
   /** ambient occlusion samples per pixel */
   ambientOcclusionSamples: number
-  ambientOcclusionScale?: number
   ambientOcclusionThickness?: number
   /** whether runtime canvas textures such as signs keep mipmaps, and with them anisotropic filtering, at the cost of building them */
   canvasTextureMipmaps: boolean
@@ -39,6 +37,8 @@ export type GraphicsProfile = {
   indirectLight: boolean
   /** filter-radius multiplier for shadow-casting lamps; independent of the Sun */
   lampShadowRadius?: number
+  /** whether screen-space reflections add to metallic surfaces like gilded frames and trims, on top of the floor reflections */
+  metalReflections: boolean
   noiseTextures: boolean
   postprocessing: boolean
   /** floor reflection pixels per output pixel along each axis */
@@ -99,6 +99,7 @@ const fastProfile: GraphicsProfile = {
   noiseTextures: false,
   floorReflections: false,
   indirectLight: false,
+  metalReflections: false,
   shadows: false,
   postprocessing: false,
   ambientOcclusionResolutionScale: 0.75,
@@ -118,12 +119,12 @@ const heavyProfile: GraphicsProfile = {
   floorReflections: true,
   indirectLight: false,
   lampShadowRadius: 4,
+  metalReflections: false,
   shadows: true,
   postprocessing: true,
   ambientOcclusionResolutionScale: 0.75,
   ambientOcclusionSamples: 16,
-  // Floors sample the reflection at mip level 1 or blurrier, so half resolution shows the same detail.
-  reflectionResolutionScale: 0.5,
+  reflectionResolutionScale: 1,
   shadowMapScale: 1,
   shadowSamples: 4,
   sunShadowRadius: 4,
@@ -133,16 +134,15 @@ const heavyProfile: GraphicsProfile = {
   volumetricLightSteps: 64,
   voxelIndirectLight: true,
 }
-// Cinematic raises intermediate and shadow-map resolutions, AO quality, texture filtering and indirect light for non-realtime rendering.
+// Cinematic raises intermediate and shadow-map resolutions, AO quality, texture filtering, indirect light and metal reflections for non-realtime rendering.
 const cinematicProfile: GraphicsProfile = {
   ...heavyProfile,
   canvasTextureMipmaps: true,
   canvasTextureResolution: 2,
   indirectLight: true,
-  ambientOcclusionRadius: 1,
+  metalReflections: true,
   ambientOcclusionResolutionScale: 2,
   ambientOcclusionSamples: 64,
-  ambientOcclusionScale: 0.8,
   ambientOcclusionThickness: 2,
   reflectionResolutionScale: 2,
   shadowMapScale: 4,

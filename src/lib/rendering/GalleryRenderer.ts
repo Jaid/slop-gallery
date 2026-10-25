@@ -20,8 +20,8 @@ type BackendInternals = {parameters: {
   powerPreference?: GPUPowerPreference
   requiredLimits: Record<string, number>
 }}
-/** bytes per pixel of all render targets of a pass, which the tuning panel’s screen-space reflections exceed with a fifth half-float target; WebGPU guarantees 32 and desktop GPUs offer 64 or more */
-const developmentColorAttachmentBytes = 64
+/** bytes per pixel of all render targets of a pass, which screen-space reflections exceed with a fifth half-float target; WebGPU guarantees 32 and desktop GPUs offer 64 or more */
+const wideColorAttachmentBytes = 64
 /** sampled textures per shader stage that cinematic asks for; its heaviest fragment shaders sample 18, above the 16 WebGPU guarantees */
 const cinematicSampledTextures = 32
 /** Renderer internals that three doesn’t type. */
@@ -123,7 +123,7 @@ export class GalleryRenderer extends WebgpuRenderer {
       ...options,
       requiredLimits: {
         ...readCinematicGraphics() ? {maxTextureDimension2D: cinematicMaxTextureSize} : {},
-        ...isDevelopmentMode ? {maxColorAttachmentBytesPerSample: developmentColorAttachmentBytes} : {},
+        ...isDevelopmentMode || readCinematicGraphics() ? {maxColorAttachmentBytesPerSample: wideColorAttachmentBytes} : {},
       },
       alpha: false,
       antialias: false,

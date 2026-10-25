@@ -31,7 +31,7 @@ test('cinematic graphics read as heavy, and only cinematic reads as cinematic', 
   expect(readCinematicGraphics('?graphics=heavy')).toBe(false)
   expect(readCinematicGraphics()).toBe(false)
 })
-test('the cinematic profile increases intermediate resolutions, AO quality, shadow samples, texture filtering and indirect light', () => {
+test('the cinematic profile increases intermediate resolutions, AO quality, shadow samples, texture filtering, indirect light and metal reflections', () => {
   const heavy = getGraphicsProfile(true)
   const cinematic = getGraphicsProfile(true, true)
   expect(cinematic).toEqual({
@@ -39,10 +39,9 @@ test('the cinematic profile increases intermediate resolutions, AO quality, shad
     canvasTextureMipmaps: true,
     canvasTextureResolution: 2,
     indirectLight: true,
-    ambientOcclusionRadius: 1,
+    metalReflections: true,
     ambientOcclusionResolutionScale: 2,
     ambientOcclusionSamples: 64,
-    ambientOcclusionScale: 0.8,
     ambientOcclusionThickness: 2,
     reflectionResolutionScale: 2,
     shadowMapScale: 4,
@@ -78,6 +77,7 @@ test('the provider exposes the default scene budget during SSR', () => {
     noiseTextures: false,
     floorReflections: false,
     indirectLight: false,
+    metalReflections: false,
     shadows: false,
     postprocessing: false,
     ambientOcclusionResolutionScale: 0.75,
@@ -97,11 +97,12 @@ test('the provider exposes the default scene budget during SSR', () => {
     floorReflections: true,
     indirectLight: false,
     lampShadowRadius: 4,
+    metalReflections: false,
     shadows: true,
     postprocessing: true,
     ambientOcclusionResolutionScale: 0.75,
     ambientOcclusionSamples: 16,
-    reflectionResolutionScale: 0.5,
+    reflectionResolutionScale: 1,
     shadowMapScale: 1,
     shadowSamples: 4,
     sunShadowRadius: 4,
@@ -134,26 +135,33 @@ test('heavy and cinematic share the tuned volumetric sunlight values, apart from
     volumetricLightSteps: 128,
   })
 })
-test('Cinematic uses the tuned AO settings without changing Fast or Heavy', () => {
+test('every profile shares the AO radius and strength, and Cinematic raises the AO quality', () => {
   const fast = getRenderPipelineSettings(getGraphicsProfile(false), false)
   const heavy = getRenderPipelineSettings(getGraphicsProfile(true), 'traa')
   const cinematic = getRenderPipelineSettings(getGraphicsProfile(true, true), 'traa')
   expect(cinematic).toMatchObject({
     ambientOcclusion: true,
-    ambientOcclusionRadius: 1,
+    ambientOcclusionRadius: 0.5,
     ambientOcclusionResolutionScale: 2,
     ambientOcclusionSamples: 64,
-    ambientOcclusionScale: 0.8,
+    ambientOcclusionScale: 1,
     ambientOcclusionTemporalFiltering: false,
     ambientOcclusionThickness: 2,
   })
   expect(fast.ambientOcclusionResolutionScale).toBe(0.75)
   expect(fast.ambientOcclusionSamples).toBe(16)
-  expect(heavy.ambientOcclusionRadius).toBe(0.3)
+  expect(fast.ambientOcclusionRadius).toBe(0.5)
+  expect(fast.ambientOcclusionScale).toBe(1)
+  expect(heavy.ambientOcclusionRadius).toBe(0.5)
   expect(heavy.ambientOcclusionResolutionScale).toBe(0.75)
   expect(heavy.ambientOcclusionSamples).toBe(16)
-  expect(heavy.ambientOcclusionScale).toBe(0.85)
+  expect(heavy.ambientOcclusionScale).toBe(1)
   expect(heavy.ambientOcclusionThickness).toBe(1)
+})
+test('only Cinematic adds screen-space reflections on metallic surfaces to the floor reflections', () => {
+  expect(getRenderPipelineSettings(getGraphicsProfile(false), false).reflectionScope).toBe('none')
+  expect(getRenderPipelineSettings(getGraphicsProfile(true), 'traa').reflectionScope).toBe('floors')
+  expect(getRenderPipelineSettings(getGraphicsProfile(true, true), 'traa').reflectionScope).toBe('all')
 })
 test('Fast disables bloom, while Heavy and Cinematic use the current tuned bloom defaults', () => {
   const fast = getRenderPipelineSettings(getGraphicsProfile(false), false)

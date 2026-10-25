@@ -96,12 +96,12 @@ export function getRenderPipelineSettings(profile: GraphicsProfile, antiAliasing
   const sunShadow = getSunShadowSettings(profile, sun.shadow.mapSize)
   return {
     ambientOcclusion: true,
-    // Knottingham darkens contacts more tightly.
-    ambientOcclusionRadius: profile.ambientOcclusionRadius ?? (isKnottingham ? 0.18 : 0.3),
+    ambientOcclusionRadius: 0.5,
     ambientOcclusionResolutionScale: profile.ambientOcclusionResolutionScale,
     ambientOcclusionSamples: profile.ambientOcclusionSamples,
-    ambientOcclusionScale: profile.ambientOcclusionScale ?? (isKnottingham ? 1.18 : 0.85),
+    ambientOcclusionScale: 1,
     ambientOcclusionTemporalFiltering: false,
+    // Knottingham darkens contacts more tightly.
     ambientOcclusionThickness: profile.ambientOcclusionThickness ?? (isKnottingham ? 0.6 : 1),
     antiAliasing,
     bloom: profile.postprocessing,
@@ -122,7 +122,7 @@ export function getRenderPipelineSettings(profile: GraphicsProfile, antiAliasing
     lampShadowRadius: profile.lampShadowRadius ?? profile.shadowMapScale,
     lampShadowSamples: profile.shadowSamples,
     reflectionResolutionScale: profile.reflectionResolutionScale,
-    reflectionScope: profile.floorReflections ? 'floors' : 'none',
+    reflectionScope: profile.floorReflections ? (profile.metalReflections ? 'all' : 'floors') : 'none',
     screenSpaceIndirectLight: profile.indirectLight,
     screenSpaceIndirectLightAmbientOcclusion: 0,
     screenSpaceIndirectLightBackfaceLighting: 0,

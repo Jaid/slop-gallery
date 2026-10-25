@@ -195,7 +195,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
         }
       })
       if (reflectionScope === 'all' && camera instanceof PerspectiveCamera) {
-        // Screen-space reflections on the metallic surfaces, like gilded frames and trims, blurred by their roughness, on top of the floors’ planar mirror. The non-stochastic pass weighs every hit by metalness, so dielectrics would only cost time. Their fifth scene target needs the higher attachment limit `?development` requests, and the normal goes in as the texture node despite the `vec3` typing, because the pass samples it at neighboring texels.
+        // Screen-space reflections on the metallic surfaces, like gilded frames and trims, blurred by their roughness, on top of the floors’ planar mirror. The non-stochastic pass weighs every hit by metalness, so dielectrics would only cost time. Their fifth scene target needs the higher attachment limit that cinematic and `?development` request, and the normal goes in as the texture node despite the `vec3` typing, because the pass samples it at neighboring texels.
         const metalRoughness = scenePass.getTextureNode('metalrough')
         const reflection = own(ssr(scenePass.getTextureNode('output'), depth, normal as unknown as Node<'vec3'>, {
           camera,
