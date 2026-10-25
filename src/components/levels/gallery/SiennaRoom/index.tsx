@@ -29,7 +29,8 @@ export default function SiennaRoom({joinery}: {
 }) {
   const resetEpoch = useGallery(s => s.resetEpoch)
   const {floorReflections} = useGraphicsModeValue(getGraphicsProfile)
-  const floor = useDisposable(useMemo(() => new PlankFloorMaterial(undefined, floorReflections), [floorReflections]))
+  // The planks blur a reflection to a faint smear, not worth a mirrored pass of the scene.
+  const floor = useDisposable(useMemo(() => new PlankFloorMaterial(undefined, false), []))
   const ceiling = useDisposable(useMemo(() => new PlankMaterial(siennaCeilingPlanks), []))
   const rug = useDisposable(useMemo(() => new PersianRugMaterial(siennaRugSize), []))
   const reflection = floor.reflectionTarget
