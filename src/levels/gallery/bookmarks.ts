@@ -92,6 +92,16 @@ export const cameraBookmarks: Array<CameraBookmark> = [
     ratio: 16 / 9,
   },
   {
+    id: 'antechamber',
+    position: [-2.05, 0.67, 15.45],
+    aim: {
+      yaw: -0.59,
+      pitch: 0.59,
+    },
+    fov: 85,
+    ratio: 16 / 9,
+  },
+  {
     id: 'tunnel_exhibition',
     position: [0.08, -7.34, 3.53],
     aim: {
