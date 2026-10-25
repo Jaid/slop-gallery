@@ -46,6 +46,25 @@ test('lights asking for a shadow borrow a slot that copies them, and others donâ
   // The unused slot stays dark and belongs to no room, so its shadow map never updates.
   expect(world.pool.slots.filter(candidate => candidate.intensity === 0)).toHaveLength(1)
 })
+test('a slot follows its light where it moved this frame, before the frame updates its matrices', () => {
+  const world = setup(1)
+  const swing = new Group
+  world.scene.add(swing)
+  const light = new PointLight('#ffffff', 10, 5)
+  light.position.set(0, -0.5, 0)
+  light.userData.shadow = true
+  swing.add(light)
+  swing.position.set(0, 0, -4)
+  update(world)
+  // Physics moves the body after the last frameâ€™s matrices, like the Sienna chandelier swinging.
+  swing.position.x = 0.3
+  swing.rotation.z = Math.PI / 2
+  world.pool.update(world.scene, world.camera)
+  const slot = world.pool.slots[0]
+  expect(slot.position.x).toBeCloseTo(0.8)
+  expect(slot.position.y).toBeCloseTo(0)
+  expect(slot.position.z).toBeCloseTo(-4)
+})
 test('nearer lights win free slots, holders keep theirs and the rest go without', () => {
   const world = setup(1)
   const far = lamp(world.scene, -20, true)

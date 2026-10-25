@@ -19,8 +19,18 @@ type Candidate = {
 
 const frustum = new Frustum
 const projection = new Matrix4
+const local = new Matrix4
+const world = new Matrix4
 const reach = new Sphere
 const cameraPosition = new Vector3
+/** where an object is this frame; its world matrix only catches up when the frame is drawn, a frame late for whatever moved since, like a light swinging with a physics body, so this composes it afresh without touching any matrix */
+const currentPosition = (object: Object3D, target: Vector3) => {
+  world.identity()
+  for (let current: Object3D | null = object; current; current = current.parent) {
+    world.premultiply(current.matrixAutoUpdate ? local.compose(current.position, current.quaternion, current.scale) : current.matrix)
+  }
+  return target.setFromMatrixPosition(world)
+}
 
 /** whether a light asks for a shadow: its `userData.shadow`, unless the light editor switched it */
 export function wantsShadow(light: Light) {
@@ -119,7 +129,7 @@ export class ShadowPool {
         continue
       }
       this.lent.set(source, slot)
-      slot.position.setFromMatrixPosition(source.matrixWorld)
+      currentPosition(source, slot.position)
       slot.color.copy(source.color)
       slot.intensity = source.intensity
       slot.distance = source.distance
