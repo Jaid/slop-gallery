@@ -3,6 +3,7 @@ import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 import useGraphicsMode from 'use-graphics-mode'
 
+import FountainAmbienceSound from '#component/levels/gallery/FountainAmbience'
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
 import Orbitable from '#component/Orbitable'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
@@ -39,5 +40,6 @@ export default function Fountain() {
     <mesh geometry={geometry.pools} material={pool} name='fountain-pools' receiveShadow />
     <mesh geometry={geometry.water} material={falling} name='fountain-falling-water' />
     <primitive object={spray} />
+    <FountainAmbienceSound />
   </Orbitable>
 }

@@ -32,6 +32,10 @@ Renewed ground contact uses the exact same **Soft Weight** footstep recipe rathe
 
 The reusable `ego-player` package emits `onLand` and `onZoomTransition` but contains no sound engine or gallery imports. `playerAudio.ts` owns surface selection, active-input policy, mute/lock gating and shared portrait/knot inspection state observation. Pause, blur, pointer-lock loss, mute and unmount stop held/transition audio even without another rendered frame. Narration uses the shared controller in `narration.ts` (`use-narrator` / `use-audio-queue`), with a separate output path from procedural player effects. Its meter retains paused connections for injection/resume and keys each explicitly concurrent voice separately, so overlapping `async` narration gets independent stacked HUD indicators and independent spectra.
 
+## Fountain ambience
+
+`fountainAmbience.ts` synthesizes the Lobby fountain’s endless trickle: two looping filtered noise beds whose levels sway by smooth random curves, plus randomly timed rising-pitch bubbles and small noise splashes scheduled with a short lookahead. It plays through the effects master (so mute covers it) from an HRTF panner at the spray, at full level within 1 m and fading linearly to silence at 10 m, and is muffled outside the Lobby. The `FountainAmbience` component inside `Fountain` starts it once `SoundEngine` exists and moves the Web Audio listener with the camera every frame.
+
 ## Playback ownership
 
 `playVoices()` returns a cancellable playback with a gain parameter. It owns only its sources, filters, envelopes and local bus; it never disconnects the caller's master or closes the caller's context. Both natural completion and cancellation disconnect nodes. Voice envelopes start with intrinsic gain zero, including before delayed onsets, so sample-boundary rounding cannot leak a full-volume noise sample.
