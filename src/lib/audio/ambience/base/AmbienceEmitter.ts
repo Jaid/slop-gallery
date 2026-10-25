@@ -25,7 +25,7 @@ export type AmbienceEmitterOptions = {
   }
   id: string
   position: Vec3
-  /** the rooms the emitter stands in; from anywhere else it is heard muffled */
+  /** the rooms the emitter sounds in; it is disabled while the listener is anywhere else */
   rooms?: ReadonlyArray<RoomId>
   title: string
 }
@@ -33,7 +33,6 @@ type Graph = {
   bus: GainNode
   context: BaseAudioContext
   level: GainNode
-  muffle: BiquadFilterNode
   panner: PannerNode
   scheduledUntil: number
   sources: Set<AudioScheduledSourceNode>
@@ -43,17 +42,11 @@ type Graph = {
 /** how far ahead one-shots are scheduled, in seconds */
 const lookahead = 0.25
 const scheduleInterval = 80
-/** how much quieter and darker an emitter is heard from outside its rooms */
-const muffled = {
-  gain: 0.3,
-  frequency: 650,
-}
-const open = 20_000
 const silence = 0.00001
 
 /**
  * A positional, endlessly looping ambient sound, synthesized live with Web Audio: subclasses declare looping {@link NoiseBed}s and scatter one-shots like {@link chirp} and {@link burst} over each scheduling window.
- * Constructing one makes no sound; {@link start} builds its graph on an output, heard through an HRTF panner at {@link position} and muffled while the listener is outside its {@link rooms}.
+ * Constructing one makes no sound; {@link start} builds its graph on an output, heard through an HRTF panner at {@link position}, and fades out while the listener is outside its {@link rooms}.
  */
 export default abstract class AmbienceEmitter {
   protected readonly beds: ReadonlyArray<NoiseBed> = []
@@ -117,18 +110,14 @@ export default abstract class AmbienceEmitter {
   /** Schedules the one-shots that fall within `from`–`until`; the default emitter has only beds. */
   protected schedule(_from: number, _until: number) {}
 
-  /** Muffles the emitter while the listener is outside its rooms. */
+  /** Disables the emitter while the listener is outside its rooms. */
   setListenerRoom(room: RoomId) {
     const inside = this.isInside(room)
     if (inside === this.inside) {
       return
     }
     this.inside = inside
-    if (this.graph) {
-      const now = this.graph.context.currentTime
-      this.graph.muffle.frequency.setTargetAtTime(inside ? open : muffled.frequency, now, 0.3)
-      this.graph.level.gain.setTargetAtTime(this.gain * (inside ? 1 : muffled.gain), now, 0.3)
-    }
+    this.graph?.level.gain.setTargetAtTime(inside ? this.gain : 0, this.graph.context.currentTime, 0.3)
   }
 
   /** Starts sounding on `output`; does nothing while already playing. */
@@ -147,19 +136,14 @@ export default abstract class AmbienceEmitter {
       positionY: y,
       positionZ: z,
     })
-    const muffle = new BiquadFilterNode(context, {
-      type: 'lowpass',
-      frequency: this.inside ? open : muffled.frequency,
-    })
-    const level = new GainNode(context, {gain: this.gain * (this.inside ? 1 : muffled.gain)})
+    const level = new GainNode(context, {gain: this.inside ? this.gain : 0})
     const bus = new GainNode(context, {gain: 0})
     bus.gain.setTargetAtTime(1, context.currentTime, 0.2)
-    bus.connect(muffle).connect(level).connect(panner).connect(master)
+    bus.connect(level).connect(panner).connect(master)
     const graph: Graph = {
       bus,
       context,
       level,
-      muffle,
       panner,
       scheduledUntil: context.currentTime,
       sources: new Set,
@@ -189,12 +173,15 @@ export default abstract class AmbienceEmitter {
     setTimeout(() => graph.panner.disconnect(), (fade + lookahead) * 1000 + 100)
   }
 
-  /** How loud the emitter reaches a listener at `listener` in `room`, 0–1, before {@link gain}. */
+  /** How loud the emitter reaches a listener at `listener` in `room`, 0–1, before {@link gain}; 0 while disabled there. */
   strengthAt(listener: Vec3, room: RoomId) {
+    if (!this.isInside(room)) {
+      return 0
+    }
     const distance = Math.hypot(listener[0] - this.position[0], listener[1] - this.position[1], listener[2] - this.position[2])
     const {near, far} = this.hearing
     const falloff = 1 - clamp((distance - near) / (far - near), 0, 1)
-    return falloff * (this.isInside(room) ? 1 : muffled.gain)
+    return falloff
   }
 
   /** a random value within `range` */
