@@ -11,6 +11,8 @@ export type NoiseBed = {
   filter: BiquadFilterType
   frequency: number
   q?: number
+  /** how many identical filters the noise passes in a row, each one steepening the slope by 12 dB per octave */
+  stages?: number
   /** how fast (per second) and how deep (0–1) the level sways */
   sway?: readonly [rate: number, depth: number]
   volume: number
@@ -49,7 +51,6 @@ const silence = 0.00001
  * Constructing one makes no sound; {@link start} builds its graph on an output, heard through an HRTF panner at {@link position}, and fades out while the listener is outside its {@link rooms}.
  */
 export default abstract class AmbienceEmitter {
-  protected readonly beds: ReadonlyArray<NoiseBed> = []
   readonly gain: number
   readonly hearing: AmbienceEmitterOptions['hearing']
   readonly id: string
@@ -66,6 +67,11 @@ export default abstract class AmbienceEmitter {
     this.hearing = hearing
     this.gain = gain
     this.rooms = rooms
+  }
+
+  /** the looping beds, read whenever the emitter starts */
+  protected get beds(): ReadonlyArray<NoiseBed> {
+    return []
   }
 
   get playing() {
@@ -214,11 +220,11 @@ export default abstract class AmbienceEmitter {
     const source = context.createBufferSource()
     source.buffer = whiteNoise(context)
     source.loop = true
-    const filter = new BiquadFilterNode(context, {
+    const filters = Array.from({length: bed.stages ?? 1}, () => new BiquadFilterNode(context, {
       type: bed.filter,
       frequency: bed.frequency,
       Q: bed.q ?? 0.7,
-    })
+    }))
     const [rate, depth] = bed.sway ?? [0, 0]
     const level = new GainNode(context, {gain: bed.volume * (1 - depth)})
     if (depth) {
@@ -229,7 +235,11 @@ export default abstract class AmbienceEmitter {
       sway.start()
       graph.sources.add(sway)
     }
-    source.connect(filter).connect(level).connect(graph.bus)
+    let tail: AudioNode = source
+    for (const filter of filters) {
+      tail = tail.connect(filter)
+    }
+    tail.connect(level).connect(graph.bus)
     // Every bed starts somewhere else in the shared noise, so beds never move in lockstep.
     source.start(0, Math.random() * loopLength)
     graph.sources.add(source)

@@ -1,7 +1,7 @@
 import type AmbienceEmitter from './base/AmbienceEmitter.ts'
 
 import optis from 'optis'
-import {useEffect} from 'react'
+import {useEffect, useState} from 'react'
 import readPermalink from 'read-permalink'
 import {create} from 'zustand'
 
@@ -37,7 +37,9 @@ export function addAmbienceEmitter(emitter: AmbienceEmitter) {
   }
 }
 
-/** Sounds an emitter of this class while the calling component is mounted. */
-export function useAmbienceEmitter(Emitter: new () => AmbienceEmitter) {
-  useEffect(() => addAmbienceEmitter(new Emitter), [Emitter])
+/** Sounds an emitter of this class while the calling component is mounted, returning it. */
+export function useAmbienceEmitter<Emitter extends AmbienceEmitter>(EmitterClass: new () => Emitter) {
+  const [emitter] = useState(() => new EmitterClass)
+  useEffect(() => addAmbienceEmitter(emitter), [emitter])
+  return emitter
 }

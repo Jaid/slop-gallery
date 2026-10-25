@@ -7,6 +7,8 @@ import useDisposable from 'disposable-lifetime/react'
 import {useMemo, useRef} from 'react'
 import useGraphicsMode from 'use-graphics-mode'
 
+import {useAmbienceEmitter} from '#src/lib/audio/ambience/ambienceEmitters.ts'
+import LodgeFireAmbience from '#src/lib/audio/ambience/LodgeFire.ts'
 import {AnimationClock} from '#src/lib/frozenTime.ts'
 import Coals from '#src/lib/gallery/fireplace/Coals.ts'
 import fire from '#src/lib/gallery/fireplace/config.ts'
@@ -28,6 +30,7 @@ const logRotation = [0, 0, Math.PI / 2] as const
 /** The lodge’s log fire inside the `lodge-fireplace` group. Heavy graphics light a live fire; fast graphics keep a static glow. */
 export default function LodgeFire() {
   const isHeavy = useGraphicsMode()
+  useAmbienceEmitter(LodgeFireAmbience)
   return <group name='lodge-fire' position={fire.position}>
     <Branch if={isHeavy} then={LiveFire} else={GlowingEmbers} />
   </group>

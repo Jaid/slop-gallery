@@ -13,6 +13,22 @@ const drops = {
   duration: [0.02, 0.06] as Range,
   volume: [0.03, 0.08] as Range,
 }
+/** a soft hiss: a band of noise over a low murmur */
+const beds: ReadonlyArray<NoiseBed> = [
+  {
+    filter: 'bandpass',
+    frequency: 1900,
+    q: 1.3,
+    volume: 0.04,
+    sway: [6, 0.5],
+  },
+  {
+    filter: 'lowpass',
+    frequency: 350,
+    volume: 0.05,
+    sway: [1.5, 0.35],
+  },
+]
 /** short bursts of noise, like water hitting water */
 const splashes = {
   rate: 1.5,
@@ -24,22 +40,6 @@ const splashes = {
 
 /** The Lobby fountain’s quiet trickle: a soft hiss under lots of single bubbles, sounding from the tip of its finial. */
 export default class Fountain extends AmbienceEmitter {
-  protected override readonly beds: ReadonlyArray<NoiseBed> = [
-    {
-      filter: 'bandpass',
-      frequency: 1900,
-      q: 1.3,
-      volume: 0.04,
-      sway: [6, 0.5],
-    },
-    {
-      filter: 'lowpass',
-      frequency: 350,
-      volume: 0.05,
-      sway: [1.5, 0.35],
-    },
-  ]
-
   constructor() {
     super({
       id: 'lobby-fountain',
@@ -54,6 +54,10 @@ export default class Fountain extends AmbienceEmitter {
       gain: 0.3,
       rooms: ['lobby'],
     })
+  }
+
+  protected override get beds() {
+    return beds
   }
 
   protected override schedule(from: number, until: number) {
