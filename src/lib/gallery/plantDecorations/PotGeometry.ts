@@ -1,7 +1,9 @@
 import type {PotKind} from './catalog.ts'
 import type {BufferGeometry} from 'three/webgpu'
 
-import {CylinderGeometry, LatheGeometry, TorusGeometry, Vector2} from 'three/webgpu'
+import {CatmullRomCurve3, CylinderGeometry, LatheGeometry, TorusGeometry, Vector2, Vector3} from 'three/webgpu'
+
+import {readGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
 import {mergeParts} from '../../geometry.ts'
 import {potDefinition} from './catalog.ts'
@@ -19,6 +21,26 @@ const radialSegments: Record<PotKind, number> = {
   celadon: 96,
   noir: 80,
 }
+/** Pots whose lathe follows `curveDetail`, starting with one to compare before rolling it out. */
+const detailedKinds: ReadonlySet<PotKind> = new Set(['celadon'])
+/** Splits every span between two wall points into `detail` pieces along a centripetal Catmull-Rom curve through the original points. The spans that meet the axis stay straight, so the flat base and soil floor keep their height. */
+const refineProfile = (profile: Profile, detail: number) => {
+  const points = profile.map(([x, y]) => new Vector2(x, y))
+  if (detail <= 1) {
+    return points
+  }
+  const curve = new CatmullRomCurve3(profile.map(([x, y]) => new Vector3(x, y, 0)), false, 'centripetal')
+  const last = points.length - 1
+  return points.flatMap((point, i) => {
+    if (i === 0 || i >= last - 1) {
+      return [point]
+    }
+    return Array.from({length: detail}, (_, j) => {
+      const {x, y} = curve.getPoint((i + j / detail) / last)
+      return new Vector2(x, y)
+    })
+  })
+}
 
 /** Hollow ceramic shells with finished rims; the recessed substrate belongs to the pot. */
 export default class PotGeometry {
@@ -29,7 +51,9 @@ export default class PotGeometry {
 
   constructor(kind: PotKind) {
     const definition = potDefinition(kind)
-    this.shell = new LatheGeometry(profiles[kind].map(point => new Vector2(...point)), radialSegments[kind])
+    const detail = detailedKinds.has(kind) ? readGraphicsProfile().curveDetail : 1
+    // The hand-placed profile is far coarser than the 96 segments around, so its spans get the square of the factor.
+    this.shell = new LatheGeometry(refineProfile(profiles[kind], detail ** 2), radialSegments[kind] * detail)
     const positions = this.shell.getAttribute('position')
     const uv = this.shell.getAttribute('uv')
     for (let i = 0; i < positions.count; i++) {

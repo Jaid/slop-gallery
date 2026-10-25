@@ -3,6 +3,8 @@ import {BufferGeometry, Float32BufferAttribute} from 'three/webgpu'
 export type ArcSlabOptions = {
   /** first and last angle around the z axis, measured from +x toward +y, in radians */
   angles: readonly [number, number]
+  /** factor on the default segment count, ignored when `segments` is given */
+  detail?: number
   /** inner and outer distance from the axis */
   radii: readonly [number, number]
   /** segments along the arc; defaults to keeping the outer face within 5 mm of its circle */
@@ -23,12 +25,12 @@ const segmentsFor = (radius: number, sweep: number) => Math.max(1, Math.ceil(swe
 export default class ArcSlabGeometry extends BufferGeometry {
   override readonly type = 'ArcSlabGeometry'
 
-  constructor({angles: [start, end], radii: [inner, outer], segments, z: [front, back]}: ArcSlabOptions) {
+  constructor({angles: [start, end], detail = 1, radii: [inner, outer], segments, z: [front, back]}: ArcSlabOptions) {
     super()
     if (![start, end, inner, outer, front, back].every(Number.isFinite) || !(end > start) || end - start > Math.PI * 2 || !(inner >= 0) || !(outer > inner) || !(back > front)) {
       throw new RangeError('An arc slab needs increasing angles within one turn, increasing non-negative radii and an increasing z range.')
     }
-    const count = segments ?? segmentsFor(outer, end - start)
+    const count = segments ?? segmentsFor(outer, end - start) * detail
     if (!Number.isInteger(count) || count < 1) {
       throw new RangeError('An arc slab needs a whole, positive number of segments.')
     }

@@ -9,12 +9,13 @@ import lobbyVault, {glazingStart, lobbyChandeliers, vaultBays, vaultCoffers, vau
 export const roseCenterY = lobbyVault.springY + lobbyVault.rose.rise
 
 /** A slab bent around the vault’s axis, which runs along z at the springing height. */
-const arc = (radii: readonly [number, number], angles: readonly [number, number], z: readonly [number, number], segments?: number) => {
+const arc = (radii: readonly [number, number], angles: readonly [number, number], z: readonly [number, number], segments?: number, detail?: number) => {
   const geometry = new ArcSlabGeometry({
     radii,
     angles,
     z,
     segments,
+    detail,
   })
   return geometry.translate(0, lobbyVault.springY, 0)
 }
@@ -147,7 +148,7 @@ export function lobbyVaultCollision() {
 /**
  * Merged meshes of the Lobby’s barrel vault, relative to the room center at floor level, by material: the clad lunettes, the
  * vault’s limestone ribs and coffer frames, the plaster behind the coffers, gilding, bronze glazing bars and the glass of the
- * crown band and the rose window.
+ * crown band and the rose window. `curveDetail` multiplies the segments of the glazing bars’ curves.
  */
 export default class LobbyVaultGeometry {
   readonly bars: BufferGeometry
@@ -159,7 +160,7 @@ export default class LobbyVaultGeometry {
   readonly roseGlass: BufferGeometry
   readonly stone: BufferGeometry
 
-  constructor() {
+  constructor(curveDetail = 1) {
     const {coffer, glazing, halfLength, outerRadius, radius, rib, rose, springY} = lobbyVault
     const clad: Array<BufferGeometry> = []
     const stone: Array<BufferGeometry> = []
@@ -266,7 +267,7 @@ export default class LobbyVaultGeometry {
       const barWidth = glazing.bar.width / back
       const rimWidth = glazing.rim / back
       for (const [from, to] of fields) {
-        bars.push(arc(barRadii, [from, to], [north, north + glazing.rim]), arc(barRadii, [from, to], [south - glazing.rim, south]))
+        bars.push(arc(barRadii, [from, to], [north, north + glazing.rim], undefined, curveDetail), arc(barRadii, [from, to], [south - glazing.rim, south], undefined, curveDetail))
         bars.push(arc(barRadii, [from, from + rimWidth], [north, south], 1), arc(barRadii, [to - rimWidth, to], [north, south], 1))
         const across = Math.max(2, Math.round((to - from) * back / glazing.pane))
         for (let i = 1; i < across; i++) {
@@ -276,11 +277,11 @@ export default class LobbyVaultGeometry {
         const along = Math.max(2, Math.round((south - north) / glazing.pane))
         for (let i = 1; i < along; i++) {
           const z = north + (south - north) * i / along
-          bars.push(arc(barRadii, [from, to], [z - glazing.bar.width / 2, z + glazing.bar.width / 2]))
+          bars.push(arc(barRadii, [from, to], [z - glazing.bar.width / 2, z + glazing.bar.width / 2], undefined, curveDetail))
         }
         const middle = (from + to) / 2
         const ringRadius = back - glazing.bar.depth / 2
-        const medallion = new TorusGeometry(glazing.medallion, 0.022, 6, 16)
+        const medallion = new TorusGeometry(glazing.medallion, 0.022, 6 * curveDetail, 16 * curveDetail)
         bars.push(medallion.rotateX(Math.PI / 2).rotateZ(middle - Math.PI / 2).translate(ringRadius * Math.cos(middle), springY + ringRadius * Math.sin(middle), (north + south) / 2))
       }
     }
@@ -331,13 +332,13 @@ export default class LobbyVaultGeometry {
         const length = rose.radius - rose.hub
         for (let i = 0; i < rose.spokes; i++) {
           const angle = i * Math.PI * 2 / rose.spokes
-          const spoke = new CylinderGeometry(rose.bar, rose.bar, length, 6)
+          const spoke = new CylinderGeometry(rose.bar, rose.bar, length, 6 * curveDetail)
           parts.bars.push(spoke.translate(0, rose.hub + length / 2, middle).rotateZ(angle - Math.PI / 2).translate(0, roseY, 0))
           const between = angle + Math.PI / rose.spokes
           const distance = rose.radius - rose.foil - 0.1
-          parts.bars.push(ring(rose.foil, rose.bar * 0.8, middle, 12, distance * Math.cos(between), distance * Math.sin(between)))
+          parts.bars.push(ring(rose.foil, rose.bar * 0.8, middle, 12 * curveDetail, distance * Math.cos(between), distance * Math.sin(between), 6 * curveDetail))
         }
-        parts.bars.push(ring(rose.wheel, rose.bar * 1.15, middle, 28))
+        parts.bars.push(ring(rose.wheel, rose.bar * 1.15, middle, 28 * curveDetail, 0, 0, 6 * curveDetail))
         parts.roseGlass.push(glassDisc(rose.radius, 0, roseY, middle, 96))
       }
       const targets = {

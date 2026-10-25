@@ -4,7 +4,7 @@ import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
-import useGraphicsMode from 'use-graphics-mode'
+import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
 import LobbyChandelierGeometry from '#src/lib/gallery/LobbyChandelierGeometry.ts'
@@ -15,6 +15,7 @@ import ArchitecturalPlasterMaterial from '#src/lib/materials/ArchitecturalPlaste
 import gold from '#src/lib/materials/gold.ts'
 import LimestoneMaterial from '#src/lib/materials/LimestoneMaterial.ts'
 import VaultGlassMaterial from '#src/lib/materials/VaultGlassMaterial.ts'
+import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
 /** The Oculus sees the chandeliers only through the glazed floor and the Salon only through its thick blue window, which both hide their light almost entirely, so they stay off from there. */
 const chandelierRooms = seenFrom('lobby', 'oculus', 'salon')
@@ -27,7 +28,8 @@ export default function LobbyVault({cladding}: {
   cladding: Material
 }) {
   const isHeavy = useGraphicsMode()
-  const geometry = useDisposable(useMemo(() => new LobbyVaultGeometry, []))
+  const {curveDetail} = useGraphicsModeValue(getGraphicsProfile)
+  const geometry = useDisposable(useMemo(() => new LobbyVaultGeometry(curveDetail), [curveDetail]))
   const stone = useDisposable(useMemo(() => new LimestoneMaterial, []))
   // Cream coffer fields behind the white stone frames, gilt moldings and rosettes.
   const plaster = useDisposable(useMemo(() => new ArchitecturalPlasterMaterial({

@@ -4,7 +4,7 @@ import {renderToStaticMarkup} from 'react-dom/server'
 import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 
 import GraphicsMode from '../../src/components/App/GraphicsMode.tsx'
-import {fitCanvasTextureResolution, getGraphicsProfile, getSunShadowSettings, readCinematicGraphics, readGraphicsMode, readGraphicsModeName} from '../../src/lib/rendering/graphicsMode.ts'
+import {fitCanvasTextureResolution, getGraphicsProfile, getSunShadowSettings, readCinematicGraphics, readGraphicsMode, readGraphicsModeName, readGraphicsProfile} from '../../src/lib/rendering/graphicsMode.ts'
 import {getRenderPipelineSettings} from '../../src/lib/rendering/renderPipelineSettings.ts'
 
 function ReadProfile() {
@@ -30,14 +30,18 @@ test('cinematic graphics read as heavy, and only cinematic reads as cinematic', 
   expect(readCinematicGraphics('?graphics=cinematic')).toBe(true)
   expect(readCinematicGraphics('?graphics=heavy')).toBe(false)
   expect(readCinematicGraphics()).toBe(false)
+  expect(readGraphicsProfile('?graphics=cinematic')).toBe(getGraphicsProfile(true, true))
+  expect(readGraphicsProfile('?graphics=heavy')).toBe(getGraphicsProfile(true))
+  expect(readGraphicsProfile()).toBe(getGraphicsProfile(false))
 })
-test('the cinematic profile increases intermediate resolutions, AO quality, shadow samples and lamp filter radius, texture filtering, indirect light and metal reflections', () => {
+test('the cinematic profile increases intermediate resolutions, AO quality, shadow samples and lamp filter radius, texture filtering, curve tessellation, indirect light and metal reflections', () => {
   const heavy = getGraphicsProfile(true)
   const cinematic = getGraphicsProfile(true, true)
   expect(cinematic).toEqual({
     ...heavy,
     canvasTextureMipmaps: true,
     canvasTextureResolution: 2,
+    curveDetail: 2,
     indirectLight: true,
     metalReflections: true,
     ambientOcclusionResolutionScale: 2,
@@ -75,6 +79,7 @@ test('the provider exposes the default scene budget during SSR', () => {
   expect(getGraphicsProfile(false)).toEqual({
     canvasTextureMipmaps: false,
     canvasTextureResolution: 0.5,
+    curveDetail: 1,
     noiseTextures: false,
     floorReflections: false,
     indirectLight: false,
@@ -94,6 +99,7 @@ test('the provider exposes the default scene budget during SSR', () => {
   expect(getGraphicsProfile(true)).toEqual({
     canvasTextureMipmaps: false,
     canvasTextureResolution: 1,
+    curveDetail: 1,
     noiseTextures: true,
     floorReflections: true,
     indirectLight: false,

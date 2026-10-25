@@ -32,6 +32,8 @@ export type GraphicsProfile = {
   canvasTextureMipmaps: boolean
   /** backing pixels per logical texel for runtime canvas textures such as signs */
   canvasTextureResolution: number
+  /** factor on the segment counts of round meshes that opt in, along each curved direction */
+  curveDetail: number
   floorReflections: boolean
   /** whether screen-space indirect light bounces the lit scene off the surfaces’ diffuse color */
   indirectLight: boolean
@@ -93,9 +95,15 @@ export function readCinematicGraphics(input?: URL | string) {
   return readGraphicsModeName(input) === useGraphicsMode.getName(true, true)
 }
 
+/** Read the profile `?graphics` asks for, for code outside React. It ignores later menu changes, so prefer `useGraphicsModeValue(getGraphicsProfile)` where a component can rebuild. */
+export function readGraphicsProfile(input?: URL | string) {
+  return getGraphicsProfile(readGraphicsMode(input), readCinematicGraphics(input))
+}
+
 const fastProfile: GraphicsProfile = {
   canvasTextureMipmaps: false,
   canvasTextureResolution: 0.5,
+  curveDetail: 1,
   noiseTextures: false,
   floorReflections: false,
   indirectLight: false,
@@ -115,6 +123,7 @@ const fastProfile: GraphicsProfile = {
 const heavyProfile: GraphicsProfile = {
   canvasTextureMipmaps: false,
   canvasTextureResolution: 1,
+  curveDetail: 1,
   noiseTextures: true,
   floorReflections: true,
   indirectLight: false,
@@ -134,11 +143,12 @@ const heavyProfile: GraphicsProfile = {
   volumetricLightSteps: 64,
   voxelIndirectLight: true,
 }
-// Cinematic raises intermediate and shadow-map resolutions, AO quality, texture filtering, indirect light and metal reflections for non-realtime rendering.
+// Cinematic raises intermediate and shadow-map resolutions, AO quality, texture filtering, curve tessellation, indirect light and metal reflections for non-realtime rendering.
 const cinematicProfile: GraphicsProfile = {
   ...heavyProfile,
   canvasTextureMipmaps: true,
   canvasTextureResolution: 2,
+  curveDetail: 2,
   indirectLight: true,
   metalReflections: true,
   ambientOcclusionResolutionScale: 2,
