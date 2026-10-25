@@ -3,6 +3,7 @@ import readPermalink, {parseNumber} from 'read-permalink'
 
 import {cameraBookmarks} from '#level/bookmarks.ts'
 
+import {readDevelopmentMode} from './developmentMode.ts'
 import {readSpawn} from './gallery/spawn.ts'
 
 declare global {
@@ -28,9 +29,9 @@ const frozenTimeSchema = optis({
 // Animation steps stay this short, so physics and effects that integrate over time do not jump.
 const step = 1 / 30
 
-/** Read the optional `?frozen_time` from the permalink, or else the `frozenTime` of the `?spawn` camera bookmark: the engine time in seconds that every animation stands still at, so captures of the same view match. */
+/** Read the optional `?frozen_time` from the permalink, or else, without `?development`, the `frozenTime` of the `?spawn` camera bookmark: the engine time in seconds that every animation stands still at, so captures of the same view match. */
 export function readFrozenTime(input: URL | string = typeof location === 'undefined' ? '' : location.href): number | undefined {
-  const spawn = readSpawn(input)
+  const spawn = readDevelopmentMode(input) ? '' : readSpawn(input)
   return readPermalink(input, {schema: frozenTimeSchema}).frozen_time ?? (spawn ? cameraBookmarks.find(bookmark => bookmark.id === spawn)?.frozenTime : undefined)
 }
 

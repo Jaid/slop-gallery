@@ -9,6 +9,7 @@ import {Euler, PerspectiveCamera, Quaternion, Vector3} from 'three/webgpu'
 
 import {insideLevel, levelFloorHeight} from '#level/navigation.ts'
 import {attachPlayerAudio, onPlayerLand, onPlayerStep, onPlayerZoomChange, onPlayerZoomTransition} from '#src/lib/audio/playerAudio.ts'
+import {isDevelopmentMode} from '#src/lib/developmentMode.ts'
 import {cameraPose, galleryEvents, markControlled, narrate, setCameraFocused, useGallery} from '#src/lib/gallery.ts'
 import {cameraBookmarkFeet, findCameraBookmark} from '#src/lib/gallery/bookmarks.ts'
 import {flyMode} from '#src/lib/gallery/flyMode.ts'
@@ -114,8 +115,8 @@ export default function Player() {
         rotation: sessionRotation.setFromEuler(new Euler(pose.pitch, pose.yaw, 0, 'YXZ')).toArray(),
       },
     }))
-    const bookmark = findCameraBookmark()
-    // The teleport above released the camera; a ?spawn camera bookmark takes it again while the player still stands below it.
+    const bookmark = isDevelopmentMode ? null : findCameraBookmark()
+    // The teleport above released the camera; a ?spawn camera bookmark takes it again while the player still stands below it. With ?development, the player flies on from it instead.
     if (bookmark && cameraBookmarkFeet(bookmark).every((value, index) => value === pose.position[index])) {
       setCameraFocused(true)
       const bookmarkRotation = new Quaternion

@@ -5,7 +5,9 @@ import {Euler, Quaternion} from 'three/webgpu'
 import {cameraBookmarks, spawnBookmarks} from '#level/bookmarks.ts'
 import {levelFloorHeight} from '#level/navigation.ts'
 
+import {isDevelopmentMode} from '../developmentMode.ts'
 import {galleryEvents, notify} from './actions.ts'
+import {flyMode} from './flyMode.ts'
 import {playerSession} from './PlayerSession.ts'
 import {readSpawn} from './spawn.ts'
 
@@ -29,12 +31,13 @@ export function findCameraBookmark(input?: URL | string, list: ReadonlyArray<Cam
   return id ? list.find(bookmark => bookmark.id === id) : null
 }
 
-/** Where the player stands below a camera bookmark: a standing eye height under the camera, but never below the floor. */
-export function cameraBookmarkFeet({position}: CameraBookmark): Vec3 {
-  return [position[0], Math.max(levelFloorHeight(position) + 0.04, position[1] - 1.6), position[2]]
+/** Where the player stands below a camera bookmark: a standing eye height under the camera, but never below the floor unless `flying`. */
+export function cameraBookmarkFeet({position}: CameraBookmark, flying = false): Vec3 {
+  const feet = position[1] - 1.6
+  return [position[0], flying ? feet : Math.max(levelFloorHeight(position) + 0.04, feet), position[2]]
 }
 
-/** Move the player session to the `?spawn` bookmark, overriding any saved position; for a camera bookmark, below it. */
+/** Move the player session to the `?spawn` bookmark, overriding any saved position; for a camera bookmark, below it, and with `?development` flying with its eyes at the bookmark. */
 export function applySpawnBookmark() {
   const spawnBookmark = findSpawnBookmark()
   if (spawnBookmark) {
@@ -43,8 +46,10 @@ export function applySpawnBookmark() {
   }
   const cameraBookmark = findCameraBookmark()
   if (cameraBookmark) {
+    // With ?development, the bookmark is a starting point to fly on from instead of a held camera.
+    flyMode.active ||= isDevelopmentMode
     playerSession.restore({
-      position: cameraBookmarkFeet(cameraBookmark),
+      position: cameraBookmarkFeet(cameraBookmark, isDevelopmentMode),
       ...cameraBookmark.aim,
     })
   } else if (cameraBookmark === undefined) {
