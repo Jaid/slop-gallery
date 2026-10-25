@@ -35,7 +35,7 @@ export type GraphicsProfile = {
   floorReflections: boolean
   /** whether screen-space indirect light bounces the lit scene off the surfaces’ diffuse color */
   indirectLight: boolean
-  /** filter-radius multiplier for shadow-casting lamps; independent of the Sun */
+  /** filter radius for shadow-casting lamps, in shadow-map texels, so a larger `shadowMapScale` needs a proportionally larger radius for the same penumbra; independent of the Sun */
   lampShadowRadius?: number
   /** whether screen-space reflections add to metallic surfaces like gilded frames and trims, on top of the floor reflections */
   metalReflections: boolean
@@ -146,6 +146,8 @@ const cinematicProfile: GraphicsProfile = {
   ambientOcclusionThickness: 2,
   reflectionResolutionScale: 2,
   shadowMapScale: 4,
+  // Heavy’s four texels on four times the map, so the lamps’ penumbrae keep their width instead of turning four times sharper.
+  lampShadowRadius: 16,
   shadowSamples: 16,
   sunShadowMapSize: 8192,
   sunShadowRadius: 8,

@@ -31,7 +31,7 @@ test('cinematic graphics read as heavy, and only cinematic reads as cinematic', 
   expect(readCinematicGraphics('?graphics=heavy')).toBe(false)
   expect(readCinematicGraphics()).toBe(false)
 })
-test('the cinematic profile increases intermediate resolutions, AO quality, shadow samples, texture filtering, indirect light and metal reflections', () => {
+test('the cinematic profile increases intermediate resolutions, AO quality, shadow samples and lamp filter radius, texture filtering, indirect light and metal reflections', () => {
   const heavy = getGraphicsProfile(true)
   const cinematic = getGraphicsProfile(true, true)
   expect(cinematic).toEqual({
@@ -45,6 +45,7 @@ test('the cinematic profile increases intermediate resolutions, AO quality, shad
     ambientOcclusionThickness: 2,
     reflectionResolutionScale: 2,
     shadowMapScale: 4,
+    lampShadowRadius: 16,
     shadowSamples: 16,
     sunShadowMapSize: 8192,
     sunShadowRadius: 8,
@@ -247,13 +248,13 @@ test('Sun shadow presets are independent of the other lights and follow the conf
   expect(heavy.voxelIndirectLightBounces).toBe(1)
   expect(cinematic.voxelIndirectLightBounces).toBe(2)
 })
-test('Heavy and Cinematic default to four-texel lamp shadow filtering without changing their samples or Sun', () => {
+test('Cinematic scales Heavy’s four-texel lamp shadow filtering with its four times larger maps without changing their samples or Sun', () => {
   const fast = getRenderPipelineSettings(getGraphicsProfile(false), false)
   const heavy = getRenderPipelineSettings(getGraphicsProfile(true), 'traa')
   const cinematic = getRenderPipelineSettings(getGraphicsProfile(true, true), 'traa')
   expect(fast.lampShadowRadius).toBe(1)
   expect(heavy.lampShadowRadius).toBe(4)
-  expect(cinematic.lampShadowRadius).toBe(4)
+  expect(cinematic.lampShadowRadius).toBe(16)
   expect(heavy.lampShadowSamples).toBe(4)
   expect(cinematic.lampShadowSamples).toBe(16)
   expect(heavy.sunShadowRadius).toBe(4)
