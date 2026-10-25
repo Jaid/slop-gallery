@@ -148,7 +148,7 @@ export function lobbyVaultCollision() {
 /**
  * Merged meshes of the Lobby’s barrel vault, relative to the room center at floor level, by material: the clad lunettes, the
  * vault’s limestone ribs and coffer frames, the plaster behind the coffers, gilding, bronze glazing bars and the glass of the
- * crown band and the rose window. `curveDetail` multiplies the segments of the glazing bars’ curves.
+ * crown band and the rose window. `curveDetail` multiplies the segments of the glazing bars’ curves and of the rose window’s gilding.
  */
 export default class LobbyVaultGeometry {
   readonly bars: BufferGeometry
@@ -323,10 +323,10 @@ export default class LobbyVaultGeometry {
         }
         // Stepped stone archivolts frame the opening on the lunette’s face, between a gilt ring outside and one lining the opening.
         parts.stone.push(ring(rose.radius + 0.33, 0.16, face - 0.04, 36, 0, 0, 8), ring(rose.radius + 0.12, 0.13, face - 0.01, 36, 0, 0, 8))
-        parts.gold.push(ring(rose.radius + 0.49, 0.05, face - 0.01, 36), ring(rose.radius - 0.02, 0.06, face - 0.02, 36))
+        parts.gold.push(ring(rose.radius + 0.49, 0.05, face - 0.01, 36 * curveDetail, 0, 0, 6 * curveDetail), ring(rose.radius - 0.02, 0.06, face - 0.02, 36 * curveDetail, 0, 0, 6 * curveDetail))
         // A gilt hub ring and boss stand proud of the bronze wheel.
-        parts.gold.push(ring(rose.hub, 0.07, middle + 0.08, 24))
-        const boss = new SphereGeometry(0.28, 12, 8)
+        parts.gold.push(ring(rose.hub, 0.07, middle + 0.08, 24 * curveDetail, 0, 0, 6 * curveDetail))
+        const boss = new SphereGeometry(0.28, 12 * curveDetail, 8 * curveDetail)
         parts.gold.push(boss.scale(1, 1, 0.48).translate(0, roseY, middle + 0.08))
         // Bronze spokes from the hub ring to the rim, crossed by a wheel, with a small ring between each pair of spokes at the rim.
         const length = rose.radius - rose.hub
