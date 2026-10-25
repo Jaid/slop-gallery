@@ -34,7 +34,7 @@ export default function Chandelier() {
       <mesh geometry={geometry.pendant} name='chandelier-pendant'><primitive attach='material' object={brass} /></mesh>
       {/* Keep the shared light below the metalwork so the fixture cannot shadow its own source. */}
       <pointLight
-        color='#ffd36c' decay={2} distance={13} intensity={110} position={[0, -0.5, 0]} userData={{
+        color='#ffd36c' decay={1.75} distance={15} intensity={110} position={[0, -0.5, 0]} userData={{
           rooms: seenFrom('sienna'),
           shadow: true,
         }}
