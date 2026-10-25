@@ -1,3 +1,4 @@
+import {cameraPose} from './actions.ts'
 import {useGallery} from './store.ts'
 import {isSunlitRoom} from './sun.ts'
 
@@ -12,8 +13,8 @@ let updated: number | undefined
  */
 export function getSunReach() {
   const now = performance.now()
-  // The first frame, and frames under frozen time, settle at once instead of fading forever.
-  const elapsed = updated === undefined || now === updated ? Infinity : (now - updated) / 1000
+  // The first frame, frames under frozen time and a detached camera, which jumps between rooms instead of walking, as in snaps and camera bookmarks, settle at once instead of fading.
+  const elapsed = updated === undefined || now === updated || cameraPose.focused ? Infinity : (now - updated) / 1000
   updated = now
   const target = isSunlitRoom(useGallery.getState().room) ? 1 : 0
   reach += (target - reach) * Math.min(1, elapsed * fadeRate)
