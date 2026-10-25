@@ -4,7 +4,7 @@ import useDisposable from 'disposable-lifetime/react'
 import {knotExhibition, knotFloatHeight} from 'knot-materials/exhibition.ts'
 import {createKnotGeometry} from 'knot-materials/geometry.ts'
 import ProgressiveKnotMaterials from 'knot-materials/ProgressiveKnotMaterials.ts'
-import {useMemo} from 'react'
+import {useEffect, useMemo} from 'react'
 import useGraphicsMode from 'use-graphics-mode'
 import constructors from 'virtual:knot-exhibition-materials'
 
@@ -28,13 +28,25 @@ export default function KnotExhibition() {
   const isHeavy = useGraphicsMode()
   const rotation = useMemo(() => new KnotRotation, [])
   useBeforePhysicsStep(world => {
+    rotation.advance(world.timestep)
     for (const exhibit of knotExhibition) {
       const body = propObjects.get(`prop-knot-${exhibit.id}`)?.body
       if (body) {
-        rotation.step(body, world.timestep)
+        rotation.step(body)
       }
     }
   })
+  useEffect(() => {
+    globalThis.slopGallery ??= {}
+    const gallery = globalThis.slopGallery
+    const reset = () => rotation.reset()
+    gallery.resetKnotRotation = reset
+    return () => {
+      if (gallery.resetKnotRotation === reset) {
+        delete gallery.resetKnotRotation
+      }
+    }
+  }, [rotation])
   const materials = useDisposable(useMemo(() => new ProgressiveKnotMaterials(renderer, camera, knotExhibition, constructors, isHeavy), [camera, isHeavy, renderer]))
   const {resources} = materials
   return <group name='lobby-knot-exhibition'>

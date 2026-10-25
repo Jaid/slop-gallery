@@ -203,6 +203,8 @@ const frameServer = Bun.serve({
 try {
   const frameUrl = `http://127.0.0.1:${frameServer.port}/`
   await page.evaluate(() => {
+    // Knots turned on the wall clock while the level loaded; every film starts them at the same angle.
+    globalThis.slopGallery!.resetKnotRotation?.()
     globalThis.virtualClock!.start()
     // Fiber measures its first frozen delta from the last wall-clock frame; this aligns it without recording.
     globalThis.virtualClock!.step(0)

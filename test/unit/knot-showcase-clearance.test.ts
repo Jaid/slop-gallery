@@ -61,7 +61,8 @@ test('showcase hull clears its own nameplate through a full revolution at maximu
     const showcase = new KnotRotation
     let maximumContactForce = 0
     for (let frame = 0; frame < knotRotationPeriod * 60; frame++) {
-      showcase.step(knot, 1 / 60)
+      showcase.advance(1 / 60)
+      showcase.step(knot)
       world.step(events)
       events.drainContactForceEvents(event => {
         maximumContactForce = Math.max(maximumContactForce, event.totalForceMagnitude())

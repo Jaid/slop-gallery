@@ -70,6 +70,8 @@ type GalleryDebugApi = Partial<CaptureFrameApi> & {
     position: Vec3
     rotation: Vec3
   }
+  /** Knottingham only: turns every showcased Knot back to the start of its revolution, so films begin at the same angles */
+  resetKnotRotation?: () => void
   snapshot?: () => GalleryDiagnostics
   teleport?: (position: Vec3, rotation: Array<number>) => void
 }

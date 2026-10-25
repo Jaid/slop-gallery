@@ -19,7 +19,8 @@ test('rotates showcased Knots and colliders together without translating them', 
   const rotation = new KnotRotation
   // a quarter turn
   for (let i = 0; i < knotRotationPeriod * 15; i++) {
-    rotation.step(body, 1 / 60)
+    rotation.advance(1 / 60)
+    rotation.step(body)
   }
   world.step()
   expect(rotation.isShowcased(body)).toBe(true)
@@ -33,25 +34,29 @@ test('rotates showcased Knots and colliders together without translating them', 
   })
   const before = body.rotation()
   for (const delta of [0, -1, Infinity, Number.NaN]) {
-    rotation.step(body, delta)
+    rotation.advance(delta)
+    rotation.step(body)
   }
   expect(body.rotation()).toEqual(before)
 })
 test('Rapier force release is one-way and never resumes showcase rotation', () => {
   const rotation = new KnotRotation
   const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed())
-  rotation.step(body, 1)
+  rotation.advance(1)
+  rotation.step(body)
   expect(rotation.isShowcased(body)).toBe(true)
   expect(rotation.release(body)).toBe(true)
   expect(rotation.isShowcased(body)).toBe(false)
   expect(body.isDynamic()).toBe(true)
   expect(rotation.release(body)).toBe(false)
   const releasedRotation = body.rotation()
-  rotation.step(body, 10)
+  rotation.advance(10)
+  rotation.step(body)
   expect(body.rotation()).toEqual(releasedRotation)
   // Grabbing temporarily fixes a released Knot; this must not put it back into showcase mode.
   body.setBodyType(RAPIER.RigidBodyType.Fixed, true)
-  rotation.step(body, 10)
+  rotation.advance(10)
+  rotation.step(body)
   expect(body.rotation()).toEqual(releasedRotation)
   expect(rotation.isShowcased(body)).toBe(false)
 })
@@ -69,22 +74,42 @@ test('showcase state blocks grabbing until the Knot has been physically released
   carried.cancel()
   expect(body.isDynamic()).toBe(true)
 })
-test('rotation is timestep independent and leaves ordinary dynamic bodies alone', () => {
+test('Knots that appear late turn in sync with the shared clock, which resets to the start', () => {
   const rotation = new KnotRotation
-  const a = world.createRigidBody(RAPIER.RigidBodyDesc.fixed())
-  const b = world.createRigidBody(RAPIER.RigidBodyDesc.fixed())
-  rotation.step(a, 10)
-  for (let i = 0; i < 1200; i++) {
-    rotation.step(b, 1 / 120)
+  const early = world.createRigidBody(RAPIER.RigidBodyDesc.fixed())
+  const late = world.createRigidBody(RAPIER.RigidBodyDesc.fixed())
+  for (let i = 0; i < 600; i++) {
+    rotation.advance(1 / 60)
+    rotation.step(early)
   }
-  expect(a.rotation().y).toBeCloseTo(b.rotation().y, 5)
+  for (let i = 0; i < 1200; i++) {
+    rotation.advance(1 / 120)
+    rotation.step(early)
+    rotation.step(late)
+  }
+  expect(late.rotation().y).toBeCloseTo(early.rotation().y, 5)
+  expect(late.rotation().w).toBeCloseTo(early.rotation().w, 5)
+  rotation.reset()
+  rotation.step(early)
+  expect(early.rotation().y).toBeCloseTo(0, 5)
+  expect(early.rotation().w).toBeCloseTo(1, 5)
+  // a full revolution brings a Knot back to where it started
+  for (let i = 0; i < knotRotationPeriod * 60; i++) {
+    rotation.advance(1 / 60)
+  }
+  rotation.step(early)
+  expect(Math.abs(early.rotation().w)).toBeCloseTo(1, 5)
+})
+test('leaves ordinary dynamic bodies alone', () => {
+  const rotation = new KnotRotation
   const dynamic = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setAngvel({
     x: 1,
     y: 2,
     z: 3,
   }))
   const before = dynamic.rotation()
-  rotation.step(dynamic, 10)
+  rotation.advance(10)
+  rotation.step(dynamic)
   expect(dynamic.rotation()).toEqual(before)
   expect(dynamic.angvel()).toEqual({
     x: 1,
