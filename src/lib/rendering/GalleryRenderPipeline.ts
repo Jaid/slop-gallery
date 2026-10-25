@@ -15,7 +15,7 @@ import {ssr} from 'three/addons/tsl/display/SSRNode.js'
 import {sss} from 'three/addons/tsl/display/SSSNode.js'
 import {traa} from 'three/addons/tsl/display/TRAANode.js'
 import {convertToTexture, diffuseColor, float, int, interleavedGradientNoise, length, luminance, max, metalness, min, mrt, normalView, output, pass, renderOutput, roughness, rtt, screenCoordinate, screenUV, smoothstep, uniform, uv, vec2, vec3, vec4, velocity} from 'three/tsl'
-import {BlendMode, DirectionalLight, HalfFloatType, MRTNode, NoBlending, Node, NormalBlending, PerspectiveCamera, RenderPipeline} from 'three/webgpu'
+import {BlendMode, DirectionalLight, HalfFloatType, MRTNode, NoBlending, Node, NormalBlending, PerspectiveCamera, RenderPipeline, Vector2} from 'three/webgpu'
 
 import {floorReflectionStrength, renderFloorReflection} from '../materials/FloorMaterial.ts'
 import ConditionalTexture from './ConditionalTexture.ts'
@@ -23,6 +23,11 @@ import {GalleryRenderer} from './GalleryRenderer.ts'
 import KnotBokeh from './KnotBokeh.ts'
 import tiltShift from './tiltShift.ts'
 import ZoomBlur from './ZoomBlur.ts'
+
+/** the most rows ambient occlusion and the floor reflection render at; at Cinematic’s 2× a 4320p snap would need 8640 rows of each and runs a 16 GB GPU out of memory, while 4320p at 1× already supersamples a 2160p image */
+const maxEffectRows = 4320
+const drawingBufferSize = new Vector2
+const capResolutionScale = (renderer: Renderer, scale: number) => Math.min(scale, maxEffectRows / renderer.getDrawingBufferSize(drawingBufferSize).height)
 
 export type GalleryRenderPipelineOptions = {
   focus?: {
@@ -106,7 +111,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
           camera,
           mrt: scenePass.getMRT(),
           renderer,
-          resolutionScale: settings.reflectionResolutionScale,
+          resolutionScale: capResolutionScale(renderer, settings.reflectionResolutionScale),
           scene: scene as Scene,
           target: scenePass.renderTarget,
         })
@@ -143,7 +148,12 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       const smooth = (input: Node<'vec4'>) => own(denoise(input, depth, normal, camera)) as unknown as Node<'vec4'>
       if (settings.ambientOcclusion) {
         const ambientOcclusion = own(ao(depth, normal, camera))
-        ambientOcclusion.resolutionScale = settings.ambientOcclusionResolutionScale
+        // It sizes its targets each frame from the drawing buffer, so the cap follows resizes.
+        const updateAmbientOcclusion = ambientOcclusion.updateBefore.bind(ambientOcclusion)
+        ambientOcclusion.updateBefore = frame => {
+          ambientOcclusion.resolutionScale = capResolutionScale(renderer, settings.ambientOcclusionResolutionScale)
+          return updateAmbientOcclusion(frame)
+        }
         ambientOcclusion.useTemporalFiltering = settings.ambientOcclusionTemporalFiltering
         set(ambientOcclusion.radius, 'ambientOcclusionRadius')
         set(ambientOcclusion.thickness, 'ambientOcclusionThickness')
