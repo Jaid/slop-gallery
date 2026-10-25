@@ -173,6 +173,15 @@ export default class GalleryRenderPipeline extends RenderPipeline {
         if (settings.voxelIndirectLight) {
           // Voxel cone tracing adds the bounces from what is off screen or hidden, which the screen-space pass cannot see. Faint, since it brightens far more than SSGI.
           const voxel = own(vxgi(depth, normal, scene as Scene, camera, settings.voxelIndirectLightResolution))
+          // Its volume recomposes every matrix of the scene each frame before collecting the lights. Within the frame’s prepass it uses the matrices the scene pass already brought up to date.
+          if (renderer instanceof GalleryRenderer) {
+            const updateVoxels = voxel.updateBefore.bind(voxel)
+            voxel.updateBefore = frame => {
+              renderer.prepass(scene, camera, () => {
+                updateVoxels(frame)
+              })
+            }
+          }
           set({
             set value(count: number) {
               voxel.bounces = count
