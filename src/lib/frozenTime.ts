@@ -83,7 +83,7 @@ const freezeTime = (seconds: number) => {
   }
   const isLoaded = () => {
     const snapshot = globalThis.slopGallery?.snapshot?.()
-    return Boolean(snapshot?.ready && snapshot.pendingImages === 0 && snapshot.pendingPipelines === 0)
+    return Boolean(snapshot?.ready && snapshot.pendingImages === 0 && snapshot.pendingLoads === 0 && snapshot.pendingPipelines === 0)
   }
   const advance = async () => {
     while (!isLoaded()) {

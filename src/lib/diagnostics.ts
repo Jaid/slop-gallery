@@ -21,6 +21,8 @@ export type GalleryDiagnostics = {
   menuStage: PauseMenuStage
   /** artwork images still decoding; a fresh pose can request more */
   pendingImages: number
+  /** other background work still loading, like knot materials and billboards */
+  pendingLoads: number
   /** render pipelines still compiling in the background; objects that need them are not drawn yet */
   pendingPipelines: number
   placement: Placement | null

@@ -158,8 +158,8 @@ const first = toPose(sampleRecipe(recipe, frameSeconds(0), fallback))
 await page.evaluate((pose: Partial<CameraPose>) => globalThis.slopGallery!.pose!(pose), first)
 await waitForFrames(page, settle)
 await page.waitForFunction(() => {
-  const {pendingImages, pendingPipelines} = globalThis.slopGallery!.snapshot!()
-  return pendingImages === 0 && pendingPipelines === 0
+  const {pendingImages, pendingLoads, pendingPipelines} = globalThis.slopGallery!.snapshot!()
+  return pendingImages === 0 && pendingLoads === 0 && pendingPipelines === 0
 }, {timeout: 120_000})
 await waitForFrames(page, settle)
 // With --scale the canvas renders more pixels than the film has; the sink downsamples them.
@@ -237,7 +237,7 @@ try {
       globalThis.virtualClock!.step(frame.delta)
       // The clock stands still while artworks that just came into view decode and pipelines compile in the background.
       const deadline = Date.now() + 120_000
-      while (api.snapshot!().pendingImages > 0 || api.snapshot!().pendingPipelines > 0) {
+      while (api.snapshot!().pendingImages > 0 || api.snapshot!().pendingLoads > 0 || api.snapshot!().pendingPipelines > 0) {
         if (Date.now() > deadline) {
           throw new Error('Artworks and pipelines did not finish loading within 2 minutes.')
         }

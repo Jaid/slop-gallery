@@ -102,6 +102,11 @@ export default class ProgressiveKnotMaterials {
     this.observers = bindings.map(binding => binding.onBeforeRender)
   }
 
+  /** full materials of rendered knots that still warm up and show their placeholder */
+  get pendingMaterials() {
+    return this.queue.pendingCount
+  }
+
   dispose() {
     if (!this.disposal) {
       this.disposal = this.release()

@@ -15,6 +15,7 @@ import constructors from 'virtual:knot-exhibition-materials'
 import InteractiveObject from '#component/InteractiveObject'
 import Stand, {Sign} from '#component/levels/knottingham/KnotBillboardSupport'
 import {narrate} from '#src/lib/gallery/actions.ts'
+import {trackPendingPromise} from '#src/lib/pendingLoads.ts'
 import {fitCanvasTextureResolution, getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
 import drawPreview, {knotPreviewBackground, knotPreviewCaptionFontFamily, knotPreviewCaptionFontSize, knotPreviewCaptionFontWeight} from './drawPreview.ts'
@@ -46,7 +47,7 @@ export default function KnotPreviewSign({bay, renderer, x}: {
     name: `Knot preview: ${bay.candidate.title}`,
     mipmaps,
     prepare: async (signal: AbortSignal) => {
-      const [images] = await Promise.all([
+      const [images] = await trackPendingPromise(Promise.all([
         renderer.render(bay.finishes, signal),
         loadCanvasFonts([
           {
@@ -54,7 +55,7 @@ export default function KnotPreviewSign({bay, renderer, x}: {
             text: bay.finishes.map(finish => `${knotNumberLabel(finish.number)} · ${finish.title}`).join(' '),
           },
         ]),
-      ])
+      ]))
       return images
     },
     disposeInputs: releaseCanvases,

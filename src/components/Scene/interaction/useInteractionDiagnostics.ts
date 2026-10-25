@@ -9,6 +9,7 @@ import {effectiveSeed} from '#src/lib/environmentSeed.ts'
 import {galleryEvents, setCameraFocused, useGallery} from '#src/lib/gallery.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
 import pauseMenu from '#src/lib/pauseMenu.ts'
+import {pendingLoads} from '#src/lib/pendingLoads.ts'
 import {GalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
 import {pendingImages} from '#src/lib/useArtworkTexture.ts'
 
@@ -24,6 +25,7 @@ export default function useInteractionDiagnostics(camera: RootState['camera'], r
       rotation: camera.rotation.toArray(),
       ready: useGallery.getState().ready,
       pendingImages: pendingImages(),
+      pendingLoads: pendingLoads(),
       pendingPipelines: renderer instanceof GalleryRenderer ? renderer.pendingPipelines : 0,
       registered: portraitObjects.size,
       room: useGallery.getState().room,

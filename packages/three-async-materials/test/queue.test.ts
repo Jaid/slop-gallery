@@ -134,6 +134,21 @@ async function flush() {
     await Promise.resolve()
   }
 }
+test('counts only rendered materials that are still warming up as pending', async () => {
+  const f = fixture()
+  try {
+    expect(f.queue.pendingCount).toBe(0)
+    f.observe(1)
+    expect(f.queue.pendingCount).toBe(1)
+    await flush()
+    f.calls[0].gate.resolve()
+    await flush()
+    expect(f.meshes[1].material).toBe(f.full[1])
+    expect(f.queue.pendingCount).toBe(0)
+  } finally {
+    await f.dispose()
+  }
+})
 test('warms nearest first, restores render state synchronously and activates only after every observed context', async () => {
   const f = fixture()
   try {

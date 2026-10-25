@@ -49,6 +49,11 @@ export default class AsyncMaterials {
 
   constructor(private readonly renderer: WebGPURenderer, private readonly options: AsyncMaterialsOptions = {}) {}
 
+  /** materials whose mesh has been rendered but that are neither active nor failed yet; materials of meshes never rendered do not count */
+  get pendingCount() {
+    return this.pending.filter(item => item.attached && item.contexts.length > 0 && !item.ready && !item.failed).length
+  }
+
   add(material: Material): MaterialBinding {
     if (this.disposed) {
       throw new Error('Cannot add materials to a disposed queue.')
