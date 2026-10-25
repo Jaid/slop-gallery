@@ -1,16 +1,15 @@
-import type {GalleryLightingPreset, LightingPreset} from '#src/lib/gallery/lighting.ts'
+import type {GalleryLightingPreset} from '#src/lib/gallery/lighting.ts'
 import type {RoomId} from '#src/lib/gallery/types.ts'
 import type {CanvasTexture, DirectionalLight, Light, Renderer, Scene} from 'three/webgpu'
 
 import {useThree} from '@react-three/fiber'
-import renderCanvasTexture from 'canvas-textures/three'
 import {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react'
-import {EquirectangularReflectionMapping, SRGBColorSpace} from 'three/webgpu'
 import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 import {useShallow} from 'zustand/react/shallow'
 
 import {isDevelopmentMode} from '#src/lib/developmentMode.ts'
 import {isTextInput, notify, rooms, useGallery} from '#src/lib/gallery.ts'
+import {createEnvironment, drawEnvironment} from '#src/lib/gallery/environment.ts'
 import {cycleLighting, lightingPresets, pickLightingTuning, tuneLighting, useLighting} from '#src/lib/gallery/lighting.ts'
 import lobbyVault from '#src/lib/gallery/lobbyVault.ts'
 import proceduralSky, {SkyLook} from '#src/lib/materials/ProceduralSky.ts'
@@ -68,13 +67,7 @@ export default function GalleryLighting() {
   }, [scene, look])
   // The environment is part of every lit material’s cache key. Set after the first frame, it would build all of them a second time; a preset only redraws its pixels.
   useLayoutEffect(() => {
-    const texture = renderCanvasTexture({
-      width: 1024,
-      height: 512,
-      draw: () => {},
-    }) as CanvasTexture
-    texture.mapping = EquirectangularReflectionMapping
-    texture.colorSpace = SRGBColorSpace
+    const texture = createEnvironment()
     environment.current = texture
     const restore = setEnvironment(scene, texture)
     return () => {
@@ -195,23 +188,6 @@ function useSunShadow(mapSize: number) {
     ...getShadowProps(sunShadow),
     samples: sunShadow.samples,
   }
-}
-/** Paints the reflection environment: a vertical gradient with four bright light boxes in its upper band. */
-function drawEnvironment(texture: CanvasTexture, stops: LightingPreset['environment']['gradient'], lightBoxes: string) {
-  const canvas = texture.image as HTMLCanvasElement | OffscreenCanvas
-  const context = canvas.getContext('2d') as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
-  const gradient = context.createLinearGradient(0, 0, 0, 512)
-  for (const [index, offset] of [0, 0.4, 0.55, 1].entries()) {
-    gradient.addColorStop(offset, stops[index])
-  }
-  context.fillStyle = gradient
-  context.fillRect(0, 0, 1024, 512)
-  context.fillStyle = lightBoxes
-  for (let i = 0; i < 4; i++) {
-    context.fillRect(i * 256 + 35, 50, 90, 100)
-  }
-  texture.needsUpdate = true
-  texture.needsPMREMUpdate = true
 }
 /** Sets the scene’s environment, returning how to restore the previous one. R3F expects it to be set from an effect. */
 function setEnvironment(scene: Scene, texture: CanvasTexture) {

@@ -12,6 +12,7 @@ import {readAntiAliasing} from './rendering/antiAliasing.ts'
 import {readGraphicsModeName} from './rendering/graphicsMode.ts'
 import {readEditLights, readShowLights} from './rendering/lightLevels.ts'
 import {readNear} from './rendering/near.ts'
+import {readPmrem} from './rendering/pmrem.ts'
 import {readScale} from './rendering/scale.ts'
 import {readVisionMode} from './rendering/visionMode.ts'
 import {readWireframeHighlight} from './rendering/wireframeHighlight.ts'
@@ -38,6 +39,7 @@ const readers: Record<string, Reader> = {
   intro_narration: readIntroNarration,
   lighting: readLighting,
   near: readNear,
+  pmrem: readPmrem,
   portraits: readDefaultPortraitsEnabled,
   scale: readScale,
   seed: readSeedOverride,

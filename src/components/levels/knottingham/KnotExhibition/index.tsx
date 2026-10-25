@@ -13,6 +13,7 @@ import KnotLabels from '#component/levels/knottingham/KnotLabels'
 import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
 import {narrateModel} from '#src/lib/gallery/actions.ts'
 import KnotRotation from '#src/lib/physics/KnotRotation.ts'
+import {getPmremEnvironment} from '#src/lib/rendering/pmrem.ts'
 
 const baseRadius = (() => {
   const geometry = createKnotGeometry()
@@ -47,7 +48,7 @@ export default function KnotExhibition() {
       }
     }
   }, [rotation])
-  const materials = useDisposable(useMemo(() => new ProgressiveKnotMaterials(renderer, camera, knotExhibition, constructors, isHeavy), [camera, isHeavy, renderer]))
+  const materials = useDisposable(useMemo(() => new ProgressiveKnotMaterials(renderer, camera, knotExhibition, constructors, isHeavy, getPmremEnvironment()), [camera, isHeavy, renderer]))
   const {resources} = materials
   return <group name='lobby-knot-exhibition'>
     <KnotLabels />

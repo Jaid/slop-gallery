@@ -1,6 +1,6 @@
 import type {KnotResourceEntry} from './KnotResources.ts'
 import type {KnotEntry, KnotMaterialConstructor} from './types.ts'
-import type {Camera, Mesh, MeshPhysicalNodeMaterial, MeshStandardNodeMaterial, WebGPURenderer} from 'three/webgpu'
+import type {Camera, Mesh, MeshPhysicalNodeMaterial, MeshStandardNodeMaterial, Texture, WebGPURenderer} from 'three/webgpu'
 
 import AsyncMaterials from 'three-async-materials'
 import {Vector3} from 'three/webgpu'
@@ -21,14 +21,17 @@ export default class ProgressiveKnotMaterials {
   readonly refs: Array<(mesh: Mesh | null) => void>
   readonly resources: KnotResources
   private disposal?: Promise<void>
-  private readonly environment: StudioEnvironment
   private readonly layered = new Map<MeshPhysicalNodeMaterial, LayeredKnotBinding>
+  /** the studio this instance made and disposes, absent when the caller passed an environment of its own */
+  private readonly ownEnvironment?: StudioEnvironment
   private readonly queue: AsyncMaterials
 
-  constructor(renderer: WebGPURenderer, camera: Camera, entries: ReadonlyArray<KnotMaterialEntry>, constructors: ReadonlyMap<string, KnotMaterialConstructor>, heavy: boolean) {
+  /** `environment` replaces the knots’ own studio; the caller keeps owning it. */
+  constructor(renderer: WebGPURenderer, camera: Camera, entries: ReadonlyArray<KnotMaterialEntry>, constructors: ReadonlyMap<string, KnotMaterialConstructor>, heavy: boolean, environment?: Texture) {
     this.resources = new KnotResources(entries)
     // Knottingham exists to review entry shaders, so fast graphics only keeps its placeholders cheap.
-    const environment = new StudioEnvironment
+    const ownEnvironment = environment ? undefined : new StudioEnvironment
+    environment ??= ownEnvironment!
     this.placeholderMaterials = entries.map(entry => {
       const material = createPlaceholderMaterial(entry.placeholder, heavy, heavy ? environment : undefined)
       material.name = `${entry.id} ${entry.placeholder.shading} placeholder`
@@ -49,14 +52,14 @@ export default class ProgressiveKnotMaterials {
       for (const material of fullMaterials) {
         material.dispose()
       }
-      environment.dispose()
+      ownEnvironment?.dispose()
       for (const material of this.placeholderMaterials) {
         material.dispose()
       }
       this.resources.dispose()
       throw error
     }
-    this.environment = environment
+    this.ownEnvironment = ownEnvironment
     this.fullMaterials = fullMaterials
     const eye = new Vector3
     const position = new Vector3
@@ -122,7 +125,7 @@ export default class ProgressiveKnotMaterials {
     for (const material of this.fullMaterials) {
       material.dispose()
     }
-    this.environment.dispose()
+    this.ownEnvironment?.dispose()
     for (const material of this.placeholderMaterials) {
       material.dispose()
     }
