@@ -68,7 +68,7 @@ export const cameraBookmarks: Array<CameraBookmark> = [
       yaw: Math.PI / 2,
       pitch: -0.35,
     },
-    fov: 55,
+    fov: 60,
     ratio: 16 / 9,
   },
   {
