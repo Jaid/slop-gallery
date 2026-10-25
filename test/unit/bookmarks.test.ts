@@ -1,15 +1,14 @@
-import type {LocationBookmark} from '../../src/lib/gallery/types.ts'
+import type {SpawnBookmark} from '../../src/lib/gallery/types.ts'
 
 import {expect, test} from 'bun:test'
 
 import {findSpawnBookmark, nextBookmark} from '../../src/lib/gallery/bookmarks.ts'
 
-const bookmark = (id: string, x: number, z: number): LocationBookmark => ({
+const bookmark = (id: string, x: number, z: number): SpawnBookmark => ({
   id,
   position: [x, 0, z],
   yaw: 0,
   pitch: 0,
-  teleport: true,
 })
 const list = [bookmark('first', 0, 0), bookmark('second', 3, 0), bookmark('third', 20, 0)]
 test('away from every bookmark, T picks the closest one', () => {

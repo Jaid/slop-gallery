@@ -82,11 +82,14 @@ export type PlayerPose = {
   yaw: number
 }
 
-export type LocationBookmark = PlayerPose & {
-  /** camera height above `position` in meters; with it, `?spawn` holds the camera there, detached from the player until the next teleport, for views from mid-jump or lower than standing */
-  eyeHeight?: number
+/** named player pose that `?spawn` starts at and T cycles through in `?development` */
+export type SpawnBookmark = PlayerPose & {
   /** snake_case name that `?spawn` refers to */
   id: string
-  /** whether T cycles through it in `?development`; bookmarks without it only serve `?spawn`, e.g. for deterministic camera snapshots */
-  teleport?: boolean
+}
+
+/** named camera view that only `?spawn` reaches, e.g. for deterministic camera snapshots */
+export type CameraBookmark = SpawnBookmark & {
+  /** camera height above `position` in meters; with it, `?spawn` holds the camera there, detached from the player until the next teleport, for views from mid-jump or lower than standing */
+  eyeHeight?: number
 }

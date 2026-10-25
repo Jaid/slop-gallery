@@ -1,10 +1,10 @@
-import type {LocationBookmark, Vec3} from './types.ts'
+import type {CameraBookmark, SpawnBookmark, Vec3} from './types.ts'
 
 import optis from 'optis'
 import readPermalink from 'read-permalink'
 import {Euler, Quaternion} from 'three/webgpu'
 
-import {locationBookmarks} from '#level/locationBookmarks.ts'
+import {cameraBookmarks, spawnBookmarks} from '#level/bookmarks.ts'
 
 import {galleryEvents, notify} from './actions.ts'
 import {playerSession} from './PlayerSession.ts'
@@ -31,8 +31,8 @@ export function readSpawn(input: URL | string = typeof location === 'undefined' 
   return readPermalink(input, {schema: spawnSchema}).spawn
 }
 
-/** The bookmark `?spawn` names, `null` without `?spawn` and `undefined` when this level has no bookmark with that ID. */
-export function findSpawnBookmark(input?: URL | string, list: ReadonlyArray<LocationBookmark> = locationBookmarks): LocationBookmark | null | undefined {
+/** The spawn or camera bookmark `?spawn` names, `null` without `?spawn` and `undefined` when this level has no bookmark with that ID. */
+export function findSpawnBookmark(input?: URL | string, list: ReadonlyArray<CameraBookmark> = [...spawnBookmarks, ...cameraBookmarks]): CameraBookmark | null | undefined {
   const id = readSpawn(input)
   return id ? list.find(bookmark => bookmark.id === id) : null
 }
@@ -48,7 +48,7 @@ export function applySpawnBookmark() {
 }
 
 /** Pick the bookmark to teleport to from feet position `position`: the one after (or with `backward`, before) the bookmark the player stands in, or else the closest one. */
-export function nextBookmark(position: Vec3, list: ReadonlyArray<LocationBookmark>, backward = false): number | null {
+export function nextBookmark(position: Vec3, list: ReadonlyArray<SpawnBookmark>, backward = false): number | null {
   if (!list.length) {
     return null
   }
@@ -58,15 +58,14 @@ export function nextBookmark(position: Vec3, list: ReadonlyArray<LocationBookmar
   return distances[closest] <= bookmarkRadius ? (closest + (backward ? list.length - 1 : 1)) % list.length : closest
 }
 
-/** Teleport the player to the next (or with `backward`, previous) of the current level’s `teleport` bookmarks, see `nextBookmark`. */
+/** Teleport the player to the next (or with `backward`, previous) of the current level’s spawn bookmarks, see `nextBookmark`. */
 export function teleportToNextBookmark(backward = false) {
-  const targets = locationBookmarks.filter(bookmark => bookmark.teleport)
-  const index = nextBookmark(playerSession.snapshot().position, targets, backward)
+  const index = nextBookmark(playerSession.snapshot().position, spawnBookmarks, backward)
   if (index === null) {
-    notify('This level has no teleport bookmarks.')
+    notify('This level has no spawn bookmarks.')
     return
   }
-  const {id, position, yaw, pitch} = targets[index]
+  const {id, position, yaw, pitch} = spawnBookmarks[index]
   const rotation = new Quaternion
   galleryEvents.dispatchEvent(new CustomEvent('teleport', {
     detail: {
@@ -75,5 +74,5 @@ export function teleportToNextBookmark(backward = false) {
       rotation: rotation.setFromEuler(new Euler(pitch, yaw, 0, 'YXZ')).toArray(),
     },
   }))
-  notify(`Bookmark ${index + 1} of ${targets.length}: ${id}`)
+  notify(`Bookmark ${index + 1} of ${spawnBookmarks.length}: ${id}`)
 }
