@@ -23,8 +23,6 @@ export type LightingPreset = {
   /** multiplies every point and spot light, the rooms’ own lamps */
   lamps: number
   sky: SkyPalette
-  /** the sky’s light falling through skylights */
-  skylight: Light
   /** the directional light: the sun, or the moon at night */
   sun: Light & {direction: Vec3}
   /** shown when switching to it */
@@ -60,10 +58,6 @@ const presets = {
       lightBoxes: '#fff9e6',
     },
     sky: daytimeSky,
-    skylight: {
-      color: '#dfe9f5',
-      intensity: 1.6,
-    },
     exposure: 1,
     lamps: 1,
   },
@@ -100,10 +94,6 @@ const presets = {
       sun: '#ffd08a',
       sunRadiance: 30,
       zenith: '#4a6fa8',
-    },
-    skylight: {
-      color: '#ffc890',
-      intensity: 1,
     },
     exposure: 1,
     lamps: 1.4,
@@ -142,10 +132,6 @@ const presets = {
       sunRadiance: 12,
       zenith: '#1d2a5c',
     },
-    skylight: {
-      color: '#8a90c8',
-      intensity: 0.35,
-    },
     exposure: 1.1,
     lamps: 1.3,
   },
@@ -182,10 +168,6 @@ const presets = {
       sun: '#dfe8ff',
       sunRadiance: 6,
       zenith: '#050a1a',
-    },
-    skylight: {
-      color: '#6f86c0',
-      intensity: 0.12,
     },
     exposure: 1.15,
     lamps: 1.5,

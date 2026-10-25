@@ -3,8 +3,8 @@ import type {Material, Texture} from 'three/webgpu'
 
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
-import {useMemo, useState} from 'react'
-import {MeshPhysicalNodeMaterial, MeshStandardNodeMaterial, Object3D, PlaneGeometry} from 'three/webgpu'
+import {useMemo} from 'react'
+import {MeshPhysicalNodeMaterial, MeshStandardNodeMaterial, PlaneGeometry} from 'three/webgpu'
 import useGraphicsMode from 'use-graphics-mode'
 
 import BenchSeat from '#component/levels/gallery/BenchSeat'
@@ -13,9 +13,7 @@ import Box from '#src/components/Scene/primitives.tsx'
 import StaticBatch from '#src/components/Scene/StaticBatch.tsx'
 import {rooms, walls} from '#src/lib/gallery.ts'
 import {wallFace, wallOpeningTrim} from '#src/lib/gallery/architecture.ts'
-import {lightingPresets, useLighting} from '#src/lib/gallery/lighting.ts'
-import {seenFrom} from '#src/lib/gallery/roomVisibility.ts'
-import {salonBench, salonBenchLegs, salonCeiling, salonSkyLight, salonSkylight, salonWainscot, wainscotFields, wallDressingSpans} from '#src/lib/gallery/salon.ts'
+import {salonBench, salonBenchLegs, salonCeiling, salonSkylight, salonWainscot, wainscotFields, wallDressingSpans} from '#src/lib/gallery/salon.ts'
 import gold from '#src/lib/materials/gold.ts'
 import VaultGlassMaterial from '#src/lib/materials/VaultGlassMaterial.ts'
 
@@ -61,28 +59,12 @@ export default function SalonRoom({glass, stone, wood}: {
         <Box material={plaster} position={[side * (room.size[0] + openingX) / 4, salonCeiling.y, 0]} size={[(room.size[0] - openingX) / 2, salonCeiling.thickness, openingZ]} />
       </group>)}
       <Skylight gilt={gold} glass={skylight} ironwork={ironwork} plaster={plaster} />
-      <SkyLight />
     </group>
     {salonWalls.map(wall => <WallDressing key={wall.id} dado={dado} gilt={gold} wall={wall} />)}
     <Ottoman />
   </group>
 }
 
-/** The sky’s light through the skylight, following the current lighting preset. */
-function SkyLight() {
-  const {color, intensity} = lightingPresets[useLighting(s => s.preset)].skylight
-  // The target stays on the floor right below the light, so the cone points straight down.
-  const [target] = useState(() => new Object3D)
-  return <>
-    <primitive object={target} />
-    <spotLight
-      angle={salonSkyLight.angle} color={color} decay={0} intensity={intensity} penumbra={salonSkyLight.penumbra} position={[0, salonSkyLight.y, 0]} target={target} userData={{
-        daylight: true,
-        rooms: seenFrom('salon'),
-      }}
-    />
-  </>
-}
 function Skylight({gilt, glass, ironwork, plaster}: {
   gilt: Material
   glass: Material
