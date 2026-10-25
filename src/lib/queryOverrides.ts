@@ -6,6 +6,7 @@ import {readSeedOverride} from './environmentSeed.ts'
 import {readFrozenTime} from './frozenTime.ts'
 import {readSpawn} from './gallery/bookmarks.ts'
 import {readDefaultPortraitsEnabled} from './gallery/defaultPortraits.ts'
+import {readFlying} from './gallery/flyMode.ts'
 import {readLighting} from './gallery/lighting.ts'
 import {readPortraitSlotEditing} from './gallery/portraitSlotStore.ts'
 import {readKnotRotation} from './physics/rotatingKnots.ts'
@@ -35,6 +36,7 @@ const readers: Record<string, Reader> = {
   development: readDevelopmentMode,
   edit_lights: readEditLights,
   edit_portrait_slots: readPortraitSlotEditing,
+  flying: readFlying,
   frozen_time: readFrozenTime,
   graphics: readGraphicsModeName,
   intro_narration: readIntroNarration,

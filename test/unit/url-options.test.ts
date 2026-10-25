@@ -2,6 +2,7 @@ import {describe, expect, test} from 'bun:test'
 
 import {readIntroNarration} from '../../src/lib/audio/intro.ts'
 import {readDevelopmentMode} from '../../src/lib/developmentMode.ts'
+import {readFlying} from '../../src/lib/gallery/flyMode.ts'
 import {getAntiAliasing, readAntiAliasing} from '../../src/lib/rendering/antiAliasing.ts'
 import {readNear} from '../../src/lib/rendering/near.ts'
 import {readScale} from '../../src/lib/rendering/scale.ts'
@@ -14,6 +15,14 @@ describe('URL options', () => {
     expect(readDevelopmentMode('?development=true')).toBe(true)
     for (const search of ['', '?development=false', '?development=1', '?development=TRUE', '?dev=true']) {
       expect(readDevelopmentMode(search)).toBe(false)
+    }
+  })
+  test('?flying only takes effect with ?development', () => {
+    for (const search of ['?development&flying', '?development=true&flying=true', '?flying&development']) {
+      expect(readFlying(search)).toBe(true)
+    }
+    for (const search of ['', '?flying', '?flying=true', '?development', '?development&flying=false', '?development=false&flying']) {
+      expect(readFlying(search)).toBe(false)
     }
   })
   test('?near and ?scale accept finite positive numbers', () => {
