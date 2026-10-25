@@ -12,6 +12,8 @@ export type PendantLight = {
   decay?: number
   distance: number
   intensity: number
+  /** whether the light asks the shadow pool for a shadow */
+  shadow?: boolean
   /** height of the light relative to the fixture’s hanging point, 0 by default */
   y?: number
 }
@@ -40,7 +42,7 @@ export default function PendantLamps({body, glow, light, lights, mounts, name, o
     {set.items.map(({mount, geometry, light: own}, i) => <group key={i} position={mount.light}>
       <mesh geometry={geometry.frame} material={set.frameMaterial} name={`${name}-${body.id}-frame`} />
       <mesh geometry={geometry.glow} material={set.glowMaterial} name={`${name}-${body.id}-glow`} />
-      <pointLight color={own.color} decay={own.decay ?? 2} distance={own.distance} intensity={own.intensity} position={[0, own.y ?? 0, 0]} userData-optional={optional} userData-rooms={rooms} />
+      <pointLight color={own.color} decay={own.decay ?? 2} distance={own.distance} intensity={own.intensity} position={[0, own.y ?? 0, 0]} userData-optional={optional} userData-rooms={rooms} userData-shadow={own.shadow} />
     </group>)}
   </group>
 }

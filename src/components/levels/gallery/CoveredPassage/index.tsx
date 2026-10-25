@@ -39,7 +39,7 @@ const soleLanternLight = {
 }
 /**
  * Which of a passage’s evenly spaced lanterns, in mount order from the passage’s start, are left out (`null`) or light differently
- * from the rest. The corridor keeps three, at both ends and in the middle; the middle one reaches farthest. The lodge tunnel keeps only its first.
+ * from the rest. The corridor keeps three, at both ends and in the middle; the middle one reaches farthest. The lodge tunnel keeps only its first, stronger and fading more gently, hung lower and casting a shadow.
  */
 const passageLanterns: Partial<Record<string, ReadonlyArray<Partial<PendantLight> | null | undefined>>> = {
   corridor: [
@@ -66,7 +66,18 @@ const passageLanterns: Partial<Record<string, ReadonlyArray<Partial<PendantLight
       y: -0.4,
     },
   ],
-  'lodge-tunnel': [{y: -0.1}, null, null, null, null],
+  'lodge-tunnel': [
+    {
+      decay: 1.75,
+      intensity: lanternLight.intensity * 2.5,
+      shadow: true,
+      y: -0.3,
+    },
+    null,
+    null,
+    null,
+    null,
+  ],
 }
 
 export default function CoveredPassage({passage, sole = false, material, paving: pavingOverride, timber, ribCutouts, transition}: {
