@@ -14,7 +14,7 @@ import SoundEngine from '../../src/lib/audio/SoundEngine.ts'
 import {galleryEvents, resetGallery, startNewGame} from '../../src/lib/gallery/actions.ts'
 import defaultPortraits from '../../src/lib/gallery/defaultPortraits.ts'
 import {playerSession, playerSpawn} from '../../src/lib/gallery/PlayerSession.ts'
-import {createDocument, markControlled, readControlled, undo, useGallery} from '../../src/lib/gallery/store.ts'
+import {createDocument, markControlled, readControlled, useGallery} from '../../src/lib/gallery/store.ts'
 import pauseMenu from '../../src/lib/pauseMenu.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
@@ -134,8 +134,6 @@ describe('minimal menu', () => {
       expect(after.hasControlled).toBe(true)
       expect(homes).toBe(1)
       expect(stops).toBe(1)
-      expect(undo()).toBe(true)
-      expect(useGallery.getState().portraits.map(p => p.id)).toEqual(samplePortraits.map(p => p.id).filter(id => id !== 'goose'))
     } finally {
       galleryEvents.removeEventListener('home', home)
       galleryEvents.removeEventListener('stop-narration', stop)

@@ -4,7 +4,7 @@ import {dropPortrait} from '../../src/lib/gallery/actions.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import ImageImporter, {containedRect, imageSize} from '../../src/lib/gallery/ImageImporter.ts'
 import portraitLabel, {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
-import {createDocument, maximumPortraits, redo, restoreDocument, undo, useGallery} from '../../src/lib/gallery/store.ts'
+import {createDocument, maximumPortraits, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
 import walls, {galleryPlacement, insideGallery, placementIssue, roomAt, rooms, roomVisit, wallCoordinates, wallPosition} from '../../src/lib/gallery/walls.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
@@ -207,29 +207,8 @@ describe('image dimensions', () => {
     })
   }
 })
-describe('transactional history', () => {
-  test('undo/redo preserves Blob identity without restoring active jobs', () => {
-    const source = new Blob(['pixels'], {type: 'image/webp'})
-    const state = useGallery.getState()
-    const first = state.portraits[0]
-    state.update(first.id, {
-      source,
-      pending: true,
-      merging: true,
-    })
-    state.remove(first.id)
-    expect(undo()).toBe(true)
-    expect(useGallery.getState().portraits[0]).toMatchObject({
-      source,
-      pending: false,
-      merging: false,
-      reserved: false,
-    })
-    expect(useGallery.getState().portraits[0].source).toBe(source)
-    expect(redo()).toBe(true)
-    expect(useGallery.getState().portraits.some(p => p.id === first.id)).toBe(false)
-  })
-  test('a dropped work falls off its wall as one undoable step and the held work stays in hand', () => {
+describe('collection changes', () => {
+  test('a dropped work falls off its wall and the held work stays in hand', () => {
     const [dropped, held] = useGallery.getState().portraits
     useGallery.setState({held: held.id})
     expect(dropPortrait(dropped.id)).toBe(true)
@@ -244,20 +223,6 @@ describe('transactional history', () => {
     expect(fallen.velocity![0] * Math.sin(dropped.rotation) + fallen.velocity![2] * Math.cos(dropped.rotation)).toBeGreaterThan(0)
     expect(dropPortrait(dropped.id)).toBe(false)
     expect(dropPortrait(held.id)).toBe(false)
-    expect(undo()).toBe(true)
-    expect(useGallery.getState().portraits.find(p => p.id === dropped.id)).toMatchObject({
-      hung: true,
-      wallId: dropped.wallId,
-    })
-  })
-  test('caps history and clears the redo branch after a new edit', () => {
-    for (let i = 0; i < 30; i++) {
-      useGallery.getState().commit(useGallery.getState().portraits)
-    }
-    expect(useGallery.getState().past).toHaveLength(20)
-    undo()
-    useGallery.getState().commit(useGallery.getState().portraits)
-    expect(redo()).toBe(false)
   })
   test('enforces collection capacity', () => {
     const p = samplePortraits[0]

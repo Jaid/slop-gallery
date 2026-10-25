@@ -19,10 +19,9 @@ type State = GallerySettings & GallerySnapshot & {
   add: (portrait: Portrait) => void
   ai: boolean
   apiKey: string
-  /** replaces the collection as one undoable step; a new `seed` starts a new environment, like a new game */
+  /** replaces the collection; a new `seed` starts a new environment, like a new game */
   commit: (portraits: Array<Portrait>, seed?: number) => void
   dragging: boolean
-  future: Array<GallerySnapshot>
   hasControlled: boolean
   held: string | null
   importEpoch: number
@@ -40,7 +39,6 @@ type State = GallerySettings & GallerySnapshot & {
   narration: NarrationState | null
   notice: string
   panel: Panel
-  past: Array<GallerySnapshot>
   placement: Placement | null
   playerEpoch: number
   ready: boolean
@@ -101,8 +99,6 @@ export const useGallery = create<State>((set, get) => ({
   narration: null,
   storageRecoveryRequired: false,
   saveStatus: 'loading',
-  past: [],
-  future: [],
   importEpoch: 0,
   revision: 0,
   importFiles: null,
@@ -122,8 +118,6 @@ export const useGallery = create<State>((set, get) => ({
     set(s => ({
       portraits,
       seed: seed ?? s.seed,
-      past: [...s.past.slice(-19), snapshot(s)],
-      future: [],
       revision: s.revision + 1,
       held: null,
       placement: null,
@@ -148,46 +142,6 @@ export function markControlled() {
   } catch {
     // Control history still remains available for this visit when storage is blocked.
   }
-}
-
-export function undo() {
-  const s = useGallery.getState()
-  const previous = s.past.at(-1)
-  if (!previous) {
-    return false
-  }
-  useGallery.setState({
-    ...snapshot(previous),
-    past: s.past.slice(0, -1),
-    future: [snapshot(s), ...s.future],
-    held: null,
-    active: null,
-    activeLabel: null,
-    placement: null,
-    revision: s.revision + 1,
-    importEpoch: s.importEpoch + 1,
-  })
-  return true
-}
-
-export function redo() {
-  const s = useGallery.getState()
-  const next = s.future.at(0)
-  if (!next) {
-    return false
-  }
-  useGallery.setState({
-    ...snapshot(next),
-    past: [...s.past, snapshot(s)],
-    future: s.future.slice(1),
-    held: null,
-    active: null,
-    activeLabel: null,
-    placement: null,
-    revision: s.revision + 1,
-    importEpoch: s.importEpoch + 1,
-  })
-  return true
 }
 
 /** The seed the environment of the current game state is built from, honoring the `?seed` override. */
@@ -216,8 +170,6 @@ export function restoreDocument(document: GalleryDocument) {
     ...snapshot(document),
     sound: document.settings.sound,
     playerEpoch: useGallery.getState().playerEpoch + 1,
-    past: [],
-    future: [],
     active: null,
     activeLabel: null,
     held: null,

@@ -5,7 +5,7 @@ import {renderToStaticMarkup} from 'react-dom/server'
 
 import Map from '#component/Map'
 
-import {galleryEvents, handleGalleryKey, importDroppedFiles, isTextInput, viewPortrait} from '../../src/lib/gallery/actions.ts'
+import {galleryEvents, importDroppedFiles, isTextInput, viewPortrait} from '../../src/lib/gallery/actions.ts'
 import ImageImporter from '../../src/lib/gallery/ImageImporter.ts'
 import {imageFilename} from '../../src/lib/gallery/imagePolicy.ts'
 import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
@@ -42,7 +42,7 @@ test('the floor plan remains available without a renderer', () => {
   const map = renderToStaticMarkup(createElement(Map))
   expect(map.match(/disabled=""/g)).toHaveLength(rooms.length)
 })
-test('renderer-free drops decode, commit and support undo/redo with a panel open', async () => {
+test('renderer-free drops decode and commit with a panel open', async () => {
   Object.assign(globalThis, {
     createImageBitmap: async () => ({
       width: 64,
@@ -67,23 +67,6 @@ test('renderer-free drops decode, commit and support undo/redo with a panel open
   try {
     await importDroppedFiles([new File(['pixels'], 'fallback.png', {type: 'image/png'})], 100, 100)
     expect(useGallery.getState().portraits).toHaveLength(original.portraits.length + 1)
-    let prevented = 0
-    const key = (redo = false, target = new ElementDouble) => handleGalleryKey({
-      code: redo ? 'KeyY' : 'KeyZ',
-      ctrlKey: true,
-      target,
-      preventDefault() {
-        prevented++
-      },
-    } as unknown as KeyboardEvent)
-    key(false, new ElementDouble(true))
-    expect(useGallery.getState().portraits).toHaveLength(original.portraits.length + 1)
-    expect(prevented).toBe(0)
-    key()
-    expect(useGallery.getState().portraits).toHaveLength(original.portraits.length)
-    key(true)
-    expect(useGallery.getState().portraits).toHaveLength(original.portraits.length + 1)
-    expect(prevented).toBe(2)
   } finally {
     importer.dispose()
   }
@@ -115,7 +98,7 @@ test('unavailable navigation does not close the floor plan or dispatch a visit',
     spy.mockRestore()
   }
 })
-test('only editable controls retain native text undo, not whole dialogs', () => {
+test('only editable controls count as text input, not whole dialogs', () => {
   expect(isTextInput(new ElementDouble)).toBe(false)
   expect(isTextInput(new ElementDouble(true))).toBe(true)
   const content = new ElementDouble

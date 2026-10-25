@@ -32,7 +32,7 @@ export function validatePlayerPose(value: unknown): PlayerPose | null {
   return insideLevel(pose.position) ? pose : null
 }
 
-/** Live movement stays outside React and artwork undo history; checkpoints contain no images. */
+/** Live movement stays outside React; checkpoints contain no images. */
 export default class PlayerSession {
   revision = 0
   private pose = copy(playerSpawn)

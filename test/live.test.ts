@@ -18,11 +18,6 @@ const enter = async (page: Page) => {
   await page.click('#enter-gallery')
   await page.waitForFunction(() => !!document.pointerLockElement)
 }
-const history = async (page: Page, redo = false) => {
-  await page.keyboard.down('Control')
-  await page.keyboard.press(redo ? 'y' : 'z')
-  await page.keyboard.up('Control')
-}
 const clickText = async (page: Page, text: string) => {
   const button = await page.waitForSelector(`xpath/.//button[starts-with(normalize-space(.), "${text}")]`)
   await button!.click()
@@ -125,22 +120,18 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().placement?.valid && Math.abs(globalThis.slopGallery!.snapshot!().camera[0] + 6.3) < 0.01)
     await page.mouse.up({button: 'left'})
     const {portraits: portraitsAfterDrop} = await snapshot(page)
-    expect(portraitsAfterDrop.find(p => p.id === 'goose')!.position[0]).toBeCloseTo(-6.3)
-    await page.keyboard.down('Control')
-    await page.keyboard.press('z')
-    await page.keyboard.up('Control')
-    const {portraits: portraitsAfterUndo} = await snapshot(page)
-    expect(portraitsAfterUndo.find(p => p.id === 'goose')!.position[0]).toBe(-3.6)
-    // A low wall target is invalid; dropping must leave the original untouched.
-    await teleport(page, [-3.6, 1.62, -4.5], lookingUp)
+    const moved = portraitsAfterDrop.find(p => p.id === 'goose')!.position
+    expect(moved[0]).toBeCloseTo(-6.3)
+    // A low wall target is invalid; dropping must leave the work where it hangs.
+    await teleport(page, [-6.3, 1.62, -4.5], lookingUp)
     await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().active === 'goose')
     await page.mouse.down({button: 'left'})
-    await teleport(page, [-3.6, 1.62, -4.5])
+    await teleport(page, [-6.3, 1.62, -4.5])
     await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().placement?.valid === false)
     await page.mouse.up({button: 'left'})
     const {portraits: portraitsAfterInvalidDrop} = await snapshot(page)
-    expect(portraitsAfterInvalidDrop.find(p => p.id === 'goose')!.position).toEqual([-3.6, 2.5, -7.78])
-    await teleport(page, [-3.6, 1.62, -4.5], lookingUp)
+    expect(portraitsAfterInvalidDrop.find(p => p.id === 'goose')!.position).toEqual(moved)
+    await teleport(page, [-6.3, 1.62, -4.5], lookingUp)
     await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().active === 'goose')
     await page.mouse.down({button: 'left'})
     await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().held === 'goose')
@@ -149,11 +140,6 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     await page.mouse.up({button: 'left'})
     const {portraits: portraitsAfterUnhang} = await snapshot(page)
     expect(portraitsAfterUnhang.find(p => p.id === 'goose')!.hung).toBe(false)
-    await page.keyboard.down('Control')
-    await page.keyboard.press('z')
-    await page.keyboard.up('Control')
-    const {portraits: portraitsAfterUnhangUndo} = await snapshot(page)
-    expect(portraitsAfterUnhangUndo.find(p => p.id === 'goose')!.hung).toBe(true)
     await page.evaluate(() => document.exitPointerLock())
     const image = await page.evaluate(async () => {
       const canvas = new OffscreenCanvas(600, 300)
@@ -196,13 +182,6 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     }, {}, imported.id)
     const {portraits: portraitsAfterMerge} = await snapshot(page)
     expect(portraitsAfterMerge).toHaveLength(baseline)
-    await history(page)
-    const {portraits: portraitsAfterMergeUndo} = await snapshot(page)
-    expect(portraitsAfterMergeUndo).toHaveLength(baseline + 1)
-    expect(portraitsAfterMergeUndo.some(p => p.id === imported.id)).toBe(true)
-    await history(page, true)
-    const {portraits: portraitsAfterMergeRedo} = await snapshot(page)
-    expect(portraitsAfterMergeRedo).toHaveLength(baseline)
     await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().saveStatus === 'saved')
     await Bun.sleep(700)
     await page.reload({waitUntil: 'domcontentloaded'})
@@ -214,9 +193,6 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     await page.keyboard.press('Escape')
     const {portraits: newGamePortraits} = await snapshot(page)
     expect(newGamePortraits.find(p => p.id === 'orange')!.title).toBe('A Slightly Larger Tomorrow')
-    await history(page)
-    const {portraits: restoredPortraits} = await snapshot(page)
-    expect(restoredPortraits.find(p => p.id === 'orange')!.title).toBe('An unexpected collaboration')
     await teleport(page, [-6.3, 1.62, -4.5], lookingUp)
     await page.waitForFunction(() => Math.abs(globalThis.slopGallery!.snapshot!().camera[0] + 6.3) < 0.01)
     const drag = (type: string, offset = 0) => page.evaluate((eventType, encoded, horizontalOffset) => {
@@ -247,7 +223,6 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     const dropped = portraitsAfterFileDrop.find(p => p.title === 'dropped fixture')!
     expect(dropped.hung).toBe(true)
     expect(dropped.position[0]).toBeLessThan(-6.32)
-    await history(page)
     await page.evaluate(encoded => {
       const clipboardData = new DataTransfer
       clipboardData.items.add(new File([Uint8Array.fromBase64(encoded)], 'pasted fixture.png', {type: 'image/png'}))
@@ -259,11 +234,10 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     }, image)
     await page.waitForFunction(baselinePortraitCount => {
       const portraits = globalThis.slopGallery!.snapshot!().portraits
-      return portraits.length === baselinePortraitCount + 1 && portraits.some(p => p.title === 'pasted fixture')
+      return portraits.length === baselinePortraitCount + 2 && portraits.some(p => p.title === 'pasted fixture')
     }, {}, baseline)
     const {portraits: portraitsAfterPaste} = await snapshot(page)
     expect(portraitsAfterPaste.some(p => p.title === 'pasted fixture')).toBe(true)
-    await history(page)
     for (const [x, room] of [[-14, 'vesper'], [14, 'dine']] as const) {
       await teleport(page, [x, 1.62, 3])
       await page.waitForFunction(expectedRoom => globalThis.slopGallery!.snapshot!().room === expectedRoom, {}, room)

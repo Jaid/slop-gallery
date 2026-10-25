@@ -65,7 +65,7 @@ export type GallerySettings = {
 }
 export type GallerySnapshot = {
   portraits: Array<Portrait>
-  /** rolled once per game state and mixed with fixed IDs for environment randomization like the potted plants; part of the undo history, so undoing a new game brings back its environment */
+  /** rolled once per game state and mixed with fixed IDs for environment randomization like the potted plants */
   seed: number
 }
 export type GalleryDocument = GallerySnapshot & {

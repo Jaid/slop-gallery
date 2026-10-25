@@ -5,7 +5,7 @@ import {corridorStairs} from '../../src/lib/gallery/corridor.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import lodge, {lodgeWindow} from '../../src/lib/gallery/lodge.ts'
 import PlayerSession, {playerSession, playerSpawn, validatePlayerPose} from '../../src/lib/gallery/PlayerSession.ts'
-import {createDocument, restoreDocument, undo, useGallery} from '../../src/lib/gallery/store.ts'
+import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
 
 const original = createDocument()
 const storageDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')
@@ -121,7 +121,7 @@ describe('player save state', () => {
       expect(playerSession.snapshot().position).toEqual(pose.position)
     }
   })
-  test('movement stays out of React updates and artwork undo, while Reset returns home', () => {
+  test('movement stays out of React updates and collection edits, while Reset returns home', () => {
     const pose = {
       position: [-25, -4.98, -35] as [number, number, number],
       yaw: -0.7,
@@ -133,11 +133,8 @@ describe('player save state', () => {
     expect(updates).toBe(0)
     unsubscribe()
     useGallery.getState().commit([...useGallery.getState().portraits])
-    undo()
     expect(playerSession.snapshot().position).toEqual(pose.position)
     resetGallery()
-    expect(playerSession.snapshot()).toEqual(playerSpawn)
-    undo()
     expect(playerSession.snapshot()).toEqual(playerSpawn)
   })
   test('refresh takes a newer small checkpoint but never an older or corrupt one', () => {

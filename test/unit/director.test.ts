@@ -5,7 +5,7 @@ import {beforeEach, expect, test} from 'bun:test'
 
 import GalleryDirector from '../../src/lib/ai/GalleryDirector.ts'
 import {readAiSettings} from '../../src/lib/ai/settings.ts'
-import {createDocument, restoreDocument, undo, useGallery} from '../../src/lib/gallery/store.ts'
+import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
 const defaults: AiSettings = readAiSettings()
@@ -42,7 +42,7 @@ class TestDirector extends GalleryDirector {
     return this.result.promise
   }
 }
-test('fusion keeps both originals until success and commits one undoable change', async () => {
+test('fusion keeps both originals until success and commits one change', async () => {
   const director = new TestDirector({
     ...defaults,
     ai: false,
@@ -55,8 +55,6 @@ test('fusion keeps both originals until success and commits one undoable change'
   await job
   expect(useGallery.getState().portraits).toHaveLength(1)
   expect(useGallery.getState().portraits[0].source).toBe(merged)
-  expect(undo()).toBe(true)
-  expect(useGallery.getState().portraits.map(p => p.source)).toEqual([a, b])
   director.dispose()
 })
 test('failed fusion releases both originals', async () => {

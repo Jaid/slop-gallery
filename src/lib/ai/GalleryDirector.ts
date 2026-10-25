@@ -161,7 +161,7 @@ export default class GalleryDirector {
       const state = useGallery.getState()
       state.commit(state.portraits.filter(p => p.id !== second).map(p => (p.id === first ? result : p)))
       chime(900)
-      notify('Something wonderfully unexpected. Undo will bring both originals back.')
+      notify('Something wonderfully unexpected.')
       void this.flavor(result).catch(() => notify('The label could not be prepared.'))
     } catch {
       if (current()) {

@@ -6,7 +6,7 @@ import {effectiveSeed, environmentPick, environmentRoll, isSeed, maximumSeed, pa
 import {resetGallery} from '../../src/lib/gallery/actions.ts'
 import GalleryRepository, {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import {potPlacements, pottedPlantKind, pottedPlantKinds} from '../../src/lib/gallery/plantDecorations/placements.ts'
-import {createDocument, restoreDocument, undo, useGallery} from '../../src/lib/gallery/store.ts'
+import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
 const previousIndexedDB = globalThis.indexedDB
@@ -98,7 +98,7 @@ test('the seed is saved, restored and validated with the collection', async () =
     })).toThrow('seed')
   }
 })
-test('a new game rolls a new seed, and undo brings the previous environment back', () => {
+test('a new game rolls a new seed, and collection edits keep it', () => {
   useGallery.setState({seed: 77})
   const seeds = new Set<number>
   for (let attempt = 0; attempt < 4; attempt++) {
@@ -106,10 +106,7 @@ test('a new game rolls a new seed, and undo brings the previous environment back
     seeds.add(useGallery.getState().seed)
   }
   expect(seeds.size).toBeGreaterThan(1)
-  for (let attempt = 0; attempt < 4; attempt++) {
-    undo()
-  }
-  expect(useGallery.getState().seed).toBe(77)
+  useGallery.setState({seed: 77})
   useGallery.getState().add({
     ...samplePortraits[0],
     id: 'seed-test',

@@ -149,7 +149,7 @@ export default class ImageImporter {
           } finally {
             bitmap.close()
           }
-          // Reset/undo during decoding must not resurrect an abandoned import batch. dispose() can also run meanwhile, which the narrowing from the check above cannot see.
+          // A reset during decoding must not resurrect an abandoned import batch. dispose() can also run meanwhile, which the narrowing from the check above cannot see.
           if ((this.disposed as boolean) || useGallery.getState().importEpoch !== epoch) {
             break
           }

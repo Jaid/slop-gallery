@@ -18,7 +18,7 @@ import {bookmarkKey, teleportToNextBookmark} from './bookmarks.ts'
 import defaultPortraits from './defaultPortraits.ts'
 import {flyModeKey, toggleFlyMode} from './flyMode.ts'
 import {playerSession, playerSpawn} from './PlayerSession.ts'
-import {redo, undo, useGallery} from './store.ts'
+import {useGallery} from './store.ts'
 
 export const cameraPose = {
   focused: false,
@@ -89,7 +89,7 @@ export function requestMerge(first: string, second: string) {
   galleryEvents.dispatchEvent(new CustomEvent('merge', {detail: [first, second]}))
 }
 
-/** Knocks a hung work off its wall, as one undoable step that keeps whatever the player holds. */
+/** Knocks a hung work off its wall, keeping whatever the player holds. */
 export function dropPortrait(id: string) {
   const state = useGallery.getState()
   const portrait = state.portraits.find(candidate => candidate.id === id)
@@ -110,7 +110,6 @@ export function dropPortrait(id: string) {
     placement: heldPlacement,
   })
   chime(110)
-  notify('Down it goes. Undo hangs it back up.')
   return true
 }
 
@@ -128,7 +127,7 @@ export function importRejected() {
 
 export function resetGallery() {
   playerSession.restore(playerSpawn)
-  // A new game state rolls a new environment; undo brings back the previous one along with its collection.
+  // A new game state rolls a new environment.
   const seed = rollSeed()
   useGallery.getState().commit(defaultPortraits(seed), seed)
   useGallery.setState(s => ({
@@ -139,7 +138,7 @@ export function resetGallery() {
   }))
   stopNarration()
   galleryEvents.dispatchEvent(new Event('home'))
-  notify('Back to the beginning. Your previous collection is one Undo away.')
+  notify('Back to the beginning.')
 }
 
 export function startNewGame() {
@@ -203,11 +202,6 @@ export function handleGalleryKey(event: KeyboardEvent) {
   if (isTextInput(event.target) || event.defaultPrevented) {
     return
   }
-  if ((event.ctrlKey || event.metaKey) && (event.code === 'KeyZ' || event.code === 'KeyY')) {
-    event.preventDefault()
-    changeHistory(event.code === 'KeyY' || event.shiftKey)
-    return
-  }
   const s = useGallery.getState()
   if (event.repeat || event.ctrlKey || event.metaKey || event.altKey || s.panel) {
     return
@@ -236,12 +230,4 @@ export function handleGalleryKey(event: KeyboardEvent) {
 export async function importDroppedFiles(files: Array<File>, x: number, y: number) {
   const s = useGallery.getState()
   return s.importFiles?.(files, s.panel ? undefined : s.importTarget?.(x, y))
-}
-
-function changeHistory(redone = false) {
-  galleryEvents.dispatchEvent(new Event('cancel-interaction'))
-  galleryEvents.dispatchEvent(new Event('cancel-view'))
-  if (redone ? redo() : undo()) {
-    notify(redone ? 'Redone. A second thought about your second thought.' : 'Undone. Even happy accidents are reversible.')
-  }
 }
