@@ -1,32 +1,29 @@
 import {useFrame} from '@react-three/fiber'
-import {useEffect, useRef} from 'react'
 import {Vector3} from 'three/webgpu'
 
-import FountainAmbience from '#src/lib/audio/fountainAmbience.ts'
+import {useAmbienceEmitters} from '#src/lib/audio/ambience/ambienceEmitters.ts'
 import SoundEngine from '#src/lib/audio/SoundEngine.ts'
 import {useGallery} from '#src/lib/gallery.ts'
-import fountain from '#src/lib/gallery/fountain/config.ts'
 
 const forward = new Vector3
 const up = new Vector3
 const position = new Vector3
 
 /**
- * Plays the fountain’s water from its spray, heard from wherever the camera is. Waits for the sound engine, which only starts with the player’s first click.
+ * Hears the level’s ambience emitters from the camera: moves the Web Audio listener along with it every frame and starts the emitters once the sound engine exists, which only happens with the player’s first click.
  */
-export default function FountainAmbienceSound() {
-  const ambience = useRef<FountainAmbience>(null)
-  useEffect(() => () => {
-    ambience.current?.dispose()
-    ambience.current = null
-  }, [])
+export default function AmbienceListener() {
   useFrame(({camera}) => {
     const engine = SoundEngine.existing()
-    if (!engine) {
+    const {emitters} = useAmbienceEmitters.getState()
+    if (!engine || !emitters.length) {
       return
     }
-    ambience.current ??= new FountainAmbience(engine.context, engine.master, [fountain.position[0], fountain.position[1] + 1.2, fountain.position[2]])
-    ambience.current.setInside(useGallery.getState().room === 'lobby')
+    const {room} = useGallery.getState()
+    for (const emitter of emitters) {
+      emitter.setListenerRoom(room)
+      emitter.start(engine)
+    }
     const {listener} = engine.context
     camera.getWorldPosition(position)
     camera.getWorldDirection(forward)

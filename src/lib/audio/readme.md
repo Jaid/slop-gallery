@@ -32,9 +32,13 @@ Renewed ground contact uses the exact same **Soft Weight** footstep recipe rathe
 
 The reusable `ego-player` package emits `onLand` and `onZoomTransition` but contains no sound engine or gallery imports. `playerAudio.ts` owns surface selection, active-input policy, mute/lock gating and shared portrait/knot inspection state observation. Pause, blur, pointer-lock loss, mute and unmount stop held/transition audio even without another rendered frame. Narration uses the shared controller in `narration.ts` (`use-narrator` / `use-audio-queue`), with a separate output path from procedural player effects. Its meter retains paused connections for injection/resume and keys each explicitly concurrent voice separately, so overlapping `async` narration gets independent stacked HUD indicators and independent spectra.
 
-## Fountain ambience
+## Ambience
 
-`fountainAmbience.ts` synthesizes the Lobby fountain’s endless trickle: two looping filtered noise beds whose levels sway by smooth random curves, plus randomly timed rising-pitch bubbles and small noise splashes scheduled with a short lookahead. It plays through the effects master (so mute covers it) from an HRTF panner at the spray, at full level within 1 m and fading linearly to silence at 10 m, and is muffled outside the Lobby. The `FountainAmbience` component inside `Fountain` starts it once `SoundEngine` exists and moves the Web Audio listener with the camera every frame.
+Ambient sounds are emitters: subclasses of `ambience/base/AmbienceEmitter.ts` that declare looping filtered noise beds with smoothly swaying levels and scatter one-shots (`chirp`, `burst`) over each lookahead window with `scatter`, a memoryless Poisson process. Constructing one is silent; `start()` builds its graph on `SoundEngine`’s effects master (so mute covers it), heard through an HRTF panner at its position, at full level within `hearing.near` and fading linearly to silence at `hearing.far`, muffled while the listener is outside its `rooms`.
+
+Level components sound an emitter with `useAmbienceEmitter(EmitterClass)`, which adds it to `useAmbienceEmitters`. `AmbienceListener` (in `Scene`) moves the Web Audio listener with the camera, tells emitters the listener’s room and starts them once the sound engine exists after the first click. `?show_ambience_emitters` draws a ball at each emitter, white at full strength at the camera, gray when silent and blue (1%) to red (99%) in between.
+
+`ambience/Fountain.ts` is the Lobby fountain’s quiet trickle: a soft hiss plus rising-pitch bubbles and small splashes, audible within 21 m.
 
 ## Playback ownership
 

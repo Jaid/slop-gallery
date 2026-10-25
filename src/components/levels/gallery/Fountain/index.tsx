@@ -3,9 +3,10 @@ import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 import useGraphicsMode from 'use-graphics-mode'
 
-import FountainAmbienceSound from '#component/levels/gallery/FountainAmbience'
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
 import Orbitable from '#component/Orbitable'
+import {useAmbienceEmitter} from '#src/lib/audio/ambience/ambienceEmitters.ts'
+import FountainAmbience from '#src/lib/audio/ambience/Fountain.ts'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import fountain from '#src/lib/gallery/fountain/config.ts'
 import FountainGeometry from '#src/lib/gallery/fountain/FountainGeometry.ts'
@@ -16,6 +17,7 @@ import gold from '#src/lib/materials/gold.ts'
 
 export default function Fountain() {
   const isHeavy = useGraphicsMode()
+  useAmbienceEmitter(FountainAmbience)
   const geometry = useDisposable(useMemo(() => new FountainGeometry, []))
   const collision = useMemo(() => colliderGeometry(geometry.stone), [geometry])
   const marble = useDisposable(useMemo(() => new FountainMarbleMaterial({reflections: isHeavy}), [isHeavy]))
@@ -40,6 +42,5 @@ export default function Fountain() {
     <mesh geometry={geometry.pools} material={pool} name='fountain-pools' receiveShadow />
     <mesh geometry={geometry.water} material={falling} name='fountain-falling-water' />
     <primitive object={spray} />
-    <FountainAmbienceSound />
   </Orbitable>
 }

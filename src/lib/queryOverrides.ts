@@ -1,4 +1,5 @@
 import {readAiSettings} from './ai/settings.ts'
+import {readShowAmbienceEmitters} from './audio/ambience/ambienceEmitters.ts'
 import {readIntroNarration} from './audio/intro.ts'
 import {readCrosshair} from './crosshair.ts'
 import {readDevelopmentMode} from './developmentMode.ts'
@@ -47,6 +48,7 @@ const readers: Record<string, Reader> = {
   portraits: readDefaultPortraitsEnabled,
   scale: readScale,
   seed: readSeedOverride,
+  show_ambience_emitters: readShowAmbienceEmitters,
   show_lights: readShowLights,
   spawn: readSpawn,
   temporary: readTemporary,

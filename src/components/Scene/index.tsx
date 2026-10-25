@@ -2,6 +2,8 @@ import {useFrame, useThree} from '@react-three/fiber'
 import Branch from 'branch-component'
 import {useEffect, useLayoutEffect, useRef, useState} from 'react'
 
+import AmbienceEmitterMarkers from '#component/AmbienceEmitterMarkers'
+import AmbienceListener from '#component/AmbienceListener'
 import LightLevels from '#component/LightLevels'
 import LightMarkers from '#component/LightMarkers'
 import Player from '#component/Player'
@@ -10,6 +12,7 @@ import PortraitSlotEditor from '#component/PortraitSlotEditor'
 import PortraitSlots from '#component/PortraitSlots'
 import WebmcpBridge from '#component/WebmcpBridge'
 import {Scene as LevelScene} from '#level/components.ts'
+import {isShowingAmbienceEmitters} from '#src/lib/audio/ambience/ambienceEmitters.ts'
 import {useGallery} from '#src/lib/gallery.ts'
 import {isEditingPortraitSlots} from '#src/lib/gallery/portraitSlotStore.ts'
 import {useHiddenUi} from '#src/lib/hiddenUi.ts'
@@ -31,8 +34,10 @@ export default function Scene() {
       <Branch if={visionMode === 'portrait_slots' || isEditingPortraitSlots} then={PortraitSlots} />
       <Branch if={isEditingPortraitSlots} then={PortraitSlotEditor} />
       <Branch if={isShowingLights} then={LightMarkers} />
+      <Branch if={isShowingAmbienceEmitters} then={AmbienceEmitterMarkers} />
     </group>
     <LightLevels />
+    <AmbienceListener />
     <Player />
     <Interaction />
     <WebmcpBridge />
