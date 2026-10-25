@@ -1,8 +1,8 @@
-import type {SpawnBookmark} from '../../src/lib/gallery/types.ts'
+import type {CameraBookmark, SpawnBookmark} from '../../src/lib/gallery/types.ts'
 
 import {expect, test} from 'bun:test'
 
-import {findSpawnBookmark, nextBookmark} from '../../src/lib/gallery/bookmarks.ts'
+import {findCameraBookmark, findSpawnBookmark, nextBookmark} from '../../src/lib/gallery/bookmarks.ts'
 
 const bookmark = (id: string, x: number, z: number): SpawnBookmark => ({
   id,
@@ -27,6 +27,21 @@ test('with Shift, T cycles back to the previous one', () => {
 })
 test('a level without bookmarks has no target', () => {
   expect(nextBookmark([0, 0, 0], [])).toBeNull()
+})
+test('?spawn names a camera bookmark by ID', () => {
+  const view: CameraBookmark = {
+    id: 'view',
+    position: [0, 2, 0],
+    aim: {
+      yaw: 0,
+      pitch: 0,
+    },
+    fov: 55,
+    ratio: 16 / 9,
+  }
+  expect(findCameraBookmark('http://localhost/?spawn=view', [view])).toBe(view)
+  expect(findCameraBookmark('http://localhost/?spawn=second', [view])).toBeUndefined()
+  expect(findSpawnBookmark('http://localhost/?spawn=view', list)).toBeUndefined()
 })
 test('?spawn names a bookmark by ID', () => {
   expect(findSpawnBookmark('http://localhost/?spawn=second', list)).toBe(list[1])

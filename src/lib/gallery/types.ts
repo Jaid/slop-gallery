@@ -88,8 +88,21 @@ export type SpawnBookmark = PlayerPose & {
   id: string
 }
 
-/** named camera view that only `?spawn` reaches, e.g. for deterministic camera snapshots */
-export type CameraBookmark = SpawnBookmark & {
-  /** camera height above `position` in meters; with it, `?spawn` holds the camera there, detached from the player until the next teleport, for views from mid-jump or lower than standing */
-  eyeHeight?: number
+/** named camera view for `?spawn`, which holds the camera there, detached from the player until the next teleport, and for `scripts/snap.ts --bookmark` */
+export type CameraBookmark = {
+  /** camera angle in radians, Euler order YXZ like the player’s look: yaw 0 looks toward −z, positive pitch looks up */
+  aim: {
+    pitch: number
+    yaw: number
+  }
+  /** vertical field of view in degrees */
+  fov: number
+  /** engine time in seconds that every animation stands still at, like `?frozen_time` */
+  frozenTime?: number
+  /** snake_case name that `?spawn` refers to */
+  id: string
+  /** camera (eye) position in meters */
+  position: MathVec3
+  /** frame width divided by height, which snaps render at */
+  ratio: number
 }

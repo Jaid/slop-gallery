@@ -1,13 +1,15 @@
 import type {CameraBookmark, SpawnBookmark, Vec3} from './types.ts'
 
-import optis from 'optis'
-import readPermalink from 'read-permalink'
 import {Euler, Quaternion} from 'three/webgpu'
 
 import {cameraBookmarks, spawnBookmarks} from '#level/bookmarks.ts'
+import {levelFloorHeight} from '#level/navigation.ts'
 
 import {galleryEvents, notify} from './actions.ts'
 import {playerSession} from './PlayerSession.ts'
+import {readSpawn} from './spawn.ts'
+
+export {readSpawn} from './spawn.ts'
 
 /** key that teleports the player to the next bookmark with `?development`, or to the previous one with Shift */
 export const bookmarkKey = 'KeyT'
@@ -15,35 +17,38 @@ export const bookmarkKey = 'KeyT'
 /** how close the player’s feet must be to a bookmark to count as standing in it, in meters */
 export const bookmarkRadius = 1
 
-const spawnSchema = optis({
-  defaults: {
-    spawn: '',
-  },
-  normalizations: {
-    spawn(value: unknown) {
-      return typeof value === 'string' ? value : ''
-    },
-  },
-})
-
-/** Read the `?spawn` bookmark ID the session starts at, or an empty string. */
-export function readSpawn(input: URL | string = typeof location === 'undefined' ? '' : location.href): string {
-  return readPermalink(input, {schema: spawnSchema}).spawn
-}
-
-/** The spawn or camera bookmark `?spawn` names, `null` without `?spawn` and `undefined` when this level has no bookmark with that ID. */
-export function findSpawnBookmark(input?: URL | string, list: ReadonlyArray<CameraBookmark> = [...spawnBookmarks, ...cameraBookmarks]): CameraBookmark | null | undefined {
+/** The spawn bookmark `?spawn` names, `null` without `?spawn` and `undefined` when this level has no spawn bookmark with that ID. */
+export function findSpawnBookmark(input?: URL | string, list: ReadonlyArray<SpawnBookmark> = spawnBookmarks): SpawnBookmark | null | undefined {
   const id = readSpawn(input)
   return id ? list.find(bookmark => bookmark.id === id) : null
 }
 
-/** Move the player session to the `?spawn` bookmark, overriding any saved position. */
+/** The camera bookmark `?spawn` names, `null` without `?spawn` and `undefined` when this level has no camera bookmark with that ID. */
+export function findCameraBookmark(input?: URL | string, list: ReadonlyArray<CameraBookmark> = cameraBookmarks): CameraBookmark | null | undefined {
+  const id = readSpawn(input)
+  return id ? list.find(bookmark => bookmark.id === id) : null
+}
+
+/** Where the player stands below a camera bookmark: a standing eye height under the camera, but never below the floor. */
+export function cameraBookmarkFeet({position}: CameraBookmark): Vec3 {
+  return [position[0], Math.max(levelFloorHeight(position) + 0.04, position[1] - 1.6), position[2]]
+}
+
+/** Move the player session to the `?spawn` bookmark, overriding any saved position; for a camera bookmark, below it. */
 export function applySpawnBookmark() {
-  const bookmark = findSpawnBookmark()
-  if (bookmark === undefined) {
+  const spawnBookmark = findSpawnBookmark()
+  if (spawnBookmark) {
+    playerSession.restore(spawnBookmark)
+    return
+  }
+  const cameraBookmark = findCameraBookmark()
+  if (cameraBookmark) {
+    playerSession.restore({
+      position: cameraBookmarkFeet(cameraBookmark),
+      ...cameraBookmark.aim,
+    })
+  } else if (cameraBookmark === undefined) {
     notify(`This level has no bookmark “${readSpawn()}”.`)
-  } else if (bookmark) {
-    playerSession.restore(bookmark)
   }
 }
 

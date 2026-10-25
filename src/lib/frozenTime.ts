@@ -1,6 +1,10 @@
 import optis from 'optis'
 import readPermalink, {parseNumber} from 'read-permalink'
 
+import {cameraBookmarks} from '#level/bookmarks.ts'
+
+import {readSpawn} from './gallery/spawn.ts'
+
 declare global {
   /** set while `?frozen_time` holds the clock; `reached` turns true once the clock stands at the requested time */
   var frozenTime: {
@@ -24,9 +28,10 @@ const frozenTimeSchema = optis({
 // Animation steps stay this short, so physics and effects that integrate over time do not jump.
 const step = 1 / 30
 
-/** Read the optional `?frozen_time` from the permalink: the engine time in seconds that every animation stands still at, so captures of the same view match. */
-export function readFrozenTime(input: URL | string = typeof location === 'undefined' ? '' : location.href) {
-  return readPermalink(input, {schema: frozenTimeSchema}).frozen_time
+/** Read the optional `?frozen_time` from the permalink, or else the `frozenTime` of the `?spawn` camera bookmark: the engine time in seconds that every animation stands still at, so captures of the same view match. */
+export function readFrozenTime(input: URL | string = typeof location === 'undefined' ? '' : location.href): number | undefined {
+  const spawn = readSpawn(input)
+  return readPermalink(input, {schema: frozenTimeSchema}).frozen_time ?? (spawn ? cameraBookmarks.find(bookmark => bookmark.id === spawn)?.frozenTime : undefined)
 }
 
 /**

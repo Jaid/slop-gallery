@@ -1,15 +1,16 @@
 import type {EgoAction, EgoPlayerHandle, EgoState} from 'ego-player'
+import type {Camera} from 'three/webgpu'
 
 import {useKeyboardControls} from '@react-three/drei/webgpu'
 import {useThree} from '@react-three/fiber'
 import EgoPlayer from 'ego-player'
 import {useEffect, useRef, useState} from 'react'
-import {Euler, Quaternion, Vector3} from 'three/webgpu'
+import {Euler, PerspectiveCamera, Quaternion, Vector3} from 'three/webgpu'
 
 import {insideLevel, levelFloorHeight} from '#level/navigation.ts'
 import {attachPlayerAudio, onPlayerLand, onPlayerStep, onPlayerZoomChange, onPlayerZoomTransition} from '#src/lib/audio/playerAudio.ts'
 import {cameraPose, galleryEvents, markControlled, narrate, setCameraFocused, useGallery} from '#src/lib/gallery.ts'
-import {findSpawnBookmark} from '#src/lib/gallery/bookmarks.ts'
+import {cameraBookmarkFeet, findCameraBookmark} from '#src/lib/gallery/bookmarks.ts'
 import {flyMode} from '#src/lib/gallery/flyMode.ts'
 import {activateInteractiveObject} from '#src/lib/gallery/interactiveObjects.ts'
 import {playerSession, playerSpawn} from '#src/lib/gallery/PlayerSession.ts'
@@ -20,6 +21,12 @@ import {playerDumpHandler, playerDumps, snapshotPlayerDump} from '#src/lib/telem
 const enabled = () => !cameraPose.focused && !useGallery.getState().panel
 const cameraEnabled = () => !cameraPose.focused
 const flying = () => flyMode.active
+const setFov = (camera: Camera, fov: number) => {
+  if (camera instanceof PerspectiveCamera && camera.fov !== fov) {
+    camera.fov = fov
+    camera.updateProjectionMatrix()
+  }
+}
 const pointerLock = {selector: '#pointer-lock-managed-by-gallery'}
 const onInteract = () => {
   const {active, held} = useGallery.getState()
@@ -38,10 +45,13 @@ export default function Player() {
   const [initial] = useState(() => playerSession.snapshot())
   const [angles] = useState(() => new Euler(0, 0, 0, 'YXZ'))
   const playerEpoch = useGallery(s => s.playerEpoch)
-  // where a ?spawn bookmark with an eye height holds the camera, until the next teleport
+  // where a ?spawn camera bookmark holds the camera, until the next teleport
   const heldCamera = useRef<{
+    fov: number
     position: Vector3
     quaternion: Quaternion
+    /** the camera’s field of view before the bookmark took it, restored on release */
+    releaseFov: number
   } | null>(null)
   useEffect(() => {
     const read = () => player.current?.getState() ?? null
@@ -63,6 +73,9 @@ export default function Player() {
         rotation: [number, number, number, number]
       }>).detail
       setCameraFocused(false)
+      if (heldCamera.current) {
+        setFov(camera, heldCamera.current.releaseFov)
+      }
       heldCamera.current = null
       // Gallery navigation describes camera poses; ego-player consistently uses feet.
       const destination = feet ? position : [position[0], Math.max(levelFloorHeight(position) + 0.04, position[1] - 1.6), position[2]] as [number, number, number]
@@ -90,7 +103,7 @@ export default function Player() {
         }
       }
     }
-  }, [])
+  }, [camera])
   useEffect(() => {
     const pose = playerSession.snapshot()
     const sessionRotation = new Quaternion
@@ -101,21 +114,25 @@ export default function Player() {
         rotation: sessionRotation.setFromEuler(new Euler(pose.pitch, pose.yaw, 0, 'YXZ')).toArray(),
       },
     }))
-    const bookmark = findSpawnBookmark()
-    // The teleport above released the camera; a ?spawn bookmark with an eye height takes it again while the player still stands at the bookmark.
-    if (bookmark?.eyeHeight !== undefined && bookmark.position.every((value, index) => value === pose.position[index])) {
+    const bookmark = findCameraBookmark()
+    // The teleport above released the camera; a ?spawn camera bookmark takes it again while the player still stands below it.
+    if (bookmark && cameraBookmarkFeet(bookmark).every((value, index) => value === pose.position[index])) {
       setCameraFocused(true)
+      const bookmarkRotation = new Quaternion
       heldCamera.current = {
-        position: new Vector3(pose.position[0], pose.position[1] + bookmark.eyeHeight, pose.position[2]),
-        quaternion: sessionRotation,
+        fov: bookmark.fov,
+        position: new Vector3(...bookmark.position),
+        quaternion: bookmarkRotation.setFromEuler(new Euler(bookmark.aim.pitch, bookmark.aim.yaw, 0, 'YXZ')),
+        releaseFov: camera instanceof PerspectiveCamera ? camera.fov : bookmark.fov,
       }
     }
-  }, [playerEpoch])
+  }, [camera, playerEpoch])
   const onUpdate = (state: EgoState) => {
     // The player applies the teleport, camera included, on its next frame, so the held camera is set after every update.
     if (heldCamera.current) {
       camera.position.copy(heldCamera.current.position)
       camera.quaternion.copy(heldCamera.current.quaternion)
+      setFov(camera, heldCamera.current.fov)
     }
     if (!cameraPose.focused) {
       const {x, y, z} = state.position

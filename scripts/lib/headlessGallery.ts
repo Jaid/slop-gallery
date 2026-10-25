@@ -64,19 +64,19 @@ const parseSize = (value: string | undefined, name: string) => {
   }
   return size
 }
-/** A missing side follows 16:9; without either, the default height. */
-const resolveSize = (values: Pick<GalleryValues, 'height' | 'width'>, defaultHeight: number) => {
+/** A missing side follows `ratio` (width divided by height); without either, the default height. */
+export const resolveSize = (values: Pick<GalleryValues, 'height' | 'width'>, defaultHeight: number, ratio = 16 / 9) => {
   const width = parseSize(values.width, 'width')
   const height = parseSize(values.height, 'height')
   if (width === undefined && height === undefined) {
     return {
-      width: Math.round(defaultHeight * 16 / 9),
+      width: Math.round(defaultHeight * ratio),
       height: defaultHeight,
     }
   }
   return {
-    width: width ?? Math.round(height! * 16 / 9),
-    height: height ?? Math.round(width! * 9 / 16),
+    width: width ?? Math.round(height! * ratio),
+    height: height ?? Math.round(width! / ratio),
   }
 }
 export const resolveSettle = (value: string) => {

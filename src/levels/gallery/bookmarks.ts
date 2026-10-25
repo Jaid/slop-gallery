@@ -58,5 +58,16 @@ export const spawnBookmarks: Array<SpawnBookmark> = [
   },
 ]
 
-/** named camera views for `?spawn` only, see `src/lib/gallery/bookmarks.ts` */
-export const cameraBookmarks: Array<CameraBookmark> = []
+/** named camera views for `?spawn` and `scripts/snap.ts --bookmark`, see `src/lib/gallery/bookmarks.ts` */
+export const cameraBookmarks: Array<CameraBookmark> = [
+  {
+    id: 'moonfall',
+    position: [8.63, -4.9, 18.61],
+    aim: {
+      yaw: 1.56,
+      pitch: -0.35,
+    },
+    fov: 55,
+    ratio: 16 / 9,
+  },
+]

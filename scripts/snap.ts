@@ -1,5 +1,5 @@
 import type {CameraPose} from '#src/lib/diagnostics.ts'
-import type {Vec3} from '#src/lib/gallery/types.ts'
+import type {CameraBookmark, Vec3} from '#src/lib/gallery/types.ts'
 
 import {join, relative} from 'node:path'
 import {parseArgs} from 'node:util'
@@ -11,7 +11,7 @@ import getFree from 'get-free'
 import {jxlEffort, lossyJxlOptions} from 'knot-materials/scripts/lib/encodeJxl.ts'
 import {Packr} from 'msgpackr'
 
-import {degrees, galleryHelp, galleryOptions, parseNumbers, radians, repositoryRoot, resolveGallerySetup, resolveSettle, serveGallery, waitForFrames, waitForGallery, watchPage} from './lib/headlessGallery.ts'
+import {degrees, galleryHelp, galleryOptions, parseNumbers, radians, repositoryRoot, resolveGallerySetup, resolveSettle, resolveSize, serveGallery, waitForFrames, waitForGallery, watchPage} from './lib/headlessGallery.ts'
 
 const snapHeight = 1080
 const help = `Usage: bun scripts/snap.ts [options]
@@ -22,10 +22,11 @@ The photo is a fresh WebGPU render of the scene, so menus and other DOM overlays
 
 Options:
 ${galleryHelp(snapHeight)}
-  --position <x,y,z>      camera (eye) position in meters. Default: the player spawn
+  --bookmark <id>         camera bookmark of the level (src/levels/<level>/bookmarks.ts) that supplies the defaults of --position, --angle, --fov, the width-to-height ratio and --frozen_time
+  --position <x,y,z>      camera (eye) position in meters. Default: the bookmark’s, or the player spawn
   --angle <yaw,pitch[,roll]>
-                          camera angle in degrees. Yaw 0 looks toward −z, positive pitch looks up. Default: the player spawn
-  --fov <degrees>         vertical field of view. Default: the game camera’s
+                          camera angle in degrees. Yaw 0 looks toward −z, positive pitch looks up. Default: the bookmark’s, or the player spawn
+  --fov <degrees>         vertical field of view. Default: the bookmark’s, or the game camera’s
   --jxl-distance <number> cjxl Butteraugli distance, 0 is lossless. Default: 1
   --jxl-effort <1–10>     cjxl effort; lossless 2160p takes about a second at 6 and minutes at 10. Default: ${jxlEffort}
   --settle <frames>       frames to render after posing and again once everything has loaded. Default: 2, enough even with TRAA
@@ -40,6 +41,7 @@ const {values} = parseArgs({
   options: {
     ...galleryOptions,
     angle: {type: 'string'},
+    bookmark: {type: 'string'},
     fov: {type: 'string'},
     help: {
       type: 'boolean',
@@ -68,9 +70,21 @@ if (values.help) {
 }
 const setup = await resolveGallerySetup(values, snapHeight)
 const settle = resolveSettle(values.settle)
-const position = values.position === undefined ? undefined : parseNumbers(values.position, 'position', [3]) as Vec3
-const angle = values.angle === undefined ? undefined : parseNumbers(values.angle, 'angle', [2, 3])
-const fov = values.fov === undefined ? undefined : parseNumbers(values.fov, 'fov', [1])[0]
+let bookmark: CameraBookmark | undefined
+if (values.bookmark !== undefined) {
+  const {cameraBookmarks} = await import(join(repositoryRoot, 'src', 'levels', setup.levelName, 'bookmarks.ts')) as {cameraBookmarks: Array<CameraBookmark>}
+  bookmark = cameraBookmarks.find(entry => entry.id === values.bookmark)
+  if (!bookmark) {
+    throw new Error(`--bookmark must be one of the ${setup.levelName} camera bookmarks: ${cameraBookmarks.map(entry => entry.id).join(', ') || 'none'}.`)
+  }
+  setup.viewport = resolveSize(values, snapHeight, bookmark.ratio)
+  if (bookmark.frozenTime !== undefined && !setup.search.has('frozen_time')) {
+    setup.search.set('frozen_time', String(bookmark.frozenTime))
+  }
+}
+const position = values.position === undefined ? bookmark?.position : parseNumbers(values.position, 'position', [3]) as Vec3
+const angle = values.angle === undefined ? bookmark && [degrees(bookmark.aim.yaw), degrees(bookmark.aim.pitch)] : parseNumbers(values.angle, 'angle', [2, 3])
+const fov = values.fov === undefined ? bookmark?.fov : parseNumbers(values.fov, 'fov', [1])[0]
 if (fov !== undefined && (fov <= 0 || fov >= 180)) {
   throw new Error('--fov must be between 0 and 180 degrees.')
 }
