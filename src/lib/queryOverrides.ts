@@ -8,6 +8,7 @@ import {readSpawn} from './gallery/bookmarks.ts'
 import {readDefaultPortraitsEnabled} from './gallery/defaultPortraits.ts'
 import {readLighting} from './gallery/lighting.ts'
 import {readPortraitSlotEditing} from './gallery/portraitSlotStore.ts'
+import {readKnotRotation} from './physics/rotatingKnots.ts'
 import {readAntiAliasing} from './rendering/antiAliasing.ts'
 import {readGraphicsModeName} from './rendering/graphicsMode.ts'
 import {readEditLights, readShowLights} from './rendering/lightLevels.ts'
@@ -37,6 +38,7 @@ const readers: Record<string, Reader> = {
   frozen_time: readFrozenTime,
   graphics: readGraphicsModeName,
   intro_narration: readIntroNarration,
+  knot_rotation: readKnotRotation,
   lighting: readLighting,
   near: readNear,
   pmrem: readPmrem,

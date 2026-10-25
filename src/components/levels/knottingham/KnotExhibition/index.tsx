@@ -13,8 +13,10 @@ import KnotLabels from '#component/levels/knottingham/KnotLabels'
 import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
 import {narrateModel} from '#src/lib/gallery/actions.ts'
 import KnotRotation from '#src/lib/physics/KnotRotation.ts'
+import {readKnotRotation} from '#src/lib/physics/rotatingKnots.ts'
 import {getPmremEnvironment} from '#src/lib/rendering/pmrem.ts'
 
+const isRotating = readKnotRotation()
 const baseRadius = (() => {
   const geometry = createKnotGeometry()
   geometry.computeBoundingSphere()
@@ -29,7 +31,9 @@ export default function KnotExhibition() {
   const isHeavy = useGraphicsMode()
   const rotation = useMemo(() => new KnotRotation, [])
   useBeforePhysicsStep(world => {
-    rotation.advance(world.timestep)
+    if (isRotating) {
+      rotation.advance(world.timestep)
+    }
     for (const exhibit of knotExhibition) {
       const body = propObjects.get(`prop-knot-${exhibit.id}`)?.body
       if (body) {
