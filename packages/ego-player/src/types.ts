@@ -1,5 +1,5 @@
 import type {EgoDump} from './EgoDiagnostics.ts'
-import type {RapierRigidBody} from '@react-three/rapier'
+import type {RapierCollider, RapierRigidBody} from '@react-three/rapier'
 
 export type EgoAction = 'backward' | 'crouch' | 'dump' | 'forward' | 'interact' | 'jump' | 'left' | 'modifier' | 'right' | 'sprint' | 'zoom'
 /** Omitted actions are inactive. The reader may return a shared input object. */
@@ -23,6 +23,18 @@ export type EgoState = Readonly<{
   position: EgoPoint
   /** Collision-resolved physical velocity, excluding camera motion. */
   velocity: EgoPoint
+}>
+/** First contact with an obstacle during one physics step. */
+export type EgoImpact = Readonly<{
+  /** whether the character was off the ground before the contact */
+  airborne: boolean
+  collider: RapierCollider
+  /** World-space contact normal, pointing out of the obstacle toward the character. */
+  normal: EgoPoint
+  /** World-space contact point on the obstacle. */
+  point: EgoPoint
+  /** Collision-resolved speed toward the obstacle along the normal on the step before the contact. */
+  speed: number
 }>
 export type EgoPlayerHandle = {
   readonly body: RapierRigidBody | null

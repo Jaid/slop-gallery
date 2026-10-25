@@ -165,6 +165,58 @@ test('walls stop motion and collision-resolved velocity excludes attempted motio
   // Allow Rapier’s small contact corrections while rejecting attempted walking velocity.
   expect(Math.abs(motor.getState().velocity.z)).toBeLessThan(0.01)
 })
+test('impacts report a first contact once, with the speed that led into it', () => {
+  const motor = grounded()
+  const wall = world.createCollider(RAPIER.ColliderDesc.cuboid(5, 2, 0.1).setTranslation(0, 1, -3))
+  world.step()
+  const hits: Array<{
+    airborne: boolean
+    speed: number
+  }> = []
+  for (let i = 0; i < 240; i++) {
+    tick(motor, {forward: true})
+    for (const impact of motor.impacts) {
+      if (impact.collider.handle !== wall.handle) {
+        continue
+      }
+      expect(impact.normal.z).toBeCloseTo(1, 2)
+      hits.push(impact)
+    }
+  }
+  expect(hits).toHaveLength(1)
+  expect(hits[0].airborne).toBe(false)
+  expect(hits[0].speed).toBeCloseTo(defaultEgoOptions.speed, 1)
+  // Pressing against the wall keeps the requested momentum, but a jump from there is no new hit.
+  tick(motor, {
+    forward: true,
+    jump: true,
+  }, 60)
+  expect(motor.impacts.some(impact => impact.collider.handle === wall.handle)).toBe(false)
+})
+test('a sprinting jump into a wall is an airborne impact at sprint speed', () => {
+  const motor = grounded()
+  const wall = world.createCollider(RAPIER.ColliderDesc.cuboid(5, 4, 0.1).setTranslation(0, 1, -5))
+  world.step()
+  tick(motor, {
+    forward: true,
+    sprint: true,
+  }, 30)
+  const hits: Array<{
+    airborne: boolean
+    speed: number
+  }> = []
+  for (let i = 0; i < 120; i++) {
+    tick(motor, {
+      forward: true,
+      sprint: true,
+      jump: true,
+    })
+    hits.push(...motor.impacts.filter(impact => impact.collider.handle === wall.handle))
+  }
+  expect(hits).toHaveLength(1)
+  expect(hits[0].airborne).toBe(true)
+  expect(hits[0].speed).toBeGreaterThan(defaultEgoOptions.speed * defaultEgoOptions.sprintFactor * 0.9)
+})
 test('collision groups apply to movement and standing queries', () => {
   const motor = grounded({collisionGroups: 0x00_01_00_01})
   world.createCollider(RAPIER.ColliderDesc.cuboid(5, 2, 0.1).setTranslation(0, 1, -1).setCollisionGroups(0x00_02_00_02))

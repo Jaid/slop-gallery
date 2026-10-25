@@ -122,6 +122,7 @@ Supply finite positions and finite, nonzero quaternions. The body’s `userData`
 
 - `onInput(input)`: before movement when input is active and at least one player action is pressed.
 - `onLand(state, impactSpeed)`: once after renewed ground contact, with downward speed before collision resolution. Initial placement/teleports and contact interruptions shorter than 0.06 seconds are suppressed. `EgoMotor.landingSpeed` exposes the same one-step signal to non-React consumers.
+- `onImpact(impact, state)`: after a physics step for each obstacle the character first touched in it, ground included. `impact.speed` is the collision-resolved speed toward the obstacle along `impact.normal` on the step before, so pressing against a wall does not repeat a hard hit; `impact.airborne` tells jumps and falls from walking. `EgoMotor.impacts` exposes the same one-step list to non-React consumers.
 - `onZoomTransition({from, to, direction, duration})`: once per real FOV target change, including mid-animation reversals; seconds match the selected casual/extended transition. Held keys do not repeat it, and explicit camera release/teleport/unmount is silent. Rendering and audio policy remain application-owned.
 - `onUpdate(state)`: after each physics step with a detached snapshot. Reading the ref on demand avoids these per-step allocations.
 - `onStep(state)`: at a grounded stride’s downward bob trough, at most once per rendered frame. It works with `bobStrength={0}` and does not repeat across frames surrounding one trough.

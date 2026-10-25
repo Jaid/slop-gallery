@@ -1,5 +1,5 @@
 import type {EgoOptions} from './options.ts'
-import type {EgoInput, EgoPosition, EgoState} from './types.ts'
+import type {EgoImpact, EgoInput, EgoPosition, EgoState} from './types.ts'
 import type {RapierCollider, RapierContext, RapierRigidBody} from '@react-three/rapier'
 import type {Quaternion} from 'three/webgpu'
 
@@ -9,6 +9,7 @@ import {approachHorizontal, clamp, getCapsuleHalfHeight, getJumpVelocity} from '
 import {resolveEgoOptions} from './options.ts'
 
 const up = new Vector3(0, 1, 0)
+const minimumImpactSpeed = 0.01
 const identityRotation = {
   x: 0,
   y: 0,
@@ -27,6 +28,7 @@ export default class EgoMotor {
   private disposed = false
   private readonly forward = new Vector3
   private freshClearance = false
+  private readonly freshImpacts: Array<EgoImpact> = []
   private hadGroundContact = false
   private isCrouching = false
   private isFlying = false
@@ -43,6 +45,8 @@ export default class EgoMotor {
   private shapeHeight = 0
   private shapeRadius = 0
   private readonly targetVelocity = new Vector3
+  /** handles of the colliders touched on the latest step, so that only first contacts count as impacts */
+  private touched = new Set<number>
   private readonly velocity = new Vector3
   private verticalVelocity = 0
 
@@ -71,6 +75,11 @@ export default class EgoMotor {
 
   get horizontalSpeed() {
     return Math.hypot(this.physicalVelocity.x, this.physicalVelocity.z)
+  }
+
+  /** Obstacles first touched on the latest step, ground included. */
+  get impacts(): ReadonlyArray<EgoImpact> {
+    return this.freshImpacts
   }
 
   /** Downward speed before impact on the latest step; zero without a new landing. */
@@ -136,6 +145,7 @@ export default class EgoMotor {
   /** `flying` moves freely along the camera direction, without gravity or collisions. Leaving it falls from the current position. */
   step(delta: number, input: EgoInput, rotation: Quaternion, active = true, flying = false) {
     this.lastLandingSpeed = 0
+    this.freshImpacts.length = 0
     if (this.disposed || !Number.isFinite(delta) || delta <= 0) {
       return
     }
@@ -145,6 +155,7 @@ export default class EgoMotor {
     const now = this.clock
     this.active = active
     if (flying) {
+      this.touched.clear()
       this.fly(dt, delta, input, rotation)
       return
     }
@@ -232,6 +243,7 @@ export default class EgoMotor {
     }
     this.movement.set(this.velocity.x * dt, this.verticalVelocity * dt, this.velocity.z * dt)
     this.controller.computeColliderMovement(this.collider, this.movement, this.rapier.QueryFilterFlags.EXCLUDE_SENSORS, o.collisionGroups)
+    this.collectImpacts(!grounded)
     if (o.pushDynamicBodies) {
       this.pushDynamicBodies(dt)
     }
@@ -320,6 +332,8 @@ export default class EgoMotor {
     this.airborneTime = 0
     this.hadGroundContact = false
     this.lastLandingSpeed = 0
+    this.freshImpacts.length = 0
+    this.touched.clear()
     this.isGrounded = false
     this.lastGroundedAt = Number.NEGATIVE_INFINITY
     this.jumpBufferedUntil = Number.NEGATIVE_INFINITY
@@ -353,6 +367,35 @@ export default class EgoMotor {
       }
     })
     return clear
+  }
+
+  private collectImpacts(airborne: boolean) {
+    const touched = new Set<number>
+    for (let index = 0; index < this.controller.numComputedCollisions(); index++) {
+      const collision = this.controller.computedCollision(index)
+      const collider = collision?.collider
+      if (!collision || !collider || touched.has(collider.handle)) {
+        continue
+      }
+      touched.add(collider.handle)
+      if (this.touched.has(collider.handle)) {
+        continue
+      }
+      // Still the velocity of the previous step: the motion that led into the contact, not the requested momentum, which stays high while pressing against a wall.
+      const {normal1, witness1} = collision
+      const speed = -(this.physicalVelocity.x * normal1.x + this.physicalVelocity.y * normal1.y + this.physicalVelocity.z * normal1.z)
+      // Contact flicker while resting against an obstacle comes back at float noise speed.
+      if (speed > minimumImpactSpeed) {
+        this.freshImpacts.push({
+          airborne,
+          collider,
+          normal: {...normal1},
+          point: {...witness1},
+          speed,
+        })
+      }
+    }
+    this.touched = touched
   }
 
   private fly(dt: number, delta: number, input: EgoInput, rotation: Quaternion) {
