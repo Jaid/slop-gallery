@@ -42,6 +42,11 @@ export default class KnotRotation {
     this.elapsed = 0
   }
 
+  /** sets the shared clock to an absolute time in seconds */
+  set(seconds: number) {
+    this.elapsed = seconds % knotRotationPeriod
+  }
+
   /** turns a showcased Knot to the shared clock’s angle, on top of the rotation it had when it was first stepped */
   step(body: RigidBody) {
     if (this.released.has(body) || !body.isFixed()) {

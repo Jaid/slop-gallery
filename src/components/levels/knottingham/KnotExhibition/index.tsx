@@ -33,7 +33,12 @@ export default function KnotExhibition() {
   const rotation = useMemo(() => new KnotRotation, [])
   useBeforePhysicsStep(world => {
     if (isRotating) {
-      rotation.advance(world.timestep)
+      // Under ?frozen_time the Knots follow the engine clock itself rather than the count of physics steps, which depends on how the frames fell while the level loaded.
+      if (globalThis.frozenTime) {
+        rotation.set(performance.now() / 1000)
+      } else {
+        rotation.advance(world.timestep)
+      }
     }
     for (const exhibit of knotExhibition) {
       const body = propObjects.get(`prop-knot-${exhibit.id}`)?.body
