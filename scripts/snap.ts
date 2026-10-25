@@ -34,6 +34,8 @@ ${galleryHelp(snapHeight)}
   --name <name>           output file name without extension. Default: the next free number, starting at 1
   -h, --help              show this help
 
+With --scale above 1, the photo renders at that many times the size and is downsampled to --width × --height with Lanczos in linear light, which needs ImageMagick’s magick on PATH.
+
 Set BROWSER to a Chromium executable with WebGPU support.`
 const snapRoot = join(repositoryRoot, 'out', 'snap')
 const {values} = parseArgs({
@@ -160,7 +162,12 @@ const name = values.name ?? await getFree('', isTaken, {
 const output = join(snapRoot, `${name}.jxl`)
 const png = `${output}.png`
 await fs.writeFile(png, capture.buffer)
+const {width, height} = setup.viewport
 try {
+  // With --scale the canvas renders more pixels than requested. They average down in linear light, so thin highlights and bright edges keep their brightness, with a Lanczos that is sharpened to make up for its softening.
+  if (frame.width !== width || frame.height !== height) {
+    await Bun.$`magick ${png} -depth 16 -colorspace RGB -filter LanczosSharp -distort Resize ${width}x${height}! -colorspace sRGB -depth 8 ${png}`.quiet()
+  }
   await Bun.$`cjxl ${png} ${lossyJxlOptions(jxlDistance, effort)} ${output}`.quiet()
 } finally {
   await fs.rm(png, {force: true})
@@ -173,5 +180,5 @@ if (frame.dump) {
   console.warn('No X dump written: the player is not ready.')
 }
 const [pitch, yaw, roll] = pose!.rotation
-console.log(`Wrote ${relative(repositoryRoot, output).replaceAll('\\', '/')} (${frame.width}×${frame.height})${frame.dump ? ' and its .msgpack X dump' : ''}`)
+console.log(`Wrote ${relative(repositoryRoot, output).replaceAll('\\', '/')} (${width}×${height}${frame.width === width && frame.height === height ? '' : `, downsampled from ${frame.width}×${frame.height}`})${frame.dump ? ' and its .msgpack X dump' : ''}`)
 console.log(`--position ${pose!.position.map(value => Math.round(value * 1000) / 1000).join(',')} --angle ${[yaw, pitch, roll].map(degrees).join(',')} --fov ${pose!.fov}`)

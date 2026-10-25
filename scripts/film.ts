@@ -66,6 +66,8 @@ A wireframe flood is a sphere growing from a position that turns everything it r
   radius     meters, for a flood that follows the keyframes instead of a speed
 Every other field of set_wireframe (mode, shape, anchor, colors, seam and glow, line_style and line_width, …) switches at its keyframe and holds from then on. Before the first direction, the scene renders as usual.
 
+With --scale above 1, every frame renders at that many times the size and is downsampled to --width × --height with Lanczos in linear light.
+
 Set BROWSER to a Chromium executable with WebGPU support. ffmpeg (and cjxl for .jxl) must be on PATH.`
 const filmRoot = join(repositoryRoot, 'out', 'film')
 const {values} = parseArgs({
@@ -160,6 +162,14 @@ await page.waitForFunction(() => {
   return pendingImages === 0 && pendingPipelines === 0
 }, {timeout: 120_000})
 await waitForFrames(page, settle)
+// With --scale the canvas renders more pixels than the film has; the sink downsamples them.
+const source = await page.evaluate(async () => {
+  const frame = await globalThis.slopGallery!.capturePixels!()
+  return {
+    width: frame.width,
+    height: frame.height,
+  }
+})
 await fs.mkdir(dirname(output), {recursive: true})
 const sink = createFrameSink(format, {
   crf,
@@ -168,9 +178,10 @@ const sink = createFrameSink(format, {
   height,
   jxlDistance,
   output,
+  source,
   width,
 })
-const frameBytes = width * height * 4
+const frameBytes = source.width * source.height * 4
 let received = 0
 // Frames travel as raw RGBA request bodies; base64 through the DevTools protocol would cost more than rendering.
 const frameServer = Bun.serve({
