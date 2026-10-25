@@ -24,6 +24,27 @@ describe('modular botanical catalog', () => {
       expect(plantCombinations.filter(combination => combination.pot === pot.id)).toHaveLength(8)
     }
   })
+  test('cinematic rounds the celadon shell but keeps its convex hull identical to the other graphics modes', () => {
+    const heavy = new PotGeometry('celadon')
+    const location = Object.getOwnPropertyDescriptor(globalThis, 'location')
+    Object.defineProperty(globalThis, 'location', {
+      configurable: true,
+      value: {href: 'https://slop.gallery/?graphics=cinematic'},
+    })
+    try {
+      const cinematic = new PotGeometry('celadon')
+      expect(triangleCount(cinematic.shell)).toBeGreaterThan(triangleCount(heavy.shell))
+      expect(cinematic.vertices).toEqual(heavy.vertices)
+      cinematic.dispose()
+    } finally {
+      if (location) {
+        Object.defineProperty(globalThis, 'location', location)
+      } else {
+        Reflect.deleteProperty(globalThis, 'location')
+      }
+      heavy.dispose()
+    }
+  })
   test('every pot is hollow above its fitted, recessed soil and has a distinct silhouette', () => {
     const material = new MeshBasicNodeMaterial
     const hashes = new Set<bigint | number>

@@ -41,38 +41,50 @@ const refineProfile = (profile: Profile, detail: number) => {
     })
   })
 }
+/** The pot’s lathed shell with `detail` times the segments around and the square of it along each span of the profile, which is far coarser than the 96 segments around. */
+const lathe = (kind: PotKind, detail: number) => {
+  const definition = potDefinition(kind)
+  const shell = new LatheGeometry(refineProfile(profiles[kind], detail ** 2), radialSegments[kind] * detail)
+  const positions = shell.getAttribute('position')
+  const uv = shell.getAttribute('uv')
+  for (let i = 0; i < positions.count; i++) {
+    const x = positions.getX(i)
+    const y = positions.getY(i)
+    const z = positions.getZ(i)
+    // Exterior fluting fades into the foot and rolled lip; the soil-facing wall stays smooth.
+    if (kind === 'ivory' && Math.hypot(x, z) > 0.3) {
+      const radius = Math.hypot(x, z)
+      const flute = 0.012 * (0.5 + 0.5 * Math.cos(Math.atan2(x, z) * 40)) * Math.sin(Math.PI * Math.min(1, y / 0.76))
+      if (radius > 0) {
+        positions.setXYZ(i, x * (1 + flute / radius), y, z * (1 + flute / radius))
+      }
+    }
+    uv.setY(i, y / definition.height)
+  }
+  return shell
+}
 
 /** Hollow ceramic shells with finished rims; the recessed substrate belongs to the pot. */
 export default class PotGeometry {
   readonly shell: LatheGeometry
   readonly soil: CylinderGeometry
   readonly trim: BufferGeometry | null
+  /** convex hull points of the shell, always from the undetailed lathe so physics is identical in every graphics mode */
   readonly vertices: Float32Array
 
   constructor(kind: PotKind) {
     const definition = potDefinition(kind)
     const detail = detailedKinds.has(kind) ? readGraphicsProfile().curveDetail : 1
-    // The hand-placed profile is far coarser than the 96 segments around, so its spans get the square of the factor.
-    this.shell = new LatheGeometry(refineProfile(profiles[kind], detail ** 2), radialSegments[kind] * detail)
-    const positions = this.shell.getAttribute('position')
-    const uv = this.shell.getAttribute('uv')
-    for (let i = 0; i < positions.count; i++) {
-      const x = positions.getX(i)
-      const y = positions.getY(i)
-      const z = positions.getZ(i)
-      // Exterior fluting fades into the foot and rolled lip; the soil-facing wall stays smooth.
-      if (kind === 'ivory' && Math.hypot(x, z) > 0.3) {
-        const radius = Math.hypot(x, z)
-        const flute = 0.012 * (0.5 + 0.5 * Math.cos(Math.atan2(x, z) * 40)) * Math.sin(Math.PI * Math.min(1, y / 0.76))
-        if (radius > 0) {
-          positions.setXYZ(i, x * (1 + flute / radius), y, z * (1 + flute / radius))
-        }
-      }
-      uv.setY(i, y / definition.height)
-    }
+    this.shell = lathe(kind, detail)
     this.shell.computeVertexNormals()
     this.shell.computeBoundingBox()
-    this.vertices = Float32Array.from(positions.array)
+    if (detail === 1) {
+      this.vertices = Float32Array.from(this.shell.getAttribute('position').array)
+    } else {
+      const hull = lathe(kind, 1)
+      this.vertices = Float32Array.from(hull.getAttribute('position').array)
+      hull.dispose()
+    }
     const soilDisc = new CylinderGeometry(definition.soilRadius, definition.soilRadius, 0.03, 64)
     this.soil = soilDisc.translate(0, definition.soilHeight - 0.015, 0)
     if (kind === 'noir') {
