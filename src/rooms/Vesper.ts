@@ -13,8 +13,8 @@ export default class Vesper extends Room<'vesper'> {
       title: 'The Vesper',
       description: 'Old masters. New misunderstandings.',
       origin: floorOrigin(plan, 0),
-      fence: floorBox(plan, 0, 5.8),
-      spawn: southSpawn(plan, 0),
+      fence: floorBox(plan.size, 0, 5.8),
+      spawn: southSpawn(plan.size),
       // The two light boxes in the ceiling.
       lamps: {
         'ceiling-north': {

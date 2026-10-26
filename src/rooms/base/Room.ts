@@ -5,9 +5,11 @@ import {Box3, Vector3} from 'three/webgpu'
 /** a rectangle on the floor plan, centered on its x and z */
 export type FloorRectangle = {
   center: readonly [x: number, z: number]
-  size: readonly [width: number, depth: number]
+  size: FloorSize
 }
-/** where visitors arrive in a room: the camera’s position in world meters and its orientation */
+/** the extent of a rectangle on the floor plan along x and z */
+export type FloorSize = readonly [width: number, depth: number]
+/** where visitors arrive in a room: the camera’s position relative to the room’s {@link Room.origin} and its orientation */
 export type RoomSpawn = {
   position: Vec3
   rotation: Quat
@@ -29,14 +31,14 @@ export type Lamp = PointLamp | SpotLamp
 export type RoomOptions<Id extends string> = {
   /** a sentence shown below the title */
   description: string
-  /** the room’s air as one axis-aligned box or several in world meters, from its floor (or the bottom of a sunken one) to its clear height */
+  /** the room’s air as one axis-aligned box or several relative to {@link origin}, from its floor (or the bottom of a sunken one) to its clear height */
   fence: Arrayable<Box3>
   id: Id
   /** the lamps by id, positioned relative to {@link origin} */
   lamps?: Record<string, Lamp>
   /** the number the map shows for the room, which also orders its room list */
   number: number
-  /** the point in world meters the room’s contents are positioned from, usually the middle of its floor */
+  /** the point in world meters every other position of the room is relative to, usually the middle of its floor */
   origin: Vec3
   spawn: RoomSpawn
   title: string
@@ -65,9 +67,9 @@ type Arrayable<T> = ReadonlyArray<T> | T
 export const eyeHeight = 1.7
 const point = new Vector3
 
-/** The box over a floor rectangle, from `floorY` up by `height`. */
-export function floorBox({center: [x, z], size: [width, depth]}: FloorRectangle, floorY: number, height: number) {
-  return new Box3(new Vector3(x - width / 2, floorY, z - depth / 2), new Vector3(x + width / 2, floorY + height, z + depth / 2))
+/** The box over a floor rectangle of the size, from `bottom` up by `height`, centered on the origin or on `center` (x and z) relative to it. */
+export function floorBox([width, depth]: FloorSize, bottom: number, height: number, [x, z]: readonly [number, number] = [0, 0]) {
+  return new Box3(new Vector3(x - width / 2, bottom, z - depth / 2), new Vector3(x + width / 2, bottom + height, z + depth / 2))
 }
 
 /** The middle of a floor rectangle at `floorY`, as most rooms’ {@link Room.origin}. */
@@ -75,10 +77,10 @@ export function floorOrigin({center: [x, z]}: FloorRectangle, floorY: number): V
   return [x, floorY, z]
 }
 
-/** The spot visitors arrive at by default: at eye height, 2.4 m in from the middle of the south wall, looking north. */
-export function southSpawn({center: [x, z], size: [, depth]}: FloorRectangle, floorY: number): RoomSpawn {
+/** The spot visitors arrive at by default in a room of the size whose origin is the middle of its floor: at eye height, 2.4 m in from the middle of the south wall, looking north. */
+export function southSpawn([, depth]: FloorSize): RoomSpawn {
   return {
-    position: [x, floorY + eyeHeight, z + depth / 2 - 2.4],
+    position: [0, eyeHeight, depth / 2 - 2.4],
     rotation: [0, 0, 0, 1],
   }
 }
@@ -110,7 +112,7 @@ export default abstract class Room<Id extends string = string> {
     this.volumetricSun = volumetricSun
   }
 
-  /** the box around the whole fence */
+  /** the box around the whole fence, relative to {@link origin} */
   get bounds() {
     return this.fence.reduce((result, box) => result.union(box), new Box3)
   }
@@ -120,10 +122,29 @@ export default abstract class Room<Id extends string = string> {
     return this.volumetricSun > 0
   }
 
-  /** Whether the position lies in the room’s air. */
-  contains([x, y, z]: Vec3) {
-    point.set(x, y, z)
+  /** the fence in world meters */
+  get worldFence() {
+    const offset = new Vector3(...this.origin)
+    return this.fence.map(box => box.clone().translate(offset))
+  }
+
+  /** the spawn in world meters */
+  get worldSpawn(): RoomSpawn {
+    return {
+      ...this.spawn,
+      position: this.toWorld(this.spawn.position),
+    }
+  }
+
+  /** Whether the world position lies in the room’s air. */
+  contains(position: Vec3) {
+    point.set(...this.toLocal(position))
     return this.fence.some(box => box.containsPoint(point))
+  }
+
+  /** The position relative to the room’s {@link origin} of a point given in world meters. */
+  toLocal([x, y, z]: Vec3): Vec3 {
+    return [x - this.origin[0], y - this.origin[1], z - this.origin[2]]
   }
 
   /** The world position of a point given relative to the room’s {@link origin}. */

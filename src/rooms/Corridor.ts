@@ -12,6 +12,7 @@ const hallSouthZ = lodge.siennaZ + lodge.timberWidth / 2
 const stairXs = corridorStairs.blocks.flatMap(block => [block.position[0] - block.size[0] / 2, block.position[0] + block.size[0] / 2])
 const stairWestX = Math.min(...stairXs)
 const stairEastX = Math.max(...stairXs)
+const [originX, originZ] = corridor.center
 const lantern = {
   tint: '#ffb363',
 } as const
@@ -25,18 +26,12 @@ export default class Corridor extends Room<'corridor'> {
       description: 'Timber, turns and the long way back to Sienna.',
       origin: [corridor.center[0], corridor.floorY, corridor.center[1]],
       fence: [
-        floorBox({
-          center: [(hallWestX + corridorHallEastX) / 2, (hallNorthZ + hallSouthZ) / 2],
-          size: [corridorHallEastX - hallWestX, hallSouthZ - hallNorthZ],
-        }, corridor.floorY, corridor.height),
+        floorBox([corridorHallEastX - hallWestX, hallSouthZ - hallNorthZ], 0, corridor.height, [(hallWestX + corridorHallEastX) / 2 - originX, (hallNorthZ + hallSouthZ) / 2 - originZ]),
         // The stair flight climbs from the hall’s south end to the Sienna’s doorway.
-        floorBox({
-          center: [(stairWestX + stairEastX) / 2, lodge.siennaZ],
-          size: [stairEastX - stairWestX, corridorStairs.width],
-        }, corridorStairs.end[1], corridorStairs.start[1] + stairHeadroom - corridorStairs.end[1]),
+        floorBox([stairEastX - stairWestX, corridorStairs.width], corridorStairs.end[1] - corridor.floorY, corridorStairs.start[1] + stairHeadroom - corridorStairs.end[1], [(stairWestX + stairEastX) / 2 - originX, lodge.siennaZ - originZ]),
       ],
       spawn: {
-        position: [corridor.center[0], corridor.floorY + eyeHeight, corridor.center[1]],
+        position: [0, eyeHeight, 0],
         rotation: [0, 0, 0, 1],
       },
       // Three lanterns at both ends and in the middle; the middle one reaches farthest.

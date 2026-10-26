@@ -13,8 +13,8 @@ export default class Oculus extends Room<'oculus'> {
       description: 'Borrowed light from the gallery above.',
       origin: floorOrigin(oculus, oculus.floorY),
       // Up to the ceiling’s underside, not the upper room’s walkable surface.
-      fence: floorBox(oculus, oculus.floorY, oculus.ceiling.topY - oculus.ceiling.thickness - oculus.floorY),
-      spawn: southSpawn(oculus, oculus.floorY),
+      fence: floorBox(oculus.size, 0, oculus.ceiling.topY - oculus.ceiling.thickness - oculus.floorY),
+      spawn: southSpawn(oculus.size),
       // Green, blue and red, from the sealed tunnel’s north end up to its high south end, each hanging 35 cm under its housing.
       lamps: {
         'tunnel-green': {

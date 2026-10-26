@@ -25,8 +25,8 @@ export default class Lobby extends Room<'lobby'> {
       description: 'Nothing here is quite as it seems.',
       origin: floorOrigin(plan, 0),
       // Up to the crown of the vault.
-      fence: floorBox(plan, 0, lobbyVault.springY + lobbyVault.outerRadius),
-      spawn: southSpawn(plan, 0),
+      fence: floorBox(plan.size, 0, lobbyVault.springY + lobbyVault.outerRadius),
+      spawn: southSpawn(plan.size),
       // One under each of the vault’s three chandeliers, hung below the hub to reach past the candle ring.
       lamps: {
         'chandelier-north': chandelier(-8),

@@ -7,7 +7,7 @@ import Room, {floorBox, floorOrigin, southSpawn} from './base/Room.ts'
 
 const {floorY, moonfall: plan} = lowerGallery
 // The fence reaches down to the deepest air in the crater.
-const bottom = floorY + craterTerrain.lowest()
+const bottom = craterTerrain.lowest()
 const wallLed = {
   tint: '#91c9c4',
 } as const
@@ -32,8 +32,8 @@ export default class Moonfall extends Room<'moonfall'> {
       title: 'Moonfall',
       description: 'Down the stairs. Out of the ordinary.',
       origin: floorOrigin(plan, floorY),
-      fence: floorBox(plan, bottom, floorY + 5.8 - bottom),
-      spawn: southSpawn(plan, floorY),
+      fence: floorBox(plan.size, bottom, 5.8 - bottom),
+      spawn: southSpawn(plan.size),
       lamps: {
         // Four wall LEDs down the west wall, leaving its middle dark.
         'wall-west-1': westWallLed(-10),

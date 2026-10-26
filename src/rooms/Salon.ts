@@ -11,8 +11,8 @@ export default class Salon extends Room<'salon'> {
       description: 'Hung frame to frame. Judged elbow to elbow.',
       // Lit through its skylight, without lamps of its own.
       origin: floorOrigin(salon, 0),
-      fence: floorBox(salon, 0, 5.8),
-      spawn: southSpawn(salon, 0),
+      fence: floorBox(salon.size, 0, 5.8),
+      spawn: southSpawn(salon.size),
     })
   }
 }

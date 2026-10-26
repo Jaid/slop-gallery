@@ -12,11 +12,11 @@ export default class Lodge extends Room<'lodge'> {
       description: 'Weathered stone. Warm timber. A way back through the corridor.',
       origin: floorOrigin(lodge, lodge.floorY),
       fence: [
-        floorBox(lodge, lodge.floorY, lodge.height),
+        floorBox(lodge.size, 0, lodge.height),
         // The Lodge’s half of the doorway passage from the Corridor’s hall.
-        floorBox(lodgeThreshold, corridor.floorY, corridor.height),
+        floorBox(lodgeThreshold.size, corridor.floorY - lodge.floorY, corridor.height, [lodgeThreshold.center[0] - lodge.center[0], lodgeThreshold.center[1] - lodge.center[1]]),
       ],
-      spawn: southSpawn(lodge, lodge.floorY),
+      spawn: southSpawn(lodge.size),
       lamps: {
         // High above the front log, flickering around an average of 90%.
         fire: {

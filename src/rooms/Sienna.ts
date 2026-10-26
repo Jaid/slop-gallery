@@ -13,8 +13,8 @@ export default class Sienna extends Room<'sienna'> {
       title: 'The Sienna',
       description: 'Low light. Rich textures. Questionable company.',
       origin: floorOrigin(plan, 0),
-      fence: floorBox(plan, 0, 5.8),
-      spawn: southSpawn(plan, 0),
+      fence: floorBox(plan.size, 0, 5.8),
+      spawn: southSpawn(plan.size),
       lamps: {
         // Below the swinging chandelier’s metalwork at rest, so the fixture can’t shadow its own source.
         chandelier: {

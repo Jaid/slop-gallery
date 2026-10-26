@@ -27,8 +27,8 @@ export default class Dine extends Room<'dine'> {
       title: 'Dine',
       description: 'A change of perspective is encouraged.',
       origin: floorOrigin(plan, 0),
-      fence: floorBox(plan, 0, 5.8),
-      spawn: southSpawn(plan, 0),
+      fence: floorBox(plan.size, 0, 5.8),
+      spawn: southSpawn(plan.size),
       // Three breakable LED panes down the middle, each lighting through one point just below its diffuser.
       lamps: {
         'led-north': led(-5),
