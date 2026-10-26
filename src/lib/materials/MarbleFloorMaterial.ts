@@ -14,7 +14,7 @@ export default class MarbleFloorMaterial extends FloorMaterial {
       reflection: reflections ? {
         strength: 0.12,
         grazingStrength: 0.65,
-        blur: 1,
+        loss: 1,
         mask: texture(map).r.smoothstep(0.008, 0.014),
       } : undefined,
     })

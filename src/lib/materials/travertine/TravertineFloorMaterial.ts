@@ -81,7 +81,8 @@ export default class TravertineFloorMaterial extends FloorMaterial {
         strength: 0.2,
         grazingStrength: 0.5,
         // Honed and buffed, not glassed: lights and doors mirror as soft smears.
-        blur: 2.6,
+        loss: 2.6,
+        gaussianBlur: 4,
         // Only the top face mirrors the room; the slab’s edges and underside show through the floor glass from below.
         mask: stone.pore.oneMinus().mul(normalWorldGeometry.y.step(0.5)),
       } : undefined,

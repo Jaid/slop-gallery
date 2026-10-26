@@ -94,7 +94,7 @@ export default class ParquetFloorMaterial extends FloorMaterial {
       reflection: reflections ? {
         strength: 0.02,
         grazingStrength: 0.16,
-        blur: 4,
+        loss: 4,
       } : undefined,
     })
     // Block-width units in a frame turned 45° about the vertical.

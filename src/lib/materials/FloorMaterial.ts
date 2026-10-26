@@ -18,8 +18,11 @@ export type ReflectionPass = {
 }
 
 type FloorReflection = {
-  blur: Node<'float'> | number
+  /** radius of the Gaussian blur over the mirror, in pixels of a 1080-row image; 0 leaves it unblurred */
+  gaussianBlur?: number
   grazingStrength: number
+  /** mip level the mirror is read at, 0 being its full resolution and every step halving it */
+  loss: Node<'float'> | number
   mask?: Node<'float'>
   strength: number
 }
@@ -45,17 +48,17 @@ const projection = new Matrix4
 export const floorReflectionStrength = uniform(1)
 /** factor on every floor’s extra reflectance at grazing angles */
 export const floorReflectionGrazing = uniform(1)
-/** factor on every floor’s mip level of the mirror, which lowers the resolution it is read at */
+/** factor on every floor’s loss, the mip level of the mirror it reads */
 export const floorReflectionLevel = uniform(1)
-/** radius of the Gaussian blur over every floor’s mirror, in pixels of a 1080-row image; 0 leaves it unblurred */
-export const floorReflectionBlur = uniform(0)
+/** factor on every floor’s Gaussian blur radius */
+export const floorReflectionBlur = uniform(1)
 /** taps of the mirror blur, spread evenly over a disk */
 const blurTaps = 16
 /** the golden angle, which spreads consecutive taps around the disk without lining up */
 const goldenAngle = Math.PI * (3 - Math.sqrt(5))
 /** factor on every reflective floor’s roughness, which shapes its highlights and environment lighting but not its mirror */
 export const floorReflectionRoughness = uniform(1)
-/** mip levels the reflection lacks when rendered below native resolution, which every floor’s blur already covers */
+/** mip levels the reflection lacks when rendered below native resolution, which every floor’s loss already covers */
 const reflectionLevelBias = uniform(0)
 /** Renders the shared floor reflection for the main pass about to render, if a floor will be in view. */
 export function renderFloorReflection(pass: ReflectionPass) {
@@ -64,14 +67,18 @@ export function renderFloorReflection(pass: ReflectionPass) {
 /**
  * Reads the mirror at a mip level through a B-spline filter: a plain lookup of a coarse mip magnifies its texels bilinearly, which shows as blocky stair-steps around bright shapes.
  *
- * With {@link floorReflectionBlur} set, it averages Gaussian-weighted taps over a disk around the point instead, each read from the mip whose texels lie about as far apart as the taps, so no detail between them flickers.
+ * With a blur radius, it averages Gaussian-weighted taps over a disk around the point instead, each read from the mip whose texels lie about as far apart as the taps, so no detail between them flickers.
  */
-function sampleMirror(reflection: Reflection, level: Node<'float'>) {
+function sampleMirror(reflection: Reflection, level: Node<'float'>, gaussianBlur: number) {
+  const smooth = textureBicubicLevel(reflection, level)
+  if (!(gaussianBlur > 0)) {
+    return smooth
+  }
   return Fn(() => {
-    const result = textureBicubicLevel(reflection, level).toVar('floorMirror')
-    If(floorReflectionBlur.greaterThan(0), () => {
+    const result = smooth.toVar('floorMirror')
+    const radius = floorReflectionBlur.mul(gaussianBlur / 1080).toVar('floorMirrorBlur')
+    If(radius.greaterThan(0), () => {
       const size = vec2(reflection.size(int(0)) as Node<'ivec2'>)
-      const radius = floorReflectionBlur.div(1080)
       const tapLevel = radius.mul(size.y).mul(2 / Math.sqrt(blurTaps)).max(1).log2().max(level)
       // Offsets are in fractions of the image height; x shrinks by the aspect ratio so the disk stays round.
       const scale = vec2(size.y.div(size.x), 1).mul(radius)
@@ -236,8 +243,8 @@ export default class FloorMaterial extends MeshStandardNodeMaterial {
     if (this.reflection && reflection) {
       const grazing = normalView.dot(positionViewDirection).abs().oneMinus().pow(5)
       const reflectance = grazing.mul(reflection.grazingStrength).mul(floorReflectionGrazing).add(reflection.strength).mul(reflection.mask ?? float(1)).mul(floorReflectionStrength)
-      const blur = typeof reflection.blur === 'number' ? float(reflection.blur) : reflection.blur
-      const mirror = sampleMirror(this.reflection, blur.mul(floorReflectionLevel).add(reflectionLevelBias).max(0))
+      const loss = typeof reflection.loss === 'number' ? float(reflection.loss) : reflection.loss
+      const mirror = sampleMirror(this.reflection, loss.mul(floorReflectionLevel).add(reflectionLevelBias).max(0), reflection.gaussianBlur ?? 0)
       this.outputNode = vec4(mix(output.rgb, mirror.rgb, reflectance), output.a)
     }
   }

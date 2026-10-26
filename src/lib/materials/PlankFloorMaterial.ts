@@ -45,7 +45,7 @@ export default class PlankFloorMaterial extends FloorMaterial {
       reflection: reflections ? {
         strength: 0.025,
         grazingStrength: 0.25,
-        blur: 3.2,
+        loss: 3.2,
         mask: boards.joint.oneMinus(),
       } : undefined,
     })

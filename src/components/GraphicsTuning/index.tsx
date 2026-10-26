@@ -114,7 +114,13 @@ const sections: Array<Section> = [
       percent('mirrorReflectionStrength', 'Strength', 0, 4, 0.05),
       percent('mirrorReflectionGrazing', 'Grazing', 0, 4, 0.05),
       percent('mirrorReflectionLevel', 'Loss', 0, 4, 0.05),
-      range('mirrorReflectionBlur', 'Gaussian blur', 0, 64, 1),
+      {
+        ...percent('mirrorReflectionBlur', 'Gaussian blur', 0.05, 4, 0.05),
+        off: {
+          fallback: 1,
+          off: 0,
+        },
+      },
       percent('mirrorReflectionRoughness', 'Roughness', 0, 4, 0.05),
     ],
   },
