@@ -25,18 +25,6 @@ type LedPanelsProps = {
   surfaceIntensity?: number
 }
 
-/** Mean brightness of a group of panes, for a light that stands in for all of them. */
-export function meanBrightness(brightness: Float32Array, panes: ReadonlyArray<number>) {
-  if (!panes.length) {
-    return 0
-  }
-  let sum = 0
-  for (const index of panes) {
-    sum += brightness[index]
-  }
-  return sum / panes.length
-}
-
 /** Ceiling LED panes that flicker after one energetic thrown hit and drop their diffuser after the second. */
 export default function LedPanels(props: LedPanelsProps) {
   const resetEpoch = useGallery(state => state.resetEpoch)
