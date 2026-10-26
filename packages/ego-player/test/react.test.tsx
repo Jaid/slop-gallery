@@ -214,7 +214,7 @@ test('React lifecycle preserves the motor, camera ownership and ref contract wit
       y: 0,
       z: 0,
     })
-    expect(state.camera.position.toArray()).toEqual([3, 5.2, 5])
+    expect(state.camera.position.toArray()).toEqual([3, 5.1, 5])
     expect(state.camera.quaternion.toArray()).toEqual([0, 1, 0, 0])
     expect(() => handle.teleport([0, 0, 0], [0, 0, 0, 0])).toThrow(RangeError)
     expect(handle.getState()?.position).toEqual({
@@ -275,7 +275,7 @@ test('React lifecycle preserves the motor, camera ownership and ref contract wit
       expect(restored.getState()?.crouching).toBe(!blocked)
       expect(restored.body!.translation().x).toBe(blocked ? 0 : 4)
       expect(state.camera.position.x).toBe(blocked ? 0 : 4)
-      expect(state.camera.position.y).toBeCloseTo(blocked ? 1.65 : 1.22, 5)
+      expect(state.camera.position.y).toBeCloseTo(blocked ? 1.65 : 1.12, 5)
       tick()
       expect(latest?.crouching).toBe(!blocked)
       expect(latest?.position.x).toBe(blocked ? 0 : 4)
@@ -302,7 +302,7 @@ test('React lifecycle preserves the motor, camera ownership and ref contract wit
     frame()
     expect(player.current!.getState()?.crouching).toBe(true)
     expect(state.camera.position.toArray()[0]).toBe(4)
-    expect(state.camera.position.y).toBeCloseTo(1.22, 5)
+    expect(state.camera.position.y).toBeCloseTo(1.12, 5)
     expect(state.camera.quaternion.toArray()).toEqual([0, 1, 0, 0])
     await act(async () => root.render(render({}, false)))
   } finally {

@@ -132,7 +132,7 @@ test('sprint and crouch speeds preserve feet and resize the collider synchronous
   expect(motor.body.translation().y).toBeCloseTo(0.02, 2)
   tick(motor)
   expect(motor.crouching).toBe(false)
-  expect(motor.body.collider(0).halfHeight()).toBeCloseTo(0.5)
+  expect(motor.body.collider(0).halfHeight()).toBeCloseTo(0.55)
 })
 test('cannot stand under a ceiling but stands after clearance is restored', () => {
   const motor = grounded()
@@ -409,7 +409,7 @@ test('teleport updates collider pose before the next controller query', () => {
   const motor = grounded()
   motor.teleport([8, 3, 7])
   expect(motor.body.collider(0).translation().x).toBe(8)
-  expect(motor.body.collider(0).translation().y).toBeCloseTo(3.8)
+  expect(motor.body.collider(0).translation().y).toBeCloseTo(3.85)
   expect(motor.body.collider(0).translation().z).toBe(7)
 })
 test('autostep climbs a low ledge and can be disabled', () => {

@@ -141,8 +141,8 @@ Distances use world units, speeds use world units per second, acceleration/gravi
 | `dodgeFactor`, `dodgeJumpFactor` | 1.5, 1.1 |
 | `acceleration`, `deceleration` | 18, 22 |
 | `airAcceleration`, `airDeceleration` | 6, 1.5 |
-| `height`, `radius`, `crouchHeight` | 1.6, 0.3, 1 |
-| `eyeHeight`, `crouchEyeHeight` | 1.6, 0.9 |
+| `height`, `radius`, `crouchHeight` | 1.7, 0.3, 1.2 |
+| `eyeHeight`, `crouchEyeHeight` | 1.6, 1.1 |
 | `jumpHeight`, `sprintJumpFactor`, `crouchJumpFactor` | 1.5, 1.3, 0.4 |
 | `jumpReleaseFactor`, `jumpBufferTime`, `coyoteTime` | 0.55, 0.14, 0.12 |
 | `gravity`, `fallGravityFactor`, `maxSpeedDown` | 9.81, 1.35, 30 |

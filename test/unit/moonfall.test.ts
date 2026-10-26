@@ -183,7 +183,8 @@ describe('lower gallery', () => {
                 const position = body.translation()
                 const dx = path[target][0] - position.x
                 const dz = path[target][1] - position.z
-                if (Math.hypot(dx, dz) < Math.max(0.14, (sprint ? 8 : 3) / fps)) {
+                // A sprint turns wider than the landing, so it heads for the next point early instead of circling this one.
+                if (Math.hypot(dx, dz) < (sprint ? 0.6 : Math.max(0.14, 3 / fps))) {
                   target++
                   continue
                 }
