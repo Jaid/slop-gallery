@@ -23,7 +23,7 @@ const staircase = {
 } as const
 export const stairFlights = [
   new StairFlight('upper', [staircase.startX, staircase.topY, staircase.z], [staircase.turnX, staircase.bottomY / 2, staircase.z], staircase.width, staircase.count / 2, staircase.landing),
-  new StairFlight('lower', [staircase.turnX, staircase.bottomY / 2, staircase.returnZ], [staircase.endX, staircase.bottomY, staircase.returnZ], staircase.lowerWidth, staircase.count / 2, 0, staircase.landing),
+  new StairFlight('lower', [staircase.turnX, staircase.bottomY / 2, staircase.returnZ], [staircase.endX, staircase.bottomY, staircase.returnZ], staircase.lowerWidth, staircase.count / 2),
 ]
 export const stairTurn = new StairTurn([staircase.turnX, (staircase.z + staircase.returnZ) / 2], staircase.bottomY / 2, (staircase.returnZ - staircase.z) / 2, staircase.width, staircase.lowerWidth)
 export const stairBlocks = stairFlights.flatMap(flight => flight.blocks)
