@@ -17,6 +17,22 @@ import WallSurface from '#src/components/Scene/WallSurface.tsx'
 import {knotGalleryBounds, knotGalleryCenter, knotGallerySize, knotGalleryWalls} from '#src/lib/gallery/knotGallery.ts'
 import VelvetWallMaterial from '#src/lib/materials/VelvetWallMaterial.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
+import {readPmrem} from '#src/lib/rendering/pmrem.ts'
+
+// A product-shot studio that floods the hall from no visible source. Under ?pmrem=slop_gallery it dims to a faint fill in the gallery’s hemisphere colors, closer to the gallery’s mood, and leaves the hall to its LED panels.
+const fillLights = readPmrem() === 'slop_gallery' ? {
+  ambient: 0,
+  sky: '#ecf3ff',
+  ground: '#a29270',
+  hemisphere: 0.3,
+  key: 0,
+} : {
+  ambient: 0.45,
+  sky: '#e1edff',
+  ground: '#80705d',
+  hemisphere: 1.3,
+  key: 2.3,
+}
 
 /** The Knot level’s shell and lighting, without museum rooms or their physics. */
 export default function KnotLobby() {
@@ -55,9 +71,9 @@ export default function KnotLobby() {
   return <>
     <color args={['#ded8ca']} attach='background' />
     <group name='knottingham-lobby'>
-      <ambientLight intensity={0.45} />
-      <hemisphereLight args={['#e1edff', '#80705d', 1.3]} />
-      <directionalLight color='#fff0d7' intensity={2.3} position={[-3, 9, -16]} />
+      <ambientLight intensity={fillLights.ambient} />
+      <hemisphereLight color={fillLights.sky} groundColor={fillLights.ground} intensity={fillLights.hemisphere} />
+      <directionalLight color='#fff0d7' intensity={fillLights.key} position={[-3, 9, -16]} />
       {knotGalleryWalls.map(wall => <WallSurface key={wall.id} material={trimMaterial} plaster={plaster} surfaceMaterial={wallMaterial} surfaceRoom='vesper' wall={wall} />)}
       <RigidBody colliders={false} type='fixed'>
         <CuboidCollider args={[knotGallerySize[0] / 2, 0.12, knotGallerySize[2] / 2]} position={[knotGalleryCenter[0], -0.12, knotGalleryCenter[2]]} />
