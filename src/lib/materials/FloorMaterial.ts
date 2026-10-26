@@ -3,7 +3,7 @@ import type NodeBuilder from 'three/src/nodes/core/NodeBuilder.js'
 import type NodeFrame from 'three/src/nodes/core/NodeFrame.js'
 import type {Camera, MRTNode, Renderer, Scene, Texture} from 'three/webgpu'
 
-import {float, materialRoughness, mix, normalView, output, positionViewDirection, reflector, uniform, vec4} from 'three/tsl'
+import {float, Fn, If, int, materialRoughness, mix, normalView, output, positionViewDirection, reflector, textureBicubicLevel, uniform, vec2, vec4} from 'three/tsl'
 import {Box3, DepthTexture, Frustum, HalfFloatType, LinearMipMapLinearFilter, Matrix4, MeshStandardNodeMaterial, NodeUpdateType, Object3D, RenderTarget, VelocityNode} from 'three/webgpu'
 
 /** what the reflection needs from the pass it is reflected into */
@@ -45,8 +45,14 @@ const projection = new Matrix4
 export const floorReflectionStrength = uniform(1)
 /** factor on every floor’s extra reflectance at grazing angles */
 export const floorReflectionGrazing = uniform(1)
-/** factor on every floor’s reflection blur, in mip levels */
-export const floorReflectionBlur = uniform(1)
+/** factor on every floor’s mip level of the mirror, which lowers the resolution it is read at */
+export const floorReflectionLevel = uniform(1)
+/** radius of the Gaussian blur over every floor’s mirror, in pixels of a 1080-row image; 0 leaves it unblurred */
+export const floorReflectionBlur = uniform(0)
+/** taps of the mirror blur, spread evenly over a disk */
+const blurTaps = 16
+/** the golden angle, which spreads consecutive taps around the disk without lining up */
+const goldenAngle = Math.PI * (3 - Math.sqrt(5))
 /** factor on every reflective floor’s roughness, which shapes its highlights and environment lighting but not its mirror */
 export const floorReflectionRoughness = uniform(1)
 /** mip levels the reflection lacks when rendered below native resolution, which every floor’s blur already covers */
@@ -54,6 +60,35 @@ const reflectionLevelBias = uniform(0)
 /** Renders the shared floor reflection for the main pass about to render, if a floor will be in view. */
 export function renderFloorReflection(pass: ReflectionPass) {
   shared?.render(pass)
+}
+/**
+ * Reads the mirror at a mip level through a B-spline filter: a plain lookup of a coarse mip magnifies its texels bilinearly, which shows as blocky stair-steps around bright shapes.
+ *
+ * With {@link floorReflectionBlur} set, it averages Gaussian-weighted taps over a disk around the point instead, each read from the mip whose texels lie about as far apart as the taps, so no detail between them flickers.
+ */
+function sampleMirror(reflection: Reflection, level: Node<'float'>) {
+  return Fn(() => {
+    const result = textureBicubicLevel(reflection, level).toVar('floorMirror')
+    If(floorReflectionBlur.greaterThan(0), () => {
+      const size = vec2(reflection.size(int(0)) as Node<'ivec2'>)
+      const radius = floorReflectionBlur.div(1080)
+      const tapLevel = radius.mul(size.y).mul(2 / Math.sqrt(blurTaps)).max(1).log2().max(level)
+      // Offsets are in fractions of the image height; x shrinks by the aspect ratio so the disk stays round.
+      const scale = vec2(size.y.div(size.x), 1).mul(radius)
+      const uv = reflection.uvNode as Node<'vec2'>
+      let sum: Node<'vec4'> = vec4(0)
+      let total = 0
+      for (let i = 0; i < blurTaps; i++) {
+        const distance = Math.sqrt((i + 0.5) / blurTaps)
+        const angle = i * goldenAngle
+        const weight = Math.exp(-2 * distance ** 2)
+        sum = sum.add(reflection.sample(uv.add(vec2(Math.cos(angle) * distance, Math.sin(angle) * distance).mul(scale))).level(tapLevel).mul(weight))
+        total += weight
+      }
+      result.assign(sum.div(total))
+    })
+    return result
+  })()
 }
 /** Bounds the floor a reflection target lies in: its nearest ancestor with geometry, since some floors keep the target in a group of its own. */
 function floorBounds(target: Object3D) {
@@ -202,7 +237,8 @@ export default class FloorMaterial extends MeshStandardNodeMaterial {
       const grazing = normalView.dot(positionViewDirection).abs().oneMinus().pow(5)
       const reflectance = grazing.mul(reflection.grazingStrength).mul(floorReflectionGrazing).add(reflection.strength).mul(reflection.mask ?? float(1)).mul(floorReflectionStrength)
       const blur = typeof reflection.blur === 'number' ? float(reflection.blur) : reflection.blur
-      this.outputNode = vec4(mix(output.rgb, this.reflection.level(blur.mul(floorReflectionBlur).add(reflectionLevelBias).max(0)).rgb, reflectance), output.a)
+      const mirror = sampleMirror(this.reflection, blur.mul(floorReflectionLevel).add(reflectionLevelBias).max(0))
+      this.outputNode = vec4(mix(output.rgb, mirror.rgb, reflectance), output.a)
     }
   }
 

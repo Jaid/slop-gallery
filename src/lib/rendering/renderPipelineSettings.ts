@@ -37,10 +37,12 @@ export type RenderPipelineSettings = {
   lampShadowRadius: number
   /** shadow map lookups per pixel for every lamp */
   lampShadowSamples: number
-  /** factor on every reflective floor’s reflection blur */
+  /** radius of the Gaussian blur over the floor mirror, in pixels of a 1080-row image */
   mirrorReflectionBlur: number
   /** factor on every reflective floor’s extra reflectance at grazing angles */
   mirrorReflectionGrazing: number
+  /** factor on every reflective floor’s mip level of the mirror */
+  mirrorReflectionLevel: number
   /** factor on every reflective floor’s roughness */
   mirrorReflectionRoughness: number
   /** whether the reflective floors mirror the room through their shared planar mirror */
@@ -129,7 +131,8 @@ export function getRenderPipelineSettings(profile: GraphicsProfile, antiAliasing
     dither: false,
     lampShadowRadius: profile.lampShadowRadius ?? profile.shadowMapScale,
     lampShadowSamples: profile.shadowSamples,
-    mirrorReflectionBlur: 1,
+    mirrorReflectionBlur: 0,
+    mirrorReflectionLevel: 1,
     mirrorReflectionGrazing: 1,
     mirrorReflectionRoughness: 1,
     mirrorReflectionStrength: 1,

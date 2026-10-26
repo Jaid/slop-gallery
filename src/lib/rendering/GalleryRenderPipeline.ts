@@ -17,7 +17,7 @@ import {traa} from 'three/addons/tsl/display/TRAANode.js'
 import {convertToTexture, diffuseColor, float, int, interleavedGradientNoise, length, luminance, max, metalness, min, mrt, normalView, output, pass, renderOutput, roughness, rtt, screenCoordinate, screenUV, smoothstep, uniform, uv, vec2, vec3, vec4, velocity} from 'three/tsl'
 import {BlendMode, DirectionalLight, HalfFloatType, MRTNode, NoBlending, Node, NormalBlending, PerspectiveCamera, RenderPipeline, Vector2} from 'three/webgpu'
 
-import {floorReflectionBlur, floorReflectionGrazing, floorReflectionRoughness, floorReflectionStrength, renderFloorReflection} from '../materials/FloorMaterial.ts'
+import {floorReflectionBlur, floorReflectionGrazing, floorReflectionLevel, floorReflectionRoughness, floorReflectionStrength, renderFloorReflection} from '../materials/FloorMaterial.ts'
 import ConditionalTexture from './ConditionalTexture.ts'
 import {GalleryRenderer} from './GalleryRenderer.ts'
 import KnotBokeh from './KnotBokeh.ts'
@@ -98,6 +98,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
     if (mirrorReflections) {
       set(floorReflectionStrength, 'mirrorReflectionStrength')
       set(floorReflectionGrazing, 'mirrorReflectionGrazing')
+      set(floorReflectionLevel, 'mirrorReflectionLevel')
       set(floorReflectionBlur, 'mirrorReflectionBlur')
       set(floorReflectionRoughness, 'mirrorReflectionRoughness')
     } else {
