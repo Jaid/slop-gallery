@@ -12,7 +12,7 @@ export default class WoodFloorMaterial extends FloorMaterial {
         strength: 0.5,
         grazingStrength: 0.1,
         gaussianBlur: 4,
-        loss: 4,
+        loss: 0,
       } : undefined,
     })
   }
