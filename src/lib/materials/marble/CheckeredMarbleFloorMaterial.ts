@@ -24,6 +24,8 @@ export type CheckeredMarbleFloorOptions = {
   origin: readonly [number, number]
   /** whether the polished floor mirrors the room (heavy mode) */
   reflections?: boolean
+  /** roughness of the polished stone in heavy mode, before the veins add a little */
+  roughness?: number
   seed?: number
   /** share of the mirror when looking straight down */
   strength?: number
@@ -57,7 +59,7 @@ export function checkeredTile(x: number, z: number, {origin, tile}: Pick<Checker
  * Every tile is cut from another part of its block and turned at random, so neighbors never continue each other’s veins. Tiles are set with hairline grout and eased arrises. In heavy mode the polish mirrors the room, bent faintly by the waviness of hand-polished stone; the grout stays matte.
  */
 export default class CheckeredMarbleFloorMaterial extends FloorMaterial {
-  constructor({dark = portoro, drift = false, gaussianBlur = 0, grazingStrength = 0.6, light = calacatta, loss = 1.5, origin, reflections = true, seed = 0, strength = 0.1, tile}: CheckeredMarbleFloorOptions) {
+  constructor({dark = portoro, drift = false, gaussianBlur = 0, grazingStrength = 0.6, light = calacatta, loss = 1.5, origin, reflections = true, roughness = 0.1, seed = 0, strength = 0.1, tile}: CheckeredMarbleFloorOptions) {
     if (!(tile > 0)) {
       throw new RangeError('Marble tiles need a positive size.')
     }
@@ -91,10 +93,10 @@ export default class CheckeredMarbleFloorMaterial extends FloorMaterial {
     const grout = line(edge, groutHalfWidth).toVar('marbleFloorGrout')
     // Only the top face mirrors the room and shows the pattern.
     const top = normalWorldGeometry.y.step(0.5)
-    const roughness = reflections ? 0.1 : 0.3
+    const finish = reflections ? roughness : 0.3
     super(null, {
       color: '#ffffff',
-      roughness,
+      roughness: finish,
       reflection: reflections ? {
         strength,
         grazingStrength,
@@ -113,7 +115,7 @@ export default class CheckeredMarbleFloorMaterial extends FloorMaterial {
     const sawn = new Color(dark.base)
     const groutColor = new Color('#2b2724')
     this.colorNode = mix(mix(vec3(sawn.r, sawn.g, sawn.b), stone.mul(arrisShade).toVec3(), top), vec3(groutColor.r, groutColor.g, groutColor.b), grout.mul(top))
-    this.roughnessNode = mix(float(roughness).add(vein.mul(0.05)), float(0.8), grout)
+    this.roughnessNode = mix(float(finish).add(vein.mul(0.05)), float(0.8), grout)
     // The arrises are eased toward the joint, and hand-polished stone is never quite flat: both bend the mirrored lights.
     const arris = edge.smoothstep(0, 0.005).oneMinus().mul(-arrisDepth).mul(visibleDetail(footprint, 0.008))
     const waviness = mx_noise_float(vec3(x.mul(4), z.mul(4), random(6).mul(40))).mul(0.00012).mul(visibleDetail(footprint, 0.05))

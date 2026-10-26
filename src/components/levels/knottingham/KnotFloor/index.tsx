@@ -13,9 +13,12 @@ export default function KnotFloor() {
   const material = useDisposable(useMemo(() => new CheckeredMarbleFloorMaterial({
     dark: neroMarquina,
     drift: true,
+    grazingStrength: 0,
     light: cremaMarfil,
+    loss: 0,
     origin: knotFloorOrigin,
     reflections: floorReflections,
+    roughness: 0.01,
     seed: 3,
     tile: knotFloorTile,
   }), [floorReflections]))
