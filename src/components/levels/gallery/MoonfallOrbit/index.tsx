@@ -5,6 +5,8 @@ import {useMemo, useRef} from 'react'
 import {useGraphicsModeValue} from 'use-graphics-mode'
 
 import Orbitable from '#component/Orbitable'
+import {useAmbienceEmitter} from '#src/lib/audio/ambience/ambienceEmitters.ts'
+import MoonfallOrbitAmbience from '#src/lib/audio/ambience/MoonfallOrbit.ts'
 import {AnimationClock} from '#src/lib/frozenTime.ts'
 import {rooms} from '#src/lib/gallery.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
@@ -22,6 +24,7 @@ export default function MoonfallOrbit() {
   const orbit = useRef<Group>(null)
   const clock = useMemo(() => new AnimationClock(0.05), [])
   const {curveDetail} = useGraphicsModeValue(getGraphicsProfile)
+  useAmbienceEmitter(MoonfallOrbitAmbience)
   // The core’s detail 2 splits each edge in three, so the factor applies to that count.
   const coreDetail = 3 * curveDetail - 1
   useFrame((_, delta) => {

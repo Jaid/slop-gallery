@@ -38,7 +38,7 @@ Ambient sounds are emitters: subclasses of `ambience/base/AmbienceEmitter.ts` th
 
 Level components sound an emitter with `useAmbienceEmitter(EmitterClass)`, which adds it to `useAmbienceEmitters`. `AmbienceListener` (in `Scene`) moves the Web Audio listener with the camera, tells emitters the listener’s room and starts them once the sound engine exists after the first click. `?show_ambience_emitters` draws a ball at each emitter, white at full strength at the camera, light gray when silent and blue (1%) to red (99%) in between, crossed out while disabled.
 
-`ambience/Fountain.ts` is the Lobby fountain’s quiet trickle: a soft hiss plus rising-pitch bubbles and small splashes, audible within 21 m. `ambience/LodgeFire.ts` is the Lodge fire burning low: a steeply filtered roar (`stages` chains identical filters, 12 dB per octave each) under sparse fine crackles, audible within 14 m.
+`ambience/Fountain.ts` is the Lobby fountain’s quiet trickle: a soft hiss plus rising-pitch bubbles and small splashes, audible within 21 m. `ambience/LodgeFire.ts` is the Lodge fire burning low: a steeply filtered roar (`stages` chains identical filters, 12 dB per octave each) under sparse fine crackles, audible within 14 m. `ambience/MoonfallOrbit.ts` gives the orbital sculpture a celestial hum: held tones (`ToneBed`, each optionally doubled a little higher to beat) over a faint rumble, audible within 32 m.
 
 ## Playback ownership
 

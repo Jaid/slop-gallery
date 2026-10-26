@@ -1,0 +1,62 @@
+import type {NoiseBed, ToneBed} from './base/AmbienceEmitter.ts'
+
+import {rooms} from '../../gallery/walls.ts'
+import AmbienceEmitter from './base/AmbienceEmitter.ts'
+
+/** a low hum whose harmonics slowly beat against each other */
+const tones: ReadonlyArray<ToneBed> = [
+  {
+    frequency: 55,
+    beat: 0.3,
+    volume: 0.05,
+    sway: [0.2, 0.3],
+  },
+  {
+    frequency: 110,
+    beat: 0.45,
+    volume: 0.025,
+    sway: [0.3, 0.5],
+  },
+  {
+    frequency: 165,
+    volume: 0.008,
+    sway: [0.4, 0.7],
+  },
+]
+/** a faint rumble under the hum */
+const beds: ReadonlyArray<NoiseBed> = [
+  {
+    filter: 'lowpass',
+    frequency: 180,
+    stages: 3,
+    volume: 0.03,
+    sway: [0.3, 0.5],
+  },
+]
+const room = rooms.find(candidate => candidate.id === 'moonfall')!
+
+/** Moonfall’s orbital sculpture: a celestial hum floating over the crater, sounding from its core. */
+export default class MoonfallOrbit extends AmbienceEmitter {
+  constructor() {
+    super({
+      id: 'moonfall-orbital-sculpture',
+      title: 'Orbital sculpture',
+      position: [room.center[0], room.floorY + 2.5, room.center[1]],
+      hearing: {
+        near: 1.5,
+        // still faintly audible from the top of the stairway, about 27 m away
+        far: 32,
+      },
+      gain: 0.3,
+      rooms: ['moonfall'],
+    })
+  }
+
+  protected override get beds() {
+    return beds
+  }
+
+  protected override get tones() {
+    return tones
+  }
+}

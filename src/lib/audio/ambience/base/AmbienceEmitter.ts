@@ -17,6 +17,15 @@ export type NoiseBed = {
   sway?: readonly [rate: number, depth: number]
   volume: number
 }
+/** a held tone, optionally doubled a few hertz higher so the two beat against each other, its level swaying like a {@link NoiseBed}’s */
+export type ToneBed = {
+  /** how many hertz above `frequency` a second oscillator plays */
+  beat?: number
+  frequency: number
+  sway?: readonly [rate: number, depth: number]
+  type?: OscillatorType
+  volume: number
+}
 export type AmbienceEmitterOptions = {
   /** overall level */
   gain?: number
@@ -47,7 +56,7 @@ const scheduleInterval = 80
 const silence = 0.00001
 
 /**
- * A positional, endlessly looping ambient sound, synthesized live with Web Audio: subclasses declare looping {@link NoiseBed}s and scatter one-shots like {@link chirp} and {@link burst} over each scheduling window.
+ * A positional, endlessly looping ambient sound, synthesized live with Web Audio: subclasses declare looping {@link NoiseBed}s and held {@link ToneBed}s and scatter one-shots like {@link chirp} and {@link burst} over each scheduling window.
  * Constructing one makes no sound; {@link start} builds its graph on an output, heard through an HRTF panner at {@link position}, and fades out while the listener is outside its {@link rooms}.
  */
 export default abstract class AmbienceEmitter {
@@ -59,6 +68,7 @@ export default abstract class AmbienceEmitter {
   readonly title: string
   private graph?: Graph
   private inside = true
+  private output?: AudioOutput
 
   constructor({id, title, position, hearing, gain = 1, rooms}: AmbienceEmitterOptions) {
     this.id = id
@@ -76,6 +86,11 @@ export default abstract class AmbienceEmitter {
 
   get playing() {
     return Boolean(this.graph)
+  }
+
+  /** the held tones, read whenever the emitter starts */
+  protected get tones(): ReadonlyArray<ToneBed> {
+    return []
   }
 
   /** A short burst of band-passed noise. */
@@ -106,6 +121,16 @@ export default abstract class AmbienceEmitter {
     return !this.rooms || this.rooms.includes(room)
   }
 
+  /** Crossfades into a fresh graph on the same output, for a recipe that changed; does nothing while stopped. */
+  restart(fade = 0.4) {
+    const {graph, output} = this
+    if (!graph || !output) {
+      return
+    }
+    this.stop(fade)
+    this.start(output)
+  }
+
   /** Random event times averaging `rate` per second within `from`–`until`. A Poisson process has no memory, so consecutive windows need no shared state. */
   protected *scatter(rate: number, from: number, until: number) {
     for (let time = from - Math.log(1 - Math.random()) / rate; time < until; time -= Math.log(1 - Math.random()) / rate) {
@@ -127,10 +152,12 @@ export default abstract class AmbienceEmitter {
   }
 
   /** Starts sounding on `output`; does nothing while already playing. */
-  start({context, master}: AudioOutput) {
+  start(output: AudioOutput) {
     if (this.graph) {
       return
     }
+    this.output = output
+    const {context, master} = output
     const [x, y, z] = this.position
     const panner = new PannerNode(context, {
       panningModel: 'HRTF',
@@ -158,6 +185,9 @@ export default abstract class AmbienceEmitter {
     this.graph = graph
     for (const bed of this.beds) {
       this.loopBed(graph, bed)
+    }
+    for (const tone of this.tones) {
+      this.holdTone(graph, tone)
     }
     this.tick(graph)
   }
@@ -215,6 +245,20 @@ export default abstract class AmbienceEmitter {
     source.stop(start + duration + 0.01)
   }
 
+  private holdTone(graph: Graph, tone: ToneBed) {
+    const level = this.swayingLevel(graph, tone.volume, tone.sway)
+    level.connect(graph.bus)
+    for (const frequency of tone.beat ? [tone.frequency, tone.frequency + tone.beat] : [tone.frequency]) {
+      const oscillator = new OscillatorNode(graph.context, {
+        type: tone.type ?? 'sine',
+        frequency,
+      })
+      oscillator.connect(level)
+      oscillator.start()
+      graph.sources.add(oscillator)
+    }
+  }
+
   private loopBed(graph: Graph, bed: NoiseBed) {
     const {context} = graph
     const source = context.createBufferSource()
@@ -225,16 +269,7 @@ export default abstract class AmbienceEmitter {
       frequency: bed.frequency,
       Q: bed.q ?? 0.7,
     }))
-    const [rate, depth] = bed.sway ?? [0, 0]
-    const level = new GainNode(context, {gain: bed.volume * (1 - depth)})
-    if (depth) {
-      const sway = context.createBufferSource()
-      sway.buffer = swayCurve(context, rate)
-      sway.loop = true
-      sway.connect(new GainNode(context, {gain: bed.volume * depth})).connect(level.gain)
-      sway.start()
-      graph.sources.add(sway)
-    }
+    const level = this.swayingLevel(graph, bed.volume, bed.sway)
     let tail: AudioNode = source
     for (const filter of filters) {
       tail = tail.connect(filter)
@@ -243,6 +278,20 @@ export default abstract class AmbienceEmitter {
     // Every bed starts somewhere else in the shared noise, so beds never move in lockstep.
     source.start(0, Math.random() * loopLength)
     graph.sources.add(source)
+  }
+
+  /** A gain at `volume`, swaying down by up to `depth` of it along a smooth random curve. */
+  private swayingLevel(graph: Graph, volume: number, [rate, depth] = [0, 0] as readonly [number, number]) {
+    const level = new GainNode(graph.context, {gain: volume * (1 - depth)})
+    if (depth) {
+      const sway = graph.context.createBufferSource()
+      sway.buffer = swayCurve(graph.context, rate)
+      sway.loop = true
+      sway.connect(new GainNode(graph.context, {gain: volume * depth})).connect(level.gain)
+      sway.start()
+      graph.sources.add(sway)
+    }
+    return level
   }
 
   private tick(graph: Graph) {
