@@ -1,4 +1,4 @@
-import Room, {floorBox, southSpawn} from './base/Room.ts'
+import Room, {floorBox, floorOrigin, southSpawn} from './base/Room.ts'
 
 const plan = {
   center: [-14, 0],
@@ -12,8 +12,24 @@ export default class Vesper extends Room<'vesper'> {
       number: 2,
       title: 'The Vesper',
       description: 'Old masters. New misunderstandings.',
+      origin: floorOrigin(plan, 0),
       fence: floorBox(plan, 0, 5.8),
       spawn: southSpawn(plan, 0),
+      // The two light boxes in the ceiling.
+      lamps: {
+        'ceiling-north': {
+          position: [0, 4.5, -3.5],
+          strength: 40,
+          tint: '#fff1d8',
+          range: 14,
+        },
+        'ceiling-south': {
+          position: [0, 4.5, 3.5],
+          strength: 40,
+          tint: '#fff1d8',
+          range: 14,
+        },
+      },
     })
   }
 }

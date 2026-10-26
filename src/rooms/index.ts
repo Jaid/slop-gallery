@@ -11,7 +11,7 @@ import Salon from './Salon.ts'
 import Sienna from './Sienna.ts'
 import Vesper from './Vesper.ts'
 
-export type {RoomOptions, RoomSpawn} from './base/Room.ts'
+export type {Lamp, PointLamp, RoomOptions, RoomSpawn, SpotLamp} from './base/Room.ts'
 export {default as Room} from './base/Room.ts'
 
 /** every room of the gallery, in the map’s order */

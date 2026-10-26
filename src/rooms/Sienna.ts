@@ -1,4 +1,4 @@
-import Room, {floorBox, southSpawn} from './base/Room.ts'
+import Room, {floorBox, floorOrigin, southSpawn} from './base/Room.ts'
 
 const plan = {
   center: [-14, 14],
@@ -12,8 +12,20 @@ export default class Sienna extends Room<'sienna'> {
       number: 5,
       title: 'The Sienna',
       description: 'Low light. Rich textures. Questionable company.',
+      origin: floorOrigin(plan, 0),
       fence: floorBox(plan, 0, 5.8),
       spawn: southSpawn(plan, 0),
+      lamps: {
+        // Below the swinging chandelier’s metalwork at rest, so the fixture can’t shadow its own source.
+        chandelier: {
+          position: [0, 3.05, 0],
+          strength: 110,
+          tint: '#ffd36c',
+          range: 15,
+          decay: 1.75,
+          shadow: true,
+        },
+      },
     })
   }
 }
