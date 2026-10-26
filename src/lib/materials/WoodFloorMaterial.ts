@@ -11,7 +11,7 @@ export default class WoodFloorMaterial extends FloorMaterial {
       reflection: reflections ? {
         strength: 0.2,
         grazingStrength: 0,
-        gaussianBlur: 16,
+        gaussianBlur: 20,
         loss: 0,
       } : undefined,
     })
