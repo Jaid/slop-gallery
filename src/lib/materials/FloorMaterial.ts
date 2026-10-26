@@ -3,7 +3,7 @@ import type NodeBuilder from 'three/src/nodes/core/NodeBuilder.js'
 import type NodeFrame from 'three/src/nodes/core/NodeFrame.js'
 import type {Camera, MRTNode, Renderer, Scene, Texture} from 'three/webgpu'
 
-import {float, Fn, If, int, materialRoughness, mix, normalView, output, positionViewDirection, reflector, textureBicubicLevel, uniform, vec2, vec4} from 'three/tsl'
+import {cos, float, Fn, frameId, If, int, interleavedGradientNoise, materialRoughness, mix, normalView, output, positionViewDirection, reflector, screenCoordinate, sin, textureBicubicLevel, uniform, vec2, vec4} from 'three/tsl'
 import {Box3, DepthTexture, Frustum, HalfFloatType, LinearMipMapLinearFilter, Matrix4, MeshStandardNodeMaterial, NodeUpdateType, Object3D, RenderTarget, Vector3, VelocityNode} from 'three/webgpu'
 
 /** what the reflection needs from the pass it is reflected into */
@@ -80,7 +80,7 @@ export function renderFloorReflection(pass: ReflectionPass) {
 /**
  * Reads the mirror at a mip level through a B-spline filter: a plain lookup of a coarse mip magnifies its texels bilinearly, which shows as blocky stair-steps around bright shapes.
  *
- * With a blur radius, it averages Gaussian-weighted taps over a disk around the point instead, each read from the mip whose texels lie about as far apart as the taps, so no detail between them flickers.
+ * With a blur radius, it averages Gaussian-weighted taps over a disk around the point instead. Each tap reads a mip with about two texels between neighboring taps, fine enough that its texels don’t show as blocks, and the disk turns by a noise that changes per pixel and frame, so the antialiasing’s history averages the gaps between the taps into a smooth blur.
  */
 function sampleMirror(reflection: Reflection, level: Node<'float'>, gaussianBlur: number) {
   const smooth = textureBicubicLevel(reflection, level)
@@ -88,11 +88,12 @@ function sampleMirror(reflection: Reflection, level: Node<'float'>, gaussianBlur
     return smooth
   }
   return Fn(() => {
-    const result = smooth.toVar('floorMirror')
+    const result = vec4(0).toVar('floorMirror')
     const radius = floorReflectionBlur.mul(gaussianBlur / 1080).toVar('floorMirrorBlur')
     If(radius.greaterThan(0), () => {
       const size = vec2(reflection.size(int(0)) as Node<'ivec2'>)
-      const tapLevel = radius.mul(size.y).mul(2 / Math.sqrt(blurTaps)).max(1).log2().max(level)
+      const tapLevel = radius.mul(size.y).mul(1 / Math.sqrt(blurTaps)).max(1).log2().max(level)
+      const turn = interleavedGradientNoise(screenCoordinate.xy.add(float(frameId).mod(64).mul(5.588238))).mul(2 * Math.PI)
       // Offsets are in fractions of the image height; x shrinks by the aspect ratio so the disk stays round.
       const scale = vec2(size.y.div(size.x), 1).mul(radius)
       const uv = reflection.uvNode as Node<'vec2'>
@@ -100,12 +101,14 @@ function sampleMirror(reflection: Reflection, level: Node<'float'>, gaussianBlur
       let total = 0
       for (let i = 0; i < blurTaps; i++) {
         const distance = Math.sqrt((i + 0.5) / blurTaps)
-        const angle = i * goldenAngle
+        const angle = turn.add(i * goldenAngle)
         const weight = Math.exp(-2 * distance ** 2)
-        sum = sum.add(reflection.sample(uv.add(vec2(Math.cos(angle) * distance, Math.sin(angle) * distance).mul(scale))).level(tapLevel).mul(weight))
+        sum = sum.add(reflection.sample(uv.add(vec2(cos(angle), sin(angle)).mul(distance).mul(scale))).level(tapLevel).mul(weight))
         total += weight
       }
       result.assign(sum.div(total))
+    }).Else(() => {
+      result.assign(smooth)
     })
     return result
   })()
