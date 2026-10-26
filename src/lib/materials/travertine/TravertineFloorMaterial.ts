@@ -73,7 +73,7 @@ export default class TravertineFloorMaterial extends FloorMaterial {
       u,
       v,
     })
-    const roughness = reflections ? 0.26 : 0.55
+    const roughness = reflections ? 0.1 : 0.55
     super(null, {
       color: '#ffffff',
       roughness,
