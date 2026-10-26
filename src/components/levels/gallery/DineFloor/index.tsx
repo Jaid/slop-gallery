@@ -25,7 +25,7 @@ export default function DineFloor(props: {
     origin: dineFloorOrigin,
     tile: dineFloorTile,
     reflections: floorReflections,
-    strength: 0.3,
+    strength: 0.4,
   }), [floorReflections]))
   const materials = useMemo(() => ({
     slab,
