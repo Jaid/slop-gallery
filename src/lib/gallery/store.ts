@@ -2,6 +2,7 @@ import type {GalleryDocument, GallerySettings, GallerySnapshot, NarrationState, 
 
 import {create} from 'zustand'
 
+import {audioOverride} from '../audio/audioParameter.ts'
 import {effectiveSeed, rollSeed} from '../environmentSeed.ts'
 import {readControlled} from '../pauseMenu.ts'
 import {localStore, sessionStore} from '../temporary.ts'
@@ -95,7 +96,7 @@ export const useGallery = create<State>((set, get) => ({
   playerEpoch: 0,
   ai: false,
   apiKey: readKey(),
-  sound: false,
+  sound: audioOverride ?? false,
   narration: null,
   storageRecoveryRequired: false,
   saveStatus: 'loading',

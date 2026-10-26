@@ -69,7 +69,7 @@ describe('rarity selection policy', () => {
   })
   test('false bypasses rarity for both omissions and ordering; edit starts from the true selection', () => {
     for (const candidate of knotCandidates) {
-      const search = `?candidates=${candidate.data.id}&shots=3`
+      const search = `?candidate=${candidate.data.id}&shots=3`
       const selected = selectKnotBays(`${search}&rarity=false`)[0]?.finishes ?? []
       const expected = candidate.items.filter(item => item.rarity !== special).toSorted((a, b) => a.id.localeCompare(b.id)).slice(0, 3)
       expect(selected.map(item => item.id)).toEqual(expected.map(item => item.id))
@@ -143,7 +143,7 @@ describe('special rarity', () => {
       '?shots=1000&candidate_limit=1000&candidate_order=name',
       '?shots=1000&candidate_limit=1000&rarity=false',
       '?shots=1000&candidate_limit=1000&rarity=edit',
-      ...[...new Set(specialKnots.map(item => item.candidateId))].map(id => `?candidates=${id}&shots=1000`),
+      ...[...new Set(specialKnots.map(item => item.candidateId))].map(id => `?candidate=${id}&shots=1000`),
       '?model=claude-opus-5.5&shots=1000',
       '?rarity_filter=0,1,2,3,4&shots=1000&candidate_limit=1000',
     ]

@@ -12,12 +12,16 @@ import {wallPosition} from '../placement/wallGeometry.ts'
 import {localStore} from '../temporary.ts'
 
 const enabledValues = new Set<unknown>([true, '', 'true'])
-const editingSchema = optis({
+const flagsSchema = optis({
   defaults: {
     edit_portrait_slots: false,
+    show_portrait_slots: false,
   },
   normalizations: {
     edit_portrait_slots(value: unknown) {
+      return enabledValues.has(value)
+    },
+    show_portrait_slots(value: unknown) {
       return enabledValues.has(value)
     },
   },
@@ -25,11 +29,19 @@ const editingSchema = optis({
 
 /** Read the `?edit_portrait_slots` flag; a bare `?edit_portrait_slots` counts as enabled. */
 export function readPortraitSlotEditing(input: URL | string = typeof location === 'undefined' ? '' : location.href): boolean {
-  return readPermalink(input, {schema: editingSchema}).edit_portrait_slots
+  return readPermalink(input, {schema: flagsSchema}).edit_portrait_slots
+}
+
+/** Read the `?show_portrait_slots` flag that marks every portrait slot with its placard; a bare `?show_portrait_slots` counts as enabled. */
+export function readShowPortraitSlots(input: URL | string = typeof location === 'undefined' ? '' : location.href): boolean {
+  return readPermalink(input, {schema: flagsSchema}).show_portrait_slots
 }
 
 /** whether this page was opened with `?edit_portrait_slots`, read once at startup */
 export const isEditingPortraitSlots = readPortraitSlotEditing()
+
+/** whether this page shows the portrait slots, read once at startup; editing shows them too */
+export const isShowingPortraitSlots = isEditingPortraitSlots || readShowPortraitSlots()
 
 /** the ratios from tallest to widest */
 const ratioCycle: ReadonlyArray<PortraitRatio> = ['9:16', '2:3', '1:1', '3:2', '16:9']

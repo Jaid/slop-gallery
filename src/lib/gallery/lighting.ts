@@ -199,12 +199,12 @@ export const lightingPresets = Object.fromEntries(Object.entries(presets).map(([
   },
 }])) as {[Id in LightingPresetId]: typeof presets[Id] & {sun: ReturnType<typeof sunGeometry>}}
 
-const lightingSchema = optis({
+const weatherSchema = optis({
   defaults: {
-    lighting: 'noon',
+    weather: 'noon',
   },
   normalizations: {
-    lighting(value: unknown) {
+    weather(value: unknown) {
       return lightingPresetIds.find(id => id === value) ?? 'noon'
     },
   },
@@ -293,13 +293,13 @@ export function tuneLighting(preset: GalleryLightingPreset, tuning: LightingTuni
   }
 }
 
-/** Read the `?lighting` preset the gallery starts with. */
-export function readLighting(input: URL | string = typeof location === 'undefined' ? '' : location.href): LightingPresetId {
-  return readPermalink(input, {schema: lightingSchema}).lighting
+/** Read the `?weather`, the lighting preset the gallery starts with. */
+export function readWeather(input: URL | string = typeof location === 'undefined' ? '' : location.href): LightingPresetId {
+  return readPermalink(input, {schema: weatherSchema}).weather
 }
 
-/** The gallery’s current lighting preset. With `?development`, it starts from `?lighting` and L cycles it for the rest of the page session; otherwise it stays at Noon. */
-export const useLighting = create<{preset: LightingPresetId}>(() => ({preset: isDevelopmentMode ? readLighting() : 'noon'}))
+/** The gallery’s current lighting preset. With `?development`, it starts from `?weather` and L cycles it for the rest of the page session; otherwise it stays at Noon. */
+export const useLighting = create<{preset: LightingPresetId}>(() => ({preset: isDevelopmentMode ? readWeather() : 'noon'}))
 
 /** Switches to the next (or with a negative `step`, previous) preset and returns it. */
 export function cycleLighting(step = 1) {

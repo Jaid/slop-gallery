@@ -43,12 +43,12 @@ const knot: HintContent = {
   ],
 }
 describe('?crosshair', () => {
-  test('is off by default', () => {
-    expect(readCrosshair('https://slop.gallery/')).toBe(false)
+  test('only false or 0 turns it off', () => {
     expect(readCrosshair('https://slop.gallery/?crosshair=false')).toBe(false)
     expect(readCrosshair('https://slop.gallery/?crosshair=0')).toBe(false)
   })
-  test('a bare flag or true enables it', () => {
+  test('is on by default', () => {
+    expect(readCrosshair('https://slop.gallery/')).toBe(true)
     expect(readCrosshair('https://slop.gallery/?crosshair')).toBe(true)
     expect(readCrosshair('https://slop.gallery/?crosshair=true')).toBe(true)
     expect(readCrosshair('https://slop.gallery/?graphics=heavy&crosshair')).toBe(true)

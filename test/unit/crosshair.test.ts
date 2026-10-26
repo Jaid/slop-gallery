@@ -39,7 +39,7 @@ describe('crosshair preference', () => {
   })
   test('without an explicit value it follows ?crosshair, which is absent in tests', () => {
     const preference = new CrosshairPreference
-    expect(preference.getSnapshot()).toBe(false)
+    expect(preference.getSnapshot()).toBe(true)
   })
 })
 describe('aim dot', () => {

@@ -38,7 +38,7 @@ export function selectKnotBays(search = '') {
   const rarityMode = parseRarityMode(search)
   const rarityFilter = parseRarityFilter(search)
   const candidateOrder = parseCandidateOrder(search)
-  const requested = [...new Set(params.getAll('candidates').flatMap(value => value.split(',')).map(value => value.trim()).filter(Boolean))]
+  const requested = [...new Set(params.getAll('candidate').flatMap(value => value.split(',')).map(value => value.trim()).filter(Boolean))]
   const known = new Set(knotCandidates.map(candidate => candidate.data.id))
   const unknown = requested.filter(id => !known.has(id))
   if (unknown.length) {

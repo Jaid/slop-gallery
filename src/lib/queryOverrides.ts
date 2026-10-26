@@ -1,15 +1,16 @@
 import {readAiSettings} from './ai/settings.ts'
 import {readShowAmbienceEmitters} from './audio/ambience/ambienceEmitters.ts'
+import {readAudio} from './audio/audioParameter.ts'
 import {readIntroNarration} from './audio/intro.ts'
 import {readCrosshair} from './crosshair.ts'
 import {readDevelopmentMode} from './developmentMode.ts'
 import {readSeedOverride} from './environmentSeed.ts'
 import {readFrozenTime} from './frozenTime.ts'
 import {readSpawn} from './gallery/bookmarks.ts'
-import {readDefaultPortraitsEnabled} from './gallery/defaultPortraits.ts'
+import {readPortraitSet} from './gallery/defaultPortraits.ts'
 import {readFlying} from './gallery/flyMode.ts'
-import {readLighting} from './gallery/lighting.ts'
-import {readPortraitSlotEditing} from './gallery/portraitSlotStore.ts'
+import {readWeather} from './gallery/lighting.ts'
+import {readPortraitSlotEditing, readShowPortraitSlots} from './gallery/portraitSlotStore.ts'
 import {readKnotRotation} from './physics/rotatingKnots.ts'
 import {readAntiAliasing} from './rendering/antiAliasing.ts'
 import {readGraphicsModeName} from './rendering/graphicsMode.ts'
@@ -17,7 +18,7 @@ import {readEditLights, readShowLights} from './rendering/lightLevels.ts'
 import {readNear} from './rendering/near.ts'
 import {readPmrem} from './rendering/pmrem.ts'
 import {readScale} from './rendering/scale.ts'
-import {readVisionMode} from './rendering/visionMode.ts'
+import {readShowWireframe} from './rendering/showWireframe.ts'
 import {readWireframeHighlight} from './rendering/wireframeHighlight.ts'
 import {readTemporary} from './temporary.ts'
 
@@ -33,6 +34,7 @@ const searchParameter = (key: string): Reader => input => searchParameters(input
 const readers: Record<string, Reader> = {
   ...Object.fromEntries(Object.keys(readAiSettings(defaultsUrl)).map(key => [key, (input: string) => readAiSettings(input)[key as keyof ReturnType<typeof readAiSettings>]])),
   anti_aliasing: readAntiAliasing,
+  audio: readAudio,
   crosshair: readCrosshair,
   development: readDevelopmentMode,
   edit_lights: readEditLights,
@@ -42,17 +44,18 @@ const readers: Record<string, Reader> = {
   graphics: readGraphicsModeName,
   intro_narration: readIntroNarration,
   knot_rotation: readKnotRotation,
-  lighting: readLighting,
   near: readNear,
   pmrem: readPmrem,
-  portraits: readDefaultPortraitsEnabled,
+  portrait_set: readPortraitSet,
   scale: readScale,
   seed: readSeedOverride,
   show_ambience_emitters: readShowAmbienceEmitters,
   show_lights: readShowLights,
+  show_portrait_slots: readShowPortraitSlots,
+  show_wireframe: readShowWireframe,
   spawn: readSpawn,
   temporary: readTemporary,
-  vision_mode: readVisionMode,
+  weather: readWeather,
   wireframe_highlight: readWireframeHighlight,
   telemetry: input => searchParameter('telemetry')(input) === 'true',
   logs_ingestion_endpoint: searchParameter('logs_ingestion_endpoint'),

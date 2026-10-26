@@ -21,7 +21,7 @@ export const galleryHelp = (defaultHeight = 720) => `  --level <id>            $
   --seed <number>         mirrors ?seed, the environment seed (0–${maximumSeed}) that decides random details like the potted plants. Default: 1
   --width <pixels>        render width. Default: --height × 16/9, or ${Math.round(defaultHeight * 16 / 9)}
   --height <pixels>       render height. Default: --width × 9/16, or ${defaultHeight}
-  --<parameter> <value>   mirrors ?<parameter>=<value> for every other URL query parameter the app reads, e.g. --vision_mode wireframe or --anti_aliasing false:
+  --<parameter> <value>   mirrors ?<parameter>=<value> for every other URL query parameter the app reads, e.g. --show_wireframe true or --anti_aliasing false:
                           ${queryOptionNames.join(', ')}`
 export const galleryOptions = {
   ...queryOptions,

@@ -2,7 +2,7 @@ import {expect, test} from 'bun:test'
 
 import artworks from '../../src/levels/gallery/artworks.ts'
 import slots from '../../src/levels/gallery/slots.ts'
-import defaultPortraits, {readDefaultPortraitsEnabled} from '../../src/lib/gallery/defaultPortraits.ts'
+import defaultPortraits, {readPortraitSet} from '../../src/lib/gallery/defaultPortraits.ts'
 
 test('default works hang in distinct slots of their ratio, taking the slot’s size', () => {
   const portraits = defaultPortraits(7)
@@ -22,9 +22,9 @@ test('the seed decides the assignment, and the same seed repeats it', () => {
   const layouts = new Set([1, 2, 3, 4, 5].map(seed => JSON.stringify(defaultPortraits(seed).map(portrait => portrait.position))))
   expect(layouts.size).toBeGreaterThan(1)
 })
-test('only ?portraits=false turns the default works off', () => {
-  expect(readDefaultPortraitsEnabled('https://example.com/')).toBe(true)
-  expect(readDefaultPortraitsEnabled('https://example.com/?portraits')).toBe(true)
-  expect(readDefaultPortraitsEnabled('https://example.com/?portraits=true')).toBe(true)
-  expect(readDefaultPortraitsEnabled('https://example.com/?portraits=false')).toBe(false)
+test('?portrait_set is classic unless it is false', () => {
+  for (const search of ['', '?portrait_set', '?portrait_set=classic', '?portrait_set=modern', '?portraits=false']) {
+    expect(readPortraitSet(`https://example.com/${search}`)).toBe('classic')
+  }
+  expect(readPortraitSet('https://example.com/?portrait_set=false')).toBe(false)
 })

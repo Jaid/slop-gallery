@@ -3,6 +3,7 @@ import type {GalleryDocument, Portrait} from './types.ts'
 import artworks from '#level/artworks.ts'
 import placement from '#level/placement.ts'
 
+import {audioOverride} from '../audio/audioParameter.ts'
 import {isSeed} from '../environmentSeed.ts'
 import {galleryStorageKey} from '../level.ts'
 import pauseMenu from '../pauseMenu.ts'
@@ -307,6 +308,10 @@ export async function initializePersistence() {
     fresh = saved === null
     if (saved) {
       restoreDocument(saved)
+      // An explicit ?audio wins over the saved setting.
+      if (audioOverride !== undefined) {
+        useGallery.setState({sound: audioOverride})
+      }
     }
     const resumed = playerSession.resume(saved?.savedAt ?? '')
     applySpawnBookmark()

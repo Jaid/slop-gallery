@@ -6,22 +6,22 @@ export type CrosshairFlag = 'always' | boolean
 
 type Listener = () => void
 
-const enabledValues = new Set<unknown>([true, '', 'true'])
+const disabledValues = new Set<unknown>([false, 'false', '0'])
 const crosshairSchema = optis({
   defaults: {
-    crosshair: false,
+    crosshair: true,
   },
   normalizations: {
     crosshair(value: unknown): CrosshairFlag {
       if (value === 'always') {
         return 'always'
       }
-      return enabledValues.has(value)
+      return !disabledValues.has(value)
     },
   },
 })
 
-/** Read the `?crosshair` flag that brings back the aim dot; a bare `?crosshair` counts as enabled and `?crosshair=always` also keeps it through V viewing and zoom. */
+/** Read the `?crosshair` flag for the aim dot; only `false` or `0` hides it, and `?crosshair=always` also keeps it through V viewing and zoom. */
 export function readCrosshair(input: URL | string = typeof location === 'undefined' ? '' : location.href): CrosshairFlag {
   return readPermalink(input, {schema: crosshairSchema}).crosshair
 }

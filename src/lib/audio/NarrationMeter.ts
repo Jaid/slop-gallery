@@ -28,7 +28,7 @@ export default class NarrationMeter {
   private frequencies = new Uint8Array(1024)
   private readonly levels = new Float32Array(narrationBands.length)
 
-  connect(instanceId: string, audio: HTMLAudioElement, context: AudioContext) {
+  connect(instanceId: string, audio: HTMLAudioElement, context: AudioContext, destination: AudioNode = context.destination) {
     const source = context.createMediaElementSource(audio)
     const analyser = context.createAnalyser()
     analyser.fftSize = 2048
@@ -36,7 +36,7 @@ export default class NarrationMeter {
     analyser.minDecibels = -90
     analyser.maxDecibels = -10
     source.connect(analyser)
-    analyser.connect(context.destination)
+    analyser.connect(destination)
     const connection = {
       audio,
       analyser,

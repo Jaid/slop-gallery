@@ -8,31 +8,38 @@ import slots from '#level/slots.ts'
 
 import {environmentRoll} from '../environmentSeed.ts'
 
-const disabledValues = new Set<unknown>([false, 'false', '0'])
-const portraitsSchema = optis({
+const portraitSets = ['classic'] as const
+
+/** the set of default works new game states get, or `false` for none */
+export type PortraitSet = typeof portraitSets[number] | false
+
+const portraitSetSchema = optis({
   defaults: {
-    portraits: true,
+    portrait_set: 'classic',
   },
   normalizations: {
-    portraits(value: unknown) {
-      return !disabledValues.has(value)
+    portrait_set(value: unknown): PortraitSet {
+      if (value === false || value === 'false') {
+        return false
+      }
+      return portraitSets.find(portraitSet => portraitSet === value) ?? 'classic'
     },
   },
 })
 
-/** Read the `?portraits` flag; only `?portraits=false` turns the default works off. */
-export function readDefaultPortraitsEnabled(input: URL | string = typeof location === 'undefined' ? '' : location.href): boolean {
-  return readPermalink(input, {schema: portraitsSchema}).portraits
+/** Read the `?portrait_set` of default works: `classic`, or `false` for none. Anything else is `classic`. */
+export function readPortraitSet(input: URL | string = typeof location === 'undefined' ? '' : location.href): PortraitSet {
+  return readPermalink(input, {schema: portraitSetSchema}).portrait_set
 }
 
-/** whether new game states get the level’s default works, false with `?portraits=false`, read once at startup */
-export const hasDefaultPortraits = readDefaultPortraitsEnabled()
+/** the default works new game states get, read once at startup */
+export const portraitSet = readPortraitSet()
 
 /**
- * The level’s default works for a new game state, or none with `?portraits=false`, each hung in a portrait slot of its ratio, the free ones of higher priority first and among equal ones drawn by the environment `seed`. A work takes the size of its slot, so the same work hangs larger or smaller from one seed to the next.
+ * The level’s default works for a new game state, or none with `?portrait_set=false`, each hung in a portrait slot of its ratio, the free ones of higher priority first and among equal ones drawn by the environment `seed`. A work takes the size of its slot, so the same work hangs larger or smaller from one seed to the next.
  */
 export default function defaultPortraits(seed: number): Array<Portrait> {
-  if (!hasDefaultPortraits) {
+  if (!portraitSet) {
     return []
   }
   const free = slots.toSorted((a, b) => b.priority - a.priority || environmentRoll(seed, `portrait-slot:${a.id}`) - environmentRoll(seed, `portrait-slot:${b.id}`))

@@ -28,9 +28,11 @@ function setup() {
 }
 test('effects retain their 12 dB boost and mute only schedules changes', () => {
   const {sound, context, gains} = setup()
-  const master = gains[0]
+  const [master, output] = gains
   expect(20 * Math.log10(master.gain.value / 0.6)).toBeCloseTo(12)
-  expect(master.connect).toHaveBeenCalledWith(context.destination)
+  expect(master.connect).toHaveBeenCalledWith(output)
+  expect(output.gain.value).toBe(1)
+  expect(output.connect).toHaveBeenCalledWith(context.destination)
   sound.mute(true)
   sound.mute(true)
   expect(master.gain.setTargetAtTime).toHaveBeenCalledTimes(1)
@@ -65,8 +67,8 @@ test('landing reuses the Soft Weight timbre and increases strength with fall spe
   const heavy = setup()
   heavy.sound.land('generic', 5, false, 9)
   expect(light.sources[0].frequency.setValueAtTime.mock.calls[0][0]).toBe(heavy.sources[0].frequency.setValueAtTime.mock.calls[0][0])
-  const lightPeak = Math.max(...light.gains.slice(2).map(gain => gain.gain.linearRampToValueAtTime.mock.calls[0]?.[0] ?? 0))
-  const heavyPeak = Math.max(...heavy.gains.slice(2).map(gain => gain.gain.linearRampToValueAtTime.mock.calls[0]?.[0] ?? 0))
+  const lightPeak = Math.max(...light.gains.slice(3).map(gain => gain.gain.linearRampToValueAtTime.mock.calls[0]?.[0] ?? 0))
+  const heavyPeak = Math.max(...heavy.gains.slice(3).map(gain => gain.gain.linearRampToValueAtTime.mock.calls[0]?.[0] ?? 0))
   expect(heavyPeak).toBeGreaterThan(lightPeak)
 })
 test('landing prevents a duplicate footfall at impact, not subsequent strides', () => {
@@ -89,7 +91,7 @@ test('zoom sweeps use the transition duration and reversals fade the previous so
   context.currentTime = 0.1
   sound.zoomTransition(true, true, 0.3)
   expect(sources[0].stop).toHaveBeenLastCalledWith(0.125)
-  expect(gains[1].gain.cancelAndHoldAtTime).toHaveBeenCalledWith(0.1)
+  expect(gains[2].gain.cancelAndHoldAtTime).toHaveBeenCalledWith(0.1)
   expect(sources[2].frequency.setValueAtTime).toHaveBeenCalledWith(1260, 0.1)
   expect(sources[2].stop).toHaveBeenLastCalledWith(0.4)
   sound.zoomTransition(false, false, 0)
@@ -102,9 +104,9 @@ test('held zoom has one quiet bed, follows zoom amount, and stops on release', (
   }
   expect(sources).toHaveLength(2)
   expect(sources[0].stop).not.toHaveBeenCalled()
-  expect(gains[1].gain.setTargetAtTime).toHaveBeenLastCalledWith(1, 0, 0.025)
+  expect(gains[2].gain.setTargetAtTime).toHaveBeenLastCalledWith(1, 0, 0.025)
   sound.zoomTransition(true, false, 0)
-  expect(gains[1].gain.setTargetAtTime).toHaveBeenLastCalledWith(1.35, 0, 0.025)
+  expect(gains[2].gain.setTargetAtTime).toHaveBeenLastCalledWith(1.35, 0, 0.025)
   context.currentTime = 1
   sound.setZoom(0)
   expect(sources[0].stop).toHaveBeenLastCalledWith(1.06)
@@ -146,15 +148,16 @@ test('viewing mode reversal cancels its delayed voices and completed nodes disco
     source.dispatchEvent(new Event('ended'))
     expect(source.disconnect).toHaveBeenCalledTimes(1)
   }
-  for (const node of [...gains.slice(1), ...filters]) {
+  for (const node of [...gains.slice(2), ...filters]) {
     expect(node.disconnect).toHaveBeenCalledTimes(1)
   }
   expect(gains[0].disconnect).not.toHaveBeenCalled()
+  expect(gains[1].disconnect).not.toHaveBeenCalled()
 })
 test('delayed footstep layers are intrinsically silent before their scheduled attack', () => {
   const {sound, gains} = setup()
   sound.step('generic', 9, false)
-  for (const envelope of gains.slice(2)) {
+  for (const envelope of gains.slice(3)) {
     expect(envelope.gain.value).toBe(0)
   }
 })

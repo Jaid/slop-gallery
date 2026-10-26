@@ -3,6 +3,7 @@ import type {ProceduralPlayback} from './proceduralAudio.ts'
 
 import {clamp} from 'math'
 
+import {audioVolume} from './audioParameter.ts'
 import {footstepVoices, impactFootstepStrength, playerSoundEffects} from './playerSoundEffects.ts'
 import {osc, playVoices} from './proceduralAudio.ts'
 import {playSoundEffect} from './soundEffects.ts'
@@ -20,6 +21,8 @@ export default class SoundEngine {
   }
   readonly context = new AudioContext
   readonly master = this.context.createGain()
+  /** where the effects and the narration meet, at the `?audio` volume */
+  readonly output = this.context.createGain()
 
   private contactIndex = 0
   private extendedZoom = false
@@ -32,7 +35,9 @@ export default class SoundEngine {
 
   private constructor() {
     this.master.gain.value = effectsGain
-    this.master.connect(this.context.destination)
+    this.output.gain.value = audioVolume
+    this.master.connect(this.output)
+    this.output.connect(this.context.destination)
   }
 
   land(surface: FootstepSurface, speed: number, crouching: boolean, impactSpeed: number) {

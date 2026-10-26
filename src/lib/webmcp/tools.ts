@@ -138,7 +138,7 @@ export default function createWebmcpTools(getBridge: () => WebmcpBridge): Array<
     {
       name: 'set_wireframe',
       title: 'Set wireframe flood',
-      description: 'Show every visible surface within a sphere as wireframe, with a glowing seam along its front, while the rest of the frame renders as usual, or the other way around. Surfaces flip by the distance of their triangles or of each pixel, both measured on the wireframe’s solid surfaces, so transparent ones like water flip too. Meant for headless rendering, as it draws the scene up to three extra times per frame. Highlighted objects draw in their own color, everything else in the regular one. Takes effect from the next frame and stays until changed; omitted fields keep their current value, and a null color returns to its fallback. Starts disabled. Needs the regular render pipeline, so ?vision_mode replaces it. Returns the whole flood now in effect.',
+      description: 'Show every visible surface within a sphere as wireframe, with a glowing seam along its front, while the rest of the frame renders as usual, or the other way around. Surfaces flip by the distance of their triangles or of each pixel, both measured on the wireframe’s solid surfaces, so transparent ones like water flip too. Meant for headless rendering, as it draws the scene up to three extra times per frame. Highlighted objects draw in their own color, everything else in the regular one. Takes effect from the next frame and stays until changed; omitted fields keep their current value, and a null color returns to its fallback. Starts disabled. Needs the regular render pipeline, so ?show_wireframe replaces it. Returns the whole flood now in effect.',
       inputSchema: {
         type: 'object',
         properties: {

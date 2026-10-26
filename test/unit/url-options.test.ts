@@ -1,12 +1,13 @@
 import {describe, expect, test} from 'bun:test'
 
+import {readAudio, readAudioOverride, readAudioVolume} from '../../src/lib/audio/audioParameter.ts'
 import {readIntroNarration} from '../../src/lib/audio/intro.ts'
 import {readDevelopmentMode} from '../../src/lib/developmentMode.ts'
 import {readFlying} from '../../src/lib/gallery/flyMode.ts'
 import {getAntiAliasing, readAntiAliasing} from '../../src/lib/rendering/antiAliasing.ts'
 import {readNear} from '../../src/lib/rendering/near.ts'
 import {readScale} from '../../src/lib/rendering/scale.ts'
-import {readVisionMode} from '../../src/lib/rendering/visionMode.ts'
+import {readShowWireframe} from '../../src/lib/rendering/showWireframe.ts'
 import {readWireframeHighlight} from '../../src/lib/rendering/wireframeHighlight.ts'
 
 describe('URL options', () => {
@@ -42,11 +43,11 @@ describe('URL options', () => {
       expect(readWireframeHighlight(search)).toBeUndefined()
     }
   })
-  test('?vision_mode accepts known modes only', () => {
-    expect(readVisionMode('?vision_mode=wireframe')).toBe('wireframe')
-    expect(readVisionMode('?vision_mode=portrait_slots')).toBe('portrait_slots')
-    for (const search of ['', '?vision_mode=', '?vision_mode=xray', '?vision_mode=Wireframe', '?visionMode=wireframe']) {
-      expect(readVisionMode(search)).toBeUndefined()
+  test('?show_wireframe is enabled by a bare or true flag only', () => {
+    expect(readShowWireframe('?show_wireframe')).toBe(true)
+    expect(readShowWireframe('?show_wireframe=true')).toBe(true)
+    for (const search of ['', '?show_wireframe=false', '?show_wireframe=1', '?vision_mode=wireframe']) {
+      expect(readShowWireframe(search)).toBe(false)
     }
   })
   test('?anti_aliasing accepts known methods and false only', () => {
@@ -71,5 +72,22 @@ describe('URL options', () => {
     for (const search of ['', 'https://slop.gallery/', '?intro_narration=true', '?intro_narration=1', '?intro_narration', '?intro_narration=maybe']) {
       expect(readIntroNarration(search)).toBe(true)
     }
+  })
+  test('?audio is muted unless it is true or a percentage', () => {
+    for (const search of ['?audio', '?audio=true']) {
+      expect(readAudio(search)).toBe(true)
+      expect(readAudioOverride(search)).toBe(true)
+      expect(readAudioVolume(search)).toBe(1)
+    }
+    expect(readAudio('?audio=40')).toBe(40)
+    expect(readAudioOverride('?audio=40')).toBe(true)
+    expect(readAudioVolume('?audio=40')).toBe(0.4)
+    for (const search of ['?audio=false', '?audio=0', '?audio=101', '?audio=0.5', '?audio=loud']) {
+      expect(readAudio(search)).toBe(false)
+      expect(readAudioOverride(search)).toBe(false)
+      expect(readAudioVolume(search)).toBe(1)
+    }
+    expect(readAudio('')).toBe(false)
+    expect(readAudioOverride('')).toBeUndefined()
   })
 })
