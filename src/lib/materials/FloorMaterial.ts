@@ -1,8 +1,9 @@
 import type Node from 'three/src/nodes/core/Node.js'
+import type NodeBuilder from 'three/src/nodes/core/NodeBuilder.js'
 import type NodeFrame from 'three/src/nodes/core/NodeFrame.js'
 import type {Camera, MRTNode, Renderer, Scene, Texture} from 'three/webgpu'
 
-import {float, mix, normalView, output, positionViewDirection, reflector, uniform, vec4} from 'three/tsl'
+import {float, materialRoughness, mix, normalView, output, positionViewDirection, reflector, uniform, vec4} from 'three/tsl'
 import {Box3, DepthTexture, Frustum, HalfFloatType, LinearMipMapLinearFilter, Matrix4, MeshStandardNodeMaterial, NodeUpdateType, Object3D, RenderTarget, VelocityNode} from 'three/webgpu'
 
 /** what the reflection needs from the pass it is reflected into */
@@ -42,6 +43,12 @@ const frustum = new Frustum
 const projection = new Matrix4
 /** factor on every floor’s reflectance, which the render pipeline sets to 0 when it renders no reflection */
 export const floorReflectionStrength = uniform(1)
+/** factor on every floor’s extra reflectance at grazing angles */
+export const floorReflectionGrazing = uniform(1)
+/** factor on every floor’s reflection blur, in mip levels */
+export const floorReflectionBlur = uniform(1)
+/** factor on every reflective floor’s roughness, which shapes its highlights and environment lighting but not its mirror */
+export const floorReflectionRoughness = uniform(1)
 /** mip levels the reflection lacks when rendered below native resolution, which every floor’s blur already covers */
 const reflectionLevelBias = uniform(0)
 /** Renders the shared floor reflection for the main pass about to render, if a floor will be in view. */
@@ -193,9 +200,9 @@ export default class FloorMaterial extends MeshStandardNodeMaterial {
     this.reflection = this.reflectionTarget ? acquireReflection(this) : null
     if (this.reflection && reflection) {
       const grazing = normalView.dot(positionViewDirection).abs().oneMinus().pow(5)
-      const reflectance = grazing.mul(reflection.grazingStrength).add(reflection.strength).mul(reflection.mask ?? float(1)).mul(floorReflectionStrength)
+      const reflectance = grazing.mul(reflection.grazingStrength).mul(floorReflectionGrazing).add(reflection.strength).mul(reflection.mask ?? float(1)).mul(floorReflectionStrength)
       const blur = typeof reflection.blur === 'number' ? float(reflection.blur) : reflection.blur
-      this.outputNode = vec4(mix(output.rgb, this.reflection.level(blur.add(reflectionLevelBias).max(0)).rgb, reflectance), output.a)
+      this.outputNode = vec4(mix(output.rgb, this.reflection.level(blur.mul(floorReflectionBlur).add(reflectionLevelBias).max(0)).rgb, reflectance), output.a)
     }
   }
 
@@ -204,5 +211,17 @@ export default class FloorMaterial extends MeshStandardNodeMaterial {
       releaseReflection(this)
     }
     super.dispose()
+  }
+
+  override setupVariants(builder: NodeBuilder) {
+    if (!this.reflection) {
+      super.setupVariants(builder)
+      return
+    }
+    // Scales the roughness for this build only, so rebuilding never stacks the factor.
+    const {roughnessNode} = this
+    this.roughnessNode = ((roughnessNode ?? materialRoughness) as Node<'float'>).mul(floorReflectionRoughness).min(1)
+    super.setupVariants(builder)
+    this.roughnessNode = roughnessNode
   }
 }

@@ -112,6 +112,9 @@ const sections: Array<Section> = [
     controls: [
       select('reflectionResolutionScale', 'Resolution', scales([0.5, 1, 2])),
       percent('mirrorReflectionStrength', 'Strength', 0, 4, 0.05),
+      percent('mirrorReflectionGrazing', 'Grazing', 0, 4, 0.05),
+      percent('mirrorReflectionBlur', 'Blur', 0, 4, 0.05),
+      percent('mirrorReflectionRoughness', 'Roughness', 0, 4, 0.05),
     ],
   },
   {
