@@ -9,7 +9,7 @@ export default class WoodFloorMaterial extends FloorMaterial {
       color: '#c5a585',
       roughness: reflections ? 0.2 : 0.72,
       reflection: reflections ? {
-        strength: 0.3,
+        strength: 0.2,
         grazingStrength: 0,
         gaussianBlur: 16,
         loss: 0,
