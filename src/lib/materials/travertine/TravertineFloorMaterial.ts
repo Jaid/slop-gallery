@@ -78,7 +78,7 @@ export default class TravertineFloorMaterial extends FloorMaterial {
       color: '#ffffff',
       roughness,
       reflection: reflections ? {
-        strength: 0.07,
+        strength: 0.2,
         grazingStrength: 0.5,
         // Honed and buffed, not glassed: lights and doors mirror as soft smears.
         blur: 2.6,
