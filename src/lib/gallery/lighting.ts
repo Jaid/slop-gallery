@@ -5,7 +5,6 @@ import optis from 'optis'
 import readPermalink from 'read-permalink'
 import {create} from 'zustand'
 
-import {isDevelopmentMode} from '../developmentMode.ts'
 import {daytimeSky} from '../materials/ProceduralSky.ts'
 import sun, {sunDirectionFromAngles, sunGeometry} from './sun.ts'
 
@@ -298,8 +297,8 @@ export function readWeather(input: URL | string = typeof location === 'undefined
   return readPermalink(input, {schema: weatherSchema}).weather
 }
 
-/** The gallery’s current lighting preset. With `?development`, it starts from `?weather` and L cycles it for the rest of the page session; otherwise it stays at Noon. */
-export const useLighting = create<{preset: LightingPresetId}>(() => ({preset: isDevelopmentMode ? readWeather() : 'noon'}))
+/** The gallery’s current lighting preset, starting from `?weather`; with `?development`, L cycles it for the rest of the page session. */
+export const useLighting = create<{preset: LightingPresetId}>(() => ({preset: readWeather()}))
 
 /** Switches to the next (or with a negative `step`, previous) preset and returns it. */
 export function cycleLighting(step = 1) {
