@@ -14,7 +14,7 @@ import Vesper from './Vesper.ts'
 export type {RoomOptions, RoomSpawn} from './base/Room.ts'
 export {default as Room} from './base/Room.ts'
 
-/** every room of the gallery, in tour order */
+/** every room of the gallery, in the map’s order */
 export const rooms = [new Lobby, new Vesper, new Dine, new Antechamber, new Sienna, new Moonfall, new Oculus, new Lodge, new Corridor, new Salon] as const
 export type GalleryRoom = (typeof rooms)[number]
 export type RoomId = GalleryRoom['id']

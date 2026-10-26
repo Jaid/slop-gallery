@@ -18,7 +18,7 @@ export type RoomOptions<Id extends string> = {
   /** the room’s air as one axis-aligned box or several in world meters, from its floor (or the bottom of a sunken one) to its clear height */
   fence: Arrayable<Box3>
   id: Id
-  /** the room’s place in the tour, as the map numbers it */
+  /** the number the map shows for the room, which also orders its room list */
   number: number
   spawn: RoomSpawn
   title: string
