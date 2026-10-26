@@ -18,8 +18,9 @@ export default function KnotFloor() {
     loss: 0,
     origin: knotFloorOrigin,
     reflections: floorReflections,
-    roughness: 0.01,
+    roughness: 0,
     seed: 3,
+    strength: 0.2,
     tile: knotFloorTile,
   }), [floorReflections]))
   const reflection = material.reflectionTarget
