@@ -1,5 +1,6 @@
 import type {Lamp} from './base/Room.ts'
 
+import FountainAmbience from '#src/lib/audio/ambience/Fountain.ts'
 import lobby from '#src/lib/gallery/lobby.ts'
 import lobbyVault from '#src/lib/gallery/lobbyVault.ts'
 
@@ -27,6 +28,13 @@ export default class Lobby extends Room<'lobby'> {
       // Up to the crown of the vault.
       fence: floorBox(plan.size, 0, lobbyVault.springY + lobbyVault.outerRadius),
       spawn: southSpawn(plan.size),
+      ambience: {
+        // From the finial’s tip, the main jet’s mouth.
+        fountain: {
+          emitter: FountainAmbience,
+          position: [0, 3.02, 0],
+        },
+      },
       // One under each of the vault’s three chandeliers, hung below the hub to reach past the candle ring.
       lamps: {
         'chandelier-north': chandelier(-8),

@@ -1,3 +1,4 @@
+import type {Vec3} from '../../gallery/types.ts'
 import type {NoiseBed} from './base/AmbienceEmitter.ts'
 import type {Range} from './base/noise.ts'
 
@@ -40,12 +41,12 @@ const splashes = {
 
 /** The Lobby fountain’s quiet trickle: a soft hiss under lots of single bubbles, sounding from the tip of its finial. */
 export default class Fountain extends AmbienceEmitter {
-  constructor() {
+  /** sounds from `position`, by default the finial’s tip, the main jet’s mouth */
+  constructor(position: Vec3 = [fountain.position[0], fountain.position[1] + fountain.jet.y, fountain.position[2]]) {
     super({
       id: 'lobby-fountain',
       title: 'Fountain',
-      // at the finial’s tip, the main jet’s mouth
-      position: [fountain.position[0], fountain.position[1] + fountain.jet.y, fountain.position[2]],
+      position,
       hearing: {
         near: 1,
         // still faintly audible from the Lobby’s far north end, about 18 m away

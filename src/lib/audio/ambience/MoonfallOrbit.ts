@@ -1,3 +1,4 @@
+import type {Vec3} from '../../gallery/types.ts'
 import type {NoiseBed, ToneBed} from './base/AmbienceEmitter.ts'
 
 import {rooms} from '../../gallery/walls.ts'
@@ -37,11 +38,12 @@ const room = rooms.find(candidate => candidate.id === 'moonfall')!
 
 /** Moonfall’s orbital sculpture: a celestial hum floating over the crater, sounding from its core. */
 export default class MoonfallOrbit extends AmbienceEmitter {
-  constructor() {
+  /** sounds from `position`, by default the sculpture’s core */
+  constructor(position: Vec3 = [room.center[0], room.floorY + 2.5, room.center[1]]) {
     super({
       id: 'moonfall-orbital-sculpture',
       title: 'Orbital sculpture',
-      position: [room.center[0], room.floorY + 2.5, room.center[1]],
+      position,
       hearing: {
         near: 1.5,
         // still faintly audible from the top of the stairway, about 27 m away

@@ -1,3 +1,4 @@
+import LodgeFireAmbience from '#src/lib/audio/ambience/LodgeFire.ts'
 import corridor, {lodgeThreshold} from '#src/lib/gallery/corridor.ts'
 import lodge from '#src/lib/gallery/lodge.ts'
 
@@ -17,6 +18,12 @@ export default class Lodge extends Room<'lodge'> {
         floorBox(lodgeThreshold.size, corridor.floorY - lodge.floorY, corridor.height, [lodgeThreshold.center[0] - lodge.center[0], lodgeThreshold.center[1] - lodge.center[1]]),
       ],
       spawn: southSpawn(lodge.size),
+      ambience: {
+        fire: {
+          emitter: LodgeFireAmbience,
+          position: [0, 0.6, 4.2],
+        },
+      },
       lamps: {
         // High above the front log, flickering around an average of 90%.
         fire: {

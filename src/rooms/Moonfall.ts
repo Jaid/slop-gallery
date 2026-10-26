@@ -1,5 +1,6 @@
 import type {Lamp} from './base/Room.ts'
 
+import MoonfallOrbitAmbience from '#src/lib/audio/ambience/MoonfallOrbit.ts'
 import lowerGallery from '#src/lib/gallery/lowerGallery.ts'
 import {craterTerrain} from '#src/lib/gallery/moonfall/CraterTerrain.ts'
 
@@ -34,6 +35,13 @@ export default class Moonfall extends Room<'moonfall'> {
       origin: floorOrigin(plan, floorY),
       fence: floorBox(plan.size, bottom, 5.8 - bottom),
       spawn: southSpawn(plan.size),
+      ambience: {
+        // A celestial hum from the orbital sculpture’s core.
+        'orbital-sculpture': {
+          emitter: MoonfallOrbitAmbience,
+          position: [0, 2.5, 0],
+        },
+      },
       lamps: {
         // Four wall LEDs down the west wall, leaving its middle dark.
         'wall-west-1': westWallLed(-10),

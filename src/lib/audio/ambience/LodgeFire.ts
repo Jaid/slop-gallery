@@ -1,3 +1,4 @@
+import type {Vec3} from '../../gallery/types.ts'
 import type {NoiseBed} from './base/AmbienceEmitter.ts'
 import type {Range} from './base/noise.ts'
 
@@ -37,11 +38,12 @@ const crackles = {
 
 /** The Lodge’s log fire burning low: a soft glow under sparse fine crackles, sounding from just above the logs. */
 export default class LodgeFire extends AmbienceEmitter {
-  constructor() {
+  /** sounds from `position`, by default 60 cm above the fire’s origin */
+  constructor(position: Vec3 = [fireWorldOrigin[0], fireWorldOrigin[1] + 0.6, fireWorldOrigin[2]]) {
     super({
       id: 'lodge-fire',
       title: 'Lodge fire',
-      position: [fireWorldOrigin[0], fireWorldOrigin[1] + 0.6, fireWorldOrigin[2]],
+      position,
       hearing: {
         near: 1,
         far: 14,

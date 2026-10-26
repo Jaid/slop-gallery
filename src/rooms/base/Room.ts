@@ -1,7 +1,16 @@
+import type AmbienceEmitter from '#src/lib/audio/ambience/base/AmbienceEmitter.ts'
 import type {Quat, Vec3} from 'math'
 
 import {Box3, Vector3} from 'three/webgpu'
 
+/** an ambience emitter class whose instances can sound from any world position */
+export type AmbienceEmitterClass = new (position?: Vec3) => AmbienceEmitter
+/** a looping ambient sound of a room */
+export type RoomAmbience = {
+  emitter: AmbienceEmitterClass
+  /** where the sound comes from, relative to the room’s {@link Room.origin} */
+  position: Vec3
+}
 /** a rectangle on the floor plan, centered on its x and z */
 export type FloorRectangle = {
   center: readonly [x: number, z: number]
@@ -29,6 +38,8 @@ export type SpotLamp = LampBase & {
 /** a light fixed in a room */
 export type Lamp = PointLamp | SpotLamp
 export type RoomOptions<Id extends string> = {
+  /** the room’s ambient sounds by id */
+  ambience?: Record<string, RoomAmbience>
   /** a sentence shown below the title */
   description: string
   /** the room’s air as one axis-aligned box or several relative to {@link origin}, from its floor (or the bottom of a sunken one) to its clear height */
@@ -90,6 +101,7 @@ export function southSpawn([, depth]: FloorSize): RoomSpawn {
  * Subclasses pass their data to the constructor and can refine {@link contains} where a few boxes don’t describe the air well enough.
  */
 export default abstract class Room<Id extends string = string> {
+  readonly ambience: ReadonlyMap<string, RoomAmbience>
   readonly description: string
   readonly fence: ReadonlyArray<Box3>
   readonly id: Id
@@ -100,7 +112,7 @@ export default abstract class Room<Id extends string = string> {
   readonly title: string
   readonly volumetricSun: number
 
-  constructor({id, number, title, description, origin, fence, spawn, lamps = {}, volumetricSun = 1}: RoomOptions<Id>) {
+  constructor({id, number, title, description, origin, fence, spawn, lamps = {}, ambience = {}, volumetricSun = 1}: RoomOptions<Id>) {
     this.id = id
     this.number = number
     this.title = title
@@ -109,6 +121,7 @@ export default abstract class Room<Id extends string = string> {
     this.fence = fence instanceof Box3 ? [fence] : fence
     this.spawn = spawn
     this.lamps = new Map(Object.entries(lamps))
+    this.ambience = new Map(Object.entries(ambience))
     this.volumetricSun = volumetricSun
   }
 
@@ -140,6 +153,11 @@ export default abstract class Room<Id extends string = string> {
   contains(position: Vec3) {
     point.set(...this.toLocal(position))
     return this.fence.some(box => box.containsPoint(point))
+  }
+
+  /** New, still silent emitters of the room’s ambient sounds, each at its world position. */
+  createAmbience() {
+    return this.ambience.values().map(({emitter: Emitter, position}) => new Emitter(this.toWorld(position))).toArray()
   }
 
   /** The position relative to the room’s {@link origin} of a point given in world meters. */
