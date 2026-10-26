@@ -71,8 +71,12 @@ export default function GalleryStairs() {
       <boxGeometry args={[0.025, 0.008, size[2] - 0.45]} />
       <meshBasicNodeMaterial color={i % 3 === 0 ? '#d5ad73' : '#62958e'} toneMapped={false} />
     </mesh>)}
-    <RigidBody colliders='cuboid' type='fixed'>
-      {stairRoofs.map((beam, i) => <Box key={i} name='stairway-ceiling' {...beam} color='#101e24' envMapIntensity={0} />)}
+    {/* StaticBatch hides the originals before automatic colliders would see them, so the beams state their colliders. */}
+    <RigidBody colliders={false} type='fixed'>
+      {stairRoofs.map((beam, i) => <group key={i}>
+        <CuboidCollider args={[beam.size[0] / 2, beam.size[1] / 2, beam.size[2] / 2]} position={beam.position} rotation={beam.rotation} />
+        <Box name='stairway-ceiling' {...beam} color='#101e24' envMapIntensity={0} />
+      </group>)}
     </RigidBody>
     <pointLight color='#8ad6cd' decay={stairLamp.decay} distance={stairLamp.distance} intensity={stairLamp.intensity} position={stairLamp.position} userData={{rooms: stairLamp.rooms}} />
   </StaticBatch>
