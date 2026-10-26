@@ -68,7 +68,7 @@ export default class KnotLayout {
         southZ,
         height: 5.8,
       }
-      // Hangs halfway between the Knot and the north wall, clear of the light above the Knot, and faces the spawn.
+      // Hangs halfway between the Knot and the north wall, clear of the lights above the Knot, and faces the spawn.
       this.candidateSign = {
         x: 0,
         z: -this.rowSpacing / 2,

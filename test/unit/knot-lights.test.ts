@@ -22,6 +22,20 @@ test('every candidate row gets a pane over every slot in the longest row', () =>
     expect(rowSlots.every(slot => slot.position[2] === layout.rowZ(row))).toBe(true)
   }
 })
+test('a lone Knot gets four panes in a square around the spot above it', () => {
+  const layout = new KnotLayout([1])
+  const slots = knotLightSlots(layout, 1, 5.8)
+  expect(slots).toHaveLength(4)
+  const ids = new Set(slots.map(slot => slot.id))
+  expect(ids.size).toBe(4)
+  expect(slots.reduce((sum, slot) => sum + slot.position[0], 0) / 4).toBeCloseTo(layout.slotX(0), 9)
+  expect(slots.reduce((sum, slot) => sum + slot.position[2], 0) / 4).toBeCloseTo(layout.rowZ(0), 9)
+  for (const slot of slots) {
+    expect(Math.abs(slot.position[0] - layout.slotX(0))).toBeGreaterThan(knotLight.size[0] / 2)
+    expect(Math.abs(slot.position[2] - layout.rowZ(0))).toBeGreaterThan(knotLight.size[2] / 2)
+    expect(slot.position[1]).toBe(5.8 - knotLight.ceilingInset)
+  }
+})
 test('impact fractures isolate exactly one dead diffuser corner behind a line through the impact', () => {
   for (const [index, point] of [[0.34, -0.42], [-0.76, 0.18], [0.02, 0.03], [0.88, 0.79]].entries()) {
     const fracture = knotLightFracture(point as [number, number], [4 - index, 1 + index], 17 + index)

@@ -17,13 +17,28 @@ export type KnotLightSlot = {
   row: number
   slot: number
 }
+// the gap between the four panes over a lone Knot
+const loneKnotPaneGap = 0.3
+
+/** One pane over every slot of the longest row in every row, or, for a lone Knot in its plain room, four panes in a square around the spot above it. */
 export function knotLightSlots(layout: KnotLayout, rowCount: number, ceilingHeight: number): Array<KnotLightSlot> {
+  const y = ceilingHeight - knotLight.ceilingInset
+  if (!layout.billboard) {
+    const offsetX = (knotLight.size[0] + loneKnotPaneGap) / 2
+    const offsetZ = (knotLight.size[2] + loneKnotPaneGap) / 2
+    return [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([x, z], slot) => ({
+      id: `0:${slot}`,
+      position: [layout.slotX(0) + x * offsetX, y, layout.rowZ(0) + z * offsetZ],
+      row: 0,
+      slot,
+    }))
+  }
   return Array.from({length: rowCount * layout.maxRowLength}, (_, index) => {
     const row = Math.floor(index / layout.maxRowLength)
     const slot = index % layout.maxRowLength
     return {
       id: `${row}:${slot}`,
-      position: [layout.slotX(slot), ceilingHeight - knotLight.ceilingInset, layout.rowZ(row)],
+      position: [layout.slotX(slot), y, layout.rowZ(row)],
       row,
       slot,
     }
