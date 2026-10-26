@@ -19,9 +19,12 @@ export default function DineFloor(props: {
 }) {
   const {floorReflections} = useGraphicsModeValue(getGraphicsProfile)
   const slab = useDisposable(useMemo(() => new CheckeredMarbleFloorMaterial({
+    blur: 1,
+    grazingStrength: 0.4,
     origin: dineFloorOrigin,
     tile: dineFloorTile,
     reflections: floorReflections,
+    strength: 0.2,
   }), [floorReflections]))
   const materials = useMemo(() => ({
     slab,

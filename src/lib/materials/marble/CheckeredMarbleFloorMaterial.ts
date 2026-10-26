@@ -8,10 +8,14 @@ import FloorMaterial from '../FloorMaterial.ts'
 import {calacatta, marblePattern, portoro, shadeMarble} from './marble.ts'
 
 export type CheckeredMarbleFloorOptions = {
+  /** mip level the mirror is read at, 0 being perfectly sharp */
+  blur?: number
   /** cut of the tiles whose column and row add up to an odd number */
   dark?: MarbleStyle
   /** whether the veins stream along each tile instead of meandering; see `marblePattern` */
   drift?: boolean
+  /** extra share of the mirror at grazing angles */
+  grazingStrength?: number
   /** cut of the tiles whose column and row add up to an even number, including the one at `origin` */
   light?: MarbleStyle
   /** a corner of the tile grid in world x/z */
@@ -19,6 +23,8 @@ export type CheckeredMarbleFloorOptions = {
   /** whether the polished floor mirrors the room (heavy mode) */
   reflections?: boolean
   seed?: number
+  /** share of the mirror when looking straight down */
+  strength?: number
   /** edge length of the square tiles, in meters */
   tile: number
 }
@@ -49,7 +55,7 @@ export function checkeredTile(x: number, z: number, {origin, tile}: Pick<Checker
  * Every tile is cut from another part of its block and turned at random, so neighbors never continue each other’s veins. Tiles are set with hairline grout and eased arrises. In heavy mode the polish mirrors the room, bent faintly by the waviness of hand-polished stone; the grout stays matte.
  */
 export default class CheckeredMarbleFloorMaterial extends FloorMaterial {
-  constructor({dark = portoro, drift = false, light = calacatta, origin, reflections = true, seed = 0, tile}: CheckeredMarbleFloorOptions) {
+  constructor({blur = 1.5, dark = portoro, drift = false, grazingStrength = 0.6, light = calacatta, origin, reflections = true, seed = 0, strength = 0.1, tile}: CheckeredMarbleFloorOptions) {
     if (!(tile > 0)) {
       throw new RangeError('Marble tiles need a positive size.')
     }
@@ -88,10 +94,10 @@ export default class CheckeredMarbleFloorMaterial extends FloorMaterial {
       color: '#ffffff',
       roughness,
       reflection: reflections ? {
-        strength: 0.1,
-        grazingStrength: 0.6,
+        strength,
+        grazingStrength,
         // Polished, but not glass: the lamps and frames mirror crisply, with a slight bloom.
-        blur: 1.5,
+        blur,
         mask: grout.oneMinus().mul(top),
       } : undefined,
     })
