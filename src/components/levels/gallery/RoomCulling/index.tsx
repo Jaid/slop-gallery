@@ -8,6 +8,7 @@ import {Box3, Matrix4, Vector3} from 'three/webgpu'
 
 import {useGallery} from '#src/lib/gallery.ts'
 import {roomBoxes, roomContaining, roomsAt, roomsOverlapping, screenRect, visibleRegions} from '#src/lib/gallery/roomVisibility.ts'
+import {getFloorReflectionHeight} from '#src/lib/materials/FloorMaterial.ts'
 import {GalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
 import {lightActive} from '#src/lib/rendering/lightLevels.ts'
 import ShadowCache from '#src/lib/rendering/ShadowCache.ts'
@@ -95,8 +96,8 @@ export default function RoomCulling() {
       camera.updateWorldMatrix(true, false)
       const from = roomsAt(camera.getWorldPosition(position).toArray())
       const regions = from.length ? visibleRegions(from, viewProjection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)) : undefined
-      // The floor reflection shows the rooms behind openings mirrored by the floor of the room the camera is in.
-      const floorY = roomBoxes.find(({id}) => id === from[0])?.floorY ?? 0
+      // The floor reflection shows the rooms behind openings mirrored by the floors it mirrors, by default those of the room the camera is in.
+      const floorY = getFloorReflectionHeight() ?? roomBoxes.find(({id}) => id === from[0])?.floorY ?? 0
       const inSight = (rects: ReadonlyArray<ScreenRect>, box: Box3) => {
         const rect = screenRect(box, viewProjection)
         return rect !== undefined && rects.some(([left, bottom, right, top]) => rect[0] <= right && rect[2] >= left && rect[1] <= top && rect[3] >= bottom)

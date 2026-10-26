@@ -4,7 +4,7 @@ import type NodeFrame from 'three/src/nodes/core/NodeFrame.js'
 import type {Camera, MRTNode, Renderer, Scene, Texture} from 'three/webgpu'
 
 import {float, Fn, If, int, materialRoughness, mix, normalView, output, positionViewDirection, reflector, textureBicubicLevel, uniform, vec2, vec4} from 'three/tsl'
-import {Box3, DepthTexture, Frustum, HalfFloatType, LinearMipMapLinearFilter, Matrix4, MeshStandardNodeMaterial, NodeUpdateType, Object3D, RenderTarget, VelocityNode} from 'three/webgpu'
+import {Box3, DepthTexture, Frustum, HalfFloatType, LinearMipMapLinearFilter, Matrix4, MeshStandardNodeMaterial, NodeUpdateType, Object3D, RenderTarget, Vector3, VelocityNode} from 'three/webgpu'
 
 /** what the reflection needs from the pass it is reflected into */
 export type ReflectionPass = {
@@ -44,6 +44,19 @@ VelocityNode.prototype.updateAfter = function (this: VelocityNode, frame) {
 const bounds = new Box3
 const frustum = new Frustum
 const projection = new Matrix4
+const point = new Vector3
+/** height of the plane a floor mirrors in, in world space */
+const planeHeight = (floor: FloorMaterial) => floor.reflectionTarget!.getWorldPosition(point).y
+/** height of the floors the shared reflection mirrors, or null to mirror every floor as if they lay in one plane */
+let mirroredHeight: number | null = null
+/** Picks the height of the floors the shared reflection mirrors; floors at other heights show their plain surface. */
+export function setFloorReflectionHeight(height: number | null) {
+  mirroredHeight = height
+}
+/** the height of the floors the shared reflection mirrors, if the level picked one */
+export function getFloorReflectionHeight() {
+  return mirroredHeight
+}
 /** factor on every floor’s reflectance, which the render pipeline sets to 0 when it renders no reflection */
 export const floorReflectionStrength = uniform(1)
 /** factor on every floor’s extra reflectance at grazing angles */
@@ -107,7 +120,7 @@ function floorBounds(target: Object3D) {
   return bounds
 }
 /**
- * All reflective floors of a level lie in one plane, so they share one reflection and the scene is mirrored once per frame instead of once per floor.
+ * All reflective floors of a level share one reflection, so the scene is mirrored once per frame instead of once per floor. Floors at other heights would each need a mirror of their own: the level picks the height to mirror with {@link setFloorReflectionHeight}, and every floor in another plane shows its plain surface meanwhile.
  * Every floor sampling the reflection hides while it renders, since a pass can’t sample the texture it draws into.
  *
  * The reflection renders right before the main pass, with the same outputs into a target of the same layout, so every material shares its shaders between both instead of building them twice. Rendered from within the main pass, it would be one call deeper and get shaders of its own.
@@ -161,10 +174,14 @@ function acquireReflection(floor: FloorMaterial) {
       // Only a floor the main pass draws needs the reflection, and the main pass leaves out floors outside the camera frustum. The frame’s matrices aren’t updated yet.
       camera.updateWorldMatrix(true, false)
       frustum.setFromProjectionMatrix(projection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse), camera.coordinateSystem, camera.reversedDepth)
-      if (!mounted.some(candidate => frustum.intersectsBox(floorBounds(candidate.reflectionTarget!)))) {
+      for (const candidate of mounted) {
+        candidate.mirrored.value = mirroredHeight === null || Math.abs(planeHeight(candidate) - mirroredHeight) < 0.01 ? 1 : 0
+      }
+      const mirrored = mounted.filter(candidate => candidate.mirrored.value === 1)
+      if (!mirrored.some(candidate => frustum.intersectsBox(floorBounds(candidate.reflectionTarget!)))) {
         return
       }
-      base.target = mounted[0].reflectionTarget!
+      base.target = mirrored[0].reflectionTarget!
       base.resolutionScale = resolutionScale
       // A floor sampling mip level n of a native-resolution target only sees a 2ⁿ-fold coarser image, so a smaller target loses nothing as long as the level shrinks along with it.
       reflectionLevelBias.value = Math.min(Math.log2(resolutionScale), 0)
@@ -187,7 +204,7 @@ function acquireReflection(floor: FloorMaterial) {
       try {
         update({
           camera,
-          material: mounted[0],
+          material: mirrored[0],
           renderer,
           scene,
         } as unknown as NodeFrame)
@@ -222,12 +239,16 @@ function releaseReflection(floor: FloorMaterial) {
  * Procedural floors pass no `map` and set their own `colorNode`; the reflection mixes over whatever the surface shades to.
  */
 export default class FloorMaterial extends MeshStandardNodeMaterial {
+  /** 1 while the shared reflection mirrors this floor’s plane, 0 while it mirrors a floor at another height */
+  readonly mirrored = uniform(1)
   readonly reflection: Reflection | null
   /** the plane of the shared reflection, to be laid at the floor’s surface facing up the local z axis */
   readonly reflectionTarget: Object3D | null
 
-  constructor(map: Texture | null, {color, roughness, reflection}: {
+  constructor(map: Texture | null, {color, envMapIntensity, roughness, reflection}: {
     color: string
+    /** the environment’s share of the lighting, by default all of it on a reflective floor and none on a matte one */
+    envMapIntensity?: number
     reflection?: FloorReflection
     roughness: number
   }) {
@@ -236,13 +257,13 @@ export default class FloorMaterial extends MeshStandardNodeMaterial {
       color,
       roughness,
       metalness: 0,
-      envMapIntensity: reflection ? 1 : 0,
+      envMapIntensity: envMapIntensity ?? (reflection ? 1 : 0),
     })
     this.reflectionTarget = reflection ? new Object3D : null
     this.reflection = this.reflectionTarget ? acquireReflection(this) : null
     if (this.reflection && reflection) {
       const grazing = normalView.dot(positionViewDirection).abs().oneMinus().pow(5)
-      const reflectance = grazing.mul(reflection.grazingStrength).mul(floorReflectionGrazing).add(reflection.strength).mul(reflection.mask ?? float(1)).mul(floorReflectionStrength)
+      const reflectance = grazing.mul(reflection.grazingStrength).mul(floorReflectionGrazing).add(reflection.strength).mul(reflection.mask ?? float(1)).mul(floorReflectionStrength).mul(this.mirrored)
       const loss = typeof reflection.loss === 'number' ? float(reflection.loss) : reflection.loss
       const mirror = sampleMirror(this.reflection, loss.mul(floorReflectionLevel).add(reflectionLevelBias).max(0), reflection.gaussianBlur ?? 0)
       this.outputNode = vec4(mix(output.rgb, mirror.rgb, reflectance), output.a)

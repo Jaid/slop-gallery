@@ -1,17 +1,27 @@
 import type {Texture} from 'three/webgpu'
 
 import {RigidBody} from '@react-three/rapier'
+import Branch from 'branch-component'
 import useDisposable from 'disposable-lifetime/react'
-import {useMemo} from 'react'
+import {useEffect, useMemo} from 'react'
+import {useGraphicsModeValue} from 'use-graphics-mode'
 
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import {moonfallCrater} from '#src/lib/gallery/moonfall/config.ts'
 import CraterGeometry from '#src/lib/gallery/moonfall/CraterGeometry.ts'
 import StanchionRingGeometry from '#src/lib/gallery/railings/StanchionRingGeometry.ts'
+import {useGallery} from '#src/lib/gallery/store.ts'
+import {rooms} from '#src/lib/gallery/walls.ts'
 import CraterMaterial from '#src/lib/materials/CraterMaterial.ts'
+import FloorMaterial, {setFloorReflectionHeight} from '#src/lib/materials/FloorMaterial.ts'
 import gold from '#src/lib/materials/gold.ts'
 import VelvetRopeMaterial from '#src/lib/materials/VelvetRopeMaterial.ts'
+import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
+
+/** rooms that see the Moonfall’s slate rather than the upper floors, so the floor reflection mirrors its plane while the player is in them */
+const slateRooms = new Set(['moonfall', 'oculus'])
+const slateHeight = rooms.find(room => room.id === 'moonfall')!.floorY
 
 export default function MoonfallCrater({stone}: {stone: Texture}) {
   const geometry = useDisposable(useMemo(() => new CraterGeometry, []))
@@ -20,11 +30,30 @@ export default function MoonfallCrater({stone}: {stone: Texture}) {
   const rock = useDisposable(useMemo(() => new CraterMaterial(false), []))
   const terrain = useDisposable(useMemo(() => new CraterMaterial, []))
   const velvet = useDisposable(useMemo(() => new VelvetRopeMaterial, []))
+  const {floorReflections} = useGraphicsModeValue(getGraphicsProfile)
+  // Honed slate in fast mode; polished in heavy mode, where it mirrors the room around the crater.
+  const slate = useDisposable(useMemo(() => new FloorMaterial(stone, {
+    color: '#24373d',
+    envMapIntensity: 0.08,
+    roughness: floorReflections ? 0.1 : 0.9,
+    reflection: floorReflections ? {
+      strength: 0.05,
+      grazingStrength: 0,
+      loss: 0,
+      gaussianBlur: 10,
+    } : undefined,
+  }), [floorReflections, stone]))
+  const reflection = slate.reflectionTarget
+  const room = useGallery(state => state.room)
+  useEffect(() => {
+    setFloorReflectionHeight(slateRooms.has(room) ? slateHeight : 0)
+  }, [room])
+  useEffect(() => () => setFloorReflectionHeight(null), [])
   return <group name='moonfall-impact-crater'>
     <RigidBody colliders={false} type='fixed'>
       {collision.map((args, i) => <MeshSurfaceCollider key={i} args={args} />)}
-      <mesh castShadow geometry={geometry.floor} name='moonfall-slate-floor' receiveShadow>
-        <meshStandardNodeMaterial color='#24373d' envMapIntensity={0.08} map={stone} roughness={0.9} />
+      <mesh castShadow geometry={geometry.floor} material={slate} name='moonfall-slate-floor' receiveShadow>
+        <Branch if={reflection}><group rotation={[-Math.PI / 2, 0, 0]}><primitive object={reflection!} /></group></Branch>
       </mesh>
       <mesh castShadow geometry={geometry.terrain} material={terrain} name='moonfall-crater-terrain' receiveShadow />
       <mesh castShadow geometry={geometry.rocks} material={rock} name='moonfall-impact-ejecta' receiveShadow />
