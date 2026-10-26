@@ -86,7 +86,6 @@ const uncappedLuminance = 65_504
 /** Cinematic graphics request a texture size limit that fits a 16384² map; heavy graphics stop at WebGPU’s default of 8192. */
 const shadowMapSizes = [1024, 2048, 4096, 8192, ...readCinematicGraphics() ? [cinematicMaxTextureSize] : []]
 const scales = (values: Array<number>): Array<[number, string]> => values.map(value => [value, `${value * 100}%`])
-const screenSpaceReflections = (settings: CustomGraphics) => settings.reflectionScope === 'all'
 const lampShadowsCast = (settings: CustomGraphics) => settings.lampShadows > 0
 const renderScales = scales([0.25, 0.5, 0.75, 1, 1.25, 1.5, 2])
 const sections: Array<Section> = [
@@ -108,31 +107,21 @@ const sections: Array<Section> = [
     controls: [select('antiAliasing', 'Method', [['traa', 'TRAA'], ['smaa', 'SMAA']])],
   },
   {
-    title: 'Reflections',
-    toggle: {
-      fallback: 'floors',
-      key: 'reflectionScope',
-      off: 'none',
-    },
+    title: 'Mirror reflections',
+    toggle: 'mirrorReflections',
     controls: [
-      select('reflectionScope', 'Scope', [['floors', 'Floors'], ['all', 'All']]),
-      select('reflectionResolutionScale', 'Floor resolution', scales([0.5, 1, 2])),
-      {
-        ...select('screenSpaceReflectionResolutionScale', 'SSR resolution', scales([0.25, 0.5, 1])),
-        when: screenSpaceReflections,
-      },
-      {
-        ...percent('screenSpaceReflectionIntensity', 'SSR intensity', 0, 2, 0.1),
-        when: screenSpaceReflections,
-      },
-      {
-        ...range('screenSpaceReflectionDistance', 'SSR distance', 0.5, 20, 0.5),
-        when: screenSpaceReflections,
-      },
-      {
-        ...range('screenSpaceReflectionThickness', 'SSR thickness', 0.05, 1, 0.05),
-        when: screenSpaceReflections,
-      },
+      select('reflectionResolutionScale', 'Resolution', scales([0.5, 1, 2])),
+      percent('mirrorReflectionStrength', 'Strength', 0, 4, 0.05),
+    ],
+  },
+  {
+    title: 'Screen-space reflections',
+    toggle: 'screenSpaceReflections',
+    controls: [
+      select('screenSpaceReflectionResolutionScale', 'Resolution', scales([0.25, 0.5, 1])),
+      percent('screenSpaceReflectionIntensity', 'Intensity', 0, 2, 0.1),
+      range('screenSpaceReflectionDistance', 'Distance', 0.5, 20, 0.5),
+      range('screenSpaceReflectionThickness', 'Thickness', 0.05, 1, 0.05),
     ],
   },
   {

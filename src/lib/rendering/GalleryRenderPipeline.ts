@@ -84,7 +84,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
 
   constructor(renderer: Renderer, scene: Object3D, camera: Camera, {focus, heavy = true, settings, volumetricLightReach = () => 1, zoom = () => 0}: GalleryRenderPipelineOptions) {
     super(renderer)
-    const {antiAliasing, reflectionScope} = settings
+    const {antiAliasing, mirrorReflections, screenSpaceReflections} = settings
     const indirectLight = settings.screenSpaceIndirectLight || settings.voxelIndirectLight
     const own = <T extends {dispose: () => void}>(effect: T) => {
       this.effects.push(effect)
@@ -95,7 +95,11 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       this.uniforms.push([node, key])
     }
     // The floor materials keep sampling their mirror, which turns dark once it is no longer rendered.
-    floorReflectionStrength.value = reflectionScope === 'none' ? 0 : 1
+    if (mirrorReflections) {
+      set(floorReflectionStrength, 'mirrorReflectionStrength')
+    } else {
+      floorReflectionStrength.value = 0
+    }
     // GTAO and TRAA require single-sampled scene depth.
     const scenePass = own(pass(scene, camera, {samples: 0}))
     this.scenePass = scenePass
@@ -104,7 +108,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
     const flood = own(new WireframeFloodPass(renderer, scene as Scene, camera))
     scenePass.updateBefore = frame => {
       const reflect = () => {
-        if (reflectionScope === 'none') {
+        if (!mirrorReflections) {
           return
         }
         renderFloorReflection({
@@ -131,7 +135,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
         output,
         ...heavy ? {normal: normalView} : {},
         ...heavy && indirectLight ? {diffuseColor} : {},
-        ...heavy && reflectionScope === 'all' ? {metalrough: vec2(metalness, roughness)} : {},
+        ...heavy && screenSpaceReflections ? {metalrough: vec2(metalness, roughness)} : {},
         ...antiAliasing === 'traa' ? {velocity} : {},
       })
       // The geometry buffers blend by their own alpha. Every material writes them with alpha 1, which overwrites like before; a soft sprite can write alpha 0 through its `mrtNode` (see `TransparentSpriteOutputsNode`) to leave the normal and motion of what is behind it alone, which the ambient occlusion and the temporal resolve read.
@@ -213,7 +217,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
           sun = object
         }
       })
-      if (reflectionScope === 'all' && camera instanceof PerspectiveCamera) {
+      if (screenSpaceReflections && camera instanceof PerspectiveCamera) {
         // Screen-space reflections on the metallic surfaces, like gilded frames and trims, blurred by their roughness, on top of the floors’ planar mirror. The non-stochastic pass weighs every hit by metalness, so dielectrics would only cost time. Their fifth scene target needs the higher attachment limit that cinematic and `?development` request, and the normal goes in as the texture node despite the `vec3` typing, because the pass samples it at neighboring texels.
         const metalRoughness = scenePass.getTextureNode('metalrough')
         const reflection = own(ssr(scenePass.getTextureNode('output'), depth, normal as unknown as Node<'vec3'>, {

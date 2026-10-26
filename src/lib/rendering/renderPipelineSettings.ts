@@ -5,9 +5,6 @@ import sun from '../gallery/sun.ts'
 import {isKnottingham} from '../level.ts'
 import {getSunShadowSettings} from './graphicsMode.ts'
 
-/** which surfaces reflect: none, the reflective floors through their shared planar mirror, or those plus screen-space reflections on metallic surfaces */
-export type ReflectionScope = 'all' | 'floors' | 'none'
-
 /** Every value the render pipeline is built from. The graphics mode fills them in; the tuning panel of `?development` changes them. */
 export type RenderPipelineSettings = {
   ambientOcclusion: boolean
@@ -40,9 +37,12 @@ export type RenderPipelineSettings = {
   lampShadowRadius: number
   /** shadow map lookups per pixel for every lamp */
   lampShadowSamples: number
+  /** whether the reflective floors mirror the room through their shared planar mirror */
+  mirrorReflections: boolean
+  /** factor on every reflective floor’s reflectance */
+  mirrorReflectionStrength: number
   /** floor reflection pixels per output pixel along each axis */
   reflectionResolutionScale: number
-  reflectionScope: ReflectionScope
   screenSpaceIndirectLight: boolean
   screenSpaceIndirectLightAmbientOcclusion: number
   screenSpaceIndirectLightBackfaceLighting: number
@@ -56,6 +56,8 @@ export type RenderPipelineSettings = {
   screenSpaceReflectionDistance: number
   screenSpaceReflectionIntensity: number
   screenSpaceReflectionResolutionScale: number
+  /** whether screen-space reflections add to metallic surfaces like gilded frames and trims */
+  screenSpaceReflections: boolean
   screenSpaceReflectionThickness: number
   /** texels along each axis of the gallery sun’s shadow map */
   sunShadowMapSize: number
@@ -84,7 +86,7 @@ export type RenderPipelineSettings = {
 export type RenderPipelineSetting = keyof RenderPipelineSettings
 
 /** the settings that change which passes the pipeline has or how they are set up, so changing one builds it anew; every other setting is a uniform that can change live. A new sun filter builds a new sun, which the passes that march its shadow map have to pick up. */
-export const renderPipelineStructure = ['ambientOcclusion', 'ambientOcclusionResolutionScale', 'ambientOcclusionTemporalFiltering', 'antiAliasing', 'bloom', 'contactShadowDenoise', 'contactShadowResolutionScale', 'contactShadows', 'dither', 'reflectionResolutionScale', 'reflectionScope', 'screenSpaceIndirectLight', 'screenSpaceIndirectLightTemporalFiltering', 'screenSpaceReflectionResolutionScale', 'sunShadowSamples', 'volumetricLight', 'volumetricLightBlur', 'volumetricLightResolutionScale', 'voxelIndirectLight', 'voxelIndirectLightResolution'] as const satisfies Array<RenderPipelineSetting>
+export const renderPipelineStructure = ['ambientOcclusion', 'ambientOcclusionResolutionScale', 'ambientOcclusionTemporalFiltering', 'antiAliasing', 'bloom', 'contactShadowDenoise', 'contactShadowResolutionScale', 'contactShadows', 'dither', 'mirrorReflections', 'reflectionResolutionScale', 'screenSpaceIndirectLight', 'screenSpaceIndirectLightTemporalFiltering', 'screenSpaceReflectionResolutionScale', 'screenSpaceReflections', 'sunShadowSamples', 'volumetricLight', 'volumetricLightBlur', 'volumetricLightResolutionScale', 'voxelIndirectLight', 'voxelIndirectLightResolution'] as const satisfies Array<RenderPipelineSetting>
 
 export type RenderPipelineStructure = Pick<RenderPipelineSettings, typeof renderPipelineStructure[number]>
 
@@ -121,8 +123,9 @@ export function getRenderPipelineSettings(profile: GraphicsProfile, antiAliasing
     dither: false,
     lampShadowRadius: profile.lampShadowRadius ?? profile.shadowMapScale,
     lampShadowSamples: profile.shadowSamples,
+    mirrorReflectionStrength: 1,
+    mirrorReflections: profile.floorReflections,
     reflectionResolutionScale: profile.reflectionResolutionScale,
-    reflectionScope: profile.floorReflections ? (profile.metalReflections ? 'all' : 'floors') : 'none',
     screenSpaceIndirectLight: profile.indirectLight,
     screenSpaceIndirectLightAmbientOcclusion: 0,
     screenSpaceIndirectLightBackfaceLighting: 0,
@@ -137,6 +140,7 @@ export function getRenderPipelineSettings(profile: GraphicsProfile, antiAliasing
     screenSpaceReflectionDistance: 4,
     screenSpaceReflectionIntensity: 1,
     screenSpaceReflectionResolutionScale: 1,
+    screenSpaceReflections: profile.metalReflections,
     screenSpaceReflectionThickness: 0.1,
     sunShadowMapSize: sunShadow.mapSize,
     sunShadowRadius: sunShadow.radius,

@@ -166,9 +166,18 @@ test('every profile shares the AO radius and strength, and Cinematic raises the 
   expect(heavy.ambientOcclusionThickness).toBe(1)
 })
 test('only Cinematic adds screen-space reflections on metallic surfaces to the floor reflections', () => {
-  expect(getRenderPipelineSettings(getGraphicsProfile(false), false).reflectionScope).toBe('none')
-  expect(getRenderPipelineSettings(getGraphicsProfile(true), 'traa').reflectionScope).toBe('floors')
-  expect(getRenderPipelineSettings(getGraphicsProfile(true, true), 'traa').reflectionScope).toBe('all')
+  expect(getRenderPipelineSettings(getGraphicsProfile(false), false)).toMatchObject({
+    mirrorReflections: false,
+    screenSpaceReflections: false,
+  })
+  expect(getRenderPipelineSettings(getGraphicsProfile(true), 'traa')).toMatchObject({
+    mirrorReflections: true,
+    screenSpaceReflections: false,
+  })
+  expect(getRenderPipelineSettings(getGraphicsProfile(true, true), 'traa')).toMatchObject({
+    mirrorReflections: true,
+    screenSpaceReflections: true,
+  })
 })
 test('Fast disables bloom, while Heavy and Cinematic use the current tuned bloom defaults', () => {
   const fast = getRenderPipelineSettings(getGraphicsProfile(false), false)
