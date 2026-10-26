@@ -6,7 +6,7 @@ import {useFrame} from '@react-three/fiber'
 import {levelWallDistance} from '#level/navigation.ts'
 import placementSpace from '#level/placement.ts'
 import {readIntroNarration} from '#src/lib/audio/intro.ts'
-import {cameraPose, dragPose, narrate, roomAt, useGallery} from '#src/lib/gallery.ts'
+import {bodyPose, cameraPose, dragPose, narrate, roomAt, useGallery} from '#src/lib/gallery.ts'
 import {interactiveObjects} from '#src/lib/gallery/interactiveObjects.ts'
 import {orbitables} from '#src/lib/gallery/orbitables.ts'
 import {isPortraitLabelHit} from '#src/lib/gallery/portraitLabel.ts'
@@ -42,7 +42,7 @@ export default function useInteractionFrame(camera: RootState['camera'], rendere
     camera.getWorldDirection(direction.current)
     cameraPose.position = camera.position.toArray()
     cameraPose.direction = direction.current.toArray()
-    const room = isGallery ? roomAt(cameraPose.position) : 'lobby'
+    const room = isGallery ? roomAt(bodyPose.center) : 'lobby'
     if (room !== s.room) {
       useGallery.setState({room})
     }

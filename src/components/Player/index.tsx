@@ -3,14 +3,14 @@ import type {Camera} from 'three/webgpu'
 
 import {useKeyboardControls} from '@react-three/drei/webgpu'
 import {useThree} from '@react-three/fiber'
-import EgoPlayer from 'ego-player'
+import EgoPlayer, {defaultEgoOptions} from 'ego-player'
 import {useEffect, useRef, useState} from 'react'
 import {Euler, PerspectiveCamera, Quaternion, Vector3} from 'three/webgpu'
 
 import {insideLevel, levelFloorHeight} from '#level/navigation.ts'
 import {attachPlayerAudio, onPlayerLand, onPlayerStep, onPlayerZoomChange, onPlayerZoomTransition} from '#src/lib/audio/playerAudio.ts'
 import {isDevelopmentMode} from '#src/lib/developmentMode.ts'
-import {cameraPose, dropPortrait, galleryEvents, markControlled, narrate, setCameraFocused, useGallery} from '#src/lib/gallery.ts'
+import {bodyPose, cameraPose, dropPortrait, galleryEvents, markControlled, narrate, setCameraFocused, useGallery} from '#src/lib/gallery.ts'
 import {cameraBookmarkFeet, findCameraBookmark} from '#src/lib/gallery/bookmarks.ts'
 import {flyMode} from '#src/lib/gallery/flyMode.ts'
 import {activateInteractiveObject} from '#src/lib/gallery/interactiveObjects.ts'
@@ -148,8 +148,9 @@ export default function Player() {
       camera.quaternion.copy(heldCamera.current.quaternion)
       setFov(camera, heldCamera.current.fov)
     }
+    const {x, y, z} = state.position
+    bodyPose.center = [x, y + (state.crouching ? defaultEgoOptions.crouchHeight : defaultEgoOptions.height) / 2, z]
     if (!cameraPose.focused) {
-      const {x, y, z} = state.position
       angles.setFromQuaternion(camera.quaternion, 'YXZ')
       playerSession.capture({
         position: [x, y, z],

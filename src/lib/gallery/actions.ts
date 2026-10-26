@@ -2,6 +2,7 @@ import type {Panel} from './store.ts'
 import type {Portrait, Vec3} from './types.ts'
 
 import composeId from 'compose-id'
+import {defaultEgoOptions} from 'ego-player/motor'
 
 import placement from '#level/placement.ts'
 
@@ -24,6 +25,10 @@ export const cameraPose = {
   focused: false,
   position: [playerSpawn.position[0], playerSpawn.position[1] + 1.6, playerSpawn.position[2]] as Vec3,
   direction: [-Math.sin(playerSpawn.yaw) * Math.cos(playerSpawn.pitch), Math.sin(playerSpawn.pitch), -Math.cos(playerSpawn.yaw) * Math.cos(playerSpawn.pitch)] as Vec3,
+}
+/** the middle of the player’s capsule, which decides the room the player is in */
+export const bodyPose = {
+  center: [playerSpawn.position[0], playerSpawn.position[1] + defaultEgoOptions.height / 2, playerSpawn.position[2]] as Vec3,
 }
 export function setCameraFocused(focused: boolean) {
   cameraPose.focused = focused
