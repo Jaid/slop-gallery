@@ -6,7 +6,7 @@ import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry} from '../../src/lib/gallery/architecture.ts'
 import {stairFlights, stairRailGeometry, stairTurn} from '../../src/lib/gallery/staircase.ts'
-import StairHandrailGeometry from '../../src/lib/gallery/stairs/StairHandrailGeometry.ts'
+import StairHandrailGeometry, {stairHandrailBend, stairHandrailEase} from '../../src/lib/gallery/stairs/StairHandrailGeometry.ts'
 
 await RAPIER.init()
 describe('continuous stair handrails', () => {
@@ -49,14 +49,14 @@ describe('continuous stair handrails', () => {
           expect(Math.hypot(normals.getX(i), normals.getY(i), normals.getZ(i))).toBeCloseTo(1, 5)
         }
         const radius = side === 'inner' ? stairTurn.innerRadius + 0.22 : stairTurn.outerRadius - 0.22
-        const segments = Math.ceil(Math.PI * 32)
         const length = stairFlights.reduce((sum, flight) => sum + flight.length, 0)
+        const segments = Math.ceil(Math.PI * radius / (stairHandrailBend / 16))
         expect(computeMeshVolume(geometry)).toBeCloseTo(0.065 ** 2 * (length + radius * segments * Math.sin(Math.PI / segments)), 5)
       } finally {
         geometry.dispose()
       }
     })
-    test(`${side}: rendering and collision meet continuously above and below both grade joins`, () => {
+    test(`${side}: rendering and collision follow eased curves through both grade joins`, () => {
       const geometry = stairRailGeometry(side)
       const material = new MeshBasicMaterial
       const mesh = new Mesh(geometry, material)
@@ -71,19 +71,30 @@ describe('continuous stair handrails', () => {
         const radius = side === 'inner' ? stairTurn.innerRadius + 0.22 : stairTurn.outerRadius - 0.22
         const centerZ = side === 'inner' ? stairTurn.innerCenterZ : stairTurn.outerCenterZ
         for (const [i, flight] of stairFlights.entries()) {
-          for (const dx of [-0.04, -0.01, -0.0001, 0.0001, 0.01, 0.04]) {
-            const z = centerZ + (i === 0 ? -1 : 1) * (dx <= 0 ? radius : Math.sqrt(radius ** 2 - dx ** 2))
-            const y = stairTurn.top + 1 + (dx < 0 ? dx * flight.slope : 0)
-            for (const across of [-0.017, 0.013]) {
-              for (const direction of [-1, 1]) {
-                const origin = new Vector3(stairTurn.center[0] + dx, y - direction, z + across)
-                const aim = new Vector3(0, direction, 0)
-                const handrailRay = new Raycaster(origin, aim, 0, 2)
-                const hit = handrailRay.intersectObject(mesh)[0]
-                expect(hit.distance).toBeCloseTo(1 - 0.065 / 2, 5)
-                expect(world.castRay(new RAPIER.Ray(origin, aim), 2, true)!.timeOfImpact).toBeCloseTo(hit.distance, 5)
-              }
-            }
+          // Path distance from the join, negative along the flight and positive around the turn, kept off the ring edges.
+          const offsets = Array.from({length: 49}, (_, j) => (j - 24) / 24 * (stairHandrailBend + 0.25) + 0.0001)
+          const tops = offsets.map(offset => {
+            const angle = Math.max(offset, 0) / radius
+            const x = stairTurn.center[0] + Math.min(offset, 0) + Math.sin(angle) * radius
+            const z = centerZ + (i === 0 ? -1 : 1) * Math.cos(angle) * radius
+            const expected = stairTurn.top + 1 + flight.slope * Math.min(offset, 0) - flight.slope * stairHandrailEase(offset)
+            const surfaces = [-0.017, 0.013].flatMap(across => [-1, 1].map(direction => {
+              const origin = new Vector3(x, expected - direction, z + across)
+              const aim = new Vector3(0, direction, 0)
+              const handrailRay = new Raycaster(origin, aim, 0, 2)
+              const hit = handrailRay.intersectObject(mesh)[0]
+              expect(hit.distance).toBeCloseTo(1 - 0.065 / 2, 2)
+              expect(world.castRay(new RAPIER.Ray(origin, aim), 2, true)!.timeOfImpact).toBeCloseTo(hit.distance, 5)
+              return hit.point.y
+            }))
+            return Math.max(...surfaces)
+          })
+          // No kink: the grade along the top changes gradually instead of jumping from the flight’s slope to level.
+          const grades = tops.slice(1).map((top, j) => (top - tops[j]) / (offsets[j + 1] - offsets[j]))
+          expect(Math.abs(grades[0] - flight.slope)).toBeLessThan(0.01)
+          expect(Math.abs(grades.at(-1)!)).toBeLessThan(0.01)
+          for (let j = 1; j < grades.length; j++) {
+            expect(Math.abs(grades[j] - grades[j - 1])).toBeLessThan(Math.abs(flight.slope) / 8)
           }
         }
       } finally {

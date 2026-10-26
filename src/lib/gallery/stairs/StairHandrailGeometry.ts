@@ -2,7 +2,18 @@ import type StairTurn from './StairTurn.ts'
 
 import {BufferGeometry, Float32BufferAttribute, Vector3} from 'three/webgpu'
 
-/** One closed rail across two grades and a level bend, with shared vertical join profiles. */
+/** half the path length over which a grade change is eased into a parabolic vertical curve */
+export const stairHandrailBend = 0.75
+
+/** height offset of a parabolic vertical curve centered on a grade change, per unit of grade change, `distance` along the path from the change */
+export function stairHandrailEase(distance: number) {
+  if (Math.abs(distance) >= stairHandrailBend) {
+    return 0
+  }
+  return (distance + stairHandrailBend) ** 2 / (4 * stairHandrailBend) - Math.max(distance, 0)
+}
+
+/** One closed rail across two grades and a level bend, with vertical profiles and eased grade changes. */
 export default class StairHandrailGeometry extends BufferGeometry {
   constructor(turn: StairTurn, side: 'inner' | 'outer', start: readonly [number, number], end: readonly [number, number]) {
     if (![...start, ...end].every(Number.isFinite) || start[0] >= turn.center[0] || end[0] >= turn.center[0]) {
@@ -13,24 +24,38 @@ export default class StairHandrailGeometry extends BufferGeometry {
     const radius = inner ? turn.innerRadius + 0.22 : turn.outerRadius - 0.22
     const centerZ = inner ? turn.innerCenterZ : turn.outerCenterZ
     const half = 0.065 / 2
-    const segments = Math.ceil(Math.PI * 32)
-    const stations = [
-      {
-        point: new Vector3(start[0], start[1] + 1, centerZ - radius),
-        normal: new Vector3(0, 0, 1),
-      },
-      ...Array.from({length: segments + 1}, (_, i) => {
-        const angle = i / segments * Math.PI
-        return {
-          point: new Vector3(turn.center[0] + Math.sin(angle) * radius, turn.top + 1, centerZ - Math.cos(angle) * radius),
-          normal: new Vector3(-Math.sin(angle), 0, Math.cos(angle)),
-        }
-      }),
-      {
-        point: new Vector3(end[0], end[1] + 1, centerZ + radius),
-        normal: new Vector3(0, 0, -1),
-      },
-    ]
+    const step = stairHandrailBend / 16
+    const entry = turn.center[0] - start[0]
+    const arc = Math.PI * radius
+    const exit = turn.center[0] - end[0]
+    const grades = [(turn.top - start[1]) / entry, 0, (end[1] - turn.top) / exit]
+    const joins = [entry, entry + arc]
+    // Rail height along the horizontal path: straight grades with both changes eased over the same distance on either side.
+    const height = (distance: number) => turn.top + 1 + grades[0] * Math.min(distance - entry, 0) + grades[2] * Math.max(distance - entry - arc, 0) + joins.reduce((sum, join, i) => sum + (grades[i + 1] - grades[i]) * stairHandrailEase(distance - join), 0)
+    const segments = Math.ceil(arc / step)
+    const easeSteps = Math.ceil(stairHandrailBend / step)
+    const distances = [
+      0,
+      ...Array.from({length: easeSteps}, (_, i) => entry - (easeSteps - i) * step),
+      ...Array.from({length: segments + 1}, (_, i) => entry + i / segments * arc),
+      ...Array.from({length: easeSteps}, (_, i) => entry + arc + (i + 1) * step),
+      entry + arc + exit,
+    ].filter(distance => distance >= 0 && distance <= entry + arc + exit)
+    const stations = distances.map(distance => {
+      const angle = Math.min(Math.max((distance - entry) / radius, 0), Math.PI)
+      const along = distance < entry ? distance - entry : Math.max(distance - entry - arc, 0)
+      const normal = new Vector3(-Math.sin(angle), 0, Math.cos(angle))
+      const tangent = new Vector3(Math.cos(angle), 0, Math.sin(angle))
+      const grade = (height(distance + 0.0001) - height(distance - 0.0001)) / 0.0002
+      const up = new Vector3(0, 1, 0)
+      up.addScaledVector(tangent, -grade).normalize()
+      return {
+        point: new Vector3(turn.center[0] + Math.sin(angle) * radius + tangent.x * along, height(distance), centerZ - Math.cos(angle) * radius),
+        normal,
+        up,
+        distance,
+      }
+    })
     const rings = stations.map(({point, normal}) => [
       point.clone().addScaledVector(normal, half).add(new Vector3(0, -half, 0)),
       point.clone().addScaledVector(normal, -half).add(new Vector3(0, -half, 0)),
@@ -58,10 +83,10 @@ export default class StairHandrailGeometry extends BufferGeometry {
       for (let face = 0; face < 4; face++) {
         const next = (face + 1) % 4
         const points = [from[face], from[next], to[next], to[face]]
-        const normal = points[1].clone().sub(points[0]).cross(points[2].clone().sub(points[0])).normalize()
-        // Smooth the circular sides, retaining crisp top/bottom edges and grade changes.
-        const fromNormal = face % 2 ? stations[i - 1].normal.clone().multiplyScalar(face === 1 ? -1 : 1) : normal
-        const toNormal = face % 2 ? stations[i].normal.clone().multiplyScalar(face === 1 ? -1 : 1) : normal
+        // Bottom, inner side, top and outer side; every face is smooth along the rail, keeping only the profile’s corners crisp.
+        const sign = face < 2 ? -1 : 1
+        const fromNormal = (face % 2 ? stations[i - 1].normal : stations[i - 1].up).clone().multiplyScalar(sign)
+        const toNormal = (face % 2 ? stations[i].normal : stations[i].up).clone().multiplyScalar(sign)
         quad(points, [fromNormal, fromNormal, toNormal, toNormal], distance, nextDistance)
       }
       distance = nextDistance
