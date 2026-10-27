@@ -3,7 +3,6 @@ import lowerGallery from '#src/lib/gallery/lowerGallery.ts'
 import Room from '../base/Room.ts'
 import floorBox from '../lib/floorBox.ts'
 import floorOrigin from '../lib/floorOrigin.ts'
-import southSpawn from '../lib/southSpawn.ts'
 import cameras from './cameras.ts'
 import slots from './slots.ts'
 import spawns from './spawns.ts'
@@ -16,7 +15,7 @@ export default class Oculus extends Room {
   override readonly fence = floorBox(oculus.size, 0, oculus.ceiling.topY - oculus.ceiling.thickness - oculus.floorY)
   override readonly id = 'oculus'
   override readonly origin = floorOrigin(oculus, oculus.floorY)
-  override readonly spawn = southSpawn(oculus.size)
+  override readonly spawn = spawns['']
 
   constructor() {
     super({

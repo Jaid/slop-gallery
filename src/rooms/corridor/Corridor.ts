@@ -6,7 +6,6 @@ import lodge from '#src/lib/gallery/lodge.ts'
 import {stairHeadroom} from '#src/lib/gallery/stairs/StairFlight.ts'
 
 import Room from '../base/Room.ts'
-import eyeHeight from '../lib/eyeHeight.ts'
 import floorBox from '../lib/floorBox.ts'
 import lamps from './lamps.ts'
 
@@ -28,8 +27,9 @@ export default class Corridor extends Room {
   override readonly id = 'corridor'
   override readonly origin: Vec3 = [originX, corridor.floorY, originZ]
   override readonly spawn = {
-    position: [0, eyeHeight, 0],
-    rotation: [0, 0, 0, 1],
+    position: [0, 0.04, 0],
+    yaw: 0,
+    pitch: 0,
   } satisfies RoomSpawn
 
   constructor() {

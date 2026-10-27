@@ -4,7 +4,6 @@ import lobbyVault from '#src/lib/gallery/lobbyVault.ts'
 import Room from '../base/Room.ts'
 import floorBox from '../lib/floorBox.ts'
 import floorOrigin from '../lib/floorOrigin.ts'
-import southSpawn from '../lib/southSpawn.ts'
 import ambienceEmitters from './ambienceEmitters.ts'
 import cameras from './cameras.ts'
 import lamps from './lamps.ts'
@@ -22,7 +21,7 @@ export default class Lobby extends Room {
   override readonly fence = floorBox(plan.size, 0, lobbyVault.springY + lobbyVault.outerRadius)
   override readonly id = 'lobby'
   override readonly origin = floorOrigin(plan, 0)
-  override readonly spawn = southSpawn(plan.size)
+  override readonly spawn = spawns['']
 
   constructor() {
     super({

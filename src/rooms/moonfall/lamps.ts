@@ -76,4 +76,12 @@ export default {
     decay: 1.5,
     shadow: true,
   },
+  // Over the upper flight of the stairway up to the Antechamber.
+  stairs: {
+    position: [24.55, 6.72, -4.98],
+    strength: 30,
+    tint: '#8ad6cd',
+    range: 15,
+    decay: 1,
+  },
 } satisfies Record<string, Lamp>

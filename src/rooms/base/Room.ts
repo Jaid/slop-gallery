@@ -1,6 +1,6 @@
 import type AmbienceEmitter from '#src/lib/audio/ambience/base/AmbienceEmitter.ts'
 import type {CameraBookmark, PortraitRatio, PortraitSlot, SpawnBookmark} from '#src/lib/gallery/types.ts'
-import type {Quat, Vec3} from 'math'
+import type {Vec3} from 'math'
 
 import {Box3, Vector3} from 'three/webgpu'
 
@@ -16,8 +16,8 @@ export type RoomAmbience = {
 }
 /** a named camera view in the room, positioned relative to the room’s {@link Room.origin} */
 export type RoomCamera = Omit<CameraBookmark, 'id'>
-/** a named player pose in the room to teleport to, positioned relative to the room’s {@link Room.origin} */
-export type RoomSpawnBookmark = Omit<SpawnBookmark, 'id'>
+/** a player pose in the room to arrive or teleport at, its feet positioned relative to the room’s {@link Room.origin} */
+export type RoomSpawn = Omit<SpawnBookmark, 'id'>
 /** a rectangle on the floor plan, centered on its x and z */
 export type FloorRectangle = {
   center: readonly [x: number, z: number]
@@ -25,11 +25,6 @@ export type FloorRectangle = {
 }
 /** the extent of a rectangle on the floor plan along x and z */
 export type FloorSize = readonly [width: number, depth: number]
-/** where visitors arrive in a room: the camera’s position relative to the room’s {@link Room.origin} and its orientation */
-export type RoomSpawn = {
-  position: Vec3
-  rotation: Quat
-}
 export type PointLamp = LampBase & {
   kind?: 'point'
 }
@@ -70,7 +65,7 @@ export type RoomOptions = {
   /** the portrait slots by their id within the room, in snake_case, which stays stable so edited slots find their originals */
   slots?: Record<string, RoomPortraitSlot>
   /** the spawn bookmarks by their id within the room, in snake_case; the empty id is the room’s default spawn, which goes by the room’s own id */
-  spawns?: Record<string, RoomSpawnBookmark>
+  spawns?: Record<string, RoomSpawn>
   title: string
   /** how strongly the air holds sun shafts while the player is inside, 1 at full strength; 0 turns volumetric sunlight off */
   volumetricSun?: number
@@ -113,8 +108,9 @@ export default abstract class Room {
   /** the point in world meters every other position of the room is relative to, usually the middle of its floor */
   abstract readonly origin: Vec3
   readonly slots: ReadonlyMap<string, RoomPortraitSlot>
+  /** where visitors arrive, usually the room’s default spawn, the empty id of {@link spawns} */
   abstract readonly spawn: RoomSpawn
-  readonly spawns: ReadonlyMap<string, RoomSpawnBookmark>
+  readonly spawns: ReadonlyMap<string, RoomSpawn>
   readonly title: string
   readonly volumetricSun: number
 

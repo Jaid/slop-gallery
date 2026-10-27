@@ -11,12 +11,10 @@ import Salon from './salon/Salon.ts'
 import Sienna from './sienna/Sienna.ts'
 import Vesper from './vesper/Vesper.ts'
 
-export type {AmbienceEmitterClass, FloorRectangle, FloorSize, Lamp, PointLamp, RoomAmbience, RoomCamera, RoomOptions, RoomPortraitSlot, RoomSpawn, RoomSpawnBookmark, SpotLamp} from './base/Room.ts'
+export type {AmbienceEmitterClass, FloorRectangle, FloorSize, Lamp, PointLamp, RoomAmbience, RoomCamera, RoomOptions, RoomPortraitSlot, RoomSpawn, SpotLamp} from './base/Room.ts'
 export {default as Room} from './base/Room.ts'
-export {default as eyeHeight} from './lib/eyeHeight.ts'
 export {default as floorBox} from './lib/floorBox.ts'
 export {default as floorOrigin} from './lib/floorOrigin.ts'
-export {default as southSpawn} from './lib/southSpawn.ts'
 
 /** every room of the gallery */
 export const rooms = [new Lobby, new Vesper, new Dine, new Antechamber, new Sienna, new Moonfall, new Oculus, new Lodge, new Corridor, new Salon] as const
@@ -40,7 +38,7 @@ export function cameraBookmarks() {
 
 /** The player’s pose on arrival: the default spawn of the {@link defaultRoom}. */
 export function defaultSpawn() {
-  return getRoom(defaultRoom).worldSpawns().find(spawn => spawn.id === defaultRoom)!
+  return getRoom(defaultRoom).worldSpawn
 }
 
 /** every portrait slot of the gallery in world meters, room by room */

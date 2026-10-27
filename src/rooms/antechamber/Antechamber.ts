@@ -4,7 +4,6 @@ import {antechamberDomeCrownY} from '#src/lib/gallery/antechamberDome.ts'
 import staircase from '#src/lib/gallery/staircase.ts'
 
 import Room from '../base/Room.ts'
-import eyeHeight from '../lib/eyeHeight.ts'
 import floorBox from '../lib/floorBox.ts'
 import floorOrigin from '../lib/floorOrigin.ts'
 import cameras from './cameras.ts'
@@ -24,8 +23,9 @@ export default class Antechamber extends Room {
   override readonly origin = floorOrigin(plan, 0)
   // Just north of the middle, looking south toward the stairs.
   override readonly spawn = {
-    position: [0, eyeHeight, -1.1],
-    rotation: [0, 1, 0, 0],
+    position: [0, 0.04, -1.1],
+    yaw: -Math.PI,
+    pitch: 0,
   } satisfies RoomSpawn
 
   constructor() {

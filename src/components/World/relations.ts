@@ -68,6 +68,7 @@ export default {
       'moonfall-tunnel_green',
       'moonfall-tunnel_blue',
       'moonfall-tunnel_red',
+      'moonfall-stairs',
     ],
   },
   sienna: {
@@ -112,6 +113,7 @@ export default {
       'moonfall-tunnel_green',
       'moonfall-tunnel_blue',
       'moonfall-tunnel_red',
+      'moonfall-stairs',
     ],
   },
   lodge: {

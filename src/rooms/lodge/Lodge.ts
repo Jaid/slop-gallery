@@ -4,7 +4,6 @@ import lodge from '#src/lib/gallery/lodge.ts'
 import Room from '../base/Room.ts'
 import floorBox from '../lib/floorBox.ts'
 import floorOrigin from '../lib/floorOrigin.ts'
-import southSpawn from '../lib/southSpawn.ts'
 import ambienceEmitters from './ambienceEmitters.ts'
 import cameras from './cameras.ts'
 import lamps from './lamps.ts'
@@ -20,7 +19,7 @@ export default class Lodge extends Room {
   ]
   override readonly id = 'lodge'
   override readonly origin = floorOrigin(lodge, lodge.floorY)
-  override readonly spawn = southSpawn(lodge.size)
+  override readonly spawn = spawns['']
 
   constructor() {
     super({

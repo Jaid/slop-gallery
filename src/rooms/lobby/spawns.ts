@@ -1,4 +1,4 @@
-import type {RoomSpawnBookmark} from '../base/Room.ts'
+import type {RoomSpawn} from '../base/Room.ts'
 
 export default {
   // Just inside the north entrance, looking south past the glass floor, 18° toward the east.
@@ -12,4 +12,4 @@ export default {
     yaw: -0.74,
     pitch: 0.03,
   },
-} satisfies Record<string, RoomSpawnBookmark>
+} satisfies Record<string, RoomSpawn>

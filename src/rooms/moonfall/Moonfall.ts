@@ -4,7 +4,6 @@ import {craterTerrain} from '#src/lib/gallery/moonfall/CraterTerrain.ts'
 import Room from '../base/Room.ts'
 import floorBox from '../lib/floorBox.ts'
 import floorOrigin from '../lib/floorOrigin.ts'
-import southSpawn from '../lib/southSpawn.ts'
 import ambienceEmitters from './ambienceEmitters.ts'
 import cameras from './cameras.ts'
 import lamps from './lamps.ts'
@@ -23,7 +22,7 @@ export default class Moonfall extends Room {
   ]
   override readonly id = 'moonfall'
   override readonly origin = floorOrigin(plan, floorY)
-  override readonly spawn = southSpawn(plan.size)
+  override readonly spawn = spawns['']
 
   constructor() {
     super({

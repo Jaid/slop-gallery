@@ -1,4 +1,4 @@
-import type {RoomSpawnBookmark} from '../base/Room.ts'
+import type {RoomSpawn} from '../base/Room.ts'
 
 export default {
   '': {
@@ -6,4 +6,4 @@ export default {
     yaw: -0.56,
     pitch: -0.08,
   },
-} satisfies Record<string, RoomSpawnBookmark>
+} satisfies Record<string, RoomSpawn>
