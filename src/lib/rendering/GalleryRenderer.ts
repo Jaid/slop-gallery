@@ -97,8 +97,8 @@ export const updateChangedMatrices = (object: Object3D, parentChanged: boolean) 
     }
   }
 }
-// Objects a warming frame may draw outside the camera frustum. Their first draw builds their node graphs synchronously, so a cap keeps every loading frame short.
-const warmupObjectsPerFrame = 48
+// Milliseconds a warming frame may spend building the node graphs of objects drawn outside the camera frustum. Behind the loading screen, long frames matter less than getting through the scene: a frame’s own rendering adds up over many short ones.
+const warmupBuildBudget = 50
 // Milliseconds a streaming frame may spend building the node graphs of objects drawn for the first time in a pass. Building happens synchronously, from a few milliseconds per object to over a hundred for the heaviest; a frame always admits at least one.
 const streamedBuildBudget = 4
 /** frames in a row without anything left to stream after which streaming stops */
@@ -119,7 +119,15 @@ export class GalleryRenderer extends WebgpuRenderer {
   readonly shadowCameras = new WeakSet<Camera>
   /** the cameras of shadow maps of lights from outside the rooms, like the sun, which draw {@link hidden} too */
   readonly unculledCameras = new WeakSet<Camera>
-  /** the recent average of milliseconds spent building per object streaming admitted */
+  /** what warming went through so far, for loading telemetry */
+  readonly warmup = {
+    /** milliseconds spent building node graphs of admitted objects */
+    buildMs: 0,
+    frames: 0,
+    /** objects admitted outside the camera frustum */
+    objects: 0,
+  }
+  /** the recent average of milliseconds spent building per object warming or streaming admitted */
   private buildCost = 10
   /** milliseconds this frame spent building node graphs */
   private buildTime = 0
@@ -176,6 +184,11 @@ export class GalleryRenderer extends WebgpuRenderer {
 
   private get internals() {
     return this as unknown as Internals
+  }
+
+  /** whether warming draws every object in every pass, see {@link setWarming} */
+  get isWarming() {
+    return this.warming
   }
 
   /** the number of render pipelines that are still compiling in the background */
@@ -282,9 +295,6 @@ export class GalleryRenderer extends WebgpuRenderer {
 
   /** Carries what the last streaming frame found over to the next one. */
   private advanceStreaming() {
-    if (this.warmupAdmissions > 0) {
-      this.buildCost = this.buildCost * 0.7 + this.buildTime / this.warmupAdmissions * 0.3
-    }
     // Everything else waits while prioritized objects are left.
     this.streamRest = this.streaming === 'all' && !this.streamPriorityFound
     this.streamIdle = this.streamFound ? 0 : this.streamIdle + 1
@@ -359,7 +369,7 @@ export class GalleryRenderer extends WebgpuRenderer {
       }
       let cameras = this.warmObjects.get(object)
       if (!cameras) {
-        if (this.warmupAdmissions >= warmupObjectsPerFrame) {
+        if (this.warmupAdmissions > 0 && (this.buildTime >= warmupBuildBudget || (this.warmupAdmissions + 1) * this.buildCost > warmupBuildBudget)) {
           // Postpone the rest of the scene to the next frames.
           this.warmedFrame = -1
           projectObject.call(this, object, camera, groupOrder, renderList, clippingContext)
@@ -456,6 +466,14 @@ export class GalleryRenderer extends WebgpuRenderer {
     this.frame = frameId
     this.culledCamera = null
     this.warmedFrame = this.warming && this.warmupAdmissions === 0 ? frameId : -1
+    if (this.warmupAdmissions > 0) {
+      this.buildCost = this.buildCost * 0.7 + this.buildTime / this.warmupAdmissions * 0.3
+    }
+    if (this.warming) {
+      this.warmup.frames++
+      this.warmup.objects += this.warmupAdmissions
+      this.warmup.buildMs += this.buildTime
+    }
     if (this.streaming) {
       this.advanceStreaming()
     }

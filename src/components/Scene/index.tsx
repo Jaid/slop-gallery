@@ -60,6 +60,8 @@ function Ready() {
     pipelines: -1,
     warm: -1,
   })
+  /** when the next loading.progress event is due, in ms since loading began */
+  const nextProgress = useRef(0)
   const renderer = useThree(state => state.renderer)
   const scene = useThree(state => state.scene)
   const galleryRenderer = renderer instanceof GalleryRenderer ? renderer : null
@@ -90,6 +92,21 @@ function Ready() {
     reached.images = imagesDone ? (reached.images < 0 ? elapsed : reached.images) : -1
     reached.pipelines = pipelinesDone ? (reached.pipelines < 0 ? elapsed : reached.pipelines) : -1
     reached.warm = isWarm ? (reached.warm < 0 ? elapsed : reached.warm) : -1
+    const warmup: Record<string, number> = galleryRenderer ? {
+      'loading.warmup_build_ms': Math.round(galleryRenderer.warmup.buildMs),
+      'loading.warmup_frames': galleryRenderer.warmup.frames,
+      'loading.warmup_objects': galleryRenderer.warmup.objects,
+    } : {}
+    if (telemetry && elapsed >= nextProgress.current) {
+      nextProgress.current = elapsed + 1000
+      telemetry.event('loading.progress', {
+        'loading.images': pendingImages(),
+        'loading.mode': loading,
+        'loading.ms': elapsed,
+        'loading.pipelines': galleryRenderer?.pendingPipelines ?? 0,
+        ...warmup,
+      })
+    }
     // A scene that never settles, like one that keeps adding objects, starts after a while anyway. Its late pipelines still compile in the background.
     const warm = galleryRenderer?.warm !== false || performance.now() - loadingSince.current > maxWarmup
     if (warm && galleryRenderer && !galleryRenderer.warm && frames.current === 0) {
@@ -110,6 +127,7 @@ function Ready() {
         'loading.ms': elapsed,
         'loading.pipelines_ms': reached.pipelines,
         'loading.warm_ms': reached.warm,
+        ...warmup,
       })
       useGallery.setState({ready: true})
     }
