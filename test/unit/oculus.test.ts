@@ -14,7 +14,7 @@ import lowerGallery, {oculusCeiling, oculusPlatform, tunnelFloorHeight, tunnelSl
 import SlopedBoxGeometry from '../../src/lib/gallery/SlopedBoxGeometry.ts'
 import StairFlight from '../../src/lib/gallery/stairs/StairFlight.ts'
 import walls, {floorHeight, insideGallery, roomAt, rooms} from '../../src/lib/gallery/walls.ts'
-import renderOculusRoom from '../../src/rooms/oculus/components/OculusRoom.tsx'
+import renderOculusRoom from '../../src/rooms/oculus/components/OculusRoom/index.tsx'
 
 await RAPIER.init()
 const {oculus, tunnel, moonfall} = lowerGallery

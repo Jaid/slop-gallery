@@ -1,32 +1,18 @@
 import type {Wall} from '#src/lib/gallery.ts'
 
-import {CuboidCollider, RigidBody} from '@react-three/rapier'
-import Branch from 'branch-component'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 
-import AntechamberDome from '#component/levels/gallery/AntechamberDome'
-import CeilingLeds from '#component/levels/gallery/CeilingLeds'
-import DineFloor from '#component/levels/gallery/DineFloor'
-import Fountain from '#component/levels/gallery/Fountain'
-import FountainBenches from '#component/levels/gallery/FountainBenches'
 import GalleryLighting from '#component/levels/gallery/GalleryLighting'
 import GalleryStairs from '#component/levels/gallery/GalleryStairs'
-import LobbyFloor from '#component/levels/gallery/LobbyFloor'
-import LobbyVault from '#component/levels/gallery/LobbyVault'
-import LodgeCorridorRoute from '#component/levels/gallery/LodgeCorridorRoute'
 import LodgeWindow from '#component/levels/gallery/LodgeWindow'
 import PottedPlants from '#component/levels/gallery/PottedPlants'
-import RoomFloor from '#component/levels/gallery/RoomFloor'
 import SalonWindow from '#component/levels/gallery/SalonWindow'
 import {surfaceTexture} from '#src/components/Scene/materials.ts'
-import Box from '#src/components/Scene/primitives.tsx'
 import WallSurface from '#src/components/Scene/WallSurface.tsx'
 import {rooms, walls} from '#src/lib/gallery.ts'
-import {antechamberLedLight, antechamberLedSlots, dineLedLight, dineLedSlots} from '#src/lib/gallery/dine.ts'
-import {seenFrom} from '#src/lib/gallery/roomVisibility.ts'
 import {createArchitecturalGlassMaterials, disposeArchitecturalGlassMaterials} from '#src/lib/materials/ArchitecturalGlassMaterials.ts'
 import CastleStoneMaterial from '#src/lib/materials/CastleStoneMaterial.ts'
 import DamaskWallpaperMaterial from '#src/lib/materials/DamaskWallpaperMaterial.ts'
@@ -38,21 +24,19 @@ import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
 import {TravertineWallMaterial} from '#src/lib/materials/travertine/index.ts'
 import VesperWallMaterial from '#src/lib/materials/VesperWallMaterial.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
-import LodgeRoom from '#src/rooms/lodge/components/LodgeRoom.tsx'
-import MoonfallRoom from '#src/rooms/moonfall/components/MoonfallRoom.tsx'
-import OculusRoom from '#src/rooms/oculus/components/OculusRoom.tsx'
-import SalonRoom from '#src/rooms/salon/components/SalonRoom.tsx'
-import SiennaRoom from '#src/rooms/sienna/components/SiennaRoom.tsx'
+import AntechamberRoom from '#src/rooms/antechamber/components/AntechamberRoom/index.tsx'
+import CorridorRoom from '#src/rooms/corridor/components/CorridorRoom/index.tsx'
+import DineRoom from '#src/rooms/dine/components/DineRoom/index.tsx'
+import LobbyRoom from '#src/rooms/lobby/components/LobbyRoom/index.tsx'
+import LodgeRoom from '#src/rooms/lodge/components/LodgeRoom/index.tsx'
+import LodgeTunnel from '#src/rooms/lodge/components/LodgeTunnel/index.tsx'
+import MoonfallRoom from '#src/rooms/moonfall/components/MoonfallRoom/index.tsx'
+import OculusRoom from '#src/rooms/oculus/components/OculusRoom/index.tsx'
+import SalonRoom from '#src/rooms/salon/components/SalonRoom/index.tsx'
+import SiennaRoom from '#src/rooms/sienna/components/SiennaRoom/index.tsx'
+import VesperRoom from '#src/rooms/vesper/components/VesperRoom/index.tsx'
 
-// These rooms are lit by breakable LED panes with their own dimming lights instead of the fixed light boxes.
-const ledRooms = new Set<Wall['room']>(['antechamber', 'dine'])
-// The Lobby has no flat ceiling: its coffered vault rises above the walls, lit by its chandeliers and the sun.
-const vaultedRooms = new Set<Wall['room']>(['lobby'])
-// These upper rooms build their own floor, ceiling and lights.
-const customRooms = new Set<Wall['room']>(['salon', 'sienna'])
 const vesper = rooms.find(room => room.id === 'vesper')!
-// The Antechamber opens up into a windowed dome instead of its LED pane, so the sun reaches another room.
-const domedRooms = new Set<Wall['room']>(['antechamber'])
 // Five courses of 1.1 m reach the cornice; slabs are twice as long as they are high.
 const lobbyCladding = {
   course: 1.1,
@@ -151,58 +135,25 @@ export default function Architecture() {
   return <>
     <GalleryLighting />
     {walls.map(wall => <WallSurface key={wall.id} glass={glass.tunnel} material={wallMaterial(wall)} plaster={plaster} surfaceMaterial={surfaceMaterial(wall)} wall={wall} />)}
-    {rooms.filter(room => room.floorY === 0 && !customRooms.has(room.id)).map(room => <group key={room.id} position={[room.center[0], 0, room.center[1]]}>
-      <Branch not={vaultedRooms.has(room.id)}>
-        <RigidBody colliders={false} type='fixed'>
-          <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, room.height + 0.1, 0]} />
-        </RigidBody>
-        <Branch if={domedRooms.has(room.id)} else={<Box color={room.id === 'vesper' ? '#7c9586' : '#e1dccc'} position={[0, room.height - 0.02, 0]} size={[room.size[0], 0.18, room.size[1]]} />}><AntechamberDome height={room.height} size={room.size} /></Branch>
-      </Branch>
-      <RoomFloorFor glass={glass.lobby} room={room} stone={stone} wood={wood} />
-      {lightBoxOffsets(room).map(z => <group key={z}>
-        <Box color='#a29982' position={[0, 5.6, z]} size={[room.size[0] * 0.48, 0.1, 2.6]} />
-        <mesh position={[0, 5.54, z]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[room.size[0] * 0.48 - 0.1, 2.45]} /><meshBasicNodeMaterial color='#fff3d8' /></mesh>
-        {[-1, 0, 1].map(x => <Box key={x} color='#c0b7a1' position={[x * room.size[0] * 0.12, 5.5, z]} size={[0.045, 0.12, 2.5]} />)}
-      </group>)}
-      <Branch if={vaultedRooms.has(room.id)}><LobbyVault cladding={lobbyWall} /></Branch>
-      {(ledRooms.has(room.id) || vaultedRooms.has(room.id) ? [] : [-3.5, 3.5]).map(z => <pointLight key={z} color='#fff1d8' decay={2} distance={14} intensity={room.id === 'vesper' ? 40 : 32} position={[0, room.id === 'vesper' ? 4.5 : 4.9, z]} userData={{rooms: seenFrom(room.id)}} />)}
-    </group>)}
-    <CeilingLeds light={dineLedLight} name='dine' optional rooms={seenFrom('dine')} slots={dineLedSlots} />
-    <Branch not={domedRooms.has('antechamber')}><CeilingLeds light={antechamberLedLight} name='antechamber' optional rooms={seenFrom('antechamber')} slots={antechamberLedSlots} /></Branch>
+    <LobbyRoom cladding={lobbyWall} glass={glass.lobby} stone={stone} wood={wood} />
+    <VesperRoom glass={glass.lobby} stone={stone} wood={wood} />
+    <DineRoom glass={glass.lobby} stone={stone} wood={wood} />
+    <AntechamberRoom glass={glass.lobby} stone={stone} wood={wood} />
     <PottedPlants />
-    <Fountain />
-    <FountainBenches wood={wood} />
     <LodgeRoom materials={lodgeMaterials} />
     <LodgeWindow glass={glass.cabin} material={windowReveal} />
-    <LodgeCorridorRoute corridorLining={corridorWood} material={castleStone} />
+    <LodgeTunnel material={castleStone} wood={wood} />
+    <CorridorRoom lining={corridorWood} wood={wood} />
     <SiennaRoom joinery={joinery} />
     <SalonRoom glass={glass.lobby} stone={stone} wood={wood} />
     <SalonWindow glass={glass.salon} />
     <GalleryStairs />
     <MoonfallRoom stone={stone} />
     <OculusRoom material={oculusMaterial} />
-
   </>
 }
 
-/** The floor of an upper room without a custom room component: the Lobby and Dine lay their own stone, the others share the default slabs. */
-function RoomFloorFor(props: Parameters<typeof RoomFloor>[0]) {
-  if (props.room.id === 'lobby') {
-    return <LobbyFloor {...props} />
-  }
-  if (props.room.id === 'dine') {
-    return <DineFloor {...props} />
-  }
-  return <RoomFloor {...props} />
-}
 /** The Lodge’s own four walls get log courses; its tunnel keeps the castle stone. */
 function isLodgeRoomWall(wall: Wall) {
   return wall.room === 'lodge' && !wall.id.startsWith('lodge-tunnel-')
-}
-/** Z offsets of the recessed light boxes: one every 4 m along the room’s depth, none where LED panes or the vault’s chandeliers take over. */
-function lightBoxOffsets(room: typeof rooms[number]) {
-  if (ledRooms.has(room.id) || vaultedRooms.has(room.id)) {
-    return []
-  }
-  return Array.from({length: room.size[1] / 4 - 1}, (_, i) => i * 4 - room.size[1] / 2 + 4)
 }

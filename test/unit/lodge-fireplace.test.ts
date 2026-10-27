@@ -11,7 +11,7 @@ import fire, {fireWorldOrigin} from '../../src/lib/gallery/fireplace/config.ts'
 import lodge from '../../src/lib/gallery/lodge.ts'
 import lodgeInterior from '../../src/lib/gallery/lodgeInterior/layout.ts'
 import LodgeMaterials from '../../src/lib/materials/LodgeMaterials.ts'
-import renderLodgeRoom from '../../src/rooms/lodge/components/LodgeRoom.tsx'
+import renderLodgeRoom from '../../src/rooms/lodge/components/LodgeRoom/index.tsx'
 
 type Props = {
   children?: ReactNode
