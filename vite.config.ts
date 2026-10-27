@@ -116,7 +116,9 @@ const getProductionConfig = () => {
             if (chunkInfo.name === 'rolldown-runtime') {
               return 'runtime.js'
             }
-            return '[name].js'
+            // Components live in folders of their name, so a chunk that starts at a component’s index takes the folder’s name.
+            const folder = chunkInfo.name === 'index' && chunkInfo.facadeModuleId ? /([^/\\]+)[/\\]index\.tsx?$/u.exec(chunkInfo.facadeModuleId)?.[1] : undefined
+            return `${folder ?? '[name]'}.js`
           },
           assetFileNames: chunkInfo => {
             if (['index.css', 'main.css'].includes(chunkInfo.names[0] ?? '')) {

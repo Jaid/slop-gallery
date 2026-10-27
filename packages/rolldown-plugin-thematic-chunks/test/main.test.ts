@@ -35,7 +35,8 @@ test('installs every preset through native Rolldown hooks', () => {
   expect(plugin).not.toHaveProperty('apply')
   expect(plugin).not.toHaveProperty('config')
   const output = configureOutput()
-  expect(output.codeSplitting).toEqual({groups: thematicChunkGroups})
+  expect(output.codeSplitting).toMatchObject({groups: thematicChunkGroups})
+  expect((output.codeSplitting as {groups: Array<{test?: unknown}>}).groups.at(-1)?.test).toBeTypeOf('function')
   expect(output.chunkFileNames).toBeUndefined()
 })
 test('retains consumer chunk groups and thresholds without mutating their options', () => {
@@ -53,7 +54,7 @@ test('retains consumer chunk groups and thresholds without mutating their option
     assetFileNames: '[name].[ext]',
   }
   const output = configureOutput(input)
-  expect(output.codeSplitting).toEqual({
+  expect(output.codeSplitting).toMatchObject({
     minSize: 100,
     groups: [custom, ...thematicChunkGroups],
   })
@@ -156,6 +157,48 @@ for (const backend of ['Rolldown', 'Vite'] as const) {
       for (const emptyGroup of ['rapier', 'three', 'react', 'sub', 'vendor']) {
         expect(chunks.map(chunk => chunk.name)).not.toContain(emptyGroup)
       }
+    } finally {
+      await fs.remove(root)
+    }
+  })
+}
+for (const backend of ['Rolldown', 'Vite'] as const) {
+  test(`${backend} leaves modules only a dynamic import reaches out of main`, async () => {
+    const root = await fs.mkdtemp(resolve(tmpdir(), 'thematic-chunks-'))
+    try {
+      await fs.outputFile(resolve(root, 'eager.js'), 'export const eager = globalThis.__thematicChunkEager ??= Math.random()')
+      await fs.outputFile(resolve(root, 'later.js'), 'export const later = globalThis.__thematicChunkLater ??= Math.random()')
+      await fs.outputFile(resolve(root, 'main.js'), `
+        import {eager} from './eager.js'
+        console.log(eager, await import('./later.js'))
+      `)
+      const input = resolve(root, 'main.js')
+      const plugins = [thematicChunks()]
+      const result = backend === 'Rolldown' ? await rolldownBuild({
+        input,
+        preserveEntrySignatures: 'allow-extension',
+        plugins,
+        output: {format: 'es'},
+        write: false,
+      }) : await viteBuild({
+        root,
+        configFile: false,
+        logLevel: 'silent',
+        plugins,
+        build: {
+          minify: false,
+          write: false,
+          rolldownOptions: {input},
+        },
+      })
+      if (Array.isArray(result) || 'close' in result) {
+        throw new TypeError('Expected one completed build output.')
+      }
+      const chunks = result.output.filter(output => output.type === 'chunk')
+      const holding = (file: string) => chunks.find(chunk => Object.keys(chunk.modules).some(id => id.replaceAll('\\', '/') === resolve(root, file).replaceAll('\\', '/')))
+      expect(holding('eager.js')?.name).toBe('main')
+      expect(holding('later.js')?.name).not.toBe('main')
+      expect(holding('later.js')?.isDynamicEntry).toBe(true)
     } finally {
       await fs.remove(root)
     }

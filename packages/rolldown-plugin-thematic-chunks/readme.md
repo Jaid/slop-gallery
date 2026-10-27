@@ -22,11 +22,13 @@ export default defineConfig({
 
 The Rapier preset uses `includeDependenciesRecursively: false`, which requires `preserveEntrySignatures: false` or `'allow-extension'`. The plugin does not override that input setting.
 
+The main group takes the application code the entries import statically. Modules only a dynamic import reaches stay out of it, so they keep loading on demand in chunks of their own; dependencies matched by another preset still join that preset’s chunk.
+
 Existing chunk groups and code-splitting thresholds are retained. Explicit `codeSplitting: false` is respected. When a consumer supplies `chunkFileNames`, only a dynamic entry named `rapier` is renamed to `rapier-entry.js`; other chunks retain the consumer’s naming rule.
 
 ## Vite
 
-The same output-only plugin can be used in Vite’s top-level `plugins` array:
+The same plugin can be used in Vite’s top-level `plugins` array:
 
 ```typescript
 import {defineConfig} from 'vite'
