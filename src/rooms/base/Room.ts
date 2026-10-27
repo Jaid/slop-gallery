@@ -37,21 +37,13 @@ export type SpotLamp = LampBase & {
 }
 /** a light fixed in a room */
 export type Lamp = PointLamp | SpotLamp
-export type RoomOptions<Id extends string> = {
+export type RoomOptions = {
   /** the room’s ambient sounds by id */
   ambience?: Record<string, RoomAmbience>
-  /** a sentence shown below the title */
-  description: string
-  /** the room’s air as one axis-aligned box or several relative to {@link origin}, from its floor (or the bottom of a sunken one) to its clear height */
-  fence: Arrayable<Box3>
-  id: Id
-  /** the lamps by id, positioned relative to {@link origin} */
+  /** the lamps by id, positioned relative to the room’s {@link Room.origin} */
   lamps?: Record<string, Lamp>
   /** the number the map shows for the room, which also orders its room list */
   number: number
-  /** the point in world meters every other position of the room is relative to, usually the middle of its floor */
-  origin: Vec3
-  spawn: RoomSpawn
   title: string
   /** how strongly the air holds sun shafts while the player is inside, 1 at full strength; 0 turns volumetric sunlight off */
   volumetricSun?: number
@@ -74,52 +66,31 @@ type LampBase = {
 }
 type Arrayable<T> = ReadonlyArray<T> | T
 
-/** how far the camera stands above the floor */
-export const eyeHeight = 1.7
 const point = new Vector3
-
-/** The box over a floor rectangle of the size, from `bottom` up by `height`, centered on the origin or on `center` (x and z) relative to it. */
-export function floorBox([width, depth]: FloorSize, bottom: number, height: number, [x, z]: readonly [number, number] = [0, 0]) {
-  return new Box3(new Vector3(x - width / 2, bottom, z - depth / 2), new Vector3(x + width / 2, bottom + height, z + depth / 2))
-}
-
-/** The middle of a floor rectangle at `floorY`, as most rooms’ {@link Room.origin}. */
-export function floorOrigin({center: [x, z]}: FloorRectangle, floorY: number): Vec3 {
-  return [x, floorY, z]
-}
-
-/** The spot visitors arrive at by default in a room of the size whose origin is the middle of its floor: at eye height, 2.4 m in from the middle of the south wall, looking north. */
-export function southSpawn([, depth]: FloorSize): RoomSpawn {
-  return {
-    position: [0, eyeHeight, depth / 2 - 2.4],
-    rotation: [0, 0, 0, 1],
-  }
-}
 
 /**
  * A room of a level: what it is called, the air it fences off, where visitors arrive and how the sun behaves inside.
- * Subclasses pass their data to the constructor and can refine {@link contains} where a few boxes don’t describe the air well enough.
+ * Subclasses declare their identity and geometry as class fields, pass the rest to the constructor and can refine {@link contains} where a few boxes don’t describe the air well enough.
+ * Field initializers of subclasses run after this constructor, so everything derived from them is a getter.
  */
-export default abstract class Room<Id extends string = string> {
+export default abstract class Room {
   readonly ambience: ReadonlyMap<string, RoomAmbience>
-  readonly description: string
-  readonly fence: ReadonlyArray<Box3>
-  readonly id: Id
+  /** a sentence shown below the title */
+  abstract readonly description: string
+  /** the room’s air as one axis-aligned box or several relative to {@link origin}, from its floor (or the bottom of a sunken one) to its clear height */
+  abstract readonly fence: Arrayable<Box3>
+  abstract readonly id: string
   readonly lamps: ReadonlyMap<string, Lamp>
   readonly number: number
-  readonly origin: Vec3
-  readonly spawn: RoomSpawn
+  /** the point in world meters every other position of the room is relative to, usually the middle of its floor */
+  abstract readonly origin: Vec3
+  abstract readonly spawn: RoomSpawn
   readonly title: string
   readonly volumetricSun: number
 
-  constructor({id, number, title, description, origin, fence, spawn, lamps = {}, ambience = {}, volumetricSun = 1}: RoomOptions<Id>) {
-    this.id = id
+  constructor({number, title, lamps = {}, ambience = {}, volumetricSun = 1}: RoomOptions) {
     this.number = number
     this.title = title
-    this.description = description
-    this.origin = origin
-    this.fence = fence instanceof Box3 ? [fence] : fence
-    this.spawn = spawn
     this.lamps = new Map(Object.entries(lamps))
     this.ambience = new Map(Object.entries(ambience))
     this.volumetricSun = volumetricSun
@@ -127,7 +98,12 @@ export default abstract class Room<Id extends string = string> {
 
   /** the box around the whole fence, relative to {@link origin} */
   get bounds() {
-    return this.fence.reduce((result, box) => result.union(box), new Box3)
+    return this.fences.reduce((result, box) => result.union(box), new Box3)
+  }
+
+  /** the boxes of the {@link fence}, always as a list */
+  get fences(): ReadonlyArray<Box3> {
+    return this.fence instanceof Box3 ? [this.fence] : this.fence
   }
 
   /** whether sun shafts render while the player is inside */
@@ -135,10 +111,10 @@ export default abstract class Room<Id extends string = string> {
     return this.volumetricSun > 0
   }
 
-  /** the fence in world meters */
+  /** the fence’s boxes in world meters */
   get worldFence() {
     const offset = new Vector3(...this.origin)
-    return this.fence.map(box => box.clone().translate(offset))
+    return this.fences.map(box => box.clone().translate(offset))
   }
 
   /** the spawn in world meters */
@@ -152,7 +128,7 @@ export default abstract class Room<Id extends string = string> {
   /** Whether the world position lies in the room’s air. */
   contains(position: Vec3) {
     point.set(...this.toLocal(position))
-    return this.fence.some(box => box.containsPoint(point))
+    return this.fences.some(box => box.containsPoint(point))
   }
 
   /** New, still silent emitters of the room’s ambient sounds, each at its world position. */

@@ -4,10 +4,12 @@ import MoonfallOrbitAmbience from '#src/lib/audio/ambience/MoonfallOrbit.ts'
 import lowerGallery from '#src/lib/gallery/lowerGallery.ts'
 import {craterTerrain} from '#src/lib/gallery/moonfall/CraterTerrain.ts'
 
-import Room, {floorBox, floorOrigin, southSpawn} from './base/Room.ts'
+import Room from './base/Room.ts'
+import floorBox from './lib/floorBox.ts'
+import floorOrigin from './lib/floorOrigin.ts'
+import southSpawn from './lib/southSpawn.ts'
 
 const {floorY, moonfall: plan} = lowerGallery
-// The fence reaches down to the deepest air in the crater.
 const bottom = craterTerrain.lowest()
 const wallLed = {
   tint: '#91c9c4',
@@ -25,16 +27,18 @@ const eastWallLed = (z: number) => ({
   range: 10,
 }) satisfies Lamp
 
-export default class Moonfall extends Room<'moonfall'> {
+export default class Moonfall extends Room {
+  override readonly description = 'Down the stairs. Out of the ordinary.'
+  // Reaches down to the deepest air in the crater.
+  override readonly fence = floorBox(plan.size, bottom, 5.8 - bottom)
+  override readonly id = 'moonfall'
+  override readonly origin = floorOrigin(plan, floorY)
+  override readonly spawn = southSpawn(plan.size)
+
   constructor() {
     super({
-      id: 'moonfall',
       number: 6,
       title: 'Moonfall',
-      description: 'Down the stairs. Out of the ordinary.',
-      origin: floorOrigin(plan, floorY),
-      fence: floorBox(plan.size, bottom, 5.8 - bottom),
-      spawn: southSpawn(plan.size),
       ambience: {
         // A celestial hum from the orbital sculpture’s core.
         'orbital-sculpture': {

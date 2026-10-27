@@ -4,7 +4,10 @@ import FountainAmbience from '#src/lib/audio/ambience/Fountain.ts'
 import lobby from '#src/lib/gallery/lobby.ts'
 import lobbyVault from '#src/lib/gallery/lobbyVault.ts'
 
-import Room, {floorBox, floorOrigin, southSpawn} from './base/Room.ts'
+import Room from './base/Room.ts'
+import floorBox from './lib/floorBox.ts'
+import floorOrigin from './lib/floorOrigin.ts'
+import southSpawn from './lib/southSpawn.ts'
 
 const plan = {
   center: [0, (lobby.northZ + lobby.southZ) / 2],
@@ -17,17 +20,18 @@ const chandelier = (z: number) => ({
   range: 15,
 }) satisfies Lamp
 
-export default class Lobby extends Room<'lobby'> {
+export default class Lobby extends Room {
+  override readonly description = 'Nothing here is quite as it seems.'
+  // Up to the crown of the vault.
+  override readonly fence = floorBox(plan.size, 0, lobbyVault.springY + lobbyVault.outerRadius)
+  override readonly id = 'lobby'
+  override readonly origin = floorOrigin(plan, 0)
+  override readonly spawn = southSpawn(plan.size)
+
   constructor() {
     super({
-      id: 'lobby',
       number: 1,
       title: 'Lobby',
-      description: 'Nothing here is quite as it seems.',
-      origin: floorOrigin(plan, 0),
-      // Up to the crown of the vault.
-      fence: floorBox(plan.size, 0, lobbyVault.springY + lobbyVault.outerRadius),
-      spawn: southSpawn(plan.size),
       ambience: {
         // From the finial’s tip, the main jet’s mouth.
         fountain: {

@@ -1,10 +1,13 @@
+import type {RoomSpawn} from './base/Room.ts'
 import type {Vec3} from 'math'
 
 import corridor, {corridorHallEastX, corridorStairs, insideCorridor} from '#src/lib/gallery/corridor.ts'
 import lodge from '#src/lib/gallery/lodge.ts'
 import {stairHeadroom} from '#src/lib/gallery/stairs/StairFlight.ts'
 
-import Room, {eyeHeight, floorBox} from './base/Room.ts'
+import Room from './base/Room.ts'
+import eyeHeight from './lib/eyeHeight.ts'
+import floorBox from './lib/floorBox.ts'
 
 const hallWestX = lodge.approachX - lodge.timberWidth / 2
 const hallNorthZ = lodge.returnZ - lodge.timberWidth / 2
@@ -17,23 +20,24 @@ const lantern = {
   tint: '#ffb363',
 } as const
 
-export default class Corridor extends Room<'corridor'> {
+export default class Corridor extends Room {
+  override readonly description = 'Timber, turns and the long way back to Sienna.'
+  override readonly fence = [
+    floorBox([corridorHallEastX - hallWestX, hallSouthZ - hallNorthZ], 0, corridor.height, [(hallWestX + corridorHallEastX) / 2 - originX, (hallNorthZ + hallSouthZ) / 2 - originZ]),
+    // The stair flight climbs from the hall’s south end to the Sienna’s doorway.
+    floorBox([stairEastX - stairWestX, corridorStairs.width], corridorStairs.end[1] - corridor.floorY, corridorStairs.start[1] + stairHeadroom - corridorStairs.end[1], [(stairWestX + stairEastX) / 2 - originX, lodge.siennaZ - originZ]),
+  ]
+  override readonly id = 'corridor'
+  override readonly origin: Vec3 = [originX, corridor.floorY, originZ]
+  override readonly spawn = {
+    position: [0, eyeHeight, 0],
+    rotation: [0, 0, 0, 1],
+  } satisfies RoomSpawn
+
   constructor() {
     super({
-      id: 'corridor',
       number: 9,
       title: 'Corridor',
-      description: 'Timber, turns and the long way back to Sienna.',
-      origin: [corridor.center[0], corridor.floorY, corridor.center[1]],
-      fence: [
-        floorBox([corridorHallEastX - hallWestX, hallSouthZ - hallNorthZ], 0, corridor.height, [(hallWestX + corridorHallEastX) / 2 - originX, (hallNorthZ + hallSouthZ) / 2 - originZ]),
-        // The stair flight climbs from the hall’s south end to the Sienna’s doorway.
-        floorBox([stairEastX - stairWestX, corridorStairs.width], corridorStairs.end[1] - corridor.floorY, corridorStairs.start[1] + stairHeadroom - corridorStairs.end[1], [(stairWestX + stairEastX) / 2 - originX, lodge.siennaZ - originZ]),
-      ],
-      spawn: {
-        position: [0, eyeHeight, 0],
-        rotation: [0, 0, 0, 1],
-      },
       // Three lanterns at both ends and in the middle; the middle one reaches farthest.
       lamps: {
         'lantern-north': {

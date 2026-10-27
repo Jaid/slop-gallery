@@ -13,6 +13,10 @@ import Vesper from './Vesper.ts'
 
 export type {AmbienceEmitterClass, FloorRectangle, FloorSize, Lamp, PointLamp, RoomAmbience, RoomOptions, RoomSpawn, SpotLamp} from './base/Room.ts'
 export {default as Room} from './base/Room.ts'
+export {default as eyeHeight} from './lib/eyeHeight.ts'
+export {default as floorBox} from './lib/floorBox.ts'
+export {default as floorOrigin} from './lib/floorOrigin.ts'
+export {default as southSpawn} from './lib/southSpawn.ts'
 
 /** every room of the gallery, in the map’s order */
 export const rooms = [new Lobby, new Vesper, new Dine, new Antechamber, new Sienna, new Moonfall, new Oculus, new Lodge, new Corridor, new Salon] as const

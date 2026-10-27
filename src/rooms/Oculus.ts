@@ -1,20 +1,24 @@
 import lowerGallery from '#src/lib/gallery/lowerGallery.ts'
 
-import Room, {floorBox, floorOrigin, southSpawn} from './base/Room.ts'
+import Room from './base/Room.ts'
+import floorBox from './lib/floorBox.ts'
+import floorOrigin from './lib/floorOrigin.ts'
+import southSpawn from './lib/southSpawn.ts'
 
 const {oculus} = lowerGallery
 
-export default class Oculus extends Room<'oculus'> {
+export default class Oculus extends Room {
+  override readonly description = 'Borrowed light from the gallery above.'
+  // Up to the ceiling’s underside, not the upper room’s walkable surface.
+  override readonly fence = floorBox(oculus.size, 0, oculus.ceiling.topY - oculus.ceiling.thickness - oculus.floorY)
+  override readonly id = 'oculus'
+  override readonly origin = floorOrigin(oculus, oculus.floorY)
+  override readonly spawn = southSpawn(oculus.size)
+
   constructor() {
     super({
-      id: 'oculus',
       number: 7,
       title: 'Oculus',
-      description: 'Borrowed light from the gallery above.',
-      origin: floorOrigin(oculus, oculus.floorY),
-      // Up to the ceiling’s underside, not the upper room’s walkable surface.
-      fence: floorBox(oculus.size, 0, oculus.ceiling.topY - oculus.ceiling.thickness - oculus.floorY),
-      spawn: southSpawn(oculus.size),
       // Green, blue and red, from the sealed tunnel’s north end up to its high south end, each hanging 35 cm under its housing.
       lamps: {
         'tunnel-green': {

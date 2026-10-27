@@ -2,7 +2,10 @@ import type {Lamp} from './base/Room.ts'
 
 import {salonSouthZ} from '#src/lib/gallery/salon.ts'
 
-import Room, {floorBox, floorOrigin, southSpawn} from './base/Room.ts'
+import Room from './base/Room.ts'
+import floorBox from './lib/floorBox.ts'
+import floorOrigin from './lib/floorOrigin.ts'
+import southSpawn from './lib/southSpawn.ts'
 
 // From the Salon’s south wall to the Vesper’s south wall’s line.
 const plan = {
@@ -19,16 +22,17 @@ const led = (z: number) => ({
   optional: true,
 }) satisfies Lamp
 
-export default class Dine extends Room<'dine'> {
+export default class Dine extends Room {
+  override readonly description = 'A change of perspective is encouraged.'
+  override readonly fence = floorBox(plan.size, 0, 5.8)
+  override readonly id = 'dine'
+  override readonly origin = floorOrigin(plan, 0)
+  override readonly spawn = southSpawn(plan.size)
+
   constructor() {
     super({
-      id: 'dine',
       number: 3,
       title: 'Dine',
-      description: 'A change of perspective is encouraged.',
-      origin: floorOrigin(plan, 0),
-      fence: floorBox(plan.size, 0, 5.8),
-      spawn: southSpawn(plan.size),
       // Three breakable LED panes down the middle, each lighting through one point just below its diffuser.
       lamps: {
         'led-north': led(-5),
