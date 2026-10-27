@@ -93,6 +93,27 @@ const relatedRegions = (from: ReadonlyArray<RoomId>, floorY: number) => {
   }
   return regions
 }
+/** With `?room_culling=both`: the regions the openings show, limited to the rooms the camera’s rooms list in `relations.ts`. */
+const relatedPortalRegions = (from: ReadonlyArray<RoomId>) => {
+  const regions = visibleRegions(from, viewProjection)
+  const allowed = new Set<RoomId>(from.flatMap(room => [room, ...relations[room].rooms]))
+  for (const room of regions.keys()) {
+    if (!allowed.has(room)) {
+      regions.delete(room)
+    }
+  }
+  return regions
+}
+/** the screen regions each room in sight shows through, by `?room_culling` */
+const regionsFrom = (from: ReadonlyArray<RoomId>, floorY: number) => {
+  if (cullingMode === 'relations') {
+    return relatedRegions(from, floorY)
+  }
+  if (cullingMode === 'both') {
+    return relatedPortalRegions(from)
+  }
+  return visibleRegions(from, viewProjection)
+}
 /**
  * Leaves out what the camera can’t see from the rooms it is in. An object belongs to every room its bounds reach into, and a room behind an opening only shows through the part of the screen the opening covers, up to two openings deep.
  * Rooms out of sight drop out of every pass of the frame: the camera, its reflection and the lamps’ shadow maps. Objects in a room in sight that miss its openings on screen only drop out of the camera and its reflection, so the shadows they cast stay.
@@ -118,7 +139,7 @@ export default function RoomCulling() {
       viewProjection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
       // The floor reflection shows the rooms behind openings mirrored by the floors it mirrors, by default those of the room the camera is in.
       const floorY = getFloorReflectionHeight() ?? roomBoxes.find(({id}) => id === from[0])?.floorY ?? 0
-      const regions = from.length ? (cullingMode === 'relations' ? relatedRegions(from, floorY) : visibleRegions(from, viewProjection)) : undefined
+      const regions = from.length ? regionsFrom(from, floorY) : undefined
       const inSight = (rects: ReadonlyArray<ScreenRect>, box: Box3) => {
         const rect = screenRect(box, viewProjection)
         return rect !== undefined && rects.some(([left, bottom, right, top]) => rect[0] <= right && rect[2] >= left && rect[1] <= top && rect[3] >= bottom)

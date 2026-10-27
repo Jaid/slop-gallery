@@ -1,10 +1,10 @@
 import optis from 'optis'
 import readPermalink from 'read-permalink'
 
-/** how RoomCulling decides which other rooms to draw: through the openings on screen, or the rooms `relations.ts` lists for the camera’s room whose fences meet the view */
-export type RoomCullingMode = 'portals' | 'relations'
+/** how RoomCulling decides which other rooms to draw: through the openings on screen, the rooms `relations.ts` lists for the camera’s room whose fences meet the view, or the openings limited to those listed rooms */
+export type RoomCullingMode = 'both' | 'portals' | 'relations'
 
-const modes = new Set<unknown>(['portals', 'relations'])
+const modes = new Set<unknown>(['both', 'portals', 'relations'])
 const schema = optis({
   defaults: {
     room_culling: 'portals',
