@@ -88,6 +88,12 @@ export const updateChangedMatrices = (object: Object3D, parentChanged: boolean) 
 }
 // Objects a warming frame may draw outside the camera frustum. Their first draw builds their node graphs synchronously, so a cap keeps every loading frame short.
 const warmupObjectsPerFrame = 48
+// Objects a streaming frame may draw for the first time in a pass. Each one builds its node graphs synchronously, which takes a few milliseconds.
+const streamedObjectsPerFrame = 4
+/** frames in a row without anything left to stream after which streaming stops */
+const streamedIdleFrames = 300
+/** how streaming picks the objects to build: `all` builds the rest of the scene after the prioritized objects, `priority` only ever builds prioritized ones */
+export type StreamingMode = 'all' | 'priority'
 
 /**
  * Instruments real lifecycle operations and keeps per-frame work in the frame scene to once per frame:
@@ -106,12 +112,23 @@ export class GalleryRenderer extends WebgpuRenderer {
   private culler: Culler | null = null
   private frame = -1
   private frameScene: Scene | null = null
+  /** shadow cameras that left out objects not built yet this frame */
+  private gatedCameras = new Set<Camera>
+  /** shadow cameras that left out objects not built yet last frame, so their maps must render again */
+  private incompleteCameras = new Set<Camera>
   private initialization?: Promise<this>
   private pending = 0
   /** projects objects outside of loading, leaving out {@link hidden} outside of {@link unculledCameras} and, outside of shadow maps, {@link hiddenFromView} */
   private projectCulled?: ProjectObject
+  private projectStreaming?: ProjectObject
   /** projects objects while loading, admitting the next ones outside the frustum */
   private projectWarming?: ProjectObject
+  private streamFound = false
+  private streamIdle = 0
+  private streaming: StreamingMode | null = null
+  private streamPriority: ((object: Object3D) => boolean) | null = null
+  private streamPriorityFound = false
+  private streamRest = false
   private warmedFrame = -1
   private warming = false
   /** the cameras each object was drawn for outside their frustum while loading */
@@ -203,10 +220,49 @@ export class GalleryRenderer extends WebgpuRenderer {
     this.frameScene = scene
   }
 
+  /**
+   * Builds the objects not drawn in a pass yet a few per frame after loading, instead of all at once when they first come into view. Until then, a pass leaves them out.
+   * Objects the priority accepts come first; with `all`, the rest follows once no prioritized one is left, and streaming stops after a while without anything left to build.
+   */
+  setStreaming(streaming: StreamingMode | null) {
+    this.streaming = streaming
+    this.streamIdle = 0
+    this.incompleteCameras.clear()
+    this.gatedCameras.clear()
+    this.installProjection()
+  }
+
+  /** Sets which objects streaming builds first, all by default. */
+  setStreamPriority(priority: ((object: Object3D) => boolean) | null) {
+    this.streamPriority = priority
+  }
+
   /** Draws every object of the frame scene in every pass, regardless of the camera frustum, so that all their pipelines compile while loading. */
   setWarming(warming: boolean) {
     this.warming = warming
     this.installProjection()
+  }
+
+  /** Whether the shadow map of this camera left out objects that streaming hasn’t built yet, so it must render again. */
+  streamingIncomplete(camera: Camera) {
+    return this.incompleteCameras.has(camera)
+  }
+
+  /** Carries what the last streaming frame found over to the next one. */
+  private advanceStreaming() {
+    // Everything else waits while prioritized objects are left.
+    this.streamRest = this.streaming === 'all' && !this.streamPriorityFound
+    this.streamIdle = this.streamFound ? 0 : this.streamIdle + 1
+    const incomplete = this.gatedCameras
+    this.gatedCameras = this.incompleteCameras
+    this.gatedCameras.clear()
+    this.incompleteCameras = incomplete
+    this.streamFound = false
+    this.streamPriorityFound = false
+    // With only the prioritized objects to build, the priority changes as the player moves, so streaming never runs out.
+    if (this.streaming === 'all' && this.streamIdle > streamedIdleFrames) {
+      this.setStreaming(null)
+    }
   }
 
   /** Replaces three’s synchronous pipeline creation for the frame scene. Objects are drawn once their pipeline is ready, so a new variant no longer stalls the frame. */
@@ -266,12 +322,48 @@ export class GalleryRenderer extends WebgpuRenderer {
         object.frustumCulled = true
       }
     }
+    this.projectStreaming = (object, camera, groupOrder, renderList, clippingContext) => {
+      const culled = hidden.has(object) && !unculledCameras.has(camera) || hiddenFromView.has(object) && !shadowCameras.has(camera)
+      const cameras = this.warmObjects.get(object)
+      if (!object.visible || !object.layers.test(camera.layers) || !object.frustumCulled || !('geometry' in object) || cameras?.has(camera)) {
+        if (!culled) {
+          projectObject.call(this, object, camera, groupOrder, renderList, clippingContext)
+        }
+        return
+      }
+      const priority = this.streamPriority?.(object) ?? true
+      this.streamPriorityFound ||= priority
+      this.streamFound ||= priority || this.streaming === 'all'
+      if (this.warmupAdmissions >= streamedObjectsPerFrame || !(priority || this.streamRest)) {
+        // Left out until its turn; its children still go their own way.
+        // Only objects that will get their turn keep the shadow map rendering.
+        if (shadowCameras.has(camera) && (priority || this.streaming === 'all')) {
+          this.gatedCameras.add(camera)
+        }
+        for (const child of object.children) {
+          this.internals._projectObject.call(this, child, camera, groupOrder, renderList, clippingContext)
+        }
+        return
+      }
+      this.warmupAdmissions++
+      if (cameras) {
+        cameras.add(camera)
+      } else {
+        this.warmObjects.set(object, new Set([camera]))
+      }
+      object.frustumCulled = false
+      try {
+        projectObject.call(this, object, camera, groupOrder, renderList, clippingContext)
+      } finally {
+        object.frustumCulled = true
+      }
+    }
     this.installProjection()
   }
 
   /** Projection runs for every object of every pass, so outside of loading it does nothing but leave out {@link hidden}. */
   private installProjection() {
-    const project = this.warming ? this.projectWarming : this.projectCulled
+    const project = this.warming ? this.projectWarming : (this.streaming ? this.projectStreaming : this.projectCulled)
     if (project) {
       this.internals._projectObject = project
     }
@@ -299,6 +391,9 @@ export class GalleryRenderer extends WebgpuRenderer {
     this.culledCamera = null
     this.warmedFrame = this.warming && this.warmupAdmissions === 0 ? frameId : -1
     this.warmupAdmissions = 0
+    if (this.streaming) {
+      this.advanceStreaming()
+    }
     updateChangedMatrices(this.frameScene!, false)
   }
 }

@@ -18,6 +18,7 @@ import {isEditingPortraitSlots, isShowingPortraitSlots} from '#src/lib/gallery/p
 import {useHiddenUi} from '#src/lib/hiddenUi.ts'
 import {GalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
 import {isShowingLights} from '#src/lib/rendering/lightLevels.ts'
+import {readLoading} from '#src/lib/rendering/loading.ts'
 import {pendingImages} from '#src/lib/useArtworkTexture.ts'
 
 import Interaction from './Interaction.tsx'
@@ -44,7 +45,11 @@ export default function Scene() {
 }
 
 const maxWarmup = 90_000
-/** Holds the loading screen until the artworks are in and every pipeline of the scene, including unseen rooms, shadows and reflections, has compiled. */
+const loading = readLoading()
+/**
+ * Holds the loading screen until the artworks are in and every pipeline of the scene, including unseen rooms, shadows and reflections, has compiled.
+ * With `?loading=streamed` or `lazy`, the level’s culling leaves out what the start view can’t see, and the renderer streams it in after the loading screen.
+ */
 function Ready() {
   const frames = useRef(0)
   const loadingSince = useRef<number>(null)
@@ -61,6 +66,7 @@ function Ready() {
     galleryRenderer.setWarming(true)
     return () => {
       galleryRenderer.setWarming(false)
+      galleryRenderer.setStreaming(null)
       galleryRenderer.setFrameScene(null)
     }
   }, [galleryRenderer, scene])
@@ -80,6 +86,9 @@ function Ready() {
     }
     if (++frames.current > 8) {
       galleryRenderer?.setWarming(false)
+      if (loading !== 'full') {
+        galleryRenderer?.setStreaming(loading === 'lazy' ? 'priority' : 'all')
+      }
       useGallery.setState({ready: true})
     }
   })

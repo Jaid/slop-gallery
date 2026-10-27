@@ -3,7 +3,7 @@ import type {RoomId} from '#src/lib/gallery/types.ts'
 import type {BufferGeometry, Camera, DirectionalLight, Light, LightShadow, Object3D} from 'three/webgpu'
 
 import {useThree} from '@react-three/fiber'
-import {useEffect} from 'react'
+import {useLayoutEffect} from 'react'
 import {Box3, Matrix4, Vector3} from 'three/webgpu'
 
 import relations from '#src/components/World/relations.ts'
@@ -12,6 +12,7 @@ import {roomBoxes, roomContaining, roomsAt, roomsOverlapping, screenRect, visibl
 import {getFloorReflectionHeight} from '#src/lib/materials/FloorMaterial.ts'
 import {GalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
 import {lightActive} from '#src/lib/rendering/lightLevels.ts'
+import {readLoading} from '#src/lib/rendering/loading.ts'
 import ShadowCache from '#src/lib/rendering/ShadowCache.ts'
 
 type Drawable = Object3D & {
@@ -26,6 +27,8 @@ type Placement = {
   world: Box3
 }
 
+/** whether culling already runs behind the loading screen, so that only what the start view sees gets built there */
+const cullsWhileLoading = readLoading() !== 'full'
 const viewProjection = new Matrix4
 const position = new Vector3
 const mirrored = new Box3
@@ -88,6 +91,7 @@ const relatedRegions = (from: ReadonlyArray<RoomId>) => {
  * Leaves out what the camera can’t see from the rooms it is in. An object belongs to every room its bounds reach into, and a room behind an opening only shows through the part of the screen the opening covers, up to two openings deep.
  * Rooms out of sight drop out of every pass of the frame: the camera, its reflection and the lamps’ shadow maps. Objects in a room in sight that miss its openings on screen only drop out of the camera and its reflection, so the shadows they cast stay.
  * The sun shines from outside every room, through openings and skylights that rooms out of sight may frame, so its shadow map keeps them all; otherwise the patches of sunlight would change shape whenever a room leaves the view.
+ * With `?loading=streamed` or `lazy`, culling starts behind the loading screen, where the sun’s shadow map leaves out hidden rooms too, and objects in the camera’s rooms and the rooms related to them stream in first.
  * Shadow maps only update when something in their light’s reach changes, and lights in hidden rooms or switched off by their room list wait until they matter again. Lights themselves stay, since a different set of lights would recompile every lit material.
  */
 export default function RoomCulling() {
@@ -95,12 +99,14 @@ export default function RoomCulling() {
   const scene = useThree(state => state.scene)
   const ready = useGallery(s => s.ready)
   const galleryRenderer = renderer instanceof GalleryRenderer ? renderer : null
-  useEffect(() => {
-    if (!ready || !galleryRenderer) {
+  // A layout effect, so that culling is in place before the first frame builds what the start view can’t see.
+  useLayoutEffect(() => {
+    if (!(ready || cullsWhileLoading) || !galleryRenderer) {
       return
     }
     const {hidden, hiddenFromView, shadowCameras, unculledCameras} = galleryRenderer
     const shadows = new ShadowCache
+    const related = new Set<RoomId>
     const cull = (camera: Camera) => {
       hidden.clear()
       hiddenFromView.clear()
@@ -110,6 +116,13 @@ export default function RoomCulling() {
       // The floor reflection shows the rooms behind openings mirrored by the floors it mirrors, by default those of the room the camera is in.
       const floorY = getFloorReflectionHeight() ?? roomBoxes.find(({id}) => id === from[0])?.floorY ?? 0
       const regions = from.length ? relatedRegions(from) : undefined
+      related.clear()
+      for (const room of from) {
+        related.add(room)
+        for (const other of relations[room].rooms) {
+          related.add(other)
+        }
+      }
       const inSight = (rects: ReadonlyArray<ScreenRect>, box: Box3) => {
         const rect = screenRect(box, viewProjection)
         return rect !== undefined && rects.some(([left, bottom, right, top]) => rect[0] <= right && rect[2] >= left && rect[1] <= top && rect[3] >= bottom)
@@ -119,8 +132,12 @@ export default function RoomCulling() {
         const light = object as Light & {shadow?: LightShadow}
         if (light.isLight && light.shadow) {
           shadowCameras.add(light.shadow.camera)
-          if ((light as DirectionalLight).isDirectionalLight) {
+          // Behind the loading screen, the sun would otherwise build every hidden room.
+          if ((light as DirectionalLight).isDirectionalLight && ready) {
             unculledCameras.add(light.shadow.camera)
+          }
+          if (galleryRenderer.streamingIncomplete(light.shadow.camera)) {
+            light.shadow.needsUpdate = true
           }
         }
         if (!regions || !drawable.geometry || !drawable.frustumCulled || holdsLight(object)) {
@@ -137,6 +154,9 @@ export default function RoomCulling() {
           hiddenFromView.add(object)
         }
       })
+      if (!ready) {
+        return
+      }
       shadows.update(scene, hidden, (light: Light) => {
         if (!lightActive.current(light)) {
           return false
@@ -146,8 +166,18 @@ export default function RoomCulling() {
       })
     }
     galleryRenderer.setCuller(cull)
+    // Objects of no room never get culled, so they count as nearby.
+    galleryRenderer.setStreamPriority(object => {
+      const drawable = object as Drawable
+      if (!related.size || !drawable.geometry) {
+        return true
+      }
+      const {rooms} = placementOf(drawable, drawable.geometry)
+      return !rooms.length || rooms.some(room => related.has(room))
+    })
     return () => {
       galleryRenderer.setCuller(null)
+      galleryRenderer.setStreamPriority(null)
       shadows.dispose()
     }
   }, [galleryRenderer, ready, scene])
