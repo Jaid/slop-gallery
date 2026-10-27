@@ -11,6 +11,8 @@ import {galleryLevel} from '../level.ts'
 /** More attributes for a `room.changed` event, set by whoever knows what the move switches; the scene lists the lights it turns on and off. */
 export const roomChangeDetails: {current: (from: string, to: string) => Attributes} = {current: () => ({})}
 
+const roomTitle = (id: string) => rooms.find(room => room.id === id)?.title ?? id
+
 export default class SlopGalleryTelemetry extends VictoriaClient {
   readonly sessionId: string
   private gameplay: Span | undefined
@@ -96,7 +98,7 @@ export default class SlopGalleryTelemetry extends VictoriaClient {
           from: previous.room,
           to: state.room,
           ...roomChangeDetails.current(previous.room, state.room),
-        })
+        }, `Room changed: ${roomTitle(previous.room)} → ${roomTitle(state.room)}`)
       }
       for (const key of ['locked', 'ready'] as const) {
         if (state[key] !== previous[key]) {
@@ -174,12 +176,12 @@ export default class SlopGalleryTelemetry extends VictoriaClient {
     })
   }
 
-  event(name: string, attributes: Attributes = {}) {
+  event(name: string, attributes: Attributes = {}, message = `Gallery event: ${name}`) {
     this.increment('gallery.events', 1, {attributes: {event: name}})
     const parent = this.gameplay ?? this.startup ?? this.session
     const span = parent ?? this.startSpan(`gallery.${name}`, {attributes})
     parent?.addEvent(`gallery.${name}`, attributes)
-    this.log(`Gallery event: ${name}`, {
+    this.log(message, {
       level: 'info',
       attributes: {
         'event.name': `gallery.${name}`,
