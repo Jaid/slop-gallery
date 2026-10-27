@@ -49,6 +49,17 @@ type Internals = {
 const projectObject = (Renderer.prototype as unknown as Internals)._projectObject
 // eslint-disable-next-line typescript/unbound-method -- Only compared, to find classes that override it.
 const updateMatrixWorld = Object3D.prototype.updateMatrixWorld
+/** an object’s name, or else its type inside the nearest named ancestor, to tell telemetry and loading items apart */
+const objectLabel = (object: Object3D) => {
+  if (object.name) {
+    return object.name
+  }
+  let ancestor = object.parent
+  while (ancestor && !ancestor.name) {
+    ancestor = ancestor.parent
+  }
+  return ancestor ? `${ancestor.name}>${object.type}` : object.type
+}
 /** each object’s position, quaternion and scale when its matrix was last composed */
 const poses = new WeakMap<Object3D, Float64Array>
 const parents = new WeakMap<Object3D, Object3D | null>
@@ -340,7 +351,7 @@ export class GalleryRenderer extends WebgpuRenderer {
     const sink: PromiseSink = {
       push: promise => {
         this.pending++
-        const id = compiling ? `pipeline:${compiling.object.name || compiling.object.type}/${compiling.material.name || compiling.material.type}` : 'pipeline'
+        const id = compiling ? `pipeline:${objectLabel(compiling.object)}/${compiling.material.name || compiling.material.type}` : 'pipeline'
         const loaded = startLoading(id)
         const start = performance.now()
         const settle = () => {

@@ -3,8 +3,8 @@ import type {MarbleStyle} from '../marble/marble.ts'
 import type {BoiseriePalette} from './paint.ts'
 import type {Node} from 'three/webgpu'
 
-import {abs, color, float, max, mix, normalGeometry, positionLocal, select, vec2} from 'three/tsl'
-import {MeshStandardNodeMaterial} from 'three/webgpu'
+import {abs, color, float, Fn, Loop, max, mix, normalGeometry, positionLocal, select, uniform, uniformArray, vec2, vec3} from 'three/tsl'
+import {MeshStandardNodeMaterial, Vector4} from 'three/webgpu'
 
 import {heightNormal, inside, line, visibleDetail} from '../filters.ts'
 import {calacatta, marble} from '../marble/marble.ts'
@@ -25,18 +25,27 @@ export type BoiserieWallOptions = {
   seed?: number
 }
 
-type Float = Node<'float'>
-
 /** depth of the chair rail, in meters, for shading only */
 const railDepth = 0.012
 /** distance of the inner fillet from the panel outline, and its half-width, in meters */
 const innerFilletInset = 0.085
 const innerFilletHalfWidth = 0.004
-/** Signed distance from a wall point to the outline of a rectangle, negative inside. */
-const rectangleDistance = (point: Node<'vec2'>, {u, v}: WallRectangle) => {
-  const center = vec2((u[0] + u[1]) / 2, (v[0] + v[1]) / 2)
-  const half = vec2((u[1] - u[0]) / 2, (v[1] - v[0]) / 2)
-  const q = point.sub(center).abs().sub(half)
+/** Room for the panels and rails of one wall. Their layouts are uniforms, so all walls share one shader. */
+const maxPanels = 8
+const maxRails = 4
+/** A rectangle as its center and half-size, packed for a uniform array. */
+const packRectangle = ({u, v}: WallRectangle) => new Vector4((u[0] + u[1]) / 2, (v[0] + v[1]) / 2, (u[1] - u[0]) / 2, (v[1] - v[0]) / 2)
+/** Named, since three otherwise names the buffer after its node and every wall would get its own shader again. */
+const rectangleArray = (name: string, rectangles: ReadonlyArray<WallRectangle>, capacity: number) => {
+  const packed = rectangles.map(packRectangle)
+  while (packed.length < capacity) {
+    packed.push(new Vector4)
+  }
+  return uniformArray(packed, 'vec4').setName(name) as unknown as {element: (at: Node<'int'>) => Node<'vec4'>}
+}
+/** Signed distance from a wall point to the outline of a packed rectangle, negative inside. */
+const rectangleDistance = (point: Node<'vec2'>, rectangle: Node<'vec4'>) => {
+  const q = point.sub(rectangle.xy).abs().sub(rectangle.zw)
   return q.max(0).length().add(q.x.max(q.y).min(0))
 }
 
@@ -55,6 +64,9 @@ export default class BoiserieWallMaterial extends MeshStandardNodeMaterial {
     if (!(moldingHalfWidth > 0) || !(moldingDepth >= 0)) {
       throw new RangeError('Boiserie moldings need a positive width and a non-negative depth.')
     }
+    if (panels.length > maxPanels || rails.length > maxRails) {
+      throw new RangeError(`Boiserie walls hold up to ${maxPanels} panels and ${maxRails} rails.`)
+    }
     for (const {u, v} of [...panels, ...rails]) {
       if (!(u[1] > u[0] && v[1] > v[0])) {
         throw new RangeError('Boiserie rectangles need a positive size.')
@@ -67,19 +79,31 @@ export default class BoiserieWallMaterial extends MeshStandardNodeMaterial {
     const front = normalGeometry.z.greaterThan(0.5)
     const plaster = paintedPlaster({
       footprint,
-      seed,
+      seed: uniform(seed),
       u,
       v,
     })
-    // Distance to the nearest panel outline; the molding is a band around it.
-    let outline: Float = float(1e3)
-    let panelField: Float = float(1e3)
-    for (const panel of panels) {
-      const distance = rectangleDistance(point, panel)
-      outline = outline.min(distance.abs())
-      panelField = panelField.min(distance)
-    }
-    const outlineDistance = outline.toVar('boiserieOutline')
+    const panelArray = rectangleArray('boiseriePanels', panels, maxPanels)
+    const panelCount = uniform(panels.length, 'int')
+    const railArray = rectangleArray('boiserieRails', rails, maxRails)
+    const railCount = uniform(rails.length, 'int')
+    // Distance to the nearest panel outline, where the molding is a band around it, and the signed distance into the nearest panel and rail.
+    const fields = Fn(() => {
+      const outline = float(1e3).toVar()
+      const panelField = float(1e3).toVar()
+      const railField = float(1e3).toVar()
+      Loop(panelCount, ({i}) => {
+        const distance = rectangleDistance(point, panelArray.element(i))
+        outline.assign(outline.min(distance.abs()))
+        panelField.assign(panelField.min(distance))
+      })
+      Loop(railCount, ({i}) => {
+        railField.assign(railField.min(rectangleDistance(point, railArray.element(i))))
+      })
+      return vec3(outline, panelField, railField)
+    })().toVar('boiserieFields')
+    const outlineDistance = fields.x
+    const panelField = fields.y
     // A slim gilt fillet runs around the inside of each panel, a hand’s width in from its molding.
     const fillet = line(panelField.add(innerFilletInset), innerFilletHalfWidth).toVar('boiserieFillet')
     const molding = line(outlineDistance, moldingHalfWidth).toVar('boiserieMolding')
@@ -93,21 +117,19 @@ export default class BoiserieWallMaterial extends MeshStandardNodeMaterial {
     // The plaster beside a molding lies in its soft shadow.
     const shadow = outlineDistance.smoothstep(moldingHalfWidth, moldingHalfWidth + 0.035).oneMinus().mul(molding.oneMinus())
     // The chair rail: a gilt bullnose, lit from above like the moldings, over a dado painted a shade deeper.
-    let railField: Float = float(1e3)
-    for (const rail of rails) {
-      railField = railField.min(rectangleDistance(point, rail))
-    }
-    const railTop = Math.max(...rails.map(rail => rail.v[1]))
-    const railBottom = Math.min(...rails.map(rail => rail.v[0]))
-    const railDistance = railField.toVar('boiserieRail')
+    const railTop = rails.length ? Math.max(...rails.map(rail => rail.v[1])) : 0
+    const railBottomValue = rails.length ? Math.min(...rails.map(rail => rail.v[0])) : 0
+    const railBottom = uniform(railBottomValue)
+    const railDistance = fields.z
     const rail = inside(railDistance)
     // 0 at the rail’s foot, 1 at its top edge.
-    const railAcross = v.sub(railBottom).div(Math.max(railTop - railBottom, 1e-3)).clamp(0, 1)
+    const railAcross = v.sub(railBottom).div(uniform(Math.max(railTop - railBottomValue, 1e-3))).clamp(0, 1)
     const railShade = railAcross.smoothstep(0.1, 0.75).mul(0.55).add(0.45).sub(line(railAcross.sub(0.3), 0.04).mul(0.2))
-    const dado = rails.length ? inside(v.sub(railBottom)).mul(rail.oneMinus()) : float(0)
+    // Without rails, there is no dado.
+    const dado = inside(v.sub(railBottom)).mul(rail.oneMinus()).mul(uniform(rails.length ? 1 : 0))
     const railHeight = railDistance.negate().smoothstep(0, 0.014).mul(railDepth)
     // The rail casts a soft shadow on the dado below it.
-    const railShadow = float(railBottom).sub(v).smoothstep(0, 0.04).oneMinus().mul(dado)
+    const railShadow = railBottom.sub(v).smoothstep(0, 0.04).oneMinus().mul(dado)
     const relief = visibleDetail(footprint, 0.02)
     const isFront = front.select(float(1), float(0))
     const giltShare = molding.max(rail).max(fillet).mul(isFront).toVar('boiserieGilt')

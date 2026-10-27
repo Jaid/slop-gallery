@@ -51,7 +51,7 @@ export default function RoomFloor({glass, materials, room, stone, wood}: {
     <RigidBody colliders={false} type='fixed'>
       {plan.slabs.map(({center: [x, z], size: [width, depth]}, i) => <group key={i}>
         <CuboidCollider args={[width / 2, floorThickness / 2, depth / 2]} position={[x, -floorThickness / 2, z]} />
-        <Box position={[x, -floorThickness / 2, z]} size={[width, floorThickness, depth]} {...surface} envMapIntensity={envMapIntensity} material={materials?.slab} roughness={floorReflections ? 0.36 : 0.8} />
+        <Box name={`${room.id}-floor-slab`} position={[x, -floorThickness / 2, z]} size={[width, floorThickness, depth]} {...surface} envMapIntensity={envMapIntensity} material={materials?.slab} roughness={floorReflections ? 0.36 : 0.8} />
       </group>)}
       <Branch if={plan.glazing}><FloorGlass glass={glass} glazing={plan.glazing!} name={room.id} /></Branch>
     </RigidBody>
@@ -59,8 +59,8 @@ export default function RoomFloor({glass, materials, room, stone, wood}: {
     <Branch if={room.id === 'vesper'}><WoodFloor depth={room.size[1]} texture={wood} width={room.size[0]} /></Branch>
     <Branch if={room.id === 'salon'}><ParquetFloor depth={room.size[1]} name={room.id} reflections={false} width={room.size[0]} /></Branch>
     <Branch none={[room.id === 'dine', room.id === 'salon']}>
-      {plan.seams.map(({center: [x, z], size: [width, depth]}, i) => <Box key={i} color='#a8a18f' envMapIntensity={envMapIntensity} position={[x, 0.008, z]} size={[width, 0.008, depth]} />)}
-      {plan.inlays.map(({center: [x, z], size: [width, depth]}, i) => <Box key={i} color='#9d8354' envMapIntensity={envMapIntensity} material={materials?.inlay} metalness={0.45} position={[x, 0.015, z]} size={[width, 0.012, depth]} />)}
+      {plan.seams.map(({center: [x, z], size: [width, depth]}, i) => <Box key={i} color='#a8a18f' envMapIntensity={envMapIntensity} name={`${room.id}-floor-seam`} position={[x, 0.008, z]} size={[width, 0.008, depth]} />)}
+      {plan.inlays.map(({center: [x, z], size: [width, depth]}, i) => <Box key={i} color='#9d8354' envMapIntensity={envMapIntensity} material={materials?.inlay} metalness={0.45} name={`${room.id}-floor-inlay`} position={[x, 0.015, z]} size={[width, 0.012, depth]} />)}
     </Branch>
   </StaticBatch>
 }

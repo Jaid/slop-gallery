@@ -39,15 +39,15 @@ export default function SiennaRoom({joinery}: {
       <RigidBody colliders={false} type='fixed'>
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, -0.15, 0]} />
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]} />
-        <Box color='#392517' envMapIntensity={floorReflections ? 1 : 0} position={[0, -0.12, 0]} size={[room.size[0], 0.24, room.size[1]]} />
-        <Box material={ceiling} position={[0, 5.78, 0]} size={[room.size[0], 0.18, room.size[1]]} />
+        <Box color='#392517' envMapIntensity={floorReflections ? 1 : 0} name='sienna-floor-slab' position={[0, -0.12, 0]} size={[room.size[0], 0.24, room.size[1]]} />
+        <Box material={ceiling} name='sienna-ceiling' position={[0, 5.78, 0]} size={[room.size[0], 0.18, room.size[1]]} />
       </RigidBody>
       <mesh name='sienna-wood-floor' position={[0, 0.001, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[...room.size]} />
         <primitive attach='material' object={floor} />
         <Branch if={reflection}><primitive object={reflection!} /></Branch>
       </mesh>
-      {siennaCeilingBeamOffsets(room.size[0]).map(x => <Box key={x} material={joinery.z} position={[x, siennaCeilingBeam.centerY, 0]} size={[siennaCeilingBeam.width, siennaCeilingBeam.height, room.size[1]]} />)}
+      {siennaCeilingBeamOffsets(room.size[0]).map(x => <Box key={x} material={joinery.z} name='sienna-ceiling-beam' position={[x, siennaCeilingBeam.centerY, 0]} size={[siennaCeilingBeam.width, siennaCeilingBeam.height, room.size[1]]} />)}
       <mesh material={rug} name='sienna-carpet' position={[0, siennaRugThickness / 2, 0]} receiveShadow>
         <boxGeometry args={[siennaRugSize[0], siennaRugThickness, siennaRugSize[1]]} />
       </mesh>
@@ -55,9 +55,9 @@ export default function SiennaRoom({joinery}: {
     </group>
     {walls.filter(wall => wall.room === 'sienna').map(wall => <group key={wall.id} position={wall.center} rotation={[0, wall.rotation, 0]}>
       {siennaWainscot(wall).map(u => <group key={u} position={[u, 0, 0]}>
-        <Box material={joinery.x} position={[0, 0.92, 0.125]} size={[2, 0.94, 0.025]} />
-        <Box material={joinery.panel} position={[0, 0.92, 0.145]} size={[1.55, 0.65, 0.025]} />
-        <Box material={joinery.x} position={[0, 1.42, 0.145]} size={[2, 0.045, 0.09]} />
+        <Box material={joinery.x} name='sienna-wainscot-frame' position={[0, 0.92, 0.125]} size={[2, 0.94, 0.025]} />
+        <Box material={joinery.panel} name='sienna-wainscot-panel' position={[0, 0.92, 0.145]} size={[1.55, 0.65, 0.025]} />
+        <Box material={joinery.x} name='sienna-wainscot-rail' position={[0, 1.42, 0.145]} size={[2, 0.045, 0.09]} />
       </group>)}
     </group>)}
   </>

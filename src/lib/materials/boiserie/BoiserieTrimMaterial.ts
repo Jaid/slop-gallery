@@ -3,8 +3,8 @@ import type {MarbleStyle} from '../marble/marble.ts'
 import type {BoiseriePalette} from './paint.ts'
 import type {Node} from 'three/webgpu'
 
-import {abs, color, float, max, mix, normalGeometry, positionLocal, select, vec2} from 'three/tsl'
-import {MeshStandardNodeMaterial} from 'three/webgpu'
+import {abs, color, float, Fn, Loop, max, mix, normalGeometry, positionLocal, select, uniform, uniformArray, vec2} from 'three/tsl'
+import {MeshStandardNodeMaterial, Vector4} from 'three/webgpu'
 
 import {wallOpeningTrim} from '#src/lib/gallery/architectureDimensions.ts'
 
@@ -32,19 +32,21 @@ const plinthHeight = 0.4
 const plinthOverhang = 0.065
 /** width of the gilt bead along a doorway surround’s outer edge */
 const surroundBead = 0.028
-/** Signed distance from a wall point to the outline of an opening, negative inside, as the CSG cutters shape it. */
-const openingDistance = (point: Node<'vec2'>, hole: WallOpening): Float => {
-  const radius = hole.width / 2
-  const x = point.x.sub(hole.u)
-  if (hole.profile === 'arch') {
-    const spring = hole.height - radius
-    const below = point.y.lessThan(spring)
-    const side = x.abs().sub(radius)
-    const arc = vec2(x, point.y.sub(spring)).length().sub(radius)
-    return select(below, side, arc)
-  }
-  const q = vec2(x.abs().sub(radius), point.y.sub(hole.height))
-  return q.max(0).length().add(q.x.max(q.y).min(0))
+/** Room for the openings of one wall. Their layouts are uniforms, so all walls share one shader. */
+const maxHoles = 6
+/** An opening as its center along the wall, half-width, height, and 1 for an arch plus 2 for one that cuts through the baseboard, packed for a uniform array. */
+const packHole = (hole: WallOpening) => new Vector4(hole.u, hole.width / 2, hole.height, (hole.profile === 'arch' ? 1 : 0) + (hole.bottom ? 2 : 0))
+/** Signed distance from a wall point to the outline of a packed opening, negative inside, as the CSG cutters shape it. */
+const openingDistance = (point: Node<'vec2'>, hole: Node<'vec4'>): Float => {
+  const radius = hole.y
+  const x = point.x.sub(hole.x)
+  const spring = hole.z.sub(radius)
+  const below = point.y.lessThan(spring)
+  const side = x.abs().sub(radius)
+  const arc = vec2(x, point.y.sub(spring)).length().sub(radius)
+  const q = vec2(x.abs().sub(radius), point.y.sub(hole.z))
+  const rectangle = q.max(0).length().add(q.x.max(q.y).min(0))
+  return select(hole.w.mod(2).greaterThan(0.5), select(below, side, arc), rectangle)
 }
 
 /**
@@ -62,6 +64,9 @@ export default class BoiserieTrimMaterial extends MeshStandardNodeMaterial {
     if (!(wallHeight > 1) || !(baseboardHeight > 0.06)) {
       throw new RangeError('Boiserie trim needs a wall taller than 1 m and a baseboard taller than its 6 cm cap.')
     }
+    if (holes.length > maxHoles) {
+      throw new RangeError(`Boiserie trim holds up to ${maxHoles} openings.`)
+    }
     const u = positionLocal.x.toVar('trimU')
     const v = positionLocal.y.toVar('trimV')
     const depth = positionLocal.z.toVar('trimDepth')
@@ -73,17 +78,29 @@ export default class BoiserieTrimMaterial extends MeshStandardNodeMaterial {
     const facingAlong = abs(n.x).greaterThan(0.5)
     const stoneU = select(facingRoom, u, select(facingAlong, depth, u))
     const stoneV = select(facingRoom.or(facingAlong), v, depth)
-    let surround: Float = float(0)
-    let bead: Float = float(0)
-    for (const hole of holes) {
-      const distance = openingDistance(point, hole)
-      // The surround runs around the opening; the plinths stand beside its foot.
-      const inSurround = inside(distance.sub(wallOpeningTrim + 0.002))
-      const inPlinth = hole.bottom ? float(0) : inside(u.sub(hole.u).abs().sub(hole.width / 2 + wallOpeningTrim + plinthOverhang + 0.002)).mul(inside(v.sub(plinthHeight + 0.002)))
-      surround = surround.max(inSurround.max(inPlinth))
-      bead = bead.max(line(distance.sub(wallOpeningTrim - surroundBead / 2), surroundBead / 2).mul(inPlinth.oneMinus()).mul(v.greaterThan(plinthHeight).select(float(1), float(0))))
+    const packed = holes.map(packHole)
+    while (packed.length < maxHoles) {
+      packed.push(new Vector4)
     }
-    const surroundShare = surround.toVar('trimSurround')
+    // Named, since three otherwise names the buffer after its node and every wall would get its own shader again.
+    const holeArray = uniformArray(packed, 'vec4').setName('trimHoles') as unknown as {element: (at: Node<'int'>) => Node<'vec4'>}
+    const holeCount = uniform(holes.length, 'int')
+    const trim = Fn(() => {
+      const surround = float(0).toVar()
+      const bead = float(0).toVar()
+      Loop(holeCount, ({i}) => {
+        const hole = holeArray.element(i)
+        const distance = openingDistance(point, hole).toVar()
+        // The surround runs around the opening; the plinths stand beside its foot, unless it cuts through the baseboard.
+        const inSurround = inside(distance.sub(wallOpeningTrim + 0.002))
+        const inPlinth = inside(u.sub(hole.x).abs().sub(hole.y.add(wallOpeningTrim + plinthOverhang + 0.002))).mul(inside(v.sub(plinthHeight + 0.002))).mul(hole.w.lessThan(1.5).select(float(1), float(0)))
+        surround.assign(surround.max(inSurround.max(inPlinth)))
+        bead.assign(bead.max(line(distance.sub(wallOpeningTrim - surroundBead / 2), surroundBead / 2).mul(inPlinth.oneMinus()).mul(v.greaterThan(plinthHeight).select(float(1), float(0)))))
+      })
+      return vec2(surround, bead)
+    })().toVar('trimOpenings')
+    const surroundShare = trim.x
+    const bead = trim.y
     const stoneColor = marble({
       footprint,
       name: 'surroundMarble',
@@ -93,8 +110,10 @@ export default class BoiserieTrimMaterial extends MeshStandardNodeMaterial {
       v: stoneV,
     }).color
     // The gilt cap of the baseboard, and the cornice’s lower band.
-    const cap = inside(float(baseboardHeight - 0.06).sub(v)).mul(inside(v.sub(baseboardHeight + 0.001)))
-    const corniceBand = inside(float(wallHeight - 0.47).sub(v)).mul(inside(v.sub(wallHeight - 0.37)))
+    const baseboard = uniform(baseboardHeight)
+    const height = uniform(wallHeight)
+    const cap = inside(baseboard.sub(0.06).sub(v)).mul(inside(v.sub(baseboard.add(0.001))))
+    const corniceBand = inside(height.sub(0.47).sub(v)).mul(inside(v.sub(height.sub(0.37))))
     const giltShare = mix(cap.max(corniceBand), bead, surroundShare).toVar('trimGilt')
     const plaster = paintedPlaster({
       footprint,

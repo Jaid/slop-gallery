@@ -35,11 +35,12 @@ const unit = (node: Float) => node.mul(0.5).add(0.5)
  */
 export function paintedPlaster({footprint, u, v, seed = 0}: {
   footprint: Float
-  seed?: number
+  /** a number, or a uniform to share one shader between surfaces that differ only in their seed */
+  seed?: Float | number
   u: Float
   v: Float
 }) {
-  const s = float(seed)
+  const s = typeof seed === 'number' ? float(seed) : seed
   const broad = unit(mx_noise_float(vec3(u.mul(0.35), v.mul(0.35), s))).mul(0.6).add(unit(mx_noise_float(vec3(u.mul(1.3), v.mul(1.3), s.add(3)))).mul(0.4))
   const trowel = mix(float(0.5), unit(mx_noise_float(vec3(u.mul(2.4), v.mul(1.6), s.add(1)))), visibleDetail(footprint, 0.08))
   const stipple = mix(float(0.5), unit(mx_noise_float(vec3(u.mul(70), v.mul(70), s.add(2)))), visibleDetail(footprint, 0.006))
