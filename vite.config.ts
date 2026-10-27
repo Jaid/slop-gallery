@@ -21,6 +21,7 @@ import titlePlugin from 'vite-plugin-title'
 import levels, {defaultLevel, levelIds} from '#src/data/levels.ts'
 import knotMaterialsPlugin from '#src/lib/vite/knotMaterialsPlugin.ts'
 import loadingScreenPlugin from '#src/lib/vite/loadingScreenPlugin.ts'
+import rapierWasmPlugin from '#src/lib/vite/rapierWasmPlugin.ts'
 
 const getCommonConfig = (context: ConfigEnv) => {
   const level = selectGameLevel(loadEnv(context.mode, process.cwd(), 'GAME_LEVEL').GAME_LEVEL, levelIds, defaultLevel)
@@ -80,6 +81,7 @@ const getProductionConfig = () => {
   const config: UserConfig = {
     plugins: [
       avifOnlyPlugin(),
+      rapierWasmPlugin(),
       bakeThreePlugin(),
       bakeBranchComponentPlugin(),
       {
