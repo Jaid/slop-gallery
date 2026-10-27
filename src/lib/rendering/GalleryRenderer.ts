@@ -117,8 +117,6 @@ const streamedBuildBudget = 4
 const minimumBuildCost = 0.1
 /** the build cost a camera’s passes are expected to have for a material they haven’t built yet, in milliseconds, until they built one */
 const initialFreshBuildCost = 30
-/** the build cost a camera’s passes are expected to have for an object whose material they built already, in milliseconds, until they built one */
-const initialSharedBuildCost = 1
 /** milliseconds after which a pipeline that compiled in the background is logged as slow */
 const slowPipelineMs = 500
 /** frames in a row without anything left to stream after which streaming stops */
@@ -176,8 +174,8 @@ export class GalleryRenderer extends WebgpuRenderer {
   private projectWarming?: ProjectObject
   /** shadow cameras whose map rendered this frame while streaming */
   private readonly renderedShadowCameras = new Set<Camera>
-  /** per camera, the recent average of milliseconds spent building an object whose material its passes built already; three mostly takes that from its caches in the scene pass, but less so in the floor reflection */
-  private readonly sharedBuildCosts = new WeakMap<Camera, number>
+  /** the recent average of milliseconds spent building an object whose material a camera’s passes built already, which three mostly takes from its caches */
+  private sharedBuildCost = 1
   private streamFound = false
   private streamIdle = 0
   private streaming: StreamingMode | null = null
@@ -335,13 +333,12 @@ export class GalleryRenderer extends WebgpuRenderer {
 
   /**
    * Admits an object to be built this frame, unless its expected cost would exceed the frame’s budget; a frame always admits at least one.
-   * Objects are admitted while projecting, before any of them is built, so the cost is a guess: an object whose material the camera’s passes haven’t built yet costs what that material took in another pass, or else about as much as the last such ones did in its passes; one that shares a built material likewise costs what the last such ones did in its passes, which is usually little. A single average across kinds or passes would let a run of cheap objects lower it until a frame admits dozens of expensive ones at once; the scene pass’s cheap builds did that to the floor reflection.
+   * Objects are admitted while projecting, before any of them is built, so the cost is a guess: an object whose material the camera’s passes haven’t built yet costs what that material took in another pass, or else about as much as the last such ones did in its passes, while one that shares a built material is cheap. A single average would let a run of cheap objects lower it until a frame admits dozens of expensive ones at once.
    */
   private admit(object: Object3D, camera: Camera, budget: number) {
     const built = this.builtMaterials.get(camera)
     const materials = (object as Object3D & {material?: Array<Material> | Material}).material
     const fresh = this.freshBuildCosts.get(camera) ?? initialFreshBuildCost
-    const shared = this.sharedBuildCosts.get(camera) ?? initialSharedBuildCost
     // Shadow maps draw with materials of their own, so what the object’s material cost elsewhere tells nothing about them.
     const known = this.shadowCameras.has(camera) ? null : this.materialBuildCosts
     // They draw with the light’s shadow material in place of the object’s, so only their first object builds it from scratch.
@@ -351,7 +348,7 @@ export class GalleryRenderer extends WebgpuRenderer {
     for (const own of list) {
       const material = override && own?.allowOverride !== false ? override : own
       if (material && built?.has(material)) {
-        cost += shared
+        cost += this.sharedBuildCost
       } else {
         cost += (material && known?.get(material)) ?? fresh
       }
@@ -411,7 +408,7 @@ export class GalleryRenderer extends WebgpuRenderer {
           this.builtMaterials.set(renderObject.camera, built)
         }
         if (built.has(renderObject.material)) {
-          this.sharedBuildCosts.set(renderObject.camera, Math.max(minimumBuildCost, (this.sharedBuildCosts.get(renderObject.camera) ?? initialSharedBuildCost) * 0.7 + ms * 0.3))
+          this.sharedBuildCost = Math.max(minimumBuildCost, this.sharedBuildCost * 0.7 + ms * 0.3)
         } else {
           built.add(renderObject.material)
           if (!this.shadowCameras.has(renderObject.camera)) {
