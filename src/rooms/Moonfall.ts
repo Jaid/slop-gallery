@@ -47,13 +47,13 @@ export default class Moonfall extends Room {
       },
       lamps: {
         // Four wall LEDs down the west wall, leaving its middle dark.
-        'wall-west-1': westWallLed(-10),
-        'wall-west-2': westWallLed(-5),
-        'wall-west-3': westWallLed(5),
-        'wall-west-4': westWallLed(10),
+        wall_west_1: westWallLed(-10),
+        wall_west_2: westWallLed(-5),
+        wall_west_3: westWallLed(5),
+        wall_west_4: westWallLed(10),
         // On the east only the pair flanking the stair door, hanging lower and brighter.
-        'wall-east-north': eastWallLed(-3.6),
-        'wall-east-south': eastWallLed(3.6),
+        wall_east_north: eastWallLed(-3.6),
+        wall_east_south: eastWallLed(3.6),
         spotlight: {
           kind: 'spot',
           position: [-7, 3.3, -4],
@@ -66,7 +66,7 @@ export default class Moonfall extends Room {
           shadow: true,
         },
         // The planet’s glow, rising from the crater, throws the orbital sculpture’s shadow onto the ceiling.
-        'planet-glow': {
+        planet_glow: {
           position: [5.37, 1.02, -0.19],
           strength: 216,
           tint: '#64bfb5',

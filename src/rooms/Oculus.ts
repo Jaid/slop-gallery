@@ -20,7 +20,7 @@ export default class Oculus extends Room {
       title: 'Oculus',
       // Green, blue and red, from the sealed tunnel’s north end up to its high south end, each hanging 35 cm under its housing.
       lamps: {
-        'tunnel-green': {
+        tunnel_green: {
           position: [0, 3.9853, 14.8027],
           strength: 10,
           tint: '#4dff6a',
@@ -28,14 +28,14 @@ export default class Oculus extends Room {
           decay: 1.25,
           shadow: true,
         },
-        'tunnel-blue': {
+        tunnel_blue: {
           position: [0, 4.7544, 19.8027],
           strength: 13.2,
           tint: '#4d7aff',
           range: 10,
           decay: 1,
         },
-        'tunnel-red': {
+        tunnel_red: {
           position: [0, 5.5235, 24.8027],
           strength: 33,
           tint: '#ff4d4d',

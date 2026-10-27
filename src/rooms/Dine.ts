@@ -34,9 +34,9 @@ export default class Dine extends Room {
       title: 'Dine',
       // Three breakable LED panes down the middle, each lighting through one point just below its diffuser.
       lamps: {
-        'led-north': led(-5),
-        'led-middle': led(0),
-        'led-south': led(5),
+        led_north: led(-5),
+        led_middle: led(0),
+        led_south: led(5),
       },
       slots: {
         'dine-north-0': {

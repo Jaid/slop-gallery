@@ -40,9 +40,9 @@ export default class Lobby extends Room {
       },
       // One under each of the vault’s three chandeliers, hung below the hub to reach past the candle ring.
       lamps: {
-        'chandelier-north': chandelier(-8),
-        'chandelier-middle': chandelier(0),
-        'chandelier-south': chandelier(8),
+        chandelier_north: chandelier(-8),
+        chandelier_middle: chandelier(0),
+        chandelier_south: chandelier(8),
       },
       slots: {
         'lobby-north-0': {

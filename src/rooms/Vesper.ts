@@ -20,13 +20,13 @@ export default class Vesper extends Room {
       title: 'The Vesper',
       // The two light boxes in the ceiling.
       lamps: {
-        'ceiling-north': {
+        ceiling_north: {
           position: [0, 4.5, -3.5],
           strength: 40,
           tint: '#fff1d8',
           range: 14,
         },
-        'ceiling-south': {
+        ceiling_south: {
           position: [0, 4.5, 3.5],
           strength: 40,
           tint: '#fff1d8',
