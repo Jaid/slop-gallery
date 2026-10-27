@@ -18,7 +18,7 @@ export type RoomRelations = {
  */
 export default {
   lobby: {
-    rooms: ['vesper', 'dine', 'antechamber', 'salon', 'oculus', 'sienna', 'moonfall', 'lodge'],
+    rooms: ['vesper', 'dine', 'antechamber', 'salon', 'oculus', 'sienna', 'moonfall'],
     floorMirror: 'base',
     keep: [
       'vesper-ceiling_north',
@@ -115,7 +115,7 @@ export default {
     ],
   },
   lodge: {
-    rooms: ['oculus', 'corridor', 'moonfall', 'lobby', 'sienna'],
+    rooms: ['oculus', 'corridor', 'moonfall', 'sienna'],
     keep: [
       'moonfall-tunnel_green',
       'moonfall-tunnel_blue',
