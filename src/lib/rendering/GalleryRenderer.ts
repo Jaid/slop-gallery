@@ -1,5 +1,5 @@
 import type {WebgpuRendererOptions} from 'three-fiber-game'
-import type {Camera, Scene} from 'three/webgpu'
+import type {Camera, Material, Scene} from 'three/webgpu'
 
 import {WebgpuRenderer} from 'three-fiber-game'
 import {Object3D, Renderer} from 'three/webgpu'
@@ -156,11 +156,11 @@ export class GalleryRenderer extends WebgpuRenderer {
   /** per camera, the recent average of milliseconds spent building an object whose material its passes haven’t built yet; that varies by pass, since three may reuse what another pass built, as for most shadow maps, or build it again for the pass, as for the floor reflection */
   private readonly freshBuildCosts = new WeakMap<Camera, number>
   /** shadow cameras that left out objects not built yet this frame */
-  private gatedCameras = new Set<Camera>
+  private readonly gatedCameras = new Set<Camera>
   /** objects that streaming left out this frame although they will get their turn */
   private gatedObjects = new Set<Object3D>
-  /** shadow cameras that left out objects not built yet last frame, so their maps must render again */
-  private incompleteCameras = new Set<Camera>
+  /** shadow cameras whose map left out objects not built yet the last time it rendered, so it must render again */
+  private readonly incompleteCameras = new Set<Camera>
   private initialization?: Promise<this>
   /** what building each material took the last time a pass other than a shadow map built it from scratch, in milliseconds; a heavy material is heavy in every such pass */
   private readonly materialBuildCosts = new WeakMap<object, number>
@@ -172,6 +172,8 @@ export class GalleryRenderer extends WebgpuRenderer {
   private projectStreaming?: ProjectObject
   /** projects objects while loading, admitting the next ones outside the frustum */
   private projectWarming?: ProjectObject
+  /** shadow cameras whose map rendered this frame while streaming */
+  private readonly renderedShadowCameras = new Set<Camera>
   /** the recent average of milliseconds spent building an object whose material a camera’s passes built already, which three mostly takes from its caches */
   private sharedBuildCost = 1
   private streamFound = false
@@ -273,6 +275,10 @@ export class GalleryRenderer extends WebgpuRenderer {
 
   override render(scene: Object3D, camera: Camera) {
     if (scene !== this.frameScene || !scene.matrixWorldAutoUpdate) {
+      // Shadow maps render within the frame’s passes.
+      if (this.streaming && this.shadowCameras.has(camera)) {
+        this.renderedShadowCameras.add(camera)
+      }
       super.render(scene, camera)
       return
     }
@@ -303,6 +309,7 @@ export class GalleryRenderer extends WebgpuRenderer {
     this.streamIdle = 0
     this.incompleteCameras.clear()
     this.gatedCameras.clear()
+    this.renderedShadowCameras.clear()
     this.waitingObjects.clear()
     this.gatedObjects.clear()
     this.installProjection()
@@ -330,13 +337,16 @@ export class GalleryRenderer extends WebgpuRenderer {
    */
   private admit(object: Object3D, camera: Camera, budget: number) {
     const built = this.builtMaterials.get(camera)
-    const materials = (object as Object3D & {material?: Array<object> | object}).material
+    const materials = (object as Object3D & {material?: Array<Material> | Material}).material
     const fresh = this.freshBuildCosts.get(camera) ?? initialFreshBuildCost
     // Shadow maps draw with materials of their own, so what the object’s material cost elsewhere tells nothing about them.
     const known = this.shadowCameras.has(camera) ? null : this.materialBuildCosts
+    // They draw with the light’s shadow material in place of the object’s, so only their first object builds it from scratch.
+    const override = this.frameScene?.overrideMaterial
     let cost = 0
-    const list: ReadonlyArray<object | undefined> = Array.isArray(materials) ? materials : [materials]
-    for (const material of list) {
+    const list: ReadonlyArray<Material | undefined> = Array.isArray(materials) ? materials : [materials]
+    for (const own of list) {
+      const material = override && own?.allowOverride !== false ? override : own
       if (material && built?.has(material)) {
         cost += this.sharedBuildCost
       } else {
@@ -356,10 +366,16 @@ export class GalleryRenderer extends WebgpuRenderer {
     // Everything else waits while prioritized objects are left.
     this.streamRest = this.streaming === 'all' && !this.streamPriorityFound
     this.streamIdle = this.streamFound ? 0 : this.streamIdle + 1
-    const incomplete = this.gatedCameras
-    this.gatedCameras = this.incompleteCameras
+    // A shadow map that didn’t render last frame still misses what it left out before.
+    for (const camera of this.renderedShadowCameras) {
+      if (this.gatedCameras.has(camera)) {
+        this.incompleteCameras.add(camera)
+      } else {
+        this.incompleteCameras.delete(camera)
+      }
+    }
+    this.renderedShadowCameras.clear()
     this.gatedCameras.clear()
-    this.incompleteCameras = incomplete
     const waiting = this.gatedObjects
     this.gatedObjects = this.waitingObjects
     this.gatedObjects.clear()
