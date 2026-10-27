@@ -40,7 +40,7 @@ export default class Moonfall extends Room {
       title: 'Moonfall',
       ambience: {
         // A celestial hum from the orbital sculpture’s core.
-        'orbital-sculpture': {
+        orbital_sculpture: {
           emitter: MoonfallOrbitAmbience,
           position: [0, 2.5, 0],
         },

@@ -34,15 +34,15 @@ export default class Vesper extends Room {
         },
       },
       slots: {
-        'vesper-north-0': {
-          wallId: 'vesper-north',
+        vesper_north_0: {
+          wallId: 'vesper_north',
           ratio: '1:1',
           area: 100_000,
           position: [0, 3.2, -7.78],
           rotation: 0,
         },
-        'vesper-west-0': {
-          wallId: 'vesper-west',
+        vesper_west_0: {
+          wallId: 'vesper_west',
           ratio: '1:1',
           area: 100_000,
           position: [-5.78, 3.2, 0],
