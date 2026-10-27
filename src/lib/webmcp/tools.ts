@@ -24,6 +24,7 @@ export type WebmcpBridge = {
   }) => Promise<FrameDownload & {dump: PlayerDumpSnapshot | null}>
   getAim: () => AimSnapshot
   getKnots: () => ReadonlyArray<KnotDump>
+  getLoadingItems: () => ReadonlyArray<string>
   getPortraitSlots: () => ReadonlyArray<PortraitSlot>
   getTelemetry: () => {
     collection: ReturnType<VictoriaClient['collectionStatus']>
@@ -69,6 +70,12 @@ export default function createWebmcpTools(getBridge: () => WebmcpBridge): Array<
       title: 'Analyze world per room',
       description: 'Sort every visible mesh of the scene into the room holding most of its world bounding box (summed over instances) and every light into the room whose fence holds it, and report rooms keyed by id, each with its title, its fence (one axis-aligned box of min/max corners in world meters from floor to clear height, or a list of them: the Corridor’s hall and its stair to the Sienna, the Lodge and its threshold), its meshes (scene path of named ancestors, instances unless just 1, material name or type, a list for several and left out for a plain MeshStandardNodeMaterial, spill: the other rooms holding at least 1% of its bounding volume, and triangles, most triangles first) and its lights (type, world position, color, intensity, range, decay, spot cone and whether it casts shadows). A mesh meeting no fence, like a crater floor, goes to the room above or below it. Meshes mostly outside every room, such as in passages and stairways, and lights outside every fence seen from above are listed under elsewhere; ambient, hemisphere and directional lights under globalLights. Triangle counts follow draw ranges and instance counts, not per-frame culling. Levels without rooms list everything under elsewhere.',
       read: () => getBridge().analyzeWorld(),
+    },
+    {
+      name: 'get_loading_items',
+      title: 'List loading items',
+      description: 'List what is still loading that would leave something out of the next frame, one short entry each: artworks decoding, background loads like knot materials, pipelines compiling, the scene warming up behind the loading screen, objects waiting to stream in and shadow maps missing streamed objects, like “12 pipelines compiling”. An empty array means the next frame shows everything in place, so captures poll this until it is empty before rendering their first frame. A new pose can bring new items. Read-only.',
+      read: () => getBridge().getLoadingItems(),
     },
   ].map(({read, ...tool}) => ({
     ...tool,

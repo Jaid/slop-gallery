@@ -5,7 +5,7 @@ import {join, relative} from 'node:path'
 import {parseArgs} from 'node:util'
 
 import capturePage from 'capture-page'
-import {setWireframe} from 'capture-session/script'
+import {setWireframe, waitForLoadingItems} from 'capture-session/script'
 import fs from 'fs-extra'
 import getFree from 'get-free'
 import {jxlEffort, lossyJxlOptions} from 'knot-materials/scripts/lib/encodeJxl.ts'
@@ -134,10 +134,7 @@ const capture = await capturePage(server.url, {
     }
     // A new pose can bring artworks into view that still need decoding, and objects whose pipelines still compile.
     await waitForFrames(page, settle)
-    await page.waitForFunction(() => {
-      const {pendingImages, pendingLoads, pendingPipelines} = globalThis.slopGallery!.snapshot!()
-      return pendingImages === 0 && pendingLoads === 0 && pendingPipelines === 0
-    }, {timeout: 120_000})
+    await waitForLoadingItems(page)
     await waitForFrames(page, settle)
   },
   // Dumps before rendering, like X: the frame shows the view the dump describes.

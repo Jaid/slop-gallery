@@ -15,5 +15,20 @@ export const callWebmcpTool = async (page: Page, name: string, input: Record<str
   return JSON.parse(result) as unknown
 }
 
+/** Polls the app’s `get_loading_items` tool until nothing is left loading, so the next frame shows everything in place. */
+export const waitForLoadingItems = async (page: Page, timeout = 120_000) => {
+  const deadline = Date.now() + timeout
+  for (;;) {
+    const items = await callWebmcpTool(page, 'get_loading_items') as Array<string>
+    if (!items.length) {
+      return
+    }
+    if (Date.now() > deadline) {
+      throw new Error(`Still loading after ${timeout / 1000} s: ${items.join(', ')}.`)
+    }
+    await new Promise(resolve => setTimeout(resolve, 20))
+  }
+}
+
 /** Changes the wireframe flood through the `set_wireframe` tool, with its snake_case input, and resolves with the whole flood now in effect. */
 export const setWireframe = (page: Page, input: Record<string, unknown>) => callWebmcpTool(page, 'set_wireframe', input) as Promise<Record<string, unknown>>

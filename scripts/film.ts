@@ -4,7 +4,7 @@ import type {Shot} from 'capture-session/script'
 import {dirname, join, relative, resolve} from 'node:path'
 import {parseArgs} from 'node:util'
 
-import {createFrameSink, frameFormat, installVirtualClock, parseRecipe, recipeDuration, sampleRecipe, sampleWireframe, setWireframe, tweens} from 'capture-session/script'
+import {createFrameSink, frameFormat, installVirtualClock, parseRecipe, recipeDuration, sampleRecipe, sampleWireframe, setWireframe, tweens, waitForLoadingItems} from 'capture-session/script'
 import fs from 'fs-extra'
 import {av1Crf} from 'knot-materials/scripts/lib/encodeAnimation.ts'
 
@@ -157,10 +157,7 @@ if (firstFlood) {
 const first = toPose(sampleRecipe(recipe, frameSeconds(0), fallback))
 await page.evaluate((pose: Partial<CameraPose>) => globalThis.slopGallery!.pose!(pose), first)
 await waitForFrames(page, settle)
-await page.waitForFunction(() => {
-  const {pendingImages, pendingLoads, pendingPipelines} = globalThis.slopGallery!.snapshot!()
-  return pendingImages === 0 && pendingLoads === 0 && pendingPipelines === 0
-}, {timeout: 120_000})
+await waitForLoadingItems(page)
 await waitForFrames(page, settle)
 // With --scale the canvas renders more pixels than the film has; the sink downsamples them.
 const source = await page.evaluate(async () => {
@@ -227,35 +224,28 @@ try {
     if (frameFlood) {
       await setWireframe(page, frameFlood)
     }
-    await page.evaluate(async (frame: {
+    await page.evaluate((frame: {
       delta: number
       pose: Partial<CameraPose>
-      url: string
     }) => {
-      const api = globalThis.slopGallery!
-      api.pose!(frame.pose)
+      globalThis.slopGallery!.pose!(frame.pose)
       globalThis.virtualClock!.step(frame.delta)
-      // The clock stands still while artworks that just came into view decode and pipelines compile in the background.
-      const deadline = Date.now() + 120_000
-      while (api.snapshot!().pendingImages > 0 || api.snapshot!().pendingLoads > 0 || api.snapshot!().pendingPipelines > 0) {
-        if (Date.now() > deadline) {
-          throw new Error('Artworks and pipelines did not finish loading within 2 minutes.')
-        }
-        await new Promise(resolveDelay => setTimeout(resolveDelay, 20))
-      }
-      const {pixels} = await api.capturePixels!()
-      const response = await fetch(frame.url, {
+    }, {
+      delta: 1 / fps,
+      pose,
+    })
+    // The clock stands still while whatever just came into view loads in the background.
+    await waitForLoadingItems(page)
+    await page.evaluate(async (url: string) => {
+      const {pixels} = await globalThis.slopGallery!.capturePixels!()
+      const response = await fetch(url, {
         method: 'POST',
         body: pixels,
       })
       if (!response.ok) {
         throw new Error(await response.text())
       }
-    }, {
-      delta: 1 / fps,
-      pose,
-      url: frameUrl,
-    })
+    }, frameUrl)
     const rendered = index + 1
     if (rendered % Math.round(fps) !== 0 && rendered !== frameCount) {
       continue

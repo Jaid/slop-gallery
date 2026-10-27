@@ -38,6 +38,7 @@ const bridge: WebmcpBridge = {
     hit: null,
     hits: [],
   }),
+  getLoadingItems: () => ['2 pipelines compiling'],
   getKnots: () => [{
     id: 'example_knot',
     name: 'Example Knot',
@@ -83,8 +84,8 @@ test('WebMCP read tools are read-only, validate input and read the current bridg
   let current = bridge
   const tools = createWebmcpTools(() => current)
   const controller = new AbortController
-  expect(tools.map(tool => tool.name)).toEqual(['get_aim', 'get_telemetry', 'dump_knots', 'dump_portrait_slots', 'analyze_world', 'download_frame', 'set_wireframe'])
-  for (const tool of tools.slice(0, 5)) {
+  expect(tools.map(tool => tool.name)).toEqual(['get_aim', 'get_telemetry', 'dump_knots', 'dump_portrait_slots', 'analyze_world', 'get_loading_items', 'download_frame', 'set_wireframe'])
+  for (const tool of tools.slice(0, 6)) {
     expect(tool.annotations?.readOnlyHint).toBe(true)
     expect(() => tool.execute({unexpected: true}, {signal: controller.signal})).toThrow(TypeError)
   }
@@ -105,6 +106,7 @@ test('WebMCP read tools are read-only, validate input and read the current bridg
   expect(tools[2].execute({}, {signal: controller.signal})).toEqual(current.getKnots())
   expect(tools[3].execute({}, {signal: controller.signal})).toEqual(current.getPortraitSlots())
   expect(tools[4].execute({}, {signal: controller.signal})).toEqual(current.analyzeWorld())
+  expect(tools[5].execute({}, {signal: controller.signal})).toEqual(['2 pipelines compiling'])
   controller.abort()
   expect(() => tools[0].execute({}, {signal: controller.signal})).toThrow()
 })
@@ -235,7 +237,7 @@ test('registrations clean up on unmount, failure and cancellation during registr
     const registered = registerWebmcp(() => bridge, controller.signal, context)
     if (mode === 'success') {
       const cleanup = await registered
-      expect(signals).toHaveLength(7)
+      expect(signals).toHaveLength(8)
       expect(signals[0].aborted).toBe(false)
       cleanup()
       cleanup()

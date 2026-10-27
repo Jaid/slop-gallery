@@ -5,6 +5,7 @@ import {WebgpuRenderer} from 'three-fiber-game'
 import {Object3D, Renderer} from 'three/webgpu'
 
 import {isDevelopmentMode} from '#src/lib/developmentMode.ts'
+import {counted, trackLoadingItems} from '#src/lib/loadingItems.ts'
 import {BatchedLighting} from '#src/lib/materials/lights/base/BatchedLightsNode.ts'
 import {telemetry} from '#src/lib/telemetry/index.ts'
 
@@ -121,6 +122,8 @@ export class GalleryRenderer extends WebgpuRenderer {
   private frameScene: Scene | null = null
   /** shadow cameras that left out objects not built yet this frame */
   private gatedCameras = new Set<Camera>
+  /** objects that streaming left out this frame although they will get their turn */
+  private gatedObjects = new Set<Object3D>
   /** shadow cameras that left out objects not built yet last frame, so their maps must render again */
   private incompleteCameras = new Set<Camera>
   private initialization?: Promise<this>
@@ -136,6 +139,9 @@ export class GalleryRenderer extends WebgpuRenderer {
   private streamPriority: ((object: Object3D) => boolean) | null = null
   private streamPriorityFound = false
   private streamRest = false
+  private readonly untrackLoading: () => void
+  /** objects that streaming left out last frame although they will get their turn */
+  private waitingObjects = new Set<Object3D>
   private warmedFrame = -1
   private warming = false
   /** the cameras each object was drawn for outside their frustum while loading */
@@ -154,6 +160,12 @@ export class GalleryRenderer extends WebgpuRenderer {
       trackTimestamp: telemetry !== null,
     })
     this.lighting = new BatchedLighting
+    this.untrackLoading = trackLoadingItems(() => [
+      ...counted(this.pending, 'pipelines compiling'),
+      ...this.warming && this.warmedFrame !== this.frame ? ['scene warming up'] : [],
+      ...counted(this.waitingObjects.size, 'objects waiting to stream in'),
+      ...counted(this.incompleteCameras.size, 'shadow maps missing streamed objects'),
+    ])
   }
 
   private get internals() {
@@ -172,6 +184,11 @@ export class GalleryRenderer extends WebgpuRenderer {
 
   override compileAsync(scene: Object3D, camera: Camera, targetScene?: Scene | null) {
     return telemetry ? telemetry.wrap('three.compile', () => super.compileAsync(scene, camera, targetScene)) : super.compileAsync(scene, camera, targetScene)
+  }
+
+  override async dispose() {
+    this.untrackLoading()
+    await super.dispose()
   }
 
   override init(): Promise<this> {
@@ -236,6 +253,8 @@ export class GalleryRenderer extends WebgpuRenderer {
     this.streamIdle = 0
     this.incompleteCameras.clear()
     this.gatedCameras.clear()
+    this.waitingObjects.clear()
+    this.gatedObjects.clear()
     this.installProjection()
   }
 
@@ -267,6 +286,10 @@ export class GalleryRenderer extends WebgpuRenderer {
     this.gatedCameras = this.incompleteCameras
     this.gatedCameras.clear()
     this.incompleteCameras = incomplete
+    const waiting = this.gatedObjects
+    this.gatedObjects = this.waitingObjects
+    this.gatedObjects.clear()
+    this.waitingObjects = waiting
     this.streamFound = false
     this.streamPriorityFound = false
     // With only the prioritized objects to build, the priority changes as the player moves, so streaming never runs out.
@@ -358,8 +381,11 @@ export class GalleryRenderer extends WebgpuRenderer {
       if (!(priority || this.streamRest) || this.warmupAdmissions > 0 && (this.buildTime >= streamedBuildBudget || (this.warmupAdmissions + 1) * this.buildCost > streamedBuildBudget)) {
         // Left out until its turn; its children still go their own way.
         // Only objects that will get their turn keep the shadow map rendering.
-        if (shadowCameras.has(camera) && (priority || this.streaming === 'all')) {
-          this.gatedCameras.add(camera)
+        if (priority || this.streaming === 'all') {
+          this.gatedObjects.add(object)
+          if (shadowCameras.has(camera)) {
+            this.gatedCameras.add(camera)
+          }
         }
         for (const child of object.children) {
           this.internals._projectObject.call(this, child, camera, groupOrder, renderList, clippingContext)

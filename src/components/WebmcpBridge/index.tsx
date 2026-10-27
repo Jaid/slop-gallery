@@ -9,6 +9,7 @@ import dumpKnots, {worldRooms} from '#level/webmcp.ts'
 import downloadFrame from '#src/lib/downloadFrame.ts'
 import {usePortraitSlots} from '#src/lib/gallery/portraitSlotStore.ts'
 import {galleryLevel} from '#src/lib/level.ts'
+import {loadingItems} from '#src/lib/loadingItems.ts'
 import {telemetry} from '#src/lib/telemetry/index.ts'
 import {playerDumps, snapshotPlayerDump} from '#src/lib/telemetry/recordPlayerDump.ts'
 import analyzeWorld from '#src/lib/webmcp/analyzeWorld.ts'
@@ -40,6 +41,7 @@ export default function WebmcpBridge() {
       },
       getAim: () => inspector.getAim(),
       getKnots: dumpKnots,
+      getLoadingItems: loadingItems,
       getPortraitSlots: () => usePortraitSlots.getState().slots,
       setWireframe: applyWireframeFlood,
       getTelemetry: () => {
