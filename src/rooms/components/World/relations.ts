@@ -8,14 +8,17 @@ export type RoomRelations = {
   floorMirror?: FloorMirror
   /** global ids of other rooms’ lamps and ambience emitters that stay on, because they reach into this room or can be seen from it */
   keep: ReadonlyArray<string>
+  /** the other rooms whose models stay enabled, as the rooms seen through up to two openings; the frustum still culls them per frame */
+  rooms: ReadonlyArray<RoomId>
 }
 
 /**
- * Per room, a whitelist of neighbor objects. While the player is in a room, every other room’s lamps and ambience emitters are off unless the room keeps them here.
- * A room’s own lamps and ambience emitters are always on inside it.
+ * Per room, a whitelist of neighbor objects. While the player is in a room, every other room’s models are hidden and its lamps and ambience emitters are off unless the room lists them here.
+ * A room’s own models, lamps and ambience emitters are always on inside it. Hiding a model only skips its draws, and switching a lamp off only dims it, so neither recompiles a shader.
  */
 export default {
   lobby: {
+    rooms: ['vesper', 'dine', 'antechamber', 'salon', 'oculus', 'sienna', 'moonfall', 'lodge'],
     floorMirror: 'base',
     keep: [
       'vesper-ceiling_north',
@@ -27,6 +30,7 @@ export default {
     ],
   },
   vesper: {
+    rooms: ['lobby', 'sienna', 'dine', 'antechamber', 'salon', 'oculus', 'corridor'],
     floorMirror: 'base',
     keep: [
       'lobby-chandelier_north',
@@ -39,6 +43,7 @@ export default {
     ],
   },
   dine: {
+    rooms: ['lobby', 'salon', 'vesper', 'antechamber', 'oculus'],
     floorMirror: 'base',
     keep: [
       'lobby-chandelier_north',
@@ -49,6 +54,7 @@ export default {
     ],
   },
   antechamber: {
+    rooms: ['lobby', 'moonfall', 'vesper', 'dine', 'salon', 'oculus'],
     floorMirror: 'base',
     keep: [
       'lobby-chandelier_north',
@@ -65,6 +71,7 @@ export default {
     ],
   },
   sienna: {
+    rooms: ['vesper', 'corridor', 'lobby', 'lodge'],
     keep: [
       'lobby-chandelier_north',
       'lobby-chandelier_middle',
@@ -77,6 +84,7 @@ export default {
     ],
   },
   moonfall: {
+    rooms: ['antechamber', 'oculus', 'lobby', 'lodge'],
     floorMirror: 'moonfall',
     keep: [
       'lobby-chandelier_north',
@@ -88,6 +96,7 @@ export default {
     ],
   },
   oculus: {
+    rooms: ['moonfall', 'lodge', 'lobby', 'antechamber', 'corridor', 'vesper', 'dine', 'salon'],
     keep: [
       'vesper-ceiling_north',
       'vesper-ceiling_south',
@@ -106,6 +115,7 @@ export default {
     ],
   },
   lodge: {
+    rooms: ['oculus', 'corridor', 'moonfall', 'lobby', 'sienna'],
     keep: [
       'oculus-tunnel_green',
       'oculus-tunnel_blue',
@@ -116,6 +126,7 @@ export default {
     ],
   },
   corridor: {
+    rooms: ['sienna', 'lodge', 'vesper', 'oculus'],
     keep: [
       'vesper-ceiling_north',
       'vesper-ceiling_south',
@@ -125,6 +136,7 @@ export default {
     ],
   },
   salon: {
+    rooms: ['dine', 'lobby', 'vesper', 'antechamber', 'oculus'],
     floorMirror: 'base',
     keep: [
       'vesper-ceiling_north',
