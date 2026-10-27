@@ -8,10 +8,8 @@ import {Euler, PerspectiveCamera, Vector3} from 'three/webgpu'
 import {effectiveSeed} from '#src/lib/environmentSeed.ts'
 import {galleryEvents, setCameraFocused, useGallery} from '#src/lib/gallery.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
+import {loadingItems} from '#src/lib/loadingItems.ts'
 import pauseMenu from '#src/lib/pauseMenu.ts'
-import {pendingLoads} from '#src/lib/pendingLoads.ts'
-import {GalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
-import {pendingImages} from '#src/lib/useArtworkTexture.ts'
 
 import {propObjects} from '../GrabbableProp.tsx'
 
@@ -24,9 +22,7 @@ export default function useInteractionDiagnostics(camera: RootState['camera'], r
       camera: camera.position.toArray(),
       rotation: camera.rotation.toArray(),
       ready: useGallery.getState().ready,
-      pendingImages: pendingImages(),
-      pendingLoads: pendingLoads(),
-      pendingPipelines: renderer instanceof GalleryRenderer ? renderer.pendingPipelines : 0,
+      loadingItems: loadingItems(),
       registered: portraitObjects.size,
       room: useGallery.getState().room,
       placement: placement.current,

@@ -119,7 +119,8 @@ const capture = await capturePage(server.url, {
   ...setup.viewport,
   body: false,
   capture: 'download',
-  timeout: 300_000,
+  // Loading only gives up once nothing finishes for a while; Knottingham’s Knot materials alone take minutes.
+  timeout: 1_800_000,
   wait: 'domcontentloaded',
   hook: async page => {
     watchPage(page)

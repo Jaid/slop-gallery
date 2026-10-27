@@ -1,7 +1,7 @@
 import type {Page} from 'puppeteer-core'
 
-/** Runs one of the app’s WebMCP tools in a page once the app has registered it, and resolves with its parsed JSON result. The browser needs `--enable-features=WebMCP`. */
-export const callWebmcpTool = async (page: Page, name: string, input: Record<string, unknown> = {}) => {
+/** Runs one of the app’s WebMCP tools in a page once the app has registered it, and resolves with its result as the browser serialized it: tools returning a string give it as is, others as JSON. The browser needs `--enable-features=WebMCP`. */
+const executeWebmcpTool = async (page: Page, name: string, input: Record<string, unknown> = {}) => {
   await page.waitForFunction(async (tool: string) => {
     const tools = await document.modelContext?.getTools()
     return Boolean(tools?.some(candidate => candidate.name === tool))
@@ -12,19 +12,27 @@ export const callWebmcpTool = async (page: Page, name: string, input: Record<str
     const registered = tools.find(candidate => candidate.name === tool)!
     return context.executeTool(registered, toolInput)
   }, name, input)
-  return JSON.parse(result) as unknown
+  return result
 }
 
-/** Polls the app’s `get_loading_items` tool until nothing is left loading, so the next frame shows everything in place. */
+/** Runs one of the app’s WebMCP tools in a page once the app has registered it, and resolves with its parsed JSON result. The browser needs `--enable-features=WebMCP`. */
+export const callWebmcpTool = async (page: Page, name: string, input: Record<string, unknown> = {}) => JSON.parse(await executeWebmcpTool(page, name, input)) as unknown
+
+/** Polls the app’s `get_loading_items` tool until nothing is left loading, so the next frame shows everything in place. Gives up once the items stay the same for `timeout` milliseconds; Knottingham’s Knot materials alone can take minutes. */
 export const waitForLoadingItems = async (page: Page, timeout = 120_000) => {
-  const deadline = Date.now() + timeout
+  let last: string | undefined
+  let deadline = 0
   for (;;) {
-    const items = await callWebmcpTool(page, 'get_loading_items') as Array<string>
-    if (!items.length) {
+    const items = await executeWebmcpTool(page, 'get_loading_items')
+    // Chrome reports a tool’s empty string result as “Operation succeeded”.
+    if (!items || /^Operation succeeded\.?$/u.test(items)) {
       return
     }
-    if (Date.now() > deadline) {
-      throw new Error(`Still loading after ${timeout / 1000} s: ${items.join(', ')}.`)
+    if (items !== last) {
+      last = items
+      deadline = Date.now() + timeout
+    } else if (Date.now() > deadline) {
+      throw new Error(`Nothing finished loading for ${timeout / 1000} s: ${items.replaceAll('\n', ', ')}.`)
     }
     await new Promise(resolve => setTimeout(resolve, 20))
   }

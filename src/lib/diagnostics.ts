@@ -17,14 +17,10 @@ export type GalleryDiagnostics = {
   camera: Vec3
   hasControlled: boolean
   held: string | null
+  /** the IDs of everything still loading that would leave something out of the next frame; a fresh pose can bring more */
+  loadingItems: Array<string>
   locked: boolean
   menuStage: PauseMenuStage
-  /** artwork images still decoding; a fresh pose can request more */
-  pendingImages: number
-  /** other background work still loading, like knot materials and billboards */
-  pendingLoads: number
-  /** render pipelines still compiling in the background; objects that need them are not drawn yet */
-  pendingPipelines: number
   placement: Placement | null
   portraits: Array<Pick<Portrait, 'height' | 'hung' | 'id' | 'merging' | 'pending' | 'position' | 'reserved' | 'title' | 'wallId' | 'width'> & {physical?: {
     x: number

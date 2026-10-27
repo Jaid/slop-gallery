@@ -3,6 +3,7 @@ import type {Texture} from 'three/webgpu'
 import {useEffect, useState} from 'react'
 
 import loadArtworkTexture from './loadArtworkTexture.ts'
+import {trackLoadingPromise} from './loadingItems.ts'
 
 type Asset = {
   promise: Promise<Texture<HTMLCanvasElement>>
@@ -11,6 +12,7 @@ type Asset = {
 }
 const assets = new Map<Blob | string, Asset>
 let pending = 0
+let blobs = 0
 export const pendingImages = () => pending
 
 export default function useArtworkTexture(source: Blob | string | null | undefined) {
@@ -71,9 +73,9 @@ function acquire(source: Blob | string) {
   let asset = assets.get(source)
   if (!asset) {
     pending++
-    const promise = loadArtworkTexture(source).finally(() => {
+    const promise = trackLoadingPromise(`artwork:${typeof source === 'string' ? source : (source as Partial<File>).name ?? `blob-${++blobs}`}`, loadArtworkTexture(source).finally(() => {
       pending--
-    })
+    }))
     asset = {
       refs: 0,
       promise,

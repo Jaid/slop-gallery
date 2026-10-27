@@ -108,7 +108,7 @@ export const knottinghamScene = (graphics: 'cinematic' | 'heavy'): KnotScene => 
         const canvas = document.querySelector('canvas')!
         const deadline = Date.now() + 120_000
         // Resizes reach the canvas through a ResizeObserver; still frames render a few more times at the same moment.
-        for (let index = 0; index < input.settle || canvas.width !== input.width || canvas.height !== input.height || api.snapshot!().pendingImages > 0 || api.snapshot!().pendingLoads > 0 || api.snapshot!().pendingPipelines > 0; index++) {
+        for (let index = 0; index < input.settle || canvas.width !== input.width || canvas.height !== input.height || api.snapshot!().loadingItems.length > 0; index++) {
           if (Date.now() > deadline) {
             throw new Error(`The canvas did not reach ${input.width}×${input.height} or finish loading within 2 minutes.`)
           }

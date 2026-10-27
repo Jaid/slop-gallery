@@ -74,8 +74,8 @@ export default function createWebmcpTools(getBridge: () => WebmcpBridge): Array<
     {
       name: 'get_loading_items',
       title: 'List loading items',
-      description: 'List what is still loading that would leave something out of the next frame, one short entry each: artworks decoding, background loads like knot materials, pipelines compiling, the scene warming up behind the loading screen, objects waiting to stream in and shadow maps missing streamed objects, like “12 pipelines compiling”. An empty array means the next frame shows everything in place, so captures poll this until it is empty before rendering their first frame. A new pose can bring new items. Read-only.',
-      read: () => getBridge().getLoadingItems(),
+      description: 'List the IDs of everything still loading that would leave something out of the next frame, one per line, or an empty string once nothing is left. IDs start with their kind: artwork: (decoding), pipeline: (compiling in the background), warmup (the loading screen’s pipeline warmup), stream: (objects waiting to stream in), shadow-map: (shadow maps missing streamed objects), knot-material:, billboard-texture:, model-sign-texture: and knot-sign-texture. Captures poll this until it is empty before rendering a frame. A new pose can bring new items. Read-only.',
+      read: () => getBridge().getLoadingItems().join('\n'),
     },
   ].map(({read, ...tool}) => ({
     ...tool,

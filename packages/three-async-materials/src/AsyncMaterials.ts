@@ -51,7 +51,12 @@ export default class AsyncMaterials {
 
   /** materials whose mesh has been rendered but that are neither active nor failed yet; materials of meshes never rendered do not count */
   get pendingCount() {
-    return this.pending.filter(item => item.attached && item.contexts.length > 0 && !item.ready && !item.failed).length
+    return this.pendingMaterials.length
+  }
+
+  /** the materials {@link pendingCount} counts */
+  get pendingMaterials() {
+    return this.pending.filter(item => item.attached && item.contexts.length > 0 && !item.ready && !item.failed).map(item => item.material)
   }
 
   add(material: Material): MaterialBinding {

@@ -104,7 +104,7 @@ export default class ProgressiveKnotMaterials {
 
   /** full materials of rendered knots that still warm up and show their placeholder */
   get pendingMaterials() {
-    return this.queue.pendingCount
+    return this.queue.pendingMaterials
   }
 
   dispose() {

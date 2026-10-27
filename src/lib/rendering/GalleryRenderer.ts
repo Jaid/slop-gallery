@@ -5,14 +5,21 @@ import {WebgpuRenderer} from 'three-fiber-game'
 import {Object3D, Renderer} from 'three/webgpu'
 
 import {isDevelopmentMode} from '#src/lib/developmentMode.ts'
-import {counted, trackLoadingItems} from '#src/lib/loadingItems.ts'
+import {startLoading, trackLoadingItems} from '#src/lib/loadingItems.ts'
 import {BatchedLighting} from '#src/lib/materials/lights/base/BatchedLightsNode.ts'
 import {telemetry} from '#src/lib/telemetry/index.ts'
 
 import {cinematicMaxTextureSize, readCinematicGraphics} from './graphicsMode.ts'
 
 type Culler = (camera: Camera) => void
-type RenderObject = {scene: Object3D}
+type RenderObject = {
+  material: {
+    name: string
+    type: string
+  }
+  object: Object3D
+  scene: Object3D
+}
 type PromiseSink = {push: (promise: Promise<void>) => void}
 type ProjectObject = (this: Renderer, object: Object3D, camera: Camera, groupOrder: number, renderList: unknown, clippingContext: unknown) => void
 /** WebGPUBackend parameters three doesn’t type, which it reads when it requests the device in `init` */
@@ -161,10 +168,9 @@ export class GalleryRenderer extends WebgpuRenderer {
     })
     this.lighting = new BatchedLighting
     this.untrackLoading = trackLoadingItems(() => [
-      ...counted(this.pending, 'pipelines compiling'),
-      ...this.warming && this.warmedFrame !== this.frame ? ['scene warming up'] : [],
-      ...counted(this.waitingObjects.size, 'objects waiting to stream in'),
-      ...counted(this.incompleteCameras.size, 'shadow maps missing streamed objects'),
+      ...this.warming && this.warmedFrame !== this.frame ? ['warmup'] : [],
+      ...[...this.waitingObjects].map(object => `stream:${object.name || object.uuid}`),
+      ...[...this.incompleteCameras].map(camera => `shadow-map:${camera.uuid}`),
     ])
   }
 
@@ -313,17 +319,30 @@ export class GalleryRenderer extends WebgpuRenderer {
         this.buildTime += performance.now() - start
       }
     }
+    let compiling: RenderObject | null = null
     const sink: PromiseSink = {
       push: promise => {
         this.pending++
+        const loaded = startLoading(compiling ? `pipeline:${compiling.object.name || compiling.object.type}/${compiling.material.name || compiling.material.type}` : 'pipeline')
         const settle = () => {
           this.pending--
+          loaded()
         }
         void promise.then(settle, settle)
       },
     }
     // A render bundle records its draws once, so an object missing from it would stay missing.
-    pipelines.updateForRender = renderObject => pipelines.getForRender(renderObject, renderObject.scene === this.frameScene && internals._currentRenderBundle === null ? sink : null)
+    pipelines.updateForRender = renderObject => {
+      if (renderObject.scene !== this.frameScene || internals._currentRenderBundle !== null) {
+        return pipelines.getForRender(renderObject, null)
+      }
+      compiling = renderObject
+      try {
+        return pipelines.getForRender(renderObject, sink)
+      } finally {
+        compiling = null
+      }
+    }
     const {hidden, hiddenFromView, shadowCameras, unculledCameras} = this
     this.projectCulled = function (this: Renderer, object, camera, groupOrder, renderList, clippingContext) {
       if ((!hidden.has(object) || unculledCameras.has(camera)) && (!hiddenFromView.has(object) || shadowCameras.has(camera))) {

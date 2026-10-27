@@ -4,6 +4,7 @@ import {useState} from 'react'
 import Dropzone from '#component/Dropzone'
 import GraphicsTuning from '#component/GraphicsTuning'
 import Hud from '#component/Hud'
+import LoadingIndicator from '#component/LoadingIndicator'
 import Menu from '#component/Menu'
 import RenderBoundary from '#component/RenderBoundary'
 import RenderError from '#component/RenderError'
@@ -47,6 +48,8 @@ export default function App() {
       {/* Hidden with O, the paused scene stays in full view, e.g. while tweaking values in an editor; O brings the menu back. Hovering the tuning panel hides it too. */}
       <Branch none={[s.locked, s.dragging, renderFailed, uiHidden, tuning.hovered]}><Menu {...settings} /></Branch>
       <Branch not={uiHidden} then={Hud} />
+      {/* The loading screen covers what loads before Enter; this shows what still streams in after it. */}
+      <Branch if={s.ready} not={uiHidden} then={LoadingIndicator} />
       <Branch if={s.notice} not={uiHidden}><Toast>{s.notice}</Toast></Branch>
     </div>
   </div></Dropzone></GraphicsMode>

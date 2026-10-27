@@ -13,7 +13,7 @@ import KnotLabels from '#component/levels/knottingham/KnotLabels'
 import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
 import {frozenSeconds} from '#src/lib/frozenTime.ts'
 import {narrateModel} from '#src/lib/gallery/actions.ts'
-import {trackPendingLoads} from '#src/lib/pendingLoads.ts'
+import {trackLoadingItems} from '#src/lib/loadingItems.ts'
 import KnotRotation from '#src/lib/physics/KnotRotation.ts'
 import {readKnotRotation} from '#src/lib/physics/rotatingKnots.ts'
 import {getPmremEnvironment} from '#src/lib/rendering/pmrem.ts'
@@ -60,7 +60,7 @@ export default function KnotExhibition() {
     }
   }, [rotation])
   const materials = useDisposable(useMemo(() => new ProgressiveKnotMaterials(renderer, camera, knotExhibition, constructors, isHeavy, getPmremEnvironment()), [camera, isHeavy, renderer]))
-  useEffect(() => trackPendingLoads(() => materials.pendingMaterials), [materials])
+  useEffect(() => trackLoadingItems(() => materials.pendingMaterials.map(material => `knot-material:${material.name}`)), [materials])
   const {resources} = materials
   return <group name='lobby-knot-exhibition'>
     <KnotLabels />

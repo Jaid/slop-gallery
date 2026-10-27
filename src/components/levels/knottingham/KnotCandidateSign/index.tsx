@@ -3,7 +3,6 @@ import type {KnotBay} from 'knot-materials/exhibition.ts'
 
 import {CuboidCollider, CylinderCollider, RigidBody, useRevoluteJoint} from '@react-three/rapier'
 import {loadCanvasFonts} from 'canvas-textures'
-import useCanvasTexture from 'canvas-textures/react'
 import useDisposable from 'disposable-lifetime/react'
 import {knotLayout} from 'knot-materials/exhibition.ts'
 import {candidateSignSuspensionCenter, candidateSignSuspensionHeight, knotCandidateSign} from 'knot-materials/knotCandidateSign.ts'
@@ -17,6 +16,7 @@ import InteractiveObject from '#component/InteractiveObject'
 import {narrate} from '#src/lib/gallery/actions.ts'
 import {knotGalleryBounds} from '#src/lib/gallery/knotGallery.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
+import useLoadingCanvasTexture from '#src/lib/useLoadingCanvasTexture.ts'
 
 import drawFace, {candidateSignBackground, candidateSignFontSize, candidateSignTextureSize} from './drawFace.ts'
 
@@ -33,7 +33,7 @@ export default function KnotCandidateSign({bay}: {bay: KnotBay}) {
   }) : new MeshBasicNodeMaterial({color: '#ac9270'})), [isHeavy]))
   const geometry = useDisposable(useMemo(() => new KnotCandidateSignGeometry, []))
   const {candidate} = bay
-  const texture = useCanvasTexture({
+  const texture = useLoadingCanvasTexture(`model-sign-texture:${candidate.id}`, {
     width: candidateSignTextureSize[0],
     height: candidateSignTextureSize[1],
     resolution,

@@ -2,7 +2,6 @@ import type {KnotBay} from 'knot-materials/exhibition.ts'
 
 import {RigidBody} from '@react-three/rapier'
 import {loadCanvasFonts} from 'canvas-textures'
-import useCanvasTexture from 'canvas-textures/react'
 import useDisposable from 'disposable-lifetime/react'
 import {knotBays, knotNumberLabel} from 'knot-materials/exhibition.ts'
 import {knotBillboardPhysics} from 'knot-materials/knotBillboardPhysics.ts'
@@ -15,8 +14,8 @@ import constructors from 'virtual:knot-exhibition-materials'
 import InteractiveObject from '#component/InteractiveObject'
 import Stand, {Sign} from '#component/levels/knottingham/KnotBillboardSupport'
 import {narrate} from '#src/lib/gallery/actions.ts'
-import {trackPendingPromise} from '#src/lib/pendingLoads.ts'
 import {fitCanvasTextureResolution, getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
+import useLoadingCanvasTexture from '#src/lib/useLoadingCanvasTexture.ts'
 
 import drawPreview, {knotPreviewBackground, knotPreviewCaptionFontFamily, knotPreviewCaptionFontSize, knotPreviewCaptionFontWeight} from './drawPreview.ts'
 import RuntimeKnotIconRenderer, {releaseCanvases} from './RuntimeKnotIconRenderer.ts'
@@ -40,14 +39,14 @@ export default function KnotPreviewSign({bay, renderer, x}: {
 }) {
   const layout = knotPreviewTextureLayout(bay.finishes.length)
   const {canvasTextureMipmaps: mipmaps, canvasTextureResolution: resolution} = useGraphicsModeValue(getGraphicsProfile)
-  const texture = useCanvasTexture(useMemo(() => ({
+  const texture = useLoadingCanvasTexture(`billboard-texture:${bay.candidate.id}`, useMemo(() => ({
     width: layout.width,
     height: layout.height,
     resolution: fitCanvasTextureResolution(resolution, layout.width, layout.height),
     name: `Knot preview: ${bay.candidate.title}`,
     mipmaps,
     prepare: async (signal: AbortSignal) => {
-      const [images] = await trackPendingPromise(Promise.all([
+      const [images] = await Promise.all([
         renderer.render(bay.finishes, signal),
         loadCanvasFonts([
           {
@@ -55,7 +54,7 @@ export default function KnotPreviewSign({bay, renderer, x}: {
             text: bay.finishes.map(finish => `${knotNumberLabel(finish.number)} · ${finish.title}`).join(' '),
           },
         ]),
-      ]))
+      ])
       return images
     },
     disposeInputs: releaseCanvases,
