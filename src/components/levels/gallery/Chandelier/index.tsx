@@ -5,8 +5,8 @@ import useDisposable from 'disposable-lifetime/react'
 import {useMemo, useRef} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
+import {litFrom} from '#src/components/World/relations.ts'
 import ChandelierGeometry from '#src/lib/gallery/ChandelierGeometry.ts'
-import {seenFrom} from '#src/lib/gallery/roomVisibility.ts'
 import {chandelierPhysics, chandelierStemCenter, chandelierStemHalfHeight} from '#src/lib/physics/chandelier.ts'
 
 export default function Chandelier() {
@@ -35,7 +35,7 @@ export default function Chandelier() {
       {/* Keep the shared light below the metalwork so the fixture cannot shadow its own source. */}
       <pointLight
         color='#ffd36c' decay={1.75} distance={15} intensity={110} position={[0, -0.5, 0]} userData={{
-          rooms: seenFrom('sienna'),
+          rooms: litFrom('sienna', 'sienna-chandelier'),
           shadow: true,
         }}
       />

@@ -3,9 +3,9 @@ import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import CeilingLeds from '#component/levels/gallery/CeilingLeds'
 import DineFloor from '#component/levels/gallery/DineFloor'
 import Box from '#src/components/Scene/primitives.tsx'
+import {litFrom} from '#src/components/World/relations.ts'
 import {rooms} from '#src/lib/gallery.ts'
 import {dineLedLight, dineLedSlots} from '#src/lib/gallery/dine.ts'
-import {seenFrom} from '#src/lib/gallery/roomVisibility.ts'
 
 const room = rooms.find(candidate => candidate.id === 'dine')!
 const [width, depth] = room.size
@@ -20,6 +20,6 @@ export default function DineRoom({glass, stone, wood}: Omit<Parameters<typeof Di
       <Box color='#e1dccc' position={[0, room.height - 0.02, 0]} size={[width, 0.18, depth]} />
       <DineFloor glass={glass} room={room} stone={stone} wood={wood} />
     </group>
-    <CeilingLeds light={dineLedLight} name='dine' optional rooms={seenFrom('dine')} slots={dineLedSlots} />
+    <CeilingLeds light={dineLedLight} name='dine' optional rooms={litFrom('dine', 'dine-led_north', 'dine-led_middle', 'dine-led_south')} slots={dineLedSlots} />
   </>
 }

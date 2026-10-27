@@ -96,32 +96,6 @@ export function roomEnclosing(sphere: Sphere) {
   return result
 }
 
-/** rooms that look into a room behind a neighbor only in theory, along lines too grazing for its lights to matter, as viewer, the room between and the room behind */
-const blindSightlines: ReadonlyArray<readonly [RoomId, RoomId, RoomId]> = [
-  ['vesper', 'sienna', 'corridor'],
-  ['sienna', 'corridor', 'lodge'],
-  ['lodge', 'corridor', 'sienna'],
-  ['corridor', 'lodge', 'oculus'],
-  ['oculus', 'lodge', 'corridor'],
-]
-const sightlines = new Map<string, ReadonlyArray<RoomId>>
-const neighbors = (room: RoomId) => portals.filter(portal => portal.rooms.includes(room)).map(portal => portal.rooms[1 - portal.rooms.indexOf(room)])
-/**
- * A room and the rooms that look into it through up to two openings, as far as {@link visibleRooms} reaches: where the player must be for a light inside it to matter.
- * Hidden rooms are left out, and so are the rooms that would only look in through them. The same arguments always give the same list.
- */
-export function seenFrom(room: RoomId, ...hidden: Array<RoomId>) {
-  const key = [room, ...hidden].join()
-  let result = sightlines.get(key)
-  if (!result) {
-    const near = neighbors(room).filter(next => !hidden.includes(next))
-    const far = near.flatMap(through => neighbors(through).filter(next => !hidden.includes(next) && !blindSightlines.some(([viewer, middle, behind]) => viewer === next && middle === through && behind === room)))
-    result = [...new Set([room, ...near, ...far])]
-    sightlines.set(key, result)
-  }
-  return result
-}
-
 /**
  * The rooms the camera can see from its room: a neighbor counts when the opening to it lies in the frustum, and a room behind a neighbor when both openings do.
  * Line of sight never reaches three openings deep in the gallery.

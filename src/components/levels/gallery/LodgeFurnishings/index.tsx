@@ -5,15 +5,15 @@ import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 import useGraphicsMode from 'use-graphics-mode'
 
+import {litFrom} from '#src/components/World/relations.ts'
 import lodge from '#src/lib/gallery/lodge.ts'
 import CoffeeTableGeometry from '#src/lib/gallery/lodgeInterior/CoffeeTableGeometry.ts'
 import lodgeInterior, {lodgeFurnitureColliders} from '#src/lib/gallery/lodgeInterior/layout.ts'
 import UpholsteredSeatGeometry from '#src/lib/gallery/lodgeInterior/UpholsteredSeatGeometry.ts'
 import WagonWheelGeometry from '#src/lib/gallery/lodgeInterior/WagonWheelGeometry.ts'
-import {seenFrom} from '#src/lib/gallery/roomVisibility.ts'
 
 /** The Lodge’s own lights stay off from the Oculus. */
-const lodgeLightRooms = seenFrom('lodge', 'oculus')
+const lodgeLightRooms = litFrom('lodge', 'lodge-chandelier')
 const {armchairs, chandelier, coffeeTable, rug, sofa} = lodgeInterior
 
 /** Seating, table, rug and wagon-wheel chandelier of the Lodge, in the room’s frame. */

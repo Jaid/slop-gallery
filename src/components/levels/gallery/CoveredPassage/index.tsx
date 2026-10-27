@@ -13,13 +13,13 @@ import {useMemo} from 'react'
 import PendantLamps from '#component/levels/gallery/PendantLamps'
 import TimberFrame from '#component/levels/gallery/TimberFrame'
 import Box from '#src/components/Scene/primitives.tsx'
+import {litFrom} from '#src/components/World/relations.ts'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import TimberGeometry from '#src/lib/gallery/passages/TimberGeometry.ts'
 import VaultGeometry from '#src/lib/gallery/passages/VaultGeometry.ts'
 import {LanternBody} from '#src/lib/gallery/pendants/index.ts'
 import {soleLampReach} from '#src/lib/gallery/pendants/lighting.ts'
 import {corridorLightSpacing, passagePendantMounts} from '#src/lib/gallery/pendants/mounts.ts'
-import {seenFrom} from '#src/lib/gallery/roomVisibility.ts'
 
 const lantern = new LanternBody
 const lanternGlow = {
@@ -79,8 +79,11 @@ const passageLanterns: Partial<Record<string, ReadonlyArray<Partial<PendantLight
     null,
   ],
 }
+const noLamps: ReadonlyArray<string> = []
 
-export default function CoveredPassage({passage, sole = false, material, paving: pavingOverride, timber, ribCutouts, transition}: {
+export default function CoveredPassage({passage, lamps = noLamps, sole = false, material, paving: pavingOverride, timber, ribCutouts, transition}: {
+  /** the global ids its lanterns go by in `relations.ts`, which decide the rooms they stay on in */
+  lamps?: ReadonlyArray<string>
   material: Material
   passage: Passage
   /** the floor laid in the passage’s material when other floors cover the rest; collision still uses the full passage floors */
@@ -116,6 +119,6 @@ export default function CoveredPassage({passage, sole = false, material, paving:
         <mesh castShadow geometry={geometry.ribs} material={material} name='castle-vault-ribs' receiveShadow />
       </Branch>
     </RigidBody>
-    <PendantLamps body={lantern} glow={lanternGlow} light={sole ? soleLanternLight : lanternLight} lights={lights} mounts={mounts} name={`${passage.id}-pendants`} rooms={seenFrom(passage.room)} />
+    <PendantLamps body={lantern} glow={lanternGlow} light={sole ? soleLanternLight : lanternLight} lights={lights} mounts={mounts} name={`${passage.id}-pendants`} rooms={litFrom(passage.room, ...lamps)} />
   </group>
 }

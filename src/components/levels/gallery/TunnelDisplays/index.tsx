@@ -5,8 +5,8 @@ import Branch from 'branch-component'
 
 import SlopedBox from '#component/levels/gallery/SlopedBox'
 import Box from '#src/components/Scene/primitives.tsx'
+import {litFrom} from '#src/components/World/relations.ts'
 import lowerGallery, {tunnelFloorHeight, tunnelSlope} from '#src/lib/gallery/lowerGallery.ts'
-import {seenFrom} from '#src/lib/gallery/roomVisibility.ts'
 import tunnelDisplays from '#src/lib/gallery/tunnelDisplays.ts'
 
 const DisplayExhibit = ({kind, material}: {
@@ -33,7 +33,7 @@ const DisplayExhibit = ({kind, material}: {
 /** Three plain colored lights in housings on the tunnel’s ceiling, abreast of each row of exhibits, lighting both displays at once. */
 const tunnelLightZs = tunnelDisplays[0].exhibits.map(exhibit => exhibit.position[2])
 /** The Lobby looks down into the tunnel through its glazed floor, but the tunnel’s lights stay off from there, so they never light the Lobby from below. */
-const tunnelLightRooms = seenFrom('oculus', 'lobby')
+const tunnelLightRooms = litFrom('moonfall', 'moonfall-tunnel_green', 'moonfall-tunnel_blue', 'moonfall-tunnel_red')
 /** green, blue and red, from the tunnel’s north end up to its high south end, each hanging 35 cm under its housing */
 const tunnelLights = [
   {

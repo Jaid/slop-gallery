@@ -75,7 +75,7 @@ export const openings: ReadonlyArray<Opening> = [
  * Per room, a whitelist of neighbor objects. While the player is in a room, every other room’s models are hidden and its lamps and ambience emitters are off unless the room lists them here.
  * A room’s own models, lamps and ambience emitters are always on inside it. Hiding a model only skips its draws, and switching a lamp off only dims it, so neither recompiles a shader.
  */
-export default {
+const relations = {
   lobby: {
     rooms: ['vesper', 'dine', 'antechamber', 'salon', 'oculus', 'sienna'],
     floorMirror: 'base',
@@ -173,6 +173,7 @@ export default {
       'moonfall-tunnel_blue',
       'moonfall-tunnel_red',
       'moonfall-stairs',
+      'lodge-tunnel_pendants',
     ],
   },
   lodge: {
@@ -208,3 +209,16 @@ export default {
     ],
   },
 } satisfies Record<RoomId, RoomRelations>
+const lit = new Map<string, ReadonlyArray<RoomId>>
+/** The rooms lamps of a room stay on in: their own room and every room whose {@link RoomRelations.keep} lists one of their global ids. The same arguments always give the same list. */
+export function litFrom(room: RoomId, ...lamps: ReadonlyArray<string>) {
+  const key = [room, ...lamps].join()
+  let result = lit.get(key)
+  if (!result) {
+    result = [room, ...Object.entries(relations).filter(([id, {keep}]) => id !== room && keep.some(lamp => lamps.includes(lamp))).map(([id]) => id as RoomId)]
+    lit.set(key, result)
+  }
+  return result
+}
+
+export default relations

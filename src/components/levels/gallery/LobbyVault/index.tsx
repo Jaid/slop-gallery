@@ -7,10 +7,10 @@ import {MeshStandardNodeMaterial} from 'three/webgpu'
 import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 
 import MeshSurfaceCollider from '#component/levels/gallery/MeshSurfaceCollider'
+import {litFrom} from '#src/components/World/relations.ts'
 import LobbyChandelierGeometry from '#src/lib/gallery/LobbyChandelierGeometry.ts'
 import lobbyVault, {lobbyChandeliers} from '#src/lib/gallery/lobbyVault.ts'
 import LobbyVaultGeometry, {lobbyVaultCollision} from '#src/lib/gallery/LobbyVaultGeometry.ts'
-import {seenFrom} from '#src/lib/gallery/roomVisibility.ts'
 import ArchitecturalPlasterMaterial from '#src/lib/materials/ArchitecturalPlasterMaterial.ts'
 import gold from '#src/lib/materials/gold.ts'
 import LimestoneMaterial from '#src/lib/materials/LimestoneMaterial.ts'
@@ -18,7 +18,7 @@ import VaultGlassMaterial from '#src/lib/materials/VaultGlassMaterial.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
 /** The Oculus sees the chandeliers only through the glazed floor and the Salon only through its thick blue window, which both hide their light almost entirely, so they stay off from there. */
-const chandelierRooms = seenFrom('lobby', 'oculus', 'salon')
+const chandelierRooms = litFrom('lobby', 'lobby-chandelier_north', 'lobby-chandelier_middle', 'lobby-chandelier_south')
 
 /**
  * The Lobby’s coffered barrel vault with its glazed crown and rose windows, and the great chandeliers hanging from it.

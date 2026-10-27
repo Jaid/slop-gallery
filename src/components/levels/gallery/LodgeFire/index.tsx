@@ -7,6 +7,7 @@ import useDisposable from 'disposable-lifetime/react'
 import {useMemo, useRef} from 'react'
 import useGraphicsMode from 'use-graphics-mode'
 
+import {litFrom} from '#src/components/World/relations.ts'
 import {useAmbienceEmitter} from '#src/lib/audio/ambience/ambienceEmitters.ts'
 import LodgeFireAmbience from '#src/lib/audio/ambience/LodgeFire.ts'
 import {AnimationClock} from '#src/lib/frozenTime.ts'
@@ -16,13 +17,12 @@ import FireSparks from '#src/lib/gallery/fireplace/FireSparks.ts'
 import FlameGeometry from '#src/lib/gallery/fireplace/FlameGeometry.ts'
 import fireFlicker from '#src/lib/gallery/fireplace/flicker.ts'
 import LogGeometry from '#src/lib/gallery/fireplace/LogGeometry.ts'
-import {seenFrom} from '#src/lib/gallery/roomVisibility.ts'
 import CharredLogMaterial from '#src/lib/materials/CharredLogMaterial.ts'
 import EmberBedMaterial from '#src/lib/materials/EmberBedMaterial.ts'
 import FlameMaterial from '#src/lib/materials/FlameMaterial.ts'
 
 /** The Lodge’s own lights stay off from the Oculus. */
-const lodgeLightRooms = seenFrom('lodge', 'oculus')
+const lodgeLightRooms = litFrom('lodge', 'lodge-fire')
 const {logs, embers, light} = fire
 const emberRotation = [-Math.PI / 2, 0, 0] as const
 const logRotation = [0, 0, Math.PI / 2] as const

@@ -24,7 +24,7 @@ export default function LodgeTunnel({material, wood}: {
   // The Lodge’s plank floor, continued board for board into the tunnel’s timber transition and over its threshold in the corridor’s doorway.
   const floor = useDisposable(useMemo(() => lightIndoors(new PlankMaterial(lodgeFloorPlanks)), []))
   return <group name='lodge-tunnel'>
-    <CoveredPassage material={material} passage={lodgeTunnel} transition={lodgeTunnelTransition} />
+    <CoveredPassage lamps={['lodge-tunnel_pendants']} material={material} passage={lodgeTunnel} transition={lodgeTunnelTransition} />
     <TimberTransition floor={floor} lining={lining} timber={timber} transition={lodgeTunnelTransition} />
     <Box material={floor} name='lodge-threshold' position={[lodgeThreshold.center[0], corridorPassage.floorY - 0.12, lodgeThreshold.center[1]]} size={[lodgeThreshold.size[0], 0.24, lodgeThreshold.size[1]]} />
   </group>
