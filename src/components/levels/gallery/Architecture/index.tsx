@@ -8,6 +8,7 @@ import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 import GalleryLighting from '#component/levels/gallery/GalleryLighting'
 import GalleryStairs from '#component/levels/gallery/GalleryStairs'
 import PottedPlants from '#component/levels/gallery/PottedPlants'
+import World from '#component/World'
 import {surfaceTexture} from '#src/components/Scene/materials.ts'
 import WallSurface from '#src/components/Scene/WallSurface.tsx'
 import {rooms, walls} from '#src/lib/gallery.ts'
@@ -22,7 +23,6 @@ import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
 import {TravertineWallMaterial} from '#src/lib/materials/travertine/index.ts'
 import VesperWallMaterial from '#src/lib/materials/VesperWallMaterial.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
-import World from '#src/rooms/components/World/index.tsx'
 
 const vesper = rooms.find(room => room.id === 'vesper')!
 // Five courses of 1.1 m reach the cornice; slabs are twice as long as they are high.
