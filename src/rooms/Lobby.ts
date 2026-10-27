@@ -45,6 +45,68 @@ export default class Lobby extends Room {
         'chandelier-middle': chandelier(0),
         'chandelier-south': chandelier(8),
       },
+      slots: {
+        'lobby-north-0': {
+          wallId: 'lobby-north',
+          ratio: '2:3',
+          area: 30_000,
+          position: [-3.6, 2.7, -19.78],
+          rotation: 0,
+        },
+        'lobby-north-1': {
+          wallId: 'lobby-north',
+          ratio: '2:3',
+          area: 30_000,
+          position: [3.6, 2.7, -19.78],
+          rotation: 0,
+        },
+        'lobby-east-0': {
+          wallId: 'lobby-east',
+          ratio: '2:3',
+          area: 30_000,
+          priority: 100,
+          position: [7.78, 2.7, 9.2],
+          rotation: -Math.PI / 2,
+        },
+        'lobby-west-0': {
+          wallId: 'lobby-west',
+          ratio: '2:3',
+          area: 30_000,
+          priority: 100,
+          position: [-7.78, 2.7, 9.2],
+          rotation: Math.PI / 2,
+        },
+        'lobby-south-0': {
+          wallId: 'lobby-south',
+          ratio: '1:1',
+          area: 60_000,
+          position: [4.6, 2.7, 19.78],
+          rotation: Math.PI,
+        },
+        'lobby-south-1': {
+          wallId: 'lobby-south',
+          ratio: '1:1',
+          area: 60_000,
+          position: [-4.6, 2.7, 19.78],
+          rotation: Math.PI,
+        },
+        'lobby-extension-east-0': {
+          wallId: 'lobby-extension-east',
+          ratio: '3:2',
+          area: 30_000,
+          priority: 100,
+          position: [7.78, 2.7, 0],
+          rotation: -Math.PI / 2,
+        },
+        'lobby-extension-west-0': {
+          wallId: 'lobby-extension-west',
+          ratio: '3:2',
+          area: 30_000,
+          priority: 100,
+          position: [-7.78, 2.7, 0],
+          rotation: Math.PI / 2,
+        },
+      },
     })
   }
 }

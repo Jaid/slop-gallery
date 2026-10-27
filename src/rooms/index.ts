@@ -11,7 +11,7 @@ import Salon from './Salon.ts'
 import Sienna from './Sienna.ts'
 import Vesper from './Vesper.ts'
 
-export type {AmbienceEmitterClass, FloorRectangle, FloorSize, Lamp, PointLamp, RoomAmbience, RoomOptions, RoomSpawn, SpotLamp} from './base/Room.ts'
+export type {AmbienceEmitterClass, FloorRectangle, FloorSize, Lamp, PointLamp, RoomAmbience, RoomOptions, RoomPortraitSlot, RoomSpawn, SpotLamp} from './base/Room.ts'
 export {default as Room} from './base/Room.ts'
 export {default as eyeHeight} from './lib/eyeHeight.ts'
 export {default as floorBox} from './lib/floorBox.ts'
@@ -28,6 +28,11 @@ const byId = new Map<RoomId, GalleryRoom>(rooms.map(room => [room.id, room]))
 /** The room with the id. */
 export function getRoom<Id extends RoomId>(id: Id) {
   return byId.get(id) as Extract<GalleryRoom, {id: Id}>
+}
+
+/** every portrait slot of the gallery in world meters, room by room */
+export function portraitSlots() {
+  return rooms.flatMap(room => room.worldSlots())
 }
 
 /** The first room whose air holds the position, or undefined in passages, stairways and outdoors. */

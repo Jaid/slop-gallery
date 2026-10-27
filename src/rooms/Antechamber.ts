@@ -30,6 +30,22 @@ export default class Antechamber extends Room {
     super({
       number: 4,
       title: 'The Antechamber',
+      slots: {
+        'antechamber-south-0': {
+          wallId: 'antechamber-south',
+          ratio: '1:1',
+          area: 100_000,
+          position: [0, 3, 3.78],
+          rotation: Math.PI,
+        },
+        'antechamber-west-0': {
+          wallId: 'antechamber-west',
+          ratio: '1:1',
+          area: 100_000,
+          position: [-3.78, 3, 0],
+          rotation: Math.PI / 2,
+        },
+      },
     })
   }
 }

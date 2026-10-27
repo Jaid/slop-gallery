@@ -1,7 +1,10 @@
 import type AmbienceEmitter from '#src/lib/audio/ambience/base/AmbienceEmitter.ts'
+import type {PortraitRatio, PortraitSlot} from '#src/lib/gallery/types.ts'
 import type {Quat, Vec3} from 'math'
 
 import {Box3, Vector3} from 'three/webgpu'
+
+import {slotFrame} from '#src/lib/placement/portraitSlots.ts'
 
 /** an ambience emitter class whose instances can sound from any world position */
 export type AmbienceEmitterClass = new (position?: Vec3) => AmbienceEmitter
@@ -35,6 +38,21 @@ export type SpotLamp = LampBase & {
   /** the point the spot aims at, relative to the room’s {@link Room.origin} */
   target: Vec3
 }
+/** a spot on a wall of the room reserved for one default work of matching ratio */
+export type RoomPortraitSlot = {
+  /** frame area in cm², which sets the frame’s size together with its ratio */
+  area: number
+  /** whether the slot hangs low and its work’s placard goes above the frame */
+  labelAbove?: boolean
+  /** center of the frame, hanging in front of its wall, relative to the room’s {@link Room.origin} */
+  position: Vec3
+  /** Default works fill free slots of higher priority first, and slots of equal priority in random order; 0 by default. */
+  priority?: number
+  ratio: PortraitRatio
+  /** turn around y in radians, the same as its wall’s */
+  rotation: number
+  wallId: string
+}
 /** a light fixed in a room */
 export type Lamp = PointLamp | SpotLamp
 export type RoomOptions = {
@@ -44,6 +62,8 @@ export type RoomOptions = {
   lamps?: Record<string, Lamp>
   /** the number the map shows for the room, which also orders its room list */
   number: number
+  /** the portrait slots by id, which stays stable so edited slots find their originals */
+  slots?: Record<string, RoomPortraitSlot>
   title: string
   /** how strongly the air holds sun shafts while the player is inside, 1 at full strength; 0 turns volumetric sunlight off */
   volumetricSun?: number
@@ -84,15 +104,17 @@ export default abstract class Room {
   readonly number: number
   /** the point in world meters every other position of the room is relative to, usually the middle of its floor */
   abstract readonly origin: Vec3
+  readonly slots: ReadonlyMap<string, RoomPortraitSlot>
   abstract readonly spawn: RoomSpawn
   readonly title: string
   readonly volumetricSun: number
 
-  constructor({number, title, lamps = {}, ambience = {}, volumetricSun = 1}: RoomOptions) {
+  constructor({number, title, lamps = {}, ambience = {}, slots = {}, volumetricSun = 1}: RoomOptions) {
     this.number = number
     this.title = title
     this.lamps = new Map(Object.entries(lamps))
     this.ambience = new Map(Object.entries(ambience))
+    this.slots = new Map(Object.entries(slots))
     this.volumetricSun = volumetricSun
   }
 
@@ -156,5 +178,17 @@ export default abstract class Room {
         ...lamp.kind === 'spot' ? {target: this.toWorld(lamp.target)} : {},
       } as Lamp & {id: string}
     }
+  }
+
+  /** The portrait slots in world meters, as the placement code takes them. */
+  worldSlots(): Array<PortraitSlot> {
+    return this.slots.entries().map(([id, {area, position, priority = 0, labelAbove, ...slot}]) => ({
+      id,
+      ...slot,
+      priority,
+      ...slotFrame(slot.ratio, area),
+      position: this.toWorld(position),
+      ...labelAbove ? {labelAbove} : {},
+    })).toArray()
   }
 }
