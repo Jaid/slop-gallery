@@ -101,6 +101,8 @@ export const updateChangedMatrices = (object: Object3D, parentChanged: boolean) 
 const warmupBuildBudget = 50
 // Milliseconds a streaming frame may spend building the node graphs of objects drawn for the first time in a pass. Building happens synchronously, from a few milliseconds per object to over a hundred for the heaviest; a frame always admits at least one.
 const streamedBuildBudget = 4
+/** milliseconds after which a pipeline that compiled in the background is logged as slow */
+const slowPipelineMs = 500
 /** frames in a row without anything left to stream after which streaming stops */
 const streamedIdleFrames = 300
 /** how streaming picks the objects to build: `all` builds the rest of the scene after the prioritized objects, `priority` only ever builds prioritized ones */
@@ -198,7 +200,12 @@ export class GalleryRenderer extends WebgpuRenderer {
 
   /** whether the last warming frame drew every object in the frame scene and no pipeline is still compiling */
   get warm() {
-    return this.warmedFrame === this.frame && this.pending === 0
+    return this.warmedAll && this.pending === 0
+  }
+
+  /** whether the last warming frame drew every object in the frame scene, so all that is left are pipelines compiling in the background */
+  get warmedAll() {
+    return this.warmedFrame === this.frame
   }
 
   override compileAsync(scene: Object3D, camera: Camera, targetScene?: Scene | null) {
@@ -333,10 +340,20 @@ export class GalleryRenderer extends WebgpuRenderer {
     const sink: PromiseSink = {
       push: promise => {
         this.pending++
-        const loaded = startLoading(compiling ? `pipeline:${compiling.object.name || compiling.object.type}/${compiling.material.name || compiling.material.type}` : 'pipeline')
+        const id = compiling ? `pipeline:${compiling.object.name || compiling.object.type}/${compiling.material.name || compiling.material.type}` : 'pipeline'
+        const loaded = startLoading(id)
+        const start = performance.now()
         const settle = () => {
           this.pending--
           loaded()
+          const ms = performance.now() - start
+          if (ms >= slowPipelineMs) {
+            telemetry?.event('pipeline.slow', {
+              'pipeline.id': id,
+              'pipeline.ms': Math.round(ms),
+              'pipeline.pending': this.pending,
+            })
+          }
         }
         void promise.then(settle, settle)
       },

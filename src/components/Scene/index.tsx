@@ -50,6 +50,7 @@ const loading = readLoading()
 /**
  * Holds the loading screen until the artworks are in and every pipeline of the scene, including unseen rooms, shadows and reflections, has compiled.
  * With `?loading=streamed` or `lazy`, the level’s culling leaves out all but the start room, and the renderer streams the rest in after the loading screen.
+ * The loading screen then only waits until every object of the start room has been drawn once: artworks still decoding and the last pipelines, which compile one after another at about a second each, appear once they are done, with the loading indicator counting them.
  */
 function Ready() {
   const frames = useRef(0)
@@ -108,11 +109,12 @@ function Ready() {
       })
     }
     // A scene that never settles, like one that keeps adding objects, starts after a while anyway. Its late pipelines still compile in the background.
-    const warm = galleryRenderer?.warm !== false || performance.now() - loadingSince.current > maxWarmup
-    if (warm && galleryRenderer && !galleryRenderer.warm && frames.current === 0) {
+    const settled = loading === 'full' ? galleryRenderer?.warm !== false : galleryRenderer?.warmedAll !== false
+    const warm = settled || performance.now() - loadingSince.current > maxWarmup
+    if (warm && galleryRenderer && !settled && frames.current === 0) {
       console.warn(`Pipeline warmup gave up after ${maxWarmup / 1000} s with ${galleryRenderer.pendingPipelines} pipelines still compiling.`)
     }
-    if (!imagesDone || !warm) {
+    if (!(imagesDone || loading !== 'full') || !warm) {
       frames.current = 0
       return
     }
