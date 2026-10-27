@@ -1,5 +1,5 @@
 import Branch from 'branch-component'
-import {useState} from 'react'
+import {useLayoutEffect, useState} from 'react'
 
 import Dropzone from '#component/Dropzone'
 import GraphicsTuning from '#component/GraphicsTuning'
@@ -32,6 +32,10 @@ export default function App() {
   const uiHidden = useHiddenUi(state => state.hidden)
   const tuning = useGraphicsTuning()
   const [renderFailed, setRenderFailed] = useState(false)
+  // index.html paints a copy of the welcome menu while the scripts download. A layout effect removes it before the real menu paints, whose translucent backdrop would show it.
+  useLayoutEffect(() => {
+    document.querySelector('#loading-screen')?.remove()
+  }, [])
   // lib.dom types navigator.gpu as always present, but browsers without WebGPU leave it undefined.
   const gpu = (navigator.gpu as GPU | undefined) !== undefined && globalThis.isSecureContext
   if (!gpu) {

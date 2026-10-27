@@ -20,6 +20,7 @@ import titlePlugin from 'vite-plugin-title'
 
 import levels, {defaultLevel, levelIds} from '#src/data/levels.ts'
 import knotMaterialsPlugin from '#src/lib/vite/knotMaterialsPlugin.ts'
+import loadingScreenPlugin from '#src/lib/vite/loadingScreenPlugin.ts'
 
 const getCommonConfig = (context: ConfigEnv) => {
   const level = selectGameLevel(loadEnv(context.mode, process.cwd(), 'GAME_LEVEL').GAME_LEVEL, levelIds, defaultLevel)
@@ -36,6 +37,7 @@ const getCommonConfig = (context: ConfigEnv) => {
       }),
       knotMaterialsPlugin(),
       titlePlugin(levels[level].title),
+      loadingScreenPlugin(levels[level]),
       gameLevelPlugin({
         level,
         levels,
