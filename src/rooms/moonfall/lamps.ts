@@ -52,4 +52,28 @@ export default {
     range: 15,
     decay: 1,
   },
+// Green, blue and red, from the sealed tunnel’s north end up to its high south end, each hanging 35 cm under its housing.
+  tunnel_green: {
+    position: [8, 0.9853, -28.6973],
+    strength: 10,
+    tint: '#4dff6a',
+    range: 14,
+    decay: 1.25,
+    shadow: true,
+  },
+  tunnel_blue: {
+    position: [8, 1.7544, -23.6973],
+    strength: 13.2,
+    tint: '#4d7aff',
+    range: 10,
+    decay: 1,
+  },
+  tunnel_red: {
+    position: [8, 2.5235, -18.6973],
+    strength: 33,
+    tint: '#ff4d4d',
+    range: 17,
+    decay: 1.5,
+    shadow: true,
+  },
 } satisfies Record<string, Lamp>
