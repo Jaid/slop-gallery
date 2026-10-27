@@ -196,7 +196,13 @@ export default class GalleryRenderPipeline extends RenderPipeline {
           // Its volume recomposes every matrix of the scene each frame before collecting the lights. Within the frame’s prepass it uses the matrices the scene pass already brought up to date.
           if (renderer instanceof GalleryRenderer) {
             const updateVoxels = voxel.updateBefore.bind(voxel)
+            let shownFrames = 0
             voxel.updateBefore = frame => {
+              // Voxelizing gathers every triangle of the scene on the CPU and builds pipelines of its own, which takes most of a second. It waits until the third frame after the loading screen: the menu enables Enter in a task after the first, and only the frame after that paints it. Until then, the voxels bounce no light.
+              shownFrames = renderer.isWarming ? 0 : shownFrames + 1
+              if (shownFrames < 3) {
+                return
+              }
               renderer.prepass(scene, camera, () => {
                 updateVoxels(frame)
               })
