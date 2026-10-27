@@ -6,7 +6,7 @@ import {readCrosshair} from './crosshair.ts'
 import {readDevelopmentMode} from './developmentMode.ts'
 import {readSeedOverride} from './environmentSeed.ts'
 import {readFrozenTime} from './frozenTime.ts'
-import {readSpawn} from './gallery/bookmarks.ts'
+import {readRoom, readSpawn} from './gallery/bookmarks.ts'
 import {readPortraitSet} from './gallery/defaultPortraits.ts'
 import {readFlying} from './gallery/flyMode.ts'
 import {readWeather} from './gallery/lighting.ts'
@@ -47,6 +47,7 @@ const readers: Record<string, Reader> = {
   near: readNear,
   pmrem: readPmrem,
   portrait_set: readPortraitSet,
+  room: readRoom,
   scale: readScale,
   seed: readSeedOverride,
   show_ambience_emitters: readShowAmbienceEmitters,

@@ -2,7 +2,8 @@ import type {CameraBookmark, SpawnBookmark} from '../../src/lib/gallery/types.ts
 
 import {expect, test} from 'bun:test'
 
-import {findCameraBookmark, findSpawnBookmark, nextBookmark} from '../../src/lib/gallery/bookmarks.ts'
+import {findCameraBookmark, findRoomSpawn, findSpawnBookmark, nextBookmark} from '../../src/lib/gallery/bookmarks.ts'
+import {getRoom} from '../../src/rooms/index.ts'
 
 const bookmark = (id: string, x: number, z: number): SpawnBookmark => ({
   id,
@@ -47,4 +48,14 @@ test('?spawn names a bookmark by ID', () => {
   expect(findSpawnBookmark('http://localhost/?spawn=second', list)).toBe(list[1])
   expect(findSpawnBookmark('http://localhost/?spawn=missing', list)).toBeUndefined()
   expect(findSpawnBookmark('http://localhost/', list)).toBeNull()
+})
+test('?room names a room whose default spawn the session starts at', () => {
+  expect(findRoomSpawn('http://localhost/')).toBeNull()
+  expect(findRoomSpawn('http://localhost/?room=missing')).toBeUndefined()
+  expect(findRoomSpawn('http://localhost/?room=moonfall')).toEqual({
+    id: 'moonfall',
+    ...getRoom('moonfall').worldSpawn,
+  })
+  // The Corridor has no spawn bookmark of its own, only its hardcoded spawn.
+  expect(findRoomSpawn('http://localhost/?room=corridor')?.position).toEqual(getRoom('corridor').toWorld([0, 0.04, 0]))
 })
