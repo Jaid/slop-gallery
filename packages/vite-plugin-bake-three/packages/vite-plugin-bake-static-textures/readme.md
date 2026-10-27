@@ -69,7 +69,7 @@ There is no shader baking, PMREM generation, KTX2 compression, atlas packing, ch
 
 ## Loading and configuration
 
-Retained snapshots are emitted as content-addressed gzip-compressed `.bin` assets. Generated ES modules preload/decompress them with top-level await; the original constructors and factories remain synchronous. This makes the resources eager dependencies of their importing module, not lazy-on-first-call downloads. Identical artifacts share a preload, not mutable texture instances.
+Retained snapshots are emitted as content-addressed Brotli-compressed `.bin` assets. Generated ES modules preload/decompress them with top-level await; the original constructors and factories remain synchronous. This makes the resources eager dependencies of their importing module, not lazy-on-first-call downloads. Identical artifacts share a preload, not mutable texture instances.
 
 ```ts
 bakeStaticTextures({

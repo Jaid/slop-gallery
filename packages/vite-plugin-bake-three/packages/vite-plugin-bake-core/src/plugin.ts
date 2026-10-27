@@ -5,7 +5,7 @@ import type {HtmlTagDescriptor, Plugin, ResolvedConfig} from 'vite'
 import {createHash} from 'node:crypto'
 import {posix, relative} from 'node:path'
 import {fileURLToPath} from 'node:url'
-import {gzipSync} from 'node:zlib'
+import {brotliCompressSync, constants} from 'node:zlib'
 
 import MagicString from 'magic-string'
 
@@ -188,7 +188,7 @@ export default function createBakePlugin(adapter: BakeAdapter, options: BakeOpti
             throw new Error('Custom factory result has no accessible constructor.')
           }
           const compressed = options.compress !== false
-          const bytes = compressed ? gzipSync(raw, {level: 9}) : raw
+          const bytes = compressed ? brotliCompressSync(raw, {params: {[constants.BROTLI_PARAM_QUALITY]: constants.BROTLI_MAX_QUALITY}}) : raw
           const hash = createHash('sha256').update(bytes).digest('hex').slice(0, 24)
           artifacts.set(hash, artifacts.get(hash) ?? {
             bytes,

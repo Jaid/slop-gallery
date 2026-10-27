@@ -1,5 +1,7 @@
 import type {Atom, Snapshot, SnapshotNode} from './types.ts'
 
+import decodeBrotli from 'decode-brotli'
+
 export type RuntimeCodec = {
   allocate: () => object
   hydrate: (target: object, data: unknown) => void
@@ -211,6 +213,7 @@ export async function loadSnapshot(url: string, constructors: Constructors = {},
   if (!response.ok) {
     throw new Error(`Could not load baked resource (${response.status}): ${url}`)
   }
-  const decoded = compressed ? new Response(response.body!.pipeThrough(new DecompressionStream('gzip'))) : response
-  return decodeSnapshot(new Uint8Array(await decoded.arrayBuffer()), constructors, codecs)
+  const bytes = new Uint8Array(await response.arrayBuffer())
+  // Browsers decode Brotli only as a content encoding, which static hosts rarely allow for precompressed files.
+  return decodeSnapshot(compressed ? decodeBrotli(bytes) : bytes, constructors, codecs)
 }

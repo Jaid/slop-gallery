@@ -59,7 +59,7 @@ Adapters can also contribute custom `BakeCandidate`s containing a closed express
 
 `Recipe.evaluateValue(path, timeout, expression)` exposes the same bounded, guarded dependency evaluation for compilers that produce plain data rather than serialized resources. The R3F compiler uses it after lowering supported JSX to inert data. It does not turn the evaluator into a React renderer or allow executing arbitrary browser APIs.
 
-Snapshots use a small JSON graph header followed by binary buffer payloads. Gzip is a transport choice, not image conversion or numeric quantization. The default browser path requires ES-module top-level await, fetch and DecompressionStream; disabling `compress` removes the last requirement.
+Snapshots use a small JSON graph header followed by binary buffer payloads. Brotli at its highest quality is a transport choice, not image conversion or numeric quantization. Its large window finds the repeats across a whole snapshot, like walls that share their trim, which shrinks geometry to about 40% of what gzip achieves. Browsers decode Brotli only as a content encoding, which static hosts rarely let precompressed files use, so the runtime decodes snapshots with the bundled `decode-brotli` (about 68 kb compressed). Disabling `compress` skips that step at the cost of larger downloads. The browser path requires ES-module top-level await and fetch.
 
 Each generated module awaits its own download, so modules in one chunk would fetch their snapshots one after another. HTML entries therefore get a `<link rel="preload" as="fetch" crossorigin>` for every snapshot their static imports reach, and all of them download with the page. Snapshots behind dynamic imports are not preloaded.
 

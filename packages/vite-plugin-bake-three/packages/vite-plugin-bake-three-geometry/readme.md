@@ -81,7 +81,7 @@ The evaluator assumes normal unmodified JavaScript/Three intrinsics and treats a
 
 ## Loading and cost
 
-Each retained artifact is content-addressed and gzip-compressed. A generated ES module fetches/decompresses it using top-level await, before dependent application modules execute. Constructors and factory calls themselves stay synchronous. Equal artifacts share one module-level preload; returned resources remain independent.
+Each retained artifact is content-addressed and Brotli-compressed. A generated ES module fetches/decompresses it using top-level await, before dependent application modules execute. Constructors and factory calls themselves stay synchronous. Equal artifacts share one module-level preload; returned resources remain independent.
 
 This trades runtime generation for transfer, decompression and buffer copies. It does not remove GPU uploads, GPU shader compilation or draw calls, and does not promise a frame-rate improvement. By default, snapshots smaller than **32 KiB uncompressed** are left alone to avoid adding requests for cheap primitives.
 

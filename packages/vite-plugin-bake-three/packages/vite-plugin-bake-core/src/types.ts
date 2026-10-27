@@ -104,7 +104,7 @@ export type BakeDiagnostic = {
 export type BakeOptions = {
   /** Permit nondeterministic random sources to run once at build time and freeze their result into the artifact. */
   allowFreezingRandomness?: boolean
-  /** Gzip is decoded once at module load, never in a resource constructor. */
+  /** Brotli is decoded once at module load, never in a resource constructor. */
   compress?: boolean
   exclude?: ((id: string) => boolean) | RegExp
   /** Paths are normalized absolute filenames. Dependencies are still followed outside this filter. */
