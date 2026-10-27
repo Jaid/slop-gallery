@@ -48,9 +48,9 @@ export default function Scene() {
 const maxWarmup = 90_000
 const loading = readLoading()
 /**
- * Holds the loading screen until the artworks are in and every pipeline of the scene, including unseen rooms, shadows and reflections, has compiled.
- * With `?loading=streamed` or `lazy`, the level’s culling leaves out all but the start room, and the renderer streams the rest in after the loading screen.
- * The loading screen then only waits until every object of the start room has been drawn once: artworks still decoding and the last pipelines, which compile one after another at about a second each, appear once they are done, with the loading indicator counting them.
+ * With `?loading=stream`, the default, or `lazy`, the level’s culling leaves out all but the start room, and the renderer streams the rest in after the loading screen.
+ * With `?loading=full`, it holds the loading screen until the artworks are in and every pipeline of the scene, including unseen rooms, shadows and reflections, has compiled.
+ * Otherwise, the loading screen only waits until every object of the start room has been drawn once: artworks still decoding and the last pipelines, which compile one after another at about a second each, appear once they are done, with the loading indicator counting them.
  */
 function Ready() {
   const frames = useRef(0)

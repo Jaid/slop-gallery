@@ -9,16 +9,18 @@ import {createServer} from 'vite'
 import {defaultLevel, levelIds} from '#src/data/levels.ts'
 import {maximumSeed, parseSeed} from '#src/lib/environmentSeed.ts'
 import {queryParameters} from '#src/lib/queryOverrides.ts'
+import {readLoading} from '#src/lib/rendering/loading.ts'
 
 export const repositoryRoot = resolve(import.meta.dir, '..', '..')
-// seed and graphics have dedicated options with validation and defaults.
-const queryOptionNames = queryParameters.filter(key => key !== 'seed' && key !== 'graphics').toSorted()
+// seed, graphics and loading have dedicated options with validation and defaults.
+const queryOptionNames = queryParameters.filter(key => key !== 'seed' && key !== 'graphics' && key !== 'loading').toSorted()
 const queryOptions: Record<string, {type: 'string'}> = Object.fromEntries(queryOptionNames.map(key => [key, {type: 'string'}]))
 /** Scripts pick their own default height; the width follows 16:9. */
 export const galleryHelp = (defaultHeight = 720) => `  --level <id>            ${levelIds.join(', ')}. Default: GAME_LEVEL or the default level
   --target <dir>          use this static build (e.g. dist) instead of the dev server. Its level-build.json decides the level
   --graphics <mode>       mirrors ?graphics (fast, heavy or cinematic, which is heavy with larger maps and more samples for non-realtime renders). Default: heavy
   --seed <number>         mirrors ?seed, the environment seed (0–${maximumSeed}) that decides random details like the potted plants. Default: 1
+  --loading <mode>        mirrors ?loading (stream, full or lazy). Default: full, which builds everything before the scene is ready, so captures don’t wait for every object and shadow map to stream in
   --width <pixels>        render width. Default: --height × 16/9, or ${Math.round(defaultHeight * 16 / 9)}
   --height <pixels>       render height. Default: --width × 9/16, or ${defaultHeight}
   --<parameter> <value>   mirrors ?<parameter>=<value> for every other URL query parameter the app reads, e.g. --show_wireframe true or --anti_aliasing false:
@@ -30,6 +32,7 @@ export const galleryOptions = {
     default: 'heavy',
   },
   level: {type: 'string'},
+  loading: {type: 'string'},
   seed: {
     type: 'string',
     default: '1',
@@ -42,6 +45,7 @@ export type GalleryValues = Partial<Record<string, boolean | string>> & {
   graphics: string
   height?: string
   level?: string
+  loading?: string
   seed: string
   target?: string
   width?: string
@@ -141,6 +145,11 @@ export const resolveGallerySetup = async (values: GalleryValues, defaultHeight =
   }
   search.set('seed', String(seed))
   search.set('graphics', values.graphics)
+  const loading = values.loading ?? 'full'
+  if (readLoading(`?${new URLSearchParams({loading})}`) !== loading) {
+    throw new Error(`--loading must be stream, full or lazy, got “${loading}”.`)
+  }
+  search.set('loading', loading)
   for (const key of queryOptionNames) {
     const value = values[key]
     if (typeof value === 'string') {
