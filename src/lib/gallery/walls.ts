@@ -3,7 +3,7 @@ import type {RoomId, Vec3} from './types.ts'
 
 import {GalleryPlacementSpace} from '../placement/GalleryPlacementSpace.ts'
 import {wallCoordinates} from '../placement/wallGeometry.ts'
-import {antechamberDomeCrownY} from './antechamberDome.ts'
+import {antechamberDomeCrownY} from './antechamberDomeShape.ts'
 import miterCorners from './cornerMiters.ts'
 import corridor, {corridorPassage, corridorStairFloor, corridorWalls, insideCorridor} from './corridor.ts'
 import mainEntrance from './entrance.ts'

@@ -17,6 +17,7 @@ import {traa} from 'three/addons/tsl/display/TRAANode.js'
 import {convertToTexture, diffuseColor, float, int, interleavedGradientNoise, length, luminance, max, metalness, min, mrt, normalView, output, pass, renderOutput, roughness, rtt, screenCoordinate, screenUV, smoothstep, uniform, uv, vec2, vec3, vec4, velocity} from 'three/tsl'
 import {BlendMode, DirectionalLight, HalfFloatType, MRTNode, NoBlending, Node, NormalBlending, PerspectiveCamera, RenderPipeline, Vector2} from 'three/webgpu'
 
+import {mountedRooms, pendingRooms} from '../gallery/roomLoading.ts'
 import {floorReflectionBlur, floorReflectionGrazing, floorReflectionLevel, floorReflectionRoughness, floorReflectionStrength, renderFloorReflection} from '../materials/FloorMaterial.ts'
 import ConditionalTexture from './ConditionalTexture.ts'
 import {GalleryRenderer} from './GalleryRenderer.ts'
@@ -197,11 +198,21 @@ export default class GalleryRenderPipeline extends RenderPipeline {
           if (renderer instanceof GalleryRenderer) {
             const updateVoxels = voxel.updateBefore.bind(voxel)
             let shownFrames = 0
+            /** how many rooms had mounted when the scene was last voxelized, or -1 before that */
+            let voxelizedRooms = -1
             voxel.updateBefore = frame => {
               // Voxelizing gathers every triangle of the scene on the CPU and builds pipelines of its own, which takes most of a second. It waits until the third frame after the loading screen: the menu enables Enter in a task after the first, and only the frame after that paints it. Until then, the voxels bounce no light.
               shownFrames = renderer.isWarming ? 0 : shownFrames + 1
-              if (shownFrames < 3) {
+              // It also waits for the rooms that load after the loading screen, and voxelizes again whenever more rooms are in.
+              if (shownFrames < 3 || voxelizedRooms < 0 && pendingRooms() > 0) {
                 return
+              }
+              if (voxelizedRooms !== mountedRooms() && pendingRooms() === 0) {
+                // The first update voxelizes anyway.
+                if (voxelizedRooms >= 0) {
+                  voxel.needsUpdate = true
+                }
+                voxelizedRooms = mountedRooms()
               }
               renderer.prepass(scene, camera, () => {
                 updateVoxels(frame)

@@ -1,6 +1,6 @@
 import type {RoomSpawn} from '../base/Room.ts'
 
-import {antechamberDomeCrownY} from '#src/lib/gallery/antechamberDome.ts'
+import {antechamberDomeCrownY} from '#src/lib/gallery/antechamberDomeShape.ts'
 import staircase from '#src/lib/gallery/staircase.ts'
 
 import Room from '../base/Room.ts'

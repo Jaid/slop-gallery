@@ -5,6 +5,7 @@ import readPermalink from 'read-permalink'
  * How the scene loads behind the loading screen:
  * `stream`, the default, builds only what the start view sees before Enter unlocks and then the rest a few objects per frame, nearest rooms first, `full` builds every object for every pass before Enter unlocks,
  * and `lazy` streams only the rooms related to the player’s current room, following the player from room to room.
+ * With `stream` and `lazy`, the gallery’s rooms other than the Lobby and the start room also only download once Enter is enabled.
  */
 export type LoadingMode = 'full' | 'lazy' | 'stream'
 

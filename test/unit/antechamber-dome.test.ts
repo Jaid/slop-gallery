@@ -2,7 +2,8 @@ import {expect, test} from 'bun:test'
 
 import {Vector3} from 'three/webgpu'
 
-import antechamberDome, {antechamberDomeCrownY, antechamberDomeGeometry, antechamberGlassPlacements, antechamberLatticeGeometry, antechamberLatticeY, antechamberWindows} from '../../src/lib/gallery/antechamberDome.ts'
+import antechamberDome, {antechamberDomeGeometry, antechamberGlassPlacements, antechamberLatticeGeometry, antechamberLatticeY, antechamberWindows} from '../../src/lib/gallery/antechamberDome.ts'
+import {antechamberDomeCrownY} from '../../src/lib/gallery/antechamberDomeShape.ts'
 import {roomClearHeight, rooms} from '../../src/lib/gallery/walls.ts'
 
 const antechamber = rooms.find(room => room.id === 'antechamber')!

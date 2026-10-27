@@ -15,6 +15,7 @@ import {Scene as LevelScene} from '#level/components.ts'
 import {isShowingAmbienceEmitters} from '#src/lib/audio/ambience/ambienceEmitters.ts'
 import {useGallery} from '#src/lib/gallery.ts'
 import {isEditingPortraitSlots, isShowingPortraitSlots} from '#src/lib/gallery/portraitSlotStore.ts'
+import {pendingRooms} from '#src/lib/gallery/roomLoading.ts'
 import {useHiddenUi} from '#src/lib/hiddenUi.ts'
 import {GalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
 import {isShowingLights} from '#src/lib/rendering/lightLevels.ts'
@@ -48,7 +49,7 @@ export default function Scene() {
 const maxWarmup = 90_000
 const loading = readLoading()
 /**
- * With `?loading=stream`, the default, or `lazy`, the level’s culling leaves out all but the start room, and the renderer streams the rest in after the loading screen.
+ * With `?loading=stream`, the default, or `lazy`, the level’s culling leaves out all but the start room, and the renderer streams the rest in after the loading screen. Rooms the level loads on demand count once they have mounted.
  * With `?loading=full`, it holds the loading screen until the artworks are in and every pipeline of the scene, including unseen rooms, shadows and reflections, has compiled.
  * Otherwise, the loading screen only waits until every object of the start room has been drawn once: artworks still decoding and the last pipelines, which compile one after another at about a second each, appear once they are done, with the loading indicator counting them.
  */
@@ -114,7 +115,7 @@ function Ready() {
     if (warm && galleryRenderer && !settled && frames.current === 0) {
       console.warn(`Pipeline warmup gave up after ${maxWarmup / 1000} s with ${galleryRenderer.pendingPipelines} pipelines still compiling.`)
     }
-    if (!(imagesDone || loading !== 'full') || !warm) {
+    if (!(imagesDone || loading !== 'full') || !warm || pendingRooms() > 0) {
       frames.current = 0
       return
     }
