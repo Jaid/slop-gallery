@@ -91,7 +91,7 @@ const relatedRegions = (from: ReadonlyArray<RoomId>) => {
  * Leaves out what the camera can’t see from the rooms it is in. An object belongs to every room its bounds reach into, and a room behind an opening only shows through the part of the screen the opening covers, up to two openings deep.
  * Rooms out of sight drop out of every pass of the frame: the camera, its reflection and the lamps’ shadow maps. Objects in a room in sight that miss its openings on screen only drop out of the camera and its reflection, so the shadows they cast stay.
  * The sun shines from outside every room, through openings and skylights that rooms out of sight may frame, so its shadow map keeps them all; otherwise the patches of sunlight would change shape whenever a room leaves the view.
- * With `?loading=streamed` or `lazy`, culling starts behind the loading screen, where it leaves out every room but the camera’s, in the sun’s shadow map too. Objects in the camera’s rooms and the rooms related to them stream in first afterward.
+ * With `?loading=streamed` or `lazy`, culling and the shadow cache start behind the loading screen, where culling leaves out every room but the camera’s, in the sun’s shadow map too. Objects in the camera’s rooms and the rooms related to them stream in first afterward.
  * Shadow maps only update when something in their light’s reach changes, and lights in hidden rooms or switched off by their room list wait until they matter again. Lights themselves stay, since a different set of lights would recompile every lit material.
  */
 export default function RoomCulling() {
@@ -107,6 +107,8 @@ export default function RoomCulling() {
     const {hidden, hiddenFromView, shadowCameras, unculledCameras} = galleryRenderer
     const shadows = new ShadowCache
     const related = new Set<RoomId>
+    /** shadow cameras refreshed for streaming since every incomplete one last had its turn */
+    const refreshed = new Set<Camera>
     const cull = (camera: Camera) => {
       hidden.clear()
       hiddenFromView.clear()
@@ -123,6 +125,8 @@ export default function RoomCulling() {
           related.add(other)
         }
       }
+      // Set inside the traversal, which TypeScript can’t follow.
+      let refreshing = false as boolean
       const inSight = (rects: ReadonlyArray<ScreenRect>, box: Box3) => {
         const rect = screenRect(box, viewProjection)
         return rect !== undefined && rects.some(([left, bottom, right, top]) => rect[0] <= right && rect[2] >= left && rect[1] <= top && rect[3] >= bottom)
@@ -136,8 +140,11 @@ export default function RoomCulling() {
           if ((light as DirectionalLight).isDirectionalLight && ready) {
             unculledCameras.add(light.shadow.camera)
           }
-          if (galleryRenderer.streamingIncomplete(light.shadow.camera)) {
+          // One shadow map missing objects renders again per frame, each in turn, since rendering them all every frame costs more than building their objects.
+          if (!refreshing && galleryRenderer.streamingIncomplete(light.shadow.camera) && !refreshed.has(light.shadow.camera)) {
             light.shadow.needsUpdate = true
+            refreshed.add(light.shadow.camera)
+            refreshing = true
           }
         }
         if (!regions || !drawable.geometry || !drawable.frustumCulled || holdsLight(object)) {
@@ -159,8 +166,9 @@ export default function RoomCulling() {
           hiddenFromView.add(object)
         }
       })
-      if (!ready) {
-        return
+      // Every missing shadow map had its turn, so the next round starts.
+      if (!refreshing) {
+        refreshed.clear()
       }
       shadows.update(scene, hidden, (light: Light) => {
         if (!lightActive.current(light)) {

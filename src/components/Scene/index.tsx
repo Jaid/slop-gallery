@@ -19,6 +19,7 @@ import {useHiddenUi} from '#src/lib/hiddenUi.ts'
 import {GalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
 import {isShowingLights} from '#src/lib/rendering/lightLevels.ts'
 import {readLoading} from '#src/lib/rendering/loading.ts'
+import {telemetry} from '#src/lib/telemetry/index.ts'
 import {pendingImages} from '#src/lib/useArtworkTexture.ts'
 
 import Interaction from './Interaction.tsx'
@@ -53,6 +54,12 @@ const loading = readLoading()
 function Ready() {
   const frames = useRef(0)
   const loadingSince = useRef<number>(null)
+  // When each condition the loading screen waits for last became true, in ms since loading began, or -1 while it is false.
+  const milestones = useRef({
+    images: -1,
+    pipelines: -1,
+    warm: -1,
+  })
   const renderer = useThree(state => state.renderer)
   const scene = useThree(state => state.scene)
   const galleryRenderer = renderer instanceof GalleryRenderer ? renderer : null
@@ -75,12 +82,20 @@ function Ready() {
       return
     }
     loadingSince.current ??= performance.now()
+    const elapsed = Math.round(performance.now() - loadingSince.current)
+    const reached = milestones.current
+    const imagesDone = pendingImages() === 0
+    const pipelinesDone = galleryRenderer?.pendingPipelines === 0
+    const isWarm = galleryRenderer?.warm !== false
+    reached.images = imagesDone ? (reached.images < 0 ? elapsed : reached.images) : -1
+    reached.pipelines = pipelinesDone ? (reached.pipelines < 0 ? elapsed : reached.pipelines) : -1
+    reached.warm = isWarm ? (reached.warm < 0 ? elapsed : reached.warm) : -1
     // A scene that never settles, like one that keeps adding objects, starts after a while anyway. Its late pipelines still compile in the background.
     const warm = galleryRenderer?.warm !== false || performance.now() - loadingSince.current > maxWarmup
     if (warm && galleryRenderer && !galleryRenderer.warm && frames.current === 0) {
       console.warn(`Pipeline warmup gave up after ${maxWarmup / 1000} s with ${galleryRenderer.pendingPipelines} pipelines still compiling.`)
     }
-    if (pendingImages() > 0 || !warm) {
+    if (!imagesDone || !warm) {
       frames.current = 0
       return
     }
@@ -89,6 +104,13 @@ function Ready() {
       if (loading !== 'full') {
         galleryRenderer?.setStreaming(loading === 'lazy' ? 'priority' : 'all')
       }
+      telemetry?.event('loading.finished', {
+        'loading.images_ms': reached.images,
+        'loading.mode': loading,
+        'loading.ms': elapsed,
+        'loading.pipelines_ms': reached.pipelines,
+        'loading.warm_ms': reached.warm,
+      })
       useGallery.setState({ready: true})
     }
   })
