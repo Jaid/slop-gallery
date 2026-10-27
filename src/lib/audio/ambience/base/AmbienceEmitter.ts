@@ -229,7 +229,9 @@ export default abstract class AmbienceEmitter {
     const envelope = graph.context.createGain()
     envelope.gain.value = 0
     envelope.gain.setValueAtTime(0, start)
-    envelope.gain.linearRampToValueAtTime(volume, start + 0.004)
+    // capped so ticks shorter than the attack still decay instead of the fade-out being scheduled before the fade-in
+    const attack = Math.min(0.004, duration * 0.8)
+    envelope.gain.linearRampToValueAtTime(volume, start + attack)
     envelope.gain.exponentialRampToValueAtTime(silence, start + duration)
     through.connect(envelope).connect(graph.bus)
     source.addEventListener('ended', () => {
