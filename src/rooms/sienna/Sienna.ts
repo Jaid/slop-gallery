@@ -5,6 +5,7 @@ import cameras from './cameras.ts'
 import lamps from './lamps.ts'
 import slots from './slots.ts'
 import spawns from './spawns.ts'
+import stickyWalls from './stickyWalls.ts'
 
 const plan = {
   center: [-14, 14],
@@ -25,6 +26,7 @@ export default class Sienna extends Room {
       spawns,
       lamps,
       slots,
+      stickyWalls,
     })
   }
 }

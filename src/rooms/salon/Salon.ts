@@ -4,6 +4,7 @@ import Room from '../base/Room.ts'
 import floorBox from '../lib/floorBox.ts'
 import floorOrigin from '../lib/floorOrigin.ts'
 import spawns from './spawns.ts'
+import stickyWalls from './stickyWalls.ts'
 
 /** Lit through its skylight, without lamps of its own. */
 export default class Salon extends Room {
@@ -17,6 +18,7 @@ export default class Salon extends Room {
     super({
       title: 'The Salon',
       spawns,
+      stickyWalls,
     })
   }
 }

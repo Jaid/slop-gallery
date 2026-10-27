@@ -1,5 +1,6 @@
 import type AmbienceEmitter from '#src/lib/audio/ambience/base/AmbienceEmitter.ts'
 import type {CameraBookmark, PortraitRatio, PortraitSlot, SpawnBookmark} from '#src/lib/gallery/types.ts'
+import type {WallOpening, WallReservation} from '#src/lib/placement/wallGeometry.ts'
 import type {Vec3} from 'math'
 
 import {Box3, Vector3} from 'three/webgpu'
@@ -18,6 +19,21 @@ export type RoomAmbience = {
 export type RoomCamera = Omit<CameraBookmark, 'id'>
 /** a player pose in the room to arrive or teleport at, its feet positioned relative to the room’s {@link Room.origin} */
 export type RoomSpawn = Omit<SpawnBookmark, 'id'>
+/** a flat wall of the room that portraits can be hung on */
+export type RoomStickyWall = {
+  /** the middle of the wall’s foot, relative to the room’s {@link Room.origin} */
+  center: Vec3
+  /** above its foot, in meters */
+  height: number
+  /** the openings through the wall, which portraits keep clear of, along the wall from its center */
+  holes?: Array<WallOpening>
+  /** solid features on the wall that portraits keep clear of, like an entrance surround */
+  reservations?: Array<WallReservation>
+  /** turn around y in radians; the wall faces +z into the room before turning */
+  rotation: number
+  /** in meters along the wall */
+  width: number
+}
 /** a rectangle on the floor plan, centered on its x and z */
 export type FloorRectangle = {
   center: readonly [x: number, z: number]
@@ -66,6 +82,8 @@ export type RoomOptions = {
   slots?: Record<string, RoomPortraitSlot>
   /** the spawn bookmarks by their id within the room, in snake_case; the empty id is the room’s default spawn, which goes by the room’s own id */
   spawns?: Record<string, RoomSpawn>
+  /** the walls portraits can be hung on by their id within the room, in snake_case */
+  stickyWalls?: Record<string, RoomStickyWall>
   title: string
   /** how strongly the air holds sun shafts while the player is inside, 1 at full strength; 0 turns volumetric sunlight off */
   volumetricSun?: number
@@ -111,16 +129,18 @@ export default abstract class Room {
   /** where visitors arrive, usually the room’s default spawn, the empty id of {@link spawns} */
   abstract readonly spawn: RoomSpawn
   readonly spawns: ReadonlyMap<string, RoomSpawn>
+  readonly stickyWalls: ReadonlyMap<string, RoomStickyWall>
   readonly title: string
   readonly volumetricSun: number
 
-  constructor({title, lamps = {}, ambience = {}, cameras = {}, slots = {}, spawns = {}, volumetricSun = 1}: RoomOptions) {
+  constructor({title, lamps = {}, ambience = {}, cameras = {}, slots = {}, spawns = {}, stickyWalls = {}, volumetricSun = 1}: RoomOptions) {
     this.title = title
     this.lamps = new Map(Object.entries(lamps))
     this.ambience = new Map(Object.entries(ambience))
     this.slots = new Map(Object.entries(slots))
     this.cameras = new Map(Object.entries(cameras))
     this.spawns = new Map(Object.entries(spawns))
+    this.stickyWalls = new Map(Object.entries(stickyWalls))
     this.volumetricSun = volumetricSun
   }
 
@@ -219,6 +239,16 @@ export default abstract class Room {
       ...spawn,
       id: this.globalId(id),
       position: this.toWorld(spawn.position),
+    })).toArray()
+  }
+
+  /** The walls portraits can be hung on with global ids in world meters, as the placement code takes them. */
+  worldStickyWalls() {
+    return this.stickyWalls.entries().map(([id, wall]) => ({
+      ...wall,
+      id: this.globalId(id),
+      room: this.id,
+      center: this.toWorld(wall.center),
     })).toArray()
   }
 }

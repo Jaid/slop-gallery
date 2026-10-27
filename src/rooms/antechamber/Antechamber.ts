@@ -8,6 +8,7 @@ import floorBox from '../lib/floorBox.ts'
 import floorOrigin from '../lib/floorOrigin.ts'
 import cameras from './cameras.ts'
 import slots from './slots.ts'
+import stickyWalls from './stickyWalls.ts'
 
 const plan = {
   center: [0, staircase.z],
@@ -33,6 +34,7 @@ export default class Antechamber extends Room {
       title: 'The Antechamber',
       cameras,
       slots,
+      stickyWalls,
     })
   }
 }

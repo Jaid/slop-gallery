@@ -8,6 +8,7 @@ import ambienceEmitters from './ambienceEmitters.ts'
 import cameras from './cameras.ts'
 import lamps from './lamps.ts'
 import spawns from './spawns.ts'
+import stickyWalls from './stickyWalls.ts'
 
 const {floorY, moonfall: plan, tunnel} = lowerGallery
 const bottom = craterTerrain.lowest()
@@ -33,6 +34,7 @@ export default class Moonfall extends Room {
       lamps,
       // The room lies under its own ceiling, so the sun never lights its air.
       volumetricSun: 0,
+      stickyWalls,
     })
   }
 }

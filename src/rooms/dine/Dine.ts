@@ -7,6 +7,7 @@ import cameras from './cameras.ts'
 import lamps from './lamps.ts'
 import slots from './slots.ts'
 import spawns from './spawns.ts'
+import stickyWalls from './stickyWalls.ts'
 
 // From the Salon’s south wall to the Vesper’s south wall’s line.
 const plan = {
@@ -28,6 +29,7 @@ export default class Dine extends Room {
       spawns,
       lamps,
       slots,
+      stickyWalls,
     })
   }
 }

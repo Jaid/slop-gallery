@@ -6,6 +6,7 @@ import floorOrigin from '../lib/floorOrigin.ts'
 import cameras from './cameras.ts'
 import slots from './slots.ts'
 import spawns from './spawns.ts'
+import stickyWalls from './stickyWalls.ts'
 
 const {oculus} = lowerGallery
 
@@ -23,6 +24,7 @@ export default class Oculus extends Room {
       cameras,
       spawns,
       slots,
+      stickyWalls,
     })
   }
 }

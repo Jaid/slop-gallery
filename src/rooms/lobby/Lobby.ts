@@ -9,6 +9,7 @@ import cameras from './cameras.ts'
 import lamps from './lamps.ts'
 import slots from './slots.ts'
 import spawns from './spawns.ts'
+import stickyWalls from './stickyWalls.ts'
 
 const plan = {
   center: [0, (lobby.northZ + lobby.southZ) / 2],
@@ -31,6 +32,7 @@ export default class Lobby extends Room {
       ambience: ambienceEmitters,
       lamps,
       slots,
+      stickyWalls,
     })
   }
 }

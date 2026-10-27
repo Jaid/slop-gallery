@@ -9,6 +9,7 @@ import cameras from './cameras.ts'
 import lamps from './lamps.ts'
 import slots from './slots.ts'
 import spawns from './spawns.ts'
+import stickyWalls from './stickyWalls.ts'
 
 export default class Lodge extends Room {
   override readonly description = 'Weathered stone. Warm timber. A way back through the corridor.'
@@ -30,6 +31,7 @@ export default class Lodge extends Room {
       lamps,
       volumetricSun: 0,
       slots,
+      stickyWalls,
     })
   }
 }
