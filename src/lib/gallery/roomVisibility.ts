@@ -3,6 +3,8 @@ import type {Frustum, Matrix4, Sphere} from 'three/webgpu'
 
 import {Box3, Vector3} from 'three/webgpu'
 
+import {openings} from '#src/components/World/relations.ts'
+
 import lobby from './lobby.ts'
 import walls, {openingTop, rooms, wallPosition} from './walls.ts'
 import {worldRooms} from './worldRooms.ts'
@@ -17,61 +19,6 @@ type Portal = {
 // Doorframes, trims and the reveal of thick walls stay inside the portal.
 const portalDepth = 0.8
 const containmentMargin = 0.05
-/** the openings between rooms, as wall ids with an index into their holes; passages list the holes at both of their ends */
-const openings: Array<{
-  holes: Array<readonly [string, number]>
-  rooms: readonly [RoomId, RoomId]
-}> = [
-  {
-    rooms: ['lobby', 'vesper'],
-    holes: [['lobby-west', 0]],
-  },
-  {
-    rooms: ['lobby', 'dine'],
-    holes: [['lobby-east', 0]],
-  },
-  {
-    rooms: ['lobby', 'antechamber'],
-    holes: [['lobby-south', 0]],
-  },
-  {
-    rooms: ['vesper', 'sienna'],
-    holes: [['vesper-south', 0]],
-  },
-  {
-    rooms: ['dine', 'salon'],
-    holes: [['dine-north', 0]],
-  },
-  {
-    rooms: ['antechamber', 'moonfall'],
-    holes: [['antechamber-east', 0], ['moonfall-east', 0]],
-  },
-  {
-    rooms: ['sienna', 'corridor'],
-    holes: [['sienna-west', 0]],
-  },
-  {
-    rooms: ['moonfall', 'oculus'],
-    holes: [['moonfall-north', 0], ['oculus-south', 0]],
-  },
-  {
-    rooms: ['oculus', 'lodge'],
-    holes: [['oculus-north', 0], ['lodge-east', 0]],
-  },
-  {
-    rooms: ['lodge', 'corridor'],
-    holes: [['lodge-west', 0]],
-  },
-  {
-    rooms: ['lodge', 'corridor'],
-    holes: [['lodge-west', 1], ['corridor-wall-5', 0]],
-  },
-  {
-    // The glass wall between the Lobby extension and the Salon.
-    rooms: ['lobby', 'salon'],
-    holes: [['lobby-extension-east', 0], ['salon-west', 0]],
-  },
-]
 const holeBox = (wallId: string, index: number) => {
   const wall = walls.find(value => value.id === wallId)
   const hole = wall?.holes?.[index]

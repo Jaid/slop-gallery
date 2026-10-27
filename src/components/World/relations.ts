@@ -12,6 +12,65 @@ export type RoomRelations = {
   rooms: ReadonlyArray<RoomId>
 }
 
+/** an opening between two rooms: the holes of the walls it passes through, by global wall id and hole index */
+export type Opening = {
+  holes: ReadonlyArray<readonly [string, number]>
+  rooms: readonly [RoomId, RoomId]
+}
+
+/** the openings between rooms that RoomCulling looks through, as global wall ids with an index into their holes; passages list the holes at both of their ends. The glazed Lobby floor into the Oculus is an opening too, but takes its box from the Lobby’s floor. */
+export const openings: ReadonlyArray<Opening> = [
+  {
+    rooms: ['lobby', 'vesper'],
+    holes: [['lobby-west', 0]],
+  },
+  {
+    rooms: ['lobby', 'dine'],
+    holes: [['lobby-east', 0]],
+  },
+  {
+    rooms: ['lobby', 'antechamber'],
+    holes: [['lobby-south', 0]],
+  },
+  {
+    rooms: ['vesper', 'sienna'],
+    holes: [['vesper-south', 0]],
+  },
+  {
+    rooms: ['dine', 'salon'],
+    holes: [['dine-north', 0]],
+  },
+  {
+    rooms: ['antechamber', 'moonfall'],
+    holes: [['antechamber-east', 0], ['moonfall-east', 0]],
+  },
+  {
+    rooms: ['sienna', 'corridor'],
+    holes: [['sienna-west', 0]],
+  },
+  {
+    rooms: ['moonfall', 'oculus'],
+    holes: [['moonfall-north', 0], ['oculus-south', 0]],
+  },
+  {
+    rooms: ['oculus', 'lodge'],
+    holes: [['oculus-north', 0], ['lodge-east', 0]],
+  },
+  {
+    rooms: ['lodge', 'corridor'],
+    holes: [['lodge-west', 0]],
+  },
+  {
+    rooms: ['lodge', 'corridor'],
+    holes: [['lodge-west', 1], ['corridor-wall-5', 0]],
+  },
+  {
+    // The glass wall between the Lobby extension and the Salon.
+    rooms: ['lobby', 'salon'],
+    holes: [['lobby-extension-east', 0], ['salon-west', 0]],
+  },
+]
+
 /**
  * Per room, a whitelist of neighbor objects. While the player is in a room, every other room’s models are hidden and its lamps and ambience emitters are off unless the room lists them here.
  * A room’s own models, lamps and ambience emitters are always on inside it. Hiding a model only skips its draws, and switching a lamp off only dims it, so neither recompiles a shader.
