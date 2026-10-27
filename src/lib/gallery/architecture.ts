@@ -37,6 +37,7 @@ const extrude = (shape: Array<Shape> | Shape, depth: number, z: number) => {
 }
 
 export type ArchitectureGeometry = ReturnType<typeof createArchitectureGeometry>
+type ArchitectureParts = ReturnType<typeof cutArchitecture>
 export function colliderGeometry(geometry: BufferGeometry): [Float32Array, Uint32Array] {
   // UV seams and lathe poles are render attributes, not physical cracks. Weld only
   // positions and remove zero-area faces before Rapier builds its contact topology.
@@ -70,7 +71,7 @@ export function colliderGeometry(geometry: BufferGeometry): [Float32Array, Uint3
   }
 }
 // CSG runs once per wall layout, never in the animation loop.
-export function createArchitectureGeometry(wall: Wall) {
+function cutArchitecture(wall: Wall) {
   const top = wall.height + 0.3
   const baseboardHeight = wall.baseboardHeight ?? 0.44
   if (!Number.isFinite(baseboardHeight) || baseboardHeight <= 0.06) {
@@ -222,11 +223,6 @@ export function createArchitectureGeometry(wall: Wall) {
       trim,
       glazing,
       collision,
-      dispose() {
-        for (const geometry of retained) {
-          geometry.dispose()
-        }
-      },
     }
   } catch (error) {
     for (const geometry of retained) {
@@ -243,10 +239,44 @@ export function createArchitectureGeometry(wall: Wall) {
     material.dispose()
   }
 }
+const withDisposal = (parts: ArchitectureParts) => ({
+  ...parts,
+  dispose() {
+    for (const geometry of [parts.surface, ...parts.cornice, ...parts.trim, ...parts.glazing]) {
+      geometry.dispose()
+    }
+  },
+})
+export function createArchitectureGeometry(wall: Wall) {
+  return withDisposal(cutArchitecture(wall))
+}
 
+const architectureKey = (wall: Wall) => JSON.stringify([wall.width, wall.height, wall.holes ?? [], wall.slope ?? 0, wall.baseboardProfile ?? null, wall.trimStyle ?? 'classic', wall.curveRadius ?? 0, wall.baseboardHeight ?? 0.44, wall.miters ?? null])
+/** Cuts each distinct layout among `walls` once. Called at module level on fixed walls, the build bakes the result for {@link provideArchitecture}. */
+export function cutArchitectures(walls: ReadonlyArray<Wall>) {
+  const cuts = new Map<string, ArchitectureParts>
+  for (const wall of walls) {
+    const key = architectureKey(wall)
+    if (!cuts.has(key)) {
+      cuts.set(key, cutArchitecture(wall))
+    }
+  }
+  return cuts
+}
 const cache = new Map<string, ArchitectureGeometry>
+/** Lets {@link architectureGeometry} hand out walls cut ahead of time. */
+export function provideArchitecture(cuts: ReadonlyMap<string, ArchitectureParts>) {
+  for (const [key, parts] of cuts) {
+    const geometry = withDisposal(parts)
+    if (cache.has(key)) {
+      geometry.dispose()
+    } else {
+      cache.set(key, geometry)
+    }
+  }
+}
 export function architectureGeometry(wall: Wall) {
-  const key = JSON.stringify([wall.width, wall.height, wall.holes ?? [], wall.slope ?? 0, wall.baseboardProfile ?? null, wall.trimStyle ?? 'classic', wall.curveRadius ?? 0, wall.baseboardHeight ?? 0.44, wall.miters ?? null])
+  const key = architectureKey(wall)
   let geometry = cache.get(key)
   if (!geometry) {
     geometry = createArchitectureGeometry(wall)

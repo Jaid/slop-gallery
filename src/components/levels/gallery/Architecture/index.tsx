@@ -12,6 +12,7 @@ import World from '#component/World'
 import {surfaceTexture} from '#src/components/Scene/materials.ts'
 import WallSurface from '#src/components/Scene/WallSurface.tsx'
 import {rooms, walls} from '#src/lib/gallery.ts'
+import {cutArchitectures, provideArchitecture} from '#src/lib/gallery/architecture.ts'
 import {createArchitecturalGlassMaterials, disposeArchitecturalGlassMaterials} from '#src/lib/materials/ArchitecturalGlassMaterials.ts'
 import CastleStoneMaterial from '#src/lib/materials/CastleStoneMaterial.ts'
 import DamaskWallpaperMaterial from '#src/lib/materials/DamaskWallpaperMaterial.ts'
@@ -24,6 +25,8 @@ import {TravertineWallMaterial} from '#src/lib/materials/travertine/index.ts'
 import VesperWallMaterial from '#src/lib/materials/VesperWallMaterial.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
+// The gallery’s walls never change, so the build cuts their openings instead of every visit.
+provideArchitecture(cutArchitectures(walls))
 const vesper = rooms.find(room => room.id === 'vesper')!
 // Five courses of 1.1 m reach the cornice; slabs are twice as long as they are high.
 const lobbyCladding = {
