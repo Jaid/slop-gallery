@@ -96,6 +96,7 @@ export default {
     ],
   },
   oculus: {
+    floorMirror: 'moonfall',
     rooms: ['moonfall', 'lodge', 'lobby', 'antechamber', 'corridor', 'vesper', 'dine', 'salon'],
     keep: [
       'vesper-ceiling_north',
