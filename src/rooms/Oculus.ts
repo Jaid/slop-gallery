@@ -45,45 +45,45 @@ export default class Oculus extends Room {
         },
       },
       slots: {
-        oculus_south_0: {
-          wallId: 'oculus_south',
+        south_0: {
+          wallId: 'south',
           ratio: '3:2',
           area: 60_000,
           position: [6.6, 4.85, 9.78],
           rotation: Math.PI,
           labelAbove: true,
         },
-        oculus_south_1: {
-          wallId: 'oculus_south',
+        south_1: {
+          wallId: 'south',
           ratio: '3:2',
           area: 60_000,
           position: [-6.6, 4.85, 9.78],
           rotation: Math.PI,
           labelAbove: true,
         },
-        oculus_north_0: {
-          wallId: 'oculus_north',
+        north_0: {
+          wallId: 'north',
           ratio: '3:2',
           area: 30_000,
           position: [-5.6, 8.3, -9.78],
           rotation: 0,
         },
-        oculus_north_1: {
-          wallId: 'oculus_north',
+        north_1: {
+          wallId: 'north',
           ratio: '3:2',
           area: 30_000,
           position: [5.6, 8.3, -9.78],
           rotation: 0,
         },
-        oculus_east_0: {
-          wallId: 'oculus_east',
+        east_0: {
+          wallId: 'east',
           ratio: '3:2',
           area: 30_000,
           position: [8.78, 8.15, -8],
           rotation: -Math.PI / 2,
         },
-        oculus_west_0: {
-          wallId: 'oculus_west',
+        west_0: {
+          wallId: 'west',
           ratio: '3:2',
           area: 30_000,
           position: [-8.78, 8.15, -8],

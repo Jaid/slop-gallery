@@ -39,78 +39,78 @@ export default class Dine extends Room {
         led_south: led(5),
       },
       slots: {
-        dine_north_0: {
-          wallId: 'dine_north',
+        north_0: {
+          wallId: 'north',
           ratio: '2:3',
           area: 30_000,
           position: [-3.7125, 3.1325, -11.78],
           rotation: 0,
         },
-        dine_north_1: {
-          wallId: 'dine_north',
+        north_1: {
+          wallId: 'north',
           ratio: '2:3',
           area: 30_000,
           position: [3.7125, 3.1325, -11.78],
           rotation: 0,
         },
-        dine_east_0: {
-          wallId: 'dine_east',
+        east_0: {
+          wallId: 'east',
           ratio: '3:2',
           area: 30_000,
           position: [5.78, 3.1325, -9.356],
           rotation: -Math.PI / 2,
         },
-        dine_east_1: {
-          wallId: 'dine_east',
+        east_1: {
+          wallId: 'east',
           ratio: '3:2',
           area: 30_000,
           position: [5.78, 3.1325, -4.678],
           rotation: -Math.PI / 2,
         },
-        dine_east_2: {
-          wallId: 'dine_east',
+        east_2: {
+          wallId: 'east',
           ratio: '3:2',
           area: 30_000,
           position: [5.78, 3.1325, 0],
           rotation: -Math.PI / 2,
         },
-        dine_south_0: {
-          wallId: 'dine_south',
+        south_0: {
+          wallId: 'south',
           ratio: '3:2',
           area: 30_000,
           position: [3.7967, 3.1325, 11.78],
           rotation: Math.PI,
         },
-        dine_south_1: {
-          wallId: 'dine_south',
+        south_1: {
+          wallId: 'south',
           ratio: '3:2',
           area: 30_000,
           position: [0, 3.1325, 11.78],
           rotation: Math.PI,
         },
-        dine_south_2: {
-          wallId: 'dine_south',
+        south_2: {
+          wallId: 'south',
           ratio: '3:2',
           area: 30_000,
           position: [-3.7967, 3.1325, 11.78],
           rotation: Math.PI,
         },
-        dine_west_0: {
-          wallId: 'dine_west',
+        west_0: {
+          wallId: 'west',
           ratio: '2:3',
           area: 30_000,
           position: [-5.78, 3.1325, 10.2125],
           rotation: Math.PI / 2,
         },
-        dine_west_1: {
-          wallId: 'dine_west',
+        west_1: {
+          wallId: 'west',
           ratio: '3:2',
           area: 30_000,
           position: [-5.78, 3.1325, 3.1494],
           rotation: Math.PI / 2,
         },
-        dine_west_2: {
-          wallId: 'dine_west',
+        west_2: {
+          wallId: 'west',
           ratio: '3:2',
           area: 30_000,
           position: [-5.78, 3.1325, -1.0919],

@@ -48,43 +48,43 @@ export default class Lodge extends Room {
       },
       volumetricSun: 0,
       slots: {
-        lodge_north_0: {
-          wallId: 'lodge_north',
+        north_0: {
+          wallId: 'north',
           ratio: '3:2',
           area: 30_000,
           position: [-3, 2, -4.78],
           rotation: 0,
         },
-        lodge_north_1: {
-          wallId: 'lodge_north',
+        north_1: {
+          wallId: 'north',
           ratio: '3:2',
           area: 30_000,
           position: [0, 2, -4.78],
           rotation: 0,
         },
-        lodge_north_2: {
-          wallId: 'lodge_north',
+        north_2: {
+          wallId: 'north',
           ratio: '3:2',
           area: 30_000,
           position: [3, 2, -4.78],
           rotation: 0,
         },
-        lodge_south_0: {
-          wallId: 'lodge_south',
+        south_0: {
+          wallId: 'south',
           ratio: '1:1',
           area: 15_000,
           position: [3.5, 2, 4.78],
           rotation: Math.PI,
         },
-        lodge_south_1: {
-          wallId: 'lodge_south',
+        south_1: {
+          wallId: 'south',
           ratio: '1:1',
           area: 15_000,
           position: [-3.5, 2, 4.78],
           rotation: Math.PI,
         },
-        lodge_east_0: {
-          wallId: 'lodge_east',
+        east_0: {
+          wallId: 'east',
           ratio: '1:1',
           area: 15_000,
           position: [4.78, 2, 1.5],

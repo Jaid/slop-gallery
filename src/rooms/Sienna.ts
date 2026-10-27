@@ -30,43 +30,43 @@ export default class Sienna extends Room {
         },
       },
       slots: {
-        sienna_north_0: {
-          wallId: 'sienna_north',
+        north_0: {
+          wallId: 'north',
           ratio: '1:1',
           area: 15_000,
           position: [-1, 3.15, -5.78],
           rotation: 0,
         },
-        sienna_east_0: {
-          wallId: 'sienna_east',
+        east_0: {
+          wallId: 'east',
           ratio: '1:1',
           area: 15_000,
           position: [5.78, 3.15, -3],
           rotation: -Math.PI / 2,
         },
-        sienna_east_1: {
-          wallId: 'sienna_east',
+        east_1: {
+          wallId: 'east',
           ratio: '1:1',
           area: 15_000,
           position: [5.78, 3.15, 3],
           rotation: -Math.PI / 2,
         },
-        sienna_south_0: {
-          wallId: 'sienna_south',
+        south_0: {
+          wallId: 'south',
           ratio: '1:1',
           area: 15_000,
           position: [3, 3.15, 5.78],
           rotation: Math.PI,
         },
-        sienna_south_1: {
-          wallId: 'sienna_south',
+        south_1: {
+          wallId: 'south',
           ratio: '1:1',
           area: 15_000,
           position: [-3, 3.15, 5.78],
           rotation: Math.PI,
         },
-        sienna_west_0: {
-          wallId: 'sienna_west',
+        west_0: {
+          wallId: 'west',
           ratio: '1:1',
           area: 15_000,
           position: [-5.78, 3.15, 3],

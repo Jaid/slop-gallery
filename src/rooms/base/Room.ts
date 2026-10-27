@@ -51,16 +51,17 @@ export type RoomPortraitSlot = {
   ratio: PortraitRatio
   /** turn around y in radians, the same as its wall’s */
   rotation: number
+  /** the wall’s id within the room, in snake_case */
   wallId: string
 }
 /** a light fixed in a room */
 export type Lamp = PointLamp | SpotLamp
 export type RoomOptions = {
-  /** the room’s ambient sounds by id */
+  /** the room’s ambient sounds by their id within the room, in snake_case */
   ambience?: Record<string, RoomAmbience>
-  /** the lamps by id, positioned relative to the room’s {@link Room.origin} */
+  /** the lamps by their id within the room, in snake_case, positioned relative to the room’s {@link Room.origin} */
   lamps?: Record<string, Lamp>
-  /** the portrait slots by id, which stays stable so edited slots find their originals */
+  /** the portrait slots by their id within the room, in snake_case, which stays stable so edited slots find their originals */
   slots?: Record<string, RoomPortraitSlot>
   title: string
   /** how strongly the air holds sun shafts while the player is inside, 1 at full strength; 0 turns volumetric sunlight off */
@@ -97,6 +98,7 @@ export default abstract class Room {
   abstract readonly description: string
   /** the room’s air as one axis-aligned box or several relative to {@link origin}, from its floor (or the bottom of a sunken one) to its clear height */
   abstract readonly fence: Arrayable<Box3>
+  /** in snake_case, also the prefix of the global ids of everything in the room */
   abstract readonly id: string
   readonly lamps: ReadonlyMap<string, Lamp>
   /** the point in world meters every other position of the room is relative to, usually the middle of its floor */
@@ -154,6 +156,11 @@ export default abstract class Room {
     return this.ambience.values().map(({emitter: Emitter, position}) => new Emitter(this.toWorld(position))).toArray()
   }
 
+  /** The gallery-wide id of a lamp, ambient sound, wall or slot of the room: the room’s id and the id within the room, joined by a hyphen. */
+  globalId(id: string) {
+    return `${this.id}-${id}`
+  }
+
   /** The position relative to the room’s {@link origin} of a point given in world meters. */
   toLocal([x, y, z]: Vec3): Vec3 {
     return [x - this.origin[0], y - this.origin[1], z - this.origin[2]]
@@ -164,23 +171,24 @@ export default abstract class Room {
     return [this.origin[0] + x, this.origin[1] + y, this.origin[2] + z]
   }
 
-  /** Every lamp with its position, and a spot’s target, in world meters. */
+  /** Every lamp with its global id and its position, and a spot’s target, in world meters. */
   *worldLamps() {
     for (const [id, lamp] of this.lamps) {
       yield {
         ...lamp,
-        id,
+        id: this.globalId(id),
         position: this.toWorld(lamp.position),
         ...lamp.kind === 'spot' ? {target: this.toWorld(lamp.target)} : {},
       } as Lamp & {id: string}
     }
   }
 
-  /** The portrait slots in world meters, as the placement code takes them. */
+  /** The portrait slots with global ids in world meters, as the placement code takes them. */
   worldSlots(): Array<PortraitSlot> {
-    return this.slots.entries().map(([id, {area, position, priority = 0, labelAbove, ...slot}]) => ({
-      id,
+    return this.slots.entries().map(([id, {area, position, priority = 0, labelAbove, wallId, ...slot}]) => ({
+      id: this.globalId(id),
       ...slot,
+      wallId: this.globalId(wallId),
       priority,
       ...slotFrame(slot.ratio, area),
       position: this.toWorld(position),
