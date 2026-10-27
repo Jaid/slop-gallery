@@ -13,6 +13,7 @@ import {cinematicMaxTextureSize, readCinematicGraphics} from './graphicsMode.ts'
 
 type Culler = (camera: Camera) => void
 type RenderObject = {
+  camera: Camera
   material: {
     name: string
     type: string
@@ -112,6 +113,10 @@ export const updateChangedMatrices = (object: Object3D, parentChanged: boolean) 
 const warmupBuildBudget = 50
 // Milliseconds a streaming frame may spend building the node graphs of objects drawn for the first time in a pass. Building happens synchronously, from a few milliseconds per object to over a hundred for the heaviest; a frame always admits at least one.
 const streamedBuildBudget = 4
+/** the least a build is expected to cost, in milliseconds, so a frame never admits more than a budget’s worth of objects whose materials are built already */
+const minimumBuildCost = 0.1
+/** the build cost a camera’s passes are expected to have for a material they haven’t built yet, in milliseconds, until they built one */
+const initialFreshBuildCost = 30
 /** milliseconds after which a pipeline that compiled in the background is logged as slow */
 const slowPipelineMs = 500
 /** frames in a row without anything left to stream after which streaming stops */
@@ -140,14 +145,16 @@ export class GalleryRenderer extends WebgpuRenderer {
     /** objects admitted outside the camera frustum */
     objects: 0,
   }
-  /** the recent average of milliseconds spent building per object warming or streaming admitted */
-  private buildCost = 10
   /** milliseconds this frame spent building node graphs */
   private buildTime = 0
+  /** the materials each camera’s passes built node graphs for already */
+  private readonly builtMaterials = new WeakMap<Camera, WeakSet<object>>
   private culledCamera: Camera | null = null
   private culler: Culler | null = null
   private frame = -1
   private frameScene: Scene | null = null
+  /** per camera, the recent average of milliseconds spent building an object whose material its passes haven’t built yet; that varies by pass, since three may reuse what another pass built, as for most shadow maps, or build it again for the pass, as for the floor reflection */
+  private readonly freshBuildCosts = new WeakMap<Camera, number>
   /** shadow cameras that left out objects not built yet this frame */
   private gatedCameras = new Set<Camera>
   /** objects that streaming left out this frame although they will get their turn */
@@ -155,12 +162,18 @@ export class GalleryRenderer extends WebgpuRenderer {
   /** shadow cameras that left out objects not built yet last frame, so their maps must render again */
   private incompleteCameras = new Set<Camera>
   private initialization?: Promise<this>
+  /** what building each material took the last time a pass other than a shadow map built it from scratch, in milliseconds; a heavy material is heavy in every such pass */
+  private readonly materialBuildCosts = new WeakMap<object, number>
   private pending = 0
+  /** the build cost this frame’s admissions are expected to add up to */
+  private plannedBuildCost = 0
   /** projects objects outside of loading, leaving out {@link hidden} outside of {@link unculledCameras} and, outside of shadow maps, {@link hiddenFromView} */
   private projectCulled?: ProjectObject
   private projectStreaming?: ProjectObject
   /** projects objects while loading, admitting the next ones outside the frustum */
   private projectWarming?: ProjectObject
+  /** the recent average of milliseconds spent building an object whose material a camera’s passes built already, which three mostly takes from its caches */
+  private sharedBuildCost = 1
   private streamFound = false
   private streamIdle = 0
   private streaming: StreamingMode | null = null
@@ -311,6 +324,33 @@ export class GalleryRenderer extends WebgpuRenderer {
     return this.incompleteCameras.has(camera)
   }
 
+  /**
+   * Admits an object to be built this frame, unless its expected cost would exceed the frame’s budget; a frame always admits at least one.
+   * Objects are admitted while projecting, before any of them is built, so the cost is a guess: an object whose material the camera’s passes haven’t built yet costs what that material took in another pass, or else about as much as the last such ones did in its passes, while one that shares a built material is cheap. A single average would let a run of cheap objects lower it until a frame admits dozens of expensive ones at once.
+   */
+  private admit(object: Object3D, camera: Camera, budget: number) {
+    const built = this.builtMaterials.get(camera)
+    const materials = (object as Object3D & {material?: Array<object> | object}).material
+    const fresh = this.freshBuildCosts.get(camera) ?? initialFreshBuildCost
+    // Shadow maps draw with materials of their own, so what the object’s material cost elsewhere tells nothing about them.
+    const known = this.shadowCameras.has(camera) ? null : this.materialBuildCosts
+    let cost = 0
+    const list: ReadonlyArray<object | undefined> = Array.isArray(materials) ? materials : [materials]
+    for (const material of list) {
+      if (material && built?.has(material)) {
+        cost += this.sharedBuildCost
+      } else {
+        cost += (material && known?.get(material)) ?? fresh
+      }
+    }
+    if (this.warmupAdmissions > 0 && (this.buildTime >= budget || this.plannedBuildCost + cost > budget)) {
+      return false
+    }
+    this.warmupAdmissions++
+    this.plannedBuildCost += cost
+    return true
+  }
+
   /** Carries what the last streaming frame found over to the next one. */
   private advanceStreaming() {
     // Everything else waits while prioritized objects are left.
@@ -344,7 +384,22 @@ export class GalleryRenderer extends WebgpuRenderer {
       try {
         return buildNodes(renderObject)
       } finally {
-        this.buildTime += performance.now() - start
+        const ms = performance.now() - start
+        this.buildTime += ms
+        let built = this.builtMaterials.get(renderObject.camera)
+        if (!built) {
+          built = new WeakSet
+          this.builtMaterials.set(renderObject.camera, built)
+        }
+        if (built.has(renderObject.material)) {
+          this.sharedBuildCost = Math.max(minimumBuildCost, this.sharedBuildCost * 0.7 + ms * 0.3)
+        } else {
+          built.add(renderObject.material)
+          if (!this.shadowCameras.has(renderObject.camera)) {
+            this.materialBuildCosts.set(renderObject.material, ms)
+          }
+          this.freshBuildCosts.set(renderObject.camera, Math.max(minimumBuildCost, (this.freshBuildCosts.get(renderObject.camera) ?? initialFreshBuildCost) * 0.7 + ms * 0.3))
+        }
       }
     }
     let compiling: RenderObject | null = null
@@ -397,13 +452,12 @@ export class GalleryRenderer extends WebgpuRenderer {
       }
       let cameras = this.warmObjects.get(object)
       if (!cameras) {
-        if (this.warmupAdmissions > 0 && (this.buildTime >= warmupBuildBudget || (this.warmupAdmissions + 1) * this.buildCost > warmupBuildBudget)) {
+        if (!this.admit(object, camera, warmupBuildBudget)) {
           // Postpone the rest of the scene to the next frames.
           this.warmedFrame = -1
           projectObject.call(this, object, camera, groupOrder, renderList, clippingContext)
           return
         }
-        this.warmupAdmissions++
         cameras = new Set
         this.warmObjects.set(object, cameras)
       }
@@ -435,7 +489,7 @@ export class GalleryRenderer extends WebgpuRenderer {
       const priority = this.streamPriority?.(object) ?? true
       this.streamPriorityFound ||= priority
       this.streamFound ||= priority || this.streaming === 'all'
-      if (!(priority || this.streamRest) || this.warmupAdmissions > 0 && (this.buildTime >= streamedBuildBudget || (this.warmupAdmissions + 1) * this.buildCost > streamedBuildBudget)) {
+      if (!(priority || this.streamRest) || !this.admit(object, camera, streamedBuildBudget)) {
         // Left out until its turn; its children still go their own way.
         // Only objects that will get their turn keep the shadow map rendering.
         if (priority || this.streaming === 'all') {
@@ -449,7 +503,6 @@ export class GalleryRenderer extends WebgpuRenderer {
         }
         return
       }
-      this.warmupAdmissions++
       if (cameras) {
         cameras.add(camera)
       } else {
@@ -494,9 +547,6 @@ export class GalleryRenderer extends WebgpuRenderer {
     this.frame = frameId
     this.culledCamera = null
     this.warmedFrame = this.warming && this.warmupAdmissions === 0 ? frameId : -1
-    if (this.warmupAdmissions > 0) {
-      this.buildCost = this.buildCost * 0.7 + this.buildTime / this.warmupAdmissions * 0.3
-    }
     if (this.warming) {
       this.warmup.frames++
       this.warmup.objects += this.warmupAdmissions
@@ -506,6 +556,7 @@ export class GalleryRenderer extends WebgpuRenderer {
       this.advanceStreaming()
     }
     this.warmupAdmissions = 0
+    this.plannedBuildCost = 0
     this.buildTime = 0
     updateChangedMatrices(this.frameScene!, false)
   }

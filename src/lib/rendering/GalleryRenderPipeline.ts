@@ -113,7 +113,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
     const flood = own(new WireframeFloodPass(renderer, scene as Scene, camera))
     scenePass.updateBefore = frame => {
       const reflect = () => {
-        // Its materials share their shaders with the scene pass, so the loading screen’s warmup skips it instead of paying for it every frame.
+        // Its pipelines are mostly the scene pass’s, so the loading screen’s warmup skips it; streaming builds what it draws over the frames after loading.
         if (!mirrorReflections || renderer instanceof GalleryRenderer && renderer.isWarming) {
           return
         }
