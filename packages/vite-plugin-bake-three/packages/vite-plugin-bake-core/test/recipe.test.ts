@@ -60,6 +60,24 @@ test('evaluates locally mutable algorithms and strips TypeScript', async () => {
   `)
   expect((roundTrip(evaluated)() as Resource).data).toEqual([8, 9, 10, 11])
 })
+test('binds parameter properties and ignores local type aliases', async () => {
+  const result = await evaluate(`
+    class Flight {
+      readonly steps: number
+      constructor(readonly id: string, readonly rise: number, count = 2) {
+        this.steps = rise * count
+      }
+    }
+    function build(): Resource {
+      type Step = {height: number}
+      const flight = new Flight('north', 3)
+      const steps: Array<Step> = [{height: flight.steps}]
+      return new Resource([flight.id, ...steps.map((step): Step['height'] => step.height)])
+    }
+    const result = build()
+  `)
+  expect((roundTrip(result)() as Resource).data).toEqual(['north', 6])
+})
 test('follows aliased imports and re-exports without executing the application module', async () => {
   await fs.writeFile(join(directory, 'source.ts'), `
     import {Resource} from 'test:resources'

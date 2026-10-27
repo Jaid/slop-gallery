@@ -40,7 +40,7 @@ class Sculpture {
 }
 ```
 
-The evaluator runs actual approved Three constructors and helpers, including transformations, normals, tangents, curves, extrusion, merging and supported CSG operations. `three-bvh-csg` is an optional peer and is loaded only when a recipe imports it.
+The evaluator runs actual approved Three constructors and helpers, including transformations, normals, tangents, curves, extrusion, shape triangulation (`ShapeUtils`), merging and supported CSG operations. `three-bvh-csg` is an optional peer and is loaded only when a recipe imports it.
 
 ## Snapshot semantics
 

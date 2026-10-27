@@ -41,6 +41,17 @@ export function describeExpression(node: t.Node) {
 function isType(path: NodePath) {
   return Boolean(path.findParent(parent => parent.isTSType() || parent.isTSTypeAnnotation() || parent.isTSInterfaceDeclaration()))
 }
+/** Babel scopes don’t bind parameter properties and take type alias names for references, so references are collected from plain JavaScript. */
+function eraseTypes(file: t.File) {
+  return transformFromAstSync(file, '', {
+    filename: 'recipe.ts',
+    babelrc: false,
+    configFile: false,
+    plugins: [[transformTypescript, {allowDeclareFields: true}]],
+    ast: true,
+    code: false,
+  })!.ast!
+}
 /** Reject capabilities that cannot be made invariant. This is an optimizer, not an untrusted-code sandbox. */
 function validate(path: NodePath, allowFreezingRandomness: boolean) {
   if (isType(path)) {
@@ -247,7 +258,7 @@ export default class Recipe {
 
   private async rewrite(node: t.Expression, original: NodePath, source: SourceModule): Promise<t.Expression> {
     this.dependencies.add(source.id)
-    const ast = t.file(t.program([t.expressionStatement(node)]))
+    const ast = eraseTypes(t.file(t.program([t.expressionStatement(node)])))
     const references: Array<NodePath<t.Identifier>> = []
     traverse(ast, {
       enter: path => validate(path, this.allowFreezingRandomness),

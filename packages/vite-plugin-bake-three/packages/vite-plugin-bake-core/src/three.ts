@@ -78,7 +78,7 @@ export function threeAdapter(options: {
   readCanvas?: (value: object) => CanvasPixels | undefined
   roots?: ReadonlyArray<unknown>
 }): BakeAdapter {
-  const available = [...geometryNames, ...textureNames, ...mathNames, ...attributeNames, ...constants, 'MeshBasicNodeMaterial']
+  const available = [...geometryNames, ...textureNames, ...mathNames, ...attributeNames, ...constants, 'MeshBasicNodeMaterial', 'ShapeUtils']
   const native = Object.fromEntries(available.filter(name => name in values).map(name => [name, values[name]]))
   const roots = new Set([...geometryNames, ...textureNames].map(name => values[name]).filter(Boolean))
   for (const root of options.roots ?? []) {
