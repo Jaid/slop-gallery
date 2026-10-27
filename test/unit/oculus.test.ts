@@ -7,7 +7,6 @@ import EgoMotor from 'ego-player/motor'
 import {Children, isValidElement} from 'react'
 import {BoxGeometry, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
-import renderOculusRoom from '../../src/components/levels/gallery/OculusRoom/index.tsx'
 import {colliderGeometry, createArchitectureGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
 import {floorThickness, roomFloorPlan} from '../../src/lib/gallery/floors.ts'
 import lobby from '../../src/lib/gallery/lobby.ts'
@@ -15,6 +14,7 @@ import lowerGallery, {oculusCeiling, oculusPlatform, tunnelFloorHeight, tunnelSl
 import SlopedBoxGeometry from '../../src/lib/gallery/SlopedBoxGeometry.ts'
 import StairFlight from '../../src/lib/gallery/stairs/StairFlight.ts'
 import walls, {floorHeight, insideGallery, roomAt, rooms} from '../../src/lib/gallery/walls.ts'
+import renderOculusRoom from '../../src/rooms/oculus/components/OculusRoom.tsx'
 
 await RAPIER.init()
 const {oculus, tunnel, moonfall} = lowerGallery

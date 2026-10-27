@@ -12,7 +12,7 @@ import VelvetRopeMaterial from '../../src/lib/materials/VelvetRopeMaterial.ts'
 
 const sharedGoldUsers = [
   'src/components/levels/gallery/MoonfallCrater/index.tsx',
-  'src/components/levels/gallery/SalonRoom/index.tsx',
+  'src/rooms/salon/components/SalonRoom.tsx',
   'src/components/levels/gallery/WallDecorations/index.tsx',
   'src/components/levels/gallery/Props/index.tsx',
 ]

@@ -7,11 +7,11 @@ import {Children, isValidElement} from 'react'
 import {Euler, Matrix4, Vector3} from 'three/webgpu'
 
 import LodgeFire from '../../src/components/levels/gallery/LodgeFire/index.tsx'
-import renderLodgeRoom from '../../src/components/levels/gallery/LodgeRoom/index.tsx'
 import fire, {fireWorldOrigin} from '../../src/lib/gallery/fireplace/config.ts'
 import lodge from '../../src/lib/gallery/lodge.ts'
 import lodgeInterior from '../../src/lib/gallery/lodgeInterior/layout.ts'
 import LodgeMaterials from '../../src/lib/materials/LodgeMaterials.ts'
+import renderLodgeRoom from '../../src/rooms/lodge/components/LodgeRoom.tsx'
 
 type Props = {
   children?: ReactNode
