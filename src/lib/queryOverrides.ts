@@ -17,6 +17,7 @@ import {readGraphicsModeName} from './rendering/graphicsMode.ts'
 import {readEditLights, readShowLights} from './rendering/lightLevels.ts'
 import {readNear} from './rendering/near.ts'
 import {readPmrem} from './rendering/pmrem.ts'
+import {readRoomCulling} from './rendering/roomCulling.ts'
 import {readScale} from './rendering/scale.ts'
 import {readShowWireframe} from './rendering/showWireframe.ts'
 import {readWireframeHighlight} from './rendering/wireframeHighlight.ts'
@@ -47,6 +48,7 @@ const readers: Record<string, Reader> = {
   near: readNear,
   pmrem: readPmrem,
   portrait_set: readPortraitSet,
+  room_culling: readRoomCulling,
   scale: readScale,
   seed: readSeedOverride,
   show_ambience_emitters: readShowAmbienceEmitters,

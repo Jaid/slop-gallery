@@ -4,14 +4,17 @@ import type {BufferGeometry, Camera, DirectionalLight, Light, LightShadow, Objec
 
 import {useThree} from '@react-three/fiber'
 import {useEffect} from 'react'
-import {Box3, Matrix4, Vector3} from 'three/webgpu'
+import {Box3, Frustum, Matrix4, Vector3} from 'three/webgpu'
 
+import relations from '#src/components/World/relations.ts'
 import {useGallery} from '#src/lib/gallery.ts'
 import {roomBoxes, roomContaining, roomsAt, roomsOverlapping, screenRect, visibleRegions} from '#src/lib/gallery/roomVisibility.ts'
 import {getFloorReflectionHeight} from '#src/lib/materials/FloorMaterial.ts'
 import {GalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
 import {lightActive} from '#src/lib/rendering/lightLevels.ts'
+import {readRoomCulling} from '#src/lib/rendering/roomCulling.ts'
 import ShadowCache from '#src/lib/rendering/ShadowCache.ts'
+import {rooms as galleryRooms} from '#src/rooms/index.ts'
 
 type Drawable = Object3D & {
   boundingBox?: Box3 | null
@@ -25,6 +28,11 @@ type Placement = {
   world: Box3
 }
 
+const cullingMode = readRoomCulling()
+const fullScreen: ScreenRect = [-1, -1, 1, 1]
+const frustum = new Frustum
+/** every room’s fence in world meters, computed once */
+const fences = new Map<RoomId, ReadonlyArray<Box3>>(galleryRooms.map(room => [room.id, room.worldFence]))
 const viewProjection = new Matrix4
 const position = new Vector3
 const mirrored = new Box3
@@ -72,7 +80,19 @@ const mirror = (box: Box3, floorY: number) => {
   mirrored.max.y = 2 * floorY - box.min.y
   return mirrored
 }
-
+/** With `?room_culling=relations`: every room the camera’s rooms list in `relations.ts` whose fence, or its reflection in the floor, meets the view, seen across the whole screen. */
+const relatedRegions = (from: ReadonlyArray<RoomId>, floorY: number) => {
+  frustum.setFromProjectionMatrix(viewProjection)
+  const regions = new Map<RoomId, Array<ScreenRect>>(from.map(room => [room, [fullScreen]]))
+  for (const room of from) {
+    for (const related of relations[room].rooms) {
+      if (!regions.has(related) && fences.get(related)!.some(box => frustum.intersectsBox(box) || frustum.intersectsBox(mirror(box, floorY)))) {
+        regions.set(related, [fullScreen])
+      }
+    }
+  }
+  return regions
+}
 /**
  * Leaves out what the camera can’t see from the rooms it is in. An object belongs to every room its bounds reach into, and a room behind an opening only shows through the part of the screen the opening covers, up to two openings deep.
  * Rooms out of sight drop out of every pass of the frame: the camera, its reflection and the lamps’ shadow maps. Objects in a room in sight that miss its openings on screen only drop out of the camera and its reflection, so the shadows they cast stay.
@@ -95,9 +115,10 @@ export default function RoomCulling() {
       hiddenFromView.clear()
       camera.updateWorldMatrix(true, false)
       const from = roomsAt(camera.getWorldPosition(position).toArray())
-      const regions = from.length ? visibleRegions(from, viewProjection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)) : undefined
+      viewProjection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
       // The floor reflection shows the rooms behind openings mirrored by the floors it mirrors, by default those of the room the camera is in.
       const floorY = getFloorReflectionHeight() ?? roomBoxes.find(({id}) => id === from[0])?.floorY ?? 0
+      const regions = from.length ? (cullingMode === 'relations' ? relatedRegions(from, floorY) : visibleRegions(from, viewProjection)) : undefined
       const inSight = (rects: ReadonlyArray<ScreenRect>, box: Box3) => {
         const rect = screenRect(box, viewProjection)
         return rect !== undefined && rects.some(([left, bottom, right, top]) => rect[0] <= right && rect[2] >= left && rect[1] <= top && rect[3] >= bottom)
