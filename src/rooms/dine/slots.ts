@@ -1,0 +1,81 @@
+import type {RoomPortraitSlot} from '../base/Room.ts'
+
+export default {
+  north_0: {
+    wallId: 'north',
+    ratio: '2:3',
+    area: 30_000,
+    position: [-3.7125, 3.1325, -11.78],
+    rotation: 0,
+  },
+  north_1: {
+    wallId: 'north',
+    ratio: '2:3',
+    area: 30_000,
+    position: [3.7125, 3.1325, -11.78],
+    rotation: 0,
+  },
+  east_0: {
+    wallId: 'east',
+    ratio: '3:2',
+    area: 30_000,
+    position: [5.78, 3.1325, -9.356],
+    rotation: -Math.PI / 2,
+  },
+  east_1: {
+    wallId: 'east',
+    ratio: '3:2',
+    area: 30_000,
+    position: [5.78, 3.1325, -4.678],
+    rotation: -Math.PI / 2,
+  },
+  east_2: {
+    wallId: 'east',
+    ratio: '3:2',
+    area: 30_000,
+    position: [5.78, 3.1325, 0],
+    rotation: -Math.PI / 2,
+  },
+  south_0: {
+    wallId: 'south',
+    ratio: '3:2',
+    area: 30_000,
+    position: [3.7967, 3.1325, 11.78],
+    rotation: Math.PI,
+  },
+  south_1: {
+    wallId: 'south',
+    ratio: '3:2',
+    area: 30_000,
+    position: [0, 3.1325, 11.78],
+    rotation: Math.PI,
+  },
+  south_2: {
+    wallId: 'south',
+    ratio: '3:2',
+    area: 30_000,
+    position: [-3.7967, 3.1325, 11.78],
+    rotation: Math.PI,
+  },
+  west_0: {
+    wallId: 'west',
+    ratio: '2:3',
+    area: 30_000,
+    position: [-5.78, 3.1325, 10.2125],
+    rotation: Math.PI / 2,
+  },
+  west_1: {
+    wallId: 'west',
+    ratio: '3:2',
+    area: 30_000,
+    position: [-5.78, 3.1325, 3.1494],
+    rotation: Math.PI / 2,
+  },
+  west_2: {
+    wallId: 'west',
+    ratio: '3:2',
+    area: 30_000,
+    position: [-5.78, 3.1325, -1.0919],
+    rotation: Math.PI / 2,
+  },
+} satisfies Record<string, RoomPortraitSlot>

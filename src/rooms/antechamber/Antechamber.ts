@@ -1,12 +1,13 @@
-import type {RoomSpawn} from './base/Room.ts'
+import type {RoomSpawn} from '../base/Room.ts'
 
 import {antechamberDomeCrownY} from '#src/lib/gallery/antechamberDome.ts'
 import staircase from '#src/lib/gallery/staircase.ts'
 
-import Room from './base/Room.ts'
-import eyeHeight from './lib/eyeHeight.ts'
-import floorBox from './lib/floorBox.ts'
-import floorOrigin from './lib/floorOrigin.ts'
+import Room from '../base/Room.ts'
+import eyeHeight from '../lib/eyeHeight.ts'
+import floorBox from '../lib/floorBox.ts'
+import floorOrigin from '../lib/floorOrigin.ts'
+import slots from './slots.ts'
 
 const plan = {
   center: [0, staircase.z],
@@ -29,22 +30,7 @@ export default class Antechamber extends Room {
   constructor() {
     super({
       title: 'The Antechamber',
-      slots: {
-        south_0: {
-          wallId: 'south',
-          ratio: '1:1',
-          area: 100_000,
-          position: [0, 3, 3.78],
-          rotation: Math.PI,
-        },
-        west_0: {
-          wallId: 'west',
-          ratio: '1:1',
-          area: 100_000,
-          position: [-3.78, 3, 0],
-          rotation: Math.PI / 2,
-        },
-      },
+      slots,
     })
   }
 }

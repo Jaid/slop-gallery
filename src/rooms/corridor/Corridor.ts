@@ -1,13 +1,14 @@
-import type {RoomSpawn} from './base/Room.ts'
+import type {RoomSpawn} from '../base/Room.ts'
 import type {Vec3} from 'math'
 
 import corridor, {corridorHallEastX, corridorStairs, insideCorridor} from '#src/lib/gallery/corridor.ts'
 import lodge from '#src/lib/gallery/lodge.ts'
 import {stairHeadroom} from '#src/lib/gallery/stairs/StairFlight.ts'
 
-import Room from './base/Room.ts'
-import eyeHeight from './lib/eyeHeight.ts'
-import floorBox from './lib/floorBox.ts'
+import Room from '../base/Room.ts'
+import eyeHeight from '../lib/eyeHeight.ts'
+import floorBox from '../lib/floorBox.ts'
+import lamps from './lamps.ts'
 
 const hallWestX = lodge.approachX - lodge.timberWidth / 2
 const hallNorthZ = lodge.returnZ - lodge.timberWidth / 2
@@ -16,9 +17,6 @@ const stairXs = corridorStairs.blocks.flatMap(block => [block.position[0] - bloc
 const stairWestX = Math.min(...stairXs)
 const stairEastX = Math.max(...stairXs)
 const [originX, originZ] = corridor.center
-const lantern = {
-  tint: '#ffb363',
-} as const
 
 export default class Corridor extends Room {
   override readonly description = 'Timber, turns and the long way back to Sienna.'
@@ -37,28 +35,7 @@ export default class Corridor extends Room {
   constructor() {
     super({
       title: 'Corridor',
-      // Three lanterns at both ends and in the middle; the middle one reaches farthest.
-      lamps: {
-        lantern_north: {
-          ...lantern,
-          position: [2.08, 2.5, -24],
-          strength: 14,
-          range: 8,
-        },
-        lantern_middle: {
-          ...lantern,
-          position: [0, 2.4, 0],
-          strength: 5.6,
-          range: 20,
-          decay: 1,
-        },
-        lantern_south: {
-          ...lantern,
-          position: [2.08, 2.4, 24],
-          strength: 22.4,
-          range: 6,
-        },
-      },
+      lamps,
       volumetricSun: 0,
     })
   }

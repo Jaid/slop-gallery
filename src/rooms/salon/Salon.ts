@@ -1,9 +1,9 @@
 import salon from '#src/lib/gallery/salon.ts'
 
-import Room from './base/Room.ts'
-import floorBox from './lib/floorBox.ts'
-import floorOrigin from './lib/floorOrigin.ts'
-import southSpawn from './lib/southSpawn.ts'
+import Room from '../base/Room.ts'
+import floorBox from '../lib/floorBox.ts'
+import floorOrigin from '../lib/floorOrigin.ts'
+import southSpawn from '../lib/southSpawn.ts'
 
 /** Lit through its skylight, without lamps of its own. */
 export default class Salon extends Room {
