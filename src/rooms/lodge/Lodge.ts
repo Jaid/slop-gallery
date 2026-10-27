@@ -6,8 +6,10 @@ import floorBox from '../lib/floorBox.ts'
 import floorOrigin from '../lib/floorOrigin.ts'
 import southSpawn from '../lib/southSpawn.ts'
 import ambienceEmitters from './ambienceEmitters.ts'
+import cameras from './cameras.ts'
 import lamps from './lamps.ts'
 import slots from './slots.ts'
+import spawns from './spawns.ts'
 
 export default class Lodge extends Room {
   override readonly description = 'Weathered stone. Warm timber. A way back through the corridor.'
@@ -23,6 +25,8 @@ export default class Lodge extends Room {
   constructor() {
     super({
       title: 'Lodge',
+      cameras,
+      spawns,
       ambience: ambienceEmitters,
       lamps,
       volumetricSun: 0,

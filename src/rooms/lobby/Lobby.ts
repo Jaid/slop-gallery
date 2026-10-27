@@ -6,8 +6,10 @@ import floorBox from '../lib/floorBox.ts'
 import floorOrigin from '../lib/floorOrigin.ts'
 import southSpawn from '../lib/southSpawn.ts'
 import ambienceEmitters from './ambienceEmitters.ts'
+import cameras from './cameras.ts'
 import lamps from './lamps.ts'
 import slots from './slots.ts'
+import spawns from './spawns.ts'
 
 const plan = {
   center: [0, (lobby.northZ + lobby.southZ) / 2],
@@ -25,6 +27,8 @@ export default class Lobby extends Room {
   constructor() {
     super({
       title: 'Lobby',
+      cameras,
+      spawns,
       ambience: ambienceEmitters,
       lamps,
       slots,

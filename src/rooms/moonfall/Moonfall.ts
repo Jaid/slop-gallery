@@ -6,7 +6,9 @@ import floorBox from '../lib/floorBox.ts'
 import floorOrigin from '../lib/floorOrigin.ts'
 import southSpawn from '../lib/southSpawn.ts'
 import ambienceEmitters from './ambienceEmitters.ts'
+import cameras from './cameras.ts'
 import lamps from './lamps.ts'
+import spawns from './spawns.ts'
 
 const {floorY, moonfall: plan} = lowerGallery
 const bottom = craterTerrain.lowest()
@@ -22,6 +24,8 @@ export default class Moonfall extends Room {
   constructor() {
     super({
       title: 'Moonfall',
+      cameras,
+      spawns,
       ambience: ambienceEmitters,
       lamps,
       // The room lies under its own ceiling, so the sun never lights its air.

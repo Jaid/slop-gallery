@@ -2,8 +2,10 @@ import Room from '../base/Room.ts'
 import floorBox from '../lib/floorBox.ts'
 import floorOrigin from '../lib/floorOrigin.ts'
 import southSpawn from '../lib/southSpawn.ts'
+import cameras from './cameras.ts'
 import lamps from './lamps.ts'
 import slots from './slots.ts'
+import spawns from './spawns.ts'
 
 const plan = {
   center: [-14, 0],
@@ -20,6 +22,8 @@ export default class Vesper extends Room {
   constructor() {
     super({
       title: 'The Vesper',
+      cameras,
+      spawns,
       lamps,
       slots,
     })

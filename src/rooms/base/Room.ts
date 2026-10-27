@@ -1,5 +1,5 @@
 import type AmbienceEmitter from '#src/lib/audio/ambience/base/AmbienceEmitter.ts'
-import type {PortraitRatio, PortraitSlot} from '#src/lib/gallery/types.ts'
+import type {CameraBookmark, PortraitRatio, PortraitSlot, SpawnBookmark} from '#src/lib/gallery/types.ts'
 import type {Quat, Vec3} from 'math'
 
 import {Box3, Vector3} from 'three/webgpu'
@@ -14,6 +14,10 @@ export type RoomAmbience = {
   /** where the sound comes from, relative to the room’s {@link Room.origin} */
   position: Vec3
 }
+/** a named camera view in the room, positioned relative to the room’s {@link Room.origin} */
+export type RoomCamera = Omit<CameraBookmark, 'id'>
+/** a named player pose in the room to teleport to, positioned relative to the room’s {@link Room.origin} */
+export type RoomSpawnBookmark = Omit<SpawnBookmark, 'id'>
 /** a rectangle on the floor plan, centered on its x and z */
 export type FloorRectangle = {
   center: readonly [x: number, z: number]
@@ -59,10 +63,14 @@ export type Lamp = PointLamp | SpotLamp
 export type RoomOptions = {
   /** the room’s ambient sounds by their id within the room, in snake_case */
   ambience?: Record<string, RoomAmbience>
+  /** the camera bookmarks by their id within the room, in snake_case */
+  cameras?: Record<string, RoomCamera>
   /** the lamps by their id within the room, in snake_case, positioned relative to the room’s {@link Room.origin} */
   lamps?: Record<string, Lamp>
   /** the portrait slots by their id within the room, in snake_case, which stays stable so edited slots find their originals */
   slots?: Record<string, RoomPortraitSlot>
+  /** the spawn bookmarks by their id within the room, in snake_case */
+  spawns?: Record<string, RoomSpawnBookmark>
   title: string
   /** how strongly the air holds sun shafts while the player is inside, 1 at full strength; 0 turns volumetric sunlight off */
   volumetricSun?: number
@@ -94,6 +102,7 @@ const point = new Vector3
  */
 export default abstract class Room {
   readonly ambience: ReadonlyMap<string, RoomAmbience>
+  readonly cameras: ReadonlyMap<string, RoomCamera>
   /** a sentence shown below the title */
   abstract readonly description: string
   /** the room’s air as one axis-aligned box or several relative to {@link origin}, from its floor (or the bottom of a sunken one) to its clear height */
@@ -105,14 +114,17 @@ export default abstract class Room {
   abstract readonly origin: Vec3
   readonly slots: ReadonlyMap<string, RoomPortraitSlot>
   abstract readonly spawn: RoomSpawn
+  readonly spawns: ReadonlyMap<string, RoomSpawnBookmark>
   readonly title: string
   readonly volumetricSun: number
 
-  constructor({title, lamps = {}, ambience = {}, slots = {}, volumetricSun = 1}: RoomOptions) {
+  constructor({title, lamps = {}, ambience = {}, cameras = {}, slots = {}, spawns = {}, volumetricSun = 1}: RoomOptions) {
     this.title = title
     this.lamps = new Map(Object.entries(lamps))
     this.ambience = new Map(Object.entries(ambience))
     this.slots = new Map(Object.entries(slots))
+    this.cameras = new Map(Object.entries(cameras))
+    this.spawns = new Map(Object.entries(spawns))
     this.volumetricSun = volumetricSun
   }
 
@@ -171,6 +183,15 @@ export default abstract class Room {
     return [this.origin[0] + x, this.origin[1] + y, this.origin[2] + z]
   }
 
+  /** The camera bookmarks with global ids in world meters. */
+  worldCameras(): Array<CameraBookmark> {
+    return this.cameras.entries().map(([id, camera]) => ({
+      ...camera,
+      id: this.globalId(id),
+      position: this.toWorld(camera.position),
+    })).toArray()
+  }
+
   /** Every lamp with its global id and its position, and a spot’s target, in world meters. */
   *worldLamps() {
     for (const [id, lamp] of this.lamps) {
@@ -193,6 +214,15 @@ export default abstract class Room {
       ...slotFrame(slot.ratio, area),
       position: this.toWorld(position),
       ...labelAbove ? {labelAbove} : {},
+    })).toArray()
+  }
+
+  /** The spawn bookmarks with global ids in world meters. */
+  worldSpawns(): Array<SpawnBookmark> {
+    return this.spawns.entries().map(([id, spawn]) => ({
+      ...spawn,
+      id: this.globalId(id),
+      position: this.toWorld(spawn.position),
     })).toArray()
   }
 }

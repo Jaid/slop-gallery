@@ -7,6 +7,7 @@ import Room from '../base/Room.ts'
 import eyeHeight from '../lib/eyeHeight.ts'
 import floorBox from '../lib/floorBox.ts'
 import floorOrigin from '../lib/floorOrigin.ts'
+import cameras from './cameras.ts'
 import slots from './slots.ts'
 
 const plan = {
@@ -30,6 +31,7 @@ export default class Antechamber extends Room {
   constructor() {
     super({
       title: 'The Antechamber',
+      cameras,
       slots,
     })
   }
