@@ -3,6 +3,7 @@ import type {MarbleStyle} from './marble.ts'
 import {float, hash, max, mix, mx_noise_float, normalWorldGeometry, positionWorld, vec2, vec3} from 'three/tsl'
 import {Color} from 'three/webgpu'
 
+import DimmedSpecularLightingModel from '../DimmedSpecularLightingModel.ts'
 import {heightNormal, line, visibleDetail} from '../filters.ts'
 import FloorMaterial from '../FloorMaterial.ts'
 import {calacatta, marblePattern, portoro, shadeMarble} from './marble.ts'
@@ -10,6 +11,8 @@ import {calacatta, marblePattern, portoro, shadeMarble} from './marble.ts'
 export type CheckeredMarbleFloorOptions = {
   /** cut of the tiles whose column and row add up to an odd number */
   dark?: MarbleStyle
+  /** share of the lamps’ direct specular highlight that the polish keeps, the rest being scattered diffusely */
+  directSpecular?: number
   /** whether the veins stream along each tile instead of meandering; see `marblePattern` */
   drift?: boolean
   /** radius of the Gaussian blur over the mirror, in pixels of a 1080-row image */
@@ -59,7 +62,8 @@ export function checkeredTile(x: number, z: number, {origin, tile}: Pick<Checker
  * Every tile is cut from another part of its block and turned at random, so neighbors never continue each other’s veins. Tiles are set with hairline grout and eased arrises. In heavy mode the polish mirrors the room, bent faintly by the waviness of hand-polished stone; the grout stays matte.
  */
 export default class CheckeredMarbleFloorMaterial extends FloorMaterial {
-  constructor({dark = portoro, drift = false, gaussianBlur = 0, grazingStrength = 0.6, light = calacatta, loss = 1.5, origin, reflections = true, roughness = 0.1, seed = 0, strength = 0.1, tile}: CheckeredMarbleFloorOptions) {
+  readonly directSpecular: number
+  constructor({dark = portoro, directSpecular = 1, drift = false, gaussianBlur = 0, grazingStrength = 0.6, light = calacatta, loss = 1.5, origin, reflections = true, roughness = 0.1, seed = 0, strength = 0.1, tile}: CheckeredMarbleFloorOptions) {
     if (!(tile > 0)) {
       throw new RangeError('Marble tiles need a positive size.')
     }
@@ -120,5 +124,9 @@ export default class CheckeredMarbleFloorMaterial extends FloorMaterial {
     const arris = edge.smoothstep(0, 0.005).oneMinus().mul(-arrisDepth).mul(visibleDetail(footprint, 0.008))
     const waviness = mx_noise_float(vec3(x.mul(4), z.mul(4), random(6).mul(40))).mul(0.00012).mul(visibleDetail(footprint, 0.05))
     this.normalNode = heightNormal(arris.add(waviness).mul(top))
+    this.directSpecular = directSpecular
+  }
+  override setupLightingModel() {
+    return this.directSpecular === 1 ? super.setupLightingModel() : new DimmedSpecularLightingModel(this.directSpecular)
   }
 }

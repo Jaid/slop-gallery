@@ -18,7 +18,7 @@ export type KnotLightSlot = {
   slot: number
 }
 // the gap between the four panes over a lone Knot
-const loneKnotPaneGap = 0.3
+const loneKnotPaneGap = 0.8
 
 /** One pane over every slot of the longest row in every row, or, for a lone Knot in its plain room, four panes in a square around the spot above it. */
 export function knotLightSlots(layout: KnotLayout, rowCount: number, ceilingHeight: number): Array<KnotLightSlot> {

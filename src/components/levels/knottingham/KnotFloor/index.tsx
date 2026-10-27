@@ -12,6 +12,7 @@ export default function KnotFloor() {
   const {floorReflections} = useGraphicsModeValue(getGraphicsProfile)
   const material = useDisposable(useMemo(() => new CheckeredMarbleFloorMaterial({
     dark: neroMarquina,
+    directSpecular: 0.1,
     drift: true,
     grazingStrength: 0,
     light: cremaMarfil,
