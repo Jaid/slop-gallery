@@ -91,7 +91,7 @@ const relatedRegions = (from: ReadonlyArray<RoomId>) => {
  * Leaves out what the camera can’t see from the rooms it is in. An object belongs to every room its bounds reach into, and a room behind an opening only shows through the part of the screen the opening covers, up to two openings deep.
  * Rooms out of sight drop out of every pass of the frame: the camera, its reflection and the lamps’ shadow maps. Objects in a room in sight that miss its openings on screen only drop out of the camera and its reflection, so the shadows they cast stay.
  * The sun shines from outside every room, through openings and skylights that rooms out of sight may frame, so its shadow map keeps them all; otherwise the patches of sunlight would change shape whenever a room leaves the view.
- * With `?loading=streamed` or `lazy`, culling starts behind the loading screen, where the sun’s shadow map leaves out hidden rooms too, and objects in the camera’s rooms and the rooms related to them stream in first.
+ * With `?loading=streamed` or `lazy`, culling starts behind the loading screen, where it leaves out every room but the camera’s, in the sun’s shadow map too. Objects in the camera’s rooms and the rooms related to them stream in first afterward.
  * Shadow maps only update when something in their light’s reach changes, and lights in hidden rooms or switched off by their room list wait until they matter again. Lights themselves stay, since a different set of lights would recompile every lit material.
  */
 export default function RoomCulling() {
@@ -145,6 +145,11 @@ export default function RoomCulling() {
         }
         const {rooms, world} = placementOf(drawable, drawable.geometry)
         if (!rooms.length || rooms.some(room => from.includes(room))) {
+          return
+        }
+        // Behind the loading screen, only the camera’s rooms get built; the rooms seen through their openings stream in first afterward.
+        if (!ready) {
+          hidden.add(object)
           return
         }
         const rects = rooms.flatMap(room => regions.get(room) ?? [])

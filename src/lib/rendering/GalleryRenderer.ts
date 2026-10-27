@@ -27,7 +27,10 @@ const cinematicSampledTextures = 32
 /** Renderer internals that three doesn’t type. */
 type Internals = {
   _currentRenderBundle: unknown
-  _nodes: {nodeFrame: {frameId: number}}
+  _nodes: {
+    getForRender: (renderObject: RenderObject) => unknown
+    nodeFrame: {frameId: number}
+  }
   _pipelines: {
     getForRender: (renderObject: RenderObject, promises: PromiseSink | null) => unknown
     updateForRender: (renderObject: RenderObject) => void
@@ -88,8 +91,8 @@ export const updateChangedMatrices = (object: Object3D, parentChanged: boolean) 
 }
 // Objects a warming frame may draw outside the camera frustum. Their first draw builds their node graphs synchronously, so a cap keeps every loading frame short.
 const warmupObjectsPerFrame = 48
-// Objects a streaming frame may draw for the first time in a pass. Each one builds its node graphs synchronously, which takes a few milliseconds.
-const streamedObjectsPerFrame = 4
+// Milliseconds a streaming frame may spend building the node graphs of objects drawn for the first time in a pass. Building happens synchronously, from a few milliseconds per object to over a hundred for the heaviest; a frame always admits at least one.
+const streamedBuildBudget = 4
 /** frames in a row without anything left to stream after which streaming stops */
 const streamedIdleFrames = 300
 /** how streaming picks the objects to build: `all` builds the rest of the scene after the prioritized objects, `priority` only ever builds prioritized ones */
@@ -108,6 +111,10 @@ export class GalleryRenderer extends WebgpuRenderer {
   readonly shadowCameras = new WeakSet<Camera>
   /** the cameras of shadow maps of lights from outside the rooms, like the sun, which draw {@link hidden} too */
   readonly unculledCameras = new WeakSet<Camera>
+  /** the recent average of milliseconds spent building per object streaming admitted */
+  private buildCost = 10
+  /** milliseconds this frame spent building node graphs */
+  private buildTime = 0
   private culledCamera: Camera | null = null
   private culler: Culler | null = null
   private frame = -1
@@ -250,6 +257,9 @@ export class GalleryRenderer extends WebgpuRenderer {
 
   /** Carries what the last streaming frame found over to the next one. */
   private advanceStreaming() {
+    if (this.warmupAdmissions > 0) {
+      this.buildCost = this.buildCost * 0.7 + this.buildTime / this.warmupAdmissions * 0.3
+    }
     // Everything else waits while prioritized objects are left.
     this.streamRest = this.streaming === 'all' && !this.streamPriorityFound
     this.streamIdle = this.streamFound ? 0 : this.streamIdle + 1
@@ -269,6 +279,17 @@ export class GalleryRenderer extends WebgpuRenderer {
   private compilePipelinesAsync() {
     const internals = this.internals
     const pipelines = internals._pipelines
+    const nodes = internals._nodes
+    const buildNodes = nodes.getForRender.bind(nodes)
+    // Only objects new to a pass build their node graphs, so timing them costs nothing in a settled frame.
+    nodes.getForRender = renderObject => {
+      const start = performance.now()
+      try {
+        return buildNodes(renderObject)
+      } finally {
+        this.buildTime += performance.now() - start
+      }
+    }
     const sink: PromiseSink = {
       push: promise => {
         this.pending++
@@ -334,7 +355,7 @@ export class GalleryRenderer extends WebgpuRenderer {
       const priority = this.streamPriority?.(object) ?? true
       this.streamPriorityFound ||= priority
       this.streamFound ||= priority || this.streaming === 'all'
-      if (this.warmupAdmissions >= streamedObjectsPerFrame || !(priority || this.streamRest)) {
+      if (!(priority || this.streamRest) || this.warmupAdmissions > 0 && (this.buildTime >= streamedBuildBudget || (this.warmupAdmissions + 1) * this.buildCost > streamedBuildBudget)) {
         // Left out until its turn; its children still go their own way.
         // Only objects that will get their turn keep the shadow map rendering.
         if (shadowCameras.has(camera) && (priority || this.streaming === 'all')) {
@@ -390,10 +411,11 @@ export class GalleryRenderer extends WebgpuRenderer {
     this.frame = frameId
     this.culledCamera = null
     this.warmedFrame = this.warming && this.warmupAdmissions === 0 ? frameId : -1
-    this.warmupAdmissions = 0
     if (this.streaming) {
       this.advanceStreaming()
     }
+    this.warmupAdmissions = 0
+    this.buildTime = 0
     updateChangedMatrices(this.frameScene!, false)
   }
 }

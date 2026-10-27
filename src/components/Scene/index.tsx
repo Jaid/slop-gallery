@@ -48,7 +48,7 @@ const maxWarmup = 90_000
 const loading = readLoading()
 /**
  * Holds the loading screen until the artworks are in and every pipeline of the scene, including unseen rooms, shadows and reflections, has compiled.
- * With `?loading=streamed` or `lazy`, the level’s culling leaves out what the start view can’t see, and the renderer streams it in after the loading screen.
+ * With `?loading=streamed` or `lazy`, the level’s culling leaves out all but the start room, and the renderer streams the rest in after the loading screen.
  */
 function Ready() {
   const frames = useRef(0)
