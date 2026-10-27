@@ -28,7 +28,6 @@ export default class Antechamber extends Room {
 
   constructor() {
     super({
-      number: 4,
       title: 'The Antechamber',
       slots: {
         'antechamber-south-0': {

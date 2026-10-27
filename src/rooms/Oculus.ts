@@ -17,7 +17,6 @@ export default class Oculus extends Room {
 
   constructor() {
     super({
-      number: 7,
       title: 'Oculus',
       // Green, blue and red, from the sealed tunnel’s north end up to its high south end, each hanging 35 cm under its housing.
       lamps: {

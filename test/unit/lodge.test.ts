@@ -20,7 +20,7 @@ import TransitionGeometry from '../../src/lib/gallery/passages/TransitionGeometr
 import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
 import StairRunner from '../../src/lib/gallery/stairs/StairRunner.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
-import walls, {floorHeight, insideGallery, placementIssue, roomAt, rooms, wallPosition} from '../../src/lib/gallery/walls.ts'
+import walls, {floorHeight, insideGallery, placementIssue, roomAt, wallPosition} from '../../src/lib/gallery/walls.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
 await RAPIER.init()
@@ -247,11 +247,9 @@ describe('Lodge and Corridor route', () => {
       }
     }
   }
-  test('navigation, floors and map room share the same raised-platform elevation', () => {
+  test('navigation and floors share the same raised-platform elevation', () => {
     expect(lodge.floorY).toBe(-5)
     expect(lodge.entranceX).toBe(oculusTower.x)
-    expect(rooms.find(room => room.id === 'lodge')!.number).toBe('08')
-    expect(rooms.find(room => room.id === 'corridor')!.number).toBe('09')
     for (const passage of routePassages) {
       for (const {center: [x, z]} of passage.floors) {
         const position: Vec3 = [x, passage.floorY + 1.6, z]

@@ -5,9 +5,8 @@ import type {RootState} from '@react-three/fiber'
 import {useEffect} from 'react'
 import {Euler, Quaternion, Raycaster, Vector2} from 'three/webgpu'
 
-import {enterGallery, galleryEvents, isTextInput, markControlled, openPanel, useGallery} from '#src/lib/gallery.ts'
+import {enterGallery, galleryEvents, isTextInput, markControlled, useGallery} from '#src/lib/gallery.ts'
 import {playerSpawn} from '#src/lib/gallery/PlayerSession.ts'
-import {gallerySupportsMap} from '#src/lib/level.ts'
 import pauseMenu from '#src/lib/pauseMenu.ts'
 
 import createGrabController from './grabController.ts'
@@ -48,7 +47,7 @@ export default function useInteractionEvents({
       }
     }
     const down = (event: MouseEvent) => {
-      if (event.target !== renderer.domElement || useGallery.getState().panel) {
+      if (event.target !== renderer.domElement) {
         return
       }
       if (!document.pointerLockElement) {
@@ -83,11 +82,7 @@ export default function useInteractionEvents({
       if (event.code === 'Escape') {
         grabbing.cancel()
       }
-      if (event.code === 'Tab' && gallerySupportsMap && !state.panel && state.locked) {
-        event.preventDefault()
-        openPanel('map')
-      }
-      if (!state.locked || state.panel) {
+      if (!state.locked) {
         return
       }
       if (['KeyQ', 'KeyV'].includes(event.code)) {

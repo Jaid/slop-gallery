@@ -60,8 +60,6 @@ export type RoomOptions = {
   ambience?: Record<string, RoomAmbience>
   /** the lamps by id, positioned relative to the room’s {@link Room.origin} */
   lamps?: Record<string, Lamp>
-  /** the number the map shows for the room, which also orders its room list */
-  number: number
   /** the portrait slots by id, which stays stable so edited slots find their originals */
   slots?: Record<string, RoomPortraitSlot>
   title: string
@@ -101,7 +99,6 @@ export default abstract class Room {
   abstract readonly fence: Arrayable<Box3>
   abstract readonly id: string
   readonly lamps: ReadonlyMap<string, Lamp>
-  readonly number: number
   /** the point in world meters every other position of the room is relative to, usually the middle of its floor */
   abstract readonly origin: Vec3
   readonly slots: ReadonlyMap<string, RoomPortraitSlot>
@@ -109,8 +106,7 @@ export default abstract class Room {
   readonly title: string
   readonly volumetricSun: number
 
-  constructor({number, title, lamps = {}, ambience = {}, slots = {}, volumetricSun = 1}: RoomOptions) {
-    this.number = number
+  constructor({title, lamps = {}, ambience = {}, slots = {}, volumetricSun = 1}: RoomOptions) {
     this.title = title
     this.lamps = new Map(Object.entries(lamps))
     this.ambience = new Map(Object.entries(ambience))

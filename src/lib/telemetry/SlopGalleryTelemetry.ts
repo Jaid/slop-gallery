@@ -98,9 +98,9 @@ export default class SlopGalleryTelemetry extends VictoriaClient {
           ...roomChangeDetails.current(previous.room, state.room),
         })
       }
-      for (const key of ['locked', 'ready', 'panel'] as const) {
+      for (const key of ['locked', 'ready'] as const) {
         if (state[key] !== previous[key]) {
-          this.event(`${key}.changed`, {value: state[key] ?? 'none'})
+          this.event(`${key}.changed`, {value: state[key]})
         }
       }
       if (!state.locked && previous.locked) {

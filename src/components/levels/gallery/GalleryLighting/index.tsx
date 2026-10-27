@@ -142,7 +142,7 @@ export default function GalleryLighting() {
       return
     }
     const keydown = (event: KeyboardEvent) => {
-      if (event.repeat || event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || isTextInput(event.target) || useGallery.getState().panel) {
+      if (event.repeat || event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || isTextInput(event.target)) {
         return
       }
       if (event.code === lightingCycleKey) {

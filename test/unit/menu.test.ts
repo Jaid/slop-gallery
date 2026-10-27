@@ -84,9 +84,6 @@ describe('minimal menu', () => {
     expect(useGallery.getState().hasControlled).toBe(false)
     useGallery.setState({locked: true})
     expect(useGallery.getState().hasControlled).toBe(false)
-    useGallery.setState({panel: 'map'})
-    markControlled()
-    expect(useGallery.getState().hasControlled).toBe(false)
     expect(writes).toBe(0)
   })
   test('the first in-game control enables reset and persists the flag exactly once', () => {
@@ -218,7 +215,6 @@ test('New game resets and enters directly; it does nothing before the scene is r
     })
     startNewGame()
     expect(entered).toBe(1)
-    expect(useGallery.getState().panel).toBeNull()
     expect(resume).toHaveBeenCalledTimes(1)
   } finally {
     resume.mockRestore()

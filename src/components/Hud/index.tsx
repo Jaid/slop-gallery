@@ -15,7 +15,7 @@ export default function Hud() {
   const narrations = narrationStates(useNarrator(narrator))
   const showCrosshair = useSyncExternalStore(crosshair.subscribe, crosshair.getSnapshot, crosshair.getSnapshot)
   const artwork = s.held ? undefined : s.portraits.find(p => p.id === s.activeLabel && p.hung && !p.reserved)
-  return <Branch if={s.locked} none={[s.panel, s.dragging]}>
+  return <Branch if={s.locked} not={s.dragging}>
     <Branch if={showCrosshair} then={AimDot} />
     <Branch if={artwork}><ArtworkOverlay portrait={artwork!} /></Branch>
     <InteractionHint />

@@ -15,7 +15,6 @@ export default class Salon extends Room {
 
   constructor() {
     super({
-      number: 10,
       title: 'The Salon',
     })
   }

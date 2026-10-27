@@ -13,7 +13,6 @@ import {playerSession} from './PlayerSession.ts'
 export {readControlled} from '../pauseMenu.ts'
 
 export {maximumPortraits} from './imagePolicy.ts'
-export type Panel = 'map' | null
 type State = GallerySettings & GallerySnapshot & {
   active: string | null
   activeLabel: string | null
@@ -39,7 +38,6 @@ type State = GallerySettings & GallerySnapshot & {
   /** Read-only projection for telemetry; the shared narrator owns playback and UI state. */
   narration: NarrationState | null
   notice: string
-  panel: Panel
   placement: Placement | null
   playerEpoch: number
   ready: boolean
@@ -90,7 +88,6 @@ export const useGallery = create<State>((set, get) => ({
   dragging: false,
   inspecting: null,
   notice: '',
-  panel: null,
   room: 'lobby',
   placement: null,
   playerEpoch: 0,
@@ -134,7 +131,7 @@ export const useGallery = create<State>((set, get) => ({
 // Entering the menu or acquiring pointer lock is not an in-game control.
 export function markControlled() {
   const s = useGallery.getState()
-  if (s.hasControlled || !s.locked || s.panel) {
+  if (s.hasControlled || !s.locked) {
     return
   }
   useGallery.setState({hasControlled: true})

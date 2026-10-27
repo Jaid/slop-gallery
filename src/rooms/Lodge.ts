@@ -20,7 +20,6 @@ export default class Lodge extends Room {
 
   constructor() {
     super({
-      number: 8,
       title: 'Lodge',
       ambience: {
         fire: {

@@ -116,7 +116,7 @@ export default function OrbitViewing() {
         return
       }
       const state = useGallery.getState()
-      if (!state.locked || state.panel || state.held || !state.active || !controls.isLocked || document.pointerLockElement !== renderer.domElement) {
+      if (!state.locked || state.held || !state.active || !controls.isLocked || document.pointerLockElement !== renderer.domElement) {
         return
       }
       const object = findTarget(state.active, state.activeLabel === state.active, camera.aspect)
@@ -194,7 +194,7 @@ export default function OrbitViewing() {
       finish(false)
     }
     const unsubscribe = useGallery.subscribe(state => {
-      if (state.panel || !state.locked) {
+      if (!state.locked) {
         release()
       }
     })

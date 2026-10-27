@@ -36,7 +36,6 @@ export default class Corridor extends Room {
 
   constructor() {
     super({
-      number: 9,
       title: 'Corridor',
       // Three lanterns at both ends and in the middle; the middle one reaches farthest.
       lamps: {

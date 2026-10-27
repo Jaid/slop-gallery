@@ -30,7 +30,6 @@ export default class Lobby extends Room {
 
   constructor() {
     super({
-      number: 1,
       title: 'Lobby',
       ambience: {
         // From the finial’s tip, the main jet’s mouth.

@@ -69,7 +69,6 @@ describe('H key', () => {
     crosshair.set(false)
     useGallery.setState({
       locked: true,
-      panel: null,
       dragging: false,
     })
   })
@@ -92,11 +91,6 @@ describe('H key', () => {
     press()
     useGallery.setState({
       locked: true,
-      panel: 'map',
-    })
-    press()
-    useGallery.setState({
-      panel: null,
       dragging: true,
     })
     press()

@@ -17,7 +17,6 @@ export default class Vesper extends Room {
 
   constructor() {
     super({
-      number: 2,
       title: 'The Vesper',
       // The two light boxes in the ceiling.
       lamps: {

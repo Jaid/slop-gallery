@@ -1,4 +1,3 @@
-import type {Panel} from './store.ts'
 import type {Portrait, Vec3} from './types.ts'
 
 import composeId from 'compose-id'
@@ -49,22 +48,10 @@ export function notify(notice: string) {
   noticeTimer = setTimeout(() => useGallery.setState({notice: ''}), 6500)
 }
 
-export function openPanel(panel: Panel) {
-  pauseMenu.release()
-  useGallery.setState({
-    panel,
-    activeLabel: null,
-    held: null,
-    placement: null,
-  })
-  galleryEvents.dispatchEvent(new Event('cancel-view'))
-}
-
 export function enterGallery() {
   if (!useGallery.getState().ready) {
     return
   }
-  useGallery.setState({panel: null})
   galleryEvents.dispatchEvent(new Event('cancel-view'))
   void SoundEngine.get().resume().catch(() => notify('Audio could not be enabled.'))
   void pauseMenu.enter().catch(() => notify('Click the gallery to begin exploring.'))
@@ -122,7 +109,6 @@ export function viewPortrait(id: string) {
   if (!useGallery.getState().ready) {
     return
   }
-  useGallery.setState({panel: null})
   galleryEvents.dispatchEvent(new CustomEvent('view', {detail: id}))
 }
 
@@ -207,10 +193,10 @@ export function handleGalleryKey(event: KeyboardEvent) {
   if (isTextInput(event.target) || event.defaultPrevented) {
     return
   }
-  const s = useGallery.getState()
-  if (event.repeat || event.ctrlKey || event.metaKey || event.altKey || s.panel) {
+  if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) {
     return
   }
+  const s = useGallery.getState()
   if (event.code === 'KeyM') {
     useGallery.setState({sound: !s.sound})
   }
@@ -234,5 +220,5 @@ export function handleGalleryKey(event: KeyboardEvent) {
 
 export async function importDroppedFiles(files: Array<File>, x: number, y: number) {
   const s = useGallery.getState()
-  return s.importFiles?.(files, s.panel ? undefined : s.importTarget?.(x, y))
+  return s.importFiles?.(files, s.importTarget?.(x, y))
 }

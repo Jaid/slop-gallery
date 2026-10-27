@@ -18,7 +18,7 @@ export {default as floorBox} from './lib/floorBox.ts'
 export {default as floorOrigin} from './lib/floorOrigin.ts'
 export {default as southSpawn} from './lib/southSpawn.ts'
 
-/** every room of the gallery, in the map’s order */
+/** every room of the gallery */
 export const rooms = [new Lobby, new Vesper, new Dine, new Antechamber, new Sienna, new Moonfall, new Oculus, new Lodge, new Corridor, new Salon] as const
 export type GalleryRoom = (typeof rooms)[number]
 export type RoomId = GalleryRoom['id']

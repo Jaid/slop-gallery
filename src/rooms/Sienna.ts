@@ -17,7 +17,6 @@ export default class Sienna extends Room {
 
   constructor() {
     super({
-      number: 5,
       title: 'The Sienna',
       lamps: {
         // Below the swinging chandelier’s metalwork at rest, so the fixture can’t shadow its own source.

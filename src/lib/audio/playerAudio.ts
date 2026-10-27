@@ -26,13 +26,13 @@ export function onPlayerLand(state: EgoState, impactSpeed: number) {
 
 export function onPlayerZoomChange(amount: number) {
   setPlayerZoom(amount)
-  const {sound, locked, panel} = useGallery.getState()
-  SoundEngine.existing()?.setZoom(sound && locked && !panel ? amount : 0)
+  const {sound, locked} = useGallery.getState()
+  SoundEngine.existing()?.setZoom(sound && locked ? amount : 0)
 }
 
 export function onPlayerZoomTransition(transition: EgoZoomTransition) {
-  const {sound, locked, panel} = useGallery.getState()
-  if (sound && locked && !panel) {
+  const {sound, locked} = useGallery.getState()
+  if (sound && locked) {
     SoundEngine.existing()?.zoomTransition(transition.from === 'extended' || transition.to === 'extended', transition.direction === 'retract', transition.duration)
   }
 }
@@ -58,10 +58,10 @@ export function attachPlayerAudio(events: Pick<EventTarget, 'addEventListener' |
     }
     if (state.sound !== previous.sound) {
       sound?.mute(!state.sound)
-      sound?.setZoom(state.sound && state.locked && !state.panel ? getPlayerZoom() : 0)
+      sound?.setZoom(state.sound && state.locked ? getPlayerZoom() : 0)
     }
-    if (!state.locked || state.panel) {
-      if (previous.locked && !previous.panel) {
+    if (!state.locked) {
+      if (previous.locked) {
         stop()
       }
       return

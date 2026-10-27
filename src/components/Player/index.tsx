@@ -19,7 +19,7 @@ import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
 import {playerTelemetry} from '#src/lib/telemetry/index.ts'
 import {playerDumpHandler, playerDumps, snapshotPlayerDump} from '#src/lib/telemetry/recordPlayerDump.ts'
 
-const enabled = () => !cameraPose.focused && !useGallery.getState().panel
+const enabled = () => !cameraPose.focused
 const cameraEnabled = () => !cameraPose.focused
 const flying = () => flyMode.active
 const setFov = (camera: Camera, fov: number) => {

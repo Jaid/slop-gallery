@@ -71,7 +71,7 @@ export default function useInteractionFrame(camera: RootState['camera'], rendere
         }
         closest = hits[0].distance
         active = id
-        activeLabel = s.locked && !s.panel && portrait?.hung && isPortraitLabelHit(hits[0].object, object.group) ? id : null
+        activeLabel = s.locked && portrait?.hung && isPortraitLabelHit(hits[0].object, object.group) ? id : null
       }
       if (active !== s.active || activeLabel !== s.activeLabel) {
         useGallery.setState({
@@ -109,7 +109,7 @@ export default function useInteractionFrame(camera: RootState['camera'], rendere
 function updateHint() {
   const s = useGallery.getState()
   const now = performance.now() / 1000
-  if (!s.locked || s.panel || s.dragging || cameraPose.focused) {
+  if (!s.locked || s.dragging || cameraPose.focused) {
     interactionHint.update(null, now, true)
     return
   }

@@ -37,7 +37,6 @@ export default class Moonfall extends Room {
 
   constructor() {
     super({
-      number: 6,
       title: 'Moonfall',
       ambience: {
         // A celestial hum from the orbital sculpture’s core.

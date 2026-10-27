@@ -41,7 +41,6 @@ beforeEach(() => {
   useGallery.setState({
     sound: true,
     locked: true,
-    panel: null,
     inspecting: null,
   })
   existing = spyOn(SoundEngine, 'existing').mockReturnValue(sound as unknown as SoundEngine)

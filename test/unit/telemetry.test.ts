@@ -78,7 +78,6 @@ const initial: GalleryState = {
   locked: false,
   held: null,
   inspecting: null,
-  panel: null,
   ai: false,
   narration: null,
   saveStatus: 'saved',

@@ -4,9 +4,7 @@ import {useState} from 'react'
 import Dropzone from '#component/Dropzone'
 import GraphicsTuning from '#component/GraphicsTuning'
 import Hud from '#component/Hud'
-import Map from '#component/Map'
 import Menu from '#component/Menu'
-import Panel from '#component/Panel'
 import RenderBoundary from '#component/RenderBoundary'
 import RenderError from '#component/RenderError'
 import Toast from '#component/Toast'
@@ -47,10 +45,9 @@ export default function App() {
         <Branch if={tuning.open} then={TuningBuffer} />
       </main>
       {/* Hidden with O, the paused scene stays in full view, e.g. while tweaking values in an editor; O brings the menu back. Hovering the tuning panel hides it too. */}
-      <Branch none={[s.locked, s.panel, s.dragging, renderFailed, uiHidden, tuning.hovered]}><Menu {...settings} /></Branch>
+      <Branch none={[s.locked, s.dragging, renderFailed, uiHidden, tuning.hovered]}><Menu {...settings} /></Branch>
       <Branch not={uiHidden} then={Hud} />
-      <Branch if={s.notice} none={[s.panel, uiHidden]}><Toast>{s.notice}</Toast></Branch>
-      <Branch if={s.panel === 'map'}><Panel title='Floor plan'><Map /></Panel></Branch>
+      <Branch if={s.notice} not={uiHidden}><Toast>{s.notice}</Toast></Branch>
     </div>
   </div></Dropzone></GraphicsMode>
 }

@@ -1,15 +1,9 @@
 import {afterEach, beforeEach, expect, spyOn, test} from 'bun:test'
 
-import {createElement} from 'react'
-import {renderToStaticMarkup} from 'react-dom/server'
-
-import Map from '#component/Map'
-
 import {galleryEvents, importDroppedFiles, isTextInput, viewPortrait} from '../../src/lib/gallery/actions.ts'
 import ImageImporter from '../../src/lib/gallery/ImageImporter.ts'
 import {imageFilename} from '../../src/lib/gallery/imagePolicy.ts'
 import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
-import {rooms} from '../../src/lib/gallery/walls.ts'
 
 const original = createDocument()
 const previous = {
@@ -31,18 +25,13 @@ beforeEach(() => {
   useGallery.setState({
     sound: false,
     ready: false,
-    panel: 'map',
     importTarget: null,
     importFiles: null,
   })
   Object.assign(globalThis, {HTMLElement: ElementDouble})
 })
 afterEach(() => Object.assign(globalThis, previous))
-test('the floor plan remains available without a renderer', () => {
-  const map = renderToStaticMarkup(createElement(Map))
-  expect(map.match(/disabled=""/g)).toHaveLength(rooms.length)
-})
-test('renderer-free drops decode and commit with a panel open', async () => {
+test('renderer-free drops decode and commit', async () => {
   Object.assign(globalThis, {
     createImageBitmap: async () => ({
       width: 64,
@@ -71,7 +60,7 @@ test('renderer-free drops decode and commit with a panel open', async () => {
     importer.dispose()
   }
 })
-test('scene placement is optional and ignored while a panel owns the drop', async () => {
+test('scene placement is optional', async () => {
   const target = {
     origin: [0, 2, 0] as [number, number, number],
     direction: [0, 0, -1] as [number, number, number],
@@ -84,15 +73,14 @@ test('scene placement is optional and ignored while a panel owns the drop', asyn
     },
   })
   await importDroppedFiles([], 12, 34)
-  useGallery.setState({panel: null})
+  useGallery.setState({importTarget: null})
   await importDroppedFiles([], 12, 34)
-  expect(calls).toEqual([undefined, target])
+  expect(calls).toEqual([target, undefined])
 })
-test('unavailable navigation does not close the floor plan or dispatch a visit', () => {
+test('unavailable navigation does not dispatch a visit', () => {
   const spy = spyOn(galleryEvents, 'dispatchEvent')
   try {
     viewPortrait('goose')
-    expect(useGallery.getState().panel).toBe('map')
     expect(spy).not.toHaveBeenCalled()
   } finally {
     spy.mockRestore()

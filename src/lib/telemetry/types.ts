@@ -10,7 +10,6 @@ export type GalleryState = {
     source: string | null
     status: string
   } | null
-  panel: string | null
   portraits: ReadonlyArray<{
     hung: boolean
     imported?: boolean

@@ -31,7 +31,6 @@ export default class Dine extends Room {
 
   constructor() {
     super({
-      number: 3,
       title: 'Dine',
       // Three breakable LED panes down the middle, each lighting through one point just below its diffuser.
       lamps: {
