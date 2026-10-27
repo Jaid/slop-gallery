@@ -69,7 +69,7 @@ export type RoomOptions = {
   lamps?: Record<string, Lamp>
   /** the portrait slots by their id within the room, in snake_case, which stays stable so edited slots find their originals */
   slots?: Record<string, RoomPortraitSlot>
-  /** the spawn bookmarks by their id within the room, in snake_case */
+  /** the spawn bookmarks by their id within the room, in snake_case; the empty id is the room’s default spawn, which goes by the room’s own id */
   spawns?: Record<string, RoomSpawnBookmark>
   title: string
   /** how strongly the air holds sun shafts while the player is inside, 1 at full strength; 0 turns volumetric sunlight off */
@@ -168,9 +168,9 @@ export default abstract class Room {
     return this.ambience.values().map(({emitter: Emitter, position}) => new Emitter(this.toWorld(position))).toArray()
   }
 
-  /** The gallery-wide id of a lamp, ambient sound, wall or slot of the room: the room’s id and the id within the room, joined by a hyphen. */
+  /** The gallery-wide id of a lamp, ambient sound, wall, slot or bookmark of the room: the room’s id and the id within the room, joined by a hyphen, or just the room’s id for the empty id of its default. */
   globalId(id: string) {
-    return `${this.id}-${id}`
+    return id ? `${this.id}-${id}` : this.id
   }
 
   /** The position relative to the room’s {@link origin} of a point given in world meters. */

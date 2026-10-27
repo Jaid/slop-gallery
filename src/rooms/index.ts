@@ -23,6 +23,9 @@ export const rooms = [new Lobby, new Vesper, new Dine, new Antechamber, new Sien
 export type GalleryRoom = (typeof rooms)[number]
 export type RoomId = GalleryRoom['id']
 
+/** the room the player starts in, at its default spawn */
+export const defaultRoom: RoomId = 'lobby'
+
 const byId = new Map<RoomId, GalleryRoom>(rooms.map(room => [room.id, room]))
 
 /** The room with the id. */
@@ -33,6 +36,11 @@ export function getRoom<Id extends RoomId>(id: Id) {
 /** every camera bookmark of the gallery in world meters, room by room */
 export function cameraBookmarks() {
   return rooms.flatMap(room => room.worldCameras())
+}
+
+/** The player’s pose on arrival: the default spawn of the {@link defaultRoom}. */
+export function defaultSpawn() {
+  return getRoom(defaultRoom).worldSpawns().find(spawn => spawn.id === defaultRoom)!
 }
 
 /** every portrait slot of the gallery in world meters, room by room */
