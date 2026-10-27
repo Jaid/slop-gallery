@@ -7,9 +7,7 @@ import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 
 import GalleryLighting from '#component/levels/gallery/GalleryLighting'
 import GalleryStairs from '#component/levels/gallery/GalleryStairs'
-import LodgeWindow from '#component/levels/gallery/LodgeWindow'
 import PottedPlants from '#component/levels/gallery/PottedPlants'
-import SalonWindow from '#component/levels/gallery/SalonWindow'
 import {surfaceTexture} from '#src/components/Scene/materials.ts'
 import WallSurface from '#src/components/Scene/WallSurface.tsx'
 import {rooms, walls} from '#src/lib/gallery.ts'
@@ -24,17 +22,7 @@ import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
 import {TravertineWallMaterial} from '#src/lib/materials/travertine/index.ts'
 import VesperWallMaterial from '#src/lib/materials/VesperWallMaterial.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
-import AntechamberRoom from '#src/rooms/antechamber/components/AntechamberRoom/index.tsx'
-import CorridorRoom from '#src/rooms/corridor/components/CorridorRoom/index.tsx'
-import DineRoom from '#src/rooms/dine/components/DineRoom/index.tsx'
-import LobbyRoom from '#src/rooms/lobby/components/LobbyRoom/index.tsx'
-import LodgeRoom from '#src/rooms/lodge/components/LodgeRoom/index.tsx'
-import LodgeTunnel from '#src/rooms/lodge/components/LodgeTunnel/index.tsx'
-import MoonfallRoom from '#src/rooms/moonfall/components/MoonfallRoom/index.tsx'
-import OculusRoom from '#src/rooms/oculus/components/OculusRoom/index.tsx'
-import SalonRoom from '#src/rooms/salon/components/SalonRoom/index.tsx'
-import SiennaRoom from '#src/rooms/sienna/components/SiennaRoom/index.tsx'
-import VesperRoom from '#src/rooms/vesper/components/VesperRoom/index.tsx'
+import World from '#src/rooms/components/World/index.tsx'
 
 const vesper = rooms.find(room => room.id === 'vesper')!
 // Five courses of 1.1 m reach the cornice; slabs are twice as long as they are high.
@@ -135,21 +123,9 @@ export default function Architecture() {
   return <>
     <GalleryLighting />
     {walls.map(wall => <WallSurface key={wall.id} glass={glass.tunnel} material={wallMaterial(wall)} plaster={plaster} surfaceMaterial={surfaceMaterial(wall)} wall={wall} />)}
-    <LobbyRoom cladding={lobbyWall} glass={glass.lobby} stone={stone} wood={wood} />
-    <VesperRoom glass={glass.lobby} stone={stone} wood={wood} />
-    <DineRoom glass={glass.lobby} stone={stone} wood={wood} />
-    <AntechamberRoom glass={glass.lobby} stone={stone} wood={wood} />
     <PottedPlants />
-    <LodgeRoom materials={lodgeMaterials} />
-    <LodgeWindow glass={glass.cabin} material={windowReveal} />
-    <LodgeTunnel material={castleStone} wood={wood} />
-    <CorridorRoom lining={corridorWood} wood={wood} />
-    <SiennaRoom joinery={joinery} />
-    <SalonRoom glass={glass.lobby} stone={stone} wood={wood} />
-    <SalonWindow glass={glass.salon} />
     <GalleryStairs />
-    <MoonfallRoom stone={stone} />
-    <OculusRoom material={oculusMaterial} />
+    <World castleStone={castleStone} corridorWood={corridorWood} glass={glass} joinery={joinery} lobbyWall={lobbyWall} lodge={lodgeMaterials} oculus={oculusMaterial} stone={stone} windowReveal={windowReveal} wood={wood} />
   </>
 }
 
