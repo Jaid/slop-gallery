@@ -1,7 +1,7 @@
 import type {BoxGeometry} from 'three/webgpu'
 
 import {expect, test} from 'bun:test'
-import {join} from 'node:path'
+import {basename, join} from 'node:path'
 import {pathToFileURL} from 'node:url'
 
 import fs from 'fs-extra'
@@ -138,6 +138,55 @@ test('leaves runtime arguments in place and preserves argument side effects on s
     expect(code).toContain('new BoxGeometry(width')
     expect(code).toContain('++calls')
     expect(code).toContain('new Static(')
+  } finally {
+    await fs.rm(directory, {
+      recursive: true,
+      force: true,
+    })
+  }
+})
+test('HTML entries preload the artifacts their static imports reach', async () => {
+  const directory = await fs.mkdtemp(join(import.meta.dirname, 'html-'))
+  try {
+    await fs.writeFile(join(directory, 'index.html'), '<!doctype html><html><head><script type="module" src="./entry.ts"></script></head><body></body></html>')
+    await fs.writeFile(join(directory, 'entry.ts'), `
+      import {BoxGeometry} from 'three/webgpu'
+      globalThis.box = new BoxGeometry(2, 3, 4, 4, 4, 4)
+      globalThis.load = () => import('./lazy.ts')
+    `)
+    await fs.writeFile(join(directory, 'lazy.ts'), `
+      import {SphereGeometry} from 'three/webgpu'
+      globalThis.sphere = new SphereGeometry(1, 32, 16)
+    `)
+    const result = await build({
+      configFile: false,
+      root: directory,
+      base: '/nested/',
+      logLevel: 'silent',
+      plugins: [bakeGeometry({minimumBytes: 0})],
+      build: {
+        write: false,
+        minify: false,
+        target: 'esnext',
+        rolldownOptions: {
+          external: ['three/webgpu'],
+        },
+      },
+    })
+    if (Array.isArray(result) || !('output' in result)) {
+      throw new Error('Unexpected Vite output')
+    }
+    const assets = result.output.filter(item => item.type === 'asset' && item.fileName.endsWith('.bin')).map(item => item.fileName)
+    expect(assets).toHaveLength(2)
+    const entry = result.output.find(item => item.type === 'chunk' && item.isEntry)
+    const html = result.output.find(item => item.fileName === 'index.html')
+    if (entry?.type !== 'chunk' || html?.type !== 'asset') {
+      throw new Error('Missing entry output')
+    }
+    const preloads = String(html.source).matchAll(/<link rel="preload" as="fetch" crossorigin href="([^"]+)">/gu).map(match => match[1]).toArray()
+    const eager = assets.filter(file => entry.code.includes(basename(file)))
+    expect(eager).toHaveLength(1)
+    expect(preloads).toEqual([`/nested/${eager[0]}`])
   } finally {
     await fs.rm(directory, {
       recursive: true,

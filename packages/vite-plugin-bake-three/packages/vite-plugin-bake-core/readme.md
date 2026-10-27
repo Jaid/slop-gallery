@@ -61,6 +61,8 @@ Adapters can also contribute custom `BakeCandidate`s containing a closed express
 
 Snapshots use a small JSON graph header followed by binary buffer payloads. Gzip is a transport choice, not image conversion or numeric quantization. The default browser path requires ES-module top-level await, fetch and DecompressionStream; disabling `compress` removes the last requirement.
 
+Each generated module awaits its own download, so modules in one chunk would fetch their snapshots one after another. HTML entries therefore get a `<link rel="preload" as="fetch" crossorigin>` for every snapshot their static imports reach, and all of them download with the page. Snapshots behind dynamic imports are not preloaded.
+
 Each plugin instance has separate build state. Watch builds start fresh, and referenced source/re-export files are watched. Artifacts deduplicate by content hash and can be cached by the serving infrastructure. There is no persistent evaluation cache.
 
 `bake-<adapter-name>.json` is enabled by default and contains relative source paths and truncated source expressions, not just aggregate counts. Set `report: false` when publishing those diagnostics is undesirable, and consume `onDiagnostic` during the build instead.

@@ -1,9 +1,9 @@
 import type {Candidate} from './candidates.ts'
 import type {BakeAdapter, BakeDiagnostic, BakeOptions, NativeType, SnapshotCodec} from './types.ts'
-import type {Plugin, ResolvedConfig} from 'vite'
+import type {HtmlTagDescriptor, Plugin, ResolvedConfig} from 'vite'
 
 import {createHash} from 'node:crypto'
-import {relative} from 'node:path'
+import {posix, relative} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {gzipSync} from 'node:zlib'
 
@@ -31,6 +31,7 @@ type Artifact = {
   codecs: Map<string, SnapshotCodec>
   compressed: boolean
   constructors: Map<string, NativeType>
+  fileName?: string
   reference?: string
 }
 
@@ -264,7 +265,12 @@ export default function createBakePlugin(adapter: BakeAdapter, options: BakeOpti
     generateBundle(_outputOptions, bundle) {
       const retained = new Set(Object.values(bundle).flatMap(output => (output.type === 'chunk' ? Object.keys(output.modules).filter(id => id.startsWith(resolvedPrefix)).map(id => id.slice(resolvedPrefix.length)) : [])))
       for (const [hash, artifact] of artifacts) {
-        if (!retained.has(hash) && artifact.reference) {
+        if (!artifact.reference) {
+          continue
+        }
+        if (retained.has(hash)) {
+          artifact.fileName = this.getFileName(artifact.reference)
+        } else {
           delete bundle[this.getFileName(artifact.reference)]
         }
       }
@@ -284,6 +290,47 @@ export default function createBakePlugin(adapter: BakeAdapter, options: BakeOpti
         const bytes = [...retained].reduce((sum, hash) => sum + artifacts.get(hash)!.bytes.byteLength, 0)
         config.logger.info(`[bake-${adapter.name}] ${baked.length} recipes, ${retained.size} retained artifacts, ${(bytes / 1024).toFixed(1)} KiB`)
       }
+    },
+    transformIndexHtml: {
+      order: 'post',
+      handler(_html, {bundle, chunk, path}) {
+        if (!bundle || !chunk) {
+          return
+        }
+        // Each snapshot module awaits its fetch before the next one runs, so the page starts every download its static imports need at once.
+        const files = new Set<string>
+        const visited = new Set<string>
+        const visit = (fileName: string) => {
+          // Imports also name external modules, which aren’t in the bundle.
+          const output = fileName in bundle ? bundle[fileName] : undefined
+          if (visited.has(fileName) || output?.type !== 'chunk') {
+            return
+          }
+          visited.add(fileName)
+          for (const [id, module] of Object.entries(output.modules)) {
+            const file = id.startsWith(resolvedPrefix) && module.renderedLength ? artifacts.get(id.slice(resolvedPrefix.length))?.fileName : undefined
+            if (file) {
+              files.add(file)
+            }
+          }
+          for (const imported of output.imports) {
+            visit(imported)
+          }
+        }
+        visit(chunk.fileName)
+        const relativeBase = !config.base || config.base.startsWith('.')
+        return [...files].map((file): HtmlTagDescriptor => ({
+          tag: 'link',
+          attrs: {
+            rel: 'preload',
+            as: 'fetch',
+            // Matches the credentials of a plain fetch, so the request reuses the preloaded response.
+            crossorigin: true,
+            href: relativeBase ? posix.relative(posix.dirname(path), `/${file}`) : `${config.base}${file}`,
+          },
+          injectTo: 'head',
+        }))
+      },
     },
   }
 }
