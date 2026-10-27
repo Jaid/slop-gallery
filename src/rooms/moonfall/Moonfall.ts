@@ -14,6 +14,7 @@ const {floorY, moonfall: plan, tunnel} = lowerGallery
 const bottom = craterTerrain.lowest()
 
 export default class Moonfall extends Room {
+  override readonly color = '#264c54'
   override readonly description = 'Down the stairs. Out of the ordinary.'
   override readonly fence = [
     // Reaches down to the deepest air in the crater.
@@ -21,8 +22,9 @@ export default class Moonfall extends Room {
     // The exhibition tunnel, sloping down to the Oculus, from its low north end to the top of its high south end.
     floorBox([tunnel.width, tunnel.southZ - tunnel.northZ], tunnel.northY - floorY, tunnel.southY + tunnel.height - tunnel.northY, [tunnel.x - plan.center[0], (tunnel.northZ + tunnel.southZ) / 2 - plan.center[1]]),
   ]
+  override readonly floorY = floorY
   override readonly id = 'moonfall'
-  override readonly origin = floorOrigin(plan, floorY)
+  override readonly origin = floorOrigin(plan, this.floorY)
   override readonly spawn = spawns['']
 
   constructor() {

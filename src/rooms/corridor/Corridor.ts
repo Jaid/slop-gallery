@@ -18,14 +18,16 @@ const stairEastX = Math.max(...stairXs)
 const [originX, originZ] = corridor.center
 
 export default class Corridor extends Room {
+  override readonly color = '#8c6747'
   override readonly description = 'Timber, turns and the long way back to Sienna.'
   override readonly fence = [
     floorBox([corridorHallEastX - hallWestX, hallSouthZ - hallNorthZ], 0, corridor.height, [(hallWestX + corridorHallEastX) / 2 - originX, (hallNorthZ + hallSouthZ) / 2 - originZ]),
     // The stair flight climbs from the hall’s south end to the Sienna’s doorway.
     floorBox([stairEastX - stairWestX, corridorStairs.width], corridorStairs.end[1] - corridor.floorY, corridorStairs.start[1] + stairHeadroom - corridorStairs.end[1], [(stairWestX + stairEastX) / 2 - originX, lodge.siennaZ - originZ]),
   ]
+  override readonly floorY = corridor.floorY
   override readonly id = 'corridor'
-  override readonly origin: Vec3 = [originX, corridor.floorY, originZ]
+  override readonly origin: Vec3 = [originX, this.floorY, originZ]
   override readonly spawn = {
     position: [0, 0.04, 0],
     yaw: 0,

@@ -17,11 +17,13 @@ const plan = {
 } as const
 
 export default class Lobby extends Room {
+  override readonly color = '#c6c7ae'
   override readonly description = 'Nothing here is quite as it seems.'
   // Up to the crown of the vault.
   override readonly fence = floorBox(plan.size, 0, lobbyVault.springY + lobbyVault.outerRadius)
+  override readonly floorY = 0
   override readonly id = 'lobby'
-  override readonly origin = floorOrigin(plan, 0)
+  override readonly origin = floorOrigin(plan, this.floorY)
   override readonly spawn = spawns['']
 
   constructor() {

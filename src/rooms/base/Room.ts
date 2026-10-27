@@ -116,10 +116,14 @@ const point = new Vector3
 export default abstract class Room {
   readonly ambience: ReadonlyMap<string, RoomAmbience>
   readonly cameras: ReadonlyMap<string, RoomCamera>
+  /** the room’s flavor color as #rrggbb, like its fill on the minimap */
+  abstract readonly color: string
   /** a sentence shown below the title */
   abstract readonly description: string
   /** the room’s air as one axis-aligned box or several relative to {@link origin}, from its floor (or the bottom of a sunken one) to its clear height */
   abstract readonly fence: Arrayable<Box3>
+  /** the world height of the room’s main floor in meters, which its floor reflection mirrors at */
+  abstract readonly floorY: number
   /** in snake_case, also the prefix of the global ids of everything in the room */
   abstract readonly id: string
   readonly lamps: ReadonlyMap<string, Lamp>

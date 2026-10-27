@@ -8,10 +8,12 @@ import stickyWalls from './stickyWalls.ts'
 
 /** Lit through its skylight, without lamps of its own. */
 export default class Salon extends Room {
+  override readonly color = '#7d2a31'
   override readonly description = 'Hung frame to frame. Judged elbow to elbow.'
   override readonly fence = floorBox(salon.size, 0, 5.8)
+  override readonly floorY = 0
   override readonly id = 'salon'
-  override readonly origin = floorOrigin(salon, 0)
+  override readonly origin = floorOrigin(salon, this.floorY)
   override readonly spawn = spawns['']
 
   constructor() {

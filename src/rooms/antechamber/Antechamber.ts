@@ -17,11 +17,13 @@ const plan = {
 
 /** Lit through the windows of its dome, without lamps of its own. */
 export default class Antechamber extends Room {
+  override readonly color = '#d4be90'
   override readonly description = 'A pause between the peculiar and the profound.'
   // Up to the crown of the dome.
   override readonly fence = floorBox(plan.size, 0, antechamberDomeCrownY)
+  override readonly floorY = 0
   override readonly id = 'antechamber'
-  override readonly origin = floorOrigin(plan, 0)
+  override readonly origin = floorOrigin(plan, this.floorY)
   // Just north of the middle, looking south toward the stairs.
   override readonly spawn = {
     position: [0, 0.04, -1.1],

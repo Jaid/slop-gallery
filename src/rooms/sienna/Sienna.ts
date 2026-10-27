@@ -13,10 +13,12 @@ const plan = {
 } as const
 
 export default class Sienna extends Room {
+  override readonly color = '#674b37'
   override readonly description = 'Low light. Rich textures. Questionable company.'
   override readonly fence = floorBox(plan.size, 0, 5.8)
+  override readonly floorY = 0
   override readonly id = 'sienna'
-  override readonly origin = floorOrigin(plan, 0)
+  override readonly origin = floorOrigin(plan, this.floorY)
   override readonly spawn = spawns['']
 
   constructor() {
