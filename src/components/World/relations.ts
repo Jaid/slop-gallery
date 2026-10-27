@@ -8,7 +8,7 @@ export type RoomRelations = {
   floorMirror?: FloorMirror
   /** global ids of other rooms’ lamps and ambience emitters that stay on, because they reach into this room or can be seen from it */
   keep: ReadonlyArray<string>
-  /** the other rooms whose models stay enabled, as the rooms seen through up to two openings; the frustum still culls them per frame */
+  /** the other rooms whose models stay enabled: the rooms a player can see into through up to two openings, by casting rays through them; the frustum still culls them per frame */
   rooms: ReadonlyArray<RoomId>
 }
 
@@ -18,7 +18,7 @@ export type RoomRelations = {
  */
 export default {
   lobby: {
-    rooms: ['vesper', 'dine', 'antechamber', 'salon', 'oculus', 'sienna', 'moonfall'],
+    rooms: ['vesper', 'dine', 'antechamber', 'salon', 'oculus', 'sienna'],
     floorMirror: 'base',
     keep: [
       'vesper-ceiling_north',
@@ -30,7 +30,7 @@ export default {
     ],
   },
   vesper: {
-    rooms: ['lobby', 'sienna', 'dine', 'antechamber', 'salon', 'oculus', 'corridor'],
+    rooms: ['lobby', 'sienna', 'dine', 'antechamber', 'salon', 'corridor'],
     floorMirror: 'base',
     keep: [
       'lobby-chandelier_north',
@@ -43,7 +43,7 @@ export default {
     ],
   },
   dine: {
-    rooms: ['lobby', 'salon', 'vesper', 'antechamber', 'oculus'],
+    rooms: ['lobby', 'salon', 'vesper', 'antechamber'],
     floorMirror: 'base',
     keep: [
       'lobby-chandelier_north',
@@ -71,7 +71,7 @@ export default {
     ],
   },
   sienna: {
-    rooms: ['vesper', 'corridor', 'lobby', 'lodge'],
+    rooms: ['vesper', 'corridor', 'lobby'],
     keep: [
       'lobby-chandelier_north',
       'lobby-chandelier_middle',
@@ -84,7 +84,7 @@ export default {
     ],
   },
   moonfall: {
-    rooms: ['antechamber', 'oculus', 'lobby', 'lodge'],
+    rooms: ['antechamber', 'oculus'],
     floorMirror: 'moonfall',
     keep: [
       'lobby-chandelier_north',
@@ -93,7 +93,7 @@ export default {
     ],
   },
   oculus: {
-    rooms: ['moonfall', 'lodge', 'lobby', 'antechamber', 'corridor', 'vesper', 'dine', 'salon'],
+    rooms: ['moonfall', 'lodge', 'lobby', 'salon'],
     keep: [
       'vesper-ceiling_north',
       'vesper-ceiling_south',
@@ -115,7 +115,7 @@ export default {
     ],
   },
   lodge: {
-    rooms: ['oculus', 'corridor', 'moonfall', 'sienna'],
+    rooms: ['oculus', 'corridor'],
     keep: [
       'moonfall-tunnel_green',
       'moonfall-tunnel_blue',
@@ -126,7 +126,7 @@ export default {
     ],
   },
   corridor: {
-    rooms: ['sienna', 'lodge', 'vesper', 'oculus'],
+    rooms: ['sienna', 'lodge'],
     keep: [
       'vesper-ceiling_north',
       'vesper-ceiling_south',
