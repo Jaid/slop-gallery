@@ -25,20 +25,20 @@ const floorY = tunnelFloorHeight(centerZ)
 const depth = 3.2
 const thickness = 0.18
 const ceilingThickness = 0.18
-/** A staff stairway runs down behind each display, from a door in the Oculus’ side wall at the balcony’s end out, then south and back in to a landing before a cutout in the display’s south end wall, turning on flat squares. */
+/** A staff stairway runs down behind each display, from a door in the Oculus’ side wall at the balcony’s end out, then south and back in to a landing before a cutout in the display’s south end wall. It turns on flat floors, the upper one running on south up to the middle flight. */
 export const displayStairway = {
   /** between the outsides of its walls, which stand inside it; the lower flight fills the gap between the display’s south end wall and Moonfall’s north wall */
   width: tunnel.southZ - (southZ + thickness - wallFace),
   /** over the grade, where its ceiling hangs, still below the floors of the Dine and the Salon above */
   headroom: 2.8,
-  /** about how deep each step is, which sets how many steps each flight takes; all of them share the drop evenly */
+  /** about how deep each step is, which sets how many steps the upper and the lower flight take */
   going: 0.5,
+  /** about how high each step rises, which sets how many steps the drop takes; all of them share it evenly, and the middle flight takes those the upper and the lower flight leave */
+  rise: 0.125,
   /** the level floor behind the door, in front of its casing, before the first step down */
   threshold: 0.4,
-  /** how far out from the Oculus’ side wall the upper flight runs before the middle ones turn south */
-  reach: 3.75,
-  /** the level floor between the two middle flights, which keeps the long run from flattening every step */
-  rest: 3,
+  /** how far out from the Oculus’ side wall the upper flight runs before the middle one turns south */
+  reach: 2.8,
   /** narrow enough for the door’s casing to fit on the balcony, between the south wall and the balcony’s edge */
   doorWidth: 1.8,
   /** low enough for the door’s casing to stay below the cornice of the Oculus’ side wall */
@@ -85,7 +85,7 @@ const tunnelDisplays = (['west', 'east'] as const).map((side, index) => {
   const {headroom, going, width: stairWidth} = displayStairway
   const id = `${side}-display`
   const innerX = oculus.center[0] + direction * oculus.size[0] / 2
-  /** where the upper flight meets the middle ones, along whose inner wall */
+  /** where the upper flight meets the middle one, along whose inner wall */
   const turnX = innerX + direction * displayStairway.reach
   const outerX = turnX + direction * stairWidth
   const middleX = (turnX + outerX) / 2
@@ -94,23 +94,26 @@ const tunnelDisplays = (['west', 'east'] as const).map((side, index) => {
   // The lower flight’s north wall continues the display’s south end wall’s outer face, and its south wall backs Moonfall’s north wall.
   const lowerZ: Range = [tunnel.southZ - stairWidth, tunnel.southZ]
   const lowerCenterZ = (lowerZ[0] + lowerZ[1]) / 2
-  const restZ: Range = [(upperZ[1] + lowerZ[0] - displayStairway.rest) / 2, (upperZ[1] + lowerZ[0] + displayStairway.rest) / 2]
   const landingY = tunnelFloorHeight(southZ)
   const threshold = wallFace + displayStairway.threshold
-  // Every flight ends a step over the floor below, so it has a step more than treads, and all steps rise alike from the landing up to the balcony.
-  const counts = [Math.abs(turnX - innerX) - threshold, restZ[0] - upperZ[1], lowerZ[0] - restZ[1], Math.abs(turnX - outsideX)].map(run => Math.round(run / going))
-  const steps = (flightCount: number) => counts.slice(0, flightCount).reduce((sum, count) => sum + count + 1, 0)
-  const rise = (balconyY - landingY) / steps(counts.length)
-  const [cornerY, restY, lowerCornerY] = [1, 2, 3].map(flightCount => balconyY - steps(flightCount) * rise)
+  // Every flight ends a step over the floor below, so it has a step more than treads, and all steps rise alike from the landing up to the balcony. The middle flight runs straight down into the lower corner, and the flat floor before it fills what its steps leave of the way south.
+  const steps = Math.round((balconyY - landingY) / displayStairway.rise)
+  const rise = (balconyY - landingY) / steps
+  const [upperCount, lowerCount] = [Math.abs(turnX - innerX) - threshold, Math.abs(turnX - outsideX)].map(run => Math.round(run / going))
+  const middleCount = steps - upperCount - lowerCount - 3
+  /** where the middle flight leaves the flat floor at its top */
+  const flatZ = lowerZ[0] - middleCount * going
+  const cornerY = balconyY - (upperCount + 1) * rise
+  const lowerCornerY = cornerY - (middleCount + 1) * rise
   const flights = [
-    new StairFlight(`${id}-upper`, [innerX, balconyY, doorZ], [turnX, cornerY + rise, doorZ], stairWidth, counts[0], threshold, 0, 'oculus', headroom),
-    new StairFlight(`${id}-middle`, [middleX, cornerY, upperZ[1]], [middleX, restY + rise, restZ[0]], stairWidth, counts[1], 0, 0, 'oculus', headroom),
-    new StairFlight(`${id}-middle-lower`, [middleX, restY, restZ[1]], [middleX, lowerCornerY + rise, lowerZ[0]], stairWidth, counts[2], 0, 0, 'oculus', headroom),
-    new StairFlight(`${id}-lower`, [turnX, lowerCornerY, lowerCenterZ], [outsideX, landingY + rise, lowerCenterZ], stairWidth, counts[3], 0, 0, 'oculus', headroom),
+    new StairFlight(`${id}-upper`, [innerX, balconyY, doorZ], [turnX, cornerY + rise, doorZ], stairWidth, upperCount, threshold, 0, 'oculus', headroom),
+    new StairFlight(`${id}-middle`, [middleX, cornerY, flatZ], [middleX, lowerCornerY + rise, lowerZ[0]], stairWidth, middleCount, 0, 0, 'oculus', headroom),
+    new StairFlight(`${id}-lower`, [turnX, lowerCornerY, lowerCenterZ], [outsideX, landingY + rise, lowerCenterZ], stairWidth, lowerCount, 0, 0, 'oculus', headroom),
   ] as const
   const corners: [DisplayLevel, DisplayLevel] = [
+    // The upper corner runs on south as the flat floor at the top of the middle flight.
     {
-      ...area([turnX, outerX], upperZ),
+      ...area([turnX, outerX], [upperZ[0], flatZ]),
       floor: cornerY,
     },
     {
@@ -118,10 +121,6 @@ const tunnelDisplays = (['west', 'east'] as const).map((side, index) => {
       floor: lowerCornerY,
     },
   ]
-  const rest: DisplayLevel = {
-    ...area([turnX, outerX], restZ),
-    floor: restY,
-  }
   /** outside the cutout, level with the display’s floor at its south end, from the cutout’s threshold to the lower flight */
   const landing: DisplayLevel = {
     ...area([frontX, outsideX], [southZ, tunnel.southZ]),
@@ -180,21 +179,22 @@ const tunnelDisplays = (['west', 'east'] as const).map((side, index) => {
     flightWall(flights[0], -1),
     closingCorner(flightWall(flights[0], 1), turnX),
     stairWall(`corner-${outerFace.name}`, {
-      center: [outerX, cornerY, doorZ],
+      center: [outerX, cornerY, corners[0].center[1]],
       rotation: outerFace.rotation,
-      width: stairWidth,
+      width: corners[0].size[1],
+    }),
+    // It runs from the upper flight’s south wall to the middle flight.
+    stairWall(`corner-${innerFace.name}`, {
+      center: [turnX, cornerY, (upperZ[1] + flatZ) / 2],
+      rotation: innerFace.rotation,
+      width: flatZ - upperZ[1],
     }),
     stairWall('corner-north', {
       center: [middleX, cornerY, upperZ[0]],
       rotation: 0,
       width: stairWidth,
     }),
-    ...[flights[1], flights[2]].flatMap(flight => [-1, 1].map(cross => flightWall(flight, cross))),
-    ...[innerFace, outerFace].map(face => stairWall(`rest-${face.name}`, {
-      center: [face === innerFace ? turnX : outerX, restY, rest.center[1]],
-      rotation: face.rotation,
-      width: rest.size[1],
-    })),
+    ...[-1, 1].map(cross => flightWall(flights[1], cross)),
     stairWall(`lower-corner-${outerFace.name}`, {
       center: [outerX, lowerCornerY, lowerCenterZ],
       rotation: outerFace.rotation,
@@ -205,8 +205,8 @@ const tunnelDisplays = (['west', 'east'] as const).map((side, index) => {
       rotation: Math.PI,
       width: stairWidth,
     }),
-    closingCorner(flightWall(flights[3], -1), turnX),
-    flightWall(flights[3], 1),
+    closingCorner(flightWall(flights[2], -1), turnX),
+    flightWall(flights[2], 1),
     // It backs the tunnel’s wall, from the display’s south end wall on.
     stairWall(`landing-${innerFace.name}`, {
       center: [frontX, landingY, (landingCeilingZ[0] + landingCeilingZ[1]) / 2],
@@ -253,6 +253,14 @@ const tunnelDisplays = (['west', 'east'] as const).map((side, index) => {
     },
   ]
   const ceilingY = (level: DisplayLevel) => level.floor + headroom + ceilingThickness / 2
+  const lampY = (level: DisplayLevel) => level.floor + headroom - ceilingThickness / 2
+  /** under the ceilings of the flat floors: in the upper corner, at the far end of the flat floor south of it, in the lower corner and over the landing */
+  const lamps: Array<Vec3> = [
+    [middleX, lampY(corners[0]), doorZ],
+    [middleX, lampY(corners[0]), flatZ - stairWidth / 2],
+    [middleX, lampY(corners[1]), lowerCenterZ],
+    [landing.center[0], lampY(landing), (landingCeilingZ[0] + landingCeilingZ[1]) / 2],
+  ]
   const ranges = ({center, size}: FloorRectangle): [Range, Range] => [[center[0] - size[0] / 2, center[0] + size[0] / 2], [center[1] - size[1] / 2, center[1] + size[1] / 2]]
   return {
     side,
@@ -271,29 +279,24 @@ const tunnelDisplays = (['west', 'east'] as const).map((side, index) => {
       /** the middle of the door’s threshold in the Oculus’ side wall */
       door,
       cutout,
-      /** from the door out, then south in two parts, then back in to the landing */
+      /** from the door out, then south, then back in to the landing */
       flights,
       treads: flights.flatMap(flight => flight.blocks),
       corners,
-      rest,
       landing,
       walls,
       /** the flat floors and their ceilings; the ceilings reach under the flights’ to close the joints */
       slabs: [
-        ...[...corners, rest].map(level => slab('display-stairway-floor', ...ranges(level), level.floor, oculusBalcony.size[1])),
+        ...corners.map(level => slab('display-stairway-floor', ...ranges(level), level.floor, oculusBalcony.size[1])),
         slab('display-landing-floor', ...ranges(landing), landingY, oculusBalcony.size[1]),
-        slab('display-stairway-ceiling', [turnX - direction * 0.1, outerX], [upperZ[0], upperZ[1] + 0.1], ceilingY(corners[0]), ceilingThickness),
+        slab('display-stairway-ceiling', [turnX - direction * 0.1, outerX], upperZ, ceilingY(corners[0]), ceilingThickness),
+        slab('display-stairway-ceiling', [turnX, outerX], [upperZ[1], flatZ + 0.1], ceilingY(corners[0]), ceilingThickness),
         slab('display-stairway-ceiling', [turnX - direction * 0.1, outerX], [lowerZ[0] - 0.1, lowerZ[1]], ceilingY(corners[1]), ceilingThickness),
-        slab('display-stairway-ceiling', [turnX, outerX], [restZ[0] - 0.1, restZ[1] + 0.1], ceilingY(rest), ceilingThickness),
         slab('display-landing-ceiling', [frontX, outsideX + direction * 0.1], landingCeilingZ, ceilingY(landing), ceilingThickness),
       ],
       roofs: flights.map(flight => flight.beam(headroom, ceilingThickness, flight.width)) satisfies Array<StairBeam>,
-      /** under the ceilings of the flat floors */
-      lamps: [
-        ...[...corners, rest].map(({center, floor}): Vec3 => [center[0], floor + headroom - ceilingThickness / 2, center[1]]),
-        [landing.center[0], landingY + headroom - ceilingThickness / 2, (landingCeilingZ[0] + landingCeilingZ[1]) / 2] as Vec3,
-      ],
-      /** the air of the upper flight with its corner, of the middle flights, of the lower flight with its corner and the landing, and of the display, each from its lowest floor up to its highest ceiling */
+      lamps,
+      /** the air of the upper flight with its corner, of the middle flight with the flat floor before it, of the lower flight with its corner and the landing, and of the display, each from its lowest floor up to its highest ceiling */
       air: [
         air([innerX, outerX], upperZ, cornerY, balconyY + headroom),
         air([turnX, outerX], [upperZ[1], lowerZ[0]], lowerCornerY, cornerY + headroom),
@@ -330,7 +333,7 @@ function displayGround(x: number, z: number) {
         headroom: displayStairway.headroom,
       }
     }
-    const level = [...stairway.corners, stairway.rest, stairway.landing].find(value => inside(x, z, value))
+    const level = [...stairway.corners, stairway.landing].find(value => inside(x, z, value))
     if (level) {
       return {
         floor: level.floor,

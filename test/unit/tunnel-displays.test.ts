@@ -87,7 +87,7 @@ describe('tower-wide tunnel with display rooms reached from the Oculus balcony',
       expect(insideGallery([display.center[0], floorY + 1.6, display.center[1]])).toBe(true)
       expect(roomAt([display.center[0], floorY + 1.6, display.center[1]])).toBe('oculus')
       expect(insideGallery([Math.sign(display.frontX) * 1.8, floorY + 1.6, display.center[1]])).toBe(true)
-      // beyond the stairway’s outer wall, between the display’s back wall and the middle flights, and between the upper and the lower flight
+      // beyond the stairway’s outer wall, between the display’s back wall and the middle flight, and between the upper and the lower flight
       const {corners, door, landing} = display.stairway
       const sign = Math.sign(display.frontX)
       const outerX = corners[0].center[0] + sign * (displayStairway.width / 2 + 0.3)
@@ -106,7 +106,7 @@ describe('tower-wide tunnel with display rooms reached from the Oculus balcony',
     expect(exhibitKinds.size).toBe(6)
   })
   for (const display of tunnelDisplays) {
-    const {corners, cutout, door, flights, landing, rest} = display.stairway
+    const {corners, cutout, door, flights, landing} = display.stairway
     const sign = Math.sign(display.frontX)
     const southZ = display.center[1] + display.size[1] / 2
     const cutoutX = (cutout.from + cutout.to) / 2
@@ -116,7 +116,7 @@ describe('tower-wide tunnel with display rooms reached from the Oculus balcony',
       expect(door[2] - displayStairway.doorWidth / 2 - wallOpeningTrim).toBeGreaterThan(balconyNorthZ)
       expect(door[2] + displayStairway.doorWidth / 2 + wallOpeningTrim).toBeLessThan(tunnel.northZ - wallFace)
       // Each flight sets off from the floor above and ends a step over the one below.
-      const floors = [balconyY, corners[0].floor, rest.floor, corners[1].floor, landing.floor]
+      const floors = [balconyY, corners[0].floor, corners[1].floor, landing.floor]
       expect(landing.floor).toBeCloseTo(tunnelFloorHeight(southZ))
       expect(flights[0].start).toEqual([door[0], balconyY, door[2]])
       for (const [i, flight] of flights.entries()) {
@@ -126,8 +126,10 @@ describe('tower-wide tunnel with display rooms reached from the Oculus balcony',
         expect(flight.run).toBeGreaterThan(0.45)
         expect(flight.run).toBeLessThan(0.6)
       }
-      expect(flights[0].rise).toBeLessThan(0.18)
-      expect(rest.size[1]).toBe(displayStairway.rest)
+      expect(flights[0].rise).toBeCloseTo(displayStairway.rise, 2)
+      // The middle flight leaves the upper corner’s flat floor and runs unbroken into the lower corner.
+      expect(flights[1].start[2]).toBeCloseTo(corners[0].center[1] + corners[0].size[1] / 2)
+      expect(flights[1].end[2]).toBeCloseTo(corners[1].center[1] - corners[1].size[1] / 2)
       // the Oculus’ side wall and the stairway’s wall behind it, back to back
       const material = new MeshBasicMaterial
       const doorWalls = wallMeshes([walls.find(value => value.id === `oculus-${display.side}`)!, display.stairway.walls.find(wall => wall.holes?.length)!], material)
@@ -148,7 +150,7 @@ describe('tower-wide tunnel with display rooms reached from the Oculus balcony',
       }
       const positions: Array<[Vec3, number]> = [
         ...display.stairway.treads.map((block): [Vec3, number] => [[block.position[0], block.top + 1.6, block.position[2]], block.top]),
-        ...[...corners, rest, landing].map(({center, floor}): [Vec3, number] => [[center[0], floor + 1.6, center[1]], floor]),
+        ...[...corners, landing].map(({center, floor}): [Vec3, number] => [[center[0], floor + 1.6, center[1]], floor]),
       ]
       for (const [position, floor] of positions) {
         expect(insideGallery(position)).toBe(true)
