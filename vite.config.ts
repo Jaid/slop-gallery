@@ -14,6 +14,7 @@ import bakeThreePlugin from 'vite-plugin-bake-three'
 import browserslistTargetPlugin from 'vite-plugin-browserslist-target'
 import gameLevelPlugin, {selectGameLevel} from 'vite-plugin-game-level'
 import importVoiceSamplePlugin from 'vite-plugin-import-voice-sample'
+import jxlHeadersPlugin from 'vite-plugin-jxl-headers'
 import mediaMixinsPlugin from 'vite-plugin-media-mixins'
 import titlePlugin from 'vite-plugin-title'
 
@@ -79,6 +80,7 @@ const getProductionConfig = () => {
   }).plugins.filter(([, options]) => !(options && 'exclude' in options && options.exclude)).map(([createPlugin, options]) => createPlugin(options))
   const config: UserConfig = {
     plugins: [
+      jxlHeadersPlugin(),
       rapierWasmPlugin(),
       bakeThreePlugin(),
       bakeBranchComponentPlugin(),

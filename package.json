@@ -90,7 +90,8 @@
     "@react-three/fiber": "10.0.0-alpha.6",
     "@react-three/rapier": "2.2.0",
     "@react-three/tsl": "10.0.0-alpha.6",
-    "capture-session": "workspace:*"
+    "capture-session": "workspace:*",
+    "vite-plugin-jxl-headers": "workspace:*"
   },
   "devDependencies": {
     "autoprefixer": "10.6.1",
