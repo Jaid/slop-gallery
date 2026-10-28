@@ -1,10 +1,25 @@
 import type {RoomStickyWall} from '../base/Room.ts'
 
+/** how far the bay reaches north of the square room’s north wall line */
+const bayDepth = 2.74
+
 export default {
+  northwest: {
+    center: [-5 + bayDepth / 2, 0, -5 - bayDepth / 2],
+    rotation: Math.PI / 4,
+    width: bayDepth * Math.SQRT2,
+    height: 3.6,
+  },
   north: {
-    center: [0, 0, -5],
+    center: [0, 0, -5 - bayDepth],
     rotation: 0,
-    width: 10,
+    width: 10 - bayDepth * 2,
+    height: 3.6,
+  },
+  northeast: {
+    center: [5 - bayDepth / 2, 0, -5 - bayDepth / 2],
+    rotation: -Math.PI / 4,
+    width: bayDepth * Math.SQRT2,
     height: 3.6,
   },
   west: {

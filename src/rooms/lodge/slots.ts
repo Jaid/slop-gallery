@@ -1,26 +1,31 @@
 import type {RoomPortraitSlot} from '../base/Room.ts'
 
+/** how far the bay reaches north of the square room’s north wall line */
+const bayDepth = 2.74
+/** how far a frame hangs in front of the middle of a 45° bay wall along x and z each */
+const diagonalOffset = 0.22 * Math.SQRT1_2
+
 export default {
+  northwest_0: {
+    wallId: 'northwest',
+    ratio: '3:2',
+    area: 30_000,
+    position: [-5 + bayDepth / 2 + diagonalOffset, 2, -5 - bayDepth / 2 + diagonalOffset],
+    rotation: Math.PI / 4,
+  },
   north_0: {
     wallId: 'north',
     ratio: '3:2',
     area: 30_000,
-    position: [-3, 2, -4.78],
+    position: [0, 2, -5 - bayDepth + 0.22],
     rotation: 0,
   },
-  north_1: {
-    wallId: 'north',
+  northeast_0: {
+    wallId: 'northeast',
     ratio: '3:2',
     area: 30_000,
-    position: [0, 2, -4.78],
-    rotation: 0,
-  },
-  north_2: {
-    wallId: 'north',
-    ratio: '3:2',
-    area: 30_000,
-    position: [3, 2, -4.78],
-    rotation: 0,
+    position: [5 - bayDepth / 2 - diagonalOffset, 2, -5 - bayDepth / 2 + diagonalOffset],
+    rotation: -Math.PI / 4,
   },
   south_0: {
     wallId: 'south',

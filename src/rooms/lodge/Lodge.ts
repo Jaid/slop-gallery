@@ -1,5 +1,5 @@
 import corridor, {lodgeThreshold} from '#src/lib/gallery/corridor.ts'
-import lodge from '#src/lib/gallery/lodge.ts'
+import lodge, {lodgeBay} from '#src/lib/gallery/lodge.ts'
 
 import Room from '../base/Room.ts'
 import floorBox from '../lib/floorBox.ts'
@@ -18,6 +18,8 @@ export default class Lodge extends Room {
     floorBox(lodge.size, 0, lodge.height),
     // The Lodge’s half of the doorway passage from the Corridor’s hall.
     floorBox(lodgeThreshold.size, corridor.floorY - lodge.floorY, corridor.height, [lodgeThreshold.center[0] - lodge.center[0], lodgeThreshold.center[1] - lodge.center[1]]),
+    // The box around the bay off the north wall.
+    floorBox(lodgeBay.bounds.size, 0, lodge.height, [lodgeBay.bounds.center[0] - lodge.center[0], lodgeBay.bounds.center[1] - lodge.center[1]]),
   ]
   override readonly floorY = lodge.floorY
   override readonly id = 'lodge'
