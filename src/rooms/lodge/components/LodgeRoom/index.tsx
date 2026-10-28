@@ -4,13 +4,14 @@ import {ConvexHullCollider, RigidBody} from '@react-three/rapier'
 import {Shape, Vector2} from 'three/webgpu'
 
 import BenchSeat from '#component/levels/gallery/BenchSeat'
+import LodgeCeiling from '#component/levels/gallery/LodgeCeiling'
 import LodgeFire from '#component/levels/gallery/LodgeFire'
 import LodgeFurnishings from '#component/levels/gallery/LodgeFurnishings'
 import Box from '#src/components/Scene/primitives.tsx'
 import lodge, {lodgeOutline} from '#src/lib/gallery/lodge.ts'
 import lodgeInterior from '#src/lib/gallery/lodgeInterior/layout.ts'
 
-const {fireplace, beams, windowSeat} = lodgeInterior
+const {fireplace, windowSeat} = lodgeInterior
 /** Interior face of the room walls, measured from the room’s center. */
 const wallInside = lodge.size[1] / 2 - 0.105
 /** Past the wall face, so breast and chimney never show a seam against the logs. */
@@ -33,12 +34,11 @@ const floorCorners = slabCorners(-floorSlab.depth, 0)
 const ceilingCorners = slabCorners(lodge.height, lodge.height + ceilingSlab.depth)
 
 /**
- * The Lodge: log walls with chinking and a half-octagon bay to the north, a wide-plank oak floor, a smoke-darkened board ceiling on hewn beams and a fieldstone fireplace, furnished around the hearth.
+ * The Lodge: log walls with chinking and a half-octagon bay to the north, a wide-plank oak floor, a smoke-darkened board ceiling on hewn beams, hips fanning into the bay and a fieldstone fireplace, furnished around the hearth.
  *
  * The walls themselves are drawn by `WallSurface` with `materials.logWall`; this adds everything inside them.
  */
 export default function LodgeRoom({materials}: {materials: LodgeMaterials}) {
-  const [width] = lodge.size
   const {hearth, mantel, chimney} = fireplace
   const pillarWidth = fireplace.width / 2 - fireplace.openingHalfWidth
   const breastDepth = breastBack - fireplace.front
@@ -50,10 +50,8 @@ export default function LodgeRoom({materials}: {materials: LodgeMaterials}) {
       <ConvexHullCollider args={[ceilingCorners]} />
       <mesh castShadow material={materials.floor} name='lodge-floor' position={[0, -floorSlab.depth, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}><extrudeGeometry args={[planShape, floorSlab]} /></mesh>
       <mesh castShadow material={materials.ceiling} name='lodge-ceiling' position={[0, lodge.height, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}><extrudeGeometry args={[planShape, ceilingSlab]} /></mesh>
-      {/* Hewn beams rest on the top plates of the east and west walls. */}
-      {/* Their ends stop inside the walls instead of in the walls’ outer faces, which they would share. */}
-      {beams.z.map(z => <Box key={z} material={materials.timber} name='lodge-beam' position={[0, lodge.height - beams.size[1] / 2, z]} size={[width - 0.1, beams.size[1], beams.size[0]]} />)}
     </RigidBody>
+    <LodgeCeiling material={materials.timber} />
     <RigidBody colliders='cuboid' type='fixed'>
       <group name='lodge-window-seat' position={windowSeat.position} rotation={[0, Math.PI / 2, 0]}>
         <BenchSeat material={materials.leather} position={[0, 0.52, 0]} size={windowSeat.cushion} />

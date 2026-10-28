@@ -6,7 +6,6 @@ import {useMemo} from 'react'
 import useGraphicsMode from 'use-graphics-mode'
 
 import {litFrom} from '#src/components/World/relations.ts'
-import lodge from '#src/lib/gallery/lodge.ts'
 import CoffeeTableGeometry from '#src/lib/gallery/lodgeInterior/CoffeeTableGeometry.ts'
 import lodgeInterior, {lodgeFurnitureColliders} from '#src/lib/gallery/lodgeInterior/layout.ts'
 import UpholsteredSeatGeometry from '#src/lib/gallery/lodgeInterior/UpholsteredSeatGeometry.ts'
@@ -22,7 +21,7 @@ export default function LodgeFurnishings({materials}: {materials: LodgeMaterials
   const sofaGeometry = useDisposable(useMemo(() => new UpholsteredSeatGeometry(sofa.seats, lodgeInterior.seatWidth), []))
   const armchairGeometry = useDisposable(useMemo(() => new UpholsteredSeatGeometry(1, lodgeInterior.seatWidth + 0.08), []))
   const table = useDisposable(useMemo(() => new CoffeeTableGeometry(coffeeTable.size), []))
-  const wheel = useDisposable(useMemo(() => new WagonWheelGeometry(lodge.height - chandelier.position[1]), []))
+  const wheel = useDisposable(useMemo(() => new WagonWheelGeometry(chandelier.drop), []))
   const seats = [
     {
       geometry: sofaGeometry,

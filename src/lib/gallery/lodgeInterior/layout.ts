@@ -1,6 +1,18 @@
 import type {Vec3} from '../types.ts'
 
+import lodge, {lodgeBay} from '../lodge.ts'
 import UpholsteredSeatGeometry from './UpholsteredSeatGeometry.ts'
+
+/** A point of the world plan in the room’s frame. */
+const toRoom = ([x, z]: readonly [number, number]) => [x - lodge.center[0], z - lodge.center[1]] as const
+/** the middle of the octagon the bay is cut from, which all four of its corners lie equally far from */
+const bayCenter = toRoom(lodgeBay.center)
+/** the octagonal boss in the bay’s ceiling that the hips run out of and the chandelier hangs from */
+const boss = {
+  /** to its corners, wide enough that the hips only meet inside it */
+  radius: 0.4,
+  height: 0.44,
+}
 
 export type Placement = {
   position: Vec3
@@ -37,7 +49,7 @@ const coffeeTable = {
 /**
  * Furnishings of the Lodge in the room’s frame: the origin is the middle of the floor and +z points toward the fireplace on the south wall.
  *
- * Seating gathers around the hearth and keeps clear of the walkway that links both doorways along the north wall at z −2.6.
+ * Seating gathers around the hearth and keeps clear of the walkway that links both doorways at z −2.6, under the chandelier in front of the north bay.
  */
 const lodgeInterior = {
   /** north edge of the furniture; the walkway between the doorways stays free north of it */
@@ -66,14 +78,17 @@ const lodgeInterior = {
   seatWidth,
   armchairs,
   coffeeTable,
-  /** the wagon wheel’s hub, hanging above the coffee table */
+  /** the wagon wheel’s hub, hanging from the boss in the bay’s ceiling with its spokes looking along the boss’ faces */
   chandelier: {
-    position: [0, 3.05, 1] as Vec3,
+    position: [bayCenter[0], 2.8, bayCenter[1]] as Vec3,
+    /** from the hub up to the boss’ underside */
+    drop: lodge.height - boss.height - 2.8,
     /** light height relative to the hub, a little below the wheel */
     lightY: -0.14,
     color: '#ffc68a',
     intensity: 20,
-    distance: 5,
+    /** far enough to reach into the bay’s corners */
+    distance: 7,
     decay: 1.25,
   },
   /**
@@ -108,10 +123,25 @@ const lodgeInterior = {
     /** soot-black lining at the back of the firebox */
     back: 4.67,
   },
+  /** hewn beams across the room, resting on the east and west walls */
   beams: {
-    z: [-3.5, 0, 3.5],
+    z: [0, 3.5],
     /** width and height of each beam */
     size: [0.3, 0.34] as [number, number],
+  },
+  /**
+   * The bay’s ceiling framing: hips run out of the boss into the bay’s four corners and two braces run back onto the first beam.
+   *
+   * All six sit square to faces of the boss, the hips to within 2°, so the boss and the wagon wheel below it look along the same eight directions.
+   */
+  bayFraming: {
+    center: bayCenter,
+    boss,
+    /** width and height of the hips and braces, lighter than the beams */
+    rafter: [0.24, 0.3] as [number, number],
+    hips: lodgeBay.corners.map(toRoom),
+    /** directions of the braces around y from +x toward +z, onto the faces of the boss that look south-east and south-west */
+    braces: [Math.PI * 3 / 8, Math.PI * 5 / 8],
   },
 } as const
 
