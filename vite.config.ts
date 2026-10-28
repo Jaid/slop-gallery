@@ -10,7 +10,6 @@ import bakeBranchComponentPlugin from 'rolldown-plugin-bake-branch-component'
 import hoistPopularConstantsPlugin from 'rolldown-plugin-hoist-popular-constants'
 import thematicChunksPlugin from 'rolldown-plugin-thematic-chunks'
 import {loadEnv, mergeConfig} from 'vite'
-import avifOnlyPlugin from 'vite-plugin-avif-only'
 import bakeThreePlugin from 'vite-plugin-bake-three'
 import browserslistTargetPlugin from 'vite-plugin-browserslist-target'
 import gameLevelPlugin, {selectGameLevel} from 'vite-plugin-game-level'
@@ -80,7 +79,6 @@ const getProductionConfig = () => {
   }).plugins.filter(([, options]) => !(options && 'exclude' in options && options.exclude)).map(([createPlugin, options]) => createPlugin(options))
   const config: UserConfig = {
     plugins: [
-      avifOnlyPlugin(),
       rapierWasmPlugin(),
       bakeThreePlugin(),
       bakeBranchComponentPlugin(),

@@ -84,7 +84,6 @@
         "tsconfig-jaid-react": "16.0.0",
         "typescript": "npm:typescript-classic@6.0.4",
         "vite": "8.3.5",
-        "vite-plugin-avif-only": "workspace:*",
         "vite-plugin-bake-three": "workspace:*",
         "vite-plugin-browserslist-target": "workspace:*",
         "vite-plugin-game-level": "workspace:*",

@@ -43,9 +43,6 @@ for (const level of levelIds) {
   if (files.some(file => /^material\d*\.js$/iu.test(file))) {
     throw new Error(`Knot material code escaped the main chunk in ${level}.`)
   }
-  if (files.some(file => file.endsWith('.jxl'))) {
-    throw new Error(`Unsupported JXL escaped the production build in ${level}.`)
-  }
   if (level === 'gallery') {
     if (!files.some(file => file.replaceAll('\\', '/').startsWith('art/')) || !files.some(file => file.replaceAll('\\', '/').startsWith('audio/'))) {
       throw new Error('Gallery public assets are incomplete.')
@@ -54,7 +51,7 @@ for (const level of levelIds) {
     if (files.some(file => /^(?:art|audio)[/\\]/u.test(file))) {
       throw new Error(`Gallery public assets leaked into ${level}.`)
     }
-    if (level === 'soundboard' && files.some(file => file.endsWith('.avif'))) {
+    if (level === 'soundboard' && files.some(file => file.endsWith('.jxl'))) {
       throw new Error('Soundboard unexpectedly contains image assets.')
     }
   }

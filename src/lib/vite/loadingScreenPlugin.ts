@@ -3,7 +3,6 @@ import type {Plugin} from 'vite'
 import {resolve} from 'node:path'
 
 import fs from 'fs-extra'
-import {AvifCache} from 'vite-plugin-avif-only'
 
 type LoadingScreen = {
   tagline: string
@@ -52,29 +51,23 @@ const style = `
   }
 }
 `
-// The wallpaper ships inside index.html, so it paints together with the title instead of after another request.
-const wallpaperOptions = {
-  quality: 30,
-  width: 1600,
-}
 /** Paints the title over the level’s wallpaper as plain HTML, which covers the page while the scripts download and the scene loads. The app fades it out to the menu once the scene is ready. */
 const loadingScreenPlugin = ({tagline, title, wallpaper}: LoadingScreen): Plugin => {
   let root: string
-  let cache: AvifCache
   return {
     name: 'loading-screen',
     configResolved(config) {
       root = config.root
-      cache = new AvifCache(resolve(root, 'temp/vite-plugin-avif-only/cache'), wallpaperOptions)
     },
     async transformIndexHtml() {
       const attrs: Record<string, string> = {
         id: 'loading-screen',
         'aria-busy': 'true',
       }
+      // The wallpaper ships inside index.html, so it paints together with the title instead of after another request.
       if (wallpaper) {
-        const image = await fs.readFile(await cache.convert(resolve(root, wallpaper)))
-        attrs.style = `--wallpaper: url(data:image/avif;base64,${image.toBase64()})`
+        const image = await fs.readFile(resolve(root, wallpaper))
+        attrs.style = `--wallpaper: url(data:image/jxl;base64,${image.toBase64()})`
       }
       return [
         {
