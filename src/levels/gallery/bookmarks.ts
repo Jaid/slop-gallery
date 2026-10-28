@@ -152,6 +152,16 @@ export const cameraBookmarks: Array<CameraBookmark> = [
     ratio: 16 / 9,
   },
   {
+    id: 'oculus_balcony',
+    position: [-6.448, -1.986, -34.632],
+    aim: {
+      yaw: -2.7851,
+      pitch: -0.262,
+    },
+    fov: 55,
+    ratio: 16 / 9,
+  },
+  {
     id: 'lodge',
     position: [-20.61, -2.03, -37.53],
     aim: {
