@@ -160,12 +160,12 @@ export class GalleryRenderer extends WebgpuRenderer {
   private frameScene: Scene | null = null
   /** per camera, the recent average of milliseconds spent building an object whose material its passes haven’t built yet; that varies by pass, since three may reuse what another pass built, as for most shadow maps, or build it again for the pass, as for the floor reflection */
   private readonly freshBuildCosts = new WeakMap<Camera, number>
-  /** shadow cameras that left out objects not built yet this frame */
-  private readonly gatedCameras = new Set<Camera>
-  /** objects that streaming left out this frame although they will get their turn */
+  /** shadow cameras that left out objects not built yet this frame, with those objects */
+  private gatedCameras = new Map<Camera, Set<Object3D>>
+  /** objects that streaming left out of passes other than shadow maps this frame although they will get their turn */
   private gatedObjects = new Set<Object3D>
-  /** shadow cameras whose map left out objects not built yet the last time it rendered, so it must render again */
-  private readonly incompleteCameras = new Set<Camera>
+  /** shadow cameras whose map left out objects not built yet the last time it rendered, so it must render again, with those objects */
+  private readonly incompleteCameras = new Map<Camera, Set<Object3D>>
   private initialization?: Promise<this>
   /** what building each material took the last time a pass other than a shadow map built it from scratch, in milliseconds; a heavy material is heavy in every such pass */
   private readonly materialBuildCosts = new WeakMap<object, number>
@@ -191,7 +191,7 @@ export class GalleryRenderer extends WebgpuRenderer {
   private streamPriorityFound = false
   private streamRest = false
   private readonly untrackLoading: () => void
-  /** objects that streaming left out last frame although they will get their turn */
+  /** objects that streaming left out of passes other than shadow maps last frame although they will get their turn */
   private waitingObjects = new Set<Object3D>
   private warmedFrame = -1
   private warming = false
@@ -211,11 +211,20 @@ export class GalleryRenderer extends WebgpuRenderer {
       trackTimestamp: telemetry !== null,
     })
     this.lighting = new BatchedLighting
-    this.untrackLoading = trackLoadingItems(() => [
-      ...this.warming && this.warmedFrame !== this.frame ? ['warmup'] : [],
-      ...[...this.waitingObjects].map(object => `stream:${object.name || object.uuid}`),
-      ...[...this.incompleteCameras].map(camera => `shadow-map:${camera.uuid}`),
-    ])
+    this.untrackLoading = trackLoadingItems(() => {
+      // Incomplete shadow maps render again one per frame in turn, so what they left out stays listed until their next turn. Listing only what last frame’s passes left out would jump with whichever map rendered.
+      const waiting = new Set(this.waitingObjects)
+      for (const objects of this.incompleteCameras.values()) {
+        for (const object of objects) {
+          waiting.add(object)
+        }
+      }
+      return [
+        ...this.warming && this.warmedFrame !== this.frame ? ['warmup'] : [],
+        ...[...waiting].map(object => `stream:${object.name || object.uuid}`),
+        ...[...this.incompleteCameras.keys()].map(camera => `shadow-map:${camera.uuid}`),
+      ]
+    })
   }
 
   private get internals() {
@@ -390,14 +399,15 @@ export class GalleryRenderer extends WebgpuRenderer {
     this.streamIdle = this.streamFound ? 0 : this.streamIdle + 1
     // A shadow map that didn’t render last frame still misses what it left out before.
     for (const camera of this.renderedShadowCameras) {
-      if (this.gatedCameras.has(camera)) {
-        this.incompleteCameras.add(camera)
+      const gated = this.gatedCameras.get(camera)
+      if (gated) {
+        this.incompleteCameras.set(camera, gated)
       } else {
         this.incompleteCameras.delete(camera)
       }
     }
     this.renderedShadowCameras.clear()
-    this.gatedCameras.clear()
+    this.gatedCameras = new Map
     const waiting = this.gatedObjects
     this.gatedObjects = this.waitingObjects
     this.gatedObjects.clear()
@@ -549,9 +559,15 @@ export class GalleryRenderer extends WebgpuRenderer {
         // Left out until its turn; its children still go their own way.
         // Only objects that will get their turn keep the shadow map rendering.
         if (priority || this.streaming === 'all') {
-          this.gatedObjects.add(object)
           if (shadowCameras.has(camera)) {
-            this.gatedCameras.add(camera)
+            let gated = this.gatedCameras.get(camera)
+            if (!gated) {
+              gated = new Set
+              this.gatedCameras.set(camera, gated)
+            }
+            gated.add(object)
+          } else {
+            this.gatedObjects.add(object)
           }
         }
         for (const child of object.children) {
