@@ -123,13 +123,13 @@ describe('tower-wide tunnel with display rooms reached from the Oculus balcony',
       const floors: Array<[number, number]> = [[balconyY, corners[0].floor], [ramp.floor - rampFall, corners[1].floor], [corners[1].floor, landing.floor]]
       expect(landing.floor).toBeCloseTo(tunnelFloorHeight(southZ))
       expect(flights[0].start).toEqual([door[0], balconyY, door[2]])
-      expect(flights[0].count).toBe(3)
+      expect(flights[0].count).toBe(displayStairway.upperSteps)
+      expect(flights[0].entryLanding).toBeGreaterThanOrEqual(wallFace + displayStairway.threshold)
       for (const [i, flight] of flights.entries()) {
         expect(flight.start[1]).toBeCloseTo(floors[i][0])
         expect(flight.end[1]).toBeCloseTo(floors[i][1] + flight.rise)
         expect(flight.rise).toBeCloseTo(displayStairway.rise, 9)
-        expect(flight.run).toBeGreaterThan(0.45)
-        expect(flight.run).toBeLessThan(0.6)
+        expect(flight.run).toBeCloseTo(displayStairway.going, 9)
       }
       // The middle flight leaves the ramp south of the upper corner and runs unbroken into the lower corner.
       expect(ramp.center[1] - ramp.size[1] / 2).toBeCloseTo(corners[0].center[1] + corners[0].size[1] / 2)
@@ -167,7 +167,7 @@ describe('tower-wide tunnel with display rooms reached from the Oculus balcony',
         expect(floorHeight(position)).toBeCloseTo(floor)
       }
     })
-    test(`${display.side}: the cutout in the display’s south end wall opens onto the landing up to its ceiling`, () => {
+    test(`${display.side}: the cutout in the display’s south end wall opens onto the landing up to the display’s ceiling`, () => {
       const material = new MeshBasicMaterial
       const shell = display.shell.map(({position, size}) => {
         const slab = new SlopedBoxGeometry(...size, tunnelSlope)
@@ -181,12 +181,15 @@ describe('tower-wide tunnel with display rooms reached from the Oculus balcony',
         return ray.intersectObjects(meshes)
       }
       try {
-        expect(cutout.top).toBeCloseTo(landing.floor + displayStairway.headroom - 0.09)
+        // The landing’s ceiling meets the display’s, which reaches over the south end wall.
+        expect(cutout.top).toBeCloseTo(landing.floor + landing.headroom - 0.09)
+        expect(cutout.top).toBeGreaterThan(tunnelFloorHeight(southZ) + tunnel.height)
         for (const x of [cutout.from + sign * 0.1, cutoutX, cutout.to - sign * 0.1]) {
-          for (const height of [0.1, 1.6, cutout.top - landing.floor - 0.1]) {
+          for (const height of [0.1, 1.6, tunnel.height - 0.15]) {
             expect(cast(x, height)).toHaveLength(0)
           }
-          expect(cast(x, cutout.top - landing.floor + 0.1).length).toBeGreaterThan(0)
+          const up = new Raycaster(new Vector3(x, landing.floor + 1.6, southZ + 0.09), new Vector3(0, 1, 0), 0, tunnel.height)
+          expect(up.intersectObjects(meshes)[0]?.point.y).toBeCloseTo(tunnelFloorHeight(southZ + 0.09) + tunnel.height, 3)
         }
         expect(cast(cutout.from - sign * 0.05, 1.6).length).toBeGreaterThan(0)
         // The display’s back wall reaches on past the south end wall as the cutout’s other jamb.
