@@ -77,7 +77,7 @@ export const openings: ReadonlyArray<Opening> = [
  */
 const relations = {
   lobby: {
-    rooms: ['vesper', 'dine', 'antechamber', 'salon', 'oculus', 'sienna'],
+    rooms: ['vesper', 'dine', 'antechamber', 'salon', 'oculus', 'sienna', 'lodge'],
     floorMirror: 'base',
     keep: [
       'vesper-ceiling_north',
@@ -179,16 +179,13 @@ const relations = {
   lodge: {
     rooms: ['oculus', 'corridor'],
     keep: [
-      'moonfall-tunnel_green',
-      'moonfall-tunnel_blue',
-      'moonfall-tunnel_red',
       'corridor-lantern_north',
       'corridor-lantern_middle',
       'corridor-lantern_south',
     ],
   },
   corridor: {
-    rooms: ['sienna', 'lodge'],
+    rooms: ['sienna', 'lodge', 'vesper'],
     keep: [
       'vesper-ceiling_north',
       'vesper-ceiling_south',
