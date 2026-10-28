@@ -229,6 +229,31 @@ describe('passage elbows', () => {
       }
     }
   })
+  test('vaults close their spandrels toward an elbow, up to its ceiling', () => {
+    const vault = new VaultGeometry(lodgeTunnel)
+    disposables.push(vault)
+    const mesh = new Mesh(vault.shell, material)
+    const radius = lodgeTunnel.width / 2
+    const [x, z] = lodgeTunnel.path[1]
+    const elbow = new Vector3(x, 0, z)
+    for (const [i, {start, end}] of lodgeTunnel.spans.entries()) {
+      // From the elbow, back along the span it ends or ahead along the span it starts.
+      const direction = i ? horizontal(end[0] - start[0], end[1] - start[1]) : horizontal(start[0] - end[0], start[1] - end[1])
+      const across = new Vector3(-direction.z, 0, direction.x)
+      for (const side of [-1, 1]) {
+        // Beside the vault’s arch, just under the elbow’s ceiling, where the turn used to look into the void behind the vault.
+        for (const height of [lodgeTunnel.height - 0.05, lodgeTunnel.height - 0.6]) {
+          const origin = elbow.clone().addScaledVector(across, side * (radius - wallFace - 0.15))
+          origin.y = lodgeTunnel.floorY + height
+          const raycaster = new Raycaster(origin, direction, 0, radius + 0.5)
+          const hits = raycaster.intersectObject(mesh)
+          expect(hits.length).toBeGreaterThan(0)
+          expect(hits[0].distance).toBeLessThan(radius)
+          expect(hits[0].distance).toBeGreaterThan(radius - wallFace - 0.05)
+        }
+      }
+    }
+  })
 })
 describe('Lodge furniture', () => {
   test('the window seat’s cushion stays inside its timber ends', () => {
