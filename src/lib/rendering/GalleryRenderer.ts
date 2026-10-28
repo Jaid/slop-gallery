@@ -42,6 +42,7 @@ type Internals = {
   }
   _pipelines: {
     getForRender: (renderObject: RenderObject, promises: PromiseSink | null) => unknown
+    isReady: (renderObject: RenderObject) => boolean
     updateForRender: (renderObject: RenderObject) => void
   }
   _projectObject: ProjectObject
@@ -149,6 +150,8 @@ export class GalleryRenderer extends WebgpuRenderer {
   private buildTime = 0
   /** the materials each camera’s passes built node graphs for already */
   private readonly builtMaterials = new WeakMap<Camera, WeakSet<object>>
+  /** the sequence numbers of the pipelines still compiling in the background, oldest first */
+  private readonly compilingPipelines = new Set<number>
   private culledCamera: Camera | null = null
   private culler: Culler | null = null
   private frame = -1
@@ -166,7 +169,8 @@ export class GalleryRenderer extends WebgpuRenderer {
   private initialization?: Promise<this>
   /** what building each material took the last time a pass other than a shadow map built it from scratch, in milliseconds; a heavy material is heavy in every such pass */
   private readonly materialBuildCosts = new WeakMap<object, number>
-  private pending = 0
+  /** the sequence number of the last pipeline that started compiling in the background */
+  private pipelineSequence = 0
   /** the build cost this frame’s admissions are expected to add up to */
   private plannedBuildCost = 0
   /** projects objects outside of loading, leaving out {@link hidden} outside of {@link unculledCameras} and, outside of shadow maps, {@link hiddenFromView} */
@@ -176,6 +180,8 @@ export class GalleryRenderer extends WebgpuRenderer {
   private projectWarming?: ProjectObject
   /** shadow cameras whose map rendered this frame while streaming */
   private readonly renderedShadowCameras = new Set<Camera>
+  /** shadow cameras whose map left out objects whose pipelines were still compiling, with the sequence number of the last pipeline that had started by then */
+  private readonly shadowsAwaitingPipelines = new Map<Camera, number>
   /** the recent average of milliseconds spent building an object whose material a camera’s passes built already, which three mostly takes from its caches */
   private sharedBuildCost = 1
   private streamFound = false
@@ -223,12 +229,12 @@ export class GalleryRenderer extends WebgpuRenderer {
 
   /** the number of render pipelines that are still compiling in the background */
   get pendingPipelines() {
-    return this.pending
+    return this.compilingPipelines.size
   }
 
   /** whether the last warming frame drew every object in the frame scene and no pipeline is still compiling */
   get warm() {
-    return this.warmedAll && this.pending === 0
+    return this.warmedAll && this.compilingPipelines.size === 0
   }
 
   /** whether the last warming frame drew every object in the frame scene, so all that is left are pipelines compiling in the background */
@@ -283,8 +289,14 @@ export class GalleryRenderer extends WebgpuRenderer {
     try {
       if (scene !== this.frameScene || !scene.matrixWorldAutoUpdate) {
         // Shadow maps render within the frame’s passes.
-        if (this.streaming && this.shadowCameras.has(camera)) {
-          this.renderedShadowCameras.add(camera)
+        if (this.shadowCameras.has(camera)) {
+          if (this.streaming) {
+            this.renderedShadowCameras.add(camera)
+          }
+          // Once the pipelines it waited for are ready, the map draws what it left out.
+          if (!this.awaitsPipelines(camera)) {
+            this.shadowsAwaitingPipelines.delete(camera)
+          }
         }
         super.render(scene, camera)
         return
@@ -336,9 +348,9 @@ export class GalleryRenderer extends WebgpuRenderer {
     this.installProjection()
   }
 
-  /** Whether the shadow map of this camera left out objects that streaming hasn’t built yet, so it must render again. */
-  streamingIncomplete(camera: Camera) {
-    return this.incompleteCameras.has(camera)
+  /** Whether the shadow map of this camera left out objects that streaming hasn’t built yet, or whose pipelines were still compiling and are ready by now, so it must render again. */
+  shadowIncomplete(camera: Camera) {
+    return this.incompleteCameras.has(camera) || this.shadowsAwaitingPipelines.has(camera) && !this.awaitsPipelines(camera)
   }
 
   /**
@@ -398,6 +410,14 @@ export class GalleryRenderer extends WebgpuRenderer {
     }
   }
 
+  /** Whether a pipeline that had started compiling when the camera’s shadow map last left out an object is still compiling. */
+  private awaitsPipelines(camera: Camera) {
+    const until = this.shadowsAwaitingPipelines.get(camera)
+    // Sequence numbers only grow and the set keeps their order, so its first one is the oldest still compiling.
+    const oldest = this.compilingPipelines.values().next().value
+    return until !== undefined && oldest !== undefined && oldest <= until
+  }
+
   /** Replaces three’s synchronous pipeline creation for the frame scene. Objects are drawn once their pipeline is ready, so a new variant no longer stalls the frame. */
   private compilePipelinesAsync() {
     const internals = this.internals
@@ -431,24 +451,34 @@ export class GalleryRenderer extends WebgpuRenderer {
     let compiling: RenderObject | null = null
     const sink: PromiseSink = {
       push: promise => {
-        this.pending++
+        const sequence = ++this.pipelineSequence
+        this.compilingPipelines.add(sequence)
         const id = compiling ? `pipeline:${objectLabel(compiling.object)}/${compiling.material.name || compiling.material.type}` : 'pipeline'
         const loaded = startLoading(id)
         const start = performance.now()
         const settle = () => {
-          this.pending--
+          this.compilingPipelines.delete(sequence)
           loaded()
           const ms = performance.now() - start
           if (ms >= slowPipelineMs) {
             telemetry?.event('pipeline.slow', {
               'pipeline.id': id,
               'pipeline.ms': Math.round(ms),
-              'pipeline.pending': this.pending,
+              'pipeline.pending': this.compilingPipelines.size,
             })
           }
         }
         void promise.then(settle, settle)
       },
+    }
+    const isReady = pipelines.isReady.bind(pipelines)
+    // A shadow map only renders again once something in its light’s reach changes, so what it leaves out while their pipelines compile would stay missing. Without the walls and roofs in the sun’s map, the sun shafts fill the rooms.
+    pipelines.isReady = renderObject => {
+      const ready = isReady(renderObject)
+      if (!ready && renderObject.scene === this.frameScene && this.shadowCameras.has(renderObject.camera)) {
+        this.shadowsAwaitingPipelines.set(renderObject.camera, this.pipelineSequence)
+      }
+      return ready
     }
     // A render bundle records its draws once, so an object missing from it would stay missing.
     pipelines.updateForRender = renderObject => {

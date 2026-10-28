@@ -141,7 +141,7 @@ export default function RoomCulling() {
             unculledCameras.add(light.shadow.camera)
           }
           // One shadow map missing objects renders again per frame, each in turn, since rendering them all every frame costs more than building their objects.
-          if (!refreshing && galleryRenderer.streamingIncomplete(light.shadow.camera) && !refreshed.has(light.shadow.camera)) {
+          if (!refreshing && galleryRenderer.shadowIncomplete(light.shadow.camera) && !refreshed.has(light.shadow.camera)) {
             light.shadow.needsUpdate = true
             refreshed.add(light.shadow.camera)
             refreshing = true
