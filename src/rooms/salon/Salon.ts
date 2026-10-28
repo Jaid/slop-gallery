@@ -3,6 +3,7 @@ import salon from '#src/lib/gallery/salon.ts'
 import Room from '../base/Room.ts'
 import floorBox from '../lib/floorBox.ts'
 import floorOrigin from '../lib/floorOrigin.ts'
+import cameras from './cameras.ts'
 import spawns from './spawns.ts'
 import stickyWalls from './stickyWalls.ts'
 
@@ -19,6 +20,7 @@ export default class Salon extends Room {
   constructor() {
     super({
       title: 'The Salon',
+      cameras,
       spawns,
       stickyWalls,
     })
