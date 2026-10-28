@@ -12,6 +12,7 @@ import {readFlying} from './gallery/flyMode.ts'
 import {readWeather} from './gallery/lighting.ts'
 import {readPortraitSlotEditing, readShowPortraitSlots} from './gallery/portraitSlotStore.ts'
 import {readKnotRotation} from './physics/rotatingKnots.ts'
+import {readAlbedo} from './rendering/albedo.ts'
 import {readAntiAliasing} from './rendering/antiAliasing.ts'
 import {readGraphicsModeName} from './rendering/graphicsMode.ts'
 import {readEditLights, readShowLights} from './rendering/lightLevels.ts'
@@ -35,6 +36,7 @@ const searchParameters = (input: string) => {
 const searchParameter = (key: string): Reader => input => searchParameters(input).get(key) ?? undefined
 const readers: Record<string, Reader> = {
   ...Object.fromEntries(Object.keys(readAiSettings(defaultsUrl)).map(key => [key, (input: string) => readAiSettings(input)[key as keyof ReturnType<typeof readAiSettings>]])),
+  albedo: readAlbedo,
   anti_aliasing: readAntiAliasing,
   audio: readAudio,
   crosshair: readCrosshair,

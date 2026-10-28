@@ -4,6 +4,7 @@ import {readAudio, readAudioOverride, readAudioVolume} from '../../src/lib/audio
 import {readIntroNarration} from '../../src/lib/audio/intro.ts'
 import {readDevelopmentMode} from '../../src/lib/developmentMode.ts'
 import {readFlying} from '../../src/lib/gallery/flyMode.ts'
+import {readAlbedo} from '../../src/lib/rendering/albedo.ts'
 import {getAntiAliasing, readAntiAliasing} from '../../src/lib/rendering/antiAliasing.ts'
 import {readNear} from '../../src/lib/rendering/near.ts'
 import {readScale} from '../../src/lib/rendering/scale.ts'
@@ -49,6 +50,13 @@ describe('URL options', () => {
     expect(readShowWireframe('?show_wireframe=true')).toBe(true)
     for (const search of ['', '?show_wireframe=false', '?show_wireframe=1', '?vision_mode=wireframe']) {
       expect(readShowWireframe(search)).toBe(false)
+    }
+  })
+  test('?albedo is enabled by a bare or true flag only', () => {
+    expect(readAlbedo('?albedo')).toBe(true)
+    expect(readAlbedo('?albedo=true')).toBe(true)
+    for (const search of ['', '?albedo=false', '?albedo=1', '?show_albedo=true']) {
+      expect(readAlbedo(search)).toBe(false)
     }
   })
   test('?anti_aliasing accepts known methods and false only', () => {

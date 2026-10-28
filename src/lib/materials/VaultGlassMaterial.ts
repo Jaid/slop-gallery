@@ -1,3 +1,4 @@
+import type {TransmittingEmission} from '../rendering/AlbedoRenderPipeline.ts'
 import type {Node} from 'three/webgpu'
 
 import {cameraFar, cameraNear, cameraProjectionMatrix, color, float, fwidth, hash, max, mix, mx_noise_float, normalView, perspectiveDepthToViewZ, positionView, positionViewDirection, pow, screenUV, smoothstep, sqrt, uv, vec2, vec3, vec4, viewportDepthTexture, viewportOpaqueMipTexture, viewportSafeUV} from 'three/tsl'
@@ -40,7 +41,9 @@ const attenuationDepth = 0.28
  * chromatic dispersion that refracts the opaque sky dome behind the vault, while catching warm specular highlights from the
  * chandeliers and interior environment.
  */
-export default class VaultGlassMaterial extends MeshPhysicalNodeMaterial {
+export default class VaultGlassMaterial extends MeshPhysicalNodeMaterial implements TransmittingEmission {
+  readonly emissionIsTransmission = true
+
   constructor({heavy = true, paneSize = [1, 1], thickness = 0.04}: VaultGlassOptions = {}) {
     if (!(paneSize[0] > 0 && paneSize[1] > 0) || !(thickness > 0)) {
       throw new RangeError('VaultGlassMaterial requires positive pane dimensions and thickness.')

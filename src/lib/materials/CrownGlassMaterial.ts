@@ -1,3 +1,4 @@
+import type {TransmittingEmission} from '../rendering/AlbedoRenderPipeline.ts'
 import type {ClearGlassOptions} from './ClearGlassMaterial.ts'
 import type {ColorRepresentation, Node} from 'three/webgpu'
 
@@ -73,7 +74,9 @@ function surfaceGradientNormal(slope: Node<'vec2'>, point: Node<'vec2'>) {
  * Unlike {@link ClearGlassMaterial}, the material resamples the backdrop itself to bend it. It reads a full-resolution copy of the frame,
  * so the view through the glass stays as sharp as the ripples allow.
  */
-export default class CrownGlassMaterial extends ClearGlassMaterial {
+export default class CrownGlassMaterial extends ClearGlassMaterial implements TransmittingEmission {
+  readonly emissionIsTransmission = true
+
   constructor({bodyColor = '#ffffff', grime, grimeColor = '#2b2721', haze, hazeColor = '#c9d0c2', paneSize, smudges, waviness, ...options}: CrownGlassOptions) {
     super(options)
     const point = uv().mul(vec2(...paneSize))

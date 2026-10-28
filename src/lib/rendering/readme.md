@@ -24,6 +24,10 @@ current-frame scene color + depth + normals + velocity
 
 Both run on linear color before the output transform. Any choice other than `false` in fast graphics mounts a light pipeline (scene pass and the resolve only, no knot focus or other heavy effects) that renders every frame.
 
+## Albedo
+
+`?albedo` replaces the whole pipeline with `AlbedoRenderPipeline`: one 4× multisampled scene pass whose context swaps every material’s result for its diffuse color, so each surface shows its base color, maps, vertex colors and opacity as if evenly lit from all sides at full strength. Lights, shadows (their maps don’t render at all), the environment, emission, fog, tone mapping, exposure and every postprocessing effect leave no trace; only the conversion to the output color space remains. Glass that refracts its backdrop itself (cast floor, vault and crown glass) is opaque and brings the view through it in as emission; it declares `emissionIsTransmission`, so it keeps that view, which then shows the albedo behind it. `?show_wireframe` takes precedence over it.
+
 ## Bloom
 
 Bloom reads the antialiased image, never the jittered scene pass. Its luminance threshold has a 0.01 knee and its first downsample is half resolution, so subpixel HDR features (flames, sparkles, thin emissive veins) that TRAA's jitter moves across pixel centers switch whole halos on and off. Those halos are smooth, so TRAA's variance clipping clamps their history to the current frame and cannot average the flicker away. Feeding bloom the resolved image keeps a still scene's halo still, and thin features bloom by their real pixel coverage instead of jitter-inflated peaks.

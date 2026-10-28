@@ -6,6 +6,7 @@ import {useGraphicsModeValue} from 'use-graphics-mode'
 import Scene from '#component/Scene'
 import {playerSession} from '#src/lib/gallery/PlayerSession.ts'
 import {usePhysicsHold} from '#src/lib/gallery/roomLoading.ts'
+import {isShowingAlbedo} from '#src/lib/rendering/albedo.ts'
 import {defaultFov, useCustomGraphics} from '#src/lib/rendering/customGraphics.ts'
 import {createGalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
@@ -22,11 +23,13 @@ export default function World() {
   const [near] = useState(() => readNear())
   // Bodies would fall through the floors of rooms that are still loading.
   const held = usePhysicsHold(state => state.held)
+  // ?albedo shows no shadows, so their maps would only cost time.
+  const shadows = profile.shadows && !isShowingAlbedo
   return <Game
     camera={{
       fov: defaultFov,
       position: [initial.position[0], initial.position[1] + 1.6, initial.position[2]],
       ...near === undefined ? {} : {near},
-    }} controls={egoControls} dpr={dpr} physics={{paused: held}} renderer={createGalleryRenderer} sceneWrapper={GameScene} shadows={profile.shadows}
+    }} controls={egoControls} dpr={dpr} physics={{paused: held}} renderer={createGalleryRenderer} sceneWrapper={GameScene} shadows={shadows}
   ><Scene /></Game>
 }

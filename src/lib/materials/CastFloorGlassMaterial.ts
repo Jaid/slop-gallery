@@ -1,3 +1,4 @@
+import type {TransmittingEmission} from '../rendering/AlbedoRenderPipeline.ts'
 import type {Node} from 'three/webgpu'
 
 import {cameraFar, cameraNear, cameraProjectionMatrix, color, float, fwidth, hash, max, mix, mx_noise_float, normalLocal, perspectiveDepthToViewZ, positionLocal, positionView, positionViewDirection, pow, screenUV, smoothstep, sqrt, transformNormalToView, vec2, vec3, vec4, viewportDepthTexture, viewportOpaqueMipTexture, viewportSafeUV} from 'three/tsl'
@@ -46,7 +47,9 @@ const attenuationDepth = 0.3
  * Real cast glass bends every ray by a small angle that keeps drifting all the way to whatever lies beyond it, so this material
  * refracts the backdrop itself: each relief facet deviates the ray like a thin prism, and the depth buffer tells how far it travels.
  */
-export default class CastFloorGlassMaterial extends MeshPhysicalNodeMaterial {
+export default class CastFloorGlassMaterial extends MeshPhysicalNodeMaterial implements TransmittingEmission {
+  readonly emissionIsTransmission = true
+
   constructor({thickness, tileSize}: CastFloorGlassOptions) {
     super({
       // The body only reflects; everything seen through the glass comes from the refracted backdrop below.
