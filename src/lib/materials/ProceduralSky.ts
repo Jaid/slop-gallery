@@ -17,7 +17,7 @@ export type SkyPalette = {
   cloudWarm: string
   /** the aureole around the sun */
   glow: string
-  /** the haze below the horizon */
+  /** below the horizon */
   ground: string
   horizon: string
   /** the disc */
@@ -41,7 +41,7 @@ const cloudHeight = 0.35
 /** Cloud deck units per second, a slow drift toward the north-east. */
 const wind = [0.0016, -0.0011] as const
 
-/** A clear, light-blue daytime sky. */
+/** A clear, blue daytime sky. */
 export const daytimeSky: SkyPalette = {
   brightness: 0.82,
   cloudCover: 0.42,
@@ -49,19 +49,19 @@ export const daytimeSky: SkyPalette = {
   cloudShade: '#a6aebb',
   cloudWarm: '#fff3dc',
   glow: '#fff1d2',
-  ground: '#c9c4b5',
-  horizon: '#cfe3f2',
+  ground: '#000000',
+  horizon: '#c4def5',
   sun: '#fff6e4',
   sunRadiance: 40,
-  zenith: '#3f86d4',
+  zenith: '#2f7ae0',
 }
 
 const colorKeys = ['cloudLit', 'cloudShade', 'cloudWarm', 'glow', 'ground', 'horizon', 'sun', 'zenith'] as const
 
 /**
- * A procedural sky with a sun and fair-weather cumulus, by default a clear, light-blue daytime one.
+ * A procedural sky with a sun and fair-weather cumulus, by default a clear, blue daytime one.
  *
- * Returns a linear color for a world direction: a zenith that pales toward a hazy horizon, a soft glow around the
+ * Returns a linear color for a world direction: a zenith that pales toward a hazy horizon over a dark ground, a soft glow around the
  * sun with a bright disc in it, and drifting clouds traced on a flat deck overhead. The clouds are lit from the sun’s side,
  * darker underneath and fade into the haze toward the horizon, where the deck’s projection would get too fine to draw.
  * Everything but the sun stays below the gallery’s bloom threshold of 1. Pass a {@link SkyLook} to change it later.
@@ -72,7 +72,7 @@ export function proceduralSky(options: ProceduralSkyOptions | SkyLook, direction
   const sun = look.sunDirection
   const up = direction.y
   const above = up.max(0)
-  // The zenith pales to a hazy horizon; below it lies a pale ground haze.
+  // The zenith pales to a hazy horizon; below it the ground takes over.
   const gradient = mix(colors.horizon, colors.zenith, pow(above, float(0.55)))
   let sky: Node<'vec3'> = mix(gradient, colors.ground, smoothstep(0, -0.08, up))
   const cosine = direction.dot(sun).clamp(-1, 1)
