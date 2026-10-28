@@ -3,9 +3,12 @@ import {afterAll, describe, expect, test} from 'bun:test'
 import {DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
-import lodge, {lodgeTunnel, lodgeTunnelTransition} from '../../src/lib/gallery/lodge.ts'
+import {corridorHallEastX, corridorPassage, lodgeThresholdSaddle} from '../../src/lib/gallery/corridor.ts'
+import lodge, {lodgeTunnel, lodgeTunnelTransition, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import Passage from '../../src/lib/gallery/passages/Passage.ts'
 import PassageTransition, {transitionFrameDepth} from '../../src/lib/gallery/passages/PassageTransition.ts'
+import SaddleGeometry from '../../src/lib/gallery/passages/SaddleGeometry.ts'
+import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
 import TransitionGeometry, {transitionClearance} from '../../src/lib/gallery/passages/TransitionGeometry.ts'
 import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
 import walls from '../../src/lib/gallery/walls.ts'
@@ -40,6 +43,11 @@ const upward = (distance: number) => {
   return ray.intersectObjects([timber, lining])[0]?.distance
 }
 const area = ({size}: {size: readonly [number, number]}) => size[0] * size[1]
+/** the height of a mesh’s surface seen from above */
+const floorAt = (x: number, z: number, mesh: Mesh) => {
+  const ray = new Raycaster(new Vector3(x, lodge.floorY + 1, z), new Vector3(0, -1, 0), 0, 2)
+  return ray.intersectObject(mesh)[0]?.point.y
+}
 describe('Lodge tunnel timber transition', () => {
   test('occupies the tunnel’s last meter, ending at the Lodge doorway', () => {
     expect(transition.length).toBeCloseTo(1.11)
@@ -107,6 +115,43 @@ describe('Lodge tunnel timber transition', () => {
     }
     expect(upward(boarded)).toBeLessThan(lodgeTunnel.height - 1.6)
     expect(upward(transition.start - 0.1)).toBeUndefined()
+  })
+  test('the saddle under the first portal stands 3 cm proud, beveled down to the flush floors on both sides', () => {
+    const sill = new Mesh(geometry.sill, material)
+    const planks = new Mesh(geometry.planks, material)
+    const middle = transition.frames[0] + transitionFrameDepth / 2
+    for (const across of [-1.5, 0, 1.5]) {
+      const z = lodge.tunnelZ + across
+      expect(floorAt(alongX(middle), z, sill)).toBeCloseTo(lodge.floorY + 0.03, 5)
+      // Halfway down either bevel.
+      for (const edge of [transition.frames[0] + 0.025, transition.frames[0] + transitionFrameDepth - 0.025]) {
+        expect(floorAt(alongX(edge), z, sill)).toBeCloseTo(lodge.floorY + 0.015, 5)
+      }
+      expect(floorAt(alongX((transition.frames[0] + transitionFrameDepth + transition.spanLength) / 2), z, planks)).toBeCloseTo(lodge.floorY, 5)
+    }
+  })
+  test('the Corridor doorway’s saddle covers the joint of the Lodge’s planks and the Corridor’s boards, right under the rib above it', () => {
+    const {center: [x, z], size: [depth, width]} = lodgeThresholdSaddle
+    expect(width).toBe(corridorPassage.width)
+    expect(Math.abs(corridorHallEastX - x)).toBeLessThan(depth / 2 - 0.05)
+    const saddle = SaddleGeometry.across(lodgeThresholdSaddle, corridorPassage.floorY)
+    const corridorTimber = TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts)
+    try {
+      expect(floorAt(x, z, new Mesh(saddle, material))).toBeCloseTo(corridorPassage.floorY + 0.03, 5)
+      const doorwayRibs = new Mesh(corridorTimber.ribs, material)
+      // Toward the rib’s post, a little above the saddle: just inside its ends the post stands on it, just outside there is none.
+      const post = (along: number) => {
+        const ray = new Raycaster(new Vector3(along, corridorPassage.floorY + 0.1, z), new Vector3(0, 0, -1), 0, width)
+        return ray.intersectObject(doorwayRibs)[0]?.distance
+      }
+      for (const side of [-1, 1]) {
+        expect(post(x + side * (depth / 2 - 0.005))).toBeCloseTo(width / 2 - 0.25, 3)
+        expect(post(x + side * (depth / 2 + 0.005))).toBeUndefined()
+      }
+    } finally {
+      saddle.dispose()
+      corridorTimber.dispose()
+    }
   })
   test('rejects transitions that do not fit their final span', () => {
     const passage = new Passage('short', 'lodge', [[0, 0], [0, -6], [-3, -6]], 0, 2.6)

@@ -6,7 +6,9 @@ import {BoxGeometry, Matrix4, Vector2} from 'three/webgpu'
 
 import {mergeParts} from '../../geometry.ts'
 import {wallFace} from '../architectureDimensions.ts'
+import grainUvs from './grainUvs.ts'
 import {transitionFrameDepth, transitionMouthProjection} from './PassageTransition.ts'
+import SaddleGeometry from './SaddleGeometry.ts'
 import {timberRing} from './TimberGeometry.ts'
 
 const archSegments = 32
@@ -40,7 +42,7 @@ export default class TransitionGeometry {
   readonly lining: BufferGeometry
   /** The floor planks between the sill and the passage mouth. Walkable collision stays with the passage floor. */
   readonly planks: BufferGeometry
-  /** The flush sill under the first portal. */
+  /** The saddle under the first portal, standing a few centimeters proud of the floor on both sides. */
   readonly sill: BufferGeometry
   /** Portals and skirting. */
   readonly timber: BufferGeometry
@@ -64,19 +66,7 @@ export default class TransitionGeometry {
       const size = max.map((value, i) => value - min[i]) as Vec3
       const geometry = new BoxGeometry(...size)
       geometry.translate(...max.map((value, i) => (value + min[i]) / 2) as Vec3)
-      const position = geometry.getAttribute('position')
-      const normal = geometry.getAttribute('normal')
-      const uv = geometry.getAttribute('uv')
-      for (let vertex = 0; vertex < position.count; vertex++) {
-        const coordinates = [position.getX(vertex), position.getY(vertex), position.getZ(vertex)]
-        const facing = [normal.getX(vertex), normal.getY(vertex), normal.getZ(vertex)].map(Math.abs)
-        const axis = facing.indexOf(Math.max(...facing))
-        const inFace = [0, 1, 2].filter(i => i !== axis)
-        const along = inFace.includes(grain) ? grain : inFace[0]
-        const across = inFace.find(i => i !== along)!
-        uv.setXY(vertex, coordinates[across] * 0.7, coordinates[along] * 0.7)
-      }
-      return geometry.applyMatrix4(transform)
+      return grainUvs(geometry, grain).applyMatrix4(transform)
     }
     const sides = [-1, 1] as const
     // A board band on both walls between two distances, optionally continuing over the vault.
@@ -99,7 +89,9 @@ export default class TransitionGeometry {
     lining.push(...timberRing(archProfile(boardFace, spring, skirtingHeight), archProfile(outer, spring, skirtingHeight), boardedTo - boardedStart, boardedStart, transform))
     this.timber = mergeParts(timber)
     this.lining = mergeParts(lining)
-    this.sill = box([-half, -0.24, frames[0]], [half, 0, frames[0] + transitionFrameDepth], 0)
+    // Across the full width, so its ends disappear into the portal’s posts.
+    const saddle = new SaddleGeometry(passage.width, transitionFrameDepth)
+    this.sill = saddle.translate(0, 0, frames[0] + transitionFrameDepth / 2).applyMatrix4(transform)
     this.planks = box([-half, -0.24, frames[0] + transitionFrameDepth], [half, 0, spanLength], 2)
     for (const geometry of [this.sill, this.planks]) {
       geometry.computeBoundingBox()

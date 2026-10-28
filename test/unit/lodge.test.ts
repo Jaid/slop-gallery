@@ -7,7 +7,7 @@ import EgoMotor from 'ego-player/motor'
 import {DoubleSide, Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import {corridorPassage, corridorRails, corridorRunner, corridorStairs, insideCorridor} from '../../src/lib/gallery/corridor.ts'
+import {corridorPassage, corridorRails, corridorRunner, corridorStairs, insideCorridor, lodgeThresholdSaddle} from '../../src/lib/gallery/corridor.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import lodge, {insideLodgeAccess, lodgeTunnel, lodgeTunnelTransition, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import lodgeInterior, {lodgeFurnitureColliders} from '../../src/lib/gallery/lodgeInterior/layout.ts'
@@ -15,6 +15,7 @@ import LodgeWindowGeometry from '../../src/lib/gallery/LodgeWindowGeometry.ts'
 import {oculusPlatform} from '../../src/lib/gallery/lowerGallery.ts'
 import oculusTower from '../../src/lib/gallery/oculusTower.ts'
 import Passage from '../../src/lib/gallery/passages/Passage.ts'
+import SaddleGeometry from '../../src/lib/gallery/passages/SaddleGeometry.ts'
 import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
 import TransitionGeometry from '../../src/lib/gallery/passages/TransitionGeometry.ts'
 import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
@@ -34,9 +35,12 @@ const architecture = routeWalls.map(wall => ({
 const windowGeometry = new LodgeWindowGeometry
 const transition = new TransitionGeometry(lodgeTunnelTransition)
 const vaults = [new VaultGeometry(lodgeTunnel, lodgeTunnelTransition.length), TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts), TimberGeometry.stairs(corridorStairs)]
+const thresholdSaddle = SaddleGeometry.across(lodgeThresholdSaddle, corridorPassage.floorY)
+const saddles = [transition.sill, thresholdSaddle]
 afterAll(() => {
   windowGeometry.dispose()
   transition.dispose()
+  thresholdSaddle.dispose()
   for (const {geometry} of architecture) {
     geometry.dispose()
   }
@@ -82,6 +86,10 @@ function createWorld(fps: number) {
   box(oculusPlatform.position, oculusPlatform.size)
   box([lodge.center[0], lodge.floorY - 0.15, lodge.center[1]], [10, 0.3, 10])
   box([lodge.center[0], lodge.floorY + lodge.height + 0.12, lodge.center[1]], [10, 0.24, 10])
+  // Both saddles, as hulls like the passages mount them.
+  for (const saddle of saddles) {
+    world.createCollider(RAPIER.ColliderDesc.convexHull(saddle.getAttribute('position').array as Float32Array)!)
+  }
   box([-14, -0.15, 14], [12, 0.3, 12])
   box([-14, 5.9, 14], [12, 0.3, 12])
   // The Lodge’s furniture, window seat and hearth, as the room mounts them.

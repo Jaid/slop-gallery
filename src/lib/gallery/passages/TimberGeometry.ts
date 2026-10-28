@@ -1,25 +1,17 @@
 import type StairFlight from '../stairs/StairFlight.ts'
-import type {Vec3} from '../types.ts'
 import type Passage from './Passage.ts'
 import type {PassageCutout} from './Passage.ts'
+import type {TimberSpan} from './timberLayout.ts'
 
 import {Brush, Evaluator, SUBTRACTION} from 'three-bvh-csg'
 import {BoxGeometry, BufferGeometry, ExtrudeGeometry, Matrix4, MeshBasicNodeMaterial, Shape, Vector2} from 'three/webgpu'
 
 import {mergeParts} from '../../geometry.ts'
 import {stairHeadroom} from '../stairs/StairFlight.ts'
+import {passageTimberSpans, timberEntranceProjection, timberRibs} from './timberLayout.ts'
 
-export type TimberSpan = {
-  end: Vec3
-  entryProjection?: number
-  from?: number
-  height: number
-  start: Vec3
-  to?: number
-  width: number
-}
+export type {TimberSpan} from './timberLayout.ts'
 
-const entranceProjection = 0.03
 /** thickness of the boards closing the void behind the knees where a lining ends inside a passage */
 const spandrelDepth = 0.04
 export function timberProfile(radius: number, height: number, inset: number) {
@@ -122,16 +114,7 @@ function cutTimber(geometry: BufferGeometry, cutouts: ReadonlyArray<PassageCutou
 /** Faceted timber portals with mitered knees, a flat crown and continuous plank backing. */
 export default class TimberGeometry {
   static passage(passage: Passage, ribCutouts: ReadonlyArray<PassageCutout> = []) {
-    return new TimberGeometry(passage.spans.map(({start, end}, i) => ({
-      start: [start[0], passage.floorY, start[1]],
-      end: [end[0], passage.floorY, end[1]],
-      width: passage.width,
-      height: passage.height,
-      entryProjection: i === 0 ? entranceProjection : 0,
-      // Keep the entire elbow open; the passage's timber ceiling closes these junctions.
-      from: i > 0 ? passage.width / 2 : 0,
-      to: Math.hypot(end[0] - start[0], end[1] - start[1]) - (i < passage.spans.length - 1 ? passage.width / 2 : 0),
-    })), passage.cutouts, ribCutouts)
+    return new TimberGeometry(passageTimberSpans(passage), passage.cutouts, ribCutouts)
   }
   static stairs(stairs: StairFlight) {
     return new TimberGeometry([
@@ -140,7 +123,7 @@ export default class TimberGeometry {
         end: stairs.end,
         width: stairs.width,
         height: stairHeadroom,
-        entryProjection: entranceProjection,
+        entryProjection: timberEntranceProjection,
       },
     ])
   }
@@ -200,11 +183,9 @@ export default class TimberGeometry {
       if (to < length) {
         shells.push(...timberSpandrels(outside, spandrel, to - spandrel, transform))
       }
-      const count = Math.max(1, Math.ceil((to - front) / 1.3))
-      const depth = Math.min(0.19, (to - front) / 3)
-      for (let rib = 0; rib <= count; rib++) {
+      for (const [ribStart, ribEnd] of timberRibs(front, to)) {
         // Meet the lining exactly; penetrating it creates coincident exposed end caps.
-        ribs.push(...timberRing(ribInside, backing, depth, front + (to - front - depth) * rib / count, transform))
+        ribs.push(...timberRing(ribInside, backing, ribEnd - ribStart, ribStart, transform))
       }
     }
     this.shell = cutTimber(shells.length ? mergeParts(shells) : new BufferGeometry, cutouts)

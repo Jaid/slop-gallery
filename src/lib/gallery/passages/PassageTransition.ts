@@ -11,8 +11,8 @@ export const transitionMouthProjection = 0.03
 /**
  * The final meter or so of a stone passage, where it turns into the timber room it opens into.
  *
- * Seen from the stone side: a timber portal on a wooden sill, a fully boarded bay and a last portal casing the room’s doorway.
- * Plank flooring runs from the first portal into the room.
+ * Seen from the stone side: a timber portal on a raised wooden saddle, a fully boarded bay and a last portal casing the room’s doorway.
+ * Plank flooring runs flush from the first portal into the room.
  */
 export default class PassageTransition {
   /** Floor area handed from stone paving to the timber sill and planks. */
@@ -21,7 +21,7 @@ export default class PassageTransition {
   readonly frames: readonly [number, number]
   /** The plank floor behind the sill. */
   readonly planks: FloorRectangle
-  /** The timber sill under the first portal, flush with the paving. */
+  /** The footprint of the timber saddle under the first portal, which stands a few centimeters proud of the paving and the planks. */
   readonly sill: FloorRectangle
   /** Run of the final span, from its start point to the passage mouth. */
   readonly spanLength: number

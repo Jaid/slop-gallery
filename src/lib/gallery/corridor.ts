@@ -3,6 +3,7 @@ import type {Vec3} from './types.ts'
 
 import lodge, {lodgeWindowCutout} from './lodge.ts'
 import Passage from './passages/Passage.ts'
+import {passageRibs} from './passages/timberLayout.ts'
 import StairFlight, {stairHeadroom} from './stairs/StairFlight.ts'
 import StairRunner from './stairs/StairRunner.ts'
 
@@ -22,6 +23,14 @@ export const lodgeThreshold: FloorRectangle = {
 }
 
 export const corridorPassage = new Passage('corridor', 'corridor', [[-30, lodge.returnZ], [lodge.approachX, lodge.returnZ], [lodge.approachX, lodge.siennaZ], [-31, lodge.siennaZ]], lodge.floorY, lodge.timberWidth, corridor.height, [lodgeWindowCutout])
+// The doorway passage leaves the Lodge westward, so its ribs lie that far west of the Lodge’s wall.
+const doorwayX = corridorPassage.spans[0].start[0]
+const jointRib = passageRibs(corridorPassage, 0).find(([start, end]) => doorwayX - end <= corridorHallEastX && corridorHallEastX <= doorwayX - start)!
+/** The timber saddle where the Lodge’s planks meet the Corridor’s boards: across the doorway passage, under the rib that stands over that joint and as deep as the rib. */
+export const lodgeThresholdSaddle: FloorRectangle = {
+  center: [doorwayX - (jointRib[0] + jointRib[1]) / 2, lodge.returnZ],
+  size: [jointRib[1] - jointRib[0], corridorPassage.width],
+}
 // The first tread begins at Sienna’s west doorway, without an intervening landing.
 export const corridorStairs = new StairFlight('return', [-20, 0, lodge.siennaZ], [-31, lodge.floorY, lodge.siennaZ], lodge.timberWidth, 28, 0, 0.35, 'corridor')
 // A 2.4 m runner leaves wide oak margins and clears both handrails’ posts.
