@@ -9,9 +9,9 @@ export default {
     range: 10,
     shadow: true,
   },
-  // In the candle plane of the wagon wheel, below its rim, so the iron never shadows its own light. It hangs from the boss in front of the north bay.
+  // In the candle plane of the wagon wheel, below its rim, so the iron never shadows its own light. It hangs from the boss in the middle of the north bay’s mouth.
   chandelier: {
-    position: [0, 2.66, -2.74],
+    position: [0, 2.66, -5],
     strength: 20,
     tint: '#ffc68a',
     range: 7,
