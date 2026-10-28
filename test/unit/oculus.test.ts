@@ -112,8 +112,9 @@ describe('oculus and connecting tunnel', () => {
       expect(floorHeight([0, tunnelFloorHeight(z) + 1.6, z])).toBeCloseTo(tunnelFloorHeight(z))
       expect(roomAt([0, tunnelFloorHeight(z) + 1.6, z])).toBe('oculus')
     }
-    // beside the tunnel, past the displays’ south ends
-    expect(insideGallery([tunnel.width / 2 + 0.01, tunnelFloorHeight(4) + 1.6, 4])).toBe(false)
+    // beside the tunnel, between the Oculus and the displays’ north ends; past their south ends lie the landings of their stairways instead
+    expect(insideGallery([tunnel.width / 2 + 0.01, tunnelFloorHeight(-14) + 1.6, -14])).toBe(false)
+    expect(roomAt([tunnel.width / 2 + 0.2, tunnelFloorHeight(4) + 1.6, 4])).toBe('oculus')
   })
   test('the ceiling opening stays aligned with the transparent floor and contains no fixtures or lights', () => {
     const material = new MeshBasicMaterial
