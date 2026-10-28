@@ -54,6 +54,17 @@ test('uses content-addressed AVIF caching and deduplicates concurrent encodes', 
   expect(await higherQualityCache.convert(source)).not.toBe(paths[0])
   expect(() => new AvifCache('unused', {quality: Number.NaN})).toThrow(RangeError)
 }, 30_000)
+test('shrinks wider images to the requested width in cache entries of their own', async () => {
+  const root = await fixture()
+  const source = join(root, 'source/image.jxl')
+  const caches = [new AvifCache(join(root, 'cache')), new AvifCache(join(root, 'cache'), {width: 8}), new AvifCache(join(root, 'cache'), {width: 64})]
+  const paths = await Promise.all(caches.map(cache => cache.convert(source)))
+  const distinctPaths = new Set(paths)
+  expect(distinctPaths.size).toBe(3)
+  const widths = await Promise.all(paths.map(path => Bun.$`magick identify -format %w ${path}`.text()))
+  expect(widths).toEqual(['16', '8', '16'])
+  expect(() => new AvifCache('unused', {width: 0})).toThrow(RangeError)
+}, 30_000)
 test('serves AVIF for source and public URLs, with HEAD, ETag and the requested default cache', async () => {
   const root = await fixture()
   const server = await createServer({

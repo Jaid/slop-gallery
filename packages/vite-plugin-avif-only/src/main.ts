@@ -11,6 +11,8 @@ import {isFileServingAllowed, normalizePath} from 'vite'
 
 import AvifCache from './AvifCache.ts'
 
+export {default as AvifCache} from './AvifCache.ts'
+
 export type AvifOnlyOptions = AvifOptions & {cacheDir?: string}
 type Ast = {
   [key: string]: unknown

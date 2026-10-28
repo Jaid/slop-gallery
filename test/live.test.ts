@@ -60,6 +60,8 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     await page.waitForFunction(() => globalThis.slopGallery?.snapshot?.().ready, {timeout: 60_000})
     await page.evaluate(() => document.fonts.ready)
     await fs.ensureDir('out/live-test')
+    // The loading screen fades out to the menu once the scene is ready.
+    await page.waitForFunction(() => !document.querySelector('#loading-screen'))
     const welcomeSnapshot = await snapshot(page)
     expect(welcomeSnapshot.locked).toBe(false)
     expect(welcomeSnapshot.hasControlled).toBe(false)

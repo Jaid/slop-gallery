@@ -6,6 +6,8 @@ type Level = GameLevel & {
   supportsMap: boolean
   tagline: string
   title: string
+  /** image behind the loading screen’s title, relative to the project root */
+  wallpaper?: string
 }
 
 const levels = {
@@ -17,6 +19,7 @@ const levels = {
     tagline: 'Good taste. Questionable art.',
     enterLabel: 'Enter gallery',
     supportsMap: true,
+    wallpaper: 'public/assets/wallpaper.jxl',
   },
   knottingham: {
     title: 'Knottingham',

@@ -43,3 +43,5 @@ avifOnly({
   speed: 0
 })
 ```
+
+`AvifCache` is also exported for conversions outside the plugin, such as a preview inlined into HTML. Its `width` option first shrinks wider images to that many pixels across. Conversions without it keep their cache keys.
