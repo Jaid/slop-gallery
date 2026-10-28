@@ -40,6 +40,8 @@ const sunRadius = 0.6 * Math.PI / 180
 const cloudHeight = 0.35
 /** Cloud deck units per second, a slow drift toward the north-east. */
 const wind = [0.0016, -0.0011] as const
+/** Height of the sky’s horizon as the sine of its elevation, about 6° up: rooms culled at the end of a long, level view show the dark ground instead of the bright haze. */
+const horizonHeight = 0.1
 
 /** A clear, blue daytime sky. */
 export const daytimeSky: SkyPalette = {
@@ -71,10 +73,10 @@ export function proceduralSky(options: ProceduralSkyOptions | SkyLook, direction
   const {colors} = look
   const sun = look.sunDirection
   const up = direction.y
-  const above = up.max(0)
+  const above = up.sub(horizonHeight).div(1 - horizonHeight).max(0)
   // The zenith pales to a hazy horizon; below it the ground takes over.
   const gradient = mix(colors.horizon, colors.zenith, pow(above, float(0.55)))
-  let sky: Node<'vec3'> = mix(gradient, colors.ground, smoothstep(0, -0.08, up))
+  let sky: Node<'vec3'> = mix(gradient, colors.ground, smoothstep(horizonHeight + 0.08, horizonHeight, up))
   const cosine = direction.dot(sun).clamp(-1, 1)
   // A wide, faint aureole and a tighter, brighter one. Like the clouds, it is weighed against the daytime brightness of 0.82.
   const aureole = pow(cosine.max(0), float(6)).mul(0.16 / 0.82).add(pow(cosine.max(0), float(160)).mul(0.5 / 0.82))
@@ -86,7 +88,7 @@ export function proceduralSky(options: ProceduralSkyOptions | SkyLook, direction
   const threshold = float(1).sub(look.cloudCover.mul(0.75))
   const density = smoothstep(threshold.sub(0.12), threshold.add(0.18), shape.add(detail.sub(0.5).mul(0.25)))
   // Toward the horizon the deck is seen ever more edge-on: its clouds thin out into the haze instead of crawling.
-  const visible = smoothstep(0.04, 0.3, up)
+  const visible = smoothstep(horizonHeight + 0.04, horizonHeight + 0.3, up)
   const coverage = density.mul(visible)
   // Thick cores are darker underneath, thin edges glow; the sunward side of the sky lights them warmer.
   const shade = mix(colors.cloudLit, colors.cloudShade, smoothstep(0.35, 1, density).mul(0.75))
