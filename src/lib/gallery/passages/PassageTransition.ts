@@ -9,20 +9,19 @@ export const transitionFrameDepth = 0.22
 export const transitionMouthProjection = 0.03
 
 /**
- * The final meters of a stone passage, where it gradually turns into the timber room it opens into.
+ * The final meter or so of a stone passage, where it turns into the timber room it opens into.
  *
- * Seen from the stone side: a timber portal, a wainscoted half with the stone vault and paving still in place, a second
- * portal on a wooden sill, a fully boarded half and a last portal casing the room’s doorway. Plank flooring runs from
- * the second portal into the room.
+ * Seen from the stone side: a timber portal on a wooden sill, a fully boarded bay and a last portal casing the room’s doorway.
+ * Plank flooring runs from the first portal into the room.
  */
 export default class PassageTransition {
   /** Floor area handed from stone paving to the timber sill and planks. */
   readonly floor: FloorRectangle
   /** Distances along the final span at which each portal begins, ordered from stone to timber. */
-  readonly frames: readonly [number, number, number]
+  readonly frames: readonly [number, number]
   /** The plank floor behind the sill. */
   readonly planks: FloorRectangle
-  /** The timber sill under the middle portal, flush with the paving. */
+  /** The timber sill under the first portal, flush with the paving. */
   readonly sill: FloorRectangle
   /** Run of the final span, from its start point to the passage mouth. */
   readonly spanLength: number
@@ -31,7 +30,7 @@ export default class PassageTransition {
   /** The passage’s paving without the transition; collision still uses the full passage floors. */
   readonly stoneFloors: Array<FloorRectangle>
 
-  constructor(readonly passage: Passage, readonly length = 2) {
+  constructor(readonly passage: Passage, readonly length = 1.11) {
     const span = passage.spans.at(-1)!
     const {start, end} = span
     this.spanLength = Math.hypot(end[0] - start[0], end[1] - start[1])
@@ -41,8 +40,7 @@ export default class PassageTransition {
       throw new RangeError(`A passage transition needs between ${transitionFrameDepth * 4} m and the final span’s ${usable} m of straight run.`)
     }
     this.start = this.spanLength - length
-    const middle = this.start + length / 2
-    this.frames = [this.start, middle - transitionFrameDepth / 2, this.spanLength - transitionFrameDepth]
+    this.frames = [this.start, this.spanLength - transitionFrameDepth]
     const rectangle = (from: number, to: number): FloorRectangle => {
       const along = (from + to) / 2
       const x = start[0] + (end[0] - start[0]) * along / this.spanLength
@@ -53,10 +51,9 @@ export default class PassageTransition {
         size: alongX ? [to - from, passage.width] : [passage.width, to - from],
       }
     }
-    const sill = this.frames[1]
-    this.floor = rectangle(sill, this.spanLength)
-    this.sill = rectangle(sill, sill + transitionFrameDepth)
-    this.planks = rectangle(sill + transitionFrameDepth, this.spanLength)
+    this.floor = rectangle(this.start, this.spanLength)
+    this.sill = rectangle(this.start, this.start + transitionFrameDepth)
+    this.planks = rectangle(this.start + transitionFrameDepth, this.spanLength)
     // Rounding in the passage partition can leave zero-width slivers next to the cut.
     this.stoneFloors = passage.floors.flatMap(floor => subtractFloorOpening(floor, this.floor)).filter(({size}) => size.every(value => value > 1e-6))
   }

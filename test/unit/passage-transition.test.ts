@@ -41,21 +41,23 @@ const upward = (distance: number) => {
 }
 const area = ({size}: {size: readonly [number, number]}) => size[0] * size[1]
 describe('Lodge tunnel timber transition', () => {
-  test('occupies the last two meters of the tunnel, ending at the Lodge doorway', () => {
-    expect(transition.length).toBe(2)
+  test('occupies the tunnel’s last meter, ending at the Lodge doorway', () => {
+    expect(transition.length).toBeCloseTo(1.11)
     expect(alongX(transition.spanLength)).toBeCloseTo(doorwayX)
     expect(walls.find(wall => wall.id === 'lodge-east')!.center[0]).toBeCloseTo(doorwayX)
-    expect(transition.frames[0]).toBeCloseTo(transition.spanLength - 2)
-    expect(transition.frames[2] + transitionFrameDepth).toBeCloseTo(transition.spanLength)
-  })
-  test('keeps the stone paving through the wainscoted bay, laying timber from the middle portal on', () => {
-    const timberLength = transition.spanLength - transition.frames[1]
-    expect(transition.floor.size[0]).toBeCloseTo(timberLength)
+    expect(transition.frames[0]).toBeCloseTo(transition.spanLength - transition.length)
+    expect(transition.frames[1] + transitionFrameDepth).toBeCloseTo(transition.spanLength)
+    expect(transition.floor.size[0]).toBeCloseTo(transition.length)
     expect(transition.floor.size[1]).toBeCloseTo(lodgeTunnel.width)
-    expect(transition.floor.center[0]).toBeCloseTo(doorwayX + timberLength / 2)
-    expect(transition.sill.center[0]).toBeCloseTo(alongX(transition.frames[1] + transitionFrameDepth / 2))
+    expect(transition.floor.center[0]).toBeCloseTo(doorwayX + transition.length / 2)
     geometry.sill.computeBoundingBox()
-    expect(geometry.sill.boundingBox!.max.x).toBeCloseTo(alongX(transition.frames[1]))
+    expect(geometry.sill.boundingBox!.max.x).toBeCloseTo(alongX(transition.start))
+  })
+  test('leaves no timber on the stone side of the first portal', () => {
+    for (const part of [geometry.timber, geometry.lining, geometry.sill, geometry.planks]) {
+      part.computeBoundingBox()
+      expect(part.boundingBox!.max.x).toBeLessThanOrEqual(alongX(transition.start) + 1e-6)
+    }
   })
   test('stone paving and timber floor tile the passage floor without overlaps or slivers', () => {
     const total = lodgeTunnel.floors.reduce((sum, floor) => sum + area(floor), 0)
@@ -86,29 +88,25 @@ describe('Lodge tunnel timber transition', () => {
       const ray = new Raycaster(new Vector3(alongX(transition.start - 1), lodge.floorY + y, lodge.tunnelZ), new Vector3(-1, 0, 0), 0, transition.length + 2)
       expect(ray.intersectObjects([timber, lining])).toHaveLength(0)
     }
-    for (const distance of [...transition.frames.map(frame => frame + transitionFrameDepth / 2), transition.frames[0] + 0.5, transition.frames[1] + 0.5]) {
+    for (const distance of [...transition.frames.map(frame => frame + transitionFrameDepth / 2), (transition.frames[0] + transition.frames[1] + transitionFrameDepth) / 2]) {
       for (const side of [-1, 1] as const) {
         const hit = lateral(distance, 0.2, side, [timber, lining])
         expect(hit).toBeCloseTo(half - transitionClearance, 3)
       }
     }
   })
-  test('stages the change: wainscot under the stone vault, then fully boarded', () => {
+  test('boards over the stone walls and vault between the portals', () => {
     const stoneFace = half - wallFace
-    const wainscot = (transition.frames[0] + transition.frames[1] + transitionFrameDepth) / 2
-    const boarded = (transition.frames[1] + transition.frames[2] + transitionFrameDepth) / 2
+    const boarded = (transition.frames[0] + transition.frames[1] + transitionFrameDepth) / 2
     for (const side of [-1, 1] as const) {
-      // Below the rail, both bays hide the stone wall and its baseboard.
-      for (const y of [0.2, 0.8]) {
-        expect(lateral(wainscot, y, side, [timber, lining])).toBeLessThan(stoneFace)
+      for (const y of [0.2, 0.8, 1.6]) {
         expect(lateral(boarded, y, side, [timber, lining])).toBeLessThan(stoneFace)
       }
-      // Above the rail, stone still shows in the first bay and is boarded over in the second.
-      expect(lateral(wainscot, 1.6, side, [timber, lining])).toBeUndefined()
-      expect(lateral(boarded, 1.6, side, [timber, lining])).toBeLessThan(stoneFace)
+      // Just before the first portal, the stone is still bare.
+      expect(lateral(transition.start - 0.1, 1.6, side, [timber, lining])).toBeUndefined()
     }
-    expect(upward(wainscot)).toBeUndefined()
     expect(upward(boarded)).toBeLessThan(lodgeTunnel.height - 1.6)
+    expect(upward(transition.start - 0.1)).toBeUndefined()
   })
   test('rejects transitions that do not fit their final span', () => {
     const passage = new Passage('short', 'lodge', [[0, 0], [0, -6], [-3, -6]], 0, 2.6)

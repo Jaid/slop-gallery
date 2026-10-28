@@ -73,8 +73,8 @@ export function lodgeWindowFloor(x: number, z: number) {
 
 export const lodgeTunnel = new Passage('lodge-tunnel', 'lodge', [[lodge.entranceX, lodge.entranceZ], [lodge.entranceX, lodge.tunnelZ], [-20, lodge.tunnelZ]], lodge.floorY, lodge.passageWidth)
 export const lodgeTunnelWalls = lodgeTunnel.walls
-/** The tunnel’s last two meters trade the castle stone for the Lodge’s timber, instead of switching at the doorway. */
-export const lodgeTunnelTransition = new PassageTransition(lodgeTunnel, 2)
+/** The tunnel’s last meter trades the castle stone for the Lodge’s timber, instead of switching at the doorway. */
+export const lodgeTunnelTransition = new PassageTransition(lodgeTunnel)
 /**
  * The Lodge’s wide-plank oak floor. It is mapped in world space, so the tunnel’s timber transition continues its boards and joints.
  *

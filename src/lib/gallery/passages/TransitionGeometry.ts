@@ -18,11 +18,6 @@ const embed = 0.03
 const tuck = 0.01
 const skirtingHeight = 0.5
 const boardRecess = 0.14
-const rail = {
-  bottom: -0.04,
-  height: 0.12,
-  depth: 0.21,
-}
 /** Polyline up one side, over a semicircular arch springing at `spring` and down the other side. */
 function archProfile(radius: number, spring: number, bottom: number) {
   const points = [new Vector2(-radius, bottom)]
@@ -35,19 +30,19 @@ function archProfile(radius: number, spring: number, bottom: number) {
 }
 
 /**
- * Timber portals, skirting, rails and boarding for a {@link PassageTransition}, in world space.
+ * Timber portals, skirting and boarding for a {@link PassageTransition}, in world space.
  *
  * Profiles are measured from the passage axis: the stone wall face sits `wallFace` inside the passage half width,
  * and the barrel vault springs where the walls end.
  */
 export default class TransitionGeometry {
-  /** Cedar boards: a wainscot under the stone vault, then a fully boarded vault. */
+  /** Cedar boards lining the walls and vault between the portals. */
   readonly lining: BufferGeometry
   /** The floor planks between the sill and the passage mouth. Walkable collision stays with the passage floor. */
   readonly planks: BufferGeometry
-  /** The flush sill under the middle portal. */
+  /** The flush sill under the first portal. */
   readonly sill: BufferGeometry
-  /** Portals, skirting and wainscot rails. */
+  /** Portals and skirting. */
   readonly timber: BufferGeometry
 
   constructor(transition: PassageTransition) {
@@ -61,8 +56,8 @@ export default class TransitionGeometry {
     const inner = half - transitionClearance
     const outer = half + embed
     const boardFace = half - boardRecess
-    if (spring <= rail.bottom + rail.height || boardFace >= half - wallFace) {
-      throw new RangeError('A passage transition needs its vault to spring above the wainscot rail.')
+    if (spring <= skirtingHeight || boardFace >= half - wallFace) {
+      throw new RangeError('A passage transition needs its vault to spring above the skirting and its boards in front of the stone wall.')
     }
     // Boxes in passage space: x across, y up from the floor, z along the final span. Grain runs along `grain`.
     const box = (min: Vec3, max: Vec3, grain: 0 | 1 | 2) => {
@@ -96,24 +91,16 @@ export default class TransitionGeometry {
       const depth = transitionFrameDepth + (i === frames.length - 1 ? transitionMouthProjection : 0)
       timber.push(...timberRing(archProfile(inner, spring, 0), archProfile(outer, spring, 0), depth, distance, transform))
     }
-    const bays = [[frames[0], frames[1]], [frames[1], frames[2]]] as const
-    for (const [from, to] of bays) {
-      // A wooden skirting covers the stone baseboard. It is flush with the portals, so it butts against them instead of overlapping.
-      timber.push(...walls(from + transitionFrameDepth, to, 0, skirtingHeight, inner, half - wallFace + 0.005, 2))
-    }
-    // Wainscot under the stone vault, capped by a rail at the springing line.
-    const [wainscotFrom, wainscotTo] = [bays[0][0] + transitionFrameDepth - tuck, bays[0][1] + tuck]
-    lining.push(...walls(wainscotFrom, wainscotTo, skirtingHeight, spring, boardFace, outer, 1))
-    timber.push(...walls(wainscotFrom, wainscotTo, spring + rail.bottom, spring + rail.bottom + rail.height, half - rail.depth, outer, 2))
-    // Beyond the middle portal, the boards continue over the vault.
-    const boardedTo = frames[2] + tuck
-    const boardedStart = frames[1] + transitionFrameDepth - tuck
+    // A wooden skirting covers the stone baseboard. It is flush with the portals, so it butts against them instead of overlapping.
+    timber.push(...walls(frames[0] + transitionFrameDepth, frames[1], 0, skirtingHeight, inner, half - wallFace + 0.005, 2))
+    // Between the portals, boards line the walls and the vault.
+    const boardedTo = frames[1] + tuck
+    const boardedStart = frames[0] + transitionFrameDepth - tuck
     lining.push(...timberRing(archProfile(boardFace, spring, skirtingHeight), archProfile(outer, spring, skirtingHeight), boardedTo - boardedStart, boardedStart, transform))
     this.timber = mergeParts(timber)
     this.lining = mergeParts(lining)
-    // The paving runs through the wainscoted bay; timber flooring starts under the middle portal.
-    this.sill = box([-half, -0.24, frames[1]], [half, 0, frames[1] + transitionFrameDepth], 0)
-    this.planks = box([-half, -0.24, frames[1] + transitionFrameDepth], [half, 0, spanLength], 2)
+    this.sill = box([-half, -0.24, frames[0]], [half, 0, frames[0] + transitionFrameDepth], 0)
+    this.planks = box([-half, -0.24, frames[0] + transitionFrameDepth], [half, 0, spanLength], 2)
     for (const geometry of [this.sill, this.planks]) {
       geometry.computeBoundingBox()
       geometry.computeBoundingSphere()
