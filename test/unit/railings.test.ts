@@ -4,8 +4,10 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import {BoxGeometry, Line3, Mesh, MeshBasicMaterial, Quaternion, Raycaster, TubeGeometry, Vector3} from 'three/webgpu'
 
 import lowerGallery, {oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
+import oculusBalcony from '../../src/lib/gallery/oculusBalcony.ts'
 import OculusGroundGeometry from '../../src/lib/gallery/OculusGroundGeometry.ts'
 import tower, {towerRamp as ramp} from '../../src/lib/gallery/oculusTower.ts'
+import OculusBalconyRailing from '../../src/lib/gallery/railings/OculusBalconyRailing.ts'
 import PolylineTubeGeometry from '../../src/lib/gallery/railings/PolylineTubeGeometry.ts'
 import RailingPath from '../../src/lib/gallery/railings/RailingPath.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
@@ -122,6 +124,19 @@ describe('connected Oculus railings', () => {
     }
     expect(Math.min(...railing.anchors.map(anchor => anchor.height))).toBe(0.5)
     expect(Math.max(...railing.anchors.map(anchor => anchor.height))).toBe(1)
+  })
+  test('the balcony rail and its posts stand at the ramps’ full railing height', () => {
+    const balconyRailing = new OculusBalconyRailing
+    const balconyY = oculusBalcony.position[1] + oculusBalcony.size[1] / 2
+    for (const anchor of balconyRailing.anchors) {
+      expect(anchor.height).toBe(ramp.railHeight)
+      expect(anchor.ground[1]).toBe(balconyY)
+    }
+    expect(balconyRailing.posts.length).toBeGreaterThan(5)
+    for (const post of balconyRailing.posts) {
+      expect(post.height).toBe(ramp.railHeight)
+      expect(post.position[1]).toBeCloseTo(balconyY + ramp.railHeight / 2)
+    }
   })
   test('the linked rail colliders meet at every joint without closing the tower entrance', () => {
     const world = new RAPIER.World({
