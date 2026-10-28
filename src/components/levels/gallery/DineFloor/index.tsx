@@ -28,7 +28,7 @@ export default function DineFloor(props: {
   }), [floorReflections]))
   const materials = useMemo(() => ({
     slab,
-    reflection: slab.reflection?.target,
+    reflection: slab.reflectionTarget ?? undefined,
   }), [slab])
   return <RoomFloor {...props} materials={materials} />
 }
