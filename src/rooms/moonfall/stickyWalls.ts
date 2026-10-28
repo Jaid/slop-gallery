@@ -9,7 +9,7 @@ export default {
     holes: [
       {
         u: 8,
-        width: 4.2,
+        width: 4.4,
         height: 3.6,
         profile: 'rectangle',
       },

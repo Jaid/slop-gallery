@@ -17,7 +17,7 @@ import {towerFloorHeight} from './oculusTower.ts'
 import salon, {salonSouthZ} from './salon.ts'
 import salonWindow from './salonWindow.ts'
 import staircase, {insideStairway, stairFlights, stairFloorHeight, stairTurn} from './staircase.ts'
-import {tunnelDisplayWindow} from './tunnelDisplays.ts'
+import tunnelDisplays, {displayFloorHeight, displayStairway, insideTunnelDisplay, tunnelDisplayWindow} from './tunnelDisplays.ts'
 
 export type {Wall, WallOpening, WallReservation} from '../placement/wallGeometry.ts'
 export {insideOpening, obstructionIssue, openingTop, placementIssue, placementIssues, wallCoordinates, wallPosition} from '../placement/wallGeometry.ts'
@@ -146,7 +146,7 @@ const contains = (room: (typeof rooms)[number], position: Vec3) => {
   return y >= ground - 1 && y <= room.floorY + roomClearHeight(room) + 0.2 && Math.abs(x - room.center[0]) <= room.size[0] / 2 && Math.abs(z - room.center[1]) <= room.size[1] / 2
 }
 export function insideGallery(position: Vec3) {
-  return position.every(Number.isFinite) && (rooms.some(room => contains(room, position)) || insideStairway(position) || tunnelContains(position) || insideLodgeAccess(position))
+  return position.every(Number.isFinite) && (rooms.some(room => contains(room, position)) || insideStairway(position) || tunnelContains(position) || insideTunnelDisplay(position) || insideLodgeAccess(position))
 }
 
 export function roomVisit(room: (typeof rooms)[number]): {
@@ -218,6 +218,20 @@ const withSalonWindow = (target: Wall): Wall => ({
       height: salonWindow.top,
       profile: 'rectangle',
     },
+  ],
+})
+/** The Oculus’ south wall, with the doors at the balcony’s level onto the stairways down to the tunnel’s displays. */
+const withDisplayDoors = (target: Wall): Wall => ({
+  ...target,
+  holes: [
+    ...target.holes ?? [],
+    ...tunnelDisplays.map(({stairway}) => ({
+      u: wallCoordinates(target, [stairway.x, 0, lowerGallery.tunnel.northZ]),
+      width: displayStairway.width,
+      bottom: stairway.flight.start[1] - target.center[1],
+      height: stairway.flight.start[1] - target.center[1] + displayStairway.doorHeight,
+      profile: 'rectangle' as const,
+    })),
   ],
 })
 /** Dine’s west wall, with the arch through to the Lobby cut where the Lobby’s east wall has it. */
@@ -385,14 +399,14 @@ const walls: Array<Wall> = miterCorners([
   roomWall('lodge', 'south'),
   ...lodgeTunnelWalls,
   ...corridorWalls,
-  roomWall('oculus', 'south', [
+  withDisplayDoors(roomWall('oculus', 'south', [
     {
       u: 0,
       width: lowerGallery.tunnel.width,
       height: 3.6,
       profile: 'rectangle',
     },
-  ]),
+  ])),
   ...[-1, 1].map(side => ({
     ...wall(`oculus-tunnel-${side < 0 ? 'west' : 'east'}`, 'oculus', lowerGallery.tunnel.x + side * lowerGallery.tunnel.width / 2, (lowerGallery.tunnel.northZ + lowerGallery.tunnel.southZ) / 2, side < 0 ? Math.PI / 2 : -Math.PI / 2, lowerGallery.tunnel.southZ - lowerGallery.tunnel.northZ, [
       {
@@ -410,6 +424,7 @@ const walls: Array<Wall> = miterCorners([
     hangable: false,
     trimStyle: 'plain' as const,
   })),
+  ...tunnelDisplays.flatMap(({stairway}) => stairway.walls),
 ])
 
 export function roomAt(position: Vec3): RoomId {
@@ -426,7 +441,7 @@ export function roomAt(position: Vec3): RoomId {
   if (insideLodgeAccess(position)) {
     return 'lodge'
   }
-  return tunnelContains(position) ? 'oculus' : 'lobby'
+  return tunnelContains(position) || insideTunnelDisplay(position) ? 'oculus' : 'lobby'
 }
 /** Where artworks hang and land in the museum. */
 export const galleryPlacement = /* @__PURE__ */ new GalleryPlacementSpace(walls, {
@@ -478,6 +493,10 @@ export function floorHeight([x, y, z]: Vec3) {
   }
   if (tunnelContains([x, tunnelFloorHeight(z), z])) {
     heights.push(tunnelFloorHeight(z))
+  }
+  const display = displayFloorHeight(x, z)
+  if (display !== undefined) {
+    heights.push(display)
   }
   heights.sort((a, b) => b - a)
   return heights.find(height => y >= height - 1) ?? heights.at(-1) ?? 0

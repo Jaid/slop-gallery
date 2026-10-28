@@ -5,6 +5,7 @@ import corridor, {corridorHallEastX, corridorStairs, lodgeThreshold} from './cor
 import lodge from './lodge.ts'
 import {craterTerrain} from './moonfall/CraterTerrain.ts'
 import {stairHeadroom} from './stairs/StairFlight.ts'
+import tunnelDisplays from './tunnelDisplays.ts'
 import {roomClearHeight, rooms} from './walls.ts'
 
 const round = (value: number) => Math.round(value * 1e4) / 1e4 + 0
@@ -28,11 +29,22 @@ const corridorFence = [
     size: [Math.max(...stairXs) - Math.min(...stairXs), corridorStairs.width],
   }, corridorStairs.end[1], corridorStairs.start[1] + stairHeadroom - corridorStairs.end[1]),
 ]
+// The tunnel’s displays, with the stairways down to them from the Oculus’ balcony.
+const displayFences = tunnelDisplays.map(({stairway: {air}}) => box(air, air.bottom, air.top - air.bottom))
+const fence = (id: WorldRoom['id'], own: WorldBox) => {
+  if (id === 'corridor') {
+    return corridorFence
+  }
+  if (id === 'lodge') {
+    return [own, box(lodgeThreshold, corridor.floorY, corridor.height)]
+  }
+  return id === 'oculus' ? [own, ...displayFences] : own
+}
 
 /**
  * Every room of the gallery fenced by 3D boxes from its floor to its clear height, up to the vault crown in the Lobby. All rooms are one box except the Corridor,
- * its hall and the stair flight up to the Sienna, and the Lodge, which adds its threshold: its half of the doorway passage from the Corridor’s hall. The Moonfall’s box reaches
- * down to the bottom of its crater.
+ * its hall and the stair flight up to the Sienna, the Lodge, which adds its threshold: its half of the doorway passage from the Corridor’s hall, and the Oculus, which adds the
+ * tunnel’s displays with the stairways down to them from its balcony. The Moonfall’s box reaches down to the bottom of its crater.
  */
 export const worldRooms: ReadonlyArray<WorldRoom> = rooms.map(room => {
   // The Moonfall’s fence reaches down to the deepest air in its crater.
@@ -41,6 +53,6 @@ export const worldRooms: ReadonlyArray<WorldRoom> = rooms.map(room => {
   return {
     id: room.id,
     title: room.title,
-    fence: room.id === 'corridor' ? corridorFence : (room.id === 'lodge' ? [own, box(lodgeThreshold, corridor.floorY, corridor.height)] : own),
+    fence: fence(room.id, own),
   }
 })

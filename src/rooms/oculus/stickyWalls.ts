@@ -36,8 +36,23 @@ export default {
     holes: [
       {
         u: 0,
-        width: 4.2,
+        width: 4.4,
         height: 3.6,
+        profile: 'rectangle',
+      },
+      // the doors onto the stairways down to the tunnel’s displays, west and east
+      {
+        u: 6.78,
+        bottom: 7.5,
+        width: 2.4,
+        height: 9.6,
+        profile: 'rectangle',
+      },
+      {
+        u: -6.78,
+        bottom: 7.5,
+        width: 2.4,
+        height: 9.6,
         profile: 'rectangle',
       },
     ],

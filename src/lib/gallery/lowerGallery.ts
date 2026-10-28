@@ -10,6 +10,8 @@ const oculusNorthZ = lobby.opening.center[1] - 11
 const oculusSouthZ = lobby.opening.center[1] + 9
 /** how far the balcony along the south wall reaches into the Oculus, from the wall’s centerline */
 export const oculusBalconyDepth = 2
+/** the radius of the round tower in the middle of the Oculus */
+export const oculusTowerRadius = 2.2
 const lowerGallery = {
   floorY: moonfallFloorY,
   moonfall: {
@@ -32,7 +34,8 @@ const lowerGallery = {
     southZ: 4.5,
     northY: moonfallFloorY - oculusDrop,
     southY: moonfallFloorY,
-    width: 4.2,
+    // as wide as the Oculus tower
+    width: oculusTowerRadius * 2,
     height: 3.6,
   },
 } as const

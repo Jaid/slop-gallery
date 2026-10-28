@@ -29,7 +29,8 @@ export default class StairFlight {
   readonly run: number
   readonly slope: number
 
-  constructor(readonly id: string, readonly start: Vec3, readonly end: Vec3, readonly width: number, readonly count: number, readonly entryLanding = 0, readonly exitLanding = 0, readonly room: RoomId = 'moonfall') {
+  /** `headroom` is the height of its walls over the grade from its start to its end. */
+  constructor(readonly id: string, readonly start: Vec3, readonly end: Vec3, readonly width: number, readonly count: number, readonly entryLanding = 0, readonly exitLanding = 0, readonly room: RoomId = 'moonfall', readonly headroom = stairHeadroom) {
     this.axis = start[0] === end[0] ? 2 : 0
     this.crossAxis = this.axis === 0 ? 2 : 0
     this.direction = Math.sign(end[this.axis] - start[this.axis])
@@ -37,7 +38,7 @@ export default class StairFlight {
     this.rise = (start[1] - end[1]) / count
     this.run = (this.length - entryLanding - exitLanding) / count
     this.slope = (end[1] - start[1]) / (end[this.axis] - start[this.axis])
-    if (![...start, ...end, width, count, entryLanding, exitLanding].every(Number.isFinite) || start[this.crossAxis] !== end[this.crossAxis] || !this.direction || width <= 0 || !Number.isSafeInteger(count) || count <= 0 || this.rise <= 0 || this.run <= 0 || entryLanding < 0 || exitLanding < 0) {
+    if (![...start, ...end, width, count, entryLanding, exitLanding, headroom].every(Number.isFinite) || start[this.crossAxis] !== end[this.crossAxis] || !this.direction || width <= 0 || headroom <= 0 || !Number.isSafeInteger(count) || count <= 0 || this.rise <= 0 || this.run <= 0 || entryLanding < 0 || exitLanding < 0) {
       throw new RangeError('A stair flight needs a descending X- or Z-axis run, positive dimensions and a whole number of steps.')
     }
     this.blocks = []
@@ -80,7 +81,7 @@ export default class StairFlight {
       center,
       rotation: face.rotation,
       width: this.length,
-      height: stairHeadroom + depth - 0.3,
+      height: this.headroom + depth - 0.3,
       slope: this.slope * (side < 0 ? 1 : -1) * (this.axis === 0 ? 1 : -1),
       hangable: false,
     }

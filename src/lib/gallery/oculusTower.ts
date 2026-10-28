@@ -1,12 +1,12 @@
 import {clamp} from 'math'
 
 import lobby from './lobby.ts'
-import lowerGallery, {oculusDrop, oculusPlatform} from './lowerGallery.ts'
+import lowerGallery, {oculusDrop, oculusPlatform, oculusTowerRadius} from './lowerGallery.ts'
 
 const oculusTower = {
   x: lobby.opening.center[0],
   z: lobby.opening.center[1],
-  radius: 2.2,
+  radius: oculusTowerRadius,
   height: 4.5 + oculusDrop,
   floorY: lowerGallery.oculus.floorY,
 }

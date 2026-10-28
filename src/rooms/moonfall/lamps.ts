@@ -52,7 +52,7 @@ export default {
     range: 15,
     decay: 1,
   },
-// Green, blue and red, from the sealed tunnel’s north end up to its high south end, each hanging 35 cm under its housing.
+// Green, blue and red, from the exhibition tunnel’s north end up to its high south end, each hanging 35 cm under its housing.
   tunnel_green: {
     position: [8, 0.9853, -28.6973],
     strength: 10,

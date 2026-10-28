@@ -3,6 +3,7 @@ import type {Material} from 'three/webgpu'
 import {RigidBody} from '@react-three/rapier'
 import Branch from 'branch-component'
 
+import DisplayStairway from '#component/levels/gallery/DisplayStairway'
 import SlopedBox from '#component/levels/gallery/SlopedBox'
 import Box from '#src/components/Scene/primitives.tsx'
 import {litFrom} from '#src/components/World/relations.ts'
@@ -60,7 +61,7 @@ const tunnelLights = [
 ]
 
 export default function TunnelDisplays({material}: {material: Material}) {
-  return <group name='sealed-tunnel-displays'>
+  return <group name='tunnel-displays'>
     {tunnelDisplays.map(display => <group key={display.side} name={`tunnel-display-${display.side}`}>
       <RigidBody colliders={false} type='fixed'>
         {display.shell.map(({position, size}, i) => <group key={i}>
@@ -70,6 +71,7 @@ export default function TunnelDisplays({material}: {material: Material}) {
       {display.exhibits.map(exhibit => <group key={exhibit.id} name={exhibit.id} position={exhibit.position}>
         <DisplayExhibit kind={exhibit.kind} material={material} />
       </group>)}
+      <DisplayStairway material={material} stairway={display.stairway} />
     </group>)}
     {tunnelLightZs.map((z, i) => <group key={z} name='tunnel-ceiling-light' position={[lowerGallery.tunnel.x, tunnelFloorHeight(z) + lowerGallery.tunnel.height, z]} rotation={[-Math.atan(tunnelSlope), 0, 0]}>
       <Box color='#242f32' position={[0, -0.04, 0]} size={[0.5, 0.1, 0.5]} />
