@@ -127,49 +127,41 @@ describe('the bay’s ceiling and chandelier', () => {
     // The outline runs from the south-west corner north first, which turns this edge normal into the room.
     return ((x - a[0]) * (a[1] - b[1]) + (z - a[1]) * (b[0] - a[0])) / length
   }))
-  test('the chandelier hangs from the boss at the middle of the octagon the bay is cut from', () => {
-    const center = [bayFraming.center[0] + lodge.center[0], bayFraming.center[1] + lodge.center[1]]
-    for (const [x, z] of lodgeBay.corners) {
-      expect(Math.hypot(x - center[0], z - center[1])).toBeCloseTo(Math.hypot(lodge.size[0] / 2, lodge.size[0] / 2 - lodgeBay.depth), 6)
-    }
+  test('the chandelier hangs from the boss in the middle of the bay’s mouth, in line with its first corners', () => {
+    const [frontWest, , , frontEast] = lodgeBay.corners
+    expect(bayFraming.center[0] + lodge.center[0]).toBeCloseTo((frontWest[0] + frontEast[0]) / 2, 6)
+    expect(bayFraming.center[1] + lodge.center[1]).toBeCloseTo(frontWest[1], 6)
+    expect(bayFraming.center[1] + lodge.center[1]).toBeCloseTo(frontEast[1], 6)
     expect([chandelier.position[0], chandelier.position[2]]).toEqual([...bayFraming.center])
     expect(chandelier.position[1] + chandelier.drop).toBeCloseTo(lodge.height - bayFraming.boss.height, 6)
-    // High enough to walk under on the way between both doorways.
     expect(chandelier.position[1] - 0.15).toBeGreaterThan(2.5)
     const boss = meshes.find(mesh => mesh.name === 'lodge-ceiling-boss')!
     const [bottom] = surfacesAbove([boss], chandelier.position[0], chandelier.position[2], lodge.height)
     expect(bottom.point.y).toBeCloseTo(chandelier.position[1] + chandelier.drop, 6)
+    // The header across the bay’s mouth runs right through the boss.
+    expect(lodgeInterior.beams.z[0]).toBeCloseTo(bayFraming.center[1], 6)
   })
-  test('hips run from the boss into the bay’s corners, each face of the boss looking along a spoke of the wheel', () => {
-    const hips = meshes.filter(mesh => mesh.name === 'lodge-hip')
-    expect(hips).toHaveLength(4)
-    for (const [i, hip] of hips.entries()) {
-      const [x, z] = bayFraming.hips[i]
-      const reach = Math.min(...corners(hip).map(point => Math.hypot(point.x - x, point.z - z)))
-      expect(reach).toBeLessThan(0.07)
-      // The wheel’s spokes and the boss’ faces look along 22.5° plus multiples of 45°.
+  test('hips run from the boss into the bay’s back corners and a rafter to its back wall, square to the boss and the wheel’s spokes but for the hips’ 5.5°', () => {
+    const fan = meshes.filter(mesh => mesh.name === 'lodge-hip' || mesh.name === 'lodge-rafter')
+    expect(fan.map(mesh => mesh.name)).toEqual(['lodge-hip', 'lodge-rafter', 'lodge-hip'])
+    for (const [i, mesh] of fan.entries()) {
+      const [x, z] = bayFraming.rafters[i]
+      // The hips come to a point in their corners; the rafter ends square, half its width to either side of its target.
+      expect(Math.min(...corners(mesh).map(point => Math.hypot(point.x - x, point.z - z)))).toBeLessThan(i === 1 ? Math.hypot(bayFraming.rafter[0] / 2, 0.07) : 0.07)
+      // The boss’ faces look along multiples of 45°, after the wheel turns by its yaw so do its spokes.
       const angle = Math.atan2(z - bayFraming.center[1], x - bayFraming.center[0]) / Math.PI * 180
-      const offFace = Math.abs(((angle - 22.5) % 45 + 67.5) % 45 - 22.5)
-      expect(offFace).toBeLessThan(2)
+      const offFace = Math.abs((angle % 45 + 67.5) % 45 - 22.5)
+      expect(offFace).toBeLessThan(i === 1 ? 1e-6 : 6)
     }
+    expect(Math.abs(((chandelier.yaw / Math.PI * 180 + 22.5) % 45 + 45) % 45)).toBeCloseTo(0, 6)
   })
-  test('every member ends inside the walls, behind their log faces, and the braces inside the first beam', () => {
+  test('every member ends inside the walls, behind their log faces', () => {
     for (const mesh of meshes) {
-      for (const point of corners(mesh)) {
-        expect(inside(point)).toBeGreaterThan(0.04)
+      const depths = corners(mesh).map(inside)
+      expect(Math.min(...depths)).toBeGreaterThan(0.04)
+      if (mesh.name !== 'lodge-ceiling-boss') {
+        expect(Math.min(...depths)).toBeLessThan(wallFace - 0.04)
       }
-    }
-    const [firstBeam] = lodgeInterior.beams.z
-    for (const mesh of meshes) {
-      if (mesh.name === 'lodge-beam' || mesh.name === 'lodge-hip') {
-        expect(Math.min(...corners(mesh).map(inside))).toBeLessThan(wallFace - 0.04)
-      }
-      if (mesh.name !== 'lodge-brace') {
-        continue
-      }
-      const south = Math.max(...corners(mesh).map(point => point.z))
-      expect(south).toBeGreaterThan(firstBeam - lodgeInterior.beams.size[0] / 2)
-      expect(south).toBeLessThan(firstBeam)
     }
   })
   test('seen from below, no two members share a face', () => {

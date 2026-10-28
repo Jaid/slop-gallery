@@ -46,7 +46,7 @@ export default function LodgeFurnishings({materials}: {materials: LodgeMaterials
     <group name='lodge-coffee-table' position={coffeeTable.position}>
       <mesh castShadow geometry={table.timber} material={materials.timber} receiveShadow />
     </group>
-    <group name='lodge-chandelier' position={chandelier.position}>
+    <group name='lodge-chandelier' position={chandelier.position} rotation={[0, chandelier.yaw, 0]}>
       {/* The light burns among the candles, so the wheel would throw its spokes across the whole room; real candle flames are too broad for that. */}
       <mesh geometry={wheel.iron} material={materials.iron} />
       <mesh geometry={wheel.wax} material={materials.wax} />

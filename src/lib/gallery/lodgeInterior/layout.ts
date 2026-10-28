@@ -5,14 +5,17 @@ import UpholsteredSeatGeometry from './UpholsteredSeatGeometry.ts'
 
 /** A point of the world plan in the room’s frame. */
 const toRoom = ([x, z]: readonly [number, number]) => [x - lodge.center[0], z - lodge.center[1]] as const
-/** the middle of the octagon the bay is cut from, which all four of its corners lie equally far from */
-const bayCenter = toRoom(lodgeBay.center)
-/** the octagonal boss in the bay’s ceiling that the hips run out of and the chandelier hangs from */
+const [frontWest, backWest, backEast, frontEast] = lodgeBay.corners.map(toRoom)
+/** the middle of the bay’s mouth, on the old north wall’s line between its first two corners */
+const bayMouth = [(frontWest[0] + frontEast[0]) / 2, (frontWest[1] + frontEast[1]) / 2] as const
+/** the octagonal boss on the header beam across the bay’s mouth that the rafters run out of and the chandelier hangs from */
 const boss = {
-  /** to its corners, wide enough that the hips only meet inside it */
-  radius: 0.4,
+  /** to its corners, wide enough that the rafters only meet inside it */
+  radius: 0.45,
   height: 0.44,
 }
+/** The beams cross the room in even bays from the header across the bay’s mouth to the south wall, which takes none. */
+const beamSpacing = lodge.size[1] / 3
 
 export type Placement = {
   position: Vec3
@@ -49,7 +52,7 @@ const coffeeTable = {
 /**
  * Furnishings of the Lodge in the room’s frame: the origin is the middle of the floor and +z points toward the fireplace on the south wall.
  *
- * Seating gathers around the hearth and keeps clear of the walkway that links both doorways at z −2.6, under the chandelier in front of the north bay.
+ * Seating gathers around the hearth and keeps clear of the walkway that links both doorways at z −2.6, beside the chandelier at the north bay’s mouth.
  */
 const lodgeInterior = {
   /** north edge of the furniture; the walkway between the doorways stays free north of it */
@@ -78,9 +81,10 @@ const lodgeInterior = {
   seatWidth,
   armchairs,
   coffeeTable,
-  /** the wagon wheel’s hub, hanging from the boss in the bay’s ceiling with its spokes looking along the boss’ faces */
+  /** the wagon wheel’s hub, hanging from the boss in the middle of the bay’s mouth, turned so its spokes look along the boss’ faces */
   chandelier: {
-    position: [bayCenter[0], 2.8, bayCenter[1]] as Vec3,
+    position: [bayMouth[0], 2.8, bayMouth[1]] as Vec3,
+    yaw: Math.PI / 8,
     /** from the hub up to the boss’ underside */
     drop: lodge.height - boss.height - 2.8,
     /** light height relative to the hub, a little below the wheel */
@@ -123,25 +127,24 @@ const lodgeInterior = {
     /** soot-black lining at the back of the firebox */
     back: 4.67,
   },
-  /** hewn beams across the room, resting on the east and west walls */
+  /** hewn beams across the room, resting on the east and west walls; the first is the header across the bay’s mouth, from corner to corner */
   beams: {
-    z: [0, 3.5],
+    z: [bayMouth[1], bayMouth[1] + beamSpacing, bayMouth[1] + beamSpacing * 2],
     /** width and height of each beam */
     size: [0.3, 0.34] as [number, number],
   },
   /**
-   * The bay’s ceiling framing: hips run out of the boss into the bay’s four corners and two braces run back onto the first beam.
+   * The bay’s ceiling framing: from the boss on the header, hips run into the bay’s two back corners and a rafter runs straight to the middle of its back wall, fanning out like half a wheel.
    *
-   * All six sit square to faces of the boss, the hips to within 2°, so the boss and the wagon wheel below it look along the same eight directions.
+   * The header and the middle rafter meet faces of the boss square, the hips 5.5° off theirs.
    */
   bayFraming: {
-    center: bayCenter,
+    center: bayMouth,
     boss,
-    /** width and height of the hips and braces, lighter than the beams */
+    /** width and height of the hips and rafter, lighter than the beams */
     rafter: [0.24, 0.3] as [number, number],
-    hips: lodgeBay.corners.map(toRoom),
-    /** directions of the braces around y from +x toward +z, onto the faces of the boss that look south-east and south-west */
-    braces: [Math.PI * 3 / 8, Math.PI * 5 / 8],
+    /** where the hips and rafter run to, on the planes of the bay’s walls */
+    rafters: [backWest, [(backWest[0] + backEast[0]) / 2, (backWest[1] + backEast[1]) / 2], backEast] as ReadonlyArray<readonly [number, number]>,
   },
 } as const
 

@@ -24,8 +24,6 @@ type HalfPlane = {
 
 /** how far members reach into the walls past their log faces, short of the walls’ middles */
 const wallTuck = 0.055
-/** how far a brace reaches into the beam it rests on */
-const braceTuck = 0.03
 const dot = (a: Point, b: Point) => a[0] * b[0] + a[1] * b[1]
 const minus = (a: Point, b: Point): Point => [a[0] - b[0], a[1] - b[1]]
 /** The part of a convex polygon on the kept side of a half plane. */
@@ -89,35 +87,30 @@ function member(name: string, from: Point, to: Point, [width, height]: readonly 
 /**
  * The hewn timber under the Lodge’s ceiling, in the room’s frame with the ceiling at y = 0.
  *
- * Beams cross the room from wall to wall. In the bay, hips run from an octagonal boss over the middle of the octagon the bay is cut from into its four corners, and two braces run from the boss back onto the first beam. The boss hides where the hips and braces meet, the walls hide their other ends.
+ * Beams cross the room from wall to wall, the first as the header across the bay’s mouth. From an octagonal boss in the header’s middle, hips run into the bay’s back corners and a rafter to the middle of its back wall. The boss hides where they meet the header, the walls hide their other ends.
  */
 export default class LodgeCeilingGeometry {
   readonly members: Array<CeilingMember>
 
   constructor() {
     const {beams, bayFraming} = lodgeInterior
-    const {center, boss, rafter, hips, braces} = bayFraming
+    const {center, boss, rafter, rafters} = bayFraming
     const plan = lodgeOutline.map(([x, z]): Point => [x - lodge.center[0], z - lodge.center[1]])
     const walls = insideOutline(plan, wallTuck)
     const reach = lodge.size[0] + lodge.size[1]
-    const [firstBeam] = beams.z
-    const onFirstBeam: HalfPlane = {
-      normal: [0, -1],
-      point: [0, firstBeam - beams.size[0] / 2 + braceTuck],
-    }
     const bossGeometry = new CylinderGeometry(boss.radius, boss.radius, boss.height, 8)
-    // Faceted, every face flat; its faces look along 22.5° plus multiples of 45°, like the wagon wheel’s spokes.
-    const faceted = bossGeometry.toNonIndexed()
+    // Faceted, every face flat; turned so its faces look along the header and the middle rafter, like the wagon wheel’s spokes.
+    const faceted = bossGeometry.toNonIndexed().rotateY(Math.PI / 8)
     bossGeometry.dispose()
     faceted.computeVertexNormals()
     this.members = [
       ...beams.z.map(z => member('lodge-beam', [-reach, z], [reach, z], beams.size, walls)),
-      ...hips.map(corner => {
-        const along = minus(corner, center)
+      ...rafters.map((target, i) => {
+        const along = minus(target, center)
         const length = Math.hypot(...along)
-        return member('lodge-hip', center, [corner[0] + along[0] / length, corner[1] + along[1] / length], rafter, walls)
+        // Past their targets on the walls’ planes, so the walls cut them off.
+        return member(i === 1 ? 'lodge-rafter' : 'lodge-hip', center, [target[0] + along[0] / length, target[1] + along[1] / length], rafter, walls)
       }),
-      ...braces.map(angle => member('lodge-brace', center, [center[0] + Math.cos(angle) * reach, center[1] + Math.sin(angle) * reach], rafter, [...walls, onFirstBeam])),
       {
         name: 'lodge-ceiling-boss',
         geometry: faceted.translate(0, -boss.height / 2, 0),

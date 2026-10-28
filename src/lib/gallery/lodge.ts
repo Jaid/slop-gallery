@@ -43,8 +43,6 @@ const bayDepth = 2.74
 export const lodgeBay = {
   depth: bayDepth,
   corners: [[westX, northZ], [westX + bayDepth, northZ - bayDepth], [eastX - bayDepth, northZ - bayDepth], [eastX, northZ]],
-  /** the middle of the octagon the bay is cut from: on the room’s axis and equally far from all four corners, which takes it as far south of the old north wall’s line as the room’s half width exceeds the bay’s depth */
-  center: [lodge.center[0], northZ + lodge.size[0] / 2 - bayDepth],
   /** the box around the bay, from the old north wall’s line to the back wall */
   bounds: {
     center: [lodge.center[0], northZ - bayDepth / 2],
@@ -52,7 +50,6 @@ export const lodgeBay = {
   },
 } as const satisfies {
   bounds: FloorRectangle
-  center: readonly [number, number]
   corners: ReadonlyArray<readonly [number, number]>
   depth: number
 }
