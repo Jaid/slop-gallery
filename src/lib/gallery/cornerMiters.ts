@@ -25,8 +25,8 @@ const tolerance = 1e-6
 /**
  * Marks the wall ends that meet another wall in an inside corner, so `createArchitectureGeometry` miters their baseboards and cornices.
  *
- * Both walls of a corner run their trim to the corner, where the bands would otherwise overlap in a square and share their tops,
- * bottoms and fronts. Mitered at 45°, the two bands only touch along the miter.
+ * Both walls of a corner run their trim to the corner, where the bands would otherwise overlap and share their tops, bottoms and
+ * fronts. Mitered along the corner’s bisector, 45° in a right angle, the two bands only touch along the miter.
  */
 export default function miterCorners(walls: ReadonlyArray<Wall>): Array<Wall> {
   // Marks from an earlier pass are recomputed, not kept.
@@ -41,14 +41,14 @@ export default function miterCorners(walls: ReadonlyArray<Wall>): Array<Wall> {
       const along: Point = [ends[1 - index][0] - end[0], ends[1 - index][1] - end[1]]
       const length = Math.hypot(...along)
       const toward: Point = [along[0] / length, along[1] / length]
-      return walls.some((other, otherIndex) => {
+      for (const [otherIndex, other] of walls.entries()) {
         if (otherIndex === wallIndex || trimKey(other) !== key) {
-          return false
+          continue
         }
         const otherEnds = wallEnds(other)
         const shared = otherEnds.findIndex(point => Math.hypot(point[0] - end[0], point[1] - end[1]) < tolerance)
         if (shared === -1) {
-          return false
+          continue
         }
         const far = otherEnds[1 - shared]
         const otherLength = Math.hypot(far[0] - end[0], far[1] - end[1])
@@ -56,9 +56,16 @@ export default function miterCorners(walls: ReadonlyArray<Wall>): Array<Wall> {
         const [nx, nz] = inward(wall)
         const [ox, oz] = inward(other)
         // An inside corner: each wall runs off into the room the other one faces.
-        return otherToward[0] * nx + otherToward[1] * nz > 1 - tolerance && toward[0] * ox + toward[1] * oz > 1 - tolerance
-      })
-    }) as [boolean, boolean]
+        if (otherToward[0] * nx + otherToward[1] * nz > tolerance && toward[0] * ox + toward[1] * oz > tolerance) {
+          // The bisector of the angle between both walls leaves the corner this far along the wall per meter into the room.
+          const cos = toward[0] * otherToward[0] + toward[1] * otherToward[1]
+          const sin = Math.abs(toward[0] * otherToward[1] - toward[1] * otherToward[0])
+          // Rounded, so a right angle comes out as exactly 1 and equal walls share one cut.
+          return Math.round((1 + cos) / sin * 1e9) / 1e9
+        }
+      }
+      return 0
+    }) as [number, number]
     return miters.some(Boolean) ? {
       ...wall,
       miters,

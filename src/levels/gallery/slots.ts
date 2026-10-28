@@ -71,10 +71,10 @@ const specs: ReadonlyArray<SlotSpec> = [
   ['oculus-north', '3:2', 30_000, 0, 5.6, -2.7],
   ['oculus-east', '3:2', 30_000, 0, oculusPlatformU, -2.85],
   ['oculus-west', '3:2', 30_000, 0, -oculusPlatformU, -2.85],
-  // Lodge: three evenly along the north wall, one each side of the fireplace and one facing the window
-  ['lodge-north', '3:2', 30_000, 0, -3, lodgeY],
+  // Lodge: one centered on each wall of the north bay, one each side of the fireplace and one facing the window
+  ['lodge-northwest', '3:2', 30_000, 0, 0, lodgeY],
   ['lodge-north', '3:2', 30_000, 0, 0, lodgeY],
-  ['lodge-north', '3:2', 30_000, 0, 3, lodgeY],
+  ['lodge-northeast', '3:2', 30_000, 0, 0, lodgeY],
   ['lodge-south', '1:1', 15_000, 0, -3.5, lodgeY],
   ['lodge-south', '1:1', 15_000, 0, 3.5, lodgeY],
   ['lodge-east', '1:1', 15_000, 0, lodgeWindowU, lodgeY],

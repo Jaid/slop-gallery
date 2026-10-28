@@ -4,6 +4,7 @@ import {expect, test} from 'bun:test'
 
 import {AmbientLight, BoxGeometry, Group, InstancedMesh, Matrix4, Mesh, MeshBasicNodeMaterial, MeshStandardNodeMaterial, PointLight, Scene} from 'three/webgpu'
 
+import {lodgeBay} from '../../src/lib/gallery/lodge.ts'
 import {craterTerrain} from '../../src/lib/gallery/moonfall/CraterTerrain.ts'
 import {roomClearHeight, rooms} from '../../src/lib/gallery/walls.ts'
 import {worldRooms} from '../../src/lib/gallery/worldRooms.ts'
@@ -26,9 +27,13 @@ test('every gallery room is fenced around its center', () => {
   expect(boxes.corridor).toHaveLength(2)
   expect(boxes.corridor[1].max[0]).toBe(-20)
   // The Corridor and the Lodge meet halfway through the doorway passage between them.
-  expect(boxes.lodge).toHaveLength(2)
+  expect(boxes.lodge).toHaveLength(3)
   expect(boxes.lodge[1].min[0]).toBe(boxes.corridor[0].max[0])
   expect(boxes.lodge[1].max[0]).toBe(boxes.lodge[0].min[0])
+  // The Lodge’s bay lies north of its square, as wide and as high.
+  expect(boxes.lodge[2].max[2]).toBe(boxes.lodge[0].min[2])
+  expect(boxes.lodge[2].min[2]).toBeCloseTo(boxes.lodge[0].min[2] - lodgeBay.depth)
+  expect([boxes.lodge[2].min[0], boxes.lodge[2].max[0], boxes.lodge[2].min[1], boxes.lodge[2].max[1]]).toEqual([boxes.lodge[0].min[0], boxes.lodge[0].max[0], boxes.lodge[0].min[1], boxes.lodge[0].max[1]])
   // The Moonfall reaches down into its crater, deeper than its floor.
   const moonfall = rooms.find(room => room.id === 'moonfall')!
   expect(boxes.moonfall[0].min[1]).toBeCloseTo(moonfall.floorY + craterTerrain.lowest(), 3)

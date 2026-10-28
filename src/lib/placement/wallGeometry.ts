@@ -42,8 +42,8 @@ export type Wall = {
   height: number
   holes?: Array<WallOpening>
   id: string
-  /** whether the trim is mitered at the wall’s −x and +x ends, where it meets another wall in an inside corner */
-  miters?: readonly [boolean, boolean]
+  /** How far the trim’s ends at the wall’s −x and +x ends slant back along the wall per meter they stand out of its plane, to meet another wall’s in an inside corner: 1 at a right angle and less at a wider one, 0 for a square end. */
+  miters?: readonly [number, number]
   /** Solid architectural features which must remain free of hanging artwork. */
   reservations?: Array<WallReservation>
   room: RoomId

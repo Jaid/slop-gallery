@@ -9,7 +9,7 @@ import corridor, {corridorPassage, corridorStairFloor, corridorWalls, insideCorr
 import mainEntrance from './entrance.ts'
 import lobby from './lobby.ts'
 import lobbyVault from './lobbyVault.ts'
-import lodge, {insideLodgeAccess, lodgeTunnel, lodgeTunnelWalls, lodgeWindow, lodgeWindowFloor} from './lodge.ts'
+import lodge, {insideLodgeAccess, lodgeBay, lodgeBayFloor, lodgeTunnel, lodgeTunnelWalls, lodgeWindow, lodgeWindowFloor} from './lodge.ts'
 import lowerGallery, {oculusPlatform, oculusRamps, rampFloorHeight, tunnelFloorHeight, tunnelSlope} from './lowerGallery.ts'
 import {craterTerrain} from './moonfall/CraterTerrain.ts'
 import {balconyFloorHeight} from './oculusBalcony.ts'
@@ -143,7 +143,8 @@ const contains = (room: (typeof rooms)[number], position: Vec3) => {
   }
   const [x, y, z] = position
   const ground = room.id === 'moonfall' ? Math.min(room.floorY, room.floorY + craterTerrain.height(x - room.center[0], z - room.center[1])) : room.floorY
-  return y >= ground - 1 && y <= room.floorY + roomClearHeight(room) + 0.2 && Math.abs(x - room.center[0]) <= room.size[0] / 2 && Math.abs(z - room.center[1]) <= room.size[1] / 2
+  const inPlan = Math.abs(x - room.center[0]) <= room.size[0] / 2 && Math.abs(z - room.center[1]) <= room.size[1] / 2 || room.id === 'lodge' && lodgeBayFloor(x, z) !== undefined
+  return y >= ground - 1 && y <= room.floorY + roomClearHeight(room) + 0.2 && inPlan
 }
 export function insideGallery(position: Vec3) {
   return position.every(Number.isFinite) && (rooms.some(room => contains(room, position)) || insideStairway(position) || tunnelContains(position) || insideTunnelDisplay(position) || insideLodgeAccess(position))
@@ -206,6 +207,13 @@ const roomWall = (roomId: RoomId, side: 'east' | 'north' | 'south' | 'west', hol
   }
   return result
 }
+/** The walls of the Lodge’s bay, each from one of its corners to the next: the 45° walls out of the north-west and north-east room corners and the back wall between them. */
+const lodgeBayWalls = (['northwest', 'north', 'northeast'] as const).map((side, i) => {
+  const [fromX, fromZ] = lodgeBay.corners[i]
+  const [toX, toZ] = lodgeBay.corners[i + 1]
+  // A wall runs along its own +x, which turns toward −z as its rotation grows.
+  return wall(`lodge-${side}`, 'lodge', (fromX + toX) / 2, (fromZ + toZ) / 2, Math.atan2(fromZ - toZ, toX - fromX), Math.hypot(toX - fromX, toZ - fromZ))
+})
 /** The wall with the cast-glass window between the Lobby and the Salon cut into it; the glass itself stands in the shared plane. */
 const withSalonWindow = (target: Wall): Wall => ({
   ...target,
@@ -375,7 +383,7 @@ const walls: Array<Wall> = miterCorners([
   ]),
   withDisplayDoor(roomWall('oculus', 'east')),
   withDisplayDoor(roomWall('oculus', 'west')),
-  roomWall('lodge', 'north'),
+  ...lodgeBayWalls,
   roomWall('lodge', 'west', [
     {
       u: lodge.center[1] - lodge.returnZ,
@@ -461,9 +469,10 @@ export function wallDistance(origin: Vec3, direction: Vec3) {
 // This also recovers loose objects slightly below a slab in stacked rooms.
 export function floorHeight([x, y, z]: Vec3) {
   const heights = rooms.filter(room => Math.abs(x - room.center[0]) <= room.size[0] / 2 && Math.abs(z - room.center[1]) <= room.size[1] / 2).map(room => room.floorY + (room.id === 'moonfall' ? craterTerrain.height(x - room.center[0], z - room.center[1]) : 0))
-  const sill = lodgeWindowFloor(x, z)
-  if (sill !== undefined) {
-    heights.push(sill)
+  for (const height of [lodgeWindowFloor(x, z), lodgeBayFloor(x, z)]) {
+    if (height !== undefined) {
+      heights.push(height)
+    }
   }
   const corridorStair = corridorStairFloor(x, z)
   if (corridorStair !== undefined) {

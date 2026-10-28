@@ -9,7 +9,7 @@ import {DoubleSide, Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vecto
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import {corridorPassage, corridorRails, corridorRunner, corridorStairs, insideCorridor, lodgeThresholdSaddle} from '../../src/lib/gallery/corridor.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
-import lodge, {insideLodgeAccess, lodgeTunnel, lodgeTunnelTransition, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
+import lodge, {insideLodgeAccess, lodgeBay, lodgeBayFloor, lodgeOutline, lodgeTunnel, lodgeTunnelTransition, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import lodgeInterior, {lodgeFurnitureColliders} from '../../src/lib/gallery/lodgeInterior/layout.ts'
 import LodgeWindowGeometry from '../../src/lib/gallery/LodgeWindowGeometry.ts'
 import {oculusPlatform} from '../../src/lib/gallery/lowerGallery.ts'
@@ -84,9 +84,10 @@ function createWorld(fps: number) {
     box(beam.position, beam.size).setRotation(beamRotation.setFromEuler(new Euler(...beam.rotation)))
   }
   box(oculusPlatform.position, oculusPlatform.size)
-  box([lodge.center[0], lodge.floorY - 0.15, lodge.center[1]], [10, 0.3, 10])
-  box([lodge.center[0], lodge.floorY + lodge.height + 0.12, lodge.center[1]], [10, 0.24, 10])
-  // Both saddles, as hulls like the passages mount them.
+  // The Lodge’s floor and ceiling slabs over its plan with the bay, and both saddles, as hulls like the room mounts them.
+  const slab = (bottom: number, top: number) => world.createCollider(RAPIER.ColliderDesc.convexHull(new Float32Array(lodgeOutline.flatMap(([x, z]) => [x, bottom, z, x, top, z])))!)
+  slab(lodge.floorY - 0.3, lodge.floorY)
+  slab(lodge.floorY + lodge.height, lodge.floorY + lodge.height + 0.24)
   for (const saddle of saddles) {
     world.createCollider(RAPIER.ColliderDesc.convexHull(saddle.getAttribute('position').array as Float32Array)!)
   }
@@ -275,6 +276,55 @@ describe('Lodge and Corridor route', () => {
     expect(insideGallery([-18, -3.4, -20])).toBe(false)
     expect(insideGallery([-25, -6.01, -20])).toBe(false)
   })
+  test('the north bay is half an octagon, half as deep as the run from the tunnel portal’s jamb to the south-east corner', () => {
+    // The two points Jaid measured between: the portal’s south jamb and the south-east corner of the log faces.
+    expect(Math.hypot(-20.028 - -20.103, -35.59 - -30.105) / 2).toBeCloseTo(lodgeBay.depth, 2)
+    const [northWest, back, northEast] = ['lodge-northwest', 'lodge-north', 'lodge-northeast'].map(id => walls.find(wall => wall.id === id)!)
+    expect([northWest.rotation, back.rotation, northEast.rotation]).toEqual([Math.PI / 4, 0, -Math.PI / 4])
+    expect(northWest.width).toBeCloseTo(lodgeBay.depth * Math.SQRT2)
+    expect(northEast.width).toBeCloseTo(lodgeBay.depth * Math.SQRT2)
+    expect(back.width).toBeCloseTo(lodge.size[0] - 2 * lodgeBay.depth)
+    expect(back.center[2]).toBeCloseTo(lodge.center[1] - lodge.size[1] / 2 - lodgeBay.depth)
+    // The diagonals start at the corners beside the Corridor’s and the tunnel’s doorways.
+    expect(wallPosition(northWest, -northWest.width / 2, 0, 0)).toEqual([expect.closeTo(lodge.center[0] - lodge.size[0] / 2), 0, expect.closeTo(lodge.center[1] - lodge.size[1] / 2)])
+    expect(wallPosition(northEast, northEast.width / 2, 0, 0)).toEqual([expect.closeTo(lodge.center[0] + lodge.size[0] / 2), 0, expect.closeTo(lodge.center[1] - lodge.size[1] / 2)])
+    // Its floor belongs to the Lodge up to its walls, not in the corners they cut off.
+    const inside: Vec3 = [lodge.center[0], lodge.floorY + 1.6, back.center[2] + 0.3]
+    expect(roomAt(inside)).toBe('lodge')
+    expect(insideGallery(inside)).toBe(true)
+    expect(floorHeight(inside)).toBe(lodge.floorY)
+    const cutOff: Vec3 = [lodge.center[0] - lodge.size[0] / 2 + 0.3, lodge.floorY + 1.6, back.center[2] + 0.3]
+    expect(lodgeBayFloor(cutOff[0], cutOff[2])).toBeUndefined()
+    expect(insideGallery(cutOff)).toBe(false)
+  })
+  for (const [label, heading] of [['north', 0], ['north-west', Math.PI / 4], ['north-east', -Math.PI / 4]] as const) {
+    test(`a player walking ${label} into the bay is stopped by its wall, on level floor`, () => {
+      const world = createWorld(60)
+      const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(lodge.center[0], lodge.floorY + 0.04, lodge.tunnelZ))
+      const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
+      const motor = new EgoMotor(RAPIER, world, body, collider)
+      const facing = new Quaternion
+      facing.setFromAxisAngle(new Vector3(0, 1, 0), heading)
+      try {
+        for (let i = 0; i < 60 * 5; i++) {
+          motor.step(world.timestep, {forward: true}, facing)
+          world.step()
+        }
+        const {x, y, z} = body.translation()
+        // At the wall the bay faces along the heading, a capsule radius in front of its logs.
+        const wall = walls.find(candidate => candidate.id === `lodge-${label.replace('-', '')}`)!
+        const clearance = (x - wall.center[0]) * Math.sin(wall.rotation) + (z - wall.center[2]) * Math.cos(wall.rotation)
+        expect(clearance).toBeGreaterThan(0.3 + 0.105 - 0.03)
+        expect(clearance).toBeLessThan(0.3 + 0.25 + 0.05)
+        expect(lodgeBayFloor(x, z)).toBe(lodge.floorY)
+        expect(y).toBeCloseTo(lodge.floorY + 0.02, 2)
+        expect(motor.grounded).toBe(true)
+      } finally {
+        motor.dispose()
+        world.free()
+      }
+    })
+  }
   test('the Lodge furniture leaves the walkway between both doorways clear', () => {
     // The loop walks along z = tunnelZ from the tunnel doorway to the corridor doorway; a 0.3 m capsule needs room on both sides.
     const walkway = lodge.tunnelZ - lodge.center[1]
@@ -373,12 +423,12 @@ describe('Lodge and Corridor route', () => {
       }
     }
   }
-  test('the new room accepts hanging and loose artwork in backups', () => {
-    const wall = walls.find(candidate => candidate.id === 'lodge-north')!
+  test('the new room accepts hanging and loose artwork in backups, on the bay’s 45° walls too', () => {
+    const wall = walls.find(candidate => candidate.id === 'lodge-northwest')!
     const portrait = {
       ...samplePortraits[0],
       wallId: wall.id,
-      position: wallPosition(wall, -2.5, lodge.floorY + 2.1),
+      position: wallPosition(wall, 0.5, lodge.floorY + 2.1),
       width: 1.2,
       height: 1.2,
       rotation: wall.rotation,

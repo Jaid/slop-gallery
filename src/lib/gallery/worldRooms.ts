@@ -2,7 +2,7 @@ import type {WorldBox, WorldRoom} from '../webmcp/analyzeWorld.ts'
 import type {FloorRectangle} from './floors.ts'
 
 import corridor, {corridorHallEastX, corridorStairs, lodgeThreshold} from './corridor.ts'
-import lodge from './lodge.ts'
+import lodge, {lodgeBay} from './lodge.ts'
 import {craterTerrain} from './moonfall/CraterTerrain.ts'
 import {stairHeadroom} from './stairs/StairFlight.ts'
 import tunnelDisplays from './tunnelDisplays.ts'
@@ -36,14 +36,14 @@ const fence = (id: WorldRoom['id'], own: WorldBox) => {
     return corridorFence
   }
   if (id === 'lodge') {
-    return [own, box(lodgeThreshold, corridor.floorY, corridor.height)]
+    return [own, box(lodgeThreshold, corridor.floorY, corridor.height), box(lodgeBay.bounds, lodge.floorY, lodge.height)]
   }
   return id === 'oculus' ? [own, ...displayFences] : own
 }
 
 /**
  * Every room of the gallery fenced by 3D boxes from its floor to its clear height, up to the vault crown in the Lobby. All rooms are one box except the Corridor,
- * its hall and the stair flight up to the Sienna, the Lodge, which adds its threshold: its half of the doorway passage from the Corridor’s hall, and the Oculus, which adds the
+ * its hall and the stair flight up to the Sienna, the Lodge, which adds its threshold: its half of the doorway passage from the Corridor’s hall, and the box around its bay, and the Oculus, which adds the
  * tunnel’s displays with the stairways down to them from its balcony. The Moonfall’s box reaches down to the bottom of its crater.
  */
 export const worldRooms: ReadonlyArray<WorldRoom> = rooms.map(room => {

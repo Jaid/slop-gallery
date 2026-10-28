@@ -84,7 +84,7 @@ function cutArchitecture(wall: Wall) {
     const bendableBlock = new BoxGeometry(width, height, depth, wall.curveRadius ? bendSegments(width, wall.curveRadius) : 1)
     return bendableBlock.translate(x, y, z)
   }
-  // A band running the full width ends at 45° in an inside corner, through the corner of both wall faces, meeting the adjoining wall’s band.
+  // A band running the full width ends on the bisector of an inside corner, through the corner of both wall faces, meeting the adjoining wall’s band.
   const miter = (geometry: BufferGeometry) => {
     const {miters} = wall
     if (!miters?.some(Boolean)) {
@@ -94,8 +94,9 @@ function cutArchitecture(wall: Wall) {
     for (let vertex = 0; vertex < position.count; vertex++) {
       const x = position.getX(vertex)
       const side = Math.sign(x)
-      if (miters[side < 0 ? 0 : 1] && Math.abs(Math.abs(x) - wall.width / 2) < 1e-6) {
-        position.setX(vertex, side * (wall.width / 2 - position.getZ(vertex)))
+      const slant = miters[side < 0 ? 0 : 1]
+      if (slant && Math.abs(Math.abs(x) - wall.width / 2) < 1e-6) {
+        position.setX(vertex, side * (wall.width / 2 - position.getZ(vertex) * slant))
       }
     }
     geometry.computeVertexNormals()

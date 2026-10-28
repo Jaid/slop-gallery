@@ -6,7 +6,7 @@ import {afterAll, describe, expect, test} from 'bun:test'
 import {DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {soundboardWalls} from '../../src/lib/audio/soundboard.ts'
-import {createArchitectureGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
+import {createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
 import miterCorners from '../../src/lib/gallery/cornerMiters.ts'
 import {corridorPassage} from '../../src/lib/gallery/corridor.ts'
 import {knotGalleryWalls} from '../../src/lib/gallery/knotGallery.ts'
@@ -16,7 +16,7 @@ import UpholsteredSeatGeometry from '../../src/lib/gallery/lodgeInterior/Upholst
 import Passage from '../../src/lib/gallery/passages/Passage.ts'
 import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
 import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
-import walls from '../../src/lib/gallery/walls.ts'
+import walls, {wallPosition} from '../../src/lib/gallery/walls.ts'
 
 const material = new MeshBasicMaterial({side: DoubleSide})
 const disposables: Array<{dispose: () => void}> = [material]
@@ -57,16 +57,35 @@ const horizontal = (x: number, z: number) => {
   const direction = new Vector3(x, 0, z)
   return direction.normalize()
 }
+/** the direction a wall’s face looks into its room */
+const inward = (wall: Wall) => horizontal(Math.sin(wall.rotation), Math.cos(wall.rotation))
+/** Where the plaster faces of two walls meet, at floor level. */
+function facesMeet(a: Wall, b: Wall) {
+  const [na, nb] = [inward(a), inward(b)]
+  // Each face lies wallFace in front of its wall’s plane through the center.
+  const da = wallFace + a.center[0] * na.x + a.center[2] * na.z
+  const db = wallFace + b.center[0] * nb.x + b.center[2] * nb.z
+  const determinant = na.x * nb.z - na.z * nb.x
+  return new Vector3((da * nb.z - db * na.z) / determinant, a.center[1], (na.x * db - nb.x * da) / determinant)
+}
+/** how far a trim end slants back per meter out of its wall at the bay’s 135° corners */
+const bayMiter = Math.SQRT2 - 1
 describe('inside corners of room walls', () => {
   test('every room corner miters both walls, on all three levels', () => {
-    for (const id of ['lodge-north', 'lodge-east', 'lodge-south', 'lodge-west', 'vesper-north', 'salon-west']) {
-      expect(mitered(walls, id)).toEqual([true, true])
+    for (const id of ['lodge-south', 'vesper-north', 'salon-west']) {
+      expect(mitered(walls, id)).toEqual([1, 1])
+    }
+    // The Lodge’s bay turns by 45° at each of its four corners, so its trim ends slant back less than in a right angle.
+    for (const [id, miters] of [['lodge-west', [1, bayMiter]], ['lodge-northwest', [bayMiter, bayMiter]], ['lodge-north', [bayMiter, bayMiter]], ['lodge-northeast', [bayMiter, bayMiter]], ['lodge-east', [bayMiter, 1]]] as const) {
+      for (const [end, miter] of miters.entries()) {
+        expect(mitered(walls, id)![end]).toBeCloseTo(miter, 8)
+      }
     }
     // Walls that run on in a straight line, or open into a doorway, keep square ends.
-    expect(mitered(walls, 'lobby-west')).toEqual([true, false])
-    expect(mitered(walls, 'lobby-extension-west')).toEqual([false, true])
+    expect(mitered(walls, 'lobby-west')).toEqual([1, 0])
+    expect(mitered(walls, 'lobby-extension-west')).toEqual([0, 1])
     for (const wall of [...knotGalleryWalls, ...soundboardWalls]) {
-      expect(wall.miters).toEqual([true, true])
+      expect(wall.miters).toEqual([1, 1])
     }
   })
   test('outside corners and mismatched trim keep square ends', () => {
@@ -105,34 +124,39 @@ describe('inside corners of room walls', () => {
         rotation: Math.PI / 2,
       },
     ])
-    expect(inside.map(wall => wall.miters)).toEqual([[true, false], [false, true]])
+    expect(inside.map(wall => wall.miters)).toEqual([[1, 0], [0, 1]])
     const plain = miterCorners([inside[0], {
       ...inside[1],
       trimStyle: 'plain',
     }])
     expect(plain.map(wall => wall.miters)).toEqual([undefined, undefined])
+    // Turned by 45° instead of 90°, like a bay’s corner, the bands meet on the wider angle’s bisector.
+    const obtuse = miterCorners([inside[0], {
+      ...inside[1],
+      center: [-Math.SQRT2, 0, Math.SQRT2],
+      rotation: Math.PI / 4,
+    }])
+    expect(obtuse[0].miters![0]).toBeCloseTo(bayMiter, 8)
+    expect(obtuse[0].miters![1]).toBe(0)
+    expect(obtuse[1].miters![0]).toBe(0)
+    expect(obtuse[1].miters![1]).toBeCloseTo(bayMiter, 8)
   })
-  // Where both walls ran their baseboards and cornices into the corner, the bands overlapped in a square with shared tops, bottoms and fronts.
-  for (const [first, second] of [['lodge-south', 'lodge-east'], ['lodge-south', 'lodge-west'], ['vesper-north', 'vesper-west']] as const) {
+  // Where both walls ran their baseboards and cornices into the corner, the bands overlapped with shared tops, bottoms and fronts.
+  // The tunnel doorway’s casing fills the corner of the bay’s north-east wall and the east wall up to the arch’s springing, so only the cornices meet there.
+  for (const [first, second, baseboard] of [['lodge-south', 'lodge-east', true], ['lodge-south', 'lodge-west', true], ['vesper-north', 'vesper-west', true], ['lodge-northwest', 'lodge-west', true], ['lodge-northwest', 'lodge-north', true], ['lodge-north', 'lodge-northeast', true], ['lodge-northeast', 'lodge-east', false]] as const) {
     test(`${first} and ${second} meet with single, mitered trim surfaces`, () => {
       const a = wallById(first)
       const b = wallById(second)
       const meshes = [...wallMeshes(a), ...wallMeshes(b)]
-      // The corner of both plaster faces, and the directions into the room along each face.
-      const normal = (wall: Wall) => horizontal(Math.sin(wall.rotation), Math.cos(wall.rotation))
-      const corner = new Vector3(a.center[0], 0, a.center[2])
-      corner.addScaledVector(normal(a), wallFace)
-      const toB = normal(b)
-      corner.x = (Math.abs(toB.x) > 0.5 ? b.center[0] : corner.x) + toB.x * wallFace
-      corner.z = (Math.abs(toB.z) > 0.5 ? b.center[2] : corner.z) + toB.z * wallFace
+      const corner = facesMeet(a, b)
       const floorY = a.center[1]
       const top = a.height
       // Off the miter line, a point in front of both faces lies on only one wall’s band.
-      for (const [alongA, alongB] of [[0.05, 0.12], [0.12, 0.05]]) {
-        const point = corner.clone().addScaledVector(normal(a), alongA).addScaledVector(toB, alongB)
+      for (const [alongA, alongB] of [[0.04, 0.09], [0.09, 0.04]]) {
+        const point = corner.clone().addScaledVector(inward(a), alongA).addScaledVector(inward(b), alongB)
         // the baseboard’s cap from above, the cornice’s lower band from below and its upper band from above
         const probes = [
-          [floorY + 1, -1, floorY + 0.44],
+          ...baseboard ? [[floorY + 1, -1, floorY + 0.44]] as const : [],
           [floorY + top - 1, 1, floorY + top - 0.47],
           [floorY + top + 0.25, -1, floorY + top - 0.105],
         ] as const
@@ -144,20 +168,25 @@ describe('inside corners of room walls', () => {
       }
     })
   }
-  test('the Lodge’s widened doorway keeps its reveal clear of the north wall’s baseboard', () => {
-    const north = wallById('lodge-north')
+  test('the bay’s 45° walls start behind the casings of the Lodge’s doorways beside them', () => {
+    for (const [doorway, diagonal] of [['lodge-west', 'lodge-northwest'], ['lodge-east', 'lodge-northeast']] as const) {
+      const wall = wallById(doorway)
+      const bay = wallById(diagonal)
+      const hole = wall.holes![0]
+      // The casing’s outer edge toward the bay, on the log face.
+      const edges = [-1, 1].map(side => new Vector3(...wallPosition(wall, hole.u + side * (hole.width / 2 + wallOpeningTrim), wall.center[1], wallFace)))
+      const edge = edges.reduce((north, candidate) => (candidate.z < north.z ? candidate : north))
+      const inFront = edge.x * inward(bay).x + edge.z * inward(bay).z - (bay.center[0] * inward(bay).x + bay.center[2] * inward(bay).z) - wallFace
+      expect(inFront).toBeGreaterThan(0.03)
+    }
+  })
+  test('the Lodge’s widened doorway keeps a plumb reveal beside the bay', () => {
+    const bay = wallById('lodge-northeast')
     const east = wallById('lodge-east')
     const hole = east.holes![0]
     // The east wall runs north to south from its −x end; its doorway’s north jamb is the hole’s −u edge.
     const jambZ = east.center[2] + hole.u - hole.width / 2
-    const northFace = north.center[2] + wallFace
-    for (const front of [0.2, 0.25]) {
-      expect(Math.abs(jambZ - (north.center[2] + front))).toBeGreaterThanOrEqual(0.02 - 1e-9)
-    }
-    expect(jambZ).toBeGreaterThan(north.center[2] + 0.25)
-    // The casing still reaches behind the log face, leaving no gap against the north wall.
-    expect(jambZ - 0.17).toBeLessThan(northFace)
-    const meshes = [...wallMeshes(north), ...wallMeshes(east)]
+    const meshes = [...wallMeshes(bay), ...wallMeshes(east)]
     // below the arch’s springing line, where the jamb is plumb
     for (const y of [0.2, 0.41, 1.1]) {
       // Across the jamb, from inside the doorway toward the north wall.

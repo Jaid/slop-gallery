@@ -1,4 +1,5 @@
 import type {PlankOptions} from '../materials/PlankMaterial.ts'
+import type {FloorRectangle} from './floors.ts'
 import type {PassageCutout} from './passages/Passage.ts'
 import type {Vec3} from './types.ts'
 
@@ -29,6 +30,37 @@ const lodge = {
   // face, the jamb shared that plane and flickered.
   tunnelZ: northZ + 0.27 + oculusTower.radius,
 } as const
+const westX = lodge.center[0] - lodge.size[0] / 2
+const eastX = lodge.center[0] + lodge.size[0] / 2
+const southZ = lodge.center[1] + lodge.size[1] / 2
+/** Half the run along the east wall from the tunnel portal’s south jamb to the room’s south-east corner. */
+const bayDepth = 2.74
+/**
+ * The bay that takes the place of the Lodge’s north wall, from the corner beside the Corridor’s doorway to the one beside the tunnel’s: half an octagon, with walls at 45° out of both corners and a back wall parallel to the old one.
+ *
+ * Its corners are where the planes of its walls meet, from west to east, so each wall faces into the room from one corner to the next.
+ */
+export const lodgeBay = {
+  depth: bayDepth,
+  corners: [[westX, northZ], [westX + bayDepth, northZ - bayDepth], [eastX - bayDepth, northZ - bayDepth], [eastX, northZ]],
+  /** the box around the bay, from the old north wall’s line to the back wall */
+  bounds: {
+    center: [lodge.center[0], northZ - bayDepth / 2],
+    size: [lodge.size[0], bayDepth],
+  },
+} as const satisfies {
+  bounds: FloorRectangle
+  corners: ReadonlyArray<readonly [number, number]>
+  depth: number
+}
+/** The Lodge’s floor plan along the planes of its walls, bay included, around from the south-west corner. It is convex. */
+export const lodgeOutline: ReadonlyArray<readonly [number, number]> = [[westX, southZ], ...lodgeBay.corners, [eastX, southZ]]
+
+/** The Lodge’s floor height inside its bay, north of the old north wall’s line and within the bay’s walls. */
+export function lodgeBayFloor(x: number, z: number) {
+  const depth = northZ - z
+  return depth >= -1e-6 && depth <= bayDepth + 1e-6 && x >= westX + depth - 1e-6 && x <= eastX - depth + 1e-6 ? lodge.floorY : undefined
+}
 
 export const lodgeWindow = {
   roomX: lodge.center[0] - lodge.size[0] / 2,
