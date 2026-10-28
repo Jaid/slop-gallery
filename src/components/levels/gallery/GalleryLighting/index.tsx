@@ -4,6 +4,7 @@ import type {CanvasTexture, DirectionalLight, Light, Renderer, Scene} from 'thre
 
 import {useThree} from '@react-three/fiber'
 import {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react'
+import {uniform} from 'three/tsl'
 import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 import {useShallow} from 'zustand/react/shallow'
 
@@ -26,6 +27,8 @@ const lobby = rooms.find(room => room.id === 'lobby')!
 /** Where light markers show the sun, which has no position of its own: 2 m above the crown of the Lobby’s vault. */
 const sunMarker = [lobby.center[0], lobbyVault.crownY + 2, lobby.center[1]] as const
 const antechamber = rooms.find(room => room.id === 'antechamber')!
+/** Rooms without a view outside: their long, level views end in rooms culled behind them, which show black instead of the sky’s bright horizon. */
+const skylessRooms: ReadonlyArray<RoomId> = ['corridor', 'moonfall']
 /** the lighting the tuning panel opens with */
 const tuningStart = pickLightingTuning(getDefaultCustomGraphics())
 
@@ -56,12 +59,19 @@ export default function GalleryLighting() {
       .and(position.x.sub(antechamber.center[0]).abs().lessThan(antechamber.size[0] / 2))
       .and(position.z.sub(antechamber.center[1]).abs().lessThan(antechamber.size[1] / 2)))
   }, [sunShadowSamples])
-  // Like the environment, the background is set before the first frame, so the pipelines are compiled once.
+  // Like the environment, the background is set before the first frame, so the pipelines are compiled once. In skyless rooms a uniform blacks it out instead of removing it.
   useLayoutEffect(() => {
     const previous = scene.backgroundNode
+    const shown = uniform(1)
+    const show = (room: RoomId) => {
+      shown.value = skylessRooms.includes(room) ? 0 : 1
+    }
+    show(useGallery.getState().room)
+    const unsubscribe = useGallery.subscribe(state => show(state.room))
     // eslint-disable-next-line react-hooks/immutability -- the scene background belongs to the level; the cleanup restores it.
-    scene.backgroundNode = proceduralSky(look)
+    scene.backgroundNode = proceduralSky(look).mul(shown)
     return () => {
+      unsubscribe()
       scene.backgroundNode = previous
     }
   }, [scene, look])
