@@ -19,7 +19,12 @@ type RailingSegment = {
 }
 
 export default class RailingPath extends Curve<Vector3> {
+  /** Horizontal gap between neighboring posts; each railing rounds its length to the nearest whole number of gaps, so every railing keeps nearly the same rhythm. */
+  static readonly postSpacing = 2
   readonly distances = [0]
+  /** Like `distances`, but measured on the ground plan, so posts on a slope stand as far apart as on the level. */
+  readonly horizontalDistances = [0]
+  readonly horizontalLength: number
   readonly length: number
   /** Rail centerline vertices; the capsule colliders and rendered tube both follow them exactly. */
   readonly points: Array<Vector3>
@@ -40,8 +45,10 @@ export default class RailingPath extends Curve<Vector3> {
         throw new RangeError('Consecutive railing anchors must be distinct.')
       }
       this.distances.push(this.distances[i - 1] + distance)
+      this.horizontalDistances.push(this.horizontalDistances[i - 1] + Math.hypot(anchors[i].ground[0] - anchors[i - 1].ground[0], anchors[i].ground[2] - anchors[i - 1].ground[2]))
     }
     this.length = this.distances.at(-1)!
+    this.horizontalLength = this.horizontalDistances.at(-1)!
     this.segments = anchors.slice(1).map((_, i) => {
       const a = this.points[i].clone()
       const b = this.points[i + 1]
@@ -54,14 +61,8 @@ export default class RailingPath extends Curve<Vector3> {
         halfLength: direction.length() / 2,
       }
     })
-    const count = Math.ceil(this.length / 1.4)
-    this.posts = Array.from({length: count + 1}, (_, i) => {
-      const anchor = this.sample(i / count)
-      return {
-        position: [anchor.ground[0], anchor.ground[1] + anchor.height / 2, anchor.ground[2]],
-        height: anchor.height,
-      }
-    })
+    const count = Math.max(1, Math.round(this.horizontalLength / RailingPath.postSpacing))
+    this.posts = Array.from({length: count + 1}, (_, i) => this.post(i / count))
   }
 
   getPoint(t: number, target = new Vector3) {
@@ -69,13 +70,25 @@ export default class RailingPath extends Curve<Vector3> {
     return target.set(ground[0], ground[1] + height, ground[2])
   }
 
+  /** The post standing at the given fraction of the railing’s horizontal length. */
+  post(fraction: number): RailingPost {
+    const {ground, height} = this.interpolate(this.horizontalDistances, clamp(fraction, 0, 1) * this.horizontalLength)
+    return {
+      position: [ground[0], ground[1] + height / 2, ground[2]],
+      height,
+    }
+  }
+
   sample(t: number): RailingAnchor {
-    const distance = clamp(t, 0, 1) * this.length
+    return this.interpolate(this.distances, clamp(t, 0, 1) * this.length)
+  }
+
+  private interpolate(distances: Array<number>, distance: number): RailingAnchor {
     let low = 0
-    let high = this.distances.length - 1
+    let high = distances.length - 1
     while (low + 1 < high) {
       const mid = low + high >>> 1
-      if (this.distances[mid] <= distance) {
+      if (distances[mid] <= distance) {
         low = mid
       } else {
         high = mid
@@ -83,7 +96,9 @@ export default class RailingPath extends Curve<Vector3> {
     }
     const a = this.anchors[low]
     const b = this.anchors[high]
-    const f = (distance - this.distances[low]) / (this.distances[high] - this.distances[low])
+    // Anchors stacked straight above each other have no horizontal extent between them.
+    const span = distances[high] - distances[low]
+    const f = span > 0 ? (distance - distances[low]) / span : 0
     return {
       ground: a.ground.map((value, i) => value + (b.ground[i] - value) * f) as Vec3,
       height: a.height + (b.height - a.height) * f,
