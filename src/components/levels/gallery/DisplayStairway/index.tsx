@@ -31,9 +31,9 @@ export default function DisplayStairway({stairway, material}: {
         <CuboidCollider args={[size[0] / 2, size[1] / 2, size[2] / 2]} position={position} />
         <Box material={material} name='display-stair-block' position={position} size={size} />
       </group>)}
-      {slabs.map(({name, position, size}, i) => <group key={i}>
-        <CuboidCollider args={[size[0] / 2, size[1] / 2, size[2] / 2]} position={position} />
-        <Box material={material} name={name} position={position} size={size} />
+      {slabs.map(({name, position, rotation, size}, i) => <group key={i} position={position} rotation={rotation}>
+        <CuboidCollider args={[size[0] / 2, size[1] / 2, size[2] / 2]} />
+        <Box material={material} name={name} size={size} />
       </group>)}
       {roofs.map(({position, rotation, size}, i) => <group key={i} position={position} rotation={rotation}>
         <CuboidCollider args={[size[0] / 2, size[1] / 2, size[2] / 2]} />
