@@ -1,17 +1,38 @@
 import type {RoomId} from '#src/rooms/index.ts'
 
+import {create} from 'zustand'
+
 import {trackLoadingItems} from '#src/lib/loadingItems.ts'
 
 /** the rooms the world asked for whose parts haven’t mounted yet */
 const pending = new Set<RoomId>
+/** the rooms the world loads later, see {@link expectRooms} */
+let expected: ReadonlyArray<RoomId> = []
+/** the expected rooms that have neither mounted nor failed yet */
+const unsettled = new Set<RoomId>
 let mounted = 0
 trackLoadingItems(() => [...pending].map(room => `room:${room}`))
+
+/**
+ * Whether the physics waits for rooms that haven’t mounted yet. Each room brings the colliders of its own floors and plinths, so without them, the player resuming in that room, loose portraits there and the Oculus props would fall through.
+ */
+export const usePhysicsHold = create<{held: boolean}>(() => ({held: false}))
 
 /** how many rooms the world asked for are still loading or waiting to mount; the loading screen waits for none to be left */
 export const pendingRooms = () => pending.size
 
 /** how many rooms have mounted so far, which grows whenever the world gains a room’s geometry */
 export const mountedRooms = () => mounted
+
+/** Holds the physics until each of these rooms has mounted or failed to load. */
+export function expectRooms(rooms: ReadonlyArray<RoomId>) {
+  expected = rooms
+  unsettled.clear()
+  for (const room of rooms) {
+    unsettled.add(room)
+  }
+  usePhysicsHold.setState({held: unsettled.size > 0})
+}
 
 /** Lists the room as loading until {@link endRoom} ends it. */
 export function startRoom(room: RoomId) {
@@ -23,9 +44,13 @@ export function endRoom(room: RoomId, failed = false) {
   if (pending.delete(room) && !failed) {
     mounted++
   }
+  if (unsettled.delete(room) && unsettled.size === 0) {
+    usePhysicsHold.setState({held: false})
+  }
 }
 
-/** Forgets every room still loading, once the world unmounts. */
+/** Forgets every room still loading once the world unmounts, and holds the physics again for a world that mounts anew. */
 export function clearRooms() {
   pending.clear()
+  expectRooms(expected)
 }

@@ -2,7 +2,7 @@ import type {PlayerPose} from './types.ts'
 
 import {wrapAngle} from 'math'
 
-import {insideLevel, playerSpawn} from '#level/navigation.ts'
+import {insideLevel, levelFloorHeight, playerSpawn} from '#level/navigation.ts'
 
 import {galleryStorageKey} from '../level.ts'
 import {localStore} from '../temporary.ts'
@@ -30,6 +30,15 @@ export function validatePlayerPose(value: unknown): PlayerPose | null {
     pitch,
   }
   return insideLevel(pose.position) ? pose : null
+}
+
+/** Puts feet that ended up below the floor under them back onto it, as a fall through a room that had not loaded yet left them. */
+const onFloor = (pose: PlayerPose): PlayerPose => {
+  const floor = levelFloorHeight(pose.position)
+  return pose.position[1] < floor ? {
+    ...pose,
+    position: [pose.position[0], floor + 0.04, pose.position[2]],
+  } : pose
 }
 
 /** Live movement stays outside React; checkpoints contain no images. */
@@ -60,7 +69,8 @@ export default class PlayerSession {
   }
 
   restore(value: unknown) {
-    this.pose = validatePlayerPose(value) ?? copy(playerSpawn)
+    const pose = validatePlayerPose(value)
+    this.pose = pose ? onFloor(pose) : copy(playerSpawn)
     this.revision++
   }
 

@@ -10,7 +10,7 @@ import {Fragment, startTransition, useEffect, useLayoutEffect, useRef, useState}
 import {Vector3} from 'three/webgpu'
 
 import {useGallery} from '#src/lib/gallery.ts'
-import {clearRooms, endRoom, startRoom} from '#src/lib/gallery/roomLoading.ts'
+import {clearRooms, endRoom, expectRooms, startRoom} from '#src/lib/gallery/roomLoading.ts'
 import {roomsAt} from '#src/lib/gallery/roomVisibility.ts'
 import {readLoading} from '#src/lib/rendering/loading.ts'
 import LobbyRoom from '#src/rooms/lobby/components/LobbyRoom/index.tsx'
@@ -83,6 +83,8 @@ const loaders: Record<LaterRoom, () => Promise<RoomPart>> = {
   },
 }
 const laterRooms = Object.keys(loaders) as Array<LaterRoom>
+// Holds the physics from before its first step until every room is in.
+expectRooms(laterRooms)
 const isLater = (room: RoomId): room is LaterRoom => room in loaders
 const loading = readLoading()
 const position = new Vector3

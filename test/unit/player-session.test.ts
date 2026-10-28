@@ -61,6 +61,21 @@ describe('player save state', () => {
     restored.resume('2026-09-09T00:00:00Z')
     expect(restored.snapshot()).toEqual(pose)
   })
+  test('a pose below the floor under it, as a fall through a room that had not loaded left it, resumes on that floor', () => {
+    const session = new PlayerSession
+    session.restore({
+      position: [14, -0.6, -18.4],
+      yaw: 0,
+      pitch: 0,
+    })
+    expect(session.snapshot().position).toEqual([14, 0.04, -18.4])
+    session.restore({
+      position: [14, 0.02, -18.4],
+      yaw: 0,
+      pitch: 0,
+    })
+    expect(session.snapshot().position).toEqual([14, 0.02, -18.4])
+  })
   test('invalid player poses reject the collection instead of salvaging artwork', () => {
     for (const player of [
       null,
