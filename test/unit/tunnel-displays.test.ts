@@ -6,7 +6,7 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import EgoMotor from 'ego-player/motor'
 import {Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
-import {colliderGeometry, createArchitectureGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
+import {colliderGeometry, createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
 import lowerGallery, {tunnelFloorHeight, tunnelSlope} from '../../src/lib/gallery/lowerGallery.ts'
 import oculusBalcony from '../../src/lib/gallery/oculusBalcony.ts'
 import oculusTower from '../../src/lib/gallery/oculusTower.ts'
@@ -19,7 +19,7 @@ const {tunnel} = lowerGallery
 const floorY = tunnelFloorHeight((tunnel.northZ + tunnel.southZ) / 2)
 const balconyY = oculusBalcony.position[1] + oculusBalcony.size[1] / 2
 type Display = (typeof tunnelDisplays)[number]
-/** the colliders between the Oculus balcony and the display: the balcony, the Oculus’ south wall with its doors, the stairway and the display’s shell */
+/** the colliders between the Oculus balcony and the display: the balcony, the Oculus’ side wall with its door, the stairway and the display’s shell */
 function stairwayWorld(display: Display) {
   const world = new RAPIER.World({
     x: 0,
@@ -27,7 +27,7 @@ function stairwayWorld(display: Display) {
     z: 0,
   })
   world.timestep = 1 / 60
-  for (const wall of [walls.find(value => value.id === 'oculus-south')!, ...display.stairway.walls]) {
+  for (const wall of [walls.find(value => value.id === `oculus-${display.side}`)!, ...display.stairway.walls]) {
     const geometry = createArchitectureGeometry(wall)
     const wallRotation = new Quaternion
     wallRotation.setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)
@@ -37,14 +37,12 @@ function stairwayWorld(display: Display) {
     geometry.dispose()
   }
   const box = (position: Vec3, size: Vec3) => world.createCollider(RAPIER.ColliderDesc.cuboid(size[0] / 2, size[1] / 2, size[2] / 2).setTranslation(...position))
-  box(oculusBalcony.position, oculusBalcony.size)
-  for (const block of display.stairway.flight.blocks) {
-    box(block.position, block.size)
+  for (const {position, size} of [oculusBalcony, ...display.stairway.flight.blocks, ...display.stairway.vestibuleSlabs]) {
+    box(position, size)
   }
-  for (const beam of [display.stairway.roof, ...display.stairway.rails]) {
-    const beamRotation = new Quaternion
-    box(beam.position, beam.size).setRotation(beamRotation.setFromEuler(new Euler(...beam.rotation)))
-  }
+  const {roof} = display.stairway
+  const roofRotation = new Quaternion
+  box(roof.position, roof.size).setRotation(roofRotation.setFromEuler(new Euler(...roof.rotation)))
   for (const {position, size} of [...display.shell, display.stairway.floor, display.stairway.ceiling]) {
     const slab = new SlopedBoxGeometry(...size, tunnelSlope)
     slab.translate(...position)
@@ -59,6 +57,8 @@ describe('tower-wide tunnel with display rooms reached from the Oculus balcony',
     for (const id of ['oculus-south', 'moonfall-north']) {
       expect(walls.find(wall => wall.id === id)!.holes![0].width).toBe(tunnel.width)
     }
+    // The doors to the stairways open in the side walls instead.
+    expect(walls.find(wall => wall.id === 'oculus-south')!.holes).toHaveLength(1)
     expect(tunnelDisplays).toHaveLength(2)
     expect(tunnelDisplays[0].center[0]).toBe(-tunnelDisplays[1].center[0])
     for (const display of tunnelDisplays) {
@@ -66,10 +66,13 @@ describe('tower-wide tunnel with display rooms reached from the Oculus balcony',
       expect(insideGallery([display.center[0], floorY + 1.6, display.center[1]])).toBe(true)
       expect(roomAt([display.center[0], floorY + 1.6, display.center[1]])).toBe('oculus')
       expect(insideGallery([Math.sign(display.frontX) * 1.8, floorY + 1.6, display.center[1]])).toBe(true)
+      // beyond the stairway’s outer wall, and between the display’s back wall and the flight
       const outerX = display.stairway.x + Math.sign(display.frontX) * (displayStairway.width / 2 + 0.3)
+      const betweenX = (display.backX + display.stairway.door[0]) / 2
       for (const z of [-10, display.stairway.landing.center[1]]) {
         expect(insideGallery([outerX, tunnelFloorHeight(z) + 1.6, z])).toBe(false)
       }
+      expect(insideGallery([betweenX, tunnelFloorHeight(-10) + 1.6, -10])).toBe(false)
       for (const exhibit of display.exhibits) {
         expect(Math.abs(exhibit.position[0] - display.center[0]) + 0.7).toBeLessThan(display.size[0] / 2)
         expect(Math.abs(exhibit.position[2] - display.center[1]) + 0.7).toBeLessThan(display.size[1] / 2)
@@ -79,54 +82,60 @@ describe('tower-wide tunnel with display rooms reached from the Oculus balcony',
     expect(exhibitKinds.size).toBe(6)
   })
   for (const display of tunnelDisplays) {
-    const {flight, landing} = display.stairway
-    test(`${display.side}: a door from the balcony opens onto the stairway, whose steps and landing are part of the Oculus`, () => {
+    const {door, flight, landing, vestibule} = display.stairway
+    const sign = Math.sign(display.frontX)
+    test(`${display.side}: a door in the Oculus’ side wall at the balcony’s end opens onto the stairway, whose vestibule, steps and landing are part of the Oculus`, () => {
+      const balconyNorthZ = oculusBalcony.position[2] - oculusBalcony.size[2] / 2
+      expect(door[1]).toBe(balconyY)
+      expect(door[2] - displayStairway.doorWidth / 2 - wallOpeningTrim).toBeGreaterThan(balconyNorthZ)
+      expect(door[2] + displayStairway.doorWidth / 2 + wallOpeningTrim).toBeLessThan(tunnel.northZ - wallFace)
       expect(flight.start).toEqual([display.stairway.x, balconyY, tunnel.northZ])
-      expect(Math.abs(flight.start[0] - oculusBalcony.position[0]) + displayStairway.width / 2).toBeLessThan(oculusBalcony.size[0] / 2)
       expect(flight.end[1]).toBeCloseTo(tunnelFloorHeight(flight.end[2]))
       expect(flight.rise).toBeLessThan(0.18)
       expect(flight.run).toBeGreaterThan(0.45)
-      const wall = walls.find(value => value.id === 'oculus-south')!
-      const geometry = createArchitectureGeometry(wall)
+      // the Oculus’ side wall and the vestibule’s wall behind it, back to back
+      const doorWalls = [walls.find(value => value.id === `oculus-${display.side}`)!, display.stairway.walls.find(wall => wall.holes?.length)!]
+      const geometries = doorWalls.map(wall => createArchitectureGeometry(wall))
       const material = new MeshBasicMaterial
-      const meshes = [geometry.surface, ...geometry.trim].map(part => {
+      const meshes = doorWalls.flatMap((wall, i) => [geometries[i].surface, ...geometries[i].trim].map(part => {
         const mesh = new Mesh(part, material)
         mesh.position.set(...wall.center)
         mesh.rotation.y = wall.rotation
         mesh.updateMatrixWorld(true)
         return mesh
-      })
+      }))
       try {
-        for (const offset of [-1, 0, 1]) {
-          for (const height of [0.02, 1.6, displayStairway.doorHeight - 0.1]) {
-            const ray = new Raycaster(new Vector3(flight.start[0] + offset, balconyY + height, tunnel.northZ - 0.5), new Vector3(0, 0, 1), 0, 1)
+        for (const offset of [-0.6, 0, 0.6]) {
+          for (const height of [0.1, 1.6, displayStairway.doorHeight - 0.1]) {
+            const ray = new Raycaster(new Vector3(door[0] - sign * 0.5, balconyY + height, door[2] + offset), new Vector3(sign, 0, 0), 0, 1)
             expect(ray.intersectObjects(meshes)).toHaveLength(0)
           }
         }
-        for (const [offset, height] of [[0, displayStairway.doorHeight + 0.15], [-1.4, 1.6], [1.4, 1.6]]) {
-          const ray = new Raycaster(new Vector3(flight.start[0] + offset, balconyY + height, tunnel.northZ - 0.5), new Vector3(0, 0, 1), 0, 1)
+        for (const [offset, height] of [[0, displayStairway.doorHeight + 0.15], [-1.2, 1.6], [1.2, 1.6]]) {
+          const ray = new Raycaster(new Vector3(door[0] - sign * 0.5, balconyY + height, door[2] + offset), new Vector3(sign, 0, 0), 0, 1)
           expect(ray.intersectObjects(meshes).length).toBeGreaterThan(0)
         }
       } finally {
-        geometry.dispose()
+        for (const geometry of geometries) {
+          geometry.dispose()
+        }
         material.dispose()
       }
-      for (const block of flight.blocks) {
-        const position: Vec3 = [block.position[0], block.top + 1.6, block.position[2]]
+      const positions: Array<[Vec3, number]> = [
+        [[vestibule.center[0], balconyY + 1.6, vestibule.center[1]], balconyY],
+        ...flight.blocks.map((block): [Vec3, number] => [[block.position[0], block.top + 1.6, block.position[2]], block.top]),
+        [[landing.center[0], tunnelFloorHeight(landing.center[1]) + 1.6, landing.center[1]], tunnelFloorHeight(landing.center[1])],
+      ]
+      for (const [position, floor] of positions) {
         expect(insideGallery(position)).toBe(true)
         expect(roomAt(position)).toBe('oculus')
-        expect(floorHeight(position)).toBeCloseTo(block.top)
+        expect(floorHeight(position)).toBeCloseTo(floor)
       }
-      const landingPosition: Vec3 = [landing.center[0], tunnelFloorHeight(landing.center[1]) + 1.6, landing.center[1]]
-      expect(insideGallery(landingPosition)).toBe(true)
-      expect(roomAt(landingPosition)).toBe('oculus')
-      expect(floorHeight(landingPosition)).toBeCloseTo(tunnelFloorHeight(landing.center[1]))
     })
     for (const returning of [false, true]) {
       test(`${display.side}: the player walks ${returning ? 'up from the display to the balcony' : 'down from the balcony into the display'}`, () => {
         const world = stairwayWorld(display)
-        const landingZ = (flight.end[2] + display.center[1] + display.size[1] / 2) / 2
-        const path: Array<[number, number]> = [[flight.start[0], tunnel.northZ - 1], [flight.start[0], landingZ], [display.center[0], landingZ], [display.center[0], display.center[1]]]
+        const path: Array<[number, number]> = [[door[0] - sign * 1.5, door[2]], [display.stairway.x, door[2]], [display.stairway.x, landing.center[1]], [display.center[0], landing.center[1]], [display.center[0], display.center[1]]]
         if (returning) {
           path.reverse()
         }

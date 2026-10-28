@@ -26,10 +26,6 @@ describe('plain doorway trim', () => {
       world.step()
       expect(geometry.trim[0].boundingBox!.max.z).toBeCloseTo(0.25, 6)
       for (const hole of wall.holes!) {
-        // Only the tunnel’s portal reaches the floor. The doors to the display stairways open higher, onto the balcony.
-        if (hole.bottom) {
-          continue
-        }
         for (const side of [-1, 1]) {
           for (const offset of [0.04, wallOpeningTrim - 0.001, wallOpeningTrim + 0.001, 0.21, 0.3]) {
             for (const y of [0.02, 0.2, 0.379, 0.381, 0.399, 0.401, 0.439, 0.441, 1.2, 3]) {

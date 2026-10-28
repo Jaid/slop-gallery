@@ -4,7 +4,7 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import {computeMeshVolume} from 'three-bvh-csg'
 import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
-import {architectureGeometry, colliderGeometry, createArchitectureGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
+import {architectureGeometry, colliderGeometry, createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
 import lowerGallery, {oculusPlatform, oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
 import walls from '../../src/lib/gallery/walls.ts'
 
@@ -50,7 +50,12 @@ describe('floor-following wall baseboards', () => {
           expect(topRay.intersectObjects(meshes)[0].point.y).toBeCloseTo(floor + 0.44, 5)
         }
         const volume = geometry.trim.reduce((sum, part) => sum + computeMeshVolume(part), 0)
-        expect(volume).toBeCloseTo(wall.width * (0.38 * (0.2 - wallFace) + 0.06 * (0.25 - wallFace)), 4)
+        // Besides the baseboard, the trim only cases the door at the balcony’s level, down to the sill buried in the balcony.
+        const [door] = wall.holes!
+        const doorHeight = door.height - door.bottom!
+        const casing = ((door.width + 2 * wallOpeningTrim) * (doorHeight + 2 * wallOpeningTrim) - door.width * doorHeight) * (0.25 - wallFace)
+        expect(wall.holes).toHaveLength(1)
+        expect(volume).toBeCloseTo(wall.width * (0.38 * (0.2 - wallFace) + 0.06 * (0.25 - wallFace)) + casing, 4)
       } finally {
         world.free()
         geometry.dispose()

@@ -220,20 +220,23 @@ const withSalonWindow = (target: Wall): Wall => ({
     },
   ],
 })
-/** The Oculus’ south wall, with the doors at the balcony’s level onto the stairways down to the tunnel’s displays. */
-const withDisplayDoors = (target: Wall): Wall => ({
-  ...target,
-  holes: [
-    ...target.holes ?? [],
-    ...tunnelDisplays.map(({stairway}) => ({
-      u: wallCoordinates(target, [stairway.x, 0, lowerGallery.tunnel.northZ]),
-      width: displayStairway.width,
-      bottom: stairway.flight.start[1] - target.center[1],
-      height: stairway.flight.start[1] - target.center[1] + displayStairway.doorHeight,
-      profile: 'rectangle' as const,
-    })),
-  ],
-})
+/** An Oculus side wall, with the door at the balcony’s level onto the stairway down to the tunnel’s display on that side. */
+const withDisplayDoor = (target: Wall): Wall => {
+  const {stairway: {door}} = tunnelDisplays.find(display => target.id === `oculus-${display.side}`)!
+  return {
+    ...target,
+    holes: [
+      ...target.holes ?? [],
+      {
+        u: wallCoordinates(target, door),
+        width: displayStairway.doorWidth,
+        bottom: door[1] - target.center[1],
+        height: door[1] - target.center[1] + displayStairway.doorHeight,
+        profile: 'rectangle',
+      },
+    ],
+  }
+}
 /** Dine’s west wall, with the arch through to the Lobby cut where the Lobby’s east wall has it. */
 const withLobbyDoorway = (target: Wall): Wall => ({
   ...target,
@@ -370,8 +373,8 @@ const walls: Array<Wall> = miterCorners([
       profile: 'arch',
     },
   ]),
-  roomWall('oculus', 'east'),
-  roomWall('oculus', 'west'),
+  withDisplayDoor(roomWall('oculus', 'east')),
+  withDisplayDoor(roomWall('oculus', 'west')),
   roomWall('lodge', 'north'),
   roomWall('lodge', 'west', [
     {
@@ -399,14 +402,14 @@ const walls: Array<Wall> = miterCorners([
   roomWall('lodge', 'south'),
   ...lodgeTunnelWalls,
   ...corridorWalls,
-  withDisplayDoors(roomWall('oculus', 'south', [
+  roomWall('oculus', 'south', [
     {
       u: 0,
       width: lowerGallery.tunnel.width,
       height: 3.6,
       profile: 'rectangle',
     },
-  ])),
+  ]),
   ...[-1, 1].map(side => ({
     ...wall(`oculus-tunnel-${side < 0 ? 'west' : 'east'}`, 'oculus', lowerGallery.tunnel.x + side * lowerGallery.tunnel.width / 2, (lowerGallery.tunnel.northZ + lowerGallery.tunnel.southZ) / 2, side < 0 ? Math.PI / 2 : -Math.PI / 2, lowerGallery.tunnel.southZ - lowerGallery.tunnel.northZ, [
       {

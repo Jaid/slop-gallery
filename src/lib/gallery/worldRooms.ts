@@ -30,7 +30,7 @@ const corridorFence = [
   }, corridorStairs.end[1], corridorStairs.start[1] + stairHeadroom - corridorStairs.end[1]),
 ]
 // The tunnel’s displays, with the stairways down to them from the Oculus’ balcony.
-const displayFences = tunnelDisplays.map(({stairway: {air}}) => box(air, air.bottom, air.top - air.bottom))
+const displayFences = tunnelDisplays.flatMap(({stairway}) => stairway.air.map(air => box(air, air.bottom, air.top - air.bottom)))
 const fence = (id: WorldRoom['id'], own: WorldBox) => {
   if (id === 'corridor') {
     return corridorFence

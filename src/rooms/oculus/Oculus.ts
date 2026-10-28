@@ -18,7 +18,7 @@ export default class Oculus extends Room {
     // Up to the ceiling’s underside, not the upper room’s walkable surface.
     floorBox(oculus.size, 0, oculus.ceiling.topY - oculus.ceiling.thickness - oculus.floorY),
     // The tunnel’s displays, with the stairways down to them from the balcony.
-    ...tunnelDisplays.map(({stairway: {air}}) => floorBox(air.size, air.bottom - oculus.floorY, air.top - air.bottom, [air.center[0] - oculus.center[0], air.center[1] - oculus.center[1]])),
+    ...tunnelDisplays.flatMap(({stairway}) => stairway.air.map(air => floorBox(air.size, air.bottom - oculus.floorY, air.top - air.bottom, [air.center[0] - oculus.center[0], air.center[1] - oculus.center[1]]))),
   ]
   override readonly floorY = oculus.floorY
   override readonly id = 'oculus'

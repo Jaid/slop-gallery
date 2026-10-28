@@ -21,12 +21,32 @@ export default {
     rotation: -Math.PI / 2,
     width: 20,
     height: 10.28,
+    holes: [
+      // the door onto the stairway down to the tunnel’s east display
+      {
+        u: 8.4475,
+        bottom: 7.5,
+        width: 1.8,
+        height: 9.6,
+        profile: 'rectangle',
+      },
+    ],
   },
   west: {
     center: [-9, 0, 0],
     rotation: Math.PI / 2,
     width: 20,
     height: 10.28,
+    holes: [
+      // the door onto the stairway down to the tunnel’s west display
+      {
+        u: -8.4475,
+        bottom: 7.5,
+        width: 1.8,
+        height: 9.6,
+        profile: 'rectangle',
+      },
+    ],
   },
   south: {
     center: [0, 0, 10],
@@ -38,21 +58,6 @@ export default {
         u: 0,
         width: 4.4,
         height: 3.6,
-        profile: 'rectangle',
-      },
-      // the doors onto the stairways down to the tunnel’s displays, west and east
-      {
-        u: 6.78,
-        bottom: 7.5,
-        width: 2.4,
-        height: 9.6,
-        profile: 'rectangle',
-      },
-      {
-        u: -6.78,
-        bottom: 7.5,
-        width: 2.4,
-        height: 9.6,
         profile: 'rectangle',
       },
     ],
