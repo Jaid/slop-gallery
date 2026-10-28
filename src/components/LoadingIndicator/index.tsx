@@ -1,5 +1,6 @@
 import Branch from 'branch-component'
 import {useEffect, useState} from 'react'
+import {createPortal} from 'react-dom'
 
 import {loadingItems} from '#src/lib/loadingItems.ts'
 
@@ -18,8 +19,9 @@ export default function LoadingIndicator() {
   if (!count) {
     return null
   }
-  return <div className={css.container} aria-label={`Loading ${count} ${count === 1 ? 'item' : 'items'}`} role='status'>
+  // A sibling of index.html’s loading screen, since the app’s root stacks below it as a whole.
+  return createPortal(<div className={css.container} aria-label={`Loading ${count} ${count === 1 ? 'item' : 'items'}`} role='status'>
     <Branch not={count === 1}><span className={css.count}>{count}</span></Branch>
     <span className={css.spinner} />
-  </div>
+  </div>, document.body)
 }
