@@ -152,6 +152,8 @@ export class GalleryRenderer extends WebgpuRenderer {
   private culledCamera: Camera | null = null
   private culler: Culler | null = null
   private frame = -1
+  /** how the passes of the frame scene project objects, see {@link installProjection} */
+  private frameProjection: ProjectObject = projectObject
   private frameScene: Scene | null = null
   /** per camera, the recent average of milliseconds spent building an object whose material its passes haven’t built yet; that varies by pass, since three may reuse what another pass built, as for most shadow maps, or build it again for the pass, as for the floor reflection */
   private readonly freshBuildCosts = new WeakMap<Camera, number>
@@ -274,17 +276,25 @@ export class GalleryRenderer extends WebgpuRenderer {
   }
 
   override render(scene: Object3D, camera: Camera) {
-    if (scene !== this.frameScene || !scene.matrixWorldAutoUpdate) {
-      // Shadow maps render within the frame’s passes.
-      if (this.streaming && this.shadowCameras.has(camera)) {
-        this.renderedShadowCameras.add(camera)
+    const internals = this.internals
+    const outer = internals._projectObject
+    // Only the frame scene warms and streams. A postprocessing pass draws a quad of its own, which streaming would leave out until a later frame, and the quad of the final pass is what draws the scene pass, so that frame would never come.
+    internals._projectObject = scene === this.frameScene ? this.frameProjection : projectObject
+    try {
+      if (scene !== this.frameScene || !scene.matrixWorldAutoUpdate) {
+        // Shadow maps render within the frame’s passes.
+        if (this.streaming && this.shadowCameras.has(camera)) {
+          this.renderedShadowCameras.add(camera)
+        }
+        super.render(scene, camera)
+        return
       }
-      super.render(scene, camera)
-      return
+      this.prepass(scene, camera, () => {
+        super.render(scene, camera)
+      })
+    } finally {
+      internals._projectObject = outer
     }
-    this.prepass(scene, camera, () => {
-      super.render(scene, camera)
-    })
   }
 
   /** Sets the function that fills {@link hidden} for the camera of each frame, once the frame’s matrices are up to date. */
@@ -534,11 +544,11 @@ export class GalleryRenderer extends WebgpuRenderer {
     this.installProjection()
   }
 
-  /** Projection runs for every object of every pass, so outside of loading it does nothing but leave out {@link hidden}. */
+  /** Projection runs for every object of every pass of the frame scene, so outside of loading it does nothing but leave out {@link hidden}. */
   private installProjection() {
     const project = this.warming ? this.projectWarming : (this.streaming ? this.projectStreaming : this.projectCulled)
     if (project) {
-      this.internals._projectObject = project
+      this.frameProjection = project
     }
   }
 
