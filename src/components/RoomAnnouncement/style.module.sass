@@ -1,0 +1,47 @@
+.container
+  position: absolute
+  top: 56px
+  left: 50%
+  max-width: calc(100% - 2rem)
+  overflow: hidden
+  color: #f2eee4
+  font-size: 2rem
+  font-weight: 300
+  letter-spacing: 0.12em
+  line-height: 1.2
+  text-overflow: ellipsis
+  text-shadow: 0 1px 12px rgb(0 0 0 / 70%), 0 0 2px rgb(0 0 0 / 50%)
+  white-space: nowrap
+  pointer-events: none
+  translate: -50% 0
+  opacity: 0
+  animation: announce 3200ms ease-in-out forwards
+
+@keyframes announce
+  0%
+    opacity: 0
+    translate: -50% -6px
+  18%
+    opacity: 1
+    translate: -50% 0
+  75%
+    opacity: 1
+    translate: -50% 0
+  100%
+    opacity: 0
+    translate: -50% 0
+
+@media (max-height: 600px)
+  .container
+    top: 32px
+    font-size: 1.5rem
+
+@media (prefers-reduced-motion: reduce)
+  .container
+    animation-name: announce-still
+
+@keyframes announce-still
+  0%, 100%
+    opacity: 0
+  18%, 75%
+    opacity: 1

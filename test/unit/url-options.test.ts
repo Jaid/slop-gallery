@@ -9,6 +9,7 @@ import {readNear} from '../../src/lib/rendering/near.ts'
 import {readScale} from '../../src/lib/rendering/scale.ts'
 import {readShowWireframe} from '../../src/lib/rendering/showWireframe.ts'
 import {readWireframeHighlight} from '../../src/lib/rendering/wireframeHighlight.ts'
+import {readRoomAnnouncements} from '../../src/lib/roomAnnouncements.ts'
 
 describe('URL options', () => {
   test('?development is enabled by a bare or true flag only', () => {
@@ -71,6 +72,14 @@ describe('URL options', () => {
     }
     for (const search of ['', 'https://slop.gallery/', '?intro_narration=true', '?intro_narration=1', '?intro_narration', '?intro_narration=maybe']) {
       expect(readIntroNarration(search)).toBe(true)
+    }
+  })
+  test('only ?room_announcements=false or 0 hides the room titles', () => {
+    for (const search of ['?room_announcements=false', '?room_announcements=0']) {
+      expect(readRoomAnnouncements(search)).toBe(false)
+    }
+    for (const search of ['', '?room_announcements', '?room_announcements=true', '?room_announcements=maybe']) {
+      expect(readRoomAnnouncements(search)).toBe(true)
     }
   })
   test('?audio is muted unless it is true or a percentage', () => {

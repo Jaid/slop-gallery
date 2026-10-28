@@ -21,6 +21,7 @@ import {readPmrem} from './rendering/pmrem.ts'
 import {readScale} from './rendering/scale.ts'
 import {readShowWireframe} from './rendering/showWireframe.ts'
 import {readWireframeHighlight} from './rendering/wireframeHighlight.ts'
+import {readRoomAnnouncements} from './roomAnnouncements.ts'
 import {readTemporary} from './temporary.ts'
 
 type Reader = (input: string) => unknown
@@ -50,6 +51,7 @@ const readers: Record<string, Reader> = {
   pmrem: readPmrem,
   portrait_set: readPortraitSet,
   room: readRoom,
+  room_announcements: readRoomAnnouncements,
   scale: readScale,
   seed: readSeedOverride,
   show_ambience_emitters: readShowAmbienceEmitters,
