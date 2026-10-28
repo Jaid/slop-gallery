@@ -11,9 +11,9 @@ export const transitionMouthProjection = 0.03
 /**
  * The final meters of a stone passage, where it gradually turns into the timber room it opens into.
  *
- * Seen from the stone side: a timber portal on a wooden sill, a wainscoted half with the stone vault still overhead,
- * a second portal, a fully boarded half and a last portal casing the room’s doorway. Plank flooring runs from the
- * first portal into the room.
+ * Seen from the stone side: a timber portal, a wainscoted half with the stone vault and paving still in place, a second
+ * portal on a wooden sill, a fully boarded half and a last portal casing the room’s doorway. Plank flooring runs from
+ * the second portal into the room.
  */
 export default class PassageTransition {
   /** Floor area handed from stone paving to the timber sill and planks. */
@@ -22,7 +22,7 @@ export default class PassageTransition {
   readonly frames: readonly [number, number, number]
   /** The plank floor behind the sill. */
   readonly planks: FloorRectangle
-  /** The timber sill under the first portal, flush with the paving. */
+  /** The timber sill under the middle portal, flush with the paving. */
   readonly sill: FloorRectangle
   /** Run of the final span, from its start point to the passage mouth. */
   readonly spanLength: number
@@ -53,9 +53,10 @@ export default class PassageTransition {
         size: alongX ? [to - from, passage.width] : [passage.width, to - from],
       }
     }
-    this.floor = rectangle(this.start, this.spanLength)
-    this.sill = rectangle(this.start, this.start + transitionFrameDepth)
-    this.planks = rectangle(this.start + transitionFrameDepth, this.spanLength)
+    const sill = this.frames[1]
+    this.floor = rectangle(sill, this.spanLength)
+    this.sill = rectangle(sill, sill + transitionFrameDepth)
+    this.planks = rectangle(sill + transitionFrameDepth, this.spanLength)
     // Rounding in the passage partition can leave zero-width slivers next to the cut.
     this.stoneFloors = passage.floors.flatMap(floor => subtractFloorOpening(floor, this.floor)).filter(({size}) => size.every(value => value > 1e-6))
   }

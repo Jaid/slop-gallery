@@ -45,7 +45,7 @@ export default class TransitionGeometry {
   readonly lining: BufferGeometry
   /** The floor planks between the sill and the passage mouth. Walkable collision stays with the passage floor. */
   readonly planks: BufferGeometry
-  /** The flush sill under the first portal. */
+  /** The flush sill under the middle portal. */
   readonly sill: BufferGeometry
   /** Portals, skirting and wainscot rails. */
   readonly timber: BufferGeometry
@@ -111,8 +111,9 @@ export default class TransitionGeometry {
     lining.push(...timberRing(archProfile(boardFace, spring, skirtingHeight), archProfile(outer, spring, skirtingHeight), boardedTo - boardedStart, boardedStart, transform))
     this.timber = mergeParts(timber)
     this.lining = mergeParts(lining)
-    this.sill = box([-half, -0.24, frames[0]], [half, 0, frames[0] + transitionFrameDepth], 0)
-    this.planks = box([-half, -0.24, frames[0] + transitionFrameDepth], [half, 0, spanLength], 2)
+    // The paving runs through the wainscoted bay; timber flooring starts under the middle portal.
+    this.sill = box([-half, -0.24, frames[1]], [half, 0, frames[1] + transitionFrameDepth], 0)
+    this.planks = box([-half, -0.24, frames[1] + transitionFrameDepth], [half, 0, spanLength], 2)
     for (const geometry of [this.sill, this.planks]) {
       geometry.computeBoundingBox()
       geometry.computeBoundingSphere()

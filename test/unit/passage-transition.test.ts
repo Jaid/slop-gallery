@@ -45,11 +45,17 @@ describe('Lodge tunnel timber transition', () => {
     expect(transition.length).toBe(2)
     expect(alongX(transition.spanLength)).toBeCloseTo(doorwayX)
     expect(walls.find(wall => wall.id === 'lodge-east')!.center[0]).toBeCloseTo(doorwayX)
-    expect(transition.floor.size[0]).toBeCloseTo(2)
-    expect(transition.floor.size[1]).toBeCloseTo(lodgeTunnel.width)
-    expect(transition.floor.center[0]).toBeCloseTo(doorwayX + 1)
     expect(transition.frames[0]).toBeCloseTo(transition.spanLength - 2)
     expect(transition.frames[2] + transitionFrameDepth).toBeCloseTo(transition.spanLength)
+  })
+  test('keeps the stone paving through the wainscoted bay, laying timber from the middle portal on', () => {
+    const timberLength = transition.spanLength - transition.frames[1]
+    expect(transition.floor.size[0]).toBeCloseTo(timberLength)
+    expect(transition.floor.size[1]).toBeCloseTo(lodgeTunnel.width)
+    expect(transition.floor.center[0]).toBeCloseTo(doorwayX + timberLength / 2)
+    expect(transition.sill.center[0]).toBeCloseTo(alongX(transition.frames[1] + transitionFrameDepth / 2))
+    geometry.sill.computeBoundingBox()
+    expect(geometry.sill.boundingBox!.max.x).toBeCloseTo(alongX(transition.frames[1]))
   })
   test('stone paving and timber floor tile the passage floor without overlaps or slivers', () => {
     const total = lodgeTunnel.floors.reduce((sum, floor) => sum + area(floor), 0)
