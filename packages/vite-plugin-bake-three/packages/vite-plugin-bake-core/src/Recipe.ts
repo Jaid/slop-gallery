@@ -17,6 +17,8 @@ import {assertConstant, importInfo} from './SourceGraph.ts'
 import {NotBakeableError} from './types.ts'
 
 const globals = new Set(['undefined', 'NaN', 'Infinity', 'Math', 'Number', 'String', 'Boolean', 'Array', 'Object', 'JSON', 'Map', 'Set', 'ArrayBuffer', 'DataView', 'Int8Array', 'Uint8Array', 'Uint8ClampedArray', 'Int16Array', 'Uint16Array', 'Int32Array', 'Uint32Array', 'Float32Array', 'Float64Array', 'BigInt64Array', 'BigUint64Array', 'Error', 'TypeError', 'RangeError', 'parseInt', 'parseFloat', 'isFinite', 'isNaN'])
+/** how many declarations a recipe may pull in from its modules, enough for a recipe over a world assembled from a dozen room modules, while a runaway dependency walk still stops early */
+const maxDependencies = 1024
 const forbiddenProperties = new Set(['constructor', '__proto__', 'prototype', 'caller', 'callee', 'now', 'getPrototypeOf', 'setPrototypeOf', 'defineProperty', 'defineProperties', 'getOwnPropertyDescriptor', 'getOwnPropertyDescriptors', 'addEventListener', 'dispatchEvent'])
 export type EvaluatedRecipe = {
   code: string
@@ -173,7 +175,7 @@ export default class Recipe {
       }
       return previous.name
     }
-    if (this.slots.size > 256) {
+    if (this.slots.size >= maxDependencies) {
       throw new NotBakeableError('Recipe dependency limit exceeded.')
     }
     const slot: Slot = {

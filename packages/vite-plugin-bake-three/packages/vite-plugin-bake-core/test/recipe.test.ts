@@ -172,6 +172,19 @@ test('keeps approved native random methods behind the same opt-in', async () => 
 test('does not confuse a shadowed constructor with an imported resource', async () => {
   await expect(evaluate('const result = (() => { const Resource = (x) => x; return Resource(1) })()')).rejects.toThrow('Not a recognized resource')
 })
+/** A recipe whose resource depends on a chain of `count` constant declarations. */
+function chainedRecipe(count: number) {
+  return [
+    'const value0 = 1',
+    ...Array.from({length: count - 1}, (_, index) => `const value${index + 1} = value${index} + 1`),
+    `const result = new Resource(value${count - 1})`,
+  ].join('\n')
+}
+test('follows recipes through hundreds of declarations, but not through thousands', async () => {
+  const evaluated = await evaluate(chainedRecipe(400))
+  expect((roundTrip(evaluated)() as Resource<number>).data).toBe(400)
+  await expect(evaluate(chainedRecipe(2000))).rejects.toThrow('Recipe dependency limit exceeded.')
+})
 test('limits runaway recipes', async () => {
   await expect(evaluate('const result = (() => { while (true) {} return new Resource(1) })()', 10)).rejects.toThrow()
 })
