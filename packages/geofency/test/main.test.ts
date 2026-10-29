@@ -1,8 +1,8 @@
-import type {BoxInput, Fence, GeofenceSessionOptions, Position} from '../src/main.ts'
+import type {BoxInput, Fence, GeofenceSessionOptions, MultimatchGeofenceSessionOptions, Position} from '../src/main.ts'
 
 import {describe, expect, test} from 'bun:test'
 
-import Geofences, {BeamBox, Box, boxInputSchema, ClosedBox, createBox, Geofence, GeofenceSession, SkyBox, VoidBox} from '../src/main.ts'
+import Geofences, {BeamBox, Box, boxInputSchema, ClosedBox, createBox, Geofence, GeofenceSession, MultimatchGeofenceSession, SkyBox, VoidBox} from '../src/main.ts'
 
 const beam = {
   x: 0,
@@ -17,7 +17,7 @@ const record = <Id>(session: GeofenceSession<Id>) => {
   session.on('change', (match, previous) => events.push(['change', match, previous]))
   return events
 }
-const create = (options?: GeofenceSessionOptions) => new GeofenceSession(new Geofences([
+const createGeofences = () => new Geofences([
   ['room', new Geofence([{
     ...beam,
     y: 0,
@@ -27,7 +27,9 @@ const create = (options?: GeofenceSessionOptions) => new GeofenceSession(new Geo
     ...beam,
     floor: 2,
   }])],
-]), options)
+])
+const create = (options?: GeofenceSessionOptions) => new GeofenceSession(createGeofences(), options)
+const createMultimatch = (options?: MultimatchGeofenceSessionOptions) => new MultimatchGeofenceSession(createGeofences(), options)
 describe('Box.contains', () => {
   const cases: Array<[string, BoxInput, Position, boolean]> = [
     ['beamBox inside', beam, [2, 0, 1], true],
@@ -490,29 +492,61 @@ describe('Geofences', () => {
   })
 })
 describe('GeofenceSession', () => {
-  test('defaults to a single sticky match', () => {
+  test('defaults to a sticky match', () => {
     const session = create()
-    expect(session.multiple).toBe(false)
     expect(session.announceEmpty).toBe(false)
-  })
-  test('starts outside of every fence', () => {
-    const session = create()
     expect(session.match).toBeNull()
-    expect([...session.matches]).toEqual([])
+  })
+  test('only follows the first match', () => {
+    const session = create()
+    const events = record(session)
+    expect(session.update([1, 1, 1])).toBe('room')
+    expect(events.splice(0)).toEqual([['enter', 'room'], ['change', 'room', null]])
+    // also in the sky fence, but the room fence comes first
+    expect(session.update([1, 2.5, 1])).toBe('room')
+    expect(events.splice(0)).toEqual([])
+    expect(session.update([1, 10, 1])).toBe('sky')
+    expect(events.splice(0)).toEqual([['leave', 'room'], ['enter', 'sky'], ['change', 'sky', 'room']])
   })
   test('listeners see the new state', () => {
     const session = create()
     const seen: Array<unknown> = []
-    session.on('change', () => seen.push(session.match, [...session.matches]))
+    session.on('change', () => seen.push(session.match))
     session.update([1, 1, 1])
-    expect(seen).toEqual(['room', ['room']])
+    expect(seen).toEqual(['room'])
+  })
+  test('keeps its match outside of every fence', () => {
+    const session = create()
+    session.update([1, 1, 1])
+    const events = record(session)
+    expect(session.update([100, 0, 100])).toBe('room')
+    expect(session.match).toBe('room')
+    expect(session.update([1, 10, 1])).toBe('sky')
+    expect(events).toEqual([['leave', 'room'], ['enter', 'sky'], ['change', 'sky', 'room']])
+  })
+  test('announces leaving every fence with announceEmpty', () => {
+    const session = create({announceEmpty: true})
+    session.update([1, 1, 1])
+    const events = record(session)
+    expect(session.update([100, 0, 100])).toBeNull()
+    session.update([100, 0, 101])
+    expect(session.update([1, 1, 1])).toBe('room')
+    expect(events).toEqual([['leave', 'room'], ['change', null, 'room'], ['enter', 'room'], ['change', 'room', null]])
+  })
+  test('keeps a removed fence’s id until another fence matches', () => {
+    const session = create()
+    session.update([1, 1, 1])
+    const events = record(session)
+    session.geofences.delete('room')
+    expect(session.update([1, 1, 1])).toBe('room')
+    expect(session.update([1, 2.5, 1])).toBe('sky')
+    expect(events).toEqual([['leave', 'room'], ['enter', 'sky'], ['change', 'sky', 'room']])
   })
 })
 describe('GeofenceSession, initialValue', () => {
   test('starts with the given match', () => {
     const session = create({initialValue: 'sky'})
     expect(session.match).toBe('sky')
-    expect([...session.matches]).toEqual(['sky'])
   })
   test('stays silent while the position is still in that fence', () => {
     const session = create({initialValue: 'room'})
@@ -541,20 +575,9 @@ describe('GeofenceSession, initialValue', () => {
     expect(session.update([100, 0, 100])).toBeNull()
     expect(events).toEqual([['leave', 'room'], ['change', null, 'room']])
   })
-  test('starts the matches in multiple mode', () => {
-    const session = create({
-      initialValue: 'room',
-      multiple: true,
-    })
-    const events = record(session)
-    session.update([1, 2.5, 1])
-    expect([...session.matches]).toEqual(['room', 'sky'])
-    expect(events).toEqual([['enter', 'sky']])
-  })
   test('null starts without a match', () => {
     const session = create({initialValue: null})
     expect(session.match).toBeNull()
-    expect([...session.matches]).toEqual([])
   })
   test('only takes known ids', () => {
     const geofences = new Geofences([['a', new Geofence([beam])], ['b', new Geofence([beam])]] as const)
@@ -565,55 +588,15 @@ describe('GeofenceSession, initialValue', () => {
     expect(unknownSession.match as unknown).toBe('c')
   })
 })
-describe('GeofenceSession, single', () => {
-  test('only follows the first match', () => {
-    const session = create()
-    const events = record(session)
-    expect(session.update([1, 1, 1])).toBe('room')
-    expect(events.splice(0)).toEqual([['enter', 'room'], ['change', 'room', null]])
-    // also in the sky fence, but the room fence comes first
-    expect(session.update([1, 2.5, 1])).toBe('room')
-    expect([...session.matches]).toEqual(['room'])
-    expect(events.splice(0)).toEqual([])
-    expect(session.update([1, 10, 1])).toBe('sky')
-    expect(events.splice(0)).toEqual([['leave', 'room'], ['enter', 'sky'], ['change', 'sky', 'room']])
-  })
-  test('keeps its match outside of every fence', () => {
-    const session = create()
-    session.update([1, 1, 1])
-    const events = record(session)
-    expect(session.update([100, 0, 100])).toBe('room')
-    expect(session.match).toBe('room')
-    expect([...session.matches]).toEqual(['room'])
-    expect(session.update([1, 10, 1])).toBe('sky')
-    expect(events).toEqual([['leave', 'room'], ['enter', 'sky'], ['change', 'sky', 'room']])
-  })
-  test('announces leaving every fence with announceEmpty', () => {
-    const session = create({announceEmpty: true})
-    session.update([1, 1, 1])
-    const events = record(session)
-    expect(session.update([100, 0, 100])).toBeNull()
+describe('MultimatchGeofenceSession', () => {
+  test('is a GeofenceSession', () => {
+    const session = createMultimatch()
+    expect(session).toBeInstanceOf(GeofenceSession)
+    expect(session.match).toBeNull()
     expect([...session.matches]).toEqual([])
-    session.update([100, 0, 101])
-    expect(session.update([1, 1, 1])).toBe('room')
-    expect(events).toEqual([['leave', 'room'], ['change', null, 'room'], ['enter', 'room'], ['change', 'room', null]])
   })
-  test('keeps a removed fence’s id until another fence matches', () => {
-    const session = create()
-    session.update([1, 1, 1])
-    const events = record(session)
-    session.geofences.delete('room')
-    expect(session.update([1, 1, 1])).toBe('room')
-    expect(session.update([1, 2.5, 1])).toBe('sky')
-    expect(events).toEqual([['leave', 'room'], ['enter', 'sky'], ['change', 'sky', 'room']])
-  })
-})
-describe('GeofenceSession, multiple', () => {
   test('follows every match', () => {
-    const session = create({
-      multiple: true,
-      announceEmpty: true,
-    })
+    const session = createMultimatch({announceEmpty: true})
     const events = record(session)
     expect(session.update([1, 1, 1])).toBe('room')
     expect(events.splice(0)).toEqual([['enter', 'room'], ['change', 'room', null]])
@@ -625,11 +608,15 @@ describe('GeofenceSession, multiple', () => {
     session.update([100, 10, 1])
     expect(events.splice(0)).toEqual([['leave', 'sky'], ['change', null, 'sky']])
   })
+  test('listeners see the new state', () => {
+    const session = createMultimatch()
+    const seen: Array<unknown> = []
+    session.on('enter', () => seen.push(session.match, [...session.matches]))
+    session.update([1, 2.5, 1])
+    expect(seen).toEqual(['room', ['room', 'sky'], 'room', ['room', 'sky']])
+  })
   test('stays silent while nothing changes', () => {
-    const session = create({
-      multiple: true,
-      announceEmpty: true,
-    })
+    const session = createMultimatch({announceEmpty: true})
     session.update([1, 1, 1])
     const events = record(session)
     session.update([2, 1.5, 1])
@@ -638,7 +625,7 @@ describe('GeofenceSession, multiple', () => {
     expect(events).toEqual([['leave', 'room'], ['change', null, 'room']])
   })
   test('keeps its last matches outside of every fence without announceEmpty', () => {
-    const session = create({multiple: true})
+    const session = createMultimatch()
     session.update([1, 2.5, 1])
     const events = record(session)
     session.update([1, 10, 1])
@@ -648,7 +635,7 @@ describe('GeofenceSession, multiple', () => {
     expect(events).toEqual([])
   })
   test('keeps every match when jumping out of all of them at once without announceEmpty', () => {
-    const session = create({multiple: true})
+    const session = createMultimatch()
     session.update([1, 2.5, 1])
     const events = record(session)
     session.update([100, 0, 100])
@@ -656,14 +643,57 @@ describe('GeofenceSession, multiple', () => {
     expect(events).toEqual([])
   })
   test('notices fences removed from its geofences', () => {
-    const session = create({
-      multiple: true,
-      announceEmpty: true,
-    })
+    const session = createMultimatch({announceEmpty: true})
     session.update([1, 1, 1])
     const events = record(session)
     session.geofences.delete('room')
     session.update([1, 1, 1])
     expect(events).toEqual([['leave', 'room'], ['change', null, 'room']])
+  })
+})
+describe('MultimatchGeofenceSession, initialValue', () => {
+  test('takes a single id', () => {
+    const session = createMultimatch({initialValue: 'room'})
+    expect(session.match).toBe('room')
+    expect([...session.matches]).toEqual(['room'])
+  })
+  test('never splits a string id into characters', () => {
+    const session = createMultimatch({initialValue: 'sky'})
+    expect([...session.matches]).toEqual(['sky'])
+  })
+  test('takes several ids, the first one as match, without duplicates', () => {
+    const session = createMultimatch({initialValue: ['sky', 'room', 'sky']})
+    expect(session.match).toBe('sky')
+    expect([...session.matches]).toEqual(['sky', 'room'])
+  })
+  test('null and an empty array start without a match', () => {
+    for (const initialValue of [null, []]) {
+      const session = createMultimatch({initialValue})
+      expect(session.match).toBeNull()
+      expect([...session.matches]).toEqual([])
+    }
+  })
+  test('stays silent while the position is in exactly those fences', () => {
+    const session = createMultimatch({initialValue: ['room', 'sky']})
+    const events = record(session)
+    session.update([1, 2.5, 1])
+    expect(events).toEqual([])
+  })
+  test('reports differences like any other matches', () => {
+    const session = createMultimatch({initialValue: ['sky', 'room']})
+    const events = record(session)
+    // the geofences’ order decides the match, not the initial order
+    expect(session.update([1, 2.5, 1])).toBe('room')
+    expect(events.splice(0)).toEqual([['change', 'room', 'sky']])
+    session.update([1, 1, 1])
+    expect(events).toEqual([['leave', 'sky']])
+  })
+  test('only takes known ids', () => {
+    const geofences = new Geofences([['a', new Geofence([beam])], ['b', new Geofence([beam])]] as const)
+    const session = new MultimatchGeofenceSession(geofences, {initialValue: ['b', 'a']})
+    expect([...session.matches]).toEqual(['b', 'a'])
+    // @ts-expect-error TS2322 not an id of the geofences
+    const unknownSession = new MultimatchGeofenceSession(geofences, {initialValue: ['a', 'c']})
+    expect([...unknownSession.matches] as Array<unknown>).toEqual(['a', 'c'])
   })
 })

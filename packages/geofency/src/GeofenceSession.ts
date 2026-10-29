@@ -4,11 +4,11 @@ import type {Fence, Position} from './types.ts'
 import EventEmitter from 'eventemitter3'
 
 export type GeofenceSessionEvents<Id> = {
-  /** the first matching id changed; null only with {@link GeofenceSessionOptions.announceEmpty} */
+  /** the first match changed; null only with {@link GeofenceSessionOptions.announceEmpty} */
   change: [match: Id | null, previous: Id | null]
-  /** a fence started to contain the position */
+  /** the position entered the fence of a tracked match */
   enter: [id: Id]
-  /** a fence stopped containing the position */
+  /** the position left the fence of a tracked match */
   leave: [id: Id]
 }
 
@@ -25,33 +25,19 @@ export type GeofenceSessionOptions<Id = string> = {
    * Set silently: the first {@link GeofenceSession.update} compares against it, so it emits nothing if the position is still in that fence.
    */
   initialValue?: Id | null
-  /**
-   * whether every matching fence is tracked
-   *
-   * If `false`, only the first match is tracked, and `enter` and `leave` only report that one.
-   */
-  multiple?: boolean
 }
 
-const emptyMatches: ReadonlySet<never> = new Set
-
-/** Follows a moving position through geofences and reports where it enters and leaves them. */
+/** Follows a moving position through geofences and reports when its first match changes. */
 export default class GeofenceSession<Id = string, Value extends Fence = Fence> extends EventEmitter<GeofenceSessionEvents<Id>> {
   readonly announceEmpty: boolean
+  protected currentMatch: Id | null
   readonly geofences: Geofences<Id, Value>
-  readonly multiple: boolean
-  private currentMatch: Id | null = null
-  private currentMatches: ReadonlySet<Id> = emptyMatches
 
-  constructor(geofences: Geofences<Id, Value>, {multiple = false, announceEmpty = false, initialValue = null}: GeofenceSessionOptions<NoInfer<Id>> = {}) {
+  constructor(geofences: Geofences<Id, Value>, {announceEmpty = false, initialValue = null}: GeofenceSessionOptions<NoInfer<Id>> = {}) {
     super()
     this.geofences = geofences
-    this.multiple = multiple
     this.announceEmpty = announceEmpty
-    if (initialValue !== null) {
-      this.currentMatch = initialValue
-      this.currentMatches = new Set([initialValue])
-    }
+    this.currentMatch = initialValue
   }
 
   /** the id of the first fence that contained the last counted position, or null */
@@ -59,47 +45,24 @@ export default class GeofenceSession<Id = string, Value extends Fence = Fence> e
     return this.currentMatch
   }
 
-  /** the ids of every fence that contained the last counted position, in insertion order; just the {@link match} if not {@link multiple} */
-  get matches(): ReadonlySet<Id> {
-    return this.currentMatches
-  }
-
   /**
-   * Moves to the position: emits `leave` for every fence left, then `enter` for every fence entered, then `change` if the first match changed.
+   * Moves to the position: if its first match changed, emits `leave` for the old one, then `enter` for the new one, then `change`.
    * Listeners already see the new state. Returns the {@link match}.
    */
   update(position: Position) {
-    let matches: ReadonlySet<Id>
-    if (this.multiple) {
-      matches = new Set(this.geofences.getMatches(position))
-    } else {
-      const match = this.geofences.getMatch(position)
-      if (match === this.currentMatch) {
-        return this.currentMatch
-      }
-      matches = match === null ? emptyMatches : new Set([match])
-    }
-    if (!matches.size && !this.announceEmpty) {
+    const match = this.geofences.getMatch(position)
+    if (match === this.currentMatch || match === null && !this.announceEmpty) {
       return this.currentMatch
     }
-    const previous = this.currentMatches
-    const previousMatch = this.currentMatch
-    const match = matches.values().next().value ?? null
-    this.currentMatches = matches
+    const previous = this.currentMatch
     this.currentMatch = match
-    for (const id of previous) {
-      if (!matches.has(id)) {
-        this.emit('leave', id)
-      }
+    if (previous !== null) {
+      this.emit('leave', previous)
     }
-    for (const id of matches) {
-      if (!previous.has(id)) {
-        this.emit('enter', id)
-      }
+    if (match !== null) {
+      this.emit('enter', match)
     }
-    if (match !== previousMatch) {
-      this.emit('change', match, previousMatch)
-    }
+    this.emit('change', match, previous)
     return match
   }
 }
