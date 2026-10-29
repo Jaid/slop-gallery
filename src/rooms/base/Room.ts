@@ -69,8 +69,12 @@ export type RoomOptions = {
   cameras?: Record<string, RoomCamera>
   /** the lamps by their id within the room, in snake_case, positioned relative to the room’s origin */
   lamps?: Record<string, Lamp>
-  /** whether the room has no view outside, so that its long, level views end in rooms culled behind it, which show black instead of the sky’s bright horizon */
-  skyless?: boolean
+  /**
+   * the id of the skybox behind the world while the player is in the room, like `sky`, which the world resolves to one of its own, maybe by its weather
+   *
+   * `null` shows none, only the renderer’s clear color, as for rooms without a view outside whose long, level views end in rooms culled behind them. Left out, entering the room keeps the skybox that showed before.
+   */
+  skybox?: SkyboxId | null
   /** the portrait slots by their id within the room, in snake_case, which stays stable so edited slots find their originals */
   slots?: Record<string, RoomPortraitSlot>
   /** the spawn bookmarks by their id within the room, in snake_case; the empty id is the room’s default spawn, which goes by the room’s own id */
@@ -83,6 +87,8 @@ export type RoomOptions = {
   /** the room’s walls by their id within the room, in snake_case */
   walls?: Record<string, RoomWall>
 }
+/** what a room calls the skybox it shows, which its world resolves */
+export type SkyboxId = string
 type LampBase = {
   /** how quickly the light fades with distance, 2 (physical) by default */
   decay?: number
@@ -129,7 +135,8 @@ export default abstract class Room {
   readonly lamps: ReadonlyMap<string, Lamp>
   /** the width along x and the depth along z of a room around a rectangular floor plan, centered on its origin */
   readonly size?: FloorSize
-  readonly skyless: boolean
+  /** the id of the skybox behind the world while the player is inside, `null` for none or undefined to keep the one that showed before */
+  readonly skybox: SkyboxId | null | undefined
   readonly slots: ReadonlyMap<string, RoomPortraitSlot>
   /** where visitors arrive, usually the room’s default spawn, the empty id of {@link spawns} */
   abstract readonly spawn: RoomSpawn
@@ -139,7 +146,7 @@ export default abstract class Room {
   readonly volumetricSun: number
   readonly walls: ReadonlyMap<string, RoomWall>
 
-  constructor({title, lamps = {}, ambience = {}, cameras = {}, slots = {}, spawns = {}, walls = {}, skyless = false, sunlit = true, volumetricSun = 1}: RoomOptions) {
+  constructor({title, lamps = {}, ambience = {}, cameras = {}, slots = {}, spawns = {}, walls = {}, skybox, sunlit = true, volumetricSun = 1}: RoomOptions) {
     this.title = title
     this.lamps = new Map(Object.entries(lamps))
     this.ambience = new Map(Object.entries(ambience))
@@ -147,7 +154,7 @@ export default abstract class Room {
     this.cameras = new Map(Object.entries(cameras))
     this.spawns = new Map(Object.entries(spawns))
     this.walls = new Map(Object.entries(walls))
-    this.skyless = skyless
+    this.skybox = skybox
     this.sunlit = sunlit
     this.volumetricSun = volumetricSun
   }

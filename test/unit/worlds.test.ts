@@ -92,6 +92,23 @@ describe('worlds', () => {
     expect(galleryWalls.map(wall => wall.room)).toEqual(slopGallery.rooms.flatMap(room => room.walls().map(() => room.id)))
     expect(galleryWalls).toEqual(slopGallery.walls)
   })
+  test('the gallery’s rooms show its sky, except those without a view outside, which show none', () => {
+    const skyless = slopGallery.rooms.filter(room => room.skybox === null).map(room => room.id)
+    expect(skyless.toSorted()).toEqual(['corridor', 'moonfall'])
+    for (const room of slopGallery.rooms) {
+      if (room.skybox !== null) {
+        expect(room.skybox).toBe('sky')
+      }
+    }
+    expect(slopGallery.room(slopGallery.defaultRoom).skybox).toBe('sky')
+    expect(slopGallery.skybox('sky')?.isNode).toBe(true)
+    expect(slopGallery.skybox('sky')).toBe(slopGallery.skybox('sky'))
+    expect(slopGallery.skybox('void')).toBeNull()
+  })
+  test('Knottingham names no skybox, so its hall keeps its own background', () => {
+    expect(knottingham.rooms.map(room => room.skybox)).toEqual([undefined])
+    expect(knottingham.skybox('sky')).toBeNull()
+  })
 })
 test('a Knottingham session retains poses beyond the gallery’s bounds and falls back to its own spawn', () => {
   const session = new PlayerSession(knottingham)

@@ -51,7 +51,7 @@ export default class Corridor extends Room {
     super({
       title: 'Corridor',
       lamps,
-      skyless: true,
+      skybox: null,
       sunlit: false,
       volumetricSun: 0,
       walls,

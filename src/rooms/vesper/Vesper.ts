@@ -36,6 +36,7 @@ export default class Vesper extends Room {
       cameras,
       spawns,
       lamps,
+      skybox: 'sky',
       slots,
       walls,
     })

@@ -2,8 +2,7 @@ import type {GalleryLightingPreset} from '#src/lib/gallery/lighting.ts'
 import type {CanvasTexture, DirectionalLight, Light, Renderer, Scene} from 'three/webgpu'
 
 import {useThree} from '@react-three/fiber'
-import {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react'
-import {uniform} from 'three/tsl'
+import {useEffect, useLayoutEffect, useMemo, useRef} from 'react'
 import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 import {useShallow} from 'zustand/react/shallow'
 
@@ -13,7 +12,6 @@ import {createEnvironment, drawEnvironment} from '#src/lib/gallery/environment.t
 import {cycleLighting, lightingPresets, pickLightingTuning, tuneLighting, useLighting} from '#src/lib/gallery/lighting.ts'
 import lobbyVault from '#src/lib/gallery/lobbyVault.ts'
 import {sunGeometry, sunlitPoints, sunShadowMapSize} from '#src/lib/gallery/sun.ts'
-import proceduralSky, {SkyLook} from '#src/lib/materials/ProceduralSky.ts'
 import {getDefaultCustomGraphics, useCustomGraphics} from '#src/lib/rendering/customGraphics.ts'
 import {getGraphicsProfile, getSunShadowSettings} from '#src/lib/rendering/graphicsMode.ts'
 import {lampOf} from '#src/lib/rendering/lamps.ts'
@@ -22,6 +20,7 @@ import {getShadowProps} from '#src/lib/rendering/shadowFilters.ts'
 import {shadowPool} from '#src/lib/rendering/shadowPool.ts'
 import StainedGlassShadowNode from '#src/lib/rendering/StainedGlassShadowNode.ts'
 import slopGallery from '#src/worlds/gallery/index.ts'
+import {skyLook} from '#src/worlds/gallery/sky.ts'
 
 /** key that cycles the lighting presets with `?development`, backwards with Shift */
 export const lightingCycleKey = 'KeyL'
@@ -41,7 +40,7 @@ type Lamp = Light & {
 }
 
 /**
- * The gallery’s lighting: sun, sky, ambient fill, reflection environment and the strength of the rooms’ lamps, all following the current {@link useLighting} preset.
+ * The gallery’s lighting: sun, the sky’s colors, ambient fill, reflection environment and the strength of the rooms’ lamps, all following the current {@link useLighting} preset. Which rooms show the sky is up to their skyboxes.
  * Switching presets only changes colors, intensities, uniforms and the environment’s pixels, never which lights exist, so no material recompiles.
  */
 export default function GalleryLighting() {
@@ -50,10 +49,6 @@ export default function GalleryLighting() {
   const renderer = useThree(s => s.renderer)
   const sunLight = useRef<DirectionalLight>(null)
   const {samples: sunShadowSamples, ...sunShadow} = useSunShadow(sunShadowMapSize)
-  const [look] = useState(() => new SkyLook({
-    ...preset.sky,
-    sunDirection: preset.sun.direction,
-  }))
   const environment = useRef<CanvasTexture>(null)
   // Only the Antechamber, under its stained-glass dome, takes the glass’ colors; the light is set up before its first frame, so its pipelines compile once.
   useLayoutEffect(() => {
@@ -62,23 +57,6 @@ export default function GalleryLighting() {
       .and(position.x.sub(antechamber.center[0]).abs().lessThan(antechamber.size[0] / 2))
       .and(position.z.sub(antechamber.center[1]).abs().lessThan(antechamber.size[1] / 2)))
   }, [sunShadowSamples])
-  // Like the environment, the background is set before the first frame, so the pipelines are compiled once. In skyless rooms a uniform blacks it out instead of removing it.
-  useLayoutEffect(() => {
-    const previous = scene.backgroundNode
-    const shown = uniform(1)
-    // Skyless rooms have no view outside: their long, level views end in rooms culled behind them, which show black instead of the sky’s bright horizon.
-    const show = (room: string) => {
-      shown.value = slopGallery.roomById(room)?.skyless ? 0 : 1
-    }
-    show(useGallery.getState().room)
-    const unsubscribe = useGallery.subscribe(state => show(state.room))
-    // eslint-disable-next-line react-hooks/immutability -- the scene background belongs to the world; the cleanup restores it.
-    scene.backgroundNode = proceduralSky(look).mul(shown)
-    return () => {
-      unsubscribe()
-      scene.backgroundNode = previous
-    }
-  }, [scene, look])
   // The environment is part of every lit material’s cache key. Set after the first frame, it would build all of them a second time; a preset only redraws its pixels.
   useLayoutEffect(() => {
     const texture = createEnvironment()
@@ -96,11 +74,11 @@ export default function GalleryLighting() {
   const sun = useMemo(() => sunGeometry(sunDirection, sunlit), [sunDirection])
   const {shadow} = sun
   useLayoutEffect(() => {
-    look.set({
+    skyLook.set({
       ...sky,
       sunDirection,
     })
-  }, [look, sky, sunDirection])
+  }, [sky, sunDirection])
   useLayoutEffect(() => {
     if (environment.current) {
       drawEnvironment(environment.current, gradient, lightBoxes)

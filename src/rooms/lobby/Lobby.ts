@@ -43,6 +43,7 @@ export default class Lobby extends Room {
       spawns,
       ambience: ambienceEmitters,
       lamps,
+      skybox: 'sky',
       slots,
       walls,
     })

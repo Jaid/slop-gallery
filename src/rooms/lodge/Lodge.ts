@@ -49,6 +49,7 @@ export default class Lodge extends Room {
       spawns,
       ambience: ambienceEmitters,
       lamps,
+      skybox: 'sky',
       sunlit: false,
       volumetricSun: 0,
       slots,

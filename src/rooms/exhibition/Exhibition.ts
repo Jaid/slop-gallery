@@ -39,6 +39,7 @@ export default class Exhibition extends Room {
       cameras,
       spawns,
       lamps,
+      skybox: 'sky',
       walls,
     })
   }

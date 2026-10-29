@@ -11,6 +11,7 @@ import Player from '#component/Player'
 import Portraits from '#component/Portraits'
 import PortraitSlotEditor from '#component/PortraitSlotEditor'
 import PortraitSlots from '#component/PortraitSlots'
+import Skybox from '#component/Skybox'
 import WebmcpBridge from '#component/WebmcpBridge'
 import {isShowingAmbienceEmitters} from '#src/lib/audio/ambience/ambienceEmitters.ts'
 import {useGallery} from '#src/lib/gallery.ts'
@@ -36,6 +37,7 @@ export default function Scene() {
   const uiHidden = useHiddenUi(state => state.hidden)
   return <>
     <WorldScene />
+    <Skybox />
     <Lamps />
     <Portraits />
     {/* Hidden with O, the markers keep working: editors still aim, drag and switch what they mark. */}

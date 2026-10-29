@@ -26,6 +26,7 @@ import {worlds} from '../index.ts'
 import artworks from './artworks.ts'
 import GalleryNavigation from './navigation.ts'
 import {litRooms} from './relations.ts'
+import sky from './sky.ts'
 
 /** a room of the gallery */
 export type GalleryRoom = Antechamber | Banquet | Corridor | Exhibition | Fortress | Lobby | Lodge | Moonfall | Oculus | Salon | Sienna | Vesper
@@ -89,6 +90,11 @@ export default class SlopGallery extends World<GalleryRoom> {
 
   override roomTagline(room: PlacedRoom<GalleryRoom>) {
     return room.floorY < 0 ? 'lower floor room' : 'upper floor room'
+  }
+
+  /** `sky` is the procedural sky in every weather: the lighting preset only repaints its uniforms, so switching presets never recompiles it. */
+  override skybox(id: string) {
+    return id === 'sky' ? sky : null
   }
 
   /** How far a ray from the origin travels until it meets a wall, a little farther than the wall itself. */

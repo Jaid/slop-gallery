@@ -64,8 +64,8 @@ export default class PlacedRoom<Kind extends Room = Room> {
     return this.room.size
   }
 
-  get skyless() {
-    return this.room.skyless
+  get skybox() {
+    return this.room.skybox
   }
 
   /** the room’s default spawn in world meters */

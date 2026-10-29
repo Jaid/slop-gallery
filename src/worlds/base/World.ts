@@ -3,11 +3,12 @@ import type {PlacementSpace} from '#src/lib/placement/base/PlacementSpace.ts'
 import type {Wall} from '#src/lib/placement/wallGeometry.ts'
 import type {WorldRoom} from '#src/lib/webmcp/analyzeWorld.ts'
 import type {KnotDump} from '#src/lib/webmcp/tools.ts'
-import type {GroundSurface, Room} from '#src/rooms/index.ts'
+import type {GroundSurface, Room, SkyboxId} from '#src/rooms/index.ts'
 import type {WorldId, WorldInfo} from '../index.ts'
 import type {PlacedLamp} from './PlacedRoom.ts'
 import type {Geofence} from 'geofency'
 import type {ComponentType} from 'react'
+import type {Node} from 'three/webgpu'
 
 import Geofences from 'geofency'
 
@@ -136,6 +137,11 @@ export default abstract class World<Kind extends Room = Room> {
   /** What the pause menu shows below the title of the room the player is in. */
   roomTagline(room: PlacedRoom<Kind>) {
     return room.description
+  }
+
+  /** What the scene’s background shows for a skybox id its rooms name, which the world may pick by its own state, like its weather, or null for nothing but the renderer’s clear color: none for every id by default. */
+  skybox(_id: SkyboxId): Node | null {
+    return null
   }
 
   /** Every spawn bookmark of the world in world meters, room by room. */

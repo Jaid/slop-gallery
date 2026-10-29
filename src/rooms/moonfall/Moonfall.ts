@@ -52,7 +52,7 @@ export default class Moonfall extends Room {
       spawns,
       ambience: ambienceEmitters,
       lamps,
-      skyless: true,
+      skybox: null,
       // The room lies under its own ceiling, so the sun never lights its air.
       volumetricSun: 0,
       walls,

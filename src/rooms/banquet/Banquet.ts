@@ -34,6 +34,7 @@ export default class Banquet extends Room {
       cameras,
       spawns,
       lamps,
+      skybox: 'sky',
       slots,
       walls,
     })

@@ -28,6 +28,7 @@ export default class Fortress extends Room {
       cameras,
       spawns,
       lamps,
+      skybox: 'sky',
       // The passage lies deep under the ground floor, out of the sun’s reach.
       sunlit: false,
       volumetricSun: 0,

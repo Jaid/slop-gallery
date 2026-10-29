@@ -40,6 +40,7 @@ export default class Antechamber extends Room {
     super({
       title: 'The Antechamber',
       cameras,
+      skybox: 'sky',
       slots,
       walls,
     })

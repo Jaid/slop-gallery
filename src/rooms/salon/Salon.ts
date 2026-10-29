@@ -30,6 +30,7 @@ export default class Salon extends Room {
       title: 'The Salon',
       cameras,
       spawns,
+      skybox: 'sky',
       walls,
     })
   }

@@ -38,6 +38,7 @@ export default class Sienna extends Room {
       cameras,
       spawns,
       lamps,
+      skybox: 'sky',
       slots,
       walls,
     })

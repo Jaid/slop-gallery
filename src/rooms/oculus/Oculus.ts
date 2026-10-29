@@ -35,6 +35,7 @@ export default class Oculus extends Room {
       title: 'Oculus',
       cameras,
       spawns,
+      skybox: 'sky',
       slots,
       walls,
     })
