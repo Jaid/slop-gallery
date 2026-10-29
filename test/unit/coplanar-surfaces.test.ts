@@ -5,7 +5,6 @@ import {afterAll, describe, expect, test} from 'bun:test'
 
 import {DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
-import {soundboardWalls} from '../../src/lib/audio/soundboard.ts'
 import {createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
 import miterCorners from '../../src/lib/gallery/cornerMiters.ts'
 import {corridorPassage} from '../../src/lib/gallery/corridor.ts'
@@ -84,7 +83,7 @@ describe('inside corners of room walls', () => {
     // Walls that run on in a straight line, or open into a doorway, keep square ends.
     expect(mitered(walls, 'lobby-west')).toEqual([1, 0])
     expect(mitered(walls, 'lobby-extension-west')).toEqual([0, 1])
-    for (const wall of [...knotGalleryWalls, ...soundboardWalls]) {
+    for (const wall of knotGalleryWalls) {
       expect(wall.miters).toEqual([1, 1])
     }
   })

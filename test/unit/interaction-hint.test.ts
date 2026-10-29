@@ -322,7 +322,7 @@ describe('target descriptions', () => {
       ],
     })
   })
-  test('soundboard buttons default to “Use” without grab or inspect', () => {
+  test('interactive objects default to “Use” without grab or inspect', () => {
     registerInteractiveObject('SFX-01', {
       group: new Group,
       activate: () => {},

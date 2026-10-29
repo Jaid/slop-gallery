@@ -12,7 +12,7 @@ export type HallBounds = {
 }
 
 /**
- * A single sealed hall with a level floor at y = 0, like Knottingham and the Soundboard.
+ * A single sealed hall with a level floor at y = 0, like Knottingham.
  *
  * Its size can change between visits, with the catalog or URL parameters, so stored artworks are settled into the current walls when a collection loads.
  */

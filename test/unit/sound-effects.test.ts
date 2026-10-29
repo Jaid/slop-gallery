@@ -1,16 +1,14 @@
 import {expect, test} from 'bun:test'
 
 import {footstepVoices, impactFootstepStrength, playerSoundEffects} from '../../src/lib/audio/playerSoundEffects.ts'
-import {collisionSoundEffects, cueSoundEffects, menuSoundEffects, notificationSoundEffects, soundEffectCandidates} from '../../src/lib/audio/soundEffectCandidates.ts'
-import {archivedSoundEffects, enabledSoundEffectIds, enabledSoundEffects, soundEffects} from '../../src/lib/audio/soundEffects.ts'
+import {soundEffects} from '../../src/lib/audio/soundEffects.ts'
 
-test('sound effect catalog has 105 stable unique IDs with playable recipes', () => {
-  expect(soundEffects).toHaveLength(105)
-  expect(soundEffects.map(effect => effect.id)).toEqual(Array.from({length: 105}, (_, index) => `SFX-${String(index + 1).padStart(2, '0')}`))
+test('sound effect catalog has 20 stable unique IDs with playable recipes', () => {
+  expect(soundEffects.map(effect => effect.id)).toEqual(['SFX-02', 'SFX-03', 'SFX-04', 'SFX-06', 'SFX-07', 'SFX-08', 'SFX-09', 'SFX-14', 'SFX-23', 'SFX-28', 'SFX-29', 'SFX-31', 'SFX-32', 'SFX-33', 'SFX-34', 'SFX-35', 'SFX-36', 'SFX-37', 'SFX-42', 'SFX-43'])
   const labels = new Set(soundEffects.map(effect => effect.label))
-  expect(labels.size).toBe(105)
+  expect(labels.size).toBe(20)
   const recipes = new Set(soundEffects.map(effect => JSON.stringify(effect.voices)))
-  expect(recipes.size).toBe(105)
+  expect(recipes.size).toBe(20)
   for (const effect of soundEffects) {
     expect(effect.voices.length).toBeGreaterThan(0)
     for (const voice of effect.voices) {
@@ -20,37 +18,12 @@ test('sound effect catalog has 105 stable unique IDs with playable recipes', () 
     }
   }
 })
-test('every non-enabled sound is archived automatically', () => {
-  expect(enabledSoundEffects).toHaveLength(20)
-  expect(enabledSoundEffects.map(effect => effect.id)).toEqual([...enabledSoundEffectIds])
-  expect(archivedSoundEffects).toHaveLength(soundEffects.length - enabledSoundEffects.length)
-  expect(new Set([...enabledSoundEffects, ...archivedSoundEffects].map(effect => effect.id))).toEqual(new Set(soundEffects.map(effect => effect.id)))
-  expect(archivedSoundEffects.some(effect => enabledSoundEffectIds.includes(effect.id))).toBe(false)
-})
-const loudest = (effects: typeof soundEffects) => Math.max(...effects.flatMap(effect => effect.voices.map(voice => voice.volume)))
-test('menu, notification, subtle cue and collision candidates are all archived', () => {
-  const categories = [menuSoundEffects, notificationSoundEffects, cueSoundEffects, collisionSoundEffects]
-  for (const category of categories) {
-    expect(category).toHaveLength(12)
-  }
-  expect(soundEffectCandidates).toEqual(categories.flat())
-  expect(soundEffects.slice(57)).toEqual(soundEffectCandidates)
-  expect(soundEffectCandidates.map(effect => effect.id)).toEqual(Array.from({length: 48}, (_, index) => `SFX-${index + 58}`))
-  for (const effect of soundEffectCandidates) {
-    expect(enabledSoundEffectIds).not.toContain(effect.id)
-    expect(archivedSoundEffects).toContain(effect)
-  }
-  expect(archivedSoundEffects).toHaveLength(85)
-})
-test('subtle cues stay quieter than collisions', () => {
-  // Heartbeat needs more level because its sub-bass thump is perceptually quiet.
-  expect(loudest(cueSoundEffects.filter(effect => effect.label !== 'Heartbeat'))).toBeLessThanOrEqual(0.011)
-  expect(loudest(collisionSoundEffects)).toBeGreaterThan(0.03)
-})
-test('all seven player cues are enabled and independently auditionable', () => {
+test('all seven player cues are in the catalog with recipes of their own', () => {
   const cues = Object.values(playerSoundEffects)
   expect(cues).toHaveLength(7)
-  expect(cues.map(cue => cue.id)).toEqual(enabledSoundEffectIds.slice(13))
+  for (const cue of cues) {
+    expect(soundEffects).toContain(cue)
+  }
   const cueRecipes = new Set(cues.map(cue => JSON.stringify(cue.voices)))
   expect(cueRecipes.size).toBe(7)
 })

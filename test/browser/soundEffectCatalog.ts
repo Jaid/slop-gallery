@@ -9,7 +9,7 @@ const assert: (condition: boolean, message: string) => asserts condition = (cond
   }
 }
 
-/** Renders every soundboard recipe into silent offline buffers: no audible output, DOM, input, focus or viewport changes. */
+/** Renders every sound effect recipe into silent offline buffers: no audible output, DOM, input, focus or viewport changes. */
 export default async function verify() {
   const effects = []
   for (const effect of soundEffects) {

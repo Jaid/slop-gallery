@@ -5,7 +5,6 @@ import levels, {levelIds} from '../../src/data/levels.ts'
 const requiredModules = {
   gallery: 'src/components/levels/gallery/Architecture/index.tsx',
   knottingham: 'src/components/levels/knottingham/KnotExhibition/index.tsx',
-  soundboard: 'src/components/levels/soundboard/SoundboardRoom/index.tsx',
 } as const
 for (const level of levelIds) {
   const build = Bun.spawn(['bun', 'run', `build:${level}`], {
@@ -57,13 +56,8 @@ for (const level of levelIds) {
     if (!files.some(file => file.replaceAll('\\', '/').startsWith('art/')) || !files.some(file => file.replaceAll('\\', '/').startsWith('audio/'))) {
       throw new Error('Gallery public assets are incomplete.')
     }
-  } else {
-    if (files.some(file => /^(?:art|audio)[/\\]/u.test(file))) {
-      throw new Error(`Gallery public assets leaked into ${level}.`)
-    }
-    if (level === 'soundboard' && files.some(file => file.endsWith('.jxl'))) {
-      throw new Error('Soundboard unexpectedly contains image assets.')
-    }
+  } else if (files.some(file => /^(?:art|audio)[/\\]/u.test(file))) {
+    throw new Error(`Gallery public assets leaked into ${level}.`)
   }
   console.log(`Verified ${level}: independent scene graph and public assets.`)
 }

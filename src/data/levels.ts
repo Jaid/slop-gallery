@@ -30,15 +30,6 @@ const levels = {
     enterLabel: 'Enter Knottingham',
     supportsMap: true,
   },
-  soundboard: {
-    title: 'Soundboard',
-    directory: 'src/levels/soundboard',
-    publicAssets: [],
-    storageKey: 'slop-soundboard',
-    tagline: 'Enabled sounds face the archived experiments.',
-    enterLabel: 'Enter soundboard',
-    supportsMap: false,
-  },
 } as const satisfies Record<string, Level>
 
 export type LevelId = keyof typeof levels

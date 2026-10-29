@@ -6,11 +6,6 @@ import {describe, expect, test} from 'bun:test'
 import levelPlacement from '../../src/levels/gallery/placement.ts'
 import {playerSpawn as knotSpawn} from '../../src/levels/knottingham/navigation.ts'
 import knotPlacement from '../../src/levels/knottingham/placement.ts'
-import {playerSpawn as soundboardSpawn} from '../../src/levels/soundboard/navigation.ts'
-import soundboardPlacement from '../../src/levels/soundboard/placement.ts'
-import {announcerColumns, soundboardBounds, soundboardButtonsIssue, soundboardLayout, soundboardWalls} from '../../src/lib/audio/soundboard.ts'
-import {announcerButton, soundboardButton} from '../../src/lib/audio/SoundboardLayout.ts'
-import {archivedSoundEffects, enabledSoundEffects} from '../../src/lib/audio/soundEffects.ts'
 import {knotGalleryBounds, knotGalleryCenter, knotGalleryWalls} from '../../src/lib/gallery/knotGallery.ts'
 import walls, {galleryPlacement} from '../../src/lib/gallery/walls.ts'
 import {HallPlacementSpace} from '../../src/lib/placement/HallPlacementSpace.ts'
@@ -109,74 +104,6 @@ describe('Knottingham placement', () => {
     expect(knotPlacement.recoveryPosition[2]).toBe(knotSpawn.position[2])
     expect(knotPlacement.contains([knotGalleryBounds.maxX + 0.5, 1, knotGalleryCenter[2]])).toBe(false)
     expect(knotPlacement.contains([Number.NaN, 1, 0])).toBe(false)
-  })
-})
-const wallById = (id: string) => soundboardWalls.find(wall => wall.id === id)!
-const reservation = (id: string) => wallById(id).reservations![0]
-const covers = (id: string, [x, y]: readonly [number, number], width: number, height: number) => {
-  const panel = reservation(id)
-  expect(x - width / 2).toBeGreaterThanOrEqual(panel.u - panel.width / 2 - 1e-9)
-  expect(x + width / 2).toBeLessThanOrEqual(panel.u + panel.width / 2 + 1e-9)
-  expect(y - height / 2).toBeGreaterThanOrEqual((panel.bottom ?? 0) - 1e-9)
-  expect(y + height / 2).toBeLessThanOrEqual(panel.height + 1e-9)
-}
-describe('Soundboard placement', () => {
-  test('every sound and announcer button lies inside its wall’s reservation', () => {
-    for (const [id, section, effects] of [['soundboard-enabled', 'enabled', enabledSoundEffects], ['soundboard-archived', 'archived', archivedSoundEffects]] as const) {
-      for (const index of effects.keys()) {
-        covers(id, soundboardLayout.buttonPosition(section, index), soundboardButton.width, soundboardButton.height)
-      }
-      covers(id, [0, soundboardLayout.headingY()], soundboardLayout.headingWidth(), 0.58)
-    }
-    for (const row of [0, 1] as const) {
-      for (let index = 0; index < announcerColumns; index++) {
-        covers('soundboard-north', soundboardLayout.announcerButtonPosition(announcerColumns, index, row), announcerButton.width, announcerButton.height)
-      }
-    }
-    expect(wallById('soundboard-south').reservations).toBeUndefined()
-  })
-  test('artworks never hang over or overlap the buttons', () => {
-    for (const id of ['soundboard-enabled', 'soundboard-archived', 'soundboard-north']) {
-      const wall = wallById(id)
-      const panel = reservation(id)
-      const middle = ((panel.bottom ?? 0) + panel.height) / 2
-      for (const u of [panel.u, panel.u - panel.width / 2 + 0.1, panel.u + panel.width / 2 - 0.1]) {
-        const {origin, direction} = aimAt(wall, u, Math.max(1.5, middle))
-        expect(soundboardPlacement.findPlacement(origin, direction, 1, 1, [])).toMatchObject({
-          wallId: id,
-          valid: false,
-          reason: soundboardButtonsIssue,
-        })
-      }
-      // A frame just beside the panel still overlaps it with its own width.
-      const {origin, direction} = aimAt(wall, panel.u + panel.width / 2 + 0.3, Math.max(1.5, middle))
-      expect(soundboardPlacement.findPlacement(origin, direction, 1, 1, [])?.reason).toBe(soundboardButtonsIssue)
-    }
-  })
-  test('the free stretches of every wall take artworks', () => {
-    for (const id of ['soundboard-enabled', 'soundboard-archived', 'soundboard-north']) {
-      const wall = wallById(id)
-      const panel = reservation(id)
-      const free = (wall.width / 2 + panel.u + panel.width / 2) / 2
-      expect(wall.width / 2 - (panel.u + panel.width / 2)).toBeGreaterThan(2)
-      const {origin, direction} = aimAt(wall, free, 2.2)
-      expect(soundboardPlacement.findPlacement(origin, direction, 1, 1, [])).toMatchObject({
-        wallId: id,
-        valid: true,
-      })
-    }
-    const south = wallById('soundboard-south')
-    const {origin, direction} = aimAt(south, 0, 2.5)
-    expect(soundboardPlacement.findPlacement(origin, direction, 2, 2, [])).toMatchObject({
-      wallId: 'soundboard-south',
-      valid: true,
-    })
-  })
-  test('the hall is level and lost artworks return to the spawn', () => {
-    expect(soundboardPlacement.floorHeight([0, 2, 0])).toBe(0)
-    expect(soundboardPlacement.contains(soundboardPlacement.recoveryPosition)).toBe(true)
-    expect(soundboardPlacement.recoveryPosition[2]).toBe(soundboardSpawn.position[2])
-    expect(soundboardPlacement.contains([0, soundboardBounds.height + 1, 0])).toBe(false)
   })
 })
 describe('settling stored artworks into a hall', () => {

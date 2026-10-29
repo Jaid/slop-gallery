@@ -11,9 +11,6 @@ import museumArtworks from '../../src/levels/gallery/artworks.ts'
 import {insideLevel as insideMuseum, playerSpawn as museumSpawn} from '../../src/levels/gallery/navigation.ts'
 import knotArtworks from '../../src/levels/knottingham/artworks.ts'
 import {groundSurface, insideLevel as insideKnots, playerSpawn as knotSpawn, levelFloorHeight} from '../../src/levels/knottingham/navigation.ts'
-import soundboardArtworks from '../../src/levels/soundboard/artworks.ts'
-import {insideLevel as insideSoundboard, playerSpawn as soundboardSpawn} from '../../src/levels/soundboard/navigation.ts'
-import {soundboardBounds} from '../../src/lib/audio/soundboard.ts'
 import {knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
 
 const farKnotPosition: PlayerPose['position'] = [knotGalleryBounds.maxX - 2, 0.04, knotGalleryBounds.northZ + 2]
@@ -24,11 +21,11 @@ describe('build-time levels', () => {
     const files = await Array.fromAsync(levelComponentGlob.scan())
     expect(files.length).toBeGreaterThan(40)
     for (const file of files) {
-      expect(file.replaceAll('\\', '/')).toMatch(/^src\/components\/levels\/(gallery|knottingham|soundboard)\/[^/]+\/index\.tsx$/u)
+      expect(file.replaceAll('\\', '/')).toMatch(/^src\/components\/levels\/(gallery|knottingham)\/[^/]+\/index\.tsx$/u)
     }
   })
   test('defines level titles, entry directories and assets in the shared data module', () => {
-    expect(levelIds).toEqual(['gallery', 'knottingham', 'soundboard'])
+    expect(levelIds).toEqual(['gallery', 'knottingham'])
     expect(levels.gallery).toMatchObject({
       title: 'Slop Gallery',
       directory: 'src/levels/gallery',
@@ -43,13 +40,6 @@ describe('build-time levels', () => {
       storageKey: 'knot-gallery',
       supportsMap: true,
     })
-    expect(levels.soundboard).toMatchObject({
-      title: 'Soundboard',
-      directory: 'src/levels/soundboard',
-      publicAssets: [],
-      storageKey: 'slop-soundboard',
-      supportsMap: false,
-    })
     const storageKeys = new Set(levelIds.map(id => levels[id].storageKey))
     expect(storageKeys.size).toBe(levelIds.length)
   })
@@ -57,7 +47,6 @@ describe('build-time levels', () => {
     expect(parseGalleryLevel()).toBe('gallery')
     expect(parseGalleryLevel('gallery')).toBe('gallery')
     expect(parseGalleryLevel('knottingham')).toBe('knottingham')
-    expect(parseGalleryLevel('soundboard')).toBe('soundboard')
     for (const value of ['', 'knots', 'Knot-Gallery', 'slop-gallery', 'knot-gallery', 'sounds']) {
       expect(() => parseGalleryLevel(value)).toThrow('Invalid game level')
     }
@@ -65,15 +54,12 @@ describe('build-time levels', () => {
   test('uses independent spawn bounds and collections', () => {
     expect(insideKnots(knotSpawn.position)).toBe(true)
     expect(insideMuseum(museumSpawn.position)).toBe(true)
-    expect(insideSoundboard(soundboardSpawn.position)).toBe(true)
     expect(insideKnots(farKnotPosition)).toBe(true)
     expect(insideMuseum(farKnotPosition)).toBe(false)
     expect(insideKnots([0, 0, knotGalleryBounds.northZ - 1])).toBe(false)
     expect(levelFloorHeight(farKnotPosition)).toBe(0)
     expect(groundSurface('vesper', [0, 0, 0])).toBe('generic')
     expect(knotArtworks).toEqual([])
-    expect(soundboardArtworks).toEqual([])
-    expect(insideSoundboard([soundboardBounds.maxX + 1, 0.04, 0])).toBe(false)
     expect(museumArtworks.length).toBeGreaterThan(0)
   })
 })

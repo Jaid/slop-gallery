@@ -187,7 +187,7 @@ export const playerSoundEffects = {
   zoom: {
     id: 'SFX-37',
     label: 'Zoom Focus',
-    // A finite audition on the soundboard; gameplay sustains these quiet, consonant tones.
+    // A finite recipe, as the catalog renders it on its own; gameplay sustains these quiet, consonant tones.
     voices: [osc(174, 1.2, 0.0018, {attack: 0.16}), osc(261, 1.2, 0.0009, {attack: 0.2})],
   },
 } satisfies Record<string, SoundEffect>

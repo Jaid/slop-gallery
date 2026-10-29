@@ -14,15 +14,11 @@ Player effects use Web Audio synthesis only: no recordings, downloads, generated
 | SFX-36 | Viewing Mode Leave | V-inspection is released, including target removal. |
 | SFX-37 | Zoom Focus | A quiet two-tone layer sustained while zoomed. |
 
-All seven appear on the soundboard's enabled wall after the previously selected effects. The held zoom layer has a finite 1.2-second soundboard audition; gameplay holds it until released. New cues do not change the previous catalog IDs or audition selection order.
+All seven are part of the catalog in `soundEffects.ts`, next to the 13 interface effects. The held zoom layer’s recipe lasts a finite 1.2 seconds; gameplay holds it until released. New cues never renumber existing catalog IDs.
 
 Zoom sweeps follow `ego-player`'s actual FOV transition direction and duration. Extended transitions use the extended family, including direct returns to normal FOV. Instant transitions produce no sweep. Reversing replaces the previous sweep with a short fade instead of stacking sounds. Explicit camera handoff, teleport and unmount release zoom audio without fabricating another transition.
 
 `onZoomChange` continues driving the app's visual effects independently of sound settings. It also controls the quiet held-zoom layer's gain; extended zoom makes that layer slightly stronger. There is one sustained playback per zoom session, not a source allocated every frame.
-
-## Candidate catalog
-
-`soundEffectCandidates.ts` holds 48 archived audition candidates (SFX-58–SFX-105), 12 each for menus, notifications, subtle cues and collisions. They use the same oscillator/noise voices; collisions approximate struck materials with inharmonic, faster-decaying upper modes. Every effect missing from `enabledSoundEffectIds` lands on the soundboard's archived wall automatically, which resizes the room to fit. To adopt a candidate, append its ID to `enabledSoundEffectIds`; never renumber existing IDs.
 
 ## Movement
 
@@ -46,6 +42,6 @@ Level components sound an emitter with `useAmbienceEmitter(EmitterClass)`, which
 
 ## Validation
 
-Run `bun test ./test/unit/sound-engine.test.ts ./test/unit/sound-effects.test.ts ./test/unit/player-audio.test.ts ./test/unit/soundboard-layout.test.ts` and `bun run --cwd packages/ego-player test`.
+Run `bun test ./test/unit/sound-engine.test.ts ./test/unit/sound-effects.test.ts ./test/unit/player-audio.test.ts` and `bun run --cwd packages/ego-player test`.
 
-With the usual development server and existing debug browser running, `bun test/browser/run.ts playerAudio.ts` renders silent offline buffers. It checks all seven cues, speed/crouch/impact-dependent output, headroom, silent tails, held-zoom cancellation and mid-transition reversal. It does not play audio, simulate input, navigate, focus or resize the user's browser. `soundEffectCatalog.ts` is a standalone fixture that renders all soundboard recipes the same way and checks for silence, headroom and silent tails. This checks synthesis and lifecycle behavior, not subjective in-game loudness or timbre.
+With the usual development server and existing debug browser running, `bun test/browser/run.ts playerAudio.ts` renders silent offline buffers. It checks all seven cues, speed/crouch/impact-dependent output, headroom, silent tails, held-zoom cancellation and mid-transition reversal. It does not play audio, simulate input, navigate, focus or resize the user's browser. `soundEffectCatalog.ts` is a standalone fixture that renders every catalog recipe the same way and checks for silence, headroom and silent tails. This checks synthesis and lifecycle behavior, not subjective in-game loudness or timbre.
