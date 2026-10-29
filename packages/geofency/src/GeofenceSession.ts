@@ -12,13 +12,19 @@ export type GeofenceSessionEvents<Id> = {
   leave: [id: Id]
 }
 
-export type GeofenceSessionOptions = {
+export type GeofenceSessionOptions<Id = string> = {
   /**
    * whether a position leaving every fence counts: it emits `leave` and `change` to null
    *
    * If `false`, positions without any match are ignored, so the session keeps its last match, like a room while walking through a passage between two rooms.
    */
   announceEmpty?: boolean
+  /**
+   * the match to start with instead of null, like a room restored from a saved game
+   *
+   * Set silently: the first {@link GeofenceSession.update} compares against it, so it emits nothing if the position is still in that fence.
+   */
+  initialValue?: Id | null
   /**
    * whether every matching fence is tracked
    *
@@ -37,11 +43,15 @@ export default class GeofenceSession<Id = string, Value extends Fence = Fence> e
   private currentMatch: Id | null = null
   private currentMatches: ReadonlySet<Id> = emptyMatches
 
-  constructor(geofences: Geofences<Id, Value>, {multiple = false, announceEmpty = false}: GeofenceSessionOptions = {}) {
+  constructor(geofences: Geofences<Id, Value>, {multiple = false, announceEmpty = false, initialValue = null}: GeofenceSessionOptions<NoInfer<Id>> = {}) {
     super()
     this.geofences = geofences
     this.multiple = multiple
     this.announceEmpty = announceEmpty
+    if (initialValue !== null) {
+      this.currentMatch = initialValue
+      this.currentMatches = new Set([initialValue])
+    }
   }
 
   /** the id of the first fence that contained the last counted position, or null */
