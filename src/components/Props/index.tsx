@@ -1,27 +1,15 @@
-import {knotGeometryArgs} from 'knot-materials/geometry.ts'
-import {TorusKnotGeometry} from 'three/webgpu'
-
 import Pedestal, {usePedestal} from '#component/Pedestal'
 import GrabbableProp from '#src/components/Scene/GrabbableProp.tsx'
 import Box from '#src/components/Scene/primitives.tsx'
 import {oculusLandingPlinths} from '#src/lib/gallery/lowerGallery.ts'
 import gold from '#src/lib/materials/gold.ts'
 
-const knotOrbit = (() => {
-  const geometry = new TorusKnotGeometry(...knotGeometryArgs)
-  geometry.computeBoundingSphere()
-  const radius = geometry.boundingSphere!.radius
-  geometry.dispose()
-  return {radius}
-})()
 const [westPlinth, eastPlinth] = oculusLandingPlinths
 const plinthTop = (plinth: typeof westPlinth) => plinth.position[1] + plinth.height / 2
 
 export default function Props() {
   const pedestal = usePedestal()
   return <>
-    <Pedestal {...pedestal} position={[14, 0, -29]} />
-    <GrabbableProp id='prop-knot' orbit={knotOrbit} position={[14, 1.9, -29]} title='A very serious knot'><mesh castShadow material={gold} receiveShadow><torusKnotGeometry args={knotGeometryArgs} /></mesh></GrabbableProp>
     <Pedestal {...pedestal} position={[-14, 0, 1]} />
     <GrabbableProp id='prop-apple' orbit={{radius: 0.33}} position={[-14, 1.57, 1]} title='The original forbidden download' type='dynamic'>
       <mesh castShadow material={gold} scale={[1, 0.93, 1]}><sphereGeometry args={[0.27, 32, 24]} /></mesh>

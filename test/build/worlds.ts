@@ -116,4 +116,17 @@ for (const chunk of files) {
     fail(`${chunk} imports the Knot material chunk ${leaked}.`)
   }
 }
+// The Salon’s Knot loads its material once it mounts and its announcements once it first speaks.
+const salon = await closure('SalonRoom.js')
+if (salon.has('knottingham.js')) {
+  fail('The Salon loads the Knottingham world with it.')
+}
+const salonKnotChunks = [...salon].filter(chunk => knotChunks.has(chunk))
+if (salonKnotChunks.length) {
+  fail(`The Salon loads ${salonKnotChunks[0]} with it.`)
+}
+const salonSources = await Promise.all([...salon].map(chunk => Bun.file(join(directory, chunk)).text()))
+if (knots.some(knot => salonSources.some(code => code.includes(`"entries/${knot.id}"`)))) {
+  fail('The Salon loads the Knots’ announcements with it.')
+}
 console.log(`Verified the build: ${initial.size} chunks load with the page, ${knotChunks.size} Knot materials and ${worldIds.length} worlds load on demand.`)

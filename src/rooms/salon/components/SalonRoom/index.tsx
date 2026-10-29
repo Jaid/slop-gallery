@@ -11,16 +11,18 @@ import BenchSeat from '#component/BenchSeat'
 import RoomFloor from '#component/RoomFloor'
 import Box from '#src/components/Scene/primitives.tsx'
 import StaticBatch from '#src/components/Scene/StaticBatch.tsx'
+import {useGallery} from '#src/lib/gallery.ts'
 import {wallFace, wallOpeningTrim} from '#src/lib/gallery/architecture.ts'
 import {salonBench, salonBenchLegs, salonCeiling, salonSkylight, salonWainscot, wainscotFields, wallDressingSpans} from '#src/lib/gallery/salon.ts'
 import gold from '#src/lib/materials/gold.ts'
 import VaultGlassMaterial from '#src/lib/materials/VaultGlassMaterial.ts'
+import SalonKnot from '#src/rooms/salon/components/SalonKnot/index.tsx'
 import slopGallery from '#src/worlds/gallery/index.ts'
 
 const room = slopGallery.room('salon')
 const salonWalls = slopGallery.walls.filter(wall => wall.room === 'salon')
 
-/** The Salon: Prussian blue walls hung frame to frame, oak herringbone underfoot and a coffered skylight overhead. */
+/** The Salon: Prussian blue walls hung frame to frame, oak herringbone underfoot, a coffered skylight overhead and a showcased Knot. */
 export default function SalonRoom({glass, stone, wood}: {
   glass: Material
   stone: Texture
@@ -41,6 +43,8 @@ export default function SalonRoom({glass, stone, wood}: {
     roughness: 0.7,
   }), []))
   const isHeavy = useGraphicsMode()
+  // A new game picks the Knot anew and puts it back in its showcase.
+  const resetEpoch = useGallery(state => state.resetEpoch)
   // The Lobby vault’s cast glass, divided into the same panes as the bars below it.
   const skylight = useDisposable(useMemo(() => new VaultGlassMaterial({
     heavy: isHeavy,
@@ -62,6 +66,7 @@ export default function SalonRoom({glass, stone, wood}: {
     </group>
     {salonWalls.map(wall => <WallDressing key={wall.id} dado={dado} gilt={gold} wall={wall} />)}
     <Ottoman />
+    <SalonKnot key={resetEpoch} />
   </group>
 }
 

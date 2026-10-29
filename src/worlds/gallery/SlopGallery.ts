@@ -6,6 +6,7 @@ import type {RoomPlacement} from '../base/World.ts'
 import {lazy} from 'react'
 
 import roomOrigins from '#src/lib/gallery/layout.ts'
+import showcasedKnots from '#src/lib/gallery/showcasedKnots.ts'
 import {GalleryPlacementSpace} from '#src/lib/placement/GalleryPlacementSpace.ts'
 import Antechamber from '#src/rooms/antechamber/Antechamber.ts'
 import Banquet from '#src/rooms/banquet/Banquet.ts'
@@ -70,6 +71,11 @@ export default class SlopGallery extends World<GalleryRoom> {
 
   override contains(position: Vec3) {
     return this.navigation.contains(position)
+  }
+
+  /** The Knots the gallery showcases, like the Salon’s, while their rooms are mounted. */
+  override dumpKnots() {
+    return showcasedKnots.values().toArray()
   }
 
   override floorHeight(position: Vec3) {
