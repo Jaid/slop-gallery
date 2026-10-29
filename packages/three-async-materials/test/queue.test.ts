@@ -18,11 +18,6 @@ function fixture(third = false, prioritized = true) {
   const geometry = new BoxGeometry
   const placeholder = new MeshStandardNodeMaterial
   const full = Array.from({length: third ? 3 : 2}, () => new MeshStandardNodeMaterial)
-  let target: RenderTarget | null = null
-  let output: RenderTarget | null = null
-  let mrt: ReturnType<WebGPURenderer['getMRT']> | null = null
-  let face = 0
-  let mip = 0
   const calls: Array<{
     camera: unknown
     face: number
@@ -35,19 +30,44 @@ function fixture(third = false, prioritized = true) {
     scene: unknown
     target: RenderTarget | null
   }> = []
+  // Like Three's renderer, it keeps its state in fields its getters read through `this`.
   const renderer = {
-    getRenderTarget: () => target,
-    setRenderTarget(next: RenderTarget | null, nextFace = 0, nextMip = 0) {
-      target = next
-      face = nextFace
-      mip = nextMip
+    _renderTarget: null as RenderTarget | null,
+    _outputRenderTarget: null as RenderTarget | null,
+    _mrt: null as ReturnType<WebGPURenderer['getMRT']> | null,
+    _activeCubeFace: 0,
+    _activeMipmapLevel: 0,
+    debug: {onNodeBuilderCreated: null as ((builder: {
+      renderer: unknown
+      setBuildStage?: (stage: unknown) => void
+      setShaderStage?: (stage: unknown) => void
+    }, object: unknown) => void) | null},
+    getRenderTarget() {
+      return this._renderTarget
     },
-    getOutputRenderTarget: () => output,
-    setOutputRenderTarget: (next: RenderTarget | null) => output = next,
-    getMRT: () => mrt,
-    setMRT: (next: typeof mrt) => mrt = next,
-    getActiveCubeFace: () => face,
-    getActiveMipmapLevel: () => mip,
+    setRenderTarget(next: RenderTarget | null, nextFace = 0, nextMip = 0) {
+      this._renderTarget = next
+      this._activeCubeFace = nextFace
+      this._activeMipmapLevel = nextMip
+    },
+    getOutputRenderTarget() {
+      return this._outputRenderTarget
+    },
+    setOutputRenderTarget(next: RenderTarget | null) {
+      this._outputRenderTarget = next
+    },
+    getMRT() {
+      return this._mrt
+    },
+    setMRT(next: ReturnType<WebGPURenderer['getMRT']> | null) {
+      this._mrt = next
+    },
+    getActiveCubeFace() {
+      return this._activeCubeFace
+    },
+    getActiveMipmapLevel() {
+      return this._activeMipmapLevel
+    },
     compileAsync(mesh: Mesh, compileCamera: unknown, compileScene: unknown) {
       const gate = Promise.withResolvers<void>()
       calls.push({
@@ -56,11 +76,11 @@ function fixture(third = false, prioritized = true) {
         mesh,
         camera: compileCamera,
         scene: compileScene,
-        target,
-        output,
-        mrt,
-        face,
-        mip,
+        target: this._renderTarget,
+        output: this._outputRenderTarget,
+        mrt: this._mrt,
+        face: this._activeCubeFace,
+        mip: this._activeMipmapLevel,
       })
       // Three's WebGPU compileAsync traverses the object synchronously before
       // returning its native-pipeline Promise, including onBeforeRender hooks.
@@ -68,6 +88,15 @@ function fixture(third = false, prioritized = true) {
         if (object instanceof Mesh) {
           object.onBeforeRender(renderer as unknown as Parameters<Mesh['onBeforeRender']>[0], compileScene as Scene, compileCamera as PerspectiveCamera, object.geometry as BufferGeometry, object.material as never, null as never)
         }
+      })
+      // r186 also creates the node builder of the first object and starts its build before the Promise returns.
+      this.debug.onNodeBuilderCreated?.({
+        renderer: this,
+        setBuildStage() {},
+        setShaderStage() {},
+      }, {
+        material: mesh.material,
+        object: mesh,
       })
       return gate.promise
     },
@@ -593,6 +622,86 @@ test('warming a parent cannot admit its child binding from synthetic traversal',
       status: 'ready',
       contexts: 1,
     })
+  } finally {
+    await f.dispose()
+  }
+})
+test('node builders three creates after compileAsync returned build against the state of the compilation in flight, stage by stage, and leave the renderer’s own state to everything else', async () => {
+  const f = fixture()
+  try {
+    const outputs = makeMrt({output: colorOutput})
+    f.renderer.setRenderTarget(f.main)
+    f.renderer.setMRT(outputs)
+    f.meshes[1].onBeforeRender(f.renderer as unknown as Parameters<Mesh['onBeforeRender']>[0], f.scene, f.camera, f.geometry, f.placeholder, null as never)
+    f.renderer.setMRT(null)
+    f.renderer.setRenderTarget(null)
+    await flush()
+    expect(f.calls).toHaveLength(1)
+    // Three 0.186 builds the nodes of what it compiles one object after another, after compileAsync has returned and the queue has put the renderer back. The builder it created before returning leaves that alone.
+    expect(f.renderer.getMRT()).toBeNull()
+    expect(f.renderer.getRenderTarget()).toBeNull()
+    const stages: Array<[unknown, unknown]> = []
+    const builder = {
+      renderer: f.renderer,
+      setBuildStage(_stage: unknown) {
+        stages.push([f.renderer.getMRT(), f.renderer.getRenderTarget()])
+      },
+      setShaderStage(_stage: unknown) {
+        stages.push([f.renderer.getMRT(), f.renderer.getRenderTarget()])
+      },
+    }
+    f.renderer.debug.onNodeBuilderCreated!(builder, {
+      material: f.full[1],
+      object: f.meshes[1],
+    })
+    // The build starts in the same stretch as the builder.
+    expect(f.renderer.getMRT()).toBe(outputs)
+    expect(f.renderer.getRenderTarget()).toBe(f.calls[0].target)
+    builder.setBuildStage('setup')
+    await Promise.resolve()
+    // Once the stretch yields, the renderer has its own state back before anything else renders.
+    expect(f.renderer.getMRT()).toBeNull()
+    expect(f.renderer.getRenderTarget()).toBeNull()
+    // The next stretch starts with a stage and borrows the compilation’s state again.
+    builder.setShaderStage('fragment')
+    expect(stages).toEqual([[outputs, f.calls[0].target], [outputs, f.calls[0].target]])
+    await Promise.resolve()
+    expect(f.renderer.getMRT()).toBeNull()
+    // Builders of anything else, the placeholder’s included, never borrow it.
+    f.renderer.debug.onNodeBuilderCreated!({renderer: f.renderer}, {
+      material: f.placeholder,
+      object: f.meshes[1],
+    })
+    expect(f.renderer.getMRT()).toBeNull()
+    f.calls[0].gate.resolve()
+    await flush()
+    // Nor does anything once the compilation settled.
+    f.renderer.debug.onNodeBuilderCreated!({renderer: f.renderer}, {
+      material: f.full[1],
+      object: f.meshes[1],
+    })
+    expect(f.renderer.getMRT()).toBeNull()
+  } finally {
+    await f.dispose()
+  }
+})
+test('queues on one renderer chain into its node builder hook and step aside in any order of disposal', async () => {
+  const f = fixture()
+  try {
+    const seen: Array<unknown> = []
+    const original = (builder: {renderer: unknown}) => {
+      seen.push(builder)
+    }
+    f.renderer.debug.onNodeBuilderCreated = original
+    const first = new AsyncMaterials(f.renderer as unknown as WebGPURenderer)
+    const second = new AsyncMaterials(f.renderer as unknown as WebGPURenderer)
+    // The first one goes while the second one still chains through it.
+    await first.disposeAsync()
+    f.renderer.debug.onNodeBuilderCreated({renderer: f.renderer}, {})
+    expect(seen).toHaveLength(1)
+    await second.disposeAsync()
+    f.renderer.debug.onNodeBuilderCreated({renderer: f.renderer}, {})
+    expect(seen).toHaveLength(2)
   } finally {
     await f.dispose()
   }

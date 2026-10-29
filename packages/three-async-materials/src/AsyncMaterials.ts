@@ -21,6 +21,25 @@ type Pending = {
   ready: boolean
 }
 
+/** the renderer’s state that node builders read: render target, output target, MRT, face and mip level */
+type RendererState = {
+  face: number
+  mip: number
+  mrt: Context['mrt']
+  output: Context['output']
+  target: Context['target']
+}
+
+/** the stages a node builder goes through, synchronously each, which r186 starts every stretch of its build with */
+type StagedBuilder = {
+  setBuildStage: (stage: string | null) => void
+  setShaderStage: (stage: string | null) => void
+}
+/** a compilation in flight and the renderer’s state its material has to build against */
+type Building = RendererState & {
+  material: Material
+  mesh: Mesh
+}
 // RenderContexts keys raw sample counts while WebGPU normalizes them to either 1 or 4.
 // Use the alternate raw value in the same normalized class so async warmup gets an
 // isolated RenderContext without creating a different pipeline variant.
@@ -39,6 +58,10 @@ function isolatedSamples(samples: number) {
 
 /** One queue per renderer. Caller owns every mesh, material, target and geometry. */
 export default class AsyncMaterials {
+  /** the renderer’s own state while a node builder of the compilation in flight borrows it, until the next microtask */
+  private borrowed: RendererState | null = null
+  /** the compilation in flight, whose node builders get its renderer state */
+  private building: Building | null = null
   private compiling = false
   private readonly disposal = Promise.withResolvers<void>()
   private disposed = false
@@ -47,7 +70,49 @@ export default class AsyncMaterials {
   private scheduled = false
   private readonly scratchTargets = new Map<RenderTargetLike, RenderTargetLike>
 
-  constructor(private readonly renderer: WebGPURenderer, private readonly options: AsyncMaterialsOptions = {}) {}
+  /** puts back the node builder hook this queue chained itself into */
+  private readonly unhook: () => void
+
+  constructor(private readonly renderer: WebGPURenderer, private readonly options: AsyncMaterialsOptions = {}) {
+    // compileAsync builds the nodes of what it compiles later, one object after another, yielding between their shader stages, and node materials read the renderer’s render target and MRT while they build.
+    // By then those belong to whatever renders meanwhile. So the node builders of the compilation in flight borrow its state for every synchronous stretch of their build: each starts with a new build or shader stage,
+    // and a microtask gives the renderer its own state back once the stretch yields, before anything else renders.
+    const {debug} = renderer
+    const previous = debug.onNodeBuilderCreated
+    let hooked = true
+    const hook: typeof previous = (builder, object) => {
+      previous?.(builder, object)
+      const {building} = this
+      const renderObject = object as {
+        material?: unknown
+        object?: unknown
+      }
+      if (!hooked || !building || renderObject.material !== building.material || renderObject.object !== building.mesh) {
+        return
+      }
+      const borrow = () => this.borrow(building)
+      // The builder is created right before its build starts, in the same stretch.
+      borrow()
+      const stages = builder as unknown as StagedBuilder
+      const {setBuildStage, setShaderStage} = stages
+      stages.setBuildStage = function (this: StagedBuilder, stage) {
+        borrow()
+        setBuildStage.call(this, stage)
+      }
+      stages.setShaderStage = function (this: StagedBuilder, stage) {
+        borrow()
+        setShaderStage.call(this, stage)
+      }
+    }
+    debug.onNodeBuilderCreated = hook
+    // Another queue on the same renderer may have chained itself in after this one; then this one only steps aside.
+    this.unhook = () => {
+      hooked = false
+      if (debug.onNodeBuilderCreated === hook) {
+        debug.onNodeBuilderCreated = previous
+      }
+    }
+  }
 
   /** materials whose mesh has been rendered but that are neither active nor failed yet; materials of meshes never rendered do not count */
   get pendingCount() {
@@ -129,10 +194,49 @@ export default class AsyncMaterials {
     await this.disposal.promise
   }
 
+  /** Gives the renderer the state of the compilation in flight until the current synchronous stretch ends. */
+  private borrow(state: RendererState) {
+    // compileAsync starts building inside compile(), which has already set the state and puts the renderer’s own one back itself; saving that as the renderer’s own would leave it stuck on the compilation’s.
+    if (this.compiling) {
+      return
+    }
+    const {renderer} = this
+    if (!this.borrowed) {
+      this.borrowed = {
+        target: renderer.getRenderTarget(),
+        output: renderer.getOutputRenderTarget(),
+        mrt: renderer.getMRT(),
+        face: renderer.getActiveCubeFace(),
+        mip: renderer.getActiveMipmapLevel(),
+      }
+      queueMicrotask(() => {
+        const own = this.borrowed
+        this.borrowed = null
+        if (own) {
+          renderer.setMRT(own.mrt)
+          renderer.setOutputRenderTarget(own.output)
+          renderer.setRenderTarget(own.target, own.face, own.mip)
+        }
+      })
+    }
+    renderer.setRenderTarget(state.target, state.face, state.mip)
+    renderer.setOutputRenderTarget(state.output)
+    renderer.setMRT(state.mrt)
+  }
+
   private compile(mesh: Mesh, fullMaterial: Material, context: Context) {
     const {renderer} = this
     const compileTarget = this.scratchTarget(context.target, context.mip)
     const compileOutput = this.scratchTarget(context.output, context.mip)
+    this.building = {
+      material: fullMaterial,
+      mesh,
+      target: compileTarget,
+      output: compileOutput,
+      mrt: context.mrt,
+      face: context.face,
+      mip: context.mip,
+    }
     const material = mesh.material
     const visible = mesh.visible
     const culled = mesh.frustumCulled
@@ -166,6 +270,8 @@ export default class AsyncMaterials {
   }
 
   private release() {
+    this.unhook()
+    this.building = null
     this.pending.length = 0
     for (const target of this.scratchTargets.values()) {
       target.dispose()
@@ -240,7 +346,11 @@ export default class AsyncMaterials {
               break
             }
             result.contexts++
-            await this.compile(mesh, next.material, context)
+            try {
+              await this.compile(mesh, next.material, context)
+            } finally {
+              this.building = null
+            }
           }
           if (!cancelled()) {
             next.ready = true

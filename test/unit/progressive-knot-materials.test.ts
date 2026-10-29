@@ -8,6 +8,8 @@ import KnotMaterial from 'knot-materials/lib/KnotMaterial.ts'
 import ProgressiveKnotMaterials from 'knot-materials/ProgressiveKnotMaterials.ts'
 import {Color, Mesh, MeshPhysicalNodeMaterial, PerspectiveCamera, RenderTarget, Scene} from 'three/webgpu'
 
+/** a renderer that never renders, only offering the debug hooks the material queue chains into */
+const bareRenderer = () => ({debug: {onNodeBuilderCreated: null}}) as unknown as WebGPURenderer
 function fixture(third = false, layered = false) {
   class TestMaterial extends KnotMaterial {
     constructor(environment: Texture) {
@@ -52,6 +54,7 @@ function fixture(third = false, layered = false) {
     target: RenderTarget | null
   }> = []
   const renderer = {
+    debug: {onNodeBuilderCreated: null},
     getRenderTarget: () => target,
     setRenderTarget: (next: RenderTarget | null) => target = next,
     getOutputRenderTarget: () => output,
@@ -185,7 +188,7 @@ test('fast mode keeps cheap lit placeholders but still constructs full knot mate
       super(environment)
     }
   }
-  const materials = new ProgressiveKnotMaterials({} as WebGPURenderer, new PerspectiveCamera, [entry], new Map([[entry.id, TrackedMaterial]]), false)
+  const materials = new ProgressiveKnotMaterials(bareRenderer(), new PerspectiveCamera, [entry], new Map([[entry.id, TrackedMaterial]]), false)
   try {
     expect(constructions).toBe(1)
     expect(materials.fullMaterials).toHaveLength(1)

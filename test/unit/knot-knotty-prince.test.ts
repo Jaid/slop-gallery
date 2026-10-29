@@ -70,7 +70,7 @@ describe('Knotty Prince solid felt underneath fuzz', () => {
     }
   })
   test.each([true, false])('activates both warmed layers atomically, core first=%s, including StrictMode ref replay', async coreFirst => {
-    const queue = new AsyncMaterials({} as WebGPURenderer)
+    const queue = new AsyncMaterials({debug: {onNodeBuilderCreated: null}} as unknown as WebGPURenderer)
     const shell = new MeshPhysicalNodeMaterial
     const core = new MeshPhysicalNodeMaterial
     const placeholder = new MeshBasicNodeMaterial
