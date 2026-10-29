@@ -1,4 +1,4 @@
-import type {RoomId, Vec3} from '../../../gallery/types.ts'
+import type {Vec3} from '../../../gallery/types.ts'
 import type {AudioOutput} from '../../proceduralAudio.ts'
 import type {Range} from './noise.ts'
 
@@ -37,7 +37,7 @@ export type AmbienceEmitterOptions = {
   id: string
   position: Vec3
   /** the rooms the emitter sounds in; it is disabled while the listener is anywhere else */
-  rooms?: ReadonlyArray<RoomId>
+  rooms?: ReadonlyArray<string>
   title: string
 }
 type Graph = {
@@ -64,7 +64,7 @@ export default abstract class AmbienceEmitter {
   readonly hearing: AmbienceEmitterOptions['hearing']
   readonly id: string
   readonly position: Vec3
-  readonly rooms?: ReadonlyArray<RoomId>
+  readonly rooms?: ReadonlyArray<string>
   readonly title: string
   private graph?: Graph
   private inside = true
@@ -117,7 +117,7 @@ export default abstract class AmbienceEmitter {
   }
 
   /** Whether `room` is one the emitter stands in. */
-  isInside(room: RoomId) {
+  isInside(room: string) {
     return !this.rooms || this.rooms.includes(room)
   }
 
@@ -142,7 +142,7 @@ export default abstract class AmbienceEmitter {
   protected schedule(_from: number, _until: number) {}
 
   /** Disables the emitter while the listener is outside its rooms. */
-  setListenerRoom(room: RoomId) {
+  setListenerRoom(room: string) {
     const inside = this.isInside(room)
     if (inside === this.inside) {
       return
@@ -210,7 +210,7 @@ export default abstract class AmbienceEmitter {
   }
 
   /** How loud the emitter reaches a listener at `listener` in `room`, 0–1, before {@link gain}; 0 while disabled there. */
-  strengthAt(listener: Vec3, room: RoomId) {
+  strengthAt(listener: Vec3, room: string) {
     if (!this.isInside(room)) {
       return 0
     }

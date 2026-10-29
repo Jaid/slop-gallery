@@ -4,8 +4,8 @@ import {knotsById} from 'knot-materials'
 import {knotBays, knotExhibition} from 'knot-materials/exhibition.ts'
 import {knotSign} from 'knot-materials/signs.ts'
 
-import drawLabel, {drawRarity, knotDetailLine, labelAtlasColumns, labelBackground, labelFonts, labelHeight, labelWidth, modelLineLayout, updateRarityAtlas} from '../../src/components/levels/knottingham/KnotLabels/drawLabel.ts'
-import signAccentColor from '../../src/components/levels/knottingham/signAccentColor.ts'
+import drawLabel, {drawRarity, knotDetailLine, labelAtlasColumns, labelBackground, labelFonts, labelHeight, labelWidth, modelLineLayout, updateRarityAtlas} from '../../src/components/KnotLabels/drawLabel.ts'
+import signAccentColor from '../../src/components/signAccentColor.ts'
 
 const iconHash = async (id: string) => Bun.hash(await Bun.file(new URL(knotsById.get(id)!.candidate.icon)).arrayBuffer())
 describe('Knot nameplates', () => {

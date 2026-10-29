@@ -1,30 +1,48 @@
+import type {GroundSurface} from '../base/Room.ts'
+import type {Vec3} from 'math'
+
+import {Geofence} from 'geofency'
+
 import lowerGallery from '#src/lib/gallery/lowerGallery.ts'
+import {moonfallCrater} from '#src/lib/gallery/moonfall/config.ts'
 import {craterTerrain} from '#src/lib/gallery/moonfall/CraterTerrain.ts'
+import {stairwayFootprint} from '#src/lib/gallery/staircase.ts'
 
 import Room from '../base/Room.ts'
 import floorBox from '../lib/floorBox.ts'
-import floorOrigin from '../lib/floorOrigin.ts'
+import footprint from '../lib/footprint.ts'
 import ambienceEmitters from './ambienceEmitters.ts'
 import cameras from './cameras.ts'
 import lamps from './lamps.ts'
 import spawns from './spawns.ts'
-import stickyWalls from './stickyWalls.ts'
+import walls from './walls.ts'
 
-const {floorY, moonfall: plan, tunnel} = lowerGallery
+const {moonfall: plan} = lowerGallery
 const bottom = craterTerrain.lowest()
 
+/** Laid out around the middle of its floor plan, at the height of its slate floor. */
 export default class Moonfall extends Room {
+  // Reaches down to the deepest air in the crater.
+  override readonly air = floorBox(plan.size, bottom, 5.8 - bottom)
   override readonly color = '#264c54'
   override readonly description = 'Down the stairs. Out of the ordinary.'
-  override readonly fence = [
-    // Reaches down to the deepest air in the crater.
-    floorBox(plan.size, bottom, 5.8 - bottom),
-    // The exhibition tunnel, sloping down to the Oculus, from its low north end to the top of its high south end.
-    floorBox([tunnel.width, tunnel.southZ - tunnel.northZ], tunnel.northY - floorY, tunnel.southY + tunnel.height - tunnel.northY, [tunnel.x - plan.center[0], (tunnel.northZ + tunnel.southZ) / 2 - plan.center[1]]),
-  ]
-  override readonly floorY = floorY
+  override readonly fence = new Geofence([
+    // Everything under its floor plan, up to just over its ceiling; it comes before the Corridor, whose stairs climb over a corner of it.
+    {
+      ...footprint([this.air]),
+      ceiling: 6,
+    },
+    // The stairway up to the Antechamber, at every height.
+    {
+      x: stairwayFootprint.x - plan.center[0],
+      z: stairwayFootprint.z - plan.center[1],
+      x2: stairwayFootprint.x2 - plan.center[0],
+      z2: stairwayFootprint.z2 - plan.center[1],
+    },
+  ])
+  override readonly height = 5.8
   override readonly id = 'moonfall'
-  override readonly origin = floorOrigin(plan, this.floorY)
+  override readonly size = plan.size
   override readonly spawn = spawns['']
 
   constructor() {
@@ -34,9 +52,15 @@ export default class Moonfall extends Room {
       spawns,
       ambience: ambienceEmitters,
       lamps,
+      skyless: true,
       // The room lies under its own ceiling, so the sun never lights its air.
       volumetricSun: 0,
-      stickyWalls,
+      walls,
     })
+  }
+
+  /** The crater’s soft ground in the middle muffles every step. */
+  override groundSurface([x, , z]: Vec3): GroundSurface {
+    return Math.hypot(x, z) <= moonfallCrater.radius + 1e-6 ? 'fabric' : 'generic'
   }
 }

@@ -2,9 +2,9 @@ import type {WebmcpBridge} from '../../src/lib/webmcp/tools.ts'
 
 import {expect, test} from 'bun:test'
 
-import dumpGalleryKnots from '../../src/levels/gallery/webmcp.ts'
 import registerWebmcp from '../../src/lib/webmcp/register.ts'
 import createWebmcpTools from '../../src/lib/webmcp/tools.ts'
+import slopGallery from '../../src/worlds/gallery/index.ts'
 
 const bridge: WebmcpBridge = {
   analyzeWorld: () => ({
@@ -214,8 +214,8 @@ test('set_wireframe validates its optional fields and sets them through the brid
   controller.abort()
   expect(() => execute({})).toThrow()
 })
-test('levels without Knots expose an empty dump', () => {
-  expect(dumpGalleryKnots()).toEqual([])
+test('worlds without Knots expose an empty dump', () => {
+  expect(slopGallery.dumpKnots()).toEqual([])
 })
 test('registrations clean up on unmount, failure and cancellation during registration', async () => {
   for (const mode of ['success', 'failure', 'abort'] as const) {

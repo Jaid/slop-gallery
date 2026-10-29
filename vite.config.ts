@@ -9,22 +9,20 @@ import postcssNormalize from 'postcss-normalize'
 import bakeBranchComponentPlugin from 'rolldown-plugin-bake-branch-component'
 import hoistPopularConstantsPlugin from 'rolldown-plugin-hoist-popular-constants'
 import thematicChunksPlugin from 'rolldown-plugin-thematic-chunks'
-import {loadEnv, mergeConfig} from 'vite'
+import {mergeConfig} from 'vite'
 import bakeThreePlugin from 'vite-plugin-bake-three'
 import browserslistTargetPlugin from 'vite-plugin-browserslist-target'
-import gameLevelPlugin, {selectGameLevel} from 'vite-plugin-game-level'
 import importVoiceSamplePlugin from 'vite-plugin-import-voice-sample'
 import jxlHeadersPlugin from 'vite-plugin-jxl-headers'
 import mediaMixinsPlugin from 'vite-plugin-media-mixins'
 import titlePlugin from 'vite-plugin-title'
 
-import levels, {defaultLevel, levelIds} from '#src/data/levels.ts'
-import knotMaterialsPlugin from '#src/lib/vite/knotMaterialsPlugin.ts'
 import loadingScreenPlugin from '#src/lib/vite/loadingScreenPlugin.ts'
 import rapierWasmPlugin from '#src/lib/vite/rapierWasmPlugin.ts'
+import worldChunksPlugin from '#src/lib/vite/worldChunksPlugin.ts'
+import {defaultWorld, knottinghamParameters, selectWorld, worldIds, worlds} from '#src/worlds/index.ts'
 
-const getCommonConfig = (context: ConfigEnv) => {
-  const level = selectGameLevel(loadEnv(context.mode, process.cwd(), 'GAME_LEVEL').GAME_LEVEL, levelIds, defaultLevel)
+const getCommonConfig = () => {
   const config: UserConfig = {
     build: {
       chunkSizeWarningLimit: 5000,
@@ -36,13 +34,12 @@ const getCommonConfig = (context: ConfigEnv) => {
         // Builds without OpenRouter access get silence for uncached samples instead of failing.
         optional: true,
       }),
-      knotMaterialsPlugin(),
-      titlePlugin(levels[level].title),
-      loadingScreenPlugin(levels[level]),
-      gameLevelPlugin({
-        level,
-        levels,
-        sharedPublicAssets: ['icon.svg'],
+      titlePlugin(worlds[defaultWorld].title),
+      loadingScreenPlugin({
+        worlds,
+        defaultWorld,
+        select: selectWorld,
+        selectorArguments: [knottinghamParameters],
       }),
       reactPlugin(),
       babelPlugin({
@@ -78,6 +75,7 @@ const getProductionConfig = () => {
     mergeIdents: false,
     zindex: false,
   }).plugins.filter(([, options]) => !(options && 'exclude' in options && options.exclude)).map(([createPlugin, options]) => createPlugin(options))
+  const worldChunks = worldChunksPlugin(Object.fromEntries(worldIds.map(id => [id, `src/worlds/${id}/index.ts`])))
   const config: UserConfig = {
     plugins: [
       jxlHeadersPlugin(),
@@ -89,6 +87,7 @@ const getProductionConfig = () => {
         apply: 'build',
         enforce: 'post',
       },
+      worldChunks,
       thematicChunksPlugin(),
     ],
     build: {
@@ -112,9 +111,34 @@ const getProductionConfig = () => {
         output: {
           minify: true,
           topLevelVar: true,
+          codeSplitting: {
+            groups: [
+              ...worldChunks.groups,
+              {
+                // The Knots’ metadata, which every material reads its own entry from, in one chunk instead of one per entry; it only loads with the first Knot.
+                name: 'knot-catalog',
+                test: /[/\\]knot-materials[/\\]src[/\\](?:(?:candidates|entries)[/\\](?:[^/\\]+[/\\]data|index)\.ts$|main\.ts$|rarities\.ts$|KnotCandidate\.ts$)/u,
+                priority: 9,
+                // Only the metadata itself, not what it imports, which other chunks share.
+                includeDependenciesRecursively: false,
+              },
+              {
+                // The helpers the Knots’ shaders share, the package’s and each candidate’s, loaded once with the first material that needs them, with what only they need, like the textures baked for them.
+                // Below the chunks of packages and libraries, which keep what the page shares with them.
+                name: 'knot-shaders',
+                test: /[/\\]knot-materials[/\\]src[/\\](?:candidates[/\\][^/\\]+[/\\])?lib[/\\]/u,
+                priority: 1,
+              },
+            ],
+          },
           chunkFileNames: chunkInfo => {
             if (chunkInfo.name === 'rolldown-runtime') {
               return 'runtime.js'
+            }
+            // Every Knot material loads on its own once a Knot wears it, as a chunk named after its entry.
+            const knot = chunkInfo.facadeModuleId ? /[/\\]knot-materials[/\\]src[/\\]entries[/\\]([^/\\]+)[/\\]Material\.ts$/u.exec(chunkInfo.facadeModuleId)?.[1] : undefined
+            if (knot) {
+              return `knot-${knot}.js`
             }
             // Components live in folders of their name, so a chunk that starts at a component’s index takes the folder’s name.
             const folder = chunkInfo.name === 'index' && chunkInfo.facadeModuleId ? /([^/\\]+)[/\\]index\.tsx?$/u.exec(chunkInfo.facadeModuleId)?.[1] : undefined
@@ -140,6 +164,6 @@ const getProductionConfig = () => {
   }
   return config
 }
-const config: UserConfigFn = context => mergeConfig(getCommonConfig(context), (context.mode === 'production' ? getProductionConfig : getDevelopmentConfig)(context))
+const config: UserConfigFn = context => mergeConfig(getCommonConfig(), (context.mode === 'production' ? getProductionConfig : getDevelopmentConfig)(context))
 
 export default config

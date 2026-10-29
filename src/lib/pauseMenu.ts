@@ -1,6 +1,7 @@
 import PauseMenu from 'use-pause-menu/core'
 
-import {galleryStorageKey} from './level.ts'
+import {currentWorldInfo} from '#src/worlds/index.ts'
+
 import {localStore} from './temporary.ts'
 
 export function readControlled() {
@@ -13,7 +14,7 @@ export function readControlled() {
 
 const pauseMenu = new PauseMenu({
   storage: localStore,
-  storageKey: `${galleryStorageKey}-visited`,
+  storageKey: `${currentWorldInfo.storageKey}-visited`,
 })
 
 export default pauseMenu

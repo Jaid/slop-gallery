@@ -6,18 +6,17 @@ import fs from 'fs-extra'
 import puppeteer from 'puppeteer-core'
 import {createServer} from 'vite'
 
-import {defaultLevel, levelIds} from '#src/data/levels.ts'
 import {maximumSeed, parseSeed} from '#src/lib/environmentSeed.ts'
 import {queryParameters} from '#src/lib/queryOverrides.ts'
 import {readLoading} from '#src/lib/rendering/loading.ts'
+import {knottinghamParameters, readWorld} from '#src/worlds/index.ts'
 
 export const repositoryRoot = resolve(import.meta.dir, '..', '..')
-// seed, graphics and loading have dedicated options with validation and defaults.
-const queryOptionNames = queryParameters.filter(key => key !== 'seed' && key !== 'graphics' && key !== 'loading').toSorted()
+// seed, graphics and loading have dedicated options with validation and defaults. Knottingham’s own parameters open it, like --world knottingham.
+const queryOptionNames = [...queryParameters.filter(key => key !== 'seed' && key !== 'graphics' && key !== 'loading'), ...knottinghamParameters].toSorted()
 const queryOptions: Record<string, {type: 'string'}> = Object.fromEntries(queryOptionNames.map(key => [key, {type: 'string'}]))
 /** Scripts pick their own default height; the width follows 16:9. */
-export const galleryHelp = (defaultHeight = 720) => `  --level <id>            ${levelIds.join(', ')}. Default: GAME_LEVEL or the default level
-  --target <dir>          use this static build (e.g. dist) instead of the dev server. Its level-build.json decides the level
+export const galleryHelp = (defaultHeight = 720) => `  --target <dir>          use this static build (e.g. dist) instead of the dev server
   --graphics <mode>       mirrors ?graphics (fast, heavy or cinematic, which is heavy with larger maps and more samples for non-realtime renders). Default: heavy
   --seed <number>         mirrors ?seed, the environment seed (0–${maximumSeed}) that decides random details like the potted plants. Default: 1
   --loading <mode>        mirrors ?loading (stream, full or lazy). Default: full, which builds everything before the scene is ready, so captures don’t wait for every object and shadow map to stream in
@@ -31,7 +30,6 @@ export const galleryOptions = {
     type: 'string',
     default: 'heavy',
   },
-  level: {type: 'string'},
   loading: {type: 'string'},
   seed: {
     type: 'string',
@@ -44,7 +42,6 @@ export const galleryOptions = {
 export type GalleryValues = Partial<Record<string, boolean | string>> & {
   graphics: string
   height?: string
-  level?: string
   loading?: string
   seed: string
   target?: string
@@ -115,25 +112,11 @@ const serveStatic = (root: string) => Bun.serve({
     return isFile ? new Response(Bun.file(file)) : new Response('Not found', {status: 404})
   },
 })
-const readBuildLevel = async (root: string) => {
-  try {
-    const {level} = JSON.parse(await fs.readFile(join(root, 'level-build.json'), 'utf8')) as {level?: string}
-    return level
-  } catch {
-  }
-}
 /** Validates the shared gallery options before anything is started. */
 export const resolveGallerySetup = async (values: GalleryValues, defaultHeight = 720) => {
   const target = values.target === undefined ? undefined : resolve(values.target)
   if (target !== undefined && !await fs.stat(join(target, 'index.html')).then(entry => entry.isFile(), () => false)) {
     throw new Error(`--target ${values.target} has no index.html. Build it first, e.g. bun run build.`)
-  }
-  if (target !== undefined && values.level !== undefined) {
-    throw new Error('--level only applies to the dev server; a static --target already contains its level.')
-  }
-  const level = target === undefined ? values.level ?? Bun.env.GAME_LEVEL : await readBuildLevel(target)
-  if (level !== undefined && !levelIds.includes(level as typeof levelIds[number])) {
-    throw new Error(`--level must be one of: ${levelIds.join(', ')}.`)
   }
   const search = new URLSearchParams({
     ai: 'false',
@@ -158,8 +141,8 @@ export const resolveGallerySetup = async (values: GalleryValues, defaultHeight =
   }
   return {
     target,
-    level,
-    levelName: level ?? defaultLevel,
+    /** the world the page opens, which --world or Knottingham’s own parameters choose */
+    world: readWorld(`?${search}`),
     search,
     seed,
     viewport: resolveSize(values, defaultHeight),
@@ -170,11 +153,7 @@ export const serveGallery = async (setup: GallerySetup, options: {
   /** Vite cache directory; a running dev server may share the default cache, and concurrent dependency optimization would invalidate each other’s chunks */
   cacheDir: string
 }) => {
-  const {target, level, search} = setup
-  if (target === undefined && level !== undefined) {
-    // vite.config.ts reads the level through loadEnv, which includes process.env.
-    process.env.GAME_LEVEL = level
-  }
+  const {target, search} = setup
   if (target !== undefined) {
     const staticServer = serveStatic(target)
     return {

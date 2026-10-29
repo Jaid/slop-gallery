@@ -3,9 +3,9 @@ import {describe, expect, test} from 'bun:test'
 import {PerspectiveCamera} from 'three/webgpu'
 
 import {floorTile, roomFloorPlan} from '../../src/lib/gallery/floors.ts'
-import {rooms} from '../../src/lib/gallery/walls.ts'
 import PolishedBrassMaterial from '../../src/lib/materials/PolishedBrassMaterial.ts'
 import {lobbyFloorTravertine, lobbyWallTravertine, TravertineFloorMaterial, travertinePalette, travertineTile, TravertineWallMaterial} from '../../src/lib/materials/travertine/index.ts'
+import {rooms} from './fixtures/gallery.ts'
 
 const lobby = rooms.find(room => room.id === 'lobby')!
 const origin = [lobby.center[0] - lobby.size[0] / 2, lobby.center[1] - lobby.size[1] / 2] as const

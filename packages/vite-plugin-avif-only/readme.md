@@ -17,7 +17,7 @@ Slop Gallery enables the plugin **only in its production config**. Development s
 - Static imports, including Vite aliases, export forwarding and `?url` imports.
 - `new URL('./image.jxl', import.meta.url)`, including expression-free template literals.
 - CSS `url()` references and literal public URLs such as `/art/portrait.jxl` in JavaScript and HTML.
-- Public assets copied by Vite or an earlier `writeBundle` hook. Conversion runs after level-specific filtering, so the other level’s images stay excluded.
+- Public assets copied by Vite or an earlier `writeBundle` hook.
 
 Production source assets are converted before Vite’s normal asset hashing, inlining and base-path handling. Copied public JXLs become `.avif` files at the same relative paths. No JXL files ship in the production output. Arbitrary URLs assembled at runtime are not rewritten; use one of the static forms above.
 

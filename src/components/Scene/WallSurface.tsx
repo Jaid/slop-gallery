@@ -1,13 +1,26 @@
 import type {Wall} from '#src/lib/gallery.ts'
+import type {ComponentType} from 'react'
 import type {Material, Texture} from 'three/webgpu'
 
 import {RigidBody, TrimeshCollider} from '@react-three/rapier'
 import Branch from 'branch-component'
 
-import {WallDecorations} from '#level/components.ts'
 import {architectureGeometry} from '#src/lib/gallery/architecture.ts'
 
-export default function WallSurface({wall, plaster, glass, material, surfaceMaterial, surfaceRoom = wall.room}: {
+/** what a world draws on one of its walls beyond the wall itself, like an entrance surround */
+export type WallDecorationsProps = {
+  material?: Material
+  /** the color the wall’s trim takes without a material of its own */
+  trim: string
+  wall: Wall
+}
+
+/** draws nothing on a wall */
+const noDecorations = () => null
+
+export default function WallSurface({wall, plaster, glass, material, surfaceMaterial, surfaceRoom = wall.room, decorations: Decorations = noDecorations}: {
+  /** what the world draws on the wall beyond the wall itself, nothing by default */
+  decorations?: ComponentType<WallDecorationsProps>
   glass?: Material
   material?: Material
   plaster: Texture
@@ -46,6 +59,6 @@ export default function WallSurface({wall, plaster, glass, material, surfaceMate
       </mesh>)}
     </RigidBody>
     {geometry.cornice.map((part, i) => <mesh key={i} castShadow geometry={part} material={material} name={`cornice-${wall.id}`} receiveShadow><Branch not={material}><meshStandardNodeMaterial color={trim} roughness={0.6} /></Branch></mesh>)}
-    <WallDecorations material={material} trim={trim} wall={wall} />
+    <Decorations material={material} trim={trim} wall={wall} />
   </group>
 }

@@ -6,7 +6,7 @@ import {expect, test} from 'bun:test'
 import {Children, isValidElement} from 'react'
 import {Euler, Matrix4, Vector3} from 'three/webgpu'
 
-import LodgeFire from '../../src/components/levels/gallery/LodgeFire/index.tsx'
+import LodgeFire from '../../src/components/LodgeFire/index.tsx'
 import fire, {fireWorldOrigin} from '../../src/lib/gallery/fireplace/config.ts'
 import lodge from '../../src/lib/gallery/lodge.ts'
 import lodgeInterior from '../../src/lib/gallery/lodgeInterior/layout.ts'

@@ -1,64 +1,40 @@
-import type {RoomId} from './types.ts'
-import type {Wall} from './walls.ts'
+import type {Wall} from '../placement/wallGeometry.ts'
+import type {FloorRectangle} from './floors.ts'
 import type {KnotLightSlot} from 'knot-materials/KnotLights.ts'
 
 import {knotLightHousingSize, knotLightHousingY} from 'knot-materials/KnotLightPanels.ts'
 
 import {wallFace, wallOpeningTrim} from './architectureDimensions.ts'
-import {rooms} from './walls.ts'
+import roomOrigins from './layout.ts'
+import {salonSouthZ} from './salon.ts'
 
-const banquet = rooms.find(room => room.id === 'banquet')!
+/** The Banquet’s floor plan, from the Salon’s south wall to the Vesper’s south wall’s line, and the height of its ceiling. */
+export const banquet = {
+  center: [roomOrigins.banquet[0], roomOrigins.banquet[2]],
+  size: [12, 8 - salonSouthZ],
+  height: 5.8,
+} as const satisfies FloorRectangle & {height: number}
 /** Underside of the 18 cm ceiling slab every upper-floor room gets 2 cm below its height, at 5.78 m in the Banquet. */
-const ceilingUnderside = (room: {height: number}) => room.height - 0.02 - 0.18 / 2
-export const banquetCeilingUnderside = ceilingUnderside(banquet)
+export const banquetCeilingUnderside = banquet.height - 0.02 - 0.18 / 2
 
 /** Three Knottingham LED panes down the room’s middle, gathered 5 m apart around its center. */
-const banquetLedGrid = {
+export const banquetLedGrid = {
   x: [0],
   z: [-5, 0, 5],
 }
 
-/** Each pane lights the room through one point light hung just below its diffuser. */
-export const banquetLedLight = {
-  /** distance below the pane’s origin, close enough that the brightest ceiling spot stays hidden behind the housing */
-  drop: 0.32,
-  color: '#eee3ff',
-  intensity: 36,
-  distance: 8,
-  // fades more gently than physical light, so the three pools blend into one even wash
-  decay: 1.5,
-}
+/** how far below a pane’s origin its lamp hangs, just below its diffuser, close enough that the brightest ceiling spot stays hidden behind the housing */
+export const banquetLedDrop = 0.32
 
-// Like Knottingham, the housing’s top sits 5 mm into the slab so no light leaks between them.
-const slotY = (room: {height: number}) => ceilingUnderside(room) + 0.005 - knotLightHousingY - knotLightHousingSize[1] / 2
-/** Breakable LED panes under a room’s ceiling slab, one at each pair of the grid’s offsets from the room center. */
-function ceilingLedSlots(roomId: RoomId, grid: {
-  x: ReadonlyArray<number>
-  z: ReadonlyArray<number>
-}): ReadonlyArray<KnotLightSlot> {
-  const room = rooms.find(candidate => candidate.id === roomId)!
-  return grid.z.flatMap((z, row) => grid.x.map((x, slot) => ({
-    id: `${row}:${slot}`,
-    position: [room.center[0] + x, slotY(room), room.center[1] + z],
-    row,
-    slot,
-  })))
-}
-
-export const banquetLedSlots = ceilingLedSlots('banquet', banquetLedGrid)
-
-/** The Antechamber’s single pane, centered on its ceiling. */
-export const antechamberLedSlots = ceilingLedSlots('antechamber', {
-  x: [0],
-  z: [0],
-})
-export const antechamberLedLight = {
-  ...banquetLedLight,
-  // Matches the mean floor and wall irradiance of the 32 cd light behind the old light box.
-  intensity: 36,
-  distance: 14,
-  decay: 2,
-}
+/** the height of the panes’ origins above the floor; like Knottingham’s, each housing’s top sits 5 mm into the slab so no light leaks between them */
+export const banquetLedY = banquetCeilingUnderside + 0.005 - knotLightHousingY - knotLightHousingSize[1] / 2
+/** Breakable LED panes under the ceiling slab, one at each pair of the grid’s offsets from the room’s middle. */
+export const banquetLedSlots: ReadonlyArray<KnotLightSlot> = banquetLedGrid.z.flatMap((z, row) => banquetLedGrid.x.map((x, slot) => ({
+  id: `${row}:${slot}`,
+  position: [banquet.center[0] + x, banquetLedY, banquet.center[1] + z],
+  row,
+  slot,
+})))
 
 /** Edge length of the Banquet’s checkered marble tiles, laid from the room’s north-west corner: 12 × 24 whole tiles fill the floor. */
 export const banquetFloorTile = 1

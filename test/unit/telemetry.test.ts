@@ -4,8 +4,8 @@ import {expect, test} from 'bun:test'
 
 import {createStore} from 'zustand/vanilla'
 
-import {rooms} from '../../src/lib/gallery/walls.ts'
 import SlopGalleryTelemetry from '../../src/lib/telemetry/SlopGalleryTelemetry.ts'
+import slopGallery from '../../src/worlds/gallery/index.ts'
 
 type RequestRecord = {
   body: string
@@ -130,8 +130,8 @@ test('gallery adapters record bounded state and lifecycle data without private g
     metric: Record<string, string>
     values: Array<number>
   })
-  const roomMetrics = metricBodies.filter(metric => Reflect.get(metric.metric, '__name__') === 'gallery.room.active').slice(-rooms.length)
-  expect(Object.fromEntries(roomMetrics.map(metric => [metric.metric.room, metric.values.at(-1)]))).toEqual(Object.fromEntries(rooms.map(room => [room.id, Number(room.id === 'sienna')])))
+  const roomMetrics = metricBodies.filter(metric => Reflect.get(metric.metric, '__name__') === 'gallery.room.active').slice(-slopGallery.rooms.length)
+  expect(Object.fromEntries(roomMetrics.map(metric => [metric.metric.room, metric.values.at(-1)]))).toEqual(Object.fromEntries(slopGallery.rooms.map(room => [room.id, Number(room.id === 'sienna')])))
   const count = requests.length
   store.setState({locked: true})
   events.dispatchEvent(new Event('merge'))

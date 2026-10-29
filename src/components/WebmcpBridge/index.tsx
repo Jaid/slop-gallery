@@ -5,15 +5,14 @@ import {applyWireframeFlood} from 'capture-session'
 import {AimInspector} from 'ego-player'
 import {useEffect} from 'react'
 
-import dumpKnots, {worldRooms} from '#level/webmcp.ts'
 import downloadFrame from '#src/lib/downloadFrame.ts'
 import {usePortraitSlots} from '#src/lib/gallery/portraitSlotStore.ts'
-import {galleryLevel} from '#src/lib/level.ts'
 import {loadingItems} from '#src/lib/loadingItems.ts'
 import {telemetry} from '#src/lib/telemetry/index.ts'
 import {playerDumps, snapshotPlayerDump} from '#src/lib/telemetry/recordPlayerDump.ts'
 import analyzeWorld from '#src/lib/webmcp/analyzeWorld.ts'
 import registerWebmcp from '#src/lib/webmcp/register.ts'
+import world from '#src/worlds/current.ts'
 
 export default function WebmcpBridge() {
   const scene = useThree(s => s.scene)
@@ -22,7 +21,7 @@ export default function WebmcpBridge() {
     const controller = new AbortController
     const inspector = new AimInspector(scene, camera)
     const bridge = {
-      analyzeWorld: () => analyzeWorld(scene, worldRooms),
+      analyzeWorld: () => analyzeWorld(scene, world.worldRooms()),
       downloadFrame: async ({name, format}: {
         format?: FrameFormat
         name?: string
@@ -31,7 +30,7 @@ export default function WebmcpBridge() {
         const capture = playerDumps.capture?.()
         const dump = capture ? snapshotPlayerDump(capture) : null
         const download = await downloadFrame({
-          name: name ?? (dump ? `${galleryLevel}-${dump.id}` : undefined),
+          name: name ?? (dump ? `${world.id}-${dump.id}` : undefined),
           format,
         })
         return {
@@ -40,7 +39,7 @@ export default function WebmcpBridge() {
         }
       },
       getAim: () => inspector.getAim(),
-      getKnots: dumpKnots,
+      getKnots: () => world.dumpKnots(),
       getLoadingItems: loadingItems,
       getPortraitSlots: () => usePortraitSlots.getState().slots,
       setWireframe: applyWireframeFlood,

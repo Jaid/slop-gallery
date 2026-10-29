@@ -1,4 +1,4 @@
-import type {Wall, WallOpening} from './walls.ts'
+import type {Wall, WallOpening} from '../placement/wallGeometry.ts'
 
 import {ADDITION, Brush, Evaluator, SUBTRACTION} from 'three-bvh-csg'
 import {mergeVertices} from 'three/addons/utils/BufferGeometryUtils.js'

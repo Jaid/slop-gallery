@@ -8,8 +8,6 @@ import {isShadowSlot, lightShadow, shadowSlotKey, useLightEdits} from './lightLe
 export const shadowSlotCount = 4
 /** how far a slot’s shadow reaches when its light has no cutoff, in meters */
 const openReach = 30
-/** an empty slot belongs to no room, so nothing waits for its shadow map */
-const nowhere: ReadonlyArray<string> = []
 
 type Candidate = {
   distance: number
@@ -60,10 +58,15 @@ export class ShadowPool {
       slot.shadow.camera.near = 0.1
       slot.shadow.normalBias = 0.035
       slot.userData[shadowSlotKey] = true
-      slot.userData.rooms = nowhere
       return slot
     })
     this.sources = this.slots.map(() => null)
+  }
+
+  /** whether one of the pool’s slots is lent to a light; nothing waits for the shadow map of an empty one */
+  isInUse(slot: Light) {
+    const index = this.slots.indexOf(slot as PointLight)
+    return index !== -1 && this.sources[index] !== null
   }
 
   /** whether a light is lent a slot, so the slot shades it instead */
@@ -125,7 +128,6 @@ export class ShadowPool {
       const source = this.sources[index]
       if (!source) {
         slot.intensity = 0
-        slot.userData.rooms = nowhere
         continue
       }
       this.lent.set(source, slot)
@@ -134,7 +136,6 @@ export class ShadowPool {
       slot.intensity = source.intensity
       slot.distance = source.distance
       slot.decay = source.decay
-      slot.userData.rooms = undefined
       slot.shadow.intensity = lightShadow.current(source)
       const far = source.distance || openReach
       if (slot.shadow.camera.far === far) {

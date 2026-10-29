@@ -11,10 +11,11 @@ import {getLightingTuning, lightingPresets} from '../../src/lib/gallery/lighting
 import LobbyChandelierGeometry, {lobbyChandelier, lobbyChandelierBottom} from '../../src/lib/gallery/LobbyChandelierGeometry.ts'
 import lobbyVault, {glazingStart, lobbyChandeliers, vaultBays, vaultCoffers, vaultHeight, vaultRibs} from '../../src/lib/gallery/lobbyVault.ts'
 import LobbyVaultGeometry, {lobbyVaultCollision, roseCenterY} from '../../src/lib/gallery/LobbyVaultGeometry.ts'
-import sun, {sunClearance, sunlitPoints} from '../../src/lib/gallery/sun.ts'
-import walls, {insideGallery, roomAt, roomClearHeight, rooms} from '../../src/lib/gallery/walls.ts'
+import {middaySun, sunClearance, sunGeometry, sunlitPoints} from '../../src/lib/gallery/sun.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 import proceduralSky from '../../src/lib/materials/ProceduralSky.ts'
+import slopGallery from '../../src/worlds/gallery/index.ts'
+import walls, {insideGallery, roomAt, roomClearHeight, rooms} from './fixtures/gallery.ts'
 
 const room = rooms.find(candidate => candidate.id === 'lobby')!
 const halfWidth = room.size[0] / 2
@@ -61,7 +62,7 @@ describe('the Lobby’s barrel vault', () => {
     expect(roomAt([0, lobbyVault.crownY - 1, room.center[1]])).toBe('lobby')
     expect(insideGallery([0, lobbyVault.crownY - 1, room.center[1]])).toBe(true)
     // Every other room but the domed Antechamber keeps its flat ceiling.
-    expect(rooms.filter(other => other.id !== 'lobby' && other.id !== 'antechamber').every(other => roomClearHeight(other) === other.height)).toBe(true)
+    expect(rooms.filter(other => other.id !== 'lobby' && other.id !== 'antechamber').every(other => Math.abs(roomClearHeight(other) - other.height) < 1e-9)).toBe(true)
   })
   test('ribs stand on the 4 m grid of the floor tiles, with wall arches against both end walls', () => {
     const ribs = vaultRibs()
@@ -123,7 +124,7 @@ describe('the Lobby’s barrel vault', () => {
       mesh.raycast = acceleratedRaycast
       mesh.updateMatrixWorld()
     }
-    const direction = new Vector3(...sun.direction)
+    const direction = new Vector3(...middaySun)
     let lit = 0
     let total = 0
     for (let x = -7; x <= 7; x += 1) {
@@ -215,10 +216,11 @@ describe('the sun and the sky', () => {
     expect(tuning.sunIntensity).toBe(2)
     expect(tuning.sunAzimuth).toBeCloseTo(193.7, 9)
     expect(tuning.sunElevation).toBeCloseTo(51, 9)
-    expect(noon.sun.direction).toEqual(sun.direction)
-    expect(noon.sun.shadow).toEqual(sun.shadow)
+    expect(noon.sun.direction).toEqual(middaySun)
   })
   test('the shadow map covers every sunlit room, and the vault stays in front of its near plane', () => {
+    const points = sunlitPoints(slopGallery.rooms)
+    const sun = sunGeometry(middaySun, points)
     const direction = new Vector3(...sun.direction)
     expect(direction.length()).toBeCloseTo(1, 9)
     expect(direction.y).toBeCloseTo(Math.sin(51 * Math.PI / 180), 9)
@@ -227,7 +229,7 @@ describe('the sun and the sky', () => {
     const worldUp = new Vector3(0, 1, 0)
     const right = worldUp.cross(direction).normalize()
     const up = direction.clone().cross(right)
-    for (const corner of sunlitPoints()) {
+    for (const corner of points) {
       const offset = new Vector3(...corner)
       offset.sub(position)
       expect(offset.dot(right)).toBeGreaterThan(sun.shadow.left)
@@ -237,13 +239,13 @@ describe('the sun and the sky', () => {
       expect(offset.dot(forward)).toBeGreaterThan(sun.shadow.near)
       expect(offset.dot(forward)).toBeLessThan(sun.shadow.far)
     }
-    expect(sunClearance).toBeGreaterThan(sun.shadow.near)
-    expect(sunlitPoints().some(([x, y, z]) => Math.abs(x) < 9 && y > lobbyVault.crownY && Math.abs(z - room.center[1]) < 21)).toBe(true)
+    expect(sunClearance(sun.direction)).toBeGreaterThan(sun.shadow.near)
+    expect(points.some(([x, y, z]) => Math.abs(x) < 9 && y > lobbyVault.crownY && Math.abs(z - room.center[1]) < 21)).toBe(true)
   })
   test('the sky validates its options', () => {
-    expect(() => proceduralSky({sunDirection: sun.direction})).not.toThrow()
+    expect(() => proceduralSky({sunDirection: middaySun})).not.toThrow()
     expect(() => proceduralSky({
-      sunDirection: sun.direction,
+      sunDirection: middaySun,
       cloudCover: 1.5,
     })).toThrow(RangeError)
     expect(() => proceduralSky({sunDirection: [0, 0, 0]})).toThrow(RangeError)

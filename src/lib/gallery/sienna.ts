@@ -1,5 +1,5 @@
 import type {PlankOptions} from '../materials/PlankMaterial.ts'
-import type {Wall} from './walls.ts'
+import type {Wall} from '../placement/wallGeometry.ts'
 
 export const siennaRugSize = [4.8, 7.2] as const
 /** pile and backing together, in meters */

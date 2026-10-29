@@ -161,7 +161,7 @@ describe('round-tube fountain bench frames', () => {
       for (const [dx, dz] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
         expect(down(fountain.position[0] + dx * diagonal, fountain.position[2] + dz * diagonal)).toBeNull()
       }
-      const component = await Bun.file(new URL('../../src/components/levels/gallery/FountainBenches/index.tsx', import.meta.url)).text()
+      const component = await Bun.file(new URL('../../src/components/FountainBenches/index.tsx', import.meta.url)).text()
       expect(component).toContain('fountainBenches.map(')
       expect(component).toContain('colliderGeometry(geometry.metal)')
       expect(component).toContain('<MeshSurfaceCollider args={collision} />')

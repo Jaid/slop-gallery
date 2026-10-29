@@ -7,12 +7,13 @@ import {floorGlassThickness} from '../../src/lib/gallery/floors.ts'
 import lobby from '../../src/lib/gallery/lobby.ts'
 import salon from '../../src/lib/gallery/salon.ts'
 import salonWindow, {salonWindowGlassDistance} from '../../src/lib/gallery/salonWindow.ts'
-import walls, {galleryPlacement, insideOpening, placementIssue, rooms, wallCoordinates, wallPosition} from '../../src/lib/gallery/walls.ts'
 import {createArchitecturalGlassMaterials, disposeArchitecturalGlassMaterials} from '../../src/lib/materials/ArchitecturalGlassMaterials.ts'
 import CastFloorGlassMaterial from '../../src/lib/materials/CastFloorGlassMaterial.ts'
+import {insideOpening, placementIssue, wallCoordinates, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
+import walls, {galleryPlacement, rooms} from './fixtures/gallery.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
-const lobbySide = walls.find(wall => wall.id === 'lobby-extension-east')!
+const lobbySide = walls.find(wall => wall.id === 'lobby-extension_east')!
 const salonSide = walls.find(wall => wall.id === 'salon-west')!
 const salonRoom = rooms.find(room => room.id === 'salon')!
 const windowCenter = [salonWindow.x, (salonWindow.bottom + salonWindow.top) / 2, salonWindow.z] as const
@@ -31,7 +32,7 @@ describe('the glass wall between the Lobby and the Salon', () => {
     expect(salonRoom.center[0] - salonRoom.size[0] / 2).toBe(salonWindow.x)
     // The Salon reaches from the Lobby’s north wall as far south of the window.
     expect(salonRoom.center[1] - salonRoom.size[1] / 2).toBe(lobby.northZ)
-    expect(salon.center).toEqual(salonRoom.center)
+    expect(salonRoom.center).toEqual([salon.center[0], salon.center[1]])
     for (const wall of [lobbySide, salonSide]) {
       expect(wall.center[0]).toBe(salonWindow.x)
       expect(wallPosition(wall, wall.holes![0].u, 0)[2]).toBeCloseTo(salonWindow.z, 12)
@@ -97,7 +98,7 @@ describe('the glass wall between the Lobby and the Salon', () => {
     expect(salonWindowGlassDistance([4, 0.8, -24], [1, 0, 0])).toBeUndefined()
     expect(salonWindowGlassDistance([4, 2.7, -24], [-1, 0, 0])).toBeUndefined()
     expect(galleryPlacement.findPlacement([4, 2.7, -24], [1, 0, 0], 1, 1, [])).toMatchObject({
-      wallId: 'lobby-extension-east',
+      wallId: 'lobby-extension_east',
       valid: false,
       reason: 'Keep the window clear.',
     })
@@ -112,7 +113,7 @@ describe('the glass wall between the Lobby and the Salon', () => {
       valid: true,
     })
     expect(galleryPlacement.findPlacement([4, 2.7, -12], [1, 0, 0], 1, 1, [])).toMatchObject({
-      wallId: 'lobby-extension-east',
+      wallId: 'lobby-extension_east',
       valid: true,
     })
     // An artwork reaching over the window’s edge is turned away.

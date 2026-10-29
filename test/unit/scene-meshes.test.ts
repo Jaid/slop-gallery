@@ -6,9 +6,9 @@ import {Box3, Mesh, MeshBasicMaterial, Raycaster, TorusKnotGeometry, Vector3} fr
 
 import ChandelierGeometry from '../../src/lib/gallery/ChandelierGeometry.ts'
 import {siennaCeilingBeam, siennaCeilingBeamOffsets} from '../../src/lib/gallery/sienna.ts'
-import {rooms} from '../../src/lib/gallery/walls.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 import {chandelierPhysics} from '../../src/lib/physics/chandelier.ts'
+import {rooms} from './fixtures/gallery.ts'
 
 describe('chandelier geometry', () => {
   test('the suspended fixture and fixed canopy retain their geometry and triangle budget', () => {

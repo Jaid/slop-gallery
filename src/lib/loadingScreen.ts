@@ -4,7 +4,7 @@ const glideMs = 300
 const fadeMs = 600
 const findLoadingScreen = () => document.querySelector<HTMLElement>('#loading-screen')
 
-/** Whether the title that index.html paints over the level’s wallpaper still covers the page, which it does until the scene is ready. */
+/** Whether the title that index.html paints over the world’s wallpaper still covers the page, which it does until the scene is ready. */
 export const useLoadingScreen = create<{shown: boolean}>(() => ({shown: findLoadingScreen() !== null}))
 
 /** Fades the loading screen out to whatever is behind it, then removes it for good. */

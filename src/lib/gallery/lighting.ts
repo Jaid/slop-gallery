@@ -6,7 +6,7 @@ import readPermalink from 'read-permalink'
 import {create} from 'zustand'
 
 import {daytimeSky} from '../materials/ProceduralSky.ts'
-import sun, {sunDirectionFromAngles, sunGeometry} from './sun.ts'
+import {middaySun, sunDirectionFromAngles} from './sun.ts'
 
 export type LightingPreset = {
   ambient: Light
@@ -49,7 +49,7 @@ const presets = {
     sun: {
       color: '#fff0d7',
       intensity: 2,
-      direction: sun.direction,
+      direction: middaySun,
     },
     environment: {
       gradient: ['#e6eeed', '#b6bcac', '#7d816c', '#4b4c3d'],
@@ -180,23 +180,16 @@ export const lightingPresetIds = Object.keys(presets) as Array<LightingPresetId>
 /** which lamps glow: all of them, only the essential ones, leaving out the lights marked `optional`, or none */
 export type LampSet = 'all' | 'essential' | 'none'
 
-/** a preset with the position and shadow frustum its sun direction needs */
+/** a preset as the tuning panel may have changed it */
 export type GalleryLightingPreset = LightingPreset & {
   /** all lamps unless the tuning panel says otherwise */
   lampSet?: LampSet
   /** full lamp shadows unless the tuning panel says otherwise */
   lampShadows?: number
-  sun: LightingPreset['sun'] & ReturnType<typeof sunGeometry>
 }
 
-/** Every preset with the shadow frustum its sun direction needs. */
-export const lightingPresets = Object.fromEntries(Object.entries(presets).map(([id, preset]) => [id, {
-  ...preset,
-  sun: {
-    ...preset.sun,
-    ...sunGeometry(preset.sun.direction),
-  },
-}])) as {[Id in LightingPresetId]: typeof presets[Id] & {sun: ReturnType<typeof sunGeometry>}}
+/** Every preset; the world casts the shadows of its sun, from where its direction says. */
+export const lightingPresets = presets
 
 const weatherSchema = optis({
   defaults: {
@@ -286,7 +279,7 @@ export function tuneLighting(preset: GalleryLightingPreset, tuning: LightingTuni
     lampShadows: tuning.lampShadows,
     sun: {
       ...preset.sun,
-      ...isMoved ? sunGeometry(sunDirectionFromAngles(pick('sunAzimuth'), pick('sunElevation'))) : {},
+      ...isMoved ? {direction: sunDirectionFromAngles(pick('sunAzimuth'), pick('sunElevation'))} : {},
       intensity: tuning.sun ? pick('sunIntensity') : 0,
     },
   }

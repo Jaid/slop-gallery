@@ -5,13 +5,12 @@ import type {Attributes, Span, SpanOptions} from 'victoria-browser-client'
 import EgoTelemetry from 'telemethree-ego'
 import VictoriaClient from 'victoria-browser-client'
 
-import {rooms} from '../gallery/walls.ts'
-import {galleryLevel} from '../level.ts'
+import world from '#src/worlds/current.ts'
 
 /** More attributes for a `room.changed` event, set by whoever knows what the move switches; the scene lists the lights it turns on and off. */
 export const roomChangeDetails: {current: (from: string, to: string) => Attributes} = {current: () => ({})}
 
-const roomTitle = (id: string) => rooms.find(room => room.id === id)?.title ?? id
+const roomTitle = (id: string) => world.roomById(id)?.title ?? id
 
 export default class SlopGalleryTelemetry extends VictoriaClient {
   readonly sessionId: string
@@ -33,7 +32,7 @@ export default class SlopGalleryTelemetry extends VictoriaClient {
     super({
       interval: 1000,
       ...clientOptions,
-      serviceName: galleryLevel,
+      serviceName: world.id,
       endpoints: {
         logs: endpoints.logs ? {
           url: endpoints.logs,
@@ -210,7 +209,7 @@ export default class SlopGalleryTelemetry extends VictoriaClient {
     this.metric('gallery.inspecting', Number(state.inspecting !== null))
     this.metric('gallery.narration.active', Number(state.narration !== null))
     this.metric('gallery.save.error', Number(state.saveStatus === 'error'))
-    for (const {id: room} of rooms) {
+    for (const {id: room} of world.rooms) {
       this.metric('gallery.room.active', Number(room === state.room), {attributes: {room}})
     }
   }

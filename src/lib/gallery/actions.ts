@@ -3,7 +3,7 @@ import type {Portrait, Vec3} from './types.ts'
 import composeId from 'compose-id'
 import {defaultEgoOptions} from 'ego-player/motor'
 
-import placement from '#level/placement.ts'
+import world from '#src/worlds/current.ts'
 
 import aimDot from '../aimDot.ts'
 import SoundEngine from '../audio/SoundEngine.ts'
@@ -17,9 +17,10 @@ import {sessionStore} from '../temporary.ts'
 import {bookmarkKey, teleportToNextBookmark} from './bookmarks.ts'
 import defaultPortraits from './defaultPortraits.ts'
 import {flyModeKey, toggleFlyMode} from './flyMode.ts'
-import {playerSession, playerSpawn} from './PlayerSession.ts'
+import {playerSession} from './PlayerSession.ts'
 import {useGallery} from './store.ts'
 
+const {spawn: playerSpawn} = world
 export const cameraPose = {
   focused: false,
   position: [playerSpawn.position[0], playerSpawn.position[1] + 1.6, playerSpawn.position[2]] as Vec3,
@@ -117,7 +118,7 @@ export function importRejected() {
 }
 
 export function resetGallery() {
-  playerSession.restore(playerSpawn)
+  playerSession.restore(world.spawn)
   // A new game state rolls a new environment.
   const seed = rollSeed()
   useGallery.getState().commit(defaultPortraits(seed), seed)
@@ -163,7 +164,7 @@ export function newPortrait(source: Blob, title: string, width: number, height: 
     creator: 'You · guest artist',
     description: 'A new arrival. Every collection starts with a little curiosity.',
     source,
-    position: [p[0] + d[0] * 1.6, Math.max(placement.floorHeight([p[0] + d[0] * 1.6, p[1], p[2] + d[2] * 1.6]) + 0.8, p[1] + d[1] * 1.6), p[2] + d[2] * 1.6],
+    position: [p[0] + d[0] * 1.6, Math.max(world.placement.floorHeight([p[0] + d[0] * 1.6, p[1], p[2] + d[2] * 1.6]) + 0.8, p[1] + d[1] * 1.6), p[2] + d[2] * 1.6],
     rotation: Math.atan2(-d[0], -d[2]),
     width,
     height,

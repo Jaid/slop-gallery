@@ -2,6 +2,8 @@ import type {BufferAttribute, BufferGeometry, InstancedBufferGeometry, Instanced
 
 import {Box3, Matrix4, Vector3} from 'three/webgpu'
 
+import {lampOf} from '../rendering/lamps.ts'
+
 /** an axis-aligned box in world meters, from the floor to the clear height of the space it covers */
 export type WorldBox = {
   max: [number, number, number]
@@ -53,9 +55,9 @@ export type WorldAnalysis = {
   elsewhere: WorldRegion
   /** ambient, hemisphere and directional lights, which light the world without a place in it */
   globalLights: Array<WorldLight>
-  /** keyed by room id, in the level’s room order */
+  /** keyed by room id, in the world’s room order */
   rooms: Record<string, Omit<WorldRoom, 'id'> & WorldRegion & {
-    /** positioned lights of other regions left on while the player stands here: those without a `userData.rooms` list and those whose list holds this room */
+    /** positioned lights of other regions left on while the player stands here: those the world lights everywhere and those it lights in this room */
     foreignLights: Array<ForeignLight>
   }>
 }
@@ -178,7 +180,7 @@ export default function analyzeWorld(scene: Object3D, rooms: ReadonlyArray<World
           placed.push({
             path: light.path,
             ...room === undefined ? {} : {room},
-            rooms: object.userData.rooms as ReadonlyArray<string> | undefined,
+            rooms: lampOf(object as Light)?.rooms,
           })
         }
       }

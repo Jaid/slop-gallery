@@ -1,5 +1,6 @@
-import type {RoomId, Vec3} from '../types.ts'
-import type {Wall} from '../walls.ts'
+import type {GalleryRoomId as RoomId} from '#src/worlds/gallery/index.ts'
+import type {Wall} from '../../placement/wallGeometry.ts'
+import type {Vec3} from '../types.ts'
 
 import passageOrientation from '../passages/orientation.ts'
 
@@ -76,14 +77,14 @@ export default class StairFlight {
     center[this.crossAxis] += side * this.width / 2
     const face = passageOrientation(this.axis, side)
     return {
-      id: `${this.room}-stairs-${this.id}-${face.name}`,
+      id: `${this.room}-stairs_${this.id.replaceAll('-', '_')}_${face.name}`,
       room: this.room,
       center,
       rotation: face.rotation,
       width: this.length,
       height: this.headroom + depth - 0.3,
       slope: this.slope * (side < 0 ? 1 : -1) * (this.axis === 0 ? 1 : -1),
-      hangable: false,
+      sticky: false,
     }
   }
 

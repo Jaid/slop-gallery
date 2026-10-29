@@ -2,7 +2,7 @@ import optis from 'optis'
 import readPermalink, {parseNumber} from 'read-permalink'
 import {NodeFrame} from 'three/webgpu'
 
-import {cameraBookmarks} from '#level/bookmarks.ts'
+import world from '#src/worlds/current.ts'
 
 import {readDevelopmentMode} from './developmentMode.ts'
 import {readSpawn} from './gallery/spawn.ts'
@@ -23,7 +23,7 @@ const frozenTimeSchema = optis({
 /** Read the optional `?frozen_time` from the permalink, or else, without `?development`, the `frozenTime` of the `?spawn` camera bookmark: the engine time in seconds that every animation stands still at, so captures of the same view match. Only animations stand still: physics, the player and a flying camera keep moving through the frozen world. */
 export function readFrozenTime(input: URL | string = typeof location === 'undefined' ? '' : location.href): number | undefined {
   const spawn = readDevelopmentMode(input) ? '' : readSpawn(input)
-  return readPermalink(input, {schema: frozenTimeSchema}).frozen_time ?? (spawn ? cameraBookmarks.find(bookmark => bookmark.id === spawn)?.frozenTime : undefined)
+  return readPermalink(input, {schema: frozenTimeSchema}).frozen_time ?? (spawn ? world.cameraBookmarks().find(bookmark => bookmark.id === spawn)?.frozenTime : undefined)
 }
 
 /** the seconds of `?frozen_time`, or undefined while the engine time runs */

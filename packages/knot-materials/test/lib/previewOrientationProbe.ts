@@ -3,7 +3,7 @@ import type {Mesh, Texture} from 'three/webgpu'
 
 import {float, positionGeometry, vec3} from 'three/tsl'
 
-import RuntimeKnotIconRenderer from '../../../../src/components/levels/knottingham/KnotPreviewSigns/RuntimeKnotIconRenderer.ts'
+import RuntimeKnotIconRenderer from '../../../../src/components/KnotPreviewSigns/RuntimeKnotIconRenderer.ts'
 import KnotMaterial from '../../src/lib/KnotMaterial.ts'
 import {knotsById} from '../../src/main.ts'
 
@@ -114,7 +114,7 @@ export async function previewOrientationProbe(renderer: KnotPreviewRenderer) {
     preview.dispose()
   }
   for (const heavy of [false, true]) {
-    const runtime = new RuntimeKnotIconRenderer(new Map([[entry.id, OrientationMaterial]]), heavy)
+    const runtime = new RuntimeKnotIconRenderer(() => OrientationMaterial, heavy)
     try {
       const billboardRenderController = new AbortController
       const images = await runtime.render([entry], billboardRenderController.signal)

@@ -1,9 +1,10 @@
 import {expect, test} from 'bun:test'
 
-import artworks from '../../src/levels/gallery/artworks.ts'
-import slots from '../../src/levels/gallery/slots.ts'
 import defaultPortraits, {readPortraitSet} from '../../src/lib/gallery/defaultPortraits.ts'
+import artworks from '../../src/worlds/gallery/artworks.ts'
+import slopGallery from '../../src/worlds/gallery/index.ts'
 
+const slots = slopGallery.portraitSlots()
 test('default works hang in distinct slots of their ratio, taking the slot’s size', () => {
   const portraits = defaultPortraits(7)
   expect(portraits.map(portrait => portrait.id)).toEqual(artworks.map(artwork => artwork.id))

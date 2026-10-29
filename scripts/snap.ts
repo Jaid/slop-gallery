@@ -16,13 +16,13 @@ import {degrees, galleryHelp, galleryOptions, parseNumbers, radians, repositoryR
 const snapHeight = 1080
 const help = `Usage: bun scripts/snap.ts [options]
 
-Takes a headless photo of a level and writes it to out/snap/<name>.jxl, next to out/snap/<name>.msgpack with the X dump of the same view.
+Takes a headless photo of a world and writes it to out/snap/<name>.jxl, next to out/snap/<name>.msgpack with the X dump of the same view.
 Starts a private Vite dev server (or serves --target) and a private headless browser through capture-page; never touches the visible browser.
 The photo is a fresh WebGPU render of the scene, so menus and other DOM overlays are not in it.
 
 Options:
 ${galleryHelp(snapHeight)}
-  --bookmark <id>         camera bookmark of the level (src/levels/<level>/bookmarks.ts) that supplies the defaults of --position, --angle, --fov, the width-to-height ratio and --frozen_time
+  --bookmark <id>         camera bookmark of the world (its rooms’ cameras.ts, like lobby-overview) that supplies the defaults of --position, --angle, --fov, the width-to-height ratio and --frozen_time
   --position <x,y,z>      camera (eye) position in meters. Default: the bookmark’s, or the player spawn
   --angle <yaw,pitch[,roll]>
                           camera angle in degrees. Yaw 0 looks toward −z, positive pitch looks up. Default: the bookmark’s, or the player spawn
@@ -74,10 +74,11 @@ const setup = await resolveGallerySetup(values, snapHeight)
 const settle = resolveSettle(values.settle)
 let bookmark: CameraBookmark | undefined
 if (values.bookmark !== undefined) {
-  const {cameraBookmarks} = await import(join(repositoryRoot, 'src', 'levels', setup.levelName, 'bookmarks.ts')) as {cameraBookmarks: Array<CameraBookmark>}
+  const {default: world} = await import(join(repositoryRoot, 'src', 'worlds', setup.world, 'index.ts')) as {default: {cameraBookmarks: () => Array<CameraBookmark>}}
+  const cameraBookmarks = world.cameraBookmarks()
   bookmark = cameraBookmarks.find(entry => entry.id === values.bookmark)
   if (!bookmark) {
-    throw new Error(`--bookmark must be one of the ${setup.levelName} camera bookmarks: ${cameraBookmarks.map(entry => entry.id).join(', ') || 'none'}.`)
+    throw new Error(`--bookmark must be one of the ${setup.world} camera bookmarks: ${cameraBookmarks.map(entry => entry.id).join(', ') || 'none'}.`)
   }
   setup.viewport = resolveSize(values, snapHeight, bookmark.ratio)
   if (bookmark.frozenTime !== undefined && !setup.search.has('frozen_time')) {

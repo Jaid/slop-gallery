@@ -5,7 +5,8 @@ import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import ImageImporter, {containedRect, imageSize} from '../../src/lib/gallery/ImageImporter.ts'
 import portraitLabel, {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
 import {createDocument, maximumPortraits, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
-import walls, {galleryPlacement, insideGallery, placementIssue, roomAt, rooms, roomVisit, wallCoordinates, wallPosition} from '../../src/lib/gallery/walls.ts'
+import {placementIssue, wallCoordinates, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
+import walls, {galleryPlacement, insideGallery, roomAt, rooms, roomVisit} from './fixtures/gallery.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
 const original = {

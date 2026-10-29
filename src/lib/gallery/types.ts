@@ -1,7 +1,6 @@
 import type {Quat as MathQuat, Vec3 as MathVec3} from 'math'
 
 export type {Quat, Vec3} from 'math'
-export type RoomId = 'antechamber' | 'corridor' | 'banquet' | 'lobby' | 'lodge' | 'moonfall' | 'oculus' | 'salon' | 'sienna' | 'vesper'
 export type Portrait = {
   creator: string
   description: string
@@ -29,7 +28,7 @@ export type Portrait = {
 }
 /** the aspect ratios of default works and their slots, as width:height */
 export type PortraitRatio = '1:1' | '2:3' | '3:2' | '9:16' | '16:9'
-/** a default work of the level, before it hangs in a portrait slot */
+/** a default work of the world, before it hangs in a portrait slot */
 export type Artwork = Pick<Portrait, 'creator' | 'description' | 'id' | 'narration' | 'title' | 'year'> & {
   ratio: PortraitRatio
   source: string

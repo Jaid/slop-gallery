@@ -10,7 +10,7 @@ import OculusGroundGeometry from '../../src/lib/gallery/OculusGroundGeometry.ts'
 import OculusSwitchbackRailing from '../../src/lib/gallery/railings/OculusSwitchbackRailing.ts'
 import SlopedBoxGeometry from '../../src/lib/gallery/SlopedBoxGeometry.ts'
 import tunnelDisplays from '../../src/lib/gallery/tunnelDisplays.ts'
-import walls, {floorHeight, insideGallery, roomAt, rooms, roomVisit} from '../../src/lib/gallery/walls.ts'
+import walls, {floorHeight, insideGallery, roomAt, rooms, roomVisit} from './fixtures/gallery.ts'
 import {addOculusRailings} from './helpers/oculusRailings.ts'
 
 await RAPIER.init()
@@ -39,7 +39,7 @@ test('Oculus is three meters deeper and four meters longer, without moving Moonf
     expect(insideGallery([0, y + 1.6, z])).toBe(true)
     expect(insideGallery([0, y - 1.01, z])).toBe(false)
     expect(insideGallery([0, y + tunnel.height + 0.01, z])).toBe(false)
-    expect(roomAt([0, y + 1.6, z])).toBe('oculus')
+    expect(roomAt([0, y + 1.6, z])).toBe('exhibition')
   }
 })
 test('sloped floor, ceiling, display shells and upright pedestal bases have matching visible and physical surfaces', () => {

@@ -18,15 +18,15 @@ const finiteVector = (value: unknown): value is Vec3 => Array.isArray(value) && 
 const movable = (value: unknown): value is Portrait => record(value) && typeof value.id === 'string' && typeof value.hung === 'boolean' && finiteVector(value.position) && typeof value.width === 'number' && typeof value.height === 'number' && Number.isFinite(value.width) && Number.isFinite(value.height)
 
 /**
- * Where a level lets artworks hang and land: its walls, its floor and its volume.
+ * Where a world lets artworks hang and land: its walls, its floor and its volume.
  *
- * Every level supplies one as the default export of `#level/placement.ts`. Dragging, placing, throwing, importing, persistence and the artwork bodies all ask it instead of a particular level’s architecture.
+ * Every world supplies one as its `placement`. Dragging, placing, throwing, importing, persistence and the artwork bodies all ask it instead of a particular world’s architecture.
  */
 export abstract class PlacementSpace {
   readonly reach = placementReach
-  /** where artworks reappear after falling out of the level or after their saved spot stopped existing */
+  /** where artworks reappear after falling out of the world or after their saved spot stopped existing */
   abstract readonly recoveryPosition: Vec3
-  /** every wall that a placement ray can hit, hangable or not */
+  /** every wall that a placement ray can hit, sticky or not */
   abstract readonly walls: ReadonlyArray<Wall>
   private wallIndex: Map<string, Wall> | undefined
 
@@ -92,7 +92,7 @@ export abstract class PlacementSpace {
   }
 
   /**
-   * Brings stored artworks, before validation, in line with the level’s current walls. Hung works are snapped back onto their wall; works whose wall or spot no longer fits come down and stand in front of it, and loose works outside the level return to the recovery position.
+   * Brings stored artworks, before validation, in line with the world’s current walls. Hung works are snapped back onto their wall; works whose wall or spot no longer fits come down and stand in front of it, and loose works outside the world return to the recovery position.
    *
    * Returns the same array if nothing had to move. Malformed entries are returned untouched for validation to reject.
    */

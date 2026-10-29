@@ -5,6 +5,8 @@ import readPermalink from 'read-permalink'
 import {Vector3} from 'three/webgpu'
 import {create} from 'zustand'
 
+import {lampOf} from './lamps.ts'
+
 type Level = {
   /** the intensity the light’s owner gave it */
   base: number
@@ -73,14 +75,14 @@ export function describeObject(object: Object3D) {
 const listTally = (tally: ReadonlyMap<string, number>) => [...tally].map(([name, count]) => (count > 1 ? `${name} ×${count}` : name)).toSorted().join(', ')
 const sumTally = (tally: ReadonlyMap<string, number>) => tally.values().reduce((sum, count) => sum + count, 0)
 /**
- * The things a move from one room to another switches on and off through their `userData.rooms` lists, each as {@link describeObject} names it, with a count where several share a name.
+ * The lamps a move from one room to another switches on and off by the rooms the world lights them in, each as {@link describeObject} names it, with a count where several share a name.
  */
 export function roomSwitches(scene: Object3D, from: string, to: string) {
   const enabled = new Map<string, number>
   const disabled = new Map<string, number>
   scene.traverse(object => {
-    const objectRooms = object.userData.rooms as ReadonlyArray<string> | undefined
-    if (!objectRooms || isShadowSlot(object)) {
+    const objectRooms = (object as Light).isLight ? lampOf(object as Light)?.rooms : undefined
+    if (!objectRooms) {
       return
     }
     const after = objectRooms.includes(to)

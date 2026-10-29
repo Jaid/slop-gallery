@@ -9,8 +9,8 @@ import fountain from '../../src/lib/gallery/fountain/config.ts'
 import SlattedBenchGeometry from '../../src/lib/gallery/fountain/SlattedBenchGeometry.ts'
 import lodge, {lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
-import {playerSpawn} from '../../src/lib/gallery/PlayerSession.ts'
-import walls from '../../src/lib/gallery/walls.ts'
+import slopGallery from '../../src/worlds/gallery/index.ts'
+import walls from './fixtures/gallery.ts'
 
 test('four matching slatted benches surround the fountain under the middle chandelier and leave the spawn clear', () => {
   expect(fountain.position).toEqual([0, 0, -12])
@@ -33,7 +33,7 @@ test('four matching slatted benches surround the fountain under the middle chand
       transform.makeRotationFromEuler(new Euler(...rotation)).setPosition(...position)
       const bounds = new Box3
       bounds.copy(seat).applyMatrix4(transform)
-      expect(bounds.distanceToPoint(new Vector3(...playerSpawn.position))).toBeGreaterThan(0.5)
+      expect(bounds.distanceToPoint(new Vector3(...slopGallery.spawn.position))).toBeGreaterThan(0.5)
       const center = new Vector3(fountain.position[0], 0.48, fountain.position[2])
       expect(bounds.distanceToPoint(center) - fountain.radius).toBeGreaterThan(1.4)
     }
@@ -76,7 +76,7 @@ test('timber entrances have a single exposed face across the ribs, lining and st
       timber: TimberGeometry.stairs(corridorStairs),
       start: corridorStairs.start,
       width: corridorStairs.width,
-      wallIds: ['sienna-west', 'corridor-stairs-return-north', 'corridor-stairs-return-south'],
+      wallIds: ['sienna-west', 'corridor-stairs_return_north', 'corridor-stairs_return_south'],
     },
     {
       timber: TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts),
@@ -135,7 +135,7 @@ test('timber entrances have a single exposed face across the ribs, lining and st
   }
 })
 test('corridor timber ribs never share their visible face with a wall baseboard', () => {
-  const wall = walls.find(value => value.id === 'corridor-wall-4')!
+  const wall = walls.find(value => value.id === 'corridor-wall_4')!
   const architecture = createArchitectureGeometry(wall)
   const timber = TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts)
   const material = new MeshBasicMaterial
@@ -152,7 +152,7 @@ test('corridor timber ribs never share their visible face with a wall baseboard'
     expect(hits[0].point.x).toBeLessThan(lodge.approachX - corridorPassage.width / 2 + 0.3)
     expect(hits[1].distance - hits[0].distance).toBeGreaterThan(0.01)
     expect(walls.filter(value => value.room === 'corridor').every(value => value.trimStyle === 'none')).toBe(true)
-    expect(walls.filter(value => value.id.startsWith('lodge-tunnel-')).every(value => value.trimStyle === 'plain')).toBe(true)
+    expect(walls.filter(value => value.room === 'fortress').every(value => value.trimStyle === 'plain')).toBe(true)
   } finally {
     material.dispose()
     architecture.dispose()

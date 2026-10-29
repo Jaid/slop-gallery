@@ -1,8 +1,9 @@
 import type {AntiAliasing} from './antiAliasing.ts'
 import type {GraphicsProfile} from './graphicsMode.ts'
 
-import sun from '../gallery/sun.ts'
-import {isKnottingham} from '../level.ts'
+import world from '#src/worlds/current.ts'
+
+import {sunShadowMapSize} from '../gallery/sun.ts'
 import {getSunShadowSettings} from './graphicsMode.ts'
 
 /** Every value the render pipeline is built from. The graphics mode fills them in; the tuning panel of `?development` changes them. */
@@ -103,7 +104,7 @@ export type RenderPipelineUniform = {[Key in RenderPipelineSetting]: RenderPipel
 
 /** The render pipeline of a graphics profile. */
 export function getRenderPipelineSettings(profile: GraphicsProfile, antiAliasing: AntiAliasing): RenderPipelineSettings {
-  const sunShadow = getSunShadowSettings(profile, sun.shadow.mapSize)
+  const sunShadow = getSunShadowSettings(profile, sunShadowMapSize)
   return {
     ambientOcclusion: true,
     ambientOcclusionRadius: 0.5,
@@ -111,8 +112,7 @@ export function getRenderPipelineSettings(profile: GraphicsProfile, antiAliasing
     ambientOcclusionSamples: profile.ambientOcclusionSamples,
     ambientOcclusionScale: 1,
     ambientOcclusionTemporalFiltering: false,
-    // Knottingham darkens contacts more tightly.
-    ambientOcclusionThickness: profile.ambientOcclusionThickness ?? (isKnottingham ? 0.6 : 1),
+    ambientOcclusionThickness: profile.ambientOcclusionThickness ?? world.ambientOcclusionThickness,
     antiAliasing,
     bloom: profile.postprocessing,
     bloomLuminanceCap: 4,

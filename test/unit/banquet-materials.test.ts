@@ -4,10 +4,10 @@ import {PerspectiveCamera} from 'three/webgpu'
 
 import {banquetBoiserie, banquetFloorOrigin, banquetFloorTile, banquetWallPanels, freeWallRuns} from '../../src/lib/gallery/banquet.ts'
 import {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
-import walls, {rooms} from '../../src/lib/gallery/walls.ts'
-import {BoiserieTrimMaterial, BoiserieWallMaterial} from '../../src/lib/materials/boiserie/index.ts'
 import BanquetMaterials from '../../src/lib/materials/BanquetMaterials.ts'
+import {BoiserieTrimMaterial, BoiserieWallMaterial} from '../../src/lib/materials/boiserie/index.ts'
 import {calacatta, CheckeredMarbleFloorMaterial, checkeredTile, portoro} from '../../src/lib/materials/marble/index.ts'
+import walls, {rooms} from './fixtures/gallery.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
 const banquet = rooms.find(room => room.id === 'banquet')!

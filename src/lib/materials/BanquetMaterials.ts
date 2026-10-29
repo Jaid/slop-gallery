@@ -1,7 +1,8 @@
-import type {Wall} from '../gallery/walls.ts'
+import type {Wall} from '../placement/wallGeometry.ts'
+
+import slopGallery from '#src/worlds/gallery/index.ts'
 
 import {banquetBoiserie, banquetWallPanels} from '../gallery/banquet.ts'
-import walls from '../gallery/walls.ts'
 import {BoiserieTrimMaterial, BoiserieWallMaterial} from './boiserie/index.ts'
 
 /**
@@ -14,7 +15,7 @@ export default class BanquetMaterials {
   }>
 
   constructor() {
-    this.walls = new Map(walls.filter(wall => wall.room === 'banquet').map((wall, index) => {
+    this.walls = new Map(slopGallery.walls.filter(wall => wall.room === 'banquet').map((wall, index) => {
       const {rails, upper} = banquetWallPanels(wall)
       return [wall.id, {
         surface: new BoiserieWallMaterial({

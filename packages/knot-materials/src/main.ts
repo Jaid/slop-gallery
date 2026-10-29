@@ -13,4 +13,4 @@ export {common, ethereal, prime, rare, default as rarities, special, unknown} fr
 export default knots
 
 export type {Rarity} from './rarities.ts'
-export type {KnotAuthor, KnotCandidateData, KnotCandidateId, KnotData, KnotEntry, KnotId, KnotMaterialConstructor, KnotPlaceholder, PlaceholderShading} from './types.ts'
+export type {KnotAuthor, KnotCandidateData, KnotCandidateId, KnotData, KnotEntry, KnotId, KnotMaterialConstructor, KnotMaterialLoader, KnotPlaceholder, PlaceholderShading} from './types.ts'

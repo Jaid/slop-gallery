@@ -4,7 +4,7 @@ import renderCanvasTexture from 'canvas-textures/three'
 import {attribute, texture, uv, vec2} from 'three/tsl'
 import {InstancedBufferAttribute, InstancedMesh, Matrix4, MeshBasicNodeMaterial, OrthographicCamera, PlaneGeometry, RenderTarget, Scene, SRGBColorSpace, WebGPURenderer} from 'three/webgpu'
 
-import drawLabel, {labelAtlasColumns, labelBackground, labelFonts, labelHeight, labelWidth} from '../../src/components/levels/knottingham/KnotLabels/drawLabel.ts'
+import drawLabel, {labelAtlasColumns, labelBackground, labelFonts, labelHeight, labelWidth} from '../../src/components/KnotLabels/drawLabel.ts'
 
 /** Detached rendering only: full-size atlas, row boundaries, final tile and late shader invalidation. */
 export default async function verifyKnotLabels() {

@@ -1,27 +1,31 @@
-import {salonSouthZ} from '#src/lib/gallery/salon.ts'
+import {Geofence} from 'geofency'
+
+import {banquet} from '#src/lib/gallery/banquet.ts'
+import {groundFenceY} from '#src/lib/gallery/floors.ts'
 
 import Room from '../base/Room.ts'
 import floorBox from '../lib/floorBox.ts'
-import floorOrigin from '../lib/floorOrigin.ts'
+import footprint from '../lib/footprint.ts'
 import cameras from './cameras.ts'
 import lamps from './lamps.ts'
 import slots from './slots.ts'
 import spawns from './spawns.ts'
-import stickyWalls from './stickyWalls.ts'
+import walls from './walls.ts'
 
-// From the Salon’s south wall to the Vesper’s south wall’s line.
-const plan = {
-  center: [14, (salonSouthZ + 8) / 2],
-  size: [12, 8 - salonSouthZ],
-} as const
+const {size, height} = banquet
 
 export default class Banquet extends Room {
+  override readonly air = floorBox(size, 0, height)
   override readonly color = '#af9294'
   override readonly description = 'A change of perspective is encouraged.'
-  override readonly fence = floorBox(plan.size, 0, 5.8)
-  override readonly floorY = 0
+  // Everything over its floor plan from the slab up; it comes before the Salon, so the wall they share is the Banquet’s.
+  override readonly fence = new Geofence([{
+    ...footprint([this.air]),
+    floor: groundFenceY,
+  }])
+  override readonly height = height
   override readonly id = 'banquet'
-  override readonly origin = floorOrigin(plan, this.floorY)
+  override readonly size = size
   override readonly spawn = spawns['']
 
   constructor() {
@@ -31,7 +35,7 @@ export default class Banquet extends Room {
       spawns,
       lamps,
       slots,
-      stickyWalls,
+      walls,
     })
   }
 }

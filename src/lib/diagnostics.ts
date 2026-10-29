@@ -1,4 +1,4 @@
-import type {Placement, Portrait, RoomId, Vec3} from './gallery/types.ts'
+import type {Placement, Portrait, Vec3} from './gallery/types.ts'
 import type {PlayerDumpSnapshot} from './telemetry/recordPlayerDump.ts'
 import type {EulerTuple} from 'three/webgpu'
 import type {PauseMenuStage} from 'use-pause-menu/core'
@@ -41,7 +41,7 @@ export type GalleryDiagnostics = {
   }>
   ready: boolean
   registered: number
-  room: RoomId
+  room: string
   rotation: EulerTuple
   saveStatus: string
   /** the environment seed in effect, after the `?seed` override */

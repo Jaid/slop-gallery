@@ -1,7 +1,7 @@
 import type {Vec3} from '../../gallery/types.ts'
 import type {NoiseBed, ToneBed} from './base/AmbienceEmitter.ts'
 
-import {rooms} from '../../gallery/walls.ts'
+import roomOrigins from '../../gallery/layout.ts'
 import AmbienceEmitter from './base/AmbienceEmitter.ts'
 
 /** a low hum whose harmonics slowly beat against each other */
@@ -34,12 +34,12 @@ const beds: ReadonlyArray<NoiseBed> = [
     sway: [0.3, 0.5],
   },
 ]
-const room = rooms.find(candidate => candidate.id === 'moonfall')!
+const [originX, originY, originZ] = roomOrigins.moonfall
 
 /** Moonfall’s orbital sculpture: a celestial hum floating over the crater, sounding from its core. */
 export default class MoonfallOrbit extends AmbienceEmitter {
   /** sounds from `position`, by default the sculpture’s core */
-  constructor(position: Vec3 = [room.center[0], room.floorY + 2.5, room.center[1]]) {
+  constructor(position: Vec3 = [originX, originY + 2.5, originZ]) {
     super({
       id: 'moonfall-orbital-sculpture',
       title: 'Orbital sculpture',

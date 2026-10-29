@@ -47,3 +47,5 @@ export type KnotEntry = KnotData & {
 
 export type KnotMaterialConstructor = new (environment: Texture) => MeshPhysicalNodeMaterial
 export type KnotMaterialModule = {default: KnotMaterialConstructor}
+/** hands out the material class of an entry, at once or once its module has loaded */
+export type KnotMaterialLoader = (entry: Pick<KnotEntry, 'id'>) => KnotMaterialConstructor | Promise<KnotMaterialConstructor>

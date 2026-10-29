@@ -12,7 +12,7 @@ const aimedColor = '#ffffff'
 const headroom = 64
 
 /**
- * What `?show_portrait_slots` shows: every portrait slot of the level and its name plate as tinted panels with solid borders, colored by ratio. While editing, the aimed slot gets a white border, a dragged slot leaves its old place and slots that could not hang where they are turn red.
+ * What `?show_portrait_slots` shows: every portrait slot of the world and its name plate as tinted panels with solid borders, colored by ratio. While editing, the aimed slot gets a white border, a dragged slot leaves its old place and slots that could not hang where they are turn red.
  */
 export default function PortraitSlots() {
   const slots = usePortraitSlots(state => state.slots)

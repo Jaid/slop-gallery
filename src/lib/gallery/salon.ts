@@ -1,5 +1,5 @@
+import type {Wall, WallOpening} from '../placement/wallGeometry.ts'
 import type {Vec3} from './types.ts'
-import type {Wall, WallOpening} from './walls.ts'
 
 import lobby from './lobby.ts'
 import salonWindow from './salonWindow.ts'

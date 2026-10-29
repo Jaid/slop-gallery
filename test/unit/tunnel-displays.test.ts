@@ -1,5 +1,5 @@
 import type {Vec3} from '../../src/lib/gallery/types.ts'
-import type {Wall} from '../../src/lib/gallery/walls.ts'
+import type {Wall} from '../../src/lib/placement/wallGeometry.ts'
 
 import {describe, expect, test} from 'bun:test'
 
@@ -13,10 +13,10 @@ import oculusBalcony from '../../src/lib/gallery/oculusBalcony.ts'
 import oculusTower from '../../src/lib/gallery/oculusTower.ts'
 import SlopedBoxGeometry from '../../src/lib/gallery/SlopedBoxGeometry.ts'
 import tunnelDisplays, {displayStairway, tunnelDisplayWindow} from '../../src/lib/gallery/tunnelDisplays.ts'
-import walls, {floorHeight, galleryPlacement, insideGallery, roomAt} from '../../src/lib/gallery/walls.ts'
+import walls, {floorHeight, galleryPlacement, insideGallery, roomAt} from './fixtures/gallery.ts'
 
 await RAPIER.init()
-const {tunnel} = lowerGallery
+const {oculus, tunnel} = lowerGallery
 const floorY = tunnelFloorHeight((tunnel.northZ + tunnel.southZ) / 2)
 const balconyY = oculusBalcony.position[1] + oculusBalcony.size[1] / 2
 type Display = (typeof tunnelDisplays)[number]
@@ -73,7 +73,7 @@ function wallMeshes(list: Array<Wall>, material: MeshBasicMaterial) {
   }
 }
 describe('tower-wide tunnel with display rooms reached from the Oculus balcony', () => {
-  test('both portals and floor bounds follow the tower-wide tunnel, and the displays join the Oculus', () => {
+  test('both portals and floor bounds follow the tower-wide tunnel, and the displays are the Exhibition’s', () => {
     expect(tunnel.width).toBe(oculusTower.radius * 2)
     for (const id of ['oculus-south', 'moonfall-north']) {
       expect(walls.find(wall => wall.id === id)!.holes![0].width).toBe(tunnel.width)
@@ -85,7 +85,7 @@ describe('tower-wide tunnel with display rooms reached from the Oculus balcony',
     for (const display of tunnelDisplays) {
       expect(display.exhibits).toHaveLength(3)
       expect(insideGallery([display.center[0], floorY + 1.6, display.center[1]])).toBe(true)
-      expect(roomAt([display.center[0], floorY + 1.6, display.center[1]])).toBe('oculus')
+      expect(roomAt([display.center[0], floorY + 1.6, display.center[1]])).toBe('exhibition')
       expect(insideGallery([Math.sign(display.frontX) * 1.8, floorY + 1.6, display.center[1]])).toBe(true)
       // beyond the stairway’s outer wall, between the display’s back wall and the middle flight, and between the upper and the lower flight
       const {corners, door, landing} = display.stairway
@@ -110,7 +110,7 @@ describe('tower-wide tunnel with display rooms reached from the Oculus balcony',
     const sign = Math.sign(display.frontX)
     const southZ = display.center[1] + display.size[1] / 2
     const cutoutX = (cutout.from + cutout.to) / 2
-    test(`${display.side}: a door in the Oculus’ side wall at the balcony’s end opens onto the stairway, whose even steps and floors are part of the Oculus`, () => {
+    test(`${display.side}: a door in the Oculus’ side wall at the balcony’s end opens onto the stairway, whose even steps and floors are the Exhibition’s`, () => {
       const balconyNorthZ = oculusBalcony.position[2] - oculusBalcony.size[2] / 2
       expect(door[1]).toBe(balconyY)
       expect(door[2] - displayStairway.doorWidth / 2 - wallOpeningTrim).toBeGreaterThan(balconyNorthZ)
@@ -163,7 +163,7 @@ describe('tower-wide tunnel with display rooms reached from the Oculus balcony',
       ]
       for (const [position, floor] of positions) {
         expect(insideGallery(position)).toBe(true)
-        expect(roomAt(position)).toBe('oculus')
+        expect(roomAt(position)).toBe('exhibition')
         expect(floorHeight(position)).toBeCloseTo(floor)
       }
     })
@@ -225,7 +225,8 @@ describe('tower-wide tunnel with display rooms reached from the Oculus balcony',
               motor.step(world.timestep, {forward: true}, facing)
               world.step()
               expect(insideGallery([x, y + 1.6, z])).toBe(true)
-              expect(roomAt([x, y + 1.6, z])).toBe('oculus')
+              // The balcony is the Oculus’, the stairway behind its door and the display the Exhibition’s.
+              expect(roomAt([x, y + 1.6, z])).toBe(Math.abs(x - oculus.center[0]) <= oculus.size[0] / 2 && z <= tunnel.northZ ? 'oculus' : 'exhibition')
             }
             expect(distance()).toBeLessThan(0.15)
           }
@@ -240,7 +241,7 @@ describe('tower-wide tunnel with display rooms reached from the Oculus balcony',
       })
     }
     test(`${display.side}: windows are real openings with glass collision, solid sills and a closed room shell`, () => {
-      const wall = walls.find(value => value.id === `oculus-tunnel-${display.side}`)!
+      const wall = walls.find(value => value.id === `exhibition-${display.side}`)!
       const geometry = createArchitectureGeometry(wall)
       const material = new MeshBasicMaterial
       const opaque = [geometry.surface, ...geometry.trim].map(part => new Mesh(part, material))
@@ -302,7 +303,7 @@ describe('tower-wide tunnel with display rooms reached from the Oculus balcony',
     })
     test(`${display.side}: glass blocks artwork placement through the display window`, () => {
       const hit = galleryPlacement.findPlacement([tunnel.x, floorY + 1.6, display.center[1]], [Math.sign(display.frontX), 0, 0], 1, 1, [])
-      expect(hit?.wallId).toBe(`oculus-tunnel-${display.side}`)
+      expect(hit?.wallId).toBe(`exhibition-${display.side}`)
       expect(hit?.valid).toBe(false)
     })
     for (const fps of [30, 60, 120]) {
@@ -314,7 +315,7 @@ describe('tower-wide tunnel with display rooms reached from the Oculus balcony',
             z: 0,
           })
           world.timestep = 1 / fps
-          const wall = walls.find(value => value.id === `oculus-tunnel-${display.side}`)!
+          const wall = walls.find(value => value.id === `exhibition-${display.side}`)!
           const geometry = createArchitectureGeometry(wall)
           for (const collision of geometry.collision) {
             const wallRotation = new Quaternion

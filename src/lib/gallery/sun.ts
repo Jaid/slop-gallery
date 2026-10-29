@@ -1,16 +1,19 @@
 import type {Vec3} from './types.ts'
+import type {Box3} from 'three/webgpu'
 
 import lobbyVault from './lobbyVault.ts'
-import {roomClearHeight, rooms} from './walls.ts'
+
+/** a room the sun may shine into, as far as its shadow map cares */
+export type SunlitRoom = {
+  /** the room’s air in world meters */
+  readonly air: ReadonlyArray<Box3>
+  /** whether the sun may reach into it anywhere */
+  readonly sunlit: boolean
+}
 
 /** How far the light’s shadow camera stands from the origin along its direction, well above the vault’s crown. */
 const distance = 80
-/** Rooms beyond the sun’s reach: their materials ignore it, so they need no shadow map. */
-const unlitRooms = new Set(['corridor', 'lodge'])
-/** Rooms that stay in the shadow map but that the sun never lights: Moonfall lies under its own ceiling, but its stairway reaches out under open ground, where the sun slips through the seams of its roof. */
-const shadedRooms = new Set(['moonfall'])
-/** Whether the sun reaches into a room at all, so its air can hold sun shafts. */
-export const isSunlitRoom = (room: string) => !unlitRooms.has(room) && !shadedRooms.has(room)
+const margin = 1
 const up = [0, 1, 0] as const
 const cross = (a: readonly [number, number, number], b: readonly [number, number, number]) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]] as const
 const normalize = (v: readonly [number, number, number]) => {
@@ -19,19 +22,22 @@ const normalize = (v: readonly [number, number, number]) => {
 }
 const dot = (a: readonly [number, number, number], b: readonly [number, number, number]) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
 
-/** Every point the sun’s shadow map has to cover: the corners of every sunlit room, from below its floor to its ceiling or vault. */
-export function sunlitPoints(): Array<Vec3> {
+/** texels along each axis of the sun’s shadow map in heavy graphics */
+export const sunShadowMapSize = 4096
+
+/** Every point the sun’s shadow map has to cover: the corners of the air of every room within the sun’s reach, from below its floor to over its ceiling or vault. */
+export function sunlitPoints(rooms: Iterable<SunlitRoom>): Array<Vec3> {
   const points: Array<Vec3> = []
   for (const room of rooms) {
-    if (unlitRooms.has(room.id)) {
+    if (!room.sunlit) {
       continue
     }
-    const [x, z] = room.center
-    const [width, depth] = room.size
-    for (const dx of [-1, 1]) {
-      for (const dz of [-1, 1]) {
-        for (const y of [room.floorY - 1, room.floorY + roomClearHeight(room) + 0.5]) {
-          points.push([x + dx * (width / 2 + 0.5), y, z + dz * (depth / 2 + 0.5)])
+    for (const {min, max} of room.air) {
+      for (const x of [min.x - 0.5, max.x + 0.5]) {
+        for (const z of [min.z - 0.5, max.z + 0.5]) {
+          for (const y of [min.y - 1, max.y + 0.5]) {
+            points.push([x, y, z])
+          }
         }
       }
     }
@@ -39,15 +45,13 @@ export function sunlitPoints(): Array<Vec3> {
   return points
 }
 
-const margin = 1
-
-/** Where a directional light shining from `toward` (any length) stands, and the shadow frustum that spans every sunlit room from there. */
-export function sunGeometry(toward: Vec3) {
+/** Where a directional light shining from `toward` (any length) stands, and the shadow frustum that spans every one of the points from there. */
+export function sunGeometry(toward: Vec3, points: ReadonlyArray<Vec3>) {
   const direction = normalize(toward)
   // The basis of a camera at the light, looking at the origin, as Object3D.lookAt builds it.
   const right = normalize(cross(up, direction))
   const top = cross(direction, right)
-  const projected = sunlitPoints().map(point => [dot(point, right), dot(point, top), distance - dot(point, direction)] as const)
+  const projected = points.map(point => [dot(point, right), dot(point, top), distance - dot(point, direction)] as const)
   const bound = (axis: 0 | 1 | 2, pick: typeof Math.max) => pick(...projected.map(point => point[axis]))
   return {
     direction: direction as Vec3,
@@ -59,7 +63,7 @@ export function sunGeometry(toward: Vec3) {
       top: bound(1, Math.max) + margin,
       near: Math.max(0.5, bound(2, Math.min) - margin),
       far: bound(2, Math.max) + margin,
-      mapSize: 4096,
+      mapSize: sunShadowMapSize,
       normalBias: 0.035,
     },
   }
@@ -72,10 +76,10 @@ export function sunDirectionFromAngles(azimuth: number, elevation: number): Vec3
   return [Math.sin(a) * Math.cos(e), Math.sin(e), -Math.cos(a) * Math.cos(e)]
 }
 
-/** The gallery’s midday sun, 193.7° clockwise from north and 51° above the horizon. The shadow frustum covers every sunlit room; only the Lobby’s glazing lets it in. */
-export const sun = sunGeometry(sunDirectionFromAngles(193.7, 51))
+/** The direction toward the gallery’s midday sun, 193.7° clockwise from north and 51° above the horizon; only the Lobby’s glazing lets it in. */
+export const middaySun = sunDirectionFromAngles(193.7, 51)
 
-/** The crown of the Lobby’s vault has to stay in front of the shadow camera, or it would cast no shadow. */
-export const sunClearance = distance - dot([0, lobbyVault.crownY, 0], sun.direction)
-
-export default sun
+/** How far in front of the shadow camera of a sun shining from `direction` the crown of the Lobby’s vault stands, which has to stay in front of it to cast a shadow. */
+export function sunClearance(direction: Vec3) {
+  return distance - dot([0, lobbyVault.crownY, 0], normalize(direction))
+}

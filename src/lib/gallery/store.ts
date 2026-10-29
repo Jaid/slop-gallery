@@ -1,6 +1,8 @@
-import type {GalleryDocument, GallerySettings, GallerySnapshot, NarrationState, Placement, Portrait, RoomId, Vec3} from './types.ts'
+import type {GalleryDocument, GallerySettings, GallerySnapshot, NarrationState, Placement, Portrait, Vec3} from './types.ts'
 
 import {create} from 'zustand'
+
+import world from '#src/worlds/current.ts'
 
 import {audioOverride} from '../audio/audioParameter.ts'
 import {effectiveSeed, rollSeed} from '../environmentSeed.ts'
@@ -44,7 +46,8 @@ type State = GallerySettings & GallerySnapshot & {
   remove: (id: string) => void
   resetEpoch: number
   revision: number
-  room: RoomId
+  /** the id of the room of the current world the player is in, or was in last when in a passage */
+  room: string
   saveStatus: 'error' | 'loading' | 'saved' | 'saving'
   storageRecoveryRequired: boolean
   update: (id: string, patch: Partial<Portrait>) => void
@@ -88,7 +91,7 @@ export const useGallery = create<State>((set, get) => ({
   dragging: false,
   inspecting: null,
   notice: '',
-  room: 'lobby',
+  room: world.defaultRoom,
   placement: null,
   playerEpoch: 0,
   ai: false,

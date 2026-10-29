@@ -4,7 +4,7 @@ import {Vector3} from 'three/webgpu'
 
 import antechamberDome, {antechamberDomeGeometry, antechamberGlassPlacements, antechamberLatticeGeometry, antechamberLatticeY, antechamberWindows} from '../../src/lib/gallery/antechamberDome.ts'
 import {antechamberDomeCrownY} from '../../src/lib/gallery/antechamberDomeShape.ts'
-import {roomClearHeight, rooms} from '../../src/lib/gallery/walls.ts'
+import {roomClearHeight, rooms} from './fixtures/gallery.ts'
 
 const antechamber = rooms.find(room => room.id === 'antechamber')!
 test('the dome springs from the top of the ceiling slab and stays inside the walls', () => {

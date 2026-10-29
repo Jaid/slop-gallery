@@ -2,17 +2,17 @@ import type {InteractionFrameRefs} from './types.ts'
 import type {RootState} from '@react-three/fiber'
 
 import {useFrame} from '@react-three/fiber'
+import {useEffect, useRef} from 'react'
 
-import {levelWallDistance} from '#level/navigation.ts'
-import placementSpace from '#level/placement.ts'
 import {readIntroNarration} from '#src/lib/audio/intro.ts'
-import {bodyPose, cameraPose, dragPose, narrate, roomAt, useGallery} from '#src/lib/gallery.ts'
+import {bodyPose, cameraPose, dragPose, narrate, useGallery} from '#src/lib/gallery.ts'
 import {interactiveObjects} from '#src/lib/gallery/interactiveObjects.ts'
 import {orbitables} from '#src/lib/gallery/orbitables.ts'
 import {isPortraitLabelHit} from '#src/lib/gallery/portraitLabel.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
+import followRooms from '#src/lib/gallery/roomSession.ts'
 import interactionHint from '#src/lib/interactionHint.ts'
-import {isGallery} from '#src/lib/level.ts'
+import world from '#src/worlds/current.ts'
 
 import {propObjects} from '../GrabbableProp.tsx'
 import {describeHeld, describeTarget} from './describeTarget.ts'
@@ -29,9 +29,18 @@ export default function useInteractionFrame(camera: RootState['camera'], rendere
   previousHeld,
   ray,
 }: InteractionFrameRefs) {
+  const rooms = useRef<ReturnType<typeof followRooms> | null>(null)
+  useEffect(() => {
+    const session = followRooms(bodyPose.center)
+    rooms.current = session
+    return () => {
+      session.removeAllListeners()
+      rooms.current = null
+    }
+  }, [])
   useFrame(() => {
     const s = useGallery.getState()
-    if (introNarration && isGallery && s.locked && !introduced.current && firstPose.current && (camera.position.distanceTo(firstPose.current.position) > 0.12 || camera.quaternion.angleTo(firstPose.current.rotation) > 0.1)) {
+    if (introNarration && world.narratesIntroduction && s.locked && !introduced.current && firstPose.current && (camera.position.distanceTo(firstPose.current.position) > 0.12 || camera.quaternion.angleTo(firstPose.current.rotation) > 0.1)) {
       introduced.current = true
       narrate('__intro')
     }
@@ -42,10 +51,7 @@ export default function useInteractionFrame(camera: RootState['camera'], rendere
     camera.getWorldDirection(direction.current)
     cameraPose.position = camera.position.toArray()
     cameraPose.direction = direction.current.toArray()
-    const room = isGallery ? roomAt(bodyPose.center) : 'lobby'
-    if (room !== s.room) {
-      useGallery.setState({room})
-    }
+    rooms.current?.update(bodyPose.center)
     cursor.current.set(0, 0)
     if (dragPose.active) {
       const bounds = renderer.domElement.getBoundingClientRect()
@@ -54,7 +60,7 @@ export default function useInteractionFrame(camera: RootState['camera'], rendere
     ray.current.setFromCamera(cursor.current, camera)
     ray.current.far = 9
     if (!dragPose.active) {
-      let closest = levelWallDistance(cameraPose.position, cameraPose.direction)
+      let closest = world.wallDistance(cameraPose.position, cameraPose.direction)
       let active: string | null = null
       let activeLabel: string | null = null
       for (const [id, object] of [...portraitObjects, ...propObjects, ...interactiveObjects, ...orbitables]) {
@@ -92,7 +98,7 @@ export default function useInteractionFrame(camera: RootState['camera'], rendere
       placement.current = null
       return
     }
-    const candidate = placementSpace.findPlacement(ray.current.ray.origin.toArray(), ray.current.ray.direction.toArray(), portrait?.width ?? 2.4, portrait?.height ?? 2.4, s.portraits, portrait?.id, portrait?.labelAbove === true)
+    const candidate = world.placement.findPlacement(ray.current.ray.origin.toArray(), ray.current.ray.direction.toArray(), portrait?.width ?? 2.4, portrait?.height ?? 2.4, s.portraits, portrait?.id, portrait?.labelAbove === true)
     placement.current = candidate
     if (candidate?.valid !== s.placement?.valid || candidate?.inReach !== s.placement?.inReach || candidate?.reason !== s.placement?.reason || candidate?.wallId !== s.placement?.wallId || candidate?.labelAbove !== s.placement?.labelAbove || !candidate && s.placement) {
       useGallery.setState({placement: candidate})

@@ -4,9 +4,8 @@ import type {RootState} from '@react-three/fiber'
 
 import {Vector3} from 'three/webgpu'
 
-import {levelWallDistance} from '#level/navigation.ts'
-import placementSpace from '#level/placement.ts'
 import {cameraPose, chime, notify, useGallery} from '#src/lib/gallery.ts'
+import world from '#src/worlds/current.ts'
 
 import {propObjects} from '../GrabbableProp.tsx'
 
@@ -63,7 +62,7 @@ export default function createGrabController(camera: RootState['camera'], placem
     if (throwing) {
       const direction = camera.getWorldDirection(new Vector3)
       const origin = camera.position.toArray()
-      const distance = Math.min(1.45, Math.max(0.35, levelWallDistance(origin, direction.toArray()) - 0.4))
+      const distance = Math.min(1.45, Math.max(0.35, world.wallDistance(origin, direction.toArray()) - 0.4))
       const position = camera.position.clone().addScaledVector(direction, distance)
       state.commit(state.portraits.map(candidate => {
         return candidate.id === id ? {
@@ -78,7 +77,7 @@ export default function createGrabController(camera: RootState['camera'], placem
       }))
       chime(130)
     } else {
-      const candidate = placementSpace.findPlacement(camera.position.toArray(), camera.getWorldDirection(new Vector3).toArray(), portrait.width, portrait.height, state.portraits, portrait.id, portrait.labelAbove === true)
+      const candidate = world.placement.findPlacement(camera.position.toArray(), camera.getWorldDirection(new Vector3).toArray(), portrait.width, portrait.height, state.portraits, portrait.id, portrait.labelAbove === true)
       if (candidate?.valid) {
         state.commit(state.portraits.map(item => {
           return item.id === id ? {

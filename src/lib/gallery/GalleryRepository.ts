@@ -1,11 +1,9 @@
 import type {GalleryDocument, Portrait} from './types.ts'
 
-import artworks from '#level/artworks.ts'
-import placement from '#level/placement.ts'
+import world from '#src/worlds/current.ts'
 
 import {audioOverride} from '../audio/audioParameter.ts'
 import {isSeed} from '../environmentSeed.ts'
-import {galleryStorageKey} from '../level.ts'
 import pauseMenu from '../pauseMenu.ts'
 import {obstructionIssue, placementIssues, wallCoordinates, wallPosition} from '../placement/wallGeometry.ts'
 import {isTemporary} from '../temporary.ts'
@@ -16,8 +14,8 @@ import {imageExtensions, maximumBackupBytes, validateCollectionImages, validateI
 import {playerSession, validatePlayerPose} from './PlayerSession.ts'
 import {createDocument, maximumPortraits, restoreDocument, useGallery} from './store.ts'
 
-const images = new Set(artworks.map(p => p.source))
-const narrations = new Set(artworks.map(p => p.narration).filter((p): p is string => typeof p === 'string'))
+const images = new Set(world.artworks.map(p => p.source))
+const narrations = new Set(world.artworks.map(p => p.narration).filter((p): p is string => typeof p === 'string'))
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 const vector = (value: unknown, length: number) => Array.isArray(value) && value.length === length && value.every(v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) < 1000)
 const shortText = (value: unknown, max: number): value is string => typeof value === 'string' && value.length <= max
@@ -59,7 +57,7 @@ export function validateDocument(value: unknown): GalleryDocument {
     if (p.orientation !== undefined && (!vector(p.orientation, 4) || Math.abs(Math.hypot(...p.orientation as Array<number>) - 1) > 0.01)) {
       throw new Error('The artwork orientation is invalid.')
     }
-    const wall = p.hung && typeof p.wallId === 'string' ? placement.wall(p.wallId) : undefined
+    const wall = p.hung && typeof p.wallId === 'string' ? world.placement.wall(p.wallId) : undefined
     if (p.hung && (!wall || p.orientation)) {
       throw new Error('A hanging artwork has an invalid wall.')
     }
@@ -74,7 +72,7 @@ export function validateDocument(value: unknown): GalleryDocument {
         throw new Error(obstruction === placementIssues.doorway ? 'A hanging artwork overlaps a doorway.' : 'A hanging artwork covers a reserved part of its wall.')
       }
     }
-    if (!placement.contains(p.position as Portrait['position'])) {
+    if (!world.placement.contains(p.position as Portrait['position'])) {
       throw new Error('An artwork is outside the gallery.')
     }
     return {
@@ -114,13 +112,13 @@ export function validateDocument(value: unknown): GalleryDocument {
 }
 
 /**
- * Lets the level settle the works of a stored collection, before validation, into its current walls and volume, which can change between visits in the halls. Returns the input itself if nothing moved, and malformed input untouched for validation to reject.
+ * Lets the world settle the works of a stored collection, before validation, into its current walls and volume, which can change between visits in the halls. Returns the input itself if nothing moved, and malformed input untouched for validation to reject.
  */
 function settleDocument(value: unknown): unknown {
   if (!object(value) || !Array.isArray(value.portraits)) {
     return value
   }
-  const portraits = placement.settle(value.portraits as Array<unknown>)
+  const portraits = world.placement.settle(value.portraits as Array<unknown>)
   return portraits === value.portraits ? value : {
     ...value,
     portraits,
@@ -267,7 +265,7 @@ export default class GalleryRepository {
     }
     let blocked = false
     const pending = new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open(galleryStorageKey, 1)
+      const request = indexedDB.open(world.storageKey, 1)
       request.addEventListener('upgradeneeded', () => request.result.createObjectStore('collections'))
       request.addEventListener('success', () => {
         // A previously blocked request can succeed after its caller has already failed.

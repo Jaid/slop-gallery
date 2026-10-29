@@ -3,7 +3,7 @@ import {afterEach, expect, test} from 'bun:test'
 import {createElement} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
 
-import Minimap from '#component/Minimap'
+import Minimap from '#component/GalleryMinimap'
 
 import {cameraPose, useGallery} from '../../src/lib/gallery.ts'
 import lowerGallery from '../../src/lib/gallery/lowerGallery.ts'

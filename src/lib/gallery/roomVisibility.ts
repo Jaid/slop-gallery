@@ -1,13 +1,14 @@
-import type {RoomId, Vec3} from './types.ts'
+import type {GalleryRoomId as RoomId} from '#src/worlds/gallery/index.ts'
+import type {Vec3} from './types.ts'
 import type {Frustum, Matrix4, Sphere} from 'three/webgpu'
 
 import {Box3, Vector3} from 'three/webgpu'
 
-import {openings} from '#src/components/World/relations.ts'
+import {openingTop, wallPosition} from '#src/lib/placement/wallGeometry.ts'
+import slopGallery from '#src/worlds/gallery/index.ts'
+import {openings} from '#src/worlds/gallery/relations.ts'
 
 import lobby from './lobby.ts'
-import walls, {openingTop, rooms, wallPosition} from './walls.ts'
-import {worldRooms} from './worldRooms.ts'
 
 /** a rectangle on screen in normalized device coordinates: left, bottom, right, top */
 export type ScreenRect = readonly [number, number, number, number]
@@ -16,14 +17,16 @@ type Portal = {
   rooms: readonly [RoomId, RoomId]
 }
 
+/** how many openings deep line of sight reaches in the gallery: from the Lobby down through its glazed floor into the Oculus and on through the Fortress into the Lodge, or from the Antechamber down to Moonfall and on through the Exhibition into the Oculus */
+const sightDepth = 3
 // Doorframes, trims and the reveal of thick walls stay inside the portal.
 const portalDepth = 0.8
 const containmentMargin = 0.05
-const holeBox = (wallId: string, index: number) => {
-  const wall = walls.find(value => value.id === wallId)
-  const hole = wall?.holes?.[index]
+const holeBox = (wallId: string, name: string) => {
+  const wall = slopGallery.walls.find(value => value.id === wallId)
+  const hole = wall?.holes?.find(value => value.name === name)
   if (!wall || !hole) {
-    throw new Error(`Wall ${wallId} has no opening ${index}.`)
+    throw new Error(`The wall ${wallId} has no hole “${name}”.`)
   }
   const bottom = wall.center[1] + (hole.bottom ?? 0)
   const top = wall.center[1] + openingTop(hole, hole.u)
@@ -42,7 +45,7 @@ const holeBox = (wallId: string, index: number) => {
 export const portals: Array<Portal> = [
   ...openings.map(({rooms: pair, holes}) => ({
     rooms: pair,
-    box: holes.map(([wallId, index]) => holeBox(wallId, index)).reduce((a, b) => a.union(b)),
+    box: holes.map(([wallId, name]) => holeBox(wallId, name)).reduce((a, b) => a.union(b)),
   })),
   {
     // The glazed Lobby floor looks down into the Oculus.
@@ -51,15 +54,16 @@ export const portals: Array<Portal> = [
   },
 ]
 
-/** the boxes fencing each room, a room’s fence can take several (like the Corridor’s hall and its stair flight up to the Sienna); they reach below the floor for its reflection */
-export const roomBoxes = rooms.flatMap(({id, floorY}) => {
-  const {fence} = worldRooms.find(room => room.id === id)!
-  return [fence].flat().map(({min, max}) => ({
-    id,
-    floorY,
-    box: new Box3(new Vector3(min[0], min[1] - 1, min[2]), new Vector3(max[0], max[1] + 0.2, max[2])),
-  }))
-})
+/** the boxes of each room’s air, a room’s air can take several (like the Corridor’s hall and its stair flight up to the Sienna); they reach below the floor for its reflection */
+export const roomBoxes: ReadonlyArray<{
+  box: Box3
+  floorY: number
+  id: RoomId
+}> = slopGallery.rooms.flatMap(({id, air, floorY}) => air.map(({min, max}) => ({
+  id,
+  floorY,
+  box: new Box3(new Vector3(min.x, min.y - 1, min.z), new Vector3(max.x, max.y + 0.2, max.z)),
+})))
 
 const point = new Vector3
 
@@ -97,8 +101,7 @@ export function roomEnclosing(sphere: Sphere) {
 }
 
 /**
- * The rooms the camera can see from its room: a neighbor counts when the opening to it lies in the frustum, and a room behind a neighbor when both openings do.
- * Line of sight never reaches three openings deep in the gallery.
+ * The rooms the camera can see from its room: a neighbor counts when the opening to it lies in the frustum, and a room behind a neighbor when both openings do, up to {@link sightDepth} openings deep.
  */
 export function visibleRooms(room: RoomId, frustum: Frustum) {
   const result = new Set<RoomId>([room])
@@ -118,7 +121,7 @@ export function visibleRooms(room: RoomId, frustum: Frustum) {
       }
     }
   }
-  through(room, 2)
+  through(room, sightDepth)
   return result
 }
 
@@ -210,7 +213,7 @@ export function intersectScreenRects(a: ScreenRect, b: ScreenRect): ScreenRect |
 }
 
 /**
- * What the camera sees of each room: the rooms it stands in fill the screen, and the rooms behind their openings show through the part of the screen those openings cover, up to two openings deep like {@link visibleRooms}.
+ * What the camera sees of each room: the rooms it stands in fill the screen, and the rooms behind their openings show through the part of the screen those openings cover, up to {@link sightDepth} openings deep like {@link visibleRooms}.
  * An opening seen through another only shows where both overlap, so rooms beyond a narrow gap or around a corner drop out. Rooms missing from the map are out of sight.
  */
 export function visibleRegions(from: ReadonlyArray<RoomId>, viewProjection: Matrix4) {
@@ -243,7 +246,7 @@ export function visibleRegions(from: ReadonlyArray<RoomId>, viewProjection: Matr
     }
   }
   for (const room of from) {
-    through(room, fullScreen, 2)
+    through(room, fullScreen, sightDepth)
   }
   return regions
 }

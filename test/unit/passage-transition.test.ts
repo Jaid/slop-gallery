@@ -11,8 +11,8 @@ import SaddleGeometry from '../../src/lib/gallery/passages/SaddleGeometry.ts'
 import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
 import TransitionGeometry, {transitionClearance} from '../../src/lib/gallery/passages/TransitionGeometry.ts'
 import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
-import walls from '../../src/lib/gallery/walls.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
+import walls from './fixtures/gallery.ts'
 
 const transition = lodgeTunnelTransition
 const geometry = new TransitionGeometry(transition)

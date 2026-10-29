@@ -27,6 +27,13 @@ export const stairFlights = [
 ]
 export const stairTurn = new StairTurn([staircase.turnX, (staircase.z + staircase.returnZ) / 2], staircase.bottomY / 2, (staircase.returnZ - staircase.z) / 2, staircase.width, staircase.lowerWidth)
 export const stairBlocks = stairFlights.flatMap(flight => flight.blocks)
+/** the rectangle on the ground the stairway covers, from the Antechamber’s east wall around the turn to Moonfall’s east wall */
+export const stairwayFootprint = {
+  x: Math.min(...stairBlocks.map(block => block.position[0] - block.size[0] / 2)),
+  z: Math.min(...stairBlocks.map(block => block.position[2] - block.size[2] / 2)),
+  x2: stairTurn.center[0] + stairTurn.outerRadius,
+  z2: Math.max(...stairBlocks.map(block => block.position[2] + block.size[2] / 2)),
+}
 export const stairRoofs: Array<StairBeam> = stairFlights.map(flight => flight.beam(stairHeadroom, 0.18, flight.width))
 export function stairRailGeometry(side: 'inner' | 'outer') {
   const start = stairFlights[0].start

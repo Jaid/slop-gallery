@@ -4,18 +4,19 @@ import {describe, expect, test} from 'bun:test'
 
 import {knotLayout} from 'knot-materials/exhibition.ts'
 
-import {insideKnotGallery, knotGalleryBounds, knotGalleryWalls} from '../../src/lib/gallery/knotGallery.ts'
-import walls, {rooms} from '../../src/lib/gallery/walls.ts'
+import {insideKnotGallery, knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
+import knottingham from '../../src/worlds/knottingham/index.ts'
+import walls, {rooms} from './fixtures/gallery.ts'
 
 describe('permanent Knot Gallery', () => {
   test('independently seals an exhibition hall sized for the candidate rows', () => {
     expect(knotGalleryBounds.maxX - knotGalleryBounds.minX).toBe(knotLayout.size[0])
     expect(knotGalleryBounds.southZ - knotGalleryBounds.northZ).toBe(knotLayout.size[2])
-    expect(knotGalleryWalls).toHaveLength(4)
-    for (const wall of knotGalleryWalls) {
+    expect(knottingham.walls).toHaveLength(4)
+    for (const wall of knottingham.walls) {
       expect(wall.holes).toBeUndefined()
-      expect(wall.room).toBe('lobby')
-      expect(wall.hangable).toBeUndefined()
+      expect(wall.room).toBe('arena')
+      expect(wall.sticky).toBeUndefined()
       expect(wall.reservations).toBeUndefined()
       expect(walls.some(original => original.id === wall.id)).toBe(false)
     }

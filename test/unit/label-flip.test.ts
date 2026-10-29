@@ -1,6 +1,6 @@
 import {expect, test} from 'bun:test'
 
-import {galleryPlacement} from '../../src/lib/gallery/walls.ts'
+import {galleryPlacement} from './fixtures/gallery.ts'
 
 // A 1 m work aimed at the Lobby’s south wall, beside the door, from 8 m away.
 const aim = (y: number, labelAbove: boolean) => galleryPlacement.findPlacement([-4.6, y, 1], [0, 0, 1], 1, 1, [], '', labelAbove)

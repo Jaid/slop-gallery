@@ -1,3 +1,0 @@
-export {default as Minimap} from '#component/levels/gallery/Minimap'
-export {default as Scene} from '#component/levels/gallery/Scene'
-export {default as WallDecorations} from '#component/levels/gallery/WallDecorations'

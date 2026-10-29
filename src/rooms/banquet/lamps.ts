@@ -1,7 +1,11 @@
 import type {Lamp} from '../base/Room.ts'
 
+import {banquetLedDrop, banquetLedGrid, banquetLedY} from '#src/lib/gallery/banquet.ts'
+
+const [x] = banquetLedGrid.x
+const [north, middle, south] = banquetLedGrid.z
 const led = (z: number) => ({
-  position: [0, 5.3, z],
+  position: [x, banquetLedY - banquetLedDrop, z],
   strength: 36,
   tint: '#eee3ff',
   range: 8,
@@ -10,9 +14,9 @@ const led = (z: number) => ({
   optional: true,
 }) satisfies Lamp
 
-// Three breakable LED panes down the middle, each lighting through one point just below its diffuser.
+// One under each of the three breakable LED panes down the middle, flickering and dying with its pane.
 export default {
-  led_north: led(-5),
-  led_middle: led(0),
-  led_south: led(5),
+  led_north: led(north),
+  led_middle: led(middle),
+  led_south: led(south),
 } satisfies Record<string, Lamp>

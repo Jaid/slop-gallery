@@ -1,4 +1,4 @@
-import type {Portrait, RoomId, Vec3} from '../gallery/types.ts'
+import type {Portrait, Vec3} from '../gallery/types.ts'
 
 import portraitLabel, {portraitLabelLayout} from '../gallery/portraitLabel.ts'
 
@@ -9,7 +9,7 @@ export const hangingOffset = 0.22
 
 /** Reasons why an artwork cannot hang at a spot, shown to the player and compared by persistence. */
 export const placementIssues = {
-  unhangable: 'Keep the stairway clear.',
+  unsticky: 'Keep the stairway clear.',
   frame: 'Leave space for the frame and its label.',
   doorway: 'Let’s keep the doorway clear.',
   neighbor: 'A little too close to another masterpiece.',
@@ -20,6 +20,8 @@ export type WallOpening = {
   bottom?: number
   glassThickness?: number
   height: number
+  /** the hole’s name within its wall, in snake_case, which openings between rooms refer to it by */
+  name?: string
   profile: 'arch' | 'rectangle'
   u: number
   width: number
@@ -38,7 +40,6 @@ export type Wall = {
   center: Vec3
   /** Signed bend radius, measured from the untrimmed wall plane. */
   curveRadius?: number
-  hangable?: boolean
   height: number
   holes?: Array<WallOpening>
   id: string
@@ -46,9 +47,12 @@ export type Wall = {
   miters?: readonly [number, number]
   /** Solid architectural features which must remain free of hanging artwork. */
   reservations?: Array<WallReservation>
-  room: RoomId
+  /** the id of the room the wall belongs to */
+  room: string
   rotation: number
   slope?: number
+  /** whether artworks can be hung on it, true by default */
+  sticky?: boolean
   trimStyle?: 'classic' | 'none' | 'plain'
   width: number
 }
@@ -78,7 +82,7 @@ export function wallPosition(targetWall: Wall, u: number, y: number, offset = ha
 }
 
 /** The coordinate along a wall, measured from its center, of the point on it nearest to a position. */
-export function wallCoordinates(targetWall: Wall, [x, , z]: Vec3) {
+export function wallCoordinates(targetWall: Pick<Wall, 'center' | 'curveRadius' | 'rotation'>, [x, , z]: Vec3) {
   const u = (x - targetWall.center[0]) * Math.cos(targetWall.rotation) - (z - targetWall.center[2]) * Math.sin(targetWall.rotation)
   if (targetWall.curveRadius) {
     const depth = (x - targetWall.center[0]) * Math.sin(targetWall.rotation) + (z - targetWall.center[2]) * Math.cos(targetWall.rotation)
@@ -103,8 +107,8 @@ export function obstructionIssue(targetWall: Wall, position: Vec3, width: number
 
 /** Why an artwork of this size cannot hang centered at `position` on a wall, or an empty string if it can. */
 export function placementIssue(targetWall: Wall, position: Vec3, width: number, height: number, portraits: ReadonlyArray<Portrait>, ignoreId = '', labelAbove = false) {
-  if (targetWall.hangable === false) {
-    return placementIssues.unhangable
+  if (targetWall.sticky === false) {
+    return placementIssues.unsticky
   }
   const {u, halfWidth, bottom, top} = footprint(targetWall, position, width, height, labelAbove)
   if (Math.abs(u) + halfWidth > targetWall.width / 2 - 0.24 || bottom < targetWall.center[1] + 0.48 || top > targetWall.center[1] + targetWall.height - 0.55) {

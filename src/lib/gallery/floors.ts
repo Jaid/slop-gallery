@@ -1,4 +1,4 @@
-import type {rooms} from './walls.ts'
+import type {GalleryRoomId} from '#src/worlds/gallery/index.ts'
 
 import lobby from './lobby.ts'
 
@@ -6,8 +6,14 @@ export type FloorRectangle = {
   center: readonly [number, number]
   size: readonly [number, number]
 }
-export type FloorRoom = (typeof rooms)[number]
+/** a room whose floor covers its rectangular plan, centered in world x and z */
+export type FloorRoom = FloorRectangle & {
+  floorY: number
+  id: GalleryRoomId
+}
 export const floorThickness = 0.24
+/** a height inside the ground floor’s slab, where the fences of the ground floor’s rooms, which reach up from it, meet those of the rooms below, which reach down from it */
+export const groundFenceY = -0.2
 export const floorGlassThickness = 0.12
 /** edge length of the square floor tiles, measured from each room’s north-west corner */
 export const floorTile = 2

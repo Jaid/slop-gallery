@@ -38,7 +38,7 @@ const samplePortraits: Array<Portrait> = [
     width: 2.7,
     height: 2.7,
     hung: true,
-    wallId: 'lobby-extension-east',
+    wallId: 'lobby-extension_east',
   },
   {
     id: 'dog',

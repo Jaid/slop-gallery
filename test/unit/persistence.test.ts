@@ -7,6 +7,7 @@ import {maximumCollectionImageBytes, maximumImageBytes} from '../../src/lib/gall
 import PlayerSession, {playerSession} from '../../src/lib/gallery/PlayerSession.ts'
 import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
 import {readTemporary} from '../../src/lib/temporary.ts'
+import slopGallery from '../../src/worlds/gallery/index.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
 const original = {
@@ -234,7 +235,7 @@ test('movement checkpoints flush synchronously on refresh without rewriting artw
     }
     playerSession.capture(pose)
     page.dispatchEvent(new Event('pagehide'))
-    const refreshed = new PlayerSession
+    const refreshed = new PlayerSession(slopGallery)
     refreshed.resume('2026-01-01T00:00:00Z')
     expect(refreshed.snapshot().position).toEqual(pose.position)
     expect(refreshed.snapshot().yaw).toBeCloseTo(pose.yaw)

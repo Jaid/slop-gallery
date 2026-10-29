@@ -8,7 +8,7 @@ import {colliderGeometry} from '../../src/lib/gallery/architecture.ts'
 import lowerGallery, {oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
 import OculusGroundGeometry from '../../src/lib/gallery/OculusGroundGeometry.ts'
 import tower, {towerRamp as ramp, towerArch, towerFloorHeight, towerPlatformOutline, towerRampGradient, towerRampHalfWidth, towerRampHeight} from '../../src/lib/gallery/oculusTower.ts'
-import {floorHeight} from '../../src/lib/gallery/walls.ts'
+import {floorHeight} from './fixtures/gallery.ts'
 import {addOculusRailings} from './helpers/oculusRailings.ts'
 
 await RAPIER.init()

@@ -4,12 +4,12 @@ import {PerspectiveCamera} from 'three/webgpu'
 
 import {lodgeFloorPlanks} from '../../src/lib/gallery/lodge.ts'
 import {siennaCeilingPlanks, siennaRugSize, siennaRugThickness, siennaWainscot} from '../../src/lib/gallery/sienna.ts'
-import walls, {rooms} from '../../src/lib/gallery/walls.ts'
 import DamaskWallpaperMaterial, {damaskCoverage} from '../../src/lib/materials/DamaskWallpaperMaterial.ts'
 import JoineryWoodMaterial from '../../src/lib/materials/JoineryWoodMaterial.ts'
 import PersianRugMaterial, {rugBorder} from '../../src/lib/materials/PersianRugMaterial.ts'
 import PlankFloorMaterial, {siennaFloorPlanks} from '../../src/lib/materials/PlankFloorMaterial.ts'
 import PlankMaterial from '../../src/lib/materials/PlankMaterial.ts'
+import walls, {rooms} from './fixtures/gallery.ts'
 
 const sienna = rooms.find(room => room.id === 'sienna')!
 const siennaWalls = walls.filter(wall => wall.room === 'sienna')

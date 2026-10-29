@@ -11,10 +11,10 @@ import GoldMaterial, {goldReflectance} from '../../src/lib/materials/GoldMateria
 import VelvetRopeMaterial from '../../src/lib/materials/VelvetRopeMaterial.ts'
 
 const sharedGoldUsers = [
-  'src/components/levels/gallery/MoonfallCrater/index.tsx',
+  'src/components/MoonfallCrater/index.tsx',
   'src/rooms/salon/components/SalonRoom/index.tsx',
-  'src/components/levels/gallery/WallDecorations/index.tsx',
-  'src/components/levels/gallery/Props/index.tsx',
+  'src/components/WallDecorations/index.tsx',
+  'src/components/Props/index.tsx',
 ]
 describe('gold', () => {
   test('is a lacquered, fully metallic and procedurally varied physical material', () => {

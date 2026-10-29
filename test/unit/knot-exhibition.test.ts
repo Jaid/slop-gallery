@@ -11,10 +11,11 @@ import StudioEnvironment from 'knot-materials/StudioEnvironment.ts'
 import {cameraPosition, positionView, positionViewDirection} from 'three/tsl'
 import {EquirectangularReflectionMapping, FloatType} from 'three/webgpu'
 
-import {knotRarityEditor} from '../../src/levels/knottingham/rarity.ts'
-import dumpKnots from '../../src/levels/knottingham/webmcp.ts'
 import {insideKnotGallery, knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
+import knottingham from '../../src/worlds/knottingham/index.ts'
+import {knotRarityEditor} from '../../src/worlds/knottingham/rarity.ts'
 
+const dumpKnots = () => knottingham.dumpKnots()
 // Known offenders that still displace from cached view-space varyings. Do not add to this list.
 const viewDependentRelief = new Set([
   'abyssal_veil',

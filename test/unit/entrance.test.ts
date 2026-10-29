@@ -2,11 +2,11 @@ import {expect, test} from 'bun:test'
 
 import {FrontSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
-import {walls} from '../../src/lib/gallery.ts'
 import mainEntrance from '../../src/lib/gallery/entrance.ts'
 import EntranceGeometry from '../../src/lib/gallery/EntranceGeometry.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 import WalnutMaterial from '../../src/lib/materials/WalnutMaterial.ts'
+import walls from './fixtures/gallery.ts'
 
 const withEntrance = (check: (geometry: EntranceGeometry) => void) => {
   const geometry = new EntranceGeometry

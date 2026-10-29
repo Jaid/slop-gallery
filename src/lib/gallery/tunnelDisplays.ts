@@ -1,7 +1,7 @@
+import type {Wall} from '../placement/wallGeometry.ts'
 import type {FloorRectangle} from './floors.ts'
 import type {StairBeam} from './stairs/StairFlight.ts'
 import type {Vec3} from './types.ts'
-import type {Wall} from './walls.ts'
 
 import {wallCoordinates} from '../placement/wallGeometry.ts'
 import {wallFace} from './architectureDimensions.ts'
@@ -120,9 +120,9 @@ const tunnelDisplays = (['west', 'east'] as const).map((side, index) => {
   const rampY = lowerCornerY + (middleCount + 1) * rise
   const rampSlope = (rampY - cornerY) / (rampZ - upperZ[1])
   const flights = [
-    new StairFlight(`${id}-upper`, [innerX, balconyY, doorZ], [turnX, cornerY + rise, doorZ], stairWidth, upperCount, threshold, 0, 'oculus', headroom),
-    new StairFlight(`${id}-middle`, [middleX, rampY, rampZ], [middleX, lowerCornerY + rise, lowerZ[0]], stairWidth, middleCount, 0, 0, 'oculus', headroom),
-    new StairFlight(`${id}-lower`, [turnX, lowerCornerY, lowerCenterZ], [outsideX, landingY + rise, lowerCenterZ], stairWidth, lowerCount, 0, 0, 'oculus', headroom),
+    new StairFlight(`${id}-upper`, [innerX, balconyY, doorZ], [turnX, cornerY + rise, doorZ], stairWidth, upperCount, threshold, 0, 'exhibition', headroom),
+    new StairFlight(`${id}-middle`, [middleX, rampY, rampZ], [middleX, lowerCornerY + rise, lowerZ[0]], stairWidth, middleCount, 0, 0, 'exhibition', headroom),
+    new StairFlight(`${id}-lower`, [turnX, lowerCornerY, lowerCenterZ], [outsideX, landingY + rise, lowerCenterZ], stairWidth, lowerCount, 0, 0, 'exhibition', headroom),
   ] as const
   const corners: [DisplayLevel, DisplayLevel] = [
     {
@@ -166,10 +166,10 @@ const tunnelDisplays = (['west', 'east'] as const).map((side, index) => {
   const outerFace = passageOrientation(2, direction)
   const stairWall = (name: string, wall: Pick<Wall, 'center' | 'rotation' | 'width'>, wallHeadroom = headroom): Wall => ({
     ...wall,
-    id: `oculus-stairs-${id}-${name}`,
-    room: 'oculus',
+    id: `exhibition-stairs_${id.replaceAll('-', '_')}_${name.replaceAll('-', '_')}`,
+    room: 'exhibition',
     height: wallHeadroom - 0.3,
-    hangable: false,
+    sticky: false,
     trimStyle: 'plain',
   })
   const flightWall = (flight: StairFlight, cross: number): Wall => ({

@@ -1,9 +1,9 @@
 import type {AiSettings} from '../../src/lib/ai/settings.ts'
 import type {PauseMenuStage as MenuStage} from 'use-pause-menu/core'
 
-import {afterEach, beforeEach, describe, expect, spyOn, test} from 'bun:test'
+import {afterEach, beforeAll, beforeEach, describe, expect, spyOn, test} from 'bun:test'
 
-import {createElement} from 'react'
+import {createElement, Suspense} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
 import {GraphicsModeProvider} from 'use-graphics-mode'
 
@@ -13,12 +13,18 @@ import {readAiSettings} from '../../src/lib/ai/settings.ts'
 import SoundEngine from '../../src/lib/audio/SoundEngine.ts'
 import {galleryEvents, resetGallery, startNewGame} from '../../src/lib/gallery/actions.ts'
 import defaultPortraits from '../../src/lib/gallery/defaultPortraits.ts'
-import {playerSession, playerSpawn} from '../../src/lib/gallery/PlayerSession.ts'
+import {playerSession} from '../../src/lib/gallery/PlayerSession.ts'
 import {createDocument, markControlled, readControlled, useGallery} from '../../src/lib/gallery/store.ts'
 import pauseMenu from '../../src/lib/pauseMenu.ts'
+import slopGallery from '../../src/worlds/gallery/index.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
 const state = useGallery.getState()
+beforeAll(async () => {
+  // The world’s minimap loads lazily: rendering it once starts the download, so the pause stage below renders it in place.
+  renderToStaticMarkup(createElement(Suspense, null, createElement(slopGallery.Minimap, {lower: false})))
+  await import('#component/GalleryMinimap')
+})
 const storageDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')
 let values: Map<string, string>
 let writes: number
@@ -203,7 +209,7 @@ test('New game resets and enters directly; it does nothing before the scene is r
   const enter = spyOn(pauseMenu, 'enter').mockImplementation(async () => {
     entered++
     expect(useGallery.getState().portraits.some(p => p.id === 'goose')).toBe(true)
-    expect(playerSession.snapshot().position).toEqual(playerSpawn.position)
+    expect(playerSession.snapshot().position).toEqual(slopGallery.spawn.position)
   })
   try {
     useGallery.getState().remove('goose')

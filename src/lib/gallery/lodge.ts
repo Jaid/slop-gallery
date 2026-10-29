@@ -103,7 +103,7 @@ export function lodgeWindowFloor(x: number, z: number) {
   return x >= lodgeWindow.tunnelX && x <= lodgeWindow.roomX && Math.abs(z - lodgeWindow.z) <= lodgeWindow.width / 2 ? lodgeWindow.bottom : undefined
 }
 
-export const lodgeTunnel = new Passage('lodge-tunnel', 'lodge', [[lodge.entranceX, lodge.entranceZ], [lodge.entranceX, lodge.tunnelZ], [-20, lodge.tunnelZ]], lodge.floorY, lodge.passageWidth)
+export const lodgeTunnel = new Passage('fortress', 'fortress', [[lodge.entranceX, lodge.entranceZ], [lodge.entranceX, lodge.tunnelZ], [-20, lodge.tunnelZ]], lodge.floorY, lodge.passageWidth)
 export const lodgeTunnelWalls = lodgeTunnel.walls
 /** The tunnel’s last meter trades the castle stone for the Lodge’s timber, instead of switching at the doorway. */
 export const lodgeTunnelTransition = new PassageTransition(lodgeTunnel)

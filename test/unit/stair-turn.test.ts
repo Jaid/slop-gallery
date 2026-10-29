@@ -8,7 +8,8 @@ import {wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
 import CurvedBoxGeometry from '../../src/lib/gallery/CurvedBoxGeometry.ts'
 import staircase, {stairFlights, stairFloorHeight, stairRoofs, stairTurn} from '../../src/lib/gallery/staircase.ts'
 import StairTurn from '../../src/lib/gallery/stairs/StairTurn.ts'
-import walls, {galleryPlacement, insideGallery, roomAt, wallCoordinates, wallPosition} from '../../src/lib/gallery/walls.ts'
+import {wallCoordinates, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
+import walls, {galleryPlacement, insideGallery, roomAt} from './fixtures/gallery.ts'
 
 await RAPIER.init()
 describe('round stair landing', () => {

@@ -4,7 +4,7 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {architectureGeometry, createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
-import walls from '../../src/lib/gallery/walls.ts'
+import walls from './fixtures/gallery.ts'
 
 await RAPIER.init()
 describe('plain doorway trim', () => {
@@ -67,6 +67,6 @@ describe('plain doorway trim', () => {
       trimStyle: undefined,
     })).toBe(classic)
     expect(classic.trim[0].boundingBox!.max.z).toBeCloseTo(0.325, 6)
-    expect(walls.filter(value => value.trimStyle === 'plain').every(value => ['lodge', 'oculus'].includes(value.room))).toBe(true)
+    expect(walls.filter(value => value.trimStyle === 'plain').every(value => ['exhibition', 'fortress', 'lodge', 'oculus'].includes(value.room))).toBe(true)
   })
 })

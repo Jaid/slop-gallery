@@ -1,24 +1,35 @@
+import type {FloorSize, GroundSurface} from '../base/Room.ts'
+import type {Vec3} from 'math'
+
+import {Geofence} from 'geofency'
+
+import {groundFenceY} from '#src/lib/gallery/floors.ts'
+import {siennaRugSize} from '#src/lib/gallery/sienna.ts'
+
 import Room from '../base/Room.ts'
 import floorBox from '../lib/floorBox.ts'
-import floorOrigin from '../lib/floorOrigin.ts'
+import footprint from '../lib/footprint.ts'
 import cameras from './cameras.ts'
 import lamps from './lamps.ts'
 import slots from './slots.ts'
 import spawns from './spawns.ts'
-import stickyWalls from './stickyWalls.ts'
+import walls from './walls.ts'
 
-const plan = {
-  center: [-14, 14],
-  size: [12, 12],
-} as const
+const size: FloorSize = [12, 12]
+const height = 5.8
 
 export default class Sienna extends Room {
+  override readonly air = floorBox(size, 0, height)
   override readonly color = '#674b37'
   override readonly description = 'Low light. Rich textures. Questionable company.'
-  override readonly fence = floorBox(plan.size, 0, 5.8)
-  override readonly floorY = 0
+  // Everything over its floor plan from the slab up; it comes before the Corridor, so the wall with the doorway between them is the Sienna’s.
+  override readonly fence = new Geofence([{
+    ...footprint([this.air]),
+    floor: groundFenceY,
+  }])
+  override readonly height = height
   override readonly id = 'sienna'
-  override readonly origin = floorOrigin(plan, this.floorY)
+  override readonly size = size
   override readonly spawn = spawns['']
 
   constructor() {
@@ -28,7 +39,12 @@ export default class Sienna extends Room {
       spawns,
       lamps,
       slots,
-      stickyWalls,
+      walls,
     })
+  }
+
+  /** The rug in the middle muffles every step, the floorboards around it sound hollow. */
+  override groundSurface([x, , z]: Vec3): GroundSurface {
+    return Math.abs(x) <= siennaRugSize[0] / 2 + 1e-6 && Math.abs(z) <= siennaRugSize[1] / 2 + 1e-6 ? 'fabric' : 'hollow'
   }
 }

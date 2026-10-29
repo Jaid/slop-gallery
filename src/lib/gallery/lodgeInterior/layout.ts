@@ -89,11 +89,6 @@ const lodgeInterior = {
     drop: lodge.height - boss.height - 2.8,
     /** light height relative to the hub, a little below the wheel */
     lightY: -0.14,
-    color: '#ffc68a',
-    intensity: 20,
-    /** far enough to reach into the bay’s corners */
-    distance: 7,
-    decay: 1.25,
   },
   /**
    * The fieldstone chimney breast on the south wall. Lengths are along the room’s z; the fireplace group itself is turned by 180°, so its frame uses the negated values.

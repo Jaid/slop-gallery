@@ -1,12 +1,12 @@
 import type {NodeMaterial} from 'three/webgpu'
 
-import Fountain from '#component/levels/gallery/Fountain'
-import FountainBenches from '#component/levels/gallery/FountainBenches'
-import LobbyFloor from '#component/levels/gallery/LobbyFloor'
-import LobbyVault from '#component/levels/gallery/LobbyVault'
-import {rooms} from '#src/lib/gallery.ts'
+import Fountain from '#component/Fountain'
+import FountainBenches from '#component/FountainBenches'
+import LobbyFloor from '#component/LobbyFloor'
+import LobbyVault from '#component/LobbyVault'
+import slopGallery from '#src/worlds/gallery/index.ts'
 
-const room = rooms.find(candidate => candidate.id === 'lobby')!
+const room = slopGallery.room('lobby')
 
 /** The Lobby has no flat ceiling: its coffered vault rises above the walls, lit by its chandeliers and the sun. */
 export default function LobbyRoom({cladding, glass, stone, wood}: Omit<Parameters<typeof LobbyFloor>[0], 'room'> & {

@@ -1,6 +1,7 @@
+import type {GalleryRoomId as RoomId} from '#src/worlds/gallery/index.ts'
+import type {Wall} from '../../placement/wallGeometry.ts'
 import type {FloorRectangle} from '../floors.ts'
-import type {RoomId, Vec3} from '../types.ts'
-import type {Wall} from '../walls.ts'
+import type {Vec3} from '../types.ts'
 
 import {wallFace} from '../architectureDimensions.ts'
 import passageOrientation from './orientation.ts'
@@ -173,13 +174,13 @@ export default class Passage {
         }
       })
       this.walls.push({
-        id: `${id}-wall-${i}`,
+        id: `${id}-wall_${i}`,
         room,
         center: edge.axis === 0 ? [center, floorY, edge.cross] : [edge.cross, floorY, center],
         rotation: face.rotation,
         width: edge.max - edge.min,
         height: height - 0.3,
-        hangable: false,
+        sticky: false,
         trimStyle: 'plain',
         ...holes.length ? {holes} : {},
       })

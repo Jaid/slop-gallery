@@ -1,14 +1,19 @@
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 
-import CeilingLeds from '#component/levels/gallery/CeilingLeds'
-import BanquetFloor from '#component/levels/gallery/BanquetFloor'
+import BanquetFloor from '#component/BanquetFloor'
+import CeilingLeds from '#component/CeilingLeds'
 import Box from '#src/components/Scene/primitives.tsx'
-import {litFrom} from '#src/components/World/relations.ts'
-import {rooms} from '#src/lib/gallery.ts'
-import {banquetLedLight, banquetLedSlots} from '#src/lib/gallery/banquet.ts'
+import {banquetLedSlots} from '#src/lib/gallery/banquet.ts'
+import lamps from '#src/rooms/banquet/lamps.ts'
+import slopGallery from '#src/worlds/gallery/index.ts'
 
-const room = rooms.find(candidate => candidate.id === 'banquet')!
+const room = slopGallery.room('banquet')
 const [width, depth] = room.size
+/** the lamps under the panes, from north to south like the panes */
+const leds = (['led_north', 'led_middle', 'led_south'] as const).map(id => ({
+  id: `banquet-${id}`,
+  strength: lamps[id].strength,
+}))
 
 /** Lit by breakable LED panes with their own dimming lights instead of fixed light boxes. */
 export default function BanquetRoom({glass, stone, wood}: Omit<Parameters<typeof BanquetFloor>[0], 'room'>) {
@@ -20,6 +25,6 @@ export default function BanquetRoom({glass, stone, wood}: Omit<Parameters<typeof
       <Box color='#e1dccc' position={[0, room.height - 0.02, 0]} size={[width, 0.18, depth]} />
       <BanquetFloor glass={glass} room={room} stone={stone} wood={wood} />
     </group>
-    <CeilingLeds light={banquetLedLight} name='banquet' optional rooms={litFrom('banquet', 'banquet-led_north', 'banquet-led_middle', 'banquet-led_south')} slots={banquetLedSlots} />
+    <CeilingLeds lamps={leds} name='banquet' slots={banquetLedSlots} />
   </>
 }

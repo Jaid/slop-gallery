@@ -10,16 +10,18 @@ import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import lodge, {lodgeWindow, lodgeWindowFloor, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import LodgeWindowGeometry from '../../src/lib/gallery/LodgeWindowGeometry.ts'
 import TimberGeometry, {timberProfile} from '../../src/lib/gallery/passages/TimberGeometry.ts'
-import PlayerSession, {playerSpawn} from '../../src/lib/gallery/PlayerSession.ts'
+import PlayerSession from '../../src/lib/gallery/PlayerSession.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
-import walls, {floorHeight, galleryPlacement, insideGallery, placementIssue, roomAt, wallPosition} from '../../src/lib/gallery/walls.ts'
+import {placementIssue, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
+import slopGallery from '../../src/worlds/gallery/index.ts'
+import walls, {floorHeight, galleryPlacement, insideGallery, roomAt} from './fixtures/gallery.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
 await RAPIER.init()
 const material = new MeshBasicMaterial
 const timber = TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts)
 const recess = new LodgeWindowGeometry
-const architecture = walls.filter(wall => wall.id === 'lodge-west' || wall.id.startsWith('corridor-wall-')).map(wall => ({
+const architecture = walls.filter(wall => wall.id === 'lodge-west' || wall.id.startsWith('corridor-wall_')).map(wall => ({
   wall,
   geometry: createArchitectureGeometry(wall),
 }))
@@ -91,7 +93,7 @@ describe('Lodge through-window', () => {
     }
   })
   test('a saved recess position restores crouched without waiting for physics broad-phase initialization', () => {
-    const session = new PlayerSession
+    const session = new PlayerSession(slopGallery)
     session.restore({
       position: [(lodgeWindow.roomX + lodgeWindow.tunnelX) / 2, lodgeWindow.bottom + 0.02, lodgeWindow.z],
       yaw: 0,
@@ -111,7 +113,7 @@ describe('Lodge through-window', () => {
     const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
     const motor = new EgoMotor(RAPIER, world, body, collider)
     try {
-      motor.teleport(saved.position, playerSpawn.position)
+      motor.teleport(saved.position, slopGallery.spawn.position)
       expect(motor.crouching).toBe(true)
       expect(body.translation().x).toBeCloseTo(saved.position[0], 5)
       expect(collider.halfHeight()).toBeCloseTo(defaultEgoOptions.crouchHeight / 2 - defaultEgoOptions.radius)

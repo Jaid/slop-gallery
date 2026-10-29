@@ -28,13 +28,13 @@ export const knottinghamScene = (graphics: 'cinematic' | 'heavy'): KnotScene => 
   const setup = await resolveGallerySetup({
     graphics,
     height: String(stillHeight),
+    // ?knot_id opens Knottingham on its own.
+    knot_id: item.id,
     knot_rotation: 'false',
-    level: 'knottingham',
     pmrem: 'slop_gallery',
     seed: '1',
     width: String(stillWidth),
   })
-  setup.search.set('knot_id', item.id)
   await using gallery = await openHeadlessGallery(setup, {
     cacheDir: 'node_modules/.vite-render-knot',
     initScript: installVirtualClock,

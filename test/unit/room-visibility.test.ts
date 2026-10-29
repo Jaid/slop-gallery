@@ -5,7 +5,7 @@ import {expect, test} from 'bun:test'
 import {Box3, Frustum, Matrix4, PerspectiveCamera, Sphere, Vector3} from 'three/webgpu'
 
 import {portals, roomContaining, roomEnclosing, roomsAt, roomsOverlapping, visibleRegions, visibleRooms} from '../../src/lib/gallery/roomVisibility.ts'
-import {rooms} from '../../src/lib/gallery/walls.ts'
+import {rooms} from './fixtures/gallery.ts'
 
 const viewProjection = (position: Vec3, target: Vec3) => {
   const camera = new PerspectiveCamera(62, 16 / 9, 0.05, 90)
@@ -29,17 +29,19 @@ test('every room is reachable through its portals', () => {
   expect(rooms.filter(room => !linked.has(room.id))).toEqual([])
 })
 test('a room shows the rooms behind the openings in view', () => {
-  // From the Vesper through both side doors of the Lobby into the Banquet, and through the Lobby’s glass wall into the Salon, but no further.
+  // From the Vesper through both side doors of the Lobby into the Banquet, through the Lobby’s glass wall into the Salon and through the Antechamber down the stairway to Moonfall, but no further.
   const vesper = visibleRooms('vesper', view([-14, 1.6, 3], [14, 1.6, 3]))
-  expect(vesper.has('banquet')).toBe(true)
-  expect(['moonfall', 'lodge', 'corridor'].filter(room => vesper.has(room as never))).toEqual([])
+  expect(['banquet', 'salon', 'moonfall'].filter(room => vesper.has(room as never))).toEqual(['banquet', 'salon', 'moonfall'])
+  expect(['exhibition', 'lodge', 'corridor'].filter(room => vesper.has(room as never))).toEqual([])
   // The Salon’s glass wall shows the Lobby extension, and the Lobby’s shows the Salon.
   expect(visibleRooms('salon', view([16, 1.6, -20], [0, 1.6, -20])).has('lobby')).toBe(true)
   expect(visibleRooms('lobby', view([0, 1.6, -28], [8, 1.6, -24])).has('salon')).toBe(true)
   // Facing the blank west wall of the Vesper.
   expect([...visibleRooms('vesper', view([-14, 1.6, 0], [-20, 1.6, 0]))]).toEqual(['vesper'])
+  // Facing south down the Lobby, the Oculus’ north arch into the Fortress lies behind the camera.
   const lobby = visibleRooms('lobby', view([0, 1.6, -28], [0, 1.6, 8]))
-  expect(lobby.has('corridor')).toBe(false)
+  expect(lobby.has('fortress')).toBe(false)
+  expect(lobby.has('lodge')).toBe(false)
   expect(lobby.has('antechamber')).toBe(true)
 })
 test('objects reaching past one room belong to none', () => {

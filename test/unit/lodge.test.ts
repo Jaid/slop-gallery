@@ -7,7 +7,7 @@ import EgoMotor from 'ego-player/motor'
 import {DoubleSide, Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import {corridorPassage, corridorRails, corridorRunner, corridorStairs, insideCorridor, lodgeThresholdSaddle} from '../../src/lib/gallery/corridor.ts'
+import {corridorHallEastX, corridorPassage, corridorRails, corridorRunner, corridorStairs, insideCorridor, lodgeThresholdSaddle} from '../../src/lib/gallery/corridor.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import lodge, {insideLodgeAccess, lodgeBay, lodgeBayFloor, lodgeOutline, lodgeTunnel, lodgeTunnelTransition, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import lodgeInterior, {lodgeFurnitureColliders} from '../../src/lib/gallery/lodgeInterior/layout.ts'
@@ -21,7 +21,9 @@ import TransitionGeometry from '../../src/lib/gallery/passages/TransitionGeometr
 import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
 import StairRunner from '../../src/lib/gallery/stairs/StairRunner.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
-import walls, {floorHeight, insideGallery, placementIssue, roomAt, wallPosition} from '../../src/lib/gallery/walls.ts'
+import {placementIssue, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
+import slopGallery from '../../src/worlds/gallery/index.ts'
+import walls, {floorHeight, insideGallery} from './fixtures/gallery.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
 await RAPIER.init()
@@ -264,13 +266,14 @@ describe('Lodge and Corridor route', () => {
         const position: Vec3 = [x, passage.floorY + 1.6, z]
         expect(insideRoute(position)).toBe(true)
         expect(insideGallery(position)).toBe(true)
-        expect(roomAt(position)).toBe(passage.room)
+        // The Lodge owns its half of the doorway passage from the Corridor’s hall.
+        expect(slopGallery.roomAt(position)?.id).toBe(passage === corridorPassage && x > corridorHallEastX ? 'lodge' : passage.room)
         expect(floorHeight(position)).toBeCloseTo(passage.floorY)
       }
     }
     for (const block of corridorStairs.blocks) {
       const position: Vec3 = [block.position[0], block.top + 1.6, block.position[2]]
-      expect(roomAt(position)).toBe('corridor')
+      expect(slopGallery.roomAt(position)?.id).toBe('corridor')
       expect(floorHeight(position)).toBeCloseTo(block.top)
     }
     expect(insideGallery([-18, -3.4, -20])).toBe(false)
@@ -290,7 +293,7 @@ describe('Lodge and Corridor route', () => {
     expect(wallPosition(northEast, northEast.width / 2, 0, 0)).toEqual([expect.closeTo(lodge.center[0] + lodge.size[0] / 2), 0, expect.closeTo(lodge.center[1] - lodge.size[1] / 2)])
     // Its floor belongs to the Lodge up to its walls, not in the corners they cut off.
     const inside: Vec3 = [lodge.center[0], lodge.floorY + 1.6, back.center[2] + 0.3]
-    expect(roomAt(inside)).toBe('lodge')
+    expect(slopGallery.roomAt(inside)?.id).toBe('lodge')
     expect(insideGallery(inside)).toBe(true)
     expect(floorHeight(inside)).toBe(lodge.floorY)
     const cutOff: Vec3 = [lodge.center[0] - lodge.size[0] / 2 + 0.3, lodge.floorY + 1.6, back.center[2] + 0.3]

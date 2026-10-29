@@ -1,7 +1,7 @@
 import {Box3, DataUtils, HalfFloatType, InstancedMesh, Mesh, OrthographicCamera, RenderTarget, Scene, Vector3, WebGPURenderer} from 'three/webgpu'
 
 import StudioEnvironment from '../../packages/knot-materials/src/StudioEnvironment.ts'
-import createSupportGeometry from '../../src/components/levels/knottingham/KnotLabels/supportGeometry.ts'
+import createSupportGeometry from '../../src/components/KnotLabels/supportGeometry.ts'
 import SlattedBenchGeometry from '../../src/lib/gallery/fountain/SlattedBenchGeometry.ts'
 import OculusRailing from '../../src/lib/gallery/railings/OculusRailing.ts'
 import PolylineTubeGeometry from '../../src/lib/gallery/railings/PolylineTubeGeometry.ts'

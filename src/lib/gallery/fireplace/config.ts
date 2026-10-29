@@ -93,12 +93,8 @@ const fire = {
     position: [0, 1.1, 0.3] as Vec3,
     /** fast graphics have no flames, only the glowing bed, so their light sits low in front of the logs */
     glowPosition: [0, 0.7, 0.35] as Vec3,
-    color: '#ffb45b',
-    /** before flickering, which averages 0.9 */
-    intensity: 68,
+    /** the light’s steady strength over the glowing bed, against the flames’ 68 before flickering, which averages 0.9 */
     glowIntensity: 52,
-    distance: 10,
-    decay: 2,
   },
   sparks: {
     count: 48,

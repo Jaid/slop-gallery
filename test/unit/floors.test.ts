@@ -7,7 +7,7 @@ import {BoxGeometry, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/we
 
 import {floorGlassThickness, roomFloorPlan, subtractFloorOpening} from '../../src/lib/gallery/floors.ts'
 import lobby from '../../src/lib/gallery/lobby.ts'
-import walls, {insideGallery, rooms, roomVisit} from '../../src/lib/gallery/walls.ts'
+import walls, {insideGallery, rooms, roomVisit} from './fixtures/gallery.ts'
 
 await RAPIER.init()
 const room = rooms.find(value => value.id === 'lobby')!
@@ -65,7 +65,7 @@ describe('rectangular floor openings', () => {
     expect(insideGallery([9, 1.7, -32.5])).toBe(false)
     expect(walls.find(wall => wall.id === 'lobby-north')!.center).toEqual([0, 0, -32])
     for (const side of ['west', 'east']) {
-      const extension = walls.find(wall => wall.id === `lobby-extension-${side}`)!
+      const extension = walls.find(wall => wall.id === `lobby-extension_${side}`)!
       expect(extension.center[2] - extension.width / 2).toBe(-32)
       expect(extension.center[2] + extension.width / 2).toBe(-8)
       expect(walls.find(wall => wall.id === `lobby-${side}`)!.center[2]).toBe(0)

@@ -9,12 +9,12 @@ import {PlacementSpace} from './base/PlacementSpace.ts'
 /**
  * The museum’s rooms, stairs and passages.
  *
- * The museum’s data module constructs it with its walls, floors and volume, which it cannot import itself without a cycle.
+ * The gallery world constructs it with its walls, floors and volume, which it cannot import itself without a cycle.
  */
 export class GalleryPlacementSpace extends PlacementSpace {
   readonly recoveryPosition: Vec3 = [0, 1, 4]
 
-  constructor(readonly walls: ReadonlyArray<Wall>, private readonly level: {
+  constructor(readonly walls: ReadonlyArray<Wall>, private readonly navigation: {
     contains: (position: Vec3) => boolean
     floorHeight: (position: Vec3) => number
   }) {
@@ -22,11 +22,11 @@ export class GalleryPlacementSpace extends PlacementSpace {
   }
 
   contains(position: Vec3) {
-    return this.level.contains(position)
+    return this.navigation.contains(position)
   }
 
   floorHeight(position: Vec3) {
-    return this.level.floorHeight(position)
+    return this.navigation.floorHeight(position)
   }
 
   /** The glass of the Lodge window and of the window between the Lobby and the Salon stops the aim before the walls behind it. */
@@ -38,7 +38,7 @@ export class GalleryPlacementSpace extends PlacementSpace {
       },
       {
         distance: salonWindowGlassDistance(origin, direction),
-        wallId: direction[0] < 0 ? 'salon-west' : 'lobby-extension-east',
+        wallId: direction[0] < 0 ? 'salon-west' : 'lobby-extension_east',
       },
     ]
     const pane = panes.filter(candidate => candidate.distance !== undefined).toSorted((a, b) => a.distance! - b.distance!).at(0)

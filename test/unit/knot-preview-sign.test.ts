@@ -4,8 +4,8 @@ import {knotBays, knotNumberLabel} from 'knot-materials/exhibition.ts'
 import {knotPreviewBottomClearance, knotPreviewHeight, knotPreviewMountY, knotPreviewPanelOffsetY, knotPreviewTextureHeight, knotPreviewTextureLayout, knotPreviewTextureWidth, knotPreviewWidth} from 'knot-materials/KnotPreviewLayout.ts'
 import {billboardParts} from 'knot-materials/signs.ts'
 
-import drawPreview, {knotPreviewBackground} from '../../src/components/levels/knottingham/KnotPreviewSigns/drawPreview.ts'
-import signAccentColor from '../../src/components/levels/knottingham/signAccentColor.ts'
+import drawPreview, {knotPreviewBackground} from '../../src/components/KnotPreviewSigns/drawPreview.ts'
+import signAccentColor from '../../src/components/signAccentColor.ts'
 
 test('runtime billboards keep one 3:2 mesh and pack stickers to fit the fixed raster', () => {
   expect(knotPreviewWidth / knotPreviewHeight).toBeCloseTo(3 / 2)

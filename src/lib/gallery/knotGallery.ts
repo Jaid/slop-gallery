@@ -3,8 +3,6 @@ import type {Vec3} from './types.ts'
 
 import {knotLayout} from 'knot-materials/exhibition.ts'
 
-import miterCorners from './cornerMiters.ts'
-
 export const knotGalleryBounds = knotLayout.bounds
 export const knotGallerySize = knotLayout.size
 export const knotGalleryCenter = knotLayout.center
@@ -13,49 +11,17 @@ export const knotFloorTile = knotLayout.rowSpacing / 8
 /** a corner of the floor’s tile grid: whole tiles run from the north wall to the south wall, and across the room the grid is centered, so both side walls cut their tiles alike */
 export const knotFloorOrigin = [knotGalleryCenter[0], knotGalleryBounds.northZ] as const
 
-export const knotGalleryWalls: Array<Wall> = miterCorners([
-  {
-    id: 'study-north',
-    center: [knotGalleryCenter[0], 0, knotGalleryBounds.northZ],
-    rotation: 0,
-    width: knotGallerySize[0],
-  },
-  {
-    id: 'study-south',
-    center: [knotGalleryCenter[0], 0, knotGalleryBounds.southZ],
-    rotation: Math.PI,
-    width: knotGallerySize[0],
-  },
-  {
-    id: 'study-west',
-    center: [knotGalleryBounds.minX, 0, knotGalleryCenter[2]],
-    rotation: Math.PI / 2,
-    width: knotGallerySize[2],
-  },
-  {
-    id: 'study-east',
-    center: [knotGalleryBounds.maxX, 0, knotGalleryCenter[2]],
-    rotation: -Math.PI / 2,
-    width: knotGallerySize[2],
-  },
-].map(wall => ({
-  ...wall,
-  center: wall.center as Vec3,
-  room: 'lobby',
-  height: knotGalleryBounds.height,
-})))
-
 export function insideKnotGallery([x, y, z]: Vec3) {
   return x > knotGalleryBounds.minX + 0.6 && x < knotGalleryBounds.maxX - 0.6 && z > knotGalleryBounds.northZ + 0.6 && z < knotGalleryBounds.southZ - 0.6 && y >= -0.2 && y < 5
 }
 
-/** Interaction occlusion follows this level’s walls, never the museum’s interior partitions. */
-export function knotGalleryWallDistance(origin: Vec3, direction: Vec3) {
+/** How far a ray travels to the nearest of the hall’s walls; interaction occlusion follows them alone, never the museum’s interior partitions. */
+export function knotGalleryWallDistance(walls: ReadonlyArray<Wall>, origin: Vec3, direction: Vec3) {
   if (!origin.every(Number.isFinite) || !direction.every(Number.isFinite)) {
     return Infinity
   }
   let nearest = Infinity
-  for (const wall of knotGalleryWalls) {
+  for (const wall of walls) {
     const sin = Math.sin(wall.rotation)
     const cos = Math.cos(wall.rotation)
     const facing = direction[0] * sin + direction[2] * cos

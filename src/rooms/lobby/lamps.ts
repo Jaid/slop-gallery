@@ -7,7 +7,8 @@ const chandelier = (z: number) => ({
   range: 15,
 }) satisfies Lamp
 
-// One under each of the vault’s three chandeliers, hung below the hub to reach past the candle ring.
+// One under each of the vault’s three chandeliers, hung below the hub to reach past the candle ring. They cast no shadow: a shadowed point light would cost six extra renders of the scene every frame.
+// The Oculus sees the chandeliers only through the glazed floor and the Salon only through its thick blue window, which both hide their light almost entirely, so neither keeps them on.
 export default {
   chandelier_north: chandelier(-8),
   chandelier_middle: chandelier(0),

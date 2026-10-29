@@ -1,14 +1,14 @@
 import type {EgoState, EgoZoomTransition} from 'ego-player'
 
-import {groundSurface} from '#level/navigation.ts'
 import {useGallery} from '#src/lib/gallery/store.ts'
 import {getPlayerZoom, setPlayerZoom} from '#src/lib/rendering/playerView.ts'
+import world from '#src/worlds/current.ts'
 
 import SoundEngine from './SoundEngine.ts'
 
 const surface = (state: EgoState) => {
   const {x, y, z} = state.position
-  return groundSurface(useGallery.getState().room, [x, y, z])
+  return world.groundSurface(useGallery.getState().room, [x, y, z])
 }
 const stop = () => SoundEngine.existing()?.stopPlayerSounds()
 

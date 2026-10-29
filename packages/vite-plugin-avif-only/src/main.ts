@@ -287,7 +287,7 @@ export default function avifOnly(options: AvifOnlyOptions = {}): Plugin {
       order: 'post',
       sequential: true,
       async handler() {
-        // Runs after normal public copying and level-specific public-asset filters.
+        // Runs after Vite and other plugins copied the public assets.
         const directory = isAbsolute(config.build.outDir) ? config.build.outDir : resolve(config.root, config.build.outDir)
         const jxlFileGlob = new Bun.Glob('**/*.jxl')
         const paths = await Array.fromAsync(jxlFileGlob.scan(directory))

@@ -20,13 +20,4 @@ export default {
     fov: 60,
     ratio: 16 / 9,
   },
-  tunnel_exhibition: {
-    position: [8.08, 0.66, -14.97],
-    aim: {
-      yaw: 0.02,
-      pitch: 0.01,
-    },
-    fov: 80,
-    ratio: 16 / 9,
-  },
 } satisfies Record<string, RoomCamera>

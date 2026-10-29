@@ -18,7 +18,7 @@ const pmremSchema = optis({
   },
 })
 
-/** Read an optional reflection environment that replaces the knots’ own studio, for comparing them under another level’s environment. */
+/** Read an optional reflection environment that replaces the knots’ own studio, for comparing them under another world’s environment. */
 export function readPmrem(input: URL | string = typeof location === 'undefined' ? '' : location.href): PmremId | undefined {
   return readPermalink(input, {schema: pmremSchema}).pmrem
 }

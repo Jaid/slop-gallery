@@ -13,8 +13,8 @@ import lobby from '../../src/lib/gallery/lobby.ts'
 import lowerGallery, {oculusCeiling, oculusPlatform, tunnelFloorHeight, tunnelSlope} from '../../src/lib/gallery/lowerGallery.ts'
 import SlopedBoxGeometry from '../../src/lib/gallery/SlopedBoxGeometry.ts'
 import StairFlight from '../../src/lib/gallery/stairs/StairFlight.ts'
-import walls, {floorHeight, insideGallery, roomAt, rooms} from '../../src/lib/gallery/walls.ts'
 import renderOculusRoom from '../../src/rooms/oculus/components/OculusRoom/index.tsx'
+import walls, {floorHeight, insideGallery, roomAt, rooms} from './fixtures/gallery.ts'
 
 await RAPIER.init()
 const {oculus, tunnel, moonfall} = lowerGallery
@@ -110,13 +110,13 @@ describe('oculus and connecting tunnel', () => {
     for (const z of [-13.9, -8, 0, 4.4]) {
       expect(insideGallery([0, tunnelFloorHeight(z) + 1.6, z])).toBe(true)
       expect(floorHeight([0, tunnelFloorHeight(z) + 1.6, z])).toBeCloseTo(tunnelFloorHeight(z))
-      expect(roomAt([0, tunnelFloorHeight(z) + 1.6, z])).toBe('oculus')
+      expect(roomAt([0, tunnelFloorHeight(z) + 1.6, z])).toBe('exhibition')
     }
     // beside the tunnel, between the Oculus and the displays’ north ends and past their south ends, where the landings of their stairways lie further out, behind the cutouts by the displays’ back walls
     for (const z of [-14, 4]) {
       expect(insideGallery([tunnel.width / 2 + 0.01, tunnelFloorHeight(z) + 1.6, z])).toBe(false)
     }
-    expect(roomAt([tunnel.width / 2 + 2, tunnelFloorHeight(4) + 1.6, 4])).toBe('oculus')
+    expect(roomAt([tunnel.width / 2 + 2, tunnelFloorHeight(4) + 1.6, 4])).toBe('exhibition')
   })
   test('the ceiling opening stays aligned with the transparent floor and contains no fixtures or lights', () => {
     const material = new MeshBasicMaterial
@@ -175,7 +175,7 @@ describe('oculus and connecting tunnel', () => {
               z: 0,
             })
             world.timestep = 1 / fps
-            const geometries = walls.filter(wall => ['moonfall-north', 'oculus-south'].includes(wall.id) || wall.id.startsWith('oculus-tunnel-')).map(wall => ({
+            const geometries = walls.filter(wall => ['exhibition-east', 'exhibition-west', 'moonfall-north', 'oculus-south'].includes(wall.id)).map(wall => ({
               wall,
               geometry: createArchitectureGeometry(wall),
             }))

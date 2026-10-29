@@ -2,11 +2,12 @@ import type {EgoDump} from 'ego-player'
 
 import stringifyClank from 'stringify-clank'
 
+import world from '#src/worlds/current.ts'
+
 import {playSoundEffect} from '../audio/soundEffects.ts'
 import SoundEngine from '../audio/SoundEngine.ts'
 import {isDevelopmentMode} from '../developmentMode.ts'
 import {useGallery} from '../gallery.ts'
-import {galleryLevel, galleryTitle} from '../level.ts'
 import readQueryOverrides from '../queryOverrides.ts'
 import {telemetry} from './index.ts'
 import saveDumpScreenshot from './saveDumpScreenshot.ts'
@@ -21,7 +22,7 @@ export function snapshotPlayerDump(dump: EgoDump) {
   const {room, active, held, inspecting, locked} = useGallery.getState()
   const sessionId = telemetry?.sessionId
   const context = {
-    level: galleryLevel,
+    world: world.id,
     room,
     // Nothing active, held or inspected is the common case, so those only appear when set.
     ...active === null ? {} : {active},
@@ -58,7 +59,7 @@ export default function recordPlayerDump(dump: EgoDump) {
     ...host ? {host} : {},
     ...query ? {query} : {},
   }
-  copyDump(`<details><summary>${galleryTitle} at ${formatLocalTime(new Date(time))}</summary><dump id=${id} date="${time}">${stringifyClank(clank)}</dump></details>`).catch(error => {
+  copyDump(`<details><summary>${world.title} at ${formatLocalTime(new Date(time))}</summary><dump id=${id} date="${time}">${stringifyClank(clank)}</dump></details>`).catch(error => {
     console.warn('Dump could not be copied to the clipboard.', error)
   })
   if (useGallery.getState().sound) {
@@ -66,7 +67,7 @@ export default function recordPlayerDump(dump: EgoDump) {
       console.warn('Dump confirmation sound could not be played.', error)
     })
   }
-  saveDumpScreenshot(`${galleryLevel}-${dump.id}`).catch(error => {
+  saveDumpScreenshot(`${world.id}-${dump.id}`).catch(error => {
     console.warn('Dump screenshot could not be captured.', error)
   })
   if (!telemetry) {

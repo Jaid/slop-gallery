@@ -17,8 +17,10 @@ import RopeRing from '../../src/lib/gallery/railings/RopeRing.ts'
 import StanchionRingGeometry from '../../src/lib/gallery/railings/StanchionRingGeometry.ts'
 import staircase from '../../src/lib/gallery/staircase.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
-import walls, {floorHeight, insideGallery, roomAt, rooms, roomVisit, wallPosition} from '../../src/lib/gallery/walls.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
+import {wallPosition} from '../../src/lib/placement/wallGeometry.ts'
+import slopGallery from '../../src/worlds/gallery/index.ts'
+import walls, {floorHeight, insideGallery, roomAt, rooms, roomVisit} from './fixtures/gallery.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
 await RAPIER.init()
@@ -161,7 +163,7 @@ describe('Moonfall impact hall', () => {
       expect(floorHeight(position)).toBeCloseTo(ground)
       expect(insideGallery(position)).toBe(true)
       expect(roomAt(position)).toBe('moonfall')
-      const session = new PlayerSession
+      const session = new PlayerSession(slopGallery)
       session.capture({
         position,
         yaw: 1.3,

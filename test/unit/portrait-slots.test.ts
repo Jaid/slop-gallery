@@ -1,10 +1,12 @@
 import {describe, expect, test} from 'bun:test'
 
-import artworks from '../../src/levels/gallery/artworks.ts'
-import slots from '../../src/levels/gallery/slots.ts'
-import {galleryPlacement, placementIssue} from '../../src/lib/gallery/walls.ts'
 import {asPortrait, portraitRatios, slotArea, slotAreas, slotFrame} from '../../src/lib/placement/portraitSlots.ts'
+import {placementIssue} from '../../src/lib/placement/wallGeometry.ts'
+import artworks from '../../src/worlds/gallery/artworks.ts'
+import slopGallery from '../../src/worlds/gallery/index.ts'
+import {galleryPlacement} from './fixtures/gallery.ts'
 
+const slots = slopGallery.portraitSlots()
 const occupied = slots.map(asPortrait)
 describe('portrait slots', () => {
   test('frames keep their ratio and area at every size', () => {

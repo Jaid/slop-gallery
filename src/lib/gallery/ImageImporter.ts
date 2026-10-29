@@ -1,7 +1,6 @@
 import type {Portrait, Vec3} from './types.ts'
 
-import {levelWallDistance} from '#level/navigation.ts'
-import placement from '#level/placement.ts'
+import world from '#src/worlds/current.ts'
 
 import {cameraPose, chime, loadBlob, newPortrait, notify} from './actions.ts'
 import {validateImage} from './imagePolicy.ts'
@@ -156,7 +155,7 @@ export default class ImageImporter {
           const title = file.name.replace(/\.[^.]+$/, '').replaceAll(/[-_]/g, ' ').trim().slice(0, 150) || 'An untitled arrival'
           const p = newPortrait(source, title, size.width, size.height, pose)
           const s = useGallery.getState()
-          const place = target && placement.findPlacement(target.origin, target.direction, p.width, p.height, s.portraits, p.id)
+          const place = target && world.placement.findPlacement(target.origin, target.direction, p.width, p.height, s.portraits, p.id)
           if (place?.valid) {
             Object.assign(p, {
               position: place.position,
@@ -166,8 +165,8 @@ export default class ImageImporter {
               hung: true,
             })
           } else {
-            const distance = Math.min(1.6, Math.max(0.25, levelWallDistance(pose.position, pose.direction) - 0.35))
-            p.position = [pose.position[0] + pose.direction[0] * distance, Math.max(placement.floorHeight([pose.position[0] + pose.direction[0] * distance, pose.position[1], pose.position[2] + pose.direction[2] * distance]) + 0.8, pose.position[1] + pose.direction[1] * distance + count * 0.15), pose.position[2] + pose.direction[2] * distance]
+            const distance = Math.min(1.6, Math.max(0.25, world.wallDistance(pose.position, pose.direction) - 0.35))
+            p.position = [pose.position[0] + pose.direction[0] * distance, Math.max(world.placement.floorHeight([pose.position[0] + pose.direction[0] * distance, pose.position[1], pose.position[2] + pose.direction[2] * distance]) + 0.8, pose.position[1] + pose.direction[1] * distance + count * 0.15), pose.position[2] + pose.direction[2] * distance]
           }
           s.add(p)
           count++

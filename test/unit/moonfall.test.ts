@@ -10,7 +10,8 @@ import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/galler
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import staircase, {stairBlocks, stairFlights, stairFloorHeight, stairRailGeometry, stairRoofs, stairTurn} from '../../src/lib/gallery/staircase.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
-import walls, {floorHeight, galleryPlacement, insideGallery, placementIssue, roomAt, rooms, roomVisit, wallPosition} from '../../src/lib/gallery/walls.ts'
+import {placementIssue, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
+import walls, {floorHeight, galleryPlacement, insideGallery, roomAt, rooms, roomVisit} from './fixtures/gallery.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
 await RAPIER.init()
@@ -138,7 +139,7 @@ describe('lower gallery', () => {
               z: 0,
             })
             world.timestep = 1 / fps
-            const geometries = walls.filter(wall => ['antechamber-east', 'moonfall-east'].includes(wall.id) || wall.id.startsWith('moonfall-stairs-')).map(wall => ({
+            const geometries = walls.filter(wall => ['antechamber-east', 'moonfall-east'].includes(wall.id) || wall.id.startsWith('moonfall-stairs_')).map(wall => ({
               wall,
               geometry: createArchitectureGeometry(wall),
             }))

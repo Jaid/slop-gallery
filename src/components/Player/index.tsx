@@ -7,17 +7,17 @@ import EgoPlayer, {defaultEgoOptions} from 'ego-player'
 import {useEffect, useRef, useState} from 'react'
 import {Euler, PerspectiveCamera, Quaternion, Vector3} from 'three/webgpu'
 
-import {insideLevel, levelFloorHeight} from '#level/navigation.ts'
 import {attachPlayerAudio, onPlayerLand, onPlayerStep, onPlayerZoomChange, onPlayerZoomTransition} from '#src/lib/audio/playerAudio.ts'
 import {isDevelopmentMode} from '#src/lib/developmentMode.ts'
 import {bodyPose, cameraPose, dropPortrait, galleryEvents, markControlled, narrate, setCameraFocused, useGallery} from '#src/lib/gallery.ts'
 import {cameraBookmarkFeet, findCameraBookmark} from '#src/lib/gallery/bookmarks.ts'
 import {flyMode} from '#src/lib/gallery/flyMode.ts'
 import {activateInteractiveObject} from '#src/lib/gallery/interactiveObjects.ts'
-import {playerSession, playerSpawn} from '#src/lib/gallery/PlayerSession.ts'
+import {playerSession} from '#src/lib/gallery/PlayerSession.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
 import {playerTelemetry} from '#src/lib/telemetry/index.ts'
 import {playerDumpHandler, playerDumps, snapshotPlayerDump} from '#src/lib/telemetry/recordPlayerDump.ts'
+import world from '#src/worlds/current.ts'
 
 const enabled = () => !cameraPose.focused
 const cameraEnabled = () => !cameraPose.focused
@@ -92,11 +92,13 @@ export default function Player() {
       }
       heldCamera.current = null
       // Gallery navigation describes camera poses; ego-player consistently uses feet.
-      const destination = feet ? position : [position[0], Math.max(levelFloorHeight(position) + 0.04, position[1] - 1.6), position[2]] as [number, number, number]
-      if (!insideLevel(destination)) {
+      const destination = feet ? position : [position[0], Math.max(world.floorHeight(position) + 0.04, position[1] - 1.6), position[2]] as [number, number, number]
+      if (!world.contains(destination)) {
         return
       }
       player.current?.teleport(destination, rotation)
+      // The body is there before the player’s next update, so whatever follows it, like the room the player is in, never sees it where it was.
+      bodyPose.center = [destination[0], destination[1] + defaultEgoOptions.height / 2, destination[2]]
       // onUpdate checkpoints the resolved physical destination, including any safe-spawn fallback.
     }
     galleryEvents.addEventListener('teleport', teleport)
@@ -168,5 +170,5 @@ export default function Player() {
       }
     }
   }
-  return <EgoPlayer cameraEnabled={cameraEnabled} enabled={enabled} fallbackPosition={playerSpawn.position} flying={flying} input={input} pitch={initial.pitch} pointerLock={pointerLock} position={initial.position} yaw={initial.yaw} ref={player} onDump={playerDumpHandler} onImpact={onImpact} onInput={markControlled} onInteract={onInteract} onLand={onPlayerLand} onStep={onPlayerStep} onUpdate={onUpdate} onZoomChange={onPlayerZoomChange} onZoomTransition={onPlayerZoomTransition} />
+  return <EgoPlayer cameraEnabled={cameraEnabled} enabled={enabled} fallbackPosition={world.spawn.position} flying={flying} input={input} pitch={initial.pitch} pointerLock={pointerLock} position={initial.position} yaw={initial.yaw} ref={player} onDump={playerDumpHandler} onImpact={onImpact} onInput={markControlled} onInteract={onInteract} onLand={onPlayerLand} onStep={onPlayerStep} onUpdate={onUpdate} onZoomChange={onPlayerZoomChange} onZoomTransition={onPlayerZoomTransition} />
 }

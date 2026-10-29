@@ -7,9 +7,9 @@ import BrushedMetalMaterial, {steelReflectance} from '../../src/lib/materials/Br
 import metal from '../../src/lib/materials/metal.ts'
 
 const clients = [
-  'src/components/levels/gallery/FountainBenches/index.tsx',
-  'src/components/levels/gallery/OculusRailings/index.tsx',
-  'src/components/levels/knottingham/KnotLabels/index.tsx',
+  'src/components/FountainBenches/index.tsx',
+  'src/components/OculusRailings/index.tsx',
+  'src/components/KnotLabels/index.tsx',
 ]
 describe('shared satin steel', () => {
   test('is a fully metallic, opaque PBR material with filtered procedural brushing', () => {

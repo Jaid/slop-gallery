@@ -10,10 +10,10 @@ import {Object3D, Quaternion, Vector3} from 'three/webgpu'
 
 import DynamicImageMaterial from '#component/DynamicImageMaterial'
 import PortraitLabel from '#component/PortraitLabel'
-import placement from '#level/placement.ts'
 import {chime, requestMerge, useGallery} from '#src/lib/gallery.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
 import {portraitImageDepth} from '#src/lib/gallery/portraitOrbit.ts'
+import world from '#src/worlds/current.ts'
 
 export default function Portrait({portrait: p}: {portrait: PortraitData}) {
   const body = useRef<RapierRigidBody>(null)
@@ -81,8 +81,8 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
       magic.current.instanceMatrix.needsUpdate = true
     }
     const position = body.current?.translation()
-    if (body.current && position && !p.hung && position.y < placement.floorHeight([position.x, position.y, position.z]) - 4) {
-      const [x, y, z] = placement.recoveryPosition
+    if (body.current && position && !p.hung && position.y < world.placement.floorHeight([position.x, position.y, position.z]) - 4) {
+      const [x, y, z] = world.placement.recoveryPosition
       body.current.setTranslation({
         x,
         y,

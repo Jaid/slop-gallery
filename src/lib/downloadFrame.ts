@@ -1,6 +1,6 @@
 import '#src/lib/diagnostics.ts'
 
-import {galleryLevel} from './level.ts'
+import {currentWorldId} from '#src/worlds/index.ts'
 
 export type FrameFormat = 'png' | 'webp'
 
@@ -17,7 +17,7 @@ export type FrameDownload = {
 
 const defaultName = () => {
   const now = new Date
-  return `${galleryLevel}-${now.toISOString().replaceAll(/[.:]/gu, '-').replace(/-\d{3}Z$/u, '')}`
+  return `${currentWorldId}-${now.toISOString().replaceAll(/[.:]/gu, '-').replace(/-\d{3}Z$/u, '')}`
 }
 type EncodedFrame = Pick<FrameDownload, 'height' | 'nonBlackFraction' | 'width'> & {blob: Blob}
 
@@ -61,7 +61,7 @@ const encodeWebp = async (): Promise<EncodedFrame> => {
   }
 }
 
-/** Download the current frame losslessly as `<name>.<format>`, by default `<level>-<timestamp>.webp`. Rejects when the capture is not mounted or encoding fails. */
+/** Download the current frame losslessly as `<name>.<format>`, by default `<world>-<timestamp>.webp`. Rejects when the capture is not mounted or encoding fails. */
 export default async function downloadFrame({name = defaultName(), format = 'webp'}: {
   format?: FrameFormat
   name?: string

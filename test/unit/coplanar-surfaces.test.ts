@@ -1,4 +1,4 @@
-import type {Wall} from '../../src/lib/gallery/walls.ts'
+import type {Wall} from '../../src/lib/placement/wallGeometry.ts'
 import type {BufferGeometry} from 'three/webgpu'
 
 import {afterAll, describe, expect, test} from 'bun:test'
@@ -8,14 +8,15 @@ import {DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/web
 import {createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
 import miterCorners from '../../src/lib/gallery/cornerMiters.ts'
 import {corridorPassage} from '../../src/lib/gallery/corridor.ts'
-import {knotGalleryWalls} from '../../src/lib/gallery/knotGallery.ts'
 import lodge, {lodgeTunnel} from '../../src/lib/gallery/lodge.ts'
 import lodgeInterior from '../../src/lib/gallery/lodgeInterior/layout.ts'
 import UpholsteredSeatGeometry from '../../src/lib/gallery/lodgeInterior/UpholsteredSeatGeometry.ts'
 import Passage from '../../src/lib/gallery/passages/Passage.ts'
 import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
 import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
-import walls, {wallPosition} from '../../src/lib/gallery/walls.ts'
+import {wallPosition} from '../../src/lib/placement/wallGeometry.ts'
+import knottingham from '../../src/worlds/knottingham/index.ts'
+import walls from './fixtures/gallery.ts'
 
 const material = new MeshBasicMaterial({side: DoubleSide})
 const disposables: Array<{dispose: () => void}> = [material]
@@ -82,8 +83,8 @@ describe('inside corners of room walls', () => {
     }
     // Walls that run on in a straight line, or open into a doorway, keep square ends.
     expect(mitered(walls, 'lobby-west')).toEqual([1, 0])
-    expect(mitered(walls, 'lobby-extension-west')).toEqual([0, 1])
-    for (const wall of knotGalleryWalls) {
+    expect(mitered(walls, 'lobby-extension_west')).toEqual([0, 1])
+    for (const wall of knottingham.walls) {
       expect(wall.miters).toEqual([1, 1])
     }
   })

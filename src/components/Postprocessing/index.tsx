@@ -50,7 +50,7 @@ const Postprocessing = ({focus = false, heavy = true, settings, tunable = false}
       renderer.toneMapping = toneMapping as typeof renderer.toneMapping
     }
   }, [renderer, toneMapping, tunable])
-  // The scene pass renders into targets with their own outputs. Activated after the first frame, every material of the scene would build a second time for them.
+  // The scene pass renders into targets with their own outputs. Activated after the first frame, every material of the scene would build a second time for them. The world’s scene suspends the canvas until it is in, so the pipeline finds its sun.
   useLayoutEffect(() => {
     const options = {
       heavy,

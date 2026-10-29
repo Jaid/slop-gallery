@@ -1,4 +1,4 @@
-import type {RoomId} from '#src/rooms/index.ts'
+import type {GalleryRoomId as RoomId} from '#src/worlds/gallery/index.ts'
 
 import {create} from 'zustand'
 

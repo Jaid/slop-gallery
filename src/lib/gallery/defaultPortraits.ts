@@ -3,8 +3,7 @@ import type {Portrait} from './types.ts'
 import optis from 'optis'
 import readPermalink from 'read-permalink'
 
-import artworks from '#level/artworks.ts'
-import slots from '#level/slots.ts'
+import world from '#src/worlds/current.ts'
 
 import {environmentRoll} from '../environmentSeed.ts'
 
@@ -36,14 +35,14 @@ export function readPortraitSet(input: URL | string = typeof location === 'undef
 export const portraitSet = readPortraitSet()
 
 /**
- * The level’s default works for a new game state, or none with `?portrait_set=false`, each hung in a portrait slot of its ratio, the free ones of higher priority first and among equal ones drawn by the environment `seed`. A work takes the size of its slot, so the same work hangs larger or smaller from one seed to the next.
+ * The world’s default works for a new game state, or none with `?portrait_set=false`, each hung in a portrait slot of its ratio, the free ones of higher priority first and among equal ones drawn by the environment `seed`. A work takes the size of its slot, so the same work hangs larger or smaller from one seed to the next.
  */
 export default function defaultPortraits(seed: number): Array<Portrait> {
   if (!portraitSet) {
     return []
   }
-  const free = slots.toSorted((a, b) => b.priority - a.priority || environmentRoll(seed, `portrait-slot:${a.id}`) - environmentRoll(seed, `portrait-slot:${b.id}`))
-  return artworks.map(({ratio, ...artwork}) => {
+  const free = world.portraitSlots().toSorted((a, b) => b.priority - a.priority || environmentRoll(seed, `portrait-slot:${a.id}`) - environmentRoll(seed, `portrait-slot:${b.id}`))
+  return world.artworks.map(({ratio, ...artwork}) => {
     const index = free.findIndex(slot => slot.ratio === ratio)
     if (index === -1) {
       throw new Error(`No ${ratio} portrait slot is left for ${artwork.id}.`)

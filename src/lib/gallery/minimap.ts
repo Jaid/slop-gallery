@@ -1,9 +1,15 @@
-import type {Portrait, RoomId, Vec3} from './types.ts'
+import type {Portrait, Vec3} from './types.ts'
+
+import {wallPosition} from '#src/lib/placement/wallGeometry.ts'
+import slopGallery from '#src/worlds/gallery/index.ts'
 
 import portraitObjects from './portraitObjects.ts'
-import walls, {roomAt, rooms, wallPosition} from './walls.ts'
 
-export const isLowerRoom = (id: RoomId) => rooms.find(room => room.id === id)!.floorY < 0
+const {walls} = slopGallery
+/** Whether the room lies on the lower floor; a position outside of every room counts by its own height. */
+const isLower = (room: {floorY: number} | undefined, [, y]: Vec3) => (room?.floorY ?? y) < 0
+/** Whether the room with the id lies on the lower floor. */
+export const isLowerRoom = (id: string) => (slopGallery.roomById(id)?.floorY ?? 0) < 0
 export const minimapHeading = ([x, , z]: Vec3) => Math.atan2(x, -z) * 180 / Math.PI
 
 export function minimapPortrait(portrait: Portrait) {
@@ -12,7 +18,7 @@ export function minimapPortrait(portrait: Portrait) {
   const wall = portrait.hung ? walls.find(candidate => candidate.id === portrait.wallId) : undefined
   return {
     position,
-    lower: isLowerRoom(wall?.room ?? roomAt(position)),
+    lower: isLower(wall ? slopGallery.roomById(wall.room) : slopGallery.roomAt(position), position),
   }
 }
 

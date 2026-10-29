@@ -1,29 +1,45 @@
+import type {GroundSurface} from '../base/Room.ts'
+
+import {Geofence} from 'geofency'
+
 import corridor, {lodgeThreshold} from '#src/lib/gallery/corridor.ts'
-import lodge, {lodgeBay} from '#src/lib/gallery/lodge.ts'
+import lodge, {lodgeBay, lodgeWindow} from '#src/lib/gallery/lodge.ts'
 
 import Room from '../base/Room.ts'
 import floorBox from '../lib/floorBox.ts'
-import floorOrigin from '../lib/floorOrigin.ts'
+import footprint from '../lib/footprint.ts'
 import ambienceEmitters from './ambienceEmitters.ts'
 import cameras from './cameras.ts'
 import lamps from './lamps.ts'
 import slots from './slots.ts'
 import spawns from './spawns.ts'
-import stickyWalls from './stickyWalls.ts'
+import walls from './walls.ts'
 
+/** Laid out around the middle of its square floor plan, at the height of its floor. */
 export default class Lodge extends Room {
-  override readonly color = '#936d47'
-  override readonly description = 'Weathered stone. Warm timber. A way back through the corridor.'
-  override readonly fence = [
+  override readonly air = [
     floorBox(lodge.size, 0, lodge.height),
     // The Lodge’s half of the doorway passage from the Corridor’s hall.
     floorBox(lodgeThreshold.size, corridor.floorY - lodge.floorY, corridor.height, [lodgeThreshold.center[0] - lodge.center[0], lodgeThreshold.center[1] - lodge.center[1]]),
     // The box around the bay off the north wall.
     floorBox(lodgeBay.bounds.size, 0, lodge.height, [lodgeBay.bounds.center[0] - lodge.center[0], lodgeBay.bounds.center[1] - lodge.center[1]]),
   ]
-  override readonly floorY = lodge.floorY
+  override readonly color = '#936d47'
+  override readonly description = 'Weathered stone. Warm timber. A way back through the corridor.'
+  override readonly fence = new Geofence([
+    // Its whole air, the doorway’s half by the Corridor and the north bay included, at every height, as nothing lies above or below it.
+    footprint(this.air),
+    // The window’s deep niche out to its glass in the Corridor’s lining; it comes before the Corridor, whose hall the niche reaches into.
+    {
+      x: lodgeWindow.tunnelX - lodge.center[0],
+      x2: lodgeWindow.roomX - lodge.center[0],
+      z: lodgeWindow.z - lodgeWindow.width / 2 - lodge.center[1],
+      z2: lodgeWindow.z + lodgeWindow.width / 2 - lodge.center[1],
+    },
+  ])
+  override readonly height = lodge.height
   override readonly id = 'lodge'
-  override readonly origin = floorOrigin(lodge, this.floorY)
+  override readonly size = lodge.size
   override readonly spawn = spawns['']
 
   constructor() {
@@ -33,9 +49,15 @@ export default class Lodge extends Room {
       spawns,
       ambience: ambienceEmitters,
       lamps,
+      sunlit: false,
       volumetricSun: 0,
       slots,
-      stickyWalls,
+      walls,
     })
+  }
+
+  /** The planks sound hollow. */
+  override groundSurface(): GroundSurface {
+    return 'hollow'
   }
 }

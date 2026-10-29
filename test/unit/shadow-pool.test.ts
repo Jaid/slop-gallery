@@ -2,6 +2,7 @@ import {expect, test} from 'bun:test'
 
 import {Group, PerspectiveCamera, PointLight, Scene} from 'three/webgpu'
 
+import {registerLamp} from '../../src/lib/rendering/lamps.ts'
 import {roomSwitches, toggleLightShadow, useLightEdits} from '../../src/lib/rendering/lightLevels.ts'
 import {ShadowPool} from '../../src/lib/rendering/shadowPool.ts'
 
@@ -133,12 +134,20 @@ test('a room change names what it switches on and off', () => {
   group.name = 'lodge-chandelier'
   scene.add(group)
   const chandelier = new PointLight
-  chandelier.userData.rooms = ['lodge', 'corridor']
+  registerLamp(chandelier, {
+    id: 'lodge-chandelier',
+    optional: false,
+    rooms: ['lodge', 'corridor'],
+  })
   group.add(chandelier)
-  for (const _ of [0, 1]) {
+  for (const index of [0, 1]) {
     const stairLamp = new PointLight
     stairLamp.name = 'stair-lamp'
-    stairLamp.userData.rooms = ['oculus']
+    registerLamp(stairLamp, {
+      id: `stair-lamp-${index}`,
+      optional: false,
+      rooms: ['oculus'],
+    })
     scene.add(stairLamp)
   }
   const everywhere = new PointLight

@@ -4,7 +4,7 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import {billboardParts, knotSign, knotSignParts, knotSignPosition, knotSignRoundParts} from 'knot-materials/signs.ts'
 import {BoxGeometry, Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
-import createSupportGeometry from '../../src/components/levels/knottingham/KnotLabels/supportGeometry.ts'
+import createSupportGeometry from '../../src/components/KnotLabels/supportGeometry.ts'
 import {circleSegments, triangleCount} from '../../src/lib/geometry.ts'
 
 await RAPIER.init()

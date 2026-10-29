@@ -8,7 +8,7 @@ import {Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/web
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import lowerGallery, {oculusPlatform, oculusRamps, rampFloorHeight} from '../../src/lib/gallery/lowerGallery.ts'
 import RampGeometry from '../../src/lib/gallery/RampGeometry.ts'
-import walls, {floorHeight} from '../../src/lib/gallery/walls.ts'
+import walls, {floorHeight} from './fixtures/gallery.ts'
 import {addOculusRailings} from './helpers/oculusRailings.ts'
 
 await RAPIER.init()

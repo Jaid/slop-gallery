@@ -10,7 +10,7 @@ const up = new Vector3
 const position = new Vector3
 
 /**
- * Hears the level’s ambience emitters from the camera: moves the Web Audio listener along with it every frame and starts the emitters once the sound engine exists, which only happens with the player’s first click.
+ * Hears the world’s ambience emitters from the camera: moves the Web Audio listener along with it every frame and starts the emitters once the sound engine exists, which only happens with the player’s first click.
  */
 export default function AmbienceListener() {
   useFrame(({camera}) => {

@@ -6,8 +6,8 @@ import {useEffect} from 'react'
 import {Euler, Quaternion, Raycaster, Vector2} from 'three/webgpu'
 
 import {enterGallery, galleryEvents, isTextInput, markControlled, useGallery} from '#src/lib/gallery.ts'
-import {playerSpawn} from '#src/lib/gallery/PlayerSession.ts'
 import pauseMenu from '#src/lib/pauseMenu.ts'
+import world from '#src/worlds/current.ts'
 
 import createGrabController from './grabController.ts'
 import teleportToPortrait from './teleportToPortrait.ts'
@@ -104,8 +104,8 @@ export default function useInteractionEvents({
       galleryEvents.dispatchEvent(new CustomEvent('teleport', {
         detail: {
           feet: true,
-          position: [...playerSpawn.position],
-          rotation: spawnRotation.setFromEuler(new Euler(playerSpawn.pitch, playerSpawn.yaw, 0, 'YXZ')).toArray(),
+          position: [...world.spawn.position],
+          rotation: spawnRotation.setFromEuler(new Euler(world.spawn.pitch, world.spawn.yaw, 0, 'YXZ')).toArray(),
         },
       }))
     }

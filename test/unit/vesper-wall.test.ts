@@ -3,8 +3,8 @@ import {describe, expect, test} from 'bun:test'
 import {mulberry32} from 'math/random'
 
 import {wallFace} from '../../src/lib/gallery/architecture.ts'
-import walls, {rooms} from '../../src/lib/gallery/walls.ts'
 import VesperWallMaterial, {fanAt, vesperFans} from '../../src/lib/materials/VesperWallMaterial.ts'
+import walls, {rooms} from './fixtures/gallery.ts'
 
 const vesper = rooms.find(room => room.id === 'vesper')!
 const vesperWalls = walls.filter(wall => wall.room === 'vesper')

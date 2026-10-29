@@ -123,7 +123,7 @@ function floorBounds(target: Object3D) {
   return bounds
 }
 /**
- * All reflective floors of a level share one reflection, so the scene is mirrored once per frame instead of once per floor. Floors at other heights would each need a mirror of their own: the level picks the height to mirror with {@link setFloorReflectionHeight}, and every floor in another plane shows its plain surface meanwhile.
+ * All reflective floors of a world share one reflection, so the scene is mirrored once per frame instead of once per floor. Floors at other heights would each need a mirror of their own: the world picks the height to mirror with {@link setFloorReflectionHeight}, and every floor in another plane shows its plain surface meanwhile.
  * Every floor sampling the reflection hides while it renders, since a pass can’t sample the texture it draws into.
  *
  * The reflection renders right before the main pass, with the same outputs into a target of the same layout, so every material shares its shaders between both instead of building them twice. Rendered from within the main pass, it would be one call deeper and get shaders of its own.

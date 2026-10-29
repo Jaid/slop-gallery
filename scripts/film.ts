@@ -12,14 +12,14 @@ import {degrees, galleryHelp, galleryOptions, openHeadlessGallery, parseNumbers,
 
 const help = `Usage: bun scripts/film.ts [options]
 
-Renders a camera flight through a level and writes it as an animated JPEG XL, a video or a PNG sequence.
+Renders a camera flight through a world and writes it as an animated JPEG XL, a video or a PNG sequence.
 Starts a private Vite dev server (or serves --target) and a private headless browser; never touches the visible browser.
 The engine clock is virtual: every frame advances the scene by exactly 1/fps seconds, however long it takes to render. Artworks that come into view are decoded before their frame is captured, so nothing pops in.
 
 Options:
   --recipe <file>         JSON camera recipe, or - to read it from stdin. Default: scripts/recipes/spawn.json, a two-second metronome sway at the gallery spawn
 ${galleryHelp()}
-  --output-file <file>    the extension picks the format. Default: out/film/<level>-<timestamp>.jxl
+  --output-file <file>    the extension picks the format. Default: out/film/<world>-<timestamp>.jxl
                           .jxl  animated JPEG XL
                           .webm, .mkv  AV1 video
                           .png  one PNG per frame, each written to the next free name after the given one (shot.png → shot_001.png, shot_002.png, …)
@@ -118,7 +118,7 @@ if (fps <= 0) {
 }
 const setup = await resolveGallerySetup(values)
 const settle = resolveSettle(values.settle)
-const output = values['output-file'] === undefined ? join(filmRoot, `${setup.levelName}-${timestamp()}.jxl`) : resolve(values['output-file'])
+const output = values['output-file'] === undefined ? join(filmRoot, `${setup.world}-${timestamp()}.jxl`) : resolve(values['output-file'])
 const format = frameFormat(output)
 const {width, height} = setup.viewport
 if ((format === 'webm' || format === 'mkv') && (width % 2 || height % 2)) {
@@ -211,7 +211,7 @@ const frameServer = Bun.serve({
 try {
   const frameUrl = `http://127.0.0.1:${frameServer.port}/`
   await page.evaluate(() => {
-    // Knots turned on the wall clock while the level loaded; every film starts them at the same angle.
+    // Knots turned on the wall clock while the world loaded; every film starts them at the same angle.
     globalThis.slopGallery!.resetKnotRotation?.()
     globalThis.virtualClock!.start()
     // Fiber measures its first frozen delta from the last wall-clock frame; this aligns it without recording.

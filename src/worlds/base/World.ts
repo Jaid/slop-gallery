@@ -1,0 +1,163 @@
+import type {Artwork, PlayerPose, Vec3} from '#src/lib/gallery/types.ts'
+import type {PlacementSpace} from '#src/lib/placement/base/PlacementSpace.ts'
+import type {Wall} from '#src/lib/placement/wallGeometry.ts'
+import type {WorldRoom} from '#src/lib/webmcp/analyzeWorld.ts'
+import type {KnotDump} from '#src/lib/webmcp/tools.ts'
+import type {GroundSurface, Room} from '#src/rooms/index.ts'
+import type {WorldId, WorldInfo} from '../index.ts'
+import type {PlacedLamp} from './PlacedRoom.ts'
+import type {Geofence} from 'geofency'
+import type {ComponentType} from 'react'
+
+import Geofences from 'geofency'
+
+import miterCorners from '#src/lib/gallery/cornerMiters.ts'
+
+import PlacedRoom from './PlacedRoom.ts'
+
+/** a room and the world position of its origin */
+export type RoomPlacement<Kind extends Room = Room> = readonly [room: Kind, origin: Vec3]
+
+const round = (value: number) => Math.round(value * 1e4) / 1e4 + 0
+
+/**
+ * A world the player can visit: the rooms it glues together, each at a placement of its own, and everything that spans them, like the walls artworks hang on, the floors and the scene that renders it all.
+ *
+ * Rooms come in the order their fences are checked, so where two fences overlap, the earlier room wins.
+ * Components that render the world load lazily: they import the current world themselves, which only exists once its module has finished loading.
+ */
+export default abstract class World<Kind extends Room = Room> {
+  /** how far ambient occlusion reaches around contacts, relative to the default */
+  readonly ambientOcclusionThickness: number = 1
+  /** the default works of the world before they hang in its portrait slots */
+  abstract readonly artworks: ReadonlyArray<Artwork>
+  /** the id of the room visitors start in, at its default spawn */
+  abstract readonly defaultRoom: Kind['id']
+  readonly enterLabel: string
+  /** the rooms’ fences in world meters by room id, in the order of {@link rooms} */
+  readonly geofences: Geofences<Kind['id'], Geofence>
+  abstract readonly id: WorldId
+  /** the map of the world in the pause menu, once for its lower floors and once for its upper ones */
+  abstract readonly Minimap: ComponentType<{lower: boolean}>
+  /** whether the welcome narration may play once the player first looks around */
+  readonly narratesIntroduction: boolean = false
+  /** where artworks hang and land */
+  abstract readonly placement: PlacementSpace
+  /** every room of the world, placed, in the order their fences are checked */
+  readonly rooms: ReadonlyArray<PlacedRoom<Kind>>
+  /** everything the world renders: its rooms, its lighting and its props */
+  abstract readonly Scene: ComponentType
+  /** the prefix of every key the world stores in the browser, so that worlds never share a save */
+  readonly storageKey: string
+  readonly tagline: string
+  readonly title: string
+  /** image behind the loading screen’s title, relative to the public directory */
+  readonly wallpaper?: string
+  /** every wall of every room in world meters, room by room, their trim mitered where two walls meet in an inside corner */
+  readonly walls: ReadonlyArray<Wall>
+  private readonly byId: ReadonlyMap<Kind['id'], PlacedRoom<Kind>>
+
+  constructor({enterLabel, storageKey, tagline, title, wallpaper}: WorldInfo, placements: ReadonlyArray<RoomPlacement<Kind>>) {
+    this.enterLabel = enterLabel
+    this.storageKey = storageKey
+    this.tagline = tagline
+    this.title = title
+    this.wallpaper = wallpaper
+    this.rooms = placements.map(([room, origin]) => new PlacedRoom(room, origin))
+    this.byId = new Map(this.rooms.map(room => [room.id, room]))
+    if (this.byId.size !== this.rooms.length) {
+      throw new Error('Every room of a world needs an id of its own.')
+    }
+    this.geofences = new Geofences(this.rooms.map(room => [room.id, room.fence]))
+    this.walls = miterCorners(this.rooms.flatMap(room => room.walls()))
+  }
+
+  /** the player’s pose on arrival: the default spawn of the {@link defaultRoom} */
+  get spawn(): PlayerPose {
+    return this.room(this.defaultRoom).spawn
+  }
+
+  /** Every camera bookmark of the world in world meters, room by room. */
+  cameraBookmarks() {
+    return this.rooms.flatMap(room => room.cameras())
+  }
+
+  /** Whether the position lies anywhere a player or an artwork may be. */
+  abstract contains(position: Vec3): boolean
+
+  /** Every Knot in the world with its current session rarity, for the `dump_knots` WebMCP tool; none by default. */
+  dumpKnots(): ReadonlyArray<KnotDump> {
+    return []
+  }
+
+  /** The height of the walkable floor under the position. */
+  abstract floorHeight(position: Vec3): number
+
+  /** What the ground under the position sounds like in the room the player is in. */
+  groundSurface(room: string, position: Vec3): GroundSurface {
+    return this.roomById(room)?.groundSurface(position) ?? 'generic'
+  }
+
+  /** The rooms the player must be in for the lamp to shine, or undefined for everywhere, the default. */
+  lampRooms(_lamp: PlacedLamp): ReadonlyArray<string> | undefined {
+    return undefined
+  }
+
+  /** Every lamp of the world with its global id in world meters, room by room. */
+  lamps() {
+    return this.rooms.flatMap(room => room.lamps())
+  }
+
+  /** Every portrait slot of the world in world meters, room by room. */
+  portraitSlots() {
+    return this.rooms.flatMap(room => room.slots())
+  }
+
+  /** The placed room with the id. */
+  room<Id extends Kind['id']>(id: Id): PlacedRoom<Extract<Kind, {id: Id}>> {
+    const room = this.byId.get(id)
+    if (!room) {
+      throw new Error(`${this.title} has no room “${id}”.`)
+    }
+    return room as PlacedRoom<Extract<Kind, {id: Id}>>
+  }
+
+  /** The first room whose fence holds the position, or undefined outside of every fence. */
+  roomAt(position: Vec3) {
+    const id = this.geofences.getMatch(position)
+    return id === null ? undefined : this.byId.get(id)
+  }
+
+  /** The placed room with the id, or undefined for an id the world doesn’t know, like one from a URL. */
+  roomById(id: string) {
+    return this.byId.get(id)
+  }
+
+  /** What the pause menu shows below the title of the room the player is in. */
+  roomTagline(room: PlacedRoom<Kind>) {
+    return room.description
+  }
+
+  /** Every spawn bookmark of the world in world meters, room by room. */
+  spawnBookmarks() {
+    return this.rooms.flatMap(room => room.spawns())
+  }
+
+  /** How far a ray from the origin travels until it meets a wall, which interaction never reaches through. */
+  abstract wallDistance(origin: Vec3, direction: Vec3): number
+
+  /** Every room as the union of its air’s boxes in world meters, for the `analyze_world` WebMCP tool. */
+  worldRooms(): ReadonlyArray<WorldRoom> {
+    return this.rooms.map(room => {
+      const boxes = room.air.map(({min, max}) => ({
+        min: [round(min.x), round(min.y), round(min.z)] as [number, number, number],
+        max: [round(max.x), round(max.y), round(max.z)] as [number, number, number],
+      }))
+      return {
+        id: room.id,
+        title: room.title,
+        fence: boxes.length === 1 ? boxes[0] : boxes,
+      }
+    })
+  }
+}

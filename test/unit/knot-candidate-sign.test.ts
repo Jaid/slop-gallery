@@ -6,7 +6,7 @@ import KnotCandidateSignGeometry from 'knot-materials/KnotCandidateSignGeometry.
 import {knotPreviewHeight, knotPreviewMountY, knotPreviewPanelOffsetY} from 'knot-materials/KnotPreviewLayout.ts'
 import {Quaternion, Vector3} from 'three/webgpu'
 
-import drawFace, {candidateSignFontSize, candidateSignTextureSize} from '../../src/components/levels/knottingham/KnotCandidateSign/drawFace.ts'
+import drawFace, {candidateSignFontSize, candidateSignTextureSize} from '../../src/components/KnotCandidateSign/drawFace.ts'
 import {knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 

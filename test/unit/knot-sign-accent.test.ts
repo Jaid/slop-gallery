@@ -1,6 +1,6 @@
 import {expect, test} from 'bun:test'
 
-import signAccentColor from '../../src/components/levels/knottingham/signAccentColor.ts'
+import signAccentColor from '../../src/components/signAccentColor.ts'
 
 test('sign accents clamp dark and oversaturated placeholder colors into a readable HSL range', () => {
   expect(signAccentColor('#1d1436')).toBe('rgb(162,143,214)')

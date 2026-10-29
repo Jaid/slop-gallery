@@ -6,16 +6,17 @@ import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 import {useGraphicsModeValue} from 'use-graphics-mode'
 
-import Chandelier from '#component/levels/gallery/Chandelier'
+import Chandelier from '#component/Chandelier'
 import Box from '#src/components/Scene/primitives.tsx'
-import {rooms, useGallery, walls} from '#src/lib/gallery.ts'
+import {useGallery} from '#src/lib/gallery.ts'
 import {siennaCeilingBeam, siennaCeilingBeamOffsets, siennaCeilingPlanks, siennaRugSize, siennaRugThickness, siennaWainscot} from '#src/lib/gallery/sienna.ts'
 import PersianRugMaterial from '#src/lib/materials/PersianRugMaterial.ts'
 import PlankFloorMaterial from '#src/lib/materials/PlankFloorMaterial.ts'
 import PlankMaterial from '#src/lib/materials/PlankMaterial.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
+import slopGallery from '#src/worlds/gallery/index.ts'
 
-const room = rooms.find(candidate => candidate.id === 'sienna')!
+const room = slopGallery.room('sienna')
 
 /** The Sienna’s floor, rug, beams, wainscot and chandelier; its papered walls and their trim come from the shared wall surfaces. */
 export default function SiennaRoom({joinery}: {
@@ -53,7 +54,7 @@ export default function SiennaRoom({joinery}: {
       </mesh>
       <Chandelier key={resetEpoch} />
     </group>
-    {walls.filter(wall => wall.room === 'sienna').map(wall => <group key={wall.id} position={wall.center} rotation={[0, wall.rotation, 0]}>
+    {slopGallery.walls.filter(wall => wall.room === 'sienna').map(wall => <group key={wall.id} position={wall.center} rotation={[0, wall.rotation, 0]}>
       {siennaWainscot(wall).map(u => <group key={u} position={[u, 0, 0]}>
         <Box material={joinery.x} name='sienna-wainscot-frame' position={[0, 0.92, 0.125]} size={[2, 0.94, 0.025]} />
         <Box material={joinery.panel} name='sienna-wainscot-panel' position={[0, 0.92, 0.145]} size={[1.55, 0.65, 0.025]} />

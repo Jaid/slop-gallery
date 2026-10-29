@@ -4,7 +4,6 @@ import {join, resolve} from 'node:path'
 import fs from 'fs-extra'
 import {build, createServer} from 'vite'
 
-import gameLevel from '../../vite-plugin-game-level/src/main.ts'
 import AvifCache from '../src/AvifCache.ts'
 import avifOnly from '../src/main.ts'
 
@@ -20,7 +19,7 @@ async function fixture() {
   const root = await fs.mkdtemp(join(temporary, 'avif-'))
   roots.push(root)
   const source = resolve(import.meta.dir, 'fixture.jxl')
-  for (const file of ['source/image.jxl', 'public/art/portrait.jxl', 'public/unused/hidden.jxl']) {
+  for (const file of ['source/image.jxl', 'public/art/portrait.jxl']) {
     await fs.ensureDir(join(root, file, '..'))
     await fs.copyFile(source, join(root, file))
   }
@@ -103,7 +102,7 @@ test('serves AVIF for source and public URLs, with HEAD, ETag and the requested 
     await server.close()
   }
 }, 30_000)
-test('builds AVIF-only imports, new URLs, CSS and public images after level filtering', async () => {
+test('builds AVIF-only imports, new URLs, CSS and public images', async () => {
   const root = await fixture()
   await build({
     root,
@@ -111,25 +110,13 @@ test('builds AVIF-only imports, new URLs, CSS and public images after level filt
     configFile: false,
     resolve: {alias: {'#art': join(root, 'source')}},
     logLevel: 'silent',
-    plugins: [
-      gameLevel({
-        level: 'gallery',
-        levels: {
-          gallery: {
-            directory: 'source',
-            publicAssets: ['art'],
-          },
-        },
-      }),
-      avifOnly(),
-    ],
+    plugins: [avifOnly()],
     build: {assetsInlineLimit: 0},
   })
   const distFileGlob = new Bun.Glob('**/*')
   const files = await Array.fromAsync(distFileGlob.scan(join(root, 'dist')))
   expect(files.some(file => file.endsWith('.jxl'))).toBe(false)
   expect(files.some(file => file.replaceAll('\\', '/') === 'art/portrait.avif')).toBe(true)
-  expect(files.some(file => file.includes('hidden'))).toBe(false)
   expect(await fs.readFile(join(root, 'dist/index.html'), 'utf8')).toContain('/nested/art/portrait.avif')
   const js = files.find(file => file.endsWith('.js'))!
   const code = await fs.readFile(join(root, 'dist', js), 'utf8')

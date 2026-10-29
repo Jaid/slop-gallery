@@ -1,34 +1,22 @@
 import {expect, test} from 'bun:test'
 
-import walls from '../../src/lib/gallery/walls.ts'
-import {rooms} from '../../src/rooms/index.ts'
+import slopGallery from '../../src/worlds/gallery/index.ts'
+import walls from './fixtures/gallery.ts'
 
-const hangable = walls.filter(wall => wall.hangable !== false && !wall.curveRadius)
-const stickyWalls = rooms.flatMap(room => room.worldStickyWalls())
-// The gallery’s walls still go by kebab-case ids within their room.
-const legacyId = (id: string) => id.replaceAll('_', '-')
-test('the rooms’ sticky walls are the gallery’s hangable walls', () => {
-  expect(stickyWalls.map(wall => legacyId(wall.id)).toSorted()).toEqual(hangable.map(wall => wall.id).toSorted())
+const sticky = walls.filter(wall => wall.sticky !== false)
+test('portraits stick to every wall but the stairways’, the passages’ and the tunnel’s', () => {
+  const others = walls.filter(wall => wall.sticky === false).map(wall => wall.id)
+  expect(others.filter(id => !/^(?:corridor|exhibition|moonfall)-stairs_|^(?:corridor|fortress)-wall_\d+$|^exhibition-(?:east|west)$/u.test(id))).toEqual([])
+  expect(sticky.some(wall => wall.curveRadius)).toBe(false)
+  for (const room of ['antechamber', 'banquet', 'lobby', 'lodge', 'moonfall', 'oculus', 'salon', 'sienna', 'vesper']) {
+    expect(sticky.some(wall => wall.room === room)).toBe(true)
+  }
 })
-test('every sticky wall stands where its gallery wall does, with its openings and reservations', () => {
-  for (const wall of stickyWalls) {
-    const original = hangable.find(value => value.id === legacyId(wall.id))!
-    expect(wall.room).toBe(original.room)
-    for (const [index, value] of wall.center.entries()) {
-      expect(value).toBeCloseTo(original.center[index], 5)
-    }
-    expect(Math.cos(wall.rotation)).toBeCloseTo(Math.cos(original.rotation), 9)
-    expect(Math.sin(wall.rotation)).toBeCloseTo(Math.sin(original.rotation), 9)
-    expect(wall.width).toBeCloseTo(original.width, 5)
-    expect(wall.height).toBeCloseTo(original.height, 5)
-    expect(wall.holes?.length ?? 0).toBe(original.holes?.length ?? 0)
-    for (const [index, hole] of (wall.holes ?? []).entries()) {
-      const originalHole = original.holes![index]
-      expect(hole.profile).toBe(originalHole.profile)
-      for (const key of ['u', 'width', 'height', 'bottom', 'glassThickness'] as const) {
-        expect(hole[key] ?? 0).toBeCloseTo(originalHole[key] ?? 0, 5)
-      }
-    }
-    expect(wall.reservations?.length ?? 0).toBe(original.reservations?.length ?? 0)
+test('every portrait slot hangs in front of a sticky wall of its own room, within its width', () => {
+  for (const slot of slopGallery.portraitSlots()) {
+    const wall = sticky.find(value => value.id === slot.wallId)
+    expect(wall?.room && slot.id.startsWith(`${wall.room}-`)).toBe(true)
+    const u = (slot.position[0] - wall!.center[0]) * Math.cos(wall!.rotation) - (slot.position[2] - wall!.center[2]) * Math.sin(wall!.rotation)
+    expect(Math.abs(u)).toBeLessThan(wall!.width / 2)
   }
 })

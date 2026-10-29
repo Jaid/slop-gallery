@@ -4,8 +4,9 @@ import {resetGallery} from '../../src/lib/gallery/actions.ts'
 import {corridorStairs} from '../../src/lib/gallery/corridor.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import lodge, {lodgeWindow} from '../../src/lib/gallery/lodge.ts'
-import PlayerSession, {playerSession, playerSpawn, validatePlayerPose} from '../../src/lib/gallery/PlayerSession.ts'
+import PlayerSession, {playerSession, validatePlayerPose} from '../../src/lib/gallery/PlayerSession.ts'
 import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
+import slopGallery from '../../src/worlds/gallery/index.ts'
 
 const original = createDocument()
 const storageDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')
@@ -37,19 +38,19 @@ describe('player save state', () => {
     expect(() => validateDocument(withoutPlayer)).toThrow('supported')
   })
   test('pitch is required and malformed pitches are rejected', () => {
-    const {pitch: _, ...withoutPitch} = playerSpawn
+    const {pitch: _, ...withoutPitch} = slopGallery.spawn
     expect(validatePlayerPose(withoutPitch)).toBeNull()
     for (const pitch of [Number.NaN, Infinity, '0', null, Math.PI]) {
       expect(validatePlayerPose({
-        ...playerSpawn,
+        ...slopGallery.spawn,
         pitch,
       })).toBeNull()
     }
   })
   test('pitch-only changes are checkpointed and restored', () => {
-    const session = new PlayerSession
+    const session = new PlayerSession(slopGallery)
     const pose = {
-      ...playerSpawn,
+      ...slopGallery.spawn,
       pitch: 0.3,
     }
     session.capture(pose)
@@ -57,12 +58,12 @@ describe('player save state', () => {
     session.capture(pose)
     expect(session.revision).toBe(1)
     expect(session.checkpoint('2026-09-10T01:00:00Z')).toBe(true)
-    const restored = new PlayerSession
+    const restored = new PlayerSession(slopGallery)
     restored.resume('2026-09-09T00:00:00Z')
     expect(restored.snapshot()).toEqual(pose)
   })
   test('a pose below the floor under it, as a fall through a room that had not loaded left it, resumes on that floor', () => {
-    const session = new PlayerSession
+    const session = new PlayerSession(slopGallery)
     session.restore({
       position: [14, -0.6, -18.4],
       yaw: 0,
@@ -150,7 +151,7 @@ describe('player save state', () => {
     useGallery.getState().commit([...useGallery.getState().portraits])
     expect(playerSession.snapshot().position).toEqual(pose.position)
     resetGallery()
-    expect(playerSession.snapshot()).toEqual(playerSpawn)
+    expect(playerSession.snapshot()).toEqual(slopGallery.spawn)
   })
   test('refresh takes a newer small checkpoint but never an older or corrupt one', () => {
     const pose = {
@@ -158,15 +159,15 @@ describe('player save state', () => {
       yaw: 0.4,
       pitch: 0,
     }
-    const live = new PlayerSession
+    const live = new PlayerSession(slopGallery)
     live.capture(pose)
     expect(live.checkpoint('2026-09-09T12:00:01Z')).toBe(true)
-    const refreshed = new PlayerSession
+    const refreshed = new PlayerSession(slopGallery)
     refreshed.resume('2026-09-09T12:00:00Z')
     expect(refreshed.snapshot().position).toEqual(pose.position)
-    const newerCollection = new PlayerSession
+    const newerCollection = new PlayerSession(slopGallery)
     newerCollection.resume('2026-09-09T12:00:02Z')
-    expect(newerCollection.snapshot()).toEqual(playerSpawn)
+    expect(newerCollection.snapshot()).toEqual(slopGallery.spawn)
     storage.set('slop-gallery-player', '{bad json')
     refreshed.resume('')
     expect(refreshed.snapshot().position).toEqual(pose.position)
@@ -182,14 +183,14 @@ describe('player save state', () => {
     expect(refreshed.snapshot().position).toEqual(pose.position)
   })
   test('blocked storage, equivalent yaw and detached snapshots remain safe', () => {
-    const session = new PlayerSession
+    const session = new PlayerSession(slopGallery)
     session.capture({
-      ...playerSpawn,
-      yaw: playerSpawn.yaw + Math.PI * 2,
+      ...slopGallery.spawn,
+      yaw: slopGallery.spawn.yaw + Math.PI * 2,
     })
     expect(session.revision).toBe(0)
     session.snapshot().position[0] = 900
-    expect(session.snapshot()).toEqual(playerSpawn)
+    expect(session.snapshot()).toEqual(slopGallery.spawn)
     Object.defineProperty(globalThis, 'localStorage', {
       configurable: true,
       get() {

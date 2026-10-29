@@ -1,28 +1,33 @@
+import {Geofence} from 'geofency'
+
+import {groundFenceY} from '#src/lib/gallery/floors.ts'
 import lowerGallery from '#src/lib/gallery/lowerGallery.ts'
-import tunnelDisplays from '#src/lib/gallery/tunnelDisplays.ts'
 
 import Room from '../base/Room.ts'
 import floorBox from '../lib/floorBox.ts'
-import floorOrigin from '../lib/floorOrigin.ts'
+import footprint from '../lib/footprint.ts'
 import cameras from './cameras.ts'
 import slots from './slots.ts'
 import spawns from './spawns.ts'
-import stickyWalls from './stickyWalls.ts'
+import walls from './walls.ts'
 
 const {oculus} = lowerGallery
+// Up to the ceiling’s underside, not the upper room’s walkable surface.
+const height = oculus.ceiling.topY - oculus.ceiling.thickness - oculus.floorY
 
+/** Laid out around the middle of its floor plan, at the height of its floor. */
 export default class Oculus extends Room {
+  override readonly air = floorBox(oculus.size, 0, height)
   override readonly color = '#7e9298'
   override readonly description = 'Borrowed light from the gallery above.'
-  override readonly fence = [
-    // Up to the ceiling’s underside, not the upper room’s walkable surface.
-    floorBox(oculus.size, 0, oculus.ceiling.topY - oculus.ceiling.thickness - oculus.floorY),
-    // The tunnel’s displays, with the stairways down to them from the balcony.
-    ...tunnelDisplays.flatMap(({stairway}) => stairway.air.map(air => floorBox(air.size, air.bottom - oculus.floorY, air.top - air.bottom, [air.center[0] - oculus.center[0], air.center[1] - oculus.center[1]]))),
-  ]
-  override readonly floorY = oculus.floorY
+  // Everything under its floor plan, up into the slab of the Lobby above; it comes before the Exhibition, so the middle of the balcony is the Oculus’.
+  override readonly fence = new Geofence([{
+    ...footprint([this.air]),
+    ceiling: groundFenceY - oculus.floorY,
+  }])
+  override readonly height = height
   override readonly id = 'oculus'
-  override readonly origin = floorOrigin(oculus, this.floorY)
+  override readonly size = oculus.size
   override readonly spawn = spawns['']
 
   constructor() {
@@ -31,7 +36,7 @@ export default class Oculus extends Room {
       cameras,
       spawns,
       slots,
-      stickyWalls,
+      walls,
     })
   }
 }

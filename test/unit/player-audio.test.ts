@@ -2,11 +2,11 @@ import type {EgoState} from 'ego-player'
 
 import {afterEach, beforeEach, expect, mock, spyOn, test} from 'bun:test'
 
-import {groundSurface} from '../../src/levels/gallery/navigation.ts'
 import {attachPlayerAudio, onPlayerLand, onPlayerStep, onPlayerZoomChange, onPlayerZoomTransition} from '../../src/lib/audio/playerAudio.ts'
 import SoundEngine from '../../src/lib/audio/SoundEngine.ts'
 import {useGallery} from '../../src/lib/gallery/store.ts'
 import {getPlayerZoom, setPlayerZoom} from '../../src/lib/rendering/playerView.ts'
+import slopGallery from '../../src/worlds/gallery/index.ts'
 
 const original = useGallery.getState()
 const sound = {
@@ -55,6 +55,7 @@ afterEach(() => {
   useGallery.setState(original)
   setPlayerZoom(0)
 })
+const groundSurface = (room: string, position: [number, number, number]) => slopGallery.groundSurface(room, position)
 test('ground surface resolver maps visible floor materials to modifiers', () => {
   expect(groundSurface('lobby', [0, 0, -20])).toBe('glass')
   expect(groundSurface('lobby', [0, 0, -10])).toBe('generic')

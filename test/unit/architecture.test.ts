@@ -5,7 +5,8 @@ import {computeMeshVolume} from 'three-bvh-csg'
 import {BufferGeometry, DoubleSide, Float32BufferAttribute, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
-import walls, {galleryPlacement, insideOpening, openingTop} from '../../src/lib/gallery/walls.ts'
+import {insideOpening, openingTop} from '../../src/lib/placement/wallGeometry.ts'
+import walls, {galleryPlacement} from './fixtures/gallery.ts'
 
 await RAPIER.init()
 describe('physical mesh topology', () => {

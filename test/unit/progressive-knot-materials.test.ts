@@ -74,7 +74,7 @@ function fixture(third = false, layered = false) {
       return gate.promise
     },
   }
-  const materials = new ProgressiveKnotMaterials(renderer as unknown as WebGPURenderer, camera, entries, new Map(entries.map(item => [item.id, TestMaterial])), true)
+  const materials = new ProgressiveKnotMaterials(renderer as unknown as WebGPURenderer, camera, entries, () => TestMaterial, true)
   const meshes = materials.resources.items.map(({geometry}, index) => {
     const mesh: Mesh = new Mesh(geometry, materials.placeholderMaterials[index])
     mesh.position.z = [-8, -2, -5][index]
@@ -152,7 +152,7 @@ test('effect replay neither restarts compilation nor disposes its live resources
   expect(f.calls).toHaveLength(1)
   f.calls[0].gate.resolve()
   await flush()
-  expect(f.meshes[0].material).toBe(f.materials.fullMaterials[0])
+  expect(f.meshes[0].material).toBe(f.materials.fullMaterials[0]!)
   replay[Symbol.dispose]()
   await f.materials.disposeAsync()
   f.dispose()
@@ -179,7 +179,7 @@ test('moving the player reprioritizes queued meshes without needing another visi
     f.dispose()
   }
 })
-test('fast mode keeps cheap lit placeholders but still constructs full knot materials', async () => {
+test('fast mode keeps cheap lit placeholders but still constructs full knot materials once a mesh shows the knot', async () => {
   const entry = knotsById.get('lenticular_mirage')!
   let constructions = 0
   class TrackedMaterial extends KnotMaterial {
@@ -188,10 +188,13 @@ test('fast mode keeps cheap lit placeholders but still constructs full knot mate
       super(environment)
     }
   }
-  const materials = new ProgressiveKnotMaterials(bareRenderer(), new PerspectiveCamera, [entry], new Map([[entry.id, TrackedMaterial]]), false)
+  const materials = new ProgressiveKnotMaterials(bareRenderer(), new PerspectiveCamera, [entry], () => TrackedMaterial, false)
   try {
+    expect(constructions).toBe(0)
+    expect(materials.fullMaterials).toEqual([undefined])
+    materials.refs[0](new Mesh(materials.resources.items[0].geometry, materials.placeholderMaterials[0]))
     expect(constructions).toBe(1)
-    expect(materials.fullMaterials).toHaveLength(1)
+    expect(materials.fullMaterials[0]).toBeInstanceOf(TrackedMaterial)
     expect(materials.placeholderMaterials).toHaveLength(1)
     const surface = materials.placeholderMaterials[0]
     expect(surface.isMeshStandardNodeMaterial).toBe(true)
@@ -234,4 +237,38 @@ test('layered entries warm and activate their core with the shell, then dispose 
   } finally {
     f.dispose()
   }
+})
+test('a knot’s shader only loads once a mesh shows it, and one arriving after disposal is never built', async () => {
+  const entry = knotsById.get('lenticular_mirage')!
+  class LateMaterial extends KnotMaterial {}
+  const entries = [entry, {
+    ...entry,
+    id: 'later',
+  }]
+  const requested: Array<string> = []
+  const modules = new Map<string, ReturnType<typeof Promise.withResolvers<typeof LateMaterial>>>
+  const materials = new ProgressiveKnotMaterials(bareRenderer(), new PerspectiveCamera, entries, ({id}) => {
+    requested.push(id)
+    const loading = Promise.withResolvers<typeof LateMaterial>()
+    modules.set(id, loading)
+    return loading.promise
+  }, false)
+  const mesh = new Mesh(materials.resources.items[0].geometry, materials.placeholderMaterials[0])
+  expect(requested).toEqual([])
+  materials.refs[0](mesh)
+  materials.refs[0](null)
+  materials.refs[0](mesh)
+  expect(requested).toEqual([entry.id])
+  expect(materials.pendingMaterials).toEqual([entry.id])
+  modules.get(entry.id)!.resolve(LateMaterial)
+  await flush()
+  expect(materials.fullMaterials[0]).toBeInstanceOf(LateMaterial)
+  expect(mesh.material).toBe(materials.placeholderMaterials[0])
+  expect(materials.pendingMaterials).toEqual([])
+  materials.refs[1](new Mesh(materials.resources.items[1].geometry, materials.placeholderMaterials[1]))
+  expect(requested).toEqual([entry.id, 'later'])
+  await materials.disposeAsync()
+  modules.get('later')!.resolve(LateMaterial)
+  await flush()
+  expect(materials.fullMaterials[1]).toBeUndefined()
 })

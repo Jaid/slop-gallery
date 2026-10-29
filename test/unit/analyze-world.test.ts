@@ -6,9 +6,9 @@ import {AmbientLight, BoxGeometry, Group, InstancedMesh, Matrix4, Mesh, MeshBasi
 
 import {lodgeBay} from '../../src/lib/gallery/lodge.ts'
 import {craterTerrain} from '../../src/lib/gallery/moonfall/CraterTerrain.ts'
-import {roomClearHeight, rooms} from '../../src/lib/gallery/walls.ts'
-import {worldRooms} from '../../src/lib/gallery/worldRooms.ts'
+import {registerLamp} from '../../src/lib/rendering/lamps.ts'
 import analyzeWorld from '../../src/lib/webmcp/analyzeWorld.ts'
+import slopGallery from '../../src/worlds/gallery/index.ts'
 
 const square = (id: string, x: number): WorldRoom => ({
   id,
@@ -18,8 +18,9 @@ const square = (id: string, x: number): WorldRoom => ({
     max: [x + 5, 4, 5],
   },
 })
-test('every gallery room is fenced around its center', () => {
-  expect(worldRooms.map(room => room.id)).toEqual(rooms.map(room => room.id))
+test('every gallery room is fenced around its origin', () => {
+  const worldRooms = slopGallery.worldRooms()
+  expect(worldRooms.map(room => room.id)).toEqual(slopGallery.rooms.map(room => room.id))
   const boxes = Object.fromEntries(worldRooms.map(room => [room.id, [room.fence].flat()]))
   // Single boxes stay unwrapped.
   expect(Array.isArray(worldRooms.find(room => room.id === 'vesper')!.fence)).toBe(false)
@@ -34,13 +35,17 @@ test('every gallery room is fenced around its center', () => {
   expect(boxes.lodge[2].max[2]).toBe(boxes.lodge[0].min[2])
   expect(boxes.lodge[2].min[2]).toBeCloseTo(boxes.lodge[0].min[2] - lodgeBay.depth)
   expect([boxes.lodge[2].min[0], boxes.lodge[2].max[0], boxes.lodge[2].min[1], boxes.lodge[2].max[1]]).toEqual([boxes.lodge[0].min[0], boxes.lodge[0].max[0], boxes.lodge[0].min[1], boxes.lodge[0].max[1]])
+  // The Fortress meets the Lodge at its east wall.
+  expect(Math.max(...boxes.lodge.map(box => box.max[0]))).toBeLessThan(Math.min(...boxes.fortress.map(box => box.max[0])))
+  expect(Math.min(...boxes.fortress.map(box => box.min[0]))).toBe(boxes.lodge[0].max[0])
   // The Moonfall reaches down into its crater, deeper than its floor.
-  const moonfall = rooms.find(room => room.id === 'moonfall')!
+  const moonfall = slopGallery.room('moonfall')
   expect(boxes.moonfall[0].min[1]).toBeCloseTo(moonfall.floorY + craterTerrain.lowest(), 3)
   expect(boxes.moonfall[0].min[1]).toBeLessThan(moonfall.floorY - 3)
-  expect(boxes.moonfall[0].max[1]).toBeCloseTo(moonfall.floorY + roomClearHeight(moonfall), 3)
-  for (const room of rooms) {
-    expect(boxes[room.id].some(({min, max}) => room.center[0] > min[0] && room.center[0] < max[0] && room.center[1] > min[2] && room.center[1] < max[2])).toBe(true)
+  expect(boxes.moonfall[0].max[1]).toBeCloseTo(moonfall.floorY + 5.8, 3)
+  for (const room of slopGallery.rooms) {
+    const [x, y, z] = room.origin
+    expect(boxes[room.id].some(({min, max}) => x >= min[0] && x <= max[0] && y >= min[1] && y <= max[1] && z >= min[2] && z <= max[2])).toBe(true)
   }
 })
 test('meshes land in the room holding most of their volume and spill into the others', () => {
@@ -112,7 +117,11 @@ test('each room lists the lights of other regions its room lists leave on', () =
     light.name = name
     light.position.set(x, 2, 0)
     if (lightRooms) {
-      light.userData.rooms = lightRooms
+      registerLamp(light, {
+        id: name,
+        optional: false,
+        rooms: lightRooms,
+      })
     }
     scene.add(light)
     return light

@@ -7,10 +7,11 @@ import KnotLightPanels, {knotLightDiffuserSize, knotLightDiffuserY, knotLightHou
 import KnotLightDamage from 'knot-materials/KnotLights.ts'
 import {Raycaster, Vector3} from 'three/webgpu'
 
-import {banquetCeilingUnderside, banquetLedLight, banquetLedSlots} from '../../src/lib/gallery/banquet.ts'
-import {rooms} from '../../src/lib/gallery/walls.ts'
+import {banquetCeilingUnderside, banquetLedSlots} from '../../src/lib/gallery/banquet.ts'
 import KnotLightImpacts from '../../src/lib/physics/KnotLightImpacts.ts'
 import {beginBodyThrow} from '../../src/lib/physics/ThrowState.ts'
+import slopGallery from '../../src/worlds/gallery/index.ts'
+import {rooms} from './fixtures/gallery.ts'
 
 await RAPIER.init()
 const banquet = rooms.find(room => room.id === 'banquet')!
@@ -56,9 +57,14 @@ test('housings meet the ceiling without a gap and the diffuser is the first surf
     panels.dispose()
   }
 })
-test('each pane light sits below its own diffuser, close enough that the housing hides its brightest ceiling spot', () => {
-  for (const slot of banquetLedSlots) {
-    expect(slot.position[1] - banquetLedLight.drop).toBeLessThan(slot.position[1] + knotLightDiffuserY - knotLightDiffuserSize[1] / 2)
+test('each pane’s lamp sits right below its own diffuser, close enough that the housing hides its brightest ceiling spot', () => {
+  const lamps = slopGallery.room('banquet').lamps()
+  expect(lamps.map(lamp => lamp.id)).toEqual(['banquet-led_north', 'banquet-led_middle', 'banquet-led_south'])
+  for (const [index, slot] of banquetLedSlots.entries()) {
+    const [x, y, z] = lamps[index].position
+    expect([x, z]).toEqual([slot.position[0], slot.position[2]])
+    expect(y).toBeLessThan(slot.position[1] + knotLightDiffuserY - knotLightDiffuserSize[1] / 2)
+    expect(y).toBeGreaterThan(slot.position[1] - 0.5)
   }
 })
 test('a prop thrown at a banquet pane cracks it first, then knocks the diffuser loose', () => {

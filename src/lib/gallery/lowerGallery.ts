@@ -45,6 +45,9 @@ export const tunnelSlope = (lowerGallery.tunnel.southY - lowerGallery.tunnel.nor
 export function tunnelFloorHeight(z: number) {
   return lowerGallery.tunnel.northY + (z - lowerGallery.tunnel.northZ) * tunnelSlope
 }
+const tunnelMiddleZ = (lowerGallery.tunnel.northZ + lowerGallery.tunnel.southZ) / 2
+/** the middle of the tunnel’s sloping floor, halfway between its ends */
+export const tunnelCenter: Vec3 = [lowerGallery.tunnel.x, tunnelFloorHeight(tunnelMiddleZ), tunnelMiddleZ]
 
 export const oculusCeiling = subtractFloorOpening({
   center: [0, 0],

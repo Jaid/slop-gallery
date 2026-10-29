@@ -7,18 +7,18 @@ import {useMemo} from 'react'
 import {MeshPhysicalNodeMaterial, MeshStandardNodeMaterial, PlaneGeometry} from 'three/webgpu'
 import useGraphicsMode from 'use-graphics-mode'
 
-import BenchSeat from '#component/levels/gallery/BenchSeat'
-import RoomFloor from '#component/levels/gallery/RoomFloor'
+import BenchSeat from '#component/BenchSeat'
+import RoomFloor from '#component/RoomFloor'
 import Box from '#src/components/Scene/primitives.tsx'
 import StaticBatch from '#src/components/Scene/StaticBatch.tsx'
-import {rooms, walls} from '#src/lib/gallery.ts'
 import {wallFace, wallOpeningTrim} from '#src/lib/gallery/architecture.ts'
 import {salonBench, salonBenchLegs, salonCeiling, salonSkylight, salonWainscot, wainscotFields, wallDressingSpans} from '#src/lib/gallery/salon.ts'
 import gold from '#src/lib/materials/gold.ts'
 import VaultGlassMaterial from '#src/lib/materials/VaultGlassMaterial.ts'
+import slopGallery from '#src/worlds/gallery/index.ts'
 
-const room = rooms.find(candidate => candidate.id === 'salon')!
-const salonWalls = walls.filter(wall => wall.room === 'salon')
+const room = slopGallery.room('salon')
+const salonWalls = slopGallery.walls.filter(wall => wall.room === 'salon')
 
 /** The Salon: Prussian blue walls hung frame to frame, oak herringbone underfoot and a coffered skylight overhead. */
 export default function SalonRoom({glass, stone, wood}: {

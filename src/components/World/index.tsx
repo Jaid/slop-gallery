@@ -1,7 +1,7 @@
 import type {createArchitecturalGlassMaterials} from '#src/lib/materials/ArchitecturalGlassMaterials.ts'
 import type LodgeMaterials from '#src/lib/materials/LodgeMaterials.ts'
-import type {RoomId} from '#src/rooms/index.ts'
 import type SiennaRoom from '#src/rooms/sienna/components/SiennaRoom/index.tsx'
+import type {GalleryRoomId as RoomId} from '#src/worlds/gallery/index.ts'
 import type {ReactNode} from 'react'
 import type {NodeMaterial, Texture} from 'three/webgpu'
 
@@ -14,9 +14,7 @@ import {clearRooms, endRoom, expectRooms, startRoom} from '#src/lib/gallery/room
 import {roomsAt} from '#src/lib/gallery/roomVisibility.ts'
 import {readLoading} from '#src/lib/rendering/loading.ts'
 import LobbyRoom from '#src/rooms/lobby/components/LobbyRoom/index.tsx'
-import MoonfallSpot from '#src/rooms/moonfall/components/MoonfallSpot/index.tsx'
-
-import relations from './relations.ts'
+import relations from '#src/worlds/gallery/relations.ts'
 
 /** the materials the rooms share with each other and with the walls around them */
 export type WorldMaterials = {
@@ -55,19 +53,23 @@ const loaders: Record<LaterRoom, () => Promise<RoomPart>> = {
     return ({joinery}) => <Room joinery={joinery} />
   },
   salon: async () => {
-    const [{default: Room}, {default: SalonWindow}] = await Promise.all([import('#src/rooms/salon/components/SalonRoom/index.tsx'), import('#component/levels/gallery/SalonWindow')])
+    const [{default: Room}, {default: SalonWindow}] = await Promise.all([import('#src/rooms/salon/components/SalonRoom/index.tsx'), import('#component/SalonWindow')])
     return ({glass, stone, wood}) => <>
       <Room glass={glass.lobby} stone={stone} wood={wood} />
       <SalonWindow glass={glass.salon} />
     </>
   },
   lodge: async () => {
-    const [{default: Room}, {default: LodgeWindow}, {default: LodgeTunnel}] = await Promise.all([import('#src/rooms/lodge/components/LodgeRoom/index.tsx'), import('#component/levels/gallery/LodgeWindow'), import('#src/rooms/lodge/components/LodgeTunnel/index.tsx')])
-    return ({castleStone, glass, lodge, windowReveal, wood}) => <>
+    const [{default: Room}, {default: LodgeWindow}, {default: LodgeThreshold}] = await Promise.all([import('#src/rooms/lodge/components/LodgeRoom/index.tsx'), import('#component/LodgeWindow'), import('#src/rooms/lodge/components/LodgeThreshold/index.tsx')])
+    return ({glass, lodge, windowReveal, wood}) => <>
       <Room materials={lodge} />
       <LodgeWindow glass={glass.cabin} material={windowReveal} />
-      <LodgeTunnel material={castleStone} wood={wood} />
+      <LodgeThreshold wood={wood} />
     </>
+  },
+  fortress: async () => {
+    const {default: Room} = await import('#src/rooms/fortress/components/FortressRoom/index.tsx')
+    return ({castleStone, wood}) => <Room material={castleStone} wood={wood} />
   },
   corridor: async () => {
     const {default: Room} = await import('#src/rooms/corridor/components/CorridorRoom/index.tsx')
@@ -79,6 +81,10 @@ const loaders: Record<LaterRoom, () => Promise<RoomPart>> = {
   },
   oculus: async () => {
     const {default: Room} = await import('#src/rooms/oculus/components/OculusRoom/index.tsx')
+    return ({oculus}) => <Room material={oculus} />
+  },
+  exhibition: async () => {
+    const {default: Room} = await import('#src/rooms/exhibition/components/ExhibitionRoom/index.tsx')
     return ({oculus}) => <Room material={oculus} />
   },
 }
@@ -154,7 +160,6 @@ export default function World(materials: WorldMaterials) {
   })
   return <group name='world'>
     <LobbyRoom cladding={lobbyWall} glass={glass.lobby} stone={stone} wood={wood} />
-    <MoonfallSpot />
     {parts.map(([room, part]) => <Fragment key={room}>{part(materials)}</Fragment>)}
   </group>
 }

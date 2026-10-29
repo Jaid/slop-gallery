@@ -11,6 +11,9 @@ export const chandelierPhysics = {
   pendantMass: 0.08,
 }
 
+/** the height of the chandelier’s lamp above the floor while it hangs at rest, below the metalwork, so the fixture cannot shadow its own source */
+export const chandelierLampY = chandelierPhysics.height - 0.5
+
 const chandelierStem = {
   top: chandelierPhysics.anchor[1] + 0.05,
   bottom: 0.1,

@@ -1,5 +1,6 @@
 import type {KnotResourceEntry} from './KnotResources.ts'
-import type {KnotEntry, KnotMaterialConstructor} from './types.ts'
+import type {KnotEntry, KnotMaterialLoader} from './types.ts'
+import type {MaterialBinding} from 'three-async-materials'
 import type {Camera, Mesh, MeshPhysicalNodeMaterial, MeshStandardNodeMaterial, Texture, WebGPURenderer} from 'three/webgpu'
 
 import AsyncMaterials from 'three-async-materials'
@@ -12,55 +13,53 @@ import KnotMaterial from './lib/KnotMaterial.ts'
 import StudioEnvironment from './StudioEnvironment.ts'
 
 type KnotMaterialEntry = KnotResourceEntry & Pick<KnotEntry, 'placeholder'>
+/** one exhibited knot: the mesh showing it and, once its shader arrived, the binding that warms it up */
+type Slot = {
+  binding?: Pick<MaterialBinding, 'onBeforeRender' | 'ref'>
+  entry: KnotMaterialEntry
+  /** whether its shader has been asked for */
+  loading: boolean
+  mesh: Mesh | null
+}
 
-/** Gallery ownership, per-entry placeholders and nearest-first material warmup. Full entry shaders load in every graphics mode; `heavy` only upgrades the placeholders. */
+/**
+ * Gallery ownership, per-entry placeholders and nearest-first material warmup.
+ * Each entry’s shader only loads once a mesh shows the knot, so a scene downloads the shaders of the knots it holds and no others; until it arrived and warmed up, the knot wears its placeholder.
+ * Full entry shaders load in every graphics mode; `heavy` only upgrades the placeholders.
+ */
 export default class ProgressiveKnotMaterials {
-  readonly fullMaterials: Array<MeshPhysicalNodeMaterial>
+  /** the full materials of the knots whose shaders have arrived, by entry index */
+  readonly fullMaterials: Array<MeshPhysicalNodeMaterial | undefined>
   readonly observers: Array<Mesh['onBeforeRender']>
   readonly placeholderMaterials: Array<MeshStandardNodeMaterial>
   readonly refs: Array<(mesh: Mesh | null) => void>
   readonly resources: KnotResources
   private disposal?: Promise<void>
+  private disposed = false
+  private readonly environment: Texture
   private readonly layered = new Map<MeshPhysicalNodeMaterial, LayeredKnotBinding>
   /** the studio this instance made and disposes, absent when the caller passed an environment of its own */
   private readonly ownEnvironment?: StudioEnvironment
   private readonly queue: AsyncMaterials
+  private readonly slots: Array<Slot>
 
-  /** `environment` replaces the knots’ own studio; the caller keeps owning it. */
-  constructor(renderer: WebGPURenderer, camera: Camera, entries: ReadonlyArray<KnotMaterialEntry>, constructors: ReadonlyMap<string, KnotMaterialConstructor>, heavy: boolean, environment?: Texture) {
+  /** `load` hands out each entry’s material class, `environment` replaces the knots’ own studio; the caller keeps owning it. */
+  constructor(renderer: WebGPURenderer, camera: Camera, entries: ReadonlyArray<KnotMaterialEntry>, private readonly load: KnotMaterialLoader, heavy: boolean, environment?: Texture) {
     this.resources = new KnotResources(entries)
     // Knottingham exists to review entry shaders, so fast graphics only keeps its placeholders cheap.
-    const ownEnvironment = environment ? undefined : new StudioEnvironment
-    environment ??= ownEnvironment!
+    this.ownEnvironment = environment ? undefined : new StudioEnvironment
+    this.environment = environment ?? this.ownEnvironment!
     this.placeholderMaterials = entries.map(entry => {
-      const material = createPlaceholderMaterial(entry.placeholder, heavy, heavy ? environment : undefined)
+      const material = createPlaceholderMaterial(entry.placeholder, heavy, heavy ? this.environment : undefined)
       material.name = `${entry.id} ${entry.placeholder.shading} placeholder`
       return material
     })
-    const fullMaterials: Array<MeshPhysicalNodeMaterial> = []
-    try {
-      for (const entry of entries) {
-        const Material = constructors.get(entry.id)
-        if (!Material) {
-          throw new Error(`Missing material constructor for ${entry.id}.`)
-        }
-        const material = new Material(environment)
-        material.name = entry.id
-        fullMaterials.push(material)
-      }
-    } catch (error) {
-      for (const material of fullMaterials) {
-        material.dispose()
-      }
-      ownEnvironment?.dispose()
-      for (const material of this.placeholderMaterials) {
-        material.dispose()
-      }
-      this.resources.dispose()
-      throw error
-    }
-    this.ownEnvironment = ownEnvironment
-    this.fullMaterials = fullMaterials
+    this.fullMaterials = Array.from<MeshPhysicalNodeMaterial | undefined>({length: entries.length})
+    this.slots = entries.map(entry => ({
+      entry,
+      loading: false,
+      mesh: null,
+    }))
     const eye = new Vector3
     const position = new Vector3
     this.queue = new AsyncMaterials(renderer, {
@@ -86,29 +85,27 @@ export default class ProgressiveKnotMaterials {
         })
       },
     })
-    const bindings = this.fullMaterials.map(material => {
-      if (material instanceof KnotMaterial && material.coreMaterial) {
-        const layered = new LayeredKnotBinding(this.queue, material, material.coreMaterial)
-        this.layered.set(material, layered)
-        this.layered.set(material.coreMaterial, layered)
-        return {
-          ref: (mesh: Mesh | null) => layered.ref(mesh),
-          onBeforeRender: layered.binding.onBeforeRender,
-        }
+    this.refs = this.slots.map((slot, index) => mesh => {
+      slot.mesh = mesh
+      if (mesh) {
+        this.request(index)
       }
-      return this.queue.add(material)
+      slot.binding?.ref(mesh)
     })
-    this.refs = bindings.map(binding => binding.ref)
-    this.observers = bindings.map(binding => binding.onBeforeRender)
+    this.observers = this.slots.map(slot => function (this: Mesh, ...parameters: Parameters<Mesh['onBeforeRender']>) {
+      slot.binding?.onBeforeRender.call(this, ...parameters)
+    })
   }
 
-  /** full materials of rendered knots that still warm up and show their placeholder */
+  /** the ids of the shown knots that still wear their placeholder: their shader is still downloading, or their full material warms up after the knot was rendered */
   get pendingMaterials() {
-    return this.queue.pendingMaterials
+    const compiling = new Set(this.queue.pendingMaterials.map(material => material.name))
+    return this.slots.filter(slot => slot.mesh && (!slot.binding || compiling.has(slot.entry.id))).map(slot => slot.entry.id)
   }
 
   dispose() {
     if (!this.disposal) {
+      this.disposed = true
       this.disposal = this.release()
       this.disposal.catch(error => console.error('Knot material disposal failed:', error))
     }
@@ -117,6 +114,26 @@ export default class ProgressiveKnotMaterials {
   async disposeAsync() {
     this.dispose()
     await this.disposal
+  }
+
+  /** Creates the entry’s full material from its class and lets the queue warm it up on the entry’s mesh. */
+  private bind(index: number, Material: Awaited<ReturnType<KnotMaterialLoader>>) {
+    const slot = this.slots[index]
+    const material = new Material(this.environment)
+    material.name = slot.entry.id
+    this.fullMaterials[index] = material
+    if (material instanceof KnotMaterial && material.coreMaterial) {
+      const layered = new LayeredKnotBinding(this.queue, material, material.coreMaterial)
+      this.layered.set(material, layered)
+      this.layered.set(material.coreMaterial, layered)
+      slot.binding = {
+        ref: (mesh: Mesh | null) => layered.ref(mesh),
+        onBeforeRender: layered.binding.onBeforeRender,
+      }
+    } else {
+      slot.binding = this.queue.add(material)
+    }
+    slot.binding.ref(slot.mesh)
   }
 
   private async release() {
@@ -128,11 +145,41 @@ export default class ProgressiveKnotMaterials {
     this.layered.clear()
     this.resources.dispose()
     for (const material of this.fullMaterials) {
-      material.dispose()
+      material?.dispose()
     }
     this.ownEnvironment?.dispose()
     for (const material of this.placeholderMaterials) {
       material.dispose()
     }
+  }
+
+  /** Asks for the entry’s shader once; a class at hand binds right away, one still downloading once it arrives, unless this was disposed meanwhile. */
+  private request(index: number) {
+    const slot = this.slots[index]
+    if (slot.loading || this.disposed) {
+      return
+    }
+    slot.loading = true
+    let loaded: ReturnType<KnotMaterialLoader>
+    try {
+      loaded = this.load(slot.entry)
+    } catch (error) {
+      console.error('Knot material could not be loaded:', slot.entry.id, error)
+      return
+    }
+    const fail = (error: unknown) => console.error('Knot material could not be loaded:', slot.entry.id, error)
+    if (!(loaded instanceof Promise)) {
+      try {
+        this.bind(index, loaded)
+      } catch (error) {
+        fail(error)
+      }
+      return
+    }
+    loaded.then(Material => {
+      if (!this.disposed) {
+        this.bind(index, Material)
+      }
+    }).catch(fail)
   }
 }

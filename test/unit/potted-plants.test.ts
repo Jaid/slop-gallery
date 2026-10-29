@@ -10,7 +10,7 @@ import DestructiblePlantGeometry from '../../src/lib/gallery/destructiblePlants/
 import {plants, potDefinition} from '../../src/lib/gallery/plantDecorations/catalog.ts'
 import {potPlacements, pottedPlantKinds} from '../../src/lib/gallery/plantDecorations/placements.ts'
 import PlantGeometry from '../../src/lib/gallery/plantDecorations/PlantGeometry.ts'
-import {rooms} from '../../src/lib/gallery/walls.ts'
+import {rooms} from './fixtures/gallery.ts'
 
 function roomBounds(position: Vec3, inset: number) {
   const room = rooms.find(candidate => Math.abs(position[0] - candidate.center[0]) < candidate.size[0] / 2 && Math.abs(position[2] - candidate.center[1]) < candidate.size[1] / 2)!

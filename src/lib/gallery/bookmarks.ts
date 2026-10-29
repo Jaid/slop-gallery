@@ -2,9 +2,7 @@ import type {CameraBookmark, SpawnBookmark, Vec3} from './types.ts'
 
 import {Euler, Quaternion} from 'three/webgpu'
 
-import {cameraBookmarks, spawnBookmarks} from '#level/bookmarks.ts'
-import {levelFloorHeight} from '#level/navigation.ts'
-import {rooms} from '#src/rooms/index.ts'
+import world from '#src/worlds/current.ts'
 
 import {isDevelopmentMode} from '../developmentMode.ts'
 import {galleryEvents, notify} from './actions.ts'
@@ -20,35 +18,35 @@ export const bookmarkKey = 'KeyT'
 /** how close the player’s feet must be to a bookmark to count as standing in it, in meters */
 export const bookmarkRadius = 1
 
-/** The spawn bookmark `?spawn` names, `null` without `?spawn` and `undefined` when this level has no spawn bookmark with that ID. */
-export function findSpawnBookmark(input?: URL | string, list: ReadonlyArray<SpawnBookmark> = spawnBookmarks): SpawnBookmark | null | undefined {
+/** The spawn bookmark `?spawn` names, `null` without `?spawn` and `undefined` when this world has no spawn bookmark with that ID. */
+export function findSpawnBookmark(input?: URL | string, list: ReadonlyArray<SpawnBookmark> = world.spawnBookmarks()): SpawnBookmark | null | undefined {
   const id = readSpawn(input)
   return id ? list.find(bookmark => bookmark.id === id) : null
 }
 
-/** The camera bookmark `?spawn` names, `null` without `?spawn` and `undefined` when this level has no camera bookmark with that ID. */
-export function findCameraBookmark(input?: URL | string, list: ReadonlyArray<CameraBookmark> = cameraBookmarks): CameraBookmark | null | undefined {
+/** The camera bookmark `?spawn` names, `null` without `?spawn` and `undefined` when this world has no camera bookmark with that ID. */
+export function findCameraBookmark(input?: URL | string, list: ReadonlyArray<CameraBookmark> = world.cameraBookmarks()): CameraBookmark | null | undefined {
   const id = readSpawn(input)
   return id ? list.find(bookmark => bookmark.id === id) : null
 }
 
-/** The default spawn in world meters of the room `?room` names, `null` without `?room` and `undefined` when the gallery has no room with that ID. */
+/** The default spawn in world meters of the room `?room` names, `null` without `?room` and `undefined` when this world has no room with that ID. */
 export function findRoomSpawn(input?: URL | string): SpawnBookmark | null | undefined {
   const id = readRoom(input)
   if (!id) {
     return null
   }
-  const room = rooms.find(candidate => candidate.id === id)
+  const room = world.roomById(id)
   return room && {
     id: room.id,
-    ...room.worldSpawn,
+    ...room.spawn,
   }
 }
 
 /** Where the player stands below a camera bookmark: a standing eye height under the camera, but never below the floor unless `flying`. */
 export function cameraBookmarkFeet({position}: CameraBookmark, flying = false): Vec3 {
   const feet = position[1] - 1.6
-  return [position[0], flying ? feet : Math.max(levelFloorHeight(position) + 0.04, feet), position[2]]
+  return [position[0], flying ? feet : Math.max(world.floorHeight(position) + 0.04, feet), position[2]]
 }
 
 /** Move the player session to the `?spawn` bookmark, overriding any saved position; for a camera bookmark, below it, and with `?development` flying with its eyes at the bookmark. A camera bookmark wins over a spawn bookmark with the same ID, which T still reaches. Without `?spawn`, `?room` starts at the default spawn of that room. */
@@ -65,13 +63,13 @@ export function applySpawnBookmark() {
       ...cameraBookmark.aim,
     })
   } else if (spawnBookmark === undefined) {
-    notify(`This level has no bookmark “${readSpawn()}”.`)
+    notify(`${world.title} has no bookmark “${readSpawn()}”.`)
   } else {
     const roomSpawn = findRoomSpawn()
     if (roomSpawn) {
       playerSession.restore(roomSpawn)
     } else if (roomSpawn === undefined) {
-      notify(`The gallery has no room “${readRoom()}”.`)
+      notify(`${world.title} has no room “${readRoom()}”.`)
     }
   }
 }
@@ -87,11 +85,12 @@ export function nextBookmark(position: Vec3, list: ReadonlyArray<SpawnBookmark>,
   return distances[closest] <= bookmarkRadius ? (closest + (backward ? list.length - 1 : 1)) % list.length : closest
 }
 
-/** Teleport the player to the next (or with `backward`, previous) of the current level’s spawn bookmarks, see `nextBookmark`. */
+/** Teleport the player to the next (or with `backward`, previous) of the current world’s spawn bookmarks, see `nextBookmark`. */
 export function teleportToNextBookmark(backward = false) {
+  const spawnBookmarks = world.spawnBookmarks()
   const index = nextBookmark(playerSession.snapshot().position, spawnBookmarks, backward)
   if (index === null) {
-    notify('This level has no spawn bookmarks.')
+    notify(`${world.title} has no spawn bookmarks.`)
     return
   }
   const {id, position, yaw, pitch} = spawnBookmarks[index]

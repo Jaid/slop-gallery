@@ -1,5 +1,5 @@
+import type {Wall} from '../../placement/wallGeometry.ts'
 import type {Vec3} from '../types.ts'
-import type {Wall} from '../walls.ts'
 
 import CurvedBoxGeometry from '../CurvedBoxGeometry.ts'
 import {stairHeadroom, stairThickness} from './StairFlight.ts'
@@ -43,7 +43,7 @@ export default class StairTurn {
     return [false, true].map(inner => {
       const radius = inner ? this.innerRadius : this.outerRadius
       return {
-        id: `moonfall-stairs-turn-${inner ? 'inner' : 'outer'}`,
+        id: `moonfall-stairs_turn_${inner ? 'inner' : 'outer'}`,
         room: 'moonfall',
         center: [this.center[0] + radius, this.top, inner ? this.innerCenterZ : this.outerCenterZ],
         rotation: inner ? Math.PI / 2 : -Math.PI / 2,
@@ -53,7 +53,7 @@ export default class StairTurn {
         // Start at the landing surface: buried end caps otherwise coincide with
         // its exposed riser. Keep the visible molding and cornice heights unchanged.
         baseboardHeight: 0.14,
-        hangable: false,
+        sticky: false,
       }
     })
   }

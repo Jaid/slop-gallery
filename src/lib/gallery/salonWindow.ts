@@ -1,5 +1,7 @@
+import type {Wall, WallOpening} from '../placement/wallGeometry.ts'
 import type {Vec3} from './types.ts'
 
+import {wallCoordinates} from '../placement/wallGeometry.ts'
 import {floorGlassThickness} from './floors.ts'
 import lobby from './lobby.ts'
 
@@ -20,6 +22,17 @@ export const salonWindow = {
   /** Edge length of the square cast pavers, matching the floor window’s. */
   tileSize: 1,
 } as const
+
+/** The hole the window cuts into a wall in its plane, of the Lobby or the Salon, positioned relative to `origin` like the wall. */
+export function salonWindowHole(wall: Pick<Wall, 'center' | 'curveRadius' | 'rotation'>, [x, , z]: Vec3 = [0, 0, 0]): WallOpening {
+  return {
+    u: wallCoordinates(wall, [salonWindow.x - x, 0, salonWindow.z - z]),
+    width: salonWindow.width,
+    bottom: salonWindow.bottom,
+    height: salonWindow.top,
+    profile: 'rectangle',
+  }
+}
 
 /** Distance along a ray, in multiples of its direction, to the face of the window’s glass it meets first, or `undefined` if it misses. */
 export function salonWindowGlassDistance(origin: Vec3, direction: Vec3) {

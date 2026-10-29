@@ -1,10 +1,10 @@
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 
-import AntechamberDome from '#component/levels/gallery/AntechamberDome'
-import RoomFloor from '#component/levels/gallery/RoomFloor'
-import {rooms} from '#src/lib/gallery.ts'
+import AntechamberDome from '#component/AntechamberDome'
+import RoomFloor from '#component/RoomFloor'
+import slopGallery from '#src/worlds/gallery/index.ts'
 
-const room = rooms.find(candidate => candidate.id === 'antechamber')!
+const room = slopGallery.room('antechamber')
 const [width, depth] = room.size
 
 /** Opens up into a windowed dome instead of a flat ceiling, so the sun reaches inside. */

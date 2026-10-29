@@ -4,8 +4,8 @@ import {knotExhibition} from 'knot-materials/exhibition.ts'
 import {createElement} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
 
-import KnotStudyMap from '../../src/components/levels/knottingham/KnotStudyMap/index.tsx'
-import KnotGalleryMinimap from '../../src/components/levels/knottingham/Minimap/index.tsx'
+import KnotStudyMap from '../../src/components/KnotStudyMap/index.tsx'
+import KnottinghamMinimap from '../../src/components/KnottinghamMinimap/index.tsx'
 import {cameraPose} from '../../src/lib/gallery.ts'
 import {knotGalleryBounds, knotGallerySize} from '../../src/lib/gallery/knotGallery.ts'
 
@@ -17,7 +17,7 @@ afterEach(() => Object.assign(cameraPose, pose))
 test('Knottingham minimap has a transparent hall outline, no visible labels and a positioned player', () => {
   cameraPose.position = [-14, 1.6, -9]
   cameraPose.direction = [1, 0, 0]
-  const html = renderToStaticMarkup(createElement(KnotGalleryMinimap, {lower: false}))
+  const html = renderToStaticMarkup(createElement(KnottinghamMinimap, {lower: false}))
   expect(html).toMatch(/<rect[^>]+fill="none"/u)
   expect(html).not.toContain('#e4e3d7')
   expect(html).not.toContain('<text')
@@ -38,7 +38,7 @@ test('the detailed map retains the model and item labels without an opaque floor
   expect(html).toContain(knotExhibition.at(-1)!.label)
 })
 test('minimap viewBox and hall outline share the dynamically sized room', () => {
-  const html = renderToStaticMarkup(createElement(KnotGalleryMinimap, {lower: false}))
+  const html = renderToStaticMarkup(createElement(KnottinghamMinimap, {lower: false}))
   expect(html).toContain(`viewBox="${knotGalleryBounds.minX - 1} ${knotGalleryBounds.northZ - 1} ${knotGallerySize[0] + 2} ${knotGallerySize[2] + 2}"`)
   const outline = /<rect[^>]+fill="none"[^>]*>/u.exec(html)?.[0]
   expect(outline).toContain(`x="${knotGalleryBounds.minX}"`)

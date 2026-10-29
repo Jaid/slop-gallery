@@ -84,9 +84,9 @@ test('player dumps are development-only, name the page host, join separate hit l
                 loader: 'ts',
                 contents: `export default () => (${enabled ? '{development: true, seed: 42, graphics: true}' : 'undefined'})`,
               }))
-              builder.onLoad({filter: /lib[/\\]level\.ts$/u}, () => ({
+              builder.onLoad({filter: /worlds[/\\]current\.ts$/u}, () => ({
                 loader: 'ts',
-                contents: "export const galleryLevel = 'knottingham'; export const galleryTitle = 'Knottingham'",
+                contents: "export default {id: 'knottingham', title: 'Knottingham'}",
               }))
             },
           },
@@ -127,13 +127,13 @@ test('player dumps are development-only, name the page host, join separate hit l
       }
       await Bun.sleep(0)
       expect(module.screenshots).toEqual([`knottingham-${dump.id}`])
-      expect(clipboard.pop()).toMatch(new RegExp(String.raw`^<details><summary>Knottingham at \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}</summary><dump id=${dump.id} date="${dump.time}">player .* context \{ level knottingham room lobby .*\}${hosted ? ' host vite.tower.lan' : ''}${enabled ? String.raw` query \{ development true seed 42 graphics true\}` : ''}</dump></details>$`, 'u'))
+      expect(clipboard.pop()).toMatch(new RegExp(String.raw`^<details><summary>Knottingham at \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}</summary><dump id=${dump.id} date="${dump.time}">player .* context \{ world knottingham room lobby .*\}${hosted ? ' host vite.tower.lan' : ''}${enabled ? String.raw` query \{ development true seed 42 graphics true\}` : ''}</dump></details>$`, 'u'))
       expect(module.played).toEqual(sound && !audioFails ? ['SFX-04'] : [])
       expect(module.SoundEngine.requests).toBe(sound ? 1 : 0)
       expect(dir).toHaveBeenLastCalledWith({
         ...dump,
         context: {
-          level: 'knottingham',
+          world: 'knottingham',
           room: 'lobby',
           locked: true,
           ...enabled ? {sessionId: 'dump-test'} : {},

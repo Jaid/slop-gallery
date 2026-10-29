@@ -25,7 +25,7 @@ export function readShowAmbienceEmitters(input: URL | string = typeof location =
 /** whether this page shows ambience emitter markers, read once at startup */
 export const isShowingAmbienceEmitters = readShowAmbienceEmitters()
 
-/** the emitters of the mounted level; `AmbienceListener` starts them once the sound engine exists */
+/** the emitters of the mounted world; `AmbienceListener` starts them once the sound engine exists */
 export const useAmbienceEmitters = create<{emitters: ReadonlyArray<AmbienceEmitter>}>(() => ({emitters: []}))
 
 /** Adds an emitter, returning how to stop and remove it again. */

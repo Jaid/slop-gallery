@@ -1,20 +1,28 @@
+import {Geofence} from 'geofency'
+
+import {groundFenceY} from '#src/lib/gallery/floors.ts'
 import salon from '#src/lib/gallery/salon.ts'
 
 import Room from '../base/Room.ts'
 import floorBox from '../lib/floorBox.ts'
-import floorOrigin from '../lib/floorOrigin.ts'
+import footprint from '../lib/footprint.ts'
 import cameras from './cameras.ts'
 import spawns from './spawns.ts'
-import stickyWalls from './stickyWalls.ts'
+import walls from './walls.ts'
 
 /** Lit through its skylight, without lamps of its own. */
 export default class Salon extends Room {
+  override readonly air = floorBox(salon.size, 0, 5.8)
   override readonly color = '#7d2a31'
   override readonly description = 'Hung frame to frame. Judged elbow to elbow.'
-  override readonly fence = floorBox(salon.size, 0, 5.8)
-  override readonly floorY = 0
+  // Everything over its floor plan from the slab up, the skylight included.
+  override readonly fence = new Geofence([{
+    ...footprint([this.air]),
+    floor: groundFenceY,
+  }])
+  override readonly height = 5.8
   override readonly id = 'salon'
-  override readonly origin = floorOrigin(salon, this.floorY)
+  override readonly size = salon.size
   override readonly spawn = spawns['']
 
   constructor() {
@@ -22,7 +30,7 @@ export default class Salon extends Room {
       title: 'The Salon',
       cameras,
       spawns,
-      stickyWalls,
+      walls,
     })
   }
 }

@@ -1,29 +1,34 @@
-import type {RoomSpawn} from '../base/Room.ts'
+import type {FloorSize, RoomSpawn} from '../base/Room.ts'
+
+import {Geofence} from 'geofency'
 
 import {antechamberDomeCrownY} from '#src/lib/gallery/antechamberDomeShape.ts'
-import staircase from '#src/lib/gallery/staircase.ts'
+import {groundFenceY} from '#src/lib/gallery/floors.ts'
 
 import Room from '../base/Room.ts'
 import floorBox from '../lib/floorBox.ts'
-import floorOrigin from '../lib/floorOrigin.ts'
+import footprint from '../lib/footprint.ts'
 import cameras from './cameras.ts'
 import slots from './slots.ts'
-import stickyWalls from './stickyWalls.ts'
+import walls from './walls.ts'
 
-const plan = {
-  center: [0, staircase.z],
-  size: [8, 8],
-} as const
+const size: FloorSize = [8, 8]
 
 /** Lit through the windows of its dome, without lamps of its own. */
 export default class Antechamber extends Room {
+  // Up to the crown of the dome.
+  override readonly air = floorBox(size, 0, antechamberDomeCrownY)
   override readonly color = '#d4be90'
   override readonly description = 'A pause between the peculiar and the profound.'
-  // Up to the crown of the dome.
-  override readonly fence = floorBox(plan.size, 0, antechamberDomeCrownY)
-  override readonly floorY = 0
+  // Everything over its floor plan from the slab up, the dome included.
+  override readonly fence = new Geofence([{
+    ...footprint([this.air]),
+    floor: groundFenceY,
+  }])
+  // Taller than the other upper rooms, a meter short of a cube.
+  override readonly height = 7
   override readonly id = 'antechamber'
-  override readonly origin = floorOrigin(plan, this.floorY)
+  override readonly size = size
   // Just north of the middle, looking south toward the stairs.
   override readonly spawn = {
     position: [0, 0.04, -1.1],
@@ -36,7 +41,7 @@ export default class Antechamber extends Room {
       title: 'The Antechamber',
       cameras,
       slots,
-      stickyWalls,
+      walls,
     })
   }
 }

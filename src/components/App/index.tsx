@@ -12,13 +12,13 @@ import Toast from '#component/Toast'
 import TuningBuffer from '#component/TuningBuffer'
 import {galleryEvents, useGallery} from '#src/lib/gallery.ts'
 import {useHiddenUi} from '#src/lib/hiddenUi.ts'
-import {galleryTitle} from '#src/lib/level.ts'
 import {hideLoadingScreen, useLoadingScreen} from '#src/lib/loadingScreen.ts'
 import {useGraphicsTuning} from '#src/lib/rendering/customGraphics.ts'
 import {telemetry} from '#src/lib/telemetry/index.ts'
 import useSlopGalleryTelemetry from '#src/lib/telemetry/useSlopGalleryTelemetry.ts'
 import useGalleryAI from '#src/lib/useGalleryAI.ts'
 import useGalleryCommands from '#src/lib/useGalleryCommands.ts'
+import {currentWorldInfo} from '#src/worlds/index.ts'
 
 import GraphicsMode from './GraphicsMode.tsx'
 import World from './World.tsx'
@@ -36,14 +36,14 @@ export default function App() {
   const loading = useLoadingScreen(state => state.shown)
   // lib.dom types navigator.gpu as always present, but browsers without WebGPU leave it undefined.
   const gpu = (navigator.gpu as GPU | undefined) !== undefined && globalThis.isSecureContext
-  // index.html covers the page with the title over the level’s wallpaper while the scene loads. It fades out to the menu over the ready scene, or to the error that keeps it from rendering.
+  // index.html covers the page with the title over the world’s wallpaper while the scene loads. It fades out to the menu over the ready scene, or to the error that keeps it from rendering.
   useEffect(() => {
     if (s.ready || renderFailed || !gpu) {
       hideLoadingScreen()
     }
   }, [gpu, renderFailed, s.ready])
   if (!gpu) {
-    return <RenderError><h2>WebGPU is unavailable.</h2><p>{galleryTitle} requires native WebGPU. Open it in current Chrome or Edge with hardware acceleration enabled, using HTTPS or localhost.</p></RenderError>
+    return <RenderError><h2>WebGPU is unavailable.</h2><p>{currentWorldInfo.title} requires native WebGPU. Open it in current Chrome or Edge with hardware acceleration enabled, using HTTPS or localhost.</p></RenderError>
   }
   return <GraphicsMode><Dropzone><div className={css.layout}>
     {/* A column of its own left of the canvas and HUD, so the panel never covers the scene it tunes */}

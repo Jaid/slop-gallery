@@ -5,8 +5,9 @@ import {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
 import {salonBench, salonCeiling, salonSkylight, salonWainscot, wainscotFields, wallDressingSpans} from '../../src/lib/gallery/salon.ts'
 import salonWindow from '../../src/lib/gallery/salonWindow.ts'
 import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
-import walls, {floorHeight, insideGallery, insideOpening, placementIssue, roomAt, rooms, roomVisit, wallCoordinates, wallPosition} from '../../src/lib/gallery/walls.ts'
 import ParquetFloorMaterial, {herringboneBlock, salonParquet} from '../../src/lib/materials/ParquetFloorMaterial.ts'
+import {insideOpening, placementIssue, wallCoordinates, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
+import walls, {floorHeight, insideGallery, roomAt, rooms, roomVisit} from './fixtures/gallery.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
 const room = rooms.find(candidate => candidate.id === 'salon')!
@@ -57,7 +58,7 @@ describe('the Salon', () => {
     expect(roomAt([14, 1.7, -16.1])).toBe('salon')
     // Its west wall backs the Lobby extension the same way.
     const salonWest = walls.find(wall => wall.id === 'salon-west')!
-    const lobbyEast = walls.find(wall => wall.id === 'lobby-extension-east')!
+    const lobbyEast = walls.find(wall => wall.id === 'lobby-extension_east')!
     expect(salonWest.center[0]).toBe(lobbyEast.center[0])
     expect(Math.abs(Math.cos(salonWest.rotation - lobbyEast.rotation) + 1)).toBeLessThan(1e-12)
   })

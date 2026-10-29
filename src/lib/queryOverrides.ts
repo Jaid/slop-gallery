@@ -1,3 +1,5 @@
+import {readWorld} from '#src/worlds/index.ts'
+
 import {readAiSettings} from './ai/settings.ts'
 import {readShowAmbienceEmitters} from './audio/ambience/ambienceEmitters.ts'
 import {readAudio} from './audio/audioParameter.ts'
@@ -64,6 +66,7 @@ const readers: Record<string, Reader> = {
   temporary: readTemporary,
   weather: readWeather,
   wireframe_highlight: readWireframeHighlight,
+  world: readWorld,
   telemetry: input => searchParameter('telemetry')(input) === 'true',
   logs_ingestion_endpoint: searchParameter('logs_ingestion_endpoint'),
   metrics_ingestion_endpoint: searchParameter('metrics_ingestion_endpoint'),

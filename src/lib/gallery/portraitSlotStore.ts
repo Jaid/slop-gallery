@@ -4,8 +4,7 @@ import optis from 'optis'
 import readPermalink from 'read-permalink'
 import {create} from 'zustand'
 
-import placement from '#level/placement.ts'
-import shippedSlots from '#level/slots.ts'
+import world from '#src/worlds/current.ts'
 
 import {asPortrait, slotArea, slotAreas, slotFrame} from '../placement/portraitSlots.ts'
 import {wallPosition} from '../placement/wallGeometry.ts'
@@ -45,7 +44,8 @@ export const isShowingPortraitSlots = isEditingPortraitSlots || readShowPortrait
 
 /** the ratios from tallest to widest */
 const ratioCycle: ReadonlyArray<PortraitRatio> = ['9:16', '2:3', '1:1', '3:2', '16:9']
-const storageKey = 'slop-gallery.portrait-slot-edits'
+const storageKey = `${world.storageKey}.portrait-slot-edits`
+const shippedSlots = world.portraitSlots()
 // Edits are kept only as long as the shipped slots they started from stay the same.
 const baseline = JSON.stringify(shippedSlots)
 
@@ -74,7 +74,7 @@ function restore(): ReadonlyArray<PortraitSlot> {
   }
 }
 
-/** The level’s portrait slots: the shipped ones, or with `?edit_portrait_slots` the ones edited in this browser. */
+/** The world’s portrait slots: the shipped ones, or with `?edit_portrait_slots` the ones edited in this browser. */
 export const usePortraitSlots = create<PortraitSlotState>(() => ({
   aimed: null,
   dragging: null,
@@ -178,15 +178,15 @@ export function createSlot(slot: PortraitSlot) {
 }
 /** Why a slot cannot hang where it is among the other slots, or an empty string if it can. */
 export function slotIssue(slot: PortraitSlot, slots: ReadonlyArray<PortraitSlot>) {
-  const wall = placement.wall(slot.wallId)
+  const wall = world.placement.wall(slot.wallId)
   if (!wall) {
     return 'unknown wall'
   }
-  return placement.placementIssue(wall, slot.position, slot.width, slot.height, slots.map(asPortrait), slot.id, slot.labelAbove)
+  return world.placement.placementIssue(wall, slot.position, slot.width, slot.height, slots.map(asPortrait), slot.id, slot.labelAbove)
 }
 /** The slot a ray from the eye first meets, frame or placard, unless a wall is in the way, or `null`. */
 export function aimedSlot(origin: Vec3, direction: Vec3, slots: ReadonlyArray<PortraitSlot>) {
-  const wallHit = placement.findPlacement(origin, direction, 0, 0, [])
+  const wallHit = world.placement.findPlacement(origin, direction, 0, 0, [])
   const reach = wallHit ? Math.hypot(...wallHit.position.map((value, index) => value - origin[index])) + 0.05 : Infinity
   let nearest: PortraitSlot | null = null
   let nearestDistance = reach
@@ -216,9 +216,9 @@ export function aimedSlot(origin: Vec3, direction: Vec3, slots: ReadonlyArray<Po
 
 /** The point on the wall where a new slot would go, for a ray from the eye. */
 export function slotTarget(origin: Vec3, direction: Vec3) {
-  const target = placement.findPlacement(origin, direction, 0, 0, [])
-  const wall = target && placement.wall(target.wallId)
-  if (!target || !wall || wall.hangable === false || wall.curveRadius) {
+  const target = world.placement.findPlacement(origin, direction, 0, 0, [])
+  const wall = target && world.placement.wall(target.wallId)
+  if (!target || !wall || wall.sticky === false || wall.curveRadius) {
     return null
   }
   return {

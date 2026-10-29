@@ -1,11 +1,11 @@
 import {useState} from 'react'
 
 import {useGallery} from '#src/lib/gallery.ts'
-import {rooms} from '#src/lib/gallery/walls.ts'
+import world from '#src/worlds/current.ts'
 
 import css from './style.module.sass'
 
-const roomTitle = (id: string) => rooms.find(room => room.id === id)?.title ?? id
+const roomTitle = (id: string) => world.roomById(id)?.title ?? id
 
 /** The title of the room the player just walked into, shrinking into place at the top center and fading out again. The room the HUD mounts in is not announced. */
 export default function RoomAnnouncement() {

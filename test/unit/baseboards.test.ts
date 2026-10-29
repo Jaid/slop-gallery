@@ -6,7 +6,7 @@ import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {architectureGeometry, colliderGeometry, createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
 import lowerGallery, {oculusPlatform, oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
-import walls from '../../src/lib/gallery/walls.ts'
+import walls from './fixtures/gallery.ts'
 
 await RAPIER.init()
 describe('floor-following wall baseboards', () => {
