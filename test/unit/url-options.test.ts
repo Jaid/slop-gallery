@@ -74,12 +74,12 @@ describe('URL options', () => {
     expect(getAntiAliasing(false, 'smaa')).toBe('smaa')
     expect(getAntiAliasing(false, 'traa')).toBe('traa')
   })
-  test('only ?intro_narration=false or 0 skips the welcome narration', () => {
-    for (const search of ['https://slop.gallery/?intro_narration=false', '?intro_narration=0', '?ai=false&intro_narration=false']) {
-      expect(readIntroNarration(search)).toBe(false)
-    }
-    for (const search of ['', 'https://slop.gallery/', '?intro_narration=true', '?intro_narration=1', '?intro_narration', '?intro_narration=maybe']) {
+  test('only a bare ?intro_narration, true or 1 plays the welcome narration', () => {
+    for (const search of ['https://slop.gallery/?intro_narration', '?intro_narration=true', '?intro_narration=1', '?ai=false&intro_narration=true']) {
       expect(readIntroNarration(search)).toBe(true)
+    }
+    for (const search of ['', 'https://slop.gallery/', '?intro_narration=false', '?intro_narration=0', '?intro_narration=maybe', '?intro_narration=TRUE']) {
+      expect(readIntroNarration(search)).toBe(false)
     }
   })
   test('only ?room_announcements=false or 0 hides the room titles', () => {

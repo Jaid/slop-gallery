@@ -17,7 +17,7 @@ import {isGallery} from '#src/lib/level.ts'
 import {propObjects} from '../GrabbableProp.tsx'
 import {describeHeld, describeTarget} from './describeTarget.ts'
 
-// `?intro_narration=false` skips the welcome narration for the whole page.
+// The welcome narration only plays with `?intro_narration`.
 const introNarration = readIntroNarration()
 export default function useInteractionFrame(camera: RootState['camera'], renderer: RootState['renderer'], {
   cursor,
