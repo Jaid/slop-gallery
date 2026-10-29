@@ -1,4 +1,4 @@
-import type {BoxInput, Fence, Position} from '../src/main.ts'
+import type {BoxInput, Fence, GeofenceSessionOptions, Position} from '../src/main.ts'
 
 import {describe, expect, test} from 'bun:test'
 
@@ -17,7 +17,7 @@ const record = <Id>(session: GeofenceSession<Id>) => {
   session.on('change', (match, previous) => events.push(['change', match, previous]))
   return events
 }
-const create = () => new GeofenceSession(new Geofences([
+const create = (options?: GeofenceSessionOptions) => new GeofenceSession(new Geofences([
   ['room', new Geofence([{
     ...beam,
     y: 0,
@@ -27,7 +27,7 @@ const create = () => new GeofenceSession(new Geofences([
     ...beam,
     floor: 2,
   }])],
-]))
+]), options)
 describe('Box.contains', () => {
   const cases: Array<[string, BoxInput, Position, boolean]> = [
     ['beamBox inside', beam, [2, 0, 1], true],
@@ -490,13 +490,73 @@ describe('Geofences', () => {
   })
 })
 describe('GeofenceSession', () => {
+  test('defaults to a single sticky match', () => {
+    const session = create()
+    expect(session.multiple).toBe(false)
+    expect(session.announceEmpty).toBe(false)
+  })
   test('starts outside of every fence', () => {
     const session = create()
     expect(session.match).toBeNull()
     expect([...session.matches]).toEqual([])
   })
-  test('emits leave, then enter, then change', () => {
+  test('listeners see the new state', () => {
     const session = create()
+    const seen: Array<unknown> = []
+    session.on('change', () => seen.push(session.match, [...session.matches]))
+    session.update([1, 1, 1])
+    expect(seen).toEqual(['room', ['room']])
+  })
+})
+describe('GeofenceSession, single', () => {
+  test('only follows the first match', () => {
+    const session = create()
+    const events = record(session)
+    expect(session.update([1, 1, 1])).toBe('room')
+    expect(events.splice(0)).toEqual([['enter', 'room'], ['change', 'room', null]])
+    // also in the sky fence, but the room fence comes first
+    expect(session.update([1, 2.5, 1])).toBe('room')
+    expect([...session.matches]).toEqual(['room'])
+    expect(events.splice(0)).toEqual([])
+    expect(session.update([1, 10, 1])).toBe('sky')
+    expect(events.splice(0)).toEqual([['leave', 'room'], ['enter', 'sky'], ['change', 'sky', 'room']])
+  })
+  test('keeps its match outside of every fence', () => {
+    const session = create()
+    session.update([1, 1, 1])
+    const events = record(session)
+    expect(session.update([100, 0, 100])).toBe('room')
+    expect(session.match).toBe('room')
+    expect([...session.matches]).toEqual(['room'])
+    expect(session.update([1, 10, 1])).toBe('sky')
+    expect(events).toEqual([['leave', 'room'], ['enter', 'sky'], ['change', 'sky', 'room']])
+  })
+  test('announces leaving every fence with announceEmpty', () => {
+    const session = create({announceEmpty: true})
+    session.update([1, 1, 1])
+    const events = record(session)
+    expect(session.update([100, 0, 100])).toBeNull()
+    expect([...session.matches]).toEqual([])
+    session.update([100, 0, 101])
+    expect(session.update([1, 1, 1])).toBe('room')
+    expect(events).toEqual([['leave', 'room'], ['change', null, 'room'], ['enter', 'room'], ['change', 'room', null]])
+  })
+  test('keeps a removed fence’s id until another fence matches', () => {
+    const session = create()
+    session.update([1, 1, 1])
+    const events = record(session)
+    session.geofences.delete('room')
+    expect(session.update([1, 1, 1])).toBe('room')
+    expect(session.update([1, 2.5, 1])).toBe('sky')
+    expect(events).toEqual([['leave', 'room'], ['enter', 'sky'], ['change', 'sky', 'room']])
+  })
+})
+describe('GeofenceSession, multiple', () => {
+  test('follows every match', () => {
+    const session = create({
+      multiple: true,
+      announceEmpty: true,
+    })
     const events = record(session)
     expect(session.update([1, 1, 1])).toBe('room')
     expect(events.splice(0)).toEqual([['enter', 'room'], ['change', 'room', null]])
@@ -509,7 +569,10 @@ describe('GeofenceSession', () => {
     expect(events.splice(0)).toEqual([['leave', 'sky'], ['change', null, 'sky']])
   })
   test('stays silent while nothing changes', () => {
-    const session = create()
+    const session = create({
+      multiple: true,
+      announceEmpty: true,
+    })
     session.update([1, 1, 1])
     const events = record(session)
     session.update([2, 1.5, 1])
@@ -517,15 +580,29 @@ describe('GeofenceSession', () => {
     session.update([100, 0, 101])
     expect(events).toEqual([['leave', 'room'], ['change', null, 'room']])
   })
-  test('listeners see the new state', () => {
-    const session = create()
-    const seen: Array<unknown> = []
-    session.on('change', () => seen.push(session.match))
-    session.update([1, 1, 1])
-    expect(seen).toEqual(['room'])
+  test('keeps its last matches outside of every fence without announceEmpty', () => {
+    const session = create({multiple: true})
+    session.update([1, 2.5, 1])
+    const events = record(session)
+    session.update([1, 10, 1])
+    expect(events.splice(0)).toEqual([['leave', 'room'], ['change', 'sky', 'room']])
+    expect(session.update([100, 0, 100])).toBe('sky')
+    expect([...session.matches]).toEqual(['sky'])
+    expect(events).toEqual([])
+  })
+  test('keeps every match when jumping out of all of them at once without announceEmpty', () => {
+    const session = create({multiple: true})
+    session.update([1, 2.5, 1])
+    const events = record(session)
+    session.update([100, 0, 100])
+    expect([...session.matches]).toEqual(['room', 'sky'])
+    expect(events).toEqual([])
   })
   test('notices fences removed from its geofences', () => {
-    const session = create()
+    const session = create({
+      multiple: true,
+      announceEmpty: true,
+    })
     session.update([1, 1, 1])
     const events = record(session)
     session.geofences.delete('room')

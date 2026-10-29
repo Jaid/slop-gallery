@@ -3,5 +3,5 @@ export type {BeamBoxInput, BoxInput, ClosedBoxInput, FootprintInput, SkyBoxInput
 export {default as Geofence} from './Geofence.ts'
 export {default} from './Geofences.ts'
 export {default as GeofenceSession} from './GeofenceSession.ts'
-export type {GeofenceSessionEvents} from './GeofenceSession.ts'
+export type {GeofenceSessionEvents, GeofenceSessionOptions} from './GeofenceSession.ts'
 export type {Fence, Position} from './types.ts'
