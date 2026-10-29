@@ -2,50 +2,50 @@ import {describe, expect, test} from 'bun:test'
 
 import {PerspectiveCamera} from 'three/webgpu'
 
-import {dineBoiserie, dineFloorOrigin, dineFloorTile, dineWallPanels, freeWallRuns} from '../../src/lib/gallery/dine.ts'
+import {banquetBoiserie, banquetFloorOrigin, banquetFloorTile, banquetWallPanels, freeWallRuns} from '../../src/lib/gallery/banquet.ts'
 import {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
 import walls, {rooms} from '../../src/lib/gallery/walls.ts'
 import {BoiserieTrimMaterial, BoiserieWallMaterial} from '../../src/lib/materials/boiserie/index.ts'
-import DineMaterials from '../../src/lib/materials/DineMaterials.ts'
+import BanquetMaterials from '../../src/lib/materials/BanquetMaterials.ts'
 import {calacatta, CheckeredMarbleFloorMaterial, checkeredTile, portoro} from '../../src/lib/materials/marble/index.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
-const dine = rooms.find(room => room.id === 'dine')!
-const dineWalls = walls.filter(wall => wall.room === 'dine')
+const banquet = rooms.find(room => room.id === 'banquet')!
+const banquetWalls = walls.filter(wall => wall.room === 'banquet')
 const layout = {
-  origin: dineFloorOrigin,
-  tile: dineFloorTile,
+  origin: banquetFloorOrigin,
+  tile: banquetFloorTile,
 }
 const lightness = (hex: string) => {
   const value = Number.parseInt(hex.slice(1), 16)
   return ((value >> 16 & 255) + (value >> 8 & 255) + (value & 255)) / 3
 }
 const corniceBand = (height: number) => height - 0.47
-describe('Dine’s checkered marble floor', () => {
+describe('The Banquet’s checkered marble floor', () => {
   test('whole tiles fill the room from its north-west corner and alternate in a checkerboard', () => {
-    expect(dineFloorOrigin).toEqual([dine.center[0] - dine.size[0] / 2, dine.center[1] - dine.size[1] / 2])
-    expect(dine.size[0] / dineFloorTile % 1).toBe(0)
-    expect(dine.size[1] / dineFloorTile % 1).toBe(0)
-    const columns = dine.size[0] / dineFloorTile
-    const rows = dine.size[1] / dineFloorTile
+    expect(banquetFloorOrigin).toEqual([banquet.center[0] - banquet.size[0] / 2, banquet.center[1] - banquet.size[1] / 2])
+    expect(banquet.size[0] / banquetFloorTile % 1).toBe(0)
+    expect(banquet.size[1] / banquetFloorTile % 1).toBe(0)
+    const columns = banquet.size[0] / banquetFloorTile
+    const rows = banquet.size[1] / banquetFloorTile
     let dark = 0
     for (let column = 0; column < columns; column++) {
       for (let row = 0; row < rows; row++) {
-        const x = dineFloorOrigin[0] + (column + 0.5) * dineFloorTile
-        const z = dineFloorOrigin[1] + (row + 0.5) * dineFloorTile
+        const x = banquetFloorOrigin[0] + (column + 0.5) * banquetFloorTile
+        const z = banquetFloorOrigin[1] + (row + 0.5) * banquetFloorTile
         const tile = checkeredTile(x, z, layout)
         expect([tile.column, tile.row]).toEqual([column, row])
-        const east = checkeredTile(x + dineFloorTile, z, layout)
-        const south = checkeredTile(x, z + dineFloorTile, layout)
+        const east = checkeredTile(x + banquetFloorTile, z, layout)
+        const south = checkeredTile(x, z + banquetFloorTile, layout)
         expect(east.dark).toBe(!tile.dark)
         expect(south.dark).toBe(!tile.dark)
         dark += Number(tile.dark)
       }
     }
-    expect(checkeredTile(dineFloorOrigin[0] + 0.01, dineFloorOrigin[1] + 0.01, layout).dark).toBe(false)
+    expect(checkeredTile(banquetFloorOrigin[0] + 0.01, banquetFloorOrigin[1] + 0.01, layout).dark).toBe(false)
     expect(dark).toBe(columns * rows / 2)
     // The pattern keeps alternating past the grid origin, where floor division turns negative.
-    expect(checkeredTile(dineFloorOrigin[0] - 0.5, dineFloorOrigin[1] + 0.5, layout).dark).toBe(true)
+    expect(checkeredTile(banquetFloorOrigin[0] - 0.5, banquetFloorOrigin[1] + 0.5, layout).dark).toBe(true)
   })
   test('heavy mode allocates a filtered, nonrecursive reflection that is released with the material', () => {
     const heavy = new CheckeredMarbleFloorMaterial({
@@ -82,7 +82,7 @@ describe('Dine’s checkered marble floor', () => {
   test('rejects tiles without a size', () => {
     for (const tile of [0, -1, Number.NaN]) {
       expect(() => new CheckeredMarbleFloorMaterial({
-        origin: dineFloorOrigin,
+        origin: banquetFloorOrigin,
         tile,
       })).toThrow(RangeError)
     }
@@ -95,22 +95,22 @@ describe('Dine’s checkered marble floor', () => {
     expect(g).toBeGreaterThan(b)
   })
 })
-describe('Dine’s boiserie layout', () => {
+describe('The Banquet’s boiserie layout', () => {
   test('every wall gets panels that stay inside the wall, clear of corners, doorways and each other', () => {
-    for (const wall of dineWalls) {
-      const {rails, upper} = dineWallPanels(wall)
+    for (const wall of banquetWalls) {
+      const {rails, upper} = banquetWallPanels(wall)
       expect(upper.length).toBeGreaterThan(0)
       const sorted = upper.toSorted((a, b) => a.u[0] - b.u[0])
       for (const [index, panel] of sorted.entries()) {
         expect(panel.u[1] - panel.u[0]).toBeGreaterThan(0.6)
-        expect(panel.u[1] - panel.u[0]).toBeLessThanOrEqual(dineBoiserie.maximumLength + 1e-9)
-        expect(panel.u[0]).toBeGreaterThanOrEqual(-wall.width / 2 + dineBoiserie.corner + dineBoiserie.cornerMargin - 1e-9)
-        expect(panel.u[1]).toBeLessThanOrEqual(wall.width / 2 - dineBoiserie.corner - dineBoiserie.cornerMargin + 1e-9)
-        expect(panel.v[0]).toBeGreaterThan(dineBoiserie.rail[1])
+        expect(panel.u[1] - panel.u[0]).toBeLessThanOrEqual(banquetBoiserie.maximumLength + 1e-9)
+        expect(panel.u[0]).toBeGreaterThanOrEqual(-wall.width / 2 + banquetBoiserie.corner + banquetBoiserie.cornerMargin - 1e-9)
+        expect(panel.u[1]).toBeLessThanOrEqual(wall.width / 2 - banquetBoiserie.corner - banquetBoiserie.cornerMargin + 1e-9)
+        expect(panel.v[0]).toBeGreaterThan(banquetBoiserie.rail[1])
         // The gilt molding stays clear of the cornice’s gilt band.
-        expect(panel.v[1] + dineBoiserie.moldingHalfWidth).toBeLessThan(corniceBand(wall.height) - 0.1)
+        expect(panel.v[1] + banquetBoiserie.moldingHalfWidth).toBeLessThan(corniceBand(wall.height) - 0.1)
         for (const hole of wall.holes ?? []) {
-          const outer = hole.width / 2 + 0.17 + dineBoiserie.openingMargin
+          const outer = hole.width / 2 + 0.17 + banquetBoiserie.openingMargin
           expect(panel.u[1] <= hole.u - outer + 1e-9 || panel.u[0] >= hole.u + outer - 1e-9).toBe(true)
         }
         const left = index > 0 ? sorted[index - 1].u[1] : undefined
@@ -118,10 +118,10 @@ describe('Dine’s boiserie layout', () => {
         if (left === undefined || (wall.holes ?? []).some(hole => hole.u > left && hole.u < panel.u[0])) {
           continue
         }
-        expect(panel.u[0] - left).toBeCloseTo(dineBoiserie.gap, 9)
+        expect(panel.u[0] - left).toBeCloseTo(banquetBoiserie.gap, 9)
       }
       for (const rail of rails) {
-        expect(rail.v).toEqual(dineBoiserie.rail)
+        expect(rail.v).toEqual(banquetBoiserie.rail)
         for (const hole of wall.holes ?? []) {
           // The rail stops at the doorway surround instead of running across the opening.
           expect(rail.u[1] <= hole.u - hole.width / 2 - 0.17 + 1e-9 || rail.u[0] >= hole.u + hole.width / 2 + 0.17 - 1e-9).toBe(true)
@@ -130,8 +130,8 @@ describe('Dine’s boiserie layout', () => {
       // Without doorways, one rail runs from corner to corner.
       if (!wall.holes?.length) {
         expect(rails).toEqual([{
-          u: [-wall.width / 2 + dineBoiserie.corner, wall.width / 2 - dineBoiserie.corner],
-          v: dineBoiserie.rail,
+          u: [-wall.width / 2 + banquetBoiserie.corner, wall.width / 2 - banquetBoiserie.corner],
+          v: banquetBoiserie.rail,
         }])
       }
     }
@@ -162,20 +162,20 @@ describe('Dine’s boiserie layout', () => {
     expect(sliver.some(([, right]) => right > 1)).toBe(false)
   })
   test('the placards of the shipped artworks clear the chair rail', () => {
-    const hung = samplePortraits.filter(portrait => portrait.wallId?.startsWith('dine-'))
+    const hung = samplePortraits.filter(portrait => portrait.wallId?.startsWith('banquet-'))
     expect(hung.length).toBeGreaterThan(0)
     for (const portrait of hung) {
       const bottom = portrait.position[1] + portraitLabelLayout(portrait.width, portrait.height).bottom
-      expect(bottom).toBeGreaterThanOrEqual(dineBoiserie.rail[1])
+      expect(bottom).toBeGreaterThanOrEqual(banquetBoiserie.rail[1])
     }
   })
 })
-describe('Dine’s boiserie materials', () => {
-  test('every Dine wall gets its own surface and trim, and other rooms get none', () => {
-    const materials = new DineMaterials
+describe('The Banquet’s boiserie materials', () => {
+  test('every Banquet wall gets its own surface and trim, and other rooms get none', () => {
+    const materials = new BanquetMaterials
     try {
-      expect(materials.walls.size).toBe(dineWalls.length)
-      for (const wall of dineWalls) {
+      expect(materials.walls.size).toBe(banquetWalls.length)
+      for (const wall of banquetWalls) {
         const surface = materials.surface(wall)!
         const trim = materials.trim(wall)!
         expect(surface).toBeInstanceOf(BoiserieWallMaterial)
@@ -187,8 +187,8 @@ describe('Dine’s boiserie materials', () => {
         }
         expect(surface.normalNode).not.toBeNull()
       }
-      const surfaces = new Set(dineWalls.map(wall => materials.surface(wall)))
-      expect(surfaces.size).toBe(dineWalls.length)
+      const surfaces = new Set(banquetWalls.map(wall => materials.surface(wall)))
+      expect(surfaces.size).toBe(banquetWalls.length)
       const lobby = walls.find(wall => wall.room === 'lobby')!
       expect(materials.surface(lobby)).toBeUndefined()
       expect(materials.trim(lobby)).toBeUndefined()
@@ -197,14 +197,14 @@ describe('Dine’s boiserie materials', () => {
     }
   })
   test('disposing releases every material', () => {
-    const materials = new DineMaterials
+    const materials = new BanquetMaterials
     let disposed = 0
     for (const {surface, trim} of materials.walls.values()) {
       surface.addEventListener('dispose', () => disposed++)
       trim.addEventListener('dispose', () => disposed++)
     }
     materials.dispose()
-    expect(disposed).toBe(dineWalls.length * 2)
+    expect(disposed).toBe(banquetWalls.length * 2)
   })
   test('rejects invalid layouts', () => {
     expect(() => new BoiserieWallMaterial({panels: [{

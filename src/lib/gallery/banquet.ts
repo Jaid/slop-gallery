@@ -7,19 +7,19 @@ import {knotLightHousingSize, knotLightHousingY} from 'knot-materials/KnotLightP
 import {wallFace, wallOpeningTrim} from './architectureDimensions.ts'
 import {rooms} from './walls.ts'
 
-const dine = rooms.find(room => room.id === 'dine')!
-/** Underside of the 18 cm ceiling slab every upper-floor room gets 2 cm below its height, at 5.78 m in Dine. */
+const banquet = rooms.find(room => room.id === 'banquet')!
+/** Underside of the 18 cm ceiling slab every upper-floor room gets 2 cm below its height, at 5.78 m in the Banquet. */
 const ceilingUnderside = (room: {height: number}) => room.height - 0.02 - 0.18 / 2
-export const dineCeilingUnderside = ceilingUnderside(dine)
+export const banquetCeilingUnderside = ceilingUnderside(banquet)
 
 /** Three Knottingham LED panes down the room’s middle, gathered 5 m apart around its center. */
-const dineLedGrid = {
+const banquetLedGrid = {
   x: [0],
   z: [-5, 0, 5],
 }
 
 /** Each pane lights the room through one point light hung just below its diffuser. */
-export const dineLedLight = {
+export const banquetLedLight = {
   /** distance below the pane’s origin, close enough that the brightest ceiling spot stays hidden behind the housing */
   drop: 0.32,
   color: '#eee3ff',
@@ -45,7 +45,7 @@ function ceilingLedSlots(roomId: RoomId, grid: {
   })))
 }
 
-export const dineLedSlots = ceilingLedSlots('dine', dineLedGrid)
+export const banquetLedSlots = ceilingLedSlots('banquet', banquetLedGrid)
 
 /** The Antechamber’s single pane, centered on its ceiling. */
 export const antechamberLedSlots = ceilingLedSlots('antechamber', {
@@ -53,17 +53,17 @@ export const antechamberLedSlots = ceilingLedSlots('antechamber', {
   z: [0],
 })
 export const antechamberLedLight = {
-  ...dineLedLight,
+  ...banquetLedLight,
   // Matches the mean floor and wall irradiance of the 32 cd light behind the old light box.
   intensity: 36,
   distance: 14,
   decay: 2,
 }
 
-/** Edge length of Dine’s checkered marble tiles, laid from the room’s north-west corner: 12 × 24 whole tiles fill the floor. */
-export const dineFloorTile = 1
+/** Edge length of the Banquet’s checkered marble tiles, laid from the room’s north-west corner: 12 × 24 whole tiles fill the floor. */
+export const banquetFloorTile = 1
 /** the room’s north-west corner in world x/z, where the tile grid starts */
-export const dineFloorOrigin = [dine.center[0] - dine.size[0] / 2, dine.center[1] - dine.size[1] / 2] as const
+export const banquetFloorOrigin = [banquet.center[0] - banquet.size[0] / 2, banquet.center[1] - banquet.size[1] / 2] as const
 
 /** A rectangle on a wall, in its local coordinates: `u` along the wall from its center, `v` up from its floor, both in meters. */
 export type WallRectangle = {
@@ -72,11 +72,11 @@ export type WallRectangle = {
 }
 
 /**
- * Gilded boiserie on Dine’s painted walls, after the mockup: tall picture-frame panels above a chair rail, and a dado painted a
+ * Gilded boiserie on the Banquet’s painted walls, after the mockup: tall picture-frame panels above a chair rail, and a dado painted a
  * shade deeper below it. The dado between the 44 cm baseboard and the rail is too low for panels of its own; they would only
  * stack more gilt lines over the baseboard cap. All heights are measured from the floor, in meters.
  */
-export const dineBoiserie = {
+export const banquetBoiserie = {
   /** depth of the side walls’ faces, which take this much off both ends of every wall */
   corner: wallFace,
   /** room left between a corner and the first panel */
@@ -105,11 +105,11 @@ export function freeWallRuns(wall: Pick<Wall, 'holes' | 'width'>, {corner: corne
   corner: number
   opening: number
 } = {
-  corner: dineBoiserie.cornerMargin,
-  opening: dineBoiserie.openingMargin,
+  corner: banquetBoiserie.cornerMargin,
+  opening: banquetBoiserie.openingMargin,
 }) {
-  const start = -wall.width / 2 + dineBoiserie.corner + cornerMargin
-  const end = wall.width / 2 - dineBoiserie.corner - cornerMargin
+  const start = -wall.width / 2 + banquetBoiserie.corner + cornerMargin
+  const end = wall.width / 2 - banquetBoiserie.corner - cornerMargin
   const blocked = (wall.holes ?? []).filter(hole => !hole.bottom).map(hole => [hole.u - hole.width / 2 - wallOpeningTrim - openingMargin, hole.u + hole.width / 2 + wallOpeningTrim + openingMargin] as const).toSorted((a, b) => a[0] - b[0])
   const runs: Array<readonly [number, number]> = []
   let cursor = start
@@ -127,11 +127,11 @@ export function freeWallRuns(wall: Pick<Wall, 'holes' | 'width'>, {corner: corne
 }
 
 /**
- * The boiserie of one of Dine’s walls, in wall-local coordinates: every free run is split into equal panels, and the chair rail
+ * The boiserie of one of the Banquet’s walls, in wall-local coordinates: every free run is split into equal panels, and the chair rail
  * runs from corner to corner, stopping only at doorway trim.
  */
-export function dineWallPanels(wall: Pick<Wall, 'holes' | 'width'>) {
-  const {gap, maximumLength, rail, upper} = dineBoiserie
+export function banquetWallPanels(wall: Pick<Wall, 'holes' | 'width'>) {
+  const {gap, maximumLength, rail, upper} = banquetBoiserie
   const columns = freeWallRuns(wall).flatMap(([left, right]) => {
     const count = Math.ceil((right - left + gap) / (maximumLength + gap))
     const length = (right - left - gap * (count - 1)) / count

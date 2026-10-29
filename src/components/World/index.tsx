@@ -42,8 +42,8 @@ const loaders: Record<LaterRoom, () => Promise<RoomPart>> = {
     const {default: Room} = await import('#src/rooms/vesper/components/VesperRoom/index.tsx')
     return ({glass, stone, wood}) => <Room glass={glass.lobby} stone={stone} wood={wood} />
   },
-  dine: async () => {
-    const {default: Room} = await import('#src/rooms/dine/components/DineRoom/index.tsx')
+  banquet: async () => {
+    const {default: Room} = await import('#src/rooms/banquet/components/BanquetRoom/index.tsx')
     return ({glass, stone, wood}) => <Room glass={glass.lobby} stone={stone} wood={wood} />
   },
   antechamber: async () => {

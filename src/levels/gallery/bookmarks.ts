@@ -15,7 +15,7 @@ export const spawnBookmarks: Array<SpawnBookmark> = [
     pitch: 0.03,
   },
   {
-    id: 'dine',
+    id: 'banquet',
     position: [16.1, 0.04, 7.4],
     yaw: 0.27,
     pitch: -0.08,
@@ -92,7 +92,7 @@ export const cameraBookmarks: Array<CameraBookmark> = [
     ratio: 16 / 9,
   },
   {
-    id: 'dine_floor',
+    id: 'banquet_floor',
     position: [10.61, 0.58, 7.24],
     aim: {
       yaw: 0.15,

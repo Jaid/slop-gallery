@@ -240,7 +240,7 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     }, {}, baseline)
     const {portraits: portraitsAfterPaste} = await snapshot(page)
     expect(portraitsAfterPaste.some(p => p.title === 'pasted fixture')).toBe(true)
-    for (const [x, room] of [[-14, 'vesper'], [14, 'dine']] as const) {
+    for (const [x, room] of [[-14, 'vesper'], [14, 'banquet']] as const) {
       await teleport(page, [x, 1.62, 3])
       await page.waitForFunction(expectedRoom => globalThis.slopGallery!.snapshot!().room === expectedRoom, {}, room)
       await page.screenshot({path: `out/live-test/production-${room}.png`})

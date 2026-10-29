@@ -19,11 +19,11 @@ beforeEach(() => {
   useGallery.setState({sound: false})
 })
 describe('the Salon', () => {
-  test('sits north of Dine on the upper floor, beside the Lobby extension and above no lower room', () => {
-    const dine = rooms.find(candidate => candidate.id === 'dine')!
+  test('sits north of the Banquet on the upper floor, beside the Lobby extension and above no lower room', () => {
+    const banquet = rooms.find(candidate => candidate.id === 'banquet')!
     expect(room.floorY).toBe(0)
-    expect(room.center[0]).toBe(dine.center[0])
-    expect(room.center[1] + room.size[1] / 2).toBe(dine.center[1] - dine.size[1] / 2)
+    expect(room.center[0]).toBe(banquet.center[0])
+    expect(room.center[1] + room.size[1] / 2).toBe(banquet.center[1] - banquet.size[1] / 2)
     expect(room.center[0] - room.size[0] / 2).toBe(8)
     const upper = rooms.filter(candidate => candidate.floorY === 0 && candidate.id !== 'salon')
     for (const other of upper) {
@@ -43,17 +43,17 @@ describe('the Salon', () => {
     expect(roomAt(visit.position)).toBe('salon')
     expect(visit.position[2]).toBeGreaterThan(salonBench.position[2] + salonBench.depth / 2 + 0.5)
   })
-  test('one shared arch joins Dine and the Salon, back to back on the same plane', () => {
-    const dineNorth = walls.find(wall => wall.id === 'dine-north')!
+  test('one shared arch joins the Banquet and the Salon, back to back on the same plane', () => {
+    const banquetNorth = walls.find(wall => wall.id === 'banquet-north')!
     const salonSouth = walls.find(wall => wall.id === 'salon-south')!
-    expect(dineNorth.center).toEqual(salonSouth.center)
-    expect(Math.abs(Math.cos(dineNorth.rotation - salonSouth.rotation) + 1)).toBeLessThan(1e-12)
+    expect(banquetNorth.center).toEqual(salonSouth.center)
+    expect(Math.abs(Math.cos(banquetNorth.rotation - salonSouth.rotation) + 1)).toBeLessThan(1e-12)
     const doorway = [14, 1.7, -16] as const
-    for (const wall of [dineNorth, salonSouth]) {
+    for (const wall of [banquetNorth, salonSouth]) {
       expect(wall.holes).toHaveLength(1)
       expect(insideOpening(wall.holes![0], wallCoordinates(wall, [...doorway]), 1.7)).toBe(true)
     }
-    expect(roomAt([14, 1.7, -15.9])).toBe('dine')
+    expect(roomAt([14, 1.7, -15.9])).toBe('banquet')
     expect(roomAt([14, 1.7, -16.1])).toBe('salon')
     // Its west wall backs the Lobby extension the same way.
     const salonWest = walls.find(wall => wall.id === 'salon-west')!
@@ -71,15 +71,15 @@ describe('the Salon', () => {
       expect(p.position[1] + portraitLabelLayout(p.width, p.height).bottom).toBeGreaterThan(salonWainscot.railBottom + salonWainscot.railHeight + 0.02)
     }
   })
-  test('Dine’s works keep clear of the new arch', () => {
-    const dineNorth = walls.find(wall => wall.id === 'dine-north')!
+  test('The Banquet’s works keep clear of the new arch', () => {
+    const banquetNorth = walls.find(wall => wall.id === 'banquet-north')!
     for (const p of samplePortraits) {
-      if (p.wallId !== 'dine-north') {
+      if (p.wallId !== 'banquet-north') {
         continue
       }
-      expect(placementIssue(dineNorth, p.position, p.width, p.height, [])).toBe('')
+      expect(placementIssue(banquetNorth, p.position, p.width, p.height, [])).toBe('')
     }
-    expect(placementIssue(dineNorth, wallPosition(dineNorth, 0, 2.6), 1, 1, [])).toContain('doorway')
+    expect(placementIssue(banquetNorth, wallPosition(banquetNorth, 0, 2.6), 1, 1, [])).toContain('doorway')
   })
   test('the ottoman leaves the doorway path and the walls clear', () => {
     const {depth, position, width} = salonBench

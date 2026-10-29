@@ -23,13 +23,13 @@ export function pottedPlantKind(seed: number, id: string) {
 
 export const potPlacements: Array<PotPlacement> = [
   {
-    id: 'prop-dine-southwest-plant',
+    id: 'prop-banquet-southwest-plant',
     pot: 'ivory',
     // Keep even the widest canopy clear of both corner walls.
     position: [8.95, 0.001, 7.1],
   },
   {
-    id: 'prop-dine-northeast-plant',
+    id: 'prop-banquet-northeast-plant',
     pot: 'ivory',
     position: [19.05, 0.001, -15.05],
   },

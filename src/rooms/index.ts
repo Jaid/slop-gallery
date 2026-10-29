@@ -2,7 +2,7 @@ import type {Vec3} from 'math'
 
 import Antechamber from './antechamber/Antechamber.ts'
 import Corridor from './corridor/Corridor.ts'
-import Dine from './dine/Dine.ts'
+import Banquet from './banquet/Banquet.ts'
 import Lobby from './lobby/Lobby.ts'
 import Lodge from './lodge/Lodge.ts'
 import Moonfall from './moonfall/Moonfall.ts'
@@ -17,7 +17,7 @@ export {default as floorBox} from './lib/floorBox.ts'
 export {default as floorOrigin} from './lib/floorOrigin.ts'
 
 /** every room of the gallery */
-export const rooms = [new Lobby, new Vesper, new Dine, new Antechamber, new Sienna, new Moonfall, new Oculus, new Lodge, new Corridor, new Salon] as const
+export const rooms = [new Lobby, new Vesper, new Banquet, new Antechamber, new Sienna, new Moonfall, new Oculus, new Lodge, new Corridor, new Salon] as const
 export type GalleryRoom = (typeof rooms)[number]
 export type RoomId = GalleryRoom['id']
 

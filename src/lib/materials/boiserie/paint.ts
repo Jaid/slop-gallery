@@ -18,7 +18,7 @@ export type BoiseriePalette = {
 
 type Float = Node<'float'>
 
-/** Slate-blue paint with antique gold, after the mockup of Dine. */
+/** Slate-blue paint with antique gold, after the mockup of the Banquet. */
 export const slateBoiserie: BoiseriePalette = {
   paint: '#3f5468',
   paintDeep: '#2f3e4f',

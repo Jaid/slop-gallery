@@ -1,4 +1,4 @@
-import type {WallRectangle} from '#src/lib/gallery/dine.ts'
+import type {WallRectangle} from '#src/lib/gallery/banquet.ts'
 import type {MarbleStyle} from '../marble/marble.ts'
 import type {BoiseriePalette} from './paint.ts'
 import type {Node} from 'three/webgpu'

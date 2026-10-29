@@ -128,7 +128,7 @@ const samplePortraits: Array<Portrait> = [
     width: 1.45,
     height: 1.45,
     hung: true,
-    wallId: 'dine-east',
+    wallId: 'banquet-east',
   },
   {
     id: 'cat',
@@ -218,7 +218,7 @@ const samplePortraits: Array<Portrait> = [
     width: 1.8,
     height: 1.8,
     hung: true,
-    wallId: 'dine-north',
+    wallId: 'banquet-north',
   },
   {
     id: 'frog',

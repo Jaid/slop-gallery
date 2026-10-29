@@ -5,13 +5,13 @@ import lobby from './lobby.ts'
 import salonWindow from './salonWindow.ts'
 
 /**
- * The Salon sits north of Dine, behind the arch in Dine’s north wall. Its west wall backs onto the Lobby’s east extension, from
- * the Lobby’s north wall to as far south of the glass wall between them, keeping the window centered on it. Dine takes the rest.
+ * The Salon sits north of the Banquet, behind the arch in the Banquet’s north wall. Its west wall backs onto the Lobby’s east extension, from
+ * the Lobby’s north wall to as far south of the glass wall between them, keeping the window centered on it. The Banquet takes the rest.
  */
 const salon = {
   center: [14, salonWindow.z],
   size: [12, (salonWindow.z - lobby.northZ) * 2],
-  /** shared by Dine’s north wall and the Salon’s south wall; both are centered on x = 14 */
+  /** shared by the Banquet’s north wall and the Salon’s south wall; both are centered on x = 14 */
   doorway: {
     u: 0,
     width: 2.8,
@@ -110,7 +110,7 @@ export function wallDressingSpans(wall: Pick<Wall, 'holes' | 'width'>, padding: 
   return spans
 }
 
-/** Dine’s north wall, which the Salon’s south wall backs onto */
+/** The Banquet’s north wall, which the Salon’s south wall backs onto */
 export const salonSouthZ = salon.center[1] + salon.size[1] / 2
 
 export default salon

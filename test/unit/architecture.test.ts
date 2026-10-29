@@ -193,7 +193,7 @@ describe('boolean architecture', () => {
     expect(openingTop(hole, hole.u + 1.2)).toBeLessThan(3.2)
     expect(galleryPlacement.findPlacement([5, 3.5, 4.2], [1, 0, 0], 0, 0, [])?.wallId).toBe(wall.id)
     expect(galleryPlacement.findPlacement([5, 3.5, 3], [1, 0, 0], 0, 0, [])).toMatchObject({
-      wallId: 'dine-east',
+      wallId: 'banquet-east',
       inReach: false,
       valid: false,
     })

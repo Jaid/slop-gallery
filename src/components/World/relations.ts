@@ -25,7 +25,7 @@ export const openings: ReadonlyArray<Opening> = [
     holes: [['lobby-west', 0]],
   },
   {
-    rooms: ['lobby', 'dine'],
+    rooms: ['lobby', 'banquet'],
     holes: [['lobby-east', 0]],
   },
   {
@@ -37,8 +37,8 @@ export const openings: ReadonlyArray<Opening> = [
     holes: [['vesper-south', 0]],
   },
   {
-    rooms: ['dine', 'salon'],
-    holes: [['dine-north', 0]],
+    rooms: ['banquet', 'salon'],
+    holes: [['banquet-north', 0]],
   },
   {
     rooms: ['antechamber', 'moonfall'],
@@ -77,31 +77,31 @@ export const openings: ReadonlyArray<Opening> = [
  */
 const relations = {
   lobby: {
-    rooms: ['vesper', 'dine', 'antechamber', 'salon', 'oculus', 'sienna', 'lodge'],
+    rooms: ['vesper', 'banquet', 'antechamber', 'salon', 'oculus', 'sienna', 'lodge'],
     floorMirror: 'base',
     keep: [
       'vesper-ceiling_north',
       'vesper-ceiling_south',
-      'dine-led_north',
-      'dine-led_middle',
-      'dine-led_south',
+      'banquet-led_north',
+      'banquet-led_middle',
+      'banquet-led_south',
       'sienna-chandelier',
     ],
   },
   vesper: {
-    rooms: ['lobby', 'sienna', 'dine', 'antechamber', 'salon', 'corridor'],
+    rooms: ['lobby', 'sienna', 'banquet', 'antechamber', 'salon', 'corridor'],
     floorMirror: 'base',
     keep: [
       'lobby-chandelier_north',
       'lobby-chandelier_middle',
       'lobby-chandelier_south',
-      'dine-led_north',
-      'dine-led_middle',
-      'dine-led_south',
+      'banquet-led_north',
+      'banquet-led_middle',
+      'banquet-led_south',
       'sienna-chandelier',
     ],
   },
-  dine: {
+  banquet: {
     rooms: ['lobby', 'salon', 'vesper', 'antechamber'],
     floorMirror: 'base',
     keep: [
@@ -113,7 +113,7 @@ const relations = {
     ],
   },
   antechamber: {
-    rooms: ['lobby', 'moonfall', 'vesper', 'dine', 'salon', 'oculus'],
+    rooms: ['lobby', 'moonfall', 'vesper', 'banquet', 'salon', 'oculus'],
     floorMirror: 'base',
     keep: [
       'lobby-chandelier_north',
@@ -121,9 +121,9 @@ const relations = {
       'lobby-chandelier_south',
       'vesper-ceiling_north',
       'vesper-ceiling_south',
-      'dine-led_north',
-      'dine-led_middle',
-      'dine-led_south',
+      'banquet-led_north',
+      'banquet-led_middle',
+      'banquet-led_south',
       'moonfall-tunnel_green',
       'moonfall-tunnel_blue',
       'moonfall-tunnel_red',
@@ -157,9 +157,9 @@ const relations = {
     keep: [
       'vesper-ceiling_north',
       'vesper-ceiling_south',
-      'dine-led_north',
-      'dine-led_middle',
-      'dine-led_south',
+      'banquet-led_north',
+      'banquet-led_middle',
+      'banquet-led_south',
       'moonfall-wall_west_1',
       'moonfall-wall_west_2',
       'moonfall-wall_west_3',
@@ -195,14 +195,14 @@ const relations = {
     ],
   },
   salon: {
-    rooms: ['dine', 'lobby', 'vesper', 'antechamber', 'oculus'],
+    rooms: ['banquet', 'lobby', 'vesper', 'antechamber', 'oculus'],
     floorMirror: 'base',
     keep: [
       'vesper-ceiling_north',
       'vesper-ceiling_south',
-      'dine-led_north',
-      'dine-led_middle',
-      'dine-led_south',
+      'banquet-led_north',
+      'banquet-led_middle',
+      'banquet-led_south',
     ],
   },
 } satisfies Record<RoomId, RoomRelations>

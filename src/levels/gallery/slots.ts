@@ -1,6 +1,6 @@
 import type {PortraitRatio, PortraitSlot} from '#src/lib/gallery/types.ts'
 
-import {dineWallPanels} from '#src/lib/gallery/dine.ts'
+import {banquetWallPanels} from '#src/lib/gallery/banquet.ts'
 import {lodgeWindow} from '#src/lib/gallery/lodge.ts'
 import {oculusPlatform, oculusRampLandings} from '#src/lib/gallery/lowerGallery.ts'
 import portraitLabel from '#src/lib/gallery/portraitLabel.ts'
@@ -16,10 +16,10 @@ const wall = (id: string) => galleryPlacement.wall(id)!
 const middle = ([start, end]: readonly [number, number]) => (start + end) / 2
 /** how far a frame’s center sits above the middle of the frame and its placard below, together */
 const placardLift = (portraitLabel.offset + portraitLabel.height / 2) / 2
-/** the middle of a Dine boiserie panel along the wall */
-const dinePanel = (id: string, index: number) => middle(dineWallPanels(wall(id)).upper[index].u)
-/** Dine frames and placards sit centered in the height of the boiserie panels. */
-const dineY = middle(dineWallPanels(wall('dine-east')).upper[0].v) + placardLift
+/** the middle of a Banquet boiserie panel along the wall */
+const banquetPanel = (id: string, index: number) => middle(banquetWallPanels(wall(id)).upper[index].u)
+/** Banquet frames and placards sit centered in the height of the boiserie panels. */
+const banquetY = middle(banquetWallPanels(wall('banquet-east')).upper[0].v) + placardLift
 /** the middle of a Sienna wainscot panel, so frames line up with the panels below them */
 const siennaPanel = (id: string, index: number) => siennaWainscot(wall(id))[index]
 // The Lodge hangs at the height of its window’s middle, and the east wall faces the window.
@@ -45,18 +45,18 @@ const specs: ReadonlyArray<SlotSpec> = [
   ['antechamber-west', '1:1', 100_000, 0, 0, 3],
   ['vesper-north', '1:1', 100_000, 0, 0, 3.2],
   ['vesper-west', '1:1', 100_000, 0, 0, 3.2],
-  // Dine: one work per boiserie panel
-  ['dine-north', '2:3', 30_000, 0, dinePanel('dine-north', 0), dineY],
-  ['dine-north', '2:3', 30_000, 0, dinePanel('dine-north', 1), dineY],
-  ['dine-east', '3:2', 30_000, 0, dinePanel('dine-east', 0), dineY],
-  ['dine-east', '3:2', 30_000, 0, dinePanel('dine-east', 1), dineY],
-  ['dine-east', '3:2', 30_000, 0, dinePanel('dine-east', 2), dineY],
-  ['dine-south', '3:2', 30_000, 0, dinePanel('dine-south', 0), dineY],
-  ['dine-south', '3:2', 30_000, 0, dinePanel('dine-south', 1), dineY],
-  ['dine-south', '3:2', 30_000, 0, dinePanel('dine-south', 2), dineY],
-  ['dine-west', '2:3', 30_000, 0, dinePanel('dine-west', 0), dineY],
-  ['dine-west', '3:2', 30_000, 0, dinePanel('dine-west', 1), dineY],
-  ['dine-west', '3:2', 30_000, 0, dinePanel('dine-west', 2), dineY],
+  // Banquet: one work per boiserie panel
+  ['banquet-north', '2:3', 30_000, 0, banquetPanel('banquet-north', 0), banquetY],
+  ['banquet-north', '2:3', 30_000, 0, banquetPanel('banquet-north', 1), banquetY],
+  ['banquet-east', '3:2', 30_000, 0, banquetPanel('banquet-east', 0), banquetY],
+  ['banquet-east', '3:2', 30_000, 0, banquetPanel('banquet-east', 1), banquetY],
+  ['banquet-east', '3:2', 30_000, 0, banquetPanel('banquet-east', 2), banquetY],
+  ['banquet-south', '3:2', 30_000, 0, banquetPanel('banquet-south', 0), banquetY],
+  ['banquet-south', '3:2', 30_000, 0, banquetPanel('banquet-south', 1), banquetY],
+  ['banquet-south', '3:2', 30_000, 0, banquetPanel('banquet-south', 2), banquetY],
+  ['banquet-west', '2:3', 30_000, 0, banquetPanel('banquet-west', 0), banquetY],
+  ['banquet-west', '3:2', 30_000, 0, banquetPanel('banquet-west', 1), banquetY],
+  ['banquet-west', '3:2', 30_000, 0, banquetPanel('banquet-west', 2), banquetY],
   // Sienna: above wainscot panels
   ['sienna-north', '1:1', 15_000, 0, siennaPanel('sienna-north', 2), 3.15],
   ['sienna-east', '1:1', 15_000, 0, siennaPanel('sienna-east', 1), 3.15],

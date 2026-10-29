@@ -1,7 +1,7 @@
 import type {Quat as MathQuat, Vec3 as MathVec3} from 'math'
 
 export type {Quat, Vec3} from 'math'
-export type RoomId = 'antechamber' | 'corridor' | 'dine' | 'lobby' | 'lodge' | 'moonfall' | 'oculus' | 'salon' | 'sienna' | 'vesper'
+export type RoomId = 'antechamber' | 'corridor' | 'banquet' | 'lobby' | 'lodge' | 'moonfall' | 'oculus' | 'salon' | 'sienna' | 'vesper'
 export type Portrait = {
   creator: string
   description: string

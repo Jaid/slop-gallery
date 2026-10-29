@@ -16,7 +16,7 @@ import {cutArchitectures, provideArchitecture} from '#src/lib/gallery/architectu
 import {createArchitecturalGlassMaterials, disposeArchitecturalGlassMaterials} from '#src/lib/materials/ArchitecturalGlassMaterials.ts'
 import CastleStoneMaterial from '#src/lib/materials/CastleStoneMaterial.ts'
 import DamaskWallpaperMaterial from '#src/lib/materials/DamaskWallpaperMaterial.ts'
-import DineMaterials from '#src/lib/materials/DineMaterials.ts'
+import BanquetMaterials from '#src/lib/materials/BanquetMaterials.ts'
 import JoineryWoodMaterial from '#src/lib/materials/JoineryWoodMaterial.ts'
 import {lightIndoors} from '#src/lib/materials/lights/index.ts'
 import LodgeMaterials from '#src/lib/materials/LodgeMaterials.ts'
@@ -82,8 +82,8 @@ export default function Architecture() {
     x: joineryX,
     z: joineryZ,
   }), [joineryPanel, joineryX, joineryZ])
-  // Dine’s walls are painted with gilt boiserie, laid out around each wall’s doorways.
-  const dine = useDisposable(useMemo(() => new DineMaterials, []))
+  // The Banquet’s walls are painted with gilt boiserie, laid out around each wall’s doorways.
+  const banquet = useDisposable(useMemo(() => new BanquetMaterials, []))
   const oculusMaterial = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
     map: stone,
     color: '#4c5558',
@@ -106,7 +106,7 @@ export default function Architecture() {
     if (wall.room === 'sienna') {
       return joineryX
     }
-    return dine.trim(wall)
+    return banquet.trim(wall)
   }
   const surfaceMaterial = (wall: Wall) => {
     if (isLodgeRoomWall(wall)) {
@@ -121,7 +121,7 @@ export default function Architecture() {
     if (wall.room === 'sienna') {
       return damask
     }
-    return dine.surface(wall)
+    return banquet.surface(wall)
   }
   return <>
     <GalleryLighting />

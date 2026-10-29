@@ -29,9 +29,9 @@ test('every room is reachable through its portals', () => {
   expect(rooms.filter(room => !linked.has(room.id))).toEqual([])
 })
 test('a room shows the rooms behind the openings in view', () => {
-  // From the Vesper through both side doors of the Lobby into Dine, and through the Lobby’s glass wall into the Salon, but no further.
+  // From the Vesper through both side doors of the Lobby into the Banquet, and through the Lobby’s glass wall into the Salon, but no further.
   const vesper = visibleRooms('vesper', view([-14, 1.6, 3], [14, 1.6, 3]))
-  expect(vesper.has('dine')).toBe(true)
+  expect(vesper.has('banquet')).toBe(true)
   expect(['moonfall', 'lodge', 'corridor'].filter(room => vesper.has(room as never))).toEqual([])
   // The Salon’s glass wall shows the Lobby extension, and the Lobby’s shows the Salon.
   expect(visibleRooms('salon', view([16, 1.6, -20], [0, 1.6, -20])).has('lobby')).toBe(true)
@@ -67,10 +67,10 @@ test('rooms behind openings only show through them', () => {
   const position: Vec3 = [-14, 1.6, 3]
   const target: Vec3 = [14, 1.6, 3]
   const regions = visibleRegions(roomsAt(position), viewProjection(position, target))
-  // Through the Lobby’s side doors into Dine, but not to the Salon and Antechamber, whose openings lie outside the door the Vesper looks through.
+  // Through the Lobby’s side doors into the Banquet, but not to the Salon and Antechamber, whose openings lie outside the door the Vesper looks through.
   const coarse = visibleRooms('vesper', view(position, target))
   expect(regions.keys().filter(room => !coarse.has(room)).toArray()).toEqual([])
-  expect(regions.has('dine')).toBe(true)
+  expect(regions.has('banquet')).toBe(true)
   expect(regions.has('salon')).toBe(false)
   const [left, bottom, right, top] = regions.get('lobby')![0]
   // The door into the Lobby covers only part of the screen.

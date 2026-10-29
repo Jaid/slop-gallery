@@ -15,18 +15,18 @@ const plan = {
   size: [12, 8 - salonSouthZ],
 } as const
 
-export default class Dine extends Room {
+export default class Banquet extends Room {
   override readonly color = '#af9294'
   override readonly description = 'A change of perspective is encouraged.'
   override readonly fence = floorBox(plan.size, 0, 5.8)
   override readonly floorY = 0
-  override readonly id = 'dine'
+  override readonly id = 'banquet'
   override readonly origin = floorOrigin(plan, this.floorY)
   override readonly spawn = spawns['']
 
   constructor() {
     super({
-      title: 'Dine',
+      title: 'The Banquet',
       cameras,
       spawns,
       lamps,

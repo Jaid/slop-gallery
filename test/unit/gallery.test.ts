@@ -174,7 +174,7 @@ describe('wall geometry', () => {
   })
   test('room boundaries are shared by UI and interaction', () => {
     expect(roomAt([-14, 2, 0])).toBe('vesper')
-    expect(roomAt([14, 2, 0])).toBe('dine')
+    expect(roomAt([14, 2, 0])).toBe('banquet')
     expect(roomAt([0, 2, 11])).toBe('antechamber')
     expect(roomAt([0, 2, 3])).toBe('lobby')
   })

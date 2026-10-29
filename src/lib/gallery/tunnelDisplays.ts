@@ -29,7 +29,7 @@ const ceilingThickness = 0.18
 export const displayStairway = {
   /** between the outsides of its walls, which stand inside it; the lower flight fills the gap between the display’s south end wall and Moonfall’s north wall */
   width: tunnel.southZ - (southZ + thickness - wallFace),
-  /** over the grade, where its ceiling hangs, still below the floors of the Dine and the Salon above */
+  /** over the grade, where its ceiling hangs, still below the floors of the Banquet and the Salon above */
   headroom: 2.8,
   /** how deep each step is; every flight takes whole steps */
   going: 0.4,

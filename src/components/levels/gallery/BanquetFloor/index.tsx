@@ -6,12 +6,12 @@ import {useMemo} from 'react'
 import {useGraphicsModeValue} from 'use-graphics-mode'
 
 import RoomFloor from '#component/levels/gallery/RoomFloor'
-import {dineFloorOrigin, dineFloorTile} from '#src/lib/gallery/dine.ts'
+import {banquetFloorOrigin, banquetFloorTile} from '#src/lib/gallery/banquet.ts'
 import {CheckeredMarbleFloorMaterial} from '#src/lib/materials/marble/index.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
-/** Dine’s floor: polished Calacatta and Portoro marble in a checkerboard, mirroring the room in heavy mode. */
-export default function DineFloor(props: {
+/** The Banquet’s floor: polished Calacatta and Portoro marble in a checkerboard, mirroring the room in heavy mode. */
+export default function BanquetFloor(props: {
   glass: Material
   room: FloorRoom
   stone: Texture
@@ -21,8 +21,8 @@ export default function DineFloor(props: {
   const slab = useDisposable(useMemo(() => new CheckeredMarbleFloorMaterial({
     loss: 0,
     grazingStrength: 0.2,
-    origin: dineFloorOrigin,
-    tile: dineFloorTile,
+    origin: banquetFloorOrigin,
+    tile: banquetFloorTile,
     reflections: floorReflections,
     strength: 0.4,
   }), [floorReflections]))

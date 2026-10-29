@@ -44,10 +44,10 @@ export const rooms = [
     color: '#7b9986',
   },
   {
-    id: 'dine',
+    id: 'banquet',
     floorY: 0,
     height: 5.8,
-    title: 'Dine',
+    title: 'The Banquet',
     subtitle: 'A change of perspective is encouraged.',
     // From the Salon’s south wall to the Vesper’s south wall’s line.
     center: [14, (salonSouthZ + 8) / 2],
@@ -245,7 +245,7 @@ const withDisplayDoor = (target: Wall): Wall => {
     ],
   }
 }
-/** Dine’s west wall, with the arch through to the Lobby cut where the Lobby’s east wall has it. */
+/** The Banquet’s west wall, with the arch through to the Lobby cut where the Lobby’s east wall has it. */
 const withLobbyDoorway = (target: Wall): Wall => ({
   ...target,
   holes: [
@@ -308,10 +308,10 @@ const walls: Array<Wall> = miterCorners([
       profile: 'arch',
     },
   ]),
-  roomWall('dine', 'north', [salon.doorway]),
-  roomWall('dine', 'east'),
-  roomWall('dine', 'south'),
-  withLobbyDoorway(roomWall('dine', 'west')),
+  roomWall('banquet', 'north', [salon.doorway]),
+  roomWall('banquet', 'east'),
+  roomWall('banquet', 'south'),
+  withLobbyDoorway(roomWall('banquet', 'west')),
   roomWall('salon', 'north'),
   roomWall('salon', 'east'),
   roomWall('salon', 'south', [salon.doorway]),

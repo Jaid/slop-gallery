@@ -77,7 +77,7 @@ test('every pot placement can grow every plant, and seed 1 stays put', () => {
     expect(grown).toEqual(new Set(pottedPlantKinds))
   }
   // Captures from snap.ts and film.ts default to seed 1; a change here changes every one of them.
-  expect(potPlacements.map(placement => pottedPlantKind(1, placement.id))).toEqual(['philodendron', 'rubber', 'fig', 'peaceLily'])
+  expect(potPlacements.map(placement => pottedPlantKind(1, placement.id))).toEqual(['jade', 'palm', 'fig', 'peaceLily'])
 })
 test('the seed is saved, restored and validated with the collection', async () => {
   useGallery.setState({seed: 123_456})
