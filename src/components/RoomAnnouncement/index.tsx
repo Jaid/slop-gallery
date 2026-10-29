@@ -7,7 +7,7 @@ import css from './style.module.sass'
 
 const roomTitle = (id: string) => rooms.find(room => room.id === id)?.title ?? id
 
-/** The title of the room the player just walked into, fading in at the top center and out again. The room the HUD mounts in is not announced. */
+/** The title of the room the player just walked into, shrinking into place at the top center and fading out again. The room the HUD mounts in is not announced. */
 export default function RoomAnnouncement() {
   const room = useGallery(s => s.room)
   const [seen, setSeen] = useState(room)
