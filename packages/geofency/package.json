@@ -1,0 +1,21 @@
+{
+  "name": "geofency",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "helper library for geofencing 3D worlds",
+  "funding": "https://github.com/sponsors/Jaid",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jaid/slop-gallery.git",
+    "directory": "packages/geofency"
+  },
+  "main": "src/main.ts",
+  "scripts": {
+    "test": "bun test ./test"
+  },
+  "dependencies": {
+    "eventemitter3": "5.0.4",
+    "zod": "4.6.7"
+  }
+}

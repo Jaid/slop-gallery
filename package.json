@@ -52,12 +52,14 @@
     "ai": "7.0.148",
     "branch-component": "0.4.0",
     "canvas-textures": "workspace:*",
+    "capture-session": "workspace:*",
     "clsx": "2.1.1",
     "compose-id": "0.2.0",
     "disposable-lifetime": "workspace:*",
     "ego-player": "workspace:*",
     "es-toolkit": "1.52.0",
     "flatten-string": "0.2.0",
+    "geofency": "workspace:*",
     "knot-materials": "workspace:*",
     "math": "0.1.0",
     "mount-root": "0.5.0",
@@ -81,6 +83,7 @@
     "use-pause-menu": "workspace:*",
     "victoria-browser-client": "0.3.0",
     "vite-plugin-import-voice-sample": "workspace:*",
+    "vite-plugin-jxl-headers": "workspace:*",
     "voice-sample-store": "workspace:*",
     "webgpu-capture-bridge": "workspace:*",
     "zustand": "5.0.16",
@@ -89,9 +92,7 @@
     "@react-three/drei": "11.0.0-alpha.7",
     "@react-three/fiber": "10.0.0-alpha.6",
     "@react-three/rapier": "2.2.0",
-    "@react-three/tsl": "10.0.0-alpha.6",
-    "capture-session": "workspace:*",
-    "vite-plugin-jxl-headers": "workspace:*"
+    "@react-three/tsl": "10.0.0-alpha.6"
   },
   "devDependencies": {
     "autoprefixer": "10.6.1",
