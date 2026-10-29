@@ -36,7 +36,9 @@ test('installs every preset through native Rolldown hooks', () => {
   expect(plugin).not.toHaveProperty('config')
   const output = configureOutput()
   expect(output.codeSplitting).toMatchObject({groups: thematicChunkGroups})
-  expect((output.codeSplitting as {groups: Array<{test?: unknown}>}).groups.at(-1)?.test).toBeTypeOf('function')
+  for (const name of ['sub', 'vendor', 'main']) {
+    expect(thematicChunkGroups.find(group => group.name === name)?.tags).toEqual(['$initial'])
+  }
   expect(output.chunkFileNames).toBeUndefined()
 })
 test('retains consumer chunk groups and thresholds without mutating their options', () => {
@@ -199,6 +201,64 @@ for (const backend of ['Rolldown', 'Vite'] as const) {
       expect(holding('eager.js')?.name).toBe('main')
       expect(holding('later.js')?.name).not.toBe('main')
       expect(holding('later.js')?.isDynamicEntry).toBe(true)
+    } finally {
+      await fs.remove(root)
+    }
+  })
+}
+for (const backend of ['Rolldown', 'Vite'] as const) {
+  test(`${backend} leaves workspace and vendor modules only a dynamic import reaches out of sub and vendor`, async () => {
+    const root = await fs.mkdtemp(resolve(tmpdir(), 'thematic-chunks-'))
+    try {
+      const files = {
+        eagerPackage: 'packages/eager/index.js',
+        laterPackage: 'packages/later/index.js',
+        eagerVendor: 'node_modules/eager/index.js',
+        laterVendor: 'node_modules/later/index.js',
+      }
+      for (const [name, file] of Object.entries(files)) {
+        await fs.outputFile(resolve(root, file), `export const ${name} = globalThis.__thematicChunk${name} ??= Math.random()`)
+      }
+      await fs.outputFile(resolve(root, 'later.js'), `
+        export {laterPackage} from './${files.laterPackage}'
+        export {laterVendor} from './${files.laterVendor}'
+      `)
+      await fs.outputFile(resolve(root, 'main.js'), `
+        import {eagerPackage} from './${files.eagerPackage}'
+        import {eagerVendor} from './${files.eagerVendor}'
+        console.log(eagerPackage, eagerVendor, await import('./later.js'))
+      `)
+      const input = resolve(root, 'main.js')
+      const plugins = [thematicChunks()]
+      const result = backend === 'Rolldown' ? await rolldownBuild({
+        input,
+        preserveEntrySignatures: 'allow-extension',
+        plugins,
+        output: {format: 'es'},
+        write: false,
+      }) : await viteBuild({
+        root,
+        configFile: false,
+        logLevel: 'silent',
+        plugins,
+        build: {
+          minify: false,
+          write: false,
+          rolldownOptions: {input},
+        },
+      })
+      if (Array.isArray(result) || 'close' in result) {
+        throw new TypeError('Expected one completed build output.')
+      }
+      const chunks = result.output.filter(output => output.type === 'chunk')
+      const holding = (file: string) => chunks.find(chunk => Object.keys(chunk.modules).some(id => id.replaceAll('\\', '/') === resolve(root, file).replaceAll('\\', '/')))
+      expect(holding(files.eagerPackage)?.name).toBe('sub')
+      expect(holding(files.eagerVendor)?.name).toBe('vendor')
+      for (const file of [files.laterPackage, files.laterVendor]) {
+        expect(holding(file)?.name).not.toBe('sub')
+        expect(holding(file)?.name).not.toBe('vendor')
+        expect(holding(file)?.isDynamicEntry).toBe(true)
+      }
     } finally {
       await fs.remove(root)
     }

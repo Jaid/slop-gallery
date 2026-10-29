@@ -1,4 +1,7 @@
-import type {Plugin} from 'rolldown'
+import type {CodeSplittingGroup, Plugin} from 'rolldown'
+
+/** only takes modules the entries import statically, so that code behind a dynamic import keeps loading on demand in chunks of its own */
+const initial = ['$initial'] satisfies CodeSplittingGroup['tags']
 
 export const thematicChunkPresets = {
   monaco: {
@@ -26,37 +29,26 @@ export const thematicChunkPresets = {
     name: 'sub',
     test: /[/\\]packages[/\\]/u,
     priority: 2,
+    tags: initial,
   },
   vendor: {
     name: 'vendor',
     test: /node_modules/u,
     priority: 3,
+    tags: initial,
   },
   main: {
     name: 'main',
+    tags: initial,
   },
-} as const
+} as const satisfies Record<string, CodeSplittingGroup>
 
-export const thematicChunkGroups = Object.values(thematicChunkPresets)
+export const thematicChunkGroups: ReadonlyArray<CodeSplittingGroup> = Object.values(thematicChunkPresets)
 
 /** Applies the shared thematic chunking strategy without changing unrelated output options. */
 export default function thematicChunks(): Plugin {
-  /** the modules the entries import statically, known once the build ends */
-  let eager: Set<string> | undefined
   return {
     name: 'thematic-chunks',
-    buildEnd() {
-      eager = new Set
-      const pending = [...this.getModuleIds()].filter(id => this.getModuleInfo(id)?.isEntry)
-      while (pending.length) {
-        const id = pending.pop()!
-        if (eager.has(id)) {
-          continue
-        }
-        eager.add(id)
-        pending.push(...this.getModuleInfo(id)?.importedIds ?? [])
-      }
-    },
     outputOptions(options) {
       const codeSplitting = typeof options.codeSplitting === 'object' ? options.codeSplitting : {}
       const chunkFileNames = options.chunkFileNames
@@ -64,11 +56,7 @@ export default function thematicChunks(): Plugin {
         ...options,
         codeSplitting: options.codeSplitting !== false && {
           ...codeSplitting,
-          // The main group only takes what the entries import statically, so app code behind a dynamic import still loads on demand.
-          groups: [...codeSplitting.groups ?? [], ...thematicChunkGroups.map(group => (group.name === 'main' ? {
-            ...group,
-            test: (id: string) => eager?.has(id) ?? true,
-          } : {...group}))],
+          groups: [...codeSplitting.groups ?? [], ...thematicChunkGroups.map(group => ({...group}))],
         },
         ...chunkFileNames === undefined ? {} : {
           chunkFileNames: chunkInfo => {
