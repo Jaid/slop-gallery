@@ -1,6 +1,6 @@
 import {join} from 'node:path'
 
-import {levelIds} from '../../src/data/levels.ts'
+import levels, {levelIds} from '../../src/data/levels.ts'
 
 const requiredModules = {
   gallery: 'src/components/levels/gallery/Architecture/index.tsx',
@@ -42,6 +42,16 @@ for (const level of levelIds) {
   }
   if (files.some(file => /^material\d*\.js$/iu.test(file))) {
     throw new Error(`Knot material code escaped the main chunk in ${level}.`)
+  }
+  const definition = levels[level]
+  if ('wallpaper' in definition) {
+    if (!files.some(file => file.replaceAll('\\', '/') === definition.wallpaper)) {
+      throw new Error(`Missing loading screen wallpaper in ${level}.`)
+    }
+    const html = await Bun.file(join(directory, 'index.html')).text()
+    if (html.includes('data:image/')) {
+      throw new Error(`Inlined image in ${level}’s index.html.`)
+    }
   }
   if (level === 'gallery') {
     if (!files.some(file => file.replaceAll('\\', '/').startsWith('art/')) || !files.some(file => file.replaceAll('\\', '/').startsWith('audio/'))) {

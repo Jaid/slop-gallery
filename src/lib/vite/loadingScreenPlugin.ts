@@ -1,4 +1,4 @@
-import type {Plugin} from 'vite'
+import type {HtmlTagDescriptor, Plugin} from 'vite'
 
 import {resolve} from 'node:path'
 
@@ -7,7 +7,7 @@ import fs from 'fs-extra'
 type LoadingScreen = {
   tagline: string
   title: string
-  /** image behind the title, relative to the project root */
+  /** image behind the title, relative to the public directory */
   wallpaper?: string
 }
 
@@ -53,23 +53,33 @@ const style = `
 `
 /** Paints the title over the level’s wallpaper as plain HTML, which covers the page while the scripts download and the scene loads. The app fades it out to the menu once the scene is ready. */
 const loadingScreenPlugin = ({tagline, title, wallpaper}: LoadingScreen): Plugin => {
-  let root: string
+  let base: string
+  let publicDir: string
   return {
     name: 'loading-screen',
     configResolved(config) {
-      root = config.root
+      base = config.base
+      publicDir = config.publicDir
     },
-    async transformIndexHtml() {
+    async generateBundle() {
+      if (!wallpaper) {
+        return
+      }
+      if (!publicDir) {
+        this.error('The loading screen’s wallpaper requires a public directory.')
+      }
+      this.emitFile({
+        type: 'asset',
+        fileName: wallpaper,
+        source: await fs.readFile(resolve(publicDir, wallpaper)),
+      })
+    },
+    transformIndexHtml() {
       const attrs: Record<string, string> = {
         id: 'loading-screen',
         'aria-busy': 'true',
       }
-      // The wallpaper ships inside index.html, so it paints together with the title instead of after another request.
-      if (wallpaper) {
-        const image = await fs.readFile(resolve(root, wallpaper))
-        attrs.style = `--wallpaper: url(data:image/jxl;base64,${image.toBase64()})`
-      }
-      return [
+      const tags: Array<HtmlTagDescriptor> = [
         {
           tag: 'style',
           children: style,
@@ -82,6 +92,23 @@ const loadingScreenPlugin = ({tagline, title, wallpaper}: LoadingScreen): Plugin
           injectTo: 'body-prepend',
         },
       ]
+      if (wallpaper) {
+        const url = `${base}${wallpaper}`
+        attrs.style = `--wallpaper: url(${url})`
+        // The preload scanner does not look into style attributes, so without the hint the wallpaper would only start downloading once the loading screen is styled.
+        tags.push({
+          tag: 'link',
+          attrs: {
+            rel: 'preload',
+            as: 'image',
+            type: 'image/jxl',
+            href: url,
+            fetchpriority: 'high',
+          },
+          injectTo: 'head',
+        })
+      }
+      return tags
     },
   }
 }
