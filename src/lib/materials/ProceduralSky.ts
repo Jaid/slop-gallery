@@ -17,13 +17,12 @@ export type SkyPalette = {
   cloudWarm: string
   /** the aureole around the sun */
   glow: string
-  /** below the horizon */
-  ground: string
   horizon: string
   /** the disc */
   sun: string
   /** linear radiance of the disc; above the bloom threshold of 1 it flares */
   sunRadiance: number
+  /** straight up, and straight down as well */
   zenith: string
 }
 
@@ -38,6 +37,8 @@ type Vector = readonly [number, number, number]
 const sunRadius = 0.6 * Math.PI / 180
 /** Height of the cloud deck in the projection, against which directions are traced; larger is flatter. */
 const cloudHeight = 0.35
+/** Sine of the elevation within which the gradient rounds off its minimum at the horizon. */
+const horizonRounding = 0.015
 /** Cloud deck units per second, a slow drift toward the north-east. */
 const wind = [0.0016, -0.0011] as const
 
@@ -49,20 +50,19 @@ export const daytimeSky: SkyPalette = {
   cloudShade: '#a6aebb',
   cloudWarm: '#fff3dc',
   glow: '#fff1d2',
-  ground: '#000000',
   horizon: '#c4def5',
   sun: '#fff6e4',
   sunRadiance: 40,
   zenith: '#2f7ae0',
 }
 
-const colorKeys = ['cloudLit', 'cloudShade', 'cloudWarm', 'glow', 'ground', 'horizon', 'sun', 'zenith'] as const
+const colorKeys = ['cloudLit', 'cloudShade', 'cloudWarm', 'glow', 'horizon', 'sun', 'zenith'] as const
 
 /**
  * A procedural sky with a sun and fair-weather cumulus, by default a clear, blue daytime one.
  *
- * Returns a linear color for a world direction: a zenith that pales toward a hazy horizon over a dark ground, a soft glow around the
- * sun with a bright disc in it, and drifting clouds traced on a flat deck overhead. The clouds are lit from the sun’s side,
+ * Returns a linear color for a world direction: a zenith that pales toward a hazy horizon and deepens again below it, a soft glow around the
+ * sun with a bright disc in it, and drifting clouds traced on a flat deck overhead. The sky has no ground, so it surrounds the world at every height. The clouds are lit from the sun’s side,
  * darker underneath and fade into the haze toward the horizon, where the deck’s projection would get too fine to draw.
  * Everything but the sun stays below the gallery’s bloom threshold of 1. Pass a {@link SkyLook} to change it later.
  */
@@ -71,10 +71,9 @@ export function proceduralSky(options: ProceduralSkyOptions | SkyLook, direction
   const {colors} = look
   const sun = look.sunDirection
   const up = direction.y
-  const above = up.max(0)
-  // The zenith pales to a hazy horizon; below it the ground takes over.
-  const gradient = mix(colors.horizon, colors.zenith, pow(above, float(0.55)))
-  let sky: Node<'vec3'> = mix(gradient, colors.ground, smoothstep(0, -0.08, up))
+  // The zenith pales to a hazy horizon, mirrored below it. The height is rounded off within a degree of the horizon, where the mirrored gradient would crease into a bright line.
+  const height = up.mul(up).add(horizonRounding ** 2).sqrt().sub(horizonRounding)
+  let sky: Node<'vec3'> = mix(colors.horizon, colors.zenith, pow(height, float(0.55)))
   const cosine = direction.dot(sun).clamp(-1, 1)
   // A wide, faint aureole and a tighter, brighter one. Like the clouds, it is weighed against the daytime brightness of 0.82.
   const aureole = pow(cosine.max(0), float(6)).mul(0.16 / 0.82).add(pow(cosine.max(0), float(160)).mul(0.5 / 0.82))
