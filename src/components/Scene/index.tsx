@@ -19,7 +19,7 @@ import {isEditingPortraitSlots, isShowingPortraitSlots} from '#src/lib/gallery/p
 import {pendingRooms} from '#src/lib/gallery/roomLoading.ts'
 import {useHiddenUi} from '#src/lib/hiddenUi.ts'
 import {GalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
-import {isShowingLights} from '#src/lib/rendering/lightLevels.ts'
+import {isShowingLamps} from '#src/lib/rendering/lightLevels.ts'
 import {readLoading} from '#src/lib/rendering/loading.ts'
 import {telemetry} from '#src/lib/telemetry/index.ts'
 import {pendingImages} from '#src/lib/useArtworkTexture.ts'
@@ -44,7 +44,7 @@ export default function Scene() {
     <group name='scene-ui' visible={!uiHidden}>
       <Branch if={isShowingPortraitSlots} then={PortraitSlots} />
       <Branch if={isEditingPortraitSlots} then={PortraitSlotEditor} />
-      <Branch if={isShowingLights} then={LightMarkers} />
+      <Branch if={isShowingLamps} then={LightMarkers} />
       <Branch if={isShowingAmbienceEmitters} then={AmbienceEmitterMarkers} />
     </group>
     <LightLevels />

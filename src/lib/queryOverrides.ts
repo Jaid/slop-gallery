@@ -17,7 +17,7 @@ import {readKnotRotation} from './physics/rotatingKnots.ts'
 import {readAlbedo} from './rendering/albedo.ts'
 import {readAntiAliasing} from './rendering/antiAliasing.ts'
 import {readGraphicsModeName} from './rendering/graphicsMode.ts'
-import {readEditLights, readShowLights} from './rendering/lightLevels.ts'
+import {readEditLamps, readShowLamps} from './rendering/lightLevels.ts'
 import {readLoading} from './rendering/loading.ts'
 import {readNear} from './rendering/near.ts'
 import {readPmrem} from './rendering/pmrem.ts'
@@ -44,7 +44,7 @@ const readers: Record<string, Reader> = {
   audio: readAudio,
   crosshair: readCrosshair,
   development: readDevelopmentMode,
-  edit_lights: readEditLights,
+  edit_lamps: readEditLamps,
   edit_portrait_slots: readPortraitSlotEditing,
   flying: readFlying,
   frozen_time: readFrozenTime,
@@ -60,7 +60,7 @@ const readers: Record<string, Reader> = {
   scale: readScale,
   seed: readSeedOverride,
   show_ambience_emitters: readShowAmbienceEmitters,
-  show_lights: readShowLights,
+  show_lamps: readShowLamps,
   show_portrait_slots: readShowPortraitSlots,
   show_wireframe: readShowWireframe,
   spawn: readSpawn,

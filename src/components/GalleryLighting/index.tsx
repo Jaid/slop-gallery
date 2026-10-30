@@ -15,7 +15,7 @@ import {sunGeometry, sunlitPoints, sunShadowMapSize} from '#src/lib/gallery/sun.
 import {getDefaultCustomGraphics, useCustomGraphics} from '#src/lib/rendering/customGraphics.ts'
 import {getGraphicsProfile, getSunShadowSettings} from '#src/lib/rendering/graphicsMode.ts'
 import {lampOf} from '#src/lib/rendering/lamps.ts'
-import {isShadowSlot, lightActive, lightGain, lightShadow} from '#src/lib/rendering/lightLevels.ts'
+import {isShadowSlot, lightActive, lightGain, lightShadow, useLightEdits} from '#src/lib/rendering/lightLevels.ts'
 import {getShadowProps} from '#src/lib/rendering/shadowFilters.ts'
 import {shadowPool} from '#src/lib/rendering/shadowPool.ts'
 import StainedGlassShadowNode from '#src/lib/rendering/StainedGlassShadowNode.ts'
@@ -122,14 +122,14 @@ export default function GalleryLighting() {
       lightShadow.current = () => 1
     }
   }, [lamps, lampSet, lampShadows])
-  // Lamps only shine while the player is in one of the rooms the world lights them in, and the shadow pool’s slots only while lent to one.
+  // Lamps only shine while the player is in one of the rooms the world lights them in, unless selected with `?edit_lamps`, and the shadow pool’s slots only while lent to one.
   useLayoutEffect(() => {
     lightActive.current = light => {
       if (isShadowSlot(light)) {
         return shadowPool.isInUse(light)
       }
       const lampRooms = lampOf(light)?.rooms
-      return !lampRooms || lampRooms.includes(useGallery.getState().room)
+      return !lampRooms || lampRooms.includes(useGallery.getState().room) || useLightEdits.getState().selected.has(light)
     }
     return () => {
       lightActive.current = () => true

@@ -5,7 +5,7 @@ import {useEffect, useRef} from 'react'
 import {Color, Matrix4, Quaternion, Vector2, Vector3} from 'three/webgpu'
 
 import {isTextInput, notify} from '#src/lib/gallery.ts'
-import {changeLightDecay, changeLightIntensity, changeLightRange, describeObject, isEditingLights, isShadowSlot, lightActive, lightShadowOn, moveLight, resetLight, setLightOn, setLightShadow, useLightEdits} from '#src/lib/rendering/lightLevels.ts'
+import {changeLightDecay, changeLightIntensity, changeLightRange, describeObject, isEditingLamps, isShadowSlot, lightActive, lightShadowOn, moveLight, resetLight, setLightOn, setLightShadow, useLightEdits} from '#src/lib/rendering/lightLevels.ts'
 
 type Positional = Light & {
   isPointLight?: boolean
@@ -120,9 +120,9 @@ const copyEdits = async (list: string) => {
   }
 }
 /**
- * `?show_lights`: a glowing, dark-rimmed dot in the color of every point, spot and area light and every light with a `userData.marker`, seen through walls, dark gray for lights switched off. With
- * `?edit_lights`, the light the camera aims at grows: E switches it off and on, Numpad / switches its shadow on and off, ←/→ make it weaker or stronger by one unit of intensity and ↓/↑ shorten or extend its range by 1 m and Numpad 7/1 make it fade faster or more gently, for the rest of the page session.
- * Left-clicking a marker selects its light, which then takes these keys wherever the camera aims, until a click on another marker or anything else; Shift+clicking a marker adds its light to the selection or takes it out, so the keys change every selected light at once.
+ * `?show_lamps`: a glowing, dark-rimmed dot in the color of every point, spot and area light and every light with a `userData.marker`, seen through walls, dark gray for lights switched off. With
+ * `?edit_lamps`, the light the camera aims at grows: E switches it off and on, Numpad / switches its shadow on and off, ←/→ make it weaker or stronger by one unit of intensity and ↓/↑ shorten or extend its range by 1 m and Numpad 7/1 make it fade faster or more gently, for the rest of the page session.
+ * Left-clicking a marker selects its light, which then takes these keys wherever the camera aims, until a click on another marker or anything else; Shift+clicking a marker adds its light to the selection or takes it out, so the keys change every selected light at once. Selected lights shine wherever the player is, even outside the rooms that light them.
  * Numpad 8, 2, 4 and 6 move the selected lights forward, back, left and right of the view, 9 and 3 up and down, 5 centers them on the camera, 0 undoes all their edits, and K copies every edit.
  */
 export default function LightMarkers() {
@@ -146,7 +146,7 @@ export default function LightMarkers() {
       }
     })
     let aimed: Light | null = null
-    if (isEditingLights) {
+    if (isEditingLamps) {
       camera.getWorldPosition(origin)
       camera.getWorldDirection(direction)
       aimed = pick(found, origin, direction)
@@ -182,7 +182,7 @@ export default function LightMarkers() {
     }
   })
   useEffect(() => {
-    if (!isEditingLights) {
+    if (!isEditingLamps) {
       return
     }
     const keydown = (event: KeyboardEvent) => {

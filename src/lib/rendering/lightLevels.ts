@@ -17,34 +17,34 @@ type Level = {
 const enabledValues = new Set<unknown>([true, '', 'true'])
 const flagsSchema = optis({
   defaults: {
-    edit_lights: false,
-    show_lights: false,
+    edit_lamps: false,
+    show_lamps: false,
   },
   normalizations: {
-    edit_lights(value: unknown) {
+    edit_lamps(value: unknown) {
       return enabledValues.has(value)
     },
-    show_lights(value: unknown) {
+    show_lamps(value: unknown) {
       return enabledValues.has(value)
     },
   },
 })
 
-/** Read the `?show_lights` flag that marks every light in the scene; a bare `?show_lights` counts as enabled. */
-export function readShowLights(input: URL | string = typeof location === 'undefined' ? '' : location.href): boolean {
-  return readPermalink(input, {schema: flagsSchema}).show_lights
+/** Read the `?show_lamps` flag that marks every light in the scene; a bare `?show_lamps` counts as enabled. */
+export function readShowLamps(input: URL | string = typeof location === 'undefined' ? '' : location.href): boolean {
+  return readPermalink(input, {schema: flagsSchema}).show_lamps
 }
 
-/** Read the `?edit_lights` flag that lets E switch the aimed light off and on, the arrows change its strength and range and Numpad 7 and 1 its decay; a bare `?edit_lights` counts as enabled. */
-export function readEditLights(input: URL | string = typeof location === 'undefined' ? '' : location.href): boolean {
-  return readPermalink(input, {schema: flagsSchema}).edit_lights
+/** Read the `?edit_lamps` flag that lets E switch the aimed light off and on, the arrows change its strength and range and Numpad 7 and 1 its decay; a bare `?edit_lamps` counts as enabled. */
+export function readEditLamps(input: URL | string = typeof location === 'undefined' ? '' : location.href): boolean {
+  return readPermalink(input, {schema: flagsSchema}).edit_lamps
 }
 
-/** whether this page was opened with `?edit_lights`, read once at startup */
-export const isEditingLights = readEditLights()
+/** whether this page was opened with `?edit_lamps`, read once at startup */
+export const isEditingLamps = readEditLamps()
 
 /** whether this page shows light markers, read once at startup; editing shows them too */
-export const isShowingLights = isEditingLights || readShowLights()
+export const isShowingLamps = isEditingLamps || readShowLamps()
 
 /** how much one step changes a light’s range, in meters */
 const rangeStep = 1
