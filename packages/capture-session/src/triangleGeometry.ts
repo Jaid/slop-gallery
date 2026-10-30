@@ -1,15 +1,23 @@
-import type {BufferGeometry, Scene} from 'three/webgpu'
+import type {Scene} from 'three/webgpu'
 
-import {InterleavedBuffer, InterleavedBufferAttribute, Mesh} from 'three/webgpu'
+import {BufferGeometry, InterleavedBuffer, InterleavedBufferAttribute, Mesh} from 'three/webgpu'
 
 export const cornerNames = ['floodCorner0', 'floodCorner1', 'floodCorner2'] as const
 export const barycentricName = 'floodBarycentric'
 
 // 3 corner offsets and a barycentric coordinate per vertex
 const stride = 12
+/** A plain, non-indexed copy of the geometry. Not `clone()`, which constructs the geometry’s own class without arguments, so subclasses that need theirs would throw or build garbage. */
+function nonIndexedCopyOf(geometry: BufferGeometry) {
+  if (geometry.index) {
+    return geometry.toNonIndexed()
+  }
+  const copy = new BufferGeometry
+  return copy.copy(geometry)
+}
 /** A copy of the geometry in which every triangle has vertices of its own, each carrying the offsets from itself to its triangle’s three corners, so flat varyings hand the whole triangle its corners, and its barycentric coordinate, so a fragment knows how far it is from the triangle’s edges. Everything shares one interleaved buffer, since WebGPU allows only 8 vertex buffers. */
 function withTriangleAttributes(geometry: BufferGeometry) {
-  const triangles = geometry.index ? geometry.toNonIndexed() : geometry.clone()
+  const triangles = nonIndexedCopyOf(geometry)
   const position = triangles.getAttribute('position')
   const values = new Float32Array(position.count * stride)
   for (let first = 0; first + 2 < position.count; first += 3) {
