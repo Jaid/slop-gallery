@@ -17,10 +17,14 @@ export const tunnelDisplayWindow = {
   width: tunnel.southZ - tunnel.northZ - 4.5,
   glassThickness: 0.06,
 }
-const centerZ = (tunnel.northZ + tunnel.southZ) / 2
-const width = tunnelDisplayWindow.width
-const northZ = centerZ - width / 2
-const southZ = centerZ + width / 2
+/** the middle of the windows along the tunnel, which the exhibits are spread around */
+const windowZ = (tunnel.northZ + tunnel.southZ) / 2
+/** how far each display reaches north past its window, behind the tunnel’s wall, to give the pedestal at its low end room */
+export const displayNorthExtension = 1
+const northZ = windowZ - tunnelDisplayWindow.width / 2 - displayNorthExtension
+const southZ = windowZ + tunnelDisplayWindow.width / 2
+const centerZ = (northZ + southZ) / 2
+const width = southZ - northZ
 const floorY = tunnelFloorHeight(centerZ)
 const depth = 3.2
 const thickness = 0.18
@@ -311,7 +315,7 @@ const tunnelDisplays = (['west', 'east'] as const).map(side => {
     /** where the exhibits stand on the display’s floor, from its north end south */
     exhibits: [-1, 0, 1].map((slot, i) => ({
       id: `tunnel-${side}-exhibit-${i}`,
-      position: [centerX, tunnelFloorHeight(centerZ + slot * width / 3), centerZ + slot * width / 3] as Vec3,
+      position: [centerX, tunnelFloorHeight(windowZ + slot * tunnelDisplayWindow.width / 3), windowZ + slot * tunnelDisplayWindow.width / 3] as Vec3,
     })),
     stairway: {
       id,
