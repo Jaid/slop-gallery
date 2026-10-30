@@ -29,9 +29,9 @@ const stairways = Object.fromEntries(tunnelDisplays.flatMap(({side, stairway}) =
 export default {
   // Green, blue and red, from the tunnel’s low north end up to its high south end, abreast of each row of exhibits, lighting both displays at once.
   tunnel_green: tunnelLamp(northZ, {
-    strength: 10,
+    strength: 25,
     tint: '#4dff6a',
-    range: 14,
+    range: 10,
     decay: 1.25,
     shadow: true,
   }),

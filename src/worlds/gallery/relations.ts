@@ -106,6 +106,11 @@ const relations = {
         'led_middle',
         'led_south',
       ],
+      exhibition: [
+        'tunnel_green',
+        'west_stairway_door',
+        'east_stairway_door',
+      ],
       sienna: 'chandelier',
     },
   },
