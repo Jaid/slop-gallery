@@ -120,11 +120,12 @@ test('the pedestals back onto the back walls with their sidecars, leaving ways i
     expect(Math.abs(signX - display.backX)).toBeCloseTo(exhibitionSidecar.signOffset, 9)
     // The sidecar’s cap is level at its height over the floor under its middle.
     expect(signY - knotSign.elevation).toBeCloseTo(tunnelFloorHeight(z + sidecar.z) + sidecar.height, 9)
-    // It faces out toward the window and up the tunnel toward Moonfall, to the south.
+    // It faces out toward the window, the lowest down the tunnel toward the Oculus, to the north, the middle one straight and the highest up the tunnel toward Moonfall, to the south.
+    const turn = [-1, 0, 1][display.exhibits.findIndex(exhibit => exhibit.id === slot.id)] * exhibitionSidecar.signTurn
     const facing = new Vector3(0, 0, 1)
     facing.applyAxisAngle(new Vector3(0, 1, 0), slot.sign.rotation)
-    expect(facing.x * slot.direction).toBeCloseTo(Math.cos(exhibitionSidecar.signTurn), 9)
-    expect(facing.z).toBeCloseTo(Math.sin(exhibitionSidecar.signTurn), 9)
+    expect(facing.x * slot.direction).toBeCloseTo(Math.cos(turn), 9)
+    expect(facing.z).toBeCloseTo(Math.sin(turn), 9)
     // Every corner of its plaque, which leans back, stays off the back wall, and either north of the pedestal or over its cap.
     const capTop = slot.pedestal[1] + main.height
     const [plaque] = knotSignParts

@@ -52,9 +52,12 @@ export const exhibitionSidecar = {
   signOffset: 0.65,
   /** how far north of its middle the nameplate stands, so the turned plaque clears the pedestal’s cap */
   signShift: 0.1,
-  /** how far the nameplate turns from facing the window toward Moonfall, up the tunnel to the south, where most visitors come from */
+  /** how far a turned nameplate turns from facing the window, up the tunnel toward Moonfall to the south or down it toward the Oculus to the north */
   signTurn: Math.PI / 6,
 } as const
+
+/** which way each display’s nameplates turn, from its north end south: the lowest down the tunnel toward the Oculus, the middle one not at all and the highest up the tunnel toward Moonfall */
+const signTurns = [-1, 0, 1] as const
 
 /** the pedestal’s lobes, north to south, around where it meets the back wall under its Knot */
 export const exhibitionPedestalLobes = [
@@ -78,20 +81,21 @@ const exhibitionNumberLabel = (number: number) => `#${String(number).padStart(2,
 export const exhibitionSlots = tunnelDisplays.flatMap(display => {
   /** from the back wall out toward the window */
   const direction = Math.sign(display.frontX - display.backX) as -1 | 1
-  return display.exhibits.map(exhibit => {
+  return display.exhibits.map((exhibit, index) => {
     const z = exhibit.position[2]
     const signZ = z - exhibitionSidecar.shift - exhibitionSidecar.signShift
+    const signTurn = signTurns[index] * exhibitionSidecar.signTurn
     return {
       id: exhibit.id,
       direction,
       /** where the pedestal meets the back wall, on the floor */
       pedestal: [display.backX, tunnelFloorHeight(z), z] as Vec3,
       position: [display.backX + direction * exhibitionKnotOffset, tunnelFloorHeight(z) + exhibitionKnotHeight, z] as Vec3,
-      /** the nameplate’s plaque over the sidecar, facing the window and turned toward Moonfall */
+      /** the nameplate’s plaque over the sidecar, facing the window and turned by its place along it */
       sign: {
         position: [display.backX + direction * exhibitionSidecar.signOffset, tunnelFloorHeight(z - exhibitionSidecar.shift) + exhibitionSidecar.height + knotSign.elevation, signZ] as Vec3,
-        // Facing +z at no rotation, it turns from the window by the sign’s turn back toward +z, where Moonfall lies.
-        rotation: direction * (Math.PI / 2 - exhibitionSidecar.signTurn),
+        // Facing +z at no rotation, it turns from the window by its turn back toward +z, where Moonfall lies, or on toward −z, where the Oculus lies.
+        rotation: direction * (Math.PI / 2 - signTurn),
       },
     }
   })
