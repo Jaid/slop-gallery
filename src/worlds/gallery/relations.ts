@@ -209,16 +209,8 @@ const relations = {
     rooms: ['lobby', 'exhibition', 'fortress', 'salon', 'moonfall', 'lodge', 'banquet'],
     visibleLamps: {
       moonfall: [
-        'wall_west_1',
-        'wall_west_2',
-        'wall_west_3',
-        'wall_west_4',
-        'wall_east_north',
-        'wall_east_south',
-        'spotlight',
         'planet_glow',
         'ember',
-        'stairs',
       ],
       exhibition: [
         'tunnel_green',
