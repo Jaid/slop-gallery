@@ -4,9 +4,12 @@ import optis from 'optis'
 import readPermalink from 'read-permalink'
 import useGraphicsMode from 'use-graphics-mode'
 
-type GraphicsModeName = ReturnType<typeof useGraphicsMode.getName>
+import {detectHeavyCapability} from './autoGraphics.ts'
 
-const graphicsModeNames: Array<GraphicsModeName> = [useGraphicsMode.getName(false), useGraphicsMode.getName(true), useGraphicsMode.getName(true, true)]
+/** a `?graphics` name: a graphics mode or `auto`, which picks fast or heavy for the GPU */
+type GraphicsModeName = ReturnType<typeof useGraphicsMode.getName> | 'auto'
+
+const graphicsModeNames: Array<GraphicsModeName> = [useGraphicsMode.getName(false), useGraphicsMode.getName(true), useGraphicsMode.getName(true, true), 'auto']
 const normalizeGraphicsMode = (value: unknown): GraphicsModeName => {
   if (value === true) {
     return useGraphicsMode.getName(true)
@@ -80,14 +83,21 @@ type SsgiSettings = Pick<RenderPipelineSettings, | 'screenSpaceIndirectLightAmbi
   | 'screenSpaceIndirectLightTemporalFiltering'
   | 'screenSpaceIndirectLightThickness'>
 
-/** Read the `?graphics` name: fast, heavy or cinematic. Anything else is fast. */
+/** Read the `?graphics` name: fast, heavy, cinematic or auto. Anything else is fast. */
 export function readGraphicsModeName(input: URL | string = typeof location === 'undefined' ? '' : location.href) {
   return readPermalink(input, {schema: graphicsModeSchema}).graphics
 }
 
-/** Read whether `?graphics` asks for heavy graphics, which cinematic graphics are too. */
+// Only `?graphics=auto` waits for the adapter, before anything reads the graphics mode.
+const isAutoHeavy = readGraphicsModeName() === 'auto' && await detectHeavyCapability()
+
+/** Read whether `?graphics` asks for heavy graphics, which cinematic graphics are too. `auto` reads as what it picked for this page’s GPU. */
 export function readGraphicsMode(input?: URL | string) {
-  return readGraphicsModeName(input) !== useGraphicsMode.getName(false)
+  const name = readGraphicsModeName(input)
+  if (name === 'auto') {
+    return isAutoHeavy
+  }
+  return name !== useGraphicsMode.getName(false)
 }
 
 /** Read whether `?graphics` asks for cinematic graphics: heavy, but budgeted for non-realtime rendering. */

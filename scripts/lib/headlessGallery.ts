@@ -19,7 +19,7 @@ const queryOptionNames = [...queryParameters.filter(key => !dedicatedQueryOption
 const queryOptions: Record<string, {type: 'string'}> = Object.fromEntries(queryOptionNames.map(key => [key, {type: 'string'}]))
 /** Scripts pick their own default height; the width follows 16:9. */
 export const galleryHelp = (defaultHeight = 720) => `  --target <dir>          use this static build (e.g. dist) instead of the dev server
-  --graphics <mode>       mirrors ?graphics (fast, heavy or cinematic, which is heavy with larger maps and more samples for non-realtime renders). Default: heavy
+  --graphics <mode>       mirrors ?graphics (fast, heavy, cinematic, which is heavy with larger maps and more samples for non-realtime renders, or auto, which picks fast or heavy for the GPU). Default: heavy
   --seed <number>         mirrors ?seed, the environment seed (0–${maximumSeed}) that decides random details like the potted plants. Default: 1
   --loading <mode>        mirrors ?loading (stream, full or lazy). Default: stream
   --stream_budget <ms|false>

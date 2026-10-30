@@ -18,11 +18,17 @@ test('graphics URL names round-trip through boolean state and default to fast', 
     const name = useGraphicsMode.getName(isHeavy)
     expect(readGraphicsMode(`?graphics=${name}`)).toBe(isHeavy)
   }
-  for (const value of ['', 'lite', 'full', 'auto', 'high', 'quality', 'performance', 'QUALITY', 'true', 'false', 'Cinematic']) {
+  for (const value of ['', 'lite', 'full', 'Auto', 'high', 'quality', 'performance', 'QUALITY', 'true', 'false', 'Cinematic']) {
     expect(readGraphicsMode(`?graphics=${value}`)).toBe(false)
     expect(readCinematicGraphics(`?graphics=${value}`)).toBe(false)
     expect(readGraphicsModeName(`?graphics=${value}`)).toBe('fast')
   }
+})
+test('auto graphics read as what the page picked for its GPU, which is fast without WebGPU, and never as cinematic', () => {
+  expect(readGraphicsModeName('?graphics=auto')).toBe('auto')
+  expect(readGraphicsMode('?graphics=auto')).toBe(false)
+  expect(readCinematicGraphics('?graphics=auto')).toBe(false)
+  expect(readGraphicsProfile('?graphics=auto')).toBe(getGraphicsProfile(false))
 })
 test('cinematic graphics read as heavy, and only cinematic reads as cinematic', () => {
   expect(readGraphicsModeName('?graphics=cinematic')).toBe('cinematic')
