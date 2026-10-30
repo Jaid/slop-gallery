@@ -9,17 +9,21 @@ import {createServer} from 'vite'
 import {maximumSeed, parseSeed} from '#src/lib/environmentSeed.ts'
 import {queryParameters} from '#src/lib/queryOverrides.ts'
 import {readLoading} from '#src/lib/rendering/loading.ts'
+import {parseStreamBudget} from '#src/lib/rendering/streamBudget.ts'
 import {knottinghamParameters, readWorld} from '#src/worlds/index.ts'
 
 export const repositoryRoot = resolve(import.meta.dir, '..', '..')
-// seed, graphics and loading have dedicated options with validation and defaults. Knottingham’s own parameters open it, like --world knottingham.
-const queryOptionNames = [...queryParameters.filter(key => key !== 'seed' && key !== 'graphics' && key !== 'loading'), ...knottinghamParameters].toSorted()
+const dedicatedQueryOptionNames = new Set(['graphics', 'loading', 'seed', 'stream_budget'])
+// These have dedicated options with validation and defaults. Knottingham’s own parameters open it, like --world knottingham.
+const queryOptionNames = [...queryParameters.filter(key => !dedicatedQueryOptionNames.has(key)), ...knottinghamParameters].toSorted()
 const queryOptions: Record<string, {type: 'string'}> = Object.fromEntries(queryOptionNames.map(key => [key, {type: 'string'}]))
 /** Scripts pick their own default height; the width follows 16:9. */
 export const galleryHelp = (defaultHeight = 720) => `  --target <dir>          use this static build (e.g. dist) instead of the dev server
   --graphics <mode>       mirrors ?graphics (fast, heavy or cinematic, which is heavy with larger maps and more samples for non-realtime renders). Default: heavy
   --seed <number>         mirrors ?seed, the environment seed (0–${maximumSeed}) that decides random details like the potted plants. Default: 1
   --loading <mode>        mirrors ?loading (stream, full or lazy). Default: full, which builds everything before the scene is ready, so captures don’t wait for every object and shadow map to stream in
+  --stream_budget <ms|false>
+                          mirrors ?stream_budget, the milliseconds a frame after loading may spend building objects. Default: false, which builds everything in the first frame, so the scene is complete about three times sooner than at the players’ 8
   --width <pixels>        render width. Default: --height × 16/9, or ${Math.round(defaultHeight * 16 / 9)}
   --height <pixels>       render height. Default: --width × 9/16, or ${defaultHeight}
   --<parameter> <value>   mirrors ?<parameter>=<value> for every other URL query parameter the app reads, e.g. --show_wireframe true or --anti_aliasing false:
@@ -35,6 +39,7 @@ export const galleryOptions = {
     type: 'string',
     default: '1',
   },
+  stream_budget: {type: 'string'},
   target: {type: 'string'},
   width: {type: 'string'},
   height: {type: 'string'},
@@ -44,6 +49,7 @@ export type GalleryValues = Partial<Record<string, boolean | string>> & {
   height?: string
   loading?: string
   seed: string
+  stream_budget?: string
   target?: string
   width?: string
 }
@@ -133,6 +139,12 @@ export const resolveGallerySetup = async (values: GalleryValues, defaultHeight =
     throw new Error(`--loading must be stream, full or lazy, got “${loading}”.`)
   }
   search.set('loading', loading)
+  // ?test=true implies it already; it is explicit so captures keep it without the test hooks.
+  const streamBudget = values.stream_budget ?? 'false'
+  if (parseStreamBudget(streamBudget) === undefined) {
+    throw new Error(`--stream_budget must be milliseconds from 0 up or false, got “${streamBudget}”.`)
+  }
+  search.set('stream_budget', streamBudget)
   for (const key of queryOptionNames) {
     const value = values[key]
     if (typeof value === 'string') {

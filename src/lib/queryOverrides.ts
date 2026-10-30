@@ -23,6 +23,7 @@ import {readNear} from './rendering/near.ts'
 import {readPmrem} from './rendering/pmrem.ts'
 import {readScale} from './rendering/scale.ts'
 import {readShowWireframe} from './rendering/showWireframe.ts'
+import {readStreamBudget} from './rendering/streamBudget.ts'
 import {readWireframeHighlight} from './rendering/wireframeHighlight.ts'
 import {readRoomAnnouncements} from './roomAnnouncements.ts'
 import {readTemporary} from './temporary.ts'
@@ -63,6 +64,7 @@ const readers: Record<string, Reader> = {
   show_portrait_slots: readShowPortraitSlots,
   show_wireframe: readShowWireframe,
   spawn: readSpawn,
+  stream_budget: readStreamBudget,
   temporary: readTemporary,
   weather: readWeather,
   wireframe_highlight: readWireframeHighlight,

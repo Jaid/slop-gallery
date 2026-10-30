@@ -10,6 +10,7 @@ import {BatchedLighting} from '#src/lib/materials/lights/base/BatchedLightsNode.
 import {telemetry} from '#src/lib/telemetry/index.ts'
 
 import {cinematicMaxTextureSize, readCinematicGraphics} from './graphicsMode.ts'
+import {readStreamBudget} from './streamBudget.ts'
 
 type Culler = (camera: Camera) => void
 type RenderObject = {
@@ -112,8 +113,9 @@ export const updateChangedMatrices = (object: Object3D, parentChanged: boolean) 
 }
 // Milliseconds a warming frame may spend building the node graphs of objects drawn outside the camera frustum. Behind the loading screen, long frames matter less than getting through the scene: a frame’s own rendering adds up over many short ones.
 const warmupBuildBudget = 50
-// Milliseconds a streaming frame may spend building the node graphs of objects drawn for the first time in a pass. Building happens synchronously, from a few milliseconds per object to over a hundred for the heaviest; a frame always admits at least one.
-const streamedBuildBudget = 4
+// Milliseconds a streaming frame may spend building the node graphs of objects drawn for the first time in a pass, see readStreamBudget. Building happens synchronously, from a few milliseconds per object to over a hundred for the heaviest; a frame always admits at least one.
+const streamBudget = readStreamBudget()
+const streamedBuildBudget = streamBudget === false ? Number.POSITIVE_INFINITY : streamBudget
 /** the least a build is expected to cost, in milliseconds, so a frame never admits more than a budget’s worth of objects whose materials are built already */
 const minimumBuildCost = 0.1
 /** the build cost a camera’s passes are expected to have for a material they haven’t built yet, in milliseconds, until they built one */
