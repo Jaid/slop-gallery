@@ -59,15 +59,15 @@ export default {
 } as const satisfies KnotData
 ```
 
-IDs are globally unique snake_case strings. A candidate is a grouping concept, not necessarily a single model. Keep exact model provenance in `author.model`: required `title`, optional `slug` and `effortLevel`. Use `harness: 'none'` for direct API inference, the actual harness name when known, and omit it when legacy provenance is unknown.
+IDs are globally unique snake_case strings. A candidate is a grouping concept, not necessarily a single model. Keep exact model provenance in `author.model`: required `title`, optional `slug` and `effortLevel`. Use `harness: 'none'` for direct API inference, the actual harness name when known, and omit it when the provenance is unknown.
 
 `KnotId` is derived from the named exports of `src/entries/index.ts`; `KnotCandidateId` is derived from the candidate metadata barrel. The registry rejects invalid IDs, cross-candidate duplicate IDs, missing rarities, mismatched candidate attribution, and invalid displacement bounds. Display titles are independent of IDs.
 
-`accent`, `highlighted`, `sourceId`, and persisted plate numbers are no longer metadata fields. `KnotEntry.rarity` is computed from the central rarity map, not stored in each `data.ts`.
+`KnotEntry.rarity` is computed from the central rarity map, not stored in each `data.ts`.
 
 ## Rarity and exhibition selection
 
-`rarities.ts` exports `unknown = 0`, `common = 1`, `rare = 2`, `prime = 3`, `ethereal = 4` and `special = 5`. Its `Record<KnotId, Rarity>` requires a rating for every entry. Unrated entries are initialized as `unknown` and display no stars. The rated tiers remain unchanged; formerly highlighted entries were initialized as `rare`. The three explicitly supplied ratings are preserved: `chladni_resonance` is `ethereal`, `lichtenberg_reliquary` is `prime`, and `washi_lantern` is `common`. The earlier automatic 3/4-star assignments were removed.
+`rarities.ts` exports `unknown = 0`, `common = 1`, `rare = 2`, `prime = 3`, `ethereal = 4` and `special = 5`. Its `Record<KnotId, Rarity>` requires a rating for every entry. Unrated entries are `unknown` and display no stars.
 
 `special` is a five-star tier outside the automatic exhibition. Special entries are never shown unless intentionally requested, either by naming them in `?knot_id=` or by a `?rarity_filter=` that includes `special` (or `5`). They are also excluded from every candidate score, like `unknown` entries, so they neither lift nor lower their candidate's row order. `knotty_prince`, `great_cat_emergence` and `felis_major_menagerie` are special.
 
