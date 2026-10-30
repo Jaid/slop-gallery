@@ -1,6 +1,11 @@
 export const wallTop = 5.8
 export const wallFace = 0.105
 export const wallOpeningTrim = 0.17
+/** how far the casing round an opening stands out of its wall’s center line, by the wall’s trim style */
+export const openingCasingFronts = {
+  plain: 0.25,
+  classic: 0.27,
+} as const
 /** the bands of a wall’s cornice, the lower one first: how tall each is, how far its front stands out of the wall’s center line and how far its middle lies under the wall’s top, 30 cm under the ceiling */
 export const corniceBands = [
   {

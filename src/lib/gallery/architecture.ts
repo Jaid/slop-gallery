@@ -5,7 +5,7 @@ import {mergeVertices} from 'three/addons/utils/BufferGeometryUtils.js'
 import {BoxGeometry, BufferGeometry, ExtrudeGeometry, Matrix4, MeshBasicNodeMaterial, Shape, Vector3} from 'three/webgpu'
 
 import {openingArc} from '../placement/wallGeometry.ts'
-import {corniceBands, wallFace, wallOpeningTrim} from './architectureDimensions.ts'
+import {corniceBands, openingCasingFronts, wallFace, wallOpeningTrim} from './architectureDimensions.ts'
 import {bendGeometry, curveSegments as bendSegments, sliceAlongX} from './CurvedBoxGeometry.ts'
 
 export {wallFace, wallOpeningTrim, wallTop} from './architectureDimensions.ts'
@@ -179,7 +179,7 @@ function cutArchitecture(wall: Wall) {
       }
       join(baseboardBand(baseboardHeight - 0.06, 0.06, 0.25))
       for (const hole of wall.holes ?? []) {
-        const front = wall.trimStyle === 'plain' ? 0.25 : 0.27
+        const front = openingCasingFronts[wall.trimStyle === 'plain' ? 'plain' : 'classic']
         join(brush(extrude(openingShape(hole, wallOpeningTrim, hole.bottom ? hole.bottom - wallOpeningTrim : 0), front - wallFace, wallFace)))
         if (wall.trimStyle !== 'plain' && !hole.bottom) {
           for (const side of [-1, 1]) {

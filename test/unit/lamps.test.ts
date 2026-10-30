@@ -37,7 +37,7 @@ const lanterns = (passage: Passage, surfaces: ReadonlyArray<BufferGeometry>, kep
 }
 test('every lamp has a world-wide id of its own and lies in its own room', () => {
   expect(byId.size).toBe(lamps.length)
-  expect(lamps.length).toBe(35)
+  expect(lamps.length).toBe(33)
   for (const {id, position, room} of lamps) {
     expect(`${id} in ${slopGallery.roomAt(position)?.id}`).toBe(`${id} in ${room}`)
   }
@@ -54,11 +54,8 @@ test('a lamp shines in its own room and in the rooms that keep it', () => {
   expect(slopGallery.lampRooms(lamp('exhibition-tunnel_red')).toSorted()).toEqual(['exhibition', 'moonfall', 'oculus'])
   expect(slopGallery.lampRooms(lamp('exhibition-west_stairway_door')).toSorted()).toEqual(['exhibition', 'lobby', 'oculus'])
   expect(slopGallery.lampRooms(lamp('fortress-lantern_east')).toSorted()).toEqual(['fortress', 'oculus'])
-  // The lanterns behind the apse’s openings light the platform through them.
+  // The lantern behind the apse’s gate lights the platform through the gate and both windows beside it.
   expect(slopGallery.lampRooms(lamp('fortress-lantern_north')).toSorted()).toEqual(['fortress', 'lodge', 'oculus'])
-  for (const side of ['northwest', 'northeast']) {
-    expect(slopGallery.lampRooms(lamp(`fortress-lantern_${side}`)).toSorted()).toEqual(['fortress', 'oculus'])
-  }
 })
 test('the passages’ lamps hang under the lanterns the fixtures hang from their vaults and ribs', () => {
   const vault = new RouteVaultGeometry(fortressCurve)

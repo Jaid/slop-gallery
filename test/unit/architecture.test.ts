@@ -6,7 +6,7 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import {computeMeshVolume} from 'three-bvh-csg'
 import {BufferGeometry, DoubleSide, Float32BufferAttribute, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
-import {colliderGeometry, createArchitectureGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
+import {colliderGeometry, createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
 import {insideOpening, openingArc, openingTop} from '../../src/lib/placement/wallGeometry.ts'
 import walls, {galleryPlacement} from './fixtures/gallery.ts'
 
@@ -134,6 +134,9 @@ describe('boolean architecture', () => {
         const meshes = [geometry.surface, ...geometry.trim].map(partGeometry => new Mesh(partGeometry, material))
         for (const hole of wall.holes!) {
           for (const side of [-1, 1]) {
+            // 40 cm past the jamb, or up to the casing of the next opening on that side, if that comes first
+            const jamb = hole.u + side * hole.width / 2
+            const clear = Math.min(0.4, ...wall.holes!.filter(other => other !== hole && (other.u - hole.u) * side > 0).map(other => (other.u - side * (other.width / 2 + wallOpeningTrim) - jamb) * side - 0.01))
             for (const offsetY of [0.173, 0.393, 0.417, 0.613, 1.731]) {
               if (offsetY >= hole.height - (hole.bottom ?? 0)) {
                 continue
@@ -147,7 +150,7 @@ describe('boolean architecture', () => {
                 }
                 const direction = new Vector3(side, side * (wall.slope ?? 0), 0)
                 direction.normalize()
-                const ray = new Raycaster(new Vector3(hole.u, y + (wall.slope ?? 0) * hole.u, z), direction, 0, hole.width / 2 + 0.4)
+                const ray = new Raycaster(new Vector3(hole.u, y + (wall.slope ?? 0) * hole.u, z), direction, 0, hole.width / 2 + clear)
                 const hits = ray.intersectObjects(meshes)
                 expect(hits.length).toBe(z < depth ? 1 : 0)
                 if (hits.length === 0) {

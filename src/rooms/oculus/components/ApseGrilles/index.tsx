@@ -1,3 +1,4 @@
+import type {ApseOpening} from '#src/lib/gallery/fortress.ts'
 import type {Material} from 'three/webgpu'
 
 import {RigidBody, TrimeshCollider} from '@react-three/rapier'
@@ -7,8 +8,9 @@ import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import BarredOpeningGeometry from '#src/lib/gallery/BarredOpeningGeometry.ts'
-import {apseOpenings, fortressClearance} from '#src/lib/gallery/fortress.ts'
+import {apseOpeningPoint, apseOpenings, fortressClearance} from '#src/lib/gallery/fortress.ts'
 import {mergeParts} from '#src/lib/geometry.ts'
+import {wallCoordinates} from '#src/lib/placement/wallGeometry.ts'
 import slopGallery from '#src/worlds/gallery/index.ts'
 
 /** the apse’s walls by the arc they stand on, west to east */
@@ -29,15 +31,30 @@ export default function ApseGrilles({stone}: {stone: Material}) {
   </RigidBody>
 }
 
-function createGrilles() {
-  const openings = apseOpenings.map(opening => {
-    const wall = slopGallery.walls.find(value => value.id === apseWalls[opening.arc])!
-    const hole = wall.holes!.find(value => value.name === opening.name)!
-    return new BarredOpeningGeometry(wall, hole, {
-      bands: opening.bands,
-      depth: fortressClearance,
-    })
+/** The bars and the reveal of one of the apse’s openings, splayed out to where it comes out on the Fortress’ side. */
+export function apseGrille(opening: ApseOpening) {
+  const wall = slopGallery.walls.find(value => value.id === apseWalls[opening.arc])!
+  const hole = wall.holes!.find(value => value.name === opening.name)!
+  const [x, z] = apseOpeningPoint({
+    arc: opening.arc,
+    angle: opening.back.angle,
   })
+  return new BarredOpeningGeometry(wall, hole, {
+    back: {
+      ...hole,
+      u: wallCoordinates(wall, [x, 0, z]),
+      width: opening.back.width,
+      // over the wall’s foot, on the platform
+      height: opening.back.height,
+      rise: opening.back.rise,
+    },
+    bands: opening.bands,
+    depth: fortressClearance,
+  })
+}
+
+function createGrilles() {
+  const openings = apseOpenings.map(apseGrille)
   const reveal = mergeParts(openings.map(opening => opening.reveal))
   const bars = mergeParts(openings.map(opening => opening.bars))
   return {

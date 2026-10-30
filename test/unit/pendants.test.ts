@@ -77,7 +77,7 @@ const firstHit = (origin: Vector3, direction: Vector3, far = Infinity) => {
 }
 describe('ceiling-hung pendants', () => {
   test('every light hangs its drop under its passage’s crown', () => {
-    expect(groups[0].mounts).toHaveLength(4)
+    expect(groups[0].mounts).toHaveLength(2)
     expect(groups.at(-1)!.mounts).toHaveLength(9)
     for (const {mounts, lights} of groups) {
       expect(mounts).toHaveLength(lights.length)

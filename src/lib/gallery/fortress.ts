@@ -1,7 +1,7 @@
 import type {RouteOpening} from './passages/RoutedPassage.ts'
 import type {Vec3} from './types.ts'
 
-import {corniceBands, wallOpeningTrim} from './architectureDimensions.ts'
+import {corniceBands, openingCasingFronts, wallOpeningTrim} from './architectureDimensions.ts'
 import {easedRampGradient} from './easedRamp.ts'
 import lodge from './lodge.ts'
 import lowerGallery, {oculusPlatform} from './lowerGallery.ts'
@@ -17,6 +17,13 @@ export type ApseOpening = {
   angle: number
   /** which of the apse’s arcs it pierces: 0 the west shoulder, 1 the crown and 2 the east shoulder */
   arc: number
+  /** where it comes out on the Fortress’ side, splayed through the gap between both walls like an embrasure: the polar angle of its middle, its width along the apse’s center line, and its height and the rise of its arch over the platform */
+  back: {
+    angle: number
+    height: number
+    rise: number
+    width: number
+  }
   /** the heights of the flat iron bands across its bars, over the platform */
   bands: ReadonlyArray<number>
   bottom: number
@@ -72,7 +79,7 @@ const [west, crown, east] = oculusApse.arcs
 const eastRadius = east.radius + offset
 /** The ramp down from the doorway to the platform’s level runs on past the run north into the turn round the apse’s east shoulder, this far round it. */
 const eastRampTurn = (rampLength(platformY - doorwayY) - runLength) / eastRadius
-/** the radius of the bend that takes the curve out of the apse’s west shoulder, in an S, back west toward the Lodge; tight, so the curve keeps to the shoulder long enough for its window */
+/** the radius of the bend that takes the curve out of the apse’s west shoulder, in an S, back west toward the Lodge */
 const bendRadius = 3
 const westRadius = west.radius + offset
 // The bend is tangent to the run toward the Lodge, its center north of the run, and to the turn round the west shoulder, outside of it.
@@ -88,24 +95,48 @@ const bendTurn = (crown.to - crown.from) / 2 + westTurn
 const climbLength = rampLength(lodge.floorY - platformY) - bendRadius * bendTurn
 /** a window’s width along the apse’s wall, a little narrower than the gate */
 const windowWidth = 2.4
-/** where the windows pierce the shoulders: the west one halfway along the stretch of its shoulder the curve still runs behind, from where the bend leaves it to the crown, and the east one mirrored */
-const windowAngle = (bendAngle + west.to) / 2
-/** The gate in the middle of the apse and a window in each of its shoulders, all opening onto the curve behind them. */
+/** how far along the crown from the gate the windows’ middles lie: as far out as they fit, 30 cm of the crown’s wall left beside their casings toward the shoulders */
+const windowAlong = (crown.to - crown.from) * crown.radius / 2 - 0.3 - windowWidth / 2 - wallOpeningTrim
+const windowTurn = windowAlong / crown.radius
+/**
+ * How much wider the windows open on the Fortress’ side, toward the gate: the lantern behind the gate hangs on the curve’s center line, and its light slants through them toward the shoulders, shifting toward the gate across the gap and the curve’s wall, out to the casing round the window there, by this much at their jambs nearest the gate.
+ * Splayed like an embrasure, they let it through all the way across.
+ */
+const windowSplay = (windowAlong - windowWidth / 2) * (fortressClearance + openingCasingFronts.plain) / offset
+/** The light also climbs toward the lantern on the way back through the windows, so they open higher there, under a flatter arch, as high as the casing round them stays under where the vault springs. */
+const windowBack = {
+  width: windowWidth + windowSplay,
+  height: apseHeight - width / 2 - wallOpeningTrim - 0.05,
+  rise: 0.3,
+}
+/** The gate in the middle of the apse’s crown and a window to either side of it, close enough for the lantern behind the gate to throw the bars of all three onto the platform, all opening onto the curve behind them. */
 export const apseOpenings: ReadonlyArray<ApseOpening> = [
   {
     name: 'west_window',
-    arc: 0,
-    angle: windowAngle,
+    arc: 1,
+    angle: Math.PI * 3 / 2 - windowTurn,
+    back: {
+      ...windowBack,
+      angle: Math.PI * 3 / 2 - windowTurn + windowSplay / 2 / crown.radius,
+    },
     width: windowWidth,
-    bottom: 1.1,
-    height: 2.9,
+    // low, so the light slanting down through them lands on the platform close by
+    bottom: 0.7,
+    height: 2.6,
     rise: 0.6,
-    bands: [1.7],
+    bands: [1.5],
   },
   {
     name: 'gate',
     arc: 1,
     angle: Math.PI * 3 / 2,
+    // The lantern hangs right behind it.
+    back: {
+      angle: Math.PI * 3 / 2,
+      width: 3,
+      height: 3,
+      rise: 0.9,
+    },
     width: 3,
     bottom: 0,
     height: 3,
@@ -115,13 +146,18 @@ export const apseOpenings: ReadonlyArray<ApseOpening> = [
   },
   {
     name: 'east_window',
-    arc: 2,
-    angle: Math.PI * 3 - windowAngle,
+    arc: 1,
+    angle: Math.PI * 3 / 2 + windowTurn,
+    back: {
+      ...windowBack,
+      angle: Math.PI * 3 / 2 + windowTurn - windowSplay / 2 / crown.radius,
+    },
     width: windowWidth,
-    bottom: 1.1,
-    height: 2.9,
+    // low, so the light slanting down through them lands on the platform close by
+    bottom: 0.7,
+    height: 2.6,
     rise: 0.6,
-    bands: [1.7],
+    bands: [1.5],
   },
 ]
 /** Where an opening’s middle lies on the center line of the apse’s wall, or `out` meters further out round the same center. */
@@ -174,24 +210,29 @@ const approachX = bendCenterX - climbLength
 if (Math.hypot(route.end.point[0] - approachX, route.end.point[1] - lodge.tunnelZ) > 1e-6) {
   throw new Error('The Fortress’ curve has to end where its approach to the Lodge begins.')
 }
-/** The openings as seen from the curve: in its left wall, the one toward the apse, as far round as they are on the apse and as wide there, so their jambs point to the arcs’ centers. */
-const curveOpenings = apseOpenings.map((opening): RouteOpening => {
-  const {name, width: openingWidth, bottom, height, rise} = opening
-  const {radius} = oculusApse.arcs[opening.arc]
-  const [x, z] = apseOpeningPoint(opening, offset)
+/** The openings as seen from the curve: in its left wall, the one toward the apse, where they come out at the back of the gap, their jambs pointing to the arcs’ centers. */
+const curveOpenings = apseOpenings.map(({name, arc, back, bottom}): RouteOpening => {
+  const {radius} = oculusApse.arcs[arc]
+  const [x, z] = apseOpeningPoint({
+    arc,
+    angle: back.angle,
+  }, offset)
   return {
     name,
     along: route.project(x, z)!.along,
     side: -1,
-    width: openingWidth * (radius + fortressClearance) / radius,
+    width: back.width * (radius + fortressClearance) / radius,
     bottom,
-    height,
-    rise,
+    height: back.height,
+    rise: back.rise,
     profile: 'arch',
   }
 })
 // The ramps level out at the platform before the casings round the windows begin, so their sills stand as high over the floor all along.
-for (const {arc, angle, width: openingWidth} of apseOpenings) {
+for (const {arc, angle, width: openingWidth} of apseOpenings.flatMap(opening => [opening, {
+  ...opening.back,
+  arc: opening.arc,
+}])) {
   const {radius} = oculusApse.arcs[arc]
   const reach = openingWidth / 2 / radius + wallOpeningTrim / (radius + fortressClearance)
   for (const side of [-1, 1]) {
@@ -224,14 +265,10 @@ const behind = (along: number) => {
   const rib = fortressCurve.ribs.find(value => Math.abs(value - along) < ribClearance)
   return rib === undefined ? along : rib + (along < rib ? -ribClearance : ribClearance)
 }
-/**
- * How far along the curve its lanterns hang: a little way into the run north from the mouth, between two ribs, and behind each opening into the apse, whose light throws the bars’ shadows onto the platform.
- */
+/** How far along the curve its lanterns hang: a little way into the run north from the mouth, between two ribs, and behind the apse’s gate, whose light throws the bars of the gate and both windows onto the platform. */
 export const fortressLanterns = {
   east: fortressCurve.ribGap(2),
   north: behind(crownMiddle),
-  northwest: behind(curveOpenings[0].along),
-  northeast: behind(curveOpenings[2].along),
 } as const
 /** The Fortress’ passages from the Oculus to the Lodge, each continuing where the one before it ends. */
 export const fortressPassages = [fortressMouth, fortressCurve, fortressApproach] as const
