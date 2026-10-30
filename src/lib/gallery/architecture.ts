@@ -5,7 +5,7 @@ import {mergeVertices} from 'three/addons/utils/BufferGeometryUtils.js'
 import {BoxGeometry, BufferGeometry, ExtrudeGeometry, Matrix4, MeshBasicNodeMaterial, Shape, Vector3} from 'three/webgpu'
 
 import {openingArc} from '../placement/wallGeometry.ts'
-import {wallFace, wallOpeningTrim} from './architectureDimensions.ts'
+import {corniceBands, wallFace, wallOpeningTrim} from './architectureDimensions.ts'
 import {bendGeometry, curveSegments as bendSegments, sliceAlongX} from './CurvedBoxGeometry.ts'
 
 export {wallFace, wallOpeningTrim, wallTop} from './architectureDimensions.ts'
@@ -204,7 +204,7 @@ function cutArchitecture(wall: Wall) {
     // Like the baseboards, both bands start at the plaster face, so their ends never share the wall’s end faces. The lower band
     // stands 1 cm proud of a classic opening casing (0.27 m), which can run up into it in low rooms.
     const corniceBand = (height: number, front: number, y: number) => miter(box(wall.width, height, front - wallFace, 0, y, (front + wallFace) / 2))
-    const cornice = wall.trimStyle === 'none' ? [] : [corniceBand(0.1, 0.28, wall.height - 0.42), corniceBand(0.23, 0.34, wall.height - 0.22)]
+    const cornice = wall.trimStyle === 'none' ? [] : corniceBands.map(({height, front, drop}) => corniceBand(height, front, wall.height - drop))
     for (const part of cornice) {
       retained.add(part)
     }

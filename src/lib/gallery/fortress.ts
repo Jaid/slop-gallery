@@ -1,6 +1,7 @@
 import type {RouteOpening} from './passages/RoutedPassage.ts'
 import type {Vec3} from './types.ts'
 
+import {corniceBands, wallOpeningTrim} from './architectureDimensions.ts'
 import lodge from './lodge.ts'
 import lowerGallery, {oculusPlatform} from './lowerGallery.ts'
 import oculusApse from './oculusApse.ts'
@@ -33,8 +34,11 @@ export const fortressClearance = 0.3
 const offset = fortressClearance + width / 2
 /** where the passage leaves the Oculus: level with the end of the east bridge, which climbs to it from the deck */
 const doorwayY = oculusTower.floorY + oculusTower.height + towerBridge.rise
-/** low enough for the arch and casing of its doorway in the Oculus’ east wall to stay below that wall’s cornice */
-const mouthHeight = 2.5
+const [lowerBand] = corniceBands
+/** where the Oculus’ walls end, 30 cm under its ceiling */
+const oculusWallTop = oculus.ceiling.topY - oculus.ceiling.thickness - 0.3
+/** high enough for the casing round the arch of its doorway in the Oculus’ east wall to run up into the lower band of that wall’s cornice and end flush with its top, joining the cornice */
+const mouthHeight = oculusWallTop - lowerBand.drop + lowerBand.height / 2 - wallOpeningTrim - doorwayY
 /** The approach to the Lodge keeps the height the whole passage used to have. */
 const approachHeight = 3.1
 /** Round the apse, at the platform’s level, it rises high enough for the gate and the windows into the apse, casings included, to stay under where its vault springs from its walls. */

@@ -6,7 +6,8 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import EgoMotor from 'ego-player/motor'
 import {Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
-import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
+import {colliderGeometry, createArchitectureGeometry, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
+import {corniceBands} from '../../src/lib/gallery/architectureDimensions.ts'
 import {fortressApproach, fortressCurve, fortressDoorway, fortressMouth, fortressOrigin, fortressPassages, fortressTransition} from '../../src/lib/gallery/fortress.ts'
 import lodge from '../../src/lib/gallery/lodge.ts'
 import {oculusPlatform, oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
@@ -58,15 +59,35 @@ describe('the Fortress’ route round the Oculus', () => {
     for (const passage of fortressPassages) {
       expect(passage.width).toBe(4)
     }
-    expect(fortressMouth.height).toBe(2.5)
+    expect(fortressMouth.height).toBeCloseTo(2.64, 9)
     expect(fortressApproach.height).toBe(3.1)
   })
-  test('the doorway’s arch and casing stay under the Oculus’ cornice', () => {
+  test('the casing round the doorway’s arch runs up into the lower band of the Oculus’ cornice and ends flush with its top', () => {
     const wall = walls.find(value => value.id === 'oculus-east')!
     const hole = wall.holes!.find(value => value.name === 'fortress')!
-    // The cornice’s lower band hangs 47 cm under the wall’s top.
-    expect(wall.center[1] + hole.height + 0.17).toBeLessThan(wall.center[1] + wall.height - 0.47)
+    const [band] = corniceBands
+    expect(hole.profile).toBe('arch')
+    expect(hole.height + wallOpeningTrim).toBeCloseTo(wall.height - band.drop + band.height / 2, 9)
+    // The opening itself stays under the band, which stands proud of the plain casing and hides its crown.
+    expect(hole.height).toBeLessThan(wall.height - band.drop - band.height / 2)
+    expect(band.front).toBeGreaterThan(0.25)
     expect(wall.center[1] + hole.height).toBeCloseTo(fortressDoorway.y + fortressDoorway.height, 9)
+    const geometry = createArchitectureGeometry(wall)
+    const material = new MeshBasicMaterial
+    try {
+      // Straight up from the floor through the doorway’s middle, the first thing above it is the casing’s crown, inside the band.
+      const meshes = [...geometry.trim, ...geometry.cornice].map(part => new Mesh(part, material))
+      const up = new Raycaster(new Vector3(hole.u, hole.height - 0.5, 0.2), new Vector3(0, 1, 0))
+      const [crown] = up.intersectObjects(meshes)
+      expect(crown.object).toBe(meshes[0])
+      expect(crown.point.y).toBeCloseTo(hole.height, 3)
+      // In front of the casing, the band covers the crown from where it enters the band to its top.
+      const front = new Raycaster(new Vector3(hole.u, wall.height - band.drop, 1), new Vector3(0, 0, -1))
+      expect(front.intersectObjects(meshes)[0].object).toBe(meshes[1])
+    } finally {
+      geometry.dispose()
+      material.dispose()
+    }
   })
   test('its curve keeps 30 cm behind the apse’s walls, round both shoulders and the crown', () => {
     const arcs = apseArcs()
