@@ -4,11 +4,11 @@ import {fortressCurve, fortressLanterns, fortressOrigin} from '#src/lib/gallery/
 import {routeLight} from '#src/lib/gallery/pendants/mounts.ts'
 
 const [originX, originY, originZ] = fortressOrigin
-/** under the lantern hanging `along` meters down the curve, in its body, with how it shines */
-const lantern = (along: number, shine: Pick<Lamp, 'decay' | 'range' | 'strength'> = {}): Lamp => {
+/** `below` meters under the middle of the lantern hanging `along` meters down the curve, with how it shines */
+const lantern = (along: number, shine: Pick<Lamp, 'decay' | 'range' | 'strength'> = {}, below = 0.3): Lamp => {
   const [x, y, z] = routeLight(fortressCurve, along)
   return {
-    position: [x - originX, y - 0.3 - originY, z - originZ],
+    position: [x - originX, y - below - originY, z - originZ],
     strength: 30,
     tint: '#ffcd8a',
     range: 7,
@@ -21,10 +21,10 @@ const lantern = (along: number, shine: Pick<Lamp, 'decay' | 'range' | 'strength'
 export default {
   // The curve’s lanterns, hung low, stronger than the corridor’s and fading more gently: a little way north of the mouth, which the Oculus sees, and behind the apse’s gate, which the Lodge also looks down the approach at.
   lantern_east: lantern(fortressLanterns.east),
-  // It throws the bars of the gate onto the platform right in front of it and those of the windows beside it, slanting through them, far out across it: it reaches that far, fading more gently but weaker, as bright as the others on the gate’s sill.
+  // It throws the bars of the gate onto the platform right in front of it and those of the windows beside it, slanting through them, far out across it: it reaches that far, fading more gently, and shines a little lower than the other one.
   lantern_north: lantern(fortressLanterns.north, {
-    strength: 28,
+    strength: 35,
     range: 20,
     decay: 1.25,
-  }),
+  }, 0.6),
 } satisfies Record<string, Lamp>

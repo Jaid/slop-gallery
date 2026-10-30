@@ -62,9 +62,13 @@ test('the passages’ lamps hang under the lanterns the fixtures hang from their
   const timber = TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts)
   try {
     const mounts = routePendantMounts(fortressCurve, [vault.shell, vault.ribs], Object.values(fortressLanterns))
-    for (const [index, name] of Object.keys(fortressLanterns).entries()) {
+    const below = {
+      east: 0.3,
+      north: 0.6,
+    }
+    for (const [index, name] of (Object.keys(fortressLanterns) as Array<keyof typeof fortressLanterns>).entries()) {
       const {light} = mounts[index]
-      expectNear(lamp(`fortress-lantern_${name}`).position, [light[0], light[1] - 0.3, light[2]])
+      expectNear(lamp(`fortress-lantern_${name}`).position, [light[0], light[1] - below[name], light[2]])
     }
     const [north, middle, south] = lanterns(corridorPassage, [timber.shell, timber.ribs], [[0, -0.3], [4, -0.4], [8, -0.4]], corridorLightSpacing, timber.ribs)
     expectNear(lamp('corridor-lantern_north').position, north)
