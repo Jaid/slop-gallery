@@ -1,11 +1,11 @@
 import type {ThreeElements} from '@react-three/fiber'
 
 import {loadCanvasFonts} from 'canvas-textures'
-import useCanvasTexture from 'canvas-textures/react'
 import {useMemo} from 'react'
 import {useGraphicsModeValue} from 'use-graphics-mode'
 
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
+import useLoadingCanvasTexture from '#src/lib/useLoadingCanvasTexture.ts'
 
 type CanvasTextProps = Omit<ThreeElements['mesh'], 'children'> & {
   color?: string
@@ -19,9 +19,10 @@ type CanvasTextProps = Omit<ThreeElements['mesh'], 'children'> & {
   width: number
 }
 const textureWidth = 1536
+/** A line of text drawn on a canvas, fitted into `width` × `height` meters; until it is drawn, it is listed as the loading item `canvas-text:<text>` and hidden. */
 const CanvasText = ({color = '#ffffff', fontFamily = 'sans-serif', fontSize = 0.7, fontWeight = 400, height, maxWidth = 0.9, materialProps, text, width, ...meshProps}: CanvasTextProps) => {
   const {canvasTextureMipmaps: mipmaps} = useGraphicsModeValue(getGraphicsProfile)
-  const texture = useCanvasTexture(useMemo(() => ({
+  const texture = useLoadingCanvasTexture(`canvas-text:${text}`, useMemo(() => ({
     width: textureWidth,
     height: Math.max(64, Math.round(textureWidth * height / width)),
     name: `Canvas text: ${text}`,
