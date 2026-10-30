@@ -11,6 +11,7 @@ import footprint from '../lib/footprint.ts'
 import ambienceEmitters from './ambienceEmitters.ts'
 import cameras from './cameras.ts'
 import lamps from './lamps.ts'
+import map from './map.svg?raw'
 import slots from './slots.ts'
 import spawns from './spawns.ts'
 import walls from './walls.ts'
@@ -54,6 +55,7 @@ export default class Lodge extends Room {
       volumetricSun: 0,
       slots,
       walls,
+      map,
     })
   }
 

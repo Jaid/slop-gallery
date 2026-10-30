@@ -1,7 +1,7 @@
 import {useEffect, useRef} from 'react'
 
 import {cameraPose, useGallery} from '#src/lib/gallery.ts'
-import {isLowerRoom, minimapHeading, minimapPortrait, minimapViewBox, minimapWalls} from '#src/lib/gallery/minimap.ts'
+import {isLowerRoom, minimapHeading, minimapPortrait, minimapRooms, minimapViewBox} from '#src/lib/gallery/minimap.ts'
 
 import css from './style.module.sass'
 
@@ -39,7 +39,8 @@ export default function GalleryMinimap({lower}: {lower: boolean}) {
     return () => cancelAnimationFrame(frame)
   }, [lower, portraits])
   return <svg className={css.container} aria-label={lower ? 'Lower gallery minimap' : 'Upper gallery minimap'} role='img' viewBox={minimapViewBox}>
-    <g className={css.walls}>{minimapWalls.filter(wall => wall.lower === lower).map((wall, i) => <polyline key={i} points={wall.path} />)}</g>
+    {/* Each room’s map.svg as it is, placed at the room’s origin, as opaque as the world draws it. */}
+    {minimapRooms.filter(room => room.lower === lower).map(room => <g key={room.id} dangerouslySetInnerHTML={{__html: room.markup}} data-room={room.id} opacity={room.opacity(current)} transform={room.transform} />)}
     <g className={css.portraits}>{portraits.map(portrait => {
       const marker = minimapPortrait(portrait)
       return <circle

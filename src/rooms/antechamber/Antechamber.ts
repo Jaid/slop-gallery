@@ -9,6 +9,7 @@ import Room from '../base/Room.ts'
 import floorBox from '../lib/floorBox.ts'
 import footprint from '../lib/footprint.ts'
 import cameras from './cameras.ts'
+import map from './map.svg?raw'
 import slots from './slots.ts'
 import walls from './walls.ts'
 
@@ -43,6 +44,7 @@ export default class Antechamber extends Room {
       skybox: 'sky',
       slots,
       walls,
+      map,
     })
   }
 }

@@ -7,6 +7,7 @@ import Room from '../base/Room.ts'
 import floorBox from '../lib/floorBox.ts'
 import footprint from '../lib/footprint.ts'
 import cameras from './cameras.ts'
+import map from './map.svg?raw'
 import spawns from './spawns.ts'
 import walls from './walls.ts'
 
@@ -32,6 +33,7 @@ export default class Salon extends Room {
       spawns,
       skybox: 'sky',
       walls,
+      map,
     })
   }
 }

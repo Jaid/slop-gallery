@@ -14,6 +14,7 @@ import footprint from '../lib/footprint.ts'
 import ambienceEmitters from './ambienceEmitters.ts'
 import cameras from './cameras.ts'
 import lamps from './lamps.ts'
+import map from './map.svg?raw'
 import spawns from './spawns.ts'
 import walls from './walls.ts'
 
@@ -56,6 +57,7 @@ export default class Moonfall extends Room {
       // The room lies under its own ceiling, so the sun never lights its air.
       volumetricSun: 0,
       walls,
+      map,
     })
   }
 

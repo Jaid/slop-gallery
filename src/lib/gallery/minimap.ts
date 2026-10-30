@@ -1,6 +1,5 @@
 import type {Portrait, Vec3} from './types.ts'
 
-import {wallPosition} from '#src/lib/placement/wallGeometry.ts'
 import slopGallery from '#src/worlds/gallery/index.ts'
 
 import portraitObjects from './portraitObjects.ts'
@@ -22,35 +21,22 @@ export function minimapPortrait(portrait: Portrait) {
   }
 }
 
-// Project the actual walls, including curved walls and walk-through openings.
-export const minimapWalls = walls.flatMap(wall => {
-  let ranges: Array<[number, number]> = [[-wall.width / 2, wall.width / 2]]
-  for (const hole of wall.holes ?? []) {
-    if ((hole.bottom ?? 0) > 0) {
-      continue
-    }
-    const left = hole.u - hole.width / 2
-    const right = hole.u + hole.width / 2
-    ranges = ranges.flatMap(([start, end]) => {
-      if (right <= start || left >= end) {
-        return [[start, end]]
-      }
-      const remaining: Array<[number, number]> = [[start, Math.max(start, left)], [Math.min(end, right), end]]
-      return remaining.filter(([a, b]) => b > a)
-    })
-  }
-  return ranges.map(([start, end]) => {
-    const steps = wall.curveRadius ? Math.max(2, Math.ceil((end - start) / 0.5)) : 1
-    const points = Array.from({length: steps + 1}, (_, i) => wallPosition(wall, start + (end - start) * i / steps, 0, 0))
-    return {
-      lower: isLowerRoom(wall.room),
-      points,
-      path: points.map(([x, , z]) => `${x},${z}`).join(' '),
-    }
-  })
+/** Every room with a floor plan, its drawing stitched to the others’ by placing it at the room’s origin. */
+export const minimapRooms = slopGallery.rooms.flatMap(room => {
+  const {id, center: [x, z], floorY, map} = room
+  return map ? {
+    id,
+    lower: floorY < 0,
+    frame: map.placedFrame([x, z]),
+    markup: map.markup,
+    /** how opaque the world draws the room while the player is in the room with the id `current` */
+    opacity: (current: string) => slopGallery.mapOpacity(room, current),
+    transform: `translate(${x} ${z})`,
+  } : []
 })
 
-const points = minimapWalls.flatMap(wall => wall.points)
-const minX = Math.min(...points.map(p => p[0])) - 3
-const minZ = Math.min(...points.map(p => p[2])) - 3
-export const minimapViewBox = [minX, minZ, Math.max(...points.map(p => p[0])) + 3 - minX, Math.max(...points.map(p => p[2])) + 3 - minZ].join(' ')
+// Both floors share one frame around every room’s, so they keep one scale and stay aligned.
+const frames = minimapRooms.map(room => room.frame)
+const minX = Math.min(...frames.map(([x]) => x)) - 3
+const minZ = Math.min(...frames.map(([, z]) => z)) - 3
+export const minimapViewBox = [minX, minZ, Math.max(...frames.map(([x, , width]) => x + width)) + 3 - minX, Math.max(...frames.map(([, z, , depth]) => z + depth)) + 3 - minZ].join(' ')

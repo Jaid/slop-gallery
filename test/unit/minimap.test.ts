@@ -7,7 +7,7 @@ import Minimap from '#component/GalleryMinimap'
 
 import {cameraPose, useGallery} from '../../src/lib/gallery.ts'
 import lowerGallery from '../../src/lib/gallery/lowerGallery.ts'
-import {minimapHeading, minimapPortrait, minimapViewBox, minimapWalls} from '../../src/lib/gallery/minimap.ts'
+import {minimapHeading, minimapPortrait, minimapRooms, minimapViewBox} from '../../src/lib/gallery/minimap.ts'
 import portraitObjects from '../../src/lib/gallery/portraitObjects.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
@@ -31,33 +31,45 @@ test.each([
 ] as const)('the red cone projects direction %j to %s degrees', (direction, degrees) => {
   expect(minimapHeading([...direction])).toBeCloseTo(degrees)
 })
-test('both layers share a scale and contain all wall outlines', () => {
+test('both layers share a scale and frame every room’s drawing', () => {
   const [x, z, width, height] = minimapViewBox.split(' ').map(Number)
-  expect(minimapWalls.some(wall => wall.lower)).toBe(true)
-  expect(minimapWalls.some(wall => !wall.lower)).toBe(true)
-  for (const wall of minimapWalls) {
-    for (const point of wall.points) {
-      expect(point[0]).toBeGreaterThan(x)
-      expect(point[0]).toBeLessThan(x + width)
-      expect(point[2]).toBeGreaterThan(z)
-      expect(point[2]).toBeLessThan(z + height)
-    }
+  expect(minimapRooms.some(room => room.lower)).toBe(true)
+  expect(minimapRooms.some(room => !room.lower)).toBe(true)
+  for (const {frame: [roomX, roomZ, roomWidth, roomDepth]} of minimapRooms) {
+    expect(roomX).toBeGreaterThan(x)
+    expect(roomX + roomWidth).toBeLessThan(x + width)
+    expect(roomZ).toBeGreaterThan(z)
+    expect(roomZ + roomDepth).toBeLessThan(z + height)
   }
 })
-test('both layers render without visible labels, numbers, legends or room fills', () => {
+test('both layers render every room’s drawing without visible labels, numbers or legends', () => {
   cameraPose.position = [1, 1.6, 2]
   cameraPose.direction = [1, 0, 0]
   const html = [false, true].map(lower => renderToStaticMarkup(createElement(Minimap, {lower}))).join('')
-  expect(html.match(/<svg\b/gu)).toHaveLength(2)
-  expect(html.match(/viewBox="/gu)).toHaveLength(2)
+  expect(html.match(/<svg\b/gu)).toHaveLength(2 + minimapRooms.length)
+  expect(html.match(/viewBox="/gu)).toHaveLength(2 + minimapRooms.length)
   expect(html).not.toContain('Upper level')
   expect(html).not.toContain('Lower level')
-  expect(html).not.toMatch(/<(?:button|h[1-6]|rect|text)\b/u)
+  expect(html).not.toMatch(/<(?:button|h[1-6]|text)\b/u)
   expect(html).toContain('translate(1 2) rotate(90)')
+  // Every room’s drawing on its own floor, placed at the room’s origin.
+  for (const room of minimapRooms) {
+    expect(html.split(`<g data-room="${room.id}" opacity="${room.opacity(initial.room)}" transform="${room.transform}"><svg `)).toHaveLength(2)
+  }
   expect(html.match(/data-portrait=/gu) ?? []).toHaveLength(initial.portraits.length * 2)
   const players = html.match(/<path[^>]+aria-label="Your position"[^>]*>/gu)!
   expect(players).toHaveLength(2)
   expect(players.filter(player => player.includes('display="inline"'))).toHaveLength(1)
+})
+test('the room the player stands in shows a little stronger than the others', () => {
+  const current = minimapRooms.find(room => room.id === initial.room)!
+  const others = minimapRooms.filter(room => room !== current)
+  expect(current.opacity(initial.room)).toBeLessThan(1)
+  for (const room of others) {
+    expect(room.opacity(initial.room)).toBeGreaterThan(0)
+    expect(room.opacity(initial.room)).toBeLessThan(current.opacity(initial.room))
+    expect(room.opacity(room.id)).toBe(current.opacity(initial.room))
+  }
 })
 test('hanging portraits belong to their wall’s floor even when rooms overlap vertically', () => {
   const portrait = {

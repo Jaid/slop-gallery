@@ -10,6 +10,7 @@ import Room from '../base/Room.ts'
 import floorBox from '../lib/floorBox.ts'
 import footprint from '../lib/footprint.ts'
 import lamps from './lamps.ts'
+import map from './map.svg?raw'
 import walls from './walls.ts'
 
 const hallWestX = lodge.approachX - lodge.timberWidth / 2
@@ -55,6 +56,7 @@ export default class Corridor extends Room {
       sunlit: false,
       volumetricSun: 0,
       walls,
+      map,
     })
   }
 

@@ -6,6 +6,8 @@ import type {Vec3} from 'math'
 
 import {Box3} from 'three/webgpu'
 
+import RoomMap from '../lib/RoomMap.ts'
+
 /** what the ground under the player’s feet is made of, which their footsteps sound like */
 export type GroundSurface = 'fabric' | 'generic' | 'glass' | 'hollow'
 /** an ambience emitter class whose instances can sound from any world position */
@@ -69,6 +71,8 @@ export type RoomOptions = {
   cameras?: Record<string, RoomCamera>
   /** the lamps by their id within the room, in snake_case, positioned relative to the room’s origin */
   lamps?: Record<string, Lamp>
+  /** the room’s floor plan on the map as SVG markup, usually the room’s own map.svg: a drawing in meters relative to the room’s origin that its viewBox frames */
+  map?: string
   /**
    * the id of the skybox behind the world while the player is in the room, like `sky`, which the world resolves to one of its own, maybe by its weather
    *
@@ -118,7 +122,7 @@ export default abstract class Room {
   abstract readonly air: Arrayable<Box3>
   readonly ambience: ReadonlyMap<string, RoomAmbience>
   readonly cameras: ReadonlyMap<string, RoomCamera>
-  /** the room’s flavor color as #rrggbb, like its fill on the minimap */
+  /** the room’s flavor color as #rrggbb */
   abstract readonly color: string
   /** a sentence shown below the title */
   abstract readonly description: string
@@ -133,6 +137,8 @@ export default abstract class Room {
   /** in snake_case, also the prefix of the global ids of everything in the room */
   abstract readonly id: string
   readonly lamps: ReadonlyMap<string, Lamp>
+  /** the room’s floor plan on the map, if it has one */
+  readonly map: RoomMap | undefined
   /** the width along x and the depth along z of a room around a rectangular floor plan, centered on its origin */
   readonly size?: FloorSize
   /** the id of the skybox behind the world while the player is inside, `null` for none or undefined to keep the one that showed before */
@@ -146,8 +152,9 @@ export default abstract class Room {
   readonly volumetricSun: number
   readonly walls: ReadonlyMap<string, RoomWall>
 
-  constructor({title, lamps = {}, ambience = {}, cameras = {}, slots = {}, spawns = {}, walls = {}, skybox, sunlit = true, volumetricSun = 1}: RoomOptions) {
+  constructor({title, lamps = {}, ambience = {}, cameras = {}, map, slots = {}, spawns = {}, walls = {}, skybox, sunlit = true, volumetricSun = 1}: RoomOptions) {
     this.title = title
+    this.map = map === undefined ? undefined : new RoomMap(map)
     this.lamps = new Map(Object.entries(lamps))
     this.ambience = new Map(Object.entries(ambience))
     this.slots = new Map(Object.entries(slots))

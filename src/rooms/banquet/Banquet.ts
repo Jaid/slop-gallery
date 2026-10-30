@@ -8,6 +8,7 @@ import floorBox from '../lib/floorBox.ts'
 import footprint from '../lib/footprint.ts'
 import cameras from './cameras.ts'
 import lamps from './lamps.ts'
+import map from './map.svg?raw'
 import slots from './slots.ts'
 import spawns from './spawns.ts'
 import walls from './walls.ts'
@@ -37,6 +38,7 @@ export default class Banquet extends Room {
       skybox: 'sky',
       slots,
       walls,
+      map,
     })
   }
 }

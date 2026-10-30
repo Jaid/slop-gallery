@@ -59,6 +59,11 @@ export default class PlacedRoom<Kind extends Room = Room> {
     return this.room.id
   }
 
+  /** the room’s floor plan on the map, relative to its origin; place it at {@link center} */
+  get map() {
+    return this.room.map
+  }
+
   /** the extent of the floor plan of a room around a rectangular one, centered on {@link center} */
   get size(): Kind['size'] {
     return this.room.size

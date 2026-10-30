@@ -1,3 +1,5 @@
 export type {AmbienceEmitterClass, FloorRectangle, FloorSize, GroundSurface, Lamp, PointLamp, RoomAmbience, RoomCamera, RoomOptions, RoomPortraitSlot, RoomSpawn, RoomWall, SkyboxId, SpotLamp} from './base/Room.ts'
 export {default as Room} from './base/Room.ts'
 export {default as floorBox} from './lib/floorBox.ts'
+export type {MapFrame} from './lib/RoomMap.ts'
+export {default as RoomMap} from './lib/RoomMap.ts'
