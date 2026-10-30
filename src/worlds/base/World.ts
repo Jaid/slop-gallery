@@ -111,7 +111,7 @@ export default abstract class World<Kind extends Room = Room> {
 
   /** How opaque the drawing of a room is on the map while the player is in the room with the id `current`: faint for every room and a little stronger for the player’s own. */
   mapOpacity(room: PlacedRoom<Kind>, current: string) {
-    return room.id === current ? 0.4 : 0.2
+    return room.id === current ? 0.25 : 0.1
   }
 
   /** Every portrait slot of the world in world meters, room by room. */
