@@ -95,6 +95,10 @@ test('the pedestals back onto the back walls with their sidecars, leaving ways i
   // The sidecar merges into the pedestal’s straight flank, and its nameplate’s stand rests on it clear of the pedestal.
   expect(main.z - main.radius - sidecar.z).toBeLessThan(sidecar.radius - 0.2)
   expect(main.z - main.radius - sidecar.z).toBeGreaterThan(0.2)
+  // Where it meets the pedestal’s north flank, the sidecar’s top lies two thirds up from the course there to the pedestal’s top.
+  const flankCourse = exhibitionPedestal.plinth + tunnelSlope * (main.z - main.radius)
+  const sidecarTop = sidecar.height + tunnelSlope * sidecar.z
+  expect((sidecarTop - flankCourse) / (main.height - flankCourse)).toBeCloseTo(2 / 3, 9)
   const base = knotSignRoundParts.find(part => part.height === 0.028)!
   // the stand’s foot inside the sidecar’s flanks and round end
   expect(exhibitionSidecar.signShift + base.radius).toBeLessThan(sidecar.radius)

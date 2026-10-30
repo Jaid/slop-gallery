@@ -7,7 +7,7 @@ import knots, {common, ethereal, prime, rare} from 'knot-materials'
 import {knotSign} from 'knot-materials/signs.ts'
 
 import {environmentPick, environmentWeightedPick} from '#src/lib/environmentSeed.ts'
-import {tunnelFloorHeight} from '#src/lib/gallery/lowerGallery.ts'
+import {tunnelFloorHeight, tunnelSlope} from '#src/lib/gallery/lowerGallery.ts'
 import tunnelDisplays, {tunnelDisplayWindow} from '#src/lib/gallery/tunnelDisplays.ts'
 import salonKnot from '#src/rooms/salon/knot.ts'
 
@@ -34,13 +34,20 @@ export const exhibitionPedestal = {
   plinth: 0.1,
 } as const
 
-/** the lower sidecar merged into each pedestal’s north flank, running out toward the window like the pedestal before it rounds off, which carries the Knot’s nameplate; its height is over the floor under its middle */
+/** how far north of its Knot the sidecar is centered on the wall, sunk deep into the pedestal’s flank */
+const sidecarShift = 1.85
+/** how far up the pedestal’s north flank, from the course there to the pedestal’s top, the sidecar’s top meets it */
+export const exhibitionSidecarRise = 2 / 3
+/** the course’s top under the pedestal’s north flank, over the floor where the pedestal meets the wall under its Knot */
+const flankCourse = exhibitionPedestal.plinth - tunnelSlope * exhibitionPedestal.radius
+
+/** the lower sidecar merged into each pedestal’s north flank, running out toward the window like the pedestal before it rounds off, which carries the Knot’s nameplate */
 export const exhibitionSidecar = {
   radius: 0.8,
   length: 0.35,
-  height: 0.46,
-  /** how far north of its Knot it is centered on the wall, sunk deep into the pedestal’s flank */
-  shift: 1.85,
+  /** its top over the floor under its middle, which lies lower than the pedestal’s by the slope */
+  height: flankCourse + exhibitionSidecarRise * (exhibitionPedestal.height - flankCourse) + tunnelSlope * sidecarShift,
+  shift: sidecarShift,
   /** how far out from the back wall the nameplate stands on it */
   signOffset: 0.65,
   /** how far north of its middle the nameplate stands, so the turned plaque clears the pedestal’s cap */
