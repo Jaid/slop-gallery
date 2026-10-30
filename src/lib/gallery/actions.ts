@@ -64,6 +64,13 @@ export function chime(frequency = 320) {
   }
 }
 
+/** Plays the sound effect of the catalog with the id, unless the sound is off. */
+export function playEffect(id: string) {
+  if (useGallery.getState().sound) {
+    SoundEngine.get().playEffect(id)
+  }
+}
+
 export function narrate(id: string) {
   void SoundEngine.get().resume().catch(() => notify('Audio could not be enabled.'))
   galleryEvents.dispatchEvent(new CustomEvent('narrate', {detail: id}))

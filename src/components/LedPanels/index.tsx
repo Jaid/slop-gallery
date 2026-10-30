@@ -17,12 +17,20 @@ type LedPanelsProps = {
   name: string
   /**
    * Receives every pane’s current brightness once per frame: 1 when intact, flickering after a crack (scaled by the lit share
-   * of the diffuser) and 0 once the diffuser fell. Scene lights follow it by intensity, which avoids recompiling lit materials.
+   * of the diffuser) and 0 once the diffuser fell or the power is off. Scene lights follow it by intensity, which avoids recompiling lit materials.
    */
   onBrightness?: (brightness: Float32Array) => void
+  /** whether the panes get power, true by default; switched off, every pane goes dark in a moment, flickering ones included */
+  powered?: boolean
   slots: ReadonlyArray<KnotLightSlot>
   /** the lit diffuser’s luminance relative to its light color, see `KnotLightPanels` */
   surfaceIntensity?: number
+}
+
+/** seconds the panes take to light up fully once powered, and to fade out as their drivers discharge once not */
+const powerRamp = {
+  on: 0.06,
+  off: 0.2,
 }
 
 /** Ceiling LED panes that flicker after one energetic thrown hit and drop their diffuser after the second. */
@@ -31,19 +39,22 @@ export default function LedPanels(props: LedPanelsProps) {
   return <LedPanelSystem key={resetEpoch} {...props} />
 }
 
-function LedPanelSystem({name, onBrightness, slots, surfaceIntensity}: LedPanelsProps) {
+function LedPanelSystem({name, onBrightness, powered = true, slots, surfaceIntensity}: LedPanelsProps) {
   const damage = useMemo(() => new KnotLightDamage(slots.length), [slots.length])
   const panels = useDisposable(useMemo(() => new KnotLightPanels(slots, `${name}-led`, surfaceIntensity), [name, slots, surfaceIntensity]))
   const impacts = useMemo(() => new KnotLightImpacts, [])
   const time = useRef(0)
   const brightness = useRef(new Float32Array(slots.length))
+  /** the share of full power the panes get right now, ramping toward `powered` */
+  const power = useRef(powered ? 1 : 0)
   const [broken, setBroken] = useState<ReadonlySet<number>>(() => new Set)
   useBeforePhysicsStep(world => impacts.capture(world))
   useFrame((_, delta) => {
     time.current += delta
+    power.current = powered ? Math.min(1, power.current + delta / powerRamp.on) : Math.max(0, power.current - delta / powerRamp.off)
     const live = brightness.current
     for (let index = 0; index < slots.length; index++) {
-      const intensity = damage.intensity(index, time.current)
+      const intensity = damage.intensity(index, time.current) * power.current
       panels.setIntensity(index, intensity)
       live[index] = intensity * panels.liveFractions[index]
     }

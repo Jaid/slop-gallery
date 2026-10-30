@@ -7,9 +7,13 @@ import KnotLightPanels, {knotLightDiffuserSize, knotLightDiffuserY, knotLightHou
 import KnotLightDamage from 'knot-materials/KnotLights.ts'
 import {Raycaster, Vector3} from 'three/webgpu'
 
-import {banquetCeilingUnderside, banquetLedSlots} from '../../src/lib/gallery/banquet.ts'
+import {wallOpeningTrim} from '../../src/lib/gallery/architectureDimensions.ts'
+import {banquetBoiserie, banquetCeilingUnderside, banquetLedSlots, banquetWallPanels} from '../../src/lib/gallery/banquet.ts'
+import lightSwitch from '../../src/lib/gallery/lightSwitch.ts'
 import KnotLightImpacts from '../../src/lib/physics/KnotLightImpacts.ts'
 import {beginBodyThrow} from '../../src/lib/physics/ThrowState.ts'
+import {obstructionIssue, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
+import {lightSwitchSpot} from '../../src/rooms/banquet/walls.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 import {rooms} from './fixtures/gallery.ts'
 
@@ -66,6 +70,22 @@ test('each pane’s lamp sits right below its own diffuser, close enough that th
     expect(y).toBeLessThan(slot.position[1] + knotLightDiffuserY - knotLightDiffuserSize[1] / 2)
     expect(y).toBeGreaterThan(slot.position[1] - 0.5)
   }
+})
+test('the light switch sits on plain plaster beside the Lobby arch, clear of its trim and the panels, and keeps artworks off it', () => {
+  const wall = slopGallery.walls.find(candidate => candidate.id === 'banquet-west')!
+  const arch = wall.holes!.find(hole => hole.name === 'lobby')!
+  const [plateWidth, plateHeight] = lightSwitch.plate
+  const left = lightSwitchSpot.u - plateWidth / 2
+  const right = lightSwitchSpot.u + plateWidth / 2
+  const trimEdge = arch.u + arch.width / 2 + wallOpeningTrim
+  const panelEdge = Math.min(...banquetWallPanels(wall).upper.map(panel => panel.u[0]).filter(u => u > arch.u))
+  expect(left - trimEdge).toBeGreaterThan(0.1)
+  expect(panelEdge - right).toBeGreaterThan(0.1)
+  expect(left - trimEdge).toBeCloseTo(panelEdge - right, 9)
+  expect(lightSwitchSpot.y - plateHeight / 2).toBeGreaterThan(banquetBoiserie.rail[1] + 0.3)
+  const inFront = (u: number) => wallPosition(wall, u, 1.6)
+  expect(obstructionIssue(wall, inFront(lightSwitchSpot.u + 0.5), 0.6, 0.6)).toBe('Let’s keep the light switch clear.')
+  expect(obstructionIssue(wall, inFront(lightSwitchSpot.u + 1), 0.6, 0.6)).toBe('')
 })
 test('a prop thrown at a banquet pane cracks it first, then knocks the diffuser loose', () => {
   const world = new RAPIER.World({

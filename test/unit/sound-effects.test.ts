@@ -3,12 +3,12 @@ import {expect, test} from 'bun:test'
 import {footstepVoices, impactFootstepStrength, playerSoundEffects} from '../../src/lib/audio/playerSoundEffects.ts'
 import {soundEffects} from '../../src/lib/audio/soundEffects.ts'
 
-test('sound effect catalog has 20 stable unique IDs with playable recipes', () => {
-  expect(soundEffects.map(effect => effect.id)).toEqual(['SFX-02', 'SFX-03', 'SFX-04', 'SFX-06', 'SFX-07', 'SFX-08', 'SFX-09', 'SFX-14', 'SFX-23', 'SFX-28', 'SFX-29', 'SFX-31', 'SFX-32', 'SFX-33', 'SFX-34', 'SFX-35', 'SFX-36', 'SFX-37', 'SFX-42', 'SFX-43'])
+test('sound effect catalog has 21 stable unique IDs with playable recipes', () => {
+  expect(soundEffects.map(effect => effect.id)).toEqual(['SFX-02', 'SFX-03', 'SFX-04', 'SFX-06', 'SFX-07', 'SFX-08', 'SFX-09', 'SFX-14', 'SFX-23', 'SFX-28', 'SFX-29', 'SFX-31', 'SFX-32', 'SFX-33', 'SFX-34', 'SFX-35', 'SFX-36', 'SFX-37', 'SFX-42', 'SFX-43', 'SFX-44'])
   const labels = new Set(soundEffects.map(effect => effect.label))
-  expect(labels.size).toBe(20)
+  expect(labels.size).toBe(21)
   const recipes = new Set(soundEffects.map(effect => JSON.stringify(effect.voices)))
-  expect(recipes.size).toBe(20)
+  expect(recipes.size).toBe(21)
   for (const effect of soundEffects) {
     expect(effect.voices.length).toBeGreaterThan(0)
     for (const voice of effect.voices) {

@@ -156,6 +156,27 @@ export const soundEffects: Array<SoundEffect> = [
       }),
     ],
   },
+  {
+    id: 'SFX-44',
+    label: 'Switch Click',
+    voices: [
+      noise(0.014, 0.03, {
+        type: 'bandpass',
+        frequency: 4200,
+        endFrequency: 2600,
+        q: 1.4,
+      }, {attack: 0.001}),
+      osc(1250, 0.03, 0.012, {
+        attack: 0.001,
+        endFrequency: 700,
+        type: 'triangle',
+      }),
+      osc(210, 0.05, 0.016, {
+        delay: 0.004,
+        endFrequency: 140,
+      }),
+    ],
+  },
 ]
 
 const byId = new Map(soundEffects.map(effect => [effect.id, effect]))

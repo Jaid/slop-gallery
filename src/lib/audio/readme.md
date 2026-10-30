@@ -14,7 +14,7 @@ Player effects use Web Audio synthesis only: no recordings, downloads, generated
 | SFX-36 | Viewing Mode Leave | V-inspection is released, including target removal. |
 | SFX-37 | Zoom Focus | A quiet two-tone layer sustained while zoomed. |
 
-All seven are part of the catalog in `soundEffects.ts`, next to the 13 interface effects. The held zoom layer’s recipe lasts a finite 1.2 seconds; gameplay holds it until released. New cues never renumber existing catalog IDs.
+All seven are part of the catalog in `soundEffects.ts`, next to the 14 interface effects. The held zoom layer’s recipe lasts a finite 1.2 seconds; gameplay holds it until released. New cues never renumber existing catalog IDs.
 
 Zoom sweeps follow `ego-player`'s actual FOV transition direction and duration. Extended transitions use the extended family, including direct returns to normal FOV. Instant transitions produce no sweep. Reversing replaces the previous sweep with a short fade instead of stacking sounds. Explicit camera handoff, teleport and unmount release zoom audio without fabricating another transition.
 

@@ -12,10 +12,12 @@ export type CeilingLed = {
 }
 
 /** Knottingham’s breakable LED panes on a room’s ceiling; the lamp under each pane flickers and dies with it. */
-export default function CeilingLeds({lamps, name, slots}: {
+export default function CeilingLeds({lamps, name, powered, slots}: {
   /** per pane, in the order of `slots` */
   lamps: ReadonlyArray<CeilingLed>
   name: string
+  /** whether the panes and their lamps are switched on, true by default */
+  powered?: boolean
   slots: ReadonlyArray<KnotLightSlot>
 }) {
   const onBrightness = (brightness: Float32Array) => {
@@ -26,5 +28,5 @@ export default function CeilingLeds({lamps, name, slots}: {
       }
     }
   }
-  return <LedPanels name={name} slots={slots} onBrightness={onBrightness} />
+  return <LedPanels name={name} powered={powered} slots={slots} onBrightness={onBrightness} />
 }
