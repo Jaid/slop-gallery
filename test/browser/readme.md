@@ -79,3 +79,11 @@ BROWSER=/path/to/chromium bun run test:live:oculus
 This builds the gallery and opens a private headless browser. The test walks the production player through the sloped Moonfall connection in both directions, up the east two-flight switchback and down the west one, including both lateral landing turns. It checks grounded feet at each destination and rejects browser errors. It uses fast graphics; the geometry and colliders are shared with heavy mode.
 
 To reuse a build, run `LIVE_TEST=true LIVE_TARGET=out/production/gallery BROWSER=/path/to/chromium bun test test/oculus.live.test.ts`.
+
+## Spawning in every room
+
+```sh
+BROWSER=/path/to/chromium bun run test:live:spawn
+```
+
+This builds the gallery and starts it once in every room with `?room`, each in a private headless browser without input. Every room but the Lobby streams in after the page, bringing its floors, so the physics waits for them; once none is loading anymore, the player has to stand grounded at the room’s spawn. It caught the physics hold reaching the scene too late, which let the player fall through the floors of a start room that had not mounted yet. `LIVE_TARGET` reuses a build like for the Oculus test.
