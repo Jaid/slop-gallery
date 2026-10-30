@@ -1,22 +1,27 @@
+import type {KnotEntry} from 'knot-materials'
+
 import {useThree} from '@react-three/fiber'
 import {ConvexHullCollider, useBeforePhysicsStep} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
-import {knotExhibition, knotFloatHeight} from 'knot-materials/exhibition.ts'
+import {special, unknown} from 'knot-materials'
+import {knotExhibition, knotFloatHeight, knotRarityMode} from 'knot-materials/exhibition.ts'
 import {createKnotGeometry} from 'knot-materials/geometry.ts'
 import loadKnotMaterial from 'knot-materials/materials.ts'
 import ProgressiveKnotMaterials from 'knot-materials/ProgressiveKnotMaterials.ts'
-import {useEffect, useMemo} from 'react'
+import {knotSign, knotSignPosition} from 'knot-materials/signs.ts'
+import {useEffect, useMemo, useSyncExternalStore} from 'react'
 import useGraphicsMode from 'use-graphics-mode'
 
 import InteractiveObject from '#component/InteractiveObject'
 import KnotLabels from '#component/KnotLabels'
 import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
 import {frozenSeconds} from '#src/lib/frozenTime.ts'
-import {narrateModel} from '#src/lib/gallery/actions.ts'
+import {narrate, narrateModel, notify} from '#src/lib/gallery/actions.ts'
 import {trackLoadingItems} from '#src/lib/loadingItems.ts'
 import KnotRotation from '#src/lib/physics/KnotRotation.ts'
 import {readKnotRotation} from '#src/lib/physics/rotatingKnots.ts'
 import {getPmremEnvironment} from '#src/lib/rendering/pmrem.ts'
+import {knotRarityEditor} from '#src/worlds/knottingham/rarity.ts'
 
 const isRotating = readKnotRotation()
 const baseRadius = (() => {
@@ -26,11 +31,33 @@ const baseRadius = (() => {
   geometry.dispose()
   return radius
 })()
+/** every exhibited Knot’s nameplate, beside it and turned in toward its row */
+const signs = knotExhibition.map(exhibit => ({
+  entry: exhibit,
+  position: knotSignPosition(exhibit),
+  rotation: exhibit.rotation + knotSign.inwardRotation,
+}))
+/** E on a nameplate announces its Knot, or with `?rarity=edit` rates it one star higher. */
+const activateKnotSign = (entry: Pick<KnotEntry, 'id' | 'title'>) => {
+  if (knotRarityMode !== 'edit') {
+    narrate(`prop-knot-${entry.id}`)
+    return
+  }
+  const value = knotRarityEditor.cycle(entry.id)
+  let rating = `${value}/4 stars`
+  if (value === unknown) {
+    rating = 'unknown'
+  } else if (value === special) {
+    rating = 'special, only shown on request'
+  }
+  notify(`${entry.title}: ${rating}`)
+}
 
 export default function KnotExhibition() {
   const camera = useThree(state => state.camera)
   const renderer = useThree(state => state.renderer)
   const isHeavy = useGraphicsMode()
+  const ratings = useSyncExternalStore(knotRarityEditor.subscribe, knotRarityEditor.getSnapshot, knotRarityEditor.getSnapshot)
   const rotation = useMemo(() => new KnotRotation, [])
   useBeforePhysicsStep(world => {
     if (isRotating) {
@@ -63,7 +90,7 @@ export default function KnotExhibition() {
   useEffect(() => trackLoadingItems(() => materials.pendingMaterials.map(id => `knot-material:${id}`)), [materials])
   const {resources} = materials
   return <group name='lobby-knot-exhibition'>
-    <KnotLabels />
+    <KnotLabels action={knotRarityMode === 'edit' ? 'Rate' : 'Listen'} ratings={ratings} signs={signs} onActivate={activateKnotSign} />
     {knotExhibition.map((finish, index) => {
       const {geometry, colliderVertices} = resources.items[index]
       const id = `prop-knot-${finish.id}`

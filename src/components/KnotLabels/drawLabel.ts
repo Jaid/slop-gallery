@@ -1,4 +1,4 @@
-import type {KnotExhibit} from 'knot-materials/exhibition.ts'
+import type {KnotEntry} from 'knot-materials'
 import type {Rarity} from 'knot-materials/rarities.ts'
 import type {Texture} from 'three/webgpu'
 
@@ -6,6 +6,9 @@ import flattenString from 'flatten-string'
 import {unknown} from 'knot-materials/rarities.ts'
 
 import signAccentColor from '../signAccentColor.ts'
+
+/** what a nameplate shows: its Knot under a label, like Knottingham’s exhibit numbers */
+export type KnotLabel = Pick<KnotEntry, 'author' | 'harness' | 'id' | 'modelTitle' | 'placeholder' | 'rarity' | 'title'> & {label: string}
 
 export const labelAtlasColumns = 10
 // 847 texels/m exceeds the previous title (800) and creator (686) densities.
@@ -52,7 +55,7 @@ export function drawRarity(context: CanvasRenderingContext2D, rarity: Rarity, x:
 }
 
 /** Complete face in atlas pixel coordinates; no overlapping sticker geometry. */
-export default function drawLabel(context: CanvasRenderingContext2D, exhibit: KnotExhibit, x: number, y: number, icon?: HTMLImageElement) {
+export default function drawLabel(context: CanvasRenderingContext2D, exhibit: KnotLabel, x: number, y: number, icon?: HTMLImageElement) {
   context.fillStyle = labelBackground
   context.fillRect(x, y, labelWidth, labelHeight)
   const accent = signAccentColor(exhibit.placeholder.color)
@@ -87,7 +90,7 @@ export default function drawLabel(context: CanvasRenderingContext2D, exhibit: Kn
   }
 }
 
-export function updateRarityAtlas(atlas: Texture, exhibits: ReadonlyArray<KnotExhibit>, ratings: ReadonlyMap<string, Rarity>) {
+export function updateRarityAtlas(atlas: Texture, exhibits: ReadonlyArray<Pick<KnotLabel, 'id'>>, ratings: ReadonlyMap<string, Rarity>) {
   const context = (atlas.image as HTMLCanvasElement).getContext('2d')!
   for (const [index, exhibit] of exhibits.entries()) {
     drawRarity(context, ratings.get(exhibit.id)!, index % labelAtlasColumns * labelWidth, Math.floor(index / labelAtlasColumns) * labelHeight)
