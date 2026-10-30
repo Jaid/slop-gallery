@@ -9,7 +9,7 @@ import CastFloorGlassMaterial from '../../src/lib/materials/CastFloorGlassMateri
 import ClearGlassMaterial from '../../src/lib/materials/ClearGlassMaterial.ts'
 import CrownGlassMaterial from '../../src/lib/materials/CrownGlassMaterial.ts'
 
-test('fast glass keeps its plain shared pane for lobby and cabin and the original tunnel pane', () => {
+test('fast glass shares one plain pane between lobby and cabin and gives the tunnel its own', () => {
   const materials = createArchitecturalGlassMaterials(false)
   expect(materials.lobby).toBe(materials.cabin)
   expect(materials.lobby).toBeInstanceOf(MeshStandardNodeMaterial)

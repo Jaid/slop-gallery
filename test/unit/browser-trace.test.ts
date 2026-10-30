@@ -197,7 +197,7 @@ test('recovers complete streamed trace events when Chromium omits the JSON foote
     await fs.remove(root)
   }
 })
-test('still rejects a missing Chromium trace footer by default', async () => {
+test('rejects a missing Chromium trace footer by default', async () => {
   const root = await fs.mkdtemp(resolve(import.meta.dir, '../../temp/browser-trace-strict-footer-test-'))
   const input = resolve(root, 'trace.json')
   const output = resolve(root, 'trace.msgpack')

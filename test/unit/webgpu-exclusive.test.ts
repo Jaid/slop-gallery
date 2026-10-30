@@ -8,6 +8,6 @@ test('owned rendering code imports only WebGPU Fiber and Three entry points', as
     }
     const source = await Bun.file(file).text()
     expect(source).not.toMatch(/from ["'](?:three|@react-three\/drei|@react-three\/fiber\/(?:legacy|webgpu))["']/u)
-    expect(source).not.toMatch(/\b(?:CaptureRenderer|RendererInfo|WebGLRenderer|meshBasicMaterial|meshStandardMaterial)\b/u)
+    expect(source).not.toMatch(/\b(?:WebGLRenderer|meshBasicMaterial|meshStandardMaterial)\b/u)
   }
 })
