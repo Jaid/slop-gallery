@@ -120,7 +120,6 @@ const relations = {
     rooms: ['lobby', 'salon', 'vesper', 'antechamber', 'oculus'],
     floorMirror: 'base',
     keep: [
-      'lobby-chandelier_north',
       'lobby-chandelier_middle',
       'lobby-chandelier_south',
     ],
@@ -164,11 +163,7 @@ const relations = {
   moonfall: {
     rooms: ['antechamber', 'exhibition', 'oculus'],
     floorMirror: 'moonfall',
-    // The tunnel’s lamps light the way up from Moonfall’s north wall.
     keep: [
-      'lobby-chandelier_north',
-      'lobby-chandelier_middle',
-      'lobby-chandelier_south',
       'exhibition-tunnel_green',
       'exhibition-tunnel_blue',
       'exhibition-tunnel_red',
@@ -185,11 +180,7 @@ const relations = {
   oculus: {
     rooms: ['lobby', 'exhibition', 'fortress', 'salon', 'moonfall', 'lodge', 'banquet'],
     floorMirror: 'moonfall',
-    // The staff stairways open onto the balcony, and the Fortress’ lantern hangs just past the north arch.
     keep: [
-      'banquet-led_north',
-      'banquet-led_middle',
-      'banquet-led_south',
       'moonfall-wall_west_1',
       'moonfall-wall_west_2',
       'moonfall-wall_west_3',
@@ -223,7 +214,6 @@ const relations = {
   exhibition: {
     rooms: ['oculus', 'moonfall', 'lobby', 'fortress', 'salon'],
     floorMirror: 'moonfall',
-    // The tunnel sees what the Oculus sees, so it keeps the lamps the Oculus keeps beyond its own.
     keep: [
       'banquet-led_north',
       'banquet-led_middle',
@@ -238,7 +228,6 @@ const relations = {
       'moonfall-planet_glow',
       'moonfall-ember',
       'moonfall-stairs',
-      'fortress-pendant',
     ],
   },
   lodge: {
@@ -252,11 +241,8 @@ const relations = {
   },
   fortress: {
     rooms: ['oculus', 'lodge', 'lobby', 'exhibition', 'corridor', 'salon'],
-    // The passage looks into the Lodge and on into the Corridor, so it keeps the Lodge’s lamps and the ones the Lodge keeps.
     keep: [
       'corridor-lantern_north',
-      'corridor-lantern_middle',
-      'corridor-lantern_south',
       'lodge-fire',
       'lodge-chandelier',
     ],
