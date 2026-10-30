@@ -1,6 +1,7 @@
 import type Passage from '../../src/lib/gallery/passages/Passage.ts'
 import type {Vec3} from '../../src/lib/gallery/types.ts'
 import type {PlacedLamp} from '../../src/worlds/base/PlacedRoom.ts'
+import type {GalleryRoomId} from '../../src/worlds/gallery/SlopGallery.ts'
 import type {BufferGeometry} from 'three/webgpu'
 
 import {expect, test} from 'bun:test'
@@ -12,7 +13,7 @@ import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
 import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
 import {corridorLightSpacing, passagePendantMounts} from '../../src/lib/gallery/pendants/mounts.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
-import relations from '../../src/worlds/gallery/relations.ts'
+import relations, {visibleLamps} from '../../src/worlds/gallery/relations.ts'
 
 const lamps = slopGallery.lamps()
 const byId = new Map(lamps.map(lamp => [lamp.id, lamp]))
@@ -41,8 +42,8 @@ test('every lamp has a world-wide id of its own and lies in its own room', () =>
   }
 })
 test('the rooms only keep lamps that exist, and none of their own', () => {
-  for (const [room, {keep}] of Object.entries(relations)) {
-    for (const id of keep) {
+  for (const room of Object.keys(relations) as Array<GalleryRoomId>) {
+    for (const id of visibleLamps(room)) {
       expect(`${room} keeps ${lamp(id).room === room ? 'its own ' : ''}${id}`).toBe(`${room} keeps ${id}`)
     }
   }
