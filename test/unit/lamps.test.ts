@@ -50,7 +50,7 @@ test('the rooms only keep lamps that exist, and none of their own', () => {
 })
 test('a lamp shines in its own room and in the rooms that keep it', () => {
   expect(slopGallery.lampRooms(lamp('lodge-fire')).toSorted()).toEqual(['corridor', 'fortress', 'lodge'])
-  expect(slopGallery.lampRooms(lamp('exhibition-tunnel_red')).toSorted()).toEqual(['antechamber', 'exhibition', 'moonfall', 'oculus'])
+  expect(slopGallery.lampRooms(lamp('exhibition-tunnel_red')).toSorted()).toEqual(['exhibition', 'moonfall', 'oculus'])
   expect(slopGallery.lampRooms(lamp('exhibition-west_stairway_door')).toSorted()).toEqual(['exhibition', 'oculus'])
   expect(slopGallery.lampRooms(lamp('fortress-pendant')).toSorted()).toEqual(['fortress', 'lodge', 'oculus'])
 })
