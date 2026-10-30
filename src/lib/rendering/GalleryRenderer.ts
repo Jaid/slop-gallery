@@ -223,8 +223,8 @@ export class GalleryRenderer extends WebgpuRenderer {
       }
       return [
         ...this.warming && this.warmedFrame !== this.frame ? ['warmup'] : [],
-        ...[...waiting].map(object => `stream:${object.name || object.uuid}`),
-        ...[...this.incompleteCameras.keys()].map(camera => `shadow-map:${camera.uuid}`),
+        ...waiting.values().map(object => `stream:${object.name || object.uuid}`),
+        ...this.incompleteCameras.keys().map(camera => `shadow-map:${camera.uuid}`),
       ]
     })
   }
