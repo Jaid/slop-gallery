@@ -9,6 +9,7 @@ import postcssNormalize from 'postcss-normalize'
 import bakeBranchComponentPlugin from 'rolldown-plugin-bake-branch-component'
 import hoistPopularConstantsPlugin from 'rolldown-plugin-hoist-popular-constants'
 import thematicChunksPlugin from 'rolldown-plugin-thematic-chunks'
+import {deprecations as sassDeprecations} from 'sass-embedded'
 import {mergeConfig} from 'vite'
 import bakeThreePlugin from 'vite-plugin-bake-three'
 import browserslistTargetPlugin from 'vite-plugin-browserslist-target'
@@ -53,6 +54,12 @@ const getCommonConfig = () => {
           postcssNormalize() as unknown as AcceptedPlugin,
           postcssAutoprefixer,
         ],
+      },
+      preprocessorOptions: {
+        sass: {
+          // What Dart Sass 2 will remove fails the build already.
+          fatalDeprecations: sassDeprecations.dartSass2,
+        },
       },
     },
   }
