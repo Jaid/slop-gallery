@@ -4,7 +4,7 @@
   "pages_build_output_dir": "dist",
   "vars": {
     "SKIP_DEPENDENCY_INSTALL": "1",
-    "BUN_VERSION": "1.4.2"
+    "BUN_VERSION": "1.4.4"
   },
   "no_bundle": true
 }

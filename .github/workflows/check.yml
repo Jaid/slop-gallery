@@ -12,7 +12,7 @@ jobs:
     - name: setupBun
       uses: oven-sh/setup-bun@v2.2.0
       with:
-        bun-version: 1.4.2
+        bun-version: 1.4.4
     - name: installSystemPackages
       run: |
         sudo apt-get update
