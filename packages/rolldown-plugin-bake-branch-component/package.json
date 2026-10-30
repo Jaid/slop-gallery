@@ -21,8 +21,8 @@
     "babel-plugin-bake-branch-component": "workspace:*"
   },
   "peerDependencies": {
-    "rolldown": "^1.2.15",
-    "@rolldown/plugin-babel": "^0.2.4"
+    "rolldown": "^1.2.16",
+    "@rolldown/plugin-babel": "^0.3.0"
   },
   "devDependencies": {
     "fs-extra": "11.4.1",

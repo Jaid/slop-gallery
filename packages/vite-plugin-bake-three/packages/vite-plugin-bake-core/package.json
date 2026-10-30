@@ -21,16 +21,16 @@
   "dependencies": {
     "decode-brotli": "0.1.0",
     "fs-extra": "11.4.1",
-    "magic-string": "1.4.3",
+    "magic-string": "1.4.5",
     "math": "0.1.0",
     "minimatch": "11.0.3",
     "type-fest": "5.10.0",
-    "@babel/core": "8.0.7",
-    "@babel/generator": "8.0.6",
-    "@babel/parser": "8.0.7",
+    "@babel/core": "8.0.10",
+    "@babel/generator": "8.0.10",
+    "@babel/parser": "8.0.10",
     "@babel/plugin-transform-typescript": "8.0.6",
-    "@babel/traverse": "8.0.7",
-    "@babel/types": "8.0.6"
+    "@babel/traverse": "8.0.10",
+    "@babel/types": "8.0.10"
   },
   "peerDependencies": {
     "three": "^0.186.1",

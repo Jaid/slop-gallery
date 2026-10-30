@@ -21,8 +21,8 @@
     "babel-plugin-hoist-popular-constants": "workspace:*"
   },
   "peerDependencies": {
-    "rolldown": "^1.2.15",
-    "@babel/core": "^8.0.7"
+    "rolldown": "^1.2.16",
+    "@babel/core": "^8.0.10"
   },
   "devDependencies": {
     "fs-extra": "11.4.1",
