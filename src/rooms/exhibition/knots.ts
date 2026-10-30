@@ -3,7 +3,7 @@ import type {ShowcasedKnot} from '#src/lib/gallery/showcasedKnots.ts'
 import type {KnotEntry, Rarity} from 'knot-materials'
 import type {Vec3} from 'math'
 
-import knots, {common, ethereal, prime, rare} from 'knot-materials'
+import {common, ethereal, knots, prime, rare} from 'knot-materials'
 import {knotSign} from 'knot-materials/signs.ts'
 
 import {environmentPick, environmentWeightedPick} from '#src/lib/environmentSeed.ts'

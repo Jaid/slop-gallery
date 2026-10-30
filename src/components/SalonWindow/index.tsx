@@ -5,7 +5,7 @@ import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 import {BoxGeometry, Matrix4, Quaternion, Vector3} from 'three/webgpu'
 
-import {salonWindow} from '#src/lib/gallery/salonWindow.ts'
+import salonWindow from '#src/lib/gallery/salonWindow.ts'
 
 const {bottom, thickness, top, width, x, z} = salonWindow
 const height = top - bottom

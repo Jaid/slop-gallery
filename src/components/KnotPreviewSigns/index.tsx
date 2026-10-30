@@ -21,7 +21,7 @@ import drawPreview, {knotPreviewBackground, knotPreviewCaptionFontFamily, knotPr
 import RuntimeKnotIconRenderer, {releaseCanvases} from './RuntimeKnotIconRenderer.ts'
 
 /** One billboard at the west end of every row, sharing one detached renderer for their Knot screenshots. */
-export function KnotPreviewSigns({x}: {
+export default function KnotPreviewSigns({x}: {
   /** where the billboards stand, relative to their row centers */
   x: number
 }) {
@@ -31,7 +31,7 @@ export function KnotPreviewSigns({x}: {
 }
 
 /** Runtime billboard composed into one texture per candidate; no combined texture is persisted. */
-export default function KnotPreviewSign({bay, renderer, x}: {
+function KnotPreviewSign({bay, renderer, x}: {
   bay: KnotBay
   renderer: RuntimeKnotIconRenderer
   /** where the billboard stands, relative to the row center */

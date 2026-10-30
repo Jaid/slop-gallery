@@ -1,5 +1,4 @@
 export * from './gallery/actions.ts'
-export {default as defaultPortraits} from './gallery/defaultPortraits.ts'
 export * from './gallery/store.ts'
 export type * from './gallery/types.ts'
-export type {Wall, WallOpening, WallReservation} from './placement/wallGeometry.ts'
+export type {Wall} from './placement/wallGeometry.ts'

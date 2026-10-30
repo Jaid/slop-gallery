@@ -9,7 +9,6 @@ const halfLength = (lobby.southZ - lobby.northZ) / 2 - wallFace
 const springY = wallTop
 const cofferDepth = 0.2
 const shell = 0.35
-
 /**
  * The Lobby’s coffered barrel vault, in meters relative to the room center at floor level.
  *
@@ -19,7 +18,7 @@ const shell = 0.35
  *
  * Angles around the vault’s axis (z) are measured from +x: 0 is the east springing, π/2 the crown, π the west springing.
  */
-export const lobbyVault = {
+const lobbyVault = {
   halfSpan,
   halfLength,
   springY,

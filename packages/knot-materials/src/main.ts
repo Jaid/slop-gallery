@@ -10,7 +10,6 @@ export const knots = knotsById.values().toArray()
 export * as entries from './entries/index.ts'
 export {default as KnotCandidate} from './KnotCandidate.ts'
 export {common, ethereal, prime, rare, default as rarities, special, unknown} from './rarities.ts'
-export default knots
 
 export type {Rarity} from './rarities.ts'
 export type {KnotAuthor, KnotCandidateData, KnotCandidateId, KnotData, KnotEntry, KnotId, KnotMaterialConstructor, KnotMaterialLoader, KnotPlaceholder, PlaceholderShading} from './types.ts'

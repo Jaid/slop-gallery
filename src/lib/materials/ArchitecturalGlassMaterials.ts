@@ -4,7 +4,7 @@ import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import {floorGlassThickness} from '../gallery/floors.ts'
 import {lodgeWindow} from '../gallery/lodge.ts'
-import {salonWindow} from '../gallery/salonWindow.ts'
+import salonWindow from '../gallery/salonWindow.ts'
 import CastFloorGlassMaterial from './CastFloorGlassMaterial.ts'
 import ClearGlassMaterial from './ClearGlassMaterial.ts'
 import CrownGlassMaterial from './CrownGlassMaterial.ts'

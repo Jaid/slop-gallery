@@ -13,13 +13,12 @@ export type Hall = PlacedRoom<GalleryRoom> & {
 
 /** the gallery’s rooms around a rectangular floor plan, every room but the Exhibition and the Fortress */
 export const rooms = slopGallery.rooms.filter((room): room is Hall => room.size !== undefined)
-export const {walls} = slopGallery
+const {walls} = slopGallery
 export const galleryPlacement = slopGallery.placement
 export const insideGallery = (position: Vec3) => slopGallery.contains(position)
 export const floorHeight = (position: Vec3) => slopGallery.floorHeight(position)
 /** the id of the room whose fence holds the position first */
 export const roomAt = (position: Vec3) => slopGallery.roomAt(position)?.id
-export const wallDistance = (origin: Vec3, direction: Vec3) => slopGallery.wallDistance(origin, direction)
 /** Height from a room’s floor to the highest point of its ceiling: the crown of the Lobby’s vault or the Antechamber’s dome, the ridge of the Vesper’s lantern, the flat ceiling everywhere else. */
 export const roomClearHeight = (room: PlacedRoom) => room.air[0].max.y - room.floorY
 

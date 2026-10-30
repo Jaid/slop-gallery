@@ -66,7 +66,7 @@ const colorKeys = ['cloudLit', 'cloudShade', 'cloudWarm', 'glow', 'horizon', 'su
  * darker underneath and fade into the haze toward the horizon, where the deck’s projection would get too fine to draw.
  * Everything but the sun stays below the gallery’s bloom threshold of 1. Pass a {@link SkyLook} to change it later.
  */
-export function proceduralSky(options: ProceduralSkyOptions | SkyLook, direction: Node<'vec3'> = normalWorldGeometry.normalize()) {
+export default function proceduralSky(options: ProceduralSkyOptions | SkyLook, direction: Node<'vec3'> = normalWorldGeometry.normalize()) {
   const look = options instanceof SkyLook ? options : new SkyLook(options)
   const {colors} = look
   const sun = look.sunDirection
@@ -130,5 +130,3 @@ export class SkyLook {
     }
   }
 }
-
-export default proceduralSky

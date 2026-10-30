@@ -1,7 +1,7 @@
 import type {KnotEntry} from 'knot-materials'
 import type {Vec3} from 'math'
 
-import knots, {prime} from 'knot-materials'
+import {knots, prime} from 'knot-materials'
 
 import {environmentPick} from '#src/lib/environmentSeed.ts'
 import salon from '#src/lib/gallery/salon.ts'

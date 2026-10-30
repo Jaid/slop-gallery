@@ -11,7 +11,7 @@ import lobby from './lobby.ts'
  *
  * The pane stands in the shared wall plane, centered in the two room faces, and is as thick as the floor glass.
  */
-export const salonWindow = {
+const salonWindow = {
   x: lobby.width / 2,
   z: lobby.opening.center[1],
   width: lobby.opening.size[1],
