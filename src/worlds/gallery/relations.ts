@@ -206,7 +206,7 @@ const relations = {
     },
   },
   oculus: {
-    rooms: ['lobby', 'exhibition', 'fortress', 'salon', 'moonfall', 'lodge', 'banquet'],
+    rooms: ['lobby', 'exhibition', 'fortress', 'salon', 'moonfall', 'banquet'],
     visibleLamps: {
       moonfall: [
         'planet_glow',
