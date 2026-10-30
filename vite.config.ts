@@ -80,7 +80,29 @@ const getProductionConfig = () => {
     plugins: [
       jxlHeadersPlugin(),
       rapierWasmPlugin(),
-      bakeThreePlugin(),
+      // Only recipes that take longer to generate than their snapshots take to download; the rest load sooner without them.
+      bakeThreePlugin({
+        geometry: {
+          include: [
+            'src/components/Architecture/index.tsx',
+            'src/lib/gallery/OculusGroundGeometry.ts',
+            'src/lib/gallery/moonfall/CraterGeometry.ts',
+            // The lattice is quicker to build than to download.
+            {
+              glob: 'src/lib/gallery/antechamberDome.ts',
+              scope: 'antechamberDomeGeometry',
+            },
+          ],
+        },
+        staticTextures: {
+          include: [
+            'packages/knot-materials/src/entries/{great_cat_emergence,felidae_nocturne}/Material.ts',
+            'packages/knot-materials/src/candidates/{claude_haiku/lib/knotArcLength,deepseek/lib/interference}.ts',
+          ],
+        },
+        // No region of the worlds is closed and static enough for it.
+        staticRendering: false,
+      }),
       bakeBranchComponentPlugin(),
       {
         ...hoistPopularConstantsPlugin(),
