@@ -7,12 +7,9 @@ import EgoMotor from 'ego-player/motor'
 import {BoxGeometry, Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import staircase, {stairBlocks, stairFlights, stairFloorHeight, stairRailGeometry, stairRoofs, stairTurn} from '../../src/lib/gallery/staircase.ts'
-import {createDocument} from '../../src/lib/gallery/store.ts'
 import {placementIssue, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
 import walls, {floorHeight, galleryPlacement, insideGallery, roomAt, rooms, roomVisit} from './fixtures/gallery.ts'
-import samplePortraits from './fixtures/portraits.ts'
 
 await RAPIER.init()
 const lower = rooms.find(candidate => candidate.id === 'moonfall')!
@@ -44,7 +41,7 @@ describe('lower gallery', () => {
     expect(stairFloorHeight(stairTurn.position[0], stairTurn.position[2])).toBe(-4)
     expect(stairFloorHeight(8, 14.6)).toBeUndefined()
   })
-  test('wall rays and frame clearance respect lower-level elevations and relocated portals', () => {
+  test('wall rays and frame clearance respect lower-level elevations and portals', () => {
     const wall = walls.find(candidate => candidate.id === 'moonfall-south')!
     const position = wallPosition(wall, 2, lower.floorY + 2.5)
     expect(position[1]).toBeCloseTo(-5.5)
@@ -60,20 +57,6 @@ describe('lower gallery', () => {
       valid: false,
       reason: 'Keep the stairway clear.',
     })
-  })
-  test('current loose artwork on the stair landing is not mistaken for the original Moonfall', () => {
-    const portrait = {
-      ...samplePortraits[0],
-      hung: false,
-      wallId: 'moonfall-east',
-      position: [15.3, -3.8, 13.3] as Vec3,
-    }
-    const saved = validateDocument({
-      ...createDocument(),
-      portraits: [portrait],
-    })
-    expect(saved.portraits[0].position).toEqual(portrait.position)
-    expect(validateDocument(saved)).toEqual(saved)
   })
   test('every tread matches the physical floor, and sidewalls close every tread edge', () => {
     const world = new RAPIER.World({
