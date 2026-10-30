@@ -4,7 +4,7 @@ import type {Binding, NodePath} from '@babel/traverse'
 
 import {Script} from 'node:vm'
 
-import {transformFromAstSync} from '@babel/core'
+import {loadPartialConfigSync, transformFromAstSync} from '@babel/core'
 import generate from '@babel/generator'
 import transformTypescript from '@babel/plugin-transform-typescript'
 import traverse from '@babel/traverse'
@@ -43,16 +43,20 @@ export function describeExpression(node: t.Node) {
 function isType(path: NodePath) {
   return Boolean(path.findParent(parent => parent.isTSType() || parent.isTSTypeAnnotation() || parent.isTSInterfaceDeclaration()))
 }
+// Resolved once: loading the plugin configuration anew for every rewritten declaration took about a third of a build.
+const eraseOptions = loadPartialConfigSync({
+  filename: 'recipe.ts',
+  babelrc: false,
+  configFile: false,
+  plugins: [[transformTypescript, {allowDeclareFields: true}]],
+  ast: true,
+  code: false,
+  // Every caller passes a fresh AST.
+  cloneInputAst: false,
+})!.options
 /** Babel scopes don’t bind parameter properties and take type alias names for references, so references are collected from plain JavaScript. */
 function eraseTypes(file: t.File) {
-  return transformFromAstSync(file, '', {
-    filename: 'recipe.ts',
-    babelrc: false,
-    configFile: false,
-    plugins: [[transformTypescript, {allowDeclareFields: true}]],
-    ast: true,
-    code: false,
-  })!.ast!
+  return transformFromAstSync(file, '', eraseOptions)!.ast!
 }
 /** Reject capabilities that cannot be made invariant. This is an optimizer, not an untrusted-code sandbox. */
 function validate(path: NodePath, allowFreezingRandomness: boolean) {
