@@ -15,6 +15,7 @@ trackLoadingItems(() => [...pending].map(room => `room:${room}`))
 
 /**
  * Whether the physics waits for rooms that haven’t mounted yet. Each room brings the colliders of its own floors and plinths, so without them, the player resuming in that room, loose portraits there and the Oculus props would fall through.
+ * The physics must read it inside the Canvas, like `GamePhysics` does, since props from outside of it reach the scene late.
  */
 export const usePhysicsHold = create<{held: boolean}>(() => ({held: false}))
 

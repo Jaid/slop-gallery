@@ -98,6 +98,8 @@ function Player() {
 
 `physics` defaults to `false`. `true` enables Rapier with gravity `[0, -9.81, 0]`. An options object passes through all `PhysicsProps` except `children`, including `paused`, `timeStep`, `colliders` and `debug`. An empty object enables physics with Rapier’s defaults. Keep your normal Suspense and error boundaries above the game; physics can suspend while loading WASM.
 
+Props reach the scene only once Fiber commits the Canvas. While the scene still suspends, Fiber’s root Suspense blocks the Canvas itself, but whatever part of the scene has mounted keeps rendering and stepping with the props it got first, `physics` included, sometimes for more than a second. A value that has to take effect right away, like pausing the physics until colliders have loaded, belongs inside the Canvas: leave `physics` off and render Rapier’s `Physics` yourself in a component among `Game`’s children that reads the value there, for example from a store.
+
 ## Renderer
 
 The exported `WebgpuRenderer` class constructs Three’s `WebGPUBackend` directly. Adapter/device initialization errors propagate; there is no fallback renderer. Game’s default factory sets `alpha: false` and `antialias: false`, leaving postprocessing and antialiasing policy to the application.
