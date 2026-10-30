@@ -234,8 +234,8 @@ try {
       delta: 1 / fps,
       pose,
     })
-    // The clock stands still while whatever just came into view loads in the background.
-    await waitForLoadingItems(page)
+    // The clock stands still while whatever just came into view loads; frames at the same moment let what needs them, like objects streaming in, get there.
+    await waitForLoadingItems(page, {between: () => page.evaluate(() => globalThis.virtualClock!.step(0))})
     await page.evaluate(async (url: string) => {
       const {pixels} = await globalThis.slopGallery!.capturePixels!()
       const response = await fetch(url, {

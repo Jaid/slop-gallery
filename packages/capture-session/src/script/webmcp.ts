@@ -18,8 +18,14 @@ const executeWebmcpTool = async (page: Page, name: string, input: Record<string,
 /** Runs one of the app’s WebMCP tools in a page once the app has registered it, and resolves with its parsed JSON result. The browser needs `--enable-features=WebMCP`. */
 export const callWebmcpTool = async (page: Page, name: string, input: Record<string, unknown> = {}) => JSON.parse(await executeWebmcpTool(page, name, input)) as unknown
 
-/** Polls the app’s `get_loading_items` tool until nothing is left loading, so the next frame shows everything in place. Gives up once the items stay the same for `timeout` milliseconds; Knottingham’s Knot materials alone can take minutes. */
-export const waitForLoadingItems = async (page: Page, timeout = 120_000) => {
+/**
+ * Polls the app’s `get_loading_items` tool until nothing is left loading, so the next frame shows everything in place. Gives up once the items stay the same for `timeout` milliseconds; Knottingham’s Knot materials alone can take minutes.
+ * `between` runs between polls while something is left, e.g. to render a frame under a stopped virtual clock: objects streaming in and shadow maps missing them only get further with frames.
+ */
+export const waitForLoadingItems = async (page: Page, {between, timeout = 120_000}: {
+  between?: () => Promise<unknown>
+  timeout?: number
+} = {}) => {
   let last: string | undefined
   let deadline = 0
   for (;;) {
@@ -35,6 +41,7 @@ export const waitForLoadingItems = async (page: Page, timeout = 120_000) => {
       throw new Error(`Nothing finished loading for ${timeout / 1000} s: ${items.replaceAll('\n', ', ')}.`)
     }
     await new Promise(resolve => setTimeout(resolve, 20))
+    await between?.()
   }
 }
 

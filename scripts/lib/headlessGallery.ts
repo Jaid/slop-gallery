@@ -21,7 +21,7 @@ const queryOptions: Record<string, {type: 'string'}> = Object.fromEntries(queryO
 export const galleryHelp = (defaultHeight = 720) => `  --target <dir>          use this static build (e.g. dist) instead of the dev server
   --graphics <mode>       mirrors ?graphics (fast, heavy or cinematic, which is heavy with larger maps and more samples for non-realtime renders). Default: heavy
   --seed <number>         mirrors ?seed, the environment seed (0–${maximumSeed}) that decides random details like the potted plants. Default: 1
-  --loading <mode>        mirrors ?loading (stream, full or lazy). Default: full, which builds everything before the scene is ready, so captures don’t wait for every object and shadow map to stream in
+  --loading <mode>        mirrors ?loading (stream, full or lazy). Default: stream
   --stream_budget <ms|false>
                           mirrors ?stream_budget, the milliseconds a frame after loading may spend building objects. Default: false, which builds everything in the first frame, so the scene is complete about three times sooner than at the players’ 8
   --width <pixels>        render width. Default: --height × 16/9, or ${Math.round(defaultHeight * 16 / 9)}
@@ -134,7 +134,7 @@ export const resolveGallerySetup = async (values: GalleryValues, defaultHeight =
   }
   search.set('seed', String(seed))
   search.set('graphics', values.graphics)
-  const loading = values.loading ?? 'full'
+  const loading = values.loading ?? 'stream'
   if (readLoading(`?${new URLSearchParams({loading})}`) !== loading) {
     throw new Error(`--loading must be stream, full or lazy, got “${loading}”.`)
   }

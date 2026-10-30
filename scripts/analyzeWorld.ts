@@ -2,7 +2,7 @@ import type {WorldAnalysis} from '#src/lib/webmcp/analyzeWorld.ts'
 
 import {parseArgs} from 'node:util'
 
-import {callWebmcpTool} from 'capture-session/script'
+import {callWebmcpTool, waitForLoadingItems} from 'capture-session/script'
 
 import {galleryHelp, galleryOptions, openHeadlessGallery, resolveGallerySetup} from './lib/headlessGallery.ts'
 
@@ -32,5 +32,7 @@ if (values.help) {
 }
 const setup = await resolveGallerySetup(values)
 await using gallery = await openHeadlessGallery(setup, {cacheDir: 'node_modules/.vite-analyze-world'})
+// Rooms other than the start room still download and mount after the scene is ready.
+await waitForLoadingItems(gallery.page)
 const analysis = await callWebmcpTool(gallery.page, 'analyze_world') as WorldAnalysis
 console.log(JSON.stringify(analysis, null, 2))
