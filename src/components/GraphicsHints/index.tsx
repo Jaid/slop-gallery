@@ -49,7 +49,7 @@ function Checks() {
     },
     {
       key: 'deviceMemory',
-      label: 'GPU memory',
+      label: 'RAM',
       value: hints.deviceMemory === undefined ? unknown : `${hints.deviceMemory}\u{202F}gb`,
     },
     {
