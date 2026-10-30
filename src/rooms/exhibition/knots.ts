@@ -34,18 +34,19 @@ export const exhibitionPedestal = {
   plinth: 0.1,
 } as const
 
-/** the lower half-round sidecar merged into each pedestal’s north flank, which carries the Knot’s nameplate; its height is over the floor under its middle */
+/** the lower sidecar merged into each pedestal’s north flank, running out toward the window like the pedestal before it rounds off, which carries the Knot’s nameplate; its height is over the floor under its middle */
 export const exhibitionSidecar = {
   radius: 0.8,
-  height: 0.38,
-  /** how far north of its Knot it is centered on the wall, overlapping the pedestal’s flank */
-  shift: 2.05,
+  length: 0.35,
+  height: 0.46,
+  /** how far north of its Knot it is centered on the wall, sunk deep into the pedestal’s flank */
+  shift: 1.85,
   /** how far out from the back wall the nameplate stands on it */
-  signOffset: 0.55,
+  signOffset: 0.65,
   /** how far north of its middle the nameplate stands, so the turned plaque clears the pedestal’s cap */
   signShift: 0.1,
   /** how far the nameplate turns from facing the window toward Moonfall, up the tunnel to the south, where most visitors come from */
-  signTurn: Math.PI / 4,
+  signTurn: Math.PI / 6,
 } as const
 
 /** the pedestal’s lobes, north to south, around where it meets the back wall under its Knot */
@@ -53,6 +54,7 @@ export const exhibitionPedestalLobes = [
   {
     z: -exhibitionSidecar.shift,
     radius: exhibitionSidecar.radius,
+    length: exhibitionSidecar.length,
     height: exhibitionSidecar.height,
   },
   {

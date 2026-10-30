@@ -96,7 +96,9 @@ test('the pedestals back onto the back walls with their sidecars, leaving ways i
   expect(main.z - main.radius - sidecar.z).toBeLessThan(sidecar.radius - 0.2)
   expect(main.z - main.radius - sidecar.z).toBeGreaterThan(0.2)
   const base = knotSignRoundParts.find(part => part.height === 0.028)!
-  expect(Math.hypot(exhibitionSidecar.signOffset, exhibitionSidecar.signShift) + base.radius).toBeLessThan(sidecar.radius)
+  // the stand’s foot inside the sidecar’s flanks and round end
+  expect(exhibitionSidecar.signShift + base.radius).toBeLessThan(sidecar.radius)
+  expect(Math.hypot(Math.max(0, exhibitionSidecar.signOffset + base.radius - sidecar.length), exhibitionSidecar.signShift + base.radius)).toBeLessThan(sidecar.radius)
   expect(sidecar.z - exhibitionSidecar.signShift + base.radius).toBeLessThan(main.z - main.radius - pedestalOverhang)
   for (const slot of exhibitionSlots) {
     const display = displayOf(slot)
@@ -117,8 +119,8 @@ test('the pedestals back onto the back walls with their sidecars, leaving ways i
     // It faces out toward the window and up the tunnel toward Moonfall, to the south.
     const facing = new Vector3(0, 0, 1)
     facing.applyAxisAngle(new Vector3(0, 1, 0), slot.sign.rotation)
-    expect(facing.x * slot.direction).toBeCloseTo(Math.sin(exhibitionSidecar.signTurn), 9)
-    expect(facing.z).toBeCloseTo(Math.cos(exhibitionSidecar.signTurn), 9)
+    expect(facing.x * slot.direction).toBeCloseTo(Math.cos(exhibitionSidecar.signTurn), 9)
+    expect(facing.z).toBeCloseTo(Math.sin(exhibitionSidecar.signTurn), 9)
     // Every corner of its plaque, which leans back, stays off the back wall, and either north of the pedestal or over its cap.
     const capTop = slot.pedestal[1] + main.height
     const [plaque] = knotSignParts
@@ -169,7 +171,8 @@ test('a pedestal’s course follows the sloping floor around both lobes, while t
       // Where the lobes meet, the course runs on without a gap, and out past the sidecar there is none.
       const seamZ = sidecar.z + sidecar.radius * 0.8
       expect(down(sidecar.radius * 0.5, seamZ).length).toBeGreaterThan(0)
-      expect(down(sidecar.radius + pedestalOverhang + 0.05, sidecar.z)).toHaveLength(0)
+      expect(down(sidecar.length + sidecar.radius + pedestalOverhang + 0.05, sidecar.z)).toHaveLength(0)
+      expect(down(sidecar.length + sidecar.radius + pedestalOverhang - 0.05, sidecar.z).length).toBeGreaterThan(0)
       for (const part of [geometry.stone, geometry.reveal, geometry.cap]) {
         expect([...part.getAttribute('normal').array].every(Number.isFinite)).toBe(true)
       }
