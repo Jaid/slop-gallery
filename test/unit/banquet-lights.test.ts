@@ -9,11 +9,11 @@ import {Raycaster, Vector3} from 'three/webgpu'
 
 import {wallOpeningTrim} from '../../src/lib/gallery/architectureDimensions.ts'
 import {banquetBoiserie, banquetCeilingUnderside, banquetLedSlots, banquetWallPanels} from '../../src/lib/gallery/banquet.ts'
-import lightSwitch from '../../src/lib/gallery/lightSwitch.ts'
+import lightSwitch, {switchButtonY} from '../../src/lib/gallery/lightSwitch.ts'
 import KnotLightImpacts from '../../src/lib/physics/KnotLightImpacts.ts'
 import {beginBodyThrow} from '../../src/lib/physics/ThrowState.ts'
 import {obstructionIssue, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
-import {lightSwitchSpot} from '../../src/rooms/banquet/walls.ts'
+import {lightSwitchSpots} from '../../src/rooms/banquet/walls.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 import {rooms} from './fixtures/gallery.ts'
 
@@ -71,21 +71,38 @@ test('each pane’s lamp sits right below its own diffuser, close enough that th
     expect(y).toBeGreaterThan(slot.position[1] - 0.5)
   }
 })
-test('the light switch sits on plain plaster beside the Lobby arch, clear of its trim and the panels, and keeps artworks off it', () => {
+test('the light switches sit side by side on plain plaster beside the Lobby arch, clear of its trim, the panels and each other, and keep artworks off them', () => {
   const wall = slopGallery.walls.find(candidate => candidate.id === 'banquet-west')!
   const arch = wall.holes!.find(hole => hole.name === 'lobby')!
   const [plateWidth, plateHeight] = lightSwitch.plate
-  const left = lightSwitchSpot.u - plateWidth / 2
-  const right = lightSwitchSpot.u + plateWidth / 2
+  const {power, temperature} = lightSwitchSpots
+  const left = power.u - plateWidth / 2
+  const right = temperature.u + plateWidth / 2
   const trimEdge = arch.u + arch.width / 2 + wallOpeningTrim
   const panelEdge = Math.min(...banquetWallPanels(wall).upper.map(panel => panel.u[0]).filter(u => u > arch.u))
-  expect(left - trimEdge).toBeGreaterThan(0.1)
-  expect(panelEdge - right).toBeGreaterThan(0.1)
+  // The one switching the lights on and off comes first from the arch.
+  expect(temperature.u - power.u).toBeCloseTo(plateWidth + lightSwitch.gap, 9)
+  expect(left - trimEdge).toBeGreaterThan(0.05)
+  expect(panelEdge - right).toBeGreaterThan(0.05)
   expect(left - trimEdge).toBeCloseTo(panelEdge - right, 9)
-  expect(lightSwitchSpot.y - plateHeight / 2).toBeGreaterThan(banquetBoiserie.rail[1] + 0.3)
+  for (const spot of [power, temperature]) {
+    expect(spot.y - plateHeight / 2).toBeGreaterThan(banquetBoiserie.rail[1] + 0.3)
+  }
+  expect(wall.reservations).toHaveLength(2)
   const inFront = (u: number) => wallPosition(wall, u, 1.6)
-  expect(obstructionIssue(wall, inFront(lightSwitchSpot.u + 0.5), 0.6, 0.6)).toBe('Let’s keep the light switch clear.')
-  expect(obstructionIssue(wall, inFront(lightSwitchSpot.u + 1), 0.6, 0.6)).toBe('')
+  expect(obstructionIssue(wall, inFront(temperature.u + 0.5), 0.6, 0.6)).toBe('Let’s keep the light switches clear.')
+  expect(obstructionIssue(wall, inFront(temperature.u + 1), 0.6, 0.6)).toBe('')
+})
+test('the buttons of a switch plate stay apart, inside the plate and clear of its screws', () => {
+  const {buttonSpacing, collar, plate, screw} = lightSwitch
+  expect(buttonSpacing).toBeGreaterThan(collar.radius * 2)
+  for (const count of [2, 3]) {
+    const ys = Array.from({length: count}, (_, index) => switchButtonY(index, count))
+    expect(ys.reduce((sum, y) => sum + y, 0)).toBeCloseTo(0, 9)
+    expect(ys).toEqual(ys.toSorted((a, b) => b - a))
+    expect(Math.max(...ys) + collar.radius).toBeLessThan(screw.offset - screw.radius)
+    expect(Math.max(...ys) + collar.radius).toBeLessThan(plate[1] / 2)
+  }
 })
 test('a prop thrown at a banquet pane cracks it first, then knocks the diffuser loose', () => {
   const world = new RAPIER.World({

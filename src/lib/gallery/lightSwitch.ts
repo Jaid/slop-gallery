@@ -1,35 +1,42 @@
 import type {WallReservation} from '../placement/wallGeometry.ts'
 
 /**
- * An old push-button light switch: a gilt plate with a mother-of-pearl button that switches on above an ebony one that switches off. Pressing either pushes it in and pops the other out.
+ * Old push-button switches: a gilt plate with a column of buttons, pressing one of which pushes it in and pops the pressed one out.
  * All values are in meters, measured from the middle of the plate’s back on the wall.
  */
 const lightSwitch = {
   /** width, height and depth of the plate */
-  plate: [0.074, 0.118, 0.006],
+  plate: [0.09, 0.16, 0.007],
   /** how far the plate’s edges are rounded */
-  plateRadius: 0.0022,
-  /** how far each button sits above or below the plate’s middle */
-  buttonOffset: 0.024,
-  buttonRadius: 0.0085,
+  plateRadius: 0.0026,
+  /** the distance between the middles of neighboring buttons, which are centered on the plate */
+  buttonSpacing: 0.04,
+  buttonRadius: 0.0105,
   /** how far a button stands proud of the plate, pushed in (just past its collar) and popped out */
-  buttonTravel: [0.003, 0.009],
+  buttonTravel: [0.0035, 0.011],
   /** the gilt ring around each button */
   collar: {
-    radius: 0.0125,
-    depth: 0.0025,
+    radius: 0.0155,
+    depth: 0.003,
   },
   /** the two gilt screw heads holding the plate, each this far above or below its middle */
   screw: {
-    offset: 0.048,
-    radius: 0.0032,
-    depth: 0.0012,
+    offset: 0.066,
+    radius: 0.0038,
+    depth: 0.0014,
   },
+  /** the room left between neighboring plates */
+  gap: 0.03,
 } as const
 
 export default lightSwitch
 
-/** The space a light switch plate centered `u` along its wall and `y` over its floor keeps free of artworks. */
+/** How far the middle of the button at the index sits above the middle of a plate with `count` buttons, the first one on top. */
+export function switchButtonY(index: number, count: number) {
+  return ((count - 1) / 2 - index) * lightSwitch.buttonSpacing
+}
+
+/** The space a switch plate centered `u` along its wall and `y` over its floor keeps free of artworks. */
 export function lightSwitchReservation(u: number, y: number): WallReservation {
   const width = lightSwitch.plate[0]
   const height = lightSwitch.plate[1]
@@ -39,6 +46,6 @@ export function lightSwitchReservation(u: number, y: number): WallReservation {
     bottom: y - height / 2,
     height: y + height / 2,
     profile: 'rectangle',
-    reason: 'Let’s keep the light switch clear.',
+    reason: 'Let’s keep the light switches clear.',
   }
 }

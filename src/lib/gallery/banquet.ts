@@ -2,7 +2,7 @@ import type {Wall} from '../placement/wallGeometry.ts'
 import type {FloorRectangle} from './floors.ts'
 import type {KnotLightSlot} from 'knot-materials/KnotLights.ts'
 
-import {knotLightHousingSize, knotLightHousingY} from 'knot-materials/KnotLightPanels.ts'
+import {knotLightColor, knotLightHousingSize, knotLightHousingY} from 'knot-materials/KnotLightPanels.ts'
 
 import {wallFace, wallOpeningTrim} from './architectureDimensions.ts'
 import roomOrigins from './layout.ts'
@@ -22,6 +22,31 @@ export const banquetLedGrid = {
   x: [0],
   z: [-5, 0, 5],
 }
+
+/**
+ * The color temperatures the Banquet’s panes can shine in, by the button that picks them, from top to bottom: the color of their lamps’ light, of their lit diffusers and of the button.
+ * The panes balance the light and diffuser colors to the brightness of the white ones, so only the hue changes.
+ */
+export const banquetLightTemperatures = {
+  white: {
+    title: 'White light',
+    light: '#eee3ff',
+    surface: knotLightColor,
+    button: '#f1eee6',
+  },
+  blue: {
+    title: 'Blue light',
+    light: '#b4caff',
+    surface: '#a9c2ff',
+    button: '#2f5fc4',
+  },
+  yellow: {
+    title: 'Yellow light',
+    light: '#ffbd6b',
+    surface: '#ffbf5e',
+    button: '#e8b522',
+  },
+} as const
 
 /** how far below a pane’s origin its lamp hangs, just below its diffuser, close enough that the brightest ceiling spot stays hidden behind the housing */
 export const banquetLedDrop = 0.32

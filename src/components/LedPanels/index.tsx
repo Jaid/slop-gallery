@@ -1,5 +1,6 @@
 import type {KnotLightImpact} from '#src/lib/physics/KnotLightImpacts.ts'
 import type {KnotLightSlot} from 'knot-materials/KnotLights.ts'
+import type {Color} from 'three/webgpu'
 
 import {useFrame} from '@react-three/fiber'
 import {CuboidCollider, RigidBody, useAfterPhysicsStep, useBeforePhysicsStep} from '@react-three/rapier'
@@ -13,6 +14,8 @@ import {useGallery} from '#src/lib/gallery.ts'
 import KnotLightImpacts from '#src/lib/physics/KnotLightImpacts.ts'
 
 type LedPanelsProps = {
+  /** the color the lit diffusers shine in before `surfaceIntensity`, `knotLightColor` by default; they only take on a new one while powered */
+  color?: Color
   /** prefix for the group, instanced meshes and fallen diffusers */
   name: string
   /**
@@ -39,7 +42,7 @@ export default function LedPanels(props: LedPanelsProps) {
   return <LedPanelSystem key={resetEpoch} {...props} />
 }
 
-function LedPanelSystem({name, onBrightness, powered = true, slots, surfaceIntensity}: LedPanelsProps) {
+function LedPanelSystem({color, name, onBrightness, powered = true, slots, surfaceIntensity}: LedPanelsProps) {
   const damage = useMemo(() => new KnotLightDamage(slots.length), [slots.length])
   const panels = useDisposable(useMemo(() => new KnotLightPanels(slots, `${name}-led`, surfaceIntensity), [name, slots, surfaceIntensity]))
   const impacts = useMemo(() => new KnotLightImpacts, [])
@@ -52,6 +55,9 @@ function LedPanelSystem({name, onBrightness, powered = true, slots, surfaceInten
   useFrame((_, delta) => {
     time.current += delta
     power.current = powered ? Math.min(1, power.current + delta / powerRamp.on) : Math.max(0, power.current - delta / powerRamp.off)
+    if (powered && color) {
+      panels.setColor(color)
+    }
     const live = brightness.current
     for (let index = 0; index < slots.length; index++) {
       const intensity = damage.intensity(index, time.current) * power.current

@@ -1,8 +1,8 @@
 import type {KnotLightFracture, KnotLightSlot} from './KnotLights.ts'
 
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
-import {attribute, color, float, mix, positionGeometry, smoothstep, vec2} from 'three/tsl'
-import {DynamicDrawUsage, InstancedBufferAttribute, InstancedMesh, Matrix4, MeshBasicNodeMaterial, MeshStandardNodeMaterial} from 'three/webgpu'
+import {attribute, color, float, mix, positionGeometry, smoothstep, uniform, vec2} from 'three/tsl'
+import {Color, DynamicDrawUsage, InstancedBufferAttribute, InstancedMesh, Matrix4, MeshBasicNodeMaterial, MeshStandardNodeMaterial} from 'three/webgpu'
 
 import {knotLight} from './KnotLights.ts'
 
@@ -35,6 +35,8 @@ export default class KnotLightPanels {
   })
   readonly housings: InstancedMesh
   readonly intensities: InstancedBufferAttribute
+  /** the color the lit diffusers shine in before `surfaceIntensity`, `knotLightColor` unless {@link setColor} changes it; a uniform, so changing it compiles nothing */
+  readonly lightColor = uniform(new Color(knotLightColor))
   readonly liveFractions: Float32Array
   private readonly matrix = new Matrix4
 
@@ -56,7 +58,7 @@ export default class KnotLightPanels {
     const live = float(1).sub(smoothstep(-0.006, 0.006, distance).mul(fracture.w))
     const edge = smoothstep(0.7, 1, point.x.abs().max(point.y.abs()))
     const emission = attribute('lightIntensity', 'float').mul(live).mul(float(1).sub(edge.mul(0.12)))
-    this.diffuserMaterial.colorNode = mix(color('#383a33'), color(knotLightColor).mul(surfaceIntensity), emission)
+    this.diffuserMaterial.colorNode = mix(color('#383a33'), this.lightColor.mul(surfaceIntensity), emission)
     this.diffuserMaterial.name = 'Knot exposed emissive LED diffusers'
     this.housings = new InstancedMesh(this.housingGeometry, this.housingMaterial, slots.length)
     this.housings.name = `${name}-housings`
@@ -96,6 +98,11 @@ export default class KnotLightPanels {
     this.fractures.setXYZW(index, nx, nz, nx * fracture.point[0] + nz * fracture.point[1], 1)
     this.fractures.needsUpdate = true
     this.liveFractions[index] = fracture.liveFraction
+  }
+
+  /** Makes every lit diffuser shine in the color, like a panel switched to another color temperature. */
+  setColor(value: Color) {
+    this.lightColor.value.copy(value)
   }
 
   setIntensity(index: number, intensity: number) {

@@ -1,13 +1,14 @@
 import type {Lamp} from '../base/Room.ts'
 
-import {banquetLedDrop, banquetLedGrid, banquetLedY} from '#src/lib/gallery/banquet.ts'
+import {banquetLedDrop, banquetLedGrid, banquetLedY, banquetLightTemperatures} from '#src/lib/gallery/banquet.ts'
 
 const [x] = banquetLedGrid.x
 const [north, middle, south] = banquetLedGrid.z
 const led = (z: number) => ({
   position: [x, banquetLedY - banquetLedDrop, z],
   strength: 36,
-  tint: '#eee3ff',
+  // until the temperature switch picks another
+  tint: banquetLightTemperatures.white.light,
   range: 8,
   // Fades more gently than physical light, so the three pools blend into one even wash.
   decay: 1.5,
