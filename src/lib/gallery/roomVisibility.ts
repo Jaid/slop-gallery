@@ -166,8 +166,10 @@ export function roomsOverlapping(box: Box3) {
 const fullScreen: ScreenRect = [-1, -1, 1, 1]
 /** clip-space w below which a corner counts as behind the camera */
 const nearW = 1e-5
+/** clip-space x, y and w of the box’s corners, by the bits of their index: 1 for the box’s maximum x, 2 for its maximum y and 4 for its maximum z */
+const corners = new Float64Array(24)
 
-/** The part of the screen the box covers, or undefined when it is off screen. A box reaching behind the camera covers the whole screen. */
+/** The part of the screen the box covers, or undefined when it is off screen. Of a box reaching behind the camera, only the part in front of it counts, which covers the whole screen when the box surrounds the camera. */
 export function screenRect(box: Box3, viewProjection: Matrix4): ScreenRect | undefined {
   const e = viewProjection.elements
   let left = Number.POSITIVE_INFINITY
@@ -179,23 +181,43 @@ export function screenRect(box: Box3, viewProjection: Matrix4): ScreenRect | und
     const x = index & 1 ? box.max.x : box.min.x
     const y = index & 2 ? box.max.y : box.min.y
     const z = index & 4 ? box.max.z : box.min.z
+    const clipX = e[0] * x + e[4] * y + e[8] * z + e[12]
+    const clipY = e[1] * x + e[5] * y + e[9] * z + e[13]
     const w = e[3] * x + e[7] * y + e[11] * z + e[15]
+    corners[index * 3] = clipX
+    corners[index * 3 + 1] = clipY
+    corners[index * 3 + 2] = w
     if (w < nearW) {
       behind++
       continue
     }
-    const screenX = (e[0] * x + e[4] * y + e[8] * z + e[12]) / w
-    const screenY = (e[1] * x + e[5] * y + e[9] * z + e[13]) / w
-    left = Math.min(left, screenX)
-    bottom = Math.min(bottom, screenY)
-    right = Math.max(right, screenX)
-    top = Math.max(top, screenY)
+    left = Math.min(left, clipX / w)
+    bottom = Math.min(bottom, clipY / w)
+    right = Math.max(right, clipX / w)
+    top = Math.max(top, clipY / w)
   }
   if (behind === 8) {
     return
   }
-  if (behind) {
-    return fullScreen
+  // The part in front of the camera is bounded by the corners in front and the points where the box’s edges pass behind the camera.
+  for (let from = 0; behind && from < 8; from++) {
+    for (let bit = 1; bit < 8; bit <<= 1) {
+      if (from & bit) {
+        continue
+      }
+      const a = from * 3
+      const b = (from | bit) * 3
+      if (corners[a + 2] < nearW === corners[b + 2] < nearW) {
+        continue
+      }
+      const t = (nearW - corners[a + 2]) / (corners[b + 2] - corners[a + 2])
+      const screenX = (corners[a] + (corners[b] - corners[a]) * t) / nearW
+      const screenY = (corners[a + 1] + (corners[b + 1] - corners[a + 1]) * t) / nearW
+      left = Math.min(left, screenX)
+      bottom = Math.min(bottom, screenY)
+      right = Math.max(right, screenX)
+      top = Math.max(top, screenY)
+    }
   }
   return intersectScreenRects(fullScreen, [left, bottom, right, top])
 }

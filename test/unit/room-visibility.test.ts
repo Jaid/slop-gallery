@@ -4,7 +4,7 @@ import {expect, test} from 'bun:test'
 
 import {Box3, Frustum, Matrix4, PerspectiveCamera, Sphere, Vector3} from 'three/webgpu'
 
-import {portals, roomContaining, roomEnclosing, roomsAt, roomsOverlapping, visibleRegions, visibleRooms} from '../../src/lib/gallery/roomVisibility.ts'
+import {portals, roomContaining, roomEnclosing, roomsAt, roomsOverlapping, screenRect, visibleRegions, visibleRooms} from '../../src/lib/gallery/roomVisibility.ts'
 import {rooms} from './fixtures/gallery.ts'
 
 const viewProjection = (position: Vec3, target: Vec3) => {
@@ -78,4 +78,15 @@ test('rooms behind openings only show through them', () => {
   // The door into the Lobby covers only part of the screen.
   expect((right - left) * (top - bottom)).toBeLessThan(4)
   expect(visibleRegions(['vesper'], viewProjection([-14, 1.6, 0], [-20, 1.6, 0])).keys().toArray()).toEqual(['vesper'])
+})
+test('of a box reaching behind the camera, only the part in front of it shows', () => {
+  const matrix = viewProjection([0, 1.6, 0], [10, 1.6, 0])
+  // Overhead, from behind the camera to in front of it, like a skylight, but far above the view.
+  expect(screenRect(new Box3(new Vector3(-3, 7.5, -3), new Vector3(3, 9.75, 3)), matrix)).toBeUndefined()
+  // Around the camera, like a doorway it stands in.
+  expect(screenRect(new Box3(new Vector3(-1, 0, -1), new Vector3(1, 3, 1)), matrix)).toEqual([-1, -1, 1, 1])
+  // To the left, from behind the camera to 3 m in front of it, it only reaches in from the left edge.
+  const [left, bottom, right, top] = screenRect(new Box3(new Vector3(-2, 1, -4), new Vector3(3, 2, -3)), matrix)!
+  expect([left, bottom, top]).toEqual([-1, -1, 1])
+  expect(right).toBeLessThan(-0.9)
 })
