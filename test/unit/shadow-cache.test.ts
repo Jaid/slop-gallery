@@ -1,8 +1,8 @@
 import {expect, test} from 'bun:test'
 
-import {BoxGeometry, DirectionalLight, Mesh, PointLight, Scene} from 'three/webgpu'
+import {BoxGeometry, DirectionalLight, Frustum, Matrix4, Mesh, PerspectiveCamera, PointLight, Scene, SpotLight} from 'three/webgpu'
 
-import ShadowCache from '../../src/lib/rendering/ShadowCache.ts'
+import ShadowCache, {reachesFrustum} from '../../src/lib/rendering/ShadowCache.ts'
 
 const setup = () => {
   const scene = new Scene
@@ -156,6 +156,42 @@ test('directional lights ignore casters hiding, since they draw hidden ones too'
   expect(step()).toBe(true)
   hidden.delete(caster)
   expect(step()).toBe(false)
+})
+test('a light reaches the view where its range meets the camera’s frustum, wherever the light itself is', () => {
+  // Standing on a floor and looking north, with a lamp hanging 7 m under the floor ahead.
+  const camera = new PerspectiveCamera(60, 16 / 9, 0.1, 100)
+  camera.position.set(0, 1.7, 0)
+  camera.lookAt(0, 1.7, -6)
+  camera.updateMatrixWorld()
+  const frustum = new Frustum
+  const viewProjection = new Matrix4
+  const view = () => frustum.setFromProjectionMatrix(viewProjection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse), camera.coordinateSystem)
+  const below = new PointLight('#fff', 1, 10)
+  below.position.set(0, -7, -6)
+  below.updateMatrixWorld()
+  expect(reachesFrustum(below, view())).toBe(true)
+  const short = new PointLight('#fff', 1, 3)
+  short.position.copy(below.position)
+  short.updateMatrixWorld()
+  expect(reachesFrustum(short, view())).toBe(false)
+  // Without a range, the shadow camera’s far plane bounds the reach.
+  const open = new PointLight('#fff', 1, 0)
+  open.position.copy(below.position)
+  open.shadow.camera.far = 3
+  open.updateMatrixWorld()
+  expect(reachesFrustum(open, view())).toBe(false)
+  open.shadow.camera.far = 10
+  expect(reachesFrustum(open, view())).toBe(true)
+  const spot = new SpotLight('#fff', 1, 10)
+  spot.position.copy(below.position)
+  spot.updateMatrixWorld()
+  expect(reachesFrustum(spot, view())).toBe(true)
+  // Further south and turned around, the lamp is behind the camera.
+  camera.position.z = 20
+  camera.lookAt(0, 1.7, 30)
+  camera.updateMatrixWorld()
+  expect(reachesFrustum(below, view())).toBe(false)
+  expect(reachesFrustum(new DirectionalLight, view())).toBe(true)
 })
 test('dispose restores updates every frame', () => {
   const {cache, lamp, step} = setup()

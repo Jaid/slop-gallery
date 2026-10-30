@@ -1,4 +1,4 @@
-import type {BufferGeometry, Light, LightShadow, Matrix4, Object3D, PerspectiveCamera} from 'three/webgpu'
+import type {BufferGeometry, Frustum, Light, LightShadow, Matrix4, Object3D, PerspectiveCamera} from 'three/webgpu'
 
 import {Sphere, Vector3} from 'three/webgpu'
 
@@ -6,6 +6,7 @@ type ShadowLight = Light & {
   distance?: number
   isDirectionalLight?: boolean
   isPointLight?: boolean
+  isSpotLight?: boolean
   shadow: LightShadow<PerspectiveCamera>
 }
 type Caster = Object3D & {
@@ -34,6 +35,7 @@ type LightState = {
 }
 
 const lightPosition = new Vector3
+const lightReach = new Sphere
 // Physics keeps settling bodies like the Sienna chandelier wobbling by fractions of a millimeter. A change only counts once it adds up to more than this, in meters and in rotation matrix elements.
 const tolerance = 0.001
 const moved = (from: Matrix4, to: Matrix4) => from.elements.some((value, i) => Math.abs(value - to.elements[i]) > tolerance)
@@ -46,6 +48,17 @@ const worldSphere = (caster: Caster, target: Sphere) => {
     caster.geometry.computeBoundingSphere()
   }
   return target.copy(caster.boundingSphere ?? caster.geometry.boundingSphere!).applyMatrix4(caster.matrixWorld)
+}
+
+/** Whether the light can shine on anything inside the frustum, where its shadows would show; a point or spot light within its range or else its shadow camera’s, any other light everywhere. */
+export function reachesFrustum(light: Light, frustum: Frustum) {
+  const {distance, isPointLight, isSpotLight, matrixWorld, shadow} = light as ShadowLight
+  if (!isPointLight && !isSpotLight) {
+    return true
+  }
+  lightReach.center.setFromMatrixPosition(matrixWorld)
+  lightReach.radius = distance || shadow.camera.far
+  return frustum.intersectsSphere(lightReach)
 }
 
 /**
