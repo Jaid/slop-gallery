@@ -43,7 +43,7 @@ export function placeWalls(room: string, [x, y, z]: Vec3, walls: Iterable<readon
 
 /**
  * Walls laid out in the museum’s meters as a room’s own, relative to its origin and by their ids within the room: the part of their global ids after the room’s id.
- * `holes` names the holes of each wall in their order; every hole needs a name.
+ * `holes` names the holes of each wall in their order, unless they carry their names already; every hole needs a name.
  */
 export function localWalls(room: string, [x, y, z]: Vec3, walls: ReadonlyArray<Wall>, holes: Readonly<Record<string, ReadonlyArray<string>>> = {}) {
   const result: Record<string, RoomWall> = {}
@@ -52,7 +52,7 @@ export function localWalls(room: string, [x, y, z]: Vec3, walls: ReadonlyArray<W
       throw new Error(`The wall ${id} is not part of the ${room}.`)
     }
     const local = id.slice(room.length + 1)
-    const names = holes[local] ?? []
+    const names = holes[local] ?? openings.flatMap(({name}) => name ?? [])
     const unique = new Set(names)
     if (local in result || names.length !== openings.length || unique.size !== names.length) {
       throw new Error(`The wall ${id} needs an id of its own and a name of its own for every hole.`)

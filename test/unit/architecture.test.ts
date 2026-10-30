@@ -1,3 +1,5 @@
+import type {Wall, WallOpening} from '../../src/lib/placement/wallGeometry.ts'
+
 import {describe, expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
@@ -5,10 +7,23 @@ import {computeMeshVolume} from 'three-bvh-csg'
 import {BufferGeometry, DoubleSide, Float32BufferAttribute, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
-import {insideOpening, openingTop} from '../../src/lib/placement/wallGeometry.ts'
+import {insideOpening, openingArc, openingTop} from '../../src/lib/placement/wallGeometry.ts'
 import walls, {galleryPlacement} from './fixtures/gallery.ts'
 
 await RAPIER.init()
+/** where a point of a wall’s flat layout, `u` along it and `depth` out of its center line, lies once the wall bends round its curve */
+const bent = ({curveRadius: radius}: Wall, u: number, depth: number): readonly [number, number] => (radius ? [(radius - depth) * Math.sin(u / radius), radius - (radius - depth) * Math.cos(u / radius)] : [u, depth])
+/** the area of an opening in its wall, a segmental arch’s segment over the rectangle up to where it springs */
+const openingArea = (hole: WallOpening) => {
+  const bottom = hole.bottom ?? 0
+  if (hole.profile !== 'arch') {
+    return hole.width * (hole.height - bottom)
+  }
+  const {radius, center} = openingArc(hole)
+  const half = Math.asin(Math.min(1, hole.width / 2 / radius))
+  const rise = hole.height - center - radius * Math.cos(half)
+  return hole.width * (hole.height - rise - bottom) + radius ** 2 * (2 * half - Math.sin(2 * half)) / 2
+}
 describe('physical mesh topology', () => {
   for (const indexed of [false, true]) {
     test(`welds render seams and removes degenerate faces without changing the source, indexed ${indexed}`, () => {
@@ -57,8 +72,8 @@ describe('boolean architecture', () => {
         }
         world.step()
         for (const hole of wall.holes!) {
-          // Sample the jambs, upper corners and crown, staying off exact cut edges.
-          for (const offset of [-1.45, -1.19, -0.6, 0, 0.6, 1.19, 1.45]) {
+          // Sample the jambs, upper corners and crown, staying off exact cut edges, like the cuts that curve a wall through the middle of an opening.
+          for (const offset of [-1.45, -1.19, -0.6, 0.013, 0.6, 1.19, 1.45]) {
             const u = hole.u + offset
             for (const y of [0.2, 1.62, 2.5, 3.2, 3.55, 3.75, 3.9, 4.1]) {
               if (y >= wall.height + 0.3 - 0.001) {
@@ -67,8 +82,12 @@ describe('boolean architecture', () => {
               const opening = wall.holes!.find(candidate => insideOpening(candidate, u, y))
               const solid = Math.abs(u) <= wall.width / 2 && !opening
               for (const side of [-1, 1]) {
-                const origin = new Vector3(u, y + (wall.slope ?? 0) * u, side)
-                const direction = new Vector3(0, 0, -side)
+                // Through the wall where it stands at u, which on a curved wall runs toward its curve’s center
+                const [x, z] = bent(wall, u, side)
+                const [toX, toZ] = bent(wall, u, -side)
+                const origin = new Vector3(x, y + (wall.slope ?? 0) * u, z)
+                const direction = new Vector3(toX - x, 0, toZ - z)
+                direction.normalize()
                 const ray = new Raycaster(origin, direction, 0, 2)
                 expect(ray.intersectObject(meshes[0]).length > 0).toBe(solid)
                 expect(ray.intersectObjects(meshes).length > 0).toBe(solid)
@@ -77,10 +96,20 @@ describe('boolean architecture', () => {
             }
           }
         }
-        const openingArea = wall.holes!.reduce((sum, hole) => sum + (hole.profile === 'arch' ? hole.width * (hole.height - hole.width / 2 - (hole.bottom ?? 0)) + Math.PI * (hole.width / 2) ** 2 / 2 : hole.width * (hole.height - (hole.bottom ?? 0))), 0)
-        expect(computeMeshVolume(geometry.surface)).toBeCloseTo((wall.width * (wall.height + 0.3) - openingArea) * wallFace, 3)
-        expect(geometry.surface.boundingBox!.min.z).toBeCloseTo(0)
-        expect(geometry.surface.boundingBox!.max.z).toBeCloseTo(wallFace)
+        const area = wall.width * (wall.height + 0.3) - wall.holes!.reduce((sum, hole) => sum + openingArea(hole), 0)
+        // A curved wall is cut flat before it bends, which leaves the cut’s T-junctions a hair apart; its cut is measured flat.
+        const flat = wall.curveRadius ? createArchitectureGeometry({
+          ...wall,
+          curveRadius: undefined,
+        }) : geometry
+        expect(computeMeshVolume(flat.surface)).toBeCloseTo(area * wallFace, 3)
+        if (flat !== geometry) {
+          flat.dispose()
+        }
+        if (!wall.curveRadius) {
+          expect(geometry.surface.boundingBox!.min.z).toBeCloseTo(0)
+          expect(geometry.surface.boundingBox!.max.z).toBeCloseTo(wallFace)
+        }
         for (const mesh of meshes) {
           for (const name of ['position', 'normal', 'uv']) {
             expect([...mesh.geometry.getAttribute(name).array].every(Number.isFinite)).toBe(true)
@@ -95,7 +124,11 @@ describe('boolean architecture', () => {
   }
   for (const wall of wallsWithOpenings) {
     test(`${wall.id}: doorway reveals have exactly one visible face through the plaster, baseboard and plinth`, () => {
-      const geometry = createArchitectureGeometry(wall)
+      // A curved wall is cut flat before it bends; its cut is checked flat, and the bend through it above.
+      const geometry = createArchitectureGeometry({
+        ...wall,
+        curveRadius: undefined,
+      })
       const material = new MeshBasicMaterial
       try {
         const meshes = [geometry.surface, ...geometry.trim].map(partGeometry => new Mesh(partGeometry, material))
@@ -120,14 +153,13 @@ describe('boolean architecture', () => {
                 if (hits.length === 0) {
                   continue
                 }
-                const radius = hole.width / 2
-                const aboveSpring = y - (hole.height - radius)
-                if (hole.profile === 'arch' && aboveSpring > 0) {
+                const {radius, center} = openingArc(hole)
+                if (hole.profile === 'arch' && y > openingTop(hole, hole.u + hole.width / 2 - 1e-9)) {
                   // Wider arches start curving lower; their reveal is not a vertical jamb.
-                  const reach = Math.sqrt(radius ** 2 - aboveSpring ** 2)
+                  const reach = Math.sqrt(radius ** 2 - (y - center) ** 2)
                   expect(Math.abs(hits[0].distance - reach)).toBeLessThan(0.001)
                 } else {
-                  expect(hits[0].distance).toBeCloseTo(radius * Math.hypot(1, wall.slope ?? 0), 5)
+                  expect(hits[0].distance).toBeCloseTo(hole.width / 2 * Math.hypot(1, wall.slope ?? 0), 5)
                 }
               }
             }

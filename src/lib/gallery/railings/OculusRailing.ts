@@ -2,7 +2,7 @@ import type {Vec3} from '../types.ts'
 import type {RailingAnchor} from './RailingPath.ts'
 
 import {oculusRamps} from '../lowerGallery.ts'
-import tower, {towerRamp as ramp, towerBridge, towerBridges, towerDeck, towerNecks, towerRampHeight} from '../oculusTower.ts'
+import tower, {towerRamp as ramp, towerBridge, towerBridgeLift, towerBridges, towerDeck, towerNecks, towerRampHeight} from '../oculusTower.ts'
 import RailingPath from './RailingPath.ts'
 
 const inset = 0.12
@@ -38,6 +38,13 @@ const fenceAt = (neck: number, point: readonly [number, number]) => {
 }
 /** how far apart the rail’s points follow its climb */
 const riseStep = 0.1
+/** how close a point of the climb may come to one of the outline’s */
+const minimumGap = 0.03
+/** How far the floor under the rail has climbed along a bridge; the outline’s points along the bridge’s sides are close enough together to follow it. */
+const liftAt = (neck: number, point: readonly [number, number]) => {
+  const {wallDistance} = towerNecks[neck]
+  return wallDistance === undefined ? 0 : towerBridgeLift(along(neck, point), wallDistance)
+}
 /** where a bridge’s rails stop short of its wall, along the bridge from the tower’s axis */
 const railEnd = (neck: number) => towerBridges.find(bridge => bridge.angle === towerNecks[neck].angle)!.wallDistance - wallGap
 const reachesWall = (neck: number, point: readonly [number, number]) => neck > 0 && along(neck, point) > railEnd(neck)
@@ -57,7 +64,8 @@ const perimeter = (indices: ReadonlyArray<number>): Array<RailingAnchor> => {
     if (previous?.neck === neck && neck) {
       const [from, to] = [along(neck, previous.point), along(neck, point)]
       const steps = Math.round(bridgeRailRise / riseStep)
-      const climb = Array.from({length: steps + 1}, (_, step) => neckReach + bridgeRailRise * step / steps).filter(value => value > Math.min(from, to) + 1e-6 && value < Math.max(from, to) - 1e-6)
+      // Not too close to the outline’s own points along the bridge, whose climb they follow too, so no segment of the rail is too short to turn its tube’s rings.
+      const climb = Array.from({length: steps + 1}, (_, step) => neckReach + bridgeRailRise * step / steps).filter(value => value > Math.min(from, to) + minimumGap && value < Math.max(from, to) - minimumGap)
       for (const value of from < to ? climb : climb.toReversed()) {
         const t = (value - from) / (to - from)
         anchors.push({
@@ -86,7 +94,7 @@ const perimeter = (indices: ReadonlyArray<number>): Array<RailingAnchor> => {
     }, ...list.slice(inside)]
   }
   return cut(cut(anchors).toReversed()).toReversed().map(({neck, point}) => ({
-    ground: [tower.x + point[0], deckY, tower.z + point[1]],
+    ground: [tower.x + point[0], deckY + liftAt(neck, point), tower.z + point[1]],
     height: fenceAt(neck, point),
   }))
 }

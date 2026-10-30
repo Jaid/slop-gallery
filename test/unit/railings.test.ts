@@ -6,7 +6,7 @@ import {BoxGeometry, Line3, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Tube
 import lowerGallery, {oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
 import oculusBalcony from '../../src/lib/gallery/oculusBalcony.ts'
 import OculusGroundGeometry from '../../src/lib/gallery/OculusGroundGeometry.ts'
-import tower, {towerRamp as ramp, towerBridge, towerBridges} from '../../src/lib/gallery/oculusTower.ts'
+import tower, {towerRamp as ramp, towerBridge, towerBridges, towerFloorHeight} from '../../src/lib/gallery/oculusTower.ts'
 import OculusBalconyRailing from '../../src/lib/gallery/railings/OculusBalconyRailing.ts'
 import {bridgeRailRise} from '../../src/lib/gallery/railings/OculusRailing.ts'
 import PolylineTubeGeometry from '../../src/lib/gallery/railings/PolylineTubeGeometry.ts'
@@ -193,7 +193,8 @@ describe('connected Oculus railings', () => {
         for (const side of [-1, 1]) {
           expect(world.castRay(new RAPIER.Ray(new Vector3(tower.x, ramp.endY + 0.6, tower.z), new Vector3(side, 0, 0)), wallDistance - 0.1, true)).toBeNull()
           // At the height of the handrail, which runs 12 cm in from the bridge’s edge
-          const across = world.castRay(new RAPIER.Ray(new Vector3(tower.x + side * (tower.radius + 2), ramp.endY + towerBridge.railHeight, tower.z), new Vector3(0, 0, 1)), 2, true)
+          const x = tower.x + side * (tower.radius + 2)
+          const across = world.castRay(new RAPIER.Ray(new Vector3(x, towerFloorHeight(x, tower.z)! + towerBridge.railHeight, tower.z), new Vector3(0, 0, 1)), 2, true)
           expect(across!.timeOfImpact).toBeGreaterThan(towerBridge.width / 2 - 0.12 - 0.05)
           expect(across!.timeOfImpact).toBeLessThan(towerBridge.width / 2 - 0.12)
         }

@@ -23,6 +23,8 @@ export type WallOpening = {
   /** the hole’s name within its wall, in snake_case, which openings between rooms refer to it by */
   name?: string
   profile: 'arch' | 'rectangle'
+  /** how far an arch rises over the height where it springs from its jambs: half its width, a semicircle, unless it is a flatter segmental arch */
+  rise?: number
   u: number
   width: number
 }
@@ -57,14 +59,29 @@ export type Wall = {
   width: number
 }
 
+/** The circle an arched opening’s top follows, through its crown and the points where it springs from its jambs: its radius and its center’s height over the wall’s foot. */
+export function openingArc(hole: WallOpening) {
+  const rise = hole.rise ?? hole.width / 2
+  const radius = ((hole.width / 2) ** 2 + rise ** 2) / (2 * rise)
+  return {
+    radius,
+    center: hole.height - radius,
+  }
+}
+
 // This profile is shared by CSG cutters, portal trim and interaction ray tests.
+/** The height of the opening’s top over the wall’s foot at `u` along the wall, `padding` meters further out around it, like its casing; -Infinity beside it. */
 export function openingTop(hole: WallOpening, u: number, padding = 0) {
-  const radius = hole.width / 2 + padding
+  const halfWidth = hole.width / 2 + padding
   const x = Math.abs(u - hole.u)
-  if (x > radius) {
+  if (x > halfWidth) {
     return -Infinity
   }
-  return hole.profile === 'arch' ? hole.height - hole.width / 2 + Math.sqrt(Math.max(0, radius ** 2 - x ** 2)) : hole.height + padding
+  if (hole.profile !== 'arch') {
+    return hole.height + padding
+  }
+  const {radius, center} = openingArc(hole)
+  return center + Math.sqrt(Math.max(0, (radius + padding) ** 2 - x ** 2))
 }
 
 export function insideOpening(hole: WallOpening, u: number, y: number) {

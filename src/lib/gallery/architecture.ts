@@ -4,24 +4,31 @@ import {ADDITION, Brush, Evaluator, SUBTRACTION} from 'three-bvh-csg'
 import {mergeVertices} from 'three/addons/utils/BufferGeometryUtils.js'
 import {BoxGeometry, BufferGeometry, ExtrudeGeometry, Matrix4, MeshBasicNodeMaterial, Shape, Vector3} from 'three/webgpu'
 
+import {openingArc} from '../placement/wallGeometry.ts'
 import {wallFace, wallOpeningTrim} from './architectureDimensions.ts'
-import {bendGeometry, curveSegments as bendSegments} from './CurvedBoxGeometry.ts'
+import {bendGeometry, curveSegments as bendSegments, sliceAlongX} from './CurvedBoxGeometry.ts'
 
 export {wallFace, wallOpeningTrim, wallTop} from './architectureDimensions.ts'
 
 const curveSegments = 64
-const openingShape = (hole: WallOpening, padding = 0, bottom = hole.bottom ?? -0.5) => {
+/** how far a straight edge of a curved wall’s face may stand off its curve, in meters: an edge of length l on radius r stands l² / 8r off */
+const bendTolerance = 0.0005
+/** The opening’s outline in the wall’s plane, `padding` meters further out around its sides and top, like its casing, from `bottom` up. */
+export const openingShape = (hole: WallOpening, padding = 0, bottom = hole.bottom ?? -0.5) => {
   const shape = new Shape
-  const radius = hole.width / 2 + padding
-  shape.moveTo(hole.u - radius, bottom)
-  shape.lineTo(hole.u + radius, bottom)
+  const halfWidth = hole.width / 2 + padding
+  shape.moveTo(hole.u - halfWidth, bottom)
+  shape.lineTo(hole.u + halfWidth, bottom)
   if (hole.profile === 'arch') {
-    const spring = hole.height - hole.width / 2
-    shape.lineTo(hole.u + radius, spring)
-    shape.absarc(hole.u, spring, radius, 0, Math.PI, false)
+    // A padded segmental arch keeps its center, so its casing stays as wide all round.
+    const {radius, center} = openingArc(hole)
+    const angle = Math.atan2(Math.sqrt(Math.max(0, (radius + padding) ** 2 - halfWidth ** 2)), halfWidth)
+    const spring = center + Math.sin(angle) * (radius + padding)
+    shape.lineTo(hole.u + halfWidth, spring)
+    shape.absarc(hole.u, center, radius + padding, angle, Math.PI - angle, false)
   } else {
-    shape.lineTo(hole.u + radius, hole.height + padding)
-    shape.lineTo(hole.u - radius, hole.height + padding)
+    shape.lineTo(hole.u + halfWidth, hole.height + padding)
+    shape.lineTo(hole.u - halfWidth, hole.height + padding)
   }
   shape.closePath()
   return shape
@@ -77,8 +84,8 @@ function cutArchitecture(wall: Wall) {
   if (!Number.isFinite(baseboardHeight) || baseboardHeight <= 0.06) {
     throw new RangeError('A baseboard needs a finite height greater than its 0.06 m cap.')
   }
-  if (wall.curveRadius && (wall.holes?.length || wall.baseboardProfile || wall.slope)) {
-    throw new RangeError('Curved walls currently need a level rectangular profile without openings.')
+  if (wall.curveRadius && (wall.baseboardProfile || wall.slope)) {
+    throw new RangeError('Curved walls currently need a level rectangular profile.')
   }
   const box = (width: number, height: number, depth: number, x: number, y: number, z: number) => {
     const bendableBlock = new BoxGeometry(width, height, depth, wall.curveRadius ? bendSegments(width, wall.curveRadius) : 1)
@@ -212,6 +219,10 @@ function cutArchitecture(wall: Wall) {
     }
     for (const part of retained) {
       if (wall.curveRadius) {
+        // Cutting the openings leaves long faces beside them; cut again, they curve with the wall instead of running straight across, and the cut’s T-junctions stay a fraction of a millimeter apart.
+        if (wall.holes?.length) {
+          sliceAlongX(part, Math.min(wall.width / bendSegments(wall.width, wall.curveRadius), Math.sqrt(8 * Math.abs(wall.curveRadius) * bendTolerance)), -wall.width / 2)
+        }
         bendGeometry(part, wall.curveRadius)
       }
       part.computeBoundingBox()

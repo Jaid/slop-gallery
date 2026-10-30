@@ -1,7 +1,7 @@
 import type {RoomWall} from '../base/Room.ts'
 import type {Vec3} from 'math'
 
-import {fortressDoorway} from '#src/lib/gallery/fortress.ts'
+import {apseOpeningPoint, apseOpenings, fortressDoorway} from '#src/lib/gallery/fortress.ts'
 import roomOrigins from '#src/lib/gallery/layout.ts'
 import lowerGallery, {oculusPlatform, oculusRamps} from '#src/lib/gallery/lowerGallery.ts'
 import oculusApse from '#src/lib/gallery/oculusApse.ts'
@@ -58,10 +58,10 @@ const sideWall = (side: 'east' | 'west'): RoomWall => {
   }
 }
 const platformHeight = oculusPlatform.position[1] + oculusPlatform.size[1] / 2 - oculus.floorY
-/** The apse’s round walls stand on the platform, each along one of its arcs, and reach up to the same cornice as the side walls. */
-const [northwest, north, northeast] = oculusApse.arcs.map(({center, radius, from, to}): RoomWall => {
+/** The apse’s round walls stand on the platform, each along one of its arcs, and reach up to the same cornice as the side walls. The barred gate and windows onto the Fortress pierce them. */
+const [northwest, north, northeast] = oculusApse.arcs.map(({center, radius, from, to}, arc): RoomWall => {
   const angle = (from + to) / 2
-  return {
+  const wall = {
     center: local([center[0] + Math.cos(angle) * radius, oculus.floorY + platformHeight, center[1] + Math.sin(angle) * radius]),
     // Facing the arc’s center, as the plan’s north wall faces south.
     rotation: Math.atan2(-Math.cos(angle), -Math.sin(angle)),
@@ -70,6 +70,21 @@ const [northwest, north, northeast] = oculusApse.arcs.map(({center, radius, from
     curveRadius: radius,
     trimStyle: 'plain',
     sticky: false,
+  } as const
+  const openings = apseOpenings.filter(opening => opening.arc === arc)
+  return {
+    ...wall,
+    ...openings.length ? {holes: Object.fromEntries(openings.map(opening => {
+      const [x, z] = apseOpeningPoint(opening)
+      return [opening.name, {
+        u: wallCoordinates(wall, local([x, 0, z])),
+        width: opening.width,
+        ...opening.bottom ? {bottom: opening.bottom} : {},
+        height: opening.height,
+        rise: opening.rise,
+        profile: 'arch' as const,
+      }]
+    }))} : {},
   }
 })
 

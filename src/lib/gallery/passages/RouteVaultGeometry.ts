@@ -26,10 +26,10 @@ function arch(radius: number, spring: number, reverse = false): Profile {
 }
 /**
  * A solid swept along stations of a route: each face of its closed cross section becomes a strip of its own, smooth along the route and across curved faces but creased between faces, and both ends are capped.
- * The cross section is given as faces in the order they follow around it, each a polyline from where the previous one ended.
+ * The cross section is given as faces in the order they follow around it, each a polyline from where the previous one ended, its heights over the floor or, `fromCrown`, over the passage’s crown.
  */
-function sweep(stations: ReadonlyArray<RouteStation>, faces: ReadonlyArray<Profile>) {
-  const place = ({point, heading, y}: RouteStation, [lateral, up]: readonly [number, number]) => [point[0] - Math.sin(heading) * lateral, y + up, point[1] + Math.cos(heading) * lateral] as const
+function sweep(stations: ReadonlyArray<RouteStation>, faces: ReadonlyArray<Profile>, fromCrown = false) {
+  const place = ({point, heading, y, height}: RouteStation, [lateral, up]: readonly [number, number]) => [point[0] - Math.sin(heading) * lateral, y + (fromCrown ? height : 0) + up, point[1] + Math.cos(heading) * lateral] as const
   const outline = faces.flatMap(face => face.slice(1))
   // Walking along the route with the cross section ordered counterclockwise, as seen from behind, each quad’s corners need this order to face outward.
   const area = outline.reduce((sum, [l, v], i) => {
@@ -81,7 +81,7 @@ function sweep(stations: ReadonlyArray<RouteStation>, faces: ReadonlyArray<Profi
 
 /**
  * The stone barrel vault, its ribs and its paving swept along a {@link RoutedPassage}, in world space.
- * Like the straight passages’ vaults, the barrel springs from behind the walls’ faces, `width / 2` off the centerline, and its crown reaches the passage’s height.
+ * Like the straight passages’ vaults, the barrel springs from behind the walls’ faces, `width / 2` off the centerline, and its crown reaches the passage’s height, wherever that changes.
  */
 export default class RouteVaultGeometry {
   /** the slab under the floor, flush with the passage’s walls */
@@ -90,9 +90,10 @@ export default class RouteVaultGeometry {
   readonly shell: BufferGeometry
 
   constructor(passage: RoutedPassage) {
-    const {route, width, height} = passage
+    const {route, width} = passage
     const radius = width / 2
-    const spring = height - radius
+    // under the crown
+    const spring = -radius
     const stations = route.stations(0, route.length, turnStep)
     // Inner arch from left to right, the right foot, the outer arch back and the left foot.
     const ring = (inner: number, outer: number): Array<Profile> => [
@@ -101,8 +102,8 @@ export default class RouteVaultGeometry {
       arch(outer, spring, true),
       [[-outer, spring], [-inner, spring]],
     ]
-    this.shell = mergeParts(sweep(stations, ring(radius, radius + shellThickness)))
-    this.ribs = mergeParts(passage.ribs.flatMap(along => sweep(route.stations(along - ribDepth / 2, along + ribDepth / 2, turnStep), ring(radius - ribThickness, radius))))
+    this.shell = mergeParts(sweep(stations, ring(radius, radius + shellThickness), true))
+    this.ribs = mergeParts(passage.ribs.flatMap(along => sweep(route.stations(along - ribDepth / 2, along + ribDepth / 2, turnStep), ring(radius - ribThickness, radius), true)))
     this.paving = mergeParts(sweep(stations, [
       [[-radius, 0], [radius, 0]],
       [[radius, 0], [radius, -pavingThickness]],

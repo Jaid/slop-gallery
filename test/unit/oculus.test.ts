@@ -74,7 +74,7 @@ describe('oculus and connecting tunnel', () => {
     expect(floorHeight([0, 1.6, -32])).toBe(0)
     expect(floorHeight([0, -7.4, -30.9])).toBe(floorY)
     // In the apse, up to its round wall
-    for (const [x, z] of [[0, -37.8], [-6, -36.9], [8.8, -35.3]] as const) {
+    for (const [x, z] of [[0, -39.8], [-6, -38.9], [7, -38.4], [8.8, -35.3]] as const) {
       expect(floorHeight([x, -4.4, z])).toBe(-6)
       expect(insideGallery([x, -4.4, z])).toBe(true)
       expect(roomAt([x, -4.4, z])).toBe('oculus')
@@ -110,15 +110,17 @@ describe('oculus and connecting tunnel', () => {
     expect(oculus.size).toEqual([18, 20])
     expect(lobby.opening.center).toEqual([0, -24])
     expect(lobby.opening.size).toEqual([8, 8])
-    expect(insideGallery([0, -5.4, -37.99])).toBe(true)
-    expect(insideGallery([0, -5.4, -38.01])).toBe(false)
-    // The apse turns out of both side walls tangentially and reaches three meters north along its middle.
-    expect(oculusApse.depth).toBe(3)
-    expect(apseBoundaryZ(0)).toBeCloseTo(-38)
+    expect(insideGallery([0, -4.4, -39.99])).toBe(true)
+    expect(insideGallery([0, -4.4, -40.01])).toBe(false)
+    // The apse turns out of both side walls tangentially, round shoulders taking up half of each side, and reaches five meters north along its middle.
+    expect(oculusApse.depth).toBe(5)
+    expect(oculusApse.shoulderRadius).toBe(4.5)
+    expect(apseBoundaryZ(0)).toBeCloseTo(-40)
     for (const side of [-1, 1]) {
       expect(apseBoundaryZ(side * 9)).toBeCloseTo(-35)
       expect(apseBoundaryZ(side * 8.99)! - -35).toBeLessThan(0)
-      expect(apseBoundaryZ(side * 8.99)! - -35).toBeGreaterThan(-0.2)
+      expect(apseBoundaryZ(side * 8.99)! - -35).toBeGreaterThan(-0.35)
+      expect(apseBoundaryZ(side * 4.5)! - -35).toBeLessThan(-4.5)
       expect(insideGallery([side * 9.01, -5.4, -35.5])).toBe(false)
     }
     expect(roomAt([0, -6.4, -24])).toBe('oculus')
@@ -172,6 +174,7 @@ describe('oculus and connecting tunnel', () => {
       }
       visit(renderOculusRoom({
         material,
+        stone: material,
       }))
     } finally {
       for (const mesh of meshes) {

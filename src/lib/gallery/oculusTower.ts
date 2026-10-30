@@ -1,5 +1,6 @@
 import {clamp} from 'math'
 
+import {wallFace} from './architectureDimensions.ts'
 import lobby from './lobby.ts'
 import lowerGallery, {oculusDrop, oculusPlatform, oculusTowerRadius} from './lowerGallery.ts'
 
@@ -42,15 +43,17 @@ export const towerArch = {
   // where the roof rounds down into the round tower behind the bridge’s end
   highCornerRadius: 0.6,
 }
-/** The level bridges from the deck to the side walls, as wide as the ramp, widening at the walls into the doorways they lead to with fillets like the ramp’s base. */
+/** The bridges from the deck to the side walls, as wide as the ramp, climbing gently toward their walls and widening there into the doorways they lead to with fillets like the ramp’s base. */
 export const towerBridge = {
   width: towerRamp.width,
   flareRadius: towerRamp.baseCornerRadius,
-  /** how deep their slabs reach under the deck */
+  /** how deep their slabs reach under their floors */
   thickness: 0.4,
   railHeight: 1,
   /** how wide they are where they meet their walls, the width of the doorways they lead to */
   mouthWidth: towerRamp.width + towerRamp.baseCornerRadius * 2,
+  /** how far they climb from the deck to their walls, easing in and out like the ramp */
+  rise: 0.6,
 }
 /** the west bridge leads to the west wall, where a room is yet to come, and the east one into the Fortress */
 export const towerBridges = (['west', 'east'] as const).map(side => ({
@@ -100,10 +103,14 @@ export type TowerNeck = {
   halfWidth: number
   /** where the shoulders meet the body, as the distance from the tower’s axis */
   reach: number
+  /** a bridge’s: the center line of the wall it leads to, as the distance from the tower’s axis */
+  wallDistance?: number
 }
 /** a point of the deck’s outline relative to the tower’s axis, with the neck it belongs to: for points on the round wall, the nearest one */
 export type DeckPoint = {
   corner?: 'after' | 'before'
+  /** how far its floor lies over the deck: along a bridge, as far as the bridge has climbed */
+  lift: number
   /** where it lies in its neck’s frame */
   local: readonly [along: number, across: number]
   neck: number
@@ -124,14 +131,42 @@ const neckReach = oculusTower.z - endZ
 /** the deck’s outline steps around the round wall at about this angle */
 const arcStep = 2.64 * Math.PI / 180
 const flareSteps = 12
+/** At most this far apart, points along a bridge’s sides follow its climb. */
+const climbStep = 0.25
+/** where a bridge’s climb ends, along it from the tower’s axis: where its fillets begin to flare out into the doorway in its wall */
+const climbEnd = (wallDistance: number) => wallDistance - wallFace - towerBridge.flareRadius
+/** how many straight steps a bridge’s climb takes, each at most `climbStep` long */
+const climbSteps = (wallDistance: number) => Math.ceil((climbEnd(wallDistance) - neckReach) / climbStep)
+/**
+ * How far a bridge’s floor lies over the deck `along` meters out from the tower’s axis: level along the deck’s shoulders, then easing up like the ramp to its full rise, which its flared end keeps up to its wall.
+ * Like the ramp’s, the eased profile runs straight between the points along the bridge’s sides, so rendering, collision and navigation share it.
+ */
+export function towerBridgeLift(along: number, wallDistance: number) {
+  const steps = climbSteps(wallDistance)
+  const step = clamp((along - neckReach) / (climbEnd(wallDistance) - neckReach), 0, 1) * steps
+  const eased = (index: number) => {
+    const t = index / steps
+    return t * t * (3 - 2 * t) * towerBridge.rise
+  }
+  const index = Math.min(Math.floor(step), steps - 1)
+  return eased(index) + (eased(index + 1) - eased(index)) * (step - index)
+}
+/** How steeply a bridge’s floor climbs `along` meters out from the tower’s axis, in meters per meter along it. */
+export function towerBridgeGradient(along: number, wallDistance: number) {
+  const length = climbEnd(wallDistance) - neckReach
+  const t = clamp((along - neckReach) / length, 0, 1)
+  return 6 * t * (1 - t) * towerBridge.rise / length
+}
 /** The bridge’s body: out along its left side, round its left fillet onto the wall’s face, into the wall and across to the right, and back. */
 const bridgeBody = (wallDistance: number): Array<NeckPoint> => {
   const radius = towerBridge.flareRadius
   // The fillets meet the plaster’s face, past which the deck reaches on into the wall.
-  const face = wallDistance - 0.105
+  const face = wallDistance - wallFace
   const mouth = neckHalfWidth + radius
+  const climb = climbSteps(wallDistance)
   const left: Array<NeckPoint> = [
-    [neckReach, -neckHalfWidth],
+    // Its side runs straight to the fillet, in steps that follow the climb.
+    ...Array.from({length: climb}, (_, i): NeckPoint => [neckReach + (climbEnd(wallDistance) - neckReach) * i / climb, -neckHalfWidth]),
     ...Array.from({length: flareSteps + 1}, (_, i): NeckPoint => {
       const angle = i / flareSteps * Math.PI / 2
       return [face - radius + Math.sin(angle) * radius, -mouth + Math.cos(angle) * radius, i === flareSteps ? 'before' : undefined]
@@ -155,6 +190,7 @@ export const towerNecks: ReadonlyArray<TowerNeck> = [
     halfWidth: neckHalfWidth,
     reach: neckReach,
     body: bridgeBody(bridge.wallDistance),
+    wallDistance: bridge.wallDistance,
   })),
 ]
 
@@ -192,10 +228,12 @@ export const towerDeck: ReadonlyArray<DeckPoint> = towerNecks.flatMap((neck, ind
     const point = toDeck(towerNecks[owner], ...local)
     const [along, across] = local
     const reach = Math.max(neckHalfWidth, Math.sqrt(Math.max(0, oculusTower.radius ** 2 - along ** 2)))
+    const {wallDistance} = towerNecks[owner]
     return {
       point,
       neck: owner,
       local,
+      lift: wallDistance === undefined ? 0 : towerBridgeLift(along, wallDistance),
       shoulder: false,
       target: extra.shoulder ? toDeck(towerNecks[owner], along, Math.sign(across) * Math.min(Math.abs(across), reach)) : point,
       ...extra,
@@ -231,7 +269,7 @@ export function towerFloorHeight(x: number, z: number) {
     }
   }
   if (inside) {
-    return endY
+    return endY + Math.max(...towerBridges.map(({angle, wallDistance}) => towerBridgeLift(localX * Math.cos(angle) + localZ * Math.sin(angle), wallDistance)))
   }
   if (Math.abs(localX) <= towerRampHalfWidth(z) && z >= startZ && z <= endZ) {
     return towerRampHeight((z - startZ) / (endZ - startZ))

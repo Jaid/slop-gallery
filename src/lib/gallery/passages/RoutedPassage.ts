@@ -1,14 +1,22 @@
 import type {GalleryRoomId as RoomId} from '#src/worlds/gallery/index.ts'
-import type {Wall} from '../../placement/wallGeometry.ts'
+import type {Wall, WallOpening} from '../../placement/wallGeometry.ts'
 import type {Vec3} from '../types.ts'
 import type {RoutePiece} from './PassageRoute.ts'
 
+import {wallCoordinates} from '../../placement/wallGeometry.ts'
 import PassageRoute from './PassageRoute.ts'
 
 /** the box around a stretch of a passage’s air, from its lowest floor to its highest ceiling */
 export type RouteChunk = {
   max: Vec3
   min: Vec3
+}
+/** an opening through the wall on one `side` of a routed passage, −1 its left and 1 its right, centered `along` meters down the route; its `width` runs along the wall, and its `bottom` and `height` stand over the floor there */
+export type RouteOpening = Omit<WallOpening, 'name' | 'u'> & {
+  along: number
+  /** its name among the holes of its wall */
+  name: string
+  side: -1 | 1
 }
 
 /** At most this far apart along the route, the vault’s ribs stand evenly spaced, like those of straight passages. */
@@ -19,28 +27,48 @@ const ribInset = 0.15
 const chunkStep = 0.05
 
 /**
- * An open-ended passage along a {@link PassageRoute} that winds through turns and may climb or fall along its runs: the same footprint drives its walls, floor and air.
- * Its runs take straight walls, raked with the floor, and its turns curved ones.
+ * An open-ended passage along a {@link PassageRoute} that winds through turns, may climb or fall and grow taller or lower along its runs, and may have openings in its walls: the same footprint drives its walls, floor and air.
+ * Its runs take straight walls and its turns curved ones. A run that climbs or falls stands its walls level, from its lowest floor up to its highest ceiling, with their baseboards following the floor.
  */
 export default class RoutedPassage {
   /** the room’s id followed by the passage’s own, which its walls’ ids start with */
   readonly name: string
   /** where the vault’s ribs stand, in meters along the route */
   readonly ribs: ReadonlyArray<number>
+  /** a wall on each side of each of the route’s pieces in turn, the left one first */
   readonly walls: ReadonlyArray<Wall>
 
-  constructor(readonly id: string, readonly room: RoomId, readonly route: PassageRoute, readonly width = 2.6, readonly height = 3.4) {
-    if (!(width > 0) || !(height > width / 2) || route.pieces.some(piece => piece.kind === 'arc' && piece.radius <= width / 2)) {
-      throw new RangeError('A routed passage needs a positive width, room for its vault and turns wider than half of it.')
+  constructor(readonly id: string, readonly room: RoomId, readonly route: PassageRoute, readonly width = 2.6, openings: ReadonlyArray<RouteOpening> = []) {
+    if (!(width > 0) || route.pieces.some(piece => Math.min(piece.startHeight, piece.endHeight) <= width / 2 || piece.kind === 'arc' && piece.radius <= width / 2)) {
+      throw new RangeError('A routed passage needs a positive width, room for its vault all along and turns wider than half of it.')
     }
     // Not an accessor: the build bakes the walls’ openings, and its evaluator leaves accessors out.
     this.name = `${room}-${id}`
     const count = Math.max(1, Math.ceil(route.length / routeRibSpacing))
     this.ribs = Array.from({length: count + 1}, (_, rib) => ribInset + (route.length - ribInset * 2) * rib / count)
-    this.walls = route.pieces.flatMap(piece => [-1, 1].map(side => this.wall(piece, side))).map((wall, index) => ({
+    const walls: Array<Wall> = route.pieces.flatMap(piece => [-1, 1].map(side => this.wall(piece, side))).map((wall, index) => ({
       ...wall,
       id: `${this.name}_wall_${index}`,
     }))
+    for (const {along, side, name, bottom = 0, height, ...opening} of openings) {
+      const piece = route.pieces.findIndex(value => along >= value.from && along <= value.from + value.length)
+      if (piece === -1) {
+        throw new RangeError(`The opening ${name} lies beyond the ends of ${this.name}.`)
+      }
+      const wall = walls[piece * 2 + (side < 0 ? 0 : 1)]
+      const station = route.at(along)
+      const half = this.width / 2
+      const foot = station.y - wall.center[1]
+      wall.holes = [...wall.holes ?? [], {
+        ...opening,
+        name,
+        u: wallCoordinates(wall, [station.point[0] - Math.sin(station.heading) * side * half, station.y, station.point[1] + Math.cos(station.heading) * side * half]),
+        // A doorway down to the wall’s foot leaves its bottom out, so it cuts on below it instead of along it.
+        ...foot + bottom > 0 ? {bottom: foot + bottom} : {},
+        height: foot + height,
+      }]
+    }
+    this.walls = walls
   }
 
   /** Boxes around the passage’s air, from its floor to its ceiling, each piece cut into as many as it takes for none to reach more than `slack` meters past the passage’s walls. */
@@ -62,16 +90,13 @@ export default class RoutedPassage {
 
   /** Whether the position lies on the passage’s floor, from a meter under it to its ceiling. */
   contains([x, y, z]: Vec3) {
-    const floor = this.floorAt(x, z)
-    return floor !== undefined && y >= floor - 1 && y <= floor + this.height
+    const station = this.stationAt(x, z)
+    return station !== undefined && y >= station.y - 1 && y <= station.y + station.height
   }
 
   /** The height of the floor under the point, or undefined beside the passage. */
   floorAt(x: number, z: number) {
-    const projection = this.route.project(x, z)
-    if (projection && Math.abs(projection.right) <= this.width / 2 + 1e-6) {
-      return this.route.at(projection.along).y
-    }
+    return this.stationAt(x, z)?.y
   }
 
   /** The middle between the two ribs around the point `along` meters down the route, where a lantern can hang from the bare vault. */
@@ -83,14 +108,22 @@ export default class RoutedPassage {
     return (this.ribs[next - 1] + this.ribs[next]) / 2
   }
 
+  /** The station of the route abreast of the point, or undefined beside the passage. */
+  stationAt(x: number, z: number) {
+    const projection = this.route.project(x, z)
+    if (projection && Math.abs(projection.right) <= this.width / 2 + 1e-6) {
+      return this.route.at(projection.along)
+    }
+  }
+
   /** The box around the floor plan of a stretch of a piece, from its lowest floor to its highest ceiling. */
   private chunk(piece: RoutePiece, from: number, to: number): RouteChunk {
     const half = this.width / 2
     const points = this.outline(piece, from, to, half)
-    const floors = [from, to].map(offset => piece.startY + (piece.endY - piece.startY) * offset / piece.length)
+    const ends = [from, to].map(offset => PassageRoute.station(piece, offset))
     return {
-      min: [Math.min(...points.map(([x]) => x)), Math.min(...floors), Math.min(...points.map(([, z]) => z))],
-      max: [Math.max(...points.map(([x]) => x)), Math.max(...floors) + this.height, Math.max(...points.map(([, z]) => z))],
+      min: [Math.min(...points.map(([x]) => x)), Math.min(...ends.map(({y}) => y)), Math.min(...points.map(([, z]) => z))],
+      max: [Math.max(...points.map(([x]) => x)), Math.max(...ends.map(({y, height}) => y + height)), Math.max(...points.map(([, z]) => z))],
     }
   }
 
@@ -129,12 +162,11 @@ export default class RoutedPassage {
     return points
   }
 
-  /** The wall along one side of a piece, `side` −1 on its left and 1 on its right, facing into the passage. */
+  /** The wall along one side of a piece, `side` −1 on its left and 1 on its right, facing into the passage. Like a room’s, it stops 30 cm short of the ceiling, here the vault’s crown. */
   private wall(piece: RoutePiece, side: number): Omit<Wall, 'id'> {
     const half = this.width / 2
     const common = {
       room: this.room,
-      height: this.height - 0.3,
       sticky: false,
       trimStyle: 'plain',
     } as const
@@ -143,14 +175,17 @@ export default class RoutedPassage {
       const [dx, dz] = [Math.cos(piece.heading), Math.sin(piece.heading)]
       // It faces back across the passage, against the side it stands on.
       const rotation = Math.atan2(side * dz, -side * dx)
-      const rise = piece.endY - piece.startY
+      const foot = Math.min(piece.startY, piece.endY)
+      const top = Math.max(piece.startY + piece.startHeight, piece.endY + piece.endHeight)
+      // A wall runs along its own +x, which turns toward −z as its rotation grows; this is where the piece starts on it.
+      const start = -(dx * Math.cos(rotation) - dz * Math.sin(rotation)) * piece.length / 2
       return {
         ...common,
-        center: [middle.point[0] - dz * side * half, middle.y, middle.point[1] + dx * side * half],
+        center: [middle.point[0] - dz * side * half, foot, middle.point[1] + dx * side * half],
         rotation,
         width: piece.length,
-        // A wall runs along its own +x, which turns toward −z as its rotation grows.
-        ...rise ? {slope: rise / piece.length * (dx * Math.cos(rotation) - dz * Math.sin(rotation))} : {},
+        height: top - foot - 0.3,
+        ...piece.startY === piece.endY ? {} : {baseboardProfile: ([[start, piece.startY - foot], [-start, piece.endY - foot]] as const).toSorted((a, b) => a[0] - b[0])},
       }
     }
     // A clockwise turn’s center lies on its right, where its wall runs closer to it.
@@ -165,6 +200,7 @@ export default class RoutedPassage {
       center: [piece.center[0] + ux * radius, piece.startY, piece.center[1] + uz * radius],
       rotation: Math.atan2(fx, fz),
       width: radius * Math.abs(piece.sweep),
+      height: piece.startHeight - 0.3,
       curveRadius: outer ? radius : -radius,
     }
   }

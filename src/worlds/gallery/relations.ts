@@ -73,6 +73,19 @@ export const openings: ReadonlyArray<Opening> = [
     rooms: ['oculus', 'fortress'],
     holes: [['oculus-east', 'fortress']],
   },
+  // The barred gate and windows in the apse, each through the apse’s wall and the wall of the Fortress’ curve behind it, the one toward the apse along that stretch of the curve.
+  {
+    rooms: ['oculus', 'fortress'],
+    holes: [['oculus-northwest', 'west_window'], ['fortress-curve_wall_6', 'west_window']],
+  },
+  {
+    rooms: ['oculus', 'fortress'],
+    holes: [['oculus-north', 'gate'], ['fortress-curve_wall_4', 'gate']],
+  },
+  {
+    rooms: ['oculus', 'fortress'],
+    holes: [['oculus-northeast', 'east_window'], ['fortress-curve_wall_2', 'east_window']],
+  },
   {
     rooms: ['fortress', 'lodge'],
     holes: [['lodge-east', 'fortress']],
@@ -221,7 +234,12 @@ const relations = {
         'east_stairway_door',
         'east_stairway_landing',
       ],
-      fortress: 'lantern_east',
+      fortress: [
+        'lantern_east',
+        'lantern_north',
+        'lantern_northwest',
+        'lantern_northeast',
+      ],
     },
   },
   exhibition: {

@@ -85,7 +85,10 @@ describe('floor-following wall baseboards', () => {
       const material = new MeshBasicMaterial
       try {
         expect(geometry.trim[0].boundingBox!.min.y).toBeCloseTo(0, 6)
-        const trimTopRay = new Raycaster(new Vector3(0, 1, 0.23), new Vector3(0, -1, 0))
+        // Near the wall’s end, clear of the barred openings, 23 cm out of its center line where it bends round its curve
+        const u = 0.3 - wall.width / 2
+        const radius = wall.curveRadius!
+        const trimTopRay = new Raycaster(new Vector3((radius - 0.23) * Math.sin(u / radius), 1, radius - (radius - 0.23) * Math.cos(u / radius)), new Vector3(0, -1, 0))
         expect(trimTopRay.intersectObject(new Mesh(geometry.trim[0], material))[0].point.y).toBeCloseTo(0.44)
         // Up to the ceiling, like the side walls
         expect(wall.center[1] + geometry.surface.boundingBox!.max.y).toBeCloseTo(lowerGallery.oculus.ceiling.topY - lowerGallery.oculus.ceiling.thickness)
@@ -94,7 +97,8 @@ describe('floor-following wall baseboards', () => {
         material.dispose()
       }
     }
-    expect(walls.filter(wall => wall.baseboardProfile).map(wall => wall.id).toSorted()).toEqual(['oculus-east', 'oculus-west'])
+    // and the level walls along the Fortress’ runs down from the east doorway and up toward the Lodge
+    expect(walls.filter(wall => wall.baseboardProfile).map(wall => wall.id).toSorted()).toEqual(['fortress-curve_wall_0', 'fortress-curve_wall_1', 'fortress-curve_wall_10', 'fortress-curve_wall_11', 'oculus-east', 'oculus-west'])
   })
   test('geometry caching distinguishes mirrored and flat floor profiles', () => {
     const west = walls.find(value => value.id === 'oculus-west')!

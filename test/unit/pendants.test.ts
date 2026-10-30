@@ -46,7 +46,7 @@ const groups: Array<{
   {
     label: 'castle curve',
     body: lantern,
-    lights: Object.values(fortressLanterns).map(along => fortressCurve.route.at(along).y + fortressCurve.height - passageLightDrop),
+    lights: Object.values(fortressLanterns).map(along => fortressCurve.route.at(along).y + fortressCurve.route.at(along).height - passageLightDrop),
     mounts: routePendantMounts(fortressCurve, [curve.shell, curve.ribs], Object.values(fortressLanterns)),
   },
   ...[fortressMouth, fortressApproach].map(passage => {
@@ -77,7 +77,7 @@ const firstHit = (origin: Vector3, direction: Vector3, far = Infinity) => {
 }
 describe('ceiling-hung pendants', () => {
   test('every light hangs its drop under its passage’s crown', () => {
-    expect(groups[0].mounts).toHaveLength(2)
+    expect(groups[0].mounts).toHaveLength(4)
     expect(groups.at(-1)!.mounts).toHaveLength(9)
     for (const {mounts, lights} of groups) {
       expect(mounts).toHaveLength(lights.length)

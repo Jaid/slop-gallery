@@ -15,9 +15,9 @@ const halfWidth = oculus.size[0] / 2
 /** where the side walls end and the apse begins, the line of the Oculus’ former north wall */
 const northZ = centerZ - oculus.size[1] / 2
 /** how far the apse reaches north past the side walls’ ends, along its middle */
-const depth = 3
-/** the arcs that turn out of the side walls, tangent to them */
-const shoulderRadius = 1.5
+const depth = 5
+/** the arcs that turn out of the side walls, tangent to them, wide enough to round off half of each side of the apse */
+const shoulderRadius = 4.5
 // A basket arch: the crown’s arc is tangent to both shoulders and spans the rest of the depth.
 const crownRadius = ((halfWidth - shoulderRadius) ** 2 + depth ** 2 - shoulderRadius ** 2) / (2 * (depth - shoulderRadius))
 const crownCenter: Point = [centerX, northZ - depth + crownRadius]

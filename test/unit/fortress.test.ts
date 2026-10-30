@@ -9,9 +9,10 @@ import {Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/web
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import {fortressApproach, fortressCurve, fortressDoorway, fortressMouth, fortressOrigin, fortressPassages, fortressTransition} from '../../src/lib/gallery/fortress.ts'
 import lodge from '../../src/lib/gallery/lodge.ts'
+import {oculusPlatform, oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
 import oculusApse, {apseArcs, insideApse} from '../../src/lib/gallery/oculusApse.ts'
 import OculusGroundGeometry from '../../src/lib/gallery/OculusGroundGeometry.ts'
-import tower from '../../src/lib/gallery/oculusTower.ts'
+import tower, {towerBridge, towerFloorHeight} from '../../src/lib/gallery/oculusTower.ts'
 import PassageRoute from '../../src/lib/gallery/passages/PassageRoute.ts'
 import RouteVaultGeometry from '../../src/lib/gallery/passages/RouteVaultGeometry.ts'
 import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
@@ -36,6 +37,7 @@ afterAll(() => {
     geometry.dispose()
   }
 })
+const platformY = oculusPlatform.position[1] + oculusPlatform.size[1] / 2
 /** stations every half meter along the curve’s center line */
 const stations = Array.from({length: Math.floor(route.length / 0.5) + 1}, (_, i) => route.at(i * 0.5))
 describe('the Fortress’ route round the Oculus', () => {
@@ -46,15 +48,25 @@ describe('the Fortress’ route round the Oculus', () => {
     expect(route.end.point[1]).toBeCloseTo(fortressApproach.path[0][1], 9)
     expect(route.end.heading).toBeCloseTo(-Math.PI, 9)
     expect(fortressApproach.path.at(-1)).toEqual([lodge.center[0] + lodge.size[0] / 2, lodge.tunnelZ])
-    // From the deck’s height at the doorway down to the Lodge’s floor
-    expect(fortressMouth.floorY).toBe(tower.floorY + tower.height)
+    // From the east bridge’s end at the doorway down to the platform round the apse and up to the Lodge’s floor
+    expect(fortressMouth.floorY).toBeCloseTo(tower.floorY + tower.height + towerBridge.rise, 9)
     expect(route.y).toBe(fortressMouth.floorY)
-    expect(route.end.y).toBe(lodge.floorY)
+    expect(route.height).toBe(fortressMouth.height)
+    expect(route.end.y).toBeCloseTo(lodge.floorY, 9)
+    expect(route.end.height).toBeCloseTo(fortressApproach.height, 9)
     expect(fortressApproach.floorY).toBe(lodge.floorY)
     for (const passage of fortressPassages) {
       expect(passage.width).toBe(4)
-      expect(passage.height).toBe(3.1)
     }
+    expect(fortressMouth.height).toBe(2.5)
+    expect(fortressApproach.height).toBe(3.1)
+  })
+  test('the doorway’s arch and casing stay under the Oculus’ cornice', () => {
+    const wall = walls.find(value => value.id === 'oculus-east')!
+    const hole = wall.holes!.find(value => value.name === 'fortress')!
+    // The cornice’s lower band hangs 47 cm under the wall’s top.
+    expect(wall.center[1] + hole.height + 0.17).toBeLessThan(wall.center[1] + wall.height - 0.47)
+    expect(wall.center[1] + hole.height).toBeCloseTo(fortressDoorway.y + fortressDoorway.height, 9)
   })
   test('its curve keeps 30 cm behind the apse’s walls, round both shoulders and the crown', () => {
     const arcs = apseArcs()
@@ -71,8 +83,9 @@ describe('the Fortress’ route round the Oculus', () => {
       expect(insideApse(x, z, fortressCurve.width / 2)).toBe(false)
     }
   })
-  test('navigation follows its floor, which falls along the run north and stays level round the apse', () => {
-    const run = route.pieces[0]
+  test('navigation follows its floor, which falls along the run north to the platform’s level, stays there round the apse and climbs as steeply to the Lodge’s', () => {
+    const [run, ...rest] = route.pieces
+    const climb = rest.at(-1)!
     for (const {point: [x, z], y} of stations) {
       expect(fortressCurve.floorAt(x, z)).toBeCloseTo(y, 6)
       const position: Vec3 = [x, y + 1.6, z]
@@ -80,10 +93,17 @@ describe('the Fortress’ route round the Oculus', () => {
       expect(floorHeight(position)).toBeCloseTo(y, 6)
       expect(roomAt(position)).toBe('fortress')
     }
-    expect(route.at(run.length).y - route.at(0).y).toBeCloseTo(lodge.floorY - fortressMouth.floorY, 9)
-    expect((route.at(run.length).y - route.at(0).y) / run.length).toBeGreaterThan(-0.08)
-    for (const along of [run.length + 1, route.length / 2, route.length - 0.5]) {
-      expect(route.at(along).y).toBe(lodge.floorY)
+    expect(run.endY).toBeCloseTo(platformY, 9)
+    expect(climb.kind).toBe('line')
+    expect(climb.startY).toBeCloseTo(platformY, 9)
+    const fall = (run.startY - run.endY) / run.length
+    expect((climb.endY - climb.startY) / climb.length).toBeCloseTo(fall, 9)
+    // Steeper than the Oculus’ side ramps, but no steeper than 15°
+    expect(fall).toBeGreaterThan(oculusRamps[0].rise / oculusRamps[0].run)
+    expect(fall).toBeLessThan(Math.tan(15 * Math.PI / 180))
+    for (const piece of rest.slice(0, -1)) {
+      expect([piece.startY, piece.endY]).toEqual([platformY, platformY])
+      expect([piece.startHeight, piece.endHeight]).toEqual([5.2, 5.2])
     }
   })
   test('beside the passage, behind its walls, lies neither the passage nor anything else', () => {
@@ -96,8 +116,8 @@ describe('the Fortress’ route round the Oculus', () => {
     }
   })
   test('the apse belongs to the Oculus and the passage round it to the Fortress, also in the corners of the apse’s box', () => {
-    const over = -6 + 1.6
-    for (const [x, z] of [[0, -37.7], [-7.8, -36.2], [7.8, -36.2], [8.6, -35.2], [-8.6, -35.2]] as const) {
+    const over = platformY + 1.6
+    for (const [x, z] of [[0, -39.7], [-6.5, -38.5], [6.5, -38.5], [-7.8, -36.2], [7.8, -36.2], [8.6, -35.2], [-8.6, -35.2]] as const) {
       expect(insideApse(x, z, -0.105)).toBe(true)
       expect(roomAt([x, over, z])).toBe('oculus')
     }
@@ -105,37 +125,43 @@ describe('the Fortress’ route round the Oculus', () => {
     const shoulder = oculusApse.arcs[2]
     for (const angle of [-0.2, -0.6, -1]) {
       const radius = shoulder.radius + 0.3 + 0.15
-      const position: Vec3 = [shoulder.center[0] + Math.cos(angle) * radius, lodge.floorY + 1.6, shoulder.center[1] + Math.sin(angle) * radius]
+      const position: Vec3 = [shoulder.center[0] + Math.cos(angle) * radius, platformY + 1.6, shoulder.center[1] + Math.sin(angle) * radius]
       expect(roomAt(position)).toBe('fortress')
     }
   })
-  test('its walls follow the route: raked along the run, curved round the turns, as long as the pieces at their sides', () => {
+  test('its walls follow the route: level along the runs with their baseboards on the sloping floor, curved round the turns, as long as the pieces at their sides', () => {
     expect(fortressCurve.walls).toHaveLength(route.pieces.length * 2)
     for (const [index, wall] of fortressCurve.walls.entries()) {
       const piece = route.pieces[Math.floor(index / 2)]
       expect(wall.id).toBe(`fortress-curve_wall_${index}`)
       expect(wall.sticky).toBe(false)
+      expect(wall.slope).toBeUndefined()
       if (piece.kind === 'line') {
         expect(wall.width).toBeCloseTo(piece.length, 9)
-        expect(Math.abs(wall.slope!)).toBeCloseTo(Math.abs(piece.endY - piece.startY) / piece.length, 9)
         expect(wall.curveRadius).toBeUndefined()
+        // From the lower floor up to 30 cm under the higher crown
+        expect(wall.center[1]).toBe(Math.min(piece.startY, piece.endY))
+        expect(wall.center[1] + wall.height + 0.3).toBeCloseTo(Math.max(piece.startY + piece.startHeight, piece.endY + piece.endHeight), 9)
+        const profile = wall.baseboardProfile!
+        expect(profile.map(([u]) => u)).toEqual([-wall.width / 2, wall.width / 2])
+        expect(profile.map(([, y]) => wall.center[1] + y).toSorted((a, b) => a - b)).toEqual([piece.startY, piece.endY].toSorted((a, b) => a - b))
         continue
       }
       expect(Math.abs(wall.curveRadius!)).toBeCloseTo(piece.radius + (index % 2 ? 1 : -1) * Math.sign(piece.sweep) * -fortressCurve.width / 2, 9)
       expect(wall.width).toBeCloseTo(Math.abs(wall.curveRadius! * piece.sweep), 9)
-      expect(wall.slope).toBeUndefined()
+      expect(wall.height).toBeCloseTo(piece.startHeight - 0.3, 9)
     }
   })
   test('the vault closes the passage above a person and springs from behind its walls', () => {
     const material = new MeshBasicMaterial
     const shell = new Mesh(curve.shell, material)
     try {
-      for (const [index, {point: [x, z], heading, y}] of stations.entries()) {
+      for (const [index, {point: [x, z], heading, y, height}] of stations.entries()) {
         if (index % 3 !== 1) {
           continue
         }
         const up = new Raycaster(new Vector3(x, y + 1.6, z), new Vector3(0, 1, 0))
-        expect(up.intersectObject(shell)[0].point.y - y).toBeCloseTo(fortressCurve.height, 1)
+        expect(up.intersectObject(shell)[0].point.y - y).toBeCloseTo(height, 1)
         for (const side of [-1, 1]) {
           const direction = new Vector3(-Math.sin(heading) * side, 0, Math.cos(heading) * side)
           // Below the springing, nothing of the vault stands inside the walls’ faces.
@@ -148,14 +174,19 @@ describe('the Fortress’ route round the Oculus', () => {
     }
   })
   test('rejects routes and passages that cannot be built', () => {
-    expect(() => new PassageRoute([0, 0], 0, 0, [])).toThrow(RangeError)
-    expect(() => new PassageRoute([0, 0], 0, 0, [{length: 0}])).toThrow(RangeError)
-    expect(() => new PassageRoute([0, 0], 0, 0, [{
+    expect(() => new PassageRoute([0, 0], 0, 0, 3, [])).toThrow(RangeError)
+    expect(() => new PassageRoute([0, 0], 0, 0, 3, [{length: 0}])).toThrow(RangeError)
+    expect(() => new PassageRoute([0, 0], 0, 0, 3, [{
       radius: 2,
       angle: 0,
     }])).toThrow(RangeError)
-    expect(() => new PassageRoute([0, Number.NaN], 0, 0, [{length: 1}])).toThrow(RangeError)
-    const quarter = new PassageRoute([0, 0], 0, 0, [{length: 2}, {
+    expect(() => new PassageRoute([0, Number.NaN], 0, 0, 3, [{length: 1}])).toThrow(RangeError)
+    expect(() => new PassageRoute([0, 0], 0, 0, 0, [{length: 1}])).toThrow(RangeError)
+    expect(() => new PassageRoute([0, 0], 0, 0, 3, [{
+      length: 1,
+      heighten: -3,
+    }])).toThrow(RangeError)
+    const quarter = new PassageRoute([0, 0], 0, 0, 3, [{length: 2}, {
       radius: 1,
       angle: Math.PI / 2,
     }])
@@ -189,14 +220,15 @@ describe('the Fortress’ route round the Oculus', () => {
           }
         }
         addOculusRailings(world)
-        const deck = tower.floorY + tower.height
+        const bridgeX = tower.x + 5
+        const bridge = towerFloorHeight(bridgeX, tower.z)!
         // Through the doorway and round the mouth’s elbow, like a player, at a walk; it ends before the timber transition’s saddle.
         const [elbowX] = fortressMouth.path[1]
-        const path: Array<readonly [x: number, z: number, careful?: boolean]> = [[tower.x + 5, tower.z], [fortressDoorway.x + 0.6, tower.z, true], [elbowX, tower.z, true], [elbowX, route.start[1], true], ...stations.filter((_, i) => i % 2 === 0).map(({point}) => point), [-16.5, lodge.tunnelZ]]
+        const path: Array<readonly [x: number, z: number, careful?: boolean]> = [[bridgeX, tower.z], [fortressDoorway.x + 0.6, tower.z, true], [elbowX, tower.z, true], [elbowX, route.start[1], true], ...stations.filter((_, i) => i % 2 === 0).map(({point}) => point), [-16.5, lodge.tunnelZ]]
         if (returning) {
           path.reverse()
         }
-        const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(path[0][0], (returning ? lodge.floorY : deck) + 0.04, path[0][1]))
+        const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(path[0][0], (returning ? lodge.floorY : bridge) + 0.04, path[0][1]))
         const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
         const motor = new EgoMotor(RAPIER, world, body, collider)
         const facing = new Quaternion
@@ -225,7 +257,9 @@ describe('the Fortress’ route round the Oculus', () => {
             motor.step(world.timestep, {}, facing)
             world.step()
           }
-          expect(body.translation().y).toBeCloseTo((returning ? deck : lodge.floorY) + 0.02, 2)
+          // Back on the bridge, the floor under the player still climbs.
+          const {x, z} = body.translation()
+          expect(body.translation().y).toBeCloseTo((returning ? towerFloorHeight(x, z)! : lodge.floorY) + 0.02, 2)
           expect(motor.grounded).toBe(true)
         } finally {
           motor.dispose()
@@ -236,7 +270,7 @@ describe('the Fortress’ route round the Oculus', () => {
   }
   test('its origin lies on its floor in the middle of the crown', () => {
     expect(fortressOrigin[0]).toBeCloseTo(tower.x, 9)
-    expect(fortressOrigin[1]).toBe(lodge.floorY)
+    expect(fortressOrigin[1]).toBe(platformY)
     expect(fortressOrigin[2]).toBeCloseTo(oculusApse.northZ - oculusApse.depth - 0.3 - fortressCurve.width / 2, 9)
   })
 })

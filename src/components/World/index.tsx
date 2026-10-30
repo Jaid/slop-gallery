@@ -80,7 +80,7 @@ const loaders: Record<LaterRoom, () => Promise<RoomPart>> = {
   },
   oculus: async () => {
     const {default: Room} = await import('#src/rooms/oculus/components/OculusRoom/index.tsx')
-    return ({oculus}) => <Room material={oculus} />
+    return ({castleStone, oculus}) => <Room material={oculus} stone={castleStone} />
   },
   exhibition: async () => {
     const {default: Room} = await import('#src/rooms/exhibition/components/ExhibitionRoom/index.tsx')

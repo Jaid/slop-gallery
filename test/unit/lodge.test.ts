@@ -8,7 +8,7 @@ import {DoubleSide, Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vecto
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import {corridorHallEastX, corridorPassage, corridorRails, corridorRunner, corridorStairs, insideCorridor, lodgeThresholdSaddle} from '../../src/lib/gallery/corridor.ts'
-import {fortressApproach, fortressDoorway, fortressTransition, insideFortress} from '../../src/lib/gallery/fortress.ts'
+import {fortressApproach, fortressDoorway, fortressMouth, fortressTransition, insideFortress} from '../../src/lib/gallery/fortress.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import lodge, {insideLodgeWindow, lodgeBay, lodgeBayFloor, lodgeOutline, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import lodgeInterior, {lodgeFurnitureColliders} from '../../src/lib/gallery/lodgeInterior/layout.ts'
@@ -191,14 +191,14 @@ describe('Lodge and Corridor route', () => {
       })
     }
   }
-  test('both doorways of the Fortress are as wide and as high as the passage, with clear corner trim', () => {
+  test('both doorways of the Fortress are as wide and as high as the passages behind them, with clear corner trim', () => {
     expect(fortressApproach.width).toBe(towerBridge.mouthWidth)
     expect(fortressApproach.width).toBe(4)
-    for (const [id, name, floorY] of [['oculus-east', 'fortress', fortressDoorway.y], ['lodge-east', 'fortress', lodge.floorY]] as const) {
+    for (const [id, name, floorY, passage] of [['oculus-east', 'fortress', fortressDoorway.y, fortressMouth], ['lodge-east', 'fortress', lodge.floorY, fortressApproach]] as const) {
       const wall = walls.find(value => value.id === id)!
       const hole = wall.holes!.find(value => value.name === name)!
-      expect(hole.width).toBe(fortressApproach.width)
-      expect(wall.center[1] + hole.height - floorY).toBeCloseTo(fortressApproach.height)
+      expect(hole.width).toBe(passage.width)
+      expect(wall.center[1] + hole.height - floorY).toBeCloseTo(passage.height)
       expect(Math.abs(hole.u) + hole.width / 2 + 0.17).toBeLessThan(wall.width / 2)
     }
     const material = new MeshBasicMaterial({side: DoubleSide})
@@ -380,7 +380,8 @@ describe('Lodge and Corridor route', () => {
       for (const sprint of [false, true]) {
         test(`real player traverses the entire loop at ${fps} Hz, returning ${returning}, sprint ${sprint}`, () => {
           const world = createWorld(fps)
-          const path = [[-13, lodge.tunnelZ], [-28, lodge.tunnelZ], [-28, lodge.returnZ], [lodge.approachX, lodge.returnZ], [lodge.approachX, lodge.siennaZ], [-31, lodge.siennaZ], [-18.5, lodge.siennaZ]]
+          // From the Fortress’ level approach, past its climb from the apse
+          const path = [[-17, lodge.tunnelZ], [-28, lodge.tunnelZ], [-28, lodge.returnZ], [lodge.approachX, lodge.returnZ], [lodge.approachX, lodge.siennaZ], [-31, lodge.siennaZ], [-18.5, lodge.siennaZ]]
           if (returning) {
             path.reverse()
           }

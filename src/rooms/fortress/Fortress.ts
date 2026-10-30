@@ -26,7 +26,7 @@ export default class Fortress extends Room {
     ...fortressCurve.chunks(slack).map(({min, max}) => new Box3(new Vector3(min[0] - originX, min[1] - originY, min[2] - originZ), new Vector3(max[0] - originX, max[1] - originY, max[2] - originZ))),
   ]
   override readonly color = '#6e675d'
-  override readonly description = 'Cold stone. Long shadows. Two lanterns to share.'
+  override readonly description = 'Cold stone. Long shadows. Light through iron bars.'
   // Each box of its air at every height, as nothing lies above or below it. It comes before the Oculus, whose fence takes in the whole box around the apse it curves round.
   override readonly fence = new Geofence(this.air.map(box => footprint([box])))
   override readonly id = 'fortress'

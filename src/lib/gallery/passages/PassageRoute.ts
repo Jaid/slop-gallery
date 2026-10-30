@@ -1,10 +1,11 @@
-/** a straight run of a route, optionally climbing or falling by `rise` meters over its length */
+/** a straight run of a route, optionally climbing or falling by `rise` meters over its length, and growing taller or lower by `heighten`, its ceiling rising by both */
 export type RouteRun = {
+  heighten?: number
   length: number
   rise?: number
 }
 
-/** a level circular turn of a route, by `angle` radians around a center `radius` meters off its centerline; positive angles turn clockwise as seen from above, from north toward east */
+/** a level circular turn of a route, as tall all along, by `angle` radians around a center `radius` meters off its centerline; positive angles turn clockwise as seen from above, from north toward east */
 export type RouteTurn = {
   angle: number
   radius: number
@@ -26,10 +27,11 @@ export type RouteArc = PieceBase & {
   sweep: number
 }
 export type RoutePiece = RouteArc | RouteLine
-/** a point on a route’s centerline with the direction it runs in there and the floor’s height */
+/** a point on a route’s centerline with the direction it runs in there, the floor’s height and how tall the passage is over it, from its floor to its crown */
 export type RouteStation = {
   /** the angle of the direction of travel in the floor plan, atan2 of its z and x */
   heading: number
+  height: number
   point: Point
   y: number
 }
@@ -41,12 +43,16 @@ export type RouteProjection = {
 }
 type Point = readonly [x: number, z: number]
 type PieceBase = {
+  /** how tall the passage is where the piece ends */
+  endHeight: number
   /** the floor height where the piece ends */
   endY: number
   /** how far along the route the piece starts */
   from: number
   /** its length along the centerline */
   length: number
+  /** how tall the passage is where the piece starts */
+  startHeight: number
   /** the floor height where the piece starts */
   startY: number
 }
@@ -58,19 +64,21 @@ const rightOf = (heading: number): Point => [-Math.sin(heading), Math.cos(headin
 
 /**
  * The centerline of a passage, laid out like a turtle walks: from a start point and heading, through straight runs and circular turns that each continue the last one’s direction.
- * Its floor height starts at `y` and changes along runs that rise or fall; turns stay level.
+ * Its floor height starts at `y` and its height at `height`; both change along runs that rise or fall or grow taller or lower, and turns keep them.
  */
 export default class PassageRoute {
   /** The station `offset` meters into a piece. */
   static station(piece: RoutePiece, offset: number): RouteStation {
     const fraction = piece.length ? offset / piece.length : 0
     const y = piece.startY + (piece.endY - piece.startY) * fraction
+    const height = piece.startHeight + (piece.endHeight - piece.startHeight) * fraction
     if (piece.kind === 'line') {
       const [dx, dz] = direction(piece.heading)
       return {
         point: [piece.start[0] + dx * offset, piece.start[1] + dz * offset],
         heading: piece.heading,
         y,
+        height,
       }
     }
     const angle = piece.startAngle + piece.sweep * fraction
@@ -78,6 +86,7 @@ export default class PassageRoute {
       point: [piece.center[0] + Math.cos(angle) * piece.radius, piece.center[1] + Math.sin(angle) * piece.radius],
       heading: angle + Math.sign(piece.sweep) * Math.PI / 2,
       y,
+      height,
     }
   }
 
@@ -118,20 +127,22 @@ export default class PassageRoute {
   readonly length: number
   readonly pieces: ReadonlyArray<RoutePiece>
 
-  constructor(readonly start: Point, readonly heading: number, readonly y: number, readonly steps: ReadonlyArray<RouteStep>) {
-    if (!steps.length || ![...start, heading, y].every(Number.isFinite)) {
-      throw new RangeError('A route needs a finite start, heading and height and at least one step.')
+  constructor(readonly start: Point, readonly heading: number, readonly y: number, readonly height: number, readonly steps: ReadonlyArray<RouteStep>) {
+    if (!steps.length || ![...start, heading, y].every(Number.isFinite) || !(height > 0)) {
+      throw new RangeError('A route needs a finite start, heading and floor height, a positive height and at least one step.')
     }
     const pieces: Array<RoutePiece> = []
     let point = start
     let current = heading
-    let height = y
+    let floor = y
+    let tall = height
     let along = 0
     for (const step of steps) {
       if ('length' in step) {
         const rise = step.rise ?? 0
-        if (!(step.length > 0) || !Number.isFinite(rise)) {
-          throw new RangeError('A route’s runs need a positive length and a finite rise.')
+        const heighten = step.heighten ?? 0
+        if (!(step.length > 0) || !Number.isFinite(rise) || !(tall + heighten > 0)) {
+          throw new RangeError('A route’s runs need a positive length, a finite rise and to stay taller than nothing.')
         }
         pieces.push({
           kind: 'line',
@@ -139,12 +150,15 @@ export default class PassageRoute {
           heading: current,
           from: along,
           length: step.length,
-          startY: height,
-          endY: height + rise,
+          startY: floor,
+          endY: floor + rise,
+          startHeight: tall,
+          endHeight: tall + heighten,
         })
         const [dx, dz] = direction(current)
         point = [point[0] + dx * step.length, point[1] + dz * step.length]
-        height += rise
+        floor += rise
+        tall += heighten
         along += step.length
         continue
       }
@@ -164,8 +178,10 @@ export default class PassageRoute {
         sweep: step.angle,
         from: along,
         length,
-        startY: height,
-        endY: height,
+        startY: floor,
+        endY: floor,
+        startHeight: tall,
+        endHeight: tall,
       })
       point = [center[0] + Math.cos(startAngle + step.angle) * step.radius, center[1] + Math.sin(startAngle + step.angle) * step.radius]
       current += step.angle
@@ -176,7 +192,8 @@ export default class PassageRoute {
     this.end = {
       point,
       heading: current,
-      y: height,
+      y: floor,
+      height: tall,
     }
   }
 

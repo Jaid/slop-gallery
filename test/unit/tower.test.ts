@@ -8,7 +8,7 @@ import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/galler
 import {fortressMouth} from '../../src/lib/gallery/fortress.ts'
 import lowerGallery, {oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
 import OculusGroundGeometry from '../../src/lib/gallery/OculusGroundGeometry.ts'
-import tower, {towerRamp as ramp, towerArch, towerBridge, towerBridges, towerDeck, towerFloorHeight, towerPlatformOutline, towerRampGradient, towerRampHalfWidth, towerRampHeight} from '../../src/lib/gallery/oculusTower.ts'
+import tower, {towerRamp as ramp, towerArch, towerBridge, towerBridgeGradient, towerBridgeLift, towerBridges, towerDeck, towerFloorHeight, towerPlatformOutline, towerRampGradient, towerRampHalfWidth, towerRampHeight} from '../../src/lib/gallery/oculusTower.ts'
 import walls, {floorHeight} from './fixtures/gallery.ts'
 import {addOculusRailings} from './helpers/oculusRailings.ts'
 
@@ -110,20 +110,30 @@ describe('cylindrical Oculus platform', () => {
       expect(Math.hypot(...point)).toBeGreaterThan(tower.radius - 0.005)
     }
   })
-  test('both bridges run level with the deck out to their walls, where they widen into the doorways they lead to', () => {
+  test('both bridges climb from the deck out to their walls, easing in and out, where they widen into the doorways they lead to', () => {
     for (const {angle, wallDistance} of towerBridges) {
       const direction = Math.cos(angle)
+      let previous = ramp.endY
       for (const along of [tower.radius + 0.3, 4, 6.5, wallDistance - towerBridge.flareRadius - 0.2]) {
         const x = tower.x + direction * along
         for (const across of [-1, 1]) {
-          expect(towerFloorHeight(x, tower.z + across * (towerBridge.width / 2 - 0.02))).toBe(ramp.endY)
+          expect(towerFloorHeight(x, tower.z + across * (towerBridge.width / 2 - 0.02))).toBe(ramp.endY + towerBridgeLift(along, wallDistance))
           expect(towerFloorHeight(x, tower.z + across * (towerBridge.width / 2 + 0.02))).toBeUndefined()
         }
+        expect(towerFloorHeight(x, tower.z)!).toBeGreaterThanOrEqual(previous)
+        previous = towerFloorHeight(x, tower.z)!
       }
-      // At the wall’s face, the deck is as wide as the doorway.
+      // Level where it leaves the deck and where it flares out toward its wall, and nowhere steeper than 10°
+      expect(towerBridgeLift(tower.radius + 0.1, wallDistance)).toBe(0)
+      expect(towerBridgeGradient(tower.radius + 0.1, wallDistance)).toBe(0)
+      expect(towerBridgeGradient(wallDistance - 0.105 - towerBridge.flareRadius, wallDistance)).toBe(0)
+      for (let along = tower.radius; along < wallDistance; along += 0.1) {
+        expect(towerBridgeGradient(along, wallDistance)).toBeLessThan(Math.tan(10 * Math.PI / 180))
+      }
+      // At the wall’s face, the deck is as wide as the doorway, at the bridge’s full rise.
       const face = tower.x + direction * (wallDistance - 0.105)
       for (const across of [-1, 1]) {
-        expect(towerFloorHeight(face, tower.z + across * (towerBridge.mouthWidth / 2 - 0.02))).toBe(ramp.endY)
+        expect(towerFloorHeight(face, tower.z + across * (towerBridge.mouthWidth / 2 - 0.02))).toBeCloseTo(ramp.endY + towerBridge.rise, 9)
         expect(towerFloorHeight(face, tower.z + across * (towerBridge.mouthWidth / 2 + 0.02))).toBeUndefined()
       }
     }
@@ -139,7 +149,7 @@ describe('cylindrical Oculus platform', () => {
             const z = tower.z + across
             const down = new Raycaster(new Vector3(x, -1, z), new Vector3(0, -1, 0))
             const hits = down.intersectObject(mesh)
-            if (hits.length < 3 || hits[0].point.y !== ramp.endY) {
+            if (hits.length < 3 || Math.abs(hits[0].point.y - towerFloorHeight(x, z)!) > 1e-4) {
               continue
             }
             // From the bridge’s underside down to what stands below it
@@ -407,7 +417,9 @@ describe('cylindrical Oculus platform', () => {
                 motor.step(world.timestep, {}, facing)
                 world.step()
               }
-              expect(body.translation().y).toBeCloseTo(ramp.endY + 0.02, 2)
+              // on the bridge, or past its end in the doorway after a sprint
+              const {x, y, z} = body.translation()
+              expect(y).toBeCloseTo(floorHeight([x, y, z]) + 0.02, 2)
               expect(Math.abs(body.translation().z - tower.z)).toBeLessThan(towerBridge.width / 2)
               expect(motor.grounded).toBe(true)
             }

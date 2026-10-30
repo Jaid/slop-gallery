@@ -3,7 +3,7 @@ import {BoxGeometry, BufferGeometry, ExtrudeGeometry, Float32BufferAttribute, Me
 
 import lowerGallery, {oculusCornerRamps, oculusLowerRamps, oculusPlatform, oculusQuarterLandings, oculusRampLandings, oculusRamps, rampLandingCorner, rampLandingOutline} from './lowerGallery.ts'
 import {apseArcs, apseOutline} from './oculusApse.ts'
-import tower, {towerArch, towerBridge, towerDeck, towerNecks, towerRamp, towerRampGradient, towerRampHalfWidth, towerRampHeight, towerRampSections} from './oculusTower.ts'
+import tower, {towerArch, towerBridge, towerBridgeGradient, towerDeck, towerNecks, towerRamp, towerRampGradient, towerRampHalfWidth, towerRampHeight, towerRampSections} from './oculusTower.ts'
 import RampGeometry from './RampGeometry.ts'
 import SlopedBoxGeometry from './SlopedBoxGeometry.ts'
 
@@ -330,11 +330,12 @@ class TowerGeometry extends BufferGeometry {
       const t = Math.min(1, Math.max(0, (top - rim - y) / span))
       return [t * t * (3 - 2 * t), y > top - rim || y < bottom(index) ? 0 : -6 * t * (1 - t) / span] as const
     }
+    // Along a bridge, every level is lifted by as far as the bridge has climbed there.
     const point = (index: number, y: number) => {
       const [x, z] = outline[at(index)]
       const [targetX, targetZ] = targets[at(index)]
       const [eased] = ease(at(index), y)
-      return [tower.x + x + (targetX - x) * eased, y, tower.z + z + (targetZ - z) * eased] as const
+      return [tower.x + x + (targetX - x) * eased, y + towerDeck[at(index)].lift, tower.z + z + (targetZ - z) * eased] as const
     }
     const normal = (index: number, y: number) => {
       const [targetX, targetZ] = targets[index]
@@ -359,6 +360,8 @@ class TowerGeometry extends BufferGeometry {
       return result.map(value => value * sign) as unknown as readonly [number, number, number]
     }
     type Vertex = {
+      /** its height before a bridge’s climb lifts it */
+      level: number
       normal: readonly [number, number, number]
       position: readonly [number, number, number]
     }
@@ -367,12 +370,13 @@ class TowerGeometry extends BufferGeometry {
       const band = easing[i] || easing[at(i - 1)] || easing[at(i + 1)] ? neckLevels : [bottom(i), top]
       const heights = grounded[i] ? [floorY, ...band.slice(band === neckLevels ? 0 : 1)] : band
       return heights.map(y => ({
+        level: y,
         position: point(i, y),
         normal: normal(i, y),
       }))
     })
-    const lower = (index: number) => columns[index].filter(({position}) => position[1] <= bottom(index))
-    const upper = (index: number, column = columns[index]) => column.filter(({position}) => position[1] >= bottom(index))
+    const lower = (index: number) => columns[index].filter(({level}) => level <= bottom(index))
+    const upper = (index: number, column = columns[index]) => column.filter(({level}) => level >= bottom(index))
     // Every neck stands in front of the cylinder between the last grounded column before it and the first after it. Below its
     // bottom, the cylinder closes behind its end along its own arc.
     const necks = towerNecks.map((_, neck) => {
@@ -388,6 +392,7 @@ class TowerGeometry extends BufferGeometry {
         const theta = leftAngle + span * (k + 1) / segments
         const radial = [Math.cos(theta), 0, Math.sin(theta)] as const
         return [floorY, bottoms[neck]].map(y => ({
+          level: y,
           position: [tower.x + Math.cos(theta) * radius, y, tower.z + Math.sin(theta) * radius] as const,
           normal: radial,
         }))
@@ -420,7 +425,7 @@ class TowerGeometry extends BufferGeometry {
       let l = 0
       let r = 0
       while (l < left.length - 1 || r < right.length - 1) {
-        const advanceLeft = r === right.length - 1 || l < left.length - 1 && left[l + 1].position[1] <= right[r + 1].position[1]
+        const advanceLeft = r === right.length - 1 || l < left.length - 1 && left[l + 1].level <= right[r + 1].level
         triangle(advanceLeft ? [left[l], right[r], left[l + 1]] : [left[l], right[r], right[r + 1]], flipStrips)
         if (advanceLeft) {
           l++
@@ -431,9 +436,10 @@ class TowerGeometry extends BufferGeometry {
     }
     // Where a bridge’s flat side meets the tower, the strip between them stays flat, keeping the crease crisp instead of
     // smearing the tower’s curvature across the bridge’s side.
-    const flatten = (column: Array<Vertex>, side: Array<Vertex>) => column.map(({position}) => ({
+    const flatten = (column: Array<Vertex>, side: Array<Vertex>) => column.map(({level, position}) => ({
+      level,
       position,
-      normal: side.find(vertex => vertex.position[1] === position[1])?.normal ?? side[0].normal,
+      normal: side.find(vertex => vertex.level === level)?.normal ?? side[0].normal,
     }))
     for (const [i, left] of columns.entries()) {
       const j = at(i + 1)
@@ -456,12 +462,38 @@ class TowerGeometry extends BufferGeometry {
       for (const indices of ShapeUtils.triangulateShape(vertices.map(([x, , z]) => new Vector2(x, z)), [])) {
         const corners = indices.map(index => vertices[index])
         triangle(corners.map(position => ({
+          level: position[1],
           position,
           normal: [0, up ? 1 : -1, 0] as const,
         })), face(corners)[1] > 0 !== up)
       }
     }
-    cap(columns.map(column => column.at(-1)!.position), true)
+    // A bridge’s body climbs, so its floor and its underside run across it from side to side, point by point, instead of joining the level caps. Its first and last points are where it leaves the deck, before it climbs.
+    const bodies = towerNecks.map((neck, index) => (neck.wallDistance === undefined ? [] : towerDeck.keys().filter(i => towerDeck[i].neck === index && !towerDeck[i].shoulder && Math.hypot(...towerDeck[i].local) > radius + 1e-6).toArray()))
+    const climbing = new Set(bodies.flatMap(body => body.slice(1, -1)))
+    /** the normal of a bridge’s floor at a point of its outline, tilted back by its climb, or of its underside */
+    const slopeNormal = (index: number, up: boolean) => {
+      const {neck, local: [along]} = towerDeck[index]
+      const {angle, wallDistance} = towerNecks[neck]
+      const gradient = wallDistance === undefined ? 0 : towerBridgeGradient(along, wallDistance)
+      const length = Math.hypot(1, gradient) * (up ? 1 : -1)
+      return [-gradient * Math.cos(angle) / length, 1 / length, -gradient * Math.sin(angle) / length] as const
+    }
+    const across = (body: ReadonlyArray<number>, vertex: (index: number) => Vertex, up: boolean) => {
+      for (let k = 0; k < body.length / 2 - 1; k++) {
+        const quad = [body[k], body[k + 1], body.at(-2 - k)!, body.at(-1 - k)!].map(index => ({
+          ...vertex(index),
+          normal: slopeNormal(index, up),
+        }))
+        for (const corners of [[quad[0], quad[1], quad[2]], [quad[0], quad[2], quad[3]]]) {
+          triangle(corners, face(corners.map(({position}) => position))[1] > 0 !== up)
+        }
+      }
+    }
+    cap(columns.filter((_, i) => !climbing.has(i)).map(column => column.at(-1)!.position), true)
+    for (const body of bodies) {
+      across(body, index => columns[index].at(-1)!, true)
+    }
     // The ground runs round the grounded columns from each neck to the next, and along the arc behind each neck’s end.
     const ground: Array<readonly [number, number, number]> = []
     for (const [k, {right}] of necks.entries()) {
@@ -476,15 +508,18 @@ class TowerGeometry extends BufferGeometry {
     }
     cap(ground, false)
     // The underside behind each neck’s end, between it and the cylinder, continues the passage’s roof or the bridge’s slab.
-    for (const {left, right, arc} of necks) {
+    for (const [neck, {left, right, arc}] of necks.entries()) {
       const underside: Array<readonly [number, number, number]> = []
       for (let i = right; ; i = at(i - 1)) {
-        underside.push(upper(i)[0].position)
+        if (!climbing.has(i)) {
+          underside.push(upper(i)[0].position)
+        }
         if (i === left) {
           break
         }
       }
       cap([...underside, ...arc.map(column => column[1].position)], false)
+      across(bodies[neck], index => upper(index)[0], false)
     }
     this.setAttribute('position', new Float32BufferAttribute(positions, 3))
     this.setAttribute('normal', new Float32BufferAttribute(normals, 3))
