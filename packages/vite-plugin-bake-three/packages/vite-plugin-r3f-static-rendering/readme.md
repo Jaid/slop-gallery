@@ -91,14 +91,14 @@ r3fStaticRendering({
   allowFreezingRandomness: false,
   staticInstancing: {minimumCount: 3},
   renderBundles: {minimumObjects: 4},
-  include: /\/src\//u,
+  include: ['src/scenes/**', {glob: 'src/components/Gallery/index.tsx', scope: 'Gallery'}],
   exclude: /\/imperative-scenes\//u,
   timeoutMs: 1000,
   maxNodes: 10_000,
   maxPlanBytes: 1024 * 1024,
   report: true,
   onDiagnostic(diagnostic) {
-    // file, line, status, reason, batches, bundles,
+    // file, line, scope, status, reason, batches, bundles,
     // objectsBefore, objectsAfter
   },
 })
@@ -106,7 +106,7 @@ r3fStaticRendering({
 
 `allowFreezingRandomness` defaults to `false`. When enabled, random values in otherwise closed static render data are evaluated once during the build and the resulting transforms/properties are frozen into the compiled plan. `math` and its subpaths are approved in either mode; seeded PRNG/noise use does not require the opt-in.
 
-Either feature can be set to `false` or `{enabled: false}`. Minimum thresholds must be integers of at least two. Include/exclude also accept predicates receiving normalized absolute filenames. The default transforms project-root `.tsx`/`.jsx` files outside `node_modules`.
+Either feature can be set to `false` or `{enabled: false}`. Minimum thresholds must be integers of at least two. `include` takes globs relative to the project root, RegExps, predicates receiving normalized absolute filenames and `{glob, scope}` objects, alone or as an array; a region’s scope path names the components and other declarations around it, like `Gallery`, without a callee such as `map` (see `vite-plugin-bake-core`). `exclude` accepts a RegExp or a predicate. The default transforms project-root `.tsx`/`.jsx` files outside `node_modules`.
 
 `r3f-static-rendering.json` reports source regions, retained plan count, successful transformations and skipped candidates with reasons. Source paths/diagnostics are potentially publishable source information; set `report: false` when that is undesirable. Plan imports are tree-shakeable, and unused plans disappear with their consumers. Watch builds start with fresh analysis and track referenced source/re-export files. High-resolution source maps accompany changes.
 

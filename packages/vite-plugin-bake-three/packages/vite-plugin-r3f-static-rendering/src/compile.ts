@@ -1,12 +1,13 @@
 import type {R3fStaticRenderingOptions, ResolvedR3fStaticRenderingOptions} from './options.ts'
 import type {SceneNode, StaticDiagnostic, StaticPlan} from './plan.ts'
 import type {NodePath} from '@babel/traverse'
+import type {ScopeSelection} from 'vite-plugin-bake-core'
 
 import {createHash} from 'node:crypto'
 
 import * as t from '@babel/types'
 import MagicString from 'magic-string'
-import {importInfo, Recipe, SourceGraph} from 'vite-plugin-bake-core'
+import {importInfo, Recipe, scopePath, SourceGraph} from 'vite-plugin-bake-core'
 import {threeAdapter} from 'vite-plugin-bake-core/three'
 
 import {optimizeScene} from './optimize.ts'
@@ -118,8 +119,8 @@ const hasJsx = (path: NodePath) => {
   return found
 }
 
-/** Pure compiler entry point, also used by Vite and executable transform tests. */
-export async function compileStaticRendering(code: string, id: string, options: R3fStaticRenderingOptions = {}, graph = new SourceGraph(async () => {})): Promise<Compilation> {
+/** Pure compiler entry point, also used by Vite and executable transform tests. `select` picks the regions to compile by their scope path. */
+export async function compileStaticRendering(code: string, id: string, options: R3fStaticRenderingOptions = {}, graph = new SourceGraph(async () => {}), select: ScopeSelection = () => true): Promise<Compilation> {
   const resolved: ResolvedR3fStaticRenderingOptions = resolveR3fStaticRenderingOptions(options)
   const source = await graph.input(id, code)
   const output = new MagicString(code)
@@ -228,6 +229,10 @@ export async function compileStaticRendering(code: string, id: string, options: 
       parts = []
     }
     for (const part of run) {
+      if (!select(scopePath(part.path, false))) {
+        flush()
+        continue
+      }
       try {
         parts.push({
           ...part,
@@ -246,6 +251,11 @@ export async function compileStaticRendering(code: string, id: string, options: 
     if (region.start < through) {
       continue
     }
+    // Regions are named after where they are, not after a call like .map().
+    const scope = scopePath(region.path, false)
+    if (!select(scope)) {
+      continue
+    }
     const line = region.path.node.loc?.start.line ?? 0
     try {
       const nodes = region.nodes ?? await evaluate(region.path, region.expression)
@@ -254,6 +264,7 @@ export async function compileStaticRendering(code: string, id: string, options: 
         diagnostics.push({
           file: id,
           line,
+          scope,
           status: 'skipped',
           reason: 'Below thresholds or no interchangeable contiguous mesh family.',
         })
@@ -280,6 +291,7 @@ export async function compileStaticRendering(code: string, id: string, options: 
       diagnostics.push({
         file: id,
         line,
+        scope,
         status: 'optimized',
         batches: plan.batches,
         bundles: plan.bundles,
@@ -290,6 +302,7 @@ export async function compileStaticRendering(code: string, id: string, options: 
       diagnostics.push({
         file: id,
         line,
+        scope,
         status: 'skipped',
         reason: Error.isError(error) ? error.message : String(error),
       })

@@ -37,6 +37,8 @@ export type StaticDiagnostic = {
   objectsAfter?: number
   objectsBefore?: number
   reason?: string
+  /** the scope path of the region, which a scoped include filter matches */
+  scope: string
   status: 'optimized' | 'skipped'
 }
 

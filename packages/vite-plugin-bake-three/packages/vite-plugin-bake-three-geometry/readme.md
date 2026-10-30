@@ -93,7 +93,7 @@ Generated assets for tree-shaken recipes are removed. High-resolution source map
 bakeThreeGeometry({
   meshBvh: true,
   allowFreezingRandomness: false,
-  include: /\/src\//u,
+  include: ['src/geometry/**', {glob: 'src/lib/dome.ts', scope: 'domeGeometry'}],
   exclude: /\/experimental\//u,
   minimumBytes: 32 * 1024,
   maxBytes: 64 * 1024 * 1024,
@@ -101,7 +101,7 @@ bakeThreeGeometry({
   compress: true,
   report: true,
   onDiagnostic(diagnostic) {
-    // status: 'baked' | 'skipped', file, line, expression,
+    // status: 'baked' | 'skipped', file, line, expression, scope,
     // reason, bytes, rawBytes, evaluationMs, resources
   },
 })
@@ -109,7 +109,7 @@ bakeThreeGeometry({
 
 `math` and its subpaths are approved build-time dependencies. Seeded `math/random` and `math/noise` algorithms are bakeable by default; `allowFreezingRandomness: true` additionally permits free random values to be sampled once during the build and serialized with the geometry.
 
-`include` and `exclude` also accept predicates receiving normalized absolute filenames. The default inclusion is project-root source outside `node_modules`. Dependencies may be followed outside the transform inclusion filter.
+`include` takes globs relative to the project root, RegExps, predicates receiving normalized absolute filenames and `{glob, scope}` objects that select single recipes in a file by their scope path, alone or as an array; see `vite-plugin-bake-core` for the scope path rules. `exclude` accepts a RegExp or a predicate. The default inclusion is project-root source outside `node_modules`. Dependencies may be followed outside the transform inclusion filter.
 
 `bake-three-geometry.json` records transformation decisions and the retained artifact count. Recipe counts include transformations that can subsequently be tree-shaken; retained artifact counts reflect final output.
 

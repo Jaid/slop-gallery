@@ -1,6 +1,8 @@
 import type {Candidate} from './candidates.ts'
+import type {IncludeFilter} from './filters.ts'
 import type {NodePath} from '@babel/traverse'
 import type * as t from '@babel/types'
+import type {Arrayable} from 'type-fest'
 
 export type Atom = {ref: number} | {special: '-0' | '-infinity' | 'infinity' | 'nan' | 'undefined'} | boolean | number | string | null
 export type SnapshotNode =
@@ -99,6 +101,8 @@ export type BakeDiagnostic = {
   rawBytes?: number
   reason?: string
   resources?: Array<string>
+  /** the candidate’s scope path, which a scoped include filter matches */
+  scope: string
   status: 'baked' | 'skipped'
 }
 export type BakeOptions = {
@@ -106,9 +110,13 @@ export type BakeOptions = {
   allowFreezingRandomness?: boolean
   /** Brotli is decoded once at module load, never in a resource constructor. */
   compress?: boolean
+  /** Tested against normalized absolute filenames after include. */
   exclude?: ((id: string) => boolean) | RegExp
-  /** Paths are normalized absolute filenames. Dependencies are still followed outside this filter. */
-  include?: ((id: string) => boolean) | RegExp
+  /**
+   * Files to analyze, and optionally which candidates in them, by scope path; any matching filter includes. Defaults to every file in the project root.
+   * Dependencies are still followed outside these files.
+   */
+  include?: Arrayable<IncludeFilter>
   /** Maximum uncompressed size of one artifact. */
   maxBytes?: number
   /** Ignore small snapshots for which an extra request is unlikely to pay for itself. */

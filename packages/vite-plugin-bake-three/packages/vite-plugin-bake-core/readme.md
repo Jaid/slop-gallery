@@ -49,6 +49,25 @@ This is not whole-program alias analysis or a proof that arbitrary user code is 
 
 Resource instances are never pooled across calls. The format preserves cycles, Maps/Sets, null prototypes, special numeric values and multiple views of the same owned ArrayBuffer. Arrays with holes/custom properties, shared-memory buffers, function-valued instance properties and unsupported descriptors/prototypes are refused rather than approximately serialized.
 
+## Selecting files and recipes
+
+Every pass analyzes each source file in the project root by default. `include` takes one filter or an array of them, and any filter that matches includes:
+
+```ts
+include: [
+  // a glob, relative to the project root unless absolute
+  'src/lib/gallery/moonfall/**',
+  // a RegExp or a predicate, tested against the normalized absolute filename
+  /\/knot-materials\/src\/entries\//u,
+  // only the candidates whose scope path matches the minimatch pattern, in the files the glob matches
+  {glob: 'src/lib/gallery/antechamberDome.ts', scope: 'antechamberDomeGeometry'},
+],
+```
+
+A candidate’s scope path joins the names around it with slashes, outermost first: the functions, classes, methods, properties and variables it sits in, then its own name, which a definition declares and a call takes from its callee. `function antechamberDomeGeometry()` is `antechamberDomeGeometry`, the `new SphereGeometry()` inside it `antechamberDomeGeometry/SphereGeometry`, `geometry = new TorusKnotGeometry()` in `class Sculpture` is `Sculpture/geometry/TorusKnotGeometry` and a call at module level, like `cutArchitectures(walls)`, just its callee’s name. Every diagnostic in the report carries its `scope`, so patterns can be read off a previous build. As in paths, `*` stays within one name and `**` spans several, so `Sculpture/**` selects everything in the class but not the class itself; `Sculpture{,/**}` selects both.
+
+A whole-file filter wins over scoped filters for the same file. Files no filter matches aren’t analyzed at all, which is where most of a build’s baking time goes, so narrow filters also make builds faster. A call into a definition that is included in its own module defers to it; a call into one whose scope is left out bakes at the call site if the call itself is included. `exclude` removes files after `include` and is tested like a RegExp or predicate filter.
+
 ## Build and transport behavior
 
 ### Specialized codecs and coupled expressions

@@ -4,14 +4,14 @@ import type {Plugin, ResolvedConfig} from 'vite'
 
 import {relative} from 'node:path'
 
-import {SourceGraph} from 'vite-plugin-bake-core'
+import {Inclusion, SourceGraph} from 'vite-plugin-bake-core'
 
 import {compileStaticRendering} from './compile.ts'
 import {constructorsFor} from './optimize.ts'
 import {resolveR3fStaticRenderingOptions} from './options.ts'
 
 const normalize = (id: string) => id.replaceAll('\\', '/')
-const matches = (filter: R3fStaticRenderingOptions['include'], id: string) => {
+const matches = (filter: R3fStaticRenderingOptions['exclude'], id: string) => {
   if (!filter) {
     return false
   }
@@ -29,12 +29,14 @@ export default function r3fStaticRendering(options: R3fStaticRenderingOptions = 
   const diagnostics: Array<StaticDiagnostic> = []
   let config: ResolvedConfig
   let graph: SourceGraph
+  let inclusion: Inclusion
   return {
     name: 'r3f-static-rendering',
     apply: 'build',
     enforce: 'pre',
     configResolved(value) {
       config = value
+      inclusion = new Inclusion(options.include, normalize(value.root))
     },
     buildStart() {
       modules.clear()
@@ -65,13 +67,11 @@ export default function r3fStaticRendering(options: R3fStaticRenderingOptions = 
       if (config.build.ssr || !/\.[jt]sx$/u.test(id) || id.includes('/node_modules/') || id.includes('\0')) {
         return
       }
-      if (options.include ? !matches(options.include, id) : !id.startsWith(`${normalize(config.root)}/`)) {
+      const select = inclusion.select(id)
+      if (!select || matches(options.exclude, id)) {
         return
       }
-      if (matches(options.exclude, id)) {
-        return
-      }
-      const result = await compileStaticRendering(code, id, options, graph)
+      const result = await compileStaticRendering(code, id, options, graph, select)
       diagnostics.push(...result.diagnostics.map(item => ({
         ...item,
         file: normalize(relative(config.root, item.file)),

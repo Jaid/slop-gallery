@@ -23,6 +23,8 @@
     "fs-extra": "11.4.1",
     "magic-string": "1.4.3",
     "math": "0.1.0",
+    "minimatch": "11.0.3",
+    "type-fest": "5.10.0",
     "@babel/core": "8.0.7",
     "@babel/generator": "8.0.6",
     "@babel/parser": "8.0.7",

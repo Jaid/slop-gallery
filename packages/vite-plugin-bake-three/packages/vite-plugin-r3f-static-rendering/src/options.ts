@@ -1,6 +1,7 @@
 import type {RenderBundlesOptions} from './features/renderBundles.ts'
 import type {StaticInstancingOptions} from './features/staticInstancing.ts'
 import type {StaticDiagnostic} from './plan.ts'
+import type {BakeOptions} from 'vite-plugin-bake-core'
 
 import {defaultRenderBundlesOptions} from './features/renderBundles.ts'
 import {defaultStaticInstancingOptions} from './features/staticInstancing.ts'
@@ -8,8 +9,10 @@ import {defaultStaticInstancingOptions} from './features/staticInstancing.ts'
 export type R3fStaticRenderingOptions = {
   /** Permit nondeterministic random sources to run once at build time and freeze their result into the compiled plan. */
   allowFreezingRandomness?: boolean
+  /** Tested against normalized absolute filenames after include. */
   exclude?: ((id: string) => boolean) | RegExp
-  include?: ((id: string) => boolean) | RegExp
+  /** Files to analyze, and optionally which regions in them, by the scope path of their enclosing components; defaults to every `.tsx`/`.jsx` file in the project root. */
+  include?: BakeOptions['include']
   maxNodes?: number
   maxPlanBytes?: number
   onDiagnostic?: (diagnostic: StaticDiagnostic) => void

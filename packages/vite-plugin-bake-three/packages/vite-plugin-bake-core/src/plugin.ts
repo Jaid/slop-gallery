@@ -10,13 +10,14 @@ import {brotliCompressSync, constants} from 'node:zlib'
 import MagicString from 'magic-string'
 
 import {deferredDefinition, definitionCandidate} from './candidates.ts'
+import {Inclusion, scopePath} from './filters.ts'
 import Recipe, {describeExpression} from './Recipe.ts'
 import SnapshotWriter from './SnapshotWriter.ts'
 import SourceGraph from './SourceGraph.ts'
 
 const sourceFile = /\.[cm]?[jt]sx?$/u
 const normalize = (id: string) => id.replaceAll('\\', '/')
-const matches = (filter: ((id: string) => boolean) | RegExp | undefined, id: string) => {
+const matches = (filter: BakeOptions['exclude'], id: string) => {
   if (!filter) {
     return false
   }
@@ -44,6 +45,7 @@ export default function createBakePlugin(adapter: BakeAdapter, options: BakeOpti
   const diagnostics: Array<BakeDiagnostic> = []
   let config: ResolvedConfig
   let graph: SourceGraph
+  let inclusion: Inclusion
   const diagnostic = (value: BakeDiagnostic) => {
     diagnostics.push(value)
     options.onDiagnostic?.(value)
@@ -54,6 +56,7 @@ export default function createBakePlugin(adapter: BakeAdapter, options: BakeOpti
     enforce: 'pre',
     configResolved(value) {
       config = value
+      inclusion = new Inclusion(options.include, normalize(value.root))
     },
     buildStart() {
       artifacts.clear()
@@ -104,10 +107,8 @@ export default function createBakePlugin(adapter: BakeAdapter, options: BakeOpti
       if (config.build.ssr || !sourceFile.test(id) || id.includes('/node_modules/') || id.includes('\0') || id === runtime || id.includes('/vite-plugin-bake-core/')) {
         return
       }
-      if (options.include ? !matches(options.include, id) : !id.startsWith(`${normalize(config.root)}/`)) {
-        return
-      }
-      if (matches(options.exclude, id)) {
+      const select = inclusion.select(id)
+      if (!select || matches(options.exclude, id)) {
         return
       }
       const source = await graph.input(id, code)
@@ -155,19 +156,25 @@ export default function createBakePlugin(adapter: BakeAdapter, options: BakeOpti
         if ((candidate.start ?? path.node.start!) < replacedUntil) {
           continue
         }
+        const scope = scopePath(path)
+        if (!select(scope)) {
+          continue
+        }
         const recipe = new Recipe(graph, adapter, options.allowFreezingRandomness ?? false)
         const entry: BakeDiagnostic = {
           file: normalize(relative(config.root, id)),
           line: path.node.loc?.start.line ?? 0,
           expression: describeExpression(candidate.expression),
+          scope,
           status: 'skipped',
         }
         try {
           if (candidate.kind === 'expression') {
             const deferred = await deferredDefinition(path, graph, adapter)
+            // The definition bakes in its own module whenever this pass looks at it there.
             if (deferred) {
               const target = graph.source(deferred).id
-              if ((options.include ? matches(options.include, target) : target.startsWith(`${normalize(config.root)}/`)) && !matches(options.exclude, target)) {
+              if (inclusion.select(target)?.(scopePath(deferred)) && !matches(options.exclude, target)) {
                 continue
               }
             }

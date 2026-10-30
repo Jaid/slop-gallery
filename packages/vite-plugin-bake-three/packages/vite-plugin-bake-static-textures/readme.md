@@ -73,7 +73,7 @@ Retained snapshots are emitted as content-addressed Brotli-compressed `.bin` ass
 
 ```ts
 bakeStaticTextures({
-  include: /\/src\//u,
+  include: ['src/materials/**', {glob: 'src/lib/textures.ts', scope: 'grainTexture'}],
   allowFreezingRandomness: false,
   minimumBytes: 4097,
   maxBytes: 64 * 1024 * 1024,
@@ -85,7 +85,7 @@ bakeStaticTextures({
 
 `math` and its subpaths are approved build-time dependencies, so seeded `math/random` and `math/noise` texture generators bake under the default strict policy. Set `allowFreezingRandomness: true` only when it is acceptable for free random values to vary between builds and then be frozen into the emitted texture.
 
-The shared options also include `exclude` and `onDiagnostic`. Filters accept normalized absolute-path predicates. Uncompressed snapshots below 8 KiB are skipped by default. Build-time canvases are additionally limited to 16,777,216 pixels.
+The shared options also include `exclude` and `onDiagnostic`. `include` takes globs relative to the project root, RegExps, predicates receiving normalized absolute filenames and `{glob, scope}` objects that select single recipes in a file by their scope path, alone or as an array; see `vite-plugin-bake-core` for the scope path rules. `exclude` accepts a RegExp or a predicate. Uncompressed snapshots below 8 KiB are skipped by default. Build-time canvases are additionally limited to 16,777,216 pixels.
 
 `bake-static-textures.json` lists baked and skipped resource candidates with source locations and reasons. Unused artifacts are removed after tree-shaking. Watch rebuilds start with fresh evaluation state and track referenced files. Content hashes support output deduplication and client caching; no persistent build-evaluation cache is implemented.
 

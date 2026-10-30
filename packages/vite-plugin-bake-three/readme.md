@@ -48,6 +48,8 @@ bakeThree({
   geometry: {
     meshBvh: true,
     minimumBytes: 64 * 1024,
+    // whole files by glob or RegExp, single recipes by their scope path
+    include: ['src/geometry/**', {glob: 'src/lib/dome.ts', scope: 'domeGeometry'}],
   },
   staticTextures: {
     minimumBytes: 16 * 1024,
