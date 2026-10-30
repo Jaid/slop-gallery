@@ -2,6 +2,7 @@ import type {RouteOpening} from './passages/RoutedPassage.ts'
 import type {Vec3} from './types.ts'
 
 import {corniceBands, wallOpeningTrim} from './architectureDimensions.ts'
+import {easedRampGradient} from './easedRamp.ts'
 import lodge from './lodge.ts'
 import lowerGallery, {oculusPlatform} from './lowerGallery.ts'
 import oculusApse from './oculusApse.ts'
@@ -51,8 +52,10 @@ const runX = eastWallX + offset
 const curveZ = oculusTower.z - width / 2 - 0.8
 /** how long the run north along the Oculus is, from the mouth to where the apse begins */
 const runLength = curveZ - oculusApse.northZ
-/** how steeply the run north falls from the doorway to the platform’s level; the run toward the Lodge climbs back up as steeply */
-const slope = (doorwayY - platformY) / runLength
+/** how steep the Fortress’ ramps get halfway, where their eased profile is steepest: like the straight ramps they replaced */
+const steepest = 0.25
+/** How long a ramp has to be to climb or fall by `rise` without getting steeper than `steepest`. */
+const rampLength = (rise: number) => Math.abs(rise) * easedRampGradient(0.5, 1) / steepest
 
 /** The doorway in the Oculus’ east wall at the east bridge’s end, as wide and as high as the passage, its floor level with the bridge’s end. */
 export const fortressDoorway = {
@@ -66,6 +69,9 @@ export const fortressDoorway = {
 export const fortressMouth = new Passage('mouth', 'fortress', [[eastWallX, oculusTower.z], [runX, oculusTower.z], [runX, curveZ]], doorwayY, width, mouthHeight)
 
 const [west, crown, east] = oculusApse.arcs
+const eastRadius = east.radius + offset
+/** The ramp down from the doorway to the platform’s level runs on past the run north into the turn round the apse’s east shoulder, this far round it. */
+const eastRampTurn = (rampLength(platformY - doorwayY) - runLength) / eastRadius
 /** the radius of the bend that takes the curve out of the apse’s west shoulder, in an S, back west toward the Lodge; tight, so the curve keeps to the shoulder long enough for its window */
 const bendRadius = 3
 const westRadius = west.radius + offset
@@ -76,8 +82,10 @@ const bendCenterX = west.center[0] - Math.sqrt((westRadius + bendRadius) ** 2 - 
 const bendAngle = Math.atan2(bendCenterZ - west.center[1], bendCenterX - west.center[0]) + Math.PI * 2
 /** how far round the west shoulder the curve turns before the bend takes over */
 const westTurn = west.to - bendAngle
-/** how long the climb from the platform’s level up to the Lodge’s floor is */
-const climbLength = (lodge.floorY - platformY) / slope
+/** how far the bend turns back: past west, the crown’s second half turned the curve, and the west shoulder on top of that */
+const bendTurn = (crown.to - crown.from) / 2 + westTurn
+/** The ramp up to the Lodge’s floor starts with the bend, and a run as long as it takes finishes it. */
+const climbLength = rampLength(lodge.floorY - platformY) - bendRadius * bendTurn
 /** a window’s width along the apse’s wall, a little narrower than the gate */
 const windowWidth = 2.4
 /** where the windows pierce the shoulders: the west one halfway along the stretch of its shoulder the curve still runs behind, from where the bend leaves it to the crown, and the east one mirrored */
@@ -123,18 +131,24 @@ export function apseOpeningPoint({arc, angle}: Pick<ApseOpening, 'angle' | 'arc'
 }
 
 /**
- * North along the Oculus’ east wall, falling to the platform’s level as its vault rises, then round the apse at the same distance from its walls, over its east shoulder, its crown and into its west shoulder, from where an S bend brings it back west and a climb as steep as the fall takes it up to the Lodge’s floor.
+ * North along the Oculus’ east wall, easing down to the platform’s level as its vault rises, on into the turn round the apse’s east shoulder, then round the apse at the same distance from its walls, over its crown and into its west shoulder, from where an S bend brings it back west, easing up as gently to the Lodge’s floor.
  * Its center line runs `offset` meters from the apse’s, so its turns share their centers with the apse’s arcs.
  */
 const route = new PassageRoute([runX, curveZ], -Math.PI / 2, doorwayY, mouthHeight, [
   {
-    length: runLength,
-    rise: platformY - doorwayY,
-    heighten: apseHeight - mouthHeight,
+    y: platformY,
+    height: apseHeight,
+    steps: [
+      {length: runLength},
+      {
+        radius: eastRadius,
+        angle: -eastRampTurn,
+      },
+    ],
   },
   {
-    radius: east.radius + offset,
-    angle: -(east.to - east.from),
+    radius: eastRadius,
+    angle: -(east.to - east.from - eastRampTurn),
   },
   {
     radius: crown.radius + offset,
@@ -145,14 +159,15 @@ const route = new PassageRoute([runX, curveZ], -Math.PI / 2, doorwayY, mouthHeig
     angle: -westTurn,
   },
   {
-    // Past west, the crown’s second half turned it, and the west shoulder on top of that.
-    radius: bendRadius,
-    angle: (crown.to - crown.from) / 2 + westTurn,
-  },
-  {
-    length: climbLength,
-    rise: lodge.floorY - platformY,
-    heighten: approachHeight - apseHeight,
+    y: lodge.floorY,
+    height: approachHeight,
+    steps: [
+      {
+        radius: bendRadius,
+        angle: bendTurn,
+      },
+      {length: climbLength},
+    ],
   },
 ])
 const approachX = bendCenterX - climbLength
@@ -175,13 +190,30 @@ const curveOpenings = apseOpenings.map((opening): RouteOpening => {
     profile: 'arch',
   }
 })
+// The ramps level out at the platform before the casings round the windows begin, so their sills stand as high over the floor all along.
+for (const {arc, angle, width: openingWidth} of apseOpenings) {
+  const {radius} = oculusApse.arcs[arc]
+  const reach = openingWidth / 2 / radius + wallOpeningTrim / (radius + fortressClearance)
+  for (const side of [-1, 1]) {
+    const [x, z] = apseOpeningPoint({
+      arc,
+      angle: angle + side * reach,
+    }, offset)
+    if (route.at(route.project(x, z)!.along).y !== platformY) {
+      throw new Error('The Fortress’ ramps have to level out before the openings into the apse.')
+    }
+  }
+}
 export const fortressCurve = new RoutedPassage('curve', 'fortress', route, width, curveOpenings)
 /** From the curve west to the Lodge’s east wall, where it turns into the Lodge’s timber. */
 export const fortressApproach = new Passage('approach', 'fortress', [[approachX, lodge.tunnelZ], [lodge.center[0] + lodge.size[0] / 2, lodge.tunnelZ]], lodge.floorY, width, approachHeight)
 /** The approach’s last meter trades the castle stone for the Lodge’s timber, instead of switching at the doorway. */
 export const fortressTransition = new PassageTransition(fortressApproach)
 /** how far along the curve the middle of its crown lies, behind the gate */
-const crownMiddle = route.pieces[0].length + route.pieces[1].length + route.pieces[2].length / 2
+const crownMiddle = route.project(...apseOpeningPoint({
+  arc: 1,
+  angle: Math.PI * 3 / 2,
+}, offset))!.along
 const crownStation = route.at(crownMiddle)
 /** where the Fortress’ origin lies: on the floor in the middle of the curve’s crown */
 export const fortressOrigin: Vec3 = [crownStation.point[0], crownStation.y, crownStation.point[1]]

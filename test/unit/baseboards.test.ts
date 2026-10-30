@@ -7,7 +7,9 @@ import {computeMeshVolume} from 'three-bvh-csg'
 import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {architectureGeometry, colliderGeometry, createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
+import {fortressCurve} from '../../src/lib/gallery/fortress.ts'
 import lowerGallery, {oculusPlatform, oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
+import {wallPosition} from '../../src/lib/placement/wallGeometry.ts'
 import walls from './fixtures/gallery.ts'
 
 await RAPIER.init()
@@ -97,8 +99,32 @@ describe('floor-following wall baseboards', () => {
         material.dispose()
       }
     }
-    // and the level walls along the Fortress’ runs down from the east doorway and up toward the Lodge
-    expect(walls.filter(wall => wall.baseboardProfile).map(wall => wall.id).toSorted()).toEqual(['fortress-curve_wall_0', 'fortress-curve_wall_1', 'fortress-curve_wall_10', 'fortress-curve_wall_11', 'oculus-east', 'oculus-west'])
+  })
+  test('the Fortress’ walls stand level along its ramps, round the apse’s east shoulder and the S bend too, their baseboards following the eased floor', () => {
+    const ramped = walls.filter(wall => wall.id.startsWith('fortress-curve_') && wall.baseboardProfile)
+    // the runs and turns down from the east doorway and up toward the Lodge
+    expect(ramped.map(wall => wall.id)).toEqual([0, 1, 2, 3, 10, 11, 12, 13].map(index => `fortress-curve_wall_${index}`))
+    expect(walls.filter(wall => wall.baseboardProfile && !ramped.includes(wall)).map(wall => wall.id).toSorted()).toEqual(['oculus-east', 'oculus-west'])
+    expect(ramped.filter(wall => wall.curveRadius)).toHaveLength(4)
+    const material = new MeshBasicMaterial
+    for (const wall of ramped) {
+      const geometry = createArchitectureGeometry(wall)
+      try {
+        const trim = new Mesh(geometry.trim[0], material)
+        // 23 cm out of its center line, over the baseboard’s cap, at its ends and in steps in between
+        for (let step = 0; step <= 16; step++) {
+          const u = (wall.width / 2 - 0.02) * (step / 8 - 1)
+          const [x, , z] = wallPosition(wall, u, 0, 0)
+          const floor = fortressCurve.floorAt(x, z)! - wall.center[1]
+          const [localX, localZ] = wall.curveRadius ? [(wall.curveRadius - 0.23) * Math.sin(u / wall.curveRadius), wall.curveRadius - (wall.curveRadius - 0.23) * Math.cos(u / wall.curveRadius)] : [u, 0.23]
+          const down = new Raycaster(new Vector3(localX, floor + 1, localZ), new Vector3(0, -1, 0), 0, 2)
+          expect(down.intersectObject(trim)[0].point.y).toBeCloseTo(floor + 0.44, 3)
+        }
+      } finally {
+        geometry.dispose()
+      }
+    }
+    material.dispose()
   })
   test('geometry caching distinguishes mirrored and flat floor profiles', () => {
     const west = walls.find(value => value.id === 'oculus-west')!

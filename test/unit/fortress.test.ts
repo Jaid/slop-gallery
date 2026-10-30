@@ -8,15 +8,17 @@ import {Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/web
 
 import {colliderGeometry, createArchitectureGeometry, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
 import {corniceBands} from '../../src/lib/gallery/architectureDimensions.ts'
+import {easedRampGradient} from '../../src/lib/gallery/easedRamp.ts'
 import {fortressApproach, fortressCurve, fortressDoorway, fortressMouth, fortressOrigin, fortressPassages, fortressTransition} from '../../src/lib/gallery/fortress.ts'
 import lodge from '../../src/lib/gallery/lodge.ts'
-import {oculusPlatform, oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
+import {oculusPlatform} from '../../src/lib/gallery/lowerGallery.ts'
 import oculusApse, {apseArcs, insideApse} from '../../src/lib/gallery/oculusApse.ts'
 import OculusGroundGeometry from '../../src/lib/gallery/OculusGroundGeometry.ts'
 import tower, {towerBridge, towerFloorHeight} from '../../src/lib/gallery/oculusTower.ts'
 import PassageRoute from '../../src/lib/gallery/passages/PassageRoute.ts'
 import RouteVaultGeometry from '../../src/lib/gallery/passages/RouteVaultGeometry.ts'
 import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
+import {wallPosition} from '../../src/lib/placement/wallGeometry.ts'
 import walls, {floorHeight, insideGallery, roomAt} from './fixtures/gallery.ts'
 import {addOculusRailings} from './helpers/oculusRailings.ts'
 
@@ -39,6 +41,8 @@ afterAll(() => {
   }
 })
 const platformY = oculusPlatform.position[1] + oculusPlatform.size[1] / 2
+/** how steeply the curve’s floor climbs `along` meters down it, over 2 cm */
+const slope = (along: number) => (route.at(along + 0.01).y - route.at(along - 0.01).y) / 0.02
 /** stations every half meter along the curve’s center line */
 const stations = Array.from({length: Math.floor(route.length / 0.5) + 1}, (_, i) => route.at(i * 0.5))
 describe('the Fortress’ route round the Oculus', () => {
@@ -91,7 +95,7 @@ describe('the Fortress’ route round the Oculus', () => {
   })
   test('its curve keeps 30 cm behind the apse’s walls, round both shoulders and the crown', () => {
     const arcs = apseArcs()
-    for (const piece of route.pieces.slice(1, 4)) {
+    for (const piece of route.pieces.slice(1, 5)) {
       expect(piece.kind).toBe('arc')
       if (piece.kind !== 'arc') {
         continue
@@ -104,9 +108,7 @@ describe('the Fortress’ route round the Oculus', () => {
       expect(insideApse(x, z, fortressCurve.width / 2)).toBe(false)
     }
   })
-  test('navigation follows its floor, which falls along the run north to the platform’s level, stays there round the apse and climbs as steeply to the Lodge’s', () => {
-    const [run, ...rest] = route.pieces
-    const climb = rest.at(-1)!
+  test('navigation follows its floor, which eases down from the doorway into the turn round the east shoulder, stays at the platform’s level round the apse and eases up from the S bend to the Lodge’s', () => {
     for (const {point: [x, z], y} of stations) {
       expect(fortressCurve.floorAt(x, z)).toBeCloseTo(y, 6)
       const position: Vec3 = [x, y + 1.6, z]
@@ -114,18 +116,34 @@ describe('the Fortress’ route round the Oculus', () => {
       expect(floorHeight(position)).toBeCloseTo(y, 6)
       expect(roomAt(position)).toBe('fortress')
     }
-    expect(run.endY).toBeCloseTo(platformY, 9)
-    expect(climb.kind).toBe('line')
-    expect(climb.startY).toBeCloseTo(platformY, 9)
-    const fall = (run.startY - run.endY) / run.length
-    expect((climb.endY - climb.startY) / climb.length).toBeCloseTo(fall, 9)
-    // Steeper than the Oculus’ side ramps, but no steeper than 15°
-    expect(fall).toBeGreaterThan(oculusRamps[0].rise / oculusRamps[0].run)
-    expect(fall).toBeLessThan(Math.tan(15 * Math.PI / 180))
-    for (const piece of rest.slice(0, -1)) {
+    const [run, eastTurn, ...rest] = route.pieces
+    const [bend, climb] = rest.slice(-2)
+    // The ramp down takes the whole run north and the start of the turn round the east shoulder, and the ramp up the S bend and the run west.
+    expect([run.kind, eastTurn.kind, bend.kind, climb.kind]).toEqual(['line', 'arc', 'arc', 'line'])
+    expect(run.ramp).toBe(eastTurn.ramp)
+    expect(bend.ramp).toBe(climb.ramp)
+    for (const piece of rest.slice(0, -2)) {
+      expect(piece.ramp).toBeUndefined()
       expect([piece.startY, piece.endY]).toEqual([platformY, platformY])
       expect([piece.startHeight, piece.endHeight]).toEqual([5.2, 5.2])
     }
+    for (const [ramp, from, to] of [[run.ramp!, fortressMouth.floorY, platformY], [climb.ramp!, platformY, lodge.floorY]] as const) {
+      expect([ramp.startY, ramp.endY]).toEqual([from, to])
+      // Longer than the straight ramps were, of 8.2 m and 3.9 m
+      expect(ramp.length).toBeGreaterThan(Math.abs(to - from) / Math.tan(14.3 * Math.PI / 180))
+      // All but level where it starts and where it ends, and halfway no steeper than 1 in 4, like the straight ramps were all along
+      expect(Math.abs(slope(ramp.from + 0.02))).toBeLessThan(0.25 / 10)
+      expect(Math.abs(slope(ramp.from + ramp.length - 0.02))).toBeLessThan(0.25 / 10)
+      expect(Math.abs(to - from) * easedRampGradient(ramp.length / 2, ramp.length)).toBeCloseTo(0.25, 9)
+      let previous = from
+      for (let along = ramp.from; along <= ramp.from + ramp.length; along += 0.05) {
+        const {y} = route.at(along)
+        expect(Math.abs(y - previous)).toBeLessThanOrEqual(0.25 * 0.05 + 1e-9)
+        expect((y - previous) * Math.sign(to - from)).toBeGreaterThanOrEqual(0)
+        previous = y
+      }
+    }
+    expect(fortressApproach.path[0][0] - fortressApproach.path[1][0]).toBeGreaterThan(fortressTransition.length + 2)
   })
   test('beside the passage, behind its walls, lies neither the passage nor anything else', () => {
     for (const {point: [x, z], heading, y} of stations) {
@@ -150,27 +168,36 @@ describe('the Fortress’ route round the Oculus', () => {
       expect(roomAt(position)).toBe('fortress')
     }
   })
-  test('its walls follow the route: level along the runs with their baseboards on the sloping floor, curved round the turns, as long as the pieces at their sides', () => {
+  test('its walls follow the route: straight along the runs, curved round the turns, as long as the pieces at their sides, standing level with their baseboards on the floor along the ramps', () => {
     expect(fortressCurve.walls).toHaveLength(route.pieces.length * 2)
     for (const [index, wall] of fortressCurve.walls.entries()) {
       const piece = route.pieces[Math.floor(index / 2)]
       expect(wall.id).toBe(`fortress-curve_wall_${index}`)
       expect(wall.sticky).toBe(false)
       expect(wall.slope).toBeUndefined()
+      // From the lower floor up to 30 cm under the higher crown
+      expect(wall.center[1]).toBe(Math.min(piece.startY, piece.endY))
+      expect(wall.center[1] + wall.height + 0.3).toBeCloseTo(Math.max(piece.startY + piece.startHeight, piece.endY + piece.endHeight), 9)
       if (piece.kind === 'line') {
         expect(wall.width).toBeCloseTo(piece.length, 9)
         expect(wall.curveRadius).toBeUndefined()
-        // From the lower floor up to 30 cm under the higher crown
-        expect(wall.center[1]).toBe(Math.min(piece.startY, piece.endY))
-        expect(wall.center[1] + wall.height + 0.3).toBeCloseTo(Math.max(piece.startY + piece.startHeight, piece.endY + piece.endHeight), 9)
-        const profile = wall.baseboardProfile!
-        expect(profile.map(([u]) => u)).toEqual([-wall.width / 2, wall.width / 2])
-        expect(profile.map(([, y]) => wall.center[1] + y).toSorted((a, b) => a - b)).toEqual([piece.startY, piece.endY].toSorted((a, b) => a - b))
+      } else {
+        expect(Math.abs(wall.curveRadius!)).toBeCloseTo(piece.radius + (index % 2 ? 1 : -1) * Math.sign(piece.sweep) * -fortressCurve.width / 2, 9)
+        expect(wall.width).toBeCloseTo(Math.abs(wall.curveRadius! * piece.sweep), 9)
+      }
+      if (piece.startY === piece.endY) {
+        expect(wall.baseboardProfile).toBeUndefined()
         continue
       }
-      expect(Math.abs(wall.curveRadius!)).toBeCloseTo(piece.radius + (index % 2 ? 1 : -1) * Math.sign(piece.sweep) * -fortressCurve.width / 2, 9)
-      expect(wall.width).toBeCloseTo(Math.abs(wall.curveRadius! * piece.sweep), 9)
-      expect(wall.height).toBeCloseTo(piece.startHeight - 0.3, 9)
+      // Its baseboard runs from end to end through the ramp’s knots, on the floor wherever it bends.
+      const profile = wall.baseboardProfile!
+      expect(profile).toHaveLength(PassageRoute.knots(piece).length + 2)
+      expect(profile[0][0]).toBeCloseTo(-wall.width / 2, 9)
+      expect(profile.at(-1)![0]).toBeCloseTo(wall.width / 2, 9)
+      for (const [u, y] of profile) {
+        const [x, , z] = wallPosition(wall, u, 0, 0)
+        expect(fortressCurve.floorAt(x, z)).toBeCloseTo(wall.center[1] + y, 6)
+      }
     }
   })
   test('the vault closes the passage above a person and springs from behind its walls', () => {
@@ -204,8 +231,12 @@ describe('the Fortress’ route round the Oculus', () => {
     expect(() => new PassageRoute([0, Number.NaN], 0, 0, 3, [{length: 1}])).toThrow(RangeError)
     expect(() => new PassageRoute([0, 0], 0, 0, 0, [{length: 1}])).toThrow(RangeError)
     expect(() => new PassageRoute([0, 0], 0, 0, 3, [{
-      length: 1,
-      heighten: -3,
+      height: 0,
+      steps: [{length: 1}],
+    }])).toThrow(RangeError)
+    expect(() => new PassageRoute([0, 0], 0, 0, 3, [{
+      y: 1,
+      steps: [],
     }])).toThrow(RangeError)
     const quarter = new PassageRoute([0, 0], 0, 0, 3, [{length: 2}, {
       radius: 1,
@@ -215,6 +246,44 @@ describe('the Fortress’ route round the Oculus', () => {
     expect(quarter.end.point[0]).toBeCloseTo(3, 9)
     expect(quarter.end.point[1]).toBeCloseTo(1, 9)
     expect(quarter.end.heading).toBeCloseTo(Math.PI / 2, 9)
+  })
+  test('a ramp eases its floor and its height over all of its runs and turns, straight from knot to knot, which its stations pass through', () => {
+    const ramped = new PassageRoute([0, 0], 0, 0, 3, [{length: 1}, {
+      y: 2,
+      height: 4,
+      steps: [{length: 3}, {
+        radius: 2,
+        angle: Math.PI / 2,
+      }],
+    }, {length: 1}])
+    const [before, run, turn, after] = ramped.pieces
+    const length = 3 + Math.PI
+    expect(run.ramp).toEqual({
+      from: 1,
+      length,
+      startY: 0,
+      endY: 2,
+      startHeight: 3,
+      endHeight: 4,
+    })
+    expect(turn.ramp).toBe(run.ramp)
+    expect([before.ramp, after.ramp]).toEqual([undefined, undefined])
+    expect([ramped.at(1).y, ramped.at(1 + length).y, ramped.end.y]).toEqual([0, 2, 2])
+    expect(ramped.at(1 + length / 2).y).toBeCloseTo(1, 9)
+    expect(ramped.at(1 + length / 2).height).toBeCloseTo(3.5, 9)
+    // Eased, half a meter into it, it has climbed less than half as far as a straight ramp would have.
+    expect(ramped.at(1.5).y).toBeLessThan(2 * 0.5 / length / 2)
+    expect([run.endY, turn.startY]).toEqual([ramped.at(4).y, ramped.at(4).y])
+    // Its knots lie at most 25 cm apart, and every station along it follows the straight floor between them.
+    const knots = [...PassageRoute.knots(run).map(knot => run.from + knot), ...PassageRoute.knots(turn).map(knot => turn.from + knot)]
+    expect(knots.length).toBe(Math.ceil(length / 0.25) - 1)
+    const rampStations = ramped.stations(0, ramped.length, 1 / 32)
+    for (const [i, knot] of knots.entries()) {
+      expect(rampStations.some(({point: [x, z]}) => Math.abs(ramped.project(x, z)!.along - knot) < 1e-6)).toBe(true)
+      if (i) {
+        expect(ramped.at((knots[i - 1] + knot) / 2).y).toBeCloseTo((ramped.at(knots[i - 1]).y + ramped.at(knot).y) / 2, 12)
+      }
+    }
   })
   for (const sprint of [false, true]) {
     for (const returning of [false, true]) {

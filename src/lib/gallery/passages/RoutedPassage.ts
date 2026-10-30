@@ -27,8 +27,8 @@ const ribInset = 0.15
 const chunkStep = 0.05
 
 /**
- * An open-ended passage along a {@link PassageRoute} that winds through turns, may climb or fall and grow taller or lower along its runs, and may have openings in its walls: the same footprint drives its walls, floor and air.
- * Its runs take straight walls and its turns curved ones. A run that climbs or falls stands its walls level, from its lowest floor up to its highest ceiling, with their baseboards following the floor.
+ * An open-ended passage along a {@link PassageRoute} that winds through turns, may climb or fall and grow taller or lower along its ramps, and may have openings in its walls: the same footprint drives its walls, floor and air.
+ * Its runs take straight walls and its turns curved ones. Along a ramp, they stand level, from the piece’s lowest floor up to its highest ceiling, with their baseboards following the floor through the ramp’s knots.
  */
 export default class RoutedPassage {
   /** the room’s id followed by the passage’s own, which its walls’ ids start with */
@@ -162,30 +162,26 @@ export default class RoutedPassage {
     return points
   }
 
-  /** The wall along one side of a piece, `side` −1 on its left and 1 on its right, facing into the passage. Like a room’s, it stops 30 cm short of the ceiling, here the vault’s crown. */
-  private wall(piece: RoutePiece, side: number): Omit<Wall, 'id'> {
+  /** The wall along one side of a piece, standing level from the piece’s lowest floor, without the profile its baseboard follows. */
+  private plainWall(piece: RoutePiece, side: number): Omit<Wall, 'id'> {
     const half = this.width / 2
+    // A ramp climbs or falls and grows taller or lower steadily, so the lowest floor and the highest crown lie at the piece’s ends.
+    const foot = Math.min(piece.startY, piece.endY)
     const common = {
       room: this.room,
+      height: Math.max(piece.startY + piece.startHeight, piece.endY + piece.endHeight) - foot - 0.3,
       sticky: false,
       trimStyle: 'plain',
     } as const
     if (piece.kind === 'line') {
       const middle = PassageRoute.station(piece, piece.length / 2)
       const [dx, dz] = [Math.cos(piece.heading), Math.sin(piece.heading)]
-      // It faces back across the passage, against the side it stands on.
-      const rotation = Math.atan2(side * dz, -side * dx)
-      const foot = Math.min(piece.startY, piece.endY)
-      const top = Math.max(piece.startY + piece.startHeight, piece.endY + piece.endHeight)
-      // A wall runs along its own +x, which turns toward −z as its rotation grows; this is where the piece starts on it.
-      const start = -(dx * Math.cos(rotation) - dz * Math.sin(rotation)) * piece.length / 2
       return {
         ...common,
         center: [middle.point[0] - dz * side * half, foot, middle.point[1] + dx * side * half],
-        rotation,
+        // It faces back across the passage, against the side it stands on.
+        rotation: Math.atan2(side * dz, -side * dx),
         width: piece.length,
-        height: top - foot - 0.3,
-        ...piece.startY === piece.endY ? {} : {baseboardProfile: ([[start, piece.startY - foot], [-start, piece.endY - foot]] as const).toSorted((a, b) => a[0] - b[0])},
       }
     }
     // A clockwise turn’s center lies on its right, where its wall runs closer to it.
@@ -197,11 +193,29 @@ export default class RoutedPassage {
     const [fx, fz] = outer ? [-ux, -uz] : [ux, uz]
     return {
       ...common,
-      center: [piece.center[0] + ux * radius, piece.startY, piece.center[1] + uz * radius],
+      center: [piece.center[0] + ux * radius, foot, piece.center[1] + uz * radius],
       rotation: Math.atan2(fx, fz),
       width: radius * Math.abs(piece.sweep),
-      height: piece.startHeight - 0.3,
       curveRadius: outer ? radius : -radius,
+    }
+  }
+
+  /** The wall along one side of a piece, `side` −1 on its left and 1 on its right, facing into the passage. Like a room’s, it stops 30 cm short of the ceiling, here the vault’s crown. */
+  private wall(piece: RoutePiece, side: number): Omit<Wall, 'id'> {
+    const wall = this.plainWall(piece, side)
+    if (piece.startY === piece.endY) {
+      return wall
+    }
+    // Where the floor meets the wall along its center line, at the piece’s ends and at every knot of its ramp in between
+    const half = this.width / 2
+    const contact = [0, ...PassageRoute.knots(piece), piece.length].map((offset): readonly [number, number] => {
+      const {point: [x, z], heading, y} = PassageRoute.station(piece, offset)
+      const u = wallCoordinates(wall, [x - Math.sin(heading) * side * half, y, z + Math.cos(heading) * side * half])
+      return [Math.min(Math.max(u, -wall.width / 2), wall.width / 2), y - wall.center[1]]
+    })
+    return {
+      ...wall,
+      baseboardProfile: contact.toSorted((a, b) => a[0] - b[0]),
     }
   }
 }

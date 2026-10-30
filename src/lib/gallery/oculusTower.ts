@@ -1,6 +1,7 @@
 import {clamp} from 'math'
 
 import {wallFace} from './architectureDimensions.ts'
+import easedRamp, {easedRampGradient, easedRampKnots} from './easedRamp.ts'
 import lobby from './lobby.ts'
 import lowerGallery, {oculusDrop, oculusPlatform, oculusTowerRadius} from './lowerGallery.ts'
 
@@ -131,31 +132,18 @@ const neckReach = oculusTower.z - endZ
 /** the deck’s outline steps around the round wall at about this angle */
 const arcStep = 2.64 * Math.PI / 180
 const flareSteps = 12
-/** At most this far apart, points along a bridge’s sides follow its climb. */
-const climbStep = 0.25
-/** where a bridge’s climb ends, along it from the tower’s axis: where its fillets begin to flare out into the doorway in its wall */
-const climbEnd = (wallDistance: number) => wallDistance - wallFace - towerBridge.flareRadius
-/** how many straight steps a bridge’s climb takes, each at most `climbStep` long */
-const climbSteps = (wallDistance: number) => Math.ceil((climbEnd(wallDistance) - neckReach) / climbStep)
+/** how long a bridge’s climb is, from the deck’s shoulders to where its fillets begin to flare out into the doorway in its wall */
+const climbLength = (wallDistance: number) => wallDistance - wallFace - towerBridge.flareRadius - neckReach
 /**
  * How far a bridge’s floor lies over the deck `along` meters out from the tower’s axis: level along the deck’s shoulders, then easing up like the ramp to its full rise, which its flared end keeps up to its wall.
- * Like the ramp’s, the eased profile runs straight between the points along the bridge’s sides, so rendering, collision and navigation share it.
+ * The points along the bridge’s sides lie at the eased profile’s knots, so rendering, collision and navigation share it.
  */
 export function towerBridgeLift(along: number, wallDistance: number) {
-  const steps = climbSteps(wallDistance)
-  const step = clamp((along - neckReach) / (climbEnd(wallDistance) - neckReach), 0, 1) * steps
-  const eased = (index: number) => {
-    const t = index / steps
-    return t * t * (3 - 2 * t) * towerBridge.rise
-  }
-  const index = Math.min(Math.floor(step), steps - 1)
-  return eased(index) + (eased(index + 1) - eased(index)) * (step - index)
+  return easedRamp(along - neckReach, climbLength(wallDistance)) * towerBridge.rise
 }
 /** How steeply a bridge’s floor climbs `along` meters out from the tower’s axis, in meters per meter along it. */
 export function towerBridgeGradient(along: number, wallDistance: number) {
-  const length = climbEnd(wallDistance) - neckReach
-  const t = clamp((along - neckReach) / length, 0, 1)
-  return 6 * t * (1 - t) * towerBridge.rise / length
+  return easedRampGradient(along - neckReach, climbLength(wallDistance)) * towerBridge.rise
 }
 /** The bridge’s body: out along its left side, round its left fillet onto the wall’s face, into the wall and across to the right, and back. */
 const bridgeBody = (wallDistance: number): Array<NeckPoint> => {
@@ -163,10 +151,9 @@ const bridgeBody = (wallDistance: number): Array<NeckPoint> => {
   // The fillets meet the plaster’s face, past which the deck reaches on into the wall.
   const face = wallDistance - wallFace
   const mouth = neckHalfWidth + radius
-  const climb = climbSteps(wallDistance)
   const left: Array<NeckPoint> = [
-    // Its side runs straight to the fillet, in steps that follow the climb.
-    ...Array.from({length: climb}, (_, i): NeckPoint => [neckReach + (climbEnd(wallDistance) - neckReach) * i / climb, -neckHalfWidth]),
+    // Its side runs straight to the fillet, through the knots of its climb.
+    ...easedRampKnots(climbLength(wallDistance)).slice(0, -1).map((knot): NeckPoint => [neckReach + knot, -neckHalfWidth]),
     ...Array.from({length: flareSteps + 1}, (_, i): NeckPoint => {
       const angle = i / flareSteps * Math.PI / 2
       return [face - radius + Math.sin(angle) * radius, -mouth + Math.cos(angle) * radius, i === flareSteps ? 'before' : undefined]

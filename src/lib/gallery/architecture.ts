@@ -84,8 +84,8 @@ function cutArchitecture(wall: Wall) {
   if (!Number.isFinite(baseboardHeight) || baseboardHeight <= 0.06) {
     throw new RangeError('A baseboard needs a finite height greater than its 0.06 m cap.')
   }
-  if (wall.curveRadius && (wall.baseboardProfile || wall.slope)) {
-    throw new RangeError('Curved walls currently need a level rectangular profile.')
+  if (wall.curveRadius && wall.slope) {
+    throw new RangeError('Curved walls cannot rake; their baseboards can follow a sloping floor instead.')
   }
   const box = (width: number, height: number, depth: number, x: number, y: number, z: number) => {
     const bendableBlock = new BoxGeometry(width, height, depth, wall.curveRadius ? bendSegments(width, wall.curveRadius) : 1)
@@ -219,8 +219,8 @@ function cutArchitecture(wall: Wall) {
     }
     for (const part of retained) {
       if (wall.curveRadius) {
-        // Cutting the openings leaves long faces beside them; cut again, they curve with the wall instead of running straight across, and the cut’s T-junctions stay a fraction of a millimeter apart.
-        if (wall.holes?.length) {
+        // Cutting the openings and sweeping the baseboards along the floor leave long faces; cut again, they curve with the wall instead of running straight across, and the cut’s T-junctions stay a fraction of a millimeter apart.
+        if (wall.holes?.length || wall.baseboardProfile) {
           sliceAlongX(part, Math.min(wall.width / bendSegments(wall.width, wall.curveRadius), Math.sqrt(8 * Math.abs(wall.curveRadius) * bendTolerance)), -wall.width / 2)
         }
         bendGeometry(part, wall.curveRadius)
