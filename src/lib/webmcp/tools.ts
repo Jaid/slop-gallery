@@ -56,7 +56,7 @@ export default function createWebmcpTools(getBridge: () => WebmcpBridge): Array<
     {
       name: 'dump_knots',
       title: 'Dump current Knots',
-      description: 'Return every Knot currently present in the world with its canonical ID, display name, world position and current session rarity: Knottingham’s exhibition, including unsaved sign edits in its rarity edit mode, or the Knots the gallery showcases, like the Salon’s, once their rooms have loaded.',
+      description: 'Return every Knot currently present in the world with its canonical ID, display name, world position and current session rarity: Knottingham’s exhibition, including unsaved sign edits in its rarity edit mode, or the Knots the gallery showcases in the Salon and the Exhibition, once their rooms have loaded.',
       read: () => getBridge().getKnots(),
     },
     {

@@ -102,8 +102,8 @@ describe('tower-wide tunnel with display rooms reached from the Oculus balcony',
         expect(Math.abs(exhibit.position[2] - display.center[1]) + 0.7).toBeLessThan(display.size[1] / 2)
       }
     }
-    const exhibitKinds = new Set(tunnelDisplays.flatMap(display => display.exhibits.map(exhibit => exhibit.kind)))
-    expect(exhibitKinds.size).toBe(6)
+    const exhibitIds = new Set(tunnelDisplays.flatMap(display => display.exhibits.map(exhibit => exhibit.id)))
+    expect(exhibitIds.size).toBe(6)
   })
   for (const display of tunnelDisplays) {
     const {corners, cutout, door, flights, landing, ramp} = display.stairway

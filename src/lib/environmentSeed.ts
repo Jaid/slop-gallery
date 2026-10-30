@@ -63,6 +63,23 @@ export function environmentPick<T>(seed: number, id: string, items: ReadonlyArra
   return items[Math.floor(environmentRoll(seed, id) * items.length)]
 }
 
+/** A stable choice among the `[item, weight]` pairs for the thing with the given `id` in the environment of `seed`, each item as likely as its share of the weights. */
+export function environmentWeightedPick<T>(seed: number, id: string, items: ReadonlyArray<readonly [T, number]>): T {
+  const total = items.reduce((sum, [, weight]) => sum + weight, 0)
+  if (!(total > 0) || items.some(([, weight]) => !(weight >= 0) || !Number.isFinite(weight))) {
+    throw new Error(`Nothing to pick from for ${id}: it needs finite, non-negative weights that add up to more than zero.`)
+  }
+  let remaining = environmentRoll(seed, id) * total
+  for (const [item, weight] of items) {
+    remaining -= weight
+    if (remaining < 0) {
+      return item
+    }
+  }
+  // Rounding can leave a sliver past the last weight.
+  return items.findLast(([, weight]) => weight > 0)![0]
+}
+
 /** MurmurHash3’s finalizer, which spreads every input bit over the whole 32-bit result. */
 function mix(hash: number) {
   hash ^= hash >>> 16

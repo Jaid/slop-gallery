@@ -116,17 +116,19 @@ for (const chunk of files) {
     fail(`${chunk} imports the Knot material chunk ${leaked}.`)
   }
 }
-// The Salon’s Knot loads its material once it mounts and its announcements once it first speaks.
-const salon = await closure('SalonRoom.js')
-if (salon.has('knottingham.js')) {
-  fail('The Salon loads the Knottingham world with it.')
-}
-const salonKnotChunks = [...salon].filter(chunk => knotChunks.has(chunk))
-if (salonKnotChunks.length) {
-  fail(`The Salon loads ${salonKnotChunks[0]} with it.`)
-}
-const salonSources = await Promise.all([...salon].map(chunk => Bun.file(join(directory, chunk)).text()))
-if (knots.some(knot => salonSources.some(code => code.includes(`"entries/${knot.id}"`)))) {
-  fail('The Salon loads the Knots’ announcements with it.')
+// The showcased Knots of the Salon and the Exhibition load their materials once they mount and their announcements once they first speak.
+for (const [title, chunk] of [['The Salon', 'SalonRoom.js'], ['The Exhibition', 'ExhibitionRoom.js']] as const) {
+  const room = await closure(chunk)
+  if (room.has('knottingham.js')) {
+    fail(`${title} loads the Knottingham world with it.`)
+  }
+  const roomKnotChunks = [...room].filter(other => knotChunks.has(other))
+  if (roomKnotChunks.length) {
+    fail(`${title} loads ${roomKnotChunks[0]} with it.`)
+  }
+  const roomSources = await Promise.all([...room].map(other => Bun.file(join(directory, other)).text()))
+  if (knots.some(knot => roomSources.some(code => code.includes(`"entries/${knot.id}"`)))) {
+    fail(`${title} loads the Knots’ announcements with it.`)
+  }
 }
 console.log(`Verified the build: ${initial.size} chunks load with the page, ${knotChunks.size} Knot materials and ${worldIds.length} worlds load on demand.`)

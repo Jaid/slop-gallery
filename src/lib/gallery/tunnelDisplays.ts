@@ -87,7 +87,7 @@ const slab = (name: string, x: Range, z: Range, top: number, height: number, slo
     size: [Math.abs(x[1] - x[0]), height, Math.hypot(z[1] - z[0], slope * (z[1] - z[0]))] as Vec3,
   }
 }
-const tunnelDisplays = (['west', 'east'] as const).map((side, index) => {
+const tunnelDisplays = (['west', 'east'] as const).map(side => {
   const direction = side === 'west' ? -1 : 1
   const frontX = tunnel.x + direction * tunnel.width / 2
   const backX = frontX + direction * depth
@@ -308,9 +308,9 @@ const tunnelDisplays = (['west', 'east'] as const).map((side, index) => {
     center: [centerX, centerZ] as const,
     size: [depth, width] as const,
     shell,
+    /** where the exhibits stand on the display’s floor, from its north end south */
     exhibits: [-1, 0, 1].map((slot, i) => ({
       id: `tunnel-${side}-exhibit-${i}`,
-      kind: (index * 3 + i) as 0 | 1 | 2 | 3 | 4 | 5,
       position: [centerX, tunnelFloorHeight(centerZ + slot * width / 3), centerZ + slot * width / 3] as Vec3,
     })),
     stairway: {
