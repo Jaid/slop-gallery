@@ -179,7 +179,6 @@ const relations = {
   },
   oculus: {
     rooms: ['lobby', 'exhibition', 'fortress', 'salon', 'moonfall', 'lodge', 'banquet'],
-    floorMirror: 'moonfall',
     keep: [
       'moonfall-wall_west_1',
       'moonfall-wall_west_2',
