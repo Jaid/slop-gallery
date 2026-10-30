@@ -9,16 +9,13 @@ import {BoiserieTrimMaterial, BoiserieWallMaterial} from '../../src/lib/material
 import {calacatta, CheckeredMarbleFloorMaterial, checkeredTile, portoro} from '../../src/lib/materials/marble/index.ts'
 import walls, {rooms} from './fixtures/gallery.ts'
 import samplePortraits from './fixtures/portraits.ts'
+import lightness from './helpers/lightness.ts'
 
 const banquet = rooms.find(room => room.id === 'banquet')!
 const banquetWalls = walls.filter(wall => wall.room === 'banquet')
 const layout = {
   origin: banquetFloorOrigin,
   tile: banquetFloorTile,
-}
-const lightness = (hex: string) => {
-  const value = Number.parseInt(hex.slice(1), 16)
-  return ((value >> 16 & 255) + (value >> 8 & 255) + (value & 255)) / 3
 }
 const corniceBand = (height: number) => height - 0.47
 describe('The Banquet’s checkered marble floor', () => {

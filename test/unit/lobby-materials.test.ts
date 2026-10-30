@@ -6,13 +6,10 @@ import {floorTile, roomFloorPlan} from '../../src/lib/gallery/floors.ts'
 import PolishedBrassMaterial from '../../src/lib/materials/PolishedBrassMaterial.ts'
 import {lobbyFloorTravertine, lobbyWallTravertine, TravertineFloorMaterial, travertinePalette, travertineTile, TravertineWallMaterial} from '../../src/lib/materials/travertine/index.ts'
 import {rooms} from './fixtures/gallery.ts'
+import lightness from './helpers/lightness.ts'
 
 const lobby = rooms.find(room => room.id === 'lobby')!
 const origin = [lobby.center[0] - lobby.size[0] / 2, lobby.center[1] - lobby.size[1] / 2] as const
-const lightness = (hex: string) => {
-  const value = Number.parseInt(hex.slice(1), 16)
-  return ((value >> 16 & 255) + (value >> 8 & 255) + (value & 255)) / 3
-}
 const layout = {
   origin,
   tile: floorTile,

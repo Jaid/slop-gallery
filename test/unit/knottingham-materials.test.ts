@@ -6,14 +6,11 @@ import {PerspectiveCamera} from 'three/webgpu'
 import {knotFloorOrigin, knotFloorTile, knotGalleryBounds, knotGalleryCenter} from '../../src/lib/gallery/knotGallery.ts'
 import {CheckeredMarbleFloorMaterial, checkeredTile, cremaMarfil, neroMarquina} from '../../src/lib/materials/marble/index.ts'
 import VelvetWallMaterial, {oxbloodVelvet} from '../../src/lib/materials/VelvetWallMaterial.ts'
+import lightness from './helpers/lightness.ts'
 
 const layout = {
   origin: knotFloorOrigin,
   tile: knotFloorTile,
-}
-const lightness = (hex: string) => {
-  const value = Number.parseInt(hex.slice(1), 16)
-  return ((value >> 16 & 255) + (value >> 8 & 255) + (value & 255)) / 3
 }
 describe('Knottingham’s checkered marble floor', () => {
   test('whole tiles run from the north wall to the south wall for any number of rows', () => {
