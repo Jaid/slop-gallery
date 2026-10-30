@@ -45,8 +45,9 @@ export type RouteArc = PieceBase & {
   sweep: number
 }
 export type RoutePiece = RouteArc | RouteLine
-/** a point on a route’s centerline with the direction it runs in there, the floor’s height and how tall the passage is over it, from its floor to its crown */
+/** a point on a route’s centerline, `along` meters down it, with the direction it runs in there, the floor’s height and how tall the passage is over it, from its floor to its crown */
 export type RouteStation = {
+  along: number
   /** the angle of the direction of travel in the floor plan, atan2 of its z and x */
   heading: number
   height: number
@@ -106,32 +107,8 @@ export default class PassageRoute {
     return easedRampKnots(ramp.length).map(knot => ramp.from + knot - piece.from).filter(offset => offset > tolerance && offset < piece.length - tolerance)
   }
 
-  /** The station `offset` meters into a piece. */
-  static station(piece: RoutePiece, offset: number): RouteStation {
-    const fraction = piece.length ? offset / piece.length : 0
-    const {y, height} = piece.ramp ? rampLevels(piece.ramp, piece.from + offset - piece.ramp.from) : {
-      y: piece.startY,
-      height: piece.startHeight,
-    }
-    if (piece.kind === 'line') {
-      const [dx, dz] = direction(piece.heading)
-      return {
-        point: [piece.start[0] + dx * offset, piece.start[1] + dz * offset],
-        heading: piece.heading,
-        y,
-        height,
-      }
-    }
-    const angle = piece.startAngle + piece.sweep * fraction
-    return {
-      point: [piece.center[0] + Math.cos(angle) * piece.radius, piece.center[1] + Math.sin(angle) * piece.radius],
-      heading: angle + Math.sign(piece.sweep) * Math.PI / 2,
-      y,
-      height,
-    }
-  }
-
-  private static projectOnto(piece: RoutePiece, x: number, z: number): RouteProjection | undefined {
+  /** Where the point lies relative to the piece, or undefined beside its span. */
+  static projectOnto(piece: RoutePiece, x: number, z: number): RouteProjection | undefined {
     if (piece.kind === 'line') {
       const [dx, dz] = direction(piece.heading)
       const [rx, rz] = rightOf(piece.heading)
@@ -160,6 +137,33 @@ export default class PassageRoute {
       along: piece.from + Math.min(angle, sweep) * piece.radius,
       // A clockwise turn has its center on the right.
       right: Math.sign(piece.sweep) * (piece.radius - distance),
+    }
+  }
+
+  /** The station `offset` meters into a piece. */
+  static station(piece: RoutePiece, offset: number): RouteStation {
+    const fraction = piece.length ? offset / piece.length : 0
+    const {y, height} = piece.ramp ? rampLevels(piece.ramp, piece.from + offset - piece.ramp.from) : {
+      y: piece.startY,
+      height: piece.startHeight,
+    }
+    if (piece.kind === 'line') {
+      const [dx, dz] = direction(piece.heading)
+      return {
+        along: piece.from + offset,
+        point: [piece.start[0] + dx * offset, piece.start[1] + dz * offset],
+        heading: piece.heading,
+        y,
+        height,
+      }
+    }
+    const angle = piece.startAngle + piece.sweep * fraction
+    return {
+      along: piece.from + offset,
+      point: [piece.center[0] + Math.cos(angle) * piece.radius, piece.center[1] + Math.sin(angle) * piece.radius],
+      heading: angle + Math.sign(piece.sweep) * Math.PI / 2,
+      y,
+      height,
     }
   }
 
@@ -261,6 +265,7 @@ export default class PassageRoute {
     this.pieces = pieces
     this.length = along
     this.end = {
+      along,
       point,
       heading: current,
       y: floor,
@@ -278,13 +283,17 @@ export default class PassageRoute {
   /** Where the point lies relative to the nearest piece whose span it lies beside, or undefined beside none of them. */
   project(x: number, z: number): RouteProjection | undefined {
     let best: RouteProjection | undefined
-    for (const piece of this.pieces) {
-      const projection = PassageRoute.projectOnto(piece, x, z)
-      if (projection && (!best || Math.abs(projection.right) < Math.abs(best.right))) {
+    for (const projection of this.projections(x, z)) {
+      if (!best || Math.abs(projection.right) < Math.abs(best.right)) {
         best = projection
       }
     }
     return best
+  }
+
+  /** Where the point lies relative to each piece whose span it lies beside, in the route’s order. */
+  projections(x: number, z: number) {
+    return this.pieces.flatMap(piece => PassageRoute.projectOnto(piece, x, z) ?? [])
   }
 
   /** Stations between two distances along the route: where they start and end, at every joint between its pieces, at every knot of its ramps and in steps of at most `turnStep` radians around its turns. */

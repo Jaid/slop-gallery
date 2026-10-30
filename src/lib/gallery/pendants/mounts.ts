@@ -40,10 +40,12 @@ export function passagePendantMounts(passage: Passage, surfaces: ReadonlyArray<B
   })
 }
 
-/** The light of a lantern `along` meters down a routed passage, under its crown. */
+/** The light of a lantern `along` meters down a routed passage, under its crown, which lies midway between its walls. */
 export function routeLight(passage: RoutedPassage, along: number): Vec3 {
-  const {point: [x, z], y, height} = passage.route.at(along)
-  return [x, y + height - passageLightDrop, z]
+  const station = passage.route.at(along)
+  const {point: [x, z], heading, y, height} = station
+  const middle = (passage.reach(station, 1) - passage.reach(station, -1)) / 2
+  return [x - Math.sin(heading) * middle, y + height - passageLightDrop, z + Math.cos(heading) * middle]
 }
 
 /** Lights hung from a routed passage’s vault at the distances along its route, each sliding along the route to a spot wide enough for its canopy. */

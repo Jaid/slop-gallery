@@ -1,4 +1,4 @@
-import type {RouteOpening} from './passages/RoutedPassage.ts'
+import type {RouteOpening, RouteOutline} from './passages/RoutedPassage.ts'
 import type {Vec3} from './types.ts'
 
 import {corniceBands, openingCasingFronts, wallOpeningTrim} from './architectureDimensions.ts'
@@ -245,7 +245,27 @@ for (const {arc, angle, width: openingWidth} of apseOpenings.flatMap(opening => 
     }
   }
 }
-export const fortressCurve = new RoutedPassage('curve', 'fortress', route, width, curveOpenings)
+/** where the outer wall north of the apse stands, touching the curve’s outer wall over the middle of the crown */
+const northWallZ = crown.center[1] - crown.radius - offset - width / 2
+/** where the outer wall of the run west toward the Lodge starts, at the end of the S bend */
+const climbCorner = [bendCenterX, lodge.tunnelZ - width / 2] as const
+/**
+ * Round the outside of the curve, from the run north along the Oculus to the run west toward the Lodge, its outer walls stand straight, with room for portraits: on north along the run’s, to a corner with the one north of the apse, which a 45° chamfer brings back to the run west.
+ * The curve widens out to them round the apse’s shoulders, most of all in the corner behind the east one.
+ */
+const outline: RouteOutline = {
+  side: 1,
+  corners: [
+    [runX + width / 2, curveZ],
+    [runX + width / 2, northWallZ],
+    [climbCorner[0] + climbCorner[1] - northWallZ, northWallZ],
+    climbCorner,
+  ],
+}
+export const fortressCurve = new RoutedPassage('curve', 'fortress', route, width, {
+  openings: curveOpenings,
+  outline,
+})
 /** From the curve west to the Lodge’s east wall, where it turns into the Lodge’s timber. */
 export const fortressApproach = new Passage('approach', 'fortress', [[approachX, lodge.tunnelZ], [lodge.center[0] + lodge.size[0] / 2, lodge.tunnelZ]], lodge.floorY, width, approachHeight)
 /** The approach’s last meter trades the castle stone for the Lodge’s timber, instead of switching at the doorway. */

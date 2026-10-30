@@ -16,6 +16,7 @@ import oculusApse, {apseArcs, insideApse} from '../../src/lib/gallery/oculusApse
 import OculusGroundGeometry from '../../src/lib/gallery/OculusGroundGeometry.ts'
 import tower, {towerBridge, towerFloorHeight} from '../../src/lib/gallery/oculusTower.ts'
 import PassageRoute from '../../src/lib/gallery/passages/PassageRoute.ts'
+import RoutedPassage from '../../src/lib/gallery/passages/RoutedPassage.ts'
 import RouteVaultGeometry from '../../src/lib/gallery/passages/RouteVaultGeometry.ts'
 import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
 import {wallPosition} from '../../src/lib/placement/wallGeometry.ts'
@@ -146,9 +147,11 @@ describe('the Fortress’ route round the Oculus', () => {
     expect(fortressApproach.path[0][0] - fortressApproach.path[1][0]).toBeGreaterThan(fortressTransition.length + 2)
   })
   test('beside the passage, behind its walls, lies neither the passage nor anything else', () => {
-    for (const {point: [x, z], heading, y} of stations) {
+    for (const station of stations) {
+      const {point: [x, z], heading, y} = station
       for (const side of [-1, 1]) {
-        const beside: Vec3 = [x - Math.sin(heading) * side * (fortressCurve.width / 2 + 0.2), y + 1.6, z + Math.cos(heading) * side * (fortressCurve.width / 2 + 0.2)]
+        const out = fortressCurve.reach(station, side) + 0.2
+        const beside: Vec3 = [x - Math.sin(heading) * side * out, y + 1.6, z + Math.cos(heading) * side * out]
         expect(fortressCurve.floorAt(beside[0], beside[2])).toBeUndefined()
         expect(insideGallery(beside)).toBe(false)
       }
@@ -168,11 +171,15 @@ describe('the Fortress’ route round the Oculus', () => {
       expect(roomAt(position)).toBe('fortress')
     }
   })
-  test('its walls follow the route: straight along the runs, curved round the turns, as long as the pieces at their sides, standing level with their baseboards on the floor along the ramps', () => {
-    expect(fortressCurve.walls).toHaveLength(route.pieces.length * 2)
-    for (const [index, wall] of fortressCurve.walls.entries()) {
-      const piece = route.pieces[Math.floor(index / 2)]
-      expect(wall.id).toBe(`fortress-curve_wall_${index}`)
+  test('its walls follow the route on its inside and along the run west: straight along the runs, curved round the turns, as long as the pieces at their sides, standing level with their baseboards on the floor along the ramps', () => {
+    // Every piece’s left wall in turn, but the outline’s walls in place of the right ones of all but the run west, after the first left one
+    const sides = [[0, -1], [1, -1], [2, -1], [3, -1], [4, -1], [5, -1], [6, -1], [6, 1]] as const
+    const followers = fortressCurve.walls.filter((_, index) => index === 0 || index > 3)
+    expect(followers).toHaveLength(sides.length)
+    for (const [index, wall] of followers.entries()) {
+      const [pieceIndex, side] = sides[index]
+      const piece = route.pieces[pieceIndex]
+      expect(wall.id).toBe(`fortress-curve_wall_${index ? index + 3 : 0}`)
       expect(wall.sticky).toBe(false)
       expect(wall.slope).toBeUndefined()
       // From the lower floor up to 30 cm under the higher crown
@@ -182,7 +189,7 @@ describe('the Fortress’ route round the Oculus', () => {
         expect(wall.width).toBeCloseTo(piece.length, 9)
         expect(wall.curveRadius).toBeUndefined()
       } else {
-        expect(Math.abs(wall.curveRadius!)).toBeCloseTo(piece.radius + (index % 2 ? 1 : -1) * Math.sign(piece.sweep) * -fortressCurve.width / 2, 9)
+        expect(Math.abs(wall.curveRadius!)).toBeCloseTo(piece.radius - side * Math.sign(piece.sweep) * fortressCurve.width / 2, 9)
         expect(wall.width).toBeCloseTo(Math.abs(wall.curveRadius! * piece.sweep), 9)
       }
       if (piece.startY === piece.endY) {
@@ -200,26 +207,84 @@ describe('the Fortress’ route round the Oculus', () => {
       }
     }
   })
-  test('the vault closes the passage above a person and springs from behind its walls', () => {
+  test('the vault closes the passage above a person, its crown midway between its walls, and springs from behind them', () => {
     const material = new MeshBasicMaterial
     const shell = new Mesh(curve.shell, material)
     try {
-      for (const [index, {point: [x, z], heading, y, height}] of stations.entries()) {
+      for (const [index, station] of stations.entries()) {
         if (index % 3 !== 1) {
           continue
         }
-        const up = new Raycaster(new Vector3(x, y + 1.6, z), new Vector3(0, 1, 0))
+        const {point: [x, z], heading, y, height} = station
+        const [left, right] = [-1, 1].map(side => fortressCurve.reach(station, side))
+        const middle = (right - left) / 2
+        const up = new Raycaster(new Vector3(x - Math.sin(heading) * middle, y + 1.6, z + Math.cos(heading) * middle), new Vector3(0, 1, 0))
         expect(up.intersectObject(shell)[0].point.y - y).toBeCloseTo(height, 1)
         for (const side of [-1, 1]) {
           const direction = new Vector3(-Math.sin(heading) * side, 0, Math.cos(heading) * side)
           // Below the springing, nothing of the vault stands inside the walls’ faces.
-          const low = new Raycaster(new Vector3(x, y + 0.6, z), direction, 0, fortressCurve.width / 2 - 0.105)
+          const low = new Raycaster(new Vector3(x, y + 0.6, z), direction, 0, fortressCurve.reach(station, side) - 0.105)
           expect(low.intersectObject(shell)).toHaveLength(0)
         }
       }
     } finally {
       material.dispose()
     }
+  })
+  test('outside the curve, from the run north to the run west, straight walls stand: on along the run north, past the apse’s crown, touching the curve where the gate opens, and back at 45° to the run west', () => {
+    const {outline} = fortressCurve
+    const [, , bend, climb] = route.pieces.slice(-4)
+    expect(outline).toMatchObject({
+      side: 1,
+      from: 0,
+      to: climb.from,
+    })
+    expect(bend.kind).toBe('arc')
+    const outer = fortressCurve.walls.slice(1, 4)
+    const [east, north, chamfer] = outer
+    for (const [index, wall] of outer.entries()) {
+      expect(wall.curveRadius).toBeUndefined()
+      expect(wall.sticky).toBe(false)
+      // From one corner to the next
+      const ends = [-1, 1].map(side => wallPosition(wall, side * wall.width / 2, 0, 0)).map(([x, , z]) => [x, z])
+      const corners = outline!.corners.slice(index, index + 2)
+      for (const corner of corners) {
+        expect(ends.some(([x, z]) => Math.hypot(x - corner[0], z - corner[1]) < 1e-9)).toBe(true)
+      }
+      // Facing into the passage: half a meter in front of it lies its floor, half a meter behind it nothing.
+      for (const share of [0.2, 0.5, 0.8]) {
+        const u = wall.width * (share - 0.5)
+        const [frontX, , frontZ] = wallPosition(wall, u, 0, 0.5)
+        const [backX, , backZ] = wallPosition(wall, u, 0, -0.5)
+        expect(fortressCurve.floorAt(frontX, frontZ)).toBeDefined()
+        expect(fortressCurve.floorAt(backX, backZ)).toBeUndefined()
+      }
+      // From the lowest floor along it up to 30 cm under the highest crown, its baseboard on the floor wherever that changes
+      const floors = Array.from({length: 41}, (_, step) => {
+        const [x, , z] = wallPosition(wall, wall.width * (step / 40 - 0.5), 0, 0)
+        return fortressCurve.stationAt(x, z)!
+      })
+      expect(wall.center[1]).toBeCloseTo(Math.min(...floors.map(({y}) => y)), 9)
+      expect(wall.center[1] + wall.height + 0.3).toBeCloseTo(platformY + 5.2, 9)
+      for (const [u, y] of wall.baseboardProfile ?? []) {
+        const [x, , z] = wallPosition(wall, u, 0, 0)
+        expect(fortressCurve.floorAt(x, z)).toBeCloseTo(wall.center[1] + y, 6)
+      }
+    }
+    // On along the run north, from the mouth’s east wall, to the line the curve’s outer wall touched over the middle of the crown, where the gate opens
+    const mouthEast = fortressMouth.walls.find(wall => wall.rotation === east.rotation && Math.abs(wall.center[0] - east.center[0]) < 1e-9)
+    expect(mouthEast).toBeDefined()
+    expect(north.center[2]).toBeCloseTo(fortressOrigin[2] - fortressCurve.width / 2, 9)
+    expect(Math.abs(Math.abs(chamfer.rotation) - Math.PI / 4)).toBeLessThan(1e-9)
+    // The ramp down runs along the run north’s, the ramp up along the chamfer; the north wall stands level.
+    expect(east.baseboardProfile).toBeDefined()
+    expect(north.baseboardProfile).toBeUndefined()
+    expect(chamfer.baseboardProfile).toBeDefined()
+    // Never narrower than before, and widest in the corner behind the apse’s east shoulder
+    const reaches = stations.map(station => fortressCurve.reach(station, 1))
+    expect(Math.min(...reaches)).toBeGreaterThanOrEqual(fortressCurve.width / 2 - 1e-9)
+    expect(Math.max(...reaches)).toBeGreaterThan(5.5)
+    expect(fortressCurve.reach(route.at(climb.from + 0.5), 1)).toBe(fortressCurve.width / 2)
   })
   test('rejects routes and passages that cannot be built', () => {
     expect(() => new PassageRoute([0, 0], 0, 0, 3, [])).toThrow(RangeError)
@@ -238,6 +303,24 @@ describe('the Fortress’ route round the Oculus', () => {
       y: 1,
       steps: [],
     }])).toThrow(RangeError)
+    // Heading east, a passage 2 m wide has its right walls 1 m to the south.
+    const run = new PassageRoute([0, 0], 0, 0, 3, [{length: 4}, {length: 2}])
+    const outlined = (...corners: ReadonlyArray<readonly [number, number]>) => new RoutedPassage('test', 'fortress', run, 2, {
+      outline: {
+        side: 1,
+        corners,
+      },
+    })
+    const widened = outlined([0, 1], [2, 3], [4, 1])
+    expect(widened.reach(run.at(2), 1)).toBeCloseTo(3, 9)
+    expect(widened.reach(run.at(2), -1)).toBe(1)
+    expect(widened.reach(run.at(5), 1)).toBe(1)
+    expect(widened.floorAt(2, 2.5)).toBe(0)
+    expect(widened.walls.map(wall => wall.curveRadius === undefined && wall.width)).toEqual([4, Math.hypot(2, 2), Math.hypot(2, 2), 2, 2])
+    // Ending off a joint, cutting into the passage or doubling back
+    expect(() => outlined([0, 1], [3, 1])).toThrow(RangeError)
+    expect(() => outlined([0, 1], [2, 0.5], [4, 1])).toThrow(RangeError)
+    expect(() => outlined([0, 1], [3, 3], [1, 4], [4, 1])).toThrow(RangeError)
     const quarter = new PassageRoute([0, 0], 0, 0, 3, [{length: 2}, {
       radius: 1,
       angle: Math.PI / 2,
