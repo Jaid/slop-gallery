@@ -18,7 +18,7 @@ export type Opening = {
   rooms: readonly [RoomId, RoomId]
 }
 
-/** the openings between rooms that RoomCulling looks through, as global wall ids with the names of their holes; passages list the holes at both of their ends. The glazed Lobby floor into the Oculus is an opening too, but takes its box from the Lobby’s floor. */
+/** the openings between rooms that RoomCulling looks through, as global wall ids with the names of their holes; passages list the holes at both of their ends. The glazed Lobby floor into the Oculus is an opening too, but takes its box from the Lobby’s floor, and so is the Vesper’s lantern, which looks out onto the Lobby’s vault. */
 export const openings: ReadonlyArray<Opening> = [
   {
     rooms: ['lobby', 'vesper'],
@@ -97,8 +97,6 @@ const relations = {
     rooms: ['vesper', 'banquet', 'antechamber', 'salon', 'oculus', 'sienna', 'exhibition', 'fortress'],
     floorMirror: 'base',
     keep: [
-      'vesper-ceiling_north',
-      'vesper-ceiling_south',
       'banquet-led_north',
       'banquet-led_middle',
       'banquet-led_south',
@@ -125,8 +123,6 @@ const relations = {
       'lobby-chandelier_north',
       'lobby-chandelier_middle',
       'lobby-chandelier_south',
-      'vesper-ceiling_north',
-      'vesper-ceiling_south',
     ],
   },
   antechamber: {
@@ -136,8 +132,6 @@ const relations = {
       'lobby-chandelier_north',
       'lobby-chandelier_middle',
       'lobby-chandelier_south',
-      'vesper-ceiling_north',
-      'vesper-ceiling_south',
       'banquet-led_north',
       'banquet-led_middle',
       'banquet-led_south',
@@ -153,8 +147,6 @@ const relations = {
       'lobby-chandelier_north',
       'lobby-chandelier_middle',
       'lobby-chandelier_south',
-      'vesper-ceiling_north',
-      'vesper-ceiling_south',
       'corridor-lantern_north',
       'corridor-lantern_middle',
       'corridor-lantern_south',
@@ -164,8 +156,6 @@ const relations = {
     rooms: ['banquet', 'lobby', 'vesper', 'antechamber', 'oculus', 'sienna', 'exhibition'],
     floorMirror: 'base',
     keep: [
-      'vesper-ceiling_north',
-      'vesper-ceiling_south',
       'banquet-led_north',
       'banquet-led_middle',
       'banquet-led_south',
@@ -187,8 +177,6 @@ const relations = {
   corridor: {
     rooms: ['sienna', 'lodge', 'vesper', 'fortress'],
     keep: [
-      'vesper-ceiling_north',
-      'vesper-ceiling_south',
       'sienna-chandelier',
       'lodge-fire',
       'lodge-chandelier',
@@ -199,8 +187,6 @@ const relations = {
     floorMirror: 'moonfall',
     // The staff stairways open onto the balcony, and the Fortress’ lantern hangs just past the north arch.
     keep: [
-      'vesper-ceiling_north',
-      'vesper-ceiling_south',
       'banquet-led_north',
       'banquet-led_middle',
       'banquet-led_south',
@@ -239,8 +225,6 @@ const relations = {
     floorMirror: 'moonfall',
     // The tunnel sees what the Oculus sees, so it keeps the lamps the Oculus keeps beyond its own.
     keep: [
-      'vesper-ceiling_north',
-      'vesper-ceiling_south',
       'banquet-led_north',
       'banquet-led_middle',
       'banquet-led_south',

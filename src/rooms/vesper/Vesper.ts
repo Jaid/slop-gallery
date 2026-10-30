@@ -3,12 +3,12 @@ import type {FloorSize, GroundSurface} from '../base/Room.ts'
 import {Geofence} from 'geofency'
 
 import {groundFenceY} from '#src/lib/gallery/floors.ts'
+import {vesperLanternRidgeY} from '#src/lib/gallery/vesperCeiling.ts'
 
 import Room from '../base/Room.ts'
 import floorBox from '../lib/floorBox.ts'
 import footprint from '../lib/footprint.ts'
 import cameras from './cameras.ts'
-import lamps from './lamps.ts'
 import slots from './slots.ts'
 import spawns from './spawns.ts'
 import walls from './walls.ts'
@@ -16,11 +16,13 @@ import walls from './walls.ts'
 const size: FloorSize = [12, 16]
 const height = 5.8
 
+/** Lit through the lantern crowning its coved ceiling, without lamps of its own. */
 export default class Vesper extends Room {
-  override readonly air = floorBox(size, 0, height)
+  // Up to the ridge of the lantern.
+  override readonly air = floorBox(size, 0, vesperLanternRidgeY)
   override readonly color = '#7b9986'
   override readonly description = 'Old masters. New misunderstandings.'
-  // Everything over its floor plan from the slab up.
+  // Everything over its floor plan from the slab up, the cove and the lantern included.
   override readonly fence = new Geofence([{
     ...footprint([this.air]),
     floor: groundFenceY,
@@ -35,7 +37,6 @@ export default class Vesper extends Room {
       title: 'The Vesper',
       cameras,
       spawns,
-      lamps,
       skybox: 'sky',
       slots,
       walls,
