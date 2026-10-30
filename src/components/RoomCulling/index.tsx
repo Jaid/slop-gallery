@@ -11,7 +11,6 @@ import {roomBoxes, roomContaining, roomsAt, roomsOverlapping, screenRect, visibl
 import {getFloorReflectionHeight} from '#src/lib/materials/FloorMaterial.ts'
 import {GalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
 import {lightActive} from '#src/lib/rendering/lightLevels.ts'
-import {readLoading} from '#src/lib/rendering/loading.ts'
 import ShadowCache from '#src/lib/rendering/ShadowCache.ts'
 import relations from '#src/worlds/gallery/relations.ts'
 
@@ -27,10 +26,6 @@ type Placement = {
   world: Box3
 }
 
-/** whether culling already runs behind the loading screen, so that only what the start view sees gets built there */
-const cullsWhileLoading = readLoading() !== 'full'
-/** whether streaming only ever builds the rooms related to the camera’s, see {@link GalleryRenderer.setStreaming} */
-const streamsRelatedOnly = readLoading() === 'lazy'
 const viewProjection = new Matrix4
 const position = new Vector3
 const mirrored = new Box3
@@ -93,8 +88,8 @@ const relatedRegions = (from: ReadonlyArray<RoomId>) => {
  * Leaves out what the camera can’t see from the rooms it is in. An object belongs to every room its bounds reach into, and a room behind an opening only shows through the part of the screen the opening covers, up to three openings deep.
  * Rooms out of sight drop out of every pass of the frame: the camera, its reflection and the lamps’ shadow maps. Objects in a room in sight that miss its openings on screen only drop out of the camera and its reflection, so the shadows they cast stay.
  * The sun shines from outside every room, through openings and skylights that rooms out of sight may frame, so its shadow map keeps them all; otherwise the patches of sunlight would change shape whenever a room leaves the view.
- * With `?loading=stream`, the default, or `lazy`, culling and the shadow cache start behind the loading screen, where culling leaves out every room but the camera’s, in the sun’s shadow map too. Objects in the camera’s rooms and the rooms related to them stream in first afterward.
- * Shadow maps only update when something in their light’s reach changes, and lights in hidden rooms or switched off by their room list wait until they matter again. With `lazy`, the sun’s map also renders again whenever a room becomes related for the first time, since it leaves out what streaming hasn’t built. Lights themselves stay, since a different set of lights would recompile every lit material.
+ * Culling and the shadow cache start behind the loading screen, where culling leaves out every room but the camera’s, in the sun’s shadow map too, so that only what the start view sees gets built there. Objects in the camera’s rooms and the rooms related to them stream in first afterward.
+ * Shadow maps only update when something in their light’s reach changes, and lights in hidden rooms or switched off by their room list wait until they matter again. Lights themselves stay, since a different set of lights would recompile every lit material.
  */
 export default function RoomCulling() {
   const renderer = useThree(state => state.renderer)
@@ -103,14 +98,12 @@ export default function RoomCulling() {
   const galleryRenderer = renderer instanceof GalleryRenderer ? renderer : null
   // A layout effect, so that culling is in place before the first frame builds what the start view can’t see.
   useLayoutEffect(() => {
-    if (!(ready || cullsWhileLoading) || !galleryRenderer) {
+    if (!galleryRenderer) {
       return
     }
     const {hidden, hiddenFromView, shadowCameras, unculledCameras} = galleryRenderer
     const shadows = new ShadowCache
     const related = new Set<RoomId>
-    /** every room that has been related to the camera’s rooms since culling started */
-    const prioritized = new Set<RoomId>
     /** shadow cameras refreshed for streaming since every incomplete one last had its turn */
     const refreshed = new Set<Camera>
     const cull = (camera: Camera) => {
@@ -129,14 +122,6 @@ export default function RoomCulling() {
           related.add(other)
         }
       }
-      let widened = false
-      for (const room of related) {
-        if (prioritized.has(room)) {
-          continue
-        }
-        prioritized.add(room)
-        widened = true
-      }
       // Set inside the traversal, which TypeScript can’t follow.
       let refreshing = false as boolean
       const inSight = (rects: ReadonlyArray<ScreenRect>, box: Box3) => {
@@ -151,10 +136,6 @@ export default function RoomCulling() {
           // Behind the loading screen, the sun would otherwise build every hidden room.
           if ((light as DirectionalLight).isDirectionalLight && ready) {
             unculledCameras.add(light.shadow.camera)
-            // With `lazy`, the sun’s map leaves out the rooms streaming won’t build without waiting for them. A room becoming related changes nothing in the sun’s reach, so the map renders again to take the room in. Otherwise the sun shines through its ceiling and the sun shafts fill its air.
-            if (widened && streamsRelatedOnly) {
-              light.shadow.needsUpdate = true
-            }
           }
           // One shadow map missing objects renders again per frame, each in turn, since rendering them all every frame costs more than building their objects.
           if (!refreshing && galleryRenderer.shadowIncomplete(light.shadow.camera) && !refreshed.has(light.shadow.camera)) {

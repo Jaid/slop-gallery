@@ -18,7 +18,6 @@ import {readAlbedo} from './rendering/albedo.ts'
 import {readAntiAliasing} from './rendering/antiAliasing.ts'
 import {readGraphicsModeName} from './rendering/graphicsMode.ts'
 import {readEditLamps, readShowLamps} from './rendering/lightLevels.ts'
-import {readLoading} from './rendering/loading.ts'
 import {readNear} from './rendering/near.ts'
 import {readPmrem} from './rendering/pmrem.ts'
 import {readScale} from './rendering/scale.ts'
@@ -51,7 +50,6 @@ const readers: Record<string, Reader> = {
   graphics: readGraphicsModeName,
   intro_narration: readIntroNarration,
   knot_rotation: readKnotRotation,
-  loading: readLoading,
   near: readNear,
   pmrem: readPmrem,
   portrait_set: readPortraitSet,

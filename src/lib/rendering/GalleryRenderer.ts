@@ -124,8 +124,6 @@ const initialFreshBuildCost = 30
 const slowPipelineMs = 500
 /** frames in a row without anything left to stream after which streaming stops */
 const streamedIdleFrames = 300
-/** how streaming picks the objects to build: `all` builds the rest of the scene after the prioritized objects, `priority` only ever builds prioritized ones */
-export type StreamingMode = 'all' | 'priority'
 
 /**
  * Instruments real lifecycle operations and keeps per-frame work in the frame scene to once per frame:
@@ -188,7 +186,7 @@ export class GalleryRenderer extends WebgpuRenderer {
   private sharedBuildCost = 1
   private streamFound = false
   private streamIdle = 0
-  private streaming: StreamingMode | null = null
+  private streaming = false
   private streamPriority: ((object: Object3D) => boolean) | null = null
   private streamPriorityFound = false
   private streamRest = false
@@ -241,11 +239,6 @@ export class GalleryRenderer extends WebgpuRenderer {
   /** the number of render pipelines that are still compiling in the background */
   get pendingPipelines() {
     return this.compilingPipelines.size
-  }
-
-  /** whether the last warming frame drew every object in the frame scene and no pipeline is still compiling */
-  get warm() {
-    return this.warmedAll && this.compilingPipelines.size === 0
   }
 
   /** whether the last warming frame drew every object in the frame scene, so all that is left are pipelines compiling in the background */
@@ -335,9 +328,9 @@ export class GalleryRenderer extends WebgpuRenderer {
 
   /**
    * Builds the objects not drawn in a pass yet a few per frame after loading, instead of all at once when they first come into view. Until then, a pass leaves them out.
-   * Objects the priority accepts come first; with `all`, the rest follows once no prioritized one is left, and streaming stops after a while without anything left to build.
+   * Objects the priority accepts come first, the rest once no prioritized one is left, and streaming stops after a while without anything left to build.
    */
-  setStreaming(streaming: StreamingMode | null) {
+  setStreaming(streaming: boolean) {
     this.streaming = streaming
     this.streamIdle = 0
     this.incompleteCameras.clear()
@@ -397,7 +390,7 @@ export class GalleryRenderer extends WebgpuRenderer {
   /** Carries what the last streaming frame found over to the next one. */
   private advanceStreaming() {
     // Everything else waits while prioritized objects are left.
-    this.streamRest = this.streaming === 'all' && !this.streamPriorityFound
+    this.streamRest = !this.streamPriorityFound
     this.streamIdle = this.streamFound ? 0 : this.streamIdle + 1
     // A shadow map that didn’t render last frame still misses what it left out before.
     for (const camera of this.renderedShadowCameras) {
@@ -416,9 +409,8 @@ export class GalleryRenderer extends WebgpuRenderer {
     this.waitingObjects = waiting
     this.streamFound = false
     this.streamPriorityFound = false
-    // With only the prioritized objects to build, the priority changes as the player moves, so streaming never runs out.
-    if (this.streaming === 'all' && this.streamIdle > streamedIdleFrames) {
-      this.setStreaming(null)
+    if (this.streamIdle > streamedIdleFrames) {
+      this.setStreaming(false)
     }
   }
 
@@ -555,22 +547,19 @@ export class GalleryRenderer extends WebgpuRenderer {
         return
       }
       const priority = this.streamPriority?.(object) ?? true
+      this.streamFound = true
       this.streamPriorityFound ||= priority
-      this.streamFound ||= priority || this.streaming === 'all'
       if (!(priority || this.streamRest) || !this.admit(object, camera, streamedBuildBudget)) {
-        // Left out until its turn; its children still go their own way.
-        // Only objects that will get their turn keep the shadow map rendering.
-        if (priority || this.streaming === 'all') {
-          if (shadowCameras.has(camera)) {
-            let gated = this.gatedCameras.get(camera)
-            if (!gated) {
-              gated = new Set
-              this.gatedCameras.set(camera, gated)
-            }
-            gated.add(object)
-          } else {
-            this.gatedObjects.add(object)
+        // Left out until its turn, which keeps a shadow map rendering; its children still go their own way.
+        if (shadowCameras.has(camera)) {
+          let gated = this.gatedCameras.get(camera)
+          if (!gated) {
+            gated = new Set
+            this.gatedCameras.set(camera, gated)
           }
+          gated.add(object)
+        } else {
+          this.gatedObjects.add(object)
         }
         for (const child of object.children) {
           this.internals._projectObject.call(this, child, camera, groupOrder, renderList, clippingContext)

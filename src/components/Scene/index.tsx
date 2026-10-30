@@ -20,7 +20,6 @@ import {pendingRooms} from '#src/lib/gallery/roomLoading.ts'
 import {useHiddenUi} from '#src/lib/hiddenUi.ts'
 import {GalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
 import {isShowingLamps} from '#src/lib/rendering/lightLevels.ts'
-import {readLoading} from '#src/lib/rendering/loading.ts'
 import {telemetry} from '#src/lib/telemetry/index.ts'
 import {pendingImages} from '#src/lib/useArtworkTexture.ts'
 import world from '#src/worlds/current.ts'
@@ -57,16 +56,14 @@ export default function Scene() {
 }
 
 const maxWarmup = 90_000
-const loading = readLoading()
 /**
- * With `?loading=stream`, the default, or `lazy`, the world’s culling leaves out all but the start room, and the renderer streams the rest in after the loading screen. Rooms the world loads on demand count once they have mounted.
- * With `?loading=full`, it holds the loading screen until the artworks are in and every pipeline of the scene, including unseen rooms, shadows and reflections, has compiled.
- * Otherwise, the loading screen only waits until every object of the start room has been drawn once: artworks still decoding and the last pipelines, which compile one after another at about a second each, appear once they are done, with the loading indicator counting them.
+ * Holds the loading screen until every object that the world’s culling leaves in, in the gallery only those of the start room, has been drawn once in every pass and the rooms the world asked for have mounted. The renderer streams the rest in afterward.
+ * Artworks still decoding and the last pipelines, which compile one after another at about a second each, appear once they are done, with the loading indicator counting them.
  */
 function Ready() {
   const frames = useRef(0)
   const loadingSince = useRef<number>(null)
-  // When each condition the loading screen waits for last became true, in ms since loading began, or -1 while it is false.
+  // When the artworks, the pipelines and the warmup were last done, in ms since loading began, or -1 while they aren’t. Of these, the loading screen only waits for the warmup.
   const milestones = useRef({
     images: -1,
     pipelines: -1,
@@ -87,7 +84,7 @@ function Ready() {
     galleryRenderer.setWarming(true)
     return () => {
       galleryRenderer.setWarming(false)
-      galleryRenderer.setStreaming(null)
+      galleryRenderer.setStreaming(false)
       galleryRenderer.setFrameScene(null)
     }
   }, [galleryRenderer, scene])
@@ -98,12 +95,10 @@ function Ready() {
     loadingSince.current ??= performance.now()
     const elapsed = Math.round(performance.now() - loadingSince.current)
     const reached = milestones.current
-    const imagesDone = pendingImages() === 0
-    const pipelinesDone = galleryRenderer?.pendingPipelines === 0
-    const isWarm = galleryRenderer?.warm !== false
-    reached.images = imagesDone ? (reached.images < 0 ? elapsed : reached.images) : -1
-    reached.pipelines = pipelinesDone ? (reached.pipelines < 0 ? elapsed : reached.pipelines) : -1
-    reached.warm = isWarm ? (reached.warm < 0 ? elapsed : reached.warm) : -1
+    const settled = galleryRenderer?.warmedAll !== false
+    reached.images = pendingImages() === 0 ? (reached.images < 0 ? elapsed : reached.images) : -1
+    reached.pipelines = galleryRenderer?.pendingPipelines === 0 ? (reached.pipelines < 0 ? elapsed : reached.pipelines) : -1
+    reached.warm = settled ? (reached.warm < 0 ? elapsed : reached.warm) : -1
     const warmup: Record<string, number> = galleryRenderer ? {
       'loading.warmup_build_ms': Math.round(galleryRenderer.warmup.buildMs),
       'loading.warmup_frames': galleryRenderer.warmup.frames,
@@ -113,30 +108,25 @@ function Ready() {
       nextProgress.current = elapsed + 1000
       telemetry.event('loading.progress', {
         'loading.images': pendingImages(),
-        'loading.mode': loading,
         'loading.ms': elapsed,
         'loading.pipelines': galleryRenderer?.pendingPipelines ?? 0,
         ...warmup,
       })
     }
-    // A scene that never settles, like one that keeps adding objects, starts after a while anyway. Its late pipelines still compile in the background.
-    const settled = loading === 'full' ? galleryRenderer?.warm !== false : galleryRenderer?.warmedAll !== false
+    // A scene that never settles, like one that keeps adding objects, starts after a while anyway. Its last objects stream in afterward.
     const warm = settled || performance.now() - loadingSince.current > maxWarmup
     if (warm && galleryRenderer && !settled && frames.current === 0) {
-      console.warn(`Pipeline warmup gave up after ${maxWarmup / 1000} s with ${galleryRenderer.pendingPipelines} pipelines still compiling.`)
+      console.warn(`Pipeline warmup gave up after ${maxWarmup / 1000} s with objects still left to draw.`)
     }
-    if (!(imagesDone || loading !== 'full') || !warm || pendingRooms() > 0) {
+    if (!warm || pendingRooms() > 0) {
       frames.current = 0
       return
     }
     if (++frames.current > 8) {
       galleryRenderer?.setWarming(false)
-      if (loading !== 'full') {
-        galleryRenderer?.setStreaming(loading === 'lazy' ? 'priority' : 'all')
-      }
+      galleryRenderer?.setStreaming(true)
       telemetry?.event('loading.finished', {
         'loading.images_ms': reached.images,
-        'loading.mode': loading,
         'loading.ms': elapsed,
         'loading.pipelines_ms': reached.pipelines,
         'loading.warm_ms': reached.warm,

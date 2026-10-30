@@ -12,7 +12,6 @@ import {Vector3} from 'three/webgpu'
 import {useGallery} from '#src/lib/gallery.ts'
 import {clearRooms, endRoom, expectRooms, startRoom} from '#src/lib/gallery/roomLoading.ts'
 import {roomsAt} from '#src/lib/gallery/roomVisibility.ts'
-import {readLoading} from '#src/lib/rendering/loading.ts'
 import LobbyRoom from '#src/rooms/lobby/components/LobbyRoom/index.tsx'
 import relations from '#src/worlds/gallery/relations.ts'
 
@@ -92,7 +91,6 @@ const laterRooms = Object.keys(loaders) as Array<LaterRoom>
 // Holds the physics from before its first step until every room is in.
 expectRooms(laterRooms)
 const isLater = (room: RoomId): room is LaterRoom => room in loaders
-const loading = readLoading()
 const position = new Vector3
 /** Every later room, nearest first: the given rooms, the rooms they see into, the rooms those see into and so on. */
 const nearestFirst = (from: ReadonlyArray<RoomId>) => {
@@ -108,7 +106,7 @@ const nearestFirst = (from: ReadonlyArray<RoomId>) => {
 
 /**
  * Every room of the gallery, each with what it builds beyond its walls.
- * The Lobby, where visitors start, comes with the page. Behind the loading screen, only the rooms the camera is in load too, or every room with `?loading=full` or outside of all rooms, where culling leaves nothing out.
+ * The Lobby, where visitors start, comes with the page. Behind the loading screen, only the rooms the camera is in load too, or every room outside of all rooms, where culling leaves nothing out.
  * The rest download once Enter is enabled and mount one at a time, nearest first, so that no single frame sets them all up.
  */
 export default function World(materials: WorldMaterials) {
@@ -128,7 +126,7 @@ export default function World(materials: WorldMaterials) {
   useFrame(({camera}) => {
     if (asked.current.size < laterRooms.length) {
       const from = roomsAt(camera.getWorldPosition(position).toArray())
-      const wanted = useGallery.getState().ready || loading === 'full' || !from.length ? nearestFirst(from) : from
+      const wanted = useGallery.getState().ready || !from.length ? nearestFirst(from) : from
       for (const room of wanted) {
         if (!isLater(room) || asked.current.has(room)) {
           continue
