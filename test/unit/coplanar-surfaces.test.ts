@@ -8,7 +8,8 @@ import {DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/web
 import {createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
 import miterCorners from '../../src/lib/gallery/cornerMiters.ts'
 import {corridorPassage} from '../../src/lib/gallery/corridor.ts'
-import lodge, {lodgeTunnel} from '../../src/lib/gallery/lodge.ts'
+import {fortressMouth} from '../../src/lib/gallery/fortress.ts'
+import lodge from '../../src/lib/gallery/lodge.ts'
 import lodgeInterior from '../../src/lib/gallery/lodgeInterior/layout.ts'
 import UpholsteredSeatGeometry from '../../src/lib/gallery/lodgeInterior/UpholsteredSeatGeometry.ts'
 import Passage from '../../src/lib/gallery/passages/Passage.ts'
@@ -198,7 +199,7 @@ describe('inside corners of room walls', () => {
   })
 })
 describe('passage elbows', () => {
-  for (const passage of [corridorPassage, lodgeTunnel]) {
+  for (const passage of [corridorPassage, fortressMouth]) {
     test(`${passage.id}: walls close the inner corner of every elbow`, () => {
       const meshes = passageSurfaces(passage)
       const half = passage.width / 2
@@ -239,16 +240,16 @@ describe('passage elbows', () => {
     expect(straight.junctions).toEqual([])
   })
   test('vault ribs never overlap, even on a short run before an elbow', () => {
-    const vault = new VaultGeometry(lodgeTunnel)
+    const vault = new VaultGeometry(fortressMouth)
     disposables.push(vault)
     const mesh = new Mesh(vault.ribs, material)
-    const radius = lodgeTunnel.width / 2
-    const spring = lodgeTunnel.floorY + lodgeTunnel.height - radius
-    for (const [i, {start, end}] of lodgeTunnel.spans.entries()) {
+    const radius = fortressMouth.width / 2
+    const spring = fortressMouth.floorY + fortressMouth.height - radius
+    for (const [i, {start, end}] of fortressMouth.spans.entries()) {
       const direction = horizontal(end[0] - start[0], end[1] - start[1])
-      // Through the ribs’ crowns, along the span.
+      // Through the ribs’ crowns, along the span, a little off its axis, where the triangles of the ribs’ faces meet.
       const origin = new Vector3(start[0], spring + radius - 0.04, start[1])
-      origin.addScaledVector(direction, i ? radius : -0.5)
+      origin.addScaledVector(direction, i ? radius : -0.5).addScaledVector(new Vector3(-direction.z, 0, direction.x), 0.013)
       const raycaster = new Raycaster(origin, direction)
       const hits = raycaster.intersectObject(mesh)
       expect(hits.length).toBeGreaterThan(0)
@@ -259,21 +260,21 @@ describe('passage elbows', () => {
     }
   })
   test('vaults close their spandrels toward an elbow, up to its ceiling', () => {
-    const vault = new VaultGeometry(lodgeTunnel)
+    const vault = new VaultGeometry(fortressMouth)
     disposables.push(vault)
     const mesh = new Mesh(vault.shell, material)
-    const radius = lodgeTunnel.width / 2
-    const [x, z] = lodgeTunnel.path[1]
+    const radius = fortressMouth.width / 2
+    const [x, z] = fortressMouth.path[1]
     const elbow = new Vector3(x, 0, z)
-    for (const [i, {start, end}] of lodgeTunnel.spans.entries()) {
+    for (const [i, {start, end}] of fortressMouth.spans.entries()) {
       // From the elbow, back along the span it ends or ahead along the span it starts.
       const direction = i ? horizontal(end[0] - start[0], end[1] - start[1]) : horizontal(start[0] - end[0], start[1] - end[1])
       const across = new Vector3(-direction.z, 0, direction.x)
       for (const side of [-1, 1]) {
         // Beside the vault’s arch, just under the elbow’s ceiling, where the turn used to look into the void behind the vault.
-        for (const height of [lodgeTunnel.height - 0.05, lodgeTunnel.height - 0.6]) {
+        for (const height of [fortressMouth.height - 0.05, fortressMouth.height - 0.6]) {
           const origin = elbow.clone().addScaledVector(across, side * (radius - wallFace - 0.15))
-          origin.y = lodgeTunnel.floorY + height
+          origin.y = fortressMouth.floorY + height
           const raycaster = new Raycaster(origin, direction, 0, radius + 0.5)
           const hits = raycaster.intersectObject(mesh)
           expect(hits.length).toBeGreaterThan(0)

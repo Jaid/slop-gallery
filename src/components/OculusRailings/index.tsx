@@ -12,7 +12,7 @@ import PolylineTubeGeometry from '#src/lib/gallery/railings/PolylineTubeGeometry
 import metal from '#src/lib/materials/metal.ts'
 
 export default function OculusRailings() {
-  const paths = useMemo(() => [new OculusRailing, new OculusSwitchbackRailing('west'), new OculusSwitchbackRailing('east'), new OculusBalconyRailing], [])
+  const paths = useMemo(() => [new OculusRailing('west'), new OculusRailing('south'), new OculusRailing('east'), new OculusSwitchbackRailing('west'), new OculusSwitchbackRailing('east'), new OculusBalconyRailing], [])
   return paths.map((path, i) => <Railing key={i} path={path} />)
 }
 

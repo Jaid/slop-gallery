@@ -1,5 +1,6 @@
 import type {RoomWall} from '../base/Room.ts'
 
+import {fortressApproach} from '#src/lib/gallery/fortress.ts'
 import lodge, {lodgeBay, lodgeWindow} from '#src/lib/gallery/lodge.ts'
 
 import {planWall} from '../lib/walls.ts'
@@ -44,7 +45,7 @@ export default {
       fortress: {
         u: lodge.tunnelZ - lodge.center[1],
         width: lodge.passageWidth,
-        height: 3.4,
+        height: fortressApproach.height,
         profile: 'arch',
       },
     },

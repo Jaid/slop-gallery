@@ -15,21 +15,16 @@ import Box from '#src/components/Scene/primitives.tsx'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import TimberGeometry from '#src/lib/gallery/passages/TimberGeometry.ts'
 import VaultGeometry from '#src/lib/gallery/passages/VaultGeometry.ts'
-import {LanternBody} from '#src/lib/gallery/pendants/index.ts'
 import {corridorLightSpacing, passagePendantMounts} from '#src/lib/gallery/pendants/mounts.ts'
+import {passageLantern, passageLanternGlow} from '#src/lib/gallery/pendants/passageLantern.ts'
 
-const lantern = new LanternBody
-const lanternGlow = {
-  color: '#ffdb99',
-  emissive: '#ffb54b',
-  emissiveIntensity: 3,
-}
 /**
- * Which of a passage’s evenly spaced lanterns, in mount order from the passage’s start, it keeps; the rest are left out. The corridor keeps three, at both ends and in the middle, the Fortress only its first. Their lamps belong to the rooms, see their `lamps.ts`.
+ * Which of a passage’s evenly spaced lanterns, in mount order from the passage’s start, it keeps, by the passage’s name; the rest are left out, and a passage left out keeps all of them. The corridor keeps three, at both ends and in the middle; the Fortress’ straight passages keep none, as its lanterns hang in its curve. Their lamps belong to the rooms, see their `lamps.ts`.
  */
 const passageLanterns: Partial<Record<string, ReadonlyArray<boolean>>> = {
   corridor: [true, false, false, false, true, false, false, false, true],
-  fortress: [true, false, false, false, false],
+  'fortress-mouth': [],
+  'fortress-approach': [],
 }
 export default function CoveredPassage({passage, sole = false, material, paving: pavingOverride, timber, ribCutouts, transition}: {
   material: Material
@@ -44,14 +39,14 @@ export default function CoveredPassage({passage, sole = false, material, paving:
   transition?: PassageTransition
 }) {
   const geometry = useDisposable(useMemo(() => (timber ? TimberGeometry.passage(passage, ribCutouts) : new VaultGeometry(passage, transition?.length)), [passage, ribCutouts, timber, transition]))
-  const lanterns = passageLanterns[passage.id]
+  const lanterns = passageLanterns[passage.name]
   // Under timber, lanterns hang from the ribs rather than the planks between them.
-  const mounts = useMemo(() => passagePendantMounts(passage, [geometry.shell, geometry.ribs], sole ? corridorLightSpacing : undefined, timber && geometry.ribs).filter((_, index) => lanterns?.[index] !== false), [geometry, lanterns, sole, passage, timber])
+  const mounts = useMemo(() => passagePendantMounts(passage, [geometry.shell, geometry.ribs], sole ? corridorLightSpacing : undefined, timber && geometry.ribs).filter((_, index) => lanterns?.[index] ?? !lanterns), [geometry, lanterns, sole, passage, timber])
   const paving = pavingOverride ?? transition?.stoneFloors ?? passage.floors
   // A timber lining’s crown is the ceiling along its spans; a slab there would share its plane. Only the open elbows show the slab.
   const ceilings = timber ? passage.junctions : passage.floors
   const collision = timber ? [] : [geometry.shell, geometry.ribs].map(colliderGeometry)
-  return <group name={passage.id}>
+  return <group name={passage.name}>
     <RigidBody colliders={false} type='fixed'>
       {passage.floors.map(({center: [x, z], size: [width, depth]}, i) => <group key={i}>
         <CuboidCollider args={[width / 2, 0.12, depth / 2]} position={[x, passage.floorY - 0.12, z]} />
@@ -66,6 +61,6 @@ export default function CoveredPassage({passage, sole = false, material, paving:
         <mesh castShadow geometry={geometry.ribs} material={material} name='castle-vault-ribs' receiveShadow />
       </Branch>
     </RigidBody>
-    <PendantLamps body={lantern} glow={lanternGlow} mounts={mounts} name={`${passage.id}-pendants`} />
+    <PendantLamps body={passageLantern} glow={passageLanternGlow} mounts={mounts} name={`${passage.name}-pendants`} />
   </group>
 }

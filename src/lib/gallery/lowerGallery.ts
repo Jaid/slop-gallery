@@ -57,10 +57,12 @@ export const oculusCeiling = subtractFloorOpening({
   size: lobby.opening.size,
 })
 
-const platformTopY = moonfallFloorY + 3
+// A meter under the Lodge’s floor, so the side ramps climb gently and the tower’s ramp still rises a meter and a half to its deck.
+const platformTopY = moonfallFloorY + 2
 const platformHeight = platformTopY - lowerGallery.oculus.floorY
-// measured from the north wall’s centerline
+// measured from the side walls’ north ends, where the apse begins; the platform fills the apse behind it too
 const platformDepth = 4
+/** the platform along the north end, as a box from the side walls’ north ends; the apse behind it is level with its top */
 export const oculusPlatform: {
   position: Vec3
   size: Vec3

@@ -1,3 +1,5 @@
+import type {WallOpening} from '../../src/lib/placement/wallGeometry.ts'
+
 import {describe, expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
@@ -9,6 +11,17 @@ import lowerGallery, {oculusPlatform, oculusRamps} from '../../src/lib/gallery/l
 import walls from './fixtures/gallery.ts'
 
 await RAPIER.init()
+/** a half circle in the 128 chords the openings’ cutters and casings take */
+const halfDisc = (radius: number) => 64 * radius ** 2 * Math.sin(Math.PI / 128)
+/** The area of the casing round a hole with a sill, on the wall’s face. */
+function casingArea({width, height, bottom = 0, profile}: WallOpening) {
+  const trim = wallOpeningTrim
+  if (profile === 'rectangle') {
+    return (width + 2 * trim) * (height - bottom + 2 * trim) - width * (height - bottom)
+  }
+  const spring = height - width / 2
+  return (width + 2 * trim) * (spring - bottom + trim) + halfDisc(width / 2 + trim) - width * (spring - bottom) - halfDisc(width / 2)
+}
 describe('floor-following wall baseboards', () => {
   for (const side of ['west', 'east'] as const) {
     test(`${side}: constant-height trim follows the floor, ramp and raised base without buried horizontal stubs`, () => {
@@ -50,11 +63,9 @@ describe('floor-following wall baseboards', () => {
           expect(topRay.intersectObjects(meshes)[0].point.y).toBeCloseTo(floor + 0.44, 5)
         }
         const volume = geometry.trim.reduce((sum, part) => sum + computeMeshVolume(part), 0)
-        // Besides the baseboard, the trim only cases the door at the balcony’s level, down to the sill buried in the balcony.
-        const [door] = wall.holes!
-        const doorHeight = door.height - door.bottom!
-        const casing = ((door.width + 2 * wallOpeningTrim) * (doorHeight + 2 * wallOpeningTrim) - door.width * doorHeight) * (0.25 - wallFace)
-        expect(wall.holes).toHaveLength(1)
+        // Besides the baseboard, the trim only cases the door at the balcony’s level, down to the sill buried in the balcony, and on the east the arched doorway into the Fortress at the bridge’s end.
+        expect(wall.holes!.map(hole => hole.name)).toEqual(side === 'east' ? ['staff_door', 'fortress'] : ['staff_door'])
+        const casing = wall.holes!.reduce((sum, hole) => sum + casingArea(hole), 0) * (0.25 - wallFace)
         expect(volume).toBeCloseTo(wall.width * (0.38 * (0.2 - wallFace) + 0.06 * (0.25 - wallFace)) + casing, 4)
       } finally {
         world.free()
@@ -63,27 +74,27 @@ describe('floor-following wall baseboards', () => {
       }
     })
   }
-  test('the north trim follows the raised floor and surrounds the elevated Lodge portal', () => {
-    const north = walls.find(value => value.id === 'oculus-north')!
+  test('the apse’s round walls stand on the platform, their baseboards along its top', () => {
     const height = oculusPlatform.position[1] + oculusPlatform.size[1] / 2 - lowerGallery.oculus.floorY
-    expect(north.baseboardProfile).toEqual([[-north.width / 2, height], [north.width / 2, height]])
-    const geometry = createArchitectureGeometry(north)
-    try {
-      expect(north.holes![0].bottom).toBe(height)
-      expect(geometry.trim[0].boundingBox!.min.y).toBeCloseTo(height - 0.17)
-      expect(geometry.trim[0].boundingBox!.max.y).toBeCloseTo(north.holes![0].height + 0.17)
+    for (const id of ['oculus-northwest', 'oculus-north', 'oculus-northeast']) {
+      const wall = walls.find(value => value.id === id)!
+      expect(wall.center[1] - lowerGallery.oculus.floorY).toBeCloseTo(height, 9)
+      expect(wall.curveRadius).toBeGreaterThan(0)
+      expect(wall.baseboardProfile).toBeUndefined()
+      const geometry = createArchitectureGeometry(wall)
       const material = new MeshBasicMaterial
-      const mesh = new Mesh(geometry.trim[0], material)
-      const trimTopRay = new Raycaster(new Vector3(-4, height + 1, 0.23), new Vector3(0, -1, 0))
-      const hit = trimTopRay.intersectObject(mesh)[0]
-      expect(hit.point.y).toBeCloseTo(height + 0.44)
-      material.dispose()
-      expect(geometry.surface.boundingBox!.min.y).toBeCloseTo(0, 6)
-      expect(geometry.surface.boundingBox!.max.y).toBeCloseTo(north.height + 0.3)
-      expect(walls.filter(wall => wall.baseboardProfile).map(wall => wall.id).toSorted()).toEqual(['oculus-east', 'oculus-north', 'oculus-west'])
-    } finally {
-      geometry.dispose()
+      try {
+        expect(geometry.trim[0].boundingBox!.min.y).toBeCloseTo(0, 6)
+        const trimTopRay = new Raycaster(new Vector3(0, 1, 0.23), new Vector3(0, -1, 0))
+        expect(trimTopRay.intersectObject(new Mesh(geometry.trim[0], material))[0].point.y).toBeCloseTo(0.44)
+        // Up to the ceiling, like the side walls
+        expect(wall.center[1] + geometry.surface.boundingBox!.max.y).toBeCloseTo(lowerGallery.oculus.ceiling.topY - lowerGallery.oculus.ceiling.thickness)
+      } finally {
+        geometry.dispose()
+        material.dispose()
+      }
     }
+    expect(walls.filter(wall => wall.baseboardProfile).map(wall => wall.id).toSorted()).toEqual(['oculus-east', 'oculus-west'])
   })
   test('geometry caching distinguishes mirrored and flat floor profiles', () => {
     const west = walls.find(value => value.id === 'oculus-west')!

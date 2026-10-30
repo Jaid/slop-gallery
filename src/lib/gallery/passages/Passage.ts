@@ -26,11 +26,16 @@ type Edge = {
   side: number
 }
 
-/** An open-ended, level passage. One footprint drives its floors, walls and navigation. */
+/**
+ * An open-ended, level passage. One footprint drives its floors, walls and navigation.
+ * A room made of several passages tells them apart by their ids; one named like its room is the room’s only passage.
+ */
 export default class Passage {
   readonly floors: Array<FloorRectangle> = []
   /** the floors at the elbows, where two spans overlap */
   readonly junctions: Array<FloorRectangle> = []
+  /** the room’s id, followed by the passage’s own unless it is the room’s only one, which its walls’ ids start with */
+  readonly name: string
   readonly spans: Array<{
     end: Point
     start: Point
@@ -44,6 +49,8 @@ export default class Passage {
     if (cutouts.some(cutout => ![...cutout.position, ...cutout.size].every(Number.isFinite) || cutout.size.some(size => size <= 0))) {
       throw new RangeError('Passage cutouts need finite centers and positive dimensions.')
     }
+    // Not an accessor: the build bakes the walls’ openings, and its evaluator leaves accessors out.
+    this.name = id === room ? id : `${room}-${id}`
     const half = width / 2
     const rectangles: Array<Rectangle> = []
     for (let i = 1; i < path.length; i++) {
@@ -174,7 +181,7 @@ export default class Passage {
         }
       })
       this.walls.push({
-        id: `${id}-wall_${i}`,
+        id: `${this.name}${id === room ? '-' : '_'}wall_${i}`,
         room,
         center: edge.axis === 0 ? [center, floorY, edge.cross] : [edge.cross, floorY, center],
         rotation: face.rotation,

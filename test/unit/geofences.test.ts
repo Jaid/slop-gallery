@@ -15,9 +15,14 @@ const samples: Array<Vec3> = []
 for (let index = 0; index < data.length; index += 3) {
   samples.push([data[index] / 100, data[index + 1] / 100, data[index + 2] / 100])
 }
+/** Where the Fortress ran straight from the Oculus’ north wall toward the Lodge, before the apse took the north wall’s place and the Fortress curved round it. Some of that air lies in their walls now. */
+const formerFortress = ([x, , z]: Vec3) => x > -20 && x < 2.2 && z > -39.73 && z < -35
 test('the rooms’ fences cover every point of the gallery’s reachable air', () => {
   expect(samples.length).toBeGreaterThan(80_000)
-  const uncovered = samples.filter(position => !slopGallery.roomAt(position))
+  const walledOff = samples.filter(position => formerFortress(position) && !slopGallery.contains(position))
+  // Most of it is the apse’s and the curve’s now.
+  expect(walledOff.length).toBeLessThan(samples.filter(formerFortress).length / 3)
+  const uncovered = samples.filter(position => !slopGallery.roomAt(position) && !walledOff.includes(position))
   expect(uncovered.slice(0, 5)).toEqual([])
 })
 test('the Lodge’s window niche belongs to the Lodge, out to the glass in the Corridor’s lining', () => {

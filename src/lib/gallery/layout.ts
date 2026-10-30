@@ -1,14 +1,14 @@
 import type {Vec3} from './types.ts'
 
 import corridor from './corridor.ts'
+import {fortressOrigin} from './fortress.ts'
 import lobby from './lobby.ts'
-import lodge, {lodgeTunnel} from './lodge.ts'
+import lodge from './lodge.ts'
 import lowerGallery, {tunnelCenter} from './lowerGallery.ts'
 import salon, {salonSouthZ} from './salon.ts'
 import staircase from './staircase.ts'
 
 const {moonfall, oculus} = lowerGallery
-const [fortressX, fortressZ] = lodgeTunnel.path[1]
 /**
  * Where the gallery’s layout puts the origin of each of its rooms, usually the middle of its main floor, in the museum’s meters. The geometry modules lay the museum out in these coordinates;
  * the rooms take what they need relative to their origin, and the gallery places them back at it.
@@ -26,8 +26,8 @@ const roomOrigins = {
   oculus: [oculus.center[0], oculus.floorY, oculus.center[1]],
   exhibition: tunnelCenter,
   lodge: [lodge.center[0], lodge.floorY, lodge.center[1]],
-  // at the passage’s elbow
-  fortress: [fortressX, lodgeTunnel.floorY, fortressZ],
+  // in the middle of the curve round the Oculus’ apse
+  fortress: fortressOrigin,
 } as const satisfies Record<string, Vec3>
 
 export default roomOrigins

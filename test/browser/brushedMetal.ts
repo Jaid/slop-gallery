@@ -14,7 +14,7 @@ export default async function verifyBrushedMetal() {
   const environment = new StudioEnvironment
   const material = new BrushedMetalMaterial({environment})
   const bench = new SlattedBenchGeometry
-  const path = new OculusRailing
+  const path = new OculusRailing('east')
   // The actual curved section in the issue, not a straight cylinder stand-in.
   const points = path.points.slice(-16)
   const rail = new PolylineTubeGeometry(points, path.radius, 12)

@@ -28,9 +28,9 @@ const roomWalls: ReadonlyArray<readonly [keyof typeof roomOrigins, Record<string
   ['moonfall', moonfall],
   ['lodge', lodge],
   ['corridor', corridor],
+  ['fortress', fortress],
   ['oculus', oculus],
   ['exhibition', exhibition],
-  ['fortress', fortress],
 ]
 /**
  * The gallery’s walls in world meters, room by room, their trim mitered where two walls meet in an inside corner: the gallery world’s `walls`, built from nothing but the rooms’ wall modules and the gallery’s layout.

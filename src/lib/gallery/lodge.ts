@@ -3,10 +3,8 @@ import type {FloorRectangle} from './floors.ts'
 import type {PassageCutout} from './passages/Passage.ts'
 import type {Vec3} from './types.ts'
 
-import lowerGallery, {oculusPlatform} from './lowerGallery.ts'
-import oculusTower from './oculusTower.ts'
-import Passage from './passages/Passage.ts'
-import PassageTransition from './passages/PassageTransition.ts'
+import lowerGallery from './lowerGallery.ts'
+import {towerBridge} from './oculusTower.ts'
 
 const timberWidth = 4
 /** The Lodge lies west of the Oculus’ north end, and everything here keeps its place relative to its north wall. */
@@ -14,26 +12,26 @@ const northZ = lowerGallery.oculus.center[1] - lowerGallery.oculus.size[1] / 2 -
 const lodge = {
   center: [-25, northZ + 5],
   size: [10, 10],
-  floorY: oculusPlatform.position[1] + oculusPlatform.size[1] / 2,
+  // three meters over Moonfall’s floor
+  floorY: lowerGallery.floorY + 3,
   height: 3.9,
-  entranceX: oculusTower.x,
   // Keep both widened doorways inset from their neighboring room corners.
   returnZ: northZ + 0.4 + timberWidth / 2,
-  entranceZ: lowerGallery.oculus.center[1] - lowerGallery.oculus.size[1] / 2,
   siennaZ: 8.4 + timberWidth / 2,
   // Expand the long timber passage westward, keeping its east wall fixed.
   approachX: -31.7 - timberWidth / 2,
   timberWidth,
-  passageWidth: oculusTower.radius * 2,
+  /** the Fortress’ width, as wide as the doorway the Oculus’ east bridge leads into */
+  passageWidth: towerBridge.mouthWidth,
   // The widened stone doorway sits beside the north wall: its jamb stays 2 cm in front of the north baseboard’s cap (25 cm from the
   // wall) and 7 cm in front of its face (20 cm), and its casing still tucks into the north wall’s logs (10.5 cm). On the baseboard’s
   // face, the jamb shared that plane and flickered.
-  tunnelZ: northZ + 0.27 + oculusTower.radius,
+  tunnelZ: northZ + 0.27 + towerBridge.mouthWidth / 2,
 } as const
 const westX = lodge.center[0] - lodge.size[0] / 2
 const eastX = lodge.center[0] + lodge.size[0] / 2
 const southZ = lodge.center[1] + lodge.size[1] / 2
-/** Half the run along the east wall from the tunnel portal’s south jamb to the room’s south-east corner. */
+/** how far the bay reaches north past the old north wall’s line */
 const bayDepth = 2.74
 /**
  * The bay that takes the place of the Lodge’s north wall, from the corner beside the Corridor’s doorway to the one beside the tunnel’s: half an octagon, with walls at 45° out of both corners and a back wall parallel to the old one.
@@ -103,10 +101,6 @@ export function lodgeWindowFloor(x: number, z: number) {
   return x >= lodgeWindow.tunnelX && x <= lodgeWindow.roomX && Math.abs(z - lodgeWindow.z) <= lodgeWindow.width / 2 ? lodgeWindow.bottom : undefined
 }
 
-export const lodgeTunnel = new Passage('fortress', 'fortress', [[lodge.entranceX, lodge.entranceZ], [lodge.entranceX, lodge.tunnelZ], [-20, lodge.tunnelZ]], lodge.floorY, lodge.passageWidth)
-export const lodgeTunnelWalls = lodgeTunnel.walls
-/** The tunnel’s last meter trades the castle stone for the Lodge’s timber, instead of switching at the doorway. */
-export const lodgeTunnelTransition = new PassageTransition(lodgeTunnel)
 /**
  * The Lodge’s wide-plank oak floor. It is mapped in world space, so the tunnel’s timber transition continues its boards and joints.
  *
@@ -130,12 +124,10 @@ export const lodgeFloorPlanks = {
   },
 } as const satisfies PlankOptions
 
-export function insideLodgeAccess(position: Vec3) {
+/** Whether the position lies in the window’s deep niche, on its sill up to its lintel. */
+export function insideLodgeWindow(position: Vec3) {
   const sill = lodgeWindowFloor(position[0], position[2])
-  if (sill !== undefined && position[1] >= sill - 0.1 && position[1] <= lodgeWindow.top) {
-    return true
-  }
-  return lodgeTunnel.contains(position)
+  return sill !== undefined && position[1] >= sill - 0.1 && position[1] <= lodgeWindow.top
 }
 
 export default lodge

@@ -2,7 +2,7 @@ import type {RoomSpawn} from '../base/Room.ts'
 
 export default {
   '': {
-    position: [-6.07, 7.52, 8.48],
+    position: [-6.07, 6.52, 8.48],
     yaw: -0.56,
     pitch: -0.08,
   },

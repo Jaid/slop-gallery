@@ -1,9 +1,10 @@
 import type {RoomWall} from '../base/Room.ts'
 import type {Vec3} from 'math'
 
+import {fortressDoorway} from '#src/lib/gallery/fortress.ts'
 import roomOrigins from '#src/lib/gallery/layout.ts'
-import lodge from '#src/lib/gallery/lodge.ts'
 import lowerGallery, {oculusPlatform, oculusRamps} from '#src/lib/gallery/lowerGallery.ts'
+import oculusApse from '#src/lib/gallery/oculusApse.ts'
 import tunnelDisplays, {displayStairway} from '#src/lib/gallery/tunnelDisplays.ts'
 import {wallCoordinates} from '#src/lib/placement/wallGeometry.ts'
 
@@ -13,12 +14,19 @@ const {oculus, tunnel} = lowerGallery
 const [originX, originY, originZ] = roomOrigins.oculus
 const height = oculus.ceiling.topY - oculus.ceiling.thickness - oculus.floorY - 0.3
 const [, depth] = oculus.size
-/** A side wall along the ramps, whose baseboard follows them up to the turning landing, with the door at the balcony’s level onto the staff stairway down to the tunnel’s display on that side. */
+const local = ([x, y, z]: Vec3): Vec3 => [x - originX, y - originY, z - originZ]
+/** The doorway’s sill sits 2 cm under the bridge’s deck, which covers it and the bottom of its casing. */
+const sillDrop = 0.02
+/**
+ * A side wall along the ramps, whose baseboard follows them up to the turning landing, with the door at the balcony’s level onto the staff stairway down to the tunnel’s display on that side.
+ * The east one opens into the Fortress where the east bridge meets it.
+ */
 const sideWall = (side: 'east' | 'west'): RoomWall => {
   const ramp = oculusRamps.find(value => value.side === side)!
   const wall = planWall(oculus.size, side, height, {trimStyle: 'plain'})
   const {stairway: {door}} = tunnelDisplays.find(display => display.side === side)!
-  const doorAt: Vec3 = [door[0] - originX, door[1] - originY, door[2] - originZ]
+  const doorAt = local(door)
+  const doorway = local([fortressDoorway.x, fortressDoorway.y, fortressDoorway.z])
   return {
     ...wall,
     baseboardProfile: [
@@ -37,26 +45,38 @@ const sideWall = (side: 'east' | 'west'): RoomWall => {
         height: doorAt[1] + displayStairway.doorHeight,
         profile: 'rectangle',
       },
+      ...side === 'east' ? {
+        fortress: {
+          u: wallCoordinates(wall, doorway),
+          width: fortressDoorway.width,
+          bottom: doorway[1] - sillDrop,
+          height: doorway[1] + fortressDoorway.height,
+          profile: 'arch',
+        },
+      } : {},
     },
   }
 }
 const platformHeight = oculusPlatform.position[1] + oculusPlatform.size[1] / 2 - oculus.floorY
+/** The apse’s round walls stand on the platform, each along one of its arcs, and reach up to the same cornice as the side walls. */
+const [northwest, north, northeast] = oculusApse.arcs.map(({center, radius, from, to}): RoomWall => {
+  const angle = (from + to) / 2
+  return {
+    center: local([center[0] + Math.cos(angle) * radius, oculus.floorY + platformHeight, center[1] + Math.sin(angle) * radius]),
+    // Facing the arc’s center, as the plan’s north wall faces south.
+    rotation: Math.atan2(-Math.cos(angle), -Math.sin(angle)),
+    width: radius * (to - from),
+    height: height - platformHeight,
+    curveRadius: radius,
+    trimStyle: 'plain',
+    sticky: false,
+  }
+})
 
 export default {
-  // Its baseboard runs along the platform’s top, past the arch into the Fortress.
-  north: planWall(oculus.size, 'north', height, {
-    trimStyle: 'plain',
-    baseboardProfile: [[-oculus.size[0] / 2, platformHeight], [oculus.size[0] / 2, platformHeight]],
-    holes: {
-      fortress: {
-        u: lodge.entranceX,
-        bottom: lodge.floorY - oculus.floorY,
-        width: lodge.passageWidth,
-        height: lodge.floorY - oculus.floorY + 3.4,
-        profile: 'arch',
-      },
-    },
-  }),
+  northwest,
+  north,
+  northeast,
   east: sideWall('east'),
   west: sideWall('west'),
   south: planWall(oculus.size, 'south', height, {

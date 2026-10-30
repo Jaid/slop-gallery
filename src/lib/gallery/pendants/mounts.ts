@@ -1,12 +1,13 @@
 import type Passage from '../passages/Passage.ts'
+import type RoutedPassage from '../passages/RoutedPassage.ts'
 import type {Vec3} from '../types.ts'
 import type {PendantMount} from './CeilingProbe.ts'
 import type {BufferGeometry} from 'three/webgpu'
 
 import CeilingProbe from './CeilingProbe.ts'
 
-/** Light height above a passage floor, as before the fixtures were hung. */
-export const passageLightHeight = 2.8
+/** how far a passage’s lights hang under its crown */
+export const passageLightDrop = 0.6
 /** At most this far between two passage lights along a span. */
 export const passageLightSpacing = 5
 /** The timber corridor’s spans are much longer, so its lanterns hang about 7 m apart instead, an odd count down its long run so one hangs at its center. */
@@ -32,10 +33,25 @@ export function passagePendantMounts(passage: Passage, surfaces: ReadonlyArray<B
     const count = Math.max(1, Math.ceil(Math.hypot(end[0] - start[0], end[1] - start[1]) / spacing))
     return Array.from({length: count}, (_, i) => {
       const t = (i + 0.5) / count
-      const light: Vec3 = [start[0] + (end[0] - start[0]) * t, passage.floorY + passageLightHeight, start[1] + (end[1] - start[1]) * t]
+      const light: Vec3 = [start[0] + (end[0] - start[0]) * t, passage.floorY + passage.height - passageLightDrop, start[1] + (end[1] - start[1]) * t]
       const along: Vec3 = [end[0] - start[0], 0, end[1] - start[1]]
       return ribProbe?.mount(light, along, ribSearch, ribStep) ?? mountOrThrow(probe, light, along, `${passage.id} span ${span}`)
     })
+  })
+}
+
+/** The light of a lantern `along` meters down a routed passage, under its crown. */
+export function routeLight(passage: RoutedPassage, along: number): Vec3 {
+  const {point: [x, z], y} = passage.route.at(along)
+  return [x, y + passage.height - passageLightDrop, z]
+}
+
+/** Lights hung from a routed passage’s vault at the distances along its route, each sliding along the route to a spot wide enough for its canopy. */
+export function routePendantMounts(passage: RoutedPassage, surfaces: ReadonlyArray<BufferGeometry>, stations: ReadonlyArray<number>): Array<PendantMount> {
+  const probe = new CeilingProbe(surfaces)
+  return stations.map(along => {
+    const {heading} = passage.route.at(along)
+    return mountOrThrow(probe, routeLight(passage, along), [Math.cos(heading), 0, Math.sin(heading)], `${passage.name} at ${along.toFixed(2)} m`)
   })
 }
 

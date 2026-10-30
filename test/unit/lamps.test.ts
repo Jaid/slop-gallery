@@ -7,11 +7,12 @@ import type {BufferGeometry} from 'three/webgpu'
 import {expect, test} from 'bun:test'
 
 import {corridorPassage} from '../../src/lib/gallery/corridor.ts'
+import {fortressCurve, fortressLanterns} from '../../src/lib/gallery/fortress.ts'
 import {lobbyChandeliers} from '../../src/lib/gallery/lobbyVault.ts'
-import {lodgeTunnel, lodgeTunnelTransition, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
+import {lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
+import RouteVaultGeometry from '../../src/lib/gallery/passages/RouteVaultGeometry.ts'
 import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
-import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
-import {corridorLightSpacing, passagePendantMounts} from '../../src/lib/gallery/pendants/mounts.ts'
+import {corridorLightSpacing, passagePendantMounts, routePendantMounts} from '../../src/lib/gallery/pendants/mounts.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 import relations, {visibleLamps} from '../../src/worlds/gallery/relations.ts'
 
@@ -36,7 +37,7 @@ const lanterns = (passage: Passage, surfaces: ReadonlyArray<BufferGeometry>, kep
 }
 test('every lamp has a world-wide id of its own and lies in its own room', () => {
   expect(byId.size).toBe(lamps.length)
-  expect(lamps.length).toBe(32)
+  expect(lamps.length).toBe(33)
   for (const {id, position, room} of lamps) {
     expect(`${id} in ${slopGallery.roomAt(position)?.id}`).toBe(`${id} in ${room}`)
   }
@@ -52,14 +53,18 @@ test('a lamp shines in its own room and in the rooms that keep it', () => {
   expect(slopGallery.lampRooms(lamp('lodge-fire')).toSorted()).toEqual(['corridor', 'fortress', 'lodge'])
   expect(slopGallery.lampRooms(lamp('exhibition-tunnel_red')).toSorted()).toEqual(['exhibition', 'moonfall', 'oculus'])
   expect(slopGallery.lampRooms(lamp('exhibition-west_stairway_door')).toSorted()).toEqual(['exhibition', 'oculus'])
-  expect(slopGallery.lampRooms(lamp('fortress-pendant')).toSorted()).toEqual(['fortress', 'lodge', 'oculus'])
+  expect(slopGallery.lampRooms(lamp('fortress-lantern_east')).toSorted()).toEqual(['fortress', 'oculus'])
+  expect(slopGallery.lampRooms(lamp('fortress-lantern_north')).toSorted()).toEqual(['fortress', 'lodge'])
 })
 test('the passages’ lamps hang under the lanterns the fixtures hang from their vaults and ribs', () => {
-  const vault = new VaultGeometry(lodgeTunnel, lodgeTunnelTransition.length)
+  const vault = new RouteVaultGeometry(fortressCurve)
   const timber = TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts)
   try {
-    const [pendant] = lanterns(lodgeTunnel, [vault.shell, vault.ribs], [[0, -0.3]])
-    expectNear(lamp('fortress-pendant').position, pendant)
+    const mounts = routePendantMounts(fortressCurve, [vault.shell, vault.ribs], Object.values(fortressLanterns))
+    for (const [index, name] of Object.keys(fortressLanterns).entries()) {
+      const {light} = mounts[index]
+      expectNear(lamp(`fortress-lantern_${name}`).position, [light[0], light[1] - 0.3, light[2]])
+    }
     const [north, middle, south] = lanterns(corridorPassage, [timber.shell, timber.ribs], [[0, -0.3], [4, -0.4], [8, -0.4]], corridorLightSpacing, timber.ribs)
     expectNear(lamp('corridor-lantern_north').position, north)
     expectNear(lamp('corridor-lantern_middle').position, middle)

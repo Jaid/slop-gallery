@@ -4,7 +4,8 @@ import {DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/web
 
 import {wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
 import {corridorHallEastX, corridorPassage, lodgeThresholdSaddle} from '../../src/lib/gallery/corridor.ts'
-import lodge, {lodgeTunnel, lodgeTunnelTransition, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
+import {fortressApproach, fortressTransition} from '../../src/lib/gallery/fortress.ts'
+import lodge, {lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import Passage from '../../src/lib/gallery/passages/Passage.ts'
 import PassageTransition, {transitionFrameDepth} from '../../src/lib/gallery/passages/PassageTransition.ts'
 import SaddleGeometry from '../../src/lib/gallery/passages/SaddleGeometry.ts'
@@ -14,9 +15,9 @@ import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 import walls from './fixtures/gallery.ts'
 
-const transition = lodgeTunnelTransition
+const transition = fortressTransition
 const geometry = new TransitionGeometry(transition)
-const vault = new VaultGeometry(lodgeTunnel, transition.length)
+const vault = new VaultGeometry(fortressApproach, transition.length)
 const material = new MeshBasicMaterial({side: DoubleSide})
 const timber = new Mesh(geometry.timber, material)
 const lining = new Mesh(geometry.lining, material)
@@ -29,10 +30,10 @@ afterAll(() => {
   vault.dispose()
   material.dispose()
 })
-const half = lodgeTunnel.width / 2
+const half = fortressApproach.width / 2
 const doorwayX = lodge.center[0] + lodge.size[0] / 2
-// The final span runs west along the tunnel axis into the Lodge’s east doorway.
-const spanStartX = lodgeTunnel.spans.at(-1)!.start[0]
+// The approach runs west along its axis into the Lodge’s east doorway.
+const spanStartX = fortressApproach.spans.at(-1)!.start[0]
 const alongX = (distance: number) => spanStartX - distance
 const lateral = (distance: number, y: number, side: -1 | 1, meshes: Array<Mesh>) => {
   const ray = new Raycaster(new Vector3(alongX(distance), lodge.floorY + y, lodge.tunnelZ), new Vector3(0, 0, side), 0, half + 0.5)
@@ -48,15 +49,15 @@ const floorAt = (x: number, z: number, mesh: Mesh) => {
   const ray = new Raycaster(new Vector3(x, lodge.floorY + 1, z), new Vector3(0, -1, 0), 0, 2)
   return ray.intersectObject(mesh)[0]?.point.y
 }
-describe('Lodge tunnel timber transition', () => {
-  test('occupies the tunnel’s last meter, ending at the Lodge doorway', () => {
+describe('the Fortress’ timber transition into the Lodge', () => {
+  test('occupies the approach’s last meter, ending at the Lodge doorway', () => {
     expect(transition.length).toBeCloseTo(1.11)
     expect(alongX(transition.spanLength)).toBeCloseTo(doorwayX)
     expect(walls.find(wall => wall.id === 'lodge-east')!.center[0]).toBeCloseTo(doorwayX)
     expect(transition.frames[0]).toBeCloseTo(transition.spanLength - transition.length)
     expect(transition.frames[1] + transitionFrameDepth).toBeCloseTo(transition.spanLength)
     expect(transition.floor.size[0]).toBeCloseTo(transition.length)
-    expect(transition.floor.size[1]).toBeCloseTo(lodgeTunnel.width)
+    expect(transition.floor.size[1]).toBeCloseTo(fortressApproach.width)
     expect(transition.floor.center[0]).toBeCloseTo(doorwayX + transition.length / 2)
     geometry.sill.computeBoundingBox()
     expect(geometry.sill.boundingBox!.max.x).toBeCloseTo(alongX(transition.start))
@@ -68,7 +69,7 @@ describe('Lodge tunnel timber transition', () => {
     }
   })
   test('stone paving and timber floor tile the passage floor without overlaps or slivers', () => {
-    const total = lodgeTunnel.floors.reduce((sum, floor) => sum + area(floor), 0)
+    const total = fortressApproach.floors.reduce((sum, floor) => sum + area(floor), 0)
     const paved = transition.stoneFloors.reduce((sum, floor) => sum + area(floor), 0)
     expect(paved + area(transition.floor)).toBeCloseTo(total, 6)
     expect(area(transition.sill) + area(transition.planks)).toBeCloseTo(area(transition.floor), 6)
@@ -113,7 +114,7 @@ describe('Lodge tunnel timber transition', () => {
       // Just before the first portal, the stone is still bare.
       expect(lateral(transition.start - 0.1, 1.6, side, [timber, lining])).toBeUndefined()
     }
-    expect(upward(boarded)).toBeLessThan(lodgeTunnel.height - 1.6)
+    expect(upward(boarded)).toBeLessThan(fortressApproach.height - 1.6)
     expect(upward(transition.start - 0.1)).toBeUndefined()
   })
   test('the saddle under the first portal stands 3 cm proud, beveled down to the flush floors on both sides', () => {

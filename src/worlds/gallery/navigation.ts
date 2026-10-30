@@ -3,9 +3,11 @@ import type PlacedRoom from '../base/PlacedRoom.ts'
 import type {GalleryRoom} from './SlopGallery.ts'
 
 import {corridorPassage, corridorStairFloor, insideCorridor} from '#src/lib/gallery/corridor.ts'
-import {insideLodgeAccess, lodgeBayFloor, lodgeTunnel, lodgeWindowFloor} from '#src/lib/gallery/lodge.ts'
-import lowerGallery, {oculusPlatform, rampFloorHeight, tunnelFloorHeight} from '#src/lib/gallery/lowerGallery.ts'
+import {fortressFloor, insideFortress} from '#src/lib/gallery/fortress.ts'
+import {insideLodgeWindow, lodgeBayFloor, lodgeWindowFloor} from '#src/lib/gallery/lodge.ts'
+import lowerGallery, {rampFloorHeight, tunnelFloorHeight} from '#src/lib/gallery/lowerGallery.ts'
 import {craterTerrain} from '#src/lib/gallery/moonfall/CraterTerrain.ts'
+import {insideApse, platformFloorHeight} from '#src/lib/gallery/oculusApse.ts'
 import {balconyFloorHeight} from '#src/lib/gallery/oculusBalcony.ts'
 import {towerFloorHeight} from '#src/lib/gallery/oculusTower.ts'
 import {insideStairway, stairFloorHeight} from '#src/lib/gallery/staircase.ts'
@@ -32,19 +34,18 @@ export default class GalleryNavigation {
 
   /** Whether the position lies anywhere a player or an artwork may be. */
   contains(position: Vec3) {
-    return position.every(Number.isFinite) && (this.halls.some(room => this.hallContains(room, position)) || insideStairway(position) || tunnelContains(position) || insideTunnelDisplay(position) || insideLodgeAccess(position))
+    return position.every(Number.isFinite) && (this.halls.some(room => this.hallContains(room, position)) || insideStairway(position) || tunnelContains(position) || insideTunnelDisplay(position) || insideLodgeWindow(position) || insideFortress(position))
   }
 
   /**
    * The height of the walkable floor under the position: the highest nearby floor below it rather than the first one found, which also catches loose objects slightly below a slab of stacked rooms.
    */
   floorHeight([x, y, z]: Vec3) {
-    const onPlatform = Math.abs(x - oculusPlatform.position[0]) <= oculusPlatform.size[0] / 2 && Math.abs(z - oculusPlatform.position[2]) <= oculusPlatform.size[2] / 2
     const floors = [
       ...this.halls.filter(room => inPlan(room, x, z)).map(room => groundOf(room, x, z)),
-      lodgeTunnel.floorAt(x, z),
+      fortressFloor(x, z),
       corridorPassage.floorAt(x, z),
-      onPlatform ? oculusPlatform.position[1] + oculusPlatform.size[1] / 2 : undefined,
+      platformFloorHeight(x, z),
       tunnelContains([x, tunnelFloorHeight(z), z]) ? tunnelFloorHeight(z) : undefined,
       lodgeWindowFloor(x, z),
       lodgeBayFloor(x, z),
@@ -65,6 +66,6 @@ export default class GalleryNavigation {
     const [x, y, z] = position
     const ground = Math.min(room.floorY, groundOf(room, x, z))
     // Up to the top of its main box, the vault’s or the dome’s crown included.
-    return y >= ground - 1 && y <= room.air[0].max.y + 0.2 && (inPlan(room, x, z) || room.id === 'lodge' && lodgeBayFloor(x, z) !== undefined)
+    return y >= ground - 1 && y <= room.air[0].max.y + 0.2 && (inPlan(room, x, z) || room.id === 'lodge' && lodgeBayFloor(x, z) !== undefined || room.id === 'oculus' && insideApse(x, z))
   }
 }

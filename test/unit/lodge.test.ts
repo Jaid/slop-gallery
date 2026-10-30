@@ -8,12 +8,12 @@ import {DoubleSide, Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vecto
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import {corridorHallEastX, corridorPassage, corridorRails, corridorRunner, corridorStairs, insideCorridor, lodgeThresholdSaddle} from '../../src/lib/gallery/corridor.ts'
+import {fortressApproach, fortressDoorway, fortressTransition, insideFortress} from '../../src/lib/gallery/fortress.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
-import lodge, {insideLodgeAccess, lodgeBay, lodgeBayFloor, lodgeOutline, lodgeTunnel, lodgeTunnelTransition, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
+import lodge, {insideLodgeWindow, lodgeBay, lodgeBayFloor, lodgeOutline, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import lodgeInterior, {lodgeFurnitureColliders} from '../../src/lib/gallery/lodgeInterior/layout.ts'
 import LodgeWindowGeometry from '../../src/lib/gallery/LodgeWindowGeometry.ts'
-import {oculusPlatform} from '../../src/lib/gallery/lowerGallery.ts'
-import oculusTower from '../../src/lib/gallery/oculusTower.ts'
+import {towerBridge} from '../../src/lib/gallery/oculusTower.ts'
 import Passage from '../../src/lib/gallery/passages/Passage.ts'
 import SaddleGeometry from '../../src/lib/gallery/passages/SaddleGeometry.ts'
 import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
@@ -27,16 +27,16 @@ import walls, {floorHeight, insideGallery} from './fixtures/gallery.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
 await RAPIER.init()
-const routePassages = [lodgeTunnel, corridorPassage] as const
-const insideRoute = (position: Vec3) => insideLodgeAccess(position) || insideCorridor(position)
-const routeWalls = walls.filter(wall => ['corridor', 'lodge'].includes(wall.room) || ['oculus-north', 'sienna-west', 'vesper-west'].includes(wall.id))
+const routePassages = [fortressApproach, corridorPassage] as const
+const insideRoute = (position: Vec3) => insideLodgeWindow(position) || insideFortress(position) || insideCorridor(position)
+const routeWalls = walls.filter(wall => ['corridor', 'lodge'].includes(wall.room) || wall.id.startsWith('fortress-approach_') || ['sienna-west', 'vesper-west'].includes(wall.id))
 const architecture = routeWalls.map(wall => ({
   wall,
   geometry: createArchitectureGeometry(wall),
 }))
 const windowGeometry = new LodgeWindowGeometry
-const transition = new TransitionGeometry(lodgeTunnelTransition)
-const vaults = [new VaultGeometry(lodgeTunnel, lodgeTunnelTransition.length), TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts), TimberGeometry.stairs(corridorStairs)]
+const transition = new TransitionGeometry(fortressTransition)
+const vaults = [new VaultGeometry(fortressApproach, fortressTransition.length), TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts), TimberGeometry.stairs(corridorStairs)]
 const thresholdSaddle = SaddleGeometry.across(lodgeThresholdSaddle, corridorPassage.floorY)
 const saddles = [transition.sill, thresholdSaddle]
 afterAll(() => {
@@ -85,7 +85,6 @@ function createWorld(fps: number) {
     const beamRotation = new Quaternion
     box(beam.position, beam.size).setRotation(beamRotation.setFromEuler(new Euler(...beam.rotation)))
   }
-  box(oculusPlatform.position, oculusPlatform.size)
   // The Lodge’s floor and ceiling slabs over its plan with the bay, and both saddles, as hulls like the room mounts them.
   const slab = (bottom: number, top: number) => world.createCollider(RAPIER.ColliderDesc.convexHull(new Float32Array(lodgeOutline.flatMap(([x, z]) => [x, bottom, z, x, top, z])))!)
   slab(lodge.floorY - 0.3, lodge.floorY)
@@ -192,14 +191,14 @@ describe('Lodge and Corridor route', () => {
       })
     }
   }
-  test('the stone entrance and both passage mouths match the tower diameter with clear corner trim', () => {
-    expect(lodgeTunnel.width).toBe(oculusTower.radius * 2)
-    expect(lodgeTunnel.width).toBe(4.4)
-    for (const id of ['oculus-north', 'lodge-east']) {
+  test('both doorways of the Fortress are as wide and as high as the passage, with clear corner trim', () => {
+    expect(fortressApproach.width).toBe(towerBridge.mouthWidth)
+    expect(fortressApproach.width).toBe(4)
+    for (const [id, name, floorY] of [['oculus-east', 'fortress', fortressDoorway.y], ['lodge-east', 'fortress', lodge.floorY]] as const) {
       const wall = walls.find(value => value.id === id)!
-      const hole = wall.holes![0]
-      expect(hole.width).toBe(lodgeTunnel.width)
-      expect(hole.height - (hole.bottom ?? 0)).toBeCloseTo(lodgeTunnel.height)
+      const hole = wall.holes!.find(value => value.name === name)!
+      expect(hole.width).toBe(fortressApproach.width)
+      expect(wall.center[1] + hole.height - floorY).toBeCloseTo(fortressApproach.height)
       expect(Math.abs(hole.u) + hole.width / 2 + 0.17).toBeLessThan(wall.width / 2)
     }
     const material = new MeshBasicMaterial({side: DoubleSide})
@@ -214,53 +213,51 @@ describe('Lodge and Corridor route', () => {
         })),
         ...[vaults[0].shell, vaults[0].ribs].map(geometry => new Mesh(geometry, material)),
       ]
-      for (const offset of [-1.65, 1.65]) {
-        const x = lodge.entranceX + offset
-        expect(lodgeTunnel.floorAt(x, lodge.entranceZ - 0.5)).toBe(lodge.floorY)
-        expect(insideGallery([x, lodge.floorY + 1.6, lodge.entranceZ - 0.5])).toBe(true)
-        const ray = new Raycaster(new Vector3(x, lodge.floorY + 1.7, lodge.entranceZ + 0.5), new Vector3(0, 0, -1), 0, lodge.entranceZ - lodge.tunnelZ + 0.5)
+      // Through the Lodge’s doorway, at a person’s height and a little off the axis on both sides
+      for (const offset of [-1.45, 1.45]) {
+        const z = lodge.tunnelZ + offset
+        expect(fortressApproach.floorAt(-19.5, z)).toBe(lodge.floorY)
+        expect(insideGallery([-19.5, lodge.floorY + 1.6, z])).toBe(true)
+        const ray = new Raycaster(new Vector3(-18.5, lodge.floorY + 1.7, z), new Vector3(-1, 0, 0), 0, 3)
         expect(ray.intersectObjects(meshes)).toHaveLength(0)
       }
     } finally {
       material.dispose()
     }
   })
-  for (const offset of [-1.65, 1.65]) {
-    for (const entrance of [true, false]) {
-      for (const returning of [false, true]) {
-        test(`the widened stone doorway is walkable at offset ${offset}, entrance ${entrance}, returning ${returning}`, () => {
-          const world = createWorld(60)
-          const path = entrance ? [[lodge.entranceX + offset, lodge.entranceZ + 1], [lodge.entranceX + offset, lodge.tunnelZ]] : [[-18.5, lodge.tunnelZ + offset], [-23, lodge.tunnelZ + offset]]
-          if (returning) {
-            path.reverse()
+  for (const offset of [-1.45, 1.45]) {
+    for (const returning of [false, true]) {
+      test(`the widened stone doorway is walkable at offset ${offset}, returning ${returning}`, () => {
+        const world = createWorld(60)
+        const path = [[-18.5, lodge.tunnelZ + offset], [-23, lodge.tunnelZ + offset]]
+        if (returning) {
+          path.reverse()
+        }
+        const [start, end] = path as [[number, number], [number, number]]
+        const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(start[0], lodge.floorY + 0.04, start[1]))
+        const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
+        const motor = new EgoMotor(RAPIER, world, body, collider)
+        const facing = new Quaternion
+        facing.setFromAxisAngle(new Vector3(0, 1, 0), Math.atan2(start[0] - end[0], start[1] - end[1]))
+        const distance = () => Math.hypot(body.translation().x - end[0], body.translation().z - end[1])
+        try {
+          for (let i = 0; i < 60 * 5 && distance() > 0.15; i++) {
+            motor.step(world.timestep, {forward: true}, facing)
+            world.step()
           }
-          const [start, end] = path as [[number, number], [number, number]]
-          const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(start[0], lodge.floorY + 0.04, start[1]))
-          const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
-          const motor = new EgoMotor(RAPIER, world, body, collider)
-          const facing = new Quaternion
-          facing.setFromAxisAngle(new Vector3(0, 1, 0), Math.atan2(start[0] - end[0], start[1] - end[1]))
-          const distance = () => Math.hypot(body.translation().x - end[0], body.translation().z - end[1])
-          try {
-            for (let i = 0; i < 60 * 5 && distance() > 0.15; i++) {
-              motor.step(world.timestep, {forward: true}, facing)
-              world.step()
-            }
-            expect(distance()).toBeLessThan(0.15)
-            expect(body.translation().y).toBeCloseTo(lodge.floorY + 0.02, 2)
-            expect(motor.grounded).toBe(true)
-            expect(motor.crouching).toBe(false)
-          } finally {
-            motor.dispose()
-            world.free()
-          }
-        })
-      }
+          expect(distance()).toBeLessThan(0.15)
+          expect(body.translation().y).toBeCloseTo(lodge.floorY + 0.02, 2)
+          expect(motor.grounded).toBe(true)
+          expect(motor.crouching).toBe(false)
+        } finally {
+          motor.dispose()
+          world.free()
+        }
+      })
     }
   }
-  test('navigation and floors share the same raised-platform elevation', () => {
+  test('navigation and floors share the passages’ elevation', () => {
     expect(lodge.floorY).toBe(-5)
-    expect(lodge.entranceX).toBe(oculusTower.x)
     for (const passage of routePassages) {
       for (const {center: [x, z]} of passage.floors) {
         const position: Vec3 = [x, passage.floorY + 1.6, z]
@@ -347,10 +344,11 @@ describe('Lodge and Corridor route', () => {
       expect(Math.abs(position[0]) - halfX >= fireplace.width / 2 || position[2] + reach <= fireplace.front).toBe(true)
     }
   })
-  test('the Oculus entrance starts at its platform, not at the buried lower floor', () => {
-    const wall = walls.find(candidate => candidate.id === 'oculus-north')!
-    expect(wall.center[1] + wall.holes![0].bottom!).toBe(lodge.floorY)
-    expect(wallPosition(wall, wall.holes![0].u, lodge.floorY, 0)).toEqual([lodge.entranceX, lodge.floorY, lodge.entranceZ])
+  test('the Fortress’ doorway in the Oculus opens at the east bridge’s end, its sill just under the deck', () => {
+    const wall = walls.find(candidate => candidate.id === 'oculus-east')!
+    const hole = wall.holes!.find(value => value.name === 'fortress')!
+    expect(wall.center[1] + hole.bottom!).toBeCloseTo(fortressDoorway.y - 0.02)
+    expect(wallPosition(wall, hole.u, fortressDoorway.y, 0)).toEqual([expect.closeTo(fortressDoorway.x), fortressDoorway.y, expect.closeTo(fortressDoorway.z)])
     const sienna = walls.find(candidate => candidate.id === 'sienna-west')!
     expect(wallPosition(sienna, sienna.holes![0].u, 0, 0)[2]).toBeCloseTo(lodge.siennaZ)
     expect(sienna.holes![0].u + lodge.timberWidth / 2 + 0.17).toBeLessThan(sienna.width / 2)
@@ -382,7 +380,7 @@ describe('Lodge and Corridor route', () => {
       for (const sprint of [false, true]) {
         test(`real player traverses the entire loop at ${fps} Hz, returning ${returning}, sprint ${sprint}`, () => {
           const world = createWorld(fps)
-          const path = [[lodge.entranceX, -33], [lodge.entranceX, lodge.tunnelZ], [-28, lodge.tunnelZ], [-28, lodge.returnZ], [lodge.approachX, lodge.returnZ], [lodge.approachX, lodge.siennaZ], [-31, lodge.siennaZ], [-18.5, lodge.siennaZ]]
+          const path = [[-13, lodge.tunnelZ], [-28, lodge.tunnelZ], [-28, lodge.returnZ], [lodge.approachX, lodge.returnZ], [lodge.approachX, lodge.siennaZ], [-31, lodge.siennaZ], [-18.5, lodge.siennaZ]]
           if (returning) {
             path.reverse()
           }

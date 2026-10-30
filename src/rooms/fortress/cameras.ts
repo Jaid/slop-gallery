@@ -1,11 +1,11 @@
 import type {RoomCamera} from '../base/Room.ts'
 
 export default {
-  // In the elbow under the lantern, looking west down the vault toward the Lodge’s timber end.
+  // Where the curve leaves the apse’s east shoulder, looking west along its crown toward the lantern at its top.
   overview: {
-    position: [0.6, 1.7, 0.4],
+    position: [8.96, 1.7, 1.79],
     aim: {
-      yaw: Math.PI / 2,
+      yaw: 1.18,
       pitch: -0.05,
     },
     fov: 70,

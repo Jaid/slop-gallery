@@ -34,6 +34,7 @@ export type GalleryRoomId = GalleryRoom['id']
 
 /**
  * Every room at the origin the gallery’s layout gives it, in the order their fences are checked: the ground floor first, then the lower rooms, each passage after the rooms its fence meets.
+ * Only the Fortress comes before the Oculus, whose fence takes in the whole box around the apse the Fortress curves round.
  */
 const placements: ReadonlyArray<RoomPlacement<GalleryRoom>> = [
   new Lobby,
@@ -45,9 +46,9 @@ const placements: ReadonlyArray<RoomPlacement<GalleryRoom>> = [
   new Moonfall,
   new Lodge,
   new Corridor,
+  new Fortress,
   new Oculus,
   new Exhibition,
-  new Fortress,
 ].map(room => [room, roomOrigins[room.id]])
 const minimap = lazy(() => import('#component/GalleryMinimap'))
 const scene = lazy(() => import('#component/GalleryScene'))

@@ -11,6 +11,7 @@ import {colliderGeometry, createArchitectureGeometry, wallFace} from '../../src/
 import {floorThickness, roomFloorPlan} from '../../src/lib/gallery/floors.ts'
 import lobby from '../../src/lib/gallery/lobby.ts'
 import lowerGallery, {oculusCeiling, oculusPlatform, tunnelFloorHeight, tunnelSlope} from '../../src/lib/gallery/lowerGallery.ts'
+import oculusApse, {apseBoundaryZ} from '../../src/lib/gallery/oculusApse.ts'
 import SlopedBoxGeometry from '../../src/lib/gallery/SlopedBoxGeometry.ts'
 import StairFlight from '../../src/lib/gallery/stairs/StairFlight.ts'
 import renderOculusRoom from '../../src/rooms/oculus/components/OculusRoom/index.tsx'
@@ -36,7 +37,7 @@ describe('oculus and connecting tunnel', () => {
     expect(oculus.ceiling.topY).toBe(-floorThickness)
     const material = new MeshBasicMaterial
     try {
-      for (const side of ['north', 'east', 'south', 'west']) {
+      for (const side of ['northwest', 'north', 'northeast', 'east', 'south', 'west']) {
         const wall = walls.find(value => value.id === `oculus-${side}`)!
         const geometry = createArchitectureGeometry(wall)
         try {
@@ -62,16 +63,22 @@ describe('oculus and connecting tunnel', () => {
       material.dispose()
     }
   })
-  test('the plain cuboid fills the extended north end with a matching walkable top', () => {
+  test('the platform fills the north end and the apse behind it with a matching walkable top', () => {
     const {position, size} = oculusPlatform
-    expect(size).toEqual([18, 6, 4])
-    expect(position).toEqual([0, -8, -33])
+    expect(size).toEqual([18, 5, 4])
+    expect(position).toEqual([0, -8.5, -33])
     expect(position[1] - size[1] / 2).toBe(floorY)
     expect(position[2] - size[2] / 2).toBe(-35)
     expect(position[2] + size[2] / 2).toBe(-31)
-    expect(floorHeight([0, -3.4, -32])).toBe(-5)
+    expect(floorHeight([0, -4.4, -32])).toBe(-6)
     expect(floorHeight([0, 1.6, -32])).toBe(0)
-    expect(floorHeight([0, -6.4, -30.9])).toBe(floorY)
+    expect(floorHeight([0, -7.4, -30.9])).toBe(floorY)
+    // In the apse, up to its round wall
+    for (const [x, z] of [[0, -37.8], [-6, -36.9], [8.8, -35.3]] as const) {
+      expect(floorHeight([x, -4.4, z])).toBe(-6)
+      expect(insideGallery([x, -4.4, z])).toBe(true)
+      expect(roomAt([x, -4.4, z])).toBe('oculus')
+    }
     const geometry = new BoxGeometry(...size)
     const material = new MeshBasicMaterial
     const mesh = new Mesh(geometry, material)
@@ -88,23 +95,32 @@ describe('oculus and connecting tunnel', () => {
       const origin = new Vector3(0, -3, -31)
       const direction = new Vector3(0, -1, 0)
       const platformRay = new Raycaster(origin, direction)
-      expect(platformRay.intersectObject(mesh)[0].point.y).toBe(-5)
-      expect(world.castRay(new RAPIER.Ray(origin, direction), 4, true)!.timeOfImpact).toBe(2)
+      expect(platformRay.intersectObject(mesh)[0].point.y).toBe(-6)
+      expect(world.castRay(new RAPIER.Ray(origin, direction), 4, true)!.timeOfImpact).toBe(3)
     } finally {
       geometry.dispose()
       material.dispose()
       world.free()
     }
   })
-  test('the Oculus runs from the Lodge exit, past the glass, to the tunnel toward Moonfall', () => {
-    expect(walls.find(wall => wall.id === 'oculus-north')!.center[2]).toBe(-35)
+  test('the Oculus runs from its round north end, past the glass, to the tunnel toward Moonfall', () => {
+    expect(walls.find(wall => wall.id === 'oculus-north')!.center[2]).toBeCloseTo(oculusApse.northZ - oculusApse.depth)
     expect(walls.find(wall => wall.id === 'oculus-south')!.center[2]).toBe(-15)
     expect(oculus.center).toEqual([0, -25])
     expect(oculus.size).toEqual([18, 20])
     expect(lobby.opening.center).toEqual([0, -24])
     expect(lobby.opening.size).toEqual([8, 8])
-    expect(insideGallery([0, -6.4, -34.8])).toBe(true)
-    expect(insideGallery([0, -6.4, -35.01])).toBe(false)
+    expect(insideGallery([0, -5.4, -37.99])).toBe(true)
+    expect(insideGallery([0, -5.4, -38.01])).toBe(false)
+    // The apse turns out of both side walls tangentially and reaches three meters north along its middle.
+    expect(oculusApse.depth).toBe(3)
+    expect(apseBoundaryZ(0)).toBeCloseTo(-38)
+    for (const side of [-1, 1]) {
+      expect(apseBoundaryZ(side * 9)).toBeCloseTo(-35)
+      expect(apseBoundaryZ(side * 8.99)! - -35).toBeLessThan(0)
+      expect(apseBoundaryZ(side * 8.99)! - -35).toBeGreaterThan(-0.2)
+      expect(insideGallery([side * 9.01, -5.4, -35.5])).toBe(false)
+    }
     expect(roomAt([0, -6.4, -24])).toBe('oculus')
     expect(roomAt([0, 1.6, -24])).toBe('lobby')
     for (const z of [-13.9, -8, 0, 4.4]) {

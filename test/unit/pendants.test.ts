@@ -5,28 +5,32 @@ import {afterAll, describe, expect, test} from 'bun:test'
 import {BoxGeometry, DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {corridorPassage, corridorStairs} from '../../src/lib/gallery/corridor.ts'
-import {lodgeTunnel, lodgeTunnelTransition, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
+import {fortressApproach, fortressCurve, fortressLanterns, fortressMouth, fortressTransition} from '../../src/lib/gallery/fortress.ts'
+import {lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import LodgeWindowGeometry from '../../src/lib/gallery/LodgeWindowGeometry.ts'
+import RouteVaultGeometry from '../../src/lib/gallery/passages/RouteVaultGeometry.ts'
 import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
 import TransitionGeometry from '../../src/lib/gallery/passages/TransitionGeometry.ts'
 import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
 import {CeilingProbe, LanternBody, PendantGeometry} from '../../src/lib/gallery/pendants/index.ts'
-import {corridorLightSpacing, passageLightHeight, passagePendantMounts} from '../../src/lib/gallery/pendants/mounts.ts'
+import {corridorLightSpacing, passageLightDrop, passagePendantMounts, routePendantMounts} from '../../src/lib/gallery/pendants/mounts.ts'
 import {canopyEmbed, canopyHeight, canopyRadius} from '../../src/lib/gallery/pendants/PendantGeometry.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 
-const vault = new VaultGeometry(lodgeTunnel, lodgeTunnelTransition.length)
+const mouth = new VaultGeometry(fortressMouth)
+const curve = new RouteVaultGeometry(fortressCurve)
+const approach = new VaultGeometry(fortressApproach, fortressTransition.length)
 const corridor = TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts)
 const stairs = TimberGeometry.stairs(corridorStairs)
-const transition = new TransitionGeometry(lodgeTunnelTransition)
+const transition = new TransitionGeometry(fortressTransition)
 const lodgeWindow = new LodgeWindowGeometry
 const material = new MeshBasicMaterial({side: DoubleSide})
 // The flat roof slabs over passage elbows, as rendered by CoveredPassage.
-const slabs = [lodgeTunnel, corridorPassage].flatMap(passage => passage.floors.map(({center: [x, z], size: [width, depth]}) => {
+const slabs = [fortressMouth, fortressApproach, corridorPassage].flatMap(passage => passage.floors.map(({center: [x, z], size: [width, depth]}) => {
   const slab = new BoxGeometry(width, 0.24, depth)
   return slab.translate(x, passage.floorY + passage.height + 0.12, z)
 }))
-const meshes = [vault.shell, vault.ribs, corridor.shell, corridor.ribs, stairs.shell, stairs.ribs, transition.timber, transition.lining, lodgeWindow.frame, lodgeWindow.lining, ...slabs].map(geometry => {
+const meshes = [mouth.shell, mouth.ribs, curve.shell, curve.ribs, approach.shell, approach.ribs, corridor.shell, corridor.ribs, stairs.shell, stairs.ribs, transition.timber, transition.lining, lodgeWindow.frame, lodgeWindow.lining, ...slabs].map(geometry => {
   const mesh = new Mesh(geometry, material)
   mesh.updateMatrixWorld()
   return mesh
@@ -35,21 +39,34 @@ const lantern = new LanternBody
 const groups: Array<{
   body: PendantBody
   label: string
+  /** how high each light hangs */
+  lights: Array<number>
   mounts: Array<PendantMount>
 }> = [
   {
-    label: 'castle tunnel',
+    label: 'castle curve',
     body: lantern,
-    mounts: passagePendantMounts(lodgeTunnel, [vault.shell, vault.ribs]),
+    lights: Object.values(fortressLanterns).map(along => fortressCurve.route.at(along).y + fortressCurve.height - passageLightDrop),
+    mounts: routePendantMounts(fortressCurve, [curve.shell, curve.ribs], Object.values(fortressLanterns)),
   },
+  ...[fortressMouth, fortressApproach].map(passage => {
+    const mounts = passagePendantMounts(passage, [passage === fortressMouth ? mouth.shell : approach.shell, passage === fortressMouth ? mouth.ribs : approach.ribs])
+    return {
+      label: `castle ${passage.id}`,
+      body: lantern,
+      lights: mounts.map(() => passage.floorY + passage.height - passageLightDrop),
+      mounts,
+    }
+  }),
   {
     label: 'timber corridor',
     body: lantern,
+    lights: Array.from({length: 9}, () => corridorPassage.floorY + corridorPassage.height - passageLightDrop),
     mounts: passagePendantMounts(corridorPassage, [corridor.shell, corridor.ribs], corridorLightSpacing, corridor.ribs),
   },
 ]
 afterAll(() => {
-  for (const geometry of [vault, corridor, stairs, transition, lodgeWindow, ...slabs]) {
+  for (const geometry of [mouth, curve, approach, corridor, stairs, transition, lodgeWindow, ...slabs]) {
     geometry.dispose()
   }
   material.dispose()
@@ -59,12 +76,13 @@ const firstHit = (origin: Vector3, direction: Vector3, far = Infinity) => {
   return raycaster.intersectObjects(meshes)[0]
 }
 describe('ceiling-hung pendants', () => {
-  test('every light hangs at its passage height', () => {
-    expect(groups[0].mounts).toHaveLength(5)
-    expect(groups[1].mounts).toHaveLength(9)
-    for (const [i, passage] of [lodgeTunnel, corridorPassage].entries()) {
-      for (const mount of groups[i].mounts) {
-        expect(mount.light[1]).toBeCloseTo(passage.floorY + passageLightHeight)
+  test('every light hangs its drop under its passage’s crown', () => {
+    expect(groups[0].mounts).toHaveLength(2)
+    expect(groups.at(-1)!.mounts).toHaveLength(9)
+    for (const {mounts, lights} of groups) {
+      expect(mounts).toHaveLength(lights.length)
+      for (const [i, mount] of mounts.entries()) {
+        expect(mount.light[1]).toBeCloseTo(lights[i])
       }
     }
   })
@@ -141,7 +159,7 @@ describe('ceiling-hung pendants', () => {
     })
   }
   test('a probe without a ceiling above refuses to mount, and slides only horizontally', () => {
-    const probe = new CeilingProbe([vault.shell])
+    const probe = new CeilingProbe([approach.shell])
     expect(probe.mount([1000, 0, 1000], [1, 0, 0])).toBeUndefined()
     expect(() => probe.mount([0, 0, 0], [0, 1, 0])).toThrow(RangeError)
     expect(() => probe.mount([0, 0, 0], [0, 0, 0])).toThrow(RangeError)

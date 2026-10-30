@@ -71,7 +71,7 @@ export const openings: ReadonlyArray<Opening> = [
   },
   {
     rooms: ['oculus', 'fortress'],
-    holes: [['oculus-north', 'fortress']],
+    holes: [['oculus-east', 'fortress']],
   },
   {
     rooms: ['fortress', 'lodge'],
@@ -221,7 +221,7 @@ const relations = {
         'east_stairway_door',
         'east_stairway_landing',
       ],
-      fortress: 'pendant',
+      fortress: 'lantern_east',
     },
   },
   exhibition: {
@@ -258,7 +258,7 @@ const relations = {
         'lantern_middle',
         'lantern_south',
       ],
-      fortress: 'pendant',
+      fortress: 'lantern_north',
     },
   },
   fortress: {

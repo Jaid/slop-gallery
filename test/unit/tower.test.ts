@@ -4,17 +4,28 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import EgoMotor from 'ego-player/motor'
 import {Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
-import {colliderGeometry} from '../../src/lib/gallery/architecture.ts'
+import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
+import {fortressMouth} from '../../src/lib/gallery/fortress.ts'
 import lowerGallery, {oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
 import OculusGroundGeometry from '../../src/lib/gallery/OculusGroundGeometry.ts'
-import tower, {towerRamp as ramp, towerArch, towerFloorHeight, towerPlatformOutline, towerRampGradient, towerRampHalfWidth, towerRampHeight} from '../../src/lib/gallery/oculusTower.ts'
-import {floorHeight} from './fixtures/gallery.ts'
+import tower, {towerRamp as ramp, towerArch, towerBridge, towerBridges, towerDeck, towerFloorHeight, towerPlatformOutline, towerRampGradient, towerRampHalfWidth, towerRampHeight} from '../../src/lib/gallery/oculusTower.ts'
+import walls, {floorHeight} from './fixtures/gallery.ts'
 import {addOculusRailings} from './helpers/oculusRailings.ts'
 
 await RAPIER.init()
 const geometry = new OculusGroundGeometry
 const collision = colliderGeometry(geometry)
-afterAll(() => geometry.dispose())
+// The side walls the bridges lead to, with the doorway into the Fortress’ mouth at the east one’s end
+const bridgeWalls = walls.filter(wall => ['oculus-east', 'oculus-west'].includes(wall.id) || wall.id.startsWith('fortress-mouth_')).map(wall => ({
+  wall,
+  geometry: createArchitectureGeometry(wall),
+}))
+afterAll(() => {
+  geometry.dispose()
+  for (const part of bridgeWalls) {
+    part.geometry.dispose()
+  }
+})
 function createWorld() {
   const world = new RAPIER.World({
     x: 0,
@@ -78,14 +89,66 @@ describe('cylindrical Oculus platform', () => {
     const lastRise = towerRampHeight(1) - towerRampHeight(1 - 1 / ramp.segments)
     expect(lastRise).toBeLessThan(0.002)
   })
-  test('rounded shoulders blend the neck into the circular platform symmetrically', () => {
-    expect(towerPlatformOutline.length).toBeGreaterThan(100)
+  test('rounded shoulders blend the ramp’s end and both bridges into the circular platform symmetrically', () => {
+    expect(towerPlatformOutline.length).toBeGreaterThan(150)
     const neckZ = ramp.endZ - tower.z
-    expect(towerPlatformOutline[0]).toEqual([-ramp.width / 2, neckZ])
-    expect(towerPlatformOutline[1]).toEqual([ramp.width / 2, neckZ])
+    // The outline starts across the ramp’s end, from its west corner.
+    expect(towerPlatformOutline[0][0]).toBeCloseTo(-ramp.width / 2, 10)
+    expect(towerPlatformOutline[0][1]).toBeCloseTo(neckZ, 10)
+    expect(towerPlatformOutline[4][0]).toBeCloseTo(ramp.width / 2, 10)
+    expect(towerPlatformOutline[4][1]).toBeCloseTo(neckZ, 10)
     for (const x of [-0.95, 0.95]) {
       expect(towerFloorHeight(x, tower.z - 1.2)).toBe(ramp.endY)
       expect(towerFloorHeight(x, ramp.endZ + 0.02)).toBeUndefined()
+    }
+    for (const {point} of towerDeck) {
+      const mirrored = towerDeck.find(({point: [x, z]}) => Math.abs(x + point[0]) < 1e-9 && Math.abs(z - point[1]) < 1e-9)
+      expect(mirrored).toBeDefined()
+    }
+    // Shoulders never cut into the round wall, and no part of the outline crosses another.
+    for (const {point} of towerDeck) {
+      expect(Math.hypot(...point)).toBeGreaterThan(tower.radius - 0.005)
+    }
+  })
+  test('both bridges run level with the deck out to their walls, where they widen into the doorways they lead to', () => {
+    for (const {angle, wallDistance} of towerBridges) {
+      const direction = Math.cos(angle)
+      for (const along of [tower.radius + 0.3, 4, 6.5, wallDistance - towerBridge.flareRadius - 0.2]) {
+        const x = tower.x + direction * along
+        for (const across of [-1, 1]) {
+          expect(towerFloorHeight(x, tower.z + across * (towerBridge.width / 2 - 0.02))).toBe(ramp.endY)
+          expect(towerFloorHeight(x, tower.z + across * (towerBridge.width / 2 + 0.02))).toBeUndefined()
+        }
+      }
+      // At the wall’s face, the deck is as wide as the doorway.
+      const face = tower.x + direction * (wallDistance - 0.105)
+      for (const across of [-1, 1]) {
+        expect(towerFloorHeight(face, tower.z + across * (towerBridge.mouthWidth / 2 - 0.02))).toBe(ramp.endY)
+        expect(towerFloorHeight(face, tower.z + across * (towerBridge.mouthWidth / 2 + 0.02))).toBeUndefined()
+      }
+    }
+  })
+  test('the bridges leave more than 2.1 m of headroom over the side ramps and landings under them', () => {
+    const material = new MeshBasicMaterial
+    const mesh = new Mesh(geometry, material)
+    try {
+      for (const {angle, wallDistance} of towerBridges) {
+        for (let along = tower.radius + 0.5; along < wallDistance - 0.2; along += 0.25) {
+          for (let across = -towerBridge.mouthWidth / 2; across <= towerBridge.mouthWidth / 2; across += 0.25) {
+            const x = tower.x + Math.cos(angle) * along
+            const z = tower.z + across
+            const down = new Raycaster(new Vector3(x, -1, z), new Vector3(0, -1, 0))
+            const hits = down.intersectObject(mesh)
+            if (hits.length < 3 || hits[0].point.y !== ramp.endY) {
+              continue
+            }
+            // From the bridge’s underside down to what stands below it
+            expect(hits[1].point.y - hits[2].point.y).toBeGreaterThan(2.1)
+          }
+        }
+      }
+    } finally {
+      material.dispose()
     }
   })
   test('the merged lower slopes meet the high base without gaps or raised overlays', () => {
@@ -94,7 +157,8 @@ describe('cylindrical Oculus platform', () => {
     try {
       for (const slope of oculusRamps) {
         for (const z of [slope.startZ - 0.01, -24, -29.99, -30.01]) {
-          const slopeRay = new Raycaster(new Vector3(slope.x, -2, z), new Vector3(0, -1, 0))
+          // From under the bridges, which cross the side ramps at the tower
+          const slopeRay = new Raycaster(new Vector3(slope.x, ramp.endY - towerBridge.thickness - 0.1, z), new Vector3(0, -1, 0))
           const hits = slopeRay.intersectObject(mesh)
           expect(hits).toHaveLength(1)
           const expected = z < slope.startZ - slope.run ? slope.floorY + slope.rise : slope.floorY + (slope.startZ - z) / slope.run * slope.rise
@@ -163,8 +227,8 @@ describe('cylindrical Oculus platform', () => {
     }
   })
   test('the cut stays lean', () => {
-    // The smooth junction of the round tower with the bridge accounts for most of these.
-    expect((geometry.index?.count ?? geometry.getAttribute('position').count) / 3).toBeLessThan(3000)
+    // The smooth junctions of the round tower with the ramp and the bridges account for most of these.
+    expect((geometry.index?.count ?? geometry.getAttribute('position').count) / 3).toBeLessThan(4500)
   })
   test('the underpass has a sloping roof with tangent rounded corners, the tall one curving into the round tower', () => {
     const half = towerArch.width / 2
@@ -268,13 +332,14 @@ describe('cylindrical Oculus platform', () => {
     }
   }
   test('the tower leaves tunnel clearance and headroom below the unchanged glass', () => {
-    expect(tower.height).toBe(7.5)
+    expect(tower.height).toBe(6.5)
     expect(tower.radius).toBe(2.2)
     expect(tower.z + tower.radius).toBeLessThan(lowerGallery.tunnel.northZ - 3.5)
     expect(tower.floorY + tower.height + 1.8).toBeLessThan(-0.12)
-    expect(floorHeight([tower.x, tower.floorY + tower.height + 1.6, tower.z])).toBe(-3.5)
+    expect(floorHeight([tower.x, tower.floorY + tower.height + 1.6, tower.z])).toBe(-4.5)
     expect(floorHeight([tower.x, 1.6, tower.z])).toBe(0)
-    expect(towerFloorHeight(tower.x + tower.radius + 0.01, tower.z)).toBeUndefined()
+    // Due south, between both bridges
+    expect(towerFloorHeight(tower.x, tower.z + tower.radius + 0.01)).toBeUndefined()
     expect(floorHeight([tower.x, -6.4, (ramp.startZ + ramp.endZ) / 2])).toBe(-11)
   })
   test('the visible deck and cylindrical top match collision and navigation heights', () => {
@@ -286,21 +351,74 @@ describe('cylindrical Oculus platform', () => {
     const world = createWorld()
     try {
       world.step()
-      for (const x of [-0.35, 0, 0.35]) {
-        for (const z of [ramp.startZ + 0.3, -28, ramp.endZ - 0.1, ramp.endZ + 0.1, tower.z]) {
-          const origin = new Vector3(x, -2, z)
-          const direction = new Vector3(0, -1, 0)
-          const height = towerFloorHeight(x, z)!
-          const deckRay = new Raycaster(origin, direction)
-          expect(deckRay.intersectObjects(meshes)[0].point.y).toBeCloseTo(height, 5)
-          expect(world.castRay(new RAPIER.Ray(origin, direction), 10, true)!.timeOfImpact).toBeCloseTo(origin.y - height, 4)
-        }
+      const points = [
+        ...[-0.35, 0, 0.35].flatMap(x => [ramp.startZ + 0.3, -28, ramp.endZ - 0.1, ramp.endZ + 0.1, tower.z].map(z => [x, z] as const)),
+        // along both bridges, out onto their fillets by the walls
+        ...towerBridges.flatMap(({angle, wallDistance}) => [tower.radius + 0.05, 5, wallDistance - 0.3].flatMap(along => [-0.6, 0, 0.6].map(across => [tower.x + Math.cos(angle) * along, tower.z + across] as const))),
+      ]
+      for (const [x, z] of points) {
+        const origin = new Vector3(x, -2, z)
+        const direction = new Vector3(0, -1, 0)
+        const height = towerFloorHeight(x, z)!
+        const deckRay = new Raycaster(origin, direction)
+        expect(deckRay.intersectObjects(meshes)[0].point.y).toBeCloseTo(height, 5)
+        expect(world.castRay(new RAPIER.Ray(origin, direction), 10, true)!.timeOfImpact).toBeCloseTo(origin.y - height, 4)
       }
     } finally {
       world.free()
       material.dispose()
     }
   })
+  for (const {side, angle, wallDistance} of towerBridges) {
+    for (const fps of [30, 60, 120]) {
+      for (const sprint of [false, true]) {
+        test(`walks across the ${side} bridge to its wall and back at ${fps} Hz, sprint ${sprint}`, () => {
+          const world = createWorld()
+          for (const part of bridgeWalls) {
+            for (const args of part.geometry.collision) {
+              const rotation = new Quaternion
+              world.createCollider(RAPIER.ColliderDesc.trimesh(...args).setTranslation(...part.wall.center).setRotation(rotation.setFromAxisAngle(new Vector3(0, 1, 0), part.wall.rotation)))
+            }
+          }
+          for (const {center: [x, z], size: [width, depth]} of fortressMouth.floors) {
+            world.createCollider(RAPIER.ColliderDesc.cuboid(width / 2, 0.12, depth / 2).setTranslation(x, fortressMouth.floorY - 0.12, z))
+          }
+          world.timestep = 1 / fps
+          const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(tower.x, ramp.endY + 0.04, tower.z))
+          const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
+          const motor = new EgoMotor(RAPIER, world, body, collider)
+          const facing = new Quaternion
+          const along = () => (body.translation().x - tower.x) * Math.cos(angle)
+          try {
+            for (const [heading, reached] of [[angle, () => along() > wallDistance - 1], [angle + Math.PI, () => along() < 0.5]] as const) {
+              // Yaw 0 walks toward −z and grows counterclockwise, seen from above.
+              facing.setFromAxisAngle(new Vector3(0, 1, 0), -Math.PI / 2 - heading)
+              let arrived = false
+              for (let i = 0; i < fps * 6 && !arrived; i++) {
+                motor.step(world.timestep, {
+                  forward: true,
+                  sprint,
+                }, facing)
+                world.step()
+                arrived = reached()
+              }
+              expect(arrived).toBe(true)
+              for (let i = 0; i < fps; i++) {
+                motor.step(world.timestep, {}, facing)
+                world.step()
+              }
+              expect(body.translation().y).toBeCloseTo(ramp.endY + 0.02, 2)
+              expect(Math.abs(body.translation().z - tower.z)).toBeLessThan(towerBridge.width / 2)
+              expect(motor.grounded).toBe(true)
+            }
+          } finally {
+            motor.dispose()
+            world.free()
+          }
+        })
+      }
+    }
+  }
   for (const fps of [30, 60, 120, 240]) {
     for (const offset of [-0.35, 0, 0.35]) {
       for (const sprint of [false, true]) {
