@@ -14,27 +14,40 @@ export type HeavyCapabilityHints = {
   deviceMemory?: number
 }
 
-/** Whether `?graphics=auto` picks heavy graphics for these hints. Browsers that report the GPU family or the device memory not at all, like Firefox and Safari, get fast graphics. */
-export function isHeavyCapable({architecture, cpuPerformance, deviceMemory}: HeavyCapabilityHints) {
-  if (architecture === undefined || !heavyArchitectures.has(architecture)) {
-    return false
+/** whether a hint meets what `?graphics=auto` asks of it for heavy graphics, or the browser didn’t report it */
+export type HeavyCapabilityVerdict = 'met' | 'unknown' | 'unmet'
+
+/** Judge each hint on its own. */
+export function judgeHeavyCapability({architecture, cpuPerformance, deviceMemory}: HeavyCapabilityHints): Record<keyof HeavyCapabilityHints, HeavyCapabilityVerdict> {
+  return {
+    architecture: architecture ? (heavyArchitectures.has(architecture) ? 'met' : 'unmet') : 'unknown',
+    cpuPerformance: cpuPerformance ? (weakCpuPerformanceTiers.has(cpuPerformance) ? 'unmet' : 'met') : 'unknown',
+    deviceMemory: deviceMemory === undefined ? 'unknown' : (deviceMemory >= heavyDeviceMemory ? 'met' : 'unmet'),
   }
-  if (deviceMemory === undefined || deviceMemory < heavyDeviceMemory) {
-    return false
-  }
-  return cpuPerformance === undefined || !weakCpuPerformanceTiers.has(cpuPerformance)
 }
 
-/** Ask the adapter that three is going to request, without a power preference too, whether `?graphics=auto` picks heavy graphics. */
-export async function detectHeavyCapability() {
-  if (typeof navigator === 'undefined' || !('gpu' in navigator)) {
-    return false
-  }
+/** Whether `?graphics=auto` picks heavy graphics for these hints. The GPU family and the device memory must be reported, which Firefox and Safari don’t, while an unknown CPU tier doesn’t count against it. */
+export function isHeavyCapable(hints: HeavyCapabilityHints) {
+  const verdicts = judgeHeavyCapability(hints)
+  return verdicts.architecture === 'met' && verdicts.deviceMemory === 'met' && verdicts.cpuPerformance !== 'unmet'
+}
+
+/** Ask the navigator, and the adapter that three is going to request without a power preference too, for the hints. */
+export async function requestHeavyCapabilityHints(): Promise<HeavyCapabilityHints> {
   const {cpuPerformance, deviceMemory} = navigator as Navigator & Pick<HeavyCapabilityHints, 'cpuPerformance' | 'deviceMemory'>
-  const adapter = await navigator.gpu.requestAdapter()
-  return isHeavyCapable({
+  // A failed request only leaves the GPU family unknown; three reports a GPU that is really missing itself.
+  const adapter = 'gpu' in navigator ? await navigator.gpu.requestAdapter().catch(() => null) : null
+  return {
     architecture: adapter?.info.architecture,
     cpuPerformance,
     deviceMemory,
-  })
+  }
+}
+
+let hints: Promise<HeavyCapabilityHints> | undefined
+
+/** The hints of this page, requested on the first call only, so `?graphics=auto` and the menu share one adapter request. */
+export function readHeavyCapabilityHints() {
+  hints ??= requestHeavyCapabilityHints()
+  return hints
 }

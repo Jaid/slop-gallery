@@ -4,7 +4,7 @@ import optis from 'optis'
 import readPermalink from 'read-permalink'
 import useGraphicsMode from 'use-graphics-mode'
 
-import {detectHeavyCapability} from './autoGraphics.ts'
+import {isHeavyCapable, readHeavyCapabilityHints} from './autoGraphics.ts'
 
 /** a `?graphics` name: a graphics mode or `auto`, which picks fast or heavy for the GPU */
 type GraphicsModeName = ReturnType<typeof useGraphicsMode.getName> | 'auto'
@@ -89,7 +89,7 @@ export function readGraphicsModeName(input: URL | string = typeof location === '
 }
 
 // Only `?graphics=auto` waits for the adapter, before anything reads the graphics mode.
-const isAutoHeavy = readGraphicsModeName() === 'auto' && await detectHeavyCapability()
+const isAutoHeavy = readGraphicsModeName() === 'auto' && isHeavyCapable(await readHeavyCapabilityHints())
 
 /** Read whether `?graphics` asks for heavy graphics, which cinematic graphics are too. `auto` reads as what it picked for this page’s GPU. */
 export function readGraphicsMode(input?: URL | string) {

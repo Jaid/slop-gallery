@@ -1,6 +1,6 @@
 import {afterEach, expect, test} from 'bun:test'
 
-import {detectHeavyCapability, isHeavyCapable} from '../../src/lib/rendering/autoGraphics.ts'
+import {isHeavyCapable, judgeHeavyCapability, readHeavyCapabilityHints, requestHeavyCapabilityHints} from '../../src/lib/rendering/autoGraphics.ts'
 
 const stubbed = ['cpuPerformance', 'deviceMemory', 'gpu'] as const
 const descriptors = Object.fromEntries(stubbed.map(key => [key, Object.getOwnPropertyDescriptor(navigator, key)]))
@@ -74,26 +74,81 @@ test('detection asks the WebGPU adapter and the navigator', async () => {
     deviceMemory: 8,
     gpu: stubAdapter('lovelace'),
   })
-  expect(await detectHeavyCapability()).toBe(true)
+  expect(isHeavyCapable(await requestHeavyCapabilityHints())).toBe(true)
   stubNavigator({cpuPerformance: 4})
-  expect(await detectHeavyCapability()).toBe(true)
+  expect(isHeavyCapable(await requestHeavyCapabilityHints())).toBe(true)
   stubNavigator({cpuPerformance: 2})
-  expect(await detectHeavyCapability()).toBe(false)
+  expect(isHeavyCapable(await requestHeavyCapabilityHints())).toBe(false)
   stubNavigator({
     cpuPerformance: 0,
     deviceMemory: 2,
   })
-  expect(await detectHeavyCapability()).toBe(false)
+  expect(isHeavyCapable(await requestHeavyCapabilityHints())).toBe(false)
   stubNavigator({
     deviceMemory: 8,
     gpu: stubAdapter('gen-12lp'),
   })
-  expect(await detectHeavyCapability()).toBe(false)
+  expect(isHeavyCapable(await requestHeavyCapabilityHints())).toBe(false)
   stubNavigator({gpu: stubAdapter(null)})
-  expect(await detectHeavyCapability()).toBe(false)
+  expect(isHeavyCapable(await requestHeavyCapabilityHints())).toBe(false)
 })
-test('detection gives fast without WebGPU', async () => {
+test('detection leaves the GPU family unknown without WebGPU or when the adapter request fails', async () => {
   stubNavigator({deviceMemory: 8})
   delete (navigator as {gpu?: unknown}).gpu
-  expect(await detectHeavyCapability()).toBe(false)
+  expect(await requestHeavyCapabilityHints()).toEqual({deviceMemory: 8})
+  stubNavigator({gpu: {requestAdapter: () => Promise.reject(new Error('lost'))}})
+  expect(await requestHeavyCapabilityHints()).toEqual({deviceMemory: 8})
+})
+test('each hint is judged on its own, with unreported ones as unknown', () => {
+  expect(judgeHeavyCapability({})).toEqual({
+    architecture: 'unknown',
+    cpuPerformance: 'unknown',
+    deviceMemory: 'unknown',
+  })
+  expect(judgeHeavyCapability({
+    architecture: '',
+    cpuPerformance: 0,
+    deviceMemory: 4,
+  })).toEqual({
+    architecture: 'unknown',
+    cpuPerformance: 'unknown',
+    deviceMemory: 'unmet',
+  })
+  expect(judgeHeavyCapability({
+    architecture: 'ampere',
+    cpuPerformance: 2,
+    deviceMemory: 8,
+  })).toEqual({
+    architecture: 'unmet',
+    cpuPerformance: 'unmet',
+    deviceMemory: 'met',
+  })
+  expect(judgeHeavyCapability({
+    architecture: 'rdna-4',
+    cpuPerformance: 3,
+    deviceMemory: 16,
+  })).toEqual({
+    architecture: 'met',
+    cpuPerformance: 'met',
+    deviceMemory: 'met',
+  })
+})
+test('the page requests its hints once', async () => {
+  let requests = 0
+  stubNavigator({
+    deviceMemory: 8,
+    gpu: {
+      requestAdapter: async () => {
+        requests++
+        return {info: {architecture: 'lovelace'}}
+      },
+    },
+  })
+  const first = readHeavyCapabilityHints()
+  expect(readHeavyCapabilityHints()).toBe(first)
+  expect(await first).toEqual({
+    architecture: 'lovelace',
+    deviceMemory: 8,
+  })
+  expect(requests).toBe(1)
 })

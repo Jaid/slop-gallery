@@ -72,6 +72,12 @@ describe('minimal menu', () => {
     expect(html).toContain('Mute audio')
     expect(html).toContain('Heavy graphics')
     expect(html).toContain('<small>Heavy</small>')
+    // The Graphics button names its tooltip, which asks the GPU only once it opens.
+    const tooltipId = /aria-label="Heavy graphics"[^>]*\binterestfor="([^"]+)"/u.exec(html)?.[1]
+    expect(tooltipId).toBeString()
+    expect(html).toMatch(new RegExp(String.raw`<div id="${tooltipId}"[^>]*\bpopover="hint"`, 'u'))
+    expect(html).toContain('Auto graphics')
+    expect(html).not.toContain('GPU family')
     expect(html).toContain('OpenRouter')
     expect(html).toContain('aria-labelledby="openrouter-title"')
     expect(html).not.toContain('<summary>OpenRouter')

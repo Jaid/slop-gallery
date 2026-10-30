@@ -1,0 +1,56 @@
+@use '../../style/colors'
+@use '../../style/ui'
+
+.container
+  // The button that names it in interestfor is its implicit anchor.
+  position-area: top
+  position-try-fallbacks: flip-block
+  inset: auto
+  margin: 0 0 0.5rem
+  min-width: 13rem
+  padding: 0.75rem 0.85rem
+  border: 1px solid colors.$border
+  border-radius: 4px
+  background: colors.$surface
+  color: inherit
+  font-size: 0.8rem
+  text-align: left
+
+.title
+  @include ui.eyebrow
+  margin: 0 0 0.6rem
+  text-transform: uppercase
+
+.pending
+  margin: 0
+  color: colors.$muted
+
+.checks
+  display: grid
+  grid-template-columns: auto auto
+  gap: 0.45rem 1.5rem
+  margin: 0
+
+.check
+  display: grid
+  grid-column: span 2
+  grid-template-columns: subgrid
+  align-items: center
+  dt
+    display: flex
+    align-items: center
+    gap: 0.5rem
+  dd
+    margin: 0
+    color: colors.$muted
+    font-family: code, monospace
+    text-align: right
+  svg
+    display: block
+    stroke-width: 2
+  &[data-verdict='met'] svg
+    color: colors.$positive
+  &[data-verdict='unmet'] svg
+    color: colors.$negative
+  &[data-verdict='unknown'] svg
+    color: colors.$informative

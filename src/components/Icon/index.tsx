@@ -11,6 +11,13 @@ const paths = {
     </>,
   arrow: <path d='M4 12h16m-6-6 6 6-6 6' />,
   close: <path d='m6 6 12 12M6 18 18 6' />,
+  check: <path d='m5 12.5 4.5 4.5L19 7' />,
+  cross: <path d='m7 7 10 10M7 17 17 7' />,
+  question:
+    <>
+      <circle cx='12' cy='12' r='9' />
+      <path d='M9.5 9.5a2.5 2.5 0 1 1 3.4 2.33c-.55.22-.9.74-.9 1.32v.6M12 16.75v.01' />
+    </>,
 
 } satisfies Record<string, ReactNode>
 
