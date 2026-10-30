@@ -38,10 +38,10 @@ const [originX, originY, originZ] = roomOrigins.moonfall
 
 /** Moonfall’s orbital sculpture: a celestial hum floating over the crater, sounding from its core. */
 export default class MoonfallOrbit extends AmbienceEmitter {
-  /** sounds from `position`, by default the sculpture’s core */
-  constructor(position: Vec3 = [originX, originY + 2.5, originZ]) {
+  /** sounds from `position`, by default the sculpture’s core, in `rooms`, by default only Moonfall */
+  constructor(position: Vec3 = [originX, originY + 2.5, originZ], rooms: ReadonlyArray<string> = ['moonfall']) {
     super({
-      id: 'moonfall-orbital-sculpture',
+      id: 'moonfall-orbital_sculpture',
       title: 'Orbital sculpture',
       position,
       hearing: {
@@ -50,7 +50,7 @@ export default class MoonfallOrbit extends AmbienceEmitter {
         far: 32,
       },
       gain: 0.3,
-      rooms: ['moonfall'],
+      rooms,
     })
   }
 

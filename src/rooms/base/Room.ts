@@ -10,8 +10,8 @@ import RoomMap from '../lib/RoomMap.ts'
 
 /** what the ground under the player’s feet is made of, which their footsteps sound like */
 export type GroundSurface = 'fabric' | 'generic' | 'glass' | 'hollow'
-/** an ambience emitter class whose instances can sound from any world position */
-export type AmbienceEmitterClass = new (position?: Vec3) => AmbienceEmitter
+/** an ambience emitter class whose instances can sound from any world position and in any rooms */
+export type AmbienceEmitterClass = new (position?: Vec3, rooms?: ReadonlyArray<string>) => AmbienceEmitter
 /** a looping ambient sound of a room */
 export type RoomAmbience = {
   emitter: AmbienceEmitterClass

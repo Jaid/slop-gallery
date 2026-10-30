@@ -41,8 +41,8 @@ const splashes = {
 
 /** The Lobby fountain’s quiet trickle: a soft hiss under lots of single bubbles, sounding from the tip of its finial. */
 export default class Fountain extends AmbienceEmitter {
-  /** sounds from `position`, by default the finial’s tip, the main jet’s mouth */
-  constructor(position: Vec3 = [fountain.position[0], fountain.position[1] + fountain.jet.y, fountain.position[2]]) {
+  /** sounds from `position`, by default the finial’s tip, the main jet’s mouth, in `rooms`, by default only the Lobby */
+  constructor(position: Vec3 = [fountain.position[0], fountain.position[1] + fountain.jet.y, fountain.position[2]], rooms: ReadonlyArray<string> = ['lobby']) {
     super({
       id: 'lobby-fountain',
       title: 'Fountain',
@@ -53,7 +53,7 @@ export default class Fountain extends AmbienceEmitter {
         far: 21,
       },
       gain: 0.3,
-      rooms: ['lobby'],
+      rooms,
     })
   }
 

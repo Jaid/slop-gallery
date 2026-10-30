@@ -78,6 +78,11 @@ export default abstract class World<Kind extends Room = Room> {
     return this.room(this.defaultRoom).spawn
   }
 
+  /** The rooms the player must be in to hear the room’s ambient sound with the global id: only its own room by default. */
+  ambienceRooms(room: string, _ambience: string): ReadonlyArray<string> {
+    return [room]
+  }
+
   /** Every camera bookmark of the world in world meters, room by room. */
   cameraBookmarks() {
     return this.rooms.flatMap(room => room.cameras())

@@ -14,10 +14,11 @@ import FountainSpray from '#src/lib/gallery/fountain/FountainSpray.ts'
 import FountainMarbleMaterial from '#src/lib/materials/FountainMarbleMaterial.ts'
 import FountainWaterMaterial from '#src/lib/materials/FountainWaterMaterial.ts'
 import gold from '#src/lib/materials/gold.ts'
+import slopGallery from '#src/worlds/gallery/index.ts'
 
 export default function Fountain() {
   const isHeavy = useGraphicsMode()
-  useAmbienceEmitter(FountainAmbience)
+  useAmbienceEmitter(FountainAmbience, slopGallery.ambienceRooms('lobby', 'lobby-fountain'))
   const geometry = useDisposable(useMemo(() => new FountainGeometry, []))
   const collision = useMemo(() => colliderGeometry(geometry.stone), [geometry])
   const marble = useDisposable(useMemo(() => new FountainMarbleMaterial({reflections: isHeavy}), [isHeavy]))

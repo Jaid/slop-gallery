@@ -25,7 +25,7 @@ import World from '../base/World.ts'
 import {worlds} from '../index.ts'
 import artworks from './artworks.ts'
 import GalleryNavigation from './navigation.ts'
-import {litRooms} from './relations.ts'
+import {audibleRooms, litRooms} from './relations.ts'
 import sky from './sky.ts'
 
 /** a room of the gallery */
@@ -68,6 +68,11 @@ export default class SlopGallery extends World<GalleryRoom> {
     super(worlds.gallery, placements)
     this.navigation = new GalleryNavigation(this.rooms)
     this.placement = new GalleryPlacementSpace(this.walls, this.navigation)
+  }
+
+  /** An ambient sound is only audible while the player is in its own room or in one it carries into. */
+  override ambienceRooms(room: string, ambience: string) {
+    return audibleRooms(room as GalleryRoomId, ambience)
   }
 
   override contains(position: Vec3) {

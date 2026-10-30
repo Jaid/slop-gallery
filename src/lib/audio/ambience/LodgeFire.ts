@@ -38,8 +38,8 @@ const crackles = {
 
 /** The Lodge’s log fire burning low: a soft glow under sparse fine crackles, sounding from just above the logs. */
 export default class LodgeFire extends AmbienceEmitter {
-  /** sounds from `position`, by default 60 cm above the fire’s origin */
-  constructor(position: Vec3 = [fireWorldOrigin[0], fireWorldOrigin[1] + 0.6, fireWorldOrigin[2]]) {
+  /** sounds from `position`, by default 60 cm above the fire’s origin, in `rooms`, by default only the Lodge */
+  constructor(position: Vec3 = [fireWorldOrigin[0], fireWorldOrigin[1] + 0.6, fireWorldOrigin[2]], rooms: ReadonlyArray<string> = ['lodge']) {
     super({
       id: 'lodge-fire',
       title: 'Lodge fire',
@@ -49,7 +49,7 @@ export default class LodgeFire extends AmbienceEmitter {
         far: 14,
       },
       gain: 0.3,
-      rooms: ['lodge'],
+      rooms,
     })
   }
 

@@ -21,6 +21,7 @@ import EmberBedMaterial from '#src/lib/materials/EmberBedMaterial.ts'
 import FlameMaterial from '#src/lib/materials/FlameMaterial.ts'
 import {useLamp} from '#src/lib/rendering/lamps.ts'
 import lodgeLamps from '#src/rooms/lodge/lamps.ts'
+import slopGallery from '#src/worlds/gallery/index.ts'
 
 const {logs, embers, light} = fire
 const emberRotation = [-Math.PI / 2, 0, 0] as const
@@ -29,7 +30,7 @@ const logRotation = [0, 0, Math.PI / 2] as const
 /** The lodge’s log fire inside the `lodge-fireplace` group, which lights the Lodge’s fire lamp. Heavy graphics light a live fire; fast graphics keep a static glow. */
 export default function LodgeFire() {
   const isHeavy = useGraphicsMode()
-  useAmbienceEmitter(LodgeFireAmbience)
+  useAmbienceEmitter(LodgeFireAmbience, slopGallery.ambienceRooms('lodge', 'lodge-fire'))
   return <group name='lodge-fire' position={fire.position}>
     <Branch if={isHeavy} then={LiveFire} else={GlowingEmbers} />
   </group>

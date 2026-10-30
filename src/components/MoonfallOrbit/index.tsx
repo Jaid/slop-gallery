@@ -24,7 +24,7 @@ export default function MoonfallOrbit() {
   const orbit = useRef<Group>(null)
   const clock = useMemo(() => new AnimationClock(0.05), [])
   const {curveDetail} = useGraphicsModeValue(getGraphicsProfile)
-  useAmbienceEmitter(MoonfallOrbitAmbience)
+  useAmbienceEmitter(MoonfallOrbitAmbience, slopGallery.ambienceRooms('moonfall', 'moonfall-orbital_sculpture'))
   // The core’s detail 2 splits each edge in three, so the factor applies to that count.
   const coreDetail = 3 * curveDetail - 1
   useFrame((_, delta) => {

@@ -37,9 +37,9 @@ export function addAmbienceEmitter(emitter: AmbienceEmitter) {
   }
 }
 
-/** Sounds an emitter of this class while the calling component is mounted, returning it. */
-export function useAmbienceEmitter<Emitter extends AmbienceEmitter>(EmitterClass: new () => Emitter) {
-  const [emitter] = useState(() => new EmitterClass)
+/** Sounds an emitter of this class at its default position while the calling component is mounted, returning it; `rooms` replaces the rooms it sounds in by default. */
+export function useAmbienceEmitter<Emitter extends AmbienceEmitter>(EmitterClass: new (position?: undefined, rooms?: ReadonlyArray<string>) => Emitter, rooms?: ReadonlyArray<string>) {
+  const [emitter] = useState(() => new EmitterClass(undefined, rooms))
   useEffect(() => addAmbienceEmitter(emitter), [emitter])
   return emitter
 }
