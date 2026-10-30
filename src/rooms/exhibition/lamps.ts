@@ -17,7 +17,7 @@ const [northZ, middleZ, southZ] = tunnelDisplays[0].exhibits.map(exhibit => exhi
 /** the color of the staff stairways’ lamps */
 export const stairwayTint = '#a3d2cc'
 /** where each stairway’s lamps hang under its ceilings, from the door down to the landing */
-const stairwayLamps = ['door', 'upper_corner', 'ramp_1', 'ramp_2', 'ramp_3', 'lower_corner', 'landing'] as const
+const stairwayLamps = ['door', 'ramp', 'landing'] as const
 const stairways = Object.fromEntries(tunnelDisplays.flatMap(({side, stairway}) => stairway.lamps.map(([x, y, z], index) => [`${side}_stairway_${stairwayLamps[index]}`, {
   position: [x - originX, y - drop - originY, z - originZ],
   strength: 16,

@@ -296,12 +296,10 @@ const tunnelDisplays = (['west', 'east'] as const).map(side => {
   /** under the level’s ceiling at `z` */
   const lamp = (level: DisplayLevel, x: number, z: number): Vec3 => [x, levelFloor(level, z) + level.headroom - ceilingThickness / 2, z]
   const footZ = rampZ - stairWidth / 2
-  /** under the ceilings: behind the door, in the upper corner, down the ramp in thirds to its foot, in the lower corner and over the landing */
+  /** under the ceilings: behind the door, two thirds down the ramp to its foot and over the landing */
   const lamps: Array<Vec3> = [
     [innerX + direction * (wallFace + 0.5), balconyY + headroom - ceilingThickness / 2, doorZ],
-    lamp(corners[0], middleX, doorZ),
-    ...[1, 2, 3].map(third => lamp(ramp, middleX, doorZ + third * (footZ - doorZ) / 3)),
-    lamp(corners[1], middleX, lowerCenterZ),
+    lamp(ramp, middleX, doorZ + 2 * (footZ - doorZ) / 3),
     lamp(landing, landing.center[0], (landingCeilingZ[0] + landingCeilingZ[1]) / 2),
   ]
   const ranges = ({center, size}: FloorRectangle): [Range, Range] => [[center[0] - size[0] / 2, center[0] + size[0] / 2], [center[1] - size[1] / 2, center[1] + size[1] / 2]]
