@@ -1,0 +1,87 @@
+import {expect, test} from 'bun:test'
+
+import {PerspectiveCamera, Texture} from 'three/webgpu'
+
+import ArchitecturalPlasterMaterial from '../../src/lib/materials/ArchitecturalPlasterMaterial.ts'
+import WoodFloorMaterial from '../../src/lib/materials/WoodFloorMaterial.ts'
+import {getGraphicsProfile} from '../../src/lib/rendering/graphicsMode.ts'
+
+test('wood floors allocate filtered, nonrecursive reflections only in heavy', () => {
+  const texture = new Texture
+  const heavy = new WoodFloorMaterial(texture, getGraphicsProfile(true).floorReflections)
+  const fast = new WoodFloorMaterial(texture, getGraphicsProfile(false).floorReflections)
+  try {
+    expect(heavy.map).toBe(texture)
+    expect(heavy.envMapIntensity).toBe(1)
+    expect(heavy.outputNode).not.toBeNull()
+    expect(heavy.reflection!.reflector.resolutionScale).toBe(1)
+    expect(heavy.reflection!.reflector.generateMipmaps).toBe(true)
+    expect(heavy.reflection!.reflector.bounces).toBe(false)
+    expect(fast.map).toBe(texture)
+    expect(fast.envMapIntensity).toBe(0)
+    expect(fast.reflection).toBeNull()
+    expect(fast.outputNode).toBeNull()
+    expect(fast.roughness).toBeGreaterThanOrEqual(0.7)
+    expect(fast.metalness).toBe(0)
+  } finally {
+    heavy.dispose()
+    fast.dispose()
+    texture.dispose()
+  }
+})
+test('wood floors release reflection targets while preserving caller-owned maps', () => {
+  const texture = new Texture
+  const material = new WoodFloorMaterial(texture)
+  const target = material.reflection!.reflector.getRenderTarget(new PerspectiveCamera)
+  const disposed: Array<string> = []
+  target.addEventListener('dispose', () => disposed.push('reflection'))
+  material.addEventListener('dispose', () => disposed.push('material'))
+  texture.addEventListener('dispose', () => disposed.push('tile'))
+  material.dispose()
+  expect(disposed).toEqual(['reflection', 'material'])
+  texture.dispose()
+  expect(disposed).toEqual(['reflection', 'material', 'tile'])
+})
+test('wood floors can repeatedly switch without sharing disposed reflection resources', () => {
+  const texture = new Texture
+  const first = new WoodFloorMaterial(texture, true)
+  const reflection = first.reflection
+  first.dispose()
+  const fast = new WoodFloorMaterial(texture, false)
+  expect(fast.reflection).toBeNull()
+  fast.dispose()
+  const next = new WoodFloorMaterial(texture, true)
+  expect(next.reflection).not.toBe(reflection)
+  expect(next.map).toBe(texture)
+  next.dispose()
+  texture.dispose()
+})
+test('architectural plaster adds procedural color, roughness and relief only in heavy', () => {
+  const texture = new Texture
+  const heavy = new ArchitecturalPlasterMaterial({
+    baseColor: '#658578',
+    map: texture,
+    heavy: true,
+    roughness: 0.9,
+  })
+  const fast = new ArchitecturalPlasterMaterial({
+    baseColor: '#658578',
+    map: texture,
+    heavy: false,
+    roughness: 0.9,
+  })
+  try {
+    expect(heavy.map).toBeNull()
+    expect(heavy.colorNode).not.toBeNull()
+    expect(heavy.roughnessNode).not.toBeNull()
+    expect(heavy.normalNode).not.toBeNull()
+    expect(fast.map).toBe(texture)
+    expect(fast.colorNode).toBeNull()
+    expect(fast.roughnessNode).toBeNull()
+    expect(fast.normalNode).toBeNull()
+  } finally {
+    heavy.dispose()
+    fast.dispose()
+    texture.dispose()
+  }
+})
