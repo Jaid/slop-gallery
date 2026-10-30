@@ -88,6 +88,20 @@ describe('worlds', () => {
     expect(slopGallery.spawn.yaw).toBeCloseTo(-0.9 * Math.PI)
     expect(slopGallery.roomAt(slopGallery.spawn.position)?.id).toBe('lobby')
   })
+  test('every spawn stands just above its floor, never inside it', () => {
+    const misplaced: Array<string> = []
+    for (const instance of [slopGallery, knottingham]) {
+      for (const room of instance.rooms) {
+        for (const [id, {position}] of [[room.id, room.spawn] as const, ...room.spawns().map(bookmark => [bookmark.id, bookmark] as const)]) {
+          const clearance = position[1] - instance.floorHeight(position)
+          if (clearance < 0 || clearance > 0.05) {
+            misplaced.push(`${id}: ${clearance.toFixed(3)} m`)
+          }
+        }
+      }
+    }
+    expect(misplaced).toEqual([])
+  })
   test('the gallery’s walls module, which the build bakes the architecture from, holds exactly the world’s walls', () => {
     expect(galleryWalls.map(wall => wall.room)).toEqual(slopGallery.rooms.flatMap(room => room.walls().map(() => room.id)))
     expect(galleryWalls).toEqual(slopGallery.walls)
