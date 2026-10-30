@@ -150,11 +150,6 @@ const relations = {
         'led_middle',
         'led_south',
       ],
-      exhibition: [
-        'tunnel_green',
-        'tunnel_blue',
-        'tunnel_red',
-      ],
       moonfall: 'stairs',
     },
   },
