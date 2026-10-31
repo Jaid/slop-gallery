@@ -26,6 +26,13 @@ export type Portrait = {
   width: number
   year?: number
 }
+/** a grabbable object thrown into a hung work, which the work then merges with a studio photograph of */
+export type ThrownItem = {
+  id: string
+  /** Photographs the item as it is now. Called once, after the work is reserved for the merge. */
+  snapshot: () => Promise<Blob>
+  title: string
+}
 /** the aspect ratios of default works and their slots, as width:height */
 export type PortraitRatio = '1:1' | '2:3' | '3:2' | '9:16' | '16:9'
 /** a default work of the world, before it hangs in a portrait slot */

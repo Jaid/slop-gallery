@@ -1,5 +1,5 @@
 import type {AiSettings} from './ai/settings.ts'
-import type {Portrait} from './gallery.ts'
+import type {Portrait, ThrownItem} from './gallery.ts'
 
 import {useEffect, useState} from 'react'
 
@@ -29,17 +29,26 @@ export default function useGalleryAI() {
       const [a, b] = (event as CustomEvent<[string, string]>).detail
       void director.merge(a, b).catch(() => notify('The fusion could not be started.'))
     }
+    const mergeItem = (event: Event) => {
+      const {portrait, item} = (event as CustomEvent<{
+        item: ThrownItem
+        portrait: string
+      }>).detail
+      void director.mergeItem(portrait, item).catch(() => notify('The fusion could not be started.'))
+    }
     const unsubscribe = useGallery.subscribe(s => {
       SoundEngine.existing()?.mute(!s.sound)
     })
     galleryEvents.addEventListener('imported', imported)
     galleryEvents.addEventListener('narrate', narrate)
     galleryEvents.addEventListener('merge', merge)
+    galleryEvents.addEventListener('merge-item', mergeItem)
     return () => {
       unsubscribe()
       galleryEvents.removeEventListener('imported', imported)
       galleryEvents.removeEventListener('narrate', narrate)
       galleryEvents.removeEventListener('merge', merge)
+      galleryEvents.removeEventListener('merge-item', mergeItem)
       director.dispose()
     }
   }, [key, params.ai, params.text_model, params.text_model_effort, params.image_model, params.audio_model, params.narrator_voice, params.narrator_character, params.eager_audio])

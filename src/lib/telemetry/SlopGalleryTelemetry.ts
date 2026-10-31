@@ -140,7 +140,7 @@ export default class SlopGalleryTelemetry extends VictoriaClient {
         })
       }
     })
-    const listeners = ['imported', 'merge', 'narrate', 'stop-narration', 'teleport'].map(name => {
+    const listeners = ['imported', 'merge', 'merge-item', 'narrate', 'stop-narration', 'teleport'].map(name => {
       const listener = () => this.event(`${name}.requested`)
       events?.addEventListener(name, listener)
       return () => events?.removeEventListener(name, listener)

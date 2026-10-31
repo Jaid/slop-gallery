@@ -1,7 +1,7 @@
 import type {OrbitSettings} from '#src/lib/camera/OrbitInspection.ts'
 import type {Vec3} from '#src/lib/gallery.ts'
 import type {GrabbableBodyOptions} from '#src/lib/physics/GrabbableBody.ts'
-import type {RapierRigidBody, RigidBodyProps} from '@react-three/rapier'
+import type {CollisionEnterPayload, RapierRigidBody, RigidBodyProps} from '@react-three/rapier'
 import type {ReactNode} from 'react'
 import type {Group} from 'three/webgpu'
 
@@ -9,9 +9,11 @@ import {useFrame} from '@react-three/fiber'
 import {RigidBody, useRapier} from '@react-three/rapier'
 import {useEffect, useLayoutEffect, useRef} from 'react'
 
-import {cameraPose, notify, useGallery} from '#src/lib/gallery.ts'
+import {cameraPose, notify, requestItemMerge, useGallery} from '#src/lib/gallery.ts'
 import {registerOrbitable} from '#src/lib/gallery/orbitables.ts'
 import GrabbableBody from '#src/lib/physics/GrabbableBody.ts'
+import {bodyThrow, clearBodyThrow} from '#src/lib/physics/ThrowState.ts'
+import {snapshotObject} from '#src/lib/rendering/StudioSnapshotRenderer.ts'
 
 export type PropHandle = {
   body: RapierRigidBody
@@ -130,7 +132,29 @@ export default function GrabbableProp({id, title, orbit, children, canGrab, bloc
     const origin: Vec3 = [p[0], p[1] - 0.22, p[2]]
     carried.move(origin, [origin[0] + d[0] * 1.45, origin[1] + d[1] * 1.45, origin[2] + d[2] * 1.45], delta)
   })
-  return <RigidBody ccd colliders='cuboid' friction={0.8} mass={1.8} restitution={0.32} ref={body} {...props}>
+  const struck = (event: CollisionEnterPayload) => {
+    const current = body.current
+    // Only a throw merges, not a drop or a knock; one throw merges once, even if the prop bounces into another work.
+    if (!current || !group.current || !bodyThrow(current)) {
+      return
+    }
+    const other: unknown = event.other.rigidBodyObject?.userData.portraitId
+    const target = useGallery.getState().portraits.find(portrait => portrait.id === other)
+    if (!target?.hung || target.merging || target.reserved) {
+      return
+    }
+    clearBodyThrow(current)
+    const subject = group.current
+    requestItemMerge(target.id, {
+      id,
+      title,
+      snapshot: async () => {
+        const {image} = await snapshotObject(subject)
+        return image
+      },
+    })
+  }
+  return <RigidBody ccd colliders='cuboid' friction={0.8} mass={1.8} restitution={0.32} ref={body} onCollisionEnter={struck} {...props}>
     <group
       name={id} userData={{
         propId: id,

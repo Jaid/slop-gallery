@@ -27,6 +27,7 @@ const paths: Record<string, string> = {
   'three/webgpu': '/node_modules/.vite/deps/three_webgpu.js',
   'disposable-lifetime/react': '/packages/disposable-lifetime/src/react/main.ts',
   'canvas-textures/three': '/packages/canvas-textures/src/three/main.ts',
+  'three-fiber-game': '/packages/three-fiber-game/src/main.ts',
 }
 const build = await Bun.build({
   entrypoints: [fileURLToPath(new URL(process.argv.slice(2).find(argument => !argument.startsWith('--')) ?? 'canvasTextures.tsx', import.meta.url))],

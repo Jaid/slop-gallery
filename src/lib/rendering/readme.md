@@ -68,6 +68,16 @@ The six-bladed 64-tap aperture, proximity-dependent radius, and highlight treatm
 - In the gallery, `RoomCulling` leaves out rooms that the camera can’t see through an opening (up to two deep) from all passes but the sun’s shadow map, and freezes the shadow maps of lights in those rooms whose reach misses the view. The sun falls through openings that rooms out of sight frame, so dropping them from its shadow map would reshape the sunlight in the rooms in sight. An object belongs to every room its bounds reach into, so a shared wall drops out once neither of its rooms is in sight. A room behind an opening only shows through the part of the screen the opening covers: its objects outside that part drop out of the camera and its floor reflection, but keep casting shadows.
 - Decor made of many fixed pieces (stairs, railings, floors, wainscots, skylights) sits in a `StaticBatch`, which merges pieces that shade alike into one mesh after mounting. Draw calls dominate the frame cost, so this saves 20–35% of them per view; the originals stay in the scene for colliders but stop rendering.
 
+## Studio snapshots
+
+`StudioSnapshotRenderer` photographs an object of the scene for the merge of a thrown prop into a hung work (`GalleryDirector.mergeItem`): a detached WebGPU renderer of its own, so the gallery’s pipelines and warmup queue are untouched, with the billboard lighting of `RuntimeKnotIconRenderer` and no backdrop. The object is cloned (geometries and materials stay shared; three keeps per-renderer caches for them), keeps its world rotation, and `frameObject` places the camera from the object’s vertices in closed form so that the farthest vertex touches the edge of the middle 960 px of the 1024² image, exactly and centered, with no crop afterward. The alpha readback is scanned for the average CIE lightness of the visible pixels, interleaved rows first and within 10 ms (about 6 ms for the whole image), and composited on the contrasting neutral gray: L 0.22 behind objects lighter than L 0.5, L 0.88 behind darker ones or when nothing was measured. The result is a WebP at quality 0.94. `snapshotObject` keeps one studio per page and releases its device a minute after the last snapshot. On tower, the first snapshot takes about 340 ms (device and pipelines), the next ones about 110 ms.
+
+With the dev server and the debug browser:
+
+```sh
+bun test/browser/run.ts studioSnapshot.ts
+```
+
 ## Native regression
 
 With the existing browser on the Knottingham production origin:

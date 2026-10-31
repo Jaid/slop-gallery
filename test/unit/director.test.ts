@@ -156,6 +156,64 @@ test('disposing a different director does not release another director’s label
   await job
   owner.dispose()
 })
+const apple = {
+  id: 'prop-apple',
+  title: 'the apple',
+  snapshot: () => Promise.resolve(new Blob(['apple'], {type: 'image/webp'})),
+}
+test('a thrown item merges into the hung work and leaves the collection size alone', async () => {
+  const director = new TestDirector({
+    ...defaults,
+    ai: false,
+  }, '')
+  const job = director.mergeItem('a', apple)
+  expect(useGallery.getState().portraits[0].merging).toBe(true)
+  await Promise.resolve()
+  await Promise.resolve()
+  expect(director.received[0]).toBe(a)
+  expect(await (director.received[1] as Blob).text()).toBe('apple')
+  const merged = new Blob(['result'], {type: 'image/webp'})
+  director.result.resolve(merged)
+  await job
+  const portraits = useGallery.getState().portraits
+  expect(portraits).toHaveLength(2)
+  expect(portraits[0]).toMatchObject({
+    id: 'a',
+    source: merged,
+    merging: false,
+    hung: true,
+  })
+  expect(portraits[0].description).toContain('struck by the apple')
+  expect(portraits[1].source).toBe(b)
+  director.dispose()
+})
+test('a thrown item cannot merge into a loose, merging or reserved work', async () => {
+  const director = new TestDirector(defaults, 'test')
+  await director.mergeItem('b', apple)
+  expect(director.received).toEqual([])
+  const job = director.mergeItem('a', apple)
+  await director.mergeItem('a', apple)
+  expect(useGallery.getState().portraits[0].mergeJob).toBeDefined()
+  director.result.reject(new Error('Provider unavailable'))
+  await job
+  expect(useGallery.getState().portraits[0]).toMatchObject({
+    source: a,
+    merging: false,
+  })
+  director.dispose()
+})
+test('a failing photograph releases the work', async () => {
+  const director = new TestDirector(defaults, 'test')
+  await director.mergeItem('a', {
+    ...apple,
+    snapshot: () => Promise.reject(new Error('No GPU')),
+  })
+  expect(useGallery.getState().portraits[0]).toMatchObject({
+    source: a,
+    merging: false,
+  })
+  director.dispose()
+})
 test('generated image admission failure preserves both originals', async () => {
   const director = new TestDirector({
     ...defaults,

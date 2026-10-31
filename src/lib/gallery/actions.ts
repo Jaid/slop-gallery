@@ -1,4 +1,4 @@
-import type {Portrait, Vec3} from './types.ts'
+import type {Portrait, ThrownItem, Vec3} from './types.ts'
 
 import composeId from 'compose-id'
 import {defaultEgoOptions} from 'ego-player/motor'
@@ -87,6 +87,16 @@ export function stopNarration() {
 
 export function requestMerge(first: string, second: string) {
   galleryEvents.dispatchEvent(new CustomEvent('merge', {detail: [first, second]}))
+}
+
+/** Asks for the hung work `portrait` to merge with a photograph of the thrown `item`. */
+export function requestItemMerge(portrait: string, item: ThrownItem) {
+  galleryEvents.dispatchEvent(new CustomEvent('merge-item', {
+    detail: {
+      portrait,
+      item,
+    },
+  }))
 }
 
 /** Knocks a hung work off its wall, keeping whatever the player holds. */

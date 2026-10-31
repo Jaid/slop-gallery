@@ -1,4 +1,4 @@
-import type {Portrait} from '../gallery/types.ts'
+import type {Portrait, ThrownItem} from '../gallery/types.ts'
 import type {AiSettings} from './settings.ts'
 
 import PortraitNarration from '../audio/PortraitNarration.ts'
@@ -138,7 +138,66 @@ export default class GalleryDirector {
     }
     notify(this.settings.ai && this.key ? 'The alchemy is underway. Both originals stay safe until it succeeds.' : 'A local collage is taking shape. No AI and no upload.')
     try {
-      const generate = () => this.generateMerge(a.source, b.source, AbortSignal.any([this.controller.signal, AbortSignal.timeout(120_000)]), a.width / a.height)
+      await this.fuse(a, b.source, current, {
+        description: `“${a.title}” met “${b.title}”. Neither had planned to share a frame.`,
+        failure: 'The fusion did not finish. Both originals are still here. Check the image model or try again.',
+        remove: second,
+      })
+    } finally {
+      // One original may have been removed mid-request. Release the survivor as well.
+      this.releaseMerge(first, token)
+      this.releaseMerge(second, token)
+      // dispose() can abort while the merge is awaited, which the narrowing from the early return above cannot see.
+      if (!(this.controller.signal.aborted as boolean)) {
+        this.narrator.ready(first)
+      }
+    }
+  }
+
+  /** Merges the hung work `portrait` with a studio photograph of the thrown `item`, which stays in the room. */
+  async mergeItem(portrait: string, item: ThrownItem) {
+    if (this.controller.signal.aborted) {
+      return
+    }
+    const s = useGallery.getState()
+    const a = s.portraits.find(p => p.id === portrait)
+    if (!a?.hung || a.merging || a.reserved || this.merges.has(portrait)) {
+      return
+    }
+    const token = Symbol('merge')
+    this.merges.set(portrait, token)
+    s.update(portrait, {
+      merging: true,
+      mergeJob: token,
+      pending: false,
+    })
+    const current = () => !this.controller.signal.aborted && useGallery.getState().portraits.some(p => p.id === portrait && p.source === a.source && p.merging && p.mergeJob === token)
+    notify(this.settings.ai && this.key ? `The alchemy is underway. “${a.title}” stays safe until it succeeds.` : 'A local collage is taking shape. No AI and no upload.')
+    try {
+      await this.fuse(a, item.snapshot, current, {
+        description: `“${a.title}” was struck by ${item.title}. Neither had planned to share a frame.`,
+        failure: 'The fusion did not finish. The original is still here. Check the image model or try again.',
+      })
+    } finally {
+      this.releaseMerge(portrait, token)
+      if (!(this.controller.signal.aborted as boolean)) {
+        this.narrator.ready(portrait)
+      }
+    }
+  }
+
+  /** Generates the merge of the hung work `a` with the image `second` (or the one it resolves to) and, if `current` still holds afterward, replaces `a` with the result, dropping the work `remove`. */
+  private async fuse(a: Portrait, second: (() => Promise<Blob>) | Portrait['source'], current: () => boolean, {description, failure, remove}: {
+    description: string
+    failure: string
+    remove?: string
+  }) {
+    try {
+      const generate = () => {
+        const signal = AbortSignal.any([this.controller.signal, AbortSignal.timeout(120_000)])
+        const aspect = a.width / a.height
+        return typeof second === 'function' ? second().then(image => this.generateMerge(a.source, image, signal, aspect)) : this.generateMerge(a.source, second, signal, aspect)
+      }
       const merged = await (telemetry ? telemetry.wrap('gallery.merge', generate, {attributes: {mode: this.settings.ai && this.key ? 'ai' : 'local'}}) : generate())
       if (!current()) {
         return
@@ -156,24 +215,16 @@ export default class GalleryDirector {
         title: 'An unexpected collaboration',
         creator: 'You · accidental alchemist',
         year: mergedAt.getFullYear(),
-        description: `“${a.title}” met “${b.title}”. Neither had planned to share a frame. ${this.settings.ai && this.key ? 'An AI-assisted collaboration.' : 'A locally made cut-paper collage, joined with a little gold.'}`.slice(0, 5000),
+        description: `${description} ${this.settings.ai && this.key ? 'An AI-assisted collaboration.' : 'A locally made cut-paper collage, joined with a little gold.'}`.slice(0, 5000),
       }
       const state = useGallery.getState()
-      state.commit(state.portraits.filter(p => p.id !== second).map(p => (p.id === first ? result : p)))
+      state.commit(state.portraits.filter(p => p.id !== remove).map(p => (p.id === a.id ? result : p)))
       chime(900)
       notify('Something wonderfully unexpected.')
       void this.flavor(result).catch(() => notify('The label could not be prepared.'))
     } catch {
       if (current()) {
-        notify('The fusion did not finish. Both originals are still here. Check the image model or try again.')
-      }
-    } finally {
-      // One original may have been removed mid-request. Release the survivor as well.
-      this.releaseMerge(first, token)
-      this.releaseMerge(second, token)
-      // dispose() can abort while the merge is awaited, which the narrowing from the early return above cannot see.
-      if (!(this.controller.signal.aborted as boolean)) {
-        this.narrator.ready(first)
+        notify(failure)
       }
     }
   }

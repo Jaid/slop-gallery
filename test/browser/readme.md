@@ -70,6 +70,14 @@ bun test/browser/run.ts brushedMetal.ts --standalone
 ```
 
 This detached HDR fixture uses the real frame, bent rail and sign geometry with UVs removed, in 24 views/scales and without scene lights or a scene environment. It rejects non-finite pixels, black sectors, overly bright broad reflections and missing light/dark structure. It also compares ordinary and rotated instanced supports and checks that moving a support does not move its local grain. The shader uses a static procedural studio environment, not live reflections. Knottingham keeps its existing flat-color support fallback in fast graphics; the benches and Oculus railings use the shared steel in both modes.
+For the studio that photographs thrown props for the merge with a hung work:
+
+```sh
+bun test/browser/run.ts studioSnapshot.ts
+```
+
+This detached fixture draws the gallery’s shared gold with a renderer of its own first, then photographs the Props’ apple twice and a white and a charcoal ball with `StudioSnapshotRenderer`. It decodes the WebPs and checks that no object pixel lies outside the middle 960 px, that the object reaches that window’s edge, that the backdrop gray contrasts with the measured lightness and that both snapshots of the apple frame alike. It reports the first (device creation) and warm snapshot times.
+
 ## Oculus keyboard traversal
 
 ```sh
