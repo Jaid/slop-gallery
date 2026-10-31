@@ -1,18 +1,24 @@
+import type {Vec3} from '../../src/lib/gallery/types.ts'
+
 import {afterEach, expect, test} from 'bun:test'
 
 import {createElement} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
 
 import Minimap from '#component/GalleryMinimap'
+import slopGallery from '#src/worlds/gallery/index.ts'
 
 import {cameraPose, useGallery} from '../../src/lib/gallery.ts'
+import {bastionApex} from '../../src/lib/gallery/bastion.ts'
 import lowerGallery from '../../src/lib/gallery/lowerGallery.ts'
-import {minimapHeading, minimapPortrait, minimapRooms, minimapViewBox} from '../../src/lib/gallery/minimap.ts'
+import {isLowerPosition, minimapHeading, minimapPortrait, minimapRooms, minimapViewBox} from '../../src/lib/gallery/minimap.ts'
 import portraitObjects from '../../src/lib/gallery/portraitObjects.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
 type PortraitObject = Parameters<typeof portraitObjects.set>[1]
 
+/** where the eyes of a player standing on the floor at the height are */
+const eye = ([x, floor, z]: Readonly<Vec3>): Vec3 => [x, floor + 1.62, z]
 const initial = {...useGallery.getInitialState()}
 const pose = {
   position: cameraPose.position,
@@ -45,7 +51,8 @@ test('both layers share a scale and frame every room’s drawing', () => {
 test('both layers render every room’s drawing without visible labels, numbers or legends', () => {
   cameraPose.position = [1, 1.6, 2]
   cameraPose.direction = [1, 0, 0]
-  const html = [false, true].map(lower => renderToStaticMarkup(createElement(Minimap, {lower}))).join('')
+  const [upper, lower] = [false, true].map(isLower => renderToStaticMarkup(createElement(Minimap, {lower: isLower})))
+  const html = upper + lower
   expect(html.match(/<svg\b/gu)).toHaveLength(2 + minimapRooms.length)
   expect(html.match(/viewBox="/gu)).toHaveLength(2 + minimapRooms.length)
   expect(html).not.toContain('Upper level')
@@ -54,7 +61,7 @@ test('both layers render every room’s drawing without visible labels, numbers 
   expect(html).toContain('translate(1 2) rotate(90)')
   // Every room’s drawing on its own floor, placed at the room’s origin.
   for (const room of minimapRooms) {
-    expect(html.split(`<g data-room="${room.id}" opacity="${room.opacity(initial.room)}" transform="${room.transform}"><svg `)).toHaveLength(2)
+    expect((room.lower ? lower : upper).split(`<g data-room="${room.id}" opacity="${room.opacity(initial.room)}" transform="${room.transform}"><svg `)).toHaveLength(2)
   }
   expect(html.match(/data-portrait=/gu) ?? []).toHaveLength(initial.portraits.length * 2)
   const players = html.match(/<path[^>]+aria-label="Your position"[^>]*>/gu)!
@@ -83,6 +90,27 @@ test('hanging portraits belong to their wall’s floor even when rooms overlap v
     ...portrait,
     wallId: 'lobby-north',
   }).lower).toBe(false)
+})
+test('the Fortress shows on the lower floor up to the apex of its western hairpin and its climb to the Cinnabar from there on the upper floor', () => {
+  const drawings = minimapRooms.filter(room => room.id === 'fortress')
+  expect(drawings.map(room => room.lower)).toEqual([true, false])
+  const [apexX, apexZ] = bastionApex.point
+  // In the mouth under the run north, on the hairpin’s west leg and just short of the apex, then just past it, up the east leg and along the run north over the mouth.
+  for (const [position, lower] of [
+    [[-15, -3.9, -24], true],
+    [[-22.3, -3.9, -24], true],
+    [[-28.3, -3, -16], true],
+    [[apexX - 0.3, -2, apexZ], true],
+    [[apexX + 0.3, -1.9, apexZ], false],
+    [[-22.3, -0.5, -16], false],
+    [[-22.3, 0, -24], false],
+    [[-22.3, 0, -30], false],
+  ] as const) {
+    const at = eye(position)
+    expect(slopGallery.roomAt(at)?.id).toBe('fortress')
+    expect(isLowerPosition('fortress', at)).toBe(lower)
+  }
+  expect(isLowerPosition('fortress', eye(slopGallery.room('fortress').spawn.position))).toBe(true)
 })
 test('portrait dots follow rigid bodies instead of stale saved positions', () => {
   const portrait = {

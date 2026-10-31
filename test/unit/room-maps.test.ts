@@ -21,7 +21,8 @@ test.each([
 })
 test('ids in the gallery’s room maps start with their room’s id, as all of them share one document', () => {
   for (const room of slopGallery.rooms) {
-    for (const [, id] of room.map!.markup.matchAll(/\sid="([^"]*)"/gu)) {
+    const markup = room.map!.markup + (room.upperMap?.map.markup ?? '')
+    for (const [, id] of markup.matchAll(/\sid="([^"]*)"/gu)) {
       expect(id).toStartWith(`${room.id}-`)
     }
   }

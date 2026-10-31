@@ -1,5 +1,6 @@
 import {Geofence} from 'geofency'
 
+import {bastionApex} from '#src/lib/gallery/bastion.ts'
 import {fortressOrigin} from '#src/lib/gallery/fortress.ts'
 import {fortressNetwork} from '#src/lib/gallery/fortressNetwork.ts'
 
@@ -10,6 +11,7 @@ import cameras from './cameras.ts'
 import lamps from './lamps.ts'
 import map from './map.svg?raw'
 import spawns from './spawns.ts'
+import upperMap from './upperMap.svg?raw'
 import walls from './walls.ts'
 
 /** The passages’ air is cut into chunks whose boxes reach at most this far past their walls, which only takes more than one per piece round the curve, short of the Oculus’ apse behind it. */
@@ -44,6 +46,11 @@ export default class Fortress extends Room {
       volumetricSun: 0,
       walls,
       map,
+      // From the apex of the western hairpin on, the climb shows on the upper floor with the Cinnabar it leads to.
+      upperMap: {
+        from: bastionApex.y - fortressOrigin[1],
+        map: upperMap,
+      },
     })
   }
 }

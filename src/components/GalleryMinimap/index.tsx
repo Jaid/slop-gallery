@@ -1,7 +1,7 @@
 import {useEffect, useRef} from 'react'
 
 import {cameraPose, useGallery} from '#src/lib/gallery.ts'
-import {isLowerRoom, minimapHeading, minimapPortrait, minimapRooms, minimapViewBox} from '#src/lib/gallery/minimap.ts'
+import {isLowerPosition, minimapHeading, minimapPortrait, minimapRooms, minimapViewBox} from '#src/lib/gallery/minimap.ts'
 
 import css from './style.module.sass'
 
@@ -21,7 +21,7 @@ export default function GalleryMinimap({lower}: {lower: boolean}) {
     const update = () => {
       if (player.current) {
         attribute(player.current, 'transform', `translate(${cameraPose.position[0]} ${cameraPose.position[2]}) rotate(${minimapHeading(cameraPose.direction)})`)
-        attribute(player.current, 'display', isLowerRoom(useGallery.getState().room) === lower ? 'inline' : 'none')
+        attribute(player.current, 'display', isLowerPosition(useGallery.getState().room, cameraPose.position) === lower ? 'inline' : 'none')
       }
       for (const portrait of portraits) {
         const dot = dots.current.get(portrait.id)
@@ -39,7 +39,7 @@ export default function GalleryMinimap({lower}: {lower: boolean}) {
     return () => cancelAnimationFrame(frame)
   }, [lower, portraits])
   return <svg className={css.container} aria-label={lower ? 'Lower gallery minimap' : 'Upper gallery minimap'} role='img' viewBox={minimapViewBox}>
-    {/* Each room’s map.svg as it is, placed at the room’s origin, as opaque as the world draws it. */}
+    {/* Each room’s drawings on this floor as they are, placed at the room’s origin, as opaque as the world draws it. */}
     {minimapRooms.filter(room => room.lower === lower).map(room => <g key={room.id} dangerouslySetInnerHTML={{__html: room.markup}} data-room={room.id} opacity={room.opacity(current)} transform={room.transform} />)}
     <g className={css.portraits}>{portraits.map(portrait => {
       const marker = minimapPortrait(portrait)
@@ -53,6 +53,6 @@ export default function GalleryMinimap({lower}: {lower: boolean}) {
         }}
       />
     })}</g>
-    <path className={css.player} aria-label='Your position' d='M 0 -2.4 L 1.35 1.5 L 0 0.85 L -1.35 1.5 Z' display={isLowerRoom(current) === lower ? 'inline' : 'none'} transform={`translate(${cameraPose.position[0]} ${cameraPose.position[2]}) rotate(${minimapHeading(cameraPose.direction)})`} ref={player} />
+    <path className={css.player} aria-label='Your position' d='M 0 -2.4 L 1.35 1.5 L 0 0.85 L -1.35 1.5 Z' display={isLowerPosition(current, cameraPose.position) === lower ? 'inline' : 'none'} transform={`translate(${cameraPose.position[0]} ${cameraPose.position[2]}) rotate(${minimapHeading(cameraPose.direction)})`} ref={player} />
   </svg>
 }

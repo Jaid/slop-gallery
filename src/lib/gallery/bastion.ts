@@ -111,6 +111,8 @@ export const bastionPassages = [bastionMouth, bastionHairpin, bastionRun, bastio
 
 /** how far along the hairpin the apex of its turn lies, halfway round it */
 const apex = legLength + Math.PI * turnRadius / 2
+/** the apex of the hairpin’s turn, halfway up its climb, where the map cuts the Fortress in two: from there on to the Cinnabar, it shows the climb on the upper floor */
+export const bastionApex = route.at(apex)
 /**
  * Which of the straight passages’ evenly spaced lanterns they keep, in mount order from their starts, see CoveredPassage: the mouth the second and the fourth of the four along its run west, which hang under the Cinnabar and before the elbow, and none in its elbow’s span;
  * the run north the middle one of its three; the approach the second of the two along its run east, before the vestibule’s arch.

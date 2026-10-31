@@ -86,6 +86,8 @@ export type RoomOptions = {
   /** whether the sun may reach into the room anywhere, which keeps it in the sun’s shadow map; rooms deep underground, whose materials ignore the sun, leave it out; true by default */
   sunlit?: boolean
   title: string
+  /** the part of the room’s floor plan that climbs to the floor above, which the map shows there instead of on the room’s own floor */
+  upperMap?: UpperMapOptions
   /** how strongly the air holds sun shafts while the player is inside, 1 at full strength; 0 turns volumetric sunlight off */
   volumetricSun?: number
   /** the room’s walls by their id within the room, in snake_case */
@@ -93,6 +95,15 @@ export type RoomOptions = {
 }
 /** what a room calls the skybox it shows, which its world resolves */
 export type SkyboxId = string
+/** the part of a room’s floor plan on the floor above the room’s own */
+export type UpperMap = {
+  /** the floor height over the room’s origin from which on the room belongs to the floor above */
+  from: number
+  /** the part’s floor plan, drawn like the room’s own map */
+  map: RoomMap
+}
+/** the part of a room’s floor plan on the floor above the room’s own, its drawing as SVG markup, usually the room’s own upperMap.svg */
+export type UpperMapOptions = Omit<UpperMap, 'map'> & {map: string}
 type LampBase = {
   /** how quickly the light fades with distance, 2 (physical) by default */
   decay?: number
@@ -149,12 +160,18 @@ export default abstract class Room {
   readonly spawns: ReadonlyMap<string, RoomSpawn>
   readonly sunlit: boolean
   readonly title: string
+  /** the part of the room’s floor plan the map shows on the floor above, if the room climbs there */
+  readonly upperMap: UpperMap | undefined
   readonly volumetricSun: number
   readonly walls: ReadonlyMap<string, RoomWall>
 
-  constructor({title, lamps = {}, ambience = {}, cameras = {}, map, slots = {}, spawns = {}, walls = {}, skybox, sunlit = true, volumetricSun = 1}: RoomOptions) {
+  constructor({title, lamps = {}, ambience = {}, cameras = {}, map, upperMap, slots = {}, spawns = {}, walls = {}, skybox, sunlit = true, volumetricSun = 1}: RoomOptions) {
     this.title = title
     this.map = map === undefined ? undefined : new RoomMap(map)
+    this.upperMap = upperMap && {
+      ...upperMap,
+      map: new RoomMap(upperMap.map),
+    }
     this.lamps = new Map(Object.entries(lamps))
     this.ambience = new Map(Object.entries(ambience))
     this.slots = new Map(Object.entries(slots))

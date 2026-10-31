@@ -89,6 +89,11 @@ export default class PlacedRoom<Kind extends Room = Room> {
     return this.room.title
   }
 
+  /** the part of the room’s floor plan on the floor above, relative to its origin, if the room climbs there; place it at {@link center} */
+  get upperMap() {
+    return this.room.upperMap
+  }
+
   get volumetricSun() {
     return this.room.volumetricSun
   }

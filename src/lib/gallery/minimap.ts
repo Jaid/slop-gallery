@@ -1,14 +1,25 @@
+import type {RoomMap} from '#src/rooms/index.ts'
 import type {Portrait, Vec3} from './types.ts'
 
 import slopGallery from '#src/worlds/gallery/index.ts'
 
 import portraitObjects from './portraitObjects.ts'
 
+type MinimapRoom = (typeof slopGallery.rooms)[number]
+
 const {walls} = slopGallery
-/** Whether the room lies on the lower floor; a position outside of every room counts by its own height. */
-const isLower = (room: {floorY: number} | undefined, [, y]: Vec3) => (room?.floorY ?? y) < 0
-/** Whether the room with the id lies on the lower floor. */
-export const isLowerRoom = (id: string) => (slopGallery.roomById(id)?.floorY ?? 0) < 0
+/**
+ * Whether a position in the room shows on the lower floor of the map: by the room’s floor, unless the floor under it lies in the part of the room that climbs to the floor above; a position outside of every room counts by its own height.
+ */
+const isLower = (room: MinimapRoom | undefined, position: Vec3) => {
+  if (!room) {
+    return position[1] < 0
+  }
+  const {floorY, upperMap} = room
+  return floorY < 0 && !(upperMap && slopGallery.floorHeight(position) >= floorY + upperMap.from)
+}
+/** Whether a position in the room with the id, like the player’s, shows on the lower floor of the map. */
+export const isLowerPosition = (id: string, position: Vec3) => isLower(slopGallery.roomById(id), position)
 export const minimapHeading = ([x, , z]: Vec3) => Math.atan2(x, -z) * 180 / Math.PI
 
 export function minimapPortrait(portrait: Portrait) {
@@ -21,18 +32,19 @@ export function minimapPortrait(portrait: Portrait) {
   }
 }
 
-/** Every room with a floor plan, its drawing stitched to the others’ by placing it at the room’s origin. */
+/** Every drawing of a room’s floor plan, its own and the part on the floor above where it climbs there, each stitched to the others’ by placing it at the room’s origin. */
 export const minimapRooms = slopGallery.rooms.flatMap(room => {
-  const {id, center: [x, z], floorY, map} = room
-  return map ? {
+  const {id, center: [x, z], floorY, map, upperMap} = room
+  const drawing = (part: RoomMap, lower: boolean) => ({
     id,
-    lower: floorY < 0,
-    frame: map.placedFrame([x, z]),
-    markup: map.markup,
+    lower,
+    frame: part.placedFrame([x, z]),
+    markup: part.markup,
     /** how opaque the world draws the room while the player is in the room with the id `current` */
     opacity: (current: string) => slopGallery.mapOpacity(room, current),
     transform: `translate(${x} ${z})`,
-  } : []
+  })
+  return [map && drawing(map, floorY < 0), upperMap && drawing(upperMap.map, false)].filter(drawn => drawn !== undefined)
 })
 
 // Both floors share one frame around every room’s, so they keep one scale and stay aligned.
