@@ -211,7 +211,8 @@ export default class GalleryDirector {
     remove?: string
   }) {
     try {
-      const generate = () => make(AbortSignal.any([this.controller.signal, AbortSignal.timeout(120_000)]), a.width / a.height)
+      // Image models take 15–40 s for most merges, but now and then over 100 s.
+      const generate = () => make(AbortSignal.any([this.controller.signal, AbortSignal.timeout(180_000)]), a.width / a.height)
       const merged = await (telemetry ? telemetry.wrap('gallery.merge', generate, {attributes: {mode: this.settings.ai && this.key ? 'ai' : 'local'}}) : generate())
       if (!current()) {
         return

@@ -19,7 +19,7 @@ export default class extends ExternalGenerator {
     const images = await Promise.all(sources.map(image => image.arrayBuffer()))
     const {image} = await generateImage({
       model: this.model,
-      abortSignal: signal ?? AbortSignal.timeout(120_000),
+      abortSignal: signal ?? AbortSignal.timeout(180_000),
       maxImagesPerCall: 1,
       prompt: {
         images,
