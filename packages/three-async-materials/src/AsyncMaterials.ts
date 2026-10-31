@@ -30,7 +30,7 @@ type RendererState = {
   target: Context['target']
 }
 
-/** the stages a node builder goes through, synchronously each, which r186 starts every stretch of its build with */
+/** the stages a node builder goes through, synchronously each, which r187 starts every stretch of its build with */
 type StagedBuilder = {
   setBuildStage: (stage: string | null) => void
   setShaderStage: (stage: string | null) => void

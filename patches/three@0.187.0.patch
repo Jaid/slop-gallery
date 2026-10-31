@@ -1,0 +1,218 @@
+diff --git a/build/three.tsl.js b/build/three.tsl.js
+index 7c8d2322834904c1247c79cda31beff8e2bfc497..9ff6caa46c9c5967890a4f93d1920b0ab2b20218 100644
+--- a/build/three.tsl.js
++++ b/build/three.tsl.js
+@@ -36126,13 +36126,13 @@ class ShadowNode extends ShadowBaseNode {
+ 		this._currentShadowType = null;
+ 
+ 		/**
+-		 * A Weak Map holding the current frame ID per camera. Used
+-		 * to control the update of shadow maps.
++		 * The frame id of the last shadow map update. Point, spot and directional shadows don't depend on the rendering camera, so additional cameras like reflectors reuse the shadow map rendered earlier in the same frame.
+ 		 *
+-		 * @type {WeakMap<Camera,number>}
+ 		 * @private
++		 * @type {number}
++		 * @default -1
+ 		 */
+-		this._cameraFrameId = new WeakMap();
++		this._frameId = - 1;
+ 
+ 		/**
+ 		 * This flag can be used for type testing.
+@@ -36716,13 +36716,13 @@ class ShadowNode extends ShadowBaseNode {
+ 
+ 		if ( needsUpdate ) {
+ 
+-			if ( this._cameraFrameId.get( frame.camera ) === frame.frameId ) {
++			if ( this._frameId === frame.frameId ) {
+ 
+ 				needsUpdate = false;
+ 
+ 			}
+ 
+-			this._cameraFrameId.set( frame.camera, frame.frameId );
++			this._frameId = frame.frameId;
+ 
+ 		}
+ 
+@@ -36890,6 +36890,9 @@ const PointShadowFilter = /*@__PURE__*/ Fn( ( { depthTexture, bd3D, distance, sh
+ 
+ const pointShadowFilter = /*@__PURE__*/ Fn( ( { filterFn, depthTexture, shadowCoord, shadow }, builder ) => {
+ 
++	// Only read the builder here. A closure using it would hold it in the scope that the update callbacks of the uniforms below share, and every node builder state keeps those callbacks.
++	const { renderer } = builder;
++
+ 	// for point lights, the uniform @vShadowCoord is re-purposed to hold
+ 	// the vector from the light to the world-space position of the fragment.
+ 	const shadowPosition = shadowCoord.xyz.toConst();
+@@ -36908,7 +36911,7 @@ const pointShadowFilter = /*@__PURE__*/ Fn( ( { filterFn, depthTexture, shadowCo
+ 		const bd3D = shadowPosition.normalize();
+ 		const distance = shadowPosition.length();
+ 
+-		const getDepth = getPointShadowDepthFn( distance, shadowCameraNear, shadowCameraFar, bias, builder.renderer );
++		const getDepth = getPointShadowDepthFn( distance, shadowCameraNear, shadowCameraFar, bias, renderer );
+ 		const dp = getDepth( viewZ.div( distance ) );
+ 
+ 		// percentage-closer filtering using cube texture sampling
+diff --git a/build/three.webgpu.js b/build/three.webgpu.js
+index f8fc49fe7df98cbac4609603a1f2a2c6aea79675..e5159499ac3e6468e3aae8752c0521b193b4527d 100644
+--- a/build/three.webgpu.js
++++ b/build/three.webgpu.js
+@@ -49262,16 +49262,45 @@ class WebGPUBackend extends Backend {
+ 
+ 		let descriptors = renderTargetData.descriptors;
+ 
++		// A render-target Texture can recreate its GPUTexture without changing JS identity,
++		// dimensions or samples (for example when texture.needsUpdate is set). Cached
++		// render-pass descriptors retain GPUTextureViews, so invalidate them whenever any
++		// underlying color/MSAA/depth GPU texture changes identity. See three.js #34301.
++		const attachmentTextures = [];
++		for ( const texture of renderContext.textures ) {
++
++			const textureData = this.get( texture );
++			attachmentTextures.push( textureData.texture, textureData.msaaTexture );
++			if ( textureData.msaaTextures !== undefined ) attachmentTextures.push( ...textureData.msaaTextures );
++
++		}
++
++		if ( renderContext.depth && renderContext.depthTexture != null ) {
++
++			const depthTextureData = this.get( renderContext.depthTexture );
++			attachmentTextures.push( depthTextureData.texture, depthTextureData.msaaTexture );
++			if ( depthTextureData.msaaTextures !== undefined ) attachmentTextures.push( ...depthTextureData.msaaTextures );
++
++		}
++
++		const previousAttachmentTextures = renderTargetData.descriptorAttachmentTextures;
++		const attachmentsChanged = previousAttachmentTextures !== undefined && (
++			previousAttachmentTextures.length !== attachmentTextures.length ||
++			previousAttachmentTextures.some( ( texture, index ) => texture !== attachmentTextures[ index ] )
++		);
++
+ 		if ( descriptors === undefined ||
+ 			renderTargetData.width !== renderTarget.width ||
+ 			renderTargetData.height !== renderTarget.height ||
+ 			renderTargetData.samples !== renderTarget.samples ||
++			attachmentsChanged ||
+ 			hasExternalTexture
+ 		) {
+ 
+ 			descriptors = {};
+ 
+ 			renderTargetData.descriptors = descriptors;
++			renderTargetData.descriptorAttachmentTextures = attachmentTextures;
+ 
+ 		}
+ 
+diff --git a/src/nodes/lighting/PointShadowNode.js b/src/nodes/lighting/PointShadowNode.js
+index 7adc79bcf48ae56912c7597c5182d4a3a2a42421..7bd05db28bcb350ab24c3fbad8c2d670eb236738 100644
+--- a/src/nodes/lighting/PointShadowNode.js
++++ b/src/nodes/lighting/PointShadowNode.js
+@@ -156,6 +156,9 @@ export const PointShadowFilter = /*@__PURE__*/ Fn( ( { depthTexture, bd3D, dista
+ 
+ const pointShadowFilter = /*@__PURE__*/ Fn( ( { filterFn, depthTexture, shadowCoord, shadow }, builder ) => {
+ 
++	// Only read the builder here. A closure using it would hold it in the scope that the update callbacks of the uniforms below share, and every node builder state keeps those callbacks.
++	const { renderer } = builder;
++
+ 	// for point lights, the uniform @vShadowCoord is re-purposed to hold
+ 	// the vector from the light to the world-space position of the fragment.
+ 	const shadowPosition = shadowCoord.xyz.toConst();
+@@ -174,7 +177,7 @@ const pointShadowFilter = /*@__PURE__*/ Fn( ( { filterFn, depthTexture, shadowCo
+ 		const bd3D = shadowPosition.normalize();
+ 		const distance = shadowPosition.length();
+ 
+-		const getDepth = getPointShadowDepthFn( distance, shadowCameraNear, shadowCameraFar, bias, builder.renderer );
++		const getDepth = getPointShadowDepthFn( distance, shadowCameraNear, shadowCameraFar, bias, renderer );
+ 		const dp = getDepth( viewZ.div( distance ) );
+ 
+ 		// percentage-closer filtering using cube texture sampling
+diff --git a/src/nodes/lighting/ShadowNode.js b/src/nodes/lighting/ShadowNode.js
+index 7c6423152fbd88d1efc2d7f79db344d4315603eb..07a410a5ffb28da48e48637b4b4a23e2d4b53ac8 100644
+--- a/src/nodes/lighting/ShadowNode.js
++++ b/src/nodes/lighting/ShadowNode.js
+@@ -217,13 +217,13 @@ class ShadowNode extends ShadowBaseNode {
+ 		this._currentShadowType = null;
+ 
+ 		/**
+-		 * A Weak Map holding the current frame ID per camera. Used
+-		 * to control the update of shadow maps.
++		 * The frame id of the last shadow map update. Point, spot and directional shadows don't depend on the rendering camera, so additional cameras like reflectors reuse the shadow map rendered earlier in the same frame.
+ 		 *
+-		 * @type {WeakMap<Camera,number>}
+ 		 * @private
++		 * @type {number}
++		 * @default -1
+ 		 */
+-		this._cameraFrameId = new WeakMap();
++		this._frameId = - 1;
+ 
+ 		/**
+ 		 * This flag can be used for type testing.
+@@ -807,13 +807,13 @@ class ShadowNode extends ShadowBaseNode {
+ 
+ 		if ( needsUpdate ) {
+ 
+-			if ( this._cameraFrameId.get( frame.camera ) === frame.frameId ) {
++			if ( this._frameId === frame.frameId ) {
+ 
+ 				needsUpdate = false;
+ 
+ 			}
+ 
+-			this._cameraFrameId.set( frame.camera, frame.frameId );
++			this._frameId = frame.frameId;
+ 
+ 		}
+ 
+diff --git a/src/renderers/webgpu/WebGPUBackend.js b/src/renderers/webgpu/WebGPUBackend.js
+index 719d67abe3986ca058794b63a441ce66bedde891..daab082f1f9bcf8fa54f82e818c27954b65190d7 100644
+--- a/src/renderers/webgpu/WebGPUBackend.js
++++ b/src/renderers/webgpu/WebGPUBackend.js
+@@ -675,16 +675,45 @@ class WebGPUBackend extends Backend {
+ 
+ 		let descriptors = renderTargetData.descriptors;
+ 
++		// A render-target Texture can recreate its GPUTexture without changing JS identity,
++		// dimensions or samples (for example when texture.needsUpdate is set). Cached
++		// render-pass descriptors retain GPUTextureViews, so invalidate them whenever any
++		// underlying color/MSAA/depth GPU texture changes identity. See three.js #34301.
++		const attachmentTextures = [];
++		for ( const texture of renderContext.textures ) {
++
++			const textureData = this.get( texture );
++			attachmentTextures.push( textureData.texture, textureData.msaaTexture );
++			if ( textureData.msaaTextures !== undefined ) attachmentTextures.push( ...textureData.msaaTextures );
++
++		}
++
++		if ( renderContext.depth && renderContext.depthTexture != null ) {
++
++			const depthTextureData = this.get( renderContext.depthTexture );
++			attachmentTextures.push( depthTextureData.texture, depthTextureData.msaaTexture );
++			if ( depthTextureData.msaaTextures !== undefined ) attachmentTextures.push( ...depthTextureData.msaaTextures );
++
++		}
++
++		const previousAttachmentTextures = renderTargetData.descriptorAttachmentTextures;
++		const attachmentsChanged = previousAttachmentTextures !== undefined && (
++			previousAttachmentTextures.length !== attachmentTextures.length ||
++			previousAttachmentTextures.some( ( texture, index ) => texture !== attachmentTextures[ index ] )
++		);
++
+ 		if ( descriptors === undefined ||
+ 			renderTargetData.width !== renderTarget.width ||
+ 			renderTargetData.height !== renderTarget.height ||
+ 			renderTargetData.samples !== renderTarget.samples ||
++			attachmentsChanged ||
+ 			hasExternalTexture
+ 		) {
+ 
+ 			descriptors = {};
+ 
+ 			renderTargetData.descriptors = descriptors;
++			renderTargetData.descriptorAttachmentTextures = attachmentTextures;
+ 
+ 		}
+ 

@@ -121,7 +121,7 @@ export default function App() {
 
 ## Peer dependencies and bundler setup
 
-Use the peer versions in `package.json`: React 19, Three r186, Fiber 10 (whose root entry renders with WebGPU), Drei 11’s WebGPU entry and Rapier 2.2. All are peer dependencies, including Rapier when physics is disabled, because the package statically imports its component.
+Use the peer versions in `package.json`: React 19, Three r187, Fiber 10 (whose root entry renders with WebGPU), Drei 11’s WebGPU entry and Rapier 2.2. All are peer dependencies, including Rapier when physics is disabled, because the package statically imports its component.
 
 Rapier 2.2 still declares Fiber 9 peers and imports bare `@react-three/fiber`, which is the same WebGPU module as Canvas, so no alias is needed. Do not install or bundle separate Fiber copies for Rapier, and do not import the deprecated `@react-three/fiber/webgpu` entry.
 

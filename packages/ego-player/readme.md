@@ -193,7 +193,7 @@ The `ego-player/motor` entry has no runtime React imports or browser globals and
 
 ## Dependencies and checks
 
-Use the manifest’s peer versions: React 19, Three r186, Fiber 10 (whose root entry renders with WebGPU), Drei 11’s WebGPU entry and Rapier 2.2. All are peers, including Drei when `pointerLock={false}`. Rapier’s bare Fiber import already resolves to the same WebGPU module as the host’s Canvas. Do not bundle a second Fiber instance or import the deprecated `@react-three/fiber/webgpu` entry. The package deliberately adds no WebGL compatibility layer.
+Use the manifest’s peer versions: React 19, Three r187, Fiber 10 (whose root entry renders with WebGPU), Drei 11’s WebGPU entry and Rapier 2.2. All are peers, including Drei when `pointerLock={false}`. Rapier’s bare Fiber import already resolves to the same WebGPU module as the host’s Canvas. Do not bundle a second Fiber instance or import the deprecated `@react-three/fiber/webgpu` entry. The package deliberately adds no WebGL compatibility layer.
 
 Run `bun test` in this directory. Tests exercise real Rapier movement, collisions, clearance, directional sprint/dodge boosts, jumps, teleport resets, independent motors and camera stride timing. A headless React/Fiber test covers Strict Mode, updates without respawning, canvas-specific lock gating, camera ownership, refs and cleanup. Its renderer is inert: this is not an interactive or visual playtest.
 

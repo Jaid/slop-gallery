@@ -7,7 +7,7 @@ import {InspectorBase} from 'three/webgpu'
 
 import ThreeInspector from './ThreeInspector.ts'
 
-// r186 public backend API is not yet represented by @types/three r185.
+// Three’s public backend timestamp API is missing from @types/three.
 export type TimestampBackend = WebGPURenderer['backend'] & {
   device?: {features: {has: (name: string) => boolean}}
   getTimestamp: (uid: string) => number

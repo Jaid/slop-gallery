@@ -2,7 +2,7 @@
 
 On-demand frame capture for Three.js WebGPU renderers, with optional React Three Fiber bindings. No gallery globals, app imports, animation loop or browser work on import.
 
-Targets Three r186 (`three@^0.186.0`). The renderer belongs to the caller; wait for pending captures before awaiting `renderer.dispose()` during application teardown.
+Targets Three r187 (`three@^0.187.0`). The renderer belongs to the caller; wait for pending captures before awaiting `renderer.dispose()` during application teardown.
 
 ## Three.js
 
@@ -107,7 +107,7 @@ This is a fresh render of the scene or pipeline, not a browser screenshot: DOM o
 
 ## Development
 
-The package ships modern ESM TypeScript source for Bun and TypeScript-aware bundlers. It targets Three.js 0.186, React 19 and the WebGPU API in Fiber 10. TypeScript consumers need the matching Three.js type definitions.
+The package ships modern ESM TypeScript source for Bun and TypeScript-aware bundlers. It targets Three.js 0.187, React 19 and the WebGPU API in Fiber 10. TypeScript consumers need the matching Three.js type definitions.
 
 ```sh
 bun run --cwd packages/webgpu-capture-bridge test

@@ -89,7 +89,7 @@ function fixture(third = false, prioritized = true) {
           object.onBeforeRender(renderer as unknown as Parameters<Mesh['onBeforeRender']>[0], compileScene as Scene, compileCamera as PerspectiveCamera, object.geometry as BufferGeometry, object.material as never, null as never)
         }
       })
-      // r186 also creates the node builder of the first object and starts its build before the Promise returns.
+      // r187 also creates the node builder of the first object and starts its build before the Promise returns.
       this.debug.onNodeBuilderCreated?.({
         renderer: this,
         setBuildStage() {},
@@ -637,7 +637,7 @@ test('node builders three creates after compileAsync returned build against the 
     f.renderer.setRenderTarget(null)
     await flush()
     expect(f.calls).toHaveLength(1)
-    // Three 0.186 builds the nodes of what it compiles one object after another, after compileAsync has returned and the queue has put the renderer back. The builder it created before returning leaves that alone.
+    // Three 0.187 builds the nodes of what it compiles one object after another, after compileAsync has returned and the queue has put the renderer back. The builder it created before returning leaves that alone.
     expect(f.renderer.getMRT()).toBeNull()
     expect(f.renderer.getRenderTarget()).toBeNull()
     const stages: Array<[unknown, unknown]> = []
