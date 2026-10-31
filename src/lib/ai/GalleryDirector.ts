@@ -85,7 +85,7 @@ export default class GalleryDirector {
       update(await (telemetry ? telemetry.wrap('gallery.ai.flavor', generate, {attributes: {model: tieredModel(this.settings.text_model, this.settings.ai_tier)}}) : generate()))
     } catch {
       if (current()) {
-        notify('The curator is unavailable. Your artwork is safe; you can edit its label in Collection.')
+        notify('The curator is unavailable. Your artwork is safe.')
       }
     } finally {
       if (current()) {

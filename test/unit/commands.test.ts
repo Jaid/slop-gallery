@@ -2,7 +2,6 @@ import {afterEach, beforeEach, expect, spyOn, test} from 'bun:test'
 
 import {galleryEvents, importDroppedFiles, isTextInput, viewPortrait} from '../../src/lib/gallery/actions.ts'
 import ImageImporter from '../../src/lib/gallery/ImageImporter.ts'
-import {imageFilename} from '../../src/lib/gallery/imagePolicy.ts'
 import {useGallery} from '../../src/lib/gallery/store.ts'
 
 const original = useGallery.getState()
@@ -92,12 +91,4 @@ test('only editable controls count as text input, not whole dialogs', () => {
   const content = new ElementDouble
   content.isContentEditable = true
   expect(isTextInput(content)).toBe(true)
-})
-for (const [mime, extension] of [['image/png', 'png'], ['image/jpeg', 'jpg'], ['image/webp', 'webp'], ['image/avif', 'avif'], ['image/gif', 'gif']]) {
-  test(`download filenames preserve ${mime}`, () => {
-    expect(imageFilename('Pigeon / 🐦', mime)).toBe(`Pigeon  .${extension}`)
-  })
-}
-test('unknown download types are never mislabeled as WebP', () => {
-  expect(() => imageFilename('artwork', 'image/unknown')).toThrow()
 })

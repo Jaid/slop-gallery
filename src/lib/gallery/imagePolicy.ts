@@ -33,11 +33,3 @@ export function validateCollectionImages(portraits: ReadonlyArray<Portrait>) {
     throw new Error('The collection can hold up to 150 mb of embedded images. Remove a work before adding more.')
   }
 }
-
-export function imageFilename(title: string, mime: string) {
-  if (!Object.hasOwn(imageExtensions, mime)) {
-    throw new Error('The artwork has an unsupported image type.')
-  }
-  const extension = imageExtensions[mime as keyof typeof imageExtensions][0]
-  return `${title.replaceAll(/[^\p{L}\p{N} -]/gu, '').slice(0, 70) || 'artwork'}${extension}`
-}
